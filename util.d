@@ -367,3 +367,19 @@ bool among(S,T...)(S arg,T args){
 		if(arg == x) return true;
 	return false;
 }
+
+string lowNumber(int i){ return (i>10?lowNumber(i/10):"") ~ text("₀₁₂₃₄₅₆₇₈₉"d[i%10]); }
+
+import hashtable;
+alias SetX(T)=HSet!(T,(a,b)=>a==b,a=>a.toHash());
+alias MapX(K,V) = HashMap!(K,V,(a,b)=>a==b,a=>a.toHash());
+struct TupleX(T...){
+	T expand;
+	alias expand this;
+	hash_t toHash(){
+		auto r=fnvb;
+		foreach(ref x;expand) r=FNV(x.toHash(),r);
+		return r;
+	}
+}
+auto tuplex(T...)(T t){ return TupleX!T(t); }

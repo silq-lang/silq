@@ -3,6 +3,8 @@ import file=std.file;
 import util;
 import lexer, parser, error;
 
+import distrib, dexpr;
+
 string getActualPath(string path){
 	// TODO: search path
 	auto ext = path.extension;
@@ -41,6 +43,7 @@ int run(string path){
 
 
 int main(string[] args){
+	//writeln(dE.dPow(2.dInt.dMult(3.dInt.dPlus(3.dInt).dPlus(3.dInt))).dPow(3.dInt));
 	if(args.length<2){
 		stderr.writeln("error: no input files");
 		return 1;
