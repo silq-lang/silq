@@ -415,6 +415,7 @@ struct Parser{
 			case Tok!"def": return parseDefinition();
 			case Tok!"return": return parseReturn();
 			case Tok!"if": return parseIte();
+			case Tok!"repeat": return parseRepeat();
 			default: break;
 		}
 		Expression left;
@@ -470,7 +471,14 @@ struct Parser{
 			nextToken();
 			othw=parseCompoundExp();
 		}
-		return New!IteExp(cond,then,othw);
+		return res=New!IteExp(cond,then,othw);
+	}
+	RepeatExp parseRepeat(){
+		mixin(SetLoc!RepeatExp);
+		expect(Tok!"repeat");
+		auto num=parseExpression();
+		auto bdy=parseCompoundExp();
+		return res=New!RepeatExp(num,bdy);
 	}
 };
 
