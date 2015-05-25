@@ -11,7 +11,7 @@ enum Precedence{
 }
 
 import std.bigint;
-alias Int=BigInt;
+alias ℕ=BigInt;
 
 abstract class DExpr{
 	override string toString(){
@@ -27,25 +27,31 @@ class DVar: DExpr{
 }
 DVar dVar(string name){ return new DVar(name); }
 
-class DInt: DExpr{
-	Int c;
-	private this(Int c)in{ assert(c>=0); }body{ this.c=c; }
+class Dℕ : DExpr{
+	ℕ c;
+	private this(ℕ c)in{ assert(c>=0); }body{ this.c=c; }
 	override string toStringImpl(Precedence prec){ return text(c); }
 }
 
-DInt[Int] uniqueMapDInt;
-DExpr dInt(Int c){
-	if(c<0) return dUMinus(dInt(-c));
-	if(c in uniqueMapDInt) return uniqueMapDInt[c];
-	return uniqueMapDInt[c]=new DInt(c);
+Dℕ[ℕ] uniqueMapDℕ;
+DExpr dℕ(ℕ c){
+	if(c<0) return dUMinus(dℕ(-c));
+	if(c in uniqueMapDℕ) return uniqueMapDℕ[c];
+	return uniqueMapDℕ[c]=new Dℕ(c);
 }
-DExpr dInt(long c){ return dInt(Int(c)); }
+DExpr dℕ(long c){ return dℕ(ℕ(c)); }
 
 class DE: DExpr{
 	override string toStringImpl(Precedence prec){ return "e"; }
 }
 static DE theDE;
 @property DE dE(){ return theDE?theDE:theDE=new DE; }
+
+class DΠ: DExpr{
+	override string toStringImpl(Precedence prec){ return "π"; }
+}
+static DΠ theDΠ;
+@property DΠ dΠ(){ return theDΠ?theDΠ:theDΠ=new DΠ; }
 
 abstract class DOp: DExpr{
 	abstract @property string symbol();
@@ -69,7 +75,7 @@ abstract class DCommutAssocOp: DOp{
 		return addp(prec, r[symbol.length..$]);
 	}
 
-	protected static insertImpl(alias rep)(ref DExprSet operands, DExpr operand){ // TODO: simplify better
+	protected static insertImpl(alias rep)(ref DExprSet operands, DExpr operand)in{assert(!!operand);}body{ // TODO: simplify better
 		if(operand !in operands) operands.insert(operand);
 		else{ operands.remove(operand); operands.insert(rep(operand,2)); }
 	}
@@ -135,8 +141,8 @@ class DPlus: DCommutAssocOp{
 	mixin Constructor;
 	override @property Precedence precedence(){ return Precedence.plus; }
 	override @property string symbol(){ return "+"; }
-	static void insert(ref DExprSet factors,DExpr factor){
-		insertImpl!((a,b)=>dMult(dInt(b),a))(factors,factor);
+	static void insert(ref DExprSet summands,DExpr summand)in{assert(!!summand);}body{
+		insertImpl!((a,b)=>dMult(dℕ(b),a))(summands,summand);
 	}
 }
 
@@ -145,13 +151,17 @@ class DMult: DCommutAssocOp{
 	mixin Constructor;
 	override @property Precedence precedence(){ return Precedence.mult; }
 	override @property string symbol(){ return "·"; }
-	static void insert(ref DExprSet factors,DExpr factor){
-		insertImpl!((a,b)=>dPow(a,dInt(b)))(factors,factor);
+	static void insert(ref DExprSet factors,DExpr factor)in{assert(!!factor);}body{
+		insertImpl!((a,b)=>dPow(a,dℕ(b)))(factors,factor);
 	}
 }
 
 mixin(makeConstructorCommutAssoc!DMult);
 mixin(makeConstructorCommutAssoc!DPlus);
+
+DExpr dMinus(DExpr e1,DExpr e2){
+	return e1.dPlus(e2.dUMinus);
+}
 
 abstract class DBinaryOp: DOp{
 	DExpr[2] operands;
@@ -164,7 +174,7 @@ abstract class DBinaryOp: DOp{
 
 class DDiv: DBinaryOp{
 	mixin Constructor;
-	override Precedence precedence(){ return Precedence.plus; }
+	override Precedence precedence(){ return Precedence.mult; }
 	override @property string symbol(){ return "/"; }
 }
 class DPow: DBinaryOp{
@@ -192,7 +202,7 @@ class DUMinus: DUnaryOp{
 }
 mixin(makeConstructorUnary!DUMinus);
 
-class DInteg: DOp{
+class DInt: DOp{
 	DVar var;
 	DExpr expr;
 	private this(DVar var,DExpr expr){ this.var=var; this.expr=expr; }
@@ -203,6 +213,6 @@ class DInteg: DOp{
 	}
 }
 
-DInteg dInteg(DVar var, DExpr expr){
-	return new DInteg(var,expr); // TODO: make unique modulo alpha-renaming?
+DInt dInt(DVar var, DExpr expr){
+	return new DInt(var,expr); // TODO: make unique modulo alpha-renaming?
 }

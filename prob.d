@@ -55,6 +55,10 @@ int main(string[] args){
 
 version=TEST;
 void test(){
-	auto v="x".dVar;
-	writeln(dInteg(v,dE.dPow(2.dInt.dMult(3.dInt.dPlus(3.dInt).dPlus(3.dInt))).dPow(v.dPlus(v))));
+	//auto v="x".dVar;
+	//writeln(dInt(v,dE.dPow(2.dℕ.dMult(3.dℕ.dPlus(3.dℕ).dPlus(3.dℕ))).dPow(v.dPlus(v))));
+	auto d=new Distribution();
+	auto v=d.getVar("x");
+	d.distribute(v,gaussianPDF(v,0.dℕ,1.dℕ));
+	writeln(d);
 }
