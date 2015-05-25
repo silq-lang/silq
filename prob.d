@@ -43,7 +43,7 @@ int run(string path){
 
 
 int main(string[] args){
-	//writeln(dE.dPow(2.dInt.dMult(3.dInt.dPlus(3.dInt).dPlus(3.dInt))).dPow(3.dInt));
+	version(TEST) test();
 	if(args.length<2){
 		stderr.writeln("error: no input files");
 		return 1;
@@ -51,4 +51,10 @@ int main(string[] args){
 	args.popFront();
 	foreach(x;args) if(auto r=run(x)) return r;
 	return 0;
+}
+
+version=TEST;
+void test(){
+	auto v="x".dVar;
+	writeln(dInteg(v,dE.dPow(2.dInt.dMult(3.dInt.dPlus(3.dInt).dPlus(3.dInt))).dPow(v.dPlus(v))));
 }

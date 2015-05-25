@@ -22,13 +22,14 @@ abstract class DExpr{
 alias DExprSet=SetX!DExpr;
 class DVar: DExpr{
 	string name;
-	this(string name){ this.name=name; }
+	private this(string name){ this.name=name; }
 	override string toStringImpl(Precedence prec){ return name; }
 }
+DVar dVar(string name){ return new DVar(name); }
 
 class DInt: DExpr{
 	Int c;
-	this(Int c)in{ assert(c>=0); }body{ this.c=c; }
+	private this(Int c)in{ assert(c>=0); }body{ this.c=c; }
 	override string toStringImpl(Precedence prec){ return text(c); }
 }
 
@@ -60,12 +61,12 @@ auto inOrder(S)(S s){
 }
 abstract class DCommutAssocOp: DOp{
 	DExprSet operands;
-	protected mixin template Constructor(){ this(DExprSet e)in{assert(e.length>1); }body{ operands=e; } }
+	protected mixin template Constructor(){ private this(DExprSet e)in{assert(e.length>1); }body{ operands=e; } }
 	override string toStringImpl(Precedence prec){
 		string r;
 		if(operands.length>20) foreach(o;operands) r~=" "~symbol~" "~o.toStringImpl(precedence);
-		else foreach(o;operands.inOrder) r~=" "~symbol~" "~o.toStringImpl(precedence);
-		return addp(prec, r[symbol.length+2..$]);
+		else foreach(o;operands.inOrder) r~=symbol~o.toStringImpl(precedence);
+		return addp(prec, r[symbol.length..$]);
 	}
 
 	protected static insertImpl(alias rep)(ref DExprSet operands, DExpr operand){ // TODO: simplify better
@@ -154,9 +155,9 @@ mixin(makeConstructorCommutAssoc!DPlus);
 
 abstract class DBinaryOp: DOp{
 	DExpr[2] operands;
-	protected mixin template Constructor(){ this(DExpr e1, DExpr e2){ operands=[e1,e2]; } }
+	protected mixin template Constructor(){ private this(DExpr e1, DExpr e2){ operands=[e1,e2]; } }
 	override string toStringImpl(Precedence prec){
-		return addp(prec, operands[0].toStringImpl(precedence) ~ " " ~ symbol ~ " " ~ operands[1].toStringImpl(precedence));
+		return addp(prec, operands[0].toStringImpl(precedence) ~ symbol ~ operands[1].toStringImpl(precedence));
 	}
 	// abstract BinaryOp construct(DExpr a, DExpr b);
 }
@@ -178,9 +179,9 @@ mixin(makeConstructorNonCommutAssoc!DPow);
 
 abstract class DUnaryOp: DOp{
 	DExpr operand;
-	protected mixin template Constructor(){ this(DExpr e){ operand=e; } }
+	protected mixin template Constructor(){ private this(DExpr e){ operand=e; } }
 	override string toStringImpl(Precedence prec){
-		return addp(prec, symbol~" "~operand.toStringImpl(precedence));
+		return addp(prec, symbol~operand.toStringImpl(precedence));
 	}
 }
 
@@ -190,3 +191,18 @@ class DUMinus: DUnaryOp{
 	override @property Precedence precedence(){ return Precedence.uminus; }
 }
 mixin(makeConstructorUnary!DUMinus);
+
+class DInteg: DOp{
+	DVar var;
+	DExpr expr;
+	private this(DVar var,DExpr expr){ this.var=var; this.expr=expr; }
+	override @property Precedence precedence(){ return Precedence.mult; }
+	override @property string symbol(){ return "∫"; }
+	override string toStringImpl(Precedence prec){
+		return addp(prec,symbol~"d"~var.toString()~addp(Precedence.mult,expr.toString()));
+	}
+}
+
+DInteg dInteg(DVar var, DExpr expr){
+	return new DInteg(var,expr); // TODO: make unique modulo alpha-renaming?
+}

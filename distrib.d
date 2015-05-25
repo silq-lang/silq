@@ -6,7 +6,7 @@ class Distribution{
 	DExpr distribution;
 	DVar addVariable(string name){
 		int suffix=++vbl[name];
-		return new DVar(name~suffix.lowNumber);
+		return dVar(name~suffix.lowNumber);
 	}
 }
 
