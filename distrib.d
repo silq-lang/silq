@@ -1,7 +1,7 @@
 import dexpr, util;
 
 DExpr gaussianPDF(DVar var,DExpr μ,DExpr σsq){
-	return 1.dℕ .dDiv(dPow(2.dℕ .dMult(dΠ).dMult(σsq),1.dℕ.dDiv(2.dℕ))).dMult(dE.dPow((var.dMinus(μ).dPow(2.dℕ).dDiv(σsq))));
+	return one / (2*dΠ*σsq)^^(one/2) * dE^^((var-μ)^^2/σsq);
 }
 
 class Distribution{

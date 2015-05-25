@@ -1,6 +1,6 @@
 import std.conv;
 import hashtable, util;
-
+import std.algorithm: canFind;
 
 enum Precedence{
 	none,
@@ -18,6 +18,32 @@ abstract class DExpr{
 		return toStringImpl(Precedence.none);
 	}
 	abstract string toStringImpl(Precedence prec);
+
+	// helpers for construction of DExprs:
+	enum ValidUnary(string s)=s=="-";
+	enum ValidBinary(string s)=["+","-","*","/","^^"].canFind(s);
+	template UnaryCons(string s)if(ValidUnary!s){
+		static assert(s=="-");
+		alias MapUnary=dUMinus;
+	}
+	template BinaryCons(string s)if(ValidBinary!s){
+		static if(s=="+") alias BinaryCons=dPlus;
+		else static if(s=="-") alias BinaryCons=dMinus;
+		else static if(s=="*") alias BinaryCons=dMult;
+		else static if(s=="/") alias BinaryCons=dDiv;
+		else static if(s=="^^") alias BinaryCons=dPow;
+		else static assert(0);
+	}
+	final opUnary(string op)()if(op=="-"){ return UnaryCons!op(this); }
+	final opBinary(string op)(DExpr e)if(ValidBinary!op){
+		return BinaryCons!op(this,e);
+	}
+	final opBinary(string op)(long e)if(ValidBinary!op){
+		return mixin("this "~op~" e.dℕ");
+	}
+	final opBinaryRight(string op)(long e)if(ValidBinary!op){
+		return mixin("e.dℕ "~op~" this");
+	}
 }
 alias DExprSet=SetX!DExpr;
 class DVar: DExpr{
@@ -44,14 +70,17 @@ DExpr dℕ(long c){ return dℕ(ℕ(c)); }
 class DE: DExpr{
 	override string toStringImpl(Precedence prec){ return "e"; }
 }
-static DE theDE;
+private static DE theDE;
 @property DE dE(){ return theDE?theDE:theDE=new DE; }
 
 class DΠ: DExpr{
 	override string toStringImpl(Precedence prec){ return "π"; }
 }
-static DΠ theDΠ;
+private static DΠ theDΠ;
 @property DΠ dΠ(){ return theDΠ?theDΠ:theDΠ=new DΠ; }
+
+private static DExpr theOne;
+@property DExpr one(){ return theOne?theOne:theOne=1.dℕ;}
 
 abstract class DOp: DExpr{
 	abstract @property string symbol();
