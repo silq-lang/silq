@@ -4,6 +4,10 @@ DExpr gaussianPDF(DVar var,DExpr μ,DExpr σsq){
 	return one / (2*dΠ*σsq)^^(one/2) * dE^^((var-μ)^^2/σsq);
 }
 
+/*DExpr uniformPDF(DVar var,DExpr a,DExpr b){
+	return dInd((a<=var).and(var<=b))*one/(b-a);
+}*/
+
 class Distribution{
 	int[string] vbl;
 	this(){ distribution=1.dℕ; }

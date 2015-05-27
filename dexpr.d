@@ -231,6 +231,18 @@ class DUMinus: DUnaryOp{
 }
 mixin(makeConstructorUnary!DUMinus);
 
+class DConstr{
+	override string toString(){
+		return toStringImpl(Precedence.none);
+	}
+	abstract string toStringImpl(Precedence prec);
+}
+
+class DInd: DOp{
+	
+}
+
+
 class DInt: DOp{
 	DVar var;
 	DExpr expr;
