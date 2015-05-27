@@ -24,7 +24,7 @@ abstract class DExpr{
 	enum ValidBinary(string s)=["+","-","*","/","^^"].canFind(s);
 	template UnaryCons(string s)if(ValidUnary!s){
 		static assert(s=="-");
-		alias MapUnary=dUMinus;
+		alias UnaryCons=dUMinus;
 	}
 	template BinaryCons(string s)if(ValidBinary!s){
 		static if(s=="+") alias BinaryCons=dPlus;
@@ -55,13 +55,17 @@ DVar dVar(string name){ return new DVar(name); }
 
 class Dℕ : DExpr{
 	ℕ c;
-	private this(ℕ c)in{ assert(c>=0); }body{ this.c=c; }
-	override string toStringImpl(Precedence prec){ return text(c); }
+	private this(ℕ c){ this.c=c; }
+	override string toStringImpl(Precedence prec){
+		string r=text(c);
+		if(prec>Precedence.uminus&&c<0)
+			r="("~r~")";
+		return r;
+	}
 }
 
 Dℕ[ℕ] uniqueMapDℕ;
 DExpr dℕ(ℕ c){
-	if(c<0) return dUMinus(dℕ(-c));
 	if(c in uniqueMapDℕ) return uniqueMapDℕ[c];
 	return uniqueMapDℕ[c]=new Dℕ(c);
 }
@@ -71,16 +75,19 @@ class DE: DExpr{
 	override string toStringImpl(Precedence prec){ return "e"; }
 }
 private static DE theDE;
-@property DE dE(){ return theDE?theDE:theDE=new DE; }
+@property DE dE(){ return theDE?theDE:(theDE=new DE); }
 
 class DΠ: DExpr{
 	override string toStringImpl(Precedence prec){ return "π"; }
 }
 private static DΠ theDΠ;
-@property DΠ dΠ(){ return theDΠ?theDΠ:theDΠ=new DΠ; }
+@property DΠ dΠ(){ return theDΠ?theDΠ:(theDΠ=new DΠ); }
 
 private static DExpr theOne;
-@property DExpr one(){ return theOne?theOne:theOne=1.dℕ;}
+@property DExpr one(){ return theOne?theOne:(theOne=1.dℕ);}
+
+private static DExpr theZero;
+@property DExpr zero(){ return theZero?theZero:(theZero=0.dℕ);}
 
 abstract class DOp: DExpr{
 	abstract @property string symbol();
@@ -103,12 +110,6 @@ abstract class DCommutAssocOp: DOp{
 		else foreach(o;operands.inOrder) r~=symbol~o.toStringImpl(precedence);
 		return addp(prec, r[symbol.length..$]);
 	}
-
-	protected static insertImpl(alias rep)(ref DExprSet operands, DExpr operand)in{assert(!!operand);}body{ // TODO: simplify better
-		if(operand !in operands) operands.insert(operand);
-		else{ operands.remove(operand); operands.insert(rep(operand,2)); }
-	}
-
 }
 
 DExprSet shallow(T)(DExprSet arg){
@@ -157,7 +158,12 @@ string makeConstructorCommutAssoc(T,string dflt=null)(){
 }
 
 string makeConstructorNonCommutAssoc(T)(){
-	return "auto " ~ lowerf(__traits(identifier, T))~"(DExpr e1, DExpr e2){ return uniqueDExprNonCommutAssoc!("~__traits(identifier,T)~")(e1,e2); }";
+	enum Ts=__traits(identifier, T);
+	return "auto " ~ lowerf(Ts)~"(DExpr e1, DExpr e2){ "
+		~"static if(__traits(hasMember,"~Ts~",`constructHook`))"
+		~"  if(auto r="~Ts~".constructHook(e1,e2)) return r;"
+		~"return uniqueDExprNonCommutAssoc!("~__traits(identifier,T)~")(e1,e2);"
+		~"}";
 }
 
 string makeConstructorUnary(T)(){
@@ -171,7 +177,50 @@ class DPlus: DCommutAssocOp{
 	override @property Precedence precedence(){ return Precedence.plus; }
 	override @property string symbol(){ return "+"; }
 	static void insert(ref DExprSet summands,DExpr summand)in{assert(!!summand);}body{
-		insertImpl!((a,b)=>dMult(dℕ(b),a))(summands,summand);
+		// TODO: use suitable data structures
+		// TODO: eliminate repetition?
+		if(auto c=cast(Dℕ)summand){
+			if(c.c==0) return;
+			foreach(s;summands){
+				if(auto d=cast(Dℕ)s){
+					summands.remove(s);
+					summands.insert(dℕ(c.c+d.c));
+					return;
+				}
+				if(auto p=cast(DPow)s){
+					if(auto d=cast(Dℕ)p.operands[0]){
+						if(auto e=cast(Dℕ)p.operands[1]){
+							assert(e.c==-1);
+							summands.remove(s);
+							summands.insert(dℕ(c.c*d.c+1)/d);
+							return;
+						}
+					}
+				}
+			}
+		}
+		if(auto p=cast(DPow)summand){
+			if(auto d=cast(Dℕ)p.operands[0]){
+				if(auto e=cast(Dℕ)p.operands[1]){
+					assert(e.c==-1);
+					foreach(s;summands){
+						if(auto c=cast(Dℕ)s){
+							summands.remove(s);
+							summands.insert(dℕ(c.c*d.c+1)/d);
+							return;
+						}
+					}
+					
+				}
+			}
+		}
+		if(summand !in summands) summands.insert(summand);
+		else{ summands.remove(summand); insert(summands,2*summand); }
+	}
+	static DExpr constructHook(DExprSet operands){
+		if(operands.length==1) return operands.element;
+		if(operands.length==0) return zero;
+		return null;
 	}
 }
 
@@ -181,7 +230,71 @@ class DMult: DCommutAssocOp{
 	override @property Precedence precedence(){ return Precedence.mult; }
 	override @property string symbol(){ return "·"; }
 	static void insert(ref DExprSet factors,DExpr factor)in{assert(!!factor);}body{
-		insertImpl!((a,b)=>dPow(a,dℕ(b)))(factors,factor);
+		// TODO: use suitable data structures
+		// TODO: eliminate repetition?
+		foreach(f;factors){
+			if(f is factor){
+				factors.remove(f);
+				insert(factors,f^^2);
+				return;
+			}
+			if(auto pf=cast(DPow)factor){
+				if(f is pf.operands[0]){
+					factors.remove(f);
+					insert(factors,f^^(pf.operands[1]+1));
+					return;
+				}
+				if(auto d=cast(Dℕ)f){
+					if(auto e=cast(Dℕ)pf.operands[0]){
+						if(d.c==-e.c){
+							factors.remove(f);
+							insert(factors,-e^^(pf.operands[1]));
+							return;
+						}
+					}
+				}
+			}
+			if(auto p=cast(DPow)f){
+				if(p.operands[0] is factor){
+					factors.remove(p);
+					insert(factors,p.operands[0]^^(p.operands[1]+1));
+					return;
+				}
+				if(auto d=cast(Dℕ)p.operands[0]){
+					if(auto e=cast(Dℕ)factor){
+						if(d.c==-e.c){
+							factors.remove(f);
+							insert(factors,-d^^(p.operands[1]+1));
+							return;
+						}
+					}
+				}
+				if(auto pf=cast(DPow)factor){
+					if(p.operands[0] is pf.operands[0]){
+						factors.remove(p);
+						insert(factors,p.operands[0]^^(p.operands[1]+pf.operands[1]));
+						return;
+					}
+				}
+			}
+		}
+		if(auto c=cast(Dℕ)factor){
+			if(c.c==1) return;
+			foreach(f;factors){
+				if(auto d=cast(Dℕ)f){
+					factors.remove(d);
+					insert(factors,dℕ(c.c*d.c));
+					return;
+				}
+			}
+		}
+		assert(factor !in factors);
+		factors.insert(factor);
+	}
+	static DExpr constructHook(DExprSet operands){
+		if(operands.length==1) return operands.element;
+		if(operands.length==0) return one;
+		return null;
 	}
 }
 
@@ -201,20 +314,34 @@ abstract class DBinaryOp: DOp{
 	// abstract BinaryOp construct(DExpr a, DExpr b);
 }
 
-class DDiv: DBinaryOp{
-	mixin Constructor;
-	override Precedence precedence(){ return Precedence.mult; }
-	override @property string symbol(){ return "/"; }
-}
 class DPow: DBinaryOp{
 	mixin Constructor;
 	override Precedence precedence(){ return Precedence.pow; }
 	override @property string symbol(){ return "^"; }
 	override bool rightAssociative(){ return true; }
+
+	static DExpr constructHook(DExpr e1,DExpr e2){
+		if(auto m=cast(DMult)e1){ // TODO: do we really want auto-distribution?
+			DExprSet factors;
+			foreach(f;m.operands)
+				DMult.insert(factors,f^^e2);
+			return dMult(factors);
+		}
+		if(auto p=cast(DPow)e1) return p.operands[0]^^(p.operands[1]*e2);
+		if(e1 is one||e2 is zero) return one;
+		if(e2 is one) return e1;
+		if(auto c=cast(Dℕ)e1){
+			if(auto d=cast(Dℕ)e2){
+				if(d.c>0) dℕ(pow(c.c,d.c));
+				else if(d.c!=-1) return dℕ(pow(c.c,-d.c))^^-1;
+			}
+		}
+		return null;
+	}
 }
 
-mixin(makeConstructorNonCommutAssoc!DDiv);
 mixin(makeConstructorNonCommutAssoc!DPow);
+DExpr dDiv(DExpr e1,DExpr e2){ return e1*e2^^-1; }
 
 abstract class DUnaryOp: DOp{
 	DExpr operand;
@@ -223,13 +350,7 @@ abstract class DUnaryOp: DOp{
 		return addp(prec, symbol~operand.toStringImpl(precedence));
 	}
 }
-
-class DUMinus: DUnaryOp{
-	mixin Constructor;
-	override @property string symbol(){ return "-"; }
-	override @property Precedence precedence(){ return Precedence.uminus; }
-}
-mixin(makeConstructorUnary!DUMinus);
+DExpr dUMinus(DExpr e){ return -1*e; }
 
 class DConstr{
 	override string toString(){

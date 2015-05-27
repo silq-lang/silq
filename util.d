@@ -383,3 +383,11 @@ struct TupleX(T...){
 	}
 }
 auto tuplex(T...)(T t){ return TupleX!T(t); }
+
+import std.bigint;
+BigInt pow(BigInt a,BigInt b)in{assert(b>=0);}body{
+	BigInt r=1;
+	for(;b;b/=2,a*=a)
+		if(b&1) r*=a;
+	return r;
+}

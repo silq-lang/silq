@@ -212,4 +212,4 @@ struct Subsets(T){
 }
 
 auto subsets(T)(T arg){ return Subsets!T(arg.array); }
-
+auto element(T)(T arg)in{assert(arg.length==1);}body{ foreach(x;arg) return x; assert(0); }
