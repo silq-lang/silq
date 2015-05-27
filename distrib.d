@@ -20,10 +20,14 @@ class Distribution{
 		return v;
 	}
 	void distribute(DVar var,DExpr pdf){
-		distribution=distribution.dMult(pdf);
+		distribution=distribution*pdf;
 	}
-	void marginalize(DVar var){
+	void assign(DVar var,DExpr exp){
+		// distribution=distribution*dDelta(exp-var); // TODO
+	}
+	void marginalize(DVar var)in{assert(var in freeVars); }body{
 		distribution=dInt(var,distribution);
+		freeVars.remove(var);
 	}
 	override string toString(){
 		return distribution.toString();

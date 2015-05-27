@@ -298,27 +298,41 @@ class DPow: DBinaryOp{
 	override bool rightAssociative(){ return true; }
 
 	override string toStringImpl(Precedence prec){
+		// TODO: always use ⅟ if negative factor in exponent
 		if(auto c=cast(Dℕ)operands[1]){
 			if(c.c==-1){
 				if(auto d=cast(Dℕ)operands[0])
 					if(2<=d.c&&d.c<=6)
-						return addp(prec,text("  ½⅓¼⅕⅙"d[d.c.to!string.to!long]),Precedence.mult);
+						return addp(prec,text("  ½⅓¼⅕⅙"d[d.c.toLong()]),Precedence.mult);
 				return addp(prec,"⅟"~operands[0].toStringImpl(Precedence.mult),Precedence.mult);
 			}
 			return addp(prec,operands[0].toStringImpl(Precedence.pow)~highNumber(c.c));
+		}
+		if(auto c=cast(DPow)operands[1]){
+			if(auto e=cast(Dℕ)c.operands[1]){
+				if(e.c==-1){
+					if(auto d=cast(Dℕ)c.operands[0]){
+						if(2<=d.c&&d.c<=4)
+							return text("  √∛∜"d[d.c.toLong()],overline(operands[0].toString()));
+					}
+				}
+			}
 		}
 		return super.toStringImpl(prec);
 	}
 
 	static DExpr constructHook(DExpr e1,DExpr e2){
+		if(e1 !is -one) if(auto c=cast(Dℕ)e1) if(c.c<0) return (-1)^^e2*dℕ(-c.c)^^e2;
 		if(auto m=cast(DMult)e1){ // TODO: do we really want auto-distribution?
 			DExprSet factors;
-			foreach(f;m.operands)
+			foreach(f;m.operands){
 				DMult.insert(factors,f^^e2);
+			}
 			return dMult(factors);
 		}
 		if(auto p=cast(DPow)e1) return p.operands[0]^^(p.operands[1]*e2);
 		if(e1 is one||e2 is zero) return one;
+		if(e1 is -one && e2 is -one) return -one;
 		if(e2 is one) return e1;
 		if(auto c=cast(Dℕ)e1){
 			if(auto d=cast(Dℕ)e2){

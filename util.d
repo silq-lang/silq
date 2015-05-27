@@ -382,7 +382,11 @@ string digitRep(T)(T i,dstring digits,dchar minus){
 string lowNumber(T)(T i){ return digitRep(i,"₀₁₂₃₄₅₆₇₈₉",'₋'); }
 string highNumber(T)(T i){ return digitRep(i,"⁰¹²³⁴⁵⁶⁷⁸⁹",'⁻'); }
 
-
+string overline(string s){
+	string r;
+	foreach(dchar d;s){ r~=d; r~="\u0305"; }
+	return r;
+}
 import hashtable;
 alias SetX(T)=HSet!(T,(a,b)=>a==b,a=>a.toHash());
 alias MapX(K,V) = HashMap!(K,V,(a,b)=>a==b,a=>a.toHash());
@@ -404,3 +408,5 @@ BigInt pow(BigInt a,BigInt b)in{assert(b>=0);}body{
 		if(b&1) r*=a;
 	return r;
 }
+
+long toLong(BigInt a){ return a.to!string.to!long; } // TODO: do properly
