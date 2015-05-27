@@ -62,11 +62,11 @@ void test(){
 	d.distribute(v,gaussianPDF(v,zero,one));
 	auto w=d.getVar("y");
 	d.distribute(w,gaussianPDF(w,zero,one));
-	//d.distribute(v,gaussianPDF(v,0.dℕ,1.dℕ));
+	d.distribute(v,gaussianPDF(v,0.dℕ,1.dℕ));
 	//d.distribute(v,gaussianPDF(v,0.dℕ,1.dℕ));
 	//d.distribute(v,gaussianPDF(v,0.dℕ,1.dℕ));
 	writeln(d);
-	//writeln((one+one)^^-2+2);
-	//writeln(-one-2^^(-one)*3);
+	writeln((one+one)^^-2+2);
+	writeln(-one-2^^(-one)*3);
 	writeln((-one)+2^^(-one)*(-1)+2^^(-one)*(-1));
 }

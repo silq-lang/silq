@@ -368,7 +368,20 @@ bool among(S,T...)(S arg,T args){
 	return false;
 }
 
-string lowNumber(int i){ return (i>10?lowNumber(i/10):"") ~ text("₀₁₂₃₄₅₆₇₈₉"d[i%10]); }
+string digitRep(T)(T i,dstring digits,dchar minus){
+	string r;
+	string tmp=to!string(i);
+	foreach(dchar c;tmp){
+		if(c=='-') r~=minus;
+		else if('0'<=c&&c<='9') r~=digits[c-'0'];
+		else r~=c;
+	}
+	return r;
+}
+
+string lowNumber(T)(T i){ return digitRep(i,"₀₁₂₃₄₅₆₇₈₉",'₋'); }
+string highNumber(T)(T i){ return digitRep(i,"⁰¹²³⁴⁵⁶⁷⁸⁹",'⁻'); }
+
 
 import hashtable;
 alias SetX(T)=HSet!(T,(a,b)=>a==b,a=>a.toHash());

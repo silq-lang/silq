@@ -8,6 +8,7 @@ enum Precedence{
 	plus,
 	mult,
 	pow,
+	invalid,
 }
 
 import std.bigint;
@@ -93,8 +94,9 @@ abstract class DOp: DExpr{
 	abstract @property string symbol();
 	bool rightAssociative(){ return false; }
 	abstract @property Precedence precedence();
-	protected final string addp(Precedence prec, string s){
-		return prec > precedence||rightAssociative&&prec==precedence? "(" ~ s ~ ")":s;
+	protected final string addp(Precedence prec, string s, Precedence myPrec=Precedence.invalid){
+		if(myPrec==Precedence.invalid) myPrec=precedence;
+		return prec > myPrec||rightAssociative&&prec==precedence? "(" ~ s ~ ")":s;
 	}
 }
 
@@ -151,10 +153,17 @@ auto uniqueDExprUnary(T)(DExpr a){
 	uniqueMapUnary[t]=r;
 	return r;
 }
-string makeConstructorCommutAssoc(T,string dflt=null)(){
+string makeConstructorCommutAssoc(T)(){
 	enum Ts=__traits(identifier, T);
-	return "auto " ~ lowerf(Ts)~"(DExprSet f){ auto fsh=f.shallow!"~__traits(identifier,T)~"; if(fsh.length==1) foreach(x;fsh) return x; "~(dflt.length?"if(!fsh.length) return "~dflt~";":"")~"return uniqueDExprCommutAssoc!("~__traits(identifier,T)~")(fsh); }" ~
-		"auto " ~ lowerf(Ts)~"(DExpr e1,DExpr e2){ DExprSet a;"~Ts~".insert(a,e1);"~Ts~".insert(a,e2);return "~lowerf(Ts)~"(a); }";
+	return "auto " ~ lowerf(Ts)~"(DExprSet f){ auto fsh=f.shallow!"~__traits(identifier,T)~";"
+		~"if(fsh.length==1) return fsh.element;"
+		~"if(auto r="~Ts~".constructHook(fsh)) return r;"
+		~"return uniqueDExprCommutAssoc!("~__traits(identifier,T)~")(fsh);"
+		~"}"
+		~"auto " ~ lowerf(Ts)~"(DExpr e1,DExpr e2){"
+		~"  DExprSet a;"~Ts~".insert(a,e1);"~Ts~".insert(a,e2);"
+		~"  return "~lowerf(Ts)~"(a);"
+		~"}";
 }
 
 string makeConstructorNonCommutAssoc(T)(){
@@ -218,7 +227,6 @@ class DPlus: DCommutAssocOp{
 		else{ summands.remove(summand); insert(summands,2*summand); }
 	}
 	static DExpr constructHook(DExprSet operands){
-		if(operands.length==1) return operands.element;
 		if(operands.length==0) return zero;
 		return null;
 	}
@@ -229,15 +237,21 @@ class DMult: DCommutAssocOp{
 	mixin Constructor;
 	override @property Precedence precedence(){ return Precedence.mult; }
 	override @property string symbol(){ return "·"; }
+	override string toStringImpl(Precedence prec){
+		// TODO: use suitable data structures
+		foreach(f;factors){
+			if(auto c=cast(Dℕ)f){
+				if(c.c<0){
+					return addp(prec,"-"~(-this).toStringImpl(Precedence.uminus),Precedence.uminus);
+				}
+			}
+		}
+		return super.toStringImpl(prec);
+	}
 	static void insert(ref DExprSet factors,DExpr factor)in{assert(!!factor);}body{
 		// TODO: use suitable data structures
 		// TODO: eliminate repetition?
 		foreach(f;factors){
-			if(f is factor){
-				factors.remove(f);
-				insert(factors,f^^2);
-				return;
-			}
 			if(auto pf=cast(DPow)factor){
 				if(f is pf.operands[0]){
 					factors.remove(f);
@@ -277,6 +291,11 @@ class DMult: DCommutAssocOp{
 					}
 				}
 			}
+			if(f is factor&&!cast(Dℕ)f){
+				factors.remove(f);
+				insert(factors,f^^2);
+				return;
+			}
 		}
 		if(auto c=cast(Dℕ)factor){
 			if(c.c==1) return;
@@ -292,7 +311,6 @@ class DMult: DCommutAssocOp{
 		factors.insert(factor);
 	}
 	static DExpr constructHook(DExprSet operands){
-		if(operands.length==1) return operands.element;
 		if(operands.length==0) return one;
 		return null;
 	}
@@ -319,6 +337,19 @@ class DPow: DBinaryOp{
 	override Precedence precedence(){ return Precedence.pow; }
 	override @property string symbol(){ return "^"; }
 	override bool rightAssociative(){ return true; }
+
+	override string toStringImpl(Precedence prec){
+		if(auto c=cast(Dℕ)operands[1]){
+			if(c.c==-1){
+				if(auto d=cast(Dℕ)operands[0])
+					if(2<=d.c&&d.c<=6)
+						return addp(prec,text("  ½⅓¼⅕⅙"d[d.c.to!string.to!long]),Precedence.mult);
+				return addp(prec,"⅟"~operands[0].toStringImpl(Precedence.mult),Precedence.mult);
+			}
+			return addp(prec,operands[0].toStringImpl(Precedence.pow)~highNumber(c.c));
+		}
+		return super.toStringImpl(prec);
+	}
 
 	static DExpr constructHook(DExpr e1,DExpr e2){
 		if(auto m=cast(DMult)e1){ // TODO: do we really want auto-distribution?
