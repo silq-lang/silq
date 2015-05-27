@@ -1,6 +1,6 @@
 import std.conv;
 import hashtable, util;
-import std.algorithm: canFind;
+import std.algorithm: canFind, swap;
 
 enum Precedence{
 	none,
@@ -186,41 +186,28 @@ class DPlus: DCommutAssocOp{
 	override @property Precedence precedence(){ return Precedence.plus; }
 	override @property string symbol(){ return "+"; }
 	static void insert(ref DExprSet summands,DExpr summand)in{assert(!!summand);}body{
-		// TODO: use suitable data structures
-		// TODO: eliminate repetition?
-		if(auto c=cast(Dℕ)summand){
-			if(c.c==0) return;
-			foreach(s;summands){
-				if(auto d=cast(Dℕ)s){
-					summands.remove(s);
-					summands.insert(dℕ(c.c+d.c));
-					return;
-				}
-				if(auto p=cast(DPow)s){
+		static DExpr combine(DExpr e1,DExpr e2){
+			if(cast(Dℕ)e2) swap(e1,e2);
+			if(auto c=cast(Dℕ)e1){
+				if(c.c==0) return e2;
+				if(auto d=cast(Dℕ)e2) return dℕ(c.c+d.c);
+				if(auto p=cast(DPow)e2){
 					if(auto d=cast(Dℕ)p.operands[0]){
 						if(auto e=cast(Dℕ)p.operands[1]){
 							assert(e.c==-1);
-							summands.remove(s);
-							summands.insert(dℕ(c.c*d.c+1)/d);
-							return;
+							return dℕ(c.c*d.c+1)/d;
 						}
 					}
 				}
 			}
+			return null;
 		}
-		if(auto p=cast(DPow)summand){
-			if(auto d=cast(Dℕ)p.operands[0]){
-				if(auto e=cast(Dℕ)p.operands[1]){
-					assert(e.c==-1);
-					foreach(s;summands){
-						if(auto c=cast(Dℕ)s){
-							summands.remove(s);
-							summands.insert(dℕ(c.c*d.c+1)/d);
-							return;
-						}
-					}
-					
-				}
+		// TODO: use suitable data structures
+		foreach(s;summands){
+			if(auto nws=combine(s,summand)){
+				summands.remove(s);
+				insert(summands,nws);
+				return;
 			}
 		}
 		if(summand !in summands) summands.insert(summand);
@@ -250,61 +237,35 @@ class DMult: DCommutAssocOp{
 	}
 	static void insert(ref DExprSet factors,DExpr factor)in{assert(!!factor);}body{
 		// TODO: use suitable data structures
-		// TODO: eliminate repetition?
-		foreach(f;factors){
-			if(auto pf=cast(DPow)factor){
-				if(f is pf.operands[0]){
-					factors.remove(f);
-					insert(factors,f^^(pf.operands[1]+1));
-					return;
-				}
-				if(auto d=cast(Dℕ)f){
-					if(auto e=cast(Dℕ)pf.operands[0]){
-						if(d.c==-e.c){
-							factors.remove(f);
-							insert(factors,-e^^(pf.operands[1]));
-							return;
-						}
-					}
-				}
+		static DExpr combine(DExpr e1,DExpr e2){
+			if(cast(Dℕ)e2) swap(e1,e2);
+			if(auto c=cast(Dℕ)e1){
+				if(c.c==1) return e2;
+				if(auto d=cast(Dℕ)e2) return dℕ(c.c*d.c);
 			}
-			if(auto p=cast(DPow)f){
-				if(p.operands[0] is factor){
-					factors.remove(p);
-					insert(factors,p.operands[0]^^(p.operands[1]+1));
-					return;
-				}
+			if(cast(DPow)e2) swap(e1,e2);
+			if(auto p=cast(DPow)e1){
+				if(p.operands[0] is e2)
+					return p.operands[0]^^(p.operands[1]+1);
 				if(auto d=cast(Dℕ)p.operands[0]){
-					if(auto e=cast(Dℕ)factor){
-						if(d.c==-e.c){
-							factors.remove(f);
-							insert(factors,-d^^(p.operands[1]+1));
-							return;
-						}
+					if(auto e=cast(Dℕ)e2){
+						if(d.c==-e.c)
+							return -d^^(p.operands[1]+1);
 					}
 				}
-				if(auto pf=cast(DPow)factor){
-					if(p.operands[0] is pf.operands[0]){
-						factors.remove(p);
-						insert(factors,p.operands[0]^^(p.operands[1]+pf.operands[1]));
-						return;
-					}
-				}
+				if(auto pf=cast(DPow)e2){
+					if(p.operands[0] is pf.operands[0])
+						return p.operands[0]^^(p.operands[1]+pf.operands[1]);
+				}				
 			}
-			if(f is factor&&!cast(Dℕ)f){
-				factors.remove(f);
-				insert(factors,f^^2);
-				return;
-			}
+			if(e1 is e2) return e1^^2;
+			return null;
 		}
-		if(auto c=cast(Dℕ)factor){
-			if(c.c==1) return;
-			foreach(f;factors){
-				if(auto d=cast(Dℕ)f){
-					factors.remove(d);
-					insert(factors,dℕ(c.c*d.c));
-					return;
-				}
+		foreach(f;factors){
+			if(auto nwf=combine(f,factor)){
+				factors.remove(f);
+				insert(factors,nwf);
+				return;
 			}
 		}
 		assert(factor !in factors);
@@ -319,9 +280,7 @@ class DMult: DCommutAssocOp{
 mixin(makeConstructorCommutAssoc!DMult);
 mixin(makeConstructorCommutAssoc!DPlus);
 
-DExpr dMinus(DExpr e1,DExpr e2){
-	return e1.dPlus(e2.dUMinus);
-}
+DExpr dMinus(DExpr e1,DExpr e2){ return e1+-e2; }
 
 abstract class DBinaryOp: DOp{
 	DExpr[2] operands;
