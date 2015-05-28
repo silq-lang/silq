@@ -29,7 +29,7 @@ class ErrorExp: Expression{
 }
 
 class LiteralExp: Expression{
-	private Token lit;
+	Token lit;
 	this(Token lit){ // TODO: suitable contract
 		this.lit=lit;
 	}

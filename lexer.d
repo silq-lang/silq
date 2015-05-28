@@ -14,6 +14,10 @@ mixin("enum TokenType{"~TokenNames()~"}");
 template Tok(string type){mixin(TokImpl());}
 template TokChars(TokenType type){mixin(TokCharsImpl());}
 
+bool isAlphaEx(dchar c){
+	import std.algorithm : canFind;
+	return isAlpha(c)||canFind("₀₁₂₃₄₅₆₇₈₉"d,c);
+}
 
 private immutable {
 string[2][] complexTokens =
@@ -565,7 +569,7 @@ private:
 									case 0x80: .. case 0xFF:
 										len=0;
 										try{auto ch=utf.decode(p[0..4],len);
-											if(isAlpha(ch)){p+=len; continue;}
+											if(isAlphaEx(ch)){p+=len; continue;}
 											break;
 										}catch{invCharSeq(); break;}
 									default: break;
@@ -586,7 +590,7 @@ private:
 										case 0x80: .. case 0xFF:
 											len=0;
 											try{auto ch=utf.decode(p[0..4],len);
-												if(isAlpha(ch)){
+												if(isAlphaEx(ch)){
 													if(p[0..len]!=ip[0..len]) break;
 													p+=len; ip+=len; continue;
 												}
@@ -748,7 +752,7 @@ private:
 								break;
 							case 0x80: .. case 0xFF:
 								len=0;
-								try if(isAlpha(utf.decode(p[0..4],len))) p+=len;
+								try if(isAlphaEx(utf.decode(p[0..4],len))) p+=len;
 									else break readident;
 								catch{break readident;} // will be caught in the next iteration
 								break;
@@ -763,7 +767,7 @@ private:
 					len=0; p--;
 					try{auto ch=utf.decode(p[0..4],len);
 						s=p, p+=len;
-						if(isAlpha(ch)) goto identifier;
+						if(isAlphaEx(ch)) goto identifier;
 						if(!isWhite(ch)) errors~=tokError(format("unsupported character '%s'",ch),s[0..len]);
 						// else if(isNewLine(ch)) line++; // TODO: implement this everywhere
 						continue;

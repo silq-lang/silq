@@ -6,6 +6,7 @@ enum Precedence{
 	none,
 	uminus,
 	plus,
+	intg,
 	mult,
 	pow,
 	invalid,
@@ -108,7 +109,7 @@ abstract class DCommutAssocOp: DOp{
 	protected mixin template Constructor(){ private this(DExprSet e)in{assert(e.length>1); }body{ operands=e; } }
 	override string toStringImpl(Precedence prec){
 		string r;
-		if(operands.length>20) foreach(o;operands) r~=" "~symbol~" "~o.toStringImpl(precedence);
+		if(operands.length>20) foreach(o;operands) r~=symbol~o.toStringImpl(precedence);
 		else foreach(o;operands.inOrder) r~=symbol~o.toStringImpl(precedence);
 		return addp(prec, r[symbol.length..$]);
 	}
@@ -306,7 +307,7 @@ class DPow: DBinaryOp{
 						return addp(prec,text("  ½⅓¼⅕⅙"d[d.c.toLong()]),Precedence.mult);
 				return addp(prec,"⅟"~operands[0].toStringImpl(Precedence.mult),Precedence.mult);
 			}
-			return addp(prec,operands[0].toStringImpl(Precedence.pow)~highNumber(c.c));
+			return addp(prec,operands[0].toStringImpl(Precedence.pow)~highNum(c.c));
 		}
 		if(auto c=cast(DPow)operands[1]){
 			if(auto e=cast(Dℕ)c.operands[1]){
@@ -367,15 +368,23 @@ class DInd: DOp{
 	
 }
 
+class DDelta: DExpr{
+	DExpr e;
+	this(DExpr e){ this.e=e; }
+	override string toStringImpl(Precedence prec){ return "δ["~e.toString()~"]"; }
+}
+
+mixin(makeConstructorUnary!DDelta);
+
 
 class DInt: DOp{
 	DVar var;
 	DExpr expr;
 	private this(DVar var,DExpr expr){ this.var=var; this.expr=expr; }
-	override @property Precedence precedence(){ return Precedence.mult; }
+	override @property Precedence precedence(){ return Precedence.intg; }
 	override @property string symbol(){ return "∫"; }
 	override string toStringImpl(Precedence prec){
-		return addp(prec,symbol~"d"~var.toString()~addp(Precedence.mult,expr.toString()));
+		return addp(prec,symbol~"d"~var.toString()~addp(Precedence.intg,expr.toString()));
 	}
 }
 

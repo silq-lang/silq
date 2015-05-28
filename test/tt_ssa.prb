@@ -1,0 +1,17 @@
+def main(){
+    // x₁ := UniformInt(1,10); // TODO: UniformInt, Uniform
+    x₁ := Gauss(0,1);
+    x₂ := Gauss(1,1);
+    x₃ := x₁ + x₂;
+    x₄ := x₃ + Bernoulli(1/2);
+    x₅ := x₄ + Bernoulli(1/2);
+    x₆ := x₅ + Bernoulli(1/2);
+    x₇ := x₆ + Bernoulli(1/2);
+    x₈ := x₇ + Bernoulli(1/2);
+    x₉ := x₈ + Bernoulli(1/2);
+    x₁₀ := x₉ + Bernoulli(1/2);
+    x₁₁ := x₁₀ + Bernoulli(1/2);
+    x₁₂ := x₁₁ + Bernoulli(1/2);
+    x₁₃ := x₁₂ + Bernoulli(1/2);
+    return x₁₃;
+}

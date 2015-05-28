@@ -379,8 +379,8 @@ string digitRep(T)(T i,dstring digits,dchar minus){
 	return r;
 }
 
-string lowNumber(T)(T i){ return digitRep(i,"₀₁₂₃₄₅₆₇₈₉",'₋'); }
-string highNumber(T)(T i){ return digitRep(i,"⁰¹²³⁴⁵⁶⁷⁸⁹",'⁻'); }
+string lowNum(T)(T i){ return digitRep(i,"₀₁₂₃₄₅₆₇₈₉",'₋'); }
+string highNum(T)(T i){ return digitRep(i,"⁰¹²³⁴⁵⁶⁷⁸⁹",'⁻'); }
 
 string overline(string s){
 	string r;

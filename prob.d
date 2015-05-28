@@ -1,9 +1,9 @@
 import std.stdio, std.path, std.array;
 import file=std.file;
 import util;
-import lexer, parser, error;
+import lexer, parser, expression, error;
 
-import distrib, dexpr;
+import analysis, distrib, dexpr;
 
 string getActualPath(string path){
 	// TODO: search path
@@ -36,8 +36,12 @@ int run(string path){
 		return 1;
 	}
 	auto src=new Source(path, code);
-	auto expr=parseExpression(src,new FormattingErrorHandler());
+	auto err=new FormattingErrorHandler();
+	auto expr=parseExpression(src,err);
 	writeln(expr);
+	if(auto fd=cast(FunctionDef)expr){
+		analyze(fd,err);
+	}else err.error("only single function definition supported",expr.loc);
 	return 0;
 }
 
@@ -72,4 +76,6 @@ void test(){
 	writeln(-one-2^^(-one)*3);
 	writeln((-one)+2^^(-one)*(-1)+2^^(-one)*(-1));
 	writeln((v^^2+w^^2)^^(one/2));
+	writeln(overline("HELLO"));
+	writeln(2*dInt(v,v));
 }
