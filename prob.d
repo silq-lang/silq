@@ -66,16 +66,18 @@ void test(){
 	//d.distribute(v,uniformPDF(v,-one,one+one));
 	d.distribute(v,gaussianPDF(v,zero,one));
 	auto w=d.getVar("y");
-	//d.distribute(w,gaussianPDF(w,zero,one));
+	d.distribute(w,gaussianPDF(w,zero,one));
 	//d.distribute(v,gaussianPDF(v,0.dℕ,1.dℕ));
 	//d.distribute(v,gaussianPDF(v,0.dℕ,1.dℕ));
 	//d.distribute(v,gaussianPDF(v,0.dℕ,1.dℕ));
-	//d.marginalize(v);
+	d.marginalize(v);
+	d.marginalize(w);
 	writeln(d);
 	writeln((one+one)^^-2+2);
 	writeln(-one-2^^(-one)*3);
 	writeln((-one)+2^^(-one)*(-1)+2^^(-one)*(-1));
 	writeln((v^^2+w^^2)^^(one/2));
 	writeln(overline("HELLO"));
-	writeln(2*dInt(v,v));
+	writeln(dInt(v,2*v));
+	writeln(dInt(v,v+w));
 }

@@ -1,6 +1,7 @@
 import std.conv;
 import hashtable, util;
-import std.algorithm: canFind, swap;
+
+import std.algorithm, std.array;
 
 enum Precedence{
 	none,
@@ -20,6 +21,8 @@ abstract class DExpr{
 		return toStringImpl(Precedence.none);
 	}
 	abstract string toStringImpl(Precedence prec);
+
+	bool hasFreeVar(DVar var){ return false; }
 
 	// helpers for construction of DExprs:
 	enum ValidUnary(string s)=s=="-";
@@ -52,6 +55,8 @@ class DVar: DExpr{
 	string name;
 	private this(string name){ this.name=name; }
 	override string toStringImpl(Precedence prec){ return name; }
+
+	override bool hasFreeVar(DVar var){ return this is var; }
 }
 DVar dVar(string name){ return new DVar(name); }
 
@@ -101,18 +106,18 @@ abstract class DOp: DExpr{
 	}
 }
 
-auto inOrder(S)(S s){
-	return s; // TODO
-}
 abstract class DCommutAssocOp: DOp{
 	DExprSet operands;
 	protected mixin template Constructor(){ private this(DExprSet e)in{assert(e.length>1); }body{ operands=e; } }
 	override string toStringImpl(Precedence prec){
 		string r;
-		if(operands.length>20) foreach(o;operands) r~=symbol~o.toStringImpl(precedence);
-		else foreach(o;operands.inOrder) r~=symbol~o.toStringImpl(precedence);
+		auto ops=operands.array.map!(a=>a.toStringImpl(precedence)).array;
+		sort(ops);
+		foreach(o;ops) r~=symbol~o;
 		return addp(prec, r[symbol.length..$]);
 	}
+
+	override bool hasFreeVar(DVar var){ return operands.any!(a=>a.hasFreeVar(var)); }
 }
 
 DExprSet shallow(T)(DExprSet arg){
@@ -281,6 +286,23 @@ class DMult: DCommutAssocOp{
 mixin(makeConstructorCommutAssoc!DMult);
 mixin(makeConstructorCommutAssoc!DPlus);
 
+auto operands(T)(DExpr x){
+	static struct Operands{
+		DExpr x;
+		int opApply(scope int delegate(DExpr) dg){
+			if(auto m=cast(T)x){
+				foreach(f;m.operands)
+					if(auto r=dg(f))
+						return r;
+				return 0;
+			}else return dg(x);
+		}
+	}
+	return Operands(x);
+}
+alias factors=operands!DMult;
+alias summands=operands!DPlus;
+
 DExpr dMinus(DExpr e1,DExpr e2){ return e1+-e2; }
 
 abstract class DBinaryOp: DOp{
@@ -289,7 +311,7 @@ abstract class DBinaryOp: DOp{
 	override string toStringImpl(Precedence prec){
 		return addp(prec, operands[0].toStringImpl(precedence) ~ symbol ~ operands[1].toStringImpl(precedence));
 	}
-	// abstract BinaryOp construct(DExpr a, DExpr b);
+	override bool hasFreeVar(DVar var){ return operands[].any!(a=>a.hasFreeVar(var)); }
 }
 
 class DPow: DBinaryOp{
@@ -376,6 +398,34 @@ class DDelta: DExpr{
 
 mixin(makeConstructorUnary!DDelta);
 
+DExpr[2] splitPlusAtVar(DExpr e,DVar var){
+	DExprSet within;
+	DExprSet outside;
+	foreach(s;e.summands){
+		if(s.hasFreeVar(var)) DPlus.insert(within,s);
+		else DPlus.insert(outside,s);
+	}
+	return [dPlus(outside),dPlus(within)];
+}
+
+DExpr[2] splitMultAtVar(DExpr e,DVar var){
+	DExprSet within;
+	DExprSet outside;
+	foreach(f;e.factors){
+		if(f.hasFreeVar(var)){
+			if(auto p=cast(DPow)f){
+				if(p.operands[0].hasFreeVar(var)){
+					DMult.insert(within,f);
+				}else{
+					auto ow=splitPlusAtVar(p.operands[1],var);
+					DMult.insert(outside,p.operands[0]^^ow[0]);
+					DMult.insert(within,p.operands[0]^^ow[1]);
+				}
+			}else DMult.insert(within,f);
+		}else DMult.insert(outside,f);
+	}
+	return [dMult(outside),dMult(within)];
+}
 
 class DInt: DOp{
 	DVar var;
@@ -386,8 +436,23 @@ class DInt: DOp{
 	override string toStringImpl(Precedence prec){
 		return addp(prec,symbol~"d"~var.toString()~addp(Precedence.intg,expr.toString()));
 	}
+	static DExpr constructHook(DVar var,DExpr expr){
+		if(auto m=cast(DPlus)expr){
+			DExprSet summands;
+			foreach(s;m.summands)
+				DPlus.insert(summands,dInt(var,s));
+			return dPlus(summands);
+		}
+		if(auto m=cast(DMult)expr){ // TODO: separate powers
+			auto ow=m.splitMultAtVar(var);
+			if(ow[0] !is one) return ow[0]*dInt(var,ow[1]);
+		}
+		if(expr!is one && !expr.hasFreeVar(var)) return expr*dInt(var,one); // (infinite integral)
+		return null;
+	}
 }
 
-DInt dInt(DVar var, DExpr expr){
-	return new DInt(var,expr); // TODO: make unique modulo alpha-renaming?
+DExpr dInt(DVar var,DExpr expr){
+	if(auto r=DInt.constructHook(var,expr)) return r;
+	return new DInt(var,expr); // TODO: make unique modulo alpha-renaming
 }

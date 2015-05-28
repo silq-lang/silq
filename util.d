@@ -351,13 +351,12 @@ auto maybe(alias a, T)(T arg){
 auto or(T)(T t, lazy T s){ if(t) return t; return s; }
 S and(T,S)(T t, lazy S s){ if(!t) return null; return s; }
 
-// Versions from Phobos do not work. TODO: reduce and file bug report
 import std.range;
-bool any(alias a=(bool _)=>_,R)(R range){// if(is(typeof(a(R.front.init)): bool) && isInputRange!R){
+bool any(alias a=(bool _)=>_,R)(R range)if(!isInputRange!R&&isIterable!R){
 	foreach(x;range) if(a(x)) return true;
 	return false;
 }
-bool all(alias a=(bool _)=>_,R)(R range){// if(is(typeof(a(R.front.init)): bool) && isInputRange!R){
+bool all(alias a=(bool _)=>_,R)(R range)if(!isInputRange!R&&isIterable!R){
 	foreach(x;range) if(!a(x)) return false;
 	return true;
 }

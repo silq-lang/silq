@@ -3,7 +3,7 @@ import std.algorithm, std.array, std.conv;
 import dexpr, util;
 
 DExpr gaussianPDF(DVar var,DExpr μ,DExpr σsq){
-	return one / (2*dΠ*σsq)^^(one/2) * dE^^-((var-μ)^^2/σsq);
+	return one / (2*dΠ*σsq)^^(one/2) * dE^^-((var-μ)^^2/2*σsq);
 }
 
 DExpr uniformPDF(DVar var,DExpr a,DExpr b){
@@ -49,10 +49,10 @@ class Distribution{
 	}
 	override string toString(){
 		string r="p(";
-		auto vars=freeVars.array.map!(to!string).array;
+		auto vars=freeVars.array.map!(a=>a.name).array;
 		sort(vars);
 		foreach(v;vars) r~=v~",";
-		r=r[0..$-1];
+		if(vars.length) r=r[0..$-1];
 		r~=") = "~distribution.toString();
 		return r;
 	}
