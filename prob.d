@@ -67,6 +67,8 @@ void test(){
 	d.distribute(v,gaussianPDF(v,zero,one));
 	auto w=d.getVar("y");
 	d.distribute(w,gaussianPDF(w,zero,one));
+	auto u=d.getVar("z");
+	d.assign(u,v+w);
 	//d.distribute(v,gaussianPDF(v,0.dℕ,1.dℕ));
 	//d.distribute(v,gaussianPDF(v,0.dℕ,1.dℕ));
 	//d.distribute(v,gaussianPDF(v,0.dℕ,1.dℕ));
@@ -77,7 +79,9 @@ void test(){
 	writeln(-one-2^^(-one)*3);
 	writeln((-one)+2^^(-one)*(-1)+2^^(-one)*(-1));
 	writeln((v^^2+w^^2)^^(one/2));
-	writeln(overline("HELLO"));
+	writeln(overline(overline("HELLO")));
 	writeln(dInt(v,2*v));
 	writeln(dInt(v,v+w));
+	writeln(dInt(v,v.dDelta)+dInt(w,w.dDelta));
+	writeln(dInt(v,one)+dInt(w,one));
 }

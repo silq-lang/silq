@@ -22,7 +22,8 @@ abstract class DExpr{
 	}
 	abstract string toStringImpl(Precedence prec);
 
-	bool hasFreeVar(DVar var){ return false; }
+	abstract bool hasFreeVar(DVar var);
+	abstract DExpr substitute(DVar var,DExpr e);
 
 	// helpers for construction of DExprs:
 	enum ValidUnary(string s)=s=="-";
@@ -49,6 +50,11 @@ abstract class DExpr{
 	final opBinaryRight(string op)(long e)if(ValidBinary!op){
 		return mixin("e.dℕ "~op~" this");
 	}
+
+	mixin template Constant(){
+		override bool hasFreeVar(DVar var){ return this is var; }
+		override DExpr substitute(DVar var,DExpr e){ return this is var?e:this; }
+	}
 }
 alias DExprSet=SetX!DExpr;
 class DVar: DExpr{
@@ -57,6 +63,7 @@ class DVar: DExpr{
 	override string toStringImpl(Precedence prec){ return name; }
 
 	override bool hasFreeVar(DVar var){ return this is var; }
+	override DExpr substitute(DVar var,DExpr e){ return this is var?e:this; }
 }
 DVar dVar(string name){ return new DVar(name); }
 
@@ -69,6 +76,7 @@ class Dℕ : DExpr{
 			r="("~r~")";
 		return r;
 	}
+	mixin Constant;
 }
 
 Dℕ[ℕ] uniqueMapDℕ;
@@ -80,12 +88,14 @@ DExpr dℕ(long c){ return dℕ(ℕ(c)); }
 
 class DE: DExpr{
 	override string toStringImpl(Precedence prec){ return "e"; }
+	mixin Constant;
 }
 private static DE theDE;
 @property DE dE(){ return theDE?theDE:(theDE=new DE); }
 
 class DΠ: DExpr{
 	override string toStringImpl(Precedence prec){ return "π"; }
+	mixin Constant;
 }
 private static DΠ theDΠ;
 @property DΠ dΠ(){ return theDΠ?theDΠ:(theDΠ=new DΠ); }
@@ -116,8 +126,6 @@ abstract class DCommutAssocOp: DOp{
 		foreach(o;ops) r~=symbol~o;
 		return addp(prec, r[symbol.length..$]);
 	}
-
-	override bool hasFreeVar(DVar var){ return operands.any!(a=>a.hasFreeVar(var)); }
 }
 
 DExprSet shallow(T)(DExprSet arg){
@@ -191,6 +199,14 @@ class DPlus: DCommutAssocOp{
 	mixin Constructor;
 	override @property Precedence precedence(){ return Precedence.plus; }
 	override @property string symbol(){ return "+"; }
+
+	override bool hasFreeVar(DVar var){ return operands.any!(a=>a.hasFreeVar(var)); }
+	override DExpr substitute(DVar var,DExpr e){
+		DExprSet res;
+		foreach(s;summands) insert(res,s.substitute(var,e));
+		return dPlus(res);
+	}
+
 	static void insert(ref DExprSet summands,DExpr summand)in{assert(!!summand);}body{
 		static DExpr combine(DExpr e1,DExpr e2){
 			if(cast(Dℕ)e2) swap(e1,e2);
@@ -240,6 +256,13 @@ class DMult: DCommutAssocOp{
 			}
 		}
 		return super.toStringImpl(prec);
+	}
+
+	override bool hasFreeVar(DVar var){ return operands.any!(a=>a.hasFreeVar(var)); }
+	override DExpr substitute(DVar var,DExpr e){
+		DExprSet res;
+		foreach(f;factors) insert(res,f.substitute(var,e));
+		return dMult(res);
 	}
 	static void insert(ref DExprSet factors,DExpr factor)in{assert(!!factor);}body{
 		// TODO: use suitable data structures
@@ -312,6 +335,9 @@ abstract class DBinaryOp: DOp{
 		return addp(prec, operands[0].toStringImpl(precedence) ~ symbol ~ operands[1].toStringImpl(precedence));
 	}
 	override bool hasFreeVar(DVar var){ return operands[].any!(a=>a.hasFreeVar(var)); }
+	override DExpr substitute(DVar var,DExpr e){
+		return operands[0].substitute(var,e)^^operands[1].substitute(var,e);
+	}
 }
 
 class DPow: DBinaryOp{
@@ -392,8 +418,11 @@ class DInd: DOp{
 
 class DDelta: DExpr{
 	DExpr e;
-	this(DExpr e){ this.e=e; }
+	private this(DExpr e){ this.e=e; }
 	override string toStringImpl(Precedence prec){ return "δ["~e.toString()~"]"; }
+
+	override bool hasFreeVar(DVar var){ return e.hasFreeVar(var); }
+	override DExpr substitute(DVar var,DExpr e){ return dDelta(e.substitute(var,e)); }
 }
 
 mixin(makeConstructorUnary!DDelta);
@@ -450,9 +479,35 @@ class DInt: DOp{
 		if(expr!is one && !expr.hasFreeVar(var)) return expr*dInt(var,one); // (infinite integral)
 		return null;
 	}
+	override bool hasFreeVar(DVar var){
+		if(this.var is var) return false;
+		return expr.hasFreeVar(var);
+	}
+	override DExpr substitute(DVar var,DExpr e){
+		if(this.var is var) return this;
+		return dInt(var,expr.substitute(var,e));
+	}
+}
+
+struct AlphaHash{
+	DVar var;
+	DExpr e;
+	bool opEquals(AlphaHash r){ return e.substitute(var,r.var) is r.e; }
+	hash_t toHash(){
+		return 0; // TODO!
+	}
+}
+
+MapX!(TupleX!(typeof(typeid(DExpr)),AlphaHash),DExpr) uniqueMapBinding;
+auto uniqueBindingDExpr(T)(DVar v,DExpr a){
+	auto t=tuplex(typeid(T),AlphaHash(v,a));
+	if(t in uniqueMapBinding) return cast(T)uniqueMapBinding[t];
+	auto r=new T(v,a);
+	uniqueMapBinding[t]=r;
+	return r;
 }
 
 DExpr dInt(DVar var,DExpr expr){
 	if(auto r=DInt.constructHook(var,expr)) return r;
-	return new DInt(var,expr); // TODO: make unique modulo alpha-renaming
+	return uniqueBindingDExpr!DInt(var,expr);
 }

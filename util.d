@@ -383,7 +383,7 @@ string highNum(T)(T i){ return digitRep(i,"⁰¹²³⁴⁵⁶⁷⁸⁹",'⁻'); 
 
 string overline(string s){
 	string r;
-	foreach(dchar d;s){ r~=d; r~="\u0305"; }
+	foreach(dchar d;s){ r~=d; if(d!='\u0305') r~="\u0305"; }
 	return r;
 }
 import hashtable;
