@@ -72,7 +72,9 @@ void test(){
 	//d.distribute(v,gaussianPDF(v,0.dℕ,1.dℕ));
 	//d.distribute(v,gaussianPDF(v,0.dℕ,1.dℕ));
 	//d.distribute(v,gaussianPDF(v,0.dℕ,1.dℕ));
+	writeln(d);
 	d.marginalize(v);
+	writeln(d);
 	d.marginalize(w);
 	writeln(d);
 	writeln((one+one)^^-2+2);
@@ -84,4 +86,5 @@ void test(){
 	writeln(dInt(v,v+w));
 	writeln(dInt(v,v.dDelta)+dInt(w,w.dDelta));
 	writeln(dInt(v,one)+dInt(w,one));
+	writeln((3*v-2*w).solveFor(v,zero));
 }

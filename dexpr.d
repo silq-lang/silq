@@ -5,8 +5,8 @@ import std.algorithm, std.array;
 
 enum Precedence{
 	none,
-	uminus,
 	plus,
+	uminus,
 	intg,
 	mult,
 	pow,
@@ -24,6 +24,7 @@ abstract class DExpr{
 
 	abstract bool hasFreeVar(DVar var);
 	abstract DExpr substitute(DVar var,DExpr e);
+	DExpr solveFor(DVar var,DExpr rhs){ return null; }
 
 	// helpers for construction of DExprs:
 	enum ValidUnary(string s)=s=="-";
@@ -64,6 +65,10 @@ class DVar: DExpr{
 
 	override bool hasFreeVar(DVar var){ return this is var; }
 	override DExpr substitute(DVar var,DExpr e){ return this is var?e:this; }
+	override DExpr solveFor(DVar var,DExpr e){
+		if(this is var) return e;
+		return null;
+	}
 }
 DVar dVar(string name){ return new DVar(name); }
 
@@ -206,6 +211,11 @@ class DPlus: DCommutAssocOp{
 		foreach(s;summands) insert(res,s.substitute(var,e));
 		return dPlus(res);
 	}
+	override DExpr solveFor(DVar var,DExpr e){
+		auto ow=splitPlusAtVar(this,var);
+		if(cast(DPlus)ow[1]) return null; // TODO
+		return ow[1].solveFor(var,e-ow[0]);
+	}
 
 	static void insert(ref DExprSet summands,DExpr summand)in{assert(!!summand);}body{
 		static DExpr combine(DExpr e1,DExpr e2){
@@ -264,6 +274,11 @@ class DMult: DCommutAssocOp{
 		foreach(f;factors) insert(res,f.substitute(var,e));
 		return dMult(res);
 	}
+	override DExpr solveFor(DVar var,DExpr e){
+		auto ow=splitMultAtVar(this,var);
+		if(cast(DMult)ow[1]) return null; // TODO
+		return ow[1].solveFor(var,e/ow[0]);
+	}
 	static void insert(ref DExprSet factors,DExpr factor)in{assert(!!factor);}body{
 		// TODO: use suitable data structures
 		static DExpr combine(DExpr e1,DExpr e2){
@@ -271,6 +286,13 @@ class DMult: DCommutAssocOp{
 			if(auto c=cast(Dℕ)e1){
 				if(c.c==1) return e2;
 				if(auto d=cast(Dℕ)e2) return dℕ(c.c*d.c);
+				if(c.c==-1){
+					if(auto p=cast(DPlus)e2){
+						DExprSet summands;
+						foreach(s;p.summands) summands.insert(-s);
+						return dPlus(summands);
+					}
+				}
 			}
 			if(cast(DPow)e2) swap(e1,e2);
 			if(auto p=cast(DPow)e1){
@@ -383,9 +405,9 @@ class DPow: DBinaryOp{
 		if(e1 is one||e2 is zero) return one;
 		if(e1 is -one && e2 is -one) return -one;
 		if(e2 is one) return e1;
-		if(auto c=cast(Dℕ)e1){
-			if(auto d=cast(Dℕ)e2){
-				if(d.c>0) dℕ(pow(c.c,d.c));
+		if(auto d=cast(Dℕ)e2){
+			if(auto c=cast(Dℕ)e1){
+				if(d.c>0) return dℕ(pow(c.c,d.c));
 				else if(d.c!=-1) return dℕ(pow(c.c,-d.c))^^-1;
 			}
 		}
@@ -472,9 +494,15 @@ class DInt: DOp{
 				DPlus.insert(summands,dInt(var,s));
 			return dPlus(summands);
 		}
-		if(auto m=cast(DMult)expr){ // TODO: separate powers
+		if(auto m=cast(DMult)expr){
 			auto ow=m.splitMultAtVar(var);
 			if(ow[0] !is one) return ow[0]*dInt(var,ow[1]);
+			foreach(f;m.factors){
+				if(!f.hasFreeVar(var)) continue;
+				if(auto d=cast(DDelta)f)
+					if(auto s=d.e.solveFor(var,zero))
+						return (m/f).substitute(var,s);
+			}
 		}
 		if(expr!is one && !expr.hasFreeVar(var)) return expr*dInt(var,one); // (infinite integral)
 		return null;
