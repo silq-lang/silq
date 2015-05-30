@@ -401,11 +401,24 @@ struct TupleX(T...){
 auto tuplex(T...)(T t){ return TupleX!T(t); }
 
 import std.bigint;
-BigInt pow(BigInt a,BigInt b)in{assert(b>=0);}body{
-	BigInt r=1;
+alias ℕ=BigInt;
+
+ℕ pow(ℕ a,ℕ b)in{assert(b>=0);}body{
+	ℕ r=1;
 	for(;b;b/=2,a*=a)
 		if(b&1) r*=a;
 	return r;
 }
 
-long toLong(BigInt a){ return a.to!string.to!long; } // TODO: do properly
+ℕ gcd(ℕ a,ℕ b){
+	if(a==b) return a;
+	if(b>a) swap(a,b);
+	if(b==0) return a;
+	if(b<0) return a<0?-gcd(-a,-b):gcd(a,-b);
+	if(!(a%2)&&!(b%2)) return 2*gcd(a/2,b/2);
+	else if(!(b%2)) return gcd(a,b/2);
+	else if(!(a%2)) return gcd(a/2,b);
+	return gcd(a-b,b);
+}
+
+long toLong(ℕ a){ return a.to!string.to!long; } // TODO: do properly

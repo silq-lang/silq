@@ -13,9 +13,6 @@ enum Precedence{
 	invalid,
 }
 
-import std.bigint;
-alias ℕ=BigInt;
-
 abstract class DExpr{
 	override string toString(){
 		return toStringImpl(Precedence.none);
@@ -25,6 +22,9 @@ abstract class DExpr{
 	abstract bool hasFreeVar(DVar var);
 	abstract DExpr substitute(DVar var,DExpr e);
 	DExpr solveFor(DVar var,DExpr rhs){ return null; }
+
+	bool isFraction(){ return false; }
+	ℕ[2] getFraction(){ assert(0,"not a fraction"); }
 
 	// helpers for construction of DExprs:
 	enum ValidUnary(string s)=s=="-";
@@ -81,6 +81,9 @@ class Dℕ : DExpr{
 			r="("~r~")";
 		return r;
 	}
+	override bool isFraction(){ return true; }
+	override ℕ[2] getFraction(){ return [c,ℕ(1)]; }
+
 	mixin Constant;
 }
 
@@ -219,18 +222,13 @@ class DPlus: DCommutAssocOp{
 
 	static void insert(ref DExprSet summands,DExpr summand)in{assert(!!summand);}body{
 		static DExpr combine(DExpr e1,DExpr e2){
-			if(cast(Dℕ)e2) swap(e1,e2);
-			if(auto c=cast(Dℕ)e1){
-				if(c.c==0) return e2;
-				if(auto d=cast(Dℕ)e2) return dℕ(c.c+d.c);
-				if(auto p=cast(DPow)e2){
-					if(auto d=cast(Dℕ)p.operands[0]){
-						if(auto e=cast(Dℕ)p.operands[1]){
-							assert(e.c==-1);
-							return dℕ(c.c*d.c+1)/d;
-						}
-					}
-				}
+			if(e1 is zero) return e2;
+			if(e2 is zero) return e1;
+			if(e1 is e2) return 2*e1;
+			if(e1.isFraction()&&e2.isFraction()){
+				auto nd1=e1.getFraction();
+				auto nd2=e2.getFraction();
+				return dℕ(nd1[0]*nd2[1]+nd2[0]*nd1[1])/dℕ(nd1[1]*nd2[1]);
 			}
 			return null;
 		}
@@ -242,8 +240,8 @@ class DPlus: DCommutAssocOp{
 				return;
 			}
 		}
-		if(summand !in summands) summands.insert(summand);
-		else{ summands.remove(summand); insert(summands,2*summand); }
+		assert(summand !in summands);
+		summands.insert(summand);
 	}
 	static DExpr constructHook(DExprSet operands){
 		if(operands.length==0) return zero;
@@ -279,14 +277,32 @@ class DMult: DCommutAssocOp{
 		if(cast(DMult)ow[1]) return null; // TODO
 		return ow[1].solveFor(var,e/ow[0]);
 	}
+
+	override bool isFraction(){ return factors.all!(a=>a.isFraction()); }
+	override ℕ[2] getFraction(){
+		ℕ n=1,d=1;
+		foreach(f;factors){
+			auto nd=f.getFraction();
+			n*=nd[0], d*=nd[1];
+		}
+		return [n,d];
+	}
+
 	static void insert(ref DExprSet factors,DExpr factor)in{assert(!!factor);}body{
 		// TODO: use suitable data structures
 		static DExpr combine(DExpr e1,DExpr e2){
-			if(cast(Dℕ)e2) swap(e1,e2);
-			if(auto c=cast(Dℕ)e1){
-				if(c.c==1) return e2;
-				if(auto d=cast(Dℕ)e2) return dℕ(c.c*d.c);
-				if(c.c==-1){
+			if(e2.isFraction()) swap(e1,e2);
+			if(e1.isFraction()){
+				auto nd1=e1.getFraction();
+				if(nd1[0]==1&&nd1[1]==1) return e2;
+				if(e2.isFraction()){
+					auto nd2=e2.getFraction();
+					auto n=nd1[0]*nd2[0],d=nd1[1]*nd2[1];
+					auto g=gcd(n,d);
+					if(g==1&&(nd1[0]==1||nd2[0]==1)) return null;
+					return dℕ(n/g)/dℕ(d/g);
+				}
+				if(nd1[0]==-1&&nd1[1]==1){ // TODO: do for all constants?
 					if(auto p=cast(DPlus)e2){
 						DExprSet summands;
 						foreach(s;p.summands) summands.insert(-s);
@@ -367,6 +383,13 @@ class DPow: DBinaryOp{
 	override Precedence precedence(){ return Precedence.pow; }
 	override @property string symbol(){ return "^"; }
 	override bool rightAssociative(){ return true; }
+
+	override bool isFraction(){ return cast(Dℕ)operands[0] && cast(Dℕ)operands[1]; }
+	override ℕ[2] getFraction(){
+		auto d=cast(Dℕ)operands[0];
+		assert(d && operands[1] is -one);
+		return [ℕ(1),d.c];
+	}
 
 	override string toStringImpl(Precedence prec){
 		// TODO: always use ⅟ if negative factor in exponent

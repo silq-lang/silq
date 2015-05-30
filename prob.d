@@ -62,12 +62,19 @@ void test(){
 	//auto v="x".dVar;
 	//writeln(dInt(v,dE.dPow(2.dℕ.dMult(3.dℕ.dPlus(3.dℕ).dPlus(3.dℕ))).dPow(v.dPlus(v))));
 	auto d=new Distribution();
-	auto v=d.getVar("x");
+	auto v=d.declareVar("x₁");
 	//d.distribute(v,uniformPDF(v,-one,one+one));
 	d.distribute(v,gaussianPDF(v,zero,one));
-	auto w=d.getVar("y");
-	d.distribute(w,gaussianPDF(w,zero,one));
-	auto u=d.getVar("z");
+	writeln(d);
+	auto w=d.declareVar("x₂");
+	d.distribute(w,gaussianPDF(w,one,one));
+	writeln(d);
+	/*d.marginalize(v);
+	writeln(d);
+	d.marginalize(w);
+	writeln(d);*/
+	//d.distribute(w,gaussianPDF(w,zero,one));
+	auto u=d.declareVar("x₃");
 	d.assign(u,v+w);
 	//d.distribute(v,gaussianPDF(v,0.dℕ,1.dℕ));
 	//d.distribute(v,gaussianPDF(v,0.dℕ,1.dℕ));
