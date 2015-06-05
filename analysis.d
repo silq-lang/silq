@@ -164,10 +164,11 @@ private struct Analyzer{
 				}else err.error("return statement must be last statement in function",re.loc);
 			}else err.error("unsupported",e.loc);
 		}
-		writeln(dist);
 	}
 }
 
 void analyze(FunctionDef def,ErrorHandler err){
-	Analyzer(new Distribution,err).analyze(def.body_);
+	auto a=Analyzer(new Distribution,err);
+	a.analyze(def.body_);
+	writeln(a.dist);
 }
