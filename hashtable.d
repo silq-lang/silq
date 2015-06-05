@@ -181,10 +181,13 @@ struct HSet(T_,alias eq, alias h){
 	}
 }
 
-auto hset(alias h,alias eq,T)(T[] args){
-	HSet!(T,eq,h) s;
-	foreach(x;args) s.insert(x);
-	return s;
+template hset(alias h,alias eq){
+	auto hset(T)(T args){
+		alias S=typeof({ foreach(x;args) return x; assert(0); }());
+		HSet!(S,eq,h) s;
+		foreach(x;args) s.insert(x);
+		return s;
+	}
 }
 /+
 void main(){
@@ -213,3 +216,16 @@ struct Subsets(T){
 
 auto subsets(T)(T arg){ return Subsets!T(arg.array); }
 auto element(T)(T arg)in{assert(arg.length==1);}body{ foreach(x;arg) return x; assert(0); }
+
+T intersect(T)(T a,T b){
+	T r;
+	foreach(x;a) if(x in b) r.insert(x);
+	return r;
+}
+T unite(T)(T a,T b){
+	T r;
+	foreach(x;a) r.insert(x);
+	foreach(y;b) r.insert(y);
+	return r;
+}
+

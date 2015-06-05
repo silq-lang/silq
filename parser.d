@@ -400,7 +400,14 @@ struct Parser{
 					if(x!="=>" && x!="." && x!="!" && x!="?")
 						r~=mixin(X!q{case Tok!"@(x)":
 							nextToken();
-							return res=New!(BinaryExp!(Tok!"@(x)"))(left,parseExpression(rbp!(Tok!"@(x)")));
+							auto right=parseExpression(rbp!(Tok!"@(x)"));
+							static if(!"@(x)".endsWith("=")||"@(x)"=="=="||"@(x)"==":="||"@(x)"=="="){
+								return res=New!(BinaryExp!(Tok!"@(x)"))(left,right);
+							}else{
+								right=New!(BinaryExp!(Tok!"@(x[0..$-1])"))(left,right);
+								right.loc=loc.to(ptok.loc);
+								return res=New!(BinaryExp!(Tok!"="))(left,right);
+							}
 						});
 				return r;
 			}());

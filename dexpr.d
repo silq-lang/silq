@@ -221,6 +221,11 @@ class DPlus: DCommutAssocOp{
 	}
 
 	static void insert(ref DExprSet summands,DExpr summand)in{assert(!!summand);}body{
+		if(auto dp=cast(DPlus)summand){
+			foreach(s;dp.summands)
+				insert(summands,s);
+			return;
+		}
 		static DExpr combine(DExpr e1,DExpr e2){
 			if(e1 is zero) return e2;
 			if(e2 is zero) return e1;
@@ -229,6 +234,12 @@ class DPlus: DCommutAssocOp{
 				auto nd1=e1.getFraction();
 				auto nd2=e2.getFraction();
 				return dℕ(nd1[0]*nd2[1]+nd2[0]*nd1[1])/dℕ(nd1[1]*nd2[1]);
+			}
+			auto common=intersect(e1.factors.setx,e2.factors.setx); // TODO: optimize?
+			if(common.length){
+				auto cm=dMult(common);
+				if(!cm.isFraction())
+					return (e1/cm+e2/cm)*cm;
 			}
 			return null;
 		}
@@ -290,10 +301,17 @@ class DMult: DCommutAssocOp{
 	}
 
 	static void insert(ref DExprSet factors,DExpr factor)in{assert(!!factor);}body{
+		if(zero in factors||factor is zero){ factors.clear(); factors.insert(zero); return; }
+		if(auto dm=cast(DMult)factor){
+			foreach(f;dm.factors)
+				insert(factors,f);
+			return;
+		}
 		// TODO: use suitable data structures
 		static DExpr combine(DExpr e1,DExpr e2){
 			if(e1 is one) return e2;
 			if(e2 is one) return e1;
+			if(e1 is e2) return e1^^2;
 			if(e2.isFraction()) swap(e1,e2);
 			if(e1.isFraction()){
 				auto nd1=e1.getFraction();
@@ -332,7 +350,6 @@ class DMult: DCommutAssocOp{
 						return p.operands[0]^^(p.operands[1]+pf.operands[1]);
 				}				
 			}
-			if(e1 is e2) return e1^^2;
 			return null;
 		}
 		foreach(f;factors){
@@ -343,7 +360,6 @@ class DMult: DCommutAssocOp{
 				return;
 			}
 		}
-		assert(factor !in factors);
 		assert(factors.length==1||one !in factors);
 		factors.insert(factor);
 	}
@@ -542,15 +558,13 @@ class DInt: DOp{
 				DPlus.insert(summands,dInt(var,s));
 			return dPlus(summands);
 		}
-		if(auto m=cast(DMult)expr){
-			auto ow=m.splitMultAtVar(var);
-			if(ow[0] !is one) return ow[0]*dInt(var,ow[1]);
-			foreach(f;m.factors){
-				if(!f.hasFreeVar(var)) continue;
-				if(auto d=cast(DDelta)f)
-					if(auto s=d.e.solveFor(var,zero))
-						return (m/f).substitute(var,s);
-			}
+		auto ow=expr.splitMultAtVar(var);
+		if(ow[0] !is one) return ow[0]*dInt(var,ow[1]);
+		foreach(f;expr.factors){
+			if(!f.hasFreeVar(var)) continue;
+			if(auto d=cast(DDelta)f)
+				if(auto s=d.e.solveFor(var,zero))
+					return (expr/f).substitute(var,s);
 		}
 		if(expr!is one && !expr.hasFreeVar(var)) return expr*dInt(var,one); // (infinite integral)
 		return null;

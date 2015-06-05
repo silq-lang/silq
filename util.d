@@ -394,7 +394,10 @@ string underline(string s){
 	return r;	
 }
 import hashtable;
-alias SetX(T)=HSet!(T,(a,b)=>a==b,a=>a.toHash());
+alias setxEq=ID!((a,b)=>a==b);
+alias setxToHash=ID!(a=>a.toHash());
+alias SetX(T)=HSet!(T,setxEq,setxToHash);
+alias setx=hset!(setxToHash,setxEq);
 alias MapX(K,V) = HashMap!(K,V,(a,b)=>a==b,a=>a.toHash());
 struct TupleX(T...){
 	T expand;

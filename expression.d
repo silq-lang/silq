@@ -142,9 +142,9 @@ class FunctionDef: Expression{
 }
 
 class ReturnExp: Expression{
-	Expression exp;
-	this(Expression exp){
-		this.exp=exp;
+	Expression e;
+	this(Expression e){
+		this.e=e;
 	}
-	override string toString(){ return "return"~(exp?" "~exp.toString():""); }
+	override string toString(){ return "return"~(e?" "~e.toString():""); }
 }

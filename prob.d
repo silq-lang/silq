@@ -95,4 +95,5 @@ void test(){
 	writeln(dInt(v,one)+dInt(w,one));
 	writeln((3*v-2*w).solveFor(v,zero));
 	writeln(-1*(-one/2));
+	writeln((v^^2/2)/(v^^2/2));
 }
