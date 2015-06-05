@@ -359,9 +359,13 @@ struct Parser{
 			mixin(getTTCases(literals,["``","``c","``w","``d"])); {auto e=New!LiteralExp(tok); e.loc=tok.loc; nextToken(); return e;}
 			case Tok!"(":
 				nextToken();
-				mixin(doParse!(Expression,"r",")"));
-				r.brackets++;
-				return r;
+				res=parseExpression();
+				expect(Tok!")");
+				res.brackets++;
+				return res;
+			case Tok!"-":
+				nextToken();
+				return res=New!(UnaryExp!(Tok!"-"))(parseExpression(nbp));
 			case Tok!"__error": mixin(rule!(ErrorExp,"_"));
 			//case Tok!"[": mixin(rule!(ArrayLiteralExp,"_","OPT",ArgumentList,"]"));
 			//case Tok!"assert": mixin(rule!(AssertExp,"_","(",ArgumentList,")"));

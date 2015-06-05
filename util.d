@@ -383,8 +383,15 @@ string highNum(T)(T i){ return digitRep(i,"⁰¹²³⁴⁵⁶⁷⁸⁹",'⁻'); 
 
 string overline(string s){
 	string r;
-	foreach(dchar d;s){ r~=d; if(d!='\u0305') r~="\u0305"; }
+	import std.uni;
+	foreach(dchar d;s){ r~=d; if(!combiningClass(d)) r~="\u0305"; }
 	return r;
+}
+string underline(string s){
+	string r;
+	import std.uni;
+	foreach(dchar d;s){ r~=d; if(!combiningClass(d)) r~="\u0332"; }
+	return r;	
 }
 import hashtable;
 alias SetX(T)=HSet!(T,(a,b)=>a==b,a=>a.toHash());

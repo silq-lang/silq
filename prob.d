@@ -88,10 +88,11 @@ void test(){
 	writeln(-one-2^^(-one)*3);
 	writeln((-one)+2^^(-one)*(-1)+2^^(-one)*(-1));
 	writeln((v^^2+w^^2)^^(one/2));
-	writeln(overline(overline("HELLO")));
+	writeln(underline(overline(overline("HELLO"))));
 	writeln(dInt(v,2*v));
 	writeln(dInt(v,v+w));
 	writeln(dInt(v,v.dDelta)+dInt(w,w.dDelta));
 	writeln(dInt(v,one)+dInt(w,one));
 	writeln((3*v-2*w).solveFor(v,zero));
+	writeln(-1*(-one/2));
 }

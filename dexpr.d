@@ -251,7 +251,8 @@ class DPlus: DCommutAssocOp{
 
 class DMult: DCommutAssocOp{
 	alias factors=operands;
-	mixin Constructor;
+	//mixin Constructor;
+	private this(DExprSet e)in{assert(e.length>1); }body{ assert(one !in e,text(e)); operands=e; }
 	override @property Precedence precedence(){ return Precedence.mult; }
 	override @property string symbol(){ return "·"; }
 	override string toStringImpl(Precedence prec){
@@ -291,6 +292,8 @@ class DMult: DCommutAssocOp{
 	static void insert(ref DExprSet factors,DExpr factor)in{assert(!!factor);}body{
 		// TODO: use suitable data structures
 		static DExpr combine(DExpr e1,DExpr e2){
+			if(e1 is one) return e2;
+			if(e2 is one) return e1;
 			if(e2.isFraction()) swap(e1,e2);
 			if(e1.isFraction()){
 				auto nd1=e1.getFraction();
@@ -309,6 +312,10 @@ class DMult: DCommutAssocOp{
 						return dPlus(summands);
 					}
 				}
+			}
+			if(e2.isFraction()){
+				auto nd2=e2.getFraction();
+				if(nd2[0]==1&&nd2[1]==1) return e1;
 			}
 			if(cast(DPow)e2) swap(e1,e2);
 			if(auto p=cast(DPow)e1){
@@ -331,11 +338,13 @@ class DMult: DCommutAssocOp{
 		foreach(f;factors){
 			if(auto nwf=combine(f,factor)){
 				factors.remove(f);
-				insert(factors,nwf);
+				if(factors.length||nwf !is one)
+					insert(factors,nwf);
 				return;
 			}
 		}
 		assert(factor !in factors);
+		assert(factors.length==1||one !in factors);
 		factors.insert(factor);
 	}
 	static DExpr constructHook(DExprSet operands){
@@ -450,24 +459,40 @@ abstract class DUnaryOp: DOp{
 }
 DExpr dUMinus(DExpr e){ return -1*e; }
 
-class DConstr{
-	override string toString(){
-		return toStringImpl(Precedence.none);
+class DIvr: DExpr{ // iverson brackets
+	enum Type{ // TODO: remove redundancy?
+		eqZ,
+		neqZ,
+		lZ,
+		leZ,
 	}
-	abstract string toStringImpl(Precedence prec);
-}
-
-class DInd: DOp{
-	
-}
-
-class DDelta: DExpr{
+	Type type;
 	DExpr e;
-	private this(DExpr e){ this.e=e; }
-	override string toStringImpl(Precedence prec){ return "δ["~e.toString()~"]"; }
+	this(Type type,DExpr e){ this.type=type; this.e=e; }
 
 	override bool hasFreeVar(DVar var){ return e.hasFreeVar(var); }
-	override DExpr substitute(DVar var,DExpr e){ return dDelta(e.substitute(var,e)); }
+	override DExpr substitute(DVar var,DExpr exp){ return dIvr(type,e.substitute(var,exp)); }
+
+	override string toStringImpl(Precedence prec){
+		with(Type) return "["~e.toString()~(type==eqZ?"=":type==neqZ?"≠":type==lZ?"<":"≥")~"0]";
+	}
+}
+MapX!(DExpr,DExpr)[DIvr.Type.max+1] uniqueMapDIvr;
+DExpr dIvr(DIvr.Type type,DExpr e){
+	if(e in uniqueMapDIvr[type]) return uniqueMapDIvr[type][e];
+	auto r=new DIvr(type,e);
+	uniqueMapDIvr[type][e]=r;
+	return r;
+
+}
+
+class DDelta: DExpr{ // (not exactly a dirac delta function: integral is invariant under scaling)
+	DExpr e;
+	private this(DExpr e){ this.e=e; }
+	override string toStringImpl(Precedence prec){ return "δ̅["~e.toString()~"]"; }
+
+	override bool hasFreeVar(DVar var){ return e.hasFreeVar(var); }
+	override DExpr substitute(DVar var,DExpr exp){ return dDelta(e.substitute(var,exp)); }
 }
 
 mixin(makeConstructorUnary!DDelta);
