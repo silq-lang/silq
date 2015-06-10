@@ -1,4 +1,4 @@
-import std.stdio, std.path, std.array;
+import std.stdio, std.path, std.array, std.string;
 import file=std.file;
 import util;
 import lexer, parser, expression, error;
@@ -9,7 +9,7 @@ string getActualPath(string path){
 	// TODO: search path
 	auto ext = path.extension;
 	if(ext=="") path = path.setExtension("prb");
-	return "test/"~path;
+	return file.getcwd().endsWith("test")?path:"test/"~path;
 }
 
 string readCode(File f){
@@ -59,7 +59,7 @@ int main(string[] args){
 
 version=TEST;
 void test(){
-	//auto v="x".dVar;
+	/+//auto v="x".dVar;
 	//writeln(dInt(v,dE.dPow(2.dℕ.dMult(3.dℕ.dPlus(3.dℕ).dPlus(3.dℕ))).dPow(v.dPlus(v))));
 	auto d=new Distribution();
 	auto v=d.declareVar("x₁");
@@ -95,5 +95,22 @@ void test(){
 	writeln(dInt(v,one)+dInt(w,one));
 	writeln((3*v-2*w).solveFor(v,zero));
 	writeln(-1*(-one/2));
-	writeln((v^^2/2)/(v^^2/2));
+	writeln((v^^2/2)/(v^^2/2));+/
+	/*auto d=new Distribution();
+	auto x=d.declareVar("x");
+	d.initialize(x,one);
+	d.assign(x,x+1);
+	auto y=d.declareVar("y");
+	d.initialize(y,3.dℕ);
+	auto tmpx=d.getVar("x");
+	d.initialize(tmpx,x);
+	auto dthen=d.dup(),dothw=d.dup();
+	dthen.assign(y,y-x);
+	writeln(dthen," ",dothw);
+	d=dthen.join(d.vbl,d.symtab,d.freeVars,dothw,dIvr(DIvr.Type.lZ,(x-y)));
+	writeln(d);
+	d.marginalize(tmpx);
+	d.marginalize(x);
+	//writeln((x*dIvr(DIvr.Type.lZ,x)).substitute(x,one+one));
+	writeln(d);*/
 }

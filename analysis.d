@@ -21,11 +21,6 @@ alias Exp=Expression;
 private struct Analyzer{
 	Distribution dist;
 	ErrorHandler err;
-	SetX!DVar tmp;
-	void marginalizeTemporaries(){
-		foreach(v;tmp) dist.marginalize(v);
-		tmp.clear();
-	}
 	DExpr transformExp(Exp e){
 		class Unwind: Exception{ this(){ super(""); } }
 		void unwind(){ throw new Unwind(); }
@@ -51,27 +46,24 @@ private struct Analyzer{
 							err.error("expected two arguments (μ,σ²) to Gauss",ce.loc);
 							unwind();
 						}
-						auto var=dist.getVar("__g");
-						tmp.insert(var);
-						dist.distribute(var,gaussianPDF(var,doIt(ce.args[0]),doIt(ce.args[1])));
+						auto var=dist.getTmpVar("__g");
+						dist.distribute(gaussianPDF(var,doIt(ce.args[0]),doIt(ce.args[1])));
 						return var;
-					case "Uniform":
+					case "Uniform": // TODO: handle b<a, b==a
 						if(ce.args.length!=2){
 							err.error("expected two arguments (a,b) to Uniform",ce.loc);
 							unwind();
 						}
-						auto var=dist.getVar("__u");
-						tmp.insert(var);
-						dist.distribute(var,uniformPDF(var,doIt(ce.args[0]),doIt(ce.args[1])));
+						auto var=dist.getTmpVar("__u");
+						dist.distribute(uniformPDF(var,doIt(ce.args[0]),doIt(ce.args[1])));
 						return var;
 					case "Bernoulli":
 						if(ce.args.length!=1){
 							err.error("expected one argument (p) to Bernoulli",ce.loc);
 							unwind();
 						}
-						auto var=dist.getVar("__b");
-						tmp.insert(var);
-						dist.distribute(var,bernoulliPDF(var,doIt(ce.args[0])));
+						auto var=dist.getTmpVar("__b");
+						dist.distribute(bernoulliPDF(var,doIt(ce.args[0])));
 						return var;
 					default: break;
 					}
@@ -123,14 +115,15 @@ private struct Analyzer{
 	}
 	void analyze(CompoundExp ce)in{assert(!!ce);}body{
 		foreach(i,e;ce.s){
+			/*writeln("statement: ",e);
+			writeln("before: ",dist);
+			scope(success) writeln("after: ",dist);*/
 			// TODO: visitor?
 			if(auto de=cast(DefExp)e){
 				if(auto id=cast(Identifier)de.e1){
 					if(auto var=dist.declareVar(id.name)){
-						SetX!DVar tmp;
 						auto rhs=transformExp(de.e2);
 						dist.initialize(var,rhs?rhs:zero);
-						marginalizeTemporaries();
 					}else err.error("variable already exists",id.loc);
 				}else err.error("left hand side of definition should be identifier",de.e1.loc);
 			}else if(auto ae=cast(AssignExp)e){
@@ -141,12 +134,30 @@ private struct Analyzer{
 					}else err.error("undefined variable '"~id.name~"'",id.loc);
 				}else err.error("left hand side of assignment should be identifier",ae.e1.loc);
 			}else if(auto ite=cast(IteExp)e){
-				SetX!DVar tmp;
 				if(auto c=transformConstr(ite.cond)){
+					DVar[] ws;
+					foreach(v;c.freeVars){
+						auto w=dist.getVar(v.name);
+						dist.initialize(w,v);
+						ws~=w;
+					}
 					auto dthen=dist.dup(), dothw=dist.dup();
 					Analyzer(dthen,err).analyze(ite.then);
 					if(ite.othw) Analyzer(dothw,err).analyze(ite.othw);
 					dist=dthen.join(dist.vbl,dist.symtab,dist.freeVars,dothw,c);
+					foreach(w;ws) dist.marginalize(w);
+				}
+			}else if(auto re=cast(RepeatExp)e){
+				if(auto exp=transformExp(re.num)){
+					if(auto num=cast(Dℕ)exp){
+						int nerrors=err.nerrors;
+						for(ℕ j=0;j<num.c;j++){
+							auto dcur=dist.dup();
+							Analyzer(dcur,err).analyze(re.bdy);
+							dist=dist.join(dist.vbl,dist.symtab,dist.freeVars,dcur,zero);
+							if(err.nerrors>nerrors) break;
+						}
+					}else err.error("repeat expression should be integer constant",re.num.loc);
 				}
 			}else if(auto re=cast(ReturnExp)e){
 				if(i+1==ce.s.length){ // TODO: this does not catch return statements in nested blocks!

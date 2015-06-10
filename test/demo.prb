@@ -1,0 +1,9 @@
+def main(){
+    //x := 1;
+    //x += Bernoulli(1/3);
+    // x += UniformInt(1,10);
+    x := Gauss(0,1);
+    y := x;
+    if y<0 { x=3; }
+    return x;
+}

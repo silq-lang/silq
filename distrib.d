@@ -7,7 +7,7 @@ DExpr gaussianPDF(DVar var,DExpr μ,DExpr σsq){
 }
 
 DExpr uniformPDF(DVar var,DExpr a,DExpr b){
-	return dIvr(DIvr.Type.lZ,a-var)*dIvr(DIvr.Type.lZ,var-b)*one/(b-a);
+	return dIvr(DIvr.Type.leZ,a-var)*dIvr(DIvr.Type.leZ,var-b)*one/(b-a);
 }
 
 DExpr bernoulliPDF(DVar var,DExpr p){
@@ -17,16 +17,24 @@ DExpr bernoulliPDF(DVar var,DExpr p){
 class Distribution{
 	int[string] vbl;
 	DVar[string] symtab;
-	this(){ distribution=1.dℕ; }
+	this(){ distribution=1.dℕ; vbl["__dummy"]=0; }
 	SetX!DVar freeVars;
 	DExpr distribution;
+	Distribution[] parents;
+
+	SetX!DVar tmp;
+	void marginalizeTemporaries(){
+		foreach(v;tmp) marginalize(v);
+		tmp.clear();
+	}
 
 	Distribution dup(){
 		auto r=new Distribution();
-		r.vbl=vbl.dup();
+		r.vbl=vbl;
 		r.symtab=symtab.dup();
 		r.freeVars=freeVars.dup();
 		r.distribution=distribution;
+		r.parents=parents~this; // TODO: elegance
 		return r;
 	}
 
@@ -36,8 +44,8 @@ class Distribution{
 		auto d1=distribution;
 		auto d2=b.distribution;
 		// TODO: this should be unnecessary with dead variable analysis
-		foreach(x;this.freeVars) if(x !in freeVars) d1=dInt(x,d1);
-		foreach(x;b.freeVars) if(x !in freeVars) d2=dInt(x,d2);
+		foreach(x;this.freeVars) if(x !in freeVars){ assert(d1.hasFreeVar(x)); d1=dInt(x,d1); }
+		foreach(x;b.freeVars) if(x !in freeVars){ assert(d2.hasFreeVar(x)); d2=dInt(x,d2); }
 		//// /// // /
 		r.vbl=vbl;
 		r.symtab=symtab;
@@ -57,26 +65,37 @@ class Distribution{
 		return symtab.get(name,null);
 	}
 	DVar getVar(string name){
-		int suffix=++vbl[name];
-		string nn=name~suffix.lowNum;
-		auto v=declareVar(nn);
-		assert(v);
+		DVar v;
+		while(!v){ // TODO: fix more elegantly!
+			int suffix=++vbl[name];
+			string nn=name~suffix.lowNum;
+			v=declareVar(nn);
+		}
 		return v;
 	}
-	void distribute(DVar var,DExpr pdf){
-		distribution=distribution*pdf;
+	DVar getTmpVar(string name){
+		auto v=getVar(name);
+		tmp.insert(v);
+		return v;
 	}
+	void distribute(DExpr pdf){ distribution=distribution*pdf; }
 	void initialize(DVar var,DExpr exp){
-		distribution=distribution*dDelta(exp-var);
+		assert(!distribution.hasFreeVar(var));
+		distribute(dDelta(exp-var));
+		marginalizeTemporaries();
 	}
 	void assign(DVar var,DExpr exp){
+		assert(distribution.hasFreeVar(var));
 		auto nvar=getVar(var.name);
 		distribution=distribution.substitute(var,nvar);
 		exp=exp.substitute(var,nvar);		
-		distribution=distribution*dDelta(exp-var);
+		distribute(dDelta(exp-var));
+		marginalizeTemporaries();
 		marginalize(nvar);
 	}
 	void marginalize(DVar var)in{assert(var in freeVars); }body{
+		assert(distribution.hasFreeVar(var),text(distribution," ",var));
+		//writeln("marginalizing: ",var,"\ndistribution: ",distribution,"\nmarginalized: ",dInt(var,distribution));
 		distribution=dInt(var,distribution);
 		freeVars.remove(var);
 	}

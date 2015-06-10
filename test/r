@@ -1,0 +1,2 @@
+#!/bin/bash
+dmd -gc ../*.d -of../prob && time ../prob $@
