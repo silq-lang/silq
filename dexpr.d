@@ -351,17 +351,28 @@ class DMult: DCommutAssocOp{
 	}
 
 	static void insert(ref DExprSet factors,DExpr factor)in{assert(!!factor);}body{
-		if(zero in factors||factor is zero){ factors.clear(); factors.insert(zero); return; }
+		//if(zero in factors||factor is zero){ factors.clear(); factors.insert(zero); return; }
 		if(auto dm=cast(DMult)factor){
 			foreach(f;dm.factors)
 				insert(factors,f);
 			return;
 		}
+
+		static DExpr combineDelta(DDelta a,DExpr b)in{assert(a&&b);}body{
+			auto var=a.e.getCanonicalFreeVar(); // TODO: find better criterion
+			if(!b.hasFreeVar(var)) return null;
+			auto e=a.e.solveFor(var,zero);
+			if(!e) return null;
+			return a*b.substitute(var,e);
+		}
+
 		// TODO: use suitable data structures
 		static DExpr combine(DExpr e1,DExpr e2){
 			if(e1 is one) return e2;
 			if(e2 is one) return e1;
 			if(e1 is e2) return e1^^2;
+			if(e1 is zero && !cast(DDelta)e2) return e1;
+			if(e2 is zero && !cast(DDelta)e1) return e2;
 			if(e2.isFraction()) swap(e1,e2);
 			if(e1.isFraction()){
 				auto nd1=e1.getFraction();
@@ -370,6 +381,7 @@ class DMult: DCommutAssocOp{
 					auto nd2=e2.getFraction();
 					auto n=nd1[0]*nd2[0],d=nd1[1]*nd2[1];
 					auto g=gcd(n,d);
+					if(g==0) return null;
 					if(g==1&&(nd1[0]==1||nd2[0]==1)) return null;
 					return dℕ(n/g)/dℕ(d/g);
 				}
@@ -400,6 +412,12 @@ class DMult: DCommutAssocOp{
 						return p.operands[0]^^(p.operands[1]+pf.operands[1]);
 				}				
 			}
+			if(auto delt=cast(DDelta)e1)
+				if(auto d=combineDelta(delt,e2))
+					return d;
+			if(auto delt=cast(DDelta)e2)
+				if(auto d=combineDelta(delt,e1))
+					return d;
 			return null;
 		}
 		foreach(f;factors){
@@ -552,9 +570,36 @@ class DIvr: DExpr{ // iverson brackets
 	override string toStringImpl(Precedence prec){
 		with(Type) return "["~e.toString()~(type==eqZ?"=":type==neqZ?"≠":type==lZ?"<":"≤")~"0]";
 	}
+
+	static DExpr constructHook(Type type,DExpr e){
+		/*if(auto c=cast(Dℕ)e){
+			DExpr x(bool b){ return b?one:zero; }
+			final switch(type) with(Type){
+			case eqZ: return x(c.c==0);
+			case neqZ: return x(c.c!=0);
+			case lZ: return x(c.c<0);
+			case leZ: return x(c.c<=0);
+			}
+		}*/
+		return null;
+	}
 }
+
+DVar getCanonicalFreeVar(DExpr e){
+	DVar r=null;
+	bool isMoreCanonicalThan(DVar a,DVar b){
+		if(b is null) return true;
+		if(cast(DDeBruinVar)a&&!cast(DDeBruinVar)b) return true;
+		return a.name<b.name;
+	}
+	foreach(v;e.freeVars)
+		if(isMoreCanonicalThan(v,r)) r=v;
+	return r;
+}
+
 MapX!(DExpr,DExpr)[DIvr.Type.max+1] uniqueMapDIvr;
 DExpr dIvr(DIvr.Type type,DExpr e){
+	if(auto r=DIvr.constructHook(type,e)) return r;
 	if(e in uniqueMapDIvr[type]) return uniqueMapDIvr[type][e];
 	auto r=new DIvr(type,e);
 	uniqueMapDIvr[type][e]=r;
@@ -562,7 +607,7 @@ DExpr dIvr(DIvr.Type type,DExpr e){
 
 }
 
-class DDelta: DExpr{ // (not exactly a dirac delta function: integral is invariant under scaling)
+class DDelta: DExpr{ // (TODO: as of now, not exactly a dirac delta function: integral is invariant under scaling, this may be what leads to wrong results in tt4.)
 	DExpr e;
 	private this(DExpr e){ this.e=e; }
 	override string toStringImpl(Precedence prec){ return "δ̅["~e.toString()~"]"; }
