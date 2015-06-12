@@ -136,15 +136,17 @@ private struct Analyzer{
 			}else if(auto ite=cast(IteExp)e){
 				if(auto c=transformConstr(ite.cond)){
 					DVar[] ws;
+					DExpr nc=c;
 					foreach(v;c.freeVars){
 						auto w=dist.getVar(v.name);
 						dist.initialize(w,v);
 						ws~=w;
+						nc=nc.substitute(v,w);
 					}
 					auto dthen=dist.dup(), dothw=dist.dup();
 					Analyzer(dthen,err).analyze(ite.then);
 					if(ite.othw) Analyzer(dothw,err).analyze(ite.othw);
-					dist=dthen.join(dist.vbl,dist.symtab,dist.freeVars,dothw,c);
+					dist=dthen.join(dist.vbl,dist.symtab,dist.freeVars,dothw,nc);
 					foreach(w;ws) dist.marginalize(w);
 				}
 			}else if(auto re=cast(RepeatExp)e){

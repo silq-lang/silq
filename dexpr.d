@@ -584,7 +584,7 @@ class DIvr: DExpr{ // iverson brackets
 	}
 
 	static DExpr constructHook(Type type,DExpr e){
-		/*if(auto c=cast(Dℕ)e){
+		if(auto c=cast(Dℕ)e){
 			DExpr x(bool b){ return b?one:zero; }
 			final switch(type) with(Type){
 			case eqZ: return x(c.c==0);
@@ -592,7 +592,7 @@ class DIvr: DExpr{ // iverson brackets
 			case lZ: return x(c.c<0);
 			case leZ: return x(c.c<=0);
 			}
-		}*/
+		}
 		return null;
 	}
 }
