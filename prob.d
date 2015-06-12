@@ -113,4 +113,12 @@ void test(){
 	d.marginalize(x);
 	//writeln((x*dIvr(DIvr.Type.lZ,x)).substitute(x,one+one));
 	writeln(d);*/
+	/*auto x="x".dVar,y="y".dVar;
+	writeln(dDiff(x,x^^(x^^2)*y));
+	writeln(dDiff(y,dDiff(x,x^^(x^^2)*y)));
+	writeln(dDiff(x,dLog(x)));
+	writeln(dDiff(x,dDiff(x,dE^^(2*x))));
+	writeln(dDiff(x,2^^(dLog(x))));
+	writeln(dLog(dE^^x));
+	writeln(dDiff(y,dInt(x,x*dIvr(DIvr.Type.lZ,-x)*dIvr(DIvr.Type.lZ,x-y))));*/
 }

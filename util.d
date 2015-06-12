@@ -404,7 +404,13 @@ struct TupleX(T...){
 	alias expand this;
 	hash_t toHash(){
 		auto r=fnvb;
-		foreach(ref x;expand) r=FNV(x.toHash(),r);
+		foreach(i,ref x;expand){
+			hash_t hash(int i)(){
+				static if(is(typeof(x is null))) return x?x.toHash():0;
+				return x.toHash();
+			}
+			r=FNV(hash!i(),r);
+		}
 		return r;
 	}
 }

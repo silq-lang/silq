@@ -8,6 +8,7 @@ enum Precedence{
 	plus,
 	uminus,
 	intg,
+	diff,
 	mult,
 	pow,
 	invalid,
@@ -80,7 +81,7 @@ class DVar: DExpr{
 
 	override int freeVarsImpl(scope int delegate(DVar) dg){ return dg(this); }
 	override DExpr substitute(DVar var,DExpr e){ return this is var?e:this; }
-	override DExpr incDeBruin(int di){ return this; }
+	override DVar incDeBruin(int di){ return this; }
 	override DExpr solveFor(DVar var,DExpr e){
 		if(this is var) return e;
 		return null;
@@ -199,6 +200,7 @@ auto uniqueDExprNonCommutAssoc(T)(DExpr a, DExpr b){
 }
 MapX!(TupleX!(typeof(typeid(DExpr)),DExpr),DExpr) uniqueMapUnary;
 auto uniqueDExprUnary(T)(DExpr a){
+	if(auto r=T.constructHook(a)) return r;
 	auto t=tuplex(typeid(T),a);
 	if(t in uniqueMapUnary) return cast(T)uniqueMapUnary[t];
 	auto r=new T(a);
@@ -536,6 +538,16 @@ class DPow: DBinaryOp{
 				else if(d.c!=-1) return dℕ(pow(c.c,-d.c))^^-1;
 			}
 		}
+		if(auto l=cast(DLog)e2){ // TODO: more principled way of handling this, with more cases
+			if(auto e=cast(DE)e1)
+				return l.e;
+			if(auto d=cast(Dℕ)e1){
+				if(auto c=cast(Dℕ)l.e){
+					if(c.c<d.c) return c^^dLog(d);
+					else return null;
+				}else return l.e^^dLog(d);
+			}
+		}
 		return null;
 	}
 }
@@ -607,14 +619,16 @@ DExpr dIvr(DIvr.Type type,DExpr e){
 
 }
 
-class DDelta: DExpr{ // (TODO: as of now, not exactly a dirac delta function: integral is invariant under scaling, this may be what leads to wrong results in tt4.)
+class DDelta: DExpr{ // Dirac delta function
 	DExpr e;
 	private this(DExpr e){ this.e=e; }
-	override string toStringImpl(Precedence prec){ return "δ̅["~e.toString()~"]"; }
+	override string toStringImpl(Precedence prec){ return "δ["~e.toString()~"]"; }
 
 	override int freeVarsImpl(scope int delegate(DVar) dg){ return e.freeVarsImpl(dg); }
 	override DExpr substitute(DVar var,DExpr exp){ return dDelta(e.substitute(var,exp)); }
 	override DExpr incDeBruin(int di){ return dDelta(e.incDeBruin(di)); }
+
+	static DExpr constructHook(DExpr e){ return null; }
 }
 
 mixin(makeConstructorUnary!DDelta);
@@ -677,7 +691,7 @@ class DInt: DOp{
 			if(!f.hasFreeVar(var)) continue;
 			if(auto d=cast(DDelta)f){
 				if(auto s=d.e.solveFor(var,zero))
-					return (expr/f).substitute(var,s);
+					return (expr/f).substitute(var,s)/dAbs(dDiff(var,d.e,zero));
 			}
 		}
 		if(expr!is one && !expr.hasFreeVar(var)) return expr*dInt(var,one); // (infinite integral)
@@ -695,11 +709,12 @@ class DInt: DOp{
 	}
 }
 
-MapX!(TupleX!(typeof(typeid(DExpr)),DDeBruinVar,DExpr),DExpr) uniqueMapBinding;
-auto uniqueBindingDExpr(T)(DDeBruinVar v,DExpr a){
-	auto t=tuplex(typeid(T),v,a);
+MapX!(TupleX!(typeof(typeid(DExpr)),DDeBruinVar,DExpr,DExpr),DExpr) uniqueMapBinding;
+auto uniqueBindingDExpr(T)(DDeBruinVar v,DExpr a,DExpr b=null){
+	auto t=tuplex(typeid(T),v,a,b);
 	if(t in uniqueMapBinding) return cast(T)uniqueMapBinding[t];
-	auto r=new T(v,a);
+	static if(is(typeof(new T(v,a)))) auto r=new T(v,a);
+	else auto r=new T(v,a,b);
 	uniqueMapBinding[t]=r;
 	return r;
 }
@@ -711,3 +726,134 @@ DExpr dInt(DVar var,DExpr expr){
 	expr=expr.incDeBruin(1).substitute(var,dbvar);
 	return uniqueBindingDExpr!DInt(dbvar,expr);
 }
+
+DExpr differentiate(DVar v,DExpr e){
+	if(v is e) return one;
+	if(cast(DVar)e) return zero;
+	if(cast(Dℕ)e) return zero;
+	if(auto p=cast(DPlus)e){
+		DExprSet r;
+		foreach(s;p.summands)
+			DPlus.insert(r,dDiff(v,s));
+		return dPlus(r);
+	}
+	if(auto m=cast(DMult)e){
+		DExprSet r;
+		foreach(f;m.factors)
+			DPlus.insert(r,dDiff(v,f)/f);
+		return dPlus(r)*m;
+	}
+	if(auto p=cast(DPow)e)
+		return p.operands[0]^^(p.operands[1]-1)*
+			(dDiff(v,p.operands[0])*p.operands[1]+
+			 p.operands[0]*dLog(p.operands[0])*dDiff(v,p.operands[1]));
+	if(auto l=cast(DLog)e)
+		return dDiff(v,l.e)/l.e;
+	if(!e.hasFreeVar(v)) return zero;
+	return null;
+}
+
+class DDiff: DOp{
+	DVar v;
+	DExpr e;
+	DExpr x;
+	this(DVar v,DExpr e,DExpr x){ this.v=v; this.e=e; this.x=x; }
+	override @property string symbol(){ return "d/d"~v.toString(); }
+	override Precedence precedence(){ return Precedence.diff; }
+	override string toStringImpl(Precedence prec){
+		return addp(prec,symbol~"("~e.toString()~")["~x.toString()~"]");
+	}
+
+	static DExpr constructHook(DVar v,DExpr e,DExpr x){
+		if(auto r=differentiate(v,e))
+			return r.substitute(v,x);
+		return null;
+	}
+
+	override int freeVarsImpl(scope int delegate(DVar) dg){
+		if(auto r=e.freeVarsImpl(w=>w is v?0:dg(v)))
+			return r;
+		return x.freeVarsImpl(dg);
+	}
+	override DExpr substitute(DVar var,DExpr exp){
+		auto nx=x.substitute(var,exp);
+		auto ne=e;
+		if(v !is var) ne=e.substitute(var,exp);
+		return dDiff(v,ne,nx);
+	}
+	override DExpr incDeBruin(int di){
+		return dDiff(v.incDeBruin(di),e.incDeBruin(di),x.incDeBruin(di));
+	}
+}
+
+MapX!(TupleX!(DVar,DExpr,DExpr),DExpr) uniqueMapDiff;
+DExpr dDiff(DVar v,DExpr e,DExpr x){
+	if(auto dbvar=cast(DDeBruinVar)v) return uniqueBindingDExpr!DDiff(dbvar,e,x);
+	if(auto r=DDiff.constructHook(v,e,x)) return r;
+	auto dbvar=dDeBruinVar(1);
+	e=e.incDeBruin(1).substitute(v,dbvar);
+	return uniqueBindingDExpr!DDiff(dbvar,e,x);
+}
+
+DExpr dDiff(DVar v,DExpr e){ return dDiff(v,e,v); }
+
+class DAbs: DOp{
+	DExpr e;
+	this(DExpr e){ this.e=e; }
+	override @property string symbol(){ return "|"; }
+	override Precedence precedence(){ return Precedence.none; }
+	override string toStringImpl(Precedence prec){
+		return "|"~e.toString()~"|";
+	}
+	override int freeVarsImpl(scope int delegate(DVar) dg){
+		return e.freeVarsImpl(dg);
+	}
+	override DExpr substitute(DVar var,DExpr exp){
+		return dAbs(e.substitute(var,exp));
+	}
+	override DExpr incDeBruin(int di){
+		return dAbs(e.incDeBruin(di));
+	}
+
+	static DExpr constructHook(DExpr e){
+		if(auto c=cast(Dℕ)e) return dℕ(c.c<0?-c.c:c.c);
+		return null;
+	}
+}
+
+DExpr dAbs(DExpr e){ return uniqueDExprUnary!DAbs(e); }
+
+
+class DLog: DOp{
+	DExpr e;
+	this(DExpr e){ this.e=e; }
+	override @property string symbol(){ return "log"; }
+	override Precedence precedence(){ return Precedence.none; }
+	override string toStringImpl(Precedence prec){
+		return "log("~e.toString()~")";
+	}
+	override int freeVarsImpl(scope int delegate(DVar) dg){
+		return e.freeVarsImpl(dg);
+	}
+	override DExpr substitute(DVar var,DExpr exp){
+		return dLog(e.substitute(var,exp));
+	}
+	override DExpr incDeBruin(int di){
+		return dLog(e.incDeBruin(di));
+	}
+
+	static DExpr constructHook(DExpr e){
+		if(auto c=cast(DE)e) return one;
+		if(auto m=cast(DMult)e){
+			DExprSet r;
+			foreach(f;m.factors)
+				r.insert(dLog(f));
+			return dPlus(r);
+		}
+		if(auto p=cast(DPow)e)
+			return p.operands[1]*dLog(p.operands[0]);
+		return null;
+	}
+}
+
+DExpr dLog(DExpr e){ return uniqueDExprUnary!DLog(e); }
