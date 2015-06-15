@@ -1,0 +1,5 @@
+def main(){
+    x := UniformInt(0,10);
+    x += x;//UniformInt(0,10);
+    return x;
+}

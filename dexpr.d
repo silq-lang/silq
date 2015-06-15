@@ -66,6 +66,12 @@ abstract class DExpr{
 	final opBinaryRight(string op)(long e)if(ValidBinary!op){
 		return mixin("e.dℕ "~op~" this");
 	}
+	final opBinary(string op)(ℕ e)if(ValidBinary!op){
+		return mixin("this "~op~" e.dℕ");
+	}
+	final opBinaryRight(string op)(ℕ e)if(ValidBinary!op){
+		return mixin("e.dℕ "~op~" this");
+	}
 
 	mixin template Constant(){
 		override int freeVarsImpl(scope int delegate(DVar) dg){ return 0; }
@@ -118,8 +124,20 @@ class Dℕ : DExpr{
 	mixin Constant;
 }
 
+
+Dℕ nthRoot(Dℕ x,ℕ n){
+	ℕ k=1,r=0;
+	while(k<x.c) k*=2;
+	for(;k;k/=2){
+		ℕ c=r+k;
+		if(pow(c,n)<=x.c)
+			r=c;
+	}
+	return pow(r,n)==x.c?dℕ(r):null;
+}
+
 Dℕ[ℕ] uniqueMapDℕ;
-DExpr dℕ(ℕ c){
+Dℕ dℕ(ℕ c){
 	if(c in uniqueMapDℕ) return uniqueMapDℕ[c];
 	return uniqueMapDℕ[c]=new Dℕ(c);
 }
@@ -373,8 +391,7 @@ class DMult: DCommutAssocOp{
 			if(e1 is one) return e2;
 			if(e2 is one) return e1;
 			if(e1 is e2) return e1^^2;
-			if(e1 is zero && !cast(DDelta)e2) return e1;
-			if(e2 is zero && !cast(DDelta)e1) return e2;
+			if(e1 is zero||e2 is zero) return zero;
 			if(e2.isFraction()) swap(e1,e2);
 			if(e1.isFraction()){
 				auto nd1=e1.getFraction();
@@ -384,7 +401,8 @@ class DMult: DCommutAssocOp{
 					auto n=nd1[0]*nd2[0],d=nd1[1]*nd2[1];
 					auto g=gcd(n,d);
 					if(g==0) return null;
-					if(g==1&&(nd1[0]==1||nd2[0]==1)) return null;
+					if(g==1&&(nd1[0]==1&&nd2[1]==1||nd1[1]==1&&nd2[0]==1))
+						return null;
 					return dℕ(n/g)/dℕ(d/g);
 				}
 				if(nd1[0]==-1&&nd1[1]==1){ // TODO: do for all constants?
@@ -442,6 +460,13 @@ class DMult: DCommutAssocOp{
 mixin(makeConstructorCommutAssoc!DMult);
 mixin(makeConstructorCommutAssoc!DPlus);
 
+auto dDistributeMult(DExpr sum,DExpr e){
+	DExprSet r;
+	foreach(s;sum.summands)
+		DPlus.insert(r,s*e);
+	return dPlus(r);
+}
+
 auto operands(T)(DExpr x){
 	static struct Operands{
 		DExpr x;
@@ -458,6 +483,14 @@ auto operands(T)(DExpr x){
 }
 alias factors=operands!DMult;
 alias summands=operands!DPlus;
+
+DExpr getFractionalFactor(DExpr e){
+	DExpr r=one;
+	foreach(f;e.factors)
+		if(f.isFraction())
+			r=r*f;
+	return r;
+}
 
 DExpr dMinus(DExpr e1,DExpr e2){ return e1+-e2; }
 
@@ -548,6 +581,15 @@ class DPow: DBinaryOp{
 				}else return l.e^^dLog(d);
 			}
 		}
+		if(auto c=cast(Dℕ)e1){ // TODO: more simplifications with constant base
+			foreach(f;e2.factors){
+				if(!f.isFraction()) continue;
+				auto nd=f.getFraction();
+				if(nd[0]!=1) continue;
+				if(auto r=nthRoot(c,nd[1]))
+					return r^^(e2/f);
+			}
+		}
 		return null;
 	}
 }
@@ -593,6 +635,17 @@ class DIvr: DExpr{ // iverson brackets
 			case leZ: return x(c.c<=0);
 			}
 		}
+		ℕ ngcd=0,dlcm=1;
+		foreach(s;e.summands){
+			auto f=s.getFractionalFactor();
+			assert(f.isFraction());
+			auto nd=f.getFraction();
+			assert(nd[1]>0);
+			ngcd=gcd(ngcd,abs(nd[0]));
+			dlcm=lcm(dlcm,nd[1]);
+		}
+		if(ngcd!=1||dlcm!=1)
+			return dIvr(type,dDistributeMult(e,dℕ(dlcm)/ngcd));
 		return null;
 	}
 }
@@ -749,6 +802,8 @@ DExpr differentiate(DVar v,DExpr e){
 			 p.operands[0]*dLog(p.operands[0])*dDiff(v,p.operands[1]));
 	if(auto l=cast(DLog)e)
 		return dDiff(v,l.e)/l.e;
+	if(auto s=cast(DSin)e)
+		return dDiff(v,s.e)*dSin(s.e+dΠ/2);
 	if(!e.hasFreeVar(v)) return zero;
 	return null;
 }
@@ -857,3 +912,28 @@ class DLog: DOp{
 }
 
 DExpr dLog(DExpr e){ return uniqueDExprUnary!DLog(e); }
+
+class DSin: DOp{
+	DExpr e;
+	this(DExpr e){ this.e=e; }
+	override @property string symbol(){ return "sin"; }
+	override Precedence precedence(){ return Precedence.none; }
+	override string toStringImpl(Precedence prec){
+		return "sin("~e.toString()~")";
+	}
+	override int freeVarsImpl(scope int delegate(DVar) dg){
+		return e.freeVarsImpl(dg);
+	}
+	override DExpr substitute(DVar var,DExpr exp){
+		return dSin(e.substitute(var,exp));
+	}
+	override DExpr incDeBruin(int di){
+		return dSin(e.incDeBruin(di));
+	}
+
+	static DExpr constructHook(DExpr e){
+		return null;
+	}
+}
+
+DExpr dSin(DExpr e){ return uniqueDExprUnary!DSin(e); }

@@ -65,6 +65,14 @@ private struct Analyzer{
 						auto var=dist.getTmpVar("__b");
 						dist.distribute(bernoulliPDF(var,doIt(ce.args[0])));
 						return var;
+					case "UniformInt": // TODO: handle b<a
+						if(ce.args.length!=2){
+							err.error("expected two arguments (a,b) to UniformInt",ce.loc);
+							unwind();
+						}
+						auto var=dist.getTmpVar("__u");
+						dist.distribute(uniformIntPDF(var,doIt(ce.args[0]),doIt(ce.args[1])));
+						return var;
 					default: break;
 					}
 				}

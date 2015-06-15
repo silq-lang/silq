@@ -1,5 +1,5 @@
 def main(){
-    // x₁ := UniformInt(1,10); // TODO: UniformInt, Uniform
+    // x₁ := UniformInt(1,10);
     x₁ := Gauss(0,1);
     x₂ := Gauss(1,1);
     x₃ := x₁ + x₂;

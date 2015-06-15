@@ -14,6 +14,11 @@ DExpr bernoulliPDF(DVar var,DExpr p){
 	return dDelta(var)*(1-p)+dDelta(1-var)*p;
 }
 
+DExpr uniformIntPDF(DVar var,DExpr a,DExpr b){
+	auto nnorm=dIvr(DIvr.Type.leZ,a-var)*dIvr(DIvr.Type.leZ,var-b)*dDelta(dSin(dΠ*var)/dΠ);
+	return nnorm/dInt(var,nnorm);
+}
+
 class Distribution{
 	int[string] vbl;
 	DVar[string] symtab;

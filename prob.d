@@ -84,6 +84,7 @@ void test(){
 	writeln(d);
 	d.marginalize(w);
 	writeln(d);
+	writeln(one/10*(one/2));
 	writeln((one+one)^^-2+2);
 	writeln(-one-2^^(-one)*3);
 	writeln((-one)+2^^(-one)*(-1)+2^^(-one)*(-1));
