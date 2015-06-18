@@ -378,14 +378,6 @@ class DMult: DCommutAssocOp{
 			return;
 		}
 
-		static DExpr combineDelta(DDelta a,DExpr b)in{assert(a&&b);}body{
-			auto var=a.e.getCanonicalFreeVar(); // TODO: find better criterion
-			if(!b.hasFreeVar(var)) return null;
-			auto e=a.e.solveFor(var,zero);
-			if(!e) return null;
-			return a*b.substitute(var,e);
-		}
-
 		// TODO: use suitable data structures
 		static DExpr combine(DExpr e1,DExpr e2){
 			if(e1 is one) return e2;
@@ -432,12 +424,6 @@ class DMult: DCommutAssocOp{
 						return p.operands[0]^^(p.operands[1]+pf.operands[1]);
 				}				
 			}
-			if(auto delt=cast(DDelta)e1)
-				if(auto d=combineDelta(delt,e2))
-					return d;
-			if(auto delt=cast(DDelta)e2)
-				if(auto d=combineDelta(delt,e1))
-					return d;
 			return null;
 		}
 		foreach(f;factors){
@@ -519,6 +505,12 @@ class DPow: DBinaryOp{
 		auto d=cast(Dℕ)operands[0];
 		assert(d && operands[1] is -one);
 		return [ℕ(1),d.c];
+	}
+
+	override DExpr solveFor(DVar var,DExpr rhs){
+		if(operands[1] !is -one) return null; // TODO
+		if(rhs is zero) return null; // TODO: it might still be zero, how to handle?
+		return operands[0].solveFor(var,one/rhs);
 	}
 
 	override string toStringImpl(Precedence prec){
@@ -743,8 +735,9 @@ class DInt: DOp{
 		foreach(f;expr.factors){
 			if(!f.hasFreeVar(var)) continue;
 			if(auto d=cast(DDelta)f){
-				if(auto s=d.e.solveFor(var,zero))
-					return (expr/f).substitute(var,s)/dAbs(dDiff(var,d.e,zero));
+				if(auto s=d.e.solveFor(var,zero)){
+					return (expr/f).substitute(var,s)/dAbs(dDiff(var,d.e,s));
+				}
 			}
 		}
 		if(expr!is one && !expr.hasFreeVar(var)) return expr*dInt(var,one); // (infinite integral)
@@ -871,7 +864,19 @@ class DAbs: DOp{
 	}
 
 	static DExpr constructHook(DExpr e){
-		if(auto c=cast(Dℕ)e) return dℕ(c.c<0?-c.c:c.c);
+		if(e.isFraction()){
+			auto nd=e.getFraction();
+			assert(nd[1]>0);
+			return abs(nd[0])/dℕ(nd[1]);
+		}
+		if(cast(DE)e) return e;
+		if(cast(DΠ)e) return e;
+		if(auto m=cast(DMult)e){ // TODO: does this preclude some DMult-optimizations and should therefore be done differently?
+			DExprSet r;
+			foreach(f;m.factors)
+				DMult.insert(r,dAbs(f));
+			return dMult(r);
+		}
 		return null;
 	}
 }
@@ -937,3 +942,47 @@ class DSin: DOp{
 }
 
 DExpr dSin(DExpr e){ return uniqueDExprUnary!DSin(e); }
+
+
+class DFun: DOp{ // uninterpreted functions
+	DVar fun;
+	DExpr[] args;
+	this(DVar fun, DExpr[] args){ this.fun=fun; this.args=args; }
+	override @property string symbol(){ return fun.name; }
+	override Precedence precedence(){ return Precedence.none; }
+	override string toStringImpl(Precedence prec){
+		return fun.name~"("~args.map!(to!string).join(",")~")";
+	}
+	override int freeVarsImpl(scope int delegate(DVar) dg){
+		foreach(a;args)
+			if(auto r=a.freeVarsImpl(dg))
+				return r;
+		return 0;
+	}
+	override DExpr substitute(DVar var,DExpr exp){
+		return dFun(fun,args.map!(a=>a.substitute(var,exp)).array);
+	}
+	override DExpr incDeBruin(int di){
+		return dFun(fun,args.map!(a=>a.incDeBruin(di)).array);
+	}
+
+	static DExpr constructHook(DExpr e){
+		return null;
+	}
+}
+
+MapX!(TupleX!(DVar,DExpr[]),DFun) uniqueMapDFun;
+auto uniqueDFun(DVar fun,DExpr[] args){
+	auto t=tuplex(fun,args);
+	if(t in uniqueMapDFun) return uniqueMapDFun[t];
+	auto r=new DFun(fun,args);
+	uniqueMapDFun[t]=r;
+	return r;
+}
+
+DFun dFun(DVar fun,DExpr[] args){
+	return uniqueDFun(fun,args);
+}
+DFun dFun(DVar fun,DExpr arg){
+	return dFun(fun,[arg]);
+}

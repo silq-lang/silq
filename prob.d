@@ -122,4 +122,12 @@ void test(){
 	writeln(dDiff(x,2^^(dLog(x))));
 	writeln(dLog(dE^^x));
 	writeln(dDiff(y,dInt(x,x*dIvr(DIvr.Type.lZ,-x)*dIvr(DIvr.Type.lZ,x-y))));*/
+	/*auto f="f".dVar,x="x".dVar;
+	auto g="g".dVar,y="y".dVar;
+	auto z="z".dVar;
+	auto dist=dFun(f,[x,y])*dDelta(x*y-z);
+	//auto dist=uniformPDF(x,zero,one)*uniformPDF(y,zero,one)*dDelta(x*y-z);
+	writeln(dist);
+	//writeln(dInt(x,dist));
+	//writeln(dInt(y,dInt(x,dist)));*/
 }

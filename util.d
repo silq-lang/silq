@@ -406,8 +406,8 @@ struct TupleX(T...){
 		auto r=fnvb;
 		foreach(i,ref x;expand){
 			hash_t hash(int i)(){
-				static if(is(typeof(x is null))) return x?x.toHash():0;
-				return x.toHash();
+				static if(is(typeof(x)==class)) return x?x.toHash():0;
+				else return typeid(x).getHash(&x);
 			}
 			r=FNV(hash!i(),r);
 		}
