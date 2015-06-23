@@ -39,7 +39,7 @@ abstract class DExpr{
 		foreach(v;freeVars) if(v is var) return true;
 		return false;
 	}
-	DExpr solveFor(DVar var,DExpr rhs){ return null; }
+	DExpr solveFor(DVar var,DExpr rhs, ref DExpr[] constraints){ return null; }
 
 	bool isFraction(){ return false; }
 	ℕ[2] getFraction(){ assert(0,"not a fraction"); }
@@ -93,7 +93,7 @@ class DVar: DExpr{
 	override int freeVarsImpl(scope int delegate(DVar) dg){ return dg(this); }
 	override DExpr substitute(DVar var,DExpr e){ return this is var?e:this; }
 	override DVar incDeBruin(int di){ return this; }
-	override DExpr solveFor(DVar var,DExpr e){
+	override DExpr solveFor(DVar var,DExpr e,ref DExpr[] constraints){
 		if(this is var) return e;
 		return null;
 	}
@@ -286,10 +286,10 @@ class DPlus: DCommutAssocOp{
 		foreach(s;summands) insert(res,s.incDeBruin(di));
 		return dPlus(res);
 	}
-	override DExpr solveFor(DVar var,DExpr e){
+	override DExpr solveFor(DVar var,DExpr e,ref DExpr[] constraints){
 		auto ow=splitPlusAtVar(this,var);
-		if(cast(DPlus)ow[1]) return null; // TODO
-		return ow[1].solveFor(var,e-ow[0]);
+		if(cast(DPlus)ow[1]) return null; // TODO (polynomials,...)
+		return ow[1].solveFor(var,e-ow[0],constraints);
 	}
 
 	static void insert(ref DExprSet summands,DExpr summand)in{assert(!!summand);}body{
@@ -373,10 +373,11 @@ class DMult: DCommutAssocOp{
 		foreach(f;factors) insert(res,f.incDeBruin(di));
 		return dMult(res);
 	}
-	override DExpr solveFor(DVar var,DExpr e){
+	override DExpr solveFor(DVar var,DExpr e,ref DExpr[] constraints){
 		auto ow=splitMultAtVar(this,var);
 		if(cast(DMult)ow[1]) return null; // TODO
-		return ow[1].solveFor(var,e/ow[0]);
+		if(couldBeZero(ow[0])) constraints~=ow[0];
+		return ow[1].solveFor(var,e/ow[0],constraints);
 	}
 
 	override bool isFraction(){ return factors.all!(a=>a.isFraction()); }
@@ -538,10 +539,11 @@ class DPow: DBinaryOp{
 		return [ℕ(1),d.c];
 	}
 
-	override DExpr solveFor(DVar var,DExpr rhs){
+	override DExpr solveFor(DVar var,DExpr rhs,ref DExpr[] constraints){
 		if(operands[1] !is -one) return null; // TODO
 		if(rhs is zero) return null; // TODO: it might still be zero, how to handle?
-		return operands[0].solveFor(var,one/rhs);
+		if(couldBeZero(rhs)) constraints~=rhs;
+		return operands[0].solveFor(var,one/rhs,constraints);
 	}
 
 	override string toStringImpl(Precedence prec){
@@ -629,6 +631,13 @@ abstract class DUnaryOp: DOp{
 }
 DExpr dUMinus(DExpr e){ return -1*e; }
 
+bool couldBeZero(DExpr e){
+	if(cast(DΠ)e) return false;
+	if(cast(DE)e) return false;
+	if(auto c=cast(Dℕ)e) return c.c==0;
+	return true;
+}
+
 class DIvr: DExpr{ // iverson brackets
 	enum Type{ // TODO: remove redundancy?
 		eqZ,
@@ -650,6 +659,7 @@ class DIvr: DExpr{ // iverson brackets
 	}
 
 	static DExpr constructHook(Type type,DExpr e){
+		if(type==Type.eqZ&&!couldBeZero(e)) return zero;
 		if(auto c=cast(Dℕ)e){
 			DExpr x(bool b){ return b?one:zero; }
 			final switch(type) with(Type){
@@ -669,7 +679,7 @@ class DIvr: DExpr{ // iverson brackets
 			dlcm=lcm(dlcm,nd[1]);
 		}
 		if(ngcd!=1||dlcm!=1)
-			return dIvr(type,dDistributeMult(e,dℕ(dlcm)/ngcd)); // TODO: does distribution do anything here?
+			return dIvr(type,dDistributeMult(e,dℕ(dlcm)/ngcd));
 		return null;
 	}
 }
@@ -780,8 +790,10 @@ class DInt: DOp{
 		foreach(f;expr.factors){
 			if(!f.hasFreeVar(var)) continue;
 			if(auto d=cast(DDelta)f){
-				if(auto s=d.e.solveFor(var,zero)){
-					return (expr/f).substitute(var,s)/dAbs(dDiff(var,d.e,s));
+				DExpr[] constraints;
+				if(auto s=d.e.solveFor(var,zero,constraints)){
+					if(!constraints.length) // TODO!
+						return (expr/f).substitute(var,s)/dAbs(dDiff(var,d.e,s));
 				}
 			}
 		}

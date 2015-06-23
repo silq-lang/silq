@@ -1,0 +1,17 @@
+// Compare benchmark. What was probably intended.
+// (Original code uses arrays, this should be rewritten.)
+// TODO: why is this so slow? (Try n=100).
+
+def compare(){
+    r := true;
+    x := true;
+    repeat 10{
+        a := Bernoulli(1/2);
+	b := Bernoulli(1/2);
+	if(x && a != b){
+	     r = a<b;
+	     x = false;
+	}
+    }
+    return r;
+}

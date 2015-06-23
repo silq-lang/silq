@@ -148,3 +148,19 @@ class ReturnExp: Expression{
 	}
 	override string toString(){ return "return"~(e?" "~e.toString():""); }
 }
+
+class AssertExp: Expression{
+	Expression e;
+	this(Expression e){
+		this.e=e;
+	}
+	override string toString(){ return "assert("~e.toString()~")"; }
+}
+
+class ObserveExp: Expression{
+	Expression e;
+	this(Expression e){
+		this.e=e;
+	}
+	override string toString(){ return "observe("~e.toString()~")"; }
+}

@@ -1,4 +1,4 @@
-import std.stdio, std.path, std.array, std.string;
+import std.stdio, std.path, std.array, std.string, std.algorithm;
 import file=std.file;
 import util;
 import lexer, parser, expression, error;
@@ -9,7 +9,7 @@ string getActualPath(string path){
 	// TODO: search path
 	auto ext = path.extension;
 	if(ext=="") path = path.setExtension("prb");
-	return file.getcwd().endsWith("test")?path:"test/"~path;
+	return file.getcwd().canFind("/test")?path:"test/"~path;
 }
 
 string readCode(File f){

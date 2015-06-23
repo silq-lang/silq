@@ -1,0 +1,10 @@
+// Example 3. Unsupported!
+
+def main(){
+	b := true;
+	c := Bernoulli(1/2);
+    while c{ // unsupported
+		b = 1-b; // TODO: support !b
+		c = Bernoulli(1/2);
+	}
+}

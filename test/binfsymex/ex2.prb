@@ -1,0 +1,6 @@
+// Example 2.
+def main(){
+    c1 := Bernoulli(1/2);
+    c2 := Bernoulli(1/2);
+    observe(c1 || c2);
+}

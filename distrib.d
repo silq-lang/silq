@@ -104,9 +104,16 @@ class Distribution{
 		distribution=dInt(var,distribution);
 		freeVars.remove(var);
 	}
+	void observe(DExpr e){ // e's domain must be 0 or 1.
+		auto nDist=distribution*e;
+		auto intNDist=nDist;
+		foreach(v;freeVars) intNDist=dInt(v,intNDist);
+		distribution=nDist/intNDist;
+	}
 	override string toString(){
 		string r="p(";
-		auto vars=freeVars.array.map!(a=>a.name).array;
+		string[] vars;
+		foreach(a;freeVars) vars~=a.name;
 		sort(vars);
 		foreach(v;vars) r~=v~",";
 		if(vars.length) r=r[0..$-1];

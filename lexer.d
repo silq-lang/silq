@@ -46,9 +46,11 @@ string[2][] simpleTokens =
 	 ["&",     "And"                       ],
 	 ["&=",    "AndAssign"                 ],
 	 ["&&",    "AndAnd"                    ],
+	 ["&&=",   "AndAndAssign"              ],
 	 ["|",     "Or"                        ],
 	 ["|=",    "OrAssign"                  ],
 	 ["||",    "OrOr"                      ],
+	 ["||=",   "OrOrAssign"                ],
 	 ["-",     "Minus"                     ],
 	 ["-=",    "MinusAssign"               ],
 	 ["--",    "MinusMinus"                ],
@@ -112,7 +114,7 @@ string[2][] specialTokens =
 	 ["EOF",   "Eof"                       ]];
 string[2][] compoundTokens = [];
 
-string[] keywords = ["def","true","false","if","else","return","repeat"];
+string[] keywords = ["def","true","false","if","else","observe","assert","return","repeat"];
 
 
 string[2][] tokens = specialTokens ~ complexTokens ~ simpleTokens ~ compoundTokens ~ keywordTokens();
@@ -1172,8 +1174,11 @@ TokenType isKeyword(string s){
 		case 5:
 			if(s=="false") return Tok!"false";
 		case 6:
+			if(s=="assert") return Tok!"assert";
 			if(s=="return") return Tok!"return";
 			if(s=="repeat") return Tok!"repeat";
+		case 7:
+			if(s=="observe") return Tok!"observe";
 		default: break;
 	}
 	return Tok!"i";

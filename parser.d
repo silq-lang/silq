@@ -44,6 +44,7 @@ int getLbp(TokenType type) pure{ // operator precedence
 	case Tok!"+=",Tok!"<<=",Tok!">>=", Tok!">>>=":
 	case Tok!"=",Tok!"*=",Tok!"%=",Tok!"^=":
 	case Tok!"^^=",Tok!"~=":
+	case Tok!"&&=", Tok!"||=":
 	case Tok!":=":
 		return 30;
 	// logical operators
@@ -356,7 +357,17 @@ struct Parser{
 					t.str~=tok.str; // TODO: make more efficient than simple append
 				}
 				mixin(rule!(LiteralExp,Existing,"t"));
-			mixin(getTTCases(literals,["``","``c","``w","``d"])); {auto e=New!LiteralExp(tok); e.loc=tok.loc; nextToken(); return e;}
+			mixin(getTTCases(literals,["``","``c","``w","``d","true","false"])); {res=New!LiteralExp(tok); nextToken(); return res;}
+			case Tok!"true":
+				nextToken();
+				auto tok=Token(Tok!"0");
+				tok.int64=1;
+				return res=New!LiteralExp(tok);
+			case Tok!"false":
+				nextToken();
+				auto tok=Token(Tok!"0");
+				tok.int64=0;
+				return res=New!LiteralExp(tok);				
 			case Tok!"(":
 				nextToken();
 				res=parseExpression();
@@ -401,7 +412,10 @@ struct Parser{
 						r~=mixin(X!q{case Tok!"@(x)":
 							nextToken();
 							auto right=parseExpression(rbp!(Tok!"@(x)"));
-							static if(!"@(x)".endsWith("=")||"@(x)"=="=="||"@(x)"==":="||"@(x)"=="="){
+							static if(!"@(x)".endsWith("=")||
+									  "@(x)"=="=="||"@(x)"==":="||"@(x)"=="="||
+									  "@(x)"=="<="||"@(x)"==">="||"@(x)"=="!="
+									  ){
 								return res=New!(BinaryExp!(Tok!"@(x)"))(left,right);
 							}else{
 								right=New!(BinaryExp!(Tok!"@(x[0..$-1])"))(left,right);
@@ -418,7 +432,10 @@ struct Parser{
 						r~=mixin(X!q{case Tok!"@(x)":nextToken();return res=New!(PostfixExp!(Tok!"@(x)"))(left);});
 				return r;
 			}());
-			default: throw new PEE("invalid binary operator '"~tok.toString()~"'");
+			default:
+				auto str="invalid binary operator '"~tok.toString()~"'";
+				nextToken();
+				throw new PEE(str);
 		}
 	}
 	Expression parseExpression(int rbp = 0){
@@ -427,6 +444,8 @@ struct Parser{
 			case Tok!"return": return parseReturn();
 			case Tok!"if": return parseIte();
 			case Tok!"repeat": return parseRepeat();
+			case Tok!"assert": return parseAssert();
+			case Tok!"observe": return parseObserve();
 			default: break;
 		}
 		Expression left;
@@ -490,6 +509,22 @@ struct Parser{
 		auto num=parseExpression();
 		auto bdy=parseCompoundExp();
 		return res=New!RepeatExp(num,bdy);
+	}
+	AssertExp parseAssert(){
+		mixin(SetLoc!AssertExp);
+		expect(Tok!"assert");
+		expect(Tok!"(");
+		auto exp=parseExpression();
+		expect(Tok!")");
+		return res=New!AssertExp(exp);
+	}
+	ObserveExp parseObserve(){
+		mixin(SetLoc!ObserveExp);
+		expect(Tok!"observe");
+		expect(Tok!"(");
+		auto exp=parseExpression();
+		expect(Tok!")");
+		return res=New!ObserveExp(exp);
 	}
 };
 

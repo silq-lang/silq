@@ -1,0 +1,17 @@
+
+def compare(){
+    r := false;
+    r ||= Bernoulli(1/2);
+    s := true;
+    s &&= Bernoulli(1/2);
+    t := true;
+    t ||= Bernoulli(1/2);
+    u := false;
+    u &&= Bernoulli(1/2);
+
+    v := Bernoulli(1/2) && Bernoulli(1/2);
+    w := Bernoulli(1/2) || Bernoulli(1/2);
+
+    x := r&&r;
+    y := s||s;
+}

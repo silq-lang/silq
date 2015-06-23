@@ -16,6 +16,8 @@ alias GtExp=BinaryExp!(Tok!">");
 alias GeExp=BinaryExp!(Tok!">=");
 alias EqExp=BinaryExp!(Tok!"==");
 alias NeqExp=BinaryExp!(Tok!"!=");
+alias OrExp=BinaryExp!(Tok!"||");
+alias AndExp=BinaryExp!(Tok!"&&");
 alias Exp=Expression;
 
 private struct Analyzer{
@@ -54,24 +56,27 @@ private struct Analyzer{
 							err.error("expected two arguments (a,b) to Uniform",ce.loc);
 							unwind();
 						}
+						auto a=doIt(ce.args[0]),b=doIt(ce.args[1]);
 						auto var=dist.getTmpVar("__u");
-						dist.distribute(uniformPDF(var,doIt(ce.args[0]),doIt(ce.args[1])));
+						dist.distribute(uniformPDF(var,a,b));
 						return var;
 					case "Bernoulli":
 						if(ce.args.length!=1){
 							err.error("expected one argument (p) to Bernoulli",ce.loc);
 							unwind();
 						}
+						auto p=doIt(ce.args[0]);
 						auto var=dist.getTmpVar("__b");
-						dist.distribute(bernoulliPDF(var,doIt(ce.args[0])));
+						dist.distribute(bernoulliPDF(var,p));
 						return var;
 					case "UniformInt": // TODO: handle b<a
 						if(ce.args.length!=2){
 							err.error("expected two arguments (a,b) to UniformInt",ce.loc);
 							unwind();
 						}
+						auto a=doIt(ce.args[0]),b=doIt(ce.args[1]);
 						auto var=dist.getTmpVar("__u");
-						dist.distribute(uniformIntPDF(var,doIt(ce.args[0]),doIt(ce.args[1])));
+						dist.distribute(uniformIntPDF(var,a,b));
 						return var;
 					default: break;
 					}
@@ -81,6 +86,8 @@ private struct Analyzer{
 				if(le.lit.type==Tok!"0")
 					return le.lit.int64.dℕ;
 			}
+			if(auto c=transformConstr(e))
+				return c;
 			err.error("unsupported",e.loc);
 			throw new Unwind();
 		}
@@ -96,7 +103,15 @@ private struct Analyzer{
 				auto e1=transformExp(b.e1),e2=transformExp(b.e2);
 				if(!e1||!e2) unwind();
 			};
-			with(DIvr.Type)if(auto b=cast(LtExp)e){
+			if(auto b=cast(AndExp)e){
+				auto e1=doIt(b.e1), e2=doIt(b.e2);
+				return e1*e2;
+			}else if(auto b=cast(OrExp)e){
+				auto e1=doIt(b.e1), e2=doIt(b.e2);
+				return 1-(1-e1)*(1-e2);
+			}else if(auto id=cast(Identifier)e){
+				return transformExp(e); // TODO: how do we make sure it is in fact boolean?
+			}else with(DIvr.Type)if(auto b=cast(LtExp)e){
 				mixin(common);
 				return dIvr(lZ,e1-e2);
 			}else if(auto b=cast(LeExp)e){
@@ -114,6 +129,27 @@ private struct Analyzer{
 			}else if(auto b=cast(NeqExp)e){
 				mixin(common);
 				return dIvr(neqZ,e2-e1);
+			}else if(auto le=cast(LiteralExp)e){
+				if(le.lit.type==Tok!"0"){
+					if(le.lit.int64==0||le.lit.int64==1)
+						return le.lit.int64.dℕ;
+				}
+			}else if(auto ce=cast(CallExp)e){
+				if(auto id=cast(Identifier)ce.e){
+					switch(id.name){
+					case "Bernoulli":
+						if(ce.args.length!=1){
+							err.error("expected one argument (p) to Bernoulli",ce.loc);
+							unwind();
+						}
+						auto p=transformExp(ce.args[0]);
+						if(!p) throw new Unwind();
+						auto var=dist.getTmpVar("__b");
+						dist.distribute(bernoulliPDF(var,p));
+						return var;
+					default: break;
+					}
+				}
 			}
 			err.error("unsupported",e.loc);
 			throw new Unwind();
@@ -121,7 +157,7 @@ private struct Analyzer{
 		try return doIt(e);
 		catch(Unwind){ return null; }
 	}
-	void analyze(CompoundExp ce)in{assert(!!ce);}body{
+	Distribution analyze(CompoundExp ce)in{assert(!!ce);}body{
 		foreach(i,e;ce.s){
 			/*writeln("statement: ",e);
 			writeln("before: ",dist);
@@ -151,9 +187,9 @@ private struct Analyzer{
 						ws~=w;
 						nc=nc.substitute(v,w);
 					}
-					auto dthen=dist.dup(), dothw=dist.dup();
-					Analyzer(dthen,err).analyze(ite.then);
-					if(ite.othw) Analyzer(dothw,err).analyze(ite.othw);
+					auto dthen=Analyzer(dist.dup(),err).analyze(ite.then);
+					auto dothw=dist.dup();
+					if(ite.othw) dothw=Analyzer(dothw,err).analyze(ite.othw);
 					dist=dthen.join(dist.vbl,dist.symtab,dist.freeVars,dothw,nc);
 					foreach(w;ws) dist.marginalize(w);
 				}
@@ -162,9 +198,8 @@ private struct Analyzer{
 					if(auto num=cast(Dℕ)exp){
 						int nerrors=err.nerrors;
 						for(ℕ j=0;j<num.c;j++){
-							auto dcur=dist.dup();
-							Analyzer(dcur,err).analyze(re.bdy);
-							dist=dist.join(dist.vbl,dist.symtab,dist.freeVars,dcur,zero);
+							auto dnext=Analyzer(dist.dup(),err).analyze(re.bdy);
+							dist=dist.join(dist.vbl,dist.symtab,dist.freeVars,dnext,zero);
 							if(err.nerrors>nerrors) break;
 						}
 					}else err.error("repeat expression should be integer constant",re.num.loc);
@@ -183,8 +218,13 @@ private struct Analyzer{
 						}else err.error("undefined variable '"~id.name~"'",id.loc);
 					}else err.error("only return of variable supported",re.e.loc);
 				}else err.error("return statement must be last statement in function",re.loc);
+			}else if(auto oe=cast(ObserveExp)e){
+				if(auto c=transformConstr(oe.e)){
+					dist.observe(c);
+				}
 			}else err.error("unsupported",e.loc);
 		}
+		return dist;
 	}
 }
 
