@@ -1,8 +1,9 @@
 def main(){
-	x := Uniform(1,10);//UniformInt(1,10);
-	if x<7 { x+=1; }
-	repeat 10 {
-		x+=Bernoulli(1/2);
-	}
-	return x;
+    x := Uniform(1,10);
+    //x := UniformInt(1,10);
+    if x<7 { x+=1; }
+    /*repeat 10 {
+        x+=Bernoulli(1/2);
+    }*/
+    return x;
 }

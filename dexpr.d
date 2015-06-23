@@ -416,12 +416,10 @@ class DMult: DCommutAssocOp{
 						return null;
 					return dℕ(n/g)/dℕ(d/g);
 				}
-				if(nd1[0]==-1&&nd1[1]==1){ // TODO: do for all constants?
-					if(auto p=cast(DPlus)e2){
-						DExprSet summands;
-						foreach(s;p.summands) summands.insert(-s);
-						return dPlus(summands);
-					}
+				if(auto p=cast(DPlus)e2){
+					DExprSet summands;
+					foreach(s;p.summands) summands.insert(e1*s);
+					return dPlus(summands);
 				}
 			}
 			if(e2.isFraction()){
@@ -465,7 +463,15 @@ class DMult: DCommutAssocOp{
 mixin(makeConstructorCommutAssoc!DMult);
 mixin(makeConstructorCommutAssoc!DPlus);
 
+auto distributeMult(DExpr sum,DExpr e){
+	DExpr[] r;
+	foreach(s;sum.summands)
+		r~=s*e;
+	return r;
+}
+
 auto dDistributeMult(DExpr sum,DExpr e){
+	// TODO: does this actually do anything?
 	DExprSet r;
 	foreach(s;sum.summands)
 		DPlus.insert(r,s*e);
@@ -663,7 +669,7 @@ class DIvr: DExpr{ // iverson brackets
 			dlcm=lcm(dlcm,nd[1]);
 		}
 		if(ngcd!=1||dlcm!=1)
-			return dIvr(type,dDistributeMult(e,dℕ(dlcm)/ngcd));
+			return dIvr(type,dDistributeMult(e,dℕ(dlcm)/ngcd)); // TODO: does distribution do anything here?
 		return null;
 	}
 }
@@ -703,7 +709,19 @@ class DDelta: DExpr{ // Dirac delta function
 	static DExpr constructHook(DExpr e){ return null; }
 }
 
-mixin(makeConstructorUnary!DDelta);
+//mixin(makeConstructorUnary!DDelta);
+
+auto dDelta(DExpr a){
+	if(auto r=DDelta.constructHook(a)) return r;
+	// TODO: is there a better way to make the argument canonical?
+	auto t1=tuplex(typeid(DDelta),a);
+	if(t1 in uniqueMapUnary) return cast(DDelta)uniqueMapUnary[t1];
+	auto t2=tuplex(typeid(DDelta),-a);
+	if(t2 in uniqueMapUnary) return cast(DDelta)uniqueMapUnary[t2];
+	auto r=new DDelta(a);
+	uniqueMapUnary[t1]=r;
+	return r;
+}
 
 DExpr[2] splitPlusAtVar(DExpr e,DVar var){
 	DExprSet within;
@@ -766,6 +784,16 @@ class DInt: DOp{
 					return (expr/f).substitute(var,s)/dAbs(dDiff(var,d.e,s));
 				}
 			}
+		}
+		foreach(f;expr.factors){ // TODO: this can lead to blowup in expressions
+			if(auto p=cast(DPlus)f)
+				if(p.hasAny!DDelta){
+					DExprSet s;
+					foreach(k;distributeMult(p,expr/f)){
+						DPlus.insert(s,dInt(var,k));
+					}
+					return dPlus(s);
+				}
 		}
 		if(expr!is one && !expr.hasFreeVar(var)) return expr*dInt(var,one); // (infinite integral)
 		return null;
@@ -1058,25 +1086,23 @@ auto visit(T,S...)(DExpr node,S args){
 	static if(!manualPropagate) return result;
 }
 
-auto visitAll(T)(DExpr e){
-	static struct VisitAll{
-		DExpr e;
-		int opApply(scope int delegate(T) dg){
-			return e.visit!T(e,dg);
-		}
-	}
-	return VisitAll(e);
-	
-}
-
-auto forEachOf(T)(DExpr e){
-	static struct ForEachVisitor{
+auto allOf(T)(DExpr e){
+	static struct AllOfVisitor{
 		scope int delegate(T) dg;
+		int r=0;
 		int perform(T t){
 			if(auto r=dg(t))
-				return r;
+				return this.r=r;
 			return 0;
 		}
 	}
-	return visitAll!ForEachVisitor(e);
+	static struct AllOf{
+		DExpr e;
+		int opApply(scope int delegate(T) dg){
+			return e.visit!AllOfVisitor(dg).r;
+		}
+	}
+	return AllOf(e);
 }
+
+bool hasAny(T)(DExpr e){ foreach(x;e.allOf!T) return true; return false; }
