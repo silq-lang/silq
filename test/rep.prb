@@ -1,8 +1,8 @@
 def main(){
     x := 0;//Gauss(0,1) + Gauss(1,1);
     //repeat 3{ x += Bernoulli(1/2); }
-    repeat 100 { x+=1; }
-    repeat 3{ x += Bernoulli(1/2); }
+   // repeat 100 { x+=1; }
+    repeat 10{ x += Bernoulli(1/2); }
     //repeat  100 { x*=2; }
     //x += Bernoulli(1/2);
     return x;

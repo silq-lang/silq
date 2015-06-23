@@ -20,6 +20,9 @@ abstract class DExpr{
 	}
 	abstract string toStringImpl(Precedence prec);
 
+	abstract int forEachSubExpr(scope int delegate(DExpr) dg);
+
+	// TODO: implement in terms of 'forEachSubExpr'?
 	abstract DExpr substitute(DVar var,DExpr e);
 	abstract DExpr incDeBruin(int di);
 	abstract int freeVarsImpl(scope int delegate(DVar));
@@ -74,6 +77,7 @@ abstract class DExpr{
 	}
 
 	mixin template Constant(){
+		override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; }
 		override int freeVarsImpl(scope int delegate(DVar) dg){ return 0; }
 		override DExpr substitute(DVar var,DExpr e){ assert(var !is this); return this; }
 		override DExpr incDeBruin(int di){ return this; }
@@ -85,6 +89,7 @@ class DVar: DExpr{
 	private this(string name){ this.name=name; }
 	override string toStringImpl(Precedence prec){ return name; }
 
+	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; }
 	override int freeVarsImpl(scope int delegate(DVar) dg){ return dg(this); }
 	override DExpr substitute(DVar var,DExpr e){ return this is var?e:this; }
 	override DVar incDeBruin(int di){ return this; }
@@ -258,6 +263,13 @@ class DPlus: DCommutAssocOp{
 	override @property Precedence precedence(){ return Precedence.plus; }
 	override @property string symbol(){ return "+"; }
 
+	override int forEachSubExpr(scope int delegate(DExpr) dg){
+		foreach(a;operands)
+			if(auto r=dg(a))
+				return r;
+		return 0;
+	}
+
 	override int freeVarsImpl(scope int delegate(DVar) dg){
 		foreach(a;operands)
 			if(auto r=a.freeVarsImpl(dg))
@@ -336,6 +348,13 @@ class DMult: DCommutAssocOp{
 			}
 		}
 		return super.toStringImpl(prec);
+	}
+
+	override int forEachSubExpr(scope int delegate(DExpr) dg){
+		foreach(a;operands)
+			if(auto r=dg(a))
+				return r;
+		return 0;
 	}
 
 	override int freeVarsImpl(scope int delegate(DVar) dg){
@@ -486,6 +505,12 @@ abstract class DBinaryOp: DOp{
 	override string toStringImpl(Precedence prec){
 		return addp(prec, operands[0].toStringImpl(precedence) ~ symbol ~ operands[1].toStringImpl(precedence));
 	}
+	override int forEachSubExpr(scope int delegate(DExpr) dg){
+		foreach(a;operands)
+			if(auto r=dg(a))
+				return r;
+		return 0;
+	}
 	override int freeVarsImpl(scope int delegate(DVar) dg){
 		foreach(a;operands)
 			if(auto r=a.freeVarsImpl(dg))
@@ -609,6 +634,7 @@ class DIvr: DExpr{ // iverson brackets
 	DExpr e;
 	this(Type type,DExpr e){ this.type=type; this.e=e; }
 
+	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; } // TODO: correct?
 	override int freeVarsImpl(scope int delegate(DVar) dg){ return e.freeVarsImpl(dg); }
 	override DExpr substitute(DVar var,DExpr exp){ return dIvr(type,e.substitute(var,exp)); }
 	override DExpr incDeBruin(int di){ return dIvr(type,e.incDeBruin(di)); }
@@ -669,6 +695,7 @@ class DDelta: DExpr{ // Dirac delta function
 	private this(DExpr e){ this.e=e; }
 	override string toStringImpl(Precedence prec){ return "δ["~e.toString()~"]"; }
 
+	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; } // TODO: ok?
 	override int freeVarsImpl(scope int delegate(DVar) dg){ return e.freeVarsImpl(dg); }
 	override DExpr substitute(DVar var,DExpr exp){ return dDelta(e.substitute(var,exp)); }
 	override DExpr incDeBruin(int di){ return dDelta(e.incDeBruin(di)); }
@@ -743,6 +770,7 @@ class DInt: DOp{
 		if(expr!is one && !expr.hasFreeVar(var)) return expr*dInt(var,one); // (infinite integral)
 		return null;
 	}
+	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; } // TODO: correct?
 	override int freeVarsImpl(scope int delegate(DVar) dg){
 		return expr.freeVarsImpl(v=>v is var?0:dg(v));
 	}
@@ -818,6 +846,8 @@ class DDiff: DOp{
 		return null;
 	}
 
+	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; } // TODO: correct?
+
 	override int freeVarsImpl(scope int delegate(DVar) dg){
 		if(auto r=e.freeVarsImpl(w=>w is v?0:dg(v)))
 			return r;
@@ -853,6 +883,10 @@ class DAbs: DOp{
 	override string toStringImpl(Precedence prec){
 		return "|"~e.toString()~"|";
 	}
+	override int forEachSubExpr(scope int delegate(DExpr) dg){
+		return dg(e); // TODO: correct?
+	}
+	
 	override int freeVarsImpl(scope int delegate(DVar) dg){
 		return e.freeVarsImpl(dg);
 	}
@@ -892,6 +926,10 @@ class DLog: DOp{
 	override string toStringImpl(Precedence prec){
 		return "log("~e.toString()~")";
 	}
+
+	override int forEachSubExpr(scope int delegate(DExpr) dg){
+		return dg(e); // TODO: correct?
+	}
 	override int freeVarsImpl(scope int delegate(DVar) dg){
 		return e.freeVarsImpl(dg);
 	}
@@ -926,6 +964,9 @@ class DSin: DOp{
 	override string toStringImpl(Precedence prec){
 		return "sin("~e.toString()~")";
 	}
+	override int forEachSubExpr(scope int delegate(DExpr) dg){
+		return dg(e); // TODO: correct?
+	}
 	override int freeVarsImpl(scope int delegate(DVar) dg){
 		return e.freeVarsImpl(dg);
 	}
@@ -952,6 +993,12 @@ class DFun: DOp{ // uninterpreted functions
 	override Precedence precedence(){ return Precedence.none; }
 	override string toStringImpl(Precedence prec){
 		return fun.name~"("~args.map!(to!string).join(",")~")";
+	}
+	override int forEachSubExpr(scope int delegate(DExpr) dg){
+		foreach(a;args)
+			if(auto r=dg(a))
+				return r;
+		return 0;
 	}
 	override int freeVarsImpl(scope int delegate(DVar) dg){
 		foreach(a;args)
@@ -985,4 +1032,51 @@ DFun dFun(DVar fun,DExpr[] args){
 }
 DFun dFun(DVar fun,DExpr arg){
 	return dFun(fun,[arg]);
+}
+
+
+import std.traits: ParameterTypeTuple;
+import std.typetuple;
+auto visit(T,S...)(DExpr node,S args){
+	enum manualPropagate=false;
+	auto result = T(args);
+	alias TypeTuple!(__traits(getOverloads,T,"perform")) overloads;
+	int runIt(DExpr node){
+		static if(!manualPropagate)
+			if(auto r=node.forEachSubExpr(&runIt))
+				return r;
+		foreach(i,ov;overloads){
+			if(auto e = cast(ParameterTypeTuple!(ov)[0])node){
+				if(auto r=result.perform(e))
+					return r;
+				return 0;
+			}
+		}
+		return 0;
+	}
+	runIt(node);
+	static if(!manualPropagate) return result;
+}
+
+auto visitAll(T)(DExpr e){
+	static struct VisitAll{
+		DExpr e;
+		int opApply(scope int delegate(T) dg){
+			return e.visit!T(e,dg);
+		}
+	}
+	return VisitAll(e);
+	
+}
+
+auto forEachOf(T)(DExpr e){
+	static struct ForEachVisitor{
+		scope int delegate(T) dg;
+		int perform(T t){
+			if(auto r=dg(t))
+				return r;
+			return 0;
+		}
+	}
+	return visitAll!ForEachVisitor(e);
 }
