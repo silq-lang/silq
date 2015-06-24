@@ -98,7 +98,11 @@ class DVar: DExpr{
 		return null;
 	}
 }
-DVar dVar(string name){ return new DVar(name); }
+DVar[string] dVarCache; // TODO: caching desirable?
+DVar dVar(string name){
+	if(name in dVarCache) return dVarCache[name];
+	return dVarCache[name]=new DVar(name);
+}
 
 class DDeBruinVar: DVar{
 	int i;
