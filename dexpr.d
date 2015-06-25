@@ -343,14 +343,12 @@ class DMult: DCommutAssocOp{
 	override @property Precedence precedence(){ return Precedence.mult; }
 	override @property string symbol(){ return "·"; }
 	override string toStringImpl(Precedence prec){
-		// TODO: use suitable data structures
-		foreach(f;factors){
-			if(auto c=cast(Dℕ)f){
-				if(c.c<0){
-					return addp(prec,"-"~(-this).toStringImpl(Precedence.uminus),Precedence.uminus);
-				}
-			}
+		auto frac=this.getFractionalFactor().getFraction();
+		if(frac[0]<0){
+			return addp(prec,"-"~(-this).toStringImpl(Precedence.uminus),Precedence.uminus);
 		}
+		//if(frac[0]!=1&&frac[1]!=1) // TODO
+		// TODO: use suitable data structures
 		return super.toStringImpl(prec);
 	}
 
@@ -626,6 +624,75 @@ class DPow: DBinaryOp{
 mixin(makeConstructorNonCommutAssoc!DPow);
 DExpr dDiv(DExpr e1,DExpr e2){ return e1*e2^^-1; }
 
+
+DExpr expandPow(DPow p,long limit=-1){
+	auto c=cast(Dℕ)p.operands[1];
+	if(!c||limit>=0&&c.c>limit) return p;
+	auto a=cast(DPlus)p.operands[0];
+	if(!cast(DPlus)p.operands[0]) return p;
+	// TODO: do this more efficiently!
+	DExprSet r;
+	foreach(s;a.summands){
+		auto cur=s*a^^(c-1);
+		if(auto curp=cast(DPow)cur) cur=expandPow(curp,max(-1,limit-1));
+		DPlus.insert(r,cur);
+	}
+	return dPlus(r);
+}
+
+struct DPolynomial{
+	DVar var;
+	DExpr[] coefficients;
+	bool initialized(){ return !!var; }
+	long degree(){ return coefficients.length-1; }
+	void addCoeff(long exp,DExpr coeff){
+		while(coefficients.length<=exp) coefficients~=zero;
+		coefficients[exp]=coefficients[exp]+coeff;
+	}
+	DExpr toDExpr(){
+		DExprSet r;
+		foreach(i;0..coefficients.length)
+			DPlus.insert(r,coefficients[i]*var^^i);
+		return dPlus(r);
+	}
+}
+
+DPolynomial asPolynomialIn(DExpr e,DVar v,long limit=-1){
+	DExprSet normSet;
+	foreach(s;e.summands){
+		if(auto p=cast(DPow)s) DPlus.insert(normSet,p.expandPow(limit));
+		else DPlus.insert(normSet,s);
+	}
+	auto normalized=dPlus(normSet);
+	auto r=DPolynomial(v);
+	bool addCoeff(long exp,DExpr coeff){
+		if(coeff.hasFreeVar(v)) return false;
+		r.addCoeff(exp,coeff);
+		return true;
+	}
+ Lsum:foreach(s;normalized.summands){
+		foreach(f;s.factors){
+			if(f is v){
+				if(!addCoeff(1,s/v))
+					return DPolynomial.init;
+				continue Lsum;
+			}
+			auto p=cast(DPow)f;
+			if(!p||p.operands[0] !is v) continue;
+			auto c=cast(Dℕ)p.operands[1];
+			if(!c) continue;
+			auto coeff=s/p;
+			assert(c.c<=long.max);
+			if(!addCoeff(c.c.toLong(),coeff))
+				return DPolynomial.init;
+			continue Lsum;
+		}
+		if(!addCoeff(0,s)) return DPolynomial.init;
+	}
+	if(!r.coefficients.length) r.coefficients~=zero;
+	return r;
+}
+
 abstract class DUnaryOp: DOp{
 	DExpr operand;
 	protected mixin template Constructor(){ private this(DExpr e){ operand=e; } }
@@ -749,10 +816,10 @@ DExpr[2] splitPlusAtVar(DExpr e,DVar var){
 		auto ow=splitPlusAtVar(a,var);
 		if(ow[0]is zero || ow[1] is zero) return fail;
 		DExpr outside=ow[0]^^c;
-		DExpr within=zero;
+		DExprSet within;
 		for(ℕ i=0;i<c.c;i++)
-			within=within+nCr(c.c,i)*ow[0]^^i*ow[1]^^(c.c-i);
-		return [outside,within];
+			DPlus.insert(within,nCr(c.c,i)*ow[0]^^i*ow[1]^^(c.c-i));
+		return [outside,dPlus(within)];
 	}
  Lsum: foreach(s;e.summands){
 		if(s.hasFreeVar(var)){
@@ -803,6 +870,25 @@ DExpr[2] splitMultAtVar(DExpr e,DVar var){
 	return [dMult(outside),dMult(within)];
 }
 
+DExpr specialIntegral(DVar v,DExpr e){
+	static DExpr gaussianIntegral(DVar v,DExpr e){
+		// detect e^^(-a*x^^2+b*x+c), and integrate to e^^(b^^2/4a+c)*(pi/a)^^(1/2).
+		// TODO: this assumes that a≥0!
+		auto p=cast(DPow)e;
+		if(!p) return null;
+		if(!cast(DE)p.operands[0]) return null;
+		auto q=p.operands[1].asPolynomialIn(v,2);
+		if(!q.initialized) return null;
+		if(q.coefficients.length!=3) return null;
+		auto qc=q.coefficients;
+		auto a=-qc[2],b=qc[1],c=qc[0];
+		if(a is zero) return null;
+		return dE^^(b^^2/(4*a)+c)*(dΠ/a)^^(one/2);
+	}
+	if(auto r=gaussianIntegral(v,e)) return r;
+	return null;
+}
+
 class DInt: DOp{
 	private{
 		DDeBruinVar var;
@@ -849,6 +935,10 @@ class DInt: DOp{
 				}
 		}
 		if(expr!is one && !expr.hasFreeVar(var)) return expr*dInt(var,one); // (infinite integral)
+		if(auto r=specialIntegral(var,expr)) return r;
+		// TODO: explicit antiderivative (d/dx)⁻¹
+		// eg. the full antiderivative e^^(-a*x^^2+b*x) is given by:
+		// e^^(b^^2/4a)*(d/dx)⁻¹(e^^(-x^^2))[(b-2*a*x)/2*a^^(1/2)]/a^^(1/2)
 		return null;
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; } // TODO: correct?

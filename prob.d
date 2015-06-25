@@ -136,4 +136,12 @@ void test(){
 	/*auto x="x".dVar,y="y".dVar;
 	auto e=-(-2+x)^^2/6-y^^2/4-one/4+y/3;
 	writeln(splitPlusAtVar(e,x));*/
+	/*auto x="x".dVar;
+	writeln((x^^10+2*x^^2+3*x+4).asPolynomialIn(x).toDExpr());*/
+	/*auto x="x".dVar,y="y".dVar;
+	auto pdf=gaussianPDF(x,1.dℕ,2.dℕ)*gaussianPDF(y,3.dℕ,4.dℕ);
+	writeln(dInt(x,pdf));
+	writeln(dInt(y,pdf));
+	writeln(dInt(y,dInt(x,pdf)));
+	writeln(dInt(x,dInt(y,pdf)));*/
 }
