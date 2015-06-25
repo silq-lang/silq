@@ -738,11 +738,48 @@ auto dDelta(DExpr a){
 }
 
 DExpr[2] splitPlusAtVar(DExpr e,DVar var){
-	DExprSet within;
-	DExprSet outside;
-	foreach(s;e.summands){
-		if(s.hasFreeVar(var)) DPlus.insert(within,s);
-		else DPlus.insert(outside,s);
+	DExprSet outside, within;
+	//writeln("splitting: ",e,"\nat: ",var);
+	//scope(exit) writeln("res: ",dPlus(outside),", ",dPlus(within));
+	DExpr[2] handlePow(DPow p){
+		DExpr[2] fail=[null,null];
+		auto a=cast(DPlus)p.operands[0];
+		auto c=cast(Dℕ)p.operands[1];
+		if(!a||!c) return fail;
+		auto ow=splitPlusAtVar(a,var);
+		if(ow[0]is zero || ow[1] is zero) return fail;
+		DExpr outside=ow[0]^^c;
+		DExpr within=zero;
+		for(ℕ i=0;i<c.c;i++)
+			within=within+nCr(c.c,i)*ow[0]^^i*ow[1]^^(c.c-i);
+		return [outside,within];
+	}
+ Lsum: foreach(s;e.summands){
+		if(s.hasFreeVar(var)){
+			auto rest=s;
+			DExpr[2][] toExpand;
+			foreach(f;s.factors){
+				if(auto p=cast(DPow)f){
+					auto ow=handlePow(p);
+					if(ow[0]){
+						assert(!!ow[1]);
+						rest=rest/f;
+						toExpand~=ow;
+					}
+				}
+			}
+			void insertExpansion(int i,DExpr cur,bool isWithin){
+				if(i==toExpand.length){
+					//writeln("inserting: ",cur);
+					DPlus.insert(isWithin?within:outside,cur);
+					return;
+				}
+				insertExpansion(i+1,cur*toExpand[i][0],isWithin);
+				insertExpansion(i+1,cur*toExpand[i][1],true);
+			}
+			if(rest.hasFreeVar(var)) DPlus.insert(within,s);
+			else insertExpansion(0,rest,false);
+		}else DPlus.insert(outside,s);
 	}
 	return [dPlus(outside),dPlus(within)];
 }

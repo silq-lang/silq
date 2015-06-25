@@ -130,4 +130,10 @@ void test(){
 	writeln(dist);
 	//writeln(dInt(x,dist));
 	//writeln(dInt(y,dInt(x,dist)));*/
+	/*auto x="x".dVar, y="y".dVar;
+	writeln(splitMultAtVar(dE^^((x+y)^^2),x));*/
+	//-(-2+__g₂)²·⅙+-x₁²·¼+-¼+x₁·½
+	/*auto x="x".dVar,y="y".dVar;
+	auto e=-(-2+x)^^2/6-y^^2/4-one/4+y/3;
+	writeln(splitPlusAtVar(e,x));*/
 }

@@ -442,3 +442,11 @@ alias ℕ=BigInt;
 long toLong(ℕ a){ return a.to!string.to!long; } // TODO: do properly
 
 ℕ abs(ℕ x){ return x<0?-x:x; }
+
+ℕ nCr(ℕ n, ℕ r){
+	if(r>n) return ℕ(0);
+	ℕ c=1;
+	for(ℕ k=0;k<r;)
+		c*=n-k,c/=++k;
+	return c;
+}
