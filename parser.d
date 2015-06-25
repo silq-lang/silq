@@ -468,7 +468,7 @@ struct Parser{
 		while(ttype!=Tok!"}" && ttype!=Tok!"EOF"){
 			auto e=parseExpression();
 			s.put(e);
-			if(!e.isCompound())
+			if(!e.isCompound()&&ttype!=Tok!"}"||ttype==Tok!";")
 			   expect(Tok!";");
 		}
 		expect(Tok!"}");

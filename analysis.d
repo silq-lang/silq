@@ -86,7 +86,16 @@ private struct Analyzer{
 				if(le.lit.type==Tok!"0")
 					return le.lit.int64.dℕ;
 			}
-			if(auto c=transformConstr(e))
+			if(auto cmp=cast(CompoundExp)e){
+				if(cmp.s.length==1)
+					return doIt(cmp.s[0]);
+			}else if(auto ite=cast(IteExp)e){
+				auto cond=transformConstr(ite.cond);
+				if(!cond) throw new Unwind();
+				auto then=doIt(ite.then);
+				auto othw=doIt(ite.othw);
+				return cond*then+(1-cond)*othw; // TODO: make sure 0 eats mal-formed expressions
+			}else if(auto c=transformConstr(e))
 				return c;
 			err.error("unsupported",e.loc);
 			throw new Unwind();
