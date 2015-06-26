@@ -571,8 +571,8 @@ class DPow: DBinaryOp{
 		if(auto c=cast(Dℕ)operands[1]){
 			if(c.c==-1){
 				if(auto d=cast(Dℕ)operands[0])
-					if(2<=d.c&&d.c<=6)
-						return addp(prec,text("  ½⅓¼⅕⅙"d[d.c.toLong()]),Precedence.mult);
+					/*if(2<=d.c&&d.c<=6)// nice, but often hard to read
+						return addp(prec,text("  ½⅓¼⅕⅙"d[d.c.toLong()]),Precedence.mult);*/
 				return addp(prec,"⅟"~operands[0].toStringImpl(Precedence.mult),Precedence.mult);
 			}
 			return addp(prec,operands[0].toStringImpl(Precedence.pow)~highNum(c.c));
