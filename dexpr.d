@@ -108,7 +108,7 @@ class DDeBruinVar: DVar{
 	int i;
 	private this(int i){ this.i=i; super("ξ"~lowNum(i)); }
 	override DDeBruinVar incDeBruin(int di){ return dDeBruinVar(i+di); }
-	
+
 }
 DDeBruinVar[int] uniqueMapDeBruin;
 DDeBruinVar dDeBruinVar(int i){
@@ -568,15 +568,12 @@ class DPow: DBinaryOp{
 
 	override string toStringImpl(Precedence prec){
 		// TODO: always use ⅟ if negative factor in exponent
-		if(auto c=cast(Dℕ)operands[1]){
-			if(c.c==-1){
-				if(auto d=cast(Dℕ)operands[0])
-					/*if(2<=d.c&&d.c<=6)// nice, but often hard to read
-						return addp(prec,text("  ½⅓¼⅕⅙"d[d.c.toLong()]),Precedence.mult);*/
-				return addp(prec,"⅟"~operands[0].toStringImpl(Precedence.mult),Precedence.mult);
-			}
+		auto frc=operands[1].getFractionalFactor().getFraction();
+		if(frc[0]<0)
+			return addp(prec,"⅟"~(operands[0]^^-operands[1]).toStringImpl(Precedence.mult),Precedence.mult);
+		// also nice, but often hard to read: ½⅓¼⅕⅙
+		if(auto c=cast(Dℕ)operands[1])
 			return addp(prec,operands[0].toStringImpl(Precedence.pow)~highNum(c.c));
-		}
 		if(auto c=cast(DPow)operands[1]){
 			if(auto e=cast(Dℕ)c.operands[1]){
 				if(e.c==-1){
@@ -1104,7 +1101,7 @@ class DAbs: DOp{
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
 		return dg(e); // TODO: correct?
 	}
-	
+
 	override int freeVarsImpl(scope int delegate(DVar) dg){
 		return e.freeVarsImpl(dg);
 	}
