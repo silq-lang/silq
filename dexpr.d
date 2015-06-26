@@ -441,7 +441,26 @@ class DMult: DCommutAssocOp{
 				if(auto pf=cast(DPow)e2){
 					if(p.operands[0] is pf.operands[0])
 						return p.operands[0]^^(p.operands[1]+pf.operands[1]);
-				}				
+					static DExpr tryCombine(DExpr a,DExpr b){
+						DExprSet s;
+						DMult.insert(s,a);
+						DMult.insert(s,b);
+						if(a !in s || b !in s)
+							return dMult(s);
+						return null;
+					}
+					auto exp1=p.operands[1],exp2=pf.operands[1];
+					if(exp1 is exp2){
+						auto a=p.operands[0],b=pf.operands[0];
+						if(auto r=tryCombine(a,b))
+							return r^^exp1;
+					}
+					if(exp1 is -exp2){
+						auto a=p.operands[0],b=1/pf.operands[0];
+						if(auto r=tryCombine(a,b))
+							return r^^exp1;
+					}
+				}
 			}
 			return null;
 		}
