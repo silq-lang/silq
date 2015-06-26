@@ -1,10 +1,10 @@
 // Example 4. Unsupported!
 
 def main(){
-	c1 := Bernoulli(1/2);
+    c1 := Bernoulli(1/2);
     c2 := Bernoulli(1/2);
-	while !(c1||c2){ // unsupported
-    	c1 = Bernoulli(1/2);
+    while !(c1||c2){ // unsupported
+        c1 = Bernoulli(1/2);
         c2 = Bernoulli(1/2);
-	}
+    }
 }

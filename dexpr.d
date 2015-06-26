@@ -117,7 +117,6 @@ DDeBruinVar dDeBruinVar(int i){
 		uniqueMapDeBruin[i];
 }
 
-
 class Dℕ : DExpr{
 	ℕ c;
 	private this(ℕ c){ this.c=c; }
@@ -905,7 +904,21 @@ class DInt: DOp{
 		return addp(prec,symbol~"d"~var.toString()~expr.toStringImpl(precedence));
 	}
 	static DExpr constructHook(DVar var,DExpr expr){
-		assert(!cast(DDeBruinVar)var);
+		static dInt(DVar var,DExpr expr){
+			if(cast(DDeBruinVar)var){
+				if(auto hooked=constructHook(var,expr)){
+					bool check(){
+						foreach(i;hooked.allOf!DInt)
+							if(i.var is var)
+								return true;
+							return false;
+					}
+					if(!check()) hooked=hooked.incDeBruin(-1); // TODO: is this right?
+					return hooked;
+				}
+			}
+			return .dInt(var,expr);
+		}
 		if(auto m=cast(DPlus)expr){
 			DExprSet summands;
 			foreach(s;m.summands)
@@ -924,15 +937,30 @@ class DInt: DOp{
 				}
 			}
 		}
-		foreach(f;expr.factors){ // TODO: this can lead to blowup in expressions
-			if(auto p=cast(DPlus)f)
-				if(p.hasAny!DDelta){
+		foreach(f;expr.factors){
+			if(auto p=cast(DPlus)f){
+				bool check(){
+					foreach(d;p.allOf!DDelta)
+						if(d.e.hasFreeVar(var))
+							return true;
+					return false;
+				}
+				if(check()){
 					DExprSet s;
 					foreach(k;distributeMult(p,expr/f)){
 						DPlus.insert(s,dInt(var,k));
 					}
 					return dPlus(s);
 				}
+			}
+		}
+		// Fubini
+		foreach(f;expr.factors){
+			if(auto other=cast(DInt)f){
+				assert(!!cast(DDeBruinVar)other.var);
+				auto intExpr=other.expr*(expr/f);
+				return dInt(other.var,intExpr);
+			}
 		}
 		if(expr!is one && !expr.hasFreeVar(var)) return expr*dInt(var,one); // (infinite integral)
 		if(auto r=specialIntegral(var,expr)) return r;
