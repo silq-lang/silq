@@ -1,3 +1,5 @@
 *~
 *.o
 prob
+*.def
+*.log
