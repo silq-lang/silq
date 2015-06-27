@@ -23,7 +23,7 @@ struct HashMap(K_, V_, alias eq_ , alias h_){
 	enum limitfactor = 32;
 	enum incrementFactor = 3;
 	enum decrementFactor = 2;
-	enum compactLimit = 2;
+	enum compactLimit = 16;
 
 
 	private void initialize(){ es = new B[](initialSize); }
