@@ -15,6 +15,13 @@ DExpr bernoulliPDF(DVar var,DExpr p){
 }
 
 DExpr uniformIntPDF(DVar var,DExpr a,DExpr b){
+	// TODO: remove this hack!
+	if(auto ca=cast(Dℕ)a) if(auto cb=cast(Dℕ)b){
+		DExprSet r;
+		for(ℕ x=ca.c;x<=cb.c;x++)
+			DPlus.insert(r,dDelta(var-x));
+		return dPlus(r)/(b-a+1);
+	}
 	auto nnorm=dIvr(DIvr.Type.leZ,a-var)*dIvr(DIvr.Type.leZ,var-b)*dDelta(dSin(dΠ*var)/dΠ);
 	return nnorm/dInt(var,nnorm);
 }
@@ -99,10 +106,11 @@ class Distribution{
 		marginalize(nvar);
 	}
 	void marginalize(DVar var)in{assert(var in freeVars); }body{
-		assert(distribution.hasFreeVar(var),text(distribution," ",var));
+		//assert(distribution.hasFreeVar(var),text(distribution," ",var));
 		//writeln("marginalizing: ",var,"\ndistribution: ",distribution,"\nmarginalized: ",dInt(var,distribution));
 		distribution=dInt(var,distribution);
 		freeVars.remove(var);
+		assert(!distribution.hasFreeVar(var));
 	}
 	void observe(DExpr e){ // e's domain must be 0 or 1.
 		auto nDist=distribution*e;

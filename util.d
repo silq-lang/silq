@@ -378,8 +378,10 @@ string digitRep(T)(T i,dstring digits,dchar minus){
 	return r;
 }
 
-string lowNum(T)(T i){ return digitRep(i,"₀₁₂₃₄₅₆₇₈₉",'₋'); }
-string highNum(T)(T i){ return digitRep(i,"⁰¹²³⁴⁵⁶⁷⁸⁹",'⁻'); }
+immutable dstring lowDigits="₀₁₂₃₄₅₆₇₈₉";
+immutable dstring highDigits="⁰¹²³⁴⁵⁶⁷⁸⁹";
+string lowNum(T)(T i){ return digitRep(i,lowDigits,'₋'); }
+string highNum(T)(T i){ return digitRep(i,highDigits,'⁻'); }
 
 string overline(string s){
 	string r;

@@ -1,0 +1,5 @@
+
+def main(){
+    x := 0;
+    if Bernoulli(1/2){ x=1; }
+}

@@ -1,0 +1,11 @@
+
+def neighbour_tuesday(){
+    isGirl1 := Bernoulli(1/2);
+    bornOnATuesday1 := Bernoulli(1/7);
+    isGirl2 := Bernoulli(1/2);
+    bornOnATuesday2 := Bernoulli(1/7);
+    observe(isGirl1 && bornOnATuesday1 ||
+            isGirl2 && bornOnATuesday2);
+    bothAreGirls := isGirl1 && isGirl2;
+    return bothAreGirls;
+}

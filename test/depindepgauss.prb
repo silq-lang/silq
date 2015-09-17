@@ -1,0 +1,7 @@
+
+def main(){
+    x := Gauss(0,1);
+    y := Gauss(0,1);
+    z := x+z;
+    return z;
+}

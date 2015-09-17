@@ -141,6 +141,14 @@ class FunctionDef: Expression{
 	override string toString(){ return "def "~name.toString()~"("~join(map!(to!string)(args),",")~")"~body_.toString();}
 }
 
+class TupleExp: Expression{
+	Expression[] e;
+	this(Expression[] e){
+		this.e=e;
+	}
+	override string toString(){ return "("~e.map!(to!string).join(",")~")"; }
+}
+
 class ReturnExp: Expression{
 	Expression e;
 	this(Expression e){

@@ -229,3 +229,8 @@ T unite(T)(T a,T b){
 	return r;
 }
 
+T setMinus(T)(T a,T b){
+	T r;
+	foreach(x;a) if(x !in b) r.insert(x);
+	return r;
+}

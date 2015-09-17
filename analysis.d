@@ -9,6 +9,7 @@ alias AddExp=BinaryExp!(Tok!"+");
 alias SubExp=BinaryExp!(Tok!"-");
 alias MulExp=BinaryExp!(Tok!"*");
 alias DivExp=BinaryExp!(Tok!"/");
+alias PowExp=BinaryExp!(Tok!"^");
 alias UMinusExp=UnaryExp!(Tok!"-");
 alias LtExp=BinaryExp!(Tok!"<");
 alias LeExp=BinaryExp!(Tok!"<=");
@@ -39,6 +40,7 @@ private struct Analyzer{
 			if(auto me=cast(SubExp)e) return doIt(me.e1)-doIt(me.e2);
 			if(auto me=cast(MulExp)e) return doIt(me.e1)*doIt(me.e2);
 			if(auto de=cast(DivExp)e) return doIt(de.e1)/doIt(de.e2);
+			if(auto pe=cast(PowExp)e) return doIt(pe.e1)^^doIt(pe.e2);
 			if(auto ume=cast(UMinusExp)e) return -doIt(ume.e);
 			if(auto ce=cast(CallExp)e){
 				if(auto id=cast(Identifier)ce.e){
@@ -215,17 +217,22 @@ private struct Analyzer{
 				}
 			}else if(auto re=cast(ReturnExp)e){
 				if(i+1==ce.s.length){ // TODO: this does not catch return statements in nested blocks!
-					if(auto id=cast(Identifier)re.e){ // TODO: tuple returns
-						if(auto v=dist.lookupVar(id.name)){
-							while(dist.freeVars.length>1){
-								foreach(w;dist.freeVars){
-									if(w==v) continue;
-									dist.marginalize(w);
-									break;
-								}
-							}
-						}else err.error("undefined variable '"~id.name~"'",id.loc);
-					}else err.error("only return of variable supported",re.e.loc);
+					Expression[] returns;
+					if(auto tpl=cast(TupleExp)re.e) returns=tpl.e;
+					else returns=[re.e];
+					import hashtable;
+					SetX!DVar vars;
+					foreach(ret;returns){
+						if(auto id=cast(Identifier)ret){ // TODO: tuple returns
+							if(auto v=dist.lookupVar(id.name)){
+								vars.insert(v);
+								
+							}else err.error("undefined variable '"~id.name~"'",id.loc);
+						}else err.error("only variables supported as return expressions",ret.loc);
+					}
+					foreach(w;dist.freeVars.setMinus(vars)){
+						dist.marginalize(w);
+					}
 				}else err.error("return statement must be last statement in function",re.loc);
 			}else if(auto oe=cast(ObserveExp)e){
 				if(auto c=transformConstr(oe.e)){

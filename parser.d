@@ -33,17 +33,16 @@ bool isRelationalOp(TokenType op){
 // left binding power
 template lbp(TokenType type){enum lbp=getLbp(type);}
 // right binding power: ^^, (op)=, ? bind weaker to the right than to the left, '.' binds only primaryExpressions
-template rbp(TokenType type){enum rbp=type==Tok!"."?180:lbp!type-(type==Tok!"^^"||lbp!type==30||type==Tok!"?");}
+template rbp(TokenType type){enum rbp=type==Tok!"."?180:lbp!type-(type==Tok!"^"||lbp!type==30||type==Tok!"?");}
 
 int getLbp(TokenType type) pure{ // operator precedence
 	switch(type){
 	//case Tok!"..": return 10; // range operator
-	case Tok!",":  return 20; // comma operator
+	//case Tok!",":  return 20; // comma operator
 	// assignment operators
 	case Tok!"/=",Tok!"&=",Tok!"|=",Tok!"-=":
 	case Tok!"+=",Tok!"<<=",Tok!">>=", Tok!">>>=":
 	case Tok!"=",Tok!"*=",Tok!"%=",Tok!"^=":
-	case Tok!"^^=",Tok!"~=":
 	case Tok!"&&=", Tok!"||=":
 	case Tok!":=":
 		return 30;
@@ -51,10 +50,6 @@ int getLbp(TokenType type) pure{ // operator precedence
 	case Tok!"?":  return 40; // conditional operator
 	case Tok!"||": return 50; // logical OR
 	case Tok!"&&": return 60; // logical AND
-	// bitwise operators
-	case Tok!"|":  return 70; // bitwise OR
-	case Tok!"^":  return 80; // bitwise XOR
-	case Tok!"&":  return 90; // bitwise AND
 	// relational operators
 	case Tok!"==",Tok!"!=",Tok!">",Tok!"<":
 	case Tok!">=",Tok!"<=",Tok!"!>",Tok!"!<":
@@ -74,7 +69,7 @@ int getLbp(TokenType type) pure{ // operator precedence
 	case Tok!"&",Tok!"++",Tok!"--",Tok!"*":
 	case Tok!"-",Tok!"+",Tok!"!",Tok!"~":
 		return 140;  */
-	case Tok!"^^": return 150; // power
+	case Tok!"^":  return 150; // power
 	// postfix operators
 	case Tok!".",Tok!"++",Tok!"--":
 	case Tok!"(", Tok!"[": // function call and indexing
@@ -371,8 +366,19 @@ struct Parser{
 			case Tok!"(":
 				nextToken();
 				res=parseExpression();
-				expect(Tok!")");
-				res.brackets++;
+				if(ttype==Tok!","){
+					auto tpl=[res];
+					while(ttype==Tok!","){
+						nextToken();
+						if(ttype==Tok!")") break;
+						tpl~=parseExpression();
+					}
+					expect(Tok!")");
+					res=New!TupleExp(tpl);
+				}else{
+					expect(Tok!")");
+					res.brackets++;
+				}
 				return res;
 			case Tok!"-":
 				nextToken();

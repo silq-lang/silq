@@ -98,7 +98,7 @@ class DVar: DExpr{
 		return null;
 	}
 }
-DVar[string] dVarCache; // TODO: caching desirable?
+DVar[string] dVarCache; // TODO: caching desirable? (also need to update parser if not)
 DVar dVar(string name){
 	if(name in dVarCache) return dVarCache[name];
 	return dVarCache[name]=new DVar(name);
@@ -920,7 +920,7 @@ class DInt: DOp{
 		return addp(prec,symbol~"d"~var.toString()~expr.toStringImpl(precedence));
 	}
 	static DExpr constructHook(DVar var,DExpr expr){
-		static dInt(DVar var,DExpr expr){
+		/*static dInt(DVar var,DExpr expr){
 			if(cast(DDeBruinVar)var){
 				if(auto hooked=constructHook(var,expr)){
 					bool check(){
@@ -934,7 +934,7 @@ class DInt: DOp{
 				}
 			}
 			return .dInt(var,expr);
-		}
+			}*/
 		if(auto m=cast(DPlus)expr){
 			DExprSet summands;
 			foreach(s;m.summands)
@@ -970,15 +970,20 @@ class DInt: DOp{
 				}
 			}
 		}
+		if(expr is one) return null; // (infinite integral)
 		// Fubini
 		foreach(f;expr.factors){
+			// assert(f.hasFreeVar(var));
 			if(auto other=cast(DInt)f){
 				assert(!!cast(DDeBruinVar)other.var);
-				auto intExpr=other.expr*(expr/f);
-				return dInt(other.var,intExpr);
+				auto tmpvar=new DVar("tmp"); // TODO: get rid of this!
+				auto intExpr=(other.expr*(expr/f)).substitute(other.var,tmpvar).incDeBruin(-1);
+				auto ow=intExpr.splitMultAtVar(var);
+				if(auto res=constructHook(var,ow[1]))
+					return dInt(tmpvar,res*ow[0]);
 			}
 		}
-		if(expr!is one && !expr.hasFreeVar(var)) return expr*dInt(var,one); // (infinite integral)
+		if(!expr.hasFreeVar(var)) return expr*dInt(var,one); // (infinite integral)
 		if(auto r=specialIntegral(var,expr)) return r;
 		// TODO: explicit antiderivative (d/dx)⁻¹
 		// eg. the full antiderivative e^^(-a*x^^2+b*x) is given by:

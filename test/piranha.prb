@@ -1,0 +1,10 @@
+// Simple example from Joost-Pieter Katoen's talk
+// TODO: arrays / tuples
+
+def main(){
+    a := Bernoulli(1/2); // 1 -- piranha
+    b := 1; // add piranha
+    r := if Bernoulli(1/2) { a } else { b };
+    observe(r);
+    return a;
+}

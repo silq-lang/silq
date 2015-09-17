@@ -144,4 +144,21 @@ void test(){
 	writeln(dInt(y,pdf));
 	writeln(dInt(y,dInt(x,pdf)));
 	writeln(dInt(x,dInt(y,pdf)));*/
+	//(∫dξ₁[-1+ξ₁≤0]·[-ξ₁≤0]·δ[-z+y·ξ₁])·[-1+y≤0]·[-y≤0]
+	/+auto xi1="ξ₁".dVar,y="y".dVar,z="z".dVar;
+	auto res=dInt(xi1,dDelta(y*xi1)*dIvr(DIvr.Type.leZ,xi1));
+	writeln(res);
+	writeln(dInt(y,res));+/
+	/*auto a="a".dVar,b="b".dVar,r="r".dVar;
+	auto exp=dE^^(-a^^2/2-b^^2/2)*dDelta(r-1)/(2*dΠ);
+	writeln(dInt(b,dInt(a,exp)));*/
+	/*import dparse;
+	auto x="x".dVar,y="y".dVar,a="a".dVar,b="b".dVar;
+	auto e="(δ[-x+1+[-b+a<0]]·δ[-y+1+[-b+a<0]]·⅟4+δ[-x+[-b+a<0]]·δ[-y+[-b+a<0]]·⅟4)·e^(-a²·⅟2+-b²·⅟2)·δ[-r+[-x+y=0]]·⅟π".dParse;
+	//auto e2=dInt(y,dInt(x,e));
+	//writeln(dInt(a,dInt(b,e2)));
+	//auto e2=dInt(a,e);
+	//writeln(e2);
+	auto e2="((∫dξ₁δ[-x+1+[-b+ξ₁<0]]·δ[-y+1+[-b+ξ₁<0]]·⅟e^(ξ₁²·⅟2))·⅟4+(∫dξ₁δ[-x+[-b+ξ₁<0]]·δ[-y+[-b+ξ₁<0]]·⅟e^(ξ₁²·⅟2))·⅟4)·δ[-r+[-x+y=0]]·⅟e^(b²·⅟2)·⅟π".dParse;
+	writeln(dInt(x,e2));*/
 }
