@@ -1,0 +1,14 @@
+x = unifReal(-10;10);
+y = unifReal(-5;5);
+
+if (x+y < 4.0) then y = y+5.0 end;
+if (x+y >= 3.0) then x = y + 1.0 end; 
+estimateProb(x+y > 10.);
+ estimateProb(x+y > 11.);
+estimateProb(x+y > 12.);
+estimateProb(x+y > 13.);
+estimateProb(x+y > 14.);
+estimateProb(x+y > 15.);
+estimateProb(x+y > 16.)
+
+

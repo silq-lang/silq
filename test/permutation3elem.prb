@@ -1,0 +1,9 @@
+def main(){
+    x := UniformInt(1,3);
+    y := UniformInt(1,3);
+    z := UniformInt(1,3);
+    observe(x!=y);
+    observe(x!=z);
+    observe(y!=z);
+    return x;
+}

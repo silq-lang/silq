@@ -1,0 +1,18 @@
+x = 0.0;
+N = 500;
+i = 0;
+while (i < N) do
+	x = x + unifReal(0.0,1.0);
+	i = i + 1
+end;
+estimateProb(x <= 0.0);
+estimateProb(x <= 50.0);
+estimateProb(x <= 100.0);
+estimateProb(x <= 150.0);
+estimateProb(x <= 200.0);
+estimateProb(x <= 250.0);
+estimateProb(x <= 300.0);
+estimateProb(x <= 350.0);
+estimateProb(x <= 400.0);
+estimateProb(x <= 450.0);
+estimateProb(x <= 500.0)

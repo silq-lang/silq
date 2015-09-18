@@ -1,0 +1,37 @@
+MAX = 10;
+cartPos = unifReal(-5.0,-3.0);
+cartVelo = unifReal(2.0,3.0);
+pAng = unifReal(1.0,5.0);
+pAngDer = unifReal(-0.5,0.5);
+count = 0;
+exitCond = 0;
+while (exitCond <= 0) do
+ count = count +1;
+ if (count >= MAX) 
+ then 
+    exitCond =1 
+ end;
+ if (cartPos >= -0.5)
+ then 
+      if (cartPos <= 0.5)
+      then 
+      	   if (pAng >= -0.1) 
+	   then 
+	   	if (pAng <= 0.1)
+		then 
+		     exitCond = 1
+		end
+            end	
+       end
+ end;	     
+ cartPos = cartPos + 0.01 * cartVelo ;
+ cartVelo = 0.02 * cartPos + 1.03 * cartVelo  - 0.3 * pAng - 0.06 * pAngDer +  unifReal(-1.0;1.0);
+ pAng = pAng + 0.01 * pAngDer;
+ pAngDer = 0.04 * cartPos + 0.07 * cartVelo  - 0.51 * pAng + 0.85 * pAngDer + unifReal(-0.8;0.8)
+end;
+estimateProb(pAng <= 1.0);
+estimateProb(pAng >= -1.0);
+estimateProb(pAng <= 0.1);
+estimateProb(pAng >= -0.1);
+estimateProb(cartPos >= -1.0 );
+estimateProb(cartPos <= 1.0 )

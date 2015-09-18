@@ -1,0 +1,24 @@
+rainProb = 0.3;
+rain = unifReal(0.0;1.0);
+rainFlip = 0.9;
+rainChance = unifReal(0.0;1.0);
+sprinklerProb = 0.5;
+sprinkler = unifReal(0.0;1.0);
+sprinklerFlip = 0.8;
+sprinklerChance = unifReal(0.0;1.0);
+grassWet = 0;
+grassFlip = 0.1;
+grassChance = unifReal(0.0;1.0);
+if (rain <= rainProb) then
+	if(rainChance <= rainFlip) then 
+		grassWet = 1 
+	end
+end;
+if (sprinkler <= sprinklerProb) then
+	if (sprinklerChance <= sprinklerFlip) then 
+		grassWet = 1 
+	end
+end;
+if (grassChance <= grassFlip) then grassWet = 1 end;
+estimateProb(grassWet <= 0);
+estimateProb(grassWet >= 1)

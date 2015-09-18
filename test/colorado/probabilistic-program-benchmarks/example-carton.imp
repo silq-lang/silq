@@ -1,0 +1,64 @@
+nPerCarton = 10;
+nLight = 0;
+nHeavy = 0;
+nMedium = 0;
+nPacked = 0;
+count = 0;
+totalWeight = 0.0;
+w = 0.0;
+
+
+
+while (nPacked < nPerCarton) do
+
+
+   w = unifReal(0.8;1.2);
+
+
+   totalWeight = totalWeight + w;
+   if (w > 0.9) 
+   then
+	if (w < 1.1) 
+	then
+		nMedium = nMedium+1;
+		nPacked = nPacked +1 
+	end
+   end;
+   if ( w >= 1.1) 
+   then
+	if (nHeavy <= nLight) 
+	then  
+   	nHeavy = nHeavy+1;
+	nPacked = nPacked +1
+	end
+   end;
+   if ( w <= 0.9)
+   then
+	if (nLight <= nHeavy)
+	then
+		nLight = nLight+1;
+		nPacked = nPacked +1
+	end
+   end;
+   count = count +1
+   
+end;
+
+estimateProb(count >= 10);
+estimateProb(count >= 11);
+estimateProb(count >= 12);
+estimateProb(count >= 13);
+estimateProb(count >= 14);
+estimateProb(count >= 15);
+estimateProb(count >= 16);
+estimateProb(count >= 17);
+estimateProb(count >= 18);
+estimateProb(count >= 19);
+estimateProb(count >= 20);
+estimateProb(count >= 21);
+estimateProb(count >= 22);
+estimateProb(totalWeight >= 12.);
+estimateProb(totalWeight >= 11.);
+estimateProb(totalWeight >= 10.);
+estimateProb(totalWeight >= 9.);
+estimateProb(totalWeight >= 8.)

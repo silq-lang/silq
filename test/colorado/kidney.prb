@@ -1,0 +1,52 @@
+// skipped: TODO: support for method calls
+// Colorado PLDI'13: Example: Estimating Kidney Disease Risk in Adults
+
+estimateLogEGFR(logScr,age,isFemale,isAA){
+    k := 0;
+    alpha := 0;
+    f := 0;
+    if isFemale{
+        k = -357/1000;
+        alpha = -329/1000;
+    }else{
+        k = -105/1000;
+	alpha = -411/1000;
+    }
+    
+    
+    f = if logScr < k {
+        alpha * (logScr - k);
+    }else{
+	-1209/1000 * (logScr - k);
+    }
+    f = f - 7*age/1000;
+    
+    if isFemale { f += 17/1000; }
+    if isAA { f += 148/1000; }
+    return f;
+}
+
+compareWithNoise(logScr,age,isFemale,isAA){
+    f1 := estimateLogEGFR(logScr,age,isFemale,isAA);
+    logScr += Uniform(-1/10,1/10);
+    age += UniformInt(-1,1);
+    if Bernoulli(1/100){
+       isFemale = !isFemale;
+    }
+    if Bernoulli(1/100){
+       isAA = !isAA;
+    }
+    f2 = estimateLogEGFR(logScr,age,isFemale,isAA);
+    r1 := f1 - f2 >= 0.1;
+    r2 := f2 - f1 >= 0.1;
+    return (r1,r2);
+}
+
+def main(){
+    // TODO: check whether this makes any sense 
+    logScr:=467/100;
+    age:=30;
+    isFemale:=1;
+    isAA:=1;
+    return compareWithNoise(logScr,age,isFemale,isAA);
+}

@@ -1,0 +1,127 @@
+p = 0.5;
+
+process1 = 0.0;
+process2 = 0.0;
+process3 = 0.0;
+process4 = 0.0;
+process5 = 0.0;
+
+if (unifReal(0,1) <= p)
+then
+	process1 = 1.0
+end;
+if (unifReal(0,1) <= p)
+then
+	process2 = 1.0
+end;
+if (unifReal(0,1) <= p)
+then
+	process3 = 1.0
+end;
+if (unifReal(0,1) <= p)
+then
+	process4 = 1.0
+end;
+if (unifReal(0,1) <= p)
+then
+	process5 = 1.0
+end;
+
+sum = process1 + process2 + process3 + process4 + process5;
+if (sum > 1.0)
+then
+	notStable = 1.0
+else
+	notStable = 0.0
+end;	
+
+count = 0;
+while (notStable > 0.5) do
+      oldprocess1 = process1;
+      oldprocess2 = process2;
+      oldprocess3 = process3;
+      oldprocess4 = process4;
+      oldprocess5 = process5;
+      
+      if (oldprocess1 > 0.5) 
+      then
+	if (unifReal(0,1) <= p)
+	then
+		process1 = 0.0;
+		process5 = 1.0
+      	else
+		process1 = 0.0;
+		process2 = 1.0
+     	end
+      end;
+
+      if (oldprocess2 > 0.5) 
+      then
+	if (unifReal(0,1) <= p)
+	then
+		process2 = 0.0;
+		process1 = 1.0
+      	else
+		process2 = 0.0;
+		process3 = 1.0
+     	end
+      end;
+      
+      if (oldprocess3 > 0.5) 
+      then
+	if (unifReal(0,1) <= p)
+	then
+		process3 = 0.0;
+		process2 = 1.0
+      	else
+		process3 = 0.0;
+		process4 = 1.0
+     	end
+      end;
+
+      if (oldprocess4 > 0.5) 
+      then
+	if (unifReal(0,1) <= p)
+	then
+		process4 = 0.0;
+		process3 = 1.0
+      	else
+		process4 = 0.0;
+		process5 = 1.0
+     	end
+      end;
+
+      if (oldprocess5 > 0.5) 
+      then
+	if (unifReal(0,1) <= p)
+	then
+		process5 = 0.0;
+		process4 = 1.0
+      	else
+		process5 = 0.0;
+		process1 = 1.0
+     	end
+      end;
+
+      sum = process1 + process2 + process3 + process4 + process5;
+      if (sum > 1.0)
+      then
+	notStable = 1.0
+      else
+	notStable = 0.0
+      end;
+      
+      count = count + 1
+end;
+
+estimateProb(count < 1);
+estimateProb(sum < 0.5);
+estimateProb(count >= 1);
+estimateProb(count >= 5);
+estimateProb(count >= 10);
+estimateProb(count >= 20);
+estimateProb(count >= 50);
+estimateProb(count >= 100)
+
+
+

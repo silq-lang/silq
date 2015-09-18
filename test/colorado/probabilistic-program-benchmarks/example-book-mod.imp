@@ -1,0 +1,52 @@
+MAX = 500; 
+curValue = unifInt(0,500); 
+tgtValue = unifInt(0,500); 
+count = 1; 
+guard = 0;
+if (-5 > curValue - tgtValue) then guard = 1 else if (curValue - tgtValue > 5) then guard = 1 else guard = 0 end end;
+print guard;
+while (guard > 0) do
+  delta = (tgtValue - curValue);
+  if (delta < 0) then
+      if (delta > -25) then
+          d = delta + unifInt(-10,10)
+      else 
+          if (delta > -50) then
+              d = delta + unifInt(-20,20)
+          else
+	      if (delta > -100) then
+                  d = delta + unifInt(-50,50)
+	      else
+		  d = delta + unifInt(-100,100)
+	      end
+      	  end
+      end
+  else
+      if (delta <25 ) then
+          d = delta + unifInt(-10,10)
+      else
+          if (delta < 50) then
+              d = delta + unifInt(-20,20)
+          else
+              if (delta > 100) then
+                  d = delta + unifInt(-50,50)
+	      else
+		  d = delta + unifInt(-100,100)
+	      end
+          end
+      end
+  end;
+  curValue = curValue + d;
+
+  if (curValue > MAX) then
+      curValue = MAX end;
+
+  if (curValue < 1) then
+      curValue = 1 end;
+
+  newDelta = curValue - tgtValue;
+  if (-5 > newDelta) then guard = 1 else if (newDelta > 5) then guard = 1 else guard = 0 end end;
+  count = count + 1
+end;
+print count;
+estimateProb (count <= 20);

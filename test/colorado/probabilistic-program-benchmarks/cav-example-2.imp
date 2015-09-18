@@ -1,0 +1,11 @@
+h = 0.0;
+t = 10.0;
+while (h <= t) do
+      	flip_guard = unifReal(0.0, 1.0);
+	if (flip_guard <= 0.5)
+	then
+		h = h + unifReal(0.0, 10.0)
+	end;
+	t = t + 1.0
+end;
+estimateProb(h-t > 1.0)

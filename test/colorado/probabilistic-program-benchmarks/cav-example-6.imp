@@ -1,0 +1,114 @@
+x = 0.0;
+y = 0.0;
+dist = 0.0;
+count = 1;
+N = 7; 
+while (count < N) do
+	c1 = unifReal(0.0, 1.0);
+	c2 = unifReal(0.0, 1.0);
+	c3 = unifReal(0.0, 1.0);
+	r1 = unifReal(0.0, 1.0);
+	if (x >= 0.0) 
+	then
+		if (y >= 0.0)
+		then
+			if (c1 <= 0.5)
+			then
+				if (c2 <= 0.5)
+				then
+					x = x + r1;
+					dist = dist + r1
+				else
+                                        y = y + r1;
+                                        dist = dist + r1
+				end
+			else
+				if (c3 <= 0.5)
+                                then
+                                        x = x - r1;
+                                        dist = dist - r1 
+                                else
+                                        y = y - r1;
+                                        dist = dist - r1 
+                                end 
+			end
+		else
+			if (c1 <= 0.5)
+                        then
+                                if (c2 <= 0.5)
+                                then
+                                        x = x + r1;
+                                        dist = dist + r1
+                                else
+                                        y = y + r1;
+                                        dist = dist - r1
+                                end
+                        else
+                                if (c3 <= 0.5)
+                                then
+                                        x = x - r1;
+                                        dist = dist - r1
+                                else
+                                        y = y - r1;
+                                        dist = dist + r1
+                                end
+                        end
+		end
+	else
+		if (y >= 0.0)
+                then
+                        if (c1 <= 0.5)
+                        then
+                                if (c2 <= 0.5)
+                                then
+                                        x = x - r1;
+                                        dist = dist + r1
+                                else
+                                        y = y + r1;
+                                        dist = dist + r1
+                                end
+                        else
+                                if (c3 <= 0.5)
+                                then
+                                        x = x + r1;
+                                        dist = dist - r1
+                                else
+                                        y = y - r1;
+                                        dist = dist - r1
+                                end
+                        end
+                else
+                        if (c1 <= 0.5)
+                        then
+                                if (c2 <= 0.5)
+                                then
+                                        x = x - r1;
+				        dist = dist + r1
+				else
+                                        y = y + r1;
+                                        dist = dist - r1
+                                end
+                        else
+                                if (c3 <= 0.5)
+                                then
+                                        x = x + r1;
+                                        dist = dist - r1
+                                else
+                                        y = y - r1;
+                                        dist = dist + r1
+                                end
+                        end
+                end
+	end;
+	count = count + 1
+end;
+estimateProb(dist <= -4.0);
+estimateProb(dist <= -3.0);
+estimateProb(dist <= -2.0);
+estimateProb(dist <= -1.0);
+estimateProb(dist <= 0.0);
+estimateProb(dist <= 1.0);
+estimateProb(dist <= 2.0);
+estimateProb(dist <= 3.0);
+estimateProb(dist <= 4.0)
+

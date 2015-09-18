@@ -1,0 +1,83 @@
+x = 0.0;
+y = 0.0;
+estX = 0.0;
+estY = 0.0;
+dx = 0.0;
+dy = 0.0;
+dxc = 0.0;
+dyc = 0.0;
+i = 1;
+N = 6;
+while(i <= N) do
+	i = i + 1;
+	guard_stay = unifReal(0.0,1.0);
+	if (guard_stay <= 0.2) 
+	then
+		dxc = 0.0;
+		dyc = 0.0
+	else
+		guard_flip1 = unifReal(0.0,1.0);
+		guard_flip2 = unifReal(0.0,1.0);
+		guard_flip3 = unifReal(0.0,1.0);
+                guard_flip4 = unifReal(0.0,1.0);
+                guard_flip5 = unifReal(0.0,1.0);
+                guard_flip6 = unifReal(0.0,1.0);
+                guard_flip7 = unifReal(0.0,1.0);
+		if (guard_flip1 <= 0.1) then
+			if (guard_flip2 <= 0.1) then
+				if (guard_flip3 <= 0.1) then
+					dxc = 0.0;
+					dyc = unifReal(1.0, 2.0)
+				else
+					dxc = 0.0;
+					dyc = unifReal(-2.0, -1.0)
+				end
+			else
+				if (guard_flip4 <= 0.1) then
+					dxc = unifReal(1.0, 2.0);
+					dyc = 0.0
+				else
+					dxc = unifReal(-2.0, -1.0);
+					dyc = 0.0
+				end
+			end
+		else
+			if (guard_flip5 <= 0.1) then
+                                if (guard_flip6 <= 0.1) then
+                                        dxc = unifReal(1.0, 1.4142);
+                                        dyc = unifReal(1.0, 1.4142) 
+                                else
+                                        dxc = unifReal(1.0, 1.4142);
+                                        dyc = unifReal(-1.4142, -1.0)
+                                end
+                        else
+                                if (guard_flip7 <= 0.1) then
+                                        dxc = unifReal(-1.4142,-1.0);
+                                        dyc = unifReal(1.0,1.4142)
+                                else
+                                        dxc = unifReal(-1.4142,-1.0);
+                                        dyc = unifReal(-1.4142,-1.0)
+                                end
+                        end
+		end
+	end;
+	dx = dxc + unifReal(-0.05,0.05);
+	dy = dyc + unifReal(-0.05,0.05);
+	x = x + dx;
+	y = y + dy;
+	estX = estX + dxc;
+	estY = estY + dyc
+end;
+estimateProb(x-estX <= 0.10);
+estimateProb(x-estX >= -0.10);
+estimateProb(x-estX <= 0.20);
+estimateProb(x-estX >= -0.20);
+estimateProb(x-estX <= 0.30);
+estimateProb(x-estX >= -0.30);
+estimateProb(y-estY <= 0.10);
+estimateProb(y-estY >= -0.10);
+estimateProb(y-estY <= 0.20);
+estimateProb(y-estY >= -0.20);
+estimateProb(y-estY <= 0.30);
+estimateProb(y-estY >= -0.30)
+

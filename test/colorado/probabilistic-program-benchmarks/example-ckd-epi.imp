@@ -1,0 +1,125 @@
+age = unifReal(30.0,80.0);
+isFemale = unifReal(0.0,1.0);
+isAA = unifReal(0.0,0.55);
+flip0 = unifReal(0.0,1.0);
+if (isFemale >= 0.5)
+then 
+     if (flip0 <= 0.31)
+     then 
+      	  logScr = unifReal(-0.04,0.04)
+     else 
+     	  if (flip0 <= 0.555)
+	  then
+		logScr = unifReal(0.04,0.12)
+          else
+		if (flip0 <= 0.775)
+		then
+			logScr = unifReal(-0.12,-0.04)
+		else
+			if (flip0 <= 0.86)
+			then
+				logScr = unifReal(0.12,0.2)
+			else
+				logScr=unifReal(-0.2,-0.12)
+			end
+		end 
+          end
+     end
+
+else 
+     if (flip0 <= 0.325)
+     then
+	logScr = unifReal(0.17,0.25)
+     else
+	if (flip0 <= 0.605)
+	then
+		logScr = unifReal(0.11,0.17)
+	else
+		if (flip0 <= 0.77)
+		then
+			logScr = unifReal(0.25,0.32)
+		else
+			if (flip0 <= 0.91)
+			then
+				logScr = unifReal(0.03,0.11)
+			else
+				if (flip0 <= 0.95)
+				then
+					logScr = unifReal(0.32,0.4)
+				else
+					logScr = unifReal(-0.07,0.03)
+				end
+			end
+		end
+	end
+     end
+
+
+end;
+
+f = 4.94;
+if (isFemale >= 0.5) then 
+    k = -0.357;
+    if (logScr <= k)
+    then 
+       f = f  - 0.329 * ( logScr - k )
+    else 
+       f = f - 1.209 * ( logScr - k )
+    end;
+    f = f + 0.017
+else 
+    k = -0.105;
+    if (logScr <= k)
+    then 
+       f = f  - 0.411 * (logScr - k)
+    else 
+       f = f - 1.209 * (logScr - k)
+    end
+end;
+if (isAA >= 0.5)
+then 
+  f = f + 0.148
+end;
+logScrErr = logScr + unifReal(-0.1,0.1);
+ageErr = age + unifReal(-1.0,1.0);
+flip1 = unifReal(0.0,1.0);
+if (flip1 <= 0.05)
+then 
+     isFemaleErr = 1.0 - isFemale
+else 		
+     isFemaleErr = isFemale
+end;
+flip2 = unifReal(0,1);
+if (flip2 <= 0.05)
+then 
+    isAAErr = 1.0 - isAA
+else
+    isAAErr = isAA
+end;
+f1 = 4.94;
+if (isFemaleErr >= 0.5)
+then 
+    k = -0.357;
+    if (logScrErr <= k)
+    then 
+       f1 = f1  - 0.329 * (logScrErr - k)
+    else 
+       f1 = f1 - 1.209 * (logScrErr - k)
+    end;
+    f1 = f1 + 0.017
+else 
+    k = -0.105;
+    if (logScr <= k)
+    then 
+       f1 = f1  - 0.411 * (logScrErr - k)
+    else 
+       f1 = f1 - 1.209 * (logScrErr - k)
+    end
+end;
+if (isAAErr >= 0.5)
+then 
+  f1 = f1 + 0.148
+end;
+
+estimateProb (f1 -f >= 0.1);
+estimateProb (f - f1 >= 0.1)

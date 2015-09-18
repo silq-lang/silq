@@ -1,0 +1,26 @@
+// TODO: the integrals should be evaluated
+// TODO: make it very fast for N=500, as this is what they use
+// TODO: allow probabilities of predicates to be evaluated
+
+def main(){
+    x := 0;
+    //N := 500;
+    //while (i < N){
+    //repeat 500{
+    repeat 100{
+        x = x + Uniform(0,1);
+    }
+    return x;
+    // TODO:
+    /*estimateProb(x <= 0);
+    estimateProb(x <= 50);
+    estimateProb(x <= 100);
+    estimateProb(x <= 150);
+    estimateProb(x <= 200);
+    estimateProb(x <= 250);
+    estimateProb(x <= 300);
+    estimateProb(x <= 350);
+    estimateProb(x <= 400);
+    estimateProb(x <= 450);
+    estimateProb(x <= 500);*/
+}

@@ -1,0 +1,18 @@
+count = 0;
+i = 1.0;
+while (i < 5.0) do
+	count = count + 1;
+	flip_guard1 = unifReal(0.0, 1.0);
+	if (flip_guard1 <= 1.0 - 0.2*i)
+	then	
+		i = i + 1.0
+	end
+end;
+estimateProb(count <= 0);
+estimateProb(count <= 10);
+estimateProb(count <= 25);
+estimateProb(count <= 50);
+estimateProb(count <= 100);
+estimateProb(count <= 250);
+estimateProb(count <= 500);
+estimateProb(count <= 1000)

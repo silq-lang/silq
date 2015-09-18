@@ -1,0 +1,46 @@
+volToFill = 20.0;
+fast = 10.0;
+medium = 3.0;
+slow = 1.0;
+vol = 0.0;
+t = 0.0;
+count = 0;
+volMeasured = unifReal(0.0,0.1);
+
+while (volMeasured <= volToFill) do
+      count = count + 1;
+      if (volToFill < vol + (0.1*fast))
+      then
+	ar = unifReal(9.0;11.0);
+	vol = vol + (0.1*ar)
+      else
+	if (volToFill < vol + (0.1 * medium))
+	then
+		ar = unifReal(2.5; 3.5);	
+		vol = vol + (0.1 * ar)
+	else
+		ar = unifReal(0.9; 1.1);
+		vol = vol + (0.1 * ar)
+	end
+      end;
+      e = unifReal(-0.1,0.1);
+      volMeasured = vol + e
+end;
+  
+estimateProb(vol > (1.1 * volToFill));
+estimateProb(vol > (10.0 + volToFill));
+estimateProb(vol > (8.0 + volToFill));
+estimateProb(vol > (6.0 + volToFill));
+estimateProb(vol > (4.0 + volToFill));
+estimateProb(vol > (2.0 + volToFill));
+estimateProb(count <= 3);
+estimateProb(count <= 5);
+estimateProb(count <= 7);
+estimateProb(count <= 9);
+estimateProb(count <= 11);
+estimateProb(count <= 13);
+estimateProb(count <= 15);
+estimateProb(count <= 17);
+estimateProb(count <= 19);
+estimateProb(count >= 20)
+	

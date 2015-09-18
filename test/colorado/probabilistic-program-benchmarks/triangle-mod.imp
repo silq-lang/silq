@@ -1,0 +1,117 @@
+a = unifInt(-1000,1000);
+b = unifInt(-1000,1000);
+c = unifInt(-1000,1000);
+
+ret = 0;
+
+if (a <= 0)
+then
+	ret = 4
+end;
+if (b <= 0)
+then
+	ret = 4
+end;
+if (c <= 0)
+then
+	ret = 4
+end;
+
+type = 0;
+
+if (ret <= 0)
+then
+	if (a <= b)
+	then
+		if (a >= b)
+		then
+			type = type + 1
+		end
+	end;
+	if (a <= c)
+	then
+		if (a >= c)
+		then
+			type = type + 2
+		end
+	end;
+	if (b <= c)
+	then
+		if (b >= c)
+		then
+			type = type + 3
+		end
+	end;
+	if (type <= 0)
+	then
+		if (a + b <= c)
+		then
+			type = 4
+		end;
+		if (b + c <= a)
+		then
+			type = 4
+		end;
+		if (a + c <= b)
+		then
+			type = 4
+		else
+			type = 1
+		end;
+		ret = type
+	end
+end;
+
+if (ret <= 0)
+then
+	if (type >= 4)
+	then
+		type = 3
+	else
+		if (type <= 1)
+		then
+			if (type >= 1)
+			then
+				if (a + b > c)
+				then
+					type = 2
+				end
+			end
+		else
+			if (type <= 2)
+			then
+				if (type >= 2)
+				then
+					if (a + c > b)
+					then
+						type = 2
+					end
+				end
+			else
+				if (type <= 3)
+				then
+					if (type >= 3)
+					then
+						if (b + c > a)
+						then
+							type = 2
+						end
+					end
+				else
+					type = 4
+				end
+			end
+		end
+	end;
+	ret = type
+end;
+
+estimateProb(ret <= 0);
+estimateProb(ret <= 1);
+estimateProb(ret <= 2);
+estimateProb(ret <= 3);
+estimateProb(ret <= 4);
+estimateProb(ret >= 5)
+
+
+

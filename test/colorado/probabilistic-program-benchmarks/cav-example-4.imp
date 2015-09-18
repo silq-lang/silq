@@ -1,0 +1,24 @@
+x = 0;
+guard = -1.0;
+guard = unifReal(0.0, 1.0);
+while (guard >= 0.5) do
+	x = x + 1;
+	guard = unifReal(0.0, 1.0)
+end;
+estimateProb(x <= 0);
+estimateProb(x <= 1);
+estimateProb(x <= 2);
+estimateProb(x <= 3);
+estimateProb(x <= 4);
+estimateProb(x <= 5);
+estimateProb(x <= 6);
+estimateProb(x <= 7);
+estimateProb(x <= 8);
+estimateProb(x <= 9);
+estimateProb(x <= 10);
+estimateProb(x <= 12);
+estimateProb(x <= 14);
+estimateProb(x <= 16);
+estimateProb(x <= 18);
+estimateProb(x <= 20)
+

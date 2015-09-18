@@ -1,0 +1,50 @@
+// skipped: this contains unbounded loops
+// TODO: translate
+
+/*i = 0;
+money = 10.0;
+while (money >= 10.0) do
+	bet = unifReal(5.0, 10.0);
+	money = money - bet;
+	bank_guard = unifReal(0.0, 1.0);
+	if (bank_guard <= 0.94737)
+	then
+		col1_guard = unifReal(0.0, 1.0);
+		if (col1_guard <= 0.33333)
+		then
+			flip_guard1 = unifReal(0.0, 1.0);
+			if (flip_guard1 <= 0.5)
+			then
+				money = money + 1.5*bet
+			else
+				money = money + 1.1*bet
+			end
+		else
+			col2_guard = unifReal(0.0, 1.0);
+			if (col2_guard <= 0.5)
+			then
+				flip_guard2 = unifReal(0.0, 1.0);
+				if (flip_guard2 <= 0.33333)
+				then
+					money = money + 1.5*bet
+				else
+					money = money + 1.1*bet
+				end
+			else
+				flip_guard3 = unifReal(0.0, 1.0);
+                                if (flip_guard3 <= 0.66667)
+                                then
+                                        money = money + 0.3*bet 
+                                end
+			end
+		end
+	end;
+	i = i + 1
+end;
+estimateProb(i <= 0);
+estimateProb(i <= 10);
+estimateProb(i <= 25);
+estimateProb(i <= 50);
+estimateProb(i <= 100);
+estimateProb(i <= 200);
+estimateProb(i <= 500)*/

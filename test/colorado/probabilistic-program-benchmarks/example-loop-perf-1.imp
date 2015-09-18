@@ -1,0 +1,28 @@
+dPriceOriginal = 0.0;
+lTrialsOriginal = 100;
+iOriginal = 1;
+while (iOriginal <= lTrialsOriginal) do
+      simresOriginal = unifReal(-1,1);
+      dPriceOriginal = dPriceOriginal + simresOriginal;
+      iOriginal = iOriginal + 1
+end;
+
+dPriceTransformed = 0.0;
+lTrialsTransformed = 100;
+iTransformed = 1;
+while (iTransformed <= lTrialsTransformed) do
+      simresTransformed = unifReal(-1,1);
+      dPriceTransformed = dPriceTransformed + simresTransformed;
+      iTransformed = iTransformed + 2
+end;
+
+meanPriceOriginal = 0.01*dPriceOriginal;
+meanPriceTransformed = 2.0*0.01*dPriceTransformed;
+guardOK = -1;
+if (meanPriceOriginal - meanPriceTransformed <=1.0)
+then guardOK = 0
+end;
+if (meanPriceTransformed - meanPriceOriginal <=1.0)
+then guardOK = guardOK + 2
+end;
+estimateProb(guardOK <= 2)

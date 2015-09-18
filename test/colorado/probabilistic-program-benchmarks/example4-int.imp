@@ -1,0 +1,12 @@
+x = unifInt(-10;10);
+y = unifInt(-5;5);
+
+if (x+y <= 4) then y = y+5 end;
+if (x+y >= 3) then x = x + 1 end; 
+estimateProb(x+y > 10);
+estimateProb(x+y > 11);
+estimateProb(x+y > 12);
+estimateProb(x+y > 13);
+estimateProb(x+y > 14);
+estimateProb(x+y > 15);
+estimateProb(x+y > 16)

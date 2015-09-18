@@ -1,0 +1,255 @@
+// Coronary heart disease risk predictor for women
+// Following the framingham formula
+// http://www.framinghamheartstudy.org/risk/coronary.html
+age = unifReal(30,75);
+ldlc = unifReal(70,240.0);
+if (ldlc <= 160.0)
+then 
+     chol = unifReal(130,240.0);
+     hdlc = unifReal(40,75)
+else 
+     chol = unifReal(200,300.0);
+     hdlc = unifReal(20,50.0)
+end;
+bpSystolic = unifReal(120,170.0);
+bpDiastolic = bpSystolic - unifReal(40,80.0);
+isDiabetic = unifReal(0,0.55);
+isSmoker = unifReal(0,0.7);
+ldlPoints =  0.2* (age - 35.0) - 1.0;
+cholPoints=ldlPoints;
+
+if (ldlc <= 100.0)
+then 
+     ldlPoints = ldlPoints - 3.0
+else 
+     if (ldlc <= 160.0)
+     then 
+     	  ldlPoints = ldlPoints + 0.0
+     else
+          if (ldlc <= 190.0) 
+	  then ldlPoints = ldlPoints + 1.0
+	  else ldlPoints = ldlPoints + 2.0
+	  end
+     end
+end;
+
+if (chol <= 160.0)
+then 
+     cholPoints = cholPoints - 3.0
+else
+     if (chol <= 200.0)
+     then 
+     	  cholPoints = cholPoints + 0.0
+     else 
+     	  if (chol <= 240.0) 
+	  then cholPoints = cholPoints + 1.0
+	  else 
+	       if (chol <= 280.0)
+	       then 
+	       	    cholPoints = cholPoints + 2.0
+	       else 
+	       	    cholPoints = cholPoints + 3.0
+	       end
+          end	       
+     end 
+end;
+
+if (hdlc <= 35.0)
+then 
+     ldlPoints = ldlPoints + 2.0;
+     cholPoints = cholPoints + 2.0
+else 
+     if (hdlc <= 45.0)
+     then 
+     	ldlPoints = ldlPoints + 1.0 ;
+	cholPoints = cholPoints +1.0  
+     end
+end;
+if (hdlc >= 60.0)
+then 
+     cholPoints = cholPoints - 2.0;
+     ldlPoints = ldlPoints - 1.0
+end;
+
+bpSystolicIncr = 0.0;
+if (bpSystolic >= 85.0)
+then 
+     bpSystolicIncr = 1.0
+end;
+
+if (bpSystolic >= 90.0)
+then 
+     bpSystolicIncr = 2.0
+end;
+
+if (bpSystolic >= 100.0)
+then 
+     bpSystolicIncr = 3.0
+end;
+
+bpDiastolicIncr = 0.0;
+if (bpDiastolic >= 130.0)
+then 
+     bpDiastolicIncr = 1.0
+end;
+if (bpDiastolic >= 140.0)
+then 
+     bpDiastolicIncr = 2.0
+end;
+if (bpDiastolic >= 160.0)
+then 
+     bpDiastolicIncr = 2.0
+end;
+
+if (bpSystolicIncr >= bpDiastolicIncr)
+then 
+     ldlPoints = ldlPoints + bpSystolicIncr;
+     cholPoints = cholPoints + bpSystolicIncr
+else
+     ldlPoints = ldlPoints + bpDiastolicIncr;
+     cholPoints = cholPoints + bpDiastolicIncr
+end;
+
+if (isDiabetic >= 0.5)
+then 
+     ldlPoints = ldlPoints + 2.0;
+     cholPoints = cholPoints + 2.0
+end;
+
+if (isSmoker >= 0.5)
+then 
+     ldlPoints = ldlPoints +2.0;
+     cholPoints = cholPoints +2.0
+end;
+ldlPointsOrig = ldlPoints;
+cholPointsOrig = cholPoints;
+//ageErr = age;
+ldlc = ldlc + unifReal(-10,10.0);
+chol = chol + unifReal(-20,20.0);
+hdlc = hdlc + unifReal (-5,5);
+bpSystolic = bpSystolic + unifReal( -20 , 20.0);
+bpDiastolic = bpDiastolic + unifReal( -10 , 10.0);
+flip0 = unifReal(0 , 1);
+if (flip0 <= 0.05)
+then 
+     isDiabetic = 1.0 - isDiabetic
+end;
+
+flip1 = unifReal(0,1);
+if (flip1 <= 0.05)
+then 
+     isSmoker = 1.0 - isSmoker
+end;
+
+ldlPoints =  0.2* (age - 35.0) - 1.0;
+cholPoints=ldlPoints;
+
+if (ldlc <= 100.0)
+then 
+     ldlPoints = ldlPoints - 3.0
+else 
+     if (ldlc <= 160.0)
+     then 
+     	  ldlPoints = ldlPoints + 0.0
+     else
+          if (ldlc <= 190.0) 
+	  then ldlPoints = ldlPoints + 1.0
+	  else ldlPoints = ldlPoints + 2.0
+          end
+     end
+end;
+
+if (chol <= 160.0)
+then 
+     cholPoints = cholPoints - 3.0
+else
+     if (chol <= 200.0)
+     then 
+     	  cholPoints = cholPoints + 0.0
+     else 
+     	  if (chol <= 240.0) 
+	  then cholPoints = cholPoints + 1.0
+	  else 
+	       if (chol <= 280.0)
+	       then 
+	       	    cholPoints = cholPoints + 2.0
+	       else 
+	       	    cholPoints = cholPoints + 3.0
+	       end
+          end	       
+     end 
+end;
+
+if (hdlc <= 35.0)
+then 
+     ldlPoints = ldlPoints + 2.0;
+     cholPoints = cholPoints + 2.0
+else 
+     if (hdlc <= 45.0)
+     then 
+     	ldlPoints = ldlPoints +1.0;
+	cholPoints = cholPoints +1.0  
+     end
+end;
+if (hdlc >= 60.0)
+then 
+     cholPoints = cholPoints - 2.0;
+     ldlPoints = ldlPoints - 1.0
+end;
+
+bpSystolicIncr = 0.0;
+if (bpSystolic >= 85.0)
+then 
+     bpSystolicIncr = 1.0
+end;
+
+if (bpSystolic >= 90.0)
+then 
+     bpSystolicIncr = 2.0
+end;
+
+if (bpSystolic >= 100.0)
+then 
+     bpSystolicIncr = 3.0
+end;
+
+bpDiastolicIncr = 0.0;
+if (bpDiastolic >= 130.0)
+then 
+     bpDiastolicIncr = 1.0
+end;
+if (bpDiastolic >= 140.0)
+then 
+     bpDiastolicIncr = 2.0
+end;
+if (bpDiastolic >= 160.0)
+then 
+     bpDiastolicIncr = 2.0
+end;
+
+if (bpSystolicIncr >= bpDiastolicIncr)
+then 
+     ldlPoints = ldlPoints + bpSystolicIncr;
+     cholPoints = cholPoints + bpSystolicIncr
+else
+     ldlPoints = ldlPoints + bpDiastolicIncr;
+     cholPoints = cholPoints + bpDiastolicIncr
+end;
+
+if (isDiabetic >= 0.5 )
+then 
+     ldlPoints = ldlPoints + 2.0;
+     cholPoints = cholPoints + 2.0
+end;
+if (isSmoker >= 0.5 )
+then 
+     ldlPoints = ldlPoints + 2.0;
+     cholPoints = cholPoints + 2.0
+end;
+tmp = ldlPoints - ldlPointsOrig;
+estimateProb( tmp >= 5.0 );
+estimateProb( tmp >= 7.0 );
+estimateProb( tmp >= 10.0 );
+estimateProb( tmp <= -5.0 );
+estimateProb( tmp <= -7.0 );
+estimateProb( tmp <= -10.0 )
