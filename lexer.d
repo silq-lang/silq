@@ -36,7 +36,8 @@ string[2][] complexTokens =
 	 [".0L",   "RealLiteral"               ],
 	 [".0fi",  "ImaginaryFloatLiteral"     ],
 	 [".0i",   "ImaginaryDoubleLiteral"    ],
-	 [".0Li",  "ImaginaryLiteral"          ]];
+	 [".0Li",  "ImaginaryLiteral"          ],
+	 ["expected", "ExpectedComment"]];
 string[2][] simpleTokens = 
 	[["/",     "Divide"                    ],
 	 ["/=",    "DivideAssign"              ],
@@ -443,8 +444,21 @@ private:
 						case '=': res[0].type = Tok!"/="; p++;
 							break;
 						case '/': p++;
+							// parse "expected" comments
+							if(*p==' ') p++;
+							bool isExp=true;
+							foreach(char c;"expected:"){
+								if(*p==c) p++;
+								else{ isExp=false; break; }
+							}
+							auto cur=p;
+							// end of parse "expected" comments
 							while(((*p!='\n') & (*p!='\r')) & ((*p!=0) & (*p!=0x1A))) mixin(skipUnicodeCont);
-							continue; // ignore comment
+							if(isExp){
+								res[0].type = Tok!"expected";
+								res[0].str = cur[0..p-cur];
+								break;
+							}else continue; // ignore comment
 						case '*':
 							s=p++-1;
 							sl=line;

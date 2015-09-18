@@ -1,3 +1,4 @@
+
 def main(){
     a := Gauss(0,1);
     b := Gauss(0,1);
@@ -8,6 +9,5 @@ def main(){
        y += 1;
     }
     r := x==y;
-    //return r; // TODO: this should work with fubini!
-    //return (r,a,b);
+    return r; // expected: δ[-r+1]
 }

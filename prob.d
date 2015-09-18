@@ -152,13 +152,28 @@ void test(){
 	/*auto a="a".dVar,b="b".dVar,r="r".dVar;
 	auto exp=dE^^(-a^^2/2-b^^2/2)*dDelta(r-1)/(2*dΠ);
 	writeln(dInt(b,dInt(a,exp)));*/
-	/*import dparse;
+	/+import dparse;
 	auto x="x".dVar,y="y".dVar,a="a".dVar,b="b".dVar;
 	auto e="(δ[-x+1+[-b+a<0]]·δ[-y+1+[-b+a<0]]·⅟4+δ[-x+[-b+a<0]]·δ[-y+[-b+a<0]]·⅟4)·e^(-a²·⅟2+-b²·⅟2)·δ[-r+[-x+y=0]]·⅟π".dParse;
 	//auto e2=dInt(y,dInt(x,e));
 	//writeln(dInt(a,dInt(b,e2)));
 	//auto e2=dInt(a,e);
-	//writeln(e2);
 	auto e2="((∫dξ₁δ[-x+1+[-b+ξ₁<0]]·δ[-y+1+[-b+ξ₁<0]]·⅟e^(ξ₁²·⅟2))·⅟4+(∫dξ₁δ[-x+[-b+ξ₁<0]]·δ[-y+[-b+ξ₁<0]]·⅟e^(ξ₁²·⅟2))·⅟4)·δ[-r+[-x+y=0]]·⅟e^(b²·⅟2)·⅟π".dParse;
-	writeln(dInt(x,e2));*/
+	writeln(dInt(b,dInt(y,dInt(x,e2))));
+	//writeln(dInt(x,e2));
+	//auto e3="(∫dξ₁((∫dξ₂δ[-x+1+[-ξ₁+ξ₂<0]]·δ[-y+1+[-ξ₁+ξ₂<0]]·⅟e^(ξ₂²·⅟2))·⅟4+(∫dξ₂δ[-x+[-ξ₁+ξ₂<0]]·δ[-y+[-ξ₁+ξ₂<0]]·⅟e^(ξ₂²·⅟2))·⅟4)·⅟e^(ξ₁²·⅟2))·δ[-r+[-x+y=0]]·⅟π".dParse;
+	//auto e3="(∫dξ₁δ[-x+1+[-b+ξ₁<0]]·δ[-y+1+[-b+ξ₁<0]]·⅟e^(ξ₁²·⅟2))·⅟4+(∫dξ₁δ[-x+[-b+ξ₁<0]]·δ[-y+[-b+ξ₁<0]]·⅟e^(ξ₁²·⅟2))·⅟4)·δ[-r+[-x+y=0]]·⅟e^(b²·⅟2)·⅟π".dParse;
+	//auto e3="∫dξ₁((∫dξ₂δ[-y+1+[-b+ξ₂<0]]·δ[-ξ₁+1+[-b+ξ₂<0]]·⅟e^(ξ₂²·⅟2)))·⅟4·⅟e^(b²·⅟2)·⅟π".dParse;
+	//writeln(dInt(b,dInt(a,e))is e3);
+	//writeln(e3);
+	//writeln(dInt(y,dInt(x,e3)));
+
+	/*auto e3="(∫dξ₁((∫dξ₂δ[-x+1+[-ξ₁+ξ₂<0]]·δ[-y+1+[-ξ₁+ξ₂<0]]·⅟e^(ξ₂²·⅟2))·⅟4)·⅟e^(ξ₁²·⅟2))·δ[-r+[-x+y=0]]·⅟π".dParse;
+	writeln(e3);
+	writeln(dInt(y,dInt(x,e3)));*/ +/
+	/*import dparse;
+	  writeln("((x₃)²)".dParse);*/
+	import dparse;
+	//writeln("⅟√1̅0̅".dParse);
+	//writeln("e^((x₃·⅟2+⅟6)²·3·⅟5+-11·⅟12+-x₃²·⅟4+x₃·⅟2)·⅟√1̅0̅·⅟√π̅".dParse);
 }

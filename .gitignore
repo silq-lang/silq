@@ -3,3 +3,4 @@
 prob
 *.def
 *.log
+test/runtests

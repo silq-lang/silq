@@ -990,7 +990,10 @@ class DInt: DOp{
 		// e^^(b^^2/4a)*(d/dx)⁻¹(e^^(-x^^2))[(b-2*a*x)/2*a^^(1/2)]/a^^(1/2)
 		return null;
 	}
-	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; } // TODO: correct?
+	override int forEachSubExpr(scope int delegate(DExpr) dg){
+		 // TODO: correct?
+		return expr.forEachSubExpr(dg);
+	}
 	override int freeVarsImpl(scope int delegate(DVar) dg){
 		return expr.freeVarsImpl(v=>v is var?0:dg(v));
 	}

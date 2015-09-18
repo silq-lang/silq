@@ -6,5 +6,5 @@ def main(){
     b := 1; // add piranha
     r := if Bernoulli(1/2) { a } else { b };
     observe(r);
-    return a;
+    return a; // expected: TODO: 2·δ[-a+1]·⅟3+δ[a]·⅟3
 }

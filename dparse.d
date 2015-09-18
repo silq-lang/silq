@@ -41,6 +41,25 @@ DExpr dParse(string s){ // TODO: this is work in progress, usually updated in or
 			return dDelta(expr);
 		}
 		
+		DExpr parseSqrt(){
+			expect('√');
+			string arg;
+			dchar cur=0;
+			string tmp=code;
+			for(int i=0;!tmp.empty;){
+				dchar c=tmp.front;
+				if(i&1){
+					if(c=='̅'){
+						arg~=cur;
+					}else break;
+				}else cur=c;
+				tmp.popFront();
+				if(i&1) code=tmp;
+				i++;
+			}
+			return dParse(arg)^^(one/2);
+		}
+
 		DExpr parseDInt(){
 			expect('∫');
 			expect('d');
@@ -82,9 +101,16 @@ DExpr dParse(string s){ // TODO: this is work in progress, usually updated in or
 		}
 
 		DExpr parseBase(){
+			if(cur()=='('){
+				next();
+				auto r=parseDExpr();
+				expect(')');
+				return r;
+			}
 			if(cur()=='[') return parseDIvr();
 			if(cur()=='δ') return parseDDelta();
 			if(cur()=='∫') return parseDInt();
+			if(cur()=='√') return parseSqrt();
 			if(cur()=='⅟'){
 				next();
 				return 1/parseFactor();
@@ -103,12 +129,6 @@ DExpr dParse(string s){ // TODO: this is work in progress, usually updated in or
 		}
 
 		DExpr parseDPow(){
-			if(cur()=='('){
-				next();
-				auto r=parseDExpr();
-				expect(')');
-				return r;
-			}
 			DExpr e=parseBase();
 			if(cur()=='^'){
 				next();
@@ -131,11 +151,23 @@ DExpr dParse(string s){ // TODO: this is work in progress, usually updated in or
 			return parseDPow();
 		}
 
+		bool isMultChar(dchar c){
+			return "·*"d.canFind(c);
+		}
+		bool isDivChar(dchar c){
+			return "÷/"d.canFind(c);
+		}
+
 		DExpr parseMult(){
 			DExpr f=parseFactor();
-			while(cur()=='·'){
-				next();
-				f=f*parseFactor();
+			while(isMultChar(cur())||isDivChar(cur())){
+				if(isMultChar(cur())){
+					next();
+					f=f*parseFactor();
+				}else{
+					next();
+					f=f/parseFactor();
+				}
 			}
 			return f;
 		}

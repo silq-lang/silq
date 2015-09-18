@@ -1,3 +1,4 @@
+// skipped (not performant enough yet)
 // http://www.quora.com/John-rolled-a-fair-die-10-times-and-said-that-every-number-from-1-to-6-appeared-at-least-once-Given-this-information-what-is-the-probability-of-the-event-number-6-appeared-at-least-2-times
 
 // TODO: this should be fast for 10 rolls

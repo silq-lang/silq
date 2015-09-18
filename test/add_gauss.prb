@@ -3,5 +3,5 @@ def main(){
     x₁ := Gauss(1,2);
     x₂ := Gauss(2,3);
     x₃ := x₁+x₂;
-    return x₃;
+    return x₃; // expected: e^((x₃·⅟2+⅟6)²·3·⅟5+-11·⅟12+-x₃²·⅟4+x₃·⅟2)·⅟√1̅0̅·⅟√π̅ (more simplifications possible)
 }

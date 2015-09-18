@@ -155,6 +155,8 @@ class ReturnExp: Expression{
 		this.e=e;
 	}
 	override string toString(){ return "return"~(e?" "~e.toString():""); }
+
+	string expected;
 }
 
 class AssertExp: Expression{

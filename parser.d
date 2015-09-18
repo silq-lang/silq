@@ -476,6 +476,12 @@ struct Parser{
 			s.put(e);
 			if(!e.isCompound()&&ttype!=Tok!"}"||ttype==Tok!";")
 			   expect(Tok!";");
+			if(auto r=cast(ReturnExp)e){
+				if(ttype==Tok!"expected"){
+					r.expected=tok.str;
+					nextToken();
+				}
+			}
 		}
 		expect(Tok!"}");
 		return res=New!CompoundExp(s.data);

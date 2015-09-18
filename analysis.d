@@ -234,6 +234,17 @@ private struct Analyzer{
 						dist.marginalize(w);
 					}
 				}else err.error("return statement must be last statement in function",re.loc);
+				if(re.expected.length){
+					import dparse;
+					bool todo=false;
+					auto ex=re.expected;
+					import std.string: strip;
+					if(ex.strip.startsWith("TODO:")){
+						todo=true;
+						ex=ex[" TODO:".length..$];
+					}
+					writeln(ex.dParse is dist.distribution?todo?"FIXED":"PASS":todo?"TODO":"FAIL");
+				}
 			}else if(auto oe=cast(ObserveExp)e){
 				if(auto c=transformConstr(oe.e)){
 					dist.observe(c);
