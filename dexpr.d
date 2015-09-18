@@ -724,6 +724,19 @@ bool couldBeZero(DExpr e){
 	return true;
 }
 
+DExpr uglyFractionCancellation(DExpr e){
+	ℕ ngcd=0,dlcm=1;
+	foreach(s;e.summands){
+		auto f=s.getFractionalFactor();
+		assert(f.isFraction());
+		auto nd=f.getFraction();
+		assert(nd[1]>0);
+		ngcd=gcd(ngcd,abs(nd[0]));
+		dlcm=lcm(dlcm,nd[1]);
+	}
+	return dℕ(dlcm)/ngcd;
+}
+
 class DIvr: DExpr{ // iverson brackets
 	enum Type{ // TODO: remove redundancy?
 		eqZ,
@@ -745,7 +758,9 @@ class DIvr: DExpr{ // iverson brackets
 	}
 
 	static DExpr constructHook(Type type,DExpr e){
+		// TODO: better decision procedures
 		if(type==Type.eqZ&&!couldBeZero(e)) return zero;
+		if(type==Type.neqZ&&!couldBeZero(e)) return one;
 		if(auto c=cast(Dℕ)e){
 			DExpr x(bool b){ return b?one:zero; }
 			final switch(type) with(Type){
@@ -755,17 +770,8 @@ class DIvr: DExpr{ // iverson brackets
 			case leZ: return x(c.c<=0);
 			}
 		}
-		ℕ ngcd=0,dlcm=1;
-		foreach(s;e.summands){
-			auto f=s.getFractionalFactor();
-			assert(f.isFraction());
-			auto nd=f.getFraction();
-			assert(nd[1]>0);
-			ngcd=gcd(ngcd,abs(nd[0]));
-			dlcm=lcm(dlcm,nd[1]);
-		}
-		if(ngcd!=1||dlcm!=1)
-			return dIvr(type,dDistributeMult(e,dℕ(dlcm)/ngcd));
+		auto cancel=uglyFractionCancellation(e);
+		if(cancel!=one) return dIvr(type,dDistributeMult(e,cancel));
 		return null;
 	}
 }
@@ -802,7 +808,11 @@ class DDelta: DExpr{ // Dirac delta function
 	override DExpr substitute(DVar var,DExpr exp){ return dDelta(e.substitute(var,exp)); }
 	override DExpr incDeBruin(int di){ return dDelta(e.incDeBruin(di)); }
 
-	static DExpr constructHook(DExpr e){ return null; }
+	static DExpr constructHook(DExpr e){
+		auto cancel=uglyFractionCancellation(e);
+		if(cancel!=one) return dDelta(dDistributeMult(e,cancel))*cancel;
+		return null;
+	}
 }
 
 //mixin(makeConstructorUnary!DDelta);
@@ -948,6 +958,10 @@ class DInt: DOp{
 			if(auto d=cast(DDelta)f){
 				DExpr[] constraints;
 				if(auto s=d.e.solveFor(var,zero,constraints)){
+					bool trivial(DExpr constraint){
+						return dIvr(DIvr.Type.neqZ,constraint) is one;
+					}
+					constraints=constraints.remove!trivial;
 					if(!constraints.length) // TODO!
 						return (expr/f).substitute(var,s)/dAbs(dDiff(var,d.e,s));
 				}
