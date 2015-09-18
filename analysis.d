@@ -249,7 +249,7 @@ private struct Analyzer{
 				if(auto c=transformConstr(oe.e)){
 					dist.observe(c);
 				}
-			}else err.error("unsupported",e.loc);
+			}else if(!cast(ErrorExp)e) err.error("unsupported",e.loc);
 		}
 		return dist;
 	}
