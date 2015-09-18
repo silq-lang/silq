@@ -16,14 +16,15 @@ void main(){
 	auto sources=shell("ls *.prb */*.prb").splitLines;
 	Summary total;
 	int skipped=0,passed=0;
+	bool colorize=isATTy(stdout);
 	foreach(source;sources){
 		if(shell("head -n1 "~source).startsWith("// skip")){
-			if(isATTy(stdout)) writeln(TODOColor,BOLD,"skipping",RESET," ",source);
+			if(colorize) writeln(TODOColor,BOLD,"skipping",RESET," ",source);
 			else writeln("skipping ",source);
 			skipped++;
 			continue;
 		}else{
-			if(isATTy(stdout)) write(BOLD,"running",RESET," ",source);
+			if(colorize) write(BOLD,"running",RESET," ",source);
 			else std.stdio.write("running ",source); // DMD bug?
 		}
 		stdout.flush();
@@ -33,23 +34,27 @@ void main(){
 		if(summary.isInteresting){
 			int regressions=summary.unexpectedErrors+summary.missingErrors;
 			if(regressions){
-				if(isATTy(stdout)) writeln(": ",failColor,BOLD,"failed",RESET);
+				if(colorize) writeln(": ",failColor,BOLD,"failed",RESET);
 				else writeln(": failed");				
 			}else{
-				if(isATTy(stdout)) writeln(": ",TODOColor,BOLD,"TODO",RESET);
+				if(colorize) writeln(": ",TODOColor,BOLD,"TODO",RESET);
 				else writeln(": TODO");
 			}
 			writeln(summary);
 		}else{
-			if(isATTy(stdout)) writeln(": ",passColor,BOLD,"passed",RESET);
+			if(colorize) writeln(": ",passColor,BOLD,"passed",RESET);
 			else writeln(": passed");
 			passed++;
 		}
 	}
-	writeln("TOTAL:");
-	writeln("passed: ",passed);
-	writeln("skipped: ",skipped);
-	writeln(total);
+	writeln();
+	if(colorize) writeln(BOLD,"TOTAL:",RESET," ",sources.length);
+	else writeln("TOTAL: ",sources.length);
+	if(colorize) writeln(passColor,BOLD,"passed:",RESET," ",passed);
+	else writeln("passed: ",passed);
+	if(colorize) writeln(failColor,"skipped:",RESET," ",skipped);
+	else writeln("skipped: ",skipped);
+	writeln(total.toString(colorize,true));
 }
 
 struct Summary{
@@ -67,12 +72,16 @@ struct Summary{
 		}
 		return r;
 	}
-	string toString(){
+	string toString(bool colorize=false,bool showAll=false){
 		int regressions=unexpectedErrors+missingErrors;
-		return ((regressions?"regressions: "~regressions.to!string~"\n":"")~
-			(todos?"TODOs: "~todos.to!string~"\n":"")~
-			(obsoleteTodos?"fixed: "~obsoleteTodos.to!string~"\n":"")~
-			(unspecified?"unspecified: "~unspecified.to!string~"\n":""))[0..$-1];
+		return ((regressions||showAll?(colorize?failColor~BOLD:"")~"regressions:"~(colorize?RESET:"")~" "
+				 ~regressions.to!string~"\n":"")~
+				(todos||showAll?(colorize?TODOColor~BOLD:"")~"TODOs:"~(colorize?RESET:"")~" "
+				 ~todos.to!string~"\n":"")~
+				(obsoleteTodos||showAll?(colorize?passColor:"")~"fixed:"~(colorize?RESET:"")~" "
+				 ~obsoleteTodos.to!string~"\n":"")~
+				(unspecified||showAll?(colorize?failColor:"")~"unspecified:"~(colorize?RESET:"")~" "
+				 ~unspecified.to!string~"\n":""))[0..$-1];
 	}
 	bool isInteresting(){
 		foreach(i,x;this.tupleof) if(i!=1&&x) return true;
