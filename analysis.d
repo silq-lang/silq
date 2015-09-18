@@ -237,13 +237,13 @@ private struct Analyzer{
 				if(re.expected.length){
 					import dparse;
 					bool todo=false;
-					auto ex=re.expected;
 					import std.string: strip;
+					auto ex=re.expected.strip;
 					if(ex.strip.startsWith("TODO:")){
 						todo=true;
-						ex=ex[" TODO:".length..$];
+						ex=ex[" TODO:".length..$].strip;
 					}
-					writeln(ex.dParse is dist.distribution?todo?"FIXED":"PASS":todo?"TODO":"FAIL");
+					writeln(ex==dist.distribution.toString()?todo?"FIXED":"PASS":todo?"TODO":"FAIL");
 				}
 			}else if(auto oe=cast(ObserveExp)e){
 				if(auto c=transformConstr(oe.e)){
