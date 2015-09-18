@@ -365,19 +365,24 @@ struct Parser{
 				return res=New!LiteralExp(tok);				
 			case Tok!"(":
 				nextToken();
-				res=parseExpression();
-				if(ttype==Tok!","){
-					auto tpl=[res];
-					while(ttype==Tok!","){
-						nextToken();
-						if(ttype==Tok!")") break;
-						tpl~=parseExpression();
-					}
-					expect(Tok!")");
-					res=New!TupleExp(tpl);
+				if(ttype==Tok!")"){
+					nextToken();
+					res=New!TupleExp(Expression[].init);
 				}else{
-					expect(Tok!")");
-					res.brackets++;
+					res=parseExpression();
+					if(ttype==Tok!","){
+						auto tpl=[res];
+						while(ttype==Tok!","){
+							nextToken();
+							if(ttype==Tok!")") break;
+							tpl~=parseExpression();
+						}
+						expect(Tok!")");
+						res=New!TupleExp(tpl);
+					}else{
+						expect(Tok!")");
+						res.brackets++;
+					}
 				}
 				return res;
 			case Tok!"-":
@@ -499,8 +504,9 @@ struct Parser{
 	ReturnExp parseReturn(){
 		mixin(SetLoc!ReturnExp);
 		expect(Tok!"return");
-		Expression exp=null;
+		Expression exp;
 		if(ttype!=Tok!";") exp=parseExpression();
+		else exp=New!TupleExp(Expression[].init);
 		return res=New!ReturnExp(exp);
 	}
 	IteExp parseIte(){
