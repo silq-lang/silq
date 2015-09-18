@@ -737,6 +737,31 @@ DExpr uglyFractionCancellation(DExpr e){
 	return dℕ(dlcm)/ngcd;
 }
 
+enum BoundStatus{
+	fail,
+	lowerBound,
+	upperBound,
+}
+
+BoundStatus getBoundForVar(DIvr ivr,DVar var,out DExpr bound){ // TODO: handle cases where there is no bound
+	enum r=BoundStatus.fail;
+	with(DIvr.Type) if(!util.among(ivr.type,lZ,leZ)) return r;
+	foreach(s;ivr.e.summands){
+		if(!s.hasFreeVar(var)) continue;
+		auto cand=s/var;
+		if(cand.hasFreeVar(var)) return r;
+		auto lZ=dIvr(DIvr.Type.lZ,cand)==one;
+		auto gZ=dIvr(DIvr.Type.lZ,-cand)==one;
+		if(!lZ&&!gZ) return r;
+		auto ne=var-ivr.e/cand;
+		if(ne.hasFreeVar(var)) return r;
+		// TODO: must consider strictness!
+		bound=ne;
+		return lZ?BoundStatus.lowerBound:BoundStatus.upperBound;
+	}
+	return r;
+}
+
 class DIvr: DExpr{ // iverson brackets
 	enum Type{ // TODO: remove redundancy?
 		eqZ,
@@ -895,7 +920,7 @@ DExpr[2] splitMultAtVar(DExpr e,DVar var){
 	return [dMult(outside),dMult(within)];
 }
 
-DExpr specialIntegral(DVar v,DExpr e){
+DExpr specialIntegral(DVar v,DExpr e){ // TODO: merge with definiteIntegral?
 	static DExpr gaussianIntegral(DVar v,DExpr e){
 		// detect e^^(-a*x^^2+b*x+c), and integrate to e^^(b^^2/4a+c)*(pi/a)^^(1/2).
 		// TODO: this assumes that a≥0!
@@ -912,6 +937,55 @@ DExpr specialIntegral(DVar v,DExpr e){
 	}
 	if(auto r=gaussianIntegral(v,e)) return r;
 	return null;
+}
+
+DExpr dMin(DExpr a,DExpr b){
+	return dIvr(DIvr.Type.lZ,a-b)*a+dIvr(DIvr.Type.leZ,b-a)*b;
+}
+DExpr dMax(DExpr a,DExpr b){
+	return dIvr(DIvr.Type.lZ,b-a)*a+dIvr(DIvr.Type.leZ,a-b)*b;
+}
+
+DExpr definiteIntegral(DVar var,DExpr expr){
+	// TODO: explicit antiderivative (d/dx)⁻¹
+	// eg. the full antiderivative e^^(-a*x^^2+b*x) is given by:
+	// e^^(b^^2/4a)*(d/dx)⁻¹(e^^(-x^^2))[(b-2*a*x)/2*a^^(1/2)]/a^^(1/2)
+	DExpr ivrs=one;
+	DExpr nonIvrs=one;
+	foreach(f;expr.factors){
+		assert(f.hasFreeVar(var));
+		if(cast(DIvr)f) ivrs=ivrs*f;
+		else nonIvrs=nonIvrs*f;
+	}
+	DExpr lower=null;
+	DExpr upper=null;
+	DExpr constraints=one;
+	foreach(f;ivrs.factors){
+		auto ivr=cast(DIvr)f;
+		assert(!!ivr);
+		DExpr bound;
+		auto status=ivr.getBoundForVar(var,bound);
+		final switch(status) with(BoundStatus){
+		case fail: return null; // TODO: non-linear bounds
+		case lowerBound:
+			if(lower) lower=dMax(lower,bound);
+			else lower=bound;
+			break;
+		case upperBound:
+			if(upper) upper=dMin(upper,bound);
+			else upper=bound;
+			break;
+		}
+		if(ivr.type==DIvr.Type.lZ) constraints=constraints*dIvr(DIvr.Type.neqZ,var-bound);
+	}
+	//writeln(expr);
+	//writeln("!! ",lower," ",upper," ",constraints);
+	// TODO: add better approach for antiderivatives	
+	if(upper&&lower&&constraints==one){
+		if(nonIvrs==one) return dIvr(DIvr.Type.leZ,lower-upper)*(upper-lower);
+	}
+	
+	return null; // no simpler expression available
 }
 
 class DInt: DOp{
@@ -999,10 +1073,7 @@ class DInt: DOp{
 		}
 		if(!expr.hasFreeVar(var)) return expr*dInt(var,one); // (infinite integral)
 		if(auto r=specialIntegral(var,expr)) return r;
-		// TODO: explicit antiderivative (d/dx)⁻¹
-		// eg. the full antiderivative e^^(-a*x^^2+b*x) is given by:
-		// e^^(b^^2/4a)*(d/dx)⁻¹(e^^(-x^^2))[(b-2*a*x)/2*a^^(1/2)]/a^^(1/2)
-		return null;
+		return definiteIntegral(var,expr);
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
 		 // TODO: correct?

@@ -7,7 +7,7 @@ def main(){
     //N := 500;
     //while (i < N){
     //repeat 500{
-    repeat 100{
+    repeat 10{
         x = x + Uniform(0,1);
     }
     return x;
