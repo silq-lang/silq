@@ -5,5 +5,5 @@ def main(){
     x := Gauss(0,1);
     y := x;
     if y<0 { x=3; }
-    return x;
+    return x; // expected: TODO: result should be simplified more
 }

@@ -7,5 +7,5 @@ def neighbour_tuesday(){
     observe(isGirl1 && bornOnATuesday1 ||
             isGirl2 && bornOnATuesday2);
     bothAreGirls := isGirl1 && isGirl2;
-    return bothAreGirls;
+    return bothAreGirls; // expected: 13·δ[-bothAreGirls+1]·⅟27+14·δ[-bothAreGirls]·⅟27
 }

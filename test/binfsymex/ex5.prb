@@ -20,6 +20,6 @@ def trueSkill(){
     perfC3 := Gauss(skillC,15);
     observe(perfA3 > perfC3);
 
-    // return (skillA,skillB,skillC);
+    return (skillA,skillB,skillC); // expected: TODO: this should be better
 }
     

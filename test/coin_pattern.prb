@@ -1,6 +1,7 @@
 // TODO: extend language such that it supports more involved examples of this type conveniently.
 // We want the inference to detect the case when the coin shows simple patterns.
 // TODO: Result should be simplified better!
+// TODO: we would want to run the same test with different observations here
 
 def test(){
     has_pattern := Bernoulli(1/2);
@@ -17,8 +18,9 @@ def test(){
         x3 = Bernoulli(1/2);
     }
     observe(x1==0);
-    //observe(x2==1);
+    observe(x2==1);
     //observe(x2==0);
-    observe(x3==1);
-    return has_pattern;
+    //observe(x3==1);
+    observe(x3==0);
+    return has_pattern; // expected: (210·has_pattern+30)·(δ[-has_pattern+1]·⅟270+δ[has_pattern]·⅟270)
 }

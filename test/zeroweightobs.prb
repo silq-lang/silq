@@ -2,4 +2,5 @@
 def main(){
     x := Gauss(0,1);
     observe(x==0);
+    return x; // expected: TODO: figure this out
 }

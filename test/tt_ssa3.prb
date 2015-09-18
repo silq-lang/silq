@@ -1,9 +1,10 @@
 def main(){
+    y:=0;
     x:=Gauss(0,1);
     if x>0 {
-        y:=x;
+        y=x;
     }else{
-        y:=-x;
+        y=-x;
     }
-    return y;
+    return y; // expected: (-[y<0]+1+[-y<0])·⅟e^(y²·⅟2)·⅟√2̅·⅟√π̅
 }

@@ -8,5 +8,6 @@ def burglar_alarm(){
     maryWakes := Bernoulli(if alarm { if earthquake { 8/10 } else { 6/10 } } else { 2/10 });
     called := maryWakes && phoneWorking;
     observe(called);
-    return burglary;
+    return burglary; // expected: (2497500000·δ[burglary]+2500000·δ[-burglary+1])·(989901·burglary·⅟1240201002500000+990181·⅟2480402005000000)
+    // TODO: this could be simplified better
 }

@@ -3,5 +3,5 @@ def main(){
     a := Bernoulli(1/2);
     b := Bernoulli(1/3);
     c := a*b;
-    return (a,c);
+    return (a,c); // expected: (2·δ[-c]·⅟3+δ[-c+a]·⅟3)·(δ[-a+1]·⅟2+δ[a]·⅟2)
 }

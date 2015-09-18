@@ -6,5 +6,5 @@ def main(){
     if c1 { count += 1; }
     if c2 { count *= 2; }
     observe(c1 && c2);
-    return count;
+    return count; // expected: δ[-count+2]
 }

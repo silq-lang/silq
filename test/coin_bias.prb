@@ -37,5 +37,6 @@ def test(){
     observe(x17==1);
     x18 := Bernoulli(p);
     observe(x18==1);
-    return p;
+    return p; // expected: (-p+1)⁷·[-1+p≤0]·[-p≤0]·p¹¹·⅟(∫dξ₁(-ξ₁+1)⁷·[-1+ξ₁≤0]·[-ξ₁≤0]·ξ₁¹¹)
+    // TODO: evaluate the integral
 }

@@ -7,5 +7,6 @@ def grass_model(){
     wet_roof := Bernoulli(7/10) && rain;
     wet_grass := Bernoulli(9/10) && rain || Bernoulli(9/10) && sprinkler;
     observe(wet_grass);
-    return rain;
+    return rain; // expected: (2000·δ[-rain+1]+8000·δ[rain])·(9·rain·⅟287600+⅟28760)+(2000·δ[rain]+8000·δ[-rain+1])·(81·rain·⅟1438000+⅟143800)+(50·δ[-rain+1]·⅟719+50·δ[rain]·⅟719)·rain
+    // TODO: this could be simplified better
 }

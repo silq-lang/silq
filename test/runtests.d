@@ -3,23 +3,46 @@ import std.stdio, std.file;
 import std.process, std.string, std.array;
 import std.algorithm, std.conv;
 
+auto shell(string cmd){
+	return executeShell(cmd).output;
+}
+
+enum TODOColor=CYAN;
+enum passColor=GREEN;
+enum failColor=RED;
+
+
 void main(){
-	auto sources=shell("ls *.prb").splitLines;
+	auto sources=shell("ls *.prb */*.prb").splitLines;
 	Summary total;
 	int skipped=0,passed=0;
 	foreach(source;sources){
 		if(shell("head -n1 "~source).startsWith("// skip")){
-			write("skipping "~source);
+			if(isATTy(stdout)) writeln(TODOColor,BOLD,"skipping",RESET," ",source);
+			else writeln("skipping ",source);
 			skipped++;
 			continue;
-		}else write("running "~source);
+		}else{
+			if(isATTy(stdout)) write(BOLD,"running",RESET," ",source);
+			else std.stdio.write("running ",source); // DMD bug?
+		}
 		stdout.flush();
 		auto results=source.getResults;
 		auto summary=results.summarize;
 		total+=summary;
-		if(summary.isInteresting) writeln("\n",summary);
-		else{
-			writeln(": passed");
+		if(summary.isInteresting){
+			int regressions=summary.unexpectedErrors+summary.missingErrors;
+			if(regressions){
+				if(isATTy(stdout)) writeln(": ",failColor,BOLD,"failed",RESET);
+				else writeln(": failed");				
+			}else{
+				if(isATTy(stdout)) writeln(": ",TODOColor,BOLD,"TODO",RESET);
+				else writeln(": TODO");
+			}
+			writeln(summary);
+		}else{
+			if(isATTy(stdout)) writeln(": ",passColor,BOLD,"passed",RESET);
+			else writeln(": passed");
 			passed++;
 		}
 	}
@@ -102,31 +125,31 @@ auto summarize(Comparison[] comp){
 				if(c.info.error){
 					if(c.info.todo){
 						result.obsoleteTodos++;
-						writeln("FIX AT LINE ",c.info.line);
+						//writeln("FIX AT LINE ",c.info.line);
 					}else result.expectedErrors++;
 				}else{
 					if(c.info.todo) result.todos++;
 					else{
 						result.missingErrors++;
-						writeln("REGRESSION AT LINE ",c.info.line);
+						//writeln("REGRESSION AT LINE ",c.info.line);
 					}
 				}
 				break;
 			case unexpected:
 				assert(c.info.error);
 				result.unexpectedErrors++;
-				writeln("REGRESSION AT LINE ",c.info.line);
+				//writeln("REGRESSION AT LINE ",c.info.line);
 				break;
 			case missing:
 				if(c.info.todo){
 					if(c.info.error) result.todos++;
 					else{
 						result.obsoleteTodos++;
-						writeln("FIX AT LINE ",c.info.line);
+						//writeln("FIX AT LINE ",c.info.line);
 					}
 				}else{
 					result.missingErrors++;
-					writeln("REGRESSION AT LINE ",c.info.line);
+					//writeln("REGRESSION AT LINE ",c.info.line);
 				}
 				break;
 			case ok:
@@ -134,4 +157,34 @@ auto summarize(Comparison[] comp){
 		}
 	}
 	return result;
+}
+
+
+
+// (copy of terminal.d)
+enum CSI = "\033[";
+enum RESET=CSI~"0m";
+enum BOLD=CSI~"1m";
+enum BLACK =CSI~"30m";
+enum RED =CSI~"31m";
+enum GREEN=CSI~"32m";
+enum YELLOW=CSI~"33m";
+enum BLUE=CSI~"34m";
+enum MAGENTA=CSI~"35m";
+enum CYAN=CSI~"36m";
+enum WHITE=CSI~"37m";
+
+version(linux){
+	private extern(C) size_t isatty(size_t desc);
+	private extern(C) int fileno(shared(_iobuf)*);
+	bool isATTy(ref File f){ // determine whether a given file is connected to a terminal
+		if(environment.get("EMACS")) return false;
+		return cast(bool)isatty(fileno(f.getFP()));
+	}
+	int getTabSize(){
+		if(environment.get("EMACS")) return 4;
+		return 8;
+	}
+}else{
+	bool isATTY(ref File){return false;}
 }

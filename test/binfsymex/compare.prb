@@ -1,6 +1,6 @@
 // Compare benchmark. Partially supported.
 // This is buggy: it does not actually compute whether a <= b.
-// (Original code uses arrays, this should be rewritten.)
+// TODO: Original code uses arrays, this should be rewritten.
 
 def compare(){
     r := true;
@@ -15,5 +15,5 @@ def compare(){
 	//r = r*(a+b);
 	//r = r*a;
     }
-    return r;
+    return r; // expected: 3·δ[-r+1]·⅟4+δ[-r]·⅟4
 }

@@ -5,5 +5,7 @@ def main(){
     /*repeat 10 {
         x+=Bernoulli(1/2);
     }*/
-    return x;
+    return x; // expected: (-[-7+x<0]·⅟9+⅟9)·[-10+x≤0]·[-x+1≤0]+[-11+x≤0]·[-8+x<0]·[-x+2≤0]·⅟9
+    // TODO: simplify to something like ([2≤x]·[x<8]+[7≤x]·[x≤10])·⅟9
 }
+

@@ -3,5 +3,5 @@ def main(){
     x := Uniform(0,1);
     y := Uniform(0,1);
     z := x + y;
-    return z;    
+    return z; // expected: TODO: max(0,min(1,z)-max(0,z-1))
 }

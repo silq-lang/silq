@@ -7,5 +7,5 @@ def main(){
        y = 3;
     }
     y += x;
-    return y;
+    return y; // expected: TODO: simplify better
 }
