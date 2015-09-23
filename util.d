@@ -452,3 +452,27 @@ long toLong(ℕ a){ return a.to!string.to!long; } // TODO: do properly
 		c*=n-k,c/=++k;
 	return c;
 }
+
+
+void matlabPlot(string expression,string variable){
+	import std.process,std.file;
+	auto input=pipe();
+	auto output=File("/dev/null","w");
+	auto error=File("/dev/null","w");
+	// TODO: make plot configurable from the outside
+	auto id=spawnProcess(["octave"],input.readEnd,output,error);
+	scope(exit) wait(id);
+	string command=
+		variable~"=-20:0.001:20;\n"~
+		variable~"Dist="~expression~";\n"~
+		"plot("~variable~","~variable~"Dist);\n";
+	if(command.length<100000){
+		writeln("command: ");
+		writeln(command);
+	}
+	input.writeEnd.writeln(command);
+	input.writeEnd.writeln("sleep(3);exit");
+	input.writeEnd.flush();
+	//writeln(input.readEnd.readln());
+	//foreach(i;0..100) writeln(error.readEnd.readln());
+}

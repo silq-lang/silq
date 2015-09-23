@@ -7,10 +7,10 @@ def main(){
     //N := 500;
     //while (i < N){
     //repeat 500{
-    repeat 10{
+    repeat 5{
         x = x + Uniform(0,1);
     }
-    return x;
+    return x; // expected: 
     // TODO:
     /*estimateProb(x <= 0);
     estimateProb(x <= 50);

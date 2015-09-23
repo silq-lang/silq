@@ -255,8 +255,8 @@ private struct Analyzer{
 	}
 }
 
-void analyze(FunctionDef def,ErrorHandler err){
+Distribution analyze(FunctionDef def,ErrorHandler err){
 	auto a=Analyzer(new Distribution,err);
 	a.analyze(def.body_);
-	writeln(a.dist);
+	return a.dist;
 }

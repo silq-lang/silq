@@ -3,7 +3,13 @@ import hashtable, util;
 
 import std.algorithm, std.array;
 
-version=MATLAB_FORMATTING;
+enum Format{
+	default_,
+	matlab,
+}
+
+enum formatting=Format.default_;
+//enum formatting=Format.matlab;
 
 enum Precedence{
 	none,
@@ -316,8 +322,11 @@ class DPlus: DCommutAssocOp{
 			if(common.length){
 				auto cm=dMult(common);
 				if(!cm.isFraction()){
-					return (dMult(e1.factors.setx.setMinus(cm.factors.setx))+
-							dMult(e2.factors.setx.setMinus(cm.factors.setx)))*cm;
+					auto sum1=dMult(e1.factors.setx.setMinus(cm.factors.setx));
+					auto sum2=dMult(e2.factors.setx.setMinus(cm.factors.setx));
+					auto sum=sum1+sum2;
+					auto summands=sum.summands.setx; // TODO: improve performance!
+					if(sum1!in summands||sum2!in summands) return sum*cm;
 				}
 			}
 			return null;
@@ -345,7 +354,7 @@ class DMult: DCommutAssocOp{
 	private this(DExprSet e)in{assert(e.length>1); }body{ assert(one !in e,text(e)); operands=e; }
 	override @property Precedence precedence(){ return Precedence.mult; }
 	override @property string symbol(){
-		version(MATLAB_FORMATTING) return ".*";
+		static if(formatting==Format.matlab) return ".*";
 		else return "·";
 	}
 	override string toStringImpl(Precedence prec){
@@ -469,6 +478,27 @@ class DMult: DCommutAssocOp{
 					}
 				}
 			}
+			if(auto ivr1=cast(DIvr)e1){
+				if(auto ivr2=cast(DIvr)e2) with(DIvr.Type){
+					// combine a≤0 and -a≤0 to a=0
+					if(ivr1.type==leZ&&ivr2.type==leZ){
+						if(ivr1.e is -ivr2.e)
+							return dIvr(eqZ,ivr1.e);
+					}
+					if(ivr2.type==eqZ) swap(ivr1,ivr2);
+					if(ivr1.type==eqZ){
+						if(ivr1.e is ivr2.e){
+							// combine a=0 and a≠0 to 0
+							if(ivr2.type==neqZ)
+								return zero;
+							// combine a=0 and a≤0 to a=0
+							if(ivr2.type==leZ)
+								return ivr1;
+						}						
+					}
+					
+				}
+			}
 			return null;
 		}
 		foreach(f;factors){
@@ -501,6 +531,7 @@ auto distributeMult(DExpr sum,DExpr e){
 auto dDistributeMult(DExpr sum,DExpr e){
 	// TODO: does this actually do anything?
 	DExprSet r;
+	//writeln(sum," ",e);
 	foreach(s;sum.summands)
 		DPlus.insert(r,s*e);
 	return dPlus(r);
@@ -556,7 +587,10 @@ abstract class DBinaryOp: DOp{
 class DPow: DBinaryOp{
 	mixin Constructor;
 	override Precedence precedence(){ return Precedence.pow; }
-	override @property string symbol(){ return "^"; }
+	override @property string symbol(){
+		static if(formatting==Format.matlab) return ".^";
+		else return "^";
+	}
 	override bool rightAssociative(){ return true; }
 
 	override bool isFraction(){ return cast(Dℕ)operands[0] && cast(Dℕ)operands[1]; }
@@ -574,19 +608,22 @@ class DPow: DBinaryOp{
 	}
 
 	override string toStringImpl(Precedence prec){
-		// TODO: always use ⅟ if negative factor in exponent
 		auto frc=operands[1].getFractionalFactor().getFraction();
-		if(frc[0]<0)
-			return addp(prec,"⅟"~(operands[0]^^-operands[1]).toStringImpl(Precedence.mult),Precedence.mult);
-		// also nice, but often hard to read: ½⅓¼⅕⅙
-		if(auto c=cast(Dℕ)operands[1])
-			return addp(prec,operands[0].toStringImpl(Precedence.pow)~highNum(c.c));
-		if(auto c=cast(DPow)operands[1]){
-			if(auto e=cast(Dℕ)c.operands[1]){
-				if(e.c==-1){
-					if(auto d=cast(Dℕ)c.operands[0]){
-						if(2<=d.c&&d.c<=4)
-							return text("  √∛∜"d[d.c.toLong()],overline(operands[0].toString()));
+		if(frc[0]<0){
+			enum pre=formatting==Format.matlab?"1/":"⅟";
+			return addp(prec,pre~(operands[0]^^-operands[1]).toStringImpl(Precedence.mult),Precedence.mult);
+		}
+			// also nice, but often hard to read: ½⅓¼⅕⅙
+		static if(formatting==Format.default_){		
+			if(auto c=cast(Dℕ)operands[1])
+				return addp(prec,operands[0].toStringImpl(Precedence.pow)~highNum(c.c));
+			if(auto c=cast(DPow)operands[1]){
+				if(auto e=cast(Dℕ)c.operands[1]){
+					if(e.c==-1){
+						if(auto d=cast(Dℕ)c.operands[0]){
+							if(2<=d.c&&d.c<=4)
+								return text("  √∛∜"d[d.c.toLong()],overline(operands[0].toString()));
+						}
 					}
 				}
 			}
@@ -654,14 +691,11 @@ DExpr expandPow(DPow p,long limit=-1){
 	auto c=cast(Dℕ)p.operands[1];
 	if(!c||limit>=0&&c.c>limit) return p;
 	auto a=cast(DPlus)p.operands[0];
-	if(!cast(DPlus)p.operands[0]) return p;
+	if(!a) return p;
 	// TODO: do this more efficiently!
 	DExprSet r;
-	foreach(s;a.summands){
-		auto cur=s*a^^(c-1);
-		if(auto curp=cast(DPow)cur) cur=expandPow(curp,max(-1,limit-1));
-		DPlus.insert(r,cur);
-	}
+	foreach(s;a.summands)
+		DPlus.insert(r,dDistributeMult(a^^(c-1),s));
 	return dPlus(r);
 }
 
@@ -683,13 +717,47 @@ struct DPolynomial{
 	}
 }
 
-DPolynomial asPolynomialIn(DExpr e,DVar v,long limit=-1){
+DExpr withoutFactor(DExpr e,DExpr factor){
+	auto s=e.factors.setx;
+	assert(factor in s);
+	return dMult(s.without(factor));
+}
+
+DExpr polyNormalize(DExpr e,DVar v,long limit=-1){
 	DExprSet normSet;
-	foreach(s;e.summands){
-		if(auto p=cast(DPow)s) DPlus.insert(normSet,p.expandPow(limit));
-		else DPlus.insert(normSet,s);
+	Louter: foreach(s;e.summands){
+		if(s.hasFreeVar(v)){
+			if(auto p=cast(DPow)s){
+				DPlus.insert(normSet,p.expandPow(limit));
+				continue;
+			}
+			if(auto p=cast(DMult)s){
+				foreach(f;p.factors){
+					if(auto a=cast(DPlus)f){
+						DPlus.insert(normSet,dDistributeMult(a,s.withoutFactor(f)));
+						continue Louter;
+					}
+				}
+				foreach(f;p.factors){
+					if(auto norm=polyNormalize(f,v,limit)){
+						if(norm !is f){
+							DPlus.insert(normSet,p.withoutFactor(f)*norm);
+							continue Louter;
+						}
+					}
+				}
+			}
+		}
+		DPlus.insert(normSet,s);
 	}
-	auto normalized=dPlus(normSet);
+	auto r=dPlus(normSet);
+	if(r !is e) return polyNormalize(r,v,limit);
+	return r;
+
+}
+
+DPolynomial asPolynomialIn(DExpr e,DVar v,long limit=-1){
+	auto normalized=polyNormalize(e,v,limit);
 	auto r=DPolynomial(v);
 	bool addCoeff(long exp,DExpr coeff){
 		if(coeff.hasFreeVar(v)) return false;
@@ -762,15 +830,15 @@ enum BoundStatus{
 
 BoundStatus getBoundForVar(DIvr ivr,DVar var,out DExpr bound){ // TODO: handle cases where there is no bound
 	enum r=BoundStatus.fail;
-	with(DIvr.Type) if(!util.among(ivr.type,lZ,leZ)) return r;
+	with(DIvr.Type) if(ivr.type!=leZ) return r;
 	foreach(s;ivr.e.summands){
 		if(!s.hasFreeVar(var)) continue;
-		auto cand=s/var;
+		auto cand=s.withoutFactor(var);
 		if(cand.hasFreeVar(var)) return r;
 		auto lZ=dIvr(DIvr.Type.lZ,cand)==one;
 		auto gZ=dIvr(DIvr.Type.lZ,-cand)==one;
 		if(!lZ&&!gZ) return r;
-		auto ne=var-ivr.e/cand;
+		auto ne=var-ivr.e/cand; // TODO: are there cases where this introduces division by 0?
 		if(ne.hasFreeVar(var)) return r;
 		// TODO: must consider strictness!
 		bound=ne;
@@ -796,24 +864,29 @@ T without(T,DExpr)(T a,DExpr b){
 }
 
 DExpr factorDIvr(alias wrapP,T...)(DExpr e,T args){
+	DExpr ns,ne;
+	void compute(DExpr s,DExpr f){
+		ns=s.withoutFactor(f);
+		ne=e-s;
+	}
 	foreach(s;e.summands){
 		foreach(f;s.factors){
-			DExpr ns,ne;
-			void compute(){
-				ns=dMult(s.factors.setx.without(f));
-				ne=e-s;
-			}
 			// workaround for recursive expansion:
 			static if(!is(typeof(wrapP(e)))){
 				auto wrap(DExpr x){ return args[0]+x*args[1]; }
 			}else alias wrap=wrapP;
 			if(auto ivr=cast(DIvr)f){
-				compute();
+				compute(s,f);
 				return f*wrap(ne+ns)+negateIvr(ivr)*(wrap(ne));
 			}
+		}
+	}
+	foreach(s;e.summands){
+		foreach(f;s.factors){
 			if(cast(DPlus)f){
-				compute();
-				if(auto fct=factorDIvr!0(f,ne,ns)) return wrap(fct);
+				compute(s,f);
+				if(auto fct=factorDIvr!0(f,ne,ns))
+					return factorDIvr!wrapP(fct,args);
 			}
 		}
 	}
@@ -838,7 +911,7 @@ class DIvr: DExpr{ // iverson brackets
 
 	override string toStringImpl(Precedence prec){
 		with(Type){
-			version(MATLAB_FORMATTING){
+			static if(formatting==Format.matlab){
 				return "["~e.toString()~(type==eqZ?"==":type==neqZ?"!=":type==lZ?"<":"<=")~"0]";
 			}else{
 				return "["~e.toString()~(type==eqZ?"=":type==neqZ?"≠":type==lZ?"<":"≤")~"0]";
@@ -1034,7 +1107,8 @@ DExpr definiteIntegral(DVar var,DExpr expr){
 		if(f is one) break;
 		auto ivr=cast(DIvr)f;
 		assert(!!ivr);
-		if(ivr.type==DIvr.Type.eqZ) return null; // TODO: eliminate eqZ early
+		//if(ivr.type==DIvr.Type.eqZ) return null; // TODO: eliminate eqZ early
+		if(ivr.type==DIvr.Type.eqZ) return zero; // TODO: eliminate eqZ early
 		if(ivr.type==DIvr.Type.neqZ) continue; // TODO: assert the necesssary preconditions for this
 		assert(ivr.type!=DIvr.Type.lZ);
 		DExpr bound;
@@ -1108,6 +1182,17 @@ class DInt: DOp{
 		}
 		auto ow=expr.splitMultAtVar(var);
 		if(ow[0] !is one) return ow[0]*dInt(var,ow[1]);
+
+		// expand powers: // TODO: is this the right place?
+		DExprSet factors;
+		foreach(f;expr.factors){
+			if(auto pow=cast(DPow)f) DMult.insert(factors,expandPow(pow));
+			else DMult.insert(factors,f);
+		}
+		auto nexp=dMult(factors);
+		if(expr !is nexp) return dInt(var,nexp);
+		////
+
 		foreach(f;expr.factors){
 			if(!f.hasFreeVar(var)) continue;
 			if(auto d=cast(DDelta)f){
@@ -1134,7 +1219,7 @@ class DInt: DOp{
 					if(check()){
 						// TODO: Assumes absolute integrability. Is this justified?
 						DExprSet s;
-						foreach(k;distributeMult(p,expr/f)){
+						foreach(k;distributeMult(p,expr.withoutFactor(f))){
 							DPlus.insert(s,dInt(var,k));
 						}
 						return dPlus(s);

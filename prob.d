@@ -40,7 +40,14 @@ int run(string path){
 	auto expr=parseExpression(src,err);
 	writeln(expr);
 	if(auto fd=cast(FunctionDef)expr){
-		analyze(fd,err);
+		auto dist=analyze(fd,err);
+		auto str=dist.toString();
+		if(str.length<100000) writeln(str);
+		import hashtable;
+		if(formatting==Format.matlab && dist.freeVars.length==1){
+			writeln("plotting...");
+			matlabPlot(dist.distribution.toString(),dist.freeVars.element.toString());
+		}
 	}else err.error("only single function definition supported",expr.loc);
 	return 0;
 }
@@ -178,6 +185,20 @@ void test(){
 	//writeln("e^((x₃·⅟2+⅟6)²·3·⅟5+-11·⅟12+-x₃²·⅟4+x₃·⅟2)·⅟√1̅0̅·⅟√π̅".dParse);
 	//writeln("∫dξ₁δ[-ξ₁·⅟2+1]".dParse);
 	//writeln("[x<0]^2".dParse);
-	writeln("[(-[-1+z≤0]+1)·z+-1≤0]".dParse);
+	//writeln("[(-[-1+z≤0]+1)·z+-1≤0]".dParse);
+	//writeln("[(-1+z)·[-z+1≠0]·[-z+1≤0]+-[-1+z≤0]≤0]".dParse);
 	// [([-z+1<0]·z+-1≤0]
+	//writeln("(((-1+w)·[-w+2≤0]+-1)·[-2+w≤0]+(-1+w)·[-w+2≤0])".dParse.factorDIvr!(a=>dIvr(DIvr.Type.leZ,a)));
+	//writeln("x".dVar^^2);
+	//writeln("(∫dξ₁((-1+-ξ₁+x)·[-2+-ξ₁+x≤0]+[-x+2+ξ₁≠0]·[-x+2+ξ₁≤0])²·[-1+ξ₁≤0]·[-2+-ξ₁+x≤0]·[-x+1+ξ₁≤0]·[-x+2+ξ₁≠0]·[-ξ₁≤0])".dParse);
+	//writeln("∫dξ₁(-x+1+ξ₁)·(-ξ₁+x)·[-1+ξ₁≤0]·[-2+-ξ₁+x≤0]·[-x+1+ξ₁≠0]·[-x+1+ξ₁≤0]·[-ξ₁≤0]".dParse);
+	//writeln("(∫dξ₁((-1+ξ₁)²·ξ₁+-(-1+ξ₁)²)·[-1+-ξ₁+x≤0]·[-4+ξ₁≤0]·[-x+ξ₁≤0]·[-ξ₁+3≠0]·[-ξ₁+3≤0])".dParse);
+	//writeln("∫dcur[-1+-2·cur+2·x≠0]·[-1+-2·cur+2·x≤0]·[-1+-cur+x≤0]·[-1+2·cur≠0]·[-1+2·cur≤0]·[-1+cur≤0]·[-cur≤0]·[-x+cur≤0]".dParse);
+	//writeln("[([x=0]+x)·(1+[x=0])≤0]".dParse); // non-termination in factorDIvr
+	//writeln("[([x≠0]+1)·(1+[x≠0])≤0]".dParse); // TODO
 }
+
+
+// [([x=0]+x)·(1+[x=0])≤0]
+
+// [x=0]
