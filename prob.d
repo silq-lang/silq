@@ -177,4 +177,7 @@ void test(){
 	//writeln("⅟√1̅0̅".dParse);
 	//writeln("e^((x₃·⅟2+⅟6)²·3·⅟5+-11·⅟12+-x₃²·⅟4+x₃·⅟2)·⅟√1̅0̅·⅟√π̅".dParse);
 	//writeln("∫dξ₁δ[-ξ₁·⅟2+1]".dParse);
+	//writeln("[x<0]^2".dParse);
+	writeln("[(-[-1+z≤0]+1)·z+-1≤0]".dParse);
+	// [([-z+1<0]·z+-1≤0]
 }

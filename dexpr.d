@@ -3,6 +3,8 @@ import hashtable, util;
 
 import std.algorithm, std.array;
 
+version=MATLAB_FORMATTING;
+
 enum Precedence{
 	none,
 	plus,
@@ -313,8 +315,10 @@ class DPlus: DCommutAssocOp{
 			auto common=intersect(e1.factors.setx,e2.factors.setx); // TODO: optimize?
 			if(common.length){
 				auto cm=dMult(common);
-				if(!cm.isFraction())
-					return (e1/cm+e2/cm)*cm;
+				if(!cm.isFraction()){
+					return (dMult(e1.factors.setx.setMinus(cm.factors.setx))+
+							dMult(e2.factors.setx.setMinus(cm.factors.setx)))*cm;
+				}
 			}
 			return null;
 		}
@@ -340,7 +344,10 @@ class DMult: DCommutAssocOp{
 	//mixin Constructor;
 	private this(DExprSet e)in{assert(e.length>1); }body{ assert(one !in e,text(e)); operands=e; }
 	override @property Precedence precedence(){ return Precedence.mult; }
-	override @property string symbol(){ return "·"; }
+	override @property string symbol(){
+		version(MATLAB_FORMATTING) return ".*";
+		else return "·";
+	}
 	override string toStringImpl(Precedence prec){
 		auto frac=this.getFractionalFactor().getFraction();
 		if(frac[0]<0){
@@ -607,6 +614,9 @@ class DPow: DBinaryOp{
 		if(e1 is one||e2 is zero) return one;
 		if(e1 is -one && e2 is -one) return -one;
 		if(e2 is one) return e1;
+		if(e1.mustBeZeroOrOne()){
+			return dIvr(DIvr.Type.neqZ,e2)*e1+dIvr(DIvr.Type.eqZ,e2);
+		}
 		if(auto d=cast(Dℕ)e2){
 			if(auto c=cast(Dℕ)e1){
 				if(d.c>0) return dℕ(pow(c.c,d.c));
@@ -659,6 +669,7 @@ struct DPolynomial{
 	DVar var;
 	DExpr[] coefficients;
 	bool initialized(){ return !!var; }
+	T opCast(T:bool)(){ return initialized(); }
 	long degree(){ return coefficients.length-1; }
 	void addCoeff(long exp,DExpr coeff){
 		while(coefficients.length<=exp) coefficients~=zero;
@@ -724,6 +735,12 @@ bool couldBeZero(DExpr e){
 	return true;
 }
 
+bool mustBeZeroOrOne(DExpr e){
+	if(e is zero || e is one) return true;
+	if(cast(DIvr)e) return true;
+	return false;
+}
+
 DExpr uglyFractionCancellation(DExpr e){
 	ℕ ngcd=0,dlcm=1;
 	foreach(s;e.summands){
@@ -762,6 +779,47 @@ BoundStatus getBoundForVar(DIvr ivr,DVar var,out DExpr bound){ // TODO: handle c
 	return r;
 }
 
+
+DExpr negateIvr(DIvr ivr){
+	final switch(ivr.type) with(DIvr.Type){
+		case lZ: return dIvr(leZ,-ivr.e);
+		case leZ: return dIvr(lZ,-ivr.e); // currently probably unreachable
+		case eqZ: return dIvr(neqZ,ivr.e);
+		case neqZ: return dIvr(eqZ,ivr.e);
+	}
+}
+
+T without(T,DExpr)(T a,DExpr b){
+	T r;
+	foreach(x;a) if(x !is b) r.insert(x);
+	return r;
+}
+
+DExpr factorDIvr(alias wrapP,T...)(DExpr e,T args){
+	foreach(s;e.summands){
+		foreach(f;s.factors){
+			DExpr ns,ne;
+			void compute(){
+				ns=dMult(s.factors.setx.without(f));
+				ne=e-s;
+			}
+			// workaround for recursive expansion:
+			static if(!is(typeof(wrapP(e)))){
+				auto wrap(DExpr x){ return args[0]+x*args[1]; }
+			}else alias wrap=wrapP;
+			if(auto ivr=cast(DIvr)f){
+				compute();
+				return f*wrap(ne+ns)+negateIvr(ivr)*(wrap(ne));
+			}
+			if(cast(DPlus)f){
+				compute();
+				if(auto fct=factorDIvr!0(f,ne,ns)) return wrap(fct);
+			}
+		}
+	}
+	return null;
+}
+
 class DIvr: DExpr{ // iverson brackets
 	enum Type{ // TODO: remove redundancy?
 		eqZ,
@@ -779,7 +837,13 @@ class DIvr: DExpr{ // iverson brackets
 	override DExpr incDeBruin(int di){ return dIvr(type,e.incDeBruin(di)); }
 
 	override string toStringImpl(Precedence prec){
-		with(Type) return "["~e.toString()~(type==eqZ?"=":type==neqZ?"≠":type==lZ?"<":"≤")~"0]";
+		with(Type){
+			version(MATLAB_FORMATTING){
+				return "["~e.toString()~(type==eqZ?"==":type==neqZ?"!=":type==lZ?"<":"<=")~"0]";
+			}else{
+				return "["~e.toString()~(type==eqZ?"=":type==neqZ?"≠":type==lZ?"<":"≤")~"0]";
+			}
+		}
 	}
 
 	static DExpr constructHook(Type type,DExpr e){
@@ -797,6 +861,8 @@ class DIvr: DExpr{ // iverson brackets
 		}
 		auto cancel=uglyFractionCancellation(e);
 		if(cancel!=one) return dIvr(type,dDistributeMult(e,cancel));
+		if(type==Type.lZ) return dIvr(Type.leZ,e)*dIvr(Type.neqZ,e);
+		if(auto fct=factorDIvr!(e=>dIvr(type,e))(e)) return fct;
 		return null;
 	}
 }
@@ -817,6 +883,11 @@ MapX!(DExpr,DExpr)[DIvr.Type.max+1] uniqueMapDIvr;
 DExpr dIvr(DIvr.Type type,DExpr e){
 	if(auto r=DIvr.constructHook(type,e)) return r;
 	if(e in uniqueMapDIvr[type]) return uniqueMapDIvr[type][e];
+	if(type==DIvr.Type.eqZ||type==DIvr.Type.neqZ){
+		// TODO: is there a better way to make the argument canonical?
+		if(-e in uniqueMapDIvr[type])
+			return uniqueMapDIvr[type][-e];
+	}
 	auto r=new DIvr(type,e);
 	uniqueMapDIvr[type][e]=r;
 	return r;
@@ -959,14 +1030,17 @@ DExpr definiteIntegral(DVar var,DExpr expr){
 	}
 	DExpr lower=null;
 	DExpr upper=null;
-	DExpr constraints=one;
 	foreach(f;ivrs.factors){
+		if(f is one) break;
 		auto ivr=cast(DIvr)f;
 		assert(!!ivr);
+		if(ivr.type==DIvr.Type.eqZ) return null; // TODO: eliminate eqZ early
+		if(ivr.type==DIvr.Type.neqZ) continue; // TODO: assert the necesssary preconditions for this
+		assert(ivr.type!=DIvr.Type.lZ);
 		DExpr bound;
 		auto status=ivr.getBoundForVar(var,bound);
 		final switch(status) with(BoundStatus){
-		case fail: return null; // TODO: non-linear bounds
+		case fail: return null; // TODO: non-linear bounds (modify DIvr such that it transforms them).
 		case lowerBound:
 			if(lower) lower=dMax(lower,bound);
 			else lower=bound;
@@ -976,13 +1050,19 @@ DExpr definiteIntegral(DVar var,DExpr expr){
 			else upper=bound;
 			break;
 		}
-		if(ivr.type==DIvr.Type.lZ) constraints=constraints*dIvr(DIvr.Type.neqZ,var-bound);
 	}
-	//writeln(expr);
-	//writeln("!! ",lower," ",upper," ",constraints);
 	// TODO: add better approach for antiderivatives	
-	if(upper&&lower&&constraints==one){
-		if(nonIvrs==one) return dIvr(DIvr.Type.leZ,lower-upper)*(upper-lower);
+	if(upper&&lower){
+		auto lowLeUp(){ return dIvr(DIvr.Type.leZ,lower-upper); }
+		if(nonIvrs is one) return lowLeUp()*(upper-lower);
+		if(auto poly=nonIvrs.asPolynomialIn(var)){
+			DExpr r=zero;
+			foreach(i,coeff;poly.coefficients){
+				assert(i<size_t.max);
+				r=r+coeff*(upper^^(i+1)-lower^^(i+1))/(i+1);
+			}
+			return lowLeUp()*r;
+		}
 	}
 	
 	return null; // no simpler expression available
@@ -1020,6 +1100,7 @@ class DInt: DOp{
 			return .dInt(var,expr);
 			}*/
 		if(auto m=cast(DPlus)expr){
+			// TODO: Assumes absolute integrability. Is this justified?
 			DExprSet summands;
 			foreach(s;m.summands)
 				DPlus.insert(summands,dInt(var,s));
@@ -1041,20 +1122,23 @@ class DInt: DOp{
 				}
 			}
 		}
-		foreach(f;expr.factors){
-			if(auto p=cast(DPlus)f){
-				bool check(){
-					foreach(d;p.allOf!DDelta)
-						if(d.e.hasFreeVar(var))
-							return true;
-					return false;
-				}
-				if(check()){
-					DExprSet s;
-					foreach(k;distributeMult(p,expr/f)){
-						DPlus.insert(s,dInt(var,k));
+		foreach(T;Seq!(DDelta,DIvr)){ // TODO: need to split on DIvr?
+			foreach(f;expr.factors){
+				if(auto p=cast(DPlus)f){
+					bool check(){
+						foreach(d;p.allOf!T)
+							if(d.e.hasFreeVar(var))
+								return true;
+						return false;
 					}
-					return dPlus(s);
+					if(check()){
+						// TODO: Assumes absolute integrability. Is this justified?
+						DExprSet s;
+						foreach(k;distributeMult(p,expr/f)){
+							DPlus.insert(s,dInt(var,k));
+						}
+						return dPlus(s);
+					}
 				}
 			}
 		}
@@ -1291,7 +1375,6 @@ class DSin: DOp{
 }
 
 DExpr dSin(DExpr e){ return uniqueDExprUnary!DSin(e); }
-
 
 class DFun: DOp{ // uninterpreted functions
 	DVar fun;
