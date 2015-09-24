@@ -233,6 +233,7 @@ private struct Analyzer{
 					foreach(w;dist.freeVars.setMinus(vars)){
 						dist.marginalize(w);
 					}
+					dist.distribution=dist.distribution.simplify(one); // TODO: this shouldn't be necessary!
 				}else err.error("return statement must be last statement in function",re.loc);
 				if(re.expected.length){
 					import dparse;

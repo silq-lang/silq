@@ -2,6 +2,7 @@ import std.conv;
 import hashtable, util;
 
 import std.algorithm, std.array;
+import std.typecons: Q=Tuple, q=tuple;
 
 enum Format{
 	default_,
@@ -29,6 +30,12 @@ abstract class DExpr{
 	abstract string toStringImpl(Precedence prec);
 
 	abstract int forEachSubExpr(scope int delegate(DExpr) dg);
+
+	abstract DExpr simplifyImpl(DExpr facts);
+	final DExpr simplify(DExpr facts){
+		if(facts is zero) return zero;
+		return simplifyImpl(facts);
+	}
 
 	// TODO: implement in terms of 'forEachSubExpr'?
 	abstract DExpr substitute(DVar var,DExpr e);
@@ -89,6 +96,7 @@ abstract class DExpr{
 		override int freeVarsImpl(scope int delegate(DVar) dg){ return 0; }
 		override DExpr substitute(DVar var,DExpr e){ assert(var !is this); return this; }
 		override DExpr incDeBruin(int di){ return this; }
+		override DExpr simplifyImpl(DExpr facts){ return this; }
 	}
 }
 alias DExprSet=SetX!DExpr;
@@ -104,6 +112,20 @@ class DVar: DExpr{
 	override DExpr solveFor(DVar var,DExpr e,ref DExpr[] constraints){
 		if(this is var) return e;
 		return null;
+	}
+	override DExpr simplifyImpl(DExpr facts){
+ // TODO: make more efficient! (e.g. keep hash table in product expressions)
+		foreach(f;facts.factors){
+			if(auto ivr=cast(DIvr)f){
+				if(ivr.type!=DIvr.Type.eqZ) continue;
+				if(ivr.e.getCanonicalFreeVar()!is this) continue; // TODO: make canonical var smart
+				DExpr[] constraints;
+				auto sol=ivr.e.solveFor(this,zero,constraints);
+				if(constraints.length) continue; // TODO: make more efficient!
+				return sol;
+			}
+		}
+		return this;
 	}
 }
 DVar[string] dVarCache; // TODO: caching desirable? (also need to update parser if not)
@@ -309,6 +331,12 @@ class DPlus: DCommutAssocOp{
 				insert(summands,s);
 			return;
 		}
+		if(auto p=cast(DPow)summand){
+			if(cast(DPlus)p.operands[0]){
+				insert(summands,expandPow(p));
+				return;
+			}
+		}
 		static DExpr combine(DExpr e1,DExpr e2){
 			if(e1 is zero) return e2;
 			if(e2 is zero) return e1;
@@ -329,6 +357,20 @@ class DPlus: DCommutAssocOp{
 					if(sum1!in summands||sum2!in summands) return sum*cm;
 				}
 			}
+			static DExpr combineIvr(DExpr e1,DExpr e2){
+				if(auto ivr1=cast(DIvr)e1){
+					if(ivr1.type is DIvr.Type.eqZ){
+						if(e2 is dIvr(DIvr.Type.lZ,ivr1.e))
+							return dIvr(DIvr.Type.leZ,ivr1.e);
+						if(e2 is dIvr(DIvr.Type.lZ,-ivr1.e))
+							return dIvr(DIvr.Type.leZ,-ivr1.e);
+					}
+				}
+				return null;
+			}
+			if(auto r=combineIvr(e1,e2)) return r;
+			if(auto r=combineIvr(e2,e1)) return r;
+			
 			return null;
 		}
 		// TODO: use suitable data structures
@@ -342,6 +384,14 @@ class DPlus: DCommutAssocOp{
 		assert(summand !in summands);
 		summands.insert(summand);
 	}
+	
+	override DExpr simplifyImpl(DExpr facts){
+		DExprSet summands;
+		foreach(s;this.summands)
+			insert(summands,s.simplify(facts));
+		return dPlus(summands);
+	}
+
 	static DExpr constructHook(DExprSet operands){
 		if(operands.length==0) return zero;
 		return null;
@@ -416,7 +466,7 @@ class DMult: DCommutAssocOp{
 		}
 
 		// TODO: use suitable data structures
-		static DExpr combine(DExpr e1,DExpr e2){
+		static DExpr combine(DExpr e1,DExpr e2){			
 			if(e1 is one) return e2;
 			if(e2 is one) return e1;
 			if(e1 is e2) return e1^^2;
@@ -478,16 +528,18 @@ class DMult: DCommutAssocOp{
 					}
 				}
 			}
-			if(auto ivr1=cast(DIvr)e1){
+			if(auto ivr1=cast(DIvr)e1){ // TODO: this should all be done by DIvr.simplify instead
 				if(auto ivr2=cast(DIvr)e2) with(DIvr.Type){
 					// combine a≤0 and -a≤0 to a=0
 					if(ivr1.type==leZ&&ivr2.type==leZ){
 						if(ivr1.e is -ivr2.e)
 							return dIvr(eqZ,ivr1.e);
+						if(ivr1.e.mustBeLessThan(ivr2.e)) return e2;
+						if(ivr2.e.mustBeLessThan(ivr1.e)) return e1;
 					}
 					if(ivr2.type==eqZ) swap(ivr1,ivr2);
 					if(ivr1.type==eqZ){
-						if(ivr1.e is ivr2.e){
+						if(ivr1.e is ivr2.e||ivr1.e is -ivr2.e){ // TODO: jointly canonicalize
 							// combine a=0 and a≠0 to 0
 							if(ivr2.type==neqZ)
 								return zero;
@@ -499,6 +551,10 @@ class DMult: DCommutAssocOp{
 					
 				}
 			}
+			/+// TODO: do we want auto-distribution?
+			if(cast(DPlus)e1) return dDistributeMult(e1,e2);
+			if(cast(DPlus)e2) return dDistributeMult(e2,e1);+/
+
 			return null;
 		}
 		foreach(f;factors){
@@ -511,6 +567,18 @@ class DMult: DCommutAssocOp{
 		}
 		assert(factors.length==1||one !in factors);
 		factors.insert(factor);
+	}
+	override DExpr simplifyImpl(DExpr facts){
+		DExprSet myFactors;
+		DExpr myFacts=one;
+		foreach(f;this.factors){
+			if(cast(DIvr)f) myFacts=myFacts*f.simplify(facts);
+			else myFactors.insert(f);
+		}
+		DExpr newFacts=facts*myFacts;
+		DExprSet simpFactors;
+		foreach(f;myFactors) insert(simpFactors,f.simplify(newFacts));
+		return dMult(simpFactors)*myFacts;
 	}
 	static DExpr constructHook(DExprSet operands){
 		if(operands.length==0) return one;
@@ -639,6 +707,13 @@ class DPow: DBinaryOp{
 	}
 
 	static DExpr constructHook(DExpr e1,DExpr e2){
+		return staticSimplify(e1,e2);
+	}
+
+	private static DExpr staticSimplify(DExpr e1,DExpr e2,DExpr facts=one){
+		auto ne1=e1.simplify(facts);
+		auto ne2=e2.simplify(facts);
+		if(ne1!is e1||ne2!is e2) return dPow(ne1,ne2);
 		if(e1 !is -one) if(auto c=cast(Dℕ)e1) if(c.c<0) return (-1)^^e2*dℕ(-c.c)^^e2;
 		if(auto m=cast(DMult)e1){ // TODO: do we really want auto-distribution?
 			DExprSet factors;
@@ -679,7 +754,13 @@ class DPow: DBinaryOp{
 					return r^^(e2/f);
 			}
 		}
+		if(cast(DPlus)e1) return expandPow(e1,e2);
 		return null;
+	}
+
+	override DExpr simplifyImpl(DExpr facts){
+		auto r=staticSimplify(operands[0],operands[1],facts);
+		return r?r:this;
 	}
 }
 
@@ -687,16 +768,21 @@ mixin(makeConstructorNonCommutAssoc!DPow);
 DExpr dDiv(DExpr e1,DExpr e2){ return e1*e2^^-1; }
 
 
-DExpr expandPow(DPow p,long limit=-1){
-	auto c=cast(Dℕ)p.operands[1];
-	if(!c||limit>=0&&c.c>limit) return p;
-	auto a=cast(DPlus)p.operands[0];
-	if(!a) return p;
+DExpr expandPow(DExpr e1,DExpr e2,long limit=-1){
+	auto c=cast(Dℕ)e2;
+	if(!c||c.c<=0||limit>=0&&c.c>limit) return null;
+	auto a=cast(DPlus)e1;
+	if(!a) return null;
 	// TODO: do this more efficiently!
 	DExprSet r;
 	foreach(s;a.summands)
 		DPlus.insert(r,dDistributeMult(a^^(c-1),s));
-	return dPlus(r);
+	return dPlus(r);	
+}
+
+DExpr expandPow(DPow p,long limit=-1){
+	auto r=expandPow(p.operands[0],p.operands[1],limit);
+	return r?r:p;
 }
 
 struct DPolynomial{
@@ -796,6 +882,7 @@ abstract class DUnaryOp: DOp{
 }
 DExpr dUMinus(DExpr e){ return -1*e; }
 
+// TODO: improve these procedures:
 bool couldBeZero(DExpr e){
 	if(cast(DΠ)e) return false;
 	if(cast(DE)e) return false;
@@ -809,6 +896,21 @@ bool mustBeZeroOrOne(DExpr e){
 	return false;
 }
 
+bool mustBeLessOrEqualZero(DExpr e){
+	if(auto c=cast(Dℕ)e) return c.c<=0;
+	return false;
+}
+bool mustBeLessThanZero(DExpr e){
+	return !couldBeZero(e)&&mustBeLessOrEqualZero(e);
+}
+
+bool mustBeLessThan(DExpr e1,DExpr e2){
+	return mustBeLessThanZero(e1-e2);
+}
+bool mustBeAtMost(DExpr e1,DExpr e2){
+	return mustBeLessOrEqualZero(e1-e2);
+}
+
 DExpr uglyFractionCancellation(DExpr e){
 	ℕ ngcd=0,dlcm=1;
 	foreach(s;e.summands){
@@ -819,6 +921,7 @@ DExpr uglyFractionCancellation(DExpr e){
 		ngcd=gcd(ngcd,abs(nd[0]));
 		dlcm=lcm(dlcm,nd[1]);
 	}
+	if(!ngcd) return one;
 	return dℕ(dlcm)/ngcd;
 }
 
@@ -847,14 +950,16 @@ BoundStatus getBoundForVar(DIvr ivr,DVar var,out DExpr bound){ // TODO: handle c
 	return r;
 }
 
-
-DExpr negateIvr(DIvr ivr){
-	final switch(ivr.type) with(DIvr.Type){
-		case lZ: return dIvr(leZ,-ivr.e);
-		case leZ: return dIvr(lZ,-ivr.e); // currently probably unreachable
-		case eqZ: return dIvr(neqZ,ivr.e);
-		case neqZ: return dIvr(eqZ,ivr.e);
-	}
+Q!(DIvr.Type,"type",DExpr,"e") negateDIvr(DIvr.Type type,DExpr e){
+	final switch(type) with(DIvr.Type){
+		case lZ: return typeof(return)(leZ,-e);
+		case leZ: return typeof(return)(lZ,-e); // currently probably unreachable
+		case eqZ: return typeof(return)(neqZ,e);
+		case neqZ: return typeof(return)(eqZ,e);
+	}	
+}
+DExpr negateDIvr(DIvr ivr){
+	return dIvr(negateDIvr(ivr.type,ivr.e).expand);
 }
 
 T without(T,DExpr)(T a,DExpr b){
@@ -863,32 +968,10 @@ T without(T,DExpr)(T a,DExpr b){
 	return r;
 }
 
-DExpr factorDIvr(alias wrapP,T...)(DExpr e,T args){
-	DExpr ns,ne;
-	void compute(DExpr s,DExpr f){
-		ns=s.withoutFactor(f);
-		ne=e-s;
-	}
-	foreach(s;e.summands){
-		foreach(f;s.factors){
-			// workaround for recursive expansion:
-			static if(!is(typeof(wrapP(e)))){
-				auto wrap(DExpr x){ return args[0]+x*args[1]; }
-			}else alias wrap=wrapP;
-			if(auto ivr=cast(DIvr)f){
-				compute(s,f);
-				return f*wrap(ne+ns)+negateIvr(ivr)*(wrap(ne));
-			}
-		}
-	}
-	foreach(s;e.summands){
-		foreach(f;s.factors){
-			if(cast(DPlus)f){
-				compute(s,f);
-				if(auto fct=factorDIvr!0(f,ne,ns))
-					return factorDIvr!wrapP(fct,args);
-			}
-		}
+DExpr factorDIvr(alias wrap)(DExpr e){
+	foreach(ivr;e.allOf!DIvr){ // TODO: do all in bulk?
+		auto neg=negateDIvr(ivr);
+		return ivr*wrap(e.simplify(ivr))+neg*wrap(e.simplify(neg));
 	}
 	return null;
 }
@@ -920,9 +1003,48 @@ class DIvr: DExpr{ // iverson brackets
 	}
 
 	static DExpr constructHook(Type type,DExpr e){
+		return staticSimplify(type,e);
+	}
+
+	static DExpr staticSimplify(Type type,DExpr e,DExpr facts=one){
+		auto ne=e.simplify(facts);
+		if(ne !is e) return dIvr(type,ne);
+		// TODO: make these check faster (also: less convoluted)
+		auto neg=negateDIvr(type,e);
+		bool foundLe=false, foundNeq=false;
+		foreach(f;facts.factors){
+			if(auto ivr=cast(DIvr)f){
+				// TODO: more elaborate implication checks
+				if(ivr.type==type){
+					if(ivr.e is e) return one;
+					if(ivr.type==Type.leZ){
+						if(e.mustBeAtMost(ivr.e))
+							return one;
+					}
+				}
+				import util: among;
+				if(neg.type==ivr.type && (neg.e is ivr.e||type.among(Type.eqZ,Type.neqZ)&&neg.e is -ivr.e))
+					return zero; // TODO: ditto
+				if(neg.type==Type.lZ){
+					if(ivr.type==Type.leZ){
+						if(neg.e is ivr.e) assert(neg.e.mustBeAtMost(ivr.e));
+						if(neg.e.mustBeAtMost(ivr.e)) foundLe=true;
+						else if(neg.e.mustBeLessThan(ivr.e)) return zero;
+					}else if(neg.e is ivr.e ||neg.e is -ivr.e&&ivr.type==Type.neqZ) foundNeq=true;
+				}
+			}
+		}
+		if(foundLe&&foundNeq){
+			assert(type==type.leZ);
+			return zero;
+		}
 		// TODO: better decision procedures
 		if(type==Type.eqZ&&!couldBeZero(e)) return zero;
 		if(type==Type.neqZ&&!couldBeZero(e)) return one;
+		if(type==Type.leZ){
+			if(mustBeLessOrEqualZero(e)) return one;
+			if(mustBeLessThanZero(-e)) return zero;
+		}
 		if(auto c=cast(Dℕ)e){
 			DExpr x(bool b){ return b?one:zero; }
 			final switch(type) with(Type){
@@ -938,6 +1060,11 @@ class DIvr: DExpr{ // iverson brackets
 		if(auto fct=factorDIvr!(e=>dIvr(type,e))(e)) return fct;
 		return null;
 	}
+	override DExpr simplifyImpl(DExpr facts){
+		auto r=staticSimplify(type,e,facts);
+		return r?r:this;
+	}
+
 }
 
 DVar getCanonicalFreeVar(DExpr e){
@@ -978,9 +1105,19 @@ class DDelta: DExpr{ // Dirac delta function
 	override DExpr incDeBruin(int di){ return dDelta(e.incDeBruin(di)); }
 
 	static DExpr constructHook(DExpr e){
+		return staticSimplify(e);
+	}
+	static DExpr staticSimplify(DExpr e,DExpr facts=one){
+		//auto ne=e.simplify(facts);
+		//if(ne !is e) return dDelta(ne); // cannot do this!
 		auto cancel=uglyFractionCancellation(e);
 		if(cancel!=one) return dDelta(dDistributeMult(e,cancel))*cancel;
+		if(auto fct=factorDIvr!(e=>dDelta(e))(e)) return fct;
 		return null;
+	}
+	override DExpr simplifyImpl(DExpr facts){
+		auto r=staticSimplify(e,facts);
+		return r?r:this;
 	}
 }
 
@@ -1158,6 +1295,11 @@ class DInt: DOp{
 		return addp(prec,symbol~"d"~var.toString()~expr.toStringImpl(precedence));
 	}
 	static DExpr constructHook(DVar var,DExpr expr){
+		return staticSimplify(var,expr);
+	}
+	static DExpr staticSimplify(DVar var,DExpr expr,DExpr facts=one){
+		auto nexpr=expr.simplify(facts); // TODO: this pattern always simplifies everything twice, make efficient
+		if(nexpr !is expr) return dInt(var,nexpr);
 		/*static dInt(DVar var,DExpr expr){
 			if(cast(DDeBruinVar)var){
 				if(auto hooked=constructHook(var,expr)){
@@ -1234,7 +1376,7 @@ class DInt: DOp{
 			if(auto other=cast(DInt)f){
 				assert(!!cast(DDeBruinVar)other.var);
 				auto tmpvar=new DVar("tmp"); // TODO: get rid of this!
-				auto intExpr=(other.expr*(expr/f)).substitute(other.var,tmpvar).incDeBruin(-1);
+				auto intExpr=(other.expr*expr.withoutFactor(f)).substitute(other.var,tmpvar).incDeBruin(-1);
 				auto ow=intExpr.splitMultAtVar(var);
 				if(auto res=constructHook(var,ow[1]))
 					return dInt(tmpvar,res*ow[0]);
@@ -1244,6 +1386,13 @@ class DInt: DOp{
 		if(auto r=specialIntegral(var,expr)) return r;
 		return definiteIntegral(var,expr);
 	}
+	
+	override DExpr simplifyImpl(DExpr facts){
+		return this; // TODO: make sure simplification works with deBruinVars correctly
+		/+ auto r=staticSimplify(var,expr);
+		 return r?r:this;+/
+	}
+
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
 		 // TODO: correct?
 		return expr.forEachSubExpr(dg);
@@ -1318,9 +1467,17 @@ class DDiff: DOp{
 	}
 
 	static DExpr constructHook(DVar v,DExpr e,DExpr x){
+		return staticSimplify(v,e,x);
+	}
+	static DExpr staticSimplify(DVar v,DExpr e,DExpr x,DExpr facts=one){
+		e=e.simplify(facts);
 		if(auto r=differentiate(v,e))
 			return r.substitute(v,x);
 		return null;
+	}
+	override DExpr simplifyImpl(DExpr facts){
+		auto r=staticSimplify(v,e,x);
+		return r?r:this;
 	}
 
 	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; } // TODO: correct?
@@ -1375,6 +1532,10 @@ class DAbs: DOp{
 	}
 
 	static DExpr constructHook(DExpr e){
+		return staticSimplify(e);
+	}
+	static DExpr staticSimplify(DExpr e,DExpr facts=one){
+		e=e.simplify(facts);
 		if(e.isFraction()){
 			auto nd=e.getFraction();
 			assert(nd[1]>0);
@@ -1389,6 +1550,10 @@ class DAbs: DOp{
 			return dMult(r);
 		}
 		return null;
+	}
+	override DExpr simplifyImpl(DExpr facts){
+		auto r=staticSimplify(e);
+		return r?r:this;
 	}
 }
 
@@ -1418,6 +1583,10 @@ class DLog: DOp{
 	}
 
 	static DExpr constructHook(DExpr e){
+		return staticSimplify(e);
+	}
+	static DExpr staticSimplify(DExpr e,DExpr facts=one){
+		e=e.simplify(facts);
 		if(auto c=cast(DE)e) return one;
 		if(auto m=cast(DMult)e){
 			DExprSet r;
@@ -1428,6 +1597,10 @@ class DLog: DOp{
 		if(auto p=cast(DPow)e)
 			return p.operands[1]*dLog(p.operands[0]);
 		return null;
+	}
+	override DExpr simplifyImpl(DExpr facts){
+		auto r=staticSimplify(e,facts);
+		return r?r:this;
 	}
 }
 
@@ -1455,7 +1628,16 @@ class DSin: DOp{
 	}
 
 	static DExpr constructHook(DExpr e){
+		return staticSimplify(e);
+	}
+	static DExpr staticSimplify(DExpr e,DExpr facts=one){
+		auto ne=e.simplify(facts);
+		if(ne!is e) return dSin(ne);
 		return null;
+	}
+	override DExpr simplifyImpl(DExpr facts){
+		auto r=staticSimplify(e,facts);
+		return r?r:this;
 	}
 }
 
@@ -1489,13 +1671,24 @@ class DFun: DOp{ // uninterpreted functions
 		return dFun(fun,args.map!(a=>a.incDeBruin(di)).array);
 	}
 
-	static DExpr constructHook(DExpr e){
+	static DFun constructHook(DVar fun,DExpr[] args){
+		return staticSimplify(fun,args);
+	}
+	static DFun staticSimplify(DVar fun,DExpr[] args,DExpr facts=one){
+		auto nargs=args.map!(a=>a.simplify(facts)).array;
+		if(nargs!=args) return dFun(fun,nargs);
 		return null;
 	}
+	override DExpr simplifyImpl(DExpr facts){
+		auto r=staticSimplify(fun,args,facts);
+		return r?r:this;
+	}
+
 }
 
 MapX!(TupleX!(DVar,DExpr[]),DFun) uniqueMapDFun;
 auto uniqueDFun(DVar fun,DExpr[] args){
+	if(auto r=DFun.constructHook(fun,args)) return r;
 	auto t=tuplex(fun,args);
 	if(t in uniqueMapDFun) return uniqueMapDFun[t];
 	auto r=new DFun(fun,args);

@@ -1,4 +1,5 @@
-
+// skipped: too slow at the moment
+// TODO: why is this so slow?
 def test(){
     p := Uniform(0,1);
     x1 := Bernoulli(p);

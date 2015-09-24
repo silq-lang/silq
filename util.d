@@ -401,6 +401,13 @@ alias setxToHash=ID!(a=>a.toHash());
 alias SetX(T)=HSet!(T,setxEq,setxToHash);
 alias setx=hset!(setxToHash,setxEq);
 alias MapX(K,V) = HashMap!(K,V,(a,b)=>a==b,a=>a.toHash());
+
+auto singleton(T)(T arg){
+	SetX!T s;
+	s.insert(arg);
+	return s;
+}
+
 struct TupleX(T...){
 	T expand;
 	alias expand this;
@@ -466,12 +473,12 @@ void matlabPlot(string expression,string variable){
 		variable~"=-20:0.001:20;\n"~
 		variable~"Dist="~expression~";\n"~
 		"plot("~variable~","~variable~"Dist);\n";
-	if(command.length<100000){
+	if(command.length<1000){
 		writeln("command: ");
 		writeln(command);
 	}
 	input.writeEnd.writeln(command);
-	input.writeEnd.writeln("sleep(3);exit");
+	input.writeEnd.writeln("sleep(5);exit");
 	input.writeEnd.flush();
 	//writeln(input.readEnd.readln());
 	//foreach(i;0..100) writeln(error.readEnd.readln());

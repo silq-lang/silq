@@ -42,7 +42,7 @@ int run(string path){
 	if(auto fd=cast(FunctionDef)expr){
 		auto dist=analyze(fd,err);
 		auto str=dist.toString();
-		if(str.length<100000) writeln(str);
+		if(str.length<10000) writeln(str);
 		import hashtable;
 		if(formatting==Format.matlab && dist.freeVars.length==1){
 			writeln("plotting...");
@@ -194,11 +194,26 @@ void test(){
 	//writeln("∫dξ₁(-x+1+ξ₁)·(-ξ₁+x)·[-1+ξ₁≤0]·[-2+-ξ₁+x≤0]·[-x+1+ξ₁≠0]·[-x+1+ξ₁≤0]·[-ξ₁≤0]".dParse);
 	//writeln("(∫dξ₁((-1+ξ₁)²·ξ₁+-(-1+ξ₁)²)·[-1+-ξ₁+x≤0]·[-4+ξ₁≤0]·[-x+ξ₁≤0]·[-ξ₁+3≠0]·[-ξ₁+3≤0])".dParse);
 	//writeln("∫dcur[-1+-2·cur+2·x≠0]·[-1+-2·cur+2·x≤0]·[-1+-cur+x≤0]·[-1+2·cur≠0]·[-1+2·cur≤0]·[-1+cur≤0]·[-cur≤0]·[-x+cur≤0]".dParse);
-	//writeln("[([x=0]+x)·(1+[x=0])≤0]".dParse); // non-termination in factorDIvr
-	//writeln("[([x≠0]+1)·(1+[x≠0])≤0]".dParse); // TODO
+	//writeln("[([x=0]+x)·(1+[x=0])≤0]".dParse.simplify(one)); // non-termination in factorDIvr
+	//writeln("x·[x=0]".dParse.simplify(one));
+	//writeln("[([x≠0]+1)·(1+[x≠0])≤0]".dParse);
+	//writeln("[x<0]".dParse.simplify("[x≤0]".dParse));
+	//writeln("[x≤0]".dParse.simplify("[-x<0]".dParse));
+	//writeln("[[z≠0]·[z≤0]≤0]".dParse); // TODO: this is convoluted!
+	//writeln("[z+-3≤0]·[z+-2≤0]".dParse);
+	//writeln("[-3+x≤0]·[-x+2≤0]".dParse);
+	//writeln("[z≤0]".dParse.simplify("[-z≤0]·[z≠0]".dParse));
+	//writeln("[[x≤0]≤0]".dParse);
 }
 
+/*
+[([x=0]+x)·(1+[x=0])≤0]
+
+[x≠0][x≤0]
+
+
+[x=0]·[(1+x)·(1+[x=0]≤0]
 
 // [([x=0]+x)·(1+[x=0])≤0]
 
-// [x=0]
+// [x=0] */
