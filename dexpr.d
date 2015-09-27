@@ -325,19 +325,20 @@ class DPlus: DCommutAssocOp{
 		return ow[1].solveFor(var,e-ow[0],constraints);
 	}
 
-	static void insert(ref DExprSet summands,DExpr summand)in{assert(!!summand);}body{
+	static void insert(ref DExprSet summands,DExpr summand,DExpr facts=one)in{assert(!!summand);}body{
+		summand=summand.simplify(facts);
 		if(auto dp=cast(DPlus)summand){
 			foreach(s;dp.summands)
-				insert(summands,s);
+				insert(summands,s,facts);
 			return;
 		}
 		if(auto p=cast(DPow)summand){
 			if(cast(DPlus)p.operands[0]){
-				insert(summands,expandPow(p));
+				insert(summands,expandPow(p),facts);
 				return;
 			}
 		}
-		static DExpr combine(DExpr e1,DExpr e2){
+		DExpr combine(DExpr e1,DExpr e2){
 			if(e1 is zero) return e2;
 			if(e2 is zero) return e1;
 			if(e1 is e2) return 2*e1;
@@ -352,7 +353,7 @@ class DPlus: DCommutAssocOp{
 				if(!cm.isFraction()){
 					auto sum1=dMult(e1.factors.setx.setMinus(cm.factors.setx));
 					auto sum2=dMult(e2.factors.setx.setMinus(cm.factors.setx));
-					auto sum=sum1+sum2;
+					auto sum=(sum1+sum2).simplify(facts);
 					auto summands=sum.summands.setx; // TODO: improve performance!
 					if(sum1!in summands||sum2!in summands) return sum*cm;
 				}
@@ -364,6 +365,13 @@ class DPlus: DCommutAssocOp{
 							return dIvr(DIvr.Type.leZ,ivr1.e);
 						if(e2 is dIvr(DIvr.Type.lZ,-ivr1.e))
 							return dIvr(DIvr.Type.leZ,-ivr1.e);
+						if(e2 is dIvr(DIvr.Type.neqZ,ivr1.e))
+							return one;
+					}else if(ivr1.type is DIvr.Type.leZ){
+						if(e2 is dIvr(DIvr.Type.leZ,-ivr1.e))
+							return 2*dIvr(DIvr.Type.eqZ,ivr1.e)+dIvr(DIvr.Type.neqZ,ivr1.e);
+						if(e2 is dIvr(DIvr.Type.lZ,-ivr1.e))
+							return one;
 					}
 				}
 				return null;
@@ -377,7 +385,7 @@ class DPlus: DCommutAssocOp{
 		foreach(s;summands){
 			if(auto nws=combine(s,summand)){
 				summands.remove(s);
-				insert(summands,nws);
+				insert(summands,nws,facts);
 				return;
 			}
 		}
@@ -385,10 +393,33 @@ class DPlus: DCommutAssocOp{
 		summands.insert(summand);
 	}
 	
+	static final integralSimplify(DExprSet summands,DExpr facts){
+		DExprSet integralSummands;
+		DExprSet integrals;
+		DVar tmp=new DVar("tmp"); // TODO: get rid of this!
+		foreach(s;summands){
+			if(auto dint=cast(DInt)s){
+				integralSummands.insert(dint.getExpr(tmp));
+				integrals.insert(dint);
+			}
+		}
+		if(integralSummands.length){
+			auto integralSum=dPlus(integralSummands).simplify(facts);
+			auto simplSummands=integralSum.summands.setx;
+			if(simplSummands.setMinus(integralSummands).length){
+				summands=summands.setMinus(integrals);
+				summands=summands.unite(simplSummands);
+				return dInt(tmp,dPlus(summands));
+			}
+		}
+		return null;
+	}
+
 	override DExpr simplifyImpl(DExpr facts){
 		DExprSet summands;
 		foreach(s;this.summands)
-			insert(summands,s.simplify(facts));
+			insert(summands,s,facts);
+		if(auto r=integralSimplify(summands,facts)) return r;
 		return dPlus(summands);
 	}
 
@@ -1201,25 +1232,6 @@ DExpr[2] splitMultAtVar(DExpr e,DVar var){
 	return [dMult(outside),dMult(within)];
 }
 
-DExpr specialIntegral(DVar v,DExpr e){ // TODO: merge with definiteIntegral?
-	static DExpr gaussianIntegral(DVar v,DExpr e){
-		// detect e^^(-a*x^^2+b*x+c), and integrate to e^^(b^^2/4a+c)*(pi/a)^^(1/2).
-		// TODO: this assumes that a≥0!
-		auto p=cast(DPow)e;
-		if(!p) return null;
-		if(!cast(DE)p.operands[0]) return null;
-		auto q=p.operands[1].asPolynomialIn(v,2);
-		if(!q.initialized) return null;
-		if(q.coefficients.length!=3) return null;
-		auto qc=q.coefficients;
-		auto a=-qc[2],b=qc[1],c=qc[0];
-		if(a is zero) return null;
-		return dE^^(b^^2/(4*a)+c)*(dΠ/a)^^(one/2);
-	}
-	if(auto r=gaussianIntegral(v,e)) return r;
-	return null;
-}
-
 DExpr dMin(DExpr a,DExpr b){
 	return dIvr(DIvr.Type.lZ,a-b)*a+dIvr(DIvr.Type.leZ,b-a)*b;
 }
@@ -1274,6 +1286,24 @@ DExpr definiteIntegral(DVar var,DExpr expr){
 			}
 			return lowLeUp()*r;
 		}
+	}
+
+	if(!upper&&!lower){
+		static DExpr gaussianIntegral(DVar v,DExpr e){
+			// detect e^^(-a*x^^2+b*x+c), and integrate to e^^(b^^2/4a+c)*(pi/a)^^(1/2).
+			// TODO: this assumes that a≥0!
+			auto p=cast(DPow)e;
+			if(!p) return null;
+			if(!cast(DE)p.operands[0]) return null;
+			auto q=p.operands[1].asPolynomialIn(v,2);
+			if(!q.initialized) return null;
+			if(q.coefficients.length!=3) return null;
+			auto qc=q.coefficients;
+			auto a=-qc[2],b=qc[1],c=qc[0];
+			if(a is zero) return null;
+			return dE^^(b^^2/(4*a)+c)*(dΠ/a)^^(one/2);
+		}
+		if(auto r=gaussianIntegral(var,nonIvrs)) return r;
 	}
 	
 	return null; // no simpler expression available
@@ -1383,7 +1413,6 @@ class DInt: DOp{
 			}
 		}
 		if(!expr.hasFreeVar(var)) return expr*dInt(var,one); // (infinite integral)
-		if(auto r=specialIntegral(var,expr)) return r;
 		return definiteIntegral(var,expr);
 	}
 	
