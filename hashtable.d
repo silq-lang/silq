@@ -4,8 +4,6 @@ import std.typecons, std.typetuple;
 import std.functional, std.algorithm;
 import std.conv, std.array;
 
-import std.random;
-
 //import util;
 
 struct HashMap(K_, V_, alias eq_ , alias h_){
@@ -30,7 +28,7 @@ struct HashMap(K_, V_, alias eq_ , alias h_){
 	int numrealloc;
 	private void realloc(){
 		auto ees = es;
-		es = new B[](es.length*incrementFactor+uniform(0,incrementFactor));
+		es = new B[](es.length*incrementFactor);
 		length = 0;
 		foreach(b;ees) foreach(e;b) insert(e);
 	}

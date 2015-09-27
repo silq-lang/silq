@@ -1,5 +1,6 @@
-// skipped: too slow at the moment
-// TODO: why is this so slow?
+// skipped: form of computed result varies non-deterministically (TODO: fix this)
+// TODO: make evaluation instantaneous
+
 def test(){
     p := Uniform(0,1);
     x1 := Bernoulli(p);
@@ -38,6 +39,5 @@ def test(){
     observe(x17==1);
     x18 := Bernoulli(p);
     observe(x18==1);
-    return p; // expected: (-p+1)⁷·[-1+p≤0]·[-p≤0]·p¹¹·⅟(∫dξ₁(-ξ₁+1)⁷·[-1+ξ₁≤0]·[-ξ₁≤0]·ξ₁¹¹)
-    // TODO: evaluate the integral
+    return p; // expected: (-16·p+16)·(-28·p+28)·(-323·p·⅟77+323·⅟77)·(-715·p·⅟48+715·⅟48)·(-84·p·⅟5+84·⅟5)·(-9·p+9)·(-p·⅟7+⅟7)·[-1+p≤0]·[-p≤0]·p¹¹
 }

@@ -1144,6 +1144,8 @@ class DDelta: DExpr{ // Dirac delta function
 		auto cancel=uglyFractionCancellation(e);
 		if(cancel!=one) return dDelta(dDistributeMult(e,cancel))*cancel;
 		if(auto fct=factorDIvr!(e=>dDelta(e))(e)) return fct;
+		if(dIvr(DIvr.Type.eqZ,e).simplify(facts) is zero)
+			return zero;
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){
