@@ -37,8 +37,13 @@ void main(){
 				if(colorize) writeln(": ",failColor,BOLD,"failed",RESET);
 				else writeln(": failed");				
 			}else{
-				if(colorize) writeln(": ",TODOColor,BOLD,"TODO",RESET);
-				else writeln(": TODO");
+				if(summary.todos||!summary.obsoleteTodos){
+					if(colorize) writeln(": ",TODOColor,BOLD,"TODO",RESET);
+					else writeln(": TODO");
+				}else{
+					if(colorize) writeln(": ",passColor,"fixed",RESET);
+					else writeln(": fixed");					
+				}
 			}
 			writeln(summary);
 		}else{

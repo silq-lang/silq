@@ -467,7 +467,7 @@ void matlabPlot(string expression,string variable){
 	auto output=File("/dev/null","w");
 	auto error=File("/dev/null","w");
 	// TODO: make plot configurable from the outside
-	auto id=spawnProcess(["octave"],input.readEnd,output,error);
+	auto id=spawnProcess(["octave"],input.readEnd,output,stderr);
 	scope(exit) wait(id);
 	string command=
 		variable~"=-20:0.001:20;\n"~

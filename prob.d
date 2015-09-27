@@ -43,9 +43,18 @@ int run(string path){
 		auto dist=analyze(fd,err);
 		auto str=dist.toString();
 		if(str.length<10000) writeln(str);
+		bool plotCDF=false;
+		if(str.canFind("δ")) plotCDF=true;
 		import hashtable;
 		if(formatting==Format.matlab && dist.freeVars.length==1){
-			writeln("plotting...");
+			if(plotCDF){
+				dist=dist.dup();
+				auto freeVar=dist.freeVars.element;
+				auto nvar=dist.declareVar("foo");
+				dist.distribute(dIvr(DIvr.Type.leZ,-freeVar)*dIvr(DIvr.Type.leZ,freeVar-nvar));
+				dist.marginalize(freeVar);
+			}
+			writeln("plotting... ",(plotCDF?"(CDF)":"(PDF)"));
 			matlabPlot(dist.distribution.toString(),dist.freeVars.element.toString());
 		}
 	}else err.error("only single function definition supported",expr.loc);
