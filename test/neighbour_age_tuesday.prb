@@ -1,0 +1,15 @@
+def neighbour_age(){
+    isGirl1 := Bernoulli(1 / 2);
+    age1 := Uniform(1,30);
+    bornOnATuesday1 := Bernoulli(1 / 7);
+    isGirl2 := Bernoulli(1 / 2);
+    age2 := Uniform(1,30);
+    bornOnATuesday2 := Bernoulli(1 / 7);
+    if age1 > age2 {
+        observe(isGirl1 && bornOnATuesday1);
+    } else {
+        observe(isGirl2 && bornOnATuesday1);
+    }
+    bothAreGirls := isGirl1 && isGirl2;
+    return bothAreGirls; // expected: TODO: δ[-bothAreGirls+1]·⅟2+δ[-bothAreGirls]·⅟2
+}
