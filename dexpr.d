@@ -32,9 +32,14 @@ abstract class DExpr{
 	abstract int forEachSubExpr(scope int delegate(DExpr) dg);
 
 	abstract DExpr simplifyImpl(DExpr facts);
+
+	static MapX!(Q!(DExpr,DExpr),DExpr) simplifyMemo;
 	final DExpr simplify(DExpr facts){
+		if(q(this,facts) in simplifyMemo) return simplifyMemo[q(this,facts)];
 		if(facts is zero) return zero;
-		return simplifyImpl(facts);
+		auto r=simplifyImpl(facts);
+		simplifyMemo[q(this,facts)]=r;
+		return r;
 	}
 
 	// TODO: implement in terms of 'forEachSubExpr'?
@@ -189,7 +194,10 @@ private static DE theDE;
 @property DE dE(){ return theDE?theDE:(theDE=new DE); }
 
 class DΠ: DExpr{
-	override string toStringImpl(Precedence prec){ return "π"; }
+	override string toStringImpl(Precedence prec){
+		static if(formatting==Format.matlab) return "pi";
+		else return "π";
+	}
 	mixin Constant;
 }
 private static DΠ theDΠ;
@@ -325,7 +333,15 @@ class DPlus: DCommutAssocOp{
 		return ow[1].solveFor(var,e-ow[0],constraints);
 	}
 
+	static MapX!(Q!(DExprSet,DExpr,DExpr),DExprSet) insertMemo;
 	static void insert(ref DExprSet summands,DExpr summand,DExpr facts=one)in{assert(!!summand);}body{
+		if(q(summands,summand,facts) in insertMemo){
+			summands=insertMemo[q(summands,summand,facts)].dup;
+			return;
+		}
+		auto origSummands=summands.dup;
+		scope(exit) insertMemo[q(origSummands,summand,facts)]=summands.dup;
+
 		summand=summand.simplify(facts);
 		if(auto dp=cast(DPlus)summand){
 			foreach(s;dp.summands)
@@ -338,7 +354,7 @@ class DPlus: DCommutAssocOp{
 				return;
 			}
 		}
-		DExpr combine(DExpr e1,DExpr e2){
+		static DExpr combine(DExpr e1,DExpr e2,DExpr facts){
 			if(e1 is zero) return e2;
 			if(e2 is zero) return e1;
 			if(e1 is e2) return 2*e1;
@@ -383,7 +399,7 @@ class DPlus: DCommutAssocOp{
 		}
 		// TODO: use suitable data structures
 		foreach(s;summands){
-			if(auto nws=combine(s,summand)){
+			if(auto nws=combine(s,summand,facts)){
 				summands.remove(s);
 				insert(summands,nws,facts);
 				return;
@@ -488,7 +504,14 @@ class DMult: DCommutAssocOp{
 		return [n,d];
 	}
 
+	static MapX!(Q!(DExprSet,DExpr),DExprSet) insertMemo;
 	static void insert(ref DExprSet factors,DExpr factor)in{assert(!!factor);}body{
+		if(q(factors,factor) in insertMemo){
+			factors=insertMemo[q(factors,factor)].dup;
+			return;
+		}
+		auto origFactors=factors.dup;
+		scope(exit) insertMemo[q(origFactors,factor)]=factors.dup;
 		//if(zero in factors||factor is zero){ factors.clear(); factors.insert(zero); return; }
 		if(auto dm=cast(DMult)factor){
 			foreach(f;dm.factors)
@@ -705,7 +728,7 @@ class DPow: DBinaryOp{
 	override string toStringImpl(Precedence prec){
 		auto frc=operands[1].getFractionalFactor().getFraction();
 		if(frc[0]<0){
-			enum pre=formatting==Format.matlab?"1/":"⅟";
+			enum pre=formatting==Format.matlab?"1./":"⅟";
 			return addp(prec,pre~(operands[0]^^-operands[1]).toStringImpl(Precedence.mult),Precedence.mult);
 		}
 			// also nice, but often hard to read: ½⅓¼⅕⅙
@@ -1325,9 +1348,10 @@ class DInt: DOp{
 	static DExpr constructHook(DVar var,DExpr expr){
 		return staticSimplify(var,expr);
 	}
+
 	static DExpr staticSimplify(DVar var,DExpr expr,DExpr facts=one){
 		auto nexpr=expr.simplify(facts); // TODO: this pattern always simplifies everything twice, make efficient
-		if(nexpr !is expr) return dInt(var,nexpr);
+		if(nexpr !is expr) expr=nexpr;
 		/*static dInt(DVar var,DExpr expr){
 			if(cast(DDeBruinVar)var){
 				if(auto hooked=constructHook(var,expr)){

@@ -87,7 +87,7 @@ DExpr dParse(string s){ // TODO: this is work in progress, usually updated in or
 		string parseIdentifier(){
 			skipWhitespace();
 			string r;
-			while(!code.empty&&isIdentifierChar(code.front)){
+			while(!code.empty&&isIdentifierChar(code.front)||!r.empty&&'0'<=code.front()&&code.front<='9'){
 				r~=code.front;
 				code.popFront();
 			}
