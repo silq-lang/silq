@@ -1,5 +1,18 @@
-// skipped: this contains unbounded loops
-// TODO: translate
+// TODO: this contains unbounded loops in the original, but only finite number of iterations are
+// relevant for computing probabilities
+// TODO: allow computing probabilities
+
+def main(){
+    x := 0;
+    guard := -1;
+    guard = Uniform(0,1);
+    //while guard >= 1/2 {
+    repeat 21{ if guard >= 1/2 {
+        x = x + 1;
+	guard = Uniform(0,1);
+    }}
+    return x;
+}
 
 /*x = 0;
 guard = -1.0;

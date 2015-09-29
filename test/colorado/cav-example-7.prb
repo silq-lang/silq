@@ -1,5 +1,4 @@
 // skipped: this contains unbounded loops
-// TODO: integrals should be evaluated
 
 def main(){
     count := 0;

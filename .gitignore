@@ -1,6 +1,8 @@
-*~
+B1;3409;0c*~
 *.o
 prob
 *.def
 *.log
 test/runtests
+*/octave_workspace
+*~

@@ -51,7 +51,7 @@ int run(string path){
 				dist=dist.dup();
 				auto freeVar=dist.freeVars.element;
 				auto nvar=dist.declareVar("foo");
-				dist.distribute(dIvr(DIvr.Type.leZ,-freeVar)*dIvr(DIvr.Type.leZ,freeVar-nvar));
+				dist.distribute(dIvr(DIvr.Type.leZ,-freeVar-20)*dIvr(DIvr.Type.leZ,freeVar-nvar));
 				dist.marginalize(freeVar);
 			}
 			writeln("plotting... ",(plotCDF?"(CDF)":"(PDF)"));

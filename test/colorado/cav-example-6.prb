@@ -1,5 +1,4 @@
 // skipped: this seems to be too slow at the moment
-// TODO: some of the integrals should be evaluated
 
 def main(){
     x := 0;
@@ -8,7 +7,7 @@ def main(){
     //count := 1;
     //N := 7; 
     //while (count < N) {
-    repeat 7{
+    repeat 3{
         c1 := Uniform(0,1);
         c2 := Uniform(0,1);
         c3 := Uniform(0,1);
