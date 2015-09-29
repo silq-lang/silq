@@ -521,10 +521,6 @@ class DMult: DCommutAssocOp{
 					return dPlus(summands);
 				}
 			}
-			if(e2.isFraction()){
-				auto nd2=e2.getFraction();
-				if(nd2[0]==1&&nd2[1]==1) return e1;
-			}
 			if(cast(DPow)e2) swap(e1,e2);
 			if(auto p=cast(DPow)e1){
 				if(p.operands[0] is e2)
