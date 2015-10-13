@@ -1260,7 +1260,20 @@ DExpr dMax(DExpr a,DExpr b){
 	return dIvr(DIvr.Type.lZ,b-a)*a+dIvr(DIvr.Type.leZ,a-b)*b;
 }
 
-DExpr definiteIntegral(DVar var,DExpr expr){
+version(INTEGRATION_STATS){
+	int integrations=0;
+	int successfulIntegrations=0;
+	static ~this(){
+		writeln(integrations," / ",successfulIntegrations);
+	}
+}
+	
+DExpr definiteIntegral(DVar var,DExpr expr)out(res){
+	version(INTEGRATION_STATS){
+		integrations++;
+		if(res) successfulIntegrations++;
+	}
+}body{
 	// TODO: explicit antiderivative (d/dx)⁻¹
 	// eg. the full antiderivative e^^(-a*x^^2+b*x) is given by:
 	// e^^(b^^2/4a)*(d/dx)⁻¹(e^^(-x^^2))[(b-2*a*x)/2*a^^(1/2)]/a^^(1/2)
@@ -1349,7 +1362,24 @@ class DInt: DOp{
 		return staticSimplify(var,expr);
 	}
 
+	version(INTEGRAL_STATS){
+		static int numIntegrals=0;
+		static void[0][DExpr] integrals;
+		static ~this(){
+			writeln("A: ",numIntegrals);
+			writeln("B: ",integrals.length);
+		}
+	}
+	
+
 	static DExpr staticSimplify(DVar var,DExpr expr,DExpr facts=one){
+		version(INTEGRAL_STATS){
+			numIntegrals++;
+			auto dbvar=dDeBruinVar(1);
+			auto newexpr=expr.incDeBruin(1).substitute(var,dbvar);
+			integrals[newexpr]=[];
+		}
+
 		auto nexpr=expr.simplify(facts); // TODO: this pattern always simplifies everything twice, make efficient
 		if(nexpr !is expr) expr=nexpr;
 		/*static dInt(DVar var,DExpr expr){
