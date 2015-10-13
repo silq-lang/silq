@@ -460,6 +460,19 @@ long toLong(ℕ a){ return a.to!string.to!long; } // TODO: do properly
 	return c;
 }
 
+auto nC(ℕ n){
+	static struct NCRange{
+		ℕ n,r=0,c=1;
+		void popFront(){
+			c*=n-r,c/=++r;
+		}
+		@property bool empty(){ return r>n; }
+		@property ℕ front(){ return c; }
+	}
+	return NCRange(n);
+}
+
+
 
 void matlabPlot(string expression,string variable){
 	import std.process,std.file;

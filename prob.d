@@ -63,6 +63,7 @@ int run(string path){
 
 
 int main(string[] args){
+	import core.memory; GC.disable();
 	version(TEST) test();
 	if(args.length<2){
 		stderr.writeln("error: no input files");
@@ -219,6 +220,28 @@ void test(){
 	//writeln("([-a+b≤0]·[-b+a≠0]·δ[-r+1]·⅟2+[-b+a≤0]·δ[-r+1]·⅟2)·e^(-a²·⅟2+-b²·⅟2)·⅟π".dParse.simplify(one));
 	//writeln("((∫dξ₁(∫dξ₂[-ξ₁+ξ₂≠0]·[-ξ₁+ξ₂≤0]·⅟e^(ξ₂²·⅟2))·⅟e^(ξ₁²·⅟2))·δ[-r+1]·⅟2+(∫dξ₁(∫dξ₂[-ξ₁+ξ₂≠0]·[-ξ₂+ξ₁≤0]·⅟e^(ξ₂²·⅟2))·⅟e^(ξ₁²·⅟2))·δ[-r+1]·⅟2)·⅟π".dParse.simplify(one));
 	//writeln("∫dage2₁∫dage2₂∫dage1₁∫dage1₂(-[-age1₁+age2₁≠0]·[-age1₁+age2₁≤0]+1)·(δ[-isGirl1+1]·⅟1682+δ[isGirl1]·⅟1682)·(δ[-isGirl2+1]+δ[isGirl2])·[-30+age1≤0]·[-30+age2≤0]·[-age1+1≤0]·[-age2+1≤0]·isGirl2·δ[-age1₁+age1]·δ[-age1₂+age1]·δ[-age2₁+age2]·δ[-age2₂+age2]+(δ[-isGirl1+1]·⅟1682+δ[isGirl1]·⅟1682)·(δ[-isGirl2+1]+δ[isGirl2])·[-30+age1≤0]·[-30+age2≤0]·[-age1+1≤0]·[-age1₁+age2₁≠0]·[-age1₁+age2₁≤0]·[-age2+1≤0]·isGirl1·δ[-age1₁+age1]·δ[-age1₂+age1]·δ[-age2₁+age2]·δ[-age2₂+age2]".dParse);
+	/+auto eu4="-125·[-4+x≠0]·[-5+x≤0]·[-x+4≤0]·x·⅟6+-22·[-3+x≤0]·[-x+2≤0]·[-x+3≠0]·x·⅟3+-31·[-3+x≤0]·[-x+2≠0]·[-x+2≤0]·x·⅟6+-39·[-4+x≤0]·[-x+3≠0]·[-x+3≤0]·x²·⅟4+-4·[-3+x≤0]·[-x+2≤0]·[-x+3≠0]·x³·⅟3+-4·[-4+x≠0]·[-4+x≤0]·[-x+3≤0]·x²+-50·[-4+x≤0]·[-x+3≠0]·[-x+3≤0]·⅟3+-5·[-2+x≤0]·[-x+1≤0]·[-x+2≠0]·⅟24+-5·[-4+x≠0]·[-5+x≤0]·[-x+4≤0]·x³·⅟6+-7·[-3+x≤0]·[-x+2≠0]·[-x+2≤0]·x³·⅟6+-85·[-4+x≠0]·[-4+x≤0]·[-x+3≤0]·⅟8+-[-2+x≤0]·[-x+1≠0]·[-x+1≤0]·x²·⅟4+-[-2+x≤0]·[-x+1≠0]·[-x+1≤0]·x⁴·⅟24+-[-2+x≤0]·[-x+1≤0]·[-x+2≠0]·x²+-[-2+x≤0]·[-x+1≤0]·[-x+2≠0]·x⁴·⅟8+-[-4+x≠0]·[-4+x≤0]·[-x+3≤0]·x⁴·⅟24+-[-4+x≤0]·[-x+3≠0]·[-x+3≤0]·x⁴·⅟8+10·[-3+x≤0]·[-x+2≤0]·[-x+3≠0]·⅟3+11·[-4+x≤0]·[-x+3≠0]·[-x+3≤0]·x³·⅟6+11·[-x+2=0]·⅟24+11·[-x+3=0]·⅟24+131·[-4+x≤0]·[-x+3≠0]·[-x+3≤0]·x·⅟6+15·[-3+x≤0]·[-x+2≠0]·[-x+2≤0]·x²·⅟4+25·[-3+x≤0]·[-x+2≠0]·[-x+2≤0]·⅟8+25·[-4+x≠0]·[-5+x≤0]·[-x+4≤0]·x²·⅟4+2·[-2+x≤0]·[-x+1≤0]·[-x+2≠0]·x³·⅟3+2·[-2+x≤0]·[-x+1≤0]·[-x+2≠0]·x·⅟3+2·[-4+x≠0]·[-4+x≤0]·[-x+3≤0]·x³·⅟3+32·[-4+x≠0]·[-4+x≤0]·[-x+3≤0]·x·⅟3+5·[-3+x≤0]·[-x+2≤0]·[-x+3≠0]·x²+625·[-4+x≠0]·[-5+x≤0]·[-x+4≤0]·⅟24+[-1+x≤0]·[-x+1≠0]·[-x≤0]·x⁴·⅟24+[-2+x≤0]·[-x+1≠0]·[-x+1≤0]·x³·⅟6+[-2+x≤0]·[-x+1≠0]·[-x+1≤0]·x·⅟6+[-3+x≤0]·[-x+2≠0]·[-x+2≤0]·x⁴·⅟8+[-3+x≤0]·[-x+2≤0]·[-x+3≠0]·x⁴·⅟8+[-4+x≠0]·[-5+x≤0]·[-x+4≤0]·x⁴·⅟24+[-x+1=0]·⅟24+[-x+4=0]·⅟24".dParse;
+	auto ey=uniformPDF("y".dVar,zero,one);
+	auto eu=eu4*ey*dDelta("z".dVar-"x".dVar-"y".dVar);
+	auto wy=dInt("y".dVar,eu);
+	auto wx=dInt("x".dVar,wy);
+	wx=wx.simplify(one);+/
+	//writeln();
+	//writeln(
+	//auto k=(eu4*ey);//.substitute("y".dVar,-"x".dVar+"z".dVar);
+	//writeln(k);
+	/+DExpr x="x".dVar;
+	DExpr d=zero;	
+	foreach(i;0..60){
+		d=d+x^^i*dIvr(DIvr.Type.leZ,-x)*dIvr(DIvr.Type.leZ,x-1);
+	}
+	//writeln(d);
+	writeln(dInt("x".dVar,d*dIvr(DIvr.Type.leZ,x-"y".dVar)));+/
+	//writeln("([-1+y≤0]·y+[-y+1≠0]·[-y+1≤0])^1000".dParse);
+	//writeln("-[-x+3≤0]+2·[-3+x≤0]·[-x+3≠0]+[-x+3≤0]·x".dParse^^31);
+	//writeln(d);
+	//DExpr x="x".dVar,y="y".dVar;
+	//writeln((x+x^^2)^^10);
 }
 
 /*

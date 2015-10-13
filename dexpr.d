@@ -518,9 +518,8 @@ class DMult: DCommutAssocOp{
 				insert(factors,f);
 			return;
 		}
-
 		// TODO: use suitable data structures
-		static DExpr combine(DExpr e1,DExpr e2){			
+		static DExpr combine(DExpr e1,DExpr e2){
 			if(e1 is one) return e2;
 			if(e2 is one) return e1;
 			if(e1 is e2) return e1^^2;
@@ -586,6 +585,26 @@ class DMult: DCommutAssocOp{
 							return dIvr(eqZ,ivr1.e);
 						if(ivr1.e.mustBeLessThan(ivr2.e)) return e2;
 						if(ivr2.e.mustBeLessThan(ivr1.e)) return e1;
+
+						// TODO: better inconsistency checks!
+						foreach(v;ivr1.freeVars()) with(BoundStatus){
+							DExpr b1,b2;
+							auto s1=ivr1.getBoundForVar(v,b1);
+							auto s2=ivr2.getBoundForVar(v,b2);
+							if(s1 is fail || s2 is fail) continue;
+							// if(s1==s2) // TODO
+							if(s1 != s2){
+								if(s1 is lowerBound){
+									if(b2.mustBeLessThan(b1))
+										return zero;
+								}else{
+									assert(s1 is upperBound);
+									if(b1.mustBeLessThan(b2))
+										return zero;
+								}
+							}
+						}
+
 					}
 					if(ivr2.type==eqZ) swap(ivr1,ivr2);
 					if(ivr1.type==eqZ){
@@ -824,9 +843,17 @@ DExpr expandPow(DExpr e1,DExpr e2,long limit=-1){
 	auto a=cast(DPlus)e1;
 	if(!a) return null;
 	// TODO: do this more efficiently!
+	DExpr s;
+	foreach(x;a.summands){
+		s=x;
+		break;
+	}
+	assert(!!s);
+	auto rest=a.withoutSummand(s);
 	DExprSet r;
-	foreach(s;a.summands)
-		DPlus.insert(r,dDistributeMult(a^^(c-1),s));
+	auto ncrange=nC(c.c);
+	for(ℕ i=0,j=c.c;i<=c.c;i++,j--,ncrange.popFront())
+		DPlus.insert(r,ncrange.front*s^^i*rest^^j);
 	return dPlus(r);	
 }
 
@@ -857,6 +884,12 @@ DExpr withoutFactor(DExpr e,DExpr factor){
 	auto s=e.factors.setx;
 	assert(factor in s);
 	return dMult(s.without(factor));
+}
+
+DExpr withoutSummand(DExpr e,DExpr summand){
+	auto s=e.summands.setx;
+	assert(summand in s);
+	return dPlus(s.without(summand));
 }
 
 DExpr polyNormalize(DExpr e,DVar v,long limit=-1){
@@ -1311,14 +1344,16 @@ DExpr definiteIntegral(DVar var,DExpr expr)out(res){
 	// TODO: add better approach for antiderivatives	
 	if(upper&&lower){
 		auto lowLeUp(){ return dIvr(DIvr.Type.leZ,lower-upper); }
+		//writeln(lower," ",upper);
+		//writeln(lowLeUp());
 		if(nonIvrs is one) return lowLeUp()*(upper-lower);
 		if(auto poly=nonIvrs.asPolynomialIn(var)){
-			DExpr r=zero;
+			DExprSet s;
 			foreach(i,coeff;poly.coefficients){
 				assert(i<size_t.max);
-				r=r+coeff*(upper^^(i+1)-lower^^(i+1))/(i+1);
+				DPlus.insert(s,coeff*(upper^^(i+1)-lower^^(i+1))/(i+1));
 			}
-			return lowLeUp()*r;
+			return lowLeUp()*dPlus(s);
 		}
 	}
 
@@ -1341,6 +1376,12 @@ DExpr definiteIntegral(DVar var,DExpr expr)out(res){
 	}
 	
 	return null; // no simpler expression available
+}
+
+import std.datetime;
+StopWatch sw;
+static ~this(){
+	writeln(sw.peek().to!("msecs",double));
 }
 
 class DInt: DOp{
@@ -1406,17 +1447,6 @@ class DInt: DOp{
 		}
 		auto ow=expr.splitMultAtVar(var);
 		if(ow[0] !is one) return ow[0]*dInt(var,ow[1]);
-
-		// expand powers: // TODO: is this the right place?
-		DExprSet factors;
-		foreach(f;expr.factors){
-			if(auto pow=cast(DPow)f) DMult.insert(factors,expandPow(pow));
-			else DMult.insert(factors,f);
-		}
-		auto nexp=dMult(factors);
-		if(expr !is nexp) return dInt(var,nexp);
-		////
-
 		foreach(f;expr.factors){
 			if(!f.hasFreeVar(var)) continue;
 			if(auto d=cast(DDelta)f){
