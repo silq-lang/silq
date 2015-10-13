@@ -2,8 +2,15 @@
 
 // FOR DEBUGGING ONLY
 public import std.stdio;
-void dw(T...)(T args){
-	debug writeln(args);
+debug bool dwguard=true;
+void dw(T...)(lazy T args){
+	debug{
+		if(dwguard){
+			dwguard=false;
+			writeln(args);
+			dwguard=true;
+		}
+	}
 	else static assert(0,"debugging output call in release mode");
 }
 int crash()(int x=0){
