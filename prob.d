@@ -42,6 +42,7 @@ int run(string path){
 	if(auto fd=cast(FunctionDef)expr){
 		auto dist=analyze(fd,err);
 		auto str=dist.toString();
+		//writeln((cast(DPlus)dist.distribution).summands.length);
 		if(str.length<10000) writeln(str);
 		bool plotCDF=false;
 		if(str.canFind("δ")) plotCDF=true;
@@ -63,7 +64,7 @@ int run(string path){
 
 
 int main(string[] args){
-	import core.memory; GC.disable();
+	//import core.memory; GC.disable();
 	version(TEST) test();
 	if(args.length<2){
 		stderr.writeln("error: no input files");
@@ -232,8 +233,10 @@ void test(){
 	//writeln(k);
 	/+DExpr x="x".dVar;
 	DExpr d=zero;	
-	foreach(i;0..60){
-		d=d+x^^i*dIvr(DIvr.Type.leZ,-x)*dIvr(DIvr.Type.leZ,x-1);
+	foreach(i;0..13){
+		foreach(j;0..13){
+			d=d+j*x^^j/(i+1)*dIvr(DIvr.Type.leZ,i-x)*dIvr(DIvr.Type.lZ,x-1-i);
+		}
 	}
 	//writeln(d);
 	writeln(dInt("x".dVar,d*dIvr(DIvr.Type.leZ,x-"y".dVar)));+/

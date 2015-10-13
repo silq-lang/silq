@@ -119,7 +119,7 @@ class DVar: DExpr{
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){
- // TODO: make more efficient! (e.g. keep hash table in product expressions)
+		// TODO: make more efficient! (e.g. keep hash table in product expressions)
 		foreach(f;facts.factors){
 			if(auto ivr=cast(DIvr)f){
 				if(ivr.type!=DIvr.Type.eqZ) continue;
@@ -620,9 +620,9 @@ class DMult: DCommutAssocOp{
 					
 				}
 			}
-			/+// TODO: do we want auto-distribution?
+			// TODO: do we want auto-distribution?
 			if(cast(DPlus)e1) return dDistributeMult(e1,e2);
-			if(cast(DPlus)e2) return dDistributeMult(e2,e1);+/
+			if(cast(DPlus)e2) return dDistributeMult(e2,e1);
 
 			return null;
 		}
@@ -842,7 +842,6 @@ DExpr expandPow(DExpr e1,DExpr e2,long limit=-1){
 	if(!c||c.c<=0||limit>=0&&c.c>limit) return null;
 	auto a=cast(DPlus)e1;
 	if(!a) return null;
-	// TODO: do this more efficiently!
 	DExpr s;
 	foreach(x;a.summands){
 		s=x;
@@ -868,7 +867,7 @@ struct DPolynomial{
 	bool initialized(){ return !!var; }
 	T opCast(T:bool)(){ return initialized(); }
 	long degree(){ return coefficients.length-1; }
-	void addCoeff(long exp,DExpr coeff){
+	void addCoeff(long exp,DExpr coeff)in{assert(exp>=0);}body{
 		while(coefficients.length<=exp) coefficients~=zero;
 		coefficients[exp]=coefficients[exp]+coeff;
 	}
@@ -929,6 +928,7 @@ DPolynomial asPolynomialIn(DExpr e,DVar v,long limit=-1){
 	auto normalized=polyNormalize(e,v,limit);
 	auto r=DPolynomial(v);
 	bool addCoeff(long exp,DExpr coeff){
+		if(exp<=0) return false;
 		if(coeff.hasFreeVar(v)) return false;
 		r.addCoeff(exp,coeff);
 		return true;
@@ -1355,6 +1355,12 @@ DExpr definiteIntegral(DVar var,DExpr expr)out(res){
 			}
 			return lowLeUp()*dPlus(s);
 		}
+		if(1/nonIvrs is var){
+			static DExpr safeLog(DExpr e){ // TODO: ok?
+				return dLog(e)*dIvr(DIvr.Type.neqZ,e);
+			}
+			return lowLeUp()*(safeLog(upper)-safeLog(lower));
+		}
 	}
 
 	if(!upper&&!lower){
@@ -1378,11 +1384,11 @@ DExpr definiteIntegral(DVar var,DExpr expr)out(res){
 	return null; // no simpler expression available
 }
 
-import std.datetime;
+/+import std.datetime;
 StopWatch sw;
 static ~this(){
 	writeln(sw.peek().to!("msecs",double));
-}
+}+/
 
 class DInt: DOp{
 	private{
@@ -1699,6 +1705,7 @@ class DLog: DOp{
 	static DExpr staticSimplify(DExpr e,DExpr facts=one){
 		e=e.simplify(facts);
 		if(auto c=cast(DE)e) return one;
+		if(e is one) return zero;
 		if(auto m=cast(DMult)e){
 			DExprSet r;
 			foreach(f;m.factors)
