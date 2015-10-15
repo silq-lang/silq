@@ -928,7 +928,7 @@ DPolynomial asPolynomialIn(DExpr e,DVar v,long limit=-1){
 	auto normalized=polyNormalize(e,v,limit);
 	auto r=DPolynomial(v);
 	bool addCoeff(long exp,DExpr coeff){
-		if(exp<=0) return false;
+		if(exp<0) return false;
 		if(coeff.hasFreeVar(v)) return false;
 		r.addCoeff(exp,coeff);
 		return true;
