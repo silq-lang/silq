@@ -5,7 +5,20 @@ import std.algorithm, std.array;
 import std.typecons: Q=Tuple, q=tuple;
 
 import std.datetime;
-StopWatch sw;
+
+struct RecursiveStopWatch{
+	StopWatch sw;
+	int started=0;
+	void stop(){
+		if(--started==0) sw.stop();
+	}
+	void start(){
+		if(++started==1) sw.start();
+	}
+	auto peek(){ return sw.peek(); }
+}
+
+RecursiveStopWatch sw;
 int swCount=0;
 static ~this(){
 	writeln("time: ",sw.peek().to!("seconds",double));
@@ -372,6 +385,7 @@ class DPlus: DCommutAssocOp{
 				auto nd2=e2.getFraction();
 				return dℕ(nd1[0]*nd2[1]+nd2[0]*nd1[1])/dℕ(nd1[1]*nd2[1]);
 			}
+
 			auto common=intersect(e1.factors.setx,e2.factors.setx); // TODO: optimize?
 			if(common.length){
 				auto cm=dMult(common);
