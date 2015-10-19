@@ -4,6 +4,14 @@ import hashtable, util;
 import std.algorithm, std.array;
 import std.typecons: Q=Tuple, q=tuple;
 
+import std.datetime;
+StopWatch sw;
+int swCount=0;
+static ~this(){
+	writeln("time: ",sw.peek().to!("seconds",double));
+	writeln("freq: ",swCount);
+}
+
 enum Format{
 	default_,
 	matlab,
@@ -335,6 +343,7 @@ class DPlus: DCommutAssocOp{
 
 	static MapX!(Q!(DExprSet,DExpr,DExpr),DExprSet) insertMemo;
 	static void insert(ref DExprSet summands,DExpr summand,DExpr facts=one)in{assert(!!summand);}body{
+		swCount++;sw.start(); scope(exit) sw.stop();
 		if(q(summands,summand,facts) in insertMemo){
 			summands=insertMemo[q(summands,summand,facts)].dup;
 			return;
@@ -425,7 +434,7 @@ class DPlus: DCommutAssocOp{
 			if(simplSummands.setMinus(integralSummands).length){
 				summands=summands.setMinus(integrals);
 				summands=summands.unite(simplSummands);
-				return dInt(tmp,dPlus(summands));
+				return dPlus(summands)+dInt(tmp,dPlus(simplSummands));
 			}
 		}
 		return null;
@@ -620,9 +629,9 @@ class DMult: DCommutAssocOp{
 					
 				}
 			}
-			// TODO: do we want auto-distribution?
+			/+// TODO: do we want auto-distribution?
 			if(cast(DPlus)e1) return dDistributeMult(e1,e2);
-			if(cast(DPlus)e2) return dDistributeMult(e2,e1);
+			if(cast(DPlus)e2) return dDistributeMult(e2,e1);+/
 
 			return null;
 		}
