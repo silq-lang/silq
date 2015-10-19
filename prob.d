@@ -245,6 +245,7 @@ void test(){
 	//writeln(d);
 	//DExpr x="x".dVar,y="y".dVar;
 	//writeln((x+x^^2)^^10);
+	//writeln("-4·[-i+2≤0]·⅟(-2·i+2·i²)+[-i+2≤0]·i·⅟(-i+i²)".dParse.simplify(one));
 }
 
 /*
