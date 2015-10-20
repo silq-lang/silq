@@ -20,10 +20,10 @@ struct RecursiveStopWatch{
 
 RecursiveStopWatch sw;
 int swCount=0;
-static ~this(){
+/+static ~this(){
 	writeln("time: ",sw.peek().to!("seconds",double));
 	writeln("freq: ",swCount);
-}
+}+/
 
 enum Format{
 	default_,
@@ -227,6 +227,9 @@ private static DΠ theDΠ;
 private static DExpr theOne;
 @property DExpr one(){ return theOne?theOne:(theOne=1.dℕ);}
 
+private static DExpr theMOne;
+@property DExpr mone(){ return theMOne?theMOne:(theMOne=(-1).dℕ);}
+
 private static DExpr theZero;
 @property DExpr zero(){ return theZero?theZero:(theZero=0.dℕ);}
 
@@ -356,7 +359,7 @@ class DPlus: DCommutAssocOp{
 
 	static MapX!(Q!(DExprSet,DExpr,DExpr),DExprSet) insertMemo;
 	static void insert(ref DExprSet summands,DExpr summand,DExpr facts=one)in{assert(!!summand);}body{
-		swCount++;sw.start(); scope(exit) sw.stop();
+		// swCount++;sw.start(); scope(exit) sw.stop();
 		if(q(summands,summand,facts) in insertMemo){
 			summands=insertMemo[q(summands,summand,facts)].dup;
 			return;
@@ -806,7 +809,7 @@ class DPow: DBinaryOp{
 		auto ne1=e1.simplify(facts);
 		auto ne2=e2.simplify(facts);
 		if(ne1!is e1||ne2!is e2) return dPow(ne1,ne2);
-		if(e1 !is -one) if(auto c=cast(Dℕ)e1) if(c.c<0) return (-1)^^e2*dℕ(-c.c)^^e2;
+		if(e1 !is mone) if(auto c=cast(Dℕ)e1) if(c.c<0) return mone^^e2*dℕ(-c.c)^^e2;
 		if(auto m=cast(DMult)e1){ // TODO: do we really want auto-distribution?
 			DExprSet factors;
 			foreach(f;m.operands){
@@ -824,7 +827,7 @@ class DPow: DBinaryOp{
 		if(auto d=cast(Dℕ)e2){
 			if(auto c=cast(Dℕ)e1){
 				if(d.c>0) return dℕ(pow(c.c,d.c));
-				else if(d.c!=-1) return dℕ(pow(c.c,-d.c))^^-1;
+				else if(d.c != -1) return dℕ(pow(c.c,-d.c))^^mone;
 			}
 		}
 		if(auto l=cast(DLog)e2){ // TODO: more principled way of handling this, with more cases
@@ -857,7 +860,7 @@ class DPow: DBinaryOp{
 }
 
 mixin(makeConstructorNonCommutAssoc!DPow);
-DExpr dDiv(DExpr e1,DExpr e2){ return e1*e2^^-1; }
+DExpr dDiv(DExpr e1,DExpr e2){ return e1*e2^^mone; }
 
 
 DExpr expandPow(DExpr e1,DExpr e2,long limit=-1){
@@ -986,7 +989,7 @@ abstract class DUnaryOp: DOp{
 		return addp(prec, symbol~operand.toStringImpl(precedence));
 	}
 }
-DExpr dUMinus(DExpr e){ return -1*e; }
+DExpr dUMinus(DExpr e){ return mone*e; }
 
 // TODO: improve these procedures:
 bool couldBeZero(DExpr e){
@@ -1584,7 +1587,7 @@ DExpr differentiate(DVar v,DExpr e){
 		return dPlus(r)*m;
 	}
 	if(auto p=cast(DPow)e)
-		return p.operands[0]^^(p.operands[1]-1)*
+		return p.operands[0]^^(p.operands[1]+mone)*
 			(dDiff(v,p.operands[0])*p.operands[1]+
 			 p.operands[0]*dLog(p.operands[0])*dDiff(v,p.operands[1]));
 	if(auto l=cast(DLog)e)
