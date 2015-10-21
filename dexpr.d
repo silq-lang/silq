@@ -59,6 +59,7 @@ abstract class DExpr{
 		if(q(this,facts) in simplifyMemo) return simplifyMemo[q(this,facts)];
 		if(facts is zero) return zero;
 		auto r=simplifyImpl(facts);
+		assert(!!r,text(typeid(this)));
 		simplifyMemo[q(this,facts)]=r;
 		return r;
 	}
@@ -147,7 +148,7 @@ class DVar: DExpr{
 				if(ivr.e.getCanonicalFreeVar()!is this) continue; // TODO: make canonical var smart
 				DExpr[] constraints;
 				auto sol=ivr.e.solveFor(this,zero,constraints);
-				if(constraints.length) continue; // TODO: make more efficient!
+				if(!sol||constraints.length) continue; // TODO: make more efficient!
 				return sol;
 			}
 		}
@@ -646,9 +647,9 @@ class DMult: DCommutAssocOp{
 					
 				}
 			}
-			/+// TODO: do we want auto-distribution?
+			// TODO: do we want auto-distribution?
 			if(cast(DPlus)e1) return dDistributeMult(e1,e2);
-			if(cast(DPlus)e2) return dDistributeMult(e2,e1);+/
+			if(cast(DPlus)e2) return dDistributeMult(e2,e1);
 
 			return null;
 		}
@@ -905,6 +906,11 @@ struct DPolynomial{
 	}
 }
 
+bool hasFactor(DExpr e,DExpr factor){
+	foreach(f;e.factors) if(factor is f) return true;
+	return false;
+}
+
 DExpr withoutFactor(DExpr e,DExpr factor){
 	auto s=e.factors.setx;
 	assert(factor in s);
@@ -1044,7 +1050,7 @@ BoundStatus getBoundForVar(DIvr ivr,DVar var,out DExpr bound){ // TODO: handle c
 	enum r=BoundStatus.fail;
 	with(DIvr.Type) if(ivr.type!=leZ) return r;
 	foreach(s;ivr.e.summands){
-		if(!s.hasFreeVar(var)) continue;
+		if(!s.hasFactor(var)) continue; // TODO: non-linear constraints
 		auto cand=s.withoutFactor(var);
 		if(cand.hasFreeVar(var)) return r;
 		auto lZ=dIvr(DIvr.Type.lZ,cand)==one;
