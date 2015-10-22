@@ -22,10 +22,11 @@ struct RecursiveStopWatch{
 
 RecursiveStopWatch sw;
 int swCount=0;
-/+static ~this(){
+static ~this(){
 	writeln("time: ",sw.peek().to!("seconds",double));
 	writeln("freq: ",swCount);
-}+/
+}
+enum measure="swCount++;sw.start();scope(exit)sw.stop();";
 
 enum Format{
 	default_,
@@ -258,20 +259,6 @@ abstract class DCommutAssocOp: DOp{
 	}
 }
 
-DExprSet shallow(T)(DExprSet arg){
-	DExprSet r;
-	foreach(x;arg){
-		if(auto t=cast(T)x){
-			foreach(y;t.operands){
-				T.insert(r,y);
-			}
-		}
-	}
-	if(!r.length) return arg;
-	foreach(x;arg) if(!cast(T)x) T.insert(r,x);
-	return r;
-}
-
 MapX!(TupleX!(typeof(typeid(DExpr)),DExprSet),DExpr) uniqueMapCommutAssoc;
 MapX!(TupleX!(typeof(typeid(DExpr)),DExpr,DExpr),DExpr) uniqueMapNonCommutAssoc;
 
@@ -300,10 +287,10 @@ auto uniqueDExprUnary(T)(DExpr a){
 }
 string makeConstructorCommutAssoc(T)(){
 	enum Ts=__traits(identifier, T);
-	return "auto " ~ lowerf(Ts)~"(DExprSet f){ auto fsh=f.shallow!"~__traits(identifier,T)~";"
-		~"if(fsh.length==1) return fsh.element;"
-		~"if(auto r="~Ts~".constructHook(fsh)) return r;"
-		~"return uniqueDExprCommutAssoc!("~__traits(identifier,T)~")(fsh);"
+	return "auto " ~ lowerf(Ts)~"(DExprSet f){"
+		~"if(f.length==1) return f.element;"
+		~"if(auto r="~Ts~".constructHook(f)) return r;"
+		~"return uniqueDExprCommutAssoc!("~__traits(identifier,T)~")(f);"
 		~"}"
 		~"auto " ~ lowerf(Ts)~"(DExpr e1,DExpr e2){"
 		~"  DExprSet a;"~Ts~".insert(a,e1);"~Ts~".insert(a,e2);"
@@ -323,7 +310,6 @@ string makeConstructorNonCommutAssoc(T)(){
 string makeConstructorUnary(T)(){
 	return "auto " ~ lowerf(__traits(identifier, T))~"(DExpr e){ return uniqueDExprUnary!("~__traits(identifier,T)~")(e); }";
 }
-
 
 class DPlus: DCommutAssocOp{
 	alias summands=operands;
@@ -360,30 +346,30 @@ class DPlus: DCommutAssocOp{
 		return ow[1].solveFor(var,e-ow[0],constraints);
 	}
 
-	static MapX!(Q!(DExprSet,DExpr,DExpr),DExprSet) insertMemo;
-	static void insert(ref DExprSet summands,DExpr summand,DExpr facts=one)in{assert(!!summand);}body{
+	static MapX!(Q!(DExprSet,DExpr,DExpr,bool),DExprSet) insertMemo;
+	static void insert(ref DExprSet summands,DExpr summand,DExpr facts=one,bool recursive=false)in{assert(!!summand);}body{
 		// swCount++;sw.start(); scope(exit) sw.stop();
-		if(q(summands,summand,facts) in insertMemo){
-			summands=insertMemo[q(summands,summand,facts)].dup;
+		if(q(summands,summand,facts,recursive) in insertMemo){
+			summands=insertMemo[q(summands,summand,facts,recursive)].dup;
 			return;
 		}
 		auto origSummands=summands.dup;
-		scope(exit) insertMemo[q(origSummands,summand,facts)]=summands.dup;
+		scope(exit) insertMemo[q(origSummands,summand,facts,recursive)]=summands.dup;
 
 		summand=summand.simplify(facts);
 		if(auto dp=cast(DPlus)summand){
 			foreach(s;dp.summands)
-				insert(summands,s,facts);
+				insert(summands,s,facts,recursive);
 			return;
 		}
 		if(auto p=cast(DPow)summand){
 			if(cast(DPlus)p.operands[0]){
 				auto expanded=expandPow(p);
-				if(expanded !is p) insert(summands,expanded,facts);
+				if(expanded !is p) insert(summands,expanded,facts,recursive);
 				return;
 			}
 		}
-		static DExpr combine(DExpr e1,DExpr e2,DExpr facts){
+		DExpr combine(DExpr e1,DExpr e2,DExpr facts){
 			if(e1 is zero) return e2;
 			if(e2 is zero) return e1;
 			if(e1 is e2) return 2*e1;
@@ -393,17 +379,11 @@ class DPlus: DCommutAssocOp{
 				return dℕ(nd1[0]*nd2[1]+nd2[0]*nd1[1])/dℕ(nd1[1]*nd2[1]);
 			}
 
-			auto common=intersect(e1.factors.setx,e2.factors.setx); // TODO: optimize?
-			if(common.length){
-				auto cm=dMult(common);
-				if(!cm.isFraction()){
-					auto sum1=dMult(e1.factors.setx.setMinus(cm.factors.setx));
-					auto sum2=dMult(e2.factors.setx.setMinus(cm.factors.setx));
-					auto sum=(sum1+sum2).simplify(facts);
-					auto summands=sum.summands.setx; // TODO: improve performance!
-					if(sum1!in summands||sum2!in summands) return sum*cm;
-				}
+			if(recursive){
+				if(auto r=recursiveCombine(e1,e2,facts))
+					return r;
 			}
+
 			static DExpr combineIvr(DExpr e1,DExpr e2){
 				if(auto ivr1=cast(DIvr)e1){
 					if(ivr1.type is DIvr.Type.eqZ){
@@ -431,7 +411,7 @@ class DPlus: DCommutAssocOp{
 		foreach(s;summands){
 			if(auto nws=combine(s,summand,facts)){
 				summands.remove(s);
-				insert(summands,nws,facts);
+				insert(summands,nws,facts,recursive);
 				return;
 			}
 		}
@@ -439,7 +419,7 @@ class DPlus: DCommutAssocOp{
 		summands.insert(summand);
 	}
 	
-	static final integralSimplify(DExprSet summands,DExpr facts){
+	static DExpr integralSimplify(DExprSet summands,DExpr facts){
 		DExprSet integralSummands;
 		DExprSet integrals;
 		DVar tmp=new DVar("tmp"); // TODO: get rid of this!
@@ -461,10 +441,28 @@ class DPlus: DCommutAssocOp{
 		return null;
 	}
 
+	static DExpr recursiveCombine(DExpr e1, DExpr e2,DExpr facts){
+			auto common=intersect(e1.factors.setx,e2.factors.setx); // TODO: optimize?
+			if(common.length){
+				auto cm=dMult(common);
+				if(!cm.isFraction()){
+					auto sum1=dMult(e1.factors.setx.setMinus(cm.factors.setx));
+					auto sum2=dMult(e2.factors.setx.setMinus(cm.factors.setx));
+					auto sum=(sum1+sum2).simplify(facts);
+					auto summands=sum.summands.setx; // TODO: improve performance!
+					if(sum1!in summands||sum2!in summands){
+						// dw(sum1," ",sum2," :: ",sum," ",cm);
+						return sum*cm;
+					}
+				}
+			}
+			return null;
+	}
+
 	override DExpr simplifyImpl(DExpr facts){
 		DExprSet summands;
 		foreach(s;this.summands)
-			insert(summands,s,facts);
+			insert(summands,s,facts,true);
 		if(auto r=integralSimplify(summands,facts)) return r;
 		return dPlus(summands);
 	}
@@ -1023,10 +1021,10 @@ bool mustBeLessThanZero(DExpr e){
 }
 
 bool mustBeLessThan(DExpr e1,DExpr e2){
-	return mustBeLessThanZero(e1-e2);
+	return mustBeLessThanZero((e1-e2).simplify(one));
 }
 bool mustBeAtMost(DExpr e1,DExpr e2){
-	return mustBeLessOrEqualZero(e1-e2);
+	return mustBeLessOrEqualZero((e1-e2).simplify(one));
 }
 
 DExpr uglyFractionCancellation(DExpr e){
@@ -1059,7 +1057,7 @@ BoundStatus getBoundForVar(DIvr ivr,DVar var,out DExpr bound){ // TODO: handle c
 		auto lZ=dIvr(DIvr.Type.lZ,cand)==one;
 		auto gZ=dIvr(DIvr.Type.lZ,-cand)==one;
 		if(!lZ&&!gZ) return r;
-		auto ne=var-ivr.e/cand; // TODO: are there cases where this introduces division by 0?
+		auto ne=(var-ivr.e/cand).simplify(one); // TODO: are there cases where this introduces division by 0?
 		if(ne.hasFreeVar(var)) return r;
 		// TODO: must consider strictness!
 		bound=ne;
@@ -1113,7 +1111,7 @@ class DIvr: DExpr{ // iverson brackets
 	override string toStringImpl(Precedence prec){
 		with(Type){
 			static if(formatting==Format.matlab){
-				return "["~e.toString()~(type==eqZ?"==":type==neqZ?"!=":type==lZ?"<":"<=")~"0]";
+				return "("~e.toString()~(type==eqZ?"==":type==neqZ?"!=":type==lZ?"<":"<=")~"0)";
 			}else{
 				return "["~e.toString()~(type==eqZ?"=":type==neqZ?"≠":type==lZ?"<":"≤")~"0]";
 			}
@@ -1464,8 +1462,11 @@ DExpr definiteIntegral(DVar var,DExpr expr)out(res){
 		// ∫(uv)' = ∫uv'+∫u'v
 		// uv+C = ∫uv'+∫u'v
 		// 
-		// dw(nonIvrs," ",splitIntegrableFactor(nonIvrs));
+		auto factors=splitIntegrableFactor(nonIvrs);
+		dw(factors[1]);
+		dw("!! ",dDiff(var,factors[1]));
 		// TODO
+		
 	}
 	return null; // no simpler expression available
 }
@@ -1549,7 +1550,7 @@ class DInt: DOp{
 					}
 					constraints=constraints.remove!trivial;
 					if(!constraints.length) // TODO!
-						return (expr/f).substitute(var,s)/dAbs(dDiff(var,d.e,s));
+						return ((expr/f).substitute(var,s)/dAbs(dDiff(var,d.e,s))).simplify(facts);
 				}
 			}
 		}
@@ -1632,7 +1633,6 @@ DExpr dInt(DVar var,DExpr expr){
 
 DExpr differentiate(DVar v,DExpr e){
 	if(v is e) return one;
-	if(cast(DVar)e) return zero;
 	if(cast(Dℕ)e) return zero;
 	if(auto p=cast(DPlus)e){
 		DExprSet r;
@@ -1655,7 +1655,7 @@ DExpr differentiate(DVar v,DExpr e){
 	if(auto s=cast(DSin)e)
 		return dDiff(v,s.e)*dSin(s.e+dΠ/2);
 	if(auto g=cast(DGaussInt)e)
-		return dGaussInt(g.deg-1,g.x);
+		return dDiff(v,g.x)*dGaussInt(g.deg-1,g.x);
 	if(!e.hasFreeVar(v)) return zero;
 	return null;
 }
