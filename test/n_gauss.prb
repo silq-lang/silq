@@ -498,5 +498,5 @@ def main(){
     x = x + Gauss(0,5);
     x = x + Gauss(0,5);
     x = x + Gauss(0,5);+/
-    return x;
+    return x; // expected: ⅟e^(x²·⅟200)·⅟√2̅0̅0̅·⅟√π̅
 }

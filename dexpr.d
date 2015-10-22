@@ -1547,7 +1547,8 @@ class DInt: DOp{
 			if(!f.hasFreeVar(var)) continue;
 			if(auto d=cast(DDelta)f){
 				DExpr[] constraints;
-				if(auto s=d.e.solveFor(var,zero,constraints).simplify(one)){
+				if(auto s=d.e.solveFor(var,zero,constraints)){
+					s=s.simplify(one);
 					bool trivial(DExpr constraint){
 						return dIvr(DIvr.Type.neqZ,constraint) is one;
 					}

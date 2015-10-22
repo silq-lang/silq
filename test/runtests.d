@@ -126,6 +126,8 @@ Comparison[] getResults(string source){
 		case "TODO": result~=Comparison(Status.expected,Info(cast(int)i+1,false,true)); break;
 		case "FAIL": result~=Comparison(Status.unexpected,Info(cast(int)i+1,true,false)); break;
 		}
+		if(l.startsWith("core.exception.AssertError"))
+			result~=Comparison(Status.unexpected,Info(cast(int)i+1,true,false));
 	}
 	return result;
 }
