@@ -1,0 +1,7 @@
+
+def main(){
+    x := Uniform(-1,1);
+    y := Uniform(-1,1);
+    z := x^2 + y^2 <= 1;
+    return z;
+}
