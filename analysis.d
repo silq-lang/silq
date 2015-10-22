@@ -259,5 +259,6 @@ private struct Analyzer{
 Distribution analyze(FunctionDef def,ErrorHandler err){
 	auto a=Analyzer(new Distribution,err);
 	a.analyze(def.body_);
+	a.dist.distribution=a.dist.distribution.simplify(one);
 	return a.dist;
 }

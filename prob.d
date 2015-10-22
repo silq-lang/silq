@@ -253,6 +253,14 @@ void test(){
 	/+DExpr bound;
 	auto r=(cast(DIvr)"[-1+-ξ₁+x₃≤0]".dParse).getBoundForVar("x₃".dVar,bound);
 	writeln(r," ",bound);+/
+	//writeln("∫dxδ[-x]·δ[z+-x+-y]".dParse);
+	//writeln("∫dyδ[-x+0+-y]·[-y≤0]·[y+-1≤0]".dParse);
+	//writeln("∫dxδ[-x+z+-y]·δ[-x]".dParse.simplify(one));
+	//writeln(d
+	//writeln("!@# ", dDiff(dVar("x"),-dVar("x"),zero));
+	//writeln("∫dξ₁((-1+-ξ₁+x)·(-x+2+ξ₁)+(-x+1)·ξ₁+-x+x²·⅟2+ξ₁²·⅟2+⅟2)·[-1+ξ₁≤0]·[-2+-ξ₁+x≠0]·[-2+-ξ₁+x≤0]·[-x+1+ξ₁≤0]·[-ξ₁≤0]".dParse);
+	//writeln("∫dξ₁((-1+-ξ₁+x)·(-x+2+ξ₁))·[-1+ξ₁≤0]·[-2+-ξ₁+x≠0]·[-2+-ξ₁+x≤0]·[-x+1+ξ₁≤0]·[-ξ₁≤0]".dParse);
+	//writeln("(-1+-ξ₁+x)·(-x+2+ξ₁)".dParse.polyNormalize(dVar("ξ₁")).simplify(one));
 }
 
 /*
