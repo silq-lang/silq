@@ -650,9 +650,9 @@ class DMult: DCommutAssocOp{
 					
 				}
 			}
-			// TODO: do we want auto-distribution?
+			/+// TODO: do we want auto-distribution?
 			if(cast(DPlus)e1) return dDistributeMult(e1,e2);
-			if(cast(DPlus)e2) return dDistributeMult(e2,e1);
+			if(cast(DPlus)e2) return dDistributeMult(e2,e1);+/
 
 			return null;
 		}
