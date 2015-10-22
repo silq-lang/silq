@@ -1335,7 +1335,20 @@ version(INTEGRATION_STATS){
 		writeln(integrations," / ",successfulIntegrations);
 	}
 }
-	
+
+DExpr[2] splitIntegrableFactor(DExpr e){
+	DExpr integrable=one;
+	DExpr nonIntegrable=one;
+	foreach(f;e.factors){
+		if(auto p=cast(DPow)f) if(p.operands[0] is dE){ // TODO: check polynomial degree
+			integrable=integrable*f; // TODO: use DExprSet
+			continue;
+		}
+		nonIntegrable=nonIntegrable*f;
+	}
+	return [integrable,nonIntegrable];
+}
+
 DExpr definiteIntegral(DVar var,DExpr expr)out(res){
 	version(INTEGRATION_STATS){
 		integrations++;
@@ -1359,8 +1372,10 @@ DExpr definiteIntegral(DVar var,DExpr expr)out(res){
 		auto ivr=cast(DIvr)f;
 		assert(!!ivr);
 		//if(ivr.type==DIvr.Type.eqZ) return null; // TODO: eliminate eqZ early
+		// TODO: check the necessary preconditions for those
+		// (the given equation must be nondegenerate.)
 		if(ivr.type==DIvr.Type.eqZ) return zero; // TODO: eliminate eqZ early
-		if(ivr.type==DIvr.Type.neqZ) continue; // TODO: assert the necesssary preconditions for this
+		if(ivr.type==DIvr.Type.neqZ) continue;
 		assert(ivr.type!=DIvr.Type.lZ);
 		DExpr bound;
 		auto status=ivr.getBoundForVar(var,bound);
@@ -1398,24 +1413,52 @@ DExpr definiteIntegral(DVar var,DExpr expr)out(res){
 		}
 	}
 
-	if(!upper&&!lower){
-		static DExpr gaussianIntegral(DVar v,DExpr e){
-			// detect e^^(-a*x^^2+b*x+c), and integrate to e^^(b^^2/4a+c)*(pi/a)^^(1/2).
-			// TODO: this assumes that a≥0!
-			auto p=cast(DPow)e;
-			if(!p) return null;
-			if(!cast(DE)p.operands[0]) return null;
-			auto q=p.operands[1].asPolynomialIn(v,2);
-			if(!q.initialized) return null;
-			if(q.coefficients.length!=3) return null;
-			auto qc=q.coefficients;
-			auto a=-qc[2],b=qc[1],c=qc[0];
-			if(a is zero) return null;
-			return dE^^(b^^2/(4*a)+c)*(dΠ/a)^^(one/2);
+	DExpr gaussianIntegral(DVar v,DExpr e){
+		// detect e^^(-a*x^^2+b*x+c), and integrate to e^^(b^^2/4a+c)*(pi/a)^^(1/2).
+		// TODO: this assumes that a≥0!
+		auto p=cast(DPow)e;
+		if(!p) return null;
+		if(!cast(DE)p.operands[0]) return null;
+		auto q=p.operands[1].asPolynomialIn(v,2);
+		if(!q.initialized) return null;
+		if(q.coefficients.length!=3) return null;
+		auto qc=q.coefficients;
+		auto a=-qc[2],b=qc[1],c=qc[0];
+		if(a is zero) return null;
+		// -a(x-b/2a)²=-ax²+bx-b²/4a
+		// -ax²+bx+c =-a(x-b/2a)²+b²/4a+c
+		// -ax²+bx+c =(√(a)x-b/2√a)²+b²/4a+c
+		// e^(-ax²+bx+c) = e^(b²/4a+c)·(e^(√(a)x-b/2√a)²
+		// ∫dx e^(-ax²+bx+c)[l≤x≤r] = e^(b²/4a+c)·∫dx(e^(√(a)x-b/(2√a))²[l≤x≤r]
+		// = e^(b²/4a+c)·⅟√a∫dx(e^x²[l≤√(a)x-b/(2√a)≤r]
+		// = e^(b²/4a+c)·⅟√a∫dx(e^x²[l/(√(a))+b/(2√a)≤x≤r/(√(a))+b/(2√a)]
+		auto fac=dE^^(b^^2/(4*a)+c)*(one/a)^^(one/2);
+		if(!upper&&!lower){
+			return fac*dΠ^^(one/2);
+		}else{
+			auto up=upper?upper:dInf, lo=lower?lower:-dInf;
+			auto lowLeUp(){
+				if(!upper||!lower) return one;
+				return dIvr(DIvr.Type.leZ,lo-up);
+			}
+			DExpr transform(DExpr x){
+				if(x is dInf || x is -dInf) return x;
+				return (x+b/2)/2^^(one/2);
+			}
+			return fac*lowLeUp()*(dGaussInt(1,transform(up))-dGaussInt(1,transform(lo)));
 		}
-		if(auto r=gaussianIntegral(var,nonIvrs)) return r;
 	}
-	
+	if(auto r=gaussianIntegral(var,nonIvrs)) return r;
+	// partial integration: TODO: this is not well founded!
+	if(!lower&&!upper){
+		// x = ∫ u'v
+		// (uv)' = uv'+u'v
+		// ∫(uv)' = ∫uv'+∫u'v
+		// uv+C = ∫uv'+∫u'v
+		// 
+		// dw(nonIvrs," ",splitIntegrableFactor(nonIvrs));
+		// TODO
+	}
 	return null; // no simpler expression available
 }
 
@@ -1603,6 +1646,8 @@ DExpr differentiate(DVar v,DExpr e){
 		return dDiff(v,l.e)/l.e;
 	if(auto s=cast(DSin)e)
 		return dDiff(v,s.e)*dSin(s.e+dΠ/2);
+	if(auto g=cast(DGaussInt)e)
+		return dGaussInt(g.deg-1,g.x);
 	if(!e.hasFreeVar(v)) return zero;
 	return null;
 }
@@ -1615,7 +1660,7 @@ class DDiff: DOp{
 	override @property string symbol(){ return "d/d"~v.toString(); }
 	override Precedence precedence(){ return Precedence.diff; }
 	override string toStringImpl(Precedence prec){
-		return addp(prec,symbol~"("~e.toString()~")["~x.toString()~"]");
+		return addp(prec,symbol~"["~e.toString()~"]("~x.toString()~")");
 	}
 
 	static DExpr constructHook(DVar v,DExpr e,DExpr x){
@@ -1795,6 +1840,75 @@ class DSin: DOp{
 }
 
 DExpr dSin(DExpr e){ return uniqueDExprUnary!DSin(e); }
+
+class DGaussInt: DOp{
+	int deg;
+	DExpr x;
+	this(int deg,DExpr x){ this.deg=deg; this.x=x; }
+	override @property string symbol(){ return "(d/dx)"~highNum(-deg)~"[e^(-x²)]"; }
+	override Precedence precedence(){ return Precedence.diff; }
+	override string toStringImpl(Precedence prec){
+		return addp(prec,symbol~"("~x.toString()~")");
+	}
+
+	static DExpr constructHook(int deg,DExpr x){
+		return staticSimplify(deg,x);
+	}
+	static DExpr staticSimplify(int deg,DExpr x,DExpr facts=one){
+		if(deg==0) return dE^^(-x^^2);
+		if(deg==1){ // TODO: higher degrees
+			if(x is dInf){
+				return dΠ^^(one/2);
+			}else if(x is -dInf){
+				return zero;
+			}
+			if(x is zero){
+				return dΠ^^(one/2)/2;
+			}
+		}
+		auto nx=x.simplify(facts);
+		if(nx !is x) return dGaussInt(deg,nx);
+		return null;
+	}
+	override DExpr simplifyImpl(DExpr facts){
+		auto r=staticSimplify(deg,x);
+		return r?r:this;
+	}
+
+	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; } // TODO: correct?
+
+	override int freeVarsImpl(scope int delegate(DVar) dg){
+		return x.freeVarsImpl(dg);
+	}
+	override DExpr substitute(DVar var,DExpr exp){
+		auto nx=x.substitute(var,exp);
+		return dGaussInt(deg,nx);
+	}
+	override DExpr incDeBruin(int di){
+		return dGaussInt(deg,x.incDeBruin(di));
+	}
+}
+
+MapX!(TupleX!(typeof(typeid(DExpr)),int,DExpr),DExpr) uniqueMapIntUnary;
+auto uniqueDExprIntUnary(T)(int k,DExpr a){
+	if(auto r=T.constructHook(k,a)) return r;
+	auto t=tuplex(typeid(T),k,a);
+	if(t in uniqueMapIntUnary) return cast(T)uniqueMapIntUnary[t];
+	auto r=new T(k,a);
+	uniqueMapIntUnary[t]=r;
+	return r;
+}
+
+auto dGaussInt(int deg,DExpr x){ return uniqueDExprIntUnary!DGaussInt(deg,x); }
+
+class DInf: DExpr{ // TODO: explicit limits?
+	override string toStringImpl(Precedence prec){ return "∞"; }
+	mixin Constant;
+}
+
+private static DInf theDInf;
+@property DInf dInf(){ return theDInf?theDInf:(theDInf=new DInf); }
+
 
 class DFun: DOp{ // uninterpreted functions
 	DVar fun;

@@ -1,0 +1,9 @@
+def main(){
+    x := Gauss(0,1);
+    y := x<0;
+
+    a := Gauss(0,1);
+    b := Gauss(0,1);
+    c := a < b;
+    return (y,c);
+}
