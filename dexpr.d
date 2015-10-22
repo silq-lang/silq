@@ -1,3 +1,5 @@
+// TODO: the caches should use weak references
+
 import std.conv;
 import hashtable, util;
 
@@ -376,7 +378,8 @@ class DPlus: DCommutAssocOp{
 		}
 		if(auto p=cast(DPow)summand){
 			if(cast(DPlus)p.operands[0]){
-				insert(summands,expandPow(p),facts);
+				auto expanded=expandPow(p);
+				if(expanded !is p) insert(summands,expanded,facts);
 				return;
 			}
 		}
