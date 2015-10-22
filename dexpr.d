@@ -1349,6 +1349,12 @@ DExpr[2] splitIntegrableFactor(DExpr e){
 	return [integrable,nonIntegrable];
 }
 
+bool hasZerosOfMeasureZero(DExpr e){
+	// TODO: check the necessary preconditions for those
+	// (the given equation must be nondegenerate.)
+	return true; // TODO: actually check this!
+}
+
 DExpr definiteIntegral(DVar var,DExpr expr)out(res){
 	version(INTEGRATION_STATS){
 		integrations++;
@@ -1372,15 +1378,17 @@ DExpr definiteIntegral(DVar var,DExpr expr)out(res){
 		auto ivr=cast(DIvr)f;
 		assert(!!ivr);
 		//if(ivr.type==DIvr.Type.eqZ) return null; // TODO: eliminate eqZ early
-		// TODO: check the necessary preconditions for those
-		// (the given equation must be nondegenerate.)
-		if(ivr.type==DIvr.Type.eqZ) return zero; // TODO: eliminate eqZ early
-		if(ivr.type==DIvr.Type.neqZ) continue;
+		if(ivr.type==DIvr.Type.eqZ||ivr.type==DIvr.Type.neqZ){
+			if(ivr.e.hasZerosOfMeasureZero()){
+				if(ivr.type==DIvr.Type.eqZ) return zero;
+				if(ivr.type==DIvr.Type.neqZ) continue;
+			}
+		}
 		assert(ivr.type!=DIvr.Type.lZ);
 		DExpr bound;
 		auto status=ivr.getBoundForVar(var,bound);
 		final switch(status) with(BoundStatus){
-		case fail: return null; // TODO: non-linear bounds (modify DIvr such that it transforms them).
+		case fail: return null; // TODO: non-linear bounds (modify DIvr such that it transforms them?).
 		case lowerBound:
 			if(lower) lower=dMax(lower,bound);
 			else lower=bound;
