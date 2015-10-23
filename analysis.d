@@ -170,9 +170,9 @@ private struct Analyzer{
 	}
 	Distribution analyze(CompoundExp ce)in{assert(!!ce);}body{
 		foreach(i,e;ce.s){
-			/*writeln("statement: ",e);
+			/+writeln("statement: ",e);
 			writeln("before: ",dist);
-			scope(success) writeln("after: ",dist);*/
+			scope(success) writeln("after: ",dist);+/
 			// TODO: visitor?
 			if(auto de=cast(DefExp)e){
 				if(auto id=cast(Identifier)de.e1){

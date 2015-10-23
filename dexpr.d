@@ -1371,6 +1371,7 @@ DExpr definiteIntegral(DVar var,DExpr expr)out(res){
 	foreach(f;expr.factors){
 		assert(f.hasFreeVar(var));
 		if(cast(DIvr)f) ivrs=ivrs*f;
+		else if(cast(DDelta)f) return null;
 		else nonIvrs=nonIvrs*f;
 	}
 	DExpr lower=null;
@@ -1467,8 +1468,8 @@ DExpr definiteIntegral(DVar var,DExpr expr)out(res){
 		// uv+C = ∫uv'+∫u'v
 		// 
 		auto factors=splitIntegrableFactor(nonIvrs);
-		dw(factors[1]);
-		dw("!! ",dDiff(var,factors[1]));
+		//dw(factors[1]);
+		//dw("!! ",dDiff(var,factors[1]));
 		// TODO
 		
 	}
