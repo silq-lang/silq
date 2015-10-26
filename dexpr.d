@@ -1060,12 +1060,27 @@ DExpr uglyFractionCancellation(DExpr e){
 		auto f=s.getFractionalFactor();
 		assert(f.isFraction());
 		auto nd=f.getFraction();
+		if(nd[1]==0) continue;
 		assert(nd[1]>0);
 		ngcd=gcd(ngcd,abs(nd[0]));
 		dlcm=lcm(dlcm,nd[1]);
 	}
 	if(!ngcd) return one;
 	return dℕ(dlcm)/ngcd;
+}
+
+private static DExpr getCommonDenominator(DExpr e){
+	DExpr r=one;
+	foreach(s;e.summands){
+		foreach(f;s.factors){
+			if(auto p=cast(DPow)f){
+				if(p.operands[1] !is mone) continue;
+				auto den=p.operands[0];
+				if(!r.hasFactor(den)) r=r*den;
+			}
+		}
+	}
+	return r;
 }
 
 enum BoundStatus{
@@ -1201,6 +1216,17 @@ class DIvr: DExpr{ // iverson brackets
 		if(cancel!=one) return dIvr(type,dDistributeMult(e,cancel));
 		if(type==Type.lZ) return dIvr(Type.leZ,e)*dIvr(Type.neqZ,e);
 		if(auto fct=factorDIvr!(e=>dIvr(type,e))(e)) return fct;
+		auto denom=getCommonDenominator(e);
+		if(denom !is one){
+			// TODO: ensure cancellation actually happens!
+			final switch(type) with(Type){
+				case eqZ,neqZ: return dIvr(type,denom*e);
+				case leZ,lZ:
+					auto dcancel=dDistributeMult(e,denom);
+					return (dIvr(leZ,-denom)*dIvr(type,dcancel)+
+							dIvr(lZ,denom)*dIvr(type,-dcancel)).simplify(facts);
+			}
+		}
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){
@@ -1269,10 +1295,17 @@ class DDelta: DExpr{ // Dirac delta function
 		SolutionInfo info;
 		if(auto s=d.e.solveFor(var,zero,caseSplit,info)){
 			s=s.simplify(one);
-			if(!info.needCaseSplit){
-				auto r=expr.withoutFactor(d).substitute(var,s);
-				return (r/dAbs(dDiff(var,d.e,s)));
+			if(!caseSplit && info.needCaseSplit) return null;
+			auto rest=expr.withoutFactor(d);
+			auto constraints=one;
+			foreach(ref x;info.caseSplits)
+				constraints=constraints*dIvr(DIvr.Type.neqZ,x.constraint);
+			auto r=rest.substitute(var,s)/dAbs(dDiff(var,d.e,s))*constraints;
+			foreach(ref x;info.caseSplits){
+				auto curConstr=constraints.withoutFactor(dIvr(DIvr.Type.neqZ,x.constraint));
+				r=r+curConstr*dIvr(DIvr.Type.eqZ,x.constraint)*dInt(var,rest*dDelta(x.expression));
 			}
+			return r;
 		}
 		return null;
 	}
@@ -1579,13 +1612,20 @@ class DInt: DOp{
 		}
 		auto ow=expr.splitMultAtVar(var);
 		if(ow[0] !is one) return ow[0]*dInt(var,ow[1]);
-		foreach(f;expr.factors){
-			if(!f.hasFreeVar(var)) continue;
-			if(auto d=cast(DDelta)f){
-				if(auto r=DDelta.performSubstitution(var,d,expr,false))
-					return r.simplify(facts);
+		DExpr deltaSubstitution(bool caseSplit){
+			// TODO: only extract deltas once?
+			// TODO: detect when to give up early?
+			foreach(f;expr.factors){
+				if(!f.hasFreeVar(var)) continue;
+				if(auto d=cast(DDelta)f){
+					if(auto r=DDelta.performSubstitution(var,d,expr,caseSplit))
+						return r.simplify(facts);
+				}
 			}
+			return null;
 		}
+		if(auto r=deltaSubstitution(false))
+			return r;
 		foreach(T;Seq!(DDelta,DIvr)){ // TODO: need to split on DIvr?
 			foreach(f;expr.factors){
 				if(auto p=cast(DPlus)f){
@@ -1606,6 +1646,8 @@ class DInt: DOp{
 				}
 			}
 		}
+		if(auto r=deltaSubstitution(true))
+			return r;
 		if(expr is one) return null; // (infinite integral)
 		// Fubini
 		foreach(f;expr.factors){
@@ -1786,7 +1828,7 @@ class DAbs: DOp{
 				DMult.insert(r,dAbs(f));
 			return dMult(r);
 		}
-		return null;
+		return -e*dIvr(DIvr.Type.lZ,e)+e*dIvr(DIvr.Type.leZ,-e);
 	}
 	override DExpr simplifyImpl(DExpr facts){
 		auto r=staticSimplify(e);
