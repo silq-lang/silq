@@ -1,4 +1,4 @@
-B1;3409;0cdef main(){
+def main(){
     x := Gauss(0,1);
     a := x^(1/2);
     b := a^2==x;

@@ -1,0 +1,12 @@
+def main(){
+    x := UniformInt(1,10);
+    i := 1;
+    y := 0;
+    repeat 5{
+        if Bernoulli(1/2) && x == i {
+	    y = y + 1;
+        }
+	i = i + Bernoulli(1/2);
+    }
+    return y; // expected: 19·δ[-y+2]·⅟512+23·δ[-y+3]·⅟2560+4153·δ[-y]·⅟5120+721·δ[-y+1]·⅟5120+9·δ[-y+4]·⅟5120+δ[-y+5]·⅟5120
+}

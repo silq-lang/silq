@@ -1,0 +1,9 @@
+def main(){
+    x := Gauss(0,1);
+    if (x-3)*(x-2) <= 0{
+        x = 0;
+    }
+    // observe((x-3)*(x-2)<=0); // (impossible observation)
+    observe((x-3)*(x-2)==6);
+    return x; // TODO: simplify better
+}
