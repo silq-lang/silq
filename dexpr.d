@@ -85,6 +85,11 @@ abstract class DExpr{
 		return false;
 	}
 	static struct SolutionInfo{
+		static enum UseCase{
+			noCaseSplit,
+			solve,
+			bound,
+		}
 		bool needCaseSplit;
 		static struct CaseSplit{
 			DExpr constraint;
@@ -92,7 +97,8 @@ abstract class DExpr{
 		}
 		CaseSplit[] caseSplits;
 	}
-	DExpr solveFor(DVar var,DExpr rhs,bool caseSplit,ref SolutionInfo info){ return null; }
+	alias SolUse=SolutionInfo.UseCase;
+	DExpr solveFor(DVar var,DExpr rhs,SolUse usage,ref SolutionInfo info){ return null; }
 
 	bool isFraction(){ return false; }
 	ℕ[2] getFraction(){ assert(0,"not a fraction"); }
@@ -147,7 +153,7 @@ class DVar: DExpr{
 	override int freeVarsImpl(scope int delegate(DVar) dg){ return dg(this); }
 	override DExpr substitute(DVar var,DExpr e){ return this is var?e:this; }
 	override DVar incDeBruin(int di){ return this; }
-	override DExpr solveFor(DVar var,DExpr e,bool caseSplit,ref SolutionInfo info){
+	override DExpr solveFor(DVar var,DExpr e,SolUse caseSplit,ref SolutionInfo info){
 		if(this is var) return e;
 		return null;
 	}
@@ -158,7 +164,7 @@ class DVar: DExpr{
 				if(ivr.type!=DIvr.Type.eqZ) continue;
 				if(ivr.e.getCanonicalFreeVar()!is this) continue; // TODO: make canonical var smart
 				SolutionInfo info;
-				auto sol=ivr.e.solveFor(this,zero,false,info);
+				auto sol=ivr.e.solveFor(this,zero,SolUse.noCaseSplit,info);
 				if(!sol||info.needCaseSplit) continue; // TODO: make more efficient!
 				// TODO: we probably want to do a case split here.
 				// TODO: allow this simplification to be disabled temporarily (for delta expressions)
@@ -350,7 +356,7 @@ class DPlus: DCommutAssocOp{
 		foreach(s;summands) insert(res,s.incDeBruin(di));
 		return dPlus(res);
 	}
-	override DExpr solveFor(DVar var,DExpr e,bool caseSplit,ref SolutionInfo info){
+	override DExpr solveFor(DVar var,DExpr e,SolUse caseSplit,ref SolutionInfo info){
 		auto ow=splitPlusAtVar(this,var);
 		if(cast(DPlus)ow[1]) return null; // TODO (polynomials,...)
 		auto r=ow[1].solveFor(var,e-ow[0],caseSplit,info); // TODO: withoutSummands
@@ -532,7 +538,7 @@ class DMult: DCommutAssocOp{
 		foreach(f;factors) insert(res,f.incDeBruin(di));
 		return dMult(res);
 	}
-	override DExpr solveFor(DVar var,DExpr e,bool caseSplit,ref SolutionInfo info){
+	override DExpr solveFor(DVar var,DExpr e,SolUse caseSplit,ref SolutionInfo info){
 		auto ow=splitMultAtVar(this,var);
 		if(cast(DMult)ow[1]) return null; // TODO
 		if(couldBeZero(ow[0])){
@@ -788,7 +794,7 @@ class DPow: DBinaryOp{
 		return [ℕ(1),d.c];
 	}
 
-	override DExpr solveFor(DVar var,DExpr rhs,bool caseSplit,ref SolutionInfo info){
+	override DExpr solveFor(DVar var,DExpr rhs,SolUse caseSplit,ref SolutionInfo info){
 		if(operands[1] !is -one) return null; // TODO
 		if(rhs is zero) return null; // TODO: it might still be zero, how to handle?
 		if(couldBeZero(rhs)){ // TODO: what to do here?
@@ -1293,7 +1299,7 @@ class DDelta: DExpr{ // Dirac delta function
 
 	static DExpr performSubstitution(DVar var,DDelta d,DExpr expr,bool caseSplit){
 		SolutionInfo info;
-		if(auto s=d.e.solveFor(var,zero,caseSplit,info)){
+		if(auto s=d.e.solveFor(var,zero,caseSplit?SolUse.solve:SolUse.noCaseSplit,info)){
 			s=s.simplify(one);
 			if(!caseSplit && info.needCaseSplit) return null;
 			auto rest=expr.withoutFactor(d);
