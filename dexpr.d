@@ -84,21 +84,6 @@ abstract class DExpr{
 		foreach(v;freeVars) if(v is var) return true;
 		return false;
 	}
-	static struct SolutionInfo{
-		static enum UseCase{
-			noCaseSplit,
-			solve,
-			bound,
-		}
-		bool needCaseSplit;
-		static struct CaseSplit{
-			DExpr constraint;
-			DExpr expression;
-		}
-		CaseSplit[] caseSplits;
-	}
-	alias SolUse=SolutionInfo.UseCase;
-	DExpr solveFor(DVar var,DExpr rhs,SolUse usage,ref SolutionInfo info){ return null; }
 
 	bool isFraction(){ return false; }
 	ℕ[2] getFraction(){ assert(0,"not a fraction"); }
@@ -153,10 +138,6 @@ class DVar: DExpr{
 	override int freeVarsImpl(scope int delegate(DVar) dg){ return dg(this); }
 	override DExpr substitute(DVar var,DExpr e){ return this is var?e:this; }
 	override DVar incDeBruin(int di){ return this; }
-	override DExpr solveFor(DVar var,DExpr e,SolUse caseSplit,ref SolutionInfo info){
-		if(this is var) return e;
-		return null;
-	}
 	override DExpr simplifyImpl(DExpr facts){
 		// TODO: make more efficient! (e.g. keep hash table in product expressions)
 		foreach(f;facts.factors){
@@ -317,8 +298,8 @@ string makeConstructorCommutAssoc(T)(){
 string makeConstructorNonCommutAssoc(T)(){
 	enum Ts=__traits(identifier, T);
 	return "auto " ~ lowerf(Ts)~"(DExpr e1, DExpr e2){ "
-		~"static if(__traits(hasMember,"~Ts~",`constructHook`))"
-		~"  if(auto r="~Ts~".constructHook(e1,e2)) return r;"
+		~"static if(__traits(hasMember,"~Ts~",`constructHook`)){"
+		~"  if(auto r="~Ts~".constructHook(e1,e2)) return r;}"
 		~"return uniqueDExprNonCommutAssoc!("~__traits(identifier,T)~")(e1,e2);"
 		~"}";
 }
@@ -355,13 +336,6 @@ class DPlus: DCommutAssocOp{
 		DExprSet res;
 		foreach(s;summands) insert(res,s.incDeBruin(di));
 		return dPlus(res);
-	}
-	override DExpr solveFor(DVar var,DExpr e,SolUse caseSplit,ref SolutionInfo info){
-		auto ow=splitPlusAtVar(this,var);
-		if(cast(DPlus)ow[1]) return null; // TODO (polynomials,...)
-		auto r=ow[1].solveFor(var,e-ow[0],caseSplit,info); // TODO: withoutSummands
-		foreach(ref x;info.caseSplits) x.expression=x.expression+ow[0];
-		return r;
 	}
 
 	static void insert(ref DExprSet summands,DExpr summand)in{assert(!!summand);}body{
@@ -537,18 +511,6 @@ class DMult: DCommutAssocOp{
 		DExprSet res;
 		foreach(f;factors) insert(res,f.incDeBruin(di));
 		return dMult(res);
-	}
-	override DExpr solveFor(DVar var,DExpr e,SolUse caseSplit,ref SolutionInfo info){
-		auto ow=splitMultAtVar(this,var);
-		if(cast(DMult)ow[1]) return null; // TODO
-		if(couldBeZero(ow[0])){
-			info.needCaseSplit=true;
-			if(caseSplit)
-				info.caseSplits~=SolutionInfo.CaseSplit(ow[0],zero);
-		}
-		auto r=ow[1].solveFor(var,e/ow[0],caseSplit,info);
-		foreach(ref x;info.caseSplits) x.expression=x.expression*ow[0];
-		return r;
 	}
 
 	override bool isFraction(){ return factors.all!(a=>a.isFraction()); }
@@ -792,18 +754,6 @@ class DPow: DBinaryOp{
 		auto d=cast(Dℕ)operands[0];
 		assert(d && operands[1] is -one);
 		return [ℕ(1),d.c];
-	}
-
-	override DExpr solveFor(DVar var,DExpr rhs,SolUse caseSplit,ref SolutionInfo info){
-		if(operands[1] !is -one) return null; // TODO
-		if(rhs is zero) return null; // TODO: it might still be zero, how to handle?
-		if(couldBeZero(rhs)){ // TODO: what to do here?
-			//info.needCaseSplit=true;
-			//if(caseSplit) info.caseSplits~=CaseSplit(rhs,null);
-		}
-		auto r=operands[0].solveFor(var,one/rhs,caseSplit,info);
-		foreach(ref x;info.caseSplits) x.expression=one/x.expression;
-		return r;
 	}
 
 	override string toStringImpl(Precedence prec){
@@ -1095,7 +1045,7 @@ enum BoundStatus{
 	upperBound,
 }
 
-BoundStatus getBoundForVar(DIvr ivr,DVar var,out DExpr bound){ // TODO: handle cases where there is no bound
+BoundStatus getBoundForVar(DIvr ivr,DVar var,out DExpr bound){ // TODO: get rid of this in favour of the next function?
 	enum r=BoundStatus.fail;
 	with(DIvr.Type) if(ivr.type!=leZ) return r;
 	foreach(s;ivr.e.summands){
@@ -1113,6 +1063,73 @@ BoundStatus getBoundForVar(DIvr ivr,DVar var,out DExpr bound){ // TODO: handle c
 	}
 	return r;
 }
+
+struct SolutionInfo{
+	static enum UseCase{
+		bool caseSplit;
+		bool bound;
+	}
+	bool needCaseSplit;
+	static struct CaseSplit{
+		DExpr constraint;
+		DExpr expression;
+	}
+	CaseSplit[] caseSplits;
+	static struct Bound{
+		DExpr isLower;
+		void setLower(){ isLower=mone; }
+		void invert(){
+			if(isLower) isLower=-isLower;
+		}
+		void invertIflZ(DExpr e){
+			if(isLower) isLower=isLower*e;
+		}
+	}
+	Bound bound;
+}
+alias SolUse=SolutionInfo.UseCase;
+
+// solve lhs = rhs, or lhs ≤ rhs, where var does not occur free in rhs
+DExpr solveFor(DExpr lhs,DVar var,DExpr rhs,SolUse usage,ref SolutionInfo info){
+	if(lhs is var){
+		if(usage.bound) info.bound.setLower();
+		return rhs;
+	}
+	if(auto p=cast(DPlus)lhs){
+		auto ow=splitPlusAtVar(lhs,var);
+		if(cast(DPlus)ow[1]) return null; // TODO (polynomials,...)
+		auto r=ow[1].solveFor(var,rhs-ow[0],usage,info); // TODO: withoutSummands
+		foreach(ref x;info.caseSplits) x.expression=x.expression+ow[0];
+		return r;
+	}
+	if(auto m=cast(DMult)lhs){
+		auto ow=splitMultAtVar(m,var);
+		if(cast(DMult)ow[1]) return null; // TODO
+		if(couldBeZero(ow[0])){
+			info.needCaseSplit=true;
+			if(usage.caseSplit)
+				info.caseSplits~=SolutionInfo.CaseSplit(ow[0],zero);
+		}
+		auto r=ow[1].solveFor(var,rhs/ow[0],usage,info);
+		foreach(ref x;info.caseSplits) x.expression=x.expression*ow[0];
+		if(usage.bound) info.bound.invertIflZ(ow[0]);
+		return r;
+	}
+	if(auto p=cast(DPow)lhs){
+		if(p.operands[1] !is -one) return null; // TODO
+		if(rhs is zero) return null; // TODO: it might still be zero, how to handle?
+		if(couldBeZero(rhs)){ // TODO: what to do here?
+			//info.needCaseSplit=true;
+			//if(caseSplit) info.caseSplits~=CaseSplit(rhs,null);
+		}
+		auto r=p.operands[0].solveFor(var,one/rhs,usage,info);
+		foreach(ref x;info.caseSplits) x.expression=one/x.expression;
+		if(usage.bound) info.bound.invert();
+		return r;
+	}
+	return null;
+}
+
 
 Q!(DIvr.Type,"type",DExpr,"e") negateDIvr(DIvr.Type type,DExpr e){
 	final switch(type) with(DIvr.Type){
@@ -1834,7 +1851,7 @@ class DAbs: DOp{
 				DMult.insert(r,dAbs(f));
 			return dMult(r);
 		}
-		return -e*dIvr(DIvr.Type.lZ,e)+e*dIvr(DIvr.Type.leZ,-e);
+		return -e*dIvr(DIvr.Type.lZ,e)+e*dIvr(DIvr.Type.leZ,-e); // TODO: just use this expression from the beginning?
 	}
 	override DExpr simplifyImpl(DExpr facts){
 		auto r=staticSimplify(e);
