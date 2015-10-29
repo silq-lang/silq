@@ -599,7 +599,12 @@ class DMult: DCommutAssocOp{
 			}
 			if(cast(DIvr)e2) swap(e1,e2);
 			if(auto ivr1=cast(DIvr)e1){ // TODO: this should all be done by DIvr.simplify instead
+				auto simple=e2.simplify(e1);
+				if(simple!is e2) return simple*e1;
 				if(auto ivr2=cast(DIvr)e2) with(DIvr.Type){
+					simple=e1.simplify(e2);
+					if(simple!is e1) return simple*e2;
+
 					// combine a≤0 and -a≤0 to a=0
 					if(ivr1.type==leZ&&ivr2.type==leZ){
 						if(ivr1.e is -ivr2.e)
