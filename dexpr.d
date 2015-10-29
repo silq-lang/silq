@@ -145,7 +145,8 @@ class DVar: DExpr{
 				if(ivr.type!=DIvr.Type.eqZ) continue;
 				if(ivr.e.getCanonicalFreeVar()!is this) continue; // TODO: make canonical var smart
 				SolutionInfo info;
-				auto sol=ivr.e.solveFor(this,zero,SolUse.noCaseSplit,info);
+				SolUse usage={caseSplit:false,bound:false};
+				auto sol=ivr.e.solveFor(this,zero,usage,info);
 				if(!sol||info.needCaseSplit) continue; // TODO: make more efficient!
 				// TODO: we probably want to do a case split here.
 				// TODO: allow this simplification to be disabled temporarily (for delta expressions)
@@ -596,6 +597,7 @@ class DMult: DCommutAssocOp{
 					}
 				}
 			}
+			if(cast(DIvr)e2) swap(e1,e2);
 			if(auto ivr1=cast(DIvr)e1){ // TODO: this should all be done by DIvr.simplify instead
 				if(auto ivr2=cast(DIvr)e2) with(DIvr.Type){
 					// combine a≤0 and -a≤0 to a=0
@@ -1065,7 +1067,7 @@ BoundStatus getBoundForVar(DIvr ivr,DVar var,out DExpr bound){ // TODO: get rid 
 }
 
 struct SolutionInfo{
-	static enum UseCase{
+	static struct UseCase{
 		bool caseSplit;
 		bool bound;
 	}
@@ -1117,12 +1119,12 @@ DExpr solveFor(DExpr lhs,DVar var,DExpr rhs,SolUse usage,ref SolutionInfo info){
 	}
 	if(auto p=cast(DPow)lhs){
 		if(p.operands[1] !is -one) return null; // TODO
-		if(rhs is zero) return null; // TODO: it might still be zero, how to handle?
-		if(couldBeZero(rhs)){ // TODO: what to do here?
-			//info.needCaseSplit=true;
-			//if(caseSplit) info.caseSplits~=CaseSplit(rhs,null);
+		if(couldBeZero(rhs)){ // TODO: is this right? (This is guaranteed never to happen for dirac deltaas, so maybe optimize it out for that caller).
+			info.needCaseSplit=true;
+			if(usage.caseSplit) info.caseSplits~=SolutionInfo.CaseSplit(rhs,one);
 		}
 		auto r=p.operands[0].solveFor(var,one/rhs,usage,info);
+		info.caseSplits=info.caseSplits.partition!(x=>x.expression is zero);
 		foreach(ref x;info.caseSplits) x.expression=one/x.expression;
 		if(usage.bound) info.bound.invert();
 		return r;
@@ -1241,13 +1243,22 @@ class DIvr: DExpr{ // iverson brackets
 		if(auto fct=factorDIvr!(e=>dIvr(type,e))(e)) return fct;
 		auto denom=getCommonDenominator(e);
 		if(denom !is one){
-			// TODO: ensure cancellation actually happens!
+			auto dcancel=dDistributeMult(e,denom);
 			final switch(type) with(Type){
-				case eqZ,neqZ: return dIvr(type,denom*e);
-				case leZ,lZ:
-					auto dcancel=dDistributeMult(e,denom);
-					return (dIvr(leZ,-denom)*dIvr(type,dcancel)+
+				case eqZ,neqZ:
+					auto r=dIvr(type,dcancel).simplify(facts);
+					if(!cast(DIvr)r) return r;
+				case leZ,lZ: break;
+					auto r=(dIvr(leZ,-denom)*dIvr(type,dcancel)+
 							dIvr(lZ,denom)*dIvr(type,-dcancel)).simplify(facts);
+					if(r is zero || r is one) return r;
+				// TODO: unfortunately, due to how definiteIntegral is implemented, we
+				// cannot use this rewrite to normalize as follows. Fix this.
+				/+case eqZ,neqZ:
+					return dIvr(type,dcancel).simplify(facts);
+				case leZ,lZ: break;
+					return (dIvr(leZ,-denom)*dIvr(type,dcancel)+
+							dIvr(lZ,denom)*dIvr(type,-dcancel)).simplify(facts);+/
 			}
 		}
 		return null;
@@ -1316,14 +1327,16 @@ class DDelta: DExpr{ // Dirac delta function
 
 	static DExpr performSubstitution(DVar var,DDelta d,DExpr expr,bool caseSplit){
 		SolutionInfo info;
-		if(auto s=d.e.solveFor(var,zero,caseSplit?SolUse.solve:SolUse.noCaseSplit,info)){
+		SolUse usage={caseSplit:caseSplit,bound:false};
+		if(auto s=d.e.solveFor(var,zero,usage,info)){
 			s=s.simplify(one);
 			if(!caseSplit && info.needCaseSplit) return null;
 			auto rest=expr.withoutFactor(d);
 			auto constraints=one;
 			foreach(ref x;info.caseSplits)
 				constraints=constraints*dIvr(DIvr.Type.neqZ,x.constraint);
-			auto r=rest.substitute(var,s)/dAbs(dDiff(var,d.e,s))*constraints;
+			auto r=constraints is zero?zero:
+				constraints*rest.substitute(var,s)/dAbs(dDiff(var,d.e,s));
 			foreach(ref x;info.caseSplits){
 				auto curConstr=constraints.withoutFactor(dIvr(DIvr.Type.neqZ,x.constraint));
 				r=r+curConstr*dIvr(DIvr.Type.eqZ,x.constraint)*dInt(var,rest*dDelta(x.expression));
@@ -1457,6 +1470,7 @@ DExpr definiteIntegral(DVar var,DExpr expr)out(res){
 	// TODO: explicit antiderivative (d/dx)⁻¹
 	// eg. the full antiderivative e^^(-a*x^^2+b*x) is given by:
 	// e^^(b^^2/4a)*(d/dx)⁻¹(e^^(-x^^2))[(b-2*a*x)/2*a^^(1/2)]/a^^(1/2)
+	// TODO: keep ivrs and nonIvrs separate in DMult
 	DExpr ivrs=one;
 	DExpr nonIvrs=one;
 	foreach(f;expr.factors){
@@ -1482,7 +1496,29 @@ DExpr definiteIntegral(DVar var,DExpr expr)out(res){
 		DExpr bound;
 		auto status=ivr.getBoundForVar(var,bound);
 		final switch(status) with(BoundStatus){
-		case fail: return null; // TODO: non-linear bounds (modify DIvr such that it transforms them?).
+		case fail:
+			 // TODO: non-linear bounds
+			SolutionInfo info;
+			SolUse usage={caseSplit:true,bound:true};
+			bound=solveFor(ivr.e,var,zero,usage,info);
+			if(!bound) return null;
+			assert(info.caseSplits.length||info.bound.isLower!is mone&&info.bound.isLower!is one);
+			// TODO: fuse some of this with DDelta.performSubstitution?
+			auto constraints=one;
+			foreach(ref x;info.caseSplits)
+				constraints=constraints*dIvr(DIvr.Type.neqZ,x.constraint);
+			auto rest=expr.withoutFactor(ivr);
+			auto r=constraints is zero?zero:
+				constraints*(dInt(var,dIvr(DIvr.Type.leZ,var-bound)*
+								  dIvr(DIvr.type.leZ,info.bound.isLower)*rest)
+							 +dInt(var,dIvr(DIvr.Type.lZ,bound-var)*
+								   dIvr(DIvr.type.leZ,-info.bound.isLower)*rest));
+			foreach(ref x;info.caseSplits){
+				auto curConstr=constraints.withoutFactor(dIvr(DIvr.Type.neqZ,x.constraint));
+				r=r+curConstr*dIvr(DIvr.Type.eqZ,x.constraint)*
+					dInt(var,rest*dIvr(DIvr.Type.leZ,x.expression));
+			}
+			return r;
 		case lowerBound:
 			if(lower) lower=dMax(lower,bound);
 			else lower=bound;
