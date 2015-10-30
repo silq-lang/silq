@@ -197,7 +197,7 @@ private struct Analyzer{
 				if(auto c=transformConstr(ite.cond)){
 					DVar[] ws;
 					DExpr nc=c;
-					foreach(v;c.freeVars){
+					foreach(v;c.freeVars.setx){
 						auto w=dist.getVar(v.name);
 						dist.initialize(w,v);
 						ws~=w;
