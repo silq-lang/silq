@@ -1567,11 +1567,11 @@ DExpr definiteIntegral(DVar var,DExpr expr)out(res){
 		if(a is zero) return null;
 		// -a(x-b/2a)²=-ax²+bx-b²/4a
 		// -ax²+bx+c =-a(x-b/2a)²+b²/4a+c
-		// -ax²+bx+c =(√(a)x-b/2√a)²+b²/4a+c
-		// e^(-ax²+bx+c) = e^(b²/4a+c)·(e^(√(a)x-b/2√a)²
-		// ∫dx e^(-ax²+bx+c)[l≤x≤r] = e^(b²/4a+c)·∫dx(e^(√(a)x-b/(2√a))²[l≤x≤r]
-		// = e^(b²/4a+c)·⅟√a∫dx(e^x²[l≤√(a)x-b/(2√a)≤r]
-		// = e^(b²/4a+c)·⅟√a∫dx(e^x²[l/(√(a))+b/(2√a)≤x≤r/(√(a))+b/(2√a)]
+		// -ax²+bx+c =-(√(a)x-b/2√a)²+b²/4a+c
+		// e^(-ax²+bx+c) = e^(b²/4a+c)·e^-(√(a)x-b/2√a)²
+		// ∫dx e^(-ax²+bx+c)[l≤x≤r] = e^(b²/4a+c)·∫dx(e^-(√(a)x-b/(2√a))²[l≤x≤r]
+		// = e^(b²/4a+c)·⅟√a∫dx(e^-x²)[l≤x/√(a)+b/(2a)≤r]
+		// = e^(b²/4a+c)·⅟√a∫dx(e^-x²)[l*(√(a))-b/(2√(a))≤x≤r*(√(a))-b/(2√(a))]
 		auto fac=dE^^(b^^2/(4*a)+c)*(one/a)^^(one/2);
 		if(!upper&&!lower){
 			return fac*dΠ^^(one/2);
@@ -1583,7 +1583,8 @@ DExpr definiteIntegral(DVar var,DExpr expr)out(res){
 			}
 			DExpr transform(DExpr x){
 				if(x is dInf || x is -dInf) return x;
-				return (x+b/2)/2^^(one/2);
+				auto sqrta=a^^(one/2);
+				return sqrta*x-b/(2*sqrta);
 			}
 			return fac*lowLeUp()*(dGaussInt(1,transform(up))-dGaussInt(1,transform(lo)));
 		}

@@ -274,6 +274,7 @@ void test(){
 	SolUse usage={caseSplit:true,bound:true};
 	writeln(solveFor("-z·⅟ξ₁".dParse,dVar("ξ₁"),zero,usage,info)," ",info.caseSplits);+/
 	//writeln("∫dz[-1+-⅟z≤0]·[-1+⅟z≤0]·[z≠0]·⅟(-2·[z²≠0]·[z²≤0]·z²+2·[-z²≤0]·z²)".dParse);
+	//writeln("∫dy([-y+2≤0]·⅟2)·e^(-1+-y²·⅟4+y)·⅟√π̅".dParse.simplify(one));
 }
 
 /*
