@@ -1085,9 +1085,6 @@ struct SolutionInfo{
 	static struct Bound{
 		DExpr isLower;
 		void setLower(){ isLower=mone; }
-		void invert(){
-			if(isLower) isLower=-isLower;
-		}
 		void invertIflZ(DExpr e){
 			if(isLower) isLower=isLower*e;
 		}
@@ -1131,7 +1128,7 @@ DExpr solveFor(DExpr lhs,DVar var,DExpr rhs,SolUse usage,ref SolutionInfo info){
 		auto r=p.operands[0].solveFor(var,one/rhs,usage,info);
 		info.caseSplits=info.caseSplits.partition!(x=>x.expression is zero);
 		foreach(ref x;info.caseSplits) x.expression=one/x.expression;
-		if(usage.bound) info.bound.invert();
+		if(usage.bound) if(usage.bound) info.bound.invertIflZ(-p.operands[0]*rhs);
 		return r;
 	}
 	return null;

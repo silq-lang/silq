@@ -273,6 +273,7 @@ void test(){
 	/+SolutionInfo info;
 	SolUse usage={caseSplit:true,bound:true};
 	writeln(solveFor("-z·⅟ξ₁".dParse,dVar("ξ₁"),zero,usage,info)," ",info.caseSplits);+/
+	//writeln("∫dz[-1+-⅟z≤0]·[-1+⅟z≤0]·[z≠0]·⅟(-2·[z²≠0]·[z²≤0]·z²+2·[-z²≤0]·z²)".dParse);
 }
 
 /*
