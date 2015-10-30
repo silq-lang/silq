@@ -1,0 +1,6 @@
+def main(){
+    x := Uniform(0,1);
+    k := 2;
+    y := k*x;
+    return y;
+}
