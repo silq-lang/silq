@@ -58,8 +58,8 @@ class Distribution{
 		auto d1=distribution;
 		auto d2=b.distribution;
 		// TODO: this should be unnecessary with dead variable analysis
-		foreach(x;this.freeVars) if(x !in freeVars){ assert(d1.hasFreeVar(x)); d1=dInt(x,d1); }
-		foreach(x;b.freeVars) if(x !in freeVars){ assert(d2.hasFreeVar(x)); d2=dInt(x,d2); }
+		foreach(x;this.freeVars) if(x !in orig.freeVars){ assert(d1.hasFreeVar(x)); d1=dInt(x,d1); }
+		foreach(x;b.freeVars) if(x !in orig.freeVars){ assert(d2.hasFreeVar(x)); d2=dInt(x,d2); }
 		//// /// // /
 		r.vbl=orig.vbl;
 		r.symtab=orig.symtab;
