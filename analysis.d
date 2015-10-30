@@ -39,7 +39,12 @@ private struct Analyzer{
 			if(auto ae=cast(AddExp)e) return doIt(ae.e1)+doIt(ae.e2);
 			if(auto me=cast(SubExp)e) return doIt(me.e1)-doIt(me.e2);
 			if(auto me=cast(MulExp)e) return doIt(me.e1)*doIt(me.e2);
-			if(auto de=cast(DivExp)e) return doIt(de.e1)/doIt(de.e2);
+			if(auto de=cast(DivExp)e){
+				auto e1=doIt(de.e1);
+				auto e2=doIt(de.e2);
+				dist.assertTrue(dIvr(DIvr.Type.neqZ,e2));
+				return e1/e2;
+			}
 			if(auto pe=cast(PowExp)e) return doIt(pe.e1)^^doIt(pe.e2);
 			if(auto ume=cast(UMinusExp)e) return -doIt(ume.e);
 			if(auto ce=cast(CallExp)e){
@@ -121,7 +126,7 @@ private struct Analyzer{
 				auto e1=doIt(b.e1), e2=doIt(b.e2);
 				return 1-(1-e1)*(1-e2);
 			}else if(auto id=cast(Identifier)e){
-				return transformExp(e); // TODO: how do we make sure it is in fact boolean?
+				return dIvr(DIvr.Type.neqZ,transformExp(e));
 			}else with(DIvr.Type)if(auto b=cast(LtExp)e){
 				mixin(common);
 				return dIvr(lZ,e1-e2);
@@ -168,7 +173,7 @@ private struct Analyzer{
 		try return doIt(e);
 		catch(Unwind){ return null; }
 	}
-	Distribution analyze(CompoundExp ce)in{assert(!!ce);}body{
+	Distribution analyze(CompoundExp ce,bool isMethodBody=false)in{assert(!!ce);}body{
 		foreach(i,e;ce.s){
 			/+writeln("statement: ",e);
 			writeln("before: ",dist);
@@ -176,8 +181,8 @@ private struct Analyzer{
 			// TODO: visitor?
 			if(auto de=cast(DefExp)e){
 				if(auto id=cast(Identifier)de.e1){
+					auto rhs=transformExp(de.e2);
 					if(auto var=dist.declareVar(id.name)){
-						auto rhs=transformExp(de.e2);
 						dist.initialize(var,rhs?rhs:zero);
 					}else err.error("variable already exists",id.loc);
 				}else err.error("left hand side of definition should be identifier",de.e1.loc);
@@ -201,22 +206,23 @@ private struct Analyzer{
 					auto dthen=Analyzer(dist.dup(),err).analyze(ite.then);
 					auto dothw=dist.dup();
 					if(ite.othw) dothw=Analyzer(dothw,err).analyze(ite.othw);
-					dist=dthen.join(dist.vbl,dist.symtab,dist.freeVars,dothw,nc);
+					dist=dthen.join(dist,dothw,nc);
 					foreach(w;ws) dist.marginalize(w);
 				}
 			}else if(auto re=cast(RepeatExp)e){
 				if(auto exp=transformExp(re.num)){
+					auto orig=dist.dup();
 					if(auto num=cast(Dℕ)exp){
 						int nerrors=err.nerrors;
 						for(ℕ j=0;j<num.c;j++){
 							auto dnext=Analyzer(dist.dup(),err).analyze(re.bdy);
-							dist=dist.join(dist.vbl,dist.symtab,dist.freeVars,dnext,zero);
+							dist=dist.join(orig,dnext,zero); // TODO: why join?
 							if(err.nerrors>nerrors) break;
 						}
 					}else err.error("repeat expression should be integer constant",re.num.loc);
 				}
 			}else if(auto re=cast(ReturnExp)e){
-				if(i+1==ce.s.length){ // TODO: this does not catch return statements in nested blocks!
+				if(isMethodBody&&i+1==ce.s.length){
 					Expression[] returns;
 					if(auto tpl=cast(TupleExp)re.e) returns=tpl.e;
 					else returns=[re.e];
@@ -258,7 +264,7 @@ private struct Analyzer{
 
 Distribution analyze(FunctionDef def,ErrorHandler err){
 	auto a=Analyzer(new Distribution,err);
-	a.analyze(def.body_);
+	a.analyze(def.body_,true);
 	a.dist.distribution=a.dist.distribution.simplify(one);
 	return a.dist;
 }

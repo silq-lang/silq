@@ -1,0 +1,14 @@
+def main(){
+    x := 3;
+    y := UniformInt(-3,3);
+    z := 0;
+    w := Bernoulli(1/2);
+    repeat 2{
+        if Bernoulli(1/2){
+            z = x/y;
+        }else{
+            z = 2;
+        }
+    }
+    return; // expected: TODO: 25·⅟28
+}

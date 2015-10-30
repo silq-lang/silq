@@ -1,0 +1,12 @@
+def main(){
+    x := 3;
+    z := 0;
+    repeat 2{
+        if Bernoulli(1/2){
+            z = x/0;
+        }else{
+            z = 2;
+        }
+    }
+    return (); // expected: ⅟4
+}

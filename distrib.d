@@ -29,9 +29,10 @@ DExpr uniformIntPDF(DVar var,DExpr a,DExpr b){
 class Distribution{
 	int[string] vbl;
 	DVar[string] symtab;
-	this(){ distribution=1.dℕ; vbl["__dummy"]=0; }
+	this(){ distribution=one; error=zero; vbl["__dummy"]=0; }
 	SetX!DVar freeVars;
 	DExpr distribution;
+	DExpr error;
 	Distribution[] parents;
 
 	SetX!DVar tmp;
@@ -39,19 +40,20 @@ class Distribution{
 		foreach(v;tmp) marginalize(v);
 		tmp.clear();
 	}
-
+	
 	Distribution dup(){
 		auto r=new Distribution();
 		r.vbl=vbl;
 		r.symtab=symtab.dup();
 		r.freeVars=freeVars.dup();
 		r.distribution=distribution;
+		r.error=error;
 		r.parents=parents~this; // TODO: elegance
 		return r;
 	}
 
 	// TODO: elegance
-	Distribution join(int[string] vbl,DVar[string] symtab,SetX!DVar freeVars,Distribution b,DExpr constraint){
+	Distribution join(Distribution orig,Distribution b,DExpr constraint){
 		auto r=new Distribution();
 		auto d1=distribution;
 		auto d2=b.distribution;
@@ -59,10 +61,14 @@ class Distribution{
 		foreach(x;this.freeVars) if(x !in freeVars){ assert(d1.hasFreeVar(x)); d1=dInt(x,d1); }
 		foreach(x;b.freeVars) if(x !in freeVars){ assert(d2.hasFreeVar(x)); d2=dInt(x,d2); }
 		//// /// // /
-		r.vbl=vbl;
-		r.symtab=symtab;
-		r.freeVars=freeVars;
+		r.vbl=orig.vbl;
+		r.symtab=orig.symtab;
+		r.freeVars=orig.freeVars;
 		r.distribution=constraint*d1+(1-constraint)*d2;
+		if(error !is zero || b.error !is zero){
+			auto prob=orig.computeProbability(constraint)/(1-orig.error); // TODO: this is ugly!
+			r.error=(prob*error+(1-prob)*b.error).simplify(one);
+		}
 		return r;
 	}
 
@@ -90,6 +96,17 @@ class Distribution{
 		tmp.insert(v);
 		return v;
 	}
+
+	DExpr computeProbability(DExpr cond){
+		auto tdist=distribution*cond;
+		foreach(v;freeVars) tdist=dInt(v,tdist);
+		return tdist;		
+	}
+
+	void assertTrue(DExpr cond){
+		error=(error+computeProbability(dIvr(DIvr.Type.eqZ,cond))).simplify(one);
+		distribution=distribution*cond;
+	}
 	void distribute(DExpr pdf){ distribution=distribution*pdf; }
 	void initialize(DVar var,DExpr exp){
 		assert(!distribution.hasFreeVar(var));
@@ -97,6 +114,7 @@ class Distribution{
 		marginalizeTemporaries();
 	}
 	void assign(DVar var,DExpr exp){
+		if(distribution is zero) return;
 		assert(distribution.hasFreeVar(var));
 		auto nvar=getVar(var.name);
 		distribution=distribution.substitute(var,nvar);
@@ -116,7 +134,7 @@ class Distribution{
 		auto nDist=distribution*e;
 		auto intNDist=nDist;
 		foreach(v;freeVars) intNDist=dInt(v,intNDist);
-		distribution=nDist/intNDist;
+		distribution=nDist/(intNDist+error);
 	}
 	override string toString(){
 		string r="p(";
@@ -126,6 +144,7 @@ class Distribution{
 		foreach(v;vars) r~=v~",";
 		if(vars.length) r=r[0..$-1];
 		r~=") = "~distribution.toString();
+		if(error !is zero) r~="\nPr[error] = "~error.toString();
 		return r;
 	}
 }
