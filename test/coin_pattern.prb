@@ -22,5 +22,5 @@ def test(){
     //observe(x2==0);
     //observe(x3==1);
     observe(x3==0);
-    return has_pattern; // expected: (-has_pattern+1)·(δ[-has_pattern+1]·⅟9+δ[has_pattern]·⅟9)+(8·δ[-has_pattern+1]·⅟9+8·δ[has_pattern]·⅟9)·has_pattern
+    return has_pattern; // expected: (-[has_pattern≠0]+1)·(δ[-has_pattern+1]·⅟9+δ[has_pattern]·⅟9)+8·[has_pattern≠0]·δ[-has_pattern+1]·⅟9
 }

@@ -6,6 +6,5 @@ def main(){
     } else {
         y = -x;
     }
-    return y; // expected: (-[y≠0]·[y≤0]+1+[-y≤0]·[y≠0])·⅟e^(y²·⅟2)·⅟√2̅·⅟√π̅
-    // TODO: the solver should be able to show that this is a probability distribution
+    return y; // expected: (-[-y≠0]·[y≤0]+1+[-y≠0]·[-y≤0])·⅟e^(y²·⅟2)·⅟√2̅·⅟√π̅
 }
