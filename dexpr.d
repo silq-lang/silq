@@ -31,10 +31,12 @@ enum measure="swCount++;sw.start();scope(exit)sw.stop();";+/
 enum Format{
 	default_,
 	matlab,
+	maple,
 }
 
 enum formatting=Format.default_;
 //enum formatting=Format.matlab;
+//enum formatting=Format.maple;
 
 enum Precedence{
 	none,
@@ -477,7 +479,8 @@ class DMult: DCommutAssocOp{
 	private this(DExprSet e)in{assert(e.length>1); }body{ assert(one !in e,text(e)); operands=e; }
 	override @property Precedence precedence(){ return Precedence.mult; }
 	override @property string symbol(){
-		static if(formatting==Format.matlab) return ".*";
+		static if(formatting==Format.maple) return "*";
+		else static if(formatting==Format.matlab) return ".*";
 		else return "·";
 	}
 	override string toStringImpl(Precedence prec){
@@ -1179,7 +1182,11 @@ class DIvr: DExpr{ // iverson brackets
 
 	override string toStringImpl(Precedence prec){
 		with(Type){
-			static if(formatting==Format.matlab){
+			static if(formatting==Format.maple){
+				if(type==leZ){
+					return text("Heaviside(",-e,")");
+				}else return "["~e.toString()~(type==eqZ?"=":type==neqZ?"≠":type==lZ?"<":"≤")~"0]"; //unsupported
+			}else static if(formatting==Format.matlab){
 				return "("~e.toString()~(type==eqZ?"==":type==neqZ?"!=":type==lZ?"<":"<=")~"0)";
 			}else{
 				return "["~e.toString()~(type==eqZ?"=":type==neqZ?"≠":type==lZ?"<":"≤")~"0]";
@@ -1302,7 +1309,13 @@ DExpr dIvr(DIvr.Type type,DExpr e){
 class DDelta: DExpr{ // Dirac delta function
 	DExpr e;
 	private this(DExpr e){ this.e=e; }
-	override string toStringImpl(Precedence prec){ return "δ["~e.toString()~"]"; }
+	override string toStringImpl(Precedence prec){
+		static if(formatting==Format.maple){
+			return text("Dirac(",e.toString(),")");
+		}else{
+			return "δ["~e.toString()~"]";
+		}
+	}
 
 	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; } // TODO: ok?
 	override int freeVarsImpl(scope int delegate(DVar) dg){ return e.freeVarsImpl(dg); }
@@ -1625,7 +1638,11 @@ class DInt: DOp{
 	override @property Precedence precedence(){ return Precedence.intg; }
 	override @property string symbol(){ return "∫"; }
 	override string toStringImpl(Precedence prec){
-		return addp(prec,symbol~"d"~var.toString()~expr.toStringImpl(precedence));
+		static if(formatting==Format.maple){
+			return text("int(",expr.toString(),",",var.toString(),"=-infinity..infinity)");
+		}else{
+			return addp(prec,symbol~"d"~var.toString()~expr.toStringImpl(precedence));
+		}
 	}
 	static DExpr constructHook(DVar var,DExpr expr){
 		return staticSimplify(var,expr);
