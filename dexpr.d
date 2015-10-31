@@ -36,7 +36,7 @@ enum Format{
 
 enum formatting=Format.default_;
 //enum formatting=Format.matlab;
-//enum formatting=Format.maple;
+//enum formatting=Format.maple; version=DISABLE_INTEGRATION;
 
 enum Precedence{
 	none,
@@ -182,7 +182,9 @@ class Dℕ : DExpr{
 	private this(ℕ c){ this.c=c; }
 	override string toStringImpl(Precedence prec){
 		string r=text(c);
-		if(prec>Precedence.uminus&&c<0)
+		static if(formatting==Format.maple){
+			if(c<0) r="("~r~")";
+		}else if(prec>Precedence.uminus&&c<0)
 			r="("~r~")";
 		return r;
 	}
@@ -486,7 +488,11 @@ class DMult: DCommutAssocOp{
 	override string toStringImpl(Precedence prec){
 		auto frac=this.getFractionalFactor().getFraction();
 		if(frac[0]<0){
-			return addp(prec,"-"~(-this).toStringImpl(Precedence.uminus),Precedence.uminus);
+			static if(formatting==Format.maple){
+				return "(-"~(-this).toStringImpl(Precedence.uminus)~")";
+			}else{
+				return addp(prec,"-"~(-this).toStringImpl(Precedence.uminus),Precedence.uminus);
+			}
 		}
 		//if(frac[0]!=1&&frac[1]!=1) // TODO
 		// TODO: use suitable data structures
@@ -769,7 +775,7 @@ class DPow: DBinaryOp{
 	override string toStringImpl(Precedence prec){
 		auto frc=operands[1].getFractionalFactor().getFraction();
 		if(frc[0]<0){
-			enum pre=formatting==Format.matlab?"1./":"⅟";
+			enum pre=formatting==Format.matlab?"1./":formatting==Format.maple?"1/":"⅟";
 			return addp(prec,pre~(operands[0]^^-operands[1]).toStringImpl(Precedence.mult),Precedence.mult);
 		}
 			// also nice, but often hard to read: ½⅓¼⅕⅙
@@ -1183,9 +1189,7 @@ class DIvr: DExpr{ // iverson brackets
 	override string toStringImpl(Precedence prec){
 		with(Type){
 			static if(formatting==Format.maple){
-				if(type==leZ){
-					return text("Heaviside(",-e,")");
-				}else return "["~e.toString()~(type==eqZ?"=":type==neqZ?"≠":type==lZ?"<":"≤")~"0]"; //unsupported
+				return "piecewise("~e.toString()~(type==eqZ?"=":type==neqZ?"<>":type==lZ?"<":"<=")~"0,1,0)";
 			}else static if(formatting==Format.matlab){
 				return "("~e.toString()~(type==eqZ?"==":type==neqZ?"!=":type==lZ?"<":"<=")~"0)";
 			}else{
@@ -1659,6 +1663,10 @@ class DInt: DOp{
 	
 
 	static DExpr staticSimplify(DVar var,DExpr expr,DExpr facts=one){
+		version(DISABLE_INTEGRATION){
+			if(expr is zero) return zero;
+			return null;
+		}
 		version(INTEGRAL_STATS){
 			numIntegrals++;
 			auto dbvar=dDeBruinVar(1);
