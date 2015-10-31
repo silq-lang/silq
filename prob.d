@@ -44,6 +44,11 @@ int run(string path){
 		auto str=dist.toString();
 		//writeln((cast(DPlus)dist.distribution).summands.length);
 		if(str.length<10000) writeln(str);
+		else{
+			writeln("writing output to temporary file...");
+			auto f=File("tmp.deleteme","w");
+			f.writeln(str);
+		}
 		bool plotCDF=false;
 		if(str.canFind("δ")) plotCDF=true;
 		import hashtable;
