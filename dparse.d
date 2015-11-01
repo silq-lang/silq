@@ -68,11 +68,16 @@ DExpr dParse(string s){ // TODO: this is work in progress, usually updated in or
 			return dInt(iVar,iExp);
 		}
 
-		DExpr parseDℕ()in{assert('0'<=cur()&&cur()<='9');}body{
+		DExpr parseNumber()in{assert('0'<=cur()&&cur()<='9');}body{
 			ℕ r=0;
 			while('0'<=cur()&&cur()<='9'){
 				r=r*10+cast(int)(cur()-'0');
 				next();
+			}
+			if(cur()=='.'){
+				string s="0.";
+				for(next();'0'<=cur()&&cur()<='9';next()) s~=cur();
+				return (s.to!double+toDouble(r)).dFloat; // TODO: this is a hack
 			}
 			return dℕ(r);
 		}
@@ -116,7 +121,7 @@ DExpr dParse(string s){ // TODO: this is work in progress, usually updated in or
 				return 1/parseFactor();
 			}
 			if('0'<=cur()&&cur()<='9')
-				return parseDℕ();
+				return parseNumber();
 			if(cur()=='e'){
 				next();
 				return dE;

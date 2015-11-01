@@ -122,6 +122,14 @@ abstract class DExpr{
 		return mixin("e.dℕ "~op~" this");
 	}
 
+	final opBinary(string op)(double e)if(ValidBinary!op){
+		return mixin("this "~op~" e.dFloat");
+	}
+	final opBinaryRight(string op)(double e)if(ValidBinary!op){
+		return mixin("e.dFloat "~op~" this");
+	}
+
+
 	mixin template Constant(){
 		override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; }
 		override int freeVarsImpl(scope int delegate(DVar) dg){ return 0; }
@@ -194,6 +202,12 @@ class Dℕ : DExpr{
 	mixin Constant;
 }
 
+Dℕ[ℕ] uniqueMapDℕ; // TODO: get rid of this!
+Dℕ dℕ(ℕ c){
+	if(c in uniqueMapDℕ) return uniqueMapDℕ[c];
+	return uniqueMapDℕ[c]=new Dℕ(c);
+}
+DExpr dℕ(long c){ return dℕ(ℕ(c)); }
 
 Dℕ nthRoot(Dℕ x,ℕ n){
 	ℕ k=1,r=0;
@@ -206,12 +220,28 @@ Dℕ nthRoot(Dℕ x,ℕ n){
 	return pow(r,n)==x.c?dℕ(r):null;
 }
 
-Dℕ[ℕ] uniqueMapDℕ;
-Dℕ dℕ(ℕ c){
-	if(c in uniqueMapDℕ) return uniqueMapDℕ[c];
-	return uniqueMapDℕ[c]=new Dℕ(c);
+class DFloat : DExpr{
+	double c;
+	private this(double c){ this.c=c; }
+	override string toStringImpl(Precedence prec){
+		import std.format;
+		string r=format("%.16f",c);
+		static if(formatting==Format.maple){
+			if(c<0) r="("~r~")";
+		}else if(prec>Precedence.uminus&&c<0)
+			r="("~r~")";
+		return r;
+	}
+
+	mixin Constant;
 }
-DExpr dℕ(long c){ return dℕ(ℕ(c)); }
+
+DFloat[double] uniqueMapDFloat; // TODO: get rid of this!
+DFloat dFloat(double c){
+	//if(c in uniqueMapDFloat) return uniqueMapDFloat[c];
+	//return uniqueMapDFloat[c]=new DFloat(c);
+	return new DFloat(c);
+}
 
 class DE: DExpr{
 	override string toStringImpl(Precedence prec){ return "e"; }
@@ -375,15 +405,42 @@ class DPlus: DCommutAssocOp{
 				return;
 			}
 		}
+
 		DExpr combine(DExpr e1,DExpr e2,DExpr facts){
 			if(e1 is zero) return e2;
 			if(e2 is zero) return e1;
 			if(e1 is e2) return 2*e1;
-			if(e1.isFraction()&&e2.isFraction()){
-				auto nd1=e1.getFraction();
-				auto nd2=e2.getFraction();
-				return dℕ(nd1[0]*nd2[1]+nd2[0]*nd1[1])/dℕ(nd1[1]*nd2[1]);
+
+
+			static DExpr combineFractions(DExpr e1,DExpr e2){
+				if(e1.isFraction()&&e2.isFraction()){
+					auto nd1=e1.getFraction();
+					auto nd2=e2.getFraction();
+					return dℕ(nd1[0]*nd2[1]+nd2[0]*nd1[1])/dℕ(nd1[1]*nd2[1]);
+				}
+				return null;
 			}
+			
+			if(auto r=combineFractions(e1,e2)) return r;
+
+			static DExpr combineWithFloat(DExpr e1,DExpr e2){
+				if(auto f=cast(DFloat)e1){
+					if(auto g=cast(DFloat)e2)
+						return (f.c+g.c).dFloat;
+					if(e2.isFraction()){
+						auto nd=e2.getFraction();
+						return (f.c+toDouble(nd[0])/toDouble(nd[1])).dFloat;
+					}
+				}
+				return null;
+			}
+			static DExpr combineFloat(DExpr e1,DExpr e2){
+				if(auto r=combineWithFloat(e1,e2)) return r;
+				if(auto r=combineWithFloat(e2,e1)) return r;
+				return null;
+			}
+
+			if(auto r=combineFloat(e1,e2)) return r;
 
 			if(auto r=recursiveCombine(e1,e2,facts))
 				return r;
@@ -572,6 +629,27 @@ class DMult: DCommutAssocOp{
 					return dPlus(summands);
 				}
 			}
+
+
+			static DExpr combineWithFloat(DExpr e1,DExpr e2){
+				if(auto f=cast(DFloat)e1){
+					if(auto g=cast(DFloat)e2)
+						return (f.c*g.c).dFloat;
+					if(e2.isFraction()){
+						auto nd=e2.getFraction();
+						return (f.c*toDouble(nd[0])/toDouble(nd[1])).dFloat;
+					}
+				}
+				return null;
+			}
+			static DExpr combineFloat(DExpr e1,DExpr e2){
+				if(auto r=combineWithFloat(e1,e2)) return r;
+				if(auto r=combineWithFloat(e2,e1)) return r;
+				return null;
+			}
+
+			if(auto r=combineFloat(e1,e2)) return r;
+
 			if(cast(DPow)e2) swap(e1,e2);
 			if(auto p=cast(DPow)e1){
 				if(p.operands[0] is e2)
@@ -851,6 +929,22 @@ class DPow: DBinaryOp{
 			}
 		}
 		if(cast(DPlus)e1) return expandPow(e1,e2);
+
+		if(auto f1=cast(DFloat)e1){
+			if(auto f2=cast(DFloat)e2)
+				return (f1.c^^f2.c).dFloat;
+			if(e2.isFraction()){
+				auto nd=e2.getFraction();
+				return (f1.c^^(toDouble(nd[0])/toDouble(nd[1]))).dFloat;
+			}
+		}
+		if(e1.isFraction()){
+			if(auto f2=cast(DFloat)e2){
+				auto nd=e1.getFraction();
+				return ((toDouble(nd[0])/toDouble(nd[1]))^^f2.c).dFloat;
+			}
+		}
+
 		return null;
 	}
 
@@ -1283,6 +1377,10 @@ class DIvr: DExpr{ // iverson brackets
 
 }
 
+DExpr dBounded(string what)(DExpr e,DExpr lo,DExpr hi) if(what=="[]"){
+	return dIvr(DIvr.Type.leZ,lo-e)*dIvr(DIvr.Type.leZ,e-hi);
+}
+
 DVar getCanonicalFreeVar(DExpr e){
 	DVar r=null;
 	bool isMoreCanonicalThan(DVar a,DVar b){
@@ -1548,6 +1646,10 @@ DExpr definiteIntegral(DVar var,DExpr expr)out(res){
 			break;
 		}
 	}
+	return tryIntegrate(var,nonIvrs,lower,upper,ivrs);
+}
+
+static DExpr tryIntegrate(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DExpr ivrs){
 	// TODO: add better approach for antiderivatives	
 	if(upper&&lower){
 		auto lowLeUp(){ return dIvr(DIvr.Type.leZ,lower-upper); }
@@ -1607,21 +1709,33 @@ DExpr definiteIntegral(DVar var,DExpr expr)out(res){
 		}
 	}
 	if(auto r=gaussianIntegral(var,nonIvrs)) return r;
-	// partial integration: TODO: this is not well founded!
-	if(!lower&&!upper){
-		// x = ∫ u'v
-		// (uv)' = uv'+u'v
-		// ∫(uv)' = ∫uv'+∫u'v
-		// uv+C = ∫uv'+∫u'v
-		// 
-		auto factors=splitIntegrableFactor(nonIvrs);
-		//dw(factors[1]);
-		//dw("!! ",dDiff(var,factors[1]));
-		// TODO
-		
+	if(auto p=cast(DPlus)nonIvrs.polyNormalize(var)){
+		DExprSet works;
+		DExprSet doesNotWork;
+		bool ok=true;
+		foreach(s;p.summands){
+			auto t=tryIntegrate(var,s,lower,upper,ivrs);
+			if(t) DPlus.insert(works,t);
+			else DPlus.insert(doesNotWork,s);
+		}
+		if(works.length) return dPlus(works)+dInt(var,dPlus(doesNotWork)*ivrs);// TODO: don't try to integrate this again!
 	}
+	// partial integration: TODO: this is not well founded!
+	/+if(!lower&&!upper){
+	 // x = ∫ u'v
+	 // (uv)' = uv'+u'v
+	 // ∫(uv)' = ∫uv'+∫u'v
+	 // uv+C = ∫uv'+∫u'v
+	 // 
+	 auto factors=splitIntegrableFactor(nonIvrs);
+	 //dw(factors[1]);
+	 //dw("!! ",dDiff(var,factors[1]));
+	 // TODO
+		
+	 }+/
 	return null; // no simpler expression available
 }
+
 
 /+import std.datetime;
 StopWatch sw;
@@ -1966,6 +2080,7 @@ class DLog: DOp{
 		}
 		if(auto p=cast(DPow)e)
 			return p.operands[1]*dLog(p.operands[0]);
+		import approximate;
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){
