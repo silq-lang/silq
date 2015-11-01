@@ -34,8 +34,8 @@ enum Format{
 	maple,
 }
 
-enum formatting=Format.default_;
-//enum formatting=Format.matlab;
+//enum formatting=Format.default_;
+enum formatting=Format.matlab;
 //enum formatting=Format.maple; version=DISABLE_INTEGRATION;
 
 enum Precedence{
@@ -496,7 +496,6 @@ class DPlus: DCommutAssocOp{
 			auto simplSummands=integralSum.summands.setx;
 			if(simplSummands.setMinus(integralSummands).length){
 				summands=summands.setMinus(integrals);
-				summands=summands.unite(simplSummands);
 				return dPlus(summands)+dInt(tmp,dPlus(simplSummands));
 			}
 		}
@@ -1862,7 +1861,7 @@ class DInt: DOp{
 			if(auto other=cast(DInt)f){
 				assert(!!cast(DDeBruinVar)other.var);
 				static int i=0;
-				auto tmpvar=new DVar("tmpfubi"~to!string(++i)); // TODO: get rid of this!
+				auto tmpvar=new DVar("tmp"); // TODO: get rid of this!
 				auto intExpr=expr.withoutFactor(f)*other.getExpr(tmpvar);
 				auto ow=intExpr.splitMultAtVar(var);
 				if(auto res=constructHook(var,ow[1]))
