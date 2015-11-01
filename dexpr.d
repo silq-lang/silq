@@ -141,7 +141,7 @@ abstract class DExpr{
 alias DExprSet=SetX!DExpr;
 class DVar: DExpr{
 	string name;
-	private this(string name){ this.name=name; }
+	/+private+/ this(string name){ this.name=name; } // TODO: make private!
 	override string toStringImpl(Precedence prec){ return name; }
 
 	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; }
@@ -389,8 +389,8 @@ class DPlus: DCommutAssocOp{
 			summands=insertMemo[q(summands,summand,facts)].dup;
 			return;
 		}
-		auto origSummands=summands.dup;
-		scope(exit) insertMemo[q(origSummands,summand,facts)]=summands.dup;
+		auto origIndex=q(summands.dup,summand,facts);
+		scope(exit) insertMemo[origIndex]=summands.dup;
 
 		summand=summand.simplify(facts);
 		if(auto dp=cast(DPlus)summand){
@@ -484,6 +484,7 @@ class DPlus: DCommutAssocOp{
 		DExprSet integralSummands;
 		DExprSet integrals;
 		DVar tmp=new DVar("tmp"); // TODO: get rid of this!
+		// dw("!! ",summands);
 		foreach(s;summands){
 			if(auto dint=cast(DInt)s){
 				integralSummands.insert(dint.getExpr(tmp));
@@ -590,22 +591,22 @@ class DMult: DCommutAssocOp{
 		return [n,d];
 	}
 
-	static MapX!(Q!(DExprSet,DExpr),DExprSet) insertMemo;
-	static void insert(ref DExprSet factors,DExpr factor)in{assert(!!factor);}body{
-		if(q(factors,factor) in insertMemo){
-			factors=insertMemo[q(factors,factor)].dup;
+	static MapX!(Q!(DExprSet,DExpr,DExpr),DExprSet) insertMemo;
+	static void insert(ref DExprSet factors,DExpr factor,DExpr facts=null)in{assert(!!factor);}body{
+		if(q(factors,factor,facts) in insertMemo){
+			factors=insertMemo[q(factors,factor,facts)].dup;
 			return;
 		}
-		auto origFactors=factors.dup;
-		scope(exit) insertMemo[q(origFactors,factor)]=factors.dup;
+		auto origIndex=q(factors.dup,factor,facts);
+		scope(exit) insertMemo[origIndex]=factors.dup;
 		//if(zero in factors||factor is zero){ factors.clear(); factors.insert(zero); return; }
 		if(auto dm=cast(DMult)factor){
 			foreach(f;dm.factors)
-				insert(factors,f);
+				insert(factors,f,facts);
 			return;
 		}
 		// TODO: use suitable data structures
-		static DExpr combine(DExpr e1,DExpr e2){
+		static DExpr combine(DExpr e1,DExpr e2,DExpr facts){
 			if(e1 is one) return e2;
 			if(e2 is one) return e1;
 			if(e1 is e2) return e1^^2;
@@ -686,12 +687,15 @@ class DMult: DCommutAssocOp{
 			}
 			if(cast(DIvr)e2) swap(e1,e2);
 			if(auto ivr1=cast(DIvr)e1){ // TODO: this should all be done by DIvr.simplify instead
-				auto simple=e2.simplify(e1);
-				if(simple!is e2) return simple*e1;
+				if(facts){ // TODO: this does not actually combine all facts optimally
+					auto simple=e2.simplify(e1*facts);
+					if(simple!is e2) return simple*e1;
+				}
 				if(auto ivr2=cast(DIvr)e2) with(DIvr.Type){
-					simple=e1.simplify(e2);
-					if(simple!is e1) return simple*e2;
-
+					if(facts){ // TODO: this does not actually combine all facts optimally
+						auto simple=e1.simplify(e2*facts);
+						if(simple!is e1) return simple*e2;
+					}
 					// combine a≤0 and -a≤0 to a=0
 					if(ivr1.type==leZ&&ivr2.type==leZ){
 						if(ivr1.e is -ivr2.e)
@@ -739,8 +743,9 @@ class DMult: DCommutAssocOp{
 
 			return null;
 		}
+		if(facts) factor=factor.simplify(facts);
 		foreach(f;factors){
-			if(auto nwf=combine(f,factor)){
+			if(auto nwf=combine(f,factor,facts)){
 				factors.remove(f);
 				if(factors.length||nwf !is one)
 					insert(factors,nwf);
@@ -752,15 +757,16 @@ class DMult: DCommutAssocOp{
 	}
 	override DExpr simplifyImpl(DExpr facts){
 		DExprSet myFactors;
-		DExpr myFacts=one;
+		DExprSet myFacts;
 		foreach(f;this.factors){
-			if(cast(DIvr)f) myFacts=myFacts*f.simplify(facts);
+			if(cast(DIvr)f) insert(myFacts,f,facts);
 			else myFactors.insert(f);
 		}
-		DExpr newFacts=facts*myFacts;
+		auto myFactsM=dMult(myFacts);
+		DExpr newFacts=facts*myFactsM;
 		DExprSet simpFactors;
 		foreach(f;myFactors) insert(simpFactors,f.simplify(newFacts));
-		return dMult(simpFactors)*myFacts;
+		return dMult(simpFactors)*myFactsM;
 	}
 	static DExpr constructHook(DExprSet operands){
 		if(operands.length==0) return one;
@@ -1750,7 +1756,7 @@ class DInt: DOp{
 		this(DDeBruinVar var,DExpr expr){ this.var=var; this.expr=expr; }
 	}
 	DExpr getExpr(DVar var){
-		assert(this.var is dDeBruinVar(1));
+		assert(this.var is dDeBruinVar(1),text(this.var));
 		return expr.substitute(this.var,var).incDeBruin(-1);
 	}
 	override @property Precedence precedence(){ return Precedence.intg; }
@@ -1855,8 +1861,9 @@ class DInt: DOp{
 			// assert(f.hasFreeVar(var));
 			if(auto other=cast(DInt)f){
 				assert(!!cast(DDeBruinVar)other.var);
-				auto tmpvar=new DVar("tmp"); // TODO: get rid of this!
-				auto intExpr=(other.expr*expr.withoutFactor(f)).substitute(other.var,tmpvar).incDeBruin(-1);
+				static int i=0;
+				auto tmpvar=new DVar("tmpfubi"~to!string(++i)); // TODO: get rid of this!
+				auto intExpr=expr.withoutFactor(f)*other.getExpr(tmpvar);
 				auto ow=intExpr.splitMultAtVar(var);
 				if(auto res=constructHook(var,ow[1]))
 					return dInt(tmpvar,res*ow[0]);
@@ -2080,7 +2087,6 @@ class DLog: DOp{
 		}
 		if(auto p=cast(DPow)e)
 			return p.operands[1]*dLog(p.operands[0]);
-		import approximate;
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){

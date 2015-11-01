@@ -41,6 +41,8 @@ int run(string path){
 	writeln(expr);
 	if(auto fd=cast(FunctionDef)expr){
 		auto dist=analyze(fd,err);
+		import approximate;
+		dist.distribution=dist.distribution.killIntegrals();
 		auto str=dist.toString();
 		//writeln((cast(DPlus)dist.distribution).summands.length);
 		if(str.length<10000) writeln(str);
@@ -281,6 +283,8 @@ void test(){
 	//writeln("∫dz[-1+-⅟z≤0]·[-1+⅟z≤0]·[z≠0]·⅟(-2·[z²≠0]·[z²≤0]·z²+2·[-z²≤0]·z²)".dParse);
 	//writeln("∫dy([-y+2≤0]·⅟2)·e^(-1+-y²·⅟4+y)·⅟√π̅".dParse.simplify(one));
 	//writeln("(∫dξ₁(((((((-2557.4741704993198255+629.1897385856640312·ξ₁)·ξ₁+4210.1081976674804537)·ξ₁+-3594.7906656730001487)·ξ₁+1694.9871901131500636)·ξ₁+-436.9879652054199823)·ξ₁+60.1321271299536022)·ξ₁+-5.1644521185101802)·[-1+ξ₁≤0]·[-10·ξ₁+1≤0]·[-w+ξ₁≠0]·[-w·⅟ξ₁≠0]·[-ξ₁+w≤0]·[-ξ₁≤0]·[ξ₁·⅟w≠0]·⅟ξ₁)".dParse);
+	//writeln("∫dtmp((∫dξ₁([-1+tmp≤0]·[-10·tmp+1≤0]+[-10+tmp≤0]·[-tmp+1≤0]+-log(ξ₁))·[-tmp+ξ₁≤0]·[-ξ₁+r≠0]·[-ξ₁+r≤0]·[-ξ₁≠0]·[-ξ₁≤0]·⅟ξ₁)·[-1+tmp≤0]·[-tmp≠0]·[-tmp≤0]·log(tmp))".dParse);
+	//writeln("∫dtmpfubi1((-(∫dξ₁[-1+ξ₁≤0]·[-ξ₁+tmpfubi1≤0]·[-ξ₁≠0]·[-ξ₁≤0]·log(ξ₁))·log(tmpfubi1)+∫dξ₁[-1+ξ₁≤0]·[-10·ξ₁+1≤0]·[-ξ₁+tmpfubi1≤0]·[-ξ₁≠0]·[-ξ₁≤0]·log(ξ₁))·[-tmpfubi1+r≠0]·[-tmpfubi1+r≤0]·[-tmpfubi1≠0]·[-tmpfubi1≤0]·⅟tmpfubi1)".dParse);
 }
 
 /*

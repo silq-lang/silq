@@ -60,6 +60,14 @@ DExpr dParse(string s){ // TODO: this is work in progress, usually updated in or
 			return dParse(arg)^^(one/2);
 		}
 
+		DExpr parseLog()in{assert(code.startsWith("log"));}body{
+			code=code["log".length..$];
+			expect('(');
+			auto e=parseDExpr();
+			expect(')');
+			return dLog(e);
+		}
+
 		DExpr parseDInt(){
 			expect('∫');
 			expect('d');
@@ -116,6 +124,7 @@ DExpr dParse(string s){ // TODO: this is work in progress, usually updated in or
 			if(cur()=='δ') return parseDDelta();
 			if(cur()=='∫') return parseDInt();
 			if(cur()=='√') return parseSqrt();
+			if(code.startsWith("log")) return parseLog();
 			if(cur()=='⅟'){
 				next();
 				return 1/parseFactor();

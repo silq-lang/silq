@@ -1,0 +1,7 @@
+def main(){
+    r := 1;
+    repeat 4{
+        r *= Uniform(0,1);
+    }
+    return r;
+}
