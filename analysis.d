@@ -42,7 +42,7 @@ private struct Analyzer{
 			if(auto de=cast(DivExp)e){
 				auto e1=doIt(de.e1);
 				auto e2=doIt(de.e2);
-				dist.assertTrue(dIvr(DIvr.Type.neqZ,e2));
+				dist.assertTrue(dIvr(DIvr.Type.neqZ,e2),formatError("division by zero",e.loc));
 				return e1/e2;
 			}
 			if(auto pe=cast(PowExp)e) return doIt(pe.e1)^^doIt(pe.e2);
@@ -55,8 +55,10 @@ private struct Analyzer{
 							err.error("expected two arguments (μ,σ²) to Gauss",ce.loc);
 							unwind();
 						}
+						auto μ=doIt(ce.args[0]), σsq=doIt(ce.args[1]);
+						dist.assertTrue(dIvr(DIvr.Type.leZ,-σsq),formatError("negative variance",e.loc));
 						auto var=dist.getTmpVar("__g");
-						dist.distribute(gaussianPDF(var,doIt(ce.args[0]),doIt(ce.args[1])));
+						dist.distribute(gaussianPDF(var,μ,σsq));
 						return var;
 					case "Uniform": // TODO: handle b<a, b==a
 						if(ce.args.length!=2){
@@ -64,6 +66,7 @@ private struct Analyzer{
 							unwind();
 						}
 						auto a=doIt(ce.args[0]),b=doIt(ce.args[1]);
+						dist.assertTrue(dIvr(DIvr.Type.leZ,a-b),formatError("empty range",e.loc));
 						auto var=dist.getTmpVar("__u");
 						dist.distribute(uniformPDF(var,a,b));
 						return var;
@@ -73,6 +76,7 @@ private struct Analyzer{
 							unwind();
 						}
 						auto p=doIt(ce.args[0]);
+						dist.assertTrue(dIvr(DIvr.Type.leZ,-p)*dIvr(DIvr.Type.leZ,p-1),"parameter ouside range [0..1]");
 						auto var=dist.getTmpVar("__b");
 						dist.distribute(bernoulliPDF(var,p));
 						return var;
@@ -82,8 +86,12 @@ private struct Analyzer{
 							unwind();
 						}
 						auto a=doIt(ce.args[0]),b=doIt(ce.args[1]);
+						auto tmp="tmp".dVar;
+						auto nnorm=uniformIntPDFNnorm(tmp,a,b);
+						auto norm=dInt(tmp,nnorm);
+						dist.assertTrue(dIvr(DIvr.Type.neqZ,norm),"no integers in range");
 						auto var=dist.getTmpVar("__u");
-						dist.distribute(uniformIntPDF(var,a,b));
+						dist.distribute(nnorm.substitute(tmp,var)/norm);
 						return var;
 					default: break;
 					}

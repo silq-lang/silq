@@ -3,18 +3,20 @@ import std.algorithm, std.array, std.conv;
 import dexpr, util;
 
 DExpr gaussianPDF(DVar var,DExpr μ,DExpr σsq){
-	return one / (2*dΠ*σsq)^^(one/2) * dE^^-((var-μ)^^2/(2*σsq));
+	auto dist=one/(2*dΠ*σsq)^^(one/2)*dE^^-((var-μ)^^2/(2*σsq));
+	return dIvr(DIvr.Type.neqZ,σsq)*dist+dIvr(DIvr.Type.eqZ,σsq)*dDelta(var-μ);
 }
 
 DExpr uniformPDF(DVar var,DExpr a,DExpr b){
-	return dIvr(DIvr.Type.leZ,a-var)*dIvr(DIvr.Type.leZ,var-b)*one/(b-a);
+	auto diff=b-a, dist=dIvr(DIvr.Type.leZ,a-var)*dIvr(DIvr.Type.leZ,var-b)*one/diff;
+	return dIvr(DIvr.Type.neqZ,diff)*dist+dIvr(DIvr.Type.eqZ,diff)*dDelta(var-a);
 }
 
 DExpr bernoulliPDF(DVar var,DExpr p){
 	return dDelta(var)*(1-p)+dDelta(1-var)*p;
 }
 
-DExpr uniformIntPDF(DVar var,DExpr a,DExpr b){
+DExpr uniformIntPDFNnorm(DVar var,DExpr a,DExpr b){
 	// TODO: remove this hack!
 	if(auto ca=cast(Dℕ)a) if(auto cb=cast(Dℕ)b){
 		DExprSet r;
@@ -22,8 +24,12 @@ DExpr uniformIntPDF(DVar var,DExpr a,DExpr b){
 			DPlus.insert(r,dDelta(var-x));
 		return dPlus(r)/(b-a+1);
 	}
-	auto nnorm=dIvr(DIvr.Type.leZ,a-var)*dIvr(DIvr.Type.leZ,var-b)*dDelta(dSin(dΠ*var)/dΠ);
-	return nnorm/dInt(var,nnorm);
+	return dIvr(DIvr.Type.leZ,a-var)*dIvr(DIvr.Type.leZ,var-b)*dDelta(dSin(dΠ*var)/dΠ);
+}
+
+DExpr uniformIntPDF(DVar var,DExpr a,DExpr b){
+	auto nnorm=uniformIntPDFNnorm(var,a,b);
+	return nnorm/dInt(var,nnorm);	
 }
 
 class Distribution{
@@ -103,7 +109,7 @@ class Distribution{
 		return tdist;		
 	}
 
-	void assertTrue(DExpr cond){
+	void assertTrue(DExpr cond,lazy string msg){
 		error=(error+computeProbability(dIvr(DIvr.Type.eqZ,cond))).simplify(one);
 		distribution=distribution*cond;
 	}

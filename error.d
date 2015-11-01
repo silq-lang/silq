@@ -98,3 +98,8 @@ protected:
 		}else super.highlight(column, rep);
 	}
 }
+
+string formatError(string msg,Location loc){
+	import std.conv;
+	return text(loc.line,": ",msg); // TODO: column
+}

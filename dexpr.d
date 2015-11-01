@@ -1759,8 +1759,7 @@ class DInt: DOp{
 	}
 
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		 // TODO: correct?
-		return expr.forEachSubExpr(dg);
+		return 0;
 	}
 	override int freeVarsImpl(scope int delegate(DVar) dg){
 		return expr.freeVarsImpl(v=>v is var?0:dg(v));
@@ -1884,7 +1883,7 @@ class DAbs: DOp{
 		return "|"~e.toString()~"|";
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		return dg(e); // TODO: correct?
+		return dg(e);
 	}
 
 	override int freeVarsImpl(scope int delegate(DVar) dg){
@@ -1936,7 +1935,7 @@ class DLog: DOp{
 	}
 
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		return dg(e); // TODO: correct?
+		return dg(e);
 	}
 	override int freeVarsImpl(scope int delegate(DVar) dg){
 		return e.freeVarsImpl(dg);
@@ -1982,7 +1981,7 @@ class DSin: DOp{
 		return "sin("~e.toString()~")";
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		return dg(e); // TODO: correct?
+		return dg(e);
 	}
 	override int freeVarsImpl(scope int delegate(DVar) dg){
 		return e.freeVarsImpl(dg);
@@ -2044,7 +2043,7 @@ class DGaussInt: DOp{
 		return r?r:this;
 	}
 
-	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; } // TODO: correct?
+	override int forEachSubExpr(scope int delegate(DExpr) dg){ return dg(x); }
 
 	override int freeVarsImpl(scope int delegate(DVar) dg){
 		return x.freeVarsImpl(dg);

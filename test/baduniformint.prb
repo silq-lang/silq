@@ -1,0 +1,4 @@
+def main(){
+    x := UniformInt(0,-1);
+    return; // expected: 0
+}
