@@ -1814,6 +1814,10 @@ DExpr differentiate(DVar v,DExpr e){
 		return dDiff(v,l.e)/l.e;
 	if(auto s=cast(DSin)e)
 		return dDiff(v,s.e)*dSin(s.e+dΠ/2);
+	if(auto f=cast(DFloor)e)
+		return dDiff(v,f.e)*dDelta(dSin(dΠ*e)/dΠ); // TODO: this delta function should be skewed!
+	if(auto f=cast(DCeil)e)
+		return dDiff(v,f.e)*dDelta(dSin(dΠ*e)/dΠ); // TODO: this delta function should be skewed!
 	if(auto g=cast(DGaussInt)e)
 		return dDiff(v,g.x)*dGaussInt(g.deg-1,g.x);
 	if(!e.hasFreeVar(v)) return zero;
@@ -2008,6 +2012,90 @@ class DSin: DOp{
 }
 
 DExpr dSin(DExpr e){ return uniqueDExprUnary!DSin(e); }
+
+
+class DFloor: DOp{
+	DExpr e;
+	this(DExpr e){ this.e=e; }
+	override @property string symbol(){ return "⌊.⌋"; }
+	override Precedence precedence(){ return Precedence.none; }
+	override string toStringImpl(Precedence prec){
+		return "⌊"~e.toString()~"⌋";
+	}
+	override int forEachSubExpr(scope int delegate(DExpr) dg){
+		return dg(e);
+	}
+	override int freeVarsImpl(scope int delegate(DVar) dg){
+		return e.freeVarsImpl(dg);
+	}
+	override DExpr substitute(DVar var,DExpr exp){
+		return dFloor(e.substitute(var,exp));
+	}
+	override DExpr incDeBruin(int di){
+		return dFloor(e.incDeBruin(di));
+	}
+	static DExpr constructHook(DExpr e){
+		return staticSimplify(e);
+	}
+	static DExpr staticSimplify(DExpr e,DExpr facts=one){
+		auto ne=e.simplify(facts);
+		if(ne!is e) return dFloor(ne);
+		if(e.isFraction()){
+			auto nd=e.getFraction();
+			return dℕ(nd[0]/nd[1]);
+		}
+		return null;
+	}
+	override DExpr simplifyImpl(DExpr facts){
+		auto r=staticSimplify(e,facts);
+		return r?r:this;
+	}
+}
+
+DExpr dFloor(DExpr e){ return uniqueDExprUnary!DFloor(e); }
+
+
+class DCeil: DOp{
+	DExpr e;
+	this(DExpr e){ this.e=e; }
+	override @property string symbol(){ return "⌈.⌉"; }
+	override Precedence precedence(){ return Precedence.none; }
+	override string toStringImpl(Precedence prec){
+		return "⌈"~e.toString()~"⌉";
+	}
+	override int forEachSubExpr(scope int delegate(DExpr) dg){
+		return dg(e);
+	}
+	override int freeVarsImpl(scope int delegate(DVar) dg){
+		return e.freeVarsImpl(dg);
+	}
+	override DExpr substitute(DVar var,DExpr exp){
+		return dCeil(e.substitute(var,exp));
+	}
+	override DExpr incDeBruin(int di){
+		return dCeil(e.incDeBruin(di));
+	}
+	static DExpr constructHook(DExpr e){
+		return staticSimplify(e);
+	}
+	static DExpr staticSimplify(DExpr e,DExpr facts=one){
+		auto ne=e.simplify(facts);
+		if(ne!is e) return dCeil(ne);
+		if(e.isFraction()){
+			auto nd=e.getFraction();
+			return dℕ((nd[0]+nd[1]-1)/nd[1]);
+		}
+		return null;
+	}
+	override DExpr simplifyImpl(DExpr facts){
+		auto r=staticSimplify(e,facts);
+		return r?r:this;
+	}
+}
+
+DExpr dCeil(DExpr e){ return uniqueDExprUnary!DCeil(e); }
+
+
 
 class DGaussInt: DOp{
 	int deg;
