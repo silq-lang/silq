@@ -134,7 +134,9 @@ private struct Analyzer{
 				auto e1=doIt(b.e1), e2=doIt(b.e2);
 				return 1-(1-e1)*(1-e2);
 			}else if(auto id=cast(Identifier)e){
-				return dIvr(DIvr.Type.neqZ,transformExp(e));
+				auto cond=transformExp(e);
+				if(!cond) unwind();
+				return dIvr(DIvr.Type.neqZ,cond);
 			}else with(DIvr.Type)if(auto b=cast(LtExp)e){
 				mixin(common);
 				return dIvr(lZ,e1-e2);

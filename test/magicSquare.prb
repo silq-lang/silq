@@ -1,17 +1,25 @@
-def x(){ return UniformInt(1,9); }
-def y(){ return [x(),x(),x()]; }
+def value(){ return UniformInt(1,9); }
+def row(){ return [x(),x(),x()]; }
+
+def sumRow(square,i){
+    return square[i][0]+square[i][1]+square[i][2];
+}
+
+def sumCol(square,i){
+    return square[j][i];
+}
 
 def main(){
-    square = [y(),y(),y()];
+    square = [row(),row(),row()];
     i := 0
     repeat 3{
         observe(sumRow(square,i)==15);
-	i += 1;
+        i += 1;
     }
     i = 0;
     repeat 3{
         observe(sumCol(square,i)==15);
-	i += 1;
+        i += 1;
     }
     observe(sumDiag1(square)==15);
     observe(sumDiag2(square)==15);
@@ -23,7 +31,7 @@ def main(){
             k[square[i][j]]=1;
             j += 1;
         }
-	i += 1;
+        i += 1;
     }
     i = 1;
     repeat 9{
