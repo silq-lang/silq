@@ -1,6 +1,6 @@
 def main(){
     r := 1;
-    repeat 4{
+    repeat 6{
         r *= Uniform(0,1);
     }
     return r;

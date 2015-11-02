@@ -32,6 +32,19 @@ DExpr uniformIntPDF(DVar var,DExpr a,DExpr b){
 	return nnorm/dInt(var,nnorm);	
 }
 
+/+ TODO:
+DExpr poissonPDF(DVar var,DExpr λ){
+	
+}
+
+DExpr gammaPDF(DVar var,...){
+
+}
+DExpr betaPDF(DVar var,...){
+
+}
++/
+
 class Distribution{
 	int[string] vbl;
 	DVar[string] symtab;

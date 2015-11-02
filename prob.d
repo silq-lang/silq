@@ -42,6 +42,7 @@ int run(string path){
 	if(auto fd=cast(FunctionDef)expr){
 		auto dist=analyze(fd,err);
 		import approximate;
+		//import hashtable; dist.distribution=approxLog(dist.freeVars.element);
 		dist.distribution=dist.distribution.killIntegrals();
 		auto str=dist.toString();
 		//writeln((cast(DPlus)dist.distribution).summands.length);

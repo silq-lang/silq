@@ -1112,6 +1112,7 @@ bool mustBeZeroOrOne(DExpr e){
 
 bool mustBeLessOrEqualZero(DExpr e){
 	if(auto c=cast(Dℕ)e) return c.c<=0;
+	if(auto c=cast(DFloat)e) return c.c<=0;
 	return false;
 }
 bool mustBeLessThanZero(DExpr e){
@@ -1384,6 +1385,10 @@ class DIvr: DExpr{ // iverson brackets
 
 DExpr dBounded(string what)(DExpr e,DExpr lo,DExpr hi) if(what=="[]"){
 	return dIvr(DIvr.Type.leZ,lo-e)*dIvr(DIvr.Type.leZ,e-hi);
+}
+
+DExpr dBounded(string what)(DExpr e,DExpr lo,DExpr hi) if(what=="[)"){
+	return dIvr(DIvr.Type.leZ,lo-e)*dIvr(DIvr.Type.lZ,e-hi);
 }
 
 DVar getCanonicalFreeVar(DExpr e){
