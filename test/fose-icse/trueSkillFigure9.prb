@@ -1,0 +1,20 @@
+def trueSkill(){
+    skillA := Gauss(100,10);
+    skillB := Gauss(100,10);
+    skillC := Gauss(100,10);
+
+    // first game:A vs B, A won
+    perfA1 := Gauss(skillA,15);
+    perfB1 := Gauss(skillB,15);
+    observe(perfA1 > perfB1);
+
+    // second game:B vs C, B won
+    perfB2 := Gauss(skillB,15);
+    perfC2 := Gauss(skillC,15);
+    observe(perfB2 > perfC2);
+
+    // third game:A vs C, A won
+    perfA3 := Gauss(skillA,15);
+    perfC3 := Gauss(skillC,15);
+    observe(perfA3 > perfC3);
+}

@@ -1,0 +1,19 @@
+
+- fose-icse:
+ true skill benchmark:
+ + integrate erf(linear function)
+ + integrate erf*gaussian (c.f. https://en.wikipedia.org/wiki/Error_function#Integral_of_error_function_with_Gaussian_density_function)
+
+- r2:
+ common:
+ + negations :o)
+ + arrays (especially: eliminate spurious arrays automatically)
+ + beta distribution
+ + categorical sampling
+ + read external data (?)
+ + zero probabillity observations
+ + (floating point literals)
+
+ (note: we need to partition the pdf in order to avoid blow-up of runtimes due to huge arrays with independent entries.)
+ (note: the examples sometimes return arrays. r2 does not actually compute the joint distribution in those cases.)
+ 

@@ -1,0 +1,8 @@
+def bothHeads(){
+    firstCoin := Bernoulli(1/2);
+    secondCoin := Bernoulli(1/2);
+    bothHeads := firstCoin && secondCoin;
+    observe(bothHeads == 0);
+    return (firstCoin,secondCoin);
+    // TODO: simplify more
+}

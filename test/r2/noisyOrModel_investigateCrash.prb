@@ -1,0 +1,33 @@
+def N20n(){
+    n1 := 0; n21 := 0; n22 := 0; n33 := 0; n31 := 0; n32 := 0; n33 := 0;
+    n0 := Bernoulli(0.5);
+    n4 := Bernoulli(0.5);
+    if (n0){
+        n1 = Bernoulli(0.8);
+	n21 = Bernoulli(0.8);
+    }else{
+        n1 = Bernoulli(0.1);
+	n21 = Bernoulli(0.1);
+    }
+    if (n4){
+        n22 = Bernoulli(0.8);
+        n33 = Bernoulli(0.8);
+    }else{
+        n22 = Bernoulli(0.1);
+        n33 = Bernoulli(0.1);
+    }
+    n2 = n21 || n22;
+    if (n1){
+        n31 = Bernoulli(0.8);
+    }else{
+        n31 = Bernoulli(0.1);
+    }
+    if (n2){
+        n32 = Bernoulli(0.8);
+    }else{
+        n32 = Bernoulli(0.1);
+    }
+    n3 = n31 || n32 || n33;
+
+    return n3;
+}
