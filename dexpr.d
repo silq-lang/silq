@@ -2138,7 +2138,7 @@ class DFun: DOp{ // uninterpreted functions
 		return staticSimplify(fun,args);
 	}
 	static DFun staticSimplify(DVar fun,DExpr[] args,DExpr facts=one){
-		auto nargs=args.map!(a=>a.simplify(facts)).array;
+		auto nargs=args.map!(a=>a.simplify(one)).array; // cannot use all facts! (might remove a free variable)
 		if(nargs!=args) return dFun(fun,nargs);
 		return null;
 	}
