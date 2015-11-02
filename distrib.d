@@ -91,10 +91,10 @@ class Distribution{
 		return r;
 	}
 
-	DVar declareVar(string name){
+	DVar declareVar(string name,bool addtosymtab=true){
 		if(name in symtab) return null;
 		auto v=dVar(name);
-		symtab[name]=v;
+		if(addtosymtab) symtab[name]=v;
 		freeVars.insert(v);
 		return v;
 	}
@@ -106,7 +106,7 @@ class Distribution{
 		while(!v){ // TODO: fix more elegantly!
 			int suffix=++vbl[name];
 			string nn=name~suffix.lowNum;
-			v=declareVar(nn);
+			v=declareVar(nn,false);
 		}
 		return v;
 	}
