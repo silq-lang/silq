@@ -1,4 +1,4 @@
-import dexpr;
+import dexpr, util;
 
 DExpr definiteIntegral(DVar var,DExpr expr)out(res){
 	version(INTEGRATION_STATS){
@@ -12,6 +12,7 @@ DExpr definiteIntegral(DVar var,DExpr expr)out(res){
 	// TODO: keep ivrs and nonIvrs separate in DMult
 	DExpr ivrs=one;
 	DExpr nonIvrs=one;
+	if(expr.hasAny!DFun) return null;
 	foreach(f;expr.factors){
 		assert(f.hasFreeVar(var));
 		if(cast(DIvr)f) ivrs=ivrs*f;
