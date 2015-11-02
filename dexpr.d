@@ -2206,23 +2206,39 @@ auto visit(T,S...)(DExpr node,S args){
 	static if(!manualPropagate) return result;
 }
 
-auto allOf(T)(DExpr e){
+auto allOf(T)(DExpr e,bool belowIntegrals=false){
 	static struct AllOfVisitor{
 		scope int delegate(T) dg;
+		bool belowIntegrals;
 		int r=0;
 		int perform(T t){
 			if(auto r=dg(t))
 				return this.r=r;
+			static if(is(T==DInt)){
+				if(belowIntegrals)
+					if(auto r=t.expr.visit!AllOfVisitor(dg,belowIntegrals).r)
+					   return this.r=r;
+			}
 			return 0;
+		}
+		static if(!is(T==DInt)){
+			int perform(DInt t){
+				if(belowIntegrals){
+					if(auto r=t.expr.visit!AllOfVisitor(dg,belowIntegrals).r)
+					   return this.r=r;
+				}
+				return 0;
+			}
 		}
 	}
 	static struct AllOf{
 		DExpr e;
+		bool belowIntegrals;
 		int opApply(scope int delegate(T) dg){
-			return e.visit!AllOfVisitor(dg).r;
+			return e.visit!AllOfVisitor(dg,belowIntegrals).r;
 		}
 	}
-	return AllOf(e);
+	return AllOf(e,belowIntegrals);
 }
 
-bool hasAny(T)(DExpr e){ foreach(x;e.allOf!T) return true; return false; }
+bool hasAny(T)(DExpr e,bool belowIntegrals=true){ foreach(x;allOf!T(e,belowIntegrals)) return true; return false; }
