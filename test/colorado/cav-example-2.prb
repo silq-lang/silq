@@ -4,7 +4,7 @@ def main(){
     h:=0;
     t:=10;
     //while h<=t{
-    repeat 4{if(h<=t){
+    repeat 3{if(h<=t){
         flip_guard := Uniform(0,1);
         if flip_guard <= 1/2{
             h+=Uniform(0,10);

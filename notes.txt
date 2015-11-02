@@ -24,3 +24,26 @@ p(y) = ([-25+y²≤0]·[y>0] + [-25+(-y)²≤0]·[y≤0])·⅕
 p(y) = ([-25+y²≤0]·[y>0] + [-25+(-y)²≤0]·[y≤0])·⅕
 
 
+
+integration by parts:
+
+∫uv'=uv-∫u'v
+
+u=log(z);
+v=log(z);
+
+∫dz log(z)·1/z
+
+= log²(z) - ∫dz log(z)·1/z
+
+
+→ ∫dz log(z)·1/z = log(z)²/2
+
+
+u=log²(z), v=log(z)
+
+∫dz log²(z)·1/z
+
+= log³(z) - 2∫dz log²(z)/z
+
+→ ∫dz log²(z)·1/z = log³(z)/3.

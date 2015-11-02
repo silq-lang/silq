@@ -1,0 +1,10 @@
+def main(){
+    r1 := 1;
+    r2 := 1;
+    repeat 3{
+    	k := Uniform(0,1);
+	r1 *= k;
+        r2 *= Uniform(0,1);
+    }
+    return (r1,r2);
+}

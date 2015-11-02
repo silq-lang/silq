@@ -1,0 +1,9 @@
+def main(){
+    r := 1;
+    repeat 3{
+    	k := Uniform(0,1);
+        r *= k;
+    }
+    p := r > 1/2;
+    return p;
+}
