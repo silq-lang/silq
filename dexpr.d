@@ -2106,10 +2106,27 @@ private static DInf theDInf;
 @property DInf dInf(){ return theDInf?theDInf:(theDInf=new DInf); }
 
 
+class DFunVar: DExpr{
+	string name;
+	/+private+/ this(string name){ this.name=name; } // TODO: make private!
+	override string toStringImpl(Precedence prec){ return name; }
+
+	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; }
+	override int freeVarsImpl(scope int delegate(DVar) dg){ return 0; }
+	override DExpr substitute(DVar var,DExpr e){ return this; }
+	override DExpr incDeBruin(int di){ return this; }
+	override DExpr simplifyImpl(DExpr facts){ return this; }
+}
+DFunVar[string] dFunVarCache; // TODO: caching desirable? (also need to update parser if not)
+DFunVar dFunVar(string name){
+	if(name in dFunVarCache) return dFunVarCache[name];
+	return dFunVarCache[name]=new DFunVar(name);
+}
+
 class DFun: DOp{ // uninterpreted functions
-	DVar fun;
+	DFunVar fun;
 	DExpr[] args;
-	this(DVar fun, DExpr[] args){ this.fun=fun; this.args=args; }
+	this(DFunVar fun, DExpr[] args){ this.fun=fun; this.args=args; }
 	override @property string symbol(){ return fun.name; }
 	override Precedence precedence(){ return Precedence.none; }
 	override string toStringImpl(Precedence prec){
@@ -2134,10 +2151,10 @@ class DFun: DOp{ // uninterpreted functions
 		return dFun(fun,args.map!(a=>a.incDeBruin(di)).array);
 	}
 
-	static DFun constructHook(DVar fun,DExpr[] args){
+	static DFun constructHook(DFunVar fun,DExpr[] args){
 		return staticSimplify(fun,args);
 	}
-	static DFun staticSimplify(DVar fun,DExpr[] args,DExpr facts=one){
+	static DFun staticSimplify(DFunVar fun,DExpr[] args,DExpr facts=one){
 		auto nargs=args.map!(a=>a.simplify(one)).array; // cannot use all facts! (might remove a free variable)
 		if(nargs!=args) return dFun(fun,nargs);
 		return null;
@@ -2146,11 +2163,10 @@ class DFun: DOp{ // uninterpreted functions
 		auto r=staticSimplify(fun,args,facts);
 		return r?r:this;
 	}
-
 }
 
-MapX!(TupleX!(DVar,DExpr[]),DFun) uniqueMapDFun;
-auto uniqueDFun(DVar fun,DExpr[] args){
+MapX!(TupleX!(DFunVar,DExpr[]),DFun) uniqueMapDFun;
+auto uniqueDFun(DFunVar fun,DExpr[] args){
 	if(auto r=DFun.constructHook(fun,args)) return r;
 	auto t=tuplex(fun,args);
 	if(t in uniqueMapDFun) return uniqueMapDFun[t];
@@ -2159,10 +2175,10 @@ auto uniqueDFun(DVar fun,DExpr[] args){
 	return r;
 }
 
-DFun dFun(DVar fun,DExpr[] args){
+DFun dFun(DFunVar fun,DExpr[] args){
 	return uniqueDFun(fun,args);
 }
-DFun dFun(DVar fun,DExpr arg){
+DFun dFun(DFunVar fun,DExpr arg){
 	return dFun(fun,[arg]);
 }
 

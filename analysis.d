@@ -273,7 +273,15 @@ private struct Analyzer{
 }
 
 Distribution analyze(FunctionDef def,ErrorHandler err){
-	auto a=Analyzer(new Distribution,err);
+	auto dist=new Distribution();
+	DExpr[] args;
+	foreach(a;def.args) args~=dist.declareVar(a.name);
+	if(args.length) dist.distribute(dFun("q".dFunVar,args)); // TODO: constant name sufficient?
+	return analyzeWith(def,dist,err);
+}
+
+Distribution analyzeWith(FunctionDef def,Distribution dist,ErrorHandler err){
+	auto a=Analyzer(dist,err);
 	a.analyze(def.body_,true);
 	a.dist.distribution=a.dist.distribution.simplify(one);
 	return a.dist;
