@@ -238,8 +238,11 @@ class DFloat : DExpr{
 	mixin Constant;
 }
 
-DFloat[double] uniqueMapDFloat; // TODO: get rid of this!
-DFloat dFloat(double c){
+//DFloat[double] uniqueMapDFloat; // TODO: get rid of this!
+DExpr dFloat(double c){
+	import std.math: floor;
+	import std.format: format;
+	if(floor(c)==c) return dℕ(ℕ(format("%.0f",c))); // TODO: don't rely on format here!
 	//if(c in uniqueMapDFloat) return uniqueMapDFloat[c];
 	//return uniqueMapDFloat[c]=new DFloat(c);
 	return new DFloat(c);
@@ -1116,6 +1119,7 @@ bool couldBeZero(DExpr e){
 	if(cast(DΠ)e) return false;
 	if(cast(DE)e) return false;
 	if(auto c=cast(Dℕ)e) return c.c==0;
+	if(auto c=cast(DFloat)e) return c.c==0;
 	return true;
 }
 

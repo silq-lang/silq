@@ -80,7 +80,7 @@ static DExpr tryIntegrate(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DExpr i
 		//writeln(lower," ",upper);
 		//writeln(lowLeUp());
 		if(nonIvrs is one) return lowLeUp()*(upper-lower);
-		if(auto poly=nonIvrs.asPolynomialIn(var)){
+		if(auto poly=nonIvrs.asPolynomialIn(var)){ // TODO: this can be wasteful sometimes
 			DExprSet s;
 			foreach(i,coeff;poly.coefficients){
 				assert(i<size_t.max);
