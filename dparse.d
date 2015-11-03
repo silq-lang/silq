@@ -112,6 +112,17 @@ DExpr dParse(string s){ // TODO: this is work in progress, usually updated in or
 			string s=parseIdentifier();
 			return dVar(s);
 		}
+		DExpr parseDVarDFun(){
+			string s=parseIdentifier();
+			if(cur()!='(') return dVar(s);
+			DExpr[] args;
+			do{
+				next();
+				if(cur()!=')') args~=parseDExpr();
+			}while(cur()==',');
+			expect(')');
+			return dFun(dFunVar(s),args);
+		}
 
 		DExpr parseBase(){
 			if(cur()=='('){
@@ -139,7 +150,7 @@ DExpr dParse(string s){ // TODO: this is work in progress, usually updated in or
 				next();
 				return dΠ;
 			}
-			return parseDVar();
+			return parseDVarDFun();
 		}
 
 		DExpr parseDPow(){

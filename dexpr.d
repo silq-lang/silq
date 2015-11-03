@@ -71,6 +71,7 @@ abstract class DExpr{
 
 	// TODO: implement in terms of 'forEachSubExpr'?
 	abstract DExpr substitute(DVar var,DExpr e);
+	abstract DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args);
 	abstract DExpr incDeBruin(int di);
 	abstract int freeVarsImpl(scope int delegate(DVar));
 	final freeVars(){
@@ -134,6 +135,7 @@ abstract class DExpr{
 		override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; }
 		override int freeVarsImpl(scope int delegate(DVar) dg){ return 0; }
 		override DExpr substitute(DVar var,DExpr e){ assert(var !is this); return this; }
+		override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args){ assert(fun !is this); return this; }
 		override DExpr incDeBruin(int di){ return this; }
 		override DExpr simplifyImpl(DExpr facts){ return this; }
 	}
@@ -147,6 +149,7 @@ class DVar: DExpr{
 	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; }
 	override int freeVarsImpl(scope int delegate(DVar) dg){ return dg(this); }
 	override DExpr substitute(DVar var,DExpr e){ return this is var?e:this; }
+	override DExpr substituteFun(DFunVar var,DExpr q,DVar[] args){ return this; }
 	override DVar incDeBruin(int di){ return this; }
 	override DExpr simplifyImpl(DExpr facts){
 		// TODO: make more efficient! (e.g. keep hash table in product expressions)
@@ -176,7 +179,6 @@ class DDeBruinVar: DVar{
 	int i;
 	private this(int i){ this.i=i; super("ξ"~lowNum(i)); }
 	override DDeBruinVar incDeBruin(int di){ return dDeBruinVar(i+di); }
-
 }
 DDeBruinVar[int] uniqueMapDeBruin;
 DDeBruinVar dDeBruinVar(int i){
@@ -365,6 +367,11 @@ class DPlus: DCommutAssocOp{
 	override DExpr substitute(DVar var,DExpr e){
 		DExprSet res;
 		foreach(s;summands) insert(res,s.substitute(var,e));
+		return dPlus(res);
+	}
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] vars){
+		DExprSet res;
+		foreach(s;summands) insert(res,s.substituteFun(fun,q,vars));
 		return dPlus(res);
 	}
 	override DExpr incDeBruin(int di){
@@ -572,6 +579,11 @@ class DMult: DCommutAssocOp{
 	override DExpr substitute(DVar var,DExpr e){
 		DExprSet res;
 		foreach(f;factors) insert(res,f.substitute(var,e));
+		return dMult(res);
+	}
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args){
+		DExprSet res;
+		foreach(f;factors) insert(res,f.substituteFun(fun,q,args));
 		return dMult(res);
 	}
 	override DExpr incDeBruin(int di){
@@ -881,6 +893,9 @@ class DPow: DBinaryOp{
 
 	override DExpr substitute(DVar var,DExpr e){
 		return operands[0].substitute(var,e)^^operands[1].substitute(var,e);
+	}
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args){
+		return operands[0].substituteFun(fun,q,args)^^operands[1].substituteFun(fun,q,args);
 	}
 	override DExpr incDeBruin(int di){
 		return operands[0].incDeBruin(di)^^operands[1].incDeBruin(di);
@@ -1284,6 +1299,7 @@ class DIvr: DExpr{ // iverson brackets
 	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; } // TODO: correct?
 	override int freeVarsImpl(scope int delegate(DVar) dg){ return e.freeVarsImpl(dg); }
 	override DExpr substitute(DVar var,DExpr exp){ return dIvr(type,e.substitute(var,exp)); }
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args){ return dIvr(type,e.substituteFun(fun,q,args)); }
 	override DExpr incDeBruin(int di){ return dIvr(type,e.incDeBruin(di)); }
 
 	override string toStringImpl(Precedence prec){
@@ -1432,6 +1448,9 @@ class DDelta: DExpr{ // Dirac delta function
 	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; } // TODO: ok?
 	override int freeVarsImpl(scope int delegate(DVar) dg){ return e.freeVarsImpl(dg); }
 	override DExpr substitute(DVar var,DExpr exp){ return dDelta(e.substitute(var,exp)); }
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args){
+		return dDelta(e.substituteFun(fun,q,args));
+	}
 	override DExpr incDeBruin(int di){ return dDelta(e.incDeBruin(di)); }
 
 	static DExpr constructHook(DExpr e){
@@ -1604,7 +1623,7 @@ class DInt: DOp{
 		this(DDeBruinVar var,DExpr expr){ this.var=var; this.expr=expr; }
 	}
 	DExpr getExpr(DVar var){
-		assert(this.var is dDeBruinVar(1),text(this.var));
+		//assert(this.var is dDeBruinVar(1),text(this)); // TODO: finally fix the deBruinVar situation...
 		return expr.substitute(this.var,var).incDeBruin(-1);
 	}
 	override @property Precedence precedence(){ return Precedence.intg; }
@@ -1712,12 +1731,13 @@ class DInt: DOp{
 			// assert(f.hasFreeVar(var));
 			if(auto other=cast(DInt)f){
 				assert(!!cast(DDeBruinVar)other.var);
-				static int i=0;
-				auto tmpvar=new DVar("tmp"); // TODO: get rid of this!
-				auto intExpr=expr.withoutFactor(f)*other.getExpr(tmpvar);
-				auto ow=intExpr.splitMultAtVar(var);
-				if(auto res=constructHook(var,ow[1]))
-					return dInt(tmpvar,res*ow[0]);
+				auto tmpvar1=new DVar("tmp1"); // TODO: get rid of this!
+				auto tmpvar2=new DVar("tmp2"); // TODO: get rid of this!
+				auto intExpr=expr.withoutFactor(f).substitute(var,tmpvar1)*
+					(cast(DInt)other.substitute(var,tmpvar1).incDeBruin(-1)).getExpr(tmpvar2);
+				auto ow=intExpr.splitMultAtVar(tmpvar1);
+				if(auto res=constructHook(tmpvar1,ow[1]))
+					return dInt(tmpvar2,res*ow[0]);
 			}
 		}
 		if(!expr.hasFreeVar(var)) return expr*dInt(var,one); // (infinite integral)
@@ -1725,9 +1745,8 @@ class DInt: DOp{
 	}
 	
 	override DExpr simplifyImpl(DExpr facts){
-		return this; // TODO: make sure simplification works with deBruinVars correctly
-		/+ auto r=staticSimplify(var,expr);
-		 return r?r:this;+/
+		 auto r=staticSimplify(var,expr);
+		 return r?r:this;
 	}
 
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
@@ -1739,6 +1758,9 @@ class DInt: DOp{
 	override DExpr substitute(DVar var,DExpr e){
 		if(this.var is var) return this;
 		return dInt(this.var,expr.substitute(var,e));
+	}
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args){
+		return dInt(var,expr.substituteFun(fun,q,args));
 	}
 	override DExpr incDeBruin(int di){
 		return dInt(var.incDeBruin(di),expr.incDeBruin(di));
@@ -1802,6 +1824,9 @@ class DDiff: DOp{
 		if(v !is var) ne=e.substitute(var,exp);
 		return dDiff(v,ne,nx);
 	}
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args){
+		return dDiff(v,e.substituteFun(fun,q,args),x.substituteFun(fun,q,args));
+	}
 	override DExpr incDeBruin(int di){
 		return dDiff(v.incDeBruin(di),e.incDeBruin(di),x.incDeBruin(di));
 	}
@@ -1835,6 +1860,9 @@ class DAbs: DOp{
 	}
 	override DExpr substitute(DVar var,DExpr exp){
 		return dAbs(e.substitute(var,exp));
+	}
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args){
+		return dAbs(e.substituteFun(fun,q,args));
 	}
 	override DExpr incDeBruin(int di){
 		return dAbs(e.incDeBruin(di));
@@ -1887,6 +1915,9 @@ class DLog: DOp{
 	override DExpr substitute(DVar var,DExpr exp){
 		return dLog(e.substitute(var,exp));
 	}
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args){
+		return dLog(e.substituteFun(fun,q,args));
+	}
 	override DExpr incDeBruin(int di){
 		return dLog(e.incDeBruin(di));
 	}
@@ -1933,6 +1964,9 @@ class DSin: DOp{
 	override DExpr substitute(DVar var,DExpr exp){
 		return dSin(e.substitute(var,exp));
 	}
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args){
+		return dSin(e.substituteFun(fun,q,args));
+	}
 	override DExpr incDeBruin(int di){
 		return dSin(e.incDeBruin(di));
 	}
@@ -1970,6 +2004,9 @@ class DFloor: DOp{
 	}
 	override DExpr substitute(DVar var,DExpr exp){
 		return dFloor(e.substitute(var,exp));
+	}
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args){
+		return dFloor(e.substituteFun(fun,q,args));
 	}
 	override DExpr incDeBruin(int di){
 		return dFloor(e.incDeBruin(di));
@@ -2011,6 +2048,9 @@ class DCeil: DOp{
 	}
 	override DExpr substitute(DVar var,DExpr exp){
 		return dCeil(e.substitute(var,exp));
+	}
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args){
+		return dCeil(e.substituteFun(fun,q,args));
 	}
 	override DExpr incDeBruin(int di){
 		return dCeil(e.incDeBruin(di));
@@ -2080,6 +2120,10 @@ class DGaussInt: DOp{
 		auto nx=x.substitute(var,exp);
 		return dGaussInt(deg,nx);
 	}
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args){
+		auto nx=x.substituteFun(fun,q,args);
+		return dGaussInt(deg,nx);
+	}
 	override DExpr incDeBruin(int di){
 		return dGaussInt(deg,x.incDeBruin(di));
 	}
@@ -2114,6 +2158,7 @@ class DFunVar: DExpr{
 	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; }
 	override int freeVarsImpl(scope int delegate(DVar) dg){ return 0; }
 	override DExpr substitute(DVar var,DExpr e){ return this; }
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args){ assert(0); }
 	override DExpr incDeBruin(int di){ return this; }
 	override DExpr simplifyImpl(DExpr facts){ return this; }
 }
@@ -2147,6 +2192,14 @@ class DFun: DOp{ // uninterpreted functions
 	override DExpr substitute(DVar var,DExpr exp){
 		return dFun(fun,args.map!(a=>a.substitute(var,exp)).array);
 	}
+
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args){
+		if(fun !is this.fun) return this;
+		auto r=q;
+		foreach(i,a;this.args) r=r.substitute(args[i],a);
+		return r;
+	}
+
 	override DExpr incDeBruin(int di){
 		return dFun(fun,args.map!(a=>a.incDeBruin(di)).array);
 	}

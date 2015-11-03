@@ -21,6 +21,9 @@ alias OrExp=BinaryExp!(Tok!"||");
 alias AndExp=BinaryExp!(Tok!"&&");
 alias Exp=Expression;
 
+FunctionDef[string] functions; // TODO: get rid of globals
+Distribution[string] summaries;
+
 private struct Analyzer{
 	Distribution dist;
 	ErrorHandler err;
@@ -49,6 +52,37 @@ private struct Analyzer{
 			if(auto ume=cast(UMinusExp)e) return -doIt(ume.e);
 			if(auto ce=cast(CallExp)e){
 				if(auto id=cast(Identifier)ce.e){
+					if(id.name in functions){
+						if(id.name !in summaries){
+							summaries[id.name]=new Distribution();
+							summaries[id.name].distribute(mone);
+							summaries[id.name]=.analyze(functions[id.name],err);
+						}else if(summaries[id.name].distribution is mone){
+							// TODO: support special cases.
+							err.error("recursive dependencies unsupported",ce.loc);
+							unwind();
+						}
+						auto fun=functions[id.name];
+						auto summary=summaries[id.name];
+						if(summary.freeVars.length!=1){
+							err.error("only single value return supported",ce.loc);
+							unwind();
+						}
+						if(ce.args.length != fun.args.length){
+							import std.format;
+							err.error(format("expected %s arguments to '%s', received %s",fun.args.length,id.name,ce.args.length),ce.loc);
+							unwind();
+						}
+						DVar[] args;
+						foreach(i,arg;ce.args){
+							if(auto a=doIt(arg)){
+								auto var=dist.getTmpVar("__arg");
+								dist.distribute(dDelta(a-var));
+								args~=var;
+							}else unwind();
+						}
+						return dist.call(summary,args);
+					}
 					switch(id.name){
 					case "Gauss":
 						if(ce.args.length!=2){
@@ -239,12 +273,12 @@ private struct Analyzer{
 					import hashtable;
 					SetX!DVar vars;
 					foreach(ret;returns){
-						if(auto id=cast(Identifier)ret){ // TODO: tuple returns
+						if(auto id=cast(Identifier)ret){
 							if(auto v=dist.lookupVar(id.name)){
 								vars.insert(v);
 								
 							}else err.error("undefined variable '"~id.name~"'",id.loc);
-						}else err.error("only variables supported as return expressions",ret.loc);
+						}else err.error("only variables supported as return expressions",ret.loc); // TODO: this is a huge hack.
 					}
 					foreach(w;dist.freeVars.setMinus(vars)){
 						dist.marginalize(w);

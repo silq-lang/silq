@@ -155,6 +155,19 @@ class Distribution{
 		foreach(v;freeVars) intNDist=dInt(v,intNDist);
 		distribution=nDist/(intNDist+error);
 	}
+	DExpr call(Distribution q,DVar[] args){
+		DExpr rdist=q.distribution;
+		assert(q.freeVars.length==1,"TODO!");
+		auto r=getTmpVar("__r");
+		import hashtable;
+		foreach(v;q.freeVars) rdist=rdist.substitute(q.freeVars.element,r);
+		distribution=rdist.substituteFun("q".dFunVar,distribution,args);
+		foreach(a;args){
+			tmp.remove(a);
+			freeVars.remove(a);
+		}
+		return r;
+	}
 	override string toString(){
 		string r="p(";
 		string[] vars;

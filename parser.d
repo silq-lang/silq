@@ -549,3 +549,10 @@ struct Parser{
 Expression parseExpression(Source source, ErrorHandler handler){
 	return Parser(lex(source),handler).parseExpression();
 }
+
+Expression[] parseFile(Source source, ErrorHandler handler){
+	auto p=Parser(lex(source),handler);
+	auto s=appender!(Expression[])();
+	while(p.ttype!=Tok!"EOF") s.put(p.parseExpression());
+	return s.data;
+}

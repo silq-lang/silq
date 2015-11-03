@@ -37,37 +37,52 @@ int run(string path){
 	}
 	auto src=new Source(path, code);
 	auto err=new FormattingErrorHandler();
-	auto expr=parseExpression(src,err);
-	writeln(expr);
-	if(auto fd=cast(FunctionDef)expr){
-		auto dist=analyze(fd,err);
-		import approximate;
-		//import hashtable; dist.distribution=approxLog(dist.freeVars.element);
-		dist.distribution=dist.distribution.killIntegrals();
-		auto str=dist.toString();
-		//writeln((cast(DPlus)dist.distribution).summands.length);
-		if(str.length<10000) writeln(str);
-		else{
-			writeln("writing output to temporary file...");
-			auto f=File("tmp.deleteme","w");
-			f.writeln(str);
+	auto exprs=parseFile(src,err);
+	foreach(expr;exprs){
+		if(auto fd=cast(FunctionDef)expr){
+			analysis.functions[fd.name.name]=fd;
+		}else{
+			err.error("top level declaration must be function",expr.loc);
 		}
-		bool plotCDF=false;
-		if(str.canFind("δ")) plotCDF=true;
-		import hashtable;
-		if(formatting==Format.matlab && dist.freeVars.length==1){
-			if(plotCDF){
-				dist=dist.dup();
-				auto freeVar=dist.freeVars.element;
-				auto nvar=dist.declareVar("foo");
-				dist.distribute(dIvr(DIvr.Type.leZ,-freeVar-20)*dIvr(DIvr.Type.leZ,freeVar-nvar));
-				dist.marginalize(freeVar);
-			}
-			writeln("plotting... ",(plotCDF?"(CDF)":"(PDF)"));
-			matlabPlot(dist.distribution.toString(),dist.freeVars.element.toString());
+	}
+	scope(exit){ // TODO: get rid of globals
+		analysis.functions=(FunctionDef[string]).init;
+		analysis.summaries=(Distribution[string]).init;
+	}
+	if(err.nerrors) return 1;
+	if(functions.length==1) foreach(_,x;functions){ functions["main"]=x; break; }
+	if("main" !in functions){
+		err.error("missing program entry point 'main'",Location(src.code.ptr[0..1],1));
+		return 1;
+	}
+	auto fd=functions["main"];
+	auto dist=analyze(fd,err);
+	import approximate;
+	//import hashtable; dist.distribution=approxLog(dist.freeVars.element);
+	dist.distribution=dist.distribution.killIntegrals();
+	auto str=dist.toString();
+	//writeln((cast(DPlus)dist.distribution).summands.length);
+	if(str.length<10000) writeln(str);
+	else{
+		writeln("writing output to temporary file...");
+		auto f=File("tmp.deleteme","w");
+		f.writeln(str);
+	}
+	bool plotCDF=false;
+	if(str.canFind("δ")) plotCDF=true;
+	import hashtable;
+	if(formatting==Format.matlab && dist.freeVars.length==1){
+		if(plotCDF){
+			dist=dist.dup();
+			auto freeVar=dist.freeVars.element;
+			auto nvar=dist.declareVar("foo");
+			dist.distribute(dIvr(DIvr.Type.leZ,-freeVar-20)*dIvr(DIvr.Type.leZ,freeVar-nvar));
+			dist.marginalize(freeVar);
 		}
-	}else err.error("only single function definition supported",expr.loc);
-	return 0;
+		writeln("plotting... ",(plotCDF?"(CDF)":"(PDF)"));
+		matlabPlot(dist.distribution.toString(),dist.freeVars.element.toString());
+	}
+	return !!err.nerrors;
 }
 
 
@@ -294,6 +309,7 @@ void test(){
 	//writeln("∫dx([x+-y=0]·[3·y+z=0]·δ[x+-z])".dParse);
 	//writeln("(((((((1+ξ₁)·ξ₁+1)·ξ₁+1)·ξ₁+1)·ξ₁+1)·ξ₁+1)·ξ₁+1)·⅟ξ₁".dParse.polyNormalize("ξ₁".dVar));
 	//writeln("(∫dξ₁(((((((1+ξ₁)·ξ₁+1)·ξ₁+1)·ξ₁+1)·ξ₁+1)·ξ₁+1)·ξ₁+1)·[-1+ξ₁≤0]·[-10·ξ₁+1≤0]·[-ξ₁+r≤0]·[-ξ₁≠0]·[-ξ₁≤0]·⅟ξ₁)".dParse);
+	//writeln("∫dx(∫dy q(x,y))·[x=0]".dParse);
 }
 
 /*
