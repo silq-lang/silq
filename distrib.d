@@ -8,7 +8,7 @@ DExpr gaussianPDF(DVar var,DExpr μ,DExpr σsq){
 }
 
 DExpr uniformPDF(DVar var,DExpr a,DExpr b){
-	auto diff=b-a, dist=dIvr(DIvr.Type.leZ,a-var)*dIvr(DIvr.Type.leZ,var-b)*one/diff;
+	auto diff=b-a, dist=dBounded!"[]"(var,a,b)/diff;
 	return dIvr(DIvr.Type.neqZ,diff)*dist+dIvr(DIvr.Type.eqZ,diff)*dDelta(var-a);
 }
 
@@ -29,7 +29,7 @@ DExpr uniformIntPDFNnorm(DVar var,DExpr a,DExpr b){
 
 DExpr uniformIntPDF(DVar var,DExpr a,DExpr b){
 	auto nnorm=uniformIntPDFNnorm(var,a,b);
-	return nnorm/dInt(var,nnorm);	
+	return nnorm/dInt(var,nnorm);
 }
 
 /+ TODO:
@@ -39,11 +39,13 @@ DExpr poissonPDF(DVar var,DExpr λ){
 
 DExpr gammaPDF(DVar var,...){
 
-}
-DExpr betaPDF(DVar var,...){
+}+/
 
+DExpr betaPDF(DVar var,DExpr α,DExpr β){
+	auto nnorm=var^^(α-1)*(1-var)^^(β-1)*dBounded!"[]"(var,zero,one);
+	return nnorm/dInt(var,nnorm);
 }
-+/
+
 
 class Distribution{
 	int[string] vbl;

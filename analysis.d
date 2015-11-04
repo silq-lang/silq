@@ -114,7 +114,7 @@ private struct Analyzer{
 						auto var=dist.getTmpVar("__b");
 						dist.distribute(bernoulliPDF(var,p));
 						return var;
-					case "UniformInt": // TODO: handle b<a
+					case "UniformInt":
 						if(ce.args.length!=2){
 							err.error("expected two arguments (a,b) to UniformInt",ce.loc);
 							unwind();
@@ -126,6 +126,16 @@ private struct Analyzer{
 						dist.assertTrue(dIvr(DIvr.Type.neqZ,norm),"no integers in range");
 						auto var=dist.getTmpVar("__u");
 						dist.distribute(nnorm.substitute(tmp,var)/norm);
+						return var;
+					case "Beta":
+						if(ce.args.length!=2){
+							err.error("expected two arguments (α,β) to Beta",ce.loc);
+							unwind();
+						}
+						auto α=doIt(ce.args[0]),β=doIt(ce.args[1]);
+						dist.assertTrue(dIvr(DIvr.Type.lZ,-α)*dIvr(DIvr.Type.lZ,-β),"α and β must be positive");
+						auto var=dist.getTmpVar("__β");
+						dist.distribute(betaPDF(var,α,β));
 						return var;
 					default: break;
 					}
