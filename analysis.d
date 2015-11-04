@@ -319,7 +319,7 @@ private struct Analyzer{
 					foreach(w;dist.freeVars.setMinus(vars)){
 						dist.marginalize(w);
 					}
-					dist.distribution=dist.distribution.simplify(one); // TODO: this shouldn't be necessary!
+					dist.simplify();
 				}else err.error("return statement must be last statement in function",re.loc);
 				if(re.expected.length){
 					import dparse;
@@ -353,6 +353,6 @@ Distribution analyze(FunctionDef def,ErrorHandler err){
 Distribution analyzeWith(FunctionDef def,Distribution dist,ErrorHandler err){
 	auto a=Analyzer(dist,err);
 	a.analyze(def.body_,true);
-	a.dist.distribution=a.dist.distribution.simplify(one);
+	a.dist.simplify();
 	return a.dist;
 }

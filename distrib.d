@@ -163,16 +163,28 @@ class Distribution{
 	}
 	DExpr call(Distribution q,DVar[] args){
 		DExpr rdist=q.distribution;
+		DExpr rerr=q.error;
 		assert(q.freeVars.length==1,"TODO!");
 		auto r=getTmpVar("__r");
 		import hashtable;
-		foreach(v;q.freeVars) rdist=rdist.substitute(q.freeVars.element,r);
-		distribution=rdist.substituteFun("q".dFunVar,distribution,args);
+		foreach(v;q.freeVars){
+			rdist=rdist.substitute(q.freeVars.element,r);
+			rerr=rerr.substitute(q.freeVars.element,r);
+		}
+		auto oldDist=distribution;
+		distribution = rdist.substituteFun("q".dFunVar,oldDist,args);
+		auto nerror = rerr.substituteFun("q".dFunVar,oldDist,args);
 		foreach(a;args){
 			tmp.remove(a);
 			freeVars.remove(a);
 		}
+		foreach(v;freeVars.without(r)) nerror=dInt(v,nerror);
+		error = error + nerror;
 		return r;
+	}
+	void simplify(){
+		distribution=distribution.simplify(one); // TODO: this shouldn't be necessary!
+		error=error.simplify(one);
 	}
 	override string toString(){
 		string r="p(";

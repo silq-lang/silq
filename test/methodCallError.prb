@@ -1,0 +1,10 @@
+def foo(x){
+    r := 1/x;
+    return r;
+}
+
+def main(){
+    x := 1/UniformInt(-1,1);
+    r := foo(UniformInt(-1,1));
+    return x; // expected: 2·δ[-1+-x]·⅟9+2·δ[-x+1]·⅟9
+}
