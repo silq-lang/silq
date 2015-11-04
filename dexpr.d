@@ -34,8 +34,8 @@ enum Format{
 	maple,
 }
 
-//enum formatting=Format.default_;
-enum formatting=Format.matlab;
+enum formatting=Format.default_;
+//enum formatting=Format.matlab;
 //enum formatting=Format.maple; version=DISABLE_INTEGRATION;
 
 enum Precedence{
