@@ -1,5 +1,35 @@
 import dexpr, util;
 
+DExpr readSpline(string filename){
+	import std.file,std.path;
+	filename=buildPath(dirName(thisExePath),filename);
+	import std.stdio,std.exception,std.conv,std.string,std.range,std.algorithm,std.format;
+	auto f=File(filename,"r");
+	string s,d;
+	DExpr r=zero;
+	while(!f.eof){
+		double a,b;
+		f.readf("Interval: %s %s\n",&a,&b);
+		f.readln();
+		f.readf("Breaks:\n");
+		DExpr[] breaks=f.readln().strip().split().map!(a=>a.to!double.dFloat).array;
+		DExpr[] polys;
+		f.readln();
+		f.readf("Coefs:\n");
+		while(!f.eof){
+			s=f.readln().strip();
+			if(!s.length) break;
+			polys~=s.split().map!(a=>a.strip().to!double).array.getPoly("x".dVar);
+		}
+		enforce(breaks.length==polys.length+1);
+		DExpr cur=zero;
+		foreach(i,p;polys)
+			cur=cur+dBounded!"[)"("x".dVar,breaks[i],breaks[i+1])*p;
+		r=r+dBounded!"[)"("x".dVar,a.dFloat,b.dFloat)*cur;
+	}
+	return r;
+}
+
 DExpr getPoly(double[] coeff,DExpr x){
 	DExpr r=zero;
 	foreach(c;coeff) r=x*r+c;
@@ -13,6 +43,7 @@ DExpr approxPowEmX2(DExpr e){
 	auto poly=[0.0422,-0.4013, 1.3594, -1.7601, 0.1268, 1.0000].getPoly(e);
 	return dIvr(DIvr.Type.leZ,arg-3)*poly;
 }
+
 
 DExpr approxLog(DExpr e){
 	static DExpr lowRank(DExpr e){
@@ -55,9 +86,12 @@ DExpr approxLog(DExpr e){
 		}
 		return r;
 	}
-	return lowRank(e);
+	//return lowRank(e);
 	//return highRank(e);
 	//return discretize(e,0.00001,2,20);
+	static DExpr logSpline=null;
+	if(!logSpline) logSpline=readSpline("approximations/logSpline.txt");
+	return logSpline.substitute("x".dVar,e);
 }
 
 DExpr approximate(DExpr e){

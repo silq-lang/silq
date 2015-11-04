@@ -34,8 +34,8 @@ enum Format{
 	maple,
 }
 
-enum formatting=Format.default_;
-//enum formatting=Format.matlab;
+//enum formatting=Format.default_;
+enum formatting=Format.matlab;
 //enum formatting=Format.maple; version=DISABLE_INTEGRATION;
 
 enum Precedence{
@@ -227,7 +227,7 @@ class DFloat : DExpr{
 	private this(double c){ this.c=c; }
 	override string toStringImpl(Precedence prec){
 		import std.format;
-		string r=format("%.16f",c);
+		string r=format("%.16e",c);
 		static if(formatting==Format.maple){
 			if(c<0) r="("~r~")";
 		}else if(prec>Precedence.uminus&&c<0)
