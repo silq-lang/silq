@@ -1,0 +1,21 @@
+def ditItRain(){
+    cloudy := Bernoulli(0.5);
+    rain := 0; sprinkler := 0;
+
+    if (cloudy){
+        rain = Bernoulli(0.8);
+        sprinkler = Bernoulli(0.1);
+    }else{
+        rain = Bernoulli(0.2);
+        sprinkler = Bernoulli(0.5);
+    }
+
+    temp1 := Bernoulli(0.7);
+    wetRoof := temp1 && rain;
+    temp2 := Bernoulli(0.9);
+    temp3 := Bernoulli(0.9);
+    wetGrass := temp2 && rain || temp3 && sprinkler;
+
+    observe(wetGrass);
+    return rain; // ((9·δ[-rain+1]·⅟179750+9·δ[-rain]·⅟719000)·([-rain=0]·⅟10+[rain≠0])+(9·δ[-rain+1]·⅟719000+9·δ[-rain]·⅟179750)·([-rain=0]·⅟2+[rain≠0])+21·δ[-rain]·⅟7190000+59·δ[-rain+1]·⅟7190000)·(3000+7000·[-rain=0]+7000·[rain≠0])
+}
