@@ -1,0 +1,29 @@
+
+def isBurglary(){
+    earthquake := Bernoulli(0.0001);
+    burglary := Bernoulli(0.001);
+    alarm := earthquake || burglary;
+
+    phoneWorking := 0;
+    if earthquake{
+        phoneWorking = Bernoulli(0.7);
+    }else{
+        phoneWorking = Bernoulli(0.99);
+    }
+
+    maryWakes := 0;
+    if alarm{
+        if earthquake{
+            maryWakes = Bernoulli(0.8);
+        }else{
+            maryWakes = Bernoulli(0.6);
+        }
+    }else{
+        maryWakes = Bernoulli(0.2);
+    }
+
+    called := maryWakes && phoneWorking;
+    observe(called);
+
+    return burglary; // expected: 2969983·δ[-burglary+1]·⅟992160802+989190819·δ[burglary]·⅟992160802
+}

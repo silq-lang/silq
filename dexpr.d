@@ -751,17 +751,6 @@ class DMult: DCommutAssocOp{
 					
 				}
 			}
-			if(facts){
-				// TODO: this does not actually combine all facts optimally
-				if(auto delta=cast(DDelta)e1){
-					auto simple=e2.simplify(dIvr(DIvr.Type.eqZ,delta.e)*facts);
-					if(simple !is e2) return e1*simple;
-				}
-				if(auto delta=cast(DDelta)e2){
-					auto simple=e1.simplify(dIvr(DIvr.Type.eqZ,delta.e)*facts);
-					if(simple !is e1) return simple*e2;
-				}
-			}
 			/+// TODO: do we want auto-distribution?
 			if(cast(DPlus)e1) return dDistributeMult(e1,e2);
 			if(cast(DPlus)e2) return dDistributeMult(e2,e1);+/
@@ -783,6 +772,7 @@ class DMult: DCommutAssocOp{
 	override DExpr simplifyImpl(DExpr facts){
 		DExprSet myFactors;
 		DExprSet myFacts;
+		foreach(f;this.factors) if(auto d=cast(DDelta)f) facts=facts*dIvr(DIvr.Type.eqZ,d.e);
 		foreach(f;this.factors){
 			if(cast(DIvr)f) insert(myFacts,f,facts);
 			else myFactors.insert(f);
@@ -1335,7 +1325,11 @@ class DIvr: DExpr{ // iverson brackets
 
 	static DExpr staticSimplify(Type type,DExpr e,DExpr facts=one){
 		auto ne=e.simplify(facts);
-		if(ne !is e) return dIvr(type,ne);
+		if(ne !is e){
+			auto r=dIvr(type,ne);
+			if(facts !is one) r=r.simplify(facts);
+			return r;
+		}
 		// TODO: make these check faster (also: less convoluted)
 		auto neg=negateDIvr(type,e);
 		bool foundLe=false, foundNeq=false;

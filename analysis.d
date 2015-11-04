@@ -164,8 +164,12 @@ private struct Analyzer{
 				}
 			}
 			if(auto le=cast(LiteralExp)e){
-				if(le.lit.type==Tok!"0")
-					return le.lit.int64.dℕ;
+				if(le.lit.type==Tok!"0"){
+					import std.string;
+					auto n=le.lit.str.split(".");
+					if(n.length==1) n~="";
+					return dℕ((n[0]~n[1]).ℕ)/(ℕ(10)^^n[1].length);
+				}
 			}
 			if(auto cmp=cast(CompoundExp)e){
 				if(cmp.s.length==1)

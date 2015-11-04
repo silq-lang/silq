@@ -59,7 +59,7 @@ int run(string path){
 	auto dist=analyze(fd,err);
 	import approximate;
 	//import hashtable; dist.distribution=approxLog(dist.freeVars.element);
-	dist.distribution=dist.distribution.killIntegrals();
+	// dist.distribution=dist.distribution.killIntegrals();
 	auto str=dist.toString();
 	//writeln((cast(DPlus)dist.distribution).summands.length);
 	if(str.length<10000) writeln(str);
@@ -312,6 +312,7 @@ void test(){
 	//writeln("∫dx(∫dy q(x,y))·[x=0]".dParse);
 	//writeln("[0.0=0]".dParse);
 	//writeln("(∫dξ₁[-ξ₁+3≠0]·[-ξ₁+3≤0]·⅟e^(3·ξ₁))".dParse.simplify(one));
+	writeln("[x=0]·δ[x]".dParse.simplify(one));
 }
 
 /*

@@ -79,20 +79,6 @@ static DExpr tryIntegrate(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DExpr i
 	static DExpr safeLog(DExpr e){ // TODO: ok?
 		return dLog(e)*dIvr(DIvr.Type.neqZ,e);
 	}
-	if(upper&&lower){
-		//writeln(lower," ",upper);
-		//writeln(lowLeUp());
-		if(nonIvrs is one) return lowLeUp()*(upper-lower);
-		if(auto poly=nonIvrs.asPolynomialIn(var)){ // TODO: this can be wasteful sometimes
-			DExprSet s;
-			foreach(i,coeff;poly.coefficients){
-				assert(i<size_t.max);
-				DPlus.insert(s,coeff*(upper^^(i+1)-lower^^(i+1))/(i+1));
-			}
-			return lowLeUp()*dPlus(s);
-		}
-		//if(1/nonIvrs is var){ return lowLeUp()*(safeLog(upper)-safeLog(lower)); }
-	}
 	if(auto p=cast(DPow)nonIvrs){
 		if(upper && lower){
 			if(p.operands[0] is var && !p.operands[1].hasFreeVar(var)){
@@ -115,6 +101,20 @@ static DExpr tryIntegrate(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DExpr i
 				}
 			}
 		}
+	}
+	if(upper&&lower){
+		//writeln(lower," ",upper);
+		//writeln(lowLeUp());
+		if(nonIvrs is one) return lowLeUp()*(upper-lower);
+		if(auto poly=nonIvrs.asPolynomialIn(var)){ // TODO: this can be wasteful sometimes
+			DExprSet s;
+			foreach(i,coeff;poly.coefficients){
+				assert(i<size_t.max);
+				DPlus.insert(s,coeff*(upper^^(i+1)-lower^^(i+1))/(i+1));
+			}
+			return lowLeUp()*dPlus(s);
+		}
+		//if(1/nonIvrs is var){ return lowLeUp()*(safeLog(upper)-safeLog(lower)); }
 	}
 	if(upper&&lower){
 		if(auto p=cast(DLog)nonIvrs){
