@@ -751,6 +751,17 @@ class DMult: DCommutAssocOp{
 					
 				}
 			}
+			if(facts){
+				// TODO: this does not actually combine all facts optimally
+				if(auto delta=cast(DDelta)e1){
+					auto simple=e2.simplify(dIvr(DIvr.Type.eqZ,delta.e)*facts);
+					if(simple !is e2) return e1*simple;
+				}
+				if(auto delta=cast(DDelta)e2){
+					auto simple=e1.simplify(dIvr(DIvr.Type.eqZ,delta.e)*facts);
+					if(simple !is e1) return simple*e2;
+				}
+			}
 			/+// TODO: do we want auto-distribution?
 			if(cast(DPlus)e1) return dDistributeMult(e1,e2);
 			if(cast(DPlus)e2) return dDistributeMult(e2,e1);+/
@@ -779,7 +790,7 @@ class DMult: DCommutAssocOp{
 		auto myFactsM=dMult(myFacts);
 		DExpr newFacts=facts*myFactsM;
 		DExprSet simpFactors;
-		foreach(f;myFactors) insert(simpFactors,f.simplify(newFacts));
+		foreach(f;myFactors) insert(simpFactors,f.simplify(newFacts),newFacts);
 		return dMult(simpFactors)*myFactsM;
 	}
 	static DExpr constructHook(DExprSet operands){
