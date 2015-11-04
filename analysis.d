@@ -159,6 +159,8 @@ private struct Analyzer{
 						return var;
 					default: break;
 					}
+					err.error("undefined function '"~id.name~"'",ce.loc);
+					unwind();
 				}
 			}
 			if(auto le=cast(LiteralExp)e){
