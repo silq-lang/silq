@@ -24,7 +24,7 @@ DExpr readSpline(string filename){
 		enforce(breaks.length==polys.length+1);
 		DExpr cur=zero;
 		foreach(i,p;polys)
-			cur=cur+dBounded!"[)"("x".dVar,breaks[i],breaks[i+1])*p;
+			cur=cur+dBounded!"[)"("x".dVar,breaks[i]+1e-20,breaks[i+1])*p;
 		r=r+dBounded!"[)"("x".dVar,a.dFloat,b.dFloat)*cur;
 	}
 	return r;
