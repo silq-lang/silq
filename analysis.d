@@ -137,6 +137,26 @@ private struct Analyzer{
 						auto var=dist.getTmpVar("__β");
 						dist.distribute(betaPDF(var,α,β));
 						return var;
+					case "Gamma":
+						if(ce.args.length!=2){
+							err.error("expected two arguments (α,β) to Gamma",ce.loc);
+							unwind();
+						}
+						auto α=doIt(ce.args[0]),β=doIt(ce.args[1]);
+						dist.assertTrue(dIvr(DIvr.Type.lZ,-α)*dIvr(DIvr.Type.lZ,-β),"α and β must be positive");
+						auto var=dist.getTmpVar("__γ");
+						dist.distribute(gammaPDF(var,α,β));
+						return var;						
+					case "Exp":
+						if(ce.args.length!=1){
+							err.error("expected one argument (λ) to Exp",ce.loc);
+							unwind();
+						}
+						auto λ=doIt(ce.args[0]);
+						dist.assertTrue(dIvr(DIvr.Type.lZ,-λ),"λ must be positive");
+						auto var=dist.getTmpVar("__e");
+						dist.distribute(expPDF(var,λ));
+						return var;
 					default: break;
 					}
 				}

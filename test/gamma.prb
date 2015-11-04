@@ -1,0 +1,5 @@
+def main(){
+    r := Gamma(9,1/2);
+    return r; // expected: [-1+r≤0]·[-r≤0]·r⁸·⅟(∫dξ₁[-1+ξ₁≤0]·[-ξ₁≤0]·ξ₁⁸·⅟e^(ξ₁·⅟2))·⅟e^(r·⅟2)
+    // TODO: get rid of the integral
+}

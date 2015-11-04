@@ -75,8 +75,11 @@ DExpr definiteIntegral(DVar var,DExpr expr)out(res){
 
 static DExpr tryIntegrate(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DExpr ivrs){
 	// TODO: add better approach for antiderivatives	
+	auto lowLeUp(){ return dIvr(DIvr.Type.leZ,lower-upper); }
+	static DExpr safeLog(DExpr e){ // TODO: ok?
+		return dLog(e)*dIvr(DIvr.Type.neqZ,e);
+	}
 	if(upper&&lower){
-		auto lowLeUp(){ return dIvr(DIvr.Type.leZ,lower-upper); }
 		//writeln(lower," ",upper);
 		//writeln(lowLeUp());
 		if(nonIvrs is one) return lowLeUp()*(upper-lower);
@@ -88,11 +91,10 @@ static DExpr tryIntegrate(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DExpr i
 			}
 			return lowLeUp()*dPlus(s);
 		}
-		static DExpr safeLog(DExpr e){ // TODO: ok?
-			return dLog(e)*dIvr(DIvr.Type.neqZ,e);
-		}
 		//if(1/nonIvrs is var){ return lowLeUp()*(safeLog(upper)-safeLog(lower)); }
-		if(auto p=cast(DPow)nonIvrs){
+	}
+	if(auto p=cast(DPow)nonIvrs){
+		if(upper && lower){
 			if(p.operands[0] is var && !p.operands[1].hasFreeVar(var)){
 				return lowLeUp()*
 					((safeLog(upper)-safeLog(lower))*
@@ -101,6 +103,20 @@ static DExpr tryIntegrate(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DExpr i
 					 dIvr(DIvr.Type.neqZ,p.operands[1]+1));
 			}
 		}
+		if(!p.operands[0].hasFreeVar(var)){
+			auto k=dLog(p.operands[0])*p.operands[1];
+			if(upper&&lower||dIvr(DIvr.Type.leZ,k).simplify(ivrs) is one){
+				// need to integrate e^^(k(x)).
+				auto dk=dDiff(var,k);
+				if(dk!is zero && !dk.hasFreeVar(var)){
+					return (upper&&lower?lowLeUp():one)*
+						((upper?dE^^k.substitute(var,upper):zero)
+						 -(lower?dE^^k.substitute(var,lower):zero))/dk;
+				}
+			}
+		}
+	}
+	if(upper&&lower){
 		if(auto p=cast(DLog)nonIvrs){
 			if(p.e is var){
 				static DExpr logIntegral(DExpr e){
@@ -110,7 +126,6 @@ static DExpr tryIntegrate(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DExpr i
 			}
 		}
 	}
-
 	DExpr gaussianIntegral(DVar v,DExpr e){
 		// detect e^^(-a*x^^2+b*x+c), and integrate to e^^(b^^2/4a+c)*(pi/a)^^(1/2).
 		// TODO: this assumes that a≥0!

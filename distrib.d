@@ -35,15 +35,19 @@ DExpr uniformIntPDF(DVar var,DExpr a,DExpr b){
 /+ TODO:
 DExpr poissonPDF(DVar var,DExpr λ){
 	
-}
-
-DExpr gammaPDF(DVar var,...){
-
 }+/
 
 DExpr betaPDF(DVar var,DExpr α,DExpr β){
 	auto nnorm=var^^(α-1)*(1-var)^^(β-1)*dBounded!"[]"(var,zero,one);
 	return nnorm/dInt(var,nnorm);
+}
+DExpr gammaPDF(DVar var,DExpr α,DExpr β){
+	auto nnorm=var^^(α-1)*dE^^(-β*var)*dBounded!"[]"(var,zero,one);
+	return nnorm/dInt(var,nnorm);
+}
+
+DExpr expPDF(DVar var,DExpr λ){
+	return λ*dE^^(-λ*var)*dIvr(DIvr.Type.leZ,-var);
 }
 
 
