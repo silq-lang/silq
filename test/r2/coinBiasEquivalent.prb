@@ -1,0 +1,34 @@
+
+/+// the identical thing would be:
+def main(){
+    observedResults := readCSV("data/CoinBias/tosses.csv");
+    bias := Beta.Sample(2, 5);
+    tossResults = array(5);
+    for i in 0..5 { tossResults[i] = Bernoulli(bias); }
+    observe(tossResults == observedResults);
+    return bias;
+}+/
+
+// our implementation already supports this example up to the following fidelity:
+
+def main(){
+    observedResults0 := 1;
+    observedResults1 := 1;
+    observedResults2 := 0;
+    observedResults3 := 1;
+    observedResults4 := 0;
+    bias := Beta(2,5);
+    tossResults0 := Bernoulli(bias);
+    tossResults1 := Bernoulli(bias);
+    tossResults2 := Bernoulli(bias);
+    tossResults3 := Bernoulli(bias);
+    tossResults4 := Bernoulli(bias);
+
+    observe(tossResults0 == observedResults0);
+    observe(tossResults1 == observedResults1);
+    observe(tossResults2 == observedResults2);
+    observe(tossResults3 == observedResults3);
+    observe(tossResults4 == observedResults4);
+
+    return bias;
+}
