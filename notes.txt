@@ -47,3 +47,16 @@ u=log²(z), v=log(z)
 = log³(z) - 2∫dz log²(z)/z
 
 → ∫dz log²(z)·1/z = log³(z)/3.
+
+
+Arrays:
+
+{ δ[n-3] }
+x := array(n)
+{ p(x) = [x∈ ⋆ⁿ]δ[n-3]·∏ᵢ[0≤i<n] δ[x[i]]
+k := UniformInt(0,n-1);
+{ p(x,k) = [x∈ ⋆ⁿ]δ[n-3]·(∏ᵢ[0≤i<n] δ[x[i]])·(∑ᵢ[0≤i<n]δ[k-i])/n }
+x[k] := 1;
+{ p(x,k) = [x∈ ⋆ⁿ]δ[n-3]·(∏ᵢ[0≤i<n ∧ i≠k] δ[x[i]]·δ[x[k]-1]·(∑ⱼ[0≤i<n]δ[k-j])/n }
+marginalize(k)
+{ p(x) = [x∈ ⋆ⁿ]δ[n-3]·(∑ⱼ[0≤j<n]·(∏ᵢ[0≤i<n ∧ i≠j] δ[x[i]])·δ[x[j]-1])/n }

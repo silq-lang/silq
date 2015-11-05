@@ -7,11 +7,16 @@
 - r2:
  common:
  + negations :o)
- + arrays (especially: eliminate spurious arrays automatically)
  + categorical sampling
- + read external data (?)
  + zero probabillity observations
+  - avoid Borel paradox
 
  (note: we need to partition the pdf in order to avoid blow-up of runtimes due to huge arrays with independent entries.)
  (note: the examples sometimes return arrays. r2 does not actually compute the joint distribution in those cases.)
  
+
+
+
+- general TODOs (not urgent):
+ + Full array support
+
