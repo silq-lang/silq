@@ -262,8 +262,27 @@ private struct Analyzer{
 		try return doIt(e);
 		catch(Unwind){ return null; }
 	}
-	Dℕ isDeterministicInteger(DExpr e){
+	DExpr isDeterministic(DExpr e){
 		if(auto num=cast(Dℕ)e) return num;
+		// TODO: this is a glorious hack:
+		auto ndist=dist.dup();
+		auto tmp=ndist.getVar("tmp");
+		ndist.distribute(dDelta(tmp-e));
+		foreach(v;dist.freeVars) ndist.marginalize(v);
+		foreach(f;ndist.distribution.factors)
+			if(!cast(DDelta)f&&!f.isFraction())
+				return null;
+		auto norm=dInt(tmp,ndist.distribution);
+		if(norm is zero || (!norm.isFraction()&&!cast(DFloat)norm))
+			return null;
+		auto r=dInt(tmp,tmp*ndist.distribution)/norm;
+		if(r.hasAny!DInt) return null;
+		return r;
+	}
+	
+	Dℕ isDeterministicInteger(DExpr e){
+		auto r=isDeterministic(e);
+		if(auto num=cast(Dℕ)r) return num;
 		return null;
 	}
 
@@ -285,7 +304,7 @@ private struct Analyzer{
 		if(auto index=transformExp(idx.a[0])){
 			auto cidx=isDeterministicInteger(index);
 			if(!cidx){
-				err.error("index expression should be integer constant",idx.a[0].loc);
+				err.error("index expression should be provably deterministic integer",idx.a[0].loc);
 				return null;
 			}
 			if(!(0<=cidx.c&&cidx.c<arr.length)){
@@ -305,7 +324,7 @@ private struct Analyzer{
 		if(!ae) return;
 		auto num=isDeterministicInteger(ae);
 		if(!num){
-			err.error("array length should be integer constant",call.loc);
+			err.error("array length should be provably deterministic integer",call.loc);
 			return;
 		}
 		if(num.c<0){
@@ -435,7 +454,7 @@ private struct Analyzer{
 							dist=dist.join(orig,dnext,zero); // TODO: why join?
 							if(err.nerrors>nerrors) break;
 						}
-					}else err.error("repeat expression should be integer constant",re.num.loc);
+					}else err.error("repeat expression should be provably deterministic integer",re.num.loc);
 				}
 			}else if(auto fe=cast(ForExp)e){
 				auto orig=dist.dup();
@@ -457,7 +476,7 @@ private struct Analyzer{
 							if(err.nerrors>nerrors) break;
 						}
 					}else{
-						err.error("for bounds should be integer constants",
+						err.error("for bounds should be provably deterministic integers",
 								  l?fe.right.loc:r?fe.left.loc:fe.left.loc.to(fe.right.loc));
 					}
 				}

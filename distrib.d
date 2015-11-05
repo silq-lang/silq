@@ -100,6 +100,7 @@ class Distribution{
 	DVar declareVar(string name,bool addtosymtab=true){
 		if(name in symtab) return null;
 		auto v=dVar(name);
+		if(v in freeVars) return null;
 		if(addtosymtab) symtab[name]=v;
 		freeVars.insert(v);
 		return v;
