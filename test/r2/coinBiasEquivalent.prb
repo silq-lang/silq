@@ -2,8 +2,8 @@
 /+// the identical thing would be:
 def main(){
     observedResults := readCSV("data/CoinBias/tosses.csv");
-    bias := Beta.Sample(2, 5);
-    tossResults = array(5);
+    bias := Beta(2, 5);
+    tossResults := array(5);
     for i in [0..5) { tossResults[i] = Bernoulli(bias); }
     observe(tossResults == observedResults);
     return bias;

@@ -1,0 +1,5 @@
+def main(){
+    i := 0;
+    for j in [1..10) { i += j; }
+    return i; // expected: δ[-i+45]
+}

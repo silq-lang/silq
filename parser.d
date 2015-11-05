@@ -455,6 +455,7 @@ struct Parser{
 			case Tok!"return": return parseReturn();
 			case Tok!"if": return parseIte();
 			case Tok!"repeat": return parseRepeat();
+			case Tok!"for": return parseFor();
 			case Tok!"assert": return parseAssert();
 			case Tok!"observe": return parseObserve();
 			default: break;
@@ -527,6 +528,22 @@ struct Parser{
 		auto num=parseExpression();
 		auto bdy=parseCompoundExp();
 		return res=New!RepeatExp(num,bdy);
+	}
+	ForExp parseFor(){
+		mixin(SetLoc!ForExp);
+		expect(Tok!"for");
+		auto var=parseIdentifier();
+		expect(Tok!"in");
+		bool leftExclusive=false,rightExclusive=false;
+		if(tok.type==Tok!"("){ leftExclusive=true; nextToken(); }
+		else expect(Tok!"[");
+		auto left=parseExpression();
+		expect(Tok!"..");
+		auto right=parseExpression();
+		if(tok.type==Tok!")"){ rightExclusive=true; nextToken(); }
+		else expect(Tok!"]");
+		auto bdy=parseCompoundExp();
+		return res=New!ForExp(var,leftExclusive,left,rightExclusive,right,bdy);
 	}
 	AssertExp parseAssert(){
 		mixin(SetLoc!AssertExp);

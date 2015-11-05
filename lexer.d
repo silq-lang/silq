@@ -115,7 +115,7 @@ string[2][] specialTokens =
 	 ["EOF",   "Eof"                       ]];
 string[2][] compoundTokens = [];
 
-string[] keywords = ["def","true","false","if","else","observe","assert","return","repeat"];
+string[] keywords = ["def","true","false","if","else","observe","assert","return","repeat","for","in"];
 
 
 string[2][] tokens = specialTokens ~ complexTokens ~ simpleTokens ~ compoundTokens ~ keywordTokens();
@@ -804,7 +804,7 @@ private:
 	private Token lexNumber(ref immutable(char)* p){
 		auto s=p;
 		while('0'<=*p && *p<='9') p++;
-		if(*p=='.'){ p++; while('0'<=*p && *p<='9') p++; }
+		if(*p=='.'&&*(p+1)!='.'){ p++; while('0'<=*p && *p<='9') p++; }
 		Token r;
 		r.type=Tok!"0";
 		r.str=s[0..p-s];
@@ -896,9 +896,11 @@ TokenType isKeyword(string s){
 	switch(s.length){
 		case 2:
 			if(s=="if") return Tok!"if";
+			if(s=="in") return Tok!"in";
 			break;
 		case 3:
 			if(s=="def") return Tok!"def";
+			if(s=="for") return Tok!"for";
 			break;
 		case 4:
 			if(s=="true") return Tok!"true";

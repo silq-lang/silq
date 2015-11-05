@@ -301,6 +301,30 @@ private struct Analyzer{
 						}
 					}else err.error("repeat expression should be integer constant",re.num.loc);
 				}
+			}else if(auto fe=cast(ForExp)e){
+				auto orig=dist.dup();
+				auto lexp=transformExp(fe.left), rexp=transformExp(fe.right);
+				if(lexp&&rexp){
+					auto l=cast(Dℕ)lexp, r=cast(Dℕ)rexp;
+					if(l&&r){
+						int nerrors=err.nerrors;
+						for(ℕ j=l.c+cast(int)fe.leftExclusive;j+cast(int)fe.rightExclusive<=r.c;j++){
+							auto cdist=dist.dup();
+							if(auto var=cdist.declareVar(fe.var.name)){
+								cdist.initialize(var,dℕ(j));
+							}else{
+								err.error("variable already exists",fe.var.loc);
+								break;
+							}
+							auto dnext=Analyzer(cdist,err).analyze(fe.bdy);
+							dist=dist.join(orig,dnext,zero); // TODO: why join?
+							if(err.nerrors>nerrors) break;
+						}
+					}else{
+						err.error("for bounds should be integer constants",
+								  l?fe.right.loc:r?fe.left.loc:fe.left.loc.to(fe.right.loc));
+					}
+				}
 			}else if(auto re=cast(ReturnExp)e){
 				if(isMethodBody&&i+1==ce.s.length){
 					Expression[] returns;

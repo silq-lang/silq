@@ -123,6 +123,25 @@ class RepeatExp: Expression{
 	override bool isCompound(){ return true; }
 }
 
+class ForExp: Expression{
+	Identifier var;
+	bool leftExclusive;
+	Expression left;
+	bool rightExclusive;
+	Expression right;
+	CompoundExp bdy;
+	this(Identifier var,bool leftExclusive,Expression left,bool rightExclusive,Expression right,CompoundExp bdy){
+		this.var=var;
+		this.leftExclusive=leftExclusive; this.left=left;
+		this.rightExclusive=rightExclusive; this.right=right;
+		this.bdy=bdy;
+	}
+	override string toString(){ return _brk("for "~var.toString()~" in "~
+											(leftExclusive?"(":"[")~left.toString()~".."~right.toString()~
+											(rightExclusive?")":"]")~bdy.toString()); }
+	override bool isCompound(){ return true; }
+}
+
 class CompoundExp: Expression{
 	Expression[] s;
 	this(Expression[] ss){s=ss;}
