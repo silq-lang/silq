@@ -1,0 +1,4 @@
+def main(){
+    a := array(7);
+    for i in [0..7){ a[i]=i; }
+}

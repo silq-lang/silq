@@ -1,4 +1,4 @@
-import std.stdio;
+import std.stdio, std.conv, std.format, std.string, std.range, std.algorithm;
 
 import lexer, expression, error;
 import distrib, dexpr, util;
@@ -27,17 +27,20 @@ Distribution[string] summaries;
 private struct Analyzer{
 	Distribution dist;
 	ErrorHandler err;
+	DExpr[][string] arrays;
 	DExpr transformExp(Exp e){
 		class Unwind: Exception{ this(){ super(""); } }
 		void unwind(){ throw new Unwind(); }
 		DExpr doIt(Exp e){
 			if(auto id=cast(Identifier)e){
-				auto v=dist.lookupVar(id.name);
-				if(!v){
+				if(auto v=dist.lookupVar(id.name))
+					return v;
+				if(id.name in arrays){
+					err.error("missing array index",id.loc);
+				}else{
 					err.error("undefined variable '"~id.name~"'",id.loc);
-					unwind();
 				}
-				return v;
+				unwind();
 			}
 			if(auto ae=cast(AddExp)e) return doIt(ae.e1)+doIt(ae.e2);
 			if(auto me=cast(SubExp)e) return doIt(me.e1)-doIt(me.e2);
@@ -69,7 +72,6 @@ private struct Analyzer{
 							unwind();
 						}
 						if(ce.args.length != fun.args.length){
-							import std.format;
 							err.error(format("expected %s arguments to '%s', received %s",fun.args.length,id.name,ce.args.length),ce.loc);
 							unwind();
 						}
@@ -84,6 +86,9 @@ private struct Analyzer{
 						return dist.call(summary,args);
 					}
 					switch(id.name){
+					case "array","readCSV":
+						err.error(text("call to '"~id.name~"' only supported as the right hand side of an assignment"),ce.loc);
+						unwind();
 					case "Gauss":
 						if(ce.args.length!=2){
 							err.error("expected two arguments (μ,σ²) to Gauss",ce.loc);
@@ -163,9 +168,13 @@ private struct Analyzer{
 					unwind();
 				}
 			}
+			if(auto idx=cast(IndexExp)e){
+				auto r=indexArray(idx);
+				if(r) return r;
+				unwind();
+			}
 			if(auto le=cast(LiteralExp)e){
 				if(le.lit.type==Tok!"0"){
-					import std.string;
 					auto n=le.lit.str.split(".");
 					if(n.length==1) n~="";
 					return dℕ((n[0]~n[1]).ℕ)/(ℕ(10)^^n[1].length);
@@ -253,6 +262,102 @@ private struct Analyzer{
 		try return doIt(e);
 		catch(Unwind){ return null; }
 	}
+	Dℕ isDeterministicInteger(DExpr e){
+		if(auto num=cast(Dℕ)e) return num;
+		return null;
+	}
+
+	DExpr indexArray(IndexExp idx){
+		if(idx.a.length!=1){
+			err.error("multidimensional arrays not supported",idx.loc);
+			return null;
+		}
+		auto id=cast(Identifier)idx.e;
+		if(!id){
+			err.error("indexed expression should be identifier",idx.e.loc);
+			return null;
+		}
+		if(id.name !in arrays){
+			err.error("undefined variable '"~id.name~"'",id.loc);
+			return null;
+		}
+		auto arr=arrays[id.name];
+		if(auto index=transformExp(idx.a[0])){
+			auto cidx=isDeterministicInteger(index);
+			if(!cidx){
+				err.error("index expression should be integer constant",idx.a[0].loc);
+				return null;
+			}
+			if(!(0<=cidx.c&&cidx.c<arr.length)){
+				err.error(text("index ",cidx.c," is outside array bounds [0..",arr.length,")"),idx.loc);
+				return null;
+			}
+			return arr[cidx.c.toLong()];
+		}else return null;
+	}
+
+	void evaluateArrayCall(Identifier id,CallExp call){
+		if(call.args.length!=1){
+			err.error("multidimensional arrays not supported",call.loc);
+			return;
+		}
+		auto ae=transformExp(call.args[0]);
+		if(!ae) return;
+		auto num=isDeterministicInteger(ae);
+		if(!num){
+			err.error("array length should be integer constant",call.loc);
+			return;
+		}
+		if(num.c<0){
+			err.error("array length should be non-negative",call.loc);
+			return;
+		}
+		if(num.c>int.max){
+			err.error("array length too high",call.loc);
+			return;
+		}
+		if(id.name in arrays){
+			err.error("array already exists",id.loc);
+			return;
+		}
+		foreach(k;0..num.c.toLong()){
+			auto var=dist.getVar(id.name);
+			dist.distribute(dDelta(var));
+			arrays[id.name]~=var;
+		}		
+	}
+
+	void evaluateReadCSVCall(Identifier id,CallExp call){
+		if(call.args.length!=1){
+			err.error("expected one argument (filename) to 'readCSV'",call.loc);
+			return;
+		}
+		auto lit=cast(LiteralExp)call.args[0];
+		if(!lit||lit.lit.type != Tok!"``"){
+			err.error("argument to 'readCSV' must be string constant",call.args[0].loc);
+			return;
+		}
+		auto filename=lit.lit.str;
+		import std.path, std.file;
+		auto path=buildPath(dirName(thisExePath),filename);
+		File f;
+		try{
+			f=File(path,"r");
+		}catch{
+			err.error(text(`could not open file "`,path,`"`),call.loc);
+			return;
+		}
+		try{
+			auto arr=f.readln().strip().split(",").map!(x=>cast(DExpr)ℕ(x).dℕ).array;
+			import std.exception;
+			enforce(f.eof);
+			arrays[id.name]=arr;
+		}catch{
+			err.error(text("not a comma-separated list of integers: `",path,"`"),call.loc);
+			return;
+		}
+	}
+
 	Distribution analyze(CompoundExp ce,bool isMethodBody=false)in{assert(!!ce);}body{
 		foreach(i,e;ce.s){
 			/+writeln("statement: ",e);
@@ -261,17 +366,48 @@ private struct Analyzer{
 			// TODO: visitor?
 			if(auto de=cast(DefExp)e){
 				if(auto id=cast(Identifier)de.e1){
-					auto rhs=transformExp(de.e2);
-					if(auto var=dist.declareVar(id.name)){
-						dist.initialize(var,rhs?rhs:zero);
-					}else err.error("variable already exists",id.loc);
+					bool isSpecial=false;
+					if(auto call=cast(CallExp)de.e2){
+						if(auto cid=cast(Identifier)call.e){
+							switch(cid.name){
+							case "array":
+								isSpecial=true;
+								evaluateArrayCall(id,call);
+								break;
+							case "readCSV":
+								isSpecial=true;
+								evaluateReadCSVCall(id,call);
+								break;
+							default: break;
+							}
+						}
+					}
+					if(!isSpecial){
+						auto rhs=transformExp(de.e2);
+						DVar var=null;
+						if(id.name !in arrays) var=dist.declareVar(id.name);
+						if(var){
+							dist.initialize(var,rhs?rhs:zero);
+						}else err.error("variable already exists",id.loc);
+					}
 				}else err.error("left hand side of definition should be identifier",de.e1.loc);
 			}else if(auto ae=cast(AssignExp)e){
 				if(auto id=cast(Identifier)ae.e1){
-					if(auto v=dist.lookupVar(id.name)){
-						auto rhs=transformExp(ae.e2);
-						dist.assign(v,rhs?rhs:zero);
-					}else err.error("undefined variable '"~id.name~"'",id.loc);
+					if(id.name !in arrays){
+						if(auto v=dist.lookupVar(id.name)){
+							auto rhs=transformExp(ae.e2);
+							dist.assign(v,rhs?rhs:zero);
+						}else err.error("undefined variable '"~id.name~"'",id.loc);
+					}else err.error("reassigning array unsupported",e.loc);
+				}else if(auto idx=cast(IndexExp)ae.e1){
+					if(auto cidx=indexArray(idx)){
+						if(auto v=cast(DVar)cidx){
+							auto rhs=transformExp(ae.e2);
+							dist.assign(v,rhs?rhs:zero);
+						}else{
+							err.error(text("array is not writeable"),ae.loc);
+						}
+					}
 				}else err.error("left hand side of assignment should be identifier",ae.e1.loc);
 			}else if(auto ite=cast(IteExp)e){
 				if(auto c=transformConstr(ite.cond)){
@@ -283,19 +419,19 @@ private struct Analyzer{
 						ws~=w;
 						nc=nc.substitute(v,w);
 					}
-					auto dthen=Analyzer(dist.dup(),err).analyze(ite.then);
+					auto dthen=Analyzer(dist.dup(),err,arrays.dup).analyze(ite.then);
 					auto dothw=dist.dup();
-					if(ite.othw) dothw=Analyzer(dothw,err).analyze(ite.othw);
+					if(ite.othw) dothw=Analyzer(dothw,err,arrays.dup).analyze(ite.othw);
 					dist=dthen.join(dist,dothw,nc);
 					foreach(w;ws) dist.marginalize(w);
 				}
 			}else if(auto re=cast(RepeatExp)e){
 				if(auto exp=transformExp(re.num)){
 					auto orig=dist.dup();
-					if(auto num=cast(Dℕ)exp){
+					if(auto num=isDeterministicInteger(exp)){
 						int nerrors=err.nerrors;
 						for(ℕ j=0;j<num.c;j++){
-							auto dnext=Analyzer(dist.dup(),err).analyze(re.bdy);
+							auto dnext=Analyzer(dist.dup(),err,arrays.dup).analyze(re.bdy);
 							dist=dist.join(orig,dnext,zero); // TODO: why join?
 							if(err.nerrors>nerrors) break;
 						}
@@ -305,7 +441,7 @@ private struct Analyzer{
 				auto orig=dist.dup();
 				auto lexp=transformExp(fe.left), rexp=transformExp(fe.right);
 				if(lexp&&rexp){
-					auto l=cast(Dℕ)lexp, r=cast(Dℕ)rexp;
+					auto l=isDeterministicInteger(lexp), r=isDeterministicInteger(rexp);
 					if(l&&r){
 						int nerrors=err.nerrors;
 						for(ℕ j=l.c+cast(int)fe.leftExclusive;j+cast(int)fe.rightExclusive<=r.c;j++){
@@ -316,7 +452,7 @@ private struct Analyzer{
 								err.error("variable already exists",fe.var.loc);
 								break;
 							}
-							auto dnext=Analyzer(cdist,err).analyze(fe.bdy);
+							auto dnext=Analyzer(cdist,err,arrays.dup).analyze(fe.bdy);
 							dist=dist.join(orig,dnext,zero); // TODO: why join?
 							if(err.nerrors>nerrors) break;
 						}
