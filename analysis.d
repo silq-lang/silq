@@ -79,7 +79,7 @@ private struct Analyzer{
 						foreach(i,arg;ce.args){
 							if(auto a=doIt(arg)){
 								auto var=dist.getTmpVar("__arg");
-								dist.distribute(dDelta(a-var));
+								dist.distribute(dDelta(var-a));
 								args~=var;
 							}else unwind();
 						}
@@ -212,10 +212,6 @@ private struct Analyzer{
 			}else if(auto b=cast(OrExp)e){
 				auto e1=doIt(b.e1), e2=doIt(b.e2);
 				return 1-(1-e1)*(1-e2);
-			}else if(auto id=cast(Identifier)e){
-				auto cond=transformExp(e);
-				if(!cond) unwind();
-				return dIvr(DIvr.Type.neqZ,cond);
 			}else with(DIvr.Type)if(auto b=cast(LtExp)e){
 				mixin(common);
 				return dIvr(lZ,e1-e2);
@@ -239,22 +235,10 @@ private struct Analyzer{
 					if(le.lit.int64==0||le.lit.int64==1)
 						return le.lit.int64.dℕ;
 				}
-			}else if(auto ce=cast(CallExp)e){
-				if(auto id=cast(Identifier)ce.e){
-					switch(id.name){
-					case "Bernoulli":
-						if(ce.args.length!=1){
-							err.error("expected one argument (p) to Bernoulli",ce.loc);
-							unwind();
-						}
-						auto p=transformExp(ce.args[0]);
-						if(!p) throw new Unwind();
-						auto var=dist.getTmpVar("__b");
-						dist.distribute(bernoulliPDF(var,p));
-						return var;
-					default: break;
-					}
-				}
+			}else{
+				auto cond=transformExp(e);
+				if(!cond) unwind();
+				return dIvr(DIvr.Type.neqZ,cond);
 			}
 			err.error("unsupported",e.loc);
 			throw new Unwind();
@@ -267,15 +251,16 @@ private struct Analyzer{
 		// TODO: this is a glorious hack:
 		auto ndist=dist.dup();
 		auto tmp=ndist.getVar("tmp");
-		ndist.distribute(dDelta(tmp-e));
+		ndist.initialize(tmp,e);
 		foreach(v;dist.freeVars) ndist.marginalize(v);
+		ndist.simplify();
 		foreach(f;ndist.distribution.factors)
 			if(!cast(DDelta)f&&!f.isFraction())
 				return null;
 		auto norm=dInt(tmp,ndist.distribution);
 		if(norm is zero || (!norm.isFraction()&&!cast(DFloat)norm))
 			return null;
-		auto r=dInt(tmp,tmp*ndist.distribution)/norm;
+		auto r=(dInt(tmp,tmp*ndist.distribution)/norm).simplify(one);
 		if(r.hasAny!DInt) return null;
 		return r;
 	}
@@ -341,7 +326,7 @@ private struct Analyzer{
 		}
 		foreach(k;0..num.c.toLong()){
 			auto var=dist.getVar(id.name);
-			dist.distribute(dDelta(var));
+			dist.initialize(var,zero);
 			arrays[id.name]~=var;
 		}		
 	}
@@ -488,12 +473,21 @@ private struct Analyzer{
 					import hashtable;
 					SetX!DVar vars;
 					foreach(ret;returns){
-						if(auto id=cast(Identifier)ret){
-							if(auto v=dist.lookupVar(id.name)){
-								vars.insert(v);
-								
-							}else err.error("undefined variable '"~id.name~"'",id.loc);
-						}else err.error("only variables supported as return expressions",ret.loc); // TODO: this is a huge hack.
+						auto exp=transformExp(ret);
+						DVar var;
+						if(auto vv=cast(DVar)exp){
+							var=vv;
+							if(var in vars){
+								vv=dist.getVar(var.name);
+								dist.initialize(vv,var);
+								var=vv;
+							}
+							vars.insert(var);
+						}else if(exp){
+							auto r=dist.getVar("r");
+							dist.initialize(r,exp);
+						}
+						// TODO: variable ordering
 					}
 					foreach(w;dist.freeVars.setMinus(vars)){
 						dist.marginalize(w);
