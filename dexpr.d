@@ -512,20 +512,27 @@ class DPlus: DCommutAssocOp{
 		return null;
 	}
 
+	// returns [common,e1only,e2only] such that e1=common*e1only, e2=common*e2only
+	static DExpr[3] splitCommonFactors(DExpr e1,DExpr e2){
+		auto common=intersect(e1.factors.setx,e2.factors.setx); // TODO: optimize?
+		if(!common.length) return [one,e1,e2];
+		auto e1only=e1.factors.setx.setMinus(common);
+		auto e2only=e2.factors.setx.setMinus(common);
+		return [dMult(common),dMult(e1only),dMult(e2only)];
+	}
+
 	static DExpr recursiveCombine(DExpr e1, DExpr e2,DExpr facts){
-			auto common=intersect(e1.factors.setx,e2.factors.setx); // TODO: optimize?
-			if(common.length){
-				auto cm=dMult(common);
-				if(!cm.isFraction()){
-					auto sum1=dMult(e1.factors.setx.setMinus(cm.factors.setx));
-					auto sum2=dMult(e2.factors.setx.setMinus(cm.factors.setx));
-					auto sum=(sum1+sum2).simplify(facts);
-					auto summands=sum.summands.setx; // TODO: improve performance!
-					if(sum1!in summands||sum2!in summands)
-						return sum*cm;
-				}
+		auto splt=splitCommonFactors(e1,e2);
+		auto common=splt[0],sum1=splt[1],sum2=splt[2];
+		if(common !is one){
+			if(!common.isFraction()){
+				auto sum=(sum1+sum2).simplify(facts);
+				auto summands=sum.summands.setx; // TODO: improve performance!
+				if(sum1!in summands||sum2!in summands)
+					return sum*common;
 			}
-			return null;
+		}
+		return null;
 	}
 
 	override DExpr simplifyImpl(DExpr facts){

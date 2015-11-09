@@ -72,3 +72,8 @@ error function integration:
 
              u            v'                u            v           u'      v
 ∫dx (d/dx)⁻¹[e^(-x²)](g(x))·f(x) = (d/dx)⁻¹[e^(-x²)](g(x))·∫dx f(x) - ∫dx g'(x)e^(-g(x)²)·f(x)
+
+
+2^(1/2)+2^(3/2) = 2^(1/2)(1+2)
+2^(3/2)-2^(1/2) = 2^(1/2)(2-1)
+
