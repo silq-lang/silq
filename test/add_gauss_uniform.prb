@@ -3,5 +3,5 @@ def main(){
     x := Gauss(0,1);
     y := Uniform(0,1);
     z := x+y;
-    return z; // expected: TODO: get rid of the integral
+    return z; // expected: (((d/dx)⁻¹[e^(-x²)](-z·⅟√2̅+⅟√2̅))·e^(z²·⅟2)·√2̅+-((d/dx)⁻¹[e^(-x²)](-z·⅟√2̅))·e^(z²·⅟2)·√2̅)·⅟e^(z²·⅟2)·⅟√2̅·⅟√π̅
 }

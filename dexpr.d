@@ -45,6 +45,7 @@ enum Precedence{
 	intg,
 	diff,
 	mult,
+	div,
 	pow,
 	invalid,
 }
@@ -685,20 +686,34 @@ class DMult: DCommutAssocOp{
 			}
 
 			if(auto r=combineFloat(e1,e2)) return r;
-
 			if(cast(DPow)e2) swap(e1,e2);
 			if(auto p=cast(DPow)e1){
-				if(p.operands[0] is e2)
-					return p.operands[0]^^(p.operands[1]+1);
+				static bool testValid(DExpr e1,DExpr e2){
+					e1=e1.simplify(one); e2=e2.simplify(one);
+					if(e1.isFraction&&e2.isFraction()){
+						auto nd=e2.getFraction();
+						if(nd[0]%nd[1]!=0&&abs(nd[0])>abs(nd[1])){
+							return false;
+						}
+					}
+					return true;
+				}
+
+				if(p.operands[0] is e2){
+					if(!cast(Dℕ)e2 && testValid(p.operands[0],p.operands[1]+1))
+						return p.operands[0]^^(p.operands[1]+1);
+				}
 				if(auto d=cast(Dℕ)p.operands[0]){
 					if(auto e=cast(Dℕ)e2){
-						if(d.c==-e.c)
+						if(d.c==-e.c && testValid(-d,p.operands[1]+1))
 							return -d^^(p.operands[1]+1);
 					}
 				}
 				if(auto pf=cast(DPow)e2){
-					if(p.operands[0] is pf.operands[0])
-						return p.operands[0]^^(p.operands[1]+pf.operands[1]);
+					if(p.operands[0] is pf.operands[0]){
+						if(testValid(p.operands[0],p.operands[1]+pf.operands[1]))
+							return p.operands[0]^^(p.operands[1]+pf.operands[1]);
+					}
 					static DExpr tryCombine(DExpr a,DExpr b){
 						DExprSet s;
 						DMult.insert(s,a);
@@ -896,7 +911,7 @@ class DPow: DBinaryOp{
 		auto frc=operands[1].getFractionalFactor().getFraction();
 		if(frc[0]<0){
 			enum pre=formatting==Format.matlab?"1./":formatting==Format.maple?"1/":"⅟";
-			return addp(prec,pre~(operands[0]^^-operands[1]).toStringImpl(Precedence.mult),Precedence.mult);
+			return addp(prec,pre~(operands[0]^^-operands[1]).toStringImpl(Precedence.div),Precedence.div);
 		}
 			// also nice, but often hard to read: ½⅓¼⅕⅙
 		static if(formatting==Format.default_){		
@@ -973,7 +988,18 @@ class DPow: DBinaryOp{
 					return r^^(e2/f);
 			}
 		}
-		if(cast(DPlus)e1) return expandPow(e1,e2);
+		if(cast(DPlus)e1){
+			if(auto r=expandPow(e1,e2))
+				return r;
+		}
+
+		if(e1.isFraction()&&e2.isFraction()){
+			auto nd=e2.getFraction();
+			if(nd[0]%nd[1]!=0&&abs(nd[0])>abs(nd[1])){
+				auto wh=nd[0]/nd[1];
+				return (e1^^wh).simplify(facts)*(e1^^(e2-wh).simplify(facts));
+			}
+		}
 
 		if(auto f1=cast(DFloat)e1){
 			if(auto f2=cast(DFloat)e2)
@@ -989,7 +1015,6 @@ class DPow: DBinaryOp{
 				return ((toDouble(nd[0])/toDouble(nd[1]))^^f2.c).dFloat;
 			}
 		}
-
 		return null;
 	}
 
