@@ -315,6 +315,7 @@ void test(){
 	//writeln("[x=0]·δ[x]".dParse.simplify(one));
 	//import approximate;
 	//writeln("∫dx log(x)·1/x·[-x<0]·[x+-y≤0]".dParse.simplify(one).killIntegrals().simplify(one));
+	writeln("(∫dx((d/dx)⁻¹[e^(-x²)](-10·⅟3·√3̅0̅+x·⅟√3̅0̅))·e^(-x²·⅟30+20·x·⅟3))".dParse.simplify(one));
 }
 
 /*

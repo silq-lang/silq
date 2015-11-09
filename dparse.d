@@ -68,6 +68,14 @@ DExpr dParse(string s){ // TODO: this is work in progress, usually updated in or
 			return dLog(e);
 		}
 
+		DExpr parseGaussInt()in{assert(code.startsWith("(d/dx)⁻¹[e^(-x²)]"));}body{
+			code=code["(d/dx)⁻¹[e^(-x²)]".length..$];
+			expect('(');
+			auto e=parseDExpr();
+			expect(')');
+			return dGaussInt(e);
+		}
+
 		DExpr parseDInt(){
 			expect('∫');
 			expect('d');
@@ -125,6 +133,7 @@ DExpr dParse(string s){ // TODO: this is work in progress, usually updated in or
 		}
 
 		DExpr parseBase(){
+			if(code.startsWith("(d/dx)⁻¹[e^(-x²)]")) return parseGaussInt();
 			if(cur()=='('){
 				next();
 				auto r=parseDExpr();

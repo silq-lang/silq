@@ -1646,6 +1646,7 @@ class DInt: DOp{
 	}
 	static DExpr constructHook(DVar var,DExpr expr){
 		return staticSimplify(var,expr);
+		//return null; // TODO: introduce this
 	}
 
 	version(INTEGRAL_STATS){
@@ -2087,36 +2088,32 @@ DExpr dCeil(DExpr e){ return uniqueDExprUnary!DCeil(e); }
 
 
 class DGaussInt: DOp{
-	int deg;
 	DExpr x;
-	this(int deg,DExpr x){ this.deg=deg; this.x=x; }
-	override @property string symbol(){ return "(d/dx)"~highNum(-deg)~"[e^(-x²)]"; }
+	this(DExpr x){ this.x=x; }
+	override @property string symbol(){ return "(d/dx)⁻¹[e^(-x²)]"; }
 	override Precedence precedence(){ return Precedence.diff; }
 	override string toStringImpl(Precedence prec){
 		return addp(prec,symbol~"("~x.toString()~")");
 	}
 
-	static DExpr constructHook(int deg,DExpr x){
-		return staticSimplify(deg,x);
+	static DExpr constructHook(DExpr x){
+		return staticSimplify(x);
 	}
-	static DExpr staticSimplify(int deg,DExpr x,DExpr facts=one){
-		if(deg==0) return dE^^(-x^^2);
-		if(deg==1){ // TODO: higher degrees
-			if(x is dInf){
-				return dΠ^^(one/2);
-			}else if(x is -dInf){
-				return zero;
-			}
-			if(x is zero){
-				return dΠ^^(one/2)/2;
-			}
+	static DExpr staticSimplify(DExpr x,DExpr facts=one){
+		if(x is dInf){
+			return dΠ^^(one/2);
+		}else if(x is -dInf){
+			return zero;
+		}
+		if(x is zero){
+			return dΠ^^(one/2)/2;
 		}
 		auto nx=x.simplify(facts);
-		if(nx !is x) return dGaussInt(deg,nx);
+		if(nx !is x) return dGaussInt(nx);
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){
-		auto r=staticSimplify(deg,x);
+		auto r=staticSimplify(x);
 		return r?r:this;
 	}
 
@@ -2127,28 +2124,18 @@ class DGaussInt: DOp{
 	}
 	override DExpr substitute(DVar var,DExpr exp){
 		auto nx=x.substitute(var,exp);
-		return dGaussInt(deg,nx);
+		return dGaussInt(nx);
 	}
 	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args){
 		auto nx=x.substituteFun(fun,q,args);
-		return dGaussInt(deg,nx);
+		return dGaussInt(nx);
 	}
 	override DExpr incDeBruin(int di){
-		return dGaussInt(deg,x.incDeBruin(di));
+		return dGaussInt(x.incDeBruin(di));
 	}
 }
 
-MapX!(TupleX!(typeof(typeid(DExpr)),int,DExpr),DExpr) uniqueMapIntUnary;
-auto uniqueDExprIntUnary(T)(int k,DExpr a){
-	if(auto r=T.constructHook(k,a)) return r;
-	auto t=tuplex(typeid(T),k,a);
-	if(t in uniqueMapIntUnary) return cast(T)uniqueMapIntUnary[t];
-	auto r=new T(k,a);
-	uniqueMapIntUnary[t]=r;
-	return r;
-}
-
-auto dGaussInt(int deg,DExpr x){ return uniqueDExprIntUnary!DGaussInt(deg,x); }
+auto dGaussInt(DExpr x){ return uniqueDExprUnary!DGaussInt(x); }
 
 class DInf: DExpr{ // TODO: explicit limits?
 	override string toStringImpl(Precedence prec){ return "∞"; }

@@ -60,3 +60,15 @@ x[k] := 1;
 { p(x,k) = [x∈ ⋆ⁿ]δ[n-3]·(∏ᵢ[0≤i<n ∧ i≠k] δ[x[i]]·δ[x[k]-1]·(∑ⱼ[0≤i<n]δ[k-j])/n }
 marginalize(k)
 { p(x) = [x∈ ⋆ⁿ]δ[n-3]·(∑ⱼ[0≤j<n]·(∏ᵢ[0≤i<n ∧ i≠j] δ[x[i]])·δ[x[j]-1])/n }
+
+
+
+error function integration:
+            u            v'             u         v        u'     v
+∫dx (d/dx)⁻¹[e^(-x²)](x)·1 = (d/dx)⁻¹[e^(-x²)](x)·x - ∫dx e^(-x²)·x
+    			   = (d/dx)⁻¹[e^(-x²)](x)·x - e^(-x²)/2
+
+
+
+             u            v'                u            v           u'      v
+∫dx (d/dx)⁻¹[e^(-x²)](g(x))·f(x) = (d/dx)⁻¹[e^(-x²)](g(x))·∫dx f(x) - ∫dx g'(x)e^(-g(x)²)·f(x)

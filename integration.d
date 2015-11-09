@@ -137,7 +137,8 @@ static DExpr tryIntegrate(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DExpr i
 		if(q.coefficients.length!=3) return null;
 		auto qc=q.coefficients;
 		auto a=-qc[2],b=qc[1],c=qc[0];
-		if(a is zero) return null;
+		// if(couldBeZero(a)) return null; // TODO: this is what should be done!
+		if(a is null) return null; // TODO: it could still be zero!
 		// -a(x-b/2a)²=-ax²+bx-b²/4a
 		// -ax²+bx+c =-a(x-b/2a)²+b²/4a+c
 		// -ax²+bx+c =-(√(a)x-b/2√a)²+b²/4a+c
@@ -159,10 +160,48 @@ static DExpr tryIntegrate(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DExpr i
 				auto sqrta=a^^(one/2);
 				return sqrta*x-b/(2*sqrta);
 			}
-			return fac*lowLeUp()*(dGaussInt(1,transform(up))-dGaussInt(1,transform(lo)));
+			return fac*lowLeUp()*(dGaussInt(transform(up))-dGaussInt(transform(lo)));
 		}
 	}
 	if(auto r=gaussianIntegral(var,nonIvrs)) return r;
+	// TODO: this is just a list of special cases. Generalize!
+	DExpr doubleGaussIntegral(DVar var,DExpr e){
+		if(!upper) return null;
+		auto up=upper,lo=lower?lower:-dInf;
+		auto gi=cast(DGaussInt)e;
+		if(!gi) return null;
+		auto q=gi.x.asPolynomialIn(var,1);
+		if(!q.initialized) return null;
+		auto a=q.coefficients[1],b=q.coefficients[0];
+		if(a is zero) return null;
+		static DExpr primitive(DExpr e){
+			if(e is -dInf) return zero;
+			return dGaussInt(e)*e-dE^^(-e^^2);
+		}
+		DExpr transform(DExpr x){
+			return x/a-b;
+		}
+		auto fac=one/a;
+		return fac*lowLeUp()*(primitive(transform(up))-primitive(transform(lo)));
+		return null;
+	}
+	if(auto r=doubleGaussIntegral(var,nonIvrs)) return r;
+	DExpr gaussIntTimesFunction(DVar var,DExpr e){ // TODO: support other functions
+		auto m=cast(DMult)e;
+		if(!m) return null;
+		DGaussInt gaussFact=null;
+		foreach(f;m.factors){
+			if(auto g=cast(DGaussInt)f){
+				gaussFact=g;
+				break;
+			}
+		}
+		if(!gaussFact) return null;
+		auto rest=m.withoutFactor(gaussFact);
+		dw(gaussFact," ",rest);
+		return null;
+	}
+	if(auto r=gaussIntTimesFunction(var,nonIvrs)) return r;
 	if(auto p=cast(DPlus)nonIvrs.polyNormalize(var)){
 		DExprSet works;
 		DExprSet doesNotWork;
