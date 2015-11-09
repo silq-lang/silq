@@ -134,6 +134,25 @@ private struct Analyzer{
 						auto var=dist.getTmpVar("__u");
 						dist.distribute(nnorm.substitute(tmp,var)/norm);
 						return var;
+					case "Categorical":
+						if(ce.args.length!=1){
+							err.error("expected one argument (ps) to Categorical",ce.loc);
+							unwind();
+						}
+						auto idd=cast(Identifier)ce.args[0];
+						if(!idd || idd.name !in arrays){
+							err.error("argument to Categorical should be an array",ce.loc);
+							unwind();
+						}
+						DExpr sum=zero;
+						auto array=arrays[idd.name];
+						foreach(x;array) sum=sum+x;
+						dist.assertTrue(dIvr(DIvr.Type.eqZ,sum-1),"probabilities should sum up to 1");
+						DExpr d=zero;
+						auto var=dist.getTmpVar("__c");
+						foreach(i,x;array) d=d+x*dDelta(var-i);
+						dist.distribute(d);
+						return var;
 					case "Beta":
 						if(ce.args.length!=2){
 							err.error("expected two arguments (α,β) to Beta",ce.loc);

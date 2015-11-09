@@ -6,7 +6,6 @@
 
 - r2:
  common:
- + categorical sampling
  + zero probabillity observations
   - avoid Borel paradox
 
