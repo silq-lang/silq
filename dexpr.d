@@ -43,9 +43,9 @@ enum Precedence{
 	plus,
 	uminus,
 	intg,
-	diff,
 	mult,
 	div,
+	diff,
 	pow,
 	invalid,
 }
@@ -1692,7 +1692,7 @@ class DInt: DOp{
 	}
 	static DExpr constructHook(DVar var,DExpr expr){
 		return staticSimplify(var,expr);
-		//return null; // TODO: introduce this
+		// return null; // TODO: introduce this
 	}
 
 	version(INTEGRAL_STATS){
@@ -1719,7 +1719,7 @@ class DInt: DOp{
 		if(nexpr !is expr) expr=nexpr;
 		/*static dInt(DVar var,DExpr expr){
 			if(cast(DDeBruinVar)var){
-				if(auto hooked=constructHook(var,expr)){
+				if(auto hooked=staticSimplify(var,expr)){
 					bool check(){
 						foreach(i;hooked.allOf!DInt)
 							if(i.var is var)
@@ -1733,7 +1733,7 @@ class DInt: DOp{
 			return .dInt(var,expr);
 			}*/
 		if(auto m=cast(DPlus)expr){
-			// TODO: Assumes absolute integrability. Is this justified?
+			// TODO: Assumes absolute integrability. Is this justified? => No!
 			DExprSet summands;
 			foreach(s;m.summands)
 				DPlus.insert(summands,dInt(var,s));
@@ -1792,7 +1792,7 @@ class DInt: DOp{
 				auto intExpr=expr.withoutFactor(f).substitute(var,tmpvar1)*
 					(cast(DInt)other.substitute(var,tmpvar1).incDeBruin(-1)).getExpr(tmpvar2);
 				auto ow=intExpr.splitMultAtVar(tmpvar1);
-				if(auto res=constructHook(tmpvar1,ow[1]))
+				if(auto res=staticSimplify(tmpvar1,ow[1]))
 					return dInt(tmpvar2,res*ow[0]);
 			}
 		}

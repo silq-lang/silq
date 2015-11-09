@@ -171,6 +171,7 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 		}
 		auto fac=one/a;
 		// constraints: upper
+		// TODO: what if a<0?!
 		return AntiD(fac*primitive(transform(var)),zero);
 	}
 	auto dgauss=doubleGaussIntegral(var,nonIvrs);

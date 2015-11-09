@@ -1,0 +1,6 @@
+def main(){
+    dd := Uniform(0,1)+Uniform(0,1);
+    //r := Uniform(0,1) + Gauss(dd,1);// + Gauss(10,1);
+    r := Gauss(dd,1);
+    return r;
+}
