@@ -623,6 +623,20 @@ class DMult: DCommutAssocOp{
 		static DExpr combine(DExpr e1,DExpr e2,DExpr facts){
 			if(e1 is one) return e2;
 			if(e2 is one) return e1;
+			static DExpr combineInf(DExpr e1,DExpr e2){
+				if(e1 is dInf && e2 is mone) return null;
+				if(e2 is dInf && e1 is mone) return null;
+				if(e1 is dInf){
+					if(e2.mustBeLessThanZero()) return -dInf;
+					if((-e2).mustBeLessThanZero()) return dInf;
+				}else if(e1 is -dInf){
+					if(auto r=combineInf(dInf,e2))
+						return -r;
+				}
+				return null;
+			}
+			if(auto r=combineInf(e1,e2)) return r;
+			if(auto r=combineInf(e2,e1)) return r;
 			if(e1 is e2) return e1^^2;
 			if(e1 is zero||e2 is zero) return zero;
 			if(e2.isFraction()) swap(e1,e2);

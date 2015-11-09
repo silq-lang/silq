@@ -72,73 +72,70 @@ DExpr definiteIntegral(DVar var,DExpr expr)out(res){
 	return tryIntegrate(var,nonIvrs,lower,upper,ivrs);
 }
 
+struct AntiD{
+	DExpr antiderivative;
+	DExpr atMinusInfinity;
+	DExpr atInfinity;
+}
 
-static DExpr tryIntegrate(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DExpr ivrs){
-	// TODO: add better approach for antiderivatives	
-	auto lowLeUp(){ return dIvr(DIvr.Type.leZ,lower-upper); }
+
+AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 	static DExpr safeLog(DExpr e){ // TODO: ok?
 		return dLog(e)*dIvr(DIvr.Type.neqZ,e);
 	}
 	if(auto p=cast(DPow)nonIvrs){
-		if(upper && lower){
-			if(p.operands[0] is var && !p.operands[1].hasFreeVar(var)){
-				return lowLeUp()*
-					((safeLog(upper)-safeLog(lower))*
-					 dIvr(DIvr.Type.eqZ,p.operands[1]+1)
-					 +(upper^^(p.operands[1]+1)-lower^^(p.operands[1]+1))/(p.operands[1]+1)*
-					 dIvr(DIvr.Type.neqZ,p.operands[1]+1));
-			}
+		if(p.operands[0] is var && !p.operands[1].hasFreeVar(var)){
+			// constraint: lower && upper
+			return AntiD((safeLog(var)*
+				 dIvr(DIvr.Type.eqZ,p.operands[1]+1)
+				 +(var^^(p.operands[1]+1))/(p.operands[1]+1)*
+						  dIvr(DIvr.Type.neqZ,p.operands[1]+1)));
 		}
 		if(!p.operands[0].hasFreeVar(var)){
 			auto k=dLog(p.operands[0])*p.operands[1];
-			if(upper&&lower||dIvr(DIvr.Type.leZ,k).simplify(ivrs) is one){
-				// need to integrate e^^(k(x)).
-				auto dk=dDiff(var,k);
-				if(dk!is zero && !dk.hasFreeVar(var)){
-					return (upper&&lower?lowLeUp():one)*
-						((upper?dE^^k.substitute(var,upper):zero)
-						 -(lower?dE^^k.substitute(var,lower):zero))/dk;
+			// need to integrate e^^(k(x)).
+			auto dk=dDiff(var,k);
+			if(dk!is zero && !dk.hasFreeVar(var)){
+				DExpr lo=null,up=null;
+				if(dIvr(DIvr.Type.leZ,k).simplify(ivrs) is one){
+					up=zero;
 				}
+				return AntiD(dE^^k/dk,lo,up);
 			}
 		}
 	}
-	if(upper&&lower){
-		//writeln(lower," ",upper);
-		//writeln(lowLeUp());
-		if(nonIvrs is one) return lowLeUp()*(upper-lower);
-		if(auto poly=nonIvrs.asPolynomialIn(var)){ // TODO: this can be wasteful sometimes
-			DExprSet s;
-			foreach(i,coeff;poly.coefficients){
-				assert(i<size_t.max);
-				DPlus.insert(s,coeff*(upper^^(i+1)-lower^^(i+1))/(i+1));
-			}
-			return lowLeUp()*dPlus(s);
+	if(nonIvrs is one) return AntiD(var); // constraint: lower && upper
+	if(auto poly=nonIvrs.asPolynomialIn(var)){ // TODO: this can be wasteful sometimes
+		DExprSet s;
+		foreach(i,coeff;poly.coefficients){
+			assert(i<size_t.max);
+			DPlus.insert(s,coeff*var^^(i+1)/(i+1));
 		}
-		//if(1/nonIvrs is var){ return lowLeUp()*(safeLog(upper)-safeLog(lower)); }
+		// constraint: lower && upper
+		return AntiD(dPlus(s));
 	}
-	if(upper&&lower){
-		if(auto p=cast(DLog)nonIvrs){
-			if(p.e is var){
-				static DExpr logIntegral(DExpr e){
-					return e*safeLog(e)-e;
-				}
-				return lowLeUp()*(logIntegral(upper)-logIntegral(lower));
+	if(auto p=cast(DLog)nonIvrs){
+		if(p.e is var){
+			static DExpr logIntegral(DExpr e){
+				return e*safeLog(e)-e;
 			}
+			// constraint: lower && upper
+			return AntiD(logIntegral(var));
 		}
 	}
-	DExpr gaussianIntegral(DVar v,DExpr e){
+	AntiD gaussianIntegral(DVar v,DExpr e){
 		// detect e^^(-a*x^^2+b*x+c), and integrate to e^^(b^^2/4a+c)*(pi/a)^^(1/2).
 		// TODO: this assumes that a≥0!
 		auto p=cast(DPow)e;
-		if(!p) return null;
-		if(!cast(DE)p.operands[0]) return null;
+		if(!p) return AntiD();
+		if(!cast(DE)p.operands[0]) return AntiD();
 		auto q=p.operands[1].asPolynomialIn(v,2);
-		if(!q.initialized) return null;
-		if(q.coefficients.length!=3) return null;
+		if(!q.initialized) return AntiD();
+		if(q.coefficients.length!=3) return AntiD();
 		auto qc=q.coefficients;
 		auto a=-qc[2],b=qc[1],c=qc[0];
 		// if(couldBeZero(a)) return null; // TODO: this is what should be done!
-		if(a is null) return null; // TODO: it could still be zero!
+		if(a is null) return AntiD(); // TODO: it could still be zero!
 		// -a(x-b/2a)²=-ax²+bx-b²/4a
 		// -ax²+bx+c =-a(x-b/2a)²+b²/4a+c
 		// -ax²+bx+c =-(√(a)x-b/2√a)²+b²/4a+c
@@ -147,33 +144,24 @@ static DExpr tryIntegrate(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DExpr i
 		// = e^(b²/4a+c)·⅟√a∫dx(e^-x²)[l≤x/√(a)+b/(2a)≤r]
 		// = e^(b²/4a+c)·⅟√a∫dx(e^-x²)[l*(√(a))-b/(2√(a))≤x≤r*(√(a))-b/(2√(a))]
 		auto fac=dE^^(b^^2/(4*a)+c)*(one/a)^^(one/2);
-		if(!upper&&!lower){
-			return fac*dΠ^^(one/2);
-		}else{
-			auto up=upper?upper:dInf, lo=lower?lower:-dInf;
-			auto lowLeUp(){
-				if(!upper||!lower) return one;
-				return dIvr(DIvr.Type.leZ,lo-up);
-			}
-			DExpr transform(DExpr x){
-				if(x is dInf || x is -dInf) return x;
-				auto sqrta=a^^(one/2);
-				return sqrta*x-b/(2*sqrta);
-			}
-			return fac*lowLeUp()*(dGaussInt(transform(up))-dGaussInt(transform(lo)));
+		DExpr transform(DExpr x){
+			if(x is dInf || x is -dInf) return x;
+			auto sqrta=a^^(one/2);
+			return sqrta*x-b/(2*sqrta);
 		}
+		// constraints: none!
+		return AntiD(fac*dGaussInt(transform(var)),zero,fac*dΠ^^(one/2));
 	}
-	if(auto r=gaussianIntegral(var,nonIvrs)) return r;
+	auto gauss=gaussianIntegral(var,nonIvrs);
+	if(gauss.antiderivative) return gauss;
 	// TODO: this is just a list of special cases. Generalize!
-	DExpr doubleGaussIntegral(DVar var,DExpr e){
-		if(!upper) return null;
-		auto up=upper,lo=lower?lower:-dInf;
+	AntiD doubleGaussIntegral(DVar var,DExpr e){
 		auto gi=cast(DGaussInt)e;
-		if(!gi) return null;
+		if(!gi) return AntiD();
 		auto q=gi.x.asPolynomialIn(var,1);
-		if(!q.initialized) return null;
+		if(!q.initialized) return AntiD();
 		auto a=q.coefficients[1],b=q.coefficients[0];
-		if(a is zero) return null;
+		if(a is zero) return AntiD();
 		static DExpr primitive(DExpr e){
 			if(e is -dInf) return zero;
 			return dGaussInt(e)*e-dE^^(-e^^2);
@@ -182,13 +170,14 @@ static DExpr tryIntegrate(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DExpr i
 			return x/a-b;
 		}
 		auto fac=one/a;
-		return fac*lowLeUp()*(primitive(transform(up))-primitive(transform(lo)));
-		return null;
+		// constraints: upper
+		return AntiD(fac*primitive(transform(var)),zero);
 	}
-	if(auto r=doubleGaussIntegral(var,nonIvrs)) return r;
-	DExpr gaussIntTimesFunction(DVar var,DExpr e){ // TODO: support other functions
+	auto dgauss=doubleGaussIntegral(var,nonIvrs);
+	if(dgauss.antiderivative) return dgauss;
+	AntiD gaussIntTimesFunction(DVar var,DExpr e){ // TODO: support other functions
 		auto m=cast(DMult)e;
-		if(!m) return null;
+		if(!m) return AntiD();
 		DGaussInt gaussFact=null;
 		foreach(f;m.factors){
 			if(auto g=cast(DGaussInt)f){
@@ -196,12 +185,42 @@ static DExpr tryIntegrate(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DExpr i
 				break;
 			}
 		}
-		if(!gaussFact) return null;
+		if(!gaussFact) return AntiD();
 		auto rest=m.withoutFactor(gaussFact);
-		dw(gaussFact," ",rest);
-		return null;
+		//dw(gaussFact," ",rest);
+		return AntiD();
 	}
-	if(auto r=gaussIntTimesFunction(var,nonIvrs)) return r;
+	auto dgaussTF=gaussIntTimesFunction(var,nonIvrs);
+	if(dgaussTF.antiderivative) return dgaussTF;
+	// partial integration: TODO: this is not well founded!
+	/+if(!lower&&!upper){
+	 // x = ∫ u'v
+	 // (uv)' = uv'+u'v
+	 // ∫(uv)' = ∫uv'+∫u'v
+	 // uv+C = ∫uv'+∫u'v
+	 // 
+	 auto factors=splitIntegrableFactor(nonIvrs);
+	 //dw(factors[1]);
+	 //dw("!! ",dDiff(var,factors[1]));
+	 // TODO
+		
+	 }+/
+	return AntiD(); // no simpler expression available
+}
+
+DExpr tryIntegrate(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DExpr ivrs){
+	// TODO: add better approach for antiderivatives	
+	auto lowLeUp(){ return lower&&upper?dIvr(DIvr.Type.leZ,lower-upper):one; }
+	auto antid=tryGetAntiderivative(var,nonIvrs,ivrs);
+	if(auto anti=antid.antiderivative){
+		if(lower&&upper)
+			return lowLeUp()*(anti.substitute(var,upper)
+							  -anti.substitute(var,lower));
+		auto lo=lower?anti.substitute(var,lower):antid.atMinusInfinity;
+		auto up=upper?anti.substitute(var,upper):antid.atInfinity;
+		if(lo&&up)
+			return up-lo;
+	}
 	if(auto p=cast(DPlus)nonIvrs.polyNormalize(var)){
 		DExprSet works;
 		DExprSet doesNotWork;
