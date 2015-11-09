@@ -313,6 +313,8 @@ void test(){
 	//writeln("[0.0=0]".dParse);
 	//writeln("(∫dξ₁[-ξ₁+3≠0]·[-ξ₁+3≤0]·⅟e^(3·ξ₁))".dParse.simplify(one));
 	//writeln("[x=0]·δ[x]".dParse.simplify(one));
+	//import approximate;
+	//writeln("∫dx log(x)·1/x·[-x<0]·[x+-y≤0]".dParse.simplify(one).killIntegrals().simplify(one));
 }
 
 /*

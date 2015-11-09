@@ -11,6 +11,7 @@ alias MulExp=BinaryExp!(Tok!"*");
 alias DivExp=BinaryExp!(Tok!"/");
 alias PowExp=BinaryExp!(Tok!"^");
 alias UMinusExp=UnaryExp!(Tok!"-");
+alias UNegExp=UnaryExp!(Tok!"!");
 alias LtExp=BinaryExp!(Tok!"<");
 alias LeExp=BinaryExp!(Tok!"<=");
 alias GtExp=BinaryExp!(Tok!">");
@@ -53,6 +54,7 @@ private struct Analyzer{
 			}
 			if(auto pe=cast(PowExp)e) return doIt(pe.e1)^^doIt(pe.e2);
 			if(auto ume=cast(UMinusExp)e) return -doIt(ume.e);
+			if(auto ume=cast(UNegExp)e) return dIvr(DIvr.Type.eqZ,doIt(ume.e));
 			if(auto ce=cast(CallExp)e){
 				if(auto id=cast(Identifier)ce.e){
 					if(id.name in functions){
@@ -230,11 +232,6 @@ private struct Analyzer{
 			}else if(auto b=cast(NeqExp)e){
 				mixin(common);
 				return dIvr(neqZ,e2-e1);
-			}else if(auto le=cast(LiteralExp)e){
-				if(le.lit.type==Tok!"0"){
-					if(le.lit.int64==0||le.lit.int64==1)
-						return le.lit.int64.dℕ;
-				}
 			}else{
 				auto cond=transformExp(e);
 				if(!cond) unwind();

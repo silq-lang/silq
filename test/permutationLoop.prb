@@ -4,7 +4,7 @@
 def main(){
     n := 2;
     p := array(n);
-    for i in [0..n){ p[i] = UniformInt(0,2); }
+    for i in [0..n){ p[i] = UniformInt(0,1); }
     f := array(n);
     for i in [0..n){
         for j in [0..n){

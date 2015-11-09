@@ -388,6 +388,9 @@ struct Parser{
 			case Tok!"-":
 				nextToken();
 				return res=New!(UnaryExp!(Tok!"-"))(parseExpression(nbp));
+			case Tok!"!":
+				nextToken();
+				return res=New!(UnaryExp!(Tok!"!"))(parseExpression(nbp));
 			case Tok!"__error": mixin(rule!(ErrorExp,"_"));
 			//case Tok!"[": mixin(rule!(ArrayLiteralExp,"_","OPT",ArgumentList,"]"));
 			//case Tok!"assert": mixin(rule!(AssertExp,"_","(",ArgumentList,")"));
