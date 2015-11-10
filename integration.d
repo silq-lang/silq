@@ -248,6 +248,8 @@ DExpr tryIntegrate(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DExpr ivrs){
 		auto up=upper?anti.substitute(var,upper):antid.atInfinity;
 		if(!lo) lo=dLimSmp(var,-dInf,anti);
 		if(!up) up=dLimSmp(var,dInf,anti);
+		// dw(anti," ",lo," ",up);
+		if(lo.isInfinite() || up.isInfinite()) return null;
 		return up-lo;
 	}
 	if(auto p=cast(DPlus)nonIvrs.polyNormalize(var)){

@@ -993,13 +993,13 @@ class DPow: DBinaryOp{
 				return r;
 		}
 
-		if(e1.isFraction()&&e2.isFraction()){
+		/+if(e1.isFraction()&&e2.isFraction()){
 			auto nd=e2.getFraction();
 			if(nd[0]%nd[1]!=0&&abs(nd[0])>abs(nd[1])){
 				auto wh=nd[0]/nd[1];
 				return (e1^^wh).simplify(facts)*(e1^^(e2-wh).simplify(facts));
 			}
-		}
+		}+/
 
 		if(auto f1=cast(DFloat)e1){
 			if(auto f2=cast(DFloat)e2)
@@ -1856,7 +1856,7 @@ class DLim: DOp{
 	DExpr x;
 	this(DVar v,DExpr e,DExpr x){ this.v=v; this.e=e; this.x=x; }
 	override @property string symbol(){ return text("lim[",v," → ",e,"]"); }
-	override Precedence precedence(){ return Precedence.mult; } // TODO: ok?
+	override Precedence precedence(){ return Precedence.diff; } // TODO: ok?
 	override string toStringImpl(Precedence prec){
 		return addp(prec,symbol~x.toString());
 	}
@@ -1916,6 +1916,8 @@ DExpr dLim(DVar v,DExpr e,DExpr x){
 	}
 	return uniqueBindingDExpr!DLim(dbvar,e,x);
 }
+
+bool hasLimits(DExpr e){ return hasAny!DLim(e); }
 
 import differentiation;
 class DDiff: DOp{
@@ -2268,6 +2270,9 @@ class DInf: DExpr{ // TODO: explicit limits?
 private static DInf theDInf;
 @property DInf dInf(){ return theDInf?theDInf:(theDInf=new DInf); }
 
+bool isInfinite(DExpr e){
+	return e is dInf || e is -dInf;
+}
 
 class DFunVar: DExpr{
 	string name;

@@ -1,10 +1,5 @@
 import dexpr, util;
-
-bool isInfinite(DExpr e){
-	return e is dInf || e is -dInf;
-}
-
-bool hasLimits(DExpr e){ return hasAny!DLim(e); }
+import asymptotics;
 
 DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one){
 	e=e.simplify(facts);
@@ -24,15 +19,22 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one){
 				l=l.simplify(facts);
 				if(l is dInf){ inf.insert(s); continue; }
 				if(l is -dInf){ minf.insert(s); continue; }
-				if(l.hasLimits()){ unsupported.insert(s); continue; }
+				if(l.hasLimits()){ unsupported.insert(l); continue; }
 				finite = finite+l;
 				simplified = true;
 			}
 			if(!unsupported.length){
 				if(inf.length && !minf.length) return dInf;
 				if(minf.length && !inf.length) return -dInf;
+
+				auto infAsymp=asymptoticNormalize(v,dPlus(inf));
+				auto minfAsymp=asymptoticNormalize(v,dPlus(minf));
+				if(growsFasterThanNormalized(v,infAsymp,minfAsymp))
+					return dInf;
+				if(growsFasterThanNormalized(v,minfAsymp,infAsymp))
+					return -dInf;
 			}
-			// TODO: figure out which function grows faster
+			
 			if(!simplified) return null;
 			foreach(x;inf) unsupported.insert(x);
 			foreach(x;minf) unsupported.insert(x);
@@ -58,7 +60,7 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one){
 					zro.insert(f);
 					continue;
 				}
-				if(l.hasLimits()){ unsupported.insert(f); continue; }
+				if(l.hasLimits()){ unsupported.insert(l); continue; }
 				finite=finite*l;
 				simplified=true;
 			}
