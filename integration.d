@@ -246,8 +246,9 @@ DExpr tryIntegrate(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DExpr ivrs){
 							  -anti.substitute(var,lower));
 		auto lo=lower?anti.substitute(var,lower):antid.atMinusInfinity;
 		auto up=upper?anti.substitute(var,upper):antid.atInfinity;
-		if(lo&&up)
-			return up-lo;
+		if(!lo) lo=dLimSmp(var,-dInf,anti);
+		if(!up) up=dLimSmp(var,dInf,anti);
+		return up-lo;
 	}
 	if(auto p=cast(DPlus)nonIvrs.polyNormalize(var)){
 		DExprSet works;

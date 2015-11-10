@@ -80,8 +80,19 @@ DExpr dParse(string s){ // TODO: this is work in progress, usually updated in or
 			expect('∫');
 			expect('d');
 			auto iVar=parseDVar();
-			auto iExp=parseDExpr();
+			auto iExp=parseMult();
 			return dInt(iVar,iExp);
+		}
+
+		DExpr parseLim()in{assert(code.startsWith("lim"));}body{
+			code=code["lim".length..$];
+			expect('[');
+			auto var=parseDVar();
+			expect('→');
+			auto e=parseDExpr();
+			expect(']');
+			auto x=parseMult();
+			return dLim(var,e,x);
 		}
 
 		DExpr parseNumber()in{assert('0'<=cur()&&cur()<='9');}body{
@@ -140,11 +151,13 @@ DExpr dParse(string s){ // TODO: this is work in progress, usually updated in or
 				expect(')');
 				return r;
 			}
+			if(cur()=='∞'){ next(); return dInf; }
 			if(cur()=='[') return parseDIvr();
 			if(cur()=='δ') return parseDDelta();
 			if(cur()=='∫') return parseDInt();
 			if(cur()=='√') return parseSqrt();
 			if(code.startsWith("log")) return parseLog();
+			if(code.startsWith("lim")) return parseLim();
 			if(cur()=='⅟'){
 				next();
 				return 1/parseFactor();

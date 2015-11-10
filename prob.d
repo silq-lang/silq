@@ -322,6 +322,11 @@ void test(){
 	//import integration;
 	//writeln(tryGetAntiderivative(dVar("x"),"(e^(-1000·⅟3+-x²·⅟15+40·x·⅟3)·⅟√3̅0̅)".dParse,one));
 	//writeln(tryGetAntiderivative(dVar("x"),"((d/dx)⁻¹[e^(-x²)](-10·⅟3·√3̅0̅+x·⅟√3̅0̅))·e^(-x²·⅟30+20·x·⅟3))".dParse,one));
+	//writeln("lim[x→ ∞] (x+x)".dParse.simplify(one));
+	//writeln("∫dx((d/dx)⁻¹[e^(-x²)](-10·⅟3·√3̅0̅+x·⅟√3̅0̅))·e^(-x²·⅟30+20·x·⅟3)".dParse);
+	//writeln("lim[x→ ∞](((d/dx)⁻¹[e^(-x²)](-10·⅟3·√3̅0̅+x·⅟√3̅0̅))²·e^(1000·⅟3)·√3̅0̅+-(d/dx)⁻¹[e^(-x²)](-20·⅟3·√1̅5̅+x·⅟√1̅5̅)·e^(-x²·⅟30+1000·⅟3+20·x·⅟3)·⅟√2̅)".dParse.simplify(one));
+	//writeln("lim[ξ₁ → ∞]-(d/dx)⁻¹[e^(-x²)](-20·⅟3·√1̅5̅+ξ₁·⅟√1̅5̅)·e^(-ξ₁²·⅟30+1000·⅟3+20·ξ₁·⅟3)·⅟√2̅".dParse.simplify(one));
+	//writeln("lim[x→ ∞](-x²·⅟30+1000·⅟3+20·x·⅟3)".dParse.simplify(one));
 }
 
 /*

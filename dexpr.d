@@ -1670,6 +1670,12 @@ static ~this(){
 	writeln(sw.peek().to!("msecs",double));
 }+/
 
+static DExpr getDeBruinExpr(DVar tvar, DExpr expr, DVar var){
+	assert(tvar is dDeBruinVar(1),text(tvar)); // TODO: finally fix the deBruinVar situation...
+	assert(!cast(DDeBruinVar)var);
+	return expr.substitute(tvar,var).incDeBruin(-1);		
+}
+
 import integration;
 class DInt: DOp{
 	private{
@@ -1677,12 +1683,7 @@ class DInt: DOp{
 		DExpr expr;
 		this(DDeBruinVar var,DExpr expr){ this.var=var; this.expr=expr; }
 	}
-	private static DExpr getExpr(DVar tvar, DExpr expr, DVar var){
-		assert(tvar is dDeBruinVar(1),text(tvar)); // TODO: finally fix the deBruinVar situation...
-		assert(!cast(DDeBruinVar)var);
-		return expr.substitute(tvar,var).incDeBruin(-1);		
-	}
-	DExpr getExpr(DVar var){ return getExpr(this.var,expr,var); }
+	DExpr getExpr(DVar var){ return getDeBruinExpr(this.var,expr,var); }
 	override @property Precedence precedence(){ return Precedence.intg; }
 	override @property string symbol(){ return "∫"; }
 	override string toStringImpl(Precedence prec){
@@ -1719,7 +1720,7 @@ class DInt: DOp{
 
 		if(cast(DDeBruinVar)var){
 			auto tmp=new DVar("tmp"); // TODO: get rid of this!
-			return staticSimplify(tmp,getExpr(var,expr,tmp));
+			return staticSimplify(tmp,getDeBruinExpr(var,expr,tmp));
 		}
 
 		auto nexpr=expr.simplify(facts); // TODO: this pattern always simplifies everything twice, make efficient
@@ -1848,6 +1849,74 @@ DExpr dInt(DVar var,DExpr expr){
 	return uniqueBindingDExpr!DInt(dbvar,expr);
 }
 
+import limits;
+class DLim: DOp{
+	DVar v;
+	DExpr e;
+	DExpr x;
+	this(DVar v,DExpr e,DExpr x){ this.v=v; this.e=e; this.x=x; }
+	override @property string symbol(){ return text("lim[",v," → ",e,"]"); }
+	override Precedence precedence(){ return Precedence.mult; } // TODO: ok?
+	override string toStringImpl(Precedence prec){
+		return addp(prec,symbol~x.toString());
+	}
+
+	static DExpr constructHook(DVar v,DExpr e,DExpr x){
+		return staticSimplify(v,e,x);
+	}
+
+	static DExpr staticSimplify(DVar v,DExpr e,DExpr x,DExpr facts=one){
+		if(cast(DDeBruinVar)v){
+			auto tmp=new DVar("tmp"); // TODO: get rid of this!
+			return staticSimplify(tmp,getDeBruinExpr(v,e,tmp),getDeBruinExpr(v,x,tmp));
+		}
+		if(auto r=getLimit(v,e,x,facts))
+			return r;
+		return null;
+	}
+	
+	override DExpr simplifyImpl(DExpr facts){
+		auto r=staticSimplify(v,e,x);
+		return r?r:this;
+	}
+
+	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; } // TODO: correct?
+
+	override int freeVarsImpl(scope int delegate(DVar) dg){
+		if(auto r=e.freeVarsImpl(w=>w is v?0:dg(v)))
+			return r;
+		return x.freeVarsImpl(dg);
+	}
+	override DExpr substitute(DVar var,DExpr exp){
+		auto nx=x.substitute(var,exp);
+		auto ne=e;
+		if(v !is var) ne=e.substitute(var,exp);
+		return dLim(v,ne,nx);
+	}
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args){
+		return dLim(v,e.substituteFun(fun,q,args),x.substituteFun(fun,q,args));
+	}
+	override DExpr incDeBruin(int di){
+		return dLim(v.incDeBruin(di),e.incDeBruin(di),x.incDeBruin(di));
+	}
+}
+
+DExpr dLimSmp(DVar v,DExpr e,DExpr x){
+	if(auto r=DLim.constructHook(v,e,x)) return r;
+	return dLim(v,e,x);
+}
+
+DExpr dLim(DVar v,DExpr e,DExpr x){
+	//if(auto dbvar=cast(DDeBruinVar)var) return uniqueBindingDExpr!DInt(dbvar,expr);
+	assert(!e.hasFreeVar(v));
+	auto dbvar=cast(DDeBruinVar)v;
+	if(!dbvar){
+		dbvar=dDeBruinVar(1);
+		x=x.incDeBruin(1).substitute(v,dbvar);
+	}
+	return uniqueBindingDExpr!DLim(dbvar,e,x);
+}
+
 import differentiation;
 class DDiff: DOp{
 	DVar v;
@@ -1863,6 +1932,7 @@ class DDiff: DOp{
 	static DExpr constructHook(DVar v,DExpr e,DExpr x){
 		return staticSimplify(v,e,x);
 	}
+
 	static DExpr staticSimplify(DVar v,DExpr e,DExpr x,DExpr facts=one){
 		e=e.simplify(facts);
 		if(auto r=differentiate(v,e))
