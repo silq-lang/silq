@@ -1703,7 +1703,7 @@ class DInt: DOp{
 			writeln("A: ",numIntegrals);
 			writeln("B: ",integrals.length);
 		}
-	}	
+	}
 
 	static DExpr staticSimplify(DVar var,DExpr expr,DExpr facts=one){
 		version(DISABLE_INTEGRATION){
@@ -1739,13 +1739,6 @@ class DInt: DOp{
 			}
 			return .dInt(var,expr);
 			}*/
-		if(auto m=cast(DPlus)expr){
-			// TODO: Assumes absolute integrability. Is this justified? => No!
-			DExprSet summands;
-			foreach(s;m.summands)
-				DPlus.insert(summands,dIntSmp(var,s));
-			return dPlus(summands);
-		}
 		auto ow=expr.splitMultAtVar(var);
 		if(ow[0] !is one) return ow[0]*dIntSmp(var,ow[1]);
 		DExpr deltaSubstitution(bool caseSplit){
@@ -1772,7 +1765,7 @@ class DInt: DOp{
 						return false;
 					}
 					if(check()){
-						// TODO: Assumes absolute integrability. Is this justified?
+						// TODO: Assumes integrability. Is this justified?
 						DExprSet s;
 						foreach(k;distributeMult(p,expr.withoutFactor(f))){
 							DPlus.insert(s,dIntSmp(var,k));

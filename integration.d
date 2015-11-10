@@ -76,10 +76,32 @@ struct AntiD{
 	DExpr antiderivative;
 	DExpr atMinusInfinity;
 	DExpr atInfinity;
+	T opCast(T:bool)(){ return !!antiderivative; }
+	AntiD opBinary(string op)(DExpr e){
+		return AntiD(antiderivative.maybe!(a=>mixin(`a `~op~` e`)),
+					 atMinusInfinity.maybe!(a=>mixin(`a `~op~` e`)),
+					 atInfinity.maybe!(a=>mixin(`a `~op~` e`)));
+	}
+	AntiD opBinaryRight(string op)(DExpr e){
+		return AntiD(antiderivative.maybe!(a=>mixin(`e `~op~` a`)),
+					 atMinusInfinity.maybe!(a=>mixin(`e `~op~` a`)),
+					 atInfinity.maybe!(a=>mixin(`e `~op~` a`)));
+	}
+	AntiD opBinary(string op)(AntiD e){
+		DExpr f(DExpr x,DExpr y){
+			return x.maybe!(a=>y.maybe!(b=>mixin(`a `~op~` b`)));
+		}
+		return AntiD(f(antiderivative,e.antiderivative));
+	}
 }
 
 
 AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
+	auto ow=nonIvrs.splitMultAtVar(var);
+	if(ow[0] !is one){
+		return ow[0]*tryGetAntiderivative(var,ow[1],ivrs);
+	}
+
 	static DExpr safeLog(DExpr e){ // TODO: ok?
 		return dLog(e)*dIvr(DIvr.Type.neqZ,e);
 	}
@@ -176,7 +198,8 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 	}
 	auto dgauss=doubleGaussIntegral(var,nonIvrs);
 	if(dgauss.antiderivative) return dgauss;
-	AntiD gaussIntTimesFunction(DVar var,DExpr e){ // TODO: support other functions
+	AntiD gaussIntTimesFunction(DVar var,DExpr e){
+		//∫dx (d/dx)⁻¹[e^(-x²)](g(x))·f(x) = (d/dx)⁻¹[e^(-x²)](g(x))·∫dx f(x) - ∫dx g'(x)e^(-g(x)²)·f(x)
 		auto m=cast(DMult)e;
 		if(!m) return AntiD();
 		DGaussInt gaussFact=null;
@@ -188,7 +211,11 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 		}
 		if(!gaussFact) return AntiD();
 		auto rest=m.withoutFactor(gaussFact);
-		//dw(gaussFact," ",rest);
+		auto gauss=dDiff(var,gaussFact).simplify(one);
+		auto intRest=tryGetAntiderivative(var,rest,ivrs);
+		auto intRestGauss=tryGetAntiderivative(var,(gauss*rest).simplify(one),ivrs);
+		if(intRest && intRestGauss)
+			return gaussFact*intRest - intRestGauss*rest;
 		return AntiD();
 	}
 	auto dgaussTF=gaussIntTimesFunction(var,nonIvrs);

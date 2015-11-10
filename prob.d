@@ -315,11 +315,13 @@ void test(){
 	//writeln("[x=0]·δ[x]".dParse.simplify(one));
 	//import approximate;
 	//writeln("∫dx log(x)·1/x·[-x<0]·[x+-y≤0]".dParse.simplify(one).killIntegrals().simplify(one));
-	//writeln("(∫dx((d/dx)⁻¹[e^(-x²)](-10·⅟3·√3̅0̅+x·⅟√3̅0̅))·e^(-x²·⅟30+20·x·⅟3))".dParse.simplify(one));
 	//writeln("2^(3/2)+2".dParse.simplify(one));
 	//writeln("⅟(2+√2̅)·√2̅".dParse.simplify(one));
 	//writeln("⅟2^(3·⅟2)".dParse.simplify(one));
 	//writeln("⅟(2·√2̅)·2".dParse.simplify(one));
+	//import integration;
+	//writeln(tryGetAntiderivative(dVar("x"),"(e^(-1000·⅟3+-x²·⅟15+40·x·⅟3)·⅟√3̅0̅)".dParse,one));
+	//writeln(tryGetAntiderivative(dVar("x"),"((d/dx)⁻¹[e^(-x²)](-10·⅟3·√3̅0̅+x·⅟√3̅0̅))·e^(-x²·⅟30+20·x·⅟3))".dParse,one));
 }
 
 /*
