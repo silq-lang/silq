@@ -96,10 +96,20 @@ class BinaryExp(TokenType op): Expression{
 	this(Expression left, Expression right){e1=left; e2=right;}
 
 
-	static if(op!=Tok!".") override string toString(){
+	override string toString(){
 		return _brk(e1.toString() ~ " "~TokChars!op~" "~e2.toString());
 	}
 	//override string toString(){return e1.toString() ~ " "~ e2.toString~TokChars!op;} // RPN
+}
+
+class FieldExp: Expression{
+	Expression e;
+	Identifier f;
+
+	this(Expression e,Identifier f){ this.e=e; this.f=f; }
+	override string toString(){
+		return _brk(e.toString()~"."~f.toString());
+	}
 }
 
 class IteExp: Expression{

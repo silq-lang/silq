@@ -419,7 +419,15 @@ struct Parser{
 				auto a=parseArgumentList!")"();
 				loc=loc.to(tok.loc); expect(Tok!")");
 				mixin(rule!(CallExp,Existing,"left,a"));
-			//case Tok!".": return parseIdentifierList!(true,true)(left);
+			case Tok!".":
+				auto r=left;
+				while(ttype==Tok!"."){
+					nextToken();
+					auto f=parseIdentifier();
+					r=new FieldExp(r,f);
+					r.loc=loc.to(tok.loc);
+				}
+				return r;
 			mixin({string r;
 				foreach(x;binaryOps)
 					if(x!="=>" && x!="." && x!="!" && x!="?")

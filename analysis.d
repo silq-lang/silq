@@ -44,6 +44,14 @@ private struct Analyzer{
 				}
 				unwind();
 			}
+			if(auto fe=cast(FieldExp)e){
+				if(auto id=cast(Identifier)fe.e){
+					if(id.name in arrays && fe.f.name=="length")
+						return ℕ(arrays[id.name].length).dℕ;
+				}
+				err.error("no property '"~fe.f.name~"' for number",fe.loc);
+				unwind();
+			}
 			if(auto ae=cast(AddExp)e) return doIt(ae.e1)+doIt(ae.e2);
 			if(auto me=cast(SubExp)e) return doIt(me.e1)-doIt(me.e2);
 			if(auto me=cast(MulExp)e) return doIt(me.e1)*doIt(me.e2);
@@ -369,11 +377,11 @@ private struct Analyzer{
 			return;
 		}
 		try{
-			auto arr=f.readln().strip().split(",").map!(x=>cast(DExpr)ℕ(x).dℕ).array;
+			auto arr=f.readln().strip().split(",").map!(x=>cast(DExpr)ℕ(strip(x)).dℕ).array;
 			import std.exception;
-			enforce(f.eof);
+			//enforce(f.eof);
 			arrays[id.name]=arr;
-		}catch{
+		}catch(Exception e){
 			err.error(text("not a comma-separated list of integers: `",path,"`"),call.loc);
 			return;
 		}

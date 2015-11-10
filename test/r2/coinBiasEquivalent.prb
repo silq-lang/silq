@@ -1,13 +1,3 @@
-/+def main(){
-    observedResults := readCSV("data/CoinBias/tosses.csv");
-    bias := Beta(2, 5);
-    tossResults := array(5);
-    for i in [0..5) { tossResults[i] = Bernoulli(bias); }
-    // observe(tossResults == observedResults); // TODO
-    for i in [0..5) { observe(tossResults[i] == observedResults[i]); }
-    return bias; // expected: (-1386·bias+-1386·bias³+2079·bias²+693·bias⁴·⅟2+693·⅟2)·(-4·bias·⅟3+4·⅟3)·(-5·bias+5)·[-1+bias≤0]·[-bias≤0]·bias⁴
-    // TODO: better simplification
-}+/
 
 // our implementation already supports this example up to the following fidelity:
 
