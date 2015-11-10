@@ -24,6 +24,7 @@ alias Exp=Expression;
 
 FunctionDef[string] functions; // TODO: get rid of globals
 Distribution[string] summaries;
+string sourceFile;
 
 private struct Analyzer{
 	Distribution dist;
@@ -359,7 +360,7 @@ private struct Analyzer{
 		}
 		auto filename=lit.lit.str;
 		import std.path, std.file;
-		auto path=buildPath(dirName(thisExePath),filename);
+		auto path=buildPath(dirName(sourceFile),filename);
 		File f;
 		try{
 			f=File(path,"r");

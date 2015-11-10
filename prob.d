@@ -45,9 +45,11 @@ int run(string path){
 			err.error("top level declaration must be function",expr.loc);
 		}
 	}
+	sourceFile=path;
 	scope(exit){ // TODO: get rid of globals
 		analysis.functions=(FunctionDef[string]).init;
 		analysis.summaries=(Distribution[string]).init;
+		sourceFile=null;
 	}
 	if(err.nerrors) return 1;
 	if(functions.length==1) foreach(_,x;functions){ functions["main"]=x; break; }
