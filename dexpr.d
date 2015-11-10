@@ -507,7 +507,7 @@ class DPlus: DCommutAssocOp{
 			auto simplSummands=integralSum.summands.setx;
 			if(simplSummands.setMinus(integralSummands).length){
 				summands=summands.setMinus(integrals);
-				return dPlus(summands)+dInt(tmp,dPlus(simplSummands));
+				return dPlus(summands)+dIntSmp(tmp,dPlus(simplSummands));
 			}
 		}
 		return null;
@@ -1540,7 +1540,7 @@ class DDelta: DExpr{ // Dirac delta function
 				constraints*rest.substitute(var,s)/dAbs(dDiff(var,d.e,s));
 			foreach(ref x;info.caseSplits){
 				auto curConstr=constraints.withoutFactor(dIvr(DIvr.Type.neqZ,x.constraint));
-				r=r+curConstr*dIvr(DIvr.Type.eqZ,x.constraint)*dInt(var,rest*dDelta(x.expression));
+				r=r+curConstr*dIvr(DIvr.Type.eqZ,x.constraint)*dIntSmp(var,rest*dDelta(x.expression));
 			}
 			return r;
 		}
@@ -1677,10 +1677,12 @@ class DInt: DOp{
 		DExpr expr;
 		this(DDeBruinVar var,DExpr expr){ this.var=var; this.expr=expr; }
 	}
-	DExpr getExpr(DVar var){
-		//assert(this.var is dDeBruinVar(1),text(this)); // TODO: finally fix the deBruinVar situation...
-		return expr.substitute(this.var,var).incDeBruin(-1);
+	private static DExpr getExpr(DVar tvar, DExpr expr, DVar var){
+		assert(tvar is dDeBruinVar(1),text(tvar)); // TODO: finally fix the deBruinVar situation...
+		assert(!cast(DDeBruinVar)var);
+		return expr.substitute(tvar,var).incDeBruin(-1);		
 	}
+	DExpr getExpr(DVar var){ return getExpr(this.var,expr,var); }
 	override @property Precedence precedence(){ return Precedence.intg; }
 	override @property string symbol(){ return "∫"; }
 	override string toStringImpl(Precedence prec){
@@ -1692,7 +1694,6 @@ class DInt: DOp{
 	}
 	static DExpr constructHook(DVar var,DExpr expr){
 		return staticSimplify(var,expr);
-		// return null; // TODO: introduce this
 	}
 
 	version(INTEGRAL_STATS){
@@ -1715,6 +1716,12 @@ class DInt: DOp{
 			auto newexpr=expr.incDeBruin(1).substitute(var,dbvar);
 			integrals[newexpr]=[];
 		}
+
+		if(cast(DDeBruinVar)var){
+			auto tmp=new DVar("tmp"); // TODO: get rid of this!
+			return staticSimplify(tmp,getExpr(var,expr,tmp));
+		}
+
 		auto nexpr=expr.simplify(facts); // TODO: this pattern always simplifies everything twice, make efficient
 		if(nexpr !is expr) expr=nexpr;
 		/*static dInt(DVar var,DExpr expr){
@@ -1736,11 +1743,11 @@ class DInt: DOp{
 			// TODO: Assumes absolute integrability. Is this justified? => No!
 			DExprSet summands;
 			foreach(s;m.summands)
-				DPlus.insert(summands,dInt(var,s));
+				DPlus.insert(summands,dIntSmp(var,s));
 			return dPlus(summands);
 		}
 		auto ow=expr.splitMultAtVar(var);
-		if(ow[0] !is one) return ow[0]*dInt(var,ow[1]);
+		if(ow[0] !is one) return ow[0]*dIntSmp(var,ow[1]);
 		DExpr deltaSubstitution(bool caseSplit){
 			// TODO: only extract deltas once?
 			// TODO: detect when to give up early?
@@ -1768,7 +1775,7 @@ class DInt: DOp{
 						// TODO: Assumes absolute integrability. Is this justified?
 						DExprSet s;
 						foreach(k;distributeMult(p,expr.withoutFactor(f))){
-							DPlus.insert(s,dInt(var,k));
+							DPlus.insert(s,dIntSmp(var,k));
 						}
 						return dPlus(s);
 					}
@@ -1790,10 +1797,10 @@ class DInt: DOp{
 				auto tmpvar1=new DVar("tmp1"); // TODO: get rid of this!
 				auto tmpvar2=new DVar("tmp2"); // TODO: get rid of this!
 				auto intExpr=expr.withoutFactor(f).substitute(var,tmpvar1)*
-					(cast(DInt)other.substitute(var,tmpvar1).incDeBruin(-1)).getExpr(tmpvar2);
+					(cast(DInt)other.substitute(var,tmpvar1)).getExpr(tmpvar2);
 				auto ow=intExpr.splitMultAtVar(tmpvar1);
 				if(auto res=staticSimplify(tmpvar1,ow[1]))
-					return dInt(tmpvar2,res*ow[0]);
+					return dIntSmp(tmpvar2,res*ow[0]);
 			}
 		}
 		if(!expr.hasFreeVar(var)) return expr*dInt(var,one); // (infinite integral)
@@ -1833,11 +1840,18 @@ auto uniqueBindingDExpr(T)(DDeBruinVar v,DExpr a,DExpr b=null){
 	return r;
 }
 
-DExpr dInt(DVar var,DExpr expr){
-	if(auto dbvar=cast(DDeBruinVar)var) return uniqueBindingDExpr!DInt(dbvar,expr);
+DExpr dIntSmp(DVar var,DExpr expr){
 	if(auto r=DInt.constructHook(var,expr)) return r;
-	auto dbvar=dDeBruinVar(1);
-	expr=expr.incDeBruin(1).substitute(var,dbvar);
+	return dInt(var,expr);
+}
+
+DExpr dInt(DVar var,DExpr expr){
+	//if(auto dbvar=cast(DDeBruinVar)var) return uniqueBindingDExpr!DInt(dbvar,expr);
+	auto dbvar=cast(DDeBruinVar)var;
+	if(!dbvar){
+		dbvar=dDeBruinVar(1);
+		expr=expr.incDeBruin(1).substitute(var,dbvar);
+	}
 	return uniqueBindingDExpr!DInt(dbvar,expr);
 }
 

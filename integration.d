@@ -49,14 +49,14 @@ DExpr definiteIntegral(DVar var,DExpr expr)out(res){
 				constraints=constraints*dIvr(DIvr.Type.neqZ,x.constraint);
 			auto rest=expr.withoutFactor(ivr);
 			auto r=constraints is zero?zero:
-				constraints*(dInt(var,dIvr(DIvr.Type.leZ,var-bound)*
+				constraints*(dIntSmp(var,dIvr(DIvr.Type.leZ,var-bound)*
 								  dIvr(DIvr.type.leZ,info.bound.isLower)*rest)
-							 +dInt(var,dIvr(DIvr.Type.lZ,bound-var)*
+							 +dIntSmp(var,dIvr(DIvr.Type.lZ,bound-var)*
 								   dIvr(DIvr.type.leZ,-info.bound.isLower)*rest));
 			foreach(ref x;info.caseSplits){
 				auto curConstr=constraints.withoutFactor(dIvr(DIvr.Type.neqZ,x.constraint));
 				r=r+curConstr*dIvr(DIvr.Type.eqZ,x.constraint)*
-					dInt(var,rest*dIvr(DIvr.Type.leZ,x.expression));
+					dIntSmp(var,rest*dIvr(DIvr.Type.leZ,x.expression));
 			}
 			return r;
 		case lowerBound:
@@ -232,7 +232,7 @@ DExpr tryIntegrate(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DExpr ivrs){
 			if(t) DPlus.insert(works,ow[0]*t);
 			else DPlus.insert(doesNotWork,s);
 		}
-		if(works.length) return dPlus(works)+dInt(var,dPlus(doesNotWork)*ivrs);// TODO: don't try to integrate this again!
+		if(works.length) return dPlus(works)+dInt(var,dPlus(doesNotWork)*ivrs);
 	}
 	// partial integration: TODO: this is not well founded!
 	/+if(!lower&&!upper){

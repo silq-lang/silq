@@ -129,7 +129,7 @@ private struct Analyzer{
 						auto a=doIt(ce.args[0]),b=doIt(ce.args[1]);
 						auto tmp="tmp".dVar;
 						auto nnorm=uniformIntPDFNnorm(tmp,a,b);
-						auto norm=dInt(tmp,nnorm);
+						auto norm=dIntSmp(tmp,nnorm);
 						dist.assertTrue(dIvr(DIvr.Type.neqZ,norm),"no integers in range");
 						auto var=dist.getTmpVar("__u");
 						dist.distribute(nnorm.substitute(tmp,var)/norm);
@@ -273,10 +273,10 @@ private struct Analyzer{
 		foreach(f;ndist.distribution.factors)
 			if(!cast(DDelta)f&&!f.isFraction())
 				return null;
-		auto norm=dInt(tmp,ndist.distribution);
+		auto norm=dIntSmp(tmp,ndist.distribution);
 		if(norm is zero || (!norm.isFraction()&&!cast(DFloat)norm))
 			return null;
-		auto r=(dInt(tmp,tmp*ndist.distribution)/norm).simplify(one);
+		auto r=(dIntSmp(tmp,tmp*ndist.distribution)/norm).simplify(one);
 		if(r.hasAny!DInt) return null;
 		return r;
 	}

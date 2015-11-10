@@ -29,7 +29,7 @@ DExpr uniformIntPDFNnorm(DVar var,DExpr a,DExpr b){
 
 DExpr uniformIntPDF(DVar var,DExpr a,DExpr b){
 	auto nnorm=uniformIntPDFNnorm(var,a,b);
-	return nnorm/dInt(var,nnorm);
+	return nnorm/dIntSmp(var,nnorm);
 }
 
 /+ TODO:
@@ -39,11 +39,11 @@ DExpr poissonPDF(DVar var,DExpr λ){
 
 DExpr betaPDF(DVar var,DExpr α,DExpr β){
 	auto nnorm=var^^(α-1)*(1-var)^^(β-1)*dBounded!"[]"(var,zero,one);
-	return nnorm/dInt(var,nnorm);
+	return nnorm/dIntSmp(var,nnorm);
 }
 DExpr gammaPDF(DVar var,DExpr α,DExpr β){
 	auto nnorm=var^^(α-1)*dE^^(-β*var)*dBounded!"[]"(var,zero,one);
-	return nnorm/dInt(var,nnorm);
+	return nnorm/dIntSmp(var,nnorm);
 }
 
 DExpr expPDF(DVar var,DExpr λ){
@@ -83,8 +83,8 @@ class Distribution{
 		auto d1=distribution;
 		auto d2=b.distribution;
 		// TODO: this should be unnecessary with dead variable analysis
-		foreach(x;this.freeVars) if(x !in orig.freeVars){ assert(d1.hasFreeVar(x)); d1=dInt(x,d1); }
-		foreach(x;b.freeVars) if(x !in orig.freeVars){ assert(d2.hasFreeVar(x)); d2=dInt(x,d2); }
+		foreach(x;this.freeVars) if(x !in orig.freeVars){ assert(d1.hasFreeVar(x)); d1=dIntSmp(x,d1); }
+		foreach(x;b.freeVars) if(x !in orig.freeVars){ assert(d2.hasFreeVar(x)); d2=dIntSmp(x,d2); }
 		//// /// // /
 		r.vbl=orig.vbl;
 		r.symtab=orig.symtab;
@@ -125,7 +125,7 @@ class Distribution{
 
 	DExpr computeProbability(DExpr cond){
 		auto tdist=distribution*cond;
-		foreach(v;freeVars) tdist=dInt(v,tdist);
+		foreach(v;freeVars) tdist=dIntSmp(v,tdist);
 		return tdist;		
 	}
 
@@ -152,14 +152,14 @@ class Distribution{
 	void marginalize(DVar var)in{assert(var in freeVars); }body{
 		//assert(distribution.hasFreeVar(var),text(distribution," ",var));
 		//writeln("marginalizing: ",var,"\ndistribution: ",distribution,"\nmarginalized: ",dInt(var,distribution));
-		distribution=dInt(var,distribution);
+		distribution=dIntSmp(var,distribution);
 		freeVars.remove(var);
 		assert(!distribution.hasFreeVar(var));
 	}
 	void observe(DExpr e){ // e's domain must be 0 or 1.
 		auto nDist=distribution*e;
 		auto intNDist=nDist;
-		foreach(v;freeVars) intNDist=dInt(v,intNDist);
+		foreach(v;freeVars) intNDist=dIntSmp(v,intNDist);
 		distribution=nDist/(intNDist+error);
 	}
 	DExpr call(Distribution q,DVar[] args){
@@ -179,7 +179,7 @@ class Distribution{
 			tmp.remove(a);
 			freeVars.remove(a);
 		}
-		foreach(v;freeVars.without(r)) nerror=dInt(v,nerror);
+		foreach(v;freeVars.without(r)) nerror=dIntSmp(v,nerror);
 		error = error + nerror;
 		return r;
 	}
