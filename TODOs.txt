@@ -14,6 +14,9 @@
  
 
 
+- bugs:
+  division.prb: resulting expression integrates to 1/2 instead of 1
+  observea.prb: result does not seem to make sense
 
 - general TODOs (not urgent):
  + Full array support

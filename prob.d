@@ -336,6 +336,14 @@ void test(){
 	//writeln(dLimSmp(dVar("x"),dInf,anti));
 	//writeln(dLimSmp(dVar("ξ₁"),dInf,"-(d/dx)⁻¹[e^(-x²)](-z·⅟√2̅)·ξ₁·⅟√π̅".dParse));
 	//writeln((-2)^^(one/2));
+	//writeln("lim[ξ₁ → -∞](d/dx)⁻¹[e^(-x²)](-20+ξ₁·⅟5)·e^(-ξ₁²·⅟50+200+4·ξ₁)·⅟√5̅0̅".dParse.simplify(one));
+	//writeln("lim[x → -∞]e^(-x²·⅟50+200+4·x)".dParse.simplify(one));
+	//writeln("lim[x→ -∞]-(x²·⅟50)".dParse.simplify(one));
+	//writeln("lim[x→ -∞] x²".dParse.simplify(one));
+	//writeln("(lim[ξ₁ → -∞]((d/dx)⁻¹[e^(-x²)](-20+ξ₁·⅟5)·5·e^(-ξ₁²·⅟50+200+4·ξ₁)·⅟√5̅0̅))".dParse.simplify(one));
+	//writeln("(lim[x → ∞]e^((1160·⅟161+2·x·⅟105)·y+-x²·⅟42+11000·⅟161+20·x·⅟7+y²·⅟483))".dParse.simplify(one));
+	//writeln("lim[ξ₁ → ∞](-ξ₁²·⅟42+20·ξ₁·⅟7+2·y·ξ₁·⅟105+y²·⅟483)".dParse.simplify(one));
+	//writeln(asymptoticNormalize(dVar("tmp"),"20·tmp·⅟7+2·tmp·y·⅟105".dParse));
 }
 
 /*

@@ -1,13 +1,13 @@
 import dexpr, util;
 import asymptotics;
 
-DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one){
+DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}body{
 	e=e.simplify(facts);
 	x=x.simplify(facts);
 	DExpr doIt(DVar v,DExpr e,DExpr x){
 		if(!x.hasFreeVar(v)) return x;
 		if(x is v) return e;
-		if(auto p=cast(DPlus)x){
+		if(auto p=cast(DPlus)x.polyNormalize(v).simplify(facts)){
 			bool simplified=false;
 			DExpr finite=zero;
 			DExprSet unsupported;
@@ -23,6 +23,7 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one){
 				finite = finite+l;
 				simplified = true;
 			}
+			//dw(v," ",inf," ",minf," ",finite," ",unsupported);
 			if(!unsupported.length){
 				if(inf.length && !minf.length) return dInf;
 				if(minf.length && !inf.length) return -dInf;
@@ -45,7 +46,7 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one){
 			DExpr finite=one;
 			DExprSet unsupported;
 			DExprSet inf;
-			int sign=0;
+			bool sign=0;
 			DExprSet zro;
 			foreach(f;m.factors){
 				auto l=doIt(v,e,f);
@@ -64,11 +65,16 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one){
 				finite=finite*l;
 				simplified=true;
 			}
-			if(dIvr(DIvr.Type.leZ,finite).simplify(facts) is zero){
+			if(dIvr(DIvr.Type.leZ,finite).simplify(facts) is zero){ // TODO: improve sign-checking!
 				// sign is correct
 			}else if(dIvr(DIvr.Type.leZ,-finite).simplify(facts) is zero){
 				sign = !sign;
+			}else{
+				// sign unknown!
+				return null; // !!!
+				// TODO: need to do a case split?
 			}
+			//dw(v," ",inf," ",zro," ",finite," ",unsupported);
 			if(!unsupported.length){
 				if(inf.length && !zro.length) return sign?-dInf:dInf;
 				if(zro.length && !inf.length) return zero;
@@ -102,7 +108,11 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one){
 				}
 				return null;
 			}
-			if(l0 is -dInf) return null;
+			if(l0 is -dInf){
+				if(auto c=cast(Dℕ)l1)
+					return c.c%2?-dInf:dInf;
+				return null;
+			}
 			if(l0 is dInf){
 				if(dIvr(DIvr.Type.leZ,l1).simplify(facts) is zero)
 					return dInf;

@@ -17,4 +17,6 @@ def trueSkill(){
     perfA3 := Gauss(skillA,15);
     perfC3 := Gauss(skillC,15);
     observe(perfA3 > perfC3);
+
+    return (skillA,skillB,skillC);
 }

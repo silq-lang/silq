@@ -1,0 +1,11 @@
+def p(a){
+    x := Bernoulli(1/2);
+    observe(x == a);
+    return a;
+}
+/+
+def main(){
+    y := Bernoulli(1/2);
+    r := p(1);
+    return r;
+}+/

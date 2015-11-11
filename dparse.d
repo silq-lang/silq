@@ -181,10 +181,12 @@ DExpr dParse(string s){ // TODO: this is work in progress, usually updated in or
 				next();
 				return e^^parseFactor();
 			}
+			ℕ exp=0;
 			if(highDigits.canFind(cur())){
-				ℕ exp=highDigits.indexOf(cur());
-				next();
-				assert(!highDigits.canFind(cur()),"TODO");
+				do{
+					exp=10*exp+highDigits.indexOf(cur());
+					next();
+				}while(highDigits.canFind(cur));
 				return e^^exp;
 			}
 			return e;

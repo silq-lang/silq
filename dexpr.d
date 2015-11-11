@@ -42,6 +42,7 @@ enum Precedence{
 	none,
 	plus,
 	uminus,
+	lim,
 	intg,
 	mult,
 	div,
@@ -1766,11 +1767,16 @@ class DInt: DOp{
 						return false;
 					}
 					if(check()){
-						// TODO: Assumes integrability. Is this justified?
+						DExprSet works;
+						DExprSet doesNotWork;
 						DExprSet s;
 						foreach(k;distributeMult(p,expr.withoutFactor(f))){
+							/+auto r=staticSimplify(var,k);
+							if(r&&!r.hasIntegrals()) DPlus.insert(works,r); // TODO: this is too conservative!
+							else DPlus.insert(doesNotWork,dInt(var,k));+/
 							DPlus.insert(s,dIntSmp(var,k));
 						}
+						//if(works.length) return dPlus(works)+dInt(var,dPlus(doesNotWork));
 						return dPlus(s);
 					}
 				}
@@ -1824,6 +1830,8 @@ class DInt: DOp{
 	}
 }
 
+bool hasIntegrals(DExpr e){ return hasAny!DInt(e); }
+
 MapX!(TupleX!(typeof(typeid(DExpr)),DDeBruinVar,DExpr,DExpr),DExpr) uniqueMapBinding;
 auto uniqueBindingDExpr(T)(DDeBruinVar v,DExpr a,DExpr b=null){
 	auto t=tuplex(typeid(T),v,a,b);
@@ -1856,7 +1864,7 @@ class DLim: DOp{
 	DExpr x;
 	this(DVar v,DExpr e,DExpr x){ this.v=v; this.e=e; this.x=x; }
 	override @property string symbol(){ return text("lim[",v," → ",e,"]"); }
-	override Precedence precedence(){ return Precedence.diff; } // TODO: ok?
+	override Precedence precedence(){ return Precedence.lim; } // TODO: ok?
 	override string toStringImpl(Precedence prec){
 		return addp(prec,symbol~x.toString());
 	}

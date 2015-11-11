@@ -1,5 +1,5 @@
 def main(){
-    a := readCSV("test/data/array/array.csv");
+    a := readCSV("data/array/array.csv");
     //observe(a.length==3);
     k := array(7);
     k[0]=3;

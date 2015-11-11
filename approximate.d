@@ -139,8 +139,6 @@ DExpr approximate(DExpr e){
 	return doIt(e,false);
 }
 
-bool hasIntegrals(DExpr e){ return hasAny!DInt(e); }
-
 DExpr killIntegrals(DExpr e){
 	while(hasIntegrals(e)){
 		if(auto r=e.approximate())

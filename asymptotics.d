@@ -32,13 +32,12 @@ DExpr asymptoticNormalize(DVar v,DExpr e){
 	if(auto p=cast(DPlus)e.polyNormalize(v)){
 		DExprSet summands;
 		foreach(s;p.summands)
-			DPlus.insert(summands,asymptoticNormalize(v,s));
+			summands.insert(asymptoticNormalize(v,s)); // TODO: ok?
 		DExprSet toRemove;
 		foreach(s;summands)
 			foreach(t;summands)
 				if(s !is t && growsFasterThan(v,s,t))
 					toRemove.insert(t);
-		if(!toRemove.length) return p;
 		foreach(x;toRemove) summands.remove(x);
 		return dPlus(summands);
 	}

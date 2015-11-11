@@ -144,7 +144,7 @@ class Distribution{
 		assert(distribution.hasFreeVar(var));
 		auto nvar=getVar(var.name);
 		distribution=distribution.substitute(var,nvar);
-		exp=exp.substitute(var,nvar);		
+		exp=exp.substitute(var,nvar);
 		distribute(dDelta(exp-var));
 		marginalizeTemporaries();
 		marginalize(nvar);
@@ -156,7 +156,8 @@ class Distribution{
 		freeVars.remove(var);
 		assert(!distribution.hasFreeVar(var));
 	}
-	void observe(DExpr e){ // e's domain must be 0 or 1.
+	void observe(DExpr e){ // e's domain must be {0,1}
+		// assertTrue(dIvr(DIvr.Type.neqZ,computeProbability(e)),"zero probability observation"); // TODO: we probably want this...
 		auto nDist=distribution*e;
 		auto intNDist=nDist;
 		foreach(v;freeVars) intNDist=dIntSmp(v,intNDist);
