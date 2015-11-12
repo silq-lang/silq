@@ -3,9 +3,10 @@ def p(a){
     observe(x == a);
     return a;
 }
-/+
+
 def main(){
     y := Bernoulli(1/2);
     r := p(1);
-    return r;
-}+/
+    return r; // expected: TODO: δ[-r+1]
+    // TODO: method calls are currently incorrectly implemented!
+}

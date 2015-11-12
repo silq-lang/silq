@@ -5,6 +5,6 @@ def main(){
     x := Uniform(0,1);
     y := Uniform(-1,1);
     z := x/y;
-    w := UniformInt(-1,1);
+    //w := UniformInt(-1,1);
     return (); // TODO: wtf?
 }

@@ -1672,7 +1672,7 @@ static ~this(){
 }+/
 
 static DExpr getDeBruinExpr(DVar tvar, DExpr expr, DVar var){
-	assert(tvar is dDeBruinVar(1),text(tvar)); // TODO: finally fix the deBruinVar situation...
+	//assert(tvar is dDeBruinVar(1),text(tvar)); // TODO: finally fix the deBruinVar situation...
 	assert(!cast(DDeBruinVar)var);
 	return expr.substitute(tvar,var).incDeBruin(-1);		
 }
@@ -1767,16 +1767,22 @@ class DInt: DOp{
 						return false;
 					}
 					if(check()){
-						DExprSet works;
-						DExprSet doesNotWork;
+						/+DExprSet works;
+						DExprSet doesNotWork;+/
 						DExprSet s;
 						foreach(k;distributeMult(p,expr.withoutFactor(f))){
-							/+auto r=staticSimplify(var,k);
-							if(r&&!r.hasIntegrals()) DPlus.insert(works,r); // TODO: this is too conservative!
-							else DPlus.insert(doesNotWork,dInt(var,k));+/
+							/+auto ow=k.splitMultAtVar(var);
+							auto r=staticSimplify(var,ow[1],facts);
+							if(r) DPlus.insert(works,ow[0]*r);
+							else DPlus.insert(doesNotWork,k);+/
 							DPlus.insert(s,dIntSmp(var,k));
 						}
-						//if(works.length) return dPlus(works)+dInt(var,dPlus(doesNotWork));
+						/+if(works.length){
+							auto r=dPlus(works).simplify(facts);
+							if(doesNotWork.length) r = r + dInt(var,dPlus(doesNotWork));
+							return r;
+						}+/
+						dw(s);
 						return dPlus(s);
 					}
 				}
@@ -1788,7 +1794,6 @@ class DInt: DOp{
 
 		if(auto r=definiteIntegral(var,expr))
 			return r;
-
 		// Fubini
 		foreach(f;expr.factors){
 			// assert(f.hasFreeVar(var));

@@ -1,0 +1,12 @@
+// skipped
+// TODO
+
+def main(a,b,mu0){
+    // a = 1; b = 2; mu0 = 1;
+    tau := Gamma(a,b);
+    mu := Gauss(mu0,mu0*tau);
+    x1 := Gauss(mu,tau);
+    //x2 := Gauss(mu,tau);
+    //observe(x1>x2);
+    observe(x1<0);
+}

@@ -67,7 +67,8 @@ private struct Analyzer{
 			if(auto ce=cast(CallExp)e){
 				if(auto id=cast(Identifier)ce.e){
 					if(id.name in functions){
-						if(id.name !in summaries){
+						err.error("no support for method calls",ce.loc); // TODO: enable after fixes
+						/+if(id.name !in summaries){
 							summaries[id.name]=new Distribution();
 							summaries[id.name].distribute(mone);
 							summaries[id.name]=.analyze(functions[id.name],err);
@@ -94,7 +95,7 @@ private struct Analyzer{
 								args~=var;
 							}else unwind();
 						}
-						return dist.call(summary,args);
+						return dist.call(summary,args);+/
 					}
 					switch(id.name){
 					case "array","readCSV":

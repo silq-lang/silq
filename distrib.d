@@ -164,7 +164,7 @@ class Distribution{
 		auto factor=(intNDist+error).simplify(one);
 		distribution=nDist*(1-error)/factor;
 	}
-	DExpr call(Distribution q,DVar[] args){
+	DExpr call(Distribution q,DVar[] args){ // TODO: this is incorrect; it does not work if the called method tries to compute a probability, for example in an 'if' or during 'observe'!
 		DExpr rdist=q.distribution;
 		DExpr rerr=q.error;
 		assert(q.freeVars.length==1,"TODO!");
