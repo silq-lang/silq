@@ -161,7 +161,8 @@ class Distribution{
 		auto nDist=distribution*e;
 		auto intNDist=nDist;
 		foreach(v;freeVars) intNDist=dIntSmp(v,intNDist);
-		distribution=nDist/(intNDist+error);
+		auto factor=(intNDist+error).simplify(one);
+		distribution=nDist*(1-error)/factor;
 	}
 	DExpr call(Distribution q,DVar[] args){
 		DExpr rdist=q.distribution;
