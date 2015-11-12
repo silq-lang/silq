@@ -67,8 +67,7 @@ private struct Analyzer{
 			if(auto ce=cast(CallExp)e){
 				if(auto id=cast(Identifier)ce.e){
 					if(id.name in functions){
-						err.error("no support for method calls",ce.loc); // TODO: enable after fixes
-						/+if(id.name !in summaries){
+						if(id.name !in summaries){
 							summaries[id.name]=new Distribution();
 							summaries[id.name].distribute(mone);
 							summaries[id.name]=.analyze(functions[id.name],err);
@@ -87,15 +86,13 @@ private struct Analyzer{
 							err.error(format("expected %s arguments to '%s', received %s",fun.args.length,id.name,ce.args.length),ce.loc);
 							unwind();
 						}
-						DVar[] args;
+						DExpr[] args;
 						foreach(i,arg;ce.args){
 							if(auto a=doIt(arg)){
-								auto var=dist.getTmpVar("__arg");
-								dist.distribute(dDelta(var-a));
-								args~=var;
+								args~=a;
 							}else unwind();
 						}
-						return dist.call(summary,args);+/
+						return dist.call(summary,args);
 					}
 					switch(id.name){
 					case "array","readCSV":

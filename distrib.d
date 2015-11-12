@@ -60,10 +60,10 @@ class Distribution{
 	DExpr error;
 	Distribution[] parents;
 
-	SetX!DVar tmp;
+	SetX!DVar tmpVars;
 	void marginalizeTemporaries(){
-		foreach(v;tmp) marginalize(v);
-		tmp.clear();
+		foreach(v;tmpVars) marginalize(v);
+		tmpVars.clear();
 	}
 	
 	Distribution dup(){
@@ -119,7 +119,7 @@ class Distribution{
 	}
 	DVar getTmpVar(string name){
 		auto v=getVar(name);
-		tmp.insert(v);
+		tmpVars.insert(v);
 		return v;
 	}
 
@@ -164,22 +164,35 @@ class Distribution{
 		auto factor=(intNDist+error).simplify(one);
 		distribution=nDist*(1-error)/factor;
 	}
-	DExpr call(Distribution q,DVar[] args){ // TODO: this is incorrect; it does not work if the called method tries to compute a probability, for example in an 'if' or during 'observe'!
+	DExpr call(Distribution q,DExpr[] args){
 		DExpr rdist=q.distribution;
 		DExpr rerr=q.error;
 		assert(q.freeVars.length==1,"TODO!");
-		auto r=getTmpVar("__r");
 		import hashtable;
+		auto distBefore=distribution;
+		auto argSet=args.map!(a=>cast(DExpr)a).setx;
+		foreach(v;freeVars){
+			if(v in argSet) continue;
+			distBefore=dIntSmp(v,distBefore);
+		}
+		auto r=getTmpVar("__r");
 		foreach(v;q.freeVars){
 			rdist=rdist.substitute(q.freeVars.element,r);
 			rerr=rerr.substitute(q.freeVars.element,r);
 		}
-		auto oldDist=distribution;
-		distribution = rdist.substituteFun("q".dFunVar,oldDist,args);
-		auto nerror = rerr.substituteFun("q".dFunVar,oldDist,args);
+		DExpr deltas=one;
+		DVar[] vars;
 		foreach(a;args){
-			tmp.remove(a);
-			freeVars.remove(a);
+			auto var=getTmpVar("__arg");
+			deltas=deltas*dDelta(var-a);
+			vars~=var;
+		}
+		auto oldDist=distribution;
+		distribution = oldDist*rdist.substituteFun("q".dFunVar,deltas,vars);
+		auto nerror = oldDist*rerr.substituteFun("q".dFunVar,deltas,vars);
+		foreach(v;vars){
+			tmpVars.remove(v);
+			freeVars.remove(v);
 		}
 		foreach(v;freeVars.without(r)) nerror=dIntSmp(v,nerror);
 		error = error + nerror;

@@ -1,12 +1,12 @@
 def p(a){
     x := Bernoulli(1/2);
     observe(x == a);
-    return a;
+    return x;
 }
 
 def main(){
     y := Bernoulli(1/2);
-    r := p(1);
-    return r; // expected: TODO: δ[-r+1]
-    // TODO: method calls are currently incorrectly implemented!
+    r := p(y);
+    return r; // expected: ([-r+1=0]+[r=0])·(δ[-r+1]·⅟2+δ[r]·⅟2)
+    // TODO: improve simplification
 }
