@@ -359,6 +359,17 @@ void test(){
 	//writeln("lim[ξ₁ → ∞](d/dx)⁻¹[e^(-x²)](-skill1·⅟√3̅0̅+ξ₁·⅟√3̅0̅)·(d/dx)⁻¹[e^(-x²)](-skill2·⅟√3̅0̅+ξ₁·⅟√3̅0̅)·e^(skill2²·⅟30)·√3̅0̅".dParse.simplify(one));
 	//writeln("lim[ξ₁ → ∞](d/dx)⁻¹[e^(-x²)](-skill1·⅟√3̅0̅+ξ₁·⅟√3̅0̅)".dParse.simplify(one));
 	//writeln("lim[tmp → ∞](tmp·⅟√3̅0̅)".dParse.simplify(one));
+	//writeln("∫dx (d/dx)⁻¹[e^(-x²)](a·x+b)·[x≤y]".dParse.simplify(one));
+	//writeln("lim[ξ₁ → ∞]((d/dx)⁻¹[e^(-x²)](ξ₁·⅟a)·ξ₁·⅟a+-⅟e^(ξ₁²·⅟a²))·⅟a".dParse.simplify(one));
+	//writeln("lim[ξ₁ → ∞](-⅟e^(ξ₁²·⅟a²))·⅟a".dParse.simplify(one));
+	//writeln("lim[ξ₁ → -∞]((d/dx)⁻¹[e^(-x²)](-10·⅟3·√3̅0̅+ξ₁·⅟√3̅0̅))²·e^(1000·⅟3)·√3̅0̅+-(d/dx)⁻¹[e^(-x²)](-20·⅟3·√1̅5̅+ξ₁·⅟√1̅5̅)·e^(-ξ₁²·⅟30+1000·⅟3+20·ξ₁·⅟3)·⅟√2̅".dParse.simplify(one));
+	//writeln("lim[ξ₁ → -∞](f(ξ₁)+g(ξ₁))".dParse.simplify(one));
+	//writeln("lim[ξ₁ → -∞](((d/dx)⁻¹[e^(-x²)](-10·⅟3·√3̅0̅+ξ₁·⅟√3̅0̅))²·e^(1000·⅟3)·√3̅0̅+-(d/dx)⁻¹[e^(-x²)](-20·⅟3·√1̅5̅+ξ₁·⅟√1̅5̅)·e^(-ξ₁²·⅟30+1000·⅟3+20·ξ₁·⅟3)·⅟√2̅)".dParse.simplify(one));
+	//writeln("∫da(-(d/dx)⁻¹[e^(-x²)](-10·⅟3·√3̅0̅+a·⅟√3̅0̅)·e^(1000·⅟3)·⅟√3̅0̅+e^(1000·⅟3)·⅟√3̅0̅·√π̅)".dParse.simplify(one));
+	//writeln("∫da [a≤b]·e^(-a²·⅟2+-b²·⅟2)".dParse.simplify(one));
+	//writeln("∫db(d/dx)⁻¹[e^(-x²)](b·⅟√2̅)·⅟e^(b²·⅟2)·√2̅".dParse.simplify(one));
+	//writeln("∫dx e^(-(x/√2̅)²)·[x≤b]".dParse.simplify(one));
+	//writeln(dDiff("b".dVar,"(d/dx)⁻¹[e^(-x²)](b·⅟√2̅)".dParse));
 }
 
 /*

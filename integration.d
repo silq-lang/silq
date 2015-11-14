@@ -198,8 +198,8 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 	}
 	auto dgauss=doubleGaussIntegral(var,nonIvrs);
 	if(dgauss.antiderivative) return dgauss;
-	AntiD gaussIntTimesFunction(DVar var,DExpr e){
-		//∫dx (d/dx)⁻¹[e^(-x²)](g(x))·f(x) = (d/dx)⁻¹[e^(-x²)](g(x))·∫dx f(x) - ∫dx g'(x)e^(-g(x)²)·f(x)
+	AntiD gaussIntTimesGauss(DVar var,DExpr e){
+		//∫dx (d/dx)⁻¹[e^(-x²)](g(x))·f(x) = (d/dx)⁻¹[e^(-x²)](g(x))·∫dx f(x) - ∫dx (g'(x)e^(-g(x)²)·∫dx f(x))
 		auto m=cast(DMult)e;
 		if(!m) return AntiD();
 		DGaussInt gaussFact=null;
@@ -213,13 +213,13 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 		auto rest=m.withoutFactor(gaussFact);
 		auto gauss=dDiff(var,gaussFact).simplify(one);
 		auto intRest=tryGetAntiderivative(var,rest,ivrs);
-		auto intRestGauss=tryGetAntiderivative(var,(gauss*rest).simplify(one),ivrs);
-		if(intRest && intRestGauss)
-			return gaussFact*intRest - intRestGauss*rest;
+		if(e is (gauss*intRest.antiderivative).simplify(one)){ // TODO: handle all cases
+			return AntiD(gaussFact*intRest.antiderivative/2);
+		}
 		return AntiD();
 	}
-	auto dgaussTF=gaussIntTimesFunction(var,nonIvrs);
-	if(dgaussTF.antiderivative) return dgaussTF;
+	auto dgaussTG=gaussIntTimesGauss(var,nonIvrs);
+	if(dgaussTG.antiderivative) return dgaussTG;
 	// partial integration: TODO: this is not well founded!
 	/+if(!lower&&!upper){
 	 // x = ∫ u'v
