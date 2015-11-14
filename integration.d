@@ -213,6 +213,7 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 		auto rest=m.withoutFactor(gaussFact);
 		auto gauss=dDiff(var,gaussFact).simplify(one);
 		auto intRest=tryGetAntiderivative(var,rest,ivrs);
+		if(!intRest.antiderivative) return AntiD();
 		if(e is (gauss*intRest.antiderivative).simplify(one)){ // TODO: handle all cases
 			return AntiD(gaussFact*intRest.antiderivative/2);
 		}
