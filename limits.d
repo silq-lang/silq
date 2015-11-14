@@ -1,4 +1,5 @@
 import dexpr, util;
+import std.algorithm, std.array;
 import asymptotics;
 
 static struct ExpLim{
@@ -9,6 +10,7 @@ static struct Case(T){
 	DExpr condition;
 	T expression;
 	auto map(alias a)(){ return Case!(typeof(a(expression)))(a(expression),condition,limit); }
+	auto addCondition(DExpr c){ return Case!T(condition*c,expression); }
 }
 auto expandMap(alias a)(Case!ExpLim[][] r){
 	alias T=typeof(a(ExpLim[].init));
@@ -20,8 +22,22 @@ auto expandMap(alias a)(Case!ExpLim[][] r){
 		}
 		foreach(k;r[i]) go(i+1,cond*k.condition,explims~k.expression);
 	}
+	go(0,one,[]);
 	return result;
 }
+auto expandFlatMap(alias a)(Case!ExpLim[][] r){
+	Case!ExpLim[] result;
+	void go(int i,DExpr cond,ExpLim[] explims){ // TODO: this seems inefficient
+		if(i==r.length){
+			result~=a(explims).map!(a=>a.addCondition(cond)).array;
+			return;
+		}
+		foreach(k;r[i]) go(i+1,cond*k.condition,explims~k.expression);
+	}
+	go(0,one,[]);
+	return result;
+}
+
 
 DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}body{
 	e=e.simplify(facts);
@@ -73,7 +89,7 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 			return expandMap!handlePlus(r);
 		}
 		if(auto m=cast(DMult)x){
-			DExpr handleMultImpl(ExpLim[] c){
+			Case!ExpLim[] handleMult(ExpLim[] c){
 				bool simplified=false;
 				DExpr finite=one;
 				DExprSet unsupported;
@@ -97,34 +113,34 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 					finite=finite*l;
 					simplified=true;
 				}
-				if(dIvr(DIvr.Type.leZ,finite).simplify(facts) is zero){ // TODO: improve sign-checking!
-					// sign is correct
-				}else if(dIvr(DIvr.Type.leZ,-finite).simplify(facts) is zero){
-					sign = !sign;
-				}else{
-					// sign unknown!
-					return null; // !!!
-					// TODO: need to do a case split!
-				}
 				//dw(v," ",inf," ",zro," ",finite," ",unsupported);
 				if(!unsupported.length){
-					if(inf.length && !zro.length) return sign?-dInf:dInf;
-					if(zro.length && !inf.length) return zero;
+					if(inf.length && !zro.length){
+						auto leZ=dIvr(DIvr.Type.leZ,finite).simplify(facts);
+						auto geZ=dIvr(DIvr.Type.leZ,-finite).simplify(facts);
+						Case!ExpLim[] r;
+						if(leZ !is zero)
+							r~=Case!ExpLim(leZ,ExpLim(m,sign?dInf:-dInf));
+						if(geZ !is zero)
+							r~=Case!ExpLim(geZ,ExpLim(m,sign?-dInf:dInf));
+						return r;
+					}
+					if(zro.length && !inf.length) return [Case!ExpLim(one,ExpLim(m,zero))];
 				}
 				// TODO: Bernoulli-De l'Hôpital (?)
 				// auto f=dMult(inf), g=1/dMult(zro);
 				if(!simplified) return null;		
 				foreach(x;inf) unsupported.insert(x);
 				foreach(x;zro) unsupported.insert(x);
-				return finite*dLimSmp(v,e,dMult(unsupported));// TODO: repeated simplification ugly, how to do without?
+				return [Case!ExpLim(one,ExpLim(m,finite*dLimSmp(v,e,dMult(unsupported))))];
+				// TODO: repeated simplification ugly, how to do without?
 			}
-			ExpLim handleMult(ExpLim[] c){ return ExpLim(m,handleMultImpl(c)); }
 			Case!ExpLim[][] r;
 			foreach(s;m.factors){
 				r~=doIt(v,e,s);
 				if(!r[$-1].length) return [];
 			}
-			return expandMap!handleMult(r);
+			return expandFlatMap!handleMult(r);
 		}
 		if(auto p=cast(DPow)x){
 			DExpr handlePow(DExpr l0,DExpr l1){
@@ -183,6 +199,7 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 			foreach(el;l){
 				r~=Case!ExpLim(el.condition,ExpLim(g,handleGaussInt(el.expression.limit)));
 			}
+			return r;
 		}
 		return [];
 	}
