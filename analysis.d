@@ -179,7 +179,7 @@ private struct Analyzer{
 						dist.assertTrue(dIvr(DIvr.Type.lZ,-α)*dIvr(DIvr.Type.lZ,-β),"α and β must be positive");
 						auto var=dist.getTmpVar("__γ");
 						dist.distribute(gammaPDF(var,α,β));
-						return var;						
+						return var;
 					case "Exp":
 						if(ce.args.length!=1){
 							err.error("expected one argument (λ) to Exp",ce.loc);
@@ -287,7 +287,7 @@ private struct Analyzer{
 		if(r.hasAny!DInt) return null;
 		return r;
 	}
-	
+
 	Dℕ isDeterministicInteger(DExpr e){
 		auto r=isDeterministic(e);
 		if(auto num=cast(Dℕ)r) return num;
@@ -351,7 +351,7 @@ private struct Analyzer{
 			auto var=dist.getVar(id.name);
 			dist.initialize(var,zero);
 			arrays[id.name]~=var;
-		}		
+		}
 	}
 
 	void evaluateReadCSVCall(Identifier id,CallExp call){
@@ -375,12 +375,18 @@ private struct Analyzer{
 			return;
 		}
 		try{
-			auto arr=f.readln().strip().split(",").map!(x=>cast(DExpr)ℕ(strip(x)).dℕ).array;
-			import std.exception;
+			static DExpr parseNum(string s){
+				auto n=s.split(".");
+				if(n.length==1) n~="";
+				import std.exception;
+				enforce(n.length==2);
+				return dℕ((n[0]~n[1]).ℕ)/(ℕ(10)^^n[1].length);
+			}
+			auto arr=f.readln().strip().split(",").map!strip.map!parseNum.array;
 			//enforce(f.eof);
 			arrays[id.name]=arr;
 		}catch(Exception e){
-			err.error(text("not a comma-separated list of integers: `",path,"`"),call.loc);
+			err.error(text("not a comma-separated list of numbers: `",path,"`"),call.loc);
 			return;
 		}
 	}
