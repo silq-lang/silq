@@ -68,6 +68,7 @@ abstract class DExpr{
 		auto r=simplifyImpl(facts);
 		assert(!!r,text(typeid(this)));
 		simplifyMemo[q(this,facts)]=r;
+		simplifyMemo[q(r,facts)]=r;
 		return r;
 	}
 
