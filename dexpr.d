@@ -1168,6 +1168,7 @@ bool couldBeZero(DExpr e){
 	if(cast(DE)e) return false;
 	if(auto c=cast(Dℕ)e) return c.c==0;
 	if(auto c=cast(DFloat)e) return c.c==0;
+	if(auto p=cast(DPow)e) return couldBeZero(p.operands[0]);
 	return true;
 }
 
@@ -1180,6 +1181,13 @@ bool mustBeZeroOrOne(DExpr e){
 bool mustBeLessOrEqualZero(DExpr e){
 	if(auto c=cast(Dℕ)e) return c.c<=0;
 	if(auto c=cast(DFloat)e) return c.c<=0;
+	if(auto p=cast(DPow)e){
+		if(auto exp=cast(Dℕ)p.operands[1]){
+			if(exp.c%2){
+				return mustBeLessOrEqualZero(p.operands[0]);
+			}
+		}
+	}
 	return false;
 }
 bool mustBeLessThanZero(DExpr e){
@@ -1871,7 +1879,7 @@ class DLim: DOp{
 	override @property string symbol(){ return text("lim[",v," → ",e,"]"); }
 	override Precedence precedence(){ return Precedence.lim; } // TODO: ok?
 	override string toStringImpl(Precedence prec){
-		return addp(prec,symbol~x.toString());
+		return addp(prec,symbol~x.toStringImpl(precedence));
 	}
 
 	static DExpr constructHook(DVar v,DExpr e,DExpr x){
