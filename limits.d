@@ -62,8 +62,8 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 					finite = finite+l;
 					simplified = true;
 				}
-				//dw(v," ",inf," ",minf," ",finite," ",unsupported);
 				if(!unsupported.length){
+					if(!inf.length && !minf.length) return finite;
 					if(inf.length && !minf.length) return dInf;
 					if(minf.length && !inf.length) return -dInf;
 
@@ -74,11 +74,7 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 					if(growsFasterThanNormalized(v,minfAsymp,infAsymp))
 						return -dInf;
 				}
-			
-				if(!simplified) return null;
-				foreach(x;inf) unsupported.insert(x);
-				foreach(x;minf) unsupported.insert(x);
-				return finite+dLimSmp(v,e,dPlus(unsupported)); // TODO: repeated simplification ugly, how to do without?			
+				return null;
 			}
 			ExpLim handlePlus(ExpLim[] c){ return ExpLim(p,handlePlusImpl(c)); }
 			Case!ExpLim[][] r;
@@ -115,6 +111,7 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 				}
 				//dw(v," ",inf," ",zro," ",finite," ",unsupported);
 				if(!unsupported.length){
+					if(!inf.length && !zro.length) return [Case!ExpLim(one,ExpLim(m,finite))];
 					if(inf.length && !zro.length){
 						auto leZ=dIvr(DIvr.Type.leZ,finite).simplify(facts);
 						auto geZ=dIvr(DIvr.Type.leZ,-finite).simplify(facts);
@@ -127,12 +124,9 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 					}
 					if(zro.length && !inf.length) return [Case!ExpLim(one,ExpLim(m,zero))];
 				}
-				// TODO: Bernoulli-De l'Hôpital (?)
-				// auto f=dMult(inf), g=1/dMult(zro);
-				if(!simplified) return null;		
-				foreach(x;inf) unsupported.insert(x);
-				foreach(x;zro) unsupported.insert(x);
-				return [Case!ExpLim(one,ExpLim(m,finite*dLimSmp(v,e,dMult(unsupported))))];
+				/+// TODO: Bernoulli-De l'Hôpital (?)
+				// auto f=dMult(inf), g=1/dMult(zro);+/
+				return null;
 				// TODO: repeated simplification ugly, how to do without?
 			}
 			Case!ExpLim[][] r;
@@ -191,7 +185,7 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 				if(!l) return null;
 				if(l.hasLimits()) return null;
 				if(l is -dInf) return zero;
-				if(l is dInf) return one;
+				if(l is dInf) return dΠ^^(one/2);
 				return dGaussInt(g.x.substitute(v,l));
 			}
 			auto l=doIt(v,e,g.x);
