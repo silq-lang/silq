@@ -1791,7 +1791,7 @@ class DInt: DOp{
 							return r;
 						}+/
 						//dw(s);
-						return dPlus(s);
+						return dPlus(s).simplify(facts);
 					}
 				}
 			}
@@ -1801,7 +1801,7 @@ class DInt: DOp{
 		if(expr is one) return null; // (infinite integral)
 
 		if(auto r=definiteIntegral(var,expr))
-			return r;
+			return r.simplify(facts);
 		// Fubini
 		foreach(f;expr.factors){
 			// assert(f.hasFreeVar(var));
