@@ -1,0 +1,18 @@
+// skipped
+// data too large
+// zero-probability observations
+// returns an array
+
+def main(){
+    dataX := readCSV("data/LinearRegression/dataX.csv");
+    dataY := readCSV("data/LinearRegression/dataY.csv");
+    a := Gauss(0,1);
+    b := Gauss(5,1.82574185835055371152); // TODO: what is the precise variance they want?
+    invNoise := Gamma(1,1);
+    y := array(dataY.length);
+    for i in [0..dataY.length){
+        y[i] = Gauss(a*dataX[i]+b,invNoise);
+	observe(y[i] == dataY[i]);
+    }
+    return (a,b,invNoise);
+}

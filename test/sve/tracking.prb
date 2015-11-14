@@ -8,7 +8,7 @@ def tracking(){
     dd := Uniform(0,10);
     trackings := array(10);
     for i in [0..10){
-        trackings[i] = 0.05*Uniform(0,10) + 0.85*Gauss(dd,2) + 0.1*Gauss(10,1);
+        trackings[i] = 0.05*Uniform(0,10) + 0.85*Gauss(dd,2) + 0.1*Gauss(10,1); // second gauss should be T!
     }
     for i in [0..10){
         observe(trackings[i] == data[i]);
