@@ -23,11 +23,17 @@ DExpr dParse(string s){ // TODO: this is work in progress, usually updated in or
 			expect('[');
 			auto exp=parseDExpr();
 			DIvr.Type ty;
+			void doIt(DIvr.Type t){
+				next();
+				if(cur()=='0') expect('0');
+				else exp=exp-parseDExpr();
+				ty=t;
+			}
 			switch(cur()) with(DIvr.Type){
-				case '=': next(); expect('0'); ty=eqZ; break;
-				case '≠': next(); expect('0'); ty=neqZ; break;
-				case '<': next(); expect('0'); ty=lZ; break;
-				case '≤': next(); expect('0'); ty=leZ; break;
+				case '=': doIt(eqZ); break;
+				case '≠': doIt(neqZ); break;
+				case '<': doIt(lZ); break;
+				case '≤': doIt(leZ); break;
 				default: expect('<'); assert(0);
 			}
 			expect(']');
@@ -223,9 +229,12 @@ DExpr dParse(string s){ // TODO: this is work in progress, usually updated in or
 
 		DExpr parseAdd(){
 			DExpr s=parseMult();
-			while(cur()=='+'){
+			while(cur()=='+'||cur()=='-'){
+				auto x=cur();
 				next();
-				s=s+parseMult();
+				auto c=parseMult();
+				if(x=='-') c=-c;
+				s=s+c;
 			}
 			return s;
 		}
