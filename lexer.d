@@ -257,8 +257,10 @@ struct Token{
 				return to!string(flt80)~"Li";
 			case Tok!"Error":
 				return "error: "~str;
+			case Tok!"true": return "true";
+			case Tok!"false": return "false";
 			default:
-				return tokens[cast(int)type][0];case Tok!"true": return "true";
+				return tokens[cast(int)type][0];
 		}
 	}
 	union{

@@ -356,12 +356,12 @@ struct Parser{
 			case Tok!"true":
 				nextToken();
 				auto tok=Token(Tok!"0");
-				tok.int64=1;
+				tok.str="1";
 				return res=New!LiteralExp(tok);
 			case Tok!"false":
 				nextToken();
 				auto tok=Token(Tok!"0");
-				tok.int64=0;
+				tok.str="0";
 				return res=New!LiteralExp(tok);				
 			case Tok!"(":
 				nextToken();
