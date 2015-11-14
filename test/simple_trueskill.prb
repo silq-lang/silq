@@ -4,7 +4,6 @@ def main(){
     skill2 := Gauss(100,10);
     perf1 := Gauss(skill1,15);
     perf2 := Gauss(skill2,15);
-    r := perf1 > perf2;
-    observe(r);
+    observe(perf1 > perf2);
     return (skill1,skill2); // expected: TODO: simplify better
 }
