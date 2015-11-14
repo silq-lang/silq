@@ -221,19 +221,41 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 	}
 	auto dgaussTG=gaussIntTimesGauss(var,nonIvrs);
 	if(dgaussTG.antiderivative) return dgaussTG;
-	// partial integration: TODO: this is not well founded!
-	/+if(!lower&&!upper){
-	 // x = ∫ u'v
-	 // (uv)' = uv'+u'v
-	 // ∫(uv)' = ∫uv'+∫u'v
-	 // uv+C = ∫uv'+∫u'v
-	 // 
-	 auto factors=splitIntegrableFactor(nonIvrs);
-	 //dw(factors[1]);
-	 //dw("!! ",dDiff(var,factors[1]));
-	 // TODO
-		
-	 }+/
+	// partial integration for polynomials
+	AntiD partiallyIntegratePolynomials(DVar var,DExpr e){
+		auto m=cast(DMult)e;
+		if(!m) return AntiD();
+		DExpr polyFact=null;
+		foreach(f;m.factors){
+			if(auto p=cast(DPow)f){
+				if(p.operands[0] is var){
+					if(auto c=cast(Dℕ)p.operands[1]){
+						if(c.c>0){ polyFact=p; break; }
+					}
+				}
+			}
+			if(f is var){ polyFact=f; break; }
+		}
+		if(!polyFact) return AntiD();
+		auto rest=m.withoutFactor(polyFact);
+		auto intRest=tryGetAntiderivative(var,rest,ivrs).antiderivative;
+		if(!intRest) return AntiD();
+		auto diffPoly=dDiff(var,polyFact);
+		auto intDiffPolyIntRest=tryGetAntiderivative(var,(diffPoly*intRest).simplify(one),ivrs).antiderivative;
+		if(!intDiffPolyIntRest) return AntiD();
+		return AntiD(polyFact*intRest-intDiffPolyIntRest);
+	}
+	auto partPoly=partiallyIntegratePolynomials(var,nonIvrs);
+	if(partPoly.antiderivative) return partPoly;
+
+	// x = ∫ u'v
+	// (uv)' = uv'+u'v
+	// ∫(uv)' = ∫uv'+∫u'v
+	// uv+C = ∫uv'+∫u'v
+	// 
+	//auto factors=splitIntegrableFactor(nonIvrs);
+	//dw(factors[1]);
+	//dw("!! ",dDiff(var,factors[1]));
 	return AntiD(); // no simpler expression available
 }
 
@@ -265,18 +287,5 @@ DExpr tryIntegrate(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DExpr ivrs){
 		}
 		if(works.length) return dPlus(works)+dInt(var,dPlus(doesNotWork)*ivrs);
 	}
-	// partial integration: TODO: this is not well founded!
-	/+if(!lower&&!upper){
-	 // x = ∫ u'v
-	 // (uv)' = uv'+u'v
-	 // ∫(uv)' = ∫uv'+∫u'v
-	 // uv+C = ∫uv'+∫u'v
-	 // 
-	 auto factors=splitIntegrableFactor(nonIvrs);
-	 //dw(factors[1]);
-	 //dw("!! ",dDiff(var,factors[1]));
-	 // TODO
-		
-	 }+/
 	return null; // no simpler expression available
 }

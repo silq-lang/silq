@@ -370,6 +370,7 @@ void test(){
 	//writeln("∫db(d/dx)⁻¹[e^(-x²)](b·⅟√2̅)·⅟e^(b²·⅟2)·√2̅".dParse.simplify(one));
 	//writeln("∫dx e^(-(x/√2̅)²)·[x≤b]".dParse.simplify(one));
 	//writeln(dDiff("b".dVar,"(d/dx)⁻¹[e^(-x²)](b·⅟√2̅)".dParse));
+	//writeln("∫dx e^(-x²)·x²·[x≤y]·[-y≤x]".dParse.simplify(one)); // TODO
 }
 
 /*
