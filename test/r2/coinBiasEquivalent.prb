@@ -1,4 +1,5 @@
-
+// skipped: quite slow
+// TODO: make fast!
 // our implementation already supports this example up to the following fidelity:
 
 def main(){
@@ -22,6 +23,6 @@ def main(){
     observe(tossResults3 == observedResults3);
     observe(tossResults4 == observedResults4);
 
-    return bias; // expected: (-11·bias+11)·(-280·bias³·⅟3+-280·bias·⅟3+140·bias²+70·bias⁴·⅟3+70·⅟3)·(-9·bias+9)·[-1+bias≤0]·[-bias≤0]·bias⁴
+    return bias; // expected: (-2100·bias+-2100·bias³+3150·bias²+525+525·bias⁴)·(-4·bias·⅟9+4·⅟9)·(-99·bias·⅟10+99·⅟10)·[-1+bias≤0]·[-bias≤0]·bias⁴
     // TODO: better simplification
 }

@@ -214,9 +214,23 @@ private struct Analyzer{
 			}else if(auto ite=cast(IteExp)e){
 				auto cond=transformConstr(ite.cond);
 				if(!cond) throw new Unwind();
-				auto then=doIt(ite.then);
-				auto othw=doIt(ite.othw);
-				return cond*then+(1-cond)*othw; // TODO: make sure 0 eats mal-formed expressions
+				auto var=dist.getTmpVar("__ite");
+				auto dthen=dist.dup();
+				dthen.distribution=dthen.distribution*dIvr(DIvr.Type.neqZ,cond);
+				auto dothw=dist.dup();
+				dothw.distribution=dothw.distribution*dIvr(DIvr.Type.eqZ,cond);
+				auto athen=Analyzer(dthen,err,arrays.dup);
+				auto then=athen.transformExp(ite.then);
+				athen.dist.initialize(var,then);
+				if(!ite.othw){
+					err.error("missing else for if expression",ite.loc);
+					unwind();
+				}
+				auto aothw=Analyzer(dothw,err,arrays.dup);
+				auto othw=aothw.transformExp(ite.othw);
+				aothw.dist.initialize(var,othw);
+				dist=athen.dist.join(dist,aothw.dist);
+				return var;
 			}else if(auto c=transformConstr(e))
 				return c;
 			err.error("unsupported",e.loc);
@@ -444,34 +458,27 @@ private struct Analyzer{
 				}else err.error("left hand side of assignment should be identifier",ae.e1.loc);
 			}else if(auto ite=cast(IteExp)e){
 				if(auto c=transformConstr(ite.cond)){
-					DVar[] ws;
-					DExpr nc=c;
-					foreach(v;c.freeVars.setx){
-						auto w=dist.getVar(v.name);
-						dist.initialize(w,v);
-						ws~=w;
-						nc=nc.substitute(v,w);
-					}
-					auto dthen=Analyzer(dist.dup(),err,arrays.dup).analyze(ite.then);
+					auto dthen=dist.dup();
+					dthen.distribution=dthen.distribution*dIvr(DIvr.Type.neqZ,c);
 					auto dothw=dist.dup();
+					dothw.distribution=dothw.distribution*dIvr(DIvr.Type.eqZ,c);
+					dthen=Analyzer(dthen,err,arrays.dup).analyze(ite.then);
 					if(ite.othw) dothw=Analyzer(dothw,err,arrays.dup).analyze(ite.othw);
-					dist=dthen.join(dist,dothw,nc);
-					foreach(w;ws) dist.marginalize(w);
+					dist=dthen.join(dist,dothw);
 				}
 			}else if(auto re=cast(RepeatExp)e){
 				if(auto exp=transformExp(re.num)){
-					auto orig=dist.dup();
 					if(auto num=isDeterministicInteger(exp)){
 						int nerrors=err.nerrors;
 						for(ℕ j=0;j<num.c;j++){
 							auto dnext=Analyzer(dist.dup(),err,arrays.dup).analyze(re.bdy);
-							dist=dist.join(orig,dnext,zero); // TODO: why join?
+							dnext.marginalizeLocals(dist);
+							dist=dnext;
 							if(err.nerrors>nerrors) break;
 						}
 					}else err.error("repeat expression should be provably deterministic integer",re.num.loc);
 				}
 			}else if(auto fe=cast(ForExp)e){
-				auto orig=dist.dup();
 				auto lexp=transformExp(fe.left), rexp=transformExp(fe.right);
 				if(lexp&&rexp){
 					auto l=isDeterministicInteger(lexp), r=isDeterministicInteger(rexp);
@@ -486,7 +493,8 @@ private struct Analyzer{
 								break;
 							}
 							auto dnext=Analyzer(cdist,err,arrays.dup).analyze(fe.bdy);
-							dist=dist.join(orig,dnext,zero); // TODO: why join?
+							dnext.marginalizeLocals(dist);
+							dist=dnext;
 							if(err.nerrors>nerrors) break;
 						}
 					}else{
