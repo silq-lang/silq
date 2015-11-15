@@ -1,0 +1,4 @@
+def main(){
+    assert(Bernoulli(1/3));
+    return (); // expected: ⅟3
+}
