@@ -373,6 +373,7 @@ void test(){
 	//writeln("∫dx e^(-x²)·x²·[x≤y]·[-y≤x]".dParse.simplify(one)); // TODO
 	//writeln("∫dξ₁[-1+ξ₁≤0]·[-ξ₁≤0]·ξ₁⁸·⅟e^(ξ₁·⅟2)".dParse.simplify(one));
 	//writeln("(x-y)·[x=y]".dParse.simplify(one));
+	//writeln("(1+⅟(-x+1))".dParse.simplify(one));
 }
 
 /*

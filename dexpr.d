@@ -404,7 +404,6 @@ class DPlus: DCommutAssocOp{
 		}
 		auto origIndex=q(summands.dup,summand,facts);
 		scope(exit) insertMemo[origIndex]=summands.dup;
-
 		summand=summand.simplify(facts);
 		if(auto dp=cast(DPlus)summand){
 			foreach(s;dp.summands)
@@ -414,8 +413,10 @@ class DPlus: DCommutAssocOp{
 		if(auto p=cast(DPow)summand){
 			if(cast(DPlus)p.operands[0]){
 				auto expanded=expandPow(p);
-				if(expanded !is p) insertAndSimplify(summands,expanded,facts);
-				return;
+				if(expanded !is p){
+					insertAndSimplify(summands,expanded,facts);
+					return;
+				}
 			}
 		}
 
