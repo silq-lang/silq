@@ -534,6 +534,10 @@ private struct Analyzer{
 					}
 					writeln(ex==dist.distribution.toString()?todo?"FIXED":"PASS":todo?"TODO":"FAIL");
 				}
+			}else if(auto ae=cast(AssertExp)e){
+				if(auto c=transformConstr(ae.e)){
+					dist.assertTrue(c,text("assertion '",ae.e,"' failed"));
+				}
 			}else if(auto oe=cast(ObserveExp)e){
 				if(auto c=transformConstr(oe.e)){
 					dist.observe(c);
