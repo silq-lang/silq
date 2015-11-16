@@ -62,10 +62,16 @@ class Distribution{
 
 	SetX!DVar tmpVars;
 	void marginalizeTemporaries(){
-		foreach(v;tmpVars) marginalize(v);
-		tmpVars.clear();
+		foreach(v;tmpVars.dup) marginalize(v);
 	}
-	
+	void marginalizeLocals(Distribution enclosing){
+		foreach(x;this.freeVars.dup){
+			if(x in enclosing.freeVars) continue;
+			marginalize(x);
+			symtab.remove(x.name);
+		}
+	}	
+
 	Distribution dup(){
 		auto r=new Distribution();
 		r.vbl=vbl;
@@ -77,8 +83,7 @@ class Distribution{
 		return r;
 	}
 
-	// TODO: elegance
-	Distribution join(Distribution orig,Distribution b,DExpr constraint){
+	Distribution join(Distribution orig,Distribution b){
 		auto r=new Distribution();
 		auto d1=distribution;
 		auto d2=b.distribution;
@@ -89,11 +94,10 @@ class Distribution{
 		r.vbl=orig.vbl;
 		r.symtab=orig.symtab;
 		r.freeVars=orig.freeVars;
-		r.distribution=constraint*d1+(1-constraint)*d2;
-		if(error !is zero || b.error !is zero){
-			auto prob=orig.computeProbability(constraint)/(1-orig.error); // TODO: this is ugly!
-			r.error=(prob*error+(1-prob)*b.error).simplify(one);
-		}
+		r.tmpVars=orig.tmpVars;
+		r.distribution=d1+d2;
+		if(error !is zero || b.error !is zero)
+			r.error=(error+b.error).simplify(one);
 		return r;
 	}
 
@@ -154,15 +158,18 @@ class Distribution{
 		//writeln("marginalizing: ",var,"\ndistribution: ",distribution,"\nmarginalized: ",dInt(var,distribution));
 		distribution=dIntSmp(var,distribution);
 		freeVars.remove(var);
+		tmpVars.remove(var);
 		assert(!distribution.hasFreeVar(var));
 	}
 	void observe(DExpr e){ // e's domain must be {0,1}
 		// assertTrue(dIvr(DIvr.Type.neqZ,computeProbability(e)),"zero probability observation"); // TODO: we probably want this...
 		auto nDist=distribution*e;
-		auto intNDist=nDist;
-		foreach(v;freeVars) intNDist=dIntSmp(v,intNDist);
-		auto factor=(intNDist+error).simplify(one);
-		distribution=nDist*(1-error)/factor;
+		auto total=distribution,factor=nDist;
+		foreach(v;freeVars){
+			total=dIntSmp(v,total);
+			factor=dIntSmp(v,factor);
+		}
+		distribution=(nDist*total/factor).simplify(one);
 	}
 	DExpr call(Distribution q,DExpr[] args){
 		DExpr rdist=q.distribution;

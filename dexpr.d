@@ -404,7 +404,6 @@ class DPlus: DCommutAssocOp{
 		}
 		auto origIndex=q(summands.dup,summand,facts);
 		scope(exit) insertMemo[origIndex]=summands.dup;
-
 		summand=summand.simplify(facts);
 		if(auto dp=cast(DPlus)summand){
 			foreach(s;dp.summands)
@@ -414,8 +413,10 @@ class DPlus: DCommutAssocOp{
 		if(auto p=cast(DPow)summand){
 			if(cast(DPlus)p.operands[0]){
 				auto expanded=expandPow(p);
-				if(expanded !is p) insertAndSimplify(summands,expanded,facts);
-				return;
+				if(expanded !is p){
+					insertAndSimplify(summands,expanded,facts);
+					return;
+				}
 			}
 		}
 
@@ -689,6 +690,7 @@ class DMult: DCommutAssocOp{
 
 			if(auto r=combineFloat(e1,e2)) return r;
 			if(cast(DPow)e2) swap(e1,e2);
+			if(!cast(Dℕ)e1&&!cast(Dℕ)e2 && e1 is -e2) return -e1^^2;
 			if(auto p=cast(DPow)e1){
 				static bool testValid(DExpr e1,DExpr e2){
 					e1=e1.simplify(one); e2=e2.simplify(one);
@@ -704,6 +706,10 @@ class DMult: DCommutAssocOp{
 				if(p.operands[0] is e2){
 					if(!cast(Dℕ)e2 && testValid(p.operands[0],p.operands[1]+1))
 						return p.operands[0]^^(p.operands[1]+1);
+				}
+				if(p.operands[0] is -e2){
+					if(!cast(Dℕ)e2 && testValid(p.operands[0],p.operands[1]+1))
+						return -p.operands[0]^^(p.operands[1]+1);
 				}
 				if(auto d=cast(Dℕ)p.operands[0]){
 					if(auto e=cast(Dℕ)e2){
