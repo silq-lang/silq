@@ -1,0 +1,17 @@
+// skipped: does not work due to lacking deterministic value tracking
+// TODO: array literals
+// TODO: returning arrays
+
+def main(){
+    //a := [0,0.1,1.0]
+    a := array(3);
+    a[0]=0; a[1]=0.1; a[2]=1;
+    result := array(3);
+    for i in [0..3){
+        result[i] = Gauss(0,1);
+    }
+    for i in [0..3){
+        observe(a[i] > result[i]);
+    }
+    // return result; // TODO
+}

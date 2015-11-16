@@ -13,7 +13,7 @@ enum failColor=RED;
 
 
 void main(){
-	auto sources=shell("ls *.prb */*.prb").splitLines;
+	auto sources=shell("ls *.prb */*.prb */*/*.prb").splitLines;
 	Summary total;
 	int skipped=0,passed=0;
 	bool colorize=isATTy(stdout);

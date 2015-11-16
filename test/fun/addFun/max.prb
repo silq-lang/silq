@@ -1,0 +1,11 @@
+def max(a,b){
+    r := if a > b { a } else { b };
+    return r;
+}
+
+def main(){
+    x := Gauss(0,1);
+    y := Gauss(0,1);
+    r := max(x,y);
+    return r; // expected: (d/dx)⁻¹[e^(-x²)](r·⅟√2̅)·2·⅟e^(r²·⅟2)·⅟π·⅟√2̅
+}

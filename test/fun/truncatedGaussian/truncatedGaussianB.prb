@@ -1,0 +1,18 @@
+// TODO: array literals
+// TODO: returning arrays
+
+def main(){
+    //a := [0,0.1,1.0]
+    a := array(3);
+    a[0]=0; a[1]=0.1; a[2]=1;
+
+    y := Gauss(0,1);
+    result := array(3);
+    for i in [0..3){
+        result[i] = y;
+    }
+    for i in [0..3){
+        observe(a[i] > result[1]);
+    }
+    // return result; // TODO
+}

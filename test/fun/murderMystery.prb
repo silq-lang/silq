@@ -1,0 +1,16 @@
+def mystery(b){
+    aliceDunnit := Bernoulli(0.3);
+    withGun := if aliceDunnit { Bernoulli(0.03) } else { Bernoulli(0.8) };
+    return (aliceDunnit,withGun);
+}
+
+def gunFoundAtScene(gunFound){
+    (aliceDunnit, withGun) := mystery(true);
+    observe(withGun == gunFound);
+    return aliceDunnit;
+}
+
+def main(){
+    posterior := gunFoundAtScene(true);
+    return posterior;
+}

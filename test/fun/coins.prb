@@ -1,0 +1,8 @@
+def main(){
+    c1 := Bernoulli(1/2);
+    c2 := Bernoulli(1/2);
+    bothHeads := c1 && c2;
+    observe(bothHeads == 0);
+    return (c1,c2,bothHeads); // expected: (2·δ[-c2+1]+2·δ[c2])·([c1=0]·δ[-bothHeads]+[c1≠0]·[c2=0]·δ[-bothHeads])·(δ[-c1+1]·⅟6+δ[c1]·⅟6)·[-bothHeads=0]
+    // TODO: simplify better
+}
