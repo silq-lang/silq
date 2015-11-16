@@ -1,3 +1,5 @@
+// skipped (somewhat slow)
+
 def trueSkill(){
     skillA := Gauss(100,10);
     skillB := Gauss(100,10);

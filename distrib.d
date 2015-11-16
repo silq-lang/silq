@@ -163,13 +163,12 @@ class Distribution{
 	}
 	void observe(DExpr e){ // e's domain must be {0,1}
 		// assertTrue(dIvr(DIvr.Type.neqZ,computeProbability(e)),"zero probability observation"); // TODO: we probably want this...
-		auto nDist=distribution*e;
-		auto total=distribution,factor=nDist;
-		foreach(v;freeVars){
-			total=dIntSmp(v,total);
-			factor=dIntSmp(v,factor);
-		}
-		distribution=(nDist*total/factor).simplify(one);
+		import renormalization;
+		auto total=distribution;
+		foreach(v;freeVars) total=dIntSmp(v,total);
+		auto distErr=renormalize(distribution*e,freeVars);
+		distribution=distErr[0]*total;
+		if(distErr[1] !is zero) error=(error+distErr[1]*total).simplify(one);
 	}
 	DExpr call(Distribution q,DExpr[] args){
 		DExpr rdist=q.distribution;

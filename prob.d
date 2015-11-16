@@ -374,6 +374,7 @@ void test(){
 	//writeln("∫dξ₁[-1+ξ₁≤0]·[-ξ₁≤0]·ξ₁⁸·⅟e^(ξ₁·⅟2)".dParse.simplify(one));
 	//writeln("(x-y)·[x=y]".dParse.simplify(one));
 	//writeln("(1+⅟(-x+1))".dParse.simplify(one));
+	//writeln("[2·√2̅+√3̅=0]".dParse.simplify(one));
 }
 
 /*

@@ -533,7 +533,7 @@ class DPlus: DCommutAssocOp{
 				auto sum=(sum1+sum2).simplify(facts);
 				auto summands=sum.summands.setx; // TODO: improve performance!
 				if(sum1!in summands||sum2!in summands)
-					return sum*common;
+					return dDistributeMult(sum,common); // was: sum*common
 			}
 		}
 		return null;
@@ -1176,6 +1176,25 @@ bool couldBeZero(DExpr e){
 	if(auto c=cast(Dℕ)e) return c.c==0;
 	if(auto c=cast(DFloat)e) return c.c==0;
 	if(auto p=cast(DPow)e) return couldBeZero(p.operands[0]);
+	if(auto p=cast(DPlus)e){
+		bool allLarge=true,allSmall=true;
+		foreach(s;p.summands){
+			if(!mustBeLessThanZero(s)) allSmall=false;
+			if(!mustBeLessThanZero(-s)) allLarge=false;
+			if(!allSmall&&!allLarge) break;
+		}
+		if(allSmall||allLarge) return false;
+	}
+	if(auto m=cast(DMult)e){
+		bool allDistinct=true;
+		foreach(f;m.factors){
+			if(couldBeZero(f)){
+				allDistinct=false;
+				break;
+			}
+		}
+		if(allDistinct) return false;		
+	}
 	return true;
 }
 
@@ -1186,13 +1205,41 @@ bool mustBeZeroOrOne(DExpr e){
 }
 
 bool mustBeLessOrEqualZero(DExpr e){
-	if(auto c=cast(Dℕ)e) return c.c<=0;
-	if(auto c=cast(DFloat)e) return c.c<=0;
-	if(auto p=cast(DPow)e){
-		if(auto exp=cast(Dℕ)p.operands[1]){
-			if(exp.c%2){
-				return mustBeLessOrEqualZero(p.operands[0]);
+	bool mustBeLessOrEqualZeroImpl(DExpr e){
+		if(auto c=cast(Dℕ)e) return c.c<=0;
+		if(auto c=cast(DFloat)e) return c.c<=0;
+		if(auto p=cast(DPow)e){
+			if(auto exp=cast(Dℕ)p.operands[1]){
+				if(exp.c%2){
+					return mustBeLessOrEqualZeroImpl(p.operands[0]);
+				}
 			}
+		}
+		return false;
+	}
+	if(mustBeLessOrEqualZeroImpl(e)) return true;
+	bool mustBeGreaterOrEqualZeroImpl(DExpr e){
+		if(auto c=cast(Dℕ)e) return c.c>=0;
+		if(auto c=cast(DFloat)e) return c.c>=0;
+		if(auto p=cast(DPow)e){
+			if(auto exp=cast(Dℕ)p.operands[1]){
+				return !(exp.c%2)||mustBeLessOrEqualZeroImpl(-p.operands[0]);
+			}
+			if(p.operands[1].isFraction()) return true; // TODO: ok?
+		}
+		return false;		
+	}
+	if(auto m=cast(DMult)e){
+		auto ff=m.getFractionalFactor();
+		if(mustBeLessOrEqualZeroImpl(ff)){
+			bool allGreaterEqual=true;
+			foreach(f;e.factors){
+				if(f.isFraction()) continue;
+				if(!mustBeGreaterOrEqualZeroImpl(f)){
+					allGreaterEqual=false; break;
+				}
+			}
+			if(allGreaterEqual) return true;
 		}
 	}
 	return false;
@@ -1542,7 +1589,7 @@ class DDelta: DExpr{ // Dirac delta function
 		return r?r:this;
 	}
 
-	static DExpr performSubstitution(DVar var,DDelta d,DExpr expr,bool caseSplit){
+	static DExpr performSubstitution(bool scale=true)(DVar var,DDelta d,DExpr expr,bool caseSplit){
 		SolutionInfo info;
 		SolUse usage={caseSplit:caseSplit,bound:false};
 		if(auto s=d.e.solveFor(var,zero,usage,info)){
@@ -1552,8 +1599,12 @@ class DDelta: DExpr{ // Dirac delta function
 			auto constraints=one;
 			foreach(ref x;info.caseSplits)
 				constraints=constraints*dIvr(DIvr.Type.neqZ,x.constraint);
-			auto r=constraints is zero?zero:
-				constraints*rest.substitute(var,s)/dAbs(dDiff(var,d.e,s));
+			static if(scale){
+				auto r=constraints is zero?zero:
+					constraints*rest.substitute(var,s)/dAbs(dDiff(var,d.e,s));
+			}else{
+				auto r=constraints is zero?zero:constraints*rest.substitute(var,s);
+			}
 			foreach(ref x;info.caseSplits){
 				auto curConstr=constraints.withoutFactor(dIvr(DIvr.Type.neqZ,x.constraint));
 				r=r+curConstr*dIvr(DIvr.Type.eqZ,x.constraint)*dIntSmp(var,rest*dDelta(x.expression));
