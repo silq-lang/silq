@@ -253,7 +253,7 @@ private struct Analyzer{
 				return e1*e2;
 			}else if(auto b=cast(OrExp)e){
 				auto e1=doIt(b.e1), e2=doIt(b.e2);
-				return 1-(1-e1)*(1-e2);
+				return dIvr(DIvr.Type.neqZ,e1+e2);
 			}else with(DIvr.Type)if(auto b=cast(LtExp)e){
 				mixin(common);
 				return dIvr(lZ,e1-e2);
