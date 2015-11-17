@@ -194,7 +194,7 @@ private struct Analyzer{
 					case "FromMarginal":
 						if(ce.args.length!=1){
 							err.error("expected one argument (e) to FromMarginal",ce.loc);
-							unwind;
+							unwind();
 						}
 						auto exp=doIt(ce.args[0]);
 						auto tmp=dist.getTmpVar("__mrg");
@@ -206,6 +206,22 @@ private struct Analyzer{
 						}
 						ndist.simplify();
 						dist.distribute(ndist.distribution);
+						return tmp;
+					case "Expectation":
+						if(ce.args.length!=1){
+							err.error("expected one arguments (e) to Expectation",ce.loc);
+							unwind();
+						}
+						auto exp=doIt(ce.args[0]);
+						auto total=dist.distribution;
+						dw(exp);
+						auto expct=dist.distribution*exp;
+						foreach(v;dist.freeVars){
+							total=dInt(v,total);
+							expct=dInt(v,expct);
+						}
+						auto tmp=dist.getTmpVar("__exp");
+						dist.distribute(dDelta(expct/total-tmp));
 						return tmp;
 					default: break;
 					}
