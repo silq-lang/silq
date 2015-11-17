@@ -64,9 +64,10 @@ class Distribution{
 	void marginalizeTemporaries(){
 		foreach(v;tmpVars.dup) marginalize(v);
 	}
-	void marginalizeLocals(Distribution enclosing){
+	void marginalizeLocals(Distribution enclosing,scope void delegate(DVar) hook=null){
 		foreach(x;this.freeVars.dup){
 			if(x in enclosing.freeVars) continue;
+			if(hook) hook(x);
 			marginalize(x);
 			symtab.remove(x.name);
 		}

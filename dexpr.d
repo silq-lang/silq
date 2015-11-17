@@ -2498,3 +2498,5 @@ auto allOf(T)(DExpr e,bool belowIntegrals=false){
 }
 
 bool hasAny(T)(DExpr e,bool belowIntegrals=true){ foreach(x;allOf!T(e,belowIntegrals)) return true; return false; }
+
+bool hasFreeVars(DExpr e){ foreach(x;e.freeVars) return true; return false; }

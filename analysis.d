@@ -30,6 +30,7 @@ private struct Analyzer{
 	Distribution dist;
 	ErrorHandler err;
 	DExpr[][string] arrays;
+	DExpr[DVar] deterministic;
 	DExpr transformExp(Exp e){
 		class Unwind: Exception{ this(){ super(""); } }
 		void unwind(){ throw new Unwind(); }
@@ -219,17 +220,23 @@ private struct Analyzer{
 				dthen.distribution=dthen.distribution*dIvr(DIvr.Type.neqZ,cond);
 				auto dothw=dist.dup();
 				dothw.distribution=dothw.distribution*dIvr(DIvr.Type.eqZ,cond);
-				auto athen=Analyzer(dthen,err,arrays.dup);
+				auto athen=Analyzer(dthen,err,arrays.dup,deterministic.dup);
 				auto then=athen.transformExp(ite.then);
 				athen.dist.initialize(var,then);
 				if(!ite.othw){
 					err.error("missing else for if expression",ite.loc);
 					unwind();
 				}
-				auto aothw=Analyzer(dothw,err,arrays.dup);
+				auto aothw=Analyzer(dothw,err,arrays.dup,deterministic.dup);
 				auto othw=aothw.transformExp(ite.othw);
 				aothw.dist.initialize(var,othw);
 				dist=athen.dist.join(dist,aothw.dist);
+				foreach(k,v;deterministic){
+					if(k in athen.deterministic && k in aothw.deterministic
+					&& athen.deterministic[k] is aothw.deterministic[k]){
+						deterministic[k]=athen.deterministic[k];
+					}else deterministic.remove(k);
+				}
 				return var;
 			}else if(auto c=transformConstr(e))
 				return c;
@@ -283,8 +290,29 @@ private struct Analyzer{
 		try return doIt(e);
 		catch(Unwind){ return null; }
 	}
+
+	void trackDeterministic(DVar var,DExpr rhs){
+		if(rhs){
+			if(auto nrhs=isObviouslyDeterministic(rhs)){
+				deterministic[var]=nrhs;
+				return;
+			}
+		}
+		deterministic.remove(var);
+	}
+
+	DExpr isObviouslyDeterministic(DExpr e){
+		foreach(v;e.freeVars.setx){
+			if(v in deterministic){
+				e=e.substitute(v,deterministic[v]);
+			}else return null;
+		}
+		return e.simplify(one);
+	}
+
 	DExpr isDeterministic(DExpr e){
-		if(auto num=cast(Dℕ)e) return num;
+		if(auto r=isObviouslyDeterministic(e))
+			return r;
 		// TODO: this is a glorious hack:
 		auto ndist=dist.dup();
 		auto tmp=ndist.getVar("tmp");
@@ -435,6 +463,7 @@ private struct Analyzer{
 						if(id.name !in arrays) var=dist.declareVar(id.name);
 						if(var){
 							dist.initialize(var,rhs?rhs:zero);
+							trackDeterministic(var,rhs);
 						}else err.error("variable already exists",id.loc);
 					}
 				}else err.error("left hand side of definition should be identifier",de.e1.loc);
@@ -444,6 +473,7 @@ private struct Analyzer{
 						if(auto v=dist.lookupVar(id.name)){
 							auto rhs=transformExp(ae.e2);
 							dist.assign(v,rhs?rhs:zero);
+							trackDeterministic(v,rhs);
 						}else err.error("undefined variable '"~id.name~"'",id.loc);
 					}else err.error("reassigning array unsupported",e.loc);
 				}else if(auto idx=cast(IndexExp)ae.e1){
@@ -451,6 +481,7 @@ private struct Analyzer{
 						if(auto v=cast(DVar)cidx){
 							auto rhs=transformExp(ae.e2);
 							dist.assign(v,rhs?rhs:zero);
+							trackDeterministic(v,rhs);
 						}else{
 							err.error(text("array is not writeable"),ae.loc);
 						}
@@ -462,18 +493,28 @@ private struct Analyzer{
 					dthen.distribution=dthen.distribution*dIvr(DIvr.Type.neqZ,c);
 					auto dothw=dist.dup();
 					dothw.distribution=dothw.distribution*dIvr(DIvr.Type.eqZ,c);
-					dthen=Analyzer(dthen,err,arrays.dup).analyze(ite.then);
-					if(ite.othw) dothw=Analyzer(dothw,err,arrays.dup).analyze(ite.othw);
+					auto athen=Analyzer(dthen,err,arrays.dup,deterministic.dup);
+					dthen=athen.analyze(ite.then);
+					auto aothw=Analyzer(dothw,err,arrays.dup,deterministic.dup);
+					if(ite.othw) dothw=aothw.analyze(ite.othw);
 					dist=dthen.join(dist,dothw);
+					foreach(k,v;deterministic){
+						if(k in athen.deterministic && k in aothw.deterministic
+						&& athen.deterministic[k] is aothw.deterministic[k]){
+							deterministic[k]=athen.deterministic[k];
+						}else deterministic.remove(k);
+					}
 				}
 			}else if(auto re=cast(RepeatExp)e){
 				if(auto exp=transformExp(re.num)){
 					if(auto num=isDeterministicInteger(exp)){
 						int nerrors=err.nerrors;
 						for(ℕ j=0;j<num.c;j++){
-							auto dnext=Analyzer(dist.dup(),err,arrays.dup).analyze(re.bdy);
+							auto anext=Analyzer(dist.dup(),err,arrays.dup,deterministic);
+							auto dnext=anext.analyze(re.bdy);
 							dnext.marginalizeLocals(dist);
 							dist=dnext;
+							deterministic=anext.deterministic;
 							if(err.nerrors>nerrors) break;
 						}
 					}else err.error("repeat expression should be provably deterministic integer",re.num.loc);
@@ -486,15 +527,21 @@ private struct Analyzer{
 						int nerrors=err.nerrors;
 						for(ℕ j=l.c+cast(int)fe.leftExclusive;j+cast(int)fe.rightExclusive<=r.c;j++){
 							auto cdist=dist.dup();
-							if(auto var=cdist.declareVar(fe.var.name)){
-								cdist.initialize(var,dℕ(j));
+							auto anext=Analyzer(cdist,err,arrays.dup,deterministic);
+							auto var=cdist.declareVar(fe.var.name);
+							if(var){
+								auto rhs=dℕ(j);
+								cdist.initialize(var,rhs);
+								anext.trackDeterministic(var,rhs);
 							}else{
 								err.error("variable already exists",fe.var.loc);
 								break;
 							}
-							auto dnext=Analyzer(cdist,err,arrays.dup).analyze(fe.bdy);
-							dnext.marginalizeLocals(dist);
+							auto dnext=anext.analyze(fe.bdy);
+							dnext.marginalizeLocals(dist,(v){ anext.deterministic.remove(v); });
 							dist=dnext;
+							deterministic=anext.deterministic;
+							deterministic.remove(var);
 							if(err.nerrors>nerrors) break;
 						}
 					}else{
