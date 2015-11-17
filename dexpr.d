@@ -1176,6 +1176,7 @@ bool couldBeZero(DExpr e){
 	if(auto c=cast(Dℕ)e) return c.c==0;
 	if(auto c=cast(DFloat)e) return c.c==0;
 	if(auto p=cast(DPow)e) return couldBeZero(p.operands[0]);
+	if(cast(DGaussInt)e) return false;
 	if(auto p=cast(DPlus)e){
 		bool allLarge=true,allSmall=true;
 		foreach(s;p.summands){
