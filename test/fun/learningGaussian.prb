@@ -1,5 +1,4 @@
 // skipped: sample size too large
-// TODO: track deterministic values
 // TODO: passing arrays
 
 def main(){

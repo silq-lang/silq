@@ -1,5 +1,5 @@
+// skipped: sample size too large
 // TODO: return arrays
-// TODO: track deterministic values
 
 def main(){
     a := Gauss(0,1);
@@ -10,12 +10,13 @@ def main(){
     aTrue := Gauss(0,1);
     bTrue := Gauss(5,0.3^0.5);
     invNoiseTrue := Gamma(1,1);
-    data := array(10);
-    for i in [1..10]{
+    n := 10;
+    data := array(n);
+    for i in [1..n]{
         data[i-1]=Gauss(aTrue*i+bTrue,invNoiseTrue);
     }
 
-    for i in [1..10]{
+    for i in [1..n]{
         observe(data[i-1] == Gauss(a*i+b,invNoise));
     }
     // return data; // TODO
