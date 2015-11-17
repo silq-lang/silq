@@ -1,0 +1,22 @@
+// TODO: return arrays
+// TODO: track deterministic values
+
+def main(){
+    a := Gauss(0,1);
+    b := Gauss(5,0.3^0.5);
+    invNoise := Gamma(1,1);
+
+    // TODO: just use one set of concrete data here
+    aTrue := Gauss(0,1);
+    bTrue := Gauss(5,0.3^0.5);
+    invNoiseTrue := Gamma(1,1);
+    data := array(10);
+    for i in [1..10]{
+        data[i-1]=Gauss(aTrue*i+bTrue,invNoiseTrue);
+    }
+
+    for i in [1..10]{
+        observe(data[i-1] == Gauss(a*i+b,invNoise));
+    }
+    // return data; // TODO
+}
