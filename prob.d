@@ -61,7 +61,8 @@ int run(string path){
 	auto dist=analyze(fd,err);
 	import approximate;
 	//import hashtable; dist.distribution=approxLog(dist.freeVars.element);
-	// dist.distribution=dist.distribution.killIntegrals();
+	//import hashtable; dist.distribution=approxGaussInt(dist.freeVars.element);
+	//dist.distribution=dist.distribution.killIntegrals();
 	auto str=dist.toString();
 	//writeln((cast(DPlus)dist.distribution).summands.length);
 	if(str.length<10000) writeln(str);

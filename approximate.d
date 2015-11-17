@@ -24,7 +24,7 @@ DExpr readSpline(string filename){
 		enforce(breaks.length==polys.length+1);
 		DExpr cur=zero;
 		foreach(i,p;polys)
-			cur=cur+dBounded!"[)"("x".dVar,breaks[i]+1e-20,breaks[i+1])*p;
+			cur=cur+dBounded!"[)"("x".dVar,breaks[i],breaks[i+1])*p;
 		r=r+dBounded!"[)"("x".dVar,a.dFloat,b.dFloat)*cur;
 	}
 	return r;
@@ -94,6 +94,38 @@ DExpr approxLog(DExpr e){
 	return logSpline.substitute("x".dVar,e);
 }
 
+DExpr approxGaussInt(DExpr e){
+	static DExpr scaledErfSpline=null;
+	if(!scaledErfSpline){
+		scaledErfSpline=readSpline("approximations/erfSpline.txt");
+		scaledErfSpline=(scaledErfSpline+1)/2;
+	}
+	return scaledErfSpline.substitute("x".dVar,e);
+}
+
+
+// TODO: get rid of code duplication here?
+DExpr approxInvX(DExpr e){
+	static DExpr invxSpline=null;
+	if(!invxSpline)
+		invxSpline=readSpline("approximations/invxSpline.txt");
+	return invxSpline.substitute("x".dVar,e);
+}
+
+DExpr approxInvSqrt(DExpr e){
+	static DExpr invSqrtSpline=null;
+	if(!invSqrtSpline)
+		invSqrtSpline=readSpline("approximations/invSqrtSpline.txt");
+	return invSqrtSpline.substitute("x".dVar,e);
+}
+
+DExpr approxSqrt(DExpr e){
+	static DExpr sqrtSpline=null;
+	if(!sqrtSpline)
+		sqrtSpline=readSpline("approximations/sqrtSpline.txt");
+	return sqrtSpline.substitute("x".dVar,e);
+}
+
 DExpr approximate(DExpr e){
 	static DExpr doIt(DExpr e, bool necessary){
 		if(auto p=cast(DPlus)e){
@@ -132,7 +164,18 @@ DExpr approximate(DExpr e){
 			if(auto l=cast(DLog)e){
 				return approxLog(l.e);
 			}
-			
+			if(auto g=cast(DGaussInt)e){
+				return approxGaussInt(g.x);
+			}
+			if(auto p=cast(DPow)e){
+				if(p.operands[1] is mone){
+					return approxInvX(p.operands[0]);
+				}else if(p.operands[1] is -(one/2)){
+					return approxInvSqrt(p.operands[0]);
+				}else if(p.operands[1] is one/2){
+					return approxSqrt(p.operands[0]);
+				}
+			}
 		}
 		return null;
 	}
