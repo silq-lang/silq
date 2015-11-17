@@ -1,5 +1,4 @@
 // skipped
-// computing the deterministic array indices by marginalizing other variables is obviously too dumb
 
 def main(){
     observedResults := readCSV("data/CoinBias/tosses.csv");
