@@ -191,6 +191,22 @@ private struct Analyzer{
 						auto var=dist.getTmpVar("__e");
 						dist.distribute(expPDF(var,λ));
 						return var;
+					case "FromMarginal":
+						if(ce.args.length!=1){
+							err.error("expected one argument (e) to FromMarginal",ce.loc);
+							unwind;
+						}
+						auto exp=doIt(ce.args[0]);
+						auto tmp=dist.getTmpVar("__mrg");
+						auto ndist=dist.dup();
+						ndist.initialize(tmp,exp);
+						foreach(v;dist.freeVars){
+							if(v !is tmp)
+								ndist.marginalize(v);
+						}
+						ndist.simplify();
+						dist.distribute(ndist.distribution);
+						return tmp;
 					default: break;
 					}
 					err.error("undefined function '"~id.name~"'",ce.loc);
