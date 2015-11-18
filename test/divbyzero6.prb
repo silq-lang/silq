@@ -2,7 +2,7 @@ def main(){
     x := Gauss(0,1);
     y := Gauss(0,1);
     z := x/y;
-    return; // expected: (∫dξ₁[ξ₁≠0]·⅟(-2·[⅟ξ₁≤0]·⅟ξ₁+2·[-⅟ξ₁≤0]·⅟ξ₁)·⅟e^(ξ₁²·⅟2)·⅟ξ₁)·⅟√π̅·√2̅
+    return; // expected: [(∫dξ₁[ξ₁≠0]·⅟(-2·[⅟ξ₁≤0]·⅟ξ₁+2·[-⅟ξ₁≤0]·⅟ξ₁)·⅟e^(ξ₁²·⅟2)·⅟ξ₁)·⅟√π̅·√2̅≠0]
     // (the important thing is that the zero-probability division by zero isn't reported)
     // (TODO: this can be improved, e.g. case split on ⅟ξ₁≤0)
 }

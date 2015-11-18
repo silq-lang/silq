@@ -9,5 +9,5 @@ def main(){
         }
     }
     observe(!x && !y);
-    return z; // expected: δ[-z+1]
+    return z; // expected: TODO: δ[-z+1]
 }

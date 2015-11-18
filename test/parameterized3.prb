@@ -1,0 +1,6 @@
+def main(arg1,arg2){
+    if(arg1 != arg2){
+        observe(arg1 != arg2);
+    }
+    return; // expected: TODO: [∫dξ₁∫dξ₂q(ξ₂,ξ₁)≠0]
+}

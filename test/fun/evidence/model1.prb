@@ -4,5 +4,5 @@ def main(){
         coin := Bernoulli(1/2);
 	observe(coin);
     }
-    return evidence; // expected: TODO: 2·δ[evidence]·⅟3+δ[-evidence+1]·⅟3
+    return evidence; // expected: 2·δ[evidence]·⅟3+δ[-evidence+1]·⅟3
 }

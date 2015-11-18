@@ -1,6 +1,6 @@
 def main(arg1,arg2){
     observe(arg1==arg2);
-    return (arg1,arg2); // expected: (∫dξ₁∫dξ₂q(ξ₂,ξ₁))·[-arg1+arg2=0]·[∫dξ₁∫dξ₂[-ξ₂+ξ₁=0]·q(ξ₂,ξ₁)≠0]·q(arg1,arg2)·⅟(∫dξ₁∫dξ₂[-ξ₂+ξ₁=0]·q(ξ₂,ξ₁))
+    return (arg1,arg2); // expected: [-arg1+arg2=0]·[∫dξ₁∫dξ₂[-ξ₂+ξ₁=0]·q(ξ₂,ξ₁)≠0]·q(arg1,arg2)·⅟(∫dξ₁∫dξ₂[-ξ₂+ξ₁=0]·q(ξ₂,ξ₁))
     // TODO: should methods expect the input distribution to be normalized?
     // TODO: we might want to have parameterized zero-probability observations, too!
 }

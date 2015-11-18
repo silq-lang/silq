@@ -84,6 +84,12 @@ class Distribution{
 		return r;
 	}
 
+	Distribution dupNoErr(){
+		auto r=dup();
+		r.error=zero;
+		return r;
+	}
+
 	Distribution join(Distribution orig,Distribution b){
 		auto r=new Distribution();
 		auto d1=distribution;
@@ -98,7 +104,7 @@ class Distribution{
 		r.tmpVars=orig.tmpVars;
 		r.distribution=d1+d2;
 		if(error !is zero || b.error !is zero)
-			r.error=(error+b.error).simplify(one);
+			r.error=(orig.error+error+b.error).simplify(one);
 		return r;
 	}
 
@@ -163,13 +169,13 @@ class Distribution{
 		assert(!distribution.hasFreeVar(var));
 	}
 	void observe(DExpr e){ // e's domain must be {0,1}
-		// assertTrue(dIvr(DIvr.Type.neqZ,computeProbability(e)),"zero probability observation"); // TODO: we probably want this...
+		distribution=distribution*e;
+	}
+	void renormalize(){
 		import renormalization;
-		auto total=distribution;
-		foreach(v;freeVars) total=dIntSmp(v,total);
-		auto distErr=renormalize(distribution*e,freeVars);
-		distribution=distErr[0]*total;
-		if(distErr[1] !is zero) error=(error+distErr[1]*total).simplify(one);
+		auto distErr=renormalize(distribution,freeVars);
+		distribution=(distErr[0]*(1-error)).simplify(one);
+		if(distErr[1] !is zero) error=(error+distErr[1]*(1-error)).simplify(one);
 	}
 	DExpr call(Distribution q,DExpr[] args){
 		DExpr rdist=q.distribution;

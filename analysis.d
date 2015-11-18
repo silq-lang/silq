@@ -26,6 +26,13 @@ FunctionDef[string] functions; // TODO: get rid of globals
 Distribution[string] summaries;
 string sourceFile;
 
+struct Expected{
+	bool exists;
+	bool todo;
+	string ex;
+}
+Expected expected;
+
 private struct Analyzer{
 	Distribution dist;
 	ErrorHandler err;
@@ -248,9 +255,9 @@ private struct Analyzer{
 				auto cond=transformConstr(ite.cond);
 				if(!cond) throw new Unwind();
 				auto var=dist.getTmpVar("__ite");
-				auto dthen=dist.dup();
+				auto dthen=dist.dupNoErr();
 				dthen.distribution=dthen.distribution*dIvr(DIvr.Type.neqZ,cond);
-				auto dothw=dist.dup();
+				auto dothw=dist.dupNoErr();
 				dothw.distribution=dothw.distribution*dIvr(DIvr.Type.eqZ,cond);
 				auto athen=Analyzer(dthen,err,arrays.dup,deterministic.dup);
 				auto then=athen.transformExp(ite.then);
@@ -521,9 +528,9 @@ private struct Analyzer{
 				}else err.error("left hand side of assignment should be identifier",ae.e1.loc);
 			}else if(auto ite=cast(IteExp)e){
 				if(auto c=transformConstr(ite.cond)){
-					auto dthen=dist.dup();
+					auto dthen=dist.dupNoErr();
 					dthen.distribution=dthen.distribution*dIvr(DIvr.Type.neqZ,c);
-					auto dothw=dist.dup();
+					auto dothw=dist.dupNoErr();
 					dothw.distribution=dothw.distribution*dIvr(DIvr.Type.eqZ,c);
 					auto athen=Analyzer(dthen,err,arrays.dup,deterministic.dup);
 					dthen=athen.analyze(ite.then);
@@ -619,7 +626,9 @@ private struct Analyzer{
 						todo=true;
 						ex=ex[" TODO:".length..$].strip;
 					}
-					writeln(ex==dist.distribution.toString()?todo?"FIXED":"PASS":todo?"TODO":"FAIL");
+					if(!expected.exists){
+						expected=Expected(true,todo,ex);
+					}else err.error("can only have one 'expected' annotation, in 'main'.",re.loc);
 				}
 			}else if(auto ae=cast(AssertExp)e){
 				if(auto c=transformConstr(ae.e)){

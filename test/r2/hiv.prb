@@ -1,6 +1,5 @@
 // skipped
 // data too large
-// zero-probability observations
 // returns an array
 
 def main(){

@@ -58,12 +58,16 @@ int run(string path){
 		return 1;
 	}
 	auto fd=functions["main"];
-	auto dist=analyze(fd,err);
+	auto dist=analyze(fd,err).dup;
+	dist.renormalize();
 	import approximate;
 	//import hashtable; dist.distribution=approxLog(dist.freeVars.element);
 	//import hashtable; dist.distribution=approxGaussInt(dist.freeVars.element);
 	//dist.distribution=dist.distribution.killIntegrals();
 	auto str=dist.toString();
+	if(expected.exists) with(expected){
+		writeln(ex==dist.distribution.toString()?todo?"FIXED":"PASS":todo?"TODO":"FAIL");
+	}
 	//writeln((cast(DPlus)dist.distribution).summands.length);
 	if(str.length<10000) writeln(str);
 	else{
