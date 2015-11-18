@@ -143,6 +143,7 @@ DExpr approxGaussInt(DExpr e){
 	static DExpr scaledErfSpline=null;
 	if(!scaledErfSpline){
 		scaledErfSpline=readSpline("approximations/erfSpline.txt");
+		scaledErfSpline=scaledErfSpline-scaledErfSpline.substitute("x".dVar,-"x".dVar);
 		scaledErfSpline=(scaledErfSpline+1)/2;
 	}
 	return scaledErfSpline.substitute("x".dVar,e);
@@ -152,8 +153,10 @@ DExpr approxGaussInt(DExpr e){
 // TODO: get rid of code duplication here?
 DExpr approxInvX(DExpr e){
 	static DExpr invxSpline=null;
-	if(!invxSpline)
+	if(!invxSpline){
 		invxSpline=readSpline("approximations/invxSpline.txt");
+		invxSpline=invxSpline-invxSpline.substitute("x".dVar,-"x".dVar);
+	}
 	return invxSpline.substitute("x".dVar,e);
 }
 
