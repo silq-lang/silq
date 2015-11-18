@@ -4,7 +4,7 @@ def main(){
     controlGroup := array(5);
     controlGroup[0]=0;controlGroup[1]=0;controlGroup[2]=1;controlGroup[3]=0;controlGroup[4]=0;
     //treatedGroup := [1,0,1,1,1];
-    treatedGroup := array(5);
+   treatedGroup := array(5);
     treatedGroup[0]=1;treatedGroup[1]=0;treatedGroup[2]=1;treatedGroup[3]=1;treatedGroup[4]=1;
 
     isEffective := Bernoulli(1/2);

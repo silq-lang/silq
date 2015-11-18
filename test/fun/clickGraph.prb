@@ -33,13 +33,12 @@ def main(){
 	    beta1 = Beta(1,1);
 	    beta2 = Beta(1,1);
         }
-	c1 := Bernoulli(beta1);
-	c2 := Bernoulli(beta2);
-	sim_0[i] = c1;
-	sim_1[i] = c2;
+	sim_0[i] = Bernoulli(beta1);
+	sim_1[i] = Bernoulli(beta2);
     }
     for i in [0..sim_0.length){
         observe(sim_0[i]==clicks_0[i]);
 	observe(sim_1[i]==clicks_1[i]);
     }
+    return similarityAll;
 }
