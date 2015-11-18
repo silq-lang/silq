@@ -1,6 +1,51 @@
 import dexpr, util;
 
 DExpr readSpline(string filename){
+    import std.file,std.path;
+    filename=buildPath(dirName(thisExePath),filename);
+    import std.stdio,std.exception,std.conv,std.string,std.range,std.algorithm,std.format;
+    auto f=File(filename,"r");
+    string s,d;
+    DExpr r=zero;
+    while(!f.eof){
+        double a,b;
+        f.readf("Interval: %s %s\n",&a,&b);
+        f.readln();
+        f.readf("Breaks:\n");
+		string ln = f.readln().strip();
+        double[] dbreaks = ln.split().map!(a=>a.to!double).array;
+        DExpr[] breaks = ln.split().map!(a=>a.to!double.dFloat).array;
+        DExpr[] polys;
+        f.readln();
+        f.readf("Coefs:\n");
+        int idx = 0;
+        while(!f.eof){
+            s=f.readln().strip();
+            if(!s.length) break;
+            auto as = s.split().map!(q=>q.strip().to!double).array;
+
+            //array conversion:
+            double bb = dbreaks[idx];
+            double[4] aa;
+            aa[0] = as[0];
+            aa[1] = -3*as[0]*bb+as[1];
+            aa[2] = 3*as[0]*bb*bb-2*as[1]*bb+as[2];
+            aa[3] = -as[0]*bb*bb*bb+as[1]*bb*bb-as[2]*bb+as[3];
+
+            polys~=aa.getPoly("x".dVar);
+            idx++;
+
+        }
+        enforce(breaks.length==polys.length+1);
+        DExpr cur=zero;
+        foreach(i,p;polys)
+            cur=cur+dBounded!"[)"("x".dVar,breaks[i],breaks[i+1])*p;
+        r=r+dBounded!"[)"("x".dVar,a.dFloat,b.dFloat)*cur;
+    }
+    return r;
+}
+/+
+DExpr readSpline(string filename){
 	import std.file,std.path;
 	filename=buildPath(dirName(thisExePath),filename);
 	import std.stdio,std.exception,std.conv,std.string,std.range,std.algorithm,std.format;
@@ -29,7 +74,7 @@ DExpr readSpline(string filename){
 	}
 	return r;
 }
-
++/
 DExpr getPoly(double[] coeff,DExpr x){
 	DExpr r=zero;
 	foreach(c;coeff) r=x*r+c;
@@ -146,7 +191,7 @@ DExpr approximate(DExpr e){
 					DMult.insert(factors,k);
 					return dMult(factors);
 				}
-			}			
+			}
 		}
 		if(auto p=cast(DPow)e){
 			if(auto k=doIt(p.operands[0],necessary))

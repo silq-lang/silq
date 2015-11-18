@@ -1,6 +1,15 @@
 import dexpr, util;
 
-DExpr definiteIntegral(DVar var,DExpr expr)out(res){
+
+DExpr[Q!(DVar,DExpr)] definiteIntegralMemo;
+
+DExpr definiteIntegral(DVar var,DExpr expr){
+	auto t=q(var,expr);
+	if(t in definiteIntegralMemo) return definiteIntegralMemo[t];
+	return definiteIntegralMemo[t]=definiteIntegralImpl(var,expr);
+}
+
+private DExpr definiteIntegralImpl(DVar var,DExpr expr)out(res){
 	version(INTEGRATION_STATS){
 		integrations++;
 		if(res) successfulIntegrations++;
@@ -259,7 +268,15 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 	return AntiD(); // no simpler expression available
 }
 
+DExpr[Q!(DVar,DExpr,DExpr,DExpr,DExpr)] tryIntegrateMemo;
+
 DExpr tryIntegrate(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DExpr ivrs){
+	auto t=q(var,nonIvrs,lower,upper,ivrs);
+	if(t in tryIntegrateMemo) return tryIntegrateMemo[t];
+	return tryIntegrateMemo[t]=tryIntegrateImpl(t.expand);
+}
+
+private DExpr tryIntegrateImpl(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DExpr ivrs){
 	// TODO: add better approach for antiderivatives	
 	auto lowLeUp(){ return lower&&upper?dIvr(DIvr.Type.leZ,lower-upper):one; }
 	auto antid=tryGetAntiderivative(var,nonIvrs,ivrs);
@@ -273,6 +290,7 @@ DExpr tryIntegrate(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DExpr ivrs){
 		if(!up) up=dLimSmp(var,dInf,anti);
 		// dw(anti," ",lo," ",up);
 		if(lo.isInfinite() || up.isInfinite()) return null;
+		if(lo.hasLimits() || up.hasLimits()) return null;
 		return up-lo;
 	}
 	if(auto p=cast(DPlus)nonIvrs.polyNormalize(var)){
