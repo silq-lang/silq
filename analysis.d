@@ -399,7 +399,7 @@ private struct Analyzer{
 				err.error(text("index ",cidx.c," is outside array bounds [0..",arr.length,")"),idx.loc);
 				return null;
 			}
-			return arr[cidx.c.toLong()];
+			return arr[cast(size_t)cidx.c.toLong()];
 		}else return null;
 	}
 

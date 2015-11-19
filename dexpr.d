@@ -930,7 +930,7 @@ class DPow: DBinaryOp{
 					if(e.c==-1){
 						if(auto d=cast(Dℕ)c.operands[0]){
 							if(2<=d.c&&d.c<=4)
-								return text("  √∛∜"d[d.c.toLong()],overline(operands[0].toString()));
+								return text("  √∛∜"d[cast(size_t)d.c.toLong()],overline(operands[0].toString()));
 						}
 					}
 				}
@@ -1068,7 +1068,7 @@ struct DPolynomial{
 	long degree(){ return coefficients.length-1; }
 	void addCoeff(long exp,DExpr coeff)in{assert(exp>=0);}body{
 		while(coefficients.length<=exp) coefficients~=zero;
-		coefficients[exp]=coefficients[exp]+coeff;
+		coefficients[cast(size_t)exp]=coefficients[cast(size_t)exp]+coeff;
 	}
 	DExpr toDExpr(){
 		DExprSet r;
