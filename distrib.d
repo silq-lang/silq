@@ -172,10 +172,12 @@ class Distribution{
 		distribution=distribution*e;
 	}
 	void renormalize(){
-		import renormalization;
-		auto distErr=renormalize(distribution,freeVars);
-		distribution=(distErr[0]*(1-error)).simplify(one);
-		if(distErr[1] !is zero) error=(error+distErr[1]*(1-error)).simplify(one);
+		auto factor=distribution;
+		foreach(v;freeVars)
+			factor=dIntSmp(v,factor);
+		factor=factor+error;
+		distribution=(distribution/factor).simplify(one);
+		error=(error/factor).simplify(one);
 	}
 	DExpr call(Distribution q,DExpr[] args){
 		DExpr rdist=q.distribution;
