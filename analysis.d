@@ -221,7 +221,6 @@ private struct Analyzer{
 						}
 						auto exp=doIt(ce.args[0]);
 						auto total=dist.distribution;
-						dw(exp);
 						auto expct=dist.distribution*exp;
 						foreach(v;dist.freeVars){
 							total=dInt(v,total);

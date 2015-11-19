@@ -2,6 +2,7 @@
 // TODO: the original r2 example uses huge arrays whose indices are seldomly used
 
 def main(){
+    n := 10;
     dataControlGroup := readCSV("data/ClinicalTrial/dataControlGroup.csv");
     dataTreatedGroup := readCSV("data/ClinicalTrial/dataTreatedGroup.csv");
     
@@ -12,20 +13,20 @@ def main(){
     probAll := Beta(1,1);
 
     if isEffective{
-        for i in [0..dataControlGroup.length){
+        for i in [0..n){
             controlGroup_i := Bernoulli(probControl);
             observe(controlGroup_i == dataControlGroup[i]);
         }
-        for i in [0..dataTreatedGroup.length){
+        for i in [0..n){
             treatedGroup_i := Bernoulli(probTreated);
 	    observe(treatedGroup_i == dataTreatedGroup[i]);
         }
     }else{
-        for i in [0..dataControlGroup.length){
+        for i in [0..n){
             controlGroup_i := Bernoulli(probAll);
             observe(controlGroup_i == dataControlGroup[i]);
         }
-        for i in [0..dataTreatedGroup.length){
+        for i in [0..n){
             treatedGroup_i := Bernoulli(probAll);
 	    observe(treatedGroup_i == dataTreatedGroup[i]);
         }

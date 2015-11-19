@@ -1,4 +1,5 @@
 import dexpr, util;
+import std.conv;
 
 DExpr readSpline(string filename){
     import std.file,std.path;
@@ -175,7 +176,7 @@ DExpr approxSqrt(DExpr e){
 }
 
 DExpr approximate(DExpr e){
-	static DExpr doIt(DExpr e, bool necessary){
+	static DExpr doIt(DExpr e, bool necessary)out(r){ assert(e !is r,text(e));}body{
 		if(auto p=cast(DPlus)e){
 			DExprSet summands=p.summands.dup;
 			foreach(s;p.summands){
@@ -196,11 +197,13 @@ DExpr approximate(DExpr e){
 				}
 			}
 		}
-		if(auto p=cast(DPow)e){
-			if(auto k=doIt(p.operands[0],necessary))
-				return k^^p.operands[1];
-			if(auto k=doIt(p.operands[1],necessary))
-				return p.operands[0]^^p.operands[1];
+		if(auto ivr=cast(DIvr)e){
+			if(auto r=doIt(ivr.e,necessary))
+				return dIvr(ivr.type,r);
+		}
+		if(auto delta=cast(DDelta)e){
+			if(auto r=doIt(delta.e,necessary))
+				return dDelta(r);
 		}
 		if(auto intg=cast(DInt)e){
 			auto tmpvar=new DVar("tmp"); // TODO: get rid of this!
@@ -216,12 +219,18 @@ DExpr approximate(DExpr e){
 				return approxGaussInt(g.x);
 			}
 			if(auto p=cast(DPow)e){
-				if(p.operands[1] is mone){
-					return approxInvX(p.operands[0]);
-				}else if(p.operands[1] is -(one/2)){
-					return approxInvSqrt(p.operands[0]);
-				}else if(p.operands[1] is one/2){
-					return approxSqrt(p.operands[0]);
+				if(!e.isFraction()){
+					if(p.operands[1] is mone){
+						return approxInvX(p.operands[0]);
+					}else if(p.operands[1] is -(one/2)){
+						return approxInvSqrt(p.operands[0]);
+					}else if(p.operands[1] is one/2){
+						return approxSqrt(p.operands[0]);
+					}
+					if(auto k=doIt(p.operands[0],necessary))
+						return k^^p.operands[1];
+					if(auto k=doIt(p.operands[1],necessary))
+						return p.operands[0]^^k;
 				}
 			}
 		}
@@ -231,10 +240,10 @@ DExpr approximate(DExpr e){
 }
 
 DExpr killIntegrals(DExpr e){
-	while(hasIntegrals(e)){
-		if(auto r=e.approximate())
+	for(;;){
+		if(auto r=e.approximate()){
 			e=r.simplify(one);
-		else break;
+		}else break;
 	}
 	return e;
 }
