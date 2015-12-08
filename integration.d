@@ -51,7 +51,7 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr)out(res){
 			SolUse usage={caseSplit:true,bound:true};
 			bound=solveFor(ivr.e,var,zero,usage,info);
 			if(!bound) return null;
-			assert(info.caseSplits.length||info.bound.isLower!is mone&&info.bound.isLower!is one);
+			import std.conv: text;
 			// TODO: fuse some of this with DDelta.performSubstitution?
 			auto constraints=one;
 			foreach(ref x;info.caseSplits)
