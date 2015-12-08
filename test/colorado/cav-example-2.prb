@@ -4,7 +4,7 @@ def main(){
     h:=0;
     t:=10;
     //while h<=t{
-    repeat 3{if(h<=t){
+    repeat 6{if(h<=t){
         flip_guard := Uniform(0,1);
         if flip_guard <= 1/2{
             h+=Uniform(0,10);
@@ -13,9 +13,9 @@ def main(){
     }}
     r := h-t;
     // estimateProb(r > 1);
-    p := r>1;
+    //p := r>1;
     //p := h<=t;
-    return p;
+    return r;
 }
 
 /*h = 0.0;

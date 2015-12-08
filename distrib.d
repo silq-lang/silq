@@ -176,8 +176,8 @@ class Distribution{
 		foreach(v;freeVars)
 			factor=dIntSmp(v,factor);
 		factor=factor+error;
-		distribution=(distribution/factor).simplify(one);
-		error=(error/factor).simplify(one);
+		distribution=(dIvr(DIvr.Type.neqZ,factor)*(distribution/factor)).simplify(one);
+		error=(dIvr(DIvr.Type.neqZ,factor)*(error/factor)).simplify(one);
 	}
 	DExpr call(Distribution q,DExpr[] args){
 		DExpr rdist=q.distribution;

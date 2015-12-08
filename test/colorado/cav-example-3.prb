@@ -10,9 +10,9 @@ def main(){
     dxc := 0;
     dyc := 0;
     i := 1;
-    //N = 6;
+    N := 6;
     //while(i <= N) {
-    repeat 6 {
+    repeat N {
         //i = i + 1;
         guard_stay := Uniform(0,1);
         if guard_stay <= 2/10{
