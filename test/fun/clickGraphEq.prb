@@ -36,6 +36,6 @@ def main(){
 	observe(c1==clicks_0[i]);
 	observe(c2==clicks_1[i]);
     }
-    assert(similarityAll>5/12);
+    // assert(similarityAll>5/12);
     return similarityAll;
 }

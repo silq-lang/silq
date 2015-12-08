@@ -50,8 +50,12 @@ enum Precedence{
 	pow,
 	invalid,
 }
-
+hash_t g_hash=0;
 abstract class DExpr{
+	hash_t hash;
+	this(){ hash = ++g_hash; }
+	override hash_t toHash()@trusted{ return hash; }
+
 	override string toString(){
 		return toStringImpl(Precedence.none);
 	}
