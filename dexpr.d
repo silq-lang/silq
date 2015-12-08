@@ -3,8 +3,10 @@
 import std.conv;
 import hashtable, util;
 
+alias Q=TupleX, q=tuplex;
+static import std.typecons;
+
 import std.algorithm, std.array;
-import std.typecons: Q=Tuple, q=tuple;
 
 import std.datetime;
 
@@ -1378,7 +1380,7 @@ DExpr solveFor(DExpr lhs,DVar var,DExpr rhs,SolUse usage,ref SolutionInfo info){
 }
 
 
-Q!(DIvr.Type,"type",DExpr,"e") negateDIvr(DIvr.Type type,DExpr e){
+std.typecons.Tuple!(DIvr.Type,"type",DExpr,"e") negateDIvr(DIvr.Type type,DExpr e){
 	final switch(type) with(DIvr.Type){
 		case lZ: return typeof(return)(leZ,-e);
 		case leZ: return typeof(return)(lZ,-e); // currently probably unreachable

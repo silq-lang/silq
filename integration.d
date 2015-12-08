@@ -1,12 +1,14 @@
 import dexpr, util;
 
 
-DExpr[Q!(DVar,DExpr)] definiteIntegralMemo;
+MapX!(Q!(DVar,DExpr),DExpr) definiteIntegralMemo;
 
 DExpr definiteIntegral(DVar var,DExpr expr){
 	auto t=q(var,expr);
 	if(t in definiteIntegralMemo) return definiteIntegralMemo[t];
-	return definiteIntegralMemo[t]=definiteIntegralImpl(var,expr);
+	auto r=definiteIntegralImpl(var,expr);
+	definiteIntegralMemo[t]=r;
+	return r;
 }
 
 private DExpr definiteIntegralImpl(DVar var,DExpr expr)out(res){
@@ -268,12 +270,14 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 	return AntiD(); // no simpler expression available
 }
 
-DExpr[Q!(DVar,DExpr,DExpr,DExpr,DExpr)] tryIntegrateMemo;
+MapX!(Q!(DVar,DExpr,DExpr,DExpr,DExpr),DExpr) tryIntegrateMemo;
 
 DExpr tryIntegrate(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DExpr ivrs){
 	auto t=q(var,nonIvrs,lower,upper,ivrs);
 	if(t in tryIntegrateMemo) return tryIntegrateMemo[t];
-	return tryIntegrateMemo[t]=tryIntegrateImpl(t.expand);
+	auto r=tryIntegrateImpl(t.expand);
+	tryIntegrateMemo[t]=r;
+	return r;
 }
 
 private DExpr tryIntegrateImpl(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DExpr ivrs){

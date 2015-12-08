@@ -423,6 +423,7 @@ struct TupleX(T...){
 		foreach(i,ref x;expand){
 			hash_t hash(int i)(){
 				static if(is(typeof(x)==class)) return x?x.toHash():0;
+				static if(is(typeof(x)==struct)) return x.toHash();
 				else return typeid(x).getHash(&x);
 			}
 			r=FNV(hash!i(),r);

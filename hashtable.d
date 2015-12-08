@@ -11,7 +11,7 @@ struct HashMap(K_, V_, alias eq_ , alias h_){
 	alias V=V_;
 	alias binaryFun!eq_ eq;
 	alias unaryFun!h_ h;
-	struct E{ V v; K k; }
+	struct E{ V v; K k; } // TODO: why can't the two fields be swapped?
 	alias E[] B;
 	B[] es;
 	size_t length;
@@ -60,8 +60,8 @@ struct HashMap(K_, V_, alias eq_ , alias h_){
 		return get(k,(assert(0, "key not found"),V.init));
 	}
 
-	void remove(K k){
-		if(!es.length) return;
+	bool remove(K k){
+		if(!es.length) return false;
 		auto b = &es[h(k)%$];
 		foreach(ref e; *b)
 			if(eq(k, e.k)){
@@ -69,22 +69,24 @@ struct HashMap(K_, V_, alias eq_ , alias h_){
 				length--;
 				*b=(*b)[0..$-1];
 				(*b).assumeSafeAppend();
-				return;
+				return true;
 			}
+		return false;
 	}
 
-	private void insert(E x) /+out{assert(x.k in this, text(es[h(x.k)%$]));}body+/{
+	private bool insert(E x) /+out{assert(x.k in this, text(es[h(x.k)%$]));}body+/{
 		if(!es.length) initialize();
 		auto hs=h(x.k);
 		auto b = &es[hs%$];
 		foreach(ref e; *b)
 			if(eq(x.k, e.k)){
 				e=x;
-				return;
+				return false;
 			}
 		length++;
 		*b~=x;
 		if(b.length>maxBucketSize&&hs!=h((*b)[0].k)&&es.length<2*length) realloc();
+		return true;
 	}
 	
 	void opIndexAssign(V v, K k){
@@ -145,22 +147,22 @@ import std.range;
 struct HSet(T_,alias eq, alias h){
 	alias T=T_;
 	private HashMap!(T,void[0],eq,h) payload;
+	hash_t hash=0;
 	void clear(){ payload.clear(); }
-	auto dup(){ return HSet(payload.dup); }
+	// around 40% of execution time spent in dup for length <= 4
+	auto dup(){ return HSet(payload.dup,hash); }
 	@property size_t length(){ return payload.length; }
-	hash_t toHash(){
-		hash_t r=0;
-		foreach(x,_;payload) r+=h(x); // TODO: this is not a very good hash function
-		return r;
-	}
+	hash_t toHash(){ return hash; }
 	bool opBinaryRight(string op: "in")(T t){
 		return t in payload;
 	}
 	void insert(T t){
-		payload[t]=[];
+		if(payload.insert(typeof(payload).E([],t)))
+			hash^=h(t);
 	}
 	void remove(T t){
-		payload.remove(t);
+		if(payload.remove(t))
+			hash^=h(t);
 	}
 	int opApply(scope int delegate(T) dg){
 		foreach(x,_;payload) if(auto r=dg(x)) return r;
