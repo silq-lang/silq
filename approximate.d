@@ -1,6 +1,8 @@
 import dexpr, util;
 import std.conv;
 
+bool extremelySimple = true;
+
 DExpr readSpline(string filename){
     import std.file,std.path;
     filename=buildPath(dirName(thisExePath),filename);
@@ -92,6 +94,7 @@ DExpr approxPowEmX2(DExpr e){
 
 
 DExpr approxLog(DExpr e){
+	if(extremelySimple) return e;
 	static DExpr lowRank(DExpr e){
 		// TODO: what about ranges [0, 0.1] and [10, ∞]?
 		// range [0.1, 1]
@@ -141,6 +144,7 @@ DExpr approxLog(DExpr e){
 }
 
 DExpr approxGaussInt(DExpr e){
+	if(extremelySimple) return e*dBounded!"[]"(e,one/10000,one);
 	static DExpr scaledErfSpline=null;
 	if(!scaledErfSpline){
 		scaledErfSpline=readSpline("approximations/erfSpline.txt");
@@ -153,6 +157,7 @@ DExpr approxGaussInt(DExpr e){
 
 // TODO: get rid of code duplication here?
 DExpr approxInvX(DExpr e){
+	if(extremelySimple) return e*dBounded!"[]"(e,zero,one);
 	static DExpr invxSpline=null;
 	if(!invxSpline){
 		invxSpline=readSpline("approximations/invxSpline.txt");
@@ -162,6 +167,7 @@ DExpr approxInvX(DExpr e){
 }
 
 DExpr approxInvSqrt(DExpr e){
+	if(extremelySimple) return e*dBounded!"[]"(e,zero,one);
 	static DExpr invSqrtSpline=null;
 	if(!invSqrtSpline)
 		invSqrtSpline=readSpline("approximations/invSqrtSpline.txt");
@@ -169,6 +175,7 @@ DExpr approxInvSqrt(DExpr e){
 }
 
 DExpr approxSqrt(DExpr e){
+	if(extremelySimple) return e*dBounded!"[]"(e,zero,one);
 	static DExpr sqrtSpline=null;
 	if(!sqrtSpline)
 		sqrtSpline=readSpline("approximations/sqrtSpline.txt");
@@ -196,6 +203,10 @@ DExpr approximate(DExpr e){
 					return dMult(factors);
 				}
 			}
+		}
+		if(auto p=cast(DPow)e){
+			if(auto k=doIt(p.operands[0],necessary)) return k^^p.operands[1];
+			if(auto k=doIt(p.operands[1],necessary)) return p.operands[0]^^k;
 		}
 		if(auto ivr=cast(DIvr)e){
 			if(auto r=doIt(ivr.e,necessary))
