@@ -5,5 +5,7 @@ def main(){
     perf1 := Gauss(skill1,15);
     perf2 := Gauss(skill2,15);
     observe(perf1 > perf2);
-    return (skill1,skill2); // expected: TODO: simplify better
+    //return (skill1,skill2); // expected: TODO: simplify better
+    p := skill1 > skill2;
+    return p;
 }

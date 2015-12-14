@@ -5,9 +5,10 @@ def main(){
     y := 0;
     dist := 0;
     //count := 1;
+    N := 3;
     //N := 7; 
     //while (count < N) {
-    repeat 3{
+    repeat N{
         c1 := Uniform(0,1);
         c2 := Uniform(0,1);
         c3 := Uniform(0,1);

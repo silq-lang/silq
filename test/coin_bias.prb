@@ -1,4 +1,3 @@
-// skipped: form of computed result varies non-deterministically (TODO: fix this)
 // TODO: make evaluation instantaneous
 
 def test(){
@@ -39,5 +38,5 @@ def test(){
     observe(x17==1);
     x18 := Bernoulli(p);
     observe(x18==1);
-    return p; // expected: (-16·p+16)·(-28·p+28)·(-323·p·⅟77+323·⅟77)·(-715·p·⅟48+715·⅟48)·(-84·p·⅟5+84·⅟5)·(-9·p+9)·(-p·⅟7+⅟7)·[-1+p≤0]·[-p≤0]·p¹¹
+    return p; // expected: (-1209312·p+604656+604656·p²)·(-4·p+-4·p³+1+6·p²+p⁴)·(-p+1)·[-1+p≤0]·[-p≤0]·p¹¹
 }

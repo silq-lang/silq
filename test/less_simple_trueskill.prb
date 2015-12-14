@@ -1,0 +1,14 @@
+def main(){
+    skill1 := Gauss(100,10);
+    skill2 := Gauss(100,10);
+    //skill3 := Gauss(100,10);
+    perf1a := Gauss(skill1,15);
+    perf2a := Gauss(skill2,15);
+    observe(perf1a > perf2a);
+
+    perf1b := Gauss(skill1,15);
+    perf2b := Gauss(skill2,15);
+    observe(perf1b < perf2b);
+
+    return (skill1,skill2);
+}
