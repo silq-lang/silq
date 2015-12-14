@@ -149,7 +149,6 @@ struct HSet(T_,alias eq, alias h){
 	private HashMap!(T,void[0],eq,h) payload;
 	hash_t hash=0;
 	void clear(){ payload.clear(); }
-	// around 40% of execution time spent in dup for length <= 4
 	auto dup(){ return HSet(payload.dup,hash); }
 	@property size_t length(){ return payload.length; }
 	hash_t toHash(){ return hash; }
@@ -189,6 +188,85 @@ template hset(alias h,alias eq){
 		return s;
 	}
 }
+
+struct SHSet(T_) if(is(T_==class)){ // small hash set
+	alias T=T_;
+	bool isSmall=true;
+	union{ T[4] small; HSet!(T,(a,b)=>a is b,a=>a.toHash()) large; }
+	private this(typeof(large) large){ isSmall=false; this.large=large; }
+	void clear(){
+		if(isSmall) small[]=null;
+		else large.clear();
+	}
+	auto dup(){
+		if(isSmall) return this;
+		return SHSet(large.dup);
+	}
+	@property size_t length(){
+		if(isSmall){ size_t r=0; foreach(x;small) if(x !is null) r++; return r; }
+		return large.length;
+	}
+	hash_t toHash(){
+		if(isSmall){ hash_t r; foreach(x;small) if(x !is null) r^=x.toHash(); return r; }
+		return large.toHash();
+	}
+	bool opBinaryRight(string op: "in")(T t){
+		if(isSmall){ foreach(x;small) if(x is t) return true; return false; }
+		return t in large;
+	}
+	void insert(T t){
+		if(isSmall){
+			foreach(x;small) if(x is t) return;
+			foreach(ref x;small) if(x is null){ x=t; return; }
+			typeof(large) l;
+			foreach(x;small) l.insert(x);
+			isSmall=false;
+			large=l;
+		}
+		large.insert(t);
+	}
+	void remove(T t){
+		if(isSmall){
+			foreach(ref x;small) if(x is t) x=null;
+			return;
+		}
+		large.remove(t);
+		if(large.length<=small.length){
+			T[small.length] s;
+			int i=0;
+			foreach(x;large) s[i++]=x;
+			isSmall=true;
+			small=s;
+		}
+	}
+	int opApply(scope int delegate(T) dg){
+		if(isSmall){ foreach(x;small) if(x !is null) if(auto r=dg(x)) return r; return 0; }
+		foreach(x;large) if(auto r=dg(x)) return r;
+		return 0;
+	}
+	bool opEquals(ref SHSet rhs){
+		foreach(x;this) if(x !in rhs) return false;
+		foreach(x;rhs) if(x !in this) return false;
+		return true;
+	}
+	static if(is(typeof(text(T.init)))) string toString(){
+		string r="{";
+		foreach(x;this) r~=text(x)~", ";
+		if(r.length>2) r=r[0..$-2];
+		return r~="}";
+	}	
+}
+
+auto shset(T)(T args){
+	alias S=typeof({ foreach(x;args) return x; assert(0); }());
+	SHSet!S s;
+	foreach(x;args) s.insert(x);
+	return s;
+}
+
+
+
+
 /+
 void main(){
 	import std.stdio;

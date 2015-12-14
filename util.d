@@ -403,10 +403,12 @@ string underline(string s){
 	return r;	
 }
 import hashtable;
-alias setxEq=ID!((a,b)=>a==b);
-alias setxToHash=ID!(a=>a.toHash());
-alias SetX(T)=HSet!(T,setxEq,setxToHash);
-alias setx=hset!(setxToHash,setxEq);
+//alias setxEq=ID!((a,b)=>a==b);
+//alias setxToHash=ID!(a=>a.toHash());
+//alias SetX(T)=HSet!(T,setxEq,setxToHash);
+//alias setx=hset!(setxToHash,setxEq);
+alias SetX(T)=SHSet!T;
+alias setx=shset;
 alias MapX(K,V) = HashMap!(K,V,(a,b)=>a==b,a=>a.toHash());
 
 auto singleton(T)(T arg){
