@@ -1494,7 +1494,10 @@ class DIvr: DExpr{ // iverson brackets
 		auto cancel=uglyFractionCancellation(e);
 		if(cancel!=one) return dIvr(type,dDistributeMult(e,cancel));
 		if(type==Type.lZ) return dIvr(Type.leZ,e)*dIvr(Type.neqZ,e);
-		if(auto fct=factorDIvr!(e=>dIvr(type,e))(e)) return fct;
+		foreach(v;e.freeVars()){ // TODO: do this right
+			if(auto fct=factorDIvr!(e=>dIvr(type,e))(e)) return fct;
+			break;
+		}
 		auto denom=getCommonDenominator(e);
 		if(denom !is one){
 			auto dcancel=dDistributeMult(e,denom);
@@ -2304,7 +2307,8 @@ class DGaussInt: DOp{
 	override @property string symbol(){ return "(d/dx)⁻¹[e^(-x²)]"; }
 	override Precedence precedence(){ return Precedence.diff; }
 	override string toStringImpl(Precedence prec){
-		return addp(prec,symbol~"("~x.toString()~")");
+		static if(formatting==Format.matlab) return "((erf("~x.toString()~")+1)/2)";
+		else return addp(prec,symbol~"("~x.toString()~")");
 	}
 
 	static DExpr constructHook(DExpr x){
