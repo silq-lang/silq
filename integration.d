@@ -292,7 +292,6 @@ private DExpr tryIntegrateImpl(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DE
 		auto up=upper?anti.substitute(var,upper):antid.atInfinity;
 		if(!lo) lo=dLimSmp(var,-dInf,anti);
 		if(!up) up=dLimSmp(var,dInf,anti);
-		// dw(anti," ",lo," ",up);
 		if(lo.isInfinite() || up.isInfinite()) return null;
 		if(lo.hasLimits() || up.hasLimits()) return null;
 		return up-lo;
