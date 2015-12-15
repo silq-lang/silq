@@ -83,7 +83,7 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr)out(res){
 	return tryIntegrate(var,nonIvrs,lower,upper,ivrs);
 }
 
-struct AntiD{
+struct AntiD{ // TODO: is this even worth the hassle?
 	DExpr antiderivative;
 	DExpr atMinusInfinity;
 	DExpr atInfinity;
@@ -194,18 +194,14 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 		auto q=gi.x.asPolynomialIn(var,1);
 		if(!q.initialized) return AntiD();
 		auto a=q.coefficients[1],b=q.coefficients[0];
-		if(a is zero) return AntiD();
+		if(a is zero) return AntiD(); // TODO: make "dynamic"
 		static DExpr primitive(DExpr e){
 			if(e is -dInf) return zero;
-			return dGaussInt(e)*e-dE^^(-e^^2);
-		}
-		DExpr transform(DExpr x){
-			return x/a-b;
+			return dGaussInt(e)*e+dE^^(-e^^2)/2;
 		}
 		auto fac=one/a;
 		// constraints: upper
-		// TODO: what if a<0?!
-		return AntiD(fac*primitive(transform(var)),zero);
+		return AntiD(fac*primitive(gi.x),zero);
 	}
 	auto dgauss=doubleGaussIntegral(var,nonIvrs);
 	if(dgauss.antiderivative) return dgauss;
@@ -251,6 +247,7 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 		auto rest=m.withoutFactor(polyFact);
 		auto intRest=tryGetAntiderivative(var,rest,ivrs).antiderivative;
 		if(!intRest) return AntiD();
+		//dw(polyFact," ",rest);
 		auto diffPoly=dDiff(var,polyFact);
 		auto intDiffPolyIntRest=tryGetAntiderivative(var,(diffPoly*intRest).simplify(one),ivrs).antiderivative;
 		if(!intDiffPolyIntRest) return AntiD();
@@ -267,6 +264,16 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 	//auto factors=splitIntegrableFactor(nonIvrs);
 	//dw(factors[1]);
 	//dw("!! ",dDiff(var,factors[1]));
+
+	/+if(auto p=cast(DPlus)nonIvrs.polyNormalize(var)){
+		AntiD r=AntiD(zero,zero,zero);
+		foreach(s;p.summands){
+			r=r+tryGetAntiderivative(var,s,ivrs);
+			if(!r) return AntiD();
+		}
+		return r;
+	}+/
+
 	return AntiD(); // no simpler expression available
 }
 

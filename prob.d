@@ -400,6 +400,15 @@ void test(){
 	//writeln("∫dξ₁(e^(-ξ₁²·⅟50+4·ξ₁)·ξ₁)".dParse.simplify(one));
 	//writeln("lim[tmp→ -∞](-100·√5̅0̅+-50·tmp·√5̅0̅)·(d/dx)⁻¹[e^(-x²)](2·√5̅0̅+tmp·√5̅0̅)".dParse.simplify(one));
 	//writeln("(∫dξ₁(d/dx)⁻¹[e^(-x²)](-skillB·⅟√3̅0̅+ξ₁·⅟√3̅0̅)·e^(-ξ₁²·⅟30+skillC·ξ₁·⅟15))".dParse.simplify(one));
+	//writeln("(∫dξ₁[ξ₁≤0]·e^(-ξ₁²·⅟50+4·ξ₁)·ξ₁²)".dParse.simplify(one));
+	//auto r=dDiff("x".dVar,dIntSmp("tmp".dVar,"[tmp≤x]".dParse*"(d/dx)⁻¹[e^(-x²)](-2·√5̅0̅+tmp·⅟√5̅0̅)".dParse)).simplify(one); // TODO: simplify better!
+	//writeln(r);
+	//auto r=dIntSmp("tmp".dVar,"[tmp≤x]".dParse*"(d/dx)⁻¹[e^(-x²)](-2·√5̅0̅+tmp·⅟√5̅0̅)".dParse);
+	//matlabPlot(r.toString(),"x");
+	//writeln(dDiff("x".dVar,"1/2·(x·(2·(d/dx)⁻¹[e^(-x²)](x)-1)+e^(-x²)+x)".dParse).simplify(one));
+	//writeln(dDiff("x".dVar,dIntSmp("y".dVar,"(d/dx)⁻¹[e^(-x²)](a·y+b)·[y≤x]".dParse)).simplify(one));
+	//writeln(dDiff("x".dVar,"⅟a·((a·x+b)·(d/dx)⁻¹[e^(-x²)](a·x+b)+e^(-(a·x+b)²)/2)".dParse).simplify(one));
+	//writeln(dDiff("x".dVar,"(d/dx)⁻¹[e^(-x²)](x)·x-e^(-x²))".dParse));
 }
 
 /*
