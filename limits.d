@@ -124,9 +124,13 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 					}
 					if(zro.length && !inf.length) return [Case!ExpLim(one,ExpLim(m,zero))];
 				}
-				/+// TODO: Bernoulli-De l'Hôpital (?)
-				// auto f=dMult(inf), g=1/dMult(zro);+/
-				return null;
+				// Bernoulli-De l'Hôpital.
+				static int nesting = 0;
+				enum nestingLimit=5; // TODO: is this a reasonable limit?
+				++nesting; scope(exit) --nesting;
+				if(nesting>nestingLimit) return null;
+				auto f=dMult(inf), g=1/dMult(zro);
+				return doIt(v,e,dDiff(v,f)/dDiff(v,g));
 				// TODO: repeated simplification ugly, how to do without?
 			}
 			Case!ExpLim[][] r;
