@@ -409,6 +409,7 @@ void test(){
 	//writeln(dDiff("x".dVar,dIntSmp("y".dVar,"(d/dx)⁻¹[e^(-x²)](a·y+b)·[y≤x]".dParse)).simplify(one));
 	//writeln(dDiff("x".dVar,"⅟a·((a·x+b)·(d/dx)⁻¹[e^(-x²)](a·x+b)+e^(-(a·x+b)²)/2)".dParse).simplify(one));
 	//writeln(dDiff("x".dVar,"(d/dx)⁻¹[e^(-x²)](x)·x-e^(-x²))".dParse));
+	//writeln("∫dy[0≤y]·[y≤x]·y²·e^(-y²)".dParse.simplify(one));
 }
 
 /*
