@@ -1379,6 +1379,26 @@ DExpr solveFor(DExpr lhs,DVar var,DExpr rhs,SolUse usage,ref SolutionInfo info){
 	return null;
 }
 
+DExpr solveFor(DExpr lhs,DVar var){
+	SolutionInfo info;
+	SolUse usage={caseSplit:true,bound:false};
+	if(auto s=lhs.solveFor(var,zero,usage,info)){
+		s=s.simplify(one);
+		auto constraints=one;
+		foreach(ref x;info.caseSplits)
+			constraints=constraints*dIvr(DIvr.Type.neqZ,x.constraint);
+		auto r=constraints is zero?zero:constraints*s;
+		foreach(ref x;info.caseSplits){
+			auto curConstr=constraints.withoutFactor(dIvr(DIvr.Type.neqZ,x.constraint));
+			auto psol=solveFor(x.expression,var);
+			if(!psol) return null;
+			r=r+curConstr*dIvr(DIvr.Type.eqZ,x.constraint)*psol;
+		}
+		return r;
+	}
+	return null;
+}
+
 
 std.typecons.Tuple!(DIvr.Type,"type",DExpr,"e") negateDIvr(DIvr.Type type,DExpr e){
 	final switch(type) with(DIvr.Type){
@@ -1599,7 +1619,7 @@ class DDelta: DExpr{ // Dirac delta function
 		return r?r:this;
 	}
 
-	static DExpr performSubstitution(bool scale=true)(DVar var,DDelta d,DExpr expr,bool caseSplit){
+	static DExpr performSubstitution(DVar var,DDelta d,DExpr expr,bool caseSplit){
 		SolutionInfo info;
 		SolUse usage={caseSplit:caseSplit,bound:false};
 		if(auto s=d.e.solveFor(var,zero,usage,info)){
@@ -1609,12 +1629,8 @@ class DDelta: DExpr{ // Dirac delta function
 			auto constraints=one;
 			foreach(ref x;info.caseSplits)
 				constraints=constraints*dIvr(DIvr.Type.neqZ,x.constraint);
-			static if(scale){
-				auto r=constraints is zero?zero:
-					constraints*rest.substitute(var,s)/dAbs(dDiff(var,d.e,s));
-			}else{
-				auto r=constraints is zero?zero:constraints*rest.substitute(var,s);
-			}
+			auto r=constraints is zero?zero:
+				constraints*rest.substitute(var,s)/dAbs(dDiff(var,d.e,s));
 			foreach(ref x;info.caseSplits){
 				auto curConstr=constraints.withoutFactor(dIvr(DIvr.Type.neqZ,x.constraint));
 				r=r+curConstr*dIvr(DIvr.Type.eqZ,x.constraint)*dIntSmp(var,rest*dDelta(x.expression));
