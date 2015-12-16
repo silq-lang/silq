@@ -5,6 +5,8 @@ import lexer, parser, expression, error;
 
 import analysis, distrib, dexpr;
 
+bool plot=false;
+
 string getActualPath(string path){
 	// TODO: search path
 	auto ext = path.extension;
@@ -78,7 +80,7 @@ int run(string path){
 	bool plotCDF=false;
 	if(str.canFind("δ")) plotCDF=true;
 	import hashtable;
-	if(formatting==Format.matlab && dist.freeVars.length==1){
+	if(plot && dist.freeVars.length==1){
 		if(plotCDF){
 			dist=dist.dup();
 			auto freeVar=dist.freeVars.element;
@@ -87,7 +89,7 @@ int run(string path){
 			dist.marginalize(freeVar);
 		}
 		writeln("plotting... ",(plotCDF?"(CDF)":"(PDF)"));
-		matlabPlot(dist.distribution.toString(),dist.freeVars.element.toString());
+		matlabPlot(dist.distribution.toString(Format.matlab),dist.freeVars.element.toString(Format.matlab));
 	}
 	return !!err.nerrors;
 }
@@ -409,7 +411,13 @@ void test(){
 	//writeln(dDiff("x".dVar,dIntSmp("y".dVar,"(d/dx)⁻¹[e^(-x²)](a·y+b)·[y≤x]".dParse)).simplify(one));
 	//writeln(dDiff("x".dVar,"⅟a·((a·x+b)·(d/dx)⁻¹[e^(-x²)](a·x+b)+e^(-(a·x+b)²)/2)".dParse).simplify(one));
 	//writeln(dDiff("x".dVar,"(d/dx)⁻¹[e^(-x²)](x)·x-e^(-x²))".dParse));
-	//writeln("∫dy[0≤y]·[y≤x]·y²·e^(-y²)".dParse.simplify(one));
+	//auto r="∫dy[0≤y]·[y≤x]·y⁵·e^(-y²)".dParse.simplify(one);
+	//auto r="x²·e^(-x²)".dParse;
+	//r=r.polyNormalize("x".dVar).simplify(one);
+	//writeln(r);
+	//writeln(dDiff("x".dVar,tryGetAntiderivative("x".dVar,"x²·e^(-x²)".dParse,one).antiderivative).simplify(one));
+	//matlabPlot(r.toString(Format.matlab),"x");
+	//writeln("∫dx(d/dx)⁻¹[e^(-x²)](x)·x".dParse.simplify(one));
 }
 
 /*

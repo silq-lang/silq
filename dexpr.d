@@ -36,7 +36,7 @@ enum Format{
 	maple,
 }
 
-enum formatting=Format.default_;
+//enum formatting=Format.default_;
 //enum formatting=Format.matlab;
 //enum formatting=Format.maple; version=DISABLE_INTEGRATION;
 
@@ -58,10 +58,12 @@ abstract class DExpr{
 	this(){ hash = ++g_hash; }
 	override hash_t toHash()@trusted{ return hash; }
 
-	override string toString(){
-		return toStringImpl(Precedence.none);
+	final override string toString(){ return toString(Format.default_); }
+
+	string toString(Format formatting){
+		return toStringImpl(formatting,Precedence.none);
 	}
-	abstract string toStringImpl(Precedence prec);
+	abstract string toStringImpl(Format formatting,Precedence prec);
 
 	abstract int forEachSubExpr(scope int delegate(DExpr) dg);
 
@@ -153,7 +155,7 @@ alias DExprSet=SetX!DExpr;
 class DVar: DExpr{
 	string name;
 	/+private+/ this(string name){ this.name=name; } // TODO: make private!
-	override string toStringImpl(Precedence prec){ return name; }
+	override string toStringImpl(Format formatting,Precedence prec){ return name; }
 
 	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; }
 	override int freeVarsImpl(scope int delegate(DVar) dg){ return dg(this); }
@@ -199,9 +201,9 @@ DDeBruinVar dDeBruinVar(int i){
 class Dℕ : DExpr{
 	ℕ c;
 	private this(ℕ c){ this.c=c; }
-	override string toStringImpl(Precedence prec){
+	override string toStringImpl(Format formatting,Precedence prec){
 		string r=text(c);
-		static if(formatting==Format.maple){
+		if(formatting==Format.maple){
 			if(c<0) r="("~r~")";
 		}else if(prec>Precedence.uminus&&c<0)
 			r="("~r~")";
@@ -234,10 +236,10 @@ Dℕ nthRoot(Dℕ x,ℕ n){
 class DFloat : DExpr{
 	double c;
 	private this(double c){ this.c=c; }
-	override string toStringImpl(Precedence prec){
+	override string toStringImpl(Format formatting,Precedence prec){
 		import std.format;
 		string r=format("%.16e",c);
-		static if(formatting==Format.maple){
+		if(formatting==Format.maple){
 			if(c<0) r="("~r~")";
 		}else if(prec>Precedence.uminus&&c<0)
 			r="("~r~")";
@@ -258,15 +260,15 @@ DExpr dFloat(double c){
 }
 
 class DE: DExpr{
-	override string toStringImpl(Precedence prec){ return "e"; }
+	override string toStringImpl(Format formatting,Precedence prec){ return "e"; } // TODO: maple
 	mixin Constant;
 }
 private static DE theDE;
 @property DE dE(){ return theDE?theDE:(theDE=new DE); }
 
 class DΠ: DExpr{
-	override string toStringImpl(Precedence prec){
-		static if(formatting==Format.matlab) return "pi";
+	override string toStringImpl(Format formatting,Precedence prec){ // TODO: maple
+		if(formatting==Format.matlab) return "pi";
 		else return "π";
 	}
 	mixin Constant;
@@ -284,7 +286,7 @@ private static DExpr theZero;
 @property DExpr zero(){ return theZero?theZero:(theZero=0.dℕ);}
 
 abstract class DOp: DExpr{
-	abstract @property string symbol();
+	abstract string symbol(Format formatting);
 	bool rightAssociative(){ return false; }
 	abstract @property Precedence precedence();
 	protected final string addp(Precedence prec, string s, Precedence myPrec=Precedence.invalid){
@@ -296,12 +298,12 @@ abstract class DOp: DExpr{
 abstract class DCommutAssocOp: DOp{
 	DExprSet operands;
 	protected mixin template Constructor(){ private this(DExprSet e)in{assert(e.length>1); }body{ operands=e; } }
-	override string toStringImpl(Precedence prec){
+	override string toStringImpl(Format formatting,Precedence prec){
 		string r;
-		auto ops=operands.array.map!(a=>a.toStringImpl(precedence)).array;
+		auto ops=operands.array.map!(a=>a.toStringImpl(formatting,precedence)).array;
 		sort(ops);
-		foreach(o;ops) r~=symbol~o;
-		return addp(prec, r[symbol.length..$]);
+		foreach(o;ops) r~=symbol(formatting)~o;
+		return addp(prec, r[symbol(formatting).length..$]);
 	}
 }
 
@@ -361,7 +363,7 @@ class DPlus: DCommutAssocOp{
 	alias summands=operands;
 	mixin Constructor;
 	override @property Precedence precedence(){ return Precedence.plus; }
-	override @property string symbol(){ return "+"; }
+	override @property string symbol(Format formatting){ return "+"; }
 
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
 		foreach(a;operands)
@@ -564,23 +566,23 @@ class DMult: DCommutAssocOp{
 	//mixin Constructor;
 	private this(DExprSet e)in{assert(e.length>1); }body{ assert(one !in e,text(e)); operands=e; }
 	override @property Precedence precedence(){ return Precedence.mult; }
-	override @property string symbol(){
-		static if(formatting==Format.maple) return "*";
-		else static if(formatting==Format.matlab) return ".*";
+	override string symbol(Format formatting){
+		if(formatting==Format.maple) return "*";
+		else if(formatting==Format.matlab) return ".*";
 		else return "·";
 	}
-	override string toStringImpl(Precedence prec){
+	override string toStringImpl(Format formatting,Precedence prec){
 		auto frac=this.getFractionalFactor().getFraction();
 		if(frac[0]<0){
-			static if(formatting==Format.maple){
-				return "(-"~(-this).toStringImpl(Precedence.uminus)~")";
+			if(formatting==Format.maple){
+				return "(-"~(-this).toStringImpl(formatting,Precedence.uminus)~")";
 			}else{
-				return addp(prec,"-"~(-this).toStringImpl(Precedence.uminus),Precedence.uminus);
+				return addp(prec,"-"~(-this).toStringImpl(formatting,Precedence.uminus),Precedence.uminus);
 			}
 		}
 		//if(frac[0]!=1&&frac[1]!=1) // TODO
 		// TODO: use suitable data structures
-		return super.toStringImpl(prec);
+		return super.toStringImpl(formatting,prec);
 	}
 
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
@@ -888,8 +890,8 @@ DExpr dMinus(DExpr e1,DExpr e2){ return e1+-e2; }
 abstract class DBinaryOp: DOp{
 	DExpr[2] operands;
 	protected mixin template Constructor(){ private this(DExpr e1, DExpr e2){ operands=[e1,e2]; } }
-	override string toStringImpl(Precedence prec){
-		return addp(prec, operands[0].toStringImpl(precedence) ~ symbol ~ operands[1].toStringImpl(precedence));
+	override string toStringImpl(Format formatting,Precedence prec){
+		return addp(prec, operands[0].toStringImpl(formatting,precedence) ~ symbol(formatting) ~ operands[1].toStringImpl(formatting,precedence));
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
 		foreach(a;operands)
@@ -908,8 +910,8 @@ abstract class DBinaryOp: DOp{
 class DPow: DBinaryOp{
 	mixin Constructor;
 	override Precedence precedence(){ return Precedence.pow; }
-	override @property string symbol(){
-		static if(formatting==Format.matlab) return ".^";
+	override @property string symbol(Format formatting){
+		if(formatting==Format.matlab) return ".^";
 		else return "^";
 	}
 	override bool rightAssociative(){ return true; }
@@ -921,16 +923,16 @@ class DPow: DBinaryOp{
 		return [ℕ(1),d.c];
 	}
 
-	override string toStringImpl(Precedence prec){
+	override string toStringImpl(Format formatting,Precedence prec){
 		auto frc=operands[1].getFractionalFactor().getFraction();
 		if(frc[0]<0){
-			enum pre=formatting==Format.matlab?"1./":formatting==Format.maple?"1/":"⅟";
-			return addp(prec,pre~(operands[0]^^-operands[1]).toStringImpl(Precedence.div),Precedence.div);
+			auto pre=formatting==Format.matlab?"1./":formatting==Format.maple?"1/":"⅟";
+			return addp(prec,pre~(operands[0]^^-operands[1]).toStringImpl(formatting,Precedence.div),Precedence.div);
 		}
 			// also nice, but often hard to read: ½⅓¼⅕⅙
-		static if(formatting==Format.default_){		
+		if(formatting==Format.default_){		
 			if(auto c=cast(Dℕ)operands[1])
-				return addp(prec,operands[0].toStringImpl(Precedence.pow)~highNum(c.c));
+				return addp(prec,operands[0].toStringImpl(formatting,Precedence.pow)~highNum(c.c));
 			if(auto c=cast(DPow)operands[1]){
 				if(auto e=cast(Dℕ)c.operands[1]){
 					if(e.c==-1){
@@ -942,7 +944,7 @@ class DPow: DBinaryOp{
 				}
 			}
 		}
-		return super.toStringImpl(prec);
+		return super.toStringImpl(formatting,prec);
 	}
 
 	override DExpr substitute(DVar var,DExpr e){
@@ -1169,8 +1171,8 @@ DPolynomial asPolynomialIn(DExpr e,DVar v,long limit=-1){
 abstract class DUnaryOp: DOp{
 	DExpr operand;
 	protected mixin template Constructor(){ private this(DExpr e){ operand=e; } }
-	override string toStringImpl(Precedence prec){
-		return addp(prec, symbol~operand.toStringImpl(precedence));
+	override string toStringImpl(Format formatting,Precedence prec){
+		return addp(prec, symbol(formatting)~operand.toStringImpl(formatting,precedence));
 	}
 }
 DExpr dUMinus(DExpr e){ return mone*e; }
@@ -1443,11 +1445,11 @@ class DIvr: DExpr{ // iverson brackets
 	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args){ return dIvr(type,e.substituteFun(fun,q,args)); }
 	override DExpr incDeBruin(int di){ return dIvr(type,e.incDeBruin(di)); }
 
-	override string toStringImpl(Precedence prec){
+	override string toStringImpl(Format formatting,Precedence prec){
 		with(Type){
-			static if(formatting==Format.maple){
+			if(formatting==Format.maple){
 				return "piecewise("~e.toString()~(type==eqZ?"=":type==neqZ?"<>":type==lZ?"<":"<=")~"0,1,0)";
-			}else static if(formatting==Format.matlab){
+			}else if(formatting==Format.matlab){
 				return "("~e.toString()~(type==eqZ?"==":type==neqZ?"!=":type==lZ?"<":"<=")~"0)";
 			}else{
 				return "["~e.toString()~(type==eqZ?"=":type==neqZ?"≠":type==lZ?"<":"≤")~"0]";
@@ -1585,8 +1587,8 @@ DExpr dIvr(DIvr.Type type,DExpr e){
 class DDelta: DExpr{ // Dirac delta function
 	DExpr e;
 	private this(DExpr e){ this.e=e; }
-	override string toStringImpl(Precedence prec){
-		static if(formatting==Format.maple){
+	override string toStringImpl(Format formatting,Precedence prec){
+		if(formatting==Format.maple){
 			return text("Dirac(",e.toString(),")");
 		}else{
 			return "δ["~e.toString()~"]";
@@ -1778,12 +1780,12 @@ class DInt: DOp{
 	}
 	DExpr getExpr(DVar var){ return getDeBruinExpr(this.var,expr,var); }
 	override @property Precedence precedence(){ return Precedence.intg; }
-	override @property string symbol(){ return "∫"; }
-	override string toStringImpl(Precedence prec){
-		static if(formatting==Format.maple){
+	override @property string symbol(Format formatting){ return "∫"; }
+	override string toStringImpl(Format formatting,Precedence prec){
+		if(formatting==Format.maple){
 			return text("int(",expr.toString(),",",var.toString(),"=-infinity..infinity)");
 		}else{
-			return addp(prec,symbol~"d"~var.toString()~expr.toStringImpl(precedence));
+			return addp(prec,symbol(formatting)~"d"~var.toString()~expr.toStringImpl(formatting,precedence));
 		}
 	}
 	static DExpr constructHook(DVar var,DExpr expr){
@@ -1960,10 +1962,10 @@ class DLim: DOp{
 	DExpr e;
 	DExpr x;
 	this(DVar v,DExpr e,DExpr x){ this.v=v; this.e=e; this.x=x; }
-	override @property string symbol(){ return text("lim[",v," → ",e,"]"); }
+	override @property string symbol(Format formatting){ return text("lim[",v," → ",e,"]"); }
 	override Precedence precedence(){ return Precedence.lim; } // TODO: ok?
-	override string toStringImpl(Precedence prec){
-		return addp(prec,symbol~x.toStringImpl(precedence));
+	override string toStringImpl(Format formatting,Precedence prec){
+		return addp(prec,symbol(formatting)~x.toStringImpl(formatting,precedence));
 	}
 
 	static DExpr constructHook(DVar v,DExpr e,DExpr x){
@@ -2030,10 +2032,10 @@ class DDiff: DOp{
 	DExpr e;
 	DExpr x;
 	this(DVar v,DExpr e,DExpr x){ this.v=v; this.e=e; this.x=x; }
-	override @property string symbol(){ return "d/d"~v.toString(); }
+	override @property string symbol(Format formatting){ return "d/d"~v.toString(); }
 	override Precedence precedence(){ return Precedence.diff; }
-	override string toStringImpl(Precedence prec){
-		return addp(prec,symbol~"["~e.toString()~"]("~x.toString()~")");
+	override string toStringImpl(Format formatting,Precedence prec){
+		return addp(prec,symbol(formatting)~"["~e.toString(formatting)~"]("~x.toString(formatting)~")");
 	}
 
 	static DExpr constructHook(DVar v,DExpr e,DExpr x){
@@ -2086,9 +2088,9 @@ DExpr dDiff(DVar v,DExpr e){ return dDiff(v,e,v); }
 class DAbs: DOp{
 	DExpr e;
 	this(DExpr e){ this.e=e; }
-	override @property string symbol(){ return "|"; }
+	override @property string symbol(Format formatting){ return "|"; }
 	override Precedence precedence(){ return Precedence.none; }
-	override string toStringImpl(Precedence prec){
+	override string toStringImpl(Format formatting,Precedence prec){ // TODO: matlab, maple
 		return "|"~e.toString()~"|";
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
@@ -2140,9 +2142,9 @@ DExpr dAbs(DExpr e){ return uniqueDExprUnary!DAbs(e); }
 class DLog: DOp{
 	DExpr e;
 	this(DExpr e){ this.e=e; }
-	override @property string symbol(){ return "log"; }
+	override @property string symbol(Format formatting){ return "log"; }
 	override Precedence precedence(){ return Precedence.none; }
-	override string toStringImpl(Precedence prec){
+	override string toStringImpl(Format formatting,Precedence prec){
 		return "log("~e.toString()~")";
 	}
 
@@ -2190,9 +2192,9 @@ DExpr dLog(DExpr e){ return uniqueDExprUnary!DLog(e); }
 class DSin: DOp{
 	DExpr e;
 	this(DExpr e){ this.e=e; }
-	override @property string symbol(){ return "sin"; }
+	override @property string symbol(Format formatting){ return "sin"; }
 	override Precedence precedence(){ return Precedence.none; }
-	override string toStringImpl(Precedence prec){
+	override string toStringImpl(Format formatting,Precedence prec){
 		return "sin("~e.toString()~")";
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
@@ -2231,9 +2233,9 @@ DExpr dSin(DExpr e){ return uniqueDExprUnary!DSin(e); }
 class DFloor: DOp{
 	DExpr e;
 	this(DExpr e){ this.e=e; }
-	override @property string symbol(){ return "⌊.⌋"; }
+	override @property string symbol(Format formatting){ return "⌊.⌋"; }
 	override Precedence precedence(){ return Precedence.none; }
-	override string toStringImpl(Precedence prec){
+	override string toStringImpl(Format formatting,Precedence prec){
 		return "⌊"~e.toString()~"⌋";
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
@@ -2275,9 +2277,9 @@ DExpr dFloor(DExpr e){ return uniqueDExprUnary!DFloor(e); }
 class DCeil: DOp{
 	DExpr e;
 	this(DExpr e){ this.e=e; }
-	override @property string symbol(){ return "⌈.⌉"; }
+	override @property string symbol(Format formatting){ return "⌈.⌉"; }
 	override Precedence precedence(){ return Precedence.none; }
-	override string toStringImpl(Precedence prec){
+	override string toStringImpl(Format formatting,Precedence prec){
 		return "⌈"~e.toString()~"⌉";
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
@@ -2320,11 +2322,11 @@ DExpr dCeil(DExpr e){ return uniqueDExprUnary!DCeil(e); }
 class DGaussInt: DOp{
 	DExpr x;
 	this(DExpr x){ this.x=x; }
-	override @property string symbol(){ return "(d/dx)⁻¹[e^(-x²)]"; }
+	override @property string symbol(Format formatting){ return "(d/dx)⁻¹[e^(-x²)]"; }
 	override Precedence precedence(){ return Precedence.diff; }
-	override string toStringImpl(Precedence prec){
-		static if(formatting==Format.matlab) return "((erf("~x.toString()~")+1)/2)";
-		else return addp(prec,symbol~"("~x.toString()~")");
+	override string toStringImpl(Format formatting,Precedence prec){
+		if(formatting==Format.matlab) return "(sqrt(pi)*(erf("~x.toString()~")+1)/2)";
+		else return addp(prec,symbol(formatting)~"("~x.toString(formatting)~")");
 	}
 
 	static DExpr constructHook(DExpr x){
@@ -2369,7 +2371,7 @@ class DGaussInt: DOp{
 auto dGaussInt(DExpr x){ return uniqueDExprUnary!DGaussInt(x); }
 
 class DInf: DExpr{ // TODO: explicit limits?
-	override string toStringImpl(Precedence prec){ return "∞"; }
+	override string toStringImpl(Format formatting,Precedence prec){ return "∞"; }
 	mixin Constant;
 }
 
@@ -2383,7 +2385,7 @@ bool isInfinite(DExpr e){
 class DFunVar: DExpr{
 	string name;
 	/+private+/ this(string name){ this.name=name; } // TODO: make private!
-	override string toStringImpl(Precedence prec){ return name; }
+	override string toStringImpl(Format formatting,Precedence prec){ return name; }
 
 	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; }
 	override int freeVarsImpl(scope int delegate(DVar) dg){ return 0; }
@@ -2402,9 +2404,9 @@ class DFun: DOp{ // uninterpreted functions
 	DFunVar fun;
 	DExpr[] args;
 	this(DFunVar fun, DExpr[] args){ this.fun=fun; this.args=args; }
-	override @property string symbol(){ return fun.name; }
+	override @property string symbol(Format formatting){ return fun.name; }
 	override Precedence precedence(){ return Precedence.none; }
-	override string toStringImpl(Precedence prec){
+	override string toStringImpl(Format formatting,Precedence prec){
 		return fun.name~"("~args.map!(to!string).join(",")~")";
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){

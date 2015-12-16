@@ -38,7 +38,7 @@ DExpr expandEqIvrs(DExpr e){
 	// TODO: fix the case when dIvr buried in other kind of expression
 	return e;
 }
-
+/+
 DExpr ivrsToDeltas(DExpr dist){
 	dist=expandEqIvrs(dist).simplify(one);
 	static DExpr doIt(DExpr e){
@@ -60,6 +60,7 @@ DExpr ivrsToDeltas(DExpr dist){
 				if(!delta) continue;
 				foreach(v;ivr.e.freeVars.setx){
 					// TODO: figure out how to deal with tautologies and/or contradictions correctly
+					// TODO: actually do this substitution right
 					if(auto e=DDelta.performSubstitution!false(v,delta,e.withoutFactor(f)*delta,true)){
 						auto grad=zero;
 						foreach(v;ivr.e.freeVars.setx) grad=grad+dDiff(v,ivr.e)^^2;
@@ -100,7 +101,7 @@ DExpr[2] renormalize(DExpr dist,SetX!DVar freeVars){
 	//return [dIvr(DIvr.Type.neqZ,factor)*dist/factor+isZ*renorm,isZ*dIvr(DIvr.Type.eqZ,renorm)];
 	return [rdist,isZ];
 }
-
++/
 /+class RenormExp: DExpr{
 	DExpr expr;
 	this(DExpr expr){ this.expr=expr; }

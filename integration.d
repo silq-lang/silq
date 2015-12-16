@@ -229,9 +229,18 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 	auto dgaussTG=gaussIntTimesGauss(var,nonIvrs);
 	if(dgaussTG.antiderivative) return dgaussTG;
 	// partial integration for polynomials
-	AntiD partiallyIntegratePolynomials(DVar var,DExpr e){
+	AntiD partiallyIntegratePolynomials(DVar var,DExpr e){ // TODO: is this well founded?
+		static MapX!(Q!(DVar,DExpr),AntiD) memo;
+		if(q(var,e) in memo) return memo[q(var,e)];
+		auto token=new DVar("τ"); // TODO: make sure this does not create a GC issue.
+		memo[q(var,e)]=AntiD(token); // TODO :get rid of AntiD
+		auto fail(){ // TODO: remember failure in memo
+			memo[q(var,e)]=AntiD();
+			return AntiD();
+		}
+
 		auto m=cast(DMult)e;
-		if(!m) return AntiD();
+		if(!m) return fail();
 		DExpr polyFact=null;
 		foreach(f;m.factors){
 			if(auto p=cast(DPow)f){
@@ -243,15 +252,21 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 			}
 			if(f is var){ polyFact=f; break; }
 		}
-		if(!polyFact) return AntiD();
+		if(!polyFact) return fail();
 		auto rest=m.withoutFactor(polyFact);
 		auto intRest=tryGetAntiderivative(var,rest,ivrs).antiderivative;
-		if(!intRest) return AntiD();
+		if(!intRest) return fail();
 		//dw(polyFact," ",rest);
 		auto diffPoly=dDiff(var,polyFact);
 		auto intDiffPolyIntRest=tryGetAntiderivative(var,(diffPoly*intRest).simplify(one),ivrs).antiderivative;
-		if(!intDiffPolyIntRest) return AntiD();
-		return AntiD(polyFact*intRest-intDiffPolyIntRest);
+		if(!intDiffPolyIntRest) return fail();
+		auto r=AntiD(polyFact*intRest-intDiffPolyIntRest);
+		if(!r.antiderivative.hasFreeVar(token)){ memo[q(var,e)]=r; return r; }
+		//memo[q(var,e)]=r=AntiD(dIntSmp(token,token*dDelta(token-r.antiderivative)));
+		//dw(token," ",e," ",(r.antiderivative-token).simplify(one));
+		if(auto s=(r.antiderivative-token).simplify(one).solveFor(token))
+			return AntiD(s);
+		return AntiD();
 	}
 	auto partPoly=partiallyIntegratePolynomials(var,nonIvrs);
 	if(partPoly.antiderivative) return partPoly;
@@ -265,14 +280,14 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 	//dw(factors[1]);
 	//dw("!! ",dDiff(var,factors[1]));
 
-	/+if(auto p=cast(DPlus)nonIvrs.polyNormalize(var)){
+	if(auto p=cast(DPlus)nonIvrs.polyNormalize(var)){
 		AntiD r=AntiD(zero,zero,zero);
 		foreach(s;p.summands){
 			r=r+tryGetAntiderivative(var,s,ivrs);
 			if(!r) return AntiD();
 		}
 		return r;
-	}+/
+	}
 
 	return AntiD(); // no simpler expression available
 }
@@ -292,9 +307,14 @@ private DExpr tryIntegrateImpl(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DE
 	auto lowLeUp(){ return lower&&upper?dIvr(DIvr.Type.leZ,lower-upper):one; }
 	auto antid=tryGetAntiderivative(var,nonIvrs,ivrs);
 	if(auto anti=antid.antiderivative){
-		if(lower&&upper)
+		//dw(anti.substitute(var,lower).simplify(one)," ",lower," ",upper);
+		if(lower&&upper){
+			//dw(dDiff(var,anti).simplify(one));
+			//dw(anti.substitute(var,upper).simplify(one));
+			//dw(anti.substitute(var,lower).simplify(one));
 			return lowLeUp()*(anti.substitute(var,upper)
 							  -anti.substitute(var,lower));
+		}
 		auto lo=lower?anti.substitute(var,lower):antid.atMinusInfinity;
 		auto up=upper?anti.substitute(var,upper):antid.atInfinity;
 		if(!lo) lo=dLimSmp(var,-dInf,anti);
