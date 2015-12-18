@@ -6,6 +6,7 @@ import lexer, parser, expression, error;
 import analysis, distrib, dexpr;
 
 bool plot=false;
+bool kill=false;
 
 string getActualPath(string path){
 	// TODO: search path
@@ -29,7 +30,7 @@ void performAnalysis(FunctionDef fd,ErrorHandler err,bool renormalize){
 	import approximate;
 	//import hashtable; dist.distribution=approxLog(dist.freeVars.element);
 	//import hashtable; dist.distribution=approxGaussInt(dist.freeVars.element);
-	//dist.distribution=dist.distribution.killIntegrals();
+	if(kill) dist.distribution=dist.distribution.killIntegrals();
 	auto str=dist.toString();
 	if(expected.exists) with(expected){
 			writeln(ex==dist.distribution.toString()?todo?"FIXED":"PASS":todo?"TODO":"FAIL");
@@ -107,10 +108,11 @@ int main(string[] args){
 		return 1;
 	}
 	args.popFront();
-	args.sort!((a,b)=>a.startsWith("--")>=b.startsWith("--"));
+	args.sort!((a,b)=>a.startsWith("--")>b.startsWith("--"));
 	foreach(x;args){
 		switch(x){
 			case "--plot": plot=true; break;
+			case "--kill": kill=true; break;
 			default: if(auto r=run(x)) return r;
 		}
 	}
