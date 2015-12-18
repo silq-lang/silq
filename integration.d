@@ -234,7 +234,7 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 		if(q(var,e) in memo) return memo[q(var,e)];
 		auto token=new DVar("τ"); // TODO: make sure this does not create a GC issue.
 		memo[q(var,e)]=AntiD(token); // TODO :get rid of AntiD
-		auto fail(){ // TODO: remember failure in memo
+		auto fail(){
 			memo[q(var,e)]=AntiD();
 			return AntiD();
 		}
@@ -256,17 +256,18 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 		auto rest=m.withoutFactor(polyFact);
 		auto intRest=tryGetAntiderivative(var,rest,ivrs).antiderivative;
 		if(!intRest) return fail();
-		//dw(polyFact," ",rest);
 		auto diffPoly=dDiff(var,polyFact);
-		auto intDiffPolyIntRest=tryGetAntiderivative(var,(diffPoly*intRest).simplify(one),ivrs).antiderivative;
+		auto diffRest=(diffPoly*intRest).polyNormalize(var).simplify(one);
+		auto intDiffPolyIntRest=tryGetAntiderivative(var,diffRest,ivrs).antiderivative;
 		if(!intDiffPolyIntRest) return fail();
 		auto r=AntiD(polyFact*intRest-intDiffPolyIntRest);
 		if(!r.antiderivative.hasFreeVar(token)){ memo[q(var,e)]=r; return r; }
-		//memo[q(var,e)]=r=AntiD(dIntSmp(token,token*dDelta(token-r.antiderivative)));
-		//dw(token," ",e," ",(r.antiderivative-token).simplify(one));
-		if(auto s=(r.antiderivative-token).simplify(one).solveFor(token))
-			return AntiD(s);
-		return AntiD();
+		if(auto s=(r.antiderivative-token).simplify(one).solveFor(token)){
+			r=AntiD(s);
+			memo[q(var,e)]=r;
+			return r;
+		}
+		return fail();
 	}
 	auto partPoly=partiallyIntegratePolynomials(var,nonIvrs);
 	if(partPoly.antiderivative) return partPoly;
@@ -306,10 +307,13 @@ private DExpr tryIntegrateImpl(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DE
 	// TODO: add better approach for antiderivatives	
 	auto lowLeUp(){ return lower&&upper?dIvr(DIvr.Type.leZ,lower-upper):one; }
 	auto antid=tryGetAntiderivative(var,nonIvrs,ivrs);
+	//dw(var," ",nonIvrs," ",ivrs);
+	//dw(antid.antiderivative);
+	//dw(dDiff(var,antid.antiderivative.simplify(one)).simplify(one));
 	if(auto anti=antid.antiderivative){
 		//dw(anti.substitute(var,lower).simplify(one)," ",lower," ",upper);
 		if(lower&&upper){
-			//dw(dDiff(var,anti).simplify(one));
+			//dw("??! ",dDiff(var,anti).simplify(one));
 			//dw(anti.substitute(var,upper).simplify(one));
 			//dw(anti.substitute(var,lower).simplify(one));
 			return lowLeUp()*(anti.substitute(var,upper)
