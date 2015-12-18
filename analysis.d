@@ -596,18 +596,18 @@ private struct Analyzer{
 					SetX!DVar vars;
 					foreach(ret;returns){
 						auto exp=transformExp(ret);
-						DVar var;
-						if(auto vv=cast(DVar)exp){
-							var=vv;
+						DVar var=cast(DVar)exp;
+						if(var && !var.name.startsWith("__")){
 							if(var in vars){
-								vv=dist.getVar(var.name);
+								auto vv=dist.getVar(var.name);
 								dist.initialize(vv,var);
 								var=vv;
 							}
 							vars.insert(var);
 						}else if(exp){
-							auto r=dist.getVar("r");
-							dist.initialize(r,exp);
+							var=dist.getVar("r");
+							dist.initialize(var,exp);
+							vars.insert(var);
 						}
 						// TODO: variable ordering
 					}
