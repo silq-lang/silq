@@ -777,7 +777,7 @@ private:
 							default: break readident;
 						}
 					}
-					
+					while(*p=='\'') ++p; // support primed identifiers
 					res[0].name = s[0..p-s];
 					res[0].type=isKeyword(res[0].name);
 					break;
