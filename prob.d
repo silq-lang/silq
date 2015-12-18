@@ -23,6 +23,40 @@ string readCode(File f){
 }
 string readCode(string path){ return readCode(File(path)); }
 
+void performAnalysis(FunctionDef fd,ErrorHandler err,bool renormalize){
+	auto dist=analyze(fd,err).dup;
+	if(renormalize) dist.renormalize();
+	import approximate;
+	//import hashtable; dist.distribution=approxLog(dist.freeVars.element);
+	//import hashtable; dist.distribution=approxGaussInt(dist.freeVars.element);
+	//dist.distribution=dist.distribution.killIntegrals();
+	auto str=dist.toString();
+	if(expected.exists) with(expected){
+			writeln(ex==dist.distribution.toString()?todo?"FIXED":"PASS":todo?"TODO":"FAIL");
+	}
+	//writeln((cast(DPlus)dist.distribution).summands.length);
+	if(str.length<10000) writeln(str);
+	else{
+		writeln("writing output to temporary file...");
+		auto f=File("tmp.deleteme","w");
+		f.writeln(str);
+	}
+	bool plotCDF=false;
+	if(str.canFind("δ")) plotCDF=true;
+	import hashtable;
+	if(plot && dist.freeVars.length==1){
+		if(plotCDF){
+			dist=dist.dup();
+			auto freeVar=dist.freeVars.element;
+			auto nvar=dist.declareVar("foo");
+			dist.distribute(dIvr(DIvr.Type.leZ,-freeVar-20)*dIvr(DIvr.Type.leZ,freeVar-nvar));
+			dist.marginalize(freeVar);
+		}
+		writeln("plotting... ",(plotCDF?"(CDF)":"(PDF)"));
+		matlabPlot(dist.distribution.toString(Format.matlab),dist.freeVars.element.toString(Format.matlab));
+	}
+}
+
 int run(string path){
 	path = getActualPath(path);
 	auto ext = path.extension;
@@ -54,43 +88,13 @@ int run(string path){
 		sourceFile=null;
 	}
 	if(err.nerrors) return 1;
-	if(functions.length==1) foreach(_,x;functions){ functions["main"]=x; break; }
 	if("main" !in functions){
-		err.error("missing program entry point 'main'",Location(src.code.ptr[0..1],1));
-		return 1;
-	}
-	auto fd=functions["main"];
-	auto dist=analyze(fd,err).dup;
-	dist.renormalize();
-	import approximate;
-	//import hashtable; dist.distribution=approxLog(dist.freeVars.element);
-	//import hashtable; dist.distribution=approxGaussInt(dist.freeVars.element);
-	//dist.distribution=dist.distribution.killIntegrals();
-	auto str=dist.toString();
-	if(expected.exists) with(expected){
-			writeln(ex==dist.distribution.toString()?todo?"FIXED":"PASS":todo?"TODO":"FAIL");
-	}
-	//writeln((cast(DPlus)dist.distribution).summands.length);
-	if(str.length<10000) writeln(str);
-	else{
-		writeln("writing output to temporary file...");
-		auto f=File("tmp.deleteme","w");
-		f.writeln(str);
-	}
-	bool plotCDF=false;
-	if(str.canFind("δ")) plotCDF=true;
-	import hashtable;
-	if(plot && dist.freeVars.length==1){
-		if(plotCDF){
-			dist=dist.dup();
-			auto freeVar=dist.freeVars.element;
-			auto nvar=dist.declareVar("foo");
-			dist.distribute(dIvr(DIvr.Type.leZ,-freeVar-20)*dIvr(DIvr.Type.leZ,freeVar-nvar));
-			dist.marginalize(freeVar);
+		foreach(name,fd;functions){
+			writeln(name,":");
+			performAnalysis(fd,err,false);
 		}
-		writeln("plotting... ",(plotCDF?"(CDF)":"(PDF)"));
-		matlabPlot(dist.distribution.toString(Format.matlab),dist.freeVars.element.toString(Format.matlab));
-	}
+		return 1;
+	}else performAnalysis(functions["main"],err,true);
 	return !!err.nerrors;
 }
 
@@ -425,6 +429,7 @@ void test(){
 	//writeln(dDiff("x".dVar,tryGetAntiderivative("x".dVar,"x²·e^(-x²)".dParse,one).antiderivative).simplify(one));
 	//matlabPlot(r.toString(Format.matlab),"x");
 	//writeln("∫dx(d/dx)⁻¹[e^(-x²)](x)·x".dParse.simplify(one));
+	//writeln("(∫dξ₁ ξ₁²·⅟e^(ξ₁²·⅟200))".dParse.simplify(one));// TODO: improve limit evaluation
 }
 
 /*
