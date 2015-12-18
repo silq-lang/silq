@@ -938,7 +938,7 @@ class DPow: DBinaryOp{
 					if(e.c==-1){
 						if(auto d=cast(Dℕ)c.operands[0]){
 							if(2<=d.c&&d.c<=4)
-								return text("  √∛∜"d[cast(size_t)d.c.toLong()],overline(operands[0].toString()));
+								return text("  √∛∜"d[cast(size_t)d.c.toLong()],overline(operands[0].toString(formatting)));
 						}
 					}
 				}
@@ -1448,11 +1448,11 @@ class DIvr: DExpr{ // iverson brackets
 	override string toStringImpl(Format formatting,Precedence prec){
 		with(Type){
 			if(formatting==Format.maple){
-				return "piecewise("~e.toString()~(type==eqZ?"=":type==neqZ?"<>":type==lZ?"<":"<=")~"0,1,0)";
+				return "piecewise("~e.toString(formatting)~(type==eqZ?"=":type==neqZ?"<>":type==lZ?"<":"<=")~"0,1,0)";
 			}else if(formatting==Format.matlab){
-				return "("~e.toString()~(type==eqZ?"==":type==neqZ?"!=":type==lZ?"<":"<=")~"0)";
+				return "("~e.toString(formatting)~(type==eqZ?"==":type==neqZ?"!=":type==lZ?"<":"<=")~"0)";
 			}else{
-				return "["~e.toString()~(type==eqZ?"=":type==neqZ?"≠":type==lZ?"<":"≤")~"0]";
+				return "["~e.toString(formatting)~(type==eqZ?"=":type==neqZ?"≠":type==lZ?"<":"≤")~"0]";
 			}
 		}
 	}
@@ -1589,9 +1589,9 @@ class DDelta: DExpr{ // Dirac delta function
 	private this(DExpr e){ this.e=e; }
 	override string toStringImpl(Format formatting,Precedence prec){
 		if(formatting==Format.maple){
-			return text("Dirac(",e.toString(),")");
+			return text("Dirac(",e.toString(formatting),")");
 		}else{
-			return "δ["~e.toString()~"]";
+			return "δ["~e.toString(formatting)~"]";
 		}
 	}
 
@@ -1783,9 +1783,9 @@ class DInt: DOp{
 	override @property string symbol(Format formatting){ return "∫"; }
 	override string toStringImpl(Format formatting,Precedence prec){
 		if(formatting==Format.maple){
-			return text("int(",expr.toString(),",",var.toString(),"=-infinity..infinity)");
+			return text("int(",expr.toString(formatting),",",var.toString(formatting),"=-infinity..infinity)");
 		}else{
-			return addp(prec,symbol(formatting)~"d"~var.toString()~expr.toStringImpl(formatting,precedence));
+			return addp(prec,symbol(formatting)~"d"~var.toString(formatting)~expr.toStringImpl(formatting,precedence));
 		}
 	}
 	static DExpr constructHook(DVar var,DExpr expr){
@@ -2032,7 +2032,7 @@ class DDiff: DOp{
 	DExpr e;
 	DExpr x;
 	this(DVar v,DExpr e,DExpr x){ this.v=v; this.e=e; this.x=x; }
-	override @property string symbol(Format formatting){ return "d/d"~v.toString(); }
+	override @property string symbol(Format formatting){ return "d/d"~v.toString(formatting); }
 	override Precedence precedence(){ return Precedence.diff; }
 	override string toStringImpl(Format formatting,Precedence prec){
 		return addp(prec,symbol(formatting)~"["~e.toString(formatting)~"]("~x.toString(formatting)~")");
@@ -2091,7 +2091,7 @@ class DAbs: DOp{
 	override @property string symbol(Format formatting){ return "|"; }
 	override Precedence precedence(){ return Precedence.none; }
 	override string toStringImpl(Format formatting,Precedence prec){ // TODO: matlab, maple
-		return "|"~e.toString()~"|";
+		return "|"~e.toString(formatting)~"|";
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
 		return dg(e);
@@ -2145,7 +2145,7 @@ class DLog: DOp{
 	override @property string symbol(Format formatting){ return "log"; }
 	override Precedence precedence(){ return Precedence.none; }
 	override string toStringImpl(Format formatting,Precedence prec){
-		return "log("~e.toString()~")";
+		return "log("~e.toString(formatting)~")";
 	}
 
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
@@ -2195,7 +2195,7 @@ class DSin: DOp{
 	override @property string symbol(Format formatting){ return "sin"; }
 	override Precedence precedence(){ return Precedence.none; }
 	override string toStringImpl(Format formatting,Precedence prec){
-		return "sin("~e.toString()~")";
+		return "sin("~e.toString(formatting)~")";
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
 		return dg(e);
@@ -2236,7 +2236,7 @@ class DFloor: DOp{
 	override @property string symbol(Format formatting){ return "⌊.⌋"; }
 	override Precedence precedence(){ return Precedence.none; }
 	override string toStringImpl(Format formatting,Precedence prec){
-		return "⌊"~e.toString()~"⌋";
+		return "⌊"~e.toString(formatting)~"⌋";
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
 		return dg(e);
@@ -2280,7 +2280,7 @@ class DCeil: DOp{
 	override @property string symbol(Format formatting){ return "⌈.⌉"; }
 	override Precedence precedence(){ return Precedence.none; }
 	override string toStringImpl(Format formatting,Precedence prec){
-		return "⌈"~e.toString()~"⌉";
+		return "⌈"~e.toString(formatting)~"⌉";
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
 		return dg(e);
@@ -2325,7 +2325,7 @@ class DGaussInt: DOp{
 	override @property string symbol(Format formatting){ return "(d/dx)⁻¹[e^(-x²)]"; }
 	override Precedence precedence(){ return Precedence.diff; }
 	override string toStringImpl(Format formatting,Precedence prec){
-		if(formatting==Format.matlab) return "(sqrt(pi)*(erf("~x.toString()~")+1)/2)";
+		if(formatting==Format.matlab) return "(sqrt(pi)*(erf("~x.toString(formatting)~")+1)/2)";
 		else return addp(prec,symbol(formatting)~"("~x.toString(formatting)~")");
 	}
 

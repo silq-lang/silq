@@ -68,7 +68,7 @@ int run(string path){
 	//dist.distribution=dist.distribution.killIntegrals();
 	auto str=dist.toString();
 	if(expected.exists) with(expected){
-		writeln(ex==dist.distribution.toString()?todo?"FIXED":"PASS":todo?"TODO":"FAIL");
+			writeln(ex==dist.distribution.toString()?todo?"FIXED":"PASS":todo?"TODO":"FAIL");
 	}
 	//writeln((cast(DPlus)dist.distribution).summands.length);
 	if(str.length<10000) writeln(str);
@@ -103,7 +103,13 @@ int main(string[] args){
 		return 1;
 	}
 	args.popFront();
-	foreach(x;args) if(auto r=run(x)) return r;
+	args.sort!((a,b)=>a.startsWith("--")>=b.startsWith("--"));
+	foreach(x;args){
+		switch(x){
+			case "--plot": plot=true; break;
+			default: if(auto r=run(x)) return r;
+		}
+	}
 	return 0;
 }
 
@@ -411,10 +417,11 @@ void test(){
 	//writeln(dDiff("x".dVar,dIntSmp("y".dVar,"(d/dx)⁻¹[e^(-x²)](a·y+b)·[y≤x]".dParse)).simplify(one));
 	//writeln(dDiff("x".dVar,"⅟a·((a·x+b)·(d/dx)⁻¹[e^(-x²)](a·x+b)+e^(-(a·x+b)²)/2)".dParse).simplify(one));
 	//writeln(dDiff("x".dVar,"(d/dx)⁻¹[e^(-x²)](x)·x-e^(-x²))".dParse));
-	//auto r="∫dy[0≤y]·[y≤x]·y⁵·e^(-y²)".dParse.simplify(one);
+	//auto r="∫dy[0≤y]·[y≤x]·y³·e^(-y²)".dParse.simplify(one);
 	//auto r="x²·e^(-x²)".dParse;
 	//r=r.polyNormalize("x".dVar).simplify(one);
 	//writeln(r);
+	//writeln(dDiff("x".dVar,"-(d/dx)⁻¹[e^(-x²)](x)·24·x⁵·⅟11+-(d/dx)⁻¹[e^(-x²)](x)·50·x³·⅟11+-35·x⁴·⅟22·⅟e^(x²)+-60·x²·⅟11·⅟e^(x²)+-60·⅟11·⅟e^(x²)+60·⅟11".dParse).simplify(one));
 	//writeln(dDiff("x".dVar,tryGetAntiderivative("x".dVar,"x²·e^(-x²)".dParse,one).antiderivative).simplify(one));
 	//matlabPlot(r.toString(Format.matlab),"x");
 	//writeln("∫dx(d/dx)⁻¹[e^(-x²)](x)·x".dParse.simplify(one));
