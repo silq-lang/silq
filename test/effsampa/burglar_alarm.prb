@@ -1,6 +1,6 @@
 // Benchmark 2.
 
-def burglar_alarm(){
+def main(){
     earthquake := Bernoulli(1/10000);
     burglary := Bernoulli(1/1000);
     alarm := earthquake || burglary;

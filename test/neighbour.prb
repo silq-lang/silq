@@ -1,5 +1,5 @@
 
-def neighbour(){
+def main(){
     isGirl1 := Bernoulli(1/2);
     isGirl2 := Bernoulli(1/2);
     observe(isGirl1 || isGirl2);

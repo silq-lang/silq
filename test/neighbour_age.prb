@@ -1,6 +1,6 @@
 // TODO: why so slow?
 
-def neighbour_age(){
+def main(){
     isGirl1 := Bernoulli(1/2);
     age1 := Uniform(1,30);
     isGirl2 := Bernoulli(1/2);

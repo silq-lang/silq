@@ -1,5 +1,5 @@
 
-def isBurglary(){
+def main(){ // isBurglary
     earthquake := Bernoulli(0.0001);
     burglary := Bernoulli(0.001);
     alarm := earthquake || burglary;

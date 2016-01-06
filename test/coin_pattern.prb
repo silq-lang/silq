@@ -3,7 +3,7 @@
 // TODO: Result should be simplified better!
 // TODO: we would want to run the same test with different observations here
 
-def test(){
+def main(){
     has_pattern := Bernoulli(1/2);
     x1 := 0;
     x2 := 0;

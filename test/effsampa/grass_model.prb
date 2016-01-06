@@ -1,6 +1,6 @@
 // Benchmark 1. (Quite common in the literature)
 
-def grass_model(){
+def main(){
     cloudy := Bernoulli(1/2);
     rain := Bernoulli(if cloudy { 4/5 } else { 1/5 });
     sprinkler := Bernoulli(if cloudy { 1/10 } else { 1/2 });

@@ -1,4 +1,4 @@
-def test(){
+def main(){
     p := Uniform(0,1);
     x1 := Bernoulli(p);
     observe(x1==1);

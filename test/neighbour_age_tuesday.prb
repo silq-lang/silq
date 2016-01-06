@@ -1,4 +1,4 @@
-def neighbour_age(){
+def main(){
     isGirl1 := Bernoulli(1 / 2);
     age1 := Uniform(1,30);
     bornOnATuesday1 := Bernoulli(1 / 7);

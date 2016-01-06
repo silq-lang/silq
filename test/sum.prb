@@ -1,5 +1,4 @@
 def sum(a,b){
     r := a + b;
-    return r; // expected: (∫dξ₁q(-ξ₁+r,ξ₁))·[∫dξ₁∫dξ₂q(-ξ₂+ξ₁,ξ₂)≠0]·⅟(∫dξ₁∫dξ₂q(-ξ₂+ξ₁,ξ₂))
-    // TODO: don't renormalize distributions of methods that are not called 'main'?
+    return r; // expected: ∫dξ₁q(-ξ₁+r,ξ₁)
 }
