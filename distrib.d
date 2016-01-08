@@ -218,14 +218,17 @@ class Distribution{
 		error=error.simplify(one);
 	}
 	override string toString(){
+		return toString(Format.default_);
+	}
+	string toString(Format formatting){
 		string r="p(";
 		string[] vars;
 		foreach(a;freeVars) vars~=a.name;
 		sort(vars);
 		foreach(v;vars) r~=v~",";
 		if(vars.length) r=r[0..$-1];
-		r~=") = "~distribution.toString();
-		if(error !is zero) r~="\nPr[error] = "~error.toString();
+		r~=") = "~distribution.toString(formatting);
+		if(error !is zero) r~="\nPr[error] = "~error.toString(formatting);
 		return r;
 	}
 }

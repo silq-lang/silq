@@ -34,9 +34,11 @@ enum Format{
 	default_,
 	matlab,
 	maple,
+	sympy
 }
 
 //version=DISABLE_INTEGRATION;
+bool raw=false;
 
 enum Precedence{
 	none,
@@ -59,7 +61,10 @@ abstract class DExpr{
 	final override string toString(){ return toString(Format.default_); }
 
 	string toString(Format formatting){
-		return toStringImpl(formatting,Precedence.none);
+		auto r=toStringImpl(formatting,Precedence.none);
+		if(formatting==Format.sympy) r=text("limit(",r,",pZ,0,'+')"); // pZ: positive zero
+		else if(formatting==Format.maple) r=text("limit(",r,",pZ=0,right)");
+		return r;
 	}
 	abstract string toStringImpl(Format formatting,Precedence prec);
 
@@ -153,7 +158,17 @@ alias DExprSet=SetX!DExpr;
 class DVar: DExpr{
 	string name;
 	/+private+/ this(string name){ this.name=name; } // TODO: make private!
-	override string toStringImpl(Format formatting,Precedence prec){ return name; }
+	override string toStringImpl(Format formatting,Precedence prec){
+		if(formatting==Format.sympy){
+			auto name=this.name.to!dstring; // TODO: why necessary? Phobos bug?
+			name=name.replace("ξ"d,"xi"d);
+			//pragma(msg, cast(dchar)('₀'+1));
+			foreach(x;0..10)
+			 	name=name.replace(""d~cast(dchar)('₀'+x),"_"d~cast(dchar)('0'+x));
+			return name.to!string;
+		}
+		return name;
+	}
 
 	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; }
 	override int freeVarsImpl(scope int delegate(DVar) dg){ return dg(this); }
@@ -565,7 +580,7 @@ class DMult: DCommutAssocOp{
 	private this(DExprSet e)in{assert(e.length>1); }body{ assert(one !in e,text(e)); operands=e; }
 	override @property Precedence precedence(){ return Precedence.mult; }
 	override string symbol(Format formatting){
-		if(formatting==Format.maple) return "*";
+		if(formatting==Format.maple||formatting==Format.sympy) return "*";
 		else if(formatting==Format.matlab) return ".*";
 		else return "·";
 	}
@@ -910,6 +925,7 @@ class DPow: DBinaryOp{
 	override Precedence precedence(){ return Precedence.pow; }
 	override @property string symbol(Format formatting){
 		if(formatting==Format.matlab) return ".^";
+		else if(formatting==Format.sympy) return "**";
 		else return "^";
 	}
 	override bool rightAssociative(){ return true; }
@@ -924,7 +940,7 @@ class DPow: DBinaryOp{
 	override string toStringImpl(Format formatting,Precedence prec){
 		auto frc=operands[1].getFractionalFactor().getFraction();
 		if(frc[0]<0){
-			auto pre=formatting==Format.matlab?"1./":formatting==Format.maple?"1/":"⅟";
+			auto pre=formatting==Format.default_?"⅟":formatting==Format.matlab?"1./":"1/";
 			return addp(prec,pre~(operands[0]^^-operands[1]).toStringImpl(formatting,Precedence.div),Precedence.div);
 		}
 			// also nice, but often hard to read: ½⅓¼⅕⅙
@@ -936,7 +952,7 @@ class DPow: DBinaryOp{
 					if(e.c==-1){
 						if(auto d=cast(Dℕ)c.operands[0]){
 							if(2<=d.c&&d.c<=4)
-								return text("  √∛∜"d[cast(size_t)d.c.toLong()],overline(operands[0].toString(formatting)));
+								return text("  √∛∜"d[cast(size_t)d.c.toLong()],overline(operands[0].toStringImpl(formatting,precedence.none)));
 						}
 					}
 				}
@@ -1446,11 +1462,29 @@ class DIvr: DExpr{ // iverson brackets
 	override string toStringImpl(Format formatting,Precedence prec){
 		with(Type){
 			if(formatting==Format.maple){
-				return "piecewise("~e.toString(formatting)~(type==eqZ?"=":type==neqZ?"<>":type==lZ?"<":"<=")~"0,1,0)";
+				//return "piecewise("~e.toStringImpl(formatting,Precedence.none)~(type==eqZ?"=":type==neqZ?"<>":type==lZ?"<":"<=")~"0,1,0)";
+				auto es=e.toStringImpl(formatting,Precedence.none);
+				final switch(type){
+					//case eqZ: return text("piecewise(",es,"=0,1,0)");
+					case eqZ: return text("piecewise(abs(",es,")<pZ,1,0)");
+					//case neqZ: return text("piecewise(",es,"<>0,1,0)");
+					case neqZ: return text("piecewise(abs(",es,")>pZ,1,0)");
+					case lZ: assert(0);
+					//case leZ: return text("piecewise(",es,"<=0,1,0)");
+					case leZ: return text("piecewise(",es,"<pZ,1,0)");
+				}
+			}else if(formatting==Format.sympy){
+				auto es=e.toStringImpl(formatting,Precedence.none);
+				final switch(type){
+				case eqZ: return text("Piecewise((1,And(",es,">-pZ,",es,"<pZ)),(0,1))");
+				case neqZ: return text("Piecewise((1,Or(",es,"<-pZ,",es,">pZ)),(0,1))");
+				case lZ: assert(0);
+				case leZ: return text("Piecewise((1,",es,"<pZ),(1,0))");
+				}
 			}else if(formatting==Format.matlab){
-				return "("~e.toString(formatting)~(type==eqZ?"==":type==neqZ?"!=":type==lZ?"<":"<=")~"0)";
+				return "("~e.toStringImpl(formatting,Precedence.none)~(type==eqZ?"==":type==neqZ?"!=":type==lZ?"<":"<=")~"0)";
 			}else{
-				return "["~e.toString(formatting)~(type==eqZ?"=":type==neqZ?"≠":type==lZ?"<":"≤")~"0]";
+				return "["~e.toStringImpl(formatting,Precedence.none)~(type==eqZ?"=":type==neqZ?"≠":type==lZ?"<":"≤")~"0]";
 			}
 		}
 	}
@@ -1587,9 +1621,13 @@ class DDelta: DExpr{ // Dirac delta function
 	private this(DExpr e){ this.e=e; }
 	override string toStringImpl(Format formatting,Precedence prec){
 		if(formatting==Format.maple){
-			return text("Dirac(",e.toString(formatting),")");
+			return text("Dirac(",e.toStringImpl(formatting,Precedence.none),")");
+			/+auto es=e.toStringImpl(formatting,Precedence.none);
+			return text("piecewise(abs(",es,")<lZ,1/(2*(",es,")))");+/
+		}else if(formatting==Format.sympy){
+			return text("DiracDelta(",e.toStringImpl(formatting,Precedence.none),")");
 		}else{
-			return "δ["~e.toString(formatting)~"]";
+			return "δ["~e.toStringImpl(formatting,Precedence.none)~"]";
 		}
 	}
 
@@ -1781,9 +1819,11 @@ class DInt: DOp{
 	override @property string symbol(Format formatting){ return "∫"; }
 	override string toStringImpl(Format formatting,Precedence prec){
 		if(formatting==Format.maple){
-			return text("int(",expr.toString(formatting),",",var.toString(formatting),"=-infinity..infinity)");
+			return text("int(",expr.toStringImpl(formatting,Precedence.none),",",var.toStringImpl(formatting,Precedence.none),"=-infinity..infinity)");
+		}else if(formatting==Format.sympy){
+			return text("integrate(",expr.toStringImpl(formatting,Precedence.none),",(",var.toStringImpl(formatting,Precedence.none),",-oo,oo))");
 		}else{
-			return addp(prec,symbol(formatting)~"d"~var.toString(formatting)~expr.toStringImpl(formatting,precedence));
+			return addp(prec,symbol(formatting)~"d"~var.toStringImpl(formatting,Precedence.none)~expr.toStringImpl(formatting,precedence));
 		}
 	}
 	static DExpr constructHook(DVar var,DExpr expr){
@@ -1800,7 +1840,8 @@ class DInt: DOp{
 	}
 
 	static DExpr staticSimplify(DVar var,DExpr expr,DExpr facts=one){
-		version(DISABLE_INTEGRATION){
+		//version(DISABLE_INTEGRATION){
+		if(raw){
 			if(expr is zero) return zero;
 			return null;
 		}
@@ -2030,10 +2071,10 @@ class DDiff: DOp{
 	DExpr e;
 	DExpr x;
 	this(DVar v,DExpr e,DExpr x){ this.v=v; this.e=e; this.x=x; }
-	override @property string symbol(Format formatting){ return "d/d"~v.toString(formatting); }
+	override @property string symbol(Format formatting){ return "d/d"~v.toStringImpl(formatting,Precedence.none); }
 	override Precedence precedence(){ return Precedence.diff; }
 	override string toStringImpl(Format formatting,Precedence prec){
-		return addp(prec,symbol(formatting)~"["~e.toString(formatting)~"]("~x.toString(formatting)~")");
+		return addp(prec,symbol(formatting)~"["~e.toStringImpl(formatting,Precedence.none)~"]("~x.toStringImpl(formatting,Precedence.none)~")");
 	}
 
 	static DExpr constructHook(DVar v,DExpr e,DExpr x){
@@ -2089,7 +2130,7 @@ class DAbs: DOp{
 	override @property string symbol(Format formatting){ return "|"; }
 	override Precedence precedence(){ return Precedence.none; }
 	override string toStringImpl(Format formatting,Precedence prec){ // TODO: matlab, maple
-		return "|"~e.toString(formatting)~"|";
+		return "|"~e.toStringImpl(formatting,Precedence.none)~"|";
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
 		return dg(e);
@@ -2143,7 +2184,7 @@ class DLog: DOp{
 	override @property string symbol(Format formatting){ return "log"; }
 	override Precedence precedence(){ return Precedence.none; }
 	override string toStringImpl(Format formatting,Precedence prec){
-		return "log("~e.toString(formatting)~")";
+		return "log("~e.toStringImpl(formatting,Precedence.none)~")";
 	}
 
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
@@ -2193,7 +2234,7 @@ class DSin: DOp{
 	override @property string symbol(Format formatting){ return "sin"; }
 	override Precedence precedence(){ return Precedence.none; }
 	override string toStringImpl(Format formatting,Precedence prec){
-		return "sin("~e.toString(formatting)~")";
+		return "sin("~e.toStringImpl(formatting,Precedence.none)~")";
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
 		return dg(e);
@@ -2234,7 +2275,7 @@ class DFloor: DOp{
 	override @property string symbol(Format formatting){ return "⌊.⌋"; }
 	override Precedence precedence(){ return Precedence.none; }
 	override string toStringImpl(Format formatting,Precedence prec){
-		return "⌊"~e.toString(formatting)~"⌋";
+		return "⌊"~e.toStringImpl(formatting,Precedence.none)~"⌋";
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
 		return dg(e);
@@ -2278,7 +2319,7 @@ class DCeil: DOp{
 	override @property string symbol(Format formatting){ return "⌈.⌉"; }
 	override Precedence precedence(){ return Precedence.none; }
 	override string toStringImpl(Format formatting,Precedence prec){
-		return "⌈"~e.toString(formatting)~"⌉";
+		return "⌈"~e.toStringImpl(formatting,Precedence.none)~"⌉";
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
 		return dg(e);
@@ -2323,8 +2364,8 @@ class DGaussInt: DOp{
 	override @property string symbol(Format formatting){ return "(d/dx)⁻¹[e^(-x²)]"; }
 	override Precedence precedence(){ return Precedence.diff; }
 	override string toStringImpl(Format formatting,Precedence prec){
-		if(formatting==Format.matlab) return "(sqrt(pi)*(erf("~x.toString(formatting)~")+1)/2)";
-		else return addp(prec,symbol(formatting)~"("~x.toString(formatting)~")");
+		if(formatting==Format.matlab) return "(sqrt(pi)*(erf("~x.toStringImpl(formatting,Precedence.none)~")+1)/2)";
+		else return addp(prec,symbol(formatting)~"("~x.toStringImpl(formatting,Precedence.none)~")");
 	}
 
 	static DExpr constructHook(DExpr x){

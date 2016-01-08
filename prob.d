@@ -5,8 +5,9 @@ import lexer, parser, expression, error;
 
 import analysis, distrib, dexpr;
 
-bool plot=false;
+bool plot=false;// TODO: get rid of globals?
 bool kill=false;
+auto formatting=Format.default_;
 
 string getActualPath(string path){
 	// TODO: search path
@@ -31,9 +32,11 @@ void performAnalysis(FunctionDef fd,ErrorHandler err,bool renormalize){
 	//import hashtable; dist.distribution=approxLog(dist.freeVars.element);
 	//import hashtable; dist.distribution=approxGaussInt(dist.freeVars.element);
 	if(kill) dist.distribution=dist.distribution.killIntegrals();
-	auto str=dist.toString();
+	auto str=dist.toString(formatting);
 	if(expected.exists) with(expected){
-			writeln(ex==dist.distribution.toString()?todo?"FIXED":"PASS":todo?"TODO":"FAIL");
+			if(formatting==Format.default_)
+				writeln(ex==dist.distribution.toString()?todo?"FIXED":"PASS":todo?"TODO":"FAIL");
+			else writeln("SKIPPED: NON-DEFAULT FORMATTING");
 	}
 	//writeln((cast(DPlus)dist.distribution).summands.length);
 	if(str.length<10000) writeln(str);
@@ -113,6 +116,10 @@ int main(string[] args){
 		switch(x){
 			case "--plot": plot=true; break;
 			case "--kill": kill=true; break;
+			case "--raw": raw=true;  break;
+			case "--matlab": formatting=Format.matlab; break;
+			case "--maple": formatting=Format.maple; break;
+			case "--sympy": formatting=Format.sympy; break;
 			default: if(auto r=run(x)) return r;
 		}
 	}
