@@ -115,6 +115,8 @@ private struct Analyzer{
 						dist.assertTrue(dIvr(DIvr.Type.leZ,-σsq),formatError("negative variance",e.loc));
 						auto var=dist.getTmpVar("__g");
 						dist.distribute(gaussianPDF(var,μ,σsq));
+						//import approximate;
+						//dist.distribute(approxGaussianPDF(var,μ,σsq));
 						return var;
 					case "Uniform": // TODO: handle b<a, b==a
 						if(ce.args.length!=2){

@@ -258,3 +258,11 @@ DExpr killIntegrals(DExpr e){
 	}
 	return e;
 }
+
+
+
+DExpr approxGaussianPDF(DVar var,DExpr μ,DExpr σsq){
+	auto dist=3*one/(4*(5*σsq)^^(one/2))*(1-(var-μ)^^2/(5*σsq))*dBounded!"[]"(var-μ,-(5*σsq)^^(one/2),(5*σsq)^^(one/2));
+	return dIvr(DIvr.Type.neqZ,σsq)*dist+dIvr(DIvr.Type.eqZ,σsq)*dDelta(var-μ);
+}
+
