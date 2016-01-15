@@ -119,6 +119,7 @@ int main(string[] args){
 			case "--raw": raw=true;  break;
 			case "--matlab": formatting=Format.matlab; break;
 			case "--maple": formatting=Format.maple; break;
+			case "--mathematica": formatting=Format.mathematica; break;
 			case "--sympy": formatting=Format.sympy; break;
 			default: if(auto r=run(x)) return r;
 		}

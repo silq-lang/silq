@@ -34,7 +34,8 @@ enum Format{
 	default_,
 	matlab,
 	maple,
-	sympy
+	mathematica,
+	sympy,
 }
 
 //version=DISABLE_INTEGRATION;
@@ -159,12 +160,12 @@ class DVar: DExpr{
 	string name;
 	/+private+/ this(string name){ this.name=name; } // TODO: make private!
 	override string toStringImpl(Format formatting,Precedence prec){
-		if(formatting==Format.sympy){
+		if(formatting==Format.sympy||formatting==Format.matlab||formatting==Format.mathematica){
 			auto name=this.name.to!dstring; // TODO: why necessary? Phobos bug?
 			name=name.replace("ξ"d,"xi"d);
 			//pragma(msg, cast(dchar)('₀'+1));
 			foreach(x;0..10)
-			 	name=name.replace(""d~cast(dchar)('₀'+x),"_"d~cast(dchar)('0'+x));
+				name=name.replace(""d~cast(dchar)('₀'+x),""d~cast(dchar)('0'+x));
 			return name.to!string;
 		}
 		return name;
@@ -580,7 +581,7 @@ class DMult: DCommutAssocOp{
 	private this(DExprSet e)in{assert(e.length>1); }body{ assert(one !in e,text(e)); operands=e; }
 	override @property Precedence precedence(){ return Precedence.mult; }
 	override string symbol(Format formatting){
-		if(formatting==Format.maple||formatting==Format.sympy) return "*";
+		if(formatting==Format.maple||formatting==Format.sympy||formatting==Format.mathematica) return "*";
 		else if(formatting==Format.matlab) return ".*";
 		else return "·";
 	}
@@ -1461,7 +1462,15 @@ class DIvr: DExpr{ // iverson brackets
 
 	override string toStringImpl(Format formatting,Precedence prec){
 		with(Type){
-			if(formatting==Format.maple){
+			if(formatting==Format.mathematica){
+				auto es=e.toStringImpl(formatting,Precedence.none);
+				final switch(type){
+				case eqZ: return text("Boole[",es,"==0]");
+				case neqZ: return text("Boole[",es,"!=0]");
+				case lZ: assert(0);
+				case leZ: return text("Boole[",es,"<=0]");
+				}
+			}else if(formatting==Format.maple){
 				//return "piecewise("~e.toStringImpl(formatting,Precedence.none)~(type==eqZ?"=":type==neqZ?"<>":type==lZ?"<":"<=")~"0,1,0)";
 				auto es=e.toStringImpl(formatting,Precedence.none);
 				final switch(type){
@@ -1620,7 +1629,9 @@ class DDelta: DExpr{ // Dirac delta function
 	DExpr e;
 	private this(DExpr e){ this.e=e; }
 	override string toStringImpl(Format formatting,Precedence prec){
-		if(formatting==Format.maple){
+		if(formatting==Format.mathematica){
+			return text("DiracDelta[",e.toStringImpl(formatting,Precedence.none),"]");
+		}else if(formatting==Format.maple){
 			return text("Dirac(",e.toStringImpl(formatting,Precedence.none),")");
 			/+auto es=e.toStringImpl(formatting,Precedence.none);
 			return text("piecewise(abs(",es,")<lZ,1/(2*(",es,")))");+/
@@ -1818,7 +1829,9 @@ class DInt: DOp{
 	override @property Precedence precedence(){ return Precedence.intg; }
 	override @property string symbol(Format formatting){ return "∫"; }
 	override string toStringImpl(Format formatting,Precedence prec){
-		if(formatting==Format.maple){
+		if(formatting==Format.mathematica){
+			return text("Integrate[",expr.toStringImpl(formatting,Precedence.none),",{",var.toStringImpl(formatting,Precedence.none),",-Infinity,Infinity}]");
+		}if(formatting==Format.maple){
 			return text("int(",expr.toStringImpl(formatting,Precedence.none),",",var.toStringImpl(formatting,Precedence.none),"=-infinity..infinity)");
 		}else if(formatting==Format.sympy){
 			return text("integrate(",expr.toStringImpl(formatting,Precedence.none),",(",var.toStringImpl(formatting,Precedence.none),",-oo,oo))");
