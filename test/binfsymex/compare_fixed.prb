@@ -5,7 +5,8 @@
 def compare(){
     r := true;
     x := true;
-    repeat 10{
+    n := 10;
+    repeat n{
         a := Bernoulli(1/2);
 	b := Bernoulli(1/2);
 	if(x && a != b){
@@ -13,5 +14,5 @@ def compare(){
 	     x = false;
 	}
     }
-    return r; // expected: 1023·δ[-r]·⅟2048+1025·δ[-r+1]·⅟2048
+    return r; // expected: 1023·δ[r]·⅟2048+1025·δ[-r+1]·⅟2048
 }

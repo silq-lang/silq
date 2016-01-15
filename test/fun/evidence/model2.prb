@@ -9,5 +9,5 @@ def main(){
     }else{
         coin = Bernoulli(1/2);
     }
-    return coin; // expected: 2·δ[-coin+1]·⅟3+δ[-coin]·⅟3
+    return coin; // expected: 2·δ[-coin+1]·⅟3+δ[coin]·⅟3
 }

@@ -1,4 +1,4 @@
-B1;3409;0c*~
+*~
 *.o
 prob
 *.def
@@ -10,3 +10,4 @@ test/runtests
 *tmp.deleteme
 Cuba*
 *octave-workspace
+weakref.d

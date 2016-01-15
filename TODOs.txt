@@ -1,8 +1,12 @@
 
++ full array support
++ eager approximation/backtracking
++ non-linear constraints and assignments (assignments partly done)
+
+
 - fose-icse:
  true skill benchmark:
- + integrate erf(linear function)
- + integrate erf*gaussian (c.f. https://en.wikipedia.org/wiki/Error_function#Integral_of_error_function_with_Gaussian_density_function)
+ + integrate erf*gaussian ? (c.f. https://en.wikipedia.org/wiki/Error_function#Integral_of_error_function_with_Gaussian_density_function)
 
 - r2:
  common:
@@ -15,8 +19,7 @@
 
 
 - bugs:
-  division.prb: resulting expression integrates to 1/2 instead of 1
+  division.prb: resulting expression integrates to 1/2 instead of 1 (fixed?)
 
-- general TODOs (not urgent):
- + Full array support
+
 

@@ -981,12 +981,20 @@ class DPow: DBinaryOp{
 		auto ne2=e2.simplify(facts);
 		if(ne1!is e1||ne2!is e2) return dPow(ne1,ne2);
 		if(e1 !is mone) if(auto c=cast(Dℕ)e1) if(c.c<0) return mone^^e2*dℕ(-c.c)^^e2;
-		if(auto m=cast(DMult)e1){ // TODO: do we really want auto-distribution?
-			DExprSet factors;
+		if(auto m=cast(DMult)e1){
+			DExprSet outside;
+			DExprSet within;
+			bool nat=!!cast(Dℕ)e2;
 			foreach(f;m.operands){
-				DMult.insert(factors,f^^e2);
+				if(nat||dIvr(DIvr.Type.lZ,f).simplify(facts) is zero)
+					DMult.insert(outside,f^^e2);
+				else DMult.insert(within,f);
 			}
-			return dMult(factors);
+			if(outside.length){
+				if(within.length)
+					return (dMult(outside)*dMult(within)^^e2).simplify(facts);
+				else return dMult(outside).simplify(facts);
+			}
 		}
 		if(auto p=cast(DPow)e1) return p.operands[0]^^(p.operands[1]*e2);
 		if(e1 is one||e2 is zero) return one;
@@ -1046,6 +1054,8 @@ class DPow: DBinaryOp{
 				return ((toDouble(nd[0])/toDouble(nd[1]))^^f2.c).dFloat;
 			}
 		}
+		if(auto fct=factorDIvr!(e=>e^^e2)(e1)) return fct;
+		if(auto fct=factorDIvr!(e=>e1^^e)(e2)) return fct;
 		return null;
 	}
 
@@ -1085,7 +1095,7 @@ DExpr expandPow(DPow p,long limit=-1){
 
 struct DPolynomial{
 	DVar var;
-	DExpr[] coefficients;
+	DExpr[] coefficients; // TODO: sparse representation?
 	bool initialized(){ return !!var; }
 	T opCast(T:bool)(){ return initialized(); }
 	long degree(){ return coefficients.length-1; }
@@ -1098,6 +1108,20 @@ struct DPolynomial{
 		foreach(i;0..coefficients.length)
 			DPlus.insert(r,coefficients[i]*var^^i);
 		return dPlus(r);
+	}
+	struct Zero{
+		DExpr expr;
+		DExpr cond;
+	}
+	Zero[] zeros()in{assert(degree<=2);}body{ // TODO: get rid of allocation?
+		Zero[] r;
+		auto a=degree>=2?coefficients[2]:zero;
+		auto b=degree>=1?coefficients[1]:zero;
+		auto c=degree>=0?coefficients[0]:zero;
+		r~=Zero(-c/b,dIvr(DIvr.Type.eqZ,a));
+		r~=Zero((-b+(b^^2-4*a*c)^^(one/2))/(2*a),dIvr(DIvr.Type.neqZ,a)*dIvr(DIvr.Type.leZ,-(b^^2-4*a*c)));
+		r~=Zero((-b+(b^^2-4*a*c)^^(one/2))/(2*a),dIvr(DIvr.Type.neqZ,a)*dIvr(DIvr.Type.lZ,-(b^^2-4*a*c)));
+		return r;
 	}
 }
 
@@ -1544,6 +1568,13 @@ class DIvr: DExpr{ // iverson brackets
 		if(type==Type.leZ){
 			if(mustBeLessOrEqualZero(e)) return one;
 			if(mustBeLessThanZero(-e)) return zero;
+			if(mustBeLessOrEqualZero(-e)) return dIvr(Type.eqZ,e).simplify(facts);
+		}
+		with(Type) if(type==eqZ||type==neqZ){ // TODO: figure out why this causes non-termination in mult_uniform_test
+			if(auto p=cast(DPow)e){
+				auto isZ=dIvr(eqZ,p.operands[0])*dIvr(neqZ,p.operands[1]);
+				return (type==eqZ?isZ:dIvr(eqZ,isZ)).simplify(facts);
+			}
 		}
 		if(auto c=cast(Dℕ)e){
 			DExpr x(bool b){ return b?one:zero; }
@@ -1555,8 +1586,12 @@ class DIvr: DExpr{ // iverson brackets
 			}
 		}
 		auto cancel=uglyFractionCancellation(e);
-		if(cancel!=one) return dIvr(type,dDistributeMult(e,cancel));
-		if(type==Type.lZ) return dIvr(Type.leZ,e)*dIvr(Type.neqZ,e);
+		if(cancel!=one) return dIvr(type,dDistributeMult(e,cancel)).simplify(facts);
+		if(type==Type.lZ) return (dIvr(Type.leZ,e)*dIvr(Type.neqZ,e)).simplify(facts);
+		if(type==Type.eqZ||type==Type.neqZ){
+			auto f=e.getFractionalFactor();
+			if(f!=one && f!=zero) return dIvr(type,e/f).simplify(facts);
+		}
 		foreach(v;e.freeVars()){ // TODO: do this right
 			if(auto fct=factorDIvr!(e=>dIvr(type,e))(e)) return fct;
 			break;
@@ -1658,6 +1693,7 @@ class DDelta: DExpr{ // Dirac delta function
 		if(ne !is e) return dDelta(ne);
 		auto cancel=uglyFractionCancellation(e);
 		if(cancel!=one) return dDelta(dDistributeMult(e,cancel))*cancel;
+		if(e.hasFactor(mone)) return dDelta(-e);
 		if(auto fct=factorDIvr!(e=>dDelta(e))(e)) return fct;
 		if(dIvr(DIvr.Type.eqZ,e).simplify(facts) is zero)
 			return zero;
@@ -1674,17 +1710,33 @@ class DDelta: DExpr{ // Dirac delta function
 		if(auto s=d.e.solveFor(var,zero,usage,info)){
 			s=s.simplify(one);
 			if(!caseSplit && info.needCaseSplit) return null;
-			auto rest=expr.withoutFactor(d);
 			auto constraints=one;
 			foreach(ref x;info.caseSplits)
 				constraints=constraints*dIvr(DIvr.Type.neqZ,x.constraint);
 			auto r=constraints is zero?zero:
-				constraints*rest.substitute(var,s)/dAbs(dDiff(var,d.e,s));
+				constraints*expr.substitute(var,s)/dAbs(dDiff(var,d.e,s));
 			foreach(ref x;info.caseSplits){
 				auto curConstr=constraints.withoutFactor(dIvr(DIvr.Type.neqZ,x.constraint));
-				r=r+curConstr*dIvr(DIvr.Type.eqZ,x.constraint)*dIntSmp(var,rest*dDelta(x.expression));
+				r=r+curConstr*dIvr(DIvr.Type.eqZ,x.constraint)*dIntSmp(var,expr*dDelta(x.expression));
 			}
 			return r;
+		}else if(caseSplit){
+			if(auto p=d.e.asPolynomialIn(var,2)){
+				DExpr r=zero;
+				foreach(z;p.zeros){
+					auto dfact=dDelta(var-z.expr);
+					foreach(f;dfact.factors){
+						if(auto delta=cast(DDelta)f){
+							if(auto s=performSubstitution(var,delta,
+														  expr*dfact.withoutFactor(f)/
+														  dAbs(dDiff(var,d.e,z.expr)),true)
+							) r=r+s*z.cond;
+							else return null;
+						}
+					}
+				}
+				return r;
+			}
 		}
 		return null;
 	}
@@ -1895,7 +1947,7 @@ class DInt: DOp{
 			foreach(f;expr.factors){
 				if(!f.hasFreeVar(var)) continue;
 				if(auto d=cast(DDelta)f){
-					if(auto r=DDelta.performSubstitution(var,d,expr,caseSplit))
+					if(auto r=DDelta.performSubstitution(var,d,expr.withoutFactor(f),caseSplit))
 						return r.simplify(facts);
 				}
 			}
@@ -2169,7 +2221,7 @@ class DAbs: DOp{
 		e=e.simplify(facts);
 		if(e.isFraction()){
 			auto nd=e.getFraction();
-			assert(nd[1]>0);
+			assert(nd[1]>=0);
 			return abs(nd[0])/dℕ(nd[1]);
 		}
 		if(cast(DE)e) return e;

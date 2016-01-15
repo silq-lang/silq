@@ -29,5 +29,5 @@ def main(){
     e := Expectation(time);
     k := 1*a+2*b+3*c+4*d;
     assert(k == e);
-    return (a,b,c,d,e); // expected: 2187·δ[-3·b+1]·δ[-9·c+4]·δ[-9·d+2]·δ[-9·e+26]·δ[-a]
+    return (a,b,c,d,e); // expected: 2187·δ[-3·b+1]·δ[-9·c+4]·δ[-9·d+2]·δ[-9·e+26]·δ[a]
 }

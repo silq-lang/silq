@@ -440,6 +440,14 @@ void test(){
 	//matlabPlot(r.toString(Format.matlab),"x");
 	//writeln("∫dx(d/dx)⁻¹[e^(-x²)](x)·x".dParse.simplify(one));
 	//writeln("(∫dξ₁ ξ₁²·⅟e^(ξ₁²·⅟200))".dParse.simplify(one));// TODO: improve limit evaluation
+	//writeln("1/(-2·a⁴·⅟3+2·a)·∫dx (1-a·x²)·[-a≤x]·[x≤a]".dParse.simplify("[0≤a]".dParse));
+	//writeln("∫dx (1-a²·(x-b/a)²)·[-a²≤x-b/a]·[x-b/a≤a²]".dParse.simplify("[0≤a]".dParse));
+	//writeln("3/(4·5^(1/2))·∫dx (1-x²/5)·x²·[-5^(1/2)≤x]·[x≤5^(1/2)]".dParse.simplify(one)); // TODO: simplify this better
+	//writeln((-dVar("x"))^^(one/2));
+	//writeln("(∫dξ₁[-1+√ξ̅₁̅≤0]·[-ξ₁≤0]·[ξ₁≠0]·⅟(-2·[√ξ̅₁̅≠0]·[√ξ̅₁̅≤0]·√ξ̅₁̅+2·√ξ̅₁̅)+∫dξ₁[-1+√ξ̅₁̅≤0]·[-ξ₁≤0]·⅟(-2·[√ξ̅₁̅≠0]·[√ξ̅₁̅≤0]·√ξ̅₁̅+2·√ξ̅₁̅))".dParse);
+	//writeln("-2·[√ξ̅₁̅≠0]·[√ξ̅₁̅≤0]·√ξ̅₁̅+2·√ξ̅₁̅".dParse.simplify("[√ξ̅₁̅≤0]".dParse));
+	//writeln("[√ξ̅₁̅≤0]".dParse.simplify(one));
+	//writeln(DExpr.simplifyMemo);
 }
 
 /*

@@ -1,0 +1,6 @@
+
+def x(){
+    x := Uniform(0,1);
+    y := x^2;
+    return y; // expected: TODO: correctly evaluate integration bounds
+}
