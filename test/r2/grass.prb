@@ -1,4 +1,4 @@
-def ditItRain(){
+def main(){ // didItRain
     cloudy := Bernoulli(0.5);
     rain := 0; sprinkler := 0;
 

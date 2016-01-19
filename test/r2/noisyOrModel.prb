@@ -1,4 +1,4 @@
-def N20n(){
+def main(){ // N20n
     n1 := 0; n21 := 0; n22 := 0; n31 := 0; n32 := 0; n33 := 0;
     n0 := Bernoulli(1/2);
     n4 := Bernoulli(1/2);

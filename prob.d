@@ -8,6 +8,18 @@ import analysis, distrib, dexpr;
 bool plot=false;// TODO: get rid of globals?
 bool kill=false;
 auto formatting=Format.default_;
+bool casBench=false;
+
+
+string casExt(Format formatting=.formatting){
+	final switch(formatting) with(Format){
+		case default_: return "dexpr";
+		case matlab: return "m";
+		case mathematica: return "m";
+		case maple: return "mpl";
+		case sympy: return "py";
+	}
+}
 
 string getActualPath(string path){
 	// TODO: search path
@@ -25,7 +37,7 @@ string readCode(File f){
 }
 string readCode(string path){ return readCode(File(path)); }
 
-void performAnalysis(FunctionDef fd,ErrorHandler err,bool renormalize){
+void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool renormalize){
 	auto dist=analyze(fd,err).dup;
 	if(renormalize) dist.renormalize();
 	import approximate;
@@ -44,6 +56,17 @@ void performAnalysis(FunctionDef fd,ErrorHandler err,bool renormalize){
 		writeln("writing output to temporary file...");
 		auto f=File("tmp.deleteme","w");
 		f.writeln(str);
+	}
+	if(casBench){
+		import std.file, std.conv;
+		auto bpath=buildPath(dirName(thisExePath()),"test/benchmarks/casBench/",to!string(formatting),setExtension(baseName(path,".prb"),casExt()));
+		auto epath=buildPath(dirName(thisExePath()),"test/benchmarks/casBench/",to!string(formatting),setExtension(baseName(path,".prb")~"Error",casExt()));
+		auto bfile=File(bpath,"w");
+		bfile.writeln(dist.distribution.toString(formatting));
+		if(dist.error.hasIntegrals()){
+			auto efile=File(epath,"w");
+			efile.writeln(dist.error.toString(formatting));
+		}
 	}
 	bool plotCDF=false;
 	if(str.canFind("δ")) plotCDF=true;
@@ -93,12 +116,15 @@ int run(string path){
 	}
 	if(err.nerrors) return 1;
 	if("main" !in functions){
+		if(casBench && functions.length>1){
+			stderr.writeln("cannot extract benchmark: no entry point");
+			return 1;
+		}
 		foreach(name,fd;functions){
 			writeln(name,":");
-			performAnalysis(fd,err,false);
+			performAnalysis(path,fd,err,false);
 		}
-		return 1;
-	}else performAnalysis(functions["main"],err,true);
+	}else performAnalysis(path,functions["main"],err,true);
 	return !!err.nerrors;
 }
 
@@ -117,6 +143,7 @@ int main(string[] args){
 			case "--plot": plot=true; break;
 			case "--kill": kill=true; break;
 			case "--raw": raw=true;  break;
+			case "--casbench": casBench=true; break;
 			case "--matlab": formatting=Format.matlab; break;
 			case "--maple": formatting=Format.maple; break;
 			case "--mathematica": formatting=Format.mathematica; break;

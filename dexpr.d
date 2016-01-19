@@ -274,7 +274,11 @@ DExpr dFloat(double c){
 }
 
 class DE: DExpr{
-	override string toStringImpl(Format formatting,Precedence prec){ return "e"; } // TODO: maple
+	override string toStringImpl(Format formatting,Precedence prec){
+		if(formatting==Format.maple) return "exp(1)";
+		if(formatting==Format.mathematica) return "E";
+		return "e";
+	} // TODO: maple
 	mixin Constant;
 }
 private static DE theDE;
@@ -283,6 +287,8 @@ private static DE theDE;
 class DΠ: DExpr{
 	override string toStringImpl(Format formatting,Precedence prec){ // TODO: maple
 		if(formatting==Format.matlab) return "pi";
+		if(formatting==Format.maple) return "Pi";
+		if(formatting==Format.mathematica) return "Pi";
 		else return "π";
 	}
 	mixin Constant;
