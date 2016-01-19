@@ -475,6 +475,7 @@ void test(){
 	//writeln("-2·[√ξ̅₁̅≠0]·[√ξ̅₁̅≤0]·√ξ̅₁̅+2·√ξ̅₁̅".dParse.simplify("[√ξ̅₁̅≤0]".dParse));
 	//writeln("[√ξ̅₁̅≤0]".dParse.simplify(one));
 	//writeln(DExpr.simplifyMemo);
+	//writeln("(2·x·π)^(⅟2)".dParse);
 }
 
 /*

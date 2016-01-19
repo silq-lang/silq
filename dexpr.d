@@ -751,6 +751,7 @@ class DMult: DCommutAssocOp{
 							return p.operands[0]^^(p.operands[1]+pf.operands[1]);
 					}
 					static DExpr tryCombine(DExpr a,DExpr b){
+						if(cast(DMult)a||cast(DMult)b) return null; // TODO: ok?
 						DExprSet s;
 						DMult.insert(s,a);
 						DMult.insert(s,b);
@@ -1260,6 +1261,7 @@ bool mustBeZeroOrOne(DExpr e){
 
 bool mustBeLessOrEqualZero(DExpr e){
 	bool mustBeLessOrEqualZeroImpl(DExpr e){
+		if(cast(DΠ)e||cast(DE)e) return false;
 		if(auto c=cast(Dℕ)e) return c.c<=0;
 		if(auto c=cast(DFloat)e) return c.c<=0;
 		if(auto p=cast(DPow)e){
@@ -1273,6 +1275,7 @@ bool mustBeLessOrEqualZero(DExpr e){
 	}
 	if(mustBeLessOrEqualZeroImpl(e)) return true;
 	bool mustBeGreaterOrEqualZeroImpl(DExpr e){
+		if(cast(DΠ)e||cast(DE)e) return true;
 		if(auto c=cast(Dℕ)e) return c.c>=0;
 		if(auto c=cast(DFloat)e) return c.c>=0;
 		if(auto p=cast(DPow)e){
