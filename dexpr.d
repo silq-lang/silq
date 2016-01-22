@@ -39,7 +39,12 @@ enum Format{
 }
 
 //version=DISABLE_INTEGRATION;
-bool raw=false;
+enum Simpl{
+	full,
+	deltas,
+	raw
+}
+Simpl simplification=Simpl.full;
 
 enum Precedence{
 	none,
@@ -1211,6 +1216,7 @@ DPolynomial asPolynomialIn(DExpr e,DVar v,long limit=-1){
 		if(!addCoeff(0,s)) return DPolynomial.init;
 	}
 	if(!r.coefficients.length) r.coefficients~=zero;
+	if(~limit && r.degree>limit) return DPolynomial.init;
 	return r;
 }
 
@@ -1396,7 +1402,15 @@ DExpr solveFor(DExpr lhs,DVar var,DExpr rhs,SolUse usage,ref SolutionInfo info){
 	}
 	if(auto p=cast(DPlus)lhs){
 		auto ow=splitPlusAtVar(lhs,var);
-		if(cast(DPlus)ow[1]) return null; // TODO (polynomials,...)
+		if(cast(DPlus)ow[1]){
+			if(!usage.caseSplit) return null;
+			/+if(auto poly=lhs.asPolynomialIn(var,2)){
+				auto zeros=poly.zeros;
+				dw(zeros);
+				return null;
+			}+/
+			return null;
+		}
 		auto r=ow[1].solveFor(var,rhs-ow[0],usage,info); // TODO: withoutSummands
 		foreach(ref x;info.caseSplits) x.expression=x.expression+ow[0];
 		return r;
@@ -1415,21 +1429,28 @@ DExpr solveFor(DExpr lhs,DVar var,DExpr rhs,SolUse usage,ref SolutionInfo info){
 		return r;
 	}
 	if(auto p=cast(DPow)lhs){
-		if(p.operands[1] !is -one) return null; // TODO
-		if(couldBeZero(rhs)){ // TODO: is this right? (This is guaranteed never to happen for dirac deltaas, so maybe optimize it out for that caller).
-			info.needCaseSplit=true;
-			if(usage.caseSplit) info.caseSplits~=SolutionInfo.CaseSplit(rhs,one);
-		}
-		auto r=p.operands[0].solveFor(var,one/rhs,usage,info);
-		info.caseSplits=info.caseSplits.partition!(x=>x.expression is zero);
-		foreach(ref x;info.caseSplits) x.expression=one/x.expression;
-		if(usage.bound) if(usage.bound) info.bound.invertIflZ(-p.operands[0]*rhs);
-		return r;
-	}
+		if(p.operands[1] is mone){
+			if(couldBeZero(rhs)){ // TODO: is this right? (This is guaranteed never to happen for dirac deltaas, so maybe optimize it out for that caller).
+				info.needCaseSplit=true;
+				if(usage.caseSplit) info.caseSplits~=SolutionInfo.CaseSplit(rhs,one);
+			}
+			auto r=p.operands[0].solveFor(var,one/rhs,usage,info);
+			info.caseSplits=info.caseSplits.partition!(x=>x.expression is zero);
+			foreach(ref x;info.caseSplits) x.expression=one/x.expression;
+			if(usage.bound) info.bound.invertIflZ(-p.operands[0]*rhs);
+			return r;
+		}/+else if(p.operands[1].isFraction()){
+			dw(lhs," ",rhs," ",usage);
+			return null; // TODO
+		}+/
+		return null;
+	}	
 	return null;
 }
 
 DExpr solveFor(DExpr lhs,DVar var){
+	// TODO: this can return zero when there is actually no solution.
+	// (this is not a problem for the current caller.)
 	SolutionInfo info;
 	SolUse usage={caseSplit:true,bound:false};
 	if(auto s=lhs.solveFor(var,zero,usage,info)){
@@ -1729,23 +1750,6 @@ class DDelta: DExpr{ // Dirac delta function
 				r=r+curConstr*dIvr(DIvr.Type.eqZ,x.constraint)*dIntSmp(var,expr*dDelta(x.expression));
 			}
 			return r;
-		}else if(caseSplit){
-			if(auto p=d.e.asPolynomialIn(var,2)){
-				DExpr r=zero;
-				foreach(z;p.zeros){
-					auto dfact=dDelta(var-z.expr);
-					foreach(f;dfact.factors){
-						if(auto delta=cast(DDelta)f){
-							if(auto s=performSubstitution(var,delta,
-														  expr*dfact.withoutFactor(f)/
-														  dAbs(dDiff(var,d.e,z.expr)),true)
-							) r=r+s*z.cond;
-							else return null;
-						}
-					}
-				}
-				return r;
-			}
 		}
 		return null;
 	}
@@ -1915,7 +1919,7 @@ class DInt: DOp{
 
 	static DExpr staticSimplify(DVar var,DExpr expr,DExpr facts=one){
 		//version(DISABLE_INTEGRATION){
-		if(raw){
+		if(simplification==Simpl.raw){
 			if(expr is zero) return zero;
 			return null;
 		}
@@ -1930,7 +1934,6 @@ class DInt: DOp{
 			auto tmp=new DVar("tmp"); // TODO: get rid of this!
 			return staticSimplify(tmp,getDeBruinExpr(var,expr,tmp));
 		}
-
 		auto nexpr=expr.simplify(facts); // TODO: this pattern always simplifies everything twice, make efficient
 		if(nexpr !is expr) expr=nexpr;
 		/*static dInt(DVar var,DExpr expr){
@@ -1997,10 +2000,12 @@ class DInt: DOp{
 		}
 		if(auto r=deltaSubstitution(true))
 			return r;
+
 		if(expr is one) return null; // (infinite integral)
 
-		if(auto r=definiteIntegral(var,expr))
-			return r.simplify(facts);
+		if(simplification!=Simpl.deltas)
+			if(auto r=definiteIntegral(var,expr))
+				return r.simplify(facts);
 		// Fubini
 		foreach(f;expr.factors){
 			// assert(f.hasFreeVar(var));

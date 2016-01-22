@@ -142,7 +142,8 @@ int main(string[] args){
 		switch(x){
 			case "--plot": plot=true; break;
 			case "--kill": kill=true; break;
-			case "--raw": raw=true;  break;
+			case "--raw": simplification=Simpl.raw;  break;
+			case "--deltas": simplification=Simpl.deltas; break;
 			case "--casbench": casBench=true; break;
 			case "--matlab": formatting=Format.matlab; break;
 			case "--maple": formatting=Format.maple; break;
