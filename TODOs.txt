@@ -1,7 +1,16 @@
 
+MUST:
+
++ compare with SVE
++ compare with Indiana
 + full array support
-+ eager approximation/backtracking
 + non-linear constraints and assignments (assignments partly done)
+
+
+
+Future Work:
+
++ eager approximation/backtracking
 
 
 - fose-icse:

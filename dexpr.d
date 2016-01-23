@@ -757,6 +757,7 @@ class DMult: DCommutAssocOp{
 					}
 					static DExpr tryCombine(DExpr a,DExpr b){
 						if(cast(DMult)a||cast(DMult)b) return null; // TODO: ok?
+						if(cast(Dℕ)a&&cast(Dℕ)b&&a is mone||b is mone) return null;
 						DExprSet s;
 						DMult.insert(s,a);
 						DMult.insert(s,b);
@@ -1008,7 +1009,8 @@ class DPow: DBinaryOp{
 				else return dMult(outside).simplify(facts);
 			}
 		}
-		if(auto p=cast(DPow)e1) return p.operands[0]^^(p.operands[1]*e2);
+		if(auto p=cast(DPow)e1)// TODO: this can be "wrong", e.g: (-1)^(2/3) != ((-1)^6)^(1/4)
+			return p.operands[0]^^(p.operands[1]*e2);
 		if(e1 is one||e2 is zero) return one;
 		if(e1 is -one && e2 is -one) return -one;
 		if(e2 is one) return e1;
@@ -1131,7 +1133,7 @@ struct DPolynomial{
 		auto b=degree>=1?coefficients[1]:zero;
 		auto c=degree>=0?coefficients[0]:zero;
 		r~=Zero(-c/b,dIvr(DIvr.Type.eqZ,a));
-		r~=Zero((-b+(b^^2-4*a*c)^^(one/2))/(2*a),dIvr(DIvr.Type.neqZ,a)*dIvr(DIvr.Type.leZ,-(b^^2-4*a*c)));
+		r~=Zero((-b-(b^^2-4*a*c)^^(one/2))/(2*a),dIvr(DIvr.Type.neqZ,a)*dIvr(DIvr.Type.leZ,-(b^^2-4*a*c)));
 		r~=Zero((-b+(b^^2-4*a*c)^^(one/2))/(2*a),dIvr(DIvr.Type.neqZ,a)*dIvr(DIvr.Type.lZ,-(b^^2-4*a*c)));
 		return r;
 	}
@@ -1372,6 +1374,118 @@ BoundStatus getBoundForVar(DIvr ivr,DVar var,out DExpr bound){ // TODO: get rid 
 	return r;
 }
 
+// attempt to produce an equivalent expression where 'var' does not occur in non-linear constraints
+DExpr linearizeConditions(DExpr e,DVar var){
+	if(!e.hasFreeVar(var)) return e;
+	if(auto p=cast(DPlus)e){
+		DExprSet r;
+		foreach(s;p.summands) DPlus.insert(r,linearizeConditions(s,var));
+		return dPlus(r);
+	}
+	if(auto m=cast(DMult)e){
+		DExprSet r;
+		foreach(f;m.factors) DMult.insert(r,linearizeConditions(f,var));
+		return dMult(r);
+	}
+	if(auto p=cast(DPow)e){
+		return linearizeConditions(p.operands[0],var)^^linearizeConditions(p.operands[1],var);
+	}
+	if(auto ivr=cast(DIvr)e) return linearizeIvr(ivr,var);
+	if(auto delta=cast(DDelta)e) return linearizeDelta(delta,var);
+	return e; // TODO: enough?
+}
+
+DExpr linearizeIvr(DIvr ivr,DVar var)in{with(DIvr.Type) assert(util.among(ivr.type,eqZ,neqZ,leZ));}body{
+	alias Type=DIvr.Type;
+	alias eqZ=Type.eqZ, neqZ=Type.neqZ, leZ=Type.leZ, lZ=Type.lZ;
+	DExpr doIt(DExpr parity,Type ty,DExpr lhs,DExpr rhs){ // invariant: var does not occur in rhs or parity
+		if(auto p=cast(DPlus)lhs){
+			auto ow=splitPlusAtVar(lhs,var);
+			if(cast(DPlus)ow[1]){
+				if(auto poly=(lhs-rhs).asPolynomialIn(var,2)){
+					assert(poly.degree>=2);
+					auto a=poly.coefficients[2];
+					auto b=poly.coefficients[1];
+					auto c=poly.coefficients[0];
+					auto lin=dIvr(eqZ,a)*doIt(parity,ty,b*var+c,rhs);
+					auto disc=b^^2-4*a*c;
+					auto z1=(-b-disc^^(one/2))/(2*a),z2=(-b+disc^^(one/2))/(2*a);
+					if(ty==leZ){
+						// (never happens for deltas)
+						// TODO: parity!
+						auto evenParity=linearizeConditions(dIvr(leZ,-parity*a),var);
+						return dIvr(lZ,disc)*dIvr(leZ,(lhs-rhs).substitute(var,-b/(2*a)))
+							+dIvr(leZ,-disc)*(
+							  evenParity*(
+								dIvr(leZ,-a)*dIvr(leZ,z1-var)*dIvr(leZ,var-z2)
+								+ dIvr(lZ,a)*dIvr(leZ,z2-var)*dIvr(leZ,var-z1)
+							  )+
+							  dIvr(eqZ,evenParity)*(
+								dIvr(leZ,-a)*(dIvr(leZ,var-z1)+dIvr(leZ,z2-var))
+								+ dIvr(lZ,a)*(dIvr(leZ,var-z2)+dIvr(leZ,z1-var))
+								- dIvr(eqZ,disc)*dIvr(eqZ,var-z1) // avoid double-counting
+							  )
+							);
+					}else if(ty==eqZ){
+						return doIt(one,ty,var,z1)+dIvr(neqZ,disc)*doIt(one,ty,var,z2);
+					}
+				}
+			}
+			return doIt(parity,ty,ow[1],rhs-ow[0]);
+		}
+		if(auto m=cast(DMult)lhs){
+			auto ow=splitMultAtVar(m,var);
+			if(cast(DMult)ow[1]) return null; // TODO
+			return dIvr(eqZ,ow[0])*dIvr(eqZ,rhs)+dIvr(neqZ,ow[0])*doIt(parity*ow[0],ty,ow[1],rhs/ow[0]);
+		}
+		if(auto p=cast(DPow)lhs){
+			auto e1=p.operands[0],e2=p.operands[1];
+			DExpr negatePower(){
+				auto lhsInv=e1^^(-p.operands[1]);
+				return dIvr(neqZ,rhs)*doIt(-parity*rhs*lhsInv,ty,lhsInv,rhs^^mone);
+			}
+			auto n=cast(Dℕ)e2;
+			if(n){
+				if(n.c<0) return negatePower();
+				if(!(n.c&1)){ // even integer power
+					auto z2=rhs^^(1/n), z1=-z2;
+					if(ty==leZ){
+						auto le=dIvr(leZ,-rhs)*doIt(mone,ty,e1,z1)*doIt(one,ty,e1,z2);
+						auto ge=dIvr(leZ,rhs)+dIvr(lZ,-rhs)*(doIt(one,ty,e1,z1)+dIvr(neqZ,z2)*doIt(mone,ty,e1,z2));
+						auto evenParity=linearizeConditions(dIvr(leZ,-parity),var);
+						return evenParity*le+dIvr(eqZ,evenParity)*ge;
+					}else if(ty==eqZ){
+						return dIvr(leZ,-rhs)*(doIt(one,ty,e1,z1)+dIvr(neqZ,z2)*doIt(one,ty,e1,z2));
+					}else{
+						assert(ty==neqZ);
+						return dIvr(lZ,rhs)+dIvr(leZ,-rhs)*doIt(one,ty,e1,z1)*doIt(one,ty,e1,z2);
+					}
+				}else{ // odd integer power
+					return dIvr(leZ,-rhs)*doIt(parity,ty,e1,rhs^^(1/n))
+						+dIvr(lZ,rhs)*doIt(parity,ty,e1,-(-rhs)^^(1/n));
+				}
+			}else if(e2.isFraction()){
+				// fractional power. assume e1>=0. (TODO: make sure the analysis respects this)
+				auto nd=e2.getFraction();
+				if(nd[0]<0) return negatePower();
+				assert(nd[0]>=0 && nd[1]>=0 && nd[1]!=1);
+				return dIvr(leZ,-rhs)*doIt(parity,ty,e1,(rhs^^(dℕ(nd[1])/nd[0])));
+			}
+		}
+		if(ty==leZ){
+			auto evenParity=linearizeConditions(dIvr(leZ,-parity),var);
+			return evenParity*dIvr(leZ,lhs-rhs)+dIvr(eqZ,evenParity)*dIvr(leZ,rhs-lhs);
+		}
+		return dIvr(ty,lhs-rhs);
+	}
+	return doIt(one,ivr.type,ivr.e.polyNormalize(var),zero);
+}
+
+DExpr linearizeDelta(DDelta delta,DVar var){
+	return delta; // TODO
+}
+
+
 struct SolutionInfo{
 	static struct UseCase{
 		bool caseSplit;
@@ -1404,11 +1518,6 @@ DExpr solveFor(DExpr lhs,DVar var,DExpr rhs,SolUse usage,ref SolutionInfo info){
 		auto ow=splitPlusAtVar(lhs,var);
 		if(cast(DPlus)ow[1]){
 			if(!usage.caseSplit) return null;
-			/+if(auto poly=lhs.asPolynomialIn(var,2)){
-				auto zeros=poly.zeros;
-				dw(zeros);
-				return null;
-			}+/
 			return null;
 		}
 		auto r=ow[1].solveFor(var,rhs-ow[0],usage,info); // TODO: withoutSummands
