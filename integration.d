@@ -128,12 +128,14 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 			auto k=dLog(p.operands[0])*p.operands[1];
 			// need to integrate e^^(k(x)).
 			auto dk=dDiff(var,k);
-			if(dk!is zero && !dk.hasFreeVar(var)){
+			if(!dk.hasFreeVar(var)){
 				DExpr lo=null,up=null;
 				if(dIvr(DIvr.Type.leZ,k).simplify(ivrs) is one){
 					up=zero;
 				}
-				return AntiD(dE^^k/dk,lo,up);
+				return dIvr(DIvr.Type.neqZ,dk)*AntiD(dE^^k/dk,lo,up);
+					// + dIvr(DIvr.Type.eqZ,dk)*var*dE^^(k-var*dk);
+					// TODO: BUG: this is necessary. Need to fix limit code such that it can handle this.
 			}
 		}
 	}
@@ -158,7 +160,7 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 	}
 	AntiD gaussianIntegral(DVar v,DExpr e){
 		// detect e^^(-a*x^^2+b*x+c), and integrate to e^^(b^^2/4a+c)*(pi/a)^^(1/2).
-		// TODO: this assumes that a≥0!
+		// TODO: this currently assumes that a≥0. (The produced expressions are still formally correct if √(-1)=i)
 		auto p=cast(DPow)e;
 		if(!p) return AntiD();
 		if(!cast(DE)p.operands[0]) return AntiD();
@@ -167,8 +169,6 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 		if(q.degree!=2) return AntiD();
 		auto qc=q.coefficients;
 		auto a=-qc.get(2,zero),b=qc.get(1,zero),c=qc.get(0,zero);
-		// if(couldBeZero(a)) return null; // TODO: this is what should be done!
-		if(a is null) return AntiD(); // TODO: it could still be zero!
 		// -a(x-b/2a)²=-ax²+bx-b²/4a
 		// -ax²+bx+c =-a(x-b/2a)²+b²/4a+c
 		// -ax²+bx+c =-(√(a)x-b/2√a)²+b²/4a+c
@@ -183,7 +183,9 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 			return sqrta*x-b/(2*sqrta);
 		}
 		// constraints: none!
-		return AntiD(fac*dGaussInt(transform(var)),zero,fac*dΠ^^(one/2));
+		return dIvr(DIvr.Type.neqZ,a)*AntiD(fac*dGaussInt(transform(v)),zero,fac*dΠ^^(one/2));
+			//+ dIvr(DIvr.Type.eqZ,a)*tryGetAntiderivative(v,dE^^(b*v+c),ivrs);
+			// TODO: BUG: this is necessary. Need to fix limit code such that it can handle this.
 	}
 	auto gauss=gaussianIntegral(var,nonIvrs);
 	if(gauss.antiderivative) return gauss;
