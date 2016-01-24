@@ -502,6 +502,12 @@ void test(){
 	//writeln(linearizeConditions("[a*x^2+b*x+c<=0]".dParse,"x".dVar));
 	//writeln("[x^2+y^2=1]*[x^2+y^2=2]".dParse.simplify(one)); // TODO: this should be simplified!
 	//writeln(linearizeConditions("[x^2+y^2=1]".dParse,"x".dVar));
+	//writeln(linearizeConditions("δ[(x-1)*(2*x-4)]".dParse,"x".dVar));
+	//writeln(linearizeConditions("[1/(x^2+x+1)<=10]".dParse,"x".dVar));
+	//writeln(linearizeConditions("[x^2+x+1<=1]".dParse,"x".dVar));
+	//writeln(linearizeConditions("[x^2+x+1<=0]".dParse,"x".dVar));
+	//writeln(linearizeConditions("δ[x/(1+x)]".dParse,"x".dVar)); // TODO: this can actually work. generalize!
+	//writeln(linearizeConditions("δ[x^2-25]".dParse,"x".dVar));
 }
 /*
 [([x=0]+x)·(1+[x=0])≤0]

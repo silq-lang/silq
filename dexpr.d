@@ -958,7 +958,7 @@ class DPow: DBinaryOp{
 			auto pre=formatting==Format.default_?"⅟":formatting==Format.matlab?"1./":"1/";
 			return addp(prec,pre~(operands[0]^^-operands[1]).toStringImpl(formatting,Precedence.div),Precedence.div);
 		}
-			// also nice, but often hard to read: ½⅓¼⅕⅙
+		// also nice, but often hard to read: ½⅓¼⅕⅙
 		if(formatting==Format.default_){		
 			if(auto c=cast(Dℕ)operands[1])
 				return addp(prec,operands[0].toStringImpl(formatting,Precedence.pow)~highNum(c.c));
@@ -1069,6 +1069,7 @@ class DPow: DBinaryOp{
 				return ((toDouble(nd[0])/toDouble(nd[1]))^^f2.c).dFloat;
 			}
 		}
+		// dw(e1," ",e2); // T!!!T
 		if(auto fct=factorDIvr!(e=>e^^e2)(e1)) return fct;
 		if(auto fct=factorDIvr!(e=>e1^^e)(e2)) return fct;
 		return null;
@@ -1391,14 +1392,17 @@ DExpr linearizeConditions(DExpr e,DVar var){
 	if(auto p=cast(DPow)e){
 		return linearizeConditions(p.operands[0],var)^^linearizeConditions(p.operands[1],var);
 	}
-	if(auto ivr=cast(DIvr)e) return linearizeIvr(ivr,var);
-	if(auto delta=cast(DDelta)e) return linearizeDelta(delta,var);
+	if(auto ivr=cast(DIvr)e) return linearizeCondition(ivr,var);
+	if(auto delta=cast(DDelta)e) return linearizeCondition(delta,var);
 	return e; // TODO: enough?
 }
 
-DExpr linearizeIvr(DIvr ivr,DVar var)in{with(DIvr.Type) assert(util.among(ivr.type,eqZ,neqZ,leZ));}body{
+DExpr linearizeCondition(T)(T cond,DVar var) if(is(T==DIvr)||is(T==DDelta))
+in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,leZ));}body{
 	alias Type=DIvr.Type;
 	alias eqZ=Type.eqZ, neqZ=Type.neqZ, leZ=Type.leZ, lZ=Type.lZ;
+	enum isDelta=is(T==DDelta);
+	class Unwind:Exception{this(){super("");}} // TODO: get rid of this?
 	DExpr doIt(DExpr parity,Type ty,DExpr lhs,DExpr rhs){ // invariant: var does not occur in rhs or parity
 		if(auto p=cast(DPlus)lhs){
 			auto ow=splitPlusAtVar(lhs,var);
@@ -1411,7 +1415,7 @@ DExpr linearizeIvr(DIvr ivr,DVar var)in{with(DIvr.Type) assert(util.among(ivr.ty
 					auto disc=b^^2-4*a*c;
 					auto z1=(-b-disc^^(one/2))/(2*a),z2=(-b+disc^^(one/2))/(2*a);
 					if(ty==leZ){
-						// (recursive base case; never happens for deltas)
+						static if(isDelta) assert(0); // (recursive base case; never happens for deltas)
 						auto evenParity=linearizeConditions(dIvr(leZ,-parity*a),var);
 						return dIvr(eqZ,a)*doIt(parity,ty,b*var+c,rhs)+
 						  dIvr(neqZ,a)*(
@@ -1435,19 +1439,16 @@ DExpr linearizeIvr(DIvr ivr,DVar var)in{with(DIvr.Type) assert(util.among(ivr.ty
 							dIvr(neqZ,a)*doIt(one,ty,var,z1)*doIt(one,ty,var,z2);
                     }
 				}
-			}
-			return doIt(parity,ty,ow[1],rhs-ow[0]);
-		}
-		if(auto m=cast(DMult)lhs){
+			}else return doIt(parity,ty,ow[1],rhs-ow[0]);
+		}else if(auto m=cast(DMult)lhs){
 			auto ow=splitMultAtVar(m,var);
-			if(cast(DMult)ow[1]) return null; // TODO
-			return dIvr(eqZ,ow[0])*dIvr(eqZ,rhs)+dIvr(neqZ,ow[0])*doIt(parity*ow[0],ty,ow[1],rhs/ow[0]);
-		}
-		if(auto p=cast(DPow)lhs){
-			auto e1=p.operands[0],e2=p.operands[1];
+			if(!cast(DMult)ow[1]) // TODO: what to do otherwise?
+				return dIvr(eqZ,ow[0])*dIvr(eqZ,rhs)+dIvr(neqZ,ow[0])*doIt(parity*ow[0],ty,ow[1],rhs/ow[0]);
+		}else if(auto p=cast(DPow)lhs){
+			auto e1=p.operands[0].polyNormalize(var),e2=p.operands[1];
 			DExpr negatePower(){
 				auto lhsInv=e1^^(-p.operands[1]);
-				return dIvr(neqZ,rhs)*doIt(-parity*rhs*lhsInv,ty,lhsInv,rhs^^mone);
+				return dIvr(neqZ,rhs)*doIt(-parity*rhs*lhsInv,ty,lhsInv.polyNormalize(var),rhs^^mone);
 			}
 			auto n=cast(Dℕ)e2;
 			if(n){
@@ -1455,6 +1456,7 @@ DExpr linearizeIvr(DIvr ivr,DVar var)in{with(DIvr.Type) assert(util.among(ivr.ty
 				if(!(n.c&1)){ // even integer power
 					auto z2=rhs^^(1/n), z1=-z2;
 					if(ty==leZ){
+						static if(isDelta) assert(0);
 						auto le=dIvr(leZ,-rhs)*doIt(mone,ty,e1,z1)*doIt(one,ty,e1,z2);
 						auto ge=dIvr(leZ,rhs)+dIvr(lZ,-rhs)*(doIt(one,ty,e1,z1)+dIvr(neqZ,z2)*doIt(mone,ty,e1,z2));
 						auto evenParity=linearizeConditions(dIvr(leZ,-parity),var);
@@ -1463,6 +1465,7 @@ DExpr linearizeIvr(DIvr ivr,DVar var)in{with(DIvr.Type) assert(util.among(ivr.ty
 						return dIvr(leZ,-rhs)*(doIt(one,ty,e1,z1)+dIvr(neqZ,z2)*doIt(one,ty,e1,z2));
 					}else{
 						assert(ty==neqZ);
+						static if(isDelta) assert(0);
 						return dIvr(lZ,rhs)+dIvr(leZ,-rhs)*doIt(one,ty,e1,z1)*doIt(one,ty,e1,z2);
 					}
 				}else{ // odd integer power
@@ -1478,18 +1481,21 @@ DExpr linearizeIvr(DIvr ivr,DVar var)in{with(DIvr.Type) assert(util.among(ivr.ty
 			}
 		}
 		if(ty==leZ){
+			static if(isDelta) assert(0);
 			auto evenParity=linearizeConditions(dIvr(leZ,-parity),var);
 			return evenParity*dIvr(leZ,lhs-rhs)+dIvr(eqZ,evenParity)*dIvr(leZ,rhs-lhs);
 		}
-		return dIvr(ty,lhs-rhs);
+		static if(isDelta){
+			if(lhs != var) throw new Unwind(); // TODO: get rid of this?
+			return dDelta(lhs-rhs)/dAbs(dDiff(var,cond.e,rhs));
+		}
+		else return dIvr(ty,lhs-rhs);
 	}
-	return doIt(one,ivr.type,ivr.e.polyNormalize(var),zero);
+	static if(isDelta) auto ty=eqZ;
+	else auto ty=cond.type;
+	try return doIt(one,ty,cond.e.polyNormalize(var),zero);
+	catch(Unwind) return cond;
 }
-
-DExpr linearizeDelta(DDelta delta,DVar var){
-	return delta; // TODO
-}
-
 
 struct SolutionInfo{
 	static struct UseCase{
