@@ -1886,7 +1886,7 @@ DExpr[2] splitPlusAtVar(DExpr e,DVar var){
 		DExpr[2] fail=[null,null];
 		auto a=cast(DPlus)p.operands[0];
 		auto c=cast(Dℕ)p.operands[1];
-		if(!a||!c) return fail;
+		if(!a||!c||c.c<=0) return fail;
 		auto ow=splitPlusAtVar(a,var);
 		if(ow[0]is zero || ow[1] is zero) return fail;
 		DExpr outside=ow[0]^^c;
@@ -1904,7 +1904,7 @@ DExpr[2] splitPlusAtVar(DExpr e,DVar var){
 					auto ow=handlePow(p);
 					if(ow[0]){
 						assert(!!ow[1]);
-						rest=rest/f;
+						rest=rest.withoutFactor(f);
 						toExpand~=ow;
 					}
 				}

@@ -477,7 +477,7 @@ void test(){
 	//writeln("[√ξ̅₁̅≤0]".dParse.simplify(one));
 	//writeln(DExpr.simplifyMemo);
 	//writeln("(2·x·π)^(⅟2)".dParse);
-	/+writeln(linearizeConditions("[1/x+1≤0]".dParse,"x".dVar));
+	/*writeln(linearizeConditions("[1/x+1≤0]".dParse,"x".dVar));
 	writeln(linearizeConditions("[x²≤1]".dParse,"x".dVar));
 	writeln(linearizeConditions("[-x²=1]".dParse,"x".dVar));
 	writeln(linearizeConditions("[x²=1]·[x≤0]".dParse,"x".dVar).polyNormalize("x".dVar));
@@ -488,11 +488,12 @@ void test(){
 	writeln(linearizeConditions("[-1-x²≤0]".dParse,"x".dVar));
 	writeln(linearizeConditions("[-1-x-x²≤0]".dParse,"x".dVar));
 	writeln(linearizeConditions("[x²=0]".dParse,"x".dVar));
-	writeln("(-3)^(1/2)".dParse);+/
+	writeln("(-3)^(1/2)".dParse);*/
 	//writeln(linearizeConditions("[1/10-1/(x²+x+1)≤0]".dParse,"x".dVar));
 	//writeln("[1/10-1/(x²+x+1)≤0]".dParse);
 	//writeln("[-1/10+1/(x²+x+1)≤0]".dParse);
-	//writeln(linearizeConditions("[-1/10+1/(x²+x+1)≤0]".dParse,"x".dVar)); // TODO (if alone, evaluates to 0. Why?)
+	//writeln(linearizeConditions("[-1/10+1/(x²+x+1)≤0]".dParse,"x".dVar));
+	//writeln(splitPlusAtVar("-1+10·⅟(1+x+x²)".dParse,"x".dVar));
 }
 /*
 [([x=0]+x)·(1+[x=0])≤0]
