@@ -9,7 +9,6 @@ bool plot=false;// TODO: get rid of globals?
 bool kill=false;
 auto formatting=Format.default_;
 bool casBench=false;
-bool sve=false;
 
 string casExt(Format formatting=.formatting){
 	final switch(formatting) with(Format){
@@ -38,12 +37,6 @@ string readCode(File f){
 string readCode(string path){ return readCode(File(path)); }
 
 void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool renormalize){
-	if(sve){
-		import svetranslate;
-		sveTranslate(path,fd,err,renormalize);
-		return;
-	}
-
 	auto dist=analyze(fd,err).dup;
 	if(renormalize) dist.renormalize();
 	import approximate;
@@ -155,7 +148,6 @@ int main(string[] args){
 			case "--maple": formatting=Format.maple; break;
 			case "--mathematica": formatting=Format.mathematica; break;
 			case "--sympy": formatting=Format.sympy; break;
-			case "--sve": sve=true; break;
 			default: if(auto r=run(x)) return r;
 		}
 	}
