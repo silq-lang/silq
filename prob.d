@@ -508,6 +508,8 @@ void test(){
 	//writeln(linearizeConditions("[x^2+x+1<=0]".dParse,"x".dVar));
 	//writeln(linearizeConditions("δ[x/(1+x)]".dParse,"x".dVar)); // TODO: this can actually work. generalize!
 	//writeln(linearizeConditions("δ[x^2-25]".dParse,"x".dVar));
+	//writeln(linearizeConditions("δ[-c+100000032000004800000448000029120001397760051251201464320032947200585728008200192089456640745472004587520019660800052428800065536·c₁¹⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰]·⅟π".dParse,"c₁".dVar));
+	//writeln("∫dx [0≤x]·[x≤y]·x^100000000000000".dParse.simplify(one));
 }
 /*
 [([x=0]+x)·(1+[x=0])≤0]

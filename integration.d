@@ -138,7 +138,7 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 		}
 	}
 	if(nonIvrs is one) return AntiD(var); // constraint: lower && upper
-	if(auto poly=nonIvrs.asPolynomialIn(var)){ // TODO: this can be wasteful sometimes
+	if(auto poly=nonIvrs.asPolynomialIn(var)){
 		DExprSet s;
 		foreach(i,coeff;poly.coefficients){
 			assert(i<size_t.max);
@@ -164,9 +164,9 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 		if(!cast(DE)p.operands[0]) return AntiD();
 		auto q=p.operands[1].asPolynomialIn(v,2);
 		if(!q.initialized) return AntiD();
-		if(q.coefficients.length!=3) return AntiD();
+		if(q.degree!=2) return AntiD();
 		auto qc=q.coefficients;
-		auto a=-qc[2],b=qc[1],c=qc[0];
+		auto a=-qc.get(2,zero),b=qc.get(1,zero),c=qc.get(0,zero);
 		// if(couldBeZero(a)) return null; // TODO: this is what should be done!
 		if(a is null) return AntiD(); // TODO: it could still be zero!
 		// -a(x-b/2a)²=-ax²+bx-b²/4a

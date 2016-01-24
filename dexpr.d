@@ -1037,7 +1037,7 @@ class DPow: DBinaryOp{
 			foreach(f;e2.factors){
 				if(!f.isFraction()) continue;
 				auto nd=f.getFraction();
-				if(nd[0]!=1) continue;
+				if(nd[0]!=1||nd[1]>5) continue; // TODO: 5 ok?
 				if(auto r=nthRoot(c,nd[1]))
 					return r^^(e2/f);
 			}
@@ -1069,7 +1069,6 @@ class DPow: DBinaryOp{
 				return ((toDouble(nd[0])/toDouble(nd[1]))^^f2.c).dFloat;
 			}
 		}
-		// dw(e1," ",e2); // T!!!T
 		if(auto fct=factorDIvr!(e=>e^^e2)(e1)) return fct;
 		if(auto fct=factorDIvr!(e=>e1^^e)(e2)) return fct;
 		return null;
@@ -1111,18 +1110,18 @@ DExpr expandPow(DPow p,long limit=-1){
 
 struct DPolynomial{
 	DVar var;
-	DExpr[] coefficients; // TODO: sparse representation?
+	DExpr[long] coefficients;
+	long degree=-1;
 	bool initialized(){ return !!var; }
 	T opCast(T:bool)(){ return initialized(); }
-	long degree(){ return coefficients.length-1; }
 	void addCoeff(long exp,DExpr coeff)in{assert(exp>=0);}body{
-		while(coefficients.length<=exp) coefficients~=zero;
-		coefficients[cast(size_t)exp]=coefficients[cast(size_t)exp]+coeff;
+		degree=max(degree,exp);
+		coefficients[exp]=coefficients.get(exp,zero)+coeff;
 	}
 	DExpr toDExpr(){
 		DExprSet r;
-		foreach(i;0..coefficients.length)
-			DPlus.insert(r,coefficients[i]*var^^i);
+		foreach(k,v;coefficients)
+			DPlus.insert(r,v*var^^k);
 		return dPlus(r);
 	}
 	struct Zero{
@@ -1131,9 +1130,9 @@ struct DPolynomial{
 	}
 	Zero[] zeros()in{assert(degree<=2);}body{ // TODO: get rid of allocation?
 		Zero[] r;
-		auto a=degree>=2?coefficients[2]:zero;
-		auto b=degree>=1?coefficients[1]:zero;
-		auto c=degree>=0?coefficients[0]:zero;
+		auto a=coefficients.get(2,zero);
+		auto b=coefficients.get(1,zero);
+		auto c=coefficients.get(0,zero);
 		r~=Zero(-c/b,dIvr(DIvr.Type.eqZ,a));
 		r~=Zero((-b-(b^^2-4*a*c)^^(one/2))/(2*a),dIvr(DIvr.Type.neqZ,a)*dIvr(DIvr.Type.leZ,-(b^^2-4*a*c)));
 		r~=Zero((-b+(b^^2-4*a*c)^^(one/2))/(2*a),dIvr(DIvr.Type.neqZ,a)*dIvr(DIvr.Type.lZ,-(b^^2-4*a*c)));
@@ -1219,7 +1218,6 @@ DPolynomial asPolynomialIn(DExpr e,DVar v,long limit=-1){
 		}
 		if(!addCoeff(0,s)) return DPolynomial.init;
 	}
-	if(!r.coefficients.length) r.coefficients~=zero;
 	if(~limit && r.degree>limit) return DPolynomial.init;
 	return r;
 }
@@ -1409,9 +1407,9 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 			if(cast(DPlus)ow[1]){
 				if(auto poly=(lhs-rhs).asPolynomialIn(var,2)){
 					assert(poly.degree>=2);
-					auto a=poly.coefficients[2];
-					auto b=poly.coefficients[1];
-					auto c=poly.coefficients[0];
+					auto a=poly.coefficients.get(2,zero);
+					auto b=poly.coefficients.get(1,zero);
+					auto c=poly.coefficients.get(0,zero);
 					auto disc=b^^2-4*a*c;
 					auto z1=(-b-disc^^(one/2))/(2*a),z2=(-b+disc^^(one/2))/(2*a);
 					if(ty==leZ){
@@ -2054,7 +2052,7 @@ class DInt: DOp{
 			auto tmp=new DVar("tmp"); // TODO: get rid of this!
 			return staticSimplify(tmp,getDeBruinExpr(var,expr,tmp));
 		}
-		auto nexpr=expr.simplify(facts); // TODO: this pattern always simplifies everything twice, make efficient
+		auto nexpr=expr.simplify(facts);
 		if(nexpr !is expr) expr=nexpr;
 		/*static dInt(DVar var,DExpr expr){
 			if(cast(DDeBruinVar)var){
