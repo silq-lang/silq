@@ -31,8 +31,12 @@ DExpr dParse(string s){ // TODO: this is work in progress, usually updated in or
 			}
 			switch(cur()) with(DIvr.Type){
 				case '=': doIt(eqZ); break;
-				case '≠': doIt(neqZ); break;
-				case '<': doIt(lZ); break;
+				case '≠','!':
+					if(cur()=='!') next(); doIt(neqZ); break;
+				case '<':
+					if(code.length>=2&&code[1]=='='){
+						next(); doIt(leZ);
+					}else doIt(lZ); break;
 				case '≤': doIt(leZ); break;
 				default: expect('<'); assert(0);
 			}
