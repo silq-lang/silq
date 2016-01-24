@@ -1407,28 +1407,32 @@ DExpr linearizeIvr(DIvr ivr,DVar var)in{with(DIvr.Type) assert(util.among(ivr.ty
 					auto a=poly.coefficients[2];
 					auto b=poly.coefficients[1];
 					auto c=poly.coefficients[0];
-					auto lin=dIvr(eqZ,a)*doIt(parity,ty,b*var+c,rhs);
 					auto disc=b^^2-4*a*c;
 					auto z1=(-b-disc^^(one/2))/(2*a),z2=(-b+disc^^(one/2))/(2*a);
 					if(ty==leZ){
-						// (never happens for deltas)
-						// TODO: parity!
+						// (recursive base case; never happens for deltas)
 						auto evenParity=linearizeConditions(dIvr(leZ,-parity*a),var);
-						return dIvr(lZ,disc)*dIvr(leZ,(lhs-rhs).substitute(var,-b/(2*a)))
-							+dIvr(leZ,-disc)*(
-							  evenParity*(
-								dIvr(leZ,-a)*dIvr(leZ,z1-var)*dIvr(leZ,var-z2)
-								+ dIvr(lZ,a)*dIvr(leZ,z2-var)*dIvr(leZ,var-z1)
-							  )+
-							  dIvr(eqZ,evenParity)*(
-								dIvr(leZ,-a)*(dIvr(leZ,var-z1)+dIvr(leZ,z2-var))
-								+ dIvr(lZ,a)*(dIvr(leZ,var-z2)+dIvr(leZ,z1-var))
-								- dIvr(eqZ,disc)*dIvr(eqZ,var-z1) // avoid double-counting
-							  )
-							);
+						return dIvr(eqZ,a)*doIt(parity,ty,b*var+c,rhs)+
+						  dIvr(neqZ,a)*(
+						    dIvr(lZ,disc)*dIvr(leZ,(lhs-rhs).substitute(var,-b/(2*a)))
+						    +dIvr(leZ,-disc)*(
+						      evenParity*(
+						        dIvr(leZ,-a)*dIvr(leZ,z1-var)*dIvr(leZ,var-z2)
+						        + dIvr(leZ,a)*dIvr(leZ,z2-var)*dIvr(leZ,var-z1)
+						      )+
+						      dIvr(eqZ,evenParity)*(
+						        dIvr(leZ,-a)*(dIvr(leZ,var-z1)+dIvr(neqZ,disc)*dIvr(leZ,z2-var)+dIvr(eqZ,disc)*dIvr(lZ,z2-var))
+						        + dIvr(leZ,a)*(dIvr(leZ,var-z2)+dIvr(neqZ,disc)*dIvr(leZ,z1-var)+dIvr(eqZ,disc)*dIvr(lZ,z1-var))
+						      )
+						    )
+						  );
 					}else if(ty==eqZ){
-						return doIt(one,ty,var,z1)+dIvr(neqZ,disc)*doIt(one,ty,var,z2);
-					}
+						return dIvr(eqZ,a)*doIt(parity,ty,b*var+c,rhs)+
+							dIvr(neqZ,a)*(doIt(one,ty,var,z1)+dIvr(neqZ,disc)*doIt(one,ty,var,z2));
+					}else{
+						return dIvr(eqZ,a)*doIt(parity,ty,b*var+c,rhs)+
+							dIvr(neqZ,a)*doIt(one,ty,var,z1)*doIt(one,ty,var,z2);
+                    }
 				}
 			}
 			return doIt(parity,ty,ow[1],rhs-ow[0]);

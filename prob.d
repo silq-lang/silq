@@ -494,6 +494,15 @@ void test(){
 	//writeln("[-1/10+1/(x²+x+1)≤0]".dParse);
 	//writeln(linearizeConditions("[-1/10+1/(x²+x+1)≤0]".dParse,"x".dVar));
 	//writeln(splitPlusAtVar("-1+10·⅟(1+x+x²)".dParse,"x".dVar));
+	//writeln(linearizeConditions("[(x-1)^2<=0]".dParse,"x".dVar));
+	//writeln(linearizeConditions("[(x-1)^2!=0]".dParse,"x".dVar));
+	//writeln(linearizeConditions("[y*x^2+x<=0]".dParse,"x".dVar).polyNormalize("x".dVar).simplify(one)); // TODO: check correctness
+	//writeln(linearizeConditions("[y*x^2+x=0]".dParse,"x".dVar).polyNormalize("x".dVar).simplify(one));
+	//writeln(linearizeConditions("[y*x^2+x!=0]".dParse,"x".dVar).polyNormalize("x".dVar).simplify(one));
+	//writeln(linearizeConditions("[a*x^2+b*x+c=0]".dParse,"x".dVar));
+	//writeln(linearizeConditions("[a*x^2+b*x+c<=0]".dParse,"x".dVar));
+	//writeln("[x^2+y^2=1]*[x^2+y^2=2]".dParse.simplify(one)); // TODO: this should be simplified!
+	//writeln(linearizeConditions("[x^2+y^2=1]".dParse,"x".dVar));
 }
 /*
 [([x=0]+x)·(1+[x=0])≤0]
