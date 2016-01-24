@@ -166,6 +166,7 @@ class DVar: DExpr{
 	/+private+/ this(string name){ this.name=name; } // TODO: make private!
 	override string toStringImpl(Format formatting,Precedence prec){
 		if(formatting==Format.sympy||formatting==Format.matlab||formatting==Format.mathematica){
+			return asciify(name);
 			auto name=this.name.to!dstring; // TODO: why necessary? Phobos bug?
 			name=name.replace("ξ"d,"xi"d);
 			//pragma(msg, cast(dchar)('₀'+1));

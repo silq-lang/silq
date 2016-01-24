@@ -390,6 +390,16 @@ immutable dstring highDigits="⁰¹²³⁴⁵⁶⁷⁸⁹";
 string lowNum(T)(T i){ return digitRep(i,lowDigits,'₋'); }
 string highNum(T)(T i){ return digitRep(i,highDigits,'⁻'); }
 
+string asciify(string s){
+	auto t=s.to!dstring; // TODO: why necessary? Phobos bug?
+	t=t.replace("ξ"d,"xi"d);
+	//pragma(msg, cast(dchar)('₀'+1));
+	foreach(x;0..10)
+		t=t.replace(""d~cast(dchar)('₀'+x),""d~cast(dchar)('0'+x));
+	return t.to!string;
+
+}
+
 string overline(string s){
 	string r;
 	import std.uni;
