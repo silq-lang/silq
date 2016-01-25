@@ -540,6 +540,21 @@ void test(){
 	//auto yz="[-1≤√-̅y̅²̅+̅1̅]".dParse;
 	//writeln(yz.linearizeConstraints("y".dVar));
 	//writeln(dIntSmp("y".dVar,yz));
+	//auto e="δ[-a₁+⅟k]".dParse;
+	//auto lin=e.linearizeConstraints("k".dVar);
+	//writeln(dIntSmp("k".dVar,e*"[0<=k]*[k<=x]".dParse));
+	//writeln("[a+⅟k≠0]".dParse.linearizeConstraints("k".dVar));
+	//writeln("[a+⅟b<=0]".dParse.linearizeConstraints("b".dVar).polyNormalize("a".dVar).simplify(one));
+	//writeln("[-a-⅟b<=0]".dParse.linearizeConstraints("b".dVar).polyNormalize("a".dVar).simplify(one));
+	/*import dparse;
+	auto good="(2·δ[-a₂+⅟k]·⅟3+δ[a₂]·⅟3)·(2·δ[a₁]·⅟3+δ[-a₁+⅟k]·⅟3)·(δ[-1+k]·⅟3+δ[-2+k]·⅟3+δ[-3+k]·⅟3)·[-1+a₁+a₂+⅟k≠0]·[k≠0]·δ[-a₃+⅟k]"
+	auto middle="(2·[a₂≠0]·δ[-⅟a₂+k]·⅟3·⅟a₂²+δ[a₂]·⅟3)·(2·δ[a₁]·⅟3+[a₁≠0]·δ[-⅟a₁+k]·⅟3·⅟a₁²)·(δ[-1+k]·⅟3+δ[-2+k]·⅟3+δ[-3+k]·⅟3)·[-1+a₁+a₂+⅟k≠0]·[a₃≠0]·[k≠0]·δ[-⅟a₃+k]·⅟a₃²";
+	auto bad="(2·[a₂≠0]·δ[-⅟a₂+k]·⅟3·⅟a₂²+δ[a₂]·⅟3)·(2·δ[a₁]·⅟3+[a₁≠0]·δ[-⅟a₁+k]·⅟3·⅟a₁²)·(δ[-1+k]·⅟3+δ[-2+k]·⅟3+δ[-3+k]·⅟3)·[-a₁+-a₂+1≠0]·[-⅟(-a₁+-a₂+1)+k≠0]·[a₃≠0]·[k≠0]·δ[-⅟a₃+k]·⅟a₃²";
+	if(nexpr.toString() == good){
+		writeln("!!!");
+		nexpr=middle.dParse;
+	}*/
+		
 }
 /*
 [([x=0]+x)·(1+[x=0])≤0]

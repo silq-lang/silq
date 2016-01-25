@@ -1375,7 +1375,7 @@ BoundStatus getBoundForVar(DIvr ivr,DVar var,out DExpr bound){ // TODO: get rid 
 }
 
 // attempt to produce an equivalent expression where 'var' does not occur in non-linear constraints
-DExpr linearizeConstraints(DExpr e,DVar var){
+DExpr linearizeConstraints(DExpr e,DVar var){ // TODO: don't re-build the expression if no constraints change.
 	if(!e.hasFreeVar(var)) return e;
 	if(auto p=cast(DPlus)e){
 		DExprSet r;
@@ -1451,9 +1451,22 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 			}
 		}else if(auto p=cast(DPow)lhs){
 			auto e1=p.operands[0].polyNormalize(var),e2=p.operands[1];
-			DExpr negatePower(){
-				auto lhsInv=e1^^(-p.operands[1]);
-				return dIvr(neqZ,rhs)*doIt(-parity*rhs*lhsInv,ty,lhsInv.polyNormalize(var),rhs^^mone);
+			DExpr negatePower()in{
+				assert(e2.isFraction());
+				auto nd=e2.getFraction();
+				assert(nd[0]<0 && nd[1]>=0);
+			}body{
+				auto lhsInv=e1^^(-e2);
+				auto r=dIvr(neqZ,rhs)*doIt(-parity*rhs*lhsInv,ty,lhsInv.polyNormalize(var),rhs^^mone);
+				if(ty==leZ){
+					static if(isDelta) assert(0);
+					auto oddParity=linearizeConstraints(dIvr(lZ,parity),var);
+					r=oddParity*dIvr(eqZ,rhs)+r;
+				}else if(ty==neqZ){
+					static if(isDelta) assert(0);
+					r=dIvr(eqZ,rhs)+r;
+				}
+				return r;
 			}
 			auto n=cast(Dℕ)e2;
 			if(n){
@@ -2067,14 +2080,7 @@ class DInt: DOp{
 			auto tmp=new DVar("tmp"); // TODO: get rid of this!
 			return staticSimplify(tmp,getDeBruinExpr(var,expr,tmp));
 		}
-		auto nexpr=expr.simplify(facts);
-		auto nnexpr=nexpr.linearizeConstraints(var).simplify(facts);
-		if(nnexpr !is nexpr){
-			/+dw(var);
-			dw("!! ",nexpr);
-			dw("!? ",nnexpr);+/
-			nexpr=nnexpr;
-		}
+		auto nexpr=expr.simplify(facts).linearizeConstraints(var).simplify(facts);
 		if(nexpr !is expr) expr=nexpr;
 		/*static dInt(DVar var,DExpr expr){
 			if(cast(DDeBruinVar)var){
