@@ -476,42 +476,70 @@ void test(){
 	//writeln("[√ξ̅₁̅≤0]".dParse.simplify(one));
 	//writeln(DExpr.simplifyMemo);
 	//writeln("(2·x·π)^(⅟2)".dParse);
-	/*writeln(linearizeConditions("[1/x+1≤0]".dParse,"x".dVar));
-	writeln(linearizeConditions("[x²≤1]".dParse,"x".dVar));
-	writeln(linearizeConditions("[-x²=1]".dParse,"x".dVar));
-	writeln(linearizeConditions("[x²=1]·[x≤0]".dParse,"x".dVar).polyNormalize("x".dVar));
-	writeln(linearizeConditions("[x³=-1]".dParse,"x".dVar)); 
-	writeln(linearizeConditions("[x³≤1]".dParse,"x".dVar)); 
-	writeln(linearizeConditions("[x³≤-1]".dParse,"x".dVar));
-	writeln(linearizeConditions("[x²+x+1≤10]".dParse,"x".dVar));
-	writeln(linearizeConditions("[-1-x²≤0]".dParse,"x".dVar));
-	writeln(linearizeConditions("[-1-x-x²≤0]".dParse,"x".dVar));
-	writeln(linearizeConditions("[x²=0]".dParse,"x".dVar));
+	/*writeln(linearizeConstraints("[1/x+1≤0]".dParse,"x".dVar));
+	writeln(linearizeConstraints("[x²≤1]".dParse,"x".dVar));
+	writeln(linearizeConstraints("[-x²=1]".dParse,"x".dVar));
+	writeln(linearizeConstraints("[x²=1]·[x≤0]".dParse,"x".dVar).polyNormalize("x".dVar));
+	writeln(linearizeConstraints("[x³=-1]".dParse,"x".dVar)); 
+	writeln(linearizeConstraints("[x³≤1]".dParse,"x".dVar)); 
+	writeln(linearizeConstraints("[x³≤-1]".dParse,"x".dVar));
+	writeln(linearizeConstraints("[x²+x+1≤10]".dParse,"x".dVar));
+	writeln(linearizeConstraints("[-1-x²≤0]".dParse,"x".dVar));
+	writeln(linearizeConstraints("[-1-x-x²≤0]".dParse,"x".dVar));
+	writeln(linearizeConstraints("[x²=0]".dParse,"x".dVar));
 	writeln("(-3)^(1/2)".dParse);*/
-	//writeln(linearizeConditions("[1/10-1/(x²+x+1)≤0]".dParse,"x".dVar));
+	//writeln(linearizeConstraints("[1/10-1/(x²+x+1)≤0]".dParse,"x".dVar));
 	//writeln("[1/10-1/(x²+x+1)≤0]".dParse);
 	//writeln("[-1/10+1/(x²+x+1)≤0]".dParse);
-	//writeln(linearizeConditions("[-1/10+1/(x²+x+1)≤0]".dParse,"x".dVar));
+	//writeln(linearizeConstraints("[-1/10+1/(x²+x+1)≤0]".dParse,"x".dVar));
 	//writeln(splitPlusAtVar("-1+10·⅟(1+x+x²)".dParse,"x".dVar));
-	//writeln(linearizeConditions("[(x-1)^2<=0]".dParse,"x".dVar));
-	//writeln(linearizeConditions("[(x-1)^2!=0]".dParse,"x".dVar));
-	//writeln(linearizeConditions("[y*x^2+x<=0]".dParse,"x".dVar).polyNormalize("x".dVar).simplify(one)); // TODO: check correctness
-	//writeln(linearizeConditions("[y*x^2+x=0]".dParse,"x".dVar).polyNormalize("x".dVar).simplify(one));
-	//writeln(linearizeConditions("[y*x^2+x!=0]".dParse,"x".dVar).polyNormalize("x".dVar).simplify(one));
-	//writeln(linearizeConditions("[a*x^2+b*x+c=0]".dParse,"x".dVar));
-	//writeln(linearizeConditions("[a*x^2+b*x+c<=0]".dParse,"x".dVar));
+	//writeln(linearizeConstraints("[(x-1)^2<=0]".dParse,"x".dVar));
+	//writeln(linearizeConstraints("[(x-1)^2!=0]".dParse,"x".dVar));
+	//writeln(linearizeConstraints("[y*x^2+x<=0]".dParse,"x".dVar).polyNormalize("x".dVar).simplify(one)); // TODO: check correctness
+	//writeln(linearizeConstraints("[y*x^2+x=0]".dParse,"x".dVar).polyNormalize("x".dVar).simplify(one));
+	//writeln(linearizeConstraints("[y*x^2+x!=0]".dParse,"x".dVar).polyNormalize("x".dVar).simplify(one));
+	//writeln(linearizeConstraints("[a*x^2+b*x+c=0]".dParse,"x".dVar));
+	//writeln(linearizeConstraints("[a*x^2+b*x+c<=0]".dParse,"x".dVar));
 	//writeln("[x^2+y^2=1]*[x^2+y^2=2]".dParse.simplify(one)); // TODO: this should be simplified!
-	//writeln(linearizeConditions("[x^2+y^2=1]".dParse,"x".dVar));
-	//writeln(linearizeConditions("δ[(x-1)*(2*x-4)]".dParse,"x".dVar));
-	//writeln(linearizeConditions("[1/(x^2+x+1)<=10]".dParse,"x".dVar));
-	//writeln(linearizeConditions("[x^2+x+1<=1]".dParse,"x".dVar));
-	//writeln(linearizeConditions("[x^2+x+1<=0]".dParse,"x".dVar));
-	//writeln(linearizeConditions("δ[x/(1+x)]".dParse,"x".dVar)); // TODO: this can actually work. generalize!
-	//writeln(linearizeConditions("δ[x^2-25]".dParse,"x".dVar));
-	//writeln(linearizeConditions("δ[-c+100000032000004800000448000029120001397760051251201464320032947200585728008200192089456640745472004587520019660800052428800065536·c₁¹⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰]·⅟π".dParse,"c₁".dVar));
+	//writeln(linearizeConstraints("[x^2+y^2=1]".dParse,"x".dVar));
+	//writeln(linearizeConstraints("δ[(x-1)*(2*x-4)]".dParse,"x".dVar));
+	//writeln(linearizeConstraints("[1/(x^2+x+1)<=10]".dParse,"x".dVar));
+	//writeln(linearizeConstraints("[x^2+x+1<=1]".dParse,"x".dVar));
+	//writeln(linearizeConstraints("[x^2+x+1<=0]".dParse,"x".dVar));
+	//writeln(linearizeConstraints("δ[x/(1+x)]".dParse,"x".dVar)); // TODO: this can actually work. generalize!
+	//writeln(linearizeConstraints("δ[x^2-25]".dParse,"x".dVar));
+	//writeln(linearizeConstraints("δ[-c+100000032000004800000448000029120001397760051251201464320032947200585728008200192089456640745472004587520019660800052428800065536·c₁¹⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰]·⅟π".dParse,"c₁".dVar));
 	//writeln("∫dx [0≤x]·[x≤y]·x^100000000000000".dParse.simplify(one));
 	//writeln("∫dx e^(-a·x^2+b·x+c)·[0≤x]·[x≤k]".dParse.simplify(one));
 	//writeln("∫dy(∫dξ₁[-ξ₁≤0]·[ξ₁≠0]·e^(-y²·⅟2·⅟ξ₁+-ξ₁²·⅟2)·⅟√ξ̅₁̅)".dParse.simplify(one));
+	//writeln(linearizeConstraints("δ[-x+u·y]".dParse,"y".dVar).simplify(one));
+	//writeln(linearizeConstraints("[y≠0]·δ[x·⅟y]".dParse,"y".dVar).simplify(one));
+	//writeln("∫dy[y≠0]·δ[x·⅟y]".dParse); // TODO: meaning?
+	//writeln("∫dx ((([-x+√-̅y̅²̅+̅1̅≤0]·⅟4+[x+√-̅y̅²̅+̅1̅≤0]·⅟4)·[-1+y²≤0]·[-y²+1≠0]+[-y²+1≤0]·⅟4)·([-1+y²≤0]·[-√-̅y̅²̅+̅1̅+x≠0]·[x+√-̅y̅²̅+̅1̅≠0]+[-y²+1≠0]·[-y²+1≤0])·δ[z]+[-1+y²≤0]·[-x+-√-̅y̅²̅+̅1̅≤0]·[-√-̅y̅²̅+̅1̅+x≤0]·δ[-z+1]·⅟4)·[-1+-x≤0]·[-1+-y≤0]·[-1+x≤0]·[-1+y≤0]".dParse.simplify(one).polyNormalize("y".dVar));
+	//writeln("∫dy [-1+-y≤0]·[-1+y²≤0]·[-1+y≤0]·[-1+√-̅y̅²̅+̅1̅≤0]·δ[-z+1]·⅟2·√-̅y̅²̅+̅1̅".dParse.simplify(one));
+	//writeln("∫dy [-1+-y≤0]·[-1+y≤0]·[-y²+1≤0]·δ[z]·⅟2".dParse.simplify(one));
+	/+auto larger="δ[z]·[[x²+y²<=1]=0]·[0≤x]·[0≤y]·[x≤1]·[y≤1]".dParse.simplify(one);
+	auto lin=linearizeConstraints(larger,"x".dVar).simplify(one);
+	writeln(lin.polyNormalize("x".dVar));
+	auto ii=dInt("x".dVar,lin).simplify(one);
+	writeln(ii);
+	auto jj=dInt("y".dVar,ii).simplify(one);
+	writeln(jj);+/
+	//auto x0="∫dx ((([-x+√-̅y̅²̅+̅1̅≤0]·⅟4+[x+√-̅y̅²̅+̅1̅≤0]·⅟4)·[-1+y²≤0]·[-y²+1≠0]+[-y²+1≤0]·⅟4)·([-1+y²≤0]·[-√-̅y̅²̅+̅1̅+x≠0]·[x+√-̅y̅²̅+̅1̅≠0]+[-y²+1≠0]·[-y²+1≤0])·δ[z]+[-1+y²≤0]·[-x+-√-̅y̅²̅+̅1̅≤0]·[-√-̅y̅²̅+̅1̅+x≤0]·δ[-z+1]·⅟4)·[-1+-x≤0]·[-1+-y≤0]·[-1+x≤0]·[-1+y≤0]".dParse.simplify(one).polyNormalize("y".dVar);
+	//auto dz="-[-1+-y≤0]·[-1+-√-̅y̅²̅+̅1̅=0]·[-1+y²≤0]·[-1+y≤0]·[-y²+1≠0]·δ[z]·⅟2·√-̅y̅²̅+̅1̅+-[-1+-y≤0]·[-1+y²≤0]·[-1+y≤0]·[-1+√-̅y̅²̅+̅1̅≤0]·[-y²+1≠0]·[1+√-̅y̅²̅+̅1̅≠0]·δ[z]·⅟2·√-̅y̅²̅+̅1̅+3·[-1+-y≤0]·[-1+y²≤0]·[-1+y≤0]·[-y²+1≠0]·[1+√-̅y̅²̅+̅1̅≠0]·[1+√-̅y̅²̅+̅1̅≤0]·δ[z]·⅟2+[-1+-y≤0]·[-1+-√-̅y̅²̅+̅1̅=0]·[-1+y²≤0]·[-1+y≤0]·[-y²+1≠0]·δ[z]·⅟2+[-1+-y≤0]·[-1+y²≤0]·[-1+y≤0]·[-1+√-̅y̅²̅+̅1̅≤0]·[-y²+1≠0]·[1+√-̅y̅²̅+̅1̅≠0]·δ[z]·⅟2+[-1+-y≤0]·[-1+y≤0]·[-y²+1≤0]·δ[z]·⅟2".dParse.simplify(one);
+	//auto x1=linearizeConstraints(dz,"y".dVar);
+	//writeln(dInt("y".dVar,x1).simplify(one));
+	//writeln(linearizeConstraints("[-1+-y≤0]·[-1+y²≤0]·[-1+y≤0]·[-1+√-̅y̅²̅+̅1̅≤0]·[-y²+1≠0]·[1+√-̅y̅²̅+̅1̅≠0]".dParse,"y".dVar));
+	//auto xyz="([-1+x²+y²≤0]·δ[-z+1]·⅟4+[-x²+-y²+1≠0]·[-x²+-y²+1≤0]·δ[z]·⅟4)·[-1+-x≤0]·[-1+-y≤0]·[-1+x≤0]·[-1+y≤0]".dParse;
+	//auto xyz="([-x²+-y²+1≠0]·[-x²+-y²+1≤0]·δ[z]·⅟4)·[-1+-x≤0]·[-1+-y≤0]·[-1+x≤0]·[-1+y≤0]".dParse;
+	//auto xyz="[-1<=x]*[x<=1]*[-1<=y]*[y<=1]*[-x²+-y²+1≤0]".dParse;
+	//writeln(xyz.linearizeConstraints("x".dVar).simplify(one));
+	//auto yz=dIntSmp("x".dVar,xyz);
+	//auto yz="(([-1+-√-̅y̅²̅+̅1̅≠0]·[1+√-̅y̅²̅+̅1̅≤0]·⅟2)·(-[-1+-√-̅y̅²̅+̅1̅≠0]·[-1+-√-̅y̅²̅+̅1̅≤0]·√-̅y̅²̅+̅1̅+1+[1+√-̅y̅²̅+̅1̅≤0])·[-1+y²≤0]·[-y²+1≠0]+([-1+y²≤0]·⅟2+[-y²+1≠0]·⅟2)·[-y²+1≤0])·[-1+-y≤0]·[-1+y≤0]·δ[z]".dParse;
+	//auto yz="(((2·[-1+-√-̅y̅²̅+̅1̅≠0]·[-1+√-̅y̅²̅+̅1̅≤0]+2·[1+√-̅y̅²̅+̅1̅=0])·[-1+-√-̅y̅²̅+̅1̅≤0]+2·[-1+-√-̅y̅²̅+̅1̅≠0]·[1+√-̅y̅²̅+̅1̅≤0])·(-[-1+-√-̅y̅²̅+̅1̅≠0]·[-1+-√-̅y̅²̅+̅1̅≤0]·√-̅y̅²̅+̅1̅+1+[1+√-̅y̅²̅+̅1̅≤0])·[-1+y²≤0]·[-y²+1≠0]+2·[-y²+1≤0])·[-1+-y≤0]·[-1+y≤0]".dParse;
+	//auto yz="[-1≤√-̅y̅²̅+̅1̅]".dParse;
+	//writeln(yz.linearizeConstraints("y".dVar));
+	//writeln(dIntSmp("y".dVar,yz));
 }
 /*
 [([x=0]+x)·(1+[x=0])≤0]

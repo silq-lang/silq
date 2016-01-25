@@ -1375,27 +1375,27 @@ BoundStatus getBoundForVar(DIvr ivr,DVar var,out DExpr bound){ // TODO: get rid 
 }
 
 // attempt to produce an equivalent expression where 'var' does not occur in non-linear constraints
-DExpr linearizeConditions(DExpr e,DVar var){
+DExpr linearizeConstraints(DExpr e,DVar var){
 	if(!e.hasFreeVar(var)) return e;
 	if(auto p=cast(DPlus)e){
 		DExprSet r;
-		foreach(s;p.summands) DPlus.insert(r,linearizeConditions(s,var));
+		foreach(s;p.summands) DPlus.insert(r,linearizeConstraints(s,var));
 		return dPlus(r);
 	}
 	if(auto m=cast(DMult)e){
 		DExprSet r;
-		foreach(f;m.factors) DMult.insert(r,linearizeConditions(f,var));
+		foreach(f;m.factors) DMult.insert(r,linearizeConstraints(f,var));
 		return dMult(r);
 	}
 	if(auto p=cast(DPow)e){
-		return linearizeConditions(p.operands[0],var)^^linearizeConditions(p.operands[1],var);
+		return linearizeConstraints(p.operands[0],var)^^linearizeConstraints(p.operands[1],var);
 	}
-	if(auto ivr=cast(DIvr)e) return linearizeCondition(ivr,var);
-	if(auto delta=cast(DDelta)e) return linearizeCondition(delta,var);
+	if(auto ivr=cast(DIvr)e) return linearizeConstraint(ivr,var);
+	if(auto delta=cast(DDelta)e) return linearizeConstraint(delta,var);
 	return e; // TODO: enough?
 }
 
-DExpr linearizeCondition(T)(T cond,DVar var) if(is(T==DIvr)||is(T==DDelta))
+DExpr linearizeConstraint(T)(T cond,DVar var) if(is(T==DIvr)||is(T==DDelta))
 in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,leZ));}body{
 	alias Type=DIvr.Type;
 	alias eqZ=Type.eqZ, neqZ=Type.neqZ, leZ=Type.leZ, lZ=Type.lZ;
@@ -1414,7 +1414,7 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 					auto z1=(-b-disc^^(one/2))/(2*a),z2=(-b+disc^^(one/2))/(2*a);
 					if(ty==leZ){
 						static if(isDelta) assert(0); // (recursive base case; never happens for deltas)
-						auto evenParity=linearizeConditions(dIvr(leZ,-parity*a),var);
+						auto evenParity=linearizeConstraints(dIvr(leZ,-parity*a),var);
 						return dIvr(eqZ,a)*doIt(parity,ty,b*var+c,rhs)+
 						  dIvr(neqZ,a)*(
 						    dIvr(lZ,disc)*dIvr(leZ,(lhs-rhs).substitute(var,-b/(2*a)))
@@ -1439,9 +1439,16 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 				}
 			}else return doIt(parity,ty,ow[1],rhs-ow[0]);
 		}else if(auto m=cast(DMult)lhs){
-			auto ow=splitMultAtVar(m,var);
-			if(!cast(DMult)ow[1]) // TODO: what to do otherwise?
-				return dIvr(eqZ,ow[0])*dIvr(eqZ,rhs)+dIvr(neqZ,ow[0])*doIt(parity*ow[0],ty,ow[1],rhs/ow[0]);
+			static if(!isDelta){
+				auto ow=splitMultAtVar(m,var);
+				if(!cast(DMult)ow[1]){
+					return dIvr(eqZ,ow[0])*dIvr(eqZ,rhs)+dIvr(neqZ,ow[0])*doIt(parity*ow[0],ty,ow[1],rhs/ow[0]);
+				}
+			}else{
+				// TODO: what to do here?
+				//δ[ow[0]*ow[1]-rhs]
+				//δ[x    *1/y  -  0]
+			}
 		}else if(auto p=cast(DPow)lhs){
 			auto e1=p.operands[0].polyNormalize(var),e2=p.operands[1];
 			DExpr negatePower(){
@@ -1457,7 +1464,7 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 						static if(isDelta) assert(0);
 						auto le=dIvr(leZ,-rhs)*doIt(mone,ty,e1,z1)*doIt(one,ty,e1,z2);
 						auto ge=dIvr(leZ,rhs)+dIvr(lZ,-rhs)*(doIt(one,ty,e1,z1)+dIvr(neqZ,z2)*doIt(mone,ty,e1,z2));
-						auto evenParity=linearizeConditions(dIvr(leZ,-parity),var);
+						auto evenParity=linearizeConstraints(dIvr(leZ,-parity),var);
 						return evenParity*le+dIvr(eqZ,evenParity)*ge;
 					}else if(ty==eqZ){
 						return dIvr(leZ,-rhs)*(doIt(one,ty,e1,z1)+dIvr(neqZ,z2)*doIt(one,ty,e1,z2));
@@ -1475,12 +1482,20 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 				auto nd=e2.getFraction();
 				if(nd[0]<0) return negatePower();
 				assert(nd[0]>=0 && nd[1]>=0 && nd[1]!=1);
-				return dIvr(leZ,-rhs)*doIt(parity,ty,e1,(rhs^^(dℕ(nd[1])/nd[0])));
+				auto r=dIvr(leZ,-rhs)*doIt(parity,ty,e1,(rhs^^(dℕ(nd[1])/nd[0])));
+				if(ty==leZ){
+					auto oddParity=linearizeConstraints(dIvr(lZ,parity),var);
+					r=oddParity*dIvr(lZ,rhs)+r;
+				}else if(ty==neqZ){
+					static if(isDelta) assert(0);
+					r=dIvr(lZ,rhs)+r;
+				}
+				return r;
 			}
 		}
 		if(ty==leZ){
 			static if(isDelta) assert(0);
-			auto evenParity=linearizeConditions(dIvr(leZ,-parity),var);
+			auto evenParity=linearizeConstraints(dIvr(leZ,-parity),var);
 			return evenParity*dIvr(leZ,lhs-rhs)+dIvr(eqZ,evenParity)*dIvr(leZ,rhs-lhs);
 		}
 		static if(isDelta){
@@ -2053,6 +2068,13 @@ class DInt: DOp{
 			return staticSimplify(tmp,getDeBruinExpr(var,expr,tmp));
 		}
 		auto nexpr=expr.simplify(facts);
+		auto nnexpr=nexpr.linearizeConstraints(var).simplify(facts);
+		if(nnexpr !is nexpr){
+			/+dw(var);
+			dw("!! ",nexpr);
+			dw("!? ",nnexpr);+/
+			nexpr=nnexpr;
+		}
 		if(nexpr !is expr) expr=nexpr;
 		/*static dInt(DVar var,DExpr expr){
 			if(cast(DDeBruinVar)var){
