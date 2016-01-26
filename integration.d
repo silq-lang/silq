@@ -27,9 +27,9 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr)out(res){
 	DExpr nonIvrs=one;
 	foreach(f;expr.factors){
 		assert(f.hasFreeVar(var));
-		if(cast(DIvr)f) ivrs=ivrs*f;
 		assert(!cast(DDelta)f);
-		nonIvrs=nonIvrs*f;
+		if(cast(DIvr)f) ivrs=ivrs*f;
+		else nonIvrs=nonIvrs*f;
 	}
 	DExpr lower=null;
 	DExpr upper=null;
