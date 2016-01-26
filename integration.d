@@ -17,18 +17,19 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr)out(res){
 		if(res) successfulIntegrations++;
 	}
 }body{
-	// TODO: explicit antiderivative (d/dx)⁻¹
-	// eg. the full antiderivative e^^(-a*x^^2+b*x) is given by:
-	// e^^(b^^2/4a)*(d/dx)⁻¹(e^^(-x^^2))[(b-2*a*x)/2*a^^(1/2)]/a^^(1/2)
+	// ensure integral is continuous
+	foreach(f;expr.allOf!DFun(true))
+		if(f.hasFreeVar(var)) return null;
+	foreach(d;expr.allOf!DDelta(true))
+		if(d.hasFreeVar(var)) return null;
 	// TODO: keep ivrs and nonIvrs separate in DMult
 	DExpr ivrs=one;
 	DExpr nonIvrs=one;
-	if(expr.hasAny!DFun) return null;
 	foreach(f;expr.factors){
 		assert(f.hasFreeVar(var));
 		if(cast(DIvr)f) ivrs=ivrs*f;
-		else if(cast(DDelta)f) return null;
-		else nonIvrs=nonIvrs*f;
+		assert(!cast(DDelta)f);
+		nonIvrs=nonIvrs*f;
 	}
 	DExpr lower=null;
 	DExpr upper=null;

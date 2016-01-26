@@ -586,6 +586,31 @@ void test(){
 	sw.stop();
 	writeln(sw.peek().to!("seconds",double));
 	dw(e);*/
+	/*auto expr="((-mean₁·⅟3141+1)·δ[answer₁]+mean₁·δ[-answer₁+1]·⅟3141)·((-mean₁·⅟3141+1)·δ[answer₃]+mean₁·δ[-answer₃+1]·⅟3141)·((-mean₁·⅟3141+1)·δ[answer₄]+mean₁·δ[-answer₄+1]·⅟3141)·((-mean₂·⅟2718+1)·δ[answer₅]+mean₂·δ[-answer₅+1]·⅟2718)·(-mean₂·⅟2718+1)·([variance₁=0]·δ[-mean₁+votes₁]+[variance₁≠0]·e^((-mean₁²·⅟2+-votes₁²·⅟2+mean₁·votes₁)·⅟variance₁)·⅟√2̅·⅟√v̅a̅r̅i̅a̅n̅c̅e̅₁̅·⅟√π̅)·([variance₂=0]·δ[-mean₂+votes₂]+[variance₂≠0]·e^((-mean₂²·⅟2+-votes₂²·⅟2+mean₂·votes₂)·⅟variance₂)·⅟√2̅·⅟√v̅a̅r̅i̅a̅n̅c̅e̅₂̅·⅟√π̅)·[-2718+mean₂≤0]·[-3141+mean₁≤0]·[-answer₁+1=0]·[-answer₃+1=0]·[-answer₄+1=0]·[-answer₅+1=0]·[-mean₁≤0]·[-mean₂≤0]·[-variance₁≤0]·[-variance₂≤0]·δ[-ansBias₁+bias₁]·δ[-ansBias₂+bias₂]·δ[-ansBias₃+bias₁]·δ[-ansBias₄+bias₁]·δ[-ansBias₅+bias₂]·δ[-bias₁·mean₁+-variance₁+mean₁]·δ[-bias₂·mean₂+-variance₂+mean₂]·δ[-mean₁+3141·bias₁]·δ[-mean₂+2718·bias₂]·δ[answer₂]".dParse;
+	auto expr1=dIntSmp("mean₁".dVar,expr);
+	auto expr2=dIntSmp("bias₁".dVar,expr1);
+	auto expr3=dIntSmp("ansBias₃".dVar,expr2);
+	auto expr4=dIntSmp("ansBias₁".dVar,expr3);
+	auto expr5=dIntSmp("ansBias₄".dVar,expr4);
+	auto expr6=dIntSmp("variance₁".dVar,expr5);
+	auto expr7=dIntSmp("votes₁".dVar,expr6);
+	auto expr8=dIntSmp("mean₂".dVar,expr7);
+	auto expr9=dIntSmp("variance₂".dVar,expr8);
+	auto expr10=dIntSmp("votes₂".dVar,expr9);
+	auto expr11=dIntSmp("answer₁".dVar,expr10);
+	auto expr12=dIntSmp("answer₂".dVar,expr11);
+	auto expr13=dIntSmp("answer₃".dVar,expr12);
+	auto expr14=dIntSmp("answer₅".dVar,expr13);
+	auto expr15=dIntSmp("ansBias₂".dVar,expr14);
+	auto expr16=dIntSmp("ansBias₅".dVar,expr15);
+	auto expr17=dIntSmp("answer₄".dVar,expr16);
+	//dw(expr16);
+	//dw(expr17);
+	auto foo="(∫dξ₁(∫dξ₂((-⅟17074476·√-̅1̅2̅5̅6̅4̅·̅ξ̅₂̅+̅9̅8̅6̅5̅8̅8̅1̅+⅟5436)·δ[answer₄])·(-ξ₂·⅟3141+⅟2+⅟6282·√-̅1̅2̅5̅6̅4̅·̅ξ̅₂̅+̅9̅8̅6̅5̅8̅8̅1̅)·[-3141+4·ξ₂≤0]·[-3141+√-̅1̅2̅5̅6̅4̅·̅ξ̅₂̅+̅9̅8̅6̅5̅8̅8̅1̅≤0]·[-4·ξ₂+3141≠0]·[-ξ₂≤0]·[ξ₂≠0]·e^(((3141·⅟2+⅟2·√-̅1̅2̅5̅6̅4̅·̅ξ̅₂̅+̅9̅8̅6̅5̅8̅8̅1̅)·ξ₁+-3141·⅟4·√-̅1̅2̅5̅6̅4̅·̅ξ̅₂̅+̅9̅8̅6̅5̅8̅8̅1̅+-9865881·⅟4+-ξ₁²·⅟2+3141·ξ₂·⅟2)·⅟ξ₂)·⅟√-̅1̅2̅5̅6̅4̅·̅ξ̅₂̅+̅9̅8̅6̅5̅8̅8̅1̅·⅟√ξ̅₂̅+∫dξ₂((349·⅟302+⅟2718·√-̅1̅2̅5̅6̅4̅·̅ξ̅₂̅+̅9̅8̅6̅5̅8̅8̅1̅)·δ[answer₄])·(-ξ₂·⅟19731762+-⅟39463524·√-̅1̅2̅5̅6̅4̅·̅ξ̅₂̅+̅9̅8̅6̅5̅8̅8̅1̅+⅟12564)·[-3141+4·ξ₂≤0]·[-3141+√-̅1̅2̅5̅6̅4̅·̅ξ̅₂̅+̅9̅8̅6̅5̅8̅8̅1̅≤0]·[-4·ξ₂+3141≠0]·[-ξ₂≤0]·[ξ₂≠0]·e^(((-⅟2·√-̅1̅2̅5̅6̅4̅·̅ξ̅₂̅+̅9̅8̅6̅5̅8̅8̅1̅+3141·⅟2)·ξ₁+-9865881·⅟4+-ξ₁²·⅟2+3141·ξ₂·⅟2+3141·⅟4·√-̅1̅2̅5̅6̅4̅·̅ξ̅₂̅+̅9̅8̅6̅5̅8̅8̅1̅)·⅟ξ₂)·⅟√-̅1̅2̅5̅6̅4̅·̅ξ̅₂̅+̅9̅8̅6̅5̅8̅8̅1̅₂̅))·[-answer₄+1=0]".dParse;
+	dw(dIntSmp("answer₄".dVar,foo));*/
+	//auto bar="∫dx(∫dξ₁∫dξ₂ (δ[x]/(ξ₁^2+ξ₂^2)+δ[x]/(ξ₁^3+ξ₂^3))+∫dξ₁∫dξ₂ (δ[x]/(ξ₁^2+ξ₂^3)+δ[x]/(ξ₁^3+ξ₂^2)))*[x=0]".dParse.simplify(one);
+	//writeln(bar);// ∫dξ₁∫dξ₂ 1/(ξ₁^2+ξ₂^2)
+
 }
 /*
 [([x=0]+x)·(1+[x=0])≤0]

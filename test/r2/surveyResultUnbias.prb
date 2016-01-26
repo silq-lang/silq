@@ -1,7 +1,7 @@
 // skipped
 // TODO
 
-def main(){
+def maing(){
     population := readCSV("data/survey/population.csv");
     gender := readCSV("data/survey/gender.csv");
     personGender := readCSV("data/survey/personGender.csv");
@@ -39,5 +39,8 @@ def main(){
     for i in [0..ansBias.length){
         observe(answer[i]==dataAnswer[i]);
     }
-    return (bias,mean,variance,votes);
+    // return (bias,mean,variance,votes); // TODO
+    assert(bias.length==2&&mean.length==2&&variance.length==2&&votes.length==2);
+    return (bias[0],bias[1],mean[0],mean[1],variance[0],variance[1],votes[0],votes[1]);
+    //return Expectation(bias[0]);
 }
