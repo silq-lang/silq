@@ -573,6 +573,7 @@ void test(){
 	writeln(x.linearizeConstraints("x".dVar));
 	writeln(x.linearizeConstraints("y".dVar));
 	writeln(dIntSmp("x".dVar,x*"f(x,y)*[y!=0]".dParse).simplify(one));*/
+	//writeln("([6+√1̅2̅≤0]·[2+√1̅2̅≤0])^-1)".dParse);
 }
 /*
 [([x=0]+x)·(1+[x=0])≤0]

@@ -1522,7 +1522,7 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 					auto ivr=cast(DIvr)f;
 					if(ivr&&ivr.type == eqZ){
 						auto val=solveFor(ivr.e,var); // TODO: modify solveFor such that it only solves linear equations and returns additional constraints.
-						if(ivr.substitute(var,val).simplify(one) !is one)
+						if(!val || ivr.substitute(var,val).simplify(one) !is one)
 							continue; // TODO: get rid of this
 						summand=s*cond.substitute(var,val);
 						break;
@@ -1656,7 +1656,10 @@ T without(T,DExpr)(T a,DExpr b){
 DExpr factorDIvr(alias wrap)(DExpr e){
 	foreach(ivr;e.allOf!DIvr){ // TODO: do all in bulk?
 		auto neg=negateDIvr(ivr);
-		return ivr*wrap(e.simplify(ivr))+neg*wrap(e.simplify(neg));
+		auto epos=e.simplify(ivr);
+		auto eneg=e.simplify(neg);
+		if(epos is e || eneg is e) return null; // TODO: fix in a better way
+		return ivr*wrap(epos)+neg*wrap(eneg);
 	}
 	return null;
 }
