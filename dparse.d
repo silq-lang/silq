@@ -123,6 +123,7 @@ DExpr dParse(string s){ // TODO: this is work in progress, usually updated in or
 			if(c=='δ') return false; // TODO: this is quite crude
 			if(c.isAlpha()) return true;
 			if(lowDigits.canFind(c)) return true;
+			if(c=='_') return true;
 			return false;
 		}
 
