@@ -2187,6 +2187,8 @@ class DInt: DOp{
 				return r.simplify(facts);
 		}
 		// Fubini
+		static int fubirec=0; fubirec++; scope(exit) fubirec--;
+		if(++fubirec<=10) // TODO: fix this properly. this is a hack.
 		foreach(f;expr.factors){
 			// assert(f.hasFreeVar(var));
 			if(auto other=cast(DInt)f){
@@ -2196,7 +2198,8 @@ class DInt: DOp{
 				auto intExpr=expr.withoutFactor(f).substitute(var,tmpvar1)*
 					(cast(DInt)other.substitute(var,tmpvar1)).getExpr(tmpvar2);
 				auto ow=intExpr.splitMultAtVar(tmpvar1);
-				if(auto res=staticSimplify(tmpvar1,ow[1]))
+				ow[1]=ow[1].simplify(facts);
+				if(auto res=staticSimplify(tmpvar1,ow[1],facts))
 					return dIntSmp(tmpvar2,res*ow[0]);
 			}
 		}

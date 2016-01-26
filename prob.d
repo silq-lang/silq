@@ -610,7 +610,8 @@ void test(){
 	dw(dIntSmp("answer₄".dVar,foo));*/
 	//auto bar="∫dx(∫dξ₁∫dξ₂ (δ[x]/(ξ₁^2+ξ₂^2)+δ[x]/(ξ₁^3+ξ₂^3))+∫dξ₁∫dξ₂ (δ[x]/(ξ₁^2+ξ₂^3)+δ[x]/(ξ₁^3+ξ₂^2)))*[x=0]".dParse.simplify(one);
 	//writeln(bar);// ∫dξ₁∫dξ₂ 1/(ξ₁^2+ξ₂^2)
-
+	//writeln("∫dx∫dy [1/x+y≤0]".dParse.simplify(one));
+	//writeln("∫dx (1/x^(1/2)+-x/x^(1/2))·[0≤x]·[x≤1]".dParse.simplify(one)); // TODO
 }
 /*
 [([x=0]+x)·(1+[x=0])≤0]
