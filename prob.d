@@ -612,6 +612,7 @@ void test(){
 	//writeln(bar);// ∫dξ₁∫dξ₂ 1/(ξ₁^2+ξ₂^2)
 	//writeln("∫dx∫dy [1/x+y≤0]".dParse.simplify(one));
 	//writeln("∫dx (1/x^(1/2)+-x/x^(1/2))·[0≤x]·[x≤1]".dParse.simplify(one)); // TODO
+	//writeln("[-2+⅟y≤0]·[-⅟y+1≤0]·[y≠0]·⅟y²".dParse.linearizeConstraints("y".dVar).simplify(one));
 }
 /*
 [([x=0]+x)·(1+[x=0])≤0]

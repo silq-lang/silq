@@ -196,7 +196,7 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 		if(!gi) return AntiD();
 		auto q=gi.x.asPolynomialIn(var,1);
 		if(!q.initialized) return AntiD();
-		auto a=q.coefficients[1],b=q.coefficients[0];
+		auto a=q.coefficients.get(1,zero),b=q.coefficients.get(0,zero);
 		if(a is zero) return AntiD(); // TODO: make "dynamic"
 		static DExpr primitive(DExpr e){
 			if(e is -dInf) return zero;
