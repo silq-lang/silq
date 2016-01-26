@@ -22,13 +22,13 @@ struct RecursiveStopWatch{
 	auto peek(){ return sw.peek(); }
 }
 
-/+RecursiveStopWatch sw;
+RecursiveStopWatch sw;
 int swCount=0;
 static ~this(){
 	writeln("time: ",sw.peek().to!("seconds",double));
 	writeln("freq: ",swCount);
 }
-enum measure="swCount++;sw.start();scope(exit)sw.stop();";+/
+enum measure="swCount++;sw.start();scope(exit)sw.stop();";
 
 enum Format{
 	default_,
@@ -850,6 +850,7 @@ class DMult: DCommutAssocOp{
 		factors.insert(factor);
 	}
 	override DExpr simplifyImpl(DExpr facts){
+		// TODO: this is a mayor bottleneck!
 		DExprSet myFactors;
 		DExprSet myFacts;
 		foreach(f;this.factors) if(auto d=cast(DDelta)f) facts=facts*dIvr(DIvr.Type.eqZ,d.e);
@@ -2723,9 +2724,11 @@ class DFun: DOp{ // uninterpreted functions
 	}
 
 	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args){
-		if(fun !is this.fun) return this;
+		auto newArgs=this.args.dup;
+		foreach(ref a;newArgs) a=a.substituteFun(fun,q,args);
+		if(fun !is this.fun||args.length!=this.args.length) return dFun(this.fun,newArgs);
 		auto r=q;
-		foreach(i,a;this.args) r=r.substitute(args[i],a);
+		foreach(i,a;newArgs) r=r.substitute(args[i],a); // TODO: this does not avoid capture properly
 		return r;
 	}
 
