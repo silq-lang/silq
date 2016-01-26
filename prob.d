@@ -554,7 +554,25 @@ void test(){
 		writeln("!!!");
 		nexpr=middle.dParse;
 	}*/
-		
+	//auto d="(δ[-x+1]·⅟2+δ[x]·⅟2)·δ[-y+x²]".dParse;
+	//writeln(d.linearizeConstraints("x".dVar));
+	//auto d="δ[x^(1/2)-y]".dParse;
+	/*auto x="δ[x-y²]".dParse;
+	writeln("orig: ",x);
+	auto d=x.linearizeConstraints("y".dVar).simplify(one);
+	writeln("liny: ",d);
+	auto k=d.linearizeConstraints("x".dVar).simplify(one);
+	writeln("linx: ",k);
+	auto j=k.linearizeConstraints("y".dVar).simplify(one);
+	writeln("liny: ",j);
+	writeln("linx: ",j.linearizeConstraints("x".dVar).simplify(one)); // TODO: implement suitable simplification rules such that this is δ[x-y²] and d=j*/
+	/*auto x="δ[z-x*y]".dParse;
+	writeln(x.linearizeConstraints("x".dVar));
+	writeln(dIntSmp("x".dVar,x*"f(x,y,z)".dParse));*/
+	/*auto x="δ[x/y]".dParse;
+	writeln(x.linearizeConstraints("x".dVar));
+	writeln(x.linearizeConstraints("y".dVar));
+	writeln(dIntSmp("x".dVar,x*"f(x,y)*[y!=0]".dParse).simplify(one));*/
 }
 /*
 [([x=0]+x)·(1+[x=0])≤0]

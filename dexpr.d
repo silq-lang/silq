@@ -1374,8 +1374,8 @@ BoundStatus getBoundForVar(DIvr ivr,DVar var,out DExpr bound){ // TODO: get rid 
 	return r;
 }
 
-// attempt to produce an equivalent expression where 'var' does not occur in non-linear constraints
-DExpr linearizeConstraints(DExpr e,DVar var){ // TODO: don't re-build the expression if no constraints change.
+// attempt to produce an equivalent expression where 'var' does not occur non-linearly in constraints
+DExpr linearizeConstraints(alias filter=e=>true)(DExpr e,DVar var){ // TODO: don't re-build the expression if no constraints change.
 	if(!e.hasFreeVar(var)) return e;
 	if(auto p=cast(DPlus)e){
 		DExprSet r;
@@ -1390,8 +1390,8 @@ DExpr linearizeConstraints(DExpr e,DVar var){ // TODO: don't re-build the expres
 	if(auto p=cast(DPow)e){
 		return linearizeConstraints(p.operands[0],var)^^linearizeConstraints(p.operands[1],var);
 	}
-	if(auto ivr=cast(DIvr)e) return linearizeConstraint(ivr,var);
-	if(auto delta=cast(DDelta)e) return linearizeConstraint(delta,var);
+	if(auto ivr=cast(DIvr)e) if(filter(ivr)) return linearizeConstraint(ivr,var);
+	if(auto delta=cast(DDelta)e) if(filter(delta)) return linearizeConstraint(delta,var);
 	return e; // TODO: enough?
 }
 
@@ -1401,6 +1401,7 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 	alias eqZ=Type.eqZ, neqZ=Type.neqZ, leZ=Type.leZ, lZ=Type.lZ;
 	enum isDelta=is(T==DDelta);
 	class Unwind:Exception{this(){super("");}} // TODO: get rid of this?
+	void unwind(){ throw new Unwind(); }
 	DExpr doIt(DExpr parity,Type ty,DExpr lhs,DExpr rhs){ // invariant: var does not occur in rhs or parity
 		if(auto p=cast(DPlus)lhs){
 			auto ow=splitPlusAtVar(lhs,var);
@@ -1439,16 +1440,14 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 				}
 			}else return doIt(parity,ty,ow[1],rhs-ow[0]);
 		}else if(auto m=cast(DMult)lhs){
-			static if(!isDelta){
-				auto ow=splitMultAtVar(m,var);
-				if(!cast(DMult)ow[1]){
-					return dIvr(eqZ,ow[0])*dIvr(eqZ,rhs)+dIvr(neqZ,ow[0])*doIt(parity*ow[0],ty,ow[1],rhs/ow[0]);
-				}
-			}else{
-				// TODO: what to do here?
-				//δ[ow[0]*ow[1]-rhs]
-				//δ[x    *1/y  -  0]
-			}
+			auto ow=splitMultAtVar(m,var);
+			if(!cast(DMult)ow[1]){
+				// TODO: make sure this is correct for deltas
+				// (this is what the case split code did)
+				static if(isDelta) auto rest=dDelta(rhs);
+				else auto rest=dIvr(eqZ,rhs);
+				return dIvr(eqZ,ow[0])*rest+dIvr(neqZ,ow[0])*doIt(parity*ow[0],ty,ow[1],rhs/ow[0]);
+			} // TODO: what if ow[1] is a product?
 		}else if(auto p=cast(DPow)lhs){
 			auto e1=p.operands[0].polyNormalize(var),e2=p.operands[1];
 			DExpr negatePower()in{
@@ -1512,8 +1511,27 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 			return evenParity*dIvr(leZ,lhs-rhs)+dIvr(eqZ,evenParity)*dIvr(leZ,rhs-lhs);
 		}
 		static if(isDelta){
-			if(lhs != var) throw new Unwind(); // TODO: get rid of this?
-			return dDelta(lhs-rhs)/dAbs(dDiff(var,cond.e,rhs));
+			if(lhs != var) unwind(); // TODO: get rid of this?
+			auto diff=dAbs(dDiff(var,cond.e));
+			auto pole=dIvr(eqZ,diff).linearizeConstraints(var).polyNormalize(var).simplify(one);
+			DExprSet special;
+			foreach(s;pole.summands){
+				DExpr summand=null;
+				if(s.hasFreeVar(var)) foreach(f;s.factors){
+					if(!f.hasFreeVar(var)) continue;
+					auto ivr=cast(DIvr)f;
+					if(ivr&&ivr.type == eqZ){
+						auto val=solveFor(ivr.e,var); // TODO: modify solveFor such that it only solves linear equations and returns additional constraints.
+						if(ivr.substitute(var,val).simplify(one) !is one)
+							continue; // TODO: get rid of this
+						summand=s*cond.substitute(var,val);
+						break;
+					}
+				}else summand=s; // TODO: is this necessary?
+				if(summand is null) unwind();
+				DPlus.insert(special,summand);
+			}
+			return dIvr(neqZ,diff)*dDelta(lhs-rhs)/diff+dPlus(special);
 		}
 		else return dIvr(ty,lhs-rhs);
 	}
@@ -2080,7 +2098,14 @@ class DInt: DOp{
 			auto tmp=new DVar("tmp"); // TODO: get rid of this!
 			return staticSimplify(tmp,getDeBruinExpr(var,expr,tmp));
 		}
-		auto nexpr=expr.simplify(facts).linearizeConstraints(var).simplify(facts);
+		auto nexpr=expr.simplify(facts);
+		/+auto nnexpr=nexpr.linearizeConstraints(var).simplify(facts);
+		if(nnexpr !is nexpr){
+			dw(var);
+			dw(nexpr);
+			dw(nnexpr);
+			nexpr=nnexpr;
+		}+/
 		if(nexpr !is expr) expr=nexpr;
 		/*static dInt(DVar var,DExpr expr){
 			if(cast(DDeBruinVar)var){
@@ -2144,14 +2169,19 @@ class DInt: DOp{
 				}
 			}
 		}
-		if(auto r=deltaSubstitution(true))
-			return r;
+		nexpr=expr.linearizeConstraints!(x=>!!cast(DDelta)x)(var).simplify(facts); // TODO: only linearize the first feasible delta.
+		if(nexpr !is expr) return staticSimplify(var,nexpr);
+		/*if(auto r=deltaSubstitution(true))
+		  return r;*/
 
 		if(expr is one) return null; // (infinite integral)
 
-		if(simplification!=Simpl.deltas)
+		if(simplification!=Simpl.deltas){
+			nexpr=expr.linearizeConstraints!(x=>!!cast(DIvr)x)(var).simplify(facts);
+			if(nexpr !is expr) return staticSimplify(var,nexpr);
 			if(auto r=definiteIntegral(var,expr))
 				return r.simplify(facts);
+		}
 		// Fubini
 		foreach(f;expr.factors){
 			// assert(f.hasFreeVar(var));
