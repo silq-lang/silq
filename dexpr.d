@@ -1432,10 +1432,10 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 						  );
 					}else if(ty==eqZ){
 						return dIvr(eqZ,a)*doIt(parity,ty,b*var+c,rhs)+
-							dIvr(neqZ,a)*(doIt(one,ty,var,z1)+dIvr(neqZ,disc)*doIt(one,ty,var,z2));
+							dIvr(neqZ,a)*dIvr(leZ,-disc)*(doIt(one,ty,var,z1)+dIvr(neqZ,disc)*doIt(one,ty,var,z2));
 					}else{
 						return dIvr(eqZ,a)*doIt(parity,ty,b*var+c,rhs)+
-							dIvr(neqZ,a)*doIt(one,ty,var,z1)*doIt(one,ty,var,z2);
+							dIvr(neqZ,a)*(dIvr(lZ,disc)+dIvr(leZ,-disc)*doIt(one,ty,var,z1)*doIt(one,ty,var,z2));
                     }
 				}
 			}else return doIt(parity,ty,ow[1],rhs-ow[0]);
