@@ -1638,8 +1638,8 @@ DExpr solveFor(DExpr lhs,DVar var){
 
 std.typecons.Tuple!(DIvr.Type,"type",DExpr,"e") negateDIvr(DIvr.Type type,DExpr e){
 	final switch(type) with(DIvr.Type){
-		case lZ: return typeof(return)(leZ,-e);
-		case leZ: return typeof(return)(lZ,-e); // currently probably unreachable
+		case lZ: return typeof(return)(leZ,-e); // currently probably unreachable
+		case leZ: return typeof(return)(lZ,-e);
 		case eqZ: return typeof(return)(neqZ,e);
 		case neqZ: return typeof(return)(eqZ,e);
 	}	
@@ -1654,15 +1654,64 @@ T without(T,DExpr)(T a,DExpr b){
 	return r;
 }
 
-DExpr factorDIvr(alias wrap)(DExpr e){
-	foreach(ivr;e.allOf!DIvr){ // TODO: do all in bulk?
-		auto neg=negateDIvr(ivr);
-		auto epos=e.simplify(ivr);
-		auto eneg=e.simplify(neg);
-		if(epos is e || eneg is e) return null; // TODO: fix in a better way
-		return ivr*wrap(epos)+neg*wrap(eneg);
+struct DExprHoles(T){
+	DExpr expr;
+	static struct Hole{
+		DVar var;
+		T expr;
 	}
-	return null;
+	Hole[] holes; // TODO: avoid allocation if only a few holes
+}
+
+DExprHoles!T getHoles(alias filter,T=DExpr)(DExpr e){
+	DExprHoles!T r;
+	DExpr doIt(DExpr e){
+		// TODO: add a general visitor with rewrite capabilities
+		if(auto expr=filter(e)){
+			auto var=dVar("(hole)"~to!string(r.holes.length));
+			r.holes~=DExprHoles!T.Hole(var,expr);
+			return var;
+		}
+		if(auto m=cast(DMult)e){
+			DExprSet r;
+			foreach(f;m.factors) DMult.insert(r,doIt(f));
+			return dMult(r);
+		}
+		if(auto p=cast(DPlus)e){
+			DExprSet r;
+			foreach(f;p.summands) DPlus.insert(r,doIt(f));
+			return dPlus(r);
+		}
+		if(auto p=cast(DPow)e)
+			return doIt(p.operands[0])^^doIt(p.operands[1]);
+		if(auto gi=cast(DGaussInt)e)
+			return dGaussInt(doIt(gi.x));
+		if(auto lg=cast(DLog)e)
+			return dLog(doIt(lg.e));
+		if(auto dl=cast(DDelta)e)
+			return dDelta(doIt(dl.e));
+		if(auto ivr=cast(DIvr)e)
+			return dIvr(ivr.type,doIt(ivr.e));
+		return e;
+	}
+	r.expr=doIt(e);
+	return r;
+}
+
+DExpr factorDIvr(alias wrap)(DExpr e){
+	auto h=getHoles!(x=>cast(DIvr)x,DIvr)(e);
+	if(!h.holes.length) return null;
+	DExpr doIt(DExpr facts,DExpr cur,size_t i){
+		if(facts is zero) return zero;
+		if(i==h.holes.length) return facts*wrap(cur);
+		auto var=h.holes[i].var,expr=h.holes[i].expr;
+		auto neg=negateDIvr(expr).simplify(facts);
+		auto pos=expr.simplify(facts);
+		return doIt(facts*pos,cur.substitute(var,one),i+1) +
+			doIt(facts*neg,cur.substitute(var,zero),i+1);
+	}
+	auto r=doIt(one,h.expr,0);
+	return r;
 }
 
 class DIvr: DExpr{ // iverson brackets
@@ -1770,7 +1819,7 @@ class DIvr: DExpr{ // iverson brackets
 		}
 		with(Type) if(type==eqZ||type==neqZ){ // TODO: figure out why this causes non-termination in mult_uniform_test
 			if(auto p=cast(DPow)e){
-				auto isZ=dIvr(eqZ,p.operands[0])*dIvr(neqZ,p.operands[1]);
+				auto isZ=dIvr(lZ,-p.operands[1])*dIvr(eqZ,p.operands[0]);
 				return (type==eqZ?isZ:dIvr(eqZ,isZ)).simplify(facts);
 			}
 		}

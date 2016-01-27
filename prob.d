@@ -643,6 +643,11 @@ void test(){
 	//writeln((dGamma(dℕ(5+1))*dGamma(dℕ(6+1))/dGamma(dℕ(5+1+6+1))).simplify(one));
 	//writeln(studentTPDF("x".dVar,7.dℕ));
 	//writeln(dIntSmp("x".dVar,weibullPDF("x".dVar,1.dℕ,3.dℕ)).toString(Format.mathematica)); // TODO: this should be 1
+	//writeln("!! ","[0<1/x]".dParse.simplify(one));
+	//writeln("[⅟x≤0]".dParse.factorDIvr!(e=>dFun("f".dFunVar,[e])));
+	//writeln("[1/x!=0]".dParse.simplify(one));
+	//writeln("[x=0]".dParse.factorDIvr!(e=>dFun("f".dFunVar,[e])));
+	//writeln("lim[x→ -∞] 1/x".dParse.simplify(one));
 }
 /*
 [([x=0]+x)·(1+[x=0])≤0]
