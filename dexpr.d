@@ -2834,3 +2834,16 @@ auto allOf(T)(DExpr e,bool belowIntegrals=false){
 bool hasAny(T)(DExpr e,bool belowIntegrals=true){ foreach(x;allOf!T(e,belowIntegrals)) return true; return false; }
 
 bool hasFreeVars(DExpr e){ foreach(x;e.freeVars) return true; return false; }
+
+
+// derived functions
+
+DExpr dGamma(DExpr t){
+	auto x=new DVar("tmp"); // TODO: get rid of this
+	return dInt(x,x^^(t-1)*dE^^(-x)*dIvr(DIvr.Type.leZ,-x));
+}
+
+DExpr dBeta(DExpr x,DExpr y){ // constraints: x>0 and y>0
+	auto t=new DVar("tmp"); // TODO: get rid of this
+	return dInt(t,dBounded!"[]"(t,zero,one)*t^^(x-1)*(1-t)^^(y-1));
+}

@@ -638,6 +638,11 @@ void test(){
 	//writeln("(∫dx[(-1+a·⅟x)·x+-1≤0]·[(-a·⅟x+1)·x≠0]·[(-a·⅟x+1)·x≤0]·[[⅟x≤0]=0]·[x≠0])·[-1+a≠0]·[-a+1≤0]+(∫dx[(-1+a·⅟x)·x+-1≤0]·[(-a·⅟x+1)·x≠0]·[(-a·⅟x+1)·x≤0]·[[⅟x≤0]=0]·[x≠0]·⅟x)·[-1+a≠0]·[-a+1≤0]+-(∫dx[(-1+a·⅟x)·x+-1≤0]·[(-a·⅟x+1)·x≠0]·[(-a·⅟x+1)·x≤0]·[[⅟x≤0]=0]·[x≠0]·⅟x)·[-1+a≠0]·[-a+1≤0]·a".dParse.simplify(one));
 	//writeln(dIntSmp("x".dVar,"[(-1+a·⅟x)·x+-1≤0]·[(-a·⅟x+1)·x≠0]·[(-a·⅟x+1)·x≤0]·[[⅟x≤0]=0]·[x≠0]·[-1+a≠0]·[-a+1≤0]".dParse.linearizeConstraints("x".dVar)));
 	//writeln(dIntSmp("x".dVar,"[(-1+a·⅟x)·x+-1≤0]·[(-a·⅟x+1)·x≠0]·[(-a·⅟x+1)·x≤0]·[[⅟x≤0]=0]·[x≠0]·[-1+a≠0]·[-a+1≤0]".dParse.linearizeConstraints("x".dVar)));
+	//writeln(dGamma(dℕ(5+1)).simplify(one));
+	//writeln(dBeta(dℕ(5+1),dℕ(6+1)).simplify(one));
+	//writeln((dGamma(dℕ(5+1))*dGamma(dℕ(6+1))/dGamma(dℕ(5+1+6+1))).simplify(one));
+	//writeln(studentTPDF("x".dVar,7.dℕ));
+	//writeln(dIntSmp("x".dVar,weibullPDF("x".dVar,1.dℕ,3.dℕ)).toString(Format.mathematica)); // TODO: this should be 1
 }
 /*
 [([x=0]+x)·(1+[x=0])≤0]

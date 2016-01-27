@@ -1,0 +1,8 @@
+
+def maink(){
+    x := Uniform(0,1);
+    y := Uniform(0,1);
+    k := Uniform(0,1);
+    a := x*y+k;
+    return (a);
+}

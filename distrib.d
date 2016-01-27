@@ -50,6 +50,15 @@ DExpr expPDF(DVar var,DExpr λ){
 	return λ*dE^^(-λ*var)*dIvr(DIvr.Type.leZ,-var);
 }
 
+DExpr studentTPDF(DVar var,DExpr ν){ // this has a mean only if ν>1. how to treat this?
+	auto nnorm=(1+var^^2/ν)^^(-(ν+1)/2);
+	return nnorm/dIntSmp(var,nnorm);
+}
+
+DExpr weibullPDF(DVar var,DExpr λ,DExpr k){
+	return dIvr(DIvr.Type.leZ,-var)*k/λ*(var/λ)^^(k-1)*dE^^(-(var/λ)^^k);
+}
+
 
 class Distribution{
 	int[string] vbl;
