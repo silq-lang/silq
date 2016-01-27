@@ -8,7 +8,7 @@ def main(){
     dataY := readCSV("data/LinearRegression/dataY.csv");
     n := dataX.length;
     assert(n==dataY.length);
-    n = 30;
+    n = 3;
     a := Gauss(0,1);
     b := Gauss(5,1.82574185835055371152); // TODO: what is the precise variance they want?
     invNoise := Gamma(1,1);
@@ -19,5 +19,6 @@ def main(){
         y := Gauss(a*dataX[i]+b,invNoise);
         cobserve(y,dataY[i]);
     }
-    return (a,b,invNoise);
+    //return (a,b,invNoise);
+    return invNoise;
 }

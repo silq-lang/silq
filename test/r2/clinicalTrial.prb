@@ -2,9 +2,10 @@
 // TODO: the original r2 example uses huge arrays whose indices are seldomly used
 
 def main(){
-    n := 10;
     dataControlGroup := readCSV("data/ClinicalTrial/dataControlGroup.csv");
     dataTreatedGroup := readCSV("data/ClinicalTrial/dataTreatedGroup.csv");
+    n := 100;
+    // n := dataControlGroup.length;
     
     isEffective := Bernoulli(1/2);
 
