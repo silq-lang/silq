@@ -2628,7 +2628,9 @@ class DGaussInt: DOp{
 	override @property string symbol(Format formatting){ return "(d/dx)⁻¹[e^(-x²)]"; }
 	override Precedence precedence(){ return Precedence.diff; }
 	override string toStringImpl(Format formatting,Precedence prec){
-		if(formatting==Format.matlab) return "(sqrt(pi)*(erf("~x.toStringImpl(formatting,Precedence.none)~")+1)/2)";
+		if(formatting==Format.mathematica){
+			return "Sqrt[Pi]*(Erf["~x.toStringImpl(formatting,Precedence.none)~"]+1)/2";
+		}else if(formatting==Format.matlab) return "(sqrt(pi)*(erf("~x.toStringImpl(formatting,Precedence.none)~")+1)/2)";
 		else return addp(prec,symbol(formatting)~"("~x.toStringImpl(formatting,Precedence.none)~")");
 	}
 
