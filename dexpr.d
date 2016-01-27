@@ -1380,16 +1380,16 @@ DExpr linearizeConstraints(alias filter=e=>true)(DExpr e,DVar var){ // TODO: don
 	if(!e.hasFreeVar(var)) return e;
 	if(auto p=cast(DPlus)e){
 		DExprSet r;
-		foreach(s;p.summands) DPlus.insert(r,linearizeConstraints(s,var));
+		foreach(s;p.summands) DPlus.insert(r,linearizeConstraints!filter(s,var));
 		return dPlus(r);
 	}
 	if(auto m=cast(DMult)e){
 		DExprSet r;
-		foreach(f;m.factors) DMult.insert(r,linearizeConstraints(f,var));
+		foreach(f;m.factors) DMult.insert(r,linearizeConstraints!filter(f,var));
 		return dMult(r);
 	}
 	if(auto p=cast(DPow)e){
-		return linearizeConstraints(p.operands[0],var)^^linearizeConstraints(p.operands[1],var);
+		return linearizeConstraints(p.operands[0],var)^^linearizeConstraints!filter(p.operands[1],var);
 	}
 	if(auto ivr=cast(DIvr)e) if(filter(ivr)) return linearizeConstraint(ivr,var);
 	if(auto delta=cast(DDelta)e) if(filter(delta)) return linearizeConstraint(delta,var);
@@ -2036,6 +2036,7 @@ DExpr[2] splitIntegrableFactor(DExpr e){
 bool hasZerosOfMeasureZero(DExpr e){
 	// TODO: check the necessary preconditions for those
 	// (the given equation must be nondegenerate.)
+	if(e.hasAny!DIvr) return false; // TODO: make sure this cannot actually happen
 	return true; // TODO: actually check this!
 }
 
@@ -2105,13 +2106,6 @@ class DInt: DOp{
 			return staticSimplify(tmp,getDeBruinExpr(var,expr,tmp));
 		}
 		auto nexpr=expr.simplify(facts);
-		/+auto nnexpr=nexpr.linearizeConstraints(var).simplify(facts);
-		if(nnexpr !is nexpr){
-			dw(var);
-			dw(nexpr);
-			dw(nnexpr);
-			nexpr=nnexpr;
-		}+/
 		if(nexpr !is expr) expr=nexpr;
 		/*static dInt(DVar var,DExpr expr){
 			if(cast(DDeBruinVar)var){
@@ -2177,8 +2171,8 @@ class DInt: DOp{
 		}
 		nexpr=expr.linearizeConstraints!(x=>!!cast(DDelta)x)(var).simplify(facts); // TODO: only linearize the first feasible delta.
 		if(nexpr !is expr) return staticSimplify(var,nexpr);
-		/*if(auto r=deltaSubstitution(true))
-		  return r;*/
+		/+if(auto r=deltaSubstitution(true))
+		 return r;+/
 
 		if(expr is one) return null; // (infinite integral)
 
