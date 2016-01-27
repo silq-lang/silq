@@ -173,7 +173,11 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 				if(auto l=cast(DLog)pw.operands[0])
 					if(l.e is var) y=pw.operands[1];
 			}
-			if(y !is null) return AntiD(dLog(var)^^(y+1)/(y+1));
+			if(y !is null){
+				return AntiD(
+					dIvr(DIvr.Type.eqZ,y+1)*dLog(dLog(var))+
+					dIvr(DIvr.Type.neqZ,y+1)*dLog(var)^^(y+1)/(y+1));
+			}
 		}
 	}
 	// integrate log to some positive integer power

@@ -613,10 +613,21 @@ void test(){
 	//writeln("∫dx∫dy [1/x+y≤0]".dParse.simplify(one));
 	//writeln("∫dx (1/x^(1/2)+-x/x^(1/2))·[0≤x]·[x≤1]".dParse.simplify(one)); // TODO
 	//writeln("[-2+⅟y≤0]·[-⅟y+1≤0]·[y≠0]·⅟y²".dParse.linearizeConstraints("y".dVar).simplify(one));
-	//writeln("∫dy log(y)²·[0<y]·[y≤x]".dParse.simplify(one));
-	//writeln("∫dy log(y)³·[0<y]·[y≤x]".dParse.simplify(one));
-	//writeln("∫dy log(y)³·[0<y]·[y≤x]".dParse.simplify(one));
-	//writeln("∫dy log(y)⁴·[0<y]·[y≤x]".dParse.simplify(one));
+	/+writeln("∫dy log(y)^(-2)·[0<y]·[y≤x]".dParse.simplify(one));
+	writeln("∫dy log(y)^(-1)·[0<y]·[y≤x]".dParse.simplify(one));
+	writeln("∫dy log(y)·[0<y]·[y≤x]".dParse.simplify(one));
+	writeln("∫dy log(y)²·[0<y]·[y≤x]".dParse.simplify(one));
+	writeln("∫dy log(y)³·[0<y]·[y≤x]".dParse.simplify(one));
+	writeln("∫dy log(y)³·[0<y]·[y≤x]".dParse.simplify(one));
+	writeln("∫dy log(y)⁴·[0<y]·[y≤x]".dParse.simplify(one));+/
+
+	/+writeln("∫dy log(y)^(-2)/y·[1/100<y]·[y≤x]".dParse.simplify(one)); // TODO: 1/log(x)
+	writeln("∫dy log(y)^(-1)/y·[1/100<y]·[y≤x]".dParse.simplify(one));
+	writeln("∫dy log(y)/y·[1/100<y]·[y≤x]".dParse.simplify(one));
+	writeln("∫dy log(y)²/y·[1/100<y]·[y≤x]".dParse.simplify(one));
+	writeln("∫dy log(y)³/y·[1/100<y]·[y≤x]".dParse.simplify(one));
+	writeln("∫dy log(y)³/y·[1/100<y]·[y≤x]".dParse.simplify(one));
+	writeln("∫dy log(y)⁴/y·[1/100<y]·[y≤x]".dParse.simplify(one));+/
 }
 /*
 [([x=0]+x)·(1+[x=0])≤0]
