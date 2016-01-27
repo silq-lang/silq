@@ -639,6 +639,14 @@ private struct Analyzer{
 				if(auto c=transformConstr(oe.e)){
 					dist.observe(c);
 				}
+			}else if(auto co=cast(CObserveExp)e){
+				static bool warned=false;
+				if(!warned){
+					err.note("warning: cobserve is not a rigorous primitive",co.loc);
+					warned=true;
+				}
+				if(auto ex=transformExp(co.val))
+				   dist.distribution=dist.distribution*dDelta(dVar(co.var.name)-ex);
 			}else if(!cast(ErrorExp)e) err.error("unsupported",e.loc);
 		}
 		return dist;

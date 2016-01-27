@@ -469,6 +469,7 @@ struct Parser{
 			case Tok!"for": return parseFor();
 			case Tok!"assert": return parseAssert();
 			case Tok!"observe": return parseObserve();
+			case Tok!"cobserve": return parseCObserve();
 			default: break;
 		}
 		Expression left;
@@ -571,6 +572,16 @@ struct Parser{
 		auto exp=parseExpression();
 		expect(Tok!")");
 		return res=New!ObserveExp(exp);
+	}
+	CObserveExp parseCObserve(){
+		mixin(SetLoc!CObserveExp);
+		expect(Tok!"cobserve");
+		expect(Tok!"(");
+		auto var=parseIdentifier();
+		expect(Tok!",");
+		auto val=parseExpression();
+		expect(Tok!")");
+		return res=New!CObserveExp(var,val);
 	}
 };
 

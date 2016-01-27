@@ -203,3 +203,12 @@ class ObserveExp: Expression{
 	}
 	override string toString(){ return "observe("~e.toString()~")"; }
 }
+
+class CObserveExp: Expression{
+	Identifier var;
+	Expression val;
+	this(Identifier var,Expression val){
+		this.var=var; this.val=val;
+	}
+	override string toString(){ return "cobserve("~var.toString()~","~val.toString()~")"; }
+}

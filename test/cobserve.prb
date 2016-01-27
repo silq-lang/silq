@@ -1,0 +1,7 @@
+
+def main(){
+    x := Uniform(0,1);
+    y := Uniform(x,2*x);
+    cobserve(y,2/3);
+    return x;
+}
