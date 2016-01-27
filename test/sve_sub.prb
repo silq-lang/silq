@@ -3,4 +3,5 @@ def main(){
     r := Uniform(0,1) + Gauss(dd,1);// + Gauss(10,1);
     //r := Gauss(dd,1);
     return r;
+    // TODO: prove this is normalized
 }

@@ -17,5 +17,6 @@ def main(){ // didItRain
     wetGrass := temp2 && rain || temp3 && sprinkler;
 
     observe(wetGrass);
-    return rain; // ((9·δ[-rain+1]·⅟179750+9·δ[-rain]·⅟719000)·([-rain=0]·⅟10+[rain≠0])+(9·δ[-rain+1]·⅟719000+9·δ[-rain]·⅟179750)·([-rain=0]·⅟2+[rain≠0])+21·δ[-rain]·⅟7190000+59·δ[-rain+1]·⅟7190000)·(3000+7000·[-rain=0]+7000·[rain≠0])
+    return rain; // expected: ((1000·δ[-rain+1]·⅟6471+4000·δ[rain]·⅟6471)·(81·[rain=0]·⅟200+9·[rain≠0]·⅟10+9·⅟200)+(1000·δ[rain]·⅟6471+4000·δ[-rain+1]·⅟6471)·(81·[rain=0]·⅟1000+9·[rain≠0]·⅟10+9·⅟1000))·(3·⅟10+7·[rain=0]·⅟10+7·[rain≠0]·⅟10)
+    // TODO: better simplification?
 }

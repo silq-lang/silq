@@ -3,6 +3,6 @@ def bothHeads(){
     secondCoin := Bernoulli(1/2);
     bothHeads := firstCoin && secondCoin;
     observe(bothHeads == 0);
-    return (firstCoin,secondCoin);
+    return (firstCoin,secondCoin); // expected: ([firstCoin=0]+[firstCoin≠0]·[secondCoin=0])·(δ[-firstCoin+1]·⅟2+δ[firstCoin]·⅟2)·(δ[-secondCoin+1]·⅟2+δ[secondCoin]·⅟2)
     // TODO: simplify more
 }

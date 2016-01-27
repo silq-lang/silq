@@ -2,5 +2,5 @@ def main(){
     x := Uniform(0,1);
     k := 2;
     y := k*x;
-    return y;
+    return y; // expected: [-2+y≤0]·[-y≤0]·⅟2
 }

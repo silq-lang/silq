@@ -1,4 +1,6 @@
 def main(){
     x := Bernoulli(1/2);
     y := if x { 2 };
+    return y; // expected: [∫dξ₁1≠0]·δ[y]
+    // TODO: fix output (p(y) = [∫dξ₁1≠0]·δ[y])
 }

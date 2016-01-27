@@ -1,6 +1,6 @@
 def main(){
     x := UniformInt(0,2);
-    y := UniformInt(0,x);
+    y := UniformInt(0,x); // TODO!
     z := x*y;
     return z;
 }
