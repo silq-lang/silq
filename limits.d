@@ -162,8 +162,13 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 					return null;
 				}
 				if(l0 is -dInf){
-					if(auto c=cast(Dℕ)l1)
+					if(dIvr(DIvr.Type.leZ,-l1).simplify(facts) is zero)
+						return zero;
+					if(auto c=cast(Dℕ)l1){
+						assert(c.c>=0);
+						if(c.c==0) return one;
 						return c.c%2?-dInf:dInf;
+					}
 					return null;
 				}
 				if(l0 is dInf){
