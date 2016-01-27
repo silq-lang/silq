@@ -28,7 +28,7 @@ Future Work:
 
 
 - bugs:
-  division.prb: resulting expression integrates to 1/2 instead of 1 (fixed?)
+  divbyzero7.prb: returned pdf is 0 for some reason
 
 
 

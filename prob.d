@@ -628,6 +628,10 @@ void test(){
 	writeln("∫dy log(y)³/y·[1/100<y]·[y≤x]".dParse.simplify(one));
 	writeln("∫dy log(y)³/y·[1/100<y]·[y≤x]".dParse.simplify(one));
 	writeln("∫dy log(y)⁴/y·[1/100<y]·[y≤x]".dParse.simplify(one));+/
+	//auto e="[-1+-x≤0]·[-1+-y≤0]·[-1+x≤0]·[-1+y≤0]·[y≠0]·δ[-z+x·⅟y]·⅟4".dParse;
+	/+auto e1=dIntSmp("y".dVar,e).simplify(one);
+	auto e2=dIntSmp("x".dVar,e1).simplify(one);
+	writeln(e2);+/
 }
 /*
 [([x=0]+x)·(1+[x=0])≤0]

@@ -2,7 +2,5 @@ def main(){
     x := Uniform(-1,1);
     y := Uniform(-1,1);
     z := x/y;
-    return z; // ((∫dξ₁[-1+-ξ₁≤0]·[-1+ξ₁≤0]·[-ξ₁+-⅟z≠0]·[-ξ₁+-⅟z≤0]·[-⅟z+ξ₁≤0]·[ξ₁≠0]·⅟(-4·[⅟ξ₁≤0]·⅟ξ₁+4·[-⅟ξ₁≤0]·⅟ξ₁))·[-z≤0]+(∫dξ₁[-1+-ξ₁≤0]·[-1+ξ₁≤0]·[-ξ₁+⅟z≠0]·[-ξ₁+⅟z≤0]·[ξ₁+⅟z≤0]·[ξ₁≠0]·⅟(-4·[⅟ξ₁≤0]·⅟ξ₁+4·[-⅟ξ₁≤0]·⅟ξ₁))·[z≤0])·[z≠0]+(∫dξ₁[-1+-ξ₁≤0]·[-1+ξ₁≤0]·[ξ₁≠0]·⅟(-4·[⅟ξ₁≤0]·⅟ξ₁+4·[-⅟ξ₁≤0]·⅟ξ₁))·[-z=0]
-    // (the important thing is that the zero-probability division by zero isn't reported)
-    // (TODO: this can be improved, e.g. case split on ⅟ξ₁≤0)
+    return z; // TODO: BUG: why does this return 0?
 }
