@@ -151,12 +151,44 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 		return AntiD(dPlus(s));
 	}
 	if(auto p=cast(DLog)nonIvrs){
+		// TODO: linear functions of var
 		if(p.e is var){
 			static DExpr logIntegral(DExpr e){
 				return e*safeLog(e)-e;
 			}
 			// constraint: lower && upper
 			return AntiD(logIntegral(var));
+		}
+	}
+	// integrate log(x)ʸ/x to log(x)ʸ⁺¹/(y+1)
+	if(auto p=cast(DMult)nonIvrs){
+		auto inv=1/var;
+		if(p.hasFactor(inv)){
+			auto without=p.withoutFactor(inv);
+			DExpr y=null;
+			// TODO: linear functions of var
+			if(auto l=cast(DLog)without){
+				if(l.e is var) y=one;
+			}else if(auto pw=cast(DPow)without){
+				if(auto l=cast(DLog)pw.operands[0])
+					if(l.e is var) y=pw.operands[1];
+			}
+			if(y !is null) return AntiD(dLog(var)^^(y+1)/(y+1));
+		}
+	}
+	// integrate log to some positive integer power
+	if(auto p=cast(DPow)nonIvrs){
+		if(auto l=cast(DLog)p.operands[0]){
+			if(l.e is var){ // TODO: linear functions of var
+				if(auto n=cast(Dℕ)p.operands[1]){
+					DExpr dInGamma(DExpr a,DExpr z){
+						auto t=new DVar("tmp"); // TODO: get rid of this
+						return dIntSmp(t,t^^(a-1)*dE^^(-t)*dIvr(DIvr.type.leZ,z-t));
+					}
+					if(n.c>0)
+						return AntiD((-dLog(var))^^(-n)*dLog(var)^^n*dInGamma(n+1,-dLog(var)));
+				}
+			}
 		}
 	}
 	AntiD gaussianIntegral(DVar v,DExpr e){

@@ -5,5 +5,6 @@ def main(){
     a := Gauss(0,1);
     b := Gauss(0,1);
     c := a < b;
-    return (c);
+    return c; // expected: (δ[-c+1]·π·⅟2+δ[c]·π·⅟2)·⅟π
+    // TODO: eliminate the π
 }
