@@ -6,13 +6,18 @@
 def main(){
     dataX := readCSV("data/LinearRegression/dataX.csv");
     dataY := readCSV("data/LinearRegression/dataY.csv");
+    n := dataX.length;
+    assert(n==dataY.length);
+    n = 30;
     a := Gauss(0,1);
     b := Gauss(5,1.82574185835055371152); // TODO: what is the precise variance they want?
     invNoise := Gamma(1,1);
-    y := array(dataY.length);
-    for i in [0..dataY.length){
-        y[i] = Gauss(a*dataX[i]+b,invNoise);
-	observe(y[i] == dataY[i]);
+    //y := array(n);
+    for i in [0..n){
+        // y[i] = Gauss(a*dataX[i]+b,invNoise);
+        // observe(y[i] == dataY[i]);// TODO
+        y := Gauss(a*dataX[i]+b,invNoise);
+        cobserve(y,dataY[i]);
     }
     return (a,b,invNoise);
 }

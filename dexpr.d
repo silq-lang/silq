@@ -1814,6 +1814,8 @@ class DIvr: DExpr{ // iverson brackets
 							dIvr(lZ,denom)*dIvr(type,-dcancel)).simplify(facts);+/
 			}
 		}
+		if(auto l=cast(DLog)e) return dIvr(type,l.e-one);
+		if(auto l=cast(DLog)-e) return dIvr(type,one-l.e);
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){
