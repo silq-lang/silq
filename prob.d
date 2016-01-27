@@ -632,6 +632,8 @@ void test(){
 	/+auto e1=dIntSmp("y".dVar,e).simplify(one);
 	auto e2=dIntSmp("x".dVar,e1).simplify(one);
 	writeln(e2);+/
+	//writeln("∫dξ₁[-ξ₁≤0]·ξ₁⁶·⅟e^ξ₁".dParse.simplify(one));
+	//writeln("lim[ξ₁ → ∞](-120·ξ₁³·⅟e^ξ₁+-360·ξ₁²·⅟e^ξ₁+-720·ξ₁·⅟e^ξ₁+-720·⅟e^ξ₁+-30·ξ₁⁴·⅟e^ξ₁+-6·ξ₁⁵·⅟e^ξ₁+-ξ₁⁶·⅟e^ξ₁)".dParse.simplify(one));
 }
 /*
 [([x=0]+x)·(1+[x=0])≤0]

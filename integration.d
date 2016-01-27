@@ -377,6 +377,6 @@ private DExpr tryIntegrateImpl(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DE
 			else DPlus.insert(doesNotWork,s);
 		}
 		if(works.length) return dPlus(works)+dInt(var,dPlus(doesNotWork)*ivrs);
-	}
+	}//else dw("fail: ","Integrate[",nonIvrs.toString(Format.mathematica),",",var.toString(Format.mathematica),"]");
 	return null; // no simpler expression available
 }

@@ -467,6 +467,7 @@ private struct Analyzer{
 			auto arr=f.readln().strip().split(",").map!strip.map!parseNum.array;
 			//enforce(f.eof);
 			arrays[id.name]=arr;
+			// dw("len: ",arr.length);
 		}catch(Exception e){
 			err.error(text("not a comma-separated list of numbers: `",path,"`"),call.loc);
 			return;
