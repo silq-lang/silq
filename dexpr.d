@@ -2446,7 +2446,9 @@ class DLog: DOp{
 	override @property string symbol(Format formatting){ return "log"; }
 	override Precedence precedence(){ return Precedence.none; }
 	override string toStringImpl(Format formatting,Precedence prec){
-		return "log("~e.toStringImpl(formatting,Precedence.none)~")";
+		auto es=e.toStringImpl(formatting,Precedence.none);
+		if(formatting==Format.mathematica) return text("Log[",es,"]");
+		return text("log(",es,")");
 	}
 
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
