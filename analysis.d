@@ -164,7 +164,7 @@ private struct Analyzer{
 						DExpr sum=zero;
 						auto array=arrays[idd.name];
 						foreach(x;array) sum=sum+x;
-						// dist.assertTrue(dIvr(DIvr.Type.eqZ,sum-1),"probabilities should sum up to 1");
+						dist.assertTrue(dIvr(DIvr.Type.eqZ,sum-1),"probabilities should sum up to 1");
 						DExpr d=zero;
 						auto var=dist.getTmpVar("__c");
 						foreach(i,x;array) d=d+x*dDelta(var-i);

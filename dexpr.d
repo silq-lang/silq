@@ -1237,7 +1237,10 @@ bool couldBeZero(DExpr e){
 	if(cast(DΠ)e) return false;
 	if(cast(DE)e) return false;
 	if(auto c=cast(Dℕ)e) return c.c==0;
-	if(auto c=cast(DFloat)e) return c.c==0;
+	if(auto c=cast(DFloat)e){
+		import std.math;
+		return approxEqual(c.c,0);
+	}
 	if(auto p=cast(DPow)e) return couldBeZero(p.operands[0]);
 	if(cast(DGaussInt)e) return false;
 	if(auto p=cast(DPlus)e){
@@ -1830,6 +1833,17 @@ class DIvr: DExpr{ // iverson brackets
 			case neqZ: return x(c.c!=0);
 			case lZ: return x(c.c<0);
 			case leZ: return x(c.c<=0);
+			}
+		}
+		if(auto f=cast(DFloat)e){
+			// TODO: ok?
+			DExpr y(bool b){ return b?one:zero; }
+			import std.math;
+			final switch(type) with(Type){
+			case eqZ: return y(approxEqual(f.c,0));
+			case neqZ: return y(!approxEqual(f.c,0));
+			case lZ: return y(f.c<=0&&!approxEqual(f.c,0));
+			case leZ: return y(f.c<=0||approxEqual(f.c,0));
 			}
 		}
 		auto cancel=uglyFractionCancellation(e);
