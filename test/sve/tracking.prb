@@ -10,11 +10,11 @@ def tracking(){
     data[6]=6.4;data[7]=7.5;data[8]=8.0;data[9]=8.1; // TODO: array literals
     dd := Uniform(0,10);
     trackings := array(10);
-    for i in [0..2){ // TODO: 10
+    for i in [0..10){ // TODO: 10
         which := Uniform(0,1);
 	trackings[i] = if which < 0.05 { Uniform(0,10); } else { if which < 0.9 { Gauss(dd,2) } else { T(10,1); }}
     }
-    for i in [0..0){
+    for i in [0..10){
         observe(trackings[i] == data[i]);
     }
     return dd;
