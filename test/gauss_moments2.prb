@@ -1,4 +1,4 @@
-
+ 
 def main(){
     x := Gauss(0,1);
     return Expectation(x^2); // expected: δ[-r₁+1]

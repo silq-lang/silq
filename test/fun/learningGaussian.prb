@@ -3,17 +3,14 @@
 
 def main(){
     n := 100;
-    gaussianData := array(n);
-    for i in [0..n){
-        gaussianData[i] = Gauss(0,1);
-    }
+    gaussianData := readCSV("data/LearningGaussian/data.csv");
 
     mean := Gauss(0,100);
     prec := Gamma(1,1);
     for i in [0..n){
     	x := gaussianData[i];
         y := Gauss(mean,prec);
-	observe(y==x);
+	cobserve(y,x);
     }
     return (mean,prec);
 }
