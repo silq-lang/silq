@@ -112,6 +112,7 @@ class Distribution{
 		r.freeVars=orig.freeVars;
 		r.tmpVars=orig.tmpVars;
 		r.distribution=d1+d2;
+		r.error=orig.error;
 		if(error !is zero || b.error !is zero)
 			r.error=(orig.error+error+b.error).simplify(one);
 		return r;
