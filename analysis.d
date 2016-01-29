@@ -262,6 +262,7 @@ private struct Analyzer{
 				dothw.distribution=dothw.distribution*dIvr(DIvr.Type.eqZ,cond);
 				auto athen=Analyzer(dthen,err,arrays.dup,deterministic.dup);
 				auto then=athen.transformExp(ite.then);
+				if(!then) unwind();
 				athen.dist.initialize(var,then);
 				if(!ite.othw){
 					err.error("missing else for if expression",ite.loc);
@@ -269,6 +270,7 @@ private struct Analyzer{
 				}
 				auto aothw=Analyzer(dothw,err,arrays.dup,deterministic.dup);
 				auto othw=aothw.transformExp(ite.othw);
+				if(!othw) unwind();
 				aothw.dist.initialize(var,othw);
 				dist=athen.dist.join(dist,aothw.dist);
 				foreach(k,v;deterministic){
