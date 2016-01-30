@@ -577,7 +577,7 @@ struct Parser{
 		mixin(SetLoc!CObserveExp);
 		expect(Tok!"cobserve");
 		expect(Tok!"(");
-		auto var=parseIdentifier();
+		auto var=parseExpression();
 		expect(Tok!",");
 		auto val=parseExpression();
 		expect(Tok!")");

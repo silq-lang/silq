@@ -649,8 +649,13 @@ private struct Analyzer{
 					err.note("warning: cobserve is not a rigorous primitive",co.loc);
 					warned=true;
 				}
-				if(auto ex=transformExp(co.val))
-				   dist.distribution=dist.distribution*dDelta(dVar(co.var.name)-ex);
+				if(auto var=transformExp(co.var)){
+					if(cast(DVar)var){
+						if(auto ex=transformExp(co.val)){
+							dist.distribution=dist.distribution*dDelta(var-ex);
+						}
+					}else err.error("observed quantity must be a variable",co.loc);
+				}
 			}else if(!cast(ErrorExp)e) err.error("unsupported",e.loc);
 		}
 		return dist;
