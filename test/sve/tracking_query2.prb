@@ -7,7 +7,7 @@ def T(){ // T(10,1,0)
 }
 
 def main(){ // tracking
-    data := readCSV("data/tracking/query_sasa.csv");
+    data := readCSV("data/tracking/query2.csv");
     d := Uniform(0,10);
     for i in [0..data.length){
         which := Uniform(0,1);

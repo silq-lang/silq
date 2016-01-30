@@ -10,4 +10,4 @@ test/runtests
 *tmp.deleteme
 Cuba*
 *octave-workspace
-weakref.d
+*.zip

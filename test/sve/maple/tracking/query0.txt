@@ -1,0 +1,1 @@
+p(d) = limit(1/10*piecewise((-10)+d<pZ,1,0)*piecewise((-d)<pZ,1,0),pZ=0,right)
