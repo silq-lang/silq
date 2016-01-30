@@ -49,7 +49,6 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr)out(res){
 		auto status=ivr.getBoundForVar(var,bound);
 		final switch(status) with(BoundStatus){
 		case fail:
-			 // TODO: non-linear bounds
 			SolutionInfo info;
 			SolUse usage={caseSplit:true,bound:true};
 			bound=solveFor(ivr.e,var,zero,usage,info);
@@ -173,7 +172,7 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 				if(auto l=cast(DLog)pw.operands[0])
 					if(l.e is var) y=pw.operands[1];
 			}
-			if(y !is null){
+			if(y !is null && !y.hasFreeVar(var)){
 				return AntiD(
 					dIvr(DIvr.Type.eqZ,y+1)*dLog(dLog(var))+
 					dIvr(DIvr.Type.neqZ,y+1)*dLog(var)^^(y+1)/(y+1));
