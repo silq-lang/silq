@@ -189,7 +189,7 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 						return dIntSmp(t,t^^(a-1)*dE^^(-t)*dIvr(DIvr.type.leZ,z-t));
 					}
 					if(n.c>0)
-						return AntiD((-dLog(var))^^(-n)*dLog(var)^^n*dInGamma(n+1,-dLog(var)));
+						return AntiD(mone^^n*dInGamma(n+1,-dLog(var)));
 				}
 			}
 		}
