@@ -6,7 +6,7 @@ void main(){
 	auto dataControlGroup = f.readText("dataControlGroup.csv").strip().split(",");
 	auto dataTreatedGroup = f.readText("dataTreatedGroup.csv").strip().split(",");
 	assert(dataControlGroup.length==1000 && dataTreatedGroup.length==1000);
-	int n=500;
+	int n=100;
 	write("Bind(Bernoulli(1/2),isEffective,");
 	write("Bind(BetaD(1,1),probControl,");
 	write("Bind(BetaD(1,1),probTreated,");

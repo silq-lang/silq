@@ -164,7 +164,7 @@ private struct Analyzer{
 						DExpr sum=zero;
 						auto array=arrays[idd.name];
 						foreach(x;array) sum=sum+x;
-						dist.assertTrue(dIvr(DIvr.Type.eqZ,sum-1),"probabilities should sum up to 1");
+						dist.assertTrue(dIvr(DIvr.Type.eqZ,sum-1),"probabilities should sum up to 1"); // TODO: don't enforce this too vigorously for floating point arguments.
 						DExpr d=zero;
 						auto var=dist.getTmpVar("__c");
 						foreach(i,x;array) d=d+x*dDelta(var-i);
@@ -464,7 +464,7 @@ private struct Analyzer{
 				if(n.length==1) n~="";
 				import std.exception;
 				enforce(n.length==2);
-				if(n[1].length) return dFloat((n[0]~"."~n[1]).to!double);
+				if(n[1].length) return dFloat((n[0]~"."~n[1]).to!real);
 				return dℕ((n[0]~n[1]).ℕ)/(ℕ(10)^^n[1].length);
 			}
 			auto arr=f.readln().strip().split(",").map!strip.map!parseNum.array;

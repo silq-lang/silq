@@ -19,7 +19,7 @@ def main(){
     sigmaY := Uniform(0, 100);
     n := dataY.length;
     assert(n==369);
-    n := 10;
+    n = 10;
     for i in [0..n){
         yHat := a1[dataPerson[i]-1] + a2[dataPerson[i]-1]*dataTime[i];
         y := Gauss(yHat,sigmaY);
