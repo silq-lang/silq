@@ -259,7 +259,10 @@ class DFloat : DExpr{
 	override string toStringImpl(Format formatting,Precedence prec){
 		import std.format;
 		string r=format("%.16e",c);
-		if(formatting==Format.maple){
+		if(formatting==Format.mathematica){
+			if(r.canFind("e"))
+				r="("~r.replace("e","*10^")~")";
+		}else if(formatting==Format.maple){
 			if(c<0) r="("~r~")";
 		}else if(prec>Precedence.uminus&&c<0)
 			r="("~r~")";
