@@ -25,6 +25,8 @@ DExpr uniformIntPDFNnorm(DVar var,DExpr a,DExpr b){
 		return dPlus(r)/(b-a+1);
 	}
 	return dIvr(DIvr.Type.leZ,a-var)*dIvr(DIvr.Type.leZ,var-b)*dDelta(dSin(dΠ*var)/dΠ);
+	//auto tmp=new DVar("tmp"); // TODO: get rid of this!
+	//return dSumSmp(tmp,dBounded!"[]"(tmp,a,b)*dDelta(tmp-var));
 }
 
 DExpr uniformIntPDF(DVar var,DExpr a,DExpr b){

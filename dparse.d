@@ -94,6 +94,14 @@ DExpr dParse(string s){ // TODO: this is work in progress, usually updated in or
 			return dInt(iVar,iExp);
 		}
 
+		DExpr parseDSum(){
+			expect('∑');
+			expect('_');
+			auto iVar=parseDVar();
+			auto iExp=parseMult();
+			return dSum(iVar,iExp);
+		}
+
 		DExpr parseLim()in{assert(code.startsWith("lim"));}body{
 			code=code["lim".length..$];
 			expect('[');
@@ -166,6 +174,7 @@ DExpr dParse(string s){ // TODO: this is work in progress, usually updated in or
 			if(cur()=='[') return parseDIvr();
 			if(cur()=='δ') return parseDDelta();
 			if(cur()=='∫') return parseDInt();
+			if(cur()=='∑') return parseDSum();
 			if(cur()=='√') return parseSqrt();
 			if(code.startsWith("log")) return parseLog();
 			if(code.startsWith("lim")) return parseLim();

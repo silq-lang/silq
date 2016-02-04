@@ -2130,7 +2130,7 @@ class DInt: DOp{
 	override string toStringImpl(Format formatting,Precedence prec){
 		if(formatting==Format.mathematica){
 			return text("Integrate[",expr.toStringImpl(formatting,Precedence.none),",{",var.toStringImpl(formatting,Precedence.none),",-Infinity,Infinity}]");
-		}if(formatting==Format.maple){
+		}else if(formatting==Format.maple){
 			return text("int(",expr.toStringImpl(formatting,Precedence.none),",",var.toStringImpl(formatting,Precedence.none),"=-infinity..infinity)");
 		}else if(formatting==Format.sympy){
 			return text("integrate(",expr.toStringImpl(formatting,Precedence.none),",(",var.toStringImpl(formatting,Precedence.none),",-oo,oo))");
@@ -2168,6 +2168,7 @@ class DInt: DOp{
 			auto tmp=new DVar("tmp"); // TODO: get rid of this!
 			return staticSimplify(tmp,getDeBruinExpr(var,expr,tmp));
 		}
+		// TODO: move (most of) the following into the implementationof definiteIntegral
 		auto nexpr=expr.simplify(facts);
 		if(nexpr !is expr) expr=nexpr;
 		/*static dInt(DVar var,DExpr expr){
@@ -2245,6 +2246,15 @@ class DInt: DOp{
 			if(auto r=definiteIntegral(var,expr))
 				return r.simplify(facts);
 		}
+		// pull sums out (TODO: ok?)
+		foreach(f;expr.factors){
+			if(auto sum=cast(DSum)f){
+				auto tmp1=new DVar("tmp1"); // TODO: get rid of this!
+				auto tmp2=new DVar("tmp2"); // TODO: get rid of this!
+				auto expr=sum.getExpr(tmp1)*expr.withoutFactor(f);
+				return dSumSmp(tmp1,dIntSmp(tmp2,expr.substitute(var,tmp2)));
+			}
+		}
 		// Fubini
 		static int fubirec=0; fubirec++; scope(exit) fubirec--;
 		if(++fubirec<=10) // TODO: fix this properly. this is a hack.
@@ -2316,6 +2326,91 @@ DExpr dInt(DVar var,DExpr expr){
 	return uniqueBindingDExpr!DInt(dbvar,expr);
 }
 
+import summation;
+class DSum: DOp{
+		private{
+		DDeBruinVar var;
+		DExpr expr;
+		this(DDeBruinVar var,DExpr expr){ this.var=var; this.expr=expr; }
+	}
+	DExpr getExpr(DVar var){ return getDeBruinExpr(this.var,expr,var); }
+	override @property Precedence precedence(){ return Precedence.intg; }
+	override @property string symbol(Format formatting){ return "∑"; }
+	override string toStringImpl(Format formatting,Precedence prec){
+		if(formatting==Format.mathematica){
+			return text("Sum[",expr.toStringImpl(formatting,Precedence.none),",{",var.toStringImpl(formatting,Precedence.none),",-Infinity,Infinity}]");
+		}else if(formatting==Format.maple){
+			return text("sum(",expr.toStringImpl(formatting,Precedence.none),",",var.toStringImpl(formatting,Precedence.none),"=-infinity..infinity)"); // TODO: correct?
+		}else if(formatting==Format.sympy){
+			return text("sum(",expr.toStringImpl(formatting,Precedence.none),",(",var.toStringImpl(formatting,Precedence.none),",-oo,oo))"); // TODO: correct?
+		}else{
+			return addp(prec,symbol(formatting)~"_"~var.toStringImpl(formatting,Precedence.none)~expr.toStringImpl(formatting,precedence));
+		}
+	}
+	static DExpr constructHook(DVar var,DExpr expr){
+		return staticSimplify(var,expr);
+	}
+	static DExpr staticSimplify(DVar var,DExpr expr,DExpr facts=one){
+		if(simplification==Simpl.raw){
+			if(expr is zero) return zero;
+			return null;
+		}
+		if(cast(DDeBruinVar)var){
+			auto tmp=new DVar("tmp"); // TODO: get rid of this!
+			return staticSimplify(tmp,getDeBruinExpr(var,expr,tmp));
+		}
+		auto nexpr=expr.simplify(facts);
+		if(nexpr !is expr) expr=nexpr;
+		auto ow=expr.splitMultAtVar(var); // not a good strategy without modification, due to deltas
+		if(ow[0] !is one) return ow[0]*dSumSmp(var,ow[1]);
+		if(expr is one) return null; // (infinite sum)
+		if(simplification!=Simpl.deltas){
+			nexpr=expr.linearizeConstraints!(x=>!!cast(DIvr)x)(var).simplify(facts);
+			if(nexpr !is expr) return staticSimplify(var,nexpr);
+			if(auto r=computeSum(var,expr))
+				return r.simplify(facts);
+		}
+		return null;
+	}
+	override DExpr simplifyImpl(DExpr facts){
+		 auto r=staticSimplify(var,expr);
+		 return r?r:this;
+	}
+
+	override int forEachSubExpr(scope int delegate(DExpr) dg){
+		return 0;
+	}
+	override int freeVarsImpl(scope int delegate(DVar) dg){
+		return expr.freeVarsImpl(v=>v is var?0:dg(v));
+	}
+	override DExpr substitute(DVar var,DExpr e){
+		if(this.var is var) return this;
+		return dSum(this.var,expr.substitute(var,e));
+	}
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args){
+		return dSum(var,expr.substituteFun(fun,q,args));
+	}
+	override DExpr incDeBruin(int di){
+		return dSum(var.incDeBruin(di),expr.incDeBruin(di));
+	}
+}
+
+DExpr dSumSmp(DVar var,DExpr expr){
+	if(auto r=DSum.constructHook(var,expr)) return r;
+	return dSum(var,expr);
+}
+
+DExpr dSum(DVar var,DExpr expr){
+	//if(auto dbvar=cast(DDeBruinVar)var) return uniqueBindingDExpr!DSum(dbvar,expr);
+	auto dbvar=cast(DDeBruinVar)var;
+	if(!dbvar){
+		dbvar=dDeBruinVar(1);
+		expr=expr.incDeBruin(1).substitute(var,dbvar);
+	}
+	return uniqueBindingDExpr!DSum(dbvar,expr);
+}
+
+
 import limits;
 class DLim: DOp{
 	DVar v;
@@ -2374,7 +2469,7 @@ DExpr dLimSmp(DVar v,DExpr e,DExpr x){
 }
 
 DExpr dLim(DVar v,DExpr e,DExpr x){
-	//if(auto dbvar=cast(DDeBruinVar)var) return uniqueBindingDExpr!DInt(dbvar,expr);
+	//if(auto dbvar=cast(DDeBruinVar)var) return uniqueBindingDExpr!DSum(dbvar,expr);
 	assert(!e.hasFreeVar(v));
 	auto dbvar=cast(DDeBruinVar)v;
 	if(!dbvar){
@@ -2623,7 +2718,7 @@ class DFloor: DOp{
 		if(ne!is e) return dFloor(ne);
 		if(e.isFraction()){
 			auto nd=e.getFraction();
-			return dℕ(nd[0]/nd[1]);
+			return dℕ(floordiv(nd[0],nd[1]));
 		}
 		return null;
 	}
@@ -2667,7 +2762,7 @@ class DCeil: DOp{
 		if(ne!is e) return dCeil(ne);
 		if(e.isFraction()){
 			auto nd=e.getFraction();
-			return dℕ((nd[0]+nd[1]-1)/nd[1]);
+			return dℕ(ceildiv(nd[0],nd[1]));
 		}
 		return null;
 	}
@@ -2838,7 +2933,7 @@ DFun dFun(DFunVar fun,DExpr arg){
 
 import std.traits: ParameterTypeTuple;
 import std.typetuple;
-auto visit(T,S...)(DExpr node,S args){
+T visit(T,S...)(DExpr node,S args){
 	enum manualPropagate=false;
 	auto result = T(args);
 	alias TypeTuple!(__traits(getOverloads,T,"perform")) overloads;
@@ -2859,25 +2954,32 @@ auto visit(T,S...)(DExpr node,S args){
 	static if(!manualPropagate) return result;
 }
 
-auto allOf(T)(DExpr e,bool belowIntegrals=false){
+auto allOf(T)(DExpr e,bool belowBindings=false){
 	static struct AllOfVisitor{
 		scope int delegate(T) dg;
-		bool belowIntegrals;
+		bool belowBindings;
 		int r=0;
 		int perform(T t){
 			if(auto r=dg(t))
 				return this.r=r;
-			static if(is(T==DInt)){
-				if(belowIntegrals)
-					if(auto r=t.expr.visit!AllOfVisitor(dg,belowIntegrals).r)
+			static if(is(T==DInt)||is(T==DSum)){
+				if(belowBindings)
+					if(auto r=t.expr.visit!AllOfVisitor(dg,belowBindings).r)
 					   return this.r=r;
 			}
 			return 0;
 		}
-		static if(!is(T==DInt)){
+		static if(!is(T==DInt)&&!is(T==DSum)){
 			int perform(DInt t){
-				if(belowIntegrals){
-					if(auto r=t.expr.visit!AllOfVisitor(dg,belowIntegrals).r)
+				if(belowBindings){
+					if(auto r=t.expr.visit!AllOfVisitor(dg,belowBindings).r)
+					   return this.r=r;
+				}
+				return 0;
+			}
+			int perform(DSum t){ // static foreach would be nice here
+				if(belowBindings){
+					if(auto r=t.expr.visit!AllOfVisitor(dg,belowBindings).r)
 					   return this.r=r;
 				}
 				return 0;
@@ -2886,15 +2988,15 @@ auto allOf(T)(DExpr e,bool belowIntegrals=false){
 	}
 	static struct AllOf{
 		DExpr e;
-		bool belowIntegrals;
+		bool belowBindings;
 		int opApply(scope int delegate(T) dg){
-			return e.visit!AllOfVisitor(dg,belowIntegrals).r;
+			return e.visit!AllOfVisitor(dg,belowBindings).r;
 		}
 	}
-	return AllOf(e,belowIntegrals);
+	return AllOf(e,belowBindings);
 }
 
-bool hasAny(T)(DExpr e,bool belowIntegrals=true){ foreach(x;allOf!T(e,belowIntegrals)) return true; return false; }
+bool hasAny(T)(DExpr e,bool belowBindings=true){ foreach(x;allOf!T(e,belowBindings)) return true; return false; }
 
 bool hasFreeVars(DExpr e){ foreach(x;e.freeVars) return true; return false; }
 

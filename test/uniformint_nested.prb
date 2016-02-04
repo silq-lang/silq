@@ -1,0 +1,8 @@
+// skipped
+// TODO: this should terminate
+
+def main(){
+    a := UniformInt(0,10);
+    b := UniformInt(0,a);
+    return b;
+}

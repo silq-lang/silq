@@ -493,7 +493,13 @@ auto nC(ℕ n){
 	return NCRange(n);
 }
 
+ℕ ceildiv(ℕ a,ℕ b){
+	return floordiv(a+b-1,b);
+}
 
+ℕ floordiv(ℕ a,ℕ b){
+	return (abs(a)/abs(b))*((a<0)^(b<0)?-1:1);
+}
 
 void matlabPlot(string expression,string variable){
 	import std.process,std.file;
