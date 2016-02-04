@@ -144,7 +144,7 @@ private struct Analyzer{
 							unwind();
 						}
 						auto a=doIt(ce.args[0]),b=doIt(ce.args[1]);
-						auto tmp="tmp".dVar;
+						auto tmp=new DVar("tmp"); // TODO: get rid of this
 						auto nnorm=uniformIntPDFNnorm(tmp,a,b);
 						auto norm=dIntSmp(tmp,nnorm);
 						dist.assertTrue(dIvr(DIvr.Type.neqZ,norm),"no integers in range");
