@@ -13,9 +13,3 @@ def main(){
     }
     return r; // expected: ⅟2·⅟e^(r²·⅟4)·⅟√π̅
 }
-
-Bind(Gaussian(0,1),x1,
-Bind(Gaussian(0,1),x3,
-Ret(x1+x3)))
-
-Gaussian(0,2^(1/2))

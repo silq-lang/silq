@@ -1,0 +1,9 @@
+
+def main(){
+    p := Beta(1,1);
+    w := Bernoulli(p);
+    x := Bernoulli(p);
+    y := Bernoulli(p);
+    z := Bernoulli(p);
+    return (w,x,y,z);
+}
