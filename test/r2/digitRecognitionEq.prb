@@ -19,12 +19,12 @@ def main(){
 
     probs := array(10);
     for i in [0..10){ probs[i] = dataPrior[i]; }
-    probs[9]=1;
-    for i in [0..9){ probs[9]-=probs[i]; } // fix rounding errors: TODO: make tolerance configurable
+    // probs[9]=1;
+    // for i in [0..9){ probs[9]-=probs[i]; } // fix rounding errors: TODO: make tolerance configurable
     y := Categorical(probs);
     n := dataX.length;
     assert(n==784);
-    n=100;
+    //n=100;
 
     if y==0{
         for i in [0..n){
@@ -75,7 +75,7 @@ def main(){
         for i in [0..n){
              x := Bernoulli(dataParams10[i]);
              observe(x == dataX[i]);
-        }                
+        }
     }}}}}}}}}}
-    return y; // expected: 1.5753310375910156e-66·δ[-6+y]+3.2488621047990486e-78·δ[y]+3.8449060423476068e-119·δ[-4+y]+3.9869724121887049e-57·δ[-5+y]+6.4480104927269477e-82·δ[-8+y]+6.9171797278672122e-18·δ[-2+y]+δ[-3+y]
+    return y; // expected: 1.2845654376053378e-151·δ[-9+y]+1.5753310375910065e-66·δ[-6+y]+3.2488621047989999e-78·δ[y]+3.6292341137355297e-125·δ[-1+y]+3.9859766543648140e-119·δ[-4+y]+3.9869724121886395e-57·δ[-5+y]+6.4480104927268174e-82·δ[-8+y]+6.9171797278671309e-18·δ[-2+y]+9.4515477402753591e-157·δ[-7+y]+9.9999999999999999e-01·δ[-3+y]
 }

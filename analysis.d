@@ -163,11 +163,12 @@ private struct Analyzer{
 						}
 						DExpr sum=zero;
 						auto array=arrays[idd.name];
+
 						foreach(x;array){
 							dist.assertTrue(dIvr(DIvr.Type.leZ,-x),"probability of category should be non-negative");
 							sum=sum+x;
 						}
-						dist.assertTrue(dIvr(DIvr.Type.eqZ,sum-1),"probabilities should sum up to 1");
+						dist.assertTrue(dIvr(DIvr.Type.eqZ,sum-1),"probabilities should sum up to 1"); // TODO: don't enforce this too vigorously for floating point arguments.
 						DExpr d=zero;
 						auto var=dist.getTmpVar("__c");
 						foreach(i,x;array) d=d+x*dDelta(var-i);
@@ -265,6 +266,7 @@ private struct Analyzer{
 				dothw.distribution=dothw.distribution*dIvr(DIvr.Type.eqZ,cond);
 				auto athen=Analyzer(dthen,err,arrays.dup,deterministic.dup);
 				auto then=athen.transformExp(ite.then);
+				if(!then) unwind();
 				athen.dist.initialize(var,then);
 				if(!ite.othw){
 					err.error("missing else for if expression",ite.loc);
@@ -272,6 +274,7 @@ private struct Analyzer{
 				}
 				auto aothw=Analyzer(dothw,err,arrays.dup,deterministic.dup);
 				auto othw=aothw.transformExp(ite.othw);
+				if(!othw) unwind();
 				aothw.dist.initialize(var,othw);
 				dist=athen.dist.join(dist,aothw.dist);
 				foreach(k,v;deterministic){
@@ -465,7 +468,7 @@ private struct Analyzer{
 				if(n.length==1) n~="";
 				import std.exception;
 				enforce(n.length==2);
-				if(n[1].length) return dFloat((n[0]~"."~n[1]).to!double);
+				if(n[1].length) return dFloat((n[0]~"."~n[1]).to!real);
 				return dℕ((n[0]~n[1]).ℕ)/(ℕ(10)^^n[1].length);
 			}
 			auto arr=f.readln().strip().split(",").map!strip.map!parseNum.array;
@@ -650,8 +653,13 @@ private struct Analyzer{
 					err.note("warning: cobserve is not a rigorous primitive",co.loc);
 					warned=true;
 				}
-				if(auto ex=transformExp(co.val))
-				   dist.distribution=dist.distribution*dDelta(dVar(co.var.name)-ex);
+				if(auto var=transformExp(co.var)){
+					if(cast(DVar)var){
+						if(auto ex=transformExp(co.val)){
+							dist.distribution=dist.distribution*dDelta(var-ex);
+						}
+					}else err.error("observed quantity must be a variable",co.loc);
+				}
 			}else if(!cast(ErrorExp)e) err.error("unsupported",e.loc);
 		}
 		return dist;

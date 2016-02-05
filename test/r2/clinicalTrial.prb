@@ -20,7 +20,7 @@ def main(){
         }
         for i in [0..n){
             treatedGroup_i := Bernoulli(probTreated);
-	    observe(treatedGroup_i == dataTreatedGroup[i]);
+            observe(treatedGroup_i == dataTreatedGroup[i]);
         }
     }else{
         for i in [0..n){
@@ -29,7 +29,7 @@ def main(){
         }
         for i in [0..n){
             treatedGroup_i := Bernoulli(probAll);
-	    observe(treatedGroup_i == dataTreatedGroup[i]);
+            observe(treatedGroup_i == dataTreatedGroup[i]);
         }
     }
 

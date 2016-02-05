@@ -469,7 +469,8 @@ alias ℕ=BigInt;
 ℕ lcm(ℕ a,ℕ b){ return a*(b/gcd(a,b)); }
 
 long toLong(ℕ a){ return a.to!string.to!long; } // TODO: do properly
-double toDouble(ℕ a){ return a.to!string.to!double; } // TODO: do properly
+//double toDouble(ℕ a){ return a.to!string.to!double; } // TODO: do properly
+real toReal(ℕ a){ return a.to!string.to!real; } // TODO: do properly
 
 ℕ abs(ℕ x){ return x<0?-x:x; }
 

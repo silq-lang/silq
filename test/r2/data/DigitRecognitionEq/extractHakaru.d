@@ -7,7 +7,8 @@ string process(int y){
 	auto data=readText("input.csv").strip().split(",");
 	assert(data.length==784);
 	assert(dataParams.length==data.length);
-	int n=784;
+	//int n=784;
+	int n=600;
 	string r="";
 	int closing=0;
 	foreach(i;0..n){

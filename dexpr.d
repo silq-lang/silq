@@ -143,10 +143,10 @@ abstract class DExpr{
 		return mixin("e.dℕ "~op~" this");
 	}
 
-	final opBinary(string op)(double e)if(ValidBinary!op){
+	final opBinary(string op)(real e)if(ValidBinary!op){
 		return mixin("this "~op~" e.dFloat");
 	}
-	final opBinaryRight(string op)(double e)if(ValidBinary!op){
+	final opBinaryRight(string op)(real e)if(ValidBinary!op){
 		return mixin("e.dFloat "~op~" this");
 	}
 
@@ -254,12 +254,15 @@ Dℕ nthRoot(Dℕ x,ℕ n){
 }
 
 class DFloat : DExpr{
-	double c;
-	private this(double c){ this.c=c; }
+	real c;
+	private this(real c){ this.c=c; }
 	override string toStringImpl(Format formatting,Precedence prec){
 		import std.format;
 		string r=format("%.16e",c);
-		if(formatting==Format.maple){
+		if(formatting==Format.mathematica){
+			if(r.canFind("e"))
+				r="("~r.replace("e","*10^")~")";
+		}else if(formatting==Format.maple){
 			if(c<0) r="("~r~")";
 		}else if(prec>Precedence.uminus&&c<0)
 			r="("~r~")";
@@ -269,8 +272,8 @@ class DFloat : DExpr{
 	mixin Constant;
 }
 
-//DFloat[double] uniqueMapDFloat; // TODO: get rid of this!
-DExpr dFloat(double c){
+//DFloat[real] uniqueMapDFloat; // TODO: get rid of this!
+DExpr dFloat(real c){
 	import std.math: floor;
 	import std.format: format;
 	if(floor(c)==c) return dℕ(ℕ(format("%.0f",c))); // TODO: don't rely on format here!
@@ -477,7 +480,7 @@ class DPlus: DCommutAssocOp{
 						return (f.c+g.c).dFloat;
 					if(e2.isFraction()){
 						auto nd=e2.getFraction();
-						return (f.c+toDouble(nd[0])/toDouble(nd[1])).dFloat;
+						return (f.c+toReal(nd[0])/toReal(nd[1])).dFloat;
 					}
 				}
 				return null;
@@ -711,7 +714,7 @@ class DMult: DCommutAssocOp{
 						return (f.c*g.c).dFloat;
 					if(e2.isFraction()){
 						auto nd=e2.getFraction();
-						return (f.c*toDouble(nd[0])/toDouble(nd[1])).dFloat;
+						return (f.c*toReal(nd[0])/toReal(nd[1])).dFloat;
 					}
 				}
 				return null;
@@ -1061,13 +1064,13 @@ class DPow: DBinaryOp{
 				return (f1.c^^f2.c).dFloat;
 			if(e2.isFraction()){
 				auto nd=e2.getFraction();
-				return (f1.c^^(toDouble(nd[0])/toDouble(nd[1]))).dFloat;
+				return (f1.c^^(toReal(nd[0])/toReal(nd[1]))).dFloat;
 			}
 		}
 		if(e1.isFraction()){
 			if(auto f2=cast(DFloat)e2){
 				auto nd=e1.getFraction();
-				return ((toDouble(nd[0])/toDouble(nd[1]))^^f2.c).dFloat;
+				return ((toReal(nd[0])/toReal(nd[1]))^^f2.c).dFloat;
 			}
 		}
 		if(auto fct=factorDIvr!(e=>e^^e2)(e1)) return fct;
@@ -1232,13 +1235,16 @@ abstract class DUnaryOp: DOp{
 }
 DExpr dUMinus(DExpr e){ return mone*e; }
 
+bool approxEqual(real a,real b){
+	return a==b;
+}
+
 // TODO: improve these procedures:
 bool couldBeZero(DExpr e){
 	if(cast(DΠ)e) return false;
 	if(cast(DE)e) return false;
 	if(auto c=cast(Dℕ)e) return c.c==0;
 	if(auto c=cast(DFloat)e){
-		import std.math;
 		return approxEqual(c.c,0);
 	}
 	if(auto p=cast(DPow)e) return couldBeZero(p.operands[0]);
@@ -1838,7 +1844,6 @@ class DIvr: DExpr{ // iverson brackets
 		if(auto f=cast(DFloat)e){
 			// TODO: ok?
 			DExpr y(bool b){ return b?one:zero; }
-			import std.math;
 			final switch(type) with(Type){
 			case eqZ: return y(approxEqual(f.c,0));
 			case neqZ: return y(!approxEqual(f.c,0));

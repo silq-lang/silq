@@ -122,7 +122,7 @@ DExpr dParse(string s){ // TODO: this is work in progress, usually updated in or
 			if(cur()=='.'){
 				string s="0.";
 				for(next();'0'<=cur()&&cur()<='9';next()) s~=cur();
-				return (s.to!double+toDouble(r)).dFloat; // TODO: this is a hack
+				return (s.to!real+toReal(r)).dFloat; // TODO: this is a hack
 			}
 			return dℕ(r);
 		}
