@@ -120,6 +120,11 @@ class Distribution{
 		return r;
 	}
 
+	DContextVars context=null;
+	DContextVars getContext(string name,DFunVar fun)in{assert(!context);}body{
+		return context=dContextVars(name,fun);
+	}
+
 	DVar declareVar(string name,bool addtosymtab=true){
 		if(name in symtab) return null;
 		auto v=dVar(name);
@@ -196,27 +201,20 @@ class Distribution{
 		DExpr rerr=q.error;
 		assert(q.freeVars.length==1,"TODO!");
 		import hashtable;
-		auto distBefore=distribution;
-		auto argSet=args.map!(a=>cast(DExpr)a).setx;
-		foreach(v;freeVars){
-			if(v in argSet) continue;
-			distBefore=dIntSmp(v,distBefore);
-		}
 		auto r=getTmpVar("__r");
 		foreach(v;q.freeVars){
 			rdist=rdist.substitute(q.freeVars.element,r);
 			rerr=rerr.substitute(q.freeVars.element,r);
 		}
-		DExpr deltas=one;
+		auto context=freeVars.dup;
 		DVar[] vars;
 		foreach(a;args){
 			auto var=getTmpVar("__arg");
-			deltas=deltas*dDelta(var-a);
 			vars~=var;
 		}
 		auto oldDist=distribution;
-		distribution = oldDist*rdist.substituteFun("q".dFunVar,deltas,vars);
-		auto nerror = oldDist*rerr.substituteFun("q".dFunVar,deltas,vars);
+		distribution = rdist.substituteFun("q".dFunVar,oldDist,vars,context);
+		auto nerror = rerr.substituteFun("q".dFunVar,oldDist,vars,context);
 		foreach(v;vars){
 			tmpVars.remove(v);
 			freeVars.remove(v);
