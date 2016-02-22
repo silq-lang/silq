@@ -1,3 +1,6 @@
+// skipped
+// TODO: too slow
+
 def main(){
     s := 0;
     sis := 0;
@@ -23,11 +26,11 @@ def main(){
     }
     sis = sis * skip; // this works (but is true only for even n)
     //observe(m > 0);
-    //sis = sis * n * (n-m)/m;  // assertion failure. 
+    //sis = sis * n * (n-m)/m;
 
    res := (sis - s);
-   //if res < 0 { res = 0 - res; }   // Causes Psy to crash
+   //if res < 0 { res = 0 - res; } // Caused Psy to crash once (TODO: figure this out.)
    //return res;
-   return Expectation(res);  // fail, assertion error
+   return Expectation(res); // fail, assertion error
    //return Expectation(res^2 - (Expectation(res))^2);
 }

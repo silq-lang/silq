@@ -1,3 +1,6 @@
+// skipped
+// TODO: too slow
+
 def main(){
     min := 1000000000000000000;
     mins := 0;
@@ -31,9 +34,9 @@ def main(){
        if sis < mins { mins = sis; }
     }
 
-    res := (min - mins);
-   //if res < 0 { res = 0 - res; }   // Causes Psy to crash
+   res := (min - mins);
+   //if res < 0 { res = 0 - res; }  // Caused Psy to crash once (TODO: figure this out.)
    return res;
-   //return Expectation(res);  // fail, assertion error
+   //return Expectation(res);
    //return Expectation(res^2 - (Expectation(res))^2);
 }

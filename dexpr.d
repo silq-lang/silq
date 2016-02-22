@@ -1417,7 +1417,6 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 			auto ow=splitPlusAtVar(lhs,var);
 			if(cast(DPlus)ow[1]){
 				if(auto poly=(lhs-rhs).asPolynomialIn(var,2)){
-					assert(poly.degree>=2);
 					auto a=poly.coefficients.get(2,zero);
 					auto b=poly.coefficients.get(1,zero);
 					auto c=poly.coefficients.get(0,zero);
