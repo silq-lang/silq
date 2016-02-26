@@ -174,6 +174,8 @@ class DVar: DExpr{
 				name=name.replace(""d~cast(dchar)('₀'+x),""d~cast(dchar)('0'+x));
 			return name.to!string;
 		}
+		/+if(name=="tmp") // Can be convenient for debugging. TODO: get rid of "tmp" vars
+		 return name~(cast(void*)this).to!string;+/
 		return name;
 	}
 
@@ -522,6 +524,7 @@ class DPlus: DCommutAssocOp{
 		// TODO: use suitable data structures
 		foreach(s;summands){
 			if(auto nws=combine(s,summand,facts)){
+				assert(s in summands);
 				summands.remove(s);
 				insertAndSimplify(summands,nws,facts);
 				return;
@@ -577,6 +580,12 @@ class DPlus: DCommutAssocOp{
 	}
 
 	override DExpr simplifyImpl(DExpr facts){
+		/+// static int i; if(++i>20000) dw(this," ",facts); // for debugging perforation bug.
+		//static int i=0; if(++i>1000) dw(this,facts); scope(exit) --i;
+		static bool[TupleX!(DExpr,DExpr)] has;
+		scope(exit) has.remove(tuplex(cast(DExpr)this,facts));
+		if(tuplex(cast(DExpr)this,facts) in has){ writeln("!"); return this; }
+		has[tuplex(cast(DExpr)this,facts)]=true;+/
 		DExprSet summands;
 		foreach(s;this.summands)
 			insertAndSimplify(summands,s,facts);

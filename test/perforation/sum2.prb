@@ -11,7 +11,8 @@ def main(){
     xs := array(n);
 
     for i in [0..n) {
-    	xs[i] = Gauss(0,1); //Gauss(0,3) fail, Gauss(0,a) fail
+    	//xs[i] = Gauss(0,1); //Gauss(0,3) fail, Gauss(0,a) fail
+	xs[i] = Uniform(0,1);
 	                      //for uniform(0,1) produces correct expectation/variance
 			      //slow for Beta and Gamma distributions 
     }
