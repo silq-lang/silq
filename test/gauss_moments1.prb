@@ -1,15 +1,15 @@
 def Variance(X){
-    return Expectation(X^2)-Expectation(X)^2; // TODO: why doesn't this work?
-    //return 0;
+    return Expectation(X^2)-Expectation(X)^2;
 }
 
 def main(){
     mu := 12;
     nu := 36;
-    //g := Gauss(mu,nu);
-    g := Uniform(0,1);
+    g := Gauss(mu,nu);
+    //g := Uniform(0,1);
     mu' := Expectation(g);
     nu' := Variance(g);
     nu'' := Expectation(g^2)-Expectation(g)^2;
-    assert(nu' == nu''); // TODO!
+    assert(nu' == nu'');
+    return (); // expected: 1
 }

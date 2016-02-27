@@ -1,5 +1,5 @@
 
-def x(){
+def main(){
     x := Uniform(0,1);
     y := x^2;
     return y; // expected: [-1+√y̅≤0]·[-y≤0]·[y≠0]·⅟2·⅟√y̅

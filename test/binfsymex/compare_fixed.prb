@@ -2,7 +2,7 @@
 // (Original code uses arrays, this should be rewritten.)
 // TODO: why is this so slow? (Try n=100).
 
-def compare(){
+def main(){ // compare
     r := true;
     x := true;
     n := 10;

@@ -92,6 +92,7 @@ class Distribution{
 		r.distribution=distribution;
 		r.error=error;
 		r.parents=parents~this; // TODO: elegance
+		r.context=context;
 		return r;
 	}
 
@@ -118,6 +119,11 @@ class Distribution{
 		if(error !is zero || b.error !is zero)
 			r.error=(orig.error+error+b.error).simplify(one);
 		return r;
+	}
+
+	DContextVars context=null;
+	DContextVars getContext(string name,DFunVar fun)in{assert(!context);}body{
+		return context=dContextVars(name,fun);
 	}
 
 	DVar declareVar(string name,bool addtosymtab=true){
@@ -187,6 +193,7 @@ class Distribution{
 		auto factor=distribution;
 		foreach(v;freeVars)
 			factor=dIntSmp(v,factor);
+		if(context) factor=dInt(context,factor);
 		factor=factor+error;
 		distribution=(dIvr(DIvr.Type.neqZ,factor)*(distribution/factor)).simplify(one);
 		error=(dIvr(DIvr.Type.eqZ,factor)+dIvr(DIvr.Type.neqZ,factor)*(error/factor)).simplify(one);
@@ -196,27 +203,19 @@ class Distribution{
 		DExpr rerr=q.error;
 		assert(q.freeVars.length==1,"TODO!");
 		import hashtable;
-		auto distBefore=distribution;
-		auto argSet=args.map!(a=>cast(DExpr)a).setx;
-		foreach(v;freeVars){
-			if(v in argSet) continue;
-			distBefore=dIntSmp(v,distBefore);
-		}
+		auto context=freeVars.dup;
 		auto r=getTmpVar("__r");
-		foreach(v;q.freeVars){
-			rdist=rdist.substitute(q.freeVars.element,r);
-			rerr=rerr.substitute(q.freeVars.element,r);
-		}
-		DExpr deltas=one;
+		rdist=rdist.substitute(q.freeVars.element,r);
+		rerr=rerr.substitute(q.freeVars.element,r);
 		DVar[] vars;
+		auto oldDist=distribution;
 		foreach(a;args){
 			auto var=getTmpVar("__arg");
-			deltas=deltas*dDelta(var-a);
 			vars~=var;
+			oldDist=oldDist*dDelta(var-a);
 		}
-		auto oldDist=distribution;
-		distribution = oldDist*rdist.substituteFun("q".dFunVar,deltas,vars);
-		auto nerror = oldDist*rerr.substituteFun("q".dFunVar,deltas,vars);
+		distribution = rdist.substituteFun("q".dFunVar,oldDist,vars,context);
+		auto nerror = rerr.substituteFun("q".dFunVar,oldDist,vars,context);
 		foreach(v;vars){
 			tmpVars.remove(v);
 			freeVars.remove(v);

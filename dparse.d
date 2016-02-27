@@ -148,18 +148,30 @@ DExpr dParse(string s){ // TODO: this is work in progress, usually updated in or
 
 		DVar parseDVar(){
 			string s=parseIdentifier();
+			if(cur()=='⃗'){
+				next();
+				auto fun="q".dFunVar; // TODO: fix!
+				return dContextVars(s,fun);
+			}
 			return dVar(s);
 		}
+		DFunVar curFun=null;
 		DExpr parseDVarDFun(){
 			string s=parseIdentifier();
+			if(curFun&&cur()=='⃗'){
+				next();
+				return dContextVars(s,curFun);
+			}
 			if(cur()!='(') return dVar(s);
+			auto oldCurFun=curFun; scope(exit) curFun=oldCurFun;
+			curFun=dFunVar(s);
 			DExpr[] args;
 			do{
 				next();
 				if(cur()!=')') args~=parseDExpr();
 			}while(cur()==',');
 			expect(')');
-			return dFun(dFunVar(s),args);
+			return dFun(curFun,args);
 		}
 
 		DExpr parseBase(){
