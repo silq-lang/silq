@@ -1,5 +1,5 @@
 
-def compare(){
+def main(){
     r := false;
     r ||= Bernoulli(1/2);
     s := true;

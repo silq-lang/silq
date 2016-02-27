@@ -1,4 +1,4 @@
-def divide(){
+def main(){ // divide
     x := Uniform(0,1);
     y := Uniform(-1,1);
     z := x/y;

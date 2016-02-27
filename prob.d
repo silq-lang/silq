@@ -38,7 +38,10 @@ string readCode(string path){ return readCode(File(path)); }
 
 void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool renormalize){
 	auto dist=analyze(fd,err).dup;
-	if(renormalize) dist.renormalize();
+	if(renormalize){
+		dist.renormalize();
+		//dist.distribution=dist.distribution.substituteFun("q".dFunVar,one,DVar[].init,SetX!DVar.init).simplify(one);
+	}
 	import approximate;
 	//import hashtable; dist.distribution=approxLog(dist.freeVars.element);
 	//import hashtable; dist.distribution=approxGaussInt(dist.freeVars.element);
@@ -660,6 +663,9 @@ void test(){
 	//writeln(dIntSmp("x".dVar,dSumSmp("n".dVar,dDelta("x".dVar-"n".dVar))));
 	//writeln("∫dξ₁∑_ξ₂[-10+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₁+ξ₂]".dParse.simplify(one));
 	//writeln("∫da(∑_ξ₁δ[-a+ξ₁])·[-10+a≤0]·[-a≤0]".dParse.simplify(one));
+	//SetX!DVar s;
+	//s.insert("x".dVar); //s.insert("__r₁".dVar);
+	//writeln("(∫dγ⃗∫dξ₁ q(ξ₁,γ⃗)·ξ₁)".dParse.substituteFun("q".dFunVar,"δ[-x+3]·δ[-x+__arg₁]".dParse,["__arg₁".dVar],s).simplify(one));
 }
 /*
 [([x=0]+x)·(1+[x=0])≤0]

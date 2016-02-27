@@ -2902,10 +2902,18 @@ class DFun: DOp{ // uninterpreted functions
 
 	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
 		auto newArgs=this.args.dup;
+		if(newArgs.length&&cast(DContextVars)newArgs[$-1]) newArgs=newArgs[0..$-1];
 		foreach(ref a;newArgs) a=a.substituteFun(fun,q,args,context);
-		if(fun !is this.fun||args.length!=this.args.length) return dFun(this.fun,newArgs);
+		bool check(){
+			if(fun !is this.fun) return false;
+			if(args.length!=newArgs.length)
+				return false;
+			return true;
+		}
+		if(!check()) return dFun(this.fun,newArgs);
 		auto r=q;
 		foreach(i,a;newArgs) r=r.substitute(args[i],a); // TODO: this does not avoid capture properly
+		//dw(q," ",r," ",this.args," ",args," ",newArgs);
 		return r;
 	}
 
@@ -2951,7 +2959,7 @@ class DContextVars: DVar{
 		this.fun=fun;
 	}
 	override string toStringImpl(Format formatting,Precedence prec){
-		return text(" ⃗",super.toStringImpl(formatting,prec));
+		return text(super.toStringImpl(formatting,prec),"⃗");
 	}
 }
 

@@ -92,6 +92,7 @@ class Distribution{
 		r.distribution=distribution;
 		r.error=error;
 		r.parents=parents~this; // TODO: elegance
+		r.context=context;
 		return r;
 	}
 
@@ -192,6 +193,7 @@ class Distribution{
 		auto factor=distribution;
 		foreach(v;freeVars)
 			factor=dIntSmp(v,factor);
+		if(context) factor=dInt(context,factor);
 		factor=factor+error;
 		distribution=(dIvr(DIvr.Type.neqZ,factor)*(distribution/factor)).simplify(one);
 		error=(dIvr(DIvr.Type.eqZ,factor)+dIvr(DIvr.Type.neqZ,factor)*(error/factor)).simplify(one);
@@ -201,18 +203,17 @@ class Distribution{
 		DExpr rerr=q.error;
 		assert(q.freeVars.length==1,"TODO!");
 		import hashtable;
-		auto r=getTmpVar("__r");
-		foreach(v;q.freeVars){
-			rdist=rdist.substitute(q.freeVars.element,r);
-			rerr=rerr.substitute(q.freeVars.element,r);
-		}
 		auto context=freeVars.dup;
+		auto r=getTmpVar("__r");
+		rdist=rdist.substitute(q.freeVars.element,r);
+		rerr=rerr.substitute(q.freeVars.element,r);
 		DVar[] vars;
+		auto oldDist=distribution;
 		foreach(a;args){
 			auto var=getTmpVar("__arg");
 			vars~=var;
+			oldDist=oldDist*dDelta(var-a);
 		}
-		auto oldDist=distribution;
 		distribution = rdist.substituteFun("q".dFunVar,oldDist,vars,context);
 		auto nerror = rerr.substituteFun("q".dFunVar,oldDist,vars,context);
 		foreach(v;vars){

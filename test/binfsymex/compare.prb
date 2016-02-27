@@ -2,7 +2,7 @@
 // This is buggy: it does not actually compute whether a <= b.
 // TODO: Original code uses arrays, this should be rewritten.
 
-def compare(){
+def main(){ // compare
     r := true;
     //s := true;
     // n := 100, TODO: allow
