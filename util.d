@@ -19,8 +19,8 @@ int crash()(int x=0){
 }
 /////////////////////
 
-import std.c.stdlib;
-import std.c.string;
+import core.stdc.stdlib;
+import core.stdc.string;
 
 import std.traits;
 import utf=std.utf, uni=std.uni;
