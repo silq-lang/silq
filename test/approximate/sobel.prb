@@ -3,7 +3,7 @@
 def noise_a() {
   //return Uniform(-0.001, 0.001);
   //return Gauss(0, 0.01);
-  //return (-1 * Bernoulli(0.5)) * Gamma(1,2) * .0001;
+  //return (1 - 2 * Bernoulli(0.5)) * Gamma(1,2);
   return Gamma(1,2) * 0.001;
 }
 
