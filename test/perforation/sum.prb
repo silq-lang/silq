@@ -18,7 +18,7 @@ def main(){
 	}
     }
 
-    assume(m > 0);
+    //assume(m > 0);
     sis = sis * n * (n-m) / m;
     
 

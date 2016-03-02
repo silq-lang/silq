@@ -1,7 +1,7 @@
 // Written in the D programming language.
 
 import std.stdio;
-import std.c.stdlib;
+import core.stdc.stdlib;
 
 enum CSI = "\033[";
 enum RESET=CSI~"0m";

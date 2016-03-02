@@ -232,7 +232,13 @@ private struct Analyzer{
 							total=dInt(v,total);
 							expct=dInt(v,expct);
 						}
+						if(auto ctx=dist.context){
+							total=dInt(ctx,total);
+							expct=dInt(ctx,expct);
+						}
 						auto tmp=dist.getTmpVar("__exp");
+						// for obvious reasons, this will never fail:
+						dist.assertTrue(dIvr(DIvr.Type.neqZ,total),"expectation can be computed only in feasible path");
 						dist.distribute(dDelta(expct/total-tmp));
 						return tmp;
 					default: break;
@@ -670,7 +676,11 @@ Distribution analyze(FunctionDef def,ErrorHandler err){
 	auto dist=new Distribution();
 	DExpr[] args;
 	foreach(a;def.args) args~=dist.declareVar(a.name);
-	if(args.length) dist.distribute(dFun("q".dFunVar,args)); // TODO: constant name sufficient?
+	if(def.name.name!="main"||args.length){ // TODO: move this decision to caller
+		auto q="q".dFunVar;
+		args~=dist.getContext("γ",q);
+		dist.distribute(dFun(q,args)); // TODO: constant name sufficient?
+	}
 	return analyzeWith(def,dist,err);
 }
 

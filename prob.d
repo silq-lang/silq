@@ -38,7 +38,10 @@ string readCode(string path){ return readCode(File(path)); }
 
 void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool renormalize){
 	auto dist=analyze(fd,err).dup;
-	if(renormalize) dist.renormalize();
+	if(renormalize){
+		dist.renormalize();
+		//dist.distribution=dist.distribution.substituteFun("q".dFunVar,one,DVar[].init,SetX!DVar.init).simplify(one);
+	}
 	import approximate;
 	//import hashtable; dist.distribution=approxLog(dist.freeVars.element);
 	//import hashtable; dist.distribution=approxGaussInt(dist.freeVars.element);
@@ -660,6 +663,12 @@ void test(){
 	//writeln(dIntSmp("x".dVar,dSumSmp("n".dVar,dDelta("x".dVar-"n".dVar))));
 	//writeln("∫dξ₁∑_ξ₂[-10+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₁+ξ₂]".dParse.simplify(one));
 	//writeln("∫da(∑_ξ₁δ[-a+ξ₁])·[-10+a≤0]·[-a≤0]".dParse.simplify(one));
+	//writeln("-tmp7F10320E0680·tmp7F1032681400+-tmp7F1032681400·tmp7F10326B17C0+-tmp7F1032681400·tmp7F1032A7FDC0+-tmp7F103277B640+tmp7F1032681400·tmp7F103306F980+-tmp7F1032681400·tmp7F103306F980+tmp7F10320E0680·tmp7F1032681400+tmp7F1032323440·tmp7F1032681400+tmp7F10323BAD80·tmp7F1032681400+tmp7F1032681400+tmp7F1032681400·tmp7F103290E4C0+tmp7F1032681400·tmp7F1032D9B640".dParse.simplify("[(-tmp7F1032681400·tmp7F103306F980+tmp7F10320E0680·tmp7F1032681400+tmp7F1032681400·tmp7F10326B17C0+tmp7F1032681400·tmp7F1032A7FDC0+tmp7F103277B640)·⅟tmp7F1032681400+tmp7F10330892C0=0]·[-1+tmp7F10330892C0≤0]·[-tmp7F103306F980+1+tmp7F10320E0680+tmp7F1032323440+tmp7F10323BAD80+tmp7F10326B17C0+tmp7F103290E4C0+tmp7F1032A7FDC0+tmp7F1032D9B640+tmp7F10330892C0=0]·[-tmp7F10330892C0≤0]·[tmp7F1032681400≠0]".dParse));
+	//writeln(DPlus.recursiveCombine("-tmp7F9FE5070800·tmp7F9FE54CB240".dParse,"(-tmp7F9FE5A65D80+1+tmp7F9FE4AD6A80+tmp7F9FE4D19900+tmp7F9FE4E14200+tmp7F9FE53028C0+tmp7F9FE54CB240+tmp7F9FE5791C80+tmp7F9FE5A7F6C0)·tmp7F9FE5070800".dParse,one));
+	//writeln("-tmp7FFFF6143580·tmp7FFFF6537C00+-tmp7FFFF6537C00·tmp7FFFF6550FC0+-tmp7FFFF6537C00·tmp7FFFF6B9BE80+-tmp7FFFF68AB0C0+tmp7FFFF6537C00·tmp7FFFF6EBB300".dParse.simplify("[(-tmp7FFFF6537C00·tmp7FFFF6EBB300+tmp7FFFF6143580·tmp7FFFF6537C00+tmp7FFFF6537C00·tmp7FFFF6550FC0+tmp7FFFF6537C00·tmp7FFFF6B9BE80+tmp7FFFF68AB0C0)·⅟tmp7FFFF6537C00+tmp7FFFF6F9F040=0]·[-1+tmp7FFFF6F9F040≤0]·[-tmp7FFFF6EBB300+1+tmp7FFFF6143580+tmp7FFFF61A4180+tmp7FFFF637CCC0+tmp7FFFF6550FC0+tmp7FFFF68ABE40+tmp7FFFF6B9BE80+tmp7FFFF6E8EA40+tmp7FFFF6F9F040=0]·[-tmp7FFFF6F9F040≤0]·[tmp7FFFF6537C00≠0]".dParse));
+	//SetX!DVar s;
+	//s.insert("x".dVar); //s.insert("__r₁".dVar);
+	//writeln("(∫dγ⃗∫dξ₁ q(ξ₁,γ⃗)·ξ₁)".dParse.substituteFun("q".dFunVar,"δ[-x+3]·δ[-x+__arg₁]".dParse,["__arg₁".dVar],s).simplify(one));
 }
 /*
 [([x=0]+x)·(1+[x=0])≤0]
