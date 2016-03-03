@@ -1,0 +1,46 @@
+
+
+def f(dif) {
+    	xi := Uniform(10,20);
+    	xsi := xi + Laplace(0,1);
+ 	return dif + (xi - xsi);
+}
+
+def main() {
+
+    n := 5;
+
+//    x := Laplace(0,2);
+//    return x;
+
+/*
+    x := array(n);
+    xs := array(n);
+
+    for i in [0..n) {
+    	x[i] = Uniform(10,20);
+    	xs[i] = x[i] + Laplace(0,1);
+    }
+
+    dif := 0;
+    for i in [0..n) {
+    	  dif = dif + (x[i] - xs[i]);
+    }
+    dif = dif / n;
+    return dif;
+
+*/
+
+    dif := 0;
+    for i in [0..n) {
+       	xi := Uniform(10,20);
+    	xsi := xi + Laplace(0,1);
+ 	dif = dif + (xi - xsi);
+	
+//    	dif = f(dif);
+    }
+
+    dif = dif / n;
+    return dif;
+
+}

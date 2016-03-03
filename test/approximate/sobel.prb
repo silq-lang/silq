@@ -4,7 +4,8 @@ def noise_a() {
   //return Uniform(-0.001, 0.001);
   //return Gauss(0, 0.01);
   //return (1 - 2 * Bernoulli(0.5)) * Gamma(1,2);
-  return Gamma(1,2) * 0.001;
+  //return Gamma(1,2) * 0.001;
+  return Beta(0.5,0.5);
 }
 
 
@@ -57,10 +58,11 @@ def sobel_y() {
 def main() {
 
     dx := sobel_x();
-    dy := sobel_y();
+    //dy := sobel_y();
 
     // had to play with the noise expression in the end... sqrts do not work. 
-    res := dx + dy;
+    //res := dx + dy;
+    res := dx;
     return res;
 
 }

@@ -194,6 +194,16 @@ private struct Analyzer{
 						auto var=dist.getTmpVar("__γ");
 						dist.distribute(gammaPDF(var,α,β));
 						return var;
+					case "Laplace":
+						if(ce.args.length!=2){
+							err.error("expected two arguments (μ,b) to Laplace",ce.loc);
+							unwind();
+						}
+						auto μ=doIt(ce.args[0]),b=doIt(ce.args[1]);
+						dist.assertTrue(dIvr(DIvr.Type.lZ,-b),"b must be positive");
+						auto var=dist.getTmpVar("__γ");
+						dist.distribute(laplacePDF(var,μ,b));
+						return var;						
 					case "Exp":
 						if(ce.args.length!=1){
 							err.error("expected one argument (λ) to Exp",ce.loc);
