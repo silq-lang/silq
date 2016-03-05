@@ -669,6 +669,14 @@ void test(){
 	//SetX!DVar s;
 	//s.insert("x".dVar); //s.insert("__r₁".dVar);
 	//writeln("(∫dγ⃗∫dξ₁ q(ξ₁,γ⃗)·ξ₁)".dParse.substituteFun("q".dFunVar,"δ[-x+3]·δ[-x+__arg₁]".dParse,["__arg₁".dVar],s).simplify(one));
+	//writeln("∫dx [x·y²=z]·[0≤x]·[x≤1]".dParse.simplify(one));
+	//writeln("∫dx [f(x,y)=z]·[0≤x]·[x≤1]".dParse.simplify(one));
+	//writeln(DInt.staticSimplify("controlGroup₁".dVar,"(∫dξ₁([-1+ξ₁≤0]·[-ξ₁≤0]·probIfControl·δ[-isEffective+1]·δ[-treatedGroup₁+1]·δ[-treatedGroup₄+1]·δ[-treatedGroup₅+1]·δ[controlGroup₁]·δ[controlGroup₂]·δ[controlGroup₄]·δ[controlGroup₅]·δ[treatedGroup₂]·⅟2+[-1+ξ₁≤0]·[-ξ₁≤0]·δ[-probIfControl+ξ₁]·δ[-treatedGroup₁+1]·δ[-treatedGroup₄+1]·δ[-treatedGroup₅+1]·δ[controlGroup₁]·δ[controlGroup₂]·δ[controlGroup₄]·δ[controlGroup₅]·δ[isEffective]·δ[treatedGroup₂]·ξ₁·⅟2)·([-ξ₁+1≠0]·[-ξ₁+1≤0]+[ξ₁≠0]·[ξ₁≤0]))·[-controlGroup₁+1=0]·probIfControl".dParse));
+	//writeln("∫dξ₁[-2+-ξ₁≤0]·[-2+ξ₁≤0]·[-ξ₁²+1=0]".dParse.simplify(one));
+	//writeln("∫dx ((d/dx)⁻¹[e^(-x²)](x)*x·[0≤x]-x·[0≤x])".dParse.simplify(one));
+	//writeln("∫dξ₁∫dξ₂(∫dξ₃[-ξ₁+ξ₃≤0]·q(ξ₃,ξ₂,γ⃗))·[-ξ₁+ξ₂≤0]·[-ξ₂+ξ₁≠0]".dParse.simplify(one));
+	//writeln("∫dξ₂((0+[-ξ₂+ξ₁=0])·q(ξ₂,ξ₁,γ⃗))".dParse.simplify(one));
+	// writeln("∫dξ₁[-ξ₁≤0]·ξ₁·⅟e^(13·ξ₁²·⅟120)".dParse.simplify(one)); // TODO
 }
 /*
 [([x=0]+x)·(1+[x=0])≤0]

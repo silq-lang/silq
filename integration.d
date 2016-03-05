@@ -39,10 +39,17 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr)out(res){
 		assert(!!ivr);
 		//if(ivr.type==DIvr.Type.eqZ) return null; // TODO: eliminate eqZ early
 		if(ivr.type==DIvr.Type.eqZ||ivr.type==DIvr.Type.neqZ){
-			if(ivr.e.hasZerosOfMeasureZero()){
+			bool mustHaveZerosOfMeasureZero(){
+				auto e=ivr.e;
+				if(e !is e.linearizeConstraints(var)) return false; // TODO: guarantee this condition
+				if(e.hasAny!DIvr) return false; // TODO: make sure this cannot actually happen
+				if(e.hasAny!DFun) return false; // TODO: some proofs still possible
+				return true;
+			}
+			if(mustHaveZerosOfMeasureZero()){
 				if(ivr.type==DIvr.Type.eqZ) return zero;
 				if(ivr.type==DIvr.Type.neqZ) continue;
-			}
+			}else return null;
 		}
 		assert(ivr.type!=DIvr.Type.lZ);
 		DExpr bound;
