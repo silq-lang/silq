@@ -1,4 +1,4 @@
-
+// skipped
 // noise for memory read-write operations
 def noise_rw() {
   //return Beta(0,0.1);

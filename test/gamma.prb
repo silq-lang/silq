@@ -1,4 +1,4 @@
 def main(){
     r := Gamma(9,1/2);
-    return r; // expected: [-1+r≤0]·[-r≤0]·r⁸·⅟(-34035938·⅟√e̅+20643840)·⅟e^(r·⅟2)
+    return r; // expected: [-r≤0]·r⁸·⅟20643840·⅟e^(r·⅟2)
 }

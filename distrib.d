@@ -44,7 +44,7 @@ DExpr betaPDF(DVar var,DExpr α,DExpr β){
 	return nnorm/dIntSmp(var,nnorm);
 }
 DExpr gammaPDF(DVar var,DExpr α,DExpr β){
-	auto nnorm=var^^(α-1)*dE^^(-β*var)*dBounded!"[]"(var,zero,one);
+	auto nnorm=var^^(α-1)*dE^^(-β*var)*dIvr(DIvr.Type.leZ,-var);
 	return nnorm/dIntSmp(var,nnorm);
 }
 
