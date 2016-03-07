@@ -6,7 +6,7 @@ import lexer, parser, expression, error;
 import analysis, distrib, dexpr;
 
 bool plot=false;// TODO: get rid of globals?
-bool kill=true;
+bool kill=false;
 auto formatting=Format.default_;
 bool casBench=false;
 
