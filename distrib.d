@@ -162,7 +162,8 @@ class Distribution{
 	DExpr computeProbability(DExpr cond){
 		auto tdist=distribution*cond;
 		foreach(v;freeVars) tdist=dIntSmp(v,tdist);
-		return tdist;		
+		if(context) tdist=dInt(context,tdist);
+		return tdist;
 	}
 
 	void assertTrue(DExpr cond,lazy string msg){
@@ -227,7 +228,6 @@ class Distribution{
 			tmpVars.remove(v);
 			freeVars.remove(v);
 		}
-		foreach(v;freeVars.without(r)) nerror=dIntSmp(v,nerror);
 		error = error + nerror;
 		return r;
 	}

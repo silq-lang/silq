@@ -212,7 +212,6 @@ class DDeBruinVar: DVar{
 	int i;
 	private this(int i){ this.i=i; super("ξ"~lowNum(i)); }
 	override DDeBruinVar incDeBruin(int di){
-		assert(i+di>0);
 		return dDeBruinVar(i+di);
 	}
 }
@@ -433,6 +432,7 @@ class DPlus: DCommutAssocOp{
 	}
 
 	static void insert(ref DExprSet summands,DExpr summand)in{assert(!!summand);}body{
+		if(summand is zero) return;
 		if(summand in summands){
 			summands.remove(summand);
 			insert(summands,2*summand);
@@ -2135,7 +2135,7 @@ class DInt: DOp{
 		this(DVar var,DExpr expr){ this.var=var; this.expr=expr; }
 	}
 	DExpr getExpr(DVar var){
-		if(cast(DDeBruinVar)var) return getDeBruinExpr(this.var,expr,var);
+		if(cast(DDeBruinVar)this.var) return getDeBruinExpr(this.var,expr,var);
 		return expr;
 	}
 	override @property Precedence precedence(){ return Precedence.intg; }
@@ -2173,21 +2173,22 @@ class DInt: DOp{
 		return r;
 	}
 	
-	static DExpr staticSimplify(DVar var,DExpr expr,DExpr facts=one){
+	static DExpr staticSimplify(DVar var,DExpr expr,DExpr facts=one)in{assert(var&&expr&&facts);}body{
 		//version(DISABLE_INTEGRATION){
-		if(simplification==Simpl.raw){
-			if(expr is zero) return zero;
+		if(expr is zero) return zero;
+		if(cast(DContextVars)var) return null;
+		if(simplification==Simpl.raw)
 			return null;
-		}
 		version(INTEGRAL_STATS){
 			numIntegrals++;
 			auto dbvar=dDeBruinVar(1);
 			auto newexpr=expr.incDeBruin(1).substitute(var,dbvar);
 			integrals[newexpr]=[];
 		}
-		if(cast(DDeBruinVar)var){
+		if(auto dbvar=cast(DDeBruinVar)var){
 			auto tmp=new DVar("tmp"); // TODO: get rid of this!
-			return staticSimplify(tmp,getDeBruinExpr(var,expr,tmp),facts);
+			auto nexpr=expr.substitute(var,tmp).incDeBruin(-dbvar.i);
+			return staticSimplify(tmp,nexpr,facts);
 		}
 		auto nexpr=expr.simplify(facts);
 		if(expr !is nexpr) expr=nexpr;
@@ -2270,7 +2271,11 @@ class DInt: DOp{
 		foreach(f;expr.factors){
 			// assert(f.hasFreeVar(var));
 			if(auto other=cast(DInt)f){
-				assert(!!cast(DDeBruinVar)other.var);
+				auto dbvar=cast(DDeBruinVar)other.var;
+				int offset=0;
+				if(dbvar) offset=1-dbvar.i;
+				other=cast(DInt)other.incDeBruin(offset);
+				assert(!!other); // TODO: get rid of cast to DInt?
 				auto tmpvar1=new DVar("tmp1"); // TODO: get rid of this!
 				auto tmpvar2=new DVar("tmp2"); // TODO: get rid of this!
 				auto intExpr=expr.withoutFactor(f).substitute(var,tmpvar1)*
@@ -2278,26 +2283,26 @@ class DInt: DOp{
 				auto ow=intExpr.splitMultAtVar(tmpvar1);
 				ow[1]=ow[1].simplify(facts);
 				if(auto res=staticSimplifyMemo(tmpvar1,ow[1],facts))
-					return dIntSmp(tmpvar2,res*ow[0]);
+					return dIntSmp(tmpvar2,res*ow[0]).incDeBruin(-offset);
 			}
 		}
 		if(!expr.hasFreeVar(var)) return expr*dInt(var,one); // (infinite integral)
 		return null;
 	}
 
-	static DExpr staticSimplifyFull(DVar var,DExpr expr,DExpr facts=one){
+	static DExpr staticSimplifyFull(DVar var,DExpr expr,DExpr facts=one)in{assert(var&&expr&&facts);}body{
+		if(auto dbvar=cast(DDeBruinVar)var){
+			auto tmp=new DVar("tmp"); // TODO: get rid of this!
+			auto nexpr=expr.substitute(var,tmp).incDeBruin(-dbvar.i);
+			auto r=staticSimplifyFull(tmp,nexpr,facts);
+			return r?r.incDeBruin(dbvar.i):null;
+		}
 		auto nexpr=expr.simplify(facts);
 		if(expr !is nexpr) expr=nexpr;
 		return staticSimplify(var,expr);
 	}
 	
 	override DExpr simplifyImpl(DExpr facts){
-		if(auto dbvar=cast(DDeBruinVar)var){
-			auto tmp=new DVar("tmp"); // TODO: get rid of this!
-			auto nexpr=expr.substitute(var,tmp).incDeBruin(-dbvar.i);
-			auto r=staticSimplifyFull(tmp,nexpr,facts);
-			return r?r.incDeBruin(dbvar.i):this;
-		}
 		auto r=staticSimplifyFull(var,expr,facts);
 		return r?r:this;
 	}
@@ -2345,7 +2350,7 @@ DExpr dIntSmp(DVar var,DExpr expr){
 	return dInt(var,expr);
 }
 
-DExpr dInt(DVar var,DExpr expr){
+DExpr dInt(DVar var,DExpr expr)in{assert(var&&expr);}body{
 	if(cast(DContextVars)var) return new DInt(var,expr); // TODO: fix
 	//if(auto dbvar=cast(DDeBruinVar)var) return uniqueBindingDExpr!DInt(dbvar,expr);
 	auto dbvar=cast(DDeBruinVar)var;

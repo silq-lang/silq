@@ -676,7 +676,9 @@ void test(){
 	//writeln("∫dx ((d/dx)⁻¹[e^(-x²)](x)*x·[0≤x]-x·[0≤x])".dParse.simplify(one));
 	//writeln("∫dξ₁∫dξ₂(∫dξ₃[-ξ₁+ξ₃≤0]·q(ξ₃,ξ₂,γ⃗))·[-ξ₁+ξ₂≤0]·[-ξ₂+ξ₁≠0]".dParse.simplify(one));
 	//writeln("∫dξ₂((0+[-ξ₂+ξ₁=0])·q(ξ₂,ξ₁,γ⃗))".dParse.simplify(one));
-	// writeln("∫dξ₁[-ξ₁≤0]·ξ₁·⅟e^(13·ξ₁²·⅟120)".dParse.simplify(one)); // TODO
+	//writeln("∫dξ₁[-ξ₁≤0]·ξ₁·⅟e^(13·ξ₁²·⅟120)".dParse.simplify(one)); // TODO
+	//writeln(dIntSmp("x".dVar,"∫dξ₁∫dξ₂ δ[x+ξ₁+ξ₂]".dParse));
+	//writeln("0+∫dξ₁(0+[ξ₁=0])·q(ξ₁,γ⃗)".dParse.simplify(one));
 }
 /*
 [([x=0]+x)·(1+[x=0])≤0]
