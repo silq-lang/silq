@@ -7,6 +7,24 @@ DExpr gaussianPDF(DVar var,DExpr μ,DExpr σsq){
 	return dIvr(DIvr.Type.neqZ,σsq)*dist+dIvr(DIvr.Type.eqZ,σsq)*dDelta(var-μ);
 }
 
+DExpr rayleighPDF(DVar var,DExpr σsq){
+	auto dist=var/(σsq)*dE^^-((var)^^2/(2*σsq)) * dIvr(DIvr.Type.leZ,-var);
+	return dIvr(DIvr.Type.neqZ,σsq)*dist+dIvr(DIvr.Type.eqZ,σsq)*dDelta(var);
+}
+
+
+DExpr truncGaussianPDF(DVar var,DExpr μ,DExpr σsq, DExpr a, DExpr b){
+	auto gdist=one/(2*dΠ)^^(one/2)*dE^^-((var-μ)^^2/(2*σsq));
+	auto dist = gdist/(σsq)/(dGaussInt((b-μ)/σsq^^(one/2))-dGaussInt((a-μ)/(σsq)^^(one/2)))*dBounded!"[]"(var,a,b);
+	return dIvr(DIvr.Type.neqZ,σsq)*dist+dIvr(DIvr.Type.eqZ,σsq)*dDelta(var-μ);
+}
+
+DExpr paretoPDF(DVar var, DExpr a, DExpr b) {
+        auto dist = a * b^^a / var^^(a+one);
+	return dist * dIvr(DIvr.Type.leZ, b-var);
+}
+
+
 DExpr uniformPDF(DVar var,DExpr a,DExpr b){
 	auto diff=b-a, dist=dBounded!"[]"(var,a,b)/diff;
 	return dIvr(DIvr.Type.neqZ,diff)*dist+dIvr(DIvr.Type.eqZ,diff)*dDelta(var-a);
@@ -44,8 +62,8 @@ DExpr betaPDF(DVar var,DExpr α,DExpr β){
 	return nnorm/dIntSmp(var,nnorm);
 }
 DExpr gammaPDF(DVar var,DExpr α,DExpr β){
-	auto nnorm=var^^(α-1)*dE^^(-β*var)*dBounded!"[]"(var,zero,one);
-	return nnorm/dIntSmp(var,nnorm);
+      auto nnorm=var^^(α-1)*dE^^(-β*var)*dBounded!"[]"(var,zero,one);
+      return nnorm/dIntSmp(var,nnorm);
 }
 
 DExpr laplacePDF(DVar var, DExpr μ, DExpr b) {
