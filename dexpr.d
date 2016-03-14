@@ -2151,8 +2151,8 @@ class DInt: DOp{
 			return addp(prec,symbol(formatting)~"d"~var.toStringImpl(formatting,Precedence.none)~expr.toStringImpl(formatting,precedence));
 		}
 	}
-	static DExpr constructHook(DVar var,DExpr expr){
-		return staticSimplifyFull(var,expr);
+	static DExpr constructHook(DVar var,DExpr expr,DExpr facts){
+		return staticSimplifyFull(var,expr,facts);
 	}
 
 	version(INTEGRAL_STATS){
@@ -2169,7 +2169,7 @@ class DInt: DOp{
 		auto t=q(dInt(var,expr),facts);
 		if(t in ssimplifyMemo) return ssimplifyMemo[t]; // TODO: better solution available?
 		auto r=staticSimplify(var,expr,facts);
-		ssimplifyMemo[t]=r?r:t[0];
+		ssimplifyMemo[t]=r;
 		return r;
 	}
 	
@@ -2292,13 +2292,16 @@ class DInt: DOp{
 
 	static DExpr staticSimplifyFull(DVar var,DExpr expr,DExpr facts=one)in{assert(var&&expr&&facts);}body{
 		if(auto dbvar=cast(DDeBruinVar)var){
+			auto nesting=dbvar.i-1;
 			auto tmp=new DVar("tmp"); // TODO: get rid of this!
-			auto nexpr=expr.substitute(var,tmp).incDeBruin(-dbvar.i);
+			auto nexpr=getDeBruinExpr(var,expr.incDeBruin(-nesting),tmp);
 			auto r=staticSimplifyFull(tmp,nexpr,facts);
-			return r?r.incDeBruin(dbvar.i):null;
+			return r?r.incDeBruin(nesting):null;
 		}
 		auto nexpr=expr.simplify(facts);
-		if(expr !is nexpr) expr=nexpr;
+		if(expr !is nexpr) return dIntSmp(var,nexpr,facts);
+		/+auto ow=expr.splitMultAtVar(var);
+		if(ow[0] !is one) return ow[0]*dIntSmp(var,ow[1],facts);+/
 		return staticSimplify(var,expr);
 	}
 	
@@ -2345,8 +2348,8 @@ auto uniqueBindingDExpr(T)(DDeBruinVar v,DExpr a,DExpr b=null){
 	return r;
 }
 
-DExpr dIntSmp(DVar var,DExpr expr){
-	if(auto r=DInt.constructHook(var,expr)) return r;
+DExpr dIntSmp(DVar var,DExpr expr,DExpr facts=one){
+	if(auto r=DInt.constructHook(var,expr,facts)) return r;
 	return dInt(var,expr);
 }
 

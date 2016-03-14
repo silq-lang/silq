@@ -679,6 +679,8 @@ void test(){
 	//writeln("∫dξ₁[-ξ₁≤0]·ξ₁·⅟e^(13·ξ₁²·⅟120)".dParse.simplify(one)); // TODO
 	//writeln(dIntSmp("x".dVar,"∫dξ₁∫dξ₂ δ[x+ξ₁+ξ₂]".dParse));
 	//writeln("0+∫dξ₁(0+[ξ₁=0])·q(ξ₁,γ⃗)".dParse.simplify(one));
+	//writeln(" ∫dξ₁((-[ξ₁≤0]·⅟ξ₁+[-ξ₁≤0]·⅟ξ₁)·[ξ₁≠0]·q(r·⅟ξ₁,ξ₁,γ⃗)+(∫dξ₂ q(ξ₂,ξ₁,γ⃗))·[ξ₁=0]·δ[r])".dParse.simplify(one));
+	//writeln("∫dξ₂[ξ₁=0]·q(ξ₂,ξ₁,γ⃗)·δ[r]".dParse.simplify(one));
 }
 /*
 [([x=0]+x)·(1+[x=0])≤0]
