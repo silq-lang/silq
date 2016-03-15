@@ -40,8 +40,10 @@ void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool isMain){
 	auto dist=analyze(fd,err).dup;
 	if(isMain){
 		dist.renormalize();
-		//dist.deleteContext();
-		//dist.assumeInputNormalized();
+		if(fd.args.length){
+			dist.deleteContext(fd.args.length);
+			dist.assumeInputNormalized(fd.args.length);
+		}
 		//dist.distribution=dist.distribution.substituteFun("q".dFunVar,one,DVar[].init,SetX!DVar.init).simplify(one);
 	}
 	import dparse;

@@ -152,16 +152,14 @@ class Distribution{
 	}
 
 	DContextVars context=null;
-	size_t nParams;
 	void addArgsWithContext(DExpr[] args)in{assert(!context);}body{
-		nParams=args.length;
 		context=dContextVars("γ","q".dFunVar);
 		auto q="q".dFunVar;
 		args~=context;
 		distribute(dFun(q,args)); // TODO: constant name sufficient?
 	}
 	
-	void deleteContext(){
+	void deleteContext(size_t nParams){
 		auto vars=iota(0,nParams).map!(x=>dVar("__p"~lowNum(x))).array;
 		auto fun=dFun("q".dFunVar,cast(DExpr[])vars); // TODO: get rid of cast
 		distribution=distribution.substituteFun("q".dFunVar,fun,vars,SetX!DVar.init).simplify(one);
@@ -169,7 +167,7 @@ class Distribution{
 		context=null;
 	}
 
-	void assumeInputNormalized(){
+	void assumeInputNormalized(size_t nParams){
 		auto vars=iota(0,nParams).map!(x=>dVar("__p"~lowNum(x))).array;
 		auto fun=dFun("q".dFunVar,cast(DExpr[])vars); // TODO: get rid of cast
 		DExpr tdist=fun;

@@ -2,5 +2,5 @@ def main(arg1,arg2){
     if(arg1 != arg2){
         observe(arg1 != arg2);
     }
-    return; // expected: [∫dξ₁∫dξ₂q(ξ₂,ξ₁,γ⃗)≠0]
+    return; // expected: 1
 }
