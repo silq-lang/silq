@@ -2187,7 +2187,7 @@ class DInt: DOp{
 		if(auto dbvar=cast(DDeBruinVar)var){
 			auto nesting=dbvar.i-1;
 			auto tmp=new DVar("tmp"); // TODO: get rid of this!
-			auto nexpr=getDeBruinExpr(var,expr.incDeBruin(-nesting),tmp);
+			auto nexpr=getDeBruinExpr(dDeBruinVar(1),expr.incDeBruin(-nesting),tmp);
 			auto r=staticSimplify(tmp,nexpr,facts);
 			return r?r.incDeBruin(nesting):null;
 		}
@@ -2297,7 +2297,7 @@ class DInt: DOp{
 		if(auto dbvar=cast(DDeBruinVar)var){
 			auto nesting=dbvar.i-1;
 			auto tmp=new DVar("tmp"); // TODO: get rid of this!
-			auto nexpr=getDeBruinExpr(var,expr.incDeBruin(-nesting),tmp);
+			auto nexpr=getDeBruinExpr(dDeBruinVar(1),expr.incDeBruin(-nesting),tmp);
 			auto r=staticSimplifyFull(tmp,nexpr,facts);
 			return r?r.incDeBruin(nesting):null;
 		}
