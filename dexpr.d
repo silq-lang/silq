@@ -2134,6 +2134,7 @@ class DInt: DOp{
 		DExpr expr;
 		this(DVar var,DExpr expr){ this.var=var; this.expr=expr; }
 	}
+	DVar getVar(){ return var; } // for Fubini. TODO: get rid of this
 	DExpr getExpr(DVar var){
 		if(cast(DDeBruinVar)this.var) return getDeBruinExpr(this.var,expr,var);
 		return expr;
@@ -2165,13 +2166,6 @@ class DInt: DOp{
 	}
 
 	static MapX!(Q!(DExpr,DExpr),DExpr) ssimplifyMemo;
-	static DExpr staticSimplifyMemo(DVar var,DExpr expr,DExpr facts=one){
-		auto t=q(dInt(var,expr),facts);
-		if(t in ssimplifyMemo) return ssimplifyMemo[t]; // TODO: better solution available?
-		auto r=staticSimplify(var,expr,facts);
-		ssimplifyMemo[t]=r;
-		return r;
-	}
 	
 	static DExpr staticSimplify(DVar var,DExpr expr,DExpr facts=one)in{assert(var&&expr&&facts);}body{
 		static int dpt=0; dpt++; scope(exit) dpt--;
@@ -2191,106 +2185,7 @@ class DInt: DOp{
 			auto r=staticSimplify(tmp,nexpr,facts);
 			return r?r.incDeBruin(nesting):null;
 		}
-		auto nexpr=expr.simplify(facts);
-		if(expr !is nexpr) expr=nexpr;
-		if(expr is zero) return zero;
-		if(cast(DContextVars)var) return null;
-		// TODO: move (most of) the following into the implementation of definiteIntegral
-		auto ow=expr.splitMultAtVar(var);
-		if(ow[0] !is one){
-			if(auto r=staticSimplifyMemo(var,ow[1],facts))
-				return ow[0]*r;
-			return null;
-		}
-		DExpr deltaSubstitution(bool caseSplit){
-			// TODO: only extract deltas once?
-			// TODO: detect when to give up early?
-			foreach(f;expr.factors){
-				if(!f.hasFreeVar(var)) continue;
-				if(auto d=cast(DDelta)f){
-					if(auto r=DDelta.performSubstitution(var,d,expr.withoutFactor(f),caseSplit))
-						return r.simplify(facts);
-				}
-			}
-			return null;
-		}
-		if(auto r=deltaSubstitution(false))
-			return r;
-		foreach(T;Seq!(DDelta,DIvr)){ // TODO: need to split on DIvr?
-			foreach(f;expr.factors){
-				if(auto p=cast(DPlus)f){
-					bool check(){
-						foreach(d;p.allOf!T)
-							if(d.e.hasFreeVar(var))
-								return true;
-						return false;
-					}
-					if(check()){
-						DExprSet works;
-						DExprSet doesNotWork;
-						bool simpler=false;
-						foreach(k;distributeMult(p,expr.withoutFactor(f))){
-							auto ow=k.splitMultAtVar(var);
-							auto r=staticSimplifyMemo(var,ow[1],facts);
-							if(r){
-								DPlus.insert(works,ow[0]*r);
-								simpler=true;
-							}else DPlus.insert(doesNotWork,k);
-						}
-						if(simpler){
-							auto r=dPlus(works).simplify(facts);
-							if(doesNotWork.length) r = r + dInt(var,dPlus(doesNotWork));
-							return r;
-						}
-					}
-				}
-			}
-		}
-		nexpr=expr.linearizeConstraints!(x=>!!cast(DDelta)x)(var).simplify(facts); // TODO: only linearize the first feasible delta.
-		if(nexpr !is expr) return staticSimplifyMemo(var,nexpr,facts);
-		/+if(auto r=deltaSubstitution(true))
-		 return r;+/
-
-		if(expr is one) return null; // (infinite integral)
-
-		if(simplification!=Simpl.deltas){
-			nexpr=expr.linearizeConstraints!(x=>!!cast(DIvr)x)(var).simplify(facts);
-			if(nexpr !is expr) return staticSimplifyMemo(var,nexpr,facts);
-			if(auto r=definiteIntegral(var,expr))
-				return r.simplify(facts);
-		}
-		// pull sums out (TODO: ok?)
-		foreach(f;expr.factors){
-			if(auto sum=cast(DSum)f){
-				auto tmp1=new DVar("tmp1"); // TODO: get rid of this!
-				auto tmp2=new DVar("tmp2"); // TODO: get rid of this!
-				auto expr=sum.getExpr(tmp1)*expr.withoutFactor(f);
-				return dSumSmp(tmp1,dIntSmp(tmp2,expr.substitute(var,tmp2)));
-			}
-		}
-		// Fubini
-		static int fubirec=0; fubirec++; scope(exit) fubirec--;
-		if(++fubirec<=10) // TODO: fix this properly. this is a hack.
-		foreach(f;expr.factors){
-			// assert(f.hasFreeVar(var));
-			if(auto other=cast(DInt)f){
-				auto dbvar=cast(DDeBruinVar)other.var;
-				int offset=0;
-				if(dbvar) offset=1-dbvar.i;
-				other=cast(DInt)other.incDeBruin(offset);
-				assert(!!other); // TODO: get rid of cast to DInt?
-				auto tmpvar1=new DVar("tmp1"); // TODO: get rid of this!
-				auto tmpvar2=new DVar("tmp2"); // TODO: get rid of this!
-				auto intExpr=expr.withoutFactor(f).substitute(var,tmpvar1)*
-					(cast(DInt)other.substitute(var,tmpvar1)).getExpr(tmpvar2);
-				auto ow=intExpr.splitMultAtVar(tmpvar1);
-				ow[1]=ow[1].simplify(facts);
-				if(auto res=staticSimplifyMemo(tmpvar1,ow[1],facts))
-					return dIntSmp(tmpvar2,res*ow[0]).incDeBruin(-offset);
-			}
-		}
-		if(!expr.hasFreeVar(var)) return expr*dInt(var,one); // (infinite integral)
-		return null;
+		return definiteIntegral(var,expr,facts);
 	}
 
 	static DExpr staticSimplifyFull(DVar var,DExpr expr,DExpr facts=one)in{assert(var&&expr&&facts);}body{

@@ -1,17 +1,120 @@
 import dexpr, util;
 
 
-MapX!(Q!(DVar,DExpr),DExpr) definiteIntegralMemo;
+MapX!(Q!(DVar,DExpr,DExpr),DExpr) definiteIntegralMemo;
 
-DExpr definiteIntegral(DVar var,DExpr expr){
-	auto t=q(var,expr);
+DExpr definiteIntegral(DVar var,DExpr expr,DExpr facts=one){
+	auto t=q(var,expr,facts);
 	if(t in definiteIntegralMemo) return definiteIntegralMemo[t];
 	auto r=definiteIntegralImpl(var,expr);
 	definiteIntegralMemo[t]=r;
 	return r;
 }
 
-private DExpr definiteIntegralImpl(DVar var,DExpr expr)out(res){
+private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
+	auto nexpr=expr.simplify(facts);
+		if(expr !is nexpr) expr=nexpr;
+		if(expr is zero) return zero;
+		if(cast(DContextVars)var) return null;
+		// TODO: move (most of) the following into the implementation of definiteIntegral
+		auto ow=expr.splitMultAtVar(var);
+		if(ow[0] !is one){
+			if(auto r=definiteIntegral(var,ow[1],facts))
+				return ow[0]*r;
+			return null;
+		}
+		DExpr deltaSubstitution(bool caseSplit){
+			// TODO: only extract deltas once?
+			// TODO: detect when to give up early?
+			foreach(f;expr.factors){
+				if(!f.hasFreeVar(var)) continue;
+				if(auto d=cast(DDelta)f){
+					if(auto r=DDelta.performSubstitution(var,d,expr.withoutFactor(f),caseSplit))
+						return r.simplify(facts);
+				}
+			}
+			return null;
+		}
+		if(auto r=deltaSubstitution(false))
+			return r;
+		foreach(T;Seq!(DDelta,DIvr)){ // TODO: need to split on DIvr?
+			foreach(f;expr.factors){
+				if(auto p=cast(DPlus)f){
+					bool check(){
+						foreach(d;p.allOf!T)
+							if(d.e.hasFreeVar(var))
+								return true;
+						return false;
+					}
+					if(check()){
+						DExprSet works;
+						DExprSet doesNotWork;
+						bool simpler=false;
+						foreach(k;distributeMult(p,expr.withoutFactor(f))){
+							auto ow=k.splitMultAtVar(var);
+							auto r=definiteIntegral(var,ow[1],facts);
+							if(r){
+								DPlus.insert(works,ow[0]*r);
+								simpler=true;
+							}else DPlus.insert(doesNotWork,k);
+						}
+						if(simpler){
+							auto r=dPlus(works).simplify(facts);
+							if(doesNotWork.length) r = r + dInt(var,dPlus(doesNotWork));
+							return r;
+						}
+					}
+				}
+			}
+		}
+		nexpr=expr.linearizeConstraints!(x=>!!cast(DDelta)x)(var).simplify(facts); // TODO: only linearize the first feasible delta.
+		if(nexpr !is expr) return definiteIntegral(var,nexpr,facts);
+		/+if(auto r=deltaSubstitution(true))
+		 return r;+/
+
+		if(expr is one) return null; // (infinite integral)
+
+		if(simplification!=Simpl.deltas){
+			nexpr=expr.linearizeConstraints!(x=>!!cast(DIvr)x)(var).simplify(facts);
+			if(nexpr !is expr) return definiteIntegral(var,nexpr,facts);
+			if(auto r=definiteIntegralContinuous(var,expr))
+				return r.simplify(facts);
+		}
+		// pull sums out (TODO: ok?)
+		foreach(f;expr.factors){
+			if(auto sum=cast(DSum)f){
+				auto tmp1=new DVar("tmp1"); // TODO: get rid of this!
+				auto tmp2=new DVar("tmp2"); // TODO: get rid of this!
+				auto expr=sum.getExpr(tmp1)*expr.withoutFactor(f);
+				return dSumSmp(tmp1,dIntSmp(tmp2,expr.substitute(var,tmp2)));
+			}
+		}
+		// Fubini
+		static int fubirec=0; fubirec++; scope(exit) fubirec--;
+		if(++fubirec<=10) // TODO: fix this properly. this is a hack.
+		foreach(f;expr.factors){
+			// assert(f.hasFreeVar(var));
+			if(auto other=cast(DInt)f){
+				auto dbvar=cast(DDeBruinVar)other.getVar();
+				int offset=0;
+				if(dbvar) offset=1-dbvar.i;
+				other=cast(DInt)other.incDeBruin(offset);
+				assert(!!other); // TODO: get rid of cast to DInt?
+				auto tmpvar1=new DVar("tmp1"); // TODO: get rid of this!
+				auto tmpvar2=new DVar("tmp2"); // TODO: get rid of this!
+				auto intExpr=expr.withoutFactor(f).substitute(var,tmpvar1)*
+					(cast(DInt)other.substitute(var,tmpvar1)).getExpr(tmpvar2);
+				auto ow=intExpr.splitMultAtVar(tmpvar1);
+				ow[1]=ow[1].simplify(facts);
+				if(auto res=definiteIntegral(tmpvar1,ow[1],facts))
+					return dIntSmp(tmpvar2,res*ow[0]).incDeBruin(-offset);
+			}
+		}
+		if(!expr.hasFreeVar(var)) return expr*dInt(var,one); // (infinite integral)
+		return null;
+}
+
+private DExpr definiteIntegralContinuous(DVar var,DExpr expr)out(res){
 	version(INTEGRATION_STATS){
 		integrations++;
 		if(res) successfulIntegrations++;

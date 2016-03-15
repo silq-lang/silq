@@ -1,4 +1,4 @@
-import std.algorithm, std.array, std.conv;
+import std.algorithm, std.range, std.array, std.conv;
 
 import dexpr, util;
 
@@ -152,10 +152,42 @@ class Distribution{
 	}
 
 	DContextVars context=null;
-	DContextVars getContext(string name,DFunVar fun)in{assert(!context);}body{
-		return context=dContextVars(name,fun);
+	size_t nParams;
+	void addArgsWithContext(DExpr[] args)in{assert(!context);}body{
+		nParams=args.length;
+		context=dContextVars("γ","q".dFunVar);
+		auto q="q".dFunVar;
+		args~=context;
+		distribute(dFun(q,args)); // TODO: constant name sufficient?
+	}
+	
+	void deleteContext(){
+		auto vars=iota(0,nParams).map!(x=>dVar("__p"~lowNum(x))).array;
+		auto fun=dFun("q".dFunVar,cast(DExpr[])vars); // TODO: get rid of cast
+		distribution=distribution.substituteFun("q".dFunVar,fun,vars,SetX!DVar.init).simplify(one);
+		error=error.substituteFun("q".dFunVar,fun,vars,SetX!DVar.init).simplify(one);
+		context=null;
 	}
 
+	void assumeInputNormalized(){
+		auto vars=iota(0,nParams).map!(x=>dVar("__p"~lowNum(x))).array;
+		auto fun=dFun("q".dFunVar,cast(DExpr[])vars); // TODO: get rid of cast
+		DExpr tdist=fun;
+		foreach(v;vars) tdist=dIntSmp(v,tdist);
+		if(context) tdist=dInt(context,tdist);
+		DExpr doIt(DExpr e){
+			auto h=e.getHoles!(x=>x is tdist?x:null);
+			e=h.expr;
+			foreach(hole;h.holes){
+				assert(hole.expr is tdist);
+				e=e.substitute(hole.var,one);
+			}
+			return e;
+		}
+		distribution=doIt(distribution).simplify(one);
+		error=doIt(error).simplify(one);
+	}
+	
 	DVar declareVar(string name,bool addtosymtab=true){
 		if(name in symtab) return null;
 		auto v=dVar(name);

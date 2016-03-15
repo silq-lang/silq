@@ -736,11 +736,8 @@ Distribution analyze(FunctionDef def,ErrorHandler err){
 	auto dist=new Distribution();
 	DExpr[] args;
 	foreach(a;def.args) args~=dist.declareVar(a.name);
-	if(def.name.name!="main"||args.length){ // TODO: move this decision to caller
-		auto q="q".dFunVar;
-		args~=dist.getContext("γ",q);
-		dist.distribute(dFun(q,args)); // TODO: constant name sufficient?
-	}
+	if(def.name.name!="main"||args.length) // TODO: move this decision to caller
+		dist.addArgsWithContext(args);
 	return analyzeWith(def,dist,err);
 }
 

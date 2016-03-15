@@ -36,10 +36,12 @@ string readCode(File f){
 }
 string readCode(string path){ return readCode(File(path)); }
 
-void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool renormalize){
+void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool isMain){
 	auto dist=analyze(fd,err).dup;
-	if(renormalize){
+	if(isMain){
 		dist.renormalize();
+		//dist.deleteContext();
+		//dist.assumeInputNormalized();
 		//dist.distribution=dist.distribution.substituteFun("q".dFunVar,one,DVar[].init,SetX!DVar.init).simplify(one);
 	}
 	import dparse;
