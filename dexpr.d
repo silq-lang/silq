@@ -2174,9 +2174,8 @@ class DInt: DOp{
 	}
 	
 	static DExpr staticSimplify(DVar var,DExpr expr,DExpr facts=one)in{assert(var&&expr&&facts);}body{
+		static int dpt=0; dpt++; scope(exit) dpt--;
 		//version(DISABLE_INTEGRATION){
-		if(expr is zero) return zero;
-		if(cast(DContextVars)var) return null;
 		if(simplification==Simpl.raw)
 			return null;
 		version(INTEGRAL_STATS){
@@ -2186,12 +2185,16 @@ class DInt: DOp{
 			integrals[newexpr]=[];
 		}
 		if(auto dbvar=cast(DDeBruinVar)var){
+			auto nesting=dbvar.i-1;
 			auto tmp=new DVar("tmp"); // TODO: get rid of this!
-			auto nexpr=expr.substitute(var,tmp).incDeBruin(-dbvar.i);
-			return staticSimplify(tmp,nexpr,facts);
+			auto nexpr=getDeBruinExpr(var,expr.incDeBruin(-nesting),tmp);
+			auto r=staticSimplify(tmp,nexpr,facts);
+			return r?r.incDeBruin(nesting):null;
 		}
 		auto nexpr=expr.simplify(facts);
 		if(expr !is nexpr) expr=nexpr;
+		if(expr is zero) return zero;
+		if(cast(DContextVars)var) return null;
 		// TODO: move (most of) the following into the implementation of definiteIntegral
 		auto ow=expr.splitMultAtVar(var);
 		if(ow[0] !is one){
@@ -2300,8 +2303,9 @@ class DInt: DOp{
 		}
 		auto nexpr=expr.simplify(facts);
 		if(expr !is nexpr) return dIntSmp(var,nexpr,facts);
-		/+auto ow=expr.splitMultAtVar(var);
-		if(ow[0] !is one) return ow[0]*dIntSmp(var,ow[1],facts);+/
+		import prob;
+		auto ow=expr.splitMultAtVar(var);
+		if(ow[0] !is one) return ow[0]*dIntSmp(var,ow[1],facts);
 		return staticSimplify(var,expr);
 	}
 	
