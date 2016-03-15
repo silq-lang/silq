@@ -7,6 +7,6 @@ def main(){
     wet_roof := Bernoulli(7/10) && rain;
     wet_grass := Bernoulli(9/10) && rain || Bernoulli(9/10) && sprinkler;
     observe(wet_grass);
-    return rain; // expected: ((10000·δ[rain]·⅟6471+40000·δ[-rain+1]·⅟6471)·(81·[rain=0]·⅟10000+9·[rain≠0]·⅟100+9·⅟10000)+(2000·δ[-rain+1]·⅟6471+8000·δ[rain]·⅟6471)·(81·[rain=0]·⅟400+9·[rain≠0]·⅟20+9·⅟400))·(3·⅟10+7·[rain=0]·⅟10+7·[rain≠0]·⅟10)
+    return rain; // expected: ((4·δ[-rain+1]+δ[rain])·(81·[rain=0]·⅟10000+9·[rain≠0]·⅟100+9·⅟10000)+(4·δ[rain]·⅟5+δ[-rain+1]·⅟5)·(81·[rain=0]·⅟400+9·[rain≠0]·⅟20+9·⅟400))·(1000·⅟2157+7000·[rain=0]·⅟6471+7000·[rain≠0]·⅟6471)
     // TODO: this could be simplified better
 }

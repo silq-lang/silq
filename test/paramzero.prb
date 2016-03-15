@@ -1,0 +1,5 @@
+def main(a){
+    x := Gauss(a,1);
+    y := x - x;
+    return y; // expected: TODO: δ[y]
+}
