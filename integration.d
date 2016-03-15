@@ -95,10 +95,10 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
 		foreach(f;expr.factors){
 			// assert(f.hasFreeVar(var));
 			if(auto other=cast(DInt)f){
-				auto dbvar=cast(DDeBruinVar)other.getVar();
+				auto dbvar=cast(DBoundVar)other.getVar();
 				int offset=0;
 				if(dbvar) offset=1-dbvar.i;
-				other=cast(DInt)other.incDeBruin(offset);
+				other=cast(DInt)other.incBoundVar(offset);
 				assert(!!other); // TODO: get rid of cast to DInt?
 				auto tmpvar1=new DVar("tmp1"); // TODO: get rid of this!
 				auto tmpvar2=new DVar("tmp2"); // TODO: get rid of this!
@@ -107,7 +107,7 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
 				auto ow=intExpr.splitMultAtVar(tmpvar1);
 				ow[1]=ow[1].simplify(facts);
 				if(auto res=definiteIntegral(tmpvar1,ow[1],facts))
-					return dIntSmp(tmpvar2,res*ow[0]).incDeBruin(-offset);
+					return dIntSmp(tmpvar2,res*ow[0]).incBoundVar(-offset);
 			}
 		}
 		if(!expr.hasFreeVar(var)) return expr*dInt(var,one); // (infinite integral)
