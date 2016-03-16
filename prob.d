@@ -82,7 +82,7 @@ void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool renormaliz
 			dist.marginalize(freeVar);
 		}
 		writeln("plotting... ",(plotCDF?"(CDF)":"(PDF)"));
-		matlabPlot(dist.distribution.toString(Format.matlab),dist.freeVars.element.toString(Format.matlab));
+		matlabPlot(dist.distribution.toString(Format.matlab).replace("q(γ⃗)","1"),dist.freeVars.element.toString(Format.matlab));
 	}
 }
 

@@ -118,6 +118,56 @@ private struct Analyzer{
 						//import approximate;
 						//dist.distribute(approxGaussianPDF(var,μ,σsq));
 						return var;
+					case "TruncatedGauss":
+						if(ce.args.length!=4){
+							err.error("expected four arguments (μ,σ²,a,b) to TruncatedGauss",ce.loc);
+							unwind();
+						}
+						auto μ=doIt(ce.args[0]), σsq=doIt(ce.args[1]), a = doIt(ce.args[2]), b = doIt(ce.args[3]);
+						dist.assertTrue(dIvr(DIvr.Type.leZ,-σsq),formatError("negative variance",e.loc));
+						auto var=dist.getTmpVar("__g");
+						dist.distribute(truncGaussianPDF(var,μ,σsq, a, b));
+						return var;
+						
+					case "Pareto":
+					        if(ce.args.length!=2){
+							err.error("expected two arguments (a,b) to Pareto",ce.loc);
+							unwind();
+						}
+						auto a = doIt(ce.args[0]), b = doIt(ce.args[1]);
+						dist.assertTrue(dIvr(DIvr.Type.leZ,-a), formatError("negative scale",e.loc));
+						dist.assertTrue(dIvr(DIvr.Type.leZ,-b), formatError("negative shape",e.loc));
+						auto var=dist.getTmpVar("__g");
+						dist.distribute(paretoPDF(var,a,b));
+						return var;
+
+					case "Rayleigh":
+						if(ce.args.length!=1){
+							err.error("expected one argument (σ²) to Rayleigh",ce.loc);
+							unwind();
+						}
+						auto σsq=doIt(ce.args[0]);
+						dist.assertTrue(dIvr(DIvr.Type.leZ,-σsq),formatError("negative scale",e.loc));
+						auto var=dist.getTmpVar("__g");
+						dist.distribute(rayleighPDF(var,σsq));
+						return var;
+
+					case "Exponential":
+						if(ce.args.length!=1){
+							err.error("expected one argument (lambda) to Exponential",ce.loc);
+							unwind();
+						}
+						auto lambda=doIt(ce.args[0]);
+						dist.assertTrue(dIvr(DIvr.Type.leZ,-lambda),formatError("negative scale",e.loc));
+						auto var=dist.getTmpVar("__g");
+						dist.distribute(exponentialPDF(var,lambda));
+						return var;
+
+					case "CosUnifDist": // TODO: Remove
+						auto var=dist.getTmpVar("__g");
+						dist.distribute(one/dΠ*(1-var^^2)^^-(one/2) * dBounded!"[]"(var,-one, one) * dIvr(DIvr.Type.neqZ,var-one)*dIvr(DIvr.Type.neqZ,var+one));
+						return var;
+
 					case "Uniform": // TODO: handle b<a, b==a
 						if(ce.args.length!=2){
 							err.error("expected two arguments (a,b) to Uniform",ce.loc);

@@ -12,6 +12,11 @@ DExpr rayleighPDF(DVar var,DExpr σsq){
 	return dIvr(DIvr.Type.neqZ,σsq)*dist+dIvr(DIvr.Type.eqZ,σsq)*dDelta(var);
 }
 
+DExpr exponentialPDF(DVar var, DExpr lambda) {
+      auto dist=lambda*dE^^-(lambda*var)*dIvr(DIvr.Type.lZ,-var);
+      return dIvr(DIvr.Type.leZ,-lambda)*dist;
+}
+
 
 DExpr truncGaussianPDF(DVar var,DExpr μ,DExpr σsq, DExpr a, DExpr b){
 	auto gdist=one/(2*dΠ)^^(one/2)*dE^^-((var-μ)^^2/(2*σsq));
@@ -62,8 +67,8 @@ DExpr betaPDF(DVar var,DExpr α,DExpr β){
 	return nnorm/dIntSmp(var,nnorm);
 }
 DExpr gammaPDF(DVar var,DExpr α,DExpr β){
-      auto nnorm=var^^(α-1)*dE^^(-β*var)*dBounded!"[]"(var,zero,one);
-      return nnorm/dIntSmp(var,nnorm);
+	auto nnorm=var^^(α-1)*dE^^(-β*var)*dIvr(DIvr.Type.leZ,-var);
+	return nnorm/dIntSmp(var,nnorm);
 }
 
 DExpr laplacePDF(DVar var, DExpr μ, DExpr b) {

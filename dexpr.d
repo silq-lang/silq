@@ -2825,7 +2825,8 @@ class DGaussInt: DOp{
 			return dΠ^^(one/2)/2;
 		}
 		auto nx=x.simplify(facts);
-		if(nx !is x) return dGaussInt(nx);
+		if(nx !is x) return dGaussInt(nx).simplify(facts);
+		if(auto fct=factorDIvr!(e=>dGaussInt(e))(x)) return fct;
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){
