@@ -48,8 +48,8 @@ DExpr uniformIntPDFNnorm(DVar var,DExpr a,DExpr b){
 		return dPlus(r)/(b-a+1);
 	}
 	return dIvr(DIvr.Type.leZ,a-var)*dIvr(DIvr.Type.leZ,var-b)*dDelta(dSin(dΠ*var)/dΠ);
-	//auto tmp=new DVar("tmp"); // TODO: get rid of this!
-	//return dSumSmp(tmp,dBounded!"[]"(tmp,a,b)*dDelta(tmp-var));
+	/+auto tmp=new DVar("tmp"); // TODO: get rid of this!
+	return dSumSmp(tmp,dBounded!"[]"(tmp,a,b)*dDelta(tmp-var));+/
 }
 
 DExpr uniformIntPDF(DVar var,DExpr a,DExpr b){
@@ -185,7 +185,8 @@ class Distribution{
 	DExpr computeProbability(DExpr cond){
 		auto tdist=distribution*cond;
 		foreach(v;freeVars) tdist=dIntSmp(v,tdist);
-		return tdist;		
+		if(context) tdist=dInt(context,tdist);
+		return tdist;
 	}
 
 	void assertTrue(DExpr cond,lazy string msg){
@@ -250,7 +251,6 @@ class Distribution{
 			tmpVars.remove(v);
 			freeVars.remove(v);
 		}
-		foreach(v;freeVars.without(r)) nerror=dIntSmp(v,nerror);
 		error = error + nerror;
 		return r;
 	}

@@ -211,7 +211,9 @@ DVar dVar(string name){
 class DDeBruinVar: DVar{
 	int i;
 	private this(int i){ this.i=i; super("ξ"~lowNum(i)); }
-	override DDeBruinVar incDeBruin(int di){ return dDeBruinVar(i+di); }
+	override DDeBruinVar incDeBruin(int di){
+		return dDeBruinVar(i+di);
+	}
 }
 DDeBruinVar[int] uniqueMapDeBruin;
 DDeBruinVar dDeBruinVar(int i){
@@ -219,6 +221,10 @@ DDeBruinVar dDeBruinVar(int i){
 		uniqueMapDeBruin[i]=new DDeBruinVar(i):
 		uniqueMapDeBruin[i];
 }
+
+DVar theDε;
+DVar dε(){ return theDε?theDε:(theDε=new DVar("ε")); }
+
 
 class Dℕ : DExpr{
 	ℕ c;
@@ -2109,15 +2115,6 @@ DExpr[2] splitIntegrableFactor(DExpr e){
 	return [integrable,nonIntegrable];
 }
 
-bool hasZerosOfMeasureZero(DExpr e){
-	// TODO: check the necessary preconditions for those
-	// (the given equation must be nondegenerate.)
-	if(e.hasAny!DIvr) return false; // TODO: make sure this cannot actually happen
-	return true; // TODO: actually check this!
-}
-
-
-
 /+import std.datetime;
 StopWatch sw;
 static ~this(){
@@ -2125,8 +2122,8 @@ static ~this(){
 }+/
 
 static DExpr getDeBruinExpr(DVar tvar, DExpr expr, DVar var){
-	//assert(tvar is dDeBruinVar(1),text(tvar)); // TODO: finally fix the deBruinVar situation...
-	assert(!cast(DDeBruinVar)var);
+	assert(tvar is dDeBruinVar(1),text(tvar)); // TODO: finally fix the deBruinVar situation...
+	assert(cast(DDeBruinVar)tvar && !cast(DDeBruinVar)var);
 	return expr.substitute(tvar,var).incDeBruin(-1);		
 }
 
@@ -2137,7 +2134,10 @@ class DInt: DOp{
 		DExpr expr;
 		this(DVar var,DExpr expr){ this.var=var; this.expr=expr; }
 	}
-	DExpr getExpr(DVar var){ return getDeBruinExpr(this.var,expr,var); }
+	DExpr getExpr(DVar var){
+		if(cast(DDeBruinVar)this.var) return getDeBruinExpr(this.var,expr,var);
+		return expr;
+	}
 	override @property Precedence precedence(){ return Precedence.intg; }
 	override @property string symbol(Format formatting){ return "∫"; }
 	override string toStringImpl(Format formatting,Precedence prec){
@@ -2151,8 +2151,8 @@ class DInt: DOp{
 			return addp(prec,symbol(formatting)~"d"~var.toStringImpl(formatting,Precedence.none)~expr.toStringImpl(formatting,precedence));
 		}
 	}
-	static DExpr constructHook(DVar var,DExpr expr){
-		return staticSimplify(var,expr);
+	static DExpr constructHook(DVar var,DExpr expr,DExpr facts){
+		return staticSimplifyFull(var,expr,facts);
 	}
 
 	version(INTEGRAL_STATS){
@@ -2164,43 +2164,44 @@ class DInt: DOp{
 		}
 	}
 
-	static DExpr staticSimplify(DVar var,DExpr expr,DExpr facts=one){
+	static MapX!(Q!(DExpr,DExpr),DExpr) ssimplifyMemo;
+	static DExpr staticSimplifyMemo(DVar var,DExpr expr,DExpr facts=one){
+		auto t=q(dInt(var,expr),facts);
+		if(t in ssimplifyMemo) return ssimplifyMemo[t]; // TODO: better solution available?
+		auto r=staticSimplify(var,expr,facts);
+		ssimplifyMemo[t]=r;
+		return r;
+	}
+	
+	static DExpr staticSimplify(DVar var,DExpr expr,DExpr facts=one)in{assert(var&&expr&&facts);}body{
+		static int dpt=0; dpt++; scope(exit) dpt--;
 		//version(DISABLE_INTEGRATION){
-		if(simplification==Simpl.raw){
-			if(expr is zero) return zero;
+		if(simplification==Simpl.raw)
 			return null;
-		}
 		version(INTEGRAL_STATS){
 			numIntegrals++;
 			auto dbvar=dDeBruinVar(1);
 			auto newexpr=expr.incDeBruin(1).substitute(var,dbvar);
 			integrals[newexpr]=[];
 		}
-
-		if(cast(DDeBruinVar)var){
+		if(auto dbvar=cast(DDeBruinVar)var){
+			auto nesting=dbvar.i-1;
 			auto tmp=new DVar("tmp"); // TODO: get rid of this!
-			return staticSimplify(tmp,getDeBruinExpr(var,expr,tmp));
+			auto nexpr=getDeBruinExpr(dDeBruinVar(1),expr.incDeBruin(-nesting),tmp);
+			auto r=staticSimplify(tmp,nexpr,facts);
+			return r?r.incDeBruin(nesting):null;
 		}
-		// TODO: move (most of) the following into the implementationof definiteIntegral
 		auto nexpr=expr.simplify(facts);
-		if(nexpr !is expr) expr=nexpr;
-		/*static dInt(DVar var,DExpr expr){
-			if(cast(DDeBruinVar)var){
-				if(auto hooked=staticSimplify(var,expr)){
-					bool check(){
-						foreach(i;hooked.allOf!DInt)
-							if(i.var is var)
-								return true;
-							return false;
-					}
-					if(!check()) hooked=hooked.incDeBruin(-1); // TODO: is this right?
-					return hooked;
-				}
-			}
-			return .dInt(var,expr);
-			}*/
+		if(expr !is nexpr) expr=nexpr;
+		if(expr is zero) return zero;
+		if(cast(DContextVars)var) return null;
+		// TODO: move (most of) the following into the implementation of definiteIntegral
 		auto ow=expr.splitMultAtVar(var);
-		if(ow[0] !is one) return ow[0]*dIntSmp(var,ow[1]);
+		if(ow[0] !is one){
+			if(auto r=staticSimplifyMemo(var,ow[1],facts))
+				return ow[0]*r;
+			return null;
+		}
 		DExpr deltaSubstitution(bool caseSplit){
 			// TODO: only extract deltas once?
 			// TODO: detect when to give up early?
@@ -2225,29 +2226,28 @@ class DInt: DOp{
 						return false;
 					}
 					if(check()){
-						/+DExprSet works;
-						DExprSet doesNotWork;+/
-						DExprSet s;
+						DExprSet works;
+						DExprSet doesNotWork;
+						bool simpler=false;
 						foreach(k;distributeMult(p,expr.withoutFactor(f))){
-							/+auto ow=k.splitMultAtVar(var);
-							auto r=staticSimplify(var,ow[1],facts);
-							if(r) DPlus.insert(works,ow[0]*r);
-							else DPlus.insert(doesNotWork,k);+/
-							DPlus.insert(s,dIntSmp(var,k));
+							auto ow=k.splitMultAtVar(var);
+							auto r=staticSimplifyMemo(var,ow[1],facts);
+							if(r){
+								DPlus.insert(works,ow[0]*r);
+								simpler=true;
+							}else DPlus.insert(doesNotWork,k);
 						}
-						/+if(works.length){
+						if(simpler){
 							auto r=dPlus(works).simplify(facts);
 							if(doesNotWork.length) r = r + dInt(var,dPlus(doesNotWork));
 							return r;
-						}+/
-						//dw(s);
-						return dPlus(s).simplify(facts);
+						}
 					}
 				}
 			}
 		}
 		nexpr=expr.linearizeConstraints!(x=>!!cast(DDelta)x)(var).simplify(facts); // TODO: only linearize the first feasible delta.
-		if(nexpr !is expr) return staticSimplify(var,nexpr);
+		if(nexpr !is expr) return staticSimplifyMemo(var,nexpr,facts);
 		/+if(auto r=deltaSubstitution(true))
 		 return r;+/
 
@@ -2255,7 +2255,7 @@ class DInt: DOp{
 
 		if(simplification!=Simpl.deltas){
 			nexpr=expr.linearizeConstraints!(x=>!!cast(DIvr)x)(var).simplify(facts);
-			if(nexpr !is expr) return staticSimplify(var,nexpr);
+			if(nexpr !is expr) return staticSimplifyMemo(var,nexpr,facts);
 			if(auto r=definiteIntegral(var,expr))
 				return r.simplify(facts);
 		}
@@ -2274,24 +2274,44 @@ class DInt: DOp{
 		foreach(f;expr.factors){
 			// assert(f.hasFreeVar(var));
 			if(auto other=cast(DInt)f){
-				assert(!!cast(DDeBruinVar)other.var);
+				auto dbvar=cast(DDeBruinVar)other.var;
+				int offset=0;
+				if(dbvar) offset=1-dbvar.i;
+				other=cast(DInt)other.incDeBruin(offset);
+				assert(!!other); // TODO: get rid of cast to DInt?
 				auto tmpvar1=new DVar("tmp1"); // TODO: get rid of this!
 				auto tmpvar2=new DVar("tmp2"); // TODO: get rid of this!
 				auto intExpr=expr.withoutFactor(f).substitute(var,tmpvar1)*
 					(cast(DInt)other.substitute(var,tmpvar1)).getExpr(tmpvar2);
 				auto ow=intExpr.splitMultAtVar(tmpvar1);
 				ow[1]=ow[1].simplify(facts);
-				if(auto res=staticSimplify(tmpvar1,ow[1],facts))
-					return dIntSmp(tmpvar2,res*ow[0]);
+				if(auto res=staticSimplifyMemo(tmpvar1,ow[1],facts))
+					return dIntSmp(tmpvar2,res*ow[0]).incDeBruin(-offset);
 			}
 		}
 		if(!expr.hasFreeVar(var)) return expr*dInt(var,one); // (infinite integral)
 		return null;
 	}
+
+	static DExpr staticSimplifyFull(DVar var,DExpr expr,DExpr facts=one)in{assert(var&&expr&&facts);}body{
+		if(auto dbvar=cast(DDeBruinVar)var){
+			auto nesting=dbvar.i-1;
+			auto tmp=new DVar("tmp"); // TODO: get rid of this!
+			auto nexpr=getDeBruinExpr(dDeBruinVar(1),expr.incDeBruin(-nesting),tmp);
+			auto r=staticSimplifyFull(tmp,nexpr,facts);
+			return r?r.incDeBruin(nesting):null;
+		}
+		auto nexpr=expr.simplify(facts);
+		if(expr !is nexpr) return dIntSmp(var,nexpr,facts);
+		import prob;
+		auto ow=expr.splitMultAtVar(var);
+		if(ow[0] !is one) return ow[0]*dIntSmp(var,ow[1],facts);
+		return staticSimplify(var,expr);
+	}
 	
 	override DExpr simplifyImpl(DExpr facts){
-		 auto r=staticSimplify(var,expr);
-		 return r?r:this;
+		auto r=staticSimplifyFull(var,expr,facts);
+		return r?r:this;
 	}
 
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
@@ -2332,12 +2352,12 @@ auto uniqueBindingDExpr(T)(DDeBruinVar v,DExpr a,DExpr b=null){
 	return r;
 }
 
-DExpr dIntSmp(DVar var,DExpr expr){
-	if(auto r=DInt.constructHook(var,expr)) return r;
+DExpr dIntSmp(DVar var,DExpr expr,DExpr facts=one){
+	if(auto r=DInt.constructHook(var,expr,facts)) return r;
 	return dInt(var,expr);
 }
 
-DExpr dInt(DVar var,DExpr expr){
+DExpr dInt(DVar var,DExpr expr)in{assert(var&&expr);}body{
 	if(cast(DContextVars)var) return new DInt(var,expr); // TODO: fix
 	//if(auto dbvar=cast(DDeBruinVar)var) return uniqueBindingDExpr!DInt(dbvar,expr);
 	auto dbvar=cast(DDeBruinVar)var;
@@ -2372,6 +2392,16 @@ class DSum: DOp{
 	static DExpr constructHook(DVar var,DExpr expr){
 		return staticSimplify(var,expr);
 	}
+
+	static MapX!(Q!(DExpr,DExpr),DExpr) ssimplifyMemo;
+	static DExpr staticSimplifyMemo(DVar var,DExpr expr,DExpr facts=one){
+		auto t=q(dSum(var,expr),facts);
+		if(t in ssimplifyMemo) return ssimplifyMemo[t]; // TODO: better solution available?
+		auto r=staticSimplify(var,expr,facts);
+		ssimplifyMemo[t]=r?r:t[0];
+		return r;
+	}
+	
 	static DExpr staticSimplify(DVar var,DExpr expr,DExpr facts=one){
 		if(simplification==Simpl.raw){
 			if(expr is zero) return zero;
@@ -2379,7 +2409,7 @@ class DSum: DOp{
 		}
 		if(cast(DDeBruinVar)var){
 			auto tmp=new DVar("tmp"); // TODO: get rid of this!
-			return staticSimplify(tmp,getDeBruinExpr(var,expr,tmp));
+			return staticSimplifyMemo(tmp,getDeBruinExpr(var,expr,tmp));
 		}
 		auto nexpr=expr.simplify(facts);
 		if(nexpr !is expr) expr=nexpr;
@@ -2388,7 +2418,7 @@ class DSum: DOp{
 		if(expr is one) return null; // (infinite sum)
 		if(simplification!=Simpl.deltas){
 			nexpr=expr.linearizeConstraints!(x=>!!cast(DIvr)x)(var).simplify(facts);
-			if(nexpr !is expr) return staticSimplify(var,nexpr);
+			if(nexpr !is expr) return staticSimplifyMemo(var,nexpr);
 			if(auto r=computeSum(var,expr))
 				return r.simplify(facts);
 		}

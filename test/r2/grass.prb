@@ -17,7 +17,7 @@ def main(){ // didItRain
     wetGrass := temp2 && rain || temp3 && sprinkler;
 
     observe(wetGrass);
-    // return rain; // TODO: better simplification for this query?
+    //return rain; // TODO: better simplification for this query?
     return Expectation(rain); // expected: 719·δ[-719·r₁+509]
     // TODO: better simplification?
 }
