@@ -1,0 +1,21 @@
+//skipped
+
+def main() {
+
+
+    s:=0;
+
+    for i in [0..3) {
+
+        x:=Uniform(3000,10000);
+	x = x + Laplace(0,10);
+	s = s + x;
+
+    }
+
+    
+
+
+    return s;
+
+}

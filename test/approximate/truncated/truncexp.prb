@@ -1,0 +1,16 @@
+//skipped
+
+def main() {
+
+    
+
+    
+    X := (2*Bernoulli(0.5) - 1) * Exponential(5);observe(-0.5 <= X && X <= 0.5);
+    Y := (2*Bernoulli(0.5) - 1) * Exponential(5);observe(-0.5 <= Y && Y <= 0.5);
+    Z := (2*Bernoulli(0.5) - 1) * Exponential(5);observe(-0.5 <= Z && Z <= 0.5);
+
+
+
+    return X+Y+Z;
+
+}

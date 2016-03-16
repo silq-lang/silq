@@ -1,0 +1,10 @@
+//skipped
+
+
+def main() {
+    X := Pareto(3,1);
+    Y := Pareto(3,1);
+    //Z := Pareto(3,1);
+    return X + Y;
+
+}

@@ -1,0 +1,23 @@
+//skipped
+
+
+def df() {
+    return Pareto(3,1)-1;
+}
+
+
+def main(){
+
+    assert(Bernoulli(0.999));
+    assert(Bernoulli(0.999));
+    assert(Bernoulli(0.999));
+
+    x:=df();
+    y:=df();
+    z:=df();
+
+    v := 0.25*(x+y+z);
+    
+    return v;
+
+}
