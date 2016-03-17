@@ -511,6 +511,7 @@ void matlabPlot(string expression,string variable){
 	auto id=spawnProcess(["octave"],input.readEnd,output,stderr);
 	scope(exit) wait(id);
 	string command=
+		"fixNaN=@(x) [0,x]((x==x)+1);\n"~
 		variable~"=-20:0.001:20;\n"~
 		variable~"Dist="~expression~";\n"~
 		"plot("~variable~","~variable~"Dist);\n";

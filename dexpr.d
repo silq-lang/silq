@@ -974,8 +974,14 @@ class DPow: DBinaryOp{
 	override string toStringImpl(Format formatting,Precedence prec){
 		auto frc=operands[1].getFractionalFactor().getFraction();
 		if(frc[0]<0){
-			auto pre=formatting==Format.default_?"⅟":formatting==Format.matlab?"1./":"1/";
-			return addp(prec,pre~(operands[0]^^-operands[1]).toStringImpl(formatting,Precedence.div),Precedence.div);
+			if(formatting==Format.matlab){
+				addp(prec,text(dIvr(DIvr.Type.neqZ,operands[0]).toStringImpl(formatting,Precedence.div),"./",
+							   (operands[0]+dIvr(DIvr.Type.eqZ,operands[0])).toStringImpl(formatting,Precedence.div)),
+					 Precedence.div);
+			}else{
+				auto pre=formatting==Format.default_?"⅟":"1/";
+				return addp(prec,pre~(operands[0]^^-operands[1]).toStringImpl(formatting,Precedence.div),Precedence.div);
+			}
 		}
 		// also nice, but often hard to read: ½⅓¼⅕⅙
 		if(formatting==Format.default_){		
@@ -992,6 +998,8 @@ class DPow: DBinaryOp{
 				}
 			}
 		}
+		if(formatting==Format.matlab)
+			return text("fixNaN(",super.toStringImpl(formatting,prec),")");
 		return super.toStringImpl(formatting,prec);
 	}
 
