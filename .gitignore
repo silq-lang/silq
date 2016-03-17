@@ -1,6 +1,6 @@
 *~
 *.o
-prob
+psy
 *.def
 *.log
 test/runtests

@@ -2206,7 +2206,6 @@ class DInt: DOp{
 		}
 		auto nexpr=expr.simplify(facts);
 		if(expr !is nexpr) return dIntSmp(var,nexpr,facts);
-		import prob;
 		auto ow=expr.splitMultAtVar(var);
 		if(ow[0] !is one) return ow[0]*dIntSmp(var,ow[1],facts);
 		return staticSimplify(var,expr);
