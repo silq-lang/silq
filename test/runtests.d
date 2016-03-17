@@ -18,7 +18,7 @@ void main(){
 	int skipped=0,passed=0;
 	bool colorize=isATTy(stdout);
 	foreach(source;sources){
-		if(shell("head -n1 "~source).startsWith("// skip")){
+		if((x=>x.startsWith("// skip")||x.startsWith("//skip"))(shell("head -n1 "~source))){
 			if(colorize) writeln(TODOColor,BOLD,"skipping",RESET," ",source);
 			else writeln("skipping ",source);
 			skipped++;
