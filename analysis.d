@@ -38,10 +38,10 @@ private struct Analyzer{
 	ErrorHandler err;
 	DExpr[][string] arrays;
 	DExpr[DVar] deterministic;
-	DExpr transformExp(Exp e){
+	DExpr transformExp(Exp e,bool allowMultiple=false){
 		class Unwind: Exception{ this(){ super(""); } }
 		void unwind(){ throw new Unwind(); }
-		DExpr doIt(Exp e){
+		DExpr doIt(Exp e,bool allowMultiple=false){
 			if(auto id=cast(Identifier)e){
 				if(auto v=dist.lookupVar(id.name))
 					return v;
@@ -86,8 +86,8 @@ private struct Analyzer{
 						}
 						auto fun=functions[id.name];
 						auto summary=summaries[id.name];
-						if(summary.freeVars.length!=1){
-							err.error("only single value return supported",ce.loc);
+						if(summary.freeVars.length!=1 && !allowMultiple){
+							err.error("multiple return values not supported for function calls in expressions",ce.loc);
 							unwind();
 						}
 						if(ce.args.length != fun.args.length){
@@ -429,7 +429,7 @@ private struct Analyzer{
 			err.error("unsupported",e.loc);
 			throw new Unwind();
 		}
-		try return doIt(e);
+		try return doIt(e,allowMultiple);
 		catch(Unwind){ return null; }
 	}
 
@@ -744,6 +744,7 @@ private struct Analyzer{
 					else returns=[re.e];
 					import hashtable;
 					SetX!DVar vars;
+					DVar[] orderedVars;
 					foreach(ret;returns){
 						auto exp=transformExp(ret);
 						DVar var=cast(DVar)exp;
@@ -754,16 +755,18 @@ private struct Analyzer{
 								var=vv;
 							}
 							vars.insert(var);
+							orderedVars~=var;
 						}else if(exp){
 							var=dist.getVar("r");
 							dist.initialize(var,exp);
 							vars.insert(var);
+							orderedVars~=var;
 						}
-						// TODO: variable ordering
 					}
 					foreach(w;dist.freeVars.setMinus(vars)){
 						dist.marginalize(w);
 					}
+					dist.orderFreeVars(orderedVars);
 					dist.simplify();
 				}else err.error("return statement must be last statement in function",re.loc);
 				if(re.expected.length){

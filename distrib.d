@@ -123,6 +123,8 @@ class Distribution{
 		r.error=error;
 		r.parents=parents~this; // TODO: elegance
 		r.context=context;
+		r.freeVarsOrdered=freeVarsOrdered;
+		r.orderedFreeVars=orderedFreeVars.dup;
 		return r;
 	}
 
@@ -291,7 +293,21 @@ class Distribution{
 	override string toString(){
 		return toString(Format.default_);
 	}
-	string toString(Format formatting){
+
+	bool freeVarsOrdered=false;
+	DVar[] orderedFreeVars;
+	void orderFreeVars(DVar[] orderedFreeVars)in{
+		assert(!freeVarsOrdered);
+		assert(orderedFreeVars.length==freeVars.length);
+		foreach(v;orderedFreeVars)
+			assert(v in freeVars);
+		// TODO: this does not check that variables occur at most once in orderedFreeVars
+	}body{
+		freeVarsOrdered=true;
+		this.orderedFreeVars=orderedFreeVars;
+	}
+
+	string toString(Format formatting)in{assert(freeVarsOrdered);}body{
 		auto initial="p(";
 		auto middle=") = ";
 		auto errstr="Pr[error] = ";
@@ -301,11 +317,8 @@ class Distribution{
 			errstr="Pr_error := ";
 		}
 		string r=initial;
-		string[] vars;
-		foreach(a;freeVars) vars~=(formatting==Format.mathematica?a.name~"_":a.name);
-		sort(vars);
-		foreach(v;vars) r~=v~",";
-		if(vars.length) r=r[0..$-1];
+		foreach(v;orderedFreeVars) r~=(formatting==Format.mathematica?v.name~"_":v.name)~",";
+		if(orderedFreeVars.length) r=r[0..$-1];
 		r~=middle~distribution.toString(formatting);
 		if(error !is zero) r~="\n"~errstr~error.toString(formatting);
 		return r;
