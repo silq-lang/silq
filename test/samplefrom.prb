@@ -1,0 +1,11 @@
+
+def Nice(y){
+    x := SampleFrom("(x;y) => [-y<=x]*[x<=y]*x^2",y);
+    return x;
+}
+
+def main(){
+    x := Nice(3);
+    y := Nice(4);
+    return x+y;
+}

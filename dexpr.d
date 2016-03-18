@@ -998,8 +998,8 @@ class DPow: DBinaryOp{
 				}
 			}
 		}
-		if(formatting==Format.matlab)
-			return text("fixNaN(",super.toStringImpl(formatting,prec),")");
+		/+if(formatting==Format.matlab)
+		 return text("fixNaN(",super.toStringImpl(formatting,prec),")");+/// TODO: why doesn't this work?
 		return super.toStringImpl(formatting,prec);
 	}
 

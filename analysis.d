@@ -280,9 +280,83 @@ private struct Analyzer{
 						ndist.simplify();
 						dist.distribute(ndist.distribution);
 						return tmp;
+					case "SampleFrom":
+						if(ce.args.length==0){
+							err.error("expected arguments to SampleFrom",ce.loc);
+							unwind();
+						}
+						auto literal=cast(LiteralExp)ce.args[0];
+						if(!literal||literal.lit.type!=Tok!"``"){
+							err.error("first argument to SampleFrom must be string literal",ce.args[0].loc);
+							unwind();
+						}
+						static struct VarMapping{
+							DVar orig;
+							DVar tmp;
+						}
+						VarMapping[] retVars;
+						DVar[] paramVars;
+						DExpr newDist;
+						import hashtable;
+						HSet!(string,(a,b)=>a==b,a=>typeid(string).getHash(&a)) names;
+						try{
+							import dparse;
+							auto parser=DParser(literal.lit.str);
+							parser.skipWhitespace();
+							parser.expect('(');
+							for(bool seen=false;parser.cur()!=')';){
+								parser.skipWhitespace();
+								if(parser.cur()==';'){
+									seen=true;
+									parser.next();
+									continue;
+								}
+								auto orig=parser.parseDVar();
+								if(orig.name in names){
+									err.error(text("multiple variables of name '",orig.name,"'"),ce.args[0].loc);
+									unwind();
+								}
+								if(!seen){
+									auto tmp=dist.getTmpVar("__tmp"~orig.name); // TODO: this is a hack
+									retVars~=VarMapping(orig,tmp);
+								}else paramVars~=orig;
+								parser.skipWhitespace();
+								if(!";)"[seen..$].canFind(parser.cur())) parser.expect(',');
+							}
+							parser.next();
+							parser.skipWhitespace();
+							if(parser.cur()=='⇒') parser.next();
+							else{ parser.expect('='); parser.expect('>'); }
+							parser.skipWhitespace();
+							newDist=parser.parseDExpr();
+						}catch(Exception e){
+							err.error(e.msg,ce.args[0].loc);
+							unwind();
+						}
+						foreach(var;retVars){
+							if(!newDist.hasFreeVar(var.orig)){
+								err.error(text("pdf must depend on variable '",var.orig.name,"')"),ce.args[0].loc);
+								unwind();
+							}
+							newDist=newDist.substitute(var.orig,var.tmp); // TODO: make sure capturing is impossible here
+						}
+						if(ce.args.length!=1+paramVars.length){
+							err.error(text("expected ",paramVars.length," additional arguments to SampleFrom"),ce.loc);
+							unwind();
+						}
+						foreach(i,pvar;paramVars){
+							auto expr=doIt(ce.args[1+i]);
+							newDist=newDist.substitute(pvar,expr);
+						}
+						if(retVars.length!=1){
+							err.error("multiple return values unsupported",ce.args[0].loc);
+							unwind();
+						}
+						dist.distribute(newDist);
+						return retVars[0].tmp;
 					case "Expectation":
 						if(ce.args.length!=1){
-							err.error("expected one arguments (e) to Expectation",ce.loc);
+							err.error("expected one argument (e) to Expectation",ce.loc);
 							unwind();
 						}
 						auto exp=doIt(ce.args[0]);
