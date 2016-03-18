@@ -66,9 +66,7 @@ void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool isMain){
 	if(cdf) dist=getCDF(dist);
 	auto str=dist.toString(formatting);
 	if(expected.exists) with(expected){
-		if(formatting==Format.default_)
-			writeln(ex==dist.distribution.toString()?todo?"FIXED":"PASS":todo?"TODO":"FAIL");
-		else writeln("SKIPPED: NON-DEFAULT FORMATTING");
+		writeln(ex==dist.distribution.toString()?todo?"FIXED":"PASS":todo?"TODO":"FAIL");
 	}
 	//writeln((cast(DPlus)dist.distribution).summands.length);
 	if(str.length<10000) writeln(str);
