@@ -2914,6 +2914,64 @@ auto dContextVars(string name,DFunVar fun){
 }
 
 
+class DTuple: DExpr{ // Tuples. TODO: real tuple support
+	DExpr[] values;
+	this(DExpr[] values){
+		this.values=values;
+	}
+	override string toStringImpl(Format formatting, Precedence prec){
+		return text("(",values.map!(v=>v.toStringImpl(formatting,Precedence.none)).join(","),values.length==1?",":"",")");
+	}
+	override int forEachSubExpr(scope int delegate(DExpr) dg){
+		foreach(v;values)
+			if(auto r=dg(v))
+				return r;
+		return 0;
+	}
+	override int freeVarsImpl(scope int delegate(DVar) dg){
+		foreach(v;values)
+			if(auto r=v.freeVarsImpl(dg))
+				return r;
+		return 0;
+	}
+	override DExpr substitute(DVar var,DExpr exp){
+		return dTuple(values.map!(v=>v.substitute(var,exp)).array);
+	}
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
+		return dTuple(values.map!(v=>v.substituteFun(fun,q,args,context)).array);
+	}
+	override DExpr incBoundVar(int di){
+		return dTuple(values.map!(v=>v.incBoundVar(di)).array);
+	}
+	static DTuple constructHook(DExpr[] values){
+		return staticSimplify(values);
+	}
+	static DTuple staticSimplify(DExpr[] values,DExpr facts=one){
+		auto nvalues=values.map!(v=>v.simplify(facts)).array;
+		if(nvalues!=values) return dTuple(values);
+		return null;
+	}
+	override DExpr simplifyImpl(DExpr facts){
+		auto r=staticSimplify(values,facts);
+		return r?r:this;
+	}
+}
+
+MapX!(TupleX!(DExpr[]),DTuple) uniqueMapDTuple;
+auto uniqueDTuple(DExpr[] values){
+	if(auto r=DTuple.constructHook(values)) return r;
+	auto t=tuplex(values);
+	if(t in uniqueMapDTuple) return uniqueMapDTuple[t];
+	auto r=new DTuple(values);
+	uniqueMapDTuple[t]=r;
+	return r;
+}
+
+DTuple dTuple(DExpr[] values){
+	return uniqueDTuple(values);
+}
+
+
 import std.traits: ParameterTypeTuple;
 import std.typetuple;
 T visit(T,S...)(DExpr node,S args){
