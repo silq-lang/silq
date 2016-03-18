@@ -351,12 +351,12 @@ private struct Analyzer{
 							auto expr=doIt(ce.args[1+i]);
 							newDist=newDist.substitute(pvar,expr);
 						}
-						if(retVars.length!=1){
-							err.error("multiple return values unsupported",ce.args[0].loc);
+						if(retVars.length!=1&&!allowMultiple){
+							err.error("only single return values supported for function calls in expressions",ce.loc);
 							unwind();
 						}
 						dist.distribute(newDist);
-						return retVars[0].tmp;
+						return retVars.length==1?retVars[0].tmp:dTuple(cast(DExpr[])retVars.map!(v=>v.tmp).array);
 					case "Expectation":
 						if(ce.args.length!=1){
 							err.error("expected one argument (e) to Expectation",ce.loc);
