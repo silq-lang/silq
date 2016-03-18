@@ -6,6 +6,7 @@ import lexer, parser, expression, error;
 import analysis, distrib, dexpr;
 
 bool plot=false;// TODO: get rid of globals?
+bool cdf=false;
 bool kill=false;
 auto formatting=Format.default_;
 bool casBench=false;
@@ -36,6 +37,17 @@ string readCode(File f){
 }
 string readCode(string path){ return readCode(File(path)); }
 
+Distribution getCDF(Distribution dist){
+	dist=dist.dup;
+	auto freeVars=dist.freeVars.dup;
+	foreach(freeVar;freeVars){
+		auto nvar=dist.declareVar("c"~freeVar.name);
+		dist.distribute(dIvr(DIvr.Type.leZ,-freeVar-20)*dIvr(DIvr.Type.leZ,freeVar-nvar));
+		dist.marginalize(freeVar);
+	}
+	return dist;
+}
+
 void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool isMain){
 	auto dist=analyze(fd,err).dup;
 	if(isMain){
@@ -51,11 +63,12 @@ void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool isMain){
 	//import hashtable; dist.distribution=approxLog(dist.freeVars.element);
 	//import hashtable; dist.distribution=approxGaussInt(dist.freeVars.element);
 	if(kill) dist.distribution=dist.distribution.killIntegrals();
+	if(cdf) dist=getCDF(dist);
 	auto str=dist.toString(formatting);
 	if(expected.exists) with(expected){
-			if(formatting==Format.default_)
-				writeln(ex==dist.distribution.toString()?todo?"FIXED":"PASS":todo?"TODO":"FAIL");
-			else writeln("SKIPPED: NON-DEFAULT FORMATTING");
+		if(formatting==Format.default_)
+			writeln(ex==dist.distribution.toString()?todo?"FIXED":"PASS":todo?"TODO":"FAIL");
+		else writeln("SKIPPED: NON-DEFAULT FORMATTING");
 	}
 	//writeln((cast(DPlus)dist.distribution).summands.length);
 	if(str.length<10000) writeln(str);
@@ -75,11 +88,11 @@ void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool isMain){
 			efile.writeln(dist.error.toString(formatting));
 		}
 	}
-	bool plotCDF=false;
+	bool plotCDF=cdf;
 	if(str.canFind("δ")) plotCDF=true;
 	import hashtable;
 	if(plot && dist.freeVars.length==1){
-		if(plotCDF){
+		if(plotCDF&&!cdf){
 			dist=dist.dup();
 			auto freeVar=dist.freeVars.element;
 			auto nvar=dist.declareVar("foo");
@@ -147,6 +160,7 @@ int main(string[] args){
 	args.sort!((a,b)=>a.startsWith("--")>b.startsWith("--"));
 	foreach(x;args){
 		switch(x){
+			case "--cdf": cdf=true; break;
 			case "--plot": plot=true; break;
 			case "--kill": kill=true; break;
 			case "--raw": simplification=Simpl.raw;  break;
