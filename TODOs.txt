@@ -1,12 +1,51 @@
 
-MUST:
++ Maple bug reports: follow up/resubmit
 
-+ compare with SVE
-+ compare with Indiana
++ multiple return values
+
++ Multivariate distribution parsing:
+    def NewDistr(w){
+        (x,y,z) := SampleFrom("(x,y,z;w) => x*y*delta(z)*w^2",w);
+    }
+
++ While loops (L1 distance)
+
++ (2x+2)(x+1)  →  2(x+1)^2
+  same thing for test/approximate/truncated/truncpareto.prb
+
++ Simplify integrals in distribution of Pareto(3,1)-1. 
+
++ Grouping of guards, e.g., adding Beta(2,2) distributions
+
++ Examples of bayesian filters: https://www.cs.cmu.edu/~fp/papers/popl05.pdf
+
++ Implemenent syntax to get those filters
+
++ Also get the filter from Benny's email
+
+
++ Make approximate/scale_kernel_simple_old.prb terminate quickly.
+
++ approximate/sobel.m
+ - Fix matlab output, such that no 'nan's are generated.
+ - Make work with signed gamma noise ( return (1 - 2*Bernoulli(0.5)) * Gamma(a,b) )
+
++ loop optimizations
+ - e.g. approximate/sum_const.prb: extracting the loop body gives large speedup
+
+
++ Reasoning about irrational numbers.
+ - e.g. in order to simplify approximate/truncated/truncgaus2.prb further
+
++ Simplify ∫dξ₁[-ξ₁≤0]·ξ₁·⅟e^(13·ξ₁²·⅟120) : Can help with GPS walking example from Uncertain<T>. (Instance of reasoning about quadratic irrational numbers.)
+
++ Simplify normalization integral for approximate/truncated/truncgaus3.prb.
+
++ Fix mathematica output to allow simple copy-pasting.
+
++ Use gnuplot for plotting instead of octave or (low priority) build own plotter.
+
 + full array support
-+ non-linear constraints and assignments (assignments partly done)
-
-
 
 Future Work:
 
