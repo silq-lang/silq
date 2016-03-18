@@ -41,8 +41,6 @@
 
 + Simplify normalization integral for approximate/truncated/truncgaus3.prb.
 
-+ Fix mathematica output to allow simple copy-pasting.
-
 + Use gnuplot for plotting instead of octave or (low priority) build own plotter.
 
 + full array support

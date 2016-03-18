@@ -292,14 +292,22 @@ class Distribution{
 		return toString(Format.default_);
 	}
 	string toString(Format formatting){
-		string r="p(";
+		auto initial="p(";
+		auto middle=") = ";
+		auto errstr="Pr[error] = ";
+		if(formatting==Format.mathematica){
+			initial="p[";
+			middle="] := ";
+			errstr="Pr_error := ";
+		}
+		string r=initial;
 		string[] vars;
-		foreach(a;freeVars) vars~=a.name;
+		foreach(a;freeVars) vars~=(formatting==Format.mathematica?a.name~"_":a.name);
 		sort(vars);
 		foreach(v;vars) r~=v~",";
 		if(vars.length) r=r[0..$-1];
-		r~=") = "~distribution.toString(formatting);
-		if(error !is zero) r~="\nPr[error] = "~error.toString(formatting);
+		r~=middle~distribution.toString(formatting);
+		if(error !is zero) r~="\n"~errstr~error.toString(formatting);
 		return r;
 	}
 }
