@@ -265,21 +265,24 @@ private struct Analyzer{
 						dist.distribute(expPDF(var,λ));
 						return var;
 					case "FromMarginal":
-						if(ce.args.length!=1){
+						if(ce.args.length!=1&&!allowMultiple){
 							err.error("expected one argument (e) to FromMarginal",ce.loc);
 							unwind();
 						}
-						auto exp=doIt(ce.args[0]);
-						auto tmp=dist.getTmpVar("__mrg");
+						auto exp=ce.args.map!doIt.array;
+						auto tmp=ce.args.map!(_=>dist.getTmpVar("__mrg")).array;
 						auto ndist=dist.dup();
-						ndist.initialize(tmp,exp);
+						foreach(i;0..exp.length)
+							ndist.initialize(tmp[i],exp[i]);
+						SetX!DVar tmpset;
+						foreach(var;tmp) tmpset.insert(var);
 						foreach(v;dist.freeVars){
-							if(v !is tmp)
+							if(v !in tmpset)
 								ndist.marginalize(v);
 						}
 						ndist.simplify();
 						dist.distribute(ndist.distribution);
-						return tmp;
+						return tmp.length==1?tmp[0]:dTuple(cast(DExpr[])tmp);
 					case "SampleFrom":
 						if(ce.args.length==0){
 							err.error("expected arguments to SampleFrom",ce.loc);
