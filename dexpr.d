@@ -2955,6 +2955,8 @@ class DTuple: DExpr{ // Tuples. TODO: real tuple support
 		auto r=staticSimplify(values,facts);
 		return r?r:this;
 	}
+	final @property size_t length(){ return values.length; }
+	final @property DExpr opIndex(size_t i){ return values[i]; }
 }
 
 MapX!(TupleX!(DExpr[]),DTuple) uniqueMapDTuple;

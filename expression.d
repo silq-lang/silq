@@ -176,6 +176,7 @@ class TupleExp: Expression{
 		this.e=e;
 	}
 	override string toString(){ return "("~e.map!(to!string).join(",")~")"; }
+	final @property size_t length(){ return e.length; }
 }
 
 class ReturnExp: Expression{

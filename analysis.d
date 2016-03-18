@@ -87,7 +87,7 @@ private struct Analyzer{
 						auto fun=functions[id.name];
 						auto summary=summaries[id.name];
 						if(summary.freeVars.length!=1 && !allowMultiple){
-							err.error("multiple return values not supported for function calls in expressions",ce.loc);
+							err.error("only single return values supported for function calls in expressions",ce.loc);
 							unwind();
 						}
 						if(ce.args.length != fun.args.length){
@@ -628,6 +628,15 @@ private struct Analyzer{
 			scope(success) writeln("after: ",dist);+/
 			// TODO: visitor?
 			if(auto de=cast(DefExp)e){
+				scope(exit) dist.marginalizeTemporaries();
+				void defineVar(Identifier id,DExpr rhs){
+					DVar var=null;
+					if(id.name !in arrays) var=dist.declareVar(id.name);
+					if(var){
+						dist.distribute(dDelta((rhs?rhs:zero)-var));
+						trackDeterministic(var,rhs);
+					}else err.error("variable already exists",id.loc);
+				}
 				if(auto id=cast(Identifier)de.e1){
 					bool isSpecial=false;
 					if(auto call=cast(CallExp)de.e2){
@@ -647,14 +656,30 @@ private struct Analyzer{
 					}
 					if(!isSpecial){
 						auto rhs=transformExp(de.e2);
-						DVar var=null;
-						if(id.name !in arrays) var=dist.declareVar(id.name);
-						if(var){
-							dist.initialize(var,rhs?rhs:zero);
-							trackDeterministic(var,rhs);
-						}else err.error("variable already exists",id.loc);
+						if(cast(DTuple)rhs){
+							err.error("multiple return values must be unpacked directly",de.loc);
+							rhs=null;
+						}
+						defineVar(id,rhs);
 					}
-				}else err.error("left hand side of definition should be identifier",de.e1.loc);
+				}else if(auto tpl=cast(TupleExp)de.e1){
+					auto rhs=transformExp(de.e2,true);
+					auto dtpl=cast(DTuple)rhs;
+					if(rhs&&(!dtpl||dtpl.length!=tpl.length)){
+						err.error(text("inconsistent number of tuple entries for definition: ",tpl.length," vs. ",tpl.length),de.loc);
+						rhs=dtpl=null;
+					}
+					if(dtpl){
+						foreach(k,exp;tpl.e){
+							auto id=cast(Identifier)exp;
+							if(!id) goto LbadDefLhs;
+							defineVar(id,dtpl[k]);
+						}
+					}
+				}else{
+				LbadDefLhs:
+					err.error("left hand side of definition should be identifier or tuple of identifiers",de.e1.loc);
+				}
 			}else if(auto ae=cast(AssignExp)e){
 				if(auto id=cast(Identifier)ae.e1){
 					if(id.name !in arrays){

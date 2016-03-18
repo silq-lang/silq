@@ -264,12 +264,14 @@ class Distribution{
 	DExpr call(Distribution q,DExpr[] args){
 		DExpr rdist=q.distribution;
 		DExpr rerr=q.error;
-		assert(q.freeVars.length==1,"TODO!");
 		import hashtable;
 		auto context=freeVars.dup;
-		auto r=getTmpVar("__r");
-		rdist=rdist.substitute(q.freeVars.element,r);
-		rerr=rerr.substitute(q.freeVars.element,r);
+		DVar[] r;
+		foreach(v;q.orderedFreeVars){
+			r~=getTmpVar("__r");
+			rdist=rdist.substitute(v,r[$-1]);
+			rerr=rerr.substitute(v,r[$-1]);
+		}
 		DVar[] vars;
 		auto oldDist=distribution;
 		foreach(a;args){
@@ -284,7 +286,7 @@ class Distribution{
 			freeVars.remove(v);
 		}
 		error = error + nerror;
-		return r;
+		return r.length==1?r[0]:dTuple(cast(DExpr[])r);
 	}
 	void simplify(){
 		distribution=distribution.simplify(one); // TODO: this shouldn't be necessary!
@@ -307,7 +309,7 @@ class Distribution{
 		this.orderedFreeVars=orderedFreeVars;
 	}
 
-	string toString(Format formatting)in{assert(freeVarsOrdered);}body{
+	string toString(Format formatting){
 		auto initial="p(";
 		auto middle=") = ";
 		auto errstr="Pr[error] = ";
@@ -317,6 +319,9 @@ class Distribution{
 			errstr="Pr_error := ";
 		}
 		string r=initial;
+		DVar[] vars;
+		if(freeVarsOrdered) vars=orderedFreeVars;
+		else vars=freeVars.array;
 		foreach(v;orderedFreeVars) r~=(formatting==Format.mathematica?v.name~"_":v.name)~",";
 		if(orderedFreeVars.length) r=r[0..$-1];
 		r~=middle~distribution.toString(formatting);
