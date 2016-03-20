@@ -1,6 +1,8 @@
 
 + Maple bug reports: follow up/resubmit
 
++ Solve (∫dξ₁[-⅟ξ₁≤0]·[ξ₁≠0]·e^(-r₁²·ξ₁²·⅟2+-ξ₁²·⅟2)·ξ₁)·⅟2·⅟π and related integrals. (See div_gauss.prb).
+
 + While loops (L1 distance)
 
 + (2x+2)(x+1)  →  2(x+1)^2

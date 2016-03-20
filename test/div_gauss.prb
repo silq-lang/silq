@@ -1,0 +1,6 @@
+
+def main() {
+    X := Gauss(0,1);
+    Y := Gauss(0,1);
+    return X/Y; // expected: TODO: cauchy distribution
+}
