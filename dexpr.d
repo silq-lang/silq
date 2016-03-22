@@ -1491,8 +1491,7 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 				auto r=dIvr(neqZ,rhs)*doIt(-parity*rhs*lhsInv,ty,lhsInv.polyNormalize(var),rhs^^mone);
 				if(ty==leZ){
 					static if(isDelta) assert(0);
-					auto oddParity=linearizeConstraints(dIvr(lZ,parity),var);
-					r=oddParity*dIvr(eqZ,rhs)+r;
+					r=linearizeConstraints(dIvr(leZ,parity*lhsInv),var)*dIvr(eqZ,rhs)+r;
 				}else if(ty==neqZ){
 					static if(isDelta) assert(0);
 					r=dIvr(eqZ,rhs)+r;
