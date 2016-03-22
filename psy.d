@@ -706,6 +706,7 @@ void test(){
 	//writeln("(x²)^(1/2)".dParse.simplify(one)); // oops
 	//writeln("∫dξ₁(-[ξ₁≤0]·ξ₁·⅟2)·[ξ₁≠0]·⅟e^(ξ₁²·⅟2)·⅟ξ₁·⅟√π̅·√2̅".dParse.simplify(one));
 	//writeln("∫dξ₁[ξ₁≠0]·[ξ₁≤0]·⅟e^(ξ₁²·⅟2)".dParse.simplify(one));
+	//writeln("∫dx x·e^(-r₁²·x²·⅟2+-x²·⅟2)".dParse.simplify(one));
 }
 /*
 [([x=0]+x)·(1+[x=0])≤0]

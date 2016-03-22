@@ -1266,7 +1266,7 @@ bool approxEqual(real a,real b){
 	return a==b;
 }
 
-// TODO: improve these procedures:
+// TODO: improve these procedures: they are way too naive
 bool couldBeZero(DExpr e){
 	if(cast(DΠ)e) return false;
 	if(cast(DE)e) return false;
@@ -1294,6 +1294,25 @@ bool couldBeZero(DExpr e){
 			}
 		}
 		if(allDistinct) return false;		
+	}
+	if(auto p=cast(DPlus)e){
+		bool allLessOrEqual=true;
+		bool allGreaterOrEqual=true;
+		bool existsNonZero=false;
+		foreach(s;p.summands){
+			if(!mustBeLessOrEqualZero(s))
+				allLessOrEqual=false;
+			if(!mustBeLessOrEqualZero(-s))
+				allGreaterOrEqual=false;
+			if(!allLessOrEqual&&!allGreaterOrEqual)
+				break;
+			if(!couldBeZero(s))
+				existsNonZero=true;
+		}
+		if(existsNonZero&&(allLessOrEqual||allGreaterOrEqual)){
+			assert(!allLessOrEqual||!allGreaterOrEqual);
+			return false;
+		}
 	}
 	return true;
 }
@@ -1335,7 +1354,7 @@ bool mustBeLessOrEqualZero(DExpr e){
 		auto ff=m.getFractionalFactor();
 		if(mustBeLessOrEqualZeroImpl(ff)){
 			bool allGreaterEqual=true;
-			foreach(f;e.factors){
+			foreach(f;m.factors){
 				if(f.isFraction()) continue;
 				if(!mustBeGreaterOrEqualZeroImpl(f)){
 					allGreaterEqual=false; break;
@@ -1343,6 +1362,15 @@ bool mustBeLessOrEqualZero(DExpr e){
 			}
 			if(allGreaterEqual) return true;
 		}
+	}
+	if(auto p=cast(DPlus)e){
+		bool allLessOrEqual=true;
+		foreach(s;p.summands){
+			if(!mustBeLessOrEqualZero(s)){
+				allLessOrEqual=false; break;
+			}
+		}
+		if(allLessOrEqual) return true;
 	}
 	return false;
 }
