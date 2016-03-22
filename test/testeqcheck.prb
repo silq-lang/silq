@@ -1,6 +1,6 @@
 def main(){
     x := Gauss(0,1);
-    a := x^(1/2);
-    b := a^2==x;
+    a := x^2;
+    b :=a^(1/2)==(if x > 0 { x } else { -x });
     return b; // expected: δ[-b+1]
 }

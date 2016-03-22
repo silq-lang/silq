@@ -1,6 +1,7 @@
 
-def main() {
+def maink(){
     X := Gauss(0,1);
     Y := Gauss(0,1);
     return X/Y; // expected: TODO: cauchy distribution
+    // TODO: why is this so slow? (Is related to (e1^e2)^e3 simplification).
 }

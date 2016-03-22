@@ -1037,8 +1037,12 @@ class DPow: DBinaryOp{
 				else return dMult(outside).simplify(facts);
 			}
 		}
-		if(auto p=cast(DPow)e1)// TODO: this can be "wrong", e.g: (-1)^(2/3) != ((-1)^6)^(1/4)
-			return p.operands[0]^^(p.operands[1]*e2);
+		if(auto p=cast(DPow)e1){
+			if(p.operands[0]!is mone){
+				return (dIvr(DIvr.Type.lZ,p.operands[0])*(mone^^p.operands[1])^^e2*(-p.operands[0])^^(p.operands[1]*e2)+
+						dIvr(DIvr.Type.leZ,-p.operands[0])*p.operands[0]^^(p.operands[1]*e2)).simplify(facts);
+			}
+		}
 		if(e1 is one||e2 is zero) return one;
 		if(e1 is -one && e2 is -one) return -one;
 		if(e2 is one) return e1;

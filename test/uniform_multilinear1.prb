@@ -4,5 +4,5 @@ def maink(){
     y := Uniform(0,1);
     k := Uniform(0,1);
     a := x*y+k;
-    return (a);
+    return (a); // expected: ((-a+-log(-1+a)+2+a·log(-1+a))·[-1+a≠0]·[-2+a≤0]·[-a+1≤0]+-[-1+a≠0]·[-1+a≤0]·[-a≤0]·[a≠0]·a·log(a)+[-1+a=0]+[-1+a≠0]·[-1+a≤0]·[-a≤0]·a)·q(γ⃗)
 }

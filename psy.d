@@ -700,6 +700,12 @@ void test(){
 	//writeln("∫dξ₂[ξ₁=0]·q(ξ₂,ξ₁,γ⃗)·δ[r]".dParse.simplify(one));
 	//writeln("∫dξ₁([-1+ξ₁≤0]·[-ξ₁≤0]·δ[-tmp+1]·δ[-x₂+1]·δ[-x₆+1]·δ[ξ₁]+[-1+ξ₁≤0]·[-ξ₁≤0]·δ[-x₂+1]·δ[-x₇+ξ₁]·δ[tmp])·([-ξ₁+1≠0]·[-ξ₁+1≤0]+[ξ₁≠0]·[ξ₁≤0])".dParse.simplify(one));
 	//writeln("∫dξ₁(∫dξ₂(∫dξ₃∫dξ₄([-ξ₁·ξ₂+ξ₃≤0]·[-ξ₁·ξ₂+ξ₄≤0]·[-ξ₃+ξ₁·ξ₂≠0]+[-ξ₄+ξ₁·ξ₂≠0]·[-ξ₄+ξ₁·ξ₂≤0])·q(ξ₄,ξ₃,γ⃗))·[-1+ξ₂≤0]·[-ξ₂≤0])·[-1+ξ₁≤0]·[-ξ₁≤0]".dParse.simplify(one));
+	//writeln("∫dξ₁([-1/ξ₁≤0]·[ξ₁≠0]·⅟e^(ξ₁²·⅟2)·√2̅·√π̅)".dParse.simplify(one)); // TODO: this should be π not 2·π
+	//writeln("[-1/ξ₁≤0]·[ξ₁≠0]".dParse.linearizeConstraints("ξ₁".dVar));
+	//writeln("((-[⅟x≤0]·x·⅟2+[-⅟x≤0]·x·⅟2)·[ξ₁≠0]·∫dr₁ e^(-r₁²·x²·⅟2+-x²·⅟2))·⅟π".dParse.toString(Format.mathematica));
+	//writeln("(x²)^(1/2)".dParse.simplify(one)); // oops
+	//writeln("∫dξ₁(-[ξ₁≤0]·ξ₁·⅟2)·[ξ₁≠0]·⅟e^(ξ₁²·⅟2)·⅟ξ₁·⅟√π̅·√2̅".dParse.simplify(one));
+	//writeln("∫dξ₁[ξ₁≠0]·[ξ₁≤0]·⅟e^(ξ₁²·⅟2)".dParse.simplify(one));
 }
 /*
 [([x=0]+x)·(1+[x=0])≤0]
