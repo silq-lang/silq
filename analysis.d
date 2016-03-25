@@ -253,6 +253,27 @@ private struct Analyzer{
 						auto var=dist.getTmpVar("__e");
 						dist.distribute(expPDF(var,λ));
 						return var;
+					case "StudentT":
+						if(ce.args.length!=1){
+							err.error("expected one argument (ν) to StudentT",ce.loc);
+							unwind();
+						}
+						auto ν=doIt(ce.args[0]);
+						dist.assertTrue(dIvr(DIvr.Type.lZ,-ν),"ν must be positive");
+						auto var=dist.getTmpVar("__t");
+						dist.distribute(studentTPDF(var,ν));
+						return var;
+					case "Weibull":
+						if(ce.args.length!=2){
+							err.error("expected two arguments (λ,k) to Weibull",ce.loc);
+							unwind();
+						}
+						auto λ=doIt(ce.args[0]), k=doIt(ce.args[1]);
+						dist.assertTrue(dIvr(DIvr.Type.lZ,-λ),"λ must be positive");
+						dist.assertTrue(dIvr(DIvr.Type.lZ,-k),"k must be positive");
+						auto var=dist.getTmpVar("__w");
+						dist.distribute(weibullPDF(var,λ,k));
+						return var;
 					case "FromMarginal":
 						if(ce.args.length!=1&&!allowMultiple){
 							err.error("expected one argument (e) to FromMarginal",ce.loc);
