@@ -25,7 +25,8 @@ string getActualPath(string path){
 	// TODO: search path
 	auto ext = path.extension;
 	if(ext=="") path = path.setExtension("prb");
-	return file.getcwd().canFind("/test")?path:"test/"~path;
+	//return file.getcwd().canFind("/test")?path:"test/"~path;
+	return path;
 }
 
 string readCode(File f){
@@ -707,6 +708,8 @@ void test(){
 	//writeln("∫dξ₁(-[ξ₁≤0]·ξ₁·⅟2)·[ξ₁≠0]·⅟e^(ξ₁²·⅟2)·⅟ξ₁·⅟√π̅·√2̅".dParse.simplify(one));
 	//writeln("∫dξ₁[ξ₁≠0]·[ξ₁≤0]·⅟e^(ξ₁²·⅟2)".dParse.simplify(one));
 	//writeln("∫dx x·e^(-r₁²·x²·⅟2+-x²·⅟2)".dParse.simplify(one));
+	//writeln("lim[ξ₁ → ∞]((-(d/dx)⁻¹[e^(-x²)](ξ₁·√r̅₁̅²̅·̅⅟̅2̅+̅⅟̅2̅)·ξ₁·√r̅₁̅²̅·̅⅟̅2̅+̅⅟̅2̅+-e^((-r₁²·⅟2+-⅟2)·ξ₁²)·⅟2)·⅟(r₁²·⅟2+⅟2)+(d/dx)⁻¹[e^(-x²)](ξ₁·√r̅₁̅²̅·̅⅟̅2̅+̅⅟̅2̅)·ξ₁·⅟√r̅₁̅²̅·̅⅟̅2̅+̅⅟̅2̅)".dParse.simplify(one));
+	//writeln("lim[x → ∞] e^((-r₁²·⅟2+-⅟2)·x²)".dParse.simplify(one));
 }
 /*
 [([x=0]+x)·(1+[x=0])≤0]
