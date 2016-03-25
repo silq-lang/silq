@@ -152,17 +152,6 @@ private struct Analyzer{
 						dist.distribute(rayleighPDF(var,σsq));
 						return var;
 
-					case "Exponential":
-						if(ce.args.length!=1){
-							err.error("expected one argument (lambda) to Exponential",ce.loc);
-							unwind();
-						}
-						auto lambda=doIt(ce.args[0]);
-						dist.assertTrue(dIvr(DIvr.Type.leZ,-lambda),formatError("negative scale",e.loc));
-						auto var=dist.getTmpVar("__g");
-						dist.distribute(exponentialPDF(var,lambda));
-						return var;
-
 					case "CosUnifDist": // TODO: Remove
 						auto var=dist.getTmpVar("__g");
 						dist.distribute(one/dΠ*(1-var^^2)^^-(one/2) * dBounded!"[]"(var,-one, one) * dIvr(DIvr.Type.neqZ,var-one)*dIvr(DIvr.Type.neqZ,var+one));
@@ -254,9 +243,9 @@ private struct Analyzer{
 						auto var=dist.getTmpVar("__γ");
 						dist.distribute(laplacePDF(var,μ,b));
 						return var;						
-					case "Exp":
+					case "Exp","Exponential":
 						if(ce.args.length!=1){
-							err.error("expected one argument (λ) to Exp",ce.loc);
+							err.error(text("expected one argument (λ) to ",id.name),ce.loc);
 							unwind();
 						}
 						auto λ=doIt(ce.args[0]);
