@@ -4,6 +4,7 @@
 def main(){
     n := 100;
     gaussianData := readCSV("data/LearningGaussian/data.csv");
+    //assert(n==gaussianData.length);
 
     mean := Gauss(0,100);
     prec := Gamma(1,1);
@@ -12,5 +13,6 @@ def main(){
         y := Gauss(mean,prec);
 	cobserve(y,x);
     }
-    return (mean,prec);
+    //return (mean,prec);
+    return Expectation(mean);
 }

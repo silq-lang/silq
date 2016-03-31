@@ -45,7 +45,8 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 	Case!ExpLim[] doIt(DVar v,DExpr e,DExpr x){
 		if(!x.hasFreeVar(v)) return [Case!ExpLim(one,ExpLim(x,x))];
 		if(x is v) return [Case!ExpLim(one,ExpLim(x,e))];
-		if(auto p=cast(DPlus)x.polyNormalize(v).simplify(facts)){
+		x=x.polyNormalize(v).simplify(facts);
+		if(auto p=cast(DPlus)x){
 			DExpr handlePlusImpl(ExpLim[] c){
 				bool simplified=false;
 				DExpr finite=zero;
@@ -74,6 +75,7 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 					if(growsFasterThanNormalized(v,minfAsymp,infAsymp))
 						return -dInf;
 				}
+				if(simplified) return finite+dLim(v,e,dPlus(unsupported)+dPlus(inf)+dPlus(minf));
 				return null;
 			}
 			ExpLim handlePlus(ExpLim[] c){ return ExpLim(p,handlePlusImpl(c)); }
@@ -85,6 +87,24 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 			return expandMap!handlePlus(r);
 		}
 		if(auto m=cast(DMult)x){
+			Case!ExpLim[][] r;
+			auto ow=m.splitMultAtVar(v);
+			foreach(s;ow[1].factors){
+				r~=doIt(v,e,s);
+				if(!r[$-1].length) return [];
+			}
+			DExpr replaceDeltasByIvrs(DExpr e){
+				auto h=e.getHoles!(x=>cast(DDelta)x,DDelta);
+				auto r=h.expr;
+				foreach(hole;h.holes){
+					r=r.substitute(hole.var,dIvr(DIvr.Type.eqZ,hole.expr.e));
+				}
+				return r;
+			}
+			// TODO: this is a hack and not generally correct:
+			// (It might be fine for the cases that this is actually called with though. This should still be fixed.)
+			auto owZNoDeltas=replaceDeltasByIvrs(ow[0]);
+			auto owZneqZ=dIvr(DIvr.Type.neqZ,owZNoDeltas);
 			Case!ExpLim[] handleMult(ExpLim[] c){
 				bool simplified=false;
 				DExpr finite=one;
@@ -111,18 +131,18 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 				}
 				//dw(v," ",inf," ",zro," ",finite," ",unsupported);
 				if(!unsupported.length){
-					if(!inf.length && !zro.length) return [Case!ExpLim(one,ExpLim(m,finite))];
+					if(!inf.length && !zro.length) return [Case!ExpLim(owZneqZ,ExpLim(m,finite*ow[0]))];
 					if(inf.length && !zro.length){
-						auto leZ=dIvr(DIvr.Type.leZ,finite).simplify(facts);
-						auto geZ=dIvr(DIvr.Type.leZ,-finite).simplify(facts);
+						auto lZ=dIvr(DIvr.Type.lZ,finite*ow[0]).simplify(facts);
+						auto gZ=dIvr(DIvr.Type.lZ,-finite*ow[0]).simplify(facts);
 						Case!ExpLim[] r;
-						if(leZ !is zero)
-							r~=Case!ExpLim(leZ,ExpLim(m,sign?dInf:-dInf));
-						if(geZ !is zero)
-							r~=Case!ExpLim(geZ,ExpLim(m,sign?-dInf:dInf));
+						if(lZ !is zero)
+							r~=Case!ExpLim(lZ,ExpLim(m,sign?dInf:-dInf));
+						if(gZ !is zero)
+							r~=Case!ExpLim(gZ,ExpLim(m,sign?-dInf:dInf));
 						return r;
 					}
-					if(zro.length && !inf.length) return [Case!ExpLim(one,ExpLim(m,zero))];
+					if(zro.length && !inf.length) return [Case!ExpLim(owZneqZ,ExpLim(m,zero))];
 				}
 				// Bernoulli-De l'Hôpital.
 				/*static int nesting = 0;
@@ -130,15 +150,13 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 				++nesting; scope(exit) --nesting;
 				if(nesting>nestingLimit) return null;*/
 				auto f=dMult(inf), g=1/dMult(zro);
-				return doIt(v,e,dDiff(v,f)/dDiff(v,g));
+				return doIt(v,e,finite*dDiff(v,f)/dDiff(v,g));
 				// TODO: repeated simplification ugly, how to do without?
 			}
-			Case!ExpLim[][] r;
-			foreach(s;m.factors){
-				r~=doIt(v,e,s);
-				if(!r[$-1].length) return [];
-			}
-			return expandFlatMap!handleMult(r);
+			auto res=expandFlatMap!handleMult(r);
+			auto cond=dIvr(DIvr.Type.eqZ,owZNoDeltas).simplify(facts);
+			if(cond !is zero) res~=Case!ExpLim(cond,ExpLim(m,zero));
+			return res;
 		}
 		if(auto p=cast(DPow)x){
 			DExpr handlePow(DExpr l0,DExpr l1){
@@ -178,6 +196,9 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 						return zero;
 					return null;
 				}
+				// pow is discontinuous at (0,0).
+				auto bad=dIvr(DIvr.Type.neqZ,dIvr(DIvr.Type.eqZ,l0)+dIvr(DIvr.Type.eqZ,l1)).simplify(facts);
+				if(bad !is zero) return null; // TODO!
 				return l0^^l1;
 			}
 			auto l0=doIt(v,e,p.operands[0]);
@@ -195,7 +216,7 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 				if(l.hasLimits()) return null;
 				if(l is -dInf) return zero;
 				if(l is dInf) return dΠ^^(one/2);
-				return dGaussInt(g.x.substitute(v,l));
+				return dGaussInt(l);
 			}
 			auto l=doIt(v,e,g.x);
 			Case!ExpLim[] r;
