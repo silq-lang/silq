@@ -3,13 +3,25 @@
 dat Filter{
     x: ℝ , v: ℝ, a: ℝ;
     def Filter(x: ℝ,v: ℝ, a: ℝ){
-    	//this.(x,v,a) = (x,v,a);
-	(this.x,this.v,this.a) = (x,v,a);
+        // (this.x,this.v,this.a) = (x,v,a); // TODO
+    }
+    // update step: compute new state after one time step
+    def update(t: ℝ){
+        /+this.x += t*v;
+        this.v += t*a;
+        this.a += t*Gauss(0,1);+/ // TODO
+    }
+    // measure x position with noise
+    def measureX(x: ℝ){
+        // observe(this.x + Gauss(0,1) == x); // TODO
     }
 }
 
-def main(){
-    x:=1; y:=2;
+def main(y){
+    x:=(1,2,3); //y:=2;
+    //x=y;
     (x,y) = (y,x);
+    f := Filter(1,2,3);
+    f := 3;
     return (x,y);
 }

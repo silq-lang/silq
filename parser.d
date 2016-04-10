@@ -1,6 +1,6 @@
 import std.array, std.typetuple, std.algorithm, std.conv;
+import std.traits: EnumMembers;
 import lexer, error, util, expression, type, declaration;
-
 // (re-purposed D parser, a little bit messy for now.)
 
 
@@ -34,10 +34,10 @@ template rbp(TokenType type){enum rbp=type==Tok!"."?180:lbp!type-(type==Tok!"^"|
 int getLbp(TokenType type) pure{ // operator precedence
 	switch(type){
 	//case Tok!"..": return 10; // range operator
-	case Tok!",":  return 20; // comma operator
+	case Tok!",":  return 10; // comma operator
 	// assignment operators
 	case Tok!":": // type annotation
-		return 10;
+		return 20;
 	case Tok!"/=",Tok!"&=",Tok!"|=",Tok!"-=":
 	case Tok!"+=",Tok!"<<=",Tok!">>=", Tok!">>>=":
 	case Tok!"=",Tok!"*=",Tok!"%=",Tok!"^=":
@@ -377,13 +377,13 @@ struct Parser{
 					nextToken();
 					res=New!TupleExp(Expression[].init);
 				}else{
-					res=parseExpression(lbp!(Tok!","));
+					res=parseExpression(rbp!(Tok!","));
 					if(ttype==Tok!","){
 						auto tpl=[res];
 						while(ttype==Tok!","){
 							nextToken();
 							if(ttype==Tok!")") break;
-							tpl~=parseExpression();
+							tpl~=parseExpression(rbp!(Tok!","));
 						}
 						expect(Tok!")");
 						res=New!TupleExp(tpl);
@@ -492,6 +492,12 @@ struct Parser{
 	}
 	Expression parseType(){
 		if(ttype==Tok!"i") return parseIdentifier();
+		if(ttype==Tok!"0"){
+			auto id=new Identifier(tok.toString());
+			id.loc=tok.loc;
+			nextToken();
+			return id;
+		}
 		error("found '"~tok.toString()~"' when expecting type");
 		nextToken();
 		return new ErrorTy();
@@ -505,8 +511,8 @@ struct Parser{
 		}
 		return left;
 	}
-	CompoundExp parseCompoundExp(){
-		mixin(SetLoc!CompoundExp);
+	T parseCompoundExp(T=CompoundExp)(){
+		mixin(SetLoc!T);
 		expect(Tok!"{");
 		auto s=appender!(Expression[])();
 		while(ttype!=Tok!"}" && ttype!=Tok!"EOF"){
@@ -522,7 +528,7 @@ struct Parser{
 			}
 		}
 		expect(Tok!"}");
-		return res=New!CompoundExp(s.data);
+		return res=New!T(s.data);
 	}
 	FunctionDef parseFunctionDef(){
 		mixin(SetLoc!FunctionDef);
@@ -538,7 +544,7 @@ struct Parser{
 		mixin(SetLoc!DatDecl);
 		expect(Tok!"dat");
 		auto name=parseIdentifier();
-		auto body_=parseCompoundExp();
+		auto body_=parseCompoundExp!CompoundDecl();
 		return res=New!DatDecl(name,body_);
 	}
 	ReturnExp parseReturn(){

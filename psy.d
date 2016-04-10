@@ -3,7 +3,7 @@ import file=std.file;
 import util;
 import lexer, parser, expression, declaration, error;
 
-import analysis, distrib, dexpr;
+import scope_, semantic_, analysis, distrib, dexpr;
 
 bool plot=false;// TODO: get rid of globals?
 bool cdf=false;
@@ -120,6 +120,8 @@ int run(string path){
 	auto src=new Source(path, code);
 	auto err=new FormattingErrorHandler();
 	auto exprs=parseFile(src,err);
+	exprs=semantic(exprs,new TopScope(err));
+	return 1337;
 	foreach(expr;exprs){
 		if(cast(ErrorExp)expr) continue;
 		if(auto fd=cast(FunctionDef)expr){

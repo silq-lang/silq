@@ -1,30 +1,13 @@
 import std.stdio, std.conv, std.format, std.string, std.range, std.algorithm;
 
-import lexer, expression, declaration, error;
+import lexer, expression, declaration, semantic_, error;
 import distrib, dexpr, util;
-
-alias DefExp=BinaryExp!(Tok!":=");
-alias AssignExp=BinaryExp!(Tok!"=");
-alias AddExp=BinaryExp!(Tok!"+");
-alias SubExp=BinaryExp!(Tok!"-");
-alias MulExp=BinaryExp!(Tok!"*");
-alias DivExp=BinaryExp!(Tok!"/");
-alias PowExp=BinaryExp!(Tok!"^");
-alias UMinusExp=UnaryExp!(Tok!"-");
-alias UNegExp=UnaryExp!(Tok!"!");
-alias LtExp=BinaryExp!(Tok!"<");
-alias LeExp=BinaryExp!(Tok!"<=");
-alias GtExp=BinaryExp!(Tok!">");
-alias GeExp=BinaryExp!(Tok!">=");
-alias EqExp=BinaryExp!(Tok!"==");
-alias NeqExp=BinaryExp!(Tok!"!=");
-alias OrExp=BinaryExp!(Tok!"||");
-alias AndExp=BinaryExp!(Tok!"&&");
-alias Exp=Expression;
 
 FunctionDef[string] functions; // TODO: get rid of globals
 Distribution[string] summaries;
 string sourceFile;
+
+alias ODefExp=BinaryExp!(Tok!":=");
 
 struct Expected{
 	bool exists;
@@ -647,7 +630,7 @@ private struct Analyzer{
 			writeln("before: ",dist);
 			scope(success) writeln("after: ",dist);+/
 			// TODO: visitor?
-			if(auto de=cast(DefExp)e){
+			if(auto de=cast(ODefExp)e){
 				scope(exit) dist.marginalizeTemporaries();
 				void defineVar(Identifier id,DExpr rhs){
 					DVar var=null;

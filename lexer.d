@@ -16,7 +16,7 @@ template TokChars(TokenType type){mixin(TokCharsImpl());}
 
 bool isAlphaEx(dchar c){
 	import std.algorithm : canFind;
-	return isAlpha(c)||canFind("₀₁₂₃₄₅₆₇₈₉"d,c);
+	return isAlpha(c)||canFind("₀₁₂₃₄₅₆₇₈₉𝟙"d,c);
 }
 
 private immutable {

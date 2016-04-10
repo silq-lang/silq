@@ -2,12 +2,22 @@
 
 import std.array, std.algorithm, std.range, std.conv, std.string;
 
-import lexer, parser, type, util;
+import lexer, parser, scope_, type, declaration, util;
+
+enum SemState{
+	initial,
+	started,
+	completed,
+	error,
+}
 
 abstract class Node{
 	// debug auto cccc=0;
 	Location loc;
 	abstract @property string kind();
+
+	// semantic information
+	SemState sstate;
 }
 
 
@@ -62,6 +72,9 @@ class Identifier: Expression{
 	}
 	override string toString(){return _brk(name);}
 	override @property string kind(){return "identifier";}
+
+	// semantic information:
+	Declaration meaning;
 }
 
 class UnaryExp(TokenType op): Expression{
@@ -167,6 +180,9 @@ class CompoundExp: Expression{
 
 	override string toString(){return "{\n"~indent(join(map!(a=>a.toString()~(a.isCompound()?"":";"))(s),"\n"))~"\n}";}
 	override bool isCompound(){ return true; }
+
+	// semantic information
+	BlockScope blscope_;
 }
 
 class TupleExp: Expression{

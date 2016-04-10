@@ -25,6 +25,7 @@ import core.stdc.string;
 import std.traits;
 import utf=std.utf, uni=std.uni;
 import std.algorithm, std.conv;
+import std.array;
 import std.string;
 import std.typetuple;
 
