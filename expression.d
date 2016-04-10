@@ -2,7 +2,7 @@
 
 import std.array, std.algorithm, std.range, std.conv, std.string;
 
-import lexer, parser, util;
+import lexer, parser, type, util;
 
 abstract class Node{
 	// debug auto cccc=0;
@@ -12,12 +12,22 @@ abstract class Node{
 
 
 abstract class Expression: Node{
+	Type type;
 	int brackets=0;
 	override string toString(){return _brk("{}()");}
 	protected string _brk(string s){return std.array.replicate("(",brackets)~s~std.array.replicate(")",brackets); return s;}
 
 	override @property string kind(){return "expression";}
 	bool isCompound(){ return false; }
+}
+
+class TypeAnnotationExp: Expression{
+	Expression e,t;
+	this(Expression e, Expression t){
+		this.e=e; this.t=t;
+	}
+	override @property string kind(){ return e.kind; }
+	override string toString(){ return _brk(e.toString()~": "~t.toString()); }
 }
 
 // workaround for the bug:
@@ -95,7 +105,6 @@ class BinaryExp(TokenType op): Expression{
 	Expression e1,e2;
 	this(Expression left, Expression right){e1=left; e2=right;}
 
-
 	override string toString(){
 		return _brk(e1.toString() ~ " "~TokChars!op~" "~e2.toString());
 	}
@@ -158,16 +167,6 @@ class CompoundExp: Expression{
 
 	override string toString(){return "{\n"~indent(join(map!(a=>a.toString()~(a.isCompound()?"":";"))(s),"\n"))~"\n}";}
 	override bool isCompound(){ return true; }
-}
-
-class FunctionDef: Expression{
-	Identifier name;
-	Identifier[] args; // TODO: make these parameters instead
-	CompoundExp body_;
-	this(Identifier name, Identifier[] args, CompoundExp body_){
-		this.name=name; this.args=args; this.body_=body_;
-	}
-	override string toString(){ return "def "~name.toString()~"("~join(map!(to!string)(args),",")~")"~body_.toString();}
 }
 
 class TupleExp: Expression{

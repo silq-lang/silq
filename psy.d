@@ -1,7 +1,7 @@
 import std.stdio, std.path, std.array, std.string, std.algorithm;
 import file=std.file;
 import util;
-import lexer, parser, expression, error;
+import lexer, parser, expression, declaration, error;
 
 import analysis, distrib, dexpr;
 
@@ -53,9 +53,9 @@ void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool isMain){
 	auto dist=analyze(fd,err).dup;
 	if(isMain){
 		dist.renormalize();
-		if(fd.args.length){
-			dist.deleteContext(fd.args.length);
-			dist.assumeInputNormalized(fd.args.length);
+		if(fd.params.length){
+			dist.deleteContext(fd.params.length);
+			dist.assumeInputNormalized(fd.params.length);
 		}
 		//dist.distribution=dist.distribution.substituteFun("q".dFunVar,one,DVar[].init,SetX!DVar.init).simplify(one);
 	}
@@ -121,11 +121,10 @@ int run(string path){
 	auto err=new FormattingErrorHandler();
 	auto exprs=parseFile(src,err);
 	foreach(expr;exprs){
+		if(cast(ErrorExp)expr) continue;
 		if(auto fd=cast(FunctionDef)expr){
 			analysis.functions[fd.name.name]=fd;
-		}else{
-			err.error("top level declaration must be function",expr.loc);
-		}
+		}else if(!cast(Declaration)expr) err.error("top level declaration must be declaration",expr.loc);
 	}
 	sourceFile=path;
 	scope(exit){ // TODO: get rid of globals

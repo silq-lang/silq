@@ -1,6 +1,6 @@
 import std.stdio, std.conv, std.format, std.string, std.range, std.algorithm;
 
-import lexer, expression, error;
+import lexer, expression, declaration, error;
 import distrib, dexpr, util;
 
 alias DefExp=BinaryExp!(Tok!":=");
@@ -42,6 +42,10 @@ private struct Analyzer{
 		class Unwind: Exception{ this(){ super(""); } }
 		void unwind(){ throw new Unwind(); }
 		DExpr doIt(Exp e,bool allowMultiple=false){
+			if(cast(Declaration)e||cast(BinaryExp!(Tok!":="))e){
+				err.error("definition must be at top level",e.loc);
+				unwind();
+			}
 			if(auto id=cast(Identifier)e){
 				if(auto v=dist.lookupVar(id.name))
 					return v;
@@ -90,8 +94,8 @@ private struct Analyzer{
 							err.error("only single return values supported for function calls in expressions",ce.loc);
 							unwind();
 						}
-						if(ce.args.length != fun.args.length){
-							err.error(format("expected %s arguments to '%s', received %s",fun.args.length,id.name,ce.args.length),ce.loc);
+						if(ce.args.length != fun.params.length){
+							err.error(format("expected %s arguments to '%s', received %s",fun.params.length,id.name,ce.args.length),ce.loc);
 							unwind();
 						}
 						DExpr[] args;
@@ -437,6 +441,9 @@ private struct Analyzer{
 					}else deterministic.remove(k);
 				}
 				return var;
+			}else if(auto tpl=cast(TupleExp)e){
+				auto dexprs=tpl.e.map!(x=>doIt(x)).array;
+				return dTuple(dexprs);
 			}else if(auto c=transformConstr(e))
 				return c;
 			err.error("unsupported",e.loc);
@@ -679,7 +686,7 @@ private struct Analyzer{
 					auto rhs=transformExp(de.e2,true);
 					auto dtpl=cast(DTuple)rhs;
 					if(rhs&&(!dtpl||dtpl.length!=tpl.length)){
-						err.error(text("inconsistent number of tuple entries for definition: ",tpl.length," vs. ",tpl.length),de.loc);
+						err.error(text("inconsistent number of tuple entries for definition: ",tpl.length," vs. ",(dtpl?dtpl.length:1)),de.loc);
 						rhs=dtpl=null;
 					}
 					if(dtpl){
@@ -694,14 +701,16 @@ private struct Analyzer{
 					err.error("left hand side of definition should be identifier or tuple of identifiers",de.e1.loc);
 				}
 			}else if(auto ae=cast(AssignExp)e){
-				if(auto id=cast(Identifier)ae.e1){
+				void assignVar(Identifier id,DExpr rhs){
 					if(id.name !in arrays){
 						if(auto v=dist.lookupVar(id.name)){
-							auto rhs=transformExp(ae.e2);
 							dist.assign(v,rhs?rhs:zero);
 							trackDeterministic(v,rhs);
 						}else err.error("undefined variable '"~id.name~"'",id.loc);
-					}else err.error("reassigning array unsupported",e.loc);
+					}else err.error("reassigning array unsupported",e.loc);					
+				}
+				if(auto id=cast(Identifier)ae.e1){
+					assignVar(id,transformExp(ae.e2));
 				}else if(auto idx=cast(IndexExp)ae.e1){
 					if(auto cidx=indexArray(idx)){
 						if(auto v=cast(DVar)cidx){
@@ -712,7 +721,26 @@ private struct Analyzer{
 							err.error(text("array is not writeable"),ae.loc);
 						}
 					}
-				}else err.error("left hand side of assignment should be identifier",ae.e1.loc);
+				}else if(auto tpl=cast(TupleExp)ae.e1){
+					auto rhs=transformExp(ae.e2,true);
+					auto dtpl=cast(DTuple)rhs;
+					if(rhs&&(!dtpl||dtpl.length!=tpl.length)){
+						err.error(text("inconsistent number of tuple entries for assignment: ",tpl.length," vs. ",(dtpl?dtpl.length:1)),ae.loc);
+						rhs=dtpl=null;
+					}
+					if(dtpl){
+						auto tmp=iota(tpl.e.length).map!(_=>dist.getVar("__tpltmp")).array;
+						foreach(k,de;dtpl.values) dist.initialize(tmp[k],de);
+						foreach(k,exp;tpl.e){
+							auto id=cast(Identifier)exp;
+							if(!id) goto LbadAssgnmLhs;
+							assignVar(id,tmp[k]);
+						}
+					}					
+				}else{
+				LbadAssgnmLhs:
+					err.error("left hand side of assignment should be identifier or tuple of identifiers",ae.e1.loc);
+				}
 			}else if(auto ite=cast(IteExp)e){
 				if(auto c=transformConstr(ite.cond)){
 					auto dthen=dist.dupNoErr();
@@ -850,7 +878,7 @@ private struct Analyzer{
 Distribution analyze(FunctionDef def,ErrorHandler err){
 	auto dist=new Distribution();
 	DExpr[] args;
-	foreach(a;def.args) args~=dist.declareVar(a.name);
+	foreach(a;def.params) args~=dist.declareVar(a.name.name);
 	if(def.name.name!="main"||args.length) // TODO: move this decision to caller
 		dist.addArgsWithContext(args);
 	return analyzeWith(def,dist,err);

@@ -1,5 +1,5 @@
 import std.array, std.typetuple, std.algorithm, std.conv;
-import lexer, error, util, expression;
+import lexer, error, util, expression, type, declaration;
 
 // (re-purposed D parser, a little bit messy for now.)
 
@@ -11,10 +11,6 @@ enum binaryOps=mixin({string r="[";
 		foreach(x;EnumMembers!TokenType)if(getLbp(x)!=-1&&!canFind([Tok!"++",Tok!"--",Tok!"(",Tok!"["],x)) r~=`"`~TokenTypeToString(x)~`",`;
 		return r~"]";
 	}());
-
-
-enum overloadableUnary = ["-","+","~","*","++","--"];
-enum overloadableBinary = ["+","-","*","/","%","^^","&","|","^","<<",">>",">>>","~","in"];
 
 bool isRelationalOp(TokenType op){
 	switch(op){
@@ -38,8 +34,10 @@ template rbp(TokenType type){enum rbp=type==Tok!"."?180:lbp!type-(type==Tok!"^"|
 int getLbp(TokenType type) pure{ // operator precedence
 	switch(type){
 	//case Tok!"..": return 10; // range operator
-	//case Tok!",":  return 20; // comma operator
+	case Tok!",":  return 20; // comma operator
 	// assignment operators
+	case Tok!":": // type annotation
+		return 10;
 	case Tok!"/=",Tok!"&=",Tok!"|=",Tok!"-=":
 	case Tok!"+=",Tok!"<<=",Tok!">>=", Tok!">>>=":
 	case Tok!"=",Tok!"*=",Tok!"%=",Tok!"^=":
@@ -324,6 +322,16 @@ struct Parser{
 		return e;
 	}
 
+	Parameter parseParameter(){
+		auto i=parseIdentifier();
+		Expression t=null;
+		if(ttype==Tok!":"){
+			nextToken();
+			t=parseType();
+		}
+		return New!Parameter(i,t);
+	}
+	
 	Expression[] parseArgumentList(string delim, bool nonempty=false, Entry=AssignExp, T...)(T args){
 		auto e=appender!(Expression[])();
 		foreach(x;args) e.put(x); // static foreach
@@ -369,7 +377,7 @@ struct Parser{
 					nextToken();
 					res=New!TupleExp(Expression[].init);
 				}else{
-					res=parseExpression();
+					res=parseExpression(lbp!(Tok!","));
 					if(ttype==Tok!","){
 						auto tpl=[res];
 						while(ttype==Tok!","){
@@ -428,9 +436,14 @@ struct Parser{
 					r.loc=loc.to(tok.loc);
 				}
 				return r;
+			case Tok!":":
+				nextToken();
+				auto t=parseType();
+				res=New!TypeAnnotationExp(left,t);
+				return res;
 			mixin({string r;
 				foreach(x;binaryOps)
-					if(x!="=>" && x!="." && x!="!" && x!="?")
+					if(x!="=>" && x!="." && x!="!" && x!="?" && x!=":")
 						r~=mixin(X!q{case Tok!"@(x)":
 							nextToken();
 							auto right=parseExpression(rbp!(Tok!"@(x)"));
@@ -462,7 +475,8 @@ struct Parser{
 	}
 	Expression parseExpression(int rbp = 0){
 		switch(ttype){
-			case Tok!"def": return parseDefinition();
+			case Tok!"def": return parseFunctionDef();
+			case Tok!"dat": return parseDatDecl();
 			case Tok!"return": return parseReturn();
 			case Tok!"if": return parseIte();
 			case Tok!"repeat": return parseRepeat();
@@ -475,6 +489,12 @@ struct Parser{
 		Expression left;
 		try left = nud();catch(PEE err){error("found '"~tok.toString()~"' when expecting expression");nextToken();return new ErrorExp();}
 		return parseExpression2(left, rbp);
+	}
+	Expression parseType(){
+		if(ttype==Tok!"i") return parseIdentifier();
+		error("found '"~tok.toString()~"' when expecting type");
+		nextToken();
+		return new ErrorTy();
 	}
 	Expression parseExpression2(Expression left, int rbp = 0){ // left is already known
 		while(rbp < arrLbp[ttype])
@@ -504,15 +524,22 @@ struct Parser{
 		expect(Tok!"}");
 		return res=New!CompoundExp(s.data);
 	}
-	FunctionDef parseDefinition(){
+	FunctionDef parseFunctionDef(){
 		mixin(SetLoc!FunctionDef);
 		expect(Tok!"def");
 		auto name=parseIdentifier();
 		expect(Tok!"(");
-		auto args=cast(Identifier[])parseArgumentList!(")",false,Identifier)();
+		auto args=cast(Parameter[])parseArgumentList!(")",false,Parameter)();
 		expect(Tok!")");
 		auto body_=parseCompoundExp();
 		return res=New!FunctionDef(name,args,body_);
+	}
+	DatDecl parseDatDecl(){
+		mixin(SetLoc!DatDecl);
+		expect(Tok!"dat");
+		auto name=parseIdentifier();
+		auto body_=parseCompoundExp();
+		return res=New!DatDecl(name,body_);
 	}
 	ReturnExp parseReturn(){
 		mixin(SetLoc!ReturnExp);

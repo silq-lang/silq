@@ -1,0 +1,15 @@
+// skipped
+
+dat Filter{
+    x: ℝ , v: ℝ, a: ℝ;
+    def Filter(x: ℝ,v: ℝ, a: ℝ){
+    	//this.(x,v,a) = (x,v,a);
+	(this.x,this.v,this.a) = (x,v,a);
+    }
+}
+
+def main(){
+    x:=1; y:=2;
+    (x,y) = (y,x);
+    return (x,y);
+}

@@ -115,7 +115,7 @@ string[2][] specialTokens =
 	 ["EOF",   "Eof"                       ]];
 string[2][] compoundTokens = [];
 
-string[] keywords = ["def","true","false","if","else","observe","assert","return","repeat","for","in","cobserve"];
+string[] keywords = ["dat","def","true","false","if","else","observe","assert","return","repeat","for","in","cobserve"];
 
 
 string[2][] tokens = specialTokens ~ complexTokens ~ simpleTokens ~ compoundTokens ~ keywordTokens();
@@ -901,6 +901,7 @@ TokenType isKeyword(string s){
 			if(s=="in") return Tok!"in";
 			break;
 		case 3:
+			if(s=="dat") return Tok!"dat";
 			if(s=="def") return Tok!"def";
 			if(s=="for") return Tok!"for";
 			break;
