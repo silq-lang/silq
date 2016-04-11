@@ -1,6 +1,6 @@
 import std.array,std.algorithm;
 import std.format, std.conv;
-import lexer,scope_,expression,type,declaration,util;
+import lexer,scope_,expression,type,declaration,error,util;
 
 alias CommaExp=BinaryExp!(Tok!",");
 alias AssignExp=BinaryExp!(Tok!"=");
@@ -121,14 +121,33 @@ Expression[] semantic(Expression[] exprs,Scope sc){
 	return exprs;
 }
 
+bool isBuiltIn(Identifier id){
+	if(!id) return false;
+	switch(id.name){
+	case "array":
+	case "readCSV":
+	case "CosUnifDist":
+	case "Rayleigh","Bernoulli","Exp","Exponential","StudentT":
+	case "Gauss","Pareto","Uniform","UniformInt","Beta","Gamma","Laplace","Weibull":
+	case "TruncatedGauss":
+	case "FromMarginal","SampleFrom": 
+	case "Expectation":
+	case "Categorical":
+		return true;
+	default: return false;
+	}
+}
 Expression builtIn(Identifier id){
 	Type t=null;
 	switch(id.name){
-	case "array","readCSV": t=funTy(tupleTy([ℝ]),arrayTy(ℝ)); break;
+	case "array": t=funTy(tupleTy([ℝ]),arrayTy(ℝ)); break;
+	case "readCSV": t=funTy(tupleTy([stringTy]),arrayTy(ℝ)); break;
 	case "CosUnifDist": t=funTy(unit,ℝ); break; // TDOO: remove
 	case "Rayleigh","Bernoulli","Exp","Exponential","StudentT": t=funTy(tupleTy([ℝ]),ℝ); break;
-	case "Gauss","Pareto","UniformInt","Beta","Gamma","Laplace","Weibull":
+	case "Gauss","Pareto","Uniform","UniformInt","Beta","Gamma","Laplace","Weibull":
 		t=funTy(tupleTy([ℝ,ℝ]),ℝ); break;
+	case "TruncatedGauss":
+		t=funTy(tupleTy([ℝ,ℝ,ℝ,ℝ]),ℝ); break;
 	case "FromMarginal","SampleFrom": t=unit; break; // those are actually magic polymorphic functions
 	case "Expectation": t=funTy(tupleTy([ℝ]),ℝ); break; // TODO: this should be polymorphic too
 	case "Categorical": t=funTy(tupleTy([arrayTy(ℝ)]),ℝ); break;
@@ -141,6 +160,7 @@ Expression builtIn(Identifier id){
 
 
 Expression semantic(Expression expr,Scope sc){
+	alias Bool=ℝ; // TODO: maybe add 𝟚 as specific boolean type?
 	if(expr.sstate==SemState.completed||expr.sstate==SemState.error) return expr;
 	if(expr.sstate==SemState.started){
 		sc.error("cyclic dependency",expr.loc);
@@ -171,9 +191,13 @@ Expression semantic(Expression expr,Scope sc){
 		ce.blscope_=blsc;
 		foreach(ref e;ce.s){
 			if(auto ite=cast(IteExp)e){
-				ite.cond=semantic(ite.cond,sc);
-				ite.then=cast(CompoundExp)semantic(ite.then,sc);
-				if(ite.othw) ite.othw=cast(CompoundExp)semantic(ite.othw,sc);
+				ite.cond=semantic(ite.cond,blsc);
+				ite.then=cast(CompoundExp)semantic(ite.then,blsc);
+				if(ite.othw) ite.othw=cast(CompoundExp)semantic(ite.othw,blsc);
+				if(ite.cond.sstate==SemState.completed && ite.cond.type!is Bool){
+					sc.error(format("cannot obtain truth value for type '%s'",ite.cond.type),ite.cond.loc);
+					ite.sstate=SemState.error;
+				}
 				propErr(ite.cond,ite);
 				propErr(ite.then,ite);
 				if(ite.othw) propErr(ite.othw,ite);
@@ -194,6 +218,7 @@ Expression semantic(Expression expr,Scope sc){
 		assert(!!bdy);
 		fd.body_=bdy;
 		fd.type=unit;
+		propErr(bdy,fd);
 		Type[] pty;
 		foreach(p;fd.params){
 			if(!p.vtype){
@@ -250,6 +275,24 @@ Expression semantic(Expression expr,Scope sc){
 				ce.sstate=SemState.error;
 			}else{
 				ce.type=ft.cod;
+			}
+		}else if(isBuiltIn(cast(Identifier)ce.e)){
+			auto id=cast(Identifier)ce.e;
+			switch(id.name){
+			case "FromMarginal": 
+				Type[] aty;
+				foreach(a;ce.args){
+					if(!a.type){
+						assert(ce.sstate==SemState.error);
+						return ce;
+					}
+					aty~=a.type;
+				}
+				ce.type=aty.length==1?aty[0]:tupleTy(aty); // TODO: this special casing is not very nice
+				break;
+			case "SampleFrom":
+				return handleSampleFrom(ce,sc);
+			default: assert(0,text("TODO: ",id.name));
 			}
 		}else{
 			sc.error(format("cannot call expression of type '%s'",fun.type),ce.loc);
@@ -354,7 +397,7 @@ Expression semantic(Expression expr,Scope sc){
 		propErr(meaning,id);
 		id.type=typeForDecl(meaning);
 		if(!id.type&&id.sstate!=SemState.error){
-			sc.error("forward reference",id.loc);
+			sc.error("invalid forward reference",id.loc);
 			id.sstate=SemState.error;
 		}
 		return id;
@@ -456,12 +499,11 @@ Expression semantic(Expression expr,Scope sc){
 		if(tae.sstate==SemState.error)
 			return tae;
 		if(tae.e.type !is tae.type){
-			sc.error(format("type is '%s' instead of '%s'",tae.e.type,tae.type),tae.loc);
+			sc.error(format("type is '%s', not '%s'",tae.e.type,tae.type),tae.loc);
 			tae.sstate=SemState.error;
 		}
 		return tae;
 	}
-	alias Bool=ℝ; // TODO: maybe add 𝟚 as specific boolean type?
 
 	Expression handleUnary(string name,Expression e,ref Expression e1,Type t1,Type r){
 		e1=semantic(e1,sc);
@@ -507,26 +549,26 @@ Expression semantic(Expression expr,Scope sc){
 	if(auto ae=cast(GtExp)expr) return handleBinary("'>'",ae,ae.e1,ae.e2,ℝ,ℝ,Bool);
 	if(auto ae=cast(GeExp)expr) return handleBinary("'≥'",ae,ae.e1,ae.e2,ℝ,ℝ,Bool);
 	if(auto ae=cast(EqExp)expr) return handleBinary("'='",ae,ae.e1,ae.e2,ℝ,ℝ,Bool);
-	if(auto ae=cast(EqExp)expr) return handleBinary("'≠'",ae,ae.e1,ae.e2,ℝ,ℝ,Bool);
+	if(auto ae=cast(NeqExp)expr) return handleBinary("'≠'",ae,ae.e1,ae.e2,ℝ,ℝ,Bool);
 	if(auto ite=cast(IteExp)expr){
 		ite.cond=semantic(ite.cond,sc);
-		ite.then=cast(CompoundExp)semantic(ite.then,sc);
+		if(ite.then.s.length!=1||ite.othw&&ite.othw.s.length!=1){
+			sc.error("branches of 'if' expression must be single expressions;",ite.loc);
+			ite.sstate=SemState.error;
+			return ite;
+		}
+		ite.then.s[0]=semantic(ite.then.s[0],sc);
 		if(!ite.othw){
 			sc.error("missing else for if expression",ite.loc);
 			ite.sstate=SemState.error;
 			return ite;
 		}
-		ite.othw=cast(CompoundExp)semantic(ite.othw,sc);
+		ite.othw.s[0]=semantic(ite.othw.s[0],sc);
 		propErr(ite.cond,ite);
 		propErr(ite.then,ite);
 		propErr(ite.othw,ite);
 		if(ite.sstate==SemState.error)
 			return ite;
-		if(ite.then.s.length!=1||ite.othw.s.length!=1){
-			sc.error("branches of 'if' expression must be single expressions;",ite.loc);
-			ite.sstate=SemState.error;
-			return ite;
-		}
 		auto t1=ite.then.s[0].type;
 		auto t2=ite.othw.s[0].type;
 		if(t1 !is t2){
@@ -536,11 +578,85 @@ Expression semantic(Expression expr,Scope sc){
 		ite.type=t1;
 		return ite;
 	}
-	
+	if(auto fe=cast(ForExp)expr){
+		auto fesc=new ForExpScope(sc,fe);
+		auto vd=new VarDecl(fe.var);
+		vd.vtype=ℝ;
+		vd.loc=fe.var.loc;
+		if(!fesc.insert(vd))
+			fe.sstate=SemState.error;
+		fe.fescope_=fesc;
+		fe.loopVar=vd;
+		fe.left=semantic(fe.left,fesc);
+		if(fe.left.sstate==SemState.completed && fe.left.type!is ℝ){
+			sc.error(format("lower bound for loop variable should be a number, not '%s",fe.left.type),fe.left.loc);
+			fe.sstate=SemState.error;
+		}
+		fe.right=semantic(fe.right,fesc);
+		if(fe.right.sstate==SemState.completed && fe.right.type!is ℝ){
+			sc.error(format("upper bound for loop variable should be a number, not '%s",fe.right.type),fe.right.loc);
+			fe.sstate=SemState.error;
+		}
+		fe.bdy=cast(CompoundExp)semantic(fe.bdy,fesc);
+		assert(!!fe.bdy);
+		propErr(fe.left,fe);
+		propErr(fe.right,fe);
+		fe.type=unit;
+		return fe;
+	}
+	if(auto re=cast(RepeatExp)expr){
+		re.num=semantic(re.num,sc);
+		if(re.num.sstate==SemState.completed && re.num.type!is ℝ){
+			sc.error(format("number of iterations should be a number, not '%s",re.num.type),re.num.loc);
+			re.sstate=SemState.error;
+		}
+		re.bdy=cast(CompoundExp)semantic(re.bdy,sc);
+		propErr(re.num,re);
+		propErr(re.bdy,re);
+		re.type=unit;
+		return re;
+	}
+	if(auto oe=cast(ObserveExp)expr){
+		oe.e=semantic(oe.e,sc);
+		if(oe.e.sstate==SemState.completed && oe.e.type!is Bool){
+			sc.error(format("cannot obtain truth value for type '%s'",oe.e.type),oe.e.loc);
+			oe.sstate=SemState.error;
+		}
+		propErr(oe.e,oe);
+		oe.type=unit;
+		return oe;
+	}
+	if(auto oe=cast(CObserveExp)expr){ // TODO: get rid of cobserve!
+		oe.var=semantic(oe.var,sc);
+		oe.val=semantic(oe.val,sc);
+		propErr(oe.var,oe);
+		propErr(oe.val,oe);
+		if(oe.sstate==SemState.error)
+			return oe;
+		if(oe.var.type!is ℝ || oe.val.type !is ℝ){
+			sc.error("both arguments to cobserve should be real numbers",oe.loc);
+			oe.sstate=SemState.error;
+		}
+		oe.type=unit;
+		return oe;
+	}
+	if(auto ae=cast(AssertExp)expr){
+		ae.e=semantic(ae.e,sc);
+		if(ae.e.sstate==SemState.completed && ae.e.type!is Bool){
+			sc.error(format("cannot obtain truth value for type '%s'",ae.e.type),ae.e.loc);
+			ae.sstate=SemState.error;
+		}
+		propErr(ae.e,ae);
+		ae.type=unit;
+		return ae;
+	}
 	if(auto lit=cast(LiteralExp)expr){
 		switch(lit.lit.type){
 		case Tok!"0":
 			expr.type=ℝ;
+			return expr;
+		case Tok!"``":
+			expr.type=stringTy;
 			return expr;
 		default: break; // TODO
 		}
@@ -579,9 +695,15 @@ Type typeSemantic(Expression t,Scope sc)in{assert(!!t&&!!sc);}body{
 		if(r&&!pr.e2.brackets) return tupleTy(t1~r.types);
 		return tupleTy([t1,t2]);
 	}
+	if(auto at=cast(IndexExp)t){
+		auto next=typeSemantic(at.e,sc);
+		if(!next) return null;
+		assert(at.a==[]);
+		return arrayTy(next);
+	}
 	sc.error("not a type",t.loc);
 	return null;
-}
+ }
 
 Type typeForDecl(Declaration decl){
 	if(auto dat=cast(DatDecl)decl){
@@ -601,4 +723,94 @@ Type typeForDecl(Declaration decl){
 
 bool compatible(Type lhs,Type rhs){
 	return lhs is rhs;
+}
+
+
+import dexpr;
+struct VarMapping{
+	DVar orig;
+	DVar tmp;
+}
+struct SampleFromInfo{
+	bool error;
+	VarMapping[] retVars;
+	DVar[] paramVars;
+	DExpr newDist;	
+}
+
+import distrib; // TODO: separate concerns properly, move the relevant parts back to analysis.d
+SampleFromInfo analyzeSampleFrom(CallExp ce,ErrorHandler err,Distribution dist=null){ // TODO: support for non-real-valued distributions
+	if(ce.args.length==0){
+		err.error("expected arguments to SampleFrom",ce.loc);
+		return SampleFromInfo(true);
+	}
+	auto literal=cast(LiteralExp)ce.args[0];
+	if(!literal||literal.lit.type!=Tok!"``"){
+		err.error("first argument to SampleFrom must be string literal",ce.args[0].loc);
+		return SampleFromInfo(true);
+	}
+	VarMapping[] retVars;
+	DVar[] paramVars;
+	DExpr newDist;
+	import hashtable;
+	HSet!(string,(a,b)=>a==b,a=>typeid(string).getHash(&a)) names;
+	try{
+		import dparse;
+		auto parser=DParser(literal.lit.str);
+		parser.skipWhitespace();
+		parser.expect('(');
+		for(bool seen=false;parser.cur()!=')';){
+			parser.skipWhitespace();
+			if(parser.cur()==';'){
+				seen=true;
+				parser.next();
+				continue;
+			}
+			auto orig=parser.parseDVar();
+			if(orig.name in names){
+				err.error(text("multiple variables of name '",orig.name,"'"),ce.args[0].loc);
+				return SampleFromInfo(true);
+			}
+			if(!seen){
+				auto tmp=dist?dist.getTmpVar("__tmp"~orig.name):null; // TODO: this is a hack
+				retVars~=VarMapping(orig,tmp);
+			}else paramVars~=orig;
+			parser.skipWhitespace();
+			if(!";)"[seen..$].canFind(parser.cur())) parser.expect(',');
+		}
+		parser.next();
+		parser.skipWhitespace();
+		if(parser.cur()=='⇒') parser.next();
+		else{ parser.expect('='); parser.expect('>'); }
+		parser.skipWhitespace();
+		newDist=parser.parseDExpr();
+	}catch(Exception e){
+		err.error(e.msg,ce.args[0].loc);
+		return SampleFromInfo(true);
+	}
+	if(dist){
+		foreach(var;retVars){
+			if(!newDist.hasFreeVar(var.orig)){
+				err.error(text("pdf must depend on variable '",var.orig.name,"')"),ce.args[0].loc);
+				return SampleFromInfo(true);
+			}
+			newDist=newDist.substitute(var.orig,var.tmp); // TODO: make sure capturing is impossible here
+		}
+	}
+	if(ce.args.length!=1+paramVars.length){
+		err.error(text("expected ",paramVars.length," additional arguments to SampleFrom"),ce.loc);
+		return SampleFromInfo(true);
+	}
+	return SampleFromInfo(false,retVars,paramVars,newDist);
+}
+
+Expression handleSampleFrom(CallExp ce,Scope sc){
+	auto info=analyzeSampleFrom(ce,sc.handler);
+	if(info.error){
+		ce.sstate=SemState.error;
+	}else{
+		import std.range;
+		ce.type=tupleTy((cast(Type)ℝ).repeat(info.retVars.length).array);
+	}
+	return ce;
 }

@@ -4,6 +4,6 @@
 def main(){
     x := Gauss(0,1);
     y := Gauss(0,1);
-    z := x+z; // TODO: this should throw an error
+    z := x+z; // error
     return z;
 }

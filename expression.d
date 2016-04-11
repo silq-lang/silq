@@ -172,6 +172,10 @@ class ForExp: Expression{
 											(leftExclusive?"(":"[")~left.toString()~".."~right.toString()~
 											(rightExclusive?")":"]")~bdy.toString()); }
 	override bool isCompound(){ return true; }
+
+	// semantic information
+	ForExpScope fescope_;
+	VarDecl loopVar;
 }
 
 class CompoundExp: Expression{

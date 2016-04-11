@@ -15,7 +15,7 @@ def main(){
         a1[i] = Gauss(muA1,sigmaA1);
 	a2[i] = Gauss(0.1*muA2,sigmaA2);
     }
-    yHat = array(dataY.length);
+    yHat := array(dataY.length);
     for i in [0..dataY.length){
         yHat[i] = a1[dataPerson[i]-1] + a2[dataPerson[i]-1] * dataTime[i];
     }

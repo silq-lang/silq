@@ -34,7 +34,7 @@ def main(){
     notStable := if sum > 1 { 1 } else { 0 };
 
     count := 0;
-	while notStable > 0.5 {
+    while notStable > 0.5 {
         oldprocess1d := process1d;
         oldprocess1p := process1p;
         oldprocess2d := process2d;

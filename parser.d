@@ -491,7 +491,7 @@ struct Parser{
 		return parseExpression2(left, rbp);
 	}
 	Expression parseType(){
-		Expression parseBase()(){
+		Expression parsePrimary()(){
 			if(ttype==Tok!"("){
 				nextToken();
 				auto r=parseIt();
@@ -512,7 +512,18 @@ struct Parser{
 			}
 			error("found '"~tok.toString()~"' when expecting type");
 			nextToken();
-			return null;
+			return null;			
+		}
+		Expression parseBase()(){
+			auto t=parsePrimary();
+			while(ttype==Tok!"["){
+				nextToken();
+				expect(Tok!"]");
+				auto n=New!IndexExp(t,Expression[].init);
+				n.loc=t.loc.to(ptok.loc);
+				t=n;
+			}
+			return t;
 		}
 		Expression parseProduct()(){
 			auto l=parseBase();
@@ -643,9 +654,9 @@ struct Parser{
 		mixin(SetLoc!CObserveExp);
 		expect(Tok!"cobserve");
 		expect(Tok!"(");
-		auto var=parseExpression();
+		auto var=parseExpression(rbp!(Tok!","));
 		expect(Tok!",");
-		auto val=parseExpression();
+		auto val=parseExpression(rbp!(Tok!","));
 		expect(Tok!")");
 		return res=New!CObserveExp(var,val);
 	}

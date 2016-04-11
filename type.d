@@ -67,6 +67,15 @@ ArrayTy arrayTy(Type next){
 	return memoize!((Type next)=>new ArrayTy(next))(next);
 }
 
+class StringTy: Type{
+	private this(){}
+	override string toString(){
+		return "string";
+	}
+}
+
+StringTy stringTy(){ return memoize!(()=>new StringTy()); }
+
 class FunTy: Type{
 	Type dom,cod;
 	private this(Type dom,Type cod){
