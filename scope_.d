@@ -35,9 +35,12 @@ abstract class Scope{
 		}
 		return r;
 	}
-
+	
 	void error(lazy string err, Location loc){handler.error(err,loc);}
 	void note(lazy string err, Location loc){handler.note(err,loc);}
+
+	abstract FunctionDef getFunction();
+
 private:
 	Declaration[const(char)*] symtab;
 }
@@ -48,6 +51,7 @@ class TopScope: Scope{
 	this(ErrorHandler handler){
 		this.handler_=handler;
 	}
+	override FunctionDef getFunction(){ return null; }
 }
 
 class NestedScope: Scope{
@@ -58,6 +62,8 @@ class NestedScope: Scope{
 		if(auto decl=lookupHere(ident)) return decl;
 		return parent.lookup(ident);
 	}
+
+	override FunctionDef getFunction(){ return parent.getFunction(); }
 }
 
 class FunctionScope: NestedScope{
@@ -66,6 +72,8 @@ class FunctionScope: NestedScope{
 		super(parent);
 		this.fd=fd;
 	}
+
+	override FunctionDef getFunction(){ return fd; }
 }
 class DataScope: NestedScope{
 	DatDecl decl;

@@ -103,7 +103,8 @@ string[2][] simpleTokens =
 	 ["^^=",   "PowAssign"                 ],
 	 ["~",     "Concat"                    ],
 	 ["~=",    "ConcatAssign"              ],
-	 ["@",     "At"                        ]];
+	 ["@",     "At"                        ],
+	 ["×",     "Times"                     ]];
 string[2][] specialTokens = 
 	[["",      "None",                     ],
 	 [" ",     "Whitespace",               ],
@@ -290,7 +291,7 @@ string caseSimpleToken(string prefix="", bool needs = false)pure{
 	else{
 		if(needs) r~="switch(*p){\n";
 		foreach(i;simpleTokens){
-			string s = i[0]; if(s[0]=='/' || s[0] == '.') continue; // / can be the start of a comment, . could be the start of a float literal
+			string s = i[0]; if(s[0]=='/' || s[0] == '.' || s=="×") continue; // / can be the start of a comment, . could be the start of a float literal
 			if(s.startsWith(prefix) && s.length==prefix.length+1){
 				r~=`case '`~s[$-1]~"':\n"~(needs?"p++;\n":"");
 				r~=caseSimpleToken(s,true);
@@ -422,7 +423,10 @@ private:
 		loop: while(res.length) { // breaks on EOF or buffer full
 			auto begin=p; // start of a token's representation
 			auto sline=line;
-			switch(*p++){
+			if(p[0.."×".length]=="×"){
+				p+="×".length;
+				res[0].type = Tok!"×";
+			}else switch(*p++){
 				// whitespace
 				case 0, 0x1A:
 					res[0].type = Tok!"EOF";

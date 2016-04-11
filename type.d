@@ -1,4 +1,5 @@
 import std.array, std.algorithm, std.conv;
+import std.functional;
 import expression, declaration;
 
 class Type: Expression{
@@ -41,14 +42,41 @@ class TupleTy: Type{
 	}
 	override string toString(){
 		if(!types.length) return "𝟙";
-		return types.map!(to!string).join(" × ");
+		return types.map!(a=>cast(TupleTy)a&&a!is unit?"("~a.toString()~")":a.toString()).join(" × ");
 	}
 }
 
-TupleTy theUnit;
-TupleTy unit(){ return theUnit?theUnit:(theUnit=new TupleTy([])); }
+TupleTy unit(){ return tupleTy([]); }
 
 TupleTy tupleTy(Type[] types){
-	import std.functional;
 	return memoize!((Type[] types)=>new TupleTy(types))(types);
+}
+
+class ArrayTy: Type{
+	Type next;
+	private this(Type next){
+		this.next=next;
+	}
+	override string toString(){
+		bool p=cast(FunTy)next||cast(TupleTy)next&&next!is unit;
+		return p?"("~next.toString()~")[]":next.toString()~"[]";
+	}
+}
+
+ArrayTy arrayTy(Type next){
+	return memoize!((Type next)=>new ArrayTy(next))(next);
+}
+
+class FunTy: Type{
+	Type dom,cod;
+	private this(Type dom,Type cod){
+		this.dom=dom; this.cod=cod;
+	}
+	override string toString(){
+		return dom.toString()~" → "~cod.toString();
+	}
+}
+
+FunTy funTy(Type dom,Type cod){
+	return memoize!((Type dom,Type cod)=>new FunTy(dom,cod))(dom,cod);
 }

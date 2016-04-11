@@ -40,16 +40,20 @@ class Parameter: VarDecl{
 
 class FunctionDef: Declaration{
 	Parameter[] params;
-	
+	Expression rret;
 	CompoundExp body_;
-	this(Identifier name, Parameter[] params, CompoundExp body_){
-		super(name); this.params=params; this.body_=body_;
+	this(Identifier name, Parameter[] params, Expression rret, CompoundExp body_){
+		super(name); this.params=params; this.rret=rret; this.body_=body_;
 	}
 	override string toString(){ return "def "~name.toString()~"("~join(map!(to!string)(params),",")~")"~body_.toString(); }
 
 	override bool isCompound(){ return true; }
 
+	// semantic information
 	FunctionScope fscope_;
+	Type ret;
+	Type ftype;
+	bool hasReturn;
 }
 
 
@@ -71,16 +75,18 @@ class DatDecl: Declaration{
 
 abstract class DefExp: Expression{
 	Expression init;
+	this(Expression init){ this.init=init; }
 	abstract VarDecl[] decls();
 
 	abstract void setType(Type type);
+	abstract void setError();
 }
 
 class SingleDefExp: DefExp{
 	VarDecl decl;
 	override VarDecl[] decls(){ return [decl]; }
 	this(VarDecl decl, BinaryExp!(Tok!":=") init){
-		this.decl=decl; this.init=init;
+		this.decl=decl; super(init);
 	}
 	override string toString(){
 		return init.toString();
@@ -88,22 +94,35 @@ class SingleDefExp: DefExp{
 
 	override void setType(Type type){
 		assert(!!type);
-		decl.type=type;
+		decl.vtype=type;
+		if(!decl.vtype) decl.sstate=SemState.error;
+	}
+	override void setError(){
+		decl.sstate=sstate=SemState.error;
 	}
 }
 
 class MultiDefExp: DefExp{
 	VarDecl[] decls_;
-	Expression init;
 	override VarDecl[] decls(){ return decls_; }
 	this(VarDecl[] decls_,Expression init){
-		this.decls_=decls_;this.init=init;
+		this.decls_=decls_; super(init);
 	}
 	override string toString(){
 		return init.toString();
 	}
 	override void setType(Type type){
 		assert(!!type);
-		// TODO!
+		if(auto tt=cast(TupleTy)type){
+			if(tt.types.length==decls_.length){
+				foreach(i,decl;decls_){
+					decl.vtype=tt.types[i];
+				}
+			}
+		}
+	}
+	override void setError(){
+		foreach(decl;decls_) decl.sstate=SemState.error;
+		sstate=SemState.error;
 	}
 }

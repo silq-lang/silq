@@ -491,16 +491,44 @@ struct Parser{
 		return parseExpression2(left, rbp);
 	}
 	Expression parseType(){
-		if(ttype==Tok!"i") return parseIdentifier();
-		if(ttype==Tok!"0"){
-			auto id=new Identifier(tok.toString());
-			id.loc=tok.loc;
+		Expression parseBase()(){
+			if(ttype==Tok!"("){
+				nextToken();
+				auto r=parseIt();
+				expect(Tok!")");
+				if(r) r.brackets++;
+				return r;
+			}
+			if(ttype==Tok!"i"){
+				auto r=parseIdentifier();
+				r.brackets++; // TODO: solve more elegantly
+				return r;
+			}
+			if(ttype==Tok!"0"){
+				auto id=new Identifier(tok.toString());
+				id.loc=tok.loc;
+				nextToken();
+				return id;
+			}
+			error("found '"~tok.toString()~"' when expecting type");
 			nextToken();
-			return id;
+			return null;
 		}
-		error("found '"~tok.toString()~"' when expecting type");
-		nextToken();
-		return new ErrorTy();
+		Expression parseProduct()(){
+			auto l=parseBase();
+			while(ttype==Tok!"×"||(ttype==Tok!"i"&&tok.str=="x")){
+				nextToken();
+				auto r=parseBase();
+				if(!r) return null;
+				auto next=New!(BinaryExp!(Tok!"×"))(l,r);
+				next.loc=l.loc.to(r.loc);
+				l=next;
+			}
+			return l;
+		}
+		Expression parseIt(){ return parseProduct(); }
+		auto r=parseProduct();
+		return r?r:new ErrorTy();
 	}
 	Expression parseExpression2(Expression left, int rbp = 0){ // left is already known
 		while(rbp < arrLbp[ttype])
@@ -537,8 +565,13 @@ struct Parser{
 		expect(Tok!"(");
 		auto args=cast(Parameter[])parseArgumentList!(")",false,Parameter)();
 		expect(Tok!")");
+		Expression ret=null;
+		if(ttype==Tok!":"){
+			nextToken();
+			ret=parseType();
+		}
 		auto body_=parseCompoundExp();
-		return res=New!FunctionDef(name,args,body_);
+		return res=New!FunctionDef(name,args,ret,body_);
 	}
 	DatDecl parseDatDecl(){
 		mixin(SetLoc!DatDecl);

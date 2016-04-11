@@ -17,11 +17,23 @@ dat Filter{
     }
 }
 
-def main(y){
-    x:=(1,2,3); //y:=2;
-    //x=y;
+def foo(x){
+    return x;
+}
+
+def main(y: ℝ × ℝ × ℝ × 𝟙):𝟙{
+    y = (1,2,3,());
+    x:=(3,2,1,()); //y:=2;
+    x=y;
+    x=foo(2):ℝ;
     (x,y) = (y,x);
     f := Filter(1,2,3);
     f := 3;
-    return (x,y);
+    a := array(3);
+    a[0]=2;
+    z := a.length;
+    w := if 2 { 3 }else { array(4) };
+    (aa,bb) := (3,4);
+    xx:=main(y);
+    return (xx,a[2],aa,bb);
 }

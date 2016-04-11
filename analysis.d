@@ -144,7 +144,7 @@ private struct Analyzer{
 						dist.distribute(one/dΠ*(1-var^^2)^^-(one/2) * dBounded!"[]"(var,-one, one) * dIvr(DIvr.Type.neqZ,var-one)*dIvr(DIvr.Type.neqZ,var+one));
 						return var;
 
-					case "Uniform": // TODO: handle b<a, b==a
+					case "Uniform":
 						if(ce.args.length!=2){
 							err.error("expected two arguments (a,b) to Uniform",ce.loc);
 							unwind();
