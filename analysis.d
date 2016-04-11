@@ -570,7 +570,10 @@ private struct Analyzer{
 			writeln("before: ",dist);
 			scope(success) writeln("after: ",dist);+/
 			// TODO: visitor?
-			if(auto de=cast(ODefExp)e){
+			if(auto nde=cast(DefExp)e){
+				auto de=cast(ODefExp)nde.init;
+				assert(!!de);
+				// TODO: no real need to repeat checks done by semantic
 				scope(exit) dist.marginalizeTemporaries();
 				void defineVar(Identifier id,DExpr rhs){
 					DVar var=null;
@@ -792,7 +795,7 @@ private struct Analyzer{
 						}
 					}else err.error("observed quantity must be a variable",co.loc);
 				}
-			}else if(!cast(ErrorExp)e) err.error("unsupported",e.loc);
+			}else if(!cast(ErrorExp)e) err.error(text("unsupported ",typeid(e)),e.loc);
 		}
 		return dist;
 	}

@@ -1,4 +1,4 @@
-import std.array,std.algorithm;
+import std.array,std.algorithm,std.range;
 import std.format, std.conv;
 import lexer,scope_,expression,type,declaration,error,util;
 
@@ -809,8 +809,8 @@ Expression handleSampleFrom(CallExp ce,Scope sc){
 	if(info.error){
 		ce.sstate=SemState.error;
 	}else{
-		import std.range;
-		ce.type=tupleTy((cast(Type)ℝ).repeat(info.retVars.length).array);
+		 // TODO: this special casing is not very nice:
+		ce.type=info.retVars.length==1?ℝ:tupleTy((cast(Type)ℝ).repeat(info.retVars.length).array);
 	}
 	return ce;
 }
