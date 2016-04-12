@@ -1,6 +1,5 @@
 
 + Fixes:
-  uniform_nested2: why does it try to evaluate log(0)?
   paramzero: make it work again without getting very slow on other exampls
 
 

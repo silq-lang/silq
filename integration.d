@@ -10,7 +10,7 @@ DExpr definiteIntegral(DVar var,DExpr expr,DExpr facts=one){
 	definiteIntegralMemo[t]=r;
 	return r;
 }
-
+import psy; // !!!
 private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
 	auto nexpr=expr.simplify(facts);
 	if(expr !is nexpr) expr=nexpr;
@@ -52,7 +52,7 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
 		foreach(f;expr.factors){
 			if(auto p=cast(DPlus)f){
 				bool check(){
-					foreach(d;p.allOf!T)
+					foreach(d;p.allOf!T(true))
 						if(d.hasFreeVar(var))
 							return true;
 					return false;

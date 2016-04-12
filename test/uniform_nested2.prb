@@ -1,5 +1,3 @@
-// skipped
-// TODO: fix
 
 def main(){
     a := Uniform(0,1);
