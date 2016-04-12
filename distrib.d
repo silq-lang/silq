@@ -1,6 +1,6 @@
 import std.algorithm, std.range, std.array, std.conv;
 
-import dexpr, util;
+import dexpr, type, util;
 
 DExpr gaussianPDF(DVar var,DExpr μ,DExpr σsq){
 	auto dist=one/(2*dΠ*σsq)^^(one/2)*dE^^-((var-μ)^^2/(2*σsq));
@@ -226,18 +226,18 @@ class Distribution{
 		distribution=distribution*cond;
 	}
 	void distribute(DExpr pdf){ distribution=distribution*pdf; }
-	void initialize(DVar var,DExpr exp){
+	void initialize(DVar var,DExpr exp,Type ty){
 		assert(!distribution.hasFreeVar(var));
-		distribute(dDelta(exp-var));
+		distribute(dDelta(var,exp,ty));
 		marginalizeTemporaries();
 	}
-	void assign(DVar var,DExpr exp){
+	void assign(DVar var,DExpr exp,Type ty){
 		if(distribution is zero) return;
 		assert(distribution.hasFreeVar(var));
 		auto nvar=getVar(var.name);
 		distribution=distribution.substitute(var,nvar);
 		exp=exp.substitute(var,nvar);
-		distribute(dDelta(exp-var));
+		distribute(dDelta(var,exp,ty));
 		marginalizeTemporaries();
 		marginalize(nvar);
 	}

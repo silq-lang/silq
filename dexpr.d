@@ -2070,7 +2070,7 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 		this.e=e;
 		this.ty=ty;
 		assert(ty !is ℝ);
-		assert(cast(DTuple)ty); // TODO: add more supported types
+		assert(cast(TupleTy)ty); // TODO: add more supported types
 	}
 	override string toStringImpl(Format formatting,Precedence prec){
 		 // TODO: encoding for other CAS?
@@ -2113,11 +2113,11 @@ import type;
 
 MapX!(TupleX!(DVar,DExpr,Type),DExpr) uniqueMapDDiscDelta;
 DExpr dDelta(DVar var,DExpr e,Type ty){
-	if(ty is ℝ) return dDelta(var-e);
+	if(ty is ℝ) return dDelta(e-var);
 	if(auto r=DDiscDelta.constructHook(var,e,ty)) return r;
 	// TODO: is there a better way to make the argument canonical?
 	auto t=tuplex(var,e,ty);
-	if(t in uniqueMapDDiscDelta) return cast(DDelta)uniqueMapDDiscDelta[t];
+	if(t in uniqueMapDDiscDelta) return uniqueMapDDiscDelta[t];
 	auto r=new DDiscDelta(var,e,ty);
 	uniqueMapDDiscDelta[t]=r;
 	return r;

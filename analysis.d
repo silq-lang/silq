@@ -1,6 +1,6 @@
 import std.stdio, std.conv, std.format, std.string, std.range, std.algorithm;
 
-import lexer, expression, declaration, semantic_, error;
+import lexer, expression, declaration, type, semantic_, error;
 import distrib, dexpr, util;
 
 FunctionDef[string] functions; // TODO: get rid of globals
@@ -182,6 +182,7 @@ private struct Analyzer{
 							err.error("expected one argument (ps) to Categorical",ce.loc);
 							unwind();
 						}
+						assert(ce.args[0].type is arrayTy(ℝ));
 						auto idd=cast(Identifier)ce.args[0];
 						if(!idd || idd.name !in arrays){
 							err.error("argument to Categorical should be an array",ce.loc);
@@ -197,7 +198,7 @@ private struct Analyzer{
 						dist.assertTrue(dIvr(DIvr.Type.eqZ,sum-1),"probabilities should sum up to 1"); // TODO: don't enforce this too vigorously for floating point arguments.
 						DExpr d=zero;
 						auto var=dist.getTmpVar("__c");
-						foreach(i,x;array) d=d+x*dDelta(var-i);
+						foreach(i,x;array) d=d+x*dDelta(var,dℕ(i),ℝ);
 						dist.distribute(d);
 						return var;
 					case "Beta":
@@ -270,7 +271,7 @@ private struct Analyzer{
 						auto tmp=ce.args.map!(_=>dist.getTmpVar("__mrg")).array;
 						auto ndist=dist.dup();
 						foreach(i;0..exp.length)
-							ndist.initialize(tmp[i],exp[i]);
+							ndist.initialize(tmp[i],exp[i],ce.args[i].type);
 						SetX!DVar tmpset;
 						foreach(var;tmp) tmpset.insert(var);
 						foreach(v;dist.freeVars){
@@ -299,6 +300,7 @@ private struct Analyzer{
 							err.error("expected one argument (e) to Expectation",ce.loc);
 							unwind();
 						}
+						assert(ce.args[0].type is ℝ);
 						auto exp=doIt(ce.args[0]);
 						auto total=dist.distribution;
 						auto expct=dist.distribution*exp;
@@ -313,7 +315,7 @@ private struct Analyzer{
 						auto tmp=dist.getTmpVar("__exp");
 						// for obvious reasons, this will never fail:
 						dist.assertTrue(dIvr(DIvr.Type.neqZ,total),"expectation can be computed only in feasible path");
-						dist.distribute(dDelta(expct/total-tmp));
+						dist.distribute(dDelta(tmp,expct/total,ℝ));
 						return tmp;
 					default: break;
 					}
@@ -347,7 +349,7 @@ private struct Analyzer{
 				auto athen=Analyzer(dthen,err,arrays.dup,deterministic.dup);
 				auto then=athen.transformExp(ite.then);
 				if(!then) unwind();
-				athen.dist.initialize(var,then);
+				athen.dist.initialize(var,then,ite.then.s[0].type);
 				if(!ite.othw){
 					err.error("missing else for if expression",ite.loc);
 					unwind();
@@ -355,7 +357,7 @@ private struct Analyzer{
 				auto aothw=Analyzer(dothw,err,arrays.dup,deterministic.dup);
 				auto othw=aothw.transformExp(ite.othw);
 				if(!othw) unwind();
-				aothw.dist.initialize(var,othw);
+				aothw.dist.initialize(var,othw,ite.othw.s[0].type);
 				dist=athen.dist.join(dist,aothw.dist);
 				foreach(k,v;deterministic){
 					if(k in athen.deterministic && k in aothw.deterministic
@@ -420,7 +422,8 @@ private struct Analyzer{
 		catch(Unwind){ return null; }
 	}
 
-	void trackDeterministic(DVar var,DExpr rhs){
+	void trackDeterministic(DVar var,DExpr rhs,Type ty){
+		if(ty !is ℝ) return;
 		if(rhs){
 			if(auto nrhs=isObviouslyDeterministic(rhs)){
 				deterministic[var]=nrhs;
@@ -439,13 +442,14 @@ private struct Analyzer{
 		return e.simplify(one);
 	}
 
-	DExpr isDeterministic(DExpr e){
+	DExpr isDeterministic(DExpr e,Type ty){ // TODO: track deterministic values for more complex datatypes than 'ℝ"?
+		if(ty !is ℝ) return null;
 		if(auto r=isObviouslyDeterministic(e))
 			return r;
 		// TODO: this is a glorious hack:
 		auto ndist=dist.dup();
 		auto tmp=ndist.getVar("tmp");
-		ndist.initialize(tmp,e);
+		ndist.initialize(tmp,e,ℝ);
 		foreach(v;dist.freeVars) ndist.marginalize(v);
 		ndist.simplify();
 		foreach(f;ndist.distribution.factors)
@@ -460,7 +464,7 @@ private struct Analyzer{
 	}
 
 	Dℕ isDeterministicInteger(DExpr e){
-		auto r=isDeterministic(e);
+		auto r=isDeterministic(e,ℝ);
 		if(auto num=cast(Dℕ)r) return num;
 		return null;
 	}
@@ -520,7 +524,7 @@ private struct Analyzer{
 		}
 		foreach(k;0..num.c.toLong()){
 			auto var=dist.getVar(id.name);
-			dist.initialize(var,zero);
+			dist.initialize(var,zero,ℝ);
 			arrays[id.name]~=var;
 		}
 	}
@@ -575,12 +579,12 @@ private struct Analyzer{
 				assert(!!de);
 				// TODO: no real need to repeat checks done by semantic
 				scope(exit) dist.marginalizeTemporaries();
-				void defineVar(Identifier id,DExpr rhs){
+				void defineVar(Identifier id,DExpr rhs,Type ty){
 					DVar var=null;
 					if(id.name !in arrays) var=dist.declareVar(id.name);
 					if(var){
-						dist.distribute(dDelta((rhs?rhs:zero)-var));
-						trackDeterministic(var,rhs);
+						dist.distribute(dDelta(var,rhs?rhs:zero,rhs?ty:ℝ)); // TODO: zero is not a good default value for types other than ℝ.
+						trackDeterministic(var,rhs,ty);
 					}else err.error("variable already exists",id.loc);
 				}
 				if(auto id=cast(Identifier)de.e1){
@@ -606,10 +610,12 @@ private struct Analyzer{
 							err.error("multiple return values must be unpacked directly",de.loc);
 							rhs=null;
 						}
-						defineVar(id,rhs);
+						defineVar(id,rhs,de.e2.type);
 					}
 				}else if(auto tpl=cast(TupleExp)de.e1){
 					auto rhs=transformExp(de.e2,true);
+					auto tt=cast(TupleTy)de.e2.type;
+					assert(!!tt);
 					auto dtpl=cast(DTuple)rhs;
 					if(rhs&&(!dtpl||dtpl.length!=tpl.length)){
 						err.error(text("inconsistent number of tuple entries for definition: ",tpl.length," vs. ",(dtpl?dtpl.length:1)),de.loc);
@@ -619,7 +625,7 @@ private struct Analyzer{
 						foreach(k,exp;tpl.e){
 							auto id=cast(Identifier)exp;
 							if(!id) goto LbadDefLhs;
-							defineVar(id,dtpl[k]);
+							defineVar(id,dtpl[k],tt.types[k]);
 						}
 					}
 				}else{
@@ -627,28 +633,30 @@ private struct Analyzer{
 					err.error("left hand side of definition should be identifier or tuple of identifiers",de.e1.loc);
 				}
 			}else if(auto ae=cast(AssignExp)e){
-				void assignVar(Identifier id,DExpr rhs){
+				void assignVar(Identifier id,DExpr rhs,Type ty){
 					if(id.name !in arrays){
 						if(auto v=dist.lookupVar(id.name)){
-							dist.assign(v,rhs?rhs:zero);
-							trackDeterministic(v,rhs);
+							dist.assign(v,rhs?rhs:zero,rhs?ty:ℝ); // TODO: zero is not a good default value for types other than ℝ
+							trackDeterministic(v,rhs,ty);
 						}else err.error("undefined variable '"~id.name~"'",id.loc);
 					}else err.error("reassigning array unsupported",e.loc);					
 				}
 				if(auto id=cast(Identifier)ae.e1){
-					assignVar(id,transformExp(ae.e2));
+					assignVar(id,transformExp(ae.e2),ae.e2.type);
 				}else if(auto idx=cast(IndexExp)ae.e1){
 					if(auto cidx=indexArray(idx)){
 						if(auto v=cast(DVar)cidx){
 							auto rhs=transformExp(ae.e2);
-							dist.assign(v,rhs?rhs:zero);
-							trackDeterministic(v,rhs);
+							dist.assign(v,rhs?rhs:zero,ae.e2.type);
+							trackDeterministic(v,rhs,ae.e2.type);
 						}else{
 							err.error(text("array is not writeable"),ae.loc);
 						}
 					}
 				}else if(auto tpl=cast(TupleExp)ae.e1){
 					auto rhs=transformExp(ae.e2,true);
+					auto tt=cast(TupleTy)ae.e2.type;
+					assert(!!tt);
 					auto dtpl=cast(DTuple)rhs;
 					if(rhs&&(!dtpl||dtpl.length!=tpl.length)){
 						err.error(text("inconsistent number of tuple entries for assignment: ",tpl.length," vs. ",(dtpl?dtpl.length:1)),ae.loc);
@@ -656,11 +664,11 @@ private struct Analyzer{
 					}
 					if(dtpl){
 						auto tmp=iota(tpl.e.length).map!(_=>dist.getVar("__tpltmp")).array;
-						foreach(k,de;dtpl.values) dist.initialize(tmp[k],de);
+						foreach(k,de;dtpl.values) dist.initialize(tmp[k],de,tt.types[k]);
 						foreach(k,exp;tpl.e){
 							auto id=cast(Identifier)exp;
 							if(!id) goto LbadAssgnmLhs;
-							assignVar(id,tmp[k]);
+							assignVar(id,tmp[k],tt.types[k]);
 						}
 					}					
 				}else{
@@ -711,8 +719,8 @@ private struct Analyzer{
 							auto var=cdist.declareVar(fe.var.name);
 							if(var){
 								auto rhs=dℕ(j);
-								cdist.initialize(var,rhs);
-								anext.trackDeterministic(var,rhs);
+								cdist.initialize(var,rhs,ℝ);
+								anext.trackDeterministic(var,rhs,ℝ);
 							}else{
 								err.error("variable already exists",fe.var.loc);
 								break;
@@ -743,14 +751,14 @@ private struct Analyzer{
 						if(var && !var.name.startsWith("__")){
 							if(var in vars){
 								auto vv=dist.getVar(var.name);
-								dist.initialize(vv,var);
+								dist.initialize(vv,var,ret.type);
 								var=vv;
 							}
 							vars.insert(var);
 							orderedVars~=var;
 						}else if(exp){
 							var=dist.getVar("r");
-							dist.initialize(var,exp);
+							dist.initialize(var,exp,ret.type);
 							vars.insert(var);
 							orderedVars~=var;
 						}
