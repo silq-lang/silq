@@ -3046,7 +3046,7 @@ class DTuple: DExpr{ // Tuples. TODO: real tuple support
 	}
 	static DTuple staticSimplify(DExpr[] values,DExpr facts=one){
 		auto nvalues=values.map!(v=>v.simplify(facts)).array;
-		if(nvalues!=values) return dTuple(values);
+		if(nvalues!=values) return dTuple(nvalues);
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){

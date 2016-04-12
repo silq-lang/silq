@@ -12,8 +12,6 @@ DExpr definiteIntegral(DVar var,DExpr expr,DExpr facts=one){
 }
 
 private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
-	bool bad=dInt(var,expr).toString()=="∫dξ₁∫dξ₂(∫dξ₃[-1+ξ₃≤0]·[-ξ₃≤0]·δ_ξ₁[(ξ₃,ξ₂)])·[-1+ξ₂≤0]·[-ξ₂≤0]";
-	
 	auto nexpr=expr.simplify(facts);
 	if(expr !is nexpr) expr=nexpr;
 	if(expr is zero) return zero;
