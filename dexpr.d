@@ -1981,7 +1981,7 @@ DExpr dIvr(DIvr.Type type,DExpr e){
 
 }
 
-class DDelta: DExpr{ // Dirac delta function
+class DDelta: DExpr{ // Dirac delta, for ℝ
 	DExpr e;
 	private this(DExpr e){ this.e=e; }
 	override string toStringImpl(Format formatting,Precedence prec){
@@ -2048,7 +2048,7 @@ class DDelta: DExpr{ // Dirac delta function
 
 //mixin(makeConstructorUnary!DDelta);
 
-auto dDelta(DExpr a){
+auto dDelta(DExpr a)in{assert(!cast(DTuple)a);}body{ // TODO: more preconditions
 	if(auto r=DDelta.constructHook(a)) return r;
 	// TODO: is there a better way to make the argument canonical?
 	auto t1=tuplex(typeid(DDelta),a);
@@ -2059,6 +2059,70 @@ auto dDelta(DExpr a){
 	uniqueMapUnary[t1]=r;
 	return r;
 }
+
+
+class DDiscDelta: DExpr{ // point mass for discrete data types
+	DVar var;
+	DExpr e;
+	Type ty;
+	private this(DVar var,DExpr e,Type ty){
+		this.var=var;
+		this.e=e;
+		this.ty=ty;
+		assert(ty !is ℝ);
+		assert(cast(DTuple)ty); // TODO: add more supported types
+	}
+	override string toStringImpl(Format formatting,Precedence prec){
+		 // TODO: encoding for other CAS?
+		return "δ_"~var.toStringImpl(formatting,Precedence.none)
+			~"["~e.toStringImpl(formatting,Precedence.none)~"]";
+	}
+
+	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; } // TODO: ok?
+	override int freeVarsImpl(scope int delegate(DVar) dg){
+		if(auto r=dg(var))
+			return r;
+		return e.freeVarsImpl(dg);
+	}
+	override DExpr substitute(DVar var,DExpr exp){
+		auto v=cast(DVar)this.var.substitute(var,exp);
+		assert(!!v);
+		return dDelta(v,e.substitute(var,exp),ty);
+	}
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
+		return dDelta(var,e.substituteFun(fun,q,args,context),ty);
+	}
+	override DExpr incBoundVar(int di){ return dDelta(var.incBoundVar(di),e.incBoundVar(di),ty); }
+
+	static DExpr constructHook(DVar var,DExpr e,Type ty){
+		return staticSimplify(var,e,ty);
+	}
+	static DExpr staticSimplify(DVar var,DExpr e,Type ty,DExpr facts=one){
+		auto ne=e.simplify(one); // cannot use all facts! (might remove a free variable)
+		if(ne !is e) return dDelta(var,ne,ty);
+		//if(dIvr(DIvr.Type.eq,var,e).simplify(facts) is zero) return zero; // a simplification like this might be possible
+		return null;
+	}
+	override DExpr simplifyImpl(DExpr facts){
+		auto r=staticSimplify(var,e,ty,facts);
+		return r?r:this;
+	}
+}
+
+import type;
+
+MapX!(TupleX!(DVar,DExpr,Type),DExpr) uniqueMapDDiscDelta;
+DExpr dDelta(DVar var,DExpr e,Type ty){
+	if(ty is ℝ) return dDelta(var-e);
+	if(auto r=DDiscDelta.constructHook(var,e,ty)) return r;
+	// TODO: is there a better way to make the argument canonical?
+	auto t=tuplex(var,e,ty);
+	if(t in uniqueMapDDiscDelta) return cast(DDelta)uniqueMapDDiscDelta[t];
+	auto r=new DDiscDelta(var,e,ty);
+	uniqueMapDDiscDelta[t]=r;
+	return r;
+}
+
 
 DExpr[2] splitPlusAtVar(DExpr e,DVar var){
 	DExprSet outside, within;
