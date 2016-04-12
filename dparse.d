@@ -46,6 +46,10 @@ struct DParser{
 		if(code.startsWith("delta")) code=code["delta".length..$];
 		else expect('δ');
 		bool round=false;
+		if(cur()=='_'){
+			auto var=parseDVar();
+			// TODo
+		}
 		if(cur()=='('){
 			round=true;
 			next();

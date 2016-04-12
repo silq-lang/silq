@@ -23,26 +23,38 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
 				return ow[0]*r;
 			return null;
 		}
-		DExpr deltaSubstitution(bool caseSplit){
-			// TODO: only extract deltas once?
+
+		DExpr discDeltaSubstitution(){
+			foreach(f;expr.factors){
+				if(!f.hasFreeVar(var)) continue;
+				if(auto d=cast(DDiscDelta)f){
+					if(d.var !is var) continue;
+					return expr.withoutFactor(f).substitute(var,d.e).simplify(facts);
+				}
+			}
+			return null;
+		}
+		if(auto r=discDeltaSubstitution())
+			return r;
+		DExpr deltaSubstitution(){
 			// TODO: detect when to give up early?
 			foreach(f;expr.factors){
 				if(!f.hasFreeVar(var)) continue;
 				if(auto d=cast(DDelta)f){
-					if(auto r=DDelta.performSubstitution(var,d,expr.withoutFactor(f),caseSplit))
+					if(auto r=DDelta.performSubstitution(var,d,expr.withoutFactor(f),false))
 						return r.simplify(facts);
 				}
 			}
 			return null;
 		}
-		if(auto r=deltaSubstitution(false))
+		if(auto r=deltaSubstitution())
 			return r;
-		foreach(T;Seq!(DDelta,DIvr)){ // TODO: need to split on DIvr?
+		foreach(T;Seq!(DDiscDelta,DDelta,DIvr)){ // TODO: need to split on DIvr?
 			foreach(f;expr.factors){
 				if(auto p=cast(DPlus)f){
 					bool check(){
 						foreach(d;p.allOf!T)
-							if(d.e.hasFreeVar(var))
+							if(d.hasFreeVar(var))
 								return true;
 						return false;
 					}
@@ -124,6 +136,8 @@ private DExpr definiteIntegralContinuous(DVar var,DExpr expr)out(res){
 	foreach(f;expr.allOf!DFun(true))
 		if(f.hasFreeVar(var)) return null;
 	foreach(d;expr.allOf!DDelta(true))
+		if(d.hasFreeVar(var)) return null;
+	foreach(d;expr.allOf!DDiscDelta(true))
 		if(d.hasFreeVar(var)) return null;
 	// TODO: keep ivrs and nonIvrs separate in DMult
 	DExpr ivrs=one;

@@ -291,7 +291,7 @@ void test(){
 	writeln(dInt(y,dInt(x,e3)));*/ +/
 	/*import dparse;
 	  writeln("((x₃)²)".dParse);*/
-	import dparse;
+	import dparse,type;
 	//writeln("⅟√1̅0̅".dParse);
 	//writeln("e^((x₃·⅟2+⅟6)²·3·⅟5+-11·⅟12+-x₃²·⅟4+x₃·⅟2)·⅟√1̅0̅·⅟√π̅".dParse);
 	//writeln("∫dξ₁δ[-ξ₁·⅟2+1]".dParse);
@@ -710,6 +710,9 @@ void test(){
 	//writeln("∫dx x·e^(-r₁²·x²·⅟2+-x²·⅟2)".dParse.simplify(one));
 	//writeln("lim[ξ₁ → ∞]((-(d/dx)⁻¹[e^(-x²)](ξ₁·√r̅₁̅²̅·̅⅟̅2̅+̅⅟̅2̅)·ξ₁·√r̅₁̅²̅·̅⅟̅2̅+̅⅟̅2̅+-e^((-r₁²·⅟2+-⅟2)·ξ₁²)·⅟2)·⅟(r₁²·⅟2+⅟2)+(d/dx)⁻¹[e^(-x²)](ξ₁·√r̅₁̅²̅·̅⅟̅2̅+̅⅟̅2̅)·ξ₁·⅟√r̅₁̅²̅·̅⅟̅2̅+̅⅟̅2̅)".dParse.simplify(one));
 	//writeln("lim[x → ∞] e^((-r₁²·⅟2+-⅟2)·x²)".dParse.simplify(one));
+	//writeln(dInt("x".dVar,dDelta("x".dVar,dTuple([one,one,one]),tupleTy([ℝ,ℝ,ℝ]))/2+dDelta("x".dVar,dTuple([one,one,one+one]),tupleTy([ℝ,ℝ,ℝ]))/2).simplify(one));
+	//writeln(dInt("x".dVar,dInt("y".dVar,dInt("z".dVar,"[0<=y]·[y<=1]·[0<=z]·[z<=1]".dParse*dDelta("x".dVar,dTuple(["y".dVar,"z".dVar]),tupleTy([ℝ,ℝ,ℝ]))))).simplify(one));
+	//writeln("∫dξ₁∫dξ₂(∫dξ₃[-1+ξ₃≤0]·[-ξ₃≤0]·δ_ξ₁[(ξ₃,ξ₂)])·[-1+ξ₂≤0]·[-ξ₂≤0]".dParse.simplify(one));
 }
 /*
 [([x=0]+x)·(1+[x=0])≤0]

@@ -56,6 +56,7 @@ enum Precedence{
 	div,
 	diff,
 	pow,
+	index,
 	invalid,
 }
 hash_t g_hash=0;
@@ -150,6 +151,8 @@ abstract class DExpr{
 		return mixin("e.dFloat "~op~" this");
 	}
 
+	final opIndex(DExpr rhs){ return dIndex(this,rhs); }
+	
 
 	mixin template Constant(){
 		override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; }
@@ -3067,6 +3070,66 @@ auto uniqueDTuple(DExpr[] values){
 DTuple dTuple(DExpr[] values){
 	return uniqueDTuple(values);
 }
+
+class DIndex: DOp{
+	DExpr e,i; // TODO: multiple indices?
+	this(DExpr e,DExpr i){
+		this.e=e; this.i=i;
+	}
+	override string symbol(Format formatting){ return "["; }
+	override @property Precedence precedence(){
+		return Precedence.index; // TODO: ok? (there is no precedence to the rhs)
+	}
+	override string toStringImpl(Format formatting, Precedence prec){
+		return addp(prec, e.toStringImpl(formatting,Precedence.index)~"["~i.toStringImpl(formatting,Precedence.none)~"]");
+	}
+
+	override int forEachSubExpr(scope int delegate(DExpr) dg){
+		if(auto r=dg(e)) return r;
+		return dg(i);
+	}
+
+	override DExpr simplifyImpl(DExpr facts){
+		auto r=staticSimplify(e,i,facts);
+		return r?r:this;
+	}
+
+	override DExpr substitute(DVar var,DExpr exp){
+		return e.substitute(var,exp)[i.substitute(var,exp)];
+	}
+
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SHSet!DVar context){
+		return e.substituteFun(fun,q,args,context)[i.substituteFun(fun,q,args,context)];
+	}
+
+	override DExpr incBoundVar(int di){
+		return e.incBoundVar(di)[i.incBoundVar(di)];
+	}
+
+	override int freeVarsImpl(scope int delegate(DVar) dg){
+		if(auto r=e.freeVarsImpl(dg)) return r;
+		return i.freeVarsImpl(dg);
+	}
+	
+	static DExpr staticSimplify(DExpr e,DExpr i,DExpr facts=one){
+		auto ne=e.simplify(one);
+		auto ni=i.simplify(one);
+		if(auto c=cast(Dℕ)ni)
+			if(auto tpl=cast(DTuple)ne)
+				if(0<=c.c&&c.c<=tpl.values.length)
+					return tpl.values[c.c.toLong()];
+		if(ne !is e || ni !is i) return dIndex(ne,ni);
+		return null;
+	}
+	
+	static DExpr constructHook(DExpr e,DExpr i){
+		return staticSimplify(e,i);
+	}
+}
+
+mixin(makeConstructorNonCommutAssoc!DIndex);
+
+
 
 
 import std.traits: ParameterTypeTuple;

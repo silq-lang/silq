@@ -1,0 +1,6 @@
+
+def main(){
+    y := (1,2,3);
+    x := if Bernoulli(1/2) { (1,2,y[0]) } else { (2,3,y[2]); };
+    return if Bernoulli(1/3) { x[0] } else { x[1] }; // expected: δ[-r₁+1]·⅟6+δ[-r₁+2]·⅟2+δ[-r₁+3]·⅟3
+}

@@ -324,9 +324,14 @@ private struct Analyzer{
 				}
 			}
 			if(auto idx=cast(IndexExp)e){
-				auto r=indexArray(idx);
-				if(r) return r;
-				unwind();
+				if(idx.e.type is arrayTy(ℝ)){
+					auto r=indexArray(idx);
+					if(r) return r;
+					unwind();
+				}else if(auto tt=cast(TupleTy)idx.e.type){
+					assert(idx.a.length==1);
+					return doIt(idx.e)[doIt(idx.a[0])];
+				}
 			}
 			if(auto le=cast(LiteralExp)e){
 				if(le.lit.type==Tok!"0"){
@@ -358,6 +363,7 @@ private struct Analyzer{
 				auto othw=aothw.transformExp(ite.othw);
 				if(!othw) unwind();
 				aothw.dist.initialize(var,othw,ite.othw.s[0].type);
+				athen.dist.simplify(), aothw.dist.simplify();
 				dist=athen.dist.join(dist,aothw.dist);
 				foreach(k,v;deterministic){
 					if(k in athen.deterministic && k in aothw.deterministic
@@ -606,10 +612,6 @@ private struct Analyzer{
 					}
 					if(!isSpecial){
 						auto rhs=transformExp(de.e2);
-						if(cast(DTuple)rhs){
-							err.error("multiple return values must be unpacked directly",de.loc);
-							rhs=null;
-						}
 						defineVar(id,rhs,de.e2.type);
 					}
 				}else if(auto tpl=cast(TupleExp)de.e1){

@@ -1,0 +1,4 @@
+def main(){
+    x := (Uniform(0,1),Uniform(0,1));
+    return x; // TODO: this normalization constant ought to be simplified.
+}
