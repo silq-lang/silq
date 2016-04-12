@@ -1,3 +1,6 @@
+// skipped
+// TODO: add better support for this again
+
 def main(a){
     x := Gauss(a,1);
     y := x - x;

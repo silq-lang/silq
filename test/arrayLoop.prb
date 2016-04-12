@@ -7,5 +7,5 @@ def main(){
     r += x;
     b := array(r-x);
     
-    return r; // expected: δ[-r+15]·⅟2+δ[-r+16]·⅟2
+    return r; // expected: δ[-15+r]·⅟2+δ[-r+16]·⅟2
 }

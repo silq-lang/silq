@@ -1,4 +1,9 @@
 
++ Fixes:
+  uniform_nested2: why does it try to evaluate log(0)?
+  paramzero: make it work again without getting very slow on other exampls
+
+
 + Maple bug reports: follow up/resubmit
 
 + Solve (∫dξ₁[-⅟ξ₁≤0]·[ξ₁≠0]·e^(-r₁²·ξ₁²·⅟2+-ξ₁²·⅟2)·ξ₁)·⅟2·⅟π and related integrals. (See div_gauss.prb).

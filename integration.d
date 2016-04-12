@@ -12,118 +12,125 @@ DExpr definiteIntegral(DVar var,DExpr expr,DExpr facts=one){
 }
 
 private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
+	bool bad=dInt(var,expr).toString()=="∫dξ₁∫dξ₂(∫dξ₃[-1+ξ₃≤0]·[-ξ₃≤0]·δ_ξ₁[(ξ₃,ξ₂)])·[-1+ξ₂≤0]·[-ξ₂≤0]";
+	
 	auto nexpr=expr.simplify(facts);
-		if(expr !is nexpr) expr=nexpr;
-		if(expr is zero) return zero;
-		if(cast(DContextVars)var) return null;
-		// TODO: move (most of) the following into the implementation of definiteIntegral
-		auto ow=expr.splitMultAtVar(var);
-		if(ow[0] !is one){
-			if(auto r=definiteIntegral(var,ow[1],facts))
-				return ow[0]*r;
-			return null;
-		}
-
-		DExpr discDeltaSubstitution(){
-			foreach(f;expr.factors){
-				if(!f.hasFreeVar(var)) continue;
-				if(auto d=cast(DDiscDelta)f){
-					if(d.var !is var) continue;
-					return expr.withoutFactor(f).substitute(var,d.e).simplify(facts);
-				}
-			}
-			return null;
-		}
-		if(auto r=discDeltaSubstitution())
-			return r;
-		DExpr deltaSubstitution(){
-			// TODO: detect when to give up early?
-			foreach(f;expr.factors){
-				if(!f.hasFreeVar(var)) continue;
-				if(auto d=cast(DDelta)f){
-					if(auto r=DDelta.performSubstitution(var,d,expr.withoutFactor(f),false))
-						return r.simplify(facts);
-				}
-			}
-			return null;
-		}
-		if(auto r=deltaSubstitution())
-			return r;
-		foreach(T;Seq!(DDiscDelta,DDelta,DIvr)){ // TODO: need to split on DIvr?
-			foreach(f;expr.factors){
-				if(auto p=cast(DPlus)f){
-					bool check(){
-						foreach(d;p.allOf!T)
-							if(d.hasFreeVar(var))
-								return true;
-						return false;
-					}
-					if(check()){
-						DExprSet works;
-						DExprSet doesNotWork;
-						bool simpler=false;
-						foreach(k;distributeMult(p,expr.withoutFactor(f))){
-							auto ow=k.splitMultAtVar(var);
-							auto r=definiteIntegral(var,ow[1],facts);
-							if(r){
-								DPlus.insert(works,ow[0]*r);
-								simpler=true;
-							}else DPlus.insert(doesNotWork,k);
-						}
-						if(simpler){
-							auto r=dPlus(works).simplify(facts);
-							if(doesNotWork.length) r = r + dInt(var,dPlus(doesNotWork));
-							return r;
-						}
-					}
-				}
-			}
-		}
-		nexpr=expr.linearizeConstraints!(x=>!!cast(DDelta)x)(var).simplify(facts); // TODO: only linearize the first feasible delta.
-		if(nexpr !is expr) return definiteIntegral(var,nexpr,facts);
-		/+if(auto r=deltaSubstitution(true))
-		 return r;+/
-
-		if(expr is one) return null; // (infinite integral)
-
-		if(simplification!=Simpl.deltas){
-			nexpr=expr.linearizeConstraints!(x=>!!cast(DIvr)x)(var).simplify(facts);
-			if(nexpr !is expr) return definiteIntegral(var,nexpr,facts);
-			if(auto r=definiteIntegralContinuous(var,expr))
-				return r.simplify(facts);
-		}
-		// pull sums out (TODO: ok?)
-		foreach(f;expr.factors){
-			if(auto sum=cast(DSum)f){
-				auto tmp1=new DVar("tmp1"); // TODO: get rid of this!
-				auto tmp2=new DVar("tmp2"); // TODO: get rid of this!
-				auto expr=sum.getExpr(tmp1)*expr.withoutFactor(f);
-				return dSumSmp(tmp1,dIntSmp(tmp2,expr.substitute(var,tmp2)));
-			}
-		}
-		// Fubini
-		static int fubirec=0; fubirec++; scope(exit) fubirec--;
-		if(++fubirec<=10) // TODO: fix this properly. this is a hack.
-		foreach(f;expr.factors){
-			// assert(f.hasFreeVar(var));
-			if(auto other=cast(DInt)f){
-				auto dbvar=cast(DBoundVar)other.getVar();
-				int offset=0;
-				if(dbvar) offset=1-dbvar.i;
-				other=cast(DInt)other.incBoundVar(offset);
-				assert(!!other); // TODO: get rid of cast to DInt?
-				auto tmpvar1=new DVar("tmp1"); // TODO: get rid of this!
-				auto tmpvar2=new DVar("tmp2"); // TODO: get rid of this!
-				auto intExpr=expr.withoutFactor(f).substitute(var,tmpvar1)*
-					(cast(DInt)other.substitute(var,tmpvar1)).getExpr(tmpvar2);
-				auto ow=intExpr.splitMultAtVar(tmpvar1);
-				ow[1]=ow[1].simplify(facts);
-				if(auto res=definiteIntegral(tmpvar1,ow[1],facts))
-					return dIntSmp(tmpvar2,res*ow[0]).incBoundVar(-offset);
-			}
-		}
-		if(!expr.hasFreeVar(var)) return expr*dInt(var,one); // (infinite integral)
+	if(expr !is nexpr) expr=nexpr;
+	if(expr is zero) return zero;
+	if(cast(DContextVars)var) return null;
+	// TODO: move (most of) the following into the implementation of definiteIntegral
+	auto ow=expr.splitMultAtVar(var);
+	if(ow[0] !is one){
+		if(auto r=definiteIntegral(var,ow[1],facts))
+			return ow[0]*r;
 		return null;
+	}
+	DExpr discDeltaSubstitution(){
+		foreach(f;expr.factors){
+			if(!f.hasFreeVar(var)) continue;
+			if(auto d=cast(DDiscDelta)f){
+				if(d.var !is var) continue;
+				return expr.withoutFactor(f).substitute(var,d.e).simplify(facts);
+			}
+		}
+		return null;
+	}
+	if(auto r=discDeltaSubstitution())
+		return r;
+	DExpr deltaSubstitution(){
+		// TODO: detect when to give up early?
+		foreach(f;expr.factors){
+			if(!f.hasFreeVar(var)) continue;
+			if(auto d=cast(DDelta)f){
+				if(auto r=DDelta.performSubstitution(var,d,expr.withoutFactor(f),false))
+					return r.simplify(facts);
+			}
+		}
+		return null;
+	}
+	if(auto r=deltaSubstitution())
+		return r;
+	foreach(T;Seq!(DDiscDelta,DDelta,DIvr)){ // TODO: need to split on DIvr?
+		foreach(f;expr.factors){
+			if(auto p=cast(DPlus)f){
+				bool check(){
+					foreach(d;p.allOf!T)
+						if(d.hasFreeVar(var))
+							return true;
+					return false;
+				}
+				if(check()){
+					DExprSet works;
+					DExprSet doesNotWork;
+					bool simpler=false;
+					foreach(k;distributeMult(p,expr.withoutFactor(f))){
+						auto ow=k.splitMultAtVar(var);
+						auto r=definiteIntegral(var,ow[1],facts);
+						if(r){
+							DPlus.insert(works,ow[0]*r);
+							simpler=true;
+						}else DPlus.insert(doesNotWork,k);
+					}
+					if(simpler){
+						auto r=dPlus(works).simplify(facts);
+						if(doesNotWork.length) r = r + dInt(var,dPlus(doesNotWork));
+						return r;
+					}
+				}
+			}
+		}
+	}
+	nexpr=expr.linearizeConstraints!(x=>!!cast(DDelta)x)(var).simplify(facts); // TODO: only linearize the first feasible delta.
+	if(nexpr !is expr) return definiteIntegral(var,nexpr,facts);
+	/+if(auto r=deltaSubstitution(true))
+	 return r;+/
+
+	if(expr is one) return null; // (infinite integral)
+
+	if(simplification!=Simpl.deltas){
+		nexpr=expr.linearizeConstraints!(x=>!!cast(DIvr)x)(var).simplify(facts);
+		if(nexpr !is expr) return definiteIntegral(var,nexpr,facts);
+		if(auto r=definiteIntegralContinuous(var,expr))
+			return r.simplify(facts);
+	}
+	// pull sums out (TODO: ok?)
+	foreach(f;expr.factors){
+		if(auto sum=cast(DSum)f){
+			auto tmp1=new DVar("tmp1"); // TODO: get rid of this!
+			auto tmp2=new DVar("tmp2"); // TODO: get rid of this!
+			auto expr=sum.getExpr(tmp1)*expr.withoutFactor(f);
+			return dSumSmp(tmp1,dIntSmp(tmp2,expr.substitute(var,tmp2)));
+		}
+	}
+	// Fubini
+	DExpr fubini(){
+		foreach(f;expr.allOf!DFun(true)) // TODO: constrain less
+			return null;
+		DVar[] fubiVars;
+		bool hasInt=false;
+		DExpr fubiRec(DExpr cur){
+			DExpr r=one;
+			foreach(f;cur.factors){
+				if(auto other=cast(DInt)f){
+					hasInt=true;
+					auto tmpvar=new DVar("tmp"); // TODO: get rid of this!
+					fubiVars~=tmpvar;
+					r=r*fubiRec(other.getExpr(tmpvar));
+				}else r=r*f;
+			}
+			return r;
+		}
+		auto fubiExpr=fubiRec(expr);
+		if(hasInt) if(auto r=definiteIntegral(var,fubiExpr)){
+			r=r.simplify(facts);
+			foreach_reverse(v;fubiVars) r=dInt(v,r);
+			return r.simplify(facts);
+		}
+		return null;
+	}
+	if(auto r=fubini()) return r;
+	if(!expr.hasFreeVar(var)) return expr*dInt(var,one); // (infinite integral)
+	return null;
 }
 
 private DExpr definiteIntegralContinuous(DVar var,DExpr expr)out(res){
@@ -131,7 +138,7 @@ private DExpr definiteIntegralContinuous(DVar var,DExpr expr)out(res){
 		integrations++;
 		if(res) successfulIntegrations++;
 	}
-}body{
+																}body{
 	// ensure integral is continuous
 	foreach(f;expr.allOf!DFun(true))
 		if(f.hasFreeVar(var)) return null;
@@ -172,40 +179,40 @@ private DExpr definiteIntegralContinuous(DVar var,DExpr expr)out(res){
 		DExpr bound;
 		auto status=ivr.getBoundForVar(var,bound);
 		final switch(status) with(BoundStatus){
-		case fail:
-			SolutionInfo info;
-			SolUse usage={caseSplit:true,bound:true};
-			bound=solveFor(ivr.e,var,zero,usage,info);
-			if(!bound) return null;
-			import std.conv: text;
-			// TODO: fuse some of this with DDelta.performSubstitution?
-			auto constraints=one;
-			foreach(ref x;info.caseSplits)
-				constraints=constraints*dIvr(DIvr.Type.neqZ,x.constraint);
-			auto rest=expr.withoutFactor(ivr);
-			auto r=constraints is zero?zero:
-				constraints*(dIntSmp(var,dIvr(DIvr.Type.leZ,var-bound)*
-								  dIvr(DIvr.type.leZ,info.bound.isLower)*rest)
-							 +dIntSmp(var,dIvr(DIvr.Type.lZ,bound-var)*
-								   dIvr(DIvr.type.leZ,-info.bound.isLower)*rest));
-			foreach(ref x;info.caseSplits){
-				auto curConstr=constraints.withoutFactor(dIvr(DIvr.Type.neqZ,x.constraint));
-				r=r+curConstr*dIvr(DIvr.Type.eqZ,x.constraint)*
-					dIntSmp(var,rest*dIvr(DIvr.Type.leZ,x.expression));
+			case fail:
+				SolutionInfo info;
+				SolUse usage={caseSplit:true,bound:true};
+				bound=solveFor(ivr.e,var,zero,usage,info);
+				if(!bound) return null;
+				import std.conv: text;
+				// TODO: fuse some of this with DDelta.performSubstitution?
+				auto constraints=one;
+				foreach(ref x;info.caseSplits)
+					constraints=constraints*dIvr(DIvr.Type.neqZ,x.constraint);
+				auto rest=expr.withoutFactor(ivr);
+				auto r=constraints is zero?zero:
+					constraints*(dIntSmp(var,dIvr(DIvr.Type.leZ,var-bound)*
+										 dIvr(DIvr.type.leZ,info.bound.isLower)*rest)
+								 +dIntSmp(var,dIvr(DIvr.Type.lZ,bound-var)*
+										  dIvr(DIvr.type.leZ,-info.bound.isLower)*rest));
+				foreach(ref x;info.caseSplits){
+					auto curConstr=constraints.withoutFactor(dIvr(DIvr.Type.neqZ,x.constraint));
+					r=r+curConstr*dIvr(DIvr.Type.eqZ,x.constraint)*
+						dIntSmp(var,rest*dIvr(DIvr.Type.leZ,x.expression));
+				}
+				return r;
+			case lowerBound:
+				if(lower) lower=dMax(lower,bound);
+				else lower=bound;
+				break;
+			case upperBound:
+				if(upper) upper=dMin(upper,bound);
+				else upper=bound;
+				break;
 			}
-			return r;
-		case lowerBound:
-			if(lower) lower=dMax(lower,bound);
-			else lower=bound;
-			break;
-		case upperBound:
-			if(upper) upper=dMin(upper,bound);
-			else upper=bound;
-			break;
-		}
 	}
 	return tryIntegrate(var,nonIvrs,lower,upper,ivrs);
-}
+ }
 
 struct AntiD{ // TODO: is this even worth the hassle?
 	DExpr antiderivative;
