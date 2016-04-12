@@ -607,7 +607,11 @@ struct Parser{
 		CompoundExp othw=null;
 		if(ttype == Tok!"else"){
 			nextToken();
-			othw=parseCompoundExp();
+			if(ttype==Tok!"if"){
+				Expression o=parseIte();
+				othw=New!CompoundExp([o]);
+				othw.loc=o.loc;
+			}else othw=parseCompoundExp();
 		}
 		return res=New!IteExp(cond,then,othw);
 	}
