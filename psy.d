@@ -731,8 +731,12 @@ void test(){
 	//auto e="[-1+-k+y[0]+y[1]≤0]·[-1+k≤0]·[-k+-l+y[0]+y[1]=0]·[-k≤0]·[-l≤0]·δ_y[(-k+y[0]+y[1],k)]".dParse; // this expression should not happen.
 	//dw(e);
 	//dw(dIntSmp("k".dVar,e));
-	//auto e="(∫dξ₁[-1+ξ₁≤0]·[-ξ₁≤0]·δ_x[x₁[0 ↦ ξ₁]])".dParse;
-	//dw(e.substitute("x₁".dVar,"[k ↦ 0] (1)".dParse));
+	/+auto e="(∫dξ₁[-1+ξ₁≤0]·[-ξ₁≤0]·δ_x[x₁[0 ↦ ξ₁]])".dParse;
+	auto f="[k ↦ 0] (1)".dParse;
+	dw(e," ",f);
+	dw("!!!");
+	auto r=e.substitute("x₁".dVar,f);
+	dw(r);+/
 	//auto e="∫dξ₁[-1+ξ₁≤0]·[-ξ₁≤0]·δ_x[[ξ₁ ↦ [ξ₁=0]·ξ₂] (1)]".dParse;
 }
 

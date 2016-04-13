@@ -95,7 +95,7 @@ abstract class DExpr{
 	// TODO: implement in terms of 'forEachSubExpr'?
 	abstract DExpr substitute(DVar var,DExpr e);
 	abstract DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context);
-	abstract DExpr incBoundVar(int di);
+	abstract DExpr incBoundVar(int di,bool bindersOnly);
 	abstract int freeVarsImpl(scope int delegate(DVar));
 	final freeVars(){
 		static struct FreeVars{ // TODO: move to util?
@@ -161,7 +161,7 @@ abstract class DExpr{
 		override int freeVarsImpl(scope int delegate(DVar) dg){ return 0; }
 		override DExpr substitute(DVar var,DExpr e){ assert(var !is this); return this; }
 		override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){ assert(fun !is this); return this; }
-		override DExpr incBoundVar(int di){ return this; }
+		override DExpr incBoundVar(int di,bool bindersOnly){ return this; }
 		override DExpr simplifyImpl(DExpr facts){ return this; }
 	}
 }
@@ -188,7 +188,7 @@ class DVar: DExpr{
 	override int freeVarsImpl(scope int delegate(DVar) dg){ return dg(this); }
 	override DExpr substitute(DVar var,DExpr e){ return this is var?e:this; }
 	override DExpr substituteFun(DFunVar var,DExpr q,DVar[] args,SetX!DVar context){ return this; }
-	override DVar incBoundVar(int di){ return this; }
+	override DVar incBoundVar(int di,bool bindersOnly){ return this; }
 	override DExpr simplifyImpl(DExpr facts){
 		// TODO: make more efficient! (e.g. keep hash table in product expressions)
 		foreach(f;facts.factors){
@@ -216,7 +216,8 @@ DVar dVar(string name){
 class DBoundVar: DVar{
 	int i;
 	private this(int i){ this.i=i; super("ξ"~lowNum(i)); }
-	override DBoundVar incBoundVar(int di){
+	override DBoundVar incBoundVar(int di,bool bindersOnly){
+		if(bindersOnly) return this;
 		return dBoundVar(i+di);
 	}
 }
@@ -430,9 +431,9 @@ class DPlus: DCommutAssocOp{
 		foreach(s;summands) insert(res,s.substituteFun(fun,q,args,context));
 		return dPlus(res);
 	}
-	override DExpr incBoundVar(int di){
+	override DExpr incBoundVar(int di,bool bindersOnly){
 		DExprSet res;
-		foreach(s;summands) insert(res,s.incBoundVar(di));
+		foreach(s;summands) insert(res,s.incBoundVar(di,bindersOnly));
 		return dPlus(res);
 	}
 
@@ -657,9 +658,9 @@ class DMult: DCommutAssocOp{
 		foreach(f;factors) insert(res,f.substituteFun(fun,q,args,context));
 		return dMult(res);
 	}
-	override DExpr incBoundVar(int di){
+	override DExpr incBoundVar(int di,bool bindersOnly){
 		DExprSet res;
-		foreach(f;factors) insert(res,f.incBoundVar(di));
+		foreach(f;factors) insert(res,f.incBoundVar(di,bindersOnly));
 		return dMult(res);
 	}
 
@@ -1014,8 +1015,8 @@ class DPow: DBinaryOp{
 	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
 		return operands[0].substituteFun(fun,q,args,context)^^operands[1].substituteFun(fun,q,args,context);
 	}
-	override DExpr incBoundVar(int di){
-		return operands[0].incBoundVar(di)^^operands[1].incBoundVar(di);
+	override DExpr incBoundVar(int di,bool bindersOnly){
+		return operands[0].incBoundVar(di,bindersOnly)^^operands[1].incBoundVar(di,bindersOnly);
 	}
 
 	static DExpr constructHook(DExpr e1,DExpr e2){
@@ -1796,7 +1797,7 @@ class DIvr: DExpr{ // iverson brackets
 	override int freeVarsImpl(scope int delegate(DVar) dg){ return e.freeVarsImpl(dg); }
 	override DExpr substitute(DVar var,DExpr exp){ return dIvr(type,e.substitute(var,exp)); }
 	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){ return dIvr(type,e.substituteFun(fun,q,args,context)); }
-	override DExpr incBoundVar(int di){ return dIvr(type,e.incBoundVar(di)); }
+	override DExpr incBoundVar(int di,bool bindersOnly){ return dIvr(type,e.incBoundVar(di,bindersOnly)); }
 
 	override string toStringImpl(Format formatting,Precedence prec){
 		with(Type){
@@ -2009,7 +2010,7 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
 		return dDelta(e.substituteFun(fun,q,args,context));
 	}
-	override DExpr incBoundVar(int di){ return dDelta(e.incBoundVar(di)); }
+	override DExpr incBoundVar(int di,bool bindersOnly){ return dDelta(e.incBoundVar(di,bindersOnly)); }
 
 	static DExpr constructHook(DExpr e){
 		return staticSimplify(e);
@@ -2093,7 +2094,7 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
 		return dDiscDelta(var,e.substituteFun(fun,q,args,context));
 	}
-	override DExpr incBoundVar(int di){ return dDiscDelta(var.incBoundVar(di),e.incBoundVar(di)); }
+	override DExpr incBoundVar(int di,bool bindersOnly){ return dDiscDelta(var.incBoundVar(di,bindersOnly),e.incBoundVar(di,bindersOnly)); }
 
 	static DExpr constructHook(DVar var,DExpr e){
 		return staticSimplify(var,e);
@@ -2237,7 +2238,7 @@ static ~this(){
 static DExpr unbind(DVar tvar, DExpr expr, DExpr nexpr){
 	assert(tvar is dBoundVar(1),text(tvar)); // TODO: finally fix the dBoundVar situation...
 	assert(cast(DBoundVar)tvar && !cast(DBoundVar)nexpr);
-	return expr.substitute(tvar,nexpr).incBoundVar(-1);
+	return expr.substitute(tvar,nexpr).incBoundVar(-1,false);
 }
 
 import integration;
@@ -2293,9 +2294,9 @@ class DInt: DOp{
 		if(auto dbvar=cast(DBoundVar)var){
 			auto nesting=dbvar.i;
 			auto tmp=new DVar("tmp"); // TODO: get rid of this!
-			auto nexpr=unbind(dBoundVar(1),expr.incBoundVar(-nesting),tmp);
+			auto nexpr=unbind(dBoundVar(1),expr.incBoundVar(-nesting,false),tmp);
 			auto r=staticSimplify(tmp,nexpr,facts);
-			return r?r.incBoundVar(nesting):null;
+			return r?r.incBoundVar(nesting,false):null;
 		}
 		return definiteIntegral(var,expr,facts);
 	}
@@ -2304,9 +2305,9 @@ class DInt: DOp{
 		if(auto dbvar=cast(DBoundVar)var){
 			auto nesting=dbvar.i-1;
 			auto tmp=new DVar("tmp"); // TODO: get rid of this!
-			auto nexpr=unbind(dBoundVar(1),expr.incBoundVar(-nesting),tmp);
+			auto nexpr=unbind(dBoundVar(1),expr.incBoundVar(-nesting,false),tmp);
 			auto r=staticSimplifyFull(tmp,nexpr,facts);
-			return r?r.incBoundVar(nesting):null;
+			return r?r.incBoundVar(nesting,false):null;
 		}
 		auto nexpr=expr.simplify(facts);
 		if(expr !is nexpr) return dIntSmp(var,nexpr,facts);
@@ -2328,10 +2329,14 @@ class DInt: DOp{
 	}
 	override DExpr substitute(DVar var,DExpr e){
 		if(this.var is var) return this;
-		return dInt(this.var,expr.substitute(var,e));
+		auto ne=e;
+		if(cast(DBoundVar)this.var) ne=e.incBoundVar(1,true);
+		return dInt(this.var,expr.substitute(var,ne));
 	}
 	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		auto nexpr=expr.substituteFun(fun,q,args,context);
+		auto nq=q;
+		if(cast(DBoundVar)this.var) nq=q.incBoundVar(1,true);
+		auto nexpr=expr.substituteFun(fun,nq,args,context);
 		if(auto ctxv=cast(DContextVars)var){
 			if(ctxv.fun is fun){
 				auto r=nexpr;
@@ -2341,8 +2346,12 @@ class DInt: DOp{
 		}
 		return dInt(this.var,nexpr);
 	}
-	override DExpr incBoundVar(int di){
-		return dInt(var.incBoundVar(di),expr.incBoundVar(di));
+	override DExpr incBoundVar(int di,bool bindersOnly){
+		auto dbvar=cast(DBoundVar)var;
+		if(bindersOnly&&dbvar){
+			auto nvar=dBoundVar(dbvar.i+di);
+			return dInt(nvar,expr.substitute(var,nvar).incBoundVar(di,bindersOnly));
+		}else return dInt(var.incBoundVar(di,bindersOnly),expr.incBoundVar(di,bindersOnly));
 	}
 }
 
@@ -2368,8 +2377,9 @@ DExpr dInt(DVar var,DExpr expr)in{assert(var&&expr);}body{
 	//if(auto dbvar=cast(DBoundVar)var) return uniqueBindingDExpr!DInt(dbvar,expr);
 	auto dbvar=cast(DBoundVar)var;
 	if(!dbvar){
+		assert(!expr.hasFreeVar(dBoundVar(1)));
 		dbvar=dBoundVar(1);
-		expr=expr.incBoundVar(1).substitute(var,dbvar);
+		expr=expr.incBoundVar(1,true).substitute(var,dbvar);
 	}
 	return uniqueBindingDExpr!DInt(dbvar,expr);
 }
@@ -2416,9 +2426,9 @@ class DSum: DOp{
 		if(auto dbvar=cast(DBoundVar)var){
 			int nesting=dbvar.i-1;
 			auto tmp=new DVar("tmp"); // TODO: get rid of this!
-			auto nexpr=unbind(var,expr.incBoundVar(-nesting),tmp);
+			auto nexpr=unbind(var,expr.incBoundVar(-nesting,false),tmp);
 			auto r=staticSimplifyMemo(tmp,nexpr);
-			return r?r.incBoundVar(nesting):null;
+			return r?r.incBoundVar(nesting,false):null;
 		}
 		auto nexpr=expr.simplify(facts);
 		if(nexpr !is expr) expr=nexpr;
@@ -2446,13 +2456,21 @@ class DSum: DOp{
 	}
 	override DExpr substitute(DVar var,DExpr e){
 		if(this.var is var) return this;
-		return dSum(this.var,expr.substitute(var,e));
+		auto ne=e;
+		if(cast(DBoundVar)this.var) ne=e.incBoundVar(1,true);
+		return dSum(this.var,expr.substitute(var,ne));
 	}
 	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		return dSum(var,expr.substituteFun(fun,q,args,context));
+		auto nq=q;
+		if(cast(DBoundVar)this.var) nq=q.incBoundVar(1,true);
+		return dSum(var,expr.substituteFun(fun,nq,args,context));
 	}
-	override DExpr incBoundVar(int di){
-		return dSum(var.incBoundVar(di),expr.incBoundVar(di));
+	override DExpr incBoundVar(int di,bool bindersOnly){
+		auto dbvar=cast(DBoundVar)var;
+		if(bindersOnly&&dbvar){
+			auto nvar=dBoundVar(dbvar.i+di);
+			return dSum(nvar,expr.substitute(var,nvar).incBoundVar(di,bindersOnly));
+		}else return dSum(var.incBoundVar(di,bindersOnly),expr.incBoundVar(di,bindersOnly));
 	}
 }
 
@@ -2466,7 +2484,7 @@ DExpr dSum(DVar var,DExpr expr){
 	auto dbvar=cast(DBoundVar)var;
 	if(!dbvar){
 		dbvar=dBoundVar(1);
-		expr=expr.incBoundVar(1).substitute(var,dbvar);
+		expr=expr.incBoundVar(1,false).substitute(var,dbvar);
 	}
 	return uniqueBindingDExpr!DSum(dbvar,expr);
 }
@@ -2492,8 +2510,8 @@ class DLim: DOp{
 		if(auto dbvar=cast(DBoundVar)v){
 			auto nesting=dbvar.i-1;
 			auto tmp=new DVar("tmp"); // TODO: get rid of this!
-			auto r=staticSimplify(tmp,e.incBoundVar(-nesting),unbind(v,x,tmp.incBoundVar(-nesting)));
-			return r?r.incBoundVar(nesting):null;
+			auto r=staticSimplify(tmp,e.incBoundVar(-nesting,false),unbind(v,x,tmp.incBoundVar(-nesting,false)));
+			return r?r.incBoundVar(nesting,false):null;
 		}
 		if(auto r=getLimit(v,e,x,facts))
 			return r;
@@ -2515,14 +2533,24 @@ class DLim: DOp{
 	override DExpr substitute(DVar var,DExpr exp){
 		auto nx=x.substitute(var,exp);
 		auto ne=e;
-		if(v !is var) ne=e.substitute(var,exp);
+		if(v !is var){
+			auto nexp=exp;
+			if(cast(DBoundVar)v) nexp=exp.incBoundVar(1,true);
+			ne=e.substitute(var,nexp);
+		}
 		return dLim(v,ne,nx);
 	}
 	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		return dLim(v,e.substituteFun(fun,q,args,context),x.substituteFun(fun,q,args,context));
+		auto nq=q;
+		if(cast(DBoundVar)v) nq=q.incBoundVar(1,true);
+		return dLim(v,e.substituteFun(fun,nq,args,context),x.substituteFun(fun,q,args,context));
 	}
-	override DExpr incBoundVar(int di){
-		return dLim(v.incBoundVar(di),e.incBoundVar(di),x.incBoundVar(di));
+	override DExpr incBoundVar(int di,bool bindersOnly){
+		auto dbvar=cast(DBoundVar)v;
+		if(bindersOnly&&dbvar){
+			auto nv=dBoundVar(dbvar.i+di);
+			return dLim(nv,e.substitute(v,nv).incBoundVar(di,bindersOnly),x.incBoundVar(di,bindersOnly));
+		}else return dLim(v.incBoundVar(di,bindersOnly),e.incBoundVar(di,bindersOnly),x.incBoundVar(di,bindersOnly));
 	}
 }
 
@@ -2537,7 +2565,7 @@ DExpr dLim(DVar v,DExpr e,DExpr x){
 	auto dbvar=cast(DBoundVar)v;
 	if(!dbvar){
 		dbvar=dBoundVar(1);
-		x=x.incBoundVar(1).substitute(v,dbvar);
+		x=x.incBoundVar(1,false).substitute(v,dbvar);
 	}
 	return uniqueBindingDExpr!DLim(dbvar,e,x);
 }
@@ -2582,14 +2610,24 @@ class DDiff: DOp{
 	override DExpr substitute(DVar var,DExpr exp){
 		auto nx=x.substitute(var,exp);
 		auto ne=e;
-		if(v !is var) ne=e.substitute(var,exp);
+		if(v !is var){
+			auto nexp=exp;
+			if(cast(DBoundVar)v) nexp=exp.incBoundVar(1,true);
+			ne=e.substitute(var,nexp);
+		}
 		return dDiff(v,ne,nx);
 	}
 	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		return dDiff(v,e.substituteFun(fun,q,args,context),x.substituteFun(fun,q,args,context));
+		auto nq=q;
+		if(cast(DBoundVar)v) nq=q.incBoundVar(1,true);
+		return dDiff(v,e.substituteFun(fun,nq,args,context),x.substituteFun(fun,q,args,context));
 	}
-	override DExpr incBoundVar(int di){
-		return dDiff(v.incBoundVar(di),e.incBoundVar(di),x.incBoundVar(di));
+	override DExpr incBoundVar(int di,bool bindersOnly){
+		auto dbvar=cast(DBoundVar)v;
+		if(bindersOnly&&dbvar){
+			auto nv=dBoundVar(dbvar.i+di);
+			return dDiff(nv,e.substitute(v,nv).incBoundVar(di,bindersOnly),x.incBoundVar(di,bindersOnly));
+		}else return dDiff(v.incBoundVar(di,bindersOnly),e.incBoundVar(di,bindersOnly),x.incBoundVar(di,bindersOnly));
 	}
 }
 
@@ -2598,7 +2636,7 @@ DExpr dDiff(DVar v,DExpr e,DExpr x){
 	if(auto dbvar=cast(DBoundVar)v) return uniqueBindingDExpr!DDiff(dbvar,e,x);
 	if(auto r=DDiff.constructHook(v,e,x)) return r;
 	auto dbvar=dBoundVar(1);
-	e=e.incBoundVar(1).substitute(v,dbvar);
+	e=e.incBoundVar(1,false).substitute(v,dbvar);
 	return uniqueBindingDExpr!DDiff(dbvar,e,x);
 }
 
@@ -2625,8 +2663,8 @@ class DAbs: DOp{
 	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
 		return dAbs(e.substituteFun(fun,q,args,context));
 	}
-	override DExpr incBoundVar(int di){
-		return dAbs(e.incBoundVar(di));
+	override DExpr incBoundVar(int di,bool bindersOnly){
+		return dAbs(e.incBoundVar(di,bindersOnly));
 	}
 
 	static DExpr constructHook(DExpr e){
@@ -2681,8 +2719,8 @@ class DLog: DOp{
 	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
 		return dLog(e.substituteFun(fun,q,args,context));
 	}
-	override DExpr incBoundVar(int di){
-		return dLog(e.incBoundVar(di));
+	override DExpr incBoundVar(int di,bool bindersOnly){
+		return dLog(e.incBoundVar(di,bindersOnly));
 	}
 
 	static DExpr constructHook(DExpr e){
@@ -2730,8 +2768,8 @@ class DSin: DOp{
 	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
 		return dSin(e.substituteFun(fun,q,args,context));
 	}
-	override DExpr incBoundVar(int di){
-		return dSin(e.incBoundVar(di));
+	override DExpr incBoundVar(int di,bool bindersOnly){
+		return dSin(e.incBoundVar(di,bindersOnly));
 	}
 
 	static DExpr constructHook(DExpr e){
@@ -2771,8 +2809,8 @@ class DFloor: DOp{
 	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
 		return dFloor(e.substituteFun(fun,q,args,context));
 	}
-	override DExpr incBoundVar(int di){
-		return dFloor(e.incBoundVar(di));
+	override DExpr incBoundVar(int di,bool bindersOnly){
+		return dFloor(e.incBoundVar(di,bindersOnly));
 	}
 	static DExpr constructHook(DExpr e){
 		return staticSimplify(e);
@@ -2815,8 +2853,8 @@ class DCeil: DOp{
 	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
 		return dCeil(e.substituteFun(fun,q,args,context));
 	}
-	override DExpr incBoundVar(int di){
-		return dCeil(e.incBoundVar(di));
+	override DExpr incBoundVar(int di,bool bindersOnly){
+		return dCeil(e.incBoundVar(di,bindersOnly));
 	}
 	static DExpr constructHook(DExpr e){
 		return staticSimplify(e);
@@ -2889,8 +2927,8 @@ class DGaussInt: DOp{
 		auto nx=x.substituteFun(fun,q,args,context);
 		return dGaussInt(nx);
 	}
-	override DExpr incBoundVar(int di){
-		return dGaussInt(x.incBoundVar(di));
+	override DExpr incBoundVar(int di,bool bindersOnly){
+		return dGaussInt(x.incBoundVar(di,bindersOnly));
 	}
 }
 
@@ -2917,7 +2955,7 @@ class DFunVar: DExpr{
 	override int freeVarsImpl(scope int delegate(DVar) dg){ return 0; }
 	override DExpr substitute(DVar var,DExpr e){ return this; }
 	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){ assert(0); }
-	override DExpr incBoundVar(int di){ return this; }
+	override DExpr incBoundVar(int di,bool bindersOnly){ return this; }
 	override DExpr simplifyImpl(DExpr facts){ return this; }
 }
 DFunVar[string] dFunVarCache; // TODO: caching desirable? (also need to update parser if not)
@@ -2968,8 +3006,8 @@ class DFun: DOp{ // uninterpreted functions
 		return r;
 	}
 
-	override DExpr incBoundVar(int di){
-		return dFun(fun,args.map!(a=>a.incBoundVar(di)).array);
+	override DExpr incBoundVar(int di,bool bindersOnly){
+		return dFun(fun,args.map!(a=>a.incBoundVar(di,bindersOnly)).array);
 	}
 
 	static DFun constructHook(DFunVar fun,DExpr[] args){
@@ -3050,8 +3088,8 @@ class DTuple: DExpr{ // Tuples. TODO: real tuple support
 	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
 		return dTuple(values.map!(v=>v.substituteFun(fun,q,args,context)).array);
 	}
-	override DExpr incBoundVar(int di){
-		return dTuple(values.map!(v=>v.incBoundVar(di)).array);
+	override DExpr incBoundVar(int di,bool bindersOnly){
+		return dTuple(values.map!(v=>v.incBoundVar(di,bindersOnly)).array);
 	}
 	static DTuple constructHook(DExpr[] values){
 		return staticSimplify(values);
@@ -3114,8 +3152,8 @@ class DIndex: DOp{
 		return e.substituteFun(fun,q,args,context)[i.substituteFun(fun,q,args,context)];
 	}
 
-	override DExpr incBoundVar(int di){
-		return e.incBoundVar(di)[i.incBoundVar(di)];
+	override DExpr incBoundVar(int di,bool bindersOnly){
+		return e.incBoundVar(di,bindersOnly)[i.incBoundVar(di,bindersOnly)];
 	}
 
 	override int freeVarsImpl(scope int delegate(DVar) dg){
@@ -3135,7 +3173,7 @@ class DIndex: DOp{
 			auto dbvar=cast(DBoundVar)arr.entries.var;
 			assert(!!dbvar);
 			auto nesting=dbvar.i-1; // TODO: get rid of this logic if possible
-			return arr.entries.incBoundVar(-nesting).apply(ni.incBoundVar(-nesting)).incBoundVar(nesting);
+			return arr.entries.incBoundVar(-nesting,false).apply(ni.incBoundVar(-nesting,false)).incBoundVar(nesting,false);
 		}
 		if(ne !is e || ni !is i) return dIndex(ne,ni);
 		return null;
@@ -3181,8 +3219,8 @@ class DIUpdate: DOp{
 		return dIUpdate(e.substituteFun(fun,q,args,context),i.substituteFun(fun,q,args,context),n.substituteFun(fun,q,args,context));
 	}
 
-	override DExpr incBoundVar(int di){
-		return dIUpdate(e.incBoundVar(di),i.incBoundVar(di),n.incBoundVar(di));
+	override DExpr incBoundVar(int di,bool bindersOnly){
+		return dIUpdate(e.incBoundVar(di,bindersOnly),i.incBoundVar(di,bindersOnly),n.incBoundVar(di,bindersOnly));
 	}
 
 	override int freeVarsImpl(scope int delegate(DVar) dg){
@@ -3210,8 +3248,12 @@ class DIUpdate: DOp{
 			assert(!!dbvar);
 			auto nesting=dbvar.i-1;
 			auto r=dArray(arr.length,
-						  dLambda(tmp,arr.entries.incBoundVar(-nesting).apply(tmp)*dIvr(DIvr.Type.neqZ,tmp-ni).incBoundVar(-nesting)
-								  +(dIvr(DIvr.Type.eqZ,tmp-ni)*nn).incBoundVar(-nesting)).incBoundVar(nesting));
+						  dLambda(tmp,arr.entries.incBoundVar(-nesting,false).apply(tmp)*dIvr(DIvr.Type.neqZ,tmp-ni).incBoundVar(-nesting,false)
+								  +(dIvr(DIvr.Type.eqZ,tmp-ni)*nn).incBoundVar(-nesting,false)).incBoundVar(nesting,false));
+			//dw("!! ",e," ",i," ",n);
+			//dw("!!! ", dLambda(tmp,(dIvr(DIvr.Type.eqZ,tmp-ni)*nn).incBoundVar(-nesting,false)));
+			//dw(nesting," ",arr.entries.incBoundVar(-nesting,false)," ",(dIvr(DIvr.Type.eqZ,tmp-ni)*nn).incBoundVar(-nesting,false));
+			//dw(r);
 			return r;
 		}
 		if(ne !is e || ni !is i || nn !is n) return dIUpdate(ne,ni,nn);
@@ -3263,14 +3305,21 @@ class DLambda: DOp{ // lambda functions DExpr → DExpr
 	}
 	override DLambda substitute(DVar var,DExpr e){
 		if(this.var is var) return this;
-		return dLambda(this.var,expr.substitute(var,e));
+		auto ne=e;
+		if(cast(DBoundVar)this.var) ne=e.incBoundVar(1,true);
+		return dLambda(this.var,expr.substitute(var,ne));
 	}
 	override DLambda substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		auto nexpr=expr.substituteFun(fun,q,args,context);
-		return dLambda(var,nexpr);
+		auto nq=q;
+		if(cast(DBoundVar)this.var) nq=q.incBoundVar(1,true);
+		return dLambda(var,expr.substituteFun(fun,nq,args,context));
 	}
-	override DLambda incBoundVar(int di){
-		return dLambda(var.incBoundVar(di),expr.incBoundVar(di));
+	override DLambda incBoundVar(int di,bool bindersOnly){
+		auto dbvar=cast(DBoundVar)var;
+		if(bindersOnly&&dbvar){
+			auto nvar=dBoundVar(dbvar.i+di);
+			return dLambda(nvar,expr.substitute(var,nvar).incBoundVar(di,bindersOnly));
+		}else return dLambda(var.incBoundVar(di,bindersOnly),expr.incBoundVar(di,bindersOnly));
 	}
 
 	static DLambda constructHook(DVar var,DExpr expr){
@@ -3280,9 +3329,9 @@ class DLambda: DOp{ // lambda functions DExpr → DExpr
 		if(auto dbvar=cast(DBoundVar)var){
 			auto nesting=dbvar.i-1;;
 			auto tmp=new DVar("tmp"); // TODO: get rid of this!
-			auto nexpr=unbind(dBoundVar(1),expr.incBoundVar(-nesting),tmp);
+			auto nexpr=unbind(dBoundVar(1),expr.incBoundVar(-nesting,false),tmp);
 			auto r=staticSimplify(tmp,nexpr,facts);
-			return r?r.incBoundVar(nesting):null;
+			return r?r.incBoundVar(nesting,false):null;
 		}
 		auto nexpr=expr.simplify(facts);
 		if(nexpr !is expr) return dLambda(var,nexpr);
@@ -3299,7 +3348,8 @@ DLambda dLambda(DVar var,DExpr expr)in{assert(var&&expr);}body{
 	auto dbvar=cast(DBoundVar)var;
 	if(!dbvar){
 		dbvar=dBoundVar(1);
-		expr=expr.incBoundVar(1).substitute(var,dbvar);
+		assert(!expr.hasFreeVar(dbvar));
+		expr=expr.incBoundVar(1,true).substitute(var,dbvar);
 	}
 	return uniqueBindingDExpr!DLambda(dbvar,expr);
 }
@@ -3332,8 +3382,8 @@ class DArray: DExpr{
 	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
 		return dArray(length.substituteFun(fun,q,args,context),entries.substituteFun(fun,q,args,context));
 	}
-	override DExpr incBoundVar(int di){
-		return dArray(length.incBoundVar(di),entries.incBoundVar(di));
+	override DExpr incBoundVar(int di,bool bindersOnly){
+		return dArray(length.incBoundVar(di,bindersOnly),entries.incBoundVar(di,bindersOnly));
 	}
 	static DArray constructHook(DExpr length,DLambda entries){
 		return staticSimplify(length,entries);
@@ -3401,8 +3451,8 @@ class DField: DOp{
 		return dField(e.substituteFun(fun,q,args,context),f);
 	}
 
-	override DExpr incBoundVar(int di){
-		return dField(e.incBoundVar(di),f);
+	override DExpr incBoundVar(int di,bool bindersOnly){
+		return dField(e.incBoundVar(di,bindersOnly),f);
 	}
 
 	override int freeVarsImpl(scope int delegate(DVar) dg){
