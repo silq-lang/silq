@@ -239,7 +239,7 @@ class Distribution{
 		exp=exp.substitute(var,nvar);
 		distribute(dDelta(var,exp,ty));
 		marginalizeTemporaries();
-		marginalize(nvar);
+		//marginalize(nvar);
 	}
 	void marginalize(DVar var)in{assert(var in freeVars); }body{
 		//assert(distribution.hasFreeVar(var),text(distribution," ",var));

@@ -713,7 +713,15 @@ void test(){
 	//writeln(dInt("x".dVar,dDelta("x".dVar,dTuple([one,one,one]),tupleTy([ℝ,ℝ,ℝ]))/2+dDelta("x".dVar,dTuple([one,one,one+one]),tupleTy([ℝ,ℝ,ℝ]))/2).simplify(one));
 	//writeln(dInt("x".dVar,dInt("y".dVar,dInt("z".dVar,"[0<=y]·[y<=1]·[0<=z]·[z<=1]".dParse*dDelta("x".dVar,dTuple(["y".dVar,"z".dVar]),tupleTy([ℝ,ℝ,ℝ]))))).simplify(one));
 	//writeln("∫dξ₁∫dξ₂(∫dξ₃[-1+ξ₃≤0]·[-ξ₃≤0]·δ_ξ₁[(ξ₃,ξ₂)])·[-1+ξ₂≤0]·[-ξ₂≤0]".dParse.simplify(one));
+	//(∫dk[-1+k≤0]·[-k≤0]·δ_x[x₁[0 ↦ k]])·[-x₁.length≤0]·[x₁.length≠0]·δ[-n+2]·δ_x₁[[k ↦ 0] (1)]
+	//auto exp=dIntSmp("k".dVar,"[-1+k≤0]·[-k≤0]".dParse*dDelta("x".dVar,dIUpdate("arr".dVar,zero,"k".dVar),arrayTy(ℝ)))*dDelta("arr".dVar,dArray([zero]),arrayTy(ℝ));
+	//writeln(exp);
+	//DEB=true;
+	//writeln(dIntSmp("arr".dVar,exp));
+	//writeln(dIntSmp("k".dVar,"[-1+k≤0]·[-k≤0]".dParse*dDelta("x".dVar,dIUpdate("arr".dVar,zero,"k".dVar),arrayTy(ℝ))).substitute("arr".dVar,dArray([zero])));
+	//writeln(dIntSmp("k".dVar,"[-1+k≤0]·[-k≤0]".dParse*dDelta("x".dVar,dIUpdate(dArray([zero]),zero,"k".dVar),arrayTy(ℝ))));
 }
+
 /*
 [([x=0]+x)·(1+[x=0])≤0]
 

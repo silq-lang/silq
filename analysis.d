@@ -21,10 +21,10 @@ private struct Analyzer{
 	ErrorHandler err;
 	DExpr[][string] arrays;
 	DExpr[DVar] deterministic;
-	DExpr transformExp(Exp e,bool allowMultiple=false){
+	DExpr transformExp(Exp e){
 		class Unwind: Exception{ this(){ super(""); } }
 		void unwind(){ throw new Unwind(); }
-		DExpr doIt(Exp e,bool allowMultiple=false){
+		DExpr doIt(Exp e){
 			if(cast(Declaration)e||cast(BinaryExp!(Tok!":="))e){
 				err.error("definition must be at top level",e.loc);
 				unwind();
@@ -44,7 +44,7 @@ private struct Analyzer{
 					if(id.name in arrays && fe.f.name=="length")
 						return ℕ(arrays[id.name].length).dℕ;
 				}
-				err.error("no property '"~fe.f.name~"' for number",fe.loc);
+				return dField(doIt(fe.e),fe.f.name);
 				unwind();
 			}
 			if(auto ae=cast(AddExp)e) return doIt(ae.e1)+doIt(ae.e2);
@@ -73,10 +73,6 @@ private struct Analyzer{
 						}
 						auto fun=functions[id.name];
 						auto summary=summaries[id.name];
-						if(summary.freeVars.length!=1 && !allowMultiple){
-							err.error("only single return values supported for function calls in expressions",ce.loc);
-							unwind();
-						}
 						if(ce.args.length != fun.params.length){
 							err.error(format("expected %s arguments to '%s', received %s",fun.params.length,id.name,ce.args.length),ce.loc);
 							unwind();
@@ -90,8 +86,11 @@ private struct Analyzer{
 						return dist.call(summary,args);
 					}
 					switch(id.name){
-					case "array","readCSV":
-						err.error(text("call to '"~id.name~"' only supported as the right hand side of an assignment"),ce.loc);
+					case "array":
+						assert(ce.args.length==1);
+						return dArray(doIt(ce.args[0]));
+					case "readCSV":
+						err.error(text("call to 'readCSV' only supported as the right hand side of an assignment"),ce.loc);
 						unwind();
 					case "Gauss":
 						if(ce.args.length!=2){
@@ -263,10 +262,6 @@ private struct Analyzer{
 						dist.distribute(weibullPDF(var,λ,k));
 						return var;
 					case "FromMarginal":
-						if(ce.args.length!=1&&!allowMultiple){
-							err.error("expected one argument (e) to FromMarginal",ce.loc);
-							unwind();
-						}
 						auto exp=ce.args.map!doIt.array;
 						auto tmp=ce.args.map!(_=>dist.getTmpVar("__mrg")).array;
 						auto ndist=dist.dup();
@@ -288,10 +283,6 @@ private struct Analyzer{
 						foreach(i,pvar;paramVars){
 							auto expr=doIt(ce.args[1+i]);
 							newDist=newDist.substitute(pvar,expr);
-						}
-						if(retVars.length!=1&&!allowMultiple){
-							err.error("only single return values supported for function calls in expressions",ce.loc);
-							unwind();
 						}
 						dist.distribute(newDist);
 						return retVars.length==1?retVars[0].tmp:dTuple(cast(DExpr[])retVars.map!(v=>v.tmp).array);
@@ -325,13 +316,23 @@ private struct Analyzer{
 			}
 			if(auto idx=cast(IndexExp)e){
 				if(idx.e.type is arrayTy(ℝ)){
-					auto r=indexArray(idx);
-					if(r) return r;
-					unwind();
+					if(auto id=cast(Identifier)idx.e) if(id.name in arrays){
+						auto r=indexArray(idx);
+						if(r) return r;
+						unwind();
+					}
+				}
+				if(cast(ArrayTy)idx.e.type){
+					assert(idx.a.length==1);
+					auto de=doIt(idx.e);
+					auto di=doIt(idx.a[0]);
+					dist.assertTrue(dIvr(DIvr.Type.lZ,di-dField(de,"length")),"array access out of bounds"); // TODO: check that index is an integer.
+					return dIndex(de,di);
 				}else if(auto tt=cast(TupleTy)idx.e.type){
 					assert(idx.a.length==1);
 					return doIt(idx.e)[doIt(idx.a[0])];
 				}
+				assert(0,text(idx.e.type));
 			}
 			if(auto le=cast(LiteralExp)e){
 				if(le.lit.type==Tok!"0"){
@@ -373,14 +374,17 @@ private struct Analyzer{
 				}
 				return var;
 			}else if(auto tpl=cast(TupleExp)e){
-				auto dexprs=tpl.e.map!(x=>doIt(x)).array;
+				auto dexprs=tpl.e.map!doIt.array;
 				return dTuple(dexprs);
+			}else if(auto arr=cast(ArrayExp)e){
+				auto dexprs=arr.e.map!doIt.array;
+				return dArray(dexprs);
 			}else if(auto c=transformConstr(e))
 				return c;
 			err.error("unsupported",e.loc);
 			throw new Unwind();
 		}
-		try return doIt(e,allowMultiple);
+		try return doIt(e);
 		catch(Unwind){ return null; }
 	}
 
@@ -577,8 +581,8 @@ private struct Analyzer{
 	Distribution analyze(CompoundExp ce,bool isMethodBody=false)in{assert(!!ce);}body{
 		foreach(i,e;ce.s){
 			/+writeln("statement: ",e);
-			writeln("before: ",dist);
-			scope(success) writeln("after: ",dist);+/
+			 writeln("before: ",dist);
+			 scope(success) writeln("after: ",dist);+/
 			// TODO: visitor?
 			if(auto nde=cast(DefExp)e){
 				auto de=cast(ODefExp)nde.init;
@@ -598,10 +602,10 @@ private struct Analyzer{
 					if(auto call=cast(CallExp)de.e2){
 						if(auto cid=cast(Identifier)call.e){
 							switch(cid.name){
-							case "array":
-								isSpecial=true;
-								evaluateArrayCall(id,call);
-								break;
+								case "array":
+								 isSpecial=true;
+								 evaluateArrayCall(id,call);
+								 break;
 							case "readCSV":
 								isSpecial=true;
 								evaluateReadCSVCall(id,call);
@@ -615,7 +619,7 @@ private struct Analyzer{
 						defineVar(id,rhs,de.e2.type);
 					}
 				}else if(auto tpl=cast(TupleExp)de.e1){
-					auto rhs=transformExp(de.e2,true);
+					auto rhs=transformExp(de.e2);
 					auto tt=cast(TupleTy)de.e2.type;
 					assert(!!tt);
 					auto dtpl=cast(DTuple)rhs;
@@ -635,48 +639,66 @@ private struct Analyzer{
 					err.error("left hand side of definition should be identifier or tuple of identifiers",de.e1.loc);
 				}
 			}else if(auto ae=cast(AssignExp)e){
-				void assignVar(Identifier id,DExpr rhs,Type ty){
-					if(id.name !in arrays){
-						if(auto v=dist.lookupVar(id.name)){
-							dist.assign(v,rhs?rhs:zero,rhs?ty:ℝ); // TODO: zero is not a good default value for types other than ℝ
-							trackDeterministic(v,rhs,ty);
-						}else err.error("undefined variable '"~id.name~"'",id.loc);
-					}else err.error("reassigning array unsupported",e.loc);					
-				}
-				if(auto id=cast(Identifier)ae.e1){
-					assignVar(id,transformExp(ae.e2),ae.e2.type);
-				}else if(auto idx=cast(IndexExp)ae.e1){
-					if(auto cidx=indexArray(idx)){
-						if(auto v=cast(DVar)cidx){
-							auto rhs=transformExp(ae.e2);
-							dist.assign(v,rhs?rhs:zero,ae.e2.type);
-							trackDeterministic(v,rhs,ae.e2.type);
+				void assignTo(Expression lhs,DExpr rhs,Type ty){
+					if(!rhs) return;
+					void assignVar(Identifier id,DExpr rhs,Type ty){
+						if(id.name !in arrays){
+							if(auto v=dist.lookupVar(id.name)){
+								dist.assign(v,rhs,ty);
+								trackDeterministic(v,rhs,ty);
+							}else err.error("undefined variable '"~id.name~"'",id.loc);
+						}else err.error("reassigning array unsupported",lhs.loc);
+					}
+					if(auto id=cast(Identifier)lhs){
+						assignVar(id,rhs,ty);
+					}else if(auto idx=cast(IndexExp)lhs){
+						if(auto id=cast(Identifier)idx.e){
+							if(id.name in arrays){
+								if(auto cidx=indexArray(idx)){
+									if(auto v=cast(DVar)cidx){
+										dist.assign(v,rhs?rhs:zero,ty);
+										trackDeterministic(v,rhs,ty);
+									}else{
+										err.error(text("array is not writeable"),lhs.loc);
+									}
+								}
+								return;
+							}
+						}
+						if(cast(TupleTy)idx.e.type||cast(ArrayTy)idx.e.type){
+							auto old=transformExp(idx.e);
+							assert(idx.a.length==1);
+							auto index=transformExp(idx.a[0]);
+							if(old&&index&&rhs){
+								dist.assertTrue(dIvr(DIvr.Type.lZ,index-dField(old,"length")),"array access out of bounds"); // TODO: check that index is an integer.
+								assignTo(idx.e,dIUpdate(old,index,rhs),idx.e.type);
+							}
 						}else{
-							err.error(text("array is not writeable"),ae.loc);
+							err.error(text("unsupported type '",idx.e.type,"' for index expression"),lhs.loc);
 						}
-					}
-				}else if(auto tpl=cast(TupleExp)ae.e1){
-					auto rhs=transformExp(ae.e2,true);
-					auto tt=cast(TupleTy)ae.e2.type;
-					assert(!!tt);
-					auto dtpl=cast(DTuple)rhs;
-					if(rhs&&(!dtpl||dtpl.length!=tpl.length)){
-						err.error(text("inconsistent number of tuple entries for assignment: ",tpl.length," vs. ",(dtpl?dtpl.length:1)),ae.loc);
-						rhs=dtpl=null;
-					}
-					if(dtpl){
-						auto tmp=iota(tpl.e.length).map!(_=>dist.getVar("__tpltmp")).array;
-						foreach(k,de;dtpl.values) dist.initialize(tmp[k],de,tt.types[k]);
-						foreach(k,exp;tpl.e){
-							auto id=cast(Identifier)exp;
-							if(!id) goto LbadAssgnmLhs;
-							assignVar(id,tmp[k],tt.types[k]);
+					}else if(auto tpl=cast(TupleExp)lhs){
+						auto tt=cast(TupleTy)ty;
+						assert(!!tt);
+						auto dtpl=cast(DTuple)rhs;
+						if(rhs&&(!dtpl||dtpl.length!=tpl.length)){
+							err.error(text("inconsistent number of tuple entries for assignment: ",tpl.length," vs. ",(dtpl?dtpl.length:1)),ae.loc);
+							rhs=dtpl=null;
 						}
-					}					
-				}else{
-				LbadAssgnmLhs:
-					err.error("left hand side of assignment should be identifier or tuple of identifiers",ae.e1.loc);
+						if(dtpl){
+							auto tmp=iota(tpl.e.length).map!(_=>dist.getVar("__tpltmp")).array;
+							foreach(k,de;dtpl.values) dist.initialize(tmp[k],de,tt.types[k]);
+							foreach(k,exp;tpl.e){
+								auto id=cast(Identifier)exp;
+								if(!id) goto LbadAssgnmLhs;
+								assignVar(id,tmp[k],tt.types[k]);
+							}
+						}					
+					}else{
+					LbadAssgnmLhs:
+						err.error("invalid left hand side for assignment",lhs.loc);
+					}
 				}
+				assignTo(ae.e1,transformExp(ae.e2),ae.e2.type);
 			}else if(auto ite=cast(IteExp)e){
 				if(auto c=transformConstr(ite.cond)){
 					auto dthen=dist.dupNoErr();

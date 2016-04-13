@@ -198,6 +198,14 @@ class TupleExp: Expression{
 	final @property size_t length(){ return e.length; }
 }
 
+class ArrayExp: Expression{
+	Expression[] e;
+	this(Expression[] e){
+		this.e=e;
+	}
+	override string toString(){ return "["~e.map!(to!string).join(",")~"]";}
+}
+
 class ReturnExp: Expression{
 	Expression e;
 	this(Expression e){

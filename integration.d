@@ -10,7 +10,7 @@ DExpr definiteIntegral(DVar var,DExpr expr,DExpr facts=one){
 	definiteIntegralMemo[t]=r;
 	return r;
 }
-import psy; // !!!
+
 private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
 	auto nexpr=expr.simplify(facts);
 	if(expr !is nexpr) expr=nexpr;

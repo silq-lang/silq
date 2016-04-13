@@ -48,6 +48,7 @@ Simpl simplification=Simpl.full;
 
 enum Precedence{
 	none,
+	lambda,
 	plus,
 	uminus,
 	lim,
@@ -57,6 +58,7 @@ enum Precedence{
 	diff,
 	pow,
 	index,
+	field=index,
 	invalid,
 }
 hash_t g_hash=0;
@@ -2073,7 +2075,7 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 		this.e=e;
 		this.ty=ty;
 		assert(ty !is ℝ);
-		assert(cast(TupleTy)ty); // TODO: add more supported types
+		assert(cast(TupleTy)ty||cast(ArrayTy)ty); // TODO: add more supported types
 	}
 	override string toStringImpl(Format formatting,Precedence prec){
 		 // TODO: encoding for other CAS?
@@ -2101,7 +2103,7 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 		return staticSimplify(var,e,ty);
 	}
 	static DExpr staticSimplify(DVar var,DExpr e,Type ty,DExpr facts=one){
-		auto ne=e.simplify(one); // cannot use all facts! (might remove a free variable)
+		auto ne=e.simplify(facts);
 		if(ne !is e) return dDelta(var,ne,ty);
 		//if(dIvr(DIvr.Type.eq,var,e).simplify(facts) is zero) return zero; // a simplification like this might be possible
 		return null;
@@ -2227,10 +2229,10 @@ static ~this(){
 	writeln(sw.peek().to!("msecs",double));
 }+/
 
-static DExpr unbind(DVar tvar, DExpr expr, DVar var){
-	assert(tvar is dBoundVar(1),text(tvar)); // TODO: finally fix the deBruinVar situation...
-	assert(cast(DBoundVar)tvar && !cast(DBoundVar)var);
-	return expr.substitute(tvar,var).incBoundVar(-1);		
+static DExpr unbind(DVar tvar, DExpr expr, DExpr nexpr){
+       assert(tvar is dBoundVar(1),text(tvar)); // TODO: finally fix the dBoundVar situation...
+       assert(cast(DBoundVar)tvar && !cast(DBoundVar)nexpr);
+       return expr.substitute(tvar,nexpr).incBoundVar(-1);
 }
 
 import integration;
@@ -2240,7 +2242,6 @@ class DInt: DOp{
 		DExpr expr;
 		this(DVar var,DExpr expr){ this.var=var; this.expr=expr; }
 	}
-	DVar getVar(){ return var; } // for Fubini. TODO: get rid of this
 	DExpr getExpr(DVar var){
 		if(cast(DBoundVar)this.var) return unbind(this.var,expr,var);
 		return expr;
@@ -2285,7 +2286,7 @@ class DInt: DOp{
 			integrals[newexpr]=[];
 		}
 		if(auto dbvar=cast(DBoundVar)var){
-			auto nesting=dbvar.i-1;
+			auto nesting=dbvar.i;
 			auto tmp=new DVar("tmp"); // TODO: get rid of this!
 			auto nexpr=unbind(dBoundVar(1),expr.incBoundVar(-nesting),tmp);
 			auto r=staticSimplify(tmp,nexpr,facts);
@@ -2333,7 +2334,7 @@ class DInt: DOp{
 				return r;
 			}
 		}
-		return dInt(var,nexpr);
+		return dInt(this.var,nexpr);
 	}
 	override DExpr incBoundVar(int di){
 		return dInt(var.incBoundVar(di),expr.incBoundVar(di));
@@ -2407,9 +2408,12 @@ class DSum: DOp{
 			if(expr is zero) return zero;
 			return null;
 		}
-		if(cast(DBoundVar)var){
+		if(auto dbvar=cast(DBoundVar)var){
+			int nesting=dbvar.i-1;
 			auto tmp=new DVar("tmp"); // TODO: get rid of this!
-			return staticSimplifyMemo(tmp,unbind(var,expr,tmp));
+			auto nexpr=unbind(var,expr.incBoundVar(-nesting),tmp);
+			auto r=staticSimplifyMemo(tmp,nexpr);
+			return r?r.incBoundVar(nesting):null;
 		}
 		auto nexpr=expr.simplify(facts);
 		if(nexpr !is expr) expr=nexpr;
@@ -2480,9 +2484,11 @@ class DLim: DOp{
 	}
 
 	static DExpr staticSimplify(DVar v,DExpr e,DExpr x,DExpr facts=one){
-		if(cast(DBoundVar)v){
+		if(auto dbvar=cast(DBoundVar)v){
+			auto nesting=dbvar.i-1;
 			auto tmp=new DVar("tmp"); // TODO: get rid of this!
-			return staticSimplify(tmp,unbind(v,e,tmp),unbind(v,x,tmp));
+			auto r=staticSimplify(tmp,e.incBoundVar(-nesting),unbind(v,x,tmp.incBoundVar(-nesting)));
+			return r?r.incBoundVar(nesting):null;
 		}
 		if(auto r=getLimit(v,e,x,facts))
 			return r;
@@ -2550,6 +2556,7 @@ class DDiff: DOp{
 	}
 
 	static DExpr staticSimplify(DVar v,DExpr e,DExpr x,DExpr facts=one){
+		// TODO: bound var handling
 		e=e.simplify(facts);
 		if(auto r=differentiate(v,e))
 			return r.substitute(v,x);
@@ -3076,7 +3083,7 @@ class DIndex: DOp{
 	this(DExpr e,DExpr i){
 		this.e=e; this.i=i;
 	}
-	override string symbol(Format formatting){ return "["; }
+	override string symbol(Format formatting){ return "[]"; }
 	override @property Precedence precedence(){
 		return Precedence.index; // TODO: ok? (there is no precedence to the rhs)
 	}
@@ -3112,12 +3119,15 @@ class DIndex: DOp{
 	}
 	
 	static DExpr staticSimplify(DExpr e,DExpr i,DExpr facts=one){
-		auto ne=e.simplify(one);
-		auto ni=i.simplify(one);
-		if(auto c=cast(Dℕ)ni)
+		auto ne=e.simplify(facts);
+		auto ni=i.simplify(facts);
+		if(auto c=cast(Dℕ)ni){
 			if(auto tpl=cast(DTuple)ne)
 				if(0<=c.c&&c.c<=tpl.values.length)
 					return tpl.values[c.c.toLong()];
+		}
+		if(auto arr=cast(DArray)ne)
+			return arr.entries.apply(ni);
 		if(ne !is e || ni !is i) return dIndex(ne,ni);
 		return null;
 	}
@@ -3129,7 +3139,293 @@ class DIndex: DOp{
 
 mixin(makeConstructorNonCommutAssoc!DIndex);
 
+class DIUpdate: DOp{
+	DExpr e,i,n; // TODO: multiple indices?
+	this(DExpr e,DExpr i,DExpr n){
+		this.e=e; this.i=i; this.n=n;
+	}
+	override string symbol(Format formatting){ return "[ ↦ ]"; }
+	override @property Precedence precedence(){
+		return Precedence.index; // TODO: ok? (there is no precedence to the rhs)
+	}
+	override string toStringImpl(Format formatting, Precedence prec){
+		return addp(prec, e.toStringImpl(formatting,Precedence.index)~"["~i.toStringImpl(formatting,Precedence.none)~
+					" ↦ "~n.toStringImpl(formatting,Precedence.none)~"]");
+	}
 
+	override int forEachSubExpr(scope int delegate(DExpr) dg){
+		if(auto r=dg(e)) return r;
+		if(auto r=dg(i)) return r;
+		return dg(n);
+	}
+
+	override DExpr simplifyImpl(DExpr facts){
+		auto r=staticSimplify(e,i,n,facts);
+		return r?r:this;
+	}
+
+	override DExpr substitute(DVar var,DExpr exp){
+		return dIUpdate(e.substitute(var,exp),i.substitute(var,exp),n.substitute(var,exp));
+	}
+
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SHSet!DVar context){
+		return dIUpdate(e.substituteFun(fun,q,args,context),i.substituteFun(fun,q,args,context),n.substituteFun(fun,q,args,context));
+	}
+
+	override DExpr incBoundVar(int di){
+		return dIUpdate(e.incBoundVar(di),i.incBoundVar(di),n.incBoundVar(di));
+	}
+
+	override int freeVarsImpl(scope int delegate(DVar) dg){
+		if(auto r=e.freeVarsImpl(dg)) return r;
+		if(auto r=i.freeVarsImpl(dg)) return r;
+		return n.freeVarsImpl(dg);
+	}
+	
+	static DExpr staticSimplify(DExpr e,DExpr i,DExpr n,DExpr facts=one){
+		auto ne=e.simplify(facts);
+		auto ni=i.simplify(facts);
+		auto nn=n.simplify(facts);
+		if(auto c=cast(Dℕ)ni){
+			if(auto tpl=cast(DTuple)ne){
+				if(0<=c.c&&c.c<=tpl.values.length){
+					auto nvalues=tpl.values.dup;
+					nvalues[c.c.toLong()]=nn;
+					return dTuple(nvalues);
+				}
+			}
+		}
+		if(auto arr=cast(DArray)ne){
+			auto tmp=new DVar("tmp"); // TODO: get rid of this!
+			auto dbvar=cast(DBoundVar)arr.entries.var;
+			assert(!!dbvar);
+			auto nesting=dbvar.i-1;
+			auto r=dArray(arr.length,
+						  dLambda(tmp,arr.entries.incBoundVar(-nesting).apply(tmp)*dIvr(DIvr.Type.neqZ,tmp-ni).incBoundVar(-nesting)
+								  +(dIvr(DIvr.Type.eqZ,tmp-ni)*nn).incBoundVar(-nesting)).incBoundVar(nesting));
+			return r;
+		}
+		if(ne !is e || ni !is i || nn !is n) return dIUpdate(ne,ni,nn);
+		return null;
+	}
+	
+	static DExpr constructHook(DExpr e,DExpr i,DExpr n){
+		return staticSimplify(e,i,n);
+	}
+}
+
+MapX!(TupleX!(DExpr,DExpr,DExpr),DExpr) uniqueMapDIUpdate;
+auto dIUpdate(DExpr e,DExpr i,DExpr n){
+	if(auto r=DIUpdate.constructHook(e,i,n)) return r;
+	auto t=tuplex(e,i,n);
+	if(t in uniqueMapDIUpdate) return uniqueMapDIUpdate[t];
+	auto r=new DIUpdate(e,i,n);
+	uniqueMapDIUpdate[t]=r;
+	return r;
+}
+
+class DLambda: DOp{ // lambda functions DExpr → DExpr
+	private{
+		DVar var;
+		DExpr expr;
+	}
+	this(DVar var,DExpr expr){
+		this.var=var; this.expr=expr;
+	}
+	DExpr getExpr(DVar var){
+		assert(cast(DBoundVar)this.var);
+		return unbind(this.var,expr,var);
+	}
+	DExpr apply(DExpr e){
+		assert(!!cast(DBoundVar)var);
+		return unbind(var,expr,e);
+	}
+	override @property Precedence precedence(){ return Precedence.lambda; }
+	override @property string symbol(Format formatting){ return "λ"; }
+	override string toStringImpl(Format formatting,Precedence prec){
+		// TODO: formatting for other CAS systems
+		return addp(prec,text("λ",var.toStringImpl(formatting,Precedence.none),". ",expr.toStringImpl(formatting,precedence.lambda)));
+	}
+	override int forEachSubExpr(scope int delegate(DExpr) dg){
+		return 0; // TODO: ok?
+	}
+	override int freeVarsImpl(scope int delegate(DVar) dg){
+		return expr.freeVarsImpl(v=>v is var?0:dg(v));
+	}
+	override DLambda substitute(DVar var,DExpr e){
+		if(this.var is var) return this;
+		return dLambda(this.var,expr.substitute(var,e));
+	}
+	override DLambda substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
+		auto nexpr=expr.substituteFun(fun,q,args,context);
+		return dLambda(var,nexpr);
+	}
+	override DLambda incBoundVar(int di){
+		return dLambda(var.incBoundVar(di),expr.incBoundVar(di));
+	}
+
+	static DLambda constructHook(DVar var,DExpr expr){
+		return staticSimplify(var,expr);
+	}
+	static DLambda staticSimplify(DVar var,DExpr expr,DExpr facts=one){
+		if(auto dbvar=cast(DBoundVar)var){
+			auto nesting=dbvar.i-1;;
+			auto tmp=new DVar("tmp"); // TODO: get rid of this!
+			auto nexpr=unbind(dBoundVar(1),expr.incBoundVar(-nesting),tmp);
+			auto r=staticSimplify(tmp,nexpr,facts);
+			return r?r.incBoundVar(nesting):null;
+		}
+		auto nexpr=expr.simplify(facts);
+		if(nexpr !is expr) return dLambda(var,nexpr);
+		return null;
+	}
+	override DExpr simplifyImpl(DExpr facts){
+		auto r=staticSimplify(var,expr);
+		return r?r:this;
+	}
+}
+
+DLambda dLambda(DVar var,DExpr expr)in{assert(var&&expr);}body{
+	if(auto r=DLambda.constructHook(var,expr)) return r;
+	auto dbvar=cast(DBoundVar)var;
+	if(!dbvar){
+		dbvar=dBoundVar(1);
+		expr=expr.incBoundVar(1).substitute(var,dbvar);
+	}
+	return uniqueBindingDExpr!DLambda(dbvar,expr);
+}
+
+class DArray: DExpr{
+	DExpr length;
+	DLambda entries;
+	this(DExpr length,DLambda entries){
+		this.length=length;
+		this.entries=entries;
+	}
+	override string toStringImpl(Format formatting,Precedence prec){
+		auto r=text("[",entries.var," ↦ ",entries.expr,"] (",length,")");
+		if(prec!=Precedence.none) r="("~r~")"; // TODO: ok?
+		return r;
+	}
+	override int forEachSubExpr(scope int delegate(DExpr) dg){
+		if(auto r=length.forEachSubExpr(dg)) return r;
+		if(auto r=entries.forEachSubExpr(dg)) return r; // TODO: ok?
+		return 0;
+	}
+	override int freeVarsImpl(scope int delegate(DVar) dg){
+		if(auto r=length.freeVarsImpl(dg)) return r;
+		if(auto r=entries.freeVarsImpl(dg)) return r; // TODO: ok?
+		return 0;
+	}
+	override DExpr substitute(DVar var,DExpr e){
+		return dArray(length.substitute(var,e),entries.substitute(var,e));
+	}
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
+		return dArray(length.substituteFun(fun,q,args,context),entries.substituteFun(fun,q,args,context));
+	}
+	override DExpr incBoundVar(int di){
+		return dArray(length.incBoundVar(di),entries.incBoundVar(di));
+	}
+	static DArray constructHook(DExpr length,DLambda entries){
+		return staticSimplify(length,entries);
+	}
+	static DArray staticSimplify(DExpr length,DLambda entries,DExpr facts=one){
+		auto nlength=length.simplify(facts);
+		auto nentries=cast(DLambda)entries.simplify(facts);
+		assert(!!nentries);
+		if(nlength!is length||nentries!is entries) return dArray(nlength,nentries);
+		return null;
+	}
+	override DArray simplifyImpl(DExpr facts){
+		auto r=staticSimplify(length,entries,facts);
+		return r?r:this;
+	}
+}
+
+MapX!(TupleX!(DExpr,DLambda),DArray) uniqueMapDArray;
+auto dArray(DExpr length,DLambda entries){
+	if(auto r=DArray.constructHook(length,entries)) return r;
+	auto t=tuplex(length,entries);
+	if(t in uniqueMapDArray) return uniqueMapDArray[t];
+	auto r=new DArray(length,entries);
+	uniqueMapDArray[t]=r;
+	return r;
+}
+
+auto dArray(DExpr length){ return dArray(length,dLambda(dBoundVar(1),zero)); }
+auto dArray(DExpr[] entries){
+	auto tmp=new DVar("tmp"); // TODO: get rid of this!
+	// TODO: not necessarily very clean for types that are not real numbers, but can be interpreted in terms of linear algebra
+	DExpr body_=zero;
+	foreach(i,e;entries) body_=body_+dIvr(DIvr.Type.eqZ,tmp-i)*entries[i];
+	return dArray(dℕ(ℕ(entries.length)),dLambda(tmp,body_));
+}
+
+class DField: DOp{
+	DExpr e;
+	string f;
+	this(DExpr e,string f){
+		this.e=e; this.f=f;
+	}
+	override string symbol(Format formatting){ return "."; }
+	override @property Precedence precedence(){
+		return Precedence.index; // TODO: ok? (there is no precedence to the rhs)
+	}
+	override string toStringImpl(Format formatting, Precedence prec){
+		return addp(prec, e.toStringImpl(formatting,Precedence.field)~"."~f);
+	}
+
+	override int forEachSubExpr(scope int delegate(DExpr) dg){
+		return dg(e);
+	}
+
+	override DExpr simplifyImpl(DExpr facts){
+		auto r=staticSimplify(e,f,facts);
+		return r?r:this;
+	}
+
+	override DExpr substitute(DVar var,DExpr exp){
+		return dField(e.substitute(var,exp),f);
+	}
+
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SHSet!DVar context){
+		return dField(e.substituteFun(fun,q,args,context),f);
+	}
+
+	override DExpr incBoundVar(int di){
+		return dField(e.incBoundVar(di),f);
+	}
+
+	override int freeVarsImpl(scope int delegate(DVar) dg){
+		return e.freeVarsImpl(dg);
+	}
+	
+	static DExpr staticSimplify(DExpr e,string f,DExpr facts=one){
+		auto ne=e.simplify(facts);
+		if(f=="length"){
+			if(auto tpl=cast(DTuple)ne)
+				return dℕ(ℕ(tpl.length));
+			if(auto arr=cast(DArray)ne)
+				return arr.length;
+		}
+		if(ne !is e) return dField(ne,f);
+		return null;
+	}
+	
+	static DExpr constructHook(DExpr e,string f){
+		return staticSimplify(e,f);
+	}
+}
+
+MapX!(TupleX!(DExpr,string),DField) uniqueMapDField;
+auto dField(DExpr e,string f){
+	if(auto r=DField.constructHook(e,f)) return r;
+	auto t=tuplex(e,f);
+	if(t in uniqueMapDField) return uniqueMapDField[t];
+	auto r=new DField(e,f);
+	uniqueMapDField[t]=r;
+	return r;
+}
 
 
 import std.traits: ParameterTypeTuple;

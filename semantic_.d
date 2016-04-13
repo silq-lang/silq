@@ -349,37 +349,37 @@ Expression semantic(Expression expr,Scope sc){
 		propErr(ae.e2,ae);
 		if(ae.sstate==SemState.error)
 			return ae;
-		if(auto id=cast(Identifier)ae.e1){
-			if(!cast(VarDecl)id.meaning){
-				sc.error("can only assign to variables",expr.loc);
-				ae.sstate=SemState.error;
-			}else if(!compatible(id.type,ae.e2.type)){
-				sc.error(format("cannot assign '%s' to variable '%s' of type '%s'",ae.e2.type,id,id.type),ae.loc);
-				sc.note("declared here",id.meaning.loc);
-				ae.sstate=SemState.error;
-			}
-		}else if(auto tpl=cast(TupleExp)ae.e1){
-			foreach(ref exp;tpl.e){
-				auto id=cast(Identifier)exp;
-				if(!id) goto LbadAssgnmLhs;
+		void checkLhs(Expression lhs){
+			if(auto id=cast(Identifier)lhs){
 				if(!cast(VarDecl)id.meaning){
-					sc.error("can only assign to variables",id.loc);
+					sc.error("can only assign to variables",expr.loc);
 					ae.sstate=SemState.error;
-					break;
 				}
-			}
-			if(!compatible(ae.e1.type,ae.e2.type)){
-				sc.error(format("cannot assign '%s' to '%s'",ae.e2.type,ae.e1.type),ae.loc);
+			}else if(auto tpl=cast(TupleExp)lhs){
+				foreach(ref exp;tpl.e){
+					auto id=cast(Identifier)exp;
+					if(!id) goto LbadAssgnmLhs;
+					if(!cast(VarDecl)id.meaning){
+						sc.error("can only assign to variables",id.loc);
+						ae.sstate=SemState.error;
+						break;
+					}
+				}
+			}else if(auto idx=cast(IndexExp)lhs){
+				checkLhs(idx.e);
+			}else{
+			LbadAssgnmLhs:
+				sc.error(format("cannot assign to '%s'",lhs),ae.e1.loc);
 				ae.sstate=SemState.error;
 			}
-		}else if(auto idx=cast(IndexExp)ae.e1){
-			if(!compatible(ae.e1.type,ae.e2.type)){
-				sc.error(format("cannot assign '%s' to '%s'",ae.e2.type,ae.e1.type),ae.loc);
-				ae.sstate=SemState.error;
-			}			
-		}else{
-		LbadAssgnmLhs:
-			sc.error("left hand side of assignment should be identifier or tuple of identifiers",ae.e1.loc);
+		}
+		checkLhs(ae.e1);
+		if(ae.sstate!=SemState.error&&!compatible(ae.e1.type,ae.e2.type)){
+			if(auto id=cast(Identifier)ae.e1){
+				sc.error(format("cannot assign '%s' to variable '%s' of type '%s'",ae.e2.type,id,id.type),ae.loc);
+				assert(!!id.meaning);
+				sc.note("declared here",id.meaning.loc);
+			}else sc.error(format("cannot assign '%s' to '%s'",ae.e2.type,ae.e1.type),ae.loc);
 			ae.sstate=SemState.error;
 		}
 		return ae;
@@ -490,6 +490,29 @@ Expression semantic(Expression expr,Scope sc){
 			tpl.type=tupleTy(tpl.e.map!(e=>e.type).array);
 		}
 		return tpl;
+	}
+	if(auto arr=cast(ArrayExp)expr){
+		Type t; bool tok=true;
+		Expression texp;
+		foreach(ref exp;arr.e){
+			exp=semantic(exp,sc);
+			propErr(exp,arr);
+			if(t){
+				if(t !is exp.type && tok){
+					sc.error(format("incompatible types '%s' and '%s' in array literal",t,exp.type),texp.loc);
+					sc.note("incompatible entry",exp.loc);
+					arr.sstate=SemState.error;
+					tok=false;
+				}
+			}else{ t=exp.type; texp=exp; }
+		}
+		if(arr.e.length){
+			arr.type=arrayTy(arr.e[0].type);
+		}else{
+			sc.error("empty array literals unsupported",arr.loc); // TODO
+			arr.sstate=SemState.error;
+		}
+		return arr;
 	}
 	if(auto tae=cast(TypeAnnotationExp)expr){
 		tae.e=semantic(tae.e,sc);

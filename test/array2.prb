@@ -1,0 +1,4 @@
+def main(){
+    x := [[(1,2)],[(2,3)],[(3,4),(5,6)]];
+    return Expectation(x[UniformInt(0,1)][0][0]+x[2][UniformInt(0,1)][1]); // expected: 2·δ[-2·r₁+13]
+}

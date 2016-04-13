@@ -370,7 +370,7 @@ struct Parser{
 				nextToken();
 				auto tok=Token(Tok!"0");
 				tok.str="0";
-				return res=New!LiteralExp(tok);				
+				return res=New!LiteralExp(tok);
 			case Tok!"(":
 				nextToken();
 				if(ttype==Tok!")"){
@@ -392,6 +392,11 @@ struct Parser{
 						res.brackets++;
 					}
 				}
+				return res;
+			case Tok!"[":
+				nextToken();
+				res=New!ArrayExp(parseArgumentList!"]"());
+				expect(Tok!"]");
 				return res;
 			case Tok!"-":
 				nextToken();

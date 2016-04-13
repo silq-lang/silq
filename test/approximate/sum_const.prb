@@ -41,6 +41,6 @@ def main() {
     }
 
     dif = dif / n;
-    return dif; // expected: -1875·[-dif≤0]·dif²·⅟256·⅟e^(5·dif)+-1875·[dif≠0]·[dif≤0]·dif²·e^(5·dif)·⅟128+-2375·[dif=0]·⅟96+-247975·[-dif≤0]·⅟1536·⅟e^(5·dif)+-3125·[dif≤0]·dif³·e^(5·dif)·⅟384+-875·[dif≤0]·dif·e^(5·dif)·⅟256+-95325·[dif≠0]·[dif≤0]·e^(5·dif)·⅟512+1875·[-dif≤0]·[dif≠0]·dif²·⅟128·⅟e^(5·dif)+249025·[-dif≤0]·[dif≠0]·⅟1536·⅟e^(5·dif)+3125·[-dif≤0]·dif³·⅟384·⅟e^(5·dif)+3125·[-dif≤0]·dif⁴·⅟768·⅟e^(5·dif)+3125·[dif≤0]·dif⁴·e^(5·dif)·⅟768+5625·[dif≤0]·dif²·e^(5·dif)·⅟256+875·[-dif≤0]·dif·⅟256·⅟e^(5·dif)+95675·[dif≤0]·e^(5·dif)·⅟512
+    return dif; // expected: (-125·[dif≤0]·dif·⅟64+-625·[dif≤0]·dif³·⅟96+175·[-dif≤0]·[dif≠0]·⅟512·⅟e^(10·dif)+175·[dif=0]·⅟512+175·[dif≠0]·[dif≤0]·⅟512+3125·[dif≤0]·dif⁴·⅟768+375·[-dif≤0]·[dif≠0]·dif·⅟256·⅟e^(10·dif)+625·[-dif≤0]·[dif≠0]·dif²·⅟256·⅟e^(10·dif)+625·[-dif≤0]·[dif≠0]·dif³·⅟384·⅟e^(10·dif)+625·[dif≤0]·dif²·⅟128)·e^(5·dif)+(-375·[dif≠0]·[dif≤0]·dif·e^(10·dif)·⅟256+-625·[dif≠0]·[dif≤0]·dif³·e^(10·dif)·⅟384+125·[-dif≤0]·dif·⅟64+175·[-dif≤0]·[dif≠0]·⅟512+175·[dif=0]·⅟512+175·[dif≠0]·[dif≤0]·e^(10·dif)·⅟512+3125·[-dif≤0]·dif⁴·⅟768+625·[-dif≤0]·dif²·⅟128+625·[-dif≤0]·dif³·⅟96+625·[dif≠0]·[dif≤0]·dif²·e^(10·dif)·⅟256)·⅟e^(5·dif)
 
 }
