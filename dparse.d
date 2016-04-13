@@ -46,17 +46,15 @@ struct DParser{
 		if(code.startsWith("delta")) code=code["delta".length..$];
 		else expect('δ');
 		bool round=false;
-		if(cur()=='_'){
-			auto var=parseDVar();
-			// TODo
-		}
+		DVar var=null;
+		if(cur()=='_'){ next(); var=parseDVar(); }
 		if(cur()=='('){
 			round=true;
 			next();
 		}else expect('[');
 		auto expr=parseDExpr();
 		expect(round?')':']');
-		return dDelta(expr);
+		return var?dDiscDelta(var,expr):dDelta(expr);
 	}
 		
 	DExpr parseSqrt(){
@@ -200,9 +198,38 @@ struct DParser{
 		if(code.startsWith("(d/dx)⁻¹[e^(-x²)]")) return parseGaussInt();
 		if(cur()=='('){
 			next();
+			if(cur()==')') return dTuple([]);
 			auto r=parseDExpr();
+			if(cur()==','){
+				auto values=[r];
+				while(cur()==','){
+					next();
+					if(cur()==')') break;
+					values~=parseDExpr();
+				}
+				expect(')');
+				return dTuple(values);
+			}
 			expect(')');
 			return r;
+		}
+		if(cur()=='['){
+			int nesting=0;
+			foreach(i,c;code){
+				if(c=='[') nesting++;
+				if(c==']') nesting--;
+				if(nesting) continue;
+				auto p=DParser(code[i..$]);
+				if(p.cur()!='(') break;
+				next();
+				auto var=parseDVar();
+				expect('↦');
+				auto expr=parseDExpr();
+				expect(']');
+				expect('(');
+				auto len=parseDExpr();
+				return dArray(len,dLambda(var,expr));
+			}
 		}
 		if(cur()=='∞'){ next(); return dInf; }
 		if(cur()=='[') return parseDIvr();
@@ -230,8 +257,20 @@ struct DParser{
 		return parseDVarDFun();
 	}
 
+	DExpr parseIndex(){
+		auto e=parseBase();
+		while(cur()=='['){
+			next();
+			auto i=parseDExpr();
+			expect(']');
+			e=dIndex(e,i);
+		}
+		return e;
+	}
+	
+
 	DExpr parseDPow(){
-		DExpr e=parseBase();
+		auto e=parseIndex();
 		if(cur()=='^'){
 			next();
 			return e^^parseFactor();

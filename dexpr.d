@@ -179,8 +179,8 @@ class DVar: DExpr{
 				name=name.replace(""d~cast(dchar)('₀'+x),""d~cast(dchar)('0'+x));
 			return name.to!string;
 		}
-		/+if(name=="tmp") // Can be convenient for debugging. TODO: get rid of "tmp" vars
-		 return name~(cast(void*)this).to!string;+/
+		if(name=="tmp") // Can be convenient for debugging. TODO: get rid of "tmp" vars
+		 return name~(cast(void*)this).to!string;
 		return name;
 	}
 
@@ -2069,13 +2069,9 @@ auto dDelta(DExpr a)in{assert(!cast(DTuple)a);}body{ // TODO: more preconditions
 class DDiscDelta: DExpr{ // point mass for discrete data types
 	DVar var;
 	DExpr e;
-	Type ty;
-	private this(DVar var,DExpr e,Type ty){
+	private this(DVar var,DExpr e){
 		this.var=var;
 		this.e=e;
-		this.ty=ty;
-		assert(ty !is ℝ);
-		assert(cast(TupleTy)ty||cast(ArrayTy)ty); // TODO: add more supported types
 	}
 	override string toStringImpl(Format formatting,Precedence prec){
 		 // TODO: encoding for other CAS?
@@ -2092,38 +2088,47 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 	override DExpr substitute(DVar var,DExpr exp){
 		auto v=cast(DVar)this.var.substitute(var,exp);
 		assert(!!v);
-		return dDelta(v,e.substitute(var,exp),ty);
+		return dDiscDelta(v,e.substitute(var,exp));
 	}
 	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		return dDelta(var,e.substituteFun(fun,q,args,context),ty);
+		return dDiscDelta(var,e.substituteFun(fun,q,args,context));
 	}
-	override DExpr incBoundVar(int di){ return dDelta(var.incBoundVar(di),e.incBoundVar(di),ty); }
+	override DExpr incBoundVar(int di){ return dDiscDelta(var.incBoundVar(di),e.incBoundVar(di)); }
 
-	static DExpr constructHook(DVar var,DExpr e,Type ty){
-		return staticSimplify(var,e,ty);
+	static DExpr constructHook(DVar var,DExpr e){
+		return staticSimplify(var,e);
 	}
-	static DExpr staticSimplify(DVar var,DExpr e,Type ty,DExpr facts=one){
-		auto ne=e.simplify(facts);
-		if(ne !is e) return dDelta(var,ne,ty);
+	static DExpr staticSimplify(DVar var,DExpr e,DExpr facts=one){
+		// cannot use all facts during simplification (e.g. see test/tuples5.prb)
+		// the problem is that there might be a relation between e.g. multiple tuple entries, and we are not
+		// allowed to introduce var as a free variable in e.
+		// TODO: filter more precisely
+		auto ne=e.simplify(one);
+		if(ne !is e) return dDiscDelta(var,ne);
 		//if(dIvr(DIvr.Type.eq,var,e).simplify(facts) is zero) return zero; // a simplification like this might be possible
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){
-		auto r=staticSimplify(var,e,ty,facts);
+		auto r=staticSimplify(var,e,facts);
 		return r?r:this;
 	}
 }
 
 import type;
 
-MapX!(TupleX!(DVar,DExpr,Type),DExpr) uniqueMapDDiscDelta;
 DExpr dDelta(DVar var,DExpr e,Type ty){
 	if(ty is ℝ) return dDelta(e-var);
-	if(auto r=DDiscDelta.constructHook(var,e,ty)) return r;
+	assert(cast(TupleTy)ty||cast(ArrayTy)ty); // TODO: add more supported types
+	return dDiscDelta(var,e);
+}
+
+MapX!(TupleX!(DVar,DExpr),DExpr) uniqueMapDDiscDelta;
+DExpr dDiscDelta(DVar var,DExpr e){
+	if(auto r=DDiscDelta.constructHook(var,e)) return r;
 	// TODO: is there a better way to make the argument canonical?
-	auto t=tuplex(var,e,ty);
+	auto t=tuplex(var,e);
 	if(t in uniqueMapDDiscDelta) return uniqueMapDDiscDelta[t];
-	auto r=new DDiscDelta(var,e,ty);
+	auto r=new DDiscDelta(var,e);
 	uniqueMapDDiscDelta[t]=r;
 	return r;
 }

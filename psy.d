@@ -720,6 +720,17 @@ void test(){
 	//writeln(dIntSmp("arr".dVar,exp));
 	//writeln(dIntSmp("k".dVar,"[-1+k≤0]·[-k≤0]".dParse*dDelta("x".dVar,dIUpdate("arr".dVar,zero,"k".dVar),arrayTy(ℝ))).substitute("arr".dVar,dArray([zero])));
 	//writeln(dIntSmp("k".dVar,"[-1+k≤0]·[-k≤0]".dParse*dDelta("x".dVar,dIUpdate(dArray([zero]),zero,"k".dVar),arrayTy(ℝ))));
+	//auto e="((∫dξ₁(∫dξ₂[-1+ξ₂≤0]·[-ξ₂≤0]·δ_t[(-ξ₁+ξ₂,-ξ₂+ξ₁)])·[-1+ξ₁≤0]·[-ξ₁≤0])·⅟2+δ_t[(0,0)]·⅟2)·[-t[0]+-t[1]=0]".dParse;
+	//writeln(dIntSmp("t".dVar,e));
+	//auto e="((∫dξ₁(∫dξ₂[-1+ξ₂≤0]·[-ξ₂≤0]·δ_x[(ξ₂,ξ₁)])·[-1+ξ₁≤0]·[-ξ₁≤0])·δ_y[(x[0],x[1])]·⅟2+(∫dξ₁(∫dξ₂[-1+ξ₂≤0]·[-ξ₂≤0]·δ_x[(ξ₂,ξ₁)])·[-1+ξ₁≤0]·[-ξ₁≤0])·δ_y[(x[1],x[0])]·⅟2)·[-t[0]+-t[1]=0]·δ_t[(-y[0]+x[0],-y[1]+x[1])]".dParse;
+	//writeln(e);
+	//writeln(dIntSmp("y".dVar,dIntSmp("t".dVar,dIntSmp("x".dVar,e))));
+	//auto e="((∫dξ₁(∫dξ₂[-1+ξ₂≤0]·[-ξ₂≤0]·δ_t[(-y[0]+ξ₂,-y[1]+ξ₁)]·δ_y[(ξ₁,ξ₂)])·[-1+ξ₁≤0]·[-ξ₁≤0])·⅟2+(∫dξ₁(∫dξ₂[-1+ξ₂≤0]·[-ξ₂≤0]·δ_t[(-y[0]+ξ₂,-y[1]+ξ₁)]·δ_y[(ξ₂,ξ₁)])·[-1+ξ₁≤0]·[-ξ₁≤0])·⅟2)·[-t[0]+-t[1]=0]".dParse;
+	//auto e="(∫dξ₁(∫dξ₂[-1+ξ₂≤0]·[-ξ₂≤0]·δ_t[(-y[0]+ξ₂,-y[1]+ξ₁)]·δ_y[(ξ₂,ξ₁)])·[-1+ξ₁≤0]·[-ξ₁≤0])·[-t[0]+-t[1]=0]".dParse;
+	//writeln(dIntSmp("t".dVar,e));
+	//auto e="[-1+-k+y[0]+y[1]≤0]·[-1+k≤0]·[-k+-l+y[0]+y[1]=0]·[-k≤0]·[-l≤0]·δ_y[(-k+y[0]+y[1],k)]".dParse; // this expression should not happen.
+	//dw(e);
+	//dw(dIntSmp("k".dVar,e));
 }
 
 /*

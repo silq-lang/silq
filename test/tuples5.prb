@@ -1,10 +1,8 @@
-// skipped
-// TODO: fix
 
 def main(){
     x := (Uniform(0,1),Uniform(0,1));
     y := if Bernoulli(1/2) { (x[0],x[1]) } else { (x[1],x[0]) };
     t := (x[0]-y[0],x[1]-y[1]);
     assert(t[0]==-t[1]);
-    return (t); // expected: 1
+    return (); // expected: 1
 }

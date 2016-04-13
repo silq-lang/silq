@@ -136,7 +136,7 @@ private DExpr definiteIntegralContinuous(DVar var,DExpr expr)out(res){
 		integrations++;
 		if(res) successfulIntegrations++;
 	}
-																}body{
+}body{
 	// ensure integral is continuous
 	foreach(f;expr.allOf!DFun(true))
 		if(f.hasFreeVar(var)) return null;
@@ -144,6 +144,7 @@ private DExpr definiteIntegralContinuous(DVar var,DExpr expr)out(res){
 		if(d.hasFreeVar(var)) return null;
 	foreach(d;expr.allOf!DDiscDelta(true))
 		if(d.hasFreeVar(var)) return null;
+
 	// TODO: keep ivrs and nonIvrs separate in DMult
 	DExpr ivrs=one;
 	DExpr nonIvrs=one;

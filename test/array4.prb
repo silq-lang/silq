@@ -1,6 +1,6 @@
 def main(){
     n := 2;
-    x := array(1);
+    x := [0];
     x[0] = Beta(1,1);
-    return (x); // expected: TODO: this is not right
+    return x; // expected: TODO: this is not right
 }
