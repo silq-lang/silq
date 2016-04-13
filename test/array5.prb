@@ -1,5 +1,5 @@
 // skipped
-// TODO
+// TODO: make fast
 
 def main(){
     a := [[0],[0]]; // TODO: better primitives

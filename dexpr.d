@@ -650,6 +650,13 @@ class DMult: DCommutAssocOp{
 		return 0;
 	}
 	override DExpr substitute(DVar var,DExpr e){
+		if(auto evar=cast(DVar)e){ // TODO: make this unnecessary, this is a hack to improve performance
+			if(!hasFreeVar(evar)){
+				DExprSet res;
+				foreach(f;factors) res.insert(f.substitute(var,e));
+				return dMult(res);
+			}	
+		}
 		DExprSet res;
 		foreach(f;factors) insert(res,f.substitute(var,e));
 		return dMult(res);

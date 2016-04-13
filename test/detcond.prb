@@ -3,5 +3,5 @@ def main(){
     x=x+1;
     y:=3;
     if y>x { y-=x; }
-    return y; // expected: δ[-y+1]
+    return y; // expected: δ[-1+y]
 }
