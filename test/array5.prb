@@ -2,8 +2,8 @@
 // TODO
 
 def main(){
-    a := [[0],[0],[0]]; // TODO: better primitives
-    for i in [0..a.length){ a[i]=array(3); }
+    a := [[0],[0]]; // TODO: better primitives
+    for i in [0..a.length){ a[i]=[0,0]; }
     for i in [0..a.length){
         for j in [0..a[i].length){
             a[i][j]=Uniform(0,1);

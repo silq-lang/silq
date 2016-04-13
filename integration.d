@@ -106,6 +106,7 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
 			return null;
 		DVar[] fubiVars;
 		bool hasInt=false;
+		int nesting=-1;
 		DExpr fubiRec(DExpr cur){
 			DExpr r=one;
 			foreach(f;cur.factors){
@@ -118,7 +119,14 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
 			}
 			return r;
 		}
-		auto fubiExpr=fubiRec(expr);
+		auto myvar=var;
+		auto myexpr=expr;
+		if(cast(DBoundVar)myvar){
+			assert(myvar is dBoundVar(1));
+			myvar=new DVar("tmp"); // TODO: get rid of this!
+			myexpr=unbind(var,expr,myvar);
+		}
+		auto fubiExpr=fubiRec(myexpr);
 		if(hasInt) if(auto r=definiteIntegral(var,fubiExpr)){
 			r=r.simplify(facts);
 			foreach_reverse(v;fubiVars) r=dInt(v,r);
@@ -126,7 +134,8 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
 		}
 		return null;
 	}
-	if(auto r=fubini()) return r;
+	auto dbvar=cast(DBoundVar)var;
+	if(!dbvar||dbvar.i==1) if(auto r=fubini()) return r;
 	if(!expr.hasFreeVar(var)) return expr*dInt(var,one); // (infinite integral)
 	return null;
 }

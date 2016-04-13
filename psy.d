@@ -743,6 +743,29 @@ void test(){
 	//writeln("e: ",e);
 	//writeln("!!");
 	//writeln("int: e",dInt("x".dVar,e));
+	//auto e="(∫dξ₁[-1+ξ₁≤0]·[-ξ₁≤0]·δ_a[a₁[0 ↦ a₁[0][0 ↦ ξ₁]]])·δ_a₁[[ξ₁ ↦ ([ξ₂ ↦ 0] (1))·[-1+ξ₁=0]+([ξ₂ ↦ 0] (1))·[ξ₁=0]] (2)]".dParse;
+	//writeln(dIntSmp("a₁".dVar,e));
+	/+auto e="(∫dξ₁δ[ξ₁]·δ_a[a₁[0 ↦ a₁[0][0 ↦ ξ₁]]])".dParse;
+	auto f="[ξ₁ ↦ ([ξ₂ ↦ 0] (1))·[-1+ξ₁=0]+([ξ₂ ↦ 0] (1))·[ξ₁=0]] (2)".dParse;
+	dw(e," ",f);
+	dw("!!");
+	writeln(e.substitute("a₁".dVar,f));+/
+	/+auto e="([ξ₂ ↦ 0] (1))·[-1+ξ₁=0]·[ξ₁≠0]+([ξ₂ ↦ [ξ₂=0]·ξ₀] (1))".dParse;
+	dw("!!");
+	writeln(dLambda(dBoundVar(1),e));+/
+	//writeln("([ξ₂ ↦ 0] (1))·[-1+ξ₁=0]·[ξ₁≠0]+([ξ₂ ↦ [ξ₂=0]·ξ₀] (1))·[ξ₁=0]".dParse);
+	//auto e="([ξ₂ ↦ 0] (1))·[-1+ξ₁=0]·[ξ₁≠0]+([ξ₂ ↦ [ξ₂=0]·ξ₀] (1))·[ξ₁=0]".dParse;
+	//writeln(e.incBoundVar(1,false));
+	//auto e="([i ↦ ([j ↦ 0] (1))·[-1+i=0]+([j ↦ 0] (1))·[i=0]] (2))[0 ↦ [i ↦ [j=0]·v] (1)]".dParse;
+	//dw(e);
+	//writeln(e.simplify(one));
+	/+auto e="∫dξ₁∫dξ₂∫dξ₃(δ[-ξ₁+1]·⅟2+δ[ξ₁]·⅟2)·δ[-ξ₂+1]·δ_ξ₃[[ξ₄ ↦ 2·[-1+ξ₄=0]+[ξ₄=0]] (2)]".dParse;
+	writeln(e);
+	dw("!!!");
+	writeln(e.simplify(one));+/
+	//auto e="∫dξ₂∫dξ₃(δ[-ξ₁+1]·⅟2+δ[ξ₁]·⅟2)·δ[-ξ₂+1]·δ_ξ₃[[ξ₄ ↦ 2·[-1+ξ₄=0]+[ξ₄=0]] (2)]".dParse;
+	//dw(e);
+	//writeln(e.incBoundVar(-1,true));
 }
 
 /*

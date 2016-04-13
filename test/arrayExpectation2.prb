@@ -1,0 +1,9 @@
+// skipped
+// TODO: fix
+
+def main(){
+    x := [1,2];
+    k := 1;
+    l := Expectation(x[UniformInt(0,1)]);
+    return (k,l); // expected: 2·δ[-2·l+3]·δ[-k+1]
+}

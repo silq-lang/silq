@@ -553,6 +553,7 @@ class DPlus: DCommutAssocOp{
 		// dw("!! ",summands);
 		foreach(s;summands){
 			if(auto dint=cast(DInt)s){
+				if(cast(DBoundVar)dint.var&&dint.var !is dBoundVar(1)) return null;
 				integralSummands.insert(dint.getExpr(tmp));
 				integrals.insert(dint);
 			}
@@ -2237,8 +2238,8 @@ static ~this(){
 
 static DExpr unbind(DVar tvar, DExpr expr, DExpr nexpr){
 	assert(tvar is dBoundVar(1),text(tvar)); // TODO: finally fix the dBoundVar situation...
-	assert(cast(DBoundVar)tvar && !cast(DBoundVar)nexpr);
-	return expr.substitute(tvar,nexpr).incBoundVar(-1,false);
+	assert(cast(DBoundVar)tvar);
+	return expr.substitute(tvar,nexpr).incBoundVar(-1,true);
 }
 
 import integration;
@@ -2350,7 +2351,8 @@ class DInt: DOp{
 		auto dbvar=cast(DBoundVar)var;
 		if(bindersOnly&&dbvar){
 			auto nvar=dBoundVar(dbvar.i+di);
-			return dInt(nvar,expr.incBoundVar(di,bindersOnly).substitute(var,nvar));
+			auto tmp=new DVar("tmp"); // TODO: get rid of this!
+			return dInt(nvar,expr.substitute(var,tmp).incBoundVar(di,bindersOnly).substitute(tmp,nvar));
 		}else return dInt(var.incBoundVar(di,bindersOnly),expr.incBoundVar(di,bindersOnly));
 	}
 }
@@ -2469,7 +2471,8 @@ class DSum: DOp{
 		auto dbvar=cast(DBoundVar)var;
 		if(bindersOnly&&dbvar){
 			auto nvar=dBoundVar(dbvar.i+di);
-			return dSum(nvar,expr.incBoundVar(di,bindersOnly).substitute(var,nvar));
+			auto tmp=new DVar("tmp"); // TODO: get rid of this!
+			return dSum(nvar,expr.substitute(var,tmp).incBoundVar(di,bindersOnly).substitute(tmp,nvar));
 		}else return dSum(var.incBoundVar(di,bindersOnly),expr.incBoundVar(di,bindersOnly));
 	}
 }
@@ -2531,25 +2534,24 @@ class DLim: DOp{
 		return x.freeVarsImpl(dg);
 	}
 	override DExpr substitute(DVar var,DExpr exp){
-		auto nx=x.substitute(var,exp);
+		auto nexp=exp;
+		if(cast(DBoundVar)v) nexp=exp.incBoundVar(1,true);
+		auto nx=x.substitute(var,nexp);
 		auto ne=e;
-		if(v !is var){
-			auto nexp=exp;
-			if(cast(DBoundVar)v) nexp=exp.incBoundVar(1,true);
-			ne=e.substitute(var,nexp);
-		}
+		if(v !is var) ne=e.substitute(var,nexp);
 		return dLim(v,ne,nx);
 	}
 	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
 		auto nq=q;
 		if(cast(DBoundVar)v) nq=q.incBoundVar(1,true);
-		return dLim(v,e.substituteFun(fun,nq,args,context),x.substituteFun(fun,q,args,context));
+		return dLim(v,e.substituteFun(fun,q,args,context),x.substituteFun(fun,nq,args,context));
 	}
 	override DExpr incBoundVar(int di,bool bindersOnly){
 		auto dbvar=cast(DBoundVar)v;
 		if(bindersOnly&&dbvar){
 			auto nv=dBoundVar(dbvar.i+di);
-			return dLim(nv,e.incBoundVar(di,bindersOnly).substitute(v,nv),x.incBoundVar(di,bindersOnly));
+			auto tmp=new DVar("tmp"); // TODO: get rid of this!
+			return dLim(nv,e.incBoundVar(di,bindersOnly),x.substitute(v,tmp).incBoundVar(di,bindersOnly).substitute(tmp,nv));
 		}else return dLim(v.incBoundVar(di,bindersOnly),e.incBoundVar(di,bindersOnly),x.incBoundVar(di,bindersOnly));
 	}
 }
@@ -2565,7 +2567,8 @@ DExpr dLim(DVar v,DExpr e,DExpr x){
 	auto dbvar=cast(DBoundVar)v;
 	if(!dbvar){
 		dbvar=dBoundVar(1);
-		x=x.incBoundVar(1,false).substitute(v,dbvar);
+		assert(!x.hasFreeVar(dbvar));
+		x=x.incBoundVar(1,true).substitute(v,dbvar);
 	}
 	return uniqueBindingDExpr!DLim(dbvar,e,x);
 }
@@ -2626,17 +2629,19 @@ class DDiff: DOp{
 		auto dbvar=cast(DBoundVar)v;
 		if(bindersOnly&&dbvar){
 			auto nv=dBoundVar(dbvar.i+di);
-			return dDiff(nv,e.incBoundVar(di,bindersOnly).substitute(v,nv),x.incBoundVar(di,bindersOnly));
+			auto tmp=new DVar("tmp"); // TODO: get rid of this!
+			return dDiff(nv,e.substitute(v,tmp).incBoundVar(di,bindersOnly).substitute(tmp,nv),x.incBoundVar(di,bindersOnly));
 		}else return dDiff(v.incBoundVar(di,bindersOnly),e.incBoundVar(di,bindersOnly),x.incBoundVar(di,bindersOnly));
 	}
 }
 
 MapX!(TupleX!(DVar,DExpr,DExpr),DExpr) uniqueMapDiff;
 DExpr dDiff(DVar v,DExpr e,DExpr x){
-	if(auto dbvar=cast(DBoundVar)v) return uniqueBindingDExpr!DDiff(dbvar,e,x);
 	if(auto r=DDiff.constructHook(v,e,x)) return r;
+	if(auto dbvar=cast(DBoundVar)v) return uniqueBindingDExpr!DDiff(dbvar,e,x);
 	auto dbvar=dBoundVar(1);
-	e=e.incBoundVar(1,false).substitute(v,dbvar);
+	assert(!e.hasFreeVar(dbvar));
+	e=e.incBoundVar(1,true).substitute(v,dbvar);
 	return uniqueBindingDExpr!DDiff(dbvar,e,x);
 }
 
@@ -3247,10 +3252,18 @@ class DIUpdate: DOp{
 			auto dbvar=cast(DBoundVar)arr.entries.var;
 			assert(!!dbvar);
 			auto nesting=dbvar.i-1;
+			/+dw("!? ",e," ",i," ",n);
+			dw("entries: ",arr.entries);
+			dw("new: ",n);
+			dw("mod-entries: ",arr.entries.incBoundVar(-nesting,false));
+			auto modr=dLambda(tmp,arr.entries.incBoundVar(-nesting,false).apply(tmp)*dIvr(DIvr.Type.neqZ,tmp-ni).incBoundVar(-nesting,false)+(dIvr(DIvr.Type.eqZ,tmp-ni)*nn).incBoundVar(-nesting,false));
+			dw("mod-r: ", modr);
+			dw("!?!");
+			writeln("mod-r2: ", modr.incBoundVar(nesting,false));+/
 			auto r=dArray(arr.length,
 						  dLambda(tmp,arr.entries.incBoundVar(-nesting,false).apply(tmp)*dIvr(DIvr.Type.neqZ,tmp-ni).incBoundVar(-nesting,false)
 								  +(dIvr(DIvr.Type.eqZ,tmp-ni)*nn).incBoundVar(-nesting,false)).incBoundVar(nesting,false));
-			//dw("!! ",e," ",i," ",n);
+			//dw(" ---> ",r);
 			//dw("!!! ", dLambda(tmp,(dIvr(DIvr.Type.eqZ,tmp-ni)*nn).incBoundVar(-nesting,false)));
 			//dw(nesting," ",arr.entries.incBoundVar(-nesting,false)," ",(dIvr(DIvr.Type.eqZ,tmp-ni)*nn).incBoundVar(-nesting,false));
 			//dw(r);
@@ -3318,7 +3331,8 @@ class DLambda: DOp{ // lambda functions DExpr → DExpr
 		auto dbvar=cast(DBoundVar)var;
 		if(bindersOnly&&dbvar){
 			auto nvar=dBoundVar(dbvar.i+di);
-			return dLambda(nvar,expr.incBoundVar(di,bindersOnly).substitute(var,nvar));
+			auto tmp=new DVar("tmp"); // TODO: get rid of this!
+			return dLambda(nvar,expr.substitute(var,tmp).incBoundVar(di,bindersOnly).substitute(tmp,nvar));
 		}else return dLambda(var.incBoundVar(di,bindersOnly),expr.incBoundVar(di,bindersOnly));
 	}
 
@@ -3327,7 +3341,7 @@ class DLambda: DOp{ // lambda functions DExpr → DExpr
 	}
 	static DLambda staticSimplify(DVar var,DExpr expr,DExpr facts=one){
 		if(auto dbvar=cast(DBoundVar)var){
-			auto nesting=dbvar.i-1;;
+			auto nesting=dbvar.i-1;
 			auto tmp=new DVar("tmp"); // TODO: get rid of this!
 			auto nexpr=unbind(dBoundVar(1),expr.incBoundVar(-nesting,false),tmp);
 			auto r=staticSimplify(tmp,nexpr,facts);
@@ -3382,7 +3396,7 @@ class DArray: DExpr{
 	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
 		return dArray(length.substituteFun(fun,q,args,context),entries.substituteFun(fun,q,args,context));
 	}
-	override DExpr incBoundVar(int di,bool bindersOnly){
+	override DArray incBoundVar(int di,bool bindersOnly){
 		return dArray(length.incBoundVar(di,bindersOnly),entries.incBoundVar(di,bindersOnly));
 	}
 	static DArray constructHook(DExpr length,DLambda entries){

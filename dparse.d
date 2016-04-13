@@ -166,6 +166,16 @@ struct DParser{
 		return r;
 	}
 
+	private DVar varOrBound(string s){
+		if(s.startsWith("ξ")){
+			auto i=0;
+			for(auto rest=s["ξ".length..$];!rest.empty();rest.popFront())
+				i=10*i+cast(int)indexOf(lowDigits,rest.front);
+			return dBoundVar(i);
+		}
+		return dVar(s);
+	}
+	
 	DVar parseDVar(){
 		string s=parseIdentifier();
 		if(cur()=='⃗'){
@@ -173,7 +183,13 @@ struct DParser{
 			auto fun="q".dFunVar; // TODO: fix!
 			return dContextVars(s,fun);
 		}
-		return dVar(s);
+		if(s.startsWith("ξ")){
+			auto i=0;
+			for(auto rest=s["ξ".length..$];!rest.empty();rest.popFront())
+				i=10*i+cast(int)indexOf(lowDigits,rest.front);
+			return dBoundVar(i);
+		}
+		return varOrBound(s);
 	}
 	DFunVar curFun=null;
 	DExpr parseDVarDFun(){
@@ -182,7 +198,9 @@ struct DParser{
 			next();
 			return dContextVars(s,curFun);
 		}
-		if(cur()!='(') return dVar(s);
+		if(cur()!='('){
+			return varOrBound(s);
+		}
 		auto oldCurFun=curFun; scope(exit) curFun=oldCurFun;
 		curFun=dFunVar(s);
 		DExpr[] args;
@@ -192,6 +210,14 @@ struct DParser{
 		}while(cur()==',');
 		expect(')');
 		return dFun(curFun,args);
+	}
+
+	DExpr parseDLambda(){
+		expect('λ');
+		auto var=parseDVar();
+		expect('.');
+		auto expr=parseDExpr();
+		return dLambda(var,expr);
 	}
 
 	DExpr parseBase(){
@@ -237,6 +263,7 @@ struct DParser{
 		if(cur()=='δ'||code.startsWith("delta")) return parseDDelta();
 		if(cur()=='∫') return parseDInt();
 		if(cur()=='∑') return parseDSum();
+		if(cur()=='λ') return parseDLambda();
 		if(cur()=='√') return parseSqrt();
 		if(cur()=='|'||code.startsWith("abs")) return parseDAbs();
 		if(code.startsWith("log")) return parseLog();
