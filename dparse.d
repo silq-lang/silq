@@ -219,7 +219,7 @@ struct DParser{
 				if(c=='[') nesting++;
 				if(c==']') nesting--;
 				if(nesting) continue;
-				auto p=DParser(code[i..$]);
+				auto p=DParser(code[i+1..$]);
 				if(p.cur()!='(') break;
 				next();
 				auto var=parseDVar();
@@ -228,6 +228,7 @@ struct DParser{
 				expect(']');
 				expect('(');
 				auto len=parseDExpr();
+				expect(')');
 				return dArray(len,dLambda(var,expr));
 			}
 		}
@@ -259,11 +260,22 @@ struct DParser{
 
 	DExpr parseIndex(){
 		auto e=parseBase();
-		while(cur()=='['){
-			next();
-			auto i=parseDExpr();
-			expect(']');
-			e=dIndex(e,i);
+		while(cur()=='['||cur()=='.'){
+			if(cur()=='['){
+				next();
+				auto i=parseDExpr();
+				if(cur()=='↦'){
+					next();
+					auto n=parseDExpr();
+					e=dIUpdate(e,i,n);
+				}else e=dIndex(e,i);
+				expect(']');
+			}else{
+				assert(cur()=='.');
+				next();
+				auto i=parseIdentifier();
+				e=dField(e,i);
+			}
 		}
 		return e;
 	}

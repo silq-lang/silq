@@ -2235,9 +2235,9 @@ static ~this(){
 }+/
 
 static DExpr unbind(DVar tvar, DExpr expr, DExpr nexpr){
-       assert(tvar is dBoundVar(1),text(tvar)); // TODO: finally fix the dBoundVar situation...
-       assert(cast(DBoundVar)tvar && !cast(DBoundVar)nexpr);
-       return expr.substitute(tvar,nexpr).incBoundVar(-1);
+	assert(tvar is dBoundVar(1),text(tvar)); // TODO: finally fix the dBoundVar situation...
+	assert(cast(DBoundVar)tvar && !cast(DBoundVar)nexpr);
+	return expr.substitute(tvar,nexpr).incBoundVar(-1);
 }
 
 import integration;
@@ -3131,8 +3131,12 @@ class DIndex: DOp{
 				if(0<=c.c&&c.c<=tpl.values.length)
 					return tpl.values[c.c.toLong()];
 		}
-		if(auto arr=cast(DArray)ne)
-			return arr.entries.apply(ni);
+		if(auto arr=cast(DArray)ne){
+			auto dbvar=cast(DBoundVar)arr.entries.var;
+			assert(!!dbvar);
+			auto nesting=dbvar.i-1; // TODO: get rid of this logic if possible
+			return arr.entries.incBoundVar(-nesting).apply(ni.incBoundVar(-nesting)).incBoundVar(nesting);
+		}
 		if(ne !is e || ni !is i) return dIndex(ne,ni);
 		return null;
 	}
