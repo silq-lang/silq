@@ -2350,7 +2350,7 @@ class DInt: DOp{
 		auto dbvar=cast(DBoundVar)var;
 		if(bindersOnly&&dbvar){
 			auto nvar=dBoundVar(dbvar.i+di);
-			return dInt(nvar,expr.substitute(var,nvar).incBoundVar(di,bindersOnly));
+			return dInt(nvar,expr.incBoundVar(di,bindersOnly).substitute(var,nvar));
 		}else return dInt(var.incBoundVar(di,bindersOnly),expr.incBoundVar(di,bindersOnly));
 	}
 }
@@ -2469,7 +2469,7 @@ class DSum: DOp{
 		auto dbvar=cast(DBoundVar)var;
 		if(bindersOnly&&dbvar){
 			auto nvar=dBoundVar(dbvar.i+di);
-			return dSum(nvar,expr.substitute(var,nvar).incBoundVar(di,bindersOnly));
+			return dSum(nvar,expr.incBoundVar(di,bindersOnly).substitute(var,nvar));
 		}else return dSum(var.incBoundVar(di,bindersOnly),expr.incBoundVar(di,bindersOnly));
 	}
 }
@@ -2549,7 +2549,7 @@ class DLim: DOp{
 		auto dbvar=cast(DBoundVar)v;
 		if(bindersOnly&&dbvar){
 			auto nv=dBoundVar(dbvar.i+di);
-			return dLim(nv,e.substitute(v,nv).incBoundVar(di,bindersOnly),x.incBoundVar(di,bindersOnly));
+			return dLim(nv,e.incBoundVar(di,bindersOnly).substitute(v,nv),x.incBoundVar(di,bindersOnly));
 		}else return dLim(v.incBoundVar(di,bindersOnly),e.incBoundVar(di,bindersOnly),x.incBoundVar(di,bindersOnly));
 	}
 }
@@ -2626,7 +2626,7 @@ class DDiff: DOp{
 		auto dbvar=cast(DBoundVar)v;
 		if(bindersOnly&&dbvar){
 			auto nv=dBoundVar(dbvar.i+di);
-			return dDiff(nv,e.substitute(v,nv).incBoundVar(di,bindersOnly),x.incBoundVar(di,bindersOnly));
+			return dDiff(nv,e.incBoundVar(di,bindersOnly).substitute(v,nv),x.incBoundVar(di,bindersOnly));
 		}else return dDiff(v.incBoundVar(di,bindersOnly),e.incBoundVar(di,bindersOnly),x.incBoundVar(di,bindersOnly));
 	}
 }
@@ -3318,7 +3318,7 @@ class DLambda: DOp{ // lambda functions DExpr → DExpr
 		auto dbvar=cast(DBoundVar)var;
 		if(bindersOnly&&dbvar){
 			auto nvar=dBoundVar(dbvar.i+di);
-			return dLambda(nvar,expr.substitute(var,nvar).incBoundVar(di,bindersOnly));
+			return dLambda(nvar,expr.incBoundVar(di,bindersOnly).substitute(var,nvar));
 		}else return dLambda(var.incBoundVar(di,bindersOnly),expr.incBoundVar(di,bindersOnly));
 	}
 

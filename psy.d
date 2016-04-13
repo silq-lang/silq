@@ -738,6 +738,11 @@ void test(){
 	auto r=e.substitute("x₁".dVar,f);
 	dw(r);+/
 	//auto e="∫dξ₁[-1+ξ₁≤0]·[-ξ₁≤0]·δ_x[[ξ₁ ↦ [ξ₁=0]·ξ₂] (1)]".dParse;
+	//auto e="∫dy∫dz δ[-x+1]·δ[-y+1]·δ[-z+1]".dParse;
+	//dw(e," ",e.simplify(one));
+	//writeln("e: ",e);
+	//writeln("!!");
+	//writeln("int: e",dInt("x".dVar,e));
 }
 
 /*
