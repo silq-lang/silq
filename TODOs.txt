@@ -1,4 +1,7 @@
 
++ Limits:
+  Fix the delta limit hacks in limit.d and in DDiscDelta.substitute
+
 + Fixes:
   paramzero: make it work again without getting very slow on other exampls
 

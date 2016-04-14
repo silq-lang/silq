@@ -2095,6 +2095,7 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 		return e.freeVarsImpl(dg);
 	}
 	override DExpr substitute(DVar var,DExpr exp){
+		if(this.var is var  && exp is e) return one; // TODO: this is a hack and should be removed
 		auto v=cast(DVar)this.var.substitute(var,exp);
 		assert(!!v);
 		return dDiscDelta(v,e.substitute(var,exp));
