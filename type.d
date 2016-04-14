@@ -42,6 +42,7 @@ class TupleTy: Type{
 	}
 	override string toString(){
 		if(!types.length) return "𝟙";
+		if(types.length==1) return "("~types[0].toString()~")¹";
 		return types.map!(a=>cast(TupleTy)a&&a!is unit?"("~a.toString()~")":a.toString()).join(" × ");
 	}
 }
