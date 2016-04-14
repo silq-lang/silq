@@ -495,6 +495,19 @@ Expression semantic(Expression expr,Scope sc){
 			sc.error("invalid forward reference",id.loc);
 			id.sstate=SemState.error;
 		}
+		if(auto dsc=isInDataScope(meaning.scope_)){
+			if(auto decl=sc.getDatDecl()){
+				if(decl is dsc.decl){
+					auto this_=new Identifier("this");
+					this_.loc=id.loc;
+					auto fe=new FieldExp(this_,id);
+					fe.loc=id.loc;
+					return semantic(fe,sc);
+				}
+			}
+			sc.error("invalid reference",id.loc);
+			id.sstate=SemState.error;
+		}
 		return id;
 	}
 	if(auto fe=cast(FieldExp)expr){

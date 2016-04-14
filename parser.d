@@ -460,7 +460,7 @@ struct Parser{
 							}else{
 								right=New!(BinaryExp!(Tok!"@(x[0..$-1])"))(left,right);
 								right.loc=loc.to(ptok.loc);
-								return res=New!(BinaryExp!(Tok!"="))(left,right);
+								return res=New!(BinaryExp!(Tok!"="))(left,right); // TODO: this can lead to bad results. fix this
 							}
 						});
 				return r;

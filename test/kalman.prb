@@ -7,9 +7,9 @@ dat Filter{
     }
     // update step: compute new state after one time step
     def update(t: ℝ){
-        this.x += t*this.v;
-        this.v += t*this.a;
-        this.a += t*Gauss(0,1); // TODO
+        x = x + t*this.v;
+        v = v + t*this.a;
+        a = a + t*Gauss(0,1); // TODO
     }
     // measure x position with noise
     def measureX(x: ℝ, t: ℝ){
