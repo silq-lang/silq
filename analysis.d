@@ -60,7 +60,14 @@ private struct Analyzer{
 			if(auto ume=cast(UMinusExp)e) return -doIt(ume.e);
 			if(auto ume=cast(UNegExp)e) return dIvr(DIvr.Type.eqZ,doIt(ume.e));
 			if(auto ce=cast(CallExp)e){
-				if(auto id=cast(Identifier)ce.e){
+				auto id=cast(Identifier)ce.e;
+				auto fe=cast(FieldExp)ce.e;
+				DExpr thisExp=null;
+				if(fe){
+					id=fe.f;
+					thisExp=doIt(fe.e);
+				}
+				if(id){
 					if(auto fun=cast(FunctionDef)id.meaning){
 						if(fun !in summaries){
 							summaries[fun]=new Distribution();
@@ -82,7 +89,21 @@ private struct Analyzer{
 								args~=a;
 							}else unwind();
 						}
-						return dist.call(summary,args);
+						if(thisExp) args~=thisExp;
+						auto r=dist.call(summary,args);
+						if(thisExp&&!fun.isConstructor){
+							DExpr thisr;
+							if(auto tpl=cast(DTuple)r){
+								thisr=tpl.values[$-1];
+							}else{
+								thisr=r;
+								r=dTuple([]);
+							}
+							assert(thisr&&fe);
+							if(auto idthis=cast(Identifier)fe.e)
+								dist.assign(dVar(idthis.name),thisr,idthis.type,true);
+						}
+						return r;
 					}
 					switch(id.name){
 					case "array":
@@ -577,7 +598,7 @@ private struct Analyzer{
 		}
 	}
 
-	Distribution analyze(CompoundExp ce,bool isMethodBody=false)in{assert(!!ce);}body{
+	Distribution analyze(CompoundExp ce,FunctionDef isMethodBody=null)in{assert(!!ce);}body{
 		foreach(i,e;ce.s){
 			/+writeln("statement: ",e);
 			 writeln("before: ",dist);
@@ -699,6 +720,9 @@ private struct Analyzer{
 					}
 				}
 				assignTo(ae.e1,transformExp(ae.e2),ae.e2.type);
+			}else if(auto call=cast(CallExp)e){
+				transformExp(call);
+				dist.marginalizeTemporaries();
 			}else if(auto ite=cast(IteExp)e){
 				if(auto c=transformConstr(ite.cond)){
 					auto dthen=dist.dupNoErr();
@@ -787,6 +811,10 @@ private struct Analyzer{
 							orderedVars~=var;
 						}
 					}
+					if(isMethodBody.thisRef&&!isMethodBody.isConstructor){
+						vars.insert(dVar("this"));
+						orderedVars~=dVar("this");
+					}
 					foreach(w;dist.freeVars.setMinus(vars)){
 						dist.marginalize(w);
 					}
@@ -817,7 +845,7 @@ private struct Analyzer{
 			}else if(auto co=cast(CObserveExp)e){
 				static bool warned=false;
 				if(!warned){
-					err.note("warning: cobserve is not a rigorous primitive",co.loc);
+					err.note("warning: cobserve will be removed",co.loc);
 					warned=true;
 				}
 				if(auto var=transformExp(co.var)){
@@ -836,6 +864,7 @@ private struct Analyzer{
 Distribution analyze(FunctionDef def,ErrorHandler err){
 	auto dist=new Distribution();
 	DExpr[] args;
+	foreach(a;def.params) args~=dist.declareVar(a.name.name);
 	if(def.thisRef){
 		auto this_=dist.declareVar("this");
 		if(!def.isConstructor) args~=this_;
@@ -845,7 +874,6 @@ Distribution analyze(FunctionDef def,ErrorHandler err){
 			dist.initialize(this_,dRecord(),dd.dtype);
 		}
 	}
-	foreach(a;def.params) args~=dist.declareVar(a.name.name);
 	if(def.name.name!="main"||args.length) // TODO: move this decision to caller
 		dist.addArgsWithContext(args);
 	return analyzeWith(def,dist,err);
@@ -853,7 +881,7 @@ Distribution analyze(FunctionDef def,ErrorHandler err){
 
 Distribution analyzeWith(FunctionDef def,Distribution dist,ErrorHandler err){
 	auto a=Analyzer(dist,err);
-	a.analyze(def.body_,true);
+	a.analyze(def.body_,def);
 	a.dist.simplify();
 	return a.dist;
 }

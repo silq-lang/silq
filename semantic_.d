@@ -89,6 +89,7 @@ Expression presemantic(Declaration expr,Scope sc){
 				rete.loc=id.loc;
 				rete.sstate=SemState.completed;
 				fd.body_.s~=rete;
+				fd.hasReturn=true;
 			}
 			assert(dsc.decl.dtype);
 		}
@@ -280,6 +281,13 @@ Expression semantic(Expression expr,Scope sc){
 			}
 			pty~=p.vtype;
 		}
+		if(!fd.hasReturn){
+			auto tpl=new TupleExp([]);
+			tpl.loc=fd.loc;
+			auto rete=new ReturnExp(tpl);
+			rete.loc=fd.loc;
+			fd.body_.s~=semantic(rete,fd.body_.blscope_);
+		}
 		if(fd.ret&&!fd.ftype) fd.ftype=funTy(tupleTy(pty),fd.ret);
 		return fd;
 	}
@@ -290,6 +298,7 @@ Expression semantic(Expression expr,Scope sc){
 			ret.sstate=SemState.error;
 			return ret;
 		}
+		fd.hasReturn=true;
 		if(auto dsc=isInDataScope(fd.scope_)){
 			if(dsc.decl.name.name==fd.name.name){
 				sc.error("no return statement allowed in constructor",ret.loc);
@@ -787,9 +796,8 @@ Type typeSemantic(Expression t,Scope sc)in{assert(!!t&&!!sc);}body{
 			return null;
 		}
 		if(auto fd=cast(FunctionDef)decl)
-			if(auto asc=cast(DataScope)fd.scope_)
-				if(fd.name.name==asc.decl.name.name)
-					decl=asc.decl;
+			if(auto dd=isInDataScope(fd.scope_))
+				decl=dd.decl;
 		if(auto dat=cast(DatDecl)decl){
 			return dat.dtype;
 		}else{

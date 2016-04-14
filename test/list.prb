@@ -1,0 +1,17 @@
+dat List{
+    head: ℝ;
+    tail: List;
+    def List(h:ℝ,t:List){
+    	this.head = h;
+	this.tail = t;
+    }
+}
+
+def main(null:List){
+    x := List(1,null);
+    for i in [2..3){
+    	x = List(i,x);
+    }
+    return x; // expected: (∫dξ₁q(ξ₁)·δ_x[{.tail ↦ {.tail ↦ ξ₁,.head ↦ 1},.head ↦ 2}])·[∫dξ₁∫dξ₂q(ξ₂)·δ_ξ₁[{.tail ↦ {.tail ↦ ξ₂,.head ↦ 1},.head ↦ 2}]≠0]·⅟(∫dξ₁∫dξ₂q(ξ₂)·δ_ξ₁[{.tail ↦ {.tail ↦ ξ₂,.head ↦ 1},.head ↦ 2}])
+    // TODO: we can prove that the normalization constat is one
+}

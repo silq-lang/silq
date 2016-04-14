@@ -2126,7 +2126,7 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 import type; // TODO: remove this import
 DExpr dDelta(DVar var,DExpr e,Type ty){ // TODO: dexpr shouldn't know about type, but this is most convenient for overloading
 	if(ty is ℝ) return dDelta(e-var);
-	assert(cast(TupleTy)ty||cast(ArrayTy)ty||cast(AggregateTy)ty); // TODO: add more supported types
+	assert(cast(TupleTy)ty||cast(ArrayTy)ty||cast(AggregateTy)ty,text(ty)); // TODO: add more supported types
 	return dDiscDelta(var,e);
 }
 
@@ -3150,7 +3150,7 @@ class DRecord: DExpr{ // Tuples. TODO: real tuple support
 			r~="."~k~" ↦ "~v.toStringImpl(formatting,Precedence.none);
 			r~=",";
 		}
-		return r[0..$-1]~"}";
+		return r.length!=1?r[0..$-1]~"}":"{}";
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
 		foreach(k,v;values)
