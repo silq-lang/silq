@@ -15,7 +15,7 @@ dat Person{
     }
     def update(){
         updateRunning();
-        v = if running { 10/2 } else { 5/2 };
+        v = if running { 5 } else { 2.5 };
         x = x+v;
     }
     def measureX(x: ℝ){

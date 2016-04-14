@@ -9,7 +9,7 @@ dat Filter{
     def update(t: ℝ){
         x = x + t*this.v;
         v = v + t*this.a;
-        a = a + t*Gauss(0,1); // TODO
+        a = a + t*Gauss(0,1); 
     }
     // measure x position with noise
     def measureX(x: ℝ, t: ℝ){

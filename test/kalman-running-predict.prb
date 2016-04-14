@@ -18,7 +18,7 @@ dat Person{
     }
     def update(){
         updateRunning();
-        v = if this.running { 10/2 } else { 5/2 };
+        v = if running { 5 } else { 2.5 };
         x = x+v;
     }
     def measureX(x: ℝ){
@@ -30,12 +30,10 @@ dat Person{
 def main(){
     p := Person(0);
     data := [0,2.5,5,10,16.5];
-     for i in [0..data.length){
-        p.update();
-        p.measureX(data[i]);
-     }
-     p.update();
-     p.update();
-     p.update();
-     return (p.x+Gauss(0,1))/3;
+    for i in [0..data.length){
+       p.update();
+       p.measureX(data[i]);
+    }
+    for i in [0..3){ p.update(); }
+    return (p.x+Gauss(0,1))/3;
 }
