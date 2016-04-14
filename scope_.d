@@ -40,6 +40,7 @@ abstract class Scope{
 	void note(lazy string err, Location loc){handler.note(err,loc);}
 
 	abstract FunctionDef getFunction();
+	abstract DatDecl getDatDecl();
 	abstract ForExp getForExp();
 private:
 	Declaration[const(char)*] symtab;
@@ -52,6 +53,7 @@ class TopScope: Scope{
 		this.handler_=handler;
 	}
 	override FunctionDef getFunction(){ return null; }
+	override DatDecl getDatDecl(){ return null; }
 	override ForExp getForExp(){ return null; }
 }
 
@@ -65,6 +67,7 @@ class NestedScope: Scope{
 	}
 
 	override FunctionDef getFunction(){ return parent.getFunction(); }
+	override DatDecl getDatDecl(){ return parent.getDatDecl(); }
 	override ForExp getForExp(){ return parent.getForExp(); }
 }
 
@@ -83,6 +86,8 @@ class DataScope: NestedScope{
 		super(parent);
 		this.decl=decl;
 	}
+
+	override DatDecl getDatDecl(){ return decl; }
 }
 class BlockScope: NestedScope{
 	this(Scope parent){ super(parent); }

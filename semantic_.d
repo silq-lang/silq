@@ -25,14 +25,32 @@ void propErr(Expression e1,Expression e2){
 	if(e1.sstate==SemState.error) e2.sstate=SemState.error;
 }
 
-Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
+DataScope isInDataScope(Scope sc){
+	auto asc=cast(AggregateScope)sc;
+	if(asc) return cast(DataScope)asc.parent;
+	return null;
+}
+
+AggregateTy isDataTyId(Expression e){
+	auto id=cast(Identifier)e;
+	if(!id) return null;
+	if(auto decl=cast(DatDecl)id.meaning)
+		return decl.dtype;
+	return null;
+}
+
+Expression presemantic(Declaration expr,Scope sc){
+	bool success=true; // dummy
+	if(!expr.scope_) makeDeclaration(expr,success,sc);
 	if(auto dat=cast(DatDecl)expr){
 		if(dat.dtype) return expr;
 		auto dsc=new DataScope(sc,dat);
 		assert(!dat.dscope_);
 		dat.dscope_=dsc;
 		dat.dtype=new AggregateTy(dat);
-		foreach(ref exp;dat.body_.s) exp=makeDeclaration(exp,success,dat.dscope_);
+		if(!dat.body_.ascope_) dat.body_.ascope_=new AggregateScope(dat.dscope_);
+		foreach(ref exp;dat.body_.s) exp=makeDeclaration(exp,success,dat.body_.ascope_);
+		foreach(ref exp;dat.body_.s) if(auto decl=cast(Declaration)exp) exp=presemantic(decl,dat.body_.ascope_);
 	}
 	if(auto fd=cast(FunctionDef)expr){
 		if(fd.fscope_) return fd;
@@ -45,6 +63,34 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 			}
 			p=cast(Parameter)semantic(p,fsc);
 			propErr(p,fd);
+		}
+		if(auto dsc=isInDataScope(sc)){
+			auto id=new Identifier("this");
+			id.loc=fd.loc;
+			fd.thisRef=new VarDecl(id);
+			fd.thisRef.loc=fd.loc;
+			fd.thisRef.vtype=dsc.decl.dtype;
+			fd.thisRef=cast(VarDecl)semantic(fd.thisRef,fsc);
+			assert(!!fd.thisRef && fd.thisRef.sstate==SemState.completed);
+			if(dsc.decl.name.name==fd.name.name){
+				fd.isConstructor=true;
+				if(fd.rret){
+					sc.error("constructor cannot have return type annotation",fd.loc);
+					fd.sstate=SemState.error;
+				}else{
+					assert(dsc.decl.dtype);
+					fd.ret=dsc.decl.dtype;
+				}
+				auto thisid=new Identifier("this");
+				id.loc=fd.loc;
+				id.meaning=fd.thisRef;
+				id.sstate=SemState.completed;
+				auto rete=new ReturnExp(thisid);
+				rete.loc=id.loc;
+				rete.sstate=SemState.completed;
+				fd.body_.s~=rete;
+			}
+			assert(dsc.decl.dtype);
 		}
 		if(fd.rret){
 			Type[] pty;
@@ -60,6 +106,10 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 			else fd.ftype=funTy(tupleTy(pty),fd.ret);
 		}
 	}
+	return expr;
+}
+
+Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 	if(auto decl=cast(Declaration)expr){
 		if(!decl.scope_) success&=sc.insert(decl);
 		return decl;
@@ -114,6 +164,7 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 Expression[] semantic(Expression[] exprs,Scope sc){
 	bool success=true;
 	foreach(ref expr;exprs) expr=makeDeclaration(expr,success,sc);
+	foreach(ref expr;exprs) if(auto decl=cast(Declaration)expr) expr=presemantic(decl,sc);
 	foreach(ref expr;exprs){
 		expr=semantic(expr,sc);
 		success&=expr.sstate==SemState.completed;
@@ -176,9 +227,12 @@ Expression semantic(Expression expr,Scope sc){
 		}
 	}
 	if(auto cd=cast(CompoundDecl)expr){
-		auto asc=new AggregateScope(sc);
+		auto asc=cd.ascope_;
+		if(!asc) asc=new AggregateScope(sc);
 		cd.ascope_=asc;
-		foreach(e;cd.s) if(auto decl=cast(Declaration)e) if(!decl.scope_) asc.insert(decl);
+		bool success=true; // dummy
+		foreach(ref e;cd.s) e=makeDeclaration(e,success,asc);
+		foreach(ref e;cd.s) if(auto decl=cast(Declaration)e) e=presemantic(decl,asc);
 		foreach(ref e;cd.s){
 			e=semantic(e,asc);
 			propErr(expr,cd);
@@ -210,8 +264,7 @@ Expression semantic(Expression expr,Scope sc){
 		return ce;
 	}
 	if(auto fd=cast(FunctionDef)expr){
-		bool success=true;
-		if(!fd.scope_) makeDeclaration(fd,success,sc);
+		if(!fd.scope_) fd=cast(FunctionDef)presemantic(fd,sc);
 		auto fsc=fd.fscope_;
 		assert(!!fsc);
 		auto bdy=cast(CompoundExp)semantic(fd.body_,fsc);
@@ -237,6 +290,13 @@ Expression semantic(Expression expr,Scope sc){
 			ret.sstate=SemState.error;
 			return ret;
 		}
+		if(auto dsc=isInDataScope(fd.scope_)){
+			if(dsc.decl.name.name==fd.name.name){
+				sc.error("no return statement allowed in constructor",ret.loc);
+				ret.sstate=SemState.error;
+				return ret;
+			}
+		}
 		ret.e=semantic(ret.e,sc);
 		propErr(ret.e,ret);
 		if(ret.sstate==SemState.error)
@@ -260,7 +320,7 @@ Expression semantic(Expression expr,Scope sc){
 		if(ce.sstate==SemState.error)
 			return ce;
 		auto fun=ce.e;
-		if(auto ft=cast(FunTy)fun.type){
+		CallExp checkFunCall(FunTy ft){
 			Type[] aty;
 			foreach(a;ce.args){
 				if(!a.type){
@@ -275,6 +335,28 @@ Expression semantic(Expression expr,Scope sc){
 				ce.sstate=SemState.error;
 			}else{
 				ce.type=ft.cod;
+			}
+			return ce;
+		}
+		if(auto ft=cast(FunTy)fun.type){
+			ce=checkFunCall(ft);
+		}else if(auto at=isDataTyId(fun)){
+			auto decl=at.decl;
+			assert(fun.type is unit);
+			auto constructor=cast(FunctionDef)decl.body_.ascope_.lookup(decl.name);
+			auto ty=cast(FunTy)typeForDecl(constructor);
+			if(!constructor||!ty){
+				sc.error(format("no constructor for type '%s'",fun.type),ce.loc);
+				ce.sstate=SemState.error;
+			}else{
+				ce=checkFunCall(ty);
+				if(ce.sstate!=SemState.error){
+					auto id=new Identifier(constructor.name.name);
+					id.loc=fun.loc;
+					id.meaning=constructor;
+					id.sstate=SemState.completed;
+					ce.e=id;
+				}
 			}
 		}else if(isBuiltIn(cast(Identifier)ce.e)){
 			auto id=cast(Identifier)ce.e;
@@ -302,7 +384,7 @@ Expression semantic(Expression expr,Scope sc){
 	}
 	if(auto dat=cast(DatDecl)expr){
 		bool success=true;
-		if(!dat.dscope_) makeDeclaration(dat,success,sc);
+		if(!dat.dscope_) presemantic(dat,sc);
 		auto bdy=cast(CompoundDecl)semantic(dat.body_,dat.dscope_);
 		assert(!!bdy);
 		dat.body_=bdy;
@@ -313,8 +395,10 @@ Expression semantic(Expression expr,Scope sc){
 		bool success=true;
 		if(!vd.scope_) makeDeclaration(vd,success,sc);
 		vd.type=unit;
-		assert(vd.dtype,text(vd));
-		vd.vtype=typeSemantic(vd.dtype,sc);
+		if(!vd.vtype){
+			assert(vd.dtype,text(vd));
+			vd.vtype=typeSemantic(vd.dtype,sc);
+		}
 		if(!vd.vtype) vd.sstate=SemState.error;
 		return vd;
 	}
@@ -356,17 +440,12 @@ Expression semantic(Expression expr,Scope sc){
 					ae.sstate=SemState.error;
 				}
 			}else if(auto tpl=cast(TupleExp)lhs){
-				foreach(ref exp;tpl.e){
-					auto id=cast(Identifier)exp;
-					if(!id) goto LbadAssgnmLhs;
-					if(!cast(VarDecl)id.meaning){
-						sc.error("can only assign to variables",id.loc);
-						ae.sstate=SemState.error;
-						break;
-					}
-				}
+				foreach(ref exp;tpl.e)
+					checkLhs(exp);
 			}else if(auto idx=cast(IndexExp)lhs){
 				checkLhs(idx.e);
+			}else if(auto fe=cast(FieldExp)lhs){
+				checkLhs(fe.e);
 			}else{
 			LbadAssgnmLhs:
 				sc.error(format("cannot assign to '%s'",lhs),ae.e1.loc);
@@ -387,13 +466,20 @@ Expression semantic(Expression expr,Scope sc){
 	if(auto id=cast(Identifier)expr){
 		if(auto r=builtIn(id))
 			return r;
-		auto meaning=sc.lookup(id);
+		auto meaning=id.meaning;
 		if(!meaning){
-			sc.error(format("undefined identifier '%s'",id), id.loc);
-			id.sstate=SemState.error;
-			return id;
+			meaning=sc.lookup(id);
+			if(!meaning){
+				sc.error(format("undefined identifier '%s'",id.name), id.loc);
+				id.sstate=SemState.error;
+				return id;
+			}
+			if(auto fd=cast(FunctionDef)meaning)
+				if(auto asc=isInDataScope(fd.scope_))
+					if(fd.name.name==asc.decl.name.name)
+						meaning=asc.decl;
+			id.meaning=meaning;
 		}
-		id.meaning=meaning;
 		propErr(meaning,id);
 		id.type=typeForDecl(meaning);
 		if(!id.type&&id.sstate!=SemState.error){
@@ -405,14 +491,16 @@ Expression semantic(Expression expr,Scope sc){
 	if(auto fe=cast(FieldExp)expr){
 		fe.e=semantic(fe.e,sc);
 		propErr(fe.e,fe);
+		if(fe.sstate==SemState.error)
+			return fe;
 		auto noMember(){
 			sc.error(format("no member '%s' for type '%s",fe.f,fe.e.type),fe.loc);
 			fe.sstate=SemState.error;
 			return fe;
 		}
 		if(auto aggrty=cast(AggregateTy)fe.e.type){
-			if(aggrty.decl&&aggrty.decl.dscope_){
-				auto meaning=aggrty.decl.dscope_.lookupHere(fe.f);
+			if(aggrty.decl&&aggrty.decl.body_.ascope_){
+				auto meaning=aggrty.decl.body_.ascope_.lookupHere(fe.f);
 				if(!meaning) return noMember();
 				fe.f.meaning=meaning;
 				fe.f.type=typeForDecl(meaning);
@@ -695,9 +783,13 @@ Type typeSemantic(Expression t,Scope sc)in{assert(!!t&&!!sc);}body{
 		if(id.name=="1"||id.name=="𝟙") return unit;
 		auto decl=sc.lookup(id);
 		if(!decl){
-			sc.error(format("undefined identifier '%s'",id),id.loc);
+			sc.error(format("undefined identifier '%s'",id.name),id.loc);
 			return null;
 		}
+		if(auto fd=cast(FunctionDef)decl)
+			if(auto asc=cast(DataScope)fd.scope_)
+				if(fd.name.name==asc.decl.name.name)
+					decl=asc.decl;
 		if(auto dat=cast(DatDecl)decl){
 			return dat.dtype;
 		}else{
@@ -731,7 +823,7 @@ Type typeSemantic(Expression t,Scope sc)in{assert(!!t&&!!sc);}body{
 Type typeForDecl(Declaration decl){
 	if(auto dat=cast(DatDecl)decl){
 		assert(cast(AggregateTy)dat.dtype);
-		return dat.dtype;
+		return unit;
 	}
 	if(auto vd=cast(VarDecl)decl){
 		return vd.vtype;

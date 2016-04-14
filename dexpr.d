@@ -2123,11 +2123,10 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 	}
 }
 
-import type;
-
-DExpr dDelta(DVar var,DExpr e,Type ty){
+import type; // TODO: remove this import
+DExpr dDelta(DVar var,DExpr e,Type ty){ // TODO: dexpr shouldn't know about type, but this is most convenient for overloading
 	if(ty is ℝ) return dDelta(e-var);
-	assert(cast(TupleTy)ty||cast(ArrayTy)ty); // TODO: add more supported types
+	assert(cast(TupleTy)ty||cast(ArrayTy)ty||cast(AggregateTy)ty); // TODO: add more supported types
 	return dDiscDelta(var,e);
 }
 
@@ -3133,6 +3132,85 @@ DTuple dTuple(DExpr[] values){
 	return uniqueDTuple(values);
 }
 
+class DRecord: DExpr{ // Tuples. TODO: real tuple support
+	DExpr[string] values;
+	this(DExpr[string] values){
+		this.values=values;
+	}
+	final DRecord update(string f,DExpr n){
+		auto nvalues=values.dup;
+		nvalues[f]=n;
+		return dRecord(nvalues);
+	}
+
+	override string toStringImpl(Format formatting, Precedence prec){
+		// TODO: other CAS?
+		auto r="{";
+		foreach(k,v;values){
+			r~="."~k~" ↦ "~v.toStringImpl(formatting,Precedence.none);
+			r~=",";
+		}
+		return r[0..$-1]~"}";
+	}
+	override int forEachSubExpr(scope int delegate(DExpr) dg){
+		foreach(k,v;values)
+			if(auto r=dg(v))
+				return r;
+		return 0;
+	}
+	override int freeVarsImpl(scope int delegate(DVar) dg){
+		foreach(k,v;values)
+			if(auto r=v.freeVarsImpl(dg))
+				return r;
+		return 0;
+	}
+	override DExpr substitute(DVar var,DExpr exp){
+		DExpr[string] nvalues;
+		foreach(k,v;values) nvalues[k]=v.substitute(var,exp);
+		return dRecord(nvalues);
+	}
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
+		DExpr[string] nvalues;
+		foreach(k,v;values) nvalues[k]=v.substituteFun(fun,q,args,context);
+		return dRecord(nvalues);
+	}
+	override DExpr incBoundVar(int di,bool bindersOnly){
+		DExpr[string] nvalues;
+		foreach(k,v;values) nvalues[k]=v.incBoundVar(di,bindersOnly);
+		return dRecord(nvalues);
+	}
+	static DRecord constructHook(DExpr[string] values){
+		return staticSimplify(values);
+	}
+	static DRecord staticSimplify(DExpr[string] values,DExpr facts=one){
+		DExpr[string] nvalues;
+		foreach(k,v;values) nvalues[k]=v.simplify(facts);
+		if(nvalues!=values) return dRecord(nvalues);
+		return null;
+	}
+	override DExpr simplifyImpl(DExpr facts){
+		auto r=staticSimplify(values,facts);
+		return r?r:this;
+	}
+}
+
+MapX!(TupleX!(TupleX!(string,DExpr)[]),DRecord) uniqueMapDRecord; // TODO: why no hash for built-in aas?
+auto dRecord(DExpr[string] values){
+	if(auto r=DRecord.constructHook(values)) return r;
+	TupleX!(string,DExpr)[] tt;
+	foreach(k,v;values) tt~=tuplex(k,v);
+	sort!"a[0]<b[0]"(tt);
+	auto t=tuplex(tt);
+	if(t in uniqueMapDRecord)
+		return uniqueMapDRecord[t];
+	auto r=new DRecord(values);
+	uniqueMapDRecord[t]=r;
+	return r;
+}
+
+auto dRecord(){ return dRecord((DExpr[string]).init); }
+
+
 class DIndex: DOp{
 	DExpr e,i; // TODO: multiple indices?
 	this(DExpr e,DExpr i){
@@ -3294,6 +3372,75 @@ auto dIUpdate(DExpr e,DExpr i,DExpr n){
 	uniqueMapDIUpdate[t]=r;
 	return r;
 }
+
+
+class DRUpdate: DOp{
+	DExpr e,n; // TODO: multiple indices?
+	string f;
+	this(DExpr e,string f,DExpr n){
+		this.e=e; this.f=f; this.n=n;
+	}
+	override string symbol(Format formatting){ return "[ ↦ ]"; }
+	override @property Precedence precedence(){
+		return Precedence.index; // TODO: ok? (there is no precedence to the rhs)
+	}
+	override string toStringImpl(Format formatting, Precedence prec){
+		return addp(prec, e.toStringImpl(formatting,Precedence.index)~"{"~f~
+					" ↦ "~n.toStringImpl(formatting,Precedence.none)~"}");
+	}
+
+	override int forEachSubExpr(scope int delegate(DExpr) dg){
+		if(auto r=dg(e)) return r;
+		return dg(n);
+	}
+
+	override DExpr simplifyImpl(DExpr facts){
+		auto r=staticSimplify(e,f,n,facts);
+		return r?r:this;
+	}
+
+	override DExpr substitute(DVar var,DExpr exp){
+		return dRUpdate(e.substitute(var,exp),f,n.substitute(var,exp));
+	}
+
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SHSet!DVar context){
+		return dRUpdate(e.substituteFun(fun,q,args,context),f,n.substituteFun(fun,q,args,context));
+	}
+
+	override DExpr incBoundVar(int di,bool bindersOnly){
+		return dRUpdate(e.incBoundVar(di,bindersOnly),f,n.incBoundVar(di,bindersOnly));
+	}
+
+	override int freeVarsImpl(scope int delegate(DVar) dg){
+		if(auto r=e.freeVarsImpl(dg)) return r;
+		return n.freeVarsImpl(dg);
+	}
+	
+	static DExpr staticSimplify(DExpr e,string f,DExpr n,DExpr facts=one){
+		auto ne=e.simplify(facts);
+		auto nn=n.simplify(facts);
+		if(auto rec=cast(DRecord)ne)
+			return rec.update(f,nn);
+		if(ne !is e || nn !is n) return dRUpdate(ne,f,nn);
+		return null;
+	}
+	
+	static DExpr constructHook(DExpr e,string f,DExpr n){
+		return staticSimplify(e,f,n);
+	}
+}
+
+MapX!(TupleX!(DExpr,string,DExpr),DExpr) uniqueMapDRUpdate;
+auto dRUpdate(DExpr e,string f,DExpr n){
+	if(auto r=DRUpdate.constructHook(e,f,n)) return r;
+	auto t=tuplex(e,f,n);
+	if(t in uniqueMapDRUpdate) return uniqueMapDRUpdate[t];
+	auto r=new DRUpdate(e,f,n);
+	uniqueMapDRUpdate[t]=r;
+	return r;
+}
+
+
 
 class DLambda: DOp{ // lambda functions DExpr → DExpr
 	private{
@@ -3488,6 +3635,8 @@ class DField: DOp{
 			if(auto arr=cast(DArray)ne)
 				return arr.length;
 		}
+		if(auto rec=cast(DRecord)e)
+			if(f in rec.values) return rec.values[f];
 		if(ne !is e) return dField(ne,f);
 		return null;
 	}

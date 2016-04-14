@@ -51,14 +51,16 @@ class FunctionDef: Declaration{
 
 	// semantic information
 	FunctionScope fscope_;
+	VarDecl thisRef;
 	Type ret;
 	Type ftype;
 	bool hasReturn;
+	bool isConstructor;
 }
 
 
 class DatDecl: Declaration{
-	Type dtype;
+	AggregateTy dtype;
 	CompoundDecl body_;
 	this(Identifier name,CompoundDecl body_){
 		super(name); this.body_=body_;

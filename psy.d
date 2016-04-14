@@ -130,7 +130,7 @@ int run(string path){
 	sourceFile=path;
 	scope(exit){ // TODO: get rid of globals
 		analysis.functions=(FunctionDef[string]).init;
-		analysis.summaries=(Distribution[string]).init;
+		analysis.summaries=(Distribution[FunctionDef]).init;
 		sourceFile=null;
 	}
 	if(err.nerrors) return 1;

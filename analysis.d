@@ -4,7 +4,7 @@ import lexer, expression, declaration, type, semantic_, error;
 import distrib, dexpr, util;
 
 FunctionDef[string] functions; // TODO: get rid of globals
-Distribution[string] summaries;
+Distribution[FunctionDef] summaries;
 string sourceFile;
 
 alias ODefExp=BinaryExp!(Tok!":=");
@@ -61,18 +61,17 @@ private struct Analyzer{
 			if(auto ume=cast(UNegExp)e) return dIvr(DIvr.Type.eqZ,doIt(ume.e));
 			if(auto ce=cast(CallExp)e){
 				if(auto id=cast(Identifier)ce.e){
-					if(id.name in functions){
-						if(id.name !in summaries){
-							summaries[id.name]=new Distribution();
-							summaries[id.name].distribute(mone);
-							summaries[id.name]=.analyze(functions[id.name],err);
-						}else if(summaries[id.name].distribution is mone){
+					if(auto fun=cast(FunctionDef)id.meaning){
+						if(fun !in summaries){
+							summaries[fun]=new Distribution();
+							summaries[fun].distribute(mone);
+							summaries[fun]=.analyze(fun,err);
+						}else if(summaries[fun].distribution is mone){
 							// TODO: support special cases.
 							err.error("recursive dependencies unsupported",ce.loc);
 							unwind();
 						}
-						auto fun=functions[id.name];
-						auto summary=summaries[id.name];
+						auto summary=summaries[fun];
 						if(ce.args.length != fun.params.length){
 							err.error(format("expected %s arguments to '%s', received %s",fun.params.length,id.name,ce.args.length),ce.loc);
 							unwind();
@@ -676,6 +675,11 @@ private struct Analyzer{
 						}else{
 							err.error(text("unsupported type '",idx.e.type,"' for index expression"),lhs.loc);
 						}
+					}else if(auto fe=cast(FieldExp)lhs){
+						if(cast(AggregateTy)fe.e.type){
+							auto old=transformExp(fe.e);
+							if(old) assignTo(fe.e,dRUpdate(old,fe.f.name,rhs),fe.e.type);
+						}
 					}else if(auto tpl=cast(TupleExp)lhs){
 						auto tt=cast(TupleTy)ty;
 						assert(!!tt);
@@ -687,11 +691,7 @@ private struct Analyzer{
 						if(dtpl){
 							auto tmp=iota(tpl.e.length).map!(_=>dist.getVar("__tpltmp")).array;
 							foreach(k,de;dtpl.values) dist.initialize(tmp[k],de,tt.types[k]);
-							foreach(k,exp;tpl.e){
-								auto id=cast(Identifier)exp;
-								if(!id) goto LbadAssgnmLhs;
-								assignVar(id,tmp[k],tt.types[k]);
-							}
+							foreach(k,exp;tpl.e) assignTo(exp,tmp[k],tt.types[k]);
 						}					
 					}else{
 					LbadAssgnmLhs:
@@ -827,7 +827,7 @@ private struct Analyzer{
 						}
 					}else err.error("observed quantity must be a variable",co.loc);
 				}
-			}else if(!cast(ErrorExp)e) err.error(text("unsupported ",typeid(e)),e.loc);
+			}else if(!cast(ErrorExp)e) err.error(text("unsupported"),e.loc);
 		}
 		return dist;
 	}
@@ -836,6 +836,15 @@ private struct Analyzer{
 Distribution analyze(FunctionDef def,ErrorHandler err){
 	auto dist=new Distribution();
 	DExpr[] args;
+	if(def.thisRef){
+		auto this_=dist.declareVar("this");
+		if(!def.isConstructor) args~=this_;
+		else{
+			auto dd=def.scope_.getDatDecl();
+			assert(dd && dd.dtype);
+			dist.initialize(this_,dRecord(),dd.dtype);
+		}
+	}
 	foreach(a;def.params) args~=dist.declareVar(a.name.name);
 	if(def.name.name!="main"||args.length) // TODO: move this decision to caller
 		dist.addArgsWithContext(args);

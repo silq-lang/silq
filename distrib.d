@@ -91,7 +91,6 @@ DExpr weibullPDF(DVar var,DExpr λ,DExpr k){
 	return dIvr(DIvr.Type.leZ,-var)*k/λ*(var/λ)^^(k-1)*dE^^(-(var/λ)^^k);
 }
 
-
 class Distribution{
 	int[string] vbl;
 	DVar[string] symtab;
@@ -233,7 +232,7 @@ class Distribution{
 	}
 	void assign(DVar var,DExpr exp,Type ty){
 		if(distribution is zero) return;
-		assert(distribution.hasFreeVar(var));
+		assert(distribution.hasFreeVar(var),text(var));
 		auto nvar=getVar(var.name);
 		distribution=distribution.substitute(var,nvar);
 		exp=exp.substitute(var,nvar);
