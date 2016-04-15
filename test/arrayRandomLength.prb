@@ -1,0 +1,4 @@
+def main(){
+    a := if Bernoulli(1/4) { [1,2,3] } else { [1,2] };
+    return a[UniformInt(0,2)]; // expected: δ[-r₁+1]·⅟3+δ[-r₁+2]·⅟3+δ[-r₁+3]·⅟12
+}

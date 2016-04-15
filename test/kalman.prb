@@ -7,8 +7,8 @@ dat Filter{
     }
     // update step: compute new state after one time step
     def update(t: ℝ){
-        x = x + t*this.v;
-        v = v + t*this.a;
+        x = x + t*v;
+        v = v + t*a;
         a = a + t*Gauss(0,1); 
     }
     // measure x position with noise
