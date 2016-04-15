@@ -1799,7 +1799,10 @@ class DIvr: DExpr{ // iverson brackets
 	}
 	Type type;
 	DExpr e;
-	this(Type type,DExpr e){ this.type=type; this.e=e; }
+	this(Type type,DExpr e){
+		this.type=type; this.e=e;
+		foreach(d;e.allOf!DDelta) assert(0);
+	}
 
 	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; } // TODO: correct?
 	override int freeVarsImpl(scope int delegate(DVar) dg){ return e.freeVarsImpl(dg); }
@@ -2435,7 +2438,7 @@ class DSum: DOp{
 		if(auto dbvar=cast(DBoundVar)var){
 			int nesting=dbvar.i-1;
 			auto tmp=new DVar("tmp"); // TODO: get rid of this!
-			auto nexpr=unbind(var,expr.incBoundVar(-nesting,false),tmp);
+			auto nexpr=unbind(dBoundVar(1),expr.incBoundVar(-nesting,false),tmp);
 			auto r=staticSimplifyMemo(tmp,nexpr);
 			return r?r.incBoundVar(nesting,false):null;
 		}
@@ -2494,7 +2497,7 @@ DExpr dSum(DVar var,DExpr expr){
 	auto dbvar=cast(DBoundVar)var;
 	if(!dbvar){
 		dbvar=dBoundVar(1);
-		expr=expr.incBoundVar(1,false).substitute(var,dbvar);
+		expr=expr.incBoundVar(1,true).substitute(var,dbvar);
 	}
 	return uniqueBindingDExpr!DSum(dbvar,expr);
 }

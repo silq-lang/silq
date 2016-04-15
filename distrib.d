@@ -91,6 +91,13 @@ DExpr weibullPDF(DVar var,DExpr λ,DExpr k){
 	return dIvr(DIvr.Type.leZ,-var)*k/λ*(var/λ)^^(k-1)*dE^^(-(var/λ)^^k);
 }
 
+DExpr categoricalPDF(DVar var,DExpr p){
+	auto tmp=new DVar("tmp"); // TODO: get rid of this!
+	auto nnorm=dSum(tmp,dBounded!"[)"(tmp,zero,dField(p,"length"))*p[tmp]*dDelta(var-tmp));
+	return nnorm;///dIntSmp(tmp,nnorm);
+}
+
+
 class Distribution{
 	int[string] vbl;
 	DVar[string] symtab;

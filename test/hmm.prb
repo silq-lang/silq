@@ -1,0 +1,31 @@
+// skipped
+// discrete hidden markov model
+
+dat HMM{
+    a: ℝ[][];
+    b: ℝ[][];
+    x: ℝ;
+    def HMM(a: ℝ[][],b: ℝ[][],x: ℝ){
+        this.a=a;
+        this.b=b;
+        this.x=x;
+    }
+    def update(){
+        x = Categorical(a[x]);
+    }
+    def predict(){
+        return Categorical(b[x]);
+    }
+}
+
+def main(){
+    // note: we could also have a random prior on a and b,
+    // and it would be updated according to observations
+    a := [[0.5,0.3,0.2], // transitions
+          [0.4,0.2,0.4],
+          [0.3,0.2,0.5]];
+    b := [[0.5,0.5],[0.2,0.8],[0.1,0.9]]; // hidden → observed
+    h := HMM(a,b,0);
+    h.update();
+    return h.x;
+}

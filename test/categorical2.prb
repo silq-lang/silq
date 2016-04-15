@@ -1,0 +1,4 @@
+def main(){
+    x := [0.2,0.3,0.5];
+    return Categorical(x); // expected: TODO: simplify
+}
