@@ -1984,7 +1984,7 @@ DVar getCanonicalFreeVar(DExpr e){
 	bool isMoreCanonicalThan(DVar a,DVar b){
 		if(b is null) return true;
 		if(cast(DBoundVar)a&&!cast(DBoundVar)b) return true;
-		return a.name<b.name;
+		return a.name<b.name||a.name==b.name&&cast(void*)a<cast(void*)b; // TODO: get rid of "tmp" vars
 	}
 	foreach(v;e.freeVars)
 		if(isMoreCanonicalThan(v,r)) r=v;
