@@ -217,6 +217,7 @@ private DExpr definiteIntegralContinuous(DVar var,DExpr expr)out(res){
 				if(upper) upper=dMin(upper,bound);
 				else upper=bound;
 				break;
+			case equal: assert(0);
 			}
 	}
 	return tryIntegrate(var,nonIvrs,lower,upper,ivrs);

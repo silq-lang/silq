@@ -1432,23 +1432,31 @@ enum BoundStatus{
 	fail,
 	lowerBound,
 	upperBound,
+	equal,
 }
 
-BoundStatus getBoundForVar(DIvr ivr,DVar var,out DExpr bound){ // TODO: get rid of this in favour of the next function?
+BoundStatus getBoundForVar(DIvr ivr,DVar var,out DExpr bound){
 	enum r=BoundStatus.fail;
-	with(DIvr.Type) if(ivr.type!=leZ) return r;
+	with(DIvr.Type) if(ivr.type!=leZ&&ivr.type!=eqZ) return r;
 	foreach(s;ivr.e.summands){
 		if(!s.hasFactor(var)) continue; // TODO: non-linear constraints
 		auto cand=s.withoutFactor(var);
 		if(cand.hasFreeVar(var)) return r;
-		auto lZ=dIvr(DIvr.Type.lZ,cand)==one;
-		auto gZ=dIvr(DIvr.Type.lZ,-cand)==one;
-		if(!lZ&&!gZ) return r;
+		BoundStatus result;
+		with(DIvr.Type) if(ivr.type==leZ){
+			auto lZ=dIvr(DIvr.Type.lZ,cand)==one;
+			auto gZ=dIvr(DIvr.Type.lZ,-cand)==one;
+			if(!lZ&&!gZ) return r;
+			result=lZ?BoundStatus.lowerBound:BoundStatus.upperBound;
+		}else{
+			assert(ivr.type==eqZ);
+			result=BoundStatus.equal;
+		}
 		auto ne=(var-ivr.e/cand).simplify(one); // TODO: are there cases where this introduces division by 0?
 		if(ne.hasFreeVar(var)) return r;
 		// TODO: must consider strictness!
 		bound=ne;
-		return lZ?BoundStatus.lowerBound:BoundStatus.upperBound;
+		return result;
 	}
 	return r;
 }
@@ -2442,15 +2450,8 @@ class DSum: DOp{
 			auto r=staticSimplifyMemo(tmp,nexpr);
 			return r?r.incBoundVar(nesting,false):null;
 		}
-		auto nexpr=expr.simplify(facts);
-		if(nexpr !is expr) expr=nexpr;
-		auto ow=expr.splitMultAtVar(var); // not a good strategy without modification, due to deltas
-		if(ow[0] !is one) return ow[0]*dSumSmp(var,ow[1]);
-		if(expr is one) return null; // (infinite sum)
 		if(simplification!=Simpl.deltas){
-			nexpr=expr.linearizeConstraints!(x=>!!cast(DIvr)x)(var).simplify(facts);
-			if(nexpr !is expr) return staticSimplifyMemo(var,nexpr);
-			if(auto r=computeSum(var,expr))
+			if(auto r=computeSum(var,expr,facts))
 				return r.simplify(facts);
 		}
 		return null;
