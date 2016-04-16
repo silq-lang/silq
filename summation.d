@@ -47,7 +47,8 @@ DExpr computeSum(DVar var,DExpr expr,DExpr facts=one){
 	DExpr nonIvrs=one;
 	foreach(f;expr.factors){
 		assert(f.hasFreeVar(var));
-		if(cast(DIvr)f) ivrs=ivrs*f;
+		auto ivr=cast(DIvr)f;
+		if(ivr&&ivr.type!=DIvr.Type.neqZ) ivrs=ivrs*f;
 		else nonIvrs=nonIvrs*f;
 	}
 
@@ -56,7 +57,7 @@ DExpr computeSum(DVar var,DExpr expr,DExpr facts=one){
 		if(f is one) break;
 		auto ivr=cast(DIvr)f;
 		assert(!!ivr);
-		if(ivr.type==DIvr.Type.neqZ) continue; // TODO: ok?
+		assert(ivr.type!=DIvr.Type.neqZ);
 		DExpr bound;
 		auto status=ivr.getBoundForVar(var,bound);
 		final switch(status) with(BoundStatus){
@@ -87,7 +88,7 @@ DExpr computeSum(DVar var,DExpr expr,DExpr facts=one){
 		auto up=floordiv(ndu[0],ndu[1]);
 		DExprSet s;
 		foreach(i;low..up+1)
-			DPlus.insert(s,expr.substitute(var,dℕ(i)).simplify(one));
+			DPlus.insert(s,nonIvrs.substitute(var,dℕ(i)).simplify(one));
 		return dPlus(s);
 	}
 	return null;
