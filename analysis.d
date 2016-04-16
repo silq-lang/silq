@@ -813,7 +813,10 @@ private struct Analyzer{
 							vars.insert(var);
 							orderedVars~=var;
 						}else if(exp){
-							var=dist.getVar("r");
+							if(auto fe=cast(FieldExp)ret){
+								var=dist.declareVar(fe.f.name,false);
+								if(!var) var=dist.getVar(fe.f.name);
+							}else var=dist.getVar("r");
 							dist.initialize(var,exp,ret.type);
 							vars.insert(var);
 							orderedVars~=var;

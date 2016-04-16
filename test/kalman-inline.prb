@@ -18,5 +18,5 @@ def main(){
         o := filter.x + t*Gauss(0,1);
         cobserve(o,data[i]);
     }
-    return filter.x; // expected: e^(-488601·⅟3382+-89·r₁²·⅟152+699·r₁·⅟38)·⅟√1̅5̅2̅·⅟√π̅·√8̅9̅
+    return filter.x; // expected: e^(-488601·⅟3382+-89·x²·⅟152+699·x·⅟38)·⅟√1̅5̅2̅·⅟√π̅·√8̅9̅
 }
