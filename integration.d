@@ -94,8 +94,8 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
 	// pull sums out (TODO: ok?)
 	foreach(f;expr.factors){
 		if(auto sum=cast(DSum)f){
-			auto tmp1=new DVar("tmp1"); // TODO: get rid of this!
-			auto tmp2=new DVar("tmp2"); // TODO: get rid of this!
+			auto tmp1=freshVar(); // TODO: get rid of this!
+			auto tmp2=freshVar(); // TODO: get rid of this!
 			auto expr=sum.getExpr(tmp1)*expr.withoutFactor(f);
 			return dSumSmp(tmp1,dIntSmp(tmp2,expr.substitute(var,tmp2)));
 		}
@@ -112,7 +112,7 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
 			foreach(f;cur.factors){
 				if(auto other=cast(DInt)f){
 					hasInt=true;
-					auto tmpvar=new DVar("tmp"); // TODO: get rid of this!
+					auto tmpvar=freshVar(); // TODO: get rid of this!
 					fubiVars~=tmpvar;
 					r=r*fubiRec(other.getExpr(tmpvar));
 				}else r=r*f;
@@ -123,7 +123,7 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
 		auto myexpr=expr;
 		if(cast(DBoundVar)myvar){
 			assert(myvar is dBoundVar(1));
-			myvar=new DVar("tmp"); // TODO: get rid of this!
+			myvar=freshVar(); // TODO: get rid of this!
 			myexpr=unbind(var,expr,myvar);
 		}
 		auto fubiExpr=fubiRec(myexpr);
@@ -325,7 +325,7 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 			if(l.e is var){ // TODO: linear functions of var
 				if(auto n=cast(Dℕ)p.operands[1]){
 					DExpr dInGamma(DExpr a,DExpr z){
-						auto t=new DVar("tmp"); // TODO: get rid of this
+						auto t=freshVar(); // TODO: get rid of this
 						return dIntSmp(t,t^^(a-1)*dE^^(-t)*dIvr(DIvr.type.leZ,z-t));
 					}
 					if(n.c>0)
@@ -410,7 +410,7 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 	AntiD partiallyIntegratePolynomials(DVar var,DExpr e){ // TODO: is this well founded?
 		static MapX!(Q!(DVar,DExpr),AntiD) memo;
 		if(q(var,e) in memo) return memo[q(var,e)];
-		auto token=new DVar("τ"); // TODO: make sure this does not create a GC issue.
+		auto token=freshVar("τ"); // TODO: make sure this does not create a GC issue.
 		memo[q(var,e)]=AntiD(token); // TODO :get rid of AntiD
 		auto fail(){
 			memo[q(var,e)]=AntiD();

@@ -189,7 +189,7 @@ private struct Analyzer{
 							unwind();
 						}
 						auto a=doIt(ce.args[0]),b=doIt(ce.args[1]);
-						auto tmp=new DVar("tmp"); // TODO: get rid of this
+						auto tmp=freshVar(); // TODO: get rid of this
 						auto nnorm=uniformIntPDFNnorm(tmp,a,b);
 						auto norm=dIntSmp(tmp,nnorm);
 						dist.assertTrue(dIvr(DIvr.Type.neqZ,norm),"no integers in range");
@@ -219,9 +219,9 @@ private struct Analyzer{
 							return var;
 						}else{
 							auto p=doIt(ce.args[0]);
-							auto tmp=new DVar("tmp"); // TODO: get rid of this
+							auto tmp=freshVar(); // TODO: get rid of this
 							dist.assertTrue(dIvr(DIvr.Type.eqZ,dSum(tmp,dBounded!"[)"(tmp,zero,dField(p,"length")*dIvr(DIvr.Type.lZ,p[tmp])))),"probability of category should be non-negative"); // TODO: dProd?
-							dist.assertTrue(dIvr(DIvr.Type.eqZ,dSum(tmp,dBounded!"[)"(tmp,zero,dField(p,"length")*p[tmp]))-1),"probabilities should sum up to 1");
+							dist.assertTrue(dIvr(DIvr.Type.eqZ,dSum(tmp,dBounded!"[)"(tmp,zero,dField(p,"length"))*p[tmp])-1),"probabilities should sum up to 1");
 							auto var=dist.getTmpVar("__c");
 							dist.distribute(categoricalPDF(var,p));
 							return var;

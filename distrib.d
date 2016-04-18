@@ -48,7 +48,7 @@ DExpr uniformIntPDFNnorm(DVar var,DExpr a,DExpr b){
 		return dPlus(r)/(b-a+1);
 	}
 	return dIvr(DIvr.Type.leZ,a-var)*dIvr(DIvr.Type.leZ,var-b)*dDelta(dSin(dΠ*var)/dΠ);
-	/+auto tmp=new DVar("tmp"); // TODO: get rid of this!
+	/+auto tmp=freshVar(); // TODO: get rid of this!
 	return dSumSmp(tmp,dBounded!"[]"(tmp,a,b)*dDelta(tmp-var));+/
 }
 
@@ -92,7 +92,7 @@ DExpr weibullPDF(DVar var,DExpr λ,DExpr k){
 }
 
 DExpr categoricalPDF(DVar var,DExpr p){
-	auto tmp=new DVar("tmp"); // TODO: get rid of this!
+	auto tmp=freshVar(); // TODO: get rid of this!
 	auto nnorm=dSum(tmp,dBounded!"[)"(tmp,zero,dField(p,"length"))*p[tmp]*dDelta(var-tmp));
 	return nnorm;///dIntSmp(tmp,nnorm);
 }

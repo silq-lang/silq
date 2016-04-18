@@ -168,7 +168,7 @@ abstract class DExpr{
 alias DExprSet=SetX!DExpr;
 class DVar: DExpr{
 	string name;
-	/+private+/ this(string name){ this.name=name; } // TODO: make private!
+	private this(string name){ this.name=name; }
 	override string toStringImpl(Format formatting,Precedence prec){
 		if(formatting==Format.sympy||formatting==Format.matlab||formatting==Format.mathematica){
 			return asciify(name);
@@ -179,8 +179,6 @@ class DVar: DExpr{
 				name=name.replace(""d~cast(dchar)('₀'+x),""d~cast(dchar)('0'+x));
 			return name.to!string;
 		}
-		if(name=="tmp") // Can be convenient for debugging. TODO: get rid of "tmp" vars
-		 return name~(cast(void*)this).to!string;
 		return name;
 	}
 
@@ -190,6 +188,7 @@ class DVar: DExpr{
 	override DExpr substituteFun(DFunVar var,DExpr q,DVar[] args,SetX!DVar context){ return this; }
 	override DVar incBoundVar(int di,bool bindersOnly){ return this; }
 	override DExpr simplifyImpl(DExpr facts){
+		if(cast(DBoundVar)this||cast(DTmpBoundVar)this) return this;
 		// TODO: make more efficient! (e.g. keep hash table in product expressions)
 		foreach(f;facts.factors){
 			if(auto ivr=cast(DIvr)f){
@@ -227,6 +226,20 @@ DBoundVar dBoundVar(int i){
 		uniqueMapBound[i]=new DBoundVar(i):
 		uniqueMapBound[i];
 }
+
+class DTmpBoundVar: DVar{
+	int i;
+	static int curi=0;
+	this(string name){ super(name); i=curi++; }
+	override string toStringImpl(Format formatting,Precedence prec){
+		if(name=="tmp") // Can be convenient for debugging. TODO: get rid of "tmp" vars
+			return name~(cast(void*)this).to!string;
+		return super.toStringImpl(formatting,prec);
+	}
+} // TODO: get rid of this!
+
+DTmpBoundVar freshVar(string name="tmp"){ return new DTmpBoundVar(name); } // TODO: get rid of this!
+
 
 DVar theDε;
 DVar dε(){ return theDε?theDε:(theDε=new DVar("ε")); }
@@ -549,7 +562,7 @@ class DPlus: DCommutAssocOp{
 	static DExpr integralSimplify(DExprSet summands,DExpr facts){
 		DExprSet integralSummands;
 		DExprSet integrals;
-		DVar tmp=new DVar("tmp"); // TODO: get rid of this!
+		DVar tmp=freshVar(); // TODO: get rid of this!
 		// dw("!! ",summands);
 		foreach(s;summands){
 			if(auto dint=cast(DInt)s){
@@ -1983,8 +1996,7 @@ DVar getCanonicalFreeVar(DExpr e){
 	DVar r=null;
 	bool isMoreCanonicalThan(DVar a,DVar b){
 		if(b is null) return true;
-		if(cast(DBoundVar)a&&!cast(DBoundVar)b) return true;
-		return a.name<b.name||a.name==b.name&&cast(void*)a<cast(void*)b; // TODO: get rid of "tmp" vars
+		return a.name<b.name;
 	}
 	foreach(v;e.freeVars)
 		if(isMoreCanonicalThan(v,r)) r=v;
@@ -2312,7 +2324,7 @@ class DInt: DOp{
 		}
 		if(auto dbvar=cast(DBoundVar)var){
 			auto nesting=dbvar.i;
-			auto tmp=new DVar("tmp"); // TODO: get rid of this!
+			auto tmp=freshVar(); // TODO: get rid of this!
 			auto nexpr=unbind(dBoundVar(1),expr.incBoundVar(-nesting,false),tmp);
 			auto r=staticSimplify(tmp,nexpr,facts);
 			return r?r.incBoundVar(nesting,false):null;
@@ -2323,7 +2335,7 @@ class DInt: DOp{
 	static DExpr staticSimplifyFull(DVar var,DExpr expr,DExpr facts=one)in{assert(var&&expr&&facts);}body{
 		if(auto dbvar=cast(DBoundVar)var){
 			auto nesting=dbvar.i-1;
-			auto tmp=new DVar("tmp"); // TODO: get rid of this!
+			auto tmp=freshVar(); // TODO: get rid of this!
 			auto nexpr=unbind(dBoundVar(1),expr.incBoundVar(-nesting,false),tmp);
 			auto r=staticSimplifyFull(tmp,nexpr,facts);
 			return r?r.incBoundVar(nesting,false):null;
@@ -2369,7 +2381,7 @@ class DInt: DOp{
 		auto dbvar=cast(DBoundVar)var;
 		if(bindersOnly&&dbvar){
 			auto nvar=dBoundVar(dbvar.i+di);
-			auto tmp=new DVar("tmp"); // TODO: get rid of this!
+			auto tmp=freshVar(); // TODO: get rid of this!
 			return dInt(nvar,expr.substitute(var,tmp).incBoundVar(di,bindersOnly).substitute(tmp,nvar));
 		}else return dInt(var.incBoundVar(di,bindersOnly),expr.incBoundVar(di,bindersOnly));
 	}
@@ -2445,7 +2457,7 @@ class DSum: DOp{
 		}
 		if(auto dbvar=cast(DBoundVar)var){
 			int nesting=dbvar.i-1;
-			auto tmp=new DVar("tmp"); // TODO: get rid of this!
+			auto tmp=freshVar(); // TODO: get rid of this!
 			auto nexpr=unbind(dBoundVar(1),expr.incBoundVar(-nesting,false),tmp);
 			auto r=staticSimplifyMemo(tmp,nexpr);
 			return r?r.incBoundVar(nesting,false):null;
@@ -2482,7 +2494,7 @@ class DSum: DOp{
 		auto dbvar=cast(DBoundVar)var;
 		if(bindersOnly&&dbvar){
 			auto nvar=dBoundVar(dbvar.i+di);
-			auto tmp=new DVar("tmp"); // TODO: get rid of this!
+			auto tmp=freshVar(); // TODO: get rid of this!
 			return dSum(nvar,expr.substitute(var,tmp).incBoundVar(di,bindersOnly).substitute(tmp,nvar));
 		}else return dSum(var.incBoundVar(di,bindersOnly),expr.incBoundVar(di,bindersOnly));
 	}
@@ -2523,7 +2535,7 @@ class DLim: DOp{
 	static DExpr staticSimplify(DVar v,DExpr e,DExpr x,DExpr facts=one){
 		if(auto dbvar=cast(DBoundVar)v){
 			auto nesting=dbvar.i-1;
-			auto tmp=new DVar("tmp"); // TODO: get rid of this!
+			auto tmp=freshVar(); // TODO: get rid of this!
 			auto r=staticSimplify(tmp,e.incBoundVar(-nesting,false),unbind(v,x,tmp.incBoundVar(-nesting,false)));
 			return r?r.incBoundVar(nesting,false):null;
 		}
@@ -2561,7 +2573,7 @@ class DLim: DOp{
 		auto dbvar=cast(DBoundVar)v;
 		if(bindersOnly&&dbvar){
 			auto nv=dBoundVar(dbvar.i+di);
-			auto tmp=new DVar("tmp"); // TODO: get rid of this!
+			auto tmp=freshVar(); // TODO: get rid of this!
 			return dLim(nv,e.incBoundVar(di,bindersOnly),x.substitute(v,tmp).incBoundVar(di,bindersOnly).substitute(tmp,nv));
 		}else return dLim(v.incBoundVar(di,bindersOnly),e.incBoundVar(di,bindersOnly),x.incBoundVar(di,bindersOnly));
 	}
@@ -2640,7 +2652,7 @@ class DDiff: DOp{
 		auto dbvar=cast(DBoundVar)v;
 		if(bindersOnly&&dbvar){
 			auto nv=dBoundVar(dbvar.i+di);
-			auto tmp=new DVar("tmp"); // TODO: get rid of this!
+			auto tmp=freshVar(); // TODO: get rid of this!
 			return dDiff(nv,e.substitute(v,tmp).incBoundVar(di,bindersOnly).substitute(tmp,nv),x.incBoundVar(di,bindersOnly));
 		}else return dDiff(v.incBoundVar(di,bindersOnly),e.incBoundVar(di,bindersOnly),x.incBoundVar(di,bindersOnly));
 	}
@@ -3338,7 +3350,7 @@ class DIUpdate: DOp{
 			}
 		}
 		if(auto arr=cast(DArray)ne){
-			auto tmp=new DVar("tmp"); // TODO: get rid of this!
+			auto tmp=freshVar(); // TODO: get rid of this!
 			auto dbvar=cast(DBoundVar)arr.entries.var;
 			assert(!!dbvar);
 			auto nesting=dbvar.i-1;
@@ -3490,7 +3502,7 @@ class DLambda: DOp{ // lambda functions DExpr → DExpr
 		auto dbvar=cast(DBoundVar)var;
 		if(bindersOnly&&dbvar){
 			auto nvar=dBoundVar(dbvar.i+di);
-			auto tmp=new DVar("tmp"); // TODO: get rid of this!
+			auto tmp=freshVar(); // TODO: get rid of this!
 			return dLambda(nvar,expr.substitute(var,tmp).incBoundVar(di,bindersOnly).substitute(tmp,nvar));
 		}else return dLambda(var.incBoundVar(di,bindersOnly),expr.incBoundVar(di,bindersOnly));
 	}
@@ -3501,7 +3513,7 @@ class DLambda: DOp{ // lambda functions DExpr → DExpr
 	static DLambda staticSimplify(DVar var,DExpr expr,DExpr facts=one){
 		if(auto dbvar=cast(DBoundVar)var){
 			auto nesting=dbvar.i-1;
-			auto tmp=new DVar("tmp"); // TODO: get rid of this!
+			auto tmp=freshVar(); // TODO: get rid of this!
 			auto nexpr=unbind(dBoundVar(1),expr.incBoundVar(-nesting,false),tmp);
 			auto r=staticSimplify(tmp,nexpr,facts);
 			return r?r.incBoundVar(nesting,false):null;
@@ -3586,7 +3598,7 @@ auto dArray(DExpr length,DLambda entries){
 
 auto dArray(DExpr length){ return dArray(length,dLambda(dBoundVar(1),zero)); }
 auto dArray(DExpr[] entries){
-	auto tmp=new DVar("tmp"); // TODO: get rid of this!
+	auto tmp=freshVar(); // TODO: get rid of this!
 	// TODO: not necessarily very clean for types that are not real numbers, but can be interpreted in terms of linear algebra
 	DExpr body_=zero;
 	foreach(i,e;entries) body_=body_+dIvr(DIvr.Type.eqZ,tmp-i)*entries[i];
@@ -3735,11 +3747,11 @@ bool hasFreeVars(DExpr e){ foreach(x;e.freeVars) return true; return false; }
 // derived functions
 
 DExpr dGamma(DExpr t){
-	auto x=new DVar("tmp"); // TODO: get rid of this
+	auto x=freshVar(); // TODO: get rid of this
 	return dInt(x,x^^(t-1)*dE^^(-x)*dIvr(DIvr.Type.leZ,-x));
 }
 
 DExpr dBeta(DExpr x,DExpr y){ // constraints: x>0 and y>0
-	auto t=new DVar("tmp"); // TODO: get rid of this
+	auto t=freshVar(); // TODO: get rid of this
 	return dInt(t,dBounded!"[]"(t,zero,one)*t^^(x-1)*(1-t)^^(y-1));
 }

@@ -19,7 +19,6 @@ dat Filter{
     }
 }
 
-
 def main(){
     data := [1,3,6,10,15];
     filter := Filter(0,0,0);
