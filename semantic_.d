@@ -84,6 +84,7 @@ Expression presemantic(Declaration expr,Scope sc){
 				auto thisid=new Identifier("this");
 				id.loc=fd.loc;
 				id.meaning=fd.thisRef;
+				id.type=dsc.decl.dtype;
 				id.sstate=SemState.completed;
 				auto rete=new ReturnExp(thisid);
 				rete.loc=id.loc;
@@ -363,6 +364,7 @@ Expression semantic(Expression expr,Scope sc){
 					auto id=new Identifier(constructor.name.name);
 					id.loc=fun.loc;
 					id.meaning=constructor;
+					id.type=constructor.ftype;
 					id.sstate=SemState.completed;
 					ce.e=id;
 				}

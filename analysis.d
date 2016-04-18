@@ -89,8 +89,15 @@ private struct Analyzer{
 								args~=a;
 							}else unwind();
 						}
-						if(thisExp) args~=thisExp;
-						auto r=dist.call(summary,args);
+						if(thisExp&&!fun.isConstructor) args~=thisExp;
+						auto funty=cast(FunTy)ce.e.type;
+						assert(!!funty);
+						auto tuplety=cast(TupleTy)funty.dom;
+						assert(!!tuplety);
+						auto types=tuplety.types;
+						if(thisExp&&!fun.isConstructor)
+							types~=fe.e.type; // TODO: this is wasteful
+						auto r=dist.call(summary,args,types);
 						if(thisExp&&!fun.isConstructor){
 							DExpr thisr;
 							if(auto tpl=cast(DTuple)r){

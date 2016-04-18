@@ -267,7 +267,7 @@ class Distribution{
 		distribution=(dIvr(DIvr.Type.neqZ,factor)*(distribution/factor)).simplify(one);
 		error=(dIvr(DIvr.Type.eqZ,factor)+dIvr(DIvr.Type.neqZ,factor)*(error/factor)).simplify(one);
 	}
-	DExpr call(Distribution q,DExpr[] args){
+	DExpr call(Distribution q,DExpr[] args,Type[] ty){
 		DExpr rdist=q.distribution;
 		DExpr rerr=q.error;
 		import hashtable;
@@ -280,10 +280,10 @@ class Distribution{
 		}
 		DVar[] vars;
 		auto oldDist=distribution;
-		foreach(a;args){
+		foreach(i,a;args){
 			auto var=getTmpVar("__arg");
 			vars~=var;
-			oldDist=oldDist*dDelta(var-a);
+			oldDist=oldDist*dDelta(var,a,ty[i]);
 		}
 		distribution = rdist.substituteFun("q".dFunVar,oldDist,vars,context);
 		auto nerror = rerr.substituteFun("q".dFunVar,oldDist,vars,context);
