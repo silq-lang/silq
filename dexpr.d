@@ -3402,7 +3402,7 @@ class DRUpdate: DOp{
 		return Precedence.index; // TODO: ok? (there is no precedence to the rhs)
 	}
 	override string toStringImpl(Format formatting, Precedence prec){
-		return addp(prec, e.toStringImpl(formatting,Precedence.index)~"{"~f~
+		return addp(prec, e.toStringImpl(formatting,Precedence.index)~"{."~f~
 					" ↦ "~n.toStringImpl(formatting,Precedence.none)~"}");
 	}
 

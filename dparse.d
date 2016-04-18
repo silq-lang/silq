@@ -258,6 +258,19 @@ struct DParser{
 				return dArray(len,dLambda(var,expr));
 			}
 		}
+		if(cur()=='{'){
+			next();
+			DExpr[string] values;
+			while(cur()=='.'){
+				next();
+				auto f=parseIdentifier();
+				expect('↦');
+				auto e=parseDExpr();
+				values[f]=e;
+			}
+			expect('}');
+			return dRecord(values);
+		}
 		if(cur()=='∞'){ next(); return dInf; }
 		if(cur()=='[') return parseDIvr();
 		if(cur()=='δ'||code.startsWith("delta")) return parseDDelta();
@@ -287,7 +300,7 @@ struct DParser{
 
 	DExpr parseIndex(){
 		auto e=parseBase();
-		while(cur()=='['||cur()=='.'){
+		while(cur()=='['||cur()=='{'||cur()=='.'){
 			if(cur()=='['){
 				next();
 				auto i=parseDExpr();
@@ -297,6 +310,14 @@ struct DParser{
 					e=dIUpdate(e,i,n);
 				}else e=dIndex(e,i);
 				expect(']');
+			}else if(cur()=='{'){
+				next();
+				expect('.');
+				auto f=parseIdentifier();
+				expect('↦');
+				auto n=parseDExpr();
+				e=dRUpdate(e,f,n);
+				expect('}');
 			}else{
 				assert(cur()=='.');
 				next();
