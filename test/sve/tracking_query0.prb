@@ -11,5 +11,5 @@ def main(){ // tracking
         which := Uniform(0,1);
 	tracking := if which < 0.05 { Uniform(0,10) } else { if which < 0.9 { Gauss(d,2) } else { T() }};
     }
-    return d;
+    return d; // expected: [-10+d≤0]·[-d≤0]·⅟10
 }
