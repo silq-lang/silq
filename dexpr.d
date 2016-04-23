@@ -681,7 +681,7 @@ class DMult: DCommutAssocOp{
 	}
 	override DExpr incBoundVar(int di,bool bindersOnly){
 		DExprSet res;
-		foreach(f;factors) insert(res,f.incBoundVar(di,bindersOnly));
+		foreach(f;factors) res.insert(f.incBoundVar(di,bindersOnly)); // TODO: ok?
 		return dMult(res);
 	}
 
@@ -1947,7 +1947,7 @@ class DIvr: DExpr{ // iverson brackets
 		if(type==Type.lZ) return (dIvr(Type.leZ,e)*dIvr(Type.neqZ,e)).simplify(facts);
 		if(type==Type.eqZ||type==Type.neqZ){
 			auto f=e.getFractionalFactor();
-			if(f!=one && f!=zero) return dIvr(type,e/f).simplify(facts);
+			if(f!=one && f!=zero && f!=mone) return dIvr(type,e/f).simplify(facts);
 		}
 		foreach(v;e.freeVars()){ // TODO: do this right
 			if(auto fct=factorDIvr!(e=>dIvr(type,e))(e)) return fct;
@@ -3519,7 +3519,11 @@ class DLambda: DOp{ // lambda functions DExpr → DExpr
 			return r?r.incBoundVar(nesting,false):null;
 		}
 		auto nexpr=expr.simplify(facts);
-		if(nexpr !is expr) return dLambda(var,nexpr);
+		if(nexpr !is expr){
+			auto r=dLambda(var,nexpr).simplify(facts);
+			assert(!r||cast(DLambda)r);
+			return cast(DLambda)r;
+		}
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){
@@ -3528,8 +3532,13 @@ class DLambda: DOp{ // lambda functions DExpr → DExpr
 	}
 }
 
-DLambda dLambda(DVar var,DExpr expr)in{assert(var&&expr);}body{
+DLambda dLambdaSmp(DVar var,DExpr expr)in{assert(var&&expr);}body{
 	if(auto r=DLambda.constructHook(var,expr)) return r;
+	return dLambda(var,expr);
+}
+
+
+DLambda dLambda(DVar var,DExpr expr)in{assert(var&&expr);}body{
 	auto dbvar=cast(DBoundVar)var;
 	if(!dbvar){
 		dbvar=dBoundVar(1);
