@@ -267,6 +267,8 @@ struct DParser{
 				expect('↦');
 				auto e=parseDExpr();
 				values[f]=e;
+				if(cur()==',') next();
+				else break;
 			}
 			expect('}');
 			return dRecord(values);

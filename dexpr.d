@@ -3282,10 +3282,21 @@ class DIndex: DOp{
 			auto nesting=dbvar.i-1; // TODO: get rid of this logic if possible
 			return arr.entries.incBoundVar(-nesting,false).apply(ni.incBoundVar(-nesting,false)).incBoundVar(nesting,false);
 		}
+		// distribute over case distinction:
+		if(auto p=cast(DPlus)ne){
+			DExprSet r;
+			foreach(s;p.summands) DPlus.insert(r,dIndex(s,ni));
+			return dPlus(r).simplify(facts);
+		}
+		if(auto m=cast(DMult)ne){
+			foreach(fc;m.factors){
+				if(cast(DTuple)fc||cast(DArray)fc)
+					return (m.withoutFactor(fc)*dIndex(fc,ni)).simplify(facts);
+			}
+		}
 		if(ne !is e || ni !is i) return dIndex(ne,ni);
 		return null;
 	}
-	
 	static DExpr constructHook(DExpr e,DExpr i){
 		return staticSimplify(e,i);
 	}
@@ -3663,6 +3674,18 @@ class DField: DOp{
 		}
 		if(auto rec=cast(DRecord)e)
 			if(f in rec.values) return rec.values[f];
+		// distribute over case distinction:
+		if(auto p=cast(DPlus)e){
+			DExprSet r;
+			foreach(s;p.summands) DPlus.insert(r,dField(s,f));
+			return dPlus(r).simplify(facts);
+		}
+		if(auto m=cast(DMult)e){
+			foreach(fc;m.factors){
+				if(cast(DTuple)fc||cast(DArray)fc||cast(DRecord)fc)
+					return (m.withoutFactor(fc)*dField(fc,f)).simplify(facts);
+			}
+		}
 		if(ne !is e) return dField(ne,f);
 		return null;
 	}

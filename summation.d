@@ -87,8 +87,9 @@ DExpr computeSum(DVar var,DExpr expr,DExpr facts=one){
 		auto low=ceildiv(ndl[0],ndl[1]);
 		auto up=floordiv(ndu[0],ndu[1]);
 		DExprSet s;
-		foreach(i;low..up+1)
-			DPlus.insert(s,nonIvrs.substitute(var,dℕ(i)).simplify(one));
+		if(low<=up) foreach(i;low..up+1){ // TODO: report bug in std.bigint (the if condition should not be necessary)
+			DPlus.insert(s,nonIvrs.substitute(var,dℕ(i)).simplify(facts));
+		}
 		return dPlus(s);
 	}
 	return null;
