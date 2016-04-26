@@ -102,6 +102,8 @@ private struct Analyzer{
 							DExpr thisr;
 							if(auto tpl=cast(DTuple)r){
 								thisr=tpl.values[$-1];
+								if(tpl.length==2) r=tpl.values[0];
+								else r=dTuple(tpl.values[0..$-1]);
 							}else{
 								thisr=r;
 								r=dTuple([]);
