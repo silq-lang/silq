@@ -40,16 +40,8 @@ DExpr bernoulliPDF(DVar var,DExpr p){
 }
 
 DExpr uniformIntPDFNnorm(DVar var,DExpr a,DExpr b){
-	// TODO: remove this hack!
-	if(auto ca=cast(Dℕ)a) if(auto cb=cast(Dℕ)b){
-		DExprSet r;
-		for(ℕ x=ca.c;x<=cb.c;x++)
-			DPlus.insert(r,dDelta(var-x));
-		return dPlus(r)/(b-a+1);
-	}
-	return dIvr(DIvr.Type.leZ,a-var)*dIvr(DIvr.Type.leZ,var-b)*dDelta(dSin(dΠ*var)/dΠ);
-	/+auto tmp=freshVar(); // TODO: get rid of this!
-	return dSumSmp(tmp,dBounded!"[]"(tmp,a,b)*dDelta(tmp-var));+/
+	auto tmp=freshVar(); // TODO: get rid of this!
+	return dSumSmp(tmp,dBounded!"[]"(tmp,a,b)*dDelta(var-tmp));
 }
 
 DExpr uniformIntPDF(DVar var,DExpr a,DExpr b){
