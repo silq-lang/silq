@@ -109,8 +109,9 @@ private struct Analyzer{
 								r=dTuple([]);
 							}
 							assert(thisr&&fe);
-							if(auto idthis=cast(Identifier)fe.e)
-								dist.assign(dVar(idthis.name),thisr,idthis.type,true);
+							assignTo(fe.e,thisr,fe.e.type,ce.loc);
+							/+if(auto idthis=cast(Identifier)fe.e) // TODO: array[index].method
+								dist.assign(dVar(idthis.name),thisr,idthis.type,true);+/
 						}
 						if(!cast(DTuple)r&&cast(TupleTy)funty.cod) r=dTuple([r]);
 						return r;
@@ -144,9 +145,9 @@ private struct Analyzer{
 						auto var=dist.getTmpVar("__g");
 						dist.distribute(truncGaussianPDF(var,μ,σsq, a, b));
 						return var;
-						
+
 					case "Pareto":
-					        if(ce.args.length!=2){
+						if(ce.args.length!=2){
 							err.error("expected two arguments (a,b) to Pareto",ce.loc);
 							unwind();
 						}
@@ -226,7 +227,7 @@ private struct Analyzer{
 						if(idd && idd.name in arrays){
 							DExpr sum=zero;
 							auto array=arrays[idd.name];
-							
+
 							foreach(x;array){
 								dist.assertTrue(dIvr(DIvr.Type.leZ,-x),"probability of category should be non-negative");
 								sum=sum+x;
@@ -277,7 +278,7 @@ private struct Analyzer{
 						dist.assertTrue(dIvr(DIvr.Type.lZ,-b),"b must be positive");
 						auto var=dist.getTmpVar("__γ");
 						dist.distribute(laplacePDF(var,μ,b));
-						return var;						
+						return var;
 					case "Exp","Exponential":
 						if(ce.args.length!=1){
 							err.error(text("expected one argument (λ) to ",id.name),ce.loc);
@@ -416,7 +417,7 @@ private struct Analyzer{
 				dist=athen.dist.join(dist,aothw.dist);
 				foreach(k,v;deterministic){
 					if(k in athen.deterministic && k in aothw.deterministic
-					&& athen.deterministic[k] is aothw.deterministic[k]){
+															&& athen.deterministic[k] is aothw.deterministic[k]){
 						deterministic[k]=athen.deterministic[k];
 					}else deterministic.remove(k);
 				}
@@ -626,6 +627,67 @@ private struct Analyzer{
 		}
 	}
 
+	void assignTo(Expression lhs,DExpr rhs,Type ty,Location loc){
+		if(!rhs) return;
+		void assignVar(Identifier id,DExpr rhs,Type ty){
+			if(id.name !in arrays){
+				if(auto v=dist.lookupVar(id.name)){
+					dist.assign(v,rhs,ty);
+					trackDeterministic(v,rhs,ty);
+				}else err.error("undefined variable '"~id.name~"'",id.loc);
+			}else err.error("reassigning array unsupported",lhs.loc);
+		}
+		if(auto id=cast(Identifier)lhs){
+			assignVar(id,rhs,ty);
+		}else if(auto idx=cast(IndexExp)lhs){
+			if(auto id=cast(Identifier)idx.e){
+				if(id.name in arrays){
+					if(auto cidx=indexArray(idx)){
+						if(auto v=cast(DVar)cidx){
+							dist.assign(v,rhs?rhs:zero,ty);
+							trackDeterministic(v,rhs,ty);
+						}else{
+							err.error(text("array is not writeable"),lhs.loc);
+						}
+					}
+					return;
+				}
+			}
+			if(cast(TupleTy)idx.e.type||cast(ArrayTy)idx.e.type){
+				auto old=transformExp(idx.e);
+				assert(idx.a.length==1);
+				auto index=transformExp(idx.a[0]);
+				if(old&&index&&rhs){
+					dist.assertTrue(dIvr(DIvr.Type.lZ,index-dField(old,"length")),"array access out of bounds"); // TODO: check that index is an integer.
+					assignTo(idx.e,dIUpdate(old,index,rhs),idx.e.type,loc);
+				}
+			}else{
+				err.error(text("unsupported type '",idx.e.type,"' for index expression"),lhs.loc);
+			}
+		}else if(auto fe=cast(FieldExp)lhs){
+			if(cast(AggregateTy)fe.e.type){
+				auto old=transformExp(fe.e);
+				if(old) assignTo(fe.e,dRUpdate(old,fe.f.name,rhs),fe.e.type,loc);
+			}
+		}else if(auto tpl=cast(TupleExp)lhs){
+			auto tt=cast(TupleTy)ty;
+			assert(!!tt);
+			auto dtpl=cast(DTuple)rhs;
+			if(rhs&&(!dtpl||dtpl.length!=tpl.length)){
+				err.error(text("inconsistent number of tuple entries for assignment: ",tpl.length," vs. ",(dtpl?dtpl.length:1)),loc);
+				rhs=dtpl=null;
+			}
+			if(dtpl){
+				auto tmp=iota(tpl.e.length).map!(_=>dist.getVar("__tpltmp")).array;
+				foreach(k,de;dtpl.values) dist.initialize(tmp[k],de,tt.types[k]);
+				foreach(k,exp;tpl.e) assignTo(exp,tmp[k],tt.types[k],loc);
+			}
+		}else{
+		LbadAssgnmLhs:
+			err.error("invalid left hand side for assignment",lhs.loc);
+		}
+	}
+
 	Distribution analyze(CompoundExp ce,FunctionDef isMethodBody=null)in{assert(!!ce);}body{
 		foreach(i,e;ce.s){
 			/+writeln("statement: ",e);
@@ -650,10 +712,10 @@ private struct Analyzer{
 					if(auto call=cast(CallExp)de.e2){
 						if(auto cid=cast(Identifier)call.e){
 							switch(cid.name){
-								case "array":
-								 isSpecial=true;
-								 evaluateArrayCall(id,call);
-								 break;
+							case "array":
+								isSpecial=true;
+								evaluateArrayCall(id,call);
+								break;
 							case "readCSV":
 								isSpecial=true;
 								evaluateReadCSVCall(id,call);
@@ -687,67 +749,7 @@ private struct Analyzer{
 					err.error("left hand side of definition should be identifier or tuple of identifiers",de.e1.loc);
 				}
 			}else if(auto ae=cast(AssignExp)e){
-				void assignTo(Expression lhs,DExpr rhs,Type ty){
-					if(!rhs) return;
-					void assignVar(Identifier id,DExpr rhs,Type ty){
-						if(id.name !in arrays){
-							if(auto v=dist.lookupVar(id.name)){
-								dist.assign(v,rhs,ty);
-								trackDeterministic(v,rhs,ty);
-							}else err.error("undefined variable '"~id.name~"'",id.loc);
-						}else err.error("reassigning array unsupported",lhs.loc);
-					}
-					if(auto id=cast(Identifier)lhs){
-						assignVar(id,rhs,ty);
-					}else if(auto idx=cast(IndexExp)lhs){
-						if(auto id=cast(Identifier)idx.e){
-							if(id.name in arrays){
-								if(auto cidx=indexArray(idx)){
-									if(auto v=cast(DVar)cidx){
-										dist.assign(v,rhs?rhs:zero,ty);
-										trackDeterministic(v,rhs,ty);
-									}else{
-										err.error(text("array is not writeable"),lhs.loc);
-									}
-								}
-								return;
-							}
-						}
-						if(cast(TupleTy)idx.e.type||cast(ArrayTy)idx.e.type){
-							auto old=transformExp(idx.e);
-							assert(idx.a.length==1);
-							auto index=transformExp(idx.a[0]);
-							if(old&&index&&rhs){
-								dist.assertTrue(dIvr(DIvr.Type.lZ,index-dField(old,"length")),"array access out of bounds"); // TODO: check that index is an integer.
-								assignTo(idx.e,dIUpdate(old,index,rhs),idx.e.type);
-							}
-						}else{
-							err.error(text("unsupported type '",idx.e.type,"' for index expression"),lhs.loc);
-						}
-					}else if(auto fe=cast(FieldExp)lhs){
-						if(cast(AggregateTy)fe.e.type){
-							auto old=transformExp(fe.e);
-							if(old) assignTo(fe.e,dRUpdate(old,fe.f.name,rhs),fe.e.type);
-						}
-					}else if(auto tpl=cast(TupleExp)lhs){
-						auto tt=cast(TupleTy)ty;
-						assert(!!tt);
-						auto dtpl=cast(DTuple)rhs;
-						if(rhs&&(!dtpl||dtpl.length!=tpl.length)){
-							err.error(text("inconsistent number of tuple entries for assignment: ",tpl.length," vs. ",(dtpl?dtpl.length:1)),ae.loc);
-							rhs=dtpl=null;
-						}
-						if(dtpl){
-							auto tmp=iota(tpl.e.length).map!(_=>dist.getVar("__tpltmp")).array;
-							foreach(k,de;dtpl.values) dist.initialize(tmp[k],de,tt.types[k]);
-							foreach(k,exp;tpl.e) assignTo(exp,tmp[k],tt.types[k]);
-						}					
-					}else{
-					LbadAssgnmLhs:
-						err.error("invalid left hand side for assignment",lhs.loc);
-					}
-				}
-				assignTo(ae.e1,transformExp(ae.e2),ae.e2.type);
+				assignTo(ae.e1,transformExp(ae.e2),ae.e2.type,ae.loc);
 			}else if(auto call=cast(CallExp)e){
 				transformExp(call);
 				dist.marginalizeTemporaries();
@@ -764,7 +766,7 @@ private struct Analyzer{
 					dist=dthen.join(dist,dothw);
 					foreach(k,v;deterministic){
 						if(k in athen.deterministic && k in aothw.deterministic
-						&& athen.deterministic[k] is aothw.deterministic[k]){
+																&& athen.deterministic[k] is aothw.deterministic[k]){
 							deterministic[k]=athen.deterministic[k];
 						}else deterministic.remove(k);
 					}
@@ -859,7 +861,7 @@ private struct Analyzer{
 					auto ex=re.expected.strip;
 					if(ex.strip.startsWith("TODO:")){
 						todo=true;
-						ex=ex[" TODO:".length..$].strip;
+						ex=ex["TODO:".length..$].strip;
 					}
 					if(!expected.exists){
 						expected=Expected(true,todo,ex);
