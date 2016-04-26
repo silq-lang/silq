@@ -1,8 +1,5 @@
 // skipped: too slow at the moment
 
-// TODO: 2D-arrays
-// TODO: array literals
-// TODO: pass arrays as arguments
 def main(){
     /+//clicks := [[1,1], [1,0], [1,1], [0,0], [0,0]]
     clicks_0 := array(5); clicks_1 := array(5);

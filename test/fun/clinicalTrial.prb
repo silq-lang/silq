@@ -1,4 +1,4 @@
-// TODO: array literals
+// TODO: make array literals as fast as built-in 'array' calls
 def main(){
     //controlGroup := [0,0,1,0,0];
     controlGroup := array(5);
