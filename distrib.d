@@ -231,7 +231,7 @@ class Distribution{
 	}
 	void assign(DVar var,DExpr exp,Type ty,bool noMarginalize=false){
 		if(distribution is zero) return;
-		assert(distribution.hasFreeVar(var),text(var));
+		// assert(distribution.hasFreeVar(var)); // ∫dx0
 		auto nvar=getVar(var.name);
 		distribution=distribution.substitute(var,nvar);
 		exp=exp.substitute(var,nvar);
