@@ -1,0 +1,13 @@
+dat Foo{
+    def Foo(){}
+    def foo(){
+    	return (2,);
+    }
+}
+def foo(){
+    return (1,);
+}
+def main(){
+    x := foo();
+    return (x[0],Foo().foo()); // expected: δ[-r₁+1]·δ_r₂[(2,)]
+}

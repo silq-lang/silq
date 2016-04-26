@@ -112,6 +112,7 @@ private struct Analyzer{
 							if(auto idthis=cast(Identifier)fe.e)
 								dist.assign(dVar(idthis.name),thisr,idthis.type,true);
 						}
+						if(!cast(DTuple)r&&cast(TupleTy)funty.cod) r=dTuple([r]);
 						return r;
 					}
 					switch(id.name){
