@@ -356,7 +356,7 @@ Expression semantic(Expression expr,Scope sc){
 			auto constructor=cast(FunctionDef)decl.body_.ascope_.lookup(decl.name);
 			auto ty=cast(FunTy)typeForDecl(constructor);
 			if(!constructor||!ty){
-				sc.error(format("no constructor for type '%s'",fun.type),ce.loc);
+				sc.error(format("no constructor for type '%s'",fun),ce.loc);
 				ce.sstate=SemState.error;
 			}else{
 				ce=checkFunCall(ty);
