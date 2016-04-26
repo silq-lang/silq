@@ -49,10 +49,10 @@ DExpr uniformIntPDF(DVar var,DExpr a,DExpr b){
 	return nnorm/dIntSmp(var,nnorm);
 }
 
-/+ TODO:
 DExpr poissonPDF(DVar var,DExpr λ){
-	
-}+/
+	auto tmp=freshVar();
+	return dE^^-λ*dSumSmp(tmp,dIvr(DIvr.Type.leZ,-tmp)*dDelta(var-tmp)*λ^^-tmp/dGamma(tmp+1));
+}
 
 DExpr betaPDF(DVar var,DExpr α,DExpr β){
 	auto nnorm=var^^(α-1)*(1-var)^^(β-1)*dBounded!"[]"(var,zero,one);

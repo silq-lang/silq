@@ -180,7 +180,7 @@ bool isBuiltIn(Identifier id){
 	case "array":
 	case "readCSV":
 	case "CosUnifDist":
-	case "Rayleigh","Bernoulli","Exp","Exponential","StudentT":
+	case "Rayleigh","Bernoulli","Exp","Exponential","StudentT","Poisson":
 	case "Gauss","Pareto","Uniform","UniformInt","Beta","Gamma","Laplace","Weibull":
 	case "TruncatedGauss":
 	case "FromMarginal","SampleFrom": 
@@ -196,7 +196,7 @@ Expression builtIn(Identifier id){
 	case "array": t=funTy(tupleTy([ℝ]),arrayTy(ℝ)); break;
 	case "readCSV": t=funTy(tupleTy([stringTy]),arrayTy(ℝ)); break;
 	case "CosUnifDist": t=funTy(unit,ℝ); break; // TDOO: remove
-	case "Rayleigh","Bernoulli","Exp","Exponential","StudentT": t=funTy(tupleTy([ℝ]),ℝ); break;
+	case "Rayleigh","Bernoulli","Exp","Exponential","StudentT","Poisson": t=funTy(tupleTy([ℝ]),ℝ); break;
 	case "Gauss","Pareto","Uniform","UniformInt","Beta","Gamma","Laplace","Weibull":
 		t=funTy(tupleTy([ℝ,ℝ]),ℝ); break;
 	case "TruncatedGauss":

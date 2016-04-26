@@ -203,6 +203,16 @@ private struct Analyzer{
 						auto var=dist.getTmpVar("__u");
 						dist.distribute(nnorm.substitute(tmp,var)/norm);
 						return var;
+					case "Poisson":
+						if(ce.args.length!=1){
+							err.error("expected one argument (λ) to Poisson",ce.loc);
+							unwind();
+						}
+						auto λ=doIt(ce.args[0]);
+						dist.assertTrue(dIvr(DIvr.Type.lZ,-λ),"λ must be positive");
+						auto var=dist.getTmpVar("__p");
+						dist.distribute(poissonPDF(var,λ));
+						return var;
 					case "Categorical":
 						if(ce.args.length!=1){
 							err.error("expected one argument (ps) to Categorical",ce.loc);
