@@ -116,7 +116,7 @@ struct Comparison{
 }
 
 Comparison[] getResults(string source){
-	auto output = shell("../psy "~source~" 2>&1").splitLines;
+	auto output = shell("../psi "~source~" 2>&1").splitLines;
 	Comparison[] result;
 	foreach(i,l;output){
 		switch(l.strip){
