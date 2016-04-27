@@ -13,5 +13,5 @@ def main(){
     for i in [0..2){
         a[UniformInt(0,1)].inc(1);
     }
-    return a[0]; // expected: TODO: δ_r₁[{.x ↦ 0}]·⅟4+δ_r₁[{.x ↦ 1}]·⅟2+δ_r₁[{.x ↦ 2}]·⅟4
+    return a[0]; // expected: δ_r₁[{.x ↦ 0}]·⅟4+δ_r₁[{.x ↦ 1}]·⅟2+δ_r₁[{.x ↦ 2}]·⅟4
 }

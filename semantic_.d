@@ -4,6 +4,11 @@ import lexer,scope_,expression,type,declaration,error,util;
 
 alias CommaExp=BinaryExp!(Tok!",");
 alias AssignExp=BinaryExp!(Tok!"=");
+alias AddAssignExp=BinaryExp!(Tok!"+=");
+alias SubAssignExp=BinaryExp!(Tok!"-=");
+alias MulAssignExp=BinaryExp!(Tok!"*=");
+alias DivAssignExp=BinaryExp!(Tok!"/=");
+alias PowAssignExp=BinaryExp!(Tok!"^=");
 alias AddExp=BinaryExp!(Tok!"+");
 alias SubExp=BinaryExp!(Tok!"-");
 alias MulExp=BinaryExp!(Tok!"*");
@@ -473,6 +478,39 @@ Expression semantic(Expression expr,Scope sc){
 			ae.sstate=SemState.error;
 		}
 		return ae;
+	}
+	if(cast(AddAssignExp)expr||cast(SubAssignExp)expr||cast(MulAssignExp)expr||cast(DivAssignExp)expr||cast(PowAssignExp)expr){
+		auto be=cast(ABinaryExp)expr;
+		assert(be);
+		be.e1=semantic(be.e1,sc);
+		be.e2=semantic(be.e2,sc);
+		propErr(be.e1,be);
+		propErr(be.e2,be);
+		if(be.sstate==SemState.error)
+			return be;
+		void checkULhs(Expression lhs){
+			if(auto id=cast(Identifier)lhs){
+				if(!cast(VarDecl)id.meaning){
+					sc.error("can only assign to variables",expr.loc);
+					be.sstate=SemState.error;
+				}
+			}else if(auto idx=cast(IndexExp)lhs){
+				checkULhs(idx.e);
+			}else if(auto fe=cast(FieldExp)lhs){
+				checkULhs(fe.e);
+			}else{
+			LbadAssgnmLhs:
+				sc.error(format("cannot update-assign to '%s'",lhs),be.e1.loc);
+				be.sstate=SemState.error;
+			}
+		}
+		checkULhs(be.e1);
+		if(be.sstate!=SemState.error&&be.e1.type !is ℝ || be.e2.type !is ℝ){
+			sc.error(format("incompatible operand types '%s' and '%s' (should be ℝ and ℝ)",be.e1.type,be.e2.type),be.loc);
+			be.sstate=SemState.error;
+		}
+		be.type=unit;
+		return be;
 	}
 	if(auto id=cast(Identifier)expr){
 		if(auto r=builtIn(id))

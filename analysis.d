@@ -109,9 +109,7 @@ private struct Analyzer{
 								r=dTuple([]);
 							}
 							assert(thisr&&fe);
-							assignTo(fe.e,thisr,fe.e.type,ce.loc);
-							/+if(auto idthis=cast(Identifier)fe.e) // TODO: array[index].method
-								dist.assign(dVar(idthis.name),thisr,idthis.type,true);+/
+							assignTo(thisExp,thisr,fe.e.type,ce.loc);
 						}
 						if(!cast(DTuple)r&&cast(TupleTy)funty.cod) r=dTuple([r]);
 						return r;
@@ -145,7 +143,6 @@ private struct Analyzer{
 						auto var=dist.getTmpVar("__g");
 						dist.distribute(truncGaussianPDF(var,μ,σsq, a, b));
 						return var;
-
 					case "Pareto":
 						if(ce.args.length!=2){
 							err.error("expected two arguments (a,b) to Pareto",ce.loc);
@@ -157,7 +154,6 @@ private struct Analyzer{
 						auto var=dist.getTmpVar("__g");
 						dist.distribute(paretoPDF(var,a,b));
 						return var;
-
 					case "Rayleigh":
 						if(ce.args.length!=1){
 							err.error("expected one argument (σ²) to Rayleigh",ce.loc);
@@ -168,12 +164,10 @@ private struct Analyzer{
 						auto var=dist.getTmpVar("__g");
 						dist.distribute(rayleighPDF(var,σsq));
 						return var;
-
 					case "CosUnifDist": // TODO: Remove
 						auto var=dist.getTmpVar("__g");
 						dist.distribute(one/dΠ*(1-var^^2)^^-(one/2) * dBounded!"[]"(var,-one, one) * dIvr(DIvr.Type.neqZ,var-one)*dIvr(DIvr.Type.neqZ,var+one));
 						return var;
-
 					case "Uniform":
 						if(ce.args.length!=2){
 							err.error("expected two arguments (a,b) to Uniform",ce.loc);
@@ -376,7 +370,8 @@ private struct Analyzer{
 					auto de=doIt(idx.e);
 					auto di=doIt(idx.a[0]);
 					dist.assertTrue(dIvr(DIvr.Type.lZ,di-dField(de,"length")),"array access out of bounds"); // TODO: check that index is an integer.
-					return dIndex(de,di);
+					auto r=dIndex(de,di);
+					return r;
 				}else if(auto tt=cast(TupleTy)idx.e.type){
 					assert(idx.a.length==1);
 					return doIt(idx.e)[doIt(idx.a[0])];
@@ -627,6 +622,30 @@ private struct Analyzer{
 		}
 	}
 
+	void assignTo(DExpr lhs,DExpr rhs,Type ty,Location loc){
+		void assignVar(DVar var,DExpr rhs,Type ty){
+			if(var.name !in arrays){
+				dist.assign(var,rhs,ty,true);
+				trackDeterministic(var,rhs,ty);
+			}else err.error("reassigning array unsupported",loc);
+		}
+		if(auto var=cast(DVar)lhs){
+			assignVar(var,rhs,ty);
+		}else if(auto idx=cast(DIndex)lhs){
+			if(auto id=cast(DVar)idx.e){
+				if(id.name in arrays){
+					err.error("unsupported",loc);
+					return;
+				}
+			}
+			assignTo(idx.e,dIUpdate(idx.e,idx.i,rhs),unit,loc); // TODO: 'unit' ok?
+		}else if(auto fe=cast(DField)lhs){
+			assignTo(fe.e,dRUpdate(fe.e,fe.f,rhs),unit,loc); // TODO: 'unit' ok?
+		}else{
+			err.error("unsupported assignment",loc);
+		}
+	}
+	
 	void assignTo(Expression lhs,DExpr rhs,Type ty,Location loc){
 		if(!rhs) return;
 		void assignVar(Identifier id,DExpr rhs,Type ty){
@@ -750,6 +769,26 @@ private struct Analyzer{
 				}
 			}else if(auto ae=cast(AssignExp)e){
 				assignTo(ae.e1,transformExp(ae.e2),ae.e2.type,ae.loc);
+			}else if(cast(AddAssignExp)e||cast(SubAssignExp)e||cast(MulAssignExp)e||cast(DivAssignExp)e||cast(PowAssignExp)e){
+				DExpr perform(DExpr a,DExpr b){
+					if(cast(AddAssignExp)e) return a+b;
+					if(cast(SubAssignExp)e) return a-b;
+					if(cast(MulAssignExp)e) return a*b;
+					if(cast(DivAssignExp)e){
+						dist.assertTrue(dIvr(DIvr.Type.neqZ,b),"division by zero");
+						return a/b;
+					}
+					if(cast(PowAssignExp)e){
+						// TODO: enforce constraints on domain
+						return a^^b;
+					}
+					assert(0);
+				}
+				auto be=cast(ABinaryExp)e;
+				assert(!!be);
+				auto lhs=transformExp(be.e1);
+				auto rhs=transformExp(be.e2);
+				assignTo(lhs,perform(lhs,rhs),be.e2.type,be.loc);
 			}else if(auto call=cast(CallExp)e){
 				transformExp(call);
 				dist.marginalizeTemporaries();

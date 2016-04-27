@@ -452,16 +452,7 @@ struct Parser{
 						r~=mixin(X!q{case Tok!"@(x)":
 							nextToken();
 							auto right=parseExpression(rbp!(Tok!"@(x)"));
-							static if(!"@(x)".endsWith("=")||
-									  "@(x)"=="=="||"@(x)"==":="||"@(x)"=="="||
-									  "@(x)"=="<="||"@(x)"==">="||"@(x)"=="!="
-									  ){
-								return res=New!(BinaryExp!(Tok!"@(x)"))(left,right);
-							}else{
-								right=New!(BinaryExp!(Tok!"@(x[0..$-1])"))(left,right);
-								right.loc=loc.to(ptok.loc);
-								return res=New!(BinaryExp!(Tok!"="))(left,right); // TODO: this can lead to bad results. fix this
-							}
+							return res=New!(BinaryExp!(Tok!"@(x)"))(left,right);
 						});
 				return r;
 			}());

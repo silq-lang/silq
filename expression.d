@@ -114,9 +114,13 @@ class CallExp: Expression{
 	}
 }
 
-class BinaryExp(TokenType op): Expression{
+abstract class ABinaryExp: Expression{
 	Expression e1,e2;
 	this(Expression left, Expression right){e1=left; e2=right;}
+}
+
+class BinaryExp(TokenType op): ABinaryExp{
+	this(Expression left, Expression right){super(left,right);}
 
 	override string toString(){
 		return _brk(e1.toString() ~ " "~TokChars!op~" "~e2.toString());
