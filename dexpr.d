@@ -3283,6 +3283,7 @@ class DIndex: DOp{
 			return arr.entries.incBoundVar(-nesting,false).apply(ni.incBoundVar(-nesting,false)).incBoundVar(nesting,false);
 		}
 		// distribute over case distinction:
+		if(e is zero) return zero;
 		if(auto p=cast(DPlus)ne){
 			DExprSet r;
 			foreach(s;p.summands) DPlus.insert(r,dIndex(s,ni));
@@ -3675,6 +3676,7 @@ class DField: DOp{
 		if(auto rec=cast(DRecord)e)
 			if(f in rec.values) return rec.values[f];
 		// distribute over case distinction:
+		if(e is zero) return zero;
 		if(auto p=cast(DPlus)e){
 			DExprSet r;
 			foreach(s;p.summands) DPlus.insert(r,dField(s,f));
