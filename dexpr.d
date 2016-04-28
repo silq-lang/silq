@@ -352,6 +352,30 @@ abstract class DOp: DExpr{
 	}
 }
 
+
+abstract class DAssocOp: DOp{
+	DExpr[] operands;
+	protected mixin template Constructor(){ private this(DExpr[] e)in{assert(e.length>1); }body{ operands=e; } }
+	override string toStringImpl(Format formatting,Precedence prec){
+		string r;
+		foreach(o;operands) r~=symbol(formatting)~o.toStringImpl(formatting,prec);
+		return addp(prec, r[symbol(formatting).length..$]);
+	}
+	override int forEachSubExpr(scope int delegate(DExpr) dg){
+		foreach(a;operands)
+			if(auto r=dg(a))
+				return r;
+		return 0;
+	}
+	override int freeVarsImpl(scope int delegate(DVar) dg){
+		foreach(a;operands)
+			if(auto r=a.freeVarsImpl(dg))
+				return r;
+		return 0;
+	}
+}
+
+
 abstract class DCommutAssocOp: DOp{
 	DExprSet operands;
 	protected mixin template Constructor(){ private this(DExprSet e)in{assert(e.length>1); }body{ operands=e; } }
@@ -362,11 +386,31 @@ abstract class DCommutAssocOp: DOp{
 		foreach(o;ops) r~=symbol(formatting)~o;
 		return addp(prec, r[symbol(formatting).length..$]);
 	}
+	override int forEachSubExpr(scope int delegate(DExpr) dg){
+		foreach(a;operands)
+			if(auto r=dg(a))
+				return r;
+		return 0;
+	}
+	override int freeVarsImpl(scope int delegate(DVar) dg){
+		foreach(a;operands)
+			if(auto r=a.freeVarsImpl(dg))
+				return r;
+		return 0;
+	}
 }
 
+MapX!(TupleX!(typeof(typeid(DExpr)),DExpr[]),DExpr) uniqueMapAssoc;
 MapX!(TupleX!(typeof(typeid(DExpr)),DExprSet),DExpr) uniqueMapCommutAssoc;
 MapX!(TupleX!(typeof(typeid(DExpr)),DExpr,DExpr),DExpr) uniqueMapNonCommutAssoc;
 
+auto uniqueDExprAssoc(T)(DExpr[] e){
+	auto t=tuplex(typeid(T),e);
+	if(t in uniqueMapAssoc) return cast(T)uniqueMapAssoc[t];
+	auto r=new T(e);
+	uniqueMapAssoc[t]=r;
+	return r;
+}
 auto uniqueDExprCommutAssoc(T)(DExprSet e){
 	auto t=tuplex(typeid(T),e);
 	if(t in uniqueMapCommutAssoc) return cast(T)uniqueMapCommutAssoc[t];
@@ -389,6 +433,17 @@ auto uniqueDExprUnary(T)(DExpr a){
 	auto r=new T(a);
 	uniqueMapUnary[t]=r;
 	return r;
+}
+string makeConstructorAssoc(T)(){
+	enum Ts=__traits(identifier, T);
+	return "auto " ~ lowerf(Ts)~"(DExpr[] f){"
+		~"if(f.length==1) return f[0];"
+		~"if(auto r="~Ts~".constructHook(f)) return r;"
+		~"return uniqueDExprAssoc!("~__traits(identifier,T)~")(f);"
+		~"}"
+		~"auto " ~ lowerf(Ts)~"(DExpr e1,DExpr e2){"
+		~"  return "~lowerf(Ts)~"([e1,e2]);"
+		~"}";
 }
 string makeConstructorCommutAssoc(T)(){
 	enum Ts=__traits(identifier, T);
@@ -422,19 +477,6 @@ class DPlus: DCommutAssocOp{
 	override @property Precedence precedence(){ return Precedence.plus; }
 	override @property string symbol(Format formatting){ return "+"; }
 
-	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		foreach(a;operands)
-			if(auto r=dg(a))
-				return r;
-		return 0;
-	}
-
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		foreach(a;operands)
-			if(auto r=a.freeVarsImpl(dg))
-				return r;
-		return 0;
-	}
 	override DExpr substitute(DVar var,DExpr e){
 		DExprSet res;
 		foreach(s;summands) insert(res,s.substitute(var,e));
@@ -648,20 +690,6 @@ class DMult: DCommutAssocOp{
 		//if(frac[0]!=1&&frac[1]!=1) // TODO
 		// TODO: use suitable data structures
 		return super.toStringImpl(formatting,prec);
-	}
-
-	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		foreach(a;operands)
-			if(auto r=dg(a))
-				return r;
-		return 0;
-	}
-
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		foreach(a;operands)
-			if(auto r=a.freeVarsImpl(dg))
-				return r;
-		return 0;
 	}
 	override DExpr substitute(DVar var,DExpr e){
 		if(auto evar=cast(DVar)e){ // TODO: make this unnecessary, this is a hack to improve performance
@@ -3627,49 +3655,63 @@ auto dArray(DExpr[] entries){
 	return dArray(dℕ(ℕ(entries.length)),dLambda(tmp,body_));
 }
 
-class DCat: DBinaryOp{ // TODO: this should have n arguments, as it is associative!
+class DCat: DAssocOp{ // TODO: this should have n arguments, as it is associative!
 	mixin Constructor;
 	override @property Precedence precedence(){ return Precedence.plus; }
 	override @property string symbol(Format formatting){ return "~"; }
 	
 	override DExpr simplifyImpl(DExpr facts){
-		auto r=staticSimplify(operands[0],operands[1],facts);
+		auto r=staticSimplify(operands,facts);
 		return r?r:this;
 	}
 
 	override DExpr substitute(DVar var,DExpr e){
-		return operands[0].substitute(var,e)~operands[1].substitute(var,e);
+		return dCat(operands.map!(a=>a.substitute(var,e)).array);
 	}
 	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		return operands[0].substituteFun(fun,q,args,context)~operands[1].substituteFun(fun,q,args,context);
+		return dCat(operands.map!(a=>a.substituteFun(fun,q,args,context)).array);
 	}
 	override DExpr incBoundVar(int di,bool bindersOnly){
-		return operands[0].incBoundVar(di,bindersOnly)~operands[1].incBoundVar(di,bindersOnly);
+		return dCat(operands.map!(a=>a.incBoundVar(di,bindersOnly)).array);
 	}
-	static DExpr constructHook(DExpr e1,DExpr e2){
-		return staticSimplify(e1,e2);
+	static DExpr constructHook(DExpr[] operands){
+		return staticSimplify(operands);
 	}
-	private static DExpr staticSimplify(DExpr e1,DExpr e2,DExpr facts=one){
-		auto ne1=e1.simplify(facts);
-		auto ne2=e2.simplify(facts);
-		if(ne1 !is e1||ne2!is e2) return dCat(ne1,ne2).simplify(facts);
-		if(auto a1=cast(DArray)e1){
-			if(auto a2=cast(DArray)e2){
-				auto tmp=freshVar(); // TODO: get rid of this!
-				auto dbvar=cast(DBoundVar)a1.entries.var;
-				assert(!!dbvar && dbvar is a2.entries.var);
-				auto nesting=dbvar.i-1;
-				return dArray(a1.length+a2.length,
-							  dLambda(tmp,
-									  a1.entries.incBoundVar(-nesting,false).apply(tmp)*dIvr(DIvr.Type.lZ,tmp-a1.length)
-									  +a2.entries.incBoundVar(-nesting,false).apply(tmp-a1.length)*dIvr(DIvr.Type.leZ,a1.length-tmp))
-							  .incBoundVar(nesting,false));
+	private static DExpr staticSimplify(DExpr[] operands,DExpr facts=one){
+		auto nop=operands.map!(a=>a.simplify(facts)).array;
+		if(nop!=operands) return dCat(nop).simplify(facts);
+		DExpr doCat(DExpr e1,DExpr e2){
+			auto a1=cast(DArray)e1;
+			auto a2=cast(DArray)e2;
+			if(!a1||!a2) return null;
+			auto tmp=freshVar(); // TODO: get rid of this!
+			auto dbvar=cast(DBoundVar)a1.entries.var;
+			assert(!!dbvar && dbvar is a2.entries.var);
+			auto nesting=dbvar.i-1;
+			return dArray(a1.length+a2.length,
+						  dLambda(tmp,
+								  a1.entries.incBoundVar(-nesting,false).apply(tmp)*dIvr(DIvr.Type.lZ,tmp-a1.length)
+								  +a2.entries.incBoundVar(-nesting,false).apply(tmp-a1.length)*dIvr(DIvr.Type.leZ,a1.length-tmp))
+						  .incBoundVar(nesting,false));
+		}
+		nop=[];
+		foreach(i;0..operands.length-1){
+			auto e1=operands[i];
+			auto e2=operands[i+1];
+			if(cast(DArray)e1&&cast(DArray)e2){
+				nop=operands[0..i]~doCat(e1,e2);
+				foreach(j;i+2..operands.length-1){
+					if(auto cat=doCat(nop[$-1],operands[j]))
+						nop[$-1]=cat;
+					else nop~=operands[j];
+				}
+				return dCat(nop).simplify(facts);
 			}
 		}
 		return null;
 	}
 }
-mixin(makeConstructorNonCommutAssoc!DCat);
+mixin(makeConstructorAssoc!DCat);
 
 class DField: DOp{
 	DExpr e;
@@ -3717,8 +3759,12 @@ class DField: DOp{
 				return dℕ(ℕ(tpl.length));
 			if(auto arr=cast(DArray)ne)
 				return arr.length;
-			if(auto cat=cast(DCat)ne)
-				return dField(cat.operands[0],f)+dField(cat.operands[1],f);
+			if(auto cat=cast(DCat)ne){
+				DExprSet s;
+				foreach(op;cat.operands)
+					DPlus.insert(s,dField(op,f));
+				return dPlus(s).simplify(facts);
+			}
 		}
 		if(auto rec=cast(DRecord)e)
 			if(f in rec.values) return rec.values[f];
