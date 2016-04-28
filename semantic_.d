@@ -150,10 +150,11 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 			foreach(vd;vds) propErr(vd,de);
 			return de;
 		}else{
-			sc.error("left hand side definition must be identifier or tuple of identifiers",expr.loc);
+			sc.error("left hand side of definition must be identifier or tuple of identifiers",expr.loc);
 			success=false;
 		}
 		success&=expr.sstate==SemState.completed;
+		return expr;
 	}
 	if(auto tae=cast(TypeAnnotationExp)expr){
 		if(auto id=cast(Identifier)tae.e){
@@ -423,25 +424,27 @@ Expression semantic(Expression expr,Scope sc){
 	if(auto be=cast(BinaryExp!(Tok!":="))expr){
 		bool success=true;
 		auto de=cast(DefExp)makeDeclaration(be,success,sc);
-		assert(!!de);
-		assert(success && de.init is be || de.sstate==SemState.error);
+		if(!de) be.sstate=SemState.error;
+		assert(success && de && de.init is be || !de||de.sstate==SemState.error);
 		be.e2=semantic(be.e2,sc);
 		if(be.e2.sstate==SemState.completed){
 			if(auto tpl=cast(TupleExp)be.e1){
 				if(auto tt=cast(TupleTy)be.e2.type){
 					if(tpl.length!=tt.types.length){
 						sc.error(text("inconsistent number of tuple entries for definition: ",tpl.length," vs. ",tt.types.length),de.loc);
-						de.setError();
+						if(de) de.setError();
 					}
 				}else{
 					sc.error(format("cannot unpack type '%s' as a tuple",be.e2.type),de.loc);
-					de.setError();
+					if(de) de.setError();
 				}
 			}
-			de.setType(be.e2.type);
-			de.type=unit;
-		}else de.setError();
-		return expr=de;
+			if(de){
+				de.setType(be.e2.type);
+				de.type=unit;
+			}
+		}else if(de) de.setError();
+		return de?expr=de:expr;
 	}
 	if(auto ae=cast(AssignExp)expr){
 		ae.type=unit;

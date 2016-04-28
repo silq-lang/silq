@@ -3597,6 +3597,7 @@ class DArray: DExpr{
 		this.entries=entries;
 	}
 	override string toStringImpl(Format formatting,Precedence prec){
+		if(length is zero) return "[]";
 		auto r=text("[",entries.var," ↦ ",entries.expr,"] (",length,")");
 		if(prec!=Precedence.none) r="("~r~")"; // TODO: ok?
 		return r;

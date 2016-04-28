@@ -1,0 +1,25 @@
+// skipped
+// TODO
+
+dat Tree{
+    value: ℝ;
+    children: Tree[];
+    def Tree(value: ℝ,children: Tree[]){
+        this.value=value;
+        this.children=children;
+    }
+    def sum(): ℝ{ // TODO
+        s := 0;
+        for i in [0..children.length){
+            s += children[i].sum();
+        }
+        return s;
+    }
+}
+
+def main(){
+    λ := ([]: Tree[]);
+    //μ : Tree[] := []; // TODO
+    ε := Tree(3,λ);
+    return Tree(1,[ε,Tree(2,[ε,ε])]).sum();
+}
