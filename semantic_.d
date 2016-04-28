@@ -666,10 +666,7 @@ Expression semantic(Expression expr,Scope sc){
 		}
 		if(arr.e.length){
 			arr.type=arrayTy(arr.e[0].type);
-		}else{
-			sc.error("empty array literals unsupported",arr.loc); // TODO
-			arr.sstate=SemState.error;
-		}
+		}else arr.type=arrayTy(ℝ); // TODO: type inference?
 		return arr;
 	}
 	if(auto tae=cast(TypeAnnotationExp)expr){
@@ -679,6 +676,11 @@ Expression semantic(Expression expr,Scope sc){
 		propErr(tae.t,tae);
 		if(tae.sstate==SemState.error)
 			return tae;
+		if(auto arr=cast(ArrayExp)tae.e){
+			if(!arr.e.length)
+				if(auto aty=cast(ArrayTy)tae.type)
+					arr.type=aty;
+		}
 		if(tae.e.type !is tae.type){
 			sc.error(format("type is '%s', not '%s'",tae.e.type,tae.type),tae.loc);
 			tae.sstate=SemState.error;
@@ -742,7 +744,7 @@ Expression semantic(Expression expr,Scope sc){
 		if(ce.e1.type is ce.e2.type && cast(ArrayTy)ce.e1.type){
 			ce.type=ce.e1.type;
 		}else{
-			sc.error(format("incompatible types '%s' and '%s' for '%s'",ce.e1.type,ce.e2.type),ce.loc);
+			sc.error(format("incompatible types '%s' and '%s' for '~'",ce.e1.type,ce.e2.type),ce.loc);
 			ce.sstate=SemState.error;
 		}
 		return ce;

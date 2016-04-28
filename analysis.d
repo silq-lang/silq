@@ -424,6 +424,8 @@ private struct Analyzer{
 			}else if(auto arr=cast(ArrayExp)e){
 				auto dexprs=arr.e.map!doIt.array;
 				return dArray(dexprs);
+			}else if(auto tae=cast(TypeAnnotationExp)e){
+				return doIt(tae.e);
 			}else if(auto c=transformConstr(e))
 				return c;
 			err.error("unsupported",e.loc);

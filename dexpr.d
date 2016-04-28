@@ -3683,6 +3683,8 @@ class DCat: DAssocOp{ // TODO: this should have n arguments, as it is associativ
 		DExpr doCat(DExpr e1,DExpr e2){
 			auto a1=cast(DArray)e1;
 			auto a2=cast(DArray)e2;
+			if(a1&&a1.length is zero) return e2;
+			if(a2&&a2.length is zero) return e1;
 			if(!a1||!a2) return null;
 			auto tmp=freshVar(); // TODO: get rid of this!
 			auto dbvar=cast(DBoundVar)a1.entries.var;
@@ -3698,9 +3700,9 @@ class DCat: DAssocOp{ // TODO: this should have n arguments, as it is associativ
 		foreach(i;0..operands.length-1){
 			auto e1=operands[i];
 			auto e2=operands[i+1];
-			if(cast(DArray)e1&&cast(DArray)e2){
-				nop=operands[0..i]~doCat(e1,e2);
-				foreach(j;i+2..operands.length-1){
+			if(auto c=doCat(e1,e2)){
+				nop=operands[0..i]~c;
+				foreach(j;i+2..operands.length){
 					if(auto cat=doCat(nop[$-1],operands[j]))
 						nop[$-1]=cat;
 					else nop~=operands[j];
