@@ -116,7 +116,7 @@ abstract class DExpr{
 
 	// helpers for construction of DExprs:
 	enum ValidUnary(string s)=s=="-";
-	enum ValidBinary(string s)=["+","-","*","/","^^"].canFind(s);
+	enum ValidBinary(string s)=["+","-","*","/","^^","~"].canFind(s);
 	template UnaryCons(string s)if(ValidUnary!s){
 		static assert(s=="-");
 		alias UnaryCons=dUMinus;
@@ -127,6 +127,7 @@ abstract class DExpr{
 		else static if(s=="*") alias BinaryCons=dMult;
 		else static if(s=="/") alias BinaryCons=dDiv;
 		else static if(s=="^^") alias BinaryCons=dPow;
+		else static if(s=="~") alias BinaryCons=dCat;
 		else static assert(0);
 	}
 	final opUnary(string op)()if(op=="-"){ return UnaryCons!op(this); }
@@ -139,17 +140,17 @@ abstract class DExpr{
 	final opBinaryRight(string op)(long e)if(ValidBinary!op){
 		return mixin("e.dℕ "~op~" this");
 	}
-	final opBinary(string op)(ℕ e)if(ValidBinary!op){
+	final opBinary(string op)(ℕ e)if(ValidBinary!op&&op!="~"){
 		return mixin("this "~op~" e.dℕ");
 	}
-	final opBinaryRight(string op)(ℕ e)if(ValidBinary!op){
+	final opBinaryRight(string op)(ℕ e)if(ValidBinary!op&&op!="~"){
 		return mixin("e.dℕ "~op~" this");
 	}
 
-	final opBinary(string op)(real e)if(ValidBinary!op){
+	final opBinary(string op)(real e)if(ValidBinary!op&&op!="~"){
 		return mixin("this "~op~" e.dFloat");
 	}
-	final opBinaryRight(string op)(real e)if(ValidBinary!op){
+	final opBinaryRight(string op)(real e)if(ValidBinary!op&&op!="~"){
 		return mixin("e.dFloat "~op~" this");
 	}
 
@@ -342,7 +343,7 @@ private static DExpr theZero;
 @property DExpr zero(){ return theZero?theZero:(theZero=0.dℕ);}
 
 abstract class DOp: DExpr{
-	abstract string symbol(Format formatting);
+	abstract @property string symbol(Format formatting);
 	bool rightAssociative(){ return false; }
 	abstract @property Precedence precedence();
 	protected final string addp(Precedence prec, string s, Precedence myPrec=Precedence.invalid){
@@ -1047,7 +1048,7 @@ class DPow: DBinaryOp{
 	private static DExpr staticSimplify(DExpr e1,DExpr e2,DExpr facts=one){
 		auto ne1=e1.simplify(facts);
 		auto ne2=e2.simplify(facts);
-		if(ne1!is e1||ne2!is e2) return dPow(ne1,ne2);
+		if(ne1!is e1||ne2!is e2) return dPow(ne1,ne2).simplify(facts);
 		if(e1 !is mone) if(auto c=cast(Dℕ)e1) if(c.c<0) return mone^^e2*dℕ(-c.c)^^e2;
 		if(auto m=cast(DMult)e1){
 			DExprSet outside;
@@ -3626,6 +3627,50 @@ auto dArray(DExpr[] entries){
 	return dArray(dℕ(ℕ(entries.length)),dLambda(tmp,body_));
 }
 
+class DCat: DBinaryOp{ // TODO: this should have n arguments, as it is associative!
+	mixin Constructor;
+	override @property Precedence precedence(){ return Precedence.plus; }
+	override @property string symbol(Format formatting){ return "~"; }
+	
+	override DExpr simplifyImpl(DExpr facts){
+		auto r=staticSimplify(operands[0],operands[1],facts);
+		return r?r:this;
+	}
+
+	override DExpr substitute(DVar var,DExpr e){
+		return operands[0].substitute(var,e)~operands[1].substitute(var,e);
+	}
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
+		return operands[0].substituteFun(fun,q,args,context)~operands[1].substituteFun(fun,q,args,context);
+	}
+	override DExpr incBoundVar(int di,bool bindersOnly){
+		return operands[0].incBoundVar(di,bindersOnly)~operands[1].incBoundVar(di,bindersOnly);
+	}
+	static DExpr constructHook(DExpr e1,DExpr e2){
+		return staticSimplify(e1,e2);
+	}
+	private static DExpr staticSimplify(DExpr e1,DExpr e2,DExpr facts=one){
+		auto ne1=e1.simplify(facts);
+		auto ne2=e2.simplify(facts);
+		if(ne1 !is e1||ne2!is e2) return dCat(ne1,ne2).simplify(facts);
+		if(auto a1=cast(DArray)e1){
+			if(auto a2=cast(DArray)e2){
+				auto tmp=freshVar(); // TODO: get rid of this!
+				auto dbvar=cast(DBoundVar)a1.entries.var;
+				assert(!!dbvar && dbvar is a2.entries.var);
+				auto nesting=dbvar.i-1;
+				return dArray(a1.length+a2.length,
+							  dLambda(tmp,
+									  a1.entries.incBoundVar(-nesting,false).apply(tmp)*dIvr(DIvr.Type.lZ,tmp-a1.length)
+									  +a2.entries.incBoundVar(-nesting,false).apply(tmp-a1.length)*dIvr(DIvr.Type.leZ,a1.length-tmp))
+							  .incBoundVar(nesting,false));
+			}
+		}
+		return null;
+	}
+}
+mixin(makeConstructorNonCommutAssoc!DCat);
+
 class DField: DOp{
 	DExpr e;
 	string f;
@@ -3672,6 +3717,8 @@ class DField: DOp{
 				return dℕ(ℕ(tpl.length));
 			if(auto arr=cast(DArray)ne)
 				return arr.length;
+			if(auto cat=cast(DCat)ne)
+				return dField(cat.operands[0],f)+dField(cat.operands[1],f);
 		}
 		if(auto rec=cast(DRecord)e)
 			if(f in rec.values) return rec.values[f];

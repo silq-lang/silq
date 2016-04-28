@@ -9,11 +9,13 @@ alias SubAssignExp=BinaryExp!(Tok!"-=");
 alias MulAssignExp=BinaryExp!(Tok!"*=");
 alias DivAssignExp=BinaryExp!(Tok!"/=");
 alias PowAssignExp=BinaryExp!(Tok!"^=");
+alias CatAssignExp=BinaryExp!(Tok!"~=");
 alias AddExp=BinaryExp!(Tok!"+");
 alias SubExp=BinaryExp!(Tok!"-");
 alias MulExp=BinaryExp!(Tok!"*");
 alias DivExp=BinaryExp!(Tok!"/");
 alias PowExp=BinaryExp!(Tok!"^");
+alias CatExp=BinaryExp!(Tok!"~");
 alias UMinusExp=UnaryExp!(Tok!"-");
 alias UNegExp=UnaryExp!(Tok!"!");
 alias LtExp=BinaryExp!(Tok!"<");
@@ -479,7 +481,7 @@ Expression semantic(Expression expr,Scope sc){
 		}
 		return ae;
 	}
-	if(cast(AddAssignExp)expr||cast(SubAssignExp)expr||cast(MulAssignExp)expr||cast(DivAssignExp)expr||cast(PowAssignExp)expr){
+	if(cast(AddAssignExp)expr||cast(SubAssignExp)expr||cast(MulAssignExp)expr||cast(DivAssignExp)expr||cast(PowAssignExp)expr||cast(CatAssignExp)expr){
 		auto be=cast(ABinaryExp)expr;
 		assert(be);
 		be.e1=semantic(be.e1,sc);
@@ -505,8 +507,14 @@ Expression semantic(Expression expr,Scope sc){
 			}
 		}
 		checkULhs(be.e1);
-		if(be.sstate!=SemState.error&&be.e1.type !is ℝ || be.e2.type !is ℝ){
-			sc.error(format("incompatible operand types '%s' and '%s' (should be ℝ and ℝ)",be.e1.type,be.e2.type),be.loc);
+		bool check(Type ty){
+			if(cast(CatAssignExp)expr) return !!cast(ArrayTy)ty;
+			return ty is ℝ;
+		}
+		if(be.sstate!=SemState.error&&be.e1.type !is be.e2.type || !check(be.e1.type)){
+			if(cast(CatAssignExp)expr){
+				sc.error(format("incompatible operand types '%s' and '%s'",be.e1.type,be.e2.type),be.loc);
+			}else sc.error(format("incompatible operand types '%s' and '%s' (should be ℝ and ℝ)",be.e1.type,be.e2.type),be.loc);
 			be.sstate=SemState.error;
 		}
 		be.type=unit;
@@ -723,6 +731,23 @@ Expression semantic(Expression expr,Scope sc){
 	if(auto ae=cast(GeExp)expr) return handleBinary("'≥'",ae,ae.e1,ae.e2,ℝ,ℝ,Bool);
 	if(auto ae=cast(EqExp)expr) return handleBinary("'='",ae,ae.e1,ae.e2,ℝ,ℝ,Bool);
 	if(auto ae=cast(NeqExp)expr) return handleBinary("'≠'",ae,ae.e1,ae.e2,ℝ,ℝ,Bool);
+
+	if(auto ce=cast(CatExp)expr){
+		ce.e1=semantic(ce.e1,sc);
+		ce.e2=semantic(ce.e2,sc);
+		propErr(ce.e1,ce);
+		propErr(ce.e2,ce);
+		if(ce.sstate==SemState.error)
+			return ce;
+		if(ce.e1.type is ce.e2.type && cast(ArrayTy)ce.e1.type){
+			ce.type=ce.e1.type;
+		}else{
+			sc.error(format("incompatible types '%s' and '%s' for '%s'",ce.e1.type,ce.e2.type),ce.loc);
+			ce.sstate=SemState.error;
+		}
+		return ce;
+	}
+	
 	if(auto ite=cast(IteExp)expr){
 		ite.cond=semantic(ite.cond,sc);
 		if(ite.then.s.length!=1||ite.othw&&ite.othw.s.length!=1){

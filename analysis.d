@@ -57,6 +57,7 @@ private struct Analyzer{
 				return e1/e2;
 			}
 			if(auto pe=cast(PowExp)e) return doIt(pe.e1)^^doIt(pe.e2);
+			if(auto ce=cast(CatExp)e) return doIt(ce.e1)~doIt(ce.e2);
 			if(auto ume=cast(UMinusExp)e) return -doIt(ume.e);
 			if(auto ume=cast(UNegExp)e) return dIvr(DIvr.Type.eqZ,doIt(ume.e));
 			if(auto ce=cast(CallExp)e){
@@ -769,7 +770,7 @@ private struct Analyzer{
 				}
 			}else if(auto ae=cast(AssignExp)e){
 				assignTo(ae.e1,transformExp(ae.e2),ae.e2.type,ae.loc);
-			}else if(cast(AddAssignExp)e||cast(SubAssignExp)e||cast(MulAssignExp)e||cast(DivAssignExp)e||cast(PowAssignExp)e){
+			}else if(cast(AddAssignExp)e||cast(SubAssignExp)e||cast(MulAssignExp)e||cast(DivAssignExp)e||cast(PowAssignExp)e||cast(CatAssignExp)e){
 				DExpr perform(DExpr a,DExpr b){
 					if(cast(AddAssignExp)e) return a+b;
 					if(cast(SubAssignExp)e) return a-b;
@@ -782,6 +783,7 @@ private struct Analyzer{
 						// TODO: enforce constraints on domain
 						return a^^b;
 					}
+					if(cast(CatAssignExp)e) return a~b;
 					assert(0);
 				}
 				auto be=cast(ABinaryExp)e;

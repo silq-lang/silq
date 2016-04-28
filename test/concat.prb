@@ -1,0 +1,4 @@
+def main(a: ℝ[],b: ℝ[],c: ℝ[]){
+    assert(((a~b)~c).length==(a~(b~c)).length);
+    return; // expected: 1
+}

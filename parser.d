@@ -41,7 +41,7 @@ int getLbp(TokenType type) pure{ // operator precedence
 	case Tok!"/=",Tok!"&=",Tok!"|=",Tok!"-=":
 	case Tok!"+=",Tok!"<<=",Tok!">>=", Tok!">>>=":
 	case Tok!"=",Tok!"*=",Tok!"%=",Tok!"^=":
-	case Tok!"&&=", Tok!"||=":
+	case Tok!"&&=", Tok!"||=", Tok!"~=":
 	case Tok!":=":
 		return 30;
 	// logical operators
