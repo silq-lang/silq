@@ -220,14 +220,14 @@ private struct Analyzer{
 						assert(ce.args[0].type is arrayTy(ℝ));
 						auto idd=cast(Identifier)ce.args[0];
 						if(idd && idd.name in arrays){
-							DExpr sum=zero;
+							// DExpr sum=zero;
 							auto array=arrays[idd.name];
 
 							foreach(x;array){
 								dist.assertTrue(dIvr(DIvr.Type.leZ,-x),"probability of category should be non-negative");
-								sum=sum+x;
+								// sum=sum+x;
 							}
-							dist.assertTrue(dIvr(DIvr.Type.eqZ,sum-1),"probabilities should sum up to 1"); // TODO: don't enforce this to vigorously for floats
+							// dist.assertTrue(dIvr(DIvr.Type.eqZ,sum-1),"probabilities should sum up to 1"); // TODO: don't enforce this to vigorously for floats
 							DExpr d=zero;
 							auto var=dist.getTmpVar("__c");
 							foreach(i,x;array) d=d+x*dDelta(var,dℕ(i),ℝ);
@@ -237,7 +237,7 @@ private struct Analyzer{
 							auto p=doIt(ce.args[0]);
 							auto tmp=freshVar(); // TODO: get rid of this
 							dist.assertTrue(dIvr(DIvr.Type.eqZ,dSum(tmp,dBounded!"[)"(tmp,zero,dField(p,"length")*dIvr(DIvr.Type.lZ,p[tmp])))),"probability of category should be non-negative"); // TODO: dProd?
-							dist.assertTrue(dIvr(DIvr.Type.eqZ,dSum(tmp,dBounded!"[)"(tmp,zero,dField(p,"length"))*p[tmp])-1),"probabilities should sum up to 1");
+							// dist.assertTrue(dIvr(DIvr.Type.eqZ,dSum(tmp,dBounded!"[)"(tmp,zero,dField(p,"length"))*p[tmp])-1),"probabilities should sum up to 1");
 							auto var=dist.getTmpVar("__c");
 							dist.distribute(categoricalPDF(var,p));
 							return var;
