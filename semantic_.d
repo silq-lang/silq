@@ -348,6 +348,11 @@ Expression semantic(Expression expr,Scope sc){
 				aty~=a.type;
 			}
 			auto atys=tupleTy(aty);
+			if(auto id=cast(Identifier)fun){
+				if(id.name=="array" && ce.args.length==2){
+					ft=funTy(tupleTy([ℝ,ce.args[1].type]),arrayTy(ce.args[1].type));
+				}
+			}
 			if(!compatible(ft.dom,atys)){
 				sc.error(format("expected argument types '%s', but '%s' was provided",ft.dom,atys),ce.loc);
 				ce.sstate=SemState.error;

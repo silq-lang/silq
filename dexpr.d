@@ -3648,6 +3648,10 @@ auto dArray(DExpr length,DLambda entries){
 }
 
 auto dArray(DExpr length){ return dArray(length,dLambda(dBoundVar(1),zero)); }
+auto dArray(DExpr length,DExpr default_){
+	auto tmp=freshVar(); // TODO: get rid of this
+	return dArray(length,dLambda(tmp,default_));
+}
 auto dArray(DExpr[] entries){
 	auto tmp=freshVar(); // TODO: get rid of this!
 	// TODO: not necessarily very clean for types that are not real numbers, but can be interpreted in terms of linear algebra

@@ -117,8 +117,10 @@ private struct Analyzer{
 					}
 					switch(id.name){
 					case "array":
-						assert(ce.args.length==1);
-						return dArray(doIt(ce.args[0]));
+						if(ce.args.length==1)
+							return dArray(doIt(ce.args[0]));
+						assert(ce.args.length==2);
+						return dArray(doIt(ce.args[0]),doIt(ce.args[1]));
 					case "readCSV":
 						err.error(text("call to 'readCSV' only supported as the right hand side of an assignment"),ce.loc);
 						unwind();
@@ -735,8 +737,10 @@ private struct Analyzer{
 						if(auto cid=cast(Identifier)call.e){
 							switch(cid.name){
 							case "array":
-								isSpecial=true;
-								evaluateArrayCall(id,call);
+								if(call.args.length==1){
+									isSpecial=true;
+									evaluateArrayCall(id,call);
+								}
 								break;
 							case "readCSV":
 								isSpecial=true;
