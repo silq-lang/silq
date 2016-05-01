@@ -304,7 +304,7 @@ class DFloat : DExpr{
 DExpr dFloat(real c){
 	import std.math: floor;
 	import std.format: format;
-	if(floor(c)==c) return dℕ(ℕ(format("%.0f",c))); // TODO: don't rely on format here!
+	if(floor(c)==c) return dℕ(ℕ(cast(long)c)); // TODO: don't rely on format here!
 	//if(c in uniqueMapDFloat) return uniqueMapDFloat[c];
 	//return uniqueMapDFloat[c]=new DFloat(c);
 	return new DFloat(c);
