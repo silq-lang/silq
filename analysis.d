@@ -871,6 +871,17 @@ private struct Analyzer{
 					SetX!DVar vars;
 					DVar[] orderedVars;
 					foreach(ret;returns){
+						if(auto id=cast(Identifier)ret){ // TODO: this hack should be removed
+							if(id.name in arrays){
+								foreach(expr;arrays[id.name]){
+									if(auto var=cast(DVar)expr){
+										vars.insert(var);
+										orderedVars~=var;
+									}
+								}
+								continue;
+							}
+						}
 						auto exp=transformExp(ret);
 						DVar var=cast(DVar)exp;
 						if(var && !var.name.startsWith("__")){

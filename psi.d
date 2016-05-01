@@ -70,12 +70,13 @@ void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool isMain){
 		writeln(ex==dist.distribution.toString()?todo?"FIXED":"PASS":todo?"TODO":"FAIL");
 	}
 	//writeln((cast(DPlus)dist.distribution).summands.length);
-	if(str.length<10000) writeln(str);
+	writeln(str);
+	/+if(str.length<10000) writeln(str);
 	else{
 		writeln("writing output to temporary file...");
 		auto f=File("tmp.deleteme","w");
 		f.writeln(str);
-	}
+	}+/
 	if(casBench){
 		import std.file, std.conv;
 		auto bpath=buildPath(dirName(thisExePath()),"test/benchmarks/casBench/",to!string(formatting),setExtension(baseName(path,".prb"),casExt()));

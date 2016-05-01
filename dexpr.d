@@ -304,7 +304,9 @@ class DFloat : DExpr{
 DExpr dFloat(real c){
 	import std.math: floor;
 	import std.format: format;
-	if(floor(c)==c) return dℕ(ℕ(cast(long)c)); // TODO: don't rely on format here!
+	if(c==1) return one;
+	if(c==0) return zero;
+	//if(floor(c)==c) return dℕ(); // TODO: fix this
 	//if(c in uniqueMapDFloat) return uniqueMapDFloat[c];
 	//return uniqueMapDFloat[c]=new DFloat(c);
 	return new DFloat(c);
@@ -771,13 +773,14 @@ class DMult: DCommutAssocOp{
 						return null;
 					return dℕ(n/g)/dℕ(d/g);
 				}
+			}
+			if(e1.isFraction()||cast(DFloat)e1){
 				if(auto p=cast(DPlus)e2){
 					DExprSet summands;
 					foreach(s;p.summands) summands.insert(e1*s);
 					return dPlus(summands);
 				}
 			}
-
 
 			static DExpr combineWithFloat(DExpr e1,DExpr e2){
 				if(auto f=cast(DFloat)e1){
