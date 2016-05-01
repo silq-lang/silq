@@ -1,0 +1,5 @@
+
+def main(){
+    x := Gauss(Gauss(3,1),1);
+    return Expectation(x);
+}
