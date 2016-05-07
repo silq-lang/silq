@@ -1576,7 +1576,7 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 				// TODO: make sure this is correct for deltas
 				// (this is what the case split code did)
 				static if(isDelta) auto rest=dDelta(rhs);
-				else auto rest=dIvr(eqZ,rhs);
+				else auto rest=dIvr(ty,-rhs);
 				return dIvr(eqZ,ow[0])*rest+dIvr(neqZ,ow[0])*doIt(parity*ow[0],ty,ow[1],rhs/ow[0]);
 			} // TODO: what if ow[1] is a product?
 		}else if(auto p=cast(DPow)lhs){
@@ -1661,7 +1661,7 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 				if(summand is null) unwind();
 				DPlus.insert(special,summand);
 			}
-			return dIvr(neqZ,diff)*dDelta(lhs-rhs)/diff+dPlus(special);
+			return dIvr(neqZ,diff)*dDelta(lhs-rhs)/diff+dPlus(special); // TODO: linearize diff!
 		}
 		else return dIvr(ty,lhs-rhs);
 	}

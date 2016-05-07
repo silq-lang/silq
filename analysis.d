@@ -239,7 +239,7 @@ private struct Analyzer{
 							auto p=doIt(ce.args[0]);
 							auto tmp=freshVar(); // TODO: get rid of this
 							dist.assertTrue(dIvr(DIvr.Type.eqZ,dSum(tmp,dBounded!"[)"(tmp,zero,dField(p,"length")*dIvr(DIvr.Type.lZ,p[tmp])))),"probability of category should be non-negative"); // TODO: dProd?
-							// dist.assertTrue(dIvr(DIvr.Type.eqZ,dSum(tmp,dBounded!"[)"(tmp,zero,dField(p,"length"))*p[tmp])-1),"probabilities should sum up to 1");
+							dist.assertTrue(dIvr(DIvr.Type.eqZ,dSum(tmp,dBounded!"[)"(tmp,zero,dField(p,"length"))*p[tmp])-1),"probabilities should sum up to 1");
 							auto var=dist.getTmpVar("__c");
 							dist.distribute(categoricalPDF(var,p));
 							return var;

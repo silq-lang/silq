@@ -784,6 +784,8 @@ void test(){
 	//writeln(e.simplify(one));
 	//auto e="[-a.length+__u₂≠0]·[-a.length+__u₂≤0]·[a[__u₂].length≤0]".dParse;
 	//writeln(e.substitute("a".dVar,"[ξ₁ ↦ (([ξ₂ ↦ 2·[-1+ξ₂=0]+3·[-2+ξ₂=0]+[ξ₂=0]] (3))·[ξ₁=0]+([ξ₂ ↦ 2·[ξ₂=0]+3·[-1+ξ₂=0]+4·[-2+ξ₂=0]] (3))+([ξ₂ ↦ 5·[ξ₂=0]+6·[-1+ξ₂=0]+7·[-2+ξ₂=0]] (3))·[-2+ξ₁=0])[0 ↦ 2+5·[-2+ξ₁=0]+[ξ₁=0]]·[-1+ξ₁=0]+(([ξ₂ ↦ 2·[-1+ξ₂=0]+3·[-2+ξ₂=0]+[ξ₂=0]] (3))·[ξ₁=0]+([ξ₂ ↦ 5·[ξ₂=0]+6·[-1+ξ₂=0]+7·[-2+ξ₂=0]] (3))·[-2+ξ₁=0])·[-1+ξ₁≠0]] (3)".dParse.simplify(one)));
+	//writeln(dIvr(DIvr.Type.neqZ,dVar("x")*dVar("y")).linearizeConstraints(dVar("x")).simplify(one));
+	//writeln("[x^2<=1]".dParse.linearizeConstraints("x".dVar));
 }
 
 /*
