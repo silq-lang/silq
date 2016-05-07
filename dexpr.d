@@ -1661,7 +1661,7 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 				if(summand is null) unwind();
 				DPlus.insert(special,summand);
 			}
-			return dIvr(neqZ,diff)*dDelta(lhs-rhs)/diff+dPlus(special); // TODO: linearize diff!
+			return dIvr(neqZ,diff).linearizeConstraints(var)*dDelta(lhs-rhs)/diff+dPlus(special);
 		}
 		else return dIvr(ty,lhs-rhs);
 	}
