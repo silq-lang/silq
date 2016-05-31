@@ -213,7 +213,7 @@ class Distribution{
 	}
 
 	DExpr computeProbability(DExpr cond){
-		auto tdist=distribution*cond;
+		auto tdist=distribution*cond.simplify(one);
 		foreach(v;freeVars) tdist=dIntSmp(v,tdist);
 		if(context) tdist=dInt(context,tdist);
 		return tdist;

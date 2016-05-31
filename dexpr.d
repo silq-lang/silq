@@ -1910,8 +1910,8 @@ class DIvr: DExpr{ // iverson brackets
 	}
 
 	static DExpr constructHook(Type type,DExpr e){
-		return staticSimplify(type,e);
-		//return null;
+		//return staticSimplify(type,e);
+		return null;
 	}
 
 	static DExpr staticSimplify(Type type,DExpr e,DExpr facts=one){
@@ -3900,3 +3900,23 @@ DExpr dBeta(DExpr x,DExpr y){ // constraints: x>0 and y>0
 	auto t=freshVar(); // TODO: get rid of this
 	return dInt(t,dBounded!"[]"(t,zero,one)*t^^(x-1)*(1-t)^^(y-1));
 }
+
+
+
+
+/+
+enum locs=[ ];
+
+DExpr dIvr(string file=__FILE__,int line=__LINE__)(DIvr.Type type, DExpr e){
+	//pragma(msg, text(`"`,file," ",line,`",`));
+	enum idx=locs.countUntil(text(file," ",line));
+	static assert(idx!=-1);
+	pragma(msg,idx);
+	static if(idx==2) pragma(msg, file," ",line);
+	if(idx==2){
+		//if(auto r=DIvr.staticSimplify(type,e))
+		//	return r;
+	}else writeln(idx);
+	return dIvrImpl(type,e);
+}
++/
