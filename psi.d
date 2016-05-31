@@ -42,10 +42,12 @@ Distribution getCDF(Distribution dist){
 	dist=dist.dup;
 	auto freeVars=dist.freeVars.dup;
 	foreach(freeVar;freeVars){
-		auto nvar=dist.declareVar("c"~freeVar.name);
+		auto nvar=dist.getVar("c"~freeVar.name);
 		dist.distribute(dIvr(DIvr.Type.leZ,-freeVar-20)*dIvr(DIvr.Type.leZ,freeVar-nvar));
 		dist.marginalize(freeVar);
+		dist.distribution=dist.distribution.substitute(nvar,freeVar);
 	}
+	dist.simplify();
 	return dist;
 }
 
