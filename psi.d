@@ -789,6 +789,8 @@ void test(){
 	//writeln(dIvr(DIvr.Type.neqZ,dVar("x")*dVar("y")).linearizeConstraints(dVar("x")).simplify(one));
 	//writeln("[x^2<=1]".dParse.linearizeConstraints("x".dVar));
 	//writeln("[-1+-y+z≤0]·[-1+y≤0]·[-y≤0]·[-z+y≤0]·δ[-w+x·z]·δ[-z+x+y]".dParse);
+	//writeln("[2=0]·2".dParse.simplify(one)," ",0^^2);
+	//writeln("∫dx₂ [-1+x₂≤0]·[-2+-x₂+x≤0]·[-x+x₂≤0]·[-x₂≠0]·[-x₂≤0]".dParse.simplify(one));
 }
 
 /*

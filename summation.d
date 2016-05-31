@@ -66,19 +66,22 @@ DExpr computeSum(DVar var,DExpr expr,DExpr facts=one){
 		case lowerBound:
 			if(lower) lower=dMax(lower,bound);
 			else lower=bound;
+			lower=lower.simplify(facts);
 			break;
 		case upperBound:
 			if(upper) upper=dMin(upper,bound);
 			else upper=bound;
+			upper=upper.simplify(facts);
 			break;
 		case equal:
 			if(lower) lower=dMax(lower,bound);
 			else lower=bound;
 			if(upper) upper=dMin(upper,bound);
 			else upper=bound;
+			lower=lower.simplify(facts);
+			upper=upper.simplify(facts);
 		}
 	}
-	
 	//dw("!! ",nonIvrs," ",lower," ",upper);
 	// TODO: use more clever summation strategies first
 	if(lower && upper && lower.isFraction() && upper.isFraction()){

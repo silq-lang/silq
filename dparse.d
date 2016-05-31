@@ -58,7 +58,10 @@ struct DParser{
 	}
 		
 	DExpr parseSqrt(){
-		expect('√');
+		DExpr e=one/2;
+		if(cur()=='∛'){ next(); e=one/3; }
+		else if(cur()=='∜'){ next(); e=one/4; }
+		else expect('√');
 		string arg;
 		dchar cur=0;
 		string tmp=code;
@@ -279,7 +282,7 @@ struct DParser{
 		if(cur()=='∫') return parseDInt();
 		if(cur()=='∑') return parseDSum();
 		if(cur()=='λ') return parseDLambda();
-		if(cur()=='√') return parseSqrt();
+		if(util.among(cur(),'√','∛','∜')) return parseSqrt();
 		if(cur()=='|'||code.startsWith("abs")) return parseDAbs();
 		if(code.startsWith("log")) return parseLog();
 		if(code.startsWith("lim")) return parseLim();

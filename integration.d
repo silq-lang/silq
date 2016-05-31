@@ -88,9 +88,10 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
 	if(simplification!=Simpl.deltas){
 		nexpr=expr.linearizeConstraints!(x=>!!cast(DIvr)x)(var).simplify(facts);
 		if(nexpr !is expr) return definiteIntegral(var,nexpr,facts);
-		if(auto r=definiteIntegralContinuous(var,expr))
+		if(auto r=definiteIntegralContinuous(var,expr,facts))
 			return r.simplify(facts);
 	}
+	
 	// pull sums out (TODO: ok?)
 	foreach(f;expr.factors){
 		if(auto sum=cast(DSum)f){
@@ -140,7 +141,7 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
 	return null;
 }
 
-private DExpr definiteIntegralContinuous(DVar var,DExpr expr)out(res){
+private DExpr definiteIntegralContinuous(DVar var,DExpr expr,DExpr facts)out(res){
 	version(INTEGRATION_STATS){
 		integrations++;
 		if(res) successfulIntegrations++;
@@ -197,6 +198,7 @@ private DExpr definiteIntegralContinuous(DVar var,DExpr expr)out(res){
 				auto constraints=one;
 				foreach(ref x;info.caseSplits)
 					constraints=constraints*dIvr(DIvr.Type.neqZ,x.constraint);
+				//constraints=constraints.simplify(one);
 				auto rest=expr.withoutFactor(ivr);
 				auto r=constraints is zero?zero:
 					constraints*(dIntSmp(var,dIvr(DIvr.Type.leZ,var-bound)*
@@ -212,10 +214,12 @@ private DExpr definiteIntegralContinuous(DVar var,DExpr expr)out(res){
 			case lowerBound:
 				if(lower) lower=dMax(lower,bound);
 				else lower=bound;
+				lower=lower.simplify(facts);
 				break;
 			case upperBound:
 				if(upper) upper=dMin(upper,bound);
 				else upper=bound;
+				upper=upper.simplify(facts);
 				break;
 			case equal: assert(0);
 			}

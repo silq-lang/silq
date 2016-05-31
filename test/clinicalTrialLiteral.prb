@@ -1,0 +1,28 @@
+// skipped
+// ("Fun" example)
+// TODO: make array literals as fast as built-in 'array' calls
+def main(){
+    controlGroup := [0,0,1,0,0];
+    //controlGroup := array(5);
+    //controlGroup[0]=0;controlGroup[1]=0;controlGroup[2]=1;controlGroup[3]=0;controlGroup[4]=0;
+    //treatedGroup := [1,0,1,1,1];
+    treatedGroup := array(5);
+    treatedGroup[0]=1;treatedGroup[1]=0;treatedGroup[2]=1;treatedGroup[3]=1;treatedGroup[4]=1;
+
+    isEffective := Bernoulli(1/2);
+    probIfTreated := Beta(1,1);
+    probIfControl := if isEffective { Beta(1,1) } else { probIfTreated };
+
+    for i in [0..controlGroup.length){
+        observe(controlGroup[i] == Bernoulli(probIfControl));
+    }
+    for i in [0..treatedGroup.length){
+        observe(treatedGroup[i] == Bernoulli(probIfTreated));
+    }
+
+    isEffectiveP := FromMarginal(isEffective);
+    observe(isEffective);
+    return (isEffectiveP,probIfTreated,probIfControl); // expected: (-20790000·probIfTreated·⅟17+20790000·⅟17)·(-4·probIfControl+-4·probIfControl³+1+6·probIfControl²+probIfControl⁴)·(δ[-isEffectiveP+1]·⅟1800+δ[isEffectiveP]·⅟5544)·[-1+probIfControl≤0]·[-1+probIfTreated≤0]·[-probIfControl≤0]·[-probIfTreated≤0]·probIfControl·probIfTreated⁴+/
+// TODO: keep polynomial in factored form +/
+    //return (controlGroup,treatedGroup); // expected: δ_controlGroup[[ξ₁ ↦ [-2+ξ₁=0]] (5)]·δ_treatedGroup[[ξ₁ ↦ [-2+ξ₁=0]+[-3+ξ₁=0]+[-4+ξ₁=0]+[ξ₁=0]] (5)]
+}
