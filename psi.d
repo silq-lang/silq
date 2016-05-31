@@ -797,6 +797,10 @@ void test(){
 	//writeln("lim[r → ∞]e^(r²)·r²".dParse.simplify(one));
 	//writeln("lim[r → ∞]e^(r²)·r".dParse.simplify(one));
 	//writeln("[-1/0=0]".dParse.simplify(one));
+	//writeln("(∫dξ₁((-(d/dx)⁻¹[e^(-x²)](ξ₁·⅟√2̅)·⅟√2̅+⅟√2̅·√π̅)·δ[c]+(d/dx)⁻¹[e^(-x²)](ξ₁·⅟√2̅)·δ[-c+1]·⅟√2̅)·⅟e^(ξ₁²·⅟2))·⅟π".dParse.simplify(one));
+	//writeln("lim[r→∞](((d/dx)⁻¹[e^(-x²)](r·⅟√2̅))²·δ[-c+1]·⅟2+(d/dx)⁻¹[e^(-x²)](r·⅟√2̅)·δ[c]·√π̅+-((d/dx)⁻¹[e^(-x²)](r·⅟√2̅))²·δ[c]·⅟2)".dParse.simplify(one));
+	//writeln("lim[r → -∞]((d/dx)⁻¹[e^(-x²)](r))²".dParse.simplify(one));
+	//writeln("(∫dx((d/dx)⁻¹[e^(-x²)](-skill1·⅟√3̅0̅+x·⅟√3̅0̅)·e^(skill1²·⅟30)·⅟600·√3̅0̅+-e^(skill1²·⅟30)·⅟600·√3̅0̅·√π̅)·(d/dx)⁻¹[e^(-x²)](-y·⅟√3̅0̅+x·⅟√3̅0̅)·e^(-x²·⅟30+skill1·x·⅟15))".dParse.simplify(one));
 }
 
 /*

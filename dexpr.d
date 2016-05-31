@@ -738,10 +738,7 @@ class DMult: DCommutAssocOp{
 			return;
 		}
 		auto origIndex=q(factors.dup,factor,facts);
-		scope(exit){
-			if(zero in origIndex[0]) assert(dIvr(DIvr.Type.eqZ,one+one) !in factors,text(origIndex," ",factors," ",zero.simplify(one)));
-			insertMemo[origIndex]=factors.dup;
-		}
+		scope(exit) insertMemo[origIndex]=factors.dup;
 		//if(zero in factors||factor is zero){ factors.clear(); factors.insert(zero); return; }
 		if(auto dm=cast(DMult)factor){
 			foreach(f;dm.factors)
@@ -1913,8 +1910,8 @@ class DIvr: DExpr{ // iverson brackets
 	}
 
 	static DExpr constructHook(Type type,DExpr e){
-		//return staticSimplify(type,e);
-		return null;
+		return staticSimplify(type,e);
+		//return null;
 	}
 
 	static DExpr staticSimplify(Type type,DExpr e,DExpr facts=one){

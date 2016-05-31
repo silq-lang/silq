@@ -200,7 +200,7 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 					return null;
 				}
 				// pow is discontinuous at (0,0).
-				auto bad=dIvr(DIvr.Type.neqZ,dIvr(DIvr.Type.eqZ,l0)+dIvr(DIvr.Type.eqZ,l1)).simplify(facts);
+				auto bad=(dIvr(DIvr.Type.eqZ,l0)*dIvr(DIvr.Type.eqZ,l1)).simplify(facts);
 				if(bad !is zero) return null; // TODO!
 				return l0^^l1;
 			}
