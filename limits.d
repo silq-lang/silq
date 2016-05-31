@@ -97,14 +97,14 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 				auto h=e.getHoles!(x=>cast(DDelta)x,DDelta);
 				auto r=h.expr;
 				foreach(hole;h.holes){
-					r=r.substitute(hole.var,dIvr(DIvr.Type.eqZ,hole.expr.e));
+					r=r.substitute(hole.var,dIvr(DIvr.Type.eqZ,hole.expr.e).simplify(facts));
 				}
 				return r;
 			}
 			// TODO: this is a hack and not generally correct:
 			// (It might be fine for the cases that this is actually called with though. This should still be fixed.)
 			auto owZNoDeltas=replaceDeltasByIvrs(ow[0]);
-			auto owZneqZ=dIvr(DIvr.Type.neqZ,owZNoDeltas);
+			auto owZneqZ=dIvr(DIvr.Type.neqZ,owZNoDeltas).simplify(facts);
 			Case!ExpLim[] handleMult(ExpLim[] c){
 				bool simplified=false;
 				DExpr finite=one;
@@ -143,14 +143,17 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 						return r;
 					}
 					if(zro.length && !inf.length) return [Case!ExpLim(owZneqZ,ExpLim(m,zero))];
+					// Bernoulli-De l'Hôpital.
+					/*static int nesting = 0;
+					  enum nestingLimit=5; // TODO: probably something like this is necessary.
+					  ++nesting; scope(exit) --nesting;
+					  if(nesting>nestingLimit) return null;*/
+					if(inf.length && zro.length){
+						auto f=dMult(inf), g=1/dMult(zro);
+						return doIt(v,e,finite*dDiff(v,f)/dDiff(v,g));
+					}
 				}
-				// Bernoulli-De l'Hôpital.
-				/*static int nesting = 0;
-				enum nestingLimit=5; // TODO: probably something like this is necessary.
-				++nesting; scope(exit) --nesting;
-				if(nesting>nestingLimit) return null;*/
-				auto f=dMult(inf), g=1/dMult(zro);
-				return doIt(v,e,finite*dDiff(v,f)/dDiff(v,g));
+				return [Case!ExpLim(owZneqZ,ExpLim(m,null))];
 				// TODO: repeated simplification ugly, how to do without?
 			}
 			auto res=expandFlatMap!handleMult(r);
