@@ -89,7 +89,6 @@ abstract class DExpr{
 		assert(!!r,text(typeid(this)));
 		simplifyMemo[q(this,facts)]=r;
 		simplifyMemo[q(r,facts)]=r;
-
 		foreach(ivr;r.allOf!DIvr){ // TODO: remove?
 			assert(ivr is ivr.simplify(facts),text(this," ",r," ",facts));
 			assert(ivr.type !is DIvr.Type.lZ);
@@ -1320,6 +1319,13 @@ DPolynomial asPolynomialIn(DExpr e,DVar v,long limit=-1){
 	return r;
 }
 
+DExpr[2] asLinearFunctionIn(DExpr e,DVar v){ // returns [b,a] if e=av+b
+	auto p=e.asPolynomialIn(v);
+	if(p.degree>1) return [null,null];
+	return [p.coefficients.get(0,zero),p.coefficients.get(1,zero)];
+}
+
+
 abstract class DUnaryOp: DOp{
 	DExpr operand;
 	protected mixin template Constructor(){ private this(DExpr e){ operand=e; } }
@@ -2010,8 +2016,11 @@ class DIvr: DExpr{ // iverson brackets
 							dIvr(lZ,denom)*dIvr(type,-dcancel)).simplify(facts);+/
 			}
 		}
-		if(auto l=cast(DLog)e) return dIvr(type,l.e-one);
-		if(auto l=cast(DLog)-e) return dIvr(type,one-l.e);
+		if(auto l=cast(DLog)e)
+			return dIvr(type,l.e-one).simplify(facts);
+		if(e.hasFactor(mone))
+			if(auto l=cast(DLog)(e.withoutFactor(mone)))
+				return dIvr(type,one-l.e).simplify(facts);
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){
@@ -2578,6 +2587,8 @@ class DLim: DOp{
 			auto r=staticSimplify(tmp,e.incBoundVar(-nesting,false),unbind(v,x,tmp.incBoundVar(-nesting,false)));
 			return r?r.incBoundVar(nesting,false):null;
 		}
+		auto ne=e.simplify(facts), nx=x.simplify(facts);
+		if(ne !is e || nx !is x) return dLim(v,ne,nx).simplify(facts);
 		if(auto r=getLimit(v,e,x,facts))
 			return r;
 		return null;
@@ -2799,13 +2810,26 @@ class DLog: DOp{
 		if(auto c=cast(DE)e) return one;
 		if(e is one) return zero;
 		if(auto m=cast(DMult)e){
-			DExprSet r;
-			foreach(f;m.factors)
-				r.insert(dLog(f));
-			return dPlus(r);
+			DExprSet r,s;
+			bool sign=false;
+			foreach(f;m.factors){
+				auto pos=dIvr(DIvr.Type.leZ,-f).simplify(facts);
+				if(pos is one)
+					r.insert(f);
+				else if(pos is zero){
+					sign^=true;
+					if(f!is mone) r.insert(-f);
+				}else s.insert(f); // TODO: use dAbs?
+			}
+			if(!(r.length&&s.length)&&r.length<=1) return null;
+			DExprSet logs;
+			foreach(x;r) DPlus.insert(logs,dLog(x));
+			DPlus.insert(logs,dLog(sign?-dMult(s):dMult(s)));
+			return dPlus(logs).simplify(facts);
 		}
 		if(auto p=cast(DPow)e)
-			return p.operands[1]*dLog(p.operands[0]);
+			return (p.operands[1]*dLog(dAbs(p.operands[0]))).simplify(facts);
+		if(auto fct=factorDIvr!(e=>dLog(e))(e)) return fct.simplify(facts);
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){

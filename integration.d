@@ -225,7 +225,7 @@ private DExpr definiteIntegralContinuous(DVar var,DExpr expr,DExpr facts)out(res
 			}
 	}
 	return tryIntegrate(var,nonIvrs,lower,upper,ivrs);
- }
+}
 
 struct AntiD{ // TODO: is this even worth the hassle?
 	DExpr antiderivative;
@@ -257,8 +257,9 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 		return ow[0]*tryGetAntiderivative(var,ow[1],ivrs);
 	}
 
-	static DExpr safeLog(DExpr e){ // TODO: ok?
-		return dLog(e)*dIvr(DIvr.Type.neqZ,e);
+	static DExpr safeLog(DExpr e){ // TODO: integrating 1/x over 0 diverges (not a problem for integrals occurring in the analysis)
+		return dLog(e)*dIvr(DIvr.Type.lZ,-e)
+			+ dLog(-e)*dIvr(DIvr.Type.lZ,e);
 	}
 	if(auto p=cast(DPow)nonIvrs){
 		if(p.operands[0] is var && !p.operands[1].hasFreeVar(var)){
@@ -269,7 +270,7 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 						  dIvr(DIvr.Type.neqZ,p.operands[1]+1)));
 		}
 		if(!p.operands[0].hasFreeVar(var)){
-			auto k=dLog(p.operands[0])*p.operands[1];
+			auto k=safeLog(p.operands[0])*p.operands[1];
 			// need to integrate e^^(k(x)).
 			auto dk=dDiff(var,k);
 			if(!dk.hasFreeVar(var)){
@@ -294,13 +295,14 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 		return AntiD(dPlus(s));
 	}
 	if(auto p=cast(DLog)nonIvrs){
-		// TODO: linear functions of var
-		if(p.e is var){
-			static DExpr logIntegral(DExpr e){
-				return e*safeLog(e)-e;
+		auto ba=p.e.asLinearFunctionIn(var);
+		auto b=ba[0],a=ba[1];
+		if(a && b){
+			static DExpr logIntegral(DVar x,DExpr a, DExpr b){
+				return (x+b/a)*safeLog(a*x+b)-x;
 			}
-			// constraint: lower && upper
-			return AntiD(logIntegral(var));
+			return AntiD(dIvr(DIvr.Type.neqZ,a)*logIntegral(var,a,b)+
+						 dIvr(DIvr.Type.eqZ,a)*var*dLog(b));
 		}
 	}
 	// integrate log(x)ʸ/x to log(x)ʸ⁺¹/(y+1)
@@ -318,8 +320,8 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 			}
 			if(y !is null && !y.hasFreeVar(var)){
 				return AntiD(
-					dIvr(DIvr.Type.eqZ,y+1)*dLog(dLog(var))+
-					dIvr(DIvr.Type.neqZ,y+1)*dLog(var)^^(y+1)/(y+1));
+					dIvr(DIvr.Type.eqZ,y+1)*safeLog(safeLog(var))+
+					dIvr(DIvr.Type.neqZ,y+1)*safeLog(var)^^(y+1)/(y+1));
 			}
 		}
 	}
@@ -333,7 +335,7 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 						return dIntSmp(t,t^^(a-1)*dE^^(-t)*dIvr(DIvr.type.leZ,z-t));
 					}
 					if(n.c>0)
-						return AntiD(mone^^n*dInGamma(n+1,-dLog(var)));
+						return AntiD(dIvr(DIvr.Type.neqZ,var)*mone^^n*dInGamma(n+1,-dLog(var)));
 				}
 			}
 		}
