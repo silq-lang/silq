@@ -89,10 +89,10 @@ abstract class DExpr{
 		assert(!!r,text(typeid(this)));
 		simplifyMemo[q(this,facts)]=r;
 		simplifyMemo[q(r,facts)]=r;
-		foreach(ivr;r.allOf!DIvr){ // TODO: remove?
+		/+foreach(ivr;r.allOf!DIvr){ // TODO: remove?
 			assert(ivr is ivr.simplify(facts),text(this," ",r," ",facts));
 			assert(ivr.type !is DIvr.Type.lZ);
-		}
+		}+/
 		return r;
 	}
 
