@@ -267,6 +267,9 @@ Expression semantic(Expression expr,Scope sc){
 				if(ite.othw) propErr(ite.othw,ite);
 				ite.type=unit;
 				e=ite;
+			}else if(cast(CommaExp)e){
+				sc.error("comma expressions are disallowed",e.loc);
+				e.sstate=SemState.error;
 			}else e=semantic(e,blsc);
 			propErr(e,ce);
 		}
@@ -316,6 +319,10 @@ Expression semantic(Expression expr,Scope sc){
 			}
 		}
 		ret.e=semantic(ret.e,sc);
+		if(cast(CommaExp)ret.e){
+			sc.error("use parentheses for multiple return values",ret.e.loc);
+			ret.sstate=SemState.error;
+		}
 		propErr(ret.e,ret);
 		if(ret.sstate==SemState.error)
 			return ret;
