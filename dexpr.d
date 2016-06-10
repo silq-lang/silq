@@ -1854,6 +1854,7 @@ DExpr factorDIvr(alias wrap)(DExpr e){
 			doIt(facts*neg,cur.substitute(var,zero),i+1);
 	}
 	auto r=doIt(one,h.expr,0);
+	if(h.holes.length>13) dw(e," ",r);
 	return r;
 }
 
@@ -3063,7 +3064,9 @@ class DFun: DOp{ // uninterpreted functions
 	override @property string symbol(Format formatting){ return fun.name; }
 	override Precedence precedence(){ return Precedence.none; }
 	override string toStringImpl(Format formatting,Precedence prec){
-		return fun.name~"("~args.map!(to!string).join(",")~")";
+		if(formatting==Format.mathematica)
+			return fun.name~"["~args.map!(a=>a.toStringImpl(formatting,Precedence.none)).join(",")~"]";
+		return fun.name~"("~args.map!(a=>a.toStringImpl(formatting,Precedence.none)).join(",")~")";
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
 		foreach(a;args)
