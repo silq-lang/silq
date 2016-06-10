@@ -1854,7 +1854,6 @@ DExpr factorDIvr(alias wrap)(DExpr e){
 			doIt(facts*neg,cur.substitute(var,zero),i+1);
 	}
 	auto r=doIt(one,h.expr,0);
-	if(h.holes.length>13) dw(e," ",r);
 	return r;
 }
 
