@@ -6,7 +6,7 @@ MapX!(Q!(DVar,DExpr,DExpr),DExpr) definiteIntegralMemo;
 DExpr definiteIntegral(DVar var,DExpr expr,DExpr facts=one){
 	auto t=q(var,expr,facts);
 	if(t in definiteIntegralMemo) return definiteIntegralMemo[t];
-	auto r=definiteIntegralImpl(var,expr);
+	auto r=definiteIntegralImpl(var,expr,facts);
 	definiteIntegralMemo[t]=r;
 	return r;
 }
@@ -18,9 +18,10 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
 	if(cast(DContextVars)var) return null;
 	// TODO: move (most of) the following into the implementation of definiteIntegral
 	auto ow=expr.splitMultAtVar(var);
+	ow[0]=ow[0].simplify(facts);
 	if(ow[0] !is one){
 		if(auto r=definiteIntegral(var,ow[1],facts))
-			return ow[0]*r;
+			return (ow[0]*r).simplify(facts);
 		return null;
 	}
 	DExpr discDeltaSubstitution(){
@@ -62,6 +63,7 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
 					DExprSet doesNotWork;
 					bool simpler=false;
 					foreach(k;distributeMult(p,expr.withoutFactor(f))){
+						k=k.simplify(facts);
 						auto ow=k.splitMultAtVar(var);
 						auto r=definiteIntegral(var,ow[1],facts);
 						if(r){
@@ -89,7 +91,7 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
 		nexpr=expr.linearizeConstraints!(x=>!!cast(DIvr)x)(var).simplify(facts);
 		if(nexpr !is expr) return definiteIntegral(var,nexpr,facts);
 		if(auto r=definiteIntegralContinuous(var,expr,facts))
-			return r.simplify(facts);
+			return r;
 	}
 	
 	// pull sums out (TODO: ok?)
@@ -164,6 +166,8 @@ private DExpr definiteIntegralContinuous(DVar var,DExpr expr,DExpr facts)out(res
 		if(cast(DIvr)f) ivrs=ivrs*f;
 		else nonIvrs=nonIvrs*f;
 	}
+	ivrs=ivrs.simplify(facts);
+	nonIvrs=nonIvrs.simplify(facts);
 	DExpr lower=null;
 	DExpr upper=null;
 	foreach(f;ivrs.factors){
@@ -210,7 +214,7 @@ private DExpr definiteIntegralContinuous(DVar var,DExpr expr,DExpr facts)out(res
 					r=r+curConstr*dIvr(DIvr.Type.eqZ,x.constraint)*
 						dIntSmp(var,rest*dIvr(DIvr.Type.leZ,x.expression));
 				}
-				return r;
+				return r.simplify(facts);
 			case lowerBound:
 				if(lower) lower=dMax(lower,bound);
 				else lower=bound;
@@ -253,8 +257,9 @@ struct AntiD{ // TODO: is this even worth the hassle?
 
 AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 	auto ow=nonIvrs.splitMultAtVar(var);
+	ow[0]=ow[0].simplify(ivrs);
 	if(ow[0] !is one){
-		return ow[0]*tryGetAntiderivative(var,ow[1],ivrs);
+		return ow[0]*tryGetAntiderivative(var,ow[1].simplify(ivrs),ivrs);
 	}
 
 	static DExpr safeLog(DExpr e){ // TODO: integrating 1/x over 0 diverges (not a problem for integrals occurring in the analysis)
@@ -402,10 +407,10 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 		}
 		if(!gaussFact) return AntiD();
 		auto rest=m.withoutFactor(gaussFact);
-		auto gauss=dDiff(var,gaussFact).simplify(one);
+		auto gauss=dDiff(var,gaussFact).simplify(ivrs);
 		auto intRest=tryGetAntiderivative(var,rest,ivrs);
 		if(!intRest.antiderivative) return AntiD();
-		if(e is (gauss*intRest.antiderivative).simplify(one)){ // TODO: handle all cases
+		if(e is (gauss*intRest.antiderivative).simplify(ivrs)){ // TODO: handle all cases
 			return AntiD(gaussFact*intRest.antiderivative/2);
 		}
 		return AntiD();
@@ -441,12 +446,12 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 		auto intRest=tryGetAntiderivative(var,rest,ivrs).antiderivative;
 		if(!intRest) return fail();
 		auto diffPoly=dDiff(var,polyFact);
-		auto diffRest=(diffPoly*intRest).polyNormalize(var).simplify(one);
+		auto diffRest=(diffPoly*intRest).polyNormalize(var).simplify(ivrs);
 		auto intDiffPolyIntRest=tryGetAntiderivative(var,diffRest,ivrs).antiderivative;
 		if(!intDiffPolyIntRest) return fail();
 		auto r=AntiD(polyFact*intRest-intDiffPolyIntRest);
 		if(!r.antiderivative.hasFreeVar(token)){ memo[q(var,e)]=r; return r; }
-		if(auto s=(r.antiderivative-token).simplify(one).solveFor(token)){
+		if(auto s=(r.antiderivative-token).simplify(ivrs).solveFor(token)){
 			r=AntiD(s);
 			memo[q(var,e)]=r;
 			return r;
@@ -517,11 +522,12 @@ private DExpr tryIntegrateImpl(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DE
 		bool ok=true;
 		foreach(s;p.summands){
 			auto ow=s.splitMultAtVar(var);
+			ow[0]=ow[0].simplify(ivrs);
 			auto t=tryIntegrate(var,ow[1],lower,upper,ivrs);
 			if(t) DPlus.insert(works,ow[0]*t);
 			else DPlus.insert(doesNotWork,s);
 		}
-		if(works.length) return dPlus(works)+dInt(var,dPlus(doesNotWork)*ivrs);
+		if(works.length) return dPlus(works).simplify(one)+dInt(var,(dPlus(doesNotWork)*ivrs).simplify(one));
 	}//else dw("fail: ","Integrate[",nonIvrs.toString(Format.mathematica),",",var.toString(Format.mathematica),"]");
 	return null; // no simpler expression available
 }

@@ -810,6 +810,9 @@ void test(){
 	//writeln("∫dX1∫dX2∫dX3(([-X2+-X3+X2·X3≤0]·⅟(-X2·X3+X2+X3)+[-X2·X3+X2+X3≠0]·[-X2·X3+X2+X3≤0]·⅟(-X2+-X3+X2·X3))·[(-X2·X3+X2+X3)·X4≠0]·[-X2·X3·X4+X2·X4+X3·X4≠0]·[-X2≤0]·[-X3≤0]·[-X4≤0]·[-r·⅟(-X2·X3·X4+X2·X4+X3·X4)≤0]·[X4≠0]·e^(-X2+-X3+-X4+-r·⅟(-X2·X3·X4+X2·X4+X3·X4))·δ[-lambda+1]·δ[-r·⅟(-X2·X3·X4+X2·X4+X3·X4)+X1]·⅟X4+[(-X2·X3+X2+X3)·X4=0]·[-X1≤0]·[-X2·X3·X4+X2·X4+X3·X4≠0]·[-X2≤0]·[-X3≤0]·[-X4≤0]·[X4≠0]·e^(-X1+-X2+-X3+-X4)·δ[-lambda+1]+[-X1≤0]·[-X2·X3·X4+X2·X4+X3·X4=0]·[-X2≤0]·[-X3≤0]·[-X4≤0]·e^(-X1+-X2+-X3+-X4)·δ[-lambda+1]·δ[r])".dParse.simplify(one));
 	//writeln("∫dξ₁[-ξ₁≤0]·ξ₁²·⅟e^ξ₁".dParse.simplify(one));
 	//writeln("lim[ξ₁ → ∞](-ξ₁²·⅟e^ξ₁)".dParse.simplify(one));
+	//writeln("[(-1)·0≠0]".dParse.simplify(one));
+	//writeln("∑_x[0≤x]·[x≤1]·δ[x-y]".dParse.simplify(one));
+	//writeln("-x".dParse.simplify("[-x+__u₁=0]".dParse));
 }
 
 /*

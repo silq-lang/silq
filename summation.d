@@ -24,6 +24,7 @@ DExpr computeSum(DVar var,DExpr expr,DExpr facts=one){
 				DExprSet doesNotWork;
 				bool simpler=false;
 				foreach(k;distributeMult(p,expr.withoutFactor(f))){
+					k=k.simplify(facts);
 					auto ow=k.splitMultAtVar(var);
 					auto r=computeSum(var,ow[1],facts);
 					if(r){
@@ -51,7 +52,8 @@ DExpr computeSum(DVar var,DExpr expr,DExpr facts=one){
 		if(ivr&&ivr.type!=DIvr.Type.neqZ) ivrs=ivrs*f;
 		else nonIvrs=nonIvrs*f;
 	}
-
+	ivrs=ivrs.simplify(facts);
+	nonIvrs=nonIvrs.simplify(facts);
 	DExpr lower,upper;
 	foreach(f;ivrs.factors){
 		if(f is one) break;
