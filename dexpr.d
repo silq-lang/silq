@@ -719,7 +719,7 @@ class DMult: DCommutAssocOp{
 	override DExpr incBoundVar(int di,bool bindersOnly){
 		DExprSet res;
 		foreach(f;factors) res.insert(f.incBoundVar(di,bindersOnly)); // TODO: ok?
-		return dMult(res);
+		res.remove(one); return dMult(res); // !!!
 	}
 
 	override bool isFraction(){ return factors.all!(a=>a.isFraction()); }
@@ -1055,8 +1055,10 @@ class DPow: DBinaryOp{
 	override bool isFraction(){ return cast(Dℕ)operands[0] && cast(Dℕ)operands[1]; }
 	override ℕ[2] getFraction(){
 		auto d=cast(Dℕ)operands[0];
-		assert(d && operands[1] is -one);
-		return [ℕ(1),d.c];
+		auto e=cast(Dℕ)operands[1];
+		assert(d && e);
+		if(e.c<0) return [ℕ(1),pow(d.c,-e.c)];
+		else return [pow(d.c,e.c),ℕ(1)];
 	}
 
 	override string toStringImpl(Format formatting,Precedence prec){
@@ -1068,7 +1070,7 @@ class DPow: DBinaryOp{
 					 Precedence.div);
 			}else{
 				auto pre=formatting==Format.default_?"⅟":"1/";
-				return addp(prec,pre~(operands[0]^^-operands[1]).toStringImpl(formatting,Precedence.div),Precedence.div);
+				return addp(prec,pre~((operands[0]^^-operands[1]).simplify(one)).toStringImpl(formatting,Precedence.div),Precedence.div);
 			}
 		}
 		// also nice, but often hard to read: ½⅓¼⅕⅙
@@ -1099,11 +1101,6 @@ class DPow: DBinaryOp{
 	}
 	override DExpr incBoundVar(int di,bool bindersOnly){
 		return operands[0].incBoundVar(di,bindersOnly)^^operands[1].incBoundVar(di,bindersOnly);
-	}
-
-	static DExpr constructHook(DExpr e1,DExpr e2){
-		return staticSimplify(e1,e2);
-		//return null;
 	}
 
 	private static DExpr staticSimplify(DExpr e1,DExpr e2,DExpr facts=one){
@@ -2009,7 +2006,7 @@ class DIvr: DExpr{ // iverson brackets
 			case leZ: return y(f.c<=0||approxEqual(f.c,0));
 			}
 		}
-		auto cancel=uglyFractionCancellation(e);
+		auto cancel=uglyFractionCancellation(e).simplify(facts);
 		if(cancel!=one) return dIvr(type,dDistributeMult(e,cancel)).simplify(facts);
 		if(type==Type.lZ) return (dIvr(Type.leZ,e)*dIvr(Type.neqZ,e)).simplify(facts);
 		if(type==Type.eqZ||type==Type.neqZ){
@@ -2120,7 +2117,7 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 	static DExpr staticSimplify(DExpr e,DExpr facts=one){
 		auto ne=e.simplify(one); // cannot use all facts! (might remove a free variable)
 		if(ne !is e) return dDelta(ne);
-		auto cancel=uglyFractionCancellation(e);
+		auto cancel=uglyFractionCancellation(e).simplify(facts);
 		if(cancel!=one) return dDelta(dDistributeMult(e,cancel))*cancel;
 		if(e.hasFactor(mone)) return dDelta(-e);
 		if(auto fct=factorDIvr!(e=>dDelta(e))(e)) return fct.simplify(facts);
@@ -2148,7 +2145,7 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 				auto curConstr=constraints.withoutFactor(dIvr(DIvr.Type.neqZ,x.constraint));
 				r=r+curConstr*dIvr(DIvr.Type.eqZ,x.constraint)*dIntSmp(var,expr*dDelta(x.expression));
 			}
-			return r;
+			return r.simplify(one);
 		}
 		return null;
 	}
@@ -3972,9 +3969,8 @@ DExpr dIvr(string file=__FILE__,int line=__LINE__)(DIvr.Type type, DExpr e){
 	return dIvrImpl(type,e);
 }
 +/
-enum locs=[  ];
-
-/+auto dMult(string file=__FILE__,int line=__LINE__)(DExpr e1,DExpr e2){
+/+enum locs=[  ];
+auto dMult(string file=__FILE__,int line=__LINE__)(DExpr e1,DExpr e2){
 	//pragma(msg, text(`"`,file," ",line,`",`));
 	//enum idx=locs.countUntil(text(file," ",line));
 	//static assert(idx!=-1);
@@ -3991,3 +3987,18 @@ enum locs=[  ];
 	}
 	return dMult(a);
 }+/
+
+
+/+enum locs = [ ];
+auto dPow(string file=__FILE__,int line=__LINE__)(DExpr e1, DExpr e2){
+	//pragma(msg, text(`"`,file," ",line,`",`));
+	/+enum idx=locs.countUntil(text(file," ",line));
+	static assert(idx!=-1);
+	//pragma(msg, idx);
+	static if(idx==26) pragma(msg, file," ",line);
+	static if(idx<=25)
+		if(auto r=DPow.staticSimplify(e1,e2)) return r;+/
+	return uniqueDExprNonCommutAssoc!(DPow)(e1,e2);
+}
+
+DExpr dDiv(string file=__FILE__,int line=__LINE__)(DExpr e1,DExpr e2){ return e1*dPow!(file,line)(e2,mone); }+/

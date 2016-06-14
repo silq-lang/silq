@@ -257,9 +257,9 @@ struct AntiD{ // TODO: is this even worth the hassle?
 
 AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 	auto ow=nonIvrs.splitMultAtVar(var);
-	ow[0]=ow[0].simplify(ivrs);
+	ow[0]=ow[0].simplify(one);
 	if(ow[0] !is one){
-		return ow[0]*tryGetAntiderivative(var,ow[1].simplify(ivrs),ivrs);
+		return ow[0]*tryGetAntiderivative(var,ow[1].simplify(one),ivrs);
 	}
 
 	static DExpr safeLog(DExpr e){ // TODO: integrating 1/x over 0 diverges (not a problem for integrals occurring in the analysis)
@@ -272,7 +272,7 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 			return AntiD((safeLog(var)*
 				 dIvr(DIvr.Type.eqZ,p.operands[1]+1)
 				 +(var^^(p.operands[1]+1))/(p.operands[1]+1)*
-						  dIvr(DIvr.Type.neqZ,p.operands[1]+1)));
+						  dIvr(DIvr.Type.neqZ,p.operands[1]+1)).simplify(one));
 		}
 		if(!p.operands[0].hasFreeVar(var)){
 			auto k=safeLog(p.operands[0])*p.operands[1];
@@ -280,7 +280,7 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 			auto dk=dDiff(var,k);
 			if(!dk.hasFreeVar(var)){
 				DExpr lo=null,up=null;
-				if(dIvr(DIvr.Type.leZ,k).simplify(ivrs) is one){
+				if(dIvr(DIvr.Type.leZ,k).simplify(one) is one){
 					up=zero;
 				}
 				return dIvr(DIvr.Type.neqZ,dk)*AntiD(dE^^k/dk,lo,up);
@@ -407,10 +407,10 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 		}
 		if(!gaussFact) return AntiD();
 		auto rest=m.withoutFactor(gaussFact);
-		auto gauss=dDiff(var,gaussFact).simplify(ivrs);
+		auto gauss=dDiff(var,gaussFact).simplify(one);
 		auto intRest=tryGetAntiderivative(var,rest,ivrs);
 		if(!intRest.antiderivative) return AntiD();
-		if(e is (gauss*intRest.antiderivative).simplify(ivrs)){ // TODO: handle all cases
+		if(e is (gauss*intRest.antiderivative).simplify(one)){ // TODO: handle all cases
 			return AntiD(gaussFact*intRest.antiderivative/2);
 		}
 		return AntiD();
@@ -446,12 +446,12 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 		auto intRest=tryGetAntiderivative(var,rest,ivrs).antiderivative;
 		if(!intRest) return fail();
 		auto diffPoly=dDiff(var,polyFact);
-		auto diffRest=(diffPoly*intRest).polyNormalize(var).simplify(ivrs);
+		auto diffRest=(diffPoly*intRest).polyNormalize(var).simplify(one);
 		auto intDiffPolyIntRest=tryGetAntiderivative(var,diffRest,ivrs).antiderivative;
 		if(!intDiffPolyIntRest) return fail();
 		auto r=AntiD(polyFact*intRest-intDiffPolyIntRest);
 		if(!r.antiderivative.hasFreeVar(token)){ memo[q(var,e)]=r; return r; }
-		if(auto s=(r.antiderivative-token).simplify(ivrs).solveFor(token)){
+		if(auto s=(r.antiderivative-token).simplify(one).solveFor(token)){
 			r=AntiD(s);
 			memo[q(var,e)]=r;
 			return r;
@@ -522,7 +522,7 @@ private DExpr tryIntegrateImpl(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DE
 		bool ok=true;
 		foreach(s;p.summands){
 			auto ow=s.splitMultAtVar(var);
-			ow[0]=ow[0].simplify(ivrs);
+			ow[0]=ow[0].simplify(one);
 			auto t=tryIntegrate(var,ow[1],lower,upper,ivrs);
 			if(t) DPlus.insert(works,ow[0]*t);
 			else DPlus.insert(doesNotWork,s);
