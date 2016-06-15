@@ -6,7 +6,7 @@ MapX!(Q!(DVar,DExpr,DExpr),DExpr) definiteIntegralMemo;
 DExpr definiteIntegral(DVar var,DExpr expr,DExpr facts=one){
 	auto t=q(var,expr,facts);
 	if(t in definiteIntegralMemo) return definiteIntegralMemo[t];
-	auto r=definiteIntegralImpl(var,expr,facts);
+	auto r=definiteIntegralImpl(t.expand);
 	definiteIntegralMemo[t]=r;
 	return r;
 }
@@ -100,7 +100,7 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
 			auto tmp1=freshVar(); // TODO: get rid of this!
 			auto tmp2=freshVar(); // TODO: get rid of this!
 			auto expr=sum.getExpr(tmp1)*expr.withoutFactor(f);
-			return dSumSmp(tmp1,dIntSmp(tmp2,expr.substitute(var,tmp2)));
+			return dSumSmp(tmp1,dIntSmp(tmp2,expr.substitute(var,tmp2),one),one);
 		}
 	}
 	// Fubini
@@ -124,10 +124,10 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
 		}
 		auto myvar=var;
 		auto myexpr=expr;
-		if(cast(DBoundVar)myvar){
-			assert(myvar is dBoundVar(1));
+		if(cast(DDeBruijnVar)myvar){
+			assert(myvar is dDeBruijnVar(1));
 			myvar=freshVar(); // TODO: get rid of this!
-			myexpr=unbind(var,expr,myvar);
+			myexpr=unbind(expr,myvar);
 		}
 		auto fubiExpr=fubiRec(myexpr);
 		if(hasInt) if(auto r=definiteIntegral(var,fubiExpr)){
@@ -137,7 +137,7 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
 		}
 		return null;
 	}
-	auto dbvar=cast(DBoundVar)var;
+	auto dbvar=cast(DDeBruijnVar)var;
 	if(!dbvar||dbvar.i==1) if(auto r=fubini()) return r;
 	if(!expr.hasFreeVar(var)) return expr*dInt(var,one); // (infinite integral)
 	return null;
@@ -206,13 +206,13 @@ private DExpr definiteIntegralContinuous(DVar var,DExpr expr,DExpr facts)out(res
 				auto rest=expr.withoutFactor(ivr);
 				auto r=constraints is zero?zero:
 					constraints*(dIntSmp(var,dIvr(DIvr.Type.leZ,var-bound)*
-										 dIvr(DIvr.type.leZ,info.bound.isLower)*rest)
+										 dIvr(DIvr.type.leZ,info.bound.isLower)*rest,one)
 								 +dIntSmp(var,dIvr(DIvr.Type.lZ,bound-var)*
-										  dIvr(DIvr.type.leZ,-info.bound.isLower)*rest));
+										  dIvr(DIvr.type.leZ,-info.bound.isLower)*rest,one));
 				foreach(ref x;info.caseSplits){
 					auto curConstr=constraints.withoutFactor(dIvr(DIvr.Type.neqZ,x.constraint));
 					r=r+curConstr*dIvr(DIvr.Type.eqZ,x.constraint)*
-						dIntSmp(var,rest*dIvr(DIvr.Type.leZ,x.expression));
+						dIntSmp(var,rest*dIvr(DIvr.Type.leZ,x.expression),one);
 				}
 				return r.simplify(facts);
 			case lowerBound:
@@ -339,7 +339,7 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 				if(auto n=cast(Dℕ)p.operands[1]){
 					DExpr dInGamma(DExpr a,DExpr z){
 						auto t=freshVar(); // TODO: get rid of this
-						return dIntSmp(t,t^^(a-1)*dE^^(-t)*dIvr(DIvr.type.leZ,z-t));
+						return dIntSmp(t,t^^(a-1)*dE^^(-t)*dIvr(DIvr.type.leZ,z-t),one);
 					}
 					if(n.c>0)
 						return AntiD(dIvr(DIvr.Type.neqZ,var)*mone^^n*dInGamma(n+1,-dLog(var)));
@@ -512,8 +512,8 @@ private DExpr tryIntegrateImpl(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DE
 		}
 		auto lo=lower?anti.substitute(var,lower):antid.atMinusInfinity;
 		auto up=upper?anti.substitute(var,upper):antid.atInfinity;
-		if(!lo) lo=dLimSmp(var,-dInf,anti);
-		if(!up) up=dLimSmp(var,dInf,anti);
+		if(!lo) lo=dLimSmp(var,-dInf,anti,one);
+		if(!up) up=dLimSmp(var,dInf,anti,one);
 		if(lo.isInfinite() || up.isInfinite()) return null;
 		if(lo.hasLimits() || up.hasLimits()) return null;
 		return up-lo;

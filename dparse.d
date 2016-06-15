@@ -174,7 +174,7 @@ struct DParser{
 			auto i=0;
 			for(auto rest=s["ξ".length..$];!rest.empty();rest.popFront())
 				i=10*i+cast(int)indexOf(lowDigits,rest.front);
-			return dBoundVar(i);
+			return dDeBruijnVar(i);
 		}
 		return dVar(s);
 	}
@@ -190,7 +190,7 @@ struct DParser{
 			auto i=0;
 			for(auto rest=s["ξ".length..$];!rest.empty();rest.popFront())
 				i=10*i+cast(int)indexOf(lowDigits,rest.front);
-			return dBoundVar(i);
+			return dDeBruijnVar(i);
 		}
 		return varOrBound(s);
 	}

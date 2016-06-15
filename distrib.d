@@ -41,26 +41,26 @@ DExpr bernoulliPDF(DVar var,DExpr p){
 
 DExpr uniformIntPDFNnorm(DVar var,DExpr a,DExpr b){
 	auto tmp=freshVar(); // TODO: get rid of this!
-	return dSumSmp(tmp,dBounded!"[]"(tmp,a,b)*dDelta(var-tmp));
+	return dSumSmp(tmp,dBounded!"[]"(tmp,a,b)*dDelta(var-tmp),one);
 }
 
 DExpr uniformIntPDF(DVar var,DExpr a,DExpr b){
 	auto nnorm=uniformIntPDFNnorm(var,a,b);
-	return nnorm/dIntSmp(var,nnorm);
+	return nnorm/dIntSmp(var,nnorm,one);
 }
 
 DExpr poissonPDF(DVar var,DExpr λ){
 	auto tmp=freshVar();
-	return dE^^-λ*dSumSmp(tmp,dIvr(DIvr.Type.leZ,-tmp)*dDelta(var-tmp)*λ^^tmp/dGamma(tmp+1));
+	return dE^^-λ*dSumSmp(tmp,dIvr(DIvr.Type.leZ,-tmp)*dDelta(var-tmp)*λ^^tmp/dGamma(tmp+1),one);
 }
 
 DExpr betaPDF(DVar var,DExpr α,DExpr β){
 	auto nnorm=var^^(α-1)*(1-var)^^(β-1)*dBounded!"[]"(var,zero,one);
-	return nnorm/dIntSmp(var,nnorm);
+	return nnorm/dIntSmp(var,nnorm,one);
 }
 DExpr gammaPDF(DVar var,DExpr α,DExpr β){
 	auto nnorm=var^^(α-1)*dE^^(-β*var)*dIvr(DIvr.Type.leZ,-var);
-	return nnorm/dIntSmp(var,nnorm);
+	return nnorm/dIntSmp(var,nnorm,one);
 }
 
 DExpr laplacePDF(DVar var, DExpr μ, DExpr b) {
@@ -76,7 +76,7 @@ DExpr expPDF(DVar var,DExpr λ){
 
 DExpr studentTPDF(DVar var,DExpr ν){ // this has a mean only if ν>1. how to treat this?
 	auto nnorm=(1+var^^2/ν)^^(-(ν+1)/2);
-	return nnorm/dIntSmp(var,nnorm);
+	return nnorm/dIntSmp(var,nnorm,one);
 }
 
 DExpr weibullPDF(DVar var,DExpr λ,DExpr k){
@@ -84,8 +84,8 @@ DExpr weibullPDF(DVar var,DExpr λ,DExpr k){
 }
 
 DExpr categoricalPDF(DVar var,DExpr p){
-	auto tmp=freshVar(); // TODO: get rid of this!
-	auto nnorm=dSum(tmp,dBounded!"[)"(tmp,zero,dField(p,"length"))*p[tmp]*dDelta(var-tmp));
+	auto dbv=dDeBruijnVar(1);
+	auto nnorm=dSum(dBounded!"[)"(dbv,zero,dField(p,"length"))*p[dbv]*dDelta(var-dbv));
 	return nnorm;///dIntSmp(tmp,nnorm);
 }
 
@@ -137,8 +137,8 @@ class Distribution{
 		auto d1=distribution;
 		auto d2=b.distribution;
 		// TODO: this should be unnecessary with dead variable analysis
-		foreach(x;this.freeVars) if(x !in orig.freeVars){ assert(d1 is zero || d1.hasFreeVar(x)); d1=dIntSmp(x,d1); }
-		foreach(x;b.freeVars) if(x !in orig.freeVars){ assert(d2 is zero || d2.hasFreeVar(x)); d2=dIntSmp(x,d2); }
+		foreach(x;this.freeVars) if(x !in orig.freeVars){ assert(d1 is zero || d1.hasFreeVar(x)); d1=dIntSmp(x,d1,one); }
+		foreach(x;b.freeVars) if(x !in orig.freeVars){ assert(d2 is zero || d2.hasFreeVar(x)); d2=dIntSmp(x,d2,one); }
 		//// /// // /
 		r.vbl=orig.vbl;
 		r.symtab=orig.symtab;
@@ -171,7 +171,7 @@ class Distribution{
 		auto vars=iota(0,nParams).map!(x=>dVar("__p"~lowNum(x))).array;
 		auto fun=dFun("q".dFunVar,cast(DExpr[])vars); // TODO: get rid of cast
 		DExpr tdist=fun;
-		foreach(v;vars) tdist=dIntSmp(v,tdist);
+		foreach(v;vars) tdist=dIntSmp(v,tdist,one);
 		if(context) tdist=dInt(context,tdist);
 		DExpr doIt(DExpr e){
 			auto h=e.getHoles!(x=>x is tdist?x:null);
@@ -214,7 +214,7 @@ class Distribution{
 
 	DExpr computeProbability(DExpr cond){
 		auto tdist=distribution*cond.simplify(one);
-		foreach(v;freeVars) tdist=dIntSmp(v,tdist);
+		foreach(v;freeVars) tdist=dIntSmp(v,tdist,one);
 		if(context) tdist=dInt(context,tdist);
 		return tdist;
 	}
@@ -242,7 +242,7 @@ class Distribution{
 	void marginalize(DVar var)in{assert(var in freeVars); }body{
 		//assert(distribution.hasFreeVar(var),text(distribution," ",var));
 		//writeln("marginalizing: ",var,"\ndistribution: ",distribution,"\nmarginalized: ",dInt(var,distribution));
-		distribution=dIntSmp(var,distribution);
+		distribution=dIntSmp(var,distribution,one);
 		freeVars.remove(var);
 		tmpVars.remove(var);
 		assert(!distribution.hasFreeVar(var));
@@ -253,7 +253,7 @@ class Distribution{
 	void renormalize(){
 		auto factor=distribution;
 		foreach(v;freeVars)
-			factor=dIntSmp(v,factor);
+			factor=dIntSmp(v,factor,one);
 		if(context) factor=dInt(context,factor);
 		factor=factor+error;
 		distribution=(dIvr(DIvr.Type.neqZ,factor)*(distribution/factor)).simplify(one);

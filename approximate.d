@@ -218,7 +218,7 @@ DExpr approximate(DExpr e){
 		}
 		if(auto intg=cast(DInt)e){
 			auto tmpvar=freshVar(); // TODO: get rid of this!
-			auto intExpr=intg.getExpr(tmpvar);
+			auto intExpr=unbind(intg,tmpvar);
 			if(auto r=doIt(intExpr,true))
 				return dInt(tmpvar,r);
 		}
