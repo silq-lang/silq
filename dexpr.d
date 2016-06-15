@@ -2110,7 +2110,6 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 	override DExpr incBoundVar(int di,bool bindersOnly){ return dDelta(e.incBoundVar(di,bindersOnly)); }
 
 	static DExpr constructHook(DExpr e){
-		//return staticSimplify(e);
 		return null;
 	}
 	static DExpr staticSimplify(DExpr e,DExpr facts=one){
@@ -2196,7 +2195,8 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 	override DExpr incBoundVar(int di,bool bindersOnly){ return dDiscDelta(var.incBoundVar(di,bindersOnly),e.incBoundVar(di,bindersOnly)); }
 
 	static DExpr constructHook(DVar var,DExpr e){
-		return staticSimplify(var,e);
+		//return staticSimplify(var,e);
+		return null;
 	}
 	static DExpr staticSimplify(DVar var,DExpr e,DExpr facts=one){
 		// cannot use all facts during simplification (e.g. see test/tuples5.prb)
@@ -2468,8 +2468,7 @@ auto uniqueBindingDExpr(T)(DBoundVar v,DExpr a,DExpr b=null){
 }
 
 DExpr dIntSmp(DVar var,DExpr expr,DExpr facts=one){
-	if(auto r=DInt.constructHook(var,expr,facts)) return r;
-	return dInt(var,expr);
+	return dInt(var,expr).simplify(facts);
 }
 
 DExpr dInt(DVar var,DExpr expr)in{assert(var&&expr);}body{
@@ -2570,9 +2569,8 @@ class DSum: DOp{
 	}
 }
 
-DExpr dSumSmp(DVar var,DExpr expr){
-	if(auto r=DSum.constructHook(var,expr)) return r;
-	return dSum(var,expr);
+DExpr dSumSmp(DVar var,DExpr expr,DExpr facts=one){
+	return dSum(var,expr).simplify(facts);
 }
 
 DExpr dSum(DVar var,DExpr expr){
@@ -2824,7 +2822,7 @@ class DLog: DOp{
 	}
 
 	static DExpr constructHook(DExpr e){
-		return staticSimplify(e);
+		return null;
 	}
 	static DExpr staticSimplify(DExpr e,DExpr facts=one){
 		auto ne=e.simplify(facts);
@@ -2887,7 +2885,7 @@ class DSin: DOp{
 	}
 
 	static DExpr constructHook(DExpr e){
-		return staticSimplify(e);
+		return null;
 	}
 	static DExpr staticSimplify(DExpr e,DExpr facts=one){
 		auto ne=e.simplify(facts);
@@ -2927,7 +2925,7 @@ class DFloor: DOp{
 		return dFloor(e.incBoundVar(di,bindersOnly));
 	}
 	static DExpr constructHook(DExpr e){
-		return staticSimplify(e);
+		return null;
 	}
 	static DExpr staticSimplify(DExpr e,DExpr facts=one){
 		auto ne=e.simplify(facts);
@@ -2971,7 +2969,7 @@ class DCeil: DOp{
 		return dCeil(e.incBoundVar(di,bindersOnly));
 	}
 	static DExpr constructHook(DExpr e){
-		return staticSimplify(e);
+		return null;
 	}
 	static DExpr staticSimplify(DExpr e,DExpr facts=one){
 		auto ne=e.simplify(facts);
@@ -3007,7 +3005,7 @@ class DGaussInt: DOp{
 	}
 
 	static DExpr constructHook(DExpr x){
-		return staticSimplify(x);
+		return null;
 	}
 	static DExpr staticSimplify(DExpr x,DExpr facts=one){
 		if(x is dInf){
@@ -3127,7 +3125,7 @@ class DFun: DOp{ // uninterpreted functions
 	}
 
 	static DFun constructHook(DFunVar fun,DExpr[] args){
-		return staticSimplify(fun,args);
+		return null;
 	}
 	static DFun staticSimplify(DFunVar fun,DExpr[] args,DExpr facts=one){
 		auto nargs=args.map!(a=>a.simplify(one)).array; // cannot use all facts! (might remove a free variable)
@@ -3208,7 +3206,7 @@ class DTuple: DExpr{ // Tuples. TODO: real tuple support
 		return dTuple(values.map!(v=>v.incBoundVar(di,bindersOnly)).array);
 	}
 	static DTuple constructHook(DExpr[] values){
-		return staticSimplify(values);
+		return null;
 	}
 	static DTuple staticSimplify(DExpr[] values,DExpr facts=one){
 		auto nvalues=values.map!(v=>v.simplify(facts)).array;
@@ -3285,7 +3283,7 @@ class DRecord: DExpr{ // Tuples. TODO: real tuple support
 		return dRecord(nvalues);
 	}
 	static DRecord constructHook(DExpr[string] values){
-		return staticSimplify(values);
+		return null;
 	}
 	static DRecord staticSimplify(DExpr[string] values,DExpr facts=one){
 		DExpr[string] nvalues;
@@ -3387,7 +3385,7 @@ class DIndex: DOp{
 		return null;
 	}
 	static DExpr constructHook(DExpr e,DExpr i){
-		return staticSimplify(e,i);
+		return null;
 	}
 }
 
@@ -3476,7 +3474,7 @@ class DIUpdate: DOp{
 	}
 	
 	static DExpr constructHook(DExpr e,DExpr i,DExpr n){
-		return staticSimplify(e,i,n);
+		return null;
 	}
 }
 
@@ -3543,7 +3541,7 @@ class DRUpdate: DOp{
 	}
 	
 	static DExpr constructHook(DExpr e,string f,DExpr n){
-		return staticSimplify(e,f,n);
+		return null;
 	}
 }
 
@@ -3681,7 +3679,7 @@ class DArray: DExpr{
 		return dArray(length.incBoundVar(di,bindersOnly),entries.incBoundVar(di,bindersOnly));
 	}
 	static DArray constructHook(DExpr length,DLambda entries){
-		return staticSimplify(length,entries);
+		return null;
 	}
 	static DArray staticSimplify(DExpr length,DLambda entries,DExpr facts=one){
 		auto nlength=length.simplify(facts);
@@ -3739,7 +3737,7 @@ class DCat: DAssocOp{ // TODO: this should have n arguments, as it is associativ
 		return dCat(operands.map!(a=>a.incBoundVar(di,bindersOnly)).array);
 	}
 	static DExpr constructHook(DExpr[] operands){
-		return staticSimplify(operands);
+		return null;
 	}
 	private static DExpr staticSimplify(DExpr[] operands,DExpr facts=one){
 		auto nop=operands.map!(a=>a.simplify(facts)).array;
@@ -3852,7 +3850,7 @@ class DField: DOp{
 	}
 	
 	static DExpr constructHook(DExpr e,string f){
-		return staticSimplify(e,f);
+		return null;
 	}
 }
 
