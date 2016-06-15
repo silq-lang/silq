@@ -2409,7 +2409,7 @@ class DInt: DOp{
 		auto nexpr=expr.simplify(facts);
 		if(expr !is nexpr) return dIntSmp(var,nexpr,facts);
 		auto ow=expr.splitMultAtVar(var);
-		ow[0]=ow[0].simplify(one);
+		ow[0]=ow[0].simplify(facts);
 		if(ow[0] !is one) return (ow[0]*dIntSmp(var,ow[1],facts)).simplify(facts);
 		return staticSimplify(var,expr);
 	}

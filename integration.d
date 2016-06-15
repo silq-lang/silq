@@ -228,7 +228,9 @@ private DExpr definiteIntegralContinuous(DVar var,DExpr expr,DExpr facts)out(res
 			case equal: assert(0);
 			}
 	}
-	return tryIntegrate(var,nonIvrs,lower,upper,ivrs);
+	if(auto r=tryIntegrate(var,nonIvrs,lower,upper,ivrs))
+		return r.simplify(facts);
+	return null;
 }
 
 struct AntiD{ // TODO: is this even worth the hassle?
@@ -527,7 +529,7 @@ private DExpr tryIntegrateImpl(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DE
 			if(t) DPlus.insert(works,ow[0]*t);
 			else DPlus.insert(doesNotWork,s);
 		}
-		if(works.length) return dPlus(works).simplify(one)+dInt(var,(dPlus(doesNotWork)*ivrs).simplify(one));
+		if(works.length) return dPlus(works)+dInt(var,(dPlus(doesNotWork)*ivrs));
 	}//else dw("fail: ","Integrate[",nonIvrs.toString(Format.mathematica),",",var.toString(Format.mathematica),"]");
 	return null; // no simpler expression available
 }
