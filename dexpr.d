@@ -2379,7 +2379,6 @@ class DInt: DOp{
 	static MapX!(Q!(DExpr,DExpr),DExpr) ssimplifyMemo;
 	
 	static DExpr staticSimplify(DVar var,DExpr expr,DExpr facts=one)in{assert(var&&expr&&facts);}body{
-		static int dpt=0; dpt++; scope(exit) dpt--;
 		//version(DISABLE_INTEGRATION){
 		if(simplification==Simpl.raw)
 			return null;
