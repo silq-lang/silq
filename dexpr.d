@@ -1341,7 +1341,7 @@ DPolynomial asPolynomialIn(DExpr e,DVar v,long limit=-1){
 
 DExpr[2] asLinearFunctionIn(DExpr e,DVar v){ // returns [b,a] if e=av+b
 	auto p=e.asPolynomialIn(v);
-	if(p.degree>1) return [null,null];
+	if(p is DPolynomial.init||p.degree>1) return [null,null];
 	return [p.coefficients.get(0,zero),p.coefficients.get(1,zero)];
 }
 
@@ -1937,7 +1937,6 @@ class DIvr: DExpr{ // iverson brackets
 	}
 
 	static DExpr constructHook(Type type,DExpr e){
-		//return staticSimplify(type,e);
 		return null;
 	}
 
@@ -2048,7 +2047,6 @@ class DIvr: DExpr{ // iverson brackets
 		auto r=staticSimplify(type,e,facts);
 		return r?r:this;
 	}
-
 }
 
 DExpr dBounded(string what)(DExpr e,DExpr lo,DExpr hi) if(what=="[]"){
@@ -2112,7 +2110,8 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 	override DExpr incBoundVar(int di,bool bindersOnly){ return dDelta(e.incBoundVar(di,bindersOnly)); }
 
 	static DExpr constructHook(DExpr e){
-		return staticSimplify(e);
+		//return staticSimplify(e);
+		return null;
 	}
 	static DExpr staticSimplify(DExpr e,DExpr facts=one){
 		auto ne=e.simplify(one); // cannot use all facts! (might remove a free variable)
@@ -2851,7 +2850,7 @@ class DLog: DOp{
 			return dPlus(logs).simplify(facts);
 		}
 		if(auto p=cast(DPow)e)
-			auto r=(p.operands[1]*dLog(dAbs(p.operands[0]))).simplify(facts);
+			return (p.operands[1]*dLog(dAbs(p.operands[0]))).simplify(facts);
 		if(auto fct=factorDIvr!(e=>dLog(e))(e)) return fct.simplify(facts);
 		return null;
 	}

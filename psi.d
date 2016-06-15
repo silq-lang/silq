@@ -813,6 +813,8 @@ void test(){
 	//writeln("[(-1)·0≠0]".dParse.simplify(one));
 	//writeln("∑_x[0≤x]·[x≤1]·δ[x-y]".dParse.simplify(one));
 	//writeln("-x".dParse.simplify("[-x+__u₁=0]".dParse));
+	//writeln(dInt("w".dVar,"(-∫dξ₁[-1+ξ₁≤0]·[-ξ₁+w≤0]·[-ξ₁≤0]·[ξ₁≠0]·log(⅟ξ₁)·⅟ξ₁)·[-w≤0]·[w≠0])".dParse).simplify(one));
+	//writeln(tryGetAntiderivative("x".dVar,"log(1/x)".dParse,one).antiderivative.simplify(one));
 }
 
 /*
