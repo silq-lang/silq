@@ -2349,9 +2349,7 @@ static ~this(){
 }+/
 
 static DExpr unbind(DExpr expr, DExpr nexpr){
-	if(nexpr is dDeBruijnVar(1)) return expr; // TODO: ok?
-	version(assert) foreach(v;nexpr.freeVars()) assert(!cast(DDeBruijnVar)v);
-	return expr.substitute(dDeBruijnVar(1),nexpr).incDeBruijnVar(-1,false);
+	return expr.incDeBruijnVar(-1,0).substitute(dDeBruijnVar(0),nexpr);
 }
 
 import integration;
@@ -2490,7 +2488,7 @@ class DContextInt: DOp{
 	}
 	static DExpr staticSimplify(DContextVars var,DExpr expr,DExpr facts){
 		auto nexpr=expr.simplify(facts);
-		if(nexpr !is expr) return dContextInt(var,nexpr);
+		if(nexpr !is expr) return dContextInt(var,nexpr).simplify(facts);
 		if(expr is zero) return zero;
 		auto ow=expr.splitMultAtVar(var);
 		ow[0]=ow[0].simplify(facts);
