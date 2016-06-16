@@ -120,7 +120,7 @@ private struct Analyzer{
 						if(ce.args.length==1)
 							return dArray(doIt(ce.args[0]));
 						assert(ce.args.length==2);
-						return dArray(doIt(ce.args[0]),doIt(ce.args[1]));
+						return dConstArray(doIt(ce.args[0]),doIt(ce.args[1]));
 					case "readCSV":
 						err.error(text("call to 'readCSV' only supported as the right hand side of an assignment"),ce.loc);
 						unwind();
@@ -776,6 +776,7 @@ private struct Analyzer{
 				}
 			}else if(auto ae=cast(AssignExp)e){
 				assignTo(ae.e1,transformExp(ae.e2),ae.e2.type,ae.loc);
+				dist.marginalizeTemporaries();
 			}else if(cast(AddAssignExp)e||cast(SubAssignExp)e||cast(MulAssignExp)e||cast(DivAssignExp)e||cast(PowAssignExp)e||cast(CatAssignExp)e){
 				DExpr perform(DExpr a,DExpr b){
 					if(cast(AddAssignExp)e) return a+b;
@@ -797,6 +798,7 @@ private struct Analyzer{
 				auto lhs=transformExp(be.e1);
 				auto rhs=transformExp(be.e2);
 				assignTo(lhs,perform(lhs,rhs),be.e2.type,be.loc);
+				dist.marginalizeTemporaries();
 			}else if(auto call=cast(CallExp)e){
 				transformExp(call);
 				dist.marginalizeTemporaries();

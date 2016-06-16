@@ -3448,9 +3448,9 @@ class DIUpdate: DOp{
 		if(auto arr=cast(DArray)ne){
 			auto dbv=dDeBruijnVar(1);
 			auto r=dArray(arr.length,
-						  dLambda(arr.entries*dIvr(DIvr.Type.neqZ,dbv-ni)
+						  dLambda(arr.entries.expr*dIvr(DIvr.Type.neqZ,dbv-ni)
 								  + dIvr(DIvr.Type.eqZ,dbv-ni)*nn));
-			return r;
+			return r.simplify(facts);
 		}
 		if(ne !is e || ni !is i || nn !is n) return dIUpdate(ne,ni,nn);
 		return null;
@@ -3597,13 +3597,14 @@ DLambda dLambda(DExpr expr)in{assert(expr);}body{
 	return uniqueBindingDExpr!DLambda(expr);
 }
 
-DLambda dLambdaSmp(DVar var,DExpr expr,DExpr facts)in{assert(var&&expr&&!cast(DDeBruijnVar)var);}body{
+DLambda dLambdaSmp(DVar var,DExpr expr,DExpr facts)in{assert(var&&expr);}body{
 	auto r=dLambda(var,expr).simplify(facts);
 	assert(!!cast(DLambda)r);
 	return cast(DLambda)cast(void*)r;
 }
 
-DLambda dLambda(DVar var,DExpr expr)in{assert(var&&expr&&!cast(DDeBruijnVar)var);}body{
+DLambda dLambda(DVar var,DExpr expr)in{assert(var&&expr&&(!cast(DDeBruijnVar)var||var is dDeBruijnVar(1)));}body{
+	if(var is dDeBruijnVar(1)) return dLambda(expr);
 	return dLambda(expr.incDeBruijnVar(1,0).substitute(var,dDeBruijnVar(1)));
 }
 
@@ -3666,7 +3667,8 @@ auto dArray(DExpr length,DLambda entries){
 }
 
 auto dArray(DExpr length){ return dArray(length,dLambda(zero)); }
-auto dArray(DExpr length,DExpr default_){
+auto dConstArray(DExpr length,DExpr default_){
+	assert(!cast(DLambda)default_);
 	return dArray(length,dLambda(default_.incDeBruijnVar(1,0)));
 }
 auto dArray(DExpr[] entries){
