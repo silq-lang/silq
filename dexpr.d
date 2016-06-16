@@ -2455,10 +2455,71 @@ DExpr dIntSmp(DVar var,DExpr expr,DExpr facts){
 	return dInt(var,expr).simplify(facts);
 }
 
-DExpr dInt(DVar var,DExpr expr)in{assert(var&&expr&&!cast(DDeBruijnVar)var);}body{
-	if(cast(DContextVars)var) assert(0,"TODO!");
+DExpr dInt(DVar var,DExpr expr)in{assert(var&&expr&&(!cast(DDeBruijnVar)var||var is dDeBruijnVar(1)));}body{
+	if(var is dDeBruijnVar(1)) return dInt(expr);
+	if(auto ctxv=cast(DContextVars)var) return dContextInt(ctxv,expr);
 	return dInt(expr.incDeBruijnVar(1,0).substitute(var,dDeBruijnVar(1)));
- }
+}
+
+class DContextInt: DOp{
+	DContextVars var;
+	DExpr expr;
+	this(DContextVars var,DExpr expr){ this.var=var; this.expr=expr; }
+	override @property Precedence precedence(){ return Precedence.intg; }
+	override @property string symbol(Format formatting,int binders){ return "∫"; }
+	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		if(formatting==Format.mathematica){
+			return text("Integrate[",expr.toStringImpl(formatting,Precedence.none,binders),",{",var.toStringImpl(formatting,Precedence.none,binders),",-Infinity,Infinity}]");
+		}else if(formatting==Format.maple){
+			return text("int(",expr.toStringImpl(formatting,Precedence.none,binders),",",var.toStringImpl(formatting,Precedence.none,binders),"=-infinity..infinity)");
+		}else if(formatting==Format.sympy){
+			return text("integrate(",expr.toStringImpl(formatting,Precedence.none,binders),",(",var.toStringImpl(formatting,Precedence.none,binders),",-oo,oo))");
+		}else{
+			return addp(prec,symbol(formatting,binders)~"d"~var.toStringImpl(formatting,Precedence.none,binders)~expr.toStringImpl(formatting,Precedence.none,binders));
+		}
+	}
+	static DExpr staticSimplify(DContextVars var,DExpr expr,DExpr facts){
+		auto nexpr=expr.simplify(facts);
+		if(nexpr !is expr) return dContextInt(var,nexpr);
+		return null;
+	}
+	override DExpr simplifyImpl(DExpr facts){
+		auto r=staticSimplify(var,expr,facts);
+		return r?r:this;
+	}
+	override int forEachSubExpr(scope int delegate(DExpr) dg){
+		return 0;
+	}
+	override int freeVarsImpl(scope int delegate(DVar) dg){
+		return expr.freeVarsImpl(v=>v is dDeBruijnVar(1)?0:dg(v.incDeBruijnVar(-1,0)));
+	}
+	override DExpr substitute(DVar var,DExpr e){
+		return dContextInt(this.var,expr.substitute(var,e));
+	}
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
+		auto nexpr=expr.substituteFun(fun,q,args,context);
+		if(var.fun is fun){
+			auto r=nexpr;
+			foreach(v;context) r=dInt(v,r);
+			return r;
+		}
+		return dContextInt(var,nexpr);
+	}
+	override DExpr incDeBruijnVar(int di,int bound){
+		return dContextInt(var,expr.incDeBruijnVar(di,bound));
+	}
+}
+
+
+MapX!(TupleX!(DContextVars,DExpr),DContextInt) uniqueMapContextInt;
+DContextInt dContextInt(DContextVars var,DExpr expr){
+	auto t=tuplex(var,expr);
+	if(t in uniqueMapContextInt) return uniqueMapContextInt[t];
+	auto r=new DContextInt(var,expr);
+	uniqueMapContextInt[t]=r;
+	return r;
+}
+
 
 import summation;
 class DSum: DOp{
@@ -2541,7 +2602,8 @@ DExpr dSumSmp(DVar var,DExpr expr,DExpr facts){
 	return dSum(var,expr).simplify(facts);
 }
 
-DExpr dSum(DVar var,DExpr expr)in{assert(var&&expr&&!cast(DDeBruijnVar)var);}body{
+DExpr dSum(DVar var,DExpr expr)in{assert(var&&expr&&(!cast(DDeBruijnVar)var||var is dDeBruijnVar(1)));}body{
+	if(var is dDeBruijnVar(1)) return dSum(expr);
 	return dSum(expr.incDeBruijnVar(1,0).substitute(var,dDeBruijnVar(1)));
 }
 
@@ -2605,7 +2667,8 @@ DExpr dLimSmp(DVar v,DExpr e,DExpr x,DExpr facts){
 	return dLim(v,e,x).simplify(facts);
 }
 
-DExpr dLim(DVar v,DExpr e,DExpr x)in{assert(v&&e&&x&&!cast(DDeBruijnVar)v);}body{
+DExpr dLim(DVar v,DExpr e,DExpr x)in{assert(v&&e&&x&&(!cast(DDeBruijnVar)v||v is dDeBruijnVar(1)));}body{
+	if(v is dDeBruijnVar(1)) return dLim(e,x);
 	return dLim(e,x.incDeBruijnVar(1,0).substitute(v,dDeBruijnVar(1)));
 }
 
@@ -2660,9 +2723,10 @@ DExpr dDiff(DExpr e,DExpr x){
 	return uniqueBindingDExpr!DDiff(e,x);
 }
 
-DExpr dDiff(DVar v,DExpr e,DExpr x)in{assert(v&&e&&x&&!cast(DDeBruijnVar)v);}body{
+DExpr dDiff(DVar v,DExpr e,DExpr x)in{assert(v&&e&&x&&(!cast(DDeBruijnVar)v||v is dDeBruijnVar(1)));}body{
+	if(v is dDeBruijnVar(1)) return dDiff(e,x);
 	return dDiff(e.incDeBruijnVar(1,0).substitute(v,dDeBruijnVar(1)),x);
- }
+}
 DExpr dDiff(DVar v,DExpr e){ return dDiff(v,e,v); }
 
 class DAbs: DOp{

@@ -17,7 +17,6 @@ DExpr exponentialPDF(DVar var, DExpr lambda) {
       return dIvr(DIvr.Type.leZ,-lambda)*dist;
 }
 
-
 DExpr truncGaussianPDF(DVar var,DExpr μ,DExpr σsq, DExpr a, DExpr b){
 	auto gdist=one/(2*dΠ)^^(one/2)*dE^^-((var-μ)^^2/(2*σsq));
 	auto dist = gdist/(σsq)/(dGaussInt((b-μ)/σsq^^(one/2))-dGaussInt((a-μ)/(σsq)^^(one/2)))*dBounded!"[]"(var,a,b);
@@ -25,10 +24,9 @@ DExpr truncGaussianPDF(DVar var,DExpr μ,DExpr σsq, DExpr a, DExpr b){
 }
 
 DExpr paretoPDF(DVar var, DExpr a, DExpr b) {
-        auto dist = a * b^^a / var^^(a+one);
+	auto dist = a * b^^a / var^^(a+one);
 	return dist * dIvr(DIvr.Type.leZ, b-var);
 }
-
 
 DExpr uniformPDF(DVar var,DExpr a,DExpr b){
 	auto diff=b-a, dist=dBounded!"[]"(var,a,b)/diff;
