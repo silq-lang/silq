@@ -2491,6 +2491,10 @@ class DContextInt: DOp{
 	static DExpr staticSimplify(DContextVars var,DExpr expr,DExpr facts){
 		auto nexpr=expr.simplify(facts);
 		if(nexpr !is expr) return dContextInt(var,nexpr);
+		if(expr is zero) return zero;
+		auto ow=expr.splitMultAtVar(var);
+		ow[0]=ow[0].simplify(facts);
+		if(ow[0] !is one) return (ow[0]*dInt(var,ow[1])).simplify(facts);
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){
@@ -2501,7 +2505,7 @@ class DContextInt: DOp{
 		return 0;
 	}
 	override int freeVarsImpl(scope int delegate(DVar) dg){
-		return expr.freeVarsImpl(v=>v is dDeBruijnVar(1)?0:dg(v.incDeBruijnVar(-1,0)));
+		return expr.freeVarsImpl(v=>v is var?0:dg(v));
 	}
 	override DExpr substitute(DVar var,DExpr e){
 		return dContextInt(this.var,expr.substitute(var,e));

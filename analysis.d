@@ -349,9 +349,9 @@ private struct Analyzer{
 							total=dInt(ctx,total);
 							expct=dInt(ctx,expct);
 						}
+						// for obvious reasons, this will never fail:
 						dist.assertTrue(dIvr(DIvr.Type.neqZ,total),"expectation can be computed only in feasible path");
 						auto tmp=dist.getTmpVar("__exp");
-						// for obvious reasons, this will never fail:
 						dist.distribute(dDelta(tmp,expct/total,ℝ));
 						return tmp;
 					default: break;
