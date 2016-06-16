@@ -82,7 +82,7 @@ abstract class DExpr{
 	abstract DExpr simplifyImpl(DExpr facts);
 
 	static MapX!(Q!(DExpr,DExpr),DExpr) simplifyMemo;
-	final DExpr simplify(DExpr facts){
+	final DExpr simplify(string file=__FILE__,int line=__LINE__)(DExpr facts){
 		if(q(this,facts) in simplifyMemo) return simplifyMemo[q(this,facts)];
 		if(facts is zero) return zero;
 		auto r=simplifyImpl(facts);
@@ -767,7 +767,15 @@ class DMult: DCommutAssocOp{
 			return;
 		}
 		// TODO: use suitable data structures
-		static DExpr combine(DExpr e1,DExpr e2,DExpr facts)in{assert(!cast(DMult)e1&&!cast(DMult)e2);}body{
+		static MapX!(Q!(DExpr,DExpr,DExpr),DExpr) combineMemo;
+		static DExpr combine()(DExpr e1,DExpr e2,DExpr facts){
+			if(q(e1,e2,facts) in combineMemo) return combineMemo[q(e1,e2,facts)];
+			auto r=combineImpl(e1,e2,facts);
+			combineMemo[q(e1,e2,facts)]=r;
+			combineMemo[q(e2,e1,facts)]=r;
+			return r;
+		}
+		static DExpr combineImpl(DExpr e1,DExpr e2,DExpr facts)in{assert(!cast(DMult)e1&&!cast(DMult)e2);}body{
 			if(e1 is one) return e2;
 			if(e2 is one) return e1;
 			static DExpr combineInf(DExpr e1,DExpr e2,DExpr facts){
