@@ -335,14 +335,16 @@ AntiD tryGetAntiderivative(DVar var,DExpr nonIvrs,DExpr ivrs){
 	// integrate log to some positive integer power
 	if(auto p=cast(DPow)nonIvrs){
 		if(auto l=cast(DLog)p.operands[0]){
-			if(l.e is var){ // TODO: linear functions of var
+			auto ba=l.e.asLinearFunctionIn(var);
+			auto b=ba[0],a=ba[1];
+			if(a && b){
 				if(auto n=cast(Dℕ)p.operands[1]){
 					DExpr dInGamma(DExpr a,DExpr z){
 						auto t=freshVar(); // TODO: get rid of this
 						return dIntSmp(t,t^^(a-1)*dE^^(-t)*dIvr(DIvr.type.leZ,z-t),one);
 					}
 					if(n.c>0)
-						return AntiD(dIvr(DIvr.Type.neqZ,var)*mone^^n*dInGamma(n+1,-dLog(var)));
+						return AntiD(dIvr(DIvr.Type.neqZ,a*var+b)*(-mone)^^n*dInGamma(n+1,-dLog(a*var+b))/a);
 				}
 			}
 		}
