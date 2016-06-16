@@ -2341,6 +2341,8 @@ static ~this(){
 }+/
 
 static DExpr unbind(DExpr expr, DExpr nexpr){
+	if(nexpr is dDeBruijnVar(1)) return expr; // TODO: ok?
+	version(assert) foreach(v;nexpr.freeVars()) assert(!cast(DDeBruijnVar)v);
 	return expr.substitute(dDeBruijnVar(1),nexpr).incDeBruijnVar(-1,false);
 }
 
