@@ -3616,7 +3616,7 @@ class DArray: DExpr{
 	}
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		if(length is zero) return "[]";
-		auto r=text("[",DDeBruijnVar.displayName(1,formatting,binders)," ↦ ",entries.expr,"] (",length,")");
+		auto r=text("[",DDeBruijnVar.displayName(1,formatting,binders+1)," ↦ ",entries.expr.toStringImpl(formatting,Precedence.none,binders+1),"] (",length,")");
 		if(prec!=Precedence.none) r="("~r~")"; // TODO: ok?
 		return r;
 	}
