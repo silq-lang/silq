@@ -3361,10 +3361,10 @@ class DIndex: DOp{
 		if(auto c=cast(Dℕ)ni){
 			if(auto tpl=cast(DTuple)ne)
 				if(0<=c.c&&c.c<=tpl.values.length)
-					return tpl.values[c.c.toLong()];
+					return tpl.values[c.c.toLong()].simplify(facts);
 		}
 		if(auto arr=cast(DArray)ne){
-			return arr.entries.apply(ni);
+			return arr.entries.apply(ni).simplify(facts);
 		}
 		// distribute over case distinction:
 		if(e is zero) return zero;
