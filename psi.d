@@ -46,6 +46,8 @@ Distribution getCDF(Distribution dist){
 		dist.distribute(dIvr(DIvr.Type.leZ,-freeVar-20)*dIvr(DIvr.Type.leZ,freeVar-nvar));
 		dist.marginalize(freeVar);
 		dist.distribution=dist.distribution.substitute(nvar,freeVar);
+		dist.freeVars.remove(nvar);
+		dist.freeVars.insert(freeVar);
 	}
 	dist.simplify();
 	return dist;
@@ -815,6 +817,14 @@ void test(){
 	//writeln("-x".dParse.simplify("[-x+__u₁=0]".dParse));
 	//writeln(dInt("w".dVar,"(-∫dξ₁[-1+ξ₁≤0]·[-ξ₁+w≤0]·[-ξ₁≤0]·[ξ₁≠0]·log(⅟ξ₁)·⅟ξ₁)·[-w≤0]·[w≠0])".dParse).simplify(one));
 	//writeln(tryGetAntiderivative("x".dVar,"log(1/x)".dParse,one).antiderivative.simplify(one));
+	/+DExpr e=one;
+	int n=160;
+	import std.conv;
+	foreach(i;0..n) e=e*dBounded!"[]"(dVar("x"~to!string(i)),zero,one+one);
+	foreach(i;0..n) e=dInt(dVar("x"~to!string(i)),e);
+	writeln(e);
+	writeln(e.simplify(one));+/
+	//writeln("∫dx log(2*x+1)^2·[1≤x]·[x≤2]".dParse.simplify(one));
 }
 
 /*
