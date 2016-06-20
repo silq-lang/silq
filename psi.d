@@ -837,6 +837,9 @@ void test(){
 	/+auto e="∫dx f₁(x)·(∫dy f₂(x,y))·(∫dy f₂'(x,y))".dParse;
 	dw(e);
 	writeln(e.simplify(one));+/
+	//auto e="(δ[-a+1]+δ[a])·δ[-b+[a≠0]]".dParse;
+	//writeln(e.simplify(one));
+	//writeln("δ[x-1]·[x=1]".dParse.simplify(one));
 }
 
 /*

@@ -83,6 +83,7 @@ abstract class DExpr{
 
 	static MapX!(Q!(DExpr,DExpr),DExpr) simplifyMemo;
 	final DExpr simplify(string file=__FILE__,int line=__LINE__)(DExpr facts){
+		assert(!cast(DPlus)facts,text(facts));
 		if(q(this,facts) in simplifyMemo) return simplifyMemo[q(this,facts)];
 		if(facts is zero) return zero;
 		auto r=simplifyImpl(facts);
@@ -962,11 +963,29 @@ class DMult: DCommutAssocOp{
 		assert(!cast(DMult)factor,text(factors," ",factor.simplify(one)));
 		factors.insert(factor);
 	}
+
+	static MapX!(DExpr,DExpr) basicSimplifyMemo;
+	final DExpr basicSimplify(){
+		if(this in basicSimplifyMemo) return basicSimplifyMemo[this];
+		DExprSet simple;
+		foreach(f;factors) insertAndSimplify(simple,f,one);
+		auto r=dMult(simple);
+		basicSimplifyMemo[this]=r;
+		return r;
+	}
+
 	override DExpr simplifyImpl(DExpr facts){
+		auto ne=basicSimplify();
+		if(ne !is this) return ne.simplifyImpl(facts);
+		assert(!cast(DPlus)facts);
 		// TODO: this is a mayor bottleneck!
 		DExprSet myFactors;
 		DExprSet myFacts;
-		foreach(f;this.factors) if(auto d=cast(DDelta)f) facts=facts*dIvr(DIvr.Type.eqZ,d.e).simplify(facts);
+		foreach(f;this.factors) if(auto d=cast(DDelta)f){
+			auto fact=dIvr(DIvr.Type.eqZ,d.e).simplify(facts);
+			assert(!cast(DPlus)fact);
+			facts=facts*fact;
+		}
 		if(facts !is one) facts=facts.simplify(one);
 		foreach(f;this.factors){
 			if(cast(DIvr)f) insertAndSimplify(myFacts,f,facts);
@@ -981,6 +1000,7 @@ class DMult: DCommutAssocOp{
 			}else newFacts=dMult(myFacts);
 		}
 		DExprSet simpFactors;
+		assert(!cast(DPlus)newFacts,text(facts," ",myFacts," ",dMult(myFacts)));
 		foreach(f;myFactors) insertAndSimplify(simpFactors,f,newFacts);
 		foreach(f;myFacts) insertAndSimplify(simpFactors,f,one);
 		return dMult(simpFactors);
@@ -2130,10 +2150,13 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 	static DExpr staticSimplify(DExpr e,DExpr facts=one){
 		auto ne=e.simplify(one); // cannot use all facts! (might remove a free variable)
 		if(ne !is e) return dDelta(ne);
-		auto cancel=uglyFractionCancellation(e).simplify(facts);
+		auto cancel=uglyFractionCancellation(e).simplify(one);
 		if(cancel!=one) return dDelta(dDistributeMult(e,cancel))*cancel;
 		if(e.hasFactor(mone)) return dDelta(-e);
-		if(auto fct=factorDIvr!(e=>dDelta(e))(e)) return fct.simplify(facts);
+		if(auto fct=factorDIvr!(e=>dDelta(e))(e)){
+			dw(fct," ",facts," ",fct.simplify(facts));
+			return fct.simplify(one);
+		}
 		if(dIvr(DIvr.Type.eqZ,e).simplify(facts) is zero)
 			return zero;
 		return null;

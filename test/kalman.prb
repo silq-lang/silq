@@ -1,4 +1,3 @@
-// TODO: make as fast as inlined version
 
 dat Filter{
     x: ℝ , v: ℝ, a: ℝ;
