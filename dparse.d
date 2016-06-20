@@ -165,6 +165,10 @@ struct DParser{
 			r~=code.front;
 			code.popFront();
 		}
+		while(!code.empty&&code.front=='\''){
+			r~=code.front;
+			code.popFront();
+		}
 		if(r=="") expect('ξ');
 		return r;
 	}

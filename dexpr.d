@@ -2354,10 +2354,8 @@ static DExpr unbind(DExpr expr, DExpr nexpr){
 
 import integration;
 class DInt: DOp{
-	private{
-		DExpr expr;
-		this(DExpr expr){ this.expr=expr; }
-	}
+	DExpr expr;
+	private this(DExpr expr){ this.expr=expr; }
 	final DExpr getExpr(DExpr e){ return unbind(expr,e); }
 	override @property Precedence precedence(){ return Precedence.intg; }
 	override @property string symbol(Format formatting,int binders){ return "∫"; }

@@ -753,6 +753,7 @@ private struct Analyzer{
 					if(!isSpecial){
 						auto rhs=transformExp(de.e2);
 						defineVar(id,rhs,de.e2.type);
+						dist.marginalizeTemporaries();
 					}
 				}else if(auto tpl=cast(TupleExp)de.e1){
 					auto rhs=transformExp(de.e2);
@@ -976,5 +977,6 @@ Distribution analyzeWith(FunctionDef def,Distribution dist,ErrorHandler err){
 	auto a=Analyzer(dist,err);
 	a.analyze(def.body_,def);
 	a.dist.simplify();
+	// dw(def," ",a.dist);
 	return a.dist;
 }

@@ -277,6 +277,7 @@ class Distribution{
 		}
 		distribution = rdist.substituteFun("q".dFunVar,oldDist,vars,context);
 		auto nerror = rerr.substituteFun("q".dFunVar,oldDist,vars,context);
+		//dw("+--\n",oldDist,"\n",rdist,"\n",distribution,"\n--+");
 		foreach(v;vars){
 			tmpVars.remove(v);
 			freeVars.remove(v);

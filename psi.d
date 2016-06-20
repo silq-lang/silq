@@ -825,6 +825,18 @@ void test(){
 	writeln(e);
 	writeln(e.simplify(one));+/
 	//writeln("∫dx log(2*x+1)^2·[1≤x]·[x≤2]".dParse.simplify(one));
+	//writeln(dInt("filter".dVar,dInt("__r₁".dVar,"(∫dξ₁[-1+ξ₁≤0]·[-ξ₁≤0]·δ___r₁[{.x ↦ ξ₁}])·q(γ⃗)·δ_filter[__r₁]·δ[r-filter.x]".dParse)).simplify(one));
+	//writeln(dInt("__r₁".dVar,"(∫dξ₁[-1+ξ₁≤0]·[-ξ₁≤0]·δ___r₁[{.x ↦ ξ₁}])·q(γ⃗)·δ_filter[__r₁]".dParse).simplify(one));
+	/+auto e="∫dx(∫dy(∫dzδ_x[{.x ↦ y+z,.a ↦ z}]·⅟e^(z²·⅟2))·⅟e^(y²·⅟2))·δ_filter[x]".dParse;
+	dw(e);
+	writeln(e.simplify(one));+/
+	//auto e="(∫dx(∫dy(∫dzδ_filter[{.x ↦ z,.a ↦ z}]·⅟e^(z²·⅟2))·q(γ⃗)·⅟√2̅·⅟√π̅·δ_y[filter]·(∫dzδ_x[y{.a ↦ z}]·⅟e^(z²·⅟2)))·δ___r₃[x{.x ↦ x.a+x.x}])·⅟√2̅·⅟√π̅".dParse;
+	/*auto e="(∫dxδ___r₃[filter{.a ↦ x}{.x ↦ filter{.a ↦ x}.a+filter{.a ↦ x}.x}]·⅟e^(x²·⅟2))·(∫dxδ_filter[{.x ↦ x,.a ↦ x}]·⅟e^(x²·⅟2))·q(γ⃗)·⅟2·⅟π".dParse;
+	dw(e);
+	writeln(dInt("filter".dVar,e).simplify(one));*/
+	/+auto e="∫dx f₁(x)·(∫dy f₂(x,y))·(∫dy f₂'(x,y))".dParse;
+	dw(e);
+	writeln(e.simplify(one));+/
 }
 
 /*

@@ -107,38 +107,38 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
 	DExpr fubini(){
 		foreach(f;expr.allOf!DFun(true)) // TODO: constrain less
 			return null;
-		DVar[] fubiVars;
 		bool hasInt=false;
-		int nesting=-1;
-		DExpr fubiRec(DExpr cur){
+		Q!(DExpr,int) fubiRec(DExpr cur){
+			// TODO: execute incDeBruijnVar only once for each subexpression
+			// (such that the running time is linear in the expression size)
 			DExpr r=one;
+			foreach(f;cur.factors)
+				if(!cast(DInt)f)
+					r=r*f;
+			int numVars=0;
 			foreach(f;cur.factors){
 				if(auto other=cast(DInt)f){
 					hasInt=true;
-					auto tmpvar=freshVar(); // TODO: get rid of this!
-					fubiVars~=tmpvar;
-					r=r*fubiRec(other.getExpr(tmpvar));
-				}else r=r*f;
+					auto en=fubiRec(other.expr);
+					r=r.incDeBruijnVar(en[1],0);
+					r=r*en[0].incDeBruijnVar(numVars,en[1]);
+					numVars+=en[1];
+				}
 			}
-			return r;
+			return q(r,numVars+1);
 		}
-		auto myvar=var;
-		auto myexpr=expr;
-		if(cast(DDeBruijnVar)myvar){
-			assert(myvar is dDeBruijnVar(1));
-			myvar=freshVar(); // TODO: get rid of this!
-			myexpr=unbind(expr,myvar);
-		}
-		auto fubiExpr=fubiRec(myexpr);
+		auto fubiExprNumVars=fubiRec(expr);
+		auto fubiExpr=fubiExprNumVars[0], numFubiVars=fubiExprNumVars[1];
+		fubiExpr=fubiExpr.incDeBruijnVar(1,0).substitute(dDeBruijnVar(numFubiVars+1),dDeBruijnVar(1));
 		if(hasInt) if(auto r=definiteIntegral(var,fubiExpr)){
-			r=r.simplify(facts);
-			foreach_reverse(v;fubiVars) r=dInt(v,r);
+			r=r.incDeBruijnVar(-1,0).simplify(facts);
+			foreach_reverse(v;0..numFubiVars-1) r=dInt(r);
 			return r.simplify(facts);
 		}
 		return null;
 	}
-	auto dbvar=cast(DDeBruijnVar)var;
-	if(!dbvar||dbvar.i==1) if(auto r=fubini()) return r;
+	assert(var is dDeBruijnVar(1));
+	if(auto r=fubini()) return r;
 	if(!expr.hasFreeVar(var)) return expr*dInt(var,one); // (infinite integral)
 	return null;
 }
