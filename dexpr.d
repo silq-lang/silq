@@ -976,7 +976,7 @@ class DMult: DCommutAssocOp{
 
 	override DExpr simplifyImpl(DExpr facts){
 		auto ne=basicSimplify();
-		if(ne !is this) return ne.simplifyImpl(facts);
+		if(ne !is this) return ne.simplify(facts);
 		assert(!cast(DPlus)facts);
 		// TODO: this is a mayor bottleneck!
 		DExprSet myFactors;
@@ -2149,14 +2149,11 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 	}
 	static DExpr staticSimplify(DExpr e,DExpr facts=one){
 		auto ne=e.simplify(one); // cannot use all facts! (might remove a free variable)
-		if(ne !is e) return dDelta(ne);
+		if(ne !is e) return dDelta(ne).simplify(facts);
 		auto cancel=uglyFractionCancellation(e).simplify(one);
 		if(cancel!=one) return dDelta(dDistributeMult(e,cancel))*cancel;
 		if(e.hasFactor(mone)) return dDelta(-e);
-		if(auto fct=factorDIvr!(e=>dDelta(e))(e)){
-			dw(fct," ",facts," ",fct.simplify(facts));
-			return fct.simplify(one);
-		}
+		if(auto fct=factorDIvr!(e=>dDelta(e))(e)) return fct.simplify(one);
 		if(dIvr(DIvr.Type.eqZ,e).simplify(facts) is zero)
 			return zero;
 		return null;
