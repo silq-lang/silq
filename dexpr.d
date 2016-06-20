@@ -3516,7 +3516,7 @@ class DRUpdate: DOp{
 		auto ne=e.simplify(facts);
 		auto nn=n.simplify(facts);
 		if(auto rec=cast(DRecord)ne)
-			return rec.update(f,nn);
+			return rec.update(f,nn).simplify(facts);
 		if(ne !is e || nn !is n) return dRUpdate(ne,f,nn);
 		return null;
 	}
@@ -3785,16 +3785,16 @@ class DField: DOp{
 				return dPlus(s).simplify(facts);
 			}
 		}
-		if(auto rec=cast(DRecord)e)
-			if(f in rec.values) return rec.values[f];
+		if(auto rec=cast(DRecord)ne)
+			if(f in rec.values) return rec.values[f].simplify(facts);
 		// distribute over case distinction:
 		if(e is zero) return zero;
-		if(auto p=cast(DPlus)e){
+		if(auto p=cast(DPlus)ne){
 			DExprSet r;
 			foreach(s;p.summands) DPlus.insert(r,dField(s,f));
 			return dPlus(r).simplify(facts);
 		}
-		if(auto m=cast(DMult)e){
+		if(auto m=cast(DMult)ne){
 			foreach(fc;m.factors){
 				if(cast(DTuple)fc||cast(DArray)fc||cast(DRecord)fc)
 					return (m.withoutFactor(fc)*dField(fc,f)).simplify(facts);
