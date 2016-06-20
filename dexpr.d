@@ -2646,7 +2646,7 @@ class DLim: DOp{
 	DExpr e;
 	DExpr x;
 	this(DExpr e,DExpr x){ this.e=e; this.x=x; }
-	override @property string symbol(Format formatting,int binders){ return text("lim[",DDeBruijnVar.displayName(1,formatting,binders)," → ",e.toStringImpl(formatting,Precedence.none,binders),"]"); }
+	override @property string symbol(Format formatting,int binders){ return text("lim[",DDeBruijnVar.displayName(1,formatting,binders+1)," → ",e.toStringImpl(formatting,Precedence.none,binders+1),"]"); }
 	override Precedence precedence(){ return Precedence.lim; } // TODO: ok?
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		return addp(prec,symbol(formatting,binders)~x.toStringImpl(formatting,precedence,binders+1));
