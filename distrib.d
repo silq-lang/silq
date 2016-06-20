@@ -95,7 +95,6 @@ class Distribution{
 	SetX!DVar freeVars;
 	DExpr distribution;
 	DExpr error;
-	Distribution[] parents;
 
 	SetX!DVar tmpVars;
 	void marginalizeTemporaries(){
@@ -117,7 +116,6 @@ class Distribution{
 		r.freeVars=freeVars.dup();
 		r.distribution=distribution;
 		r.error=error;
-		r.parents=parents~this; // TODO: elegance
 		r.context=context;
 		r.freeVarsOrdered=freeVarsOrdered;
 		r.orderedFreeVars=orderedFreeVars.dup;
