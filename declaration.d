@@ -35,7 +35,7 @@ class Parameter: VarDecl{
 	this(Identifier name, Expression type){
 		super(name); this.dtype=type;
 	}
-	override string toString(){ return name.toString()~(type?": "~type.toString():""); }
+	override string toString(){ return name.toString()~(dtype?": "~dtype.toString():""); }
 }
 
 class FunctionDef: Declaration{
