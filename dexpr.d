@@ -550,7 +550,6 @@ class DPlus: DCommutAssocOp{
 			if(e2 is zero) return e1;
 			if(e1 is e2) return (2*e1).simplify(facts);
 
-
 			static DExpr combineFractions(DExpr e1,DExpr e2){
 				if(e1.isFraction()&&e2.isFraction()){
 					auto nd1=e1.getFraction();
@@ -604,6 +603,26 @@ class DPlus: DCommutAssocOp{
 			}
 			if(auto r=combineIvr(e1,e2,facts)) return r.simplify(facts);
 			if(auto r=combineIvr(e2,e1,facts)) return r.simplify(facts);
+
+			static DExpr combineIvr2(DExpr e1,DExpr e2,DExpr facts){
+				// If B → A and B ⇔  ¬C: [A∧ C] + [B] = [A]
+				if(cast(DIvr)e1 && cast(DIvr)e2) return null;
+				foreach(f;e1.factors) if(!cast(DIvr)f) return null;
+				foreach(f;e2.factors) if(!cast(DIvr)f) return null;
+				auto implied=one, notImplied=one;
+				foreach(f;e1.factors){
+					if(f.simplify(e2) is one) implied=implied*f;
+					else notImplied=notImplied*f;
+				}
+				if(implied !is one){
+					notImplied=notImplied.simplify(facts); // C
+					if(dIvr(DIvr.Type.eqZ,notImplied).simplify(facts) is e2) // B ⇔ ¬ C
+						return implied.simplify(facts);
+				}
+				return null;
+			}
+			if(auto r=combineIvr2(e1,e2,facts)) return r.simplify(facts);
+			if(auto r=combineIvr2(e2,e1,facts)) return r.simplify(facts);
 			
 			return null;
 		}
@@ -624,6 +643,12 @@ class DPlus: DCommutAssocOp{
 		DExprSet integralSummands;
 		DExprSet integrals;
 		// dw("!! ",summands);
+		static void recursiveInsert(ref DExprSet set,DExpr e){
+			if(auto p=cast(DPlus)e)
+				foreach(s;p.summands)
+					recursiveInsert(set,e);
+			else DPlus.insert(set,e);
+		}
 		foreach(s;summands){
 			if(auto dint=cast(DInt)s){
 				integralSummands.insert(dint.expr);
@@ -635,7 +660,7 @@ class DPlus: DCommutAssocOp{
 			auto simplSummands=integralSum.summands.setx;
 			if(simplSummands.setMinus(integralSummands).length){
 				summands=summands.setMinus(integrals);
-				return dPlus(summands)+dIntSmp(dPlus(simplSummands),facts);
+				return dPlus(summands).simplify(facts)+dIntSmp(dPlus(simplSummands),facts);
 			}
 		}
 		return null;
@@ -674,7 +699,7 @@ class DPlus: DCommutAssocOp{
 		DExprSet summands;
 		foreach(s;this.summands)
 			insertAndSimplify(summands,s,facts);
-		if(auto r=integralSimplify(summands,facts)) return r.simplify(facts);
+		// if(auto r=integralSimplify(summands,facts)) return r.simplify(facts);
 		return dPlus(summands);
 	}
 
@@ -1980,6 +2005,7 @@ class DIvr: DExpr{ // iverson brackets
 		if(ne !is e) return dIvr(type,ne).simplify(facts);
 		// TODO: make these check faster (also: less convoluted)
 		auto neg=negateDIvr(type,e);
+		neg[1]=neg[1].simplify(facts);
 		bool foundLe=false, foundNeq=false;
 		foreach(f;facts.factors){
 			if(auto ivr=cast(DIvr)f){
@@ -1992,20 +2018,21 @@ class DIvr: DExpr{ // iverson brackets
 					}
 				}
 				import util: among;
-				if(neg.type==ivr.type && (neg.e is ivr.e||type.among(Type.eqZ,Type.neqZ)&&neg.e is -ivr.e))
+				if(neg.type==ivr.type && (neg.e is ivr.e||
+					type.among(Type.eqZ,Type.neqZ)&&(-neg.e).simplify(facts) is ivr.e))
 					return zero; // TODO: ditto
 				if(neg.type==Type.lZ){
 					if(ivr.type==Type.leZ){
 						if(neg.e is ivr.e) assert(neg.e.mustBeAtMost(ivr.e));
 						if(neg.e.mustBeAtMost(ivr.e)) foundLe=true;
 						else if(neg.e.mustBeLessThan(ivr.e)) return zero;
-					}else if(neg.e is ivr.e ||neg.e is -ivr.e&&ivr.type==Type.neqZ) foundNeq=true;
+					}
 				}
 			}
 		}
-		if(foundLe&&foundNeq){
+		if(type==type.leZ&&foundLe){
 			assert(type==type.leZ);
-			return zero;
+			return dIvr(DIvr.Type.eqZ,e).simplify(facts);
 		}
 		// TODO: better decision procedures
 		if(type==Type.eqZ&&!couldBeZero(e)) return zero;
