@@ -3,6 +3,7 @@ import dexpr,util;
 
 struct DParser{
 	string code;
+	int numBinders=0;
 	void skipWhitespace(){
 		while(!code.empty&&code.front.isWhite())
 			next();
@@ -112,14 +113,18 @@ struct DParser{
 	DExpr parseDInt(){
 		expect('∫');
 		expect('d');
+		++numBinders;
 		auto iVar=parseDVar();
+		if(!cast(DDeBruijnVar)iVar) --numBinders;
 		auto iExp=parseMult();
+		if(cast(DDeBruijnVar)iVar) --numBinders;
 		return dInt(iVar,iExp);
 	}
 
 	DExpr parseDSum(){
 		expect('∑');
 		expect('_');
+		++numBinders; scope(exit) --numBinders;
 		auto iVar=parseDVar();
 		auto iExp=parseMult();
 		return dSum(iVar,iExp);
@@ -128,11 +133,15 @@ struct DParser{
 	DExpr parseLim()in{assert(code.startsWith("lim"));}body{
 		code=code["lim".length..$];
 		expect('[');
+		++numBinders;
 		auto var=parseDVar();
+		--numBinders;
 		expect('→');
 		auto e=parseDExpr();
 		expect(']');
+		if(cast(DDeBruijnVar)var) ++numBinders;
 		auto x=parseMult();
+		if(cast(DDeBruijnVar)var) --numBinders;
 		return dLim(var,e,x);
 	}
 
@@ -178,7 +187,7 @@ struct DParser{
 			auto i=0;
 			for(auto rest=s["ξ".length..$];!rest.empty();rest.popFront())
 				i=10*i+cast(int)indexOf(lowDigits,rest.front);
-			return dDeBruijnVar(i);
+			return dDeBruijnVar(numBinders-i+1);
 		}
 		return dVar(s);
 	}
@@ -194,7 +203,7 @@ struct DParser{
 			auto i=0;
 			for(auto rest=s["ξ".length..$];!rest.empty();rest.popFront())
 				i=10*i+cast(int)indexOf(lowDigits,rest.front);
-			return dDeBruijnVar(i);
+			return dDeBruijnVar(numBinders-i+1);
 		}
 		return varOrBound(s);
 	}
@@ -221,9 +230,12 @@ struct DParser{
 
 	DExpr parseDLambda(){
 		expect('λ');
+		++numBinders;
 		auto var=parseDVar();
+		if(!cast(DDeBruijnVar)var) --numBinders;
 		expect('.');
 		auto expr=parseDExpr();
+		if(cast(DDeBruijnVar)var) ++numBinders;
 		return dLambda(var,expr);
 	}
 
@@ -255,9 +267,12 @@ struct DParser{
 				auto p=DParser(code[i+1..$]);
 				if(p.cur()!='(') break;
 				next();
+				++numBinders;
 				auto var=parseDVar();
 				expect('↦');
+				if(!cast(DDeBruijnVar)var) --numBinders;
 				auto expr=parseDExpr();
+				if(cast(DDeBruijnVar)var) --numBinders;
 				expect(']');
 				expect('(');
 				auto len=parseDExpr();
