@@ -2417,7 +2417,7 @@ class DInt: DOp{
 		}else if(formatting==Format.sympy){
 			return text("integrate(",expr.toStringImpl(formatting,Precedence.none,binders+1),",(",DDeBruijnVar.displayName(1,formatting,binders+1),",-oo,oo))");
 		}else{
-			return addp(prec,symbol(formatting,binders)~"d"~DDeBruijnVar.displayName(1,formatting,binders+1)~expr.toStringImpl(formatting,Precedence.none,binders+1));
+			return addp(prec,symbol(formatting,binders)~"d"~DDeBruijnVar.displayName(1,formatting,binders+1)~expr.toStringImpl(formatting,Precedence.intg,binders+1));
 		}
 	}
 	static DExpr constructHook(DExpr expr,DExpr facts){
