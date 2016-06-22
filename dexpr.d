@@ -616,6 +616,9 @@ class DPlus: DCommutAssocOp{
 				}
 				if(implied !is one){
 					notImplied=notImplied.simplify(facts); // C
+					static DExprSet active;
+					if(notImplied in active) return null; // detect cycles (TODO: can this be avoided?)
+					active.insert(notImplied); scope(exit) active.remove(notImplied);
 					if(dIvr(DIvr.Type.eqZ,notImplied).simplify(facts) is e2) // B ⇔ ¬ C
 						return implied.simplify(facts);
 				}

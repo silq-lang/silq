@@ -890,6 +890,14 @@ void test(){
 	//writeln("[z≤1]·[z≠1]·[0≤z]".dParse.simplify("[1≤z]".dParse.simplify(one)));
 	//writeln("[[z≤1]·[z≠1]·[0≤z]=[1≤z]]".dParse.simplify(one));
 	//writeln("[-[-ξ₀+2≠0]·[-ξ₀+3=0]·[-ξ₀+4=0]+[-ξ₀+3≠0]=0]".dParse.simplify(one));
+	//auto e="[-dif+-xsi+xi≤0]·[-xi+xsi≤0]·[-20+xi≤0]".dParse;
+	//dw(e);
+	//writeln(dInt("xi".dVar,e).simplify(one));
+	//auto e="[[2+x≠0]·[2+x≤0]+2·[x+2≤0]+k=0]".dParse;
+	//auto e="[[-2+-x≤0]·[2+x≠0]·[k≠0]=0]".dParse;
+	/+auto e="[-2+-x≤0]·[2+x≠0]·[k=0]+[2+x≠0]·[2+x≤0]".dParse;
+	dw(e);
+	writeln(e.simplify(one));+/
 }
 
 /*
