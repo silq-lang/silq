@@ -656,7 +656,7 @@ private struct Analyzer{
 		void assignVar(Identifier id,DExpr rhs,Type ty){
 			if(id.name !in arrays){
 				if(auto v=dist.lookupVar(id.name)){
-					dist.assign(v,rhs,ty);
+					dist.assign(v,rhs,ty,true);
 					trackDeterministic(v,rhs,ty);
 				}else err.error("undefined variable '"~id.name~"'",id.loc);
 			}else err.error("reassigning array unsupported",lhs.loc);
