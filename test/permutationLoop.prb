@@ -1,5 +1,5 @@
 // TODO: make this fast for reasonable n, for example n≤10, certainly n=3
-// ideally n can be a parameter to main, but that is perhaps too much to ask. :o)
+// ideally n can be a parameter to main
 
 def main(){
     n := 2;
@@ -13,5 +13,5 @@ def main(){
     }
     for i in [0..n){ observe(f[i]); }
     for i in [0..n-1){ observe(p[i]==i+1); }
-    return p[n-1]; // expected: δ[p₂]
+    return p[n-1]; // expected: δ[-p₂]
 }

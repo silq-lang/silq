@@ -3,6 +3,6 @@ def main(){
     c2 := Bernoulli(1/2);
     bothHeads := c1 && c2;
     observe(bothHeads == 0);
-    return (c1,c2,bothHeads); // expected: (2·δ[-c1+1]·⅟3+2·δ[c1]·⅟3)·([c1=0]·δ[bothHeads]+[c1≠0]·[c2=0]·δ[bothHeads])·(δ[-c2+1]·⅟2+δ[c2]·⅟2)·[bothHeads=0]
+    return (c1,c2,bothHeads); // expected: (2·δ[-c1+1]·⅟3+2·δ[c1]·⅟3)·([c1=0]·δ[-bothHeads]+[c1≠0]·[c2=0]·δ[-bothHeads])·(δ[-c2+1]·⅟2+δ[c2]·⅟2)·[-bothHeads=0]
     // TODO: simplify better
 }

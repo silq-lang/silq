@@ -2,5 +2,5 @@
 def main(a) {
     x := a;
     y := x - x;
-    return y; // expected: δ[y]
+    return y; // expected: δ[-y]
 }
