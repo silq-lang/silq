@@ -894,10 +894,77 @@ void test(){
 	//dw(e);
 	//writeln(dInt("xi".dVar,e).simplify(one));
 	//auto e="[[2+x≠0]·[2+x≤0]+2·[x+2≤0]+k=0]".dParse;
-	//auto e="[[-2+-x≤0]·[2+x≠0]·[k≠0]=0]".dParse;
+	///auto e="[[-2+-x≤0]·[2+x≠0]·[k≠0]=0]".dParse;
 	/+auto e="[-2+-x≤0]·[2+x≠0]·[k=0]+[2+x≠0]·[2+x≤0]".dParse;
 	dw(e);
 	writeln(e.simplify(one));+/
+	/+auto e1="+[-dif≤0]·dif·⅟4·⅟e^dif
+-[dif≤0]·dif·e^dif·⅟4
+
++[-dif≠0]·[-dif≤0]·⅟8·⅟e^dif
++[-dif≠0]·[dif≤0]·e^dif·⅟8
+
++[-dif≤0]·⅟8·⅟e^dif
++[dif≤0]·e^dif·⅟8
+".dParse;
+	auto e2="(   -[-10+-dif≤0]·⅟160·⅟e⁴⁰
+   +-[10+dif≠0]·[10+dif≤0]·e^(-20+2·dif)·⅟160)·[dif≠0]·[dif≤0]·e^(-dif+20)
+
++(  -[-10+dif≠0]·[-dif+10≤0]·e^(-2·dif+40)·⅟160
+   +-[-10+dif≤0]·e²⁰·⅟160)·[-dif≤0]·[dif≠0]·e^(-40+dif)
+
++(-dif·⅟80+⅟4)·[-10+dif≠0]·[-dif+10≤0]·[dif≠0]·⅟e^dif
+
++(-e²⁰·⅟160+e⁴⁰·⅟160)·[-dif=0]·⅟e⁴⁰
+
++(-e²⁰·⅟80+e⁴⁰·⅟80)·([-dif≤0]·⅟2·⅟e⁴⁰+[dif≤0]·e^(-40+2·dif)·⅟2)·[dif≠0]·⅟e^dif
+
++(-⅟160·⅟e⁴⁰+⅟160·⅟e²⁰)·[-dif=0]·e²⁰
+
++(-⅟8+dif·⅟80)·[10+dif≤0]·[dif≠0]·e^dif
+
++(-⅟80·⅟e⁴⁰+⅟80·⅟e²⁰)·([-dif≤0]·e^(-2·dif+20)·⅟2+[dif≤0]·e²⁰·⅟2)·[dif≠0]·e^dif
+
++-15·[-10+dif≠0]·[-dif+10≤0]·⅟4·⅟e^dif
++-581·[dif≤0]·e^dif·⅟160
++-5·[-10+-dif≤0]·[dif≤0]·e^dif·⅟4
++-5·[-10+dif≤0]·[-dif≤0]·⅟e^dif
++-[-10+-dif≤0]·[10+dif≠0]·[dif≠0]·[dif≤0]·e^dif·⅟4
++-[-10+-dif≤0]·[dif≤0]·dif²·e^dif·⅟80
++-[-10+-dif≤0]·[dif≤0]·dif·e^dif·⅟4
++-[-10+dif≤0]·[-dif≤0]·[dif≠0]·dif·⅟80·⅟e^dif
++-[-10+dif≤0]·[-dif≤0]·dif²·⅟80·⅟e^dif
++-[-dif+10≤0]·dif²·⅟80·⅟e^dif
++-[-dif≤0]·[dif≠0]·⅟160·⅟e^dif
++-[-dif≤0]·dif·⅟4·⅟e^dif
++-[10+dif≤0]·dif²·e^dif·⅟80
++-[dif≠0]·[dif≤0]·dif·e^dif·⅟80
++-[dif≤0]·dif·e^dif·⅟2
++15·[-dif≤0]·⅟4·⅟e^dif
++15·[10+dif≤0]·e^dif·⅟4
++19·[-10+-dif≤0]·[dif≠0]·[dif≤0]·e^dif·⅟160
++19·[-dif=0]·⅟160+39·[-10+dif≤0]·[-dif≤0]·[dif≠0]·⅟160·⅟e^dif
++5·[-10+-dif≤0]·[10+dif≠0]·[dif≤0]·e^dif
++5·[-10+dif≠0]·[-10+dif≤0]·[-dif≤0]·⅟4·⅟e^dif
++[-10+-dif≤0]·[10+dif≠0]·[dif≤0]·dif·e^dif·⅟2
++[-10+-dif≤0]·[dif≠0]·[dif≤0]·dif·e^dif·⅟80
++[-10+-dif≤0]·e^(-20+-dif)·⅟160
++[-10+dif≠0]·[-10+dif≤0]·[-dif≤0]·dif·⅟4·⅟e^dif
++[-10+dif≤0]·[-dif≤0]·dif·⅟4·⅟e^dif
++[-10+dif≤0]·e^(-20+dif)·⅟160
++[-dif+10≤0]·dif·⅟2·⅟e^dif
++[-dif≤0]·[dif≠0]·dif·⅟80·⅟e^dif
++[-dif≤0]·[dif≠0]·e^(-20+-dif)·⅟160
++[-dif≤0]·dif²·⅟80·⅟e^dif
++[10+dif≤0]·dif·e^dif·⅟4
++[dif≠0]·[dif≤0]·e^(-20+dif)·⅟160
++[dif≠0]·[dif≤0]·e^dif·⅟4
++[dif≤0]·dif²·e^dif·⅟80
+".dParse;
+	//matlabPlot((e1-e2).toString(Format.matlab).replace("q(γ⃗)","1"),"dif");
+	//writeln(e1.toString(Format.mathematica));
+	//writeln(e2.polyNormalize("dif".dVar).simplify(one));
+	writeln("".dParse.toString(Format.mathematica));+/
 }
 
 /*
