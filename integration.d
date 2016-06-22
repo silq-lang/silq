@@ -28,8 +28,10 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
 		foreach(f;expr.factors){
 			if(!f.hasFreeVar(var)) continue;
 			if(auto d=cast(DDiscDelta)f){
-				if(d.var !is var) continue;
-				return expr.withoutFactor(f).substitute(var,d.e).simplify(facts);
+				if(d.var is var)
+					return expr.withoutFactor(f).substitute(var,d.e).simplify(facts);
+				if(d.e is var) // TODO: more complex "inversions"?
+					return expr.withoutFactor(f).substitute(var,d.var).simplify(facts);
 			}
 		}
 		return null;
@@ -105,8 +107,6 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
 	}
 	// Fubini
 	DExpr fubini(){
-		foreach(f;expr.allOf!DFun(true)) // TODO: constrain less
-			return null;
 		bool hasInt=false;
 		Q!(DExpr,int) fubiRec(DExpr cur){
 			// TODO: execute incDeBruijnVar only once for each subexpression
