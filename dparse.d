@@ -360,6 +360,10 @@ struct DParser{
 			next();
 			return -parseFactor();
 		}
+		if(cur()=='+'){
+			next();
+			return parseFactor();
+		}
 		return parseDPow();
 	}
 
