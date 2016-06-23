@@ -1,4 +1,5 @@
 import dexpr, util;
+import std.conv;
 
 
 MapX!(Q!(DVar,DExpr,DExpr),DExpr) definiteIntegralMemo;
@@ -167,8 +168,8 @@ private DExpr definiteIntegralContinuous(DVar var,DExpr expr,DExpr facts)in{
 		if(cast(DIvr)f) ivrs=ivrs*f;
 		else nonIvrs=nonIvrs*f;
 	}
-	ivrs=ivrs.simplify(facts);
-	nonIvrs=nonIvrs.simplify(facts);
+	ivrs=ivrs.simplify(facts.incDeBruijnVar(1,0));
+	nonIvrs=nonIvrs.simplify(facts.incDeBruijnVar(1,0));
 	DExpr lower=null;
 	DExpr upper=null;
 	foreach(f;ivrs.factors){
