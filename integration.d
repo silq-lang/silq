@@ -12,7 +12,7 @@ DExpr definiteIntegral(DVar var,DExpr expr,DExpr facts=one){
 }
 
 private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one)in{assert(var is dDeBruijnVar(1));}body{
-	auto nexpr=expr.simplify(facts);
+	auto nexpr=expr.simplify(facts.incDeBruijnVar(1,0));
 	if(expr !is nexpr) expr=nexpr;
 	if(expr is zero) return zero;
 	// TODO: move (most of) the following into the implementation of definiteIntegral
@@ -82,10 +82,7 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one)in{assert
 		}
 	}
 	nexpr=expr.linearizeConstraints!(x=>!!cast(DDelta)x)(var).simplify(facts.incDeBruijnVar(1,0)); // TODO: only linearize the first feasible delta.
-	if(nexpr !is expr){
-		dw("!/ ",expr," ",nexpr.simplify(one));
-		return definiteIntegral(var,nexpr,facts);
-	}
+	if(nexpr !is expr) return definiteIntegral(var,nexpr,facts);
 	/+if(auto r=deltaSubstitution(true))
 	 return r;+/
 
@@ -516,10 +513,10 @@ private DExpr tryIntegrateImpl(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DE
 			return lowLeUp()*(anti.substitute(var,upper)
 							  -anti.substitute(var,lower));
 		}
-		auto lo=lower?unbind(anti,lower):antid.atMinusInfinity;
-		auto up=upper?unbind(anti,upper):antid.atInfinity;
-		if(!lo) lo=dLimSmp(var,-dInf,anti,one);
-		if(!up) up=dLimSmp(var,dInf,anti,one);
+		auto lo=lower?unbind(anti,lower.incDeBruijnVar(-1,0)):antid.atMinusInfinity;
+		auto up=upper?unbind(anti,upper.incDeBruijnVar(-1,0)):antid.atInfinity;
+		if(!lo) lo=dLimSmp(var,-dInf,anti,one).incDeBruijnVar(-1,0);
+		if(!up) up=dLimSmp(var,dInf,anti,one).incDeBruijnVar(-1,0);
 		if(lo.isInfinite() || up.isInfinite()) return null;
 		if(lo.hasLimits() || up.hasLimits()) return null;
 		return up-lo;

@@ -118,6 +118,10 @@ struct DParser{
 		if(!cast(DDeBruijnVar)iVar) --numBinders;
 		auto iExp=parseMult();
 		if(cast(DDeBruijnVar)iVar) --numBinders;
+		if(auto dbv=cast(DDeBruijnVar)iVar){
+			assert(dbv.i==1);
+			return dInt(iExp);
+		}
 		return dInt(iVar,iExp);
 	}
 

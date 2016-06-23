@@ -994,6 +994,10 @@ void test(){
 	//dw("***");
 	//writeln(dDelta(-"z".dVar+dDeBruijnVar(1)*dVar("x")).linearizeConstraints(dDeBruijnVar(1)).simplify(one));
 	//writeln(dDiff(dDeBruijnVar(1),dDeBruijnVar(1)*dDeBruijnVar(2)));
+	//auto e="[-1+x≤0]·[-x≠0]·[-x≤0]·log(x)²/2".dParse;
+	/+auto e="∫dξ₁[-log(ξ₀)+-ξ₁≤0]·ξ₁^(-1+1+2)·⅟e^ξ₁".dParse;
+	dw(e);
+	writeln(e.simplify(one));+/
 }
 
 /*
