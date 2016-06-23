@@ -1011,7 +1011,11 @@ void test(){
 	dw(e);
 	writeln(dInt("filter".dVar,e).simplify(one));+/
 	//auto e="∫dξ₁∫dξ₂∫dξ₃∫dξ₄∫dξ₅ e^(-ξ₁²·⅟2+-ξ₂²·⅟2+-ξ₃²·⅟2+-ξ₄²·⅟2+-ξ₅²·⅟2)·δ[-3·ξ₃+-6·ξ₄+-ξ₅+x]".dParse;
-	//writeln(.dParse);
+	//auto e="∫dξ₁∫dξ₂∫dξ₃∫dξ₄ e^(-ξ₁²·⅟2+-ξ₂²·⅟2+-ξ₃²·⅟2+-ξ₄²·⅟2+-(-3·ξ₃+-6·ξ₄+x)²·⅟2)".dParse;
+	//auto e="∫dξ₁∫dξ₂∫dξ₃∫dξ₄ e^(-18·ξ₃·ξ₄+-37·ξ₄²·⅟2+-5·ξ₃²+-x²·⅟2+-ξ₁²·⅟2+-ξ₂²·⅟2+3·x·ξ₃+6·x·ξ₄)".dParse; // should be (2*Sqrt[2/23]*Pi^2)/E^(x^2/92)
+	//writeln("(-ξ₁²·⅟2+-ξ₂²·⅟2+-ξ₃²·⅟2+-ξ₄²·⅟2+-(-3·ξ₃+-6·ξ₄+x)²·⅟2)".dParse.polyNormalize("x".dVar).simplify(one));
+	//writeln(e.toString(Format.mathematica));
+	//writeln(e.simplify(one));
 }
 
 /*
