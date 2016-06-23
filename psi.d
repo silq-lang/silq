@@ -998,6 +998,15 @@ void test(){
 	/+auto e="∫dξ₁[-log(ξ₀)+-ξ₁≤0]·ξ₁^(-1+1+2)·⅟e^ξ₁".dParse;
 	dw(e);
 	writeln(e.simplify(one));+/
+	//auto e="(∫dξ₁∫dξ₂(∫dξ₃(∫dξ₄ δ_filter[{.x ↦ 0,.a ↦ 0}]·δ[-ξ₁+⅟1]·δ_ξ₄[filter]·δ___r₂[ξ₄{.x ↦ ξ₁·ξ₃+ξ₄.x}{.a ↦ ξ₂+ξ₄.a}])·[-1+ξ₃≤0]·[-ξ₃≤0])·⅟e^(ξ₂²·⅟2))·⅟√2̅·⅟√π̅".dParse;
+	//auto e="(∫dξ₁∫dξ₂(∫dξ₃(δ_filter[{.x ↦ 0,.a ↦ 0}]·δ[-ξ₁+⅟1]·δ___r₂[filter{.x ↦ ξ₁·ξ₃+filter.x}{.a ↦ ξ₂+filter.a}])·[-1+ξ₃≤0]·[-ξ₃≤0])·⅟e^(ξ₂²·⅟2))·⅟√2̅·⅟√π̅".dParse;
+	//auto e="(∫dξ₁∫dξ₂(∫dξ₃(δ[-ξ₁+⅟1]·δ_k[filter{.x ↦ ξ₁·ξ₃+filter.x}])·q(filter,ξ₃,ξ₂))·⅟e^(ξ₂²·⅟2))·⅟√2̅·⅟√π̅".dParse;
+	/+auto e="∫dξ₁(∫dξ₂(∫dξ₃(δ[-ξ₁+1]·δ_k[filter{.x ↦ ξ₁·ξ₃+filter.x}])·q(filter,ξ₃,ξ₂))·⅟e^(ξ₂²·⅟2))·⅟√2̅·⅟√π̅".dParse;
+	writeln(e);
+	writeln(e.simplify(one));+/
+	/+auto e="∫dξ₁(∫dξ₂ q(filter,ξ₂,ξ₁)·δ_k[filter{.x ↦ filter.x+ξ₀·ξ₂}])·⅟e^(ξ₁²·⅟2)·ξ₋₁".dParse;
+	dw(e);
+	writeln(unbind(e,one));+/
 }
 
 /*

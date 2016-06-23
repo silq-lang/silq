@@ -225,7 +225,7 @@ DVar dVar(string name){
 
 class DDeBruijnVar: DVar{
 	int i;
-	private this(int i){ this.i=i; super("db"~to!string(i)); }
+	private this(int i)in{assert(i>=1);}body{ this.i=i; super("db"~to!string(i)); }
 	static string displayName(int i,Format formatting,int binders){
 		return fixName("ξ"~lowNum(1+binders-i),formatting);
 	}
@@ -234,6 +234,7 @@ class DDeBruijnVar: DVar{
 	}
 	override DDeBruijnVar incDeBruijnVar(int di,int bound){
 		if(i<=bound) return this;
+		assert((i<=bound) == (i+di <= bound)); // (otherwise bound variables can be captured);
 		return dDeBruijnVar(i+di);
 	}
 }
@@ -2401,7 +2402,8 @@ static ~this(){
 }+/
 
 static DExpr unbind(DExpr expr, DExpr nexpr){
-	return expr.incDeBruijnVar(-1,0).substitute(dDeBruijnVar(0),nexpr);
+	auto tmp=freshVar(); // TODO: get rid of this!
+	return expr.substitute(dDeBruijnVar(1),tmp).incDeBruijnVar(-1,0).substitute(tmp,nexpr);
 }
 
 import integration;
@@ -3518,7 +3520,7 @@ auto dIUpdate(DExpr e,DExpr i,DExpr n){
 }
 
 
-class DRUpdate: DOp{
+class DRUpdate: DOp{ // TODO: allow updating multiple fields at once
 	DExpr e,n; // TODO: multiple indices?
 	string f;
 	this(DExpr e,string f,DExpr n){
@@ -3835,6 +3837,8 @@ class DField: DOp{
 		}
 		if(auto rec=cast(DRecord)ne)
 			if(f in rec.values) return rec.values[f].simplify(facts);
+		if(auto ru=cast(DRUpdate)ne)
+			return f == ru.f ? ru.n.simplify(facts) : dField(ru.e,f).simplify(facts);
 		// distribute over case distinction:
 		if(e is zero) return zero;
 		if(auto p=cast(DPlus)ne){
