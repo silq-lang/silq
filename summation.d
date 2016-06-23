@@ -1,12 +1,13 @@
 import dexpr, util;
 
-DExpr computeSum(DVar var,DExpr expr,DExpr facts=one){
-	auto nexpr=expr.simplify(facts);
+DExpr computeSum(DExpr expr,DExpr facts=one){
+	auto var=dDeBruijnVar(1);
+	auto nexpr=expr.simplify(facts.incDeBruijnVar(1,0));
 	if(nexpr !is expr) expr=nexpr;
 	if(expr is zero) return zero;
 	auto ow=expr.splitMultAtVar(var); // not a good strategy without modification, due to deltas
 	if(ow[0] !is one){
-		if(auto r=computeSum(var,ow[1]))
+		if(auto r=computeSum(ow[1],facts))
 			return ow[0]*r;
 		return null;
 	}
@@ -26,7 +27,7 @@ DExpr computeSum(DVar var,DExpr expr,DExpr facts=one){
 				foreach(k;distributeMult(p,expr.withoutFactor(f))){
 					k=k.simplify(facts);
 					auto ow=k.splitMultAtVar(var);
-					auto r=computeSum(var,ow[1],facts);
+					auto r=computeSum(ow[1],facts);
 					if(r){
 						DPlus.insert(works,ow[0]*r);
 						simpler=true;
@@ -34,14 +35,14 @@ DExpr computeSum(DVar var,DExpr expr,DExpr facts=one){
 				}
 				if(simpler){
 					auto r=dPlus(works).simplify(facts);
-					if(doesNotWork.length) r = r + dSum(var,dPlus(doesNotWork));
+					if(doesNotWork.length) r = r + dSum(dPlus(doesNotWork));
 					return r;
 				}
 			}
 		}
 	}
 	nexpr=expr.linearizeConstraints!(x=>!!cast(DIvr)x)(var).simplify(facts);
-	if(nexpr !is expr) return computeSum(var,nexpr);
+	if(nexpr !is expr) return computeSum(nexpr);
 
 	// TODO: keep ivrs and nonIvrs separate in DMult
 	DExpr ivrs=one;
@@ -93,7 +94,7 @@ DExpr computeSum(DVar var,DExpr expr,DExpr facts=one){
 		auto up=floordiv(ndu[0],ndu[1]);
 		DExprSet s;
 		if(low<=up) foreach(i;low..up+1){ // TODO: report bug in std.bigint (the if condition should not be necessary)
-			DPlus.insert(s,nonIvrs.substitute(var,dℕ(i)).simplify(facts));
+			DPlus.insert(s,unbind(nonIvrs,dℕ(i)).simplify(facts));
 		}
 		return dPlus(s);
 	}

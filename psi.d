@@ -1007,6 +1007,11 @@ void test(){
 	/+auto e="∫dξ₁(∫dξ₂ q(filter,ξ₂,ξ₁)·δ_k[filter{.x ↦ filter.x+ξ₀·ξ₂}])·⅟e^(ξ₁²·⅟2)·ξ₋₁".dParse;
 	dw(e);
 	writeln(unbind(e,one));+/
+	/+auto e="(∫dξ₁(∫dξ₂(∫dξ₃(∫dξ₄(∫dξ₅δ_filter[{.x ↦ 3·ξ₃+6·ξ₄+ξ₅,.v ↦ 2·ξ₅+3·ξ₃+4·ξ₄+ξ₂,.a ↦ ξ₁+ξ₂+ξ₃+ξ₄+ξ₅}]·⅟e^(ξ₅²·⅟2))·⅟e^(ξ₄²·⅟2))·⅟e^(ξ₃²·⅟2))·⅟e^(ξ₂²·⅟2))·⅟e^(ξ₁²·⅟2))·δ[x-filter.x]".dParse;
+	dw(e);
+	writeln(dInt("filter".dVar,e).simplify(one));+/
+	//auto e="∫dξ₁∫dξ₂∫dξ₃∫dξ₄∫dξ₅ e^(-ξ₁²·⅟2+-ξ₂²·⅟2+-ξ₃²·⅟2+-ξ₄²·⅟2+-ξ₅²·⅟2)·δ[-3·ξ₃+-6·ξ₄+-ξ₅+x]".dParse;
+	//writeln(.dParse);
 }
 
 /*
