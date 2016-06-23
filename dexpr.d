@@ -2193,20 +2193,22 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 		return r?r:this;
 	}
 
-	static DExpr performSubstitution(DVar var,DDelta d,DExpr expr,bool caseSplit){
+	static DExpr performSubstitution(DVar var,DDelta d,DExpr expr,bool caseSplit)in{
+		assert(var is dDeBruijnVar(1));
+	}body{
 		SolutionInfo info;
 		SolUse usage={caseSplit:caseSplit,bound:false};
 		if(auto s=d.e.solveFor(var,zero,usage,info)){
-			s=s.simplify(one);
+			s=s.incDeBruijnVar(-1,0).simplify(one);
 			if(!caseSplit && info.needCaseSplit) return null;
 			auto constraints=one;
 			foreach(ref x;info.caseSplits)
 				constraints=constraints*dIvr(DIvr.Type.neqZ,x.constraint);
 			auto r=constraints is zero?zero:
-				constraints*expr.substitute(var,s)/dAbs(dDiff(var,d.e,s));
+				constraints*unbind(expr,s)/dAbs(dDiff(var,d.e,s));
 			foreach(ref x;info.caseSplits){
 				auto curConstr=constraints.withoutFactor(dIvr(DIvr.Type.neqZ,x.constraint));
-				r=r+curConstr*dIvr(DIvr.Type.eqZ,x.constraint)*dIntSmp(var,expr*dDelta(x.expression),one);
+				r=r+(curConstr*dIvr(DIvr.Type.eqZ,x.constraint)).incDeBruijnVar(-1,0)*dIntSmp(var,expr*dDelta(x.expression),one);
 			}
 			return r.simplify(one);
 		}
@@ -2448,8 +2450,8 @@ class DInt: DOp{
 			numIntegrals++;
 			integrals[expr]=[];
 		}
-		if(auto r=definiteIntegral(dDeBruijnVar(1),expr,facts.incDeBruijnVar(1,0)))
-			return r.incDeBruijnVar(-1,0);
+		if(auto r=definiteIntegral(dDeBruijnVar(1),expr,facts))
+			return r;
 		return null;
 	}
 	
@@ -2508,7 +2510,7 @@ DExpr dIntSmp(DVar var,DExpr expr,DExpr facts){
 }
 
 DExpr dInt(DVar var,DExpr expr)in{assert(var&&expr&&(!cast(DDeBruijnVar)var||var is dDeBruijnVar(1)));}body{
-	if(var is dDeBruijnVar(1)) return dInt(expr);
+	if(var is dDeBruijnVar(1)) return dInt(expr.incDeBruijnVar(1,1));
 	if(auto ctxv=cast(DContextVars)var) return dContextInt(ctxv,expr);
 	return dInt(expr.incDeBruijnVar(1,0).substitute(var,dDeBruijnVar(1)));
 }
@@ -2659,7 +2661,7 @@ DExpr dSumSmp(DVar var,DExpr expr,DExpr facts){
 }
 
 DExpr dSum(DVar var,DExpr expr)in{assert(var&&expr&&(!cast(DDeBruijnVar)var||var is dDeBruijnVar(1)));}body{
-	if(var is dDeBruijnVar(1)) return dSum(expr);
+	if(var is dDeBruijnVar(1)) return dSum(expr.incDeBruijnVar(1,1));
 	return dSum(expr.incDeBruijnVar(1,0).substitute(var,dDeBruijnVar(1)));
 }
 
@@ -2706,7 +2708,7 @@ class DLim: DOp{
 		return dLim(e.substituteFun(fun,q,args,context),x.substituteFun(fun,q.incDeBruijnVar(1,0),args,context));
 	}
 	override DExpr incDeBruijnVar(int di,int bound){
-		return dLim(e.incDeBruijnVar(di,bound+1),x.incDeBruijnVar(di,bound+1));
+		return dLim(e.incDeBruijnVar(di,bound),x.incDeBruijnVar(di,bound+1));
 	}
 }
 
@@ -2724,7 +2726,7 @@ DExpr dLimSmp(DVar v,DExpr e,DExpr x,DExpr facts){
 }
 
 DExpr dLim(DVar v,DExpr e,DExpr x)in{assert(v&&e&&x&&(!cast(DDeBruijnVar)v||v is dDeBruijnVar(1)));}body{
-	if(v is dDeBruijnVar(1)) return dLim(e,x);
+	if(v is dDeBruijnVar(1)) return dLim(e,x.incDeBruijnVar(1,1));
 	return dLim(e,x.incDeBruijnVar(1,0).substitute(v,dDeBruijnVar(1)));
 }
 
@@ -2780,7 +2782,7 @@ DExpr dDiff(DExpr e,DExpr x){
 }
 
 DExpr dDiff(DVar v,DExpr e,DExpr x)in{assert(v&&e&&x&&(!cast(DDeBruijnVar)v||v is dDeBruijnVar(1)));}body{
-	if(v is dDeBruijnVar(1)) return dDiff(e,x);
+	if(v is dDeBruijnVar(1)) return dDiff(e.incDeBruijnVar(1,1),x);
 	return dDiff(e.incDeBruijnVar(1,0).substitute(v,dDeBruijnVar(1)),x);
 }
 DExpr dDiff(DVar v,DExpr e){ return dDiff(v,e,v); }
@@ -3648,7 +3650,7 @@ DLambda dLambdaSmp(DVar var,DExpr expr,DExpr facts)in{assert(var&&expr);}body{
 }
 
 DLambda dLambda(DVar var,DExpr expr)in{assert(var&&expr&&(!cast(DDeBruijnVar)var||var is dDeBruijnVar(1)));}body{
-	if(var is dDeBruijnVar(1)) return dLambda(expr);
+	if(var is dDeBruijnVar(1)) return dLambda(expr.incDeBruijnVar(1,1));
 	return dLambda(expr.incDeBruijnVar(1,0).substitute(var,dDeBruijnVar(1)));
 }
 

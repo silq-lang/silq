@@ -976,6 +976,24 @@ void test(){
 	//auto e="[-a.length≠0]·[-a.length≤0]·[-a[0].length+1≠0]·[-a[0].length+1≤0]·δ[-r₁+a[0][1]]·δ_a[[ξ₁ ↦ ([ξ₂ ↦ [-1+ξ₂=0]·⅟2+⅟2] (2))·[ξ₁=0]] (1)]".dParse;
 	//writeln(dInt("a".dVar,e).simplify(one));
 	//writeln(dArray([dArray([one/2,one/2])]));
+	//auto e="∫dξ₁(-(∫dξ₂[-1+e·⅟ξ₁·⅟ξ₂≤0]·[-1+ξ₂≤0]·[-e·⅟ξ₁·⅟ξ₂≤0]·[-ξ₂≤0]·[e·⅟ξ₁·⅟ξ₂≠0]·[ξ₁·ξ₂≠0]·[ξ₂≠0]·log(e·⅟ξ₁·⅟ξ₂)·⅟ξ₂)·[-1+ξ₁≤0]·[-ξ₁≤0]·[ξ₁≠0]·⅟ξ₁)".dParse;
+	//writeln(e.simplify(one));
+	//auto e="[-1+x≤0]·[-1+y≤0]·[-x≠0]·[-x≤0]·[-y≤0]·log(x)²·δ[-z+x·y]·⅟2".dParse;
+	//dw(e);
+	//auto ii=dInt("x".dVar,dInt("y".dVar,e));
+	//dw(dInt("y".dVar,e));
+	//dw((cast(DInt)ii).expr.substitute(dDeBruijnVar(1),"x".dVar));
+	//writeln("?? ",(cast(DInt)ii).expr.simplify(one).substitute(dDeBruijnVar(1),"x".dVar));
+	//dw("***");
+	//writeln("!! ",(cast(DInt)ii).expr.substitute(dDeBruijnVar(1),"x".dVar).simplify(one));
+	// writeln((cast(DInt)ii).expr.simplify(one).substitute(dDeBruijnVar(1),"x".dVar));
+	//writeln(ii.simplify(one));
+	//writeln("(∫dξ₁[-1+z·⅟ξ₁≤0]·[-1+ξ₁≤0]·[-z·⅟ξ₁≠0]·[-z·⅟ξ₁≤0]·[-ξ₁≠0]·[-ξ₁≤0]·log(ξ₁)²·ξ₁)·⅟2·⅟z".dParse.simplify(one));
+	//writeln(dInt("y".dVar,e).substitute("x".dVar,dDeBruijnVar(2)).simplify(one));
+	//writeln(dDelta(-"z".dVar+dDeBruijnVar(1)*dDeBruijnVar(2)).linearizeConstraints(dDeBruijnVar(1)).simplify(one));
+	//dw("***");
+	//writeln(dDelta(-"z".dVar+dDeBruijnVar(1)*dVar("x")).linearizeConstraints(dDeBruijnVar(1)).simplify(one));
+	//writeln(dDiff(dDeBruijnVar(1),dDeBruijnVar(1)*dDeBruijnVar(2)));
 }
 
 /*

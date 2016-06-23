@@ -11,14 +11,13 @@ DExpr definiteIntegral(DVar var,DExpr expr,DExpr facts=one){
 	return r;
 }
 
-private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
+private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one)in{assert(var is dDeBruijnVar(1));}body{
 	auto nexpr=expr.simplify(facts);
 	if(expr !is nexpr) expr=nexpr;
 	if(expr is zero) return zero;
-	if(cast(DContextVars)var) return null;
 	// TODO: move (most of) the following into the implementation of definiteIntegral
 	auto ow=expr.splitMultAtVar(var);
-	ow[0]=ow[0].simplify(facts);
+	ow[0]=ow[0].incDeBruijnVar(-1,0).simplify(facts);
 	if(ow[0] !is one){
 		if(auto r=definiteIntegral(var,ow[1],facts))
 			return (ow[0]*r).simplify(facts);
@@ -29,9 +28,9 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
 			if(!f.hasFreeVar(var)) continue;
 			if(auto d=cast(DDiscDelta)f){
 				if(d.var is var)
-					return expr.withoutFactor(f).substitute(var,d.e).simplify(facts);
+					return expr.withoutFactor(f).substitute(var,d.e).incDeBruijnVar(-1,0).simplify(facts);
 				if(d.e is var) // TODO: more complex "inversions"?
-					return expr.withoutFactor(f).substitute(var,d.var).simplify(facts);
+					return expr.withoutFactor(f).substitute(var,d.var).incDeBruijnVar(-1,0).simplify(facts);
 			}
 		}
 		return null;
@@ -49,8 +48,7 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
 		}
 		return null;
 	}
-	if(auto r=deltaSubstitution())
-		return r;
+	if(auto r=deltaSubstitution()) return r;
 	foreach(T;Seq!(DDiscDelta,DDelta,DIvr)){ // TODO: need to split on DIvr?
 		foreach(f;expr.factors){
 			if(auto p=cast(DPlus)f){
@@ -69,6 +67,7 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
 						auto ow=k.splitMultAtVar(var);
 						auto r=definiteIntegral(var,ow[1],facts);
 						if(r){
+							ow[0]=ow[0].incDeBruijnVar(-1,0);
 							DPlus.insert(works,ow[0]*r);
 							simpler=true;
 						}else DPlus.insert(doesNotWork,k);
@@ -82,29 +81,32 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
 			}
 		}
 	}
-	nexpr=expr.linearizeConstraints!(x=>!!cast(DDelta)x)(var).simplify(facts); // TODO: only linearize the first feasible delta.
-	if(nexpr !is expr) return definiteIntegral(var,nexpr,facts);
+	nexpr=expr.linearizeConstraints!(x=>!!cast(DDelta)x)(var).simplify(facts.incDeBruijnVar(1,0)); // TODO: only linearize the first feasible delta.
+	if(nexpr !is expr){
+		dw("!/ ",expr," ",nexpr.simplify(one));
+		return definiteIntegral(var,nexpr,facts);
+	}
 	/+if(auto r=deltaSubstitution(true))
 	 return r;+/
 
 	if(expr is one) return null; // (infinite integral)
 
 	if(simplification!=Simpl.deltas){
-		nexpr=expr.linearizeConstraints!(x=>!!cast(DIvr)x)(var).simplify(facts);
+		nexpr=expr.linearizeConstraints!(x=>!!cast(DIvr)x)(var).simplify(facts.incDeBruijnVar(1,0));
 		if(nexpr !is expr) return definiteIntegral(var,nexpr,facts);
 		if(auto r=definiteIntegralContinuous(var,expr,facts))
 			return r;
 	}
 	
 	// pull sums out (TODO: ok?)
-	foreach(f;expr.factors){
+	/+foreach(f;expr.factors){ // TODO: fix this
 		if(auto sum=cast(DSum)f){
 			auto tmp1=freshVar(); // TODO: get rid of this!
 			auto tmp2=freshVar(); // TODO: get rid of this!
 			auto expr=sum.getExpr(tmp1)*expr.withoutFactor(f);
-			return dSumSmp(tmp1,dIntSmp(tmp2,expr.substitute(var,tmp2),one),one);
+			return dSum(tmp1,dInt(tmp2,expr.substitute(var,tmp2))).simplify(facts);
 		}
-	}
+	}+/
 	// Fubini
 	DExpr fubini(){
 		bool hasInt=false;
@@ -131,19 +133,21 @@ private DExpr definiteIntegralImpl(DVar var,DExpr expr,DExpr facts=one){
 		auto fubiExpr=fubiExprNumVars[0], numFubiVars=fubiExprNumVars[1];
 		fubiExpr=fubiExpr.incDeBruijnVar(1,0).substitute(dDeBruijnVar(numFubiVars+1),dDeBruijnVar(1));
 		if(hasInt) if(auto r=definiteIntegral(var,fubiExpr)){
-			r=r.simplify(facts).incDeBruijnVar(-1,0);
+			r=r.simplify(facts);
 			foreach_reverse(v;0..numFubiVars-1) r=dInt(r);
-			return r.incDeBruijnVar(1,0).simplify(facts);
+			return r.simplify(facts);
 		}
 		return null;
 	}
 	assert(var is dDeBruijnVar(1));
 	if(auto r=fubini()) return r;
-	if(!expr.hasFreeVar(var)) return expr*dInt(var,one); // (infinite integral)
+	if(!expr.hasFreeVar(var)) return expr.incDeBruijnVar(-1,0)*dInt(var,one); // (infinite integral)
 	return null;
 }
 
-private DExpr definiteIntegralContinuous(DVar var,DExpr expr,DExpr facts)out(res){
+private DExpr definiteIntegralContinuous(DVar var,DExpr expr,DExpr facts)in{
+	assert(var is dDeBruijnVar(1));
+}out(res){
 	version(INTEGRATION_STATS){
 		integrations++;
 		if(res) successfulIntegrations++;
@@ -512,8 +516,8 @@ private DExpr tryIntegrateImpl(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DE
 			return lowLeUp()*(anti.substitute(var,upper)
 							  -anti.substitute(var,lower));
 		}
-		auto lo=lower?anti.substitute(var,lower):antid.atMinusInfinity;
-		auto up=upper?anti.substitute(var,upper):antid.atInfinity;
+		auto lo=lower?unbind(anti,lower):antid.atMinusInfinity;
+		auto up=upper?unbind(anti,upper):antid.atInfinity;
 		if(!lo) lo=dLimSmp(var,-dInf,anti,one);
 		if(!up) up=dLimSmp(var,dInf,anti,one);
 		if(lo.isInfinite() || up.isInfinite()) return null;
@@ -526,7 +530,7 @@ private DExpr tryIntegrateImpl(DVar var,DExpr nonIvrs,DExpr lower,DExpr upper,DE
 		bool ok=true;
 		foreach(s;p.summands){
 			auto ow=s.splitMultAtVar(var);
-			ow[0]=ow[0].simplify(one);
+			ow[0]=ow[0].incDeBruijnVar(-1,0).simplify(one);
 			auto t=tryIntegrate(var,ow[1],lower,upper,ivrs);
 			if(t) DPlus.insert(works,ow[0]*t);
 			else DPlus.insert(doesNotWork,s);
