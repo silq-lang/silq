@@ -919,6 +919,7 @@ class DMult: DCommutAssocOp{
 						if(auto r=tryCombine(a,b,facts))
 							return (r^^exp1).simplify(facts);
 					}
+
 				}
 			}
 			if(cast(DIvr)e2) swap(e1,e2);
@@ -1171,7 +1172,7 @@ class DPow: DBinaryOp{
 		auto ne1=e1.simplify(facts);
 		auto ne2=e2.simplify(facts);
 		if(ne1!is e1||ne2!is e2) return dPow(ne1,ne2).simplify(facts);
-		if(e1 !is mone) if(auto c=cast(Dℕ)e1) if(c.c<0) return (mone^^e2*dℕ(-c.c)^^e2).simplify(facts);
+		if(e1 !is mone) if(auto c=cast(Dℕ)e1) if(c.c<0) if(cast(Dℕ)e2) return (mone^^e2*dℕ(-c.c)^^e2).simplify(facts);
 		if(auto m=cast(DMult)e1){
 			DExprSet outside;
 			DExprSet within;
