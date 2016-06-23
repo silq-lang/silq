@@ -208,12 +208,6 @@ struct DParser{
 			auto fun="q".dFunVar; // TODO: fix!
 			return dContextVars(s,fun);
 		}
-		if(s.startsWith("ξ")){
-			auto i=0;
-			for(auto rest=s["ξ".length..$];!rest.empty();rest.popFront())
-				i=10*i+cast(int)indexOf(lowDigits,rest.front);
-			return dDeBruijnVar(numBinders-i+1);
-		}
 		return varOrBound(s);
 	}
 	DFunVar curFun=null;
