@@ -167,6 +167,7 @@ struct DParser{
 		if(c=='δ') return false; // TODO: this is quite crude
 		if(c.isAlpha()) return true;
 		if(lowDigits.canFind(c)) return true;
+		if(c=='₋') return true;
 		if(c=='_') return true;
 		return false;
 	}
@@ -189,8 +190,12 @@ struct DParser{
 	private DVar varOrBound(string s){
 		if(s.startsWith("ξ")){
 			auto i=0;
-			for(auto rest=s["ξ".length..$];!rest.empty();rest.popFront())
+			auto rest=s["ξ".length..$];
+			bool neg=false;
+			if(!rest.empty&&rest.front=='₋'){ neg=true; rest.popFront(); }
+			for(;!rest.empty();rest.popFront())
 				i=10*i+cast(int)indexOf(lowDigits,rest.front);
+			if(neg) i=-i;
 			return dDeBruijnVar(numBinders-i+1);
 		}
 		return dVar(s);
