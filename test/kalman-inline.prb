@@ -1,3 +1,5 @@
+// skipped
+// TODO: performance currently depends critically on marginalization order, fix this
 
 dat Filter{
     x: ℝ , v: ℝ, a: ℝ;
