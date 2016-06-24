@@ -508,8 +508,10 @@ private DExpr tryIntegrateImpl(DExpr nonIvrs,DExpr lower,DExpr upper,DExpr ivrs)
 	//dw(dDiff(var,antid.antiderivative.simplify(one)).simplify(one));
 	if(auto anti=antid.antiderivative){
 		//dw(anti.substitute(var,lower).simplify(one)," ",lower," ",upper);
-		auto lo=lower?unbind(anti,lower.incDeBruijnVar(-1,0)):antid.atMinusInfinity.incDeBruijnVar(-1,0);
-		auto up=upper?unbind(anti,upper.incDeBruijnVar(-1,0)):antid.atInfinity.incDeBruijnVar(-1,0);
+		auto lo=lower?unbind(anti,lower.incDeBruijnVar(-1,0)):
+			antid.atMinusInfinity.maybe!(x=>x.incDeBruijnVar(-1,0));
+		auto up=upper?unbind(anti,upper.incDeBruijnVar(-1,0)):
+			antid.atInfinity.maybe!(x=>x.incDeBruijnVar(-1,0));
 		if(lower&&upper){
 			//dw("??! ",dDiff(var,anti).simplify(one));
 			//dw(anti.substitute(var,upper).simplify(one));
