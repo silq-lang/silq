@@ -1,4 +1,6 @@
 
++ floor/modulo, bitwise operators
+
 + Limits:
   Fix the delta limit hacks in limit.d and in DDiscDelta.substitute
 
