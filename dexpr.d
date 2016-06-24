@@ -1199,6 +1199,7 @@ class DPow: DBinaryOp{
 		if(e2 is one) return e1;
 		if(e1.mustBeZeroOrOne()&&(-e2).mustBeLessOrEqualZero())
 			return (dIvr(DIvr.Type.neqZ,e2)*e1+dIvr(DIvr.Type.eqZ,e2)).simplify(facts);
+		if(e1 is zero) return dIvr(DIvr.Type.eqZ,e2).simplify(facts);
 		if(auto d=cast(Dℕ)e2){
 			if(auto c=cast(Dℕ)e1){
 				if(d.c>0) return dℕ(pow(c.c,d.c));

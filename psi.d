@@ -1016,6 +1016,8 @@ void test(){
 	//writeln("(-ξ₁²·⅟2+-ξ₂²·⅟2+-ξ₃²·⅟2+-ξ₄²·⅟2+-(-3·ξ₃+-6·ξ₄+x)²·⅟2)".dParse.polyNormalize("x".dVar).simplify(one));
 	//writeln(e.toString(Format.mathematica));
 	//writeln(e.simplify(one));
+	//writeln("0^(1/x)".dParse.simplify(one));
+	//writeln("lim[x→ ∞] 0^(1/x)".dParse.simplify(one));
 }
 
 /*
