@@ -262,6 +262,10 @@ struct DParser{
 			return r;
 		}
 		if(cur()=='['){
+			if(code.length>=2 && code[1]==']'){
+				code=code[2..$];
+				return dArray(zero);
+			}
 			int nesting=0;
 			foreach(i,c;code){
 				if(c=='[') nesting++;
