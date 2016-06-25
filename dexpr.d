@@ -1572,6 +1572,19 @@ private static DExpr getCommonDenominator(DExpr e){
 	}
 	return r;
 }
+private static DExpr cancelCommonDenominator(DExpr e,DExpr denom){ // TODO: get rid of this
+	DExpr r=zero;
+	auto invDenom=(1/denom).simplify(one);
+	foreach(s;e.summands){
+		DExpr t=s;
+		foreach(f;invDenom.factors){
+			if(t.hasFactor(f)) t=t.withoutFactor(f);
+			else t=t/f;
+		}
+		r=r+t;
+	}
+	return r;
+}
 
 enum BoundStatus{
 	fail,
@@ -2086,7 +2099,8 @@ class DIvr: DExpr{ // iverson brackets
 		}
 		auto denom=getCommonDenominator(e).simplify(facts);
 		if(denom !is one){
-			auto dcancel=dDistributeMult(e,denom);
+			// auto dcancel=dDistributeMult(e,denom); // TODO: use this again (inverses should cancel each other immediately during DMult simplification)
+			auto dcancel=cancelCommonDenominator(e,denom);
 			final switch(type) with(Type){
 				case eqZ,neqZ:
 					auto r=dIvr(type,dcancel).simplify(facts);

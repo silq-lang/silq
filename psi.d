@@ -1031,6 +1031,8 @@ void test(){
 	/+auto e="∫dξ₁([-ξ₁+⅟ξ₀≤0]·[ξ₀≤0]·[ξ₀≠0])·[-1+ξ₁≤0]".dParse;
 	dw(e);
 	writeln(e.simplify(one));+/
+	/+auto e="[-⅟√-̅1̅·√-̅r̅₁̅-̅1̅·√-̅1̅=0]".dParse;
+	writeln(e.simplify(one));+/
 }
 
 /*

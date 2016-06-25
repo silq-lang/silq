@@ -1,3 +1,5 @@
+// skipped
+// TODO: fix
 
 def main(){
     X := Gauss(0,1);

@@ -6,6 +6,6 @@ def main(){
 	r1 *= k;
         r2 *= Uniform(0,1);
     }
-    return (r1,r2); // expected: [-1+r1≤0]·[-1+r2≤0]·[-r1≤0]·[-r2≤0]·[r1≠0]·[r2≠0]·log(r1)²·log(r2)²·⅟4
+    return (r1,r2); // expected: [-1+r1≤0]·[-1+r2≤0]·[-r1≤0]·[-r2≠0]·[-r2≤0]·[r1≠0]·log(r1)²·log(r2)²·⅟4
     // TODO: confirm that this is correct
 }
