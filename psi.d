@@ -817,13 +817,6 @@ void test(){
 	//writeln("-x".dParse.simplify("[-x+__u₁=0]".dParse));
 	//writeln(dInt("w".dVar,"(-∫dξ₁[-1+ξ₁≤0]·[-ξ₁+w≤0]·[-ξ₁≤0]·[ξ₁≠0]·log(⅟ξ₁)·⅟ξ₁)·[-w≤0]·[w≠0])".dParse).simplify(one));
 	//writeln(tryGetAntiderivative("x".dVar,"log(1/x)".dParse,one).antiderivative.simplify(one));
-	/+DExpr e=one;
-	int n=160;
-	import std.conv;
-	foreach(i;0..n) e=e*dBounded!"[]"(dVar("x"~to!string(i)),zero,one+one);
-	foreach(i;0..n) e=dInt(dVar("x"~to!string(i)),e);
-	writeln(e);
-	writeln(e.simplify(one));+/
 	//writeln("∫dx log(2*x+1)^2·[1≤x]·[x≤2]".dParse.simplify(one));
 	//writeln(dInt("filter".dVar,dInt("__r₁".dVar,"(∫dξ₁[-1+ξ₁≤0]·[-ξ₁≤0]·δ___r₁[{.x ↦ ξ₁}])·q(γ⃗)·δ_filter[__r₁]·δ[r-filter.x]".dParse)).simplify(one));
 	//writeln(dInt("__r₁".dVar,"(∫dξ₁[-1+ξ₁≤0]·[-ξ₁≤0]·δ___r₁[{.x ↦ ξ₁}])·q(γ⃗)·δ_filter[__r₁]".dParse).simplify(one));
@@ -1018,6 +1011,26 @@ void test(){
 	//writeln(e.simplify(one));
 	//writeln("0^(1/x)".dParse.simplify(one));
 	//writeln("lim[x→ ∞] 0^(1/x)".dParse.simplify(one));
+	/+DExpr e=one;
+	int n=160;
+	import std.conv;
+	foreach(i;0..n) e=e*dBounded!"[]"(dVar("x"~to!string(i)),zero,one+one);
+	foreach(i;0..n) e=dInt(dVar("x"~to!string(i)),e);
+	writeln(e);
+	writeln(e.simplify(one));+/
+	//auto x="(∫dξ₁[k·ξ₁≤1]·[-1+ξ₁≤0]·[-ξ₁≤0]·[ξ₁≠0])".dParse.simplify(one);
+	//writeln(x);
+	//auto e="(∫dξ₁[k·ξ₁≤1]·[-1+ξ₁≤0]·[-ξ₁≤0]·[ξ₁≠0])·[-1+k≤0]·[-k≤0]·q(γ⃗)".dParse;
+	//auto e="(((-[-⅟k≤0]·⅟k+1)·[-1+⅟k≤0]·[k≤0]+([-1+⅟k≤0]·⅟k+[-⅟k+1≠0]·[-⅟k+1≤0])·[-k≤0]·[-⅟k≤0])·[k≠0]+[k=0])·[-1+k≤0]·[-k≤0]".dParse;
+	//e=dInt("k".dVar,e);
+	//dw(e);
+	//writeln(e.simplify(one));
+	//auto e="[-1+ξ₀·ξ₁≤0]·[-1+ξ₁≤0]·[-ξ₁≤0]·[ξ₁≠0]".dParse;
+	//writeln(e.linearizeConstraints(dDeBruijnVar(0)).simplify(one));
+	//auto e="(∫dξ₁[-1+ξ₀·ξ₁≤0]·[-1+ξ₁≤0]·[-ξ₁≤0]·[ξ₁≠0])".dParse;
+	/+auto e="∫dξ₁([-ξ₁+⅟ξ₀≤0]·[ξ₀≤0]·[ξ₀≠0])·[-1+ξ₁≤0]".dParse;
+	dw(e);
+	writeln(e.simplify(one));+/
 }
 
 /*

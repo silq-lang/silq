@@ -501,22 +501,23 @@ DExpr tryIntegrate(DExpr nonIvrs,DExpr lower,DExpr upper,DExpr ivrs){
 private DExpr tryIntegrateImpl(DExpr nonIvrs,DExpr lower,DExpr upper,DExpr ivrs){
 	auto var=dDeBruijnVar(1);
 	// TODO: add better approach for antiderivatives	
-	auto lowLeUp(){ return lower&&upper?dIvr(DIvr.Type.leZ,lower-upper):one; }
 	auto antid=tryGetAntiderivative(nonIvrs,ivrs);
 	//dw(var," ",nonIvrs," ",ivrs);
 	//dw(antid.antiderivative);
 	//dw(dDiff(var,antid.antiderivative.simplify(one)).simplify(one));
 	if(auto anti=antid.antiderivative){
 		//dw(anti.substitute(var,lower).simplify(one)," ",lower," ",upper);
-		auto lo=lower?unbind(anti,lower.incDeBruijnVar(-1,0)):
+		if(lower) lower=lower.incDeBruijnVar(-1,0);
+		if(upper) upper=upper.incDeBruijnVar(-1,0);
+		auto lo=lower?unbind(anti,lower):
 			antid.atMinusInfinity.maybe!(x=>x.incDeBruijnVar(-1,0));
-		auto up=upper?unbind(anti,upper.incDeBruijnVar(-1,0)):
+		auto up=upper?unbind(anti,upper):
 			antid.atInfinity.maybe!(x=>x.incDeBruijnVar(-1,0));
 		if(lower&&upper){
 			//dw("??! ",dDiff(var,anti).simplify(one));
 			//dw(anti.substitute(var,upper).simplify(one));
 			//dw(anti.substitute(var,lower).simplify(one));
-			return lowLeUp()*(up-lo);
+			return dIvr(DIvr.Type.leZ,lower-upper)*(up-lo);
 		}
 		if(!lo) lo=dLimSmp(var,-dInf,anti,one).incDeBruijnVar(-1,0);
 		if(!up) up=dLimSmp(var,dInf,anti,one).incDeBruijnVar(-1,0);
