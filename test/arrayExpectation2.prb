@@ -1,5 +1,3 @@
-// skipped
-// TODO: fix
 
 def main(){
     x := [1,2];
