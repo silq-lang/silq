@@ -1007,13 +1007,13 @@ class DMult: DCommutAssocOp{
 	override DExpr simplifyImpl(DExpr facts){
 		auto ne=basicSimplify();
 		if(ne !is this) return ne.simplify(facts);
-		assert(!cast(DPlus)facts);
+		assert(!cast(DPlus)facts,text(facts));
 		// TODO: this is a mayor bottleneck!
 		DExprSet myFactors;
 		DExprSet myFacts;
-		foreach(f;this.factors) if(auto d=cast(DDelta)f){
+	Louter: foreach(f;this.factors) if(auto d=cast(DDelta)f){
 			auto fact=dIvr(DIvr.Type.eqZ,d.e).simplify(facts);
-			assert(!cast(DPlus)fact);
+			foreach(f;fact.factors) if(!cast(DIvr)f) continue Louter; // TODO: remove this if possible
 			facts=facts*fact;
 		}
 		if(facts !is one) facts=facts.simplify(one);
