@@ -2473,13 +2473,6 @@ class DInt: DOp{
 		return dInt(expr.substitute(var.incDeBruijnVar(1,0),e.incDeBruijnVar(1,0)));
 	}
 	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		/+if(auto ctxv=cast(DContextVars)var){ // TODO!!!
-			if(ctxv.fun is fun){
-				auto r=nexpr;
-				foreach(v;context) r=dInt(v,r);
-				return r;
-			}
-		}+/
 		return dInt(expr.substituteFun(fun,q.incDeBruijnVar(1,0),args,context));
 	}
 	override DExpr incDeBruijnVar(int di,int bound){
