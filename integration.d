@@ -103,7 +103,7 @@ private DExpr definiteIntegralImpl(DExpr expr,DExpr facts=one){
 			auto tmp1=freshVar(); // TODO: get rid of this!
 			auto tmp2=freshVar(); // TODO: get rid of this!
 			auto expr=sum.getExpr(tmp1)*expr.withoutFactor(f);
-			return dSum(tmp1,dInt(tmp2,expr.substitute(var,tmp2))).simplify(facts);
+			return dSum(tmp1,dInt(tmp2,unbind(expr,tmp2))).simplify(facts);
 		}
 	}+/
 	// Fubini

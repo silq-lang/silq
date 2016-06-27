@@ -1954,7 +1954,6 @@ DExpr[2] splitIvrs(DExpr e){
 
 DExpr factorDIvr(alias wrap)(DExpr e){
 	if(!e.hasAny!DIvr) return null;
-	e=e.polyNormalize().simplify(one);
 	if(auto ivr=cast(DIvr)e) return ivr*wrap(one)+negateDIvr(ivr)*wrap(zero);
 	if(e.factors.all!(x=>!!cast(DIvr)x)) return factorDIvrProduct!wrap(e);
 	auto h=getHoles!(x=>x.factors.any!(y=>!!cast(DIvr)y)?x:null)(e);
