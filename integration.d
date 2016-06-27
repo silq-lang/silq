@@ -158,15 +158,9 @@ private DExpr definiteIntegralContinuous(DExpr expr,DExpr facts)out(res){
 	foreach(d;expr.allOf!DDiscDelta(true))
 		if(d.hasFreeVar(var)) return null;
 
-	// TODO: keep ivrs and nonIvrs separate in DMult
-	DExpr ivrs=one;
-	DExpr nonIvrs=one;
-	foreach(f;expr.factors){
-		assert(f.hasFreeVar(var));
-		assert(!cast(DDelta)f);
-		if(cast(DIvr)f) ivrs=ivrs*f;
-		else nonIvrs=nonIvrs*f;
-	}
+	assert(expr.factors.all!(x=>x.hasFreeVar(var)));
+	assert(expr.factors.all!(x=>!cast(DDelta)x));
+	auto ivrsNonIvrs=splitIvrs(expr), ivrs=ivrsNonIvrs[0], nonIvrs=ivrsNonIvrs[1];
 	ivrs=ivrs.simplify(facts.incDeBruijnVar(1,0));
 	nonIvrs=nonIvrs.simplify(facts.incDeBruijnVar(1,0));
 	DExpr lower=null;

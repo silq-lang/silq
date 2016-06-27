@@ -1340,10 +1340,10 @@ DExpr withoutSummand(DExpr e,DExpr summand){
 	return dPlus(s.without(summand));
 }
 
-DExpr polyNormalize(DExpr e,DVar v,long limit=-1){
+DExpr polyNormalize(DExpr e,DVar v=null,long limit=-1){
 	DExprSet normSet;
 	Louter: foreach(s;e.summands){
-		if(s.hasFreeVar(v)){
+		if(!v||s.hasFreeVar(v)){
 			if(auto p=cast(DPow)s){
 				DPlus.insert(normSet,p.expandPow(limit));
 				continue;
@@ -1941,21 +1941,68 @@ DExprHoles!T getHoles(alias filter,T=DExpr)(DExpr e){
 	return r;
 }
 
+// TODO: keep ivrs and nonIvrs separate in DMult
+DExpr[2] splitIvrs(DExpr e){
+	DExpr ivrs=one;
+	DExpr nonIvrs=one;
+	foreach(f;e.factors){
+		if(cast(DIvr)f) ivrs=ivrs*f;
+		else nonIvrs=nonIvrs*f;
+	}
+	return [ivrs,nonIvrs];
+}
+
 DExpr factorDIvr(alias wrap)(DExpr e){
-	auto h=getHoles!(x=>cast(DIvr)x,DIvr)(e);
+	if(!e.hasAny!DIvr) return null;
+	e=e.polyNormalize().simplify(one);
+	if(auto ivr=cast(DIvr)e) return ivr*wrap(one)+negateDIvr(ivr)*wrap(zero);
+	if(e.factors.all!(x=>!!cast(DIvr)x)) return factorDIvrProduct!wrap(e);
+	auto h=getHoles!(x=>x.factors.any!(y=>!!cast(DIvr)y)?x:null)(e);
 	if(!h.holes.length) return null;
 	DExpr doIt(DExpr facts,DExpr cur,size_t i){
+		facts=facts.simplify(one);
 		if(facts is zero) return zero;
 		if(i==h.holes.length) return facts*wrap(cur);
 		auto var=h.holes[i].var,expr=h.holes[i].expr;
-		auto neg=negateDIvr(expr).simplify(facts);
-		auto pos=expr.simplify(facts);
-		return doIt(facts*pos,cur.substitute(var,one),i+1) +
+		auto ivrsNonIvrs=splitIvrs(expr), ivrs=ivrsNonIvrs[0], nonIvrs=ivrsNonIvrs[1];
+		ivrs=ivrs.simplify(one), nonIvrs=nonIvrs.simplify(one);
+		auto neg=negateDIvrProduct(ivrs).simplify(one);
+		auto pos=ivrs.simplify(one);
+		return doIt(facts*pos,cur.substitute(var,nonIvrs),i+1) +
 			doIt(facts*neg,cur.substitute(var,zero),i+1);
 	}
 	auto r=doIt(one,h.expr,0);
 	return r;
 }
+
+DExpr factorDIvrProduct(alias wrap)(DExpr e){
+	auto ivrsNonIvrs=splitIvrs(e), ivrs=ivrsNonIvrs[0], nonIvrs=ivrsNonIvrs[1];
+	ivrs=ivrs.simplify(one), nonIvrs=nonIvrs.simplify(one);
+	return factorDIvrProduct!wrap(ivrs,nonIvrs);
+}
+
+DExpr negateDIvrProduct(DExpr ivrs)in{
+	assert(ivrs.factors.all!(x=>!!cast(DIvr)x));
+}body{
+	auto r=zero;
+	auto cur=one;
+	foreach(f;ivrs.factors){
+		auto ivr=cast(DIvr)f;
+		assert(!!ivr);
+		r=r+cur*negateDIvr(ivr);
+		cur=cur*ivr;
+	}
+	return r;
+}
+
+DExpr factorDIvrProduct(alias wrap)(DExpr ivrs,DExpr nonIvrs)in{
+	assert(ivrs.factors.all!(x=>!!cast(DIvr)x));
+}body{
+	auto tt=wrap(nonIvrs),ff=wrap(zero);
+	auto r=ivrs*tt;
+	return ivrs*tt+negateDIvrProduct(ivrs)*ff;
+}
+
 
 class DIvr: DExpr{ // iverson brackets
 	enum Type{ // TODO: remove redundancy?
@@ -3431,6 +3478,8 @@ class DIndex: DOp{
 			foreach(fc;m.factors){
 				if(cast(DTuple)fc||cast(DArray)fc)
 					return (m.withoutFactor(fc)*dIndex(fc,ni)).simplify(facts);
+				if(cast(DIvr)fc)
+					return (dIndex(m.withoutFactor(fc),ni)*fc).simplify(facts);
 			}
 		}
 		if(ne !is e || ni !is i) return dIndex(ne,ni);
@@ -3856,6 +3905,8 @@ class DField: DOp{
 			foreach(fc;m.factors){
 				if(cast(DTuple)fc||cast(DArray)fc||cast(DRecord)fc)
 					return (m.withoutFactor(fc)*dField(fc,f)).simplify(facts);
+				if(cast(DIvr)fc)
+					return (dField(m.withoutFactor(fc),f)*fc).simplify(facts);
 			}
 		}
 		if(ne !is e) return dField(ne,f);
