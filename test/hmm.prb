@@ -29,6 +29,5 @@ def main(){
     h.update();
     h.update();
     observe(h.predict()==0);
-    //return h.x; // expected: 215·δ[x]·⅟297+32·δ[-x+2]·⅟297+50·δ[-x+1]·⅟297
-    
+    return h.x; // expected: 215·δ[-x]·⅟297+32·δ[-x+2]·⅟297+50·δ[-x+1]·⅟297
 }
