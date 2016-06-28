@@ -67,9 +67,10 @@ private DExpr definiteIntegralImpl(DExpr expr,DExpr facts=one){
 					foreach(k;distributeMult(p,expr.withoutFactor(f))){
 						k=k.simplify(facts);
 						auto ow=k.splitMultAtVar(var);
+						ow[0]=ow[0].incDeBruijnVar(-1,0).simplify(facts);
+						if(ow[0] is zero){ simpler=true; continue; }
 						auto r=definiteIntegral(ow[1],facts);
 						if(r){
-							ow[0]=ow[0].incDeBruijnVar(-1,0);
 							DPlus.insert(works,ow[0]*r);
 							simpler=true;
 						}else DPlus.insert(doesNotWork,k);
