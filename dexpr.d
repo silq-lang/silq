@@ -1005,10 +1005,14 @@ class DMult: DCommutAssocOp{
 	}
 
 	override DExpr simplifyImpl(DExpr facts){
+		// TODO: this is a mayor bottleneck!
 		auto ne=basicSimplify();
 		if(ne !is this) return ne.simplify(facts);
 		assert(!cast(DPlus)facts,text(facts));
-		// TODO: this is a mayor bottleneck!
+		foreach(f;this.factors) if(auto d=cast(DDiscDelta)f){ // TODO: do this in a nicer way
+			auto wo=this.withoutFactor(f);
+			if(wo.hasFreeVar(d.var)) return (wo.substitute(d.var,d.e)*d).simplify(facts);
+		}
 		DExprSet myFactors;
 		DExprSet myFacts;
 	Louter: foreach(f;this.factors) if(auto d=cast(DDelta)f){
@@ -2313,7 +2317,7 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 		return e.freeVarsImpl(dg);
 	}
 	override DExpr substitute(DVar var,DExpr exp){
-		if(this.var is var  && exp is e) return one; // TODO: this is a hack and should be removed
+		if(this.var is var && exp is e) return one; // TODO: this is a hack and should be removed
 		auto v=cast(DVar)this.var.substitute(var,exp);
 		assert(!!v);
 		return dDiscDelta(v,e.substitute(var,exp));
