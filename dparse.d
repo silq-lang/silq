@@ -128,9 +128,15 @@ struct DParser{
 	DExpr parseDSum(){
 		expect('∑');
 		expect('_');
-		++numBinders; scope(exit) --numBinders;
+		++numBinders;
 		auto iVar=parseDVar();
+		if(!cast(DDeBruijnVar)iVar) --numBinders;
 		auto iExp=parseMult();
+		if(cast(DDeBruijnVar)iVar) --numBinders;
+		if(auto dbv=cast(DDeBruijnVar)iVar){
+			assert(dbv.i==1);
+			return dSum(iExp);
+		}
 		return dSum(iVar,iExp);
 	}
 
