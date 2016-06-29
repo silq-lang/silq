@@ -2429,6 +2429,8 @@ DExpr[2] splitMultAtVar(DExpr e,DVar var){
 			}else DMult.insert(within,f);
 		}else DMult.insert(outside,f);
 	}
+	if(!outside.length) return [one,e];
+	if(!within.length) return [e,one];
 	return [dMult(outside),dMult(within)];
 }
 

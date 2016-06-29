@@ -130,13 +130,13 @@ private DExpr definiteIntegralImpl(DExpr expr,DExpr facts=one){
 			return q(r,numVars+1);
 		}
 		auto fubiExprNumVars=fubiRec(expr);
+		if(!hasInt) return null;
 		auto fubiExpr=fubiExprNumVars[0], numFubiVars=fubiExprNumVars[1];
 		fubiExpr=fubiExpr.incDeBruijnVar(1,0).substitute(dDeBruijnVar(numFubiVars+1),dDeBruijnVar(1));
-		if(hasInt) if(auto r=definiteIntegral(fubiExpr,facts)){
-			foreach_reverse(v;0..numFubiVars-1) r=dInt(r);
-			return r.simplify(facts);
-		}
-		return null;
+		auto r=definiteIntegral(fubiExpr,facts);
+		if(!r) return null;
+		foreach_reverse(v;0..numFubiVars-1) r=dInt(r);
+		return r.simplify(facts);
 	}
 	assert(var is dDeBruijnVar(1));
 	if(auto r=fubini()) return r;
