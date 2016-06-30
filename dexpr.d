@@ -2696,13 +2696,13 @@ class DSum: DOp{
 		return 0;
 	}
 	override int freeVarsImpl(scope int delegate(DVar) dg){
-		return expr.freeVarsImpl(v=>v is dDeBruijnVar(1)?0:dg(v.incDeBruijnVar(-1,false)));
+		return expr.freeVarsImpl(v=>v is dDeBruijnVar(1)?0:dg(v.incDeBruijnVar(-1,0)));
 	} 
 	override DExpr substitute(DVar var,DExpr e){
-		return dSum(expr.substitute(var.incDeBruijnVar(1,false),e.incDeBruijnVar(1,false)));
+		return dSum(expr.substitute(var.incDeBruijnVar(1,0),e.incDeBruijnVar(1,0)));
 	}
 	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		return dSum(expr.substituteFun(fun,q.incDeBruijnVar(1,false),args,context));
+		return dSum(expr.substituteFun(fun,q.incDeBruijnVar(1,0),args,context));
 	}
 	override DExpr incDeBruijnVar(int di,int bound){
 		return dSum(expr.incDeBruijnVar(di,bound+1));
