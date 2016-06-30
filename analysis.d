@@ -725,8 +725,8 @@ private struct Analyzer{
 
 	Distribution analyze(CompoundExp ce,FunctionDef isMethodBody=null)in{assert(!!ce);}body{
 		foreach(i,e;ce.s){
-			/+writeln("statement: ",e);
-			writeln("before: ",dist);
+			if(trace) writeln("statement: ",e);
+			/+writeln("before: ",dist);
 			scope(success) writeln("after: ",dist);+/
 			// TODO: visitor?
 			if(auto nde=cast(DefExp)e){

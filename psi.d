@@ -11,6 +11,7 @@ bool kill=false;
 auto formatting=Format.default_;
 bool casBench=false;
 bool noBoundsCheck=false;
+bool trace=false;
 
 string casExt(Format formatting=.formatting){
 	final switch(formatting) with(Format){
@@ -171,6 +172,7 @@ int main(string[] args){
 			case "--raw": simplification=Simpl.raw;  break;
 			case "--deltas": simplification=Simpl.deltas; break;
 			case "--noboundscheck": noBoundsCheck=true; break;
+			case "--trace": trace=true; break;
 			case "--casbench": casBench=true; break;
 			case "--matlab": formatting=Format.matlab; break;
 			case "--maple": formatting=Format.maple; break;
