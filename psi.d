@@ -10,6 +10,7 @@ bool cdf=false;
 bool kill=false;
 auto formatting=Format.default_;
 bool casBench=false;
+bool noBoundsCheck=false;
 
 string casExt(Format formatting=.formatting){
 	final switch(formatting) with(Format){
@@ -169,6 +170,7 @@ int main(string[] args){
 			case "--kill": kill=true; break;
 			case "--raw": simplification=Simpl.raw;  break;
 			case "--deltas": simplification=Simpl.deltas; break;
+			case "--noboundscheck": noBoundsCheck=true; break;
 			case "--casbench": casBench=true; break;
 			case "--matlab": formatting=Format.matlab; break;
 			case "--maple": formatting=Format.maple; break;
@@ -1051,6 +1053,9 @@ void test(){
 	/+auto e="∫dξ₁(∫dξ₂[(-a+ξ₁)·⅟ξ₂≤0]·[(-ξ₁+a)·⅟ξ₂+-1≤0]·[-1+ξ₂≤0]·[-ξ₂≤0]·[ξ₂≠0]·⅟ξ₂)·[-1+ξ₁≤0]·[-ξ₁≤0]".dParse;
 	dw(e);
 	writeln(e.simplify(one));+/
+	//auto x="x".dVar,a="a".dVar;
+	//writeln(dIvr(DIvr.dIvr(DIvr.Type.eqZ,dAbs(2*x-3*a)+dAbs(a+1-x)-(x+1)).simplify(one));
+	//writeln("[|2·x-3·a|+|a+1-x|=|x+1|]".dParse.simplify("[0<a]".dParse));
 }
 
 /*

@@ -351,6 +351,7 @@ struct Parser{
 		mixin(SetLoc!Expression);
 		switch(ttype){
 			case Tok!"i": return parseIdentifier();
+			case Tok!"?": nextToken(); return res=New!PlaceholderExp(parseIdentifier());
 			case Tok!"``", Tok!"``c", Tok!"``w", Tok!"``d": // adjacent string tokens get concatenated
 				Token t=tok;
 				for(nextToken();;nextToken()){

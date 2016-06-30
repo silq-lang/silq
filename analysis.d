@@ -1,5 +1,6 @@
 import std.stdio, std.conv, std.format, std.string, std.range, std.algorithm;
 
+import psi;
 import lexer, expression, declaration, type, semantic_, error;
 import distrib, dexpr, util;
 
@@ -28,6 +29,16 @@ private struct Analyzer{
 			if(cast(Declaration)e||cast(BinaryExp!(Tok!":="))e){
 				err.error("definition must be at top level",e.loc);
 				unwind();
+			}
+			if(auto pl=cast(PlaceholderExp)e){
+				string name = pl.ident.name;
+				if(name in dist.symtab){
+					err.error("duplicate placeholder name", pl.loc); // TODO: check this in semantic
+					unwind();
+				}
+				auto v=dVar(name);
+				dist.symtab[name]=v;
+				return v;
 			}
 			if(auto id=cast(Identifier)e){
 				if(auto v=dist.lookupVar(id.name))
@@ -372,7 +383,7 @@ private struct Analyzer{
 					assert(idx.a.length==1);
 					auto de=doIt(idx.e);
 					auto di=doIt(idx.a[0]);
-					dist.assertTrue(dIvr(DIvr.Type.lZ,di-dField(de,"length")),"array access out of bounds"); // TODO: check that index is an integer.
+					if(!noBoundsCheck) dist.assertTrue(dIvr(DIvr.Type.lZ,di-dField(de,"length")),"array access out of bounds"); // TODO: check that index is an integer.
 					auto r=dIndex(de,di);
 					return r;
 				}else if(auto tt=cast(TupleTy)idx.e.type){
@@ -682,7 +693,7 @@ private struct Analyzer{
 				assert(idx.a.length==1);
 				auto index=transformExp(idx.a[0]);
 				if(old&&index&&rhs){
-					dist.assertTrue(dIvr(DIvr.Type.lZ,index-dField(old,"length")),"array access out of bounds"); // TODO: check that index is an integer.
+					if(!noBoundsCheck) dist.assertTrue(dIvr(DIvr.Type.lZ,index-dField(old,"length")),"array access out of bounds"); // TODO: check that index is an integer.
 					assignTo(idx.e,dIUpdate(old,index,rhs),idx.e.type,loc);
 				}
 			}else{
@@ -715,8 +726,8 @@ private struct Analyzer{
 	Distribution analyze(CompoundExp ce,FunctionDef isMethodBody=null)in{assert(!!ce);}body{
 		foreach(i,e;ce.s){
 			/+writeln("statement: ",e);
-			 writeln("before: ",dist);
-			 scope(success) writeln("after: ",dist);+/
+			writeln("before: ",dist);
+			scope(success) writeln("after: ",dist);+/
 			// TODO: visitor?
 			if(auto nde=cast(DefExp)e){
 				auto de=cast(ODefExp)nde.init;
@@ -888,7 +899,7 @@ private struct Analyzer{
 						auto exp=transformExp(ret);
 						DVar var=cast(DVar)exp;
 						if(var && !var.name.startsWith("__")){
-							if(var in vars){
+							if(var in vars||isMethodBody.thisRef&&!isMethodBody.isConstructor&&var.name=="this"){
 								auto vv=dist.getVar(var.name);
 								dist.initialize(vv,var,ret.type);
 								var=vv;

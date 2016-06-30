@@ -535,6 +535,11 @@ Expression semantic(Expression expr,Scope sc){
 		be.type=unit;
 		return be;
 	}
+	if(auto pl=cast(PlaceholderExp)expr){
+		pl.type = ℝ;
+		pl.sstate = SemState.completed;
+		return pl;
+	}
 	if(auto id=cast(Identifier)expr){
 		if(auto r=builtIn(id))
 			return r;

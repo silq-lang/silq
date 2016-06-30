@@ -77,6 +77,14 @@ class Identifier: Expression{
 	Declaration meaning;
 }
 
+class PlaceholderExp: Expression{
+	Identifier ident;
+	this(Identifier ident){ this.ident = ident; }
+	override string toString(){ return _brk("?"); }
+	override @property string kind(){ return "placeholder"; }
+}
+
+
 class UnaryExp(TokenType op): Expression{
 	Expression e;
 	this(Expression next){e = next;}
