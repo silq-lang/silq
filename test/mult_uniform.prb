@@ -2,5 +2,5 @@ def main(){
     x := Uniform(0,1);
     y := Uniform(0,1);
     z := x*y;
-    return z; // expected: -[-1+z≤0]·[-z≤0]·[z≠0]·log(z)
+    return z; // expected: -[-1+z≤0]·[-z≠0]·[-z≤0]·log(z)
 }

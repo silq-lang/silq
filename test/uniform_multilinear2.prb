@@ -1,6 +1,6 @@
 // skipped
 
-def main(){
+def mains(){
     x := Uniform(0,1);
     y := Uniform(0,1);
     z := Uniform(0,1);
