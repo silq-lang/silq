@@ -3558,7 +3558,7 @@ class DIUpdate: DOp{
 			auto dbv=dDeBruijnVar(1);
 			auto r=dArray(arr.length,
 						  dLambda(arr.entries.expr*dIvr(DIvr.Type.neqZ,dbv-ni)
-								  + dIvr(DIvr.Type.eqZ,dbv-ni)*nn));
+								  + dIvr(DIvr.Type.eqZ,dbv-ni)*nn.incDeBruijnVar(1,0)));
 			return r.simplify(facts);
 		}
 		if(ne !is e || ni !is i || nn !is n) return dIUpdate(ne,ni,nn);
