@@ -221,7 +221,6 @@ class Distribution{
 	void assertTrue(DExpr cond,lazy string msg){
 		error=(error+computeProbability(dIvr(DIvr.Type.eqZ,cond))).simplify(one);
 		distribution=distribution*cond;
-		assert(!error.hasFreeVars());
 	}
 	void distribute(DExpr pdf){ distribution=distribution*pdf; }
 	void initialize(DVar var,DExpr exp,Type ty){
