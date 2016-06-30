@@ -44,7 +44,7 @@ DExpr computeSum(DExpr expr,DExpr facts=one){
 		}
 	}
 	nexpr=expr.linearizeConstraints!(x=>!!cast(DIvr)x)(var).simplify(facts.incDeBruijnVar(1,0));
-	if(nexpr !is expr) return computeSum(nexpr);
+	if(nexpr !is expr) return computeSum(nexpr,facts);
 
 	// TODO: keep ivrs and nonIvrs separate in DMult
 	DExpr ivrs=one;
