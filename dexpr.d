@@ -2018,7 +2018,7 @@ class DIvr: DExpr{ // iverson brackets
 	DExpr e;
 	this(Type type,DExpr e){
 		this.type=type; this.e=e;
-		foreach(d;e.allOf!DDelta) assert(0);
+		foreach(d;e.allOf!DDelta) assert(0,text(e));
 	}
 
 	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; } // TODO: correct?
@@ -2376,7 +2376,7 @@ DExpr[2] splitPlusAtVar(DExpr e,DVar var){
 		auto c=cast(Dℕ)p.operands[1];
 		if(!a||!c||c.c<=0) return fail;
 		auto ow=splitPlusAtVar(a,var);
-		if(ow[0]is zero || ow[1] is zero) return fail;
+		if(ow[0] is zero || ow[1] is zero) return fail;
 		DExpr outside=ow[0]^^c;
 		DExprSet within;
 		for(ℕ i=0;i<c.c;i++)
@@ -2511,6 +2511,7 @@ class DInt: DOp{
 		if(expr !is nexpr) return dIntSmp(nexpr,facts);
 		auto ow=expr.splitMultAtVar(dDeBruijnVar(1));
 		ow[0]=ow[0].incDeBruijnVar(-1,0).simplify(facts);
+		if(ow[0] is zero) return zero;
 		if(ow[0] !is one) return (ow[0]*dIntSmp(ow[1],facts)).simplify(facts);
 		//version(DISABLE_INTEGRATION){
 		if(simplification==Simpl.raw)
