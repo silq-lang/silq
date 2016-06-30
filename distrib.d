@@ -142,6 +142,9 @@ class Distribution{
 		r.tmpVars=orig.tmpVars;
 		r.distribution=d1+d2;
 		r.error=orig.error;
+		r.context=context;
+		assert(context is b.context);
+		assert(!freeVarsOrdered && !b.freeVarsOrdered);
 		if(error !is zero || b.error !is zero)
 			r.error=(orig.error+error+b.error).simplify(one);
 		return r;
@@ -218,6 +221,7 @@ class Distribution{
 	void assertTrue(DExpr cond,lazy string msg){
 		error=(error+computeProbability(dIvr(DIvr.Type.eqZ,cond))).simplify(one);
 		distribution=distribution*cond;
+		assert(!error.hasFreeVars());
 	}
 	void distribute(DExpr pdf){ distribution=distribution*pdf; }
 	void initialize(DVar var,DExpr exp,Type ty){
