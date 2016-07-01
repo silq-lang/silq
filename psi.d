@@ -1084,6 +1084,8 @@ void test(){
 	dw(e);
 	writeln(e.simplify(one));
 	writeln(e.substitute(dDeBruijnVar(2),"asdf".dVar).simplify(one).substitute("asdf".dVar,dDeBruijnVar(2)));+/
+	//writeln("∫dx [0≤x] [x≤1] 4x³".dParse.simplify(one));
+	//writeln("∑_y∫dx 2q(x,y)f(z)".dParse.simplify(one));
 }
 
 /*

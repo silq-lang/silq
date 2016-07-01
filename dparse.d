@@ -337,6 +337,7 @@ struct DParser{
 
 	DExpr parseIndex(){
 		auto e=parseBase();
+		if(cast(DIvr)e) return e;
 		while(cur()=='['||cur()=='{'||cur()=='.'){
 			if(cur()=='['){
 				next();
@@ -395,22 +396,47 @@ struct DParser{
 		return parseDPow();
 	}
 
-	bool isMultChar(dchar c){
+	static bool isBinaryOp(dchar c){
+		return isMultChar(c)||isDivChar(c)||isAddChar(c)||isSubChar(c)||
+			c == '↦' || c == '!' || c == '=' || c == '≠' ||
+			c == '≤' || c == '≥' || c == '<' || c == '>';
+	}
+	
+	bool hasFactor(){
+		return code.length && !isBinaryOp(cur())
+			&& cur()!=')' && cur()!='}' && cur()!=']' && cur!=',';
+	}
+
+	DExpr parseJMult(){
+		DExpr f=parseFactor();
+		while(hasFactor())
+			f=f*parseFactor();
+		return f;
+	}
+	
+	static bool isMultChar(dchar c){
 		return "·*"d.canFind(c);
 	}
-	bool isDivChar(dchar c){
+	static bool isDivChar(dchar c){
 		return "÷/"d.canFind(c);
 	}
 
+	static bool isAddChar(dchar c){
+		return c=='+';
+	}
+	static bool isSubChar(dchar c){
+		return c=='-';
+	}
+
 	DExpr parseMult(){
-		DExpr f=parseFactor();
+		DExpr f=parseJMult();
 		while(isMultChar(cur())||isDivChar(cur())){
 			if(isMultChar(cur())){
 				next();
-				f=f*parseFactor();
+				f=f*parseJMult();
 			}else{
 				next();
-				f=f/parseFactor();
+				f=f/parseJMult();
 			}
 		}
 		return f;
@@ -418,7 +444,7 @@ struct DParser{
 
 	DExpr parseAdd(){
 		DExpr s=parseMult();
-		while(cur()=='+'||cur()=='-'){
+		while(isAddChar(cur())||isSubChar(cur())){
 			auto x=cur();
 			next();
 			auto c=parseMult();
