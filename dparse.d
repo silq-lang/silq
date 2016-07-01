@@ -14,8 +14,8 @@ struct DParser{
 		return code.front;
 	}
 	void next(){ code.popFront(); }
-	void expect(dchar c){
-		if(cur()==c) next();
+	void expect(dchar c,bool consume=true){
+		if(cur()==c){ if(consume) next(); }
 		else throw new Exception("expected '"~to!string(c)~"' at \""~code~"\"");
 	}
 		
@@ -23,21 +23,22 @@ struct DParser{
 		expect('[');
 		auto exp=parseDExpr();
 		DIvr.Type ty;
-		void doIt(DIvr.Type t){
+		void doIt(DIvr.Type t,bool negate=false){
 			next();
 			if(cur()=='0') expect('0');
 			else exp=exp-parseDExpr();
 			ty=t;
+			if(negate) exp=-exp;
 		}
 		switch(cur()) with(DIvr.Type){
 			case '=': doIt(eqZ); break;
 			case '≠','!':
-				if(cur()=='!') next(); doIt(neqZ); break;
-			case '<':
+				if(cur()=='!'){ next(); expect('=',false); } doIt(neqZ); break;
+			case '<','>':
 				if(code.length>=2&&code[1]=='='){
-					next(); doIt(leZ);
+					bool b=cur()=='>'; next(); doIt(leZ,b);
 				}else doIt(lZ); break;
-			case '≤': doIt(leZ); break;
+			case '≤','≥': doIt(leZ,cur=='≥'); break;
 			default: expect('<'); assert(0);
 			}
 		expect(']');
@@ -335,10 +336,16 @@ struct DParser{
 		return parseDVarDFun();
 	}
 
+	bool isDIvr(){
+		try DParser(this.tupleof).parseDIvr(); // TODO: improve
+		catch return false;
+		return true;
+	}
+
 	DExpr parseIndex(){
 		auto e=parseBase();
-		if(cast(DIvr)e) return e;
 		while(cur()=='['||cur()=='{'||cur()=='.'){
+			if(isDIvr()) return e;
 			if(cur()=='['){
 				next();
 				auto i=parseDExpr();
