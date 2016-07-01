@@ -2266,6 +2266,7 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 		SolUse usage={caseSplit:caseSplit,bound:false};
 		if(auto s=d.e.solveFor(var,zero,usage,info)){
 			s=s.incDeBruijnVar(-1,0).simplify(one);
+			foreach(ref x;info.caseSplits) x.constraint=x.constraint.incDeBruijnVar(-1,0);
 			if(!caseSplit && info.needCaseSplit) return null;
 			auto constraints=one;
 			foreach(ref x;info.caseSplits)
@@ -2274,7 +2275,7 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 				constraints*unbind(expr,s)/dAbs(dDiff(var,d.e,s));
 			foreach(ref x;info.caseSplits){
 				auto curConstr=constraints.withoutFactor(dIvr(DIvr.Type.neqZ,x.constraint));
-				r=r+(curConstr*dIvr(DIvr.Type.eqZ,x.constraint)).incDeBruijnVar(-1,0)*dIntSmp(var,expr*dDelta(x.expression),one);
+				r=r+curConstr*dIvr(DIvr.Type.eqZ,x.constraint)*dIntSmp(var,expr*dDelta(x.expression),one);
 			}
 			return r.simplify(one);
 		}

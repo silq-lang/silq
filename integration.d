@@ -187,12 +187,14 @@ private DExpr definiteIntegralContinuous(DExpr expr,DExpr facts)out(res){
 		assert(ivr.type!=DIvr.Type.lZ);
 		DExpr bound;
 		auto status=ivr.getBoundForVar(var,bound);
+		if(bound) bound=bound.incDeBruijnVar(-1,0);
 		final switch(status) with(BoundStatus){
 			case fail:
 				SolutionInfo info;
 				SolUse usage={caseSplit:true,bound:true};
 				bound=solveFor(ivr.e,var,zero,usage,info);
 				if(!bound) return null;
+				foreach(ref x;info.caseSplits) x.constraint=x.constraint.incDeBruijnVar(-1,0);
 				import std.conv: text;
 				// TODO: fuse some of this with DDelta.performSubstitution?
 				auto constraints=one;
@@ -214,12 +216,12 @@ private DExpr definiteIntegralContinuous(DExpr expr,DExpr facts)out(res){
 			case lowerBound:
 				if(lower) lower=dMax(lower,bound);
 				else lower=bound;
-				lower=lower.simplify(facts.incDeBruijnVar(1,0));
+				lower=lower.simplify(facts);
 				break;
 			case upperBound:
 				if(upper) upper=dMin(upper,bound);
 				else upper=bound;
-				upper=upper.simplify(facts.incDeBruijnVar(1,0));
+				upper=upper.simplify(facts);
 				break;
 			case equal: assert(0);
 			}
@@ -502,8 +504,6 @@ private DExpr tryIntegrateImpl(DExpr nonIvrs,DExpr lower,DExpr upper,DExpr ivrs)
 	//dw(dDiff(var,antid.antiderivative.simplify(one)).simplify(one));
 	if(auto anti=antid.antiderivative){
 		//dw(anti.substitute(var,lower).simplify(one)," ",lower," ",upper);
-		if(lower) lower=lower.incDeBruijnVar(-1,0);
-		if(upper) upper=upper.incDeBruijnVar(-1,0);
 		auto lo=lower?unbind(anti,lower):
 			antid.atMinusInfinity.maybe!(x=>x.incDeBruijnVar(-1,0));
 		auto up=upper?unbind(anti,upper):

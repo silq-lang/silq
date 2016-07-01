@@ -65,26 +65,27 @@ DExpr computeSum(DExpr expr,DExpr facts=one){
 		assert(ivr.type!=DIvr.Type.neqZ);
 		DExpr bound;
 		auto status=ivr.getBoundForVar(var,bound);
+		if(bound) bound=bound.incDeBruijnVar(-1,0);
 		final switch(status) with(BoundStatus){
 		case fail:
 			return null;
 		case lowerBound:
 			if(lower) lower=dMax(lower,bound);
 			else lower=bound;
-			lower=lower.simplify(facts.incDeBruijnVar(1,0));
+			lower=lower.simplify(facts);
 			break;
 		case upperBound:
 			if(upper) upper=dMin(upper,bound);
 			else upper=bound;
-			upper=upper.simplify(facts.incDeBruijnVar(1,0));
+			upper=upper.simplify(facts);
 			break;
 		case equal:
 			if(lower) lower=dMax(lower,bound);
 			else lower=bound;
 			if(upper) upper=dMin(upper,bound);
 			else upper=bound;
-			lower=lower.simplify(facts.incDeBruijnVar(1,0));
-			upper=upper.simplify(facts.incDeBruijnVar(1,0));
+			lower=lower.simplify(facts);
+			upper=upper.simplify(facts);
 		}
 	}
 	//dw("!! ",nonIvrs," ",lower," ",upper);
