@@ -65,7 +65,7 @@ private DExpr definiteIntegralImpl(DExpr expr,DExpr facts=one){
 					DExprSet doesNotWork;
 					bool simpler=false;
 					foreach(k;distributeMult(p,expr.withoutFactor(f))){
-						k=k.simplify(facts);
+						k=k.simplify(facts.incDeBruijnVar(1,0));
 						auto ow=k.splitMultAtVar(var);
 						ow[0]=ow[0].incDeBruijnVar(-1,0).simplify(facts);
 						if(ow[0] is zero){ simpler=true; continue; }
@@ -214,12 +214,12 @@ private DExpr definiteIntegralContinuous(DExpr expr,DExpr facts)out(res){
 			case lowerBound:
 				if(lower) lower=dMax(lower,bound);
 				else lower=bound;
-				lower=lower.simplify(facts);
+				lower=lower.simplify(facts.incDeBruijnVar(1,0));
 				break;
 			case upperBound:
 				if(upper) upper=dMin(upper,bound);
 				else upper=bound;
-				upper=upper.simplify(facts);
+				upper=upper.simplify(facts.incDeBruijnVar(1,0));
 				break;
 			case equal: assert(0);
 			}

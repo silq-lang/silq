@@ -26,7 +26,7 @@ DExpr computeSum(DExpr expr,DExpr facts=one){
 				DExprSet doesNotWork;
 				bool simpler=false;
 				foreach(k;distributeMult(p,expr.withoutFactor(f))){
-					k=k.simplify(facts);
+					k=k.simplify(facts.incDeBruijnVar(1,0));
 					auto ow=k.splitMultAtVar(var);
 					auto r=computeSum(ow[1],facts);
 					if(r){
@@ -71,20 +71,20 @@ DExpr computeSum(DExpr expr,DExpr facts=one){
 		case lowerBound:
 			if(lower) lower=dMax(lower,bound);
 			else lower=bound;
-			lower=lower.simplify(facts);
+			lower=lower.simplify(facts.incDeBruijnVar(1,0));
 			break;
 		case upperBound:
 			if(upper) upper=dMin(upper,bound);
 			else upper=bound;
-			upper=upper.simplify(facts);
+			upper=upper.simplify(facts.incDeBruijnVar(1,0));
 			break;
 		case equal:
 			if(lower) lower=dMax(lower,bound);
 			else lower=bound;
 			if(upper) upper=dMin(upper,bound);
 			else upper=bound;
-			lower=lower.simplify(facts);
-			upper=upper.simplify(facts);
+			lower=lower.simplify(facts.incDeBruijnVar(1,0));
+			upper=upper.simplify(facts.incDeBruijnVar(1,0));
 		}
 	}
 	//dw("!! ",nonIvrs," ",lower," ",upper);
