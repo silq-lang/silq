@@ -3557,9 +3557,11 @@ class DIUpdate: DOp{
 		}
 		if(auto arr=cast(DArray)ne){
 			auto dbv=dDeBruijnVar(1);
+			auto nni=ni.incDeBruijnVar(1,0);
+			auto nnn=nn.incDeBruijnVar(1,0);
 			auto r=dArray(arr.length,
-						  dLambda(arr.entries.expr*dIvr(DIvr.Type.neqZ,dbv-ni)
-								  + dIvr(DIvr.Type.eqZ,dbv-ni)*nn.incDeBruijnVar(1,0)));
+						  dLambda(arr.entries.expr*dIvr(DIvr.Type.neqZ,dbv-nni)
+								  + dIvr(DIvr.Type.eqZ,dbv-nni)*nnn));
 			return r.simplify(facts);
 		}
 		if(ne !is e || ni !is i || nn !is n) return dIUpdate(ne,ni,nn);
