@@ -16,6 +16,7 @@ bool trace=false;
 string casExt(Format formatting=.formatting){
 	final switch(formatting) with(Format){
 		case default_: return "dexpr";
+		case gnuplot: return "gnu";
 		case matlab: return "m";
 		case mathematica: return "m";
 		case maple: return "mpl";
@@ -97,7 +98,7 @@ void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool isMain){
 	bool plotCDF=cdf;
 	if(str.canFind("δ")) plotCDF=true;
 	import hashtable;
-	if(plot && dist.freeVars.length==1){
+	if(plot && dist.freeVars.length==1||dist.freeVars.length==2){
 		if(plotCDF&&!cdf){
 			dist=dist.dup();
 			auto freeVar=dist.freeVars.element;
@@ -106,7 +107,8 @@ void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool isMain){
 			dist.marginalize(freeVar);
 		}
 		writeln("plotting... ",(plotCDF?"(CDF)":"(PDF)"));
-		matlabPlot(dist.distribution.toString(Format.matlab).replace("q(γ⃗)","1"),dist.freeVars.element.toString(Format.matlab));
+		//matlabPlot(dist.distribution.toString(Format.matlab).replace("q(γ⃗)","1"),dist.freeVars.element.toString(Format.matlab));
+		gnuplot(dist.distribution,dist.freeVars);
 	}
 }
 
@@ -174,6 +176,7 @@ int main(string[] args){
 			case "--noboundscheck": noBoundsCheck=true; break;
 			case "--trace": trace=true; break;
 			case "--casbench": casBench=true; break;
+			case "--gnuplot": formatting=Format.gnuplot; break;
 			case "--matlab": formatting=Format.matlab; break;
 			case "--maple": formatting=Format.maple; break;
 			case "--mathematica": formatting=Format.mathematica; break;
@@ -1119,6 +1122,27 @@ void test(){
 	dw("N: ",e);
 	e=dIntSmp("numSteps".dVar,e,one);
 	dw("numSteps: ",e);+/
+	/+auto e="((2·δ_infected[[ξ₁ ↦ [-1+ξ₁≠0]·[ξ₁=0]] (2)]·⅟3+4·δ_infected[[ξ₁ ↦ [-1+ξ₁=0]+[-1+ξ₁≠0]·[ξ₁=0]] (2)]·⅟3+δ_infected[[ξ₁ ↦ [-1+ξ₁=0]·[ξ₁≠0]+[ξ₁=0]] (2)]·⅟3+δ_infected[[ξ₁ ↦ [ξ₁=0]] (2)]·⅟3)·[infected[0]=0]·[infected[1]=0]+δ_infected[[ξ₁ ↦ [-1+ξ₁=0]+[-1+ξ₁≠0]·[ξ₁=0]] (2)]·⅟2+δ_infected[[ξ₁ ↦ [-1+ξ₁=0]·[ξ₁≠0]+[ξ₁=0]] (2)]·⅟2)·δ[-r₁+infected[1]]".dParse;
+	dw(e);
+	e=dIntSmp("infected".dVar,e,one);
+	dw(e);+/
+	/+{auto e="((δ_newInfected[[ξ₁ ↦ [-1+ξ₁=0]+[-1+ξ₁≠0]·[ξ₁=0]] (2)]+δ_newInfected[[ξ₁ ↦ [-1+ξ₁=0]·[ξ₁≠0]+[ξ₁=0]] (2)]·⅟4+δ_newInfected[[ξ₁ ↦ [-1+ξ₁≠0]·[ξ₁=0]] (2)]·⅟2+δ_newInfected[[ξ₁ ↦ [ξ₁=0]] (2)]·⅟4)·[newInfected[0]=0]·[newInfected[1]=0]+3·δ_newInfected[[ξ₁ ↦ [-1+ξ₁=0]·[ξ₁≠0]+[ξ₁=0]] (2)]·⅟8+δ_newInfected[[ξ₁ ↦ [-1+ξ₁=0]+[-1+ξ₁≠0]·[ξ₁=0]] (2)]·⅟2+δ_newInfected[[ξ₁ ↦ [ξ₁=0]] (2)]·⅟8)·δ[-r₁+newInfected[1]]".dParse;
+	dw(e);
+	e=dIntSmp("newInfected".dVar,e,one);
+	dw(e);}+/
+	
+	/+auto e="(((∫dξ₁(∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])·(∫dξ₂(∑_ξ₃[-N+1+ξ₃≤0]·[-ξ₃≤0]·δ[-ξ₃+ξ₂])·δ_newInfected[[ξ₃ ↦ (([-1+ξ₃=0]+[-1+ξ₃≠0]·[ξ₃=0])·[-ξ₂+ξ₃≠0]+[-ξ₃+ξ₂=0])·[-ξ₁+ξ₃≠0]+[-ξ₃+ξ₁=0]] (N)]))·[∫dξ₁∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁]≠0]·δ[-N+2]·⅟(∫dξ₁∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])²·⅟2+(∫dξ₁(∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])·δ_newInfected[[ξ₂ ↦ [-1+ξ₂≠0]·[-ξ₁+ξ₂≠0]·[ξ₂=0]+[-ξ₂+ξ₁=0]] (N)])·[∫dξ₁∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁]≠0]·δ[-N+2]·⅟(∫dξ₁∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])·⅟2+δ[-N+2]·δ_newInfected[[ξ₁ ↦ [-1+ξ₁=0]+[-1+ξ₁≠0]·[ξ₁=0]] (N)]·⅟2+δ[-N+2]·δ_newInfected[[ξ₁ ↦ [-1+ξ₁≠0]·[ξ₁=0]] (N)]·⅟2)·[newInfected[0]=0]·[newInfected[1]=0]+(∫dξ₁((∫dξ₂(∑_ξ₃[-N+1+ξ₃≤0]·[-ξ₃≤0]·δ[-ξ₃+ξ₂])·(∫dξ₃(∑_ξ₄[-N+1+ξ₄≤0]·[-ξ₄≤0]·δ[-ξ₄+ξ₃])·(∫dξ₄(∑_ξ₅[-N+1+ξ₅≤0]·[-ξ₅≤0]·δ[-ξ₅+ξ₄])·δ_newInfected[[ξ₅ ↦ (((([-1+ξ₅=0]+[-1+ξ₅≠0]·[ξ₅=0])·[-ξ₃+ξ₅≠0]+[-ξ₅+ξ₃=0])·[-ξ₂+ξ₅≠0]+[-ξ₂+ξ₅=0])·[-ξ₄+ξ₅≠0]+[-ξ₅+ξ₄=0])·[-ξ₁+ξ₅≠0]+[-ξ₁+ξ₅=0]] (N)])))·δ[-N+2]·⅟(∫dξ₂∑_ξ₃[-N+1+ξ₃≤0]·[-ξ₃≤0]·δ[-ξ₃+ξ₂])²·⅟2+(∫dξ₂(∑_ξ₃[-N+1+ξ₃≤0]·[-ξ₃≤0]·δ[-ξ₃+ξ₂])·(∫dξ₃(∑_ξ₄[-N+1+ξ₄≤0]·[-ξ₄≤0]·δ[-ξ₄+ξ₃])·δ_newInfected[[ξ₄ ↦ (([-1+ξ₄≠0]·[-ξ₂+ξ₄≠0]·[ξ₄=0]+[-ξ₄+ξ₂=0])·[-ξ₃+ξ₄≠0]+[-ξ₄+ξ₃=0])·[-ξ₁+ξ₄≠0]+[-ξ₁+ξ₄=0]] (N)])·[-1+ξ₂=0])·δ[-N+2]·⅟(∫dξ₂∑_ξ₃[-N+1+ξ₃≤0]·[-ξ₃≤0]·δ[-ξ₃+ξ₂])·⅟2)·(∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁]))·[∫dξ₁∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁]≠0]·⅟(∫dξ₁∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])²)·δ_infected[newInfected]·δ[r-newInfected[1]]".dParse;+/
+	/+auto e="(((∫dξ₁(∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])·(∫dξ₂(∑_ξ₃[-N+1+ξ₃≤0]·[-ξ₃≤0]·δ[-ξ₃+ξ₂])·δ_newInfected[[ξ₃ ↦ (([-1+ξ₃=0]+[-1+ξ₃≠0]·[ξ₃=0])·[-ξ₂+ξ₃≠0]+[-ξ₃+ξ₂=0])·[-ξ₁+ξ₃≠0]+[-ξ₃+ξ₁=0]] (N)]))·[∫dξ₁∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁]≠0]·δ[-N+2]·⅟(∫dξ₁∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])²·⅟2+(∫dξ₁(∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])·δ_newInfected[[ξ₂ ↦ [-1+ξ₂≠0]·[-ξ₁+ξ₂≠0]·[ξ₂=0]+[-ξ₂+ξ₁=0]] (N)])·[∫dξ₁∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁]≠0]·δ[-N+2]·⅟(∫dξ₁∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])·⅟2+δ[-N+2]·δ_newInfected[[ξ₁ ↦ [-1+ξ₁=0]+[-1+ξ₁≠0]·[ξ₁=0]] (N)]·⅟2+δ[-N+2]·δ_newInfected[[ξ₁ ↦ [-1+ξ₁≠0]·[ξ₁=0]] (N)]·⅟2)·[newInfected[0]=0]·[newInfected[1]=0]+(∫dξ₁((∫dξ₂(∑_ξ₃[-N+1+ξ₃≤0]·[-ξ₃≤0]·δ[-ξ₃+ξ₂])·(∫dξ₃(∑_ξ₄[-N+1+ξ₄≤0]·[-ξ₄≤0]·δ[-ξ₄+ξ₃])·(∫dξ₄(∑_ξ₅[-N+1+ξ₅≤0]·[-ξ₅≤0]·δ[-ξ₅+ξ₄])·δ_newInfected[[ξ₅ ↦ (((([-1+ξ₅=0]+[-1+ξ₅≠0]·[ξ₅=0])·[-ξ₄+ξ₅≠0]+[-ξ₅+ξ₄=0])·[-ξ₃+ξ₅≠0]+[-ξ₅+ξ₃=0])·[-ξ₂+ξ₅≠0]+[-ξ₂+ξ₅=0])·[-ξ₁+ξ₅≠0]+[-ξ₁+ξ₅=0]] (N)])))·δ[-N+2]·⅟(∫dξ₂∑_ξ₃[-N+1+ξ₃≤0]·[-ξ₃≤0]·δ[-ξ₃+ξ₂])²·⅟2+(∫dξ₂(∑_ξ₃[-N+1+ξ₃≤0]·[-ξ₃≤0]·δ[-ξ₃+ξ₂])·(∫dξ₃(∑_ξ₄[-N+1+ξ₄≤0]·[-ξ₄≤0]·δ[-ξ₄+ξ₃])·δ_newInfected[[ξ₄ ↦ (([-1+ξ₄≠0]·[-ξ₂+ξ₄≠0]·[ξ₄=0]+[-ξ₄+ξ₂=0])·[-ξ₃+ξ₄≠0]+[-ξ₄+ξ₃=0])·[-ξ₁+ξ₄≠0]+[-ξ₁+ξ₄=0]] (N)])·[-1+ξ₂=0])·δ[-N+2]·⅟(∫dξ₂∑_ξ₃[-N+1+ξ₃≤0]·[-ξ₃≤0]·δ[-ξ₃+ξ₂])·⅟2)·(∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁]))·[∫dξ₁∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁]≠0]·⅟(∫dξ₁∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])²+(∫dξ₁(∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])·(∫dξ₂(∑_ξ₃[-N+1+ξ₃≤0]·[-ξ₃≤0]·δ[-ξ₃+ξ₂])·δ_newInfected[[ξ₃ ↦ ([-1+ξ₃≠0]·[-ξ₁+ξ₃≠0]·[ξ₃=0]+[-ξ₃+ξ₁=0])·[-ξ₂+ξ₃≠0]+[-ξ₃+ξ₂=0]] (N)])·[-1+ξ₁≠0])·[∫dξ₁∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁]≠0]·δ[-N+2]·⅟(∫dξ₁∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])²·⅟2)·δ_infected[newInfected]".dParse;
+	dw(e);
+	e=dIntSmp("N".dVar,e,one);
+	dw("N: ",e);
+	e=dIntSmp("infected".dVar,e,one);
+	dw("infected: ",e);
+	e=dIntSmp("newInfected".dVar,e,one);
+	dw(e);+/
+	//auto e="(2 + 9*(1-((d/dx)⁻¹[e^(-x²)](9·⅟10·⅟√2̅)/(⅟2·√π̅)-1)))/40".dParse;
+	/+auto e="((-(d/dx)⁻¹[e^(-x²)](9·⅟10·⅟√2̅)·2·⅟√π̅+2)·9+2)·⅟40".dParse;
+	dw(e.toString(Format.mathematica));+/
 }
 
 /*

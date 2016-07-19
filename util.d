@@ -526,3 +526,39 @@ void matlabPlot(string expression,string variable){
 	//writeln(input.readEnd.readln());
 	//foreach(i;0..100) writeln(error.readEnd.readln());
 }
+
+import dexpr;
+void gnuplot(DExpr expr,SetX!DVar varset){
+	DVar[] vars;
+	foreach(var;varset) vars~=var;
+	assert(vars.length==1||vars.length==2);
+	import std.process,std.file;
+	auto input=pipe();
+	auto output=File("/dev/null","w");
+	auto error=File("/dev/null","w");
+	// TODO: make plot configurable from the outside
+	auto id=spawnProcess(["gnuplot"],input.readEnd,output,stderr);
+	scope(exit) wait(id);
+	assert(!expr.hasFreeVar("x".dVar));
+	expr=expr.substitute(vars[0],"x".dVar);
+	if(vars.length==2){
+		assert(!expr.hasFreeVar("y".dVar));
+		expr=expr.substitute(vars[1],"y".dVar);
+	}
+	auto str=expr.toString(Format.gnuplot).replace("q(γ⃗)","1");
+	string command="set xlabel \""~vars[0].toString(Format.gnuplot)~"\"\n"
+		~(vars.length==2?"set ylabel \""~vars[1].toString(Format.gnuplot)~"\"\n":"")
+		~"set "~(vars.length==1?"y":"z")~"label \"density\"\n"
+		~"set samples 500, 500\n"
+		~"unset key\n";
+	if(vars.length==1) command~="plot [0:7] "~str~"\n";
+	else command~="splot [0:7] [0:7] "~str~"\n";
+	if(command.length<10000){
+		writeln("command: ");
+		writeln(command);
+	}
+	input.writeEnd.writeln(command);
+	input.writeEnd.writeln("pause 5\nset term postscript\nset output \"/tmp/psiplot.ps\"\nreplot");
+	input.writeEnd.writeln("exit");
+	input.writeEnd.flush();	
+}

@@ -32,6 +32,7 @@ enum measure="swCount++;sw.start();scope(exit)sw.stop();";+/
 
 enum Format{
 	default_,
+	gnuplot,
 	matlab,
 	maple,
 	mathematica,
@@ -178,7 +179,7 @@ class DVar: DExpr{
 	string name;
 	private this(string name){ this.name=name; }
 	static string fixName(string name,Format formatting){
-		if(formatting==Format.sympy||formatting==Format.matlab||formatting==Format.mathematica){
+		if(formatting==Format.gnuplot||formatting==Format.sympy||formatting==Format.matlab||formatting==Format.mathematica){
 			return asciify(name);
 			auto nname=name.to!dstring; // TODO: why necessary? Phobos bug?
 			nname=nname.replace("ξ"d,"xi"d);
@@ -331,6 +332,7 @@ DExpr dFloat(real c){
 
 class DE: DExpr{
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		if(formatting==Format.gnuplot) return "exp(1)";
 		if(formatting==Format.maple) return "exp(1)";
 		if(formatting==Format.mathematica) return "E";
 		return "e";
@@ -342,6 +344,7 @@ private static DE theDE;
 
 class DΠ: DExpr{
 	override string toStringImpl(Format formatting,Precedence prec,int binders){ // TODO: maple
+		if(formatting==Format.gnuplot) return "pi";
 		if(formatting==Format.matlab) return "pi";
 		if(formatting==Format.maple) return "Pi";
 		if(formatting==Format.mathematica) return "Pi";
@@ -719,7 +722,7 @@ class DMult: DCommutAssocOp{
 	private this(DExprSet e)in{assert(e.length>1); }body{ assert(one !in e,text(e)); operands=e; }
 	override @property Precedence precedence(){ return Precedence.mult; }
 	override string symbol(Format formatting,int binders){
-		if(formatting==Format.maple||formatting==Format.sympy||formatting==Format.mathematica) return "*";
+		if(formatting==Format.gnuplot||formatting==Format.maple||formatting==Format.sympy||formatting==Format.mathematica) return "*";
 		else if(formatting==Format.matlab) return ".*";
 		else return "·";
 	}
@@ -1115,7 +1118,8 @@ class DPow: DBinaryOp{
 	mixin Constructor;
 	override Precedence precedence(){ return Precedence.pow; }
 	override @property string symbol(Format formatting,int binders){
-		if(formatting==Format.matlab) return ".^";
+		if(formatting==Format.gnuplot) return "**";
+		else if(formatting==Format.matlab) return ".^";
 		else if(formatting==Format.sympy) return "**";
 		else return "^";
 	}
@@ -1133,7 +1137,7 @@ class DPow: DBinaryOp{
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		auto frc=operands[1].getFractionalFactor().getFraction();
 		if(frc[0]<0){
-			if(formatting==Format.matlab){
+			if(formatting==Format.matlab||formatting==Format.gnuplot){
 				addp(prec,text(dIvr(DIvr.Type.neqZ,operands[0]).toStringImpl(formatting,Precedence.div,binders),"./",
 							   (operands[0]+dIvr(DIvr.Type.eqZ,operands[0])).toStringImpl(formatting,Precedence.div,binders)),
 					 Precedence.div);
@@ -1143,7 +1147,7 @@ class DPow: DBinaryOp{
 			}
 		}
 		// also nice, but often hard to read: ½⅓¼⅕⅙
-		if(formatting==Format.default_){		
+		if(formatting==Format.default_){
 			if(auto c=cast(Dℕ)operands[1])
 				return addp(prec,operands[0].toStringImpl(formatting,Precedence.pow,binders)~highNum(c.c));
 			if(auto c=cast(DPow)operands[1]){
@@ -2029,7 +2033,15 @@ class DIvr: DExpr{ // iverson brackets
 
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		with(Type){
-			if(formatting==Format.mathematica){
+			if(formatting==Format.gnuplot){
+				auto es=e.toStringImpl(formatting,Precedence.none,binders);
+				final switch(type){
+				case eqZ: return text("(",es,"==0)");
+				case neqZ: return text("(",es,"!=0)");
+				case lZ: assert(0);
+				case leZ: return text("(",es,"<=0)");
+				}
+			}else if(formatting==Format.mathematica){
 				auto es=e.toStringImpl(formatting,Precedence.none,binders);
 				final switch(type){
 				case eqZ: return text("Boole[",es,"==0]");
@@ -3105,7 +3117,9 @@ class DGaussInt: DOp{
 	override @property string symbol(Format formatting,int binders){ return "(d/dx)⁻¹[e^(-x²)]"; }
 	override Precedence precedence(){ return Precedence.diff; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
-		if(formatting==Format.mathematica){
+		if(formatting==Format.gnuplot){
+			return "sqrt(pi)*(erf("~x.toStringImpl(formatting,Precedence.none,binders)~")+1)/2";
+		}else if(formatting==Format.mathematica){
 			return "Sqrt[Pi]*(Erf["~x.toStringImpl(formatting,Precedence.none,binders)~"]+1)/2";
 		}else if(formatting==Format.maple){
 			return "sqrt(Pi)*(erf("~x.toStringImpl(formatting,Precedence.none,binders)~")+1)/2";
