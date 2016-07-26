@@ -98,13 +98,15 @@ void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool isMain){
 	bool plotCDF=cdf;
 	if(str.canFind("δ")) plotCDF=true;
 	import hashtable;
-	if(plot && dist.freeVars.length==1||dist.freeVars.length==2){
+	if(plot && (dist.freeVars.length==1||dist.freeVars.length==2)){
 		if(plotCDF&&!cdf){
 			dist=dist.dup();
-			auto freeVar=dist.freeVars.element;
-			auto nvar=dist.declareVar("foo");
-			dist.distribute(dIvr(DIvr.Type.leZ,-freeVar-20)*dIvr(DIvr.Type.leZ,freeVar-nvar));
-			dist.marginalize(freeVar);
+			foreach(freeVar;dist.freeVars.dup){
+				auto nvar=dist.declareVar("foo"~freeVar.name);
+				dw(dIvr(DIvr.Type.leZ,-freeVar-20)*dIvr(DIvr.Type.leZ,freeVar-nvar));
+				dist.distribute(dIvr(DIvr.Type.leZ,-freeVar-20)*dIvr(DIvr.Type.leZ,freeVar-nvar));
+				dist.marginalize(freeVar);
+			}
 		}
 		writeln("plotting... ",(plotCDF?"(CDF)":"(PDF)"));
 		//matlabPlot(dist.distribution.toString(Format.matlab).replace("q(γ⃗)","1"),dist.freeVars.element.toString(Format.matlab));

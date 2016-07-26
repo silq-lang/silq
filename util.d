@@ -537,28 +537,36 @@ void gnuplot(DExpr expr,SetX!DVar varset){
 	auto output=File("/dev/null","w");
 	auto error=File("/dev/null","w");
 	// TODO: make plot configurable from the outside
-	auto id=spawnProcess(["gnuplot"],input.readEnd,output,stderr);
-	scope(exit) wait(id);
-	assert(!expr.hasFreeVar("x".dVar));
-	expr=expr.substitute(vars[0],"x".dVar);
+	auto id=spawnProcess(["gnuplot","-"],input.readEnd,output,stderr);
+	scope(success) wait(id);
+	if(vars[0]!is "x".dVar){ // TODO: fix
+		assert(!expr.hasFreeVar("x".dVar));
+		expr=expr.substitute(vars[0],"x".dVar);
+	}
 	if(vars.length==2){
 		assert(!expr.hasFreeVar("y".dVar));
 		expr=expr.substitute(vars[1],"y".dVar);
 	}
 	auto str=expr.toString(Format.gnuplot).replace("q(γ⃗)","1");
-	string command="set xlabel \""~vars[0].toString(Format.gnuplot)~"\"\n"
+	string command=
+		//"set enhanced color lw 2 \"Times\" 30\n"~
+		"set pointsize 20\n"
+		~"set xlabel \""~vars[0].toString(Format.gnuplot)~"\"\n"
 		~(vars.length==2?"set ylabel \""~vars[1].toString(Format.gnuplot)~"\"\n":"")
 		~"set "~(vars.length==1?"y":"z")~"label \"density\"\n"
 		~"set samples 500, 500\n"
+		~"set isosample 200\n"
 		~"unset key\n";
-	if(vars.length==1) command~="plot [0:7] "~str~"\n";
-	else command~="splot [0:7] [0:7] "~str~"\n";
+	auto range="[-10:100]";
+	if(vars.length==1) command~="plot "~range~" "~str~"\n";
+	else command~="splot "~range~" "~range~" "~str~"\n";
 	if(command.length<10000){
 		writeln("command: ");
 		writeln(command);
 	}
 	input.writeEnd.writeln(command);
-	input.writeEnd.writeln("pause 5\nset term postscript\nset output \"/tmp/psiplot.ps\"\nreplot");
-	input.writeEnd.writeln("exit");
+	//input.writeEnd.writeln("exit");
+	//input.writeEnd.writeln("set terminal postscript eps\nset output \"/tmp/psiplot.eps\"\nreplot\n");
+	input.writeEnd.writeln("bind \"x\" \"exit\"\n");
 	input.writeEnd.flush();	
 }
