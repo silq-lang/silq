@@ -1150,6 +1150,7 @@ void test(){
 	writeln(dInt("y".dVar,e.simplify(one)).simplify(one)); // TODO: fix+/
 	//writeln("δ[y-⅟x²]".dParse.linearizeConstraints("x".dVar).simplify(one)); // TODO: fix
 	//writeln("[1/x^3=0]".dParse.simplify(one)); // TODO: 0
+	//writeln("∫dx [0≤x]·[x≤1]·(x+3)^(-9/10)".dParse.simplify(one));
 }
 
 /*

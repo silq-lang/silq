@@ -268,12 +268,22 @@ AntiD tryGetAntiderivative(DExpr nonIvrs,DExpr ivrs){
 			+ dLog(-e)*dIvr(DIvr.Type.lZ,e);
 	}
 	if(auto p=cast(DPow)nonIvrs){
-		if(p.operands[0] is var && !p.operands[1].hasFreeVar(var)){
-			// constraint: lower && upper
-			return AntiD((safeLog(var)*
-				 dIvr(DIvr.Type.eqZ,p.operands[1]+1)
-				 +(var^^(p.operands[1]+1))/(p.operands[1]+1)*
-						  dIvr(DIvr.Type.neqZ,p.operands[1]+1)).simplify(one));
+		if(!p.operands[1].hasFreeVar(var)){
+			if(p.operands[0] is var){
+				// constraint: lower && upper
+				return AntiD((safeLog(var)*
+							  dIvr(DIvr.Type.eqZ,p.operands[1]+1)
+							  +(var^^(p.operands[1]+1))/(p.operands[1]+1)*
+							  dIvr(DIvr.Type.neqZ,p.operands[1]+1)).simplify(one));
+			}
+			auto ba=p.operands[0].asLinearFunctionIn(var);
+			auto b=ba[0],a=ba[1];
+			if(a && b){
+				return AntiD(((safeLog(p.operands[0])*
+							  dIvr(DIvr.Type.eqZ,p.operands[1]+1)
+							  +(p.operands[0]^^(p.operands[1]+1))/(p.operands[1]+1)*
+							   dIvr(DIvr.Type.neqZ,p.operands[1]+1))/a).simplify(one));
+			}
 		}
 		if(!p.operands[0].hasFreeVar(var)){
 			auto k=safeLog(p.operands[0])*p.operands[1];
