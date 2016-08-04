@@ -2217,6 +2217,7 @@ DExpr dIvr(DIvr.Type type,DExpr e){
 	if(auto r=DIvr.constructHook(type,e)) return r;
 	if(e in uniqueMapDIvr[type]) return uniqueMapDIvr[type][e];
 	if(type==DIvr.Type.eqZ||type==DIvr.Type.neqZ){
+		// if(e.hasFactor(mone)) e=e.withoutFactor(mone); // TODO
 		// TODO: is there a better way to make the argument canonical?
 		auto neg=(-e).simplify(one);
 		if(neg in uniqueMapDIvr[type])

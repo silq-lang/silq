@@ -1145,6 +1145,11 @@ void test(){
 	//auto e="(2 + 9*(1-((d/dx)⁻¹[e^(-x²)](9·⅟10·⅟√2̅)/(⅟2·√π̅)-1)))/40".dParse;
 	/+auto e="((-(d/dx)⁻¹[e^(-x²)](9·⅟10·⅟√2̅)·2·⅟√π̅+2)·9+2)·⅟40".dParse;
 	dw(e.toString(Format.mathematica));+/
+
+	/+auto e="∫dx([-1+x≤0]·[-x≤0]·[x≠0]·⅟e^(r₁²·⅟2·y)·⅟x·δ[y-⅟x²])·⅟√2̅·⅟√π̅".dParse;
+	writeln(dInt("y".dVar,e.simplify(one)).simplify(one)); // TODO: fix+/
+	//writeln("δ[y-⅟x²]".dParse.linearizeConstraints("x".dVar).simplify(one)); // TODO: fix
+	//writeln("[1/x^3=0]".dParse.simplify(one)); // TODO: 0
 }
 
 /*

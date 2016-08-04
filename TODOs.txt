@@ -1,4 +1,6 @@
 
++ factor
+
 + floor/modulo, bitwise operators
 
 + Limits:

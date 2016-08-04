@@ -557,7 +557,7 @@ void gnuplot(DExpr expr,SetX!DVar varset){
 		~"set samples 500, 500\n"
 		~"set isosample 200\n"
 		~"unset key\n";
-	auto range="[-10:100]";
+	auto range="[-1:3]";
 	if(vars.length==1) command~="plot "~range~" "~str~"\n";
 	else command~="splot "~range~" "~range~" "~str~"\n";
 	if(command.length<10000){
