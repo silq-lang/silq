@@ -2501,6 +2501,9 @@ class DInt: DOp{
 			return text("int(",expr.toStringImpl(formatting,Precedence.none,binders+1),",",DDeBruijnVar.displayName(1,formatting,binders+1),"=-infinity..infinity)");
 		}else if(formatting==Format.sympy){
 			return text("integrate(",expr.toStringImpl(formatting,Precedence.none,binders+1),",(",DDeBruijnVar.displayName(1,formatting,binders+1),",-oo,oo))");
+		}else if(formatting==Format.gnuplot && !hasFreeVars(this)){
+			writeln("warning: replacing integral by 1");
+			return "1";
 		}else{
 			return addp(prec,symbol(formatting,binders)~"d"~DDeBruijnVar.displayName(1,formatting,binders+1)~expr.toStringImpl(formatting,Precedence.intg,binders+1));
 		}
