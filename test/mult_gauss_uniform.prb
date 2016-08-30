@@ -1,0 +1,5 @@
+def main() {
+    x := Gauss(0,1);
+    y := Uniform(0,1);
+    return x*y; // TODO
+}

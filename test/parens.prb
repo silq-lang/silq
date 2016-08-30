@@ -1,0 +1,34 @@
+// skipped
+// TODO: make fast
+
+def main(){
+    N := 6;
+    x := array(N,0);
+    for i in [0..N){
+	x[i] = Bernoulli(1/2);
+    }
+    ok := 1;
+    cur := 0;
+    for i in [0..N){
+	if x[i] == 0{
+	    cur+=1;
+	}else{
+	    cur-=1;
+	    if cur<0{ ok = 0; }
+	}
+    }
+    if cur != 0 { ok = 0; }
+    return ok; // expected: 59·δ[-ok]·⅟64+5·δ[-ok+1]·⅟64
+    /+observe(ok);
+    return x[1]; // expected: 2·δ[-r₁+1]·⅟5+3·δ[-r₁]·⅟5+/
+}
+
+/+
+The five sequences are:
+
+((()))
+(()())
+(())()
+()(())
+()()()
++/

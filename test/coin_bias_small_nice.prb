@@ -1,0 +1,8 @@
+def main(){
+    p := Uniform(0,1);
+    r := [1,1,0,1,0];
+    for i in [0..r.length){
+	observe(Bernoulli(p)==r[i]);
+    }
+    return p; // expected: (-120·p+60+60·p²)·[-1+p≤0]·[-p≤0]·p³
+}
