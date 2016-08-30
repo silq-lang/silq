@@ -1,0 +1,10 @@
+// skipped
+
+def main(){
+    female := Bernoulli(0.49);
+    length := if female { Gauss(89,0.2); } else { Gauss(92,0.2); };
+    param := ?x;
+    cobserve(length,param);
+    assert(!female);
+    return length;
+}
