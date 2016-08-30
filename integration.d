@@ -133,7 +133,7 @@ private DExpr definiteIntegralImpl(DExpr expr,DExpr facts=one){
 		if(!hasInt) return null;
 		auto fubiExpr=fubiExprNumVars[0], numFubiVars=fubiExprNumVars[1];
 		fubiExpr=fubiExpr.incDeBruijnVar(1,0).substitute(dDeBruijnVar(numFubiVars+1),dDeBruijnVar(1)).incDeBruijnVar(-1,numFubiVars);
-		auto r=definiteIntegral(fubiExpr,facts);
+		auto r=definiteIntegral(fubiExpr,facts.incDeBruijnVar(numFubiVars-1,0));
 		if(!r) return null;
 		foreach_reverse(v;0..numFubiVars-1) r=dInt(r);
 		return r.simplify(facts);
