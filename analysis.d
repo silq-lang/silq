@@ -135,6 +135,16 @@ private struct Analyzer{
 					case "readCSV":
 						err.error(text("call to 'readCSV' only supported as the right hand side of an assignment"),ce.loc);
 						unwind();
+					case "exp":
+						if(ce.args.length!=1)
+							err.error("expected one argument to exp",ce.loc);
+						return dE^^doIt(ce.args[0]);
+					case "log":
+						if(ce.args.length!=1)
+							err.error("expected one argument to log",ce.loc);
+						auto x=doIt(ce.args[0]);
+						dist.assertTrue(dIvr(DIvr.Type.lZ,-x),formatError("negative argument to log",e.loc));
+						return dLog(x);
 					case "Gauss":
 						if(ce.args.length!=2){
 							err.error("expected two arguments (μ,σ²) to Gauss",ce.loc);
