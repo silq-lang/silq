@@ -210,6 +210,16 @@ class TupleExp: Expression{
 	final @property size_t length(){ return e.length; }
 }
 
+class LambdaExp: Expression{
+	FunctionDef fd;
+	this(FunctionDef fd){
+		this.fd=fd;
+	}
+	override string toString(){
+		return "("~join(map!(to!string)(fd.params),",")~")"~fd.body_.toString();
+	}
+}
+
 class ArrayExp: Expression{
 	Expression[] e;
 	this(Expression[] e){

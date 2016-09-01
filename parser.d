@@ -373,6 +373,24 @@ struct Parser{
 				tok.str="0";
 				return res=New!LiteralExp(tok);
 			case Tok!"(":
+				auto state=saveState();
+				nextToken();
+				skipToUnmatched();
+				nextToken();
+				switch(ttype){
+					case Tok!":":
+						nextToken();
+						if(skipType() && ttype == Tok!"=>")
+							goto case;
+						break;
+					case Tok!"{",Tok!"=>":
+						restoreState(state);
+						return parseLambdaExp();
+					default: break;
+				}
+				restoreState(state);
+				nextToken();
+
 				nextToken();
 				if(ttype==Tok!")"){
 					nextToken();
@@ -411,6 +429,12 @@ struct Parser{
 			default: throw new PEE("invalid unary operator '"~tok.toString()~"'");
 		}
 	}
+
+	LambdaExp parseLambdaExp(){
+		mixin(SetLoc!LambdaExp);
+		return res=New!LambdaExp(parseFunctionDef!true);
+	}
+	
 	// left denotation
 	Expression led(Expression left){
 		Expression res=null;
@@ -487,7 +511,7 @@ struct Parser{
 		try left = nud();catch(PEE err){error("found '"~tok.toString()~"' when expecting expression");nextToken();return new ErrorExp();}
 		return parseExpression2(left, rbp);
 	}
-	Expression parseType(){
+	auto parseType(bool showErrors=true)(){
 		Expression parsePrimary()(){
 			if(ttype==Tok!"("){
 				nextToken();
@@ -507,12 +531,13 @@ struct Parser{
 				nextToken();
 				return id;
 			}
-			error("found '"~tok.toString()~"' when expecting type");
+			static if(showErrors) error("found '"~tok.toString()~"' when expecting type");
 			nextToken();
 			return null;			
 		}
 		Expression parseBase()(){
 			auto t=parsePrimary();
+			if(!t) return null;
 			while(ttype==Tok!"["){
 				nextToken();
 				expect(Tok!"]");
@@ -536,8 +561,10 @@ struct Parser{
 		}
 		Expression parseIt(){ return parseProduct(); }
 		auto r=parseProduct();
-		return r?r:new ErrorTy();
+		static if(showErrors) return r?r:new ErrorTy();
+		else return !!r;
 	}
+	alias skipType=parseType!false;
 	Expression parseExpression2(Expression left, int rbp = 0){ // left is already known
 		while(rbp < arrLbp[ttype])
 		loop: try left = led(left); catch(PEE err){error(err.msg);}
@@ -566,10 +593,12 @@ struct Parser{
 		expect(Tok!"}");
 		return res=New!T(s.data);
 	}
-	FunctionDef parseFunctionDef(){
+	FunctionDef parseFunctionDef(bool lambda=false)(){
 		mixin(SetLoc!FunctionDef);
-		expect(Tok!"def");
-		auto name=parseIdentifier();
+		static if(!lambda){
+			expect(Tok!"def");
+			auto name=parseIdentifier();
+		}else Identifier name=null; // TODO
 		expect(Tok!"(");
 		auto args=cast(Parameter[])parseArgumentList!(")",false,Parameter)();
 		expect(Tok!")");
@@ -578,7 +607,16 @@ struct Parser{
 			nextToken();
 			ret=parseType();
 		}
-		auto body_=parseCompoundExp();
+		CompoundExp body_;
+		if(ttype == Tok!"=>"){
+			nextToken();
+			auto e=parseExpression();
+			auto r=New!ReturnExp(e);
+			r.loc=e.loc;
+			body_= New!CompoundExp([cast(Expression)r]);
+			body_.loc=e.loc;
+			static if(!lambda) expect(Tok!";");			
+		}else body_=parseCompoundExp();
 		return res=New!FunctionDef(name,args,ret,body_);
 	}
 	DatDecl parseDatDecl(){

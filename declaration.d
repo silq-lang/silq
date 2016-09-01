@@ -45,7 +45,7 @@ class FunctionDef: Declaration{
 	this(Identifier name, Parameter[] params, Expression rret, CompoundExp body_){
 		super(name); this.params=params; this.rret=rret; this.body_=body_;
 	}
-	override string toString(){ return "def "~name.toString()~"("~join(map!(to!string)(params),",")~")"~body_.toString(); }
+	override string toString(){ return "def "~(name?name.toString():"")~"("~join(map!(to!string)(params),",")~")"~body_.toString(); }
 
 	override bool isCompound(){ return true; }
 
