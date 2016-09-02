@@ -62,6 +62,7 @@ Expression presemantic(Declaration expr,Scope sc){
 	if(auto fd=cast(FunctionDef)expr){
 		if(fd.fscope_) return fd;
 		auto fsc=new FunctionScope(sc,fd);
+		fd.type=unit;
 		fd.fscope_=fsc;
 		foreach(ref p;fd.params){
 			if(!p.dtype){ // ℝ is the default parameter type
@@ -232,7 +233,7 @@ Expression semantic(Expression expr,Scope sc){
 	}
 	assert(expr.sstate==SemState.initial);
 	expr.sstate=SemState.started;
-	scope(exit){
+	scope(success){
 		if(expr.sstate!=SemState.error){
 			assert(!!expr.type,text(expr));
 			expr.sstate=SemState.completed;
@@ -278,10 +279,19 @@ Expression semantic(Expression expr,Scope sc){
 		ce.type=unit;
 		return ce;
 	}
+	if(auto le=cast(LambdaExp)expr){
+		le.fd.scope_=sc;
+		le.fd=cast(FunctionDef)semantic(presemantic(le.fd,sc),sc);
+		assert(!!le.fd);
+		propErr(le.fd,le);
+		if(le.fd.sstate==SemState.completed)
+			le.type=typeForDecl(le.fd);
+		return le;
+	}
 	if(auto fd=cast(FunctionDef)expr){
 		if(!fd.scope_) fd=cast(FunctionDef)presemantic(fd,sc);
 		auto fsc=fd.fscope_;
-		assert(!!fsc);
+		assert(!!fsc,text(expr));
 		auto bdy=cast(CompoundExp)semantic(fd.body_,fsc);
 		assert(!!bdy);
 		fd.body_=bdy;
@@ -460,7 +470,7 @@ Expression semantic(Expression expr,Scope sc){
 		}else if(de) de.setError();
 		return de?expr=de:expr;
 	}
-	if(auto ae=cast(AssignExp)expr){
+	if(auto ae=cast(AssignExp)expr){ // TODO: prevent assigning to less nested scope? (error prone, capturing is by value, not by reference).
 		ae.type=unit;
 		ae.e1=semantic(ae.e1,sc);
 		ae.e2=semantic(ae.e2,sc);
@@ -575,6 +585,7 @@ Expression semantic(Expression expr,Scope sc){
 					return semantic(fe,sc);
 				}
 			}
+			// TODO: context lookup for nested declarations such as lambdas
 			sc.error("invalid reference",id.loc);
 			id.sstate=SemState.error;
 		}

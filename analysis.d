@@ -71,6 +71,10 @@ private struct Analyzer{
 			if(auto ce=cast(CatExp)e) return doIt(ce.e1)~doIt(ce.e2);
 			if(auto ume=cast(UMinusExp)e) return -doIt(ume.e);
 			if(auto ume=cast(UNegExp)e) return dIvr(DIvr.Type.eqZ,doIt(ume.e));
+			if(auto le=cast(LambdaExp)e){
+				err.error("lambda expressions not supported yet",e.loc);
+				unwind();
+			}
 			if(auto ce=cast(CallExp)e){
 				auto id=cast(Identifier)ce.e;
 				auto fe=cast(FieldExp)ce.e;
