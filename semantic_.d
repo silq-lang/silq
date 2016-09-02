@@ -90,10 +90,11 @@ Expression presemantic(Declaration expr,Scope sc){
 					fd.ret=dsc.decl.dtype;
 				}
 				auto thisid=new Identifier("this");
-				id.loc=fd.loc;
-				id.meaning=fd.thisRef;
-				id.type=dsc.decl.dtype;
-				id.sstate=SemState.completed;
+				thisid.loc=fd.loc;
+				thisid.scope_=fd.fscope_;
+				thisid.meaning=fd.thisRef;
+				thisid.type=dsc.decl.dtype;
+				thisid.sstate=SemState.completed;
 				auto rete=new ReturnExp(thisid);
 				rete.loc=id.loc;
 				rete.sstate=SemState.completed;
@@ -553,6 +554,7 @@ Expression semantic(Expression expr,Scope sc){
 		return pl;
 	}
 	if(auto id=cast(Identifier)expr){
+		id.scope_=sc;
 		if(auto r=builtIn(id))
 			return r;
 		auto meaning=id.meaning;
@@ -580,6 +582,7 @@ Expression semantic(Expression expr,Scope sc){
 				if(decl is dsc.decl){
 					auto this_=new Identifier("this");
 					this_.loc=id.loc;
+					this_.scope_=sc;
 					auto fe=new FieldExp(this_,id);
 					fe.loc=id.loc;
 					return semantic(fe,sc);

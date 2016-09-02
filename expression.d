@@ -75,6 +75,7 @@ class Identifier: Expression{
 
 	// semantic information:
 	Declaration meaning;
+	Scope scope_;
 }
 
 class PlaceholderExp: Expression{
