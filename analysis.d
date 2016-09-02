@@ -4,7 +4,6 @@ import psi;
 import lexer, expression, declaration, type, semantic_, error;
 import distrib, dexpr, util;
 
-FunctionDef[string] functions; // TODO: get rid of globals
 Distribution[FunctionDef] summaries;
 string sourceFile;
 

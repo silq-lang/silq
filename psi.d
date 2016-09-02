@@ -132,15 +132,16 @@ int run(string path){
 	auto err=new FormattingErrorHandler();
 	auto exprs=parseFile(src,err);
 	exprs=semantic(exprs,new TopScope(err));
+	FunctionDef[string] functions;
 	foreach(expr;exprs){
 		if(cast(ErrorExp)expr) continue;
 		if(auto fd=cast(FunctionDef)expr){
-			analysis.functions[fd.name.name]=fd;
+			functions[fd.name.name]=fd;
 		}else if(!cast(Declaration)expr) err.error("top level expression must be declaration",expr.loc);
 	}
 	sourceFile=path;
 	scope(exit){ // TODO: get rid of globals
-		analysis.functions=(FunctionDef[string]).init;
+		functions=(FunctionDef[string]).init;
 		analysis.summaries=(Distribution[FunctionDef]).init;
 		sourceFile=null;
 	}
