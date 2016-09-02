@@ -39,8 +39,8 @@ private struct Analyzer{
 			assert(id.scope_.isNestedIn(meaningScope));
 			for(auto sc=id.scope_;sc!=meaningScope;sc=(cast(NestedScope)sc).parent){
 				void add(string name){
-					if(!r) r=dVar(id.name);
-					else r=dField(r,id.name);
+					if(!r) r=dVar(name);
+					else r=dField(r,name);
 				}
 				if(cast(AggregateScope)sc) add("this");
 				else if(cast(FunctionScope)sc) add("__ctx"); // TODO: shouldn't be able to clash with user defined variables
@@ -985,6 +985,8 @@ private struct Analyzer{
 						}
 					}else err.error("observed quantity must be a variable",co.loc);
 				}
+			}else if(cast(Declaration)e){
+				// skip
 			}else if(!cast(ErrorExp)e) err.error(text("unsupported"),e.loc);
 		}
 		return dist;
