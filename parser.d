@@ -390,8 +390,6 @@ struct Parser{
 				}
 				restoreState(state);
 				nextToken();
-
-				nextToken();
 				if(ttype==Tok!")"){
 					nextToken();
 					res=New!TupleExp(Expression[].init);
