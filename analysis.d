@@ -25,29 +25,42 @@ private struct Analyzer{
 	DExpr transformExp(Exp e){
 		class Unwind: Exception{ this(){ super(""); } }
 		void unwind(){ throw new Unwind(); }
+		DExpr lookupMeaning(Identifier id){
+			if(!id.meaning||!id.scope_||!id.meaning.scope_){
+				err.error("undefined variable '"~id.name~"'",id.loc);
+				return null;
+			}
+			if(cast(FunctionDef)id.meaning){
+				err.error("first-class functions not supported yet",id.loc);
+				return null;
+			}
+			DExpr r=null;
+			import scope_;
+			auto meaningScope=id.meaning.scope_;
+			assert(id.scope_.isNestedIn(meaningScope));
+			for(auto sc=id.scope_;sc!=meaningScope;sc=(cast(NestedScope)sc).parent){
+				void add(string name){
+					if(!r) r=dVar(id.name);
+					else r=dField(r,id.name);
+				}
+				if(cast(AggregateScope)sc) add("this");
+				else if(cast(FunctionScope)sc) add("__ctx"); // TODO: shouldn't be able to clash with user defined variables
+			}
+			return r?dField(r,id.name):dVar(id.name);
+		}
 		DExpr doIt(Exp e){
 			if(cast(Declaration)e||cast(BinaryExp!(Tok!":="))e){
 				err.error("definition must be at top level",e.loc);
 				unwind();
 			}
-			if(auto pl=cast(PlaceholderExp)e){
-				string name = pl.ident.name;
-				if(name in dist.symtab){
-					err.error("duplicate placeholder name", pl.loc); // TODO: check this in semantic
-					unwind();
-				}
-				auto v=dVar(name);
-				dist.symtab[name]=v;
-				return v;
-			}
+			if(auto pl=cast(PlaceholderExp)e)
+				return dVar(pl.ident.name);
 			if(auto id=cast(Identifier)e){
-				if(auto v=dist.lookupVar(id.name))
-					return v;
 				if(id.name in arrays){
 					err.error("missing array index",id.loc);
-				}else{
-					err.error("undefined variable '"~id.name~"'",id.loc);
+					unwind();
 				}
+				if(auto r=lookupMeaning(id)) return r;
 				unwind();
 			}
 			if(auto fe=cast(FieldExp)e){
@@ -680,10 +693,9 @@ private struct Analyzer{
 		if(!rhs) return;
 		void assignVar(Identifier id,DExpr rhs,Type ty){
 			if(id.name !in arrays){
-				if(auto v=dist.lookupVar(id.name)){
-					dist.assign(v,rhs,ty,true);
-					trackDeterministic(v,rhs,ty);
-				}else err.error("undefined variable '"~id.name~"'",id.loc);
+				auto v=dVar(id.name);
+				dist.assign(v,rhs,ty,true);
+				trackDeterministic(v,rhs,ty);
 			}else err.error("reassigning array unsupported",lhs.loc);
 		}
 		if(auto id=cast(Identifier)lhs){
@@ -922,7 +934,7 @@ private struct Analyzer{
 							orderedVars~=var;
 						}else if(exp){
 							if(auto fe=cast(FieldExp)ret){
-								var=dist.declareVar(fe.f.name,false);
+								var=dist.declareVar(fe.f.name);
 								if(!var) var=dist.getVar(fe.f.name);
 							}else var=dist.getVar("r");
 							dist.initialize(var,exp,ret.type);

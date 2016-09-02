@@ -90,7 +90,6 @@ DExpr categoricalPDF(DVar var,DExpr p){
 
 class Distribution{
 	int[string] vbl;
-	DVar[string] symtab;
 	this(){ distribution=one; error=zero; vbl["__dummy"]=0; }
 	SetX!DVar freeVars;
 	DExpr distribution;
@@ -105,14 +104,12 @@ class Distribution{
 			if(x in enclosing.freeVars) continue;
 			if(hook) hook(x);
 			marginalize(x);
-			symtab.remove(x.name);
 		}
 	}	
 
 	Distribution dup(){
 		auto r=new Distribution();
 		r.vbl=vbl;
-		r.symtab=symtab.dup();
 		r.freeVars=freeVars.dup();
 		r.distribution=distribution;
 		r.error=error;
@@ -137,7 +134,6 @@ class Distribution{
 		foreach(x;b.freeVars) if(x !in orig.freeVars){ assert(d2 is zero || d2.hasFreeVar(x)); d2=dIntSmp(x,d2,one); }
 		//// /// // /
 		r.vbl=orig.vbl;
-		r.symtab=orig.symtab;
 		r.freeVars=orig.freeVars;
 		r.tmpVars=orig.tmpVars;
 		r.distribution=d1+d2;
@@ -185,23 +181,18 @@ class Distribution{
 		error=doIt(error).simplify(one);
 	}
 	
-	DVar declareVar(string name,bool addtosymtab=true){
-		if(name in symtab) return null;
+	DVar declareVar(string name){
 		auto v=dVar(name);
 		if(v in freeVars) return null;
-		if(addtosymtab) symtab[name]=v;
 		freeVars.insert(v);
 		return v;
-	}
-	DVar lookupVar(string name){
-		return symtab.get(name,null);
 	}
 	DVar getVar(string name){
 		DVar v;
 		while(!v){ // TODO: fix more elegantly!
 			int suffix=++vbl[name];
 			string nn=name~suffix.lowNum;
-			v=declareVar(nn,false);
+			v=declareVar(nn);
 		}
 		return v;
 	}

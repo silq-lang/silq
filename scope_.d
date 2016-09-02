@@ -36,6 +36,8 @@ abstract class Scope{
 		return r;
 	}
 	
+	bool isNestedIn(Scope rhs){ return rhs is this; }
+
 	void error(lazy string err, Location loc){handler.error(err,loc);}
 	void note(lazy string err, Location loc){handler.note(err,loc);}
 
@@ -66,6 +68,8 @@ class NestedScope: Scope{
 		return parent.lookup(ident);
 	}
 
+	override bool isNestedIn(Scope rhs){ return rhs is this || parent.isNestedIn(rhs); }
+	
 	override FunctionDef getFunction(){ return parent.getFunction(); }
 	override DatDecl getDatDecl(){ return parent.getDatDecl(); }
 	override ForExp getForExp(){ return parent.getForExp(); }
