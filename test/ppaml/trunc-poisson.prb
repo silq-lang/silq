@@ -1,4 +1,4 @@
-
+// skipped 
 def main(){
     /*bound := 3;
     lambda := 4;
@@ -26,4 +26,5 @@ def main(){
     assert(u5>L);
     u6 := u5*Uniform(0,1);
     assert(u6<=L);
+    return (); // expected: [-1+⅟e≤0]·[-⅟e≤0]·⅟120·⅟e
 }
