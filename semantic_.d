@@ -609,6 +609,7 @@ Expression semantic(Expression expr,Scope sc){
 				auto meaning=aggrty.decl.body_.ascope_.lookupHere(fe.f);
 				if(!meaning) return noMember();
 				fe.f.meaning=meaning;
+				fe.f.scope_=sc;
 				fe.f.type=typeForDecl(meaning);
 				fe.f.sstate=SemState.completed;
 				fe.type=fe.f.type;

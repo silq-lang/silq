@@ -67,8 +67,12 @@ private struct Analyzer{
 					if(id.name in arrays && fe.f.name=="length")
 						return ℕ(arrays[id.name].length).dℕ;
 				}
+				assert(fe.f.meaning&&fe.f.scope_&&fe.f.meaning.scope_);
+				if(cast(FunctionDef)fe.f.meaning){
+					err.error("first-class methods not supported yet",fe.loc);
+					unwind();
+				}
 				return dField(doIt(fe.e),fe.f.name);
-				unwind();
 			}
 			if(auto ae=cast(AddExp)e) return doIt(ae.e1)+doIt(ae.e2);
 			if(auto me=cast(SubExp)e) return doIt(me.e1)-doIt(me.e2);
