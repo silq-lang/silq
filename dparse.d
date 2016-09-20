@@ -157,7 +157,7 @@ struct DParser{
 	}
 
 	DExpr parseNumber()in{assert('0'<=cur()&&cur()<='9');}body{
-		ℕ r=0;
+		ℤ r=0;
 		while('0'<=cur()&&cur()<='9'){
 			r=r*10+cast(int)(cur()-'0');
 			next();
@@ -167,7 +167,7 @@ struct DParser{
 			for(next();'0'<=cur()&&cur()<='9';next()) s~=cur();
 			return (s.to!real+toReal(r)).dFloat; // TODO: this is a hack
 		}
-		return dℕ(r);
+		return dℤ(r);
 	}
 
 	bool isIdentifierChar(dchar c){
@@ -380,7 +380,7 @@ struct DParser{
 			next();
 			return e^^parseFactor();
 		}
-		ℕ exp=0;
+		ℤ exp=0;
 		if(highDigits.canFind(cur())){
 			do{
 				exp=10*exp+highDigits.indexOf(cur());

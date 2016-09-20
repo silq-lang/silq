@@ -193,7 +193,7 @@ int main(string[] args){
 version=TEST;
 void test(){
 	/+//auto v="x".dVar;
-	//writeln(dInt(v,dE.dPow(2.dℕ.dMult(3.dℕ.dPlus(3.dℕ).dPlus(3.dℕ))).dPow(v.dPlus(v))));
+	//writeln(dInt(v,dE.dPow(2.dℤ.dMult(3.dℤ.dPlus(3.dℤ).dPlus(3.dℤ))).dPow(v.dPlus(v))));
 	auto d=new Distribution();
 	auto v=d.declareVar("x₁");
 	//d.distribute(v,uniformPDF(v,-one,one+one));
@@ -209,9 +209,9 @@ void test(){
 	//d.distribute(w,gaussianPDF(w,zero,one));
 	auto u=d.declareVar("x₃");
 	d.assign(u,v+w);
-	//d.distribute(v,gaussianPDF(v,0.dℕ,1.dℕ));
-	//d.distribute(v,gaussianPDF(v,0.dℕ,1.dℕ));
-	//d.distribute(v,gaussianPDF(v,0.dℕ,1.dℕ));
+	//d.distribute(v,gaussianPDF(v,0.dℤ,1.dℤ));
+	//d.distribute(v,gaussianPDF(v,0.dℤ,1.dℤ));
+	//d.distribute(v,gaussianPDF(v,0.dℤ,1.dℤ));
 	writeln(d);
 	d.marginalize(v);
 	writeln(d);
@@ -235,7 +235,7 @@ void test(){
 	d.initialize(x,one);
 	d.assign(x,x+1);
 	auto y=d.declareVar("y");
-	d.initialize(y,3.dℕ);
+	d.initialize(y,3.dℤ);
 	auto tmpx=d.getVar("x");
 	d.initialize(tmpx,x);
 	auto dthen=d.dup(),dothw=d.dup();
@@ -272,7 +272,7 @@ void test(){
 	/*auto x="x".dVar;
 	writeln((x^^10+2*x^^2+3*x+4).asPolynomialIn(x).toDExpr());*/
 	/*auto x="x".dVar,y="y".dVar;
-	auto pdf=gaussianPDF(x,1.dℕ,2.dℕ)*gaussianPDF(y,3.dℕ,4.dℕ);
+	auto pdf=gaussianPDF(x,1.dℤ,2.dℤ)*gaussianPDF(y,3.dℤ,4.dℤ);
 	writeln(dInt(x,pdf));
 	writeln(dInt(y,pdf));
 	writeln(dInt(y,dInt(x,pdf)));
@@ -419,7 +419,7 @@ void test(){
 	//writeln("lim[x→ ∞](((d/dx)⁻¹[e^(-x²)](-10·⅟3·√3̅0̅+x·⅟√3̅0̅))²·e^(1000·⅟3)·√3̅0̅+-(d/dx)⁻¹[e^(-x²)](-20·⅟3·√1̅5̅+x·⅟√1̅5̅)·e^(-x²·⅟30+1000·⅟3+20·x·⅟3)·⅟√2̅)".dParse.simplify(one));
 	//writeln("lim[ξ₁ → ∞]-(d/dx)⁻¹[e^(-x²)](-20·⅟3·√1̅5̅+ξ₁·⅟√1̅5̅)·e^(-ξ₁²·⅟30+1000·⅟3+20·ξ₁·⅟3)·⅟√2̅".dParse.simplify(one));
 	//writeln("lim[x→ ∞](-x²·⅟30+1000·⅟3+20·x·⅟3)".dParse.simplify(one));
-	//writeln(growsFasterThan(dVar("x"),-dVar("x")^^(5/2.dℕ),dParse("x·x")));
+	//writeln(growsFasterThan(dVar("x"),-dVar("x")^^(5/2.dℤ),dParse("x·x")));
 	//auto anti=tryGetAntiderivative(dVar("z"),"((d/dx)⁻¹[e^(-x²)](-z·⅟√2̅+⅟√2̅)·e^(z²·⅟2)·√2̅+-(d/dx)⁻¹[e^(-x²)](-z·⅟√2̅)·e^(z²·⅟2)·√2̅)·⅟e^(z²·⅟2)·⅟√2̅·⅟√π̅)".dParse,one).antiderivative;
 	//writeln("∫dz((d/dx)⁻¹[e^(-x²)](-z·⅟√2̅+⅟√2̅)+-(d/dx)⁻¹[e^(-x²)](-z·⅟√2̅))".dParse.simplify(one));
 	//writeln(dLim(dVar("z"),dInf,anti));
@@ -673,11 +673,11 @@ void test(){
 	//writeln("(∫dx[(-1+a·⅟x)·x+-1≤0]·[(-a·⅟x+1)·x≠0]·[(-a·⅟x+1)·x≤0]·[[⅟x≤0]=0]·[x≠0])·[-1+a≠0]·[-a+1≤0]+(∫dx[(-1+a·⅟x)·x+-1≤0]·[(-a·⅟x+1)·x≠0]·[(-a·⅟x+1)·x≤0]·[[⅟x≤0]=0]·[x≠0]·⅟x)·[-1+a≠0]·[-a+1≤0]+-(∫dx[(-1+a·⅟x)·x+-1≤0]·[(-a·⅟x+1)·x≠0]·[(-a·⅟x+1)·x≤0]·[[⅟x≤0]=0]·[x≠0]·⅟x)·[-1+a≠0]·[-a+1≤0]·a".dParse.simplify(one));
 	//writeln(dIntSmp("x".dVar,"[(-1+a·⅟x)·x+-1≤0]·[(-a·⅟x+1)·x≠0]·[(-a·⅟x+1)·x≤0]·[[⅟x≤0]=0]·[x≠0]·[-1+a≠0]·[-a+1≤0]".dParse.linearizeConstraints("x".dVar)));
 	//writeln(dIntSmp("x".dVar,"[(-1+a·⅟x)·x+-1≤0]·[(-a·⅟x+1)·x≠0]·[(-a·⅟x+1)·x≤0]·[[⅟x≤0]=0]·[x≠0]·[-1+a≠0]·[-a+1≤0]".dParse.linearizeConstraints("x".dVar)));
-	//writeln(dGamma(dℕ(5+1)).simplify(one));
-	//writeln(dBeta(dℕ(5+1),dℕ(6+1)).simplify(one));
-	//writeln((dGamma(dℕ(5+1))*dGamma(dℕ(6+1))/dGamma(dℕ(5+1+6+1))).simplify(one));
-	//writeln(studentTPDF("x".dVar,7.dℕ));
-	//writeln(dIntSmp("x".dVar,weibullPDF("x".dVar,1.dℕ,3.dℕ)).toString(Format.mathematica)); // TODO: this should be 1
+	//writeln(dGamma(dℤ(5+1)).simplify(one));
+	//writeln(dBeta(dℤ(5+1),dℤ(6+1)).simplify(one));
+	//writeln((dGamma(dℤ(5+1))*dGamma(dℤ(6+1))/dGamma(dℤ(5+1+6+1))).simplify(one));
+	//writeln(studentTPDF("x".dVar,7.dℤ));
+	//writeln(dIntSmp("x".dVar,weibullPDF("x".dVar,1.dℤ,3.dℤ)).toString(Format.mathematica)); // TODO: this should be 1
 	//writeln("!! ","[0<1/x]".dParse.simplify(one));
 	//writeln("[⅟x≤0]".dParse.factorDIvr!(e=>dFun("f".dFunVar,[e])));
 	//writeln("[1/x!=0]".dParse.simplify(one));

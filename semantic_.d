@@ -655,7 +655,7 @@ Expression semantic(Expression expr,Scope sc){
 					sc.error(format("index for type '%s' should be integer constant",tt),idx.loc); // TODO: allow dynamic indexing if known to be safe?
 					idx.sstate=SemState.error;
 				}else{
-					auto c=ℕ(lit.lit.str);
+					auto c=ℤ(lit.lit.str);
 					if(c>=tt.types.length){
 						sc.error(format("index for type '%s' is out of bounds [0..%s)",tt,tt.types.length),idx.loc);
 						idx.sstate=SemState.error;

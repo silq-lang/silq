@@ -347,7 +347,7 @@ AntiD tryGetAntiderivative(DExpr nonIvrs,DExpr ivrs){
 			auto ba=l.e.asLinearFunctionIn(var);
 			auto b=ba[0],a=ba[1];
 			if(a && b){
-				if(auto n=cast(Dℕ)p.operands[1]){
+				if(auto n=cast(Dℤ)p.operands[1]){
 					DExpr dInGamma(DExpr a,DExpr z){
 						auto t=freshVar(); // TODO: get rid of this
 						return dIntSmp(t,t^^(a-1)*dE^^(-t)*dIvr(DIvr.type.leZ,z-t),one);
@@ -447,7 +447,7 @@ AntiD tryGetAntiderivative(DExpr nonIvrs,DExpr ivrs){
 		foreach(f;m.factors){
 			if(auto p=cast(DPow)f){
 				if(p.operands[0] is var){
-					if(auto c=cast(Dℕ)p.operands[1]){
+					if(auto c=cast(Dℤ)p.operands[1]){
 						if(c.c>0){ polyFact=p; break; }
 					}
 				}

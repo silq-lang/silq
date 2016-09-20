@@ -65,7 +65,7 @@ private struct Analyzer{
 			if(auto fe=cast(FieldExp)e){
 				if(auto id=cast(Identifier)fe.e){
 					if(id.name in arrays && fe.f.name=="length")
-						return ℕ(arrays[id.name].length).dℕ;
+						return ℤ(arrays[id.name].length).dℤ;
 				}
 				assert(fe.f.meaning&&fe.f.scope_&&fe.f.meaning.scope_);
 				if(cast(FunctionDef)fe.f.meaning){
@@ -273,7 +273,7 @@ private struct Analyzer{
 							// dist.assertTrue(dIvr(DIvr.Type.eqZ,sum-1),"probabilities should sum up to 1"); // TODO: don't enforce this to vigorously for floats
 							DExpr d=zero;
 							auto var=dist.getTmpVar("__c");
-							foreach(i,x;array) d=d+x*dDelta(var,dℕ(i),ℝ);
+							foreach(i,x;array) d=d+x*dDelta(var,dℤ(i),ℝ);
 							dist.distribute(d);
 							return var;
 						}else{
@@ -426,7 +426,7 @@ private struct Analyzer{
 				if(le.lit.type==Tok!"0"){
 					auto n=le.lit.str.split(".");
 					if(n.length==1) n~="";
-					return dℕ((n[0]~n[1]).ℕ)/(ℕ(10)^^n[1].length);
+					return dℤ((n[0]~n[1]).ℤ)/(ℤ(10)^^n[1].length);
 				}
 			}
 			if(auto cmp=cast(CompoundExp)e){
@@ -563,9 +563,9 @@ private struct Analyzer{
 		return r;
 	}
 
-	Dℕ isDeterministicInteger(DExpr e){
+	Dℤ isDeterministicInteger(DExpr e){
 		auto r=isDeterministic(e,ℝ);
-		if(auto num=cast(Dℕ)r) return num;
+		if(auto num=cast(Dℤ)r) return num;
 		return null;
 	}
 
@@ -656,7 +656,7 @@ private struct Analyzer{
 				import std.exception;
 				enforce(n.length==2);
 				if(n[1].length) return dFloat((n[0]~"."~n[1]).to!real);
-				return dℕ((n[0]~n[1]).ℕ)/(ℕ(10)^^n[1].length);
+				return dℤ((n[0]~n[1]).ℤ)/(ℤ(10)^^n[1].length);
 			}
 			auto arr=f.readln().strip().split(",").map!strip.map!parseNum.array;
 			//enforce(f.eof);
@@ -865,7 +865,7 @@ private struct Analyzer{
 				if(auto exp=transformExp(re.num)){
 					if(auto num=isDeterministicInteger(exp)){
 						int nerrors=err.nerrors;
-						for(ℕ j=0;j<num.c;j++){
+						for(ℤ j=0;j<num.c;j++){
 							auto anext=Analyzer(dist.dup(),err,arrays.dup,deterministic);
 							auto dnext=anext.analyze(re.bdy);
 							dnext.marginalizeLocals(dist);
@@ -881,12 +881,12 @@ private struct Analyzer{
 					auto l=isDeterministicInteger(lexp), r=isDeterministicInteger(rexp);
 					if(l&&r){
 						int nerrors=err.nerrors;
-						for(ℕ j=l.c+cast(int)fe.leftExclusive;j+cast(int)fe.rightExclusive<=r.c;j++){
+						for(ℤ j=l.c+cast(int)fe.leftExclusive;j+cast(int)fe.rightExclusive<=r.c;j++){
 							auto cdist=dist.dup();
 							auto anext=Analyzer(cdist,err,arrays.dup,deterministic);
 							auto var=cdist.declareVar(fe.var.name);
 							if(var){
-								auto rhs=dℕ(j);
+								auto rhs=dℤ(j);
 								cdist.initialize(var,rhs,ℝ);
 								anext.trackDeterministic(var,rhs,ℝ);
 							}else{
