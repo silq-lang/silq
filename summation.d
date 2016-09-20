@@ -97,7 +97,7 @@ DExpr computeSum(DExpr expr,DExpr facts=one){
 		auto up=floordiv(ndu[0],ndu[1]);
 		DExprSet s;
 		if(low<=up) foreach(i;low..up+1){ // TODO: report bug in std.bigint (the if condition should not be necessary)
-			DPlus.insert(s,unbind(nonIvrs,dℕ(i)).simplify(facts));
+			DPlus.insert(s,unbind(nonIvrs,dℤ(i)).simplify(facts));
 		}
 		return dPlus(s);
 	}

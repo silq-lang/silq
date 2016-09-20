@@ -447,16 +447,16 @@ struct TupleX(T...){
 auto tuplex(T...)(T t){ return TupleX!T(t); }
 
 import std.bigint;
-alias ℕ=BigInt;
+alias ℤ=BigInt;
 
-ℕ pow(ℕ a,ℕ b)in{assert(b>=0);}body{
-	ℕ r=1;
+ℤ pow(ℤ a,ℤ b)in{assert(b>=0);}body{
+	ℤ r=1;
 	for(;b;b/=2,a*=a)
 		if(b&1) r*=a;
 	return r;
 }
 
-ℕ gcd(ℕ a,ℕ b){
+ℤ gcd(ℤ a,ℤ b){
 	if(a==b) return a;
 	if(b>a) swap(a,b);
 	if(b==0) return a;
@@ -467,39 +467,39 @@ alias ℕ=BigInt;
 	return gcd(a-b,b);
 }
 
-ℕ lcm(ℕ a,ℕ b){ return a*(b/gcd(a,b)); }
+ℤ lcm(ℤ a,ℤ b){ return a*(b/gcd(a,b)); }
 
-long toLong(ℕ a){ return a.to!string.to!long; } // TODO: do properly
-//double toDouble(ℕ a){ return a.to!string.to!double; } // TODO: do properly
-real toReal(ℕ a){ return a.to!string.to!real; } // TODO: do properly
+long toLong(ℤ a){ return a.to!string.to!long; } // TODO: do properly
+//double toDouble(ℤ a){ return a.to!string.to!double; } // TODO: do properly
+real toReal(ℤ a){ return a.to!string.to!real; } // TODO: do properly
 
-ℕ abs(ℕ x){ return x<0?-x:x; }
+ℤ abs(ℤ x){ return x<0?-x:x; }
 
-ℕ nCr(ℕ n, ℕ r){
-	if(r>n) return ℕ(0);
-	ℕ c=1;
-	for(ℕ k=0;k<r;)
+ℤ nCr(ℤ n, ℤ r){
+	if(r>n) return ℤ(0);
+	ℤ c=1;
+	for(ℤ k=0;k<r;)
 		c*=n-k,c/=++k;
 	return c;
 }
 
-auto nC(ℕ n){
+auto nC(ℤ n){
 	static struct NCRange{
-		ℕ n,r=0,c=1;
+		ℤ n,r=0,c=1;
 		void popFront(){
 			c*=n-r,c/=++r;
 		}
 		@property bool empty(){ return r>n; }
-		@property ℕ front(){ return c; }
+		@property ℤ front(){ return c; }
 	}
 	return NCRange(n);
 }
 
-ℕ ceildiv(ℕ a,ℕ b){
+ℤ ceildiv(ℤ a,ℤ b){
 	return floordiv(a+b-1,b);
 }
 
-ℕ floordiv(ℕ a,ℕ b){
+ℤ floordiv(ℤ a,ℤ b){
 	return (abs(a)/abs(b))*((a<0)^(b<0)?-1:1);
 }
 
