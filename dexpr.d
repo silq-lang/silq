@@ -163,7 +163,7 @@ abstract class DExpr{
 	}
 
 	final opIndex(DExpr rhs){ return dIndex(this,rhs); }
-	
+
 
 	mixin template Constant(){
 		override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; }
@@ -562,7 +562,7 @@ class DPlus: DCommutAssocOp{
 				}
 				return null;
 			}
-			
+
 			if(auto r=combineFractions(e1,e2)) return r.simplify(facts);
 
 			static DExpr combineWithFloat(DExpr e1,DExpr e2){
@@ -630,7 +630,7 @@ class DPlus: DCommutAssocOp{
 			}
 			if(auto r=combineIvr2(e1,e2,facts)) return r.simplify(facts);
 			if(auto r=combineIvr2(e2,e1,facts)) return r.simplify(facts);
-			
+
 			return null;
 		}
 		// TODO: use suitable data structures
@@ -645,7 +645,7 @@ class DPlus: DCommutAssocOp{
 		assert(summand !in summands);
 		summands.insert(summand);
 	}
-	
+
 	static DExpr integralSimplify(DExprSet summands,DExpr facts){
 		DExprSet integralSummands;
 		DExprSet integrals;
@@ -745,7 +745,7 @@ class DMult: DCommutAssocOp{
 				DExprSet res;
 				foreach(f;factors) res.insert(f.substitute(var,e));
 				return dMult(res);
-			}	
+			}
 		}
 		DExprSet res;
 		foreach(f;factors) insert(res,f.substitute(var,e));
@@ -973,9 +973,9 @@ class DMult: DCommutAssocOp{
 							// combine a=0 and a≤0 to a=0
 							if(ivr2.type==leZ)
 								return ivr1;
-						}						
+						}
 					}
-					
+
 				}
 			}
 			/+// TODO: do we want auto-distribution?
@@ -1291,7 +1291,7 @@ DExpr expandPow(DExpr e1,DExpr e2,long limit=-1){
 	auto ncrange=nC(c.c);
 	for(ℤ i=0,j=c.c;i<=c.c;i++,j--,ncrange.popFront())
 		DPlus.insert(r,ncrange.front*s^^i*rest^^j);
-	return dPlus(r);	
+	return dPlus(r);
 }
 
 DExpr expandPow(DPow p,long limit=-1){
@@ -1460,7 +1460,7 @@ bool couldBeZero(DExpr e){
 				break;
 			}
 		}
-		if(allDistinct) return false;		
+		if(allDistinct) return false;
 	}
 	if(auto p=cast(DPlus)e){
 		bool allLessOrEqual=true;
@@ -1515,7 +1515,7 @@ bool mustBeLessOrEqualZero(DExpr e){
 			}
 			if(p.operands[1].isFraction()) return true; // TODO: ok?
 		}
-		return false;		
+		return false;
 	}
 	if(auto m=cast(DMult)e){
 		auto ff=m.getFractionalFactor();
@@ -1859,7 +1859,7 @@ DExpr solveFor(DExpr lhs,DVar var,DExpr rhs,SolUse usage,ref SolutionInfo info){
 			return null; // TODO
 		}+/
 		return null;
-	}	
+	}
 	return null;
 }
 
@@ -1893,7 +1893,7 @@ std.typecons.Tuple!(DIvr.Type,"type",DExpr,"e") negateDIvr(DIvr.Type type,DExpr 
 		case leZ: return typeof(return)(lZ,-e);
 		case eqZ: return typeof(return)(neqZ,e);
 		case neqZ: return typeof(return)(eqZ,e);
-	}	
+	}
 }
 DExpr negateDIvr(DIvr ivr){
 	return dIvr(negateDIvr(ivr.type,ivr.e).expand);
@@ -2541,7 +2541,7 @@ class DInt: DOp{
 			return r;
 		return null;
 	}
-	
+
 	override DExpr simplifyImpl(DExpr facts){
 		auto r=staticSimplify(expr,facts);
 		return r?r:this;
@@ -2690,7 +2690,7 @@ class DSum: DOp{
 		ssimplifyMemo[t]=r?r:t[0];
 		return r;
 	}
-	
+
 	static DExpr staticSimplify(DExpr expr,DExpr facts=one){
 		if(simplification==Simpl.raw){
 			if(expr is zero) return zero;
@@ -2714,7 +2714,7 @@ class DSum: DOp{
 	}
 	override int freeVarsImpl(scope int delegate(DVar) dg){
 		return expr.freeVarsImpl(v=>v is dDeBruijnVar(1)?0:dg(v.incDeBruijnVar(-1,0)));
-	} 
+	}
 	override DExpr substitute(DVar var,DExpr e){
 		return dSum(expr.substitute(var.incDeBruijnVar(1,0),e.incDeBruijnVar(1,0)));
 	}
@@ -2766,7 +2766,7 @@ class DLim: DOp{
 			return r.incDeBruijnVar(-1,0);
 		return null;
 	}
-	
+
 	override DExpr simplifyImpl(DExpr facts){
 		auto r=staticSimplify(e,x);
 		return r?r:this;
@@ -3480,7 +3480,7 @@ class DIndex: DOp{
 		if(auto r=e.freeVarsImpl(dg)) return r;
 		return i.freeVarsImpl(dg);
 	}
-	
+
 	static DExpr staticSimplify(DExpr e,DExpr i,DExpr facts=one){
 		auto ne=e.simplify(facts);
 		auto ni=i.simplify(facts);
@@ -3559,7 +3559,7 @@ class DIUpdate: DOp{
 		if(auto r=i.freeVarsImpl(dg)) return r;
 		return n.freeVarsImpl(dg);
 	}
-	
+
 	static DExpr staticSimplify(DExpr e,DExpr i,DExpr n,DExpr facts=one){
 		auto ne=e.simplify(facts);
 		auto ni=i.simplify(facts);
@@ -3585,7 +3585,7 @@ class DIUpdate: DOp{
 		if(ne !is e || ni !is i || nn !is n) return dIUpdate(ne,ni,nn);
 		return null;
 	}
-	
+
 	static DExpr constructHook(DExpr e,DExpr i,DExpr n){
 		return null;
 	}
@@ -3643,7 +3643,7 @@ class DRUpdate: DOp{ // TODO: allow updating multiple fields at once
 		if(auto r=e.freeVarsImpl(dg)) return r;
 		return n.freeVarsImpl(dg);
 	}
-	
+
 	static DExpr staticSimplify(DExpr e,string f,DExpr n,DExpr facts=one){
 		auto ne=e.simplify(facts);
 		auto nn=n.simplify(facts);
@@ -3652,7 +3652,7 @@ class DRUpdate: DOp{ // TODO: allow updating multiple fields at once
 		if(ne !is e || nn !is n) return dRUpdate(ne,f,nn);
 		return null;
 	}
-	
+
 	static DExpr constructHook(DExpr e,string f,DExpr n){
 		return null;
 	}
@@ -3813,7 +3813,7 @@ class DCat: DAssocOp{ // TODO: this should have n arguments, as it is associativ
 	mixin Constructor;
 	override @property Precedence precedence(){ return Precedence.plus; }
 	override @property string symbol(Format formatting,int binders){ return "~"; }
-	
+
 	override DExpr simplifyImpl(DExpr facts){
 		auto r=staticSimplify(operands,facts);
 		return r?r:this;
@@ -3902,7 +3902,7 @@ class DField: DOp{
 	override int freeVarsImpl(scope int delegate(DVar) dg){
 		return e.freeVarsImpl(dg);
 	}
-	
+
 	static DExpr staticSimplify(DExpr e,string f,DExpr facts=one){
 		auto ne=e.simplify(facts);
 		if(f=="length"){
@@ -3939,7 +3939,7 @@ class DField: DOp{
 		if(ne !is e) return dField(ne,f);
 		return null;
 	}
-	
+
 	static DExpr constructHook(DExpr e,string f){
 		return null;
 	}

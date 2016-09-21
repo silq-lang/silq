@@ -204,9 +204,9 @@ private DExpr definiteIntegralContinuous(DExpr expr,DExpr facts)out(res){
 				auto rest=expr.withoutFactor(ivr);
 				auto r=constraints is zero?zero:
 					constraints*(dIntSmp(dIvr(DIvr.Type.leZ,var-bound)*
-										 dIvr(DIvr.type.leZ,info.bound.isLower)*rest,one)
-								 +dIntSmp(dIvr(DIvr.Type.lZ,bound-var)*
-										  dIvr(DIvr.type.leZ,-info.bound.isLower)*rest,one));
+					                     dIvr(DIvr.type.leZ,info.bound.isLower)*rest,one)
+					             +dIntSmp(dIvr(DIvr.Type.lZ,bound-var)*
+					                      dIvr(DIvr.type.leZ,-info.bound.isLower)*rest,one));
 				foreach(ref x;info.caseSplits){
 					auto curConstr=constraints.withoutFactor(dIvr(DIvr.Type.neqZ,x.constraint));
 					r=r+curConstr*dIvr(DIvr.Type.eqZ,x.constraint)*
@@ -238,13 +238,13 @@ struct AntiD{ // TODO: is this even worth the hassle?
 	T opCast(T:bool)(){ return !!antiderivative; }
 	AntiD opBinary(string op)(DExpr e){
 		return AntiD(antiderivative.maybe!(a=>mixin(`a `~op~` e`)),
-					 atMinusInfinity.maybe!(a=>mixin(`a `~op~` e`)),
-					 atInfinity.maybe!(a=>mixin(`a `~op~` e`)));
+		             atMinusInfinity.maybe!(a=>mixin(`a `~op~` e`)),
+		             atInfinity.maybe!(a=>mixin(`a `~op~` e`)));
 	}
 	AntiD opBinaryRight(string op)(DExpr e){
 		return AntiD(antiderivative.maybe!(a=>mixin(`e `~op~` a`)),
-					 atMinusInfinity.maybe!(a=>mixin(`e `~op~` a`)),
-					 atInfinity.maybe!(a=>mixin(`e `~op~` a`)));
+		             atMinusInfinity.maybe!(a=>mixin(`e `~op~` a`)),
+		             atInfinity.maybe!(a=>mixin(`e `~op~` a`)));
 	}
 	AntiD opBinary(string op)(AntiD e){
 		DExpr f(DExpr x,DExpr y){
@@ -280,9 +280,9 @@ AntiD tryGetAntiderivative(DExpr nonIvrs,DExpr ivrs){
 			auto b=ba[0],a=ba[1];
 			if(a && b){
 				return AntiD(((safeLog(p.operands[0])*
-							  dIvr(DIvr.Type.eqZ,p.operands[1]+1)
-							  +(p.operands[0]^^(p.operands[1]+1))/(p.operands[1]+1)*
-							   dIvr(DIvr.Type.neqZ,p.operands[1]+1))/a).simplify(one));
+				               dIvr(DIvr.Type.eqZ,p.operands[1]+1)
+				              +(p.operands[0]^^(p.operands[1]+1))/(p.operands[1]+1)*
+				               dIvr(DIvr.Type.neqZ,p.operands[1]+1))/a).simplify(one));
 			}
 		}
 		if(!p.operands[0].hasFreeVar(var)){
@@ -295,8 +295,8 @@ AntiD tryGetAntiderivative(DExpr nonIvrs,DExpr ivrs){
 					up=zero;
 				}
 				return dIvr(DIvr.Type.neqZ,dk)*AntiD(dE^^k/dk,lo,up);
-					// + dIvr(DIvr.Type.eqZ,dk)*var*dE^^(k-var*dk);
-					// TODO: BUG: this is necessary. Need to fix limit code such that it can handle this.
+				// + dIvr(DIvr.Type.eqZ,dk)*var*dE^^(k-var*dk);
+				// TODO: BUG: this is necessary. Need to fix limit code such that it can handle this.
 			}
 		}
 	}
@@ -318,7 +318,7 @@ AntiD tryGetAntiderivative(DExpr nonIvrs,DExpr ivrs){
 				return (x+b/a)*safeLog(a*x+b)-x;
 			}
 			return AntiD(dIvr(DIvr.Type.neqZ,a)*logIntegral(var,a,b)+
-						 dIvr(DIvr.Type.eqZ,a)*var*dLog(b));
+			             dIvr(DIvr.Type.eqZ,a)*var*dLog(b));
 		}
 	}
 	// integrate log(x)ʸ/x to log(x)ʸ⁺¹/(y+1)
@@ -440,7 +440,7 @@ AntiD tryGetAntiderivative(DExpr nonIvrs,DExpr ivrs){
 			memo[q(var,e)]=AntiD();
 			return AntiD();
 		}
-
+		
 		auto m=cast(DMult)e;
 		if(!m) return fail();
 		DExpr polyFact=null;
