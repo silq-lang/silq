@@ -190,7 +190,7 @@ enum MAGENTA=CSI~"35m";
 enum CYAN=CSI~"36m";
 enum WHITE=CSI~"37m";
 
-version(linux){
+version(Posix){
 	private extern(C) size_t isatty(size_t desc);
 	private extern(C) int fileno(shared(_iobuf)*);
 	bool isATTy(ref File f){ // determine whether a given file is connected to a terminal
