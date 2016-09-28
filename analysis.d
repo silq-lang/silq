@@ -752,7 +752,7 @@ private struct Analyzer{
 		}
 	}
 
-	Distribution analyze(CompoundExp ce,FunctionDef isMethodBody=null)in{assert(!!ce);}body{
+	Distribution analyze(CompoundExp ce,ref Distribution retDist,FunctionDef functionDef)in{assert(!!ce);}body{
 		foreach(i,e;ce.s){
 			if(trace) writeln("statement: ",e);
 			/+writeln("before: ",dist);
@@ -850,9 +850,9 @@ private struct Analyzer{
 					auto dothw=dist.dupNoErr();
 					dothw.distribution=dothw.distribution*dIvr(DIvr.Type.eqZ,c);
 					auto athen=Analyzer(dthen,err,arrays.dup,deterministic.dup);
-					dthen=athen.analyze(ite.then);
+					dthen=athen.analyze(ite.then,retDist,functionDef);
 					auto aothw=Analyzer(dothw,err,arrays.dup,deterministic.dup);
-					if(ite.othw) dothw=aothw.analyze(ite.othw);
+					if(ite.othw) dothw=aothw.analyze(ite.othw,retDist,functionDef);
 					dist=dthen.join(dist,dothw);
 					foreach(k,v;deterministic){
 						if(k in athen.deterministic && k in aothw.deterministic
@@ -867,7 +867,7 @@ private struct Analyzer{
 						int nerrors=err.nerrors;
 						for(ℤ j=0;j<num.c;j++){
 							auto anext=Analyzer(dist.dup(),err,arrays.dup,deterministic);
-							auto dnext=anext.analyze(re.bdy);
+							auto dnext=anext.analyze(re.bdy,retDist,functionDef);
 							dnext.marginalizeLocals(dist);
 							dist=dnext;
 							deterministic=anext.deterministic;
@@ -893,7 +893,7 @@ private struct Analyzer{
 								err.error("variable already exists",fe.var.loc);
 								break;
 							}
-							auto dnext=anext.analyze(fe.bdy);
+							auto dnext=anext.analyze(fe.bdy,retDist,functionDef);
 							dnext.marginalizeLocals(dist,(v){ anext.deterministic.remove(v); });
 							dist=dnext;
 							deterministic=anext.deterministic;
@@ -906,16 +906,18 @@ private struct Analyzer{
 					}
 				}
 			}else if(auto re=cast(ReturnExp)e){
-				if(isMethodBody&&i+1==ce.s.length){
-					Expression[] returns;
-					if(auto tpl=cast(TupleExp)re.e) returns=tpl.e;
-					else returns=[re.e];
-					import hashtable;
-					SetX!DVar vars;
-					DVar[] orderedVars;
-					foreach(ret;returns){
-						if(auto id=cast(Identifier)ret){ // TODO: this hack should be removed
-							if(id.name in arrays){
+				bool isLast=functionDef&&i+1==ce.s.length;
+				auto odist=dist.dup;
+				odist.distribution=odist.error=zero; // code after return is unreachable
+				Expression[] returns;
+				if(auto tpl=cast(TupleExp)re.e) returns=tpl.e;
+				else returns=[re.e];
+				import hashtable;
+				SetX!DVar vars;
+				DVar[] orderedVars;
+				foreach(ret;returns){
+					if(auto id=cast(Identifier)ret){ // TODO: this hack should be removed
+						if(id.name in arrays){
 								foreach(expr;arrays[id.name]){
 									if(auto var=cast(DVar)expr){
 										vars.insert(var);
@@ -923,38 +925,40 @@ private struct Analyzer{
 									}
 								}
 								continue;
-							}
 						}
-						auto exp=transformExp(ret);
-						DVar var=cast(DVar)exp;
-						if(var && !var.name.startsWith("__")){
-							if(var in vars||isMethodBody.thisRef&&!isMethodBody.isConstructor&&var.name=="this"){
-								auto vv=dist.getVar(var.name);
-								dist.initialize(vv,var,ret.type);
+					}
+					auto exp=transformExp(ret);
+					DVar var=cast(DVar)exp;
+					if(var && !var.name.startsWith("__")){
+						if(var in vars||functionDef.thisRef&&!functionDef.isConstructor&&var.name=="this"){
+							auto vv=dist.getVar(var.name);
+							dist.initialize(vv,var,ret.type);
 								var=vv;
-							}
-							vars.insert(var);
-							orderedVars~=var;
-						}else if(exp){
-							if(auto fe=cast(FieldExp)ret){
-								var=dist.declareVar(fe.f.name);
-								if(!var) var=dist.getVar(fe.f.name);
-							}else var=dist.getVar("r");
-							dist.initialize(var,exp,ret.type);
-							vars.insert(var);
-							orderedVars~=var;
 						}
+						vars.insert(var);
+						orderedVars~=var;
+					}else if(exp){
+						if(auto fe=cast(FieldExp)ret){
+							var=dist.declareVar(fe.f.name);
+							if(!var) var=dist.getVar(fe.f.name);
+						}else var=dist.getVar("r");
+						dist.initialize(var,exp,ret.type);
+						vars.insert(var);
+						orderedVars~=var;
 					}
-					if(isMethodBody.thisRef&&!isMethodBody.isConstructor){
-						vars.insert(dVar("this"));
-						orderedVars~=dVar("this");
-					}
-					foreach(w;dist.freeVars.setMinus(vars)){
-						dist.marginalize(w);
-					}
-					dist.orderFreeVars(orderedVars);
-					dist.simplify();
-				}else err.error("return statement must be last statement in function",re.loc);
+				}
+				if(functionDef.thisRef&&!functionDef.isConstructor){
+					vars.insert(dVar("this"));
+					orderedVars~=dVar("this");
+				}
+				foreach(w;dist.freeVars.setMinus(vars)){
+					dist.marginalize(w);
+				}
+				dist.orderFreeVars(orderedVars);
+				dist.simplify();
+				if(!retDist) retDist=dist;
+				else retDist=dist.orderedJoin(retDist);
+				dist=odist;
 				if(re.expected.length){
 					import dparse;
 					bool todo=false;
@@ -995,6 +999,12 @@ private struct Analyzer{
 		}
 		return dist;
 	}
+	void applyRetDist(FunctionDef fd,Distribution retDist){
+		if(!retDist) return;
+		dist.simplify();
+		if(dist.distribution is zero && dist.error is zero) dist=retDist;
+		else err.error("not all paths return",fd.loc); // TODO: check during semantic
+	}
 }
 
 Distribution analyze(FunctionDef def,ErrorHandler err){
@@ -1017,7 +1027,9 @@ Distribution analyze(FunctionDef def,ErrorHandler err){
 
 Distribution analyzeWith(FunctionDef def,Distribution dist,ErrorHandler err){
 	auto a=Analyzer(dist,err);
-	a.analyze(def.body_,def);
+	Distribution retDist=null;
+	a.analyze(def.body_,retDist,def);
+	a.applyRetDist(def,retDist);
 	a.dist.simplify();
 	// dw(def," ",a.dist);
 	return a.dist;

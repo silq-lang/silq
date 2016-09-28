@@ -125,6 +125,15 @@ class Distribution{
 		return r;
 	}
 
+	Distribution orderedJoin(Distribution b)in{assert(freeVarsOrdered && b.freeVarsOrdered);}body{
+		auto r=dup();
+		auto bdist = b.distribution.substituteAll(b.orderedFreeVars,cast(DExpr[])orderedFreeVars);
+		r.distribution=r.distribution+bdist;
+		r.error=r.error+b.error;
+		assert(r.context is b.context);
+		return r;
+	}
+	
 	Distribution join(Distribution orig,Distribution b){
 		auto r=new Distribution();
 		auto d1=distribution;
