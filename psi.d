@@ -118,7 +118,7 @@ void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool isMain){
 int run(string path){
 	path = getActualPath(path);
 	auto ext = path.extension;
-	if(ext != ".prb"){
+	if(ext != ".prb" && ext !=".psi"){
 		stderr.writeln(path~": unrecognized extension: "~ext);
 		return 1;
 	}
