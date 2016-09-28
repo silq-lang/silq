@@ -145,7 +145,9 @@ int run(string path){
 	auto src=new Source(path, code);
 	auto err=new FormattingErrorHandler();
 	auto exprs=parseFile(src,err);
+	if(err.nerrors) return 1;
 	exprs=semantic(exprs,new TopScope(err));
+	if(err.nerrors) return 1;
 	FunctionDef[string] functions;
 	foreach(expr;exprs){
 		if(cast(ErrorExp)expr) continue;
