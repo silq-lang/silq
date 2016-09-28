@@ -13,6 +13,7 @@ auto formatting=Format.default_;
 bool casBench=false;
 bool noBoundsCheck=false;
 bool trace=false;
+bool expectation=false;
 
 string casExt(Format formatting=.formatting){
 	final switch(formatting) with(Format){
@@ -104,7 +105,6 @@ void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool isMain){
 			dist=dist.dup();
 			foreach(freeVar;dist.freeVars.dup){
 				auto nvar=dist.declareVar("foo"~freeVar.name);
-				dw(dIvr(DIvr.Type.leZ,-freeVar-20)*dIvr(DIvr.Type.leZ,freeVar-nvar));
 				dist.distribute(dIvr(DIvr.Type.leZ,-freeVar-20)*dIvr(DIvr.Type.leZ,freeVar-nvar));
 				dist.marginalize(freeVar);
 			}
@@ -179,6 +179,7 @@ int main(string[] args){
 			case "--deltas": simplification=Simpl.deltas; break;
 			case "--noboundscheck": noBoundsCheck=true; break;
 			case "--trace": trace=true; break;
+			case "--expectation": expectation=true; break;
 			case "--casbench": casBench=true; break;
 			case "--gnuplot": formatting=Format.gnuplot; break;
 			case "--matlab": formatting=Format.matlab; break;
