@@ -1,0 +1,4 @@
+#!/bin/bash
+# release build
+# TODO: make sure tests run correctly with release build
+dmd -O -release -inline *.d -ofpsi
