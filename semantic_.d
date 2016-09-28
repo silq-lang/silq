@@ -471,7 +471,7 @@ Expression semantic(Expression expr,Scope sc){
 		}else if(de) de.setError();
 		return de?expr=de:expr;
 	}
-	if(auto ae=cast(AssignExp)expr){ // TODO: prevent assigning to less nested scope? (error prone, capturing is by value, not by reference).
+	if(auto ae=cast(AssignExp)expr){
 		ae.type=unit;
 		ae.e1=semantic(ae.e1,sc);
 		ae.e2=semantic(ae.e2,sc);
@@ -484,6 +484,15 @@ Expression semantic(Expression expr,Scope sc){
 				if(!cast(VarDecl)id.meaning){
 					sc.error("can only assign to variables",expr.loc);
 					ae.sstate=SemState.error;
+				}
+				for(auto sc=id.scope_;sc !is id.meaning.scope_;sc=(cast(NestedScope)sc).parent){
+					if(auto fsc=cast(FunctionScope)sc){
+						// TODO: what needs to be done to lift this restriction?
+						// TODO: method calls are also implicit assignments.
+						sc.error("cannot assign variable in closure context (capturing by value)",expr.loc);
+						ae.sstate=SemState.error;
+						break;
+					}
 				}
 			}else if(auto tpl=cast(TupleExp)lhs){
 				foreach(ref exp;tpl.e)
@@ -840,6 +849,14 @@ Expression semantic(Expression expr,Scope sc){
 		propErr(fe.right,fe);
 		fe.type=unit;
 		return fe;
+	}
+	if(auto we=cast(WhileExp)expr){
+		we.cond=semantic(we.cond,sc);
+		we.bdy=cast(CompoundExp)semantic(we.bdy,sc);
+		propErr(we.cond,we);
+		propErr(we.bdy,we);
+		we.type=unit;
+		return we;
 	}
 	if(auto re=cast(RepeatExp)expr){
 		re.num=semantic(re.num,sc);

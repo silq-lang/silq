@@ -165,6 +165,7 @@ class RepeatExp: Expression{
 		this.num=num; this.bdy=bdy;
 	}
 	override string toString(){ return _brk("repeat "~num.toString()~" "~bdy.toString()); }
+	override @property string kind(){ return "repeat loop"; }
 	override bool isCompound(){ return true; }
 }
 
@@ -184,11 +185,24 @@ class ForExp: Expression{
 	override string toString(){ return _brk("for "~var.toString()~" in "~
 											(leftExclusive?"(":"[")~left.toString()~".."~right.toString()~
 											(rightExclusive?")":"]")~bdy.toString()); }
+	override @property string kind(){ return "for loop"; }
 	override bool isCompound(){ return true; }
 
 	// semantic information
 	ForExpScope fescope_;
 	VarDecl loopVar;
+}
+
+class WhileExp: Expression{
+	Expression cond;
+	CompoundExp bdy;
+	this(Expression cond,CompoundExp bdy){
+		this.cond=cond;
+		this.bdy=bdy;
+	}
+	override string toString(){ return _brk("while "~cond.toString()~bdy.toString()); }
+	override @property string kind(){ return "while loop"; }
+	override bool isCompound(){ return true; }	
 }
 
 class CompoundExp: Expression{

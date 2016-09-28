@@ -500,6 +500,7 @@ struct Parser{
 			case Tok!"if": return parseIte();
 			case Tok!"repeat": return parseRepeat();
 			case Tok!"for": return parseFor();
+			case Tok!"while": return parseWhile();
 			case Tok!"assert": return parseAssert();
 			case Tok!"observe": return parseObserve();
 			case Tok!"cobserve": return parseCObserve();
@@ -654,6 +655,13 @@ struct Parser{
 		auto num=parseExpression();
 		auto bdy=parseCompoundExp();
 		return res=New!RepeatExp(num,bdy);
+	}
+	WhileExp parseWhile(){
+		mixin(SetLoc!WhileExp);
+		expect(Tok!"while");
+		auto num=parseExpression();
+		auto bdy=parseCompoundExp();
+		return res=New!WhileExp(num,bdy);
 	}
 	ForExp parseFor(){
 		mixin(SetLoc!ForExp);
