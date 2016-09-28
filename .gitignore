@@ -4,6 +4,7 @@ psi
 *.def
 *.log
 test/runtests
+test/misc
 */octave_workspace
 *~
 **/tmp.prb
