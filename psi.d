@@ -73,6 +73,19 @@ void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool isMain){
 	//import hashtable; dist.distribution=approxLog(dist.freeVars.element);
 	//import hashtable; dist.distribution=approxGaussInt(dist.freeVars.element);
 	if(kill) dist.distribution=dist.distribution.killIntegrals();
+	if(expectation){
+		import type, std.conv : text;
+		if(fd.ret != ℝ){
+			err.error(text("with --expectation switch, functions should return a single number (not '",fd.ret,"')"),fd.loc);
+			return;
+		}
+		assert(dist.orderedFreeVars.length==1);
+		auto var=dist.orderedFreeVars[0];
+		auto expectation = dIntSmp(var,var*dist.distribution/(one-dist.error),one);
+		writeln("E[",var.toString(),dist.error!=zero?"|¬error":"","] = ",expectation); // TODO: use blackboard bold E?
+		writeln("Pr[error] = ",dist.error);
+		return;
+	}
 	if(cdf) dist=getCDF(dist);
 	auto str=dist.toString(formatting);
 	if(expected.exists) with(expected){
