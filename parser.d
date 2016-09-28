@@ -633,10 +633,15 @@ struct Parser{
 		else exp=New!TupleExp(Expression[].init);
 		return res=New!ReturnExp(exp);
 	}
+	Expression parseCondition(){
+		mixin(SetLoc!Expression);
+		if(ttype==Tok!"("){ nextToken(); auto r=parseExpression(); expect(Tok!")"); return r; }
+		return parseExpression();
+	}
 	IteExp parseIte(){
 		mixin(SetLoc!IteExp);
 		expect(Tok!"if");
-		auto cond=parseExpression();
+		auto cond=parseCondition();
 		auto then=parseCompoundExp();
 		CompoundExp othw=null;
 		if(ttype == Tok!"else"){
@@ -652,14 +657,14 @@ struct Parser{
 	RepeatExp parseRepeat(){
 		mixin(SetLoc!RepeatExp);
 		expect(Tok!"repeat");
-		auto num=parseExpression();
+		auto num=parseCondition();
 		auto bdy=parseCompoundExp();
 		return res=New!RepeatExp(num,bdy);
 	}
 	WhileExp parseWhile(){
 		mixin(SetLoc!WhileExp);
 		expect(Tok!"while");
-		auto num=parseExpression();
+		auto num=parseCondition();
 		auto bdy=parseCompoundExp();
 		return res=New!WhileExp(num,bdy);
 	}
