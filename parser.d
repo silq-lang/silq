@@ -635,7 +635,7 @@ struct Parser{
 	}
 	Expression parseCondition(){
 		mixin(SetLoc!Expression);
-		if(ttype==Tok!"("){ nextToken(); auto r=parseExpression(); expect(Tok!")"); return r; }
+		if(ttype==Tok!"(" && peekPastParen().type==Tok!"{"){ nextToken(); auto r=parseExpression(); expect(Tok!")"); return r; }
 		return parseExpression();
 	}
 	IteExp parseIte(){
