@@ -528,7 +528,7 @@ void matlabPlot(string expression,string variable){
 }
 
 import dexpr;
-void gnuplot(DExpr expr,SetX!DVar varset){
+void gnuplot(DExpr expr,SetX!DVar varset,string range="[-1:3]"){
 	DVar[] vars;
 	foreach(var;varset) vars~=var;
 	assert(vars.length==1||vars.length==2);
@@ -557,7 +557,6 @@ void gnuplot(DExpr expr,SetX!DVar varset){
 		~"set samples 500, 500\n"
 		~"set isosample 200\n"
 		~"unset key\n";
-	auto range="[-1:3]";
 	if(vars.length==1) command~="plot "~range~" "~str~"\n";
 	else command~="splot "~range~" "~range~" "~str~"\n";
 	if(command.length<10000){

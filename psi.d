@@ -6,6 +6,7 @@ import lexer, parser, expression, declaration, error;
 import scope_, semantic_, analysis, distrib, dexpr;
 
 bool plot=false;// TODO: get rid of globals?
+string plotRange="[-10:10]";
 bool cdf=false;
 bool kill=false;
 auto formatting=Format.default_;
@@ -110,7 +111,7 @@ void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool isMain){
 		}
 		writeln("plotting... ",(plotCDF?"(CDF)":"(PDF)"));
 		//matlabPlot(dist.distribution.toString(Format.matlab).replace("q(γ⃗)","1"),dist.freeVars.element.toString(Format.matlab));
-		gnuplot(dist.distribution,dist.freeVars);
+		gnuplot(dist.distribution,dist.freeVars,plotRange);
 	}
 }
 
@@ -184,7 +185,21 @@ int main(string[] args){
 			case "--maple": formatting=Format.maple; break;
 			case "--mathematica": formatting=Format.mathematica; break;
 			case "--sympy": formatting=Format.sympy; break;
-			default: if(auto r=run(x)) return r;
+			default:
+				if(x.startsWith("--plot=")){
+					auto rest=x["--plot=".length..$];
+					import std.regex;
+					auto r=regex(r"^\[-?[0-9]+(\.[0-9]+)?:-?[0-9]+(\.[0-9]+)?\]$");
+					if(match(rest,r)){
+						plot=true;
+						plotRange=rest;
+						continue;
+					}else{
+						stderr.writeln("error: plot range needs to be of format [l:r], where l and r are decimal numbers");
+						return 1;
+					}
+				}
+				if(auto r=run(x)) return r;
 		}
 	}
 	return 0;
