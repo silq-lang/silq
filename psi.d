@@ -117,7 +117,7 @@ void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool isMain){
 int run(string path){
 	path = getActualPath(path);
 	auto ext = path.extension;
-	if(ext != ".prb" && ext != ".di"){
+	if(ext != ".prb"){
 		stderr.writeln(path~": unrecognized extension: "~ext);
 		return 1;
 	}
@@ -192,6 +192,7 @@ int main(string[] args){
 
 version=TEST;
 void test(){
+	//writeln(dDiff("x".dVar,"x/(x^2-y^2)^(1/2)".dParse).simplify(one)); // TODO: Fix?
 	/+//auto v="x".dVar;
 	//writeln(dInt(v,dE.dPow(2.dℤ.dMult(3.dℤ.dPlus(3.dℤ).dPlus(3.dℤ))).dPow(v.dPlus(v))));
 	auto d=new Distribution();
@@ -1213,6 +1214,11 @@ void test(){
 	writeln("manual marginal: ",manual.simplify(one));+/
 	/+auto e="(∑_ξ₁[-N+1+ξ₁≤0]·[-ξ₁≤0]·δ[-ξ₁+ξ₀])·(∑_ξ₁[-N+1+ξ₁≤0]·[-ξ₁≤0]·δ[-ξ₁+ξ₋₁])·[-1+ξ₋₁≠0]·δ_infected[[ξ₁ ↦ ([-ξ₁+ξ₋₁=0]+[-ξ₋₁+ξ₁≠0]·[ξ₁=0])·[-ξ₁+ξ₀≠0]+[-ξ₁+ξ₀=0]] (2)]".dParse;
 	writeln(e.simplify("[-N+2=0]·[-ξ₋₁+1=0]".dParse.simplify(one)));+/
+	/+import std.range;
+	auto vars=iota(0,5).map!(i=>dVar("x"~lowNum(i))).array;
+	DExpr r=zero;
+	foreach(var;vars) r=dIvr(DIvr.Type.neqZ,r+var).simplify(one).polyNormalize().simplify(one);
+	writeln(r);+/
 }
 
 /*
