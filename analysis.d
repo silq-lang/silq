@@ -37,7 +37,7 @@ private struct Analyzer{
 			import scope_;
 			auto meaningScope=id.meaning.scope_;
 			assert(id.scope_.isNestedIn(meaningScope));
-			for(auto sc=id.scope_;sc!=meaningScope;sc=(cast(NestedScope)sc).parent){
+			for(auto sc=id.scope_;sc !is meaningScope;sc=(cast(NestedScope)sc).parent){
 				void add(string name){
 					if(!r) r=dVar(name);
 					else r=dField(r,name);
@@ -67,7 +67,7 @@ private struct Analyzer{
 					if(id.name in arrays && fe.f.name=="length")
 						return ℤ(arrays[id.name].length).dℤ;
 				}
-				assert(fe.f.meaning&&fe.f.scope_&&fe.f.meaning.scope_);
+				assert(cast(ArrayTy)fe.e.type&&fe.f.name=="length"||fe.f.meaning&&fe.f.scope_&&fe.f.meaning.scope_);
 				if(cast(FunctionDef)fe.f.meaning){
 					err.error("first-class methods not supported yet",fe.loc);
 					unwind();

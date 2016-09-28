@@ -32,6 +32,13 @@ class AggregateTy: Type{
 	override string toString(){ return decl.name.toString(); }
 }
 
+class ContextTy: Type{
+	private this(){} // dummy
+}
+private ContextTy theContextTy;
+ContextTy contextTy(){ return theContextTy?theContextTy:(theContextTy=new ContextTy()); }
+
+
 
 class TupleTy: Type{
 	Type[] types;
