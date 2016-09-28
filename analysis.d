@@ -420,7 +420,7 @@ private struct Analyzer{
 					assert(idx.a.length==1);
 					return doIt(idx.e)[doIt(idx.a[0])];
 				}
-				assert(0,text(idx.e.type));
+				assert(0,text(idx," ",idx.e.type));
 			}
 			if(auto le=cast(LiteralExp)e){
 				if(le.lit.type==Tok!"0"){
@@ -1002,8 +1002,10 @@ private struct Analyzer{
 	void applyRetDist(FunctionDef fd,Distribution retDist){
 		if(!retDist) return;
 		dist.simplify();
-		if(dist.distribution is zero && dist.error is zero) dist=retDist;
-		else err.error("not all paths return",fd.loc); // TODO: check during semantic
+		if(dist.distribution is zero){
+			retDist.error=retDist.error+dist.error;
+			dist=retDist;
+		}else err.error("not all paths return",fd.loc); // TODO: check during semantic
 	}
 }
 

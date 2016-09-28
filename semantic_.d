@@ -99,7 +99,6 @@ Expression presemantic(Declaration expr,Scope sc){
 				rete.loc=id.loc;
 				rete.sstate=SemState.completed;
 				fd.body_.s~=rete;
-				fd.hasReturn=true;
 			}
 			assert(dsc.decl.dtype);
 		}
@@ -162,6 +161,7 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 		if(auto id=cast(Identifier)tae.e){
 			auto vd=new VarDecl(id);
 			vd.dtype=tae.t;
+			vd.vtype=typeSemantic(vd.dtype,sc);
 			vd.loc=id.loc;
 			success&=sc.insert(vd);
 			return vd;
@@ -306,12 +306,16 @@ Expression semantic(Expression expr,Scope sc){
 			}
 			pty~=p.vtype;
 		}
-		if(!fd.hasReturn){
-			auto tpl=new TupleExp([]);
-			tpl.loc=fd.loc;
-			auto rete=new ReturnExp(tpl);
-			rete.loc=fd.loc;
-			fd.body_.s~=semantic(rete,fd.body_.blscope_);
+		if(!definitelyReturns(fd)){
+			if(fd.ret && fd.ret != unit){
+				sc.error("control flow might reach end of function (add return or assert(0) statement)",fd.loc);
+			}else{
+				auto tpl=new TupleExp([]);
+				tpl.loc=fd.loc;
+				auto rete=new ReturnExp(tpl);
+				rete.loc=fd.loc;
+				fd.body_.s~=semantic(rete,fd.body_.blscope_);
+			}
 		}
 		if(fd.ret&&!fd.ftype) fd.ftype=funTy(tupleTy(pty),fd.ret);
 		return fd;
@@ -323,7 +327,6 @@ Expression semantic(Expression expr,Scope sc){
 			ret.sstate=SemState.error;
 			return ret;
 		}
-		fd.hasReturn=true;
 		if(auto dsc=isInDataScope(fd.scope_)){
 			if(dsc.decl.name.name==fd.name.name){
 				sc.error("no return statement allowed in constructor",ret.loc);
@@ -339,7 +342,7 @@ Expression semantic(Expression expr,Scope sc){
 		propErr(ret.e,ret);
 		if(ret.sstate==SemState.error)
 			return ret;
-		if(!fd.rret) fd.ret=ret.e.type;
+		if(!fd.rret && !fd.ret) fd.ret=ret.e.type;
 		if(!compatible(fd.ret,ret.e.type)){
 			sc.error(format("'%s' is incompatible with return type '%s'",ret.e.type,fd.ret),ret.e.loc);
 			ret.sstate=SemState.error;
@@ -980,6 +983,36 @@ Type typeForDecl(Declaration decl){
 
 bool compatible(Type lhs,Type rhs){
 	return lhs is rhs;
+}
+
+bool definitelyReturns(FunctionDef fd){
+	bool doIt(Expression e){
+		if(auto ret=cast(ReturnExp)e)
+			return true;
+		bool isZero(Expression e){
+			if(auto le=cast(LiteralExp)e)
+				if(le.lit.type==Tok!"0")
+					if(le.lit.str=="0")
+						return true;
+			return false;
+		}
+		if(auto ae=cast(AssertExp)e)
+			return isZero(ae.e);
+		if(auto oe=cast(ObserveExp)e)
+			return isZero(oe.e);
+		if(auto ce=cast(CompoundExp)e)
+			return ce.s.any!(x=>doIt(x));
+		if(auto ite=cast(IteExp)e)
+			return doIt(ite.then) && doIt(ite.othw);
+		if(auto fe=cast(ForExp)e)
+			return doIt(fe.bdy);
+		if(auto we=cast(WhileExp)e)
+			return doIt(we.bdy);
+		if(auto re=cast(RepeatExp)e)
+			return doIt(re.bdy);
+		return false;
+	}
+	return doIt(fd.body_);
 }
 
 
