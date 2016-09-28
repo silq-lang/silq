@@ -246,6 +246,17 @@ DDeBruijnVar dDeBruijnVar(int i){
 		uniqueMapBound[i];
 }
 
+// substitute all variables from 'from' by the respective expressions in 'to' at the same time (avoiding capture)
+DExpr substituteAll(DExpr e,DVar[] from, DExpr[] to)in{assert(from.length==to.length);}body{
+	assert(from.length<int.max);
+	auto ne=e;
+	auto vars=from.map!(a=>freshVar).array; // TODO: get rid of this!
+	foreach(i,v;from) ne=ne.substitute(v,vars[i]);
+	foreach(i,t;to) ne=ne.substitute(vars[i],t);
+	return ne;
+}
+
+
 class DTmpDeBruijnVar: DVar{
 	int i;
 	static int curi=0;
@@ -3242,7 +3253,7 @@ class DFun: DOp{ // uninterpreted functions
 		}
 		if(!check()) return dFun(this.fun,newArgs);
 		auto r=q;
-		foreach(i,a;newArgs) r=r.substitute(args[i],a); // TODO: this does not avoid capture properly
+		r=r.substituteAll(args,newArgs);
 		//dw(q," ",r," ",this.args," ",args," ",newArgs);
 		return r;
 	}
