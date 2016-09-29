@@ -2,25 +2,25 @@ import std.algorithm, std.range, std.array, std.conv;
 
 import dexpr, type, util;
 
-DExpr gaussianPDF(DVar var,DExpr μ,DExpr σsq){
-	auto dist=one/(2*dΠ*σsq)^^(one/2)*dE^^-((var-μ)^^2/(2*σsq));
-	return dIvr(DIvr.Type.neqZ,σsq)*dist+dIvr(DIvr.Type.eqZ,σsq)*dDelta(var-μ);
+DExpr gaussPDF(DVar var,DExpr μ,DExpr ν){
+	auto dist=one/(2*dΠ*ν)^^(one/2)*dE^^-((var-μ)^^2/(2*ν));
+	return dIvr(DIvr.Type.neqZ,ν)*dist+dIvr(DIvr.Type.eqZ,ν)*dDelta(var-μ);
 }
 
-DExpr rayleighPDF(DVar var,DExpr σsq){
-	auto dist=var/(σsq)*dE^^-((var)^^2/(2*σsq)) * dIvr(DIvr.Type.leZ,-var);
-	return dIvr(DIvr.Type.neqZ,σsq)*dist+dIvr(DIvr.Type.eqZ,σsq)*dDelta(var);
+DExpr rayleighPDF(DVar var,DExpr ν){
+	auto dist=var/(ν)*dE^^-((var)^^2/(2*ν)) * dIvr(DIvr.Type.leZ,-var);
+	return dIvr(DIvr.Type.neqZ,ν)*dist+dIvr(DIvr.Type.eqZ,ν)*dDelta(var);
 }
 
-DExpr exponentialPDF(DVar var, DExpr lambda) {
-      auto dist=lambda*dE^^-(lambda*var)*dIvr(DIvr.Type.lZ,-var);
-      return dIvr(DIvr.Type.leZ,-lambda)*dist;
+DExpr exponentialPDF(DVar var, DExpr λ) {
+      auto dist=λ*dE^^-(λ*var)*dIvr(DIvr.Type.lZ,-var);
+      return dIvr(DIvr.Type.leZ,-λ)*dist;
 }
 
-DExpr truncGaussianPDF(DVar var,DExpr μ,DExpr σsq, DExpr a, DExpr b){
-	auto gdist=one/(2*dΠ)^^(one/2)*dE^^-((var-μ)^^2/(2*σsq));
-	auto dist = gdist/(σsq)/(dGaussInt((b-μ)/σsq^^(one/2))-dGaussInt((a-μ)/(σsq)^^(one/2)))*dBounded!"[]"(var,a,b);
-	return dIvr(DIvr.Type.neqZ,σsq)*dist+dIvr(DIvr.Type.eqZ,σsq)*dDelta(var-μ);
+DExpr truncatedGaussPDF(DVar var,DExpr μ,DExpr ν, DExpr a, DExpr b){
+	auto gdist=one/(2*dΠ)^^(one/2)*dE^^-((var-μ)^^2/(2*ν));
+	auto dist = gdist/(ν)/(dGaussInt((b-μ)/ν^^(one/2))-dGaussInt((a-μ)/(ν)^^(one/2)))*dBounded!"[]"(var,a,b);
+	return dIvr(DIvr.Type.neqZ,ν)*dist+dIvr(DIvr.Type.eqZ,ν)*dDelta(var-μ);
 }
 
 DExpr paretoPDF(DVar var, DExpr a, DExpr b) {

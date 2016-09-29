@@ -173,9 +173,9 @@ private struct Analyzer{
 						auto μ=doIt(ce.args[0]), σsq=doIt(ce.args[1]);
 						dist.assertTrue(dIvr(DIvr.Type.leZ,-σsq),formatError("negative variance",e.loc));
 						auto var=dist.getTmpVar("__g");
-						dist.distribute(gaussianPDF(var,μ,σsq));
+						dist.distribute(gaussPDF(var,μ,σsq));
 						//import approximate;
-						//dist.distribute(approxGaussianPDF(var,μ,σsq));
+						//dist.distribute(approxGaussPDF(var,μ,σsq));
 						return var;
 					case "TruncatedGauss":
 						if(ce.args.length!=4){
@@ -185,7 +185,7 @@ private struct Analyzer{
 						auto μ=doIt(ce.args[0]), σsq=doIt(ce.args[1]), a = doIt(ce.args[2]), b = doIt(ce.args[3]);
 						dist.assertTrue(dIvr(DIvr.Type.leZ,-σsq),formatError("negative variance",e.loc));
 						auto var=dist.getTmpVar("__g");
-						dist.distribute(truncGaussianPDF(var,μ,σsq, a, b));
+						dist.distribute(truncatedGaussPDF(var,μ,σsq, a, b));
 						return var;
 					case "Pareto":
 						if(ce.args.length!=2){
