@@ -73,7 +73,7 @@ void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool isMain){
 	//import hashtable; dist.distribution=approxLog(dist.freeVars.element);
 	//import hashtable; dist.distribution=approxGaussInt(dist.freeVars.element);
 	if(kill) dist.distribution=dist.distribution.killIntegrals();
-	if(expectation){
+	if(expectation){ // TODO: deal with non-convergent expectations
 		import type, std.conv : text;
 		if(fd.ret != ℝ){
 			err.error(text("with --expectation switch, functions should return a single number (not '",fd.ret,"')"),fd.loc);
@@ -179,14 +179,17 @@ int run(string path){
 int main(string[] args){
 	//import core.memory; GC.disable();
 	version(TEST) test();
-	if(args.length<2){
-		stderr.writeln("error: no input files");
-		return 1;
-	}
-	args.popFront();
+	if(args.length) args.popFront();
 	args.sort!((a,b)=>a.startsWith("--")>b.startsWith("--"));
+	bool hasInputFile=false;
 	foreach(x;args){
 		switch(x){
+			import help;
+			case "--help": writeln(help.help); return 0;
+			case "--syntax": writeln(syntax); return 0;
+			case "--distributions":
+				writeln(computeDistributionDocString());
+				return 0;
 			case "--cdf": cdf=true; break;
 			case "--plot": plot=true; break;
 			case "--kill": kill=true; break;
@@ -215,8 +218,13 @@ int main(string[] args){
 						return 1;
 					}
 				}
+				hasInputFile=true;
 				if(auto r=run(x)) return r;
 		}
+	}
+	if(!hasInputFile){
+		stderr.writeln("error: no input files");
+		return 1;
 	}
 	return 0;
 }
@@ -1250,6 +1258,7 @@ void test(){
 	DExpr r=zero;
 	foreach(var;vars) r=dIvr(DIvr.Type.neqZ,r+var).simplify(one).polyNormalize().simplify(one);
 	writeln(r);+/
+	//writeln(((("ν".dVar)^^(one/2))^^-1).simplify(one));
 }
 
 /*

@@ -1,7 +1,7 @@
 // skipped
 
 def main(){
-    x := Bernoulli(1/2); // declare local variable and initialize it sampling from Bernoulli(1/2)
+    x := Bernoulli(1/2); // declare local variable and initialize it by sampling from Bernoulli(1/2)
     if x { // conditional
         return 2; // return a value
     }

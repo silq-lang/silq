@@ -503,6 +503,16 @@ auto nC(ℤ n){
 	return (abs(a)/abs(b))*((a<0)^(b<0)?-1:1);
 }
 
+template tryImport(string filename,string alt=""){
+	static if(__traits(compiles,import(filename))) enum tryImport = import(filename)[0..$-1];
+	else enum tryImport = alt;
+}
+
+string capitalize(string s){ // (only works with ascii for now)
+	if(!s.length) return s;
+	return s[0].toUpper().to!string~s[1..$];
+}
+
 void matlabPlot(string expression,string variable){
 	import std.process,std.file;
 	auto input=pipe();
