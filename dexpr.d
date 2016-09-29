@@ -119,6 +119,11 @@ abstract class DExpr{
 
 	bool isFraction(){ return false; }
 	ℤ[2] getFraction(){ assert(0,"not a fraction"); }
+	final bool isFractional(){
+		if(!isFraction()) return false;
+		auto nd=getFraction();
+		return nd[1]!=1;
+	}
 
 	// helpers for construction of DExprs:
 	enum ValidUnary(string s)=s=="-";
@@ -1209,8 +1214,10 @@ class DPow: DBinaryOp{
 		}
 		if(auto p=cast(DPow)e1){
 			if(p.operands[0]!is mone){
-				return (dIvr(DIvr.Type.lZ,p.operands[0])*(mone^^p.operands[1])^^e2*(-p.operands[0])^^(p.operands[1]*e2)+
-						dIvr(DIvr.Type.leZ,-p.operands[0])*p.operands[0]^^(p.operands[1]*e2)).simplify(facts);
+				auto e2p=p.operands[1]*e2;
+				if(p.operands[1].isFractional()) return (p.operands[0]^^e2p).simplify(facts);
+				return (dIvr(DIvr.Type.lZ,p.operands[0])*(mone^^p.operands[1])^^e2*(-p.operands[0])^^e2p+
+						dIvr(DIvr.Type.leZ,-p.operands[0])*p.operands[0]^^e2p).simplify(facts);
 			}
 		}
 		if(e1 is one||e2 is zero) return one;
