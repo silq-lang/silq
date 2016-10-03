@@ -82,7 +82,7 @@ void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool isMain){
 		assert(dist.orderedFreeVars.length==1);
 		auto var=dist.orderedFreeVars[0];
 		auto expectation = dIntSmp(var,var*dist.distribution/(one-dist.error),one);
-		writeln("𝔼[",var.toString(),dist.error!=zero?"|¬error":"","] = ",expectation); // TODO: use blackboard bold E?
+		writeln("𝔼[",var.toString(),dist.error!=zero?"|¬error":"","] = ",expectation.toString(formatting)); // TODO: use blackboard bold E?
 		writeln("Pr[error] = ",dist.error);
 		return;
 	}
