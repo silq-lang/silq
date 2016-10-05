@@ -12,3 +12,5 @@ test/misc
 Cuba*
 *octave-workspace
 *.zip
+*.exe
+*.obj
