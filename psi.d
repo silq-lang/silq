@@ -83,7 +83,7 @@ void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool isMain){
 		auto var=dist.orderedFreeVars[0];
 		auto expectation = dIntSmp(var,var*dist.distribution/(one-dist.error),one);
 		
-		writeln(formatting==Format.mathematica?"E[":"𝔼[",var.toString(formatting),(formatting==Format.mathematica?"_":""),dist.error!=zero?(formatting==Format.mathematica?"|!error":"|¬error"):"","] = ",expectation.toString(formatting)); // TODO: use blackboard bold E?
+		writeln(formatting==Format.mathematica?"E[":"𝔼[",var.toString(formatting),dist.error!=zero?(formatting==Format.mathematica?"|!error":"|¬error"):"","] = ",expectation.toString(formatting)); // TODO: use blackboard bold E?
 		writeln("Pr[error] = ",dist.error);
 		return;
 	}
