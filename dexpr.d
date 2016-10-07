@@ -37,6 +37,7 @@ enum Format{
 	maple,
 	mathematica,
 	sympy,
+	lisp,
 }
 
 //version=DISABLE_INTEGRATION;
@@ -396,6 +397,16 @@ abstract class DAssocOp: DOp{
 	protected mixin template Constructor(){ private this(DExpr[] e)in{assert(e.length>1); }body{ operands=e; } }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		string r;
+		if(formatting==Format.lisp){
+			r~="(";
+			r~=symbol(formatting,binders);
+			foreach(o;operands){
+				r~=" ";
+				r~=o.toStringImpl(formatting,prec,binders);
+			}
+			r~=")";
+			return r;
+		}
 		foreach(o;operands) r~=symbol(formatting,binders)~o.toStringImpl(formatting,prec,binders);
 		return addp(prec, r[symbol(formatting,binders).length..$]);
 	}
@@ -419,6 +430,16 @@ abstract class DCommutAssocOp: DOp{
 	protected mixin template Constructor(){ private this(DExprSet e)in{assert(e.length>1); }body{ operands=e; } }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		string r;
+		if(formatting==Format.lisp){
+			r~="(";
+			r~=symbol(formatting,binders);
+			foreach(o;operands){
+				r~=" ";
+				r~=o.toStringImpl(formatting,prec,binders);
+			}
+			r~=")";
+			return r;
+		}
 		auto ops=operands.array.map!(a=>a.toStringImpl(formatting,precedence,binders)).array;
 		sort(ops);
 		foreach(o;ops) r~=symbol(formatting,binders)~o;
@@ -738,11 +759,12 @@ class DMult: DCommutAssocOp{
 	private this(DExprSet e)in{assert(e.length>1); }body{ assert(one !in e,text(e)); operands=e; }
 	override @property Precedence precedence(){ return Precedence.mult; }
 	override string symbol(Format formatting,int binders){
-		if(formatting==Format.gnuplot||formatting==Format.maple||formatting==Format.sympy||formatting==Format.mathematica) return "*";
+		if(formatting==Format.gnuplot||formatting==Format.maple||formatting==Format.sympy||formatting==Format.mathematica||formatting==Format.lisp) return "*";
 		else if(formatting==Format.matlab) return ".*";
 		else return "·";
 	}
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		if(formatting==Format.lisp) return super.toStringImpl(formatting,prec,binders);
 		auto frac=this.getFractionalFactor().getFraction();
 		if(frac[0]<0){
 			if(formatting==Format.maple){
@@ -1114,6 +1136,8 @@ abstract class DBinaryOp: DOp{
 	DExpr[2] operands;
 	protected mixin template Constructor(){ private this(DExpr e1, DExpr e2){ operands=[e1,e2]; } }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		if(formatting==Format.lisp)
+			return text("(",symbol(formatting,binders)," ",operands[0].toStringImpl(formatting,prec,binders)," ",operands[1].toStringImpl(formatting,prec,binders),")");
 		return addp(prec, operands[0].toStringImpl(formatting,precedence,binders) ~ symbol(formatting,binders) ~ operands[1].toStringImpl(formatting,precedence,binders));
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
@@ -1151,6 +1175,7 @@ class DPow: DBinaryOp{
 	}
 
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		if(formatting==Format.lisp) return super.toStringImpl(formatting,prec,binders);
 		auto frc=operands[1].getFractionalFactor().getFraction();
 		if(frc[0]<0){
 			if(formatting==Format.matlab||formatting==Format.gnuplot){
@@ -1442,6 +1467,8 @@ abstract class DUnaryOp: DOp{
 	DExpr operand;
 	protected mixin template Constructor(){ private this(DExpr e){ operand=e; } }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		if(formatting==Format.lisp)
+			return text("(",symbol(formatting,binders)," ",operand.toStringImpl(formatting,prec,binders),")");
 		return addp(prec, symbol(formatting,binders)~operand.toStringImpl(formatting,precedence,binders));
 	}
 }
@@ -2050,6 +2077,8 @@ class DIvr: DExpr{ // iverson brackets
 	override DExpr incDeBruijnVar(int di,int bound){ return dIvr(type,e.incDeBruijnVar(di,bound)); }
 
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		if(formatting==Format.lisp)
+			return text("(if (",type==Type.eqZ?"=":type==Type.neqZ?"not=":type==Type.lZ?"<":type==Type.leZ?"<=":""," ",e.toStringImpl(formatting,Precedence.none,binders)," 0) 1 0)");
 		with(Type){
 			if(formatting==Format.gnuplot){
 				auto es=e.toStringImpl(formatting,Precedence.none,binders);
@@ -2259,6 +2288,8 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 			return text("piecewise(abs(",es,")<lZ,1/(2*(",es,")))");+/
 		}else if(formatting==Format.sympy){
 			return text("DiracDelta(",e.toStringImpl(formatting,Precedence.none,binders),")");
+		}else if(formatting==Format.lisp){
+			return text("(dirac ",e.toStringImpl(formatting,Precedence.none,binders),")");
 		}else{
 			return "δ["~e.toStringImpl(formatting,Precedence.none,binders)~"]";
 		}
@@ -2337,7 +2368,9 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 		this.e=e;
 	}
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
-		 // TODO: encoding for other CAS?
+		if(formatting==Format.lisp) // TODO: better name
+			return text("(dirac2 ",var.toStringImpl(formatting,Precedence.none,binders),e.toStringImpl(formatting,Precedence.none,binders),")");
+		// TODO: encoding for other CAS?
 		return "δ_"~var.toStringImpl(formatting,Precedence.none,binders)
 			~"["~e.toStringImpl(formatting,Precedence.none,binders)~"]";
 	}
@@ -2522,6 +2555,8 @@ class DInt: DOp{
 		}else if(formatting==Format.gnuplot && !hasFreeVars(this)){
 			writeln("warning: replacing integral by 1");
 			return "1";
+		}else if(formatting==Format.lisp){
+			return text("(integrate ",DDeBruijnVar.displayName(1,formatting,binders+1)," ",expr.toStringImpl(formatting,Precedence.none,binders),")");
 		}else{
 			return addp(prec,symbol(formatting,binders)~"d"~DDeBruijnVar.displayName(1,formatting,binders+1)~expr.toStringImpl(formatting,Precedence.intg,binders+1));
 		}
@@ -2625,6 +2660,8 @@ class DContextInt: DOp{
 			return text("int(",expr.toStringImpl(formatting,Precedence.none,binders),",",var.toStringImpl(formatting,Precedence.none,binders),"=-infinity..infinity)");
 		}else if(formatting==Format.sympy){
 			return text("integrate(",expr.toStringImpl(formatting,Precedence.none,binders),",(",var.toStringImpl(formatting,Precedence.none,binders),",-oo,oo))");
+		}else if(formatting==Format.lisp){
+			return text("(integrate ",var.toStringImpl(formatting,Precedence.none,binders)," ",expr.toStringImpl(formatting,Precedence.none,binders),")");
 		}else{
 			return addp(prec,symbol(formatting,binders)~"d"~var.toStringImpl(formatting,Precedence.none,binders)~expr.toStringImpl(formatting,Precedence.none,binders));
 		}
@@ -2692,6 +2729,8 @@ class DSum: DOp{
 			return text("sum(",expr.toStringImpl(formatting,Precedence.none,binders+1),",",DDeBruijnVar.displayName(1,formatting,binders+1),"=-infinity..infinity)"); // TODO: correct?
 		}else if(formatting==Format.sympy){
 			return text("sum(",expr.toStringImpl(formatting,Precedence.none,binders+1),",(",DDeBruijnVar.displayName(1,formatting,binders+1),",-oo,oo))"); // TODO: correct?
+		}else if(formatting==Format.lisp){
+			return text("(sum ",DDeBruijnVar.displayName(1,formatting,binders+1)," ",expr.toStringImpl(formatting,Precedence.none,binders+1),")");
 		}else{
 			return addp(prec,symbol(formatting,binders)~"_"~DDeBruijnVar.displayName(1,formatting,binders+1)~expr.toStringImpl(formatting,precedence,binders+1));
 		}
@@ -2770,6 +2809,8 @@ class DLim: DOp{
 	override @property string symbol(Format formatting,int binders){ return text("lim[",DDeBruijnVar.displayName(1,formatting,binders+1)," → ",e.toStringImpl(formatting,Precedence.none,binders+1),"]"); }
 	override Precedence precedence(){ return Precedence.lim; } // TODO: ok?
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		if(formatting==Format.lisp)
+			return text("(limit (-> ",DDeBruijnVar.displayName(1,formatting,binders+1),e.toStringImpl(formatting,Precedence.none,binders+1),") ",x.toStringImpl(formatting,Precedence.none,binders+1),")");
 		return addp(prec,symbol(formatting,binders)~x.toStringImpl(formatting,precedence,binders+1));
 	}
 
@@ -2836,6 +2877,8 @@ class DDiff: DOp{
 	override @property string symbol(Format formatting,int binders){ return "d/d"~DDeBruijnVar.displayName(1,formatting,binders); }
 	override Precedence precedence(){ return Precedence.diff; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		if(formatting==Format.lisp)
+			return text("(differentiate ",DDeBruijnVar.displayName(1,formatting,binders)," ",(e is x?text(e):text(e," ",x)));
 		return addp(prec,symbol(formatting,binders)~"["~e.toStringImpl(formatting,Precedence.none,binders)~"]("~x.toStringImpl(formatting,Precedence.none,binders)~")");
 	}
 
@@ -2889,6 +2932,7 @@ class DAbs: DOp{
 	override @property string symbol(Format formatting,int binders){ return "|"; }
 	override Precedence precedence(){ return Precedence.none; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){ // TODO: matlab, maple
+		if(formatting==Format.lisp) return text("(abs ",e.toStringImpl(formatting,prec,binders),")");
 		return "|"~e.toStringImpl(formatting,Precedence.none,binders)~"|";
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
@@ -2943,6 +2987,7 @@ class DLog: DOp{
 	override @property string symbol(Format formatting,int binders){ return "log"; }
 	override Precedence precedence(){ return Precedence.none; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		if(formatting==Format.lisp) return text("(log ",e.toStringImpl(formatting,prec,binders),")");
 		auto es=e.toStringImpl(formatting,Precedence.none,binders);
 		if(formatting==Format.mathematica) return text("Log[",es,"]");
 		return text("log(",es,")");
@@ -3009,6 +3054,7 @@ class DSin: DOp{
 	override @property string symbol(Format formatting,int binders){ return "sin"; }
 	override Precedence precedence(){ return Precedence.none; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		if(formatting==Format.lisp) return text("(sin ",e.toStringImpl(formatting,Precedence.none,binders),")");
 		return "sin("~e.toStringImpl(formatting,Precedence.none,binders)~")";
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
@@ -3050,6 +3096,7 @@ class DFloor: DOp{
 	override @property string symbol(Format formatting,int binders){ return "⌊.⌋"; }
 	override Precedence precedence(){ return Precedence.none; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		if(formatting==Format.lisp) return text("(floor ",e.toStringImpl(formatting,Precedence.none,binders),")");
 		return "⌊"~e.toStringImpl(formatting,Precedence.none,binders)~"⌋";
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
@@ -3094,6 +3141,7 @@ class DCeil: DOp{
 	override @property string symbol(Format formatting,int binders){ return "⌈.⌉"; }
 	override Precedence precedence(){ return Precedence.none; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		if(formatting==Format.lisp) return text("(ceil ",e.toStringImpl(formatting,Precedence.none,binders),")");
 		return "⌈"~e.toStringImpl(formatting,Precedence.none,binders)~"⌉";
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
@@ -3146,6 +3194,7 @@ class DGaussInt: DOp{
 		}else if(formatting==Format.maple){
 			return "sqrt(Pi)*(erf("~x.toStringImpl(formatting,Precedence.none,binders)~")+1)/2";
 		}else if(formatting==Format.matlab) return "(sqrt(pi)*(erf("~x.toStringImpl(formatting,Precedence.none,binders)~")+1)/2)";
+		else if(formatting==Format.lisp) return text("(gauss-integral ",x.toStringImpl(formatting,Precedence.none,binders),")");
 		else return addp(prec,symbol(formatting,binders)~"("~x.toStringImpl(formatting,Precedence.none,binders)~")");
 	}
 
@@ -3192,7 +3241,10 @@ class DGaussInt: DOp{
 auto dGaussInt(DExpr x){ return uniqueDExprUnary!DGaussInt(x); }
 
 class DInf: DExpr{ // TODO: explicit limits?
-	override string toStringImpl(Format formatting,Precedence prec,int binders){ return "∞"; }
+	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		if(formatting==Format.lisp) return "infinity";
+		return "∞";
+	}
 	mixin Constant;
 }
 
@@ -3228,6 +3280,7 @@ class DFun: DOp{ // uninterpreted functions
 	override @property string symbol(Format formatting,int binders){ return fun.name; }
 	override Precedence precedence(){ return Precedence.none; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		if(formatting==Format.lisp) return text("(",fun," ",args.map!(a=>a.toStringImpl(formatting,Precedence.none,binders)).join(" "),")");
 		if(formatting==Format.mathematica)
 			return fun.name~"["~args.map!(a=>a.toStringImpl(formatting,Precedence.none,binders)).join(",")~"]";
 		return fun.name~"("~args.map!(a=>a.toStringImpl(formatting,Precedence.none,binders)).join(",")~")";
@@ -3327,6 +3380,7 @@ class DTuple: DExpr{ // Tuples. TODO: real tuple support
 		this.values=values;
 	}
 	override string toStringImpl(Format formatting, Precedence prec, int binders){
+		if(formatting==Format.lisp) return text("(tuple ",values.map!(v=>v.toStringImpl(formatting,Precedence.none,binders)).join(" "),")");
 		return text("(",values.map!(v=>v.toStringImpl(formatting,Precedence.none,binders)).join(","),values.length==1?",":"",")");
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
@@ -3392,6 +3446,13 @@ class DRecord: DExpr{ // Tuples. TODO: real tuple support
 	}
 
 	override string toStringImpl(Format formatting, Precedence prec, int binders){
+		if(formatting==Format.lisp){
+			auto r="(record ";
+			foreach(k,v;values)
+				r~=text("(:",k," ",v.toStringImpl(formatting,Precedence.none,binders),")");
+			r~=")";
+			return r;
+		}
 		// TODO: other CAS?
 		auto r="{";
 		foreach(k,v;values){
@@ -3469,6 +3530,7 @@ class DIndex: DOp{
 		return Precedence.index; // TODO: ok? (there is no precedence to the rhs)
 	}
 	override string toStringImpl(Format formatting, Precedence prec, int binders){
+		if(formatting==Format.lisp) return text("(select ",e.toStringImpl(formatting,Precedence.none,binders)," ",i.toStringImpl(formatting,Precedence.none,binders),")");
 		return addp(prec, e.toStringImpl(formatting,Precedence.index,binders)~"["~i.toStringImpl(formatting,Precedence.none,binders)~"]");
 	}
 
@@ -3545,6 +3607,7 @@ class DIUpdate: DOp{
 		return Precedence.index; // TODO: ok? (there is no precedence to the rhs)
 	}
 	override string toStringImpl(Format formatting, Precedence prec, int binders){
+		if(formatting==Format.lisp) return text("(store ",e.toStringImpl(formatting,Precedence.none,binders)," ",i.toStringImpl(formatting,Precedence.none,binders)," ",n.toStringImpl(formatting,Precedence.none,binders));
 		return addp(prec, e.toStringImpl(formatting,Precedence.index,binders)~"["~i.toStringImpl(formatting,Precedence.none,binders)~
 					" ↦ "~n.toStringImpl(formatting,Precedence.none,binders)~"]");
 	}
@@ -3631,6 +3694,7 @@ class DRUpdate: DOp{ // TODO: allow updating multiple fields at once
 		return Precedence.index; // TODO: ok? (there is no precedence to the rhs)
 	}
 	override string toStringImpl(Format formatting, Precedence prec, int binders){
+		if(formatting==Format.lisp) return text("(store ",e.toStringImpl(formatting,Precedence.none,binders)," :",f," ",n.toStringImpl(formatting,Precedence.none,binders),")");
 		return addp(prec, e.toStringImpl(formatting,Precedence.index,binders)~"{."~f~
 					" ↦ "~n.toStringImpl(formatting,Precedence.none,binders)~"}");
 	}
@@ -3697,6 +3761,8 @@ class DLambda: DOp{ // lambda functions DExpr → DExpr
 	override @property Precedence precedence(){ return Precedence.lambda; }
 	override @property string symbol(Format formatting,int binders){ return "λ"; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		if(formatting==Format.lisp)
+			return text("(lambda (",DDeBruijnVar.displayName(1,formatting,binders+1),") ",expr.toStringImpl(formatting,Precedence.none,binders+1),")");
 		// TODO: formatting for other CAS systems
 		return addp(prec,text("λ",DDeBruijnVar.displayName(1,formatting,binders+1),". ",expr.toStringImpl(formatting,precedence.lambda,binders+1)));
 	}
@@ -3764,6 +3830,7 @@ class DArray: DExpr{
 		this.entries=entries;
 	}
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		if(formatting==Format.lisp) return text("(array ",length.toStringImpl(formatting,Precedence.none,binders)," ",entries.toStringImpl(formatting,Precedence.none,binders),")");// TODO: how to do this in z3?
 		if(length is zero) return "[]";
 		auto r=text("[",DDeBruijnVar.displayName(1,formatting,binders+1)," ↦ ",entries.expr.toStringImpl(formatting,Precedence.none,binders+1),"] (",length,")");
 		if(prec!=Precedence.none) r="("~r~")"; // TODO: ok?
@@ -3893,6 +3960,7 @@ class DField: DOp{
 		return Precedence.index; // TODO: ok? (there is no precedence to the rhs)
 	}
 	override string toStringImpl(Format formatting, Precedence prec,int binders){
+		if(formatting==Format.lisp) return text("(select ",e.toStringImpl(formatting,Precedence.none,binders)," :",f);
 		return addp(prec, e.toStringImpl(formatting,Precedence.field,binders)~"."~f);
 	}
 

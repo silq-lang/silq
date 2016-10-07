@@ -23,6 +23,7 @@ string casExt(Format formatting=.formatting){
 		case mathematica: return "m";
 		case maple: return "mpl";
 		case sympy: return "py";
+		case lisp: return "lisp";
 	}
 }
 
@@ -181,7 +182,16 @@ int main(string[] args){
 	//import core.memory; GC.disable();
 	version(TEST) test();
 	if(args.length) args.popFront();
-	args.sort!((a,b)=>a.startsWith("--")>b.startsWith("--"));
+	bool isFormatting(string flag){
+		import std.traits: EnumMembers;
+		import std.conv: to;
+		foreach(m;EnumMembers!Format){
+			if(m==Format.default_) continue;
+			if(flag=="--"~to!string(m)) return true;
+		}
+		return false;
+	}
+	args.sort!((a,b)=>a.startsWith("--")>b.startsWith("--")||a.startsWith("--")&&b.startsWith("--")&&isFormatting(a)&&!isFormatting(b)); // TODO: make better
 	bool hasInputFile=false;
 	foreach(x;args){
 		switch(x){
@@ -205,6 +215,7 @@ int main(string[] args){
 			case "--maple": formatting=Format.maple; break;
 			case "--mathematica": formatting=Format.mathematica; break;
 			case "--sympy": formatting=Format.sympy; break;
+			case "--lisp": formatting=Format.lisp; break;
 			default:
 				if(x.startsWith("--plot=")){
 					auto rest=x["--plot=".length..$];
