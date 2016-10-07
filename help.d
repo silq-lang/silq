@@ -54,7 +54,7 @@ string computeDistributionDocString(){
 	// TODO: domain constraints
 	foreach(i,name;ToTuple!names){
 		string lhs=text("x := ",name[1],"(",calls[i][1..$].join(","),");");
-		string rhs=text("x ∼ ",mixin(text(name[0],`(dVar("x"),`,calls[i][1..$].map!(x=>`dVar("`~x~`")`).join(","),")")).simplify(one).toString(formatting));
+		string rhs=text("p(x) = ",mixin(text(name[0],`(dVar("x"),`,calls[i][1..$].map!(x=>`dVar("`~x~`")`).join(","),")")).simplify(one).toString(formatting));
 		lr~=[lhs,rhs];
 	}
 	auto padding=lr.map!(x=>x[0].length).reduce!max+4;
