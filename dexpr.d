@@ -1175,7 +1175,12 @@ class DPow: DBinaryOp{
 	}
 
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
-		if(formatting==Format.lisp) return super.toStringImpl(formatting,prec,binders);
+		if(formatting==Format.lisp){
+			if(operands[1] is mone){
+				return text("(/ 1 ",operands[0].toStringImpl(formatting,Precedence.none,binders),")");
+			}
+			return super.toStringImpl(formatting,Precedence.none,binders);
+		}
 		auto frc=operands[1].getFractionalFactor().getFraction();
 		if(frc[0]<0){
 			if(formatting==Format.matlab||formatting==Format.gnuplot){
@@ -2078,7 +2083,7 @@ class DIvr: DExpr{ // iverson brackets
 
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		if(formatting==Format.lisp)
-			return text("(if (",type==Type.eqZ?"=":type==Type.neqZ?"not=":type==Type.lZ?"<":type==Type.leZ?"<=":""," ",e.toStringImpl(formatting,Precedence.none,binders)," 0) 1 0)");
+			return text("(ite (",type==Type.eqZ?"=":type==Type.neqZ?"not (=":type==Type.lZ?"<":type==Type.leZ?"<=":""," ",e.toStringImpl(formatting,Precedence.none,binders)," 0)",type==Type.neqZ?")":""," 1 0)");
 		with(Type){
 			if(formatting==Format.gnuplot){
 				auto es=e.toStringImpl(formatting,Precedence.none,binders);
