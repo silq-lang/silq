@@ -4,6 +4,8 @@ import lexer,scope_,expression,type,declaration,error,util;
 
 alias CommaExp=BinaryExp!(Tok!",");
 alias AssignExp=BinaryExp!(Tok!"=");
+alias OrAssignExp=BinaryExp!(Tok!"||=");
+alias AndAssignExp=BinaryExp!(Tok!"&&=");
 alias AddAssignExp=BinaryExp!(Tok!"+=");
 alias SubAssignExp=BinaryExp!(Tok!"-=");
 alias MulAssignExp=BinaryExp!(Tok!"*=");
@@ -69,7 +71,8 @@ Expression presemantic(Declaration expr,Scope sc){
 				p.dtype=New!Identifier("ℝ");
 				p.dtype.loc=p.loc;
 			}
-			p=cast(Parameter)semantic(p,fsc);
+			p=cast(Parameter)varDeclSemantic(p,fsc);
+			assert(!!p);
 			propErr(p,fd);
 		}
 		if(auto dsc=isInDataScope(sc)){
@@ -78,7 +81,7 @@ Expression presemantic(Declaration expr,Scope sc){
 			fd.thisRef=new VarDecl(id);
 			fd.thisRef.loc=fd.loc;
 			fd.thisRef.vtype=dsc.decl.dtype;
-			fd.thisRef=cast(VarDecl)semantic(fd.thisRef,fsc);
+			fd.thisRef=varDeclSemantic(fd.thisRef,fsc);
 			assert(!!fd.thisRef && fd.thisRef.sstate==SemState.completed);
 			if(dsc.decl.name.name==fd.name.name){
 				fd.isConstructor=true;
@@ -178,10 +181,18 @@ Expression[] semantic(Expression[] exprs,Scope sc){
 	foreach(ref expr;exprs) expr=makeDeclaration(expr,success,sc);
 	foreach(ref expr;exprs) if(auto decl=cast(Declaration)expr) expr=presemantic(decl,sc);
 	foreach(ref expr;exprs){
-		expr=semantic(expr,sc);
+		expr=toplevelSemantic(expr,sc);
 		success&=expr.sstate==SemState.completed;
 	}
 	return exprs;
+}
+
+Expression toplevelSemantic(Expression expr,Scope sc){
+	if(auto fd=cast(FunctionDef)expr) return functionDefSemantic(fd,sc);
+	if(auto dd=cast(DatDecl)expr) return datDeclSemantic(dd,sc);
+	sc.error("not supported at toplevel",expr.loc);
+	expr.sstate=SemState.error;
+	return expr;
 }
 
 bool isBuiltIn(Identifier id){
@@ -223,8 +234,444 @@ Expression builtIn(Identifier id){
 	return id;
 }
 
+bool isFieldDecl(Expression e){
+	if(cast(VarDecl)e) return true;
+	if(auto tae=cast(TypeAnnotationExp)e)
+		if(auto id=cast(Identifier)tae.e)
+			return true;
+	return false;
+}
 
-Expression semantic(Expression expr,Scope sc){
+Expression fieldDeclSemantic(Expression e,Scope sc)in{
+	assert(isFieldDecl(e));
+}body{
+	e.sstate=SemState.completed;
+	return e;
+}
+
+Expression expectFieldDeclSemantic(Expression e,Scope sc){
+	if(auto ce=cast(CommaExp)e){
+		ce.e1=expectFieldDeclSemantic(ce.e1,sc);
+		ce.e2=expectFieldDeclSemantic(ce.e2,sc);
+		propErr(ce.e1,ce);
+		propErr(ce.e2,ce);
+		return ce;
+	}
+	if(isFieldDecl(e)) return fieldDeclSemantic(e,sc);
+	sc.error("expected field declaration",e.loc);
+	e.sstate=SemState.error;
+	return e;
+}
+
+Expression nestedDeclSemantic(Expression e,Scope sc){
+	if(auto fd=cast(FunctionDef)e)
+		return functionDefSemantic(fd,sc);
+	if(auto dd=cast(DatDecl)e){
+		sc.error("nested "~dd.kind~" unsupported",dd.loc);
+		dd.sstate=SemState.error;
+		return dd;
+	}
+	if(isFieldDecl(e)) return fieldDeclSemantic(e,sc);
+	if(auto ce=cast(CommaExp)e) return expectFieldDeclSemantic(ce,sc);
+	sc.error("not a declaration",e.loc);
+	e.sstate=SemState.error;
+	return e;
+}
+
+CompoundDecl compoundDeclSemantic(CompoundDecl cd,Scope sc){
+	auto asc=cd.ascope_;
+	if(!asc) asc=new AggregateScope(sc);
+	cd.ascope_=asc;
+	bool success=true; // dummy
+	foreach(ref e;cd.s) e=makeDeclaration(e,success,asc);
+	foreach(ref e;cd.s) if(auto decl=cast(Declaration)e) e=presemantic(decl,asc);
+	foreach(ref e;cd.s){
+		e=nestedDeclSemantic(e,asc);
+		propErr(e,cd);
+	}
+	cd.type=unit;
+	return cd;	
+}
+
+Expression statementSemantic(Expression e,Scope sc){
+	alias Bool=ℝ; // TODO: maybe add 𝟚 as specific boolean type?
+	if(auto ce=cast(CallExp)e)
+		return callSemantic(ce,sc);
+	if(auto ite=cast(IteExp)e){
+		ite.cond=expressionSemantic(ite.cond,sc);
+		ite.then=compoundExpSemantic(ite.then,sc);
+		if(ite.othw) ite.othw=compoundExpSemantic(ite.othw,sc);
+		if(ite.cond.sstate==SemState.completed && ite.cond.type!is Bool){
+			sc.error(format("cannot obtain truth value for type '%s'",ite.cond.type),ite.cond.loc);
+			ite.sstate=SemState.error;
+		}
+		propErr(ite.cond,ite);
+		propErr(ite.then,ite);
+		if(ite.othw) propErr(ite.othw,ite);
+		ite.type=unit;
+		return ite;
+	}
+	if(auto ret=cast(ReturnExp)e)
+		return returnExpSemantic(ret,sc);
+	if(auto fd=cast(FunctionDef)e){
+		sc.error("nested "~fd.kind~"s are unsupported",fd.loc);
+		fd.sstate=SemState.error;
+		return fd;
+	}
+	if(auto dd=cast(DatDecl)e){
+		sc.error("nested "~dd.kind~"s are unsupported",dd.loc);
+		dd.sstate=SemState.error;
+		return dd;
+	}
+	if(auto ce=cast(CommaExp)e) return expectColonOrAssignSemantic(ce,sc);
+	if(isColonOrAssign(e)) return colonOrAssignSemantic(e,sc);
+	if(auto fe=cast(ForExp)e){
+		auto fesc=new ForExpScope(sc,fe);
+		auto vd=new VarDecl(fe.var);
+		vd.vtype=ℝ;
+		vd.loc=fe.var.loc;
+		if(!fesc.insert(vd))
+			fe.sstate=SemState.error;
+		fe.fescope_=fesc;
+		fe.loopVar=vd;
+		fe.left=expressionSemantic(fe.left,fesc);
+		if(fe.left.sstate==SemState.completed && fe.left.type!is ℝ){
+			sc.error(format("lower bound for loop variable should be a number, not '%s",fe.left.type),fe.left.loc);
+			fe.sstate=SemState.error;
+		}
+		fe.right=expressionSemantic(fe.right,fesc);
+		if(fe.right.sstate==SemState.completed && fe.right.type!is ℝ){
+			sc.error(format("upper bound for loop variable should be a number, not '%s",fe.right.type),fe.right.loc);
+			fe.sstate=SemState.error;
+		}
+		fe.bdy=compoundExpSemantic(fe.bdy,fesc);
+		assert(!!fe.bdy);
+		propErr(fe.left,fe);
+		propErr(fe.right,fe);
+		fe.type=unit;
+		return fe;
+	}
+	if(auto we=cast(WhileExp)e){
+		we.cond=expressionSemantic(we.cond,sc);
+		we.bdy=compoundExpSemantic(we.bdy,sc);
+		propErr(we.cond,we);
+		propErr(we.bdy,we);
+		we.type=unit;
+		return we;
+	}
+	if(auto re=cast(RepeatExp)e){
+		re.num=expressionSemantic(re.num,sc);
+		if(re.num.sstate==SemState.completed && re.num.type!is ℝ){
+			sc.error(format("number of iterations should be a number, not '%s",re.num.type),re.num.loc);
+			re.sstate=SemState.error;
+		}
+		re.bdy=compoundExpSemantic(re.bdy,sc);
+		propErr(re.num,re);
+		propErr(re.bdy,re);
+		re.type=unit;
+		return re;
+	}
+	if(auto oe=cast(ObserveExp)e){
+		oe.e=expressionSemantic(oe.e,sc);
+		if(oe.e.sstate==SemState.completed && oe.e.type!is Bool){
+			sc.error(format("cannot obtain truth value for type '%s'",oe.e.type),oe.e.loc);
+			oe.sstate=SemState.error;
+		}
+		propErr(oe.e,oe);
+		oe.type=unit;
+		return oe;
+	}
+	if(auto oe=cast(CObserveExp)e){ // TODO: get rid of cobserve!
+		oe.var=expressionSemantic(oe.var,sc);
+		oe.val=expressionSemantic(oe.val,sc);
+		propErr(oe.var,oe);
+		propErr(oe.val,oe);
+		if(oe.sstate==SemState.error)
+			return oe;
+		if(oe.var.type!is ℝ || oe.val.type !is ℝ){
+			sc.error("both arguments to cobserve should be real numbers",oe.loc);
+			oe.sstate=SemState.error;
+		}
+		oe.type=unit;
+		return oe;
+	}
+	if(auto ae=cast(AssertExp)e){
+		ae.e=expressionSemantic(ae.e,sc);
+		if(ae.e.sstate==SemState.completed && ae.e.type!is Bool){
+			sc.error(format("cannot obtain truth value for type '%s'",ae.e.type),ae.e.loc);
+			ae.sstate=SemState.error;
+		}
+		propErr(ae.e,ae);
+		ae.type=unit;
+		return ae;
+	}
+	sc.error("not supported at this location",e.loc);
+	e.sstate=SemState.error;
+	return e;	
+}
+
+CompoundExp compoundExpSemantic(CompoundExp ce,Scope sc){
+	auto blsc=new BlockScope(sc);
+	ce.blscope_=blsc;
+	foreach(ref e;ce.s){
+		e=statementSemantic(e,blsc);
+		propErr(e,ce);
+	}
+	ce.type=unit;
+	return ce;
+}
+
+VarDecl varDeclSemantic(VarDecl vd,Scope sc){
+	bool success=true;
+	if(!vd.scope_) makeDeclaration(vd,success,sc);
+	vd.type=unit;
+	if(!success) vd.sstate=SemState.error;
+	if(!vd.vtype){
+		assert(vd.dtype,text(vd));
+		vd.vtype=typeSemantic(vd.dtype,sc);
+	}
+	if(!vd.vtype) vd.sstate=SemState.error;
+	if(vd.sstate!=SemState.error)
+		vd.sstate=SemState.completed;
+	return vd;
+}
+
+Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
+	bool success=true;
+	auto de=cast(DefExp)makeDeclaration(be,success,sc);
+	if(!de) be.sstate=SemState.error;
+	assert(success && de && de.init is be || !de||de.sstate==SemState.error);
+	be.e2=expressionSemantic(be.e2,sc);
+	if(be.e2.sstate==SemState.completed){
+		if(auto tpl=cast(TupleExp)be.e1){
+			if(auto tt=cast(TupleTy)be.e2.type){
+				if(tpl.length!=tt.types.length){
+					sc.error(text("inconsistent number of tuple entries for definition: ",tpl.length," vs. ",tt.types.length),de.loc);
+					if(de) de.setError();
+				}
+			}else{
+				sc.error(format("cannot unpack type '%s' as a tuple",be.e2.type),de.loc);
+				if(de) de.setError();
+			}
+		}
+		if(de){
+			de.setType(be.e2.type);
+			de.type=unit;
+		}
+	}else if(de) de.setError();
+	return de?de:be;
+}
+
+AssignExp assignExpSemantic(AssignExp ae,Scope sc){
+	ae.type=unit;
+	ae.e1=expressionSemantic(ae.e1,sc);
+	ae.e2=expressionSemantic(ae.e2,sc);
+	propErr(ae.e1,ae);
+	propErr(ae.e2,ae);
+	if(ae.sstate==SemState.error)
+		return ae;
+	void checkLhs(Expression lhs){
+		if(auto id=cast(Identifier)lhs){
+			if(!cast(VarDecl)id.meaning){
+				sc.error("can only assign to variables",ae.loc);
+				ae.sstate=SemState.error;
+			}
+			for(auto sc=id.scope_;sc !is id.meaning.scope_;sc=(cast(NestedScope)sc).parent){
+				if(auto fsc=cast(FunctionScope)sc){
+					// TODO: what needs to be done to lift this restriction?
+					// TODO: method calls are also implicit assignments.
+					sc.error("cannot assign variable in closure context (capturing by value)",ae.loc);
+					ae.sstate=SemState.error;
+					break;
+				}
+			}
+		}else if(auto tpl=cast(TupleExp)lhs){
+			foreach(ref exp;tpl.e)
+				checkLhs(exp);
+		}else if(auto idx=cast(IndexExp)lhs){
+			checkLhs(idx.e);
+		}else if(auto fe=cast(FieldExp)lhs){
+			checkLhs(fe.e);
+		}else{
+		LbadAssgnmLhs:
+			sc.error(format("cannot assign to '%s'",lhs),ae.e1.loc);
+			ae.sstate=SemState.error;
+		}
+	}
+	checkLhs(ae.e1);
+	if(ae.sstate!=SemState.error&&!compatible(ae.e1.type,ae.e2.type)){
+		if(auto id=cast(Identifier)ae.e1){
+			sc.error(format("cannot assign '%s' to variable '%s' of type '%s'",ae.e2.type,id,id.type),ae.loc);
+			assert(!!id.meaning);
+			sc.note("declared here",id.meaning.loc);
+		}else sc.error(format("cannot assign '%s' to '%s'",ae.e2.type,ae.e1.type),ae.loc);
+		ae.sstate=SemState.error;
+	}
+	return ae;
+}
+
+bool isOpAssignExp(Expression e){
+	return cast(OrAssignExp)e||cast(AndAssignExp)e||cast(AddAssignExp)e||cast(SubAssignExp)e||cast(MulAssignExp)e||cast(DivAssignExp)e||cast(PowAssignExp)e||cast(CatAssignExp)e;
+}
+
+ABinaryExp opAssignExpSemantic(ABinaryExp be,Scope sc)in{
+	assert(isOpAssignExp(be));
+}body{
+	be.e1=expressionSemantic(be.e1,sc);
+	be.e2=expressionSemantic(be.e2,sc);
+	propErr(be.e1,be);
+	propErr(be.e2,be);
+	if(be.sstate==SemState.error)
+		return be;
+	void checkULhs(Expression lhs){
+		if(auto id=cast(Identifier)lhs){
+			if(!cast(VarDecl)id.meaning){
+				sc.error("can only assign to variables",be.loc);
+				be.sstate=SemState.error;
+			}
+		}else if(auto idx=cast(IndexExp)lhs){
+			checkULhs(idx.e);
+		}else if(auto fe=cast(FieldExp)lhs){
+			checkULhs(fe.e);
+		}else{
+		LbadAssgnmLhs:
+			sc.error(format("cannot update-assign to '%s'",lhs),be.e1.loc);
+			be.sstate=SemState.error;
+		}
+	}
+	checkULhs(be.e1);
+	bool check(Type ty){
+		if(cast(CatAssignExp)be) return !!cast(ArrayTy)ty;
+		return ty is ℝ;
+	}
+	if(be.sstate!=SemState.error&&be.e1.type !is be.e2.type || !check(be.e1.type)){
+		if(cast(CatAssignExp)be){
+			sc.error(format("incompatible operand types '%s' and '%s'",be.e1.type,be.e2.type),be.loc);
+		}else sc.error(format("incompatible operand types '%s' and '%s' (should be ℝ and ℝ)",be.e1.type,be.e2.type),be.loc);
+		be.sstate=SemState.error;
+	}
+	be.type=unit;
+	return be;
+}
+
+bool isAssignment(Expression e){
+	return cast(AssignExp)e||isOpAssignExp(e);
+}
+
+Expression assignSemantic(Expression e,Scope sc)in{
+	assert(isAssignment(e));
+}body{
+	if(auto ae=cast(AssignExp)e) return assignExpSemantic(ae,sc);
+	if(isOpAssignExp(e)) return opAssignExpSemantic(cast(ABinaryExp)e,sc);
+	assert(0);
+}
+
+bool isColonOrAssign(Expression e){
+	return isAssignment(e)||cast(BinaryExp!(Tok!":="))e;
+}
+
+Expression colonOrAssignSemantic(Expression e,Scope sc)in{
+	assert(isColonOrAssign(e));
+}body{
+	if(isAssignment(e)) return assignSemantic(e,sc);
+	if(auto be=cast(BinaryExp!(Tok!":="))e) return colonAssignSemantic(be,sc);
+	assert(0);
+}
+
+Expression expectColonOrAssignSemantic(Expression e,Scope sc){
+	if(auto ce=cast(CommaExp)e){
+		ce.e1=expectColonOrAssignSemantic(ce.e1,sc);
+		ce.e2=expectColonOrAssignSemantic(ce.e2,sc);
+		ce.type=unit;
+		return ce;
+	}
+	if(isColonOrAssign(e)) return colonOrAssignSemantic(e,sc);
+	sc.error("expected assignment or variable declaration",e.loc);
+	e.sstate=SemState.error;
+	return e;
+}
+
+Expression callSemantic(CallExp ce,Scope sc){
+	ce.e=expressionSemantic(ce.e,sc);
+	propErr(ce.e,ce);
+	foreach(ref e;ce.args){
+		e=expressionSemantic(e,sc);
+		propErr(e,ce);
+	}
+	if(ce.sstate==SemState.error)
+		return ce;
+	auto fun=ce.e;
+	CallExp checkFunCall(FunTy ft){
+		Type[] aty;
+		foreach(a;ce.args){
+			if(!a.type){
+				assert(ce.sstate==SemState.error);
+				return ce;
+			}
+			aty~=a.type;
+		}
+		auto atys=tupleTy(aty);
+		if(auto id=cast(Identifier)fun){
+			if(id.name=="array" && ce.args.length==2){
+				ft=funTy(tupleTy([ℝ,ce.args[1].type]),arrayTy(ce.args[1].type));
+			}
+		}
+		if(!compatible(ft.dom,atys)){
+			sc.error(format("expected argument types '%s', but '%s' was provided",ft.dom,atys),ce.loc);
+			ce.sstate=SemState.error;
+		}else{
+			ce.type=ft.cod;
+		}
+		return ce;
+	}
+	if(auto ft=cast(FunTy)fun.type){
+		ce=checkFunCall(ft);
+	}else if(auto at=isDataTyId(fun)){
+		auto decl=at.decl;
+		assert(fun.type is unit);
+		auto constructor=cast(FunctionDef)decl.body_.ascope_.lookup(decl.name);
+		auto ty=cast(FunTy)typeForDecl(constructor);
+		if(!constructor||!ty){
+			sc.error(format("no constructor for type '%s'",fun),ce.loc);
+			ce.sstate=SemState.error;
+		}else{
+			ce=checkFunCall(ty);
+			if(ce.sstate!=SemState.error){
+				auto id=new Identifier(constructor.name.name);
+				id.loc=fun.loc;
+				id.meaning=constructor;
+				id.type=constructor.ftype;
+				id.sstate=SemState.completed;
+				ce.e=id;
+			}
+		}
+	}else if(isBuiltIn(cast(Identifier)ce.e)){
+		auto id=cast(Identifier)ce.e;
+		switch(id.name){
+			case "FromMarginal": 
+				Type[] aty;
+				foreach(a;ce.args){
+					if(!a.type){
+						assert(ce.sstate==SemState.error);
+						return ce;
+					}
+					aty~=a.type;
+				}
+				ce.type=aty.length==1?aty[0]:tupleTy(aty); // TODO: this special casing is not very nice
+				break;
+			case "SampleFrom":
+				return handleSampleFrom(ce,sc);
+			default: assert(0,text("TODO: ",id.name));
+		}
+	}else{
+		sc.error(format("cannot call expression of type '%s'",fun.type),ce.loc);
+		ce.sstate=SemState.error;
+	}
+	return ce;
+}
+
+
+Expression expressionSemantic(Expression expr,Scope sc){
 	alias Bool=ℝ; // TODO: maybe add 𝟚 as specific boolean type?
 	if(expr.sstate==SemState.completed||expr.sstate==SemState.error) return expr;
 	if(expr.sstate==SemState.started){
@@ -240,49 +687,15 @@ Expression semantic(Expression expr,Scope sc){
 			expr.sstate=SemState.completed;
 		}
 	}
-	if(auto cd=cast(CompoundDecl)expr){
-		auto asc=cd.ascope_;
-		if(!asc) asc=new AggregateScope(sc);
-		cd.ascope_=asc;
-		bool success=true; // dummy
-		foreach(ref e;cd.s) e=makeDeclaration(e,success,asc);
-		foreach(ref e;cd.s) if(auto decl=cast(Declaration)e) e=presemantic(decl,asc);
-		foreach(ref e;cd.s){
-			e=semantic(e,asc);
-			propErr(expr,cd);
-		}
-		cd.type=unit;
-		return cd;
-	}
-	if(auto ce=cast(CompoundExp)expr){
-		auto blsc=new BlockScope(sc);
-		ce.blscope_=blsc;
-		foreach(ref e;ce.s){
-			if(auto ite=cast(IteExp)e){
-				ite.cond=semantic(ite.cond,blsc);
-				ite.then=cast(CompoundExp)semantic(ite.then,blsc);
-				if(ite.othw) ite.othw=cast(CompoundExp)semantic(ite.othw,blsc);
-				if(ite.cond.sstate==SemState.completed && ite.cond.type!is Bool){
-					sc.error(format("cannot obtain truth value for type '%s'",ite.cond.type),ite.cond.loc);
-					ite.sstate=SemState.error;
-				}
-				propErr(ite.cond,ite);
-				propErr(ite.then,ite);
-				if(ite.othw) propErr(ite.othw,ite);
-				ite.type=unit;
-				e=ite;
-			}else if(cast(CommaExp)e){
-				sc.error("comma expressions are disallowed",e.loc);
-				e.sstate=SemState.error;
-			}else e=semantic(e,blsc);
-			propErr(e,ce);
-		}
-		ce.type=unit;
-		return ce;
-	}
+	if(auto cd=cast(CompoundDecl)expr)
+		return compoundDeclSemantic(cd,sc);
+	if(auto ce=cast(CompoundExp)expr)
+		return compoundExpSemantic(ce,sc);
 	if(auto le=cast(LambdaExp)expr){
 		le.fd.scope_=sc;
-		le.fd=cast(FunctionDef)semantic(presemantic(le.fd,sc),sc);
+		auto nfd=cast(FunctionDef)presemantic(le.fd,sc);
+		assert(!!nfd);
+		le.fd=functionDefSemantic(nfd,sc);
 		assert(!!le.fd);
 		propErr(le.fd,le);
 		if(le.fd.sstate==SemState.completed)
@@ -290,276 +703,17 @@ Expression semantic(Expression expr,Scope sc){
 		return le;
 	}
 	if(auto fd=cast(FunctionDef)expr){
-		if(!fd.scope_) fd=cast(FunctionDef)presemantic(fd,sc);
-		auto fsc=fd.fscope_;
-		assert(!!fsc,text(expr));
-		auto bdy=cast(CompoundExp)semantic(fd.body_,fsc);
-		assert(!!bdy);
-		fd.body_=bdy;
-		fd.type=unit;
-		propErr(bdy,fd);
-		Type[] pty;
-		foreach(p;fd.params){
-			if(!p.vtype){
-				assert(fd.sstate==SemState.error);
-				return fd;
-			}
-			pty~=p.vtype;
-		}
-		if(!definitelyReturns(fd)){
-			if(fd.ret && fd.ret != unit){
-				sc.error("control flow might reach end of function (add return or assert(0) statement)",fd.loc);
-			}else{
-				auto tpl=new TupleExp([]);
-				tpl.loc=fd.loc;
-				auto rete=new ReturnExp(tpl);
-				rete.loc=fd.loc;
-				fd.body_.s~=semantic(rete,fd.body_.blscope_);
-			}
-		}
-		if(fd.ret&&!fd.ftype) fd.ftype=funTy(tupleTy(pty),fd.ret);
+		sc.error("function definition cannot appear within an expression",fd.loc);
+		fd.sstate=SemState.error;
 		return fd;
 	}
-	if(auto ret=cast(ReturnExp)expr){ // TODO: enforce presence, check constraints/allow at arbitrary locations in analysis
-		auto fd=sc.getFunction();
-		if(!fd){
-			sc.error("return statement must be within function",ret.loc);
-			ret.sstate=SemState.error;
-			return ret;
-		}
-		if(auto dsc=isInDataScope(fd.scope_)){
-			if(dsc.decl.name.name==fd.name.name){
-				sc.error("no return statement allowed in constructor",ret.loc);
-				ret.sstate=SemState.error;
-				return ret;
-			}
-		}
-		ret.e=semantic(ret.e,sc);
-		if(cast(CommaExp)ret.e){
-			sc.error("use parentheses for multiple return values",ret.e.loc);
-			ret.sstate=SemState.error;
-		}
-		propErr(ret.e,ret);
-		if(ret.sstate==SemState.error)
-			return ret;
-		if(!fd.rret && !fd.ret) fd.ret=ret.e.type;
-		if(!compatible(fd.ret,ret.e.type)){
-			sc.error(format("'%s' is incompatible with return type '%s'",ret.e.type,fd.ret),ret.e.loc);
-			ret.sstate=SemState.error;
-			return ret;
-		}
-		ret.type=unit;
+	if(auto ret=cast(ReturnExp)expr){
+		sc.error("return statement cannot appear within an expression",ret.loc);
+		ret.sstate=SemState.error;
 		return ret;
 	}
-	if(auto ce=cast(CallExp)expr){
-		ce.e=semantic(ce.e,sc);
-		propErr(ce.e,ce);
-		foreach(ref e;ce.args){
-			e=semantic(e,sc);
-			propErr(e,ce);
-		}
-		if(ce.sstate==SemState.error)
-			return ce;
-		auto fun=ce.e;
-		CallExp checkFunCall(FunTy ft){
-			Type[] aty;
-			foreach(a;ce.args){
-				if(!a.type){
-					assert(ce.sstate==SemState.error);
-					return ce;
-				}
-				aty~=a.type;
-			}
-			auto atys=tupleTy(aty);
-			if(auto id=cast(Identifier)fun){
-				if(id.name=="array" && ce.args.length==2){
-					ft=funTy(tupleTy([ℝ,ce.args[1].type]),arrayTy(ce.args[1].type));
-				}
-			}
-			if(!compatible(ft.dom,atys)){
-				sc.error(format("expected argument types '%s', but '%s' was provided",ft.dom,atys),ce.loc);
-				ce.sstate=SemState.error;
-			}else{
-				ce.type=ft.cod;
-			}
-			return ce;
-		}
-		if(auto ft=cast(FunTy)fun.type){
-			ce=checkFunCall(ft);
-		}else if(auto at=isDataTyId(fun)){
-			auto decl=at.decl;
-			assert(fun.type is unit);
-			auto constructor=cast(FunctionDef)decl.body_.ascope_.lookup(decl.name);
-			auto ty=cast(FunTy)typeForDecl(constructor);
-			if(!constructor||!ty){
-				sc.error(format("no constructor for type '%s'",fun),ce.loc);
-				ce.sstate=SemState.error;
-			}else{
-				ce=checkFunCall(ty);
-				if(ce.sstate!=SemState.error){
-					auto id=new Identifier(constructor.name.name);
-					id.loc=fun.loc;
-					id.meaning=constructor;
-					id.type=constructor.ftype;
-					id.sstate=SemState.completed;
-					ce.e=id;
-				}
-			}
-		}else if(isBuiltIn(cast(Identifier)ce.e)){
-			auto id=cast(Identifier)ce.e;
-			switch(id.name){
-			case "FromMarginal": 
-				Type[] aty;
-				foreach(a;ce.args){
-					if(!a.type){
-						assert(ce.sstate==SemState.error);
-						return ce;
-					}
-					aty~=a.type;
-				}
-				ce.type=aty.length==1?aty[0]:tupleTy(aty); // TODO: this special casing is not very nice
-				break;
-			case "SampleFrom":
-				return handleSampleFrom(ce,sc);
-			default: assert(0,text("TODO: ",id.name));
-			}
-		}else{
-			sc.error(format("cannot call expression of type '%s'",fun.type),ce.loc);
-			ce.sstate=SemState.error;
-		}
-		return ce;
-	}
-	if(auto dat=cast(DatDecl)expr){
-		bool success=true;
-		if(!dat.dscope_) presemantic(dat,sc);
-		auto bdy=cast(CompoundDecl)semantic(dat.body_,dat.dscope_);
-		assert(!!bdy);
-		dat.body_=bdy;
-		dat.type=unit;
-		return dat;
-	}
-	if(auto vd=cast(VarDecl)expr){
-		bool success=true;
-		if(!vd.scope_) makeDeclaration(vd,success,sc);
-		vd.type=unit;
-		if(!vd.vtype){
-			assert(vd.dtype,text(vd));
-			vd.vtype=typeSemantic(vd.dtype,sc);
-		}
-		if(!vd.vtype) vd.sstate=SemState.error;
-		return vd;
-	}
-	if(auto be=cast(BinaryExp!(Tok!":="))expr){
-		bool success=true;
-		auto de=cast(DefExp)makeDeclaration(be,success,sc);
-		if(!de) be.sstate=SemState.error;
-		assert(success && de && de.init is be || !de||de.sstate==SemState.error);
-		be.e2=semantic(be.e2,sc);
-		if(be.e2.sstate==SemState.completed){
-			if(auto tpl=cast(TupleExp)be.e1){
-				if(auto tt=cast(TupleTy)be.e2.type){
-					if(tpl.length!=tt.types.length){
-						sc.error(text("inconsistent number of tuple entries for definition: ",tpl.length," vs. ",tt.types.length),de.loc);
-						if(de) de.setError();
-					}
-				}else{
-					sc.error(format("cannot unpack type '%s' as a tuple",be.e2.type),de.loc);
-					if(de) de.setError();
-				}
-			}
-			if(de){
-				de.setType(be.e2.type);
-				de.type=unit;
-			}
-		}else if(de) de.setError();
-		return de?expr=de:expr;
-	}
-	if(auto ae=cast(AssignExp)expr){
-		ae.type=unit;
-		ae.e1=semantic(ae.e1,sc);
-		ae.e2=semantic(ae.e2,sc);
-		propErr(ae.e1,ae);
-		propErr(ae.e2,ae);
-		if(ae.sstate==SemState.error)
-			return ae;
-		void checkLhs(Expression lhs){
-			if(auto id=cast(Identifier)lhs){
-				if(!cast(VarDecl)id.meaning){
-					sc.error("can only assign to variables",expr.loc);
-					ae.sstate=SemState.error;
-				}
-				for(auto sc=id.scope_;sc !is id.meaning.scope_;sc=(cast(NestedScope)sc).parent){
-					if(auto fsc=cast(FunctionScope)sc){
-						// TODO: what needs to be done to lift this restriction?
-						// TODO: method calls are also implicit assignments.
-						sc.error("cannot assign variable in closure context (capturing by value)",expr.loc);
-						ae.sstate=SemState.error;
-						break;
-					}
-				}
-			}else if(auto tpl=cast(TupleExp)lhs){
-				foreach(ref exp;tpl.e)
-					checkLhs(exp);
-			}else if(auto idx=cast(IndexExp)lhs){
-				checkLhs(idx.e);
-			}else if(auto fe=cast(FieldExp)lhs){
-				checkLhs(fe.e);
-			}else{
-			LbadAssgnmLhs:
-				sc.error(format("cannot assign to '%s'",lhs),ae.e1.loc);
-				ae.sstate=SemState.error;
-			}
-		}
-		checkLhs(ae.e1);
-		if(ae.sstate!=SemState.error&&!compatible(ae.e1.type,ae.e2.type)){
-			if(auto id=cast(Identifier)ae.e1){
-				sc.error(format("cannot assign '%s' to variable '%s' of type '%s'",ae.e2.type,id,id.type),ae.loc);
-				assert(!!id.meaning);
-				sc.note("declared here",id.meaning.loc);
-			}else sc.error(format("cannot assign '%s' to '%s'",ae.e2.type,ae.e1.type),ae.loc);
-			ae.sstate=SemState.error;
-		}
-		return ae;
-	}
-	if(cast(AddAssignExp)expr||cast(SubAssignExp)expr||cast(MulAssignExp)expr||cast(DivAssignExp)expr||cast(PowAssignExp)expr||cast(CatAssignExp)expr){
-		auto be=cast(ABinaryExp)expr;
-		assert(be);
-		be.e1=semantic(be.e1,sc);
-		be.e2=semantic(be.e2,sc);
-		propErr(be.e1,be);
-		propErr(be.e2,be);
-		if(be.sstate==SemState.error)
-			return be;
-		void checkULhs(Expression lhs){
-			if(auto id=cast(Identifier)lhs){
-				if(!cast(VarDecl)id.meaning){
-					sc.error("can only assign to variables",expr.loc);
-					be.sstate=SemState.error;
-				}
-			}else if(auto idx=cast(IndexExp)lhs){
-				checkULhs(idx.e);
-			}else if(auto fe=cast(FieldExp)lhs){
-				checkULhs(fe.e);
-			}else{
-			LbadAssgnmLhs:
-				sc.error(format("cannot update-assign to '%s'",lhs),be.e1.loc);
-				be.sstate=SemState.error;
-			}
-		}
-		checkULhs(be.e1);
-		bool check(Type ty){
-			if(cast(CatAssignExp)expr) return !!cast(ArrayTy)ty;
-			return ty is ℝ;
-		}
-		if(be.sstate!=SemState.error&&be.e1.type !is be.e2.type || !check(be.e1.type)){
-			if(cast(CatAssignExp)expr){
-				sc.error(format("incompatible operand types '%s' and '%s'",be.e1.type,be.e2.type),be.loc);
-			}else sc.error(format("incompatible operand types '%s' and '%s' (should be ℝ and ℝ)",be.e1.type,be.e2.type),be.loc);
-			be.sstate=SemState.error;
-		}
-		be.type=unit;
-		return be;
-	}
+	if(auto ce=cast(CallExp)expr)
+		return expr=callSemantic(ce,sc);
 	if(auto pl=cast(PlaceholderExp)expr){
 		pl.type = ℝ;
 		pl.sstate = SemState.completed;
@@ -597,7 +751,7 @@ Expression semantic(Expression expr,Scope sc){
 					this_.scope_=sc;
 					auto fe=new FieldExp(this_,id);
 					fe.loc=id.loc;
-					return semantic(fe,sc);
+					return expressionSemantic(fe,sc);
 				}
 			}
 			// TODO: context lookup for nested declarations such as lambdas
@@ -607,7 +761,7 @@ Expression semantic(Expression expr,Scope sc){
 		return id;
 	}
 	if(auto fe=cast(FieldExp)expr){
-		fe.e=semantic(fe.e,sc);
+		fe.e=expressionSemantic(fe.e,sc);
 		propErr(fe.e,fe);
 		if(fe.sstate==SemState.error)
 			return fe;
@@ -637,10 +791,10 @@ Expression semantic(Expression expr,Scope sc){
 		}else return noMember();
 	}
 	if(auto idx=cast(IndexExp)expr){
-		idx.e=semantic(idx.e,sc);
+		idx.e=expressionSemantic(idx.e,sc);
 		propErr(idx.e,idx);
 		foreach(ref a;idx.a){
-			a=semantic(a,sc);
+			a=expressionSemantic(a,sc);
 			propErr(a,idx);
 		}
 		if(idx.sstate==SemState.error)
@@ -682,15 +836,14 @@ Expression semantic(Expression expr,Scope sc){
 		}
 		return idx;
 	}
-	if(auto ce=cast(CommaExp)expr){
-		ce.e1=semantic(ce.e1,sc);
-		ce.e2=semantic(ce.e2,sc);
-		ce.type=unit;
-		return ce;
+	if(cast(CommaExp)expr){
+		sc.error("nested comma expressions are disallowed",expr.loc);
+		expr.sstate=SemState.error;
+		return expr;
 	}
 	if(auto tpl=cast(TupleExp)expr){
 		foreach(ref exp;tpl.e){
-			exp=semantic(exp,sc);
+			exp=expressionSemantic(exp,sc);
 			propErr(exp,tpl);
 		}
 		if(tpl.sstate!=SemState.error){
@@ -702,7 +855,7 @@ Expression semantic(Expression expr,Scope sc){
 		Type t; bool tok=true;
 		Expression texp;
 		foreach(ref exp;arr.e){
-			exp=semantic(exp,sc);
+			exp=expressionSemantic(exp,sc);
 			propErr(exp,arr);
 			if(t){
 				if(t !is exp.type && tok){
@@ -719,7 +872,7 @@ Expression semantic(Expression expr,Scope sc){
 		return arr;
 	}
 	if(auto tae=cast(TypeAnnotationExp)expr){
-		tae.e=semantic(tae.e,sc);
+		tae.e=expressionSemantic(tae.e,sc);
 		tae.type=typeSemantic(tae.t,sc);
 		propErr(tae.e,tae);
 		propErr(tae.t,tae);
@@ -738,7 +891,7 @@ Expression semantic(Expression expr,Scope sc){
 	}
 
 	Expression handleUnary(string name,Expression e,ref Expression e1,Type t1,Type r){
-		e1=semantic(e1,sc);
+		e1=expressionSemantic(e1,sc);
 		propErr(e1,e);
 		if(e.sstate==SemState.error)
 			return e;
@@ -752,8 +905,8 @@ Expression semantic(Expression expr,Scope sc){
 	}
 	
 	Expression handleBinary(string name,Expression e,ref Expression e1,ref Expression e2,Type t1,Type t2,Type r){
-		e1=semantic(e1,sc);
-		e2=semantic(e2,sc);
+		e1=expressionSemantic(e1,sc);
+		e2=expressionSemantic(e2,sc);
 		propErr(e1,e);
 		propErr(e2,e);
 		if(e.sstate==SemState.error)
@@ -784,8 +937,8 @@ Expression semantic(Expression expr,Scope sc){
 	if(auto ae=cast(NeqExp)expr) return handleBinary("'≠'",ae,ae.e1,ae.e2,ℝ,ℝ,Bool);
 
 	if(auto ce=cast(CatExp)expr){
-		ce.e1=semantic(ce.e1,sc);
-		ce.e2=semantic(ce.e2,sc);
+		ce.e1=expressionSemantic(ce.e1,sc);
+		ce.e2=expressionSemantic(ce.e2,sc);
 		propErr(ce.e1,ce);
 		propErr(ce.e2,ce);
 		if(ce.sstate==SemState.error)
@@ -797,22 +950,21 @@ Expression semantic(Expression expr,Scope sc){
 			ce.sstate=SemState.error;
 		}
 		return ce;
-	}
-	
+	}	
 	if(auto ite=cast(IteExp)expr){
-		ite.cond=semantic(ite.cond,sc);
+		ite.cond=expressionSemantic(ite.cond,sc);
 		if(ite.then.s.length!=1||ite.othw&&ite.othw.s.length!=1){
 			sc.error("branches of 'if' expression must be single expressions;",ite.loc);
 			ite.sstate=SemState.error;
 			return ite;
 		}
-		ite.then.s[0]=semantic(ite.then.s[0],sc);
+		ite.then.s[0]=expressionSemantic(ite.then.s[0],sc);
 		if(!ite.othw){
 			sc.error("missing else for if expression",ite.loc);
 			ite.sstate=SemState.error;
 			return ite;
 		}
-		ite.othw.s[0]=semantic(ite.othw.s[0],sc);
+		ite.othw.s[0]=expressionSemantic(ite.othw.s[0],sc);
 		propErr(ite.cond,ite);
 		propErr(ite.then,ite);
 		propErr(ite.othw,ite);
@@ -827,86 +979,6 @@ Expression semantic(Expression expr,Scope sc){
 		ite.type=t1;
 		return ite;
 	}
-	if(auto fe=cast(ForExp)expr){
-		auto fesc=new ForExpScope(sc,fe);
-		auto vd=new VarDecl(fe.var);
-		vd.vtype=ℝ;
-		vd.loc=fe.var.loc;
-		if(!fesc.insert(vd))
-			fe.sstate=SemState.error;
-		fe.fescope_=fesc;
-		fe.loopVar=vd;
-		fe.left=semantic(fe.left,fesc);
-		if(fe.left.sstate==SemState.completed && fe.left.type!is ℝ){
-			sc.error(format("lower bound for loop variable should be a number, not '%s",fe.left.type),fe.left.loc);
-			fe.sstate=SemState.error;
-		}
-		fe.right=semantic(fe.right,fesc);
-		if(fe.right.sstate==SemState.completed && fe.right.type!is ℝ){
-			sc.error(format("upper bound for loop variable should be a number, not '%s",fe.right.type),fe.right.loc);
-			fe.sstate=SemState.error;
-		}
-		fe.bdy=cast(CompoundExp)semantic(fe.bdy,fesc);
-		assert(!!fe.bdy);
-		propErr(fe.left,fe);
-		propErr(fe.right,fe);
-		fe.type=unit;
-		return fe;
-	}
-	if(auto we=cast(WhileExp)expr){
-		we.cond=semantic(we.cond,sc);
-		we.bdy=cast(CompoundExp)semantic(we.bdy,sc);
-		propErr(we.cond,we);
-		propErr(we.bdy,we);
-		we.type=unit;
-		return we;
-	}
-	if(auto re=cast(RepeatExp)expr){
-		re.num=semantic(re.num,sc);
-		if(re.num.sstate==SemState.completed && re.num.type!is ℝ){
-			sc.error(format("number of iterations should be a number, not '%s",re.num.type),re.num.loc);
-			re.sstate=SemState.error;
-		}
-		re.bdy=cast(CompoundExp)semantic(re.bdy,sc);
-		propErr(re.num,re);
-		propErr(re.bdy,re);
-		re.type=unit;
-		return re;
-	}
-	if(auto oe=cast(ObserveExp)expr){
-		oe.e=semantic(oe.e,sc);
-		if(oe.e.sstate==SemState.completed && oe.e.type!is Bool){
-			sc.error(format("cannot obtain truth value for type '%s'",oe.e.type),oe.e.loc);
-			oe.sstate=SemState.error;
-		}
-		propErr(oe.e,oe);
-		oe.type=unit;
-		return oe;
-	}
-	if(auto oe=cast(CObserveExp)expr){ // TODO: get rid of cobserve!
-		oe.var=semantic(oe.var,sc);
-		oe.val=semantic(oe.val,sc);
-		propErr(oe.var,oe);
-		propErr(oe.val,oe);
-		if(oe.sstate==SemState.error)
-			return oe;
-		if(oe.var.type!is ℝ || oe.val.type !is ℝ){
-			sc.error("both arguments to cobserve should be real numbers",oe.loc);
-			oe.sstate=SemState.error;
-		}
-		oe.type=unit;
-		return oe;
-	}
-	if(auto ae=cast(AssertExp)expr){
-		ae.e=semantic(ae.e,sc);
-		if(ae.e.sstate==SemState.completed && ae.e.type!is Bool){
-			sc.error(format("cannot obtain truth value for type '%s'",ae.e.type),ae.e.loc);
-			ae.sstate=SemState.error;
-		}
-		propErr(ae.e,ae);
-		ae.type=unit;
-		return ae;
-	}
 	if(auto lit=cast(LiteralExp)expr){
 		switch(lit.lit.type){
 		case Tok!"0":
@@ -918,10 +990,88 @@ Expression semantic(Expression expr,Scope sc){
 		default: break; // TODO
 		}
 	}
-	sc.error("unsupported "~typeid(expr).to!string,expr.loc);
+	sc.error(expr.kind~" cannot appear within an expression",expr.loc);
 	expr.sstate=SemState.error;
 	return expr;
 }
+
+FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
+	if(!fd.scope_) fd=cast(FunctionDef)presemantic(fd,sc);
+	auto fsc=fd.fscope_;
+	assert(!!fsc,text(fd));
+	auto bdy=compoundExpSemantic(fd.body_,fsc);
+	assert(!!bdy);
+	fd.body_=bdy;
+	fd.type=unit;
+	propErr(bdy,fd);
+	Type[] pty;
+	foreach(p;fd.params){
+		if(!p.vtype){
+			assert(fd.sstate==SemState.error);
+			return fd;
+		}
+		pty~=p.vtype;
+	}
+	if(!definitelyReturns(fd)){
+		if(fd.ret && fd.ret != unit){
+			sc.error("control flow might reach end of function (add return or assert(0) statement)",fd.loc);
+		}else{
+			auto tpl=new TupleExp([]);
+			tpl.loc=fd.loc;
+			auto rete=new ReturnExp(tpl);
+			rete.loc=fd.loc;
+			fd.body_.s~=returnExpSemantic(rete,fd.body_.blscope_);
+		}
+	}
+	if(fd.ret&&!fd.ftype) fd.ftype=funTy(tupleTy(pty),fd.ret);
+	if(!fd.sstate==SemState.error)
+		fd.sstate=SemState.completed;
+	return fd;
+}
+
+DatDecl datDeclSemantic(DatDecl dat,Scope sc){
+	bool success=true;
+	if(!dat.dscope_) presemantic(dat,sc);
+	auto bdy=compoundDeclSemantic(dat.body_,dat.dscope_);
+	assert(!!bdy);
+	dat.body_=bdy;
+	dat.type=unit;
+	return dat;
+}
+
+ReturnExp returnExpSemantic(ReturnExp ret,Scope sc){
+	if(ret.sstate==SemState.completed) return ret;
+	auto fd=sc.getFunction();
+	if(!fd){
+		sc.error("return statement must be within function",ret.loc);
+		ret.sstate=SemState.error;
+		return ret;
+	}
+	if(auto dsc=isInDataScope(fd.scope_)){
+		if(dsc.decl.name.name==fd.name.name){
+			sc.error("no return statement allowed in constructor",ret.loc);
+			ret.sstate=SemState.error;
+			return ret;
+		}
+	}
+	ret.e=expressionSemantic(ret.e,sc);
+	if(cast(CommaExp)ret.e){
+		sc.error("use parentheses for multiple return values",ret.e.loc);
+		ret.sstate=SemState.error;
+	}
+	propErr(ret.e,ret);
+	if(ret.sstate==SemState.error)
+		return ret;
+	if(!fd.rret && !fd.ret) fd.ret=ret.e.type;
+	if(!compatible(fd.ret,ret.e.type)){
+		sc.error(format("'%s' is incompatible with return type '%s'",ret.e.type,fd.ret),ret.e.loc);
+		ret.sstate=SemState.error;
+		return ret;
+	}
+	ret.type=unit;
+	return ret;
+}
+
 
 Type typeSemantic(Expression t,Scope sc)in{assert(!!t&&!!sc);}body{
 	if(auto id=cast(Identifier)t){
@@ -974,7 +1124,7 @@ Type typeForDecl(Declaration decl){
 		return vd.vtype;
 	}
 	if(auto fd=cast(FunctionDef)decl){
-		if(!fd.ftype&&fd.scope_) fd=cast(FunctionDef)semantic(fd,fd.scope_);
+		if(!fd.ftype&&fd.scope_) fd=functionDefSemantic(fd,fd.scope_);
 		assert(!!fd);
 		return fd.ftype;
 	}

@@ -135,6 +135,9 @@ class BinaryExp(TokenType op): ABinaryExp{
 		return _brk(e1.toString() ~ " "~TokChars!op~" "~e2.toString());
 	}
 	//override string toString(){return e1.toString() ~ " "~ e2.toString~TokChars!op;} // RPN
+	static if(op==Tok!":="){
+		override @property string kind(){ return "variable declaration"; }
+	}
 }
 
 class FieldExp: Expression{

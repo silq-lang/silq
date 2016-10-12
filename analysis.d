@@ -752,30 +752,29 @@ private struct Analyzer{
 		}
 	}
 
-	Distribution analyze(CompoundExp ce,ref Distribution retDist,FunctionDef functionDef)in{assert(!!ce);}body{
-		foreach(i,e;ce.s){
-			if(trace) writeln("statement: ",e);
-			/+writeln("before: ",dist);
-			scope(success) writeln("after: ",dist);+/
-			// TODO: visitor?
-			if(auto nde=cast(DefExp)e){
-				auto de=cast(ODefExp)nde.init;
-				assert(!!de);
-				// TODO: no real need to repeat checks done by semantic
-				scope(exit) dist.marginalizeTemporaries();
-				void defineVar(Identifier id,DExpr rhs,Type ty){
-					DVar var=null;
-					if(id.name !in arrays) var=dist.declareVar(id.name);
-					if(var){
-						dist.distribute(dDelta(var,rhs?rhs:zero,rhs?ty:ℝ)); // TODO: zero is not a good default value for types other than ℝ.
-						trackDeterministic(var,rhs,ty);
-					}else err.error("variable already exists",id.loc);
-				}
-				if(auto id=cast(Identifier)de.e1){
-					bool isSpecial=false;
-					if(auto call=cast(CallExp)de.e2){
-						if(auto cid=cast(Identifier)call.e){
-							switch(cid.name){
+	private void analyzeStatement(Expression e,ref Distribution retDist,FunctionDef functionDef)in{assert(!!e);}body{
+		if(trace) writeln("statement: ",e);
+		/+writeln("before: ",dist);
+		 scope(success) writeln("after: ",dist);+/
+		// TODO: visitor?
+		if(auto nde=cast(DefExp)e){
+			auto de=cast(ODefExp)nde.init;
+			assert(!!de);
+			// TODO: no real need to repeat checks done by semantic
+			scope(exit) dist.marginalizeTemporaries();
+			void defineVar(Identifier id,DExpr rhs,Type ty){
+				DVar var=null;
+				if(id.name !in arrays) var=dist.declareVar(id.name);
+				if(var){
+					dist.distribute(dDelta(var,rhs?rhs:zero,rhs?ty:ℝ)); // TODO: zero is not a good default value for types other than ℝ.
+					trackDeterministic(var,rhs,ty);
+				}else err.error("variable already exists",id.loc);
+			}
+			if(auto id=cast(Identifier)de.e1){
+				bool isSpecial=false;
+				if(auto call=cast(CallExp)de.e2){
+					if(auto cid=cast(Identifier)call.e){
+						switch(cid.name){
 							case "array":
 								if(call.args.length==1){
 									isSpecial=true;
@@ -787,215 +786,224 @@ private struct Analyzer{
 								evaluateReadCSVCall(id,call);
 								break;
 							default: break;
-							}
 						}
 					}
-					if(!isSpecial){
-						auto rhs=transformExp(de.e2);
-						defineVar(id,rhs,de.e2.type);
-						dist.marginalizeTemporaries();
-					}
-				}else if(auto tpl=cast(TupleExp)de.e1){
+				}
+				if(!isSpecial){
 					auto rhs=transformExp(de.e2);
-					auto tt=cast(TupleTy)de.e2.type;
-					assert(!!tt);
-					auto dtpl=cast(DTuple)rhs;
-					if(rhs&&(!dtpl||dtpl.length!=tpl.length)){
-						err.error(text("inconsistent number of tuple entries for definition: ",tpl.length," vs. ",(dtpl?dtpl.length:1)),de.loc);
-						rhs=dtpl=null;
+					defineVar(id,rhs,de.e2.type);
+					dist.marginalizeTemporaries();
+				}
+			}else if(auto tpl=cast(TupleExp)de.e1){
+				auto rhs=transformExp(de.e2);
+				auto tt=cast(TupleTy)de.e2.type;
+				assert(!!tt);
+				auto dtpl=cast(DTuple)rhs;
+				if(rhs&&(!dtpl||dtpl.length!=tpl.length)){
+					err.error(text("inconsistent number of tuple entries for definition: ",tpl.length," vs. ",(dtpl?dtpl.length:1)),de.loc);
+					rhs=dtpl=null;
+				}
+				if(dtpl){
+					foreach(k,exp;tpl.e){
+						auto id=cast(Identifier)exp;
+						if(!id) goto LbadDefLhs;
+						defineVar(id,dtpl[k],tt.types[k]);
 					}
-					if(dtpl){
-						foreach(k,exp;tpl.e){
-							auto id=cast(Identifier)exp;
-							if(!id) goto LbadDefLhs;
-							defineVar(id,dtpl[k],tt.types[k]);
+				}
+			}else{
+			LbadDefLhs:
+				err.error("left hand side of definition should be identifier or tuple of identifiers",de.e1.loc);
+			}
+		}else if(auto ae=cast(AssignExp)e){
+			assignTo(ae.e1,transformExp(ae.e2),ae.e2.type,ae.loc);
+			dist.marginalizeTemporaries();
+		}else if(isOpAssignExp(e)){
+			DExpr perform(DExpr a,DExpr b){
+				if(cast(OrAssignExp)e) return dIvr(DIvr.Type.neqZ,dIvr(DIvr.Type.neqZ,a)+dIvr(DIvr.Type.neqZ,b));
+				if(cast(AndAssignExp)e) return dIvr(DIvr.Type.neqZ,a)*dIvr(DIvr.Type.neqZ,b);
+				if(cast(AddAssignExp)e) return a+b;
+				if(cast(SubAssignExp)e) return a-b;
+				if(cast(MulAssignExp)e) return a*b;
+				if(cast(DivAssignExp)e){
+					dist.assertTrue(dIvr(DIvr.Type.neqZ,b),"division by zero");
+					return a/b;
+				}
+				if(cast(PowAssignExp)e){
+					// TODO: enforce constraints on domain
+					return a^^b;
+				}
+				if(cast(CatAssignExp)e) return a~b;
+				assert(0);
+			}
+			auto be=cast(ABinaryExp)e;
+			assert(!!be);
+			auto lhs=transformExp(be.e1);
+			auto rhs=transformExp(be.e2);
+			assignTo(lhs,perform(lhs,rhs),be.e2.type,be.loc);
+			dist.marginalizeTemporaries();
+		}else if(auto call=cast(CallExp)e){
+			transformExp(call);
+			dist.marginalizeTemporaries();
+		}else if(auto ite=cast(IteExp)e){
+			if(auto c=transformConstr(ite.cond)){
+				auto dthen=dist.dupNoErr();
+				dthen.distribution=dthen.distribution*dIvr(DIvr.Type.neqZ,c);
+				auto dothw=dist.dupNoErr();
+				dothw.distribution=dothw.distribution*dIvr(DIvr.Type.eqZ,c);
+				auto athen=Analyzer(dthen,err,arrays.dup,deterministic.dup);
+				dthen=athen.analyze(ite.then,retDist,functionDef);
+				auto aothw=Analyzer(dothw,err,arrays.dup,deterministic.dup);
+				if(ite.othw) dothw=aothw.analyze(ite.othw,retDist,functionDef);
+				dist=dthen.join(dist,dothw);
+				foreach(k,v;deterministic){
+					if(k in athen.deterministic && k in aothw.deterministic
+						                                    && athen.deterministic[k] is aothw.deterministic[k]){
+						deterministic[k]=athen.deterministic[k];
+					}else deterministic.remove(k);
+				}
+			}
+		}else if(auto re=cast(RepeatExp)e){
+			if(auto exp=transformExp(re.num)){
+				if(auto num=isDeterministicInteger(exp)){
+					int nerrors=err.nerrors;
+					for(ℤ j=0;j<num.c;j++){
+						auto anext=Analyzer(dist.dup(),err,arrays.dup,deterministic);
+						auto dnext=anext.analyze(re.bdy,retDist,functionDef);
+						dnext.marginalizeLocals(dist);
+						dist=dnext;
+						deterministic=anext.deterministic;
+						if(err.nerrors>nerrors) break;
+					}
+				}else err.error("repeat expression should be provably deterministic integer",re.num.loc);
+			}
+		}else if(auto fe=cast(ForExp)e){
+			auto lexp=transformExp(fe.left), rexp=transformExp(fe.right);
+			if(lexp&&rexp){
+				auto l=isDeterministicInteger(lexp), r=isDeterministicInteger(rexp);
+				if(l&&r){
+					int nerrors=err.nerrors;
+					for(ℤ j=l.c+cast(int)fe.leftExclusive;j+cast(int)fe.rightExclusive<=r.c;j++){
+						auto cdist=dist.dup();
+						auto anext=Analyzer(cdist,err,arrays.dup,deterministic);
+						auto var=cdist.declareVar(fe.var.name);
+						if(var){
+							auto rhs=dℤ(j);
+							cdist.initialize(var,rhs,ℝ);
+							anext.trackDeterministic(var,rhs,ℝ);
+						}else{
+							err.error("variable already exists",fe.var.loc);
+							break;
 						}
+						auto dnext=anext.analyze(fe.bdy,retDist,functionDef);
+						dnext.marginalizeLocals(dist,(v){ anext.deterministic.remove(v); });
+						dist=dnext;
+						deterministic=anext.deterministic;
+						deterministic.remove(var);
+						if(err.nerrors>nerrors) break;
 					}
 				}else{
-				LbadDefLhs:
-					err.error("left hand side of definition should be identifier or tuple of identifiers",de.e1.loc);
+					err.error("for bounds should be provably deterministic integers",
+					          l?fe.right.loc:r?fe.left.loc:fe.left.loc.to(fe.right.loc));
 				}
-			}else if(auto ae=cast(AssignExp)e){
-				assignTo(ae.e1,transformExp(ae.e2),ae.e2.type,ae.loc);
-				dist.marginalizeTemporaries();
-			}else if(cast(AddAssignExp)e||cast(SubAssignExp)e||cast(MulAssignExp)e||cast(DivAssignExp)e||cast(PowAssignExp)e||cast(CatAssignExp)e){
-				DExpr perform(DExpr a,DExpr b){
-					if(cast(AddAssignExp)e) return a+b;
-					if(cast(SubAssignExp)e) return a-b;
-					if(cast(MulAssignExp)e) return a*b;
-					if(cast(DivAssignExp)e){
-						dist.assertTrue(dIvr(DIvr.Type.neqZ,b),"division by zero");
-						return a/b;
-					}
-					if(cast(PowAssignExp)e){
-						// TODO: enforce constraints on domain
-						return a^^b;
-					}
-					if(cast(CatAssignExp)e) return a~b;
-					assert(0);
-				}
-				auto be=cast(ABinaryExp)e;
-				assert(!!be);
-				auto lhs=transformExp(be.e1);
-				auto rhs=transformExp(be.e2);
-				assignTo(lhs,perform(lhs,rhs),be.e2.type,be.loc);
-				dist.marginalizeTemporaries();
-			}else if(auto call=cast(CallExp)e){
-				transformExp(call);
-				dist.marginalizeTemporaries();
-			}else if(auto ite=cast(IteExp)e){
-				if(auto c=transformConstr(ite.cond)){
-					auto dthen=dist.dupNoErr();
-					dthen.distribution=dthen.distribution*dIvr(DIvr.Type.neqZ,c);
-					auto dothw=dist.dupNoErr();
-					dothw.distribution=dothw.distribution*dIvr(DIvr.Type.eqZ,c);
-					auto athen=Analyzer(dthen,err,arrays.dup,deterministic.dup);
-					dthen=athen.analyze(ite.then,retDist,functionDef);
-					auto aothw=Analyzer(dothw,err,arrays.dup,deterministic.dup);
-					if(ite.othw) dothw=aothw.analyze(ite.othw,retDist,functionDef);
-					dist=dthen.join(dist,dothw);
-					foreach(k,v;deterministic){
-						if(k in athen.deterministic && k in aothw.deterministic
-																&& athen.deterministic[k] is aothw.deterministic[k]){
-							deterministic[k]=athen.deterministic[k];
-						}else deterministic.remove(k);
-					}
-				}
-			}else if(auto re=cast(RepeatExp)e){
-				if(auto exp=transformExp(re.num)){
-					if(auto num=isDeterministicInteger(exp)){
-						int nerrors=err.nerrors;
-						for(ℤ j=0;j<num.c;j++){
-							auto anext=Analyzer(dist.dup(),err,arrays.dup,deterministic);
-							auto dnext=anext.analyze(re.bdy,retDist,functionDef);
-							dnext.marginalizeLocals(dist);
-							dist=dnext;
-							deterministic=anext.deterministic;
-							if(err.nerrors>nerrors) break;
-						}
-					}else err.error("repeat expression should be provably deterministic integer",re.num.loc);
-				}
-			}else if(auto fe=cast(ForExp)e){
-				auto lexp=transformExp(fe.left), rexp=transformExp(fe.right);
-				if(lexp&&rexp){
-					auto l=isDeterministicInteger(lexp), r=isDeterministicInteger(rexp);
-					if(l&&r){
-						int nerrors=err.nerrors;
-						for(ℤ j=l.c+cast(int)fe.leftExclusive;j+cast(int)fe.rightExclusive<=r.c;j++){
-							auto cdist=dist.dup();
-							auto anext=Analyzer(cdist,err,arrays.dup,deterministic);
-							auto var=cdist.declareVar(fe.var.name);
-							if(var){
-								auto rhs=dℤ(j);
-								cdist.initialize(var,rhs,ℝ);
-								anext.trackDeterministic(var,rhs,ℝ);
-							}else{
-								err.error("variable already exists",fe.var.loc);
-								break;
+			}
+		}else if(auto re=cast(ReturnExp)e){
+			auto odist=dist.dup;
+			odist.distribution=odist.error=zero; // code after return is unreachable
+			Expression[] returns;
+			if(auto tpl=cast(TupleExp)re.e) returns=tpl.e;
+			else returns=[re.e];
+			import hashtable;
+			SetX!DVar vars;
+			DVar[] orderedVars;
+			foreach(ret;returns){
+				if(auto id=cast(Identifier)ret){ // TODO: this hack should be removed
+					if(id.name in arrays){
+						foreach(expr;arrays[id.name]){
+							if(auto var=cast(DVar)expr){
+								vars.insert(var);
+								orderedVars~=var;
 							}
-							auto dnext=anext.analyze(fe.bdy,retDist,functionDef);
-							dnext.marginalizeLocals(dist,(v){ anext.deterministic.remove(v); });
-							dist=dnext;
-							deterministic=anext.deterministic;
-							deterministic.remove(var);
-							if(err.nerrors>nerrors) break;
 						}
-					}else{
-						err.error("for bounds should be provably deterministic integers",
-								  l?fe.right.loc:r?fe.left.loc:fe.left.loc.to(fe.right.loc));
+						continue;
 					}
 				}
-			}else if(auto re=cast(ReturnExp)e){
-				bool isLast=functionDef&&i+1==ce.s.length;
-				auto odist=dist.dup;
-				odist.distribution=odist.error=zero; // code after return is unreachable
-				Expression[] returns;
-				if(auto tpl=cast(TupleExp)re.e) returns=tpl.e;
-				else returns=[re.e];
-				import hashtable;
-				SetX!DVar vars;
-				DVar[] orderedVars;
-				foreach(ret;returns){
-					if(auto id=cast(Identifier)ret){ // TODO: this hack should be removed
-						if(id.name in arrays){
-								foreach(expr;arrays[id.name]){
-									if(auto var=cast(DVar)expr){
-										vars.insert(var);
-										orderedVars~=var;
-									}
-								}
-								continue;
-						}
+				auto exp=transformExp(ret);
+				DVar var=cast(DVar)exp;
+				if(var && !var.name.startsWith("__")){
+					if(var in vars||functionDef.thisRef&&!functionDef.isConstructor&&var.name=="this"){
+						auto vv=dist.getVar(var.name);
+						dist.initialize(vv,var,ret.type);
+						var=vv;
 					}
-					auto exp=transformExp(ret);
-					DVar var=cast(DVar)exp;
-					if(var && !var.name.startsWith("__")){
-						if(var in vars||functionDef.thisRef&&!functionDef.isConstructor&&var.name=="this"){
-							auto vv=dist.getVar(var.name);
-							dist.initialize(vv,var,ret.type);
-								var=vv;
-						}
-						vars.insert(var);
-						orderedVars~=var;
-					}else if(exp){
-						if(auto fe=cast(FieldExp)ret){
-							var=dist.declareVar(fe.f.name);
-							if(!var) var=dist.getVar(fe.f.name);
-						}else var=dist.getVar("r");
-						dist.initialize(var,exp,ret.type);
-						vars.insert(var);
-						orderedVars~=var;
+					vars.insert(var);
+					orderedVars~=var;
+				}else if(exp){
+					if(auto fe=cast(FieldExp)ret){
+						var=dist.declareVar(fe.f.name);
+						if(!var) var=dist.getVar(fe.f.name);
+					}else var=dist.getVar("r");
+					dist.initialize(var,exp,ret.type);
+					vars.insert(var);
+					orderedVars~=var;
+				}
+			}
+			if(functionDef.thisRef&&!functionDef.isConstructor){
+				vars.insert(dVar("this"));
+				orderedVars~=dVar("this");
+			}
+			foreach(w;dist.freeVars.setMinus(vars)){
+				dist.marginalize(w);
+			}
+			dist.orderFreeVars(orderedVars);
+			dist.simplify();
+			if(!retDist) retDist=dist;
+			else retDist=dist.orderedJoin(retDist);
+			dist=odist;
+			if(re.expected.length){
+				import dparse;
+				bool todo=false;
+				import std.string: strip;
+				auto ex=re.expected.strip;
+				if(ex.strip.startsWith("TODO:")){
+					todo=true;
+					ex=ex["TODO:".length..$].strip;
+				}
+				if(!expected.exists){
+					expected=Expected(true,todo,ex);
+				}else err.error("can only have one 'expected' annotation, in 'main'.",re.loc);
+			}
+		}else if(auto ae=cast(AssertExp)e){
+			if(auto c=transformConstr(ae.e)){
+				dist.assertTrue(c,text("assertion '",ae.e,"' failed"));
+			}
+		}else if(auto oe=cast(ObserveExp)e){
+			if(auto c=transformConstr(oe.e)){
+				dist.observe(c);
+			}
+		}else if(auto co=cast(CObserveExp)e){
+			static bool warned=false;
+			if(!warned){
+				err.note("warning: cobserve will be removed",co.loc);
+				warned=true;
+			}
+			if(auto var=transformExp(co.var)){
+				if(cast(DVar)var){
+					if(auto ex=transformExp(co.val)){
+						dist.distribution=dist.distribution*dDelta(var-ex);
 					}
-				}
-				if(functionDef.thisRef&&!functionDef.isConstructor){
-					vars.insert(dVar("this"));
-					orderedVars~=dVar("this");
-				}
-				foreach(w;dist.freeVars.setMinus(vars)){
-					dist.marginalize(w);
-				}
-				dist.orderFreeVars(orderedVars);
-				dist.simplify();
-				if(!retDist) retDist=dist;
-				else retDist=dist.orderedJoin(retDist);
-				dist=odist;
-				if(re.expected.length){
-					import dparse;
-					bool todo=false;
-					import std.string: strip;
-					auto ex=re.expected.strip;
-					if(ex.strip.startsWith("TODO:")){
-						todo=true;
-						ex=ex["TODO:".length..$].strip;
-					}
-					if(!expected.exists){
-						expected=Expected(true,todo,ex);
-					}else err.error("can only have one 'expected' annotation, in 'main'.",re.loc);
-				}
-			}else if(auto ae=cast(AssertExp)e){
-				if(auto c=transformConstr(ae.e)){
-					dist.assertTrue(c,text("assertion '",ae.e,"' failed"));
-				}
-			}else if(auto oe=cast(ObserveExp)e){
-				if(auto c=transformConstr(oe.e)){
-					dist.observe(c);
-				}
-			}else if(auto co=cast(CObserveExp)e){
-				static bool warned=false;
-				if(!warned){
-					err.note("warning: cobserve will be removed",co.loc);
-					warned=true;
-				}
-				if(auto var=transformExp(co.var)){
-					if(cast(DVar)var){
-						if(auto ex=transformExp(co.val)){
-							dist.distribution=dist.distribution*dDelta(var-ex);
-						}
-					}else err.error("observed quantity must be a variable",co.loc);
-				}
-			}else if(cast(Declaration)e){
-				// skip
-			}else if(!cast(ErrorExp)e) err.error(text("unsupported"),e.loc);
+				}else err.error("observed quantity must be a variable",co.loc);
+			}
+		}else if(auto ce=cast(CommaExp)e){
+			analyzeStatement(ce.e1,retDist,functionDef);
+			analyzeStatement(ce.e2,retDist,functionDef);
+		}else if(cast(Declaration)e){
+			// skip
+		}else if(!cast(ErrorExp)e) err.error(text("unsupported"),e.loc);
+	}
+	
+	Distribution analyze(CompoundExp ce,ref Distribution retDist,FunctionDef functionDef)in{assert(!!ce);}body{
+		foreach(e;ce.s){
+			analyzeStatement(e,retDist,functionDef);
 		}
 		return dist;
 	}
