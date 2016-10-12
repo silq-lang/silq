@@ -1,8 +1,7 @@
-// skipped
 
 def main(){
     x := UniformInt(0,2);
-    y := UniformInt(0,x); // TODO!
+    y := UniformInt(0,x);
     z := x*y;
-    return z;
+    return z; // expected: 11·δ[-z]·⅟18+δ[-1+z]·⅟6+δ[-2+z]·⅟9+δ[-4+z]·⅟9
 }
