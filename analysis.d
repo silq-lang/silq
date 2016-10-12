@@ -325,7 +325,7 @@ private struct Analyzer{
 						auto λ=doIt(ce.args[0]);
 						dist.assertTrue(dIvr(DIvr.Type.lZ,-λ),"λ must be positive");
 						auto var=dist.getTmpVar("__e");
-						dist.distribute(expPDF(var,λ));
+						dist.distribute(exponentialPDF(var,λ));
 						return var;
 					case "StudentT":
 						if(ce.args.length!=1){

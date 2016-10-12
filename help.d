@@ -50,16 +50,18 @@ string computeDistributionDocString(){
 	         return r;
 		}();
 	import std.conv, psi, dexpr;
-	string[2][] lr;
+	string[3][] lrc;
 	// TODO: domain constraints
 	foreach(i,name;ToTuple!names){
+		DExpr cond=mixin(text(name[0][0..$-3],"Cond(",calls[i][1..$].map!(x=>`dVar("`~x~`")`).join(","),")")).simplify(one);
 		string lhs=text("x := ",name[1],"(",calls[i][1..$].join(","),");");
-		string rhs=text("p(x) = ",mixin(text(name[0],`(dVar("x"),`,calls[i][1..$].map!(x=>`dVar("`~x~`")`).join(","),")")).simplify(one).toString(formatting));
-		lr~=[lhs,rhs];
+		string rhs=text("p(x) = ",mixin(text(name[0],`(dVar("x"),`,calls[i][1..$].map!(x=>`dVar("`~x~`")`).join(","),")")).simplify(cond).toString(formatting));
+		string cnd=text("where "~cond.toString(formatting));
+		lrc~=[lhs,rhs,cnd];
 	}
-	auto padding=lr.map!(x=>x[0].length).reduce!max+4;
+	auto padding=lrc.map!(x=>x[0].length).reduce!max+4;
 	// note that count is wrong in general, as we want number of display characters (here it works)
-	auto r="Supported primitive distributions\n"~lr.map!(x=>x[0]~repeat(' ').take(padding-x[0].count).to!string~"⇒   "~x[1]).join("\n\n");
+	auto r="Supported primitive distributions\n"~lrc.map!(x=>x[0]~repeat(' ').take(padding-x[0].count).to!string~"⇒   "~x[1]~"\n"~repeat(' ').take(padding+"⇒   p(x) = ".count).to!string~x[2]).join("\n\n");
 	return r;
 }
 
