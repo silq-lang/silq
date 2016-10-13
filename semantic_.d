@@ -75,14 +75,18 @@ Expression presemantic(Declaration expr,Scope sc){
 			assert(!!p);
 			propErr(p,fd);
 		}
-		if(auto dsc=isInDataScope(sc)){
-			auto id=new Identifier("this");
+		VarDecl createContext(string name,Type ty){
+			auto id=new Identifier(name);
 			id.loc=fd.loc;
-			fd.thisRef=new VarDecl(id);
-			fd.thisRef.loc=fd.loc;
-			fd.thisRef.vtype=dsc.decl.dtype;
-			fd.thisRef=varDeclSemantic(fd.thisRef,fsc);
-			assert(!!fd.thisRef && fd.thisRef.sstate==SemState.completed);
+			auto context=new VarDecl(id);
+			context.loc=fd.loc;
+			context.vtype=ty;
+			context=varDeclSemantic(context,fsc);
+			assert(!!context && context.sstate==SemState.completed);
+			return context;
+		}
+		if(auto dsc=isInDataScope(sc)){
+			fd.context=createContext("this",dsc.decl.dtype);
 			if(dsc.decl.name.name==fd.name.name){
 				fd.isConstructor=true;
 				if(fd.rret){
@@ -95,15 +99,17 @@ Expression presemantic(Declaration expr,Scope sc){
 				auto thisid=new Identifier("this");
 				thisid.loc=fd.loc;
 				thisid.scope_=fd.fscope_;
-				thisid.meaning=fd.thisRef;
+				thisid.meaning=fd.context;
 				thisid.type=dsc.decl.dtype;
 				thisid.sstate=SemState.completed;
 				auto rete=new ReturnExp(thisid);
-				rete.loc=id.loc;
+				rete.loc=thisid.loc;
 				rete.sstate=SemState.completed;
 				fd.body_.s~=rete;
 			}
 			assert(dsc.decl.dtype);
+		}else if(auto nsc=cast(NestedScope)sc){
+			fd.context=createContext("__ctx",contextTy()); // TODO: contextTy is not too nice
 		}
 		if(fd.rret){
 			Type[] pty;
@@ -313,11 +319,8 @@ Expression statementSemantic(Expression e,Scope sc){
 	}
 	if(auto ret=cast(ReturnExp)e)
 		return returnExpSemantic(ret,sc);
-	if(auto fd=cast(FunctionDef)e){
-		sc.error("nested "~fd.kind~"s are unsupported",fd.loc);
-		fd.sstate=SemState.error;
-		return fd;
-	}
+	if(auto fd=cast(FunctionDef)e)
+		return functionDefSemantic(fd,sc);
 	if(auto dd=cast(DatDecl)e){
 		sc.error("nested "~dd.kind~"s are unsupported",dd.loc);
 		dd.sstate=SemState.error;
@@ -639,6 +642,7 @@ Expression callSemantic(CallExp ce,Scope sc){
 			if(ce.sstate!=SemState.error){
 				auto id=new Identifier(constructor.name.name);
 				id.loc=fun.loc;
+				id.scope_=sc;
 				id.meaning=constructor;
 				id.type=constructor.ftype;
 				id.sstate=SemState.completed;

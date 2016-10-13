@@ -51,11 +51,17 @@ class FunctionDef: Declaration{
 
 	// semantic information
 	FunctionScope fscope_;
-	VarDecl thisRef;
+	VarDecl context;
+	@property string contextName()in{assert(!!context);}body{ return context.name.name; }
 	Type ret;
 	Type ftype;
 	bool hasReturn;
 	bool isConstructor;
+
+	@property Scope realScope(){
+		if(isConstructor) return scope_.getDatDecl().scope_;
+		return scope_;
+	}
 }
 
 

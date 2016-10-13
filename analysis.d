@@ -24,28 +24,64 @@ private struct Analyzer{
 	DExpr transformExp(Exp e){
 		class Unwind: Exception{ this(){ super(""); } }
 		void unwind(){ throw new Unwind(); }
-		DExpr lookupMeaning(Identifier id){
+		import scope_;
+		DExpr getContextFor(Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{
+			DExpr r=null;
+			auto meaningScope=meaning.scope_;
+			if(auto fd=cast(FunctionDef)meaning)
+				meaningScope=fd.realScope;
+			assert(sc&&sc.isNestedIn(meaningScope));
+			for(auto csc=sc;csc !is meaningScope;csc=(cast(NestedScope)csc).parent){
+				void add(string name){
+					if(!r) r=dVar(name);
+					else r=dField(r,name);
+					assert(!!cast(NestedScope)csc);
+				}
+				assert(cast(NestedScope)csc);
+				if(!cast(NestedScope)(cast(NestedScope)csc).parent) break;
+				if(cast(AggregateScope)csc) add("outer");
+				else if(auto fsc=cast(FunctionScope)csc) add(fsc.getFunction().contextName); // TODO: shouldn't be able to clash with user defined variables
+			}
+			return r;
+		}
+		DExpr readVariable(VarDecl var,Scope from){
+			DExpr r=getContextFor(var,from);
+			return r?dField(r,var.name.name):dVar(var.name.name);
+		}
+		DExpr buildContextFor()(Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{ // template, forward references 'doIt'
+			if(meaning.scope_ !is sc) return getContextFor(meaning,sc);
+			DExpr[string] record;
+			foreach(vd;&sc.all!VarDecl) record[vd.name.name]=readVariable(vd,sc);
+			for(auto csc=sc;;csc=(cast(NestedScope)csc).parent){
+				if(!cast(NestedScope)csc) break;
+				if(!cast(NestedScope)(cast(NestedScope)csc).parent) break;
+				if(cast(AggregateScope)csc){
+					record["outer"]=dVar("outer");
+					break;
+				}
+				if(auto fsc=cast(FunctionScope)csc){
+					auto cname=fsc.getFunction().contextName;
+					record[cname]=dVar(cname);
+					break;
+				}
+			}
+			return dRecord(record);
+		}
+		DExpr lookupMeaning(Identifier id)in{assert(id && id.scope_,text(id," ",id.loc));}body{
 			if(!id.meaning||!id.scope_||!id.meaning.scope_){
 				err.error("undefined variable '"~id.name~"'",id.loc);
 				return null;
+			}
+			if(auto vd=cast(VarDecl)id.meaning){
+				DExpr r=getContextFor(id.meaning,id.scope_);
+				return r?dField(r,id.name):dVar(id.name);
 			}
 			if(cast(FunctionDef)id.meaning){
 				err.error("first-class functions not supported yet",id.loc);
 				return null;
 			}
-			DExpr r=null;
-			import scope_;
-			auto meaningScope=id.meaning.scope_;
-			assert(id.scope_.isNestedIn(meaningScope));
-			for(auto sc=id.scope_;sc !is meaningScope;sc=(cast(NestedScope)sc).parent){
-				void add(string name){
-					if(!r) r=dVar(name);
-					else r=dField(r,name);
-				}
-				if(cast(AggregateScope)sc) add("this");
-				else if(cast(FunctionScope)sc) add("__ctx"); // TODO: shouldn't be able to clash with user defined variables
-			}
-			return r?dField(r,id.name):dVar(id.name);
+			err.error("unsupported",id.loc);
+			return null;
 		}
 		DExpr doIt(Exp e){
 			if(cast(Declaration)e||cast(BinaryExp!(Tok!":="))e){
@@ -129,6 +165,13 @@ private struct Analyzer{
 						auto types=tuplety.types;
 						if(thisExp&&!fun.isConstructor)
 							types~=fe.e.type; // TODO: this is wasteful
+						if(!thisExp)if(auto nsc=cast(NestedScope)fun.realScope){ // nested function calls
+							assert(id.scope_,text(id," ",id.loc));
+							auto ctx=buildContextFor(fun,id.scope_);
+							assert(!!ctx);
+							args~=ctx;
+							types~=contextTy();
+						}
 						auto r=dist.call(summary,args,types);
 						if(thisExp&&!fun.isConstructor){
 							DExpr thisr;
@@ -930,7 +973,7 @@ private struct Analyzer{
 				auto exp=transformExp(ret);
 				DVar var=cast(DVar)exp;
 				if(var && !var.name.startsWith("__")){
-					if(var in vars||functionDef.thisRef&&!functionDef.isConstructor&&var.name=="this"){
+					if(var in vars||functionDef.context&&!functionDef.isConstructor&&var.name==functionDef.contextName){
 						auto vv=dist.getVar(var.name);
 						dist.initialize(vv,var,ret.type);
 						var=vv;
@@ -947,9 +990,9 @@ private struct Analyzer{
 					orderedVars~=var;
 				}
 			}
-			if(functionDef.thisRef&&!functionDef.isConstructor){
-				vars.insert(dVar("this"));
-				orderedVars~=dVar("this");
+			if(functionDef.context&&functionDef.contextName=="this"&&!functionDef.isConstructor){
+				vars.insert(dVar(functionDef.contextName));
+				orderedVars~=dVar(functionDef.contextName);
 			}
 			foreach(w;dist.freeVars.setMinus(vars)){
 				dist.marginalize(w);
@@ -1021,13 +1064,13 @@ Distribution analyze(FunctionDef def,ErrorHandler err){
 	auto dist=new Distribution();
 	DExpr[] args;
 	foreach(a;def.params) args~=dist.declareVar(a.name.name);
-	if(def.thisRef){
-		auto this_=dist.declareVar("this");
-		if(!def.isConstructor) args~=this_;
+	if(def.context){
+		auto ctx=dist.declareVar(def.contextName);
+		if(!def.isConstructor) args~=ctx;
 		else{
 			auto dd=def.scope_.getDatDecl();
 			assert(dd && dd.dtype);
-			dist.initialize(this_,dRecord(),dd.dtype);
+			dist.initialize(ctx,dRecord(),dd.dtype);
 		}
 	}
 	if(def.name.name!="main"||args.length) // TODO: move this decision to caller

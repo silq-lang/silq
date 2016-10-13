@@ -44,6 +44,14 @@ abstract class Scope{
 	abstract FunctionDef getFunction();
 	abstract DatDecl getDatDecl();
 	abstract ForExp getForExp();
+	final int all(T)(int delegate(T) dg){
+		foreach(k,v;symtab){
+			auto t=cast(T)v;
+			if(!t) continue;
+			if(auto r=dg(t)) return r;
+		}
+		return 0;
+	}
 private:
 	Declaration[const(char)*] symtab;
 }
