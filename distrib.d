@@ -311,6 +311,7 @@ class Distribution{
 		DExpr rerr=q.error;
 		import hashtable;
 		auto context=freeVars.dup;
+		if(this.context) context.insert(this.context);
 		DVar[] r;
 		foreach(v;q.orderedFreeVars){
 			r~=getTmpVar("__r");

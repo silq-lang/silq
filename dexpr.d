@@ -2073,6 +2073,10 @@ class DIvr: DExpr{ // iverson brackets
 	this(Type type,DExpr e){
 		this.type=type; this.e=e;
 		foreach(d;e.allOf!DDelta) assert(0,text(e));
+		/*foreach(d;e.allOf!DDelta(true)){
+			foreach(vf;d.freeVars)
+				assert(cast(DContextVars)vf||!e.hasFreeVar(vf),text(vf," ",e));
+		}*/
 	}
 
 	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; } // TODO: correct?
