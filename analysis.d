@@ -119,6 +119,7 @@ private struct Analyzer{
 				dist.assertTrue(dIvr(DIvr.Type.neqZ,e2),formatError("division by zero",e.loc));
 				return e1/e2;
 			}
+			if(auto me=cast(ModExp)e) return doIt(me.e1)%doIt(me.e2);
 			if(auto pe=cast(PowExp)e) return doIt(pe.e1)^^doIt(pe.e2);
 			if(auto ce=cast(CatExp)e) return doIt(ce.e1)~doIt(ce.e2);
 			if(auto ume=cast(UMinusExp)e) return -doIt(ume.e);
@@ -871,6 +872,7 @@ private struct Analyzer{
 					dist.assertTrue(dIvr(DIvr.Type.neqZ,b),"division by zero");
 					return a/b;
 				}
+				if(cast(ModAssignExp)e) return a%b;
 				if(cast(PowAssignExp)e){
 					// TODO: enforce constraints on domain
 					return a^^b;

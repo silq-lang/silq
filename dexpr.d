@@ -128,7 +128,7 @@ abstract class DExpr{
 
 	// helpers for construction of DExprs:
 	enum ValidUnary(string s)=s=="-";
-	enum ValidBinary(string s)=["+","-","*","/","^^","~"].canFind(s);
+	enum ValidBinary(string s)=["+","-","*","/","%","^^","~"].canFind(s);
 	template UnaryCons(string s)if(ValidUnary!s){
 		static assert(s=="-");
 		alias UnaryCons=dUMinus;
@@ -138,6 +138,7 @@ abstract class DExpr{
 		else static if(s=="-") alias BinaryCons=dMinus;
 		else static if(s=="*") alias BinaryCons=dMult;
 		else static if(s=="/") alias BinaryCons=dDiv;
+		else static if(s=="%") alias BinaryCons=dMod;
 		else static if(s=="^^") alias BinaryCons=dPow;
 		else static if(s=="~") alias BinaryCons=dCat;
 		else static assert(0);
@@ -3087,7 +3088,7 @@ class DSin: DOp{
 	}
 	static DExpr staticSimplify(DExpr e,DExpr facts=one){
 		auto ne=e.simplify(facts);
-		if(ne!is e) return dSin(ne);
+		if(ne!is e) return dSin(ne).simplify(facts);
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){
@@ -3097,7 +3098,6 @@ class DSin: DOp{
 }
 
 DExpr dSin(DExpr e){ return uniqueDExprUnary!DSin(e); }
-
 
 class DFloor: DOp{
 	DExpr e;
@@ -3128,7 +3128,7 @@ class DFloor: DOp{
 	}
 	static DExpr staticSimplify(DExpr e,DExpr facts=one){
 		auto ne=e.simplify(facts);
-		if(ne!is e) return dFloor(ne);
+		if(ne!is e) return dFloor(ne).simplify(facts);
 		if(e.isFraction()){
 			auto nd=e.getFraction();
 			return dℤ(floordiv(nd[0],nd[1]));
@@ -3173,7 +3173,7 @@ class DCeil: DOp{
 	}
 	static DExpr staticSimplify(DExpr e,DExpr facts=one){
 		auto ne=e.simplify(facts);
-		if(ne!is e) return dCeil(ne);
+		if(ne!is e) return dCeil(ne).simplify(facts);
 		if(e.isFraction()){
 			auto nd=e.getFraction();
 			return dℤ(ceildiv(nd[0],nd[1]));
@@ -3188,6 +3188,9 @@ class DCeil: DOp{
 
 DExpr dCeil(DExpr e){ return uniqueDExprUnary!DCeil(e); }
 
+DExpr dMod(DExpr e1,DExpr e2){
+	return e1-dFloor(e1/e2)*e2;
+}
 
 
 class DGaussInt: DOp{
