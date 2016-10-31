@@ -497,14 +497,16 @@ auto nC(ℤ n){
 
 ℤ ceildiv(ℤ a,ℤ b){
 	bool sign=(a<0)^(b<0);
+	a=abs(a), b=abs(b);
 	if(!sign) return (a+b-1)/b;
-	return a/b;
+	return -a/b;
 }
 
 ℤ floordiv(ℤ a,ℤ b){
 	bool sign=(a<0)^(b<0);
+	a=abs(a), b=abs(b);
 	if(!sign) return a/b;
-	return (a-b+1)/b;
+	return -(a+b-1)/b;
 }
 
 template tryImport(string filename,string alt=""){
