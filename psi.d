@@ -2,32 +2,8 @@ import std.stdio, std.path, std.array, std.string, std.algorithm;
 import file=std.file;
 import util;
 import lexer, parser, expression, declaration, error;
+import options, scope_, semantic_, backend;
 
-import scope_, semantic_, symbolic, distrib, dexpr;
-
-struct Options{
-	bool plot=false;
-	string plotRange="[-10:10]";
-	bool cdf=false;
-	bool kill=false;
-	auto formatting=Format.default_;
-	bool casBench=false;
-	bool noBoundsCheck=false;
-	bool trace=false;
-	bool expectation=false;
-}
-Options opt; // TODO: get rid of global?
-string casExt(Format formatting=opt.formatting){
-	final switch(formatting) with(Format){
-		case default_: return "dexpr";
-		case gnuplot: return "gnu";
-		case matlab: return "m";
-		case mathematica: return "m";
-		case maple: return "mpl";
-		case sympy: return "py";
-		case lisp: return "lisp";
-	}
-}
 
 string getActualPath(string path){
 	// TODO: search path
@@ -45,92 +21,6 @@ string readCode(File f){
 	return cast(string)app.data;	
 }
 string readCode(string path){ return readCode(File(path)); }
-
-Distribution getCDF(Distribution dist){
-	dist=dist.dup;
-	auto freeVars=dist.freeVars.dup;
-	foreach(freeVar;freeVars){
-		auto nvar=dist.getVar("c"~freeVar.name);
-		dist.distribute(dIvr(DIvr.Type.leZ,-freeVar-20)*dIvr(DIvr.Type.leZ,freeVar-nvar));
-		dist.marginalize(freeVar);
-		dist.distribution=dist.distribution.substitute(nvar,freeVar);
-		dist.freeVars.remove(nvar);
-		dist.freeVars.insert(freeVar);
-	}
-	dist.simplify();
-	return dist;
-}
-
-void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool isMain){
-	auto dist=analyze(fd,err).dup;
-	if(isMain){
-		dist.renormalize();
-		if(fd.params.length){
-			dist.deleteContext(fd.params.length);
-			dist.assumeInputNormalized(fd.params.length);
-		}
-		//dist.distribution=dist.distribution.substituteFun("q".dFunVar,one,DVar[].init,SetX!DVar.init).simplify(one);
-	}
-	import dparse;
-	import approximate;
-	//import hashtable; dist.distribution=approxLog(dist.freeVars.element);
-	//import hashtable; dist.distribution=approxGaussInt(dist.freeVars.element);
-	if(opt.kill) dist.distribution=dist.distribution.killIntegrals();
-	if(opt.expectation){ // TODO: deal with non-convergent expectations
-		import type, std.conv : text;
-		if(fd.ret != ℝ){
-			err.error(text("with --expectation switch, functions should return a single number (not '",fd.ret,"')"),fd.loc);
-			return;
-		}
-		assert(dist.orderedFreeVars.length==1);
-		auto var=dist.orderedFreeVars[0];
-		auto expectation = dIntSmp(var,var*dist.distribution/(one-dist.error),one);
-		
-		writeln(opt.formatting==Format.mathematica?"E[":"𝔼[",var.toString(opt.formatting),dist.error!=zero?(opt.formatting==Format.mathematica?"|!error":"|¬error"):"","] = ",expectation.toString(opt.formatting)); // TODO: use blackboard bold E?
-		writeln("Pr[error] = ",dist.error);
-		return;
-	}
-	if(opt.cdf) dist=getCDF(dist);
-	auto str=dist.toString(opt.formatting);
-	if(expected.exists) with(expected){
-		writeln(ex==dist.distribution.toString()?todo?"FIXED":"PASS":todo?"TODO":"FAIL");
-	}
-	//writeln((cast(DPlus)dist.distribution).summands.length);
-	writeln(str);
-	/+if(str.length<10000) writeln(str);
-	else{
-		writeln("writing output to temporary file...");
-		auto f=File("tmp.deleteme","w");
-		f.writeln(str);
-	}+/
-	if(opt.casBench){
-		import std.file, std.conv;
-		auto bpath=buildPath(dirName(thisExePath()),"test/benchmarks/casBench/",to!string(opt.formatting),setExtension(baseName(path,".prb"),casExt()));
-		auto epath=buildPath(dirName(thisExePath()),"test/benchmarks/casBench/",to!string(opt.formatting),setExtension(baseName(path,".prb")~"Error",casExt()));
-		auto bfile=File(bpath,"w");
-		bfile.writeln(dist.distribution.toString(opt.formatting));
-		if(dist.error.hasIntegrals()){
-			auto efile=File(epath,"w");
-			efile.writeln(dist.error.toString(opt.formatting));
-		}
-	}
-	bool plotCDF=opt.cdf;
-	if(str.canFind("δ")) plotCDF=true;
-	import hashtable;
-	if(opt.plot && (dist.freeVars.length==1||dist.freeVars.length==2)){
-		if(plotCDF&&!opt.cdf){
-			dist=dist.dup();
-			foreach(freeVar;dist.freeVars.dup){
-				auto nvar=dist.declareVar("foo"~freeVar.name);
-				dist.distribute(dIvr(DIvr.Type.leZ,-freeVar-20)*dIvr(DIvr.Type.leZ,freeVar-nvar));
-				dist.marginalize(freeVar);
-			}
-		}
-		writeln("plotting... ",(plotCDF?"(CDF)":"(PDF)"));
-		//matlabPlot(dist.distribution.toString(Format.matlab).replace("q(γ⃗)","1"),dist.freeVars.element.toString(Format.matlab));
-		gnuplot(dist.distribution,dist.freeVars,opt.plotRange);
-	}
-}
 
 int run(string path){
 	path = getActualPath(path);
@@ -159,12 +49,7 @@ int run(string path){
 			functions[fd.name.name]=fd;
 		}else if(!cast(Declaration)expr) err.error("top level expression must be declaration",expr.loc);
 	}
-	sourceFile=path;
-	scope(exit){ // TODO: get rid of globals
-		functions=(FunctionDef[string]).init;
-		symbolic.summaries=(Distribution[FunctionDef]).init;
-		sourceFile=null;
-	}
+	auto be=Backend.create(path);
 	if(err.nerrors) return 1;
 	if("main" !in functions){
 		if(opt.casBench && functions.length>1){
@@ -173,12 +58,11 @@ int run(string path){
 		}
 		foreach(name,fd;functions){
 			writeln(name,":");
-			performAnalysis(path,fd,err,false);
+			printResult(be,path,fd,err,false);
 		}
-	}else performAnalysis(path,functions["main"],err,true);
+	}else printResult(be,path,functions["main"],err,true);
 	return !!err.nerrors;
 }
-
 
 int main(string[] args){
 	//import core.memory; GC.disable();

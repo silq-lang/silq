@@ -1,22 +1,50 @@
 import std.stdio, std.conv, std.format, std.string, std.range, std.algorithm;
 
-import psi;
+import options, backend;
 import lexer, expression, declaration, type, semantic_, error;
 import distrib, dexpr, util;
 
-Distribution[FunctionDef] summaries;
-string sourceFile;
+class Symbolic: Backend{
+	this(string sourceFile){
+		this.sourceFile=sourceFile;
+	}
+	override Distribution analyze(FunctionDef def,ErrorHandler err){
+		auto dist=new Distribution();
+		DExpr[] args;
+		foreach(a;def.params) args~=dist.declareVar(a.name.name);
+		if(def.context){
+			auto ctx=dist.declareVar(def.contextName);
+			if(!def.isConstructor) args~=ctx;
+			else{
+				auto dd=def.scope_.getDatDecl();
+				assert(dd && dd.dtype);
+				dist.initialize(ctx,dRecord(),dd.dtype);
+			}
+		}
+		if(def.name.name!="main"||args.length) // TODO: move this decision to caller
+			dist.addArgsWithContext(args);
+		return analyzeWith(def,dist,err);
+	}
+
+	Distribution analyzeWith(FunctionDef def,Distribution dist,ErrorHandler err){
+		auto a=Analyzer(this,dist,err);
+		Distribution retDist=null;
+		a.analyze(def.body_,retDist,def);
+		a.applyRetDist(def,retDist);
+		a.dist.simplify();
+		// dw(def," ",a.dist);
+		return a.dist;
+	}
+private:
+	Distribution[FunctionDef] summaries;
+	string sourceFile;	
+}
+
 
 alias ODefExp=BinaryExp!(Tok!":=");
 
-struct Expected{
-	bool exists;
-	bool todo;
-	string ex;
-}
-Expected expected;
-
 private struct Analyzer{
+	Symbolic be;
 	Distribution dist;
 	ErrorHandler err;
 	DExpr[][string] arrays;
@@ -138,16 +166,16 @@ private struct Analyzer{
 				}
 				if(id){
 					if(auto fun=cast(FunctionDef)id.meaning){
-						if(fun !in summaries){
-							summaries[fun]=new Distribution();
-							summaries[fun].distribute(mone);
-							summaries[fun]=.analyze(fun,err);
-						}else if(summaries[fun].distribution is mone){
+						if(fun !in be.summaries){
+							be.summaries[fun]=new Distribution();
+							be.summaries[fun].distribute(mone);
+							be.summaries[fun]=be.analyze(fun,err);
+						}else if(be.summaries[fun].distribution is mone){
 							// TODO: support special cases.
 							err.error("recursive dependencies unsupported",ce.loc);
 							unwind();
 						}
-						auto summary=summaries[fun];
+						auto summary=be.summaries[fun];
 						if(ce.args.length != fun.params.length){
 							err.error(format("expected %s arguments to '%s', received %s",fun.params.length,id.name,ce.args.length),ce.loc);
 							unwind();
@@ -484,7 +512,7 @@ private struct Analyzer{
 				dthen.distribution=dthen.distribution*dIvr(DIvr.Type.neqZ,cond);
 				auto dothw=dist.dupNoErr();
 				dothw.distribution=dothw.distribution*dIvr(DIvr.Type.eqZ,cond);
-				auto athen=Analyzer(dthen,err,arrays.dup,deterministic.dup);
+				auto athen=Analyzer(be,dthen,err,arrays.dup,deterministic.dup);
 				auto then=athen.transformExp(ite.then);
 				if(!then) unwind();
 				athen.dist.initialize(var,then,ite.then.s[0].type);
@@ -492,7 +520,7 @@ private struct Analyzer{
 					err.error("missing else for if expression",ite.loc);
 					unwind();
 				}
-				auto aothw=Analyzer(dothw,err,arrays.dup,deterministic.dup);
+				auto aothw=Analyzer(be,dothw,err,arrays.dup,deterministic.dup);
 				auto othw=aothw.transformExp(ite.othw);
 				if(!othw) unwind();
 				aothw.dist.initialize(var,othw,ite.othw.s[0].type);
@@ -685,7 +713,7 @@ private struct Analyzer{
 		}
 		auto filename=lit.lit.str;
 		import std.path, std.file;
-		auto path=buildPath(dirName(sourceFile),filename);
+		auto path=buildPath(dirName(be.sourceFile),filename);
 		File f;
 		try{
 			f=File(path,"r");
@@ -895,9 +923,9 @@ private struct Analyzer{
 				dthen.distribution=dthen.distribution*dIvr(DIvr.Type.neqZ,c);
 				auto dothw=dist.dupNoErr();
 				dothw.distribution=dothw.distribution*dIvr(DIvr.Type.eqZ,c);
-				auto athen=Analyzer(dthen,err,arrays.dup,deterministic.dup);
+				auto athen=Analyzer(be,dthen,err,arrays.dup,deterministic.dup);
 				dthen=athen.analyze(ite.then,retDist,functionDef);
-				auto aothw=Analyzer(dothw,err,arrays.dup,deterministic.dup);
+				auto aothw=Analyzer(be,dothw,err,arrays.dup,deterministic.dup);
 				if(ite.othw) dothw=aothw.analyze(ite.othw,retDist,functionDef);
 				dist=dthen.join(dist,dothw);
 				foreach(k,v;deterministic){
@@ -912,7 +940,7 @@ private struct Analyzer{
 				if(auto num=isDeterministicInteger(exp)){
 					int nerrors=err.nerrors;
 					for(ℤ j=0;j<num.c;j++){
-						auto anext=Analyzer(dist.dup(),err,arrays.dup,deterministic);
+						auto anext=Analyzer(be,dist.dup(),err,arrays.dup,deterministic);
 						auto dnext=anext.analyze(re.bdy,retDist,functionDef);
 						dnext.marginalizeLocals(dist);
 						dist=dnext;
@@ -929,7 +957,7 @@ private struct Analyzer{
 					int nerrors=err.nerrors;
 					for(ℤ j=l.c+cast(int)fe.leftExclusive;j+cast(int)fe.rightExclusive<=r.c;j++){
 						auto cdist=dist.dup();
-						auto anext=Analyzer(cdist,err,arrays.dup,deterministic);
+						auto anext=Analyzer(be,cdist,err,arrays.dup,deterministic);
 						auto var=cdist.declareVar(fe.var.name);
 						if(var){
 							auto rhs=dℤ(j);
@@ -1060,32 +1088,4 @@ private struct Analyzer{
 			dist=retDist;
 		}else err.error("not all paths return",fd.loc); // TODO: check during semantic
 	}
-}
-
-Distribution analyze(FunctionDef def,ErrorHandler err){
-	auto dist=new Distribution();
-	DExpr[] args;
-	foreach(a;def.params) args~=dist.declareVar(a.name.name);
-	if(def.context){
-		auto ctx=dist.declareVar(def.contextName);
-		if(!def.isConstructor) args~=ctx;
-		else{
-			auto dd=def.scope_.getDatDecl();
-			assert(dd && dd.dtype);
-			dist.initialize(ctx,dRecord(),dd.dtype);
-		}
-	}
-	if(def.name.name!="main"||args.length) // TODO: move this decision to caller
-		dist.addArgsWithContext(args);
-	return analyzeWith(def,dist,err);
-}
-
-Distribution analyzeWith(FunctionDef def,Distribution dist,ErrorHandler err){
-	auto a=Analyzer(dist,err);
-	Distribution retDist=null;
-	a.analyze(def.body_,retDist,def);
-	a.applyRetDist(def,retDist);
-	a.dist.simplify();
-	// dw(def," ",a.dist);
-	return a.dist;
 }

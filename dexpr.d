@@ -1,7 +1,7 @@
 // TODO: the caches should use weak references
 
 import std.conv;
-import hashtable, util;
+import options, hashtable, util;
 
 alias Q=TupleX, q=tuplex;
 static import std.typecons;
@@ -30,23 +30,7 @@ static ~this(){
 }
 enum measure="swCount++;sw.start();scope(exit)sw.stop();";+/
 
-enum Format{
-	default_,
-	gnuplot,
-	matlab,
-	maple,
-	mathematica,
-	sympy,
-	lisp,
-}
-
 //version=DISABLE_INTEGRATION;
-enum Simpl{
-	full,
-	deltas,
-	raw
-}
-Simpl simplification=Simpl.full;
 
 enum Precedence{
 	none,

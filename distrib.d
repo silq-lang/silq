@@ -1,6 +1,6 @@
 import std.algorithm, std.range, std.array, std.conv;
 
-import dexpr, type, util;
+import options, dexpr, type, util;
 
 DExpr gaussPDF(DVar var,DExpr μ,DExpr ν){
 	auto dist=one/(2*dΠ*ν)^^(one/2)*dE^^-((var-μ)^^2/(2*ν));

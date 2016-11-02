@@ -1,4 +1,4 @@
-import util;
+import options,util;
 
 enum commit = tryImport!(".git/"~tryImport!(".git/HEAD","ref: ")["ref: ".length..$],"unknown commit");
 
@@ -49,7 +49,7 @@ string computeDistributionDocString(){
              }
 	         return r;
 		}();
-	import std.conv, psi, dexpr;
+	import std.conv, dexpr;
 	string[3][] lrc;
 	// TODO: domain constraints
 	foreach(i,name;ToTuple!names){
