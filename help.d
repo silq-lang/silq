@@ -55,8 +55,8 @@ string computeDistributionDocString(){
 	foreach(i,name;ToTuple!names){
 		DExpr cond=mixin(text(name[0][0..$-3],"Cond(",calls[i][1..$].map!(x=>`dVar("`~x~`")`).join(","),")")).simplify(one);
 		string lhs=text("x := ",name[1],"(",calls[i][1..$].join(","),");");
-		string rhs=text("p(x) = ",mixin(text(name[0],`(dVar("x"),`,calls[i][1..$].map!(x=>`dVar("`~x~`")`).join(","),")")).simplify(cond).toString(formatting));
-		string cnd=text("where "~cond.toString(formatting));
+		string rhs=text("p(x) = ",mixin(text(name[0],`(dVar("x"),`,calls[i][1..$].map!(x=>`dVar("`~x~`")`).join(","),")")).simplify(cond).toString(opt.formatting));
+		string cnd=text("where "~cond.toString(opt.formatting));
 		lrc~=[lhs,rhs,cnd];
 	}
 	auto padding=lrc.map!(x=>x[0].length).reduce!max+4;

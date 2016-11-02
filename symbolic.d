@@ -457,7 +457,7 @@ private struct Analyzer{
 					assert(idx.a.length==1);
 					auto de=doIt(idx.e);
 					auto di=doIt(idx.a[0]);
-					if(!noBoundsCheck) dist.assertTrue(dIvr(DIvr.Type.lZ,di-dField(de,"length")),"array access out of bounds"); // TODO: check that index is an integer.
+					if(!opt.noBoundsCheck) dist.assertTrue(dIvr(DIvr.Type.lZ,di-dField(de,"length")),"array access out of bounds"); // TODO: check that index is an integer.
 					auto r=dIndex(de,di);
 					return r;
 				}else if(auto tt=cast(TupleTy)idx.e.type){
@@ -766,7 +766,7 @@ private struct Analyzer{
 				assert(idx.a.length==1);
 				auto index=transformExp(idx.a[0]);
 				if(old&&index&&rhs){
-					if(!noBoundsCheck) dist.assertTrue(dIvr(DIvr.Type.lZ,index-dField(old,"length")),"array access out of bounds"); // TODO: check that index is an integer.
+					if(!opt.noBoundsCheck) dist.assertTrue(dIvr(DIvr.Type.lZ,index-dField(old,"length")),"array access out of bounds"); // TODO: check that index is an integer.
 					assignTo(idx.e,dIUpdate(old,index,rhs),idx.e.type,loc);
 				}
 			}else{
@@ -797,7 +797,7 @@ private struct Analyzer{
 	}
 
 	private void analyzeStatement(Expression e,ref Distribution retDist,FunctionDef functionDef)in{assert(!!e);}body{
-		if(trace) writeln("statement: ",e);
+		if(opt.trace) writeln("statement: ",e);
 		/+writeln("before: ",dist);
 		 scope(success) writeln("after: ",dist);+/
 		// TODO: visitor?

@@ -3,19 +3,21 @@ import file=std.file;
 import util;
 import lexer, parser, expression, declaration, error;
 
-import scope_, semantic_, analysis, distrib, dexpr;
+import scope_, semantic_, symbolic, distrib, dexpr;
 
-bool plot=false;// TODO: get rid of globals?
-string plotRange="[-10:10]";
-bool cdf=false;
-bool kill=false;
-auto formatting=Format.default_;
-bool casBench=false;
-bool noBoundsCheck=false;
-bool trace=false;
-bool expectation=false;
-
-string casExt(Format formatting=.formatting){
+struct Options{
+	bool plot=false;
+	string plotRange="[-10:10]";
+	bool cdf=false;
+	bool kill=false;
+	auto formatting=Format.default_;
+	bool casBench=false;
+	bool noBoundsCheck=false;
+	bool trace=false;
+	bool expectation=false;
+}
+Options opt; // TODO: get rid of global?
+string casExt(Format formatting=opt.formatting){
 	final switch(formatting) with(Format){
 		case default_: return "dexpr";
 		case gnuplot: return "gnu";
@@ -73,8 +75,8 @@ void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool isMain){
 	import approximate;
 	//import hashtable; dist.distribution=approxLog(dist.freeVars.element);
 	//import hashtable; dist.distribution=approxGaussInt(dist.freeVars.element);
-	if(kill) dist.distribution=dist.distribution.killIntegrals();
-	if(expectation){ // TODO: deal with non-convergent expectations
+	if(opt.kill) dist.distribution=dist.distribution.killIntegrals();
+	if(opt.expectation){ // TODO: deal with non-convergent expectations
 		import type, std.conv : text;
 		if(fd.ret != ℝ){
 			err.error(text("with --expectation switch, functions should return a single number (not '",fd.ret,"')"),fd.loc);
@@ -84,12 +86,12 @@ void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool isMain){
 		auto var=dist.orderedFreeVars[0];
 		auto expectation = dIntSmp(var,var*dist.distribution/(one-dist.error),one);
 		
-		writeln(formatting==Format.mathematica?"E[":"𝔼[",var.toString(formatting),dist.error!=zero?(formatting==Format.mathematica?"|!error":"|¬error"):"","] = ",expectation.toString(formatting)); // TODO: use blackboard bold E?
+		writeln(opt.formatting==Format.mathematica?"E[":"𝔼[",var.toString(opt.formatting),dist.error!=zero?(opt.formatting==Format.mathematica?"|!error":"|¬error"):"","] = ",expectation.toString(opt.formatting)); // TODO: use blackboard bold E?
 		writeln("Pr[error] = ",dist.error);
 		return;
 	}
-	if(cdf) dist=getCDF(dist);
-	auto str=dist.toString(formatting);
+	if(opt.cdf) dist=getCDF(dist);
+	auto str=dist.toString(opt.formatting);
 	if(expected.exists) with(expected){
 		writeln(ex==dist.distribution.toString()?todo?"FIXED":"PASS":todo?"TODO":"FAIL");
 	}
@@ -101,22 +103,22 @@ void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool isMain){
 		auto f=File("tmp.deleteme","w");
 		f.writeln(str);
 	}+/
-	if(casBench){
+	if(opt.casBench){
 		import std.file, std.conv;
-		auto bpath=buildPath(dirName(thisExePath()),"test/benchmarks/casBench/",to!string(formatting),setExtension(baseName(path,".prb"),casExt()));
-		auto epath=buildPath(dirName(thisExePath()),"test/benchmarks/casBench/",to!string(formatting),setExtension(baseName(path,".prb")~"Error",casExt()));
+		auto bpath=buildPath(dirName(thisExePath()),"test/benchmarks/casBench/",to!string(opt.formatting),setExtension(baseName(path,".prb"),casExt()));
+		auto epath=buildPath(dirName(thisExePath()),"test/benchmarks/casBench/",to!string(opt.formatting),setExtension(baseName(path,".prb")~"Error",casExt()));
 		auto bfile=File(bpath,"w");
-		bfile.writeln(dist.distribution.toString(formatting));
+		bfile.writeln(dist.distribution.toString(opt.formatting));
 		if(dist.error.hasIntegrals()){
 			auto efile=File(epath,"w");
-			efile.writeln(dist.error.toString(formatting));
+			efile.writeln(dist.error.toString(opt.formatting));
 		}
 	}
-	bool plotCDF=cdf;
+	bool plotCDF=opt.cdf;
 	if(str.canFind("δ")) plotCDF=true;
 	import hashtable;
-	if(plot && (dist.freeVars.length==1||dist.freeVars.length==2)){
-		if(plotCDF&&!cdf){
+	if(opt.plot && (dist.freeVars.length==1||dist.freeVars.length==2)){
+		if(plotCDF&&!opt.cdf){
 			dist=dist.dup();
 			foreach(freeVar;dist.freeVars.dup){
 				auto nvar=dist.declareVar("foo"~freeVar.name);
@@ -126,7 +128,7 @@ void performAnalysis(string path,FunctionDef fd,ErrorHandler err,bool isMain){
 		}
 		writeln("plotting... ",(plotCDF?"(CDF)":"(PDF)"));
 		//matlabPlot(dist.distribution.toString(Format.matlab).replace("q(γ⃗)","1"),dist.freeVars.element.toString(Format.matlab));
-		gnuplot(dist.distribution,dist.freeVars,plotRange);
+		gnuplot(dist.distribution,dist.freeVars,opt.plotRange);
 	}
 }
 
@@ -160,12 +162,12 @@ int run(string path){
 	sourceFile=path;
 	scope(exit){ // TODO: get rid of globals
 		functions=(FunctionDef[string]).init;
-		analysis.summaries=(Distribution[FunctionDef]).init;
+		symbolic.summaries=(Distribution[FunctionDef]).init;
 		sourceFile=null;
 	}
 	if(err.nerrors) return 1;
 	if("main" !in functions){
-		if(casBench && functions.length>1){
+		if(opt.casBench && functions.length>1){
 			stderr.writeln("cannot extract benchmark: no entry point");
 			return 1;
 		}
@@ -201,29 +203,29 @@ int main(string[] args){
 			case "--distributions":
 				writeln(computeDistributionDocString());
 				return 0;
-			case "--cdf": cdf=true; break;
-			case "--plot": plot=true; break;
-			case "--kill": kill=true; break;
+			case "--cdf": opt.cdf=true; break;
+			case "--plot": opt.plot=true; break;
+			case "--kill": opt.kill=true; break;
 			case "--raw": simplification=Simpl.raw;  break;
 			case "--deltas": simplification=Simpl.deltas; break;
-			case "--noboundscheck": noBoundsCheck=true; break;
-			case "--trace": trace=true; break;
-			case "--expectation": expectation=true; break;
-			case "--casbench": casBench=true; break;
-			case "--gnuplot": formatting=Format.gnuplot; break;
-			case "--matlab": formatting=Format.matlab; break;
-			case "--maple": formatting=Format.maple; break;
-			case "--mathematica": formatting=Format.mathematica; break;
-			case "--sympy": formatting=Format.sympy; break;
-			case "--lisp": formatting=Format.lisp; break;
+			case "--noboundscheck": opt.noBoundsCheck=true; break;
+			case "--trace": opt.trace=true; break;
+			case "--expectation": opt.expectation=true; break;
+			case "--casbench": opt.casBench=true; break;
+			case "--gnuplot": opt.formatting=Format.gnuplot; break;
+			case "--matlab": opt.formatting=Format.matlab; break;
+			case "--maple": opt.formatting=Format.maple; break;
+			case "--mathematica": opt.formatting=Format.mathematica; break;
+			case "--sympy": opt.formatting=Format.sympy; break;
+			case "--lisp": opt.formatting=Format.lisp; break;
 			default:
 				if(x.startsWith("--plot=")){
 					auto rest=x["--plot=".length..$];
 					import std.regex;
 					auto r=regex(r"^\[-?[0-9]+(\.[0-9]+)?:-?[0-9]+(\.[0-9]+)?\]$");
 					if(match(rest,r)){
-						plot=true;
-						plotRange=rest;
+						opt.plot=true;
+						opt.plotRange=rest;
 						continue;
 					}else{
 						stderr.writeln("error: plot range needs to be of format [l:r], where l and r are decimal numbers");
