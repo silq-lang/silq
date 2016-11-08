@@ -418,7 +418,8 @@ import hashtable;
 //alias setxToHash=ID!(a=>a.toHash());
 //alias SetX(T)=HSet!(T,setxEq,setxToHash);
 //alias setx=hset!(setxToHash,setxEq);
-alias SetX(T)=SHSet!T;
+template SetX(T) if(is(T==class)){ alias SetX=SHSet!T; }
+template SetX(T) if(!is(T==class)){ alias SetX=HSet!(T,(a,b)=>a is b,a=>typeid(T).getHash(&a)); }
 alias setx=shset;
 alias MapX(K,V) = HashMap!(K,V,(a,b)=>a==b,a=>a.toHash());
 
