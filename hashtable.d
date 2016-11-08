@@ -1,4 +1,5 @@
-// built-in AAs as implemented by Digital Mars are unusable.
+// Written in the D programming language
+// License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
 
 import std.typecons, std.typetuple;
 import std.functional, std.algorithm;

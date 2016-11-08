@@ -1,3 +1,6 @@
+// Written in the D programming language
+// License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
+
 import options,util;
 
 enum commit = tryImport!(".git/"~tryImport!(".git/HEAD","ref: ")["ref: ".length..$],"unknown commit");

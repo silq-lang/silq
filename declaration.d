@@ -1,3 +1,6 @@
+// Written in the D programming language
+// License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
+
 import std.array, std.algorithm, std.conv;
 import lexer, type, expression, scope_, util;
 

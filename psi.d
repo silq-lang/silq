@@ -1,3 +1,6 @@
+// Written in the D programming language
+// License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
+
 import std.stdio, std.path, std.array, std.string, std.algorithm;
 import file=std.file;
 import util;

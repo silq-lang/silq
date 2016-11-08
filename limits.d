@@ -1,3 +1,6 @@
+// Written in the D programming language
+// License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
+
 import dexpr, util;
 import std.algorithm, std.array;
 import asymptotics;
