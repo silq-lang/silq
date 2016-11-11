@@ -1,3 +1,5 @@
+![alt text](https://raw.githubusercontent.com/eth-srl/psi/master/logo.png "PSI solver")
+
 # PSI Solver
 
 PSI is a tool for performing exact inference on probabilistic programs.
@@ -31,7 +33,7 @@ PSI is written in the D programming language. D compilers are available at http:
 ./build-release creates a release build.
 
 *NOTE:* The tests do not currently pass with the release build (PSI computes equivalent, but different expressions).
-(There is a nondeterministic order-of-iteration issue.)
+(There is a nondeterministic-order-of-iteration issue.)
 
 ### Other platforms
 
