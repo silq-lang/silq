@@ -9,7 +9,7 @@ PSI is described in the paper 'PSI: Exact Symbolic Inference for Probabilistic P
 
 ## Compatibility Disclaimer
 
-PSI does not currently try make any guarantees on backwards compatibility.
+PSI does not currently try to make any guarantees on backwards compatibility.
 If your project depends on PSI, write down the exact commit hash to ensure others can reproduce your results.
 The commit of HEAD at build time is displayed when running ./psi --help.
 
