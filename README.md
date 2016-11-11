@@ -40,14 +40,17 @@ Feel free to write a pull request with working build scripts for your favourite 
 
 ## Example
 
+```
 $ ./dependencies.sh && ./build.sh
+```
 
 ## Running the tests
 
-Change the current directory
-
+```
 cd test
 ./runtests
+```
+
 
 *NOTE:* The tests will currently only pass with the debug build. (See Build Instructions.)
 
@@ -63,6 +66,7 @@ Run './psi --help' to display information about supported command-line options.
 
 ### Examples
 
+```
 $ cat example.prb
 def main(){
     a := Gauss(0,1);
@@ -99,7 +103,7 @@ set samples 500, 500
 set isosample 200
 unset key
 plot [-10:10] (-1+x<=0)*(-30*x+30)*(-x<=0)*x**4
-
+```
 
 ## Quick language guide
 
@@ -234,6 +238,7 @@ Note: PSI does not currently check whether (a,b) is in the domain of exponentiat
 
 #### Method calls and tuples
 
+```
 def swapped(a,b){
     return (b,a);
 }
@@ -242,6 +247,7 @@ def main(){
     (z,w) = swapped(1,2);
     return ((z,w),swapped(z,w)); // p(r₁,r₂) = δ_r₁[(2,1)]·δ_r₂[(1,2)]
 }
+```
 
 #### Type annotations
 
@@ -252,12 +258,15 @@ The empty tuple has type '1'.
 
 One can annotate method return types:
 
+```
 def main(): R x R{
     return (0,1);
 }
+```
 
 #### General arrays
 
+```
 x := [1,2,3]; // declare array
 return x[UniformInt(0,2)]; // index randomly into array
 
@@ -265,6 +274,7 @@ x := ([] : R[]); // declare empty array of real numbers
 y := x ~ [1]; // y is the concatenation of x with [1]. ~= is also supported
 
 z := array(UniformInt(1,3),[1,2,3]); // declare array of arrays of random size, initialized with [1,2,3] at all indices
+```
 
 Note: PSI does not currently verify that array indices and lengths are integers.
 (Indexing into an array using a non-integer index within [0..length) returns the value 0.)
@@ -276,6 +286,7 @@ In order to bypass the special casing, use e.g. 'x := array(n,0)'.
 
 E.g.
 
+```
 dat Foo{
     x : R;
     y : R[];
@@ -294,7 +305,7 @@ def main(){
     x := Foo(1,[1,2,3]);
     return x.method(); // p(r₁) = δ_r₁[(1,2)]
 }
-
+```
 
 ## Source Code Guide
 
