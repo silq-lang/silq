@@ -156,11 +156,11 @@ Function bodies consist of a sequence of statements, possibly referencing the va
 ### Expressions
 
 - The following operators are supported and denote the corresponding operations on real numbers with standard C operator precedence (where applicable):
-  expression + expression, expression - expression, expression * expression, expression / expression, expression div expression
+  expression + expression, expression - expression, expression * expression, expression / expression, expression div expression, expression | expression, expression ⊕ expression, expression & expression
   -expression
   expression < expression, expression > expression, expression <= expression, expression >= expression,
   expression == expression, expression != expression
-  (div is integer division. a div b is the same as floor(a,b).)
+  (div is integer division. "a div b" is the same as "floor(a,b)". ⊕ is bitwise xor. The non-unicode syntax is "a xorb b".)
 
 - There are logical operators !, && and ||, also with standard C operator precedence.
   (Warning: && and || do not currently use short-circuit evaluation.)
