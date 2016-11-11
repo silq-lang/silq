@@ -41,7 +41,7 @@ int getLbp(TokenType type) pure{ // operator precedence
 	// assignment operators
 	case Tok!":": // type annotation
 		return 20;
-	case Tok!"/=",Tok!"&=",Tok!"|=",Tok!"-=":
+	case Tok!"/=",Tok!"div=",Tok!"&=",Tok!"|=",Tok!"-=":
 	case Tok!"+=",Tok!"<<=",Tok!">>=", Tok!">>>=":
 	case Tok!"=",Tok!"*=",Tok!"%=",Tok!"^=":
 	case Tok!"&&=", Tok!"||=", Tok!"~=":
@@ -64,7 +64,7 @@ int getLbp(TokenType type) pure{ // operator precedence
 	case Tok!"+",Tok!"-",Tok!"~":
 		return 120;
 	// multiplicative operators
-	case Tok!"*",Tok!"/",Tok!"%":
+	case Tok!"*",Tok!"/",Tok!"%",Tok!"div":
 		return 130;
 	/*/ prefix operators
 	case Tok!"&",Tok!"++",Tok!"--",Tok!"*":
@@ -482,6 +482,18 @@ struct Parser{
 						});
 				return r;
 			}());
+			case Tok!"i":
+				if(tok.str!="div") goto default;
+				auto id=tok;
+				nextToken();
+				if(ttype==Tok!"=" && id.loc.rep.ptr+id.loc.rep.length==tok.loc.rep.ptr){
+					nextToken();
+					auto right=parseExpression(rbp!(Tok!"div="));
+					return res=New!(BinaryExp!(Tok!"div="))(left,right);
+				}else{
+					auto right=parseExpression(rbp!(Tok!"div"));
+					return res=New!(BinaryExp!(Tok!"div"))(left,right);
+				}
 			//pragma(msg,TokenTypeToString(cast(TokenType)61));
 			mixin({string r;
 				foreach(x;postfixOps)
@@ -568,9 +580,14 @@ struct Parser{
 	}
 	alias skipType=parseType!false;
 	Expression parseExpression2(Expression left, int rbp = 0){ // left is already known
-		while(rbp < arrLbp[ttype])
+		int clbp(){
+			if(ttype==Tok!"i"&&tok.str=="div")
+				return arrLbp[peek().type==Tok!"="?Tok!"div=":Tok!"div"];
+			return arrLbp[ttype];
+		}
+		while(rbp < clbp())
 		loop: try left = led(left); catch(PEE err){error(err.msg);}
-		if(arrLbp[ttype] == -2 && rbp<lbp!(Tok!"==")){
+		if(clbp() == -2 && rbp<lbp!(Tok!"==")){
 			try left = led(left); catch(PEE err){error(err.msg);}
 			if(rbp<arrLbp[ttype]) goto loop;
 		}

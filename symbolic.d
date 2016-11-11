@@ -144,11 +144,12 @@ private struct Analyzer{
 			if(auto ae=cast(AddExp)e) return doIt(ae.e1)+doIt(ae.e2);
 			if(auto me=cast(SubExp)e) return doIt(me.e1)-doIt(me.e2);
 			if(auto me=cast(MulExp)e) return doIt(me.e1)*doIt(me.e2);
-			if(auto de=cast(DivExp)e){
+			if(cast(DivExp)e||cast(IDivExp)e){
+				auto de=cast(ABinaryExp)e;
 				auto e1=doIt(de.e1);
 				auto e2=doIt(de.e2);
 				dist.assertTrue(dIvr(DIvr.Type.neqZ,e2),formatError("division by zero",e.loc));
-				return e1/e2;
+				return cast(IDivExp)e?dFloor(e1/e2):e1/e2;
 			}
 			if(auto me=cast(ModExp)e) return doIt(me.e1)%doIt(me.e2);
 			if(auto pe=cast(PowExp)e) return doIt(pe.e1)^^doIt(pe.e2);
@@ -907,9 +908,9 @@ private struct Analyzer{
 				if(cast(AddAssignExp)e) return a+b;
 				if(cast(SubAssignExp)e) return a-b;
 				if(cast(MulAssignExp)e) return a*b;
-				if(cast(DivAssignExp)e){
+				if(cast(DivAssignExp)e||cast(IDivAssignExp)e){
 					dist.assertTrue(dIvr(DIvr.Type.neqZ,b),"division by zero");
-					return a/b;
+					return cast(IDivAssignExp)e?dFloor(a/b):a/b;
 				}
 				if(cast(ModAssignExp)e) return a%b;
 				if(cast(PowAssignExp)e){

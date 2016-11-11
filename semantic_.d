@@ -13,6 +13,7 @@ alias AddAssignExp=BinaryExp!(Tok!"+=");
 alias SubAssignExp=BinaryExp!(Tok!"-=");
 alias MulAssignExp=BinaryExp!(Tok!"*=");
 alias DivAssignExp=BinaryExp!(Tok!"/=");
+alias IDivAssignExp=BinaryExp!(Tok!"div=");
 alias ModAssignExp=BinaryExp!(Tok!"%=");
 alias PowAssignExp=BinaryExp!(Tok!"^=");
 alias CatAssignExp=BinaryExp!(Tok!"~=");
@@ -20,6 +21,7 @@ alias AddExp=BinaryExp!(Tok!"+");
 alias SubExp=BinaryExp!(Tok!"-");
 alias MulExp=BinaryExp!(Tok!"*");
 alias DivExp=BinaryExp!(Tok!"/");
+alias IDivExp=BinaryExp!(Tok!"div");
 alias ModExp=BinaryExp!(Tok!"%");
 alias PowExp=BinaryExp!(Tok!"^");
 alias CatExp=BinaryExp!(Tok!"~");
@@ -521,7 +523,7 @@ AssignExp assignExpSemantic(AssignExp ae,Scope sc){
 }
 
 bool isOpAssignExp(Expression e){
-	return cast(OrAssignExp)e||cast(AndAssignExp)e||cast(AddAssignExp)e||cast(SubAssignExp)e||cast(MulAssignExp)e||cast(DivAssignExp)e||cast(ModAssignExp)e||cast(PowAssignExp)e||cast(CatAssignExp)e;
+	return cast(OrAssignExp)e||cast(AndAssignExp)e||cast(AddAssignExp)e||cast(SubAssignExp)e||cast(MulAssignExp)e||cast(DivAssignExp)e||cast(IDivAssignExp)e||cast(ModAssignExp)e||cast(PowAssignExp)e||cast(CatAssignExp)e;
 }
 
 ABinaryExp opAssignExpSemantic(ABinaryExp be,Scope sc)in{
@@ -935,6 +937,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 	if(auto ae=cast(SubExp)expr) return handleBinary("subtraction",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
 	if(auto ae=cast(MulExp)expr) return handleBinary("multiplication",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
 	if(auto ae=cast(DivExp)expr) return handleBinary("division",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
+	if(auto ae=cast(IDivExp)expr) return handleBinary("integer division",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
 	if(auto ae=cast(ModExp)expr) return handleBinary("modulo",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
 	if(auto ae=cast(PowExp)expr) return handleBinary("power",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
 	if(auto ae=cast(UMinusExp)expr) return handleUnary("minus",ae,ae.e,ℝ,ℝ);
@@ -1002,7 +1005,8 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		default: break; // TODO
 		}
 	}
-	sc.error(expr.kind~" cannot appear within an expression",expr.loc);
+	if(expr.kind=="expression") sc.error("unsupported",expr.loc);
+	else sc.error(expr.kind~" cannot appear within an expression",expr.loc);
 	expr.sstate=SemState.error;
 	return expr;
 }

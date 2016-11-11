@@ -114,6 +114,8 @@ string[2][] specialTokens =
 	 ["\n",    "NewLine",                  ], // TODO: incorporate unicode new line support
 	 ["Error", "Error"                     ],
 	 ["__error","ErrorLiteral"             ],
+	 ["div",   "IntegerDivision"           ],
+	 ["div=",  "IntegerDivisionAssign"     ],
 	 ["EOF",   "Eof"                       ]];
 string[2][] compoundTokens = [];
 
