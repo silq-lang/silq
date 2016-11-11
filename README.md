@@ -40,7 +40,7 @@ PSI is written in the D programming language. D compilers are available at http:
 The build instructions given here are for GNU/Linux. PSI also works on other platforms.
 Feel free to write a pull request with working build scripts for your favourite platform.
 
-## Example
+### Example
 
 ```
 $ ./dependencies.sh && ./build.sh
