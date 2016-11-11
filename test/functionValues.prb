@@ -10,6 +10,6 @@ dat Dat{
 
 def main(){
     d := Dat(4);
-    y := d.query; // TODO: this shouldn't assert
+    y := d.query;
     return y;
 }
