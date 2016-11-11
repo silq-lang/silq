@@ -82,7 +82,7 @@ p(r₁) = (d/dx)⁻¹[e^(-x²)](r₁·⅟√2̅)·2·⅟e^(r₁²·⅟2)·⅟π�
 $ psi example.prb --mathematica --cdf
 p[r₁_] := (-2^(1/2)*Sqrt[Pi]*(Erf[-1/2^(1/2)*20]+1)/2^2+1/2^(1/2)*2*Sqrt[Pi]*(Erf[1/2^(1/2)*cr1]+1)/2^2)*1/2^(1/2)*1/Pi*Boole[-20+-cr1<=0]
 
-$ cat coin\_bias\_small.prb
+$ cat coin_bias_small.prb
 def main(){
     p := Uniform(0,1);
     x1 := Bernoulli(p);
@@ -94,7 +94,7 @@ def main(){
     return p;
 }
 
-$ psi coinBiasSmall.prb --plot
+$ psi coin_bias_small.prb --plot
 p(p) = (-30·p+30)·[-1+p≤0]·[-p≤0]·p⁴
 plotting... (PDF)
 command: 
