@@ -216,9 +216,10 @@ If arguments don't conform to the constraints of the distribution, the program e
   and [expression != expression] can be used, among others.
 
   Example:
+  ```
   x := SampleFrom("(x;y) => [-y<=x]*[x<=y]*x^2",y);
   (x,y,z) := SampleFrom("(x,y,z;w) => [-1<=x]*[x<=1]*[-1<=y]*[y<=1]*|x|*|y|*delta(z-w)",w);
-
+  ```  
   Note: PSI does not currently verify that the given density expression is in fact a generalized probability density, so
   some care is required when using this primitive.
   
