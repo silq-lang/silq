@@ -38,6 +38,9 @@ enum measure="swCount++;sw.start();scope(exit)sw.stop();";+/
 enum Precedence{
 	none,
 	lambda,
+	bitOr,
+	bitXor,
+	bitAnd,
 	plus,
 	uminus,
 	lim,
@@ -3179,6 +3182,100 @@ DExpr dMod(DExpr e1,DExpr e2){
 	return e1-dFloor(e1/e2)*e2;
 }
 
+template BitwiseImpl(string which){
+	mixin Constructor;
+	override @property Precedence precedence(){ return mixin("Precedence."~which); }
+	override @property string symbol(Format formatting,int binders){ return " "~which~" "; }
+	override DExpr substitute(DVar var,DExpr e){
+		DExprSet res;
+		foreach(s;operands) insert(res,s.substitute(var,e));
+		return mixin("d"~upperf(which))(res);
+	}
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
+		DExprSet res;
+		foreach(s;operands) insert(res,s.substituteFun(fun,q,args,context));
+		return mixin("d"~upperf(which))(res);
+	}
+	override DExpr incDeBruijnVar(int di,int bound){
+		DExprSet res;
+		foreach(s;operands) insert(res,s.incDeBruijnVar(di,bound));
+		return mixin("d"~upperf(which))(res);
+	}
+	static void insert(ref DExprSet operands,DExpr operand)in{assert(!!operand);}body{
+		if(operand is zero){
+			static if(which=="bitAnd") operands.clear();
+			return;
+		}
+		static if(which=="bitXor"){
+			if(operand in operands){
+				operands.remove(operand);
+				return;
+			}
+		}
+		operands.insert(operand);
+	}
+	static void insertAndSimplify(ref DExprSet operands,DExpr operand,DExpr facts){
+		operand=operand.simplify(facts);
+		if(auto other=mixin("cast(D"~upperf(which)~")operand")){
+			foreach(o;other.operands)
+				insertAndSimplify(operands,o,facts);
+			return;
+		}
+		DExpr combine(DExpr e1,DExpr e2,DExpr facts){
+			if(e1 is e2){
+				static if(which=="bitXor") return zero;
+				else return e1;
+			}
+			if(auto n1=cast(Dℤ)e1){
+				if(auto n2=cast(Dℤ)e2){
+					static if(which=="bitOr")
+						return dℤ(n1.c|n2.c);
+					else static if(which=="bitXor")
+						return dℤ(n1.c^n2.c);
+					else static if(which=="bitAnd")
+						return dℤ(n1.c&n2.c);
+					else static assert(0);
+				}
+			}
+			return null;
+		}
+		foreach(o;operands){
+			if(auto nws=combine(o,operand,facts)){
+				assert(o in operands);
+				operands.remove(o);
+				insertAndSimplify(operands,nws,facts);
+				return;
+			}
+		}
+		insert(operands,operand);
+	}
+	override DExpr simplifyImpl(DExpr facts){
+		DExprSet operands;
+		foreach(o;this.operands)
+			insertAndSimplify(operands,o,facts);
+		return mixin("d"~upperf(which))(operands);
+	}
+	static DExpr constructHook(DExprSet operands){
+		static if(which=="bitOr"||which=="bitXor"){
+			if(!operands.length) return zero;
+		}
+		return null;
+	}
+}
+class DCommutAssocIdemOp: DCommutAssocOp { }
+alias makeConstructorCommutAssocIdem=makeConstructorCommutAssoc;
+class DBitOr: DCommutAssocIdemOp{ // TODO: this is actually also idempotent
+	mixin BitwiseImpl!"bitOr";
+}
+class DBitXor: DCommutAssocOp{
+	mixin BitwiseImpl!"bitXor";
+}
+class DBitAnd: DCommutAssocIdemOp{ // TODO: this is actually also idempotent
+	mixin BitwiseImpl!"bitAnd";
+}
+mixin(makeConstructorCommutAssocIdem!DBitOr);
+mixin(makeConstructorCommutAssoc!DBitXor);
+mixin(makeConstructorCommutAssocIdem!DBitAnd);
 
 class DGaussInt: DOp{
 	DExpr x;

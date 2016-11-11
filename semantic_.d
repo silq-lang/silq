@@ -17,6 +17,9 @@ alias IDivAssignExp=BinaryExp!(Tok!"div=");
 alias ModAssignExp=BinaryExp!(Tok!"%=");
 alias PowAssignExp=BinaryExp!(Tok!"^=");
 alias CatAssignExp=BinaryExp!(Tok!"~=");
+alias BitOrAssignExp=BinaryExp!(Tok!"|=");
+alias BitXorAssignExp=BinaryExp!(Tok!"⊕=");
+alias BitAndAssignExp=BinaryExp!(Tok!"&=");
 alias AddExp=BinaryExp!(Tok!"+");
 alias SubExp=BinaryExp!(Tok!"-");
 alias MulExp=BinaryExp!(Tok!"*");
@@ -25,6 +28,9 @@ alias IDivExp=BinaryExp!(Tok!"div");
 alias ModExp=BinaryExp!(Tok!"%");
 alias PowExp=BinaryExp!(Tok!"^");
 alias CatExp=BinaryExp!(Tok!"~");
+alias BitOrExp=BinaryExp!(Tok!"|");
+alias BitXorExp=BinaryExp!(Tok!"⊕");
+alias BitAndExp=BinaryExp!(Tok!"&");
 alias UMinusExp=UnaryExp!(Tok!"-");
 alias UNegExp=UnaryExp!(Tok!"!");
 alias LtExp=BinaryExp!(Tok!"<");
@@ -523,7 +529,7 @@ AssignExp assignExpSemantic(AssignExp ae,Scope sc){
 }
 
 bool isOpAssignExp(Expression e){
-	return cast(OrAssignExp)e||cast(AndAssignExp)e||cast(AddAssignExp)e||cast(SubAssignExp)e||cast(MulAssignExp)e||cast(DivAssignExp)e||cast(IDivAssignExp)e||cast(ModAssignExp)e||cast(PowAssignExp)e||cast(CatAssignExp)e;
+	return cast(OrAssignExp)e||cast(AndAssignExp)e||cast(AddAssignExp)e||cast(SubAssignExp)e||cast(MulAssignExp)e||cast(DivAssignExp)e||cast(IDivAssignExp)e||cast(ModAssignExp)e||cast(PowAssignExp)e||cast(CatAssignExp)e||cast(BitOrAssignExp)e||cast(BitXorAssignExp)e||cast(BitAndAssignExp)e;
 }
 
 ABinaryExp opAssignExpSemantic(ABinaryExp be,Scope sc)in{
@@ -940,6 +946,9 @@ Expression expressionSemantic(Expression expr,Scope sc){
 	if(auto ae=cast(IDivExp)expr) return handleBinary("integer division",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
 	if(auto ae=cast(ModExp)expr) return handleBinary("modulo",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
 	if(auto ae=cast(PowExp)expr) return handleBinary("power",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
+	if(auto ae=cast(BitOrExp)expr) return handleBinary("bitwise or",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
+	if(auto ae=cast(BitXorExp)expr) return handleBinary("bitwise xor",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
+	if(auto ae=cast(BitAndExp)expr) return handleBinary("bitwise and",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);	
 	if(auto ae=cast(UMinusExp)expr) return handleUnary("minus",ae,ae.e,ℝ,ℝ);
 	if(auto ae=cast(UNegExp)expr) return handleUnary("negation",ae,ae.e,Bool,Bool);
 	if(auto ae=cast(AndExp)expr) return handleBinary("conjunction",ae,ae.e1,ae.e2,Bool,Bool,Bool);

@@ -1,0 +1,18 @@
+
+def swap(a,b){
+    a xorb= b;
+    b xorb= a;
+    a xorb= b;
+    return (a,b);
+}
+
+def main(){
+    x := 5 ⊕ 3;
+    y := 2134678 | 1287122;
+    z := 2134678 & 1287122;
+    w := 5;
+    w ⊕= 5;
+    assert(!w);
+    return (x,y,z,swap(x,y)); // expected: δ[-x+6]·δ[-y+3388374]·δ[-z+33426]·δ_r₁[(y,x)]
+}
+

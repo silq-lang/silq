@@ -98,12 +98,12 @@ string[2][] simpleTokens =
 	 ["*=",    "MultiplyAssign"            ],
 	 ["%",     "Modulo"                    ],
 	 ["%=",    "ModuloAssign"              ],
-	 ["^",     "Xor"                       ],
-	 ["^=",    "XorAssign"                 ],
-	 ["^^",    "Pow"                       ],
-	 ["^^=",   "PowAssign"                 ],
+	 ["^",     "Pow"                       ],
+	 ["^=",    "PowAssign"                 ],
 	 ["~",     "Concat"                    ],
 	 ["~=",    "ConcatAssign"              ],
+	 ["⊕",     "Xor"                       ],
+	 ["⊕=",    "XorAssign"                 ],
 	 ["@",     "At"                        ],
 	 ["×",     "Times"                     ]];
 string[2][] specialTokens = 
@@ -793,6 +793,13 @@ private:
 					try{auto ch=utf.decode(p[0..4],len);
 						s=p, p+=len;
 						if(isAlphaEx(ch)) goto identifier;
+						if(ch=='⊕'){
+							if(*p=='='){
+								res[0].type=Tok!"⊕=";
+								p++;
+							}else res[0].type=Tok!"⊕";
+							break;
+						}
 						if(!isWhite(ch)) errors~=tokError(format("unsupported character '%s'",ch),s[0..len]);
 						// else if(isNewLine(ch)) line++; // TODO: implement this everywhere
 						continue;

@@ -41,7 +41,7 @@ int getLbp(TokenType type) pure{ // operator precedence
 	// assignment operators
 	case Tok!":": // type annotation
 		return 20;
-	case Tok!"/=",Tok!"div=",Tok!"&=",Tok!"|=",Tok!"-=":
+	case Tok!"/=",Tok!"div=",Tok!"&=",Tok!"⊕=",Tok!"|=",Tok!"-=":
 	case Tok!"+=",Tok!"<<=",Tok!">>=", Tok!">>>=":
 	case Tok!"=",Tok!"*=",Tok!"%=",Tok!"^=":
 	case Tok!"&&=", Tok!"||=", Tok!"~=":
@@ -51,6 +51,10 @@ int getLbp(TokenType type) pure{ // operator precedence
 	case Tok!"?":  return 40; // conditional operator
 	case Tok!"||": return 50; // logical OR
 	case Tok!"&&": return 60; // logical AND
+	// bitwise operators
+	case Tok!"|": return 70;
+	case Tok!"⊕": return 80;
+	case Tok!"&": return 90;
 	// relational operators
 	case Tok!"==",Tok!"!=",Tok!">",Tok!"<":
 	case Tok!">=",Tok!"<=",Tok!"!>",Tok!"!<":
@@ -483,17 +487,32 @@ struct Parser{
 				return r;
 			}());
 			case Tok!"i":
-				if(tok.str!="div") goto default;
-				auto id=tok;
-				nextToken();
-				if(ttype==Tok!"=" && id.loc.rep.ptr+id.loc.rep.length==tok.loc.rep.ptr){
-					nextToken();
-					auto right=parseExpression(rbp!(Tok!"div="));
-					return res=New!(BinaryExp!(Tok!"div="))(left,right);
-				}else{
-					auto right=parseExpression(rbp!(Tok!"div"));
-					return res=New!(BinaryExp!(Tok!"div"))(left,right);
+				switch(tok.str){ // TODO: clean this up using code generation
+					case "div":
+						auto id=tok;
+						nextToken();
+						if(ttype==Tok!"=" && id.loc.rep.ptr+id.loc.rep.length==tok.loc.rep.ptr){
+							nextToken();
+							auto right=parseExpression(rbp!(Tok!"div="));
+							return res=New!(BinaryExp!(Tok!"div="))(left,right);
+						}else{
+							auto right=parseExpression(rbp!(Tok!"div"));
+							return res=New!(BinaryExp!(Tok!"div"))(left,right);
+						}
+					case "xorb":
+						auto id=tok;
+						nextToken();
+						if(ttype==Tok!"=" && id.loc.rep.ptr+id.loc.rep.length==tok.loc.rep.ptr){
+							nextToken();
+							auto right=parseExpression(rbp!(Tok!"⊕="));
+							return res=New!(BinaryExp!(Tok!"⊕="))(left,right);
+						}else{
+							auto right=parseExpression(rbp!(Tok!"⊕"));
+							return res=New!(BinaryExp!(Tok!"⊕"))(left,right);
+						}
+					default: break;
 				}
+				goto default;
 			//pragma(msg,TokenTypeToString(cast(TokenType)61));
 			mixin({string r;
 				foreach(x;postfixOps)
@@ -581,8 +600,12 @@ struct Parser{
 	alias skipType=parseType!false;
 	Expression parseExpression2(Expression left, int rbp = 0){ // left is already known
 		int clbp(){
-			if(ttype==Tok!"i"&&tok.str=="div")
-				return arrLbp[peek().type==Tok!"="?Tok!"div=":Tok!"div"];
+			if(ttype==Tok!"i"){
+				if(tok.str=="div")
+					return arrLbp[peek().type==Tok!"="?Tok!"div=":Tok!"div"];
+				if(tok.str=="xorb")
+					return arrLbp[peek().type==Tok!"="?Tok!"⊕=":Tok!"⊕"];
+			}
 			return arrLbp[ttype];
 		}
 		while(rbp < clbp())

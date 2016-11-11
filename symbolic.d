@@ -154,6 +154,9 @@ private struct Analyzer{
 			if(auto me=cast(ModExp)e) return doIt(me.e1)%doIt(me.e2);
 			if(auto pe=cast(PowExp)e) return doIt(pe.e1)^^doIt(pe.e2);
 			if(auto ce=cast(CatExp)e) return doIt(ce.e1)~doIt(ce.e2);
+			if(auto ce=cast(BitOrExp)e) return dBitOr(doIt(ce.e1),doIt(ce.e2));
+			if(auto ce=cast(BitXorExp)e) return dBitXor(doIt(ce.e1),doIt(ce.e2));
+			if(auto ce=cast(BitAndExp)e) return dBitAnd(doIt(ce.e1),doIt(ce.e2));
 			if(auto ume=cast(UMinusExp)e) return -doIt(ume.e);
 			if(auto ume=cast(UNegExp)e) return dIvr(DIvr.Type.eqZ,doIt(ume.e));
 			if(auto le=cast(LambdaExp)e){
@@ -918,6 +921,9 @@ private struct Analyzer{
 					return a^^b;
 				}
 				if(cast(CatAssignExp)e) return a~b;
+				if(cast(BitOrAssignExp)e) return dBitOr(a,b);
+				if(cast(BitXorAssignExp)e) return dBitXor(a,b);
+				if(cast(BitAndAssignExp)e) return dBitAnd(a,b);
 				assert(0);
 			}
 			auto be=cast(ABinaryExp)e;
