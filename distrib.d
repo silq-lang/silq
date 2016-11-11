@@ -277,16 +277,14 @@ class Distribution{
 	void initialize(DVar var,DExpr exp,Type ty){
 		assert(!distribution.hasFreeVar(var));
 		distribute(dDelta(var,exp,ty));
-		marginalizeTemporaries();
 	}
-	void assign(DVar var,DExpr exp,Type ty,bool noMarginalize=false){
+	void assign(DVar var,DExpr exp,Type ty){
 		if(distribution is zero) return;
 		// assert(distribution.hasFreeVar(var)); // ∫dx0
 		auto nvar=getVar(var.name);
 		distribution=distribution.substitute(var,nvar);
 		exp=exp.substitute(var,nvar);
 		distribute(dDelta(var,exp,ty));
-		if(!noMarginalize) marginalizeTemporaries();
 		marginalize(nvar);
 	}
 	void marginalize(DVar var)in{assert(var in freeVars); }body{

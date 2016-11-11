@@ -40,7 +40,7 @@ class Symbolic: Backend{
 	}
 private:
 	Distribution[FunctionDef] summaries;
-	string sourceFile;	
+	string sourceFile;
 }
 
 
@@ -758,7 +758,7 @@ private struct Analyzer{
 	void assignTo(DExpr lhs,DExpr rhs,Type ty,Location loc){
 		void assignVar(DVar var,DExpr rhs,Type ty){
 			if(var.name !in arrays){
-				dist.assign(var,rhs,ty,true);
+				dist.assign(var,rhs,ty);
 				trackDeterministic(var,rhs,ty);
 			}else err.error("reassigning array unsupported",loc);
 		}
@@ -784,7 +784,7 @@ private struct Analyzer{
 		void assignVar(Identifier id,DExpr rhs,Type ty){
 			if(id.name !in arrays){
 				auto v=dVar(id.name);
-				dist.assign(v,rhs,ty,true);
+				dist.assign(v,rhs,ty);
 				trackDeterministic(v,rhs,ty);
 			}else err.error("reassigning array unsupported",lhs.loc);
 		}
