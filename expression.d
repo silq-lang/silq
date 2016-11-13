@@ -30,6 +30,7 @@ abstract class Expression: Node{
 
 	override @property string kind(){return "expression";}
 	bool isCompound(){ return false; }
+	bool isConstant(){ return false; }
 }
 
 class TypeAnnotationExp: Expression{
@@ -57,6 +58,7 @@ class LiteralExp: Expression{
 	override string toString(){
 		return lit.toString();
 	}
+	override bool isConstant(){ return true; }
 }
 
 class Identifier: Expression{
@@ -99,6 +101,7 @@ class UnaryExp(TokenType op): Expression{
 		}
 		//override UnaryExp!(Tok!"&") isAddressExp(){return this;}
 	}
+	override bool isConstant(){ return e.isConstant(); }
 }
 class PostfixExp(TokenType op): Expression{
 	Expression e;
@@ -127,6 +130,9 @@ class CallExp: Expression{
 abstract class ABinaryExp: Expression{
 	Expression e1,e2;
 	this(Expression left, Expression right){e1=left; e2=right;}
+	override bool isConstant(){
+		return e1.isConstant() && e2.isConstant();
+	}
 }
 
 class BinaryExp(TokenType op): ABinaryExp{
@@ -245,6 +251,7 @@ class ArrayExp: Expression{
 		this.e=e;
 	}
 	override string toString(){ return "["~e.map!(to!string).join(",")~"]";}
+	override bool isConstant(){ return e.all!(x=>x.isConstant()); }
 }
 
 class ReturnExp: Expression{

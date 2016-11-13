@@ -198,7 +198,7 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 
 Expression[] semantic(Expression[] exprs,Scope sc){
 	bool success=true;
-	foreach(ref expr;exprs) expr=makeDeclaration(expr,success,sc);
+	foreach(ref expr;exprs) if(!cast(BinaryExp!(Tok!":="))expr) expr=makeDeclaration(expr,success,sc); // TODO: get rid of special casing?
 	foreach(ref expr;exprs) if(auto decl=cast(Declaration)expr) expr=presemantic(decl,sc);
 	foreach(ref expr;exprs){
 		expr=toplevelSemantic(expr,sc);
@@ -210,6 +210,7 @@ Expression[] semantic(Expression[] exprs,Scope sc){
 Expression toplevelSemantic(Expression expr,Scope sc){
 	if(auto fd=cast(FunctionDef)expr) return functionDefSemantic(fd,sc);
 	if(auto dd=cast(DatDecl)expr) return datDeclSemantic(dd,sc);
+	if(cast(BinaryExp!(Tok!":="))expr||cast(DefExp)expr) return toplevelConstantSemantic(expr,sc);
 	sc.error("not supported at toplevel",expr.loc);
 	expr.sstate=SemState.error;
 	return expr;
@@ -459,23 +460,30 @@ Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
 	bool success=true;
 	auto de=cast(DefExp)makeDeclaration(be,success,sc);
 	if(!de) be.sstate=SemState.error;
-	assert(success && de && de.init is be || !de||de.sstate==SemState.error);
+	assert(success && de && de.initializer is be || !de||de.sstate==SemState.error);
 	be.e2=expressionSemantic(be.e2,sc);
 	if(be.e2.sstate==SemState.completed){
 		if(auto tpl=cast(TupleExp)be.e1){
 			if(auto tt=cast(TupleTy)be.e2.type){
 				if(tpl.length!=tt.types.length){
 					sc.error(text("inconsistent number of tuple entries for definition: ",tpl.length," vs. ",tt.types.length),de.loc);
-					if(de) de.setError();
+					if(de){ de.setError(); be.sstate=SemState.error; }
 				}
 			}else{
 				sc.error(format("cannot unpack type '%s' as a tuple",be.e2.type),de.loc);
-				if(de) de.setError();
+				if(de){ de.setError(); be.sstate=SemState.error; }
 			}
 		}
 		if(de){
 			de.setType(be.e2.type);
+			de.setInitializer();
 			de.type=unit;
+		}
+		if(cast(TopScope)sc){
+			if(!be.e2.isConstant()){
+				sc.error("global constant initializer must be a constant",be.e2.loc);
+				if(de){ de.setError(); be.sstate=SemState.error; }
+			}
 		}
 	}else if(de) de.setError();
 	return de?de:be;
@@ -586,7 +594,7 @@ Expression assignSemantic(Expression e,Scope sc)in{
 }
 
 bool isColonOrAssign(Expression e){
-	return isAssignment(e)||cast(BinaryExp!(Tok!":="))e;
+	return isAssignment(e)||cast(BinaryExp!(Tok!":="))e||cast(DefExp)e;
 }
 
 Expression colonOrAssignSemantic(Expression e,Scope sc)in{
@@ -594,6 +602,7 @@ Expression colonOrAssignSemantic(Expression e,Scope sc)in{
 }body{
 	if(isAssignment(e)) return assignSemantic(e,sc);
 	if(auto be=cast(BinaryExp!(Tok!":="))e) return colonAssignSemantic(be,sc);
+	if(cast(DefExp)e) return e; // TODO: ok?
 	assert(0);
 }
 
@@ -777,6 +786,15 @@ Expression expressionSemantic(Expression expr,Scope sc){
 			// TODO: context lookup for nested declarations such as lambdas
 			sc.error("invalid reference",id.loc);
 			id.sstate=SemState.error;
+		}
+		if(auto vd=cast(VarDecl)id.meaning){
+			if(cast(TopScope)vd.scope_){
+				if(!vd.initializer||vd.initializer.sstate!=SemState.completed){
+					id.sstate=SemState.error;
+					return id;
+				}
+				return vd.initializer;
+			}
 		}
 		return id;
 	}
@@ -1064,6 +1082,10 @@ DatDecl datDeclSemantic(DatDecl dat,Scope sc){
 	dat.body_=bdy;
 	dat.type=unit;
 	return dat;
+}
+
+Expression toplevelConstantSemantic(Expression e,Scope sc){
+	return statementSemantic(e,sc);
 }
 
 ReturnExp returnExpSemantic(ReturnExp ret,Scope sc){

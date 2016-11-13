@@ -846,7 +846,7 @@ private struct Analyzer{
 		 scope(success) writeln("after: ",dist);+/
 		// TODO: visitor?
 		if(auto nde=cast(DefExp)e){
-			auto de=cast(ODefExp)nde.init;
+			auto de=cast(ODefExp)nde.initializer;
 			assert(!!de);
 			// TODO: no real need to repeat checks done by semantic
 			scope(exit) dist.marginalizeTemporaries();

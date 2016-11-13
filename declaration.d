@@ -32,6 +32,7 @@ class VarDecl: Declaration{
 
 	// semantic information
 	Type vtype;
+	Expression initializer;
 }
 
 class Parameter: VarDecl{
@@ -85,11 +86,12 @@ class DatDecl: Declaration{
 }
 
 abstract class DefExp: Expression{
-	Expression init;
-	this(Expression init){ this.init=init; }
+	BinaryExp!(Tok!":=") initializer;
+	this(BinaryExp!(Tok!":=") init){ this.initializer=init; }
 	abstract VarDecl[] decls();
 
 	abstract void setType(Type type);
+	abstract void setInitializer();
 	abstract void setError();
 }
 
@@ -100,13 +102,17 @@ class SingleDefExp: DefExp{
 		this.decl=decl; super(init);
 	}
 	override string toString(){
-		return init.toString();
+		return initializer.toString();
 	}
 
 	override void setType(Type type){
 		assert(!!type);
 		decl.vtype=type;
 		if(!decl.vtype) decl.sstate=SemState.error;
+	}
+	override void setInitializer(){
+		assert(!decl.initializer&&initializer);
+		decl.initializer=initializer.e2;
 	}
 	override void setError(){
 		decl.sstate=sstate=SemState.error;
@@ -116,11 +122,11 @@ class SingleDefExp: DefExp{
 class MultiDefExp: DefExp{
 	VarDecl[] decls_;
 	override VarDecl[] decls(){ return decls_; }
-	this(VarDecl[] decls_,Expression init){
+	this(VarDecl[] decls_,BinaryExp!(Tok!":=") init){
 		this.decls_=decls_; super(init);
 	}
 	override string toString(){
-		return init.toString();
+		return initializer.toString();
 	}
 	override void setType(Type type){
 		assert(!!type);
@@ -130,6 +136,16 @@ class MultiDefExp: DefExp{
 					decl.vtype=tt.types[i];
 				}
 			}
+		}
+	}
+	override void setInitializer(){
+		assert(initializer);
+		auto tpl=cast(TupleExp)initializer.e2;
+		if(!tpl) return;
+		assert(tpl.length==decls.length);
+		foreach(i;0..decls.length){
+			assert(!decls[i].initializer);
+			decls[i].initializer=tpl.e[i];
 		}
 	}
 	override void setError(){
