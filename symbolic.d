@@ -38,6 +38,20 @@ class Symbolic: Backend{
 		// dw(def," ",a.dist);
 		return a.dist;
 	}
+
+
+	Distribution getSummary(FunctionDef fun,Location loc,ErrorHandler err){
+		if(fun !in summaries){
+			summaries[fun]=new Distribution();
+			summaries[fun].distribute(mone);
+			summaries[fun]=analyze(fun,err);
+		}else if(summaries[fun].distribution is mone){
+			// TODO: support special cases.
+			err.error("recursive dependencies unsupported",loc);
+			return null;
+		}
+		return summaries[fun];
+	}
 private:
 	Distribution[FunctionDef] summaries;
 	string sourceFile;
@@ -174,16 +188,8 @@ private struct Analyzer{
 				}
 				if(id){
 					if(auto fun=cast(FunctionDef)id.meaning){
-						if(fun !in be.summaries){
-							be.summaries[fun]=new Distribution();
-							be.summaries[fun].distribute(mone);
-							be.summaries[fun]=be.analyze(fun,err);
-						}else if(be.summaries[fun].distribution is mone){
-							// TODO: support special cases.
-							err.error("recursive dependencies unsupported",ce.loc);
-							unwind();
-						}
-						auto summary=be.summaries[fun];
+						auto summary=be.getSummary(fun,ce.loc,err);
+						if(!summary) unwind();
 						if(ce.args.length != fun.params.length){
 							err.error(format("expected %s arguments to '%s', received %s",fun.params.length,id.name,ce.args.length),ce.loc);
 							unwind();
