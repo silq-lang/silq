@@ -1160,6 +1160,17 @@ void test(){
 	foreach(var;vars) r=dIvr(DIvr.Type.neqZ,r+var).simplify(one).polyNormalize().simplify(one);
 	writeln(r);+/
 	//writeln(((("ν".dVar)^^(one/2))^^-1).simplify(one));
+	/*import distrib,dexpr,dparse,type;
+	auto d=new Distribution();
+	d.declareVar("x");
+	d.distribute("[0≤x]·[x≤1]".dParse);
+	d.declareVar("y");
+	d.distribute("[0≤y]·[y≤1]".dParse);
+	d.assertTrue("[x≤y]".dParse,"fail!");
+	d.orderFreeVars([dVar("x"),dVar("y")]);
+	auto r=Distribution.fromDExpr(d.toDExpr(),[dVar("a"),dVar("b")],[ℝ,ℝ]);
+	r.simplify();
+	writeln(r);*/
 }
 
 /*

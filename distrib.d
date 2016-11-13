@@ -357,6 +357,28 @@ class Distribution{
 		this.orderedFreeVars=orderedFreeVars;
 	}
 
+	DExpr toDExpr()in{assert(freeVarsOrdered);}body{
+		auto db1=dDeBruijnVar(1);
+		auto r=dDiscDelta(db1,dRecord(["tag":one,"values":dTuple(cast(DExpr[])orderedFreeVars)]))*distribution.incDeBruijnVar(1,0);
+		foreach(v;orderedFreeVars) r=dInt(v,r);
+		r=r+dDiscDelta(db1,dRecord(["tag":zero]))*error;
+		return dLambda(r);
+	}
+
+	static Distribution fromDExpr(DExpr dexpr,DVar[] orderedFreeVars,Type[] types){
+		auto r=new Distribution();
+		auto db1=dDeBruijnVar(1);
+		dexpr=dexpr.incDeBruijnVar(1,0);
+		foreach(i,v;orderedFreeVars){
+			r.freeVars.insert(v);
+			r.initialize(v,dIndex(dField(db1,"values"),dℤ(i)),types[i]);
+		}
+		r.distribution=dInt(r.distribution*dIvr(DIvr.Type.eqZ,dField(db1,"tag")-one)*dApply(dexpr,db1));
+		r.error=dInt(dIvr(DIvr.Type.eqZ,dField(db1,"tag"))*dApply(dexpr,db1));
+		r.orderFreeVars(orderedFreeVars);
+		return r;
+	}
+
 	string toString(Format formatting){
 		auto initial="p(";
 		auto middle=") = ";
