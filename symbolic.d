@@ -158,7 +158,7 @@ private struct Analyzer{
 			if(auto ce=cast(BitXorExp)e) return dBitXor(doIt(ce.e1),doIt(ce.e2));
 			if(auto ce=cast(BitAndExp)e) return dBitAnd(doIt(ce.e1),doIt(ce.e2));
 			if(auto ume=cast(UMinusExp)e) return -doIt(ume.e);
-			if(auto ume=cast(UNegExp)e) return dIvr(DIvr.Type.eqZ,doIt(ume.e));
+			if(auto ume=cast(UNotExp)e) return dIvr(DIvr.Type.eqZ,doIt(ume.e));
 			if(auto le=cast(LambdaExp)e){
 				err.error("lambda expressions not supported yet",e.loc);
 				unwind();

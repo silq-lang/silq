@@ -32,7 +32,7 @@ alias BitOrExp=BinaryExp!(Tok!"|");
 alias BitXorExp=BinaryExp!(Tok!"⊕");
 alias BitAndExp=BinaryExp!(Tok!"&");
 alias UMinusExp=UnaryExp!(Tok!"-");
-alias UNegExp=UnaryExp!(Tok!"!");
+alias UNotExp=UnaryExp!(Tok!"!");
 alias LtExp=BinaryExp!(Tok!"<");
 alias LeExp=BinaryExp!(Tok!"<=");
 alias GtExp=BinaryExp!(Tok!">");
@@ -950,7 +950,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 	if(auto ae=cast(BitXorExp)expr) return handleBinary("bitwise xor",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
 	if(auto ae=cast(BitAndExp)expr) return handleBinary("bitwise and",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);	
 	if(auto ae=cast(UMinusExp)expr) return handleUnary("minus",ae,ae.e,ℝ,ℝ);
-	if(auto ae=cast(UNegExp)expr) return handleUnary("negation",ae,ae.e,Bool,Bool);
+	if(auto ae=cast(UNotExp)expr) return handleUnary("negation",ae,ae.e,Bool,Bool);
 	if(auto ae=cast(AndExp)expr) return handleBinary("conjunction",ae,ae.e1,ae.e2,Bool,Bool,Bool);
 	if(auto ae=cast(OrExp)expr) return handleBinary("disjunction",ae,ae.e1,ae.e2,Bool,Bool,Bool);
 	if(auto ae=cast(LtExp)expr) return handleBinary("'<'",ae,ae.e1,ae.e2,ℝ,ℝ,Bool);
