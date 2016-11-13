@@ -392,8 +392,8 @@ class Distribution{
 		DVar[] vars;
 		if(freeVarsOrdered) vars=orderedFreeVars;
 		else vars=freeVars.array;
-		foreach(v;orderedFreeVars) r~=(formatting==Format.mathematica?v.toString(formatting)~"_":v.toString(formatting))~",";
-		if(orderedFreeVars.length) r=r[0..$-1];
+		foreach(v;vars) r~=(formatting==Format.mathematica?v.toString(formatting)~"_":v.toString(formatting))~",";
+		if(vars.length) r=r[0..$-1];
 		r~=middle~distribution.toString(formatting);
 		if(error !is zero) r~="\n"~errstr~error.toString(formatting);
 		return r;
