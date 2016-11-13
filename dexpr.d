@@ -49,6 +49,7 @@ enum Precedence{
 	div,
 	diff,
 	pow,
+	apply,
 	index,
 	field=index,
 	invalid,
@@ -3917,6 +3918,48 @@ DLambda dLambda(DVar var,DExpr expr)in{assert(var&&expr&&(!cast(DDeBruijnVar)var
 	if(var is dDeBruijnVar(1)) return dLambda(expr);
 	return dLambda(expr.incDeBruijnVar(1,0).substitute(var,dDeBruijnVar(1)));
 }
+
+class DApply: DOp{
+	DExpr fun;
+	DExpr arg;
+	this(DExpr fun,DExpr arg){
+		this.fun=fun;
+		this.arg=arg;
+	}
+	override @property string symbol(Format formatting,int binders){ return " "; }
+	override @property Precedence precedence(){ return Precedence.apply; }
+	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		return addp(prec,text(fun.toStringImpl(formatting,Precedence.apply,binders)," ",arg.toStringImpl(formatting,Precedence.apply,binders)));
+	}
+	override int forEachSubExpr(scope int delegate(DExpr) dg){
+		if(auto r=dg(fun)) return r;
+		return dg(arg);
+	}
+	override int freeVarsImpl(scope int delegate(DVar) dg){
+		if(auto r=fun.freeVarsImpl(dg)) return r;
+		return arg.freeVarsImpl(dg);
+	}
+	override DExpr substitute(DVar var,DExpr e){
+		return dApply(fun.substitute(var,e),arg.substitute(var,e));
+	}
+	override DExpr substituteFun(DFunVar fun,DExpr q,DVar[] args,SetX!DVar context){
+		return dApply(this.fun.substituteFun(fun,q,args,context),arg.substituteFun(fun,q,args,context));
+	}
+	override DApply incDeBruijnVar(int di,int bound){
+		return dApply(fun.incDeBruijnVar(di,bound),arg.incDeBruijnVar(di,bound));
+	}
+	static DApply constructHook(DExpr fun,DExpr arg){
+		return null;
+	}
+	override DExpr simplifyImpl(DExpr facts){
+		auto nfun=fun.simplify(facts),narg=arg.simplify(facts);
+		if(auto l=cast(DLambda)nfun)
+			return l.apply(narg);
+		return dApply(nfun,narg);
+	}
+}
+mixin(makeConstructorNonCommutAssoc!DApply);
+
 
 class DArray: DExpr{
 	DExpr length;
