@@ -729,6 +729,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		propErr(le.fd,le);
 		if(le.fd.sstate==SemState.completed)
 			le.type=typeForDecl(le.fd);
+		if(le.fd.sstate==SemState.completed) le.sstate=SemState.completed;
 		return le;
 	}
 	if(auto fd=cast(FunctionDef)expr){
@@ -1069,7 +1070,7 @@ FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 		}
 	}
 	if(fd.ret&&!fd.ftype) fd.ftype=funTy(tupleTy(pty),fd.ret);
-	if(!fd.sstate==SemState.error)
+	if(fd.sstate!=SemState.error)
 		fd.sstate=SemState.completed;
 	return fd;
 }
