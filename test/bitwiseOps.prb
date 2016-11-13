@@ -13,6 +13,6 @@ def main(){
     w := 5;
     w ⊕= 5;
     assert(!w);
-    return (x,y,z,swap(x,y)); // expected: δ[-x+6]·δ[-y+3388374]·δ[-z+33426]·δ_r₁[(y,x)]
+    return (x,y,z,swap(x,y),~0); // expected: δ[-1+-r₂]·δ[-x+6]·δ[-y+3388374]·δ[-z+33426]·δ_r₁[(y,x)]
 }
 
