@@ -3365,7 +3365,7 @@ class DContextLambda: DOp{ // TODO: get rid of this?
 	override @property Precedence precedence(){ return Precedence.lambda; }
 	override string symbol(Format formatting,int binders){ return "λ"; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
-		return addp(prec,text("λ(",args.map!(a=>a.toStringImpl(formatting,Precedence.none,binders)),"). ",fun.toStringImpl(formatting,Precedence.lambda,binders)));
+		return addp(prec,text("λ(",args.map!(a=>a.toStringImpl(formatting,Precedence.none,binders)).join(","),";",context.array.map!(x=>x.toStringImpl(formatting,Precedence.none,binders)).join(","),"). ",fun.toStringImpl(formatting,Precedence.lambda,binders)));
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
 		return 0;
