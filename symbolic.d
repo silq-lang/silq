@@ -126,9 +126,11 @@ private struct Analyzer{
 				DExpr r=getContextFor(id.meaning,id.scope_);
 				return r?dField(r,id.name):dVar(id.name);
 			}
-			if(cast(FunctionDef)id.meaning){
-				err.error("first-class functions not supported yet",id.loc);
-				return null;
+			if(auto fd=cast(FunctionDef)id.meaning){
+				/*err.error("first-class functions not supported yet",id.loc);
+				  return null;*/
+				auto summary=be.getSummary(fd,id.loc,err);
+				return summary.toDExpr();
 			}
 			err.error("unsupported",id.loc);
 			return null;
@@ -502,9 +504,27 @@ private struct Analyzer{
 						return tmp;
 					default: break;
 					}
-					err.error("undefined function '"~id.name~"'",ce.loc);
-					unwind();
 				}
+				auto funty=cast(FunTy)ce.e.type;
+				assert(!!funty);
+				Type[] resty;
+				if(auto tplres=cast(TupleTy)funty.cod) resty=tplres.types;
+				else resty=[funty.cod];
+				DVar[] results=iota(0,resty.length).map!(x=>dVar("__r"~lowNum(x+1))).array;
+				auto summary=Distribution.fromDExpr(doIt(ce.e),results,resty);
+				auto tuplety=cast(TupleTy)funty.dom;
+				assert(ce.args.length == tuplety.types.length);
+				DExpr[] args;
+				foreach(i,arg;ce.args){
+					if(auto a=doIt(arg)){
+						args~=a;
+					}else unwind();
+				}
+				assert(!!tuplety);
+				auto types=tuplety.types;
+				auto r=dist.call(summary,args,types);
+				if(!cast(DTuple)r&&cast(TupleTy)funty.cod) r=dTuple([r]);
+				return r;
 			}
 			if(auto idx=cast(IndexExp)e){
 				if(idx.e.type is arrayTy(ℝ)){

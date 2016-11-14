@@ -2417,7 +2417,7 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 import type; // TODO: remove this import
 DExpr dDelta(DVar var,DExpr e,Type ty){ // TODO: dexpr shouldn't know about type, but this is most convenient for overloading
 	if(ty is ℝ) return dDelta(e-var);
-	assert(cast(TupleTy)ty||cast(ArrayTy)ty||cast(AggregateTy)ty||cast(ContextTy)ty,text(ty)); // TODO: add more supported types
+	assert(cast(TupleTy)ty||cast(ArrayTy)ty||cast(AggregateTy)ty||cast(ContextTy)ty||cast(FunTy)ty,text(ty)); // TODO: add more supported types
 	return dDiscDelta(var,e);
 }
 
