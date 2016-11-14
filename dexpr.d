@@ -3378,10 +3378,10 @@ class DFun: DOp{ // uninterpreted functions
 	override @property string symbol(Format formatting,int binders){ return fun.name; }
 	override Precedence precedence(){ return Precedence.none; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
-		if(formatting==Format.lisp) return text("(",fun," ",args.map!(a=>a.toStringImpl(formatting,Precedence.none,binders)).join(" "),")");
+		if(formatting==Format.lisp) return text("(",fun.toStringImpl(formatting,prec,binders)," ",args.map!(a=>a.toStringImpl(formatting,Precedence.none,binders)).join(" "),")");
 		if(formatting==Format.mathematica)
-			return fun.name~"["~args.map!(a=>a.toStringImpl(formatting,Precedence.none,binders)).join(",")~"]";
-		return fun.name~"("~args.map!(a=>a.toStringImpl(formatting,Precedence.none,binders)).join(",")~")";
+			return fun.toStringImpl(formatting,prec,binders)~"["~args.map!(a=>a.toStringImpl(formatting,Precedence.none,binders)).join(",")~"]";
+		return fun.toStringImpl(formatting,prec,binders)~"("~args.map!(a=>a.toStringImpl(formatting,Precedence.none,binders)).join(",")~")";
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
 		foreach(a;args)
