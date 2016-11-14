@@ -1,4 +1,5 @@
 def main(a: ℝ[],b: ℝ[],c: ℝ[]){
     assert(((a~b)~c).length==(a~(b~c)).length);
-    return; // expected: 1
+    return; // expected: [∫dξ₁∫dξ₂∫dξ₃`q(ξ₃,ξ₂,ξ₁)≠0]
+    // TODO: 1 would be better...
 }

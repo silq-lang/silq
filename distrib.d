@@ -164,6 +164,7 @@ class Distribution{
 		r.freeVars=freeVars.dup();
 		r.distribution=distribution;
 		r.error=error;
+		r.q=q;
 		r.context=context;
 		r.freeVarsOrdered=freeVarsOrdered;
 		r.orderedFreeVars=orderedFreeVars.dup;
@@ -198,7 +199,9 @@ class Distribution{
 		r.tmpVars=orig.tmpVars;
 		r.distribution=d1+d2;
 		r.error=orig.error;
+		r.q=q;
 		r.context=context;
+		assert(q is b.q);
 		assert(context is b.context);
 		assert(!freeVarsOrdered && !b.freeVarsOrdered);
 		if(error !is zero || b.error !is zero)
@@ -206,25 +209,29 @@ class Distribution{
 		return r;
 	}
 
+	DVar q;
 	DContextVars context=null;
-	void addArgsWithContext(DExpr[] args)in{assert(!context);}body{
-		context=dContextVars("γ","q".dFunVar);
-		auto q="q".dFunVar;
+
+	void addArgsWithContext(DExpr[] args)in{assert(!context&&!q);}body{
+		q=dVar("`q");
+		assert(!!q);
+		context=dContextVars("γ",q);
 		args~=context;
 		distribute(dFun(q,args)); // TODO: constant name sufficient?
 	}
 	
-	void deleteContext(size_t nParams){
+	void deleteContext(size_t nParams)in{ assert(!!q); }body{
 		auto vars=iota(0,nParams).map!(x=>dVar("__p"~lowNum(x))).array;
-		auto fun=dFun("q".dFunVar,cast(DExpr[])vars); // TODO: get rid of cast
-		distribution=distribution.substituteFun("q".dFunVar,fun,vars,SetX!DVar.init).simplify(one);
-		error=error.substituteFun("q".dFunVar,fun,vars,SetX!DVar.init).simplify(one);
+		auto fun=dFun(q,cast(DExpr[])vars); // TODO: get rid of cast
+		distribution=distribution.substituteFun(q,fun,vars,SetX!DVar.init).simplify(one);
+		error=error.substituteFun(q,fun,vars,SetX!DVar.init).simplify(one);
 		context=null;
+		q=null;
 	}
 
 	void assumeInputNormalized(size_t nParams){
 		auto vars=iota(0,nParams).map!(x=>dVar("__p"~lowNum(x))).array;
-		auto fun=dFun("q".dFunVar,cast(DExpr[])vars); // TODO: get rid of cast
+		auto fun=dFun(q,cast(DExpr[])vars); // TODO: get rid of cast
 		DExpr tdist=fun;
 		foreach(v;vars) tdist=dIntSmp(v,tdist,one);
 		if(context) tdist=dInt(context,tdist);
@@ -311,7 +318,7 @@ class Distribution{
 		distribution=(dIvr(DIvr.Type.neqZ,factor)*(distribution/factor)).simplify(one);
 		error=(dIvr(DIvr.Type.eqZ,factor)+dIvr(DIvr.Type.neqZ,factor)*(error/factor)).simplify(one);
 	}
-	DExpr call(Distribution q,DExpr[] args,Type[] ty){
+	DExpr call(Distribution q,DExpr[] args,Type[] ty)in{assert(!!q.q);}body{
 		DExpr rdist=q.distribution;
 		DExpr rerr=q.error;
 		import hashtable;
@@ -330,8 +337,8 @@ class Distribution{
 			vars~=var;
 			oldDist=oldDist*dDelta(var,a,ty[i]);
 		}
-		distribution = rdist.substituteFun("q".dFunVar,oldDist,vars,context);
-		auto nerror = rerr.substituteFun("q".dFunVar,oldDist,vars,context);
+		distribution = rdist.substituteFun(q.q,oldDist,vars,context);
+		auto nerror = rerr.substituteFun(q.q,oldDist,vars,context);
 		//dw("+--\n",oldDist,"\n",rdist,"\n",distribution,"\n--+");
 		foreach(v;vars){
 			tmpVars.remove(v);

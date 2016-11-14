@@ -2,5 +2,6 @@
 def main(a) {
     x := a;
     y := x - x;
-    return y; // expected: δ[-y]
+    return y; // expected: [∫dξ₁`q(ξ₁)≠0]·δ[-y]
+    // TODO: get rid of integral term
 }

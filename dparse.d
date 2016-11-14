@@ -181,6 +181,7 @@ struct DParser{
 		if(lowDigits.canFind(c)) return true;
 		if(c=='₋') return true;
 		if(c=='_') return true;
+		if(c=='`') return true; // for "`q"
 		return false;
 	}
 
@@ -217,12 +218,12 @@ struct DParser{
 		string s=parseIdentifier();
 		if(cur()=='⃗'){
 			next();
-			auto fun="q".dFunVar; // TODO: fix!
+			auto fun="`q".dVar; // TODO: fix!
 			return dContextVars(s,fun);
 		}
 		return varOrBound(s);
 	}
-	DFunVar curFun=null;
+	DVar curFun=null;
 	DExpr parseDVarDFun(){
 		string s=parseIdentifier();
 		if(curFun&&cur()=='⃗'){
@@ -233,7 +234,7 @@ struct DParser{
 			return varOrBound(s);
 		}
 		auto oldCurFun=curFun; scope(exit) curFun=oldCurFun;
-		curFun=dFunVar(s);
+		curFun=dVar(s);
 		DExpr[] args;
 		do{
 			next();
