@@ -223,8 +223,8 @@ class Distribution{
 	void deleteContext(size_t nParams)in{ assert(!!q); }body{
 		auto vars=iota(0,nParams).map!(x=>dVar("__p"~lowNum(x))).array;
 		auto fun=dFun(q,cast(DExpr[])vars); // TODO: get rid of cast
-		distribution=distribution.substituteFun(q,fun,vars,SetX!DVar.init).simplify(one);
-		error=error.substituteFun(q,fun,vars,SetX!DVar.init).simplify(one);
+		distribution=distribution.substitute(q,dContextLambda(vars,SetX!DVar.init,fun)).simplify(one);
+		error=error.substitute(q,dContextLambda(vars,SetX!DVar.init,fun)).simplify(one);
 		context=null;
 		q=null;
 	}
@@ -337,8 +337,8 @@ class Distribution{
 			vars~=var;
 			oldDist=oldDist*dDelta(var,a,ty[i]);
 		}
-		distribution = rdist.substituteFun(q.q,oldDist,vars,context);
-		auto nerror = rerr.substituteFun(q.q,oldDist,vars,context);
+		distribution = rdist.substitute(q.q,dContextLambda(vars,context,oldDist));
+		auto nerror = rerr.substitute(q.q,dContextLambda(vars,context,oldDist));
 		//dw("+--\n",oldDist,"\n",rdist,"\n",distribution,"\n--+");
 		foreach(v;vars){
 			tmpVars.remove(v);

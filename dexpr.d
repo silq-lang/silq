@@ -92,7 +92,6 @@ abstract class DExpr{
 
 	// TODO: implement in terms of 'forEachSubExpr'?
 	abstract DExpr substitute(DVar var,DExpr e);
-	abstract DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SetX!DVar context);
 	abstract DExpr incDeBruijnVar(int di,int free);
 	abstract int freeVarsImpl(scope int delegate(DVar));
 	final freeVars(){
@@ -167,7 +166,6 @@ abstract class DExpr{
 		override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; }
 		override int freeVarsImpl(scope int delegate(DVar) dg){ return 0; }
 		override DExpr substitute(DVar var,DExpr e){ assert(var !is this); return this; }
-		override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SetX!DVar context){ assert(fun !is this); return this; }
 		override DExpr incDeBruijnVar(int di,int free){ return this; }
 		override DExpr simplifyImpl(DExpr facts){ return this; }
 	}
@@ -195,7 +193,6 @@ class DVar: DExpr{
 	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; }
 	override int freeVarsImpl(scope int delegate(DVar) dg){ return dg(this); }
 	override DExpr substitute(DVar var,DExpr e){ return this is var?e:this; }
-	override DExpr substituteFun(DVar var,DExpr q,DVar[] args,SetX!DVar context){ return this; }
 	override DVar incDeBruijnVar(int di,int free){ return this; }
 	override DExpr simplifyImpl(DExpr facts){
 		if(cast(DDeBruijnVar)this||cast(DTmpDeBruijnVar)this) return this;
@@ -533,11 +530,6 @@ class DPlus: DCommutAssocOp{
 		foreach(s;summands) insert(res,s.substitute(var,e));
 		return dPlus(res);
 	}
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		DExprSet res;
-		foreach(s;summands) insert(res,s.substituteFun(fun,q,args,context));
-		return dPlus(res);
-	}
 	override DExpr incDeBruijnVar(int di,int bound){
 		DExprSet res;
 		foreach(s;summands) insert(res,s.incDeBruijnVar(di,bound));
@@ -779,11 +771,6 @@ class DMult: DCommutAssocOp{
 		}
 		DExprSet res;
 		foreach(f;factors) insert(res,f.substitute(var,e));
-		return dMult(res);
-	}
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		DExprSet res;
-		foreach(f;factors) insert(res,f.substituteFun(fun,q,args,context));
 		return dMult(res);
 	}
 	override DExpr incDeBruijnVar(int di,int bound){
@@ -1207,9 +1194,6 @@ class DPow: DBinaryOp{
 
 	override DExpr substitute(DVar var,DExpr e){
 		return operands[0].substitute(var,e)^^operands[1].substitute(var,e);
-	}
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		return operands[0].substituteFun(fun,q,args,context)^^operands[1].substituteFun(fun,q,args,context);
 	}
 	override DExpr incDeBruijnVar(int di,int bound){
 		return operands[0].incDeBruijnVar(di,bound)^^operands[1].incDeBruijnVar(di,bound);
@@ -2075,7 +2059,6 @@ class DIvr: DExpr{ // iverson brackets
 	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; } // TODO: correct?
 	override int freeVarsImpl(scope int delegate(DVar) dg){ return e.freeVarsImpl(dg); }
 	override DExpr substitute(DVar var,DExpr exp){ return dIvr(type,e.substitute(var,exp)); }
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SetX!DVar context){ return dIvr(type,e.substituteFun(fun,q,args,context)); }
 	override DExpr incDeBruijnVar(int di,int bound){ return dIvr(type,e.incDeBruijnVar(di,bound)); }
 
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
@@ -2300,9 +2283,6 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; } // TODO: ok?
 	override int freeVarsImpl(scope int delegate(DVar) dg){ return e.freeVarsImpl(dg); }
 	override DExpr substitute(DVar var,DExpr exp){ return dDelta(e.substitute(var,exp)); }
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		return dDelta(e.substituteFun(fun,q,args,context));
-	}
 	override DExpr incDeBruijnVar(int di,int bound){ return dDelta(e.incDeBruijnVar(di,bound)); }
 
 	static DExpr constructHook(DExpr e){
@@ -2388,9 +2368,6 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 		auto v=cast(DVar)this.var.substitute(var,exp);
 		assert(!!v);
 		return dDiscDelta(v,e.substitute(var,exp));
-	}
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		return dDiscDelta(var,e.substituteFun(fun,q,args,context));
 	}
 	override DExpr incDeBruijnVar(int di,int bound){ return dDiscDelta(var.incDeBruijnVar(di,bound),e.incDeBruijnVar(di,bound)); }
 
@@ -2611,9 +2588,6 @@ class DInt: DOp{
 	override DExpr substitute(DVar var,DExpr e){
 		return dInt(expr.substitute(var.incDeBruijnVar(1,0),e.incDeBruijnVar(1,0)));
 	}
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		return dInt(expr.substituteFun(fun,q.incDeBruijnVar(1,0),args,context));
-	}
 	override DExpr incDeBruijnVar(int di,int bound){
 		return dInt(expr.incDeBruijnVar(di,bound+1));
 	}
@@ -2688,16 +2662,15 @@ class DContextInt: DOp{
 		return expr.freeVarsImpl(v=>v is var?0:dg(v));
 	}
 	override DExpr substitute(DVar var,DExpr e){
-		return dContextInt(this.var,expr.substitute(var,e));
-	}
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		auto nexpr=expr.substituteFun(fun,q,args,context);
-		if(var.fun is fun){
-			auto r=nexpr;
-			foreach(v;context) r=dInt(v,r);
-			return r;
+		auto nexpr=expr.substitute(var,e);
+		if(auto cl=cast(DContextLambda)e){
+			if(this.var.fun is var){
+				auto r=nexpr;
+				foreach(v;cl.context) r=dInt(v,r);
+				return r;		
+			}
 		}
-		return dContextInt(var,nexpr);
+		return dContextInt(this.var,nexpr);
 	}
 	override DExpr incDeBruijnVar(int di,int bound){
 		return dContextInt(var,expr.incDeBruijnVar(di,bound));
@@ -2777,9 +2750,6 @@ class DSum: DOp{
 	override DExpr substitute(DVar var,DExpr e){
 		return dSum(expr.substitute(var.incDeBruijnVar(1,0),e.incDeBruijnVar(1,0)));
 	}
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		return dSum(expr.substituteFun(fun,q.incDeBruijnVar(1,0),args,context));
-	}
 	override DExpr incDeBruijnVar(int di,int bound){
 		return dSum(expr.incDeBruijnVar(di,bound+1));
 	}
@@ -2842,9 +2812,6 @@ class DLim: DOp{
 	}
 	override DExpr substitute(DVar var,DExpr exp){
 		return dLim(e.substitute(var,exp),x.substitute(var.incDeBruijnVar(1,0),exp.incDeBruijnVar(1,0)));
-	}
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		return dLim(e.substituteFun(fun,q,args,context),x.substituteFun(fun,q.incDeBruijnVar(1,0),args,context));
 	}
 	override DExpr incDeBruijnVar(int di,int bound){
 		return dLim(e.incDeBruijnVar(di,bound),x.incDeBruijnVar(di,bound+1));
@@ -2909,9 +2876,6 @@ class DDiff: DOp{
 	override DExpr substitute(DVar var,DExpr exp){
 		return dDiff(e.substitute(var.incDeBruijnVar(1,0),exp.incDeBruijnVar(1,0)),x.substitute(var,exp));
 	}
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		return dDiff(e.substituteFun(fun,q.incDeBruijnVar(1,0),args,context),x.substituteFun(fun,q,args,context));
-	}
 	override DExpr incDeBruijnVar(int di,int bound){
 		return dDiff(e.incDeBruijnVar(di,bound+1),x.incDeBruijnVar(di,bound));
 	}
@@ -2946,9 +2910,6 @@ class DAbs: DOp{
 	}
 	override DExpr substitute(DVar var,DExpr exp){
 		return dAbs(e.substitute(var,exp));
-	}
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		return dAbs(e.substituteFun(fun,q,args,context));
 	}
 	override DExpr incDeBruijnVar(int di,int bound){
 		return dAbs(e.incDeBruijnVar(di,bound));
@@ -3003,9 +2964,6 @@ class DLog: DOp{
 	}
 	override DExpr substitute(DVar var,DExpr exp){
 		return dLog(e.substitute(var,exp));
-	}
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		return dLog(e.substituteFun(fun,q,args,context));
 	}
 	override DExpr incDeBruijnVar(int di,int bound){
 		return dLog(e.incDeBruijnVar(di,bound));
@@ -3068,9 +3026,6 @@ class DSin: DOp{
 	override DExpr substitute(DVar var,DExpr exp){
 		return dSin(e.substitute(var,exp));
 	}
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		return dSin(e.substituteFun(fun,q,args,context));
-	}
 	override DExpr incDeBruijnVar(int di,int bound){
 		return dSin(e.incDeBruijnVar(di,bound));
 	}
@@ -3108,9 +3063,6 @@ class DFloor: DOp{
 	}
 	override DExpr substitute(DVar var,DExpr exp){
 		return dFloor(e.substitute(var,exp));
-	}
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		return dFloor(e.substituteFun(fun,q,args,context));
 	}
 	override DExpr incDeBruijnVar(int di,int bound){
 		return dFloor(e.incDeBruijnVar(di,bound));
@@ -3154,9 +3106,6 @@ class DCeil: DOp{
 	override DExpr substitute(DVar var,DExpr exp){
 		return dCeil(e.substitute(var,exp));
 	}
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		return dCeil(e.substituteFun(fun,q,args,context));
-	}
 	override DExpr incDeBruijnVar(int di,int bound){
 		return dCeil(e.incDeBruijnVar(di,bound));
 	}
@@ -3191,11 +3140,6 @@ template BitwiseImpl(string which){
 	override DExpr substitute(DVar var,DExpr e){
 		DExprSet res;
 		foreach(s;operands) insert(res,s.substitute(var,e));
-		return mixin("d"~upperf(which))(res);
-	}
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		DExprSet res;
-		foreach(s;operands) insert(res,s.substituteFun(fun,q,args,context));
 		return mixin("d"~upperf(which))(res);
 	}
 	override DExpr incDeBruijnVar(int di,int bound){
@@ -3327,10 +3271,6 @@ class DGaussInt: DOp{
 		auto nx=x.substitute(var,exp);
 		return dGaussInt(nx);
 	}
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		auto nx=x.substituteFun(fun,q,args,context);
-		return dGaussInt(nx);
-	}
 	override DExpr incDeBruijnVar(int di,int bound){
 		return dGaussInt(x.incDeBruijnVar(di,bound));
 	}
@@ -3404,9 +3344,6 @@ class DContextLambda: DOp{ // TODO: get rid of this?
 		foreach(v;e.freeVars) relabel(v,nargs,nctx,nfun);
 		return dContextLambda(nargs,nctx,nfun);
 	}
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		assert(0);
-	}
 	override DContextLambda incDeBruijnVar(int di,int bound){
 		return dContextLambda(args,context,fun.incDeBruijnVar(di,bound));
 	}
@@ -3459,24 +3396,22 @@ class DFun: DOp{ // uninterpreted functions
 		return 0;
 	}
 	override DExpr substitute(DVar var,DExpr exp){
-		return dFun(fun,args.map!(a=>a.substitute(var,exp)).array);
-	}
-
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		auto newArgs=this.args.dup;
-		if(newArgs.length&&cast(DContextVars)newArgs[$-1]) newArgs=newArgs[0..$-1];
-		foreach(ref a;newArgs) a=a.substituteFun(fun,q,args,context);
-		bool check(){
-			if(fun !is this.fun) return false;
-			if(args.length!=newArgs.length)
-				return false;
-			return true;
+		auto nargs=args.map!(a=>a.substitute(var,exp)).array;
+		if(var is fun){
+			if(auto nfun=cast(DVar)exp) return dFun(nfun,nargs);
+			auto cl=cast(DContextLambda)exp;
+			assert(!!cl);
+			if(nargs.length&&cast(DContextVars)nargs[$-1]) nargs=nargs[0..$-1];
+			bool check(){
+				if(cl.fun !is fun) return false;
+				if(cl.args.length!=nargs.length)
+					return false;
+				return true;
+			}
+			if(cl.args.length==nargs.length)
+				return cl.fun.substituteAll(cl.args,nargs);
 		}
-		if(!check()) return dFun(this.fun,newArgs);
-		auto r=q;
-		r=r.substituteAll(args,newArgs);
-		//dw(q," ",r," ",this.args," ",args," ",newArgs);
-		return r;
+		return dFun(fun,nargs);
 	}
 
 	override DExpr incDeBruijnVar(int di,int bound){
@@ -3559,9 +3494,6 @@ class DTuple: DExpr{ // Tuples. TODO: real tuple support
 	override DExpr substitute(DVar var,DExpr exp){
 		return dTuple(values.map!(v=>v.substitute(var,exp)).array);
 	}
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		return dTuple(values.map!(v=>v.substituteFun(fun,q,args,context)).array);
-	}
 	override DExpr incDeBruijnVar(int di,int bound){
 		return dTuple(values.map!(v=>v.incDeBruijnVar(di,bound)).array);
 	}
@@ -3639,11 +3571,6 @@ class DRecord: DExpr{ // Tuples. TODO: real tuple support
 		foreach(k,v;values) nvalues[k]=v.substitute(var,exp);
 		return dRecord(nvalues);
 	}
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		DExpr[string] nvalues;
-		foreach(k,v;values) nvalues[k]=v.substituteFun(fun,q,args,context);
-		return dRecord(nvalues);
-	}
 	override DExpr incDeBruijnVar(int di,int bound){
 		DExpr[string] nvalues;
 		foreach(k,v;values) nvalues[k]=v.incDeBruijnVar(di,bound);
@@ -3707,10 +3634,6 @@ class DIndex: DOp{
 
 	override DExpr substitute(DVar var,DExpr exp){
 		return e.substitute(var,exp)[i.substitute(var,exp)];
-	}
-
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SHSet!DVar context){
-		return e.substituteFun(fun,q,args,context)[i.substituteFun(fun,q,args,context)];
 	}
 
 	override DExpr incDeBruijnVar(int di,int bound){
@@ -3786,10 +3709,6 @@ class DIUpdate: DOp{
 
 	override DExpr substitute(DVar var,DExpr exp){
 		return dIUpdate(e.substitute(var,exp),i.substitute(var,exp),n.substitute(var,exp));
-	}
-
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SHSet!DVar context){
-		return dIUpdate(e.substituteFun(fun,q,args,context),i.substituteFun(fun,q,args,context),n.substituteFun(fun,q,args,context));
 	}
 
 	override DExpr incDeBruijnVar(int di,int bound){
@@ -3874,10 +3793,6 @@ class DRUpdate: DOp{ // TODO: allow updating multiple fields at once
 		return dRUpdate(e.substitute(var,exp),f,n.substitute(var,exp));
 	}
 
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SHSet!DVar context){
-		return dRUpdate(e.substituteFun(fun,q,args,context),f,n.substituteFun(fun,q,args,context));
-	}
-
 	override DExpr incDeBruijnVar(int di,int bound){
 		return dRUpdate(e.incDeBruijnVar(di,bound),f,n.incDeBruijnVar(di,bound));
 	}
@@ -3935,9 +3850,6 @@ class DLambda: DOp{ // lambda functions DExpr → DExpr
 	}
 	override DLambda substitute(DVar var,DExpr e){
 		return dLambda(expr.substitute(var.incDeBruijnVar(1,0),e.incDeBruijnVar(1,0)));
-	}
-	override DLambda substituteFun(DVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		return dLambda(expr.substituteFun(fun,q.incDeBruijnVar(1,0),args,context));
 	}
 	override DLambda incDeBruijnVar(int di,int bound){
 		return dLambda(expr.incDeBruijnVar(di,bound+1));
@@ -4006,9 +3918,6 @@ class DApply: DOp{
 	override DExpr substitute(DVar var,DExpr e){
 		return dApply(fun.substitute(var,e),arg.substitute(var,e));
 	}
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		return dApply(this.fun.substituteFun(fun,q,args,context),arg.substituteFun(fun,q,args,context));
-	}
 	override DApply incDeBruijnVar(int di,int bound){
 		return dApply(fun.incDeBruijnVar(di,bound),arg.incDeBruijnVar(di,bound));
 	}
@@ -4051,9 +3960,6 @@ class DArray: DExpr{
 	}
 	override DExpr substitute(DVar var,DExpr e){
 		return dArray(length.substitute(var,e),entries.substitute(var,e));
-	}
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		return dArray(length.substituteFun(fun,q,args,context),entries.substituteFun(fun,q,args,context));
 	}
 	override DArray incDeBruijnVar(int di,int bound){
 		return dArray(length.incDeBruijnVar(di,bound),entries.incDeBruijnVar(di,bound));
@@ -4109,9 +4015,6 @@ class DCat: DAssocOp{ // TODO: this should have n arguments, as it is associativ
 
 	override DExpr substitute(DVar var,DExpr e){
 		return dCat(operands.map!(a=>a.substitute(var,e)).array);
-	}
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SetX!DVar context){
-		return dCat(operands.map!(a=>a.substituteFun(fun,q,args,context)).array);
 	}
 	override DExpr incDeBruijnVar(int di,int bound){
 		return dCat(operands.map!(a=>a.incDeBruijnVar(di,bound)).array);
@@ -4178,10 +4081,6 @@ class DField: DOp{
 
 	override DExpr substitute(DVar var,DExpr exp){
 		return dField(e.substitute(var,exp),f);
-	}
-
-	override DExpr substituteFun(DVar fun,DExpr q,DVar[] args,SHSet!DVar context){
-		return dField(e.substituteFun(fun,q,args,context),f);
 	}
 
 	override DExpr incDeBruijnVar(int di,int bound){
