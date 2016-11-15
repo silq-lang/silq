@@ -578,7 +578,7 @@ private struct Analyzer{
 				dist=athen.dist.join(dist,aothw.dist);
 				foreach(k,v;deterministic){
 					if(k in athen.deterministic && k in aothw.deterministic
-															&& athen.deterministic[k] is aothw.deterministic[k]){
+						&& athen.deterministic[k] is aothw.deterministic[k]){
 						deterministic[k]=athen.deterministic[k];
 					}else deterministic.remove(k);
 				}
@@ -983,7 +983,7 @@ private struct Analyzer{
 				dist=dthen.join(dist,dothw);
 				foreach(k,v;deterministic){
 					if(k in athen.deterministic && k in aothw.deterministic
-						                                    && athen.deterministic[k] is aothw.deterministic[k]){
+						&& athen.deterministic[k] is aothw.deterministic[k]){
 						deterministic[k]=athen.deterministic[k];
 					}else deterministic.remove(k);
 				}
