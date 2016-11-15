@@ -207,10 +207,12 @@ class Distribution{
 	}
 
 	DVar q;
+	size_t nargs;
 
 	void addArgs(DExpr[] args)in{assert(!q);}body{
 		q=dVar("`q");
 		assert(!!q);
+		nargs=args.length;
 		distribute(dApply(q,dTuple(args))); // TODO: constant name sufficient?
 	}
 	
@@ -352,14 +354,26 @@ class Distribution{
 		this.orderedFreeVars=orderedFreeVars;
 	}
 
-	DExpr toDExpr()in{assert(freeVarsOrdered&&q);}body{
+	private DExpr toDExprLambdaBody(){
 		auto db1=dDeBruijnVar(1);
 		auto r=dDiscDelta(db1,dRecord(["tag":one,"values":dTuple(cast(DExpr[])orderedFreeVars)]))*distribution.incDeBruijnVar(1,0);
 		foreach(v;orderedFreeVars) r=dInt(v,r);
 		r=r+dDiscDelta(db1,dRecord(["tag":zero]))*error;
-		return dLambda(dLambda(r).substitute(q,db1));
+		return dLambda(r).substitute(q,db1);
+	}
+	
+	DExpr toDExpr()in{assert(freeVarsOrdered&&q);}body{
+		return dLambda(toDExprLambdaBody());
 	}
 
+	DExpr toDExprWithContext(DExpr context)in{assert(freeVarsOrdered&&q);}body{
+		auto db1=dDeBruijnVar(1),db2=dDeBruijnVar(2);
+		auto bdy=toDExprLambdaBody();
+		context=context.incDeBruijnVar(1,0);
+		bdy=bdy.substitute(db1,dLambda(dApply(db2,dTuple(iota(nargs-1).map!(i=>db1[dℤ(i)]).array))*dDiscDelta(db1[dℤ(nargs-1)],context)));
+		return dLambda(bdy);
+	}
+	
 	static Distribution fromDExpr(DExpr dexpr,DVar[] orderedFreeVars,Type[] types){
 		auto r=new Distribution();
 		auto db1=dDeBruijnVar(1);

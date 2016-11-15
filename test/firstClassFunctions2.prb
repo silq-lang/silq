@@ -1,0 +1,27 @@
+
+dat Foo{
+    x: ℝ;
+    def Foo(x){
+	this.x=x;
+    }
+    def foo(){
+	return x;
+    }
+}
+
+def main(){
+    k := 1338;
+    k += Bernoulli(1/2);
+    def foo(){
+	return k;
+    }
+    x := foo; // captured by value
+    y := Foo(1337);
+    y.x += Bernoulli(1/2);
+    z := y.foo; // captured by value
+    k = 0;
+    y.x = 0; // hence these assignments are not visible
+    return (x(),z()); // expected:  (δ[-r₁+1338]·⅟2+δ[-r₁+1339]·⅟2)·(δ[-r₂+1337]·⅟2+δ[-r₂+1338]·⅟2)
+}
+
+

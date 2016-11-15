@@ -127,9 +127,9 @@ private struct Analyzer{
 				return r?dField(r,id.name):dVar(id.name);
 			}
 			if(auto fd=cast(FunctionDef)id.meaning){
-				/*err.error("first-class functions not supported yet",id.loc);
-				  return null;*/
 				auto summary=be.getSummary(fd,id.loc,err);
+				if(fd.isNested)
+					return summary.toDExprWithContext(buildContextFor(fd,id.scope_));
 				return summary.toDExpr();
 			}
 			err.error("unsupported",id.loc);
@@ -157,9 +157,9 @@ private struct Analyzer{
 						return ℤ(arrays[id.name].length).dℤ;
 				}
 				assert(cast(ArrayTy)fe.e.type&&fe.f.name=="length"||fe.f.meaning&&fe.f.scope_&&fe.f.meaning.scope_);
-				if(cast(FunctionDef)fe.f.meaning){
-					err.error("first-class methods not supported yet",fe.loc);
-					unwind();
+				if(auto fd=cast(FunctionDef)fe.f.meaning){
+					auto summary=be.getSummary(fd,fe.f.loc,err);
+					return summary.toDExprWithContext(doIt(fe.e));
 				}
 				return dField(doIt(fe.e),fe.f.name);
 			}
@@ -216,7 +216,7 @@ private struct Analyzer{
 						auto types=tuplety.types;
 						if(thisExp&&!fun.isConstructor)
 							types~=fe.e.type; // TODO: this is wasteful
-						if(!thisExp)if(auto nsc=cast(NestedScope)fun.realScope){ // nested function calls
+						if(!thisExp)if(fun.isNested){ // nested function calls
 							assert(id.scope_,text(id," ",id.loc));
 							auto ctx=buildContextFor(fun,id.scope_);
 							assert(!!ctx);

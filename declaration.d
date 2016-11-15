@@ -66,6 +66,7 @@ class FunctionDef: Declaration{
 		if(isConstructor) return scope_.getDatDecl().scope_;
 		return scope_;
 	}
+	@property bool isNested(){ return !!cast(NestedScope)realScope; }
 }
 
 
