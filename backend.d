@@ -160,7 +160,7 @@ void gnuplot(DExpr expr,SetX!DVar varset,string range="[-1:3]",string outfile=""
 	if(outfile.length){
 		input.writeEnd.writeln("set terminal postscript eps\nset output \"",outfile,"\"");
 	}
-	auto str=expr.toString(Format.gnuplot).replace("q(γ⃗)","1");
+	auto str=expr.toString(Format.gnuplot).replace("`q()","1");
 	string command=
 		//"set enhanced color lw 2 \"Times\" 30\n"~
 		"set pointsize 20\n"

@@ -115,6 +115,7 @@ struct DParser{
 	}
 
 	DExpr parseDInt(){
+		dw(code);
 		expect('∫');
 		expect('d');
 		++numBinders;
@@ -246,6 +247,22 @@ struct DParser{
 
 	DExpr parseDLambda(){
 		expect('λ');
+		if(cur()=='('){
+			DVar[] args,ctx;
+			do{
+				next();
+				if(cur()!=';') args~=parseDVar();
+			}while(cur()==',');
+			expect(';');
+			do{
+				next();
+				if(cur()!=')') ctx~=parseDVar();
+			}while(cur()==',');
+			expect(')');
+			expect('.');
+			auto expr=parseDExpr();
+			return dContextLambda(args,ctx.setx,expr);
+		}
 		++numBinders;
 		auto var=parseDVar();
 		if(!cast(DDeBruijnVar)var) --numBinders;

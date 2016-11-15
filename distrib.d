@@ -182,6 +182,7 @@ class Distribution{
 		auto bdist = b.distribution.substituteAll(b.orderedFreeVars,cast(DExpr[])orderedFreeVars);
 		r.distribution=r.distribution+bdist;
 		r.error=r.error+b.error;
+		assert(r.q is b.q);
 		assert(r.context is b.context);
 		return r;
 	}
@@ -215,8 +216,8 @@ class Distribution{
 	void addArgsWithContext(DExpr[] args)in{assert(!context&&!q);}body{
 		q=dVar("`q");
 		assert(!!q);
-		context=dContextVars("γ",q);
-		args~=context;
+		// context=dContextVars("γ",q);
+		// args~=context;
 		distribute(dFun(q,args)); // TODO: constant name sufficient?
 	}
 	
@@ -322,6 +323,7 @@ class Distribution{
 		DExpr rdist=q.distribution;
 		DExpr rerr=q.error;
 		import hashtable;
+		
 		auto context=freeVars.dup;
 		if(this.context) context.insert(this.context);
 		DVar[] r;
@@ -332,18 +334,20 @@ class Distribution{
 		}
 		DVar[] vars;
 		auto oldDist=distribution;
+		auto argDist=one;
 		foreach(i,a;args){
 			auto var=getTmpVar("__arg");
 			vars~=var;
-			oldDist=oldDist*dDelta(var,a,ty[i]);
+			argDist=argDist*dDelta(var,a,ty[i]);
 		}
-		distribution = rdist.substitute(q.q,dContextLambda(vars,context,oldDist));
-		auto nerror = rerr.substitute(q.q,dContextLambda(vars,context,oldDist));
+		distribution = rdist.substitute(q.q,dContextLambda(vars,SetX!DVar.init,argDist))*oldDist;
+		auto nerror = rerr.substitute(q.q,dContextLambda(vars,SetX!DVar.init,argDist))*oldDist;
 		//dw("+--\n",oldDist,"\n",rdist,"\n",distribution,"\n--+");
 		foreach(v;vars){
 			tmpVars.remove(v);
 			freeVars.remove(v);
 		}
+		foreach(v;context) nerror=dInt(v,nerror);
 		error = error + nerror;
 		return r.length==1?r[0]:dTuple(cast(DExpr[])r);
 	}
@@ -368,7 +372,7 @@ class Distribution{
 		this.orderedFreeVars=orderedFreeVars;
 	}
 
-	DExpr toDExpr()in{assert(freeVarsOrdered&&q&&context);}body{
+	DExpr toDExpr()in{assert(freeVarsOrdered&&q);}body{
 		auto db1=dDeBruijnVar(1);
 		auto r=dDiscDelta(db1,dRecord(["tag":one,"values":dTuple(cast(DExpr[])orderedFreeVars)]))*distribution.incDeBruijnVar(1,0);
 		foreach(v;orderedFreeVars) r=dInt(v,r);

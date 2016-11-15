@@ -157,6 +157,8 @@ private DExpr definiteIntegralContinuous(DExpr expr,DExpr facts)out(res){
 	// ensure integral is continuous
 	foreach(f;expr.allOf!DFun(true))
 		if(f.hasFreeVar(var)) return null;
+	foreach(f;expr.allOf!DApply(true))
+		if(f.hasFreeVar(var)) return null;
 	foreach(d;expr.allOf!DDelta(true))
 		if(d.hasFreeVar(var)) return null;
 	foreach(d;expr.allOf!DDiscDelta(true))
@@ -180,7 +182,7 @@ private DExpr definiteIntegralContinuous(DExpr expr,DExpr facts)out(res){
 				if(e !is e.linearizeConstraints(var)) return false; // TODO: guarantee this condition
 				if(e.hasAny!DIvr) return false; // TODO: make sure this cannot actually happen
 				if(e.hasAny!DFloor||e.hasAny!DCeil) return false;
-				if(e.hasAny!DFun) return false; // TODO: some proofs still possible
+				if(e.hasAny!DFun||e.hasAny!DApply) return false; // TODO: some proofs still possible
 				return true;
 			}
 			if(mustHaveZerosOfMeasureZero()){
