@@ -233,7 +233,7 @@ struct DParser{
 			if(cur()!=')') args~=parseDExpr();
 		}while(cur()==',');
 		expect(')');
-		return dFun(curFun,args);
+		return dApply(curFun,dTuple(args));
 	}
 
 	DExpr parseDLambda(){

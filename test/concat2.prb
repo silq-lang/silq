@@ -1,4 +1,4 @@
 dat Cell{ x : ℝ; }
 def main(a : Cell[]){
-    return ([]:Cell[])~a~([]:Cell[]); // expected: `q(r₁)
+    return ([]:Cell[])~a~([]:Cell[]); // expected: `q(r₁,)
 }

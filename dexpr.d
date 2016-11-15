@@ -52,6 +52,7 @@ enum Precedence{
 	apply,
 	index,
 	field=index,
+	subscript,
 	invalid,
 }
 hash_t g_hash=0;
@@ -1031,8 +1032,9 @@ class DMult: DCommutAssocOp{
 		assert(!cast(DPlus)facts,text(facts));
 		foreach(f;this.factors) if(auto d=cast(DDiscDelta)f){ // TODO: do this in a nicer way
 			auto wo=this.withoutFactor(f);
-			if(wo.hasFreeVar(d.var) && !d.e.hasFreeVar(d.var))
-				return (wo.substitute(d.var,d.e)*d).simplify(facts);
+			auto var=cast(DVar)d.var;
+			if(var&&wo.hasFreeVar(var) && !d.e.hasFreeVar(var))
+				return (wo.substitute(var,d.e)*d).simplify(facts);
 		}
 		DExprSet myFactors;
 		DExprSet myFacts;
@@ -2343,15 +2345,15 @@ auto dDelta(DExpr a)in{assert(!cast(DTuple)a);}body{ // TODO: more preconditions
 
 
 class DDiscDelta: DExpr{ // point mass for discrete data types
-	DVar var;
+	DExpr var; // TODO: figure out what it should mean if var is some expression with multiple free variables
 	DExpr e;
-	private this(DVar var,DExpr e){
+	private this(DExpr var,DExpr e){
 		this.var=var;
 		this.e=e;
 	}
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		if(formatting==Format.lisp) // TODO: better name
-			return text("(dirac2 ",var.toStringImpl(formatting,Precedence.none,binders),e.toStringImpl(formatting,Precedence.none,binders),")");
+			return text("(dirac2 ",var.toStringImpl(formatting,Precedence.subscript,binders),e.toStringImpl(formatting,Precedence.none,binders),")");
 		// TODO: encoding for other CAS?
 		return "δ_"~var.toStringImpl(formatting,Precedence.none,binders)
 			~"["~e.toStringImpl(formatting,Precedence.none,binders)~"]";
@@ -2359,29 +2361,28 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 
 	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; } // TODO: ok?
 	override int freeVarsImpl(scope int delegate(DVar) dg){
-		if(auto r=dg(var))
+		if(auto r=var.freeVarsImpl(dg))
 			return r;
 		return e.freeVarsImpl(dg);
 	}
 	override DExpr substitute(DVar var,DExpr exp){
 		if(this.var is var && exp is e) return one; // TODO: this is a hack and should be removed
-		auto v=cast(DVar)this.var.substitute(var,exp);
-		assert(!!v);
-		return dDiscDelta(v,e.substitute(var,exp));
+		return dDiscDelta(this.var.substitute(var,exp),e.substitute(var,exp));
 	}
 	override DExpr incDeBruijnVar(int di,int bound){ return dDiscDelta(var.incDeBruijnVar(di,bound),e.incDeBruijnVar(di,bound)); }
 
-	static DExpr constructHook(DVar var,DExpr e){
+	static DExpr constructHook(DExpr var,DExpr e){
 		//return staticSimplify(var,e);
 		return null;
 	}
-	static DExpr staticSimplify(DVar var,DExpr e,DExpr facts=one){
+	static DExpr staticSimplify(DExpr var,DExpr e,DExpr facts=one){
 		// cannot use all facts during simplification (e.g. see test/tuples5.prb)
 		// the problem is that there might be a relation between e.g. multiple tuple entries, and we are not
-		// allowed to introduce var as a free variable in e.
+		// allowed to introduce free variables from var into e, or remove free variables from var.
 		// TODO: filter more precisely
+		auto nvar=var.simplify(one);
 		auto ne=e.simplify(one);
-		if(ne !is e) return dDiscDelta(var,ne);
+		if(nvar !is var || ne !is e) return dDiscDelta(nvar,ne);
 		//if(dIvr(DIvr.Type.eq,var,e).simplify(facts) is zero) return zero; // a simplification like this might be possible
 		return null;
 	}
@@ -2392,14 +2393,14 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 }
 
 import type; // TODO: remove this import
-DExpr dDelta(DVar var,DExpr e,Type ty){ // TODO: dexpr shouldn't know about type, but this is most convenient for overloading
+DExpr dDelta(DExpr var,DExpr e,Type ty){ // TODO: dexpr shouldn't know about type, but this is most convenient for overloading
 	if(ty is ℝ) return dDelta(e-var);
 	assert(cast(TupleTy)ty||cast(ArrayTy)ty||cast(AggregateTy)ty||cast(ContextTy)ty||cast(FunTy)ty,text(ty)); // TODO: add more supported types
 	return dDiscDelta(var,e);
 }
 
-MapX!(TupleX!(DVar,DExpr),DExpr) uniqueMapDDiscDelta;
-DExpr dDiscDelta(DVar var,DExpr e){
+MapX!(TupleX!(DExpr,DExpr),DExpr) uniqueMapDDiscDelta;
+DExpr dDiscDelta(DExpr var,DExpr e){
 	if(auto r=DDiscDelta.constructHook(var,e)) return r;
 	// TODO: is there a better way to make the argument canonical?
 	auto t=tuplex(var,e);
@@ -3227,153 +3228,6 @@ bool isInfinite(DExpr e){
 	return e is dInf || e is -dInf;
 }
 
-class DTupleLambda: DOp{ // TODO: get rid of this?
-	DVar[] args;
-	DExpr fun;
-	this(DVar[] args,DExpr fun){
-		this.args=args;
-		this.fun=fun;
-	}
-	override @property Precedence precedence(){ return Precedence.lambda; }
-	override string symbol(Format formatting,int binders){ return "λ"; }
-	override string toStringImpl(Format formatting,Precedence prec,int binders){
-		return addp(prec,text("λ(",args.map!(a=>a.toStringImpl(formatting,Precedence.none,binders)).join(","),"). ",fun.toStringImpl(formatting,Precedence.lambda,binders)));
-	}
-	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		return 0;
-	}
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		return fun.freeVarsImpl(v=>args.canFind!"a is b"(v)?0:dg(v));
-	}
-	private static void relabel(DVar var,ref DVar[] args,ref DExpr fun){
-		int i=0;
-		DVar getFreshVar(){
-			DVar newVar=null;
-			do{
-				i++;
-				string newName="τ"~lowNum(i);
-				newVar=dVar(newName);
-			}while(args.canFind(newVar) || fun.hasFreeVar(newVar));
-			return newVar;
-		}
-		foreach(ref v;args){
-			if(v is var){
-				auto nv=getFreshVar();
-				fun=fun.substitute(v,nv);
-				v=nv;
-			}
-		}
-	}
-	override DTupleLambda substitute(DVar var,DExpr e){
-		if(!hasFreeVar(var)) return this;
-		auto nargs=args.dup,nfun=fun;
-		foreach(v;e.freeVars) relabel(v,nargs,nfun);
-		return dTupleLambda(nargs,nfun);
-	}
-	override DTupleLambda incDeBruijnVar(int di,int bound){
-		return dTupleLambda(args,fun.incDeBruijnVar(di,bound));
-	}
-	static DTupleLambda staticSimplify(DVar[] args,DExpr fun,DExpr facts){
-		auto nfun=fun.simplify(facts);
-		if(nfun !is fun){
-			auto r=dTupleLambda(args,nfun).simplify(facts);
-			assert(!!cast(DTupleLambda)r);
-			return cast(DTupleLambda)r;
-		}
-		return null;
-	}
-	override DExpr simplifyImpl(DExpr facts){
-		auto r=staticSimplify(args,fun,facts);
-		return r?r:this;
-	}
-}
-
-MapX!(TupleX!(DVar[],DExpr),DTupleLambda) uniqueMapDTupleLambda;
-DTupleLambda dTupleLambda(DVar[] args,DExpr fun){
-	auto t=tuplex(args,fun);
-	if(t in uniqueMapDTupleLambda) return uniqueMapDTupleLambda[t];
-	auto r=new DTupleLambda(args,fun);
-	uniqueMapDTupleLambda[t]=r;
-	return r;
-}
-
-class DFun: DOp{ // uninterpreted functions
-	DVar fun;
-	DExpr[] args;
-	this(DVar fun, DExpr[] args){ this.fun=fun; this.args=args; }
-	override @property string symbol(Format formatting,int binders){ return fun.name; }
-	override Precedence precedence(){ return Precedence.none; }
-	override string toStringImpl(Format formatting,Precedence prec,int binders){
-		if(formatting==Format.lisp) return text("(",fun.toStringImpl(formatting,prec,binders)," ",args.map!(a=>a.toStringImpl(formatting,Precedence.none,binders)).join(" "),")");
-		if(formatting==Format.mathematica)
-			return fun.toStringImpl(formatting,prec,binders)~"["~args.map!(a=>a.toStringImpl(formatting,Precedence.none,binders)).join(",")~"]";
-		return fun.toStringImpl(formatting,prec,binders)~"("~args.map!(a=>a.toStringImpl(formatting,Precedence.none,binders)).join(",")~")";
-	}
-	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		foreach(a;args)
-			if(auto r=dg(a))
-				return r;
-		return 0;
-	}
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		foreach(a;args)
-			if(auto r=a.freeVarsImpl(dg))
-				return r;
-		return 0;
-	}
-	override DExpr substitute(DVar var,DExpr exp){
-		auto nargs=args.map!(a=>a.substitute(var,exp)).array;
-		if(var is fun){
-			if(auto nfun=cast(DVar)exp) return dFun(nfun,nargs);
-			auto cl=cast(DTupleLambda)exp;
-			assert(!!cl);
-			bool check(){
-				if(cl.fun !is fun) return false;
-				if(cl.args.length!=nargs.length)
-					return false;
-				return true;
-			}
-			if(cl.args.length==nargs.length)
-				return cl.fun.substituteAll(cl.args,nargs);
-		}
-		return dFun(fun,nargs);
-	}
-
-	override DExpr incDeBruijnVar(int di,int bound){
-		return dFun(fun,args.map!(a=>a.incDeBruijnVar(di,bound)).array);
-	}
-
-	static DFun constructHook(DVar fun,DExpr[] args){
-		return null;
-	}
-	static DFun staticSimplify(DVar fun,DExpr[] args,DExpr facts=one){
-		auto nargs=args.map!(a=>a.simplify(one)).array; // cannot use all facts! (might remove a free variable)
-		if(nargs!=args) return dFun(fun,nargs);
-		return null;
-	}
-	override DExpr simplifyImpl(DExpr facts){
-		auto r=staticSimplify(fun,args,facts);
-		return r?r:this;
-	}
-}
-
-MapX!(TupleX!(DVar,DExpr[]),DFun) uniqueMapDFun;
-auto uniqueDFun(DVar fun,DExpr[] args){
-	if(auto r=DFun.constructHook(fun,args)) return r;
-	auto t=tuplex(fun,args);
-	if(t in uniqueMapDFun) return uniqueMapDFun[t];
-	auto r=new DFun(fun,args);
-	uniqueMapDFun[t]=r;
-	return r;
-}
-
-DFun dFun(DVar fun,DExpr[] args){
-	return uniqueDFun(fun,args);
-}
-DFun dFun(DVar fun,DExpr arg){
-	return dFun(fun,[arg]);
-}
-
 class DTuple: DExpr{ // Tuples. TODO: real tuple support
 	DExpr[] values;
 	this(DExpr[] values){
@@ -3730,8 +3584,6 @@ auto dRUpdate(DExpr e,string f,DExpr n){
 	return r;
 }
 
-
-
 class DLambda: DOp{ // lambda functions DExpr → DExpr
 	private{ DExpr expr; }
 	this(DExpr expr){ this.expr=expr; }
@@ -3799,6 +3651,13 @@ DLambda dLambda(DVar var,DExpr expr)in{assert(var&&expr&&(!cast(DDeBruijnVar)var
 	return dLambda(expr.incDeBruijnVar(1,0).substitute(var,dDeBruijnVar(1)));
 }
 
+DLambda dTupleLambda(DVar[] args,DExpr fun){
+	auto db1=dDeBruijnVar(1);
+	import std.range: iota;
+	fun=fun.incDeBruijnVar(1,0).substituteAll(args,iota(args.length).map!(i=>db1[dℤ(i)]).array);
+	return dLambda(fun);
+}
+
 class DApply: DOp{
 	DExpr fun;
 	DExpr arg;
@@ -3809,7 +3668,7 @@ class DApply: DOp{
 	override @property string symbol(Format formatting,int binders){ return " "; }
 	override @property Precedence precedence(){ return Precedence.apply; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
-		return addp(prec,text(fun.toStringImpl(formatting,Precedence.apply,binders)," ",arg.toStringImpl(formatting,Precedence.apply,binders)));
+		return addp(prec,text(fun.toStringImpl(formatting,Precedence.apply,binders),(cast(DTuple)arg?"":" "),arg.toStringImpl(formatting,Precedence.apply,binders)));
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
 		if(auto r=dg(fun)) return r;
@@ -3829,7 +3688,7 @@ class DApply: DOp{
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){
-		auto nfun=fun.simplify(facts),narg=arg.simplify(facts);
+		auto nfun=fun.simplify(facts),narg=arg.simplify(one); // cannot use all facts for arg! (might remove a free variable)
 		if(auto l=cast(DLambda)nfun)
 			return l.apply(narg).simplify(facts);
 		return dApply(nfun,narg);

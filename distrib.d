@@ -211,12 +211,12 @@ class Distribution{
 	void addArgs(DExpr[] args)in{assert(!q);}body{
 		q=dVar("`q");
 		assert(!!q);
-		distribute(dFun(q,args)); // TODO: constant name sufficient?
+		distribute(dApply(q,dTuple(args))); // TODO: constant name sufficient?
 	}
 	
 	void assumeInputNormalized(size_t nParams){
 		auto vars=iota(0,nParams).map!(x=>dVar("__p"~lowNum(x))).array;
-		auto fun=dFun(q,cast(DExpr[])vars); // TODO: get rid of cast
+		auto fun=dApply(q,dTuple(cast(DExpr[])vars)); // TODO: get rid of cast
 		DExpr tdist=fun;
 		foreach(v;vars) tdist=dIntSmp(v,tdist,one);
 		DExpr doIt(DExpr e){
