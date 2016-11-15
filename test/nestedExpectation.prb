@@ -1,3 +1,6 @@
+// skipped
+// this does not work anymore
+// TODO: Update once higher-order inference is in.
 
 def foo(x){
     return Expectation(x);

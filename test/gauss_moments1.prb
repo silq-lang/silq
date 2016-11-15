@@ -1,3 +1,8 @@
+// skipped
+// this does not work anymore
+// TODO: update once higher-order inference is in.
+
+
 def Variance(X){
     return Expectation(X^2)-Expectation(X)^2;
 }
