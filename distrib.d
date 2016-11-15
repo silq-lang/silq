@@ -368,12 +368,12 @@ class Distribution{
 		this.orderedFreeVars=orderedFreeVars;
 	}
 
-	DExpr toDExpr()in{assert(freeVarsOrdered);}body{
+	DExpr toDExpr()in{assert(freeVarsOrdered&&q&&context);}body{
 		auto db1=dDeBruijnVar(1);
 		auto r=dDiscDelta(db1,dRecord(["tag":one,"values":dTuple(cast(DExpr[])orderedFreeVars)]))*distribution.incDeBruijnVar(1,0);
 		foreach(v;orderedFreeVars) r=dInt(v,r);
 		r=r+dDiscDelta(db1,dRecord(["tag":zero]))*error;
-		return dLambda(r);
+		return dLambda(dLambda(r).substitute(q,db1));
 	}
 
 	static Distribution fromDExpr(DExpr dexpr,DVar[] orderedFreeVars,Type[] types){
@@ -384,8 +384,11 @@ class Distribution{
 			r.freeVars.insert(v);
 			r.initialize(v,dIndex(dField(db1,"values"),dℤ(i)),types[i]);
 		}
-		r.distribution=dInt(r.distribution*dIvr(DIvr.Type.eqZ,dField(db1,"tag")-one)*dApply(dexpr,db1));
-		r.error=dInt(dIvr(DIvr.Type.eqZ,dField(db1,"tag"))*dApply(dexpr,db1));
+		r.q=dVar("`q");
+		r.context=dContextVars("γ",r.q);
+		auto ndist=dApply(dApply(dexpr,r.q),db1);
+		r.distribution=dInt(r.distribution*dIvr(DIvr.Type.eqZ,dField(db1,"tag")-one)*ndist);
+		r.error=dInt(dIvr(DIvr.Type.eqZ,dField(db1,"tag"))*ndist);
 		r.orderFreeVars(orderedFreeVars);
 		return r;
 	}
