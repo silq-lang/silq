@@ -2052,7 +2052,7 @@ class DIvr: DExpr{ // iverson brackets
 		foreach(d;e.allOf!DDelta) assert(0,text(e));
 		/*foreach(d;e.allOf!DDelta(true)){
 			foreach(vf;d.freeVars)
-				assert(cast(DContextVars)vf||!e.hasFreeVar(vf),text(vf," ",e));
+				assert(!e.hasFreeVar(vf),text(vf," ",e));
 		}*/
 	}
 
@@ -2619,74 +2619,8 @@ DExpr dIntSmp(DVar var,DExpr expr,DExpr facts){
 }
 
 DExpr dInt(DVar var,DExpr expr)in{assert(var&&expr&&!cast(DDeBruijnVar)var);}body{
-	if(auto ctxv=cast(DContextVars)var) return dContextInt(ctxv,expr);
 	return dInt(expr.incDeBruijnVar(1,0).substitute(var,dDeBruijnVar(1)));
 }
-
-class DContextInt: DOp{
-	DContextVars var;
-	DExpr expr;
-	this(DContextVars var,DExpr expr){ this.var=var; this.expr=expr; }
-	override @property Precedence precedence(){ return Precedence.intg; }
-	override @property string symbol(Format formatting,int binders){ return "∫"; }
-	override string toStringImpl(Format formatting,Precedence prec,int binders){
-		if(formatting==Format.mathematica){
-			return text("Integrate[",expr.toStringImpl(formatting,Precedence.none,binders),",{",var.toStringImpl(formatting,Precedence.none,binders),",-Infinity,Infinity}]");
-		}else if(formatting==Format.maple){
-			return text("int(",expr.toStringImpl(formatting,Precedence.none,binders),",",var.toStringImpl(formatting,Precedence.none,binders),"=-infinity..infinity)");
-		}else if(formatting==Format.sympy){
-			return text("integrate(",expr.toStringImpl(formatting,Precedence.none,binders),",(",var.toStringImpl(formatting,Precedence.none,binders),",-oo,oo))");
-		}else if(formatting==Format.lisp){
-			return text("(integrate ",var.toStringImpl(formatting,Precedence.none,binders)," ",expr.toStringImpl(formatting,Precedence.none,binders),")");
-		}else{
-			return addp(prec,symbol(formatting,binders)~"d"~var.toStringImpl(formatting,Precedence.none,binders)~expr.toStringImpl(formatting,Precedence.none,binders));
-		}
-	}
-	static DExpr staticSimplify(DContextVars var,DExpr expr,DExpr facts){
-		auto nexpr=expr.simplify(facts);
-		if(nexpr !is expr) return dContextInt(var,nexpr).simplify(facts);
-		if(expr is zero) return zero;
-		auto ow=expr.splitMultAtVar(var);
-		ow[0]=ow[0].simplify(facts);
-		if(ow[0] !is one) return (ow[0]*dInt(var,ow[1])).simplify(facts);
-		return null;
-	}
-	override DExpr simplifyImpl(DExpr facts){
-		auto r=staticSimplify(var,expr,facts);
-		return r?r:this;
-	}
-	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		return 0;
-	}
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		return expr.freeVarsImpl(v=>v is var?0:dg(v));
-	}
-	override DExpr substitute(DVar var,DExpr e){
-		auto nexpr=expr.substitute(var,e);
-		if(auto cl=cast(DContextLambda)e){
-			if(this.var.fun is var){
-				auto r=nexpr;
-				foreach(v;cl.context) r=dInt(v,r);
-				return r;		
-			}
-		}
-		return dContextInt(this.var,nexpr);
-	}
-	override DExpr incDeBruijnVar(int di,int bound){
-		return dContextInt(var,expr.incDeBruijnVar(di,bound));
-	}
-}
-
-
-MapX!(TupleX!(DContextVars,DExpr),DContextInt) uniqueMapContextInt;
-DContextInt dContextInt(DContextVars var,DExpr expr){
-	auto t=tuplex(var,expr);
-	if(t in uniqueMapContextInt) return uniqueMapContextInt[t];
-	auto r=new DContextInt(var,expr);
-	uniqueMapContextInt[t]=r;
-	return r;
-}
-
 
 import summation;
 class DSum: DOp{
@@ -3293,27 +3227,25 @@ bool isInfinite(DExpr e){
 	return e is dInf || e is -dInf;
 }
 
-class DContextLambda: DOp{ // TODO: get rid of this?
+class DTupleLambda: DOp{ // TODO: get rid of this?
 	DVar[] args;
-	SetX!DVar context;
 	DExpr fun;
-	this(DVar[] args,SetX!DVar context,DExpr fun){
+	this(DVar[] args,DExpr fun){
 		this.args=args;
-		this.context=context;
 		this.fun=fun;
 	}
 	override @property Precedence precedence(){ return Precedence.lambda; }
 	override string symbol(Format formatting,int binders){ return "λ"; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
-		return addp(prec,text("λ(",args.map!(a=>a.toStringImpl(formatting,Precedence.none,binders)).join(","),";",context.array.map!(x=>x.toStringImpl(formatting,Precedence.none,binders)).join(","),"). ",fun.toStringImpl(formatting,Precedence.lambda,binders)));
+		return addp(prec,text("λ(",args.map!(a=>a.toStringImpl(formatting,Precedence.none,binders)).join(","),"). ",fun.toStringImpl(formatting,Precedence.lambda,binders)));
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
 		return 0;
 	}
 	override int freeVarsImpl(scope int delegate(DVar) dg){
-		return fun.freeVarsImpl(v=>v in context || args.canFind!"a is b"(v)?0:dg(v));
+		return fun.freeVarsImpl(v=>args.canFind!"a is b"(v)?0:dg(v));
 	}
-	private static void relabel(DVar var,ref DVar[] args,ref SetX!DVar context,ref DExpr fun){
+	private static void relabel(DVar var,ref DVar[] args,ref DExpr fun){
 		int i=0;
 		DVar getFreshVar(){
 			DVar newVar=null;
@@ -3321,7 +3253,7 @@ class DContextLambda: DOp{ // TODO: get rid of this?
 				i++;
 				string newName="τ"~lowNum(i);
 				newVar=dVar(newName);
-			}while(newVar in context || args.canFind(newVar) || fun.hasFreeVar(newVar));
+			}while(args.canFind(newVar) || fun.hasFreeVar(newVar));
 			return newVar;
 		}
 		foreach(ref v;args){
@@ -3331,43 +3263,37 @@ class DContextLambda: DOp{ // TODO: get rid of this?
 				v=nv;
 			}
 		}
-		if(var in context){
-			auto nv=getFreshVar();
-			fun=fun.substitute(var,nv);
-			context.remove(var);
-			context.insert(nv);
-		}
 	}
-	override DContextLambda substitute(DVar var,DExpr e){
+	override DTupleLambda substitute(DVar var,DExpr e){
 		if(!hasFreeVar(var)) return this;
-		auto nargs=args.dup,nfun=fun,nctx=context.dup;
-		foreach(v;e.freeVars) relabel(v,nargs,nctx,nfun);
-		return dContextLambda(nargs,nctx,nfun);
+		auto nargs=args.dup,nfun=fun;
+		foreach(v;e.freeVars) relabel(v,nargs,nfun);
+		return dTupleLambda(nargs,nfun);
 	}
-	override DContextLambda incDeBruijnVar(int di,int bound){
-		return dContextLambda(args,context,fun.incDeBruijnVar(di,bound));
+	override DTupleLambda incDeBruijnVar(int di,int bound){
+		return dTupleLambda(args,fun.incDeBruijnVar(di,bound));
 	}
-	static DContextLambda staticSimplify(DVar[] args,SetX!DVar context,DExpr fun,DExpr facts){
+	static DTupleLambda staticSimplify(DVar[] args,DExpr fun,DExpr facts){
 		auto nfun=fun.simplify(facts);
 		if(nfun !is fun){
-			auto r=dContextLambda(args,context,nfun).simplify(facts);
-			assert(!!cast(DContextLambda)r);
-			return cast(DContextLambda)r;
+			auto r=dTupleLambda(args,nfun).simplify(facts);
+			assert(!!cast(DTupleLambda)r);
+			return cast(DTupleLambda)r;
 		}
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){
-		auto r=staticSimplify(args,context,fun,facts);
+		auto r=staticSimplify(args,fun,facts);
 		return r?r:this;
 	}
 }
 
-MapX!(TupleX!(DVar[],SetX!DVar,DExpr),DContextLambda) uniqueMapDContextLambda;
-DContextLambda dContextLambda(DVar[] args,SetX!DVar context,DExpr fun){
-	auto t=tuplex(args,context,fun);
-	if(t in uniqueMapDContextLambda) return uniqueMapDContextLambda[t];
-	auto r=new DContextLambda(args,context,fun);
-	uniqueMapDContextLambda[t]=r;
+MapX!(TupleX!(DVar[],DExpr),DTupleLambda) uniqueMapDTupleLambda;
+DTupleLambda dTupleLambda(DVar[] args,DExpr fun){
+	auto t=tuplex(args,fun);
+	if(t in uniqueMapDTupleLambda) return uniqueMapDTupleLambda[t];
+	auto r=new DTupleLambda(args,fun);
+	uniqueMapDTupleLambda[t]=r;
 	return r;
 }
 
@@ -3399,9 +3325,8 @@ class DFun: DOp{ // uninterpreted functions
 		auto nargs=args.map!(a=>a.substitute(var,exp)).array;
 		if(var is fun){
 			if(auto nfun=cast(DVar)exp) return dFun(nfun,nargs);
-			auto cl=cast(DContextLambda)exp;
+			auto cl=cast(DTupleLambda)exp;
 			assert(!!cl);
-			if(nargs.length&&cast(DContextVars)nargs[$-1]) nargs=nargs[0..$-1];
 			bool check(){
 				if(cl.fun !is fun) return false;
 				if(cl.args.length!=nargs.length)
@@ -3448,27 +3373,6 @@ DFun dFun(DVar fun,DExpr[] args){
 DFun dFun(DVar fun,DExpr arg){
 	return dFun(fun,[arg]);
 }
-
-class DContextVars: DVar{
-	DVar fun;
-	this(string name,DVar fun){
-		super(name);
-		this.fun=fun;
-	}
-	override string toStringImpl(Format formatting,Precedence prec,int binders){
-		return text(super.toStringImpl(formatting,prec,binders),"⃗");
-	}
-}
-
-MapX!(TupleX!(string,DVar),DContextVars) uniqueMapDVars;
-auto dContextVars(string name,DVar fun){
-	auto k=tuplex(name,fun);
-	if(k in uniqueMapDVars) return uniqueMapDVars[k];
-	auto r=new DContextVars(name,fun);
-	uniqueMapDVars[k]=r;
-	return r;
-}
-
 
 class DTuple: DExpr{ // Tuples. TODO: real tuple support
 	DExpr[] values;

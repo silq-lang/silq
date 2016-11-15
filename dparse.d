@@ -217,20 +217,11 @@ struct DParser{
 	
 	DVar parseDVar(){
 		string s=parseIdentifier();
-		if(cur()=='⃗'){
-			next();
-			auto fun="`q".dVar; // TODO: fix!
-			return dContextVars(s,fun);
-		}
 		return varOrBound(s);
 	}
 	DVar curFun=null;
 	DExpr parseDVarDFun(){
 		string s=parseIdentifier();
-		if(curFun&&cur()=='⃗'){
-			next();
-			return dContextVars(s,curFun);
-		}
 		if(cur()!='('){
 			return varOrBound(s);
 		}
@@ -248,20 +239,15 @@ struct DParser{
 	DExpr parseDLambda(){
 		expect('λ');
 		if(cur()=='('){
-			DVar[] args,ctx;
+			DVar[] args;
 			do{
 				next();
-				if(cur()!=';') args~=parseDVar();
-			}while(cur()==',');
-			expect(';');
-			do{
-				next();
-				if(cur()!=')') ctx~=parseDVar();
+				if(cur()!=')') args~=parseDVar();
 			}while(cur()==',');
 			expect(')');
 			expect('.');
 			auto expr=parseDExpr();
-			return dContextLambda(args,ctx.setx,expr);
+			return dTupleLambda(args,expr);
 		}
 		++numBinders;
 		auto var=parseDVar();

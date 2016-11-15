@@ -165,7 +165,6 @@ class Distribution{
 		r.distribution=distribution;
 		r.error=error;
 		r.q=q;
-		r.context=context;
 		r.freeVarsOrdered=freeVarsOrdered;
 		r.orderedFreeVars=orderedFreeVars.dup;
 		return r;
@@ -183,7 +182,6 @@ class Distribution{
 		r.distribution=r.distribution+bdist;
 		r.error=r.error+b.error;
 		assert(r.q is b.q);
-		assert(r.context is b.context);
 		return r;
 	}
 	
@@ -201,9 +199,7 @@ class Distribution{
 		r.distribution=d1+d2;
 		r.error=orig.error;
 		r.q=q;
-		r.context=context;
 		assert(q is b.q);
-		assert(context is b.context);
 		assert(!freeVarsOrdered && !b.freeVarsOrdered);
 		if(error !is zero || b.error !is zero)
 			r.error=(orig.error+error+b.error).simplify(one);
@@ -211,31 +207,18 @@ class Distribution{
 	}
 
 	DVar q;
-	DContextVars context=null;
 
-	void addArgsWithContext(DExpr[] args)in{assert(!context&&!q);}body{
+	void addArgs(DExpr[] args)in{assert(!q);}body{
 		q=dVar("`q");
 		assert(!!q);
-		// context=dContextVars("γ",q);
-		// args~=context;
 		distribute(dFun(q,args)); // TODO: constant name sufficient?
 	}
 	
-	void deleteContext(size_t nParams)in{ assert(!!q); }body{
-		auto vars=iota(0,nParams).map!(x=>dVar("__p"~lowNum(x))).array;
-		auto fun=dFun(q,cast(DExpr[])vars); // TODO: get rid of cast
-		distribution=distribution.substitute(q,dContextLambda(vars,SetX!DVar.init,fun)).simplify(one);
-		error=error.substitute(q,dContextLambda(vars,SetX!DVar.init,fun)).simplify(one);
-		context=null;
-		q=null;
-	}
-
 	void assumeInputNormalized(size_t nParams){
 		auto vars=iota(0,nParams).map!(x=>dVar("__p"~lowNum(x))).array;
 		auto fun=dFun(q,cast(DExpr[])vars); // TODO: get rid of cast
 		DExpr tdist=fun;
 		foreach(v;vars) tdist=dIntSmp(v,tdist,one);
-		if(context) tdist=dInt(context,tdist);
 		DExpr doIt(DExpr e){
 			auto h=e.getHoles!(x=>x is tdist?x:null);
 			e=h.expr;
@@ -277,7 +260,6 @@ class Distribution{
 	DExpr computeProbability(DExpr cond){
 		auto tdist=distribution*cond.simplify(one);
 		foreach(v;freeVars) tdist=dIntSmp(v,tdist,one);
-		if(context) tdist=dInt(context,tdist);
 		return tdist;
 	}
 
@@ -314,7 +296,6 @@ class Distribution{
 		auto factor=distribution;
 		foreach(v;freeVars)
 			factor=dIntSmp(v,factor,one);
-		if(context) factor=dInt(context,factor);
 		factor=factor+error;
 		distribution=(dIvr(DIvr.Type.neqZ,factor)*(distribution/factor)).simplify(one);
 		error=(dIvr(DIvr.Type.eqZ,factor)+dIvr(DIvr.Type.neqZ,factor)*(error/factor)).simplify(one);
@@ -325,7 +306,6 @@ class Distribution{
 		import hashtable;
 		
 		auto context=freeVars.dup;
-		if(this.context) context.insert(this.context);
 		DVar[] r;
 		foreach(v;q.orderedFreeVars){
 			r~=getTmpVar("__r");
@@ -340,8 +320,8 @@ class Distribution{
 			vars~=var;
 			argDist=argDist*dDelta(var,a,ty[i]);
 		}
-		distribution = rdist.substitute(q.q,dContextLambda(vars,SetX!DVar.init,argDist))*oldDist;
-		auto nerror = rerr.substitute(q.q,dContextLambda(vars,SetX!DVar.init,argDist))*oldDist;
+		distribution = rdist.substitute(q.q,dTupleLambda(vars,argDist))*oldDist;
+		auto nerror = rerr.substitute(q.q,dTupleLambda(vars,argDist))*oldDist;
 		//dw("+--\n",oldDist,"\n",rdist,"\n",distribution,"\n--+");
 		foreach(v;vars){
 			tmpVars.remove(v);
@@ -389,7 +369,6 @@ class Distribution{
 			r.initialize(v,dIndex(dField(db1,"values"),dℤ(i)),types[i]);
 		}
 		r.q=dVar("`q");
-		r.context=dContextVars("γ",r.q);
 		auto ndist=dApply(dApply(dexpr,r.q),db1);
 		r.distribution=dInt(r.distribution*dIvr(DIvr.Type.eqZ,dField(db1,"tag")-one)*ndist);
 		r.error=dInt(dIvr(DIvr.Type.eqZ,dField(db1,"tag"))*ndist);

@@ -25,7 +25,7 @@ class Symbolic: Backend{
 			}
 		}
 		if(def.name.name!="main"||args.length) // TODO: move this decision to caller
-			dist.addArgsWithContext(args);
+			dist.addArgs(args);
 		return analyzeWith(def,dist,err);
 	}
 
@@ -492,10 +492,6 @@ private struct Analyzer{
 						foreach(v;dist.freeVars){
 							total=dInt(v,total);
 							expct=dInt(v,expct);
-						}
-						if(auto ctx=dist.context){
-							total=dInt(ctx,total);
-							expct=dInt(ctx,expct);
 						}
 						// for obvious reasons, this will never fail:
 						dist.assertTrue(dIvr(DIvr.Type.neqZ,total),"expectation can be computed only in feasible path");
