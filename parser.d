@@ -80,7 +80,7 @@ int getLbp(TokenType type) pure{ // operator precedence
 	case Tok!"(", Tok!"[": // function call and indexing
 		return 160;
 	// template instantiation
-	case Tok!"=>": return 165; // goesto
+	case Tok!"⇒",Tok!"↦",Tok!"=>": return 165; // goesto
 	case Tok!"!":  return 170;
 	//case Tok!"i": return 45; //infix
 	default: return -1;
@@ -389,10 +389,10 @@ struct Parser{
 				switch(ttype){
 					case Tok!":":
 						nextToken();
-						if(skipType() && ttype == Tok!"=>")
+						if(skipType() && (util.among(ttype,Tok!"⇒",Tok!"↦",Tok!"=>")))
 							goto case;
 						break;
-					case Tok!"{",Tok!"=>":
+					case Tok!"{",Tok!"⇒",Tok!"↦",Tok!"=>":
 						restoreState(state);
 						return parseLambdaExp();
 					default: break;
@@ -666,9 +666,9 @@ struct Parser{
 			ret=parseType();
 		}
 		CompoundExp body_;
-		if(ttype == Tok!"=>"){
+		if(util.among(ttype,Tok!"⇒",Tok!"↦",Tok!"=>")){
 			nextToken();
-			auto e=parseExpression();
+			auto e=parseExpression(rbp!(Tok!(",")));
 			auto r=New!ReturnExp(e);
 			r.loc=e.loc;
 			body_= New!CompoundExp([cast(Expression)r]);
