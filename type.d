@@ -93,7 +93,10 @@ class FunTy: Type{
 		this.dom=dom; this.cod=cod;
 	}
 	override string toString(){
-		return dom.toString()~" → "~cod.toString();
+		auto d=dom.toString(), c=cod.toString();
+		if(cast(TupleTy)dom||cast(FunTy)dom) d="("~d~")";
+		if(cast(TupleTy)cod) c="("~c~")";
+		return d~" → "~c;
 	}
 }
 
