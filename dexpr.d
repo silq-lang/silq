@@ -4066,8 +4066,8 @@ class DCat: DAssocOp{ // TODO: this should have n arguments, as it is associativ
 			if(!a1||!a2) return null;
 			auto dbv=dDeBruijnVar(1);
 			return dArray(a1.length+a2.length,
-						  dLambda(a1.entries.apply(dbv)*dIvr(DIvr.Type.lZ,dbv-a1.length)
-								  +a2.entries.apply(dbv-a1.length)*dIvr(DIvr.Type.leZ,a1.length-dbv)));
+			              dLambda(a1.entries.expr*dIvr(DIvr.Type.lZ,dbv-a1.length)
+			                      +a2.entries.expr.substitute(dbv,dbv-a1.length)*dIvr(DIvr.Type.leZ,a1.length-dbv)));
 		}
 		nop=[];
 		foreach(i;0..operands.length-1){
