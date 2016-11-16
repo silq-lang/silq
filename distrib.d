@@ -307,8 +307,6 @@ class Distribution{
 	DExpr call(Distribution q,DExpr[] args,Type[] ty)in{assert(!!q.q);}body{
 		DExpr rdist=q.distribution;
 		DExpr rerr=q.error;
-		import hashtable;
-		
 		auto context=freeVars.dup;
 		DVar[] r;
 		foreach(v;q.orderedFreeVars){
