@@ -1,0 +1,9 @@
+
+def foo(x){
+    return ()=>x;
+}
+
+def main(){
+    f := foo(1337);
+    return f(); // expected: δ[-r₁+1337]
+}

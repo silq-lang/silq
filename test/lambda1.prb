@@ -1,4 +1,3 @@
-// skipped
 
 dat Foo{
     def Foo(){}
@@ -14,10 +13,10 @@ def main(){
     q := foo;
     f := Foo();
     r := f.foo;
-    y := (z:ℝ) =>x+z+q(z);
+    y := (z:ℝ) => x+z+q(z);
     def bar(k){
 	return (x-y(2))*k;
     }
     z := bar;
-    return z(2);
+    return z(2); // expected: δ[-8+-r₁]
 }

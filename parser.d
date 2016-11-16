@@ -597,8 +597,19 @@ struct Parser{
 			}
 			return l;
 		}
-		Expression parseIt(){ return parseProduct(); }
-		auto r=parseProduct();
+		Expression parseExponential()(){
+			auto l=parseProduct();
+			if(ttype==Tok!"→"||ttype==Tok!"->"){
+				nextToken();
+				auto r=parseExponential();
+				auto next=New!(BinaryExp!(Tok!"→"))(l,r);
+				next.loc=l.loc.to(r.loc);
+				return next;
+			}
+			return l;
+		}
+		Expression parseIt(){ return parseExponential(); }
+		auto r=parseIt();
 		static if(showErrors) return r?r:new ErrorTy();
 		else return !!r;
 	}

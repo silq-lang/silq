@@ -24,7 +24,7 @@ class Symbolic: Backend{
 				dist.initialize(ctx,dRecord(),dd.dtype);
 			}
 		}
-		if(def.name.name!="main"||args.length) // TODO: move this decision to caller
+		if(!def.name||def.name.name!="main"||args.length) // TODO: move this decision to caller
 			dist.addArgs(args);
 		return analyzeWith(def,dist,err);
 	}
@@ -103,6 +103,9 @@ private struct Analyzer{
 				if(auto var=readVariable(vd,sc))
 					record[vd.name.name]=var;
 			for(auto csc=sc;;csc=(cast(NestedScope)csc).parent){
+				if(auto fsc=cast(FunctionScope)csc)
+					foreach(p;fsc.getFunction().params)
+						record[p.name.name]=dVar(p.name.name);
 				if(!cast(NestedScope)csc) break;
 				if(!cast(NestedScope)(cast(NestedScope)csc).parent) break;
 				if(cast(AggregateScope)csc){
@@ -183,8 +186,10 @@ private struct Analyzer{
 			if(auto ume=cast(UNotExp)e) return dIvr(DIvr.Type.eqZ,doIt(ume.e));
 			if(auto ume=cast(UBitNotExp)e) return -doIt(ume.e)-1;
 			if(auto le=cast(LambdaExp)e){
-				err.error("lambda expressions not supported yet",e.loc);
-				unwind();
+				auto summary=be.getSummary(le.fd,le.loc,err);
+				if(le.fd.isNested)
+					return summary.toDExprWithContext(buildContextFor(le.fd,le.fd.scope_));
+				return summary.toDExpr();
 			}
 			if(auto ce=cast(CallExp)e){
 				auto id=cast(Identifier)ce.e;
@@ -506,8 +511,11 @@ private struct Analyzer{
 				Type[] resty;
 				if(auto tplres=cast(TupleTy)funty.cod) resty=tplres.types;
 				else resty=[funty.cod];
+				size_t nargs;
+				if(auto tplargs=cast(TupleTy)funty.dom) nargs=tplargs.types.length;
+				else nargs=1;
 				DVar[] results=iota(0,resty.length).map!(x=>dVar("__r"~lowNum(x+1))).array;
-				auto summary=Distribution.fromDExpr(doIt(ce.e),results,resty);
+				auto summary=Distribution.fromDExpr(doIt(ce.e),nargs,results,resty);
 				auto tuplety=cast(TupleTy)funty.dom;
 				assert(ce.args.length == tuplety.types.length);
 				DExpr[] args;

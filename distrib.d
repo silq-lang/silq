@@ -165,6 +165,7 @@ class Distribution{
 		r.distribution=distribution;
 		r.error=error;
 		r.q=q;
+		r.nargs=nargs;
 		r.freeVarsOrdered=freeVarsOrdered;
 		r.orderedFreeVars=orderedFreeVars.dup;
 		return r;
@@ -181,7 +182,7 @@ class Distribution{
 		auto bdist = b.distribution.substituteAll(b.orderedFreeVars,cast(DExpr[])orderedFreeVars);
 		r.distribution=r.distribution+bdist;
 		r.error=r.error+b.error;
-		assert(r.q is b.q);
+		assert(r.q is b.q && r.nargs is b.nargs);
 		return r;
 	}
 	
@@ -199,7 +200,8 @@ class Distribution{
 		r.distribution=d1+d2;
 		r.error=orig.error;
 		r.q=q;
-		assert(q is b.q);
+		r.nargs=nargs;
+		assert(q is b.q && nargs is b.nargs);
 		assert(!freeVarsOrdered && !b.freeVarsOrdered);
 		if(error !is zero || b.error !is zero)
 			r.error=(orig.error+error+b.error).simplify(one);
@@ -366,7 +368,7 @@ class Distribution{
 		return dLambda(toDExprLambdaBody());
 	}
 
-	DExpr toDExprWithContext(DExpr context)in{assert(freeVarsOrdered&&q);}body{
+	DExpr toDExprWithContext(DExpr context)in{assert(freeVarsOrdered&&q&&nargs);}body{
 		auto db1=dDeBruijnVar(1),db2=dDeBruijnVar(2);
 		auto bdy=toDExprLambdaBody();
 		context=context.incDeBruijnVar(1,0);
@@ -374,7 +376,7 @@ class Distribution{
 		return dLambda(bdy);
 	}
 	
-	static Distribution fromDExpr(DExpr dexpr,DVar[] orderedFreeVars,Type[] types){
+	static Distribution fromDExpr(DExpr dexpr,size_t nargs,DVar[] orderedFreeVars,Type[] types){
 		auto r=new Distribution();
 		auto db1=dDeBruijnVar(1);
 		dexpr=dexpr.incDeBruijnVar(1,0);
@@ -383,6 +385,7 @@ class Distribution{
 			r.initialize(v,dIndex(dField(db1,"values"),dℤ(i)),types[i]);
 		}
 		r.q=dVar("`q");
+		r.nargs=nargs;
 		auto ndist=dApply(dApply(dexpr,r.q),db1);
 		r.distribution=dInt(r.distribution*dIvr(DIvr.Type.eqZ,dField(db1,"tag")-one)*ndist);
 		r.error=dInt(dIvr(DIvr.Type.eqZ,dField(db1,"tag"))*ndist);

@@ -1,0 +1,30 @@
+
+arrayLength := 3; // TODO: make unnecessary
+
+def map(lambda: ℝ → ℝ){
+    return (arr: ℝ[]){
+        result := [];
+        for i in [0..arrayLength){
+            result ~= [lambda(arr[i])];
+        }
+        return result;
+    }
+}
+
+def all(lambda: ℝ → ℝ){
+    return (arr: ℝ[]){
+	result := 1;
+	for i in [0..arrayLength){
+	    result &&= lambda(arr[i]);
+	}
+	return result;
+    }
+}
+
+def main(){
+    f := (x) => Bernoulli(x);
+    g := map(f);
+    a := [1/2,1/3,1/4];
+    h := (x)=>x!=0;
+    return all(h)(g(a)); // expected: 23·δ[r₁]·⅟24+δ[-r₁+1]·⅟24
+}

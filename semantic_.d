@@ -1164,6 +1164,14 @@ Type typeSemantic(Expression t,Scope sc)in{assert(!!t&&!!sc);}body{
 		if(r&&!pr.e2.brackets) return tupleTy(t1~r.types);
 		return tupleTy([t1,t2]);
 	}
+	if(auto ex=cast(BinaryExp!(Tok!"→"))t){
+		auto t1=typeSemantic(ex.e1,sc);
+		auto t2=typeSemantic(ex.e2,sc);
+		if(!t1||!t2) return null;
+		auto tpl=cast(TupleTy)t1;
+		if(!tpl) tpl=tupleTy([t1]); // TODO: ok?
+		return funTy(tpl,t2);
+	}
 	if(auto at=cast(IndexExp)t){
 		auto next=typeSemantic(at.e,sc);
 		if(!next) return null;
