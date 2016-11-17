@@ -1132,6 +1132,7 @@ ReturnExp returnExpSemantic(ReturnExp ret,Scope sc){
 
 
 Type typeSemantic(Expression t,Scope sc)in{assert(!!t&&!!sc);}body{
+	if(auto tt=cast(Type)t) return tt;
 	if(auto id=cast(Identifier)t){
 		if(id.name=="R"||id.name=="ℝ") return ℝ;
 		if(id.name=="1"||id.name=="𝟙") return unit;

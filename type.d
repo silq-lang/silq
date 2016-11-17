@@ -98,6 +98,14 @@ class FunTy: Type{
 		if(cast(TupleTy)cod) c="("~c~")";
 		return d~" → "~c;
 	}
+	@property size_t nargs(){
+		if(auto tplargs=cast(TupleTy)dom) return tplargs.types.length;
+		return 1;
+	}
+	Type argTy(size_t i)in{assert(i<nargs);}body{
+		if(auto tplargs=cast(TupleTy)dom) return tplargs.types[i];
+		return dom;
+	}
 }
 
 FunTy funTy(Type dom,Type cod){

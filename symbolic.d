@@ -122,6 +122,27 @@ private struct Analyzer{
 		}
 		DExpr lookupMeaning(Identifier id)in{assert(id && id.scope_,text(id," ",id.loc));}body{
 			if(!id.meaning||!id.scope_||!id.meaning.scope_){
+				if(isBuiltIn(id)){ // TODO: this is somewhat hacky
+					static DExpr[string] builtIn;
+					auto fty=cast(FunTy)id.type;
+					assert(!!fty);
+					if(id.name !in builtIn){
+						auto bdist=new Distribution();
+						auto names=iota(fty.nargs).map!(i=>new Identifier("x"~lowNum(i+1))).array;
+						auto params=new Parameter[](names.length);
+						foreach(i,ref p;params) p=new Parameter(names[i],fty.argTy(i));
+						auto call=new CallExp(id,cast(Expression[])names);
+						auto bdy=new CompoundExp([new ReturnExp(call)]);
+						auto fdef=new FunctionDef(null,params,null,bdy);
+						auto sc=new TopScope(err);
+						fdef.scope_=sc;
+						fdef=cast(FunctionDef)presemantic(fdef,sc);
+						assert(!!fdef);
+						bdist=be.analyze(functionDefSemantic(fdef,sc),err);
+						builtIn[id.name]=bdist.toDExpr();
+					}
+					return builtIn[id.name];
+				}
 				err.error("undefined variable '"~id.name~"'",id.loc);
 				return null;
 			}
@@ -511,9 +532,7 @@ private struct Analyzer{
 				Type[] resty;
 				if(auto tplres=cast(TupleTy)funty.cod) resty=tplres.types;
 				else resty=[funty.cod];
-				size_t nargs;
-				if(auto tplargs=cast(TupleTy)funty.dom) nargs=tplargs.types.length;
-				else nargs=1;
+				size_t nargs=funty.nargs;
 				auto fun=doIt(ce.e);
 				DVar[] results=iota(0,resty.length).map!(x=>dist.getTmpVar("__r")).array;
 				auto summary=Distribution.fromDExpr(fun,nargs,results,resty);
