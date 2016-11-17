@@ -1071,16 +1071,15 @@ FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 		}
 		pty~=p.vtype;
 	}
-	if(!definitelyReturns(fd)){
-		if(fd.ret && fd.ret != unit){
-			sc.error("control flow might reach end of function (add return or assert(0) statement)",fd.loc);
-		}else{
-			auto tpl=new TupleExp([]);
-			tpl.loc=fd.loc;
-			auto rete=new ReturnExp(tpl);
-			rete.loc=fd.loc;
-			fd.body_.s~=returnExpSemantic(rete,fd.body_.blscope_);
-		}
+	if(!definitelyReturns(fd) && fd.ret && fd.ret != unit){
+		sc.error("control flow might reach end of function (add return or assert(0) statement)",fd.loc);
+		fd.sstate=SemState.error;
+	}else if(!fd.ret){
+		auto tpl=new TupleExp([]);
+		tpl.loc=fd.loc;
+		auto rete=new ReturnExp(tpl);
+		rete.loc=fd.loc;
+		fd.body_.s~=returnExpSemantic(rete,fd.body_.blscope_);
 	}
 	if(fd.ret&&!fd.ftype) fd.ftype=funTy(tupleTy(pty),fd.ret);
 	if(fd.sstate!=SemState.error)
