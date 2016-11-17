@@ -2278,7 +2278,7 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 		}else if(formatting==Format.lisp){
 			return text("(dirac ",e.toStringImpl(formatting,Precedence.none,binders),")");
 		}else{
-			return "δ["~e.toStringImpl(formatting,Precedence.none,binders)~"]";
+			return "δ["~e.toStringImpl(formatting,Precedence.none,binders)~"]"; // TODO: use ⟦ instead of [
 		}
 	}
 
@@ -2355,8 +2355,8 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 		if(formatting==Format.lisp) // TODO: better name
 			return text("(dirac2 ",var.toStringImpl(formatting,Precedence.subscript,binders),e.toStringImpl(formatting,Precedence.none,binders),")");
 		// TODO: encoding for other CAS?
-		return "δ_"~var.toStringImpl(formatting,Precedence.none,binders)
-			~"["~e.toStringImpl(formatting,Precedence.none,binders)~"]";
+		return "δ_"~var.toStringImpl(formatting,Precedence.subscript,binders)
+			~"["~e.toStringImpl(formatting,Precedence.none,binders)~"]"; // TODO: use ⟦ instead of [
 	}
 
 	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; } // TODO: ok?
@@ -3688,13 +3688,52 @@ class DApply: DOp{
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){
-		auto nfun=fun.simplify(facts),narg=arg.simplify(one); // cannot use all facts for arg! (might remove a free variable)
+		auto nfun=fun.simplify(facts),narg=arg.simplify(facts);
 		if(auto l=cast(DLambda)nfun)
 			return l.apply(narg).simplify(facts);
 		return dApply(nfun,narg);
 	}
 }
 mixin(makeConstructorNonCommutAssoc!DApply);
+
+class DDistApply: DOp{
+	DExpr fun;
+	DExpr arg;
+	this(DExpr fun,DExpr arg){
+		this.fun=fun;
+		this.arg=arg;
+	}
+	override @property string symbol(Format formatting,int binders){ return "("; } // TODO: ambiguous (same syntax as DApply). Replace symbol by ⟦ and also use ⟦ instead of [ for deltas.
+	override @property Precedence precedence(){ return Precedence.index; }
+	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		auto isTpl=!!cast(DTuple)arg;
+		return addp(prec,text(fun.toStringImpl(formatting,Precedence.index,binders),(isTpl?"":" "),"(",arg.toStringImpl(formatting,Precedence.apply,binders)[isTpl..$-isTpl],")"));
+	}
+	override int forEachSubExpr(scope int delegate(DExpr) dg){
+		if(auto r=dg(fun)) return r;
+		return dg(arg);
+	}
+	override int freeVarsImpl(scope int delegate(DVar) dg){
+		if(auto r=fun.freeVarsImpl(dg)) return r;
+		return arg.freeVarsImpl(dg);
+	}
+	override DExpr substitute(DVar var,DExpr e){
+		return dDistApply(fun.substitute(var,e),arg.substitute(var,e));
+	}
+	override DDistApply incDeBruijnVar(int di,int bound){
+		return dDistApply(fun.incDeBruijnVar(di,bound),arg.incDeBruijnVar(di,bound));
+	}
+	static DDistApply constructHook(DExpr fun,DExpr arg){
+		return null;
+	}
+	override DExpr simplifyImpl(DExpr facts){
+		auto nfun=fun.simplify(facts),narg=arg.simplify(one); // cannot use all facts for arg! (might remove a free variable)
+		if(auto l=cast(DLambda)nfun)
+			return l.apply(narg);
+		return dDistApply(nfun,narg);
+	}
+}
+mixin(makeConstructorNonCommutAssoc!DDistApply);
 
 
 class DArray: DExpr{

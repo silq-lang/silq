@@ -215,12 +215,12 @@ class Distribution{
 		q=dVar("`q");
 		assert(!!q);
 		nargs=args.length;
-		distribute(dApply(q,dTuple(args))); // TODO: constant name sufficient?
+		distribute(dDistApply(q,dTuple(args))); // TODO: constant name sufficient?
 	}
 	
 	void assumeInputNormalized(size_t nParams){
 		auto vars=iota(0,nParams).map!(x=>dVar("__p"~lowNum(x))).array;
-		auto fun=dApply(q,dTuple(cast(DExpr[])vars)); // TODO: get rid of cast
+		auto fun=dDistApply(q,dTuple(cast(DExpr[])vars)); // TODO: get rid of cast
 		DExpr tdist=fun;
 		foreach(v;vars) tdist=dIntSmp(v,tdist,one);
 		DExpr doIt(DExpr e){
@@ -369,7 +369,7 @@ class Distribution{
 		auto db1=dDeBruijnVar(1),db2=dDeBruijnVar(2);
 		auto bdy=toDExprLambdaBody();
 		context=context.incDeBruijnVar(1,0);
-		bdy=bdy.substitute(db1,dLambda(dApply(db2,dTuple(iota(nargs-1).map!(i=>db1[dℤ(i)]).array))*dDiscDelta(db1[dℤ(nargs-1)],context)));
+		bdy=bdy.substitute(db1,dLambda(dDistApply(db2,dTuple(iota(nargs-1).map!(i=>db1[dℤ(i)]).array))*dDiscDelta(db1[dℤ(nargs-1)],context)));
 		return dLambda(bdy);
 	}
 	
@@ -383,7 +383,7 @@ class Distribution{
 		}
 		r.q=dVar("`q");
 		r.nargs=nargs;
-		auto ndist=dApply(dApply(dexpr,r.q),db1);
+		auto ndist=dDistApply(dApply(dexpr,r.q),db1);
 		r.distribution=dInt(r.distribution*dIvr(DIvr.Type.eqZ,dField(db1,"tag")-one)*ndist);
 		r.error=dInt(dIvr(DIvr.Type.eqZ,dField(db1,"tag"))*ndist);
 		r.orderFreeVars(orderedFreeVars);
