@@ -7,6 +7,6 @@ def main(){
     x := Gauss(0,1);
     y := Gauss(0,1);
     r := Expectation(max(x,y));
-    return r; // expected: 2·δ[(∫dξ₁(d/dx)⁻¹[e^(-x²)](ξ₁·⅟√2̅)·ξ₁·⅟e^(ξ₁²·⅟2))·2·⅟π·⅟√2̅+-2·r+⅟√π̅]
+    return r; // expected: δ[(∫dξ₁(d/dx)⁻¹[e^(-x²)](ξ₁·⅟√2̅)·ξ₁·⅟e^(ξ₁²·⅟2))·2·⅟π·⅟√2̅+-r]
     // TODO: δ[⅟√π̅+-r] // (mathematica is able to determine this.)
 }

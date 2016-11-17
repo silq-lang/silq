@@ -1,0 +1,7 @@
+
+def main(){
+    x:=(x)=>(x){assert(Bernoulli(1/2));};
+    y:=(){assert(0);};
+    return if Bernoulli(1/3) { x(1)(2); } else { y(); }; // expected: δ_r₁[()]·⅟6
+}
+

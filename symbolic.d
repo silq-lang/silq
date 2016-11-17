@@ -530,6 +530,7 @@ private struct Analyzer{
 				auto cond=transformConstr(ite.cond);
 				if(!cond) throw new Unwind();
 				auto var=dist.getTmpVar("__ite");
+				dist.initialize(var,dTuple([]),unit); // TODO: get rid of this?
 				auto dthen=dist.dupNoErr();
 				dthen.distribution=dthen.distribution*dIvr(DIvr.Type.neqZ,cond);
 				auto dothw=dist.dupNoErr();
@@ -537,7 +538,7 @@ private struct Analyzer{
 				auto athen=Analyzer(be,dthen,err,arrays.dup,deterministic.dup);
 				auto then=athen.transformExp(ite.then);
 				if(!then) unwind();
-				athen.dist.initialize(var,then,ite.then.s[0].type);
+				athen.dist.assign(var,then,ite.then.s[0].type);
 				if(!ite.othw){
 					err.error("missing else for if expression",ite.loc);
 					unwind();
@@ -545,7 +546,7 @@ private struct Analyzer{
 				auto aothw=Analyzer(be,dothw,err,arrays.dup,deterministic.dup);
 				auto othw=aothw.transformExp(ite.othw);
 				if(!othw) unwind();
-				aothw.dist.initialize(var,othw,ite.othw.s[0].type);
+				aothw.dist.assign(var,othw,ite.othw.s[0].type);
 				athen.dist.simplify(), aothw.dist.simplify();
 				dist=athen.dist.join(dist,aothw.dist);
 				foreach(k,v;deterministic){
