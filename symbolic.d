@@ -514,8 +514,10 @@ private struct Analyzer{
 				size_t nargs;
 				if(auto tplargs=cast(TupleTy)funty.dom) nargs=tplargs.types.length;
 				else nargs=1;
-				DVar[] results=iota(0,resty.length).map!(x=>dVar("__r"~lowNum(x+1))).array;
-				auto summary=Distribution.fromDExpr(doIt(ce.e),nargs,results,resty);
+				auto fun=doIt(ce.e);
+				DVar[] results=iota(0,resty.length).map!(x=>dist.getTmpVar("__r")).array;
+				auto summary=Distribution.fromDExpr(fun,nargs,results,resty);
+				foreach(r;results) dist.freeVars.remove(r), dist.tmpVars.remove(r);
 				auto tuplety=cast(TupleTy)funty.dom;
 				assert(ce.args.length == tuplety.types.length);
 				DExpr[] args;

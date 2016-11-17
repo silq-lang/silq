@@ -1,0 +1,17 @@
+
+def ret(arg: ℝ) ⇒ (k: ℝ → ℝ) ⇒ k(arg);
+def bind(me: (ℝ → ℝ) → ℝ, f: ℝ → (ℝ → ℝ)→ ℝ) ⇒
+    (k: ℝ → ℝ) ⇒ me((r:ℝ) ⇒ f(r)(k));
+def callCC(f: (ℝ → (ℝ → ℝ) → ℝ) × ℝ → (ℝ → ℝ) →ℝ,arg: ℝ) ⇒
+    (k: ℝ → ℝ) ⇒ f(((a:ℝ)⇒(_:ℝ → ℝ)⇒k(a)),arg)(k);
+
+def main(){
+    y := Bernoulli(1/2);
+    def f(cont: ℝ → (ℝ → ℝ) → ℝ, x: ℝ){
+	return bind(if x<3 { cont(x) } else { ret(y) }, (a: ℝ)⇒ cont(x+a));
+    }
+    assert(callCC(f,1)((x) ⇒ x)==1);
+    cont := (x:ℝ) ⇒ (g:ℝ → ℝ) ⇒ g(x);
+    assert(f(cont,1)((x)=>x)==2);
+    return callCC(f,3-Bernoulli(1/2))((x) ⇒ x); // expected: δ[-r₁+2]·⅟2+δ[-r₁+3]·⅟4+δ[-r₁+4]·⅟4
+}

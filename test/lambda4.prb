@@ -1,0 +1,4 @@
+def call(f: ℝ → ℝ → ℝ) ⇒ f(1)(2);
+def main(){
+    return call((x)⇒ (y) ⇒ x+y); // expected: δ[-r₁+3]
+}

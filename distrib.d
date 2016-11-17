@@ -309,11 +309,10 @@ class Distribution{
 		DExpr rerr=q.error;
 		auto context=freeVars.dup;
 		DVar[] r;
-		foreach(v;q.orderedFreeVars){
+		foreach(_;q.orderedFreeVars)
 			r~=getTmpVar("__r");
-			rdist=rdist.substitute(v,r[$-1]);
-			rerr=rerr.substitute(v,r[$-1]);
-		}
+		rdist=rdist.substituteAll(q.orderedFreeVars,cast(DExpr[])r);
+		rerr=rerr.substituteAll(q.orderedFreeVars,cast(DExpr[])r);
 		DVar[] vars;
 		auto oldDist=distribution;
 		auto argDist=one;
