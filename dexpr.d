@@ -3205,7 +3205,8 @@ template BitwiseImpl(string which){
 	static void insert(ref DExprSet operands,DExpr operand)in{assert(!!operand);}body{
 		if(operand is zero){
 			static if(which=="bitAnd") operands.clear();
-			return;
+			else static if(which=="bitOr"||which=="bitXor") return;
+			else static assert(0);
 		}
 		static if(which=="bitXor"){
 			if(operand in operands){
@@ -3257,9 +3258,8 @@ template BitwiseImpl(string which){
 		return mixin("d"~upperf(which))(operands);
 	}
 	static DExpr constructHook(DExprSet operands){
-		static if(which=="bitOr"||which=="bitXor"){
+		static if(which=="bitOr"||which=="bitXor")
 			if(!operands.length) return zero;
-		}
 		return null;
 	}
 }
