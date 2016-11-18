@@ -330,13 +330,14 @@ struct Parser{
 	}
 
 	Parameter parseParameter(){
+		mixin(SetLoc!Parameter);
 		auto i=parseIdentifier();
 		Expression t=null;
 		if(ttype==Tok!":"){
 			nextToken();
 			t=parseType();
 		}
-		return New!Parameter(i,t);
+		return res=New!Parameter(i,t);
 	}
 	
 	Expression[] parseArgumentList(string delim, bool nonempty=false, Entry=AssignExp, T...)(T args){
