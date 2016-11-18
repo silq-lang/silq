@@ -383,9 +383,11 @@ struct Parser{
 				return res=New!LiteralExp(tok);
 			case Tok!"(":
 				auto state=saveState();
-				nextToken();
-				skipToUnmatched();
-				nextToken();
+				while(ttype==Tok!"("){
+					nextToken();
+					skipToUnmatched();
+					nextToken();
+				}
 				switch(ttype){
 					case Tok!":":
 						nextToken();
@@ -666,9 +668,14 @@ struct Parser{
 			ret=parseType();
 		}
 		CompoundExp body_;
-		if(util.among(ttype,Tok!"⇒",Tok!"↦",Tok!"=>")){
-			nextToken();
-			auto e=parseExpression(rbp!(Tok!(",")));
+		if(util.among(ttype,Tok!"⇒",Tok!"↦",Tok!"=>",Tok!"(")){
+			Expression e;
+			if(ttype==Tok!"("){
+				e=parseLambdaExp();
+			}else{
+				nextToken();
+				e=parseExpression(rbp!(Tok!(",")));
+			}
 			auto r=New!ReturnExp(e);
 			r.loc=e.loc;
 			body_= New!CompoundExp([cast(Expression)r]);

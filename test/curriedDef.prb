@@ -1,0 +1,8 @@
+
+def k(x:ℝ)(y:ℝ)=>x;
+
+def main(){
+    f := k(3);
+    g := ((x:ℝ)(y:ℝ)=>x)(3);
+    return f(2)==g(3); // expected: δ[-r₁+1]
+}
