@@ -19,6 +19,7 @@ struct Options{
 	InferenceMethod backend;
 	bool plot=false;
 	string plotRange="[-10:10]";
+	string plotFile="";
 	bool cdf=false;
 	bool kill=false;
 	auto formatting=Format.default_;

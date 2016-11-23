@@ -97,7 +97,7 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 		}
 		writeln("plotting... ",(plotCDF?"(CDF)":"(PDF)"));
 		//matlabPlot(dist.distribution.toString(Format.matlab).replace("q(γ⃗)","1"),dist.freeVars.element.toString(Format.matlab));
-		gnuplot(dist.distribution,dist.freeVars,opt.plotRange);
+		gnuplot(dist.distribution,dist.freeVars,opt.plotRange,opt.plotFile);
 	}
 }
 
@@ -125,7 +125,7 @@ void matlabPlot(string expression,string variable){
 	//writeln(input.readEnd.readln());
 	//foreach(i;0..100) writeln(error.readEnd.readln());
 }
-void gnuplot(DExpr expr,SetX!DVar varset,string range="[-1:3]"){
+void gnuplot(DExpr expr,SetX!DVar varset,string range="[-1:3]",string outfile=""){
 	DVar[] vars;
 	foreach(var;varset) vars~=var;
 	assert(vars.length==1||vars.length==2);
@@ -145,6 +145,9 @@ void gnuplot(DExpr expr,SetX!DVar varset,string range="[-1:3]"){
 		expr=expr.substitute(vars[1],"y".dVar);
 	}
 	import std.string;
+	if(outfile.length){
+		input.writeEnd.writeln("set terminal postscript eps\nset output \"",outfile,"\"");
+	}
 	auto str=expr.toString(Format.gnuplot).replace("q(γ⃗)","1");
 	string command=
 		//"set enhanced color lw 2 \"Times\" 30\n"~
@@ -162,8 +165,7 @@ void gnuplot(DExpr expr,SetX!DVar varset,string range="[-1:3]"){
 		writeln(command);
 	}
 	input.writeEnd.writeln(command);
-	//input.writeEnd.writeln("exit");
-	//input.writeEnd.writeln("set terminal postscript eps\nset output \"/tmp/psiplot.eps\"\nreplot\n");
-	input.writeEnd.writeln("bind \"x\" \"exit\"\n");
+	if(outfile.length) input.writeEnd.writeln("exit");
+	else input.writeEnd.writeln("bind \"x\" \"exit\"\n");
 	input.writeEnd.flush();	
 }

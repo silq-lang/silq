@@ -119,6 +119,11 @@ int main(string[] args){
 						return 1;
 					}
 				}
+				if(x.startsWith("--plot-file=")){
+					opt.plot=true;
+					opt.plotFile=x["--plot-file=".length..$];
+					continue;
+				}
 				hasInputFile=true;
 				if(auto r=run(x)) return r;
 		}
