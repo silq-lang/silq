@@ -3,7 +3,7 @@
 
 import std.algorithm, std.range, std.array, std.conv;
 
-import options, dexpr, type, util;
+import options, dexpr, expression, util;
 
 DExpr gaussPDF(DVar var,DExpr μ,DExpr ν){
 	auto dist=one/(2*dΠ*ν)^^(one/2)*dE^^-((var-μ)^^2/(2*ν));
@@ -272,11 +272,11 @@ class Distribution{
 		distribution=distribution*cond;
 	}
 	void distribute(DExpr pdf){ distribution=distribution*pdf; }
-	void initialize(DVar var,DExpr exp,Type ty){
+	void initialize(DVar var,DExpr exp,Expression ty){
 		assert(!distribution.hasFreeVar(var));
 		distribute(dDelta(var,exp,ty));
 	}
-	void assign(DVar var,DExpr exp,Type ty){
+	void assign(DVar var,DExpr exp,Expression ty){
 		if(distribution is zero) return;
 		// assert(distribution.hasFreeVar(var)); // ∫dx0
 		auto nvar=getVar(var.name);
@@ -304,7 +304,7 @@ class Distribution{
 		distribution=(dIvr(DIvr.Type.neqZ,factor)*(distribution/factor)).simplify(one);
 		error=(dIvr(DIvr.Type.eqZ,factor)+dIvr(DIvr.Type.neqZ,factor)*(error/factor)).simplify(one);
 	}
-	DExpr call(Distribution q,DExpr[] args,Type[] ty)in{assert(!!q.q);}body{
+	DExpr call(Distribution q,DExpr[] args,Expression[] ty)in{assert(!!q.q);}body{ // TODO: get rid of 'ty'
 		DExpr rdist=q.distribution;
 		DExpr rerr=q.error;
 		auto context=freeVars.dup;
@@ -373,7 +373,7 @@ class Distribution{
 		return dLambda(bdy);
 	}
 	
-	static Distribution fromDExpr(DExpr dexpr,size_t nargs,DVar[] orderedFreeVars,Type[] types){
+	static Distribution fromDExpr(DExpr dexpr,size_t nargs,DVar[] orderedFreeVars,Expression[] types){
 		auto r=new Distribution();
 		auto db1=dDeBruijnVar(1);
 		dexpr=dexpr.incDeBruijnVar(1,0);

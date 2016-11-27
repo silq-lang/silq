@@ -127,7 +127,7 @@ Expression presemantic(Declaration expr,Scope sc){
 		}
 		if(fd.rret){
 			string[] pn;
-			Type[] pty;
+			Expression[] pty;
 			foreach(p;fd.params){
 				if(!p.vtype){
 					assert(fd.sstate==SemState.error);
@@ -578,7 +578,7 @@ ABinaryExp opAssignExpSemantic(ABinaryExp be,Scope sc)in{
 		}
 	}
 	checkULhs(be.e1);
-	bool check(Type ty){
+	bool check(Expression ty){
 		if(cast(CatAssignExp)be) return !!cast(ArrayTy)ty;
 		return ty is ℝ;
 	}
@@ -645,7 +645,12 @@ Expression callSemantic(CallExp ce,Scope sc){
 		return ce;
 	auto fun=ce.e;
 	CallExp checkFunCall(FunTy ft){
-		Type[] aty;
+		if(auto id=cast(Identifier)fun){
+			if(id.name=="array" && ce.args.length==2){
+				ft=funTy(tupleTy([ℝ,ce.args[1].type]),arrayTy(ce.args[1].type));
+			}
+		}
+		Expression[] aty;
 		foreach(a;ce.args){
 			if(!a.type){
 				assert(ce.sstate==SemState.error);
@@ -654,16 +659,11 @@ Expression callSemantic(CallExp ce,Scope sc){
 			aty~=a.type;
 		}
 		auto atys=tupleTy(aty);
-		if(auto id=cast(Identifier)fun){
-			if(id.name=="array" && ce.args.length==2){
-				ft=funTy(tupleTy([ℝ,ce.args[1].type]),arrayTy(ce.args[1].type));
-			}
-		}
-		if(!compatible(ft.dom,atys)){
+		if(auto rty=ft.tryApply(ce.args)){
+			ce.type=rty;
+		}else{
 			sc.error(format("expected argument types '%s', but '%s' was provided",ft.dom,atys),ce.loc);
 			ce.sstate=SemState.error;
-		}else{
-			ce.type=ft.cod;
 		}
 		return ce;
 	}
@@ -693,7 +693,7 @@ Expression callSemantic(CallExp ce,Scope sc){
 		auto id=cast(Identifier)ce.e;
 		switch(id.name){
 			case "FromMarginal": 
-				Type[] aty;
+				Expression[] aty;
 				foreach(a;ce.args){
 					if(!a.type){
 						assert(ce.sstate==SemState.error);
@@ -909,7 +909,7 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 		return tpl;
 	}
 	if(auto arr=cast(ArrayExp)expr){
-		Type t; bool tok=true;
+		Expression t; bool tok=true;
 		Expression texp;
 		foreach(ref exp;arr.e){
 			exp=expressionSemantic(exp,sc);
@@ -1093,7 +1093,7 @@ FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 	fd.type=unit;
 	propErr(bdy,fd);
 	string[] pn;
-	Type[] pty;
+	Expression[] pty;
 	foreach(p;fd.params){
 		if(!p.vtype){
 			assert(fd.sstate==SemState.error);
@@ -1207,7 +1207,7 @@ Type typeSemantic(Expression expr,Scope sc)in{assert(!!expr&&!!sc);}body{
 	return null;
  }
 
-Type typeForDecl(Declaration decl){
+Expression typeForDecl(Declaration decl){
 	if(auto dat=cast(DatDecl)decl){
 		if(!dat.dtype&&dat.scope_) dat=cast(DatDecl)presemantic(dat,dat.scope_);
 		assert(cast(AggregateTy)dat.dtype);
@@ -1222,10 +1222,6 @@ Type typeForDecl(Declaration decl){
 		return fd.ftype;
 	}
 	return unit; // TODO
-}
-
-bool compatible(Type lhs,Type rhs){
-	return lhs == rhs;
 }
 
 bool definitelyReturns(FunctionDef fd){
@@ -1343,7 +1339,7 @@ Expression handleSampleFrom(CallExp ce,Scope sc){
 		ce.sstate=SemState.error;
 	}else{
 		 // TODO: this special casing is not very nice:
-		ce.type=info.retVars.length==1?ℝ:tupleTy((cast(Type)ℝ).repeat(info.retVars.length).array);
+		ce.type=info.retVars.length==1?ℝ:tupleTy((cast(Expression)ℝ).repeat(info.retVars.length).array);
 	}
 	return ce;
 }

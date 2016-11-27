@@ -529,7 +529,7 @@ private struct Analyzer{
 				}
 				auto funty=cast(FunTy)ce.e.type;
 				assert(!!funty);
-				Type[] resty;
+				Expression[] resty;
 				if(auto tplres=cast(TupleTy)funty.cod) resty=tplres.types;
 				else resty=[funty.cod];
 				size_t nargs=funty.nargs;
@@ -673,7 +673,7 @@ private struct Analyzer{
 		catch(Unwind){ return null; }
 	}
 
-	void trackDeterministic(DVar var,DExpr rhs,Type ty){
+	void trackDeterministic(DVar var,DExpr rhs,Expression ty){
 		if(ty !is ℝ) return;
 		if(rhs){
 			if(auto nrhs=isObviouslyDeterministic(rhs)){
@@ -693,7 +693,7 @@ private struct Analyzer{
 		return e.simplify(one);
 	}
 
-	DExpr isDeterministic(DExpr e,Type ty){ // TODO: track deterministic values for more complex datatypes than 'ℝ"?
+	DExpr isDeterministic(DExpr e,Expression ty){ // TODO: track deterministic values for more complex datatypes than 'ℝ"?
 		if(ty !is ℝ) return null;
 		if(auto r=isObviouslyDeterministic(e))
 			return r;
@@ -819,8 +819,8 @@ private struct Analyzer{
 		}
 	}
 
-	void assignTo(DExpr lhs,DExpr rhs,Type ty,Location loc){
-		void assignVar(DVar var,DExpr rhs,Type ty){
+	void assignTo(DExpr lhs,DExpr rhs,Expression ty,Location loc){
+		void assignVar(DVar var,DExpr rhs,Expression ty){
 			if(var.name !in arrays){
 				dist.assign(var,rhs,ty);
 				trackDeterministic(var,rhs,ty);
@@ -843,9 +843,9 @@ private struct Analyzer{
 		}
 	}
 	
-	void assignTo(Expression lhs,DExpr rhs,Type ty,Location loc){
+	void assignTo(Expression lhs,DExpr rhs,Expression ty,Location loc){
 		if(!rhs) return;
-		void assignVar(Identifier id,DExpr rhs,Type ty){
+		void assignVar(Identifier id,DExpr rhs,Expression ty){
 			if(id.name !in arrays){
 				auto v=dVar(id.name);
 				dist.assign(v,rhs,ty);
@@ -913,7 +913,7 @@ private struct Analyzer{
 			assert(!!de);
 			// TODO: no real need to repeat checks done by semantic
 			scope(exit) dist.marginalizeTemporaries();
-			void defineVar(Identifier id,DExpr rhs,Type ty){
+			void defineVar(Identifier id,DExpr rhs,Expression ty){
 				DVar var=null;
 				if(id.name !in arrays) var=dist.declareVar(id.name);
 				if(var){

@@ -10,6 +10,8 @@ class Declaration: Expression{
 	this(Identifier name){ this.name=name; }
 	override @property string kind(){ return "declaration"; }
 	override string toString(){ return name.toString(); }
+
+	mixin VariableFree;
 }
 
 class CompoundDecl: Expression{
@@ -21,6 +23,8 @@ class CompoundDecl: Expression{
 
 	// semantic information
 	AggregateScope ascope_;
+
+	mixin VariableFree; // TODO!
 }
 
 
@@ -32,7 +36,7 @@ class VarDecl: Declaration{
 	@property override string kind(){ return "variable"; }
 
 	// semantic information
-	Type vtype;
+	Expression vtype;
 	Expression initializer;
 }
 
@@ -63,7 +67,7 @@ class FunctionDef: Declaration{
 	FunctionScope fscope_;
 	VarDecl context;
 	@property string contextName()in{assert(!!context);}body{ return context.name.name; }
-	Type ret;
+	Expression ret; // return type
 	Type ftype;
 	bool hasReturn;
 	bool isConstructor;
@@ -97,7 +101,7 @@ abstract class DefExp: Expression{
 	this(BinaryExp!(Tok!":=") init){ this.initializer=init; }
 	abstract VarDecl[] decls();
 
-	abstract void setType(Type type);
+	abstract void setType(Expression type);
 	abstract void setInitializer();
 	abstract void setError();
 }
@@ -112,7 +116,7 @@ class SingleDefExp: DefExp{
 		return initializer.toString();
 	}
 
-	override void setType(Type type){
+	override void setType(Expression type){
 		assert(!!type);
 		decl.vtype=type;
 		if(!decl.vtype) decl.sstate=SemState.error;
@@ -124,6 +128,8 @@ class SingleDefExp: DefExp{
 	override void setError(){
 		decl.sstate=sstate=SemState.error;
 	}
+
+	mixin VariableFree; // TODO
 }
 
 class MultiDefExp: DefExp{
@@ -135,7 +141,7 @@ class MultiDefExp: DefExp{
 	override string toString(){
 		return initializer.toString();
 	}
-	override void setType(Type type){
+	override void setType(Expression type){
 		assert(!!type);
 		if(auto tt=cast(TupleTy)type){
 			if(tt.types.length==decls_.length){
@@ -143,6 +149,8 @@ class MultiDefExp: DefExp{
 					decl.vtype=tt.types[i];
 				}
 			}
+		}else{
+			assert(0,"TODO!");
 		}
 	}
 	override void setInitializer(){
@@ -159,4 +167,6 @@ class MultiDefExp: DefExp{
 		foreach(decl;decls_) decl.sstate=SemState.error;
 		sstate=SemState.error;
 	}
+
+	mixin VariableFree;
 }
