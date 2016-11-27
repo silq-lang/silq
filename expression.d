@@ -241,7 +241,8 @@ class LambdaExp: Expression{
 		this.fd=fd;
 	}
 	override string toString(){
-		return "("~join(map!(to!string)(fd.params),",")~")"~fd.body_.toString();
+		string d=fd.isSquare?"[]":"()";
+		return d[0]~join(map!(to!string)(fd.params),",")~d[1]~fd.body_.toString();
 	}
 }
 

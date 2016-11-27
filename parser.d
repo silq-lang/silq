@@ -67,6 +67,7 @@ int getLbp(TokenType type) pure{ // operator precedence
 	// additive operators
 	case Tok!"+",Tok!"-",Tok!"~":
 		return 120;
+	case Tok!"×": // product type
 	// multiplicative operators
 	case Tok!"*",Tok!"/",Tok!"%",Tok!"div":
 		return 130;
@@ -80,6 +81,7 @@ int getLbp(TokenType type) pure{ // operator precedence
 	case Tok!"(", Tok!"[": // function call and indexing
 		return 160;
 	// template instantiation
+	case Tok!"->",Tok!"→": // exponential type
 	case Tok!"⇒",Tok!"↦",Tok!"=>": return 165; // goesto
 	case Tok!"!":  return 170;
 	//case Tok!"i": return 45; //infix
@@ -360,6 +362,7 @@ struct Parser{
 		Token t; // DMD 2.072.1: hoisted to satisfy buggy deprecation code
 		switch(ttype){
 			case Tok!"i": return parseIdentifier();
+			case Tok!"*": auto r=New!Identifier("*"); r.loc=tok.loc; nextToken(); return r;
 			case Tok!"?": nextToken(); return res=New!PlaceholderExp(parseIdentifier());
 			case Tok!"``", Tok!"``c", Tok!"``w", Tok!"``d": // adjacent string tokens get concatenated
 				t=tok;
@@ -381,50 +384,48 @@ struct Parser{
 				auto tok=Token(Tok!"0");
 				tok.str="0";
 				return res=New!LiteralExp(tok);
-			case Tok!"(":
+			case Tok!"(",Tok!"[":
 				auto state=saveState();
-				while(ttype==Tok!"("){
+				while(util.among(ttype,Tok!"(",Tok!"[")){
 					nextToken();
 					skipToUnmatched();
 					nextToken();
 				}
 				switch(ttype){
-					case Tok!":":
-						nextToken();
-						if(skipType() && (util.among(ttype,Tok!"⇒",Tok!"↦",Tok!"=>")))
-							goto case;
-						break;
 					case Tok!"{",Tok!"⇒",Tok!"↦",Tok!"=>":
 						restoreState(state);
 						return parseLambdaExp();
 					default: break;
 				}
 				restoreState(state);
-				nextToken();
-				if(ttype==Tok!")"){
+				if(ttype==Tok!"("){
 					nextToken();
-					res=New!TupleExp(Expression[].init);
-				}else{
-					res=parseExpression(rbp!(Tok!","));
-					if(ttype==Tok!","){
-						auto tpl=[res];
-						while(ttype==Tok!","){
-							nextToken();
-							if(ttype==Tok!")") break;
-							tpl~=parseExpression(rbp!(Tok!","));
-						}
-						expect(Tok!")");
-						res=New!TupleExp(tpl);
+					if(ttype==Tok!")"){
+						nextToken();
+						res=New!TupleExp(Expression[].init);
 					}else{
-						expect(Tok!")");
-						res.brackets++;
+						res=parseExpression(rbp!(Tok!","));
+						if(ttype==Tok!","){
+							auto tpl=[res];
+							while(ttype==Tok!","){
+								nextToken();
+								if(ttype==Tok!")") break;
+								tpl~=parseExpression(rbp!(Tok!","));
+							}
+							expect(Tok!")");
+							res=New!TupleExp(tpl);
+						}else{
+							expect(Tok!")");
+							res.brackets++;
+						}
 					}
+				}else{
+					assert(ttype==Tok!"[");
+					nextToken();
+					res=New!ArrayExp(parseArgumentList!"]"());
+					expect(Tok!"]");
+					return res;
 				}
-				return res;
-			case Tok!"[":
-				nextToken();
-				res=New!ArrayExp(parseArgumentList!"]"());
-				expect(Tok!"]");
 				return res;
 			case Tok!"-":
 				nextToken();
@@ -489,7 +490,10 @@ struct Parser{
 						r~=mixin(X!q{case Tok!"@(x)":
 							nextToken();
 							auto right=parseExpression(rbp!(Tok!"@(x)"));
-							return res=New!(BinaryExp!(Tok!"@(x)"))(left,right);
+							static if("@(x)"=="->")
+								alias BE=BinaryExp!(Tok!"→");
+							else alias BE=BinaryExp!(Tok!"@(x)");
+							return res=New!BE(left,right);
 						});
 				return r;
 			}());
@@ -517,6 +521,11 @@ struct Parser{
 							auto right=parseExpression(rbp!(Tok!"⊕"));
 							return res=New!(BinaryExp!(Tok!"⊕"))(left,right);
 						}
+					case "x":
+						auto id=tok;
+						nextToken();
+						auto right=parseExpression(rbp!(Tok!"×"));
+						return res=New!(BinaryExp!(Tok!"×"))(left,right);
 					default: break;
 				}
 				goto default;
@@ -551,7 +560,8 @@ struct Parser{
 		try left = nud();catch(PEE err){error("found '"~tok.toString()~"' when expecting expression");nextToken();return new ErrorExp();}
 		return parseExpression2(left, rbp);
 	}
-	auto parseType(bool showErrors=true)(){
+	auto parseType(){ return parseExpression(rbp!(Tok!",")); }
+	/*auto parseType(bool showErrors=true)(){
 		Expression parsePrimary()(){
 			if(ttype==Tok!"("){
 				nextToken();
@@ -615,7 +625,7 @@ struct Parser{
 		static if(showErrors) return r?r:new ErrorTy();
 		else return !!r;
 	}
-	alias skipType=parseType!false;
+	alias skipType=parseType!false;*/
 	Expression parseExpression2(Expression left, int rbp = 0){ // left is already known
 		int clbp(){
 			if(ttype==Tok!"i"){
@@ -623,6 +633,8 @@ struct Parser{
 					return arrLbp[peek().type==Tok!"="?Tok!"div=":Tok!"div"];
 				if(tok.str=="xorb")
 					return arrLbp[peek().type==Tok!"="?Tok!"⊕=":Tok!"⊕"];
+				if(tok.str=="x")
+					return arrLbp[Tok!"×"];
 			}
 			return arrLbp[ttype];
 		}
@@ -659,9 +671,11 @@ struct Parser{
 			expect(Tok!"def");
 			auto name=parseIdentifier();
 		}else Identifier name=null; // TODO
-		expect(Tok!"(");
+		bool isSquare=false;
+		if(ttype==Tok!"[") isSquare=true;
+		expect(isSquare?Tok!"[":Tok!"(");
 		auto args=cast(Parameter[])parseArgumentList!(")",false,Parameter)();
-		expect(Tok!")");
+		expect(isSquare?Tok!"]":Tok!")");
 		Expression ret=null;
 		if(ttype==Tok!":"){
 			nextToken();
@@ -682,7 +696,9 @@ struct Parser{
 			body_.loc=e.loc;
 			static if(!lambda) expect(Tok!";");			
 		}else body_=parseCompoundExp();
-		return res=New!FunctionDef(name,args,ret,body_);
+		res=New!FunctionDef(name,args,ret,body_);
+		res.isSquare=isSquare;
+		return res;
 	}
 	DatDecl parseDatDecl(){
 		mixin(SetLoc!DatDecl);

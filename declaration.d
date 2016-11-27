@@ -29,6 +29,7 @@ class VarDecl: Declaration{
 	Expression dtype;
 	this(Identifier name){ super(name); }
 	override string toString(){ return name.toString()~(dtype?": "~dtype.toString():vtype?": "~vtype.toString():""); }
+	@property override string kind(){ return "variable"; }
 
 	// semantic information
 	Type vtype;
@@ -40,16 +41,21 @@ class Parameter: VarDecl{
 		super(name); this.dtype=type;
 	}
 	override string toString(){ return name.toString()~(dtype?": "~dtype.toString():""); }
+	@property override string kind(){ return "parameter"; }
 }
 
 class FunctionDef: Declaration{
 	Parameter[] params;
 	Expression rret;
 	CompoundExp body_;
+	bool isSquare=false;
 	this(Identifier name, Parameter[] params, Expression rret, CompoundExp body_){
 		super(name); this.params=params; this.rret=rret; this.body_=body_;
 	}
-	override string toString(){ return "def "~(name?name.toString():"")~"("~join(map!(to!string)(params),",")~")"~body_.toString(); }
+	override string toString(){
+		string d=isSquare?"[]":"()";
+		return "def "~(name?name.toString():"")~d[0]~join(map!(to!string)(params),",")~d[1]~body_.toString();
+	}
 
 	override bool isCompound(){ return true; }
 

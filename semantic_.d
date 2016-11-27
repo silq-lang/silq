@@ -81,8 +81,8 @@ Expression presemantic(Declaration expr,Scope sc){
 		fd.type=unit;
 		fd.fscope_=fsc;
 		foreach(ref p;fd.params){
-			if(!p.dtype){ // ℝ is the default parameter type
-				p.dtype=New!Identifier("ℝ");
+			if(!p.dtype){ // ℝ is the default parameter type for () and * is the default parameter type for []
+				p.dtype=New!Identifier(fd.isSquare?"*":"ℝ");
 				p.dtype.loc=p.loc;
 			}
 			p=cast(Parameter)varDeclSemantic(p,fsc);
@@ -126,17 +126,19 @@ Expression presemantic(Declaration expr,Scope sc){
 			fd.context=createContext("__ctx",contextTy()); // TODO: contextTy is not too nice
 		}
 		if(fd.rret){
+			string[] pn;
 			Type[] pty;
 			foreach(p;fd.params){
 				if(!p.vtype){
 					assert(fd.sstate==SemState.error);
 					return fd;
 				}
+				pn~=p.name.name;
 				pty~=p.vtype;
 			}
 			fd.ret=typeSemantic(fd.rret,sc);
 			if(!fd.ret) fd.sstate=SemState.error;
-			else fd.ftype=funTy(tupleTy(pty),fd.ret);
+			else fd.ftype=forallTy(pn,tupleTy(pty),fd.ret);
 		}
 	}
 	return expr;
@@ -239,7 +241,7 @@ bool isBuiltIn(Identifier id){
 	default: return false;
 	}
 }
-Expression builtIn(Identifier id){
+Expression builtIn(Identifier id,Scope sc){
 	Type t=null;
 	switch(id.name){
 	case "array": t=funTy(tupleTy([ℝ]),arrayTy(ℝ)); break;
@@ -256,6 +258,7 @@ Expression builtIn(Identifier id){
 	case "FromMarginal","SampleFrom": t=unit; break; // those are actually magic polymorphic functions
 	case "Expectation": t=funTy(tupleTy([ℝ]),ℝ); break; // TODO: this should be polymorphic too
 	case "Categorical": t=funTy(tupleTy([arrayTy(ℝ)]),ℝ); break;
+	case "R","ℝ","𝟙": return typeSemantic(id,sc);
 	default: return null;
 	}
 	id.type=t;
@@ -510,8 +513,7 @@ AssignExp assignExpSemantic(AssignExp ae,Scope sc){
 			if(!cast(VarDecl)id.meaning){
 				sc.error("can only assign to variables",ae.loc);
 				ae.sstate=SemState.error;
-			}
-			for(auto sc=id.scope_;sc !is id.meaning.scope_;sc=(cast(NestedScope)sc).parent){
+			}else for(auto sc=id.scope_;sc !is id.meaning.scope_;sc=(cast(NestedScope)sc).parent){
 				if(auto fsc=cast(FunctionScope)sc){
 					// TODO: what needs to be done to lift this restriction?
 					// TODO: method calls are also implicit assignments.
@@ -580,7 +582,7 @@ ABinaryExp opAssignExpSemantic(ABinaryExp be,Scope sc)in{
 		if(cast(CatAssignExp)be) return !!cast(ArrayTy)ty;
 		return ty is ℝ;
 	}
-	if(be.sstate!=SemState.error&&be.e1.type !is be.e2.type || !check(be.e1.type)){
+	if(be.sstate!=SemState.error&&be.e1.type != be.e2.type || !check(be.e1.type)){
 		if(cast(CatAssignExp)be){
 			sc.error(format("incompatible operand types '%s' and '%s'",be.e1.type,be.e2.type),be.loc);
 		}else sc.error(format("incompatible operand types '%s' and '%s' (should be ℝ and ℝ)",be.e1.type,be.e2.type),be.loc);
@@ -713,7 +715,9 @@ Expression callSemantic(CallExp ce,Scope sc){
 }
 
 
-Expression expressionSemantic(Expression expr,Scope sc){
+Expression expressionSemantic(Expression expr,Scope sc)out(r){
+
+}body{
 	alias Bool=ℝ; // TODO: maybe add 𝟚 as specific boolean type?
 	if(expr.sstate==SemState.completed||expr.sstate==SemState.error) return expr;
 	if(expr.sstate==SemState.started){
@@ -768,7 +772,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		if(!meaning){
 			meaning=sc.lookup(id);
 			if(!meaning){
-				if(auto r=builtIn(id))
+				if(auto r=builtIn(id,sc))
 					return r;
 				sc.error(format("undefined identifier '%s'",id.name), id.loc);
 				id.sstate=SemState.error;
@@ -844,6 +848,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 	}
 	if(auto idx=cast(IndexExp)expr){
 		idx.e=expressionSemantic(idx.e,sc);
+		if(auto ty=cast(Type)idx.e) return typeSemantic(expr,sc);
 		propErr(idx.e,idx);
 		foreach(ref a;idx.a){
 			a=expressionSemantic(a,sc);
@@ -910,7 +915,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 			exp=expressionSemantic(exp,sc);
 			propErr(exp,arr);
 			if(t){
-				if(t !is exp.type && tok){
+				if(t != exp.type && tok){
 					sc.error(format("incompatible types '%s' and '%s' in array literal",t,exp.type),texp.loc);
 					sc.note("incompatible entry",exp.loc);
 					arr.sstate=SemState.error;
@@ -935,7 +940,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 				if(auto aty=cast(ArrayTy)tae.type)
 					arr.type=aty;
 		}
-		if(tae.e.type !is tae.type){
+		if(tae.e.type != tae.type){
 			sc.error(format("type is '%s', not '%s'",tae.e.type,tae.type),tae.loc);
 			tae.sstate=SemState.error;
 		}
@@ -1001,14 +1006,38 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		propErr(ce.e2,ce);
 		if(ce.sstate==SemState.error)
 			return ce;
-		if(ce.e1.type is ce.e2.type && cast(ArrayTy)ce.e1.type){
+		if(cast(ArrayTy)ce.e1.type && ce.e1.type == ce.e2.type){
 			ce.type=ce.e1.type;
 		}else{
 			sc.error(format("incompatible types '%s' and '%s' for '~'",ce.e1.type,ce.e2.type),ce.loc);
 			ce.sstate=SemState.error;
 		}
 		return ce;
-	}	
+	}
+
+	if(auto pr=cast(BinaryExp!(Tok!"×"))expr){
+		// TODO: allow nested declarations
+		expr.type=typeTy();
+		auto t1=typeSemantic(pr.e1,sc);
+		auto t2=typeSemantic(pr.e2,sc);
+		if(!t1||!t2) return null;
+		auto l=cast(TupleTy)t1,r=cast(TupleTy)t2;
+		if(l && r && !pr.e1.brackets && !pr.e2.brackets)
+			return tupleTy(l.types~r.types);
+		if(l&&!pr.e1.brackets) return tupleTy(l.types~t2);
+		if(r&&!pr.e2.brackets) return tupleTy(t1~r.types);
+		return tupleTy([t1,t2]);
+	}
+	if(auto ex=cast(BinaryExp!(Tok!"→"))expr){
+		expr.type=typeTy();
+		auto t1=typeSemantic(ex.e1,sc);
+		auto t2=typeSemantic(ex.e2,sc);
+		if(!t1||!t2) return null;
+		auto tpl=cast(TupleTy)t1;
+		if(!tpl) tpl=tupleTy([t1]); // TODO: ok?
+		return funTy(tpl,t2);
+	}
+	
 	if(auto ite=cast(IteExp)expr){
 		ite.cond=expressionSemantic(ite.cond,sc);
 		if(ite.then.s.length!=1||ite.othw&&ite.othw.s.length!=1){
@@ -1030,7 +1059,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 			return ite;
 		auto t1=ite.then.s[0].type;
 		auto t2=ite.othw.s[0].type;
-		if(t1 !is t2){
+		if(t1 != t2){
 			sc.error(format("incompatible types '%s' and '%s' for branches of 'if' expression",t1,t2),ite.loc);
 			ite.sstate=SemState.error;
 		}
@@ -1063,12 +1092,14 @@ FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 	fd.body_=bdy;
 	fd.type=unit;
 	propErr(bdy,fd);
+	string[] pn;
 	Type[] pty;
 	foreach(p;fd.params){
 		if(!p.vtype){
 			assert(fd.sstate==SemState.error);
 			return fd;
 		}
+		pn~=p.name.name;
 		pty~=p.vtype;
 	}
 	if(!definitelyReturns(fd) && fd.ret && fd.ret != unit){
@@ -1081,7 +1112,7 @@ FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 		rete.loc=fd.loc;
 		fd.body_.s~=returnExpSemantic(rete,fd.body_.blscope_);
 	}
-	if(fd.ret&&!fd.ftype) fd.ftype=funTy(tupleTy(pty),fd.ret);
+	if(fd.ret&&!fd.ftype) fd.ftype=forallTy(pn,tupleTy(pty),fd.ret);
 	if(fd.sstate!=SemState.error)
 		fd.sstate=SemState.completed;
 	return fd;
@@ -1131,11 +1162,20 @@ ReturnExp returnExpSemantic(ReturnExp ret,Scope sc){
 }
 
 
-Type typeSemantic(Expression t,Scope sc)in{assert(!!t&&!!sc);}body{
-	if(auto tt=cast(Type)t) return tt;
-	if(auto id=cast(Identifier)t){
+Type typeSemantic(Expression expr,Scope sc)in{assert(!!expr&&!!sc);}body{
+	if(auto t=cast(Type)expr) return t;
+	if(auto lit=cast(LiteralExp)expr){
+		lit.type=typeTy;
+		if(lit.lit.type==Tok!"0"){
+			if(lit.lit.str=="1")
+				return unit;
+		}
+	}
+	if(auto id=cast(Identifier)expr){
+		id.type=typeTy;
+		if(id.name=="*") return typeTy;
 		if(id.name=="R"||id.name=="ℝ") return ℝ;
-		if(id.name=="1"||id.name=="𝟙") return unit;
+		if(id.name=="𝟙") return unit;
 		auto decl=sc.lookup(id);
 		if(!decl){
 			sc.error(format("undefined identifier '%s'",id.name),id.loc);
@@ -1144,41 +1184,26 @@ Type typeSemantic(Expression t,Scope sc)in{assert(!!t&&!!sc);}body{
 		if(auto fd=cast(FunctionDef)decl)
 			if(auto dd=isInDataScope(fd.scope_))
 				decl=dd.decl;
-		if(auto dat=cast(DatDecl)decl){
+		if(auto dat=cast(DatDecl)decl)
 			return dat.dtype;
-		}else{
-			sc.error(format("%s '%s' is not a data type declaration",decl.kind,decl.name),id.loc);
-			sc.note("declared here",decl.loc);
-			return null;
+		if(auto vd=cast(VarDecl)decl){
+			if(vd.vtype is typeTy)
+				return varTy(id.name);
 		}
+		sc.error(format("%s '%s' is not a type",decl.kind,decl.name),id.loc);
+		sc.note("declared here",decl.loc);
+		return null;
 	}
-	if(auto pr=cast(BinaryExp!(Tok!"×"))t){
-		// TODO: allow nested declarations
-		auto t1=typeSemantic(pr.e1,sc);
-		auto t2=typeSemantic(pr.e2,sc);
-		if(!t1||!t2) return null;
-		auto l=cast(TupleTy)t1,r=cast(TupleTy)t2;
-		if(l && r && !pr.e1.brackets && !pr.e2.brackets)
-			return tupleTy(l.types~r.types);
-		if(l&&!pr.e1.brackets) return tupleTy(l.types~t2);
-		if(r&&!pr.e2.brackets) return tupleTy(t1~r.types);
-		return tupleTy([t1,t2]);
-	}
-	if(auto ex=cast(BinaryExp!(Tok!"→"))t){
-		auto t1=typeSemantic(ex.e1,sc);
-		auto t2=typeSemantic(ex.e2,sc);
-		if(!t1||!t2) return null;
-		auto tpl=cast(TupleTy)t1;
-		if(!tpl) tpl=tupleTy([t1]); // TODO: ok?
-		return funTy(tpl,t2);
-	}
-	if(auto at=cast(IndexExp)t){
+	if(auto at=cast(IndexExp)expr){
+		expr.type=typeTy;
 		auto next=typeSemantic(at.e,sc);
 		if(!next) return null;
 		assert(at.a==[]);
 		return arrayTy(next);
 	}
-	sc.error("not a type",t.loc);
+	auto t=cast(Type)expressionSemantic(expr,sc);
+	if(t){ t.type=typeTy; return t; }
+	sc.error("not a type",expr.loc);
 	return null;
  }
 
@@ -1200,7 +1225,7 @@ Type typeForDecl(Declaration decl){
 }
 
 bool compatible(Type lhs,Type rhs){
-	return lhs is rhs;
+	return lhs == rhs;
 }
 
 bool definitelyReturns(FunctionDef fd){
