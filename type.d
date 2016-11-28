@@ -11,7 +11,7 @@ bool compatible(Expression lhs,Expression rhs){
 
 
 class Type: Expression{
-	this(){ if(!this.type) this.type=typeTy; }
+	this(){ if(!this.type) this.type=typeTy; sstate=SemState.completed; }
 	override @property string kind(){ return "type"; }
 	override string toString(){ return "T"; }
 }
@@ -61,7 +61,11 @@ class TupleTy: Type{
 	override string toString(){
 		if(!types.length) return "𝟙";
 		if(types.length==1) return "("~types[0].toString()~")¹";
-		return types.map!(a=>cast(TupleTy)a&&a!is unit?"("~a.toString()~")":a.toString()).join(" × ");
+		string addp(Expression a){
+			if(cast(FunTy)a) return "("~a.toString()~")";
+			return a.toString();
+		}
+		return types.map!(a=>cast(TupleTy)a&&a!is unit?"("~a.toString()~")":addp(a)).join(" × ");
 	}
 	override int freeVarsImpl(scope int delegate(string) dg){
 		foreach(t;types)
