@@ -731,7 +731,8 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 	expr.sstate=SemState.started;
 	scope(success){
 		if(expr.sstate!=SemState.error){
-			if(expr.type) expr.sstate=SemState.completed;
+			assert(!!expr.type);
+			expr.sstate=SemState.completed;
 		}
 	}
 	if(auto cd=cast(CompoundDecl)expr)
@@ -852,7 +853,7 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 		if(auto ft=cast(FunTy)idx.e.type){
 			auto ce=new CallExp(idx.e,idx.a,true);
 			ce.loc=idx.loc;
-			return callSemantic(ce,sc);
+			return expr=callSemantic(ce,sc);
 		}
 		if(auto ty=cast(Type)idx.e) return typeSemantic(expr,sc);
 		propErr(idx.e,idx);
@@ -1026,7 +1027,10 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 		expr.type=typeTy();
 		auto t1=typeSemantic(pr.e1,sc);
 		auto t2=typeSemantic(pr.e2,sc);
-		if(!t1||!t2) return null;
+		if(!t1||!t2){
+			expr.sstate=SemState.error;
+			return null;
+		}
 		auto l=cast(TupleTy)t1,r=cast(TupleTy)t2;
 		if(l && r && !pr.e1.brackets && !pr.e2.brackets)
 			return tupleTy(l.types~r.types);
@@ -1038,7 +1042,10 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 		expr.type=typeTy();
 		auto t1=typeSemantic(ex.e1,sc);
 		auto t2=typeSemantic(ex.e2,sc);
-		if(!t1||!t2) return null;
+		if(!t1||!t2){
+			expr.sstate=SemState.error;
+			return null;
+		}
 		auto tpl=cast(TupleTy)t1;
 		if(!tpl) tpl=tupleTy([t1]); // TODO: ok?
 		return funTy(tpl,t2);
@@ -1209,7 +1216,10 @@ Type typeSemantic(Expression expr,Scope sc)in{assert(!!expr&&!!sc);}body{
 	}
 	auto t=cast(Type)expressionSemantic(expr,sc);
 	if(t){ t.type=typeTy; return t; }
-	sc.error("not a type",expr.loc);
+	if(expr.sstate!=SemState.error){
+		sc.error("not a type",expr.loc);
+		expr.sstate=SemState.error;
+	}
 	return null;
  }
 
