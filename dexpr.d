@@ -2372,7 +2372,10 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 	override DExpr incDeBruijnVar(int di,int bound){ return dDiscDelta(var.incDeBruijnVar(di,bound),e.incDeBruijnVar(di,bound)); }
 
 	static DExpr constructHook(DExpr var,DExpr e){
-		//return staticSimplify(var,e);
+		static bool isNumeric(DExpr e){ // TODO: merge dDelta and dDiscDelta completely, such that type information is irrelevant
+			return cast(Dℤ)e||cast(DPlus)e||cast(DMult)e||cast(DPow)e||cast(DIvr)e;
+		}
+		if(isNumeric(e)||isNumeric(var)) return dDelta(var-e);
 		return null;
 	}
 	static DExpr staticSimplify(DExpr var,DExpr e,DExpr facts=one){
