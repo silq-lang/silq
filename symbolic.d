@@ -1008,40 +1008,57 @@ private struct Analyzer{
 		}else if(auto re=cast(ReturnExp)e){
 			auto odist=dist.dup;
 			odist.distribution=odist.error=zero; // code after return is unreachable
-			Expression[] returns;
-			if(auto tpl=cast(TupleExp)re.e) returns=tpl.e;
-			else returns=[re.e];
-			import hashtable;
 			SetX!DVar vars;
 			DVar[] orderedVars;
-			foreach(ret;returns){
-				if(auto id=cast(Identifier)ret){ // TODO: this hack should be removed
-					if(id.name in arrays){
-						foreach(expr;arrays[id.name]){
-							if(auto var=cast(DVar)expr){
-								vars.insert(var);
-								orderedVars~=var;
+			Expression[] returns;
+			dist.freeVar("r");
+			if(!cast(TupleTy)re.e.type||cast(TupleExp)re.e){
+				if(auto tpl=cast(TupleExp)re.e) returns=tpl.e;
+				else returns=[re.e];
+				foreach(ret;returns){
+					if(auto id=cast(Identifier)ret){ // TODO: this hack should be removed
+						if(id.name in arrays){
+							foreach(expr;arrays[id.name]){
+								if(auto var=cast(DVar)expr){
+									vars.insert(var);
+									orderedVars~=var;
+								}
 							}
+							continue;
 						}
-						continue;
+					}
+					auto exp=transformExp(ret);
+					DVar var=cast(DVar)exp;
+					if(var && !var.name.startsWith("__")){
+						if(var in vars||functionDef.context&&!functionDef.isConstructor&&var.name==functionDef.contextName){
+							dist.freeVar(var.name);
+							auto vv=dist.getVar(var.name);
+							dist.initialize(vv,var,ret.type);
+							var=vv;
+						}
+						vars.insert(var);
+						orderedVars~=var;
+					}else if(exp){
+						if(auto fe=cast(FieldExp)ret){
+							dist.freeVar(fe.f.name);
+							var=dist.declareVar(fe.f.name);
+							if(!var) var=dist.getVar(fe.f.name);
+						}else var=dist.getVar("r");
+						dist.initialize(var,exp,ret.type);
+						vars.insert(var);
+						orderedVars~=var;
 					}
 				}
-				auto exp=transformExp(ret);
-				DVar var=cast(DVar)exp;
-				if(var && !var.name.startsWith("__")){
-					if(var in vars||functionDef.context&&!functionDef.isConstructor&&var.name==functionDef.contextName){
-						auto vv=dist.getVar(var.name);
-						dist.initialize(vv,var,ret.type);
-						var=vv;
-					}
-					vars.insert(var);
-					orderedVars~=var;
-				}else if(exp){
-					if(auto fe=cast(FieldExp)ret){
-						var=dist.declareVar(fe.f.name);
-						if(!var) var=dist.getVar(fe.f.name);
-					}else var=dist.getVar("r");
-					dist.initialize(var,exp,ret.type);
+			}else{
+				auto tty=cast(TupleTy)re.e.type;
+				assert(!!tty);
+				auto r=transformExp(re.e);
+				auto id=cast(Identifier)re.e;
+				auto name=id?id.name:"r";
+				dist.freeVar(name);
+				foreach(i,ty;tty.types){
+					auto var=dist.getVar(name);
+					dist.initialize(var,dIndex(r,i.dℤ),ty);
 					vars.insert(var);
 					orderedVars~=var;
 				}
@@ -1050,6 +1067,7 @@ private struct Analyzer{
 				vars.insert(dVar(functionDef.contextName));
 				orderedVars~=dVar(functionDef.contextName);
 			}
+			import hashtable:  setMinus;
 			foreach(w;dist.freeVars.setMinus(vars)){
 				dist.marginalize(w);
 			}

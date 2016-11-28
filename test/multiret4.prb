@@ -1,4 +1,4 @@
 def main(){
     if Bernoulli(1/2){ assert(0); return 0; }
-    return 1; // expected: δ[-r₂+1]·⅟2
+    return 1; // expected: δ[-r₁+1]·⅟2
 }

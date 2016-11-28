@@ -1,0 +1,6 @@
+def a()=>(1,2);
+def b()=>a();
+def main(){
+    c:=b();
+    return c; // expected: δ[-c₁+1]·δ[-c₂+2]
+}

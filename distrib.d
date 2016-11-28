@@ -256,6 +256,10 @@ class Distribution{
 		}
 		return v;
 	}
+	void freeVar(string name){
+		while(name in vbl&&vbl[name]!=0&&dVar(name~vbl[name].lowNum)!in freeVars)
+			--vbl[name];
+	}
 	DVar getTmpVar(string name){
 		auto v=getVar(name);
 		tmpVars.insert(v);
