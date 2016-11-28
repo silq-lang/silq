@@ -32,7 +32,7 @@ bool isRelationalOp(TokenType op){
 // left binding power
 template lbp(TokenType type){enum lbp=getLbp(type);}
 // right binding power: ^^, (op)=, ? bind weaker to the right than to the left, '.' binds only primaryExpressions
-template rbp(TokenType type){enum rbp=type==Tok!"."?180:lbp!type-(type==Tok!"^"||lbp!type==30||type==Tok!"?");}
+template rbp(TokenType type){enum rbp=type==Tok!"."?180:lbp!type-(lbp!type==30||util.among(type,Tok!"^",Tok!"?",Tok!"->",Tok!"→",Tok!"⇒",Tok!"↦",Tok!"=>"));}
 
 int getLbp(TokenType type) pure{ // operator precedence
 	switch(type){
@@ -64,6 +64,8 @@ int getLbp(TokenType type) pure{ // operator precedence
 	// shift operators
 	case Tok!">>", Tok!"<<":
 	case Tok!">>>": return 110;
+	case Tok!"->",Tok!"→": // exponential type
+	case Tok!"⇒",Tok!"↦",Tok!"=>": return 115; // goesto
 	// additive operators
 	case Tok!"+",Tok!"-",Tok!"~":
 		return 120;
@@ -81,8 +83,6 @@ int getLbp(TokenType type) pure{ // operator precedence
 	case Tok!"(", Tok!"[": // function call and indexing
 		return 160;
 	// template instantiation
-	case Tok!"->",Tok!"→": // exponential type
-	case Tok!"⇒",Tok!"↦",Tok!"=>": return 165; // goesto
 	case Tok!"!":  return 170;
 	//case Tok!"i": return 45; //infix
 	default: return -1;
