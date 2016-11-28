@@ -620,7 +620,9 @@ private struct Analyzer{
 				return dArray(dexprs);
 			}else if(auto tae=cast(TypeAnnotationExp)e){
 				return doIt(tae.e);
-			}else if(auto c=transformConstr(e))
+			}else if(cast(Type)e)
+				return dTuple([]); // 'erase' types
+			else if(auto c=transformConstr(e))
 				return c;
 			err.error("unsupported",e.loc);
 			throw new Unwind();
