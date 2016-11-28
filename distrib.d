@@ -168,6 +168,7 @@ class Distribution{
 		r.nargs=nargs;
 		r.freeVarsOrdered=freeVarsOrdered;
 		r.orderedFreeVars=orderedFreeVars.dup;
+		r.isTuple=isTuple;
 		return r;
 	}
 
@@ -330,7 +331,7 @@ class Distribution{
 		}
 		foreach(v;context) nerror=dInt(v,nerror);
 		error = error + nerror;
-		return r.length==1?r[0]:dTuple(cast(DExpr[])r);
+		return q.isTuple?dTuple(cast(DExpr[])r):r[0];
 	}
 	void simplify(){
 		distribution=distribution.simplify(one); // TODO: this shouldn't be necessary!
@@ -342,21 +343,28 @@ class Distribution{
 
 	bool freeVarsOrdered=false;
 	DVar[] orderedFreeVars;
-	void orderFreeVars(DVar[] orderedFreeVars)in{
+	bool isTuple=true;
+	void orderFreeVars(DVar[] orderedFreeVars,bool isTuple)in{
 		assert(!freeVarsOrdered);
 		assert(orderedFreeVars.length==freeVars.length);
 		foreach(v;orderedFreeVars)
 			assert(v in freeVars);
 		// TODO: this does not check that variables occur at most once in orderedFreeVars
+		assert(isTuple||orderedFreeVars.length==1);
 	}body{
 		freeVarsOrdered=true;
 		this.orderedFreeVars=orderedFreeVars;
+		this.isTuple=isTuple;
 	}
 
-	private DExpr toDExprLambdaBody(){
+	private DExpr toDExprLambdaBody(bool stripContext=false)in{
+		assert(!stripContext||isTuple&&orderedFreeVars.length);
+	}body{
 		auto db1=dDeBruijnVar(1);
-		auto r=dDiscDelta(db1,dRecord(["tag":one,"values":dTuple(cast(DExpr[])orderedFreeVars)]))*distribution.incDeBruijnVar(1,0);
-		foreach(v;orderedFreeVars) r=dInt(v,r);
+		auto vars=stripContext?orderedFreeVars[0..$]:orderedFreeVars;
+		auto values=isTuple&&(!stripContext||orderedFreeVars.length!=2)?dTuple(cast(DExpr[])vars):vars[0];
+		auto r=dDiscDelta(db1,dRecord(["tag":one,"values":values]))*distribution.incDeBruijnVar(1,0);
+		foreach(v;vars) r=dInt(v,r);
 		r=r+dDiscDelta(db1,dRecord(["tag":zero]))*error;
 		return dLambda(r).substitute(q,db1);
 	}
@@ -365,28 +373,30 @@ class Distribution{
 		return dLambda(toDExprLambdaBody());
 	}
 
-	DExpr toDExprWithContext(DExpr context)in{assert(freeVarsOrdered&&q&&nargs);}body{
+	DExpr toDExprWithContext(DExpr context,bool stripContext=false)in{assert(freeVarsOrdered&&q&&nargs);}body{
 		auto db1=dDeBruijnVar(1),db2=dDeBruijnVar(2);
-		auto bdy=toDExprLambdaBody();
+		auto bdy=toDExprLambdaBody(stripContext);
 		context=context.incDeBruijnVar(1,0);
 		bdy=bdy.substitute(db1,dLambda(dDistApply(db2,dTuple(iota(nargs-1).map!(i=>db1[dℤ(i)]).array))*dDiscDelta(db1[dℤ(nargs-1)],context)));
 		return dLambda(bdy);
 	}
 	
-	static Distribution fromDExpr(DExpr dexpr,size_t nargs,DVar[] orderedFreeVars,Expression[] types){
+	static Distribution fromDExpr(DExpr dexpr,size_t nargs,DVar[] orderedFreeVars,bool isTuple,Expression[] types){
 		auto r=new Distribution();
 		auto db1=dDeBruijnVar(1);
 		dexpr=dexpr.incDeBruijnVar(1,0);
+		auto values=dField(db1,"values");
 		foreach(i,v;orderedFreeVars){
 			r.freeVars.insert(v);
-			r.initialize(v,dIndex(dField(db1,"values"),dℤ(i)),types[i]);
+			auto value=isTuple?dIndex(values,dℤ(i)):values;
+			r.initialize(v,value,types[i]);
 		}
 		r.q=dVar("`q");
 		r.nargs=nargs;
 		auto ndist=dDistApply(dApply(dexpr,r.q),db1);
 		r.distribution=dInt(r.distribution*dIvr(DIvr.Type.eqZ,dField(db1,"tag")-one)*ndist);
 		r.error=dInt(dIvr(DIvr.Type.eqZ,dField(db1,"tag"))*ndist);
-		r.orderFreeVars(orderedFreeVars);
+		r.orderFreeVars(orderedFreeVars,isTuple);
 		return r;
 	}
 

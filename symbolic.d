@@ -183,7 +183,7 @@ private struct Analyzer{
 				assert(cast(ArrayTy)fe.e.type&&fe.f.name=="length"||fe.f.meaning&&fe.f.scope_&&fe.f.meaning.scope_);
 				if(auto fd=cast(FunctionDef)fe.f.meaning){
 					auto summary=be.getSummary(fd,fe.f.loc,err);
-					return summary.toDExprWithContext(doIt(fe.e));
+					return summary.toDExprWithContext(doIt(fe.e),true);
 				}
 				return dField(doIt(fe.e),fe.f.name);
 			}
@@ -263,7 +263,6 @@ private struct Analyzer{
 							assert(thisr&&fe);
 							assignTo(thisExp,thisr,fe.e.type,ce.loc);
 						}
-						if(!cast(DTuple)r&&cast(TupleTy)funty.cod) r=dTuple([r]);
 						return r;
 					}
 					switch(id.name){
@@ -530,12 +529,13 @@ private struct Analyzer{
 				auto funty=cast(FunTy)ce.e.type;
 				assert(!!funty);
 				Expression[] resty;
+				bool isTuple=true;
 				if(auto tplres=cast(TupleTy)funty.cod) resty=tplres.types;
-				else resty=[funty.cod];
+				else{ resty=[funty.cod]; isTuple=false; }
 				size_t nargs=funty.nargs;
 				auto fun=doIt(ce.e);
 				DVar[] results=iota(0,resty.length).map!(x=>dist.getTmpVar("__r")).array;
-				auto summary=Distribution.fromDExpr(fun,nargs,results,resty);
+				auto summary=Distribution.fromDExpr(fun,nargs,results,isTuple,resty);
 				foreach(r;results) dist.freeVars.remove(r), dist.tmpVars.remove(r);
 				auto tuplety=cast(TupleTy)funty.dom;
 				assert(ce.args.length == tuplety.types.length);
@@ -548,7 +548,6 @@ private struct Analyzer{
 				assert(!!tuplety);
 				auto types=tuplety.types;
 				auto r=dist.call(summary,args,types);
-				if(!cast(DTuple)r&&cast(TupleTy)funty.cod) r=dTuple([r]);
 				return r;
 			}
 			if(auto idx=cast(IndexExp)e){
@@ -1068,11 +1067,12 @@ private struct Analyzer{
 			odist.distribution=odist.error=zero; // code after return is unreachable
 			SetX!DVar vars;
 			DVar[] orderedVars;
+			bool isTuple=true;
 			Expression[] returns;
 			dist.freeVar("r");
 			if(!cast(TupleTy)re.e.type||cast(TupleExp)re.e){
 				if(auto tpl=cast(TupleExp)re.e) returns=tpl.e;
-				else returns=[re.e];
+				else{ returns=[re.e]; isTuple=false; }
 				foreach(ret;returns){
 					if(auto id=cast(Identifier)ret){ // TODO: this hack should be removed
 						if(id.name in arrays){
@@ -1122,6 +1122,8 @@ private struct Analyzer{
 				}
 			}
 			if(functionDef.context&&functionDef.contextName=="this"&&!functionDef.isConstructor){
+				if(!isTuple) isTuple=true;
+				else if(orderedVars.length==1) dist.assign(orderedVars[0],dTuple([orderedVars[0]]),re.e.type);
 				vars.insert(dVar(functionDef.contextName));
 				orderedVars~=dVar(functionDef.contextName);
 			}
@@ -1129,7 +1131,7 @@ private struct Analyzer{
 			foreach(w;dist.freeVars.setMinus(vars)){
 				dist.marginalize(w);
 			}
-			dist.orderFreeVars(orderedVars);
+			dist.orderFreeVars(orderedVars,isTuple);
 			dist.simplify();
 			if(!retDist) retDist=dist;
 			else retDist=dist.orderedJoin(retDist);
