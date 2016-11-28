@@ -2,7 +2,7 @@
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
 
 import std.array, std.algorithm, std.conv;
-import std.functional;
+import std.functional, std.range;
 import expression, declaration, util;
 
 bool compatible(Expression lhs,Expression rhs){
@@ -155,21 +155,24 @@ class ForallTy: Type{
 	string[] names;
 	TupleTy dom;
 	Expression cod;
-	private this(string[] names,TupleTy dom,Expression cod)in{
+	bool isSquare;
+	private this(string[] names,TupleTy dom,Expression cod,bool isSquare)in{
 		assert(names.length==dom.types.length);
 		assert(cod.type==typeTy);
 	}body{
-		this.names=names; this.dom=dom; this.cod=cod;
+		this.names=names; this.dom=dom; this.cod=cod; this.isSquare=isSquare;
 	}
 	override string toString(){
-		auto d=dom.types.length==1?dom.types[0].toString():dom.toString(), c=cod.toString();
-		if(dom&&dom.types.length>1||cast(FunTy)dom.types[0]) d="("~d~")";
+		auto c=cod.toString();
 		if(cast(TupleTy)cod) c="("~c~")";
+		auto del=isSquare?"[]":"()";
 		if(!cod.hasAnyFreeVar(names)){
+			auto d=dom.types.length==1?dom.types[0].toString():dom.toString();
+			if(isSquare||dom&&dom.types.length>1||cast(FunTy)dom.types[0]) d=del[0]~d~del[1];
 			return d~" → "~c;
 		}else{
 			assert(names.length);
-			return "∀"~(names.length==1?names[0]:"("~names.join(",")~")")~": "~d~". "~c;
+			return "∏"~del[0]~zip(names,dom.types).map!(x=>x[0]~":"~x[1].toString()).join(",")~del[1]~". "~c;
 		}
 	}
 	@property size_t nargs(){
@@ -202,7 +205,8 @@ class ForallTy: Type{
 		auto ncod=cod.substitute(nsubst);
 		return forallTy(names,ndom,ncod);
 	}
-	Expression tryApply(Expression[] rhs){
+	Expression tryApply(Expression[] rhs,bool isSquare){
+		if(isSquare != this.isSquare) return null;
 		if(rhs.length!=names.length) return null;
 		foreach(i,r;rhs){
 			if(!compatible(dom.types[i],rhs[i].type))
@@ -216,15 +220,15 @@ class ForallTy: Type{
 	override bool opEquals(Object o){
 		auto r=cast(ForallTy)o;
 		if(!r) return false;
-		if(dom.types.length!=r.dom.types.length) return false;
+		if(isSquare!=r.isSquare||dom.types.length!=r.dom.types.length) return false;
 		foreach(i;0..dom.types.length)
 			r=r.relabel(r.names[i],names[i]);
 		return dom==r.dom&&cod==r.cod;
 	}
 }
 
-ForallTy forallTy(string[] names,TupleTy dom,Expression cod){
-	return memoize!((string[] names,TupleTy dom,Expression cod)=>new FunTy(names,dom,cod))(names,dom,cod);
+ForallTy forallTy(string[] names,TupleTy dom,Expression cod,bool isSquare=false){
+	return memoize!((string[] names,TupleTy dom,Expression cod,bool isSquare)=>new ForallTy(names,dom,cod,isSquare))(names,dom,cod,isSquare);
 }
 
 alias FunTy=ForallTy;

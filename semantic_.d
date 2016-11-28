@@ -659,10 +659,12 @@ Expression callSemantic(CallExp ce,Scope sc){
 			aty~=a.type;
 		}
 		auto atys=tupleTy(aty);
-		if(auto rty=ft.tryApply(ce.args)){
+		if(auto rty=ft.tryApply(ce.args,ce.isSquare)){
 			ce.type=rty;
 		}else{
-			sc.error(format("expected argument types '%s', but '%s' was provided",ft.dom,atys),ce.loc);
+			if(ce.isSquare!=ft.isSquare)
+				sc.error(text("function of type ",ft," cannot be called with arguments ",ce.isSquare?"[":"(",atys,ce.isSquare?"]":")"),ce.loc);
+			else sc.error(format("expected argument types '%s', but '%s' was provided",ft.dom,atys),ce.loc);
 			ce.sstate=SemState.error;
 		}
 		return ce;
@@ -729,8 +731,7 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 	expr.sstate=SemState.started;
 	scope(success){
 		if(expr.sstate!=SemState.error){
-			assert(!!expr.type,text(expr));
-			expr.sstate=SemState.completed;
+			if(expr.type) expr.sstate=SemState.completed;
 		}
 	}
 	if(auto cd=cast(CompoundDecl)expr)
@@ -848,6 +849,11 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 	}
 	if(auto idx=cast(IndexExp)expr){
 		idx.e=expressionSemantic(idx.e,sc);
+		if(auto ft=cast(FunTy)idx.e.type){
+			auto ce=new CallExp(idx.e,idx.a,true);
+			ce.loc=idx.loc;
+			return callSemantic(ce,sc);
+		}
 		if(auto ty=cast(Type)idx.e) return typeSemantic(expr,sc);
 		propErr(idx.e,idx);
 		foreach(ref a;idx.a){
@@ -1112,7 +1118,7 @@ FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 		rete.loc=fd.loc;
 		fd.body_.s~=returnExpSemantic(rete,fd.body_.blscope_);
 	}
-	if(fd.ret&&!fd.ftype) fd.ftype=forallTy(pn,tupleTy(pty),fd.ret);
+	if(fd.ret&&!fd.ftype) fd.ftype=forallTy(pn,tupleTy(pty),fd.ret,fd.isSquare);
 	if(fd.sstate!=SemState.error)
 		fd.sstate=SemState.completed;
 	return fd;

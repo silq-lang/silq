@@ -215,7 +215,8 @@ class IndexExp: Expression{ //e[a...]
 class CallExp: Expression{
 	Expression e;
 	Expression[] args;
-	this(Expression exp, Expression[] args){e=exp; this.args=args;}
+	bool isSquare;
+	this(Expression exp, Expression[] args, bool isSquare=false){e=exp; this.args=args; this.isSquare=isSquare; }
 	override string toString(){
 		return _brk(e.toString()~'('~join(map!(to!string)(args),",")~')');
 	}
