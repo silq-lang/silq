@@ -35,7 +35,10 @@ abstract class Expression: Node{
 	Expression eval(){ return this; }
 	
 	abstract int freeVarsImpl(scope int delegate(string) dg);
-	abstract Expression substitute(string name,Expression exp); // TODO: name might be free in the _types_ of subexpressions
+	final Expression substitute(string name,Expression exp){
+		return substitute([name:exp]);
+	}
+	abstract Expression substitute(Expression[string] subst); // TODO: name might be free in the _types_ of subexpressions
 	final freeVars(){
 		static struct FreeVars{
 			Expression self;
@@ -63,7 +66,7 @@ abstract class Expression: Node{
 
 mixin template VariableFree(){
 	override int freeVarsImpl(scope int delegate(string)){ return 0; }
-	override Expression substitute(string name,Expression type){ return this; }
+	override Expression substitute(Expression[string] subst){ return this; }
 }
 
 class TypeAnnotationExp: Expression{
@@ -77,9 +80,9 @@ class TypeAnnotationExp: Expression{
 		if(auto r=e.freeVarsImpl(dg)) return r;
 		return t.freeVarsImpl(dg);
 	}
-	override TypeAnnotationExp substitute(string name,Expression expr){
-		auto ne=e.substitute(name,expr);
-		auto nt=t.substitute(name,expr);
+	override TypeAnnotationExp substitute(Expression[string] subst){
+		auto ne=e.substitute(subst);
+		auto nt=t.substitute(subst);
 		if(ne==e&&nt==t) return this;
 		auto r=new TypeAnnotationExp(ne,nt);
 		r.loc=loc;
@@ -160,8 +163,8 @@ class UnaryExp(TokenType op): Expression{
 	override int freeVarsImpl(scope int delegate(string) dg){
 		return e.freeVarsImpl(dg);
 	}
-	override UnaryExp substitute(string name,Expression expr){
-		auto ne=e.substitute(name,expr);
+	override UnaryExp substitute(Expression[string] subst){
+		auto ne=e.substitute(subst);
 		if(ne==e) return this;
 		auto r=new UnaryExp(ne);
 		r.loc=loc;
@@ -176,8 +179,8 @@ class PostfixExp(TokenType op): Expression{
 	override int freeVarsImpl(scope int delegate(string) dg){
 		return e.freeVarsImpl(dg);
 	}
-	override PostfixExp substitute(string name,Expression expr){
-		auto ne=e.substitute(name,expr);
+	override PostfixExp substitute(Expression[string] subst){
+		auto ne=e.substitute(subst);
 		if(ne==e) return this;
 		auto r=new PostfixExp(ne);
 		r.loc=loc;
@@ -198,10 +201,10 @@ class IndexExp: Expression{ //e[a...]
 		foreach(x;a) if(auto r=x.freeVarsImpl(dg)) return r;
 		return 0;
 	}
-	override IndexExp substitute(string name,Expression expr){
-		auto ne=e.substitute(name,expr);
+	override IndexExp substitute(Expression[string] subst){
+		auto ne=e.substitute(subst);
 		auto na=a.dup;
-		foreach(ref x;na) x=substitute(name,expr);
+		foreach(ref x;na) x=substitute(subst);
 		if(ne==e&&na==a) return this;
 		auto r=new IndexExp(ne,na);
 		r.loc=loc;
@@ -221,10 +224,10 @@ class CallExp: Expression{
 		foreach(x;args) if(auto r=x.freeVarsImpl(dg)) return r;
 		return 0;
 	}
-	override CallExp substitute(string name,Expression expr){
-		auto ne=e.substitute(name,expr);
+	override CallExp substitute(Expression[string] subst){
+		auto ne=e.substitute(subst);
 		auto nargs=args.dup;
-		foreach(ref x;nargs) x=substitute(name,expr);
+		foreach(ref x;nargs) x=substitute(subst);
 		if(ne==e&&nargs==args) return this;
 		auto r=new CallExp(ne,nargs);
 		r.loc=loc;
@@ -255,9 +258,9 @@ class BinaryExp(TokenType op): ABinaryExp{
 	static if(op==Tok!":="){
 		override @property string kind(){ return "variable declaration"; }
 	}
-	override BinaryExp!op substitute(string name,Expression expr){
-		auto ne1=e1.substitute(name,expr);
-		auto ne2=e2.substitute(name,expr);
+	override BinaryExp!op substitute(Expression[string] subst){
+		auto ne1=e1.substitute(subst);
+		auto ne2=e2.substitute(subst);
 		if(ne1==e1&&ne2==e2) return this;
 		auto r=new BinaryExp!op(ne1,ne2);
 		r.loc=loc;
@@ -277,8 +280,8 @@ class FieldExp: Expression{
 	override int freeVarsImpl(scope int delegate(string) dg){
 		return e.freeVarsImpl(dg);
 	}
-	override FieldExp substitute(string name,Expression expr){
-		auto ne=e.substitute(name,expr);
+	override FieldExp substitute(Expression[string] subst){
+		auto ne=e.substitute(subst);
 		if(ne==e) return this;
 		auto r=new FieldExp(ne,f);
 		r.loc=loc;
@@ -302,10 +305,10 @@ class IteExp: Expression{
 		if(othw) if(auto r=othw.freeVarsImpl(dg)) return r;
 		return 0;
 	}
-	override IteExp substitute(string name,Expression expr){
-		auto ncond=cond.substitute(name,expr);
-		auto nthen=cast(CompoundExp)then.substitute(name,expr);
-		auto nothw=othw?cast(CompoundExp)othw.substitute(name,expr):null;
+	override IteExp substitute(Expression[string] subst){
+		auto ncond=cond.substitute(subst);
+		auto nthen=cast(CompoundExp)then.substitute(subst);
+		auto nothw=othw?cast(CompoundExp)othw.substitute(subst):null;
 		assert(!!nthen && !!nothw==!!othw);
 		if(ncond==cond&&nthen==then&&nothw==othw) return this;
 		auto r=new IteExp(ncond,nthen,nothw);
@@ -392,9 +395,9 @@ class TupleExp: Expression{
 		foreach(x;e) if(auto r=x.freeVarsImpl(dg)) return r;
 		return 0;
 	}
-	override TupleExp substitute(string name,Expression expr){
+	override TupleExp substitute(Expression[string] subst){
 		auto ne=e.dup;
-		foreach(ref x;ne) x=x.substitute(name,expr);
+		foreach(ref x;ne) x=x.substitute(subst);
 		if(ne==e) return this;
 		auto r=new TupleExp(ne);
 		r.loc=loc;
@@ -427,9 +430,9 @@ class ArrayExp: Expression{
 		foreach(x;e) if(auto r=x.freeVarsImpl(dg)) return r;
 		return 0;
 	}
-	override ArrayExp substitute(string name,Expression expr){
+	override ArrayExp substitute(Expression[string] subst){
 		auto ne=e.dup;
-		foreach(ref x;ne) x=x.substitute(name,expr);
+		foreach(ref x;ne) x=x.substitute(subst);
 		if(ne==e) return this;
 		auto r=new ArrayExp(ne);
 		r.loc=loc;

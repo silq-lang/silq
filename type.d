@@ -14,6 +14,7 @@ class Type: Expression{
 	this(){ if(!this.type) this.type=typeTy; sstate=SemState.completed; }
 	override @property string kind(){ return "type"; }
 	override string toString(){ return "T"; }
+	abstract override bool opEquals(Object r);
 }
 
 class ErrorTy: Type{
@@ -28,6 +29,9 @@ class ℝTy: Type{
 	override string toString(){
 		return "ℝ";
 	}
+	override bool opEquals(Object o){
+		return !!cast(ℝTy)o;
+	}
 	mixin VariableFree;
 }
 private ℝTy theℝ;
@@ -39,11 +43,19 @@ class AggregateTy: Type{
 	this(DatDecl decl){
 		this.decl=decl;
 	}
+	override bool opEquals(Object o){
+		if(auto r=cast(AggregateTy)o)
+			return decl is r.decl;
+		return false;
+	}
 	mixin VariableFree;
 }
 
 class ContextTy: Type{
 	private this(){} // dummy
+	override bool opEquals(Object o){
+		return !!cast(ContextTy)o;
+	}
 	mixin VariableFree;
 }
 private ContextTy theContextTy;
@@ -73,10 +85,15 @@ class TupleTy: Type{
 				return r;
 		return 0;
 	}
-	override TupleTy substitute(string name,Expression type){
+	override TupleTy substitute(Expression[string] subst){
 		auto ntypes=types.dup;
-		foreach(ref t;ntypes) t=t.substitute(name,type);
+		foreach(ref t;ntypes) t=t.substitute(subst);
 		return tupleTy(ntypes);
+	}
+	override bool opEquals(Object o){
+		if(auto r=cast(TupleTy)o)
+			return types==r.types;
+		return false;
 	}
 }
 
@@ -102,11 +119,16 @@ class ArrayTy: Type{
 	override int freeVarsImpl(scope int delegate(string) dg){
 		return next.freeVarsImpl(dg);
 	}
-	override ArrayTy substitute(string name,Expression type){
-		return arrayTy(next.substitute(name,type));
+	override ArrayTy substitute(Expression[string] subst){
+		return arrayTy(next.substitute(subst));
 	}
 	override ArrayTy eval(){
 		return arrayTy(next.eval());
+	}
+	override bool opEquals(Object o){
+		if(auto r=cast(ArrayTy)o)
+			return next==r.next;
+		return false;
 	}
 }
 
@@ -120,6 +142,9 @@ class StringTy: Type{
 	private this(){}
 	override string toString(){
 		return "string";
+	}
+	override bool opEquals(Object o){
+		return !!cast(StringTy)o;
 	}
 	mixin VariableFree;
 }
@@ -160,17 +185,21 @@ class ForallTy: Type{
 	}
 	private ForallTy relabel(string oname,string nname)in{assert(names.canFind(oname));}body{
 		auto nnames=names.dup;
-		foreach(ref v;nnames) if(v==oname) v=nname;
+		foreach(ref v;nnames) if(v==oname) v=nname; // TODO: this is rather dumb
 		auto nvar=varTy(nname);
 		return forallTy(nnames,dom,cod.substitute(oname,nvar));
 	}
-	override ForallTy substitute(string name,Expression type){
+	override ForallTy substitute(Expression[string] subst){
 		foreach(n;names){
-			if(n!=name) continue;
-			return relabel(n,n~"'").substitute(name,type);
+			bool ok=true;
+			foreach(k,v;subst) if(v.hasFreeVar(n)) ok=false;
+			if(ok) continue;
+			return relabel(n,n~"'").substitute(subst);
 		}
-		auto ndom=dom.substitute(name,type);
-		auto ncod=names.canFind(name)?cod:cod.substitute(name,type);
+		auto ndom=dom.substitute(subst);
+		auto nsubst=subst.dup;
+		foreach(n;names) nsubst.remove(n);
+		auto ncod=cod.substitute(nsubst);
 		return forallTy(names,ndom,ncod);
 	}
 	Expression tryApply(Expression[] rhs){
@@ -183,6 +212,14 @@ class ForallTy: Type{
 		foreach(i,n;names)
 			r=r.substitute(n,rhs[i]); // TODO: avoid capturing!
 		return r;
+	}
+	override bool opEquals(Object o){
+		auto r=cast(ForallTy)o;
+		if(!r) return false;
+		if(dom.types.length!=r.dom.types.length) return false;
+		foreach(i;0..dom.types.length)
+			r=r.relabel(r.names[i],names[i]);
+		return dom==r.dom&&cod==r.cod;
 	}
 }
 
@@ -209,9 +246,14 @@ class VarTy: Type{
 	override int freeVarsImpl(scope int delegate(string) dg){
 		return dg(name);
 	}
-	override Expression substitute(string name,Expression type){
-		if(this.name==name) return type;
+	override Expression substitute(Expression[string] subst){
+		if(name in subst) return subst[name];
 		return this;
+	}
+	override bool opEquals(Object o){
+		if(auto r=cast(VarTy)o)
+			return name==r.name;
+		return false;
 	}
 }
 
@@ -223,6 +265,9 @@ class TypeTy: Type{
 	this(){ this.type=this; super(); }
 	override string toString(){
 		return "*";
+	}
+	override bool opEquals(Object o){
+		return !!cast(TypeTy)o;
 	}
 	mixin VariableFree;
 }
