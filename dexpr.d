@@ -3663,7 +3663,7 @@ class DIndex: DOp{
 		auto ni=i.simplify(facts);
 		if(auto c=cast(Dℤ)ni){
 			if(auto tpl=cast(DTuple)ne)
-				if(0<=c.c&&c.c<=tpl.values.length)
+				if(0<=c.c&&c.c<tpl.values.length)
 					return tpl.values[cast(size_t)c.c.toLong()].simplify(facts);
 		}
 		if(auto arr=cast(DArray)ne){
@@ -3744,7 +3744,7 @@ class DIUpdate: DOp{
 		auto nn=n.simplify(facts);
 		if(auto c=cast(Dℤ)ni){
 			if(auto tpl=cast(DTuple)ne){
-				if(0<=c.c&&c.c<=tpl.values.length){
+				if(0<=c.c&&c.c<tpl.values.length){
 					auto nvalues=tpl.values.dup;
 					nvalues[cast(size_t)c.c.toLong()]=nn;
 					return dTuple(nvalues);
