@@ -168,7 +168,7 @@ class ForallTy: Type{
 		auto del=isSquare?"[]":"()";
 		if(!cod.hasAnyFreeVar(names)){
 			auto d=dom.types.length==1?dom.types[0].toString():dom.toString();
-			if(isSquare||dom&&dom.types.length>1||cast(FunTy)dom.types[0]) d=del[0]~d~del[1];
+			if(isSquare||dom.types.length>1||dom.types.length==1&&cast(FunTy)dom.types[0]) d=del[0]~d~del[1];
 			return d~" → "~c;
 		}else{
 			assert(names.length);
