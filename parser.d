@@ -443,9 +443,9 @@ struct Parser{
 		}
 	}
 
-	LambdaExp parseLambdaExp(){
+	LambdaExp parseLambdaExp(bool semicolon=false)(){
 		mixin(SetLoc!LambdaExp);
-		return res=New!LambdaExp(parseFunctionDef!true);
+		return res=New!LambdaExp(parseFunctionDef!(true,semicolon));
 	}
 	
 	// left denotation
@@ -665,7 +665,7 @@ struct Parser{
 		expect(Tok!"}");
 		return res=New!T(s.data);
 	}
-	FunctionDef parseFunctionDef(bool lambda=false)(){
+	FunctionDef parseFunctionDef(bool lambda=false,bool semicolon=!lambda)(){
 		mixin(SetLoc!FunctionDef);
 		static if(!lambda){
 			expect(Tok!"def");
@@ -685,16 +685,16 @@ struct Parser{
 		if(util.among(ttype,Tok!"⇒",Tok!"↦",Tok!"=>",Tok!"(")){
 			Expression e;
 			if(ttype==Tok!"("){
-				e=parseLambdaExp();
+				e=parseLambdaExp!true();
 			}else{
 				nextToken();
 				e=parseExpression(rbp!(Tok!(",")));
+				static if(semicolon) expect(Tok!";");			
 			}
 			auto r=New!ReturnExp(e);
 			r.loc=e.loc;
 			body_= New!CompoundExp([cast(Expression)r]);
 			body_.loc=e.loc;
-			static if(!lambda) expect(Tok!";");			
 		}else body_=parseCompoundExp();
 		res=New!FunctionDef(name,args,ret,body_);
 		res.isSquare=isSquare;
