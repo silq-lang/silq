@@ -273,7 +273,7 @@ DVar theDε;
 DVar dε(){ return theDε?theDε:(theDε=new DVar("ε")); }
 
 
-class Dℤ : DExpr{
+class Dℤ: DExpr{
 	ℤ c;
 	private this(ℤ c){ this.c=c; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
@@ -308,7 +308,7 @@ Dℤ nthRoot(Dℤ x,ℤ n){
 	return pow(r,n)==x.c?dℤ(r):null;
 }
 
-class DFloat : DExpr{
+class DFloat: DExpr{
 	real c;
 	private this(real c){ this.c=c; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
