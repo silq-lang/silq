@@ -1339,8 +1339,8 @@ SampleFromInfo analyzeSampleFrom(CallExp ce,ErrorHandler err,Distribution dist=n
 				err.error(text("pdf must depend on variable '",var.orig.name,"')"),ce.args[0].loc);
 				return SampleFromInfo(true);
 			}
-			newDist=newDist.substitute(var.orig,var.tmp); // TODO: make sure capturing is impossible here
 		}
+		newDist=newDist.substituteAll(retVars.map!(x=>x.orig).array,retVars.map!(x=>cast(DExpr)x.tmp).array);
 	}
 	if(ce.args.length!=1+paramVars.length){
 		err.error(text("expected ",paramVars.length," additional arguments to SampleFrom"),ce.loc);
