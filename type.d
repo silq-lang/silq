@@ -213,9 +213,10 @@ class ForallTy: Type{
 				return null;
 		}
 		Expression r=cod;
+		Expression[string] subst;
 		foreach(i,n;names)
-			r=r.substitute(n,rhs[i]); // TODO: avoid capturing!
-		return r;
+			subst[n]=rhs[i];
+		return r.substitute(subst);
 	}
 	override bool opEquals(Object o){
 		auto r=cast(ForallTy)o;
