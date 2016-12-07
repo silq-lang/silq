@@ -342,16 +342,16 @@ struct Parser{
 		return res=New!Parameter(i,t);
 	}
 	
-	Expression[] parseArgumentList(string delim, bool nonempty=false, Entry=AssignExp, T...)(T args){
+	Expression[] parseArgumentList(bool nonempty=false, Entry=AssignExp, T...)(TokenType delim, T args){
 		auto e=appender!(Expression[])();
 		foreach(x;args) e.put(x); // static foreach
 		static if(args.length){if(ttype==Tok!",") nextToken(); else return e.data;}
-		static if(!nonempty) if(ttype==Tok!delim) return e.data;
+		static if(!nonempty) if(ttype==delim) return e.data;
 		do{
 			mixin(doParse!(Entry,"e1")); e.put(e1);
 			if(ttype==Tok!",") nextToken();
 			else break;
-		}while(ttype!=Tok!delim && ttype!=Tok!"EOF");
+		}while(ttype!=delim && ttype!=Tok!"EOF");
 		return e.data;
 	}
 
@@ -422,7 +422,7 @@ struct Parser{
 				}else{
 					assert(ttype==Tok!"[");
 					nextToken();
-					res=New!ArrayExp(parseArgumentList!"]"());
+					res=New!ArrayExp(parseArgumentList(Tok!"]"));
 					expect(Tok!"]");
 					return res;
 				}
@@ -462,12 +462,12 @@ struct Parser{
 				nextToken();
 				if(ttype==Tok!"]"){loc=loc.to(tok.loc); nextToken(); mixin(rule!(IndexExp,Existing,q{left,(Expression[]).init}));}
 				auto l=parseExpression(rbp!(Tok!","));
-				res=New!IndexExp(left,parseArgumentList!"]"(l));
+				res=New!IndexExp(left,parseArgumentList(Tok!"]",l));
 				loc=loc.to(tok.loc); expect(Tok!"]");
 				return res;
 			case Tok!"(":
 				nextToken();
-				auto a=parseArgumentList!")"();
+				auto a=parseArgumentList(Tok!")");
 				loc=loc.to(tok.loc); expect(Tok!")");
 				mixin(rule!(CallExp,Existing,"left,a"));
 			case Tok!".":
@@ -674,7 +674,7 @@ struct Parser{
 		bool isSquare=false;
 		if(ttype==Tok!"[") isSquare=true;
 		expect(isSquare?Tok!"[":Tok!"(");
-		auto args=cast(Parameter[])parseArgumentList!(")",false,Parameter)();
+		auto args=cast(Parameter[])parseArgumentList!(false,Parameter)(isSquare?Tok!"]":Tok!")");
 		expect(isSquare?Tok!"]":Tok!")");
 		Expression ret=null;
 		if(ttype==Tok!":"){
@@ -704,6 +704,7 @@ struct Parser{
 		mixin(SetLoc!DatDecl);
 		expect(Tok!"dat");
 		auto name=parseIdentifier();
+		
 		auto body_=parseCompoundExp!CompoundDecl();
 		return res=New!DatDecl(name,body_);
 	}
