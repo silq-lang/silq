@@ -48,6 +48,9 @@ class AggregateTy: Type{
 			return decl is r.decl;
 		return false;
 	}
+	override string toString(){
+		return decl.name.name;
+	}
 	mixin VariableFree;
 }
 
@@ -143,7 +146,7 @@ class ArrayTy: Type{
 }
 
 ArrayTy arrayTy(Expression next)in{
-	assert(next.type==typeTy);
+	assert(next&&next.type==typeTy);
 }body{
 	return memoize!((Expression next)=>new ArrayTy(next))(next);
 }
@@ -168,7 +171,7 @@ class ForallTy: Type{
 	bool isSquare;
 	private this(string[] names,TupleTy dom,Expression cod,bool isSquare)in{
 		assert(names.length==dom.types.length);
-		assert(cod.type==typeTy);
+		assert(cod.type==typeTy,text(cod));
 	}body{
 		this.names=names; this.dom=dom; this.cod=cod; this.isSquare=isSquare;
 	}
@@ -200,7 +203,7 @@ class ForallTy: Type{
 		auto nnames=names.dup;
 		foreach(ref v;nnames) if(v==oname) v=nname; // TODO: this is rather dumb
 		auto nvar=varTy(nname);
-		return forallTy(nnames,dom,cod.substitute(oname,nvar));
+		return forallTy(nnames,dom,cod.substitute(oname,nvar),isSquare);
 	}
 	override ForallTy substitute(Expression[string] subst){
 		foreach(n;names){
@@ -213,7 +216,7 @@ class ForallTy: Type{
 		auto nsubst=subst.dup;
 		foreach(n;names) nsubst.remove(n);
 		auto ncod=cod.substitute(nsubst);
-		return forallTy(names,ndom,ncod);
+		return forallTy(names,ndom,ncod,isSquare);
 	}
 	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
 		auto r=cast(ForallTy)rhs; // TODO: get rid of duplication (same code in opEquals)
@@ -271,8 +274,8 @@ ForallTy forallTy(string[] names,TupleTy dom,Expression cod,bool isSquare=false)
 }
 
 alias FunTy=ForallTy;
-FunTy funTy(TupleTy dom,Expression cod){
-	return forallTy(dom.types.map!(_=>"").array,dom,cod);
+FunTy funTy(TupleTy dom,Expression cod,bool isSquare=false){
+	return forallTy(dom.types.map!(_=>"").array,dom,cod,isSquare);
 }
 
 /+FunTy funTy(TupleTy dom,Type cod){
