@@ -115,7 +115,6 @@ struct DParser{
 	}
 
 	DExpr parseDInt(){
-		dw(code);
 		expect('∫');
 		expect('d');
 		++numBinders;
