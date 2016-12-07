@@ -881,7 +881,7 @@ private struct Analyzer{
 				err.error(text("unsupported type '",idx.e.type,"' for index expression"),lhs.loc);
 			}
 		}else if(auto fe=cast(FieldExp)lhs){
-			if(cast(AggregateTy)fe.e.type){
+			if(!cast(ArrayTy)fe.e.type){
 				auto old=transformExp(fe.e);
 				if(old) assignTo(fe.e,dRUpdate(old,fe.f.name,rhs),fe.e.type,loc);
 			}

@@ -704,9 +704,16 @@ struct Parser{
 		mixin(SetLoc!DatDecl);
 		expect(Tok!"dat");
 		auto name=parseIdentifier();
-		
+		Parameter[] params;
+		bool hasParams=false;
+		if(ttype==Tok!"["){
+			nextToken();
+			hasParams=true;
+			params=cast(Parameter[])parseArgumentList!(false,Parameter)(Tok!"]");
+			expect(Tok!"]");
+		}
 		auto body_=parseCompoundExp!CompoundDecl();
-		return res=New!DatDecl(name,body_);
+		return res=New!DatDecl(name,hasParams,params,body_);
 	}
 	ReturnExp parseReturn(){
 		mixin(SetLoc!ReturnExp);

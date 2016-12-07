@@ -55,6 +55,10 @@ DataScope isInDataScope(Scope sc){
 }
 
 AggregateTy isDataTyId(Expression e){
+	if(auto ce=cast(CallExp)e)
+		if(auto id=cast(Identifier)ce.e)
+			if(auto decl=cast(DatDecl)id.meaning)
+				return decl.dtype;
 	auto id=cast(Identifier)e;
 	if(!id) return null;
 	if(auto decl=cast(DatDecl)id.meaning)
@@ -65,12 +69,24 @@ AggregateTy isDataTyId(Expression e){
 Expression presemantic(Declaration expr,Scope sc){
 	bool success=true; // dummy
 	if(!expr.scope_) makeDeclaration(expr,success,sc);
+	static void declareParameters(Declaration parent,bool isSquare,Parameter[] params, Scope sc){
+		foreach(ref p;params){
+			if(!p.dtype){ // ℝ is the default parameter type for () and * is the default parameter type for []
+				p.dtype=New!Identifier(isSquare?"*":"ℝ");
+				p.dtype.loc=p.loc;
+			}
+			p=cast(Parameter)varDeclSemantic(p,sc);
+			assert(!!p);
+			propErr(p,parent);
+		}		
+	}
 	if(auto dat=cast(DatDecl)expr){
 		if(dat.dtype) return expr;
 		auto dsc=new DataScope(sc,dat);
 		assert(!dat.dscope_);
 		dat.dscope_=dsc;
 		dat.dtype=new AggregateTy(dat);
+		if(dat.hasParams) declareParameters(dat,true,dat.params,dsc);
 		if(!dat.body_.ascope_) dat.body_.ascope_=new AggregateScope(dat.dscope_);
 		foreach(ref exp;dat.body_.s) exp=makeDeclaration(exp,success,dat.body_.ascope_);
 		foreach(ref exp;dat.body_.s) if(auto decl=cast(Declaration)exp) exp=presemantic(decl,dat.body_.ascope_);
@@ -80,16 +96,8 @@ Expression presemantic(Declaration expr,Scope sc){
 		auto fsc=new FunctionScope(sc,fd);
 		fd.type=unit;
 		fd.fscope_=fsc;
-		foreach(ref p;fd.params){
-			if(!p.dtype){ // ℝ is the default parameter type for () and * is the default parameter type for []
-				p.dtype=New!Identifier(fd.isSquare?"*":"ℝ");
-				p.dtype.loc=p.loc;
-			}
-			p=cast(Parameter)varDeclSemantic(p,fsc);
-			assert(!!p);
-			propErr(p,fd);
-		}
-		VarDecl createContext(string name,Type ty){
+		declareParameters(fd,fd.isSquare,fd.params,fsc);
+		VarDecl createContext(string name,Expression ty){
 			auto id=new Identifier(name);
 			id.loc=fd.loc;
 			auto context=new VarDecl(id);
@@ -100,7 +108,15 @@ Expression presemantic(Declaration expr,Scope sc){
 			return context;
 		}
 		if(auto dsc=isInDataScope(sc)){
-			fd.context=createContext("this",dsc.decl.dtype);
+			Expression ctxty;
+			if(dsc.decl.hasParams){
+				auto id=new Identifier(dsc.decl.name.name);
+				id.meaning=dsc.decl;
+				ctxty=callSemantic(new CallExp(id,dsc.decl.params.map!(p=>cast(Expression)varTy(p.name.name)).array,true),sc);
+				ctxty.sstate=SemState.completed;
+				assert(ctxty.type == typeTy);
+			}else ctxty=dsc.decl.dtype;
+			fd.context=createContext("this",ctxty);
 			if(dsc.decl.name.name==fd.name.name){
 				fd.isConstructor=true;
 				if(fd.rret){
@@ -108,13 +124,13 @@ Expression presemantic(Declaration expr,Scope sc){
 					fd.sstate=SemState.error;
 				}else{
 					assert(dsc.decl.dtype);
-					fd.ret=dsc.decl.dtype;
+					fd.ret=fd.context.vtype;
 				}
 				auto thisid=new Identifier("this");
 				thisid.loc=fd.loc;
 				thisid.scope_=fd.fscope_;
 				thisid.meaning=fd.context;
-				thisid.type=dsc.decl.dtype;
+				thisid.type=fd.context.vtype;
 				thisid.sstate=SemState.completed;
 				auto rete=new ReturnExp(thisid);
 				rete.loc=thisid.loc;
@@ -661,21 +677,32 @@ Expression callSemantic(CallExp ce,Scope sc){
 		auto atys=tupleTy(aty);
 		bool tryCall(){
 			if(!ce.isSquare && ft.isSquare){
-				Expression[] gargs;
-				auto tt=ft.tryMatch(ce.args,gargs);
-				if(!tt) return false;
-				auto nce=new CallExp(ce.e,gargs,true);
-				nce.loc=ce.loc;
-				auto nnce=new CallExp(nce,ce.args,false);
-				nnce.loc=ce.loc;
-				nnce=cast(CallExp)callSemantic(nnce,sc);
-				assert(nnce&&nnce.type == tt);
-				ce=nnce;
-			}else{
-				ce.type=ft.tryApply(ce.args,ce.isSquare);
-				if(!ce.type) return false;
+				auto nft=ft;
+				if(auto id=cast(Identifier)fun){
+					if(auto decl=cast(DatDecl)id.meaning){
+						if(auto constructor=cast(FunctionDef)decl.body_.ascope_.lookup(decl.name)){
+							auto cty=cast(FunTy)typeForDecl(constructor);
+							assert(ft.cod is typeTy);
+							nft=forallTy(ft.names,ft.dom,cty,ft.isSquare);
+						}
+					}
+				}
+				if(cast(ForallTy)nft.cod){
+					Expression[] gargs;
+					auto tt=nft.tryMatch(ce.args,gargs);
+					if(!tt) return false;
+					auto nce=new CallExp(ce.e,gargs,true);
+					nce.loc=ce.loc;
+					auto nnce=new CallExp(nce,ce.args,false);
+					nnce.loc=ce.loc;
+					nnce=cast(CallExp)callSemantic(nnce,sc);
+					assert(nnce&&nnce.type == tt);
+					ce=nnce;
+					return true;
+				}
 			}
-			return true;
+			ce.type=ft.tryApply(ce.args,ce.isSquare);
+			return !!ce.type;
 		}
 		if(!tryCall()){
 			if(ce.isSquare!=ft.isSquare)
@@ -689,9 +716,18 @@ Expression callSemantic(CallExp ce,Scope sc){
 		ce=checkFunCall(ft);
 	}else if(auto at=isDataTyId(fun)){
 		auto decl=at.decl;
-		assert(fun.type is unit);
+		assert(fun.type is typeTy);
 		auto constructor=cast(FunctionDef)decl.body_.ascope_.lookup(decl.name);
 		auto ty=cast(FunTy)typeForDecl(constructor);
+		if(ty&&decl.hasParams){
+			auto nce=cast(CallExp)fun;
+			assert(!!nce);
+			Expression[string] subst;
+			assert(decl.params.length==nce.args.length);
+			foreach(i,p;decl.params)
+				subst[p.name.name]=nce.args[i];
+			ty=ty.substitute(subst);
+		}
 		if(!constructor||!ty){
 			sc.error(format("no constructor for type '%s'",fun),ce.loc);
 			ce.sstate=SemState.error;
@@ -844,13 +880,30 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 			fe.sstate=SemState.error;
 			return fe;
 		}
-		if(auto aggrty=cast(AggregateTy)fe.e.type){
+		auto aggrty=cast(AggregateTy)fe.e.type;
+		Expression[] args;
+		if(auto ce=cast(CallExp)fe.e.type){
+			if(auto id=cast(Identifier)ce.e){
+				if(auto decl=cast(DatDecl)id.meaning){
+					aggrty=decl.dtype;
+					args=ce.args;
+				}
+			}
+		}
+		if(aggrty){
 			if(aggrty.decl&&aggrty.decl.body_.ascope_){
 				auto meaning=aggrty.decl.body_.ascope_.lookupHere(fe.f);
 				if(!meaning) return noMember();
 				fe.f.meaning=meaning;
 				fe.f.scope_=sc;
 				fe.f.type=typeForDecl(meaning);
+				if(aggrty.decl.hasParams){
+					Expression[string] subst;
+					assert(aggrty.decl.params.length==args.length);
+					foreach(i,p;aggrty.decl.params)
+						subst[p.name.name]=args[i];
+					fe.f.type=fe.f.type.substitute(subst);
+				}
 				fe.f.sstate=SemState.completed;
 				fe.type=fe.f.type;
 				if(!fe.type) fe.sstate=SemState.error;
@@ -1214,7 +1267,7 @@ Type typeSemantic(Expression expr,Scope sc)in{assert(!!expr&&!!sc);}body{
 			if(auto dd=isInDataScope(fd.scope_))
 				decl=dd.decl;
 		if(auto dat=cast(DatDecl)decl)
-			return dat.dtype;
+			if(!dat.hasParams) return dat.dtype;
 		if(auto vd=cast(VarDecl)decl){
 			if(vd.vtype is typeTy)
 				return varTy(id.name);
@@ -1243,7 +1296,9 @@ Expression typeForDecl(Declaration decl){
 	if(auto dat=cast(DatDecl)decl){
 		if(!dat.dtype&&dat.scope_) dat=cast(DatDecl)presemantic(dat,dat.scope_);
 		assert(cast(AggregateTy)dat.dtype);
-		return unit;
+		if(!dat.hasParams) return typeTy;
+		foreach(p;dat.params) if(!p.vtype) return unit; // TODO: ok?
+		return forallTy(dat.params.map!(p=>p.name.name).array,tupleTy(dat.params.map!(p=>p.vtype).array),typeTy,true);
 	}
 	if(auto vd=cast(VarDecl)decl){
 		return vd.vtype;

@@ -1,0 +1,15 @@
+
+dat Cell[a]{
+    x: a;
+    def Cell(x: a){
+        this.x = x;
+    }
+    def map[b](f:a→b)=>Cell(f(x));
+}
+
+def main(){
+    a := Cell([2]);
+    b := Cell(1);
+    c := b.map((x)=>[3*x]);
+    return ([Cell(b.x).map((x)=>x).x][0],a.x[0],c.x[0]); // expected: δ[-r₁+1]·δ[-r₂+2]·δ[-r₃+3]
+}

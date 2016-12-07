@@ -82,9 +82,14 @@ class FunctionDef: Declaration{
 
 class DatDecl: Declaration{
 	AggregateTy dtype;
+	bool hasParams;
+	Parameter[] params;
 	CompoundDecl body_;
-	this(Identifier name,CompoundDecl body_){
-		super(name); this.body_=body_;
+	this(Identifier name,bool hasParams,Parameter[] params,CompoundDecl body_){
+		super(name);
+		this.hasParams=hasParams;
+		this.params=params;
+		this.body_=body_;
 	}
 	override string toString(){
 		return "dat "~name.toString()~body_.toString();
