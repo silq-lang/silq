@@ -243,7 +243,8 @@ class CallExp: Expression{
 	bool isSquare;
 	this(Expression exp, Expression[] args, bool isSquare=false){e=exp; this.args=args; this.isSquare=isSquare; }
 	override string toString(){
-		return _brk(e.toString()~'('~join(map!(to!string)(args),",")~')');
+		auto d=isSquare?"[]":"()";
+		return _brk(e.toString()~d[0]~join(map!(to!string)(args),",")~d[1]);
 	}
 	override int freeVarsImpl(scope int delegate(string) dg){
 		if(auto r=e.freeVarsImpl(dg)) return r;
@@ -253,7 +254,7 @@ class CallExp: Expression{
 	override CallExp substitute(Expression[string] subst){
 		auto ne=e.substitute(subst);
 		auto nargs=args.dup;
-		foreach(ref x;nargs) x=substitute(subst);
+		foreach(ref x;nargs) x=x.substitute(subst);
 		if(ne==e&&nargs==args) return this;
 		auto r=new CallExp(ne,nargs);
 		r.loc=loc;
