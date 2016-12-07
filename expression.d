@@ -256,14 +256,23 @@ class CallExp: Expression{
 		auto nargs=args.dup;
 		foreach(ref x;nargs) x=x.substitute(subst);
 		if(ne==e&&nargs==args) return this;
-		auto r=new CallExp(ne,nargs);
+		auto r=new CallExp(ne,nargs,isSquare);
 		r.loc=loc;
+		if(sstate==SemState.completed){
+			r.type=type.substitute(subst);
+			r.sstate=SemState.completed;
+		}
 		return r;
 	}
 	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
 		auto ce=cast(CallExp)rhs;
 		if(!ce||args.length!=ce.args.length) return false;
 		return e.unify(ce.e,subst)&&all!(i=>args[i].unify(ce.args[i],subst))(iota(args.length));
+	}
+	override bool opEquals(Object rhs){
+		auto ce=cast(CallExp)rhs;
+		if(!ce) return false;
+		return e==ce.e&&args==ce.args;
 	}
 }
 
