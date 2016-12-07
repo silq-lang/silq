@@ -906,7 +906,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 			}else{ t=exp.type; texp=exp; }
 		}
 		if(arr.e.length){
-			arr.type=arrayTy(arr.e[0].type);
+			if(arr.e[0].type) arr.type=arrayTy(arr.e[0].type);
 		}else arr.type=arrayTy(ℝ); // TODO: type inference?
 		return arr;
 	}
