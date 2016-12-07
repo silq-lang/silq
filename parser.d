@@ -685,7 +685,7 @@ struct Parser{
 		if(util.among(ttype,Tok!"⇒",Tok!"↦",Tok!"=>",Tok!"(")){
 			Expression e;
 			if(ttype==Tok!"("){
-				e=parseLambdaExp!true();
+				e=parseLambdaExp!semicolon();
 			}else{
 				nextToken();
 				e=parseExpression(rbp!(Tok!(",")));
