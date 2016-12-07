@@ -90,6 +90,12 @@ class TupleTy: Type{
 		foreach(ref t;ntypes) t=t.substitute(subst);
 		return tupleTy(ntypes);
 	}
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+		auto tt=cast(TupleTy)rhs;
+		if(!tt||types.length!=tt.types.length) return false;
+		return all!(i=>types[i].unify(tt.types[i],subst))(iota(types.length));
+
+	}
 	override bool opEquals(Object o){
 		if(auto r=cast(TupleTy)o)
 			return types==r.types;
@@ -121,6 +127,10 @@ class ArrayTy: Type{
 	}
 	override ArrayTy substitute(Expression[string] subst){
 		return arrayTy(next.substitute(subst));
+	}
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+		auto at=cast(ArrayTy)rhs;
+		return at && next.unifyImpl(at.next,subst);
 	}
 	override ArrayTy eval(){
 		return arrayTy(next.eval());
@@ -205,6 +215,35 @@ class ForallTy: Type{
 		auto ncod=cod.substitute(nsubst);
 		return forallTy(names,ndom,ncod);
 	}
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+		auto r=cast(ForallTy)rhs; // TODO: get rid of duplication (same code in opEquals)
+		if(!r) return false;
+		if(isSquare!=r.isSquare||dom.types.length!=r.dom.types.length) return false;
+		foreach(i;0..dom.types.length)
+			r=r.relabel(r.names[i],names[i]);
+		Expression[string] nsubst;
+		foreach(k,v;subst) if(!names.canFind(k)) nsubst[k]=v;
+		auto res=dom.unify(r.dom,nsubst)&&cod.unify(r.cod,nsubst);
+		foreach(k,v;nsubst) subst[k]=v;
+		return res;
+	}
+	Expression tryMatch(Expression[] args,out Expression[] gargs)in{assert(isSquare&&cast(ForallTy)cod);}body{
+		auto cod=cast(ForallTy)this.cod;
+		assert(!!cod);
+		if(args.length!=cod.dom.types.length) return null;
+		Expression[string] subst;
+		foreach(n;names) subst[n]=null;
+		foreach(i,a;args){
+			if(!cod.dom.types[i].unify(a.type,subst))
+				return null;
+		}
+		gargs=new Expression[](names.length);
+		foreach(i,n;names){
+			if(!subst[n]) return null;
+			gargs[i]=subst[n];
+		}
+		return cod.substitute(subst).tryApply(args,false);
+	}
 	Expression tryApply(Expression[] rhs,bool isSquare){
 		if(isSquare != this.isSquare) return null;
 		if(rhs.length!=names.length) return null;
@@ -212,11 +251,10 @@ class ForallTy: Type{
 			if(!compatible(dom.types[i],rhs[i].type))
 				return null;
 		}
-		Expression r=cod;
 		Expression[string] subst;
 		foreach(i,n;names)
 			subst[n]=rhs[i];
-		return r.substitute(subst);
+		return cod.substitute(subst);
 	}
 	override bool opEquals(Object o){
 		auto r=cast(ForallTy)o;
@@ -254,6 +292,15 @@ class VarTy: Type{
 	override Expression substitute(Expression[string] subst){
 		if(name in subst) return subst[name];
 		return this;
+	}
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+		auto vt=cast(VarTy)rhs;
+		assert(!vt||name!=vt.name);
+		if(name !in subst) return false;
+		if(subst[name]) return subst[name].unify(rhs,subst);
+		if(rhs.hasFreeVar(name)) return false; // TODO: fixpoint types
+		subst[name]=rhs;
+		return true;
 	}
 	override bool opEquals(Object o){
 		if(auto r=cast(VarTy)o)

@@ -1,0 +1,9 @@
+
+def foo[a,b](x:a×b){
+    return x[0][2];
+}
+
+
+def main(){
+    return foo((2,[3,4]));
+}

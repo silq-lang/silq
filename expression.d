@@ -39,6 +39,13 @@ abstract class Expression: Node{
 		return substitute([name:exp]);
 	}
 	abstract Expression substitute(Expression[string] subst); // TODO: name might be free in the _types_ of subexpressions
+
+	final bool unify(Expression rhs,ref Expression[string] subst){
+		if(this == rhs) return true;
+		return unifyImpl(rhs,subst) || eval().unifyImpl(rhs.eval(),subst);
+	}
+	abstract bool unifyImpl(Expression rhs,ref Expression[string] subst);
+	
 	final freeVars(){
 		static struct FreeVars{
 			Expression self;
@@ -67,6 +74,7 @@ abstract class Expression: Node{
 mixin template VariableFree(){
 	override int freeVarsImpl(scope int delegate(string)){ return 0; }
 	override Expression substitute(Expression[string] subst){ return this; }
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst){ return false; }
 }
 
 class TypeAnnotationExp: Expression{
@@ -88,7 +96,9 @@ class TypeAnnotationExp: Expression{
 		r.loc=loc;
 		return r;
 	}
-
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+		return e.unify(rhs,subst);
+	}
 }
 
 // workaround for the bug:
@@ -170,6 +180,11 @@ class UnaryExp(TokenType op): Expression{
 		r.loc=loc;
 		return r;
 	}
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+		auto ue=cast(typeof(this))rhs;
+		if(!ue) return false;
+		return e.unify(ue.e,subst);
+	}
 }
 class PostfixExp(TokenType op): Expression{
 	Expression e;
@@ -185,6 +200,11 @@ class PostfixExp(TokenType op): Expression{
 		auto r=new PostfixExp(ne);
 		r.loc=loc;
 		return r;
+	}
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+		auto pe=cast(PostfixExp)rhs;
+		if(!pe) return false;
+		return e.unify(pe.e,subst);
 	}
 }
 
@@ -210,6 +230,11 @@ class IndexExp: Expression{ //e[a...]
 		r.loc=loc;
 		return r;
 	}
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+		auto idx=cast(IndexExp)rhs;
+		if(!idx||a.length!=idx.a.length) return false;
+		return e.unify(idx.e,subst)&&all!(i=>a[i].unify(idx.a[i],subst))(iota(a.length));
+	}
 }
 
 class CallExp: Expression{
@@ -233,6 +258,11 @@ class CallExp: Expression{
 		auto r=new CallExp(ne,nargs);
 		r.loc=loc;
 		return r;
+	}
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+		auto ce=cast(CallExp)rhs;
+		if(!ce||args.length!=ce.args.length) return false;
+		return e.unify(ce.e,subst)&&all!(i=>args[i].unify(ce.args[i],subst))(iota(args.length));
 	}
 }
 
@@ -267,6 +297,11 @@ class BinaryExp(TokenType op): ABinaryExp{
 		r.loc=loc;
 		return r;
 	}
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+		auto be=cast(typeof(this))rhs;
+		if(!be) return false;
+		return e1.unify(be.e1,subst)&&e2.unify(be.e2,subst);
+	}
 }
 
 class FieldExp: Expression{
@@ -287,6 +322,11 @@ class FieldExp: Expression{
 		auto r=new FieldExp(ne,f);
 		r.loc=loc;
 		return r;
+	}
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+		auto fe=cast(FieldExp)rhs;
+		if(!fe||f!=fe.f) return false;
+		return e.unify(rhs,subst);
 	}
 }
 
@@ -315,6 +355,12 @@ class IteExp: Expression{
 		auto r=new IteExp(ncond,nthen,nothw);
 		r.loc=loc;
 		return r;
+	}
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+		auto ite=cast(IteExp)rhs;
+		if(!ite) return false;
+		return cond.unify(ite.cond,subst)&&then.unify(ite.then,subst)
+			&&!othw&&!ite.othw||othw&&ite.othw&&othw.unify(ite.othw,subst);
 	}
 }
 
@@ -404,6 +450,11 @@ class TupleExp: Expression{
 		r.loc=loc;
 		return r;
 	}
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+		auto te=cast(TupleExp)rhs;
+		if(!te||e.length!=te.e.length) return false;
+		return all!(i=>e[i].unify(te.e[i],subst))(iota(e.length));
+	}
 }
 
 class LambdaExp: Expression{
@@ -438,6 +489,11 @@ class ArrayExp: Expression{
 		auto r=new ArrayExp(ne);
 		r.loc=loc;
 		return r;
+	}
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+		auto ae=cast(ArrayExp)rhs;
+		if(!ae||e.length!=ae.e.length) return false;
+		return all!(i=>e[i].unify(ae.e[i],subst))(iota(e.length));
 	}
 }
 

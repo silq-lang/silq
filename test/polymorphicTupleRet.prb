@@ -1,0 +1,6 @@
+def f()=>(1,2);
+def call[b](x:𝟙 → b)=>x();
+def main(){
+    xs:=call[ℝ×ℝ](f);
+    return xs;
+}

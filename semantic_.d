@@ -659,9 +659,25 @@ Expression callSemantic(CallExp ce,Scope sc){
 			aty~=a.type;
 		}
 		auto atys=tupleTy(aty);
-		if(auto rty=ft.tryApply(ce.args,ce.isSquare)){
-			ce.type=rty;
-		}else{
+		bool tryCall(){
+			if(!ce.isSquare && ft.isSquare){
+				Expression[] gargs;
+				auto tt=ft.tryMatch(ce.args,gargs);
+				if(!tt) return false;
+				auto nce=new CallExp(ce.e,gargs,true);
+				nce.loc=ce.loc;
+				auto nnce=new CallExp(nce,ce.args,false);
+				nnce.loc=ce.loc;
+				nnce=cast(CallExp)callSemantic(nnce,sc);
+				assert(nnce&&nnce.type == tt);
+				ce=nnce;
+			}else{
+				ce.type=ft.tryApply(ce.args,ce.isSquare);
+				if(!ce.type) return false;
+			}
+			return true;
+		}
+		if(!tryCall()){
 			if(ce.isSquare!=ft.isSquare)
 				sc.error(text("function of type ",ft," cannot be called with arguments ",ce.isSquare?"[":"(",atys,ce.isSquare?"]":")"),ce.loc);
 			else sc.error(format("expected argument types '%s', but '%s' was provided",ft.dom,atys),ce.loc);

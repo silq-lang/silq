@@ -1,0 +1,7 @@
+
+// def foo[a, (+): a×a → a](x:a)(y:a)(z:a) ⇒ x+y+z; // TODO: something like this
+
+def main(){
+    x := 1 ⊕ 4;
+    return x;
+}
