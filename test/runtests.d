@@ -116,6 +116,8 @@ struct Comparison{
 }
 
 Comparison[] getResults(string source){
+	bool compilationError=(x=>x.startsWith("// compilation error")||x.startsWith("//compilation error"))(shell("head -n1 "~source));
+	bool foundCompilationError=false;
 	auto output = shell("../psi "~source~" 2>&1").splitLines;
 	Comparison[] result;
 	foreach(i,l;output){
@@ -126,9 +128,13 @@ Comparison[] getResults(string source){
 		case "TODO": result~=Comparison(Status.expected,Info(cast(int)i+1,false,true)); break;
 		case "FAIL": result~=Comparison(Status.unexpected,Info(cast(int)i+1,true,false)); break;
 		}
-		if(l.startsWith("core.exception.AssertError")||l.startsWith("Segmentation fault"))
+		auto isCompilationError=l.canFind("error: ");
+		if(l.startsWith("core.exception.AssertError")||l.startsWith("Segmentation fault")||!compilationError&&!foundCompilationError&&isCompilationError)
 			result~=Comparison(Status.unexpected,Info(cast(int)i+1,true,false));
+		foundCompilationError|=isCompilationError;
 	}
+	if(compilationError&&!foundCompilationError)
+		result~=Comparison(Status.unexpected,Info(0,true,false));
 	return result;
 }
 
