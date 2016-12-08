@@ -1,6 +1,6 @@
 
 def foo[a,b](x:a×b){
-    return x[0][2];
+    return x[0];
 }
 
 

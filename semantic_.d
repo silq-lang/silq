@@ -108,14 +108,22 @@ Expression presemantic(Declaration expr,Scope sc){
 			return context;
 		}
 		if(auto dsc=isInDataScope(sc)){
-			Expression ctxty;
+			auto id=new Identifier(dsc.decl.name.name);
+			id.meaning=dsc.decl;
+			id=cast(Identifier)expressionSemantic(id,sc);
+			assert(!!id);
+			Expression ctxty=id;
 			if(dsc.decl.hasParams){
-				auto id=new Identifier(dsc.decl.name.name);
-				id.meaning=dsc.decl;
-				ctxty=callSemantic(new CallExp(id,dsc.decl.params.map!(p=>cast(Expression)varTy(p.name.name)).array,true),sc);
+				ctxty=callSemantic(new CallExp(ctxty,dsc.decl.params.map!((p){
+								auto id=new Identifier(p.name.name);
+								id.meaning=p;
+								auto r=expressionSemantic(id,sc);
+								assert(r.sstate==SemState.completed);
+								return r;
+							}).array,true),sc);
 				ctxty.sstate=SemState.completed;
 				assert(ctxty.type == typeTy);
-			}else ctxty=dsc.decl.dtype;
+			}
 			fd.context=createContext("this",ctxty);
 			if(dsc.decl.name.name==fd.name.name){
 				fd.isConstructor=true;
@@ -154,7 +162,7 @@ Expression presemantic(Declaration expr,Scope sc){
 			}
 			fd.ret=typeSemantic(fd.rret,sc);
 			if(!fd.ret) fd.sstate=SemState.error;
-			else fd.ftype=forallTy(pn,tupleTy(pty),fd.ret);
+			else fd.ftype=forallTy(pn,tupleTy(pty),fd.ret,fd.isSquare);
 		}
 	}
 	return expr;
@@ -274,7 +282,19 @@ Expression builtIn(Identifier id,Scope sc){
 	case "FromMarginal","SampleFrom": t=unit; break; // those are actually magic polymorphic functions
 	case "Expectation": t=funTy(tupleTy([ℝ]),ℝ); break; // TODO: this should be polymorphic too
 	case "Categorical": t=funTy(tupleTy([arrayTy(ℝ)]),ℝ); break;
-	case "R","ℝ","𝟙": return typeSemantic(id,sc);
+	case "*","R","ℝ","𝟙": 
+		id.type=typeTy;
+		if(id.name=="*") return typeTy;
+		if(id.name=="R"||id.name=="ℝ") return ℝ;
+		if(id.name=="𝟙") return unit;
+		/+if(auto fd=cast(FunctionDef)decl)
+			if(auto dd=isInDataScope(fd.scope_))
+				decl=dd.decl;
+		if(auto dat=cast(DatDecl)decl)
+			if(!dat.hasParams) return dat.dtype;+/
+		/+
+		return null;+/
+
 	default: return null;
 	}
 	id.type=t;
@@ -681,9 +701,10 @@ Expression callSemantic(CallExp ce,Scope sc){
 				if(auto id=cast(Identifier)fun){
 					if(auto decl=cast(DatDecl)id.meaning){
 						if(auto constructor=cast(FunctionDef)decl.body_.ascope_.lookup(decl.name)){
-							auto cty=cast(FunTy)typeForDecl(constructor);
-							assert(ft.cod is typeTy);
-							nft=forallTy(ft.names,ft.dom,cty,ft.isSquare);
+							if(auto cty=cast(FunTy)typeForDecl(constructor)){
+								assert(ft.cod is typeTy);
+								nft=forallTy(ft.names,ft.dom,cty,ft.isSquare);
+							}
 						}
 					}
 				}
@@ -726,7 +747,8 @@ Expression callSemantic(CallExp ce,Scope sc){
 			assert(decl.params.length==nce.args.length);
 			foreach(i,p;decl.params)
 				subst[p.name.name]=nce.args[i];
-			ty=ty.substitute(subst);
+			ty=cast(ForallTy)ty.substitute(subst);
+			assert(!!ty);
 		}
 		if(!constructor||!ty){
 			sc.error(format("no constructor for type '%s'",fun),ce.loc);
@@ -767,7 +789,6 @@ Expression callSemantic(CallExp ce,Scope sc){
 	}
 	return ce;
 }
-
 
 Expression expressionSemantic(Expression expr,Scope sc)out(r){
 
@@ -880,33 +901,38 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 			fe.sstate=SemState.error;
 			return fe;
 		}
-		auto aggrty=cast(AggregateTy)fe.e.type;
+		DatDecl aggrd=null;
+		if(auto aggrty=cast(AggregateTy)fe.e.type) aggrd=aggrty.decl;
+		else if(auto id=cast(Identifier)fe.e.type) if(auto dat=cast(DatDecl)id.meaning) aggrd=dat;
 		Expression[] args;
 		if(auto ce=cast(CallExp)fe.e.type){
 			if(auto id=cast(Identifier)ce.e){
 				if(auto decl=cast(DatDecl)id.meaning){
-					aggrty=decl.dtype;
+					aggrd=decl;
 					args=ce.args;
 				}
 			}
 		}
-		if(aggrty){
-			if(aggrty.decl&&aggrty.decl.body_.ascope_){
-				auto meaning=aggrty.decl.body_.ascope_.lookupHere(fe.f);
+		if(aggrd){
+			if(aggrd.body_.ascope_){
+				auto meaning=aggrd.body_.ascope_.lookupHere(fe.f);
 				if(!meaning) return noMember();
 				fe.f.meaning=meaning;
 				fe.f.scope_=sc;
 				fe.f.type=typeForDecl(meaning);
-				if(aggrty.decl.hasParams){
+				if(fe.f.type&&aggrd.hasParams){
 					Expression[string] subst;
-					assert(aggrty.decl.params.length==args.length);
-					foreach(i,p;aggrty.decl.params)
+					assert(aggrd.params.length==args.length);
+					foreach(i,p;aggrd.params)
 						subst[p.name.name]=args[i];
 					fe.f.type=fe.f.type.substitute(subst);
 				}
 				fe.f.sstate=SemState.completed;
 				fe.type=fe.f.type;
-				if(!fe.type) fe.sstate=SemState.error;
+				if(!fe.type){
+					fe.sstate=SemState.error;
+					fe.f.sstate=SemState.error;
+				}
 				return fe;
 			}else return noMember();
 		}else if(auto at=cast(ArrayTy)fe.e.type){
@@ -1244,37 +1270,14 @@ ReturnExp returnExpSemantic(ReturnExp ret,Scope sc){
 }
 
 
-Type typeSemantic(Expression expr,Scope sc)in{assert(!!expr&&!!sc);}body{
-	if(auto t=cast(Type)expr) return t;
+Expression typeSemantic(Expression expr,Scope sc)in{assert(!!expr&&!!sc);}body{
+	if(expr.type==typeTy) return expr;
 	if(auto lit=cast(LiteralExp)expr){
 		lit.type=typeTy;
 		if(lit.lit.type==Tok!"0"){
 			if(lit.lit.str=="1")
 				return unit;
 		}
-	}
-	if(auto id=cast(Identifier)expr){
-		id.type=typeTy;
-		if(id.name=="*") return typeTy;
-		if(id.name=="R"||id.name=="ℝ") return ℝ;
-		if(id.name=="𝟙") return unit;
-		auto decl=sc.lookup(id);
-		if(!decl){
-			sc.error(format("undefined identifier '%s'",id.name),id.loc);
-			return null;
-		}
-		if(auto fd=cast(FunctionDef)decl)
-			if(auto dd=isInDataScope(fd.scope_))
-				decl=dd.decl;
-		if(auto dat=cast(DatDecl)decl)
-			if(!dat.hasParams) return dat.dtype;
-		if(auto vd=cast(VarDecl)decl){
-			if(vd.vtype is typeTy)
-				return varTy(id.name);
-		}
-		sc.error(format("%s '%s' is not a type",decl.kind,decl.name),id.loc);
-		sc.note("declared here",decl.loc);
-		return null;
 	}
 	if(auto at=cast(IndexExp)expr){
 		expr.type=typeTy;
@@ -1283,10 +1286,14 @@ Type typeSemantic(Expression expr,Scope sc)in{assert(!!expr&&!!sc);}body{
 		assert(at.a==[]);
 		return arrayTy(next);
 	}
-	auto t=cast(Type)expressionSemantic(expr,sc);
-	if(t){ t.type=typeTy; return t; }
+	auto e=expressionSemantic(expr,sc);
+	if(e.type==typeTy) return e;
 	if(expr.sstate!=SemState.error){
-		sc.error("not a type",expr.loc);
+		if(auto id=cast(Identifier)expr){
+			auto decl=id.meaning;
+			sc.error(format("%s '%s' is not a type",decl.kind,decl.name),id.loc);
+			sc.note("declared here",decl.loc);
+		}else sc.error("not a type",expr.loc);
 		expr.sstate=SemState.error;
 	}
 	return null;

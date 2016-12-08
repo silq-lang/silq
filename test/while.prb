@@ -1,3 +1,4 @@
+// compilation error
 
 def main(){
     x := 0;

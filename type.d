@@ -88,7 +88,7 @@ class TupleTy: Type{
 				return r;
 		return 0;
 	}
-	override TupleTy substitute(Expression[string] subst){
+	override TupleTy substituteImpl(Expression[string] subst){
 		auto ntypes=types.dup;
 		foreach(ref t;ntypes) t=t.substitute(subst);
 		return tupleTy(ntypes);
@@ -128,7 +128,7 @@ class ArrayTy: Type{
 	override int freeVarsImpl(scope int delegate(string) dg){
 		return next.freeVarsImpl(dg);
 	}
-	override ArrayTy substitute(Expression[string] subst){
+	override ArrayTy substituteImpl(Expression[string] subst){
 		return arrayTy(next.substitute(subst));
 	}
 	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
@@ -170,6 +170,7 @@ class ForallTy: Type{
 	Expression cod;
 	bool isSquare;
 	private this(string[] names,TupleTy dom,Expression cod,bool isSquare)in{
+		// TODO: assert that all names are distinct
 		assert(names.length==dom.types.length);
 		assert(cod.type==typeTy,text(cod));
 	}body{
@@ -201,18 +202,24 @@ class ForallTy: Type{
 	}
 	private ForallTy relabel(string oname,string nname)in{assert(names.canFind(oname));}body{
 		auto nnames=names.dup;
-		foreach(ref v;nnames) if(v==oname) v=nname; // TODO: this is rather dumb
-		auto nvar=varTy(nname);
-		return forallTy(nnames,dom,cod.substitute(oname,nvar),isSquare);
+		foreach(i,ref v;nnames){
+			if(v==oname) v=nname; // TODO: this is rather dumb
+			auto nvar=varTy(nname,dom.types[i]);
+			return forallTy(nnames,dom,cod.substitute(oname,nvar),isSquare);
+		}
+		return this;
 	}
-	override ForallTy substitute(Expression[string] subst){
+	override ForallTy substituteImpl(Expression[string] subst){
 		foreach(n;names){
 			bool ok=true;
 			foreach(k,v;subst) if(v.hasFreeVar(n)) ok=false;
 			if(ok) continue;
-			return relabel(n,n~"'").substitute(subst);
+			auto r=cast(ForallTy)relabel(n,n~"'").substitute(subst);
+			assert(!!r);
+			return r;
 		}
-		auto ndom=dom.substitute(subst);
+		auto ndom=cast(TupleTy)dom.substitute(subst);
+		assert(!!ndom);
 		auto nsubst=subst.dup;
 		foreach(n;names) nsubst.remove(n);
 		auto ncod=cod.substitute(nsubst);
@@ -245,7 +252,9 @@ class ForallTy: Type{
 			if(!subst[n]) return null;
 			gargs[i]=subst[n];
 		}
-		return cod.substitute(subst).tryApply(args,false);
+		cod=cast(ForallTy)cod.substitute(subst);
+		assert(!!cod);
+		return cod.tryApply(args,false);
 	}
 	Expression tryApply(Expression[] rhs,bool isSquare){
 		if(isSquare != this.isSquare) return null;
@@ -269,51 +278,26 @@ class ForallTy: Type{
 	}
 }
 
-ForallTy forallTy(string[] names,TupleTy dom,Expression cod,bool isSquare=false){
+ForallTy forallTy(string[] names,TupleTy dom,Expression cod,bool isSquare=false)in{
+	assert(dom&&cod&&names.length==dom.types.length);
+}body{
 	return memoize!((string[] names,TupleTy dom,Expression cod,bool isSquare)=>new ForallTy(names,dom,cod,isSquare))(names,dom,cod,isSquare);
 }
 
 alias FunTy=ForallTy;
-FunTy funTy(TupleTy dom,Expression cod,bool isSquare=false){
+FunTy funTy(TupleTy dom,Expression cod,bool isSquare=false)in{
+	assert(dom&&cod);
+}body{
 	return forallTy(dom.types.map!(_=>"").array,dom,cod,isSquare);
 }
 
-/+FunTy funTy(TupleTy dom,Type cod){
-	return memoize!((string[] names,TupleTy dom,Type cod)=>new FunTy(names,dom,cod))(names,dom,cod);
-}+/
-
-
-class VarTy: Type{
-	string name;
-	private this(string name){ this.name=name; }
-	override string toString(){
-		return name;
-	}
-	override int freeVarsImpl(scope int delegate(string) dg){
-		return dg(name);
-	}
-	override Expression substitute(Expression[string] subst){
-		if(name in subst) return subst[name];
-		return this;
-	}
-	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
-		auto vt=cast(VarTy)rhs;
-		assert(!vt||name!=vt.name);
-		if(name !in subst) return false;
-		if(subst[name]) return subst[name].unify(rhs,subst);
-		if(rhs.hasFreeVar(name)) return false; // TODO: fixpoint types
-		subst[name]=rhs;
-		return true;
-	}
-	override bool opEquals(Object o){
-		if(auto r=cast(VarTy)o)
-			return name==r.name;
-		return false;
-	}
-}
-
-VarTy varTy(string name){
-	return memoize!((string name)=>new VarTy(name))(name);
+Identifier varTy(string name,Expression type){
+	return memoize!((string name,Expression type){
+		auto r=new Identifier(name);
+		r.type=type;
+		r.sstate=SemState.completed;
+		return r;
+	})(name,type);
 }
 
 class TypeTy: Type{

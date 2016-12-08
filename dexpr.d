@@ -2399,7 +2399,7 @@ import expression; // TODO: remove this import
 DExpr dDelta(DExpr var,DExpr e,Expression ty){ // TODO: dexpr shouldn't know about expression/type, but this is most convenient for overloading
 	import type;
 	if(ty is ℝ) return dDelta(e-var);
-	assert(cast(TupleTy)ty||cast(ArrayTy)ty||cast(AggregateTy)ty||cast(ContextTy)ty||cast(FunTy)ty||cast(TypeTy)ty||cast(VarTy)ty||cast(CallExp)ty,text(ty)); // TODO: add more supported types
+	assert(cast(TupleTy)ty||cast(ArrayTy)ty||cast(AggregateTy)ty||cast(ContextTy)ty||cast(FunTy)ty||cast(TypeTy)ty||cast(Identifier)ty||cast(CallExp)ty,text(ty)); // TODO: add more supported types
 	return dDiscDelta(var,e);
 }
 
