@@ -4206,7 +4206,7 @@ T visit(T,S...)(DExpr node,S args){
 
 auto allOf(T)(DExpr e,bool belowBindings=false){
 	static struct AllOfVisitor{
-		scope int delegate(T) dg;
+		int delegate(T) dg;
 		bool belowBindings;
 		int r=0;
 		int perform(T t){

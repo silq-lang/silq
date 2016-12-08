@@ -341,7 +341,7 @@ struct DParser{
 
 	bool isDIvr(){
 		try DParser(this.tupleof).parseDIvr(); // TODO: improve
-		catch return false;
+		catch(Exception) return false;
 		return true;
 	}
 

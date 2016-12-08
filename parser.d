@@ -357,11 +357,12 @@ struct Parser{
 	// null denotation
 	Expression nud(){
 		mixin(SetLoc!Expression);
+		Token t; // DMD 2.072.1: hoisted to satisfy buggy deprecation code
 		switch(ttype){
 			case Tok!"i": return parseIdentifier();
 			case Tok!"?": nextToken(); return res=New!PlaceholderExp(parseIdentifier());
 			case Tok!"``", Tok!"``c", Tok!"``w", Tok!"``d": // adjacent string tokens get concatenated
-				Token t=tok;
+				t=tok;
 				for(nextToken();;nextToken()){
 					if(ttype==t.type||ttype==Tok!"``"){}
 					else if(t.type==Tok!"``" && Tok!"``c"<=ttype && ttype<=Tok!"``d") t.type=ttype; // EXTENSION
@@ -475,12 +476,12 @@ struct Parser{
 					r.loc=loc.to(tok.loc);
 				}
 				return r;
-			case Tok!":":
+			case Tok!":":{
 				nextToken();
 				auto t=parseType();
 				res=New!TypeAnnotationExp(left,t);
 				return res;
-			mixin({string r;
+			}mixin({string r;
 				foreach(x;binaryOps)
 					if(x!="=>" && x!="." && x!="!" && x!="?" && x!=":")
 						r~=mixin(X!q{case Tok!"@(x)":

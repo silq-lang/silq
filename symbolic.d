@@ -241,6 +241,7 @@ private struct Analyzer{
 					case "readCSV":
 						err.error(text("call to 'readCSV' only supported as the right hand side of an assignment"),ce.loc);
 						unwind();
+						assert(0);
 					case "exp":
 						if(ce.args.length!=1)
 							err.error("expected one argument to exp",ce.loc);
@@ -740,7 +741,7 @@ private struct Analyzer{
 		File f;
 		try{
 			f=File(path,"r");
-		}catch{
+		}catch(Exception){
 			err.error(text(`could not open file "`,path,`"`),call.loc);
 			return;
 		}

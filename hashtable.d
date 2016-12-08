@@ -57,8 +57,12 @@ struct HashMap(K_, V_, alias eq_ , alias h_){
 		return alt;
 	}
 
-	V opIndex(K k){
-		return get(k,(assert(0, "key not found"),V.init));
+	V opIndex(K k){ // TODO: get rid of code duplication
+		if(length){
+			foreach(ref e; es[h(k)%$])
+				if(eq(k, e.k)) return e.v;
+		}
+		assert(0, "key not found");
 	}
 
 	bool remove(K k){
