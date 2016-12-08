@@ -682,9 +682,9 @@ struct Parser{
 			ret=parseType();
 		}
 		CompoundExp body_;
-		if(util.among(ttype,Tok!"⇒",Tok!"↦",Tok!"=>",Tok!"(")){
+		if(util.among(ttype,Tok!"⇒",Tok!"↦",Tok!"=>",Tok!"(",Tok!"[")){
 			Expression e;
-			if(ttype==Tok!"("){
+			if(ttype==Tok!"("||ttype==Tok!"["){
 				e=parseLambdaExp!semicolon();
 			}else{
 				nextToken();
