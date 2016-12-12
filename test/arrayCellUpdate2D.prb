@@ -10,7 +10,7 @@ def main(){
     cells := array(1,array(1,Cell(0)));
     cells[0][0] = Cell(1);
     for flow in [0..2){
-	cells[0][0].c -= Uniform(0,1);
+		cells[0][0].c -= Uniform(0,1);
     }
     return cells[0][0].c; // expected: ((-c+1)·[-c≤0]+[c≠0]·[c≤0]+[c≤0]·c)·([-1+-c≤0]·[c≤0]+[-1+c≤0]·[-c≤0]·[c≠0])
 }

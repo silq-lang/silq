@@ -1,0 +1,11 @@
+
+def foo[a](x: a){
+    def bar[a](y:a)=>(x,y);
+    return bar([1]);
+}
+
+def main(){
+    r:=foo(2);
+    assert(r[0]==2 && r[1][0]==1);
+    return; // expected: 1
+}

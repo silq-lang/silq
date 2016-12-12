@@ -14,7 +14,7 @@ class Symbolic: Backend{
 	override Distribution analyze(FunctionDef def,ErrorHandler err){
 		auto dist=new Distribution();
 		DExpr[] args;
-		foreach(a;def.params) args~=dist.declareVar(a.name.name);
+		foreach(a;def.params) args~=dist.declareVar(a.getName);
 		if(def.context){
 			auto ctx=dist.declareVar(def.contextName);
 			if(!def.isConstructor) args~=ctx;
@@ -24,7 +24,7 @@ class Symbolic: Backend{
 				dist.initialize(ctx,dRecord(),dd.dtype);
 			}
 		}
-		if(!def.name||def.name.name!="main"||args.length) // TODO: move this decision to caller
+		if(!def.name||def.getName!="main"||args.length) // TODO: move this decision to caller
 			dist.addArgs(args);
 		return analyzeWith(def,dist,err);
 	}
@@ -91,8 +91,8 @@ private struct Analyzer{
 		}
 		DExpr readVariable(VarDecl var,Scope from){
 			DExpr r=getContextFor(var,from);
-			if(r) return dField(r,var.name.name);
-			auto v=dVar(var.name.name);
+			if(r) return dField(r,var.getName);
+			auto v=dVar(var.getName);
 			if(v in dist.freeVars) return v;
 			return null;
 		}
@@ -101,11 +101,11 @@ private struct Analyzer{
 			DExpr[string] record;
 			foreach(vd;&sc.all!VarDecl)
 				if(auto var=readVariable(vd,sc))
-					record[vd.name.name]=var;
+					record[vd.getName]=var;
 			for(auto csc=sc;;csc=(cast(NestedScope)csc).parent){
 				if(auto fsc=cast(FunctionScope)csc)
 					foreach(p;fsc.getFunction().params)
-						record[p.name.name]=dVar(p.name.name);
+						record[p.getName]=dVar(p.getName);
 				if(!cast(NestedScope)csc) break;
 				if(!cast(NestedScope)(cast(NestedScope)csc).parent) break;
 				if(cast(AggregateScope)csc){

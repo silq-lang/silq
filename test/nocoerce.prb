@@ -1,7 +1,7 @@
 // compilation error
 
 def coerce[b][a](x:a){
-    def foo[a]{ return x; }
+    def foo[a]=>x;
     return foo[b];
 }
 

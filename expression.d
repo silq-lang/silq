@@ -168,8 +168,6 @@ class Identifier: Expression{
 	}
 	override bool opEquals(Object o){
 		if(auto r=cast(Identifier)o){
-			if(meaning||r.meaning)
-				return meaning==r.meaning;
 			return name==r.name;
 		}
 		return false;

@@ -9,9 +9,13 @@ class Declaration: Expression{
 	Scope scope_;
 	this(Identifier name){ this.name=name; }
 	override @property string kind(){ return "declaration"; }
-	override string toString(){ return name.toString(); }
+	final @property string getName(){ return (rename?rename:name).toString(); }
+	override string toString(){ return getName; }
 
 	mixin VariableFree;
+
+	// semantic information
+	Identifier rename=null;
 }
 
 class CompoundDecl: Expression{
@@ -66,7 +70,7 @@ class FunctionDef: Declaration{
 	// semantic information
 	FunctionScope fscope_;
 	VarDecl context;
-	@property string contextName()in{assert(!!context);}body{ return context.name.name; }
+	@property string contextName()in{assert(!!context);}body{ return context.getName; }
 	Expression ret; // return type
 	Type ftype;
 	bool hasReturn;

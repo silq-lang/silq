@@ -297,12 +297,12 @@ struct Parser{
 		}
 		auto tt=peek().type;
 		if(tt!=Tok!"i"&&tt==type){
-			error("stray '"~tok.toString()~"' in program",tok.loc);
+			error("stray \""~tok.toString()~"\" in program",tok.loc);
 			nextToken(); nextToken();
 			return;
 		}
-		if(rd||ttype==Tok!"__error") error("expected '"~TokenTypeToString(type)~"'",loc);
-		else error("found '" ~ tok.toString() ~ "' when expecting '" ~ TokenTypeToString(type) ~"'",loc);
+		if(rd||ttype==Tok!"__error") error("expected \""~TokenTypeToString(type)~"\"",loc);
+		else error("found \"" ~ tok.toString() ~ "\" when expecting \"" ~ TokenTypeToString(type) ~"\"",loc);
 		if(type!=Tok!";" && type!=Tok!"}"){
 			while(ttype != Tok!";" && ttype != Tok!"}" && ttype != Tok!"EOF") nextToken();
 			if(ttype == Tok!";") nextToken();
@@ -311,7 +311,7 @@ struct Parser{
 	void expectErr(string what)(){
 		if(!displayExpectErr) return;
 		if(ttype==Tok!"__error") error("expected "~what,tok.loc);
-		else error("found '" ~ tok.toString() ~ "' when expecting " ~ what,tok.loc);
+		else error("found \"" ~ tok.toString() ~ "\" when expecting " ~ what,tok.loc);
 		if(ttype!=Tok!")" && ttype!=Tok!"}" && ttype!=Tok!"]" && ttype!=Tok!";") nextToken();
 		displayExpectErr = false;
 	}
@@ -439,7 +439,7 @@ struct Parser{
 			case Tok!"__error": mixin(rule!(ErrorExp,"_"));
 			//case Tok!"[": mixin(rule!(ArrayLiteralExp,"_","OPT",ArgumentList,"]"));
 			//case Tok!"assert": mixin(rule!(AssertExp,"_","(",ArgumentList,")"));
-			default: throw new PEE("invalid unary operator '"~tok.toString()~"'");
+			default: throw new PEE("invalid unary operator \""~tok.toString()~"\"");
 		}
 	}
 
@@ -537,7 +537,7 @@ struct Parser{
 				return r;
 			}());
 			default:
-				auto str="invalid binary operator '"~tok.toString()~"'";
+				auto str="invalid binary operator \""~tok.toString()~"\"";
 				nextToken();
 				throw new PEE(str);
 		}
@@ -557,7 +557,7 @@ struct Parser{
 			default: break;
 		}
 		Expression left;
-		try left = nud();catch(PEE err){error("found '"~tok.toString()~"' when expecting expression");nextToken();return new ErrorExp();}
+		try left = nud();catch(PEE err){error("found \""~tok.toString()~"\" when expecting expression");nextToken();return new ErrorExp();}
 		return parseExpression2(left, rbp);
 	}
 	auto parseType(){ return parseExpression(rbp!(Tok!",")); }
@@ -581,7 +581,7 @@ struct Parser{
 				nextToken();
 				return id;
 			}
-			static if(showErrors) error("found '"~tok.toString()~"' when expecting type");
+			static if(showErrors) error("found \""~tok.toString()~"\" when expecting type");
 			nextToken();
 			return null;			
 		}

@@ -1,0 +1,11 @@
+def foo(){
+    def foo(){
+        def foo()=>2;
+        return foo();
+    }
+    return foo();
+}
+
+def main(){
+    return foo(); // expected: δ[-r₁+2]
+}

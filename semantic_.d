@@ -157,7 +157,7 @@ Expression presemantic(Declaration expr,Scope sc){
 					assert(fd.sstate==SemState.error);
 					return fd;
 				}
-				pn~=p.name.name;
+				pn~=p.getName;
 				pty~=p.vtype;
 			}
 			fd.ret=typeSemantic(fd.rret,sc);
@@ -218,7 +218,7 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 			return vd;
 		}
 	}
-	sc.error("not a declaration: '"~expr.toString()~"' ",expr.loc);
+	sc.error("not a declaration: "~expr.toString()~" ",expr.loc);
 	expr.sstate=SemState.error;
 	success=false;
 	return expr;
@@ -287,14 +287,6 @@ Expression builtIn(Identifier id,Scope sc){
 		if(id.name=="*") return typeTy;
 		if(id.name=="R"||id.name=="ℝ") return ℝ;
 		if(id.name=="𝟙") return unit;
-		/+if(auto fd=cast(FunctionDef)decl)
-			if(auto dd=isInDataScope(fd.scope_))
-				decl=dd.decl;
-		if(auto dat=cast(DatDecl)decl)
-			if(!dat.hasParams) return dat.dtype;+/
-		/+
-		return null;+/
-
 	default: return null;
 	}
 	id.type=t;
@@ -370,7 +362,7 @@ Expression statementSemantic(Expression e,Scope sc){
 		ite.then=compoundExpSemantic(ite.then,sc);
 		if(ite.othw) ite.othw=compoundExpSemantic(ite.othw,sc);
 		if(ite.cond.sstate==SemState.completed && ite.cond.type!is Bool){
-			sc.error(format("cannot obtain truth value for type '%s'",ite.cond.type),ite.cond.loc);
+			sc.error(format("cannot obtain truth value for type %s",ite.cond.type),ite.cond.loc);
 			ite.sstate=SemState.error;
 		}
 		propErr(ite.cond,ite);
@@ -401,12 +393,12 @@ Expression statementSemantic(Expression e,Scope sc){
 		fe.loopVar=vd;
 		fe.left=expressionSemantic(fe.left,fesc);
 		if(fe.left.sstate==SemState.completed && fe.left.type!is ℝ){
-			sc.error(format("lower bound for loop variable should be a number, not '%s",fe.left.type),fe.left.loc);
+			sc.error(format("lower bound for loop variable should be a number, not %s",fe.left.type),fe.left.loc);
 			fe.sstate=SemState.error;
 		}
 		fe.right=expressionSemantic(fe.right,fesc);
 		if(fe.right.sstate==SemState.completed && fe.right.type!is ℝ){
-			sc.error(format("upper bound for loop variable should be a number, not '%s",fe.right.type),fe.right.loc);
+			sc.error(format("upper bound for loop variable should be a number, not %s",fe.right.type),fe.right.loc);
 			fe.sstate=SemState.error;
 		}
 		fe.bdy=compoundExpSemantic(fe.bdy,fesc);
@@ -427,7 +419,7 @@ Expression statementSemantic(Expression e,Scope sc){
 	if(auto re=cast(RepeatExp)e){
 		re.num=expressionSemantic(re.num,sc);
 		if(re.num.sstate==SemState.completed && re.num.type!is ℝ){
-			sc.error(format("number of iterations should be a number, not '%s",re.num.type),re.num.loc);
+			sc.error(format("number of iterations should be a number, not %s",re.num.type),re.num.loc);
 			re.sstate=SemState.error;
 		}
 		re.bdy=compoundExpSemantic(re.bdy,sc);
@@ -439,7 +431,7 @@ Expression statementSemantic(Expression e,Scope sc){
 	if(auto oe=cast(ObserveExp)e){
 		oe.e=expressionSemantic(oe.e,sc);
 		if(oe.e.sstate==SemState.completed && oe.e.type!is Bool){
-			sc.error(format("cannot obtain truth value for type '%s'",oe.e.type),oe.e.loc);
+			sc.error(format("cannot obtain truth value for type %s",oe.e.type),oe.e.loc);
 			oe.sstate=SemState.error;
 		}
 		propErr(oe.e,oe);
@@ -463,7 +455,7 @@ Expression statementSemantic(Expression e,Scope sc){
 	if(auto ae=cast(AssertExp)e){
 		ae.e=expressionSemantic(ae.e,sc);
 		if(ae.e.sstate==SemState.completed && ae.e.type!is Bool){
-			sc.error(format("cannot obtain truth value for type '%s'",ae.e.type),ae.e.loc);
+			sc.error(format("cannot obtain truth value for type %s",ae.e.type),ae.e.loc);
 			ae.sstate=SemState.error;
 		}
 		propErr(ae.e,ae);
@@ -515,7 +507,7 @@ Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
 					if(de){ de.setError(); be.sstate=SemState.error; }
 				}
 			}else{
-				sc.error(format("cannot unpack type '%s' as a tuple",be.e2.type),de.loc);
+				sc.error(format("cannot unpack type %s as a tuple",be.e2.type),de.loc);
 				if(de){ de.setError(); be.sstate=SemState.error; }
 			}
 		}
@@ -567,17 +559,17 @@ AssignExp assignExpSemantic(AssignExp ae,Scope sc){
 			checkLhs(fe.e);
 		}else{
 		LbadAssgnmLhs:
-			sc.error(format("cannot assign to '%s'",lhs),ae.e1.loc);
+			sc.error(format("cannot assign to %s",lhs),ae.e1.loc);
 			ae.sstate=SemState.error;
 		}
 	}
 	checkLhs(ae.e1);
 	if(ae.sstate!=SemState.error&&!compatible(ae.e1.type,ae.e2.type)){
 		if(auto id=cast(Identifier)ae.e1){
-			sc.error(format("cannot assign '%s' to variable '%s' of type '%s'",ae.e2.type,id,id.type),ae.loc);
+			sc.error(format("cannot assign %s to variable %s of type %s",ae.e2.type,id,id.type),ae.loc);
 			assert(!!id.meaning);
 			sc.note("declared here",id.meaning.loc);
-		}else sc.error(format("cannot assign '%s' to '%s'",ae.e2.type,ae.e1.type),ae.loc);
+		}else sc.error(format("cannot assign %s to %s",ae.e2.type,ae.e1.type),ae.loc);
 		ae.sstate=SemState.error;
 	}
 	if(ae.sstate!=SemState.error) ae.sstate=SemState.completed;
@@ -609,7 +601,7 @@ ABinaryExp opAssignExpSemantic(ABinaryExp be,Scope sc)in{
 			checkULhs(fe.e);
 		}else{
 		LbadAssgnmLhs:
-			sc.error(format("cannot update-assign to '%s'",lhs),be.e1.loc);
+			sc.error(format("cannot update-assign to %s",lhs),be.e1.loc);
 			be.sstate=SemState.error;
 		}
 	}
@@ -620,8 +612,8 @@ ABinaryExp opAssignExpSemantic(ABinaryExp be,Scope sc)in{
 	}
 	if(be.sstate!=SemState.error&&be.e1.type != be.e2.type || !check(be.e1.type)){
 		if(cast(CatAssignExp)be){
-			sc.error(format("incompatible operand types '%s' and '%s'",be.e1.type,be.e2.type),be.loc);
-		}else sc.error(format("incompatible operand types '%s' and '%s' (should be ℝ and ℝ)",be.e1.type,be.e2.type),be.loc);
+			sc.error(format("incompatible operand types %s and %s",be.e1.type,be.e2.type),be.loc);
+		}else sc.error(format("incompatible operand types %s and %s (should be ℝ and ℝ)",be.e1.type,be.e2.type),be.loc);
 		be.sstate=SemState.error;
 	}
 	be.type=unit;
@@ -700,7 +692,7 @@ Expression callSemantic(CallExp ce,Scope sc){
 				auto nft=ft;
 				if(auto id=cast(Identifier)fun){
 					if(auto decl=cast(DatDecl)id.meaning){
-						if(auto constructor=cast(FunctionDef)decl.body_.ascope_.lookup(decl.name)){
+						if(auto constructor=cast(FunctionDef)decl.body_.ascope_.lookup(decl.name,false,false)){
 							if(auto cty=cast(FunTy)typeForDecl(constructor)){
 								assert(ft.cod is typeTy);
 								nft=forallTy(ft.names,ft.dom,cty,ft.isSquare);
@@ -728,7 +720,7 @@ Expression callSemantic(CallExp ce,Scope sc){
 		if(!tryCall()){
 			if(ce.isSquare!=ft.isSquare)
 				sc.error(text("function of type ",ft," cannot be called with arguments ",ce.isSquare?"[":"(",atys,ce.isSquare?"]":")"),ce.loc);
-			else sc.error(format("expected argument types '%s', but '%s' was provided",ft.dom,atys),ce.loc);
+			else sc.error(format("expected argument types %s, but %s was provided",ft.dom,atys),ce.loc);
 			ce.sstate=SemState.error;
 		}
 		return ce;
@@ -738,7 +730,7 @@ Expression callSemantic(CallExp ce,Scope sc){
 	}else if(auto at=isDataTyId(fun)){
 		auto decl=at.decl;
 		assert(fun.type is typeTy);
-		auto constructor=cast(FunctionDef)decl.body_.ascope_.lookup(decl.name);
+		auto constructor=cast(FunctionDef)decl.body_.ascope_.lookup(decl.name,false,false);
 		auto ty=cast(FunTy)typeForDecl(constructor);
 		if(ty&&decl.hasParams){
 			auto nce=cast(CallExp)fun;
@@ -746,12 +738,12 @@ Expression callSemantic(CallExp ce,Scope sc){
 			Expression[string] subst;
 			assert(decl.params.length==nce.args.length);
 			foreach(i,p;decl.params)
-				subst[p.name.name]=nce.args[i];
+				subst[p.getName]=nce.args[i];
 			ty=cast(ForallTy)ty.substitute(subst);
 			assert(!!ty);
 		}
 		if(!constructor||!ty){
-			sc.error(format("no constructor for type '%s'",fun),ce.loc);
+			sc.error(format("no constructor for type %s",at),ce.loc);
 			ce.sstate=SemState.error;
 		}else{
 			ce=checkFunCall(ty);
@@ -784,7 +776,7 @@ Expression callSemantic(CallExp ce,Scope sc){
 			default: assert(0,text("TODO: ",id.name));
 		}
 	}else{
-		sc.error(format("cannot call expression of type '%s'",fun.type),ce.loc);
+		sc.error(format("cannot call expression of type %s",fun.type),ce.loc);
 		ce.sstate=SemState.error;
 	}
 	return ce;
@@ -845,11 +837,11 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 		id.scope_=sc;
 		auto meaning=id.meaning;
 		if(!meaning){
-			meaning=sc.lookup(id);
+			meaning=sc.lookup(id,true,false);
 			if(!meaning){
 				if(auto r=builtIn(id,sc))
 					return r;
-				sc.error(format("undefined identifier '%s'",id.name), id.loc);
+				sc.error(format("undefined identifier %s",id.name), id.loc);
 				id.sstate=SemState.error;
 				return id;
 			}
@@ -876,7 +868,6 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 					return expressionSemantic(fe,sc);
 				}
 			}
-			// TODO: context lookup for nested declarations such as lambdas
 			sc.error("invalid reference",id.loc);
 			id.sstate=SemState.error;
 		}
@@ -897,7 +888,7 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 		if(fe.sstate==SemState.error)
 			return fe;
 		auto noMember(){
-			sc.error(format("no member '%s' for type '%s",fe.f,fe.e.type),fe.loc);
+			sc.error(format("no member %s for type %s",fe.f,fe.e.type),fe.loc);
 			fe.sstate=SemState.error;
 			return fe;
 		}
@@ -915,7 +906,7 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 		}
 		if(aggrd){
 			if(aggrd.body_.ascope_){
-				auto meaning=aggrd.body_.ascope_.lookupHere(fe.f);
+				auto meaning=aggrd.body_.ascope_.lookupHere(fe.f,true,false);
 				if(!meaning) return noMember();
 				fe.f.meaning=meaning;
 				fe.f.scope_=sc;
@@ -924,7 +915,7 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 					Expression[string] subst;
 					assert(aggrd.params.length==args.length);
 					foreach(i,p;aggrd.params)
-						subst[p.name.name]=args[i];
+						subst[p.getName]=args[i];
 					fe.f.type=fe.f.type.substitute(subst);
 				}
 				fe.f.sstate=SemState.completed;
@@ -960,11 +951,11 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 			return idx;
 		if(auto at=cast(ArrayTy)idx.e.type){
 			if(idx.a.length!=1){
-				sc.error(format("only one index required to index type '%s'",at),idx.loc);
+				sc.error(format("only one index required to index type %s",at),idx.loc);
 				idx.sstate=SemState.error;
 			}else{
 				if(!compatible(ℝ,idx.a[0].type)){
-					sc.error(format("index should be number, not '%s'",idx.a[0].type),idx.loc);
+					sc.error(format("index should be number, not %s",idx.a[0].type),idx.loc);
 					idx.sstate=SemState.error;
 				}else{
 					idx.type=at.next;
@@ -972,17 +963,17 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 			}
 		}else if(auto tt=cast(TupleTy)idx.e.type){
 			if(idx.a.length!=1){
-				sc.error(format("only one index required to index type '%s'",tt),idx.loc);
+				sc.error(format("only one index required to index type %s",tt),idx.loc);
 				idx.sstate=SemState.error;
 			}else{
 				auto lit=cast(LiteralExp)idx.a[0];
 				if(!lit||lit.lit.type!=Tok!"0"){
-					sc.error(format("index for type '%s' should be integer constant",tt),idx.loc); // TODO: allow dynamic indexing if known to be safe?
+					sc.error(format("index for type %s should be integer constant",tt),idx.loc); // TODO: allow dynamic indexing if known to be safe?
 					idx.sstate=SemState.error;
 				}else{
 					auto c=ℤ(lit.lit.str);
 					if(c>=tt.types.length){
-						sc.error(format("index for type '%s' is out of bounds [0..%s)",tt,tt.types.length),idx.loc);
+						sc.error(format("index for type %s is out of bounds [0..%s)",tt,tt.types.length),idx.loc);
 						idx.sstate=SemState.error;
 					}else{
 						idx.type=tt.types[cast(size_t)c.toLong()];
@@ -990,7 +981,7 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 				}
 			}
 		}else{
-			sc.error(format("type '%s' is not indexable",idx.e.type),idx.loc);
+			sc.error(format("type %s is not indexable",idx.e.type),idx.loc);
 			idx.sstate=SemState.error;
 		}
 		return idx;
@@ -1018,7 +1009,7 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 			propErr(exp,arr);
 			if(t){
 				if(t != exp.type && tok){
-					sc.error(format("incompatible types '%s' and '%s' in array literal",t,exp.type),texp.loc);
+					sc.error(format("incompatible types %s and %s in array literal",t,exp.type),texp.loc);
 					sc.note("incompatible entry",exp.loc);
 					arr.sstate=SemState.error;
 					tok=false;
@@ -1043,7 +1034,7 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 					arr.type=aty;
 		}
 		if(tae.e.type != tae.type){
-			sc.error(format("type is '%s', not '%s'",tae.e.type,tae.type),tae.loc);
+			sc.error(format("type is %s, not %s",tae.e.type,tae.type),tae.loc);
 			tae.sstate=SemState.error;
 		}
 		return tae;
@@ -1057,7 +1048,7 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 		if(e1.type is t1){
 			e.type=r;
 		}else{
-			sc.error(format("incompatible type '%s' for %s",e1.type,name),r.loc);
+			sc.error(format("incompatible type %s for %s",e1.type,name),r.loc);
 			e.sstate=SemState.error;
 		}
 		return e;
@@ -1073,7 +1064,7 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 		if(e1.type is t1 && e2.type is t1){
 			e.type=r;
 		}else{
-			sc.error(format("incompatible types '%s' and '%s' for %s",e1.type,e2.type,name),e.loc);
+			sc.error(format("incompatible types %s and %s for %s",e1.type,e2.type,name),e.loc);
 			e.sstate=SemState.error;
 		}
 		return e;
@@ -1111,7 +1102,7 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 		if(cast(ArrayTy)ce.e1.type && ce.e1.type == ce.e2.type){
 			ce.type=ce.e1.type;
 		}else{
-			sc.error(format("incompatible types '%s' and '%s' for '~'",ce.e1.type,ce.e2.type),ce.loc);
+			sc.error(format("incompatible types %s and %s for ~",ce.e1.type,ce.e2.type),ce.loc);
 			ce.sstate=SemState.error;
 		}
 		return ce;
@@ -1149,7 +1140,7 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 	if(auto ite=cast(IteExp)expr){
 		ite.cond=expressionSemantic(ite.cond,sc);
 		if(ite.then.s.length!=1||ite.othw&&ite.othw.s.length!=1){
-			sc.error("branches of 'if' expression must be single expressions;",ite.loc);
+			sc.error("branches of if expression must be single expressions;",ite.loc);
 			ite.sstate=SemState.error;
 			return ite;
 		}
@@ -1168,7 +1159,7 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 		auto t1=ite.then.s[0].type;
 		auto t2=ite.othw.s[0].type;
 		if(t1 != t2){
-			sc.error(format("incompatible types '%s' and '%s' for branches of 'if' expression",t1,t2),ite.loc);
+			sc.error(format("incompatible types %s and %s for branches of if expression",t1,t2),ite.loc);
 			ite.sstate=SemState.error;
 		}
 		ite.type=t1;
@@ -1207,7 +1198,7 @@ FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 			assert(fd.sstate==SemState.error);
 			return fd;
 		}
-		pn~=p.name.name;
+		pn~=p.getName;
 		pty~=p.vtype;
 	}
 	if(!definitelyReturns(fd) && fd.ret && fd.ret != unit){
@@ -1261,7 +1252,7 @@ ReturnExp returnExpSemantic(ReturnExp ret,Scope sc){
 		return ret;
 	if(!fd.rret && !fd.ret) fd.ret=ret.e.type;
 	if(!compatible(fd.ret,ret.e.type)){
-		sc.error(format("'%s' is incompatible with return type '%s'",ret.e.type,fd.ret),ret.e.loc);
+		sc.error(format("%s is incompatible with return type %s",ret.e.type,fd.ret),ret.e.loc);
 		ret.sstate=SemState.error;
 		return ret;
 	}
@@ -1291,7 +1282,7 @@ Expression typeSemantic(Expression expr,Scope sc)in{assert(!!expr&&!!sc);}body{
 	if(expr.sstate!=SemState.error){
 		if(auto id=cast(Identifier)expr){
 			auto decl=id.meaning;
-			sc.error(format("%s '%s' is not a type",decl.kind,decl.name),id.loc);
+			sc.error(format("%s %s is not a type",decl.kind,decl.name),id.loc);
 			sc.note("declared here",decl.loc);
 		}else sc.error("not a type",expr.loc);
 		expr.sstate=SemState.error;
@@ -1305,7 +1296,7 @@ Expression typeForDecl(Declaration decl){
 		assert(cast(AggregateTy)dat.dtype);
 		if(!dat.hasParams) return typeTy;
 		foreach(p;dat.params) if(!p.vtype) return unit; // TODO: ok?
-		return forallTy(dat.params.map!(p=>p.name.name).array,tupleTy(dat.params.map!(p=>p.vtype).array),typeTy,true);
+		return forallTy(dat.params.map!(p=>p.getName).array,tupleTy(dat.params.map!(p=>p.vtype).array),typeTy,true);
 	}
 	if(auto vd=cast(VarDecl)decl){
 		return vd.vtype;
@@ -1391,7 +1382,7 @@ SampleFromInfo analyzeSampleFrom(CallExp ce,ErrorHandler err,Distribution dist=n
 			}
 			auto orig=parser.parseDVar();
 			if(orig.name in names){
-				err.error(text("multiple variables of name '",orig.name,"'"),ce.args[0].loc);
+				err.error(text("multiple variables of name \"",orig.name,"\""),ce.args[0].loc);
 				return SampleFromInfo(true);
 			}
 			if(!seen){
@@ -1414,7 +1405,7 @@ SampleFromInfo analyzeSampleFrom(CallExp ce,ErrorHandler err,Distribution dist=n
 	if(dist){
 		foreach(var;retVars){
 			if(!newDist.hasFreeVar(var.orig)){
-				err.error(text("pdf must depend on variable '",var.orig.name,"')"),ce.args[0].loc);
+				err.error(text("pdf must depend on variable ",var.orig.name,")"),ce.args[0].loc);
 				return SampleFromInfo(true);
 			}
 		}

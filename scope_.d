@@ -7,12 +7,12 @@ import lexer, expression, declaration, error;
 abstract class Scope{
 	abstract @property ErrorHandler handler();
 	bool insert(Declaration decl)in{assert(!decl.scope_);}body{
-		auto d=symtabLookup(decl.name);
-		if(d){
+		if(auto d=symtabLookup(decl.name,false,false)){
 			redefinitionError(decl, d);
 			decl.sstate=SemState.error;
 			return false;
 		}
+		rename(decl);
 		symtab[decl.name.ptr]=decl;
 		decl.scope_=this;
 		return true;
@@ -21,21 +21,29 @@ abstract class Scope{
 		assert(decl);
 		assert(decl.name.ptr is prev.name.ptr);
 	}body{
-		error(format("redefinition of '%s'",decl.name), decl.name.loc);
+		error(format("redefinition of \"%s\"",decl.name), decl.name.loc);
 		note("previous definition was here",prev.name.loc);
 	}
 
-	protected final Declaration symtabLookup(Identifier ident){
-		return symtab.get(ident.ptr, null);
+	protected final Declaration symtabLookup(Identifier ident,bool relabel,bool rnsym){
+		auto r=symtab.get(ident.ptr, null);
+		if(relabel&&r&&r.rename) ident.name=r.rename.name;
+		if(rnsym&&!r) r=rnsymtab.get(ident.ptr,null);
+		return r;
 	}
-	Declaration lookup(Identifier ident){
-		return lookupHere(ident);
+	Declaration lookup(Identifier ident,bool relabel,bool rnsym){
+		return lookupHere(ident,relabel,rnsym);
 	}
-	final Declaration lookupHere(Identifier ident){
-		auto r = symtabLookup(ident);
-		if(!r){
-			
+	protected final void rename(Declaration decl){
+		for(;;){ // TODO: quite hacky
+			auto d=lookup(decl.rename?decl.rename:decl.name,false,true);
+			if(!d) break;
+			decl.rename=new Identifier(decl.getName~"'");
+			decl.rename.loc=decl.name.loc;
 		}
+	}
+	final Declaration lookupHere(Identifier ident,bool relabel,bool rnsym){
+		auto r = symtabLookup(ident,relabel,rnsym);
 		return r;
 	}
 	
@@ -57,6 +65,7 @@ abstract class Scope{
 	}
 private:
 	Declaration[const(char)*] symtab;
+	Declaration[const(char)*] rnsymtab;
 }
 
 class TopScope: Scope{
@@ -74,9 +83,9 @@ class NestedScope: Scope{
 	Scope parent;
 	override @property ErrorHandler handler(){ return parent.handler; }
 	this(Scope parent){ this.parent=parent; }
-	override Declaration lookup(Identifier ident){
-		if(auto decl=lookupHere(ident)) return decl;
-		return parent.lookup(ident);
+	override Declaration lookup(Identifier ident,bool relabel,bool rnsym){
+		if(auto decl=lookupHere(ident,relabel,rnsym)) return decl;
+		return parent.lookup(ident,relabel,rnsym);
 	}
 
 	override bool isNestedIn(Scope rhs){ return rhs is this || parent.isNestedIn(rhs); }
