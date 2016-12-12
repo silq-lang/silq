@@ -692,7 +692,7 @@ Expression callSemantic(CallExp ce,Scope sc){
 				auto nft=ft;
 				if(auto id=cast(Identifier)fun){
 					if(auto decl=cast(DatDecl)id.meaning){
-						if(auto constructor=cast(FunctionDef)decl.body_.ascope_.lookup(decl.name,false,false)){
+						if(auto constructor=cast(FunctionDef)decl.body_.ascope_.lookup(decl.name,false)){
 							if(auto cty=cast(FunTy)typeForDecl(constructor)){
 								assert(ft.cod is typeTy);
 								nft=forallTy(ft.names,ft.dom,cty,ft.isSquare);
@@ -730,7 +730,7 @@ Expression callSemantic(CallExp ce,Scope sc){
 	}else if(auto at=isDataTyId(fun)){
 		auto decl=at.decl;
 		assert(fun.type is typeTy);
-		auto constructor=cast(FunctionDef)decl.body_.ascope_.lookup(decl.name,false,false);
+		auto constructor=cast(FunctionDef)decl.body_.ascope_.lookup(decl.name,false);
 		auto ty=cast(FunTy)typeForDecl(constructor);
 		if(ty&&decl.hasParams){
 			auto nce=cast(CallExp)fun;
@@ -752,6 +752,7 @@ Expression callSemantic(CallExp ce,Scope sc){
 				id.loc=fun.loc;
 				id.scope_=sc;
 				id.meaning=constructor;
+				id.name=constructor.getName;
 				id.type=constructor.ftype;
 				id.sstate=SemState.completed;
 				ce.e=id;
@@ -805,8 +806,11 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 	if(auto ce=cast(CompoundExp)expr)
 		return compoundExpSemantic(ce,sc);
 	if(auto le=cast(LambdaExp)expr){
-		le.fd.scope_=sc;
-		auto nfd=cast(FunctionDef)presemantic(le.fd,sc);
+		FunctionDef nfd=le.fd;
+		if(!le.fd.scope_){
+			le.fd.scope_=sc;
+			nfd=cast(FunctionDef)presemantic(nfd,sc);
+		}else assert(le.fd.scope_ is sc);
 		assert(!!nfd);
 		le.fd=functionDefSemantic(nfd,sc);
 		assert(!!le.fd);
@@ -837,7 +841,7 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 		id.scope_=sc;
 		auto meaning=id.meaning;
 		if(!meaning){
-			meaning=sc.lookup(id,true,false);
+			meaning=sc.lookup(id,false);
 			if(!meaning){
 				if(auto r=builtIn(id,sc))
 					return r;
@@ -851,6 +855,7 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 						meaning=asc.decl;
 			id.meaning=meaning;
 		}
+		id.name=meaning.getName;
 		propErr(meaning,id);
 		id.type=typeForDecl(meaning);
 		if(!id.type&&id.sstate!=SemState.error){
@@ -906,9 +911,10 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 		}
 		if(aggrd){
 			if(aggrd.body_.ascope_){
-				auto meaning=aggrd.body_.ascope_.lookupHere(fe.f,true,false);
+				auto meaning=aggrd.body_.ascope_.lookupHere(fe.f,false);
 				if(!meaning) return noMember();
 				fe.f.meaning=meaning;
+				fe.f.name=meaning.getName;
 				fe.f.scope_=sc;
 				fe.f.type=typeForDecl(meaning);
 				if(fe.f.type&&aggrd.hasParams){
@@ -1181,7 +1187,20 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 	expr.sstate=SemState.error;
 	return expr;
 }
-
+bool setFtype(FunctionDef fd){
+	string[] pn;
+	Expression[] pty;
+	foreach(p;fd.params){
+		if(!p.vtype){
+			assert(fd.sstate==SemState.error);
+			return false;
+		}
+		pn~=p.getName;
+		pty~=p.vtype;
+	}
+	if(fd.ret&&!fd.ftype) fd.ftype=forallTy(pn,tupleTy(pty),fd.ret,fd.isSquare);
+	return true;
+}
 FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 	if(!fd.scope_) fd=cast(FunctionDef)presemantic(fd,sc);
 	auto fsc=fd.fscope_;
@@ -1191,16 +1210,6 @@ FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 	fd.body_=bdy;
 	fd.type=unit;
 	propErr(bdy,fd);
-	string[] pn;
-	Expression[] pty;
-	foreach(p;fd.params){
-		if(!p.vtype){
-			assert(fd.sstate==SemState.error);
-			return fd;
-		}
-		pn~=p.getName;
-		pty~=p.vtype;
-	}
 	if(!definitelyReturns(fd) && fd.ret && fd.ret != unit){
 		sc.error("control flow might reach end of function (add return or assert(0) statement)",fd.loc);
 		fd.sstate=SemState.error;
@@ -1211,7 +1220,7 @@ FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 		rete.loc=fd.loc;
 		fd.body_.s~=returnExpSemantic(rete,fd.body_.blscope_);
 	}
-	if(fd.ret&&!fd.ftype) fd.ftype=forallTy(pn,tupleTy(pty),fd.ret,fd.isSquare);
+	setFtype(fd);
 	if(fd.sstate!=SemState.error)
 		fd.sstate=SemState.completed;
 	return fd;
@@ -1225,6 +1234,21 @@ DatDecl datDeclSemantic(DatDecl dat,Scope sc){
 	dat.body_=bdy;
 	dat.type=unit;
 	return dat;
+}
+
+Expression determineType(ref Expression e,Scope sc){
+	if(auto le=cast(LambdaExp)e){
+		assert(!!le.fd);
+		if(!le.fd.scope_){
+			le.fd.scope_=sc;
+			le.fd=cast(FunctionDef)presemantic(le.fd,sc);
+			assert(!!le.fd);
+		}
+		if(auto ty=le.fd.ftype)
+			return ty;
+	}
+	e=expressionSemantic(e,sc);
+	return e.type;
 }
 
 ReturnExp returnExpSemantic(ReturnExp ret,Scope sc){
@@ -1242,7 +1266,11 @@ ReturnExp returnExpSemantic(ReturnExp ret,Scope sc){
 			return ret;
 		}
 	}
-	ret.e=expressionSemantic(ret.e,sc);
+	auto ty=determineType(ret.e,sc);
+	if(!fd.rret && !fd.ret) fd.ret=ty;
+	setFtype(fd);
+	if(ret.e.sstate!=SemState.completed)
+		ret.e=expressionSemantic(ret.e,sc);
 	if(cast(CommaExp)ret.e){
 		sc.error("use parentheses for multiple return values",ret.e.loc);
 		ret.sstate=SemState.error;
@@ -1250,7 +1278,6 @@ ReturnExp returnExpSemantic(ReturnExp ret,Scope sc){
 	propErr(ret.e,ret);
 	if(ret.sstate==SemState.error)
 		return ret;
-	if(!fd.rret && !fd.ret) fd.ret=ret.e.type;
 	if(!compatible(fd.ret,ret.e.type)){
 		sc.error(format("%s is incompatible with return type %s",ret.e.type,fd.ret),ret.e.loc);
 		ret.sstate=SemState.error;

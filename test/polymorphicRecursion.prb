@@ -1,0 +1,5 @@
+def rec[a](f: 𝟙→ a):ℝ{
+    return rec(f);
+}
+
+def main(){}

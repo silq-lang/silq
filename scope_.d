@@ -7,7 +7,7 @@ import lexer, expression, declaration, error;
 abstract class Scope{
 	abstract @property ErrorHandler handler();
 	bool insert(Declaration decl)in{assert(!decl.scope_);}body{
-		if(auto d=symtabLookup(decl.name,false,false)){
+		if(auto d=symtabLookup(decl.name,false)){
 			redefinitionError(decl, d);
 			decl.sstate=SemState.error;
 			return false;
@@ -25,25 +25,24 @@ abstract class Scope{
 		note("previous definition was here",prev.name.loc);
 	}
 
-	protected final Declaration symtabLookup(Identifier ident,bool relabel,bool rnsym){
+	protected final Declaration symtabLookup(Identifier ident,bool rnsym){
 		auto r=symtab.get(ident.ptr, null);
-		if(relabel&&r&&r.rename) ident.name=r.rename.name;
 		if(rnsym&&!r) r=rnsymtab.get(ident.ptr,null);
 		return r;
 	}
-	Declaration lookup(Identifier ident,bool relabel,bool rnsym){
-		return lookupHere(ident,relabel,rnsym);
+	Declaration lookup(Identifier ident,bool rnsym){
+		return lookupHere(ident,rnsym);
 	}
 	protected final void rename(Declaration decl){
 		for(;;){ // TODO: quite hacky
-			auto d=lookup(decl.rename?decl.rename:decl.name,false,true);
+			auto d=lookup(decl.rename?decl.rename:decl.name,true);
 			if(!d) break;
 			decl.rename=new Identifier(decl.getName~"'");
 			decl.rename.loc=decl.name.loc;
 		}
 	}
-	final Declaration lookupHere(Identifier ident,bool relabel,bool rnsym){
-		auto r = symtabLookup(ident,relabel,rnsym);
+	final Declaration lookupHere(Identifier ident,bool rnsym){
+		auto r = symtabLookup(ident,rnsym);
 		return r;
 	}
 	
@@ -83,9 +82,9 @@ class NestedScope: Scope{
 	Scope parent;
 	override @property ErrorHandler handler(){ return parent.handler; }
 	this(Scope parent){ this.parent=parent; }
-	override Declaration lookup(Identifier ident,bool relabel,bool rnsym){
-		if(auto decl=lookupHere(ident,relabel,rnsym)) return decl;
-		return parent.lookup(ident,relabel,rnsym);
+	override Declaration lookup(Identifier ident,bool rnsym){
+		if(auto decl=lookupHere(ident,rnsym)) return decl;
+		return parent.lookup(ident,rnsym);
 	}
 
 	override bool isNestedIn(Scope rhs){ return rhs is this || parent.isNestedIn(rhs); }

@@ -49,10 +49,6 @@ abstract class Expression: Node{
 	abstract Expression substituteImpl(Expression[string] subst); // TODO: name might be free in the _types_ of subexpressions
 
 	final bool unify(Expression rhs,ref Expression[string] subst){
-		if(this == rhs){
-			if(auto vt=cast(Identifier)this) subst[vt.name]=vt; // TODO: ok?
-			return true;
-		}
 		return unifyImpl(rhs,subst) || eval().unifyImpl(rhs.eval(),subst);
 	}
 	abstract bool unifyImpl(Expression rhs,ref Expression[string] subst);
@@ -85,7 +81,7 @@ abstract class Expression: Node{
 mixin template VariableFree(){
 	override int freeVarsImpl(scope int delegate(string)){ return 0; }
 	override Expression substituteImpl(Expression[string] subst){ return this; }
-	override bool unifyImpl(Expression rhs,ref Expression[string] subst){ return false; }
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst){ return this==rhs; }
 }
 
 class TypeAnnotationExp: Expression{
@@ -158,9 +154,12 @@ class Identifier: Expression{
 		return this;
 	}
 	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
-		auto id=cast(Identifier)rhs;
-		assert(!id||name!=id.name);
-		if(name !in subst||subst[name]==this) return false;
+		if(this==rhs){
+			if(subst[name]&&subst[name]!=this) return false;
+			subst[name]=this;
+			return true;
+		}
+		if(subst[name]==this) return false;
 		if(subst[name]) return subst[name].unify(rhs,subst);
 		if(rhs.hasFreeVar(name)) return false; // TODO: fixpoint types
 		subst[name]=rhs;

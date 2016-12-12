@@ -9,7 +9,7 @@ class Declaration: Expression{
 	Scope scope_;
 	this(Identifier name){ this.name=name; }
 	override @property string kind(){ return "declaration"; }
-	final @property string getName(){ return (rename?rename:name).toString(); }
+	final @property string getName(){ return (rename?rename:name).name; }
 	override string toString(){ return getName; }
 
 	mixin VariableFree;
