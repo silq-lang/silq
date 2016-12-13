@@ -133,15 +133,13 @@ class LiteralExp: Expression{
 
 class Identifier: Expression{
 	string name;
-	// alias name this; // stupid compiler bug prevents this from being useful
 	@property auto ptr(){return name.ptr;}
 	@property auto length(){return name.length;}
-	this(string name){ // TODO: make more efficient, this is a bottleneck!
+	this(string name){
 		static string[string] uniq;
 		auto n=uniq.get(name,null);
 		if(n !is null) this.name = n;
 		else this.name = uniq[name] = name;
-		static int x = 0;
 	}
 	override string toString(){return _brk(name);}
 	override @property string kind(){return "identifier";}
