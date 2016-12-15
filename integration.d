@@ -32,7 +32,7 @@ private DExpr definiteIntegralImpl(DExpr expr,DExpr facts=one){
 		foreach(f;expr.factors){
 			if(!f.hasFreeVar(var)) continue;
 			if(auto d=cast(DDiscDelta)f){
-				if(d.var is var)
+				if(d.var is var && !d.e.hasFreeVar(var))
 					return expr.withoutFactor(f).substitute(var,d.e).incDeBruijnVar(-1,0).simplify(facts);
 				if(d.e is var) // TODO: more complex "inversions"?
 					return expr.withoutFactor(f).substitute(var,d.var).incDeBruijnVar(-1,0).simplify(facts);

@@ -1044,7 +1044,8 @@ class DMult: DCommutAssocOp{
 		assert(!cast(DPlus)facts,text(facts));
 		foreach(f;this.factors) if(auto d=cast(DDiscDelta)f){ // TODO: do this in a nicer way
 			auto wo=this.withoutFactor(f);
-			if(wo.hasFreeVar(d.var)) return (wo.substitute(d.var,d.e)*d).simplify(facts);
+			if(wo.hasFreeVar(d.var) && !d.e.hasFreeVar(d.var))
+				return (wo.substitute(d.var,d.e)*d).simplify(facts);
 		}
 		DExprSet myFactors;
 		DExprSet myFacts;
