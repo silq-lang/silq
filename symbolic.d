@@ -91,12 +91,17 @@ private struct Analyzer{
 		}
 		DExpr readVariable(VarDecl var,Scope from){
 			DExpr r=getContextFor(var,from);
-			return r?dField(r,var.name.name):dVar(var.name.name);
+			if(r) return dField(r,var.name.name);
+			auto v=dVar(var.name.name);
+			if(v in dist.freeVars) return v;
+			return null;
 		}
 		DExpr buildContextFor()(Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{ // template, forward references 'doIt'
 			if(meaning.scope_ !is sc) return getContextFor(meaning,sc);
 			DExpr[string] record;
-			foreach(vd;&sc.all!VarDecl) record[vd.name.name]=readVariable(vd,sc);
+			foreach(vd;&sc.all!VarDecl)
+				if(auto var=readVariable(vd,sc))
+					record[vd.name.name]=var;
 			for(auto csc=sc;;csc=(cast(NestedScope)csc).parent){
 				if(!cast(NestedScope)csc) break;
 				if(!cast(NestedScope)(cast(NestedScope)csc).parent) break;
