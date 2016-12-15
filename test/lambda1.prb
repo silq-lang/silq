@@ -15,8 +15,8 @@ def main(){
     r := f.foo;
     y := (z:ℝ) => x+z+q(z);
     def bar(k){
-	return (x-y(2))*k;
+        return (x-y(2))*k;
     }
     z := bar;
-    return z(2); // expected: δ[-8+-r₁]
+    return z(2); // expected: δ[8+r₁]
 }
