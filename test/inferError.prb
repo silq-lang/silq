@@ -1,0 +1,4 @@
+def main(){
+	y := infer((){ assert(0); });
+	return y; // expected: δ_y[λξ₁. δ_ξ₁[{.tag ↦ 0}]]
+}

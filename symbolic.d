@@ -523,6 +523,24 @@ private struct Analyzer{
 						auto tmp=dist.getTmpVar("__exp");
 						dist.distribute(dDelta(tmp,expct/total,ℝ));
 						return tmp;
+					case "infer":
+						if(ce.args.length!=1){
+							err.error("expected one argument [a] to infer",ce.loc);
+							unwind();
+						}
+						assert(ce.args[0].type is typeTy);
+						auto fty=cast(ForallTy)ce.type;
+						assert(fty.dom.types.length==1);
+						auto dfty=cast(ForallTy)fty.dom.types[0];
+						assert(dfty&&dfty.dom.types.length==0);
+						auto idist=new Distribution();
+						auto f=idist.declareVar("f");
+						idist.addArgs([f]);
+						auto r=idist.declareVar("__dist");
+						idist.initialize(r,dApply(f,dLambda(one)),fty.cod);
+						idist.marginalize(f);
+						idist.orderFreeVars([r],false);
+						return idist.toDExpr();
 					default: break;
 					}
 				}

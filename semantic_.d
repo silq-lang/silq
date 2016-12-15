@@ -261,12 +261,13 @@ bool isBuiltIn(Identifier id){
 	case "FromMarginal","SampleFrom": 
 	case "Expectation":
 	case "Categorical":
+	case "infer","Distribution":
 		return true;
 	default: return false;
 	}
 }
 Expression builtIn(Identifier id,Scope sc){
-	Type t=null;
+	Expression t=null;
 	switch(id.name){
 	case "array": t=funTy(tupleTy([ℝ]),arrayTy(ℝ)); break;
 	case "readCSV": t=funTy(tupleTy([stringTy]),arrayTy(ℝ)); break;
@@ -282,7 +283,15 @@ Expression builtIn(Identifier id,Scope sc){
 	case "FromMarginal","SampleFrom": t=unit; break; // those are actually magic polymorphic functions
 	case "Expectation": t=funTy(tupleTy([ℝ]),ℝ); break; // TODO: this should be polymorphic too
 	case "Categorical": t=funTy(tupleTy([arrayTy(ℝ)]),ℝ); break;
-	case "*","R","ℝ","𝟙": 
+
+	case "infer": t=
+			forallTy(["a"],tupleTy([typeTy]),
+			         forallTy(["f"],tupleTy([funTy(tupleTy([]),varTy("a",typeTy))]),
+			                  typeSemantic(
+				                  new CallExp(varTy("Distribution",funTy(tupleTy([typeTy]),typeTy,true)),
+				                              [cast(Expression)varTy("a",typeTy)],true),sc)),true);
+		break;
+	case "*","R","ℝ","𝟙":
 		id.type=typeTy;
 		if(id.name=="*") return typeTy;
 		if(id.name=="R"||id.name=="ℝ") return ℝ;
