@@ -3733,7 +3733,7 @@ class DDistApply: DOp{
 	override DExpr simplifyImpl(DExpr facts){
 		auto nfun=fun.simplify(facts),narg=arg.simplify(one); // cannot use all facts for arg! (might remove a free variable)
 		if(auto l=cast(DLambda)nfun)
-			return l.apply(narg);
+			return l.apply(narg).simplify(facts);
 		return dDistApply(nfun,narg);
 	}
 }
