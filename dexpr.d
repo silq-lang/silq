@@ -3954,7 +3954,7 @@ class DApply: DOp{
 	override DExpr simplifyImpl(DExpr facts){
 		auto nfun=fun.simplify(facts),narg=arg.simplify(facts);
 		if(auto l=cast(DLambda)nfun)
-			return l.apply(narg);
+			return l.apply(narg).simplify(facts);
 		return dApply(nfun,narg);
 	}
 }
