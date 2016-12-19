@@ -1,0 +1,4 @@
+
+def main(){
+	return π; // expected: δ[-r₁+π]
+}

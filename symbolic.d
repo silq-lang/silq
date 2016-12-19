@@ -141,6 +141,7 @@ private struct Analyzer{
 			if(auto pl=cast(PlaceholderExp)e)
 				return dVar(pl.ident.name);
 			if(auto id=cast(Identifier)e){
+				if(!id.meaning && id.name=="π") return dΠ;
 				if(id.name in arrays){
 					err.error("missing array index",id.loc);
 					unwind();
