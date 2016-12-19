@@ -146,8 +146,8 @@ Function bodies consist of a sequence of statements, possibly referencing the va
 
 - assert(expression); puts the program in the error state in case the expression is not equal to zero (PSI will then report the probability of error).
 
-- return (expression1,expression2,...,expressionn); describes the result of the given procedure.
-  return must be the last statement in a procedure. If no return statement is provided for a procedure, return (); is automatically inserted.
+- return (expression1,expression2,...,expressionn); terminates the procedure with the given results.
+  If no return statement is provided at the end of a procedure, return (); is automatically inserted.
 
 ### Special statements
 
