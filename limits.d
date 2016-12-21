@@ -147,10 +147,10 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 					}
 					if(zro.length && !inf.length) return [Case!ExpLim(owZneqZ,ExpLim(m,zero))];
 					// Bernoulli-De l'Hôpital.
-					/*static int nesting = 0;
+					/+static int nesting = 0;
 					  enum nestingLimit=5; // TODO: probably something like this is necessary.
 					  ++nesting; scope(exit) --nesting;
-					  if(nesting>nestingLimit) return null;*/
+					  if(nesting>nestingLimit) return null;+/
 					if(inf.length && zro.length){
 						auto f=dMult(inf), g=1/dMult(zro);
 						return doIt(v,e,finite*dDiff(v,f)/dDiff(v,g));
@@ -174,15 +174,14 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 					return dInf;
 				}
 				if(l0.hasLimits()||l1.hasLimits()) return null;
-				if(l1 is -dInf) return zero;
-				// TODO: fix those cases
-				if(l1 is dInf){
-					if(dIvr(DIvr.Type.leZ,-l0).simplify(facts) is zero){
-						if(dIvr(DIvr.Type.leZ,l0-one).simplify(facts) is zero)
-							return dInf;
+				if(l0 is dE && l1 is -dInf) return zero;
+				if(l1 is dInf||l1 is -dInf){
+					/+if(dIvr(DIvr.Type.leZ,l0).simplify(facts) is zero){ // TODO
+						if(l0 is dE||dIvr(DIvr.Type.leZ,l0-one).simplify(facts) is zero)
+							return l1 is dInf?dInf:zero;
 						if(dIvr(DIvr.Type.leZ,one-l0).simplify(facts) is zero)
-							return zero;
-					}
+							return l1 is dInf?zero:dInf;
+					}+/
 					return null;
 				}
 				if(l0 is -dInf){
