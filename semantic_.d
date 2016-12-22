@@ -1014,7 +1014,9 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 			ce.loc=idx.loc;
 			return expr=callSemantic(ce,sc);
 		}
-		if(auto ty=cast(Type)idx.e) return typeSemantic(expr,sc);
+		if(auto ty=cast(Type)idx.e)
+			if(auto tty=typeSemantic(expr,sc))
+				return tty;
 		propErr(idx.e,idx);
 		foreach(ref a;idx.a){
 			a=expressionSemantic(a,sc);
