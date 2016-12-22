@@ -160,6 +160,7 @@ private struct Analyzer{
 			return null;
 		}
 		DExpr doIt(Exp e){
+			if(e.type == typeTy) return dTuple([]); // TODO: get rid of this
 			if(cast(Declaration)e||cast(BinaryExp!(Tok!":="))e){
 				err.error("definition must be at top level",e.loc);
 				unwind();
@@ -167,7 +168,7 @@ private struct Analyzer{
 			if(auto pl=cast(PlaceholderExp)e)
 				return dVar(pl.ident.name);
 			if(auto id=cast(Identifier)e){
-				if(!id.meaning && id.name=="π") return dΠ;
+				if(!id.meaning&&id.name=="π") return dΠ;
 				if(id.name in arrays){
 					err.error("missing array index",id.loc);
 					unwind();
@@ -180,11 +181,94 @@ private struct Analyzer{
 					if(id.name in arrays && fe.f.name=="length")
 						return ℤ(arrays[id.name].length).dℤ;
 				}
-				assert(cast(ArrayTy)fe.e.type&&fe.f.name=="length"||fe.f.meaning&&fe.f.scope_&&fe.f.meaning.scope_);
-				if(auto fd=cast(FunctionDef)fe.f.meaning){
+				if(isBuiltIn(fe)){
+					bool ok=false;
+					if(auto at=cast(ArrayTy)fe.e.type){
+						assert(fe.f.name=="length");
+						ok=true;
+					}else if(auto ce=cast(CallExp)fe.e.type){
+						if(auto id=cast(Identifier)ce.e){
+							assert(ce.args.length==1 && ce.args[0].type == typeTy);
+							auto tt=ce.args[0];
+							if(id.name=="Distribution"){
+								static DExpr get(DExpr distr,Expression tt,Expression type,string name){
+									switch(name){
+										case "sample":
+											auto idist=new Distribution();
+											idist.addArgs([]);
+											auto d=idist.declareVar("`d");
+											auto dist=dDistApply(distr,d);
+											idist.distribute(dist*dIvr(DIvr.Type.eqZ,dField(d,"tag")-one));
+											idist.error=dInt(d,dIvr(DIvr.Type.eqZ,dField(d,"tag"))*dist);
+											auto r=idist.declareVar("`r");
+											idist.initialize(r,dField(d,"values"),tt);
+											idist.marginalize(d);
+											idist.orderFreeVars([r],false);
+											return idist.toDExpr().simplify(one);
+										case "then": // d.then(f) <-> infer(()=>f(d.sample()))
+											auto idist=new Distribution();
+											auto f=idist.declareVar("`f");
+											idist.addArgs([f]);
+											auto rdist=new Distribution();
+											rdist.addArgs([]);
+											auto d=rdist.declareVar("`d");
+											auto dist=dDistApply(distr,d);
+											rdist.distribute(dist*dIvr(DIvr.Type.eqZ,dField(d,"tag")-one));
+											rdist.error=dInt(d,dIvr(DIvr.Type.eqZ,dField(d,"tag"))*dist);
+											auto x=rdist.declareVar("`x");
+											rdist.initialize(x,dField(d,"values"),tt);
+											auto faty=cast(ForallTy)type;
+											assert(!!faty);
+											auto fety=cast(FunTy)faty.cod;
+											assert(!!fety&&fety.dom.types.length==1);
+											auto fty=cast(FunTy)fety.dom.types[0];
+											assert(!!fty);
+											auto summary=Distribution.fromDExpr(f,1,["`r".dVar],false,[fty.cod]);
+											auto db1=dDeBruijnVar(1);
+											auto tmp=rdist.call(summary,[x],[fty.dom]);
+											auto r=rdist.declareVar("`r");
+											rdist.initialize(r,tmp,tt);
+											rdist.marginalize(d);
+											rdist.marginalize(x);
+											rdist.marginalizeTemporaries();
+											rdist.orderFreeVars([r],false);
+											auto res=idist.declareVar("`res");
+											idist.initialize(res,dDistApply(rdist.toDExpr(),dLambda(one)),fety.cod);
+											idist.marginalize(f);
+											idist.orderFreeVars([res],false);
+											auto gdist=new Distribution(); // generic argument
+											auto a=gdist.declareVar("`a");
+											gdist.addArgs([a]);
+											auto fun=gdist.declareVar("`fun");
+											gdist.initialize(fun,idist.toDExpr(),faty.cod);
+											gdist.marginalize(a);
+											gdist.orderFreeVars([fun],false);
+											return gdist.toDExpr().simplify(one);
+										case "expectation":
+											assert(tt is ℝ);
+											auto d="`d".dVar,x="`x".dVar;
+											auto pdf=dInt(d,dDistApply(distr,d)*dIvr(DIvr.Type.eqZ,dField(d,"tag")-one)*dDelta(x,dField(d,"values"),ℝ));
+											auto total=dInt(x,pdf),expct=dInt(x,x*pdf);
+											auto idist=new Distribution();
+											idist.addArgs([]);
+											idist.assertTrue(dIvr(DIvr.Type.neqZ,total),"cannot compute conditional expectation");
+											auto r=idist.declareVar("`r");
+											idist.initialize(r,expct/total,ℝ);
+											idist.orderFreeVars([r],false);
+											return idist.toDExpr().simplify(one);
+										default: assert(0);
+									}
+								}
+								import std.functional: memoize;
+								return memoize!get(doIt(fe.e),tt,fe.type,fe.f.name);
+							}
+						}
+					}
+				}else if(auto fd=cast(FunctionDef)fe.f.meaning){
+					assert(fe.f.scope_&&fe.f.meaning.scope_);
 					auto summary=be.getSummary(fd,fe.f.loc,err);
 					return summary.toDExprWithContext(doIt(fe.e),true);
-				}
+				}else assert(cast(VarDecl)fe.f.meaning&&fe.f.scope_&&fe.f.meaning.scope_);
 				return dField(doIt(fe.e),fe.f.name);
 			}
 			if(auto ae=cast(AddExp)e) return doIt(ae.e1)+doIt(ae.e2);
@@ -534,9 +618,9 @@ private struct Analyzer{
 						auto dfty=cast(ForallTy)fty.dom.types[0];
 						assert(dfty&&dfty.dom.types.length==0);
 						auto idist=new Distribution();
-						auto f=idist.declareVar("f");
+						auto f=idist.declareVar("`f");
 						idist.addArgs([f]);
-						auto r=idist.declareVar("__dist");
+						auto r=idist.declareVar("`dist");
 						idist.initialize(r,dApply(f,dLambda(one)),fty.cod);
 						idist.marginalize(f);
 						idist.orderFreeVars([r],false);

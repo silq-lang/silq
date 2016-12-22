@@ -284,6 +284,7 @@ Expression builtIn(Identifier id,Scope sc){
 	case "Expectation": t=funTy(tupleTy([ℝ]),ℝ); break; // TODO: this should be polymorphic too
 	case "Categorical": t=funTy(tupleTy([arrayTy(ℝ)]),ℝ); break;
 
+	case "Distribution": t=funTy(tupleTy([typeTy]),typeTy,true); break;
 	case "infer": t=
 			forallTy(["a"],tupleTy([typeTy]),
 			         forallTy(["f"],tupleTy([funTy(tupleTy([]),varTy("a",typeTy))]),
@@ -301,6 +302,68 @@ Expression builtIn(Identifier id,Scope sc){
 	id.type=t;
 	id.sstate=SemState.completed;
 	return id;
+}
+
+bool isBuiltIn(FieldExp fe)in{
+	assert(fe.e.sstate==SemState.completed);
+}body{
+	if(auto at=cast(ArrayTy)fe.e.type){
+		if(fe.f.name=="length"){
+			return true;
+		}
+	}else if(auto ce=cast(CallExp)fe.e.type){
+		if(auto id=cast(Identifier)ce.e){
+			if(id.name=="Distribution"){
+				assert(ce.args.length==1 && ce.args[0].type == typeTy);
+				auto tt=ce.args[0];
+				switch(fe.f.name){
+					case "then","sample","expectation":
+						return true;
+					default: return false;
+				}
+			}
+		}
+	}
+	return false;
+}
+
+Expression builtIn(FieldExp fe,Scope sc)in{
+	assert(fe.e.sstate==SemState.completed);
+}body{
+	Expression t=null;
+	if(auto at=cast(ArrayTy)fe.e.type){
+		if(fe.f.name=="length"){
+			fe.type=ℝ;
+			fe.f.sstate=SemState.completed;
+			return fe;
+		}else return null;
+	}else if(auto ce=cast(CallExp)fe.e.type){
+		if(auto id=cast(Identifier)ce.e){
+			if(id.name=="Distribution"){
+				assert(ce.args.length==1 && ce.args[0].type == typeTy);
+				auto tt=ce.args[0];
+				switch(fe.f.name){
+					case "then":
+						string name="a";
+						while(tt.hasFreeVar(name)) name~="'";
+						t=forallTy([name],tupleTy([typeTy]),funTy(tupleTy([cast(Expression)funTy(tupleTy([tt]),varTy(name,typeTy))]),expressionSemantic(new CallExp(ce.e,[varTy(name,typeTy)],true),sc)),true);
+						break;
+					case "sample":
+						t=funTy(tupleTy([]),tt);
+						break;
+					case "expectation":
+						if(tt != ℝ) return null;
+						t=funTy(tupleTy([]),ℝ);
+						break;
+					default: return null;
+				}
+			}
+		}
+	}
+	if(!t) return null;
+	fe.type=fe.f.type=t;
+	fe.sstate=fe.f.sstate=SemState.completed;
+	return fe;
 }
 
 bool isFieldDecl(Expression e){
@@ -522,7 +585,7 @@ Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
 		}
 		if(de){
 			de.setType(be.e2.type);
-			de.setInitializer();
+			if(de.sstate!=SemState.error) de.setInitializer();
 			de.type=unit;
 		}
 		if(cast(TopScope)sc){
@@ -941,13 +1004,8 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 				}
 				return fe;
 			}else return noMember();
-		}else if(auto at=cast(ArrayTy)fe.e.type){
-			if(fe.f.name=="length"){
-				fe.type=ℝ;
-				fe.f.sstate=SemState.completed;
-				return fe;
-			}else return noMember();
-		}else return noMember();
+		}else if(auto r=builtIn(fe,sc)) return r;
+		else return noMember();
 	}
 	if(auto idx=cast(IndexExp)expr){
 		idx.e=expressionSemantic(idx.e,sc);
@@ -1306,17 +1364,18 @@ Expression typeSemantic(Expression expr,Scope sc)in{assert(!!expr&&!!sc);}body{
 				return unit;
 		}
 	}
-	if(auto at=cast(IndexExp)expr){
+	auto at=cast(IndexExp)expr;
+	if(at&&at.a==[]){
 		expr.type=typeTy;
 		auto next=typeSemantic(at.e,sc);
 		if(!next) return null;
-		assert(at.a==[]);
 		return arrayTy(next);
 	}
 	auto e=expressionSemantic(expr,sc);
 	if(e.type==typeTy) return e;
 	if(expr.sstate!=SemState.error){
-		if(auto id=cast(Identifier)expr){
+		auto id=cast(Identifier)expr;
+		if(id&&id.meaning){
 			auto decl=id.meaning;
 			sc.error(format("%s %s is not a type",decl.kind,decl.name),id.loc);
 			sc.note("declared here",decl.loc);
