@@ -179,6 +179,7 @@ private DExpr definiteIntegralContinuous(DExpr expr,DExpr facts)out(res){
 				auto e=ivr.e;
 				if(e !is e.linearizeConstraints(var)) return false; // TODO: guarantee this condition
 				if(e.hasAny!DIvr) return false; // TODO: make sure this cannot actually happen
+				if(e.hasAny!DFloor||e.hasAny!DCeil) return false;
 				if(e.hasAny!DFun) return false; // TODO: some proofs still possible
 				return true;
 			}
