@@ -153,6 +153,7 @@ class Identifier: Expression{
 	}
 	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
 		if(this==rhs){
+			if(name !in subst) return true;
 			if(subst[name]&&subst[name]!=this) return false;
 			subst[name]=this;
 			return true;
