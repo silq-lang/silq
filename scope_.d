@@ -14,6 +14,10 @@ abstract class Scope{
 		}
 		rename(decl);
 		symtab[decl.name.ptr]=decl;
+		if(decl.rename){
+			assert(decl.rename.ptr !in rnsymtab);
+			rnsymtab[decl.rename.ptr]=decl;
+		}
 		decl.scope_=this;
 		return true;
 	}

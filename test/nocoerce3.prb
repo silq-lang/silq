@@ -1,0 +1,12 @@
+// compilation error
+
+a:=3;
+def coerce[b][a](x:a){
+	def foo[a']=>x;
+	return foo[b];
+}
+
+def main(){
+    x := coerce[R[]](3);
+    return x[0];
+}

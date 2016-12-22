@@ -185,6 +185,7 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 			auto vd=new VarDecl(id);
 			vd.loc=id.loc;
 			success&=sc.insert(vd);
+			id.name=vd.getName;
 			auto de=new SingleDefExp(vd,be);
 			de.loc=be.loc;
 			propErr(vd,de);
@@ -196,6 +197,7 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 				vds~=new VarDecl(id);
 				vds[$-1].loc=id.loc;
 				success&=sc.insert(vds[$-1]);
+				id.name=vds[$-1].getName;
 			}
 			auto de=new MultiDefExp(vds,be);
 			de.loc=be.loc;
@@ -215,6 +217,7 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 			vd.vtype=typeSemantic(vd.dtype,sc);
 			vd.loc=id.loc;
 			success&=sc.insert(vd);
+			id.name=vd.getName;
 			return vd;
 		}
 	}
@@ -461,6 +464,7 @@ Expression statementSemantic(Expression e,Scope sc){
 		vd.loc=fe.var.loc;
 		if(!fesc.insert(vd))
 			fe.sstate=SemState.error;
+		fe.var.name=vd.getName;
 		fe.fescope_=fesc;
 		fe.loopVar=vd;
 		fe.left=expressionSemantic(fe.left,fesc);
