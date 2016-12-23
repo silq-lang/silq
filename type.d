@@ -192,12 +192,17 @@ class ForallTy: Type{
 		if(cast(TupleTy)cod) c="("~c~")";
 		auto del=isSquare?"[]":"()";
 		if(!cod.hasAnyFreeVar(names)){
-			auto d=tdom.types.length==1?tdom.types[0].toString():tdom.toString();
-			if(isSquare||tdom.types.length>1||tdom.types.length==1&&cast(FunTy)tdom.types[0]) d=del[0]~d~del[1];
+			auto d=dom.toString();
+			if(isSquare||nargs>1||nargs==1&&cast(FunTy)tdom.types[0]) d=del[0]~d~del[1];
 			return d~" → "~c;
 		}else{
 			assert(names.length);
-			return "∏"~del[0]~zip(names,tdom.types).map!(x=>x[0]~":"~x[1].toString()).join(",")~del[1]~". "~c;
+			string args;
+			if(isTuple){
+				args=zip(names,tdom.types).map!(x=>x[0]~":"~x[1].toString()).join(",");
+				if(nargs==1) args~=",";
+			}else args=names[0]~":"~dom.toString();
+			return "∏"~del[0]~args~del[1]~". "~c;
 		}
 	}
 	@property size_t nargs(){
@@ -225,7 +230,7 @@ class ForallTy: Type{
 		assert(i!=-1);
 		auto nnames=names.dup;
 		nnames[i]=nname;
-		auto nvar=varTy(nname,tdom.types[i]);
+		auto nvar=varTy(nname,argTy(i));
 		return forallTy(nnames,dom,cod.substitute(oname,nvar),isSquare,isTuple);
 	}
 	private ForallTy relabelAway(string oname)in{
@@ -248,7 +253,7 @@ class ForallTy: Type{
 		foreach(n;nnames) assert(!hasFreeVar(n));
 	}body{
 		Expression[string] subst;
-		foreach(i;0..names.length) subst[names[i]]=varTy(nnames[i],tdom.types[i]);
+		foreach(i;0..names.length) subst[names[i]]=varTy(nnames[i],argTy(i));
 		return forallTy(nnames,dom,cod.substitute(subst),isSquare,isTuple);
 	}
 	override ForallTy substituteImpl(Expression[string] subst){
@@ -270,7 +275,7 @@ class ForallTy: Type{
 	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
 		auto r=cast(ForallTy)rhs; // TODO: get rid of duplication (same code in opEquals)
 		if(!r) return false;
-		if(isSquare!=r.isSquare||isTuple!=r.isTuple||tdom.types.length!=r.tdom.types.length) return false; // TODO: fix isTuple
+		if(isSquare!=r.isSquare||isTuple!=r.isTuple||nargs!=r.nargs) return false; // TODO: fix isTuple
 		r=r.relabelAll(freshNames(r));
 		Expression[string] nsubst;
 		foreach(k,v;subst) if(!names.canFind(k)) nsubst[k]=v;
@@ -281,11 +286,11 @@ class ForallTy: Type{
 	Expression tryMatch(Expression[] args,out Expression[] gargs)in{assert(isSquare&&cast(ForallTy)cod);}body{
 		auto cod=cast(ForallTy)this.cod;
 		assert(!!cod);
-		if(args.length!=cod.tdom.types.length) return null;
+		if(args.length!=cod.nargs) return null;
 		Expression[string] subst;
 		foreach(n;names) subst[n]=null;
 		foreach(i,a;args){
-			if(!cod.tdom.types[i].unify(a.type,subst))
+			if(!cod.argTy(i).unify(a.type,subst))
 				return null;
 		}
 		gargs=new Expression[](names.length);
@@ -301,7 +306,7 @@ class ForallTy: Type{
 		if(isSquare != this.isSquare) return null;
 		if(rhs.length!=names.length) return null;
 		foreach(i,r;rhs){
-			if(!compatible(tdom.types[i],rhs[i].type))
+			if(!compatible(argTy(i),rhs[i].type))
 				return null;
 		}
 		Expression[string] subst;
@@ -312,7 +317,7 @@ class ForallTy: Type{
 	override bool opEquals(Object o){
 		auto r=cast(ForallTy)o;
 		if(!r) return false;
-		if(isSquare!=r.isSquare||tdom.types.length!=r.tdom.types.length) return false;
+		if(isSquare!=r.isSquare||isTuple!=r.isTuple||nargs!=r.nargs) return false; // TODO: fix isTuple
 		r=r.relabelAll(freshNames(r));
 		return dom==r.dom&&cod==r.cod;
 	}
