@@ -13,11 +13,11 @@ def map(lambda: ℝ → ℝ){
 
 def all(lambda: ℝ → ℝ){
     return (arr: ℝ[]){
-	result := 1;
-	for i in [0..arrayLength){
-	    result &&= lambda(arr[i]);
-	}
-	return result;
+        result := 1;
+        for i in [0..arrayLength){
+            result &&= lambda(arr[i]);
+        }
+        return result;
     }
 }
 
