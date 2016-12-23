@@ -200,21 +200,52 @@ class ForallTy: Type{
 		if(auto r=dom.freeVarsImpl(dg)) return r;
 		return cod.freeVarsImpl(v=>names.canFind(v)?0:dg(v));
 	}
-	private ForallTy relabel(string oname,string nname)in{assert(names.canFind(oname));}body{
+	private ForallTy relabel(string oname,string nname)in{
+		assert(names.canFind(oname));
+		assert(!hasFreeVar(nname));
+		assert(!names.canFind(nname));
+	}out(r){
+		assert(r.names.canFind(nname));
+		assert(!r.names.canFind(oname));
+	}body{
+		if(oname==nname) return this;
+		import std.algorithm;
+		auto i=names.countUntil(oname);
+		assert(i!=-1);
 		auto nnames=names.dup;
-		foreach(i,ref v;nnames){
-			if(v==oname) v=nname; // TODO: this is rather dumb
-			auto nvar=varTy(nname,dom.types[i]);
-			return forallTy(nnames,dom,cod.substitute(oname,nvar),isSquare);
-		}
-		return this;
+		nnames[i]=nname;
+		auto nvar=varTy(nname,dom.types[i]);
+		return forallTy(nnames,dom,cod.substitute(oname,nvar),isSquare);
+	}
+	private ForallTy relabelAway(string oname)in{
+		assert(names.canFind(oname));
+	}out(r){
+		assert(!r.names.canFind(oname));
+	}body{
+		auto nname=oname;
+		while(names.canFind(nname)||hasFreeVar(nname)) nname~="'";
+		return relabel(oname,nname);
+	}
+	private string[] freshNames(Expression block){
+		auto nnames=names.dup;
+		foreach(i,ref nn;nnames)
+			if(hasFreeVar(nn)||block.hasFreeVar(nn)||nnames[0..i].canFind(nn)) nn~="'";
+		return nnames;
+	}
+	private ForallTy relabelAll(string[] nnames)out(r){
+		assert(nnames.length==names.length);
+		foreach(n;nnames) assert(!hasFreeVar(n));
+	}body{
+		Expression[string] subst;
+		foreach(i;0..names.length) subst[names[i]]=varTy(nnames[i],dom.types[i]);
+		return forallTy(nnames,dom,cod.substitute(subst),isSquare);
 	}
 	override ForallTy substituteImpl(Expression[string] subst){
 		foreach(n;names){
 			bool ok=true;
 			foreach(k,v;subst) if(v.hasFreeVar(n)) ok=false;
 			if(ok) continue;
-			auto r=cast(ForallTy)relabel(n,n~"'").substitute(subst);
+			auto r=cast(ForallTy)relabelAway(n).substitute(subst);
 			assert(!!r);
 			return r;
 		}
@@ -229,8 +260,7 @@ class ForallTy: Type{
 		auto r=cast(ForallTy)rhs; // TODO: get rid of duplication (same code in opEquals)
 		if(!r) return false;
 		if(isSquare!=r.isSquare||dom.types.length!=r.dom.types.length) return false;
-		foreach(i;0..dom.types.length)
-			r=r.relabel(r.names[i],names[i]);
+		r=r.relabelAll(freshNames(r));
 		Expression[string] nsubst;
 		foreach(k,v;subst) if(!names.canFind(k)) nsubst[k]=v;
 		auto res=dom.unify(r.dom,nsubst)&&cod.unify(r.cod,nsubst);
@@ -272,8 +302,7 @@ class ForallTy: Type{
 		auto r=cast(ForallTy)o;
 		if(!r) return false;
 		if(isSquare!=r.isSquare||dom.types.length!=r.dom.types.length) return false;
-		foreach(i;0..dom.types.length)
-			r=r.relabel(r.names[i],names[i]);
+		r=r.relabelAll(freshNames(r));
 		return dom==r.dom&&cod==r.cod;
 	}
 }
