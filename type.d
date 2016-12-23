@@ -166,35 +166,46 @@ StringTy stringTy(){ return memoize!(()=>new StringTy()); }
 
 class ForallTy: Type{
 	string[] names;
-	TupleTy dom;
-	Expression cod;
-	bool isSquare;
-	private this(string[] names,TupleTy dom,Expression cod,bool isSquare)in{
+	Expression dom, cod;
+	bool isSquare,isTuple;
+	private this(string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple)in{
 		// TODO: assert that all names are distinct
-		assert(names.length==dom.types.length);
+		if(isTuple){
+			auto tdom=cast(TupleTy)dom;
+			assert(!!tdom);
+			assert(names.length==tdom.types.length);
+		}else assert(names.length==1);
 		assert(cod.type==typeTy,text(cod));
 	}body{
-		this.names=names; this.dom=dom; this.cod=cod; this.isSquare=isSquare;
+		this.names=names; this.dom=dom; this.cod=cod;
+		this.isSquare=isSquare; this.isTuple=isTuple;
+	}
+	/+private+/ @property TupleTy tdom()in{ // TODO: make private
+		assert(isTuple);
+	}body{
+		auto r=cast(TupleTy)dom;
+		assert(!!r);
+		return r;
 	}
 	override string toString(){
 		auto c=cod.toString();
 		if(cast(TupleTy)cod) c="("~c~")";
 		auto del=isSquare?"[]":"()";
 		if(!cod.hasAnyFreeVar(names)){
-			auto d=dom.types.length==1?dom.types[0].toString():dom.toString();
-			if(isSquare||dom.types.length>1||dom.types.length==1&&cast(FunTy)dom.types[0]) d=del[0]~d~del[1];
+			auto d=tdom.types.length==1?tdom.types[0].toString():tdom.toString();
+			if(isSquare||tdom.types.length>1||tdom.types.length==1&&cast(FunTy)tdom.types[0]) d=del[0]~d~del[1];
 			return d~" → "~c;
 		}else{
 			assert(names.length);
-			return "∏"~del[0]~zip(names,dom.types).map!(x=>x[0]~":"~x[1].toString()).join(",")~del[1]~". "~c;
+			return "∏"~del[0]~zip(names,tdom.types).map!(x=>x[0]~":"~x[1].toString()).join(",")~del[1]~". "~c;
 		}
 	}
 	@property size_t nargs(){
-		if(auto tplargs=cast(TupleTy)dom) return tplargs.types.length;
+		if(isTuple) return tdom.types.length;
 		return 1;
 	}
 	Expression argTy(size_t i)in{assert(i<nargs);}body{
-		return dom.types[i];
+		return tdom.types[i];
 	}
 	override int freeVarsImpl(scope int delegate(string) dg){
 		if(auto r=dom.freeVarsImpl(dg)) return r;
@@ -214,8 +225,8 @@ class ForallTy: Type{
 		assert(i!=-1);
 		auto nnames=names.dup;
 		nnames[i]=nname;
-		auto nvar=varTy(nname,dom.types[i]);
-		return forallTy(nnames,dom,cod.substitute(oname,nvar),isSquare);
+		auto nvar=varTy(nname,tdom.types[i]);
+		return forallTy(nnames,dom,cod.substitute(oname,nvar),isSquare,isTuple);
 	}
 	private ForallTy relabelAway(string oname)in{
 		assert(names.canFind(oname));
@@ -237,8 +248,8 @@ class ForallTy: Type{
 		foreach(n;nnames) assert(!hasFreeVar(n));
 	}body{
 		Expression[string] subst;
-		foreach(i;0..names.length) subst[names[i]]=varTy(nnames[i],dom.types[i]);
-		return forallTy(nnames,dom,cod.substitute(subst),isSquare);
+		foreach(i;0..names.length) subst[names[i]]=varTy(nnames[i],tdom.types[i]);
+		return forallTy(nnames,dom,cod.substitute(subst),isSquare,isTuple);
 	}
 	override ForallTy substituteImpl(Expression[string] subst){
 		foreach(n;names){
@@ -254,12 +265,12 @@ class ForallTy: Type{
 		auto nsubst=subst.dup;
 		foreach(n;names) nsubst.remove(n);
 		auto ncod=cod.substitute(nsubst);
-		return forallTy(names,ndom,ncod,isSquare);
+		return forallTy(names,ndom,ncod,isSquare,isTuple);
 	}
 	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
 		auto r=cast(ForallTy)rhs; // TODO: get rid of duplication (same code in opEquals)
 		if(!r) return false;
-		if(isSquare!=r.isSquare||dom.types.length!=r.dom.types.length) return false;
+		if(isSquare!=r.isSquare||isTuple!=r.isTuple||tdom.types.length!=r.tdom.types.length) return false; // TODO: fix isTuple
 		r=r.relabelAll(freshNames(r));
 		Expression[string] nsubst;
 		foreach(k,v;subst) if(!names.canFind(k)) nsubst[k]=v;
@@ -270,11 +281,11 @@ class ForallTy: Type{
 	Expression tryMatch(Expression[] args,out Expression[] gargs)in{assert(isSquare&&cast(ForallTy)cod);}body{
 		auto cod=cast(ForallTy)this.cod;
 		assert(!!cod);
-		if(args.length!=cod.dom.types.length) return null;
+		if(args.length!=cod.tdom.types.length) return null;
 		Expression[string] subst;
 		foreach(n;names) subst[n]=null;
 		foreach(i,a;args){
-			if(!cod.dom.types[i].unify(a.type,subst))
+			if(!cod.tdom.types[i].unify(a.type,subst))
 				return null;
 		}
 		gargs=new Expression[](names.length);
@@ -290,7 +301,7 @@ class ForallTy: Type{
 		if(isSquare != this.isSquare) return null;
 		if(rhs.length!=names.length) return null;
 		foreach(i,r;rhs){
-			if(!compatible(dom.types[i],rhs[i].type))
+			if(!compatible(tdom.types[i],rhs[i].type))
 				return null;
 		}
 		Expression[string] subst;
@@ -301,23 +312,29 @@ class ForallTy: Type{
 	override bool opEquals(Object o){
 		auto r=cast(ForallTy)o;
 		if(!r) return false;
-		if(isSquare!=r.isSquare||dom.types.length!=r.dom.types.length) return false;
+		if(isSquare!=r.isSquare||tdom.types.length!=r.tdom.types.length) return false;
 		r=r.relabelAll(freshNames(r));
 		return dom==r.dom&&cod==r.cod;
 	}
 }
 
-ForallTy forallTy(string[] names,TupleTy dom,Expression cod,bool isSquare=false)in{
-	assert(dom&&cod&&names.length==dom.types.length);
+ForallTy forallTy(string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple)in{
+	assert(dom&&cod);
+	if(isTuple){
+		auto tdom=cast(TupleTy)dom;
+		assert(tdom&&names.length==tdom.types.length);
+	}
 }body{
-	return memoize!((string[] names,TupleTy dom,Expression cod,bool isSquare)=>new ForallTy(names,dom,cod,isSquare))(names,dom,cod,isSquare);
+	return memoize!((string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple)=>new ForallTy(names,dom,cod,isSquare,isTuple))(names,dom,cod,isSquare,isTuple);
 }
 
 alias FunTy=ForallTy;
-FunTy funTy(TupleTy dom,Expression cod,bool isSquare=false)in{
+FunTy funTy(Expression dom,Expression cod,bool isSquare,bool isTuple)in{
 	assert(dom&&cod);
 }body{
-	return forallTy(dom.types.map!(_=>"").array,dom,cod,isSquare);
+	auto nargs=1+[].length;
+	if(isTuple) if(auto tpl=cast(TupleTy)dom) nargs=tpl.types.length;
+	return forallTy(iota(nargs).map!(_=>"").array,dom,cod,isSquare,isTuple);
 }
 
 Identifier varTy(string name,Expression type){

@@ -220,8 +220,8 @@ private struct Analyzer{
 											auto faty=cast(ForallTy)type;
 											assert(!!faty);
 											auto fety=cast(FunTy)faty.cod;
-											assert(!!fety&&fety.dom.types.length==1);
-											auto fty=cast(FunTy)fety.dom.types[0];
+											assert(!!fety&&fety.tdom.types.length==1);
+											auto fty=cast(FunTy)fety.tdom.types[0];
 											assert(!!fty);
 											auto summary=Distribution.fromDExpr(f,1,["`r".dVar],false,[fty.cod]);
 											auto db1=dDeBruijnVar(1);
@@ -614,9 +614,9 @@ private struct Analyzer{
 						}
 						assert(ce.args[0].type is typeTy);
 						auto fty=cast(ForallTy)ce.type;
-						assert(fty.dom.types.length==1);
-						auto dfty=cast(ForallTy)fty.dom.types[0];
-						assert(dfty&&dfty.dom.types.length==0);
+						assert(fty.tdom.types.length==1);
+						auto dfty=cast(ForallTy)fty.tdom.types[0];
+						assert(dfty&&dfty.tdom.types.length==0);
 						auto idist=new Distribution();
 						auto f=idist.declareVar("`f");
 						idist.addArgs([f]);
