@@ -56,6 +56,7 @@ string[2][] simpleTokens =
 	 ["-",     "Minus"                     ],
 	 ["-=",    "MinusAssign"               ],
 	 ["--",    "MinusMinus"                ],
+	 ["->",    "UglyMapsTo"                ],
 	 ["+",     "Plus"                      ],
 	 ["+=",    "PlusAssign"                ],
 	 ["++",    "PlusPlus"                  ],
@@ -92,7 +93,7 @@ string[2][] simpleTokens =
 	 [":=",    "ColonAssign"               ],
 	 ["$",     "Dollar"                    ],
 	 ["=",     "Assign"                    ],
-	 ["=>",    "GoesTo"                    ],
+	 ["=>",    "UglyGoesTo"                ],
 	 ["==",    "Equal"                     ],
 	 ["*",     "Star"                      ],
 	 ["*=",    "MultiplyAssign"            ],
@@ -101,11 +102,7 @@ string[2][] simpleTokens =
 	 ["^",     "Pow"                       ],
 	 ["^=",    "PowAssign"                 ],
 	 ["~",     "Concat"                    ],
-	 ["~=",    "ConcatAssign"              ],
-	 ["⊕",     "Xor"                       ],
-	 ["⊕=",    "XorAssign"                 ],
-	 ["@",     "At"                        ],
-	 ["×",     "Times"                     ]];
+	 ["~=",    "ConcatAssign"              ]];
 string[2][] specialTokens = 
 	[["",      "None",                     ],
 	 [" ",     "Whitespace",               ],
@@ -116,7 +113,14 @@ string[2][] specialTokens =
 	 ["__error","ErrorLiteral"             ],
 	 ["div",   "IntegerDivision"           ],
 	 ["div=",  "IntegerDivisionAssign"     ],
-	 ["EOF",   "Eof"                       ]];
+	 ["EOF",   "Eof"                       ],
+	 ["⊕",     "Xor"                       ],
+	 ["⊕=",    "XorAssign"                 ],
+	 ["@",     "At"                        ],
+	 ["×",     "Times"                     ],
+	 ["→",     "To"                        ],
+	 ["⇒",     "GoesTo"                    ],
+	 ["↦",     "MapsTo"                    ]];
 string[2][] compoundTokens = [];
 
 string[] keywords = ["dat","def","true","false","if","else","observe","assert","return","repeat","for","while","in","cobserve"];
@@ -429,6 +433,15 @@ private:
 			if(p[0.."×".length]=="×"){
 				p+="×".length;
 				res[0].type = Tok!"×";
+			}else if(p[0.."→".length]=="→"){
+				p+="→".length;
+				res[0].type = Tok!"→";
+			}else if(p[0.."⇒".length]=="⇒"){
+				p+="⇒".length;
+				res[0].type = Tok!"⇒";
+			}else if(p[0.."↦".length]=="↦"){
+				p+="↦".length;
+				res[0].type = Tok!"↦";
 			}else switch(*p++){
 				// whitespace
 				case 0, 0x1A:
@@ -891,22 +904,6 @@ private dchar readEscapeSeq(ref immutable(char)* _p) in{assert(*(_p-1)=='\\');}b
 				_p=p; throw new EscapeSeqException(format("unrecognized escape sequence '\\%s'",s[0..len]),s[0..len]);
 			}
 	}
-}
-
-
-unittest{
-	alias token t;
-	assert(lex(".\r..\v...\t  ....\r\n") == [t!".", t!"\n", t!"..", t!"...", t!"...", t!".",t!"\n"]);
-	assert(to!string(lex(ulong.max.stringof)[0]) == ulong.max.stringof);
-	assert(lex(ulong.max.stringof[0..$-2])[0].type == Tok!"Error");
-	foreach(i;0..1000UL){
-		ulong v = i^^4*1337;
-		ulong w = lex(to!string(v))[0].int64;
-		assert(w == v);
-	}
-	// 184467440737095516153.6L is rounded to 184467440737095516160.0L
-	assert(lex("184467440737095516153.6L")[0].flt80 == 184467440737095516153.6L);//184467440737095516160.0L);
-	assert(lex("0x1234_5678_9ABC_5A5AL")[0].int64 == 0x1234_5678_9ABC_5A5AL);
 }
 
 private string isKw(string[] cases){
