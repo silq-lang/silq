@@ -590,8 +590,10 @@ Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
 			}
 		}
 		if(de){
-			de.setType(be.e2.type);
-			if(de.sstate!=SemState.error) de.setInitializer();
+			if(de.sstate!=SemState.error){
+				de.setType(be.e2.type);
+				de.setInitializer();
+			}
 			de.type=unit;
 		}
 		if(cast(TopScope)sc){
