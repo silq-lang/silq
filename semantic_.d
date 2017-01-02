@@ -114,13 +114,14 @@ Expression presemantic(Declaration expr,Scope sc){
 			assert(!!id);
 			Expression ctxty=id;
 			if(dsc.decl.hasParams){
-				ctxty=callSemantic(new CallExp(ctxty,dsc.decl.params.map!((p){
-								auto id=new Identifier(p.name.name);
-								id.meaning=p;
-								auto r=expressionSemantic(id,sc);
-								assert(r.sstate==SemState.completed);
-								return r;
-							}).array,true),sc);
+				auto args=dsc.decl.params.map!((p){
+					auto id=new Identifier(p.name.name);
+					id.meaning=p;
+					auto r=expressionSemantic(id,sc);
+					assert(r.sstate==SemState.completed);
+					return r;
+				}).array;
+				ctxty=callSemantic(new CallExp(ctxty,new TupleExp(args),true),sc);
 				ctxty.sstate=SemState.completed;
 				assert(ctxty.type == typeTy);
 			}
@@ -272,28 +273,28 @@ bool isBuiltIn(Identifier id){
 Expression builtIn(Identifier id,Scope sc){
 	Expression t=null;
 	switch(id.name){
-	case "array": t=funTy(tupleTy([ℝ]),arrayTy(ℝ),false,true); break;
-	case "readCSV": t=funTy(tupleTy([stringTy]),arrayTy(ℝ),false,true); break;
+	case "array": t=funTy(ℝ,arrayTy(ℝ),false,false); break;
+	case "readCSV": t=funTy(stringTy,arrayTy(ℝ),false,false); break;
 	case "π": t=ℝ; break;
-	case "exp","log","abs": t=funTy(tupleTy([ℝ]),ℝ,false,true); break;
-	case "floor","ceil": t=funTy(tupleTy([ℝ]),ℝ,false,true); break;
-	case "CosUnifDist": t=funTy(unit,ℝ,false,true); break; // TDOO: remove
-	case "Rayleigh","Bernoulli","Exp","Exponential","StudentT","Poisson": t=funTy(tupleTy([ℝ]),ℝ,false,true); break;
+	case "exp","log","abs": t=funTy(ℝ,ℝ,false,false); break;
+	case "floor","ceil": t=funTy(ℝ,ℝ,false,false); break;
+	case "CosUnifDist": t=funTy(unit,ℝ,false,false); break; // TDOO: remove
+	case "Rayleigh","Bernoulli","Exp","Exponential","StudentT","Poisson": t=funTy(ℝ,ℝ,false,false); break;
 	case "Gauss","Pareto","Uniform","UniformInt","Beta","Gamma","Laplace","Weibull":
 		t=funTy(tupleTy([ℝ,ℝ]),ℝ,false,true); break;
 	case "TruncatedGauss":
 		t=funTy(tupleTy([ℝ,ℝ,ℝ,ℝ]),ℝ,false,true); break;
 	case "FromMarginal","SampleFrom": t=unit; break; // those are actually magic polymorphic functions
-	case "Expectation": t=funTy(tupleTy([ℝ]),ℝ,false,true); break; // TODO: this should be polymorphic too
-	case "Categorical": t=funTy(tupleTy([arrayTy(ℝ)]),ℝ,false,true); break;
+	case "Expectation": t=funTy(ℝ,ℝ,false,false); break; // TODO: this should be polymorphic too
+	case "Categorical": t=funTy(arrayTy(ℝ),ℝ,false,false); break;
 
-	case "Distribution": t=funTy(tupleTy([typeTy]),typeTy,true,true); break;
+	case "Distribution": t=funTy(typeTy,typeTy,true,false); break;
 	case "infer": t=
-			forallTy(["a"],tupleTy([typeTy]),
-			         forallTy(["f"],tupleTy([funTy(tupleTy([]),varTy("a",typeTy),false,true)]),
+			forallTy(["a"],typeTy,
+			         forallTy(["f"],funTy(tupleTy([]),varTy("a",typeTy),false,true),
 			                  typeSemantic(
-				                  new CallExp(varTy("Distribution",funTy(tupleTy([typeTy]),typeTy,true,true)),
-				                              [cast(Expression)varTy("a",typeTy)],true),sc),false,true),true,true);
+				                  new CallExp(varTy("Distribution",funTy(typeTy,typeTy,true,false)),
+				                              varTy("a",typeTy),true),sc),false,false),true,false);
 		break;
 	case "*","R","ℝ","𝟙":
 		id.type=typeTy;
@@ -317,8 +318,8 @@ bool isBuiltIn(FieldExp fe)in{
 	}else if(auto ce=cast(CallExp)fe.e.type){
 		if(auto id=cast(Identifier)ce.e){
 			if(id.name=="Distribution"){
-				assert(ce.args.length==1 && ce.args[0].type == typeTy);
-				auto tt=ce.args[0];
+				assert(ce.arg.type == typeTy);
+				auto tt=ce.arg;
 				switch(fe.f.name){
 					case "then","sample","expectation":
 						return true;
@@ -343,20 +344,20 @@ Expression builtIn(FieldExp fe,Scope sc)in{
 	}else if(auto ce=cast(CallExp)fe.e.type){
 		if(auto id=cast(Identifier)ce.e){
 			if(id.name=="Distribution"){
-				assert(ce.args.length==1 && ce.args[0].type == typeTy);
-				auto tt=ce.args[0];
+				assert(ce.arg.type == typeTy);
+				auto tt=ce.arg;
 				switch(fe.f.name){
 					case "then":
 						string name="a";
 						while(tt.hasFreeVar(name)) name~="'";
-						t=forallTy([name],tupleTy([typeTy]),funTy(tupleTy([cast(Expression)funTy(tupleTy([tt]),varTy(name,typeTy),false,true)]),expressionSemantic(new CallExp(ce.e,[varTy(name,typeTy)],true),sc),false,true),true,true);
+						t=forallTy([name],typeTy,funTy(funTy(tt,varTy(name,typeTy),false,true),expressionSemantic(new CallExp(ce.e,varTy(name,typeTy),true),sc),false,true),true,true);
 						break;
 					case "sample":
-						t=funTy(tupleTy([]),tt,false,true);
+						t=funTy(unit,tt,false,true);
 						break;
 					case "expectation":
 						if(tt != ℝ) return null;
-						t=funTy(tupleTy([]),ℝ,false,true);
+						t=funTy(unit,ℝ,false,true);
 						break;
 					default: return null;
 				}
@@ -741,28 +742,18 @@ Expression expectColonOrAssignSemantic(Expression e,Scope sc){
 Expression callSemantic(CallExp ce,Scope sc){
 	ce.e=expressionSemantic(ce.e,sc);
 	propErr(ce.e,ce);
-	foreach(ref e;ce.args){
-		e=expressionSemantic(e,sc);
-		propErr(e,ce);
-	}
+	ce.arg=expressionSemantic(ce.arg,sc);
+	propErr(ce.arg,ce);
 	if(ce.sstate==SemState.error)
 		return ce;
 	auto fun=ce.e;
 	CallExp checkFunCall(FunTy ft){
 		if(auto id=cast(Identifier)fun){
-			if(id.name=="array" && ce.args.length==2){
-				ft=funTy(tupleTy([ℝ,ce.args[1].type]),arrayTy(ce.args[1].type),false,true);
+			auto args=cast(TupleExp)ce.arg;
+			if(id.name=="array" && args && args.length==2){ // TODO: make type of 'array' polymorphic
+				ft=funTy(tupleTy([ℝ,args.e[1].type]),arrayTy(args.e[1].type),false,true);
 			}
 		}
-		Expression[] aty;
-		foreach(a;ce.args){
-			if(!a.type){
-				assert(ce.sstate==SemState.error);
-				return ce;
-			}
-			aty~=a.type;
-		}
-		auto atys=tupleTy(aty);
 		bool tryCall(){
 			if(!ce.isSquare && ft.isSquare){
 				auto nft=ft;
@@ -777,12 +768,12 @@ Expression callSemantic(CallExp ce,Scope sc){
 					}
 				}
 				if(cast(ForallTy)nft.cod){
-					Expression[] gargs;
-					auto tt=nft.tryMatch(ce.args,gargs);
+					Expression garg;
+					auto tt=nft.tryMatch(ce.arg,garg);
 					if(!tt) return false;
-					auto nce=new CallExp(ce.e,gargs,true);
+					auto nce=new CallExp(ce.e,garg,true);
 					nce.loc=ce.loc;
-					auto nnce=new CallExp(nce,ce.args,false);
+					auto nnce=new CallExp(nce,ce.arg,false);
 					nnce.loc=ce.loc;
 					nnce=cast(CallExp)callSemantic(nnce,sc);
 					assert(nnce&&nnce.type == tt);
@@ -790,13 +781,14 @@ Expression callSemantic(CallExp ce,Scope sc){
 					return true;
 				}
 			}
-			ce.type=ft.tryApply(ce.args,ce.isSquare);
+			ce.type=ft.tryApply(ce.arg,ce.isSquare);
 			return !!ce.type;
 		}
 		if(!tryCall()){
+			auto aty=ce.arg.type;
 			if(ce.isSquare!=ft.isSquare)
-				sc.error(text("function of type ",ft," cannot be called with arguments ",ce.isSquare?"[":"(",atys,ce.isSquare?"]":")"),ce.loc);
-			else sc.error(format("expected argument types %s, but %s was provided",ft.dom,atys),ce.loc);
+				sc.error(text("function of type ",ft," cannot be called with arguments ",ce.isSquare?"[":"",aty,ce.isSquare?"]":""),ce.loc);
+			else sc.error(format("expected argument types %s, but %s was provided",ft.dom,aty),ce.loc);
 			ce.sstate=SemState.error;
 		}
 		return ce;
@@ -811,10 +803,7 @@ Expression callSemantic(CallExp ce,Scope sc){
 		if(ty&&decl.hasParams){
 			auto nce=cast(CallExp)fun;
 			assert(!!nce);
-			Expression[string] subst;
-			assert(decl.params.length==nce.args.length);
-			foreach(i,p;decl.params)
-				subst[p.getName]=nce.args[i];
+			auto subst=decl.getSubst(nce.arg);
 			ty=cast(ForallTy)ty.substitute(subst);
 			assert(!!ty);
 		}
@@ -838,15 +827,7 @@ Expression callSemantic(CallExp ce,Scope sc){
 		auto id=cast(Identifier)ce.e;
 		switch(id.name){
 			case "FromMarginal": 
-				Expression[] aty;
-				foreach(a;ce.args){
-					if(!a.type){
-						assert(ce.sstate==SemState.error);
-						return ce;
-					}
-					aty~=a.type;
-				}
-				ce.type=aty.length==1?aty[0]:tupleTy(aty); // TODO: this special casing is not very nice
+				ce.type=ce.arg.type;
 				break;
 			case "SampleFrom":
 				return handleSampleFrom(ce,sc);
@@ -976,12 +957,12 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 		DatDecl aggrd=null;
 		if(auto aggrty=cast(AggregateTy)fe.e.type) aggrd=aggrty.decl;
 		else if(auto id=cast(Identifier)fe.e.type) if(auto dat=cast(DatDecl)id.meaning) aggrd=dat;
-		Expression[] args;
+		Expression arg=null;
 		if(auto ce=cast(CallExp)fe.e.type){
 			if(auto id=cast(Identifier)ce.e){
 				if(auto decl=cast(DatDecl)id.meaning){
 					aggrd=decl;
-					args=ce.args;
+					arg=ce.arg;
 				}
 			}
 		}
@@ -994,10 +975,7 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 				fe.f.scope_=sc;
 				fe.f.type=typeForDecl(meaning);
 				if(fe.f.type&&aggrd.hasParams){
-					Expression[string] subst;
-					assert(aggrd.params.length==args.length);
-					foreach(i,p;aggrd.params)
-						subst[p.getName]=args[i];
+					auto subst=aggrd.getSubst(arg);
 					fe.f.type=fe.f.type.substitute(subst);
 				}
 				fe.f.sstate=SemState.completed;
@@ -1014,7 +992,11 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 	if(auto idx=cast(IndexExp)expr){
 		idx.e=expressionSemantic(idx.e,sc);
 		if(auto ft=cast(FunTy)idx.e.type){
-			auto ce=new CallExp(idx.e,idx.a,true);
+			Expression arg;
+			if(!idx.trailingComma&&idx.a.length==1) arg=idx.a[0];
+			else arg=new TupleExp(idx.a);
+			arg.loc=idx.loc;
+			auto ce=new CallExp(idx.e,arg,true);
 			ce.loc=idx.loc;
 			return expr=callSemantic(ce,sc);
 		}
@@ -1211,9 +1193,7 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 			expr.sstate=SemState.error;
 			return null;
 		}
-		auto tpl=cast(TupleTy)t1;
-		if(!tpl) tpl=tupleTy([t1]); // TODO: ok?
-		return funTy(tpl,t2,false,true);
+		return funTy(t1,t2,false,false);
 	}
 	
 	if(auto ite=cast(IteExp)expr){
@@ -1271,7 +1251,9 @@ bool setFtype(FunctionDef fd){
 		pn~=p.getName;
 		pty~=p.vtype;
 	}
-	if(fd.ret&&!fd.ftype) fd.ftype=forallTy(pn,tupleTy(pty),fd.ret,fd.isSquare,true);
+	assert(fd.isTuple||pty.length==1);
+	auto pt=fd.isTuple?tupleTy(pty):pty[0];
+	if(fd.ret&&!fd.ftype) fd.ftype=forallTy(pn,pt,fd.ret,fd.isSquare,fd.isTuple);
 	return true;
 }
 FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
@@ -1397,7 +1379,9 @@ Expression typeForDecl(Declaration decl){
 		assert(cast(AggregateTy)dat.dtype);
 		if(!dat.hasParams) return typeTy;
 		foreach(p;dat.params) if(!p.vtype) return unit; // TODO: ok?
-		return forallTy(dat.params.map!(p=>p.getName).array,tupleTy(dat.params.map!(p=>p.vtype).array),typeTy,true,true);
+		assert(dat.isTuple||dat.params.length==1);
+		auto pt=dat.isTuple?tupleTy(dat.params.map!(p=>p.vtype).array):dat.params[0].vtype;
+		return forallTy(dat.params.map!(p=>p.getName).array,pt,typeTy,true,dat.isTuple);
 	}
 	if(auto vd=cast(VarDecl)decl){
 		return vd.vtype;
@@ -1455,13 +1439,16 @@ struct SampleFromInfo{
 
 import distrib; // TODO: separate concerns properly, move the relevant parts back to analysis.d
 SampleFromInfo analyzeSampleFrom(CallExp ce,ErrorHandler err,Distribution dist=null){ // TODO: support for non-real-valued distributions
-	if(ce.args.length==0){
+	Expression[] args;
+	if(auto tpl=cast(TupleExp)ce.arg) args=tpl.e;
+	else args=[ce.arg];
+	if(args.length==0){
 		err.error("expected arguments to SampleFrom",ce.loc);
 		return SampleFromInfo(true);
 	}
-	auto literal=cast(LiteralExp)ce.args[0];
+	auto literal=cast(LiteralExp)args[0];
 	if(!literal||literal.lit.type!=Tok!"``"){
-		err.error("first argument to SampleFrom must be string literal",ce.args[0].loc);
+		err.error("first argument to SampleFrom must be string literal",args[0].loc);
 		return SampleFromInfo(true);
 	}
 	VarMapping[] retVars;
@@ -1483,7 +1470,7 @@ SampleFromInfo analyzeSampleFrom(CallExp ce,ErrorHandler err,Distribution dist=n
 			}
 			auto orig=parser.parseDVar();
 			if(orig.name in names){
-				err.error(text("multiple variables of name \"",orig.name,"\""),ce.args[0].loc);
+				err.error(text("multiple variables of name \"",orig.name,"\""),args[0].loc);
 				return SampleFromInfo(true);
 			}
 			if(!seen){
@@ -1500,19 +1487,19 @@ SampleFromInfo analyzeSampleFrom(CallExp ce,ErrorHandler err,Distribution dist=n
 		parser.skipWhitespace();
 		newDist=parser.parseDExpr();
 	}catch(Exception e){
-		err.error(e.msg,ce.args[0].loc);
+		err.error(e.msg,args[0].loc);
 		return SampleFromInfo(true);
 	}
 	if(dist){
 		foreach(var;retVars){
 			if(!newDist.hasFreeVar(var.orig)){
-				err.error(text("pdf must depend on variable ",var.orig.name,")"),ce.args[0].loc);
+				err.error(text("pdf must depend on variable ",var.orig.name,")"),args[0].loc);
 				return SampleFromInfo(true);
 			}
 		}
 		newDist=newDist.substituteAll(retVars.map!(x=>x.orig).array,retVars.map!(x=>cast(DExpr)x.tmp).array);
 	}
-	if(ce.args.length!=1+paramVars.length){
+	if(args.length!=1+paramVars.length){
 		err.error(text("expected ",paramVars.length," additional arguments to SampleFrom"),ce.loc);
 		return SampleFromInfo(true);
 	}

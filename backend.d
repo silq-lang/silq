@@ -35,7 +35,7 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 	if(isMain){
 		dist.renormalize();
 		if(fd.params.length){
-			dist.assumeInputNormalized(fd.params.length);
+			dist.assumeInputNormalized(fd.params.length,fd.isTuple);
 		}
 		//dist.distribution=dist.distribution.substituteFun("q".dFunVar,one,DVar[].init,SetX!DVar.init).simplify(one);
 	}

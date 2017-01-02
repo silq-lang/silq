@@ -54,15 +54,18 @@ class Parameter: VarDecl{
 
 class FunctionDef: Declaration{
 	Parameter[] params;
+	bool isTuple;
 	Expression rret;
 	CompoundExp body_;
 	bool isSquare=false;
-	this(Identifier name, Parameter[] params, Expression rret, CompoundExp body_){
-		super(name); this.params=params; this.rret=rret; this.body_=body_;
+	this(Identifier name, Parameter[] params, bool isTuple, Expression rret, CompoundExp body_)in{
+		assert(isTuple||params.length==1);
+	}body{
+		super(name); this.params=params; this.isTuple=isTuple; this.rret=rret; this.body_=body_;
 	}
 	override string toString(){
 		string d=isSquare?"[]":"()";
-		return "def "~(name?name.toString():"")~d[0]~join(map!(to!string)(params),",")~d[1]~body_.toString();
+		return "def "~(name?name.toString():"")~d[0]~join(map!(to!string)(params),",")~(isTuple&&params.length==1?",":"")~d[1]~body_.toString();
 	}
 
 	override bool isCompound(){ return true; }
@@ -88,11 +91,16 @@ class DatDecl: Declaration{
 	AggregateTy dtype;
 	bool hasParams;
 	Parameter[] params;
+	bool isTuple;
 	CompoundDecl body_;
-	this(Identifier name,bool hasParams,Parameter[] params,CompoundDecl body_){
+	this(Identifier name,bool hasParams,Parameter[] params,bool isTuple,CompoundDecl body_)in{
+		if(hasParams) assert(isTuple||params.length==1);
+		else assert(isTuple&&params.length==0);
+	}body{
 		super(name);
 		this.hasParams=hasParams;
 		this.params=params;
+		this.isTuple=isTuple;
 		this.body_=body_;
 	}
 	override string toString(){
@@ -101,6 +109,18 @@ class DatDecl: Declaration{
 
 	override bool isCompound(){ return true; }
 
+	final Expression[string] getSubst(Expression arg){
+		Expression[string] subst;
+		if(isTuple){
+			foreach(i,p;params)
+				subst[p.getName]=new IndexExp(arg,[new LiteralExp(Token(Tok!"0",to!string(i)))],false).eval();
+		}else{
+			assert(params.length==1);
+			subst[params[0].getName]=arg;
+		}
+		return subst;
+	}
+	
 	// semantic information
 	DataScope dscope_;
 }

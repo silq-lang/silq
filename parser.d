@@ -3,6 +3,7 @@
 
 import std.array, std.typetuple, std.algorithm, std.conv;
 import std.traits: EnumMembers;
+import std.typecons: Q=Tuple,q=tuple;
 import lexer, error, util, expression, type, declaration;
 // (re-purposed D parser, a little bit messy for now.)
 
@@ -341,19 +342,46 @@ struct Parser{
 		return res=New!Parameter(i,t);
 	}
 	
-	Expression[] parseArgumentList(bool nonempty=false, Entry=AssignExp, T...)(TokenType delim, T args){
+	Q!(Expression[],bool) parseArgumentList(bool nonempty=false, Entry=AssignExp, T...)(TokenType delim, T args){
 		auto e=appender!(Expression[])();
 		foreach(x;args) e.put(x); // static foreach
-		static if(args.length){if(ttype==Tok!",") nextToken(); else return e.data;}
-		static if(!nonempty) if(ttype==delim) return e.data;
+		bool trailingComma=false;
+		static if(args.length){if(ttype==Tok!","){ nextToken(); trailingComma=true; }else return q(e.data,trailingComma); }
+		static if(!nonempty) if(ttype==delim) return q(e.data,trailingComma);
 		do{
+			trailingComma=false;
 			mixin(doParse!(Entry,"e1")); e.put(e1);
-			if(ttype==Tok!",") nextToken();
+			if(ttype==Tok!","){ nextToken(); trailingComma=true; }
 			else break;
 		}while(ttype!=delim && ttype!=Tok!"EOF");
-		return e.data;
+		return q(e.data,trailingComma);
 	}
 
+	Expression parseParenthesized()in{assert(ttype==Tok!"(");}body{
+		mixin(SetLoc!Expression);
+		nextToken();
+		if(ttype==Tok!")"){
+			nextToken();
+			res=New!TupleExp(Expression[].init);
+		}else{
+			res=parseExpression(rbp!(Tok!","));
+			if(ttype==Tok!","){
+				auto tpl=[res];
+				while(ttype==Tok!","){
+					nextToken();
+					if(ttype==Tok!")") break;
+					tpl~=parseExpression(rbp!(Tok!","));
+				}
+				expect(Tok!")");
+				res=New!TupleExp(tpl);
+			}else{
+				expect(Tok!")");
+				res.brackets++;
+			}
+		}
+		return res;
+	}
+	
 	// Operator precedence expression parser
 	// null denotation
 	Expression nud(bool allowLambda){
@@ -400,34 +428,14 @@ struct Parser{
 					restoreState(state);
 				}
 				if(ttype==Tok!"("){
-					nextToken();
-					if(ttype==Tok!")"){
-						nextToken();
-						res=New!TupleExp(Expression[].init);
-					}else{
-						res=parseExpression(rbp!(Tok!","));
-						if(ttype==Tok!","){
-							auto tpl=[res];
-							while(ttype==Tok!","){
-								nextToken();
-								if(ttype==Tok!")") break;
-								tpl~=parseExpression(rbp!(Tok!","));
-							}
-							expect(Tok!")");
-							res=New!TupleExp(tpl);
-						}else{
-							expect(Tok!")");
-							res.brackets++;
-						}
-					}
+					return res=parseParenthesized();
 				}else{
 					assert(ttype==Tok!"[");
 					nextToken();
-					res=New!ArrayExp(parseArgumentList(Tok!"]"));
+					res=New!ArrayExp(parseArgumentList(Tok!"]")[0]);
 					expect(Tok!"]");
 					return res;
 				}
-				return res;
 			case Tok!"-":
 				nextToken();
 				return res=New!(UnaryExp!(Tok!"-"))(parseExpression(nbp));
@@ -461,15 +469,13 @@ struct Parser{
 			//case Tok!"?": mixin(rule!(TernaryExp,"_",Existing,"left",Expression,":",OrOrExp));
 			case Tok!"[":
 				nextToken();
-				if(ttype==Tok!"]"){loc=loc.to(tok.loc); nextToken(); mixin(rule!(IndexExp,Existing,q{left,(Expression[]).init}));}
+				if(ttype==Tok!"]"){loc=loc.to(tok.loc); nextToken(); mixin(rule!(IndexExp,Existing,q{left,(Expression[]).init,false}));}
 				auto l=parseExpression(rbp!(Tok!","));
-				res=New!IndexExp(left,parseArgumentList(Tok!"]",l));
-				loc=loc.to(tok.loc); expect(Tok!"]");
+				res=New!IndexExp(left,parseArgumentList(Tok!"]",l).expand);
+				expect(Tok!"]");
 				return res;
 			case Tok!"(":
-				nextToken();
-				auto a=parseArgumentList(Tok!")");
-				loc=loc.to(tok.loc); expect(Tok!")");
+				auto a=parseParenthesized();
 				mixin(rule!(CallExp,Existing,"left,a"));
 			case Tok!".":
 				auto r=left;
@@ -675,7 +681,7 @@ struct Parser{
 		bool isSquare=false;
 		if(ttype==Tok!"[") isSquare=true;
 		expect(isSquare?Tok!"[":Tok!"(");
-		auto args=cast(Parameter[])parseArgumentList!(false,Parameter)(isSquare?Tok!"]":Tok!")");
+		auto params=parseArgumentList!(false,Parameter)(isSquare?Tok!"]":Tok!")");
 		expect(isSquare?Tok!"]":Tok!")");
 		Expression ret=null;
 		if(ttype==Tok!":"){
@@ -697,7 +703,7 @@ struct Parser{
 			body_= New!CompoundExp([cast(Expression)r]);
 			body_.loc=e.loc;
 		}else body_=parseCompoundExp();
-		res=New!FunctionDef(name,args,ret,body_);
+		res=New!FunctionDef(name,cast(Parameter[])params[0],params[1]||params[0].length!=1,ret,body_);
 		res.isSquare=isSquare;
 		return res;
 	}
@@ -705,16 +711,16 @@ struct Parser{
 		mixin(SetLoc!DatDecl);
 		expect(Tok!"dat");
 		auto name=parseIdentifier();
-		Parameter[] params;
+		Q!(Expression[],bool) params;
 		bool hasParams=false;
 		if(ttype==Tok!"["){
 			nextToken();
 			hasParams=true;
-			params=cast(Parameter[])parseArgumentList!(false,Parameter)(Tok!"]");
+			params=parseArgumentList!(false,Parameter)(Tok!"]");
 			expect(Tok!"]");
 		}
 		auto body_=parseCompoundExp!CompoundDecl();
-		return res=New!DatDecl(name,hasParams,params,body_);
+		return res=New!DatDecl(name,hasParams,cast(Parameter[])params[0],params[1]||params[0].length!=1,body_);
 	}
 	ReturnExp parseReturn(){
 		mixin(SetLoc!ReturnExp);

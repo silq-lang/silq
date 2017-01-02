@@ -15,17 +15,18 @@ class Symbolic: Backend{
 		auto dist=new Distribution();
 		DExpr[] args;
 		foreach(a;def.params) args~=dist.declareVar(a.getName);
+		DVar ctx=null;
 		if(def.context){
-			auto ctx=dist.declareVar(def.contextName);
-			if(!def.isConstructor) args~=ctx;
-			else{
+			ctx=dist.declareVar(def.contextName);
+			if(def.isConstructor){
 				auto dd=def.scope_.getDatDecl();
 				assert(dd && dd.dtype);
 				dist.initialize(ctx,dRecord(),dd.dtype);
+				ctx=null;
 			}
 		}
-		if(!def.name||def.getName!="main"||args.length) // TODO: move this decision to caller
-			dist.addArgs(args);
+		if(!def.name||def.getName!="main"||args.length||def.isNested) // TODO: move this decision to caller
+			dist.addArgs(args,def.isTuple,ctx);
 		return analyzeWith(def,dist,err);
 	}
 
@@ -129,11 +130,13 @@ private struct Analyzer{
 					if(id.name !in builtIn){
 						auto bdist=new Distribution();
 						auto names=iota(fty.nargs).map!(i=>new Identifier("x"~lowNum(i+1))).array;
+						auto arg=fty.isTuple?new TupleExp(cast(Expression[])names):names[0];
 						auto params=new Parameter[](names.length);
 						foreach(i,ref p;params) p=new Parameter(names[i],fty.argTy(i));
-						auto call=new CallExp(id,cast(Expression[])names);
+						auto call=new CallExp(id,arg);
 						auto bdy=new CompoundExp([new ReturnExp(call)]);
-						auto fdef=new FunctionDef(null,params,null,bdy);
+						auto fdef=new FunctionDef(null,params,fty.isTuple,null,bdy);
+						fdef.isSquare=fty.isSquare;
 						auto sc=new TopScope(err);
 						fdef.scope_=sc;
 						fdef=cast(FunctionDef)presemantic(fdef,sc);
@@ -188,14 +191,14 @@ private struct Analyzer{
 						ok=true;
 					}else if(auto ce=cast(CallExp)fe.e.type){
 						if(auto id=cast(Identifier)ce.e){
-							assert(ce.args.length==1 && ce.args[0].type == typeTy);
-							auto tt=ce.args[0];
+							assert(ce.arg.type == typeTy);
+							auto tt=ce.arg;
 							if(id.name=="Distribution"){
 								static DExpr get(DExpr distr,Expression tt,Expression type,string name){
 									switch(name){
 										case "sample":
 											auto idist=new Distribution();
-											idist.addArgs([]);
+											idist.addArgs([],true,null);
 											auto d=idist.declareVar("`d");
 											auto dist=dDistApply(distr,d);
 											idist.distribute(dist*dIvr(DIvr.Type.eqZ,dField(d,"tag")-one));
@@ -208,9 +211,9 @@ private struct Analyzer{
 										case "then": // d.then(f) <-> infer(()=>f(d.sample()))
 											auto idist=new Distribution();
 											auto f=idist.declareVar("`f");
-											idist.addArgs([f]);
+											idist.addArgs([f],false,null);
 											auto rdist=new Distribution();
-											rdist.addArgs([]);
+											rdist.addArgs([],true,null);
 											auto d=rdist.declareVar("`d");
 											auto dist=dDistApply(distr,d);
 											rdist.distribute(dist*dIvr(DIvr.Type.eqZ,dField(d,"tag")-one));
@@ -220,12 +223,12 @@ private struct Analyzer{
 											auto faty=cast(ForallTy)type;
 											assert(!!faty);
 											auto fety=cast(FunTy)faty.cod;
-											assert(!!fety&&fety.tdom.types.length==1);
-											auto fty=cast(FunTy)fety.tdom.types[0];
+											assert(!!fety);
+											auto fty=cast(FunTy)fety.dom;
 											assert(!!fty);
 											auto summary=Distribution.fromDExpr(f,1,["`r".dVar],false,[fty.cod]);
 											auto db1=dDeBruijnVar(1);
-											auto tmp=rdist.call(summary,[x],[fty.dom]);
+											auto tmp=rdist.call(summary,x,fty.dom);
 											auto r=rdist.declareVar("`r");
 											rdist.initialize(r,tmp,tt);
 											rdist.marginalize(d);
@@ -238,19 +241,19 @@ private struct Analyzer{
 											idist.orderFreeVars([res],false);
 											auto gdist=new Distribution(); // generic argument
 											auto a=gdist.declareVar("`a");
-											gdist.addArgs([a]);
+											gdist.addArgs([a],false,null);
 											auto fun=gdist.declareVar("`fun");
 											gdist.initialize(fun,idist.toDExpr(),faty.cod);
 											gdist.marginalize(a);
 											gdist.orderFreeVars([fun],false);
 											return gdist.toDExpr().simplify(one);
-										case "expectation":
-											assert(tt is ℝ);
+										case "expectation": // TODO: handle non-convergence
+											assert(tt == ℝ);
 											auto d="`d".dVar,x="`x".dVar;
 											auto pdf=dInt(d,dDistApply(distr,d)*dIvr(DIvr.Type.eqZ,dField(d,"tag")-one)*dDelta(x,dField(d,"values"),ℝ));
 											auto total=dInt(x,pdf),expct=dInt(x,x*pdf);
 											auto idist=new Distribution();
-											idist.addArgs([]);
+											idist.addArgs([],true,null);
 											idist.assertTrue(dIvr(DIvr.Type.neqZ,total),"cannot compute conditional expectation");
 											auto r=idist.declareVar("`r");
 											idist.initialize(r,expct/total,ℝ);
@@ -308,85 +311,75 @@ private struct Analyzer{
 					if(auto fun=cast(FunctionDef)id.meaning){
 						auto summary=be.getSummary(fun,ce.loc,err);
 						if(!summary) unwind();
-						if(ce.args.length != fun.params.length){
-							err.error(format("expected %s arguments to '%s', received %s",fun.params.length,id.name,ce.args.length),ce.loc);
-							unwind();
-						}
-						DExpr[] args;
-						foreach(i,arg;ce.args){
-							if(auto a=doIt(arg)){
-								args~=a;
-							}else unwind();
-						}
-						if(thisExp&&!fun.isConstructor) args~=thisExp;
+						DExpr arg=doIt(ce.arg);
+						if(!arg) unwind();
 						auto funty=cast(FunTy)ce.e.type;
 						assert(!!funty);
-						auto tuplety=cast(TupleTy)funty.dom;
-						assert(!!tuplety);
-						auto types=tuplety.types;
-						if(thisExp&&!fun.isConstructor)
-							types~=fe.e.type; // TODO: this is wasteful
+						auto argty=ce.arg.type;
+						assert(argty == funty.dom);
+						if(thisExp&&!fun.isConstructor){
+							arg=dTuple([arg,thisExp]);
+							argty=tupleTy([argty,fe.e.type]);
+						}
 						if(!thisExp)if(fun.isNested){ // nested function calls
 							assert(id.scope_,text(id," ",id.loc));
 							auto ctx=buildContextFor(fun,id.scope_);
 							assert(!!ctx);
-							args~=ctx;
-							types~=contextTy();
+							arg=dTuple([arg,ctx]);
+							argty=tupleTy([argty,contextTy]);
 						}
-						auto r=dist.call(summary,args,types);
+						auto r=dist.call(summary,arg,argty);
 						if(thisExp&&!fun.isConstructor){
 							DExpr thisr;
-							if(auto tpl=cast(DTuple)r){
-								thisr=tpl.values[$-1];
-								if(tpl.length==2) r=tpl.values[0];
-								else r=dTuple(tpl.values[0..$-1]);
-							}else{
-								thisr=r;
-								r=dTuple([]);
-							}
+							auto tpl=cast(DTuple)r;
+							assert(!!tpl);
+							r=tpl.values[0];
+							thisr=tpl.values[1];
 							assert(thisr&&fe);
 							assignTo(thisExp,thisr,fe.e.type,ce.loc);
 						}
 						return r;
 					}
+					auto arg=id.name=="Categorical"||id.name=="SampleFrom"?null:doIt(ce.arg);
 					switch(id.name){
-					case "array":
-						if(ce.args.length==1)
-							return dArray(doIt(ce.args[0]));
-						assert(ce.args.length==2);
-						return dConstArray(doIt(ce.args[0]),doIt(ce.args[1]));
+					case "array": // TODO: make polymorphic
+						if(auto tpl=cast(TupleTy)ce.arg.type){
+							assert(tpl.types.length==2&&tpl.types[0]==ℝ);
+							return dConstArray(arg[0.dℤ],arg[1.dℤ]);
+						}
+						assert(ce.arg.type == ℝ);
+						return dArray(arg);
 					case "readCSV":
 						err.error(text("call to 'readCSV' only supported as the right hand side of an assignment"),ce.loc);
 						unwind();
 						assert(0);
 					case "exp":
-						if(ce.args.length!=1)
-							err.error("expected one argument to exp",ce.loc);
-						return dE^^doIt(ce.args[0]);
+						if(ce.arg.type!=ℝ)
+							err.error("expected one real argument to exp",ce.loc);
+						return dE^^arg;
 					case "log":
-						if(ce.args.length!=1)
-							err.error("expected one argument to log",ce.loc);
-						auto x=doIt(ce.args[0]);
-						dist.assertTrue(dIvr(DIvr.Type.lZ,-x),formatError("negative argument to log",e.loc));
-						return dLog(x);
+						if(ce.arg.type!=ℝ)
+							err.error("expected one real argument to log",ce.loc);
+						dist.assertTrue(dIvr(DIvr.Type.lZ,-arg),formatError("nonpositive argument to log",e.loc));
+						return dLog(arg);
 					case "abs":
-						if(ce.args.length!=1)
+						if(ce.arg.type!=ℝ)
 							err.error("expected one argument to abs",ce.loc);
-						return dAbs(doIt(ce.args[0]));
+						return dAbs(doIt(ce.arg));
 					case "floor":
-						if(ce.args.length!=1)
-							err.error("expected one argument to floor",ce.loc);
-						return dFloor(doIt(ce.args[0]));
+						if(ce.arg.type!=ℝ)
+							err.error("expected one real argument to floor",ce.loc);
+						return dFloor(arg);
 					case "ceil":
-						if(ce.args.length!=1)
-							err.error("expected one argument to floor",ce.loc);
-						return dCeil(doIt(ce.args[0]));						
+						if(ce.arg.type!=ℝ)
+							err.error("expected one real argument to floor",ce.loc);
+						return dCeil(arg);
 					case "Gauss":
-						if(ce.args.length!=2){
-							err.error("expected two arguments (μ,σ²) to Gauss",ce.loc);
+						if(ce.arg.type!=tupleTy([ℝ,ℝ])){
+							err.error("expected two real arguments (μ,σ²) to Gauss",ce.loc);
 							unwind();
 						}
-						auto μ=doIt(ce.args[0]), σsq=doIt(ce.args[1]);
+						auto μ=arg[0.dℤ], σsq=arg[1.dℤ];
 						dist.assertTrue(dIvr(DIvr.Type.leZ,-σsq),formatError("negative variance",e.loc));
 						auto var=dist.getTmpVar("__g");
 						dist.distribute(gaussPDF(var,μ,σsq));
@@ -394,32 +387,32 @@ private struct Analyzer{
 						//dist.distribute(approxGaussPDF(var,μ,σsq));
 						return var;
 					case "TruncatedGauss":
-						if(ce.args.length!=4){
-							err.error("expected four arguments (μ,σ²,a,b) to TruncatedGauss",ce.loc);
+						if(ce.arg.type!=tupleTy([ℝ,ℝ,ℝ,ℝ])){
+							err.error("expected four real arguments (μ,σ²,a,b) to TruncatedGauss",ce.loc);
 							unwind();
 						}
-						auto μ=doIt(ce.args[0]), σsq=doIt(ce.args[1]), a = doIt(ce.args[2]), b = doIt(ce.args[3]);
+						auto μ=arg[0.dℤ], σsq=arg[1.dℤ], a=arg[2.dℤ], b=arg[3.dℤ];
 						dist.assertTrue(dIvr(DIvr.Type.leZ,-σsq),formatError("negative variance",e.loc));
 						auto var=dist.getTmpVar("__g");
 						dist.distribute(truncatedGaussPDF(var,μ,σsq, a, b));
 						return var;
 					case "Pareto":
-						if(ce.args.length!=2){
-							err.error("expected two arguments (a,b) to Pareto",ce.loc);
+						if(ce.arg.type!=tupleTy([ℝ,ℝ])){
+							err.error("expected two real arguments (a,b) to Pareto",ce.loc);
 							unwind();
 						}
-						auto a = doIt(ce.args[0]), b = doIt(ce.args[1]);
-						dist.assertTrue(dIvr(DIvr.Type.leZ,-a), formatError("negative scale",e.loc));
-						dist.assertTrue(dIvr(DIvr.Type.leZ,-b), formatError("negative shape",e.loc));
+						auto a=arg[0.dℤ], b=arg[1.dℤ];
+						dist.assertTrue(dIvr(DIvr.Type.leZ,-a),formatError("negative scale",e.loc));
+						dist.assertTrue(dIvr(DIvr.Type.leZ,-b),formatError("negative shape",e.loc));
 						auto var=dist.getTmpVar("__g");
 						dist.distribute(paretoPDF(var,a,b));
 						return var;
 					case "Rayleigh":
-						if(ce.args.length!=1){
-							err.error("expected one argument (σ²) to Rayleigh",ce.loc);
+						if(ce.arg.type!=ℝ){
+							err.error("expected one real argument (σ²) to Rayleigh",ce.loc);
 							unwind();
 						}
-						auto σsq=doIt(ce.args[0]);
+						auto σsq=arg;
 						dist.assertTrue(dIvr(DIvr.Type.leZ,-σsq),formatError("negative scale",e.loc));
 						auto var=dist.getTmpVar("__g");
 						dist.distribute(rayleighPDF(var,σsq));
@@ -429,31 +422,31 @@ private struct Analyzer{
 						dist.distribute(one/dΠ*(1-var^^2)^^-(one/2) * dBounded!"[]"(var,-one, one) * dIvr(DIvr.Type.neqZ,var-one)*dIvr(DIvr.Type.neqZ,var+one));
 						return var;
 					case "Uniform":
-						if(ce.args.length!=2){
-							err.error("expected two arguments (a,b) to Uniform",ce.loc);
+						if(ce.arg.type!=tupleTy([ℝ,ℝ])){
+							err.error("expected two real arguments (a,b) to Uniform",ce.loc);
 							unwind();
 						}
-						auto a=doIt(ce.args[0]),b=doIt(ce.args[1]);
+						auto a=arg[0.dℤ],b=arg[1.dℤ];
 						dist.assertTrue(dIvr(DIvr.Type.leZ,a-b),formatError("empty range",e.loc));
 						auto var=dist.getTmpVar("__u");
 						dist.distribute(uniformPDF(var,a,b));
 						return var;
 					case "Bernoulli":
-						if(ce.args.length!=1){
-							err.error("expected one argument (p) to Bernoulli",ce.loc);
+						if(ce.arg.type!=ℝ){
+							err.error("expected one real argument (p) to Bernoulli",ce.loc);
 							unwind();
 						}
-						auto p=doIt(ce.args[0]);
+						auto p=arg;
 						dist.assertTrue(dIvr(DIvr.Type.leZ,-p)*dIvr(DIvr.Type.leZ,p-1),"parameter ouside range [0..1]");
 						auto var=dist.getTmpVar("__b");
 						dist.distribute(bernoulliPDF(var,p));
 						return var;
 					case "UniformInt":
-						if(ce.args.length!=2){
-							err.error("expected two arguments (a,b) to UniformInt",ce.loc);
+						if(ce.arg.type!=tupleTy([ℝ,ℝ])){
+							err.error("expected two real arguments (a,b) to UniformInt",ce.loc);
 							unwind();
 						}
-						auto a=doIt(ce.args[0]),b=doIt(ce.args[1]);
+						auto a=arg[0.dℤ],b=arg[1.dℤ];
 						auto tmp=freshVar(); // TODO: get rid of this
 						auto nnorm=uniformIntPDFNnorm(tmp,a,b);
 						auto norm=dIntSmp(tmp,nnorm,one);
@@ -462,22 +455,21 @@ private struct Analyzer{
 						dist.distribute(nnorm.substitute(tmp,var)/norm);
 						return var;
 					case "Poisson":
-						if(ce.args.length!=1){
+						if(ce.arg.type!=ℝ){
 							err.error("expected one argument (λ) to Poisson",ce.loc);
 							unwind();
 						}
-						auto λ=doIt(ce.args[0]);
+						auto λ=arg;
 						dist.assertTrue(dIvr(DIvr.Type.lZ,-λ),"λ must be positive");
 						auto var=dist.getTmpVar("__p");
 						dist.distribute(poissonPDF(var,λ));
 						return var;
 					case "Categorical":
-						if(ce.args.length!=1){
-							err.error("expected one argument (ps) to Categorical",ce.loc);
+						if(ce.arg.type!=arrayTy(ℝ)){
+							err.error("expected one argument (ps: ℝ[]) to Categorical",ce.loc);
 							unwind();
 						}
-						assert(ce.args[0].type is arrayTy(ℝ));
-						auto idd=cast(Identifier)ce.args[0];
+						auto idd=cast(Identifier)ce.arg;
 						if(idd && idd.name in arrays){
 							// DExpr sum=zero;
 							auto array=arrays[idd.name];
@@ -493,7 +485,7 @@ private struct Analyzer{
 							dist.distribute(d);
 							return var;
 						}else{
-							auto p=doIt(ce.args[0]);
+							auto p=doIt(ce.arg);
 							auto dbv=dDeBruijnVar(1);
 							dist.assertTrue(dIvr(DIvr.Type.eqZ,dSum(dBounded!"[)"(dbv,zero,dField(p,"length")*dIvr(DIvr.Type.lZ,p[dbv])))),"probability of category should be non-negative"); // TODO: dProd?
 							dist.assertTrue(dIvr(DIvr.Type.eqZ,dSum(dBounded!"[)"(dbv,zero,dField(p,"length"))*p[dbv])-1),"probabilities should sum up to 1");
@@ -504,101 +496,98 @@ private struct Analyzer{
 							//unwind();
 						}
 					case "Beta":
-						if(ce.args.length!=2){
-							err.error("expected two arguments (α,β) to Beta",ce.loc);
+						if(ce.arg.type!=tupleTy([ℝ,ℝ])){
+							err.error("expected two real arguments (α,β) to Beta",ce.loc);
 							unwind();
 						}
-						auto α=doIt(ce.args[0]),β=doIt(ce.args[1]);
+						auto α=arg[0.dℤ],β=arg[1.dℤ];
 						dist.assertTrue(dIvr(DIvr.Type.lZ,-α)*dIvr(DIvr.Type.lZ,-β),"α and β must be positive");
 						auto var=dist.getTmpVar("__β");
 						dist.distribute(betaPDF(var,α,β));
 						return var;
 					case "Gamma":
-						if(ce.args.length!=2){
-							err.error("expected two arguments (α,β) to Gamma",ce.loc);
+						if(ce.arg.type!=tupleTy([ℝ,ℝ])){
+							err.error("expected two real arguments (α,β) to Gamma",ce.loc);
 							unwind();
 						}
-						auto α=doIt(ce.args[0]),β=doIt(ce.args[1]);
+						auto α=arg[0.dℤ],β=arg[1.dℤ];
 						dist.assertTrue(dIvr(DIvr.Type.lZ,-α)*dIvr(DIvr.Type.lZ,-β),"α and β must be positive");
 						auto var=dist.getTmpVar("__γ");
 						dist.distribute(gammaPDF(var,α,β));
 						return var;
 					case "Laplace":
-						if(ce.args.length!=2){
-							err.error("expected two arguments (μ,b) to Laplace",ce.loc);
+						if(ce.arg.type!=tupleTy([ℝ,ℝ])){
+							err.error("expected two real arguments (μ,b) to Laplace",ce.loc);
 							unwind();
 						}
-						auto μ=doIt(ce.args[0]),b=doIt(ce.args[1]);
+						auto μ=arg[0.dℤ],b=arg[1.dℤ];
 						dist.assertTrue(dIvr(DIvr.Type.lZ,-b),"b must be positive");
 						auto var=dist.getTmpVar("__γ");
 						dist.distribute(laplacePDF(var,μ,b));
 						return var;
 					case "Exp","Exponential":
-						if(ce.args.length!=1){
-							err.error(text("expected one argument (λ) to ",id.name),ce.loc);
+						if(ce.arg.type!=ℝ){
+							err.error(text("expected one real argument (λ) to ",id.name),ce.loc);
 							unwind();
 						}
-						auto λ=doIt(ce.args[0]);
+						auto λ=arg;
 						dist.assertTrue(dIvr(DIvr.Type.lZ,-λ),"λ must be positive");
 						auto var=dist.getTmpVar("__e");
 						dist.distribute(exponentialPDF(var,λ));
 						return var;
 					case "StudentT":
-						if(ce.args.length!=1){
-							err.error("expected one argument (ν) to StudentT",ce.loc);
+						if(ce.arg.type!=ℝ){
+							err.error("expected one real argument (ν) to StudentT",ce.loc);
 							unwind();
 						}
-						auto ν=doIt(ce.args[0]);
+						auto ν=arg;
 						dist.assertTrue(dIvr(DIvr.Type.lZ,-ν),"ν must be positive");
 						auto var=dist.getTmpVar("__t");
 						dist.distribute(studentTPDF(var,ν));
 						return var;
 					case "Weibull":
-						if(ce.args.length!=2){
+						if(ce.arg.type!=tupleTy([ℝ,ℝ])){
 							err.error("expected two arguments (λ,k) to Weibull",ce.loc);
 							unwind();
 						}
-						auto λ=doIt(ce.args[0]), k=doIt(ce.args[1]);
+						auto λ=arg[0.dℤ], k=arg[1.dℤ];
 						dist.assertTrue(dIvr(DIvr.Type.lZ,-λ),"λ must be positive");
 						dist.assertTrue(dIvr(DIvr.Type.lZ,-k),"k must be positive");
 						auto var=dist.getTmpVar("__w");
 						dist.distribute(weibullPDF(var,λ,k));
 						return var;
 					case "FromMarginal":
-						auto exp=ce.args.map!doIt.array;
-						auto tmp=ce.args.map!(_=>dist.getTmpVar("__mrg")).array;
+						auto tmp=dist.getTmpVar("__mrg");
 						auto ndist=dist.dup();
-						foreach(i;0..exp.length)
-							ndist.initialize(tmp[i],exp[i],ce.args[i].type);
-						SetX!DVar tmpset;
-						foreach(var;tmp) tmpset.insert(var);
+						ndist.initialize(tmp,arg,ce.arg.type);
 						foreach(v;dist.freeVars){
-							if(v !in tmpset)
+							if(v !is tmp)
 								ndist.marginalize(v);
 						}
 						ndist.simplify();
 						dist.distribute(ndist.distribution);
-						return tmp.length==1?tmp[0]:dTuple(cast(DExpr[])tmp);
+						return tmp;
 					case "SampleFrom":
+						Expression[] args;
+						if(auto tpl=cast(TupleExp)ce.arg) args=tpl.e;
+						else args=[ce.arg];
 						auto info=analyzeSampleFrom(ce,err,dist);
 						if(info.error) unwind();
 						auto retVars=info.retVars,paramVars=info.paramVars,newDist=info.newDist;
 						foreach(i,pvar;paramVars){
-							auto expr=doIt(ce.args[1+i]);
+							auto expr=doIt(args[1+i]);
 							newDist=newDist.substitute(pvar,expr);
 						}
 						dist.distribute(newDist);
 						return retVars.length==1?retVars[0].tmp:dTuple(cast(DExpr[])retVars.map!(v=>v.tmp).array);
 					case "Expectation":
-						if(ce.args.length!=1){
-							err.error("expected one argument (e) to Expectation",ce.loc);
+						if(ce.arg.type!=ℝ){
+							err.error("expected one real argument (e) to Expectation",ce.loc);
 							unwind();
 						}
-						assert(ce.args[0].type is ℝ);
-						auto exp=doIt(ce.args[0]);
 						auto total=dist.distribution;
-						auto expct=dist.distribution*exp;
-						foreach(v;dist.freeVars){
+						auto expct=dist.distribution*arg;
+						foreach(v;dist.freeVars){ // TODO: handle non-convergence
 							total=dInt(v,total);
 							expct=dInt(v,expct);
 						}
@@ -608,18 +597,16 @@ private struct Analyzer{
 						dist.distribute(dDelta(tmp,expct/total,ℝ));
 						return tmp;
 					case "infer":
-						if(ce.args.length!=1){
-							err.error("expected one argument [a] to infer",ce.loc);
+						if(ce.arg.type!=typeTy){
+							err.error("expected one type argument [a] to infer",ce.loc);
 							unwind();
 						}
-						assert(ce.args[0].type is typeTy);
 						auto fty=cast(ForallTy)ce.type;
-						assert(fty.tdom.types.length==1);
-						auto dfty=cast(ForallTy)fty.tdom.types[0];
-						assert(dfty&&dfty.tdom.types.length==0);
+						auto dfty=cast(ForallTy)fty.dom;
+						assert(dfty&&dfty.dom==unit);
 						auto idist=new Distribution();
 						auto f=idist.declareVar("`f");
-						idist.addArgs([f]);
+						idist.addArgs([f],false,null);
 						auto r=idist.declareVar("`dist");
 						idist.initialize(r,dApply(f,dLambda(one)),fty.cod);
 						idist.marginalize(f);
@@ -639,21 +626,13 @@ private struct Analyzer{
 				DVar[] results=iota(0,resty.length).map!(x=>dist.getTmpVar("__r")).array;
 				auto summary=Distribution.fromDExpr(fun,nargs,results,isTuple,resty);
 				foreach(r;results) dist.freeVars.remove(r), dist.tmpVars.remove(r);
-				auto tuplety=cast(TupleTy)funty.dom;
-				assert(ce.args.length == tuplety.types.length);
-				DExpr[] args;
-				foreach(i,arg;ce.args){
-					if(auto a=doIt(arg)){
-						args~=a;
-					}else unwind();
-				}
-				assert(!!tuplety);
-				auto types=tuplety.types;
-				auto r=dist.call(summary,args,types);
+				auto argty=funty.dom;
+				assert(ce.arg.type == argty);
+				auto r=dist.call(summary,doIt(ce.arg),argty);
 				return r;
 			}
 			if(auto idx=cast(IndexExp)e){
-				if(idx.e.type is arrayTy(ℝ)){
+				if(idx.e.type == arrayTy(ℝ)){
 					if(auto id=cast(Identifier)idx.e) if(id.name in arrays){
 						auto r=indexArray(idx);
 						if(r) return r;
@@ -777,7 +756,7 @@ private struct Analyzer{
 	}
 
 	void trackDeterministic(DVar var,DExpr rhs,Expression ty){
-		if(ty !is ℝ) return;
+		if(ty != ℝ) return;
 		if(rhs){
 			if(auto nrhs=isObviouslyDeterministic(rhs)){
 				deterministic[var]=nrhs;
@@ -797,7 +776,7 @@ private struct Analyzer{
 	}
 
 	DExpr isDeterministic(DExpr e,Expression ty){ // TODO: track deterministic values for more complex datatypes than 'ℝ"?
-		if(ty !is ℝ) return null;
+		if(ty != ℝ) return null;
 		if(auto r=isObviouslyDeterministic(e))
 			return r;
 		// TODO: this is a glorious hack:
@@ -853,11 +832,11 @@ private struct Analyzer{
 	}
 
 	void evaluateArrayCall(Identifier id,CallExp call){
-		if(call.args.length!=1){
-			err.error("multidimensional arrays not supported",call.loc);
+		if(call.arg.type!=ℝ){
+			err.error("expected one real argument to array",call.loc);
 			return;
 		}
-		auto ae=transformExp(call.args[0]);
+		auto ae=transformExp(call.arg);
 		if(!ae) return;
 		auto num=isDeterministicInteger(ae);
 		if(!num){
@@ -884,13 +863,13 @@ private struct Analyzer{
 	}
 
 	void evaluateReadCSVCall(Identifier id,CallExp call){
-		if(call.args.length!=1){
-			err.error("expected one argument (filename) to 'readCSV'",call.loc);
+		if(call.arg.type!=stringTy){
+			err.error("expected one string argument (filename) to 'readCSV'",call.loc);
 			return;
 		}
-		auto lit=cast(LiteralExp)call.args[0];
+		auto lit=cast(LiteralExp)call.arg;
 		if(!lit||lit.lit.type != Tok!"``"){
-			err.error("argument to 'readCSV' must be string constant",call.args[0].loc);
+			err.error("argument to 'readCSV' must be string constant",call.arg.loc);
 			return;
 		}
 		auto filename=lit.lit.str;
@@ -1030,7 +1009,7 @@ private struct Analyzer{
 					if(auto cid=cast(Identifier)call.e){
 						switch(cid.name){
 							case "array":
-								if(call.args.length==1){
+								if(call.arg.type==ℝ){
 									isSpecial=true;
 									evaluateArrayCall(id,call);
 								}
@@ -1224,10 +1203,16 @@ private struct Analyzer{
 				}
 			}
 			if(functionDef.context&&functionDef.contextName=="this"&&!functionDef.isConstructor){
-				if(!isTuple) isTuple=true;
-				else if(orderedVars.length==1) dist.assign(orderedVars[0],dTuple([orderedVars[0]]),re.e.type);
-				vars.insert(dVar(functionDef.contextName));
-				orderedVars~=dVar(functionDef.contextName);
+				// TODO: if this happens, the above is quite pointless. refactor.
+				assert(isTuple||orderedVars.length==1);
+				auto res=isTuple?dTuple(cast(DExpr[])orderedVars):orderedVars[0];
+				auto resv=dist.getVar("__r"),ctxv=dVar(functionDef.contextName);
+				dist.initialize(resv,res,re.e.type);
+				vars.clear();
+				vars.insert(resv);
+				vars.insert(ctxv);
+				orderedVars=[resv,ctxv];
+				isTuple=true;
 			}
 			import hashtable:  setMinus;
 			foreach(w;dist.freeVars.setMinus(vars)){

@@ -241,11 +241,32 @@ class PostfixExp(TokenType op): Expression{
 class IndexExp: Expression{ //e[a...]
 	Expression e;
 	Expression[] a;
-	this(Expression exp, Expression[] args){e=exp; a=args;}
+	bool trailingComma;
+	this(Expression exp, Expression[] args, bool trailingComma){e=exp; a=args; this.trailingComma=trailingComma; }
 	override string toString(){
-		return _brk(e.toString()~'['~join(map!(to!string)(a),",")~']');
+		return _brk(e.toString()~'['~join(map!(to!string)(a),",")~(trailingComma?",":"")~']');
 	}
-
+	override Expression eval(){
+		if(a.length!=1) return this;
+		auto ne=e.eval();
+		auto na=a.dup;
+		foreach(ref x;a) x=x.eval();
+		Expression[] exprs;
+		if(auto tpl=cast(TupleExp)ne) exprs=tpl.e;
+		if(auto arr=cast(ArrayExp)ne) exprs=arr.e;
+		if(exprs.length){
+			if(auto le=cast(LiteralExp)na[0]){
+				if(le.lit.type==Tok!"0"&&!le.lit.str.canFind(".")){
+					auto idx=ℤ(le.lit.str);
+					if(0<=idx&&idx<exprs.length) return exprs[cast(size_t)idx];
+				}
+			}
+		}
+		if(ne==e && na==a) return this;
+		auto r=new IndexExp(ne,na,trailingComma);
+		r.loc=loc;
+		return r;
+	}
 	override int freeVarsImpl(scope int delegate(string) dg){
 		if(auto r=e.freeVarsImpl(dg)) return r;
 		foreach(x;a) if(auto r=x.freeVarsImpl(dg)) return r;
@@ -256,7 +277,7 @@ class IndexExp: Expression{ //e[a...]
 		auto na=a.dup;
 		foreach(ref x;na) x=substitute(subst);
 		if(ne==e&&na==a) return this;
-		auto r=new IndexExp(ne,na);
+		auto r=new IndexExp(ne,na,trailingComma);
 		r.loc=loc;
 		return r;
 	}
@@ -267,26 +288,34 @@ class IndexExp: Expression{ //e[a...]
 	}
 }
 
+string tupleToString(Expression e,bool isSquare){
+	auto d=isSquare?"[]":"()";
+	bool isTuple=!!cast(TupleExp)e;
+	auto str=e.toString();
+	if(isTuple||e.brackets){
+		assert(str[0]=='(' && str[$-1]==')');
+		str=str[1..$-1];
+	}
+	return d[0]~str~d[1];
+}
+
 class CallExp: Expression{
 	Expression e;
-	Expression[] args;
+	Expression arg;
 	bool isSquare;
-	this(Expression exp, Expression[] args, bool isSquare=false){e=exp; this.args=args; this.isSquare=isSquare; }
+	this(Expression exp, Expression arg, bool isSquare=false){e=exp; this.arg=arg; this.isSquare=isSquare; }
 	override string toString(){
-		auto d=isSquare?"[]":"()";
-		return _brk(e.toString()~d[0]~join(map!(to!string)(args),",")~d[1]);
+		return _brk(e.toString()~arg.tupleToString(isSquare));
 	}
 	override int freeVarsImpl(scope int delegate(string) dg){
 		if(auto r=e.freeVarsImpl(dg)) return r;
-		foreach(x;args) if(auto r=x.freeVarsImpl(dg)) return r;
-		return 0;
+		return arg.freeVarsImpl(dg);
 	}
 	override CallExp substituteImpl(Expression[string] subst){
 		auto ne=e.substitute(subst);
-		auto nargs=args.dup;
-		foreach(ref x;nargs) x=x.substitute(subst);
-		if(ne==e&&nargs==args) return this;
-		auto r=new CallExp(ne,nargs,isSquare);
+		auto narg=arg.substitute(subst);
+		if(ne==e&&narg==arg) return this;
+		auto r=new CallExp(ne,narg,isSquare);
 		r.loc=loc;
 		if(sstate==SemState.completed){
 			r.type=type.substitute(subst);
@@ -296,13 +325,13 @@ class CallExp: Expression{
 	}
 	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
 		auto ce=cast(CallExp)rhs;
-		if(!ce||args.length!=ce.args.length) return false;
-		return e.unify(ce.e,subst)&&all!(i=>args[i].unify(ce.args[i],subst))(iota(args.length));
+		if(!ce) return false;
+		return e.unify(ce.e,subst)&&arg.unify(ce.arg,subst);
 	}
 	override bool opEquals(Object rhs){
 		auto ce=cast(CallExp)rhs;
 		if(!ce) return false;
-		return e==ce.e&&args==ce.args;
+		return e==ce.e&&arg==ce.arg;
 	}
 }
 

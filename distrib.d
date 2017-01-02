@@ -212,16 +212,22 @@ class Distribution{
 	DVar q;
 	size_t nargs;
 
-	void addArgs(DExpr[] args)in{assert(!q);}body{
+	void addArgs(DExpr[] args,bool isTuple,DExpr ctx)in{assert(!q);}body{
 		q=dVar("`q");
 		assert(!!q);
 		nargs=args.length;
-		distribute(dDistApply(q,dTuple(args))); // TODO: constant name sufficient?
+		assert(isTuple||args.length==1);
+		auto arg=isTuple?dTuple(args):args[0];
+		if(ctx){
+			nargs=2;
+			arg=dTuple([arg,ctx]);
+		}
+		distribute(dDistApply(q,arg)); // TODO: constant name sufficient?
 	}
 	
-	void assumeInputNormalized(size_t nParams){
+	void assumeInputNormalized(size_t nParams,bool isTuple){
 		auto vars=iota(0,nParams).map!(x=>dVar("__p"~lowNum(x))).array;
-		auto fun=dDistApply(q,dTuple(cast(DExpr[])vars)); // TODO: get rid of cast
+		auto fun=dDistApply(q,isTuple?dTuple(cast(DExpr[])vars):vars[0]); // TODO: get rid of cast
 		DExpr tdist=fun;
 		foreach(v;vars) tdist=dIntSmp(v,tdist,one);
 		DExpr doIt(DExpr e){
@@ -305,7 +311,7 @@ class Distribution{
 		distribution=(dIvr(DIvr.Type.neqZ,factor)*(distribution/factor)).simplify(one);
 		error=(dIvr(DIvr.Type.eqZ,factor)+dIvr(DIvr.Type.neqZ,factor)*(error/factor)).simplify(one);
 	}
-	DExpr call(Distribution q,DExpr[] args,Expression[] ty)in{assert(!!q.q);}body{ // TODO: get rid of 'ty'
+	DExpr call(Distribution q,DExpr arg,Expression ty)in{assert(!!q.q);}body{ // TODO: get rid of 'ty'
 		DExpr rdist=q.distribution;
 		DExpr rerr=q.error;
 		auto context=freeVars.dup;
@@ -314,21 +320,12 @@ class Distribution{
 			r~=getTmpVar("__r");
 		rdist=rdist.substituteAll(q.orderedFreeVars,cast(DExpr[])r);
 		rerr=rerr.substituteAll(q.orderedFreeVars,cast(DExpr[])r);
-		DVar[] vars;
 		auto oldDist=distribution;
-		auto argDist=one;
-		foreach(i,a;args){
-			auto var=getTmpVar("__arg");
-			vars~=var;
-			argDist=argDist*dDelta(var,a,ty[i]);
-		}
-		distribution = rdist.substitute(q.q,dTupleLambda(vars,argDist))*oldDist;
-		auto nerror = rerr.substitute(q.q,dTupleLambda(vars,argDist))*oldDist;
+		auto db1=dDeBruijnVar(1);
+		auto argDist=dLambda(dDelta(db1,arg,ty));
+		distribution = rdist.substitute(q.q,argDist)*oldDist;
+		auto nerror = rerr.substitute(q.q,argDist)*oldDist;
 		//dw("+--\n",oldDist,"\n",rdist,"\n",distribution,"\n--+");
-		foreach(v;vars){
-			tmpVars.remove(v);
-			freeVars.remove(v);
-		}
 		foreach(v;context) nerror=dInt(v,nerror);
 		error = error + nerror;
 		return q.isTuple?dTuple(cast(DExpr[])r):r[0];
@@ -358,11 +355,12 @@ class Distribution{
 	}
 
 	private DExpr toDExprLambdaBody(bool stripContext=false)in{
-		assert(!stripContext||isTuple&&orderedFreeVars.length);
+		assert(!stripContext||isTuple&&orderedFreeVars.length==2);
 	}body{
 		auto db1=dDeBruijnVar(1);
-		auto vars=stripContext?orderedFreeVars[0..$]:orderedFreeVars;
-		auto values=isTuple&&(!stripContext||orderedFreeVars.length!=2)?dTuple(cast(DExpr[])vars):vars[0];
+		auto vars=orderedFreeVars;
+		assert(isTuple||vars.length==1);
+		auto values=isTuple?dTuple(cast(DExpr[])vars[0..$-stripContext]):vars[0];
 		auto r=dDiscDelta(db1,dRecord(["tag":one,"values":values]))*distribution.incDeBruijnVar(1,0);
 		foreach(v;vars) r=dInt(v,r);
 		r=r+dDiscDelta(db1,dRecord(["tag":zero]))*error;
@@ -373,11 +371,13 @@ class Distribution{
 		return dLambda(toDExprLambdaBody());
 	}
 
-	DExpr toDExprWithContext(DExpr context,bool stripContext=false)in{assert(freeVarsOrdered&&q&&nargs);}body{
+	DExpr toDExprWithContext(DExpr context,bool stripContext=false)in{
+		assert(freeVarsOrdered&&q&&nargs==2);
+	}body{
 		auto db1=dDeBruijnVar(1),db2=dDeBruijnVar(2);
 		auto bdy=toDExprLambdaBody(stripContext);
 		context=context.incDeBruijnVar(1,0);
-		bdy=bdy.substitute(db1,dLambda(dDistApply(db2,dTuple(iota(nargs-1).map!(i=>db1[dℤ(i)]).array))*dDiscDelta(db1[dℤ(nargs-1)],context)));
+		bdy=bdy.substitute(db1,dLambda(dDistApply(db2,db1[0.dℤ])*dDiscDelta(db1[dℤ(1)],context)));
 		return dLambda(bdy);
 	}
 	

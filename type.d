@@ -189,11 +189,10 @@ class ForallTy: Type{
 	}
 	override string toString(){
 		auto c=cod.toString();
-		if(cast(TupleTy)cod) c="("~c~")";
 		auto del=isSquare?"[]":"()";
 		if(!cod.hasAnyFreeVar(names)){
 			auto d=dom.toString();
-			if(isSquare||nargs>1||nargs==1&&cast(FunTy)tdom.types[0]) d=del[0]~d~del[1];
+			if(isSquare||!isTuple&&nargs==1&&cast(FunTy)argTy(0)) d=del[0]~d~del[1];
 			return d~" → "~c;
 		}else{
 			assert(names.length);
@@ -210,7 +209,8 @@ class ForallTy: Type{
 		return 1;
 	}
 	Expression argTy(size_t i)in{assert(i<nargs);}body{
-		return tdom.types[i];
+		if(isTuple) return tdom.types[i];
+		return dom;
 	}
 	override int freeVarsImpl(scope int delegate(string) dg){
 		if(auto r=dom.freeVarsImpl(dg)) return r;
@@ -265,8 +265,7 @@ class ForallTy: Type{
 			assert(!!r);
 			return r;
 		}
-		auto ndom=cast(TupleTy)dom.substitute(subst);
-		assert(!!ndom);
+		auto ndom=dom.substitute(subst);
 		auto nsubst=subst.dup;
 		foreach(n;names) nsubst.remove(n);
 		auto ncod=cod.substitute(nsubst);
@@ -283,35 +282,44 @@ class ForallTy: Type{
 		foreach(k,v;nsubst) subst[k]=v;
 		return res;
 	}
-	Expression tryMatch(Expression[] args,out Expression[] gargs)in{assert(isSquare&&cast(ForallTy)cod);}body{
+	Expression tryMatch(Expression arg,out Expression garg)in{assert(isSquare&&cast(ForallTy)cod);}body{
 		auto cod=cast(ForallTy)this.cod;
 		assert(!!cod);
-		if(args.length!=cod.nargs) return null;
+		if(!!cast(TupleTy)arg.type!=!!cast(TupleTy)cod.dom) return null;
+		Expression[] atys;
+		if(auto tpl=cast(TupleTy)arg.type) atys=tpl.types;
+		else atys=[arg.type];
+		if(atys.length!=cod.nargs) return null;
 		Expression[string] subst;
 		foreach(n;names) subst[n]=null;
-		foreach(i,a;args){
-			if(!cod.argTy(i).unify(a.type,subst))
+		foreach(i,aty;atys){
+			if(!cod.argTy(i).unify(aty,subst))
 				return null;
 		}
-		gargs=new Expression[](names.length);
+		auto gargs=new Expression[](names.length);
 		foreach(i,n;names){
 			if(!subst[n]) return null;
 			gargs[i]=subst[n];
 		}
+		if(!isTuple) assert(gargs.length==1);
+		garg=isTuple?new TupleExp(gargs):gargs[0];
 		cod=cast(ForallTy)cod.substitute(subst);
 		assert(!!cod);
-		return cod.tryApply(args,false);
+		return cod.tryApply(arg,false);
 	}
-	Expression tryApply(Expression[] rhs,bool isSquare){
+	Expression tryApply(Expression arg,bool isSquare){
 		if(isSquare != this.isSquare) return null;
-		if(rhs.length!=names.length) return null;
-		foreach(i,r;rhs){
-			if(!compatible(argTy(i),rhs[i].type))
-				return null;
-		}
+		if(!compatible(dom,arg.type)) return null;
 		Expression[string] subst;
-		foreach(i,n;names)
-			subst[n]=rhs[i];
+		if(isTuple){
+			foreach(i,n;names){
+				import lexer;
+				subst[n]=new IndexExp(arg,[new LiteralExp(Token(Tok!"0",to!string(i)))],false).eval();
+			}
+		}else{
+			assert(names.length==1);
+			subst[names[0]]=arg;
+		}
 		return cod.substitute(subst);
 	}
 	override bool opEquals(Object o){

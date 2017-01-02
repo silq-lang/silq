@@ -2387,6 +2387,16 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 		auto ne=e.simplify(one);
 		if(nvar !is var || ne !is e) return dDiscDelta(nvar,ne);
 		//if(dIvr(DIvr.Type.eq,var,e).simplify(facts) is zero) return zero; // a simplification like this might be possible
+		if(auto vtpl=cast(DTuple)var){ // δ_(x,y,z,...)[(1,2,3,...)].
+			if(auto etpl=cast(DTuple)e){
+				if(vtpl.values.length==etpl.values.length){
+					DExprSet factors;
+					foreach(i;0..vtpl.values.length)
+						DMult.insert(factors,dDiscDelta(vtpl[i],etpl[i]));
+					return dMult(factors).simplify(facts);
+				}
+			}
+		}
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){
