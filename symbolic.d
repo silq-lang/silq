@@ -316,7 +316,7 @@ private struct Analyzer{
 						auto funty=cast(FunTy)ce.e.type;
 						assert(!!funty);
 						auto argty=ce.arg.type;
-						assert(argty == funty.dom);
+						assert(argty == funty.dom,text(argty," ",funty.dom));
 						if(thisExp&&!fun.isConstructor){
 							arg=dTuple([arg,thisExp]);
 							argty=tupleTy([argty,fe.e.type]);
@@ -969,16 +969,8 @@ private struct Analyzer{
 		}else if(auto tpl=cast(TupleExp)lhs){
 			auto tt=cast(TupleTy)ty;
 			assert(!!tt);
-			auto dtpl=cast(DTuple)rhs;
-			if(rhs&&(!dtpl||dtpl.length!=tpl.length)){
-				err.error(text("inconsistent number of tuple entries for assignment: ",tpl.length," vs. ",(dtpl?dtpl.length:1)),loc);
-				rhs=dtpl=null;
-			}
-			if(dtpl){
-				auto tmp=iota(tpl.e.length).map!(_=>dist.getVar("__tpltmp")).array;
-				foreach(k,de;dtpl.values) dist.initialize(tmp[k],de,tt.types[k]);
-				foreach(k,exp;tpl.e) assignTo(exp,tmp[k],tt.types[k],loc);
-			}
+			assert(tpl.e.length==tt.types.length);
+			foreach(k,exp;tpl.e) assignTo(exp,rhs[k.dℤ],tt.types[k],loc);
 		}else{
 		LbadAssgnmLhs:
 			err.error("invalid left hand side for assignment",lhs.loc);
@@ -1031,17 +1023,11 @@ private struct Analyzer{
 				auto rhs=transformExp(de.e2);
 				auto tt=cast(TupleTy)de.e2.type;
 				assert(!!tt);
-				auto dtpl=cast(DTuple)rhs;
-				if(rhs&&(!dtpl||dtpl.length!=tpl.length)){
-					err.error(text("inconsistent number of tuple entries for definition: ",tpl.length," vs. ",(dtpl?dtpl.length:1)),de.loc);
-					rhs=dtpl=null;
-				}
-				if(dtpl){
-					foreach(k,exp;tpl.e){
-						auto id=cast(Identifier)exp;
-						if(!id) goto LbadDefLhs;
-						defineVar(id,dtpl[k],tt.types[k]);
-					}
+				assert(tpl.e.length==tt.types.length);
+				foreach(k,exp;tpl.e){
+					auto id=cast(Identifier)exp;
+					if(!id) goto LbadDefLhs;
+					defineVar(id,rhs[k.dℤ],tt.types[k]);
 				}
 			}else{
 			LbadDefLhs:
