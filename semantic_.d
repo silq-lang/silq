@@ -96,7 +96,6 @@ Expression presemantic(Declaration expr,Scope sc){
 		auto fsc=new FunctionScope(sc,fd);
 		fd.type=unit;
 		fd.fscope_=fsc;
-		declareParameters(fd,fd.isSquare,fd.params,fsc);
 		VarDecl createContext(string name,Expression ty){
 			auto id=new Identifier(name);
 			id.loc=fd.loc;
@@ -149,8 +148,9 @@ Expression presemantic(Declaration expr,Scope sc){
 			}
 			assert(dsc.decl.dtype);
 		}else if(auto nsc=cast(NestedScope)sc){
-			fd.context=createContext("__ctx",contextTy()); // TODO: contextTy is not too nice
+			fd.context=createContext("`outer",contextTy()); // TODO: replace contextTy by suitable record type; make name 'outer' available
 		}
+		declareParameters(fd,fd.isSquare,fd.params,fsc);
 		if(fd.rret){
 			string[] pn;
 			Expression[] pty;
