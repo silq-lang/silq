@@ -3682,7 +3682,8 @@ class DApply: DOp{
 	override @property string symbol(Format formatting,int binders){ return " "; }
 	override @property Precedence precedence(){ return Precedence.apply; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
-		return addp(prec,text(fun.toStringImpl(formatting,Precedence.apply,binders),(cast(DTuple)arg?"":" "),arg.toStringImpl(formatting,Precedence.apply,binders)));
+		auto isTpl=!!cast(DTuple)arg;
+		return addp(prec,text(fun.toStringImpl(formatting,Precedence.index,binders),"(",arg.toStringImpl(formatting,Precedence.apply,binders)[isTpl..$-isTpl],")"));
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
 		if(auto r=dg(fun)) return r;
@@ -3721,7 +3722,7 @@ class DDistApply: DOp{
 	override @property Precedence precedence(){ return Precedence.index; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		auto isTpl=!!cast(DTuple)arg;
-		return addp(prec,text(fun.toStringImpl(formatting,Precedence.index,binders),(isTpl?"":" "),"(",arg.toStringImpl(formatting,Precedence.apply,binders)[isTpl..$-isTpl],")"));
+		return addp(prec,text(fun.toStringImpl(formatting,Precedence.index,binders),"(",arg.toStringImpl(formatting,Precedence.apply,binders)[isTpl..$-isTpl],")"));
 	}
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
 		if(auto r=dg(fun)) return r;
