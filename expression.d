@@ -124,7 +124,7 @@ class LiteralExp: Expression{
 		this.lit=lit;
 	}
 	override string toString(){
-		return lit.toString();
+		return _brk(lit.toString());
 	}
 	override bool isConstant(){ return true; }
 
@@ -293,6 +293,7 @@ string tupleToString(Expression e,bool isSquare){
 	bool isTuple=!!cast(TupleExp)e;
 	auto str=e.toString();
 	if(isTuple||e.brackets){
+		writeln(str);
 		assert(str[0]=='(' && str[$-1]==')');
 		str=str[1..$-1];
 	}
@@ -504,7 +505,7 @@ class TupleExp: Expression{
 	this(Expression[] e){
 		this.e=e;
 	}
-	override string toString(){ return "("~e.map!(to!string).join(",")~")"; }
+	override string toString(){ return _brk("("~e.map!(to!string).join(",")~")"); }
 	final @property size_t length(){ return e.length; }
 
 	override int freeVarsImpl(scope int delegate(string) dg){
@@ -533,7 +534,7 @@ class LambdaExp: Expression{
 	}
 	override string toString(){
 		string d=fd.isSquare?"[]":"()";
-		return d[0]~join(map!(to!string)(fd.params),",")~d[1]~fd.body_.toString();
+		return _brk(d[0]~join(map!(to!string)(fd.params),",")~d[1]~fd.body_.toString());
 	}
 
 	mixin VariableFree; // TODO!
@@ -544,7 +545,7 @@ class ArrayExp: Expression{
 	this(Expression[] e){
 		this.e=e;
 	}
-	override string toString(){ return "["~e.map!(to!string).join(",")~"]";}
+	override string toString(){ return _brk("["~e.map!(to!string).join(",")~"]");}
 	override bool isConstant(){ return e.all!(x=>x.isConstant()); }
 
 	override int freeVarsImpl(scope int delegate(string) dg){
@@ -582,7 +583,7 @@ class AssertExp: Expression{
 	this(Expression e){
 		this.e=e;
 	}
-	override string toString(){ return "assert("~e.toString()~")"; }
+	override string toString(){ return _brk("assert("~e.toString()~")"); }
 	mixin VariableFree; // TODO!
 }
 
@@ -591,7 +592,7 @@ class ObserveExp: Expression{
 	this(Expression e){
 		this.e=e;
 	}
-	override string toString(){ return "observe("~e.toString()~")"; }
+	override string toString(){ return _brk("observe("~e.toString()~")"); }
 
 	mixin VariableFree; // TODO
 }
@@ -602,7 +603,7 @@ class CObserveExp: Expression{
 	this(Expression var,Expression val){
 		this.var=var; this.val=val;
 	}
-	override string toString(){ return "cobserve("~var.toString()~","~val.toString()~")"; }
+	override string toString(){ return _brk("cobserve("~var.toString()~","~val.toString()~")"); }
 
 	mixin VariableFree; // TODO
 }
