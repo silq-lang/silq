@@ -204,7 +204,7 @@ private struct Analyzer{
 											idist.distribute(dist*dIvr(DIvr.Type.eqZ,dField(d,"tag")-one));
 											idist.error=dInt(d,dIvr(DIvr.Type.eqZ,dField(d,"tag"))*dist);
 											auto r=idist.declareVar("`r");
-											idist.initialize(r,dField(d,"values"),tt);
+											idist.initialize(r,dField(d,"val"),tt);
 											idist.marginalize(d);
 											idist.orderFreeVars([r],false);
 											return idist.toDExpr().simplify(one);
@@ -219,7 +219,7 @@ private struct Analyzer{
 											rdist.distribute(dist*dIvr(DIvr.Type.eqZ,dField(d,"tag")-one));
 											rdist.error=dInt(d,dIvr(DIvr.Type.eqZ,dField(d,"tag"))*dist);
 											auto x=rdist.declareVar("`x");
-											rdist.initialize(x,dField(d,"values"),tt);
+											rdist.initialize(x,dField(d,"val"),tt);
 											auto faty=cast(ForallTy)type;
 											assert(!!faty);
 											auto fety=cast(FunTy)faty.cod;
@@ -250,7 +250,7 @@ private struct Analyzer{
 										case "expectation": // TODO: handle non-convergence
 											assert(tt == ℝ);
 											auto d="`d".dVar,x="`x".dVar;
-											auto pdf=dInt(d,dDistApply(distr,d)*dIvr(DIvr.Type.eqZ,dField(d,"tag")-one)*dDelta(x,dField(d,"values"),ℝ));
+											auto pdf=dInt(d,dDistApply(distr,d)*dIvr(DIvr.Type.eqZ,dField(d,"tag")-one)*dDelta(x,dField(d,"val"),ℝ));
 											auto total=dInt(x,pdf),expct=dInt(x,x*pdf);
 											auto idist=new Distribution();
 											idist.addArgs([],true,null);

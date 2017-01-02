@@ -361,7 +361,7 @@ class Distribution{
 		auto vars=orderedFreeVars;
 		assert(isTuple||vars.length==1);
 		auto values=isTuple&&!stripContext?dTuple(cast(DExpr[])vars):vars[0];
-		auto r=dDiscDelta(db1,dRecord(["tag":one,"values":values]))*distribution.incDeBruijnVar(1,0);
+		auto r=dDiscDelta(db1,dRecord(["tag":one,"val":values]))*distribution.incDeBruijnVar(1,0);
 		foreach(v;vars) r=dInt(v,r);
 		r=r+dDiscDelta(db1,dRecord(["tag":zero]))*error;
 		return dLambda(r).substitute(q,db1);
@@ -385,7 +385,7 @@ class Distribution{
 		auto r=new Distribution();
 		auto db1=dDeBruijnVar(1);
 		dexpr=dexpr.incDeBruijnVar(1,0);
-		auto values=dField(db1,"values");
+		auto values=dField(db1,"val");
 		foreach(i,v;orderedFreeVars){
 			r.freeVars.insert(v);
 			auto value=isTuple?dIndex(values,dℤ(i)):values;
