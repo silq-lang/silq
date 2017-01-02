@@ -351,7 +351,7 @@ Expression builtIn(FieldExp fe,Scope sc)in{
 					case "then":
 						string name="a";
 						while(tt.hasFreeVar(name)) name~="'";
-						t=forallTy([name],typeTy,funTy(funTy(tt,varTy(name,typeTy),false,true),expressionSemantic(new CallExp(ce.e,varTy(name,typeTy),true),sc),false,true),true,true);
+						t=forallTy([name],typeTy,funTy(funTy(tt,varTy(name,typeTy),false,false),expressionSemantic(new CallExp(ce.e,varTy(name,typeTy),true),sc),false,false),true,false) ;
 						break;
 					case "sample":
 						t=funTy(unit,tt,false,true);
