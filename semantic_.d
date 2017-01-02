@@ -121,7 +121,8 @@ Expression presemantic(Declaration expr,Scope sc){
 					assert(r.sstate==SemState.completed);
 					return r;
 				}).array;
-				ctxty=callSemantic(new CallExp(ctxty,new TupleExp(args),true),sc);
+				assert(dsc.decl.isTuple||args.length==1);
+				ctxty=callSemantic(new CallExp(ctxty,dsc.decl.isTuple?new TupleExp(args):args[0],true),sc);
 				ctxty.sstate=SemState.completed;
 				assert(ctxty.type == typeTy);
 			}
@@ -818,7 +819,7 @@ Expression callSemantic(CallExp ce,Scope sc){
 				id.scope_=sc;
 				id.meaning=constructor;
 				id.name=constructor.getName;
-				id.type=constructor.ftype;
+				id.type=ty;
 				id.sstate=SemState.completed;
 				ce.e=id;
 			}
