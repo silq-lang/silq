@@ -245,7 +245,7 @@ class ForallTy: Type{
 	private string[] freshNames(Expression block){
 		auto nnames=names.dup;
 		foreach(i,ref nn;nnames)
-			if(hasFreeVar(nn)||block.hasFreeVar(nn)||nnames[0..i].canFind(nn)) nn~="'";
+			while(hasFreeVar(nn)||block.hasFreeVar(nn)||nnames[0..i].canFind(nn)) nn~="'";
 		return nnames;
 	}
 	private ForallTy relabelAll(string[] nnames)out(r){
@@ -274,7 +274,9 @@ class ForallTy: Type{
 	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
 		auto r=cast(ForallTy)rhs; // TODO: get rid of duplication (same code in opEquals)
 		if(!r) return false;
-		if(isSquare!=r.isSquare||isTuple!=r.isTuple||nargs!=r.nargs) return false; // TODO: fix isTuple
+		if(isTuple&&!cast(TupleTy)r.dom) return false;
+		r=r.setTuple(isTuple);
+		if(isSquare!=r.isSquare||nargs!=r.nargs) return false; // TODO: fix isTuple
 		r=r.relabelAll(freshNames(r));
 		Expression[string] nsubst;
 		foreach(k,v;subst) if(!names.canFind(k)) nsubst[k]=v;
@@ -287,11 +289,13 @@ class ForallTy: Type{
 		assert(!!cod);
 		if(!!cast(TupleTy)arg.type!=!!cast(TupleTy)cod.dom) return null;
 		Expression[] atys;
-		if(auto tpl=cast(TupleTy)arg.type) atys=tpl.types;
-		else atys=[arg.type];
-		if(atys.length!=cod.nargs) return null;
+		auto tpl=cast(TupleTy)arg.type;
+		if(cod.isTuple&&tpl){
+			atys=tpl.types;
+			if(atys.length!=cod.nargs) return null;
+		}else atys=[arg.type];
 		Expression[string] subst;
-		foreach(n;names) subst[n]=null;
+		foreach(i,n;names) subst[n]=null;
 		foreach(i,aty;atys){
 			if(!cod.argTy(i).unify(aty,subst))
 				return null;
@@ -325,9 +329,24 @@ class ForallTy: Type{
 	override bool opEquals(Object o){
 		auto r=cast(ForallTy)o;
 		if(!r) return false;
+		if(isTuple&&!cast(TupleTy)r.dom) return false;
+		r=r.setTuple(isTuple);
 		if(isSquare!=r.isSquare||isTuple!=r.isTuple||nargs!=r.nargs) return false; // TODO: fix isTuple
 		r=r.relabelAll(freshNames(r));
 		return dom==r.dom&&cod==r.cod;
+	}
+	private ForallTy setTuple(bool tuple)in{
+		assert(!tuple||cast(TupleTy)dom);
+	}body{
+		if(tuple==isTuple) return this;
+		string[] nnames;
+		if(tuple){
+			auto tpl=cast(TupleTy)dom;
+			assert(!!tpl);
+			nnames=iota(tpl.types.length).map!(i=>"x"~lowNum(i)).array;
+		}else nnames=["x"];
+		foreach(i,ref nn;nnames) while(hasFreeVar(nn)) nn~="'";
+		return forallTy(nnames,dom,cod,isSquare,tuple);
 	}
 }
 
