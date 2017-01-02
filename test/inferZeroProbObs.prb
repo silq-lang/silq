@@ -1,0 +1,6 @@
+
+def main(){
+	x := Bernoulli(1/2);
+	y := infer((){ observe(x == Bernoulli(1/2)+1); return x; });
+	return y.sample(); // expected: δ[-r₁+1]·⅟2
+}

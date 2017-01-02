@@ -235,6 +235,7 @@ private struct Analyzer{
 											rdist.marginalize(x);
 											rdist.marginalizeTemporaries();
 											rdist.orderFreeVars([r],false);
+											rdist.renormalize();
 											auto res=idist.declareVar("`res");
 											idist.initialize(res,dDistApply(rdist.toDExpr(),dLambda(one)),fety.cod);
 											idist.marginalize(f);
@@ -607,8 +608,10 @@ private struct Analyzer{
 						auto idist=new Distribution();
 						auto f=idist.declareVar("`f");
 						idist.addArgs([f],false,null);
+						auto fdist=Distribution.fromDExpr(f,0,["`val".dVar],false,[dfty.cod]);
+						fdist.renormalize();
 						auto r=idist.declareVar("`dist");
-						idist.initialize(r,dApply(f,dLambda(one)),fty.cod);
+						idist.initialize(r,dApply(fdist.toDExpr(),dLambda(one)),fty.cod);
 						idist.marginalize(f);
 						idist.orderFreeVars([r],false);
 						return idist.toDExpr();
