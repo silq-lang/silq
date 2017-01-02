@@ -1125,8 +1125,20 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 		propErr(e2,e);
 		if(e.sstate==SemState.error)
 			return e;
-		if(e1.type is t1 && e2.type is t1){
+		if(e1.type == t1 && e2.type == t1){
 			e.type=r;
+		}else if(e1.type==typeTy&&name=="power"){
+			if(auto le=cast(LiteralExp)e2){
+				if(le.lit.type==Tok!"0"){
+					if(!le.lit.str.canFind(".")){
+						auto n=ℤ(le.lit.str);
+						if(0<=n&&n<long.max)
+							return tupleTy(e1.repeat(n.toLong()).array);
+					}
+				}
+			}
+			sc.error("expected non-negative integer constant",e2.loc);
+			e.sstate=SemState.error;
 		}else{
 			sc.error(format("incompatible types %s and %s for %s",e1.type,e2.type,name),e.loc);
 			e.sstate=SemState.error;
@@ -1134,27 +1146,27 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 		return e;
 	}
 
-	if(auto ae=cast(AddExp)expr) return handleBinary("addition",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
-	if(auto ae=cast(SubExp)expr) return handleBinary("subtraction",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
-	if(auto ae=cast(MulExp)expr) return handleBinary("multiplication",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
-	if(auto ae=cast(DivExp)expr) return handleBinary("division",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
-	if(auto ae=cast(IDivExp)expr) return handleBinary("integer division",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
-	if(auto ae=cast(ModExp)expr) return handleBinary("modulo",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
-	if(auto ae=cast(PowExp)expr) return handleBinary("power",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
-	if(auto ae=cast(BitOrExp)expr) return handleBinary("bitwise or",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
-	if(auto ae=cast(BitXorExp)expr) return handleBinary("bitwise xor",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
-	if(auto ae=cast(BitAndExp)expr) return handleBinary("bitwise and",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);	
-	if(auto ae=cast(UMinusExp)expr) return handleUnary("minus",ae,ae.e,ℝ,ℝ);
-	if(auto ae=cast(UNotExp)expr) return handleUnary("not",ae,ae.e,Bool,Bool);
-	if(auto ae=cast(UBitNotExp)expr) return handleUnary("bitwise not",ae,ae.e,Bool,Bool);
-	if(auto ae=cast(AndExp)expr) return handleBinary("conjunction",ae,ae.e1,ae.e2,Bool,Bool,Bool);
-	if(auto ae=cast(OrExp)expr) return handleBinary("disjunction",ae,ae.e1,ae.e2,Bool,Bool,Bool);
-	if(auto ae=cast(LtExp)expr) return handleBinary("'<'",ae,ae.e1,ae.e2,ℝ,ℝ,Bool);
-	if(auto ae=cast(LeExp)expr) return handleBinary("'≤'",ae,ae.e1,ae.e2,ℝ,ℝ,Bool);
-	if(auto ae=cast(GtExp)expr) return handleBinary("'>'",ae,ae.e1,ae.e2,ℝ,ℝ,Bool);
-	if(auto ae=cast(GeExp)expr) return handleBinary("'≥'",ae,ae.e1,ae.e2,ℝ,ℝ,Bool);
-	if(auto ae=cast(EqExp)expr) return handleBinary("'='",ae,ae.e1,ae.e2,ℝ,ℝ,Bool);
-	if(auto ae=cast(NeqExp)expr) return handleBinary("'≠'",ae,ae.e1,ae.e2,ℝ,ℝ,Bool);
+	if(auto ae=cast(AddExp)expr) return expr=handleBinary("addition",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
+	if(auto ae=cast(SubExp)expr) return expr=handleBinary("subtraction",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
+	if(auto ae=cast(MulExp)expr) return expr=handleBinary("multiplication",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
+	if(auto ae=cast(DivExp)expr) return expr=handleBinary("division",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
+	if(auto ae=cast(IDivExp)expr) return expr=handleBinary("integer division",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
+	if(auto ae=cast(ModExp)expr) return expr=handleBinary("modulo",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
+	if(auto ae=cast(PowExp)expr) return expr=handleBinary("power",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
+	if(auto ae=cast(BitOrExp)expr) return expr=handleBinary("bitwise or",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
+	if(auto ae=cast(BitXorExp)expr) return expr=handleBinary("bitwise xor",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
+	if(auto ae=cast(BitAndExp)expr) return expr=handleBinary("bitwise and",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
+	if(auto ae=cast(UMinusExp)expr) return expr=handleUnary("minus",ae,ae.e,ℝ,ℝ);
+	if(auto ae=cast(UNotExp)expr) return expr=handleUnary("not",ae,ae.e,Bool,Bool);
+	if(auto ae=cast(UBitNotExp)expr) return expr=handleUnary("bitwise not",ae,ae.e,Bool,Bool);
+	if(auto ae=cast(AndExp)expr) return expr=handleBinary("conjunction",ae,ae.e1,ae.e2,Bool,Bool,Bool);
+	if(auto ae=cast(OrExp)expr) return expr=handleBinary("disjunction",ae,ae.e1,ae.e2,Bool,Bool,Bool);
+	if(auto ae=cast(LtExp)expr) return expr=handleBinary("'<'",ae,ae.e1,ae.e2,ℝ,ℝ,Bool);
+	if(auto ae=cast(LeExp)expr) return expr=handleBinary("'≤'",ae,ae.e1,ae.e2,ℝ,ℝ,Bool);
+	if(auto ae=cast(GtExp)expr) return expr=handleBinary("'>'",ae,ae.e1,ae.e2,ℝ,ℝ,Bool);
+	if(auto ae=cast(GeExp)expr) return expr=handleBinary("'≥'",ae,ae.e1,ae.e2,ℝ,ℝ,Bool);
+	if(auto ae=cast(EqExp)expr) return expr=handleBinary("'='",ae,ae.e1,ae.e2,ℝ,ℝ,Bool);
+	if(auto ae=cast(NeqExp)expr) return expr=handleBinary("'≠'",ae,ae.e1,ae.e2,ℝ,ℝ,Bool);
 
 	if(auto ce=cast(CatExp)expr){
 		ce.e1=expressionSemantic(ce.e1,sc);
