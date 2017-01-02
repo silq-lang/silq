@@ -360,7 +360,7 @@ class Distribution{
 		auto db1=dDeBruijnVar(1);
 		auto vars=orderedFreeVars;
 		assert(isTuple||vars.length==1);
-		auto values=isTuple?dTuple(cast(DExpr[])vars[0..$-stripContext]):vars[0];
+		auto values=isTuple&&!stripContext?dTuple(cast(DExpr[])vars):vars[0];
 		auto r=dDiscDelta(db1,dRecord(["tag":one,"values":values]))*distribution.incDeBruijnVar(1,0);
 		foreach(v;vars) r=dInt(v,r);
 		r=r+dDiscDelta(db1,dRecord(["tag":zero]))*error;
