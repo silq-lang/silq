@@ -38,5 +38,5 @@ def main(){
     observe(x17==1);
     x18 := Bernoulli(p);
     observe(x18==1);
-    return p; // expected: (-2·p+1+p²)·(-4·p+-4·p³+1+6·p²+p⁴)·(-604656·p+604656)·[-1+p≤0]·[-p≤0]·p¹¹
+    return p; // expected: (-1209312·p+604656+604656·p²)·(-4·p+-4·p³+1+6·p²+p⁴)·(-p+1)·[-1+p≤0]·[-p≤0]·p¹¹
 }

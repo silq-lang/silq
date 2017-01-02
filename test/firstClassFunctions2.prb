@@ -2,10 +2,10 @@
 dat Foo{
     x: ℝ;
     def Foo(x){
-	this.x=x;
+        this.x=x;
     }
     def foo(){
-	return x;
+        return x;
     }
 }
 
@@ -13,7 +13,7 @@ def main(){
     k := 1338;
     k += Bernoulli(1/2);
     def foo(){
-	return k;
+        return k;
     }
     x := foo; // captured by value
     y := Foo(1337);

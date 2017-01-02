@@ -2,6 +2,6 @@ def main(){
     a := Uniform(0,1);
     b := Uniform(-1,0);
     c := a*b;
-    return c; // expected: -[-1+-c≤0]·[c≠0]·[c≤0]·log(-c)
+    return c; // expected: -[-1+-c≤0]·[-c≠0]·[c≤0]·log(-c)
     // TODO: normalization constant (integrate linear function of log)
 }

@@ -18,5 +18,5 @@ def main(){
         return (x-y(2))*k;
     }
     z := bar;
-    return z(2); // expected: δ[8+r₁]
+    return z(2); // expected: δ[-8+-r₁]
 }
