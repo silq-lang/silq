@@ -5,6 +5,6 @@ def main(){
 	x := Bernoulli(1/2);
 	y := infer(()=>x+1);
 	k := y.then((x)=>(x,x+Bernoulli(1/2)));
-	//return k.then((a,b)=>a+b).sample(); // TODO
-	return (k.then((x:ℝ×ℝ)=>x[0]+x[1]).sample(),k.sample()[0]); // expected: (δ[-r₁+2]·⅟4+δ[-r₁+3]·⅟4)·δ[-r₂+1]+(δ[-r₁+4]·⅟4+δ[-r₁+5]·⅟4)·δ[-r₂+2]
+	return (k.then((a,b)=>a+b).sample(),k.sample()[0]); // expected: (δ[-r₁+2]·⅟4+δ[-r₁+3]·⅟4)·δ[-r₂+1]+(δ[-r₁+4]·⅟4+δ[-r₁+5]·⅟4)·δ[-r₂+2]
+	//return (k.then((x:ℝ×ℝ)=>x[0]+x[1]).sample(),k.sample()[0]);
 }
