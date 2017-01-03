@@ -276,7 +276,7 @@ class ForallTy: Type{
 		if(!r) return false;
 		if(isTuple&&!cast(TupleTy)r.dom) return false;
 		r=r.setTuple(isTuple);
-		if(isSquare!=r.isSquare||nargs!=r.nargs) return false; // TODO: fix isTuple
+		if(isSquare!=r.isSquare||nargs!=r.nargs) return false;
 		r=r.relabelAll(freshNames(r));
 		Expression[string] nsubst;
 		foreach(k,v;subst) if(!names.canFind(k)) nsubst[k]=v;
@@ -331,7 +331,7 @@ class ForallTy: Type{
 		if(!r) return false;
 		if(isTuple&&!cast(TupleTy)r.dom) return false;
 		r=r.setTuple(isTuple);
-		if(isSquare!=r.isSquare||isTuple!=r.isTuple||nargs!=r.nargs) return false; // TODO: fix isTuple
+		if(isSquare!=r.isSquare||isTuple!=r.isTuple||nargs!=r.nargs) return false;
 		r=r.relabelAll(freshNames(r));
 		return dom==r.dom&&cod==r.cod;
 	}

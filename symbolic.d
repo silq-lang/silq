@@ -133,7 +133,7 @@ private struct Analyzer{
 						auto arg=fty.isTuple?new TupleExp(cast(Expression[])names):names[0];
 						auto params=new Parameter[](names.length);
 						foreach(i,ref p;params) p=new Parameter(names[i],fty.argTy(i));
-						auto call=new CallExp(id,arg);
+						auto call=new CallExp(id,arg,fty.isSquare);
 						auto bdy=new CompoundExp([new ReturnExp(call)]);
 						auto fdef=new FunctionDef(null,params,fty.isTuple,null,bdy);
 						fdef.isSquare=fty.isSquare;
@@ -344,12 +344,16 @@ private struct Analyzer{
 					auto arg=id.name=="Categorical"||id.name=="SampleFrom"?null:doIt(ce.arg);
 					switch(id.name){
 					case "array": // TODO: make polymorphic
-						if(auto tpl=cast(TupleTy)ce.arg.type){
-							assert(tpl.types.length==2&&tpl.types[0]==ℝ);
-							return dConstArray(arg[0.dℤ],arg[1.dℤ]);
-						}
-						assert(ce.arg.type == ℝ);
-						return dArray(arg);
+						assert(ce.arg.type==typeTy);
+						auto idist=new Distribution();
+						auto len=idist.declareVar("`len"),init=idist.declareVar("`init");
+						idist.addArgs([len,init],true,null);
+						auto r=idist.declareVar("`r");
+						idist.initialize(r,dConstArray(len,init),arrayTy(ce.arg));
+						idist.marginalize(init);
+						idist.marginalize(len);
+						idist.orderFreeVars([r],false);
+						return idist.toDExpr();
 					case "readCSV":
 						err.error(text("call to 'readCSV' only supported as the right hand side of an assignment"),ce.loc);
 						unwind();
@@ -1156,6 +1160,7 @@ private struct Analyzer{
 						}
 					}
 					auto exp=transformExp(ret);
+					if(!exp) exp=dTuple([]); // TODO: is there a better way?
 					DVar var=cast(DVar)exp;
 					if(var && !var.name.startsWith("__")){
 						if(var in vars||functionDef.context&&!functionDef.isConstructor&&var.name==functionDef.contextName){
@@ -1166,7 +1171,7 @@ private struct Analyzer{
 						}
 						vars.insert(var);
 						orderedVars~=var;
-					}else if(exp){
+					}else{
 						if(auto fe=cast(FieldExp)ret){
 							dist.freeVar(fe.f.name);
 							var=dist.declareVar(fe.f.name);

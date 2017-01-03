@@ -163,8 +163,10 @@ Expression presemantic(Declaration expr,Scope sc){
 				pty~=p.vtype;
 			}
 			fd.ret=typeSemantic(fd.rret,sc);
+			assert(fd.isTuple||pty.length==1);
+			auto pt=fd.isTuple?tupleTy(pty):pty[0];
 			if(!fd.ret) fd.sstate=SemState.error;
-			else fd.ftype=forallTy(pn,tupleTy(pty),fd.ret,fd.isSquare,true);
+			else fd.ftype=forallTy(pn,pt,fd.ret,fd.isSquare,fd.isTuple);
 		}
 	}
 	return expr;
@@ -274,7 +276,7 @@ bool isBuiltIn(Identifier id){
 Expression builtIn(Identifier id,Scope sc){
 	Expression t=null;
 	switch(id.name){
-	case "array": t=funTy(ℝ,arrayTy(ℝ),false,false); break;
+	case "array": t=forallTy(["a"],typeTy,funTy(tupleTy([ℝ,varTy("a",typeTy)]),arrayTy(varTy("a",typeTy)),false,true),true,false); break;
 	case "readCSV": t=funTy(stringTy,arrayTy(ℝ),false,false); break;
 	case "π": t=ℝ; break;
 	case "exp","log","abs": t=funTy(ℝ,ℝ,false,false); break;
@@ -573,6 +575,17 @@ VarDecl varDeclSemantic(VarDecl vd,Scope sc){
 
 Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
 	bool success=true;
+	if(auto ce=cast(CallExp)be.e2){
+		if(auto id=cast(Identifier)ce.e){
+			if(id.name=="array" && !ce.isSquare){
+				ce.arg=expressionSemantic(ce.arg,sc);
+				if(ce.arg.type==ℝ){
+					ce.e.type=funTy(ℝ,arrayTy(ℝ),false,false);
+					ce.e.sstate=SemState.completed;
+				}
+			}
+		}
+	}
 	auto de=cast(DefExp)makeDeclaration(be,success,sc);
 	if(!de) be.sstate=SemState.error;
 	assert(success && de && de.initializer is be || !de||de.sstate==SemState.error);
@@ -751,12 +764,6 @@ Expression callSemantic(CallExp ce,Scope sc){
 		return ce;
 	auto fun=ce.e;
 	CallExp checkFunCall(FunTy ft){
-		if(auto id=cast(Identifier)fun){
-			auto args=cast(TupleExp)ce.arg;
-			if(id.name=="array" && args && args.length==2){ // TODO: make type of 'array' polymorphic
-				ft=funTy(tupleTy([ℝ,args.e[1].type]),arrayTy(args.e[1].type),false,true);
-			}
-		}
 		bool tryCall(){
 			if(!ce.isSquare && ft.isSquare){
 				auto nft=ft;
@@ -1232,7 +1239,7 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 			return ite;
 		auto t1=ite.then.s[0].type;
 		auto t2=ite.othw.s[0].type;
-		if(t1 != t2){
+		if(t1 && t2 && t1 != t2){
 			sc.error(format("incompatible types %s and %s for branches of if expression",t1,t2),ite.loc);
 			ite.sstate=SemState.error;
 		}
