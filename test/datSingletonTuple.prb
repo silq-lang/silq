@@ -1,0 +1,23 @@
+
+dat Foo{
+	x: ℝ;
+	def Foo(x){
+		this.x=x;
+	}
+	def foo(){
+		return (x,);
+	}
+	def bar(){
+		return x;
+	}
+}
+
+def main(){
+	f := Foo(2);
+	k := f.foo()[0];
+	f.x = 3;
+	l := f.bar();
+	return (k,l); // expected: δ[-k+2]·δ[-l+3]
+}
+
+

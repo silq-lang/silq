@@ -1,0 +1,8 @@
+
+def foo(){
+    return (1,);
+}
+def main(){
+    x := foo();
+    return (x[0],(2,)); // expected: δ[-r₁+1]·δ_r₂[(2,)]
+}
