@@ -262,12 +262,8 @@ bool isBuiltIn(Identifier id){
 	case "exp","log","abs":
 	case "floor","ceil":
 	case "CosUnifDist":
-	case "Rayleigh","Bernoulli","Exponential","StudentT","Poisson":
-	case "Gauss","Pareto","Uniform","UniformInt","Beta","Gamma","Laplace","Weibull":
-	case "TruncatedGauss":
-	case "FromMarginal","SampleFrom": 
-	case "Expectation":
-	case "Categorical":
+	foreach(name;ToTuple!distribNames)
+	case name: goto case;
 	case "infer","Distribution":
 		return true;
 	default: return false;
@@ -282,14 +278,19 @@ Expression builtIn(Identifier id,Scope sc){
 	case "exp","log","abs": t=funTy(ℝ,ℝ,false,false); break;
 	case "floor","ceil": t=funTy(ℝ,ℝ,false,false); break;
 	case "CosUnifDist": t=funTy(unit,ℝ,false,false); break; // TDOO: remove
-	case "Rayleigh","Bernoulli","Exponential","StudentT","Poisson": t=funTy(ℝ,ℝ,false,false); break;
-	case "Gauss","Pareto","Uniform","UniformInt","Beta","Gamma","Laplace","Weibull":
-		t=funTy(tupleTy([ℝ,ℝ]),ℝ,false,true); break;
-	case "TruncatedGauss":
-		t=funTy(tupleTy([ℝ,ℝ,ℝ,ℝ]),ℝ,false,true); break;
+	foreach(name;ToTuple!distribNames){
+		static if(name!="Categorical"){
+			case name:
+				auto nargs=paramNames!name.length;
+				auto argty=nargs==1?ℝ:tupleTy((cast(Expression)ℝ).repeat(nargs).array);
+				t=funTy(argty,ℝ,false,nargs!=1);
+				break;
+		}
+	}
+	break;		
+	case "Categorical": t=funTy(arrayTy(ℝ),ℝ,false,false); break;
 	case "FromMarginal","SampleFrom": t=unit; break; // those are actually magic polymorphic functions
 	case "Expectation": t=funTy(ℝ,ℝ,false,false); break; // TODO: this should be polymorphic too
-	case "Categorical": t=funTy(arrayTy(ℝ),ℝ,false,false); break;
 
 	case "Distribution": t=funTy(typeTy,typeTy,true,false); break;
 	case "infer": t=
