@@ -1230,12 +1230,14 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 			return ite;
 		}
 		ite.then.s[0]=expressionSemantic(ite.then.s[0],sc);
+		propErr(ite.then.s[0],ite.then);
 		if(!ite.othw){
 			sc.error("missing else for if expression",ite.loc);
 			ite.sstate=SemState.error;
 			return ite;
 		}
 		ite.othw.s[0]=expressionSemantic(ite.othw.s[0],sc);
+		propErr(ite.othw.s[0],ite.othw);
 		propErr(ite.cond,ite);
 		propErr(ite.then,ite);
 		propErr(ite.othw,ite);
