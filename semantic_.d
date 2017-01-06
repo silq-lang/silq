@@ -265,6 +265,7 @@ bool isBuiltIn(Identifier id){
 	case "bernoulli": goto case "flip";
 	foreach(name;ToTuple!distribNames)
 	case name: goto case;
+	case "FromMarginal","SampleFrom":
 	case "infer","Distribution":
 		return true;
 	default: return false;
