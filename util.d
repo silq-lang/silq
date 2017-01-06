@@ -520,3 +520,7 @@ string capitalize(string s){ // (only works with ascii for now)
 	if(!s.length) return s;
 	return s[0].toUpper().to!string~s[1..$];
 }
+string uncapitalize(string s){
+	if(!s.length) return s;
+	return s[0].toLower().to!string~s[1..$];	
+}

@@ -262,7 +262,7 @@ bool isBuiltIn(Identifier id){
 	case "exp","log","abs":
 	case "floor","ceil":
 	case "CosUnifDist":
-	case "Rayleigh","Bernoulli","Exp","Exponential","StudentT","Poisson":
+	case "Rayleigh","Bernoulli","Exponential","StudentT","Poisson":
 	case "Gauss","Pareto","Uniform","UniformInt","Beta","Gamma","Laplace","Weibull":
 	case "TruncatedGauss":
 	case "FromMarginal","SampleFrom": 
@@ -282,7 +282,7 @@ Expression builtIn(Identifier id,Scope sc){
 	case "exp","log","abs": t=funTy(ℝ,ℝ,false,false); break;
 	case "floor","ceil": t=funTy(ℝ,ℝ,false,false); break;
 	case "CosUnifDist": t=funTy(unit,ℝ,false,false); break; // TDOO: remove
-	case "Rayleigh","Bernoulli","Exp","Exponential","StudentT","Poisson": t=funTy(ℝ,ℝ,false,false); break;
+	case "Rayleigh","Bernoulli","Exponential","StudentT","Poisson": t=funTy(ℝ,ℝ,false,false); break;
 	case "Gauss","Pareto","Uniform","UniformInt","Beta","Gamma","Laplace","Weibull":
 		t=funTy(tupleTy([ℝ,ℝ]),ℝ,false,true); break;
 	case "TruncatedGauss":

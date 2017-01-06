@@ -379,95 +379,9 @@ private struct Analyzer{
 						if(ce.arg.type!=ℝ)
 							err.error("expected one real argument to floor",ce.loc);
 						return dCeil(arg);
-					case "Gauss":
-						if(ce.arg.type!=tupleTy([ℝ,ℝ])){
-							err.error("expected two real arguments (μ,σ²) to Gauss",ce.loc);
-							unwind();
-						}
-						auto μ=arg[0.dℤ], σsq=arg[1.dℤ];
-						dist.assertTrue(dIvr(DIvr.Type.leZ,-σsq),formatError("negative variance",e.loc));
-						auto var=dist.getTmpVar("__g");
-						dist.distribute(gaussPDF(var,μ,σsq));
-						//import approximate;
-						//dist.distribute(approxGaussPDF(var,μ,σsq));
-						return var;
-					case "TruncatedGauss":
-						if(ce.arg.type!=tupleTy([ℝ,ℝ,ℝ,ℝ])){
-							err.error("expected four real arguments (μ,σ²,a,b) to TruncatedGauss",ce.loc);
-							unwind();
-						}
-						auto μ=arg[0.dℤ], σsq=arg[1.dℤ], a=arg[2.dℤ], b=arg[3.dℤ];
-						dist.assertTrue(dIvr(DIvr.Type.leZ,-σsq),formatError("negative variance",e.loc));
-						auto var=dist.getTmpVar("__g");
-						dist.distribute(truncatedGaussPDF(var,μ,σsq, a, b));
-						return var;
-					case "Pareto":
-						if(ce.arg.type!=tupleTy([ℝ,ℝ])){
-							err.error("expected two real arguments (a,b) to Pareto",ce.loc);
-							unwind();
-						}
-						auto a=arg[0.dℤ], b=arg[1.dℤ];
-						dist.assertTrue(dIvr(DIvr.Type.leZ,-a),formatError("negative scale",e.loc));
-						dist.assertTrue(dIvr(DIvr.Type.leZ,-b),formatError("negative shape",e.loc));
-						auto var=dist.getTmpVar("__g");
-						dist.distribute(paretoPDF(var,a,b));
-						return var;
-					case "Rayleigh":
-						if(ce.arg.type!=ℝ){
-							err.error("expected one real argument (σ²) to Rayleigh",ce.loc);
-							unwind();
-						}
-						auto σsq=arg;
-						dist.assertTrue(dIvr(DIvr.Type.leZ,-σsq),formatError("negative scale",e.loc));
-						auto var=dist.getTmpVar("__g");
-						dist.distribute(rayleighPDF(var,σsq));
-						return var;
 					case "CosUnifDist": // TODO: Remove
 						auto var=dist.getTmpVar("__g");
 						dist.distribute(one/dΠ*(1-var^^2)^^-(one/2) * dBounded!"[]"(var,-one, one) * dIvr(DIvr.Type.neqZ,var-one)*dIvr(DIvr.Type.neqZ,var+one));
-						return var;
-					case "Uniform":
-						if(ce.arg.type!=tupleTy([ℝ,ℝ])){
-							err.error("expected two real arguments (a,b) to Uniform",ce.loc);
-							unwind();
-						}
-						auto a=arg[0.dℤ],b=arg[1.dℤ];
-						dist.assertTrue(dIvr(DIvr.Type.leZ,a-b),formatError("empty range",e.loc));
-						auto var=dist.getTmpVar("__u");
-						dist.distribute(uniformPDF(var,a,b));
-						return var;
-					case "Bernoulli":
-						if(ce.arg.type!=ℝ){
-							err.error("expected one real argument (p) to Bernoulli",ce.loc);
-							unwind();
-						}
-						auto p=arg;
-						dist.assertTrue(dIvr(DIvr.Type.leZ,-p)*dIvr(DIvr.Type.leZ,p-1),"parameter ouside range [0..1]");
-						auto var=dist.getTmpVar("__b");
-						dist.distribute(bernoulliPDF(var,p));
-						return var;
-					case "UniformInt":
-						if(ce.arg.type!=tupleTy([ℝ,ℝ])){
-							err.error("expected two real arguments (a,b) to UniformInt",ce.loc);
-							unwind();
-						}
-						auto a=arg[0.dℤ],b=arg[1.dℤ];
-						auto tmp=freshVar(); // TODO: get rid of this
-						auto nnorm=uniformIntPDFNnorm(tmp,a,b);
-						auto norm=dIntSmp(tmp,nnorm,one);
-						dist.assertTrue(dIvr(DIvr.Type.neqZ,norm),"no integers in range");
-						auto var=dist.getTmpVar("__u");
-						dist.distribute(nnorm.substitute(tmp,var)/norm);
-						return var;
-					case "Poisson":
-						if(ce.arg.type!=ℝ){
-							err.error("expected one argument (λ) to Poisson",ce.loc);
-							unwind();
-						}
-						auto λ=arg;
-						dist.assertTrue(dIvr(DIvr.Type.lZ,-λ),"λ must be positive");
-						auto var=dist.getTmpVar("__p");
-						dist.distribute(poissonPDF(var,λ));
 						return var;
 					case "Categorical":
 						if(ce.arg.type!=arrayTy(ℝ)){
@@ -500,67 +414,18 @@ private struct Analyzer{
 							//err.error("argument to Categorical should be an array",ce.loc);
 							//unwind();
 						}
-					case "Beta":
-						if(ce.arg.type!=tupleTy([ℝ,ℝ])){
-							err.error("expected two real arguments (α,β) to Beta",ce.loc);
-							unwind();
+					foreach(name;ToTuple!distribNames){
+						static if(name != "Categorical"){
+							case name:
+								auto nargs=paramNames!name.length;
+								auto args=nargs==1?[arg]:iota(nargs).map!(i=>arg[i.dℤ]).array;
+								foreach(c;cond!name(args))
+									dist.assertTrue(c.cond,formatError(c.error,e.loc));
+								auto var=dist.getTmpVar("__"~name[0]);
+								dist.distribute(pdf!name(var,args));
+								return var;
 						}
-						auto α=arg[0.dℤ],β=arg[1.dℤ];
-						dist.assertTrue(dIvr(DIvr.Type.lZ,-α)*dIvr(DIvr.Type.lZ,-β),"α and β must be positive");
-						auto var=dist.getTmpVar("__β");
-						dist.distribute(betaPDF(var,α,β));
-						return var;
-					case "Gamma":
-						if(ce.arg.type!=tupleTy([ℝ,ℝ])){
-							err.error("expected two real arguments (α,β) to Gamma",ce.loc);
-							unwind();
-						}
-						auto α=arg[0.dℤ],β=arg[1.dℤ];
-						dist.assertTrue(dIvr(DIvr.Type.lZ,-α)*dIvr(DIvr.Type.lZ,-β),"α and β must be positive");
-						auto var=dist.getTmpVar("__γ");
-						dist.distribute(gammaPDF(var,α,β));
-						return var;
-					case "Laplace":
-						if(ce.arg.type!=tupleTy([ℝ,ℝ])){
-							err.error("expected two real arguments (μ,b) to Laplace",ce.loc);
-							unwind();
-						}
-						auto μ=arg[0.dℤ],b=arg[1.dℤ];
-						dist.assertTrue(dIvr(DIvr.Type.lZ,-b),"b must be positive");
-						auto var=dist.getTmpVar("__γ");
-						dist.distribute(laplacePDF(var,μ,b));
-						return var;
-					case "Exp","Exponential":
-						if(ce.arg.type!=ℝ){
-							err.error(text("expected one real argument (λ) to ",id.name),ce.loc);
-							unwind();
-						}
-						auto λ=arg;
-						dist.assertTrue(dIvr(DIvr.Type.lZ,-λ),"λ must be positive");
-						auto var=dist.getTmpVar("__e");
-						dist.distribute(exponentialPDF(var,λ));
-						return var;
-					case "StudentT":
-						if(ce.arg.type!=ℝ){
-							err.error("expected one real argument (ν) to StudentT",ce.loc);
-							unwind();
-						}
-						auto ν=arg;
-						dist.assertTrue(dIvr(DIvr.Type.lZ,-ν),"ν must be positive");
-						auto var=dist.getTmpVar("__t");
-						dist.distribute(studentTPDF(var,ν));
-						return var;
-					case "Weibull":
-						if(ce.arg.type!=tupleTy([ℝ,ℝ])){
-							err.error("expected two arguments (λ,k) to Weibull",ce.loc);
-							unwind();
-						}
-						auto λ=arg[0.dℤ], k=arg[1.dℤ];
-						dist.assertTrue(dIvr(DIvr.Type.lZ,-λ),"λ must be positive");
-						dist.assertTrue(dIvr(DIvr.Type.lZ,-k),"k must be positive");
-						auto var=dist.getTmpVar("__w");
-						dist.distribute(weibullPDF(var,λ,k));
-						return var;
+					}
 					case "FromMarginal":
 						auto tmp=dist.getTmpVar("__mrg");
 						auto ndist=dist.dup();

@@ -46,21 +46,13 @@ see 'test' directory for more examples
 
 string computeDistributionDocString(){
 	import distrib, std.range, std.algorithm, std.uni, std.ascii;
-	enum names=[__traits(allMembers,distrib)].filter!(x=>x.endsWith("PDF")).map!(x=>cast(string[2])[x,capitalize(x[0..$-"PDF".length])]).array;
-	enum calls={ string[][] r;
-             foreach(name;ToTuple!names){
-	             import std.traits;
-	             r~=name[0]~[ParameterIdentifierTuple!(mixin(name[0]))[1..$]];
-             }
-	         return r;
-		}();
 	import std.conv, dexpr;
 	string[3][] lrc;
 	// TODO: domain constraints
-	foreach(i,name;ToTuple!names){
-		DExpr cond=mixin(text(name[0][0..$-3],"Cond(",calls[i][1..$].map!(x=>`dVar("`~x~`")`).join(","),")")).simplify(one);
-		string lhs=text("x := ",name[1],"(",calls[i][1..$].join(","),");");
-		string rhs=text("p(x) = ",mixin(text(name[0],`(dVar("x"),`,calls[i][1..$].map!(x=>`dVar("`~x~`")`).join(","),")")).simplify(cond).toString(opt.formatting));
+	foreach(i,name;ToTuple!distribNames){
+		DExpr cond=mixin(text(uncapitalize(name)~"Cond","(",paramNames!(name).map!(x=>`dVar("`~x~`")`).join(","),")")).extractConditions.simplify(one);
+		string lhs=text("x := ",name,"(",paramNames!(name).join(","),");");
+		string rhs=text("p(x) = ",mixin(text(uncapitalize(name),"PDF",`(dVar("x"),`,paramNames!(name).map!(x=>`dVar("`~x~`")`).join(","),")")).simplify(cond).toString(opt.formatting));
 		string cnd=text("where "~cond.toString(opt.formatting));
 		lrc~=[lhs,rhs,cnd];
 	}
