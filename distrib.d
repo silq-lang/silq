@@ -70,10 +70,10 @@ Cond[] uniformCond(DExpr a,DExpr b){
 	return [Cond(dIvr(DIvr.Type.leZ,a-b),"empty range")];
 }
 
-DExpr bernoulliPDF(DVar var,DExpr p){
+DExpr flipPDF(DVar var,DExpr p){
 	return dDelta(var)*(1-p)+dDelta(1-var)*p;
 }
-Cond[] bernoulliCond(DExpr p){
+Cond[] flipCond(DExpr p){
 	return [Cond(dIvr(DIvr.Type.leZ,-p)*dIvr(DIvr.Type.leZ,p-1),"parameter ouside range [0..1]")];
 }
 

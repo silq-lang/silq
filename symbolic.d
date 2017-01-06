@@ -414,6 +414,7 @@ private struct Analyzer{
 							//err.error("argument to categorical should be an array",ce.loc);
 							//unwind();
 						}
+					case "bernoulli": goto case "flip";
 					foreach(name;ToTuple!distribNames){
 						static if(name != "categorical"){
 							case name:
