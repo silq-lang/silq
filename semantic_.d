@@ -261,7 +261,7 @@ bool isBuiltIn(Identifier id){
 	case "π":
 	case "exp","log","abs":
 	case "floor","ceil":
-	case "CosUnifDist":
+	case "cosUnifDist":
 	foreach(name;ToTuple!distribNames)
 	case name: goto case;
 	case "infer","Distribution":
@@ -277,9 +277,9 @@ Expression builtIn(Identifier id,Scope sc){
 	case "π": t=ℝ; break;
 	case "exp","log","abs": t=funTy(ℝ,ℝ,false,false); break;
 	case "floor","ceil": t=funTy(ℝ,ℝ,false,false); break;
-	case "CosUnifDist": t=funTy(unit,ℝ,false,false); break; // TDOO: remove
+	case "cosUnifDist": t=funTy(unit,ℝ,false,false); break; // TDOO: remove
 	foreach(name;ToTuple!distribNames){
-		static if(name!="Categorical"){
+		static if(name!="categorical"){
 			case name:
 				auto nargs=paramNames!name.length;
 				auto argty=nargs==1?ℝ:tupleTy((cast(Expression)ℝ).repeat(nargs).array);
@@ -288,7 +288,7 @@ Expression builtIn(Identifier id,Scope sc){
 		}
 	}
 	break;		
-	case "Categorical": t=funTy(arrayTy(ℝ),ℝ,false,false); break;
+	case "categorical": t=funTy(arrayTy(ℝ),ℝ,false,false); break;
 	case "FromMarginal","SampleFrom": t=unit; break; // those are actually magic polymorphic functions
 	case "Expectation": t=funTy(ℝ,ℝ,false,false); break; // TODO: this should be polymorphic too
 

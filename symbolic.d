@@ -341,7 +341,7 @@ private struct Analyzer{
 						}
 						return r;
 					}
-					auto arg=id.name=="Categorical"||id.name=="SampleFrom"?null:doIt(ce.arg);
+					auto arg=id.name=="categorical"||id.name=="SampleFrom"?null:doIt(ce.arg);
 					switch(id.name){
 					case "array": // TODO: make polymorphic
 						assert(ce.arg.type==typeTy);
@@ -379,13 +379,13 @@ private struct Analyzer{
 						if(ce.arg.type!=ℝ)
 							err.error("expected one real argument to floor",ce.loc);
 						return dCeil(arg);
-					case "CosUnifDist": // TODO: Remove
+					case "cosUnifDist": // TODO: Remove
 						auto var=dist.getTmpVar("__g");
 						dist.distribute(one/dΠ*(1-var^^2)^^-(one/2) * dBounded!"[]"(var,-one, one) * dIvr(DIvr.Type.neqZ,var-one)*dIvr(DIvr.Type.neqZ,var+one));
 						return var;
-					case "Categorical":
+					case "categorical":
 						if(ce.arg.type!=arrayTy(ℝ)){
-							err.error("expected one argument (ps: ℝ[]) to Categorical",ce.loc);
+							err.error("expected one argument (ps: ℝ[]) to categorical",ce.loc);
 							unwind();
 						}
 						auto idd=cast(Identifier)ce.arg;
@@ -411,11 +411,11 @@ private struct Analyzer{
 							auto var=dist.getTmpVar("__c");
 							dist.distribute(categoricalPDF(var,p));
 							return var;
-							//err.error("argument to Categorical should be an array",ce.loc);
+							//err.error("argument to categorical should be an array",ce.loc);
 							//unwind();
 						}
 					foreach(name;ToTuple!distribNames){
-						static if(name != "Categorical"){
+						static if(name != "categorical"){
 							case name:
 								auto nargs=paramNames!name.length;
 								auto args=nargs==1?[arg]:iota(nargs).map!(i=>arg[i.dℤ]).array;

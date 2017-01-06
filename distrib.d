@@ -14,17 +14,17 @@ DExpr extractConditions(Cond[] conds){
 	foreach(x;conds) r=r*x.cond;
 	return r;
 }
-enum distribNames=[__traits(allMembers,distrib)].filter!(x=>x.endsWith("PDF")).map!(x=>capitalize(x[0..$-"PDF".length])).array;
+enum distribNames=[__traits(allMembers,distrib)].filter!(x=>x.endsWith("PDF")).map!(x=>x[0..$-"PDF".length]).array;
 
 import std.traits: ParameterIdentifierTuple;
-enum paramNames(string name)=[ParameterIdentifierTuple!(mixin(uncapitalize(name)~"PDF"))[1..$]];
+enum paramNames(string name)=[ParameterIdentifierTuple!(mixin(name~"PDF"))[1..$]];
 
 DExpr pdf(string name)(DVar var,DExpr[] args)in{assert(args.length==paramNames!name.length);}body{
-	return mixin(text(uncapitalize(name),"PDF(var,",iota(paramNames!name.length).map!(i=>text("args[",i,"]")).join(","),")"));
+	return mixin(text(name,"PDF(var,",iota(paramNames!name.length).map!(i=>text("args[",i,"]")).join(","),")"));
  }
 
 Cond[] cond(string name)(DExpr[] args)in{assert(args.length==paramNames!name.length);}body{
-	return mixin(text(uncapitalize(name),"Cond(",iota(paramNames!name.length).map!(i=>text("args[",i,"]")).join(","),")"));
+	return mixin(text(name,"Cond(",iota(paramNames!name.length).map!(i=>text("args[",i,"]")).join(","),")"));
 }
 
 DExpr gaussPDF(DVar var,DExpr μ,DExpr ν){
