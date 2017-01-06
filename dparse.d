@@ -43,7 +43,7 @@ struct DParser{
 				}else doIt(lZ); break;
 			case '≤','≥': doIt(leZ,cur=='≥'); break;
 			default: expect('<'); assert(0);
-			}
+		}
 		expect(']');
 		return dIvr(ty,exp);
 	}
@@ -93,7 +93,10 @@ struct DParser{
 			return dAbs(arg);
 		}
 		expect('|');
-		auto arg=parseDExpr();
+		auto l=code.indexOf('|');
+		if(l==-1) l=code.length;
+		auto arg=DParser(code[0..l]).parseDExpr();
+		code=code[l..$];
 		expect('|');
 		return dAbs(arg);
 	}
