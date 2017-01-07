@@ -1,7 +1,7 @@
 
 + fix assert error in sve/{radar_query1,radar_query2}
 
-+ add dirac, dirichlet, binomial, multivariate gauss,
++ add dirichlet, binomial, multivariate gauss,
 
 + fix result for synopsis.prb
 

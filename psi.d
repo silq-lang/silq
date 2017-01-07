@@ -11,7 +11,7 @@ import options, scope_, semantic_, backend;
 string getActualPath(string path){
 	// TODO: search path
 	auto ext = path.extension;
-	if(ext=="") path = path.setExtension("prb");
+	if(ext=="") path = path.setExtension("psi");
 	//return file.getcwd().canFind("/test")?path:"test/"~path;
 	return path;
 }
@@ -28,7 +28,7 @@ string readCode(string path){ return readCode(File(path)); }
 int run(string path){
 	path = getActualPath(path);
 	auto ext = path.extension;
-	if(ext != ".prb" && ext !=".psi"){
+	if(ext !=".psi"){
 		stderr.writeln(path~": unrecognized extension: "~ext);
 		return 1;
 	}

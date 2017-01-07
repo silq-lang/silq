@@ -85,8 +85,8 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 	}
 	if(opt.casBench){
 		import std.file, std.conv;
-		auto bpath=buildPath(dirName(thisExePath()),"test/benchmarks/casBench/",to!string(opt.formatting),setExtension(baseName(path,".prb"),casExt()));
-		auto epath=buildPath(dirName(thisExePath()),"test/benchmarks/casBench/",to!string(opt.formatting),setExtension(baseName(path,".prb")~"Error",casExt()));
+		auto bpath=buildPath(dirName(thisExePath()),"test/benchmarks/casBench/",to!string(opt.formatting),setExtension(baseName(path,".psi"),casExt()));
+		auto epath=buildPath(dirName(thisExePath()),"test/benchmarks/casBench/",to!string(opt.formatting),setExtension(baseName(path,".psi")~"Error",casExt()));
 		auto bfile=File(bpath,"w");
 		bfile.writeln(dist.distribution.toString(opt.formatting));
 		if(dist.error.hasIntegrals()){

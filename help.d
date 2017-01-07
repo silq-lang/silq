@@ -31,7 +31,7 @@ The options below may be used.
 --distributions     print information about supported primitive distributions and exit
 --help              display this help and exit
 
-Recognized file extensions: *.psi, *.prb
+Recognized file extensions: *.psi
 
 Source code: http://psisolver.org/
 Commit: `~commit~`
@@ -41,7 +41,7 @@ Commit: `~commit~`
 enum syntax="input language syntax (example)
 see 'test' directory for more examples
 
-"~tryImport!("test/synopsis.prb","example not available for this build.\nConsult http://psisolver.org")["// skipped\n\n".length..$];
+"~tryImport!("test/synopsis.psi","example not available for this build.\nConsult http://psisolver.org")["// skipped\n\n".length..$];
 
 
 string computeDistributionDocString(){

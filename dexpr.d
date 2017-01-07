@@ -2379,7 +2379,7 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 		return null;
 	}
 	static DExpr staticSimplify(DExpr var,DExpr e,DExpr facts=one){
-		// cannot use all facts during simplification (e.g. see test/tuples5.prb)
+		// cannot use all facts during simplification (e.g. see test/tuples5.psi)
 		// the problem is that there might be a relation between e.g. multiple tuple entries, and we are not
 		// allowed to introduce free variables from var into e, or remove free variables from var.
 		// TODO: filter more precisely

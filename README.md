@@ -58,7 +58,7 @@ cd test
 
 ## Using PSI on your own models
 
-Run './psi example.prb', where 'example.prb' is a file containing the source code for the model.
+Run './psi example.psi', where 'example.psi' is a file containing the source code for the model.
 The next section ("Quick language guide") briefly introduces the most important language features.
 
 ### Additional command-line options
@@ -69,20 +69,20 @@ Run './psi --help' to display information about supported command-line options.
 ### Examples
 
 ```
-$ cat example.prb
+$ cat example.psi
 def main(){
     a := Gauss(0,1);
     b := Gauss(0,1);
     return if a > b { a } else { b };
 }
 
-$ psi example.prb
+$ psi example.psi
 p(r₁) = (d/dx)⁻¹[e^(-x²)](r₁·⅟√2̅)·2·⅟e^(r₁²·⅟2)·⅟π·⅟√2̅
 
-$ psi example.prb --mathematica --cdf
+$ psi example.psi --mathematica --cdf
 p[r₁_] := (-2^(1/2)*Sqrt[Pi]*(Erf[-1/2^(1/2)*20]+1)/2^2+1/2^(1/2)*2*Sqrt[Pi]*(Erf[1/2^(1/2)*cr1]+1)/2^2)*1/2^(1/2)*1/Pi*Boole[-20+-cr1<=0]
 
-$ cat coin_bias_small.prb
+$ cat coin_bias_small.psi
 def main(){
     p := Uniform(0,1);
     x1 := Bernoulli(p);
@@ -94,7 +94,7 @@ def main(){
     return p;
 }
 
-$ psi coin_bias_small.prb --plot
+$ psi coin_bias_small.psi --plot
 p(p) = (-30·p+30)·[-1+p≤0]·[-p≤0]·p⁴
 plotting... (PDF)
 command: 
@@ -109,7 +109,7 @@ plot [-10:10] (-1+x<=0)*(-30*x+30)*(-x<=0)*x**4
 
 ## Quick language guide
 
-PSI operates on files with the *.prb extension.
+PSI operates on files with the *.psi extension.
 
 Such a file contains one or multiple procedure definitions:
 
@@ -396,4 +396,4 @@ util.d:
 
 ## Adding new tests
 
-Add a *.prb file into the 'test' directory. 
+Add a *.psi file into the 'test' directory. 
