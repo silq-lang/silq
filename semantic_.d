@@ -872,9 +872,7 @@ Expression callSemantic(CallExp ce,Scope sc){
 	return ce;
 }
 
-Expression expressionSemantic(Expression expr,Scope sc)out(r){
-
-}body{
+Expression expressionSemantic(Expression expr,Scope sc){
 	alias Bool=ℝ; // TODO: maybe add 𝟚 as specific boolean type?
 	if(expr.sstate==SemState.completed||expr.sstate==SemState.error) return expr;
 	if(expr.sstate==SemState.started){
