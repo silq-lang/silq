@@ -1,5 +1,0 @@
-def main(){
-    //a := [Bernoulli(1/2),Bernoulli(1/2),Bernoulli(1/2),Bernoulli(1/2),Bernoulli(1/2),Bernoulli(1/2),Bernoulli(1/2)];
-    //return a;
-    return (Bernoulli(1/2),Bernoulli(1/2),Bernoulli(1/2),Bernoulli(1/2),Bernoulli(1/2),Bernoulli(1/2),Bernoulli(1/2));
-}

@@ -1,8 +1,0 @@
-
-def main(){
-    a := [0,0,0];
-    k := UniformInt(1,3);
-    for i in [0..3) { a[i] = Bernoulli((i+1)/3)/k; }
-    x := Categorical(a);
-    return x; // expected: 31·δ[-x+2]·⅟162+7·δ[-x]·⅟162+8·δ[-x+1]·⅟81
-}

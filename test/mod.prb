@@ -1,5 +1,0 @@
-
-def main(){
-    x := UniformInt(1,5);
-    return x % 2; // expected: 2·δ[-r₁]·⅟5+3·δ[-r₁+1]·⅟5
-}

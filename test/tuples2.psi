@@ -1,0 +1,4 @@
+def main(){
+    x := (uniform(0,1),uniform(0,1));
+    return x; // expected: [-1+x₁≤0]·[-1+x₂≤0]·[-x₁≤0]·[-x₂≤0]
+}

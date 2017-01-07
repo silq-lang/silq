@@ -1,5 +1,0 @@
-def main(){
-    a := Uniform(0,1);
-    b := Uniform(0,a);
-    return b; // expected: -[-1+b≤0]·[-b≤0]·[b≠0]·log(b)
-}

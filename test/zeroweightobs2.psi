@@ -1,0 +1,8 @@
+def main(){
+    x := uniform(0,1);
+    y := uniform(0,1);
+    z := uniform(0,1);
+    //observe(x==y || x+y+z==1 || x == 1 && y == 1);
+    observe(x==y || x+y+z==1 || x == 1);
+    return x; // expected: TODO: ((-x+1)·([x≠0]+[x≤0])·[-1+x≤0]·[-x≤0]·√3̅+[-1+x≤0]·[-x≤0]·√2̅+[-x+1=0]·⅟2·√5̅+δ[-x+1])·⅟(1+⅟2·√3̅+√2̅)
+}

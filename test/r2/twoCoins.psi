@@ -1,0 +1,9 @@
+def main(){ // bothHeads
+    firstCoin := flip(1/2);
+    secondCoin := flip(1/2);
+    bothHeads := firstCoin && secondCoin;
+    observe(bothHeads == 0);
+    firstCoin = Expectation(firstCoin);
+    secondCoin = Expectation(secondCoin);
+    return (firstCoin,secondCoin); // expected: 9·δ[-3·firstCoin+1]·δ[-3·secondCoin+1]
+}

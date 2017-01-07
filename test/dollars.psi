@@ -1,0 +1,19 @@
+// skipped
+// https://www.quora.com/If-you-randomly-distribute-13-dollars-among-4-people-what-is-the-expected-difference-between-the-highest-and-lowest-amounts-of-money-received-by-individuals
+
+def main(){
+    d := 3; // 13
+    p := 2; // 4
+    m := array(p,0);
+    for i in [0..d){
+        m[uniformInt(0,p-1)]+=1;
+    }
+    min := 14;
+    max := -1;
+    for i in [0..p){
+        if m[i] < min { min = m[i]; }
+        if m[i] > max { max = m[i]; }
+    }
+    r := max-min;
+    return r;
+}

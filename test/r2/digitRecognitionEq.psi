@@ -1,0 +1,81 @@
+// skipped
+// data too large
+
+def main(){
+    dataPrior := readCSV("data/DigitRecognitionEq/nbPrior.csv");
+
+    dataParams1 := readCSV("data/DigitRecognitionEq/nbParams1.csv");
+    dataParams2 := readCSV("data/DigitRecognitionEq/nbParams2.csv");
+    dataParams3 := readCSV("data/DigitRecognitionEq/nbParams3.csv");
+    dataParams4 := readCSV("data/DigitRecognitionEq/nbParams4.csv");
+    dataParams5 := readCSV("data/DigitRecognitionEq/nbParams5.csv");
+    dataParams6 := readCSV("data/DigitRecognitionEq/nbParams6.csv");
+    dataParams7 := readCSV("data/DigitRecognitionEq/nbParams7.csv");
+    dataParams8 := readCSV("data/DigitRecognitionEq/nbParams8.csv");
+    dataParams9 := readCSV("data/DigitRecognitionEq/nbParams9.csv");
+    dataParams10 := readCSV("data/DigitRecognitionEq/nbParams10.csv");
+
+    dataX := readCSV("data/DigitRecognitionEq/input.csv");
+
+    probs := array(10);
+    for i in [0..10){ probs[i] = dataPrior[i]; }
+    // probs[9]=1;
+    // for i in [0..9){ probs[9]-=probs[i]; } // fix rounding errors: TODO: make tolerance configurable
+    y := categorical(probs);
+    n := dataX.length;
+    assert(n==784);
+    //n=100;
+
+    if y==0{
+        for i in [0..n){
+            x := flip(dataParams1[i]);
+            observe(x == dataX[i]);
+        }
+    }else if y==1{
+        for i in [0..n){
+            x := flip(dataParams2[i]);
+            observe(x == dataX[i]);
+        }
+    }else if y==2{
+        for i in [0..n){
+            x := flip(dataParams3[i]);
+            observe(x == dataX[i]);
+        }        
+    }else if y==3{
+        for i in [0..n){
+            x := flip(dataParams4[i]);
+            observe(x == dataX[i]);
+        }                
+    }else if y==4{
+        for i in [0..n){
+            x := flip(dataParams5[i]);
+            observe(x == dataX[i]);
+        }                
+    }else if y==5{
+        for i in [0..n){
+            x := flip(dataParams6[i]);
+            observe(x == dataX[i]);
+        }                
+    }else if y==6{
+        for i in [0..n){
+            x := flip(dataParams7[i]);
+            observe(x == dataX[i]);
+        }                
+    }else if y==7{
+        for i in [0..n){
+            x := flip(dataParams8[i]);
+            observe(x == dataX[i]);
+        }                
+    }else if y==8{
+        for i in [0..n){
+            x := flip(dataParams9[i]);
+            observe(x == dataX[i]);
+        }                
+    }else if y==9{
+        for i in [0..n){
+            x := flip(dataParams10[i]);
+            observe(x == dataX[i]);
+        }
+    }
+    return y; // expected: 1.2845654376053378e-151·δ[-9+y]+1.5753310375910065e-66·δ[-6+y]+3.2488621047989999e-78·δ[y]+3.6292341137355297e-125·δ[-1+y]+3.9859766543648140e-119·δ[-4+y]+3.9869724121886395e-57·δ[-5+y]+6.4480104927268174e-82·δ[-8+y]+6.9171797278671309e-18·δ[-2+y]+9.4515477402753591e-157·δ[-7+y]+9.9999999999999999e-01·δ[-3+y]
+}

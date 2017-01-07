@@ -1,0 +1,6 @@
+
+def main(){
+	p := gauss(0,1);
+	k := infer(()=>flip(p));
+	return k.expectation(); // expected: [-1+r₁≤0]·[-r₁≤0]·⅟e^(r₁²·⅟2)·⅟√2̅·⅟√π̅
+}

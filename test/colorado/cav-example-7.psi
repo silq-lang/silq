@@ -1,0 +1,23 @@
+// skipped: this contains unbounded loops
+
+def main(){
+    count := 0;
+    i := 1;
+    //while(i < 5) {
+    repeat 10{ if i < 5 {
+        count = count + 1;
+        flip_guard1 := uniform(0, 1);
+        if (flip_guard1 <= 1-i/5){        
+            i = i + 1;
+        }
+    }}
+    return count;
+    /*estimateProb(count <= 0);
+      estimateProb(count <= 10);
+      estimateProb(count <= 25);
+      estimateProb(count <= 50);
+      estimateProb(count <= 100);
+      estimateProb(count <= 250);
+      estimateProb(count <= 500);
+      estimateProb(count <= 1000)*/
+}

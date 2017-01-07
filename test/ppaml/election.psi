@@ -1,0 +1,12 @@
+// skipped
+// TODO: get rid of the huge terms and possibly the integral
+
+def main(){
+    p0:=1+276;
+    p1:=1+304;
+    p := beta(p0,p1);
+    n:=2400000;
+    np:=n*p;
+    clintonVotes := gauss(np,np*(1-p));
+    return clintonVotes>n/2;
+}

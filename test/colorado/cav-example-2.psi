@@ -1,0 +1,31 @@
+// skipped: this has unbounded loops
+
+def main(){
+    h:=0;
+    t:=10;
+    //while h<=t{
+    repeat 6{if(h<=t){
+        flip_guard := uniform(0,1);
+        if flip_guard <= 1/2{
+            h+=uniform(0,10);
+        }
+        t = t+1;
+    }}
+    r := h-t;
+    // estimateProb(r > 1);
+    //p := r>1;
+    //p := h<=t;
+    return r;
+}
+
+/*h = 0.0;
+  t = 10.0;
+  while (h <= t) do
+  flip_guard = unifReal(0.0, 1.0);
+  if (flip_guard <= 0.5)
+  then
+  h = h + unifReal(0.0, 10.0)
+  end;
+  t = t + 1.0
+  end;
+  estimateProb(h-t > 1.0)*/

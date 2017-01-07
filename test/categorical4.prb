@@ -1,7 +1,0 @@
-
-def main(){
-    x := Categorical([1/2,1/2]);
-    a := [[0.5,0.4,0.1],[0.3,0.7]];
-    y := Categorical(a[x]);
-    return y; // expected: 11·δ[-1+y]·⅟20+2·δ[y]·⅟5+δ[-2+y]·⅟20
-}

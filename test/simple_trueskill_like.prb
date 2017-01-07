@@ -1,7 +1,0 @@
-
-def main(){
-    a := Gauss(100,15);
-    b := Gauss(100,15);
-    c := a > b;
-    return c; // expected: TODO: simplify better
-}

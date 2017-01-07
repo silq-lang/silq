@@ -1,0 +1,39 @@
+// skipped
+// TODO: make fast
+
+dat Person{
+    running: ℝ;
+    x: ℝ, v: ℝ;
+    def Person(running: ℝ){
+        this.running = running;
+        this.x = 0;
+        this.v = 0;
+    }
+    def updateRunning(){
+        if running {
+           running=flip(9/10);
+        }else{
+           running=flip(1/10);
+        }
+    }
+    def update(){
+        updateRunning();
+        v = if running { 5 } else { 2.5 };
+        x = x+v;
+    }
+    def measureX(x: ℝ){
+        o := this.x + gauss(0,1);
+        cobserve(o,x);
+    }
+}
+
+def main(){
+    p := Person(0);
+    data := [0,2.5,5,10,16.5];
+    for i in [0..data.length){
+       p.update();
+       p.measureX(data[i]);
+    }
+    for i in [0..3){ p.update(); }
+    return (p.x+gauss(0,1))/3;
+}

@@ -1,0 +1,18 @@
+dat GaussCounter{
+    x:ℝ;
+    def GaussCounter(){
+        this.x = 0;
+    }
+    def foo(){
+        this.x += gauss(0,1);
+        return ();
+    }
+}
+
+def main(){
+    c := GaussCounter();
+    for i in [0..2){
+        c.foo();
+    }
+    return c; // expected: TODO: simplify this better
+}

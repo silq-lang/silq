@@ -1,0 +1,12 @@
+// skipped
+// http://math.stackexchange.com/questions/831714/sum-of-two-truncated-gaussian
+
+def tg(μ,σ,a,b){
+    x := gauss(μ,σ^2);
+    observe (x >= a && x <= b);
+    return x;
+}
+
+def main() {
+    return tg(5,2,5,8)+tg(1,4,7,9); // expected: TODO: determine normalization
+}

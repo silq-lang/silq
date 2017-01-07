@@ -1,0 +1,7 @@
+def main(){
+    x := uniform(0,1) + uniform(0,1);
+    eps := 10^(-10);
+    observe(x==0+eps || x==2-eps);
+    if x < 1 { x = x - eps } else { x = x + eps }
+    return x; // expected: TODO: δ[-x+2]·⅟2+δ[-x]·⅟2
+}

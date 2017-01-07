@@ -1,0 +1,20 @@
+//skipped
+
+def main() { // ~1 minute
+
+    x := beta(2.0,2.0);	
+    y := x;
+
+    x2 := beta(2.0,2.0);
+
+    y = y + x2;
+
+    x3 := beta(2.0,2.0);
+    y = y + x3;
+
+    x4 := beta(2.0,2.0);
+    y = y + x4;
+
+    return 0.001*y;
+
+}

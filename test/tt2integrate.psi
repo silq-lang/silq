@@ -1,0 +1,7 @@
+def main(){
+    x:=1;
+    x=x+1;
+    y:=gauss(x,x);
+    if y>x { y-=x; }
+    return; // expected: 1
+}

@@ -1,0 +1,7 @@
+
+def main(){
+	x := flip(1/2);
+	d := infer(()=>()); // TODO: Dirac(()).
+	y := d.then((){ observe(x == flip(1/2)+1); return x; });
+	return y.sample(); // expected: δ[-r₁+1]·⅟2
+}

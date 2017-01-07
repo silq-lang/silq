@@ -1,0 +1,14 @@
+def max(x,y){
+    return if x>y { x } else { y };
+}
+
+def main(){
+    x := gauss(0,1);
+    y := uniform(0,1);
+    //observe(x>=0);
+    //cobserve(x,3);
+    /*x := uniform(0,1);
+    y := uniform(0,1);
+    observe(y==0||x==y);*/
+    return max(x,y);
+}

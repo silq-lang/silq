@@ -1,0 +1,10 @@
+//skipped
+
+def main() {
+    s:=0;
+    for i in [0..2) {
+        x:=pareto(1.161,1); //80-20 rule: https://en.wikipedia.org/wiki/Pareto_distribution#Relation_to_the_.22Pareto_principle.22
+		s = s + x;
+    } // mathematica couldn't solve this integral even after 5 days. 
+    return s;
+}

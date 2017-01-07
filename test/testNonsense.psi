@@ -1,0 +1,9 @@
+def main(){
+    x := (-1)^(1/2)+3;
+    x = x^2;
+    if x < 3{
+       x = x + 1;
+    }
+    z := gauss(0,1)^gauss(0,1);
+    return; // expected: TODO: 0
+}

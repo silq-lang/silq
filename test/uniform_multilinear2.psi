@@ -1,0 +1,11 @@
+// skipped
+
+def mains(){
+    x := uniform(0,1);
+    y := uniform(0,1);
+    z := uniform(0,1);
+    w := uniform(0,1);
+    k := uniform(0,1);
+    a := x*y+z*w+k;
+    return a;
+}

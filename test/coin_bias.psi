@@ -1,0 +1,42 @@
+// TODO: make evaluation instantaneous
+
+def main(){
+    p := uniform(0,1);
+    x1 := flip(p);
+    observe(x1==1);
+    x2 := flip(p);
+    observe(x2==1);
+    x3 := flip(p);
+    observe(x3==1);
+    x4 := flip(p);
+    observe(x4==1);
+    x5 := flip(p);
+    observe(x5==0);
+    x6 := flip(p);
+    observe(x6==0);
+    x7 := flip(p);
+    observe(x7==1);
+    x8 := flip(p);
+    observe(x8==0);
+    x9 := flip(p);
+    observe(x9==0);
+    x10 := flip(p);
+    observe(x10==1);
+    x11 := flip(p);
+    observe(x11==1);
+    x12 := flip(p);
+    observe(x12==0);
+    x13 := flip(p);
+    observe(x13==0);
+    x14 := flip(p);
+    observe(x14==1);
+    x15 := flip(p);
+    observe(x15==0);
+    x16 := flip(p);
+    observe(x16==1);
+    x17 := flip(p);
+    observe(x17==1);
+    x18 := flip(p);
+    observe(x18==1);
+    return p; // expected: (-1209312·p+604656+604656·p²)·(-4·p+-4·p³+1+6·p²+p⁴)·(-p+1)·[-1+p≤0]·[-p≤0]·p¹¹
+}

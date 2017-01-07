@@ -1,0 +1,17 @@
+// skipped
+// data too large, 2D-Arrays not supported
+
+def main(){
+    dataPrior := readCSV("data/DigitRecognition/nbPrior.csv");
+    dataParams := readCSV("data/DigitRecognition/nbParams.csv");
+    dataX := readCSV("data/DigitRecognition/input.csv");
+    probs := array(10);
+    for i in [0..10){ probs[i] = dataPrior[i]; }
+    x := array(dataX.length);
+    y := categorical(probs);
+    for i in [0..dataX.length){
+    	x[i] = flip(dataParams[y,i]);
+		observe(x[i] == dataX[i]);
+    }
+    return y;
+}

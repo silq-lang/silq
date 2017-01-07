@@ -1,0 +1,89 @@
+// skipped: this seems to be too slow at the moment
+
+def main(){
+    x := 0;
+    y := 0;
+    estX := 0;
+    estY := 0;
+    dx := 0;
+    dy := 0;
+    dxc := 0;
+    dyc := 0;
+    i := 1;
+    N := 6;
+    //while(i <= N) {
+    repeat N {
+        //i = i + 1;
+        guard_stay := uniform(0,1);
+        if guard_stay <= 2/10{
+            dxc = 0;
+            dyc = 0;
+        }else{
+            guard_flip1 := uniform(0,1);
+            guard_flip2 := uniform(0,1);
+            guard_flip3 := uniform(0,1);
+            guard_flip4 := uniform(0,1);
+            guard_flip5 := uniform(0,1);
+            guard_flip6 := uniform(0,1);
+            guard_flip7 := uniform(0,1);
+            if guard_flip1 <= 1/10 {
+                if guard_flip2 <= 1/10 {
+                    if guard_flip3 <= 1/10 {
+                        dxc = 0;
+                        dyc = uniform(1,2);
+                    }else{
+                        dxc = 0;
+                        dyc = uniform(-2, -1);
+                    }
+                }else{
+                    if guard_flip4 <= 1/10 {
+                        dxc = uniform(1,2);
+                        dyc = 0;
+                    }else{
+                        dxc = uniform(-2,-1);
+                        dyc = 0;
+                    }
+                }
+            }else{
+                if guard_flip5 <= 1/10 {
+                    if guard_flip6 <= 1/10 {
+                        dxc = uniform(1, 14142/10000);
+                        dyc = uniform(1, 14142/10000) 
+                    }else{
+                        dxc = uniform(1, 14142/10000);
+                        dyc = uniform(-14142/10000, -1)
+                    } 
+                }else{
+                    if guard_flip7 <= 1/10 {
+                        dxc = uniform(-14142/10000,-1);
+                        dyc = uniform(1,14142/10000);
+                    }else{
+                        dxc = uniform(-14142/10000,-1);
+                        dyc = uniform(-14142/10000,-1);
+                    }
+                }
+            }
+        };
+        dx = dxc + uniform(-5/100,5/100);
+        dy = dyc + uniform(-5/100,5/100);
+        x = x + dx;
+        y = y + dy;
+        estX = estX + dxc;
+        estY = estY + dyc;
+    }
+    r1 := x-estX;
+    r2 := y-estY;
+    return (r1,r2);
+    /*estimateProb(x-estX <= 0.10);
+      estimateProb(x-estX >= -0.10);
+      estimateProb(x-estX <= 0.20);
+      estimateProb(x-estX >= -0.20);
+      estimateProb(x-estX <= 0.30);
+      estimateProb(x-estX >= -0.30);
+      estimateProb(y-estY <= 0.10);
+      estimateProb(y-estY >= -0.10);
+      estimateProb(y-estY <= 0.20);
+      estimateProb(y-estY >= -0.20);
+      estimateProb(y-estY <= 0.30);
+      estimateProb(y-estY >= -0.30)*/
+}

@@ -1,0 +1,115 @@
+// skipped: this has unbounded loops
+// TODO: compute probabilities of predicates
+
+def main(){
+    p := 1/2;
+    
+    process1d := 0;
+    process1p := 0;
+    process2d := 0;
+    process2p := 0;
+    process3d := 0;
+    process3p := 0;
+    
+    
+    if uniform(0,1) <= p {
+        process1d = 1;
+    }
+    if uniform(0,1) <= p {
+        process1p = 1;
+    }
+    if uniform(0,1) <= p {
+        process2d = 1;
+    }
+    if uniform(0,1) <= p {
+        process2p = 1;
+    }
+    if uniform(0,1) <= p {
+        process3d = 1
+    }
+    if uniform(0,1) <= p {
+        process3p = 1
+    }
+    sum := process1p + process2p + process3p;
+    notStable := if sum > 1 { 1 } else { 0 };
+
+    count := 0;
+    while notStable > 0.5 {
+        oldprocess1d := process1d;
+        oldprocess1p := process1p;
+        oldprocess2d := process2d;
+        oldprocess2p := process2p;
+        oldprocess3d := process3d;
+        oldprocess3p := process3p;
+
+        if (oldprocess1d >= oldprocess3d){
+            if (oldprocess1d <= oldprocess3d){
+                if (oldprocess1p >= oldprocess3p){
+                    if (oldprocess1p <= oldprocess3p){
+						process1d = 1 - oldprocess1d;
+						if (uniform(0,1) <= p){
+							process1p = oldprocess1p;
+						}else{
+							process1p = 1 - oldprocess1p;
+						}
+					}else{
+						process1d = 1 - oldprocess1d;
+					}
+				}else{
+					process1d = 1 - oldprocess1d;
+				}
+			}
+        }
+
+        if (oldprocess2d >= oldprocess1d){
+			if (oldprocess2d <= oldprocess1d){
+				if (oldprocess2p >= oldprocess1p){
+					if (oldprocess2p <= oldprocess1p){
+						process2d = 1 - oldprocess2d;
+						if (uniform(0,1) <= p){
+							process2p = oldprocess2p;
+						}else{
+							process2p = 1 - oldprocess2p;
+						}
+					}else{
+						process2d = 1 - oldprocess2d;
+					}
+				}else{
+					process2d = 1 - oldprocess2d;
+				}
+			}
+        }
+
+        if (oldprocess3d >= oldprocess2d){
+			if (oldprocess3d <= oldprocess2d){
+				if (oldprocess3p >= oldprocess2p){
+					if (oldprocess3p <= oldprocess2p){
+						process3d = 1 - oldprocess3d;
+						if (uniform(0,1) <= p){
+							process3p = oldprocess3p;
+						}else{
+							process3p = 1 - oldprocess3p;
+						}
+					}else{
+						process3d = 1 - oldprocess3d;
+					}
+				}else{
+					process3d = 1 - oldprocess3d;
+				}
+			}
+        }
+
+        sum = process1p + process2p + process3p;
+		notStable = if sum > 1 { 1 } else { 0 };
+        count = count + 1
+	}
+	return count;
+    /*estimateProb(count < 1);
+    estimateProb(sum < 0.5);
+    estimateProb(count >= 1);
+    estimateProb(count >= 5);
+    estimateProb(count >= 10);
+    estimateProb(count >= 20);
+    estimateProb(count >= 50);
+    estimateProb(count >= 100);*/
+}

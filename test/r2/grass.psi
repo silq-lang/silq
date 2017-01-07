@@ -1,0 +1,23 @@
+def main(){ // didItRain
+    cloudy := flip(0.5);
+    rain := 0; sprinkler := 0;
+
+    if (cloudy){
+        rain = flip(0.8);
+        sprinkler = flip(0.1);
+    }else{
+        rain = flip(0.2);
+        sprinkler = flip(0.5);
+    }
+
+    temp1 := flip(0.7);
+    wetRoof := temp1 && rain;
+    temp2 := flip(0.9);
+    temp3 := flip(0.9);
+    wetGrass := temp2 && rain || temp3 && sprinkler;
+
+    observe(wetGrass);
+    //return rain; // TODO: better simplification for this query?
+    return Expectation(rain); // expected: 719·δ[-719·r₁+509]
+    // TODO: better simplification?
+}

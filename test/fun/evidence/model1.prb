@@ -1,8 +1,0 @@
-def main(){
-    evidence := Bernoulli(1/2);
-    if evidence {
-        coin := Bernoulli(1/2);
-	observe(coin);
-    }
-    return evidence; // expected: 2·δ[evidence]·⅟3+δ[-evidence+1]·⅟3
-}

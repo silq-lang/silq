@@ -1,0 +1,13 @@
+
+def main(){
+    r := 1;
+    repeat 3{
+        k := uniform(0,1);
+        r *= k;
+        p := k <= 1/2;
+        observe(p);
+    }
+    p := r >= 1/9;
+    return p; // expected: ((-3·log(2)·log(8)·⅟8+-log(2)·⅟24+-log(4)²·⅟144+-log(9)²·⅟18+-log(9)·⅟9+5·log(2)²·⅟144+log(2)·log(4)·⅟36+log(2)·log(9)·⅟3+log(8)²·⅟16+log(8)·⅟8+⅟72)·δ[-p+1]+(-log(2)·log(9)·⅟3+-log(2)·⅟3+-log(4)²·⅟18+2·log(2)·log(4)·⅟9+5·log(2)²·⅟18+log(9)²·⅟18+log(9)·⅟9+⅟9)·δ[-p])·[-6·log(2)+-6·log(2)·log(8)+-log(4)²+2+2·log(8)+4·log(2)·log(4)+5·log(2)²+log(8)²≠0]·⅟(-3·log(2)·log(8)·⅟8+-3·log(2)·⅟8+-log(4)²·⅟16+5·log(2)²·⅟16+log(2)·log(4)·⅟4+log(8)²·⅟16+log(8)·⅟8+⅟8)
+    // TODO: prove that the bracket is a tautology
+}

@@ -1,3 +1,0 @@
-def main(){
-	return infer(()=>Bernoulli(1/2)); // expected: δ_r₁[λξ₁. δ_ξ₁[{.val ↦ 0,.tag ↦ 1}]·⅟2+δ_ξ₁[{.val ↦ 1,.tag ↦ 1}]·⅟2]
-}

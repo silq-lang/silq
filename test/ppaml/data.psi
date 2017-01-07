@@ -1,0 +1,9 @@
+// skipped
+
+def main(){
+    k := 1;
+    n := 15;
+    p := beta(0.01,0.1)*20000+30000;
+    //observe(Binomial(p,n)==k); // TODO: Binomial
+    return p;
+}

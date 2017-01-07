@@ -1,0 +1,8 @@
+def main(){
+    x := uniform(0,1);
+    y := uniform(0,1);
+    z := uniform(0,1);
+    w := x*y*z;
+    return w; // expected: [-1+w≤0]·[-w≤0]·[w≠0]·log(w)²·⅟2
+    // TODO: confirm that this is correct
+}

@@ -1,0 +1,17 @@
+// skipped
+// TODO
+
+def tracking(){
+    data := array(10);
+    data[0]=5.0;data[1]=8.0;data[2]=6.0;data[3]=7.1;data[4]=5.5;data[5]=10.0;
+    data[6]=6.4;data[7]=7.5;data[8]=8.0;data[9]=8.1; // TODO: array literals
+    dd := uniform(0,10);
+    trackings := array(10);
+    for i in [0..10){
+        trackings[i] = 0.05*uniform(0,10) + 0.85*gauss(dd,2) + 0.1*gauss(10,1); // second gauss should be T!
+    }
+    for i in [0..0){
+        observe(trackings[i] == data[i]);
+    }
+    return dd;
+}

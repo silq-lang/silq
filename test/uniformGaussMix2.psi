@@ -1,0 +1,14 @@
+// skipped
+
+def main(){
+    x := uniform(0,1);
+    y := 0;
+    if x>1/2{
+        y = gauss(0,1);
+        x -= 2;
+    }else{
+        y = uniform(2,3);
+    }
+    if x > y{ y -= 3; }
+    return x+y; // TODO: why integral remaining?
+}

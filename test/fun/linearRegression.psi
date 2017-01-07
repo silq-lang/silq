@@ -1,0 +1,22 @@
+// skipped
+
+def main(){
+    a := gauss(0,1);
+    b := gauss(5,0.3^0.5);
+    invNoise := gamma(1,1);
+
+    // TODO: just use one set of concrete data here
+    aTrue := gauss(0,1);
+    bTrue := gauss(5,0.3^0.5);
+    invNoiseTrue := gamma(1,1);
+    n := 10;
+    data := array(n);
+    for i in [1..n]{
+        data[i-1]=gauss(aTrue*i+bTrue,invNoiseTrue);
+    }
+
+    for i in [1..n]{
+        cobserve(data[i-1],gauss(a*i+b,invNoise));
+    }
+    return (a,b,invNoise); // TODO
+}

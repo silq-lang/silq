@@ -1,0 +1,12 @@
+// skipped
+
+def doIt(a,b,mu0){
+    // a = 1; b = 2; mu0 = 1;
+    tau := gamma(a,b);
+    mu := gauss(mu0,mu0*tau);
+    x1 := gauss(mu,tau);
+    //x2 := Gauss(mu,tau);
+    //observe(x1>x2);
+    observe(x1<0);
+    return x1; // expected: TODO: fix
+}

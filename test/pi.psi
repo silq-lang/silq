@@ -1,0 +1,7 @@
+
+def main(){
+    x := uniform(-1,1);
+    y := uniform(-1,1);
+    z := x^2 + y^2 <= 1;
+    return z; // expected: TODO: δ[-1+z]·π·⅟4 + δ[z]·(1+-π·⅟4)
+}

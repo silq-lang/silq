@@ -1,0 +1,18 @@
+// skipped: sample size too large
+// TODO: passing arrays
+
+def main(){
+    n := 100;
+    gaussianData := readCSV("data/LearningGaussian/data.csv");
+    //assert(n==gaussianData.length);
+
+    mean := gauss(0,100);
+    prec := gamma(1,1);
+    for i in [0..n){
+        x := gaussianData[i];
+        y := gauss(mean,prec);
+        cobserve(y,x);
+    }
+    //return (mean,prec);
+    return Expectation(mean);
+}

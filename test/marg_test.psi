@@ -1,0 +1,6 @@
+
+def main(){
+    x := 0;
+    if flip(1/2){ x=1; }
+    return x; // expected: δ[-x+1]·⅟2+δ[-x]·⅟2
+}

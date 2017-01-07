@@ -1,0 +1,14 @@
+// skipped
+
+def main(){
+    x₁ := uniform(0,2);
+    x₂ := uniform(0,2);
+    x₃ := uniform(0,2);
+    x₄ := uniform(0,2);
+    x₅ := uniform(0,2);
+    x₆ := uniform(0,2);
+    x₇ := x₁+x₂;
+    x₈ := x₃+x₄;
+    x₉ := x₆+x₇;
+    return x₁>1||x₂>1||x₃>1||x₄>1||x₅>1||x₆>1||x₇>1||x₈>1||x₉>1;
+}

@@ -1,0 +1,7 @@
+//skipped
+
+def main() {
+    x := gauss(0,2);
+    observe (x >= -10 && x <= 10);
+    return x;
+}

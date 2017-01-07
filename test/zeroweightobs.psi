@@ -1,0 +1,6 @@
+
+def main(){
+    x := gauss(0,1);
+    observe(x==0);
+    return x; // expected: TODO: δ[-x]
+}

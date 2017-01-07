@@ -1,0 +1,12 @@
+// skipped
+// https://en.wikipedia.org/wiki/Two_envelopes_problem
+
+def main(){
+    envelopes := array(2);
+    for i in [0..2) { envelopes[i] = uniform(0,1); }
+    observe(envelopes[0] == 2*envelopes[1]);// || (envelopes[1] == 2*envelopes[0]));
+    //which := UniformInt(0,1);
+    //switch := envelopes[which] < envelopes[1-which];// TODO
+    //switch := envelopes[0] > envelopes[1];
+    return 1;
+}

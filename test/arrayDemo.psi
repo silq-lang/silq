@@ -1,0 +1,5 @@
+def main(){
+    //a := [flip(1/2),flip(1/2),flip(1/2),flip(1/2),flip(1/2),flip(1/2),flip(1/2)];
+    //return a;
+    return (flip(1/2),flip(1/2),flip(1/2),flip(1/2),flip(1/2),flip(1/2),flip(1/2));
+}

@@ -1,0 +1,17 @@
+
+x := 2;
+y := x+3;
+z := [1,2,3];
+w := z~[4,5,6];
+
+def foo(){
+    r := 0;
+    for i in [0..x){
+        r += 4+i;
+    }
+    return r;
+}
+
+def main(){
+    return (w[y],foo()); // expected: δ[-r₁+6]·δ[-r₂+9]
+}

@@ -1,0 +1,20 @@
+//skipped
+
+def df() {
+    return uniform(-0.5,0.5);
+}
+
+
+def main(){
+    assert(flip(0.999));
+    assert(flip(0.999));
+    assert(flip(0.999));
+
+    x:=df();
+    y:=df();
+    z:=df();
+
+    v := 0.25*(x+y+z);
+    
+    return v;
+}

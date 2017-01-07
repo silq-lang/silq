@@ -1,0 +1,24 @@
+// skipped
+// TODO: performance currently depends critically on marginalization order, fix this
+
+dat Filter{
+    x: ℝ , v: ℝ, a: ℝ;
+    def Filter(x: ℝ,v: ℝ, a: ℝ){
+        (this.x,this.v,this.a) = (x,v,a);
+    }
+}
+
+
+def main(){
+    data := [1,3,6,10,15];
+    filter := Filter(0,0,0);
+    for i in [0..data.length){
+	t := 1;
+        filter.x += t*filter.v;
+        filter.v += t*filter.a;
+        filter.a += t*gauss(0,1);
+        o := filter.x + t*gauss(0,1);
+        cobserve(o,data[i]);
+    }
+    return filter.x; // expected: e^(-488601·⅟3382+-89·x²·⅟152+699·x·⅟38)·⅟√1̅5̅2̅·⅟√π̅·√8̅9̅
+}

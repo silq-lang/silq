@@ -1,0 +1,5 @@
+def main(){
+    x := uniform(0,1);
+    y := x*(x+1)*(x+2);
+    return y; // TODO: figure this out
+}

@@ -1,0 +1,106 @@
+// skipped: this seems to be too slow at the moment
+
+def main(){
+    x := 0;
+    y := 0;
+    dist := 0;
+    //count := 1;
+    N := 3;
+    //N := 7; 
+    //while (count < N) {
+    repeat N{
+        c1 := uniform(0,1);
+        c2 := uniform(0,1);
+        c3 := uniform(0,1);
+        r1 := uniform(0,1);
+        if (x >= 0){
+            if (y >= 0){
+                if (c1 <= 1/2){
+                    if (c2 <= 1/2){
+                        x = x + r1;
+                        dist = dist + r1;
+                    }else{
+                        y = y + r1;
+                        dist = dist + r1;
+                    }
+                }else{
+                    if (c3 <= 1/2){
+                        x = x - r1;
+                        dist = dist - r1;
+                    }else{
+                        y = y - r1;
+                        dist = dist - r1;
+                    }
+                }
+            }else{
+                if (c1 <= 1/2){
+                    if (c2 <= 1/2){
+                        x = x + r1;
+                        dist = dist + r1;
+                    }else{
+                        y = y + r1;
+                        dist = dist - r1;
+                    }
+                }else{
+                    if (c3 <= 1/2){
+                        x = x - r1;
+                        dist = dist - r1;
+                    }else{
+                        y = y - r1;
+                        dist = dist + r1;
+                    }
+                }
+            }
+        }else{
+            if (y >= 0){
+                if (c1 <= 1/2){
+                    if (c2 <= 1/2){
+                        x = x - r1;
+                        dist = dist + r1;
+                    }else{
+                        y = y + r1;
+                        dist = dist + r1;
+                    }
+                }else{
+                    if (c3 <= 1/2){
+                        x = x + r1;
+                        dist = dist - r1;
+                    }else{
+                        y = y - r1;
+                        dist = dist - r1;
+                    }
+                }
+            }else{
+                if (c1 <= 1/2){
+                    if (c2 <= 1/2){
+                        x = x - r1;
+                        dist = dist + r1;
+                    }else{
+                        y = y + r1;
+                        dist = dist - r1;
+                    }
+                }else{
+                    if (c3 <= 1/2){
+                        x = x + r1;
+                        dist = dist - r1;
+                    }else{
+                        y = y - r1;
+                        dist = dist + r1;
+                    }
+                }
+            }
+        }
+        //count = count + 1;
+    }
+    return dist;
+    /*estimateProb(dist <= -4);
+      estimateProb(dist <= -3);
+      estimateProb(dist <= -2);
+      estimateProb(dist <= -1);
+      estimateProb(dist <= 0);
+      estimateProb(dist <= 1);
+      estimateProb(dist <= 2);
+      estimateProb(dist <= 3);
+      estimateProb(dist <= 4);*/
+}
+

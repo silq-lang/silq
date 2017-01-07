@@ -1,0 +1,48 @@
+// skipped
+
+def main(){
+    x := flip(1/2); // declare local variable and initialize it by sampling from flip(1/2)
+    if x { // conditional
+        return 2; // return a value
+    }
+    if flip(1/2) {
+        x = 2*x; // assign to previously declared variable (* is multiplication)
+    } else {
+        x = x/2; // (/ is division)
+    }
+    observe(x < 1); // condition on event
+    y := [1,2,3]; // initialize y with an array literal
+    y = array(4,5); // equivalent to y = [5,5,5,5];
+    for i in [0..4){ // for loop
+        y[i] = uniformInt(1,3);
+    }
+    z := y;
+    if flip(1/2){
+        z ~= [uniform(0,1)]; // append to array (a ~ b is concatenation of a and b)
+    }
+    d := Data(x,3,z); // create instance of type 'Data' (forward references allowed)
+    d.x += d.y; // increase d.x by d.y
+    if uniform(0,1) < 0.7 {
+        return d.foo() + d.x + d.z[0]; // call method 'foo' on d (side effects evaluated left-to-right)
+    }
+    assert(0); // causes an error
+}
+
+
+dat Data{
+    x: R,y: R; // declare fields of type R (real numbers)
+    z: R[];    // declare field of type R[] (array)
+    def Data(x: R, y: R, z: R[]){ // declare constructor
+        this.x = x; // assign fields
+        this.y = y;
+        this.z = z;
+    }
+    def foo(){
+        x += 3;
+        if flip(1/2) {
+            return x - y;
+        } else {
+            return x + y;
+        }
+    }
+}

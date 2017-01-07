@@ -1,0 +1,15 @@
+// skipped
+
+
+def main() {
+    assert(flip(0.999));
+    assert(flip(0.999));
+    assert(flip(0.999));
+
+    X := laplace(0, 0.2); observe(-0.5 <= X && X <= 0.5);
+    Y := laplace(0, 0.2); observe(-0.5 <= Y && Y <= 0.5);
+    Z := laplace(0, 0.2); observe(-0.5 <= Z && Z <= 0.5);
+
+    return 0.25*(X+Y+Z);
+//    return (X,Y);
+}

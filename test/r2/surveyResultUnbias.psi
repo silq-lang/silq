@@ -1,0 +1,47 @@
+// skipped
+// TODO
+
+def maing(){
+    population := readCSV("data/survey/population.csv");
+    gender := readCSV("data/survey/gender.csv");
+    personGender := readCSV("data/survey/personGender.csv");
+    dataAnswer := readCSV("data/survey/answer.csv");
+    // Vector<double> vv = Normal.Sample(0, 0, 1); // what is this?
+    bias := array(population.length);
+    for i in [0..population.length){
+        bias[i] = beta(1,1);
+    }
+
+    mean := array(population.length);
+    for i in [0..population.length){
+        mean[i] = population[i]*bias[i];
+    }
+
+    variance := array(population.length);
+    for i in [0..population.length){
+        variance[i] = mean[i]-mean[i]*bias[i];
+    }
+
+    votes := array(population.length);
+    for i in [0..population.length){
+        votes[i] = gauss(mean[i],variance[i]);
+    }
+
+    ansBias := array(personGender.length);    
+    for i in [0..personGender.length){
+        ansBias[i] = bias[personGender[i]];
+    }
+
+    answer := array(ansBias.length);
+    for i in [0..ansBias.length){
+        answer[i] = flip(ansBias[i]);
+    }
+    for i in [0..ansBias.length){
+        observe(answer[i]==dataAnswer[i]);
+    }
+    // return (bias,mean,variance,votes); // TODO
+    assert(bias.length==2&&mean.length==2&&variance.length==2&&votes.length==2);
+    return (bias[0],bias[1],mean[0],mean[1],variance[0],variance[1],votes[0],votes[1]); // expected: (-mean₂·⅟72884432668644+⅟26815464558)·([-2718·votes₂+votes₂²=0]·δ[-mean₂+votes₂]+[variance₂≠0]·e^((-mean₂²·⅟2+-votes₂²·⅟2+mean₂·votes₂)·⅟variance₂)·⅟√2̅·⅟√v̅a̅r̅i̅a̅n̅c̅e̅₂̅·⅟√π̅)·([-votes₁²+3141·votes₁=0]·δ[-mean₁+votes₁]·⅟3141+[variance₁≠0]·e^((-mean₁²·⅟2+-votes₁²·⅟2+mean₁·votes₁)·⅟variance₁)·⅟3141·⅟√2̅·⅟√v̅a̅r̅i̅a̅n̅c̅e̅₁̅·⅟√π̅)·[-2718+mean₂≤0]·[-3141+mean₁≤0]·[-mean₁≤0]·[-mean₂≤0]·[-variance₁≤0]·[-variance₂≤0]·`q()·mean₁³·mean₂·δ[-bias₁·mean₁+-variance₁+mean₁]·δ[-bias₂·mean₂+-variance₂+mean₂]·δ[-mean₁+3141·bias₁]·δ[-mean₂+2718·bias₂]
+    //return (Expectation(bias[0]),Expectation(bias[1]),Expectation(mean[0]),Expectation(mean[1]),Expectation(variance[0]),Expectation(variance[1]),Expectation(votes[0]),Expectation(votes[1]));
+    //return Expectation(bias[1]);
+}

@@ -1,0 +1,14 @@
+
+def main(){
+    isGirl1 := flip(1 / 2);
+    isGirl2 := flip(1 / 2);
+    isGirlAnnounce := -1;
+    if flip(1 / 2){
+        isGirlAnnounce = isGirl1;
+    }else{
+        isGirlAnnounce = isGirl2;
+    }
+    observe(isGirlAnnounce);
+    bothAreGirls := isGirl1 && isGirl2;
+    return bothAreGirls; // expected: δ[-bothAreGirls+1]·⅟2+δ[-bothAreGirls]·⅟2
+}

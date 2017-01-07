@@ -1,0 +1,45 @@
+//skipped
+// noise for memory read-write operations
+def noise_rw() {
+    //return Beta(2.0,2.0);
+    //S:= Bernoulli(0.99);
+    S := 0;
+    Y := 0;
+    if !S {
+        Y = gauss(0,1);
+        observe (Y >= -2 && Y <= 2);
+    }
+    return Y;
+    //return Uniform(-0.01, 0.01);
+}
+
+// noise for arithemtic operations
+def noise_a() {
+    //return Gauss(0,0.01);
+    //return Uniform(-0.01, 0.01);
+    //return Beta(2.0,2.0);
+    return 0;
+}
+
+
+
+// Simulating image scaling examples, which works on
+// 3x3 blocks of pixels:
+def main() {
+    // block of pixels
+    // (cannot pass arrays as the parameters)
+
+    dup := noise_rw();   
+    ddown := noise_rw();
+    dleft := noise_rw();
+    dright := noise_rw();
+
+    //val := 0.001 * (((dup + ddown + noise_a()) + dleft + noise_a()) + dright + noise_a()) * 0.25 ;
+    val := (dup + ddown + dleft + dright) * 0.0025;
+
+    // thought that inlining might help, but not...
+    //val := (((up + down + Uniform(-.01,.01)) + left + Uniform(-.01,.01)) + right + Uniform(-.01,.01)) * 0.25;
+
+    return val;
+    
+}

@@ -1,8 +1,0 @@
-
-def main(){
-    x := Uniform(0,1);
-    y := Uniform(x,2*x);
-    cobserve(y,2/3);
-    return x; // expected: [-1+x≤0]·[-2+3·x≤0]·[-3·x+1≤0]·[-x≤0]·[x≠0]·⅟log(2)·⅟x
-    // TODO: get rid of spurious brackets
-}

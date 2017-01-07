@@ -1,0 +1,55 @@
+// skipped: too slow
+// TODO: make fast
+
+def value(){ return uniformInt(1,9); }
+def row(){ return [value(),value(),value()]; }
+
+def sumRow(square: ℝ[][],i){
+    return square[i][0]+square[i][1]+square[i][2];
+}
+
+def sumCol(square: ℝ[][],i){
+    s := 0;
+    for j in [0..3){ // TODO: allow square.length
+        s+=square[j][i];
+    }
+    return s;
+}
+
+def sumDiag1(square: ℝ[][]){
+    s := 0;
+    for j in [0..3){ // TODO: allow square.length
+    	s+=square[j][j];
+    }
+    return s;
+}
+
+def sumDiag2(square: ℝ[][]){
+    s := 0;
+    for j in [0..3){ // TODO: allow square.length
+    	s+=square[j][3-j];
+    }
+    return s;
+}
+
+def main(){
+    square := [row(),row(),row()];
+    for i in [0..3){
+        observe(sumRow(square,i)==15);
+    }
+    for i in [0..3){
+        observe(sumCol(square,i)==15);
+    }
+    observe(sumDiag1(square)==15);
+    observe(sumDiag2(square)==15);
+    k := array(10);
+    for i in [0..3){
+        for j in [0..3){
+            k[square[i][j]]=1;
+        }
+    }
+    for i in [1..9]{
+        observe(k[i]);
+    }
+    return square;
+}

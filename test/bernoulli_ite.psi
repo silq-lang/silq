@@ -1,0 +1,5 @@
+def main(){
+    x := bernoulli(1/2);
+    y := if x { x } else { bernoulli(1/2); };
+    return y; // expected: 3·δ[-y+1]·⅟4+δ[y]·⅟4
+}

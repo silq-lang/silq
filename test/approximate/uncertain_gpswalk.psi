@@ -1,0 +1,23 @@
+//skipped
+
+def main() {
+    epsilon := 12 / 2.60; /* log(400 = 2.60; hw precision: 40 ft = 12 m http://gis.stackexchange.com/questions/104305/most-accurate-gps-hardware-for-less-than-1-mile-radius */
+    
+    deg_meter := 0.35;   /* http://coherence.com.au/curlew/2014/04/degrees-of-slope-to-fall-calculator-including-gradient/ */
+
+    radius := rayleigh(epsilon);
+    //angle := Uniform(0, 2*π);
+    // c1:= cos(angle) => pdf(c1) = 1/pi/sqrt(1-angle^2)
+    // c2:= sin(angle) => c2 = sqrt(1-c1^2)
+
+    //anglecos := CosUnifDist();
+    anglecos := -1 + 2*beta(0.5, 0.5);
+    //anglesin := (1-anglecos^2)^(1/2);
+
+    x:= radius * anglecos;// * deg_meter;
+
+    //y := radius * anglesin;// * deg_meter;
+    return x;
+    
+
+}

@@ -1,0 +1,5 @@
+def main(){
+    x := uniform(0,5);
+    y := x*x;
+    return y; // expected: TODO: [-y≤0]·[-25+y≤0]·⅟10·⅟√y̅
+}

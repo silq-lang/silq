@@ -1,5 +1,0 @@
-def main(){
-    x := Bernoulli(1/2);
-    y := x*x;
-    return y; // expected: δ[-y+1]·⅟2+δ[-y]·⅟2
-}

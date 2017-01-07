@@ -1,0 +1,12 @@
+def p(a){
+    x := flip(1/2);
+    observe(x == a);
+    return x;
+}
+
+def main(){
+    y := flip(1/2);
+    r := p(y);
+    return r; // expected: ([-r+1=0]·⅟2+[r=0]·⅟2)·(δ[-r+1]+δ[r])
+    // TODO: improve simplification
+}

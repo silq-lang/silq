@@ -1,0 +1,44 @@
+// skipped (too slow with integration order i xi xsi, works ok with integration order i xsi xi)
+
+def f(dif) {
+    xi := uniform(10,20);
+    xsi := xi + laplace(0,1);
+    return dif + (xi - xsi);
+}
+
+def main() {
+    n := 5;
+
+    //    x := Laplace(0,2);
+    //    return x;
+
+    /*
+      x := array(n);
+      xs := array(n);
+
+      for i in [0..n) {
+          x[i] = Uniform(10,20);
+		  xs[i] = x[i] + Laplace(0,1);
+      }
+
+      dif := 0;
+      for i in [0..n) {
+          dif = dif + (x[i] - xs[i]);
+      }
+      dif = dif / n;
+      return dif;
+
+    */
+
+    dif := 0;
+    for i in [0..n) {
+        xi := uniform(10,20);
+        xsi := xi + laplace(0,1);
+        dif = dif + (xi - xsi);
+        //      dif = f(dif);
+    }
+
+    dif = dif / n;
+    return dif; // expected: -3125·[dif≤0]·dif³·e^(5·dif)·⅟384+-875·[dif≤0]·dif·e^(5·dif)·⅟256+175·[-dif≠0]·[-dif≤0]·⅟512·⅟e^(5·dif)+175·[-dif≠0]·[dif≤0]·e^(5·dif)·⅟512+175·[-dif≤0]·⅟512·⅟e^(5·dif)+175·[dif≤0]·e^(5·dif)·⅟512+1875·[-dif≤0]·dif²·⅟256·⅟e^(5·dif)+1875·[dif≤0]·dif²·e^(5·dif)·⅟256+3125·[-dif≤0]·dif³·⅟384·⅟e^(5·dif)+3125·[-dif≤0]·dif⁴·⅟768·⅟e^(5·dif)+3125·[dif≤0]·dif⁴·e^(5·dif)·⅟768+875·[-dif≤0]·dif·⅟256·⅟e^(5·dif)
+
+}

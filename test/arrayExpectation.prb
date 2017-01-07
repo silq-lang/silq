@@ -1,4 +1,0 @@
-def main(){
-    x := [0,1];
-    return Expectation(x[UniformInt(0,1)]); // expected: 2·δ[-2·r₁+1]
-}

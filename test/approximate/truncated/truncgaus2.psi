@@ -1,0 +1,6 @@
+//skipped
+
+def main() {
+    x := truncatedGauss(0,2,-10.0,10.0);
+    return x;
+}

@@ -1,8 +1,0 @@
-
-def main(){
-    isGirl1 := Bernoulli(1/2);
-    isGirl2 := Bernoulli(1/2);
-    observe(isGirl1 || isGirl2);
-    bothAreGirls := isGirl1 && isGirl2;
-    return bothAreGirls; // expected: 2·δ[-bothAreGirls]·⅟3+δ[-bothAreGirls+1]·⅟3
-}

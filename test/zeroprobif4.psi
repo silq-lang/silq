@@ -1,0 +1,15 @@
+
+def main(){
+    x := gauss(0,1);
+    z := 0;
+    obs := 1;
+    if x == 0 {
+        y := gauss(0,1);
+        if y == 0 {
+            z = 1;
+        }
+        obs = y == 0;
+    }
+    observe(!x && obs);
+    return z; // expected: TODO: δ[-z+1]
+}

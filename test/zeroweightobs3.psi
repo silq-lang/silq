@@ -1,0 +1,6 @@
+def main(){
+    x := gauss(0,1);
+    observe(x==1 || x==-1);
+    return x; // expected: TODO: (δ[-1+-x]·⅟√2̅·⅟√e̅·⅟√π̅+δ[-x+1]·⅟√2̅·⅟√e̅·⅟√π̅)·⅟√2̅·√e̅·√π̅
+    // TODO: simplify better
+}

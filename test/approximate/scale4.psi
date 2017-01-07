@@ -1,0 +1,28 @@
+//skipped
+
+
+// Simulating image scaling examples, which works on
+// 3x3 blocks of pixels:
+def main() {
+    // configuration
+    p:=0.99999;
+    a:=-1.0;
+    b:=1.0;
+    mu:=0;
+    sigmasq:=0.01;
+
+    nup := flip(p); assert (nup==1);  // up
+    ndn := flip(p); assert (ndn==1); // down
+    nlf := flip(p); assert (nlf==1); // left
+    nrt := flip(p); assert (nrt==1); // right
+
+    //val := 0.001 * (((dup + ddown + noise_a()) + dleft + noise_a()) + dright + noise_a()) * 0.25 ;
+
+    n1 := gauss(mu,sigmasq); observe(a<=n1 && n1<=b);
+    n2 := gauss(mu,sigmasq); observe(a<=n2 && n2<=b);
+    //n3 := gauss(mu,sigmasq); observe(a<=n3 && n3<=b);
+
+    val := (n1 + n2);
+
+    return val;
+}

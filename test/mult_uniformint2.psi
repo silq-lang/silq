@@ -1,0 +1,7 @@
+
+def main(){
+    x := uniformInt(0,2);
+    y := uniformInt(0,x);
+    z := x*y;
+    return z; // expected: 11·δ[-z]·⅟18+δ[-1+z]·⅟6+δ[-2+z]·⅟9+δ[-4+z]·⅟9
+}

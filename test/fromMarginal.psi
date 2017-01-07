@@ -1,0 +1,7 @@
+def main(){
+    x := flip(1/2);
+    y := flip(1/2);
+    z := FromMarginal(x+y);
+    z = z-x-y;
+    return z; // expected: 3·δ[z]·⅟8+δ[-z+1]·⅟4+δ[-z+2]·⅟16+δ[1+z]·⅟4+δ[2+z]·⅟16
+}

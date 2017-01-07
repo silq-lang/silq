@@ -1,8 +1,0 @@
-
-def main(){
-    a := [[1,2,3],[2,3,4],[5,6,7]];
-    a[UniformInt(0,2)][UniformInt(0,2)]+=Bernoulli(1/2);
-    assert(a[0][0]<=2);
-    p := Expectation(a[0][0]==2);
-    return p; // expected: 18·δ[-18·p+1]
-}

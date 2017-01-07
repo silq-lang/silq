@@ -1,0 +1,9 @@
+// skipped
+
+def main(){
+    x := gauss(22,10);
+    z := gauss(x,1);
+    cobserve(z,25);
+    //return Expectation(x); // TODO
+    return Expectation(x);
+}

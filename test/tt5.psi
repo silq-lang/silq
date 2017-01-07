@@ -1,0 +1,11 @@
+def main(){
+    x := uniform(0,5);
+    y := 0;
+    if x < 2 {
+       y = x*x;
+    }else{
+       y = 3;
+    }
+    y += x;
+    return y; // expected: TODO: simplify better
+}

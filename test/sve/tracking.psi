@@ -1,0 +1,18 @@
+// skipped
+// TODO
+def T(){ // T(10,1,0)
+    x:=uniform(9,10)+uniform(0,1);
+    observe(x<10);
+    return x;
+}
+
+def main(){ // tracking
+    data := readCSV("data/tracking/query_sasa.csv");
+    d := uniform(0,10);
+    for i in [0..data.length){
+        which := uniform(0,1);
+        tracking := if which < 0.05 { uniform(0,10) } else { if which < 0.9 { gauss(d,2) } else { T() }};
+        cobserve(tracking,data[i]);
+    }
+    return d;
+}

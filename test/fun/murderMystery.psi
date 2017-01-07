@@ -1,0 +1,18 @@
+// skipped: need multiple return values
+
+def mystery(b){
+    aliceDunnit := flip(0.3);
+    withGun := if aliceDunnit { flip(0.03) } else { flip(0.8) };
+    return (aliceDunnit,withGun);
+}
+
+def gunFoundAtScene(gunFound){
+    (aliceDunnit, withGun) := mystery(true);
+    observe(withGun == gunFound);
+    return aliceDunnit;
+}
+
+def main(){
+    posterior := gunFoundAtScene(true);
+    return posterior; // expected: 560·δ[posterior]·⅟569+9·δ[-posterior+1]·⅟569
+}

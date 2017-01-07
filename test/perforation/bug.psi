@@ -1,0 +1,33 @@
+// skipped
+// TODO: too slow
+
+def main(){
+    s := 0;
+    sis := 0;
+    n := 10;
+    skip:=2;
+    m := n/skip;
+
+    xs := array(n);
+
+    for i in [0..n) {
+        //xs[i] = gauss(0,1);
+        xs[i] = uniform(0,1); //for uniform(0,1) produces correct expectation/variance
+        //slow for beta and gamma distributions 
+    }
+
+
+    for i in [0..n) {
+        s = s + xs[i];
+    }
+
+    for i in [0..m) {
+        sis = sis + xs[skip*i];
+    }
+    sis = sis * skip; // this works (but is true only for even n)
+
+    res := (sis - s);
+    
+    return Expectation(res); // fail, assertion error
+    //return Expectation(res^2 - (Expectation(res))^2);
+}

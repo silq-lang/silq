@@ -1,0 +1,6 @@
+def main(){
+    a:=[1,2];
+    a[flip(1/2)]+=1;
+    assert(a[0]<=2);
+    return; // expected: 1
+}

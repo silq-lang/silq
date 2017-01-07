@@ -1,6 +1,0 @@
-
-def main(){
-    x := UniformInt(-1,1);
-    y := if 1/x!=1 || x ==0 { 1 } else { 0 };
-    return y; // expected: δ[-1+y]·⅟3+δ[y]·⅟3
-}

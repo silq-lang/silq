@@ -1,0 +1,66 @@
+// skipped: this is too slow at the moment
+
+def main(){
+    cartX := uniform(-6,-5);
+    cartY := uniform(-6, -5);
+    steerX := uniform(-3/4,-3/5);
+    steerY := uniform(-4/5,-7/10);
+    exitCond := 0;
+    count := 0;
+    //while (exitCond <= 0) {
+    repeat 4{ if exitCond <= 0 {
+        count = count + 1;
+        if (steerX <= 3/5){
+            steerX = 71/100 + uniform(-1/10,1/10);
+            steerY = 71/100 + uniform(-1/10,1/10);
+        }else{
+            if (steerX >= 4/5){
+                steerX = 71/100 + uniform(-1/10,1/10);
+                steerY = 71/100 + uniform(-1/10,1/10);
+            }
+        }
+        if (steerY <= 3/5){
+            steerX = 71/100 + uniform(-1/10,1/10);
+            steerY = 71/100 + uniform(-1/10,1/10);
+        }else{
+            if (steerY >= 4/5){
+                steerX = 71/100 + uniform(-1/10,1/10);
+                steerY = 71/100 + uniform(-1/10,1/10);
+            }
+        }
+
+        cartX = cartX + steerX;
+        cartY = cartY + steerY;
+        steerX = steerX + uniform(-1/10,1/10);
+        steerY = steerY + uniform(-1/10, 1/10);
+        if (count >= 5){
+            exitCond = 1;
+        }
+
+        if (cartX <= 1){
+            if (cartX >= -1){
+                if (cartY <= 1){
+                    if (cartY >= -1){
+                        exitCond = 1;
+                    }
+                }
+            }
+        }
+    }}
+    return count;
+    /*estimateProb(count >= 15);
+      estimateProb(count >= 14);
+      estimateProb(count >= 13);
+      estimateProb(count >= 12);
+      estimateProb(count >= 11);
+      estimateProb(count >= 10);
+      estimateProb(count >= 9);
+      estimateProb(count >= 8);
+      estimateProb(count >= 7);
+      estimateProb(count >= 6);
+      estimateProb(count >= 5);
+      estimateProb(count >= 4);
+      estimateProb(count >= 3);
+      estimateProb(count >= 2);
+      estimateProb(count >= 1)*/
+}

@@ -1,0 +1,17 @@
+
+def find(haystack: ℝ[], needle){
+    for i in [0..3/+haystack.length+/){ // TODO: symbolic loops
+        if haystack[i] == needle{
+            return i;
+        }
+    }
+    return -1;
+}
+
+def main(){
+    a:=array(3,0);
+    for i in [0..a.length){
+        a[i] = uniformInt(-1,1);
+    }
+    return find(a,0); // expected: 2·δ[-r₁+1]·⅟9+4·δ[-r₁+2]·⅟27+8·δ[-1+-r₁]·⅟27+δ[-r₁]·⅟3
+}

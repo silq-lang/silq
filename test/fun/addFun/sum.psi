@@ -1,0 +1,15 @@
+// TODO: passing arrays to methods
+// TODO: array literals
+
+def main(){
+    x := array(3);
+    for i in [0..3){ x[i] = gauss(0,1); }
+    // ind := [1,0,1];
+    ind := array(3);
+    ind[0]=1; ind[1]=0; ind[2]=1;
+    r := 0;
+    for i in [0..3){
+        if ind[i] { r += x[i]; }
+    }
+    return r; // expected: ⅟2·⅟e^(r²·⅟4)·⅟√π̅
+}

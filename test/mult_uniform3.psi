@@ -1,0 +1,8 @@
+def main(){
+    r := 1;
+    repeat 4{
+        r *= uniform(0,1);
+    }
+    return r; // expected: -[-1+r≤0]·[-r≠0]·[-r≤0]·log(r)³·⅟6
+    // TODO: confirm that this is correct
+}

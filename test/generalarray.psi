@@ -1,0 +1,7 @@
+def main(){
+    x := ([] : R[]); // declare empty array of real numbers
+    y := x ~ [1]; // y is the concatenation of x with [1]
+    
+    z := array(uniformInt(1,3),[1,2,3]); // declare array of arrays of random size, initialized with [1,2,3]
+    return (x,y,z); // expected: (δ_z[[ξ₁ ↦ [ξ₂ ↦ 2·[-1+ξ₂=0]+3·[-2+ξ₂=0]+[ξ₂=0]] (3)] (1)]·⅟3+δ_z[[ξ₁ ↦ [ξ₂ ↦ 2·[-1+ξ₂=0]+3·[-2+ξ₂=0]+[ξ₂=0]] (3)] (2)]·⅟3+δ_z[[ξ₁ ↦ [ξ₂ ↦ 2·[-1+ξ₂=0]+3·[-2+ξ₂=0]+[ξ₂=0]] (3)] (3)]·⅟3)·δ_x[[]]·δ_y[[ξ₁ ↦ [ξ₁=0]] (1)]
+}

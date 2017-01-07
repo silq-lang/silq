@@ -1,0 +1,4 @@
+def main(){
+    x := (gauss(0,1)+gauss(0,1),);
+    return (x,); // expected: TODO: simplify
+}

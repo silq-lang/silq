@@ -1,0 +1,16 @@
+// skipped
+// this does not work anymore
+// TODO: Update once higher-order inference is in.
+
+def foo(x){
+    return Expectation(x);
+}
+
+def bar(y){
+    return foo(y);
+}
+
+
+def main(){
+    return bar(flip(1/3)); // expected: 3·δ[-3·r₁+1]
+}

@@ -1,0 +1,11 @@
+
+def main(){
+    //x := 1;
+    //x += Bernoulli(1/3);
+    // x += UniformInt(1,10);
+    x := gauss(0,1);
+    y := x;
+    if y<0 { x=3; }
+    return x; // expected: ([-x≤0]·⅟e^(x²·⅟2)·⅟√2̅·⅟√π̅+δ[-x+3]·⅟2)·⅟((-⅟√2̅·√π̅+√2̅·√π̅)·⅟√2̅·⅟√π̅+⅟2)
+    // TODO: result should be simplified better
+}

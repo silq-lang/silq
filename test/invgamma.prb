@@ -1,6 +1,0 @@
-
-def main() {
-    X := Gamma(1,1);
-    Z := 1/X;
-    return Z;
-}

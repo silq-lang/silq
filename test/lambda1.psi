@@ -1,0 +1,22 @@
+
+dat Foo{
+    def Foo(){}
+    def foo(){}
+}
+
+def foo(t){
+    return t;
+}
+
+def main(){
+    x := flip(1/2);
+    q := foo;
+    f := Foo();
+    r := f.foo;
+    y := (z:ℝ) => x+z+q(z);
+    def bar(k){
+        return (x-y(2))*k;
+    }
+    z := bar;
+    return z(2); // expected: δ[-8+-r₁]
+}

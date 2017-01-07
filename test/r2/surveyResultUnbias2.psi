@@ -1,0 +1,31 @@
+// skipped
+// uses binomial distribution
+// returns arrays
+
+def main(){
+    population := readCSV("data/survey2/population.csv");
+    gender := readCSV("data/survey2/gender.csv");
+    personGender := readCSV("data/survey2/personGender.csv");
+    dataAnswer := readCSV("data/survey2/answer.csv");
+    
+    bias := array(population.length);
+    for i in [0..population.length){
+        bias[i] = beta(1,1);
+    }
+    votes := array(population.length);
+    for i in [0..votes.length){
+        votes[i] = binomial(population[i],bias[i]); // TODO
+    }
+    ansBias := array(personGender.length);
+    for i in [0..personGender.length){
+        ansBias[i] = bias[personGender[i]];
+    }
+    answer := array(ansBias.length);
+    for i in [0..answer.length){
+        answer[i] = flip(ansBias[i]);
+    }
+    for i in [0..answer.length){
+        observe(answer[i]==dataAnswer[i]);
+    }
+    return (bias,votes);
+}

@@ -1,0 +1,13 @@
+
+def main(){
+    a := gauss(0,1);
+    b := gauss(0,1);
+    x := if a<b { 1 } else { 0 };
+    y := if a<b { 1 } else { 0 };
+    if flip(1/2){
+        x += 1;
+        y += 1;
+    }
+    r := x==y;
+    return r; // expected: δ[-r+1]
+}

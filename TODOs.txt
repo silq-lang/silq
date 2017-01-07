@@ -1,5 +1,16 @@
 
-+ factor
++ fix assert error in sve/{radar_query1,radar_query2}
+
++ add dirac, dirichlet, binomial, multivariate gauss,
+
++ fix result for synopsis.prb
+
++ fix gauss_moments1 segfault
+
++ fix dp-vertex-cover segfault
+
+
++ factor/score
 
 + floor/modulo, bitwise operators
 

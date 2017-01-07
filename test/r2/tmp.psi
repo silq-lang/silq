@@ -1,0 +1,44 @@
+// skipped
+// TODO
+
+def main(){
+    population := readCSV("data/survey/population.csv");
+    gender := readCSV("data/survey/gender.csv");
+    personGender := readCSV("data/survey/personGender.csv");
+    dataAnswer := readCSV("data/survey/answer.csv");
+    // Vector<double> vv = Normal.Sample(0, 0, 1); // what is this?
+    bias := array(population.length);
+    for i in [0..population.length){
+        bias[i] = beta(1,1);
+    }
+
+    mean := array(population.length);
+    for i in [0..population.length){
+        mean[i] = population[i]*bias[i];
+    }
+
+    variance := array(population.length);
+    for i in [0..population.length){
+        variance[i] = mean[i]-mean[i]*bias[i];
+    }
+
+    votes := array(population.length);
+    for i in [0..population.length){
+        votes[i] = gauss(mean[i],variance[i]);
+    }
+
+    ansBias := array(personGender.length);    
+    for i in [0..personGender.length){
+        ansBias[i] = bias[personGender[i]];
+    }
+
+    answer := array(ansBias.length);
+    for i in [0..ansBias.length){
+        answer[i] = flip(ansBias[i]);
+    }
+    for i in [0..ansBias.length){
+        observe(answer[i]==dataAnswer[i]);
+    }
+    return bias[1];
+    //return Expectation(bias[0]);
+}

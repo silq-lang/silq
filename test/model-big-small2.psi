@@ -1,0 +1,26 @@
+// skipped
+
+def main() {
+    isSmall := flip(0.5);
+    // data := [0]; // data := [0,1]; // data := [0,1,0]; // data := [0,1,0,1,1];
+    data := [0,1,0,1,1,1,0,3];
+
+    small := [0,1,2];
+    big := [0,1,2,3,4];
+
+    for i in [0..data.length) {
+        dnoise := flip(0.05); // 5% chance that there is an error...
+        dnoisesign := 1 - 2*flip(0.5);
+        data_noise := data[i] - dnoise*dnoisesign;
+
+        if isSmall {
+            k := uniformInt(0, small.length-1);
+            observe(data_noise == small[k]);
+        } else {
+            k := uniformInt(0, big.length-1);
+            observe(data_noise == big[k]);
+        }
+    }
+
+    return isSmall;
+}

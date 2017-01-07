@@ -1,0 +1,7 @@
+def main(){
+    x := gauss(0,1);
+    y := gauss(0,1);
+    z := x/y;
+    return; // expected: 1
+    // (the important thing is that the zero-probability division by zero isn't reported)
+}

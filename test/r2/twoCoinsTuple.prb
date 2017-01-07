@@ -1,8 +1,0 @@
-def main(){ // bothHeads
-    firstCoin := Bernoulli(1/2);
-    secondCoin := Bernoulli(1/2);
-    bothHeads := firstCoin && secondCoin;
-    observe(bothHeads == 0);
-    return (firstCoin,secondCoin); // expected: (2·δ[-firstCoin+1]·⅟3+2·δ[firstCoin]·⅟3)·([firstCoin=0]+[firstCoin≠0]·[secondCoin=0])·(δ[-secondCoin+1]·⅟2+δ[secondCoin]·⅟2)
-    // TODO: simplify more
-}

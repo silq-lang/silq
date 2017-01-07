@@ -1,0 +1,19 @@
+//skipped
+
+def df() {
+    return pareto(3,1)-1;
+}
+
+def main(){
+    assert(flip(0.999));
+    assert(flip(0.999));
+    assert(flip(0.999));
+
+    x:=df();
+    y:=df();
+    z:=df();
+
+    v := 0.25*(x+y+z);
+    
+    return v;
+}

@@ -1,0 +1,9 @@
+// skipped
+// TODO: make this example illustrate the difference between adding independent and fully dependent gaussians
+
+def main(){
+    x := gauss(0,1);
+    y := gauss(0,1);
+    z := x+z; // error
+    return z;
+}

@@ -1,7 +1,0 @@
-
-def main(){
-    X := Gauss(0,1);
-    Y := Gauss(0,1);
-    return X/Y; // expected: [(∫dξ₁⅟(2+2·ξ₁²))·⅟π≠0]·⅟(2+2·r₁²)·⅟(∫dξ₁⅟(2+2·ξ₁²))
-    // TODO: evaluate normalization constant
-}

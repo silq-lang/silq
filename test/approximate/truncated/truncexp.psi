@@ -1,0 +1,8 @@
+//skipped
+
+def main() {
+    X := (2*flip(0.5) - 1) * exponential(5);observe(-0.5 <= X && X <= 0.5);
+    Y := (2*flip(0.5) - 1) * exponential(5);observe(-0.5 <= Y && Y <= 0.5);
+    Z := (2*flip(0.5) - 1) * exponential(5);observe(-0.5 <= Z && Z <= 0.5);
+    return X+Y+Z;
+}

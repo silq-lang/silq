@@ -1,0 +1,7 @@
+// compilation errors
+
+def main(){
+    x := flip(1/2);
+    y := if x { 2 }; // error
+    return y;
+}

@@ -1,0 +1,59 @@
+// skipped
+
+def main(){
+    N := 2;
+    infected := array(N,0);
+    infected[0] = 1;
+    infected[1] = flip(1/2);
+    for i in [0..2){
+        newInfected := infected;
+        for j in [0..2){
+            if infected[j]{
+                which := uniformInt(0,N-1);
+                newInfected[which] = 1;
+            }
+        }
+        infected = newInfected;
+    }
+    return infected[1]; // expected: 7·δ[-r₁+1]·⅟8+δ[-r₁]·⅟8
+}
+
+
+/+
+def main(){
+    N := 2;
+    infected := array(N,0);
+    infected[0] = 1;
+    infected[1] = Bernoulli(1/2);
+    newInfected := [];
+    for i in [0..2){
+		newInfected = infected;
+		for j in [0..2){
+			if infected[j]{
+				which := UniformInt(0,N-1);
+				newInfected[which] = 1;
+			}
+		}
+		infected = newInfected;
+    }
+    /+newInfected = infected;
+    for j in [0..2){
+        if infected[j]{
+            which := UniformInt(0,N-1);
+            newInfected[which] = 1;
+        }
+    }
+    infected = newInfected;
+    newInfected = infected;
+    for j in [0..2){
+        if infected[j]{
+			which := UniformInt(0,N-1);
+			newInfected[which] = 1;
+        }
+    }
+    infected = newInfected;+/
+    return newInfected[1]; // expected: 7·δ[-r₁+1]·⅟8+δ[-r₁]·⅟8
+    //return (N,newInfected,newInfected[1]);
+    //return (infected,newInfected,infected[1]);
+}
++/

@@ -1,0 +1,5 @@
+
+def main(){
+    x := gauss(gauss(3,1),1);
+    return Expectation(x); // expected: δ[-3+r₁]
+}

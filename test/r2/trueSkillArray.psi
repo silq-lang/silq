@@ -1,0 +1,25 @@
+// skipped
+// TODO: 2D-arrays
+// returns arrays
+
+def main(){
+    players := [0,1,2];
+    games := [[0,1,1],[1,2,1],[0,2,1]];
+    playerSkills := array(3);
+    for i in [0..3){
+        playerSkills[i] = gauss(100,10);
+    }
+    performance := array(3,2,0);
+    for i in [0..3){
+        performance[i,0] = gauss(playerSkills[games[i,0]],15);
+        performance[i,1] = gauss(playerSkills[games[i,1]],15);
+        if games[i,2] == 1 {
+            observe(performance[i,0]>performance[i,1]);
+        }else if games[i,2] == 0 {
+            observe(performance[i,0]==performance[i,1]);
+        }else if games[i,2] == -1 {
+            observe(performance[i,0]<performance[i,1]);
+        }
+    }
+    return playerSkills;
+}

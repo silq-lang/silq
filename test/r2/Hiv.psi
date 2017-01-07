@@ -1,0 +1,29 @@
+// skipped
+
+def main(){
+    dataPerson := readCSV("data/Hiv/dataPerson.csv");
+    dataTime := readCSV("data/Hiv/dataTime.csv");
+    dataY := readCSV("data/Hiv/dataY.csv");
+
+    muA1 := gauss(0,1);
+    muA2 := gauss(0,1);
+    sigmaA1 := uniform(0,100);
+    sigmaA2 := uniform(0,100);
+    
+    k := 2;
+    a1 := array(k); a2 := array(k);
+    for i in [0..k){
+        a1[i] = gauss(muA1,sigmaA1);
+        a2[i] = gauss(0.1*muA2,sigmaA2);
+    }
+    sigmaY := uniform(0, 100);
+    n := dataY.length;
+    assert(n==369);
+    n = 10;
+    for i in [0..n){
+        yHat := a1[dataPerson[i]-1] + a2[dataPerson[i]-1]*dataTime[i];
+        y := gauss(yHat,sigmaY);
+        cobserve(y,dataY[i]);
+    }
+    //return (a1,a2,sigmaA1,sigmaA2,sigmaY); // TODO: return arrays
+}

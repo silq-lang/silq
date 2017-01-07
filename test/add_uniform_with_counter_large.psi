@@ -1,0 +1,14 @@
+// skipped
+// TODO: why is this so slow for even moderate number of iterations?
+def main(){
+    x := 0;
+    y := 0;
+    repeat 3{
+        cur := uniform(0,1);
+        x = x + cur;
+        if cur<1/2 { y+=1; }
+    }
+    //z:=x==y;
+    observe(y==2);
+    return x;
+}

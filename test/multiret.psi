@@ -1,0 +1,16 @@
+
+def p(x,y){
+    if x == y{
+        return x;
+    }else{
+        return y;
+    }
+}
+
+def main(){
+    assert(p(0,0)==0);
+    assert(p(0,1)==1);
+    assert(p(1,0)==0);
+    assert(p(1,1)==1);
+    return (); // expected: 1
+}

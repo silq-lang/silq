@@ -1,0 +1,9 @@
+// skipped
+
+def k(a,b){
+    x := uniform(0,1);
+    y := uniform(0,1);
+    z := x*y;
+    assert(z<a || z>b);
+    return; // expected: TODO: something with linearized constraints, comparable to ∫dξ₁(-∫dξ₂(∫dξ₃[-ξ₁+ξ₃≤0]·q(ξ₃,ξ₂,γ⃗))·[-ξ₁+ξ₂≤0]·[-ξ₂+ξ₁≠0]+-∫dξ₂∫dξ₃[-ξ₃+ξ₁≠0]·[-ξ₃+ξ₁≤0]·q(ξ₃,ξ₂,γ⃗))·[-1+ξ₁≤0]·[-ξ₁≤0]·[ξ₁≠0]·log(ξ₁)
+}

@@ -1,0 +1,94 @@
+// skipped (not performant enough yet)
+// http://www.quora.com/John-rolled-a-fair-die-10-times-and-said-that-every-number-from-1-to-6-appeared-at-least-once-Given-this-information-what-is-the-probability-of-the-event-number-6-appeared-at-least-2-times
+
+// TODO: this should be fast for 10 rolls
+// TODO: methods, arrays, pass-by-reference.
+def main(){
+    x₁ := uniformInt(1,6);
+    x₂ := uniformInt(1,6);
+    x₃ := uniformInt(1,6);
+    x₄ := uniformInt(1,6);
+    x₅ := uniformInt(1,6);
+    x₆ := uniformInt(1,6);
+    x₇ := uniformInt(1,6);
+    x₈ := uniformInt(1,6);
+    x₉ := uniformInt(1,6);
+    x₁₀ := uniformInt(1,6);
+
+    c₁ := 0;
+    c₂ := 0;
+    c₃ := 0;
+    c₄ := 0;
+    c₅ := 0;
+    c₆ := 0;
+
+    if x₁  == 1 { c₁ += 1; }
+    if x₂  == 1 { c₁ += 1; }
+    if x₃  == 1 { c₁ += 1; }
+    if x₄  == 1 { c₁ += 1; }
+    if x₅  == 1 { c₁ += 1; }
+    if x₆  == 1 { c₁ += 1; }
+    if x₇  == 1 { c₁ += 1; }
+    if x₈  == 1 { c₁ += 1; }
+    if x₉  == 1 { c₁ += 1; }
+    if x₁₀ == 1 { c₁ += 1; }
+
+    if x₁  == 2 { c₂ += 1; }
+    if x₂  == 2 { c₂ += 1; }
+    if x₃  == 2 { c₂ += 1; }
+    if x₄  == 2 { c₂ += 1; }
+    if x₅  == 2 { c₂ += 1; }
+    if x₆  == 2 { c₂ += 1; }
+    if x₇  == 2 { c₂ += 1; }
+    if x₈  == 2 { c₂ += 1; }
+    if x₉  == 2 { c₂ += 1; }
+    if x₁₀ == 2 { c₂ += 1; }
+
+    if x₁  == 3 { c₃ += 1; }
+    if x₂  == 3 { c₃ += 1; }
+    if x₃  == 3 { c₃ += 1; }
+    if x₄  == 3 { c₃ += 1; }
+    if x₅  == 3 { c₃ += 1; }
+    if x₆  == 3 { c₃ += 1; }
+    if x₇  == 3 { c₃ += 1; }
+    if x₈  == 3 { c₃ += 1; }
+    if x₉  == 3 { c₃ += 1; }
+    if x₁₀ == 3 { c₃ += 1; }
+
+    if x₁  == 4 { c₄ += 1; }
+    if x₂  == 4 { c₄ += 1; }
+    if x₃  == 4 { c₄ += 1; }
+    if x₄  == 4 { c₄ += 1; }
+    if x₅  == 4 { c₄ += 1; }
+    if x₆  == 4 { c₄ += 1; }
+    if x₇  == 4 { c₄ += 1; }
+    if x₈  == 4 { c₄ += 1; }
+    if x₉  == 4 { c₄ += 1; }
+    if x₁₀ == 4 { c₄ += 1; }
+
+    if x₁  == 5 { c₅ += 1; }
+    if x₂  == 5 { c₅ += 1; }
+    if x₃  == 5 { c₅ += 1; }
+    if x₄  == 5 { c₅ += 1; }
+    if x₅  == 5 { c₅ += 1; }
+    if x₆  == 5 { c₅ += 1; }
+    if x₇  == 5 { c₅ += 1; }
+    if x₈  == 5 { c₅ += 1; }
+    if x₉  == 5 { c₅ += 1; }
+    if x₁₀ == 5 { c₅ += 1; }
+
+    if x₁  == 6 { c₆ += 1; }
+    if x₂  == 6 { c₆ += 1; }
+    if x₃  == 6 { c₆ += 1; }
+    if x₄  == 6 { c₆ += 1; }
+    if x₅  == 6 { c₆ += 1; }
+    if x₆  == 6 { c₆ += 1; }
+    if x₇  == 6 { c₆ += 1; }
+    if x₈  == 6 { c₆ += 1; }
+    if x₉  == 6 { c₆ += 1; }
+    if x₁₀ == 6 { c₆ += 1; }
+
+    observe(c₁>0&&c₂>0&&c₃>0&&c₄>0&&c₅>0&&c₆>0);
+    r := c₂>1;
+    return r;
+}

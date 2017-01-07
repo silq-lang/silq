@@ -1,0 +1,17 @@
+def main(){
+    x := flip(1/2);
+    if x {
+        assert(x);
+        observe(x);
+    }else{
+        assert(!x);
+        observe(!x);
+    }
+
+    y := if x { 1/x } else { 1/(1-x) };
+    z := 0;
+    if x { z = 1/x; } else { z=1/(1-x); }
+
+    w := if x { flip(1/2) } else { flip(1/3) };
+    return (y,z,w); // expected: 5·δ[-w+1]·δ[-y+1]·δ[-z+1]·⅟12+7·δ[-y+1]·δ[-z+1]·δ[w]·⅟12
+}

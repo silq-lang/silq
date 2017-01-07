@@ -1,0 +1,26 @@
+// skipped
+// Example 5.
+
+def trueSkill(){
+    skillA := gauss(100,10);
+    skillB := gauss(100,10);
+    skillC := gauss(100,10);
+    
+    // first game: A vs B, A won
+    perfA1 := gauss(skillA,15);
+    perfB1 := gauss(skillB,15);
+    observe(perfA1 > perfB1);
+    
+    // second game: B vs C, B won
+    perfB2 := gauss(skillB,15);
+    perfC2 := gauss(skillC,15);
+    observe(perfB2 > perfC2);
+
+    // second game: A vs C, A won
+    perfA3 := gauss(skillA,15);
+    perfC3 := gauss(skillC,15);
+    observe(perfA3 > perfC3);
+
+    return (skillA,skillB,skillC); // expected: (∫dξ₁(d/dx)⁻¹[e^(-x²)](-skillB·⅟√3̅0̅+ξ₁·⅟√3̅0̅)·e^(-ξ₁²·⅟30+skillA·ξ₁·⅟15))·(∫dξ₁(d/dx)⁻¹[e^(-x²)](-skillC·⅟√3̅0̅+ξ₁·⅟√3̅0̅)·e^(-ξ₁²·⅟30+skillA·ξ₁·⅟15))·(∫dξ₁(d/dx)⁻¹[e^(-x²)](-skillC·⅟√3̅0̅+ξ₁·⅟√3̅0̅)·e^(-ξ₁²·⅟30+skillB·ξ₁·⅟15))·`q()·e^(-1500+-7·skillA²·⅟60+-skillB²·⅟12+-skillC²·⅟20+10·skillA+10·skillB+10·skillC)·⅟20·⅟π^(9·⅟2)·⅟√5̅4̅0̅0̅0̅0̅
+}
+    

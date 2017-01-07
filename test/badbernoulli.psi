@@ -1,0 +1,5 @@
+def main(){
+    x := uniform(-1,2);
+    y := flip(x);
+    return y; // expected: δ[-y+1]·⅟6+δ[y]·⅟6
+}

@@ -1,0 +1,10 @@
+
+def main(){
+    count := 0;
+    c1 := flip(1/2);
+    c2 := flip(1/2);
+    if c1 { count += 1; }
+    if c2 { count *= 2; }
+    observe(c1 && c2);
+    return count; // expected: δ[-count+2]
+}

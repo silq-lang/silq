@@ -1,0 +1,26 @@
+// skipped
+
+def main(){
+    observedResults0 := 1;
+    observedResults1 := 1;
+    observedResults2 := 0;
+    observedResults3 := 1;
+    observedResults4 := 0;
+
+    bias := beta(2,5);
+
+    tossResults0 := flip(bias);
+    tossResults1 := flip(bias);
+    tossResults2 := flip(bias);
+    tossResults3 := flip(bias);
+    tossResults4 := flip(bias);
+
+    observe(tossResults0 == observedResults0);
+    observe(tossResults1 == observedResults1);
+    observe(tossResults2 == observedResults2);
+    observe(tossResults3 == observedResults3);
+    observe(tossResults4 == observedResults4);
+
+    return bias; // expected: (-2·bias+1+bias²)·(-9240·bias+-9240·bias³+13860·bias²+2310+2310·bias⁴)·[-1+bias≤0]·[-bias≤0]·bias⁴
+    // TODO: better simplification
+}

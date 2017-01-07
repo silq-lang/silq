@@ -1,0 +1,19 @@
+// skipped
+
+def max(a,b){
+    r := a;
+    if b > r { r = b; }
+    return r;
+}
+
+def main(){
+    x := uniform(0,1);
+    y := gauss(0,1);
+    z := uniform(0,1);
+    r := max(x,max(y,z));
+    observe(x < 0.75);
+    if flip(1/2)
+      { assert(r < 0.9); }
+    return r + uniformInt(1,3);
+}
+

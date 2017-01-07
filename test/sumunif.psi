@@ -1,0 +1,7 @@
+// skipped
+
+def main() {
+	val := 0;
+	for j in [0..8) { val = val + uniform(0,j); }
+	return val;
+}

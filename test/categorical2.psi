@@ -1,0 +1,4 @@
+def main(){
+    x := [0.2,0.3,0.5];
+    return categorical(x); // expected: 3·δ[-1+r₁]·⅟10+δ[-2+r₁]·⅟2+δ[r₁]·⅟5
+}

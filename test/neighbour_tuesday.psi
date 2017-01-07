@@ -1,0 +1,11 @@
+
+def main(){
+    isGirl1 := flip(1/2);
+    bornOnATuesday1 := flip(1/7);
+    isGirl2 := flip(1/2);
+    bornOnATuesday2 := flip(1/7);
+    observe(isGirl1 && bornOnATuesday1 ||
+            isGirl2 && bornOnATuesday2);
+    bothAreGirls := isGirl1 && isGirl2;
+    return bothAreGirls; // expected: 13·δ[-bothAreGirls+1]·⅟27+14·δ[-bothAreGirls]·⅟27
+}

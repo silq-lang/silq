@@ -1,0 +1,14 @@
+// skipped
+
+def main(){
+    observedResults := readCSV("data/CoinBias/tosses.csv");
+    bias := beta(2, 5);
+    tossResults := array(5);
+    assert(observedResults.length == tossResults.length);
+    for i in [0..5) { tossResults[i] = flip(bias); }
+    // observe(tossResults == observedResults); // TODO
+    for i in [0..5) { observe(tossResults[i] == observedResults[i]); }
+    //return bias; // expected: (-2·bias+1+bias²)·(-9240·bias+-9240·bias³+13860·bias²+2310+2310·bias⁴)·[-1+bias≤0]·[-bias≤0]·bias⁴
+    return bias;
+    // TODO: better simplification
+}

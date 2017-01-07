@@ -1,0 +1,29 @@
+// skipped
+// TODO: assume?
+
+def main(){
+    s := 0;
+    sis := 0;
+    skip := 0;
+    n := 10;
+    m := 0;
+    for i in [0..n) {
+        x := gauss(0,1);
+        s = s + x;
+
+        if skip == 0 {
+            sis = sis + x;
+            skip = 1 - skip;
+            m = m + 1;
+        }
+    }
+
+    //assume(m > 0);
+    sis = sis * n * (n-m) / m;
+    
+
+    res := sis - s;
+    if res < 0 { res = 0 - res; }
+    //return res;
+    return Expectation(res);
+}

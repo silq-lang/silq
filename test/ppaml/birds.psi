@@ -1,0 +1,10 @@
+// skipped
+
+def main(){
+    female := flip(0.49);
+    length := if female { gauss(89,0.2); } else { gauss(92,0.2); };
+    param := ?x;
+    cobserve(length,param);
+    assert(!female);
+    return length;
+}

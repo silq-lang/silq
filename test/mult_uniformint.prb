@@ -1,6 +1,0 @@
-def main(){
-    x := UniformInt(0,2);
-    y := UniformInt(0,2);
-    z := x*y;
-    return z; // expected: 2·δ[-z+2]·⅟9+5·δ[-z]·⅟9+δ[-z+1]·⅟9+δ[-z+4]·⅟9
-}

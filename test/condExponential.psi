@@ -1,0 +1,7 @@
+// https://www.quora.com/If-X-and-Y-are-independent-exponential-random-variables-with-parameter-1-What-is-E-X+Y-2-X-1-Y-1
+
+def main(){
+	(x,y) := (exponential(1),exponential(1));
+	observe(x>1&&y>1);
+	return Expectation((x+y)^2); // expected: δ[-r₁+18]
+}

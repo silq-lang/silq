@@ -1,0 +1,16 @@
+def sum(a,b){
+    r := a+b;
+    return r;
+}
+
+def product(a,b){
+    r := a*b;
+    return r;
+}
+
+def main(){
+    k := uniform(0,1);
+    r := sum(1,2);
+    r += product(r,r);
+    return (r,k); // expected: [-1+k≤0]·[-k≤0]·δ[-r+12]
+}

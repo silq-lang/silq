@@ -1,0 +1,60 @@
+// skipped
+
+
+def main(){ // train
+    features1 := readCSV("data/BPM/trainingFeatures1.csv");
+    features2 := readCSV("data/BPM/trainingFeatures2.csv");
+    features3 := readCSV("data/BPM/trainingFeatures3.csv");
+    outcomes := readCSV("data/BPM/trainingOutcomes.csv");
+    noise := 0.1;
+    n := features1.length;
+    weights := array(3);
+    for i in [0..3){ weights[i] = gauss(0,1); }
+    for i in [0..n){
+        mean := features1[i]*weights[0]
+            + features2[i]*weights[1]
+            + features3[i]*weights[2];
+        result := gauss(mean,noise) > 0;
+        observe(result == outcomes[i]);
+    }
+    return (weights[0],weights[1],weights[2]);
+}
+
+/+
+let BayesPointMachine (features : Vector[]) (noise:float) (weights:Vector) : bool[] = 
+    [|for v in features -> 
+        (random(GaussianFromMeanAndVariance(innerProduct(v, weights), noise)) > 0.0)|]
+
+let TrainBayesPointMachine features outcomes noise = 
+    let priorMeans = mkVector [|0.0; 0.0; 0.0|]
+    let priorCovariance = diag (mkVector [|1.0; 1.0; 1.0|])
+    let weights = random (VectorGaussianFromMeanAndVariance(priorMeans, priorCovariance))
+    observe (outcomes = BayesPointMachine features noise weights)
+    weights
+
+let trainedWeights = function 
+  (trainingVectors, trainingOutcomes) ->
+    TrainBayesPointMachine trainingVectors trainingOutcomes 0.1
+
+
+let modelledOutcomes(trainingVectors, trainingOutcomes, testVectors) = BayesPointMachine testVectors 0.1 (trainedWeights(trainingVectors, trainingOutcomes))
+
+
+
+
+let featureVector : float * float -> Vector = function (x, y) -> mkVector [|x;y;1.0|]
+let trainingFeatures = [|(63.0, 38.0); (16.0,23.0); (28.0,40.0); (55.0,27.0); (22.0,18.0); (20.0,40.0)|]
+let trainingVectors = Array.map featureVector trainingFeatures
+let trainingOutcomes = [| true; false; true; true; false; false |]
+let testFeatures = [|(58.0,36.0); (18.0,24.0); (22.0,37.0);|]
+let testVectors = Array.map featureVector testFeatures
+
+
+let trainedWeightsD = inferFun1 <@ trainedWeights @> (trainingVectors, trainingOutcomes)
+
+let modelledOutcomesD = inferFun1 <@ modelledOutcomes @> (trainingVectors, trainingOutcomes, testVectors)
+
+printf "trainedWeights: \n%A\n" trainedWeightsD
+printf "modelledOutcomes: \n%A\n" modelledOutcomesD
+
++/

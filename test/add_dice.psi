@@ -1,0 +1,17 @@
+// skipped
+// (plot output)
+
+def abs(x){
+    return if x<0 { -x } else { x };
+}
+
+def main(){
+    n := uniformInt(1,4);
+    o := uniformInt(-2,2);
+    c := if flip((o+3)/5){ 1/n }else {1/n^2};
+    x := 0;
+    for i in [0..4){ if(i<n){x+=uniformInt(1,6);} } // TODO: for loops
+    r:=x/n-3.5+uniform(-1,1)*c; // smear out
+    r+=3*o;
+    return r;
+}

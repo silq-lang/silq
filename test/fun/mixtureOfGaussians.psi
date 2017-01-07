@@ -1,0 +1,12 @@
+// skipped: sample size too large
+// TODO: improve method calls
+// TODO: allow returning arrays
+// TODO: dirichlet distribution
+
+
+def main(){
+    p := array(2);
+    p[0]=1;p[1]=1;
+    weights := dirichlet(p);// Dirichlet([1,1]);
+    
+}

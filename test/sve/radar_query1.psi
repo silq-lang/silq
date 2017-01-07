@@ -1,0 +1,34 @@
+// skipped
+
+def IrwHall(mu,w){
+    return mu+uniform(-w/2,w/2)+uniform(-w/2,w/2);
+}
+
+def T(mu,l,r){
+    x := uniform(-l,0)+uniform(0,l);
+    observe(x<=0);
+    y := uniform(-r,0)+uniform(0,r);
+    observe(y>0);
+    return (if flip(l/(l+r)) { x } else { y }) + mu;
+}
+
+def main(){
+    n := 2;
+    b := array(n);
+    x := array(n);
+    o := array(n);
+    b[0] = flip(0.2);
+    for i in [1..n){
+    	b[i] = if b[i-1] { 1 } else { flip(0.2) };
+    }
+    x[0] = uniform(0,10);
+    for i in [1..n){
+    	x[i] = gauss(x[i-1],2);
+    }
+    for i in [0..n){
+        o[i] = T(x[i],5,(if b[i]{ 1 }else{ 5 }));
+    }
+    cobserve(o[0],5);
+    observe(b[0]);
+    return x[1];
+}

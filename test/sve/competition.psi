@@ -1,0 +1,35 @@
+// skipped
+// TODO!
+
+def IrwHall(mu,w){
+    return mu+uniform(-w/2,w/2)+uniform(-w/2,w/2);
+}
+
+def T(mu,l,r){
+    x := uniform(-l,0)+uniform(0,l);
+    observe(x<=0);
+    y := uniform(-r,0)+uniform(0,r);
+    observe(y>0);
+    return (if flip(l/(l+r)) { x } else { y }) + mu;
+}
+
+def TruncGauss(mu,var,width){
+    x:=gauss(mu,var);
+    observe(x>=mu-width && x<=mu+width);
+    return x;
+}
+
+def main(){
+    o1 := IrwHall(3*flip(1/2),7);
+    r1 := uniform(-2,8);
+    cobserve(r1,5);
+    r2 := IrwHall(r1,4);
+    r3 := IrwHall((if o1 < 2.5 {(r1+r2)/2} else {r1-r2}),4);
+    t1 := IrwHall(r2+r3,4);
+    s1 := uniform(0,10);
+    s2 := IrwHall(5,5);
+    s3 := T(8,8,2);
+    t2 := TruncGauss(s1+s2+s3,1000,2);
+    z := TruncGauss(s1-t1,1000,5);
+    return (o1,r3);
+}

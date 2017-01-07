@@ -1,0 +1,153 @@
+// skipped
+
+def noise_a() {
+  //return uniform(-0.001, 0.001);
+  //return gauss(0, 0.01);
+  //return (1 - 2 * flip(0.5)) * gamma(1,2);
+  //return gamma(1,2) * 0.001;
+  return beta(0.5,0.5);
+}
+
+
+def sobel_x() {
+    w := array(9);
+    for i in [0..9) { w[i] = 1; }
+
+    // sx = convolve(w, ky);
+    sx := 0;
+    sx = sx + w[0] * (-1) + w[1] * 0 + w[2] * (1);
+    sx = sx + w[3] * (-2) + w[4] * 0 + w[5] * (2);
+    sx = sx + w[6] * (-1) + w[7] * 0 + w[8] * (1);
+
+    
+    sxp := 0;
+    sxp = sxp + noise_a() + w[0] * (-1) + noise_a() + (w[1] * 0) + w[2] * (1) + noise_a();
+    sxp = sxp + noise_a() + w[3] * (-2) + noise_a() + (w[4] * 0) + w[5] * (2) + noise_a();
+    sxp = sxp + noise_a() + w[6] * (-1) + noise_a() + (w[7] * 0) + w[8] * (1) + noise_a();
+
+
+    d := (sxp - sx);
+    if (d < 0) { d = -d; }
+
+    return d;
+}
+
+
+def sobel_y() {
+    w:= array(9);
+    for i in [0..9) { w[i] = 1; }
+
+    sy := 0;
+    sy = sy + w[0] * (-1) + w[1] * (-2) + w[2] * (-1);
+    sy = sy + 0;
+    sy = sy + w[6] * (1)  + w[7] * (2)  + w[8] * (1);
+
+    syp := 0;
+    syp = syp + w[0] * (-1) + w[1] * (-2) + w[2] * (-1);
+    syp = syp + 0;
+    syp = syp + w[6] * (1)  + w[7] * (2)  + w[8] * (1);
+
+    d := (syp - sy);
+    if (d < 0) { d = -d; }
+
+    return d;
+
+}
+
+
+def main() {
+
+    dx := sobel_x();
+    //dy := sobel_y();
+
+    // had to play with the noise expression in the end... sqrts do not work. 
+    //res := dx + dy;
+    res := dx;
+    return res;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+
+
+static float kx[][3] =
+		{
+			{ -1, -2, -1 },
+			{  0,  0,  0 },
+			{  1,  2,  1 }
+		} ;
+
+static float ky[][3] =
+		{
+			{ -1, 0, 1 },
+			{ -2, 0, 2 },
+			{ -1, 0, 1 }
+		} ;
+
+float convolve(float w[][3], float k[][3])
+{
+	float r ;
+	r = 0.0 ;
+	for( int j = 0 ; j < 3 ; j++ )
+		for ( int i = 0 ; i < 3 ; i++ )
+		{
+			r += w[i][j] * k[j][i] ;
+		}
+	return r ;
+}
+
+float sobel(float w[][3])
+{
+	float sx ;
+	float sy ;
+	float s  ;
+
+	sx = convolve(w, ky) ;
+
+	sy = convolve(w, kx) ;
+
+	s = sqrt(sx * sx + sy * sy) ;
+
+	if (s >= (256 / sqrt(256 * 256 + 256 * 256)))
+		s = 255 / sqrt(256 * 256 + 256 * 256);
+
+	return s ;
+}
+
+*/

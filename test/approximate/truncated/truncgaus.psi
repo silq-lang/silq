@@ -1,0 +1,8 @@
+//skipped
+
+def main() {
+    x := gauss(0,1);
+    y := x;
+    if (x < -2 || x > 2) { y = 0; } 
+    return y;
+}

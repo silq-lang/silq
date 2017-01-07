@@ -1,0 +1,10 @@
+def main(){
+    //x := gauss(0,1);
+    //y := x<0;
+
+    a := gauss(0,1);
+    b := gauss(0,1);
+    c := a < b;
+    return c; // expected: (δ[-c+1]·π·⅟2+δ[-c]·π·⅟2)·⅟π
+    // TODO: eliminate the π
+}

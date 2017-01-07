@@ -1,0 +1,28 @@
+// skipped
+
+def main() {
+    isSmall := flip(0.5);
+
+    data := [0];
+    // data := [0,1]; // data := [0,1,0]; // data := [0,1,0,1,1];
+    //data := [0,1,0,1,1,0];
+
+    small := [0,1,2];
+    big := [0,1,2,3,4];
+
+    for i in [0..data.length) {
+        if (isSmall) {
+            //for j in [0..data.length) {
+            k := uniformInt(0, small.length-1);
+            observe(data[i] == small[k]);
+            //}
+        } else {
+            //for j in [0..data.length) {
+            k := uniformInt(0, big.length-1);
+            observe(data[i] == big[k]);
+            //}
+        }
+    }
+
+    return isSmall;
+}

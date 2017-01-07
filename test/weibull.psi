@@ -1,0 +1,7 @@
+
+def main(){
+    x := weibull(1,1/2);
+    y := weibull(1,5);
+    return (x,y); // expected: [(∫dξ₁[-ξ₁≤0]·ξ₁⁴·⅟e^(ξ₁⁵))·(∫dξ₁[-ξ₁≤0]·⅟e^√ξ̅₁̅·⅟√ξ̅₁̅)≠0]·[-x≤0]·[-y≤0]·e^(-y⁵+-√x̅)·y⁴·⅟(∫dξ₁[-ξ₁≤0]·ξ₁⁴·⅟e^(ξ₁⁵))·⅟(∫dξ₁[-ξ₁≤0]·⅟e^√ξ̅₁̅·⅟√ξ̅₁̅)·⅟√x̅
+    // TODO: evaluate normalization constant
+}

@@ -1,0 +1,7 @@
+def main(){
+    x:=1;
+    x=x+1;
+    y:=gauss(x,x);
+    if y>x { y-=x; }
+    return y; // expected: [-2+y≤0]·e^(-1+-y²·⅟4+y)·⅟2·⅟√π̅+[-y≠0]·[-y≤0]·⅟2·⅟e^(y²·⅟4)·⅟√π̅
+}

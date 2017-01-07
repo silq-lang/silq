@@ -1,0 +1,37 @@
+// skipped: data too large
+// TODO: the original r2 example uses huge arrays whose indices are seldomly used
+
+def main(){
+    dataControlGroup := readCSV("data/ClinicalTrial/dataControlGroup.csv");
+    dataTreatedGroup := readCSV("data/ClinicalTrial/dataTreatedGroup.csv");
+    n := 100;
+    // n := dataControlGroup.length;
+    
+    isEffective := flip(1/2);
+
+    probControl := beta(1,1);
+    probTreated := beta(1,1);
+    probAll := beta(1,1);
+
+    if isEffective{
+        for i in [0..n){
+            controlGroup_i := flip(probControl);
+            observe(controlGroup_i == dataControlGroup[i]);
+        }
+        for i in [0..n){
+            treatedGroup_i := flip(probTreated);
+            observe(treatedGroup_i == dataTreatedGroup[i]);
+        }
+    }else{
+        for i in [0..n){
+            controlGroup_i := flip(probAll);
+            observe(controlGroup_i == dataControlGroup[i]);
+        }
+        for i in [0..n){
+            treatedGroup_i := flip(probAll);
+            observe(treatedGroup_i == dataTreatedGroup[i]);
+        }
+    }
+
+    return isEffective;
+}

@@ -1,0 +1,11 @@
+// skipped
+// Example 4. Unsupported!
+
+def main(){
+    c1 := flip(1/2);
+    c2 := flip(1/2);
+    while !(c1||c2){ // unsupported
+        c1 = flip(1/2);
+        c2 = flip(1/2);
+    }
+}

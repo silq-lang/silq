@@ -1,0 +1,19 @@
+// skipped
+// TODO: fix segfault
+
+
+def Variance(x:Distribution[ℝ]){
+    return x.then((x)=>x^2).expectation()-x.expectation()^2;
+}
+
+def main(){
+    mu := 12;
+    nu := 36;
+    g := infer(()=>gauss(mu,nu));
+    //g := Uniform(0,1);
+    mu' := Expectation(g.sample());
+    nu' := Variance(g);
+    nu'' := Expectation(g.sample()^2)-Expectation(g.sample())^2;
+    assert(nu' == nu'');
+    return (); // expected: 1
+}

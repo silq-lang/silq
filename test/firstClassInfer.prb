@@ -1,9 +1,0 @@
-
-def Dirac[a](x:a):Distribution[a]{ // TODO: make built-in
-	return infer(()=>x);
-}
-
-def main(){
-	k := if Bernoulli(1/2) { infer } else { [a](f:𝟙 → a)=>Dirac(f()) };
-	return k(()=>Bernoulli(1/2)); // expected: δ_r₁[λξ₁. δ_ξ₁[{.val ↦ 0,.tag ↦ 1}]]·⅟4+δ_r₁[λξ₁. δ_ξ₁[{.val ↦ 0,.tag ↦ 1}]·⅟2+δ_ξ₁[{.val ↦ 1,.tag ↦ 1}]·⅟2]·⅟2+δ_r₁[λξ₁. δ_ξ₁[{.val ↦ 1,.tag ↦ 1}]]·⅟4
-}

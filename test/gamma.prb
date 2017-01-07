@@ -1,4 +1,0 @@
-def main(){
-    r := Gamma(9,1/2);
-    return r; // expected: [-r≤0]·r⁸·⅟20643840·⅟e^(r·⅟2)
-}

@@ -1,0 +1,14 @@
+
+def main(){
+    a := [0,0.1,1.0];
+    y := gauss(0,1);
+    result := array(3);
+    for i in [0..3){
+        result[i] = y;
+    }
+    for i in [0..3){
+        observe(a[i] > result[i]);
+    }
+    return (result[0],result[1],result[2]); // expected: 2·[-1+10·result₃≠0]·[-1+10·result₃≤0]·[-1+result₃≠0]·[result₃≠0]·[result₃≤0]·δ[-result₂+result₁]·δ[-result₃+result₁]·⅟e^(result₃²·⅟2)·⅟√2̅·⅟√π̅
+    // TODO: eliminate spurious iverson brackets
+}

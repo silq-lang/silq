@@ -1,0 +1,30 @@
+// skipped 
+def main(){
+    /*bound := 3;
+    lambda := 4;
+    L := SampleFrom("(L)=>δ[L-e^(-lambda)]"); // TODO: add constant e
+    p := 1;
+    r := -1;
+    for k in [0..bound){
+	if r==-1{
+	    p = p*uniform(0,1);
+	    if p <= L{ r = k; }
+	}
+    }
+    return r;*/
+    lambda := 1;
+    L := SampleFrom("(L)=>δ[L-e^(-lambda)]"); // TODO: add constant e
+    u1 := uniform(0,1);
+    assert(u1>L);
+    u2 := u1*uniform(0,1);
+    assert(u2>L);
+    u3 := u2*uniform(0,1);
+    assert(u3>L);
+    u4 := u3*uniform(0,1);
+    assert(u4>L);
+    u5 := u4*uniform(0,1);
+    assert(u5>L);
+    u6 := u5*uniform(0,1);
+    assert(u6<=L);
+    return (); // expected: [-1+⅟e≤0]·[-⅟e≤0]·⅟120·⅟e
+}

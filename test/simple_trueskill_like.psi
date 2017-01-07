@@ -1,0 +1,7 @@
+
+def main(){
+    a := gauss(100,15);
+    b := gauss(100,15);
+    c := a > b;
+    return c; // expected: TODO: simplify better
+}

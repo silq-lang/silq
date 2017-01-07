@@ -1,0 +1,31 @@
+// skipped. TODO
+// TODO: make work
+
+def main(){
+    ngroups := 5;
+    groupSize := 7;
+    total := ngroups*groupSize;
+    nballots := array(ngroups,0);
+    for i in [0..ngroups){
+        nballots[i] = groupSize;
+    }
+    for i in [0..total-2){
+        which := uniformInt(0,total-1-i);
+        done := 0;
+        for j in [0..ngroups){
+            if !done{
+                if which < nballots[j]{
+                    done = 1;
+                    nballots[j]-=1;
+                }else {
+                    which -= nballots[j];
+                }
+            }
+        }
+    }
+    ok := 1;
+    for i in [0..ngroups){
+        ok &&= nballots[i]<=1;
+    }
+    return ok;
+}

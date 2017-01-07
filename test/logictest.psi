@@ -1,0 +1,20 @@
+
+def main(){
+    r := false;
+    r ||= flip(1/2);
+    s := true;
+    s &&= flip(1/2);
+    t := true;
+    t ||= flip(1/2);
+    u := false;
+    u &&= flip(1/2);
+
+    v := flip(1/2) && flip(1/2);
+    w := flip(1/2) || flip(1/2);
+
+    x := r&&r;
+    y := s||s;
+
+    return (r,s,t,u,v,w,x,y); // expected: (3·δ[-v]·⅟4+δ[-v+1]·⅟4)·(3·δ[-w+1]·⅟4+δ[-w]·⅟4)·([-r=0]·δ[-x]+[r≠0]·δ[-x+1])·([-s=0]·δ[-y]+[s≠0]·δ[-y+1])·(δ[-r+1]·⅟2+δ[-r]·⅟2)·(δ[-s+1]·⅟2+δ[-s]·⅟2)·δ[-t+1]·δ[-u]
+    // TODO: nicer simplification?
+}

@@ -1,0 +1,13 @@
+
+def main(){
+    evidence := flip(1/2);
+    coin := 0;
+    if evidence {
+        coin1 := flip(1/2);
+        observe(coin1);
+        coin = coin1;
+    }else{
+        coin = flip(1/2);
+    }
+    return coin; // expected: 2·δ[-coin+1]·⅟3+δ[-coin]·⅟3
+}

@@ -1,5 +1,0 @@
-
-def main(){
-    f := if (()=>Bernoulli)()(1/2) { Bernoulli } else { Exponential };
-    return f(1/2); // expected: [-r₁≤0]·⅟4·⅟e^(r₁·⅟2)+δ[-r₁+1]·⅟4+δ[r₁]·⅟4
-}

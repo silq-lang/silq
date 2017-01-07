@@ -1,0 +1,9 @@
+
+def main(){
+    x := uniform(0,1);
+    if x > 1/2 {
+        x = 1/2;
+    }
+    z := x <= 1/2;
+    return z; // expected: δ[-z+1]
+}

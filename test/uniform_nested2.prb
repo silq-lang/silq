@@ -1,8 +1,0 @@
-
-def main(){
-    a := Uniform(0,1);
-    b := Uniform(0,a);
-    c := Uniform(0,b);
-    d := Uniform(0,c);
-    return d; // expected: -[-1+d≤0]·[-d≤0]·[d≠0]·log(d)³·⅟6
-}

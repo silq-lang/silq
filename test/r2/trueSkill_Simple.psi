@@ -1,0 +1,25 @@
+// skipped
+// uses 2D-arrays
+// returns an array
+
+def main(){
+    players := readCSV("data/TrueSkill_Simple/players.csv");
+    games := readCSV("data/TrueSkill_Simple/games.csv");
+    playerSkills := array(players.length);
+    for i in [0..players.length){
+        playerSkills[i] = gauss(100,10);
+    }
+    performance := array(games.length,games.length,0); // TODO: multidimensional arrays
+    for i in [0..games.length){
+        performance[i,0]=gauss(playerSkills[games[i,0]],15);
+        performance[i,1]=Gauss(playerSkills[ganes[i,1]],15);
+        if games[i,2] == 1 {
+            observe(performance[i,0]>performance[i,1]);
+        }else {if games[i,2] == 0 {
+            observe(performance[i,0]==performance[i,1]);
+        }else {if games[i,2] == -1 {
+            observe(performance[i,0]<performance[i,1]);
+        }}}
+    }
+    return playerSkills;
+}

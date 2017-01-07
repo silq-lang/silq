@@ -1,0 +1,27 @@
+//skipped
+
+def df() {
+    X := exponential(2); observe (0 <=X && X<=1);
+    Y := exponential(2); observe (0 <=Y && Y<1);
+
+    X1:= -1 + X;
+    Y1:=  1 - Y;
+    Z:=0;
+    if flip(0.5) {Z=X1;} else {Z=Y1;}
+    return Z/2;
+}
+
+
+def main(){
+    assert(flip(0.999));
+    assert(flip(0.999));
+    assert(flip(0.999));
+
+    x:=df();
+    y:=df();
+    z:=df();
+
+    v := 0.25*(x+y+z);
+    
+    return v;
+}

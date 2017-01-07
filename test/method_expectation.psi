@@ -1,0 +1,16 @@
+// skipped
+// this does not work anymore
+// TODO: update once higher-order inference is in
+
+def foo(a){
+    r:=Expectation(a);
+    observe(a==1);
+    return r;
+}
+
+def main(){
+    x:=flip(1/2);
+    r:=foo(x);
+    observe(x==1);
+    return (r,x); // expected: 2·δ[-2·r+1]·δ[-x+1]
+}

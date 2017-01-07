@@ -1,5 +1,0 @@
-def main(){
-    x := Gauss(0,1);
-    if x { observe(0); }
-    return x; // expected: TODO: δ[x]
-}

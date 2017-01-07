@@ -1,0 +1,25 @@
+// skipped
+// data too large
+// zero-probability observations
+// returns an array
+
+def main(){
+    dataX := readCSV("data/LinearRegression/dataX.csv");
+    dataY := readCSV("data/LinearRegression/dataY.csv");
+    n := dataX.length;
+    assert(n==1000);
+    assert(n==dataY.length);
+    n = 100;
+    a := gauss(0,1);
+    b := gauss(5,1.82574185835055371152); // TODO: what is the precise variance they want?
+    invNoise := gamma(1,1);
+    //y := array(n);
+    for i in [0..n){
+        // y[i] = gauss(a*dataX[i]+b,invNoise);
+        // observe(y[i] == dataY[i]);// TODO
+        y := gauss(a*dataX[i]+b,invNoise);
+        cobserve(y,dataY[i]);
+    }
+    return (a,b,invNoise);
+    //return invNoise;
+}
