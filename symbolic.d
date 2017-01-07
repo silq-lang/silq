@@ -474,14 +474,21 @@ private struct Analyzer{
 								return dApply(idist.toDExpr(),dLambda(dDelta(db1,arg,ce.arg.type)));
 						}
 					}
+					case "Marginal":
+						auto idist=dist.dup();
+						auto r=idist.getVar("`r");
+						idist.addArgs([],true,null);
+						idist.initialize(r,arg,ce.arg.type);
+						foreach(v;idist.freeVars)
+							if(v !is r) idist.marginalize(v);
+						idist.orderFreeVars([r],false);
+						return dApply(idist.toDExpr(),dLambda(one));
 					case "FromMarginal":
 						auto tmp=dist.getTmpVar("__mrg");
 						auto ndist=dist.dup();
 						ndist.initialize(tmp,arg,ce.arg.type);
-						foreach(v;dist.freeVars){
-							if(v !is tmp)
-								ndist.marginalize(v);
-						}
+						foreach(v;dist.freeVars)
+							if(v !is tmp) ndist.marginalize(v);
 						ndist.simplify();
 						dist.distribute(ndist.distribution);
 						return tmp;

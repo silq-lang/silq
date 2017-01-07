@@ -268,7 +268,7 @@ bool isBuiltIn(Identifier id){
 		case name: goto case;
 		case capitalize(name): goto case;
 	}
-	case "FromMarginal","SampleFrom":
+	case "Marginal","FromMarginal","SampleFrom":
 	case "infer","Distribution":
 		return true;
 	default: return false;
@@ -309,8 +309,8 @@ Expression builtIn(Identifier id,Scope sc){
 	case "Categorical": t=funTy(arrayTy(ℝ),distributionTy(ℝ,sc),false,false); break;
 	case "dirac": t=forallTy(["a"],typeTy,funTy(varTy("a",typeTy),varTy("a",typeTy),false,false),true,false); break;
 	case "Dirac": t=forallTy(["a"],typeTy,funTy(varTy("a",typeTy),distributionTy(varTy("a",typeTy),sc),false,false),true,false); break;
-	case "FromMarginal","SampleFrom": t=unit; break; // those are actually magic polymorphic functions
-	case "Expectation": t=funTy(ℝ,ℝ,false,false); break; // TODO: this should be polymorphic too
+	case "Marginal","FromMarginal","SampleFrom": t=unit; break; // those are actually magic polymorphic functions
+	case "Expectation": t=funTy(ℝ,ℝ,false,false); break;
 	case "Distribution": t=funTy(typeTy,typeTy,true,false); break;
 	case "infer": t=
 			forallTy(["a"],typeTy,
@@ -855,6 +855,9 @@ Expression callSemantic(CallExp ce,Scope sc){
 	}else if(isBuiltIn(cast(Identifier)ce.e)){
 		auto id=cast(Identifier)ce.e;
 		switch(id.name){
+			case "Marginal":
+				ce.type=distributionTy(ce.arg.type,sc);
+				break;
 			case "FromMarginal": 
 				ce.type=ce.arg.type;
 				break;
@@ -930,7 +933,7 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 			meaning=sc.lookup(id,false);
 			if(!meaning){
 				if(auto r=builtIn(id,sc)){
-					if(!id.calledDirectly&&util.among(id.name,"FromMarginal","SampleFrom")){
+					if(!id.calledDirectly&&util.among(id.name,"Marginal","FromMarginal","SampleFrom")){
 						sc.error("special operator must be called directly",id.loc);
 						id.sstate=r.sstate=SemState.error;
 					}
