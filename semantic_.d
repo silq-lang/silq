@@ -263,8 +263,11 @@ bool isBuiltIn(Identifier id){
 	case "floor","ceil":
 	case "cosUnifDist":
 	case "bernoulli": goto case "flip";
-	foreach(name;ToTuple!distribNames)
-	case name: goto case;
+	case "Bernoulli": goto case "Flip";
+	foreach(name;ToTuple!distribNames){
+		case name: goto case;
+		case capitalize(name): goto case;
+	}
 	case "FromMarginal","SampleFrom":
 	case "infer","Distribution":
 		return true;
@@ -286,6 +289,7 @@ Expression builtIn(Identifier id,Scope sc){
 	case "floor","ceil": t=funTy(ℝ,ℝ,false,false); break;
 	case "cosUnifDist": t=funTy(unit,ℝ,false,false); break; // TDOO: remove
 	case "bernoulli": goto case "flip";
+	case "Bernoulli": goto case "Flip";
 	foreach(name;ToTuple!distribNames){
 		static if(!util.among(name,"categorical","dirac")){
 			case name:

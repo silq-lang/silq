@@ -443,6 +443,7 @@ private struct Analyzer{
 						rdist.orderFreeVars([r],false);
 						return rdist.toDExpr();
 					case "bernoulli": goto case "flip";
+					case "Bernoulli": goto case "Flip";
 					foreach(name;ToTuple!distribNames){
 						static if(!util.among(name,"categorical","dirac")){
 							case name:
