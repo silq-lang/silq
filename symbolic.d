@@ -341,7 +341,7 @@ private struct Analyzer{
 						}
 						return r;
 					}
-					auto arg=util.among(id.name,"categorical","dirac","SampleFrom")?null:doIt(ce.arg);
+					auto arg=util.among(id.name,"categorical","dirac","Dirac","SampleFrom")?null:doIt(ce.arg);
 					switch(id.name){
 					case "array": // TODO: make polymorphic
 						assert(ce.arg.type==typeTy);
@@ -417,10 +417,31 @@ private struct Analyzer{
 					case "dirac":
 						assert(ce.arg.type == typeTy);
 						auto idist=new Distribution();
-						auto x=idist.declareVar("x");
+						auto x=idist.declareVar("`x");
 						idist.addArgs([x],false,null);
 						idist.orderFreeVars([x],false);
 						return idist.toDExpr();
+					case "Dirac":
+						assert(ce.arg.type == typeTy);
+						auto idist=new Distribution();
+						auto x=idist.declareVar("`x");
+						auto darg=idist.declareVar("`arg");
+						idist.addArgs([darg],false,null);
+						idist.distribute(pdf!"dirac"(x,[darg]));
+						idist.marginalize(darg);
+						idist.orderFreeVars([x],false);
+						auto rdist=new Distribution();
+						auto varg=rdist.declareVar("`varg");
+						rdist.addArgs([varg],false,null);
+						auto r=rdist.declareVar("`r");
+						auto db1=dDeBruijnVar(1);
+						auto res=dApply(idist.toDExpr(),dLambda(dDelta(db1,varg,ce.arg.type)));
+						auto fty=cast(FunTy)ce.type;
+						assert(!!fty);
+						rdist.initialize(r,res,fty.cod);
+						rdist.marginalize(varg);
+						rdist.orderFreeVars([r],false);
+						return rdist.toDExpr();
 					case "bernoulli": goto case "flip";
 					foreach(name;ToTuple!distribNames){
 						static if(!util.among(name,"categorical","dirac")){
@@ -432,6 +453,24 @@ private struct Analyzer{
 								auto var=dist.getTmpVar("__"~name[0]);
 								dist.distribute(pdf!name(var,args));
 								return var;
+						}
+						static if(!util.among(name,"dirac")){
+							case util.capitalize(name):
+								auto nargs=paramNames!name.length;
+								auto args=nargs==1?[arg]:iota(nargs).map!(i=>arg[i.dℤ]).array;
+								foreach(c;cond!name(args))
+									dist.assertTrue(c.cond,formatError(c.error,e.loc));
+
+								auto idist=new Distribution();
+								auto argv=idist.declareVar("`arg");
+								idist.addArgs([argv],false,null);
+								auto vargs=nargs==1?[cast(DExpr)argv]:iota(nargs).map!(i=>argv[i.dℤ]).array;
+								auto x=idist.declareVar("`x");
+								idist.distribute(pdf!name(x,vargs));
+								idist.marginalize(argv);
+								idist.orderFreeVars([x],false);
+								auto db1=dDeBruijnVar(1);
+								return dApply(idist.toDExpr(),dLambda(dDelta(db1,arg,ce.arg.type)));
 						}
 					}
 					case "FromMarginal":

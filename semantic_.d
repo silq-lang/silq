@@ -271,6 +271,11 @@ bool isBuiltIn(Identifier id){
 	default: return false;
 	}
 }
+
+Expression distributionTy(Expression base,Scope sc){
+	return typeSemantic(new CallExp(varTy("Distribution",funTy(typeTy,typeTy,true,false)),base,true),sc);
+}
+
 Expression builtIn(Identifier id,Scope sc){
 	Expression t=null;
 	switch(id.name){
@@ -288,21 +293,25 @@ Expression builtIn(Identifier id,Scope sc){
 				auto argty=nargs==1?ℝ:tupleTy((cast(Expression)ℝ).repeat(nargs).array);
 				t=funTy(argty,ℝ,false,nargs!=1);
 				break;
+			case capitalize(name):
+				auto nargs=paramNames!name.length;
+				auto argty=nargs==1?ℝ:tupleTy((cast(Expression)ℝ).repeat(nargs).array);
+				t=funTy(argty,distributionTy(ℝ,sc),false,nargs!=1);
+				break;
 		}
 	}
 	break;		
 	case "categorical": t=funTy(arrayTy(ℝ),ℝ,false,false); break;
+	case "Categorical": t=funTy(arrayTy(ℝ),distributionTy(ℝ,sc),false,false); break;
 	case "dirac": t=forallTy(["a"],typeTy,funTy(varTy("a",typeTy),varTy("a",typeTy),false,false),true,false); break;
+	case "Dirac": t=forallTy(["a"],typeTy,funTy(varTy("a",typeTy),distributionTy(varTy("a",typeTy),sc),false,false),true,false); break;
 	case "FromMarginal","SampleFrom": t=unit; break; // those are actually magic polymorphic functions
 	case "Expectation": t=funTy(ℝ,ℝ,false,false); break; // TODO: this should be polymorphic too
-
 	case "Distribution": t=funTy(typeTy,typeTy,true,false); break;
 	case "infer": t=
 			forallTy(["a"],typeTy,
 			         forallTy(["f"],funTy(tupleTy([]),varTy("a",typeTy),false,true),
-			                  typeSemantic(
-				                  new CallExp(varTy("Distribution",funTy(typeTy,typeTy,true,false)),
-				                              varTy("a",typeTy),true),sc),false,false),true,false);
+			                  distributionTy(varTy("a",typeTy),sc),false,false),true,false);
 		break;
 	case "*","R","ℝ","𝟙":
 		id.type=typeTy;

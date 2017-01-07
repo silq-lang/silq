@@ -1,0 +1,10 @@
+
+
+def main(){
+	x := Dirac(5);
+	y := Categorical([1/2,1/3,1/6]).expectation();
+	z := Gauss(3,4).expectation();
+	w := Dirac([1,2,3]).sample()[2];
+	y = Dirac(y).sample();
+	return (x,y,z,w); // expected: 3·δ[-3·y+2]·δ[-w+3]·δ[-z+3]·δ_x[λξ₁. δ_ξ₁[{.val ↦ 5,.tag ↦ 1}]]
+}
