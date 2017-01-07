@@ -58,7 +58,7 @@ string computeDistributionDocString(){
 	}
 	auto padding=lrc.map!(x=>x[0].length).reduce!max+4;
 	// note that count is wrong in general, as we want number of display characters (here it works)
-	auto r="Supported primitive distributions\n"~lrc.map!(x=>x[0]~repeat(' ').take(padding-x[0].count).to!string~"⇒   "~x[1]~"\n"~repeat(' ').take(padding+"⇒   p(x) = ".count).to!string~x[2]).join("\n\n");
+	auto r="Supported primitive distributions\n"~lrc.map!(x=>x[0]~repeat(' ').take(padding-x[0].count).to!string~"⇒   "~x[1]~(x[2]!="where 1"?"\n"~repeat(' ').take(padding+"⇒   p(x) = ".count).to!string~x[2]:"")).join("\n\n");
 	return r;
 }
 

@@ -341,7 +341,7 @@ private struct Analyzer{
 						}
 						return r;
 					}
-					auto arg=id.name=="categorical"||id.name=="SampleFrom"?null:doIt(ce.arg);
+					auto arg=util.among(id.name,"categorical","dirac","SampleFrom")?null:doIt(ce.arg);
 					switch(id.name){
 					case "array": // TODO: make polymorphic
 						assert(ce.arg.type==typeTy);
@@ -414,9 +414,16 @@ private struct Analyzer{
 							//err.error("argument to categorical should be an array",ce.loc);
 							//unwind();
 						}
+					case "dirac":
+						assert(ce.arg.type == typeTy);
+						auto idist=new Distribution();
+						auto x=idist.declareVar("x");
+						idist.addArgs([x],false,null);
+						idist.orderFreeVars([x],false);
+						return idist.toDExpr();
 					case "bernoulli": goto case "flip";
 					foreach(name;ToTuple!distribNames){
-						static if(name != "categorical"){
+						static if(!util.among(name,"categorical","dirac")){
 							case name:
 								auto nargs=paramNames!name.length;
 								auto args=nargs==1?[arg]:iota(nargs).map!(i=>arg[i.dℤ]).array;

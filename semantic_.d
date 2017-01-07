@@ -282,7 +282,7 @@ Expression builtIn(Identifier id,Scope sc){
 	case "cosUnifDist": t=funTy(unit,ℝ,false,false); break; // TDOO: remove
 	case "bernoulli": goto case "flip";
 	foreach(name;ToTuple!distribNames){
-		static if(name!="categorical"){
+		static if(!util.among(name,"categorical","dirac")){
 			case name:
 				auto nargs=paramNames!name.length;
 				auto argty=nargs==1?ℝ:tupleTy((cast(Expression)ℝ).repeat(nargs).array);
@@ -292,6 +292,7 @@ Expression builtIn(Identifier id,Scope sc){
 	}
 	break;		
 	case "categorical": t=funTy(arrayTy(ℝ),ℝ,false,false); break;
+	case "dirac": t=forallTy(["a"],typeTy,funTy(varTy("a",typeTy),varTy("a",typeTy),false,false),true,false); break;
 	case "FromMarginal","SampleFrom": t=unit; break; // those are actually magic polymorphic functions
 	case "Expectation": t=funTy(ℝ,ℝ,false,false); break; // TODO: this should be polymorphic too
 

@@ -21,7 +21,7 @@ enum paramNames(string name)=[ParameterIdentifierTuple!(mixin(name~"PDF"))[1..$]
 
 DExpr pdf(string name)(DVar var,DExpr[] args)in{assert(args.length==paramNames!name.length);}body{
 	return mixin(text(name,"PDF(var,",iota(paramNames!name.length).map!(i=>text("args[",i,"]")).join(","),")"));
- }
+}
 
 Cond[] cond(string name)(DExpr[] args)in{assert(args.length==paramNames!name.length);}body{
 	return mixin(text(name,"Cond(",iota(paramNames!name.length).map!(i=>text("args[",i,"]")).join(","),")"));
@@ -163,6 +163,14 @@ Cond[] categoricalCond(DExpr p){
 	auto dbv=dDeBruijnVar(1);
 	return [Cond(dIvr(DIvr.Type.eqZ,dSum(dBounded!"[)"(dbv,zero,dField(p,"length")*dIvr(DIvr.Type.lZ,p[dbv])))),"probability of category should be non-negative"),
 	        Cond(dIvr(DIvr.Type.eqZ,dSum(dBounded!"[)"(dbv,zero,dField(p,"length"))*p[dbv])-1),"probabilities should sum up to 1")];
+}
+
+DExpr diracPDF(DVar var,DExpr e){
+	import type;
+	return dDelta(var,e,varTy("a",typeTy));
+}
+Cond[] diracCond(DExpr e){
+	return [];
 }
 
 

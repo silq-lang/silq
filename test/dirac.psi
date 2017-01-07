@@ -1,0 +1,4 @@
+
+def main(){
+	return dirac(3); // δ[-r₁+3]
+}
