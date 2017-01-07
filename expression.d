@@ -174,6 +174,7 @@ class Identifier: Expression{
 	// semantic information:
 	Declaration meaning;
 	Scope scope_;
+	bool calledDirectly=false;
 }
 
 class PlaceholderExp: Expression{

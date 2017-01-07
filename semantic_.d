@@ -770,6 +770,7 @@ Expression expectColonOrAssignSemantic(Expression e,Scope sc){
 }
 
 Expression callSemantic(CallExp ce,Scope sc){
+	if(auto id=cast(Identifier)ce.e) id.calledDirectly=true;
 	ce.e=expressionSemantic(ce.e,sc);
 	propErr(ce.e,ce);
 	ce.arg=expressionSemantic(ce.arg,sc);
@@ -924,8 +925,13 @@ Expression expressionSemantic(Expression expr,Scope sc)out(r){
 		if(!meaning){
 			meaning=sc.lookup(id,false);
 			if(!meaning){
-				if(auto r=builtIn(id,sc))
+				if(auto r=builtIn(id,sc)){
+					if(!id.calledDirectly&&util.among(id.name,"FromMarginal","SampleFrom")){
+						sc.error("special operator must be called directly",id.loc);
+						id.sstate=r.sstate=SemState.error;
+					}
 					return r;
+				}
 				sc.error(format("undefined identifier %s",id.name), id.loc);
 				id.sstate=SemState.error;
 				return id;
