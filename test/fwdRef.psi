@@ -1,0 +1,18 @@
+
+dat A{
+	b: B[];
+	def A(b: B[]){
+		this.b=b;
+	}
+}
+dat B{
+	a: A[];
+	def B(a: A[]){
+		this.a=a;
+	}
+}
+
+def main(){
+	a := A([B([A([]:B[]),A([B([]:A[]),B([]:A[])])]),B([]:A[])]);
+	return a.b[0].a[0].b; // expected: δ_b[[]]
+}
