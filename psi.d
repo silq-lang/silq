@@ -50,7 +50,7 @@ int run(string path){
 		if(cast(ErrorExp)expr) continue;
 		if(auto fd=cast(FunctionDef)expr){
 			functions[fd.name.name]=fd;
-		}else if(!cast(Declaration)expr&&!cast(DefExp)expr) err.error("top level expression must be declaration",expr.loc);
+		}else if(!cast(Declaration)expr&&!cast(DefExp)expr&&!cast(CommaExp)expr) err.error("top level expression must be declaration",expr.loc);
 	}
 	auto be=Backend.create(path);
 	if(err.nerrors) return 1;

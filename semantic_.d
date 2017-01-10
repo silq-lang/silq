@@ -149,7 +149,9 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 	}
 	if(auto ce=cast(CommaExp)expr){
 		ce.e1=makeDeclaration(ce.e1,success,sc);
+		propErr(ce.e1,ce);
 		ce.e2=makeDeclaration(ce.e2,success,sc);
+		propErr(ce.e2,ce);
 		return ce;
 	}
 	if(auto be=cast(BinaryExp!(Tok!":="))expr){
@@ -198,7 +200,7 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 
 Expression[] semantic(Expression[] exprs,Scope sc){
 	bool success=true;
-	foreach(ref expr;exprs) if(!cast(BinaryExp!(Tok!":="))expr) expr=makeDeclaration(expr,success,sc); // TODO: get rid of special casing?
+	foreach(ref expr;exprs) if(!cast(BinaryExp!(Tok!":="))expr&&!cast(CommaExp)expr) expr=makeDeclaration(expr,success,sc); // TODO: get rid of special casing?
 	foreach(ref expr;exprs) if(auto decl=cast(Declaration)expr) expr=presemantic(decl,sc);
 	foreach(ref expr;exprs){
 		expr=toplevelSemantic(expr,sc);
@@ -208,9 +210,11 @@ Expression[] semantic(Expression[] exprs,Scope sc){
 }
 
 Expression toplevelSemantic(Expression expr,Scope sc){
+	if(expr.sstate==SemState.error) return expr;
 	if(auto fd=cast(FunctionDef)expr) return functionDefSemantic(fd,sc);
 	if(auto dd=cast(DatDecl)expr) return datDeclSemantic(dd,sc);
-	if(cast(BinaryExp!(Tok!":="))expr||cast(DefExp)expr) return toplevelConstantSemantic(expr,sc);
+	if(cast(BinaryExp!(Tok!":="))expr||cast(DefExp)expr) return colonOrAssignSemantic(expr,sc);
+	if(auto ce=cast(CommaExp)expr) return expectColonOrAssignSemantic(ce,sc);
 	sc.error("not supported at toplevel",expr.loc);
 	expr.sstate=SemState.error;
 	return expr;
@@ -488,7 +492,9 @@ Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
 			}
 		}
 	}else if(de) de.setError();
-	return de?de:be;
+	auto r=de?de:be;
+	if(r.sstate!=SemState.error) r.sstate=SemState.completed;
+	return r;
 }
 
 AssignExp assignExpSemantic(AssignExp ae,Scope sc){
@@ -536,6 +542,7 @@ AssignExp assignExpSemantic(AssignExp ae,Scope sc){
 		}else sc.error(format("cannot assign '%s' to '%s'",ae.e2.type,ae.e1.type),ae.loc);
 		ae.sstate=SemState.error;
 	}
+	if(ae.sstate!=SemState.error) ae.sstate=SemState.completed;
 	return ae;
 }
 
@@ -580,6 +587,7 @@ ABinaryExp opAssignExpSemantic(ABinaryExp be,Scope sc)in{
 		be.sstate=SemState.error;
 	}
 	be.type=unit;
+	if(be.sstate!=SemState.error) be.sstate=SemState.completed;
 	return be;
 }
 
@@ -611,8 +619,11 @@ Expression colonOrAssignSemantic(Expression e,Scope sc)in{
 Expression expectColonOrAssignSemantic(Expression e,Scope sc){
 	if(auto ce=cast(CommaExp)e){
 		ce.e1=expectColonOrAssignSemantic(ce.e1,sc);
+		propErr(ce.e1,ce);
 		ce.e2=expectColonOrAssignSemantic(ce.e2,sc);
+		propErr(ce.e2,ce);
 		ce.type=unit;
+		if(ce.sstate!=SemState.error) ce.sstate=SemState.completed;
 		return ce;
 	}
 	if(isColonOrAssign(e)) return colonOrAssignSemantic(e,sc);
@@ -1085,10 +1096,6 @@ DatDecl datDeclSemantic(DatDecl dat,Scope sc){
 	dat.body_=bdy;
 	dat.type=unit;
 	return dat;
-}
-
-Expression toplevelConstantSemantic(Expression e,Scope sc){
-	return statementSemantic(e,sc);
 }
 
 ReturnExp returnExpSemantic(ReturnExp ret,Scope sc){
