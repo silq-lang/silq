@@ -1169,6 +1169,7 @@ Type typeSemantic(Expression t,Scope sc)in{assert(!!t&&!!sc);}body{
 
 Type typeForDecl(Declaration decl){
 	if(auto dat=cast(DatDecl)decl){
+		if(!dat.dtype&&dat.scope_) dat=cast(DatDecl)presemantic(dat,dat.scope_);
 		assert(cast(AggregateTy)dat.dtype);
 		return unit;
 	}
