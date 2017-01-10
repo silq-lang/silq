@@ -1,0 +1,5 @@
+
+def main(){
+    a := array(100,0);
+	return a[-1]; // expected: 0
+}
