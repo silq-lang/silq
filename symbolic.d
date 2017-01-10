@@ -514,7 +514,7 @@ private struct Analyzer{
 					assert(idx.a.length==1);
 					auto de=doIt(idx.e);
 					auto di=doIt(idx.a[0]);
-					if(!opt.noBoundsCheck) dist.assertTrue(dIvr(DIvr.Type.lZ,di-dField(de,"length")),"array access out of bounds"); // TODO: check that index is an integer.
+					if(!opt.noBoundsCheck) dist.assertTrue(dIvr(DIvr.Type.leZ,-di)*dIvr(DIvr.Type.lZ,di-dField(de,"length")),"array access out of bounds"); // TODO: check that index is an integer.
 					auto r=dIndex(de,di);
 					return r;
 				}else if(auto tt=cast(TupleTy)idx.e.type){
