@@ -1,0 +1,6 @@
+
+x := 1, y := 2;
+
+def main(){
+	return (x,y); // expected: δ[-r₁+1]·δ[-r₂+2]
+}
