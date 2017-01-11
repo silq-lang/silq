@@ -3429,7 +3429,7 @@ class DIndex: DOp{
 			return arr.entries.apply(ni).simplify(facts);
 		}
 		// distribute over case distinction:
-		if(e is zero) return zero;
+		if(ne is zero) return zero;
 		if(auto p=cast(DPlus)ne){
 			DExprSet r;
 			foreach(s;p.summands) DPlus.insert(r,dIndex(s,ni));
@@ -3533,6 +3533,97 @@ auto dIUpdate(DExpr e,DExpr i,DExpr n){
 	uniqueMapDIUpdate[t]=r;
 	return r;
 }
+
+
+class DSlice: DOp{
+	DExpr e,l,r; // TODO: multiple indices?
+	this(DExpr e,DExpr l,DExpr r){
+		this.e=e; this.l=l; this.r=r;
+	}
+	override string symbol(Format formatting,int binders){ return "[]"; }
+	override @property Precedence precedence(){
+		return Precedence.index; // TODO: ok? (there is no precedence to the rhs)
+	}
+	override string toStringImpl(Format formatting, Precedence prec, int binders){
+		if(formatting==Format.lisp) return text("(slice ",e.toStringImpl(formatting,Precedence.none,binders)," ",l.toStringImpl(formatting,Precedence.none,binders)," ",r.toStringImpl(formatting,Precedence.none,binders),")");
+		return addp(prec, e.toStringImpl(formatting,Precedence.index,binders)~"["~l.toStringImpl(formatting,Precedence.none,binders)~".."~r.toStringImpl(formatting,Precedence.none,binders)~"]");
+	}
+
+	override int forEachSubExpr(scope int delegate(DExpr) dg){
+		if(auto x=dg(e)) return x;
+		if(auto x=dg(l)) return x;
+		if(auto x=dg(r)) return x;
+		return 0;
+	}
+
+	override DExpr simplifyImpl(DExpr facts){
+		auto res=staticSimplify(e,l,r,facts);
+		return res?res:this;
+	}
+
+	override DExpr substitute(DVar var,DExpr exp){
+		return dSlice(e.substitute(var,exp),l.substitute(var,exp),r.substitute(var,exp));
+	}
+
+	override DExpr incDeBruijnVar(int di,int bound){
+		return dSlice(e.incDeBruijnVar(di,bound),l.incDeBruijnVar(di,bound),r.incDeBruijnVar(di,bound));
+	}
+
+	override int freeVarsImpl(scope int delegate(DVar) dg){
+		if(auto x=e.freeVarsImpl(dg)) return x;
+		if(auto x=l.freeVarsImpl(dg)) return x;
+		if(auto x=r.freeVarsImpl(dg)) return x;
+		return 0;
+	}
+
+	static DExpr staticSimplify(DExpr e,DExpr l,DExpr r,DExpr facts=one){
+		auto ne=e.simplify(facts);
+		auto nl=l.simplify(facts);
+		auto nr=r.simplify(facts);
+		if(auto c=cast(Dℤ)nl){
+			if(auto d=cast(Dℤ)nr){
+				if(auto tpl=cast(DTuple)ne)
+					if(0<=c.c&&c.c<tpl.values.length&&0<=d.c&&d.c<tpl.values.length)
+						return dTuple(tpl.values[cast(size_t)c.c.toLong()..cast(size_t)d.c.toLong()]).simplify(facts);
+			}
+		}
+		if(auto arr=cast(DArray)ne){
+			auto dbv=dDeBruijnVar(1);
+			return dArray(nr-nl,dLambda(arr.entries.expr.substitute(dbv,dbv+nl)*dBounded!"[)"(dbv,zero,nr-nl))).simplify(facts);
+		}
+		// distribute over case distinction:
+		if(ne is zero) return zero;
+		if(auto p=cast(DPlus)ne){
+			DExprSet res;
+			foreach(s;p.summands) DPlus.insert(res,dSlice(s,nl,nr));
+			return dPlus(res).simplify(facts);
+		}
+		if(auto m=cast(DMult)ne){
+			foreach(fc;m.factors){
+				if(cast(DTuple)fc||cast(DArray)fc)
+					return (m.withoutFactor(fc)*dSlice(fc,nl,nr)).simplify(facts);
+				if(cast(DIvr)fc)
+					return (dSlice(m.withoutFactor(fc),nl,nr)*fc).simplify(facts);
+			}
+		}
+		if(ne !is e || nl !is l || nr !is r) return dSlice(ne,nl,nr);
+		return null;
+	}
+	static DExpr constructHook(DExpr e,DExpr l,DExpr r){
+		return null;
+	}
+}
+
+MapX!(TupleX!(DExpr,DExpr,DExpr),DExpr) uniqueMapDSlice;
+auto dSlice(DExpr e,DExpr l,DExpr r){
+	if(auto res=DSlice.constructHook(e,l,r)) return res;
+	auto t=tuplex(e,l,r);
+	if(t in uniqueMapDSlice) return uniqueMapDSlice[t];
+	auto res=new DSlice(e,l,r);
+	uniqueMapDSlice[t]=res;
+	return res;
+}
+
 
 
 class DRUpdate: DOp{ // TODO: allow updating multiple fields at once
@@ -3784,14 +3875,18 @@ class DArray: DExpr{
 	static DArray constructHook(DExpr length,DLambda entries){
 		return null;
 	}
-	static DArray staticSimplify(DExpr length,DLambda entries,DExpr facts=one){
+	static DExpr staticSimplify(DExpr length,DLambda entries,DExpr facts=one){
 		auto nlength=length.simplify(facts);
-		auto nentries=cast(DLambda)entries.simplify(facts);
+		auto nentries=nlength is zero?dLambda(zero):cast(DLambda)entries.simplify(facts);
 		assert(!!nentries);
+		if(nlength is one){ // TODO: use the fact that indices are integers for simplification
+			nentries=cast(DLambda)dLambda(nentries.apply(zero).incDeBruijnVar(1,0)).simplify(facts);
+			assert(!!nentries);
+		}
 		if(nlength!is length||nentries!is entries) return dArray(nlength,nentries);
 		return null;
 	}
-	override DArray simplifyImpl(DExpr facts){
+	override DExpr simplifyImpl(DExpr facts){
 		auto r=staticSimplify(length,entries,facts);
 		return r?r:this;
 	}

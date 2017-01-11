@@ -1068,7 +1068,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 					idx.sstate=SemState.error;
 				}else{
 					auto c=ℤ(lit.lit.str);
-					if(c>=tt.types.length){
+					if(c<0||c>=tt.types.length){
 						sc.error(format("index for type %s is out of bounds [0..%s)",tt,tt.types.length),idx.loc);
 						idx.sstate=SemState.error;
 					}else{
@@ -1081,6 +1081,59 @@ Expression expressionSemantic(Expression expr,Scope sc){
 			idx.sstate=SemState.error;
 		}
 		return idx;
+	}
+	if(auto sl=cast(SliceExp)expr){
+		sl.e=expressionSemantic(sl.e,sc);
+		propErr(sl.e,sl);
+		sl.l=expressionSemantic(sl.l,sc);
+		propErr(sl.l,sl);
+		sl.r=expressionSemantic(sl.r,sc);
+		propErr(sl.r,sl);
+		if(sl.sstate==SemState.error)
+			return sl;
+		if(!compatible(ℝ,sl.l.type)){
+			sc.error(format("lower bound should be number, not %s",sl.l.type),sl.l.loc);
+			sl.l.sstate=SemState.error;
+		}
+		if(!compatible(ℝ,sl.r.type)){
+			sc.error(format("upper bound should be number, not %s",sl.r.type),sl.r.loc);
+			sl.r.sstate=SemState.error;
+		}
+		if(sl.sstate==SemState.error)
+			return sl;
+		if(auto at=cast(ArrayTy)sl.e.type){
+			sl.type=at;
+		}else if(auto tt=cast(TupleTy)sl.e.type){
+			auto llit=cast(LiteralExp)sl.l, rlit=cast(LiteralExp)sl.r;
+			if(!llit||llit.lit.type!=Tok!"0"){
+				sc.error(format("slice lower bound for type %s should be integer constant",tt),sl.loc);
+				sl.sstate=SemState.error;
+			}
+			if(!rlit||rlit.lit.type!=Tok!"0"){
+				sc.error(format("slice upper bound for type %s should be integer constant",tt),sl.loc);
+				sl.sstate=SemState.error;
+			}
+			if(sl.sstate==SemState.error)
+				return sl;
+			auto lc=ℤ(llit.lit.str), rc=ℤ(rlit.lit.str);
+			if(lc<0){
+				sc.error(format("slice lower bound for type %s cannot be negative",tt),sl.loc);
+				sl.sstate=SemState.error;
+			}
+			if(lc>rc){
+				sc.error("slice lower bound exceeds slice upper bound",sl.loc);
+				sl.sstate=SemState.error;
+			}
+			if(rc>tt.types.length){
+				sc.error(format("slice upper bound for type %s exceeds %s",tt,tt.types.length),sl.loc);
+				sl.sstate=SemState.error;
+			}
+			sl.type=tupleTy(tt.types[cast(size_t)lc..cast(size_t)rc]);
+		}else{
+			sc.error(format("type %s is not slicable",sl.e.type),sl.loc);
+			sl.sstate=SemState.error;
+		}
+		return sl;
 	}
 	if(cast(CommaExp)expr){
 		sc.error("nested comma expressions are disallowed",expr.loc);

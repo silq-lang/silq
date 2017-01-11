@@ -289,6 +289,68 @@ class IndexExp: Expression{ //e[a...]
 	}
 }
 
+class SliceExp: Expression{
+	Expression e;
+	Expression l,r;
+	this(Expression exp, Expression left,Expression right){e=exp; l=left; r=right; }
+	override string toString(){
+		return _brk(e.toString()~'['~l.toString()~".."~r.toString()~']');
+	}
+	override Expression eval(){
+		auto ne=e.eval(), nl=l.eval(), nr=r.eval();
+		Expression[] exprs;
+		auto tpl=cast(TupleExp)ne, arr=cast(ArrayExp)ne;
+		if(tpl) exprs=tpl.e;
+		if(arr) exprs=arr.e;
+		if(tpl||arr){
+			if(auto le=cast(LiteralExp)nl){
+				if(auto re=cast(LiteralExp)nr){
+					if(le.lit.type==Tok!"0"&&!le.lit.str.canFind(".")&&re.lit.type==Tok!"0"&&!re.lit.str.canFind(".")){
+						auto lid=ℤ(le.lit.str), rid=ℤ(re.lit.str);
+						if(cast(size_t)lid==0 && cast(size_t)rid==exprs.length) return e;
+						if(0<=lid&&lid<=rid&&rid<=exprs.length){
+							auto rexprs=exprs[cast(size_t)lid..cast(size_t)rid];
+							if(tpl){
+								auto res=new TupleExp(rexprs);
+								res.loc=loc;
+								return res;
+							}
+							if(arr){
+								auto res=new ArrayExp(rexprs);
+								res.loc=loc;
+								return res;
+							}
+						}
+					}
+				}
+			}
+		}
+		if(ne==e && nl==l && nr==r) return this;
+		auto res=new SliceExp(ne,nl,nr);
+		res.loc=loc;
+		return res;
+	}
+	override int freeVarsImpl(scope int delegate(string) dg){
+		if(auto x=e.freeVarsImpl(dg)) return x;
+		if(auto x=l.freeVarsImpl(dg)) return x;
+		if(auto x=r.freeVarsImpl(dg)) return x;
+		return 0;
+	}
+	override SliceExp substituteImpl(Expression[string] subst){
+		auto ne=e.substitute(subst);
+		auto nl=l.substitute(subst);
+		auto nr=r.substitute(subst);
+		if(ne==e&&nl==l&&nr==r) return this;
+		auto res=new SliceExp(ne,nl,nr);
+		res.loc=loc;
+		return res;
+	}
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+		auto sl=cast(SliceExp)rhs;
+		return e.unify(sl.e,subst)&&l.unify(sl.l,subst)&&r.unify(sl.r,subst);
+	}
+}
+
 string tupleToString(Expression e,bool isSquare){
 	auto d=isSquare?"[]":"()";
 	bool isTuple=!!cast(TupleExp)e;

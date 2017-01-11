@@ -471,6 +471,12 @@ struct Parser{
 				nextToken();
 				if(ttype==Tok!"]"){loc=loc.to(tok.loc); nextToken(); mixin(rule!(IndexExp,Existing,q{left,(Expression[]).init,false}));}
 				auto l=parseExpression(rbp!(Tok!","));
+				if(ttype==Tok!".."){
+					nextToken();
+					auto r=parseExpression();
+					expect(Tok!"]");
+					return res=new SliceExp(left,l,r);
+				}
 				res=New!IndexExp(left,parseArgumentList(Tok!"]",l).expand);
 				expect(Tok!"]");
 				return res;
