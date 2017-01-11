@@ -130,7 +130,9 @@ struct DParser{
 	}
 
 	DExpr parseDSum(){
-		expect('∑');
+		if(code.startsWith("sum")){
+			code=code["sum".length..$];
+		}else expect('∑');
 		expect('_');
 		++numBinders;
 		auto iVar=parseDVar();
@@ -316,7 +318,7 @@ struct DParser{
 		if(cur()=='[') return parseDIvr();
 		if(cur()=='δ'||code.startsWith("delta")) return parseDDelta();
 		if(cur()=='∫') return parseDInt();
-		if(cur()=='∑') return parseDSum();
+		if(cur()=='∑'||code.startsWith("sum")) return parseDSum();
 		if(cur()=='λ') return parseDLambda();
 		if(util.among(cur(),'√','∛','∜')) return parseSqrt();
 		if(cur()=='|'||code.startsWith("abs")) return parseDAbs();
