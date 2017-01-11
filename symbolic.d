@@ -98,7 +98,7 @@ private struct Analyzer{
 			return null;
 		}
 		DExpr buildContextFor()(Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{ // template, forward references 'doIt'
-			if(meaning.scope_ !is sc) return getContextFor(meaning,sc);
+			if(auto ctx=getContextFor(meaning,sc)) return ctx;
 			DExpr[string] record;
 			foreach(vd;&sc.all!VarDecl)
 				if(auto var=readVariable(vd,sc))

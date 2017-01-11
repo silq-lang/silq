@@ -1,0 +1,10 @@
+def main(){
+    def fun(){
+		return 2;
+    }
+	if 1 != 0{
+		return fun(); // expected: δ[-r₁+2]
+	}
+	assert(0);
+}
+
