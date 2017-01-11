@@ -356,7 +356,6 @@ string tupleToString(Expression e,bool isSquare){
 	bool isTuple=!!cast(TupleExp)e;
 	auto str=e.toString();
 	if(isTuple||e.brackets){
-		writeln(str);
 		assert(str[0]=='(' && str[$-1]==')');
 		str=str[1..$-1];
 	}
