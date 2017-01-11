@@ -54,24 +54,36 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 		assert(dist.orderedFreeVars.length==1);
 		auto var=dist.orderedFreeVars[0];
 		auto expectation = dIntSmp(var,var*dist.distribution/(one-dist.error),one);
-		
-		writeln(opt.formatting==Format.mathematica?"E[":"𝔼[",var.toString(opt.formatting),dist.error!=zero?(opt.formatting==Format.mathematica?"|!error":"|¬error"):"","] = ",expectation.toString(opt.formatting)); // TODO: use blackboard bold E?
-		writeln("Pr[error] = ",dist.error);
+		final switch(opt.outputForm){
+			case OutputForm.default_:
+				writeln(opt.formatting==Format.mathematica?"E[":"𝔼[",var.toString(opt.formatting),dist.error!=zero?(opt.formatting==Format.mathematica?"|!error":"|¬error"):"","] = ",expectation.toString(opt.formatting)); // TODO: use blackboard bold E?
+				writeln("Pr[error] = ",dist.error.toString(opt.formatting));
+				break;
+			case OutputForm.raw:
+				writeln(expectation.toString(opt.formatting));
+				break;
+			case OutputForm.rawError:
+				writeln(dist.error.toString(opt.formatting));
+				break;
+		}
 		return;
 	}
 	if(opt.cdf) dist=getCDF(dist);
-	auto str=dist.toString(opt.formatting);
 	if(expected.exists) with(expected){
 		writeln(ex==dist.distribution.toString()?todo?"FIXED":"PASS":todo?"TODO":"FAIL");
 	}
-	//writeln((cast(DPlus)dist.distribution).summands.length);
-	writeln(str);
-	/+if(str.length<10000) writeln(str);
-	else{
-		writeln("writing output to temporary file...");
-		auto f=File("tmp.deleteme","w");
-		f.writeln(str);
-	}+/
+	auto str=dist.toString(opt.formatting);
+	final switch(opt.outputForm){
+		case OutputForm.default_:
+			writeln(str);
+			break;
+		case OutputForm.raw:
+			writeln(dist.distribution.toString(opt.formatting));
+			break;
+		case OutputForm.rawError:
+			writeln(dist.error.toString(opt.formatting));
+			break;
+	}
 	if(opt.casBench){
 		import std.file, std.conv;
 		auto bpath=buildPath(dirName(thisExePath()),"test/benchmarks/casBench/",to!string(opt.formatting),setExtension(baseName(path,".prb"),casExt()));

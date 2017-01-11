@@ -93,8 +93,8 @@ int main(string[] args){
 			case "--cdf": opt.cdf=true; break;
 			case "--plot": opt.plot=true; break;
 			case "--kill": opt.kill=true; break;
-			case "--raw": simplification=Simpl.raw;  break;
-			case "--deltas": simplification=Simpl.deltas; break;
+			case "--nointegrate": opt.integrationLevel=IntegrationLevel.none; break;
+			case "--integratedeltas": opt.integrationLevel=IntegrationLevel.deltas; break;
 			case "--noboundscheck": opt.noBoundsCheck=true; break;
 			case "--trace": opt.trace=true; break;
 			case "--expectation": opt.expectation=true; break;
@@ -105,6 +105,8 @@ int main(string[] args){
 			case "--mathematica": opt.formatting=Format.mathematica; break;
 			case "--sympy": opt.formatting=Format.sympy; break;
 			case "--lisp": opt.formatting=Format.lisp; break;
+			case "--raw": opt.outputForm=OutputForm.raw; break;
+			case "--raw-error": opt.outputForm=OutputForm.rawError; break;
 			default:
 				if(x.startsWith("--plot=")){
 					auto rest=x["--plot=".length..$];

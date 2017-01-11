@@ -10,24 +10,26 @@ enum help=`PSI solver
 Usage: psi [OPTION]... [FILE]...
 
 The options below may be used.
---plot           call gnuplot to plot the result (experimental)
---noboundscheck  do not check array bounds
+--plot              call gnuplot to plot the result (experimental)
+--noboundscheck     do not check array bounds
 
---cdf            generate cumulative distribution function (instead of generalized probability density)
---expectation    compute expectation of result ('main' should return a single number)
+--cdf               generate cumulative distribution function (instead of generalized probability density)
+--expectation       compute expectation of result ('main' should return a single number)
 
---trace          print statements as they are analyzed
+--trace             print statements as they are analyzed
+--raw               print only pdf, cdf or expectation
+--raw-error         print only error probability
 
---raw            do not evaluate integrals
---deltas         do not evaluate continuous integrals
+--nointegrate       do not evaluate integrals
+--integratedeltas   do not evaluate continuous integrals
 
---gnuplot        print output in gnuplot format (experimental)
---mathematica    print output in mathematica format (experimental)
---maple          print output in maple format (experimental)
+--gnuplot           print output in gnuplot format (experimental)
+--mathematica       print output in mathematica format (experimental)
+--maple             print output in maple format (experimental)
 
---syntax         print example demonstrating language syntax and exit
---distributions  print information about supported primitive distributions and exit
---help           display this help and exit
+--syntax            print example demonstrating language syntax and exit
+--distributions     print information about supported primitive distributions and exit
+--help              display this help and exit
 
 Recognized file extensions: *.psi, *.prb
 

@@ -94,7 +94,7 @@ private DExpr definiteIntegralImpl(DExpr expr,DExpr facts=one){
 
 	if(expr is one) return null; // (infinite integral)
 
-	if(simplification!=Simpl.deltas){
+	if(opt.integrationLevel!=IntegrationLevel.deltas){
 		nexpr=expr.linearizeConstraints!(x=>!!cast(DIvr)x)(var).simplify(facts.incDeBruijnVar(1,0));
 		if(nexpr !is expr) return definiteIntegral(nexpr,facts);
 		if(auto r=definiteIntegralContinuous(expr,facts))

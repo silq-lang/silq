@@ -2586,7 +2586,7 @@ class DInt: DOp{
 		if(ow[0] is zero) return zero;
 		if(ow[0] !is one) return (ow[0]*dIntSmp(ow[1],facts)).simplify(facts);
 		//version(DISABLE_INTEGRATION){
-		if(simplification==Simpl.raw)
+		if(opt.integrationLevel==IntegrationLevel.none)
 			return null;
 		version(INTEGRAL_STATS){
 			numIntegrals++;
@@ -2751,13 +2751,13 @@ class DSum: DOp{
 	}
 
 	static DExpr staticSimplify(DExpr expr,DExpr facts=one){
-		if(simplification==Simpl.raw){
+		if(opt.integrationLevel==IntegrationLevel.none){
 			if(expr is zero) return zero;
 			return null;
 		}
 		auto nexpr=expr.simplify(facts.incDeBruijnVar(1,0));
 		if(nexpr !is expr) return dSum(nexpr).simplify(facts);
-		if(simplification!=Simpl.deltas){
+		if(opt.integrationLevel!=IntegrationLevel.deltas){
 			if(auto r=computeSum(expr,facts))
 				return r.simplify(facts);
 		}

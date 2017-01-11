@@ -15,6 +15,18 @@ enum InferenceMethod{
 	symbolic,
 }
 
+enum OutputForm{
+	default_,
+	raw,
+	rawError,
+}
+
+enum IntegrationLevel{
+	full,
+	deltas,
+	none,
+}
+
 struct Options{
 	InferenceMethod backend;
 	bool plot=false;
@@ -27,6 +39,8 @@ struct Options{
 	bool noBoundsCheck=false;
 	bool trace=false;
 	bool expectation=false;
+	IntegrationLevel integrationLevel=IntegrationLevel.full;
+	OutputForm outputForm;
 }
 Options opt; // TODO: get rid of global?
 
@@ -47,9 +61,3 @@ string casExt(Format formatting=opt.formatting){
 		case lisp: return "lisp";
 	}
 }
-enum Simpl{
-	full,
-	deltas,
-	raw
-}
-Simpl simplification=Simpl.full;
