@@ -280,16 +280,6 @@ struct Token{
 }
 template token(string t){enum token=Token(Tok!t);} // unions not yet supported
 
-unittest{
-static assert({
-	foreach(i;simpleTokens){
-		string s=i[0];
-		bool found = s.length==1;
-		foreach(j;simpleTokens) if(j[0] == s[0..$-1]) found = true;
-		if(!found) return false;
-	}return true;
-}(),"Every non-empty prefix of simpleTokens must be a valid token.");
-}
 string caseSimpleToken(string prefix="", bool needs = false)pure{
 	string r;
 	int c=0,d=0;
@@ -945,12 +935,3 @@ TokenType isKeyword(string s){
 	}
 	return Tok!"i";
 }
-
-
-
-
-
-
-
-
-
