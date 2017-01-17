@@ -958,8 +958,8 @@ Expression expressionSemantic(Expression expr,Scope sc){
 			sc.error("invalid forward reference",id.loc);
 			id.sstate=SemState.error;
 		}
-		if(auto vd=cast(VarDecl)meaning){ // (it would suffice to do this for left hand sides of assignments)
-			if(auto dsc=isInDataScope(vd.scope_)){
+		if(id.type != typeTy()){
+			if(auto dsc=isInDataScope(id.meaning.scope_)){
 				if(auto decl=sc.getDatDecl()){
 					if(decl is dsc.decl){
 						auto this_=new Identifier("this");
