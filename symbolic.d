@@ -16,14 +16,14 @@ class Symbolic: Backend{
 		DExpr[] args;
 		foreach(a;def.params) args~=dist.declareVar(a.getName);
 		DVar ctx=null;
-		if(def.context){
-			ctx=dist.declareVar(def.contextName);
-			if(def.isConstructor){
-				auto dd=def.scope_.getDatDecl();
-				assert(dd && dd.dtype);
-				dist.initialize(ctx,dRecord(),dd.dtype);
-				ctx=null;
-			}
+		if(def.context) ctx=dist.declareVar(def.contextName);
+		if(def.isConstructor){
+			auto thisVar=dist.declareVar("this");
+			auto dd=def.scope_.getDatDecl();
+			assert(dd && dd.dtype);
+			DExpr[string] fields;
+			if(def.context) fields[def.contextName]=ctx;
+			dist.initialize(thisVar,dRecord(fields),dd.dtype);
 		}
 		if(!def.name||def.getName!="main"||args.length||def.isNested) // TODO: move this decision to caller
 			dist.addArgs(args,def.isTuple,ctx);
@@ -77,7 +77,7 @@ private struct Analyzer{
 			if(auto fd=cast(FunctionDef)meaning)
 				meaningScope=fd.realScope;
 			assert(sc&&sc.isNestedIn(meaningScope));
-			for(auto csc=sc;csc !is meaningScope;csc=(cast(NestedScope)csc).parent){
+			for(auto csc=sc;csc !is meaningScope;){
 				void add(string name){
 					if(!r) r=dVar(name);
 					else r=dField(r,name);
@@ -85,8 +85,19 @@ private struct Analyzer{
 				}
 				assert(cast(NestedScope)csc);
 				if(!cast(NestedScope)(cast(NestedScope)csc).parent) break;
-				if(cast(AggregateScope)csc) add("outer");
-				else if(auto fsc=cast(FunctionScope)csc) add(fsc.getFunction().contextName); // TODO: shouldn't be able to clash with user defined variables
+				if(auto fsc=cast(FunctionScope)csc) add(fsc.getFunction().contextName);
+				else if(cast(AggregateScope)csc) add(csc.getDatDecl().contextName);
+				csc=(cast(NestedScope)csc).parent;
+				if(csc is meaningScope) break;
+				if(auto fsc=cast(FunctionScope)csc){
+					auto fd=fsc.getFunction();
+					assert(!!fd);
+					if(fd.isConstructor){
+						csc=fd.scope_;
+						assert(!!cast(AggregateScope)csc);
+						if(csc is meaningScope) break;
+					}
+				}
 			}
 			return r;
 		}
@@ -103,14 +114,18 @@ private struct Analyzer{
 			foreach(vd;&sc.all!VarDecl)
 				if(auto var=readVariable(vd,sc))
 					record[vd.getName]=var;
-			for(auto csc=sc;;csc=(cast(NestedScope)csc).parent){
+			auto msc=meaning.scope_;
+			if(auto fd=cast(FunctionDef)meaning)
+				msc=fd.realScope;
+			for(auto csc=msc;;csc=(cast(NestedScope)csc).parent){
 				if(auto fsc=cast(FunctionScope)csc)
 					foreach(p;fsc.getFunction().params)
 						record[p.getName]=dVar(p.getName);
 				if(!cast(NestedScope)csc) break;
 				if(!cast(NestedScope)(cast(NestedScope)csc).parent) break;
-				if(cast(AggregateScope)csc){
-					record["outer"]=dVar("outer");
+				if(auto dsc=cast(DataScope)csc){
+					auto name=dsc.decl.contextName;
+					record[name]=dVar(name);
 					break;
 				}
 				if(auto fsc=cast(FunctionScope)csc){
@@ -316,7 +331,7 @@ private struct Analyzer{
 						assert(!!funty);
 						auto argty=ce.arg.type;
 						assert(argty == funty.dom,text(argty," ",funty.dom));
-						if(thisExp&&!fun.isConstructor){
+						if(thisExp){
 							arg=dTuple([arg,thisExp]);
 							argty=tupleTy([argty,fe.e.type]);
 						}
@@ -1090,7 +1105,7 @@ private struct Analyzer{
 					if(!exp) exp=dTuple([]); // TODO: is there a better way?
 					DVar var=cast(DVar)exp;
 					if(var && !var.name.startsWith("__")){
-						if(var in vars||functionDef.context&&!functionDef.isConstructor&&var.name==functionDef.contextName){
+						if(var in vars||functionDef.context&&var.name==functionDef.contextName){
 							dist.freeVar(var.name);
 							auto vv=dist.getVar(var.name);
 							dist.initialize(vv,var,ret.type);
@@ -1123,7 +1138,7 @@ private struct Analyzer{
 					orderedVars~=var;
 				}
 			}
-			if(functionDef.context&&functionDef.contextName=="this"&&!functionDef.isConstructor){
+			if(functionDef.context&&functionDef.contextName.startsWith("this")){
 				// TODO: if this happens, the above is quite pointless. refactor.
 				assert(isTuple||orderedVars.length==1);
 				auto res=isTuple?dTuple(cast(DExpr[])orderedVars):orderedVars[0];

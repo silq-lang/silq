@@ -123,6 +123,9 @@ class DatDecl: Declaration{
 	
 	// semantic information
 	DataScope dscope_;
+	VarDecl context;
+	@property string contextName()in{assert(!!context);}body{ return context.getName; }
+	@property bool isNested(){ return !!cast(NestedScope)scope_; }
 }
 
 abstract class DefExp: Expression{

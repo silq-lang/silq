@@ -1,0 +1,19 @@
+
+
+def main(){
+	x := 2;
+	dat Foo{
+		dat Bar{
+			k: ℝ;
+			def Bar(){
+				k = x;
+			}
+		}
+		b: Bar;
+		def Foo(){
+			this.b = Bar();
+		}
+	}
+	f := Foo();
+	return f; // expected: δ_f[{.b ↦ {.k ↦ 2,.`outer' ↦ {.`outer ↦ {.x ↦ 2}}},.`outer ↦ {.x ↦ 2}}]
+}

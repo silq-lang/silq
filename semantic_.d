@@ -56,13 +56,13 @@ DataScope isInDataScope(Scope sc){
 
 AggregateTy isDataTyId(Expression e){
 	if(auto ce=cast(CallExp)e)
-		if(auto id=cast(Identifier)ce.e)
-			if(auto decl=cast(DatDecl)id.meaning)
-				return decl.dtype;
-	auto id=cast(Identifier)e;
-	if(!id) return null;
-	if(auto decl=cast(DatDecl)id.meaning)
-		return decl.dtype;
+		return isDataTyId(ce.e);
+	if(auto id=cast(Identifier)e)
+		if(auto decl=cast(DatDecl)id.meaning)
+			return decl.dtype;
+	if(auto fe=cast(FieldExp)e)
+		if(auto decl=cast(DatDecl)fe.f.meaning)
+			return decl.dtype;
 	return null;
 }
 
@@ -80,6 +80,16 @@ Expression presemantic(Declaration expr,Scope sc){
 			propErr(p,parent);
 		}		
 	}
+	VarDecl createContext(string name,Expression ty,Location loc,Scope sc){
+		auto id=new Identifier(name);
+		id.loc=loc;
+		auto context=new VarDecl(id);
+		context.loc=loc;
+		context.vtype=ty;
+		context=varDeclSemantic(context,sc);
+		assert(!!context && context.sstate==SemState.completed);
+		return context;
+	}
 	if(auto dat=cast(DatDecl)expr){
 		if(dat.dtype) return expr;
 		auto dsc=new DataScope(sc,dat);
@@ -88,6 +98,7 @@ Expression presemantic(Declaration expr,Scope sc){
 		dat.dtype=new AggregateTy(dat);
 		if(dat.hasParams) declareParameters(dat,true,dat.params,dsc);
 		if(!dat.body_.ascope_) dat.body_.ascope_=new AggregateScope(dat.dscope_);
+		if(cast(NestedScope)sc) dat.context = createContext("`outer",contextTy(),dat.loc,dsc);
 		foreach(ref exp;dat.body_.s) exp=makeDeclaration(exp,success,dat.body_.ascope_);
 		foreach(ref exp;dat.body_.s) if(auto decl=cast(Declaration)exp) exp=presemantic(decl,dat.body_.ascope_);
 	}
@@ -96,18 +107,9 @@ Expression presemantic(Declaration expr,Scope sc){
 		auto fsc=new FunctionScope(sc,fd);
 		fd.type=unit;
 		fd.fscope_=fsc;
-		VarDecl createContext(string name,Expression ty){
-			auto id=new Identifier(name);
-			id.loc=fd.loc;
-			auto context=new VarDecl(id);
-			context.loc=fd.loc;
-			context.vtype=ty;
-			context=varDeclSemantic(context,fsc);
-			assert(!!context && context.sstate==SemState.completed);
-			return context;
-		}
 		if(auto dsc=isInDataScope(sc)){
 			auto id=new Identifier(dsc.decl.name.name);
+			id.loc=dsc.decl.loc;
 			id.meaning=dsc.decl;
 			id=cast(Identifier)expressionSemantic(id,sc);
 			assert(!!id);
@@ -125,30 +127,31 @@ Expression presemantic(Declaration expr,Scope sc){
 				ctxty.sstate=SemState.completed;
 				assert(ctxty.type == typeTy);
 			}
-			fd.context=createContext("this",ctxty);
 			if(dsc.decl.name.name==fd.name.name){
+				auto thisVar=createContext("this",ctxty,fd.loc,fsc);
 				fd.isConstructor=true;
 				if(fd.rret){
 					sc.error("constructor cannot have return type annotation",fd.loc);
 					fd.sstate=SemState.error;
 				}else{
 					assert(dsc.decl.dtype);
-					fd.ret=fd.context.vtype;
+					fd.ret=ctxty;
 				}
 				auto thisid=new Identifier("this");
 				thisid.loc=fd.loc;
 				thisid.scope_=fd.fscope_;
-				thisid.meaning=fd.context;
-				thisid.type=fd.context.vtype;
+				thisid.meaning=thisVar;
+				thisid.type=ctxty;
 				thisid.sstate=SemState.completed;
 				auto rete=new ReturnExp(thisid);
 				rete.loc=thisid.loc;
 				rete.sstate=SemState.completed;
 				fd.body_.s~=rete;
-			}
+				if(dsc.decl.context) fd.context=dsc.decl.context; // TODO: ok?
+			}else fd.context=createContext("this",ctxty,fd.loc,fsc);
 			assert(dsc.decl.dtype);
 		}else if(auto nsc=cast(NestedScope)sc){
-			fd.context=createContext("`outer",contextTy()); // TODO: replace contextTy by suitable record type; make name 'outer' available
+			fd.context=createContext("`outer",contextTy(),fd.loc,fsc); // TODO: replace contextTy by suitable record type; make name 'outer' available
 		}
 		declareParameters(fd,fd.isSquare,fd.params,fsc);
 		if(fd.rret){
@@ -217,6 +220,7 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 	if(auto tae=cast(TypeAnnotationExp)expr){
 		if(auto id=cast(Identifier)tae.e){
 			auto vd=new VarDecl(id);
+			vd.loc=tae.loc;
 			vd.dtype=tae.t;
 			vd.vtype=typeSemantic(vd.dtype,sc);
 			vd.loc=id.loc;
@@ -423,11 +427,8 @@ Expression expectFieldDeclSemantic(Expression e,Scope sc){
 Expression nestedDeclSemantic(Expression e,Scope sc){
 	if(auto fd=cast(FunctionDef)e)
 		return functionDefSemantic(fd,sc);
-	if(auto dd=cast(DatDecl)e){
-		sc.error("nested "~dd.kind~" unsupported",dd.loc);
-		dd.sstate=SemState.error;
-		return dd;
-	}
+	if(auto dd=cast(DatDecl)e)
+		return datDeclSemantic(dd,sc);
 	if(isFieldDecl(e)) return fieldDeclSemantic(e,sc);
 	if(auto ce=cast(CommaExp)e) return expectFieldDeclSemantic(ce,sc);
 	sc.error("not a declaration",e.loc);
@@ -472,11 +473,8 @@ Expression statementSemantic(Expression e,Scope sc){
 		return returnExpSemantic(ret,sc);
 	if(auto fd=cast(FunctionDef)e)
 		return functionDefSemantic(fd,sc);
-	if(auto dd=cast(DatDecl)e){
-		sc.error("nested "~dd.kind~"s are unsupported",dd.loc);
-		dd.sstate=SemState.error;
-		return dd;
-	}
+	if(auto dd=cast(DatDecl)e)
+		return datDeclSemantic(dd,sc);
 	if(auto ce=cast(CommaExp)e) return expectColonOrAssignSemantic(ce,sc);
 	if(isColonOrAssign(e)) return colonOrAssignSemantic(e,sc);
 	if(auto fe=cast(ForExp)e){
@@ -849,7 +847,13 @@ Expression callSemantic(CallExp ce,Scope sc){
 				id.name=constructor.getName;
 				id.type=ty;
 				id.sstate=SemState.completed;
-				ce.e=id;
+				if(auto fe=cast(FieldExp)fun){
+					assert(fe.e.sstate==SemState.completed);
+					ce.e=new FieldExp(fe.e,id);
+					ce.e.type=id.type;
+					ce.e.loc=fun.loc;
+					ce.e.sstate=SemState.completed;
+				}else ce.e=id;
 			}
 		}
 	}else if(isBuiltIn(cast(Identifier)ce.e)){
@@ -954,19 +958,19 @@ Expression expressionSemantic(Expression expr,Scope sc){
 			sc.error("invalid forward reference",id.loc);
 			id.sstate=SemState.error;
 		}
-		if(auto dsc=isInDataScope(meaning.scope_)){
-			if(auto decl=sc.getDatDecl()){
-				if(decl is dsc.decl){
-					auto this_=new Identifier("this");
-					this_.loc=id.loc;
-					this_.scope_=sc;
-					auto fe=new FieldExp(this_,id);
-					fe.loc=id.loc;
-					return expressionSemantic(fe,sc);
+		if(auto vd=cast(VarDecl)meaning){ // (it would suffice to do this for left hand sides of assignments)
+			if(auto dsc=isInDataScope(vd.scope_)){
+				if(auto decl=sc.getDatDecl()){
+					if(decl is dsc.decl){
+						auto this_=new Identifier("this");
+						this_.loc=id.loc;
+						this_.scope_=sc;
+						auto fe=new FieldExp(this_,id);
+						fe.loc=id.loc;
+						return expressionSemantic(fe,sc);
+					}
 				}
 			}
-			sc.error("invalid reference",id.loc);
-			id.sstate=SemState.error;
 		}
 		if(auto vd=cast(VarDecl)id.meaning){
 			if(cast(TopScope)vd.scope_){

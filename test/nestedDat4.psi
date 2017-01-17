@@ -1,0 +1,17 @@
+
+dat Foo{
+	x: ℝ;
+	def Foo(x){
+		this.x = x;
+	}
+	dat Bar{
+		y: ℝ;
+		def Bar(){
+			y = x;
+		}
+	}
+}
+
+def main(){
+	return Foo(3).Bar(); // expected: δ_r₁[{.y ↦ 3,.`outer ↦ {.x ↦ 3}}]
+}
