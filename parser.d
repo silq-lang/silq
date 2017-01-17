@@ -499,15 +499,16 @@ struct Parser{
 				return res;
 			}mixin({string r;
 				foreach(x;binaryOps)
-					if(x!="=>" && x!="." && x!="!" && x!="?" && x!=":")
+					if(x!="=>" && x!="." && x!="!" && x!="?" && x!=":"){
 						r~=mixin(X!q{case Tok!"@(x)":
 							nextToken();
-							auto right=parseExpression(rbp!(Tok!"@(x)"));
+							auto right=parseExpression(rbp!(Tok!"@(x)"),"@(x)"=="="||"@(x)"==":=");
 							static if("@(x)"=="->")
 								alias BE=BinaryExp!(Tok!"→");
 							else alias BE=BinaryExp!(Tok!"@(x)");
 							return res=New!BE(left,right);
 						});
+					}
 				return r;
 			}());
 			case Tok!"i":
@@ -517,10 +518,10 @@ struct Parser{
 						nextToken();
 						if(ttype==Tok!"=" && id.loc.rep.ptr+id.loc.rep.length==tok.loc.rep.ptr){
 							nextToken();
-							auto right=parseExpression(rbp!(Tok!"div="));
+							auto right=parseExpression(rbp!(Tok!"div="),false);
 							return res=New!(BinaryExp!(Tok!"div="))(left,right);
 						}else{
-							auto right=parseExpression(rbp!(Tok!"div"));
+							auto right=parseExpression(rbp!(Tok!"div"),false);
 							return res=New!(BinaryExp!(Tok!"div"))(left,right);
 						}
 					case "xorb":
@@ -528,16 +529,16 @@ struct Parser{
 						nextToken();
 						if(ttype==Tok!"=" && id.loc.rep.ptr+id.loc.rep.length==tok.loc.rep.ptr){
 							nextToken();
-							auto right=parseExpression(rbp!(Tok!"⊕="));
+							auto right=parseExpression(rbp!(Tok!"⊕="),false);
 							return res=New!(BinaryExp!(Tok!"⊕="))(left,right);
 						}else{
-							auto right=parseExpression(rbp!(Tok!"⊕"));
+							auto right=parseExpression(rbp!(Tok!"⊕"),false);
 							return res=New!(BinaryExp!(Tok!"⊕"))(left,right);
 						}
 					case "x":
 						auto id=tok;
 						nextToken();
-						auto right=parseExpression(rbp!(Tok!"×"));
+						auto right=parseExpression(rbp!(Tok!"×"),false);
 						return res=New!(BinaryExp!(Tok!"×"))(left,right);
 					default: break;
 				}
@@ -574,71 +575,6 @@ struct Parser{
 		return parseExpression2(left, rbp);
 	}
 	auto parseType(){ return parseExpression(rbp!(Tok!",")); }
-	/*auto parseType(bool showErrors=true)(){
-		Expression parsePrimary()(){
-			if(ttype==Tok!"("){
-				nextToken();
-				auto r=parseIt();
-				expect(Tok!")");
-				if(r) r.brackets++;
-				return r;
-			}
-			if(ttype==Tok!"i"){
-				auto r=parseIdentifier();
-				r.brackets++; // TODO: solve more elegantly
-				return r;
-			}
-			if(ttype==Tok!"0"){
-				auto id=new Identifier(tok.toString());
-				id.loc=tok.loc;
-				nextToken();
-				return id;
-			}
-			static if(showErrors) error("found \""~tok.toString()~"\" when expecting type");
-			nextToken();
-			return null;			
-		}
-		Expression parseBase()(){
-			auto t=parsePrimary();
-			if(!t) return null;
-			while(ttype==Tok!"["){
-				nextToken();
-				expect(Tok!"]");
-				auto n=New!IndexExp(t,Expression[].init);
-				n.loc=t.loc.to(ptok.loc);
-				t=n;
-			}
-			return t;
-		}
-		Expression parseProduct()(){
-			auto l=parseBase();
-			while(ttype==Tok!"×"||(ttype==Tok!"i"&&tok.str=="x")){
-				nextToken();
-				auto r=parseBase();
-				if(!r) return null;
-				auto next=New!(BinaryExp!(Tok!"×"))(l,r);
-				next.loc=l.loc.to(r.loc);
-				l=next;
-			}
-			return l;
-		}
-		Expression parseExponential()(){
-			auto l=parseProduct();
-			if(ttype==Tok!"→"||ttype==Tok!"->"){
-				nextToken();
-				auto r=parseExponential();
-				auto next=New!(BinaryExp!(Tok!"→"))(l,r);
-				next.loc=l.loc.to(r.loc);
-				return next;
-			}
-			return l;
-		}
-		Expression parseIt(){ return parseExponential(); }
-		auto r=parseIt();
-		static if(showErrors) return r?r:new ErrorTy();
-		else return !!r;
-	}
-	alias skipType=parseType!false;*/
 	Expression parseExpression2(Expression left, int rbp = 0){ // left is already known
 		int clbp(){
 			if(ttype==Tok!"i"){
