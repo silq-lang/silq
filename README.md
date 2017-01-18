@@ -140,8 +140,8 @@ Function bodies consist of a sequence of statements, possibly referencing the va
 - observe(expression); conditions the joint probability distribution of the program variables on the event that the expression is not equal to zero
   *Note:* The probability that the expression is not equal to zero should be positive (enforced by PSI during normalization).
   
-- cobserve(variable,expression); conditions the joint probability distribution of the program variables on the event that the given variable
-  equals the given expression. The probability that the variable is equal to the expression must be zero, but the probability density at that point
+- cobserve(expression,value); conditions the joint probability distribution of the program variables on the event that the given expression
+  equals the given value. The probability that the variable is equal to the expression must be zero, but the probability density at that point
   must be positive. *Note:* This is not currently enforced automatically by PSI, therefore some care is required when using this primitive.
 
 - assert(expression); puts the program in the error state in case the expression is not equal to zero (PSI will then report the probability of error).
