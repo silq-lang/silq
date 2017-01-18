@@ -1109,18 +1109,9 @@ private struct Analyzer{
 				dist.observe(c);
 			}
 		}else if(auto co=cast(CObserveExp)e){
-			static bool warned=false;
-			if(!warned){
-				err.note("warning: cobserve will be removed",co.loc);
-				warned=true;
-			}
-			if(auto var=transformExp(co.var)){
-				if(cast(DVar)var){
-					if(auto ex=transformExp(co.val)){
-						dist.distribution=dist.distribution*dDelta(var-ex);
-					}
-				}else err.error("observed quantity must be a variable",co.loc);
-			}
+			if(auto var=transformExp(co.var))
+				if(auto ex=transformExp(co.val))
+					dist.distribution=dist.distribution*dDelta(var-ex);
 		}else if(auto ce=cast(CommaExp)e){
 			analyzeStatement(ce.e1,retDist,functionDef);
 			analyzeStatement(ce.e2,retDist,functionDef);
