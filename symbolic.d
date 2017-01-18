@@ -258,6 +258,10 @@ private struct Analyzer{
 						auto x=doIt(ce.args[0]);
 						dist.assertTrue(dIvr(DIvr.Type.lZ,-x),formatError("negative argument to log",e.loc));
 						return dLog(x);
+					case "abs":
+						if(ce.args.length!=1)
+							err.error("expected one argument to abs",ce.loc);
+						return dAbs(doIt(ce.args[0]));
 					case "floor":
 						if(ce.args.length!=1)
 							err.error("expected one argument to floor",ce.loc);

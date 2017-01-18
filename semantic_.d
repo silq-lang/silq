@@ -226,7 +226,7 @@ bool isBuiltIn(Identifier id){
 	case "array":
 	case "readCSV":
 	case "π":
-	case "exp","log":
+	case "exp","log","abs":
 	case "floor","ceil":
 	case "CosUnifDist":
 	case "Rayleigh","Bernoulli","Exp","Exponential","StudentT","Poisson":
@@ -245,7 +245,7 @@ Expression builtIn(Identifier id){
 	case "array": t=funTy(tupleTy([ℝ]),arrayTy(ℝ)); break;
 	case "readCSV": t=funTy(tupleTy([stringTy]),arrayTy(ℝ)); break;
 	case "π": t=ℝ; break;
-	case "exp","log": t=funTy(tupleTy([ℝ]),ℝ); break;
+	case "exp","log","abs": t=funTy(tupleTy([ℝ]),ℝ); break;
 	case "floor","ceil": t=funTy(tupleTy([ℝ]),ℝ); break;
 	case "CosUnifDist": t=funTy(unit,ℝ); break; // TDOO: remove
 	case "Rayleigh","Bernoulli","Exp","Exponential","StudentT","Poisson": t=funTy(tupleTy([ℝ]),ℝ); break;
