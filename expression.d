@@ -163,7 +163,7 @@ class IteExp: Expression{
 	this(Expression cond, CompoundExp then, CompoundExp othw){
 		this.cond=cond; this.then=then; this.othw=othw;
 	}
-	override string toString(){return _brk("if "~cond.toString() ~ " " ~ then.toString() ~ (othw?" else " ~ othw.toString():""));}
+	override string toString(){return _brk("if "~cond.toString() ~ " " ~ then.toString() ~ (othw?" else " ~ (othw.s.length==1&&cast(IteExp)othw.s[0]?othw.s[0].toString():othw.toString()):""));}
 
 	override bool isCompound(){ return true; }
 }
