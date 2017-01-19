@@ -1307,20 +1307,31 @@ Expression expressionSemantic(Expression expr,Scope sc){
 			ite.sstate=SemState.error;
 			return ite;
 		}
-		ite.then.s[0]=expressionSemantic(ite.then.s[0],sc);
+		Expression branchSemantic(Expression branch){
+			if(auto ae=cast(AssertExp)branch){
+				branch=statementSemantic(branch,sc);
+				if(auto lit=cast(LiteralExp)ae.e)
+					if(lit.lit.type==Tok!"0" && lit.lit.str=="0")
+						branch.type=null;
+			}else branch=expressionSemantic(branch,sc);
+			return branch;
+		}
+		ite.then.s[0]=branchSemantic(ite.then.s[0]);
 		propErr(ite.then.s[0],ite.then);
 		if(!ite.othw){
 			sc.error("missing else for if expression",ite.loc);
 			ite.sstate=SemState.error;
 			return ite;
 		}
-		ite.othw.s[0]=expressionSemantic(ite.othw.s[0],sc);
+		ite.othw.s[0]=branchSemantic(ite.othw.s[0]);
 		propErr(ite.othw.s[0],ite.othw);
 		propErr(ite.cond,ite);
 		propErr(ite.then,ite);
 		propErr(ite.othw,ite);
 		if(ite.sstate==SemState.error)
 			return ite;
+		if(!ite.then.s[0].type) ite.then.s[0].type = ite.othw.s[0].type;
+		if(!ite.othw.s[0].type) ite.othw.s[0].type = ite.then.s[0].type;
 		auto t1=ite.then.s[0].type;
 		auto t2=ite.othw.s[0].type;
 		if(t1 && t2 && t1 != t2){

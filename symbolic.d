@@ -647,6 +647,11 @@ private struct Analyzer{
 			}else if(auto arr=cast(ArrayExp)e){
 				auto dexprs=arr.e.map!doIt.array;
 				return dArray(dexprs);
+			}else if(auto ae=cast(AssertExp)e){
+				if(auto c=transformConstr(ae.e)){
+					dist.assertTrue(c,text("assertion '",ae.e,"' failed"));
+					return dTuple([]);
+				}
 			}else if(auto tae=cast(TypeAnnotationExp)e){
 				return doIt(tae.e);
 			}else if(cast(Type)e)
@@ -1173,13 +1178,11 @@ private struct Analyzer{
 				}else err.error("can only have one 'expected' annotation, in 'main'.",re.loc);
 			}
 		}else if(auto ae=cast(AssertExp)e){
-			if(auto c=transformConstr(ae.e)){
+			if(auto c=transformConstr(ae.e))
 				dist.assertTrue(c,text("assertion '",ae.e,"' failed"));
-			}
 		}else if(auto oe=cast(ObserveExp)e){
-			if(auto c=transformConstr(oe.e)){
+			if(auto c=transformConstr(oe.e))
 				dist.observe(c);
-			}
 		}else if(auto co=cast(CObserveExp)e){
 			if(auto var=transformExp(co.var))
 				if(auto ex=transformExp(co.val))
