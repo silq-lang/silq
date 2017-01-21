@@ -1,0 +1,11 @@
+
+def foo(){
+	if flip(1/2){
+		return;
+	}
+}
+
+def main(){
+	foo();
+	return; // expected: 1
+}

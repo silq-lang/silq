@@ -1385,7 +1385,7 @@ FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 	if(!definitelyReturns(fd) && fd.ret && fd.ret != unit){
 		sc.error("control flow might reach end of function (add return or assert(0) statement)",fd.loc);
 		fd.sstate=SemState.error;
-	}else if(!fd.ret){
+	}else if(!fd.body_.s.length||!cast(ReturnExp)fd.body_.s[$-1]){
 		auto tpl=new TupleExp([]);
 		tpl.loc=fd.loc;
 		auto rete=new ReturnExp(tpl);
