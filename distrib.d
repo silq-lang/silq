@@ -378,11 +378,11 @@ class Distribution{
 	bool isTuple=true;
 	void orderFreeVars(DVar[] orderedFreeVars,bool isTuple)in{
 		assert(!freeVarsOrdered);
-		assert(orderedFreeVars.length==freeVars.length);
+	   /+assert(orderedFreeVars.length==freeVars.length);
 		foreach(v;orderedFreeVars)
 			assert(v in freeVars);
 		// TODO: this does not check that variables occur at most once in orderedFreeVars
-		assert(isTuple||orderedFreeVars.length==1);
+		assert(isTuple||orderedFreeVars.length==1);+/
 	}body{
 		freeVarsOrdered=true;
 		this.orderedFreeVars=orderedFreeVars;

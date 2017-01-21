@@ -626,7 +626,7 @@ Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
 			de.type=unit;
 		}
 		if(cast(TopScope)sc){
-			if(!be.e2.isConstant()){
+			if(!be.e2.isConstant() && !cast(PlaceholderExp)be.e2){
 				sc.error("global constant initializer must be a constant",be.e2.loc);
 				if(de){ de.setError(); be.sstate=SemState.error; }
 			}
