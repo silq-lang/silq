@@ -1,0 +1,17 @@
+
+dat Distribution[a]{
+	x: a;
+	def Distribution(x: a){
+		this.x=x;
+	}
+	def sample(){
+		return x;
+	}
+}
+
+def main(){
+	x := Distribution(4);
+	k := x.sample;
+	array := 4;
+	return k()+array; // expected: δ[-r₁+8]
+}

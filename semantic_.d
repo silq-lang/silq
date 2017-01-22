@@ -336,6 +336,7 @@ Expression builtIn(Identifier id,Scope sc){
 bool isBuiltIn(FieldExp fe)in{
 	assert(fe.e.sstate==SemState.completed);
 }body{
+	if(fe.f.meaning) return false;
 	if(auto at=cast(ArrayTy)fe.e.type){
 		if(fe.f.name=="length"){
 			return true;
@@ -359,6 +360,7 @@ bool isBuiltIn(FieldExp fe)in{
 Expression builtIn(FieldExp fe,Scope sc)in{
 	assert(fe.e.sstate==SemState.completed);
 }body{
+	if(fe.f.meaning) return null;
 	Expression t=null;
 	if(auto at=cast(ArrayTy)fe.e.type){
 		if(fe.f.name=="length"){
