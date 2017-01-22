@@ -13,6 +13,7 @@ enum Format{
 
 enum InferenceMethod{
 	symbolic,
+	bruteforce,
 }
 
 enum OutputForm{

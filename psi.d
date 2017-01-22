@@ -118,6 +118,7 @@ int main(string[] args){
 			case "--lisp": opt.formatting=Format.lisp; break;
 			case "--raw": opt.outputForm=OutputForm.raw; break;
 			case "--raw-error": opt.outputForm=OutputForm.rawError; break;
+			case "--bruteforce": opt.backend=InferenceMethod.bruteforce; break;
 			default:
 				if(x.startsWith("--plot=")){
 					auto rest=x["--plot=".length..$];

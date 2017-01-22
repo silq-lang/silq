@@ -2,7 +2,7 @@
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
 
 import options,declaration,distrib,error,dexpr,util;
-import symbolic;
+import symbolic,bruteforce;
 import std.stdio, std.path, std.algorithm;
 
 Distribution getCDF(Distribution dist){
@@ -25,6 +25,8 @@ abstract class Backend{
 		final switch(opt.backend){
 			case InferenceMethod.symbolic:
 				return new Symbolic(source);
+			case InferenceMethod.bruteforce:
+				return new Bruteforce(source);
 		}
 	}
 	abstract Distribution analyze(FunctionDef fd,ErrorHandler err);
