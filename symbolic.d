@@ -828,7 +828,7 @@ private struct Analyzer{
 				assert(idx.a.length==1);
 				auto index=transformExp(idx.a[0]);
 				if(old&&index&&rhs){
-					if(!opt.noBoundsCheck) dist.assertTrue(dIvr(DIvr.Type.lZ,index-dField(old,"length")),"array access out of bounds"); // TODO: check that index is an integer.
+					if(!opt.noBoundsCheck) dist.assertTrue(dIvr(DIvr.Type.leZ,-index)*dIvr(DIvr.Type.lZ,index-dField(old,"length")),"array access out of bounds"); // TODO: check that index is an integer.
 					assignTo(idx.e,dIUpdate(old,index,rhs),idx.e.type,loc);
 				}
 			}else{
