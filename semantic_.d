@@ -221,7 +221,7 @@ Expression toplevelSemantic(Expression expr,Scope sc){
 }
 
 bool isBuiltIn(Identifier id){
-	if(!id) return false;
+	if(!id||id.meaning) return false;
 	switch(id.name){
 	case "array":
 	case "readCSV":
@@ -764,12 +764,12 @@ Expression expressionSemantic(Expression expr,Scope sc){
 	}
 	if(auto id=cast(Identifier)expr){
 		id.scope_=sc;
-		if(auto r=builtIn(id))
-			return r;
 		auto meaning=id.meaning;
 		if(!meaning){
 			meaning=sc.lookup(id);
 			if(!meaning){
+				if(auto r=builtIn(id))
+					return r;
 				sc.error(format("undefined identifier '%s'",id.name), id.loc);
 				id.sstate=SemState.error;
 				return id;
