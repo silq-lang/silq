@@ -1202,11 +1202,13 @@ private struct Analyzer{
 		return dist;
 	}
 	void applyRetDist(FunctionDef fd,Distribution retDist){
-		if(!retDist) return;
-		dist.simplify();
-		if(dist.distribution is zero){
-			retDist.error=retDist.error+dist.error;
-			dist=retDist;
-		}else err.error("not all paths return",fd.loc); // TODO: check during semantic
+		if(retDist){
+			dist.simplify();
+			if(dist.distribution is zero){
+				retDist.error=retDist.error+dist.error;
+				dist=retDist;
+			}else err.error("not all paths return",fd.loc); // TODO: check during semantic
+		}
+		if(!dist.freeVarsOrdered) dist.orderFreeVars(dist.freeVars.array,dist.freeVars.length!=1);
 	}
 }

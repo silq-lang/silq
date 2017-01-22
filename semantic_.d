@@ -1382,16 +1382,18 @@ FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 	fd.body_=bdy;
 	fd.type=unit;
 	propErr(bdy,fd);
-	if(!definitelyReturns(fd) && fd.ret && fd.ret != unit){
-		sc.error("control flow might reach end of function (add return or assert(0) statement)",fd.loc);
-		fd.sstate=SemState.error;
-	}else if(!fd.body_.s.length||!cast(ReturnExp)fd.body_.s[$-1]){
-		auto tpl=new TupleExp([]);
-		tpl.loc=fd.loc;
-		auto rete=new ReturnExp(tpl);
-		rete.loc=fd.loc;
-		fd.body_.s~=returnExpSemantic(rete,fd.body_.blscope_);
-	}
+	if(!definitelyReturns(fd)){
+		if(!fd.ret || fd.ret == unit){
+			auto tpl=new TupleExp([]);
+			tpl.loc=fd.loc;
+			auto rete=new ReturnExp(tpl);
+			rete.loc=fd.loc;
+			fd.body_.s~=returnExpSemantic(rete,fd.body_.blscope_);
+		}else{
+			sc.error("control flow might reach end of function (add return or assert(0) statement)",fd.loc);
+			fd.sstate=SemState.error;
+		}
+	}else if(!fd.ret) fd.ret=unit;
 	setFtype(fd);
 	if(fd.sstate!=SemState.error)
 		fd.sstate=SemState.completed;
