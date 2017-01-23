@@ -14,8 +14,8 @@ class Bruteforce: Backend{
 		this.sourceFile=sourceFile;
 	}
 	override Distribution analyze(FunctionDef def,ErrorHandler err){
-		auto interpreter=Interpreter(def.body_);
-		Dist ret;
+		auto interpreter=Interpreter(def.body_,false);
+		auto ret=distInit();
 		interpreter.run(ret);
 		return ret.toDistribution();
 	}
@@ -23,6 +23,9 @@ private:
 	string sourceFile;
 }
 
+auto distInit(){
+	return Dist(MapX!(DExpr,DExpr).init,zero,SetX!string.init);
+}
 struct Dist{
 	void add(DExpr k,DExpr v){
 		if(k in state) state[k]=(state[k]+v).simplify(one);
@@ -32,43 +35,41 @@ struct Dist{
 	void opOpAssign(string op:"+")(Dist r){
 		foreach(k,v;r.state)
 			add(k,v);
+		error=(error+r.error).simplify(one);
 	}
 	Dist map(DLambda lambda){
-		Dist r;
+		auto r=distInit;
 		r.tupleof[1..$]=this.tupleof[1..$];
-		foreach(k,v;state){
-			auto err=dField(k,"`error").simplify(one);
-			assert(err is one || err is zero);
-			if(err is one) r.add(k,v);
-			else r.add(dApply(lambda,k).simplify(one),v);
-		}
+		foreach(k,v;state) r.add(dApply(lambda,k).simplify(one),v);
 		return r;
 	}
+	Dist pushFrame(){
+		return map(dLambda(dRecord(["`frame":db1])));
+	}
+	Dist popFrame(string tmpVar){
+		addTmpVar(tmpVar);
+		return map(dLambda(dRUpdate(dField(db1,"`frame"),tmpVar,dField(db1,"`value"))));
+	}
 	Dist flatMap(DLambda[] lambdas){
-		Dist r;
+		auto r=distInit;
 		r.tupleof[1..$]=this.tupleof[1..$];
 		foreach(k,v;state){
-			auto err=dField(k,"`error").simplify(one);
-			assert(err is one || err is zero);
-			if(err is one) r.add(k,v);
-			else{
-				foreach(lambda;lambdas){
-					auto app=dApply(lambda,k).simplify(one);
-					auto val=app[0.dℤ].simplify(one),scale=app[1.dℤ].simplify(one);
-					r.add(val,(v*scale).simplify(one));
-				}
+			foreach(lambda;lambdas){
+				auto app=dApply(lambda,k).simplify(one);
+				auto val=app[0.dℤ].simplify(one),scale=app[1.dℤ].simplify(one);
+				r.add(val,(v*scale).simplify(one));
 			}
 		}
 		return r;
 	}
 	Dist assertTrue(DLambda lambda){
-		Dist r;
+		auto r=distInit;
 		r.tupleof[1..$]=this.tupleof[1..$];
 		foreach(k,v;state){
 			auto cond=dApply(lambda,k).simplify(one);
 			assert(cond is one || cond is zero);
-			if(dField(k,"`error").simplify(one) is one || cond is zero){
-				r.add(dRecord(["`error":one]),v);
+			if(cond is zero){
+				r.error = (r.error + v).simplify(one);
 			}else{
 				r.add(k,v);
 			}
@@ -76,28 +77,17 @@ struct Dist{
 		return r;
 	}
 	Dist eraseErrors(){
-		Dist r;
-		r.tupleof[1..$]=this.tupleof[1..$];
-		foreach(k,v;state){
-			auto cond=dField(k,"`error").simplify(one);
-			assert(cond is one || cond is zero);
-			if(cond is one) continue;
-			r.add(k,v);
-		}
+		auto r=dup();
+		error=zero;
 		return r;
 	}
 	Dist observe(DLambda lambda){
-		Dist r;
+		auto r=distInit;
 		r.tupleof[1..$]=this.tupleof[1..$];
 		foreach(k,v;state){
-			auto err=dField(k,"`error").simplify(one);
-			assert(err is one || err is zero);
-			if(err is one) r.add(k,v);
-			else{
-				auto cond=dApply(lambda,k).simplify(one);
-				assert(cond is one || cond is zero,text(cond));
-				if(cond is one) r.add(k,v);
-			}
+			auto cond=dApply(lambda,k).simplify(one);
+			assert(cond is one || cond is zero,text(cond));
+			if(cond is one) r.add(k,v);
 		}
 		return r;
 	}
@@ -105,39 +95,33 @@ struct Dist{
 		auto r=new Distribution();
 		auto var=r.declareVar("r");
 		r.distribution=zero;
-		r.error=zero;
-		foreach(k,v;state){
-			auto err=dField(k,"`error").simplify(one);
-			assert(err is one || err is zero);
-			if(err is one) r.error=r.error+v;
-			else r.distribution=r.distribution+v*dDiscDelta(var,dField(k,"`value"));
-		}
+		foreach(k,v;state) r.distribution=r.distribution+v*dDiscDelta(var,dField(k,"`value"));
+		r.error=error;
 		r.simplify();
 		r.orderFreeVars([var],false);
 		return r;
 	}
-	MapX!(DExpr,DExpr) state;	
+	MapX!(DExpr,DExpr) state;
+	DExpr error;
 	SetX!string tmpVars;
-	this(MapX!(DExpr,DExpr) state,SetX!string tmpVars){
+	@disable this();
+	this(MapX!(DExpr,DExpr) state,DExpr error,SetX!string tmpVars){
 		this.state=state;
+		this.error=error;
 		this.tmpVars=tmpVars;
 	}
-	Dist dup(){ return Dist(state.dup,tmpVars.dup); static assert(this.tupleof.length==2); }
+	Dist dup(){ return Dist(state.dup,error,tmpVars.dup); static assert(this.tupleof.length==3); }
 	void addTmpVar(string var){ tmpVars.insert(var); }
 	Dist marginalizeTemporaries(){
 		if(!tmpVars.length) return this;
-		Dist r;
+		auto r=distInit;
+		r.error=error;
 		foreach(k,v;state){
-			auto err=dField(k,"`error").simplify(one);
-			assert(err is one || err is zero);
-			if(err is one) r.add(k,v);
-			else{
-				auto rec=cast(DRecord)k;
-				assert(!!rec);
-				auto val=rec.values.dup;
-				foreach(x;tmpVars) val.remove(x);
-				r.add(dRecord(val),v);
-			}
+			auto rec=cast(DRecord)k;
+			assert(!!rec);
+			auto val=rec.values.dup;
+			foreach(x;tmpVars) val.remove(x);
+			r.add(dRecord(val),v);
 		}
 		tmpVars.clear();
 		return r;
@@ -150,14 +134,16 @@ auto db1(){ return dDeBruijnVar(1); }
 struct Interpreter{
 	CompoundExp statements;
 	Dist cur;
-	this(CompoundExp statements){
-		MapX!(DExpr,DExpr) state;
-		state[dRecord(["`error":zero])]=one;
-		this(statements,Dist(state,SetX!string.init));
+	bool hasFrame=false;
+	this(CompoundExp statements,bool hasFrame){
+		auto cur=distInit;
+		cur.state[dRecord()]=one;
+		this(statements,cur,hasFrame);
 	}
-	this(CompoundExp statements,Dist cur){
+	this(CompoundExp statements,Dist cur,bool hasFrame){
 		this.statements=statements;
 		this.cur=cur;
+		this.hasFrame=hasFrame;
 	}
 	DExpr runExp(Expression e){
 		DExpr doIt(Expression e){
@@ -203,7 +189,26 @@ struct Interpreter{
 					thisExp=doIt(fe.e);
 				}
 				if(auto fun=cast(FunctionDef)id.meaning){
-					assert(0,text("TODO: ",ce));
+					if(thisExp) assert(0,text("TODO: ",ce));
+					auto ncur=cur.pushFrame();
+					auto arg=doIt(ce.arg); // TODO: allow temporaries within arguments
+					if(fun.isTuple){
+						DExpr updates=db1;
+						foreach(i,prm;fun.params){
+							updates=dRUpdate(updates,prm.getName,arg[i.dℤ]);
+						}
+						if(updates !is db1) ncur=ncur.map(dLambda(updates));
+					}else{
+						assert(fun.params.length==1);
+						ncur=ncur.map(dLambda(dRUpdate(db1,fun.params[0].getName,arg)));
+					}
+					auto intp=Interpreter(fun.body_,ncur,true);
+					auto nndist = distInit();
+					intp.run(nndist);
+					static uniq=0;
+					string tmp="`call"~lowNum(++uniq);
+					cur=nndist.popFrame(tmp);
+					return dField(db1,tmp);
 				}
 				switch(id.name){
 					case "flip":
@@ -238,11 +243,11 @@ struct Interpreter{
 				auto curP=cur.eraseErrors();
 				cur=cur.observe(dLambda(dIvr(DIvr.Type.neqZ,cond).simplify(one)));
 				curP=curP.observe(dLambda(dIvr(DIvr.Type.eqZ,cond).simplify(one)));
-				auto thenIntp=Interpreter(ite.then,cur);
+				auto thenIntp=Interpreter(ite.then,cur,hasFrame);
 				auto r=dIvr(DIvr.Type.neqZ,cond)*thenIntp.runExp(ite.then.s[0]);
 				cur=thenIntp.cur;
 				assert(!!ite.othw);
-				auto othwIntp=Interpreter(ite.othw,curP);
+				auto othwIntp=Interpreter(ite.othw,curP,hasFrame);
 				r=r+dIvr(DIvr.Type.eqZ,cond)*othwIntp.runExp(ite.othw);
 				curP=othwIntp.cur;
 				cur+=curP;
@@ -353,11 +358,11 @@ struct Interpreter{
 			auto curP=cur.eraseErrors();
 			cur=cur.observe(dLambda(dIvr(DIvr.Type.neqZ,cond)));
 			curP=curP.observe(dLambda(dIvr(DIvr.Type.eqZ,cond).simplify(one)));
-			auto thenIntp=Interpreter(ite.then,cur);
+			auto thenIntp=Interpreter(ite.then,cur,hasFrame);
 			thenIntp.run(retDist);
 			cur=thenIntp.cur;
 			if(ite.othw){
-				auto othwIntp=Interpreter(ite.othw,curP);
+				auto othwIntp=Interpreter(ite.othw,curP,hasFrame);
 				othwIntp.run(retDist);
 				curP=othwIntp.cur;
 			}
@@ -370,8 +375,10 @@ struct Interpreter{
 			assert(0,text("TODO: ",fe));
 		}else if(auto re=cast(ReturnExp)e){
 			auto value = runExp(re.e);
-			retDist += cur.map(dLambda(dRecord(["`error":dField(db1,"`error"),"`value":value])));
-			cur=Dist.init;
+			auto rec=["`value":value];
+			if(hasFrame) rec["`frame"]=dField(db1,"`frame");
+			retDist += cur.map(dLambda(dRecord(rec)));
+			cur=distInit;
 		}else if(auto ae=cast(AssertExp)e){
 			auto cond=dIvr(DIvr.Type.neqZ,runExp(ae.e));
 			cur=cur.assertTrue(dLambda(cond));
