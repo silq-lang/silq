@@ -2,6 +2,7 @@ import std.conv: text;
 import std.string: split;
 import std.algorithm: map;
 import std.array: array;
+import std.string: startsWith;
 
 import backend;
 import distrib,error;
@@ -14,7 +15,7 @@ class Bruteforce: Backend{
 		this.sourceFile=sourceFile;
 	}
 	override Distribution analyze(FunctionDef def,ErrorHandler err){
-		auto interpreter=Interpreter(def.body_,false);
+		auto interpreter=Interpreter(def,def.body_,false);
 		auto ret=distInit();
 		interpreter.run(ret);
 		return ret.toDistribution();
@@ -118,7 +119,7 @@ struct Dist{
 		r.error=error;
 		foreach(k,v;state){
 			auto rec=cast(DRecord)k;
-			assert(!!rec);
+			assert(!!rec,text(k));
 			auto val=rec.values.dup;
 			foreach(x;tmpVars) val.remove(x);
 			r.add(dRecord(val),v);
@@ -126,21 +127,54 @@ struct Dist{
 		tmpVars.clear();
 		return r;
 	}
+	DExpr flip(DExpr p){
+		// TODO: check that p is in [0,1]
+		static int unique=0;
+		auto tmp="`flip"~lowNum(++unique);
+		addTmpVar(tmp);
+		this=flatMap(
+			[dLambda(dTuple([dRUpdate(db1,tmp,zero),(one-p).simplify(one)])),
+			 dLambda(dTuple([dRUpdate(db1,tmp,one),p]))]);
+		return dField(db1,tmp);
+	}
+	DExpr uniformInt(DExpr arg){
+		// TODO: check constraints on arguments
+		auto r=distInit;
+		r.tupleof[1..$]=this.tupleof[1..$];
+		auto lambda=dLambda(arg);
+		static int unique=0;
+		auto tmp="`uniformInt"~lowNum(++unique);
+		addTmpVar(tmp);
+		foreach(k,v;state){
+			auto ab=dApply(lambda,k).simplify(one);
+			auto a=ab[0.dℤ].simplify(one), b=ab[1.dℤ].simplify(one);
+			auto az=cast(Dℤ)a, bz=cast(Dℤ)b;
+			assert(az&&bz,"TODO");
+			auto num=dℤ(bz.c-az.c+1);
+			if(num.c<=0) assert(0,"TODO");
+			auto nv=(v/num).simplify(one);
+			for(ℤ i=az.c;i<=bz.c;++i) r.add(dRUpdate(k,tmp,i.dℤ).simplify(one),nv);
+		}
+		this=r;
+		return dField(db1,tmp);
+	}
 }
 
 import lexer: Tok;
 alias ODefExp=BinaryExp!(Tok!":=");
 auto db1(){ return dDeBruijnVar(1); }
 struct Interpreter{
+	FunctionDef functionDef;
 	CompoundExp statements;
 	Dist cur;
 	bool hasFrame=false;
-	this(CompoundExp statements,bool hasFrame){
+	this(FunctionDef functionDef,CompoundExp statements,bool hasFrame){
 		auto cur=distInit;
 		cur.state[dRecord()]=one;
-		this(statements,cur,hasFrame);
+		this(functionDef,statements,cur,hasFrame);
 	}
-	this(CompoundExp statements,Dist cur,bool hasFrame){
+	this(FunctionDef functionDef,CompoundExp statements,Dist cur,bool hasFrame){
+		this.functionDef=functionDef;
 		this.statements=statements;
 		this.cur=cur;
 		this.hasFrame=hasFrame;
@@ -153,9 +187,6 @@ struct Interpreter{
 				return dField(db1,id.name);
 			}
 			if(auto fe=cast(FieldExp)e){
-				if(isBuiltIn(fe)){
-					assert(0,"TODO");
-				}
 				return dField(doIt(fe.e),fe.f.name);
 			}
 			if(auto ae=cast(AddExp)e) return doIt(ae.e1)+doIt(ae.e2);
@@ -189,39 +220,42 @@ struct Interpreter{
 					thisExp=doIt(fe.e);
 				}
 				if(auto fun=cast(FunctionDef)id.meaning){
-					if(thisExp) assert(0,text("TODO: ",ce));
-					auto ncur=cur.pushFrame();
 					auto arg=doIt(ce.arg); // TODO: allow temporaries within arguments
+					auto ncur=cur.pushFrame();
+					DExpr inFrame(DExpr arg){
+						return arg.substitute(db1,dField(db1,"`frame"));
+					}
+					if(fun.isConstructor){
+						assert(!thisExp,"TODO");
+						ncur=ncur.map(dLambda(dRUpdate(db1,"this",dRecord())));
+					}else if(thisExp) ncur=ncur.map(dLambda(dRUpdate(db1,"this",inFrame(thisExp))));
 					if(fun.isTuple){
 						DExpr updates=db1;
 						foreach(i,prm;fun.params){
-							updates=dRUpdate(updates,prm.getName,arg[i.dℤ]);
+							updates=dRUpdate(updates,prm.getName,inFrame(arg[i.dℤ]));
 						}
 						if(updates !is db1) ncur=ncur.map(dLambda(updates));
 					}else{
 						assert(fun.params.length==1);
-						ncur=ncur.map(dLambda(dRUpdate(db1,fun.params[0].getName,arg)));
+						ncur=ncur.map(dLambda(dRUpdate(db1,fun.params[0].getName,inFrame(arg))));
 					}
-					auto intp=Interpreter(fun.body_,ncur,true);
+					auto intp=Interpreter(fun,fun.body_,ncur,true);
 					auto nndist = distInit();
 					intp.run(nndist);
 					static uniq=0;
 					string tmp="`call"~lowNum(++uniq);
 					cur=nndist.popFrame(tmp);
+					if(thisExp&&!fun.isConstructor){
+						assignTo(thisExp,dField(db1,tmp)[1.dℤ]);
+						assignTo(dVar(tmp),dField(db1,tmp)[0.dℤ]);
+					}
 					return dField(db1,tmp);
 				}
 				switch(id.name){
 					case "flip":
-						// TODO: check that p is in [0,1]
-						auto p=doIt(ce.arg);
-						static int unique=0;
-						auto tmp="`flip"~lowNum(++unique);
-						cur.addTmpVar(tmp);
-						cur=cur.flatMap(
-							[dLambda(dTuple([dRUpdate(db1,tmp,zero),(one-p).simplify(one)])),
-							 dLambda(dTuple([dRUpdate(db1,tmp,one),p]))]);
-						return dField(db1,tmp);
-					case "uniformInt": assert(0,text("TODO: ",ce));
+						return cur.flip(doIt(ce.arg));
+					case "uniformInt":
+						return cur.uniformInt(doIt(ce.arg));
 					case "categorical": assert(0,text("TODO: ",ce));
 					default: assert(0,text("TODO: ",ce));
 				}
@@ -243,11 +277,11 @@ struct Interpreter{
 				auto curP=cur.eraseErrors();
 				cur=cur.observe(dLambda(dIvr(DIvr.Type.neqZ,cond).simplify(one)));
 				curP=curP.observe(dLambda(dIvr(DIvr.Type.eqZ,cond).simplify(one)));
-				auto thenIntp=Interpreter(ite.then,cur,hasFrame);
+				auto thenIntp=Interpreter(functionDef,ite.then,cur,hasFrame);
 				auto r=dIvr(DIvr.Type.neqZ,cond)*thenIntp.runExp(ite.then.s[0]);
 				cur=thenIntp.cur;
 				assert(!!ite.othw);
-				auto othwIntp=Interpreter(ite.othw,curP,hasFrame);
+				auto othwIntp=Interpreter(functionDef,ite.othw,curP,hasFrame);
 				r=r+dIvr(DIvr.Type.eqZ,cond)*othwIntp.runExp(ite.othw);
 				curP=othwIntp.cur;
 				cur+=curP;
@@ -301,30 +335,35 @@ struct Interpreter{
 		}
 		return doIt(e);
 	}
-	void assignTo(Expression to,DExpr val){
-		if(auto id=cast(Identifier)to){
-			auto lambda=dLambda(dRUpdate(db1,id.name,val));
+	void assignTo(DExpr lhs,DExpr rhs){
+		if(auto id=cast(DVar)lhs){
+			auto lambda=dLambda(dRUpdate(db1,id.name,rhs));
 			cur=cur.map(lambda);
+		}else if(auto idx=cast(DIndex)lhs){
+			assignTo(idx.e,dIUpdate(idx.e,idx.i,rhs));
+		}else if(auto fe=cast(DField)lhs){
+			if(fe.e is db1){
+				assignTo(dVar(fe.f),rhs);
+				return;
+			}
+			assignTo(fe.e,dRUpdate(fe.e,fe.f,rhs));
 		}else{
-			assert(0,text("TODO: assign to ",to));
+			assert(0,text("TODO: ",lhs," = ",rhs));
 		}
 	}
 	void runStm(Expression e,ref Dist retDist){
 		if(auto nde=cast(DefExp)e){
 			auto de=cast(ODefExp)nde.initializer;
 			assert(!!de);
-			if(auto id=cast(Identifier)de.e1){
-				auto lambda=dLambda(dRUpdate(db1,id.name,runExp(de.e2)));
-				cur=cur.map(lambda);
-				cur=cur.marginalizeTemporaries();
-			}else{
-				assert(0,text("TODO: ",e));
-			}
+			auto lhs=runExp(de.e1).simplify(one), rhs=runExp(de.e2).simplify(one);
+			assignTo(lhs,rhs);
+			cur=cur.marginalizeTemporaries();
 		}else if(auto ae=cast(AssignExp)e){
-			assignTo(ae.e1,runExp(ae.e2));
+			auto lhs=runExp(ae.e1),rhs=runExp(ae.e2);
+			assignTo(lhs,rhs);
 			cur=cur.marginalizeTemporaries();
 		}else if(isOpAssignExp(e)){
-						DExpr perform(DExpr a,DExpr b){
+			DExpr perform(DExpr a,DExpr b){
 				if(cast(OrAssignExp)e) return dIvr(DIvr.Type.neqZ,dIvr(DIvr.Type.neqZ,a)+dIvr(DIvr.Type.neqZ,b));
 				if(cast(AndAssignExp)e) return dIvr(DIvr.Type.neqZ,a)*dIvr(DIvr.Type.neqZ,b);
 				if(cast(AddAssignExp)e) return a+b;
@@ -347,9 +386,9 @@ struct Interpreter{
 			}
 			auto be=cast(ABinaryExp)e;
 			assert(!!be);
-			auto lhs=runExp(be.e1);
+			auto lhs=runExp(be.e1); // TODO: keep lhs stable!
 			auto rhs=runExp(be.e2);
-			assignTo(be.e1,perform(lhs,rhs));
+			assignTo(lhs,perform(lhs,rhs));
 			cur=cur.marginalizeTemporaries();
 		}else if(auto call=cast(CallExp)e){
 			runExp(call);
@@ -358,23 +397,42 @@ struct Interpreter{
 			auto curP=cur.eraseErrors();
 			cur=cur.observe(dLambda(dIvr(DIvr.Type.neqZ,cond)));
 			curP=curP.observe(dLambda(dIvr(DIvr.Type.eqZ,cond).simplify(one)));
-			auto thenIntp=Interpreter(ite.then,cur,hasFrame);
+			auto thenIntp=Interpreter(functionDef,ite.then,cur,hasFrame);
 			thenIntp.run(retDist);
 			cur=thenIntp.cur;
 			if(ite.othw){
-				auto othwIntp=Interpreter(ite.othw,curP,hasFrame);
+				auto othwIntp=Interpreter(functionDef,ite.othw,curP,hasFrame);
 				othwIntp.run(retDist);
 				curP=othwIntp.cur;
 			}
 			cur+=curP;
 		}else if(auto re=cast(RepeatExp)e){
 			auto rep=runExp(re.num);
-			rep=dApply(rep,dTuple([])).simplify(one);
-			assert(0,text("TODO: ",re));
+			if(auto z=cast(Dℤ)rep){
+				auto intp=Interpreter(functionDef,re.bdy,cur,hasFrame);
+				foreach(x;0.ℤ..z.c){
+					intp.run(retDist);
+					// TODO: marginalize locals
+				}
+				cur=intp.cur;
+			}else assert(0,text("TODO: ",re));
 		}else if(auto fe=cast(ForExp)e){
-			assert(0,text("TODO: ",fe));
+			auto l=runExp(fe.left), r=runExp(fe.right);
+			auto lz=cast(Dℤ)l,rz=cast(Dℤ)r;
+			if(lz&&rz){
+				auto intp=Interpreter(functionDef,fe.bdy,cur,hasFrame);
+				for(ℤ j=lz.c+cast(int)fe.leftExclusive;j+cast(int)fe.rightExclusive<=rz.c;j++){
+					intp.assignTo(dVar(fe.var.name),dℤ(j));
+					intp.run(retDist);
+					// TODO: marginalize locals
+				}
+				cur=intp.cur;
+			}else assert(0,text("TODO: ",fe));
 		}else if(auto re=cast(ReturnExp)e){
 			auto value = runExp(re.e);
+			if(functionDef.context&&functionDef.contextName.startsWith("this")){
+				value = dTuple([value,dField(db1,"this")]);
+			}
 			auto rec=["`value":value];
 			if(hasFrame) rec["`frame"]=dField(db1,"`frame");
 			retDist += cur.map(dLambda(dRecord(rec)));
