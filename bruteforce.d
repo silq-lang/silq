@@ -39,6 +39,7 @@ struct Dist{
 		error=(error+r.error).simplify(one);
 	}
 	Dist map(DLambda lambda){
+		if(opt.trace) writeln("particle-size: ",state.length);
 		auto r=distInit;
 		r.tupleof[1..$]=this.tupleof[1..$];
 		foreach(k,v;state) r.add(dApply(lambda,k).simplify(one),v);
@@ -161,7 +162,7 @@ struct Dist{
 			auto ab=dApply(lambda,k).simplify(one);
 			auto a=ab[0.dℤ].simplify(one), b=ab[1.dℤ].simplify(one);
 			auto az=cast(Dℤ)a, bz=cast(Dℤ)b;
-			assert(az&&bz,"TODO");
+			assert(az&&bz,text("TODO: ",a," ",b));
 			auto num=dℤ(bz.c-az.c+1);
 			if(num.c<=0) assert(0,"TODO");
 			auto nv=(v/num).simplify(one);
@@ -444,6 +445,7 @@ struct Interpreter{
 			if(auto z=cast(Dℤ)rep){
 				auto intp=Interpreter(functionDef,re.bdy,cur,hasFrame);
 				foreach(x;0.ℤ..z.c){
+					if(opt.trace) writeln("repetition: ",x+1);
 					intp.run(retDist);
 					// TODO: marginalize locals
 				}
@@ -455,6 +457,7 @@ struct Interpreter{
 			if(lz&&rz){
 				auto intp=Interpreter(functionDef,fe.bdy,cur,hasFrame);
 				for(ℤ j=lz.c+cast(int)fe.leftExclusive;j+cast(int)fe.rightExclusive<=rz.c;j++){
+					if(opt.trace) writeln("loop-index: ",j);
 					intp.assignTo(dVar(fe.var.name),dℤ(j));
 					intp.run(retDist);
 					// TODO: marginalize locals
