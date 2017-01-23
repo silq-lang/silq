@@ -4,7 +4,7 @@ import std.algorithm: map;
 import std.array: array;
 import std.string: startsWith;
 
-import backend;
+import backend,options;
 import distrib,error;
 import dexpr,hashtable,util;
 import expression,declaration,type;
@@ -42,6 +42,11 @@ struct Dist{
 		auto r=distInit;
 		r.tupleof[1..$]=this.tupleof[1..$];
 		foreach(k,v;state) r.add(dApply(lambda,k).simplify(one),v);
+		return r;
+	}
+	DExpr expectation(DLambda lambda){
+		DExpr r=zero;
+		foreach(k,v;state) r=(r+v*dApply(lambda,k)).simplify(one);
 		return r;
 	}
 	Dist pushFrame(){
@@ -253,10 +258,15 @@ struct Interpreter{
 				}
 				switch(id.name){
 					case "flip":
-						return cur.flip(doIt(ce.arg));
+						auto arg=doIt(ce.arg);
+						return cur.flip(arg);
 					case "uniformInt":
-						return cur.uniformInt(doIt(ce.arg));
+						auto arg=doIt(ce.arg);
+						return cur.uniformInt(arg);
 					case "categorical": assert(0,text("TODO: ",ce));
+					case "Expectation": // TODO: condition on frame
+						auto arg=doIt(ce.arg);
+						return cur.expectation(dLambda(arg));
 					default: assert(0,text("TODO: ",ce));
 				}
 			}
@@ -309,8 +319,15 @@ struct Interpreter{
 					auto e1=doIt(b.e1), e2=doIt(b.e2);
 					return e1*e2;
 				}else if(auto b=cast(OrExp)e){
-					auto e1=doIt(b.e1), e2=doIt(b.e2);
-					return dIvr(DIvr.Type.neqZ,e1+e2);
+					DExprSet disjuncts;
+					void collect(Expression e){
+						if(auto or=cast(OrExp)e){
+							collect(or.e1);
+							collect(or.e2);
+						}else disjuncts.insert(doIt(e));
+					}
+					collect(e);
+					return dIvr(DIvr.Type.neqZ,dPlus(disjuncts));
 				}else with(DIvr.Type)if(auto b=cast(LtExp)e){
 					mixin(common);
 					return dIvr(lZ,e1-e2);
@@ -347,11 +364,18 @@ struct Interpreter{
 				return;
 			}
 			assignTo(fe.e,dRUpdate(fe.e,fe.f,rhs));
+		}else if(auto tpl=cast(DTuple)lhs){
+			foreach(i;0..tpl.values.length)
+				assignTo(tpl[i],rhs[i.dℤ].simplify(one));
+		}else if(cast(DPlus)lhs||cast(DMult)lhs){
+			// TODO: this could be the case (if cond { a } else { b }) = c;
+			// (this is also not handled in the symbolic backend at the moment)
 		}else{
 			assert(0,text("TODO: ",lhs," = ",rhs));
 		}
 	}
 	void runStm(Expression e,ref Dist retDist){
+		if(opt.trace) writeln("statement: ",e);
 		if(auto nde=cast(DefExp)e){
 			auto de=cast(ODefExp)nde.initializer;
 			assert(!!de);
