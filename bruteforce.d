@@ -441,7 +441,7 @@ struct Interpreter{
 			}
 			cur+=curP;
 		}else if(auto re=cast(RepeatExp)e){
-			auto rep=runExp(re.num);
+			auto rep=runExp(re.num).simplify(one);
 			if(auto z=cast(Dℤ)rep){
 				auto intp=Interpreter(functionDef,re.bdy,cur,hasFrame);
 				foreach(x;0.ℤ..z.c){
@@ -452,7 +452,7 @@ struct Interpreter{
 				cur=intp.cur;
 			}else assert(0,text("TODO: ",re));
 		}else if(auto fe=cast(ForExp)e){
-			auto l=runExp(fe.left), r=runExp(fe.right);
+			auto l=runExp(fe.left).simplify(one), r=runExp(fe.right).simplify(one);
 			auto lz=cast(Dℤ)l,rz=cast(Dℤ)r;
 			if(lz&&rz){
 				auto intp=Interpreter(functionDef,fe.bdy,cur,hasFrame);
