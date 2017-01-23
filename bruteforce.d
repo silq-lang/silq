@@ -73,11 +73,15 @@ struct Dist{
 		r.tupleof[1..$]=this.tupleof[1..$];
 		foreach(k,v;state){
 			auto cond=dApply(lambda,k).simplify(one);
-			assert(cond is one || cond is zero);
-			if(cond is zero){
-				r.error = (r.error + v).simplify(one);
+			if(cond is one || cond is zero){
+				if(cond is zero){
+					r.error = (r.error + v).simplify(one);
+				}else{
+					r.add(k,v);
+				}
 			}else{
-				r.add(k,v);
+				r.error = (r.error + v*dIvr(DIvr.Type.eqZ,cond)).simplify(one);
+				r.add(k,(v*cond).simplify(one));
 			}
 		}
 		return r;
@@ -92,8 +96,11 @@ struct Dist{
 		r.tupleof[1..$]=this.tupleof[1..$];
 		foreach(k,v;state){
 			auto cond=dApply(lambda,k).simplify(one);
-			assert(cond is one || cond is zero,text(cond));
-			if(cond is one) r.add(k,v);
+			if(cond is one || cond is zero){
+				if(cond is one) r.add(k,v);
+			}else{
+				r.add(k,(v*cond).simplify(one));
+			}
 		}
 		return r;
 	}
@@ -185,6 +192,7 @@ struct Interpreter{
 		this.hasFrame=hasFrame;
 	}
 	DExpr runExp(Expression e){
+		if(!cur.state.length) return zero;
 		DExpr doIt(Expression e){
 			if(auto pl=cast(PlaceholderExp)e) return dVar(pl.ident.name);
 			if(auto id=cast(Identifier)e){
@@ -375,6 +383,7 @@ struct Interpreter{
 		}
 	}
 	void runStm(Expression e,ref Dist retDist){
+		if(!cur.state.length) return;
 		if(opt.trace) writeln("statement: ",e);
 		if(auto nde=cast(DefExp)e){
 			auto de=cast(ODefExp)nde.initializer;
