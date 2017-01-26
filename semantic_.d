@@ -1224,7 +1224,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 					if(!le.lit.str.canFind(".")){
 						auto n=ℤ(le.lit.str);
 						if(0<=n&&n<long.max)
-							return tupleTy(e1.repeat(n.toLong()).array);
+							return tupleTy(e1.repeat(cast(size_t)n.toLong()).array);
 					}
 				}
 			}
