@@ -37,6 +37,7 @@ struct Dist{
 		foreach(k,v;r.state)
 			add(k,v);
 		error=(error+r.error).simplify(one);
+		foreach(t;r.tmpVars) addTmpVar(t);
 	}
 	Dist map(DLambda lambda){
 		if(opt.trace) writeln("particle-size: ",state.length);
@@ -391,11 +392,9 @@ struct Interpreter{
 			assert(!!de);
 			auto lhs=runExp(de.e1).simplify(one), rhs=runExp(de.e2).simplify(one);
 			assignTo(lhs,rhs);
-			cur=cur.marginalizeTemporaries();
 		}else if(auto ae=cast(AssignExp)e){
 			auto lhs=runExp(ae.e1),rhs=runExp(ae.e2);
 			assignTo(lhs,rhs);
-			cur=cur.marginalizeTemporaries();
 		}else if(isOpAssignExp(e)){
 			DExpr perform(DExpr a,DExpr b){
 				if(cast(OrAssignExp)e) return dIvr(DIvr.Type.neqZ,dIvr(DIvr.Type.neqZ,a)+dIvr(DIvr.Type.neqZ,b));
@@ -423,7 +422,6 @@ struct Interpreter{
 			auto lhs=runExp(be.e1); // TODO: keep lhs stable!
 			auto rhs=runExp(be.e2);
 			assignTo(lhs,perform(lhs,rhs));
-			cur=cur.marginalizeTemporaries();
 		}else if(auto call=cast(CallExp)e){
 			runExp(call);
 		}else if(auto ite=cast(IteExp)e){
@@ -485,6 +483,7 @@ struct Interpreter{
 		}else{
 			assert(0,text("TODO: ",e));
 		}
+		cur=cur.marginalizeTemporaries();
 	}
 	void run(ref Dist retDist){
 		foreach(s;statements.s){
