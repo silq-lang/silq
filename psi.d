@@ -1,11 +1,11 @@
 // Written in the D programming language
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
 
-import std.stdio, std.path, std.array, std.string, std.algorithm;
+import std.stdio, std.path, std.array, std.string, std.algorithm, std.conv;
 import file=std.file;
 import util;
 import lexer, parser, expression, declaration, error;
-import options, scope_, semantic_, backend;
+import options, scope_, semantic_, summarize, backend;
 
 
 string getActualPath(string path){
@@ -51,6 +51,17 @@ int run(string path){
 		if(auto fd=cast(FunctionDef)expr){
 			functions[fd.name.name]=fd;
 		}else if(!cast(Declaration)expr&&!cast(DefExp)expr&&!cast(CommaExp)expr) err.error("top level expression must be declaration",expr.loc);
+	}
+	if(opt.summarize.length){
+		try{
+			foreach(expr;exprs)
+				if(auto fd=cast(FunctionDef)expr)
+					writefln(getSummary(fd,opt.summarize).join(","));
+		}catch(Exception e){
+			stderr.writeln("error: ",e.msg);
+			return 1;
+		}
+		return 0;
 	}
 	auto be=Backend.create(path);
 	if(err.nerrors) return 1;
@@ -124,6 +135,20 @@ int main(string[] args){
 				if(x.startsWith("--plot-file=")){
 					opt.plot=true;
 					opt.plotFile=x["--plot-file=".length..$];
+					continue;
+				}
+				if(x.startsWith("--summarize=")){
+					auto rest=x["--summarize=".length..$];
+					import std.regex: regex, match;
+					auto r=regex(r"^\[(([-a-z])*,)*([-a-z])*,?\]$");
+					if(match(rest,r)){
+						rest=rest[1..$-1];
+						if(rest.endsWith(",")) rest=rest[0..$-1];
+						opt.summarize=rest.split(',');
+					}else{
+						stderr.writeln("error: summary specification needs to be of format [key1,key2,...]");
+						return 1;
+					}
 					continue;
 				}
 				hasInputFile=true;

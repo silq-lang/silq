@@ -20,12 +20,15 @@ The options below may be used.
 --raw               print only pdf, cdf or expectation
 --raw-error         print only error probability
 
+--summarize=...     summarize function declarations and exit (ex: --summarize=[name,arg-arity,ret-arity])
+
 --nointegrate       do not evaluate integrals
 --integratedeltas   do not evaluate continuous integrals
 
 --gnuplot           print output in gnuplot format (experimental)
 --mathematica       print output in mathematica format (experimental)
 --maple             print output in maple format (experimental)
+--lisp              print output in lisp format (experimental)
 
 --syntax            print example demonstrating language syntax and exit
 --distributions     print information about supported primitive distributions and exit
