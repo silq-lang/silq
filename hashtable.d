@@ -111,12 +111,12 @@ struct HashMap(K_, V_, alias eq_ , alias h_){
 
 	int opApply(scope int delegate(ref V) dg){
 		if(es.length>compactLimit*length) compact();
-		foreach(b;es) foreach(e;b) if(auto r=dg(e.v)) return r;
+		foreach(ref b;es) foreach(ref e;b) if(auto r=dg(e.v)) return r;
 		return 0;
 	}
 	int opApply(scope int delegate(ref K,ref V) dg){
 		if(es.length>compactLimit*length) compact();
-		foreach(b;es) foreach(e;b) if(auto r=dg(e.k, e.v)) return r;
+		foreach(ref b;es) foreach(ref e;b) if(auto r=dg(e.k, e.v)) return r;
 		return 0;
 	}
 
