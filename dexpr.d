@@ -2385,7 +2385,7 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 		// TODO: filter more precisely
 		auto nvar=var.simplify(one);
 		auto ne=e.simplify(one);
-		if(nvar !is var || ne !is e) return dDiscDelta(nvar,ne);
+		if(nvar !is var || ne !is e) return dDiscDelta(nvar,ne).simplify(facts); // (might be rewritten to normal delta)
 		//if(dIvr(DIvr.Type.eq,var,e).simplify(facts) is zero) return zero; // a simplification like this might be possible
 		if(auto vtpl=cast(DTuple)var){ // δ_(x,y,z,...)[(1,2,3,...)].
 			if(auto etpl=cast(DTuple)e){
