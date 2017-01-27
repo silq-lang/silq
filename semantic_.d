@@ -276,6 +276,7 @@ bool isBuiltIn(Identifier id){
 		case capitalize(name): goto case;
 	}
 	case "Marginal","FromMarginal","SampleFrom":
+	case "Expectation":
 	case "infer","Distribution":
 		return true;
 	default: return false;
