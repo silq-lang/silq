@@ -3,6 +3,7 @@ import std.string: split;
 import std.algorithm: map;
 import std.array: array;
 import std.string: startsWith;
+import std.typecons: q=tuple,Q=Tuple;
 
 import backend,options;
 import distrib,error;
@@ -46,10 +47,36 @@ struct Dist{
 		foreach(k,v;state) r.add(dApply(lambda,k).simplify(one),v);
 		return r;
 	}
-	DExpr expectation(DLambda lambda){
-		DExpr r=zero;
-		foreach(k,v;state) r=(r+v*dApply(lambda,k)).simplify(one);
-		return r;
+	DExpr expectation(DLambda lambda,bool hasFrame){
+		if(!hasFrame){
+			DExpr r=zero;
+			foreach(k,v;state) r=(r+v*dApply(lambda,k)).simplify(one);
+			return r;
+		}
+		MapX!(DExpr,Q!(Q!(DExpr,DExpr)[],DExpr,DExpr)) byFrame;
+		foreach(k,v;state){
+			auto frame=dField(k,"`frame").simplify(one);
+			if(frame in byFrame) byFrame[frame][0]~=q(k,v);
+			else byFrame[frame]=q([q(k,v)],zero,zero);
+		}
+		foreach(k,ref v;byFrame){
+			foreach(x;v[0]){
+				v[1]=(v[1]+x[1]*dApply(lambda,x[0])).simplify(one);
+				v[2]=(v[2]+x[1]).simplify(one);
+			}
+		}
+		auto r=distInit;
+		r.tupleof[1..$]=this.tupleof[1..$];
+		static int unique=0;
+		string tmp="__expectation"~lowNum(++unique);
+		addTmpVar(tmp);
+		foreach(k,v;byFrame){
+			auto e=(v[1]/v[2]).simplify(one);
+			foreach(x;v[0])
+				r.add(dRUpdate(x[0],tmp,e).simplify(one),x[1]);
+		}
+		this=r;
+		return dField(db1,tmp);
 	}
 	Dist pushFrame(){
 		return map(dLambda(dRecord(["`frame":db1])));
@@ -276,7 +303,7 @@ struct Interpreter{
 					case "categorical": assert(0,text("TODO: ",ce));
 					case "Expectation": // TODO: condition on frame
 						auto arg=doIt(ce.arg);
-						return cur.expectation(dLambda(arg));
+						return cur.expectation(dLambda(arg),hasFrame);
 					default: assert(0,text("TODO: ",ce));
 				}
 			}
