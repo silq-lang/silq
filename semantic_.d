@@ -193,6 +193,7 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 			vd.loc=id.loc;
 			success&=sc.insert(vd);
 			id.name=vd.getName;
+			id.scope_=sc;
 			auto de=new SingleDefExp(vd,be);
 			de.loc=be.loc;
 			propErr(vd,de);
@@ -205,6 +206,7 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 				vds[$-1].loc=id.loc;
 				success&=sc.insert(vds[$-1]);
 				id.name=vds[$-1].getName;
+				id.scope_=sc;
 			}
 			auto de=new MultiDefExp(vds,be);
 			de.loc=be.loc;
@@ -226,6 +228,7 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 			vd.loc=id.loc;
 			success&=sc.insert(vd);
 			id.name=vd.getName;
+			id.scope_=sc;
 			return vd;
 		}
 	}
@@ -847,6 +850,7 @@ Expression callSemantic(CallExp ce,Scope sc){
 				id.scope_=sc;
 				id.meaning=constructor;
 				id.name=constructor.getName;
+				id.scope_=sc;
 				id.type=ty;
 				id.sstate=SemState.completed;
 				if(auto fe=cast(FieldExp)fun){
