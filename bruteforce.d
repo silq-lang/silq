@@ -2,6 +2,7 @@ import std.conv: text;
 import std.string: split;
 import std.algorithm: map;
 import std.array: array;
+import std.range: iota;
 import std.string: startsWith;
 import std.typecons: q=tuple,Q=Tuple;
 
@@ -394,8 +395,30 @@ DExpr buildContextFor(Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{
 	}
 	return dRecord(record);
  }
-DExpr lookupMeaning(Identifier id)in{assert(id && id.scope_,text(id," ",id.loc));}body{
+DExpr lookupMeaning(Identifier id)in{assert(!!id);}body{
+	if(isBuiltIn(id)){ // TODO: this is somewhat hacky, do this in semantic?
+		static DExpr[string] builtIn;
+		auto fty=cast(FunTy)id.type;
+		assert(!!fty);
+		if(id.name !in builtIn){
+			auto names=iota(fty.nargs).map!(i=>new Identifier("x"~lowNum(i+1))).array;
+			auto arg=fty.isTuple?new TupleExp(cast(Expression[])names):names[0];
+			auto params=new Parameter[](names.length);
+			foreach(i,ref p;params) p=new Parameter(names[i],fty.argTy(i));
+			auto call=new CallExp(id,arg,fty.isSquare);
+			auto bdy=new CompoundExp([new ReturnExp(call)]);
+			auto fdef=new FunctionDef(null,params,fty.isTuple,null,bdy);
+			fdef.isSquare=fty.isSquare;
+			auto sc=new TopScope(new SimpleErrorHandler());
+			fdef.scope_=sc;
+			fdef=cast(FunctionDef)presemantic(fdef,sc);
+			assert(!!fdef);
+			builtIn[id.name]=dBFFun(fdef);
+		}
+		return builtIn[id.name];
+	}
 	if(!id.meaning) return dField(db1,id.name);
+	assert(!!id.scope_);
 	if(auto vd=cast(VarDecl)id.meaning){
 		DExpr r=getContextFor(id.meaning,id.scope_);
 		return r?dField(r,id.name):dField(db1,id.name);
