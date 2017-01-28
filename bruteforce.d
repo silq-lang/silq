@@ -9,7 +9,7 @@ import backend,options;
 import distrib,error;
 import dexpr,hashtable,util;
 import expression,declaration,type;
-import semantic_;
+import semantic_,scope_;
 
 class Bruteforce: Backend{
 	this(string sourceFile){
@@ -199,6 +199,221 @@ struct Dist{
 		this=r;
 		return dField(db1,tmp);
 	}
+	void assignTo(DExpr lhs,DExpr rhs){
+		if(auto id=cast(DVar)lhs){
+			auto lambda=dLambda(dRUpdate(db1,id.name,rhs));
+			this=map(lambda);
+		}else if(auto idx=cast(DIndex)lhs){
+			assignTo(idx.e,dIUpdate(idx.e,idx.i,rhs));
+		}else if(auto fe=cast(DField)lhs){
+			if(fe.e is db1){
+				assignTo(dVar(fe.f),rhs);
+				return;
+			}
+			assignTo(fe.e,dRUpdate(fe.e,fe.f,rhs));
+		}else if(auto tpl=cast(DTuple)lhs){
+			foreach(i;0..tpl.values.length)
+				assignTo(tpl[i],rhs[i.dℤ].simplify(one));
+		}else if(cast(DPlus)lhs||cast(DMult)lhs){
+			// TODO: this could be the case (if cond { a } else { b }) = c;
+			// (this is also not handled in the symbolic backend at the moment)
+		}else{
+			assert(0,text("TODO: ",lhs," = ",rhs));
+		}
+	}
+	DExpr call(FunctionDef fun,DExpr thisExp,DExpr arg,Scope sc){
+		auto ncur=pushFrame();
+		if(fun.isConstructor){
+			assert(!thisExp,"TODO");
+			ncur=ncur.map(dLambda(dRUpdate(db1,"this",dRecord())));
+		}else if(thisExp) ncur=ncur.map(dLambda(dRUpdate(db1,"this",inFrame(thisExp))));
+		if(fun.isTuple){
+			DExpr updates=db1;
+			foreach(i,prm;fun.params){
+				updates=dRUpdate(updates,prm.getName,inFrame(arg[i.dℤ]));
+			}
+			if(updates !is db1) ncur=ncur.map(dLambda(updates));
+		}else{
+			assert(fun.params.length==1);
+			ncur=ncur.map(dLambda(dRUpdate(db1,fun.params[0].getName,inFrame(arg))));
+		}
+		if(fun.context) ncur=ncur.map(dLambda(inFrame(dRUpdate(db1,fun.contextName,buildContextFor(fun,sc))).simplify(one)));
+		auto intp=Interpreter(fun,fun.body_,ncur,true);
+		auto nndist = distInit();
+		intp.run(nndist);
+		static uniq=0;
+		string tmp="`call"~lowNum(++uniq);
+		this=nndist.popFrame(tmp);
+		if(thisExp&&!fun.isConstructor){
+			assignTo(thisExp,dField(db1,tmp)[1.dℤ]);
+			assignTo(dVar(tmp),dField(db1,tmp)[0.dℤ]);
+		}
+		return dField(db1,tmp);
+	}
+	DExpr call(DExpr fun,DExpr arg){
+		this=pushFrame();
+		auto f=dLambda(inFrame(fun)), a=dLambda(inFrame(arg));
+		auto r=distInit;
+		r.tupleof[1..$]=this.tupleof[1..$];
+		MapX!(FunctionDef,MapX!(DExpr,DExpr)) byFun;
+		foreach(k,v;state){
+			auto cf=dApply(f,k).simplify(one);
+			auto ca=dApply(a,k).simplify(one);
+			FunctionDef fun;
+			DExpr ctx;
+			if(auto bcf=cast(DBFContextFun)cf){
+				fun=bcf.def;
+				ctx=bcf.ctx;
+			}else if(auto bff=cast(DBFFun)cf) fun=bff.def;
+			else assert(0,text(cf," ",typeid(cf)));
+			DExpr nk=k;
+			if(fun.isTuple){
+				foreach(i,prm;fun.params)
+					nk=dRUpdate(nk,prm.getName,ca[i.dℤ]).simplify(one);
+			}else{
+				assert(fun.params.length==1);
+				nk=dRUpdate(nk,fun.params[0].getName,ca).simplify(one);
+			}
+			assert(!!fun.context==!!ctx,text(fun.context," ",ctx," ",cf));
+			if(ctx) nk=dRUpdate(nk,fun.contextName,ctx).simplify(one);
+			if(fun !in byFun) byFun[fun]=typeof(byFun[fun]).init;
+			byFun[fun][nk]=v;
+		}
+		foreach(fun,kv;byFun){
+			auto ncur=distInit;
+			ncur.state=kv;
+			ncur.tupleof[1..$]=this.tupleof[1..$];
+			auto intp=Interpreter(fun,fun.body_,ncur,true);
+			auto nndist = distInit();
+			intp.run(nndist);
+			r+=nndist;
+		}
+		static uniq=0;
+		string tmp="`call'"~lowNum(++uniq);
+		this=r.popFrame(tmp);
+		return dField(db1,tmp);
+	}
+}
+
+DExpr inFrame(DExpr arg){
+	return arg.substitute(db1,dField(db1,"`frame"));
+}
+
+
+class DBFFun: DExpr{
+	FunctionDef def;
+	this(FunctionDef def){ this.def=def; }
+	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		return def.name.name;
+	}
+	mixin Constant;
+}
+DBFFun dBFFun(FunctionDef def){
+	static MapX!(FunctionDef,DBFFun) unique;
+	if(def in unique) return unique[def];
+	auto r=new DBFFun(def);
+	unique[def]=r;
+	return r;
+}
+class DBFContextFun: DExpr{
+	FunctionDef def;
+	DExpr ctx;
+	this(FunctionDef def,DExpr ctx){ this.def=def; this.ctx=ctx; }
+	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		return text(def.name?def.name.name:text("(",def,")"),"@(",ctx.toStringImpl(formatting,Precedence.none,binders),")");
+	}
+	override DExpr simplifyImpl(DExpr facts){ return dBFContextFun(def,ctx.simplify(facts)); }
+	override DExpr substitute(DVar var,DExpr expr){ return dBFContextFun(def,ctx.substitute(var,expr)); }
+	override int forEachSubExpr(scope int delegate(DExpr) dg){ return dg(ctx); }
+	override DExpr incDeBruijnVar(int di, int free){ return dBFContextFun(def,ctx.incDeBruijnVar(di,free)); }
+	override int freeVarsImpl(scope int delegate(DVar) dg){ return ctx.freeVarsImpl(dg); }
+}
+DBFContextFun dBFContextFun(FunctionDef def,DExpr ctx){
+	static MapX!(TupleX!(FunctionDef,DExpr),DBFContextFun) unique;
+	auto t=tuplex(def,ctx);
+	if(t in unique) return unique[t];
+	auto r=new DBFContextFun(def,ctx);
+	unique[t]=r;
+	return r;
+}
+
+DExpr getContextFor(Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{
+	DExpr r=null;
+	auto meaningScope=meaning.scope_;
+	if(auto fd=cast(FunctionDef)meaning)
+		meaningScope=fd.realScope;
+	assert(sc&&sc.isNestedIn(meaningScope));
+	for(auto csc=sc;csc !is meaningScope;){
+		void add(string name){
+			if(!r) r=dField(db1,name);
+			else r=dField(r,name);
+			assert(!!cast(NestedScope)csc);
+		}
+		assert(cast(NestedScope)csc);
+		if(!cast(NestedScope)(cast(NestedScope)csc).parent) break;
+		if(auto fsc=cast(FunctionScope)csc) add(fsc.getFunction().contextName);
+		else if(cast(AggregateScope)csc) add(csc.getDatDecl().contextName);
+		csc=(cast(NestedScope)csc).parent;
+		if(csc is meaningScope) break;
+		if(auto fsc=cast(FunctionScope)csc){
+			auto fd=fsc.getFunction();
+			assert(!!fd);
+			if(fd.isConstructor){
+				csc=fd.scope_;
+				assert(!!cast(AggregateScope)csc);
+				if(csc is meaningScope) break;
+			}
+		}
+	}
+	return r;
+ }
+DExpr buildContextFor()(Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{ // template, forward references 'doIt'
+	if(auto ctx=getContextFor(meaning,sc)) return ctx;
+	DExpr[string] record;
+	foreach(vd;&sc.all!VarDecl)
+		if(auto var=readVariable(vd,sc))
+			record[vd.getName]=var;
+	auto msc=meaning.scope_;
+	if(auto fd=cast(FunctionDef)meaning)
+		msc=fd.realScope;
+	for(auto csc=msc;;csc=(cast(NestedScope)csc).parent){
+		if(auto fsc=cast(FunctionScope)csc)
+			foreach(p;fsc.getFunction().params)
+				record[p.getName]=dField(db1,p.getName);
+		if(!cast(NestedScope)csc) break;
+		if(!cast(NestedScope)(cast(NestedScope)csc).parent) break;
+		if(auto dsc=cast(DataScope)csc){
+			auto name=dsc.decl.contextName;
+			record[name]=dField(db1,name);
+			break;
+		}
+		if(auto fsc=cast(FunctionScope)csc){
+			auto cname=fsc.getFunction().contextName;
+			record[cname]=dField(db1,cname);
+			break;
+		}
+	}
+	return dRecord(record);
+ }
+DExpr lookupMeaning(Identifier id)in{assert(id && id.scope_,text(id," ",id.loc));}body{
+	if(!id.meaning) return dField(db1,id.name);
+	if(auto vd=cast(VarDecl)id.meaning){
+		DExpr r=getContextFor(id.meaning,id.scope_);
+		return r?dField(r,id.name):dField(db1,id.name);
+	}
+	if(auto fd=cast(FunctionDef)id.meaning){
+		if(!fd.isNested) return dBFFun(fd);
+		return dBFContextFun(fd,buildContextFor(fd,id.scope_));
+	}
+	assert(0,"unsupported");
+ }
+DExpr readVariable(VarDecl var,Scope from){
+	DExpr r=getContextFor(var,from);
+	if(r) return dField(r,var.getName);
+	auto v=dField(db1,var.getName);
+	//if(v in cur.freeVars) return v; // TODO!
+	return v;
+	return null;
 }
 
 import lexer: Tok;
@@ -222,11 +437,13 @@ struct Interpreter{
 	}
 	DExpr runExp(Expression e){
 		if(!cur.state.length) return zero;
+		// TODO: get rid of code duplication
 		DExpr doIt(Expression e){
 			if(auto pl=cast(PlaceholderExp)e) return dVar(pl.ident.name);
 			if(auto id=cast(Identifier)e){
 				if(!id.meaning&&id.name=="π") return dΠ;
-				return dField(db1,id.name);
+				if(auto r=lookupMeaning(id)) return r;
+				assert(0);
 			}
 			if(auto fe=cast(FieldExp)e){
 				return dField(doIt(fe.e),fe.f.name);
@@ -251,7 +468,10 @@ struct Interpreter{
 			if(auto ume=cast(UNotExp)e) return dIvr(DIvr.Type.eqZ,doIt(ume.e));
 			if(auto ume=cast(UBitNotExp)e) return -doIt(ume.e)-1;
 			if(auto le=cast(LambdaExp)e){
-				assert(0,"TODO: lambdas");
+				if(le.fd.isNested){
+					return dBFContextFun(le.fd,buildContextFor(le.fd,le.fd.scope_));
+				}
+				return dBFFun(le.fd);
 			}
 			if(auto ce=cast(CallExp)e){
 				auto id=cast(Identifier)ce.e;
@@ -261,51 +481,29 @@ struct Interpreter{
 					id=fe.f;
 					thisExp=doIt(fe.e);
 				}
-				if(auto fun=cast(FunctionDef)id.meaning){
-					auto arg=doIt(ce.arg); // TODO: allow temporaries within arguments
-					auto ncur=cur.pushFrame();
-					DExpr inFrame(DExpr arg){
-						return arg.substitute(db1,dField(db1,"`frame"));
+				if(id){
+					if(auto fun=cast(FunctionDef)id.meaning){
+						auto arg=doIt(ce.arg); // TODO: allow temporaries within arguments
+						return cur.call(fun,thisExp,arg,id.scope_);
 					}
-					if(fun.isConstructor){
-						assert(!thisExp,"TODO");
-						ncur=ncur.map(dLambda(dRUpdate(db1,"this",dRecord())));
-					}else if(thisExp) ncur=ncur.map(dLambda(dRUpdate(db1,"this",inFrame(thisExp))));
-					if(fun.isTuple){
-						DExpr updates=db1;
-						foreach(i,prm;fun.params){
-							updates=dRUpdate(updates,prm.getName,inFrame(arg[i.dℤ]));
+					if(isBuiltIn(id)){
+						switch(id.name){
+							case "flip":
+								auto arg=doIt(ce.arg);
+								return cur.flip(arg);
+							case "uniformInt":
+								auto arg=doIt(ce.arg);
+								return cur.uniformInt(arg);
+							case "categorical": assert(0,text("TODO: ",ce));
+						case "Expectation": // TODO: condition on frame
+							auto arg=doIt(ce.arg);
+							return cur.expectation(dLambda(arg),hasFrame);
+							default: assert(0,text("TODO: ",ce));
 						}
-						if(updates !is db1) ncur=ncur.map(dLambda(updates));
-					}else{
-						assert(fun.params.length==1);
-						ncur=ncur.map(dLambda(dRUpdate(db1,fun.params[0].getName,inFrame(arg))));
 					}
-					auto intp=Interpreter(fun,fun.body_,ncur,true);
-					auto nndist = distInit();
-					intp.run(nndist);
-					static uniq=0;
-					string tmp="`call"~lowNum(++uniq);
-					cur=nndist.popFrame(tmp);
-					if(thisExp&&!fun.isConstructor){
-						assignTo(thisExp,dField(db1,tmp)[1.dℤ]);
-						assignTo(dVar(tmp),dField(db1,tmp)[0.dℤ]);
-					}
-					return dField(db1,tmp);
 				}
-				switch(id.name){
-					case "flip":
-						auto arg=doIt(ce.arg);
-						return cur.flip(arg);
-					case "uniformInt":
-						auto arg=doIt(ce.arg);
-						return cur.uniformInt(arg);
-					case "categorical": assert(0,text("TODO: ",ce));
-					case "Expectation": // TODO: condition on frame
-						auto arg=doIt(ce.arg);
-						return cur.expectation(dLambda(arg),hasFrame);
-					default: assert(0,text("TODO: ",ce));
-				}
+				auto fun=doIt(ce.e), arg=doIt(ce.arg);
+				return cur.call(fun,arg);
 			}
 			if(auto idx=cast(IndexExp)e) return dIndex(doIt(idx.e),doIt(idx.a[0])); // TODO: bounds checking
 			if(auto sl=cast(SliceExp)e) return dSlice(doIt(sl.e),doIt(sl.l),doIt(sl.r)); // TODO: bounds checking
@@ -389,28 +587,6 @@ struct Interpreter{
 		}
 		return doIt(e);
 	}
-	void assignTo(DExpr lhs,DExpr rhs){
-		if(auto id=cast(DVar)lhs){
-			auto lambda=dLambda(dRUpdate(db1,id.name,rhs));
-			cur=cur.map(lambda);
-		}else if(auto idx=cast(DIndex)lhs){
-			assignTo(idx.e,dIUpdate(idx.e,idx.i,rhs));
-		}else if(auto fe=cast(DField)lhs){
-			if(fe.e is db1){
-				assignTo(dVar(fe.f),rhs);
-				return;
-			}
-			assignTo(fe.e,dRUpdate(fe.e,fe.f,rhs));
-		}else if(auto tpl=cast(DTuple)lhs){
-			foreach(i;0..tpl.values.length)
-				assignTo(tpl[i],rhs[i.dℤ].simplify(one));
-		}else if(cast(DPlus)lhs||cast(DMult)lhs){
-			// TODO: this could be the case (if cond { a } else { b }) = c;
-			// (this is also not handled in the symbolic backend at the moment)
-		}else{
-			assert(0,text("TODO: ",lhs," = ",rhs));
-		}
-	}
 	void runStm(Expression e,ref Dist retDist){
 		if(!cur.state.length) return;
 		if(opt.trace) writeln("statement: ",e);
@@ -418,10 +594,10 @@ struct Interpreter{
 			auto de=cast(ODefExp)nde.initializer;
 			assert(!!de);
 			auto lhs=runExp(de.e1).simplify(one), rhs=runExp(de.e2).simplify(one);
-			assignTo(lhs,rhs);
+			cur.assignTo(lhs,rhs);
 		}else if(auto ae=cast(AssignExp)e){
 			auto lhs=runExp(ae.e1),rhs=runExp(ae.e2);
-			assignTo(lhs,rhs);
+			cur.assignTo(lhs,rhs);
 		}else if(isOpAssignExp(e)){
 			DExpr perform(DExpr a,DExpr b){
 				if(cast(OrAssignExp)e) return dIvr(DIvr.Type.neqZ,dIvr(DIvr.Type.neqZ,a)+dIvr(DIvr.Type.neqZ,b));
@@ -448,7 +624,7 @@ struct Interpreter{
 			assert(!!be);
 			auto lhs=runExp(be.e1); // TODO: keep lhs stable!
 			auto rhs=runExp(be.e2);
-			assignTo(lhs,perform(lhs,rhs));
+			cur.assignTo(lhs,perform(lhs,rhs));
 		}else if(auto call=cast(CallExp)e){
 			runExp(call);
 		}else if(auto ite=cast(IteExp)e){
@@ -483,7 +659,7 @@ struct Interpreter{
 				auto intp=Interpreter(functionDef,fe.bdy,cur,hasFrame);
 				for(ℤ j=lz.c+cast(int)fe.leftExclusive;j+cast(int)fe.rightExclusive<=rz.c;j++){
 					if(opt.trace) writeln("loop-index: ",j);
-					intp.assignTo(dVar(fe.var.name),dℤ(j));
+					intp.cur.assignTo(dVar(fe.var.name),dℤ(j));
 					intp.run(retDist);
 					// TODO: marginalize locals
 				}
@@ -507,6 +683,8 @@ struct Interpreter{
 		}else if(auto ce=cast(CommaExp)e){
 			runStm(ce.e1,retDist);
 			runStm(ce.e2,retDist);
+		}else if(cast(Declaration)e){
+			// do nothing
 		}else{
 			assert(0,text("TODO: ",e));
 		}
