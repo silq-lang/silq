@@ -223,10 +223,10 @@ struct Dist{
 	}
 	DExpr call(FunctionDef fun,DExpr thisExp,DExpr arg,Scope sc){
 		auto ncur=pushFrame();
-		if(fun.isConstructor){
-			assert(!thisExp,"TODO");
-			ncur=ncur.map(dLambda(dRUpdate(db1,"this",dRecord())));
-		}else if(thisExp) ncur=ncur.map(dLambda(dRUpdate(db1,"this",inFrame(thisExp))));
+		if(fun.isConstructor) ncur=ncur.map(dLambda(dRUpdate(db1,"this",dRecord())));
+		if(thisExp) ncur=ncur.map(dLambda(dRUpdate(db1,fun.isConstructor?fun.contextName:"this",inFrame(thisExp))));
+		else if(fun.isNested) ncur=ncur.map(dLambda(dRUpdate(db1,fun.contextName,inFrame(buildContextFor(fun,sc)))));
+		if(fun.isNested&&fun.isConstructor) ncur=ncur.map(dLambda(dRUpdate(db1,"this",dRecord([fun.contextName:dField(db1,fun.contextName)]))));
 		if(fun.isTuple){
 			DExpr updates=db1;
 			foreach(i,prm;fun.params){
@@ -237,7 +237,6 @@ struct Dist{
 			assert(fun.params.length==1);
 			ncur=ncur.map(dLambda(dRUpdate(db1,fun.params[0].getName,inFrame(arg))));
 		}
-		if(fun.context) ncur=ncur.map(dLambda(inFrame(dRUpdate(db1,fun.contextName,buildContextFor(fun,sc))).simplify(one)));
 		auto intp=Interpreter(fun,fun.body_,ncur,true);
 		auto nndist = distInit();
 		intp.run(nndist);
@@ -367,7 +366,7 @@ DExpr getContextFor(Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{
 	}
 	return r;
  }
-DExpr buildContextFor()(Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{ // template, forward references 'doIt'
+DExpr buildContextFor(Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{
 	if(auto ctx=getContextFor(meaning,sc)) return ctx;
 	DExpr[string] record;
 	foreach(vd;&sc.all!VarDecl)
