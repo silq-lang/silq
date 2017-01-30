@@ -30,120 +30,6 @@ auto distInit(){
 	return Dist(MapX!(DExpr,DExpr).init,zero,SetX!string.init);
 }
 struct Dist{
-	void add(DExpr k,DExpr v){
-		if(k in state) state[k]=(state[k]+v).simplify(one);
-		else state[k]=v;
-		if(state[k] is zero) state.remove(k);
-	}
-	void opOpAssign(string op:"+")(Dist r){
-		foreach(k,v;r.state)
-			add(k,v);
-		error=(error+r.error).simplify(one);
-		foreach(t;r.tmpVars) addTmpVar(t);
-	}
-	Dist map(DLambda lambda){
-		if(opt.trace) writeln("particle-size: ",state.length);
-		auto r=distInit;
-		r.tupleof[1..$]=this.tupleof[1..$];
-		foreach(k,v;state) r.add(dApply(lambda,k).simplify(one),v);
-		return r;
-	}
-	DExpr expectation(DLambda lambda,bool hasFrame){
-		if(!hasFrame){
-			DExpr r=zero;
-			foreach(k,v;state) r=(r+v*dApply(lambda,k)).simplify(one);
-			return r;
-		}
-		MapX!(DExpr,Q!(Q!(DExpr,DExpr)[],DExpr,DExpr)) byFrame;
-		foreach(k,v;state){
-			auto frame=dField(k,"`frame").simplify(one);
-			if(frame in byFrame) byFrame[frame][0]~=q(k,v);
-			else byFrame[frame]=q([q(k,v)],zero,zero);
-		}
-		foreach(k,ref v;byFrame){
-			foreach(x;v[0]){
-				v[1]=(v[1]+x[1]*dApply(lambda,x[0])).simplify(one);
-				v[2]=(v[2]+x[1]).simplify(one);
-			}
-		}
-		auto r=distInit;
-		r.tupleof[1..$]=this.tupleof[1..$];
-		static int unique=0;
-		string tmp="__expectation"~lowNum(++unique);
-		addTmpVar(tmp);
-		foreach(k,v;byFrame){
-			auto e=(v[1]/v[2]).simplify(one);
-			foreach(x;v[0])
-				r.add(dRUpdate(x[0],tmp,e).simplify(one),x[1]);
-		}
-		this=r;
-		return dField(db1,tmp);
-	}
-	Dist pushFrame(){
-		return map(dLambda(dRecord(["`frame":db1])));
-	}
-	Dist popFrame(string tmpVar){
-		addTmpVar(tmpVar);
-		return map(dLambda(dRUpdate(dField(db1,"`frame"),tmpVar,dField(db1,"`value"))));
-	}
-	Dist flatMap(DLambda[] lambdas){
-		auto r=distInit;
-		r.tupleof[1..$]=this.tupleof[1..$];
-		foreach(k,v;state){
-			foreach(lambda;lambdas){
-				auto app=dApply(lambda,k).simplify(one);
-				auto val=app[0.dℤ].simplify(one),scale=app[1.dℤ].simplify(one);
-				r.add(val,(v*scale).simplify(one));
-			}
-		}
-		return r;
-	}
-	Dist assertTrue(DLambda lambda){
-		auto r=distInit;
-		r.tupleof[1..$]=this.tupleof[1..$];
-		foreach(k,v;state){
-			auto cond=dApply(lambda,k).simplify(one);
-			if(cond is one || cond is zero){
-				if(cond is zero){
-					r.error = (r.error + v).simplify(one);
-				}else{
-					r.add(k,v);
-				}
-			}else{
-				r.error = (r.error + v*dIvr(DIvr.Type.eqZ,cond)).simplify(one);
-				r.add(k,(v*cond).simplify(one));
-			}
-		}
-		return r;
-	}
-	Dist eraseErrors(){
-		auto r=dup();
-		error=zero;
-		return r;
-	}
-	Dist observe(DLambda lambda){
-		auto r=distInit;
-		r.tupleof[1..$]=this.tupleof[1..$];
-		foreach(k,v;state){
-			auto cond=dApply(lambda,k).simplify(one);
-			if(cond is one || cond is zero){
-				if(cond is one) r.add(k,v);
-			}else{
-				r.add(k,(v*cond).simplify(one));
-			}
-		}
-		return r;
-	}
-	Distribution toDistribution(){
-		auto r=new Distribution();
-		auto var=r.declareVar("r");
-		r.distribution=zero;
-		foreach(k,v;state) r.distribution=r.distribution+v*dDiscDelta(var,dField(k,"`value"));
-		r.error=error;
-		r.simplify();
-		r.orderFreeVars([var],false);
-		return r;
-	}
 	MapX!(DExpr,DExpr) state;
 	DExpr error;
 	SetX!string tmpVars;
@@ -169,6 +55,130 @@ struct Dist{
 		tmpVars.clear();
 		return r;
 	}
+	void add(DExpr k,DExpr v){
+		if(k in state) state[k]=(state[k]+v).simplify(one);
+		else state[k]=v;
+		if(state[k] is zero) state.remove(k);
+	}
+	void opOpAssign(string op:"+")(Dist r){
+		foreach(k,v;r.state)
+			add(k,v);
+		error=(error+r.error).simplify(one);
+		foreach(t;r.tmpVars) addTmpVar(t);
+	}
+	Dist map(DLambda lambda){
+		if(opt.trace) writeln("particle-size: ",state.length);
+		auto r=distInit;
+		r.copyNonState(this);
+		foreach(k,v;state) r.add(dApply(lambda,k).simplify(one),v);
+		return r;
+	}
+	DExpr expectation(DLambda lambda,bool hasFrame){
+		if(!hasFrame){
+			DExpr r=zero;
+			foreach(k,v;state) r=(r+v*dApply(lambda,k)).simplify(one);
+			return r;
+		}
+		MapX!(DExpr,Q!(Q!(DExpr,DExpr)[],DExpr,DExpr)) byFrame;
+		foreach(k,v;state){
+			auto frame=dField(k,"`frame").simplify(one);
+			if(frame in byFrame) byFrame[frame][0]~=q(k,v);
+			else byFrame[frame]=q([q(k,v)],zero,zero);
+		}
+		foreach(k,ref v;byFrame){
+			foreach(x;v[0]){
+				v[1]=(v[1]+x[1]*dApply(lambda,x[0])).simplify(one);
+				v[2]=(v[2]+x[1]).simplify(one);
+			}
+		}
+		auto r=distInit;
+		r.copyNonState(this);
+		static int unique=0;
+		string tmp="__expectation"~lowNum(++unique);
+		addTmpVar(tmp);
+		foreach(k,v;byFrame){
+			auto e=(v[1]/v[2]).simplify(one);
+			foreach(x;v[0])
+				r.add(dRUpdate(x[0],tmp,e).simplify(one),x[1]);
+		}
+		this=r;
+		return dField(db1,tmp);
+	}
+	Dist pushFrame(){
+		return map(dLambda(dRecord(["`frame":db1])));
+	}
+	Dist popFrame(string tmpVar){
+		addTmpVar(tmpVar);
+		return map(dLambda(dRUpdate(dField(db1,"`frame"),tmpVar,dField(db1,"`value"))));
+	}
+	Dist flatMap(DLambda[] lambdas){
+		auto r=distInit;
+		r.copyNonState(this);
+		foreach(k,v;state){
+			foreach(lambda;lambdas){
+				auto app=dApply(lambda,k).simplify(one);
+				auto val=app[0.dℤ].simplify(one),scale=app[1.dℤ].simplify(one);
+				r.add(val,(v*scale).simplify(one));
+			}
+		}
+		return r;
+	}
+	Dist assertTrue(DLambda lambda){
+		auto r=distInit;
+		r.copyNonState(this);
+		foreach(k,v;state){
+			auto cond=dApply(lambda,k).simplify(one);
+			if(cond is one || cond is zero){
+				if(cond is zero){
+					r.error = (r.error + v).simplify(one);
+				}else{
+					r.add(k,v);
+				}
+			}else{
+				r.error = (r.error + v*dIvr(DIvr.Type.eqZ,cond)).simplify(one);
+				r.add(k,(v*cond).simplify(one));
+			}
+		}
+		return r;
+	}
+	Dist eraseErrors(){
+		auto r=dup();
+		error=zero;
+		return r;
+	}
+	Dist observe(DLambda lambda){
+		auto r=distInit;
+		r.copyNonState(this);
+		foreach(k,v;state){
+			auto cond=dApply(lambda,k).simplify(one);
+			if(cond is one || cond is zero){
+				if(cond is one) r.add(k,v);
+			}else{
+				r.add(k,(v*cond).simplify(one));
+			}
+		}
+		return r;
+	}
+	Distribution toDistribution(){
+		auto r=new Distribution();
+		string name="r";
+	Louter:for(;;){ // avoid variable capturing. TODO: make more efficient
+			foreach(k,v;state){
+				if(k.hasFreeVar(dVar(name))||v.hasFreeVar(dVar(name))){
+					name~="'";
+					continue Louter;
+				}
+			}
+			break;
+		}
+		auto var=r.declareVar(name);
+		r.distribution=zero;
+		foreach(k,v;state) r.distribution=r.distribution+v*dDiscDelta(var,dField(k,"`value"));
+		r.error=error;
+		r.simplify();
+		r.orderFreeVars([var],false);
+		return r;
+	}
 	DExpr flip(DExpr p){
 		// TODO: check that p is in [0,1]
 		static int unique=0;
@@ -182,7 +192,7 @@ struct Dist{
 	DExpr uniformInt(DExpr arg){
 		// TODO: check constraints on arguments
 		auto r=distInit;
-		r.tupleof[1..$]=this.tupleof[1..$];
+		r.copyNonState(this);
 		auto lambda=dLambda(arg);
 		static int unique=0;
 		auto tmp="`uniformInt"~lowNum(++unique);
@@ -250,11 +260,11 @@ struct Dist{
 		}
 		return dField(db1,tmp);
 	}
-	DExpr call(DExpr fun,DExpr arg){
+	private Dist callImpl(DExpr fun,DExpr arg){
 		this=pushFrame();
 		auto f=dLambda(inFrame(fun)), a=dLambda(inFrame(arg));
 		auto r=distInit;
-		r.tupleof[1..$]=this.tupleof[1..$];
+		r.copyNonState(this);
 		MapX!(FunctionDef,MapX!(DExpr,DExpr)) byFun;
 		foreach(k,v;state){
 			auto cf=dApply(f,k).simplify(one);
@@ -282,16 +292,89 @@ struct Dist{
 		foreach(fun,kv;byFun){
 			auto ncur=distInit;
 			ncur.state=kv;
-			ncur.tupleof[1..$]=this.tupleof[1..$];
+			ncur.copyNonState(this);
 			auto intp=Interpreter(fun,fun.body_,ncur,true);
 			auto nndist = distInit();
 			intp.run(nndist);
 			r+=nndist;
 		}
+		return r;
+	}
+	DExpr call(DExpr fun,DExpr arg){
+		auto r=callImpl(fun,arg);
 		static uniq=0;
 		string tmp="`call'"~lowNum(++uniq);
 		this=r.popFrame(tmp);
 		return dField(db1,tmp);
+	}
+	Dist normalize(){
+		auto r=distInit();
+		r.copyNonState(this);
+		DExpr tot=r.error;
+		foreach(k,v;state) tot=(tot+v).simplify(one);
+		if(tot == zero) r.error=one;
+		else if(tot.isFraction()) foreach(k,v;state) r.add(k,(v/tot).simplify(one));
+		else{
+			r.error=(dIvr(DIvr.Type.neqZ,tot)*r.error+dIvr(DIvr.Type.eqZ,tot)).simplify(one);
+			foreach(k,v;state) r.add(k,((v/tot)*dIvr(DIvr.Type.neqZ,tot)).simplify(one));
+		}
+		return r;
+	}
+	DExpr infer(DExpr fun){
+		MapX!(DExpr,Q!(Dist,DExpr)) byFrame;
+		foreach(k,v;state){
+			auto frame=dField(k,"`frame").simplify(one);
+			if(frame !in byFrame){
+				auto ndist=distInit();
+				ndist.copyNonState(this);
+				ndist.error=zero;
+				byFrame[frame]=q(ndist,zero);
+			}
+			(ref x){x[0].add(k,v),x[1]=(x[1]+v).simplify(one);}(byFrame[frame]);
+		}
+		auto r=distInit;
+		r.copyNonState(this);
+		foreach(f,v;byFrame){
+			v[0]=v[0].callImpl(fun,dTuple([]));
+			v[0]=v[0].marginalizeTemporaries();
+			r.add(dRecord(["`frame":f,"`value":dBFDist(v[0].normalize())]),v[1]);
+		}
+		static uniq=0;
+		string tmp="`infer"~lowNum(++uniq);
+		addTmpVar(tmp);
+		this=r.popFrame(tmp);
+		return dField(db1,tmp);
+	}
+	void copyNonState(ref Dist rhs){
+		this.tupleof[1..$]=rhs.tupleof[1..$];
+	}
+	Dist simplify(DExpr facts){
+		auto r=distInit;
+		r.copyNonState(this);
+		foreach(k,v;state)
+			r.add(k.simplify(facts),v.simplify(facts));
+		return r;
+	}
+	Dist substitute(DVar var,DExpr expr){
+		auto r=distInit;
+		r.copyNonState(this);
+		foreach(k,v;state)
+			r.add(k.substitute(var,expr),v.substitute(var,expr));
+		return r;
+	}
+	Dist incDeBruijnVar(int di, int free){
+		auto r=distInit;
+		r.copyNonState(this);
+		foreach(k,v;state)
+			r.add(k.incDeBruijnVar(di,free),v.incDeBruijnVar(di,free));
+		return r;
+	}
+	int freeVarsImpl(scope int delegate(DVar) dg){
+		foreach(k,v;state){
+			if(auto r=k.freeVarsImpl(dg)) return r;
+			if(auto r=v.freeVarsImpl(dg)) return r;
+		}
+		return 0;
 	}
 }
 
@@ -334,6 +417,30 @@ DBFContextFun dBFContextFun(FunctionDef def,DExpr ctx){
 	if(t in unique) return unique[t];
 	auto r=new DBFContextFun(def,ctx);
 	unique[t]=r;
+	return r;
+}
+class DBFDist: DExpr{
+	Dist dist;
+	this(Dist dist)in{assert(!dist.tmpVars.length);}body{ this.dist=dist; }
+	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		auto d=dist.toDistribution();
+		d.addArgs([],true,null);
+		return dApply(d.toDExpr(),dLambda(one)).simplify(one).toStringImpl(formatting,prec,binders);
+	}
+	override DExpr simplifyImpl(DExpr facts){ return dBFDist(dist.simplify(facts)); }
+	override DExpr substitute(DVar var,DExpr expr){
+		return dBFDist(dist.substitute(var,expr));
+	}
+	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; }
+	override DExpr incDeBruijnVar(int di, int free){ return dBFDist(dist.incDeBruijnVar(di,free)); }
+	override int freeVarsImpl(scope int delegate(DVar) dg){ return dist.freeVarsImpl(dg); }
+}
+DBFDist dBFDist(Dist dist)in{assert(!dist.tmpVars.length);}body{
+	MapX!(TupleX!(MapX!(DExpr,DExpr),DExpr),DBFDist) uniq;
+	auto t=tuplex(dist.state,dist.error);
+	if(t in uniq) return uniq[t];
+	auto r=new DBFDist(dist);
+	uniq[t]=r;
 	return r;
 }
 
@@ -396,24 +503,30 @@ DExpr buildContextFor(Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{
 	return dRecord(record);
  }
 DExpr lookupMeaning(Identifier id)in{assert(!!id);}body{
-	if(isBuiltIn(id)){ // TODO: this is somewhat hacky, do this in semantic?
+	if(isBuiltIn(id)||id.name.startsWith("`")){ // TODO: this is somewhat hacky, do this in semantic?
 		static DExpr[string] builtIn;
 		auto fty=cast(FunTy)id.type;
 		assert(!!fty);
 		if(id.name !in builtIn){
-			auto names=iota(fty.nargs).map!(i=>new Identifier("x"~lowNum(i+1))).array;
-			auto arg=fty.isTuple?new TupleExp(cast(Expression[])names):names[0];
-			auto params=new Parameter[](names.length);
-			foreach(i,ref p;params) p=new Parameter(names[i],fty.argTy(i));
-			auto call=new CallExp(id,arg,fty.isSquare);
-			auto bdy=new CompoundExp([new ReturnExp(call)]);
-			auto fdef=new FunctionDef(null,params,fty.isTuple,null,bdy);
-			fdef.isSquare=fty.isSquare;
-			auto sc=new TopScope(new SimpleErrorHandler());
-			fdef.scope_=sc;
-			fdef=cast(FunctionDef)presemantic(fdef,sc);
-			assert(!!fdef);
-			builtIn[id.name]=dBFFun(fdef);
+			if(fty.isSquare){
+				auto nid=new Identifier("`"~id.name~"Impl");
+				nid.type=fty.cod;
+				builtIn[id.name]=lookupMeaning(nid);
+			}else{
+				auto names=iota(fty.nargs).map!(i=>new Identifier("x"~lowNum(i+1))).array;
+				auto arg=fty.isTuple?new TupleExp(cast(Expression[])names):names[0];
+				auto params=new Parameter[](names.length);
+				foreach(i,ref p;params) p=new Parameter(names[i],fty.argTy(i));
+				auto call=new CallExp(id,arg,false);
+				auto bdy=new CompoundExp([new ReturnExp(call)]);
+				auto fdef=new FunctionDef(null,params,fty.isTuple,null,bdy);
+				fdef.isSquare=false;
+				auto sc=new TopScope(new SimpleErrorHandler());
+				fdef.scope_=sc;
+				fdef=cast(FunctionDef)presemantic(fdef,sc);
+				assert(!!fdef);
+				builtIn[id.name]=dBFFun(fdef);
+			}
 		}
 		return builtIn[id.name];
 	}
@@ -508,7 +621,11 @@ struct Interpreter{
 						auto arg=doIt(ce.arg); // TODO: allow temporaries within arguments
 						return cur.call(fun,thisExp,arg,id.scope_);
 					}
-					if(isBuiltIn(id)){
+					if(isBuiltIn(id)||id.name.startsWith("`")){
+						if(ce.isSquare){ // ignore []-calls on built-ins
+							assert(ce.arg.type == typeTy);
+							return doIt(ce.e);
+						}
 						switch(id.name){
 							case "flip":
 								auto arg=doIt(ce.arg);
@@ -517,10 +634,14 @@ struct Interpreter{
 								auto arg=doIt(ce.arg);
 								return cur.uniformInt(arg);
 							case "categorical": assert(0,text("TODO: ",ce));
-						case "Expectation": // TODO: condition on frame
-							auto arg=doIt(ce.arg);
-							return cur.expectation(dLambda(arg),hasFrame);
-							default: assert(0,text("TODO: ",ce));
+							case "Expectation": // TODO: condition on frame
+								auto arg=doIt(ce.arg);
+								return cur.expectation(dLambda(arg),hasFrame);
+							case "`inferImpl":
+								auto arg=doIt(ce.arg);
+								return cur.infer(arg);
+							default:
+								break;
 						}
 					}
 				}
