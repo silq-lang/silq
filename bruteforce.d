@@ -94,7 +94,7 @@ struct Dist{
 		auto r=distInit;
 		r.copyNonState(this);
 		static int unique=0;
-		string tmp="__expectation"~lowNum(++unique);
+		string tmp="`expectation"~lowNum(++unique);
 		addTmpVar(tmp);
 		foreach(k,v;byFrame){
 			auto e=(v[1]/v[2]).simplify(one);
@@ -345,6 +345,51 @@ struct Dist{
 		this=r.popFrame(tmp);
 		return dField(db1,tmp);
 	}
+	DExpr distSample(DExpr dist){
+		auto r=distInit;
+		r.copyNonState(this);
+		auto d=dLambda(dist);
+		static uniq=0;
+		string tmp="`sample"~lowNum(++uniq);
+		r.addTmpVar(tmp);
+		foreach(k,v;state){
+			auto dbf=cast(DBFDist)dApply(d,k).simplify(one);
+			assert(!!dbf,text(dbf," ",d));
+			foreach(dk,dv;dbf.dist.state) r.add(dRUpdate(k,tmp,dField(dk,"`value")).simplify(one),(v*dv).simplify(one));
+			r.error=(r.error+v*dbf.dist.error).simplify(one);
+		}
+		this=r;
+		return dField(db1,tmp);
+	}
+	DExpr distThen(DExpr dist,DExpr arg){
+		// TODO.
+		assert(0,"TODO");
+	}
+	DExpr distExpectation(DExpr dist){
+		auto r=distInit;
+		r.copyNonState(this);
+		auto d=dLambda(dist);
+		static uniq=0;
+		string tmp="`expectation'"~lowNum(++uniq);
+		r.addTmpVar(tmp);
+		foreach(k,v;state){
+			auto dbf=cast(DBFDist)dApply(d,k).simplify(one);
+			assert(!!dbf,text(dbf," ",d));
+			DExpr val1=zero,val2=zero;
+			foreach(dk,dv;dbf.dist.state){
+				val1=(val1+dv*dField(dk,"`value")).simplify(one);
+				val2=(val2+dv).simplify(one);
+			}
+			if(val2==zero) r.error=(r.error+v).simplify(one);
+			else if(val2.isFraction()) r.add(dRUpdate(k,tmp,val1/val2).simplify(one),v);
+			else{
+				r.error=(r.error+v*dIvr(DIvr.Type.eqZ,val2)).simplify(one);
+				r.add(dRUpdate(k,tmp,val1/val2).simplify(one),(v*dIvr(DIvr.Type.neqZ,val2)).simplify(one));
+			}
+		}
+		this=r;
+		return dField(db1,tmp);
+	}
 	void copyNonState(ref Dist rhs){
 		this.tupleof[1..$]=rhs.tupleof[1..$];
 	}
@@ -501,7 +546,8 @@ DExpr buildContextFor(Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{
 		}
 	}
 	return dRecord(record);
- }
+}
+
 DExpr lookupMeaning(Identifier id)in{assert(!!id);}body{
 	if(isBuiltIn(id)||id.name.startsWith("`")){ // TODO: this is somewhat hacky, do this in semantic?
 		static DExpr[string] builtIn;
@@ -581,6 +627,13 @@ struct Interpreter{
 				assert(0);
 			}
 			if(auto fe=cast(FieldExp)e){
+				if(isBuiltIn(fe)){
+					if(auto at=cast(ArrayTy)fe.e.type){
+						assert(fe.f.name=="length");
+					}else{
+						assert(0,"TODO: first-class built-in methdods");
+					}
+				}
 				return dField(doIt(fe.e),fe.f.name);
 			}
 			if(auto ae=cast(AddExp)e) return doIt(ae.e1)+doIt(ae.e2);
@@ -621,7 +674,27 @@ struct Interpreter{
 						auto arg=doIt(ce.arg); // TODO: allow temporaries within arguments
 						return cur.call(fun,thisExp,arg,id.scope_);
 					}
-					if(isBuiltIn(id)||id.name.startsWith("`")){
+					if(fe && isBuiltIn(fe)){
+						if(auto dce=cast(CallExp)fe.e.type){
+							auto fty=cast(FunTy)fe.e.type;
+							if(auto did=cast(Identifier)dce.e){
+								assert(dce.arg.type == typeTy);
+								auto tt=dce.arg;
+								if(did.name=="Distribution"){
+									switch(fe.f.name){
+										case "sample":
+											return cur.distSample(thisExp);
+										case "then":
+											assert(0,text("TODO: ",fe));
+										case "expectation":
+											return cur.distExpectation(thisExp);
+										default: assert(0,text("TODO: ",fe));
+									}
+								}
+							}
+						}
+					}
+					if(!fe && isBuiltIn(id)||id.name.startsWith("`")){
 						if(ce.isSquare){ // ignore []-calls on built-ins
 							assert(ce.arg.type == typeTy);
 							return doIt(ce.e);
@@ -640,6 +713,19 @@ struct Interpreter{
 							case "`inferImpl":
 								auto arg=doIt(ce.arg);
 								return cur.infer(arg);
+							case "exp":
+								auto arg=doIt(ce.arg);
+								return dE^^arg;
+							case "log":
+								auto arg=doIt(ce.arg);
+								// TODO: check constraints on argument
+								return dLog(arg);
+							case "abs":
+								return dAbs(doIt(ce.arg));
+							case "floor":
+								return dFloor(doIt(ce.arg));
+							case "ceil":
+								return dCeil(doIt(ce.arg));
 							default:
 								break;
 						}
