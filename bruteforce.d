@@ -880,7 +880,20 @@ struct Interpreter{
 					// TODO: marginalize locals
 				}
 				cur=intp.cur;
-			}else assert(0,text("TODO: ",re));
+			}else{
+				auto bound=dFloor(rep);
+				auto intp=Interpreter(functionDef,re.bdy,distInit(),hasFrame);
+				intp.cur.state = cur.state;
+				cur.state=typeof(cur.state).init;
+				for(ℤ x=0;;++x){
+					cur += intp.cur.observe(dLambda(dIvr(DIvr.Type.leZ,bound-x)));
+					intp.cur = intp.cur.observe(dLambda(dIvr(DIvr.Type.lZ,x-bound)));
+					intp.cur.error = zero;
+					if(!intp.cur.state.length) break;
+					if(opt.trace) writeln("repetition: ",x+1);
+					intp.run(retDist);
+				}
+			}
 		}else if(auto fe=cast(ForExp)e){
 			auto l=runExp(fe.left).simplify(one), r=runExp(fe.right).simplify(one);
 			auto lz=cast(Dℤ)l,rz=cast(Dℤ)r;
@@ -893,7 +906,29 @@ struct Interpreter{
 					// TODO: marginalize locals
 				}
 				cur=intp.cur;
-			}else assert(0,text("TODO: ",fe));
+			}else{
+				static uniq=0;
+				auto tmp="`loopIndex"~lowNum(++uniq);
+				cur.assignTo(dVar(tmp),fe.leftExclusive?dFloor(l)+1:dCeil(l));
+				auto bound=fe.rightExclusive?dCeil(r)-1:dFloor(r);
+				auto intp=Interpreter(functionDef,fe.bdy,distInit(),hasFrame);
+				intp.cur.state = cur.state;
+				cur.state=typeof(cur.state).init;
+				auto cond = dLambda(dIvr(DIvr.Type.leZ,dField(db1,tmp)-bound).simplify(one));
+				auto ncond = dLambda(dIvr(DIvr.Type.lZ,bound-dField(db1,tmp)).simplify(one));
+				auto upd = (dField(db1,tmp)+1).simplify(one);
+				for(int x=0;;++x){
+					cur += intp.cur.observe(ncond);
+					intp.cur = intp.cur.observe(cond);
+					intp.cur.error = zero;
+					if(!intp.cur.state.length) break;
+					intp.cur.assignTo(dVar(fe.var.name),dField(db1,tmp));
+					if(opt.trace) writeln("repetition: ",x+1);
+					intp.run(retDist);
+					intp.cur.assignTo(dVar(tmp),upd);
+					// TODO: marginalize locals
+				}
+			}
 		}else if(auto re=cast(ReturnExp)e){
 			auto value = runExp(re.e);
 			if(functionDef.context&&functionDef.contextName.startsWith("this")){
