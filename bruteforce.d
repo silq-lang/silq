@@ -726,6 +726,39 @@ struct Interpreter{
 								return dFloor(doIt(ce.arg));
 							case "ceil":
 								return dCeil(doIt(ce.arg));
+							case "SampleFrom":
+								Expression[] args;
+								if(auto tpl=cast(TupleExp)ce.arg) args=tpl.e;
+								else args=[ce.arg];
+								auto dist=new Distribution();
+								auto info=analyzeSampleFrom(ce,new SimpleErrorHandler(),dist);
+								if(info.error) assert(0,"TODO");
+								auto retVars=info.retVars,paramVars=info.paramVars,newDist=info.newDist;
+								foreach(i,pvar;paramVars){
+									auto expr=doIt(args[1+i]);
+									newDist=newDist.substitute(pvar,expr);
+								}
+								dist.distribute(newDist);
+								auto tmp=dist.declareVar("`tmp");
+								dist.initialize(tmp,dTuple(cast(DExpr[])retVars.map!(v=>v.tmp).array),contextTy());
+								foreach(v;info.retVars) dist.marginalize(v.tmp);
+								dist.simplify();
+								auto smpl=distInit();
+								void gather(DExpr e,DExpr factor){
+									assert(!cast(DInt)e,text("TODO: ",ce.e));
+									foreach(s;e.summands){
+										foreach(f;s.factors){
+											if(auto dd=cast(DDiscDelta)f){
+												assert(dd.var is tmp);
+												smpl.add(dRecord(["`value":retVars.length==1?dd.e[1.dℤ].simplify(one):dd.e]),(factor*s.withoutFactor(f)).substitute(tmp,dd.e).simplify(one));
+											}else if(auto sm=cast(DPlus)f){
+												gather(sm,factor*s.withoutFactor(f));
+											}
+										}
+									}
+								}
+								gather(dist.distribution,one);
+								return cur.distSample(dBFDist(smpl));
 							default:
 								break;
 						}
