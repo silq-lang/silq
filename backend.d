@@ -27,6 +27,8 @@ abstract class Backend{
 				return new Symbolic(source);
 			case InferenceMethod.bruteforce:
 				return new Bruteforce(source);
+			case InferenceMethod.simulate:
+				return new Bruteforce(source);
 		}
 	}
 	abstract Distribution analyze(FunctionDef fd,ErrorHandler err);

@@ -12,6 +12,8 @@ import dexpr,hashtable,util;
 import expression,declaration,type;
 import semantic_,scope_;
 
+import std.random; // (for InferenceMethod.simulate)
+
 class Bruteforce: Backend{
 	this(string sourceFile){
 		this.sourceFile=sourceFile;
@@ -147,6 +149,7 @@ struct Dist{
 		return r;
 	}
 	Dist observe(DLambda lambda){
+		assert(opt.backend != InferenceMethod.simulate,"TODO: observe with --simulate");
 		auto r=distInit;
 		r.copyNonState(this);
 		foreach(k,v;state){
@@ -187,6 +190,7 @@ struct Dist{
 		this=flatMap(
 			[dLambda(dTuple([dRUpdate(db1,tmp,zero),(one-p).simplify(one)])),
 			 dLambda(dTuple([dRUpdate(db1,tmp,one),p]))]);
+		if(opt.backend==InferenceMethod.simulate) pickOne();
 		return dField(db1,tmp);
 	}
 	DExpr uniformInt(DExpr arg){
@@ -208,6 +212,7 @@ struct Dist{
 			for(ℤ i=az.c;i<=bz.c;++i) r.add(dRUpdate(k,tmp,i.dℤ).simplify(one),nv);
 		}
 		this=r;
+		if(opt.backend==InferenceMethod.simulate) pickOne();
 		return dField(db1,tmp);
 	}
 	void assignTo(DExpr lhs,DExpr rhs){
@@ -321,6 +326,7 @@ struct Dist{
 		return r;
 	}
 	DExpr infer(DExpr fun){
+		assert(opt.backend != InferenceMethod.simulate,"TODO: higher-order inference in simulate backend");
 		MapX!(DExpr,Q!(Dist,DExpr)) byFrame;
 		foreach(k,v;state){
 			auto frame=dField(k,"`frame").simplify(one);
@@ -359,6 +365,7 @@ struct Dist{
 			r.error=(r.error+v*dbf.dist.error).simplify(one);
 		}
 		this=r;
+		if(opt.backend==InferenceMethod.simulate) pickOne();
 		return dField(db1,tmp);
 	}
 	DExpr distThen(DExpr dist,DExpr arg){
@@ -392,6 +399,25 @@ struct Dist{
 	}
 	void copyNonState(ref Dist rhs){
 		this.tupleof[1..$]=rhs.tupleof[1..$];
+	}
+	void pickOne()in{assert(opt.backend==InferenceMethod.simulate);}body{
+		real f = uniform(0.0L,1.0L);
+		DExpr cur=zero;
+		foreach(k,v;state){
+			cur=(cur+v).simplify(one);
+			auto r=dIvr(DIvr.Type.leZ,dFloat(f)-cur).simplify(one);
+			assert(r is zero || r is one);
+			if(r is one){
+				error = zero;
+				state.clear();
+				state[k]=one;
+				return;
+			}
+		}
+		cur = (cur+error).simplify(one);
+		assert(cur is one);
+		state.clear();
+		error = one;
 	}
 	Dist simplify(DExpr facts){
 		auto r=distInit;

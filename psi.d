@@ -119,6 +119,7 @@ int main(string[] args){
 			case "--raw": opt.outputForm=OutputForm.raw; break;
 			case "--raw-error": opt.outputForm=OutputForm.rawError; break;
 			case "--bruteforce": opt.backend=InferenceMethod.bruteforce; break;
+			case "--simulate": opt.backend=InferenceMethod.simulate; break;
 			default:
 				if(x.startsWith("--plot=")){
 					auto rest=x["--plot=".length..$];
