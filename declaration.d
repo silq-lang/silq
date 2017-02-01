@@ -36,7 +36,7 @@ class CompoundDecl: Expression{
 class VarDecl: Declaration{
 	Expression dtype;
 	this(Identifier name){ super(name); }
-	override string toString(){ return name.toString()~(dtype?": "~dtype.toString():vtype?": "~vtype.toString():""); }
+	override string toString(){ return getName~(dtype?": "~dtype.toString():vtype?": "~vtype.toString():""); }
 	@property override string kind(){ return "variable"; }
 
 	// semantic information
@@ -48,7 +48,7 @@ class Parameter: VarDecl{
 	this(Identifier name, Expression type){
 		super(name); this.dtype=type;
 	}
-	override string toString(){ return name.toString()~(dtype?": "~dtype.toString():""); }
+	override string toString(){ return getName~(dtype?": "~dtype.toString():""); }
 	@property override string kind(){ return "parameter"; }
 }
 
@@ -65,7 +65,7 @@ class FunctionDef: Declaration{
 	}
 	override string toString(){
 		string d=isSquare?"[]":"()";
-		return "def "~(name?name.toString():"")~d[0]~join(map!(to!string)(params),",")~(isTuple&&params.length==1?",":"")~d[1]~body_.toString();
+		return "def "~(name?getName:"")~d[0]~join(map!(to!string)(params),",")~(isTuple&&params.length==1?",":"")~d[1]~body_.toString();
 	}
 
 	override bool isCompound(){ return true; }
@@ -104,7 +104,7 @@ class DatDecl: Declaration{
 		this.body_=body_;
 	}
 	override string toString(){
-		return "dat "~name.toString()~body_.toString();
+		return "dat "~getName~body_.toString();
 	}
 
 	override bool isCompound(){ return true; }
