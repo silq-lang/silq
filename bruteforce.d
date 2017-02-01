@@ -328,27 +328,21 @@ struct Dist{
 	DExpr infer(DExpr fun){
 		assert(opt.backend != InferenceMethod.simulate,"TODO: higher-order inference in simulate backend");
 		MapX!(DExpr,Q!(Dist,DExpr)) byFrame;
-		foreach(k,v;state){
-			auto frame=dField(k,"`frame").simplify(one);
-			if(frame !in byFrame){
-				auto ndist=distInit();
-				ndist.copyNonState(this);
-				ndist.error=zero;
-				byFrame[frame]=q(ndist,zero);
-			}
-			(ref x){x[0].add(k,v),x[1]=(x[1]+v).simplify(one);}(byFrame[frame]);
-		}
 		auto r=distInit;
 		r.copyNonState(this);
-		foreach(f,v;byFrame){
-			v[0]=v[0].callImpl(fun,dTuple([]));
-			v[0]=v[0].marginalizeTemporaries();
-			r.add(dRecord(["`frame":f,"`value":dBFDist(v[0].normalize())]),v[1]);
-		}
 		static uniq=0;
 		string tmp="`infer"~lowNum(++uniq);
 		addTmpVar(tmp);
-		this=r.popFrame(tmp);
+		foreach(k,v;state){
+			auto cur=distInit;
+			cur.add(k,v);
+			cur=cur.callImpl(fun,dTuple([])); // TODO: group calls that depend on identical information
+			cur=cur.map(dLambda(dRecord(["`value":dField(db1,"`value")])));
+			cur.tmpVars.clear();
+			cur=cur.normalize();
+			r.add(dRUpdate(k,tmp,dBFDist(cur)),v);
+		}
+		this=r;
 		return dField(db1,tmp);
 	}
 	DExpr distSample(DExpr dist){
