@@ -720,14 +720,20 @@ struct Interpreter{
 							return doIt(ce.e);
 						}
 						switch(id.name){
-							case "flip":
+							case "flip","bernoulli":
 								auto arg=doIt(ce.arg);
 								return cur.flip(arg);
 							case "uniformInt":
 								auto arg=doIt(ce.arg);
 								return cur.uniformInt(arg);
 							case "categorical": assert(0,text("TODO: ",ce));
-							case "Expectation": // TODO: condition on frame
+							case "Flip","Bernoulli":
+								assert(0,text("TODO: ",ce));
+							case "UniformInt":
+								assert(0,text("TODO: ",ce));
+							case "Categorical":
+								assert(0,text("TODO: ",ce));
+							case "Expectation":
 								auto arg=doIt(ce.arg);
 								return cur.expectation(dLambda(arg),hasFrame);
 							case "`inferImpl":
