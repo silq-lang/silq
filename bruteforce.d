@@ -149,7 +149,6 @@ struct Dist{
 		return r;
 	}
 	Dist observe(DLambda lambda){
-		assert(opt.backend != InferenceMethod.simulate,"TODO: observe with --simulate");
 		auto r=distInit;
 		r.copyNonState(this);
 		foreach(k,v;state){
@@ -1001,6 +1000,7 @@ struct Interpreter{
 			auto cond=dIvr(DIvr.Type.neqZ,runExp(ae.e));
 			cur=cur.assertTrue(dLambda(cond));
 		}else if(auto oe=cast(ObserveExp)e){
+			assert(opt.backend != InferenceMethod.simulate,"TODO: observe with --simulate");
 			auto cond=dIvr(DIvr.Type.neqZ,runExp(oe.e));
 			cur=cur.observe(dLambda(cond));
 		}else if(auto ce=cast(CommaExp)e){
