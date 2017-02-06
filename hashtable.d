@@ -125,8 +125,8 @@ struct HashMap(K_, V_, alias eq_ , alias h_){
 		return 0;
 	}
 	hash_t toHash()(){
-		hash_t r;
-		foreach(ref x;es) foreach(ref b;x) r^=FNV(b.k.toHash(),b.v.toHash()); // TODO: improve
+		hash_t r=0;
+		foreach(ref x;es) foreach(ref b;x) r+=FNV(b.k.toHash(),FNV(b.v.toHash(),fnvb)); // TODO: improve
 		return r;
 	}
 
@@ -171,11 +171,11 @@ struct HSet(T_,alias eq, alias h){
 	}
 	void insert(T t){
 		if(payload.insert(typeof(payload).E([],t)))
-			hash^=h(t);
+			hash+=FNV(h(t));
 	}
 	void remove(T t){
 		if(payload.remove(t))
-			hash^=h(t);
+			hash-=FNV(h(t));
 	}
 	int opApply(scope int delegate(T) dg){
 		foreach(x,_;payload) if(auto r=dg(x)) return r;
@@ -221,7 +221,7 @@ struct SHSet(T_) if(is(T_==class)){ // small hash set
 		return large.length;
 	}
 	hash_t toHash(){
-		if(isSmall){ hash_t r; foreach(x;small) if(x !is null) r^=x.toHash(); return r; }
+		if(isSmall){ hash_t r; foreach(x;small) if(x !is null) r+=FNV(x.toHash()); return r; }
 		return large.toHash();
 	}
 	bool opBinaryRight(string op: "in")(T t){

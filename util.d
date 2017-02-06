@@ -433,16 +433,19 @@ auto singleton(T)(T arg){
 struct TupleX(T...){
 	T expand;
 	alias expand this;
+	private static hash_t getHash(T)(ref T x,hash_t b){
+		static if(is(T==class)) return FNV(x?x.toHash():0,b);
+		else static if(is(T==struct)) return FNV(x.toHash(),b);
+		else static if(is(T==string)||is(T==int)) return FNV(typeid(T).getHash(&x),b);
+		else static if(is(T==S[],S)){
+			auto r=b;
+			foreach(ref y;x) r=getHash(y,r);
+			return r;
+		}else static assert(0,T.stringof);
+	}
 	hash_t toHash(){
 		auto r=fnvb;
-		foreach(i,ref x;expand){
-			hash_t hash(int i)(){
-				static if(is(typeof(x)==class)) return x?x.toHash():0;
-				static if(is(typeof(x)==struct)) return x.toHash();
-				else return typeid(x).getHash(&x);
-			}
-			r=FNV(hash!i(),r);
-		}
+		foreach(i,ref x;expand) r=getHash(x,r);
 		return r;
 	}
 }
