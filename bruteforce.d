@@ -775,7 +775,7 @@ struct Interpreter{
 										foreach(f;s.factors){
 											if(auto dd=cast(DDiscDelta)f){
 												assert(dd.var is tmp);
-												smpl.add(dRecord(["`value":retVars.length==1?dd.e[1.dℤ].simplify(one):dd.e]),(factor*s.withoutFactor(f)).substitute(tmp,dd.e).simplify(one));
+												smpl.add(dRecord(["`value":retVars.length==1?dd.e[0.dℤ].simplify(one):dd.e]),(factor*s.withoutFactor(f)).substitute(tmp,dd.e).simplify(one));
 											}else if(auto sm=cast(DPlus)f){
 												gather(sm,factor*s.withoutFactor(f));
 											}
