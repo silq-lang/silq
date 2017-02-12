@@ -48,16 +48,16 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 	//import hashtable; dist.distribution=approxLog(dist.freeVars.element);
 	//import hashtable; dist.distribution=approxGaussInt(dist.freeVars.element);
 	if(opt.kill) dist.distribution=dist.distribution.killIntegrals();
-	if(opt.expectation){ // TODO: deal with non-convergent expectations
+	if(opt.expectation||opt.backend==InferenceMethod.simulate){ // TODO: deal with non-convergent expectations
 		import type, std.conv : text;
-		if(fd.ret != ℝ){
+		if(fd.ret != ℝ && opt.backend!=InferenceMethod.simulate){
 			err.error(text("with --expectation switch, functions should return a single number (not '",fd.ret,"')"),fd.loc);
 			return;
 		}
 		assert(dist.orderedFreeVars.length==1);
 		auto var=dist.orderedFreeVars[0];
 		auto expectation = dIntSmp(var,var*dist.distribution/(one-dist.error),one);
-		final switch(opt.outputForm){
+		final switch(opt.backend==InferenceMethod.simulate?OutputForm.raw:opt.outputForm){
 			case OutputForm.default_:
 				writeln(opt.formatting==Format.mathematica?"E[":"𝔼[",var.toString(opt.formatting),dist.error!=zero?(opt.formatting==Format.mathematica?"|!error":"|¬error"):"","] = ",expectation.toString(opt.formatting));
 				if(dist.error !is zero) writeln("Pr[error] = ",dist.error.toString(opt.formatting));
