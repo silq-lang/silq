@@ -47,6 +47,18 @@ struct DParser{
 		expect(']');
 		return dIvr(ty,exp);
 	}
+	DExpr parseDFloor(){
+		expect('⌊');
+		auto exp=parseDExpr();
+		expect('⌋');
+		return dFloor(exp);
+	}
+	DExpr parseDCeil(){
+		expect('⌈');
+		auto exp=parseDExpr();
+		expect('⌉');
+		return dCeil(exp);
+	}
 	DExpr parseDDelta(){
 		if(code.startsWith("delta")) code=code["delta".length..$];
 		else expect('δ');
@@ -305,6 +317,8 @@ struct DParser{
 				return dArray(len,dLambda(var,expr));
 			}
 		}
+		if(cur()=='⌊') return parseDFloor();
+		if(cur()=='⌈') return parseDCeil();
 		if(cur()=='{'){
 			next();
 			DExpr[string] values;
@@ -422,7 +436,7 @@ struct DParser{
 	
 	bool hasFactor(){
 		return code.length && !isBinaryOp(cur())
-			&& cur()!=')' && cur()!='}' && cur()!=']' && cur!=',';
+			&& cur()!=')' && cur()!='}' && cur()!=']' && cur() != '⌋' && cur() != '⌉' && cur!=',';
 	}
 
 	DExpr parseJMult(){
