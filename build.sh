@@ -5,7 +5,11 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
     BIN="osx/bin"
 fi
 
-DMD="./dmd2/$BIN/dmd"
+if [[ -d "dmd2" ]]; then
+    DMD="./dmd2/$BIN/dmd"
+else
+    DMD="dmd"
+fi
 
 # debug build
 $DMD -gc -debug -J. *.d -ofpsi
