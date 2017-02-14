@@ -1,9 +1,11 @@
 #!/bin/bash
-if [ -d "dmd2" ]; then
-    DMD="./dmd2/linux/bin64/dmd";
-else
-    DMD="dmd"
+if [[ "$OSTYPE" == "linux-gnu" ]]; then
+    BIN="linux/bin64"
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    BIN="osx/bin"
 fi
+
+DMD="./dmd2/$BIN/dmd"
 
 # debug build
 $DMD -gc -debug -J. *.d -ofpsi
