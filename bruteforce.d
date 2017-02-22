@@ -738,6 +738,9 @@ struct Interpreter{
 							case "`inferImpl":
 								auto arg=doIt(ce.arg);
 								return cur.infer(arg);
+							case "`arrayImpl":
+								auto arg=doIt(ce.arg);
+								return dConstArray(arg[0.dℤ],arg[1.dℤ]);
 							case "exp":
 								auto arg=doIt(ce.arg);
 								return dE^^arg;
