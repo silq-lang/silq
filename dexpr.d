@@ -313,7 +313,7 @@ alias dVar=dNVar;
 
 class DDeBruijnVar: DVar{
 	@subExpr int i;
-	/+private+/ this(int i)in{assert(i>=1);}body{ this.i=i; }
+	/+private+/ this(int i)in{assert(i>=0);}body{ this.i=i; }
 	static string displayName(int i,Format formatting,int binders){
 		return DVar.fixName("ξ"~lowNum(1+binders-i),formatting);
 	}
@@ -2621,9 +2621,7 @@ static ~this(){
 }+/
 
 static DExpr unbind(DExpr expr, DExpr nexpr){
-	auto tmp=freshVar(); // TODO: get rid of this!
-	return expr.substitute(dDeBruijnVar(1),tmp).incDeBruijnVar(-1,0).substitute(tmp,nexpr);
-	//return expr.incDeBruijnVar(-1,0).substitute(dDeBruijnVar(0),nexpr);
+	return expr.substitute(dDeBruijnVar(1),nexpr.incDeBruijnVar(1,0)).incDeBruijnVar(-1,0);
 }
 
 import integration;

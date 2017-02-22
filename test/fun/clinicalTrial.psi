@@ -20,6 +20,6 @@ def main(){
 
     isEffectiveP := FromMarginal(isEffective);
     observe(isEffective);
-    return (isEffectiveP,probIfTreated,probIfControl); // expected: (-2·probIfControl³·⅟17+-2·probIfControl·⅟17+3·probIfControl²·⅟17+probIfControl⁴·⅟34+⅟34)·(-41580000·probIfTreated+41580000)·(δ[-isEffectiveP+1]·⅟1800+δ[-isEffectiveP]·⅟5544)·[-1+probIfControl≤0]·[-1+probIfTreated≤0]·[-probIfControl≤0]·[-probIfTreated≤0]·probIfControl·probIfTreated⁴
+    return (isEffectiveP,probIfTreated,probIfControl); // expected: (-20790000·probIfTreated·⅟17+20790000·⅟17)·(-4·probIfControl+-4·probIfControl³+1+6·probIfControl²+probIfControl⁴)·(δ[-isEffectiveP+1]·⅟1800+δ[-isEffectiveP]·⅟5544)·[-1+probIfControl≤0]·[-1+probIfTreated≤0]·[-probIfControl≤0]·[-probIfTreated≤0]·probIfControl·probIfTreated⁴
     // TODO: keep polynomial in factored form
 }
