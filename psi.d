@@ -164,6 +164,8 @@ int main(string[] args){
 
 version=TEST;
 void test(){
+	import dparse,type,dexpr;
+	//writeln("∫dx [0≤x]·[x≤1]".dParse.simplify(one));
 	//writeln(dDiff("x".dVar,"x/(x^2-y^2)^(1/2)".dParse).simplify(one)); // TODO: Fix?
 	/+//auto v="x".dVar;
 	//writeln(dInt(v,dE.dPow(2.dℤ.dMult(3.dℤ.dPlus(3.dℤ).dPlus(3.dℤ))).dPow(v.dPlus(v))));
@@ -279,7 +281,6 @@ void test(){
 	writeln(dInt(y,dInt(x,e3)));*/ +/
 	/*import dparse;
 	  writeln("((x₃)²)".dParse);*/
-	import dparse,type;
 	//writeln("⅟√1̅0̅".dParse);
 	//writeln("e^((x₃·⅟2+⅟6)²·3·⅟5+-11·⅟12+-x₃²·⅟4+x₃·⅟2)·⅟√1̅0̅·⅟√π̅".dParse);
 	//writeln("∫dξ₁δ[-ξ₁·⅟2+1]".dParse);

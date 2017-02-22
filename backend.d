@@ -136,7 +136,7 @@ void matlabPlot(string expression,string variable){
 	//writeln(input.readEnd.readln());
 	//foreach(i;0..100) writeln(error.readEnd.readln());
 }
-void gnuplot(DExpr expr,SetX!DVar varset,string range="[-1:3]",string outfile=""){
+void gnuplot(DExpr expr,SetX!DNVar varset,string range="[-1:3]",string outfile=""){
 	DVar[] vars;
 	foreach(var;varset) vars~=var;
 	assert(vars.length==1||vars.length==2);

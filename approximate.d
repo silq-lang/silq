@@ -220,10 +220,8 @@ DExpr approximate(DExpr e){
 				return dDelta(r);
 		}
 		if(auto intg=cast(DInt)e){
-			auto tmpvar=freshVar(); // TODO: get rid of this!
-			auto intExpr=unbind(intg,tmpvar);
-			if(auto r=doIt(intExpr,true))
-				return dInt(tmpvar,r);
+			if(auto r=doIt(intg.expr,true))
+				return dInt(r);
 		}
 		if(necessary){
 			if(auto l=cast(DLog)e){

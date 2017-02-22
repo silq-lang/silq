@@ -1556,13 +1556,13 @@ bool definitelyReturns(FunctionDef fd){
 
 import dexpr;
 struct VarMapping{
-	DVar orig;
-	DVar tmp;
+	DNVar orig;
+	DNVar tmp;
 }
 struct SampleFromInfo{
 	bool error;
 	VarMapping[] retVars;
-	DVar[] paramVars;
+	DNVar[] paramVars;
 	DExpr newDist;	
 }
 
@@ -1581,7 +1581,7 @@ SampleFromInfo analyzeSampleFrom(CallExp ce,ErrorHandler err,Distribution dist=n
 		return SampleFromInfo(true);
 	}
 	VarMapping[] retVars;
-	DVar[] paramVars;
+	DNVar[] paramVars;
 	DExpr newDist;
 	import hashtable;
 	HSet!(string,(a,b)=>a==b,a=>typeid(string).getHash(&a)) names;
@@ -1597,7 +1597,8 @@ SampleFromInfo analyzeSampleFrom(CallExp ce,ErrorHandler err,Distribution dist=n
 				parser.next();
 				continue;
 			}
-			auto orig=parser.parseDVar();
+			auto orig=cast(DNVar)parser.parseDVar();
+			if(!orig) throw new Exception("TODO");
 			if(orig.name in names){
 				err.error(text("multiple variables of name \"",orig.name,"\""),args[0].loc);
 				return SampleFromInfo(true);
@@ -1626,7 +1627,7 @@ SampleFromInfo analyzeSampleFrom(CallExp ce,ErrorHandler err,Distribution dist=n
 				return SampleFromInfo(true);
 			}
 		}
-		newDist=newDist.substituteAll(retVars.map!(x=>x.orig).array,retVars.map!(x=>cast(DExpr)x.tmp).array);
+		newDist=newDist.substituteAll(retVars.map!(x=>cast(DVar)x.orig).array,retVars.map!(x=>cast(DExpr)x.tmp).array);
 	}
 	if(args.length!=1+paramVars.length){
 		err.error(text("expected ",paramVars.length," additional arguments to SampleFrom"),ce.loc);

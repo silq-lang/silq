@@ -572,7 +572,7 @@ private struct Analyzer{
 				else{ resty=[funty.cod]; isTuple=false; }
 				size_t nargs=funty.nargs;
 				auto fun=doIt(ce.e);
-				DVar[] results=iota(0,resty.length).map!(x=>dist.getTmpVar("__r")).array;
+				DNVar[] results=iota(0,resty.length).map!(x=>dist.getTmpVar("__r")).array;
 				auto summary=Distribution.fromDExpr(fun,nargs,results,isTuple,resty);
 				foreach(r;results) dist.freeVars.remove(r), dist.tmpVars.remove(r);
 				auto argty=funty.dom;
@@ -865,16 +865,16 @@ private struct Analyzer{
 	}
 
 	void assignTo(DExpr lhs,DExpr rhs,Expression ty,Location loc){
-		void assignVar(DVar var,DExpr rhs,Expression ty){
+		void assignVar(DNVar var,DExpr rhs,Expression ty){
 			if(var.name !in arrays){
 				dist.assign(var,rhs,ty);
 				trackDeterministic(var,rhs,ty);
 			}else err.error("reassigning array unsupported",loc);
 		}
-		if(auto var=cast(DVar)lhs){
+		if(auto var=cast(DNVar)lhs){
 			assignVar(var,rhs,ty);
 		}else if(auto idx=cast(DIndex)lhs){
-			if(auto id=cast(DVar)idx.e){
+			if(auto id=cast(DNVar)idx.e){
 				if(id.name in arrays){
 					err.error("unsupported",loc);
 					return;
@@ -903,7 +903,7 @@ private struct Analyzer{
 			if(auto id=cast(Identifier)idx.e){
 				if(id.name in arrays){
 					if(auto cidx=indexArray(idx)){
-						if(auto v=cast(DVar)cidx){
+						if(auto v=cast(DNVar)cidx){
 							dist.assign(v,rhs?rhs:zero,ty);
 							trackDeterministic(v,rhs,ty);
 						}else{
@@ -1095,8 +1095,8 @@ private struct Analyzer{
 		}else if(auto re=cast(ReturnExp)e){
 			auto odist=dist.dup;
 			odist.distribution=odist.error=zero; // code after return is unreachable
-			SetX!DVar vars;
-			DVar[] orderedVars;
+			SetX!DNVar vars;
+			DNVar[] orderedVars;
 			bool isTuple=true;
 			Expression[] returns;
 			dist.freeVar("r");
@@ -1107,7 +1107,7 @@ private struct Analyzer{
 					if(auto id=cast(Identifier)ret){ // TODO: this hack should be removed
 						if(id.name in arrays){
 							foreach(expr;arrays[id.name]){
-								if(auto var=cast(DVar)expr){
+								if(auto var=cast(DNVar)expr){
 									vars.insert(var);
 									orderedVars~=var;
 								}
@@ -1117,7 +1117,7 @@ private struct Analyzer{
 					}
 					auto exp=transformExp(ret);
 					if(!exp) exp=dTuple([]); // TODO: is there a better way?
-					DVar var=cast(DVar)exp;
+					DNVar var=cast(DNVar)exp;
 					if(var && !var.name.startsWith("__")){
 						if(var in vars||functionDef.context&&var.name==functionDef.contextName){
 							dist.freeVar(var.name);

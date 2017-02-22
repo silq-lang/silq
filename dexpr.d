@@ -171,10 +171,100 @@ abstract class DExpr{
 		override DExpr simplifyImpl(DExpr facts){ return this; }
 	}
 }
+
+// attributes
+import std.traits;
+struct subExpr{} struct binder{}
+alias subExprs(alias T) = getSymbolsByUDA!(T,subExpr);
+
+enum forEachSubExprImpl(string code)=mixin(X!q{
+	foreach(se;subExprs!(typeof(this))){
+		static if(is(typeof(x):DExpr)){
+			alias x=se;
+			@(code);
+		}else static if(is(typeof(x)==SetX!DExpr)){
+			foreach(x;se) @(code);
+		}
+	}
+});
+
+mixin template Visitors(){
+	override int forEachSubExpr(scope int delegate(DExpr) dg){
+		mixin(forEachSubExprImpl!"if(auto r=dg(x)) return r");
+		return 0;
+	}
+	override int freeVarsImpl(scope int delegate(DVar) dg){
+		static if(is(typeof(this):DVar)) return dg(this);
+		else{
+			mixin(forEachSubExprImpl!"if(auto r=x.freeVarsImpl(dg)) return r");
+			return 0;
+		}
+	}
+	override DExpr substitute(DVar var,DExpr e){
+		static if(is(typeof(this):DVar)) return this is var?e:this;
+		else{
+			alias This=typeof(this);
+			Q!(typeof(subExprs!This)) nsubs;
+			alias subs=subExprs!This;
+			foreach(i,sub;subs){
+				auto cvar=var,ce=e;
+				static if(hasUDA!(sub,binder)){
+					cvar=cvar.incDeBruijnVar(1,0);
+					ce=ce.incDeBruijnVar(1,0);
+				}
+				static if(is(typeof(x):DExpr)){
+					nsubs[i]=sub.substitute(cvar,ce);
+				}else static if(is(typeof(x)==SetX!DExpr)){
+						assert(is(typeof(this)==DMult)||is(typeof(this)==DPlus));
+						if(auto evar=cast(DVar)e){ // TODO: make this unnecessary, this is a hack to improve performance
+							if(!hasFreeVar(evar)){
+								foreach(f;factors) nsubs[i].insert(f.substitute(var,e));
+								continue;
+							}
+						}
+						foreach(f;factors) typeof(this).insert(res,f.substitute(var,e));
+					}else nsubs[i]=sub;
+				if(nsubs==q(subs)) return this;
+				return mixin(lowerf(typeof(this).stringof))(nsubs.expand);
+			}
+		}
+	}
+	override typeof(this) incDeBruijnVar(int di,int bound){
+		static if(is(typeof(this)==DDeBruijnVar)){
+			if(i<=bound) return this;
+			assert((i<=bound) == (i+di <= bound)); // (otherwise bound variables can be captured);
+			return dDeBruijnVar(i+di);
+		}else{
+			alias This=typeof(this);
+			Q!(typeof(subExprs!This)) nsubs;
+			alias subs=subExprs!This;
+			foreach(i,sub;subs){
+				auto cdi=di,cbound=bound;
+				static if(hasUDA!(sub,binder)){
+					cbound++;
+				}
+				static if(is(typeof(x):DExpr)){
+					nsubs[i]=sub.incDeBruijnVar(di,bound);
+				}else static if(is(typeof(x)==SetX!DExpr)){
+						assert(is(typeof(this)==DMult)||is(typeof(this)==DPlus));
+						if(auto evar=cast(DVar)e){ // TODO: make this unnecessary, this is a hack to improve performance
+							if(!hasFreeVar(evar)){
+								foreach(f;sub[i]) nsubs[i].insert(f.incDeBruijnVar(di,bound));
+								continue;
+							}
+						}
+						foreach(f;sub) typeof(this).insert(res,f.substitute(var,e));
+					}else nsubs[i]=sub;
+				if(nsubs==q(sub)) return this;
+				return mixin(lowerf(typeof(this).stringof))(nsubs.expand);
+			}
+		}
+	}
+}
+
+
 alias DExprSet=SetX!DExpr;
-class DVar: DExpr{
-	string name;
-	private this(string name){ this.name=name; }
+abstract class DVar: DExpr{
 	static string fixName(string name,Format formatting){
 		if(formatting==Format.gnuplot||formatting==Format.sympy||formatting==Format.matlab||formatting==Format.mathematica){
 			return asciify(name);
@@ -187,16 +277,16 @@ class DVar: DExpr{
 		}
 		return name;
 	}
+	override abstract DVar incDeBruijnVar(int di,int bound);
+}
+class DNVar: DVar{ // named variables
+	@subExpr string name;
+	/+private+/ this(string name){ this.name=name; } // TODO: add private again after broken deprecation warning is fixed
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		return fixName(name,formatting);
 	}
-
-	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; }
-	override int freeVarsImpl(scope int delegate(DVar) dg){ return dg(this); }
-	override DExpr substitute(DVar var,DExpr e){ return this is var?e:this; }
-	override DVar incDeBruijnVar(int di,int free){ return this; }
+	mixin Visitors;
 	override DExpr simplifyImpl(DExpr facts){
-		if(cast(DDeBruijnVar)this||cast(DTmpDeBruijnVar)this) return this;
 		// TODO: make more efficient! (e.g. keep hash table in product expressions)
 		foreach(f;facts.factors){
 			if(auto ivr=cast(DIvr)f){
@@ -214,25 +304,25 @@ class DVar: DExpr{
 		return this;
 	}
 }
-DVar[string] dVarCache; // TODO: caching desirable? (also need to update parser if not)
-DVar dVar(string name){
+DNVar[string] dVarCache; // TODO: caching desirable? (also need to update parser if not)
+DNVar dNVar(string name){
 	if(name in dVarCache) return dVarCache[name];
-	return dVarCache[name]=new DVar(name);
+	return dVarCache[name]=new DNVar(name);
 }
+alias dVar=dNVar;
 
 class DDeBruijnVar: DVar{
-	int i;
-	private this(int i)in{assert(i>=1);}body{ this.i=i; super("db"~to!string(i)); }
+	@subExpr int i;
+	/+private+/ this(int i)in{assert(i>=1);}body{ this.i=i; }
 	static string displayName(int i,Format formatting,int binders){
-		return fixName("ξ"~lowNum(1+binders-i),formatting);
+		return DVar.fixName("ξ"~lowNum(1+binders-i),formatting);
 	}
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		return displayName(i,formatting,binders);
 	}
-	override DDeBruijnVar incDeBruijnVar(int di,int bound){
-		if(i<=bound) return this;
-		assert((i<=bound) == (i+di <= bound)); // (otherwise bound variables can be captured);
-		return dDeBruijnVar(i+di);
+	mixin Visitors;
+	override DExpr simplifyImpl(DExpr facts){
+		return this;
 	}
 }
 DDeBruijnVar[int] uniqueMapBound;
@@ -253,7 +343,7 @@ DExpr substituteAll(DExpr e,DVar[] from, DExpr[] to)in{assert(from.length==to.le
 }
 
 
-class DTmpDeBruijnVar: DVar{
+class DTmpDeBruijnVar: DNVar{
 	int i;
 	static int curi=0;
 	this(string name){ super(name); i=curi++; }
@@ -262,13 +352,16 @@ class DTmpDeBruijnVar: DVar{
 			return name~(cast(void*)this).to!string;
 		return super.toStringImpl(formatting,prec,binders);
 	}
+	override DExpr simplifyImpl(DExpr facts){
+		return this;
+	}
 } // TODO: get rid of this!
 
-DTmpDeBruijnVar freshVar(string name="tmp"){ return new DTmpDeBruijnVar(name); } // TODO: get rid of this!
+DNVar freshVar(string name="tmp"){ return new DTmpDeBruijnVar(name); } // TODO: get rid of this!
 
 
 DVar theDε;
-DVar dε(){ return theDε?theDε:(theDε=new DVar("ε")); }
+DVar dε(){ return theDε?theDε:(theDε=new DNVar("ε")); }
 
 
 class Dℤ: DExpr{
@@ -2239,7 +2332,7 @@ DVar getCanonicalFreeVar(DExpr e){
 	DVar r=null;
 	bool isMoreCanonicalThan(DVar a,DVar b){
 		if(b is null) return true;
-		return a.name<b.name;
+		return a.toString()<b.toString();
 	}
 	foreach(v;e.freeVars)
 		if(isMoreCanonicalThan(v,r)) r=v;
@@ -2530,6 +2623,7 @@ static ~this(){
 static DExpr unbind(DExpr expr, DExpr nexpr){
 	auto tmp=freshVar(); // TODO: get rid of this!
 	return expr.substitute(dDeBruijnVar(1),tmp).incDeBruijnVar(-1,0).substitute(tmp,nexpr);
+	//return expr.incDeBruijnVar(-1,0).substitute(dDeBruijnVar(0),nexpr);
 }
 
 import integration;

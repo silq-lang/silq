@@ -177,15 +177,15 @@ Cond[] diracCond(DExpr e){
 class Distribution{
 	int[string] vbl;
 	this(){ distribution=one; error=zero; vbl["__dummy"]=0; }
-	SetX!DVar freeVars;
+	SetX!DNVar freeVars;
 	DExpr distribution;
 	DExpr error;
 
-	SetX!DVar tmpVars;
+	SetX!DNVar tmpVars;
 	void marginalizeTemporaries(){
 		foreach(v;tmpVars.dup) marginalize(v);
 	}
-	void marginalizeLocals(Distribution enclosing,scope void delegate(DVar) hook=null){
+	void marginalizeLocals(Distribution enclosing,scope void delegate(DNVar) hook=null){
 		foreach(x;this.freeVars.dup){
 			if(x in enclosing.freeVars) continue;
 			if(hook) hook(x);
@@ -215,7 +215,7 @@ class Distribution{
 
 	Distribution orderedJoin(Distribution b)in{assert(freeVarsOrdered && b.freeVarsOrdered);}body{
 		auto r=dup();
-		auto bdist = b.distribution.substituteAll(b.orderedFreeVars,cast(DExpr[])orderedFreeVars);
+		auto bdist = b.distribution.substituteAll(cast(DVar[])b.orderedFreeVars,cast(DExpr[])orderedFreeVars);
 		r.distribution=r.distribution+bdist;
 		r.error=r.error+b.error;
 		assert(r.q is b.q && r.nargs is b.nargs);
@@ -244,7 +244,7 @@ class Distribution{
 		return r;
 	}
 
-	DVar q;
+	DNVar q;
 	size_t nargs;
 
 	void addArgs(DExpr[] args,bool isTuple,DExpr ctx)in{assert(!q);}body{
@@ -278,14 +278,14 @@ class Distribution{
 		error=doIt(error).simplify(one);
 	}
 	
-	DVar declareVar(string name){
+	DNVar declareVar(string name){
 		auto v=dVar(name);
 		if(v in freeVars) return null;
 		freeVars.insert(v);
 		return v;
 	}
-	DVar getVar(string name){
-		DVar v;
+	DNVar getVar(string name){
+		DNVar v;
 		while(!v){ // TODO: fix more elegantly!
 			int suffix=++vbl[name];
 			string nn=name~suffix.lowNum;
@@ -297,7 +297,7 @@ class Distribution{
 		while(name in vbl&&vbl[name]!=0&&dVar(name~vbl[name].lowNum)!in freeVars)
 			--vbl[name];
 	}
-	DVar getTmpVar(string name){
+	DNVar getTmpVar(string name){
 		auto v=getVar(name);
 		tmpVars.insert(v);
 		return v;
@@ -314,11 +314,11 @@ class Distribution{
 		distribution=distribution*cond;
 	}
 	void distribute(DExpr pdf){ distribution=distribution*pdf; }
-	void initialize(DVar var,DExpr exp,Expression ty){
+	void initialize(DNVar var,DExpr exp,Expression ty){
 		assert(!distribution.hasFreeVar(var));
 		distribute(dDelta(var,exp,ty));
 	}
-	void assign(DVar var,DExpr exp,Expression ty){
+	void assign(DNVar var,DExpr exp,Expression ty){
 		if(distribution is zero) return;
 		// assert(distribution.hasFreeVar(var)); // ∫dx0
 		auto nvar=getVar(var.name);
@@ -327,7 +327,7 @@ class Distribution{
 		distribute(dDelta(var,exp,ty));
 		marginalize(nvar);
 	}
-	void marginalize(DVar var)in{assert(var in freeVars); }body{
+	void marginalize(DNVar var)in{assert(var in freeVars); }body{
 		//assert(distribution.hasFreeVar(var),text(distribution," ",var));
 		//writeln("marginalizing: ",var,"\ndistribution: ",distribution,"\nmarginalized: ",dInt(var,distribution));
 		distribution=dIntSmp(var,distribution,one);
@@ -350,11 +350,11 @@ class Distribution{
 		DExpr rdist=q.distribution;
 		DExpr rerr=q.error;
 		auto context=freeVars.dup;
-		DVar[] r;
+		DNVar[] r;
 		foreach(_;q.orderedFreeVars)
 			r~=getTmpVar("__r");
-		rdist=rdist.substituteAll(q.orderedFreeVars,cast(DExpr[])r);
-		rerr=rerr.substituteAll(q.orderedFreeVars,cast(DExpr[])r);
+		rdist=rdist.substituteAll(cast(DVar[])q.orderedFreeVars,cast(DExpr[])r);
+		rerr=rerr.substituteAll(cast(DVar[])q.orderedFreeVars,cast(DExpr[])r);
 		auto oldDist=distribution;
 		auto db1=dDeBruijnVar(1);
 		auto argDist=dLambda(dDelta(db1,arg,ty));
@@ -374,9 +374,9 @@ class Distribution{
 	}
 
 	bool freeVarsOrdered=false;
-	DVar[] orderedFreeVars;
+	DNVar[] orderedFreeVars;
 	bool isTuple=true;
-	void orderFreeVars(DVar[] orderedFreeVars,bool isTuple)in{
+	void orderFreeVars(DNVar[] orderedFreeVars,bool isTuple)in{
 		assert(!freeVarsOrdered);
 	   /+assert(orderedFreeVars.length==freeVars.length);
 		foreach(v;orderedFreeVars)
@@ -416,7 +416,7 @@ class Distribution{
 		return dLambda(bdy);
 	}
 	
-	static Distribution fromDExpr(DExpr dexpr,size_t nargs,DVar[] orderedFreeVars,bool isTuple,Expression[] types){
+	static Distribution fromDExpr(DExpr dexpr,size_t nargs,DNVar[] orderedFreeVars,bool isTuple,Expression[] types){
 		auto r=new Distribution();
 		auto db1=dDeBruijnVar(1);
 		dexpr=dexpr.incDeBruijnVar(1,0);
@@ -445,7 +445,7 @@ class Distribution{
 			errstr="Pr_error := ";
 		}
 		string r=initial;
-		DVar[] vars;
+		DNVar[] vars;
 		if(freeVarsOrdered) vars=orderedFreeVars;
 		else vars=freeVars.array;
 		foreach(v;vars) r~=(formatting==Format.mathematica?v.toString(formatting)~"_":v.toString(formatting))~",";
