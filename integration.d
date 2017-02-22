@@ -353,8 +353,9 @@ AntiD tryGetAntiderivative(DExpr nonIvrs,DExpr ivrs){
 			if(a && b){
 				if(auto n=cast(Dℤ)p.operands[1]){
 					DExpr dInGamma(DExpr a,DExpr z){
-						auto t=freshVar(); // TODO: get rid of this
-						return dIntSmp(t,t^^(a-1)*dE^^(-t)*dIvr(DIvr.type.leZ,z-t),one);
+						a=a.incDeBruijnVar(1,0), z=z.incDeBruijnVar(1,0);
+						auto t=dDeBruijnVar(1);
+						return dIntSmp(t^^(a-1)*dE^^(-t)*dIvr(DIvr.type.leZ,z-t),one);
 					}
 					if(n.c>0)
 						return AntiD(dIvr(DIvr.Type.neqZ,a*var+b)*mone^^n*dInGamma(n+1,-dLog(a*var+b))/a);
