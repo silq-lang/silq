@@ -199,7 +199,7 @@ struct Dist{
 		auto lambda=dLambda(arg);
 		static int unique=0;
 		auto tmp="`uniformInt"~lowNum(++unique);
-		addTmpVar(tmp);
+		r.addTmpVar(tmp);
 		foreach(k,v;state){
 			auto ab=dApply(lambda,k).simplify(one);
 			auto a=ab[0.dℤ].simplify(one), b=ab[1.dℤ].simplify(one);
