@@ -990,6 +990,20 @@ struct Interpreter{
 					// TODO: marginalize locals
 				}
 			}
+		}else if(auto we=cast(WhileExp)e){
+			auto intp=Interpreter(functionDef,we.bdy,distInit(),hasFrame);
+			intp.cur.state=cur.state;
+			cur.state=typeof(cur.state).init;
+			while(intp.cur.state.length){
+				auto rcond = intp.runExp(we.cond).simplify(one);
+				auto cond = dLambda(dIvr(DIvr.Type.neqZ,rcond).simplify(one));
+				auto ncond = dLambda(dIvr(DIvr.Type.eqZ,rcond).simplify(one));
+				cur += intp.cur.observe(ncond);
+				intp.cur = intp.cur.observe(cond);
+				intp.cur.error = zero;
+				intp.run(retDist);
+				// TODO: marginalize locals
+			}
 		}else if(auto re=cast(ReturnExp)e){
 			auto value = runExp(re.e);
 			if(functionDef.context&&functionDef.contextName.startsWith("this")){
