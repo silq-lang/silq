@@ -4221,13 +4221,15 @@ bool hasFreeVars(DExpr e){ foreach(x;e.freeVars) return true; return false; }
 // derived functions
 
 DExpr dGamma(DExpr t){
-	auto x=freshVar(); // TODO: get rid of this
-	return dInt(x,x^^(t-1)*dE^^(-x)*dIvr(DIvr.Type.leZ,-x));
+	t=t.incDeBruijnVar(1,0);
+	auto x=dDeBruijnVar(1);
+	return dInt(x^^(t-1)*dE^^(-x)*dIvr(DIvr.Type.leZ,-x));
 }
 
 DExpr dBeta(DExpr x,DExpr y){ // constraints: x>0 and y>0
-	auto t=freshVar(); // TODO: get rid of this
-	return dInt(t,dBounded!"[]"(t,zero,one)*t^^(x-1)*(1-t)^^(y-1));
+	x=x.incDeBruijnVar(1,0), y=y.incDeBruijnVar(1,0);
+	auto t=dDeBruijnVar(1);
+	return dInt(dBounded!"[]"(t,zero,one)*t^^(x-1)*(1-t)^^(y-1));
 }
 
 
