@@ -78,8 +78,10 @@ Cond[] flipCond(DExpr p){
 }
 
 DExpr uniformIntPDFNnorm(DVar var,DExpr a,DExpr b){
-	auto tmp=freshVar(); // TODO: get rid of this!
-	return dSumSmp(tmp,dBounded!"[]"(tmp,a,b)*dDelta(var-tmp),one);
+	var=var.incDeBruijnVar(1,0);
+	a=a.incDeBruijnVar(1,0), b=b.incDeBruijnVar(1,0);
+	auto x=dDeBruijnVar(1);
+	return dSumSmp(dBounded!"[]"(x,a,b)*dDelta(var-x),one);
 }
 
 DExpr uniformIntPDF(DVar var,DExpr a,DExpr b){
@@ -87,15 +89,17 @@ DExpr uniformIntPDF(DVar var,DExpr a,DExpr b){
 	return nnorm/dIntSmp(var,nnorm,one);
 }
 Cond[] uniformIntCond(DExpr a,DExpr b){
-	auto tmp=freshVar(); // TODO: get rid of this!
-	auto nnorm=uniformIntPDFNnorm(tmp,a,b);
-	auto norm=dIntSmp(tmp,nnorm,one);
+	a=a.incDeBruijnVar(1,0), b=b.incDeBruijnVar(1,0);
+	auto x=dDeBruijnVar(1); // TODO: get rid of this!
+	auto nnorm=uniformIntPDFNnorm(x,a,b);
+	auto norm=dIntSmp(nnorm,one);
 	return [Cond(dIvr(DIvr.Type.neqZ,norm),"no integers in range")];
 }
 
 DExpr poissonPDF(DVar var,DExpr λ){
-	auto tmp=freshVar();
-	return dE^^-λ*dSumSmp(tmp,dIvr(DIvr.Type.leZ,-tmp)*dDelta(var-tmp)*λ^^tmp/dGamma(tmp+1),one);
+	var=var.incDeBruijnVar(1,0), λ=λ.incDeBruijnVar(1,0);
+	auto x=dDeBruijnVar(1);
+	return dE^^-λ*dSumSmp(dIvr(DIvr.Type.leZ,-x)*dDelta(var-x)*λ^^x/dGamma(x+1),one);
 }
 Cond[] poissonCond(DExpr λ){
 	return [Cond(dIvr(DIvr.Type.lZ,-λ),"λ must be positive")];
@@ -155,11 +159,13 @@ Cond[] weibullCond(DExpr λ,DExpr k){
 }
 
 DExpr categoricalPDF(DVar var,DExpr p){
+	var=var.incDeBruijnVar(1,0), p=p.incDeBruijnVar(1,0);
 	auto dbv=dDeBruijnVar(1);
 	auto nnorm=dSum(dBounded!"[)"(dbv,zero,dField(p,"length"))*p[dbv]*dDelta(var-dbv));
-	return nnorm;///dIntSmp(tmp,nnorm);
+	return nnorm;///dIntSmp(nnorm);
 }
 Cond[] categoricalCond(DExpr p){
+	p=p.incDeBruijnVar(1,0);
 	auto dbv=dDeBruijnVar(1);
 	return [Cond(dIvr(DIvr.Type.eqZ,dSum(dBounded!"[)"(dbv,zero,dField(p,"length")*dIvr(DIvr.Type.lZ,p[dbv])))),"probability of category should be non-negative"),
 	        Cond(dIvr(DIvr.Type.eqZ,dSum(dBounded!"[)"(dbv,zero,dField(p,"length"))*p[dbv])-1),"probabilities should sum up to 1")];
@@ -357,7 +363,7 @@ class Distribution{
 		rerr=rerr.substituteAll(cast(DVar[])q.orderedFreeVars,cast(DExpr[])r);
 		auto oldDist=distribution;
 		auto db1=dDeBruijnVar(1);
-		auto argDist=dLambda(dDelta(db1,arg,ty));
+		auto argDist=dLambda(dDelta(db1,arg.incDeBruijnVar(1,0),ty));
 		distribution = rdist.substitute(q.q,argDist)*oldDist;
 		auto nerror = rerr.substitute(q.q,argDist)*oldDist;
 		//dw("+--\n",oldDist,"\n",rdist,"\n",distribution,"\n--+");
@@ -395,7 +401,7 @@ class Distribution{
 		auto db1=dDeBruijnVar(1);
 		auto vars=orderedFreeVars;
 		assert(isTuple||vars.length==1);
-		auto values=isTuple&&!stripContext?dTuple(cast(DExpr[])vars):vars[0];
+		auto values=(isTuple&&!stripContext?dTuple(cast(DExpr[])vars):vars[0]).incDeBruijnVar(1,0);
 		auto r=dDiscDelta(db1,dRecord(["tag":one,"val":values]))*distribution.incDeBruijnVar(1,0);
 		foreach(v;vars) r=dInt(v,r);
 		r=r+dDiscDelta(db1,dRecord(["tag":zero]))*error;
