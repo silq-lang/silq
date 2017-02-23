@@ -2296,8 +2296,8 @@ DExpr dIvr(DIvr.Type type,DExpr e){
 }
 
 class DDelta: DExpr{ // Dirac delta, for ℝ
-	DExpr e;
-	private this(DExpr e){ this.e=e; }
+	@subExpr DExpr e;
+	/+private+/ this(DExpr e){ this.e=e; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		if(formatting==Format.mathematica){
 			return text("DiracDelta[",e.toStringImpl(formatting,Precedence.none,binders),"]");
@@ -2314,10 +2314,7 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 		}
 	}
 
-	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; } // TODO: ok?
-	override int freeVarsImpl(scope int delegate(DVar) dg){ return e.freeVarsImpl(dg); }
-	override DExpr substitute(DVar var,DExpr exp){ return dDelta(e.substitute(var,exp)); }
-	override DExpr incDeBruijnVar(int di,int bound){ return dDelta(e.incDeBruijnVar(di,bound)); }
+	mixin Visitors;
 
 	static DExpr constructHook(DExpr e){
 		return null;
