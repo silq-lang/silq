@@ -390,6 +390,22 @@ struct Dist{
 		this=r;
 		return dField(db1,tmp);
 	}
+	DExpr distError(DExpr dist){
+		auto r=distInit;
+		r.copyNonState(this);
+		auto d=dLambda(dist);
+		static uniq=0;
+		string tmp="`error'"~lowNum(++uniq);
+		r.addTmpVar(tmp);
+		foreach(k,v;state){
+			auto dbf=cast(DBFDist)dApply(d,k).simplify(one);
+			assert(!!dbf,text(dbf," ",d));
+			DExpr error=dbf.dist.error;
+			r.add(dRUpdate(k,tmp,error).simplify(one),v);
+		}
+		this=r;
+		return dField(db1,tmp);		
+	}
 	void copyNonState(ref Dist rhs){
 		this.tupleof[1..$]=rhs.tupleof[1..$];
 	}
@@ -707,6 +723,8 @@ struct Interpreter{
 											assert(0,text("TODO: ",fe));
 										case "expectation":
 											return cur.distExpectation(thisExp);
+										case "error":
+											return cur.distError(thisExp);
 										default: assert(0,text("TODO: ",fe));
 									}
 								}
