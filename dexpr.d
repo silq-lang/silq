@@ -1236,7 +1236,7 @@ class DPow: DBinaryOp{
 		return super.toStringImpl(formatting,prec,binders);
 	}
 	mixin Visitors;
-	private static DExpr staticSimplify(DExpr e1,DExpr e2,DExpr facts=one){
+	/+private+/ static DExpr staticSimplify(DExpr e1,DExpr e2,DExpr facts=one){
 		auto ne1=e1.simplify(facts);
 		auto ne2=e2.simplify(facts);
 		if(ne1!is e1||ne2!is e2) return dPow(ne1,ne2).simplify(facts);
@@ -1483,7 +1483,7 @@ DExpr[2] asLinearFunctionIn(DExpr e,DVar v){ // returns [b,a] if e=av+b
 
 
 abstract class DUnaryOp: DOp{
-	DExpr operand;
+	@subExpr DExpr operand;
 	protected mixin template Constructor(){ private this(DExpr e){ operand=e; } }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		if(formatting==Format.lisp)
@@ -2082,8 +2082,8 @@ class DIvr: DExpr{ // iverson brackets
 		lZ,
 		leZ,
 	}
-	Type type;
-	DExpr e;
+	@subExpr Type type;
+	@subExpr DExpr e;
 	this(Type type,DExpr e){
 		this.type=type; this.e=e;
 		foreach(d;e.allOf!DDelta) assert(0,text(e));
@@ -2093,10 +2093,7 @@ class DIvr: DExpr{ // iverson brackets
 		}*/
 	}
 
-	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; } // TODO: correct?
-	override int freeVarsImpl(scope int delegate(DVar) dg){ return e.freeVarsImpl(dg); }
-	override DExpr substitute(DVar var,DExpr exp){ return dIvr(type,e.substitute(var,exp)); }
-	override DExpr incDeBruijnVar(int di,int bound){ return dIvr(type,e.incDeBruijnVar(di,bound)); }
+	mixin Visitors;
 
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		if(formatting==Format.lisp)

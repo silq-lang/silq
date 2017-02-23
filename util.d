@@ -441,6 +441,8 @@ struct TupleX(T...){
 			auto r=b;
 			foreach(ref y;x) r=getHash(y,r);
 			return r;
+		}else static if(is(typeof(cast(hash_t)x))){
+			return FNV(cast(hash_t)x,b);
 		}else static assert(0,T.stringof);
 	}
 	hash_t toHash(){
