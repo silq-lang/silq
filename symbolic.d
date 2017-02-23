@@ -273,6 +273,15 @@ private struct Analyzer{
 											idist.initialize(r,expct/total,ℝ);
 											idist.orderFreeVars([r],false);
 											return idist.toDExpr().simplify(one);
+										case "error":
+											auto d="`d".dVar,x="`x".dVar;
+											auto error=dInt(d,dDistApply(distr,d)*dIvr(DIvr.Type.eqZ,dField(d,"tag")));
+											auto idist=new Distribution();
+											idist.addArgs([],true,null);
+											auto r=idist.declareVar("`r");
+											idist.initialize(r,error,ℝ);
+											idist.orderFreeVars([r],false);
+											return idist.toDExpr().simplify(one);
 										default: assert(0);
 									}
 								}

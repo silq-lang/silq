@@ -351,7 +351,7 @@ bool isBuiltIn(FieldExp fe)in{
 				assert(ce.arg.type == typeTy);
 				auto tt=ce.arg;
 				switch(fe.f.name){
-					case "then","sample","expectation":
+					case "then","sample","expectation","error":
 						return true;
 					default: return false;
 				}
@@ -389,6 +389,9 @@ Expression builtIn(FieldExp fe,Scope sc)in{
 					case "expectation":
 						if(tt != ℝ) return null;
 						t=funTy(unit,ℝ,false,true);
+						break;
+					case "error":
+						t=funTy(unit,ℝ,false,false);
 						break;
 					default: return null;
 				}
