@@ -178,7 +178,9 @@ struct subExpr{} struct binder{} struct isAbstract{}
 alias subExprs(alias T) = getSymbolsByUDA!(T,subExpr);
 
 enum forEachSubExprImpl(string code)=mixin(X!q{
-	foreach(se;subExprs!(typeof(this))){
+	alias This=typeof(this);
+	alias subs=subExprs!This;
+	foreach(i,se;subs){
 		static if(is(typeof(se):DExpr)){
 			alias x=se;
 			@(code);
@@ -195,13 +197,18 @@ enum IsAbstract(T) = hasUDA!(T,isAbstract);
 mixin template Visitors(){
 	static if(!IsAbstract!(typeof(this))):
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		mixin(forEachSubExprImpl!"if(auto r=dg(x)) return r");
+		static if(!(is(typeof(this)==DInt)||is(typeof(this)==DDelta)||is(typeof(this)==DDiscDelta)))
+			mixin(forEachSubExprImpl!"if(auto r=dg(x)) return r");
 		return 0;
 	}
 	override int freeVarsImpl(scope int delegate(DVar) dg){
 		static if(is(typeof(this):DVar)) return dg(this);
 		else{
-			mixin(forEachSubExprImpl!"if(auto r=x.freeVarsImpl(dg)) return r");
+			mixin(forEachSubExprImpl!q{{
+				static if(hasUDA!(subs[i],binder)){
+					if(auto r=x.freeVarsImpl(v=>v is dDeBruijnVar(1)?0:dg(v.incDeBruijnVar(-1,0)))) return r;
+				}else{ if(auto r=x.freeVarsImpl(dg)) return r; }
+			}});
 			return 0;
 		}
 	}
@@ -213,7 +220,7 @@ mixin template Visitors(){
 			alias subs=subExprs!This;
 			foreach(i,sub;subs){
 				auto cvar=var,ce=e;
-				static if(hasUDA!(sub,binder)){
+				static if(hasUDA!(subs[i],binder)){
 					cvar=cvar.incDeBruijnVar(1,0);
 					ce=ce.incDeBruijnVar(1,0);
 				}
@@ -222,14 +229,14 @@ mixin template Visitors(){
 				}else static if(is(typeof(sub)==SetX!DExpr)){
 					if(auto evar=cast(DVar)e){ // TODO: make this unnecessary, this is a hack to improve performance
 						if(!hasFreeVar(evar)){
-							foreach(f;sub) nsubs[i].insert(f.substitute(var,e));
+							foreach(f;sub) nsubs[i].insert(f.substitute(cvar,ce));
 							continue;
 						}
 					}
-					foreach(f;sub) typeof(this).insert(nsubs[i],f.substitute(var,e));
+					foreach(f;sub) typeof(this).insert(nsubs[i],f.substitute(cvar,ce));
 				}else static if(is(typeof(sub)==DExpr[])||is(typeof(sub)==DExpr[2])){
 					nsubs[i]=sub.dup;
-					foreach(ref x;nsubs[i]) x=x.substitute(var,e);
+					foreach(ref x;nsubs[i]) x=x.substitute(cvar,ce);
 				}else nsubs[i]=sub;
 			}
 			if(nsubs==q(subs)) return this;
@@ -247,16 +254,16 @@ mixin template Visitors(){
 			alias subs=subExprs!This;
 			foreach(i,sub;subs){
 				auto cdi=di,cbound=bound;
-				static if(hasUDA!(sub,binder)){
+				static if(hasUDA!(subs[i],binder)){
 					cbound++;
 				}
 				static if(is(typeof(sub):DExpr)){
-					nsubs[i]=sub.incDeBruijnVar(di,bound);
+					nsubs[i]=sub.incDeBruijnVar(cdi,cbound);
 				}else static if(is(typeof(sub)==SetX!DExpr)){
-					foreach(f;sub) nsubs[i].insert(f.incDeBruijnVar(di,bound));
+					foreach(f;sub) nsubs[i].insert(f.incDeBruijnVar(cdi,cbound));
 				}else static if(is(typeof(sub)==DExpr[])||is(typeof(sub)==DExpr[2])){
 					nsubs[i]=sub.dup;
-					foreach(ref x;nsubs[i]) x=x.incDeBruijnVar(di,bound);
+					foreach(ref x;nsubs[i]) x=x.incDeBruijnVar(cdi,cbound);
 				}else nsubs[i]=sub;
 			}
 			if(nsubs==q(subs)) return this;
@@ -2552,8 +2559,8 @@ static DExpr unbind(DExpr expr, DExpr nexpr){
 
 import integration;
 class DInt: DOp{
-	DExpr expr;
-	private this(DExpr expr){ this.expr=expr; }
+	@subExpr @binder DExpr expr;
+	/+private+/ this(DExpr expr){ this.expr=expr; }
 	final DExpr getExpr(DExpr e){ return unbind(expr,e); }
 	override @property Precedence precedence(){ return Precedence.intg; }
 	override @property string symbol(Format formatting,int binders){ return "∫"; }
@@ -2612,18 +2619,7 @@ class DInt: DOp{
 		return r?r:this;
 	}
 
-	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		return 0;
-	}
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		return expr.freeVarsImpl(v=>v is dDeBruijnVar(1)?0:dg(v.incDeBruijnVar(-1,0)));
-	}
-	override DExpr substitute(DVar var,DExpr e){
-		return dInt(expr.substitute(var.incDeBruijnVar(1,0),e.incDeBruijnVar(1,0)));
-	}
-	override DExpr incDeBruijnVar(int di,int bound){
-		return dInt(expr.incDeBruijnVar(di,bound+1));
-	}
+	mixin Visitors;
 }
 
 bool hasIntegrals(DExpr e){ return hasAny!DInt(e); }
