@@ -182,7 +182,7 @@ enum forEachSubExprImpl(string code)=mixin(X!q{
 		static if(is(typeof(se):DExpr)){
 			alias x=se;
 			@(code);
-		}else static if(is(typeof(se)==SetX!DExpr)||is(typeof(se)==DExpr[])){
+		}else static if(is(typeof(se)==SetX!DExpr)||is(typeof(se)==DExpr[])||is(typeof(se)==DExpr[2])){
 			foreach(x;se) @(code);
 		}
 	}
@@ -220,21 +220,20 @@ mixin template Visitors(){
 				static if(is(typeof(sub):DExpr)){
 					nsubs[i]=sub.substitute(cvar,ce);
 				}else static if(is(typeof(sub)==SetX!DExpr)){
-					assert(is(typeof(this)==DMult)||is(typeof(this)==DPlus));
 					if(auto evar=cast(DVar)e){ // TODO: make this unnecessary, this is a hack to improve performance
 						if(!hasFreeVar(evar)){
-							foreach(f;factors) nsubs[i].insert(f.substitute(var,e));
+							foreach(f;sub) nsubs[i].insert(f.substitute(var,e));
 							continue;
 						}
 					}
-					foreach(f;factors) typeof(this).insert(res,f.substitute(var,e));
+					foreach(f;sub) typeof(this).insert(nsubs[i],f.substitute(var,e));
 				}else static if(is(typeof(sub)==DExpr[])){
 					nsubs[i]=sub.dup;
 					foreach(ref x;nsubs[i]) x=x.substitute(var,e);
 				}else nsubs[i]=sub;
-				if(nsubs==q(subs)) return this;
-				return mixin(lowerf(typeof(this).stringof))(nsubs.expand);
 			}
+			if(nsubs==q(subs)) return this;
+			return mixin(lowerf(typeof(this).stringof))(nsubs.expand);
 		}
 	}
 	override IncDeBruijnVarType!(typeof(this)) incDeBruijnVar(int di,int bound){
@@ -254,21 +253,14 @@ mixin template Visitors(){
 				static if(is(typeof(sub):DExpr)){
 					nsubs[i]=sub.incDeBruijnVar(di,bound);
 				}else static if(is(typeof(sub)==SetX!DExpr)){
-					assert(is(typeof(this)==DMult)||is(typeof(this)==DPlus));
-					if(auto evar=cast(DVar)e){ // TODO: make this unnecessary, this is a hack to improve performance
-						if(!hasFreeVar(evar)){
-							foreach(f;sub[i]) nsubs[i].insert(f.incDeBruijnVar(di,bound));
-							continue;
-						}
-					}
-					foreach(f;sub) typeof(this).insert(res,f.substitute(var,e));
+					foreach(f;sub) nsubs[i].insert(f.incDeBruijnVar(di,bound));
 				}else static if(is(typeof(sub)==DExpr[])){
 					nsubs[i]=sub.dup;
 					foreach(ref x;nsubs[i]) x=x.incDeBruijnVar(di,bound);
 				}else nsubs[i]=sub;
-				if(nsubs==q(sub)) return this;
-				return mixin(lowerf(typeof(this).stringof))(nsubs.expand);
 			}
+			if(nsubs==q(subs)) return this;
+			return mixin(lowerf(typeof(this).stringof))(nsubs.expand);
 		}
 	}
 }
@@ -509,9 +501,8 @@ abstract class DAssocOp: DOp{
 
 
 abstract class DCommutAssocOp: DOp{
-	DExprSet operands;
-	/+protected+/ mixin template Constructor(){ private this(DExprSet e)in{assert(e.length>1); }body{ operands=e; } } // TODO: add protected
-	override string toStringImpl(Format formatting,Precedence prec,int binders){
+	/+protected+/ mixin template Constructor(){ /+private+/ this(DExprSet e)in{assert(e.length>1); }body{ operands=e; } } // TODO: add protected/private
+	/+protected+/ final string toStringImplImpl(DExprSet operands,Format formatting,Precedence prec,int binders){
 		string r;
 		if(formatting==Format.lisp){
 			r~="(";
@@ -528,17 +519,10 @@ abstract class DCommutAssocOp: DOp{
 		foreach(o;ops) r~=symbol(formatting,binders)~o;
 		return addp(prec, r[symbol(formatting,binders).length..$]);
 	}
-	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		foreach(a;operands)
-			if(auto r=dg(a))
-				return r;
-		return 0;
-	}
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		foreach(a;operands)
-			if(auto r=a.freeVarsImpl(dg))
-				return r;
-		return 0;
+	mixin template ToString(){
+		override string toStringImpl(Format formatting,Precedence prec,int binders){
+			return toStringImplImpl(operands,formatting,prec,binders);
+		}
 	}
 }
 
@@ -614,21 +598,12 @@ string makeConstructorUnary(T)(){
 }
 
 class DPlus: DCommutAssocOp{
-	alias summands=operands;
+	@subExpr DExprSet operands;
 	mixin Constructor;
+	mixin ToString;
 	override @property Precedence precedence(){ return Precedence.plus; }
 	override @property string symbol(Format formatting,int binders){ return "+"; }
-
-	override DExpr substitute(DVar var,DExpr e){
-		DExprSet res;
-		foreach(s;summands) insert(res,s.substitute(var,e));
-		return dPlus(res);
-	}
-	override DExpr incDeBruijnVar(int di,int bound){
-		DExprSet res;
-		foreach(s;summands) insert(res,s.incDeBruijnVar(di,bound));
-		return dPlus(res);
-	}
+	mixin Visitors;
 
 	static void insert(ref DExprSet summands,DExpr summand)in{assert(!!summand);}body{
 		if(summand is zero) return;
@@ -832,9 +807,8 @@ class DPlus: DCommutAssocOp{
 }
 
 class DMult: DCommutAssocOp{
-	alias factors=operands;
-	//mixin Constructor;
-	private this(DExprSet e)in{assert(e.length>1); }body{ assert(one !in e,text(e)); operands=e; }
+	@subExpr DExprSet operands;
+	mixin Constructor;
 	override @property Precedence precedence(){ return Precedence.mult; }
 	override string symbol(Format formatting,int binders){
 		if(formatting==Format.gnuplot||formatting==Format.maple||formatting==Format.sympy||formatting==Format.mathematica||formatting==Format.lisp) return "*";
@@ -842,7 +816,7 @@ class DMult: DCommutAssocOp{
 		else return "·";
 	}
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
-		if(formatting==Format.lisp) return super.toStringImpl(formatting,prec,binders);
+		if(formatting==Format.lisp) return toStringImplImpl(operands,formatting,prec,binders);
 		auto frac=this.getFractionalFactor().getFraction();
 		if(frac[0]<0){
 			if(formatting==Format.maple){
@@ -853,30 +827,14 @@ class DMult: DCommutAssocOp{
 		}
 		//if(frac[0]!=1&&frac[1]!=1) // TODO
 		// TODO: use suitable data structures
-		return super.toStringImpl(formatting,prec,binders);
+		return toStringImplImpl(operands,formatting,prec,binders);
 	}
-	override DExpr substitute(DVar var,DExpr e){
-		if(auto evar=cast(DVar)e){ // TODO: make this unnecessary, this is a hack to improve performance
-			if(!hasFreeVar(evar)){
-				DExprSet res;
-				foreach(f;factors) res.insert(f.substitute(var,e));
-				return dMult(res);
-			}
-		}
-		DExprSet res;
-		foreach(f;factors) insert(res,f.substitute(var,e));
-		return dMult(res);
-	}
-	override DExpr incDeBruijnVar(int di,int bound){
-		DExprSet res;
-		foreach(f;factors) res.insert(f.incDeBruijnVar(di,bound)); // TODO: ok?
-		res.remove(one); return dMult(res); // !!!
-	}
+	mixin Visitors;
 
-	override bool isFraction(){ return factors.all!(a=>a.isFraction()); }
+	override bool isFraction(){ return operands.all!(a=>a.isFraction()); }
 	override ℤ[2] getFraction(){
 		ℤ n=1,d=1;
-		foreach(f;factors){
+		foreach(f;operands){
 			auto nd=f.getFraction();
 			n*=nd[0], d*=nd[1];
 		}
@@ -1112,7 +1070,7 @@ class DMult: DCommutAssocOp{
 	final DExpr basicSimplify(){
 		if(this in basicSimplifyMemo) return basicSimplifyMemo[this];
 		DExprSet simple;
-		foreach(f;factors) insertAndSimplify(simple,f,one);
+		foreach(f;operands) insertAndSimplify(simple,f,one);
 		auto r=dMult(simple);
 		basicSimplifyMemo[this]=r;
 		return r;
@@ -3175,19 +3133,12 @@ DExpr dMod(DExpr e1,DExpr e2){
 }
 
 template BitwiseImpl(string which){
+	@subExpr SetX!DExpr operands;
 	mixin Constructor;
+	mixin ToString;
 	override @property Precedence precedence(){ return mixin("Precedence."~which); }
 	override @property string symbol(Format formatting,int binders){ return " "~which~" "; }
-	override DExpr substitute(DVar var,DExpr e){
-		DExprSet res;
-		foreach(s;operands) insert(res,s.substitute(var,e));
-		return mixin("d"~upperf(which))(res);
-	}
-	override DExpr incDeBruijnVar(int di,int bound){
-		DExprSet res;
-		foreach(s;operands) insert(res,s.incDeBruijnVar(di,bound));
-		return mixin("d"~upperf(which))(res);
-	}
+	mixin Visitors;
 	static void insert(ref DExprSet operands,DExpr operand)in{assert(!!operand);}body{
 		if(operand is zero){
 			static if(which=="bitAnd") operands.clear();

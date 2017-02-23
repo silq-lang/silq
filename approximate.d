@@ -188,8 +188,8 @@ DExpr approxSqrt(DExpr e){
 DExpr approximate(DExpr e){
 	static DExpr doIt(DExpr e, bool necessary)out(r){ assert(e !is r,text(e));}body{
 		if(auto p=cast(DPlus)e){
-			DExprSet summands=p.summands.dup;
-			foreach(s;p.summands){
+			DExprSet summands=p.operands.dup;
+			foreach(s;p.operands){
 				if(auto k=doIt(s,necessary)){
 					summands.remove(s);
 					DPlus.insert(summands,k);
@@ -198,8 +198,8 @@ DExpr approximate(DExpr e){
 			}
 		}
 		if(auto m=cast(DMult)e){
-			DExprSet factors=m.factors.dup;
-			foreach(f;m.factors){
+			DExprSet factors=m.operands.dup;
+			foreach(f;m.operands){
 				if(auto k=doIt(f,necessary)){
 					factors.remove(f);
 					DMult.insert(factors,k);
