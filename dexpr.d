@@ -227,7 +227,7 @@ mixin template Visitors(){
 						}
 					}
 					foreach(f;sub) typeof(this).insert(nsubs[i],f.substitute(var,e));
-				}else static if(is(typeof(sub)==DExpr[])){
+				}else static if(is(typeof(sub)==DExpr[])||is(typeof(sub)==DExpr[2])){
 					nsubs[i]=sub.dup;
 					foreach(ref x;nsubs[i]) x=x.substitute(var,e);
 				}else nsubs[i]=sub;
@@ -254,7 +254,7 @@ mixin template Visitors(){
 					nsubs[i]=sub.incDeBruijnVar(di,bound);
 				}else static if(is(typeof(sub)==SetX!DExpr)){
 					foreach(f;sub) nsubs[i].insert(f.incDeBruijnVar(di,bound));
-				}else static if(is(typeof(sub)==DExpr[])){
+				}else static if(is(typeof(sub)==DExpr[])||is(typeof(sub)==DExpr[2])){
 					nsubs[i]=sub.dup;
 					foreach(ref x;nsubs[i]) x=x.incDeBruijnVar(di,bound);
 				}else nsubs[i]=sub;
@@ -586,7 +586,10 @@ string makeConstructorCommutAssoc(T)(){
 
 string makeConstructorNonCommutAssoc(T)(){
 	enum Ts=__traits(identifier, T);
-	return "auto " ~ lowerf(Ts)~"(DExpr e1, DExpr e2){ "
+	return "auto " ~ lowerf(Ts)~"(DExpr[2] o){"
+		~"   return " ~ lowerf(Ts)~"(o[0],o[1]);"
+		~"}"
+		~"auto " ~ lowerf(Ts)~"(DExpr e1, DExpr e2){ "
 		~"static if(__traits(hasMember,"~Ts~",`constructHook`)){"
 		~"  if(auto r="~Ts~".constructHook(e1,e2)) return r;}"
 		~"return uniqueDExprNonCommutAssoc!("~__traits(identifier,T)~")(e1,e2);"
@@ -1166,24 +1169,12 @@ DExpr getFractionalFactor(DExpr e){
 DExpr dMinus(DExpr e1,DExpr e2){ return e1+-e2; }
 
 abstract class DBinaryOp: DOp{
-	DExpr[2] operands;
-	protected mixin template Constructor(){ private this(DExpr e1, DExpr e2){ operands=[e1,e2]; } }
+	@subExpr DExpr[2] operands;
+	/+protected+/ mixin template Constructor(){/+private+/ this(DExpr[2] o){ this.operands=o; } /+private+/ this(DExpr e1, DExpr e2){ this([e1,e2]); } }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		if(formatting==Format.lisp)
 			return text("(",symbol(formatting,binders)," ",operands[0].toStringImpl(formatting,prec,binders)," ",operands[1].toStringImpl(formatting,prec,binders),")");
 		return addp(prec, operands[0].toStringImpl(formatting,precedence,binders) ~ symbol(formatting,binders) ~ operands[1].toStringImpl(formatting,precedence,binders));
-	}
-	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		foreach(a;operands)
-			if(auto r=dg(a))
-				return r;
-		return 0;
-	}
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		foreach(a;operands)
-			if(auto r=a.freeVarsImpl(dg))
-				return r;
-		return 0;
 	}
 }
 
@@ -1244,14 +1235,7 @@ class DPow: DBinaryOp{
 		 return text("fixNaN(",super.toStringImpl(formatting,prec),")");+/// TODO: why doesn't this work?
 		return super.toStringImpl(formatting,prec,binders);
 	}
-
-	override DExpr substitute(DVar var,DExpr e){
-		return operands[0].substitute(var,e)^^operands[1].substitute(var,e);
-	}
-	override DExpr incDeBruijnVar(int di,int bound){
-		return operands[0].incDeBruijnVar(di,bound)^^operands[1].incDeBruijnVar(di,bound);
-	}
-
+	mixin Visitors;
 	private static DExpr staticSimplify(DExpr e1,DExpr e2,DExpr facts=one){
 		auto ne1=e1.simplify(facts);
 		auto ne2=e2.simplify(facts);

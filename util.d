@@ -437,7 +437,7 @@ struct TupleX(T...){
 		static if(is(T==class)) return FNV(x?x.toHash():0,b);
 		else static if(is(T==struct)) return FNV(x.toHash(),b);
 		else static if(is(T==string)||is(T==int)) return FNV(typeid(T).getHash(&x),b);
-		else static if(is(T==S[],S)){
+		else static if(is(T==S[],S)||is(T==S[n],S,size_t n)){
 			auto r=b;
 			foreach(ref y;x) r=getHash(y,r);
 			return r;
