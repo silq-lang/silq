@@ -2374,9 +2374,9 @@ auto dDelta(DExpr a)in{assert(!cast(DTuple)a);}body{ // TODO: more preconditions
 
 
 class DDiscDelta: DExpr{ // point mass for discrete data types
-	DExpr var; // TODO: figure out what it should mean if var is some expression with multiple free variables
-	DExpr e;
-	private this(DExpr var,DExpr e){
+	@subExpr DExpr var; // TODO: figure out what it should mean if var is some expression with multiple free variables
+	@subExpr DExpr e;
+	/+private+/ this(DExpr var,DExpr e){
 		this.var=var;
 		this.e=e;
 	}
@@ -2388,17 +2388,7 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 			~"["~e.toStringImpl(formatting,Precedence.none,binders)~"]"; // TODO: use ⟦ instead of [
 	}
 
-	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; } // TODO: ok?
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		if(auto r=var.freeVarsImpl(dg))
-			return r;
-		return e.freeVarsImpl(dg);
-	}
-	override DExpr substitute(DVar var,DExpr exp){
-		if(this.var is var && exp is e) return one; // TODO: this is a hack and should be removed
-		return dDiscDelta(this.var.substitute(var,exp),e.substitute(var,exp));
-	}
-	override DExpr incDeBruijnVar(int di,int bound){ return dDiscDelta(var.incDeBruijnVar(di,bound),e.incDeBruijnVar(di,bound)); }
+	mixin Visitors;
 
 	static DExpr constructHook(DExpr var,DExpr e){
 		static bool isNumeric(DExpr e){ // TODO: merge dDelta and dDiscDelta completely, such that type information is irrelevant
