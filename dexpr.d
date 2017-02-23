@@ -174,21 +174,26 @@ abstract class DExpr{
 
 // attributes
 import std.traits;
-struct subExpr{} struct binder{}
+struct subExpr{} struct binder{} struct isAbstract{}
 alias subExprs(alias T) = getSymbolsByUDA!(T,subExpr);
 
 enum forEachSubExprImpl(string code)=mixin(X!q{
 	foreach(se;subExprs!(typeof(this))){
-		static if(is(typeof(x):DExpr)){
+		static if(is(typeof(se):DExpr)){
 			alias x=se;
 			@(code);
-		}else static if(is(typeof(x)==SetX!DExpr)){
+		}else static if(is(typeof(se)==SetX!DExpr)||is(typeof(se)==DExpr[])){
 			foreach(x;se) @(code);
 		}
 	}
 });
-
+template IncDeBruijnVarType(T){
+	static if(is(T:DVar)) alias IncDeBruijnVarType=T;
+	else alias IncDeBruijnVarType=DExpr;
+}
+enum IsAbstract(T) = hasUDA!(T,isAbstract);
 mixin template Visitors(){
+	static if(!IsAbstract!(typeof(this))):
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
 		mixin(forEachSubExprImpl!"if(auto r=dg(x)) return r");
 		return 0;
@@ -212,24 +217,27 @@ mixin template Visitors(){
 					cvar=cvar.incDeBruijnVar(1,0);
 					ce=ce.incDeBruijnVar(1,0);
 				}
-				static if(is(typeof(x):DExpr)){
+				static if(is(typeof(sub):DExpr)){
 					nsubs[i]=sub.substitute(cvar,ce);
-				}else static if(is(typeof(x)==SetX!DExpr)){
-						assert(is(typeof(this)==DMult)||is(typeof(this)==DPlus));
-						if(auto evar=cast(DVar)e){ // TODO: make this unnecessary, this is a hack to improve performance
-							if(!hasFreeVar(evar)){
-								foreach(f;factors) nsubs[i].insert(f.substitute(var,e));
-								continue;
-							}
+				}else static if(is(typeof(sub)==SetX!DExpr)){
+					assert(is(typeof(this)==DMult)||is(typeof(this)==DPlus));
+					if(auto evar=cast(DVar)e){ // TODO: make this unnecessary, this is a hack to improve performance
+						if(!hasFreeVar(evar)){
+							foreach(f;factors) nsubs[i].insert(f.substitute(var,e));
+							continue;
 						}
-						foreach(f;factors) typeof(this).insert(res,f.substitute(var,e));
-					}else nsubs[i]=sub;
+					}
+					foreach(f;factors) typeof(this).insert(res,f.substitute(var,e));
+				}else static if(is(typeof(sub)==DExpr[])){
+					nsubs[i]=sub.dup;
+					foreach(ref x;nsubs[i]) x=x.substitute(var,e);
+				}else nsubs[i]=sub;
 				if(nsubs==q(subs)) return this;
 				return mixin(lowerf(typeof(this).stringof))(nsubs.expand);
 			}
 		}
 	}
-	override typeof(this) incDeBruijnVar(int di,int bound){
+	override IncDeBruijnVarType!(typeof(this)) incDeBruijnVar(int di,int bound){
 		static if(is(typeof(this)==DDeBruijnVar)){
 			if(i<=bound) return this;
 			assert((i<=bound) == (i+di <= bound)); // (otherwise bound variables can be captured);
@@ -243,18 +251,21 @@ mixin template Visitors(){
 				static if(hasUDA!(sub,binder)){
 					cbound++;
 				}
-				static if(is(typeof(x):DExpr)){
+				static if(is(typeof(sub):DExpr)){
 					nsubs[i]=sub.incDeBruijnVar(di,bound);
-				}else static if(is(typeof(x)==SetX!DExpr)){
-						assert(is(typeof(this)==DMult)||is(typeof(this)==DPlus));
-						if(auto evar=cast(DVar)e){ // TODO: make this unnecessary, this is a hack to improve performance
-							if(!hasFreeVar(evar)){
-								foreach(f;sub[i]) nsubs[i].insert(f.incDeBruijnVar(di,bound));
-								continue;
-							}
+				}else static if(is(typeof(sub)==SetX!DExpr)){
+					assert(is(typeof(this)==DMult)||is(typeof(this)==DPlus));
+					if(auto evar=cast(DVar)e){ // TODO: make this unnecessary, this is a hack to improve performance
+						if(!hasFreeVar(evar)){
+							foreach(f;sub[i]) nsubs[i].insert(f.incDeBruijnVar(di,bound));
+							continue;
 						}
-						foreach(f;sub) typeof(this).insert(res,f.substitute(var,e));
-					}else nsubs[i]=sub;
+					}
+					foreach(f;sub) typeof(this).insert(res,f.substitute(var,e));
+				}else static if(is(typeof(sub)==DExpr[])){
+					nsubs[i]=sub.dup;
+					foreach(ref x;nsubs[i]) x=x.incDeBruijnVar(di,bound);
+				}else nsubs[i]=sub;
 				if(nsubs==q(sub)) return this;
 				return mixin(lowerf(typeof(this).stringof))(nsubs.expand);
 			}
@@ -468,16 +479,17 @@ abstract class DOp: DExpr{
 	abstract @property string symbol(Format formatting,int binders);
 	bool rightAssociative(){ return false; }
 	abstract @property Precedence precedence();
-	protected final string addp(Precedence prec, string s, Precedence myPrec=Precedence.invalid){
+	/+protected+/ final string addp(Precedence prec, string s, Precedence myPrec=Precedence.invalid){ // TODO: add protected
 		if(myPrec==Precedence.invalid) myPrec=precedence;
 		return prec > myPrec||rightAssociative&&prec==precedence? "(" ~ s ~ ")":s;
 	}
 }
 
 
+@isAbstract
 abstract class DAssocOp: DOp{
-	DExpr[] operands;
-	protected mixin template Constructor(){ private this(DExpr[] e)in{assert(e.length>1); }body{ operands=e; } }
+	@subExpr DExpr[] operands;
+	/+protected+/ mixin template Constructor(){ /+private+/ this(DExpr[] e)in{assert(e.length>1); }body{ operands=e; } } // TODO: add protected/private after deprecation warning is fixed in DMD
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		string r;
 		if(formatting==Format.lisp){
@@ -493,24 +505,12 @@ abstract class DAssocOp: DOp{
 		foreach(o;operands) r~=symbol(formatting,binders)~o.toStringImpl(formatting,prec,binders);
 		return addp(prec, r[symbol(formatting,binders).length..$]);
 	}
-	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		foreach(a;operands)
-			if(auto r=dg(a))
-				return r;
-		return 0;
-	}
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		foreach(a;operands)
-			if(auto r=a.freeVarsImpl(dg))
-				return r;
-		return 0;
-	}
 }
 
 
 abstract class DCommutAssocOp: DOp{
 	DExprSet operands;
-	protected mixin template Constructor(){ private this(DExprSet e)in{assert(e.length>1); }body{ operands=e; } }
+	/+protected+/ mixin template Constructor(){ private this(DExprSet e)in{assert(e.length>1); }body{ operands=e; } } // TODO: add protected
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		string r;
 		if(formatting==Format.lisp){
@@ -4016,17 +4016,11 @@ class DCat: DAssocOp{ // TODO: this should have n arguments, as it is associativ
 		auto r=staticSimplify(operands,facts);
 		return r?r:this;
 	}
-
-	override DExpr substitute(DVar var,DExpr e){
-		return dCat(operands.map!(a=>a.substitute(var,e)).array);
-	}
-	override DExpr incDeBruijnVar(int di,int bound){
-		return dCat(operands.map!(a=>a.incDeBruijnVar(di,bound)).array);
-	}
+	mixin Visitors;
 	static DExpr constructHook(DExpr[] operands){
 		return null;
 	}
-	private static DExpr staticSimplify(DExpr[] operands,DExpr facts=one){
+	/+private+/ static DExpr staticSimplify(DExpr[] operands,DExpr facts=one){
 		auto nop=operands.map!(a=>a.simplify(facts)).array;
 		if(nop!=operands) return dCat(nop).simplify(facts);
 		DExpr doCat(DExpr e1,DExpr e2){
