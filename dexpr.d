@@ -3300,7 +3300,7 @@ class DIndex: DOp{
 mixin(makeConstructorNonCommutAssoc!DIndex);
 
 class DIUpdate: DOp{
-	DExpr e,i,n; // TODO: multiple indices?
+	@subExpr DExpr e,i,n; // TODO: multiple indices?
 	this(DExpr e,DExpr i,DExpr n){
 		this.e=e; this.i=i; this.n=n;
 	}
@@ -3313,30 +3313,11 @@ class DIUpdate: DOp{
 		return addp(prec, e.toStringImpl(formatting,Precedence.index,binders)~"["~i.toStringImpl(formatting,Precedence.none,binders)~
 					" ↦ "~n.toStringImpl(formatting,Precedence.none,binders)~"]");
 	}
-
-	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		if(auto r=dg(e)) return r;
-		if(auto r=dg(i)) return r;
-		return dg(n);
-	}
-
+	mixin Visitors;
+	
 	override DExpr simplifyImpl(DExpr facts){
 		auto r=staticSimplify(e,i,n,facts);
 		return r?r:this;
-	}
-
-	override DExpr substitute(DVar var,DExpr exp){
-		return dIUpdate(e.substitute(var,exp),i.substitute(var,exp),n.substitute(var,exp));
-	}
-
-	override DExpr incDeBruijnVar(int di,int bound){
-		return dIUpdate(e.incDeBruijnVar(di,bound),i.incDeBruijnVar(di,bound),n.incDeBruijnVar(di,bound));
-	}
-
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		if(auto r=e.freeVarsImpl(dg)) return r;
-		if(auto r=i.freeVarsImpl(dg)) return r;
-		return n.freeVarsImpl(dg);
 	}
 
 	static DExpr staticSimplify(DExpr e,DExpr i,DExpr n,DExpr facts=one){
