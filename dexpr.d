@@ -3498,18 +3498,6 @@ class DLambda: DOp{ // lambda functions DExpr → DExpr
 		return addp(prec,text("λ",DDeBruijnVar.displayName(1,formatting,binders+1),". ",expr.toStringImpl(formatting,Precedence.lambda,binders+1)));
 	}
 	mixin Visitors;
-	/+override int forEachSubExpr(scope int delegate(DExpr) dg){
-		return 0; // TODO: ok?
-	}
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		return expr.freeVarsImpl(v=>v is dDeBruijnVar(1)?0:dg(v.incDeBruijnVar(-1,0)));
-	}
-	override DLambda substitute(DVar var,DExpr e){
-		return dLambda(expr.substitute(var.incDeBruijnVar(1,0),e.incDeBruijnVar(1,0)));
-	}
-	override DLambda incDeBruijnVar(int di,int bound){
-		return dLambda(expr.incDeBruijnVar(di,bound+1));
-	}+/
 
 	static DLambda constructHook(DExpr expr){
 		return staticSimplify(expr);
