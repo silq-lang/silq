@@ -3584,8 +3584,7 @@ class DApply: DOp{
 mixin(makeConstructorNonCommutAssoc!DApply);
 
 class DDistApply: DOp{
-	DExpr fun;
-	DExpr arg;
+	@subExpr DExpr fun,arg;
 	this(DExpr fun,DExpr arg){
 		this.fun=fun;
 		this.arg=arg;
@@ -3596,20 +3595,7 @@ class DDistApply: DOp{
 		auto isTpl=!!cast(DTuple)arg;
 		return addp(prec,text(fun.toStringImpl(formatting,Precedence.index,binders),"(",arg.toStringImpl(formatting,Precedence.apply,binders)[isTpl..$-isTpl],")"));
 	}
-	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		if(auto r=dg(fun)) return r;
-		return dg(arg);
-	}
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		if(auto r=fun.freeVarsImpl(dg)) return r;
-		return arg.freeVarsImpl(dg);
-	}
-	override DExpr substitute(DVar var,DExpr e){
-		return dDistApply(fun.substitute(var,e),arg.substitute(var,e));
-	}
-	override DDistApply incDeBruijnVar(int di,int bound){
-		return dDistApply(fun.incDeBruijnVar(di,bound),arg.incDeBruijnVar(di,bound));
-	}
+	mixin Visitors;
 	static DDistApply constructHook(DExpr fun,DExpr arg){
 		return null;
 	}
