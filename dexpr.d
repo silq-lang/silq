@@ -3714,8 +3714,8 @@ class DCat: DAssocOp{ // TODO: this should have n arguments, as it is associativ
 mixin(makeConstructorAssoc!DCat);
 
 class DField: DOp{
-	DExpr e;
-	string f;
+	@subExpr DExpr e;
+	@subExpr string f;
 	this(DExpr e,string f){
 		this.e=e; this.f=f;
 	}
@@ -3727,26 +3727,11 @@ class DField: DOp{
 		if(formatting==Format.lisp) return text("(select ",e.toStringImpl(formatting,Precedence.none,binders)," :",f);
 		return addp(prec, e.toStringImpl(formatting,Precedence.field,binders)~"."~f);
 	}
-
-	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		return dg(e);
-	}
-
+	mixin Visitors;
+	
 	override DExpr simplifyImpl(DExpr facts){
 		auto r=staticSimplify(e,f,facts);
 		return r?r:this;
-	}
-
-	override DExpr substitute(DVar var,DExpr exp){
-		return dField(e.substitute(var,exp),f);
-	}
-
-	override DExpr incDeBruijnVar(int di,int bound){
-		return dField(e.incDeBruijnVar(di,bound),f);
-	}
-
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		return e.freeVarsImpl(dg);
 	}
 
 	static DExpr staticSimplify(DExpr e,string f,DExpr facts=one){
