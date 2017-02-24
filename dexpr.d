@@ -197,8 +197,8 @@ enum IsAbstract(T) = hasUDA!(T,isAbstract);
 mixin template Visitors(){
 	static if(!IsAbstract!(typeof(this))):
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		// TODO: ok?:
-		static if(!(is(typeof(this)==DInt)||is(typeof(this)==DSum)||is(typeof(this)==DLim)||is(typeof(this)==DDelta)||is(typeof(this)==DDiscDelta)))
+		// TODO: fix this.
+		static if(!(is(typeof(this)==DInt)||is(typeof(this)==DSum)||is(typeof(this)==DLim)||is(typeof(this)==DDiff)||is(typeof(this)==DDelta)||is(typeof(this)==DDiscDelta)))
 			mixin(forEachSubExprImpl!"if(auto r=dg(x)) return r");
 		return 0;
 	}
@@ -2778,8 +2778,8 @@ bool hasLimits(DExpr e){ return hasAny!DLim(e); }
 
 import differentiation;
 class DDiff: DOp{
-	DExpr e;
-	DExpr x;
+	@subExpr @binder DExpr e;
+	@subExpr DExpr x;
 	this(DExpr e,DExpr x){ this.e=e; this.x=x; }
 	override @property string symbol(Format formatting,int binders){ return "d/d"~DDeBruijnVar.displayName(1,formatting,binders); }
 	override Precedence precedence(){ return Precedence.diff; }
@@ -2803,20 +2803,7 @@ class DDiff: DOp{
 		auto r=staticSimplify(e,x);
 		return r?r:this;
 	}
-
-	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; } // TODO: correct?
-
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		if(auto r=e.freeVarsImpl(v=>v is dDeBruijnVar(1)?0:dg(v.incDeBruijnVar(-1,0))))
-			return r;
-		return x.freeVarsImpl(dg);
-	}
-	override DExpr substitute(DVar var,DExpr exp){
-		return dDiff(e.substitute(var.incDeBruijnVar(1,0),exp.incDeBruijnVar(1,0)),x.substitute(var,exp));
-	}
-	override DExpr incDeBruijnVar(int di,int bound){
-		return dDiff(e.incDeBruijnVar(di,bound+1),x.incDeBruijnVar(di,bound));
-	}
+	mixin Visitors;
 }
 
 DExpr dDiff(DExpr e,DExpr x){
