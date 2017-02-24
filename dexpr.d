@@ -3559,8 +3559,7 @@ DLambda dTupleLambda(DVar[] args,DExpr fun){
 }
 
 class DApply: DOp{
-	DExpr fun;
-	DExpr arg;
+	@subExpr DExpr fun,arg;
 	this(DExpr fun,DExpr arg){
 		this.fun=fun;
 		this.arg=arg;
@@ -3571,20 +3570,7 @@ class DApply: DOp{
 		auto isTpl=!!cast(DTuple)arg;
 		return addp(prec,text(fun.toStringImpl(formatting,Precedence.index,binders),"(",arg.toStringImpl(formatting,Precedence.apply,binders)[isTpl..$-isTpl],")"));
 	}
-	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		if(auto r=dg(fun)) return r;
-		return dg(arg);
-	}
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		if(auto r=fun.freeVarsImpl(dg)) return r;
-		return arg.freeVarsImpl(dg);
-	}
-	override DExpr substitute(DVar var,DExpr e){
-		return dApply(fun.substitute(var,e),arg.substitute(var,e));
-	}
-	override DApply incDeBruijnVar(int di,int bound){
-		return dApply(fun.incDeBruijnVar(di,bound),arg.incDeBruijnVar(di,bound));
-	}
+	mixin Visitors;
 	static DApply constructHook(DExpr fun,DExpr arg){
 		return null;
 	}
