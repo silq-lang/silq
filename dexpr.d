@@ -197,7 +197,8 @@ enum IsAbstract(T) = hasUDA!(T,isAbstract);
 mixin template Visitors(){
 	static if(!IsAbstract!(typeof(this))):
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		static if(!(is(typeof(this)==DInt)||is(typeof(this)==DSum)||is(typeof(this)==DDelta)||is(typeof(this)==DDiscDelta)))
+		// TODO: ok?:
+		static if(!(is(typeof(this)==DInt)||is(typeof(this)==DSum)||is(typeof(this)==DLim)||is(typeof(this)==DDelta)||is(typeof(this)==DDiscDelta)))
 			mixin(forEachSubExprImpl!"if(auto r=dg(x)) return r");
 		return 0;
 	}
@@ -2724,8 +2725,8 @@ DExpr dSum(DVar var,DExpr expr)in{assert(var&&expr&&!cast(DDeBruijnVar)var);}bod
 
 import limits;
 class DLim: DOp{
-	DExpr e;
-	DExpr x;
+	@subExpr DExpr e;
+	@subExpr @binder DExpr x;
 	this(DExpr e,DExpr x){ this.e=e; this.x=x; }
 	override @property string symbol(Format formatting,int binders){ return text("lim[",DDeBruijnVar.displayName(1,formatting,binders+1)," → ",e.toStringImpl(formatting,Precedence.none,binders+1),"]"); }
 	override Precedence precedence(){ return Precedence.lim; } // TODO: ok?
@@ -2752,19 +2753,7 @@ class DLim: DOp{
 		return r?r:this;
 	}
 
-	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; } // TODO: correct?
-
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		if(auto r=e.freeVarsImpl(dg))
-			return r;
-		return x.freeVarsImpl(v=>v is dDeBruijnVar(1)?0:dg(v.incDeBruijnVar(-1,0)));
-	}
-	override DExpr substitute(DVar var,DExpr exp){
-		return dLim(e.substitute(var,exp),x.substitute(var.incDeBruijnVar(1,0),exp.incDeBruijnVar(1,0)));
-	}
-	override DExpr incDeBruijnVar(int di,int bound){
-		return dLim(e.incDeBruijnVar(di,bound),x.incDeBruijnVar(di,bound+1));
-	}
+	mixin Visitors;
 }
 
 @disable DExpr dLimSmp(DVar var,DExpr e,DExpr x);
