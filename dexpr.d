@@ -3433,8 +3433,9 @@ auto dSlice(DExpr e,DExpr l,DExpr r){
 
 
 class DRUpdate: DOp{ // TODO: allow updating multiple fields at once
-	DExpr e,n; // TODO: multiple indices?
-	string f;
+	@subExpr DExpr e; // TODO: multiple indices?
+	@subExpr string f;
+	@subExpr DExpr n;
 	this(DExpr e,string f,DExpr n){
 		this.e=e; this.f=f; this.n=n;
 	}
@@ -3447,28 +3448,11 @@ class DRUpdate: DOp{ // TODO: allow updating multiple fields at once
 		return addp(prec, e.toStringImpl(formatting,Precedence.index,binders)~"{."~f~
 					" ↦ "~n.toStringImpl(formatting,Precedence.none,binders)~"}");
 	}
-
-	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		if(auto r=dg(e)) return r;
-		return dg(n);
-	}
+	mixin Visitors;
 
 	override DExpr simplifyImpl(DExpr facts){
 		auto r=staticSimplify(e,f,n,facts);
 		return r?r:this;
-	}
-
-	override DExpr substitute(DVar var,DExpr exp){
-		return dRUpdate(e.substitute(var,exp),f,n.substitute(var,exp));
-	}
-
-	override DExpr incDeBruijnVar(int di,int bound){
-		return dRUpdate(e.incDeBruijnVar(di,bound),f,n.incDeBruijnVar(di,bound));
-	}
-
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		if(auto r=e.freeVarsImpl(dg)) return r;
-		return n.freeVarsImpl(dg);
 	}
 
 	static DExpr staticSimplify(DExpr e,string f,DExpr n,DExpr facts=one){
