@@ -2965,7 +2965,7 @@ DExpr dFloor(DExpr e){ return uniqueDExprUnary!DFloor(e); }
 
 
 class DCeil: DOp{
-	DExpr e;
+	@subExpr DExpr e;
 	this(DExpr e){ this.e=e; }
 	override @property string symbol(Format formatting,int binders){ return "⌈.⌉"; }
 	override Precedence precedence(){ return Precedence.none; }
@@ -2973,18 +2973,7 @@ class DCeil: DOp{
 		if(formatting==Format.lisp) return text("(ceil ",e.toStringImpl(formatting,Precedence.none,binders),")");
 		return "⌈"~e.toStringImpl(formatting,Precedence.none,binders)~"⌉";
 	}
-	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		return dg(e);
-	}
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		return e.freeVarsImpl(dg);
-	}
-	override DExpr substitute(DVar var,DExpr exp){
-		return dCeil(e.substitute(var,exp));
-	}
-	override DExpr incDeBruijnVar(int di,int bound){
-		return dCeil(e.incDeBruijnVar(di,bound));
-	}
+	mixin Visitors;
 	static DExpr constructHook(DExpr e){
 		return null;
 	}
