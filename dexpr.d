@@ -3610,8 +3610,8 @@ mixin(makeConstructorNonCommutAssoc!DDistApply);
 
 
 class DArray: DExpr{
-	DExpr length;
-	DLambda entries;
+	@subExpr DExpr length;
+	@subExpr DLambda entries;
 	this(DExpr length,DLambda entries){
 		this.length=length;
 		this.entries=entries;
@@ -3623,22 +3623,7 @@ class DArray: DExpr{
 		if(prec!=Precedence.none) r="("~r~")"; // TODO: ok?
 		return r;
 	}
-	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		if(auto r=length.forEachSubExpr(dg)) return r;
-		if(auto r=entries.forEachSubExpr(dg)) return r; // TODO: ok?
-		return 0;
-	}
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		if(auto r=length.freeVarsImpl(dg)) return r;
-		if(auto r=entries.freeVarsImpl(dg)) return r; // TODO: ok?
-		return 0;
-	}
-	override DExpr substitute(DVar var,DExpr e){
-		return dArray(length.substitute(var,e),entries.substitute(var,e));
-	}
-	override DArray incDeBruijnVar(int di,int bound){
-		return dArray(length.incDeBruijnVar(di,bound),entries.incDeBruijnVar(di,bound));
-	}
+	mixin Visitors;
 	static DArray constructHook(DExpr length,DLambda entries){
 		return null;
 	}
