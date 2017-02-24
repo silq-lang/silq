@@ -2818,7 +2818,7 @@ DExpr dDiff(DVar v,DExpr e,DExpr x)in{assert(v&&e&&x&&(!cast(DDeBruijnVar)v||v i
 DExpr dDiff(DVar v,DExpr e){ return dDiff(v,e,v); }
 
 class DAbs: DOp{
-	DExpr e;
+	@subExpr DExpr e;
 	this(DExpr e){ this.e=e; }
 	override @property string symbol(Format formatting,int binders){ return "|"; }
 	override Precedence precedence(){ return Precedence.none; }
@@ -2826,20 +2826,7 @@ class DAbs: DOp{
 		if(formatting==Format.lisp) return text("(abs ",e.toStringImpl(formatting,prec,binders),")");
 		return "|"~e.toStringImpl(formatting,Precedence.none,binders)~"|";
 	}
-	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		return dg(e);
-	}
-
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		return e.freeVarsImpl(dg);
-	}
-	override DExpr substitute(DVar var,DExpr exp){
-		return dAbs(e.substitute(var,exp));
-	}
-	override DExpr incDeBruijnVar(int di,int bound){
-		return dAbs(e.incDeBruijnVar(di,bound));
-	}
-
+	mixin Visitors;
 	static DExpr constructHook(DExpr e){
 		return staticSimplify(e);
 	}
