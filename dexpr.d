@@ -3082,7 +3082,7 @@ mixin(makeConstructorCommutAssoc!DBitXor);
 mixin(makeConstructorCommutAssocIdem!DBitAnd);
 
 class DGaussInt: DOp{
-	DExpr x;
+	@subExpr DExpr x;
 	this(DExpr x){ this.x=x; }
 	override @property string symbol(Format formatting,int binders){ return "(d/dx)⁻¹[e^(-x²)]"; }
 	override Precedence precedence(){ return Precedence.diff; }
@@ -3119,19 +3119,7 @@ class DGaussInt: DOp{
 		auto r=staticSimplify(x);
 		return r?r:this;
 	}
-
-	override int forEachSubExpr(scope int delegate(DExpr) dg){ return dg(x); }
-
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		return x.freeVarsImpl(dg);
-	}
-	override DExpr substitute(DVar var,DExpr exp){
-		auto nx=x.substitute(var,exp);
-		return dGaussInt(nx);
-	}
-	override DExpr incDeBruijnVar(int di,int bound){
-		return dGaussInt(x.incDeBruijnVar(di,bound));
-	}
+	mixin Visitors;
 }
 
 auto dGaussInt(DExpr x){ return uniqueDExprUnary!DGaussInt(x); }
