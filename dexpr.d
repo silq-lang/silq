@@ -197,7 +197,7 @@ enum IsAbstract(T) = hasUDA!(T,isAbstract);
 mixin template Visitors(){
 	static if(!IsAbstract!(typeof(this))):
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		static if(!(is(typeof(this)==DInt)||is(typeof(this)==DDelta)||is(typeof(this)==DDiscDelta)))
+		static if(!(is(typeof(this)==DInt)||is(typeof(this)==DSum)||is(typeof(this)==DDelta)||is(typeof(this)==DDiscDelta)))
 			mixin(forEachSubExprImpl!"if(auto r=dg(x)) return r");
 		return 0;
 	}
@@ -2653,10 +2653,8 @@ DExpr dInt(DVar var,DExpr expr)in{assert(var&&expr&&!cast(DDeBruijnVar)var);}bod
 
 import summation;
 class DSum: DOp{
-	private{
-		DExpr expr;
-		this(DExpr expr){ this.expr=expr; }
-	}
+	@subExpr @binder DExpr expr;
+	this(DExpr expr){ this.expr=expr; }
 	final DExpr getExpr(DExpr e){ return unbind(expr,e); }
 	override @property Precedence precedence(){ return Precedence.intg; }
 	override @property string symbol(Format formatting,int binders){ return "∑"; }
@@ -2703,19 +2701,7 @@ class DSum: DOp{
 		auto r=staticSimplify(expr);
 		return r?r:this;
 	}
-
-	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		return 0;
-	}
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		return expr.freeVarsImpl(v=>v is dDeBruijnVar(1)?0:dg(v.incDeBruijnVar(-1,0)));
-	}
-	override DExpr substitute(DVar var,DExpr e){
-		return dSum(expr.substitute(var.incDeBruijnVar(1,0),e.incDeBruijnVar(1,0)));
-	}
-	override DExpr incDeBruijnVar(int di,int bound){
-		return dSum(expr.incDeBruijnVar(di,bound+1));
-	}
+	mixin Visitors;
 }
 
 @disable DExpr dSumSmp(DVar var,DExpr expr);
