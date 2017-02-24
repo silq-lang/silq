@@ -2908,7 +2908,7 @@ class DLog: DOp{
 DExpr dLog(DExpr e){ return uniqueDExprUnary!DLog(e); }
 
 class DSin: DOp{
-	DExpr e;
+	@subExpr DExpr e;
 	this(DExpr e){ this.e=e; }
 	override @property string symbol(Format formatting,int binders){ return "sin"; }
 	override Precedence precedence(){ return Precedence.none; }
@@ -2916,19 +2916,7 @@ class DSin: DOp{
 		if(formatting==Format.lisp) return text("(sin ",e.toStringImpl(formatting,Precedence.none,binders),")");
 		return "sin("~e.toStringImpl(formatting,Precedence.none,binders)~")";
 	}
-	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		return dg(e);
-	}
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		return e.freeVarsImpl(dg);
-	}
-	override DExpr substitute(DVar var,DExpr exp){
-		return dSin(e.substitute(var,exp));
-	}
-	override DExpr incDeBruijnVar(int di,int bound){
-		return dSin(e.incDeBruijnVar(di,bound));
-	}
-
+	mixin Visitors;
 	static DExpr constructHook(DExpr e){
 		return null;
 	}
