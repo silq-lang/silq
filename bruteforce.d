@@ -215,7 +215,7 @@ struct Dist{
 		return dField(db1,tmp);
 	}
 	void assignTo(DExpr lhs,DExpr rhs){
-		if(auto id=cast(DVar)lhs){
+		if(auto id=cast(DNVar)lhs){
 			auto lambda=dLambda(dRUpdate(db1,id.name,rhs));
 			this=map(lambda);
 		}else if(auto idx=cast(DIndex)lhs){
