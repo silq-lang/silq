@@ -3246,7 +3246,7 @@ auto dRecord(){ return dRecord((DExpr[string]).init); }
 
 
 class DIndex: DOp{
-	DExpr e,i; // TODO: multiple indices?
+	@subExpr DExpr e,i; // TODO: multiple indices?
 	this(DExpr e,DExpr i){
 		this.e=e; this.i=i;
 	}
@@ -3258,30 +3258,11 @@ class DIndex: DOp{
 		if(formatting==Format.lisp) return text("(select ",e.toStringImpl(formatting,Precedence.none,binders)," ",i.toStringImpl(formatting,Precedence.none,binders),")");
 		return addp(prec, e.toStringImpl(formatting,Precedence.index,binders)~"["~i.toStringImpl(formatting,Precedence.none,binders)~"]");
 	}
-
-	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		if(auto r=dg(e)) return r;
-		return dg(i);
-	}
-
+	mixin Visitors;
 	override DExpr simplifyImpl(DExpr facts){
 		auto r=staticSimplify(e,i,facts);
 		return r?r:this;
 	}
-
-	override DExpr substitute(DVar var,DExpr exp){
-		return e.substitute(var,exp)[i.substitute(var,exp)];
-	}
-
-	override DExpr incDeBruijnVar(int di,int bound){
-		return e.incDeBruijnVar(di,bound)[i.incDeBruijnVar(di,bound)];
-	}
-
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		if(auto r=e.freeVarsImpl(dg)) return r;
-		return i.freeVarsImpl(dg);
-	}
-
 	static DExpr staticSimplify(DExpr e,DExpr i,DExpr facts=one){
 		auto ne=e.simplify(facts);
 		auto ni=i.simplify(facts);
