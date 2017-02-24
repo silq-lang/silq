@@ -3140,7 +3140,7 @@ bool isInfinite(DExpr e){
 }
 
 class DTuple: DExpr{ // Tuples. TODO: real tuple support
-	DExpr[] values;
+	@subExpr DExpr[] values;
 	this(DExpr[] values){
 		this.values=values;
 	}
@@ -3148,24 +3148,7 @@ class DTuple: DExpr{ // Tuples. TODO: real tuple support
 		if(formatting==Format.lisp) return text("(tuple ",values.map!(v=>v.toStringImpl(formatting,Precedence.none,binders)).join(" "),")");
 		return text("(",values.map!(v=>v.toStringImpl(formatting,Precedence.none,binders)).join(","),values.length==1?",":"",")");
 	}
-	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		foreach(v;values)
-			if(auto r=dg(v))
-				return r;
-		return 0;
-	}
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		foreach(v;values)
-			if(auto r=v.freeVarsImpl(dg))
-				return r;
-		return 0;
-	}
-	override DExpr substitute(DVar var,DExpr exp){
-		return dTuple(values.map!(v=>v.substitute(var,exp)).array);
-	}
-	override DExpr incDeBruijnVar(int di,int bound){
-		return dTuple(values.map!(v=>v.incDeBruijnVar(di,bound)).array);
-	}
+	mixin Visitors;
 	static DTuple constructHook(DExpr[] values){
 		return null;
 	}
