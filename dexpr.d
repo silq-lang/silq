@@ -186,6 +186,8 @@ enum forEachSubExprImpl(string code)=mixin(X!q{
 			@(code);
 		}else static if(is(typeof(se)==SetX!DExpr)||is(typeof(se)==DExpr[])||is(typeof(se)==DExpr[2])){
 			foreach(x;se) @(code);
+		}else static if(is(typeof(se)==DExpr[string])){
+			foreach(k,x;values) @(code);
 		}
 	}
 });
@@ -238,6 +240,8 @@ mixin template Visitors(){
 				}else static if(is(typeof(sub)==DExpr[])||is(typeof(sub)==DExpr[2])){
 					nsubs[i]=sub.dup;
 					foreach(ref x;nsubs[i]) x=x.substitute(cvar,ce);
+				}else static if(is(typeof(sub)==DExpr[string])){
+					foreach(k,v;sub) nsubs[i][k]=v.substitute(cvar,ce);
 				}else nsubs[i]=sub;
 			}
 			if(nsubs==q(subs)) return this;
@@ -265,6 +269,8 @@ mixin template Visitors(){
 				}else static if(is(typeof(sub)==DExpr[])||is(typeof(sub)==DExpr[2])){
 					nsubs[i]=sub.dup;
 					foreach(ref x;nsubs[i]) x=x.incDeBruijnVar(cdi,cbound);
+				}else static if(is(typeof(sub)==DExpr[string])){
+					foreach(k,v;sub) nsubs[i][k]=v.incDeBruijnVar(cdi,cbound);
 				}else nsubs[i]=sub;
 			}
 			if(nsubs==q(subs)) return this;
@@ -3180,7 +3186,7 @@ DTuple dTuple(DExpr[] values){
 }
 
 class DRecord: DExpr{ // Tuples. TODO: real tuple support
-	DExpr[string] values;
+	@subExpr DExpr[string] values;
 	this(DExpr[string] values){
 		this.values=values;
 	}
@@ -3206,28 +3212,7 @@ class DRecord: DExpr{ // Tuples. TODO: real tuple support
 		}
 		return r.length!=1?r[0..$-1]~"}":"{}";
 	}
-	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		foreach(k,v;values)
-			if(auto r=dg(v))
-				return r;
-		return 0;
-	}
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		foreach(k,v;values)
-			if(auto r=v.freeVarsImpl(dg))
-				return r;
-		return 0;
-	}
-	override DExpr substitute(DVar var,DExpr exp){
-		DExpr[string] nvalues;
-		foreach(k,v;values) nvalues[k]=v.substitute(var,exp);
-		return dRecord(nvalues);
-	}
-	override DExpr incDeBruijnVar(int di,int bound){
-		DExpr[string] nvalues;
-		foreach(k,v;values) nvalues[k]=v.incDeBruijnVar(di,bound);
-		return dRecord(nvalues);
-	}
+	mixin Visitors;
 	static DRecord constructHook(DExpr[string] values){
 		return null;
 	}
