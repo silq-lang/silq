@@ -192,8 +192,12 @@ enum forEachSubExprImpl(string code)=mixin(X!q{
 	}
 });
 template IncDeBruijnVarType(T){
-	static if(is(T:DVar)) alias IncDeBruijnVarType=T;
+	static if(is(T:DVar)||is(T==DLambda)) alias IncDeBruijnVarType=T;
 	else alias IncDeBruijnVarType=DExpr;
+}
+template SubstituteType(T){
+	static if(is(T==DLambda)) alias SubstituteType=T;
+	else alias SubstituteType=DExpr;
 }
 enum IsAbstract(T) = hasUDA!(T,isAbstract);
 mixin template Visitors(){
@@ -215,7 +219,7 @@ mixin template Visitors(){
 			return 0;
 		}
 	}
-	override DExpr substitute(DVar var,DExpr e){
+	override SubstituteType!(typeof(this)) substitute(DVar var,DExpr e){
 		static if(is(typeof(this):DVar)) return this is var?e:this;
 		else{
 			alias This=typeof(this);
@@ -3480,7 +3484,7 @@ auto dRUpdate(DExpr e,string f,DExpr n){
 }
 
 class DLambda: DOp{ // lambda functions DExpr → DExpr
-	private{ DExpr expr; }
+	/+private+/ @subExpr @binder DExpr expr;
 	this(DExpr expr){ this.expr=expr; }
 	DExpr apply(DExpr e){
 		return unbind(expr,e);
@@ -3493,7 +3497,8 @@ class DLambda: DOp{ // lambda functions DExpr → DExpr
 		// TODO: formatting for other CAS systems
 		return addp(prec,text("λ",DDeBruijnVar.displayName(1,formatting,binders+1),". ",expr.toStringImpl(formatting,Precedence.lambda,binders+1)));
 	}
-	override int forEachSubExpr(scope int delegate(DExpr) dg){
+	mixin Visitors;
+	/+override int forEachSubExpr(scope int delegate(DExpr) dg){
 		return 0; // TODO: ok?
 	}
 	override int freeVarsImpl(scope int delegate(DVar) dg){
@@ -3504,7 +3509,7 @@ class DLambda: DOp{ // lambda functions DExpr → DExpr
 	}
 	override DLambda incDeBruijnVar(int di,int bound){
 		return dLambda(expr.incDeBruijnVar(di,bound+1));
-	}
+	}+/
 
 	static DLambda constructHook(DExpr expr){
 		return staticSimplify(expr);
