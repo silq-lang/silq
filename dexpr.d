@@ -2857,7 +2857,7 @@ DExpr dAbs(DExpr e){ return uniqueDExprUnary!DAbs(e); }
 
 
 class DLog: DOp{
-	DExpr e;
+	@subExpr DExpr e;
 	this(DExpr e){ this.e=e; }
 	override @property string symbol(Format formatting,int binders){ return "log"; }
 	override Precedence precedence(){ return Precedence.none; }
@@ -2867,20 +2867,7 @@ class DLog: DOp{
 		if(formatting==Format.mathematica) return text("Log[",es,"]");
 		return text("log(",es,")");
 	}
-
-	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		return dg(e);
-	}
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		return e.freeVarsImpl(dg);
-	}
-	override DExpr substitute(DVar var,DExpr exp){
-		return dLog(e.substitute(var,exp));
-	}
-	override DExpr incDeBruijnVar(int di,int bound){
-		return dLog(e.incDeBruijnVar(di,bound));
-	}
-
+	mixin Visitors;
 	static DExpr constructHook(DExpr e){
 		return null;
 	}
