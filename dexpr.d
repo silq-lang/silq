@@ -3363,7 +3363,7 @@ auto dIUpdate(DExpr e,DExpr i,DExpr n){
 
 
 class DSlice: DOp{
-	DExpr e,l,r; // TODO: multiple indices?
+	@subExpr DExpr e,l,r; // TODO: multiple indices?
 	this(DExpr e,DExpr l,DExpr r){
 		this.e=e; this.l=l; this.r=r;
 	}
@@ -3375,32 +3375,11 @@ class DSlice: DOp{
 		if(formatting==Format.lisp) return text("(slice ",e.toStringImpl(formatting,Precedence.none,binders)," ",l.toStringImpl(formatting,Precedence.none,binders)," ",r.toStringImpl(formatting,Precedence.none,binders),")");
 		return addp(prec, e.toStringImpl(formatting,Precedence.index,binders)~"["~l.toStringImpl(formatting,Precedence.none,binders)~".."~r.toStringImpl(formatting,Precedence.none,binders)~"]");
 	}
-
-	override int forEachSubExpr(scope int delegate(DExpr) dg){
-		if(auto x=dg(e)) return x;
-		if(auto x=dg(l)) return x;
-		if(auto x=dg(r)) return x;
-		return 0;
-	}
+	mixin Visitors;
 
 	override DExpr simplifyImpl(DExpr facts){
 		auto res=staticSimplify(e,l,r,facts);
 		return res?res:this;
-	}
-
-	override DExpr substitute(DVar var,DExpr exp){
-		return dSlice(e.substitute(var,exp),l.substitute(var,exp),r.substitute(var,exp));
-	}
-
-	override DExpr incDeBruijnVar(int di,int bound){
-		return dSlice(e.incDeBruijnVar(di,bound),l.incDeBruijnVar(di,bound),r.incDeBruijnVar(di,bound));
-	}
-
-	override int freeVarsImpl(scope int delegate(DVar) dg){
-		if(auto x=e.freeVarsImpl(dg)) return x;
-		if(auto x=l.freeVarsImpl(dg)) return x;
-		if(auto x=r.freeVarsImpl(dg)) return x;
-		return 0;
 	}
 
 	static DExpr staticSimplify(DExpr e,DExpr l,DExpr r,DExpr facts=one){
