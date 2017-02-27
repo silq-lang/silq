@@ -176,7 +176,7 @@ abstract class DExpr{
 
 // attributes
 import std.traits: hasUDA;
-struct binder{} struct isAbstract{}
+struct binder{} struct even{} struct conditionallyEven(alias cond){ } struct isAbstract{}
 enum forEachSubExprImpl(string code)=mixin(X!q{
 	foreach(i,se;subExprs){
 		static if(is(typeof(se):DExpr)){
@@ -292,6 +292,33 @@ mixin template Visitors(){
 }
 
 mixin template FactoryFunction(T){
+	static if(is(T==DIvr)){
+		DExpr dIvr(DIvr.Type type,DExpr e){
+			static MapX!(DExpr,DExpr)[DIvr.Type.max+1] unique;
+			if(auto r=DIvr.constructHook(type,e)) return r;
+			if(e in unique[type]) return unique[type][e];
+			if(type==DIvr.Type.eqZ||type==DIvr.Type.neqZ){
+				// if(e.hasFactor(mone)) e=e.withoutFactor(mone); // TODO
+				// TODO: is there a better way to make the argument canonical?
+				auto neg=(-e).simplify(one);
+				if(neg in unique[type])
+					return unique[type][neg];
+			}
+			auto r=new DIvr(type,e);
+			unique[type][e]=r;
+			return r;
+		}
+	}else:
+
+	static if(is(T==DDelta)){
+		import expression; // TODO: remove this import
+		DExpr dDelta(DExpr var,DExpr e,Expression ty){ // TODO: dexpr shouldn't know about expression/type, but this is most convenient for overloading
+			import type;
+			if(ty is ℝ) return dDelta(e-var);
+			assert(cast(TupleTy)ty||cast(ArrayTy)ty||cast(AggregateTy)ty||cast(ContextTy)ty||cast(FunTy)ty||cast(TypeTy)ty||cast(Identifier)ty||cast(CallExp)ty,text(ty)); // TODO: add more supported types
+			return dDiscDelta(var,e);
+		}
+	}
 	mixin(mixin(X!q{
 		auto @(lowerf(T.stringof))(typeof(T.subExprs) args){
 			static if(is(T:DCommutAssocOp)){
@@ -307,6 +334,12 @@ mixin template FactoryFunction(T){
 			static MapX!(TupleX!(typeof(T.subExprs)),T) unique;
 			auto t=tuplex(args);
 			if(t in unique) return unique[t];
+			static if(is(T==DDelta)){
+				static assert(hasUDA!(T.subExprs[0],even));
+				// TODO: use 'even' UDA.
+				auto t2=tuplex((-args[0]).simplify(one)); // TODO: don't want full simplification
+				if(t2 in unique) return unique[t2];
+			}
 			auto r=new T(args);
 			unique[t]=r;
 			return r;
@@ -2076,8 +2109,8 @@ class DIvr: DExpr{ // iverson brackets
 		leZ,
 	}
 	Type type;
-	DExpr e;
 	alias subExprs=Seq!(type,e);
+	@conditionallyEven!((Type t,DExpr e)=>util.among(t,DIvr.Type.eqZ,DIvr.Type.neqZ)) DExpr e;
 	mixin Visitors;
 
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
@@ -2243,6 +2276,7 @@ class DIvr: DExpr{ // iverson brackets
 		return r?r:this;
 	}
 }
+mixin FactoryFunction!DIvr;
 
 DExpr dBounded(string what)(DExpr e,DExpr lo,DExpr hi) if(what=="[]"){
 	return dIvr(DIvr.Type.leZ,lo-e)*dIvr(DIvr.Type.leZ,e-hi);
@@ -2263,25 +2297,8 @@ DVar getCanonicalFreeVar(DExpr e){
 	return r;
 }
 
-MapX!(DExpr,DExpr)[DIvr.Type.max+1] uniqueMapDIvr;
-DExpr dIvr(DIvr.Type type,DExpr e){
-	if(auto r=DIvr.constructHook(type,e)) return r;
-	if(e in uniqueMapDIvr[type]) return uniqueMapDIvr[type][e];
-	if(type==DIvr.Type.eqZ||type==DIvr.Type.neqZ){
-		// if(e.hasFactor(mone)) e=e.withoutFactor(mone); // TODO
-		// TODO: is there a better way to make the argument canonical?
-		auto neg=(-e).simplify(one);
-		if(neg in uniqueMapDIvr[type])
-			return uniqueMapDIvr[type][neg];
-	}
-	auto r=new DIvr(type,e);
-	uniqueMapDIvr[type][e]=r;
-	return r;
-
-}
-
 class DDelta: DExpr{ // Dirac delta, for ℝ
-	DExpr e;
+	@even DExpr e;
 	alias subExprs=Seq!e;
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		if(formatting==Format.mathematica){
@@ -2342,19 +2359,7 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 		return null;
 	}
 }
-
-auto dDelta(DExpr a)in{assert(!cast(DTuple)a);}body{ // TODO: more preconditions
-	if(auto r=DDelta.constructHook(a)) return r;
-	// TODO: is there a better way to make the argument canonical?
-	auto t1=tuplex(typeid(DDelta),a);
-	if(t1 in uniqueMapUnary) return cast(DDelta)uniqueMapUnary[t1];
-	auto t2=tuplex(typeid(DDelta),(-a).simplify(one)); // TODO: don't want full simplification
-	if(t2 in uniqueMapUnary) return cast(DDelta)uniqueMapUnary[t2];
-	auto r=new DDelta(a);
-	uniqueMapUnary[t1]=r;
-	return r;
-}
-
+mixin FactoryFunction!DDelta;
 
 class DDiscDelta: DExpr{ // point mass for discrete data types
 	DExpr var; // TODO: figure out what it should mean if var is some expression with multiple free variables
@@ -2403,26 +2408,7 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 		return r?r:this;
 	}
 }
-
-import expression; // TODO: remove this import
-DExpr dDelta(DExpr var,DExpr e,Expression ty){ // TODO: dexpr shouldn't know about expression/type, but this is most convenient for overloading
-	import type;
-	if(ty is ℝ) return dDelta(e-var);
-	assert(cast(TupleTy)ty||cast(ArrayTy)ty||cast(AggregateTy)ty||cast(ContextTy)ty||cast(FunTy)ty||cast(TypeTy)ty||cast(Identifier)ty||cast(CallExp)ty,text(ty)); // TODO: add more supported types
-	return dDiscDelta(var,e);
-}
-
-MapX!(TupleX!(DExpr,DExpr),DExpr) uniqueMapDDiscDelta;
-DExpr dDiscDelta(DExpr var,DExpr e){
-	if(auto r=DDiscDelta.constructHook(var,e)) return r;
-	// TODO: is there a better way to make the argument canonical?
-	auto t=tuplex(var,e);
-	if(t in uniqueMapDDiscDelta) return uniqueMapDDiscDelta[t];
-	auto r=new DDiscDelta(var,e);
-	uniqueMapDDiscDelta[t]=r;
-	return r;
-}
-
+mixin FactoryFunction!DDiscDelta;
 
 DExpr[2] splitPlusAtVar(DExpr e,DVar var){
 	DExprSet outside, within;
