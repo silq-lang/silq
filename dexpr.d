@@ -3072,9 +3072,6 @@ class DTuple: DExpr{ // Tuples. TODO: real tuple support
 		return text("(",values.map!(v=>v.toStringImpl(formatting,Precedence.none,binders)).join(","),values.length==1?",":"",")");
 	}
 	mixin Visitors;
-	static DTuple constructHook(DExpr[] values){
-		return null;
-	}
 	static DTuple staticSimplify(DExpr[] values,DExpr facts=one){
 		auto nvalues=values.map!(v=>v.simplify(facts)).array;
 		if(nvalues!=values) return dTuple(nvalues);
@@ -3087,20 +3084,7 @@ class DTuple: DExpr{ // Tuples. TODO: real tuple support
 	final @property size_t length(){ return values.length; }
 	final @property DExpr opIndex(size_t i){ return values[i]; }
 }
-
-MapX!(TupleX!(DExpr[]),DTuple) uniqueMapDTuple;
-auto uniqueDTuple(DExpr[] values){
-	if(auto r=DTuple.constructHook(values)) return r;
-	auto t=tuplex(values);
-	if(t in uniqueMapDTuple) return uniqueMapDTuple[t];
-	auto r=new DTuple(values);
-	uniqueMapDTuple[t]=r;
-	return r;
-}
-
-DTuple dTuple(DExpr[] values){
-	return uniqueDTuple(values);
-}
+mixin FactoryFunction!DTuple;
 
 class DRecord: DExpr{ // Tuples. TODO: real tuple support
 	DExpr[string] values;
