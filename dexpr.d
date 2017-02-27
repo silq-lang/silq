@@ -298,7 +298,8 @@ mixin template FactoryFunction(T){
 				static assert(is(typeof(args)==Seq!DExprSet));
 				if(args[0].length==1) return args[0].element;
 			}
-			if(auto r=T.constructHook(args)) return r;
+			static if(__traits(hasMember,T,"constructHook"))
+				if(auto r=T.constructHook(args)) return r;
 			static MapX!(TupleX!(typeof(T.subExprs)),T) unique;
 			auto t=tuplex(args);
 			if(t in unique) return unique[t];
@@ -314,6 +315,13 @@ mixin template FactoryFunction(T){
 				T.insert(a,e1);
 				T.insert(a,e2);
 				return @(lowerf(T.stringof))(a);
+			}
+		}));
+	}
+	static if(is(T:DBinaryOp)){
+		mixin(mixin(X!q{
+			auto @(lowerf(T.stringof))(DExpr e1,DExpr e2){
+				return @(lowerf(T.stringof))([e1,e2]);
 			}
 		}));
 	}
@@ -583,21 +591,12 @@ abstract class DCommutAssocOp: DOp{
 }
 
 MapX!(TupleX!(typeof(typeid(DExpr)),DExpr[]),DExpr) uniqueMapAssoc;
-MapX!(TupleX!(typeof(typeid(DExpr)),DExpr,DExpr),DExpr) uniqueMapNonCommutAssoc;
 
 auto uniqueDExprAssoc(T)(DExpr[] e){
 	auto t=tuplex(typeid(T),e);
 	if(t in uniqueMapAssoc) return cast(T)uniqueMapAssoc[t];
 	auto r=new T(e);
 	uniqueMapAssoc[t]=r;
-	return r;
-}
-
-auto uniqueDExprNonCommutAssoc(T)(DExpr a, DExpr b){
-	auto t=tuplex(typeid(T),a,b);
-	if(t in uniqueMapNonCommutAssoc) return cast(T)uniqueMapNonCommutAssoc[t];
-	auto r=new T(a,b);
-	uniqueMapNonCommutAssoc[t]=r;
 	return r;
 }
 MapX!(TupleX!(typeof(typeid(DExpr)),DExpr),DExpr) uniqueMapUnary;
@@ -618,18 +617,6 @@ string makeConstructorAssoc(T)(){
 		~"}"
 		~"auto " ~ lowerf(Ts)~"(DExpr e1,DExpr e2){"
 		~"  return "~lowerf(Ts)~"([e1,e2]);"
-		~"}";
-}
-
-string makeConstructorNonCommutAssoc(T)(){
-	enum Ts=__traits(identifier, T);
-	return "auto " ~ lowerf(Ts)~"(DExpr[2] o){"
-		~"   return " ~ lowerf(Ts)~"(o[0],o[1]);"
-		~"}"
-		~"auto " ~ lowerf(Ts)~"(DExpr e1, DExpr e2){ "
-		~"static if(__traits(hasMember,"~Ts~",`constructHook`)){"
-		~"  if(auto r="~Ts~".constructHook(e1,e2)) return r;}"
-		~"return uniqueDExprNonCommutAssoc!("~__traits(identifier,T)~")(e1,e2);"
 		~"}";
 }
 
@@ -1362,14 +1349,13 @@ class DPow: DBinaryOp{
 		if(auto fct=factorDIvr!(e=>e1^^e)(e2)) return fct.simplify(facts);
 		return null;
 	}
-
 	override DExpr simplifyImpl(DExpr facts){
 		auto r=staticSimplify(operands[0],operands[1],facts);
 		return r?r:this;
 	}
 }
 
-mixin(makeConstructorNonCommutAssoc!DPow);
+mixin FactoryFunction!DPow;
 DExpr dDiv(DExpr e1,DExpr e2){ return e1*e2^^mone; }
 
 
@@ -2386,8 +2372,6 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 	}
 }
 
-//mixin(makeConstructorUnary!DDelta);
-
 auto dDelta(DExpr a)in{assert(!cast(DTuple)a);}body{ // TODO: more preconditions
 	if(auto r=DDelta.constructHook(a)) return r;
 	// TODO: is there a better way to make the argument canonical?
@@ -3302,7 +3286,7 @@ class DIndex: DOp{
 	}
 }
 
-mixin(makeConstructorNonCommutAssoc!DIndex);
+mixin FactoryFunction!DIndex;
 
 class DIUpdate: DOp{
 	DExpr e,i,n; // TODO: multiple indices?
@@ -3561,7 +3545,7 @@ class DApply: DOp{
 		return dApply(nfun,narg);
 	}
 }
-mixin(makeConstructorNonCommutAssoc!DApply);
+mixin FactoryFunction!DApply;
 
 class DDistApply: DOp{
 	DExpr fun,arg;
@@ -3583,8 +3567,7 @@ class DDistApply: DOp{
 		return dDistApply(nfun,narg);
 	}
 }
-mixin(makeConstructorNonCommutAssoc!DDistApply);
-
+mixin FactoryFunction!DDistApply;
 
 class DArray: DExpr{
 	DExpr length;
