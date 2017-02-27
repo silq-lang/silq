@@ -682,7 +682,6 @@ abstract class DCommutAssocOp: DOp{
 		}
 	}
 }
-MapX!(TupleX!(typeof(typeid(DExpr)),DExpr),DExpr) uniqueMapUnary;
 
 class DPlus: DCommutAssocOp{
 	DExprSet operands;
