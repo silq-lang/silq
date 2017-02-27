@@ -374,6 +374,8 @@ mixin template FactoryFunction(T){
 			if(var is dDeBruijnVar(1)) return dLambda(expr);
 			return dLambda(expr.incDeBruijnVar(1,0).substitute(var,dDeBruijnVar(1)));
 		}
+	}else static if(is(T==DRecord)){
+		auto dRecord(){ return dRecord((DExpr[string]).init); }
 	}
 	mixin(mixin(X!q{
 		auto @(lowerf(T.stringof))(typeof(T.subExprs) args){
@@ -3126,23 +3128,7 @@ class DRecord: DExpr{ // Tuples. TODO: real tuple support
 		return r?r:this;
 	}
 }
-
-MapX!(TupleX!(TupleX!(string,DExpr)[]),DRecord) uniqueMapDRecord; // TODO: why no hash for built-in aas?
-auto dRecord(DExpr[string] values){
-	if(auto r=DRecord.constructHook(values)) return r;
-	TupleX!(string,DExpr)[] tt;
-	foreach(k,v;values) tt~=tuplex(k,v);
-	sort!"a[0]<b[0]"(tt);
-	auto t=tuplex(tt);
-	if(t in uniqueMapDRecord)
-		return uniqueMapDRecord[t];
-	auto r=new DRecord(values);
-	uniqueMapDRecord[t]=r;
-	return r;
-}
-
-auto dRecord(){ return dRecord((DExpr[string]).init); }
-
+mixin FactoryFunction!DRecord;
 
 class DIndex: DOp{
 	DExpr e,i; // TODO: multiple indices?
