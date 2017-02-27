@@ -164,6 +164,8 @@ abstract class DExpr{
 
 
 	mixin template Constant(){
+		static if(!is(subExprs==Seq!()))
+			this(typeof(subExprs) args){ subExprs=args; }
 		override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; }
 		override int freeVarsImpl(scope int delegate(DVar) dg){ return 0; }
 		override DExpr substitute(DVar var,DExpr e){ assert(var !is this); return this; }
@@ -394,7 +396,7 @@ DVar dε(){ return theDε?theDε:(theDε=new DNVar("ε")); }
 
 class Dℤ: DExpr{
 	ℤ c;
-	private this(ℤ c){ this.c=c; }
+	alias subExprs=Seq!c;
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		string r=text(c);
 		if(formatting==Format.maple){
@@ -429,7 +431,7 @@ Dℤ nthRoot(Dℤ x,ℤ n){
 
 class DFloat: DExpr{
 	real c;
-	private this(real c){ this.c=c; }
+	alias subExprs=Seq!c;
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		import std.format;
 		string r=format("%.16e",c);
@@ -459,6 +461,7 @@ DExpr dFloat(real c){
 }
 
 class DE: DExpr{
+	alias subExprs=Seq!();
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		if(formatting==Format.gnuplot) return "exp(1)";
 		if(formatting==Format.maple) return "exp(1)";
@@ -471,6 +474,7 @@ private static DE theDE;
 @property DE dE(){ return theDE?theDE:(theDE=new DE); }
 
 class DΠ: DExpr{
+	alias subExprs=Seq!();
 	override string toStringImpl(Format formatting,Precedence prec,int binders){ // TODO: maple
 		if(formatting==Format.gnuplot) return "pi";
 		if(formatting==Format.matlab) return "pi";
@@ -3129,6 +3133,7 @@ class DGaussInt: DOp{
 auto dGaussInt(DExpr x){ return uniqueDExprUnary!DGaussInt(x); }
 
 class DInf: DExpr{ // TODO: explicit limits?
+	alias subExprs=Seq!();
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		if(formatting==Format.lisp) return "infinity";
 		return "∞";
