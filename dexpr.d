@@ -376,6 +376,19 @@ mixin template FactoryFunction(T){
 		}
 	}else static if(is(T==DRecord)){
 		auto dRecord(){ return dRecord((DExpr[string]).init); }
+	}else static if(is(T==DArray)){
+		auto dArray(DExpr length){ return dArray(length,dLambda(zero)); }
+		auto dConstArray(DExpr length,DExpr default_){
+			assert(!cast(DLambda)default_);
+			return dArray(length,dLambda(default_.incDeBruijnVar(1,0)));
+		}
+		auto dArray(DExpr[] entries){
+			auto dbv=dDeBruijnVar(1);
+			// TODO: not necessarily very clean for types that are not real numbers, but can be interpreted in terms of linear algebra
+			DExpr body_=zero;
+			foreach(i,e;entries) body_=body_+dIvr(DIvr.Type.eqZ,dbv-i)*entries[i].incDeBruijnVar(1,0);
+			return dArray(dℤ(ℤ(entries.length)),dLambda(body_));
+		}
 	}
 	mixin(mixin(X!q{
 		auto @(lowerf(T.stringof))(typeof(T.subExprs) args){
@@ -3179,7 +3192,6 @@ class DIndex: DOp{
 		return null;
 	}
 }
-
 mixin FactoryFunction!DIndex;
 
 class DIUpdate: DOp{
@@ -3231,17 +3243,7 @@ class DIUpdate: DOp{
 		return null;
 	}
 }
-
-MapX!(TupleX!(DExpr,DExpr,DExpr),DExpr) uniqueMapDIUpdate;
-auto dIUpdate(DExpr e,DExpr i,DExpr n){
-	if(auto r=DIUpdate.constructHook(e,i,n)) return r;
-	auto t=tuplex(e,i,n);
-	if(t in uniqueMapDIUpdate) return uniqueMapDIUpdate[t];
-	auto r=new DIUpdate(e,i,n);
-	uniqueMapDIUpdate[t]=r;
-	return r;
-}
-
+mixin FactoryFunction!DIUpdate;
 
 class DSlice: DOp{
 	DExpr e,l,r; // TODO: multiple indices?
@@ -3298,18 +3300,7 @@ class DSlice: DOp{
 		return null;
 	}
 }
-
-MapX!(TupleX!(DExpr,DExpr,DExpr),DExpr) uniqueMapDSlice;
-auto dSlice(DExpr e,DExpr l,DExpr r){
-	if(auto res=DSlice.constructHook(e,l,r)) return res;
-	auto t=tuplex(e,l,r);
-	if(t in uniqueMapDSlice) return uniqueMapDSlice[t];
-	auto res=new DSlice(e,l,r);
-	uniqueMapDSlice[t]=res;
-	return res;
-}
-
-
+mixin FactoryFunction!DSlice;
 
 class DRUpdate: DOp{ // TODO: allow updating multiple fields at once
 	DExpr e; // TODO: multiple indices?
@@ -3345,16 +3336,7 @@ class DRUpdate: DOp{ // TODO: allow updating multiple fields at once
 		return null;
 	}
 }
-
-MapX!(TupleX!(DExpr,string,DExpr),DExpr) uniqueMapDRUpdate;
-auto dRUpdate(DExpr e,string f,DExpr n){
-	if(auto r=DRUpdate.constructHook(e,f,n)) return r;
-	auto t=tuplex(e,f,n);
-	if(t in uniqueMapDRUpdate) return uniqueMapDRUpdate[t];
-	auto r=new DRUpdate(e,f,n);
-	uniqueMapDRUpdate[t]=r;
-	return r;
-}
+mixin FactoryFunction!DRUpdate;
 
 class DLambda: DOp{ // lambda functions DExpr → DExpr
 	/+private+/ @binder DExpr expr;
@@ -3473,29 +3455,7 @@ class DArray: DExpr{
 		return r?r:this;
 	}
 }
-
-MapX!(TupleX!(DExpr,DLambda),DArray) uniqueMapDArray;
-auto dArray(DExpr length,DLambda entries){
-	if(auto r=DArray.constructHook(length,entries)) return r;
-	auto t=tuplex(length,entries);
-	if(t in uniqueMapDArray) return uniqueMapDArray[t];
-	auto r=new DArray(length,entries);
-	uniqueMapDArray[t]=r;
-	return r;
-}
-
-auto dArray(DExpr length){ return dArray(length,dLambda(zero)); }
-auto dConstArray(DExpr length,DExpr default_){
-	assert(!cast(DLambda)default_);
-	return dArray(length,dLambda(default_.incDeBruijnVar(1,0)));
-}
-auto dArray(DExpr[] entries){
-	auto dbv=dDeBruijnVar(1);
-	// TODO: not necessarily very clean for types that are not real numbers, but can be interpreted in terms of linear algebra
-	DExpr body_=zero;
-	foreach(i,e;entries) body_=body_+dIvr(DIvr.Type.eqZ,dbv-i)*entries[i].incDeBruijnVar(1,0);
-	return dArray(dℤ(ℤ(entries.length)),dLambda(body_));
-}
+mixin FactoryFunction!DArray;
 
 class DCat: DAssocOp{ // TODO: this should have n arguments, as it is associative!
 	override @property Precedence precedence(){ return Precedence.plus; }
