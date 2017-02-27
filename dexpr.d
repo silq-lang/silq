@@ -175,7 +175,6 @@ abstract class DExpr{
 }
 
 // attributes
-import std.traits: hasUDA;
 struct binder{} struct even{} struct conditionallyEven(alias cond){ } struct isAbstract{}
 enum forEachSubExprImpl(string code)=mixin(X!q{
 	foreach(i,se;subExprs){
@@ -197,6 +196,7 @@ template SubstituteType(T){
 	static if(is(T==DLambda)) alias SubstituteType=T;
 	else alias SubstituteType=DExpr;
 }
+import std.traits: hasUDA;
 enum IsAbstract(T) = hasUDA!(T,isAbstract);
 mixin template Visitors(){
 	this(typeof(subExprs) args)in{
@@ -223,6 +223,7 @@ mixin template Visitors(){
 		static if(is(typeof(this):DVar)) return dg(this);
 		else{
 			mixin(forEachSubExprImpl!q{{
+				import std.traits: hasUDA;
 				static if(hasUDA!(subExprs[i],binder)){
 					if(auto r=x.freeVarsImpl(v=>v is dDeBruijnVar(1)?0:dg(v.incDeBruijnVar(-1,0)))) return r;
 				}else{ if(auto r=x.freeVarsImpl(dg)) return r; }
@@ -236,6 +237,7 @@ mixin template Visitors(){
 			Q!(typeof(subExprs)) nsubs;
 			foreach(i,sub;subExprs){
 				auto cvar=var,ce=e;
+				import std.traits: hasUDA;
 				static if(hasUDA!(subExprs[i],binder)){
 					cvar=cvar.incDeBruijnVar(1,0);
 					ce=ce.incDeBruijnVar(1,0);
@@ -271,6 +273,7 @@ mixin template Visitors(){
 			alias subs=subExprs;
 			foreach(i,sub;subExprs){
 				auto cdi=di,cbound=bound;
+				import std.traits: hasUDA;
 				static if(hasUDA!(subExprs[i],binder)){
 					cbound++;
 				}
