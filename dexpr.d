@@ -298,6 +298,10 @@ mixin template FactoryFunction(T){
 				static assert(is(typeof(args)==Seq!DExprSet));
 				if(args[0].length==1) return args[0].element;
 			}
+			static if(is(T:DAssocOp)){
+				static assert(is(typeof(args)==Seq!(DExpr[])));
+				if(args[0].length==1) return args[0][0];
+			}
 			static if(__traits(hasMember,T,"constructHook"))
 				if(auto r=T.constructHook(args)) return r;
 			static MapX!(TupleX!(typeof(T.subExprs)),T) unique;
@@ -308,6 +312,13 @@ mixin template FactoryFunction(T){
 			return r;
 		}
 	}));
+	static if(is(T:DBinaryOp)||is(T:DAssocOp)){
+		mixin(mixin(X!q{
+			auto @(lowerf(T.stringof))(DExpr e1,DExpr e2){
+				return @(lowerf(T.stringof))([e1,e2]);
+			}
+		}));
+	}
 	static if(is(T:DCommutAssocOp)){
 		mixin(mixin(X!q{
 			auto @(lowerf(T.stringof))(DExpr e1,DExpr e2){
@@ -315,13 +326,6 @@ mixin template FactoryFunction(T){
 				T.insert(a,e1);
 				T.insert(a,e2);
 				return @(lowerf(T.stringof))(a);
-			}
-		}));
-	}
-	static if(is(T:DBinaryOp)){
-		mixin(mixin(X!q{
-			auto @(lowerf(T.stringof))(DExpr e1,DExpr e2){
-				return @(lowerf(T.stringof))([e1,e2]);
 			}
 		}));
 	}
@@ -589,40 +593,7 @@ abstract class DCommutAssocOp: DOp{
 		}
 	}
 }
-
-MapX!(TupleX!(typeof(typeid(DExpr)),DExpr[]),DExpr) uniqueMapAssoc;
-
-auto uniqueDExprAssoc(T)(DExpr[] e){
-	auto t=tuplex(typeid(T),e);
-	if(t in uniqueMapAssoc) return cast(T)uniqueMapAssoc[t];
-	auto r=new T(e);
-	uniqueMapAssoc[t]=r;
-	return r;
-}
 MapX!(TupleX!(typeof(typeid(DExpr)),DExpr),DExpr) uniqueMapUnary;
-auto uniqueDExprUnary(T)(DExpr a){
-	if(auto r=T.constructHook(a)) return r;
-	auto t=tuplex(typeid(T),a);
-	if(t in uniqueMapUnary) return cast(T)uniqueMapUnary[t];
-	auto r=new T(a);
-	uniqueMapUnary[t]=r;
-	return r;
-}
-string makeConstructorAssoc(T)(){
-	enum Ts=__traits(identifier, T);
-	return "auto " ~ lowerf(Ts)~"(DExpr[] f){"
-		~"if(f.length==1) return f[0];"
-		~"if(auto r="~Ts~".constructHook(f)) return r;"
-		~"return uniqueDExprAssoc!("~__traits(identifier,T)~")(f);"
-		~"}"
-		~"auto " ~ lowerf(Ts)~"(DExpr e1,DExpr e2){"
-		~"  return "~lowerf(Ts)~"([e1,e2]);"
-		~"}";
-}
-
-string makeConstructorUnary(T)(){
-	return "auto " ~ lowerf(__traits(identifier, T))~"(DExpr e){ return uniqueDExprUnary!("~__traits(identifier,T)~")(e); }";
-}
 
 class DPlus: DCommutAssocOp{
 	DExprSet operands;
@@ -2854,8 +2825,7 @@ class DAbs: DOp{
 	}
 }
 
-DExpr dAbs(DExpr e){ return uniqueDExprUnary!DAbs(e); }
-
+mixin FactoryFunction!DAbs;
 
 class DLog: DOp{
 	DExpr e;
@@ -2905,8 +2875,7 @@ class DLog: DOp{
 		return r?r:this;
 	}
 }
-
-DExpr dLog(DExpr e){ return uniqueDExprUnary!DLog(e); }
+mixin FactoryFunction!DLog;
 
 class DSin: DOp{
 	DExpr e;
@@ -2931,8 +2900,7 @@ class DSin: DOp{
 		return r?r:this;
 	}
 }
-
-DExpr dSin(DExpr e){ return uniqueDExprUnary!DSin(e); }
+mixin FactoryFunction!DSin;
 
 class DFloor: DOp{
 	DExpr e;
@@ -2961,9 +2929,7 @@ class DFloor: DOp{
 		return r?r:this;
 	}
 }
-
-DExpr dFloor(DExpr e){ return uniqueDExprUnary!DFloor(e); }
-
+mixin FactoryFunction!DFloor;
 
 class DCeil: DOp{
 	DExpr e;
@@ -2992,8 +2958,7 @@ class DCeil: DOp{
 		return r?r:this;
 	}
 }
-
-DExpr dCeil(DExpr e){ return uniqueDExprUnary!DCeil(e); }
+mixin FactoryFunction!DCeil;
 
 DExpr dMod(DExpr e1,DExpr e2){
 	return e1-dFloor(e1/e2)*e2;
@@ -3121,8 +3086,7 @@ class DGaussInt: DOp{
 	}
 	mixin Visitors;
 }
-
-auto dGaussInt(DExpr x){ return uniqueDExprUnary!DGaussInt(x); }
+mixin FactoryFunction!DGaussInt;
 
 class DInf: DExpr{ // TODO: explicit limits?
 	alias subExprs=Seq!();
@@ -3667,7 +3631,7 @@ class DCat: DAssocOp{ // TODO: this should have n arguments, as it is associativ
 		return null;
 	}
 }
-mixin(makeConstructorAssoc!DCat);
+mixin FactoryFunction!DCat;
 
 class DField: DOp{
 	DExpr e;
