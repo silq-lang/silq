@@ -173,14 +173,10 @@ abstract class DExpr{
 }
 
 // attributes
-import std.traits;
-struct subExpr{} struct binder{} struct isAbstract{}
-alias subExprs(alias T) = getSymbolsByUDA!(T,subExpr);
-
+import std.traits: hasUDA;
+struct binder{} struct isAbstract{}
 enum forEachSubExprImpl(string code)=mixin(X!q{
-	alias This=typeof(this);
-	alias subs=subExprs!This;
-	foreach(i,se;subs){
+	foreach(i,se;subExprs){
 		static if(is(typeof(se):DExpr)){
 			alias x=se;
 			@(code);
@@ -201,6 +197,10 @@ template SubstituteType(T){
 }
 enum IsAbstract(T) = hasUDA!(T,isAbstract);
 mixin template Visitors(){
+	/+this(typeof(subExprs) args){ subExprs=args; }
+	static if(is(typeof(subExprs)==Seq!(DExpr[2]))){
+		this(DExpr e1,DExpr e2){ this([e1,e2]); }
+	}+/
 	static if(!IsAbstract!(typeof(this))):
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
 		// TODO: fix this.
@@ -212,7 +212,7 @@ mixin template Visitors(){
 		static if(is(typeof(this):DVar)) return dg(this);
 		else{
 			mixin(forEachSubExprImpl!q{{
-				static if(hasUDA!(subs[i],binder)){
+				static if(hasUDA!(subExprs[i],binder)){
 					if(auto r=x.freeVarsImpl(v=>v is dDeBruijnVar(1)?0:dg(v.incDeBruijnVar(-1,0)))) return r;
 				}else{ if(auto r=x.freeVarsImpl(dg)) return r; }
 			}});
@@ -222,12 +222,10 @@ mixin template Visitors(){
 	override SubstituteType!(typeof(this)) substitute(DVar var,DExpr e){
 		static if(is(typeof(this):DVar)) return this is var?e:this;
 		else{
-			alias This=typeof(this);
-			Q!(typeof(subExprs!This)) nsubs;
-			alias subs=subExprs!This;
-			foreach(i,sub;subs){
+			Q!(typeof(subExprs)) nsubs;
+			foreach(i,sub;subExprs){
 				auto cvar=var,ce=e;
-				static if(hasUDA!(subs[i],binder)){
+				static if(hasUDA!(subExprs[i],binder)){
 					cvar=cvar.incDeBruijnVar(1,0);
 					ce=ce.incDeBruijnVar(1,0);
 				}
@@ -248,7 +246,7 @@ mixin template Visitors(){
 					foreach(k,v;sub) nsubs[i][k]=v.substitute(cvar,ce);
 				}else nsubs[i]=sub;
 			}
-			if(nsubs==q(subs)) return this;
+			if(nsubs==q(subExprs)) return this;
 			return mixin(lowerf(typeof(this).stringof))(nsubs.expand);
 		}
 	}
@@ -258,12 +256,11 @@ mixin template Visitors(){
 			assert((i<=bound) == (i+di <= bound)); // (otherwise bound variables can be captured);
 			return dDeBruijnVar(i+di);
 		}else{
-			alias This=typeof(this);
-			Q!(typeof(subExprs!This)) nsubs;
-			alias subs=subExprs!This;
-			foreach(i,sub;subs){
+			Q!(typeof(subExprs)) nsubs;
+			alias subs=subExprs;
+			foreach(i,sub;subExprs){
 				auto cdi=di,cbound=bound;
-				static if(hasUDA!(subs[i],binder)){
+				static if(hasUDA!(subExprs[i],binder)){
 					cbound++;
 				}
 				static if(is(typeof(sub):DExpr)){
@@ -277,7 +274,7 @@ mixin template Visitors(){
 					foreach(k,v;sub) nsubs[i][k]=v.incDeBruijnVar(cdi,cbound);
 				}else nsubs[i]=sub;
 			}
-			if(nsubs==q(subs)) return this;
+			if(nsubs==q(subExprs)) return this;
 			return mixin(lowerf(typeof(this).stringof))(nsubs.expand);
 		}
 	}
@@ -301,7 +298,8 @@ abstract class DVar: DExpr{
 	override abstract DVar incDeBruijnVar(int di,int bound);
 }
 class DNVar: DVar{ // named variables
-	@subExpr string name;
+	string name;
+	alias subExprs=Seq!(name);
 	/+private+/ this(string name){ this.name=name; } // TODO: add private again after broken deprecation warning is fixed
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		return fixName(name,formatting);
@@ -325,6 +323,7 @@ class DNVar: DVar{ // named variables
 		return this;
 	}
 }
+
 DNVar[string] dVarCache; // TODO: caching desirable? (also need to update parser if not)
 DNVar dNVar(string name){
 	if(name in dVarCache) return dVarCache[name];
@@ -333,7 +332,8 @@ DNVar dNVar(string name){
 alias dVar=dNVar;
 
 class DDeBruijnVar: DVar{
-	@subExpr int i;
+	int i;
+	alias subExprs=Seq!i;
 	/+private+/ this(int i)in{assert(i>=0);}body{ this.i=i; }
 	static string displayName(int i,Format formatting,int binders){
 		return DVar.fixName("ξ"~lowNum(1+binders-i),formatting);
@@ -498,7 +498,8 @@ abstract class DOp: DExpr{
 
 @isAbstract
 abstract class DAssocOp: DOp{
-	@subExpr DExpr[] operands;
+	DExpr[] operands;
+	alias subExprs=Seq!operands;
 	/+protected+/ mixin template Constructor(){ /+private+/ this(DExpr[] e)in{assert(e.length>1); }body{ operands=e; } } // TODO: add protected/private after deprecation warning is fixed in DMD
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		string r;
@@ -619,7 +620,8 @@ string makeConstructorUnary(T)(){
 }
 
 class DPlus: DCommutAssocOp{
-	@subExpr DExprSet operands;
+	DExprSet operands;
+	alias subExprs=Seq!operands;
 	mixin Constructor;
 	mixin ToString;
 	override @property Precedence precedence(){ return Precedence.plus; }
@@ -828,7 +830,8 @@ class DPlus: DCommutAssocOp{
 }
 
 class DMult: DCommutAssocOp{
-	@subExpr DExprSet operands;
+	DExprSet operands;
+	alias subExprs=Seq!operands;
 	mixin Constructor;
 	override @property Precedence precedence(){ return Precedence.mult; }
 	override string symbol(Format formatting,int binders){
@@ -1187,7 +1190,8 @@ DExpr getFractionalFactor(DExpr e){
 DExpr dMinus(DExpr e1,DExpr e2){ return e1+-e2; }
 
 abstract class DBinaryOp: DOp{
-	@subExpr DExpr[2] operands;
+	DExpr[2] operands;
+	alias subExprs=Seq!operands;
 	/+protected+/ mixin template Constructor(){/+private+/ this(DExpr[2] o){ this.operands=o; } /+private+/ this(DExpr e1, DExpr e2){ this([e1,e2]); } }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		if(formatting==Format.lisp)
@@ -1501,7 +1505,8 @@ DExpr[2] asLinearFunctionIn(DExpr e,DVar v){ // returns [b,a] if e=av+b
 
 
 abstract class DUnaryOp: DOp{
-	@subExpr DExpr operand;
+	DExpr operand;
+	alias subExprs=Seq!operand;
 	protected mixin template Constructor(){ private this(DExpr e){ operand=e; } }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		if(formatting==Format.lisp)
@@ -2100,8 +2105,9 @@ class DIvr: DExpr{ // iverson brackets
 		lZ,
 		leZ,
 	}
-	@subExpr Type type;
-	@subExpr DExpr e;
+	Type type;
+	DExpr e;
+	alias subExprs=Seq!(type,e);
 	this(Type type,DExpr e){
 		this.type=type; this.e=e;
 		foreach(d;e.allOf!DDelta) assert(0,text(e));
@@ -2314,7 +2320,8 @@ DExpr dIvr(DIvr.Type type,DExpr e){
 }
 
 class DDelta: DExpr{ // Dirac delta, for ℝ
-	@subExpr DExpr e;
+	DExpr e;
+	alias subExprs=Seq!e;
 	/+private+/ this(DExpr e){ this.e=e; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		if(formatting==Format.mathematica){
@@ -2392,8 +2399,9 @@ auto dDelta(DExpr a)in{assert(!cast(DTuple)a);}body{ // TODO: more preconditions
 
 
 class DDiscDelta: DExpr{ // point mass for discrete data types
-	@subExpr DExpr var; // TODO: figure out what it should mean if var is some expression with multiple free variables
-	@subExpr DExpr e;
+	DExpr var; // TODO: figure out what it should mean if var is some expression with multiple free variables
+	DExpr e;
+	alias subExprs=Seq!(var,e);
 	/+private+/ this(DExpr var,DExpr e){
 		this.var=var;
 		this.e=e;
@@ -2570,7 +2578,8 @@ static DExpr unbind(DExpr expr, DExpr nexpr){
 
 import integration;
 class DInt: DOp{
-	@subExpr @binder DExpr expr;
+	@binder DExpr expr;
+	alias subExprs=Seq!expr;
 	/+private+/ this(DExpr expr){ this.expr=expr; }
 	final DExpr getExpr(DExpr e){ return unbind(expr,e); }
 	override @property Precedence precedence(){ return Precedence.intg; }
@@ -2664,7 +2673,8 @@ DExpr dInt(DVar var,DExpr expr)in{assert(var&&expr&&!cast(DDeBruijnVar)var);}bod
 
 import summation;
 class DSum: DOp{
-	@subExpr @binder DExpr expr;
+	@binder DExpr expr;
+	alias subExprs=Seq!expr;
 	this(DExpr expr){ this.expr=expr; }
 	final DExpr getExpr(DExpr e){ return unbind(expr,e); }
 	override @property Precedence precedence(){ return Precedence.intg; }
@@ -2735,8 +2745,9 @@ DExpr dSum(DVar var,DExpr expr)in{assert(var&&expr&&!cast(DDeBruijnVar)var);}bod
 
 import limits;
 class DLim: DOp{
-	@subExpr DExpr e;
-	@subExpr @binder DExpr x;
+	DExpr e;
+	@binder DExpr x;
+	alias subExprs=Seq!(e,x);
 	this(DExpr e,DExpr x){ this.e=e; this.x=x; }
 	override @property string symbol(Format formatting,int binders){ return text("lim[",DDeBruijnVar.displayName(1,formatting,binders+1)," → ",e.toStringImpl(formatting,Precedence.none,binders+1),"]"); }
 	override Precedence precedence(){ return Precedence.lim; } // TODO: ok?
@@ -2788,8 +2799,9 @@ bool hasLimits(DExpr e){ return hasAny!DLim(e); }
 
 import differentiation;
 class DDiff: DOp{
-	@subExpr @binder DExpr e;
-	@subExpr DExpr x;
+	@binder DExpr e;
+	DExpr x;
+	alias subExprs=Seq!(e,x);
 	this(DExpr e,DExpr x){ this.e=e; this.x=x; }
 	override @property string symbol(Format formatting,int binders){ return "d/d"~DDeBruijnVar.displayName(1,formatting,binders); }
 	override Precedence precedence(){ return Precedence.diff; }
@@ -2828,7 +2840,8 @@ DExpr dDiff(DVar v,DExpr e,DExpr x)in{assert(v&&e&&x&&(!cast(DDeBruijnVar)v||v i
 DExpr dDiff(DVar v,DExpr e){ return dDiff(v,e,v); }
 
 class DAbs: DOp{
-	@subExpr DExpr e;
+	DExpr e;
+	alias subExprs=Seq!e;
 	this(DExpr e){ this.e=e; }
 	override @property string symbol(Format formatting,int binders){ return "|"; }
 	override Precedence precedence(){ return Precedence.none; }
@@ -2867,7 +2880,8 @@ DExpr dAbs(DExpr e){ return uniqueDExprUnary!DAbs(e); }
 
 
 class DLog: DOp{
-	@subExpr DExpr e;
+	DExpr e;
+	alias subExprs=Seq!e;
 	this(DExpr e){ this.e=e; }
 	override @property string symbol(Format formatting,int binders){ return "log"; }
 	override Precedence precedence(){ return Precedence.none; }
@@ -2918,7 +2932,8 @@ class DLog: DOp{
 DExpr dLog(DExpr e){ return uniqueDExprUnary!DLog(e); }
 
 class DSin: DOp{
-	@subExpr DExpr e;
+	DExpr e;
+	alias subExprs=Seq!e;
 	this(DExpr e){ this.e=e; }
 	override @property string symbol(Format formatting,int binders){ return "sin"; }
 	override Precedence precedence(){ return Precedence.none; }
@@ -2944,7 +2959,8 @@ class DSin: DOp{
 DExpr dSin(DExpr e){ return uniqueDExprUnary!DSin(e); }
 
 class DFloor: DOp{
-	@subExpr DExpr e;
+	DExpr e;
+	alias subExprs=Seq!e;
 	this(DExpr e){ this.e=e; }
 	override @property string symbol(Format formatting,int binders){ return "⌊.⌋"; }
 	override Precedence precedence(){ return Precedence.none; }
@@ -2975,7 +2991,8 @@ DExpr dFloor(DExpr e){ return uniqueDExprUnary!DFloor(e); }
 
 
 class DCeil: DOp{
-	@subExpr DExpr e;
+	DExpr e;
+	alias subExprs=Seq!e;
 	this(DExpr e){ this.e=e; }
 	override @property string symbol(Format formatting,int binders){ return "⌈.⌉"; }
 	override Precedence precedence(){ return Precedence.none; }
@@ -3009,7 +3026,8 @@ DExpr dMod(DExpr e1,DExpr e2){
 }
 
 template BitwiseImpl(string which){
-	@subExpr SetX!DExpr operands;
+	SetX!DExpr operands;
+	alias subExprs=Seq!operands;
 	mixin Constructor;
 	mixin ToString;
 	override @property Precedence precedence(){ return mixin("Precedence."~which); }
@@ -3092,7 +3110,8 @@ mixin(makeConstructorCommutAssoc!DBitXor);
 mixin(makeConstructorCommutAssocIdem!DBitAnd);
 
 class DGaussInt: DOp{
-	@subExpr DExpr x;
+	DExpr x;
+	alias subExprs=Seq!x;
 	this(DExpr x){ this.x=x; }
 	override @property string symbol(Format formatting,int binders){ return "(d/dx)⁻¹[e^(-x²)]"; }
 	override Precedence precedence(){ return Precedence.diff; }
@@ -3150,7 +3169,8 @@ bool isInfinite(DExpr e){
 }
 
 class DTuple: DExpr{ // Tuples. TODO: real tuple support
-	@subExpr DExpr[] values;
+	DExpr[] values;
+	alias subExprs=Seq!values;
 	this(DExpr[] values){
 		this.values=values;
 	}
@@ -3190,7 +3210,8 @@ DTuple dTuple(DExpr[] values){
 }
 
 class DRecord: DExpr{ // Tuples. TODO: real tuple support
-	@subExpr DExpr[string] values;
+	DExpr[string] values;
+	alias subExprs=Seq!values;
 	this(DExpr[string] values){
 		this.values=values;
 	}
@@ -3250,7 +3271,8 @@ auto dRecord(){ return dRecord((DExpr[string]).init); }
 
 
 class DIndex: DOp{
-	@subExpr DExpr e,i; // TODO: multiple indices?
+	DExpr e,i; // TODO: multiple indices?
+	alias subExprs=Seq!(e,i);
 	this(DExpr e,DExpr i){
 		this.e=e; this.i=i;
 	}
@@ -3304,7 +3326,8 @@ class DIndex: DOp{
 mixin(makeConstructorNonCommutAssoc!DIndex);
 
 class DIUpdate: DOp{
-	@subExpr DExpr e,i,n; // TODO: multiple indices?
+	DExpr e,i,n; // TODO: multiple indices?
+	alias subExprs=Seq!(e,i,n);
 	this(DExpr e,DExpr i,DExpr n){
 		this.e=e; this.i=i; this.n=n;
 	}
@@ -3367,7 +3390,8 @@ auto dIUpdate(DExpr e,DExpr i,DExpr n){
 
 
 class DSlice: DOp{
-	@subExpr DExpr e,l,r; // TODO: multiple indices?
+	DExpr e,l,r; // TODO: multiple indices?
+	alias subExprs=Seq!(e,l,r);
 	this(DExpr e,DExpr l,DExpr r){
 		this.e=e; this.l=l; this.r=r;
 	}
@@ -3437,9 +3461,10 @@ auto dSlice(DExpr e,DExpr l,DExpr r){
 
 
 class DRUpdate: DOp{ // TODO: allow updating multiple fields at once
-	@subExpr DExpr e; // TODO: multiple indices?
-	@subExpr string f;
-	@subExpr DExpr n;
+	DExpr e; // TODO: multiple indices?
+	string f;
+	DExpr n;
+	alias subExprs=Seq!(e,f,n);
 	this(DExpr e,string f,DExpr n){
 		this.e=e; this.f=f; this.n=n;
 	}
@@ -3484,7 +3509,8 @@ auto dRUpdate(DExpr e,string f,DExpr n){
 }
 
 class DLambda: DOp{ // lambda functions DExpr → DExpr
-	/+private+/ @subExpr @binder DExpr expr;
+	/+private+/ @binder DExpr expr;
+	alias subExprs=Seq!expr;
 	this(DExpr expr){ this.expr=expr; }
 	DExpr apply(DExpr e){
 		return unbind(expr,e);
@@ -3547,7 +3573,8 @@ DLambda dTupleLambda(DVar[] args,DExpr fun){
 }
 
 class DApply: DOp{
-	@subExpr DExpr fun,arg;
+	DExpr fun,arg;
+	alias subExprs=Seq!(fun,arg);
 	this(DExpr fun,DExpr arg){
 		this.fun=fun;
 		this.arg=arg;
@@ -3572,7 +3599,8 @@ class DApply: DOp{
 mixin(makeConstructorNonCommutAssoc!DApply);
 
 class DDistApply: DOp{
-	@subExpr DExpr fun,arg;
+	DExpr fun,arg;
+	alias subExprs=Seq!(fun,arg);
 	this(DExpr fun,DExpr arg){
 		this.fun=fun;
 		this.arg=arg;
@@ -3598,8 +3626,9 @@ mixin(makeConstructorNonCommutAssoc!DDistApply);
 
 
 class DArray: DExpr{
-	@subExpr DExpr length;
-	@subExpr DLambda entries;
+	DExpr length;
+	DLambda entries;
+	alias subExprs=Seq!(length,entries);
 	this(DExpr length,DLambda entries){
 		this.length=length;
 		this.entries=entries;
@@ -3702,8 +3731,9 @@ class DCat: DAssocOp{ // TODO: this should have n arguments, as it is associativ
 mixin(makeConstructorAssoc!DCat);
 
 class DField: DOp{
-	@subExpr DExpr e;
-	@subExpr string f;
+	DExpr e;
+	string f;
+	alias subExprs=Seq!(e,f);
 	this(DExpr e,string f){
 		this.e=e; this.f=f;
 	}
