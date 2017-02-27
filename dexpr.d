@@ -576,15 +576,50 @@ class Dℤ: DExpr{
 }
 mixin FactoryFunction!Dℤ;
 
-Dℤ nthRoot(Dℤ x,ℤ n){
+Dℤ nthRoot(ℤ x,ℤ n){
 	ℤ k=1,r=0;
-	while(k<x.c) k*=2;
+	while(k<x) k*=2;
 	for(;k;k/=2){
 		ℤ c=r+k;
-		if(pow(c,n)<=x.c)
+		if(pow(c,n)<=x)
 			r=c;
 	}
-	return pow(r,n)==x.c?dℤ(r):null;
+	return pow(r,n)==x?dℤ(r):null;
+}
+
+ℤ ceilLog2(ℤ x)in{assert(x>=1);}body{
+	ℤ r=0;
+	for(ℤ y=1;y<x;y*=2) ++r;
+	return r;
+}
+
+Dℤ[2] isPower(ℤ x,size_t bound=-1)in{assert(x>=0);}body{
+	if(x<4) return [null,null];
+	ℤ i = ceilLog2(x);
+	if(bound!=-1) if(i>bound) return [null,null];
+	for(;i>1;--i)
+		if(auto r=nthRoot(x,i))
+			return [r,dℤ(i)];
+	return [null,null];
+}
+
+Dℤ integerLog(ℤ x,ℤ b)in{assert(x>=0);}body{
+	if(x==1) return cast(Dℤ)zero;
+	if(x%b) return null;
+	ℤ r=0,d=1;
+	ℤ[] p=[b];
+	while(!(x%p[$-1])){
+		p~=p[$-1]*p[$-1];
+		d*=2;
+	}
+	ℤ c=x;
+	for(size_t i=p.length;i--;d/=2){
+		if(!(c%p[i])){
+			c/=p[i];
+			r+=d;
+		}
+	}
+	return c==1?dℤ(r):null;
 }
 
 class DFloat: DExpr{
@@ -1146,7 +1181,16 @@ class DMult: DCommutAssocOp{
 			/+// TODO: do we want auto-distribution?
 			if(cast(DPlus)e1) return dDistributeMult(e1,e2);
 			if(cast(DPlus)e2) return dDistributeMult(e2,e1);+/
-
+			if(auto l2=cast(DLog)e2)
+				if(auto z2=cast(Dℤ)l2.e)
+					if(z2.c>=0)
+						if(auto p1=cast(DPow)e1)
+							if(p1.operands[1] == mone)
+								if(auto l1=cast(DLog)p1.operands[0])
+									if(auto z1=cast(Dℤ)l1.e)
+										if(z1.c>=0)
+											if(auto r=integerLog(z2.c,z1.c))
+												return r;
 			return null;
 		}
 		foreach(f;factors){
@@ -1383,7 +1427,7 @@ class DPow: DBinaryOp{
 				if(!f.isFraction()) continue;
 				auto nd=f.getFraction();
 				if(nd[0]!=1||nd[1]>5) continue; // TODO: 5 ok?
-				if(auto r=nthRoot(c,nd[1]))
+				if(auto r=nthRoot(c.c,nd[1]))
 					return (r^^(e2/f)).simplify(facts);
 			}
 		}
