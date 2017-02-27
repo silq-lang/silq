@@ -308,6 +308,8 @@ mixin template FactoryFunction(T){
 			unique[type][e]=r;
 			return r;
 		}
+	}else static if(is(T==DFloat)){
+		DExpr dFloat(real c){ return new DFloat(c); }
 	}else:
 
 	static if(is(T==DDelta)){
@@ -389,7 +391,19 @@ mixin template FactoryFunction(T){
 			foreach(i,e;entries) body_=body_+dIvr(DIvr.Type.eqZ,dbv-i)*entries[i].incDeBruijnVar(1,0);
 			return dArray(dℤ(ℤ(entries.length)),dLambda(body_));
 		}
+	}else static if(is(T==Dℤ)){
+		DExpr dℤ(long c){ return dℤ(ℤ(c)); }
 	}
+	static if(is(T.subExprs==Seq!())){
+		mixin(mixin(X!q{
+			auto @(lowerf(T.stringof))(){
+				static T unique=null;
+				if(unique) return unique;
+				unique=new T();
+				return unique;
+			}
+		}));
+	}else:
 	mixin(mixin(X!q{
 		auto @(lowerf(T.stringof))(typeof(T.subExprs) args){
 			static if(is(T:DCommutAssocOp)){
@@ -433,6 +447,16 @@ mixin template FactoryFunction(T){
 			}
 		}));
 	}
+}
+mixin template FactoryFunction(string name,string value){
+	mixin(mixin(X!q{
+		auto @(name)(){
+			static typeof(@(value)) unique=null;
+			if(unique) return unique;
+			unique=@(value);
+			return unique;
+		}
+	}));
 }
 
 
@@ -499,12 +523,7 @@ class DDeBruijnVar: DVar{
 		return this;
 	}
 }
-DDeBruijnVar[int] uniqueMapBound;
-DDeBruijnVar dDeBruijnVar(int i){
-	return i !in uniqueMapBound ?
-		uniqueMapBound[i]=new DDeBruijnVar(i):
-		uniqueMapBound[i];
-}
+mixin FactoryFunction!DDeBruijnVar;
 
 // substitute all variables from 'from' by the respective expressions in 'to' at the same time (avoiding capture)
 DExpr substituteAll(DExpr e,DVar[] from, DExpr[] to)in{assert(from.length==to.length);}body{
@@ -533,10 +552,8 @@ class DTmpDeBruijnVar: DNVar{
 
 DNVar freshVar(string name="tmp"){ return new DTmpDeBruijnVar(name); } // TODO: get rid of this!
 
-
 DVar theDε;
 DVar dε(){ return theDε?theDε:(theDε=new DNVar("ε")); }
-
 
 class Dℤ: DExpr{
 	ℤ c;
@@ -554,13 +571,7 @@ class Dℤ: DExpr{
 
 	mixin Constant;
 }
-
-Dℤ[ℤ] uniqueMapDℤ; // TODO: get rid of this!
-Dℤ dℤ(ℤ c){
-	if(c in uniqueMapDℤ) return uniqueMapDℤ[c];
-	return uniqueMapDℤ[c]=new Dℤ(c);
-}
-DExpr dℤ(long c){ return dℤ(ℤ(c)); }
+mixin FactoryFunction!Dℤ;
 
 Dℤ nthRoot(Dℤ x,ℤ n){
 	ℤ k=1,r=0;
@@ -591,18 +602,7 @@ class DFloat: DExpr{
 
 	mixin Constant;
 }
-
-//DFloat[real] uniqueMapDFloat; // TODO: get rid of this!
-DExpr dFloat(real c){
-	import std.math: floor;
-	import std.format: format;
-	if(c==1) return one;
-	if(c==0) return zero;
-	//if(floor(c)==c) return dℤ(); // TODO: fix this
-	//if(c in uniqueMapDFloat) return uniqueMapDFloat[c];
-	//return uniqueMapDFloat[c]=new DFloat(c);
-	return new DFloat(c);
-}
+mixin FactoryFunction!DFloat;
 
 class DE: DExpr{
 	alias subExprs=Seq!();
@@ -614,8 +614,7 @@ class DE: DExpr{
 	} // TODO: maple
 	mixin Constant;
 }
-private static DE theDE;
-@property DE dE(){ return theDE?theDE:(theDE=new DE); }
+mixin FactoryFunction!DE;
 
 class DΠ: DExpr{
 	alias subExprs=Seq!();
@@ -628,17 +627,10 @@ class DΠ: DExpr{
 	}
 	mixin Constant;
 }
-private static DΠ theDΠ;
-@property DΠ dΠ(){ return theDΠ?theDΠ:(theDΠ=new DΠ); }
-
-private static DExpr theOne;
-@property DExpr one(){ return theOne?theOne:(theOne=1.dℤ);}
-
-private static DExpr theMOne;
-@property DExpr mone(){ return theMOne?theMOne:(theMOne=(-1).dℤ);}
-
-private static DExpr theZero;
-@property DExpr zero(){ return theZero?theZero:(theZero=0.dℤ);}
+mixin FactoryFunction!DΠ;
+mixin FactoryFunction!("one","dℤ(1)");
+mixin FactoryFunction!("mone","dℤ(-1)");
+mixin FactoryFunction!("zero","dℤ(0)");
 
 abstract class DOp: DExpr{
 	abstract @property string symbol(Format formatting,int binders);
@@ -3562,17 +3554,7 @@ class DField: DOp{
 		return null;
 	}
 }
-
-MapX!(TupleX!(DExpr,string),DField) uniqueMapDField;
-auto dField(DExpr e,string f){
-	if(auto r=DField.constructHook(e,f)) return r;
-	auto t=tuplex(e,f);
-	if(t in uniqueMapDField) return uniqueMapDField[t];
-	auto r=new DField(e,f);
-	uniqueMapDField[t]=r;
-	return r;
-}
-
+mixin FactoryFunction!DField;
 
 import std.traits: ParameterTypeTuple;
 import std.typetuple;
