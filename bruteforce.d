@@ -35,7 +35,7 @@ struct Dist{
 	MapX!(DExpr,DExpr) state;
 	DExpr error;
 	SetX!string tmpVars;
-	@disable this();
+	// @disable this();
 	this(MapX!(DExpr,DExpr) state,DExpr error,SetX!string tmpVars){
 		this.state=state;
 		this.error=error;
@@ -465,42 +465,28 @@ DExpr inFrame(DExpr arg){
 
 class DBFFun: DExpr{
 	FunctionDef def;
-	this(FunctionDef def){ this.def=def; }
+	alias subExprs=Seq!def;
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		return def.name.name;
 	}
 	mixin Constant;
 }
-DBFFun dBFFun(FunctionDef def){
-	static MapX!(FunctionDef,DBFFun) unique;
-	if(def in unique) return unique[def];
-	auto r=new DBFFun(def);
-	unique[def]=r;
-	return r;
-}
+mixin FactoryFunction!DBFFun;
 class DBFContextFun: DExpr{
 	FunctionDef def;
 	DExpr ctx;
-	this(FunctionDef def,DExpr ctx){ this.def=def; this.ctx=ctx; }
+	alias subExprs=Seq!(def,ctx);
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		return text(def.name?def.name.name:text("(",def,")"),"@(",ctx.toStringImpl(formatting,Precedence.none,binders),")");
 	}
+	mixin Visitors;
 	override DExpr simplifyImpl(DExpr facts){ return dBFContextFun(def,ctx.simplify(facts)); }
-	override DExpr substitute(DVar var,DExpr expr){ return dBFContextFun(def,ctx.substitute(var,expr)); }
-	override int forEachSubExpr(scope int delegate(DExpr) dg){ return dg(ctx); }
-	override DExpr incDeBruijnVar(int di, int free){ return dBFContextFun(def,ctx.incDeBruijnVar(di,free)); }
-	override int freeVarsImpl(scope int delegate(DVar) dg){ return ctx.freeVarsImpl(dg); }
+
 }
-DBFContextFun dBFContextFun(FunctionDef def,DExpr ctx){
-	static MapX!(TupleX!(FunctionDef,DExpr),DBFContextFun) unique;
-	auto t=tuplex(def,ctx);
-	if(t in unique) return unique[t];
-	auto r=new DBFContextFun(def,ctx);
-	unique[t]=r;
-	return r;
-}
+mixin FactoryFunction!DBFContextFun;
 class DBFDist: DExpr{
 	Dist dist;
+	alias subExprs=Seq!dist;
 	this(Dist dist)in{assert(!dist.tmpVars.length);}body{ this.dist=dist; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		auto d=dist.toDistribution();
@@ -508,12 +494,7 @@ class DBFDist: DExpr{
 		return dApply(d.toDExpr(),dLambda(one)).simplify(one).toStringImpl(formatting,prec,binders);
 	}
 	override DExpr simplifyImpl(DExpr facts){ return dBFDist(dist.simplify(facts)); }
-	override DExpr substitute(DVar var,DExpr expr){
-		return dBFDist(dist.substitute(var,expr));
-	}
-	override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; }
-	override DExpr incDeBruijnVar(int di, int free){ return dBFDist(dist.incDeBruijnVar(di,free)); }
-	override int freeVarsImpl(scope int delegate(DVar) dg){ return dist.freeVarsImpl(dg); }
+	mixin Visitors;
 }
 DBFDist dBFDist(Dist dist)in{assert(!dist.tmpVars.length);}body{
 	MapX!(TupleX!(MapX!(DExpr,DExpr),DExpr),DBFDist) uniq;
