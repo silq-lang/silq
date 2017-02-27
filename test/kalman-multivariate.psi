@@ -25,5 +25,5 @@ def main(){
         filter.update(1);
         filter.measureX(data[i],1);
     }
-    return (filter.x,filter.v,filter.a); // expected: e^(-127303·⅟801+-3·a·x·⅟8+-43·x²·⅟48+-65·a²·⅟144+-65·v²·⅟144+-77·v·⅟18+17·v·x·⅟24+25·a·⅟18+45·x·⅟2+49·a·v·⅟72)·⅟12·⅟π^(3·⅟2)·⅟√1̅2̅·√8̅9̅
+    return (filter.x,filter.v,filter.a); // expected: e^(-127303·⅟801+-3·a·x·⅟8+-43·x²·⅟48+-65·a²·⅟144+-65·v²·⅟144+-77·v·⅟18+17·v·x·⅟24+25·a·⅟18+45·x·⅟2+49·a·v·⅟72)·⅟24·⅟π^(3·⅟2)·⅟√3̅·√8̅9̅
 }

@@ -318,6 +318,62 @@ mixin template FactoryFunction(T){
 			assert(cast(TupleTy)ty||cast(ArrayTy)ty||cast(AggregateTy)ty||cast(ContextTy)ty||cast(FunTy)ty||cast(TypeTy)ty||cast(Identifier)ty||cast(CallExp)ty,text(ty)); // TODO: add more supported types
 			return dDiscDelta(var,e);
 		}
+	}else static if(is(T==DInt)){ // TODO: generalize over DInt, DSum, DLim, DLambda, (DDiff)
+		@disable DExpr dIntSmp(DVar var,DExpr expr);
+		DExpr dIntSmp(DExpr expr,DExpr facts){
+			return dInt(expr).simplify(facts);
+		}
+		DExpr dIntSmp(DVar var,DExpr expr,DExpr facts){
+			return dInt(var,expr).simplify(facts);
+		}
+		DExpr dInt(DVar var,DExpr expr)in{assert(var&&expr&&!cast(DDeBruijnVar)var);}body{
+			return dInt(expr.incDeBruijnVar(1,0).substitute(var,dDeBruijnVar(1)));
+		}
+	}else static if(is(T==DSum)){
+		@disable DExpr dSumSmp(DVar var,DExpr expr);
+		DExpr dSumSmp(DExpr expr,DExpr facts){
+			return dSum(expr).simplify(facts);
+		}
+		DExpr dSumSmp(DVar var,DExpr expr,DExpr facts){
+			return dSum(var,expr).simplify(facts);
+		}
+		DExpr dSum(DVar var,DExpr expr)in{assert(var&&expr&&!cast(DDeBruijnVar)var);}body{
+			return dSum(expr.incDeBruijnVar(1,0).substitute(var,dDeBruijnVar(1)));
+		}
+	}else static if(is(T==DLim)){
+		@disable DExpr dLimSmp(DVar var,DExpr e,DExpr x);
+		DExpr dLimSmp(DExpr e,DExpr x,DExpr facts){
+			return dLim(e,x).simplify(facts);
+		}
+		DExpr dLimSmp(DVar v,DExpr e,DExpr x,DExpr facts){
+			return dLim(v,e,x).simplify(facts);
+		}
+		DExpr dLim(DVar v,DExpr e,DExpr x)in{assert(v&&e&&x&&(!cast(DDeBruijnVar)v||v is dDeBruijnVar(1)));}body{
+			if(v is dDeBruijnVar(1)) return dLim(e,x.incDeBruijnVar(1,1));
+			return dLim(e,x.incDeBruijnVar(1,0).substitute(v,dDeBruijnVar(1)));
+		}
+	}else static if(is(T==DDiff)){
+		DExpr dDiff(DVar v,DExpr e,DExpr x)in{assert(v&&e&&x&&(!cast(DDeBruijnVar)v||v is dDeBruijnVar(1)));}body{
+			if(v is dDeBruijnVar(1)) return dDiff(e.incDeBruijnVar(1,1),x);
+			return dDiff(e.incDeBruijnVar(1,0).substitute(v,dDeBruijnVar(1)),x);
+		}
+		DExpr dDiff(DVar v,DExpr e){ return dDiff(v,e,v); }
+	}else static if(is(T==DLambda)){
+		@disable DExpr dLambdaSmp(DVar var,DExpr expr);
+		DLambda dLambdaSmp(DExpr expr,DExpr facts)in{assert(expr);}body{
+			auto r=dLambda(expr).simplify(facts);
+			assert(!!cast(DLambda)r);
+			return cast(DLambda)cast(void*)r;
+		}
+		DLambda dLambdaSmp(DVar var,DExpr expr,DExpr facts)in{assert(var&&expr);}body{
+			auto r=dLambda(var,expr).simplify(facts);
+			assert(!!cast(DLambda)r);
+			return cast(DLambda)cast(void*)r;
+		}
+		DLambda dLambda(DVar var,DExpr expr)in{assert(var&&expr&&(!cast(DDeBruijnVar)var||var is dDeBruijnVar(1)));}body{
+			if(var is dDeBruijnVar(1)) return dLambda(expr);
+			return dLambda(expr.incDeBruijnVar(1,0).substitute(var,dDeBruijnVar(1)));
+		}
 	}
 	mixin(mixin(X!q{
 		auto @(lowerf(T.stringof))(typeof(T.subExprs) args){
@@ -2539,9 +2595,6 @@ class DInt: DOp{
 			return addp(prec,symbol(formatting,binders)~"d"~DDeBruijnVar.displayName(1,formatting,binders+1)~expr.toStringImpl(formatting,Precedence.intg,binders+1));
 		}
 	}
-	static DExpr constructHook(DExpr expr,DExpr facts){
-		return staticSimplify(expr,facts);
-	}
 
 	version(INTEGRAL_STATS){
 		static int numIntegrals=0;
@@ -2580,35 +2633,9 @@ class DInt: DOp{
 
 	mixin Visitors;
 }
+mixin FactoryFunction!DInt;
 
 bool hasIntegrals(DExpr e){ return hasAny!DInt(e); }
-
-MapX!(TupleX!(typeof(typeid(DExpr)),DExpr,DExpr),DExpr) uniqueMapBinding;
-auto uniqueBindingDExpr(T)(DExpr a,DExpr b=null){
-	auto t=tuplex(typeid(T),a,b);
-	if(t in uniqueMapBinding) return cast(T)uniqueMapBinding[t];
-	static if(is(typeof(new T(a)))) auto r=new T(a);
-	else auto r=new T(a,b);
-	uniqueMapBinding[t]=r;
-	return r;
-}
-
-@disable DExpr dIntSmp(DVar var,DExpr expr);
-DExpr dIntSmp(DExpr expr,DExpr facts){
-	return dInt(expr).simplify(facts);
-}
-
-DExpr dInt(DExpr expr)in{assert(expr);}body{
-	return uniqueBindingDExpr!DInt(expr);
-}
-
-DExpr dIntSmp(DVar var,DExpr expr,DExpr facts){
-	return dInt(var,expr).simplify(facts);
-}
-
-DExpr dInt(DVar var,DExpr expr)in{assert(var&&expr&&!cast(DDeBruijnVar)var);}body{
-	return dInt(expr.incDeBruijnVar(1,0).substitute(var,dDeBruijnVar(1)));
-}
 
 import summation;
 class DSum: DOp{
@@ -2630,10 +2657,6 @@ class DSum: DOp{
 			return addp(prec,symbol(formatting,binders)~"_"~DDeBruijnVar.displayName(1,formatting,binders+1)~expr.toStringImpl(formatting,precedence,binders+1));
 		}
 	}
-	static DExpr constructHook(DVar var,DExpr expr){
-		return staticSimplify(var,expr);
-	}
-
 	static MapX!(Q!(DExpr,DExpr),DExpr) ssimplifyMemo;
 	static DExpr staticSimplifyMemo(DExpr expr,DExpr facts=one){
 		auto t=q(expr,facts);
@@ -2662,24 +2685,7 @@ class DSum: DOp{
 	}
 	mixin Visitors;
 }
-
-@disable DExpr dSumSmp(DVar var,DExpr expr);
-DExpr dSumSmp(DExpr expr,DExpr facts){
-	return dSum(expr).simplify(facts);
-}
-
-DExpr dSum(DExpr expr){
-	return uniqueBindingDExpr!DSum(expr);
-}
-
-DExpr dSumSmp(DVar var,DExpr expr,DExpr facts){
-	return dSum(var,expr).simplify(facts);
-}
-
-DExpr dSum(DVar var,DExpr expr)in{assert(var&&expr&&!cast(DDeBruijnVar)var);}body{
-	return dSum(expr.incDeBruijnVar(1,0).substitute(var,dDeBruijnVar(1)));
-}
-
+mixin FactoryFunction!DSum;
 
 import limits;
 class DLim: DOp{
@@ -2692,10 +2698,6 @@ class DLim: DOp{
 		if(formatting==Format.lisp)
 			return text("(limit (-> ",DDeBruijnVar.displayName(1,formatting,binders+1),e.toStringImpl(formatting,Precedence.none,binders+1),") ",x.toStringImpl(formatting,Precedence.none,binders+1),")");
 		return addp(prec,symbol(formatting,binders)~x.toStringImpl(formatting,precedence,binders+1));
-	}
-
-	static DExpr constructHook(DExpr e,DExpr x){
-		return staticSimplify(e,x);
 	}
 
 	static DExpr staticSimplify(DExpr e,DExpr x,DExpr facts=one){
@@ -2713,24 +2715,7 @@ class DLim: DOp{
 
 	mixin Visitors;
 }
-
-@disable DExpr dLimSmp(DVar var,DExpr e,DExpr x);
-DExpr dLimSmp(DExpr e,DExpr x,DExpr facts){
-	return dLim(e,x).simplify(facts);
-}
-
-DExpr dLim(DExpr e,DExpr x){
-	return uniqueBindingDExpr!DLim(e,x);
-}
-
-DExpr dLimSmp(DVar v,DExpr e,DExpr x,DExpr facts){
-	return dLim(v,e,x).simplify(facts);
-}
-
-DExpr dLim(DVar v,DExpr e,DExpr x)in{assert(v&&e&&x&&(!cast(DDeBruijnVar)v||v is dDeBruijnVar(1)));}body{
-	if(v is dDeBruijnVar(1)) return dLim(e,x.incDeBruijnVar(1,1));
-	return dLim(e,x.incDeBruijnVar(1,0).substitute(v,dDeBruijnVar(1)));
-}
+mixin FactoryFunction!DLim;
 
 bool hasLimits(DExpr e){ return hasAny!DLim(e); }
 
@@ -2763,17 +2748,7 @@ class DDiff: DOp{
 	}
 	mixin Visitors;
 }
-
-DExpr dDiff(DExpr e,DExpr x){
-	if(auto r=DDiff.constructHook(e,x)) return r;
-	return uniqueBindingDExpr!DDiff(e,x);
-}
-
-DExpr dDiff(DVar v,DExpr e,DExpr x)in{assert(v&&e&&x&&(!cast(DDeBruijnVar)v||v is dDeBruijnVar(1)));}body{
-	if(v is dDeBruijnVar(1)) return dDiff(e.incDeBruijnVar(1,1),x);
-	return dDiff(e.incDeBruijnVar(1,0).substitute(v,dDeBruijnVar(1)),x);
-}
-DExpr dDiff(DVar v,DExpr e){ return dDiff(v,e,v); }
+mixin FactoryFunction!DDiff;
 
 class DAbs: DOp{
 	DExpr e;
@@ -3445,28 +3420,7 @@ class DLambda: DOp{ // lambda functions DExpr → DExpr
 		return r?r:this;
 	}
 }
-
-@disable DExpr dLambdaSmp(DVar var,DExpr expr);
-DLambda dLambdaSmp(DExpr expr,DExpr facts)in{assert(expr);}body{
-	auto r=dLambda(expr).simplify(facts);
-	assert(!!cast(DLambda)r);
-	return cast(DLambda)cast(void*)r;
-}
-
-DLambda dLambda(DExpr expr)in{assert(expr);}body{
-	return uniqueBindingDExpr!DLambda(expr);
-}
-
-DLambda dLambdaSmp(DVar var,DExpr expr,DExpr facts)in{assert(var&&expr);}body{
-	auto r=dLambda(var,expr).simplify(facts);
-	assert(!!cast(DLambda)r);
-	return cast(DLambda)cast(void*)r;
-}
-
-DLambda dLambda(DVar var,DExpr expr)in{assert(var&&expr&&(!cast(DDeBruijnVar)var||var is dDeBruijnVar(1)));}body{
-	if(var is dDeBruijnVar(1)) return dLambda(expr);
-	return dLambda(expr.incDeBruijnVar(1,0).substitute(var,dDeBruijnVar(1)));
-}
+mixin FactoryFunction!DLambda;
 
 DLambda dTupleLambda(DVar[] args,DExpr fun){
 	auto db1=dDeBruijnVar(1);
