@@ -137,30 +137,30 @@ abstract class DExpr{
 	final opUnary(string op)()if(op=="-"){
 		return UnaryCons!op(this);
 	}
-	final opBinary(string op)(DExpr e)if(ValidBinary!op){
+	final DExpr opBinary(string op)(DExpr e)if(ValidBinary!op){
 		return BinaryCons!op(this,e);
 	}
-	final opBinary(string op)(long e)if(ValidBinary!op){
+	final DExpr opBinary(string op)(long e)if(ValidBinary!op){
 		return mixin("this "~op~" e.dℤ");
 	}
-	final opBinaryRight(string op)(long e)if(ValidBinary!op){
+	final DExpr opBinaryRight(string op)(long e)if(ValidBinary!op){
 		return mixin("e.dℤ "~op~" this");
 	}
-	final opBinary(string op)(ℤ e)if(ValidBinary!op&&op!="~"){
+	final DExpr opBinary(string op)(ℤ e)if(ValidBinary!op&&op!="~"){
 		return mixin("this "~op~" e.dℤ");
 	}
-	final opBinaryRight(string op)(ℤ e)if(ValidBinary!op&&op!="~"){
+	final DExpr opBinaryRight(string op)(ℤ e)if(ValidBinary!op&&op!="~"){
 		return mixin("e.dℤ "~op~" this");
 	}
 
-	final opBinary(string op)(real e)if(ValidBinary!op&&op!="~"){
+	final DExpr opBinary(string op)(real e)if(ValidBinary!op&&op!="~"){
 		return mixin("this "~op~" e.dFloat");
 	}
-	final opBinaryRight(string op)(real e)if(ValidBinary!op&&op!="~"){
+	final DExpr opBinaryRight(string op)(real e)if(ValidBinary!op&&op!="~"){
 		return mixin("e.dFloat "~op~" this");
 	}
 
-	final opIndex(DExpr rhs){ return dIndex(this,rhs); }
+	final DExpr opIndex(DExpr rhs){ return dIndex(this,rhs); }
 
 
 	mixin template Constant(){
@@ -288,6 +288,34 @@ mixin template Visitors(){
 			if(nsubs==q(subExprs)) return this;
 			return mixin(lowerf(typeof(this).stringof))(nsubs.expand);
 		}
+	}
+}
+
+mixin template FactoryFunction(T){
+	mixin(mixin(X!q{
+		auto @(lowerf(T.stringof))(typeof(T.subExprs) args){
+			static if(is(T:DCommutAssocOp)){
+				static assert(is(typeof(args)==Seq!DExprSet));
+				if(args[0].length==1) return args[0].element;
+			}
+			if(auto r=T.constructHook(args)) return r;
+			static MapX!(TupleX!(typeof(T.subExprs)),T) unique;
+			auto t=tuplex(args);
+			if(t in unique) return unique[t];
+			auto r=new T(args);
+			unique[t]=r;
+			return r;
+		}
+	}));
+	static if(is(T:DCommutAssocOp)){
+		mixin(mixin(X!q{
+			auto @(lowerf(T.stringof))(DExpr e1,DExpr e2){
+				DExprSet a;
+				T.insert(a,e1);
+				T.insert(a,e2);
+				return @(lowerf(T.stringof))(a);
+			}
+		}));
 	}
 }
 
@@ -555,7 +583,6 @@ abstract class DCommutAssocOp: DOp{
 }
 
 MapX!(TupleX!(typeof(typeid(DExpr)),DExpr[]),DExpr) uniqueMapAssoc;
-MapX!(TupleX!(typeof(typeid(DExpr)),DExprSet),DExpr) uniqueMapCommutAssoc;
 MapX!(TupleX!(typeof(typeid(DExpr)),DExpr,DExpr),DExpr) uniqueMapNonCommutAssoc;
 
 auto uniqueDExprAssoc(T)(DExpr[] e){
@@ -565,13 +592,7 @@ auto uniqueDExprAssoc(T)(DExpr[] e){
 	uniqueMapAssoc[t]=r;
 	return r;
 }
-auto uniqueDExprCommutAssoc(T)(DExprSet e){
-	auto t=tuplex(typeid(T),e);
-	if(t in uniqueMapCommutAssoc) return cast(T)uniqueMapCommutAssoc[t];
-	auto r=new T(e);
-	uniqueMapCommutAssoc[t]=r;
-	return r;
-}
+
 auto uniqueDExprNonCommutAssoc(T)(DExpr a, DExpr b){
 	auto t=tuplex(typeid(T),a,b);
 	if(t in uniqueMapNonCommutAssoc) return cast(T)uniqueMapNonCommutAssoc[t];
@@ -597,18 +618,6 @@ string makeConstructorAssoc(T)(){
 		~"}"
 		~"auto " ~ lowerf(Ts)~"(DExpr e1,DExpr e2){"
 		~"  return "~lowerf(Ts)~"([e1,e2]);"
-		~"}";
-}
-string makeConstructorCommutAssoc(T)(){
-	enum Ts=__traits(identifier, T);
-	return "auto " ~ lowerf(Ts)~"(DExprSet f){"
-		~"if(f.length==1) return f.element;"
-		~"if(auto r="~Ts~".constructHook(f)) return r;"
-		~"return uniqueDExprCommutAssoc!("~__traits(identifier,T)~")(f);"
-		~"}"
-		~"auto " ~ lowerf(Ts)~"(DExpr e1,DExpr e2){"
-		~"  DExprSet a;"~Ts~".insert(a,e1);"~Ts~".insert(a,e2);"
-		~"  return "~lowerf(Ts)~"(a);"
 		~"}";
 }
 
@@ -1150,8 +1159,8 @@ class DMult: DCommutAssocOp{
 	}
 }
 
-mixin(makeConstructorCommutAssoc!DMult);
-mixin(makeConstructorCommutAssoc!DPlus);
+mixin FactoryFunction!DMult;
+mixin FactoryFunction!DPlus;
 
 auto distributeMult(DExpr sum,DExpr e){
 	DExpr[] r;
@@ -3007,7 +3016,7 @@ DExpr dMod(DExpr e1,DExpr e2){
 }
 
 template BitwiseImpl(string which){
-	SetX!DExpr operands;
+	DExprSet operands;
 	alias subExprs=Seq!operands;
 	mixin ToString;
 	override @property Precedence precedence(){ return mixin("Precedence."~which); }
@@ -3075,7 +3084,6 @@ template BitwiseImpl(string which){
 	}
 }
 class DCommutAssocIdemOp: DCommutAssocOp { }
-alias makeConstructorCommutAssocIdem=makeConstructorCommutAssoc;
 class DBitOr: DCommutAssocIdemOp{ // TODO: this is actually also idempotent
 	mixin BitwiseImpl!"bitOr";
 }
@@ -3085,9 +3093,9 @@ class DBitXor: DCommutAssocOp{
 class DBitAnd: DCommutAssocIdemOp{ // TODO: this is actually also idempotent
 	mixin BitwiseImpl!"bitAnd";
 }
-mixin(makeConstructorCommutAssocIdem!DBitOr);
-mixin(makeConstructorCommutAssoc!DBitXor);
-mixin(makeConstructorCommutAssocIdem!DBitAnd);
+mixin FactoryFunction!DBitOr;
+mixin FactoryFunction!DBitXor;
+mixin FactoryFunction!DBitAnd;
 
 class DGaussInt: DOp{
 	DExpr x;
