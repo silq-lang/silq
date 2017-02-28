@@ -220,6 +220,7 @@ mixin template Visitors(){
 		return 0;
 	}
 	override int freeVarsImpl(scope int delegate(DVar) dg){
+		// TODO: improve performance (this method uses ~10% of total running time)
 		static if(is(typeof(this):DVar)) return dg(this);
 		else{
 			mixin(forEachSubExprImpl!q{{
@@ -731,15 +732,8 @@ class DPlus: DCommutAssocOp{
 			summands.insert(summand);
 		}
 	}
-	static MapX!(Q!(DExprSet,DExpr,DExpr),DExprSet) insertMemo;
 	static void insertAndSimplify(ref DExprSet summands,DExpr summand,DExpr facts){
 		// swCount++;sw.start(); scope(exit) sw.stop();
-		if(q(summands,summand,facts) in insertMemo){
-			summands=insertMemo[q(summands,summand,facts)].dup;
-			return;
-		}
-		auto origIndex=q(summands.dup,summand,facts);
-		scope(exit) insertMemo[origIndex]=summands.dup;
 		summand=summand.simplify(facts);
 		if(auto dp=cast(DPlus)summand){
 			foreach(s;dp.summands)
@@ -958,7 +952,6 @@ class DMult: DCommutAssocOp{
 		return [n,d];
 	}
 
-	static MapX!(Q!(DExprSet,DExpr,DExpr),DExprSet) insertMemo;
 	static void insert(string file=__FILE__,int line=__LINE__)(ref DExprSet factors,DExpr factor)in{assert(!!factor);}body{
 		if(factor is one) return;
 		if(factor is zero) factors.clear();
@@ -971,14 +964,6 @@ class DMult: DCommutAssocOp{
 		}
 	}
 	static void insertAndSimplify(ref DExprSet factors,DExpr factor,DExpr facts)in{assert(factor&&facts);}body{
-		if(q(factors,factor,facts) in insertMemo){
-			factors=insertMemo[q(factors,factor,facts)].dup;
-			return;
-		}
-		auto origIndex=q(factors.dup,factor,facts);
-		scope(exit) insertMemo[origIndex]=factors.dup;
-		//if(zero in factors||factor is zero){ factors.clear(); factors.insert(zero); return; }
-		//dw(factors," ",factor," ",facts);
 		factor=factor.simplify(facts);
 		if(auto dm=cast(DMult)factor){
 			foreach(f;dm.factors)
