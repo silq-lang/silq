@@ -1755,7 +1755,7 @@ DExpr cancelFractions(bool isDelta)(DExpr e,DIvr.Type type=DIvr.Type.eqZ){
 	int nfreeVar=0;
 	foreach(v;e.freeVars) nfreeVar++;
 	DExpr cancel=one;
-	if((util.among(type,DIvr.Type.eqZ,DIvr.Type.neqZ))&&nfreeVar==1){
+	if(nfreeVar==1){
 		DVar var;
 		foreach(v;e.freeVars){ var=v; break; }
 		int count=0,tot=0;
@@ -1775,6 +1775,10 @@ DExpr cancelFractions(bool isDelta)(DExpr e,DIvr.Type type=DIvr.Type.eqZ){
 		}
 	}
 	if(!simple) cancel=uglyFractionCancellation(e).simplify(one);
+	static if(!isDelta)
+		with(DIvr.Type)
+			if(!util.among(type,eqZ,neqZ))
+				cancel=dAbs(cancel).simplify(one);
 	if(cancel!=one){
 		static if(isDelta) return dDelta(dDistributeMult(e,cancel))*dAbs(cancel);
 		else return dIvr(type,dDistributeMult(e,cancel));
