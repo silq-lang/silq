@@ -24,8 +24,9 @@ private DExpr definiteIntegralImpl(DExpr expr,DExpr facts=one){
 	auto ow=expr.splitMultAtVar(var);
 	ow[0]=ow[0].incDeBruijnVar(-1,0).simplify(facts);
 	if(ow[0] !is one){
-		if(auto r=definiteIntegral(ow[1],facts))
+		if(auto r=definiteIntegral(ow[1],facts)){
 			return (ow[0]*r).simplify(facts);
+		}
 		return null;
 	}
 	DExpr discDeltaSubstitution(){

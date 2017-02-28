@@ -1178,9 +1178,6 @@ class DMult: DCommutAssocOp{
 
 				}
 			}
-			/+// TODO: do we want auto-distribution?
-			if(cast(DPlus)e1) return dDistributeMult(e1,e2);
-			if(cast(DPlus)e2) return dDistributeMult(e2,e1);+/
 			if(auto l2=cast(DLog)e2)
 				if(auto z2=cast(Dℤ)l2.e)
 					if(z2.c>=0)
@@ -1191,6 +1188,22 @@ class DMult: DCommutAssocOp{
 										if(z1.c>=0)
 											if(auto r=integerLog(z2.c,z1.c))
 												return r;
+			if(cast(DPlus)e2) swap(e1,e2);
+			if(!e2.hasFreeVars()){
+				if(auto p=cast(DPlus)e1){
+					foreach(s;p.summands){
+						auto x=(s*e2).simplify(facts);
+						if(x.hasFactor(e2)) continue;
+						auto summands=p.summands.setx;
+						assert(s in summands);
+						summands.remove(s);
+						return (dPlus(summands)*e2+x).simplify(facts);
+					}
+				}
+			}
+			/+// TODO: do we want auto-distribution?
+			if(cast(DPlus)e1) return dDistributeMult(e1,e2);
+			if(cast(DPlus)e2) return dDistributeMult(e2,e1);+/
 			return null;
 		}
 		foreach(f;factors){
@@ -2675,7 +2688,7 @@ class DInt: DOp{
 			integrals[expr]=[];
 		}
 		if(auto r=definiteIntegral(expr,facts))
-			return r;
+			return r.simplify(facts);
 		return null;
 	}
 
