@@ -1,4 +1,4 @@
 def main(){
     x := gauss(0,0);
-    return x; // expected: δ[-x]
+    return x; // expected: δ[x]
 }

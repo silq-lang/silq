@@ -13,5 +13,5 @@ def main(){
     for i in [0..a.length){
         a[i] = uniformInt(-1,1);
     }
-    return find(a,0); // expected: 2·δ[-r₁+1]·⅟9+4·δ[-r₁+2]·⅟27+8·δ[-1+-r₁]·⅟27+δ[-r₁]·⅟3
+    return find(a,0); // expected: 2·δ[-r₁+1]·⅟9+4·δ[-r₁+2]·⅟27+8·δ[-1+-r₁]·⅟27+δ[r₁]·⅟3
 }

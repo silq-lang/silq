@@ -11,5 +11,5 @@ def main(){
         observe(isGirl2);
     }
     bothAreGirls := isGirl1 && isGirl2;
-    return bothAreGirls; // expected: δ[-bothAreGirls+1]·⅟2+δ[-bothAreGirls]·⅟2
+    return bothAreGirls; // expected: δ[-bothAreGirls+1]·⅟2+δ[bothAreGirls]·⅟2
 }

@@ -8,6 +8,6 @@ def main(){
 		observe(p);
     }
     p := r > 1/8;
-    return p; // expected: [-6·log(2)+-6·log(2)·log(8)+-log(4)²+2+2·log(8)+4·log(2)·log(4)+5·log(2)²+log(8)²≠0]·δ[-p]
+    return p; // expected: [-6·log(2)+-6·log(2)·log(8)+-log(4)²+2+2·log(8)+4·log(2)·log(4)+5·log(2)²+log(8)²≠0]·δ[p]
     // TODO: prove that the bracket is a tautology
 }

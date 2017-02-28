@@ -5,6 +5,6 @@ def main(){
         r *= k;
     }
     p := r > 1/2;
-    return p; // expected: (-log(2)²·⅟4+-log(2)·⅟2+⅟2)·δ[-p+1]+(log(2)²·⅟4+log(2)·⅟2+⅟2)·δ[-p]
+    return p; // expected: (-log(2)²·⅟4+-log(2)·⅟2+⅟2)·δ[-p+1]+(log(2)²·⅟4+log(2)·⅟2+⅟2)·δ[p]
     // TODO: confirm using an experiment that this is correct
 }

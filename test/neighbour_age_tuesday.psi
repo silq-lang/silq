@@ -11,6 +11,6 @@ def main(){
         observe(isGirl2 && bornOnATuesday1);
     }
     bothAreGirls := isGirl1 && isGirl2;
-    return bothAreGirls; // expected: δ[-bothAreGirls+1]·⅟2+δ[-bothAreGirls]·⅟2
+    return bothAreGirls; // expected: δ[-bothAreGirls+1]·⅟2+δ[bothAreGirls]·⅟2
     // TODO: why is this so unreasonably slow?
 }

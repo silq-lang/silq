@@ -5,5 +5,5 @@ def main(){ // bothHeads
     observe(bothHeads == 0);
     firstCoin = Expectation(firstCoin);
     secondCoin = Expectation(secondCoin);
-    return (firstCoin,secondCoin); // expected: 9·δ[-3·firstCoin+1]·δ[-3·secondCoin+1]
+    return (firstCoin,secondCoin); // expected: δ[-firstCoin+⅟3]·δ[-secondCoin+⅟3]
 }

@@ -298,15 +298,7 @@ mixin template FactoryFunction(T){
 	static if(is(T==DIvr)){
 		DExpr dIvr(DIvr.Type type,DExpr e){
 			static MapX!(DExpr,DExpr)[DIvr.Type.max+1] unique;
-			if(auto r=DIvr.constructHook(type,e)) return r;
 			if(e in unique[type]) return unique[type][e];
-			if(type==DIvr.Type.eqZ||type==DIvr.Type.neqZ){
-				// if(e.hasFactor(mone)) e=e.withoutFactor(mone); // TODO
-				// TODO: is there a better way to make the argument canonical?
-				auto neg=(-e).simplify(one);
-				if(neg in unique[type])
-					return unique[type][neg];
-			}
 			auto r=new DIvr(type,e);
 			unique[type][e]=r;
 			return r;
@@ -422,12 +414,6 @@ mixin template FactoryFunction(T){
 			static MapX!(TupleX!(typeof(T.subExprs)),T) unique;
 			auto t=tuplex(args);
 			if(t in unique) return unique[t];
-			static if(is(T==DDelta)){
-				static assert(hasUDA!(T.subExprs[0],even));
-				// TODO: use 'even' UDA.
-				auto t2=tuplex((-args[0]).simplify(one)); // TODO: don't want full simplification
-				if(t2 in unique) return unique[t2];
-			}
 			auto r=new T(args);
 			unique[t]=r;
 			return r;
@@ -1764,6 +1750,44 @@ bool mustBeAtMost(DExpr e1,DExpr e2){
 	return mustBeLessOrEqualZero((e1-e2).simplify(one));
 }
 
+DExpr cancelFractions(bool isDelta)(DExpr e,DIvr.Type type=DIvr.Type.eqZ){
+	bool simple=false;
+	int nfreeVar=0;
+	foreach(v;e.freeVars) nfreeVar++;
+	DExpr cancel=one;
+	if((util.among(type,DIvr.Type.eqZ,DIvr.Type.neqZ))&&nfreeVar==1){
+		DVar var;
+		foreach(v;e.freeVars){ var=v; break; }
+		int count=0,tot=0;
+		foreach(s;e.summands){
+			++tot;
+			if(s.hasFreeVar(var))
+				++count;
+		}
+		if(tot>1&&count==1){
+			simple=true;
+			foreach(s;e.summands){
+				if(!s.hasFreeVar(var)) continue;
+				auto f=s.getFractionalFactor();
+				if(f==mone) break;
+				cancel=(mone/f).simplify(one);
+			}
+		}
+	}
+	if(!simple) cancel=uglyFractionCancellation(e).simplify(one);
+	if(cancel!=one){
+		static if(isDelta) return dDelta(dDistributeMult(e,cancel))*dAbs(cancel);
+		else return dIvr(type,dDistributeMult(e,cancel));
+	}
+	auto nege=(-e).simplify(one);
+	if(!simple&&(util.among(type,DIvr.Type.eqZ,DIvr.Type.neqZ))&&(e.hasFactor(mone)||!nege.hasFactor(mone)&&nege.isMoreCanonicalThan(e))){
+		static if(isDelta) return dDelta(nege);
+		else return dIvr(type,nege);
+	}
+	return null;
+}
+
+
 DExpr uglyFractionCancellation(DExpr e){
 	ℤ ngcd=0,dlcm=1;
 	foreach(s;e.summands){
@@ -2282,14 +2306,11 @@ class DIvr: DExpr{ // iverson brackets
 			}
 		}
 	}
-
-	static DExpr constructHook(Type type,DExpr e){
-		return null;
-	}
-
+	
 	static DExpr staticSimplify(Type type,DExpr e,DExpr facts=one){
 		auto ne=e.simplify(facts);
 		if(ne !is e) return dIvr(type,ne).simplify(facts);
+		if(auto r=cancelFractions!false(e,type)) return r.simplify(facts);
 		// TODO: make these check faster (also: less convoluted)
 		auto neg=negateDIvr(type,e);
 		neg[1]=neg[1].simplify(facts);
@@ -2354,8 +2375,6 @@ class DIvr: DExpr{ // iverson brackets
 			case leZ: return y(f.c<=0||approxEqual(f.c,0));
 			}
 		}
-		auto cancel=uglyFractionCancellation(e).simplify(facts);
-		if(cancel!=one) return dIvr(type,dDistributeMult(e,cancel)).simplify(facts);
 		if(type==Type.lZ) return (dIvr(Type.leZ,e)*dIvr(Type.neqZ,e)).simplify(facts);
 		if(type==Type.eqZ||type==Type.neqZ){
 			auto f=e.getFractionalFactor();
@@ -2366,7 +2385,7 @@ class DIvr: DExpr{ // iverson brackets
 			break;
 		}
 		auto denom=getCommonDenominator(e).simplify(facts);
-		if(denom !is one){
+		if(!denom.isFraction()){
 			// auto dcancel=dDistributeMult(e,denom); // TODO: use this again (inverses should cancel each other immediately during DMult simplification)
 			auto dcancel=cancelCommonDenominator(e,denom);
 			final switch(type) with(Type){
@@ -2419,6 +2438,10 @@ DVar getCanonicalFreeVar(DExpr e){
 	return r;
 }
 
+
+bool isMoreCanonicalThan(DExpr e1,DExpr e2){
+	return e1.toHash()<e2.toHash(); // TODO: find something more stable
+}
 class DDelta: DExpr{ // Dirac delta, for ℝ
 	@even DExpr e;
 	alias subExprs=Seq!e;
@@ -2446,10 +2469,8 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 	static DExpr staticSimplify(DExpr e,DExpr facts=one){
 		auto ne=e.simplify(one); // cannot use all facts! (might remove a free variable)
 		if(ne !is e) return dDelta(ne).simplify(facts);
-		auto cancel=uglyFractionCancellation(e).simplify(one);
-		if(cancel!=one) return dDelta(dDistributeMult(e,cancel))*cancel;
-		if(e.hasFactor(mone)) return dDelta(-e);
-		if(auto fct=factorDIvr!(e=>dDelta(e))(e)) return fct.simplify(one);
+		if(auto r=cancelFractions!true(e)) return r.simplify(facts);
+		if(auto fct=factorDIvr!(e=>dDelta(e))(e)) return fct.simplify(facts);
 		if(dIvr(DIvr.Type.eqZ,e).simplify(facts) is zero)
 			return zero;
 		return null;

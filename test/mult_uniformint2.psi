@@ -3,5 +3,5 @@ def main(){
     x := uniformInt(0,2);
     y := uniformInt(0,x);
     z := x*y;
-    return z; // expected: 11·δ[-z]·⅟18+δ[-1+z]·⅟6+δ[-2+z]·⅟9+δ[-4+z]·⅟9
+    return z; // expected: 11·δ[z]·⅟18+δ[-z+1]·⅟6+δ[-z+2]·⅟9+δ[-z+4]·⅟9
 }
