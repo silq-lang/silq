@@ -206,9 +206,32 @@ struct Dist{
 			auto az=cast(Dℤ)a, bz=cast(Dℤ)b;
 			assert(az&&bz,text("TODO: ",a," ",b));
 			auto num=dℤ(bz.c-az.c+1);
-			if(num.c<=0) assert(0,"TODO");
-			auto nv=(v/num).simplify(one);
-			for(ℤ i=az.c;i<=bz.c;++i) r.add(dRUpdate(k,tmp,i.dℤ).simplify(one),nv);
+			if(num.c>0){
+				auto nv=(v/num).simplify(one);
+				for(ℤ i=az.c;i<=bz.c;++i) r.add(dRUpdate(k,tmp,i.dℤ).simplify(one),nv);
+			}else r.error = (r.error + v).simplify(one);
+		}
+		this=r;
+		if(opt.backend==InferenceMethod.simulate) pickOne();
+		return dField(db1,tmp);
+	}
+	DExpr categorical(DExpr arg){
+		auto r=distInit;
+		r.copyNonState(this);
+		auto lambda=dLambda(arg);
+		static int unique=0;
+		auto tmp="`categorical"~lowNum(++unique);
+		r.addTmpVar(tmp);
+		foreach(k,v;state){
+			auto p=dApply(lambda,k).simplify(one);
+			auto l=dField(p,"length").simplify(one);
+			auto lz=cast(Dℤ)l;
+			assert(!!lz,"TODO");
+			if(lz!=zero){
+				// TODO: check other preconditions
+				for(ℤ i=0.ℤ;i<lz.c;++i)
+					r.add(dRUpdate(k,tmp,i.dℤ).simplify(one),(v*p[i.dℤ]).simplify(one));
+			}else r.error = (r.error + v).simplify(one);
 		}
 		this=r;
 		if(opt.backend==InferenceMethod.simulate) pickOne();
@@ -724,7 +747,9 @@ struct Interpreter{
 							case "uniformInt":
 								auto arg=doIt(ce.arg);
 								return cur.uniformInt(arg);
-							case "categorical": assert(0,text("TODO: ",ce));
+							case "categorical":
+								auto arg=doIt(ce.arg);
+								return cur.categorical(arg);
 							case "Flip","Bernoulli":
 								assert(0,text("TODO: ",ce));
 							case "UniformInt":
