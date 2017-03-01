@@ -63,6 +63,10 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 				if(dist.error !is zero) writeln("Pr[error] = ",dist.error.toString(opt.formatting));
 				break;
 			case OutputForm.raw:
+				if(opt.backend==InferenceMethod.simulate && dist.error==one){
+					writeln("⊥");
+					break;
+				}
 				writeln(expectation.toString(opt.formatting));
 				break;
 			case OutputForm.rawError:
