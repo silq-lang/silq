@@ -6,5 +6,5 @@ def main(){
     if c1 { count += 1; }
     if c2 { count += 1; }
     observe(c1 || c2);
-    return count; // expected: 2·δ[-count+1]·⅟3+δ[-count+2]·⅟3
+    return count; // expected: 2/3·δ[-count+1]+δ[-count+2]·⅟3
 }

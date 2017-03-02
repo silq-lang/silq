@@ -6,5 +6,5 @@ def foo(x){
 def main(){
     x := 1/uniformInt(-1,1);
     r := foo(uniformInt(-1,1));
-    return x; // expected: 2·δ[-1+-x]·⅟9+2·δ[-x+1]·⅟9
+    return x; // expected: 2/9·δ[-1+-x]+2/9·δ[-x+1]
 }

@@ -480,11 +480,83 @@ alias ℤ=BigInt;
 
 ℤ lcm(ℤ a,ℤ b){ return a*(b/gcd(a,b)); }
 
+struct ℚ{
+	ℤ num=0,den=1;
+	this(long num){
+		this(num.ℤ);
+	}
+	this(ℤ num){
+		this.num=num;
+	}
+	this(ℤ num,ℤ den){
+		if(den<0){ num=-num; den=-den; }
+		auto d=gcd(abs(num),den);
+		num/=d, den/=d;
+		this.num=num;
+		this.den=den;
+	}
+	ℚ opUnary(string op:"-")(){
+		return ℚ(-num,den);
+	}
+	ℚ opUnary(string op:"/")(){
+		return ℚ(den,num);
+	}
+	ℚ opBinary(string op:"+")(ℚ r){
+		return ℚ(num*r.den+r.num*den,den*r.den);
+	}
+	ℚ opBinary(string op:"-")(ℚ r){
+		return this+-r;
+	}
+	ℚ opBinary(string op:"*")(ℚ r){
+		return ℚ(num*r.num,den*r.den);
+	}
+	ℚ opBinary(string op:"/")(ℚ r){
+		return this*r.opUnary!"/"();
+	}
+	bool opEquals(long r){
+		return num==r*den;
+	}
+	bool opEquals(ℤ r){
+		return num==r*den;
+	}
+	bool opEquals(ℚ r){
+		return num==r.num && den==r.den;
+	}
+	int opCmp(long r){
+		return num.opCmp(den*r);
+	}
+	int opCmp(ℤ r){
+		return num.opCmp(den*r);
+	}
+	int opCmp(ℚ r){
+		if(r.num==0) return num.opCmp(0);
+		return (num*r.den).opCmp(den*r.num);
+	}
+	string toString(){
+		if(den==1) return text(num);
+		return text(num,"/",den);
+	}
+	hash_t toHash(){
+		return FNV(num.toHash(),FNV(den.toHash()));
+	}
+}
+
+ℚ pow(ℚ a,ℤ b){
+	if(b<0){
+		b=-b;
+		a=a.opUnary!"/";
+	}
+	return ℚ(pow(a.num,b),pow(a.den,b));
+}
+
 long toLong(ℤ a){ return a.to!string.to!long; } // TODO: do properly
 //double toDouble(ℤ a){ return a.to!string.to!double; } // TODO: do properly
 real toReal(ℤ a){ return a.to!string.to!real; } // TODO: do properly
+real toReal(ℚ a){ return toReal(a.num)/toReal(a.den); }
 
 ℤ abs(ℤ x){ return x<0?-x:x; }
+ℚ abs(ℚ x){ return ℚ(abs(x.num),x.den); }
+
 
 ℤ nCr(ℤ n, ℤ r){
 	if(r>n) return ℤ(0);
@@ -518,6 +590,14 @@ auto nC(ℤ n){
 	a=abs(a), b=abs(b);
 	if(!sign) return a/b;
 	return -(a+b-1)/b;
+}
+
+ℤ ceil(ℚ x){
+	return ceildiv(x.num,x.den);
+}
+
+ℤ floor(ℚ x){
+	return floordiv(x.num,x.den);
 }
 
 template tryImport(string filename,string alt=""){

@@ -1,4 +1,4 @@
 def main(){
     r := beta(1/2,2);
-    return r; // expected: (-3·r·⅟4+3·⅟4)·[-1+r≤0]·[-r≤0]·⅟√r̅
+    return r; // expected: (-3/4·r+3/4)·[-1+r≤0]·[-r≤0]·⅟√r̅
 }

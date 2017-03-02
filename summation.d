@@ -93,14 +93,12 @@ DExpr computeSum(DExpr expr,DExpr facts=one){
 	}
 	//dw("!! ",nonIvrs," ",lower," ",upper);
 	// TODO: use more clever summation strategies first
-	if(lower && upper && lower.isFraction() && upper.isFraction()){
-		auto ndl=lower.getFraction();
-		auto ndu=upper.getFraction();
-		auto low=ceildiv(ndl[0],ndl[1]);
-		auto up=floordiv(ndu[0],ndu[1]);
+	auto lq=cast(Dℚ)lower, uq=cast(Dℚ)upper;
+	if(lower && upper && lq && uq){
+		auto low=ceil(lq.c), up=floor(uq.c);
 		DExprSet s;
 		if(low<=up) foreach(i;low..up+1){ // TODO: report bug in std.bigint (the if condition should not be necessary)
-			DPlus.insert(s,unbind(nonIvrs,dℤ(i)).simplify(facts));
+			DPlus.insert(s,unbind(nonIvrs,dℚ(i)).simplify(facts));
 		}
 		return dPlus(s);
 	}

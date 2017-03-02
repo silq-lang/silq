@@ -187,10 +187,10 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 				if(l0 is -dInf){
 					if(dIvr(DIvr.Type.leZ,-l1).simplify(facts) is zero)
 						return zero;
-					if(auto c=cast(Dℤ)l1){
-						assert(c.c>=0);
-						if(c.c==0) return one;
-						return c.c%2?-dInf:dInf;
+					if(auto c=l1.isInteger()){
+						assert(c.c>=0 && c.c.den==1);
+						if(c.c.num==0) return one;
+						return c.c.num%2?-dInf:dInf;
 					}
 					return null;
 				}

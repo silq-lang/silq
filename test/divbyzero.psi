@@ -8,5 +8,5 @@ def main(){
     }else{
         z = 2;
     }
-    return (); // expected: 13·⅟14
+    return (); // expected: 13/14
 }

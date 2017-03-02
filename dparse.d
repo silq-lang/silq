@@ -187,7 +187,7 @@ struct DParser{
 			for(next();'0'<=cur()&&cur()<='9';next()) s~=cur();
 			return (s.to!real+toReal(r)).dFloat; // TODO: this is a hack
 		}
-		return dℤ(r);
+		return dℚ(r);
 	}
 
 	bool isIdentifierChar(dchar c){

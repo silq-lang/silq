@@ -197,7 +197,7 @@ private struct Analyzer{
 			if(auto fe=cast(FieldExp)e){
 				if(auto id=cast(Identifier)fe.e){
 					if(id.name in arrays && fe.f.name=="length")
-						return ℤ(arrays[id.name].length).dℤ;
+						return ℤ(arrays[id.name].length).dℚ;
 				}
 				if(isBuiltIn(fe)){
 					if(auto at=cast(ArrayTy)fe.e.type){
@@ -422,7 +422,7 @@ private struct Analyzer{
 							// dist.assertTrue(dIvr(DIvr.Type.eqZ,sum-1),"probabilities should sum up to 1"); // TODO: don't enforce this to vigorously for floats
 							DExpr d=zero;
 							auto var=dist.getTmpVar("__c");
-							foreach(i,x;array) d=d+x*dDelta(var,dℤ(i),ℝ);
+							foreach(i,x;array) d=d+x*dDelta(var,dℚ(i),ℝ);
 							dist.distribute(d);
 							return var;
 						}else{
@@ -470,7 +470,7 @@ private struct Analyzer{
 						static if(!util.among(name,"categorical","dirac")){
 							case name:
 								auto nargs=paramNames!name.length;
-								auto args=nargs==1?[arg]:iota(nargs).map!(i=>arg[i.dℤ]).array;
+								auto args=nargs==1?[arg]:iota(nargs).map!(i=>arg[i.dℚ]).array;
 								foreach(c;cond!name(args))
 									dist.assertTrue(c.cond,formatError(c.error,e.loc));
 								auto var=dist.getTmpVar("__"~name[0]);
@@ -480,14 +480,14 @@ private struct Analyzer{
 						static if(!util.among(name,"dirac")){
 							case util.capitalize(name):
 								auto nargs=paramNames!name.length;
-								auto args=nargs==1?[arg]:iota(nargs).map!(i=>arg[i.dℤ]).array;
+								auto args=nargs==1?[arg]:iota(nargs).map!(i=>arg[i.dℚ]).array;
 								foreach(c;cond!name(args))
 									dist.assertTrue(c.cond,formatError(c.error,e.loc));
 
 								auto idist=new Distribution();
 								auto argv=idist.declareVar("`arg");
 								idist.addArgs([argv],false,null);
-								auto vargs=nargs==1?[cast(DExpr)argv]:iota(nargs).map!(i=>argv[i.dℤ]).array;
+								auto vargs=nargs==1?[cast(DExpr)argv]:iota(nargs).map!(i=>argv[i.dℚ]).array;
 								auto x=idist.declareVar("`x");
 								idist.distribute(pdf!name(x,vargs));
 								idist.marginalize(argv);
@@ -614,7 +614,7 @@ private struct Analyzer{
 				if(le.lit.type==Tok!"0"){
 					auto n=le.lit.str.split(".");
 					if(n.length==1) n~="";
-					return dℤ((n[0]~n[1]).ℤ)/(ℤ(10)^^n[1].length);
+					return dℚ((n[0]~n[1]).ℤ)/(ℤ(10)^^n[1].length);
 				}
 			}
 			if(auto cmp=cast(CompoundExp)e){
@@ -749,19 +749,19 @@ private struct Analyzer{
 		foreach(v;dist.freeVars) ndist.marginalize(v);
 		ndist.simplify();
 		foreach(f;ndist.distribution.factors)
-			if(!cast(DDelta)f&&!f.isFraction())
+			if(!cast(DDelta)f&&!cast(Dℚ)f)
 				return null;
 		auto norm=dIntSmp(tmp,ndist.distribution,one);
-		if(norm is zero || (!norm.isFraction()&&!cast(DFloat)norm))
+		if(norm is zero || (!cast(Dℚ)norm&&!cast(DFloat)norm))
 			return null;
 		auto r=(dIntSmp(tmp,tmp*ndist.distribution,one)/norm).simplify(one);
 		if(r.hasAny!DInt) return null;
 		return r;
 	}
 
-	Dℤ isDeterministicInteger(DExpr e){
+	Dℚ isDeterministicInteger(DExpr e){
 		auto r=isDeterministic(e,ℝ);
-		if(auto num=cast(Dℤ)r) return num;
+		if(auto num=r.isInteger()) return num;
 		return null;
 	}
 
@@ -790,7 +790,8 @@ private struct Analyzer{
 				err.error(text("index ",cidx.c," is outside array bounds [0..",arr.length,")"),idx.loc);
 				return null;
 			}
-			return arr[cast(size_t)cidx.c.toLong()];
+			assert(cidx.c.den==1);
+			return arr[cast(size_t)cidx.c.num.toLong()];
 		}else return null;
 	}
 
@@ -802,15 +803,16 @@ private struct Analyzer{
 		auto ae=transformExp(call.arg);
 		if(!ae) return;
 		auto num=isDeterministicInteger(ae);
+		assert(num.c.den==1);
 		if(!num){
 			err.error("array length should be provably deterministic integer",call.loc);
 			return;
 		}
-		if(num.c<0){
+		if(num.c.num<0){
 			err.error("array length should be non-negative",call.loc);
 			return;
 		}
-		if(num.c>int.max){
+		if(num.c.num>int.max){
 			err.error("array length too high",call.loc);
 			return;
 		}
@@ -818,7 +820,7 @@ private struct Analyzer{
 			err.error("array already exists",id.loc);
 			return;
 		}
-		foreach(k;0..num.c.toLong()){
+		foreach(k;0..num.c.num.toLong()){
 			auto var=dist.getVar(id.name);
 			dist.initialize(var,zero,ℝ);
 			arrays[id.name]~=var;
@@ -852,7 +854,7 @@ private struct Analyzer{
 				import std.exception;
 				enforce(n.length==2);
 				if(n[1].length) return dFloat((n[0]~"."~n[1]).to!real);
-				return dℤ((n[0]~n[1]).ℤ)/(ℤ(10)^^n[1].length);
+				return dℚ((n[0]~n[1]).ℤ)/(ℤ(10)^^n[1].length);
 			}
 			auto arr=f.readln().strip().split(",").map!strip.map!parseNum.array;
 			//enforce(f.eof);
@@ -933,7 +935,7 @@ private struct Analyzer{
 			auto tt=cast(TupleTy)ty;
 			assert(!!tt);
 			assert(tpl.e.length==tt.types.length);
-			foreach(k,exp;tpl.e) assignTo(exp,rhs[k.dℤ],tt.types[k],loc);
+			foreach(k,exp;tpl.e) assignTo(exp,rhs[k.dℚ],tt.types[k],loc);
 		}else{
 		LbadAssgnmLhs:
 			err.error("invalid left hand side for assignment",lhs.loc);
@@ -990,7 +992,7 @@ private struct Analyzer{
 				foreach(k,exp;tpl.e){
 					auto id=cast(Identifier)exp;
 					if(!id) goto LbadDefLhs;
-					defineVar(id,rhs[k.dℤ],tt.types[k]);
+					defineVar(id,rhs[k.dℚ],tt.types[k]);
 				}
 			}else{
 			LbadDefLhs:
@@ -1068,12 +1070,13 @@ private struct Analyzer{
 				auto l=isDeterministicInteger(lexp), r=isDeterministicInteger(rexp);
 				if(l&&r){
 					int nerrors=err.nerrors;
-					for(ℤ j=l.c+cast(int)fe.leftExclusive;j+cast(int)fe.rightExclusive<=r.c;j++){
+					assert(l.c.den==1 && r.c.den==1);
+					for(ℤ j=l.c.num+cast(int)fe.leftExclusive;j+cast(int)fe.rightExclusive<=r.c.num;j++){
 						auto cdist=dist.dup();
 						auto anext=Analyzer(be,cdist,err,arrays.dup,deterministic);
 						auto var=cdist.declareVar(fe.var.name);
 						if(var){
-							auto rhs=dℤ(j);
+							auto rhs=dℚ(j);
 							cdist.initialize(var,rhs,ℝ);
 							anext.trackDeterministic(var,rhs,ℝ);
 						}else{
@@ -1147,7 +1150,7 @@ private struct Analyzer{
 				dist.freeVar(name);
 				foreach(i,ty;tty.types){
 					auto var=dist.getVar(name);
-					dist.initialize(var,dIndex(r,i.dℤ),ty);
+					dist.initialize(var,dIndex(r,i.dℚ),ty);
 					vars.insert(var);
 					orderedVars~=var;
 				}

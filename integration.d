@@ -352,7 +352,7 @@ AntiD tryGetAntiderivative(DExpr nonIvrs,DExpr ivrs){
 			auto ba=l.e.asLinearFunctionIn(var);
 			auto b=ba[0],a=ba[1];
 			if(a && b){
-				if(auto n=cast(Dℤ)p.operands[1]){
+				if(auto n=p.operands[1].isInteger()){
 					DExpr dInGamma(DExpr a,DExpr z){
 						a=a.incDeBruijnVar(1,0), z=z.incDeBruijnVar(1,0);
 						auto t=dDeBruijnVar(1);
@@ -453,7 +453,7 @@ AntiD tryGetAntiderivative(DExpr nonIvrs,DExpr ivrs){
 		foreach(f;m.factors){
 			if(auto p=cast(DPow)f){
 				if(p.operands[0] is var){
-					if(auto c=cast(Dℤ)p.operands[1]){
+					if(auto c=p.operands[1].isInteger()){
 						if(c.c>0){ polyFact=p; break; }
 					}
 				}

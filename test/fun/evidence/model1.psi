@@ -4,5 +4,5 @@ def main(){
         coin := flip(1/2);
         observe(coin);
     }
-    return evidence; // expected: 2·δ[evidence]·⅟3+δ[-evidence+1]·⅟3
+    return evidence; // expected: 2/3·δ[evidence]+δ[-evidence+1]·⅟3
 }

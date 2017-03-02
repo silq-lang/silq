@@ -3,5 +3,5 @@ def main(){
     x := categorical([1/2,1/2]);
     a := [[0.5,0.4,0.1],[0.3,0.7]];
     y := categorical(a[x]);
-    return y; // expected: 11·δ[-y+1]·⅟20+2·δ[y]·⅟5+δ[-y+2]·⅟20
+    return y; // expected: 11/20·δ[-y+1]+2/5·δ[y]+δ[-y+2]·⅟20
 }

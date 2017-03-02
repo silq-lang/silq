@@ -3,6 +3,6 @@ def main(){
     x₁ := gauss(1,2);
     x₂ := gauss(2,3);
     x₃ := x₁+x₂;
-    return x₃; // expected: e^(-9·⅟10+-x₃²·⅟10+3·x₃·⅟5)·⅟√1̅0̅·⅟√π̅
+    return x₃; // expected: e^(-9/10+-x₃²·⅟10+3/5·x₃)·⅟2·⅟√π̅·√2̅/̅5̅
     // TODO: more simplifications possible
 }

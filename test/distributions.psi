@@ -6,5 +6,5 @@ def main(){
 	z := Gauss(3,4).expectation();
 	w := Dirac([1,2,3]).sample()[2];
 	y = Dirac(y).sample();
-	return (x,y,z,w); // expected: δ[-w+3]·δ[-y+2·⅟3]·δ[-z+3]·δ_x[λξ₁. δ_ξ₁[{.val ↦ 5,.tag ↦ 1}]]
+	return (x,y,z,w); // expected: δ[-w+3]·δ[-y+2/3]·δ[-z+3]·δ_x[λξ₁. δ_ξ₁[{.val ↦ 5,.tag ↦ 1}]]
 }

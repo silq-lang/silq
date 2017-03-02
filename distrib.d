@@ -418,7 +418,7 @@ class Distribution{
 		auto db1=dDeBruijnVar(1),db2=dDeBruijnVar(2);
 		auto bdy=toDExprLambdaBody(stripContext);
 		context=context.incDeBruijnVar(1,0);
-		bdy=bdy.substitute(db1,dLambda(dDistApply(db2,db1[0.dℤ])*dDiscDelta(db1[dℤ(1)],context)));
+		bdy=bdy.substitute(db1,dLambda(dDistApply(db2,db1[0.dℚ])*dDiscDelta(db1[dℚ(1)],context)));
 		return dLambda(bdy);
 	}
 	
@@ -429,7 +429,7 @@ class Distribution{
 		auto values=dField(db1,"val");
 		foreach(i,v;orderedFreeVars){
 			r.freeVars.insert(v);
-			auto value=isTuple?dIndex(values,dℤ(i)):values;
+			auto value=isTuple?dIndex(values,dℚ(i)):values;
 			r.initialize(v,value,types[i]);
 		}
 		r.q=dVar("`q");

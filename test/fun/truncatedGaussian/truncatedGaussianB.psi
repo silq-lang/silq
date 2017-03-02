@@ -9,6 +9,6 @@ def main(){
     for i in [0..3){
         observe(a[i] > result[i]);
     }
-    return (result[0],result[1],result[2]); // expected: 2·[-result₃+1≠0]·[-result₃+⅟10≠0]·[-⅟10+result₃≤0]·[result₃≠0]·[result₃≤0]·δ[-result₁+result₂]·δ[-result₃+result₂]·⅟e^(result₃²·⅟2)·⅟√2̅·⅟√π̅
+    return (result[0],result[1],result[2]); // expected: [-result₃+1≠0]·[-result₃+⅟10≠0]·[result₃≠0]·[result₃≤0]·δ[-result₂+result₁]·δ[-result₃+result₁]·⅟e^(result₃²·⅟2)·⅟√π̅·√2̅
     // TODO: eliminate spurious iverson brackets
 }

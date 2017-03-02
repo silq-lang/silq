@@ -107,7 +107,7 @@ DExpr approxLog(DExpr e){
 		// range [1, 10]
 		auto poly2=[-0.000711707042556582, 0.0204319245831799,
 					-0.220870997847981, 1.20818665998564, -1.00703587967828].getPoly(e);
-		return dBounded!"[)"(e,one/10,one)*poly1+dBounded!"[]"(e,one,10.dℤ)*poly2;
+		return dBounded!"[)"(e,one/10,one)*poly1+dBounded!"[]"(e,one,10.dℚ)*poly2;
 	}
 	static DExpr highRank(DExpr e){
 		// range [0.01,0.1]
@@ -124,10 +124,10 @@ DExpr approxLog(DExpr e){
 		auto poly6=[3.64797006769141e-43,-9.05410980815970e-39,1.02265987367689e-34,-6.96047538865881e-31,3.18636659549754e-27,-1.03704347483133e-23,2.47351714069082e-20,-4.39299907920198e-17,5.84575749289629e-14,-5.82271150576115e-11,4.31642109915334e-08,-2.37648818759322e-05,0.0103170845178250,3.94224075426239].getPoly(e);
 		return dBounded!"[)"(e,one/100,one/10)*poly1
 			+ dBounded!"[)"(e,one/10,one)*poly2
-			+ dBounded!"[)"(e,one,25.dℤ)*poly3
-			+ dBounded!"[)"(e,25.dℤ,100.dℤ)*poly4
-			+ dBounded!"[)"(e,100.dℤ,500.dℤ)*poly5
-			+ dBounded!"[]"(e,500.dℤ,3000.dℤ);
+			+ dBounded!"[)"(e,one,25.dℚ)*poly3
+			+ dBounded!"[)"(e,25.dℚ,100.dℚ)*poly4
+			+ dBounded!"[)"(e,100.dℚ,500.dℚ)*poly5
+			+ dBounded!"[]"(e,500.dℚ,3000.dℚ);
 	}
 	static DExpr discretize(DExpr e,double left,double right,int steps){
 		DExpr r=zero;
@@ -231,7 +231,7 @@ DExpr approximate(DExpr e){
 				return approxGaussInt(g.x);
 			}
 			if(auto p=cast(DPow)e){
-				if(!e.isFraction()){
+				if(!cast(Dℚ)e){
 					if(p.operands[1] is mone){
 						return approxInvX(p.operands[0]);
 					}else if(p.operands[1] is -(one/2)){
