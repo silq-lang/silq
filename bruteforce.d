@@ -119,7 +119,7 @@ struct Dist{
 		foreach(k,v;state){
 			foreach(lambda;lambdas){
 				auto app=dApply(lambda,k).simplify(one);
-				auto val=app[0.dℤ].simplify(one),scale=app[1.dℤ].simplify(one);
+				auto val=app[0.dℚ].simplify(one),scale=app[1.dℚ].simplify(one);
 				r.add(val,(v*scale).simplify(one));
 			}
 		}
@@ -202,13 +202,13 @@ struct Dist{
 		r.addTmpVar(tmp);
 		foreach(k,v;state){
 			auto ab=dApply(lambda,k).simplify(one);
-			auto a=ab[0.dℤ].simplify(one), b=ab[1.dℤ].simplify(one);
-			auto az=cast(Dℤ)a, bz=cast(Dℤ)b;
+			auto a=ab[0.dℚ].simplify(one), b=ab[1.dℚ].simplify(one);
+			auto az=a.isInteger(), bz=b.isInteger();
 			assert(az&&bz,text("TODO: ",a," ",b));
-			auto num=dℤ(bz.c-az.c+1);
+			auto num=dℚ(bz.c.num-az.c.num+1);
 			if(num.c>0){
 				auto nv=(v/num).simplify(one);
-				for(ℤ i=az.c;i<=bz.c;++i) r.add(dRUpdate(k,tmp,i.dℤ).simplify(one),nv);
+				for(ℤ i=az.c.num;i<=bz.c.num;++i) r.add(dRUpdate(k,tmp,i.dℚ).simplify(one),nv);
 			}else r.error = (r.error + v).simplify(one);
 		}
 		this=r;
@@ -225,12 +225,12 @@ struct Dist{
 		foreach(k,v;state){
 			auto p=dApply(lambda,k).simplify(one);
 			auto l=dField(p,"length").simplify(one);
-			auto lz=cast(Dℤ)l;
+			auto lz=l.isInteger();
 			assert(!!lz,"TODO");
 			if(lz!=zero){
 				// TODO: check other preconditions
-				for(ℤ i=0.ℤ;i<lz.c;++i)
-					r.add(dRUpdate(k,tmp,i.dℤ).simplify(one),(v*p[i.dℤ]).simplify(one));
+				for(ℤ i=0.ℤ;i<lz.c.num;++i)
+					r.add(dRUpdate(k,tmp,i.dℚ).simplify(one),(v*p[i.dℚ]).simplify(one));
 			}else r.error = (r.error + v).simplify(one);
 		}
 		this=r;
@@ -251,7 +251,7 @@ struct Dist{
 			assignTo(fe.e,dRUpdate(fe.e,fe.f,rhs));
 		}else if(auto tpl=cast(DTuple)lhs){
 			foreach(i;0..tpl.values.length)
-				assignTo(tpl[i],rhs[i.dℤ].simplify(one));
+				assignTo(tpl[i],rhs[i.dℚ].simplify(one));
 		}else if(cast(DPlus)lhs||cast(DMult)lhs){
 			// TODO: this could be the case (if cond { a } else { b }) = c;
 			// (this is also not handled in the symbolic backend at the moment)
@@ -268,7 +268,7 @@ struct Dist{
 		if(fun.isTuple){
 			DExpr updates=db1;
 			foreach(i,prm;fun.params){
-				updates=dRUpdate(updates,prm.getName,inFrame(arg[i.dℤ]));
+				updates=dRUpdate(updates,prm.getName,inFrame(arg[i.dℚ]));
 			}
 			if(updates !is db1) ncur=ncur.map(dLambda(updates));
 		}else{
@@ -282,8 +282,8 @@ struct Dist{
 		string tmp="`call"~lowNum(++uniq);
 		this=nndist.popFrame(tmp);
 		if(thisExp&&!fun.isConstructor){
-			assignTo(thisExp,dField(db1,tmp)[1.dℤ]);
-			assignTo(dVar(tmp),dField(db1,tmp)[0.dℤ]);
+			assignTo(thisExp,dField(db1,tmp)[1.dℚ]);
+			assignTo(dVar(tmp),dField(db1,tmp)[0.dℚ]);
 		}
 		return dField(db1,tmp);
 	}
@@ -306,7 +306,7 @@ struct Dist{
 			DExpr nk=k;
 			if(fun.isTuple){
 				foreach(i,prm;fun.params)
-					nk=dRUpdate(nk,prm.getName,ca[i.dℤ]).simplify(one);
+					nk=dRUpdate(nk,prm.getName,ca[i.dℚ]).simplify(one);
 			}else{
 				assert(fun.params.length==1);
 				nk=dRUpdate(nk,fun.params[0].getName,ca).simplify(one);
@@ -340,7 +340,7 @@ struct Dist{
 		DExpr tot=r.error;
 		foreach(k,v;state) tot=(tot+v).simplify(one);
 		if(tot == zero) r.error=one;
-		else if(tot.isFraction()) foreach(k,v;state) r.add(k,(v/tot).simplify(one));
+		else if(cast(Dℚ)tot) foreach(k,v;state) r.add(k,(v/tot).simplify(one));
 		else{
 			r.error=(dIvr(DIvr.Type.neqZ,tot)*r.error+dIvr(DIvr.Type.eqZ,tot)).simplify(one);
 			foreach(k,v;state) r.add(k,((v/tot)*dIvr(DIvr.Type.neqZ,tot)).simplify(one));
@@ -404,7 +404,7 @@ struct Dist{
 				val2=(val2+dv).simplify(one);
 			}
 			if(val2==zero) r.error=(r.error+v).simplify(one);
-			else if(val2.isFraction()) r.add(dRUpdate(k,tmp,val1/val2).simplify(one),v);
+			else if(cast(Dℚ)val2) r.add(dRUpdate(k,tmp,val1/val2).simplify(one),v);
 			else{
 				r.error=(r.error+v*dIvr(DIvr.Type.eqZ,val2)).simplify(one);
 				r.add(dRUpdate(k,tmp,val1/val2).simplify(one),(v*dIvr(DIvr.Type.neqZ,val2)).simplify(one));
@@ -764,7 +764,7 @@ struct Interpreter{
 								return cur.infer(arg);
 							case "`arrayImpl":
 								auto arg=doIt(ce.arg);
-								return dConstArray(arg[0.dℤ],arg[1.dℤ]);
+								return dConstArray(arg[0.dℚ],arg[1.dℚ]);
 							case "exp":
 								auto arg=doIt(ce.arg);
 								return dE^^arg;
@@ -802,7 +802,7 @@ struct Interpreter{
 										foreach(f;s.factors){
 											if(auto dd=cast(DDiscDelta)f){
 												assert(dd.var is tmp);
-												smpl.add(dRecord(["`value":retVars.length==1?dd.e[0.dℤ].simplify(one):dd.e]),(factor*s.withoutFactor(f)).substitute(tmp,dd.e).simplify(one));
+												smpl.add(dRecord(["`value":retVars.length==1?dd.e[0.dℚ].simplify(one):dd.e]),(factor*s.withoutFactor(f)).substitute(tmp,dd.e).simplify(one));
 											}else if(auto sm=cast(DPlus)f){
 												gather(sm,factor*s.withoutFactor(f));
 											}
@@ -825,7 +825,7 @@ struct Interpreter{
 				if(le.lit.type==Tok!"0"){
 					auto n=le.lit.str.split(".");
 					if(n.length==1) n~="";
-					return (dℤ((n[0]~n[1]).ℤ)/(ℤ(10)^^n[1].length)).simplify(one);
+					return (dℚ((n[0]~n[1]).ℤ)/(ℤ(10)^^n[1].length)).simplify(one);
 				}
 			}
 			if(auto cmp=cast(CompoundExp)e){
@@ -957,9 +957,9 @@ struct Interpreter{
 			cur+=curP;
 		}else if(auto re=cast(RepeatExp)e){
 			auto rep=runExp(re.num).simplify(one);
-			if(auto z=cast(Dℤ)rep){
+			if(auto z=rep.isInteger()){
 				auto intp=Interpreter(functionDef,re.bdy,cur,hasFrame);
-				foreach(x;0.ℤ..z.c){
+				foreach(x;0.ℤ..z.c.num){
 					if(opt.trace) writeln("repetition: ",x+1);
 					intp.run(retDist);
 					// TODO: marginalize locals
@@ -981,12 +981,12 @@ struct Interpreter{
 			}
 		}else if(auto fe=cast(ForExp)e){
 			auto l=runExp(fe.left).simplify(one), r=runExp(fe.right).simplify(one);
-			auto lz=cast(Dℤ)l,rz=cast(Dℤ)r;
+			auto lz=l.isInteger(),rz=r.isInteger();
 			if(lz&&rz){
 				auto intp=Interpreter(functionDef,fe.bdy,cur,hasFrame);
-				for(ℤ j=lz.c+cast(int)fe.leftExclusive;j+cast(int)fe.rightExclusive<=rz.c;j++){
+				for(ℤ j=lz.c.num+cast(int)fe.leftExclusive;j+cast(int)fe.rightExclusive<=rz.c.num;j++){
 					if(opt.trace) writeln("loop-index: ",j);
-					intp.cur.assignTo(dVar(fe.var.name),dℤ(j));
+					intp.cur.assignTo(dVar(fe.var.name),dℚ(j));
 					intp.run(retDist);
 					// TODO: marginalize locals
 				}
