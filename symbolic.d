@@ -760,8 +760,8 @@ private struct Analyzer{
 	}
 
 	Dℚ isDeterministicInteger(DExpr e){
-		auto r=isDeterministic(e,ℝ);
-		if(auto num=r.isInteger()) return num;
+		if(auto r=isDeterministic(e,ℝ))
+			if(auto num=r.isInteger()) return num;
 		return null;
 	}
 
