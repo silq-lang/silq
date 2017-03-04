@@ -122,7 +122,7 @@ struct HashMap(K_, V_, alias eq_ , alias h_){
 	bool opEquals()(ref HashMap rhs){
 		foreach(k,v;this) if(k !in rhs || rhs[k] != v) return false;
 		foreach(k,v;rhs) if(k !in this) return false;
-		return 0;
+		return true;
 	}
 	hash_t toHash()(){
 		hash_t r=0;
