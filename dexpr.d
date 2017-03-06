@@ -59,7 +59,8 @@ hash_t g_hash=0;
 abstract class DExpr{
 	hash_t hash;
 	this(){ hash = ++g_hash; }
-	override hash_t toHash()@trusted{ return hash; }
+	final override hash_t toHash()@trusted{ return hash; }
+	final override bool opEquals(Object r){ return this is r; }
 
 	final override string toString(){ return toString(Format.default_); }
 
@@ -79,14 +80,14 @@ abstract class DExpr{
 	final DExpr simplify(string file=__FILE__,int line=__LINE__)(DExpr facts){
 		assert(!cast(DPlus)facts,text(facts));
 		if(q(this,facts) in simplifyMemo) return simplifyMemo[q(this,facts)];
-		if(facts is zero) return zero;
+		if(facts==zero) return zero;
 		auto r=simplifyImpl(facts);
 		assert(!!r,text(typeid(this)));
 		simplifyMemo[q(this,facts)]=r;
 		simplifyMemo[q(r,facts)]=r;
 		/+foreach(ivr;r.allOf!DIvr){ // TODO: remove?
-			assert(ivr is ivr.simplify(facts),text(this," ",r," ",facts));
-			assert(ivr.type !is DIvr.Type.lZ);
+			assert(ivr == ivr.simplify(facts),text(this," ",r," ",facts));
+			assert(ivr.type != DIvr.Type.lZ);
 		}+/
 		return r;
 	}
@@ -105,7 +106,7 @@ abstract class DExpr{
 		return FreeVars(this);
 	}
 	final bool hasFreeVar(DVar var){
-		foreach(v;freeVars) if(v is var) return true;
+		foreach(v;freeVars) if(v == var) return true;
 		return false;
 	}
 
@@ -177,7 +178,7 @@ abstract class DExpr{
 			this(typeof(subExprs) args){ subExprs=args; }
 		override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; }
 		override int freeVarsImpl(scope int delegate(DVar) dg){ return 0; }
-		override DExpr substitute(DVar var,DExpr e){ assert(var !is this); return this; }
+		override DExpr substitute(DVar var,DExpr e){ assert(var != this); return this; }
 		override DExpr incDeBruijnVar(int di,int free){ return this; }
 		override DExpr simplifyImpl(DExpr facts){ return this; }
 	}
@@ -235,14 +236,14 @@ mixin template Visitors(){
 			mixin(forEachSubExprImpl!q{{
 				import std.traits: hasUDA;
 				static if(hasUDA!(subExprs[i],binder)){
-					if(auto r=x.freeVarsImpl(v=>v is dDeBruijnVar(1)?0:dg(v.incDeBruijnVar(-1,0)))) return r;
+					if(auto r=x.freeVarsImpl(v=>v==dDeBruijnVar(1)?0:dg(v.incDeBruijnVar(-1,0)))) return r;
 				}else{ if(auto r=x.freeVarsImpl(dg)) return r; }
 			}});
 			return 0;
 		}
 	}
 	override SubstituteType!(typeof(this)) substitute(DVar var,DExpr e){
-		static if(is(typeof(this):DVar)) return this is var?e:this;
+		static if(is(typeof(this):DVar)) return this==var?e:this;
 		else{
 			Q!(typeof(subExprs)) nsubs;
 			foreach(i,sub;subExprs){
@@ -321,7 +322,7 @@ mixin template FactoryFunction(T){
 		import expression; // TODO: remove this import
 		DExpr dDelta(DExpr var,DExpr e,Expression ty){ // TODO: dexpr shouldn't know about expression/type, but this is most convenient for overloading
 			import type;
-			if(ty is ℝ) return dDelta(e-var);
+			if(ty==ℝ) return dDelta(e-var);
 			assert(cast(TupleTy)ty||cast(ArrayTy)ty||cast(AggregateTy)ty||cast(ContextTy)ty||cast(FunTy)ty||cast(TypeTy)ty||cast(Identifier)ty||cast(CallExp)ty,text(ty)); // TODO: add more supported types
 			return dDiscDelta(var,e);
 		}
@@ -355,13 +356,13 @@ mixin template FactoryFunction(T){
 		DExpr dLimSmp(DVar v,DExpr e,DExpr x,DExpr facts){
 			return dLim(v,e,x).simplify(facts);
 		}
-		DExpr dLim(DVar v,DExpr e,DExpr x)in{assert(v&&e&&x&&(!cast(DDeBruijnVar)v||v is dDeBruijnVar(1)));}body{
-			if(v is dDeBruijnVar(1)) return dLim(e,x.incDeBruijnVar(1,1));
+		DExpr dLim(DVar v,DExpr e,DExpr x)in{assert(v&&e&&x&&(!cast(DDeBruijnVar)v||v==dDeBruijnVar(1)));}body{
+			if(v==dDeBruijnVar(1)) return dLim(e,x.incDeBruijnVar(1,1));
 			return dLim(e,x.incDeBruijnVar(1,0).substitute(v,dDeBruijnVar(1)));
 		}
 	}else static if(is(T==DDiff)){
-		DExpr dDiff(DVar v,DExpr e,DExpr x)in{assert(v&&e&&x&&(!cast(DDeBruijnVar)v||v is dDeBruijnVar(1)));}body{
-			if(v is dDeBruijnVar(1)) return dDiff(e.incDeBruijnVar(1,1),x);
+		DExpr dDiff(DVar v,DExpr e,DExpr x)in{assert(v&&e&&x&&(!cast(DDeBruijnVar)v||v==dDeBruijnVar(1)));}body{
+			if(v==dDeBruijnVar(1)) return dDiff(e.incDeBruijnVar(1,1),x);
 			return dDiff(e.incDeBruijnVar(1,0).substitute(v,dDeBruijnVar(1)),x);
 		}
 		DExpr dDiff(DVar v,DExpr e){ return dDiff(v,e,v); }
@@ -377,8 +378,8 @@ mixin template FactoryFunction(T){
 			assert(!!cast(DLambda)r);
 			return cast(DLambda)cast(void*)r;
 		}
-		DLambda dLambda(DVar var,DExpr expr)in{assert(var&&expr&&(!cast(DDeBruijnVar)var||var is dDeBruijnVar(1)));}body{
-			if(var is dDeBruijnVar(1)) return dLambda(expr);
+		DLambda dLambda(DVar var,DExpr expr)in{assert(var&&expr&&(!cast(DDeBruijnVar)var||var==dDeBruijnVar(1)));}body{
+			if(var==dDeBruijnVar(1)) return dLambda(expr);
 			return dLambda(expr.incDeBruijnVar(1,0).substitute(var,dDeBruijnVar(1)));
 		}
 	}else static if(is(T==DRecord)){
@@ -488,7 +489,7 @@ class DNVar: DVar{ // named variables
 		foreach(f;facts.factors){
 			if(auto ivr=cast(DIvr)f){
 				if(ivr.type!=DIvr.Type.eqZ) continue;
-				if(ivr.e.getCanonicalFreeVar()!is this) continue; // TODO: make canonical var smart
+				if(ivr.e.getCanonicalFreeVar()!=this) continue; // TODO: make canonical var smart
 				SolutionInfo info;
 				SolUse usage={caseSplit:false,bound:false};
 				auto sol=ivr.e.solveFor(this,zero,usage,info);
@@ -750,7 +751,7 @@ class DPlus: DCommutAssocOp{
 	mixin Visitors;
 
 	static void insert(ref DExprSet summands,DExpr summand)in{assert(!!summand);}body{
-		if(summand is zero) return;
+		if(summand==zero) return;
 		if(summand in summands){
 			summands.remove(summand);
 			insert(summands,2*summand);
@@ -772,7 +773,7 @@ class DPlus: DCommutAssocOp{
 		if(auto p=cast(DPow)summand){
 			if(cast(DPlus)p.operands[0]){
 				auto expanded=expandPow(p);
-				if(expanded !is p){
+				if(expanded != p){
 					insertAndSimplify(summands,expanded,facts);
 					return;
 				}
@@ -780,9 +781,9 @@ class DPlus: DCommutAssocOp{
 		}
 
 		DExpr combine(DExpr e1,DExpr e2,DExpr facts){
-			if(e1 is zero) return e2;
-			if(e2 is zero) return e1;
-			if(e1 is e2) return (2*e1).simplify(facts);
+			if(e1==zero) return e2;
+			if(e2==zero) return e1;
+			if(e1==e2) return (2*e1).simplify(facts);
 
 			static DExpr combineFractions(DExpr e1,DExpr e2){
 				if(auto q1=cast(Dℚ)e1)
@@ -815,17 +816,17 @@ class DPlus: DCommutAssocOp{
 
 			static DExpr combineIvr(DExpr e1,DExpr e2,DExpr facts){
 				if(auto ivr1=cast(DIvr)e1){
-					if(ivr1.type is DIvr.Type.eqZ){
-						if(e2 is dIvr(DIvr.Type.lZ,ivr1.e).simplify(facts))
+					if(ivr1.type==DIvr.Type.eqZ){
+						if(e2==dIvr(DIvr.Type.lZ,ivr1.e).simplify(facts))
 							return dIvr(DIvr.Type.leZ,ivr1.e);
-						if(e2 is dIvr(DIvr.Type.lZ,-ivr1.e).simplify(facts))
+						if(e2==dIvr(DIvr.Type.lZ,-ivr1.e).simplify(facts))
 							return dIvr(DIvr.Type.leZ,-ivr1.e);
-						if(e2 is dIvr(DIvr.Type.neqZ,ivr1.e).simplify(facts))
+						if(e2==dIvr(DIvr.Type.neqZ,ivr1.e).simplify(facts))
 							return one;
-					}else if(ivr1.type is DIvr.Type.leZ){
-						if(e2 is dIvr(DIvr.Type.leZ,-ivr1.e).simplify(facts))
+					}else if(ivr1.type==DIvr.Type.leZ){
+						if(e2==dIvr(DIvr.Type.leZ,-ivr1.e).simplify(facts))
 							return 2*dIvr(DIvr.Type.eqZ,ivr1.e)+dIvr(DIvr.Type.neqZ,ivr1.e);
-						if(e2 is dIvr(DIvr.Type.lZ,-ivr1.e).simplify(facts))
+						if(e2==dIvr(DIvr.Type.lZ,-ivr1.e).simplify(facts))
 							return one;
 					}
 				}
@@ -841,15 +842,15 @@ class DPlus: DCommutAssocOp{
 				foreach(f;e2.factors) if(!cast(DIvr)f) return null;
 				auto implied=one, notImplied=one;
 				foreach(f;e1.factors){
-					if(f.simplify(e2) is one) implied=implied*f;
+					if(f.simplify(e2)==one) implied=implied*f;
 					else notImplied=notImplied*f;
 				}
-				if(implied !is one){
+				if(implied != one){
 					notImplied=notImplied.simplify(facts); // C
 					static DExprSet active;
 					if(notImplied in active) return null; // detect cycles (TODO: can this be avoided?)
 					active.insert(notImplied); scope(exit) active.remove(notImplied);
-					if(dIvr(DIvr.Type.eqZ,notImplied).simplify(facts) is e2) // B ⇔ ¬ C
+					if(dIvr(DIvr.Type.eqZ,notImplied).simplify(facts)==e2) // B ⇔ ¬ C
 						return implied.simplify(facts);
 				}
 				return null;
@@ -911,7 +912,7 @@ class DPlus: DCommutAssocOp{
 	static DExpr recursiveCombine(DExpr e1, DExpr e2,DExpr facts){
 		auto splt=splitCommonFactors(e1,e2);
 		auto common=splt[0],sum1=splt[1],sum2=splt[2];
-		if(common !is one){
+		if(common != one){
 			if(!cast(Dℚ)common){
 				auto sum=(sum1+sum2).simplify(facts);
 				auto summands=sum.summands.setx; // TODO: improve performance!
@@ -968,8 +969,8 @@ class DMult: DCommutAssocOp{
 	mixin Visitors;
 
 	static void insert(string file=__FILE__,int line=__LINE__)(ref DExprSet factors,DExpr factor)in{assert(!!factor);}body{
-		if(factor is one) return;
-		if(factor is zero) factors.clear();
+		if(factor==one) return;
+		if(factor==zero) factors.clear();
 		if(zero in factors) return;
 		if(factor in factors){
 			factors.remove(factor);
@@ -997,15 +998,15 @@ class DMult: DCommutAssocOp{
 			return r;
 		}
 		static DExpr combineImpl(DExpr e1,DExpr e2,DExpr facts)in{assert(!cast(DMult)e1&&!cast(DMult)e2);}body{
-			if(e1 is one) return e2;
-			if(e2 is one) return e1;
+			if(e1==one) return e2;
+			if(e2==one) return e1;
 			static DExpr combineInf(DExpr e1,DExpr e2,DExpr facts){
-				if(e1 is dInf && e2 is mone) return null;
-				if(e2 is dInf && e1 is mone) return null;
-				if(e1 is dInf){
+				if(e1==dInf && e2==mone) return null;
+				if(e2==dInf && e1==mone) return null;
+				if(e1==dInf){
 					if(e2.mustBeLessThanZero()) return -dInf;
 					if((-e2).simplify(facts).mustBeLessThanZero()) return dInf;
-				}else if(e1 is -dInf){
+				}else if(e1==-dInf){
 					if(auto r=combineInf(dInf,e2,facts))
 						return -r;
 				}
@@ -1013,8 +1014,8 @@ class DMult: DCommutAssocOp{
 			}
 			if(auto r=combineInf(e1,e2,facts)) return r.simplify(facts);
 			if(auto r=combineInf(e2,e1,facts)) return r.simplify(facts);
-			if(e1 is e2) return (e1^^2).simplify(facts);
-			if(e1 is zero||e2 is zero) return zero;
+			if(e1==e2) return (e1^^2).simplify(facts);
+			if(e1==zero||e2==zero) return zero;
 			if(cast(Dℚ)e2) swap(e1,e2);
 			if(auto q1=cast(Dℚ)e1){
 				if(q1.c==1) return e2;
@@ -1046,12 +1047,12 @@ class DMult: DCommutAssocOp{
 
 			if(auto r=combineFloat(e1,e2)) return r;
 			if(cast(DPow)e2) swap(e1,e2);
-			if(!cast(Dℚ)e1 && e1 is (-e2).simplify(facts)) return (-e1^^2).simplify(facts);
+			if(!cast(Dℚ)e1 && e1==(-e2).simplify(facts)) return (-e1^^2).simplify(facts);
 			if(auto p=cast(DPow)e1){
-				if(p.operands[0] is e2){
+				if(p.operands[0]==e2){
 					return (p.operands[0]^^(p.operands[1]+1)).simplify(facts);
 				}
-				if(p.operands[0] is -e2){
+				if(p.operands[0]==-e2){
 					return (-p.operands[0]^^(p.operands[1]+1)).simplify(facts);
 				}
 				if(auto d=cast(Dℚ)p.operands[0]){
@@ -1065,7 +1066,7 @@ class DMult: DCommutAssocOp{
 					}
 				}
 				if(auto pf=cast(DPow)e2){
-					if(p.operands[0] is pf.operands[0])
+					if(p.operands[0]==pf.operands[0])
 						return (p.operands[0]^^(p.operands[1]+pf.operands[1])).simplify(facts);
 					static DExpr tryCombine(DExpr a,DExpr b,DExpr facts){
 						if(cast(DMult)a||cast(DMult)b) return null; // TODO: ok?
@@ -1078,12 +1079,12 @@ class DMult: DCommutAssocOp{
 						return null;
 					}
 					auto exp1=p.operands[1],exp2=pf.operands[1];
-					if(exp1 is exp2){
+					if(exp1==exp2){
 						auto a=p.operands[0],b=pf.operands[0];
 						if(auto r=tryCombine(a,b,facts))
 							return (r^^exp1).simplify(facts);
 					}
-					if(exp1 is (-exp2).simplify(facts)){
+					if(exp1==(-exp2).simplify(facts)){
 						auto a=p.operands[0],b=1/pf.operands[0];
 						if(auto r=tryCombine(a,b,facts))
 							return (r^^exp1).simplify(facts);
@@ -1095,14 +1096,14 @@ class DMult: DCommutAssocOp{
 			if(auto ivr1=cast(DIvr)e1){ // TODO: this should all be done by DIvr.simplify instead
 				// TODO: this does not actually combine all facts optimally
 				auto simple2=e2.simplify((e1*facts).simplify(one));
-				if(simple2!is e2) return (simple2*e1).simplify(facts);
+				if(simple2!=e2) return (simple2*e1).simplify(facts);
 				if(auto ivr2=cast(DIvr)e2) with(DIvr.Type){
 					// TODO: this does not actually combine all facts optimally
 					auto simple1=e1.simplify((e2*facts).simplify(one));
-					if(simple1!is e1) return (simple1*e2).simplify(facts);
+					if(simple1!=e1) return (simple1*e2).simplify(facts);
 					// combine a≤0 and -a≤0 to a=0
 					if(ivr1.type==leZ&&ivr2.type==leZ){
-						if(ivr1.e is (-ivr2.e).simplify(facts)){
+						if(ivr1.e==(-ivr2.e).simplify(facts)){
 							auto r=dIvr(eqZ,ivr1.e);
 							r=r.simplify(facts);
 							return r;
@@ -1115,14 +1116,14 @@ class DMult: DCommutAssocOp{
 							DExpr b1,b2;
 							auto s1=ivr1.getBoundForVar(v,b1);
 							auto s2=ivr2.getBoundForVar(v,b2);
-							if(s1 is fail || s2 is fail) continue;
+							if(s1==fail || s2==fail) continue;
 							// if(s1==s2) // TODO
 							if(s1 != s2){
-								if(s1 is lowerBound){
+								if(s1==lowerBound){
 									if(b2.mustBeLessThan(b1))
 										return zero;
 								}else{
-									assert(s1 is upperBound);
+									assert(s1==upperBound);
 									if(b1.mustBeLessThan(b2))
 										return zero;
 								}
@@ -1132,7 +1133,7 @@ class DMult: DCommutAssocOp{
 					}
 					if(ivr2.type==eqZ) swap(ivr1,ivr2);
 					if(ivr1.type==eqZ){
-						if(ivr1.e is ivr2.e||ivr1.e is (-ivr2.e).simplify(facts)){ // TODO: jointly canonicalize
+						if(ivr1.e==ivr2.e||ivr1.e==(-ivr2.e).simplify(facts)){ // TODO: jointly canonicalize
 							// combine a=0 and a≠0 to 0
 							if(ivr2.type==neqZ)
 								return zero;
@@ -1177,7 +1178,7 @@ class DMult: DCommutAssocOp{
 		foreach(f;factors){
 			if(auto nwf=combine(f,factor,facts)){
 				factors.remove(f);
-				if(factors.length||nwf !is one)
+				if(factors.length||nwf != one)
 					insertAndSimplify(factors,nwf,facts);
 				return;
 			}
@@ -1200,7 +1201,7 @@ class DMult: DCommutAssocOp{
 	override DExpr simplifyImpl(DExpr facts){
 		// TODO: this is a mayor bottleneck!
 		auto ne=basicSimplify();
-		if(ne !is this) return ne.simplify(facts);
+		if(ne != this) return ne.simplify(facts);
 		assert(!cast(DPlus)facts,text(facts));
 		foreach(f;this.factors) if(auto d=cast(DDiscDelta)f){ // TODO: do this in a nicer way
 			auto wo=this.withoutFactor(f);
@@ -1215,14 +1216,14 @@ class DMult: DCommutAssocOp{
 			foreach(f;fact.factors) if(!cast(DIvr)f) continue Louter; // TODO: remove this if possible
 			facts=facts*fact;
 		}
-		if(facts !is one) facts=facts.simplify(one);
+		if(facts != one) facts=facts.simplify(one);
 		foreach(f;this.factors){
 			if(cast(DIvr)f) insertAndSimplify(myFacts,f,facts);
 			else myFactors.insert(f);
 		}
 		DExpr newFacts=facts;
 		if(myFacts.length){
-			if(newFacts !is one){
+			if(newFacts != one){
 				DExprSet newFactsSet=newFacts.factors.setx;
 				foreach(f;myFacts) insertAndSimplify(newFactsSet,f,one);
 				newFacts=dMult(newFactsSet);
@@ -1308,7 +1309,7 @@ class DPow: DBinaryOp{
 
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		if(formatting==Format.lisp){
-			if(operands[1] is mone){
+			if(operands[1]==mone){
 				return text("(/ 1 ",operands[0].toStringImpl(formatting,Precedence.none,binders),")");
 			}
 			return super.toStringImpl(formatting,Precedence.none,binders);
@@ -1343,14 +1344,14 @@ class DPow: DBinaryOp{
 	/+private+/ static DExpr staticSimplify(DExpr e1,DExpr e2,DExpr facts=one){
 		auto ne1=e1.simplify(facts);
 		auto ne2=e2.simplify(facts);
-		if(ne1!is e1||ne2!is e2) return dPow(ne1,ne2).simplify(facts);
-		if(e1 !is mone) if(auto c=cast(Dℚ)e1) if(c.c<0) if(e2.isInteger()) return (mone^^e2*dℚ(-c.c)^^e2).simplify(facts);
+		if(ne1!=e1||ne2!=e2) return dPow(ne1,ne2).simplify(facts);
+		if(e1 != mone) if(auto c=cast(Dℚ)e1) if(c.c<0) if(e2.isInteger()) return (mone^^e2*dℚ(-c.c)^^e2).simplify(facts);
 		if(auto m=cast(DMult)e1){
 			DExprSet outside;
 			DExprSet within;
 			bool nat=!!e2.isInteger();
 			foreach(f;m.operands){
-				if(nat||dIvr(DIvr.Type.lZ,f).simplify(facts) is zero)
+				if(nat||dIvr(DIvr.Type.lZ,f).simplify(facts)==zero)
 					DMult.insert(outside,f^^e2);
 				else DMult.insert(within,f);
 			}
@@ -1361,19 +1362,19 @@ class DPow: DBinaryOp{
 			}
 		}
 		if(auto p=cast(DPow)e1){
-			if(p.operands[0]!is mone){
+			if(p.operands[0]!=mone){
 				auto e2p=p.operands[1]*e2;
 				if(p.operands[1].isFractional()) return (p.operands[0]^^e2p).simplify(facts);
 				return (dIvr(DIvr.Type.lZ,p.operands[0])*(mone^^p.operands[1])^^e2*(-p.operands[0])^^e2p+
 						dIvr(DIvr.Type.leZ,-p.operands[0])*p.operands[0]^^e2p).simplify(facts);
 			}
 		}
-		if(e1 is one||e2 is zero) return one;
-		if(e1 is mone && e2 is mone) return mone;
-		if(e2 is one) return e1;
+		if(e1==one||e2==zero) return one;
+		if(e1==mone && e2==mone) return mone;
+		if(e2==one) return e1;
 		if(e1.mustBeZeroOrOne()&&(-e2).mustBeLessOrEqualZero())
 			return (dIvr(DIvr.Type.neqZ,e2)*e1+dIvr(DIvr.Type.eqZ,e2)).simplify(facts);
-		if(e1 is zero) return dIvr(DIvr.Type.eqZ,e2).simplify(facts);
+		if(e1==zero) return dIvr(DIvr.Type.eqZ,e2).simplify(facts);
 		if(auto d=e2.isInteger()){
 			if(auto c=cast(Dℚ)e1){
 				assert(d.c.den==1);
@@ -1492,7 +1493,7 @@ struct DPolynomial{
 }
 
 bool hasFactor(DExpr e,DExpr factor){
-	foreach(f;e.factors) if(factor is f) return true;
+	foreach(f;e.factors) if(factor==f) return true;
 	return false;
 }
 
@@ -1525,7 +1526,7 @@ DExpr polyNormalize(DExpr e,DVar v=null,long limit=-1){
 				}
 				foreach(f;p.factors){
 					if(auto norm=polyNormalize(f,v,limit)){
-						if(norm !is f){
+						if(norm != f){
 							DPlus.insert(normSet,p.withoutFactor(f)*norm);
 							continue Louter;
 						}
@@ -1536,7 +1537,7 @@ DExpr polyNormalize(DExpr e,DVar v=null,long limit=-1){
 		DPlus.insert(normSet,s);
 	}
 	auto r=dPlus(normSet).simplify(one);
-	if(r !is e) return polyNormalize(r,v,limit);
+	if(r != e) return polyNormalize(r,v,limit);
 	return r;
 
 }
@@ -1552,13 +1553,13 @@ DPolynomial asPolynomialIn(DExpr e,DVar v,long limit=-1){
 	}
  Lsum:foreach(s;normalized.summands){
 		foreach(f;s.factors){
-			if(f is v){
+			if(f==v){
 				if(!addCoeff(1,s.withoutFactor(v)))
 					return DPolynomial.init;
 				continue Lsum;
 			}
 			auto p=cast(DPow)f;
-			if(!p||p.operands[0] !is v) continue;
+			if(!p||p.operands[0] != v) continue;
 			auto c=p.operands[1].isInteger();
 			if(!c) continue;
 			assert(c.c.den==1);
@@ -1576,7 +1577,7 @@ DPolynomial asPolynomialIn(DExpr e,DVar v,long limit=-1){
 
 DExpr[2] asLinearFunctionIn(DExpr e,DVar v){ // returns [b,a] if e=av+b
 	auto p=e.asPolynomialIn(v);
-	if(p is DPolynomial.init||p.degree>1) return [null,null];
+	if(p==DPolynomial.init||p.degree>1) return [null,null];
 	return [p.coefficients.get(0,zero),p.coefficients.get(1,zero)];
 }
 
@@ -1648,7 +1649,7 @@ bool couldBeZero(DExpr e){
 }
 
 bool mustBeZeroOrOne(DExpr e){
-	if(e is zero || e is one) return true;
+	if(e==zero || e==one) return true;
 	if(cast(DIvr)e) return true;
 	return false;
 }
@@ -1777,7 +1778,7 @@ private static DExpr getCommonDenominator(DExpr e){
 	foreach(s;e.summands){
 		foreach(f;s.factors){
 			if(auto p=cast(DPow)f){
-				if(p.operands[1] !is mone) continue;
+				if(p.operands[1] != mone) continue;
 				auto den=p.operands[0];
 				if(!r.hasFactor(den)) r=r*den;
 			}
@@ -1977,7 +1978,7 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 					auto ivr=cast(DIvr)f;
 					if(ivr&&ivr.type == eqZ){
 						auto val=solveFor(ivr.e,var); // TODO: modify solveFor such that it only solves linear equations and returns additional constraints.
-						if(!val || ivr.substitute(var,val).simplify(one) !is one)
+						if(!val || ivr.substitute(var,val).simplify(one) != one)
 							continue; // TODO: get rid of this
 						summand=s*cond.substitute(var,val);
 						break;
@@ -2020,7 +2021,7 @@ alias SolUse=SolutionInfo.UseCase;
 
 // solve lhs = rhs, or lhs ≤ rhs, where var does not occur free in rhs
 DExpr solveFor(DExpr lhs,DVar var,DExpr rhs,SolUse usage,ref SolutionInfo info){
-	if(lhs is var){
+	if(lhs==var){
 		if(usage.bound) info.bound.setLower();
 		return rhs;
 	}
@@ -2048,13 +2049,13 @@ DExpr solveFor(DExpr lhs,DVar var,DExpr rhs,SolUse usage,ref SolutionInfo info){
 		return r;
 	}
 	if(auto p=cast(DPow)lhs){
-		if(p.operands[1] is mone){
+		if(p.operands[1]==mone){
 			if(couldBeZero(rhs)){ // TODO: is this right? (This is guaranteed never to happen for dirac deltaas, so maybe optimize it out for that caller).
 				info.needCaseSplit=true;
 				if(usage.caseSplit) info.caseSplits~=SolutionInfo.CaseSplit(rhs,one);
 			}
 			auto r=p.operands[0].solveFor(var,one/rhs,usage,info);
-			info.caseSplits=info.caseSplits.partition!(x=>x.expression is zero);
+			info.caseSplits=info.caseSplits.partition!(x=>x.expression==zero);
 			foreach(ref x;info.caseSplits) x.expression=one/x.expression;
 			if(usage.bound) info.bound.invertIflZ(-p.operands[0]*rhs);
 			return r;
@@ -2078,7 +2079,7 @@ DExpr solveFor(DExpr lhs,DVar var){
 		foreach(ref x;info.caseSplits)
 			constraints=constraints*dIvr(DIvr.Type.neqZ,x.constraint);
 		constraints=constraints.simplify(one);
-		auto r=constraints is zero?zero:constraints*s;
+		auto r=constraints==zero?zero:constraints*s;
 		foreach(ref x;info.caseSplits){
 			auto curConstr=constraints.withoutFactor(dIvr(DIvr.Type.neqZ,x.constraint));
 			auto psol=solveFor(x.expression,var);
@@ -2105,7 +2106,7 @@ DExpr negateDIvr(DIvr ivr){
 
 T without(T,DExpr)(T a,DExpr b){
 	T r;
-	foreach(x;a) if(x !is b) r.insert(x);
+	foreach(x;a) if(x != b) r.insert(x);
 	return r;
 }
 
@@ -2172,7 +2173,7 @@ DExpr factorDIvr(alias wrap)(DExpr e){
 	if(!h.holes.length) return null;
 	DExpr doIt(DExpr facts,DExpr cur,size_t i){
 		facts=facts.simplify(one);
-		if(facts is zero) return zero;
+		if(facts==zero) return zero;
 		if(i==h.holes.length) return facts*wrap(cur);
 		auto var=h.holes[i].var,expr=h.holes[i].expr;
 		auto ivrsNonIvrs=splitIvrs(expr), ivrs=ivrsNonIvrs[0], nonIvrs=ivrsNonIvrs[1];
@@ -2277,7 +2278,7 @@ class DIvr: DExpr{ // iverson brackets
 	
 	static DExpr staticSimplify(Type type,DExpr e,DExpr facts=one){
 		auto ne=e.simplify(facts);
-		if(ne !is e) return dIvr(type,ne).simplify(facts);
+		if(ne != e) return dIvr(type,ne).simplify(facts);
 		if(auto r=cancelFractions!false(e,type)) return r.simplify(facts);
 		// TODO: make these check faster (also: less convoluted)
 		auto neg=negateDIvr(type,e);
@@ -2287,19 +2288,19 @@ class DIvr: DExpr{ // iverson brackets
 			if(auto ivr=cast(DIvr)f){
 				// TODO: more elaborate implication checks
 				if(ivr.type==type){
-					if(ivr.e is e) return one;
+					if(ivr.e==e) return one;
 					if(ivr.type==Type.leZ){
 						if(e.mustBeAtMost(ivr.e))
 							return one;
 					}
 				}
 				import util: among;
-				if(neg.type==ivr.type && (neg.e is ivr.e||
-					type.among(Type.eqZ,Type.neqZ)&&(-neg.e).simplify(facts) is ivr.e))
+				if(neg.type==ivr.type && (neg.e==ivr.e||
+					type.among(Type.eqZ,Type.neqZ)&&(-neg.e).simplify(facts)==ivr.e))
 					return zero; // TODO: ditto
 				if(neg.type==Type.lZ){
 					if(ivr.type==Type.leZ){
-						if(neg.e is ivr.e) assert(neg.e.mustBeAtMost(ivr.e));
+						if(neg.e==ivr.e) assert(neg.e.mustBeAtMost(ivr.e));
 						if(neg.e.mustBeAtMost(ivr.e)) foundLe=true;
 						else if(neg.e.mustBeLessThan(ivr.e)) return zero;
 					}
@@ -2363,7 +2364,7 @@ class DIvr: DExpr{ // iverson brackets
 				case leZ,lZ: break;
 					auto r=(dIvr(leZ,-denom)*dIvr(type,dcancel)+
 							dIvr(lZ,denom)*dIvr(type,-dcancel)).simplify(facts);
-					if(r is zero || r is one) return r;
+					if(r==zero || r==one) return r;
 				// TODO: unfortunately, due to how definiteIntegral is implemented, we
 				// cannot use this rewrite to normalize as follows. Fix this.
 				/+case eqZ,neqZ:
@@ -2440,10 +2441,10 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 	}
 	static DExpr staticSimplify(DExpr e,DExpr facts=one){
 		auto ne=e.simplify(one); // cannot use all facts! (might remove a free variable)
-		if(ne !is e) return dDelta(ne).simplify(facts);
+		if(ne != e) return dDelta(ne).simplify(facts);
 		if(auto r=cancelFractions!true(e)) return r.simplify(facts);
 		if(auto fct=factorDIvr!(e=>dDelta(e))(e)) return fct.simplify(facts);
-		if(dIvr(DIvr.Type.eqZ,e).simplify(facts) is zero)
+		if(dIvr(DIvr.Type.eqZ,e).simplify(facts)==zero)
 			return zero;
 		return null;
 	}
@@ -2463,7 +2464,7 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 			auto constraints=one;
 			foreach(ref x;info.caseSplits)
 				constraints=constraints*dIvr(DIvr.Type.neqZ,x.constraint);
-			auto r=constraints is zero?zero:
+			auto r=constraints==zero?zero:
 				constraints*unbind(expr,s)/dAbs(dDiff(var,d.e,s));
 			foreach(ref x;info.caseSplits){
 				auto curConstr=constraints.withoutFactor(dIvr(DIvr.Type.neqZ,x.constraint));
@@ -2504,7 +2505,7 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 		// TODO: filter more precisely
 		auto nvar=var.simplify(one);
 		auto ne=e.simplify(one);
-		if(nvar !is var || ne !is e) return dDiscDelta(nvar,ne).simplify(facts); // (might be rewritten to normal delta)
+		if(nvar != var || ne != e) return dDiscDelta(nvar,ne).simplify(facts); // (might be rewritten to normal delta)
 		//if(dIvr(DIvr.Type.eq,var,e).simplify(facts) is zero) return zero; // a simplification like this might be possible
 		if(auto vtpl=cast(DTuple)var){ // δ_(x,y,z,...)[(1,2,3,...)].
 			if(auto etpl=cast(DTuple)e){
@@ -2536,7 +2537,7 @@ DExpr[2] splitPlusAtVar(DExpr e,DVar var){
 		if(!a||!c||c.c<=0) return fail;
 		assert(c.c.den==1);
 		auto ow=splitPlusAtVar(a,var);
-		if(ow[0] is zero || ow[1] is zero) return fail;
+		if(ow[0]==zero || ow[1]==zero) return fail;
 		DExpr outside=ow[0]^^c;
 		DExprSet within;
 		for(ℤ i=0;i<c.c.num;i++)
@@ -2613,7 +2614,7 @@ DExpr[2] splitIntegrableFactor(DExpr e){
 	DExpr integrable=one;
 	DExpr nonIntegrable=one;
 	foreach(f;e.factors){
-		if(auto p=cast(DPow)f) if(p.operands[0] is dE){ // TODO: check polynomial degree
+		if(auto p=cast(DPow)f) if(p.operands[0]==dE){ // TODO: check polynomial degree
 			integrable=integrable*f; // TODO: use DExprSet
 			continue;
 		}
@@ -2669,11 +2670,11 @@ class DInt: DOp{
 
 	static DExpr staticSimplify(DExpr expr,DExpr facts=one)in{assert(expr&&facts);}body{
 		auto nexpr=expr.simplify(facts.incDeBruijnVar(1,0));
-		if(expr !is nexpr) return dIntSmp(nexpr,facts);
+		if(expr != nexpr) return dIntSmp(nexpr,facts);
 		auto ow=expr.splitMultAtVar(dDeBruijnVar(1));
 		ow[0]=ow[0].incDeBruijnVar(-1,0).simplify(facts);
-		if(ow[0] is zero) return zero;
-		if(ow[0] !is one) return (ow[0]*dIntSmp(ow[1],facts)).simplify(facts);
+		if(ow[0]==zero) return zero;
+		if(ow[0] != one) return (ow[0]*dIntSmp(ow[1],facts)).simplify(facts);
 		//version(DISABLE_INTEGRATION){
 		if(opt.integrationLevel==IntegrationLevel.none)
 			return null;
@@ -2728,11 +2729,11 @@ class DSum: DOp{
 
 	static DExpr staticSimplify(DExpr expr,DExpr facts=one){
 		if(opt.integrationLevel==IntegrationLevel.none){
-			if(expr is zero) return zero;
+			if(expr==zero) return zero;
 			return null;
 		}
 		auto nexpr=expr.simplify(facts.incDeBruijnVar(1,0));
-		if(nexpr !is expr) return dSum(nexpr).simplify(facts);
+		if(nexpr != expr) return dSum(nexpr).simplify(facts);
 		if(opt.integrationLevel!=IntegrationLevel.deltas){
 			if(auto r=computeSum(expr,facts))
 				return r.simplify(facts);
@@ -2762,7 +2763,7 @@ class DLim: DOp{
 
 	static DExpr staticSimplify(DExpr e,DExpr x,DExpr facts=one){
 		auto ne=e.simplify(facts), nx=x.simplify(facts.incDeBruijnVar(1,0));
-		if(ne !is e || nx !is x) return dLim(ne,nx).simplify(facts);
+		if(ne != e || nx != x) return dLim(ne,nx).simplify(facts);
 		if(auto r=getLimit(dDeBruijnVar(1),e,x,facts))
 			return r.incDeBruijnVar(-1,0);
 		return null;
@@ -2788,7 +2789,7 @@ class DDiff: DOp{
 	override Precedence precedence(){ return Precedence.diff; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		if(formatting==Format.lisp)
-			return text("(differentiate ",DDeBruijnVar.displayName(1,formatting,binders)," ",(e is x?text(e):text(e," ",x)));
+			return text("(differentiate ",DDeBruijnVar.displayName(1,formatting,binders)," ",(e==x?text(e):text(e," ",x)));
 		return addp(prec,symbol(formatting,binders)~"["~e.toStringImpl(formatting,Precedence.none,binders)~"]("~x.toStringImpl(formatting,Precedence.none,binders)~")");
 	}
 
@@ -2862,19 +2863,19 @@ class DLog: DOp{
 	}
 	static DExpr staticSimplify(DExpr e,DExpr facts=one){
 		auto ne=e.simplify(facts);
-		if(ne !is e) return dLog(ne).simplify(facts);
+		if(ne != e) return dLog(ne).simplify(facts);
 		if(auto c=cast(DE)e) return one;
-		if(e is one) return zero;
+		if(e==one) return zero;
 		if(auto m=cast(DMult)e){
 			DExprSet r,s;
 			bool sign=false;
 			foreach(f;m.factors){
 				auto pos=dIvr(DIvr.Type.leZ,-f).simplify(facts);
-				if(pos is one)
+				if(pos==one)
 					r.insert(f);
-				else if(pos is zero){
+				else if(pos==zero){
 					sign^=true;
-					if(f!is mone) r.insert(-f);
+					if(f!= mone) r.insert(-f);
 				}else s.insert(f); // TODO: use dAbs?
 			}
 			if(!(r.length&&s.length)&&r.length<=1) return null;
@@ -2913,7 +2914,7 @@ class DSin: DOp{
 	}
 	static DExpr staticSimplify(DExpr e,DExpr facts=one){
 		auto ne=e.simplify(facts);
-		if(ne!is e) return dSin(ne).simplify(facts);
+		if(ne!= e) return dSin(ne).simplify(facts);
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){
@@ -2938,7 +2939,7 @@ class DFloor: DOp{
 	}
 	static DExpr staticSimplify(DExpr e,DExpr facts=one){
 		auto ne=e.simplify(facts);
-		if(ne!is e) return dFloor(ne).simplify(facts);
+		if(ne!= e) return dFloor(ne).simplify(facts);
 		if(auto q=cast(Dℚ)e)
 			return dℚ(floor(q.c));
 		return null;
@@ -2965,7 +2966,7 @@ class DCeil: DOp{
 	}
 	static DExpr staticSimplify(DExpr e,DExpr facts=one){
 		auto ne=e.simplify(facts);
-		if(ne!is e) return dCeil(ne).simplify(facts);
+		if(ne!= e) return dCeil(ne).simplify(facts);
 		if(auto q=cast(Dℚ)e)
 			return dℚ(ceil(q.c));
 		return null;
@@ -2989,7 +2990,7 @@ template BitwiseImpl(string which){
 	override @property string symbol(Format formatting,int binders){ return " "~which~" "; }
 	mixin Visitors;
 	static void insert(ref DExprSet operands,DExpr operand)in{assert(!!operand);}body{
-		if(operand is zero){
+		if(operand==zero){
 			static if(which=="bitAnd") operands.clear();
 			else static if(which=="bitOr"||which=="bitXor") return;
 			else static assert(0);
@@ -3010,7 +3011,7 @@ template BitwiseImpl(string which){
 			return;
 		}
 		DExpr combine(DExpr e1,DExpr e2,DExpr facts){
-			if(e1 is e2){
+			if(e1==e2){
 				static if(which=="bitXor") return zero;
 				else return e1;
 			}
@@ -3085,16 +3086,16 @@ class DGaussInt: DOp{
 		return null;
 	}
 	static DExpr staticSimplify(DExpr x,DExpr facts=one){
-		if(x is dInf){
+		if(x==dInf){
 			return dΠ^^(one/2);
-		}else if(x is -dInf){
+		}else if(x==-dInf){
 			return zero;
 		}
-		if(x is zero){
+		if(x==zero){
 			return dΠ^^(one/2)/2;
 		}
 		auto nx=x.simplify(facts);
-		if(nx !is x) return dGaussInt(nx).simplify(facts);
+		if(nx != x) return dGaussInt(nx).simplify(facts);
 		if(auto fct=factorDIvr!(e=>dGaussInt(e))(x)) return fct.simplify(facts);
 		return null;
 	}
@@ -3119,7 +3120,7 @@ private static DInf theDInf;
 @property DInf dInf(){ return theDInf?theDInf:(theDInf=new DInf); }
 
 bool isInfinite(DExpr e){
-	return e is dInf || e is -dInf;
+	return e==dInf || e==-dInf;
 }
 
 class DTuple: DExpr{ // Tuples. TODO: real tuple support
@@ -3216,7 +3217,7 @@ class DIndex: DOp{
 			return arr.entries.apply(ni).simplify(facts);
 		}
 		// distribute over case distinction:
-		if(ne is zero) return zero;
+		if(ne==zero) return zero;
 		if(auto p=cast(DPlus)ne){
 			DExprSet r;
 			foreach(s;p.summands) DPlus.insert(r,dIndex(s,ni));
@@ -3230,7 +3231,7 @@ class DIndex: DOp{
 					return (dIndex(m.withoutFactor(fc),ni)*fc).simplify(facts);
 			}
 		}
-		if(ne !is e || ni !is i) return dIndex(ne,ni);
+		if(ne != e || ni != i) return dIndex(ne,ni);
 		return null;
 	}
 	static DExpr constructHook(DExpr e,DExpr i){
@@ -3281,7 +3282,7 @@ class DIUpdate: DOp{
 								  + dIvr(DIvr.Type.eqZ,dbv-nni)*nnn));
 			return r.simplify(facts);
 		}
-		if(ne !is e || ni !is i || nn !is n) return dIUpdate(ne,ni,nn);
+		if(ne != e || ni != i || nn != n) return dIUpdate(ne,ni,nn);
 		return null;
 	}
 
@@ -3327,7 +3328,7 @@ class DSlice: DOp{
 			return dArray(nr-nl,dLambda(arr.entries.expr.substitute(dbv,dbv+nl)*dBounded!"[)"(dbv,zero,nr-nl))).simplify(facts);
 		}
 		// distribute over case distinction:
-		if(ne is zero) return zero;
+		if(ne==zero) return zero;
 		if(auto p=cast(DPlus)ne){
 			DExprSet res;
 			foreach(s;p.summands) DPlus.insert(res,dSlice(s,nl,nr));
@@ -3341,7 +3342,7 @@ class DSlice: DOp{
 					return (dSlice(m.withoutFactor(fc),nl,nr)*fc).simplify(facts);
 			}
 		}
-		if(ne !is e || nl !is l || nr !is r) return dSlice(ne,nl,nr);
+		if(ne != e || nl != l || nr != r) return dSlice(ne,nl,nr);
 		return null;
 	}
 	static DExpr constructHook(DExpr e,DExpr l,DExpr r){
@@ -3376,7 +3377,7 @@ class DRUpdate: DOp{ // TODO: allow updating multiple fields at once
 		auto nn=n.simplify(facts);
 		if(auto rec=cast(DRecord)ne)
 			return rec.update(f,nn).simplify(facts);
-		if(ne !is e || nn !is n) return dRUpdate(ne,f,nn);
+		if(ne != e || nn != n) return dRUpdate(ne,f,nn);
 		return null;
 	}
 
@@ -3407,7 +3408,7 @@ class DLambda: DOp{ // lambda functions DExpr → DExpr
 	}
 	static DLambda staticSimplify(DExpr expr,DExpr facts=one){
 		auto nexpr=expr.simplify(facts.incDeBruijnVar(1,0));
-		if(nexpr !is expr){
+		if(nexpr != expr){
 			auto r=dLambda(nexpr).simplify(facts);
 			assert(!r||cast(DLambda)r);
 			return cast(DLambda)r;
@@ -3478,7 +3479,7 @@ class DArray: DExpr{
 	alias subExprs=Seq!(length,entries);
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		if(formatting==Format.lisp) return text("(array ",length.toStringImpl(formatting,Precedence.none,binders)," ",entries.toStringImpl(formatting,Precedence.none,binders),")");// TODO: how to do this in z3?
-		if(length is zero) return "[]";
+		if(length==zero) return "[]";
 		auto r=text("[",DDeBruijnVar.displayName(1,formatting,binders+1)," ↦ ",entries.expr.toStringImpl(formatting,Precedence.none,binders+1),"] (",length,")");
 		if(prec!=Precedence.none) r="("~r~")"; // TODO: ok?
 		return r;
@@ -3489,13 +3490,13 @@ class DArray: DExpr{
 	}
 	static DExpr staticSimplify(DExpr length,DLambda entries,DExpr facts=one){
 		auto nlength=length.simplify(facts);
-		auto nentries=nlength is zero?dLambda(zero):cast(DLambda)entries.simplify(facts);
+		auto nentries=nlength==zero?dLambda(zero):cast(DLambda)entries.simplify(facts);
 		assert(!!nentries);
-		if(nlength is one){ // TODO: use the fact that indices are integers for simplification
+		if(nlength==one){ // TODO: use the fact that indices are integers for simplification
 			nentries=cast(DLambda)dLambda(nentries.apply(zero).incDeBruijnVar(1,0)).simplify(facts);
 			assert(!!nentries);
 		}
-		if(nlength!is length||nentries!is entries) return dArray(nlength,nentries);
+		if(nlength!= length||nentries!= entries) return dArray(nlength,nentries);
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){
@@ -3523,8 +3524,8 @@ class DCat: DAssocOp{ // TODO: this should have n arguments, as it is associativ
 		DExpr doCat(DExpr e1,DExpr e2){
 			auto a1=cast(DArray)e1;
 			auto a2=cast(DArray)e2;
-			if(a1&&a1.length is zero) return e2;
-			if(a2&&a2.length is zero) return e1;
+			if(a1&&a1.length==zero) return e2;
+			if(a2&&a2.length==zero) return e1;
 			if(!a1||!a2) return null;
 			auto dbv=dDeBruijnVar(1);
 			return dArray(a1.length+a2.length,
@@ -3588,7 +3589,7 @@ class DField: DOp{
 		if(auto ru=cast(DRUpdate)ne)
 			return f == ru.f ? ru.n.simplify(facts) : dField(ru.e,f).simplify(facts);
 		// distribute over case distinction:
-		if(e is zero) return zero;
+		if(e==zero) return zero;
 		if(auto p=cast(DPlus)ne){
 			DExprSet r;
 			foreach(s;p.summands) DPlus.insert(r,dField(s,f));
@@ -3602,7 +3603,7 @@ class DField: DOp{
 					return (dField(m.withoutFactor(fc),f)*fc).simplify(facts);
 			}
 		}
-		if(ne !is e) return dField(ne,f);
+		if(ne != e) return dField(ne,f);
 		return null;
 	}
 

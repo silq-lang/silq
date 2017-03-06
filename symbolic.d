@@ -46,7 +46,7 @@ class Symbolic: Backend{
 			summaries[fun]=new Distribution();
 			summaries[fun].distribute(mone);
 			summaries[fun]=analyze(fun,err);
-		}else if(summaries[fun].distribution is mone){
+		}else if(summaries[fun].distribution == mone){
 			// TODO: support special cases.
 			err.error("recursive dependencies unsupported",loc);
 			return null;
@@ -502,7 +502,7 @@ private struct Analyzer{
 						idist.addArgs([],true,null);
 						idist.initialize(r,arg,ce.arg.type);
 						foreach(v;idist.freeVars)
-							if(v !is r) idist.marginalize(v);
+							if(v != r) idist.marginalize(v);
 						idist.orderFreeVars([r],false);
 						return dApply(idist.toDExpr(),dLambda(one));
 					case "FromMarginal":
@@ -510,7 +510,7 @@ private struct Analyzer{
 						auto ndist=dist.dup();
 						ndist.initialize(tmp,arg,ce.arg.type);
 						foreach(v;dist.freeVars)
-							if(v !is tmp) ndist.marginalize(v);
+							if(v != tmp) ndist.marginalize(v);
 						ndist.simplify();
 						dist.distribute(ndist.distribution);
 						return tmp;
@@ -645,7 +645,7 @@ private struct Analyzer{
 				dist=athen.dist.join(dist,aothw.dist);
 				foreach(k,v;deterministic){
 					if(k in athen.deterministic && k in aothw.deterministic
-						&& athen.deterministic[k] is aothw.deterministic[k]){
+						&& athen.deterministic[k] == aothw.deterministic[k]){
 						deterministic[k]=athen.deterministic[k];
 					}else deterministic.remove(k);
 				}
@@ -752,7 +752,7 @@ private struct Analyzer{
 			if(!cast(DDelta)f&&!cast(Dℚ)f)
 				return null;
 		auto norm=dIntSmp(tmp,ndist.distribution,one);
-		if(norm is zero || (!cast(Dℚ)norm&&!cast(DFloat)norm))
+		if(norm == zero || (!cast(Dℚ)norm&&!cast(DFloat)norm))
 			return null;
 		auto r=(dIntSmp(tmp,tmp*ndist.distribution,one)/norm).simplify(one);
 		if(r.hasAny!DInt) return null;
@@ -1045,7 +1045,7 @@ private struct Analyzer{
 				dist=dthen.join(dist,dothw);
 				foreach(k,v;deterministic){
 					if(k in athen.deterministic && k in aothw.deterministic
-						&& athen.deterministic[k] is aothw.deterministic[k]){
+						&& athen.deterministic[k] == aothw.deterministic[k]){
 						deterministic[k]=athen.deterministic[k];
 					}else deterministic.remove(k);
 				}
@@ -1216,7 +1216,7 @@ private struct Analyzer{
 	void applyRetDist(FunctionDef fd,Distribution retDist){
 		if(retDist){
 			dist.simplify();
-			if(dist.distribution is zero){
+			if(dist.distribution == zero){
 				retDist.error=retDist.error+dist.error;
 				dist=retDist;
 			}else err.error("not all paths return",fd.loc); // TODO: check during semantic

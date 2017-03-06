@@ -47,7 +47,7 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 	x=x.simplify(facts);
 	Case!ExpLim[] doIt(DVar v,DExpr e,DExpr x){
 		if(!x.hasFreeVar(v)) return [Case!ExpLim(one,ExpLim(x,x))];
-		if(x is v) return [Case!ExpLim(one,ExpLim(x,e))];
+		if(x == v) return [Case!ExpLim(one,ExpLim(x,e))];
 		x=x.polyNormalize(v).simplify(facts);
 		if(auto p=cast(DPlus)x){
 			DExpr handlePlusImpl(ExpLim[] c){
@@ -60,8 +60,8 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 					auto l=s.limit;
 					if(!l){ unsupported.insert(s.expression); continue; }
 					l=l.simplify(facts);
-					if(l is dInf){ inf.insert(s.expression); continue; }
-					if(l is -dInf){ minf.insert(s.expression); continue; }
+					if(l == dInf){ inf.insert(s.expression); continue; }
+					if(l == -dInf){ minf.insert(s.expression); continue; }
 					if(l.hasLimits()){ unsupported.insert(l); continue; }
 					finite = finite+l;
 					simplified = true;
@@ -120,11 +120,11 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 					if(!l){ unsupported.insert(f.expression); continue; }
 					l=l.simplify(facts);
 					if(l.isInfinite()){
-						sign ^= l is -dInf;
+						sign ^= l == -dInf;
 						inf.insert(f.expression);
 						continue;
 					}
-					if(l is zero){
+					if(l == zero){
 						zro.insert(f.expression);
 						continue;
 					}
@@ -139,9 +139,9 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 						auto lZ=dIvr(DIvr.Type.lZ,finite*ow[0]).simplify(facts);
 						auto gZ=dIvr(DIvr.Type.lZ,-finite*ow[0]).simplify(facts);
 						Case!ExpLim[] r;
-						if(lZ !is zero)
+						if(lZ != zero)
 							r~=Case!ExpLim(lZ,ExpLim(m,sign?dInf:-dInf));
-						if(gZ !is zero)
+						if(gZ != zero)
 							r~=Case!ExpLim(gZ,ExpLim(m,sign?-dInf:dInf));
 						return r;
 					}
@@ -161,7 +161,7 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 			}
 			auto res=expandFlatMap!handleMult(r);
 			auto cond=dIvr(DIvr.Type.eqZ,owZNoDeltas).simplify(facts);
-			if(cond !is zero) res~=Case!ExpLim(cond,ExpLim(m,zero));
+			if(cond != zero) res~=Case!ExpLim(cond,ExpLim(m,zero));
 			return res;
 		}
 		if(auto p=cast(DPow)x){
@@ -170,22 +170,22 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 				l0=l0.simplify(facts);
 				l1=l1.simplify(facts);
 				if(l0.isInfinite()&&l1.isInfinite()){
-					if(l1 is -dInf||l0 is -dInf) return null;
+					if(l1 == -dInf||l0 == -dInf) return null;
 					return dInf;
 				}
 				if(l0.hasLimits()||l1.hasLimits()) return null;
-				if(l0 is dE && l1 is -dInf) return zero;
-				if(l1 is dInf||l1 is -dInf){
-					/+if(dIvr(DIvr.Type.leZ,l0).simplify(facts) is zero){ // TODO
-						if(l0 is dE||dIvr(DIvr.Type.leZ,l0-one).simplify(facts) is zero)
-							return l1 is dInf?dInf:zero;
-						if(dIvr(DIvr.Type.leZ,one-l0).simplify(facts) is zero)
-							return l1 is dInf?zero:dInf;
+				if(l0 == dE && l1 == -dInf) return zero;
+				if(l1 == dInf||l1 == -dInf){
+					/+if(dIvr(DIvr.Type.leZ,l0).simplify(facts) == zero){ // TODO
+						if(l0 == dE||dIvr(DIvr.Type.leZ,l0-one).simplify(facts) == zero)
+							return l1 ==x dInf?dInf:zero;
+						if(dIvr(DIvr.Type.leZ,one-l0).simplify(facts) == zero)
+							return l1 == dInf?zero:dInf;
 					}+/
 					return null;
 				}
-				if(l0 is -dInf){
-					if(dIvr(DIvr.Type.leZ,-l1).simplify(facts) is zero)
+				if(l0 == -dInf){
+					if(dIvr(DIvr.Type.leZ,-l1).simplify(facts) == zero)
 						return zero;
 					if(auto c=l1.isInteger()){
 						assert(c.c>=0 && c.c.den==1);
@@ -195,15 +195,15 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 					return null;
 				}
 				if(l0 is dInf){
-					if(dIvr(DIvr.Type.leZ,l1).simplify(facts) is zero)
+					if(dIvr(DIvr.Type.leZ,l1).simplify(facts) == zero)
 						return dInf;
-					if(dIvr(DIvr.Type.leZ,-l1).simplify(facts) is zero)
+					if(dIvr(DIvr.Type.leZ,-l1).simplify(facts) == zero)
 						return zero;
 					return null;
 				}
 				// pow is discontinuous at (0,0).
 				auto bad=(dIvr(DIvr.Type.eqZ,l0)*dIvr(DIvr.Type.eqZ,l1)).simplify(facts);
-				if(bad !is zero) return null; // TODO!
+				if(bad != zero) return null; // TODO!
 				return l0^^l1;
 			}
 			auto l0=doIt(v,e,p.operands[0]);
@@ -219,8 +219,8 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 			DExpr handleGaussInt(DExpr l){
 				if(!l) return null;
 				if(l.hasLimits()) return null;
-				if(l is -dInf) return zero;
-				if(l is dInf) return dΠ^^(one/2);
+				if(l == -dInf) return zero;
+				if(l == dInf) return dΠ^^(one/2);
 				return dGaussInt(l);
 			}
 			auto l=doIt(v,e,g.x);

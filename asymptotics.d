@@ -22,8 +22,8 @@ bool growsFasterThanNormalized(DVar v,DExpr e1,DExpr e2){
 		y2=p2.operands[1];
 	}
 	// dw(x1," ",x2," :: ",y1," ",y2);
-	if(x1 is v && y1 is v){
-		if(dIvr(DIvr.Type.leZ,x2-y2).simplify(one) is zero)
+	if(x1 == v && y1 == v){
+		if(dIvr(DIvr.Type.leZ,x2-y2).simplify(one) == zero)
 			return true;
 	}
 	// TODO: more cases
@@ -39,7 +39,7 @@ DExpr asymptoticNormalize(DVar v,DExpr e){
 		DExprSet toRemove;
 		foreach(s;summands)
 			foreach(t;summands)
-				if(s !is t && growsFasterThan(v,s,t))
+				if(s != t && growsFasterThan(v,s,t))
 					toRemove.insert(t);
 		foreach(x;toRemove) summands.remove(x);
 		return dPlus(summands);

@@ -60,7 +60,7 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 		final switch(opt.backend==InferenceMethod.simulate?OutputForm.raw:opt.outputForm){
 			case OutputForm.default_:
 				writeln(opt.formatting==Format.mathematica?"E[":"𝔼[",var.toString(opt.formatting),dist.error!=zero?(opt.formatting==Format.mathematica?"|!error":"|¬error"):"","] = ",expectation.toString(opt.formatting));
-				if(dist.error !is zero) writeln("Pr[error] = ",dist.error.toString(opt.formatting));
+				if(dist.error != zero) writeln("Pr[error] = ",dist.error.toString(opt.formatting));
 				break;
 			case OutputForm.raw:
 				if(opt.backend==InferenceMethod.simulate && dist.error==one){

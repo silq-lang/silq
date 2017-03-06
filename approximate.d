@@ -186,7 +186,7 @@ DExpr approxSqrt(DExpr e){
 }
 
 DExpr approximate(DExpr e){
-	static DExpr doIt(DExpr e, bool necessary)out(r){ assert(e !is r,text(e));}body{
+	static DExpr doIt(DExpr e, bool necessary)out(r){ assert(e!=r,text(e));}body{
 		if(auto p=cast(DPlus)e){
 			DExprSet summands=p.operands.dup;
 			foreach(s;p.operands){
@@ -232,11 +232,11 @@ DExpr approximate(DExpr e){
 			}
 			if(auto p=cast(DPow)e){
 				if(!cast(Dℚ)e){
-					if(p.operands[1] is mone){
+					if(p.operands[1] == mone){
 						return approxInvX(p.operands[0]);
-					}else if(p.operands[1] is -(one/2)){
+					}else if(p.operands[1] == -(one/2)){
 						return approxInvSqrt(p.operands[0]);
-					}else if(p.operands[1] is one/2){
+					}else if(p.operands[1] == one/2){
 						return approxSqrt(p.operands[0]);
 					}
 					if(auto k=doIt(p.operands[0],necessary))

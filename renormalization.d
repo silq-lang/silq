@@ -12,7 +12,7 @@ DExpr expandEqIvrs(DExpr e){
 		foreach(s;p.summands){
 			auto t=expandEqIvrs(s);
 			DPlus.insert(summands,t);
-			change|=s !is t;
+			change|=s != t;
 		}
 		if(!change) return e;
 		return dPlus(summands).simplify(one);
@@ -23,7 +23,7 @@ DExpr expandEqIvrs(DExpr e){
 		foreach(f;m.factors){
 			auto g=expandEqIvrs(f);
 			DMult.insert(factors,g);
-			change|=f !is g;
+			change|=f != g;
 		}
 		if(change) e=dMult(factors).simplify(one);
 		foreach(f;e.factors){

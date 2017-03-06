@@ -60,7 +60,7 @@ struct Dist{
 	void add(DExpr k,DExpr v){
 		if(k in state) state[k]=(state[k]+v).simplify(one);
 		else state[k]=v;
-		if(state[k] is zero) state.remove(k);
+		if(state[k] == zero) state.remove(k);
 	}
 	void opOpAssign(string op:"+")(Dist r){
 		foreach(k,v;r.state)
@@ -130,8 +130,8 @@ struct Dist{
 		r.copyNonState(this);
 		foreach(k,v;state){
 			auto cond=dApply(lambda,k).simplify(one);
-			if(cond is one || cond is zero){
-				if(cond is zero){
+			if(cond == one || cond == zero){
+				if(cond == zero){
 					r.error = (r.error + v).simplify(one);
 				}else{
 					r.add(k,v);
@@ -153,8 +153,8 @@ struct Dist{
 		r.copyNonState(this);
 		foreach(k,v;state){
 			auto cond=dApply(lambda,k).simplify(one);
-			if(cond is one || cond is zero){
-				if(cond is one) r.add(k,v);
+			if(cond == one || cond == zero){
+				if(cond == one) r.add(k,v);
 			}else{
 				r.add(k,(v*cond).simplify(one));
 			}
@@ -244,7 +244,7 @@ struct Dist{
 		}else if(auto idx=cast(DIndex)lhs){
 			assignTo(idx.e,dIUpdate(idx.e,idx.i,rhs));
 		}else if(auto fe=cast(DField)lhs){
-			if(fe.e is db1){
+			if(fe.e == db1){
 				assignTo(dVar(fe.f),rhs);
 				return;
 			}
@@ -270,7 +270,7 @@ struct Dist{
 			foreach(i,prm;fun.params){
 				updates=dRUpdate(updates,prm.getName,inFrame(arg[i.dℚ]));
 			}
-			if(updates !is db1) ncur=ncur.map(dLambda(updates));
+			if(updates != db1) ncur=ncur.map(dLambda(updates));
 		}else{
 			assert(fun.params.length==1);
 			ncur=ncur.map(dLambda(dRUpdate(db1,fun.params[0].getName,inFrame(arg))));
@@ -438,8 +438,8 @@ struct Dist{
 		foreach(k,v;state){
 			cur=(cur+v).simplify(one);
 			auto r=dIvr(DIvr.Type.leZ,dFloat(f)-cur).simplify(one);
-			assert(r is zero || r is one);
-			if(r is one){
+			assert(r == zero || r == one);
+			if(r == one){
 				error = zero;
 				state.clear();
 				state[k]=one;
@@ -447,7 +447,7 @@ struct Dist{
 			}
 		}
 		cur = (cur+error).simplify(one);
-		assert(cur is one);
+		assert(cur == one);
 		state.clear();
 		error = one;
 	}
@@ -801,7 +801,7 @@ struct Interpreter{
 									foreach(s;e.summands){
 										foreach(f;s.factors){
 											if(auto dd=cast(DDiscDelta)f){
-												assert(dd.var is tmp);
+												assert(dd.var == tmp);
 												smpl.add(dRecord(["`value":retVars.length==1?dd.e[0.dℚ].simplify(one):dd.e]),(factor*s.withoutFactor(f)).substitute(tmp,dd.e).simplify(one));
 											}else if(auto sm=cast(DPlus)f){
 												gather(sm,factor*s.withoutFactor(f));

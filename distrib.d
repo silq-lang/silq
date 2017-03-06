@@ -224,7 +224,7 @@ class Distribution{
 		auto bdist = b.distribution.substituteAll(cast(DVar[])b.orderedFreeVars,cast(DExpr[])orderedFreeVars);
 		r.distribution=r.distribution+bdist;
 		r.error=r.error+b.error;
-		assert(r.q is b.q && r.nargs is b.nargs);
+		assert(r.q == b.q && r.nargs == b.nargs);
 		return r;
 	}
 	
@@ -233,8 +233,8 @@ class Distribution{
 		auto d1=distribution;
 		auto d2=b.distribution;
 		// TODO: this should be unnecessary with dead variable analysis
-		foreach(x;this.freeVars) if(x !in orig.freeVars){ assert(d1 is zero || d1.hasFreeVar(x)); d1=dIntSmp(x,d1,one); }
-		foreach(x;b.freeVars) if(x !in orig.freeVars){ assert(d2 is zero || d2.hasFreeVar(x)); d2=dIntSmp(x,d2,one); }
+		foreach(x;this.freeVars) if(x !in orig.freeVars){ assert(d1 == zero || d1.hasFreeVar(x)); d1=dIntSmp(x,d1,one); }
+		foreach(x;b.freeVars) if(x !in orig.freeVars){ assert(d2 == zero || d2.hasFreeVar(x)); d2=dIntSmp(x,d2,one); }
 		//// /// // /
 		r.vbl=orig.vbl;
 		r.freeVars=orig.freeVars;
@@ -243,9 +243,9 @@ class Distribution{
 		r.error=orig.error;
 		r.q=q;
 		r.nargs=nargs;
-		assert(q is b.q && nargs is b.nargs);
+		assert(q == b.q && nargs == b.nargs);
 		assert(!freeVarsOrdered && !b.freeVarsOrdered);
-		if(error !is zero || b.error !is zero)
+		if(error != zero || b.error != zero)
 			r.error=(orig.error+error+b.error).simplify(one);
 		return r;
 	}
@@ -272,10 +272,10 @@ class Distribution{
 		DExpr tdist=fun;
 		foreach(v;vars) tdist=dIntSmp(v,tdist,one);
 		DExpr doIt(DExpr e){
-			auto h=e.getHoles!(x=>x is tdist?x:null);
+			auto h=e.getHoles!(x=>x == tdist?x:null);
 			e=h.expr;
 			foreach(hole;h.holes){
-				assert(hole.expr is tdist);
+				assert(hole.expr == tdist);
 				e=e.substitute(hole.var,one);
 			}
 			return e;
@@ -457,7 +457,7 @@ class Distribution{
 		foreach(v;vars) r~=(formatting==Format.mathematica?v.toString(formatting)~"_":v.toString(formatting))~",";
 		if(vars.length) r=r[0..$-1];
 		r~=middle~distribution.toString(formatting);
-		if(error !is zero) r~="\n"~errstr~error.toString(formatting);
+		if(error != zero) r~="\n"~errstr~error.toString(formatting);
 		return r;
 	}
 }
