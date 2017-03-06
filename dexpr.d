@@ -760,12 +760,15 @@ class DPlus: DCommutAssocOp{
 	}
 	static void insertAndSimplify(ref DExprSet summands,DExpr summand,DExpr facts){
 		// swCount++;sw.start(); scope(exit) sw.stop();
-		summand=summand.simplify(facts);
-		if(auto dp=cast(DPlus)summand){
-			foreach(s;dp.summands)
-				insertAndSimplify(summands,s,facts);
-			return;
+		foreach(i;0..2){
+			if(auto dp=cast(DPlus)summand){
+				foreach(s;dp.summands)
+					insertAndSimplify(summands,s,facts);
+				return;
+			}
+			if(!i) summand=summand.simplify(facts);
 		}
+
 		if(auto p=cast(DPow)summand){
 			if(cast(DPlus)p.operands[0]){
 				auto expanded=expandPow(p);
@@ -975,12 +978,23 @@ class DMult: DCommutAssocOp{
 			factors.insert(factor);
 		}
 	}
+	static int[typeof(typeid(DExpr))] freq;
+	static ~this(){
+		Q!(typeof(typeid(DExpr)),int)[] fr;
+		foreach(k,v;freq) fr~=q(k,v);
+		sort!"a[1]>b[1]"(fr);
+		foreach(x;fr){
+			writeln(x[1]," ",x[0]);
+		}
+	}
 	static void insertAndSimplify(ref DExprSet factors,DExpr factor,DExpr facts)in{assert(factor&&facts);}body{
-		factor=factor.simplify(facts);
-		if(auto dm=cast(DMult)factor){
-			foreach(f;dm.factors)
-				insertAndSimplify(factors,f,facts);
-			return;
+		foreach(i;0..2){
+			if(auto dm=cast(DMult)factor){
+				foreach(f;dm.factors)
+					insertAndSimplify(factors,f,facts);
+				return;
+			}
+			if(!i) factor=factor.simplify(facts);
 		}
 		// TODO: use suitable data structures
 		static MapX!(Q!(DExpr,DExpr,DExpr),DExpr) combineMemo;

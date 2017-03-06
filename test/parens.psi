@@ -2,7 +2,7 @@
 // TODO: make fast
 
 def main(){
-    N := 6;
+    N := 4;//6;
     x := array(N,0);
     for i in [0..N){
         x[i] = flip(1/2);
@@ -18,7 +18,7 @@ def main(){
         }
     }
     if cur != 0 { ok = 0; }
-    return ok; // expected: 59·δ[-ok]·⅟64+5·δ[-ok+1]·⅟64
+    return ok; // expected: 5/64·δ[-ok+1]+59/64·δ[ok]
     /+observe(ok);
     return x[1]; // expected: 2·δ[-r₁+1]·⅟5+3·δ[-r₁]·⅟5+/
 }
