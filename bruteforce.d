@@ -520,7 +520,7 @@ class DBFDist: DExpr{
 	mixin Visitors;
 }
 DBFDist dBFDist(Dist dist)in{assert(!dist.tmpVars.length);}body{
-	MapX!(TupleX!(MapX!(DExpr,DExpr),DExpr),DBFDist) uniq;
+	static MapX!(TupleX!(MapX!(DExpr,DExpr),DExpr),DBFDist) uniq;
 	auto t=tuplex(dist.state,dist.error);
 	if(t in uniq) return uniq[t];
 	auto r=new DBFDist(dist);

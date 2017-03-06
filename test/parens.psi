@@ -2,7 +2,7 @@
 // TODO: make fast
 
 def main(){
-    N := 4;//6;
+    N := 6;
     x := array(N,0);
     for i in [0..N){
         x[i] = flip(1/2);
