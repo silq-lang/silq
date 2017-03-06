@@ -978,15 +978,6 @@ class DMult: DCommutAssocOp{
 			factors.insert(factor);
 		}
 	}
-	static int[typeof(typeid(DExpr))] freq;
-	static ~this(){
-		Q!(typeof(typeid(DExpr)),int)[] fr;
-		foreach(k,v;freq) fr~=q(k,v);
-		sort!"a[1]>b[1]"(fr);
-		foreach(x;fr){
-			writeln(x[1]," ",x[0]);
-		}
-	}
 	static void insertAndSimplify(ref DExprSet factors,DExpr factor,DExpr facts)in{assert(factor&&facts);}body{
 		foreach(i;0..2){
 			if(auto dm=cast(DMult)factor){
