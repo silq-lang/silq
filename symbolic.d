@@ -641,7 +641,6 @@ private struct Analyzer{
 				auto othw=aothw.transformExp(ite.othw);
 				if(!othw) unwind();
 				aothw.dist.assign(var,othw,ite.othw.s[0].type);
-				athen.dist.simplify(), aothw.dist.simplify();
 				dist=athen.dist.join(dist,aothw.dist);
 				foreach(k,v;deterministic){
 					if(k in athen.deterministic && k in aothw.deterministic
@@ -747,7 +746,6 @@ private struct Analyzer{
 		auto tmp=ndist.getVar("tmp");
 		ndist.initialize(tmp,e,ℝ);
 		foreach(v;dist.freeVars) ndist.marginalize(v);
-		ndist.simplify();
 		foreach(f;ndist.distribution.factors)
 			if(!cast(DDelta)f&&!cast(Dℚ)f)
 				return null;
@@ -1172,7 +1170,6 @@ private struct Analyzer{
 				dist.marginalize(w);
 			}
 			dist.orderFreeVars(orderedVars,isTuple);
-			dist.simplify();
 			if(!retDist) retDist=dist;
 			else retDist=dist.orderedJoin(retDist);
 			dist=odist;
