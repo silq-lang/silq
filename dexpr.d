@@ -25,13 +25,13 @@ struct RecursiveStopWatch{
 	auto peek(){ return sw.peek(); }
 }
 
-RecursiveStopWatch sw;
+/+RecursiveStopWatch sw;
 int swCount=0;
 static ~this(){
 	writeln("time: ",sw.peek().to!("seconds",double));
 	writeln("freq: ",swCount);
 }
-enum measure="swCount++;sw.start();scope(exit)sw.stop();";
+enum measure="swCount++;sw.start();scope(exit)sw.stop();";+/
 
 //version=DISABLE_INTEGRATION;
 
