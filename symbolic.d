@@ -111,17 +111,14 @@ private struct Analyzer{
 		DExpr buildContextFor()(Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{ // template, forward references 'doIt'
 			if(auto ctx=getContextFor(meaning,sc)) return ctx;
 			DExpr[string] record;
-			foreach(vd;&sc.all!VarDecl)
-				if(auto var=readVariable(vd,sc))
-					record[vd.getName]=var;
 			auto msc=meaning.scope_;
 			if(auto fd=cast(FunctionDef)meaning)
 				msc=fd.realScope;
 			for(auto csc=msc;;csc=(cast(NestedScope)csc).parent){
-				if(auto fsc=cast(FunctionScope)csc)
-					foreach(p;fsc.getFunction().params)
-						record[p.getName]=dVar(p.getName);
 				if(!cast(NestedScope)csc) break;
+				foreach(vd;&csc.all!VarDecl)
+					if(auto var=readVariable(vd,sc))
+						record[vd.getName]=var;
 				if(!cast(NestedScope)(cast(NestedScope)csc).parent) break;
 				if(auto dsc=cast(DataScope)csc){
 					auto name=dsc.decl.contextName;
@@ -1184,7 +1181,8 @@ private struct Analyzer{
 				}
 				if(!expected.exists){
 					expected=Expected(true,todo,ex);
-				}else err.error("can only have one 'expected' annotation, in 'main'.",re.loc);
+				}else if(expected != Expected(true,todo,ex))
+					err.error("can only have one 'expected' annotation, in 'main'.",re.loc);
 			}
 		}else if(auto ae=cast(AssertExp)e){
 			if(auto c=transformConstr(ae.e))

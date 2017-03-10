@@ -561,17 +561,17 @@ DExpr getContextFor(Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{
 DExpr buildContextFor(Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{
 	if(auto ctx=getContextFor(meaning,sc)) return ctx;
 	DExpr[string] record;
-	foreach(vd;&sc.all!VarDecl)
-		if(auto var=readVariable(vd,sc))
-			record[vd.getName]=var;
 	auto msc=meaning.scope_;
 	if(auto fd=cast(FunctionDef)meaning)
 		msc=fd.realScope;
 	for(auto csc=msc;;csc=(cast(NestedScope)csc).parent){
+		if(!cast(NestedScope)csc) break;
+		foreach(vd;&csc.all!VarDecl)
+			if(auto var=readVariable(vd,sc))
+				record[vd.getName]=var;
 		if(auto fsc=cast(FunctionScope)csc)
 			foreach(p;fsc.getFunction().params)
 				record[p.getName]=dField(db1,p.getName);
-		if(!cast(NestedScope)csc) break;
 		if(!cast(NestedScope)(cast(NestedScope)csc).parent) break;
 		if(auto dsc=cast(DataScope)csc){
 			auto name=dsc.decl.contextName;
