@@ -25,13 +25,13 @@ struct RecursiveStopWatch{
 	auto peek(){ return sw.peek(); }
 }
 
-/+RecursiveStopWatch sw;
+RecursiveStopWatch sw;
 int swCount=0;
 static ~this(){
 	writeln("time: ",sw.peek().to!("seconds",double));
 	writeln("freq: ",swCount);
 }
-enum measure="swCount++;sw.start();scope(exit)sw.stop();";+/
+enum measure="swCount++;sw.start();scope(exit)sw.stop();";
 
 //version=DISABLE_INTEGRATION;
 
@@ -76,8 +76,33 @@ abstract class DExpr{
 
 	abstract DExpr simplifyImpl(DExpr facts);
 
+	/+static RecursiveStopWatch[DExpr] simplificationTimer;
+	static ~this(){
+		Q!(double,DExpr)[] x;
+		foreach(k,v;simplificationTimer) x~=q(v.peek().to!("seconds",double),k);
+		sort!"a[0]>b[0]"(x);
+		double tot=0;
+		foreach(k;x){
+			writeln(k[1],": ",k[0]);
+			writeln(k[1].simplify(one));
+			writeln();
+			writeln();
+			// if(k[0]<0.01) break;
+			tot+=k[0];
+		}
+		writeln("tot: ",tot);
+	}+/
+	
 	static MapX!(Q!(DExpr,DExpr),DExpr) simplifyMemo;
 	final DExpr simplify(string file=__FILE__,int line=__LINE__)(DExpr facts){
+		/+static int nested=0;nested++; scope(exit) nested--;
+		if(nested==1){
+			if(this !in simplificationTimer){
+				simplificationTimer[this]=RecursiveStopWatch();
+			}
+			simplificationTimer[this].start();
+		}
+		scope(exit) if(nested==1) simplificationTimer[this].stop();+/
 		assert(!cast(DPlus)facts,text(facts));
 		if(q(this,facts) in simplifyMemo) return simplifyMemo[q(this,facts)];
 		if(facts==zero) return zero;
@@ -957,9 +982,9 @@ class DMult: DCommutAssocOp{
 		auto frac=this.getFractionalFactor();
 		if(frac.c<0){
 			if(formatting==Format.maple){
-				return "(-"~(-this).simplify(one).toStringImpl(formatting,Precedence.uminus,binders)~")";
+				return "(-"~(dℚ(-frac.c)*this.withoutFactor(frac)).toStringImpl(formatting,Precedence.uminus,binders)~")";
 			}else{
-				return addp(prec,"-"~(-this).simplify(one).toStringImpl(formatting,Precedence.uminus,binders),Precedence.uminus);
+				return addp(prec,"-"~(dℚ(-frac.c)*this.withoutFactor(frac)).toStringImpl(formatting,Precedence.uminus,binders),Precedence.uminus);
 			}
 		}
 		//if(frac[0]!=1&&frac[1]!=1) // TODO
@@ -1199,7 +1224,7 @@ class DMult: DCommutAssocOp{
 	}
 
 	override DExpr simplifyImpl(DExpr facts){
-		// TODO: this is a mayor bottleneck!
+		// TODO: this is a major bottleneck!
 		auto ne=basicSimplify();
 		if(ne != this) return ne.simplify(facts);
 		assert(!cast(DPlus)facts,text(facts));

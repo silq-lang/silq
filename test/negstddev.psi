@@ -1,6 +1,6 @@
 def main(){
     x := gauss(0,1);
     y := gauss(0,x);
-    return y; // expected: (∫dξ₁[-ξ₁≤0]·[ξ₁≠0]·e^(-y²·⅟2·⅟ξ₁+-ξ₁²·⅟2)·⅟√ξ̅₁̅)·⅟2·⅟π
+    return y; // expected: (∫dξ₁[-ξ₁≤0]·[ξ₁≠0]·e^(-y²·⅟ξ₁·⅟2+-ξ₁²·⅟2)·⅟√ξ̅₁̅)·⅟2·⅟π
     // TODO: better simplification (?)
 }
