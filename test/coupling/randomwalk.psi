@@ -1,0 +1,43 @@
+// skipped
+
+def randomWalk(s,T){
+	x := s, ι := 0;
+	// l := [];
+	while ι < T {
+		r := [-1,1][flip(1/2)];
+		x = x + r;
+		// l = [r] ~ l;
+		ι = ι + 1;
+		assert(ι);
+	}
+	return x;	
+}
+
+def main(){
+	k := 2;
+	l := 0, r:=20;
+	tvs := array(r,0);
+	for i in [l..r){
+		a := infer(()=>randomWalk(k,i));
+		b := infer(()=>randomWalk(-k,i));
+		tvs[i] = TV(a,b);
+	}
+	/*for i in [l..r){
+		if(i) { assert(tvs[i]<=k*exp(1)/π*(2/i)^(1/2)); } // TODO: fix segfault.
+	}*/
+	return (tvs[0],tvs[1],tvs[2],tvs[3],tvs[4],tvs[5],tvs[6],tvs[7],tvs[8],tvs[9],tvs[10],tvs[11],tvs[12],tvs[13],tvs[14],tvs[15],tvs[16],tvs[17],tvs[18],tvs[19]);
+}
+
+
+def TV(a: Distribution[ℝ], b: Distribution[ℝ]){
+	def TVImpl(a: Distribution[ℝ], b: Distribution[ℝ]){
+		return infer((){
+			x := a.sample();
+			p₁ := infer(()=>a.sample()==x).expectation();
+			p₂ := infer(()=>b.sample()==x).expectation();
+			if !p₂ { return 1; }
+			return abs(p₁-p₂)/(2*p₁);
+		}).expectation();
+	}
+	return (TVImpl(a,b)+TVImpl(b,a))/2;
+}
