@@ -69,7 +69,17 @@ AggregateTy isDataTyId(Expression e){
 Expression presemantic(Declaration expr,Scope sc){
 	bool success=true; // dummy
 	if(!expr.scope_) makeDeclaration(expr,success,sc);
-	static void declareParameters(Declaration parent,bool isSquare,Parameter[] params, Scope sc){
+	static VarDecl addVar(string name,Expression ty,Location loc,Scope sc){
+		auto id=new Identifier(name);
+		id.loc=loc;
+		auto var=new VarDecl(id);
+		var.loc=loc;
+		var.vtype=ty;
+		var=varDeclSemantic(var,sc);
+		assert(!!var && var.sstate==SemState.completed);
+		return var;
+	}
+	static void declareParameters(Declaration parent,bool isSquare,Parameter[] params,Scope sc){
 		foreach(ref p;params){
 			if(!p.dtype){ // ℝ is the default parameter type for () and * is the default parameter type for []
 				p.dtype=New!Identifier(isSquare?"*":"ℝ");
@@ -80,16 +90,6 @@ Expression presemantic(Declaration expr,Scope sc){
 			propErr(p,parent);
 		}		
 	}
-	VarDecl createContext(string name,Expression ty,Location loc,Scope sc){
-		auto id=new Identifier(name);
-		id.loc=loc;
-		auto context=new VarDecl(id);
-		context.loc=loc;
-		context.vtype=ty;
-		context=varDeclSemantic(context,sc);
-		assert(!!context && context.sstate==SemState.completed);
-		return context;
-	}
 	if(auto dat=cast(DatDecl)expr){
 		if(dat.dtype) return expr;
 		auto dsc=new DataScope(sc,dat);
@@ -98,7 +98,7 @@ Expression presemantic(Declaration expr,Scope sc){
 		dat.dtype=new AggregateTy(dat);
 		if(dat.hasParams) declareParameters(dat,true,dat.params,dsc);
 		if(!dat.body_.ascope_) dat.body_.ascope_=new AggregateScope(dat.dscope_);
-		if(cast(NestedScope)sc) dat.context = createContext("`outer",contextTy(),dat.loc,dsc);
+		if(cast(NestedScope)sc) dat.context = addVar("`outer",contextTy(),dat.loc,dsc);
 		foreach(ref exp;dat.body_.s) exp=makeDeclaration(exp,success,dat.body_.ascope_);
 		foreach(ref exp;dat.body_.s) if(auto decl=cast(Declaration)exp) exp=presemantic(decl,dat.body_.ascope_);
 	}
@@ -107,6 +107,8 @@ Expression presemantic(Declaration expr,Scope sc){
 		auto fsc=new FunctionScope(sc,fd);
 		fd.type=unit;
 		fd.fscope_=fsc;
+		assert(!fd.body_.blscope_);
+		fd.body_.blscope_=new BlockScope(fsc);
 		if(auto dsc=isInDataScope(sc)){
 			auto id=new Identifier(dsc.decl.name.name);
 			id.loc=dsc.decl.loc;
@@ -128,7 +130,8 @@ Expression presemantic(Declaration expr,Scope sc){
 				assert(ctxty.type == typeTy);
 			}
 			if(dsc.decl.name.name==fd.name.name){
-				auto thisVar=createContext("this",ctxty,fd.loc,fsc);
+				assert(!!fd.body_.blscope_);
+				auto thisVar=addVar("this",ctxty,fd.loc,fd.body_.blscope_); // the 'this' variable
 				fd.isConstructor=true;
 				if(fd.rret){
 					sc.error("constructor cannot have return type annotation",fd.loc);
@@ -137,9 +140,9 @@ Expression presemantic(Declaration expr,Scope sc){
 					assert(dsc.decl.dtype);
 					fd.ret=ctxty;
 				}
-				auto thisid=new Identifier("this");
+				auto thisid=new Identifier(thisVar.getName);
 				thisid.loc=fd.loc;
-				thisid.scope_=fd.fscope_;
+				thisid.scope_=fd.body_.blscope_;
 				thisid.meaning=thisVar;
 				thisid.type=ctxty;
 				thisid.sstate=SemState.completed;
@@ -147,13 +150,24 @@ Expression presemantic(Declaration expr,Scope sc){
 				rete.loc=thisid.loc;
 				rete.sstate=SemState.completed;
 				fd.body_.s~=rete;
-				if(dsc.decl.context) fd.context=dsc.decl.context; // TODO: ok?
-			}else fd.context=createContext("this",ctxty,fd.loc,fsc);
+				if(dsc.decl.context){
+					fd.context=dsc.decl.context; // TODO: ok?
+					fd.contextVal=dsc.decl.context; // TODO: ok?
+				}
+				fd.thisVar=thisVar;
+			}else{
+				fd.contextVal=addVar("this",unit,fd.loc,fsc); // the 'this' value
+				assert(!!fd.body_.blscope_);
+				fd.context=addVar("this",ctxty,fd.loc,fd.body_.blscope_);
+			}
 			assert(dsc.decl.dtype);
 		}else if(auto nsc=cast(NestedScope)sc){
-			fd.context=createContext("`outer",contextTy(),fd.loc,fsc); // TODO: replace contextTy by suitable record type; make name 'outer' available
+			fd.contextVal=addVar("`outer",contextTy(),fd.loc,fsc); // TODO: replace contextTy by suitable record type; make name 'outer' available
+			fd.context=fd.contextVal;
 		}
-		declareParameters(fd,fd.isSquare,fd.params,fsc);
+		fd.paramVals = fd.params.map!(p=>addVar(p.name.name,unit,p.loc,fsc)).array; // parameter values
+		assert(!!fd.body_.blscope_);
+		declareParameters(fd,fd.isSquare,fd.params,fd.body_.blscope_); // parameter variables
 		if(fd.rret){
 			string[] pn;
 			Expression[] pty;
@@ -573,10 +587,9 @@ Expression statementSemantic(Expression e,Scope sc){
 }
 
 CompoundExp compoundExpSemantic(CompoundExp ce,Scope sc){
-	auto blsc=new BlockScope(sc);
-	ce.blscope_=blsc;
+	if(!ce.blscope_) ce.blscope_=new BlockScope(sc);
 	foreach(ref e;ce.s){
-		e=statementSemantic(e,blsc);
+		e=statementSemantic(e,ce.blscope_);
 		propErr(e,ce);
 	}
 	ce.type=unit;

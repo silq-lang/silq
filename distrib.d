@@ -187,6 +187,53 @@ class Distribution{
 	DExpr distribution;
 	DExpr error;
 
+
+	bool hasArgs=false;
+	DNVar[] args;
+	bool argsIsTuple=true;
+	DNVar context;
+	
+	void addArgs(DNVar[] args,bool isTuple,DNVar ctx)in{
+		assert(!hasArgs);
+		assert(!context);
+		assert(isTuple||args.length==1);
+		foreach(v;args) assert(v in freeVars);
+		assert(!ctx||ctx in freeVars);
+	}body{
+		hasArgs=true;
+		this.args=args;
+		argsIsTuple=isTuple;
+		context=ctx;
+		foreach(v;args) freeVars.remove(v);
+		if(context) freeVars.remove(context);
+	}
+	void addArgs(size_t nargs,bool isTuple,DNVar ctx){
+		DNVar[] args=[];
+		foreach(i;0..nargs) args~=getVar("__a");
+		addArgs(args,isTuple,ctx);
+	}
+
+	bool hasArg(DNVar v){
+		 // TODO: use more efficient search?
+		return args.canFind(v) || context&&v==context;
+	}
+	
+	bool freeVarsOrdered=false;
+	DNVar[] orderedFreeVars;
+	bool isTuple=true;
+	void orderFreeVars(DNVar[] orderedFreeVars,bool isTuple)in{
+		assert(!freeVarsOrdered);
+	   /+assert(orderedFreeVars.length==freeVars.length);
+		foreach(v;orderedFreeVars)
+			assert(v in freeVars);
+		// TODO: this does not check that variables occur at most once in orderedFreeVars
+		assert(isTuple||orderedFreeVars.length==1);+/
+	}body{
+		freeVarsOrdered=true;
+		this.orderedFreeVars=orderedFreeVars;
+		this.isTuple=isTuple;
+	}
+	
 	SetX!DNVar tmpVars;
 	void marginalizeTemporaries(){
 		foreach(v;tmpVars.dup) marginalize(v);
@@ -205,9 +252,11 @@ class Distribution{
 		r.freeVars=freeVars.dup();
 		r.distribution=distribution;
 		r.error=error;
-		r.q=q;
-		r.nargs=nargs;
 		r.freeVarsOrdered=freeVarsOrdered;
+		r.hasArgs=hasArgs;
+		r.args=args.dup;
+		r.argsIsTuple=argsIsTuple;
+		r.context=context;
 		r.orderedFreeVars=orderedFreeVars.dup;
 		r.isTuple=isTuple;
 		return r;
@@ -224,7 +273,7 @@ class Distribution{
 		auto bdist = b.distribution.substituteAll(cast(DVar[])b.orderedFreeVars,cast(DExpr[])orderedFreeVars);
 		r.distribution=r.distribution+bdist;
 		r.error=r.error+b.error;
-		assert(r.q == b.q && r.nargs == b.nargs);
+		assert(r.args == b.args);
 		return r;
 	}
 	
@@ -241,52 +290,23 @@ class Distribution{
 		r.tmpVars=orig.tmpVars;
 		r.distribution=d1+d2;
 		r.error=orig.error;
-		r.q=q;
-		r.nargs=nargs;
-		assert(q == b.q && nargs == b.nargs);
+		r.hasArgs=orig.hasArgs;
+		r.args=orig.args;
+		r.argsIsTuple=orig.argsIsTuple;
+		r.context=orig.context;
+		r.orderedFreeVars=orig.orderedFreeVars;
+		r.isTuple=isTuple;
+		assert(hasArgs==b.hasArgs && args == b.args);
 		assert(!freeVarsOrdered && !b.freeVarsOrdered);
 		if(error != zero || b.error != zero)
 			r.error=(orig.error+error+b.error).simplify(one);
 		return r;
 	}
-
-	DNVar q;
-	size_t nargs;
-
-	void addArgs(DExpr[] args,bool isTuple,DExpr ctx)in{assert(!q);}body{
-		q=dVar("`q");
-		assert(!!q);
-		nargs=args.length;
-		assert(isTuple||args.length==1);
-		auto arg=isTuple?dTuple(args):args[0];
-		if(ctx){
-			nargs=2;
-			arg=dTuple([arg,ctx]);
-		}
-		distribute(dDistApply(q,arg)); // TODO: constant name sufficient?
-	}
-	
-	void assumeInputNormalized(size_t nParams,bool isTuple){
-		auto vars=iota(0,nParams).map!(x=>dVar("__p"~lowNum(x))).array;
-		auto fun=dDistApply(q,isTuple?dTuple(cast(DExpr[])vars):vars[0]); // TODO: get rid of cast
-		DExpr tdist=fun;
-		foreach(v;vars) tdist=dIntSmp(v,tdist,one);
-		DExpr doIt(DExpr e){
-			auto h=e.getHoles!(x=>x == tdist?x:null);
-			e=h.expr;
-			foreach(hole;h.holes){
-				assert(hole.expr == tdist);
-				e=e.substitute(hole.var,one);
-			}
-			return e;
-		}
-		distribution=doIt(distribution).simplify(one);
-		error=doIt(error).simplify(one);
-	}
 	
 	DNVar declareVar(string name){
 		auto v=dVar(name);
 		if(v in freeVars) return null;
+		if(hasArg(v)) return null;
 		freeVars.insert(v);
 		return v;
 	}
@@ -320,7 +340,9 @@ class Distribution{
 		distribution=distribution*cond;
 	}
 	void distribute(DExpr pdf){ distribution=distribution*pdf; }
-	void initialize(DNVar var,DExpr exp,Expression ty){
+	void initialize(DNVar var,DExpr exp,Expression ty)in{
+		assert(var&&exp&&ty);
+	}body{
 		assert(!distribution.hasFreeVar(var));
 		distribute(dDelta(var,exp,ty));
 	}
@@ -333,7 +355,7 @@ class Distribution{
 		distribute(dDelta(var,exp,ty));
 		marginalize(nvar);
 	}
-	void marginalize(DNVar var)in{assert(var in freeVars); }body{
+	void marginalize(DNVar var)in{assert(var in freeVars,text(var)); }body{
 		//assert(distribution.hasFreeVar(var),text(distribution," ",var));
 		//writeln("marginalizing: ",var,"\ndistribution: ",distribution,"\nmarginalized: ",dInt(var,distribution));
 		distribution=dIntSmp(var,distribution,one);
@@ -346,28 +368,32 @@ class Distribution{
 	}
 	void renormalize(){
 		auto factor=distribution;
-		foreach(v;freeVars)
-			factor=dIntSmp(v,factor,one);
+		foreach(v;freeVars) factor=dIntSmp(v,factor,one);
 		factor=factor+error;
 		distribution=(dIvr(DIvr.Type.neqZ,factor)*(distribution/factor)).simplify(one);
 		error=(dIvr(DIvr.Type.eqZ,factor)+dIvr(DIvr.Type.neqZ,factor)*(error/factor)).simplify(one);
 	}
-	DExpr call(Distribution q,DExpr arg,Expression ty)in{assert(!!q.q);}body{ // TODO: get rid of 'ty'
+	DExpr call(Distribution q,DExpr arg,Expression ty){
 		DExpr rdist=q.distribution;
 		DExpr rerr=q.error;
-		auto context=freeVars.dup;
+		auto vars=freeVars.dup;
+		auto targ=arg;
+		if(q.context) targ=arg[0.dℚ];
+		DExpr[] args;
+		if(q.argsIsTuple) args=iota(0,q.args.length).map!(i=>targ[i.dℚ]).array;
+		else args=[targ];
 		DNVar[] r;
 		foreach(_;q.orderedFreeVars)
 			r~=getTmpVar("__r");
-		rdist=rdist.substituteAll(cast(DVar[])q.orderedFreeVars,cast(DExpr[])r);
-		rerr=rerr.substituteAll(cast(DVar[])q.orderedFreeVars,cast(DExpr[])r);
+		auto allVars=cast(DVar[])q.args~cast(DVar[])q.orderedFreeVars~(q.context?[cast(DVar)q.context]:[]);
+		auto allVals=cast(DExpr[])args~cast(DExpr[])r~(q.context?[arg[1.dℚ]]:[]);
+		rdist=rdist.substituteAll(allVars,allVals);
+		rerr=rerr.substituteAll(allVars,allVals);
 		auto oldDist=distribution;
-		auto db1=dDeBruijnVar(1);
-		auto argDist=dLambda(dDelta(db1,arg.incDeBruijnVar(1,0),ty));
-		distribution = rdist.substitute(q.q,argDist)*oldDist;
-		auto nerror = rerr.substitute(q.q,argDist)*oldDist;
+		distribution = rdist*oldDist;
+		auto nerror = rerr*oldDist;
 		//dw("+--\n",oldDist,"\n",rdist,"\n",distribution,"\n--+");
-		foreach(v;context) nerror=dInt(v,nerror);
+		foreach(v;vars) nerror=dInt(v,nerror);
 		error = error + nerror;
 		return q.isTuple?dTuple(cast(DExpr[])r):r[0];
 	}
@@ -379,50 +405,49 @@ class Distribution{
 		return toString(Format.default_);
 	}
 
-	bool freeVarsOrdered=false;
-	DNVar[] orderedFreeVars;
-	bool isTuple=true;
-	void orderFreeVars(DNVar[] orderedFreeVars,bool isTuple)in{
-		assert(!freeVarsOrdered);
-	   /+assert(orderedFreeVars.length==freeVars.length);
-		foreach(v;orderedFreeVars)
-			assert(v in freeVars);
-		// TODO: this does not check that variables occur at most once in orderedFreeVars
-		assert(isTuple||orderedFreeVars.length==1);+/
-	}body{
-		freeVarsOrdered=true;
-		this.orderedFreeVars=orderedFreeVars;
-		this.isTuple=isTuple;
-	}
-
 	private DExpr toDExprLambdaBody(bool stripContext=false)in{
 		assert(!stripContext||isTuple&&orderedFreeVars.length==2);
 	}body{
-		auto db1=dDeBruijnVar(1);
 		auto vars=orderedFreeVars;
 		assert(isTuple||vars.length==1);
 		auto values=(isTuple&&!stripContext?dTuple(cast(DExpr[])vars):vars[0]).incDeBruijnVar(1,0);
-		auto r=dDiscDelta(db1,dRecord(["tag":one,"val":values]))*distribution.incDeBruijnVar(1,0);
+		auto dist=distribution.incDeBruijnVar(1,0);
+		auto db2=dDeBruijnVar(2);
+		auto allVars=cast(DVar[])args;
+		DExpr[] allVals;
+		if(context){
+			allVars~=context;
+			allVals=iota(0,args.length).map!(i=>argsIsTuple?db2[0.dℚ][i.dℚ]:db2[0.dℚ]).array~db2[1.dℚ];
+		}else{
+			allVals=iota(0,args.length).map!(i=>argsIsTuple?db2[i.dℚ]:db2).array;
+		}
+		dist=dist.substituteAll(allVars,allVals);
+		auto db1=dDeBruijnVar(1);
+		auto r=dist*dDiscDelta(db1,dRecord(["tag":one,"val":values]));
 		foreach(v;vars) r=dInt(v,r);
-		r=r+dDiscDelta(db1,dRecord(["tag":zero]))*error;
-		return dLambda(r).substitute(q,db1);
+		r=r+dDiscDelta(db1,dRecord(["tag":zero]))*error.substituteAll(allVars,allVals);
+		return dLambda(r);
 	}
 	
-	DExpr toDExpr()in{assert(freeVarsOrdered&&q);}body{
+	DExpr toDExpr()in{assert(freeVarsOrdered&&hasArgs);}body{
 		return dLambda(toDExprLambdaBody());
 	}
 
 	DExpr toDExprWithContext(DExpr context,bool stripContext=false)in{
-		assert(freeVarsOrdered&&q&&nargs==2);
+		assert(!!this.context);
+		assert(freeVarsOrdered&&hasArgs);
 	}body{
 		auto db1=dDeBruijnVar(1),db2=dDeBruijnVar(2);
 		auto bdy=toDExprLambdaBody(stripContext);
 		context=context.incDeBruijnVar(1,0);
-		bdy=bdy.substitute(db1,dLambda(dDistApply(db2,db1[0.dℚ])*dDiscDelta(db1[dℚ(1)],context)));
+		bdy=bdy.substitute(db1,dTuple([db1,context]));
 		return dLambda(bdy);
 	}
 	
-	static Distribution fromDExpr(DExpr dexpr,size_t nargs,DNVar[] orderedFreeVars,bool isTuple,Expression[] types){
+	static Distribution fromDExpr(DExpr dexpr,size_t nargs,bool argsIsTuple,DNVar[] orderedFreeVars,bool isTuple,Expression[] types)in{
+		assert(argsIsTuple||nargs==1);
+		assert(isTuple||orderedFreeVars.length==1);
+	}body{
 		auto r=new Distribution();
 		auto db1=dDeBruijnVar(1);
 		dexpr=dexpr.incDeBruijnVar(1,0);
@@ -432,23 +457,32 @@ class Distribution{
 			auto value=isTuple?dIndex(values,dℚ(i)):values;
 			r.initialize(v,value,types[i]);
 		}
-		r.q=dVar("`q");
-		r.nargs=nargs;
-		auto ndist=dDistApply(dApply(dexpr,r.q),db1);
+		r.addArgs(nargs,argsIsTuple,null);
+		auto args=argsIsTuple?dTuple(cast(DExpr[])r.args):r.args[0];
+		auto ndist=dDistApply(dApply(dexpr,args),db1);
 		r.distribution=dInt(r.distribution*dIvr(DIvr.Type.eqZ,dField(db1,"tag")-one)*ndist);
 		r.error=dInt(dIvr(DIvr.Type.eqZ,dField(db1,"tag"))*ndist);
 		r.orderFreeVars(orderedFreeVars,isTuple);
 		return r;
 	}
 
+	string argsToString(Format formatting){
+		if(formatting==Format.mathematica)
+			return args.length?(freeVars.length?", ":"")~args.map!(a=>a.toString(formatting)~"_").join(","):"";
+		return args.length?(freeVars.length?"|":"")~args.map!(a=>a.toString(formatting)).join(","):"";
+	}
+	
 	string toString(Format formatting){
-		auto initial="p(";
-		auto middle=") = ";
-		auto errstr="Pr[error] = ";
+		string initial,middle,errstr;
+		auto astr=argsToString(formatting);
 		if(formatting==Format.mathematica){
 			initial="p[";
-			middle="] := ";
-			errstr="Pr_error := ";
+			middle=text(astr,"] := ");
+			errstr=text("Pr_error[",astr.length?astr[2..$]:"","] := ");
+		}else{
+			initial="p(";
+			middle=text(astr,") = ");
+			errstr=text("Pr[error",astr,"] = ");
 		}
 		string r=initial;
 		DNVar[] vars;

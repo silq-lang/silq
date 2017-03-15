@@ -13,20 +13,29 @@ class Symbolic: Backend{
 	}
 	override Distribution analyze(FunctionDef def,ErrorHandler err){
 		auto dist=new Distribution();
-		DExpr[] args;
-		foreach(a;def.params) args~=dist.declareVar(a.getName);
-		DVar ctx=null;
-		if(def.context) ctx=dist.declareVar(def.contextName);
+		DNVar[] args;
+		assert(def.params.length==def.paramVals.length);
+		foreach(i,a;def.params){
+			args~=dist.declareVar(def.paramVals[i].getName);
+			dist.initialize(dist.declareVar(a.getName),args[i],a.vtype);
+		}
+		DNVar ctx=null;
+		if(def.context){
+			assert(!!def.contextVal,text(def));
+			ctx=dist.declareVar(def.contextVal.getName);
+			if(def.contextName!=ctx.name)
+				dist.initialize(dist.declareVar(def.contextName),ctx,def.context.vtype);
+		}
 		if(def.isConstructor){
-			auto thisVar=dist.declareVar("this");
+			assert(!!def.thisVar);
+			auto thisVar=dist.declareVar(def.thisVar.getName);
 			auto dd=def.scope_.getDatDecl();
 			assert(dd && dd.dtype);
 			DExpr[string] fields;
 			if(def.context) fields[def.contextName]=ctx;
 			dist.initialize(thisVar,dRecord(fields),dd.dtype);
 		}
-		if(!def.name||def.getName!="main"||args.length||def.isNested) // TODO: move this decision to caller
-			dist.addArgs(args,def.isTuple,ctx);
+		dist.addArgs(args,def.isTuple,ctx);
 		return analyzeWith(def,dist,err);
 	}
 
@@ -153,6 +162,8 @@ private struct Analyzer{
 						fdef.scope_=sc;
 						fdef=cast(FunctionDef)presemantic(fdef,sc);
 						assert(!!fdef);
+						fdef=cast(FunctionDef)functionDefSemantic(fdef,sc);
+						assert(!!fdef);
 						bdist=be.analyze(functionDefSemantic(fdef,sc),err);
 						builtIn[id.name]=bdist.toDExpr();
 					}
@@ -236,7 +247,7 @@ private struct Analyzer{
 											assert(!!fety);
 											auto fty=cast(FunTy)fety.dom;
 											assert(!!fty);
-											auto summary=Distribution.fromDExpr(f,1,["`r".dVar],false,[fty.cod]);
+											auto summary=Distribution.fromDExpr(f,1,false,["`r".dVar],false,[fty.cod]);
 											auto db1=dDeBruijnVar(1);
 											auto tmp=rdist.call(summary,x,fty.dom);
 											auto r=rdist.declareVar("`r");
@@ -247,15 +258,13 @@ private struct Analyzer{
 											rdist.orderFreeVars([r],false);
 											rdist.renormalize();
 											auto res=idist.declareVar("`res");
-											idist.initialize(res,dDistApply(rdist.toDExpr(),dLambda(one)),fety.cod);
-											idist.marginalize(f);
+											idist.initialize(res,dDistApply(rdist.toDExpr(),dTuple([])),fety.cod);
 											idist.orderFreeVars([res],false);
 											auto gdist=new Distribution(); // generic argument
 											auto a=gdist.declareVar("`a");
 											gdist.addArgs([a],false,null);
 											auto fun=gdist.declareVar("`fun");
 											gdist.initialize(fun,idist.toDExpr(),faty.cod);
-											gdist.marginalize(a);
 											gdist.orderFreeVars([fun],false);
 											return gdist.toDExpr().simplify(one);
 										case "expectation": // TODO: handle non-convergence
@@ -369,8 +378,6 @@ private struct Analyzer{
 						idist.addArgs([len,init],true,null);
 						auto r=idist.declareVar("`r");
 						idist.initialize(r,dConstArray(len,init),arrayTy(ce.arg));
-						idist.marginalize(init);
-						idist.marginalize(len);
 						idist.orderFreeVars([r],false);
 						return idist.toDExpr();
 					case "readCSV":
@@ -436,9 +443,11 @@ private struct Analyzer{
 					case "dirac":
 						assert(ce.arg.type == typeTy);
 						auto idist=new Distribution();
-						auto x=idist.declareVar("`x");
-						idist.addArgs([x],false,null);
-						idist.orderFreeVars([x],false);
+						auto x_arg=idist.declareVar("`x");
+						idist.addArgs([x_arg],false,null);
+						auto x_res=idist.declareVar("`x'");
+						idist.initialize(x_res,x_arg,ce.arg);
+						idist.orderFreeVars([x_res],false);
 						return idist.toDExpr();
 					case "Dirac":
 						assert(ce.arg.type == typeTy);
@@ -447,18 +456,16 @@ private struct Analyzer{
 						auto darg=idist.declareVar("`arg");
 						idist.addArgs([darg],false,null);
 						idist.distribute(pdf!"dirac"(x,[darg]));
-						idist.marginalize(darg);
 						idist.orderFreeVars([x],false);
 						auto rdist=new Distribution();
 						auto varg=rdist.declareVar("`varg");
 						rdist.addArgs([varg],false,null);
 						auto r=rdist.declareVar("`r");
 						auto db1=dDeBruijnVar(1);
-						auto res=dApply(idist.toDExpr(),dLambda(dDelta(db1,varg,ce.arg.type)));
+						auto res=dApply(idist.toDExpr(),varg);
 						auto fty=cast(FunTy)ce.type;
 						assert(!!fty);
 						rdist.initialize(r,res,fty.cod);
-						rdist.marginalize(varg);
 						rdist.orderFreeVars([r],false);
 						return rdist.toDExpr();
 					case "bernoulli": goto case "flip";
@@ -487,21 +494,21 @@ private struct Analyzer{
 								auto vargs=nargs==1?[cast(DExpr)argv]:iota(nargs).map!(i=>argv[i.dℚ]).array;
 								auto x=idist.declareVar("`x");
 								idist.distribute(pdf!name(x,vargs));
-								idist.marginalize(argv);
 								idist.orderFreeVars([x],false);
 								auto db1=dDeBruijnVar(1);
-								return dApply(idist.toDExpr(),dLambda(dDelta(db1,arg,ce.arg.type)));
+								return dApply(idist.toDExpr(),arg);
 						}
 					}
 					case "Marginal":
 						auto idist=dist.dup();
 						auto r=idist.getVar("`r");
+						idist.hasArgs=false;
 						idist.addArgs([],true,null);
 						idist.initialize(r,arg,ce.arg.type);
 						foreach(v;idist.freeVars)
 							if(v != r) idist.marginalize(v);
 						idist.orderFreeVars([r],false);
-						return dApply(idist.toDExpr(),dLambda(one));
+						return dApply(idist.toDExpr(),dTuple([]));
 					case "FromMarginal":
 						auto tmp=dist.getTmpVar("__mrg");
 						auto ndist=dist.dup();
@@ -551,11 +558,10 @@ private struct Analyzer{
 						auto idist=new Distribution();
 						auto f=idist.declareVar("`f");
 						idist.addArgs([f],false,null);
-						auto fdist=Distribution.fromDExpr(f,0,["`val".dVar],false,[dfty.cod]);
+						auto fdist=Distribution.fromDExpr(f,0,true,["`val".dVar],false,[dfty.cod]);
 						fdist.renormalize();
 						auto r=idist.declareVar("`dist");
-						idist.initialize(r,dApply(fdist.toDExpr(),dLambda(one)),fty.cod);
-						idist.marginalize(f);
+						idist.initialize(r,dApply(fdist.toDExpr(),dTuple([])),fty.cod);
 						idist.orderFreeVars([r],false);
 						return idist.toDExpr();
 					default: break;
@@ -567,10 +573,9 @@ private struct Analyzer{
 				bool isTuple=true;
 				if(auto tplres=cast(TupleTy)funty.cod) resty=tplres.types;
 				else{ resty=[funty.cod]; isTuple=false; }
-				size_t nargs=funty.nargs;
 				auto fun=doIt(ce.e);
 				DNVar[] results=iota(0,resty.length).map!(x=>dist.getTmpVar("__r")).array;
-				auto summary=Distribution.fromDExpr(fun,nargs,results,isTuple,resty);
+				auto summary=Distribution.fromDExpr(fun,1,false,results,isTuple,resty);
 				foreach(r;results) dist.freeVars.remove(r), dist.tmpVars.remove(r);
 				auto argty=funty.dom;
 				assert(ce.arg.type == argty);

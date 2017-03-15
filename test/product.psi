@@ -1,5 +1,5 @@
 
 def product(a,b){
     r := a*b;
-    return r; // expected: ∫dξ₁((-[ξ₁≤0]·⅟ξ₁+[-ξ₁≤0]·⅟ξ₁)·[ξ₁≠0]·`q(r·⅟ξ₁,ξ₁)+(∫dξ₂`q(ξ₂,ξ₁))·[ξ₁=0]·δ[r])
+    return r; // expected: δ[-r+a·b]
 }

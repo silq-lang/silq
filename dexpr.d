@@ -240,7 +240,7 @@ mixin template Visitors(){
 		static if(is(typeof(this):DAssocOp)||is(typeof(this):DCommutAssocOp))
 			assert(args[0].length>1);
 		static if(is(typeof(this)==DIvr)){
-			foreach(d;args[1].allOf!DDelta) assert(0,text(e));
+			foreach(d;args[1].allOf!DDelta) assert(0,text(args[1]));
 		}
 	}body{
 		subExprs=args;
@@ -250,7 +250,7 @@ mixin template Visitors(){
 	static if(!IsAbstract!(typeof(this))):
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
 		// TODO: fix this.
-		static if(!(is(typeof(this)==DInt)||is(typeof(this)==DSum)||is(typeof(this)==DLim)||is(typeof(this)==DDiff)||is(typeof(this)==DDelta)||is(typeof(this)==DDiscDelta)))
+		static if(!(is(typeof(this)==DLambda)||is(typeof(this)==DInt)||is(typeof(this)==DSum)||is(typeof(this)==DLim)||is(typeof(this)==DDiff)||is(typeof(this)==DDelta)||is(typeof(this)==DDiscDelta)))
 			mixin(forEachSubExprImpl!"if(auto r=dg(x)) return r");
 		return 0;
 	}
@@ -2012,7 +2012,8 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 				if(summand is null) unwind();
 				DPlus.insert(special,summand);
 			}
-			return dIvr(neqZ,diff).linearizeConstraints(var)*dDelta(lhs-rhs)/diff+dPlus(special);
+			return dIvr(neqZ,diff).linearizeConstraints(var)*dDelta(lhs-rhs)/diff+dPlus
+				(special);
 		}
 		else return dIvr(ty,lhs-rhs);
 	}

@@ -7,14 +7,15 @@ import std.stdio, std.path, std.algorithm;
 
 Distribution getCDF(Distribution dist){
 	dist=dist.dup;
-	auto freeVars=dist.freeVars.dup;
-	foreach(freeVar;freeVars){
-		auto nvar=dist.getVar("c"~freeVar.name);
-		dist.distribute(dIvr(DIvr.Type.leZ,-freeVar-20)*dIvr(DIvr.Type.leZ,freeVar-nvar));
-		dist.marginalize(freeVar);
-		dist.distribution=dist.distribution.substitute(nvar,freeVar);
+	auto vars=dist.freeVars.dup;
+	foreach(a;dist.args) vars.insert(a);
+	foreach(var;vars){
+		auto nvar=dist.getVar("c"~var.name);
+		dist.distribute(dIvr(DIvr.Type.leZ,var-nvar));
+		dist.marginalize(var);
+		dist.distribution=dist.distribution.substitute(nvar,var);
 		dist.freeVars.remove(nvar);
-		dist.freeVars.insert(freeVar);
+		dist.freeVars.insert(var);
 	}
 	dist.simplify();
 	return dist;
@@ -36,13 +37,7 @@ abstract class Backend{
 
 void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isMain){
 	auto dist=be.analyze(fd,err).dup;
-	if(isMain){
-		dist.renormalize();
-		if(fd.params.length){
-			dist.assumeInputNormalized(fd.params.length,fd.isTuple);
-		}
-		//dist.distribution=dist.distribution.substituteFun("q".dFunVar,one,DVar[].init,SetX!DVar.init).simplify(one);
-	}
+	if(isMain) dist.renormalize();
 	import dparse;
 	import approximate;
 	//import hashtable; dist.distribution=approxLog(dist.freeVars.element);
@@ -59,7 +54,10 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 		auto expectation = dIntSmp(var,var*dist.distribution/(one-dist.error),one);
 		final switch(opt.backend==InferenceMethod.simulate?OutputForm.raw:opt.outputForm){
 			case OutputForm.default_:
-				writeln(opt.formatting==Format.mathematica?"E[":"𝔼[",var.toString(opt.formatting),dist.error!=zero?(opt.formatting==Format.mathematica?"|!error":"|¬error"):"","] = ",expectation.toString(opt.formatting));
+				auto astr=dist.argsToString(opt.formatting);
+				if(dist.error!=zero && opt.formatting!=Format.mathematica)
+					astr~=astr.length?",¬error":"|¬error";
+				writeln(opt.formatting==Format.mathematica?"E[":"𝔼[",var.toString(opt.formatting),astr,"] = ",expectation.toString(opt.formatting));
 				if(dist.error != zero) writeln("Pr[error] = ",dist.error.toString(opt.formatting));
 				break;
 			case OutputForm.raw:
@@ -105,18 +103,13 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 	bool plotCDF=opt.cdf;
 	if(str.canFind("δ")) plotCDF=true;
 	import hashtable;
-	if(opt.plot && (dist.freeVars.length==1||dist.freeVars.length==2)){
-		if(plotCDF&&!opt.cdf){
-			dist=dist.dup();
-			foreach(freeVar;dist.freeVars.dup){
-				auto nvar=dist.declareVar("foo"~freeVar.name);
-				dist.distribute(dIvr(DIvr.Type.leZ,-freeVar-20)*dIvr(DIvr.Type.leZ,freeVar-nvar));
-				dist.marginalize(freeVar);
-			}
-		}
+	SetX!DNVar varset=dist.freeVars.dup;
+	foreach(a;dist.args) varset.insert(a);
+	if(opt.plot && (varset.length==1||varset.length==2)){
+		if(plotCDF&&!opt.cdf) dist=getCDF(dist);
 		writeln("plotting... ",(plotCDF?"(CDF)":"(PDF)"));
 		//matlabPlot(dist.distribution.toString(Format.matlab).replace("q(γ⃗)","1"),dist.freeVars.element.toString(Format.matlab));
-		gnuplot(dist.distribution,dist.freeVars,opt.plotRange,opt.plotFile);
+		gnuplot(dist.distribution,dist.freeVars,plotCDF?"probability":"density",opt.plotRange,opt.plotFile);
 	}
 }
 
@@ -144,7 +137,7 @@ void matlabPlot(string expression,string variable){
 	//writeln(input.readEnd.readln());
 	//foreach(i;0..100) writeln(error.readEnd.readln());
 }
-void gnuplot(DExpr expr,SetX!DNVar varset,string range="[-1:3]",string outfile=""){
+void gnuplot(DExpr expr,SetX!DNVar varset,string label,string range="[-1:3]",string outfile=""){
 	DVar[] vars;
 	foreach(var;varset) vars~=var;
 	assert(vars.length==1||vars.length==2);
@@ -155,14 +148,7 @@ void gnuplot(DExpr expr,SetX!DNVar varset,string range="[-1:3]",string outfile="
 	// TODO: make plot configurable from the outside
 	auto id=spawnProcess(["gnuplot","-"],input.readEnd,output,stderr);
 	scope(success) wait(id);
-	if(vars[0]!is "x".dVar){ // TODO: fix
-		assert(!expr.hasFreeVar("x".dVar));
-		expr=expr.substitute(vars[0],"x".dVar);
-	}
-	if(vars.length==2){
-		assert(!expr.hasFreeVar("y".dVar));
-		expr=expr.substitute(vars[1],"y".dVar);
-	}
+	expr=expr.substituteAll(vars,[cast(DExpr)"x".dVar,"y".dVar][0..vars.length]);
 	import std.string;
 	if(outfile.length){
 		input.writeEnd.writeln("set terminal postscript eps\nset output \"",outfile,"\"");
@@ -173,7 +159,7 @@ void gnuplot(DExpr expr,SetX!DNVar varset,string range="[-1:3]",string outfile="
 		"set pointsize 20\n"
 		~"set xlabel \""~vars[0].toString(Format.gnuplot)~"\"\n"
 		~(vars.length==2?"set ylabel \""~vars[1].toString(Format.gnuplot)~"\"\n":"")
-		~"set "~(vars.length==1?"y":"z")~"label \"density\"\n"
+		~"set "~(vars.length==1?"y":"z")~"label \""~label~"\"\n"
 		~"set samples 500, 500\n"
 		~"set isosample 200\n"
 		~"unset key\n";

@@ -19,7 +19,11 @@ class Bruteforce: Backend{
 		this.sourceFile=sourceFile;
 	}
 	override Distribution analyze(FunctionDef def,ErrorHandler err){
-		auto interpreter=Interpreter(def,def.body_,false);
+		assert(def.params.length==def.paramVals.length);
+		DExpr[string] fields;
+		foreach(i,a;def.params) fields[a.getName]=dVar(def.paramVals[i].getName);
+		DExpr init=dRecord(fields);
+		auto interpreter=Interpreter(def,def.body_,init,false);
 		auto ret=distInit();
 		interpreter.run(ret);
 		return ret.toDistribution();
@@ -514,7 +518,7 @@ class DBFDist: DExpr{
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		auto d=dist.toDistribution();
 		d.addArgs([],true,null);
-		return dApply(d.toDExpr(),dLambda(one)).simplify(one).toStringImpl(formatting,prec,binders);
+		return dApply(d.toDExpr(),dTuple([])).simplify(one).toStringImpl(formatting,prec,binders);
 	}
 	override DExpr simplifyImpl(DExpr facts){ return dBFDist(dist.simplify(facts)); }
 	mixin Visitors;
@@ -596,6 +600,7 @@ DExpr lookupMeaning(Identifier id)in{assert(!!id);}body{
 			if(fty.isSquare){
 				auto nid=new Identifier("`"~id.name~"Impl");
 				nid.type=fty.cod;
+				nid.sstate=SemState.completed;
 				builtIn[id.name]=lookupMeaning(nid);
 			}else{
 				auto names=iota(fty.nargs).map!(i=>new Identifier("x"~lowNum(i+1))).array;
@@ -609,6 +614,8 @@ DExpr lookupMeaning(Identifier id)in{assert(!!id);}body{
 				auto sc=new TopScope(new SimpleErrorHandler());
 				fdef.scope_=sc;
 				fdef=cast(FunctionDef)presemantic(fdef,sc);
+				assert(!!fdef);
+				fdef=cast(FunctionDef)functionDefSemantic(fdef,sc);
 				assert(!!fdef);
 				builtIn[id.name]=dBFFun(fdef);
 			}
@@ -644,9 +651,9 @@ struct Interpreter{
 	CompoundExp statements;
 	Dist cur;
 	bool hasFrame=false;
-	this(FunctionDef functionDef,CompoundExp statements,bool hasFrame){
+	this(FunctionDef functionDef,CompoundExp statements,DExpr init,bool hasFrame){
 		auto cur=distInit;
-		cur.state[dRecord()]=one;
+		cur.state[init]=one;
 		this(functionDef,statements,cur,hasFrame);
 	}
 	this(FunctionDef functionDef,CompoundExp statements,Dist cur,bool hasFrame){

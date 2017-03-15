@@ -12,5 +12,5 @@ def main(null:List){
     for i in [2..20){
         x = List(i,x);
     }
-    return x; // expected: ∫dξ₁`q(ξ₁)·δ_x[{.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ ξ₁,.head ↦ 1},.head ↦ 2},.head ↦ 3},.head ↦ 4},.head ↦ 5},.head ↦ 6},.head ↦ 7},.head ↦ 8},.head ↦ 9},.head ↦ 10},.head ↦ 11},.head ↦ 12},.head ↦ 13},.head ↦ 14},.head ↦ 15},.head ↦ 16},.head ↦ 17},.head ↦ 18},.head ↦ 19}]
+    return x; // expected: δ_x[{.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ {.tail ↦ null,.head ↦ 1},.head ↦ 2},.head ↦ 3},.head ↦ 4},.head ↦ 5},.head ↦ 6},.head ↦ 7},.head ↦ 8},.head ↦ 9},.head ↦ 10},.head ↦ 11},.head ↦ 12},.head ↦ 13},.head ↦ 14},.head ↦ 15},.head ↦ 16},.head ↦ 17},.head ↦ 18},.head ↦ 19}]
 }

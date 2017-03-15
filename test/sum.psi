@@ -1,4 +1,4 @@
 def sum(a,b){
     r := a + b;
-    return r; // expected: ∫dξ₁`q(-ξ₁+r,ξ₁)
+    return r; // expected: δ[-r+a+b]
 }

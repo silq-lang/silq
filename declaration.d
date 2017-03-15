@@ -73,6 +73,9 @@ class FunctionDef: Declaration{
 	// semantic information
 	FunctionScope fscope_;
 	VarDecl context;
+	VarDecl contextVal;
+	VarDecl thisVar; // for constructors
+	VarDecl[] paramVals;
 	@property string contextName()in{assert(!!context);}body{ return context.getName; }
 	Expression ret; // return type
 	Type ftype;

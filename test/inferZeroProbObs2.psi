@@ -1,7 +1,8 @@
 
 def main(){
 	x := flip(1/2);
-	d := infer(()=>()); // TODO: Dirac(()).
+	d := Dirac[𝟙](); // TODO: fix type inference
 	y := d.then((){ observe(x == flip(1/2)+1); return x; });
-	return y.sample(); // expected: δ[-r₁+1]·⅟2
+	return y.sample(); // expected: (2·[-r₁+1=0]+2·[-r₁+2=0])·([-r₁+1=0]+[-r₁+2=0])·([-r₁+1=0]·⅟2+[-r₁+2=0]·⅟2)·(δ[-r₁+1]·⅟2+δ[r₁]·⅟2)
+	// TODO: simplify better
 }
