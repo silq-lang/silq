@@ -24,7 +24,7 @@ class Bruteforce: Backend{
 		DExpr init=dRecord(fields);
 		auto interpreter=Interpreter(def,def.body_,init,false);
 		auto ret=distInit();
-		interpreter.run(ret);
+		interpreter.runFun(ret);
 		return ret.toDistribution();
 	}
 private:
@@ -148,7 +148,7 @@ struct Dist{
 	}
 	Dist eraseErrors(){
 		auto r=dup();
-		error=zero;
+		r.error=zero;
 		return r;
 	}
 	Dist observe(DLambda lambda){
@@ -280,7 +280,7 @@ struct Dist{
 		}
 		auto intp=Interpreter(fun,fun.body_,ncur,true);
 		auto nndist = distInit();
-		intp.run(nndist);
+		intp.runFun(nndist);
 		static uniq=0;
 		string tmp="`call"~lowNum(++uniq);
 		this=nndist.popFrame(tmp);
@@ -325,7 +325,7 @@ struct Dist{
 			ncur.copyNonState(this);
 			auto intp=Interpreter(fun,fun.body_,ncur,true);
 			auto nndist = distInit();
-			intp.run(nndist);
+			intp.runFun(nndist);
 			r+=nndist;
 		}
 		return r;
@@ -1065,5 +1065,10 @@ struct Interpreter{
 			runStm(s,retDist);
 			// writeln("cur: ",cur);
 		}
+	}
+	void runFun(ref Dist retDist){
+		run(retDist);
+		retDist+=cur;
+		cur=distInit();
 	}
 }
