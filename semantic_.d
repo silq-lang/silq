@@ -1503,6 +1503,7 @@ Expression typeSemantic(Expression expr,Scope sc)in{assert(!!expr&&!!sc);}body{
 		return arrayTy(next);
 	}
 	auto e=expressionSemantic(expr,sc);
+	if(!e) return null;
 	if(e.type==typeTy) return e;
 	if(expr.sstate!=SemState.error){
 		auto id=cast(Identifier)expr;
