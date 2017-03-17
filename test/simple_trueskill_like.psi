@@ -3,5 +3,5 @@ def main(){
     a := gauss(100,15);
     b := gauss(100,15);
     c := a > b;
-    return c; // expected: TODO: simplify better
+    return c; // expected: δ[-c+1]·⅟2+δ[c]·⅟2
 }

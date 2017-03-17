@@ -2375,10 +2375,9 @@ class DIvr: DExpr{ // iverson brackets
 			auto f=e.getFractionalFactor();
 			if(f!=one && f!=zero && f!=mone) return dIvr(type,e/f).simplify(facts);
 		}
-		foreach(v;e.freeVars()){ // TODO: do this right
-			if(auto fct=factorDIvr!(e=>dIvr(type,e))(e)) return fct.simplify(facts);
-			break;
-		}
+		if(e.hasFreeVars())
+			if(auto fct=factorDIvr!(e=>dIvr(type,e))(e))
+				return fct.simplify(facts);
 		auto denom=getCommonDenominator(e).simplify(facts);
 		if(!cast(Dℚ)denom){
 			// auto dcancel=dDistributeMult(e,denom); // TODO: use this again (inverses should cancel each other immediately during DMult simplification)
@@ -2408,6 +2407,35 @@ class DIvr: DExpr{ // iverson brackets
 				if(auto l=cast(DLog)(e.withoutFactor(q)))
 					return dIvr(type,one-l.e).simplify(facts);
 			}
+		}
+		if(auto var=e.getCanonicalFreeVar()){
+			/+bool onlyOne=true;
+			foreach(v;e.freeVars) if(v!=var){ onlyOne=false; break; }+/
+			if(type==Type.eqZ){
+				SolutionInfo info;
+				SolUse usage={caseSplit:false,bound:false};
+				auto sol=e.solveFor(var,zero,usage,info);
+				if(sol&&!info.needCaseSplit){
+					if(facts.substitute(var,sol).simplify(one)==zero)
+						return zero;
+					/+if(onlyOne){
+						auto nexp=(sol-var).simplify(facts);
+						auto mnexp=(-nexp).simplify(facts);
+						if(nexp!=e&&mnexp!=e) return dIvr(Type.eqZ,nexp).simplify(facts);
+					}+/
+				}
+			}
+			/+if(onlyOne){
+				auto oivr=cast(DIvr)dIvr(type,e);
+				static DExprSet active;
+				if(e !in active){
+					active.insert(e);
+					auto r=linearizeConstraint!DIvr(oivr,var).simplify(facts);
+					active.remove(e);
+					if(!cast(DIvr)r||(cast(DIvr)r).e!=e)
+						return r;
+				}
+			}+/
 		}
 		return null;
 	}

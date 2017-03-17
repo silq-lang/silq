@@ -167,6 +167,7 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr;
+	//writeln("[1+√1̅+̅4̅·̅y̅≤0]".dParse.simplify(one));
 	//writeln("δ[x·y]".dParse.linearizeConstraints("x".dVar).simplify(one));
 	//writeln("∫dx [0≤x]·[x≤1]".dParse.simplify(one));
 	//writeln(dDiff("x".dVar,"x/(x^2-y^2)^(1/2)".dParse).simplify(one)); // TODO: Fix?

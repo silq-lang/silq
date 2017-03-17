@@ -1214,6 +1214,10 @@ Expression expressionSemantic(Expression expr,Scope sc){
 				if(auto aty=cast(ArrayTy)tae.type)
 					arr.type=aty;
 		}
+		if(auto ce=cast(CallExp)tae.e)
+			if(auto id=cast(Identifier)ce.e)
+				if(id.name=="SampleFrom")
+					ce.type=tae.type;
 		if(tae.e.type != tae.type){
 			sc.error(format("type is %s, not %s",tae.e.type,tae.type),tae.loc);
 			tae.sstate=SemState.error;
