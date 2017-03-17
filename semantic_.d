@@ -627,6 +627,7 @@ Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
 	auto de=cast(DefExp)makeDeclaration(be,success,sc);
 	if(!de) be.sstate=SemState.error;
 	assert(success && de && de.initializer is be || !de||de.sstate==SemState.error);
+	auto e2orig=be.e2;
 	be.e2=expressionSemantic(be.e2,sc);
 	if(be.e2.sstate==SemState.completed){
 		if(auto tpl=cast(TupleExp)be.e1){
@@ -649,7 +650,7 @@ Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
 		}
 		if(cast(TopScope)sc){
 			if(!be.e2.isConstant() && !cast(PlaceholderExp)be.e2){
-				sc.error("global constant initializer must be a constant",be.e2.loc);
+				sc.error("global constant initializer must be a constant",e2orig.loc);
 				if(de){ de.setError(); be.sstate=SemState.error; }
 			}
 		}
