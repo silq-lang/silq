@@ -319,6 +319,12 @@ class Distribution{
 		}
 		return v;
 	}
+	DNVar getPrimedVar(string name){
+		DNVar v;
+		for(string nn=name;!v;nn~="'")
+			v=declareVar(nn);
+		return v;
+	}
 	void freeVar(string name){
 		while(name in vbl&&vbl[name]!=0&&dVar(name~vbl[name].lowNum)!in freeVars)
 			--vbl[name];
@@ -401,9 +407,6 @@ class Distribution{
 		distribution=distribution.simplify(one); // TODO: this shouldn't be necessary!
 		error=error.simplify(one);
 	}
-	override string toString(){
-		return toString(Format.default_);
-	}
 
 	private DExpr toDExprLambdaBody(bool stripContext=false)in{
 		assert(!stripContext||isTuple&&orderedFreeVars.length==2);
@@ -466,6 +469,10 @@ class Distribution{
 		return r;
 	}
 
+	override string toString(){
+		return toString(Format.default_);
+	}
+	
 	string argsToString(Format formatting){
 		if(formatting==Format.mathematica)
 			return args.length?(freeVars.length?", ":"")~args.map!(a=>a.toString(formatting)~"_").join(","):"";

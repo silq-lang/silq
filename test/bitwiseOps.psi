@@ -1,9 +1,10 @@
 
 def swap(a,b){
-    a xorb= b;
-    b xorb= a;
-    a xorb= b;
-    return (a,b);
+	x:=a,y:=b;
+    x xorb= y;
+    y xorb= x;
+    x xorb= y;
+    return (x,y);
 }
 
 def main(){

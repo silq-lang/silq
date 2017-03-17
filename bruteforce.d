@@ -19,9 +19,8 @@ class Bruteforce: Backend{
 		this.sourceFile=sourceFile;
 	}
 	override Distribution analyze(FunctionDef def,ErrorHandler err){
-		assert(def.params.length==def.paramVals.length);
 		DExpr[string] fields;
-		foreach(i,a;def.params) fields[a.getName]=dVar(def.paramVals[i].getName);
+		foreach(i,a;def.params) fields[a.getName]=dVar(a.getName);
 		DExpr init=dRecord(fields);
 		auto interpreter=Interpreter(def,def.body_,init,false);
 		auto ret=distInit();

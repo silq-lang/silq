@@ -14,11 +14,7 @@ class Symbolic: Backend{
 	override Distribution analyze(FunctionDef def,ErrorHandler err){
 		auto dist=new Distribution();
 		DNVar[] args;
-		assert(def.params.length==def.paramVals.length);
-		foreach(i,a;def.params){
-			args~=dist.declareVar(def.paramVals[i].getName);
-			dist.initialize(dist.declareVar(a.getName),args[i],a.vtype);
-		}
+		foreach(i,a;def.params) args~=dist.declareVar(a.getName);
 		DNVar ctx=null;
 		if(def.context){
 			assert(!!def.contextVal,text(def));
@@ -114,7 +110,7 @@ private struct Analyzer{
 			DExpr r=getContextFor(var,from);
 			if(r) return dField(r,var.getName);
 			auto v=dVar(var.getName);
-			if(v in dist.freeVars) return v;
+			if(v in dist.freeVars||dist.hasArg(v)) return v;
 			return null;
 		}
 		DExpr buildContextFor()(Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{ // template, forward references 'doIt'
@@ -125,9 +121,10 @@ private struct Analyzer{
 				msc=fd.realScope;
 			for(auto csc=msc;;csc=(cast(NestedScope)csc).parent){
 				if(!cast(NestedScope)csc) break;
-				foreach(vd;&csc.all!VarDecl)
+				foreach(vd;&csc.all!VarDecl){
 					if(auto var=readVariable(vd,sc))
 						record[vd.getName]=var;
+				}
 				if(!cast(NestedScope)(cast(NestedScope)csc).parent) break;
 				if(auto dsc=cast(DataScope)csc){
 					auto name=dsc.decl.contextName;
@@ -1122,9 +1119,9 @@ private struct Analyzer{
 					if(!exp) exp=dTuple([]); // TODO: is there a better way?
 					DNVar var=cast(DNVar)exp;
 					if(var && !var.name.startsWith("__")){
-						if(var in vars||functionDef.context&&var.name==functionDef.contextName){
+						if(var in vars||functionDef.context&&var.name==functionDef.contextName||dist.hasArg(var)){
 							dist.freeVar(var.name);
-							auto vv=dist.getVar(var.name);
+							auto vv=dist.hasArg(var)?dist.getPrimedVar(var.name):dist.getVar(var.name);
 							dist.initialize(vv,var,ret.type);
 							var=vv;
 						}

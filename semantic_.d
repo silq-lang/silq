@@ -165,9 +165,7 @@ Expression presemantic(Declaration expr,Scope sc){
 			fd.contextVal=addVar("`outer",contextTy(),fd.loc,fsc); // TODO: replace contextTy by suitable record type; make name 'outer' available
 			fd.context=fd.contextVal;
 		}
-		fd.paramVals = fd.params.map!(p=>addVar(p.name.name,unit,p.loc,fsc)).array; // parameter values
-		assert(!!fd.body_.blscope_);
-		declareParameters(fd,fd.isSquare,fd.params,fd.body_.blscope_); // parameter variables
+		declareParameters(fd,fd.isSquare,fd.params,fsc); // parameter variables
 		if(fd.rret){
 			string[] pn;
 			Expression[] pty;
@@ -660,6 +658,24 @@ Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
 	return r;
 }
 
+bool checkAssignable(Declaration meaning,Location loc,Scope sc){
+	if(!cast(VarDecl)meaning){
+		sc.error("can only assign to variables",loc);
+		return false;
+	}else if(cast(Parameter)meaning){
+		sc.error("cannot reassign parameters (use :=)",loc);
+		return false;
+	}else for(auto csc=sc;csc !is meaning.scope_;csc=(cast(NestedScope)csc).parent){
+		if(auto fsc=cast(FunctionScope)csc){
+			// TODO: what needs to be done to lift this restriction?
+			// TODO: method calls are also implicit assignments.
+			sc.error("cannot assign to variable in closure context (capturing by value)",loc);
+			return false;
+		}
+	}
+	return true;
+}
+
 AssignExp assignExpSemantic(AssignExp ae,Scope sc){
 	ae.type=unit;
 	ae.e1=expressionSemantic(ae.e1,sc);
@@ -670,18 +686,8 @@ AssignExp assignExpSemantic(AssignExp ae,Scope sc){
 		return ae;
 	void checkLhs(Expression lhs){
 		if(auto id=cast(Identifier)lhs){
-			if(!cast(VarDecl)id.meaning){
-				sc.error("can only assign to variables",ae.loc);
+			if(!checkAssignable(id.meaning,ae.loc,sc))
 				ae.sstate=SemState.error;
-			}else for(auto sc=id.scope_;sc !is id.meaning.scope_;sc=(cast(NestedScope)sc).parent){
-				if(auto fsc=cast(FunctionScope)sc){
-					// TODO: what needs to be done to lift this restriction?
-					// TODO: method calls are also implicit assignments.
-					sc.error("cannot assign variable in closure context (capturing by value)",ae.loc);
-					ae.sstate=SemState.error;
-					break;
-				}
-			}
 		}else if(auto tpl=cast(TupleExp)lhs){
 			foreach(ref exp;tpl.e)
 				checkLhs(exp);
@@ -723,10 +729,8 @@ ABinaryExp opAssignExpSemantic(ABinaryExp be,Scope sc)in{
 		return be;
 	void checkULhs(Expression lhs){
 		if(auto id=cast(Identifier)lhs){
-			if(!cast(VarDecl)id.meaning){
-				sc.error("can only assign to variables",be.loc);
-				be.sstate=SemState.error;
-			}
+			if(!checkAssignable(id.meaning,be.loc,sc))
+			   be.sstate=SemState.error;
 		}else if(auto idx=cast(IndexExp)lhs){
 			checkULhs(idx.e);
 		}else if(auto fe=cast(FieldExp)lhs){

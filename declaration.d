@@ -75,7 +75,6 @@ class FunctionDef: Declaration{
 	VarDecl context;
 	VarDecl contextVal;
 	VarDecl thisVar; // for constructors
-	VarDecl[] paramVals;
 	@property string contextName()in{assert(!!context);}body{ return context.getName; }
 	Expression ret; // return type
 	Type ftype;
