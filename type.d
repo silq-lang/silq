@@ -287,7 +287,6 @@ class ForallTy: Type{
 	Expression tryMatch(Expression arg,out Expression garg)in{assert(isSquare&&cast(ForallTy)cod);}body{
 		auto cod=cast(ForallTy)this.cod;
 		assert(!!cod);
-		if(!!cast(TupleTy)arg.type!=!!cast(TupleTy)cod.dom) return null;
 		Expression[] atys;
 		auto tpl=cast(TupleTy)arg.type;
 		if(cod.isTuple&&tpl){
