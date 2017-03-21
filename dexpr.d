@@ -1176,12 +1176,18 @@ class DMult: DCommutAssocOp{
 						if(auto p1=cast(DPow)e1)
 							if(p1.operands[1] == mone)
 								if(auto l1=cast(DLog)p1.operands[0])
-									if(auto z1=l1.e.isInteger())
+									if(auto z1=l1.e.isInteger()){
 										if(z1.c>=0){
 											assert(z1.c.den==1 && z2.c.den==1);
 											if(auto r=integerLog(z2.c.num,z1.c.num))
 												return r;
 										}
+										// TODO: generalize/improve the following simplification rule:
+										assert(z2.c.den==1&&z1.c.den==1);
+										if(z2.c.num!=0 && z1.c.num!=1)
+											if((z2.c.num%z1.c.num)==0)
+												return (one+dLog(dℚ(z2.c.num/z1.c.num))*p1).simplify(facts);
+									}
 			if(cast(DPlus)e2) swap(e1,e2);
 			if(!e2.hasFreeVars()){
 				if(auto p=cast(DPlus)e1){
@@ -1764,6 +1770,9 @@ DExpr cancelFractions(bool isDelta)(DExpr e,DIvr.Type type=DIvr.Type.eqZ){
 				auto f=s.getFractionalFactor();
 				if(f==mone) break;
 				cancel=(mone/f).simplify(one);
+				if((s*cancel).simplify(one).getFractionalFactor()!=mone)
+					cancel=one;
+				break;
 			}
 		}
 	}
