@@ -40,10 +40,8 @@ abstract class Expression: Node{
 	}
 	final Expression substitute(Expression[string] subst){
 		auto r=substituteImpl(subst);
-		if(!r.type){
-			r.type=r.substituteImpl(subst);
-			r.sstate=sstate;
-		}
+		if(type == this) r.type=r;
+		else r.type=type.substitute(subst);
 		return r;
 	}
 	abstract Expression substituteImpl(Expression[string] subst); // TODO: name might be free in the _types_ of subexpressions
@@ -53,13 +51,17 @@ abstract class Expression: Node{
 	}
 	abstract bool unifyImpl(Expression rhs,ref Expression[string] subst);
 	
-	final freeVars(){
-		static struct FreeVars{
-			Expression self;
-			int opApply(scope int delegate(string) dg){
-				return self.freeVarsImpl(dg);
-			}
+	static struct FreeVars{
+		Expression self;
+		int opApply(scope int delegate(string) dg){
+			if(auto r=self.freeVarsImpl(dg)) return r;
+			if(self.type != self)
+				foreach(v;self.type.freeVars())
+					if(auto r=dg(v)) return r;
+			return 0;
 		}
+	}
+	final FreeVars freeVars(){
 		return FreeVars(this);
 	}
 	final bool hasFreeVar(string name){
