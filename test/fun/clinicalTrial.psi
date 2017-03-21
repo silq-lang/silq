@@ -1,11 +1,6 @@
-// TODO: make array literals as fast as built-in 'array' calls
 def main(){
-    //controlGroup := [0,0,1,0,0];
-    controlGroup := array(5);
-    controlGroup[0]=0;controlGroup[1]=0;controlGroup[2]=1;controlGroup[3]=0;controlGroup[4]=0;
-    //treatedGroup := [1,0,1,1,1];
-    treatedGroup := array(5);
-    treatedGroup[0]=1;treatedGroup[1]=0;treatedGroup[2]=1;treatedGroup[3]=1;treatedGroup[4]=1;
+    controlGroup := [0,0,1,0,0];
+    treatedGroup := [1,0,1,1,1];
 
     isEffective := flip(1/2);
     probIfTreated := beta(1,1);
@@ -20,6 +15,6 @@ def main(){
 
     isEffectiveP := FromMarginal(isEffective);
     observe(isEffective);
-    return (isEffectiveP,probIfTreated,probIfControl); // expected: (-2·probIfControl+1+probIfControl²)·(-41580000/17·probIfTreated+41580000/17)·(-probIfControl+1)·(-probIfControl·⅟2+⅟2)·(δ[-isEffectiveP+1]·⅟1800+δ[isEffectiveP]·⅟5544)·[-1+probIfControl≤0]·[-1+probIfTreated≤0]·[-probIfControl≤0]·[-probIfTreated≤0]·probIfControl·probIfTreated⁴
+    return (isEffectiveP,probIfTreated,probIfControl); // expected: (-4·probIfControl+-4·probIfControl³+1+6·probIfControl²+probIfControl⁴)·(-probIfTreated·⅟2+⅟2)·(23100/17·δ[-isEffectiveP+1]+7500/17·δ[isEffectiveP])·[-1+probIfControl≤0]·[-1+probIfTreated≤0]·[-probIfControl≤0]·[-probIfTreated≤0]·probIfControl·probIfTreated⁴
     // TODO: keep polynomial in factored form
 }
