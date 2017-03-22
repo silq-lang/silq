@@ -243,26 +243,11 @@ struct Token{
 				return '"'~escape(str)~`"d`;
 			case Tok!"' '":
 				return '\''~escape(to!string(cast(dchar)int64),false)~'\'';
-			case Tok!"0":
-				return to!string(cast(int)int64);
-			case Tok!"0U":
-				return to!string(cast(uint)int64)~'U';
-			case Tok!"0L":
-				return to!string(cast(long)int64)~'L';
-			case Tok!"0LU":
-				return to!string(int64)~"LU";
-			case Tok!".0f":
-				return to!string(flt80)~'f';
-			case Tok!".0":
-				return to!string(flt80);
-			case Tok!".0L":
-				return to!string(flt80)~'L';
-			case Tok!".0i":
-				return to!string(flt80)~'i';
-			case Tok!".0fi":
-				return to!string(flt80)~"fi";
-			case Tok!".0Li":
-				return to!string(flt80)~"Li";
+			case Tok!"0", Tok!"0U":
+			case Tok!"0L", Tok!"0LU":
+			case Tok!".0f", Tok!".0", Tok!".0L":
+			case Tok!".0i", Tok!".0fi", Tok!".0Li":
+				return str;
 			case Tok!"Error":
 				return "error: "~str;
 			case Tok!"true": return "true";
@@ -274,7 +259,6 @@ struct Token{
 	union{
 		string str, name;  // string literals, identifiers
 		ulong int64;       // integer literals
-		real flt80;        // float, double, real literals
 	}
 	Location loc;
 }
