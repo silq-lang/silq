@@ -36,6 +36,11 @@ abstract class Backend{
 }
 
 void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isMain){
+	import type, std.conv : text;
+	if(opt.expectation && fd.ret != ℝ){
+		err.error(text("with --expectation switch, functions should return a single number (not '",fd.ret,"')"),fd.loc);
+		return;
+	}
 	auto dist=be.analyze(fd,err).dup;
 	if(isMain) dist.renormalize();
 	import dparse;
@@ -44,11 +49,6 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 	//import hashtable; dist.distribution=approxGaussInt(dist.freeVars.element);
 	if(opt.kill) dist.distribution=dist.distribution.killIntegrals();
 	if(opt.expectation||opt.backend==InferenceMethod.simulate){ // TODO: deal with non-convergent expectations
-		import type, std.conv : text;
-		if(fd.ret != ℝ && opt.backend!=InferenceMethod.simulate){
-			err.error(text("with --expectation switch, functions should return a single number (not '",fd.ret,"')"),fd.loc);
-			return;
-		}
 		assert(dist.orderedFreeVars.length==1);
 		auto var=dist.orderedFreeVars[0];
 		auto expectation = dIntSmp(var,var*dist.distribution/(one-dist.error),one);
