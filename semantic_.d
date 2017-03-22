@@ -508,12 +508,12 @@ Expression statementSemantic(Expression e,Scope sc){
 		fe.var.name=vd.getName;
 		fe.fescope_=fesc;
 		fe.loopVar=vd;
-		fe.left=expressionSemantic(fe.left,fesc);
+		fe.left=expressionSemantic(fe.left,sc);
 		if(fe.left.sstate==SemState.completed && fe.left.type!is ℝ){
 			sc.error(format("lower bound for loop variable should be a number, not %s",fe.left.type),fe.left.loc);
 			fe.sstate=SemState.error;
 		}
-		fe.right=expressionSemantic(fe.right,fesc);
+		fe.right=expressionSemantic(fe.right,sc);
 		if(fe.right.sstate==SemState.completed && fe.right.type!is ℝ){
 			sc.error(format("upper bound for loop variable should be a number, not %s",fe.right.type),fe.right.loc);
 			fe.sstate=SemState.error;
