@@ -241,26 +241,29 @@ struct Dist{
 		return dField(db1,tmp);
 	}
 	void assignTo(DExpr lhs,DExpr rhs){
-		if(auto id=cast(DNVar)lhs){
-			auto lambda=dLambda(dRUpdate(db1,id.name,rhs));
-			this=map(lambda);
-		}else if(auto idx=cast(DIndex)lhs){
-			assignTo(idx.e,dIUpdate(idx.e,idx.i,rhs));
-		}else if(auto fe=cast(DField)lhs){
-			if(fe.e == db1){
-				assignTo(dVar(fe.f),rhs);
-				return;
+		void assignToImpl(DExpr lhs,DExpr rhs){
+			if(auto id=cast(DNVar)lhs){
+				auto lambda=dLambda(dRUpdate(db1,id.name,rhs));
+				this=map(lambda);
+			}else if(auto idx=cast(DIndex)lhs){
+				assignTo(idx.e,dIUpdate(idx.e,idx.i,rhs));
+			}else if(auto fe=cast(DField)lhs){
+				if(fe.e == db1){
+					assignTo(dVar(fe.f),rhs);
+					return;
+				}
+				assignTo(fe.e,dRUpdate(fe.e,fe.f,rhs));
+			}else if(auto tpl=cast(DTuple)lhs){
+				foreach(i;0..tpl.values.length)
+					assignTo(tpl[i],rhs[i.dℚ].simplify(one));
+			}else if(cast(DPlus)lhs||cast(DMult)lhs){
+				// TODO: this could be the case (if cond { a } else { b }) = c;
+				// (this is also not handled in the symbolic backend at the moment)
+			}else{
+				assert(0,text("TODO: ",lhs," = ",rhs));
 			}
-			assignTo(fe.e,dRUpdate(fe.e,fe.f,rhs));
-		}else if(auto tpl=cast(DTuple)lhs){
-			foreach(i;0..tpl.values.length)
-				assignTo(tpl[i],rhs[i.dℚ].simplify(one));
-		}else if(cast(DPlus)lhs||cast(DMult)lhs){
-			// TODO: this could be the case (if cond { a } else { b }) = c;
-			// (this is also not handled in the symbolic backend at the moment)
-		}else{
-			assert(0,text("TODO: ",lhs," = ",rhs));
 		}
+		assignToImpl(lhs,rhs);
 	}
 	DExpr call(FunctionDef fun,DExpr thisExp,DExpr arg,Scope sc){
 		auto ncur=pushFrame();

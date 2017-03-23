@@ -889,54 +889,62 @@ private struct Analyzer{
 	
 	void assignTo(Expression lhs,DExpr rhs,Expression ty,Location loc){
 		if(!rhs) return;
-		void assignVar(Identifier id,DExpr rhs,Expression ty){
-			if(id.name !in arrays){
-				auto v=dVar(id.name);
-				dist.assign(v,rhs,ty);
-				trackDeterministic(v,rhs,ty);
-			}else err.error("reassigning array unsupported",lhs.loc);
-		}
-		if(auto id=cast(Identifier)lhs){
-			assignVar(id,rhs,ty);
-		}else if(auto idx=cast(IndexExp)lhs){
-			if(auto id=cast(Identifier)idx.e){
-				if(id.name in arrays){
-					if(auto cidx=indexArray(idx)){
-						if(auto v=cast(DNVar)cidx){
-							dist.assign(v,rhs?rhs:zero,ty);
-							trackDeterministic(v,rhs,ty);
-						}else{
-							err.error(text("array is not writeable"),lhs.loc);
+		/+if(!cast(Identifier)lhs&&!cast(FieldExp)lhs){ // TODO
+			auto tmp=dist.getTmpVar("tmp");
+			dist.initialize(tmp,rhs,ty);
+			rhs=tmp;
+		}+/
+		void assignToImpl(Expression lhs,DExpr rhs,Expression ty){
+			void assignVar(Identifier id,DExpr rhs,Expression ty){
+				if(id.name !in arrays){
+					auto v=dVar(id.name);
+					dist.assign(v,rhs,ty);
+					trackDeterministic(v,rhs,ty);
+				}else err.error("reassigning array unsupported",lhs.loc);
+			}
+			if(auto id=cast(Identifier)lhs){
+				assignVar(id,rhs,ty);
+			}else if(auto idx=cast(IndexExp)lhs){
+				if(auto id=cast(Identifier)idx.e){
+					if(id.name in arrays){
+						if(auto cidx=indexArray(idx)){
+							if(auto v=cast(DNVar)cidx){
+								dist.assign(v,rhs?rhs:zero,ty);
+								trackDeterministic(v,rhs,ty);
+							}else{
+								err.error(text("array is not writeable"),lhs.loc);
+							}
 						}
+						return;
 					}
-					return;
 				}
-			}
-			if(cast(TupleTy)idx.e.type||cast(ArrayTy)idx.e.type){
-				auto old=transformExp(idx.e);
-				assert(idx.a.length==1);
-				auto index=transformExp(idx.a[0]);
-				if(old&&index&&rhs){
-					if(!opt.noBoundsCheck) dist.assertTrue(dIvr(DIvr.Type.leZ,-index)*dIvr(DIvr.Type.lZ,index-dField(old,"length")),"array access out of bounds"); // TODO: check that index is an integer.
-					assignTo(idx.e,dIUpdate(old,index,rhs),idx.e.type,loc);
+				if(cast(TupleTy)idx.e.type||cast(ArrayTy)idx.e.type){
+					auto old=transformExp(idx.e);
+					assert(idx.a.length==1);
+					auto index=transformExp(idx.a[0]);
+					if(old&&index&&rhs){
+						if(!opt.noBoundsCheck) dist.assertTrue(dIvr(DIvr.Type.leZ,-index)*dIvr(DIvr.Type.lZ,index-dField(old,"length")),"array access out of bounds"); // TODO: check that index is an integer.
+						assignToImpl(idx.e,dIUpdate(old,index,rhs),idx.e.type);
+					}
+				}else{
+					err.error(text("unsupported type '",idx.e.type,"' for index expression"),lhs.loc);
 				}
+			}else if(auto fe=cast(FieldExp)lhs){
+				if(!cast(ArrayTy)fe.e.type){
+					auto old=transformExp(fe.e);
+					if(old) assignToImpl(fe.e,dRUpdate(old,fe.f.name,rhs),fe.e.type);
+				}
+			}else if(auto tpl=cast(TupleExp)lhs){
+				auto tt=cast(TupleTy)ty;
+				assert(!!tt);
+				assert(tpl.e.length==tt.types.length);
+				foreach(k,exp;tpl.e) assignToImpl(exp,rhs[k.dℚ],tt.types[k]);
 			}else{
-				err.error(text("unsupported type '",idx.e.type,"' for index expression"),lhs.loc);
+			LbadAssgnmLhs:
+				err.error("invalid left hand side for assignment",lhs.loc);
 			}
-		}else if(auto fe=cast(FieldExp)lhs){
-			if(!cast(ArrayTy)fe.e.type){
-				auto old=transformExp(fe.e);
-				if(old) assignTo(fe.e,dRUpdate(old,fe.f.name,rhs),fe.e.type,loc);
-			}
-		}else if(auto tpl=cast(TupleExp)lhs){
-			auto tt=cast(TupleTy)ty;
-			assert(!!tt);
-			assert(tpl.e.length==tt.types.length);
-			foreach(k,exp;tpl.e) assignTo(exp,rhs[k.dℚ],tt.types[k],loc);
-		}else{
-		LbadAssgnmLhs:
-			err.error("invalid left hand side for assignment",lhs.loc);
 		}
+		assignToImpl(lhs,rhs,ty);
 	}
 
 	private void analyzeStatement(Expression e,ref Distribution retDist,FunctionDef functionDef)in{assert(!!e);}body{

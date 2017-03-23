@@ -1,0 +1,7 @@
+
+def main(){
+	(x,y,z,w) := (1,2,3,4);
+	(x,(y,z))[1] = (z,y);
+	(x,y) = (y,x);
+	return (x,y,z,w); // expected: TODO: δ[-w+4]·δ[-x+3]·δ[-y+1]·δ[-z+2]
+}
