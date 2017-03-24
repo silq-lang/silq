@@ -2347,8 +2347,14 @@ class DIvr: DExpr{ // iverson brackets
 			return dIvr(DIvr.Type.eqZ,e).simplify(facts);
 		}
 		// TODO: better decision procedures
-		if(type==Type.eqZ&&!couldBeZero(e)) return zero;
-		if(type==Type.neqZ&&!couldBeZero(e)) return one;
+		if(type==Type.eqZ){
+			if(!couldBeZero(e)) return zero;
+			if(auto eivr=cast(DIvr)e) return negateDIvr(eivr).simplify(one);
+		}
+		if(type==Type.neqZ){
+			if(!couldBeZero(e)) return one;
+			if(mustBeZeroOrOne(e)) return e;
+		}
 		if(type==Type.leZ){
 			if(mustBeLessOrEqualZero(e)) return one;
 			if(mustBeLessThanZero(-e)) return zero;
