@@ -980,7 +980,7 @@ class DMult: DCommutAssocOp{
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		if(formatting==Format.lisp) return toStringImplImpl(operands,formatting,prec,binders);
 		auto frac=this.getFractionalFactor();
-		if(frac.c<0){
+		if(frac.c<0 && this.hasFactor(frac)){
 			if(formatting==Format.maple){
 				return "(-"~(dℚ(-frac.c)*this.withoutFactor(frac)).toStringImpl(formatting,Precedence.uminus,binders)~")";
 			}else{
