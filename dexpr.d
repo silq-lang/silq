@@ -642,7 +642,7 @@ Dℚ[2] isPower(ℤ x,size_t bound=-1)in{assert(x>=0);}body{ // TODO: return May
 	return [null,null];
 }
 
-Dℚ integerLog(ℤ x,ℤ b)in{assert(x>=0);}body{ // TODO: return Maybe!ℤ
+Dℚ integerLog(ℤ x,ℤ b)in{assert(x>0);}body{ // TODO: return Maybe!ℤ
 	if(x==1) return cast(Dℚ)zero;
 	if(x%b) return null;
 	ℤ r=0,d=1;
@@ -1177,16 +1177,16 @@ class DMult: DCommutAssocOp{
 							if(p1.operands[1] == mone)
 								if(auto l1=cast(DLog)p1.operands[0])
 									if(auto z1=l1.e.isInteger()){
-										if(z1.c>=0){
-											assert(z1.c.den==1 && z2.c.den==1);
-											if(auto r=integerLog(z2.c.num,z1.c.num))
-												return r;
-										}
-										// TODO: generalize/improve the following simplification rule:
-										assert(z2.c.den==1&&z1.c.den==1);
-										if(z2.c.num!=0 && z1.c.num!=1)
+										assert(z1.c.den==1&&z2.c.den==1);
+										if(z2.c.num!=0 && z1.c.num!=1){
+											if(z1.c>=0){
+												if(auto r=integerLog(z2.c.num,z1.c.num))
+													return r;
+											}
+											// TODO: generalize/improve the following simplification rule:
 											if((z2.c.num%z1.c.num)==0)
 												return (one+dLog(dℚ(z2.c.num/z1.c.num))*p1).simplify(facts);
+										}
 									}
 			if(cast(DPlus)e2) swap(e1,e2);
 			if(!e2.hasFreeVars()){
