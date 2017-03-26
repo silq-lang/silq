@@ -267,10 +267,10 @@ struct Dist{
 	}
 	DExpr call(FunctionDef fun,DExpr thisExp,DExpr arg,Scope sc){
 		auto ncur=pushFrame();
-		if(fun.isConstructor) ncur=ncur.map(dLambda(dRUpdate(db1,"this",dRecord())));
-		if(thisExp) ncur=ncur.map(dLambda(dRUpdate(db1,fun.isConstructor?fun.contextName:"this",inFrame(thisExp))));
+		if(fun.isConstructor) ncur=ncur.map(dLambda(dRUpdate(db1,fun.thisVar.getName,dRecord())));
+		if(thisExp) ncur=ncur.map(dLambda(dRUpdate(db1,fun.contextName,inFrame(thisExp))));
 		else if(fun.isNested) ncur=ncur.map(dLambda(dRUpdate(db1,fun.contextName,inFrame(buildContextFor(fun,sc)))));
-		if(fun.isNested&&fun.isConstructor) ncur=ncur.map(dLambda(dRUpdate(db1,"this",dRecord([fun.contextName:dField(db1,fun.contextName)]))));
+		if(fun.isNested&&fun.isConstructor) ncur=ncur.map(dLambda(dRUpdate(db1,fun.thisVar.getName,dRecord([fun.contextName:dField(db1,fun.contextName)]))));
 		if(fun.isTuple){
 			DExpr updates=db1;
 			foreach(i,prm;fun.params){
@@ -1039,9 +1039,8 @@ struct Interpreter{
 			}
 		}else if(auto re=cast(ReturnExp)e){
 			auto value = runExp(re.e);
-			if(functionDef.context&&functionDef.contextName.startsWith("this")){
-				value = dTuple([value,dField(db1,"this")]);
-			}
+			if(functionDef.context&&functionDef.contextName.startsWith("this"))
+				value = dTuple([value,dField(db1,functionDef.contextName)]);
 			auto rec=["`value":value];
 			if(hasFrame) rec["`frame"]=dField(db1,"`frame");
 			retDist += cur.map(dLambda(dRecord(rec)));
