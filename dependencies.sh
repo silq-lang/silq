@@ -10,6 +10,12 @@ if [ ! -d dmd2 ]; then
         SUM1="MD5 ($FILE) = 0844f3218043a21dcc7a3fc76605af5d"
         ZIPLINK="http://downloads.dlang.org/releases/2.x/2.072.2/$FILE"
         MD5="md5"
+    else
+	>&2 echo "This script does not support your platform at this time."
+	>&2 echo "Try to obtain the dmd d compiler manually from:"
+	>&2 echo "https://dlang.org"
+	>&2 echo "Pull requests for improved build script welcome."
+	exit(1);
     fi
 
     wget $ZIPLINK
