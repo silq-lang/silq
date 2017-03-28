@@ -1240,17 +1240,20 @@ class DMult: DCommutAssocOp{
 			if(var&&wo.hasFreeVar(var) && !d.e.hasFreeVar(var))
 				return (wo.substitute(var,d.e)*d).simplify(facts);
 		}
-		DExprSet myFactors;
-		DExprSet myFacts;
 	Louter: foreach(f;this.factors) if(auto d=cast(DDelta)f){
 			auto fact=dIvr(DIvr.Type.eqZ,d.e).simplify(facts);
 			foreach(f;fact.factors) if(!cast(DIvr)f) continue Louter; // TODO: remove this if possible
 			facts=facts*fact;
 		}
 		if(facts != one) facts=facts.simplify(one);
+		DExprSet myFactors,myFacts,myIntegralFacts;
 		foreach(f;this.factors){
-			if(cast(DIvr)f) insertAndSimplify(myFacts,f,facts);
-			else myFactors.insert(f);
+			if(auto ivr=cast(DIvr)f){
+				 // TODO: improve criterion (the point is to avoid simplifying identical subterms exponentially many times)
+				if(!hasIntegrals(ivr.e))
+					insertAndSimplify(myFacts,f,facts);
+				else myIntegralFacts.insert(f);
+			}else myFactors.insert(f);
 		}
 		DExpr newFacts=facts;
 		if(myFacts.length){
@@ -1264,6 +1267,7 @@ class DMult: DCommutAssocOp{
 		assert(!cast(DPlus)newFacts,text(facts," ",myFacts," ",dMult(myFacts)));
 		foreach(f;myFactors) insertAndSimplify(simpFactors,f,newFacts);
 		foreach(f;myFacts) insertAndSimplify(simpFactors,f,one);
+		foreach(f;myIntegralFacts) simpFactors.insert(f);
 		return dMult(simpFactors);
 	}
 	static DExpr constructHook(DExprSet operands){
