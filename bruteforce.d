@@ -478,10 +478,10 @@ struct Dist{
 			r.add(k.incDeBruijnVar(di,free),v.incDeBruijnVar(di,free));
 		return r;
 	}
-	int freeVarsImpl(scope int delegate(DVar) dg){
+	int freeVarsImpl(scope int delegate(DVar) dg,ref DExprSet visited){
 		foreach(k,v;state){
-			if(auto r=k.freeVarsImpl(dg)) return r;
-			if(auto r=v.freeVarsImpl(dg)) return r;
+			if(auto r=k.freeVarsImpl(dg,visited)) return r;
+			if(auto r=v.freeVarsImpl(dg,visited)) return r;
 		}
 		return 0;
 	}

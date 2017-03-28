@@ -118,14 +118,33 @@ abstract class DExpr{
 	}
 
 	// TODO: implement in terms of 'forEachSubExpr'?
-	abstract DExpr substitute(DVar var,DExpr e);
-	abstract DExpr incDeBruijnVar(int di,int free);
-	abstract int freeVarsImpl(scope int delegate(DVar));
+	static MapX!(Q!(DExpr,DVar,DExpr),DExpr) substituteMemo;
+	final DExpr substitute(DVar var,DExpr e){
+		auto t=q(this,var,e);
+		if(t in substituteMemo) return substituteMemo[t];
+		auto r=substituteImpl(var,e);
+		substituteMemo[t]=r;
+		return r;
+	}
+	abstract DExpr substituteImpl(DVar var,DExpr e);
+	static MapX!(Q!(DExpr,int,int),DExpr) incDeBruijnVarMemo;
+	final DExpr incDeBruijnVar(int di,int free){
+		auto t=q(this,di,free);
+		if(t in incDeBruijnVarMemo) return incDeBruijnVarMemo[t];
+		auto r=incDeBruijnVarImpl(di,free);
+		incDeBruijnVarMemo[t]=r;
+		return r;
+	}
+	abstract DExpr incDeBruijnVarImpl(int di,int free);
+	abstract int freeVarsImpl(scope int delegate(DVar),ref DExprSet visited);
 	final freeVars(){
 		static struct FreeVars{ // TODO: move to util?
 			DExpr self;
+			DExprSet visited;
+			@disable this(this);
 			int opApply(scope int delegate(DVar) dg){
-				return self.freeVarsImpl(dg);
+				visited=DExprSet.init;
+				return self.freeVarsImpl(dg,visited);
 			}
 		}
 		return FreeVars(this);
@@ -202,9 +221,9 @@ abstract class DExpr{
 		static if(!is(subExprs==Seq!()))
 			this(typeof(subExprs) args){ subExprs=args; }
 		override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; }
-		override int freeVarsImpl(scope int delegate(DVar) dg){ return 0; }
-		override DExpr substitute(DVar var,DExpr e){ assert(var != this); return this; }
-		override DExpr incDeBruijnVar(int di,int free){ return this; }
+		override int freeVarsImpl(scope int delegate(DVar) dg,ref DExprSet visited){ return 0; }
+		override DExpr substituteImpl(DVar var,DExpr e){ assert(var != this); return this; }
+		override DExpr incDeBruijnVarImpl(int di,int free){ return this; }
 		override DExpr simplifyImpl(DExpr facts){ return this; }
 	}
 }
@@ -254,20 +273,25 @@ mixin template Visitors(){
 			mixin(forEachSubExprImpl!"if(auto r=dg(x)) return r");
 		return 0;
 	}
-	override int freeVarsImpl(scope int delegate(DVar) dg){
+	override int freeVarsImpl(scope int delegate(DVar) dg,ref DExprSet visited){
 		// TODO: improve performance (this method uses ~10% of total running time)
+		if(this in visited) return 0;
+		visited.insert(this);
 		static if(is(typeof(this):DVar)) return dg(this);
 		else{
 			mixin(forEachSubExprImpl!q{{
 				import std.traits: hasUDA;
 				static if(hasUDA!(subExprs[i],binder)){
-					if(auto r=x.freeVarsImpl(v=>v==dDeBruijnVar(1)?0:dg(v.incDeBruijnVar(-1,0)))) return r;
-				}else{ if(auto r=x.freeVarsImpl(dg)) return r; }
+					foreach(v;x.freeVars())
+						if(v!=dDeBruijnVar(1))
+							if(auto r=dg(v.incDeBruijnVar(-1,0)))
+								return r;
+				}else{ if(auto r=x.freeVarsImpl(dg,visited)) return r; }
 			}});
 			return 0;
 		}
 	}
-	override SubstituteType!(typeof(this)) substitute(DVar var,DExpr e){
+	override SubstituteType!(typeof(this)) substituteImpl(DVar var,DExpr e){
 		static if(is(typeof(this):DVar)) return this==var?e:this;
 		else{
 			Q!(typeof(subExprs)) nsubs;
@@ -299,7 +323,7 @@ mixin template Visitors(){
 			return mixin(lowerf(typeof(this).stringof))(nsubs.expand);
 		}
 	}
-	override IncDeBruijnVarType!(typeof(this)) incDeBruijnVar(int di,int bound){
+	override IncDeBruijnVarType!(typeof(this)) incDeBruijnVarImpl(int di,int bound){
 		static if(is(typeof(this)==DDeBruijnVar)){
 			if(i<=bound) return this;
 			assert((i<=bound) == (i+di <= bound)); // (otherwise bound variables can be captured);
@@ -314,7 +338,7 @@ mixin template Visitors(){
 					cbound++;
 				}
 				static if(is(typeof(sub):DExpr)){
-					nsubs[i]=sub.incDeBruijnVar(cdi,cbound);
+					nsubs[i]=cast(typeof(nsubs[i]))sub.incDeBruijnVar(cdi,cbound);
 				}else static if(is(typeof(sub)==SetX!DExpr)){
 					foreach(f;sub) nsubs[i].insert(f.incDeBruijnVar(cdi,cbound));
 				}else static if(is(typeof(sub)==DExpr[])||is(typeof(sub)==DExpr[2])){
@@ -500,7 +524,12 @@ abstract class DVar: DExpr{
 		}
 		return name;
 	}
-	override abstract DVar incDeBruijnVar(int di,int bound);
+	override abstract DVar incDeBruijnVarImpl(int di,int bound);
+	final DVar incDeBruijnVar(int di,int bound){
+		auto r=cast(DVar)super.incDeBruijnVar(di,bound); // TODO: get rid of cast?
+		assert(!!r);
+		return r;
+	}
 }
 class DNVar: DVar{ // named variables
 	string name;
@@ -3475,7 +3504,11 @@ class DLambda: DOp{ // lambda functions DExpr → DExpr
 		return addp(prec,text("λ",DDeBruijnVar.displayName(1,formatting,binders+1),". ",expr.toStringImpl(formatting,Precedence.lambda,binders+1)));
 	}
 	mixin Visitors;
-
+	final DLambda substitute(DVar var,DExpr expr){
+		auto r=cast(DLambda)super.substitute(var,expr);
+		assert(!!r);
+		return r;
+	}
 	static DLambda constructHook(DExpr expr){
 		return staticSimplify(expr);
 	}
