@@ -219,10 +219,10 @@ private struct Analyzer{
 											idist.addArgs([],true,null);
 											auto d=idist.declareVar("`d");
 											auto dist=dDistApply(distr,d);
-											idist.distribute(dist*dIvr(DIvr.Type.eqZ,dField(d,"tag")-one));
-											idist.error=dInt(d,dIvr(DIvr.Type.eqZ,dField(d,"tag"))*dist);
 											auto r=idist.declareVar("`r");
-											idist.initialize(r,dField(d,"val"),tt);
+											auto db1=dDeBruijnVar(1);
+											idist.distribute(dMCase(d,dDiscDelta(r,db1),zero)*dist);
+											idist.error=dInt(d,dMCase(d,zero,one)*dist);
 											idist.marginalize(d);
 											idist.orderFreeVars([r],false);
 											return idist.toDExpr().simplify(one);
@@ -232,12 +232,11 @@ private struct Analyzer{
 											idist.addArgs([f],false,null);
 											auto rdist=new Distribution();
 											rdist.addArgs([],true,null);
-											auto d=rdist.declareVar("`d");
+											auto d=rdist.declareVar("`d"),x=rdist.declareVar("`x");
 											auto dist=dDistApply(distr,d);
-											rdist.distribute(dist*dIvr(DIvr.Type.eqZ,dField(d,"tag")-one));
-											rdist.error=dInt(d,dIvr(DIvr.Type.eqZ,dField(d,"tag"))*dist);
-											auto x=rdist.declareVar("`x");
-											rdist.initialize(x,dField(d,"val"),tt);
+											auto db1=dDeBruijnVar(1);
+											rdist.distribute(dMCase(d,dDiscDelta(x,db1),zero)*dist);
+											rdist.error=dInt(d,dMCase(d,zero,one)*dist);
 											auto faty=cast(ForallTy)type;
 											assert(!!faty);
 											auto fety=cast(FunTy)faty.cod;
@@ -245,7 +244,6 @@ private struct Analyzer{
 											auto fty=cast(FunTy)fety.dom;
 											assert(!!fty);
 											auto summary=Distribution.fromDExpr(f,1,false,["`r".dVar],false,[fty.cod]);
-											auto db1=dDeBruijnVar(1);
 											auto tmp=rdist.call(summary,x,fty.dom);
 											auto r=rdist.declareVar("`r");
 											rdist.initialize(r,tmp,tt);
@@ -267,7 +265,8 @@ private struct Analyzer{
 										case "expectation": // TODO: handle non-convergence
 											assert(tt == ℝ);
 											auto d="`d".dVar,x="`x".dVar;
-											auto pdf=dInt(d,dDistApply(distr,d)*dIvr(DIvr.Type.eqZ,dField(d,"tag")-one)*dDelta(x,dField(d,"val"),ℝ));
+											auto db1=dDeBruijnVar(1);
+											auto pdf=dInt(d,dDistApply(distr,d)*dMCase(d,dDiscDelta(x,db1),zero));
 											auto total=dInt(x,pdf),expct=dInt(x,x*pdf);
 											auto idist=new Distribution();
 											idist.addArgs([],true,null);
@@ -278,7 +277,7 @@ private struct Analyzer{
 											return idist.toDExpr().simplify(one);
 										case "error":
 											auto d="`d".dVar,x="`x".dVar;
-											auto error=dInt(d,dDistApply(distr,d)*dIvr(DIvr.Type.eqZ,dField(d,"tag")));
+											auto error=dInt(d,dDistApply(distr,d)*dMCase(d,zero,one));
 											auto idist=new Distribution();
 											idist.addArgs([],true,null);
 											auto r=idist.declareVar("`r");
@@ -1142,6 +1141,7 @@ private struct Analyzer{
 							if(!var) var=dist.getVar(fe.f.name);
 						}else var=dist.getVar("r");
 						dist.initialize(var,exp,ret.type);
+						dist.simplify();
 						vars.insert(var);
 						orderedVars~=var;
 					}

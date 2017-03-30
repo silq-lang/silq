@@ -1,3 +1,3 @@
 def main(){
-	return infer(()=>uniform(0,1)); // expected: δ_r₁[λξ₁. ∫dξ₂[-1+ξ₂≤0]·[-ξ₂≤0]·δ_ξ₁[{.val ↦ ξ₂,.tag ↦ 1}]]
+	return infer(()=>uniform(0,1)); // expected: δ_r₁[λξ₁. ∫dξ₂[-1+ξ₂≤0]·[-ξ₂≤0]·δ_ξ₁[val(ξ₂)]]
 }

@@ -426,9 +426,9 @@ class Distribution{
 		}
 		dist=dist.substituteAll(allVars,allVals);
 		auto db1=dDeBruijnVar(1);
-		auto r=dist*dDiscDelta(db1,dRecord(["tag":one,"val":values]));
+		auto r=dist*dDiscDelta(db1,dVal(values));
 		foreach(v;vars) r=dInt(v,r);
-		r=r+dDiscDelta(db1,dRecord(["tag":zero]))*error.substituteAll(allVars,allVals);
+		r=r+dDiscDelta(db1,dErr)*error.substituteAll(allVars,allVals);
 		return dLambda(r);
 	}
 	
@@ -454,7 +454,7 @@ class Distribution{
 		auto r=new Distribution();
 		auto db1=dDeBruijnVar(1);
 		dexpr=dexpr.incDeBruijnVar(1,0);
-		auto values=dField(db1,"val");
+		auto values=db1;
 		foreach(i,v;orderedFreeVars){
 			r.freeVars.insert(v);
 			auto value=isTuple?dIndex(values,dℚ(i)):values;
@@ -463,8 +463,9 @@ class Distribution{
 		r.addArgs(nargs,argsIsTuple,null);
 		auto args=argsIsTuple?dTuple(cast(DExpr[])r.args):r.args[0];
 		auto ndist=dDistApply(dApply(dexpr,args),db1);
-		r.distribution=dInt(r.distribution*dIvr(DIvr.Type.eqZ,dField(db1,"tag")-one)*ndist);
-		r.error=dInt(dIvr(DIvr.Type.eqZ,dField(db1,"tag"))*ndist);
+		auto db3=dDeBruijnVar(3);
+		r.distribution=dInt(r.distribution*dInt(dMCase(db1,dDiscDelta(db3,db1),zero)*ndist));
+		r.error=dInt(dMCase(db1,zero,one)*ndist);
 		r.orderFreeVars(orderedFreeVars,isTuple);
 		return r;
 	}
@@ -476,7 +477,7 @@ class Distribution{
 	string argsToString(Format formatting){
 		if(formatting==Format.mathematica)
 			return args.length?(freeVars.length?", ":"")~args.map!(a=>a.toString(formatting)~"_").join(","):"";
-		return args.length?(freeVars.length?"|":"")~args.map!(a=>a.toString(formatting)).join(","):"";
+		return args.map!(a=>a.toString(formatting)).join(",");
 	}
 	
 	string toString(Format formatting){
@@ -485,11 +486,11 @@ class Distribution{
 		if(formatting==Format.mathematica){
 			initial="p[";
 			middle=text(astr,"] := ");
-			errstr=text("Pr_error[",astr.length?astr[2..$]:"","] := ");
+			errstr=text("Pr_error[",astr.length?astr:"","] := ");
 		}else{
 			initial="p(";
-			middle=text(astr,") = ");
-			errstr=text("Pr[error",astr,"] = ");
+			middle=text(astr.length&&freeVars.length?"|":"",astr,") = ");
+			errstr=text("Pr[error",astr.length?"|":"",astr,"] = ");
 		}
 		string r=initial;
 		DNVar[] vars;

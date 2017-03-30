@@ -38,6 +38,7 @@ enum measure="swCount++;sw.start();scope(exit)sw.stop();";+/
 enum Precedence{
 	none,
 	lambda,
+	bind,
 	bitOr,
 	bitXor,
 	bitAnd,
@@ -3526,9 +3527,14 @@ class DLambda: DOp{ // lambda functions DExpr → DExpr
 		}
 		return null;
 	}
-	override DExpr simplifyImpl(DExpr facts){
+	override DLambda simplifyImpl(DExpr facts){
 		auto r=staticSimplify(expr,facts);
 		return r?r:this;
+	}
+	final DLambda simplify(DExpr facts){
+		auto r=cast(DLambda)super.simplify(facts);
+		assert(!!r);
+		return r;
 	}
 }
 mixin FactoryFunction!DLambda;
@@ -3723,6 +3729,85 @@ class DField: DOp{
 	}
 }
 mixin FactoryFunction!DField;
+
+abstract class DMonad: DExpr{}
+
+class DVal: DMonad{
+	DExpr e;
+	alias subExprs=Seq!e;
+	mixin Visitors;
+	override DExpr simplifyImpl(DExpr facts){
+		auto ne=e.simplify(facts);
+		if(ne==e) return this;
+		return dVal(ne);
+	}
+	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		return text("val(",e.toStringImpl(formatting,Precedence.none,binders),")");
+	}
+}
+mixin FactoryFunction!DVal;
+
+class DErr: DMonad{ // monad for side-effects
+	alias subExprs=Seq!();
+	mixin Constant;
+	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		return "⊥";
+	}
+}
+mixin FactoryFunction!DErr;
+
+class DMCase: DExpr{
+	DExpr e;
+	@binder DExpr val;
+	DExpr err;
+	alias subExprs=Seq!(e,val,err);
+	mixin Visitors;
+	override DExpr simplifyImpl(DExpr facts){
+		auto ne=e.simplify(facts);
+		auto nval=val.simplify(facts.incDeBruijnVar(1,0));
+		auto nerr=err.simplify(facts);
+		if(cast(DMonad)e){
+			if(auto v=cast(DVal)ne)
+				return unbind(val,v.e).simplify(facts);
+			if(cast(DErr)ne)
+				return nerr;
+		}
+		if(ne==e&&nerr==err&&nval==val) return this;
+		return dMCase(ne,nval,nerr);
+	}
+	override string toStringImpl(Format formatting, Precedence prec, int binders){
+		return text("(case(",e.toStringImpl(formatting,Precedence.none,binders),"){ val(",DDeBruijnVar.displayName(1,formatting,binders+1),") ⇒ ",val.toStringImpl(formatting,Precedence.none,binders+1),";⊥ ⇒ ",err.toStringImpl(formatting,Precedence.none,binders),"})");
+	}
+}
+mixin FactoryFunction!DMCase;
+
+class DBind: DOp{
+	DExpr e,f;
+	alias subExprs=Seq!(e,f);
+	mixin Visitors;
+	override @property string symbol(Format formatting,int binders){
+		return ">>=";
+	}
+	override @property Precedence precedence(){
+		return Precedence.bind;
+	}
+	override string toStringImpl(Format formatting, Precedence prec, int binders){
+		return addp(prec, text(e.toStringImpl(formatting,prec,binders),">>=",f.toStringImpl(formatting,prec,binders)));
+	}
+	override DExpr simplifyImpl(DExpr facts){
+		auto ne=e.simplify(facts), nf=f.simplify(facts);
+		if(cast(DMonad)ne){
+			if(auto val=cast(DVal)ne)
+				return dApply(f,val.e).simplify(facts);
+			if(cast(DErr)ne)
+				return ne;
+		}
+		if(ne==e&&nf==f) return this;
+		return dBind(ne,nf);
+	}
+}
+mixin FactoryFunction!DBind;
+
 
 import std.traits: ParameterTypeTuple;
 import std.typetuple;
