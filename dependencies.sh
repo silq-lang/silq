@@ -15,7 +15,7 @@ if [ ! -d dmd2 ]; then
 	>&2 echo "Try to obtain the dmd d compiler manually from:"
 	>&2 echo "https://dlang.org"
 	>&2 echo "Pull requests for improved build script welcome."
-	exit(1);
+	exit 1;
     fi
 
     wget $ZIPLINK

@@ -17,7 +17,7 @@ else
     >&2 echo "Try to obtain the ldc d compiler manually from:"
     >&2 echo "https://github.com/ldc-developers/ldc/releases"
     >&2 echo "Pull requests for improved build script welcome."
-    exit(1);
+    exit 1
 fi
 
 if [ ! -d $NAME ]; then
