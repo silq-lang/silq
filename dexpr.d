@@ -3036,8 +3036,9 @@ class DFloor: DOp{
 	override @property string symbol(Format formatting,int binders){ return "⌊.⌋"; }
 	override Precedence precedence(){ return Precedence.none; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		if(formatting==Format.default_)   return "⌊"~e.toStringImpl(formatting,Precedence.none,binders)~"⌋";
 		if(formatting==Format.lisp) return text("(floor ",e.toStringImpl(formatting,Precedence.none,binders),")");
-		return "⌊"~e.toStringImpl(formatting,Precedence.none,binders)~"⌋";
+		return text("floor(",e.toStringImpl(formatting,Precedence.none,binders),")");
 	}
 	mixin Visitors;
 	static DExpr constructHook(DExpr e){

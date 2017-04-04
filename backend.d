@@ -8,7 +8,6 @@ import std.stdio, std.path, std.algorithm;
 Distribution getCDF(Distribution dist){
 	dist=dist.dup;
 	auto vars=dist.freeVars.dup;
-	foreach(a;dist.args) vars.insert(a);
 	foreach(var;vars){
 		auto nvar=dist.getVar("c"~var.name);
 		dist.distribute(dIvr(DIvr.Type.leZ,var-nvar));
@@ -71,6 +70,11 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 				writeln(dist.error.toString(opt.formatting));
 				break;
 		}
+		auto varset=expectation.freeVars.setx;
+		if(opt.plot && (varset.length==1||varset.length==2)){
+			writeln("plotting... ");
+			gnuplot(expectation,dist.freeVars,"expectation",opt.plotRange,opt.plotFile);
+		}
 		return;
 	}
 	if(opt.cdf) dist=getCDF(dist);
@@ -109,7 +113,7 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 		if(plotCDF&&!opt.cdf) dist=getCDF(dist);
 		writeln("plotting... ",(plotCDF?"(CDF)":"(PDF)"));
 		//matlabPlot(dist.distribution.toString(Format.matlab).replace("q(γ⃗)","1"),dist.freeVars.element.toString(Format.matlab));
-		gnuplot(dist.distribution,dist.freeVars,plotCDF?"probability":"density",opt.plotRange,opt.plotFile);
+		gnuplot(dist.distribution,varset,plotCDF?"probability":"density",opt.plotRange,opt.plotFile);
 	}
 }
 
