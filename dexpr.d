@@ -930,25 +930,25 @@ class DPlus: DCommutAssocOp{
 	static DExpr integralSimplify(DExprSet summands,DExpr facts){
 		DExprSet integralSummands;
 		DExprSet integrals;
-		// dw("!! ",summands);
 		static void recursiveInsert(ref DExprSet set,DExpr e){
 			if(auto p=cast(DPlus)e)
 				foreach(s;p.summands)
-					recursiveInsert(set,e);
+					recursiveInsert(set,s);
 			else DPlus.insert(set,e);
 		}
 		foreach(s;summands){
 			if(auto dint=cast(DInt)s){
-				integralSummands.insert(dint.expr);
+				recursiveInsert(integralSummands,dint.expr);
+				assert(dint !in integrals);
 				integrals.insert(dint);
 			}
 		}
 		if(integralSummands.length){
-			auto integralSum=dPlus(integralSummands).simplify(facts);
-			auto simplSummands=integralSum.summands.setx;
-			if(simplSummands.setMinus(integralSummands).length){
+			auto integralSum=dPlus(integralSummands);
+			auto simplSum=integralSum.simplify(facts.incDeBruijnVar(1,0));
+			if(integralSum!=simplSum){
 				summands=summands.setMinus(integrals);
-				return dPlus(summands).simplify(facts)+dIntSmp(dPlus(simplSummands),facts);
+				return dPlus(summands)+dIntSmp(simplSum,facts);
 			}
 		}
 		return null;
@@ -987,7 +987,7 @@ class DPlus: DCommutAssocOp{
 		DExprSet summands;
 		foreach(s;this.summands)
 			insertAndSimplify(summands,s,facts);
-		// if(auto r=integralSimplify(summands,facts)) return r.simplify(facts);
+		if(auto r=integralSimplify(summands,facts)) return r.simplify(facts);
 		return dPlus(summands);
 	}
 
