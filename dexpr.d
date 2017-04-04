@@ -913,6 +913,11 @@ class DPlus: DCommutAssocOp{
 			if(auto r=combineIvr2(e1,e2,facts)) return r.simplify(facts);
 			if(auto r=combineIvr2(e2,e1,facts)) return r.simplify(facts);
 
+			if(auto c1=cast(DMCase)e1)
+				if(auto c2=cast(DMCase)e2)
+					if(c1.e==c2.e)
+						return dMCase(c1.e,c1.val+c2.val,c1.err+c2.err).simplify(facts);
+
 			return null;
 		}
 		// TODO: use suitable data structures
@@ -1231,6 +1236,12 @@ class DMult: DCommutAssocOp{
 					}
 				}
 			}
+
+			if(auto c1=cast(DMCase)e1)
+				if(auto c2=cast(DMCase)e2)
+					if(c1.e==c2.e)
+						return dMCase(c1.e,c1.val*c2.val,c1.err*c2.err).simplify(facts);
+
 			/+// TODO: do we want auto-distribution?
 			if(cast(DPlus)e1) return dDistributeMult(e1,e2);
 			if(cast(DPlus)e2) return dDistributeMult(e2,e1);+/
@@ -2778,6 +2789,16 @@ class DInt: DOp{
 		ow[0]=ow[0].incDeBruijnVar(-1,0).simplify(facts);
 		if(ow[0]==zero) return zero;
 		if(ow[0] != one) return (ow[0]*dIntSmp(ow[1],facts)).simplify(facts);
+		/+foreach(f;expr.factors){
+			if(auto case_=cast(DMCase)f){
+				if(!case_.e.hasFreeVar(dDeBruijnVar(1))){
+					auto e=case_.e.incDeBruijnVar(-1,0);
+					auto val=case_.val.incDeBruijnVar(1,0).substitute(dDeBruijnVar(2),dDeBruijnVar(1)).incDeBruijnVar(-1,1);
+					auto rest=expr.withoutFactor(f).incDeBruijnVar(1,1);
+					return dMCase(e,dInt(val*rest),dInt(case_.err*rest)).simplify(facts);
+				}
+			}
+		}+/
 		//version(DISABLE_INTEGRATION){
 		if(opt.integrationLevel==IntegrationLevel.none)
 			return null;
@@ -3756,7 +3777,7 @@ class DErr: DMonad{ // monad for side-effects
 }
 mixin FactoryFunction!DErr;
 
-class DMCase: DExpr{
+class DMCase: DExpr{ // TODO: generalize?
 	DExpr e;
 	@binder DExpr val;
 	DExpr err;
