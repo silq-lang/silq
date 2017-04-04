@@ -70,9 +70,11 @@ int run(string path){
 			stderr.writeln("cannot extract benchmark: no entry point");
 			return 1;
 		}
-		foreach(name,fd;functions){
-			writeln(name,":");
-			printResult(be,path,fd,err,false);
+		foreach(expr;exprs){
+			if(auto fd=cast(FunctionDef)expr){
+				writeln(fd.name,":");
+				printResult(be,path,fd,err,false);
+			}
 		}
 	}else printResult(be,path,functions["main"],err,true);
 	return !!err.nerrors;
