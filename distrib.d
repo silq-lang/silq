@@ -379,29 +379,19 @@ class Distribution{
 		distribution=(dIvr(DIvr.Type.neqZ,factor)*(distribution/factor)).simplify(one);
 		error=(dIvr(DIvr.Type.eqZ,factor)+dIvr(DIvr.Type.neqZ,factor)*(error/factor)).simplify(one);
 	}
-	DExpr call(Distribution q,DExpr arg,Expression ty){
-		DExpr rdist=q.distribution;
-		DExpr rerr=q.error;
+	DExpr call(DExpr q,DExpr arg){
 		auto vars=freeVars.dup;
-		auto targ=arg;
-		if(q.context) targ=arg[0.dℚ];
-		DExpr[] args;
-		if(q.argsIsTuple) args=iota(0,q.args.length).map!(i=>targ[i.dℚ]).array;
-		else args=[targ];
-		DNVar[] r;
-		foreach(_;q.orderedFreeVars)
-			r~=getTmpVar("__r");
-		auto allVars=cast(DVar[])q.args~cast(DVar[])q.orderedFreeVars~(q.context?[cast(DVar)q.context]:[]);
-		auto allVals=cast(DExpr[])args~cast(DExpr[])r~(q.context?[arg[1.dℚ]]:[]);
-		rdist=rdist.substituteAll(allVars,allVals);
-		rerr=rerr.substituteAll(allVars,allVals);
-		auto oldDist=distribution;
-		distribution = rdist*oldDist;
-		auto nerror = rerr*oldDist;
-		//dw("+--\n",oldDist,"\n",rdist,"\n",distribution,"\n--+");
+		auto r=getTmpVar("__r");
+		auto db1=dDeBruijnVar(1);
+		auto ndist=dDistApply(dApply(q,arg),db1);
+		auto nerror=distribution*dInt(dMCase(db1,zero,one)*ndist);
+		distribution=distribution*dInt(dMCase(db1,dDiscDelta(r,db1),zero)*ndist);
 		foreach(v;vars) nerror=dInt(v,nerror);
-		error = error + nerror;
-		return q.isTuple?dTuple(cast(DExpr[])r):r[0];
+		error=error+nerror;
+		return r;
+	}
+	DExpr call(Distribution q,DExpr arg,Expression ty){
+		return call(q.toDExpr(),arg);
 	}
 	void simplify(){
 		distribution=distribution.simplify(one); // TODO: this shouldn't be necessary!

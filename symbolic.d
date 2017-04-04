@@ -355,12 +355,8 @@ private struct Analyzer{
 						}
 						auto r=dist.call(summary,arg,argty);
 						if(thisExp&&!fun.isConstructor){
-							DExpr thisr;
-							auto tpl=cast(DTuple)r;
-							assert(!!tpl);
-							r=tpl.values[0];
-							thisr=tpl.values[1];
-							assert(thisr&&fe);
+							auto thisr=r[1.dℚ];
+							r=r[0.dℚ];
 							assignTo(thisExp,thisr,fe.e.type,ce.loc);
 						}
 						return r;

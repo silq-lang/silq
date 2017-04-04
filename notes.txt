@@ -1,5 +1,52 @@
 
 
+∫dξ₁(case(ξ₁){ val(ξ₂) ⇒ 0;⊥ ⇒ 1})·(f(0))(ξ₁)+
+
+∫dξ₁(∫dξ₂(case(ξ₂){ val(ξ₃) ⇒ 0;⊥ ⇒ 1})·(f(ξ₁))(ξ₂))·
+  (∫dξ₂(case(ξ₂){ val(ξ₃) ⇒ δ_ξ₁[ξ₃];⊥ ⇒ 0})·(f(0))(ξ₂))
+
+
+f(0) >>= f.
+
+
+∫dξ₁(∫dξ₂(case(ξ₂){ val(ξ₃) ⇒ 0;⊥ ⇒ 1})·(f(ξ₁))(ξ₂))·
+  (∫dξ₂(case(ξ₂){ val(ξ₃) ⇒ δ_ξ₁[ξ₃];⊥ ⇒ 0})·(f(0))(ξ₂))
+
+⇒ focus second summand, fubini:
+
+∫dx(∫dy(∫dz (case(y){ val(w) ⇒ 0;⊥ ⇒ 1})·(f(x))(y)·(case(z){ val(w) ⇒ δ_x[w];⊥ ⇒ 0})·(f(0))(z))
+
+⇒ case integration:
+
+∫dx(∫dy(∫dz (case(z){ val(w) ⇒ δ_x[w]·case(y){ val(w) ⇒ 0;⊥ ⇒ 1})·(f(x))(y);⊥ ⇒ 0})·(f(0))(z))
+
+∫dy(∫dz (case(z){ val(w) ⇒ ∫dx(δ_x[w]·case(y){ val(w) ⇒ 0;⊥ ⇒ 1}))·(f(x))(y);⊥ ⇒ 0})·(f(0))(z)
+
+∫dz (case(z){ val(w) ⇒ ∫dy (case(y){ val(w) ⇒ 0;⊥ ⇒ 1})·(f(w))(y);⊥ ⇒ 0})·(f(0))(z)
+
+⇒ unfocus second summand:
+
+∫dz(case(z){ val(w) ⇒ 0;⊥ ⇒ 1})·(f(0))(z)+
+∫dz(case(z){ val(w) ⇒ ∫dy (case(y){ val(w) ⇒ 0;⊥ ⇒ 1})·(f(w))(y);⊥ ⇒ 0})·(f(0))(z)
+
+⇒ combine integrals
+∫dz((case(z){ val(w) ⇒ 0;⊥ ⇒ 1})·(f(0))(z)+
+    (case(z){ val(w) ⇒ ∫dy (case(y){ val(w) ⇒ 0;⊥ ⇒ 1})·(f(w))(y);⊥ ⇒ 0})·(f(0))(z))
+
+⇒ combine cases on identical value:
+∫dz((case(z){ val(w) ⇒ ∫dy (case(y){ val(k) ⇒ 0;⊥ ⇒ 1})·(f(w))(y);⊥ ⇒ 1})·(f(0))(z)
+
+⇒ avoids blowup.
+
+
+
+x >>= f
+
+=>λξ₁. ∫dξ₂ f(x)(ξ₂)·(case(ξ₂){ val(ξ₃) ⇒ δ_ξ₁[ξ₃]; ⊥ ⇒ 
+
+
+
+
 λz_dist. λyres.
   ∫dval(∫dctx∫dqres(λξ₆. δ_(ξ₆[1])[{.q ↦ q}]·z_dist(ξ₆[0],))(-qres.values+val,ctx)·(ctx.q (λξ₆. δ[-qres.values+-ξ₆[0]+val])) (qres))·δ_yres[{.values ↦ val}]
 
