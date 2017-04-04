@@ -2989,8 +2989,12 @@ class DLog: DOp{
 		if(auto q=cast(Dℚ)e)
 			if(q.c.den!=1)
 				return dLog(dℚ(q.c.num))-dLog(dℚ(q.c.den));
-		if(auto p=cast(DPow)e)
-			return (p.operands[1]*dLog(dAbs(p.operands[0]))).simplify(facts);
+		if(auto p=cast(DPow)e){
+			if(auto q=cast(Dℚ)p.operands[1])
+				if(!(q.c.num&1)&&q.c.den==1)
+					return (p.operands[1]*dLog(dAbs(p.operands[0]))).simplify(facts);
+			return (p.operands[1]*dLog(p.operands[0])).simplify(facts);
+		}
 		if(auto fct=factorDIvr!(e=>dLog(e))(e)) return fct.simplify(facts);
 		return null;
 	}
