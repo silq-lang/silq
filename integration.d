@@ -29,6 +29,21 @@ private DExpr definiteIntegralImpl(DExpr expr,DExpr facts=one){
 		}
 		return null;
 	}
+	/+foreach(f;expr.factors){
+		if(auto case_=cast(DMCase)f){
+			if(!case_.e.hasFreeVar(dDeBruijnVar(1))){
+				auto val=case_.val.incDeBruijnVar(1,0).substitute(dDeBruijnVar(2),dDeBruijnVar(1)).incDeBruijnVar(-1,1);
+				auto rest=expr.withoutFactor(f).incDeBruijnVar(1,1);
+				auto vali=definiteIntegral(val*rest,facts);
+				auto erri=definiteIntegral(case_.err*rest,facts);
+				if(vali&&erri){
+					auto e=case_.e.incDeBruijnVar(-1,0);
+					return dMCase(e,vali,erri).simplify(facts);
+				}
+			}
+		}
+	}+/
+
 	DExpr discDeltaSubstitution(){
 		foreach(f;expr.factors){
 			if(!f.hasFreeVar(var)) continue;

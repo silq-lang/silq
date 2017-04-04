@@ -2789,16 +2789,6 @@ class DInt: DOp{
 		ow[0]=ow[0].incDeBruijnVar(-1,0).simplify(facts);
 		if(ow[0]==zero) return zero;
 		if(ow[0] != one) return (ow[0]*dIntSmp(ow[1],facts)).simplify(facts);
-		/+foreach(f;expr.factors){
-			if(auto case_=cast(DMCase)f){
-				if(!case_.e.hasFreeVar(dDeBruijnVar(1))){
-					auto e=case_.e.incDeBruijnVar(-1,0);
-					auto val=case_.val.incDeBruijnVar(1,0).substitute(dDeBruijnVar(2),dDeBruijnVar(1)).incDeBruijnVar(-1,1);
-					auto rest=expr.withoutFactor(f).incDeBruijnVar(1,1);
-					return dMCase(e,dInt(val*rest),dInt(case_.err*rest)).simplify(facts);
-				}
-			}
-		}+/
 		//version(DISABLE_INTEGRATION){
 		if(opt.integrationLevel==IntegrationLevel.none)
 			return null;
