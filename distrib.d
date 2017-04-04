@@ -378,6 +378,11 @@ class Distribution{
 		factor=factor+error;
 		distribution=(dIvr(DIvr.Type.neqZ,factor)*(distribution/factor)).simplify(one);
 		error=(dIvr(DIvr.Type.eqZ,factor)+dIvr(DIvr.Type.neqZ,factor)*(error/factor)).simplify(one);
+		/+import type;
+		Distribution r=fromDExpr(dLambda(dNormalize(dApply(toDExpr().incDeBruijnVar(1,0),dDeBruijnVar(1)))),args.length,argsIsTuple,orderedFreeVars,isTuple,orderedFreeVars.map!(x=>cast(Expression)contextTy).array);
+		r.simplify();
+		distribution=r.distribution;
+		error=r.error;+/
 	}
 	DExpr call(DExpr q,DExpr arg){
 		auto vars=freeVars.dup;

@@ -3829,6 +3829,25 @@ class DBind: DOp{
 }
 mixin FactoryFunction!DBind;
 
+class DNormalize: DExpr{
+	DExpr e;
+	alias subExprs=Seq!e;
+	mixin Visitors;
+	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		return text("normalize(",e.toStringImpl(formatting,Precedence.none,binders),")");
+	}
+	override DExpr simplifyImpl(DExpr facts){
+		auto ne=e.simplify(facts);
+		if(auto onorm=cast(DNormalize)ne)
+			return onorm;
+		auto nnorm=dIntSmp(dDistApply(ne.incDeBruijnVar(1,0),dDeBruijnVar(1)),facts);
+		if(dIvr(DIvr.type.eqZ,nnorm).simplify(facts)==zero)
+			return dLambda(dDistApply(ne.incDeBruijnVar(1,0),dDeBruijnVar(1))/nnorm).simplify(facts);
+		if(ne!=e) return dNormalize(ne).simplify(facts);
+		return this;
+	}
+}
+mixin FactoryFunction!DNormalize;
 
 import std.traits: ParameterTypeTuple;
 import std.typetuple;
