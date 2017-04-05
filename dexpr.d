@@ -1448,7 +1448,7 @@ class DPow: DBinaryOp{
 		if(e1==one||e2==zero) return one;
 		if(e1==mone && e2==mone) return mone;
 		if(e2==one) return e1;
-		if(e1.mustBeZeroOrOne()&&(-e2).mustBeLessOrEqualZero())
+		if(e1.mustBeZeroOrOne()&&(-e2).simplify(facts).mustBeLessOrEqualZero())
 			return (dIvr(DIvr.Type.neqZ,e2)*e1+dIvr(DIvr.Type.eqZ,e2)).simplify(facts);
 		if(e1==zero) return dIvr(DIvr.Type.eqZ,e2).simplify(facts);
 		if(auto d=e2.isInteger()){
@@ -1687,7 +1687,7 @@ bool couldBeZero(DExpr e){
 		bool allLarge=true,allSmall=true;
 		foreach(s;p.summands){
 			if(!mustBeLessThanZero(s)) allSmall=false;
-			if(!mustBeLessThanZero(-s)) allLarge=false;
+			if(!mustBeLessThanZero((-s).simplify(one))) allLarge=false;
 			if(!allSmall&&!allLarge) break;
 		}
 		if(allSmall||allLarge) return false;
@@ -1709,7 +1709,7 @@ bool couldBeZero(DExpr e){
 		foreach(s;p.summands){
 			if(!mustBeLessOrEqualZero(s))
 				allLessOrEqual=false;
-			if(!mustBeLessOrEqualZero(-s))
+			if(!mustBeLessOrEqualZero((-s).simplify(one)))
 				allGreaterOrEqual=false;
 			if(!allLessOrEqual&&!allGreaterOrEqual)
 				break;
@@ -1753,7 +1753,7 @@ bool mustBeLessOrEqualZero(DExpr e){
 		if(auto p=cast(DPow)e){
 			if(auto exp=p.operands[1].isInteger()){
 				assert(exp.c.den==1);
-				return !(exp.c.num%2)||mustBeLessOrEqualZeroImpl(-p.operands[0]);
+				return !(exp.c.num%2)||mustBeGreaterOrEqualZeroImpl(p.operands[0]);
 			}
 			if(p.operands[1].isFractional()) return true; // TODO: ok?
 		}
@@ -2402,8 +2402,8 @@ class DIvr: DExpr{ // iverson brackets
 		}
 		if(type==Type.leZ){
 			if(mustBeLessOrEqualZero(e)) return one;
-			if(mustBeLessThanZero(-e)) return zero;
-			if(mustBeLessOrEqualZero(-e)) return dIvr(Type.eqZ,e).simplify(facts);
+			if(mustBeLessThanZero((-e).simplify(facts))) return zero;
+			if(mustBeLessOrEqualZero((-e).simplify(facts))) return dIvr(Type.eqZ,e).simplify(facts);
 		}
 		with(Type) if(type==eqZ||type==neqZ){ // TODO: figure out why this causes non-termination in mult_uniform_test
 			if(auto p=cast(DPow)e){

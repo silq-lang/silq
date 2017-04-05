@@ -15,6 +15,32 @@ static struct Case(T){
 	auto map(alias a)(){ return Case!(typeof(a(expression)))(a(expression),condition,limit); }
 	auto addCondition(DExpr c){ return Case!T(condition*c,expression); }
 }
+auto compress(Case!ExpLim[] explims){
+	foreach(ref el;explims){
+		el.condition=el.condition.simplify(one);
+		el.expression.limit=el.expression.limit.maybe!(e=>e.simplify(one));
+	}
+	Case!ExpLim[][DExpr] byLimit;
+	Case!ExpLim[] result;
+	foreach(el;explims) byLimit[el.expression.limit]~=el;
+	foreach(k,v;byLimit){
+		auto condition=zero, expression=zero, limit=zero;
+		if(k&&k.isInfinite()){
+			// TODO: improve
+			result~=v;
+		}else{
+			foreach(el;v){
+				assert(el.expression.limit == k);
+				condition=condition+el.condition;
+				expression=expression+el.condition*el.expression.expression;
+				if(el.expression.limit !is null) limit=limit+el.condition*el.expression.limit;
+				else limit=null;
+			}
+			result~=Case!ExpLim(condition,ExpLim(expression,limit));
+		}
+	}
+	return result;
+}
 auto expandMap(alias a)(Case!ExpLim[][] r){
 	alias T=typeof(a(ExpLim[].init));
 	Case!T[] result;
@@ -23,6 +49,7 @@ auto expandMap(alias a)(Case!ExpLim[][] r){
 			result~=Case!T(cond,a(explims));
 			return;
 		}
+		r[i]=compress(r[i]);
 		foreach(k;r[i]) go(i+1,cond*k.condition,explims~k.expression);
 	}
 	go(0,one,[]);
@@ -35,6 +62,7 @@ auto expandFlatMap(alias a)(Case!ExpLim[][] r){
 			result~=a(explims).map!(a=>a.addCondition(cond)).array;
 			return;
 		}
+		r[i]=compress(r[i]);
 		foreach(k;r[i]) go(i+1,cond*k.condition,explims~k.expression);
 	}
 	go(0,one,[]);
@@ -84,8 +112,9 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 			ExpLim handlePlus(ExpLim[] c){ return ExpLim(p,handlePlusImpl(c)); }
 			Case!ExpLim[][] r;
 			foreach(s;p.summands){
-				r~=doIt(v,e,s);
-				if(!r[$-1].length) return [];
+				auto cur=doIt(v,e,s);
+				if(!cur.length) return [];
+				r~=cur;
 			}
 			return expandMap!handlePlus(r);
 		}
@@ -134,18 +163,21 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 				}
 				//dw(v," ",inf," ",zro," ",finite," ",unsupported);
 				if(!unsupported.length){
-					if(!inf.length && !zro.length) return [Case!ExpLim(owZneqZ,ExpLim(m,finite*ow[0]))];
+					if(!inf.length && !zro.length) return [Case!ExpLim(one,ExpLim(m,finite*ow[0]))];
 					if(inf.length && !zro.length){
-						auto lZ=dIvr(DIvr.Type.lZ,finite*ow[0]).simplify(facts);
-						auto gZ=dIvr(DIvr.Type.lZ,-finite*ow[0]).simplify(facts);
+						auto lZ=dIvr(DIvr.Type.lZ,finite*owZNoDeltas).simplify(facts);
+						auto eqZ=dIvr(DIvr.Type.eqZ,finite*owZNoDeltas).simplify(facts);
+						auto gZ=dIvr(DIvr.Type.lZ,-finite*owZNoDeltas).simplify(facts);
 						Case!ExpLim[] r;
 						if(lZ != zero)
 							r~=Case!ExpLim(lZ,ExpLim(m,sign?dInf:-dInf));
+						if(eqZ != zero)
+							r~=Case!ExpLim(eqZ,ExpLim(m,zero));
 						if(gZ != zero)
 							r~=Case!ExpLim(gZ,ExpLim(m,sign?-dInf:dInf));
 						return r;
 					}
-					if(zro.length && !inf.length) return [Case!ExpLim(owZneqZ,ExpLim(m,zero))];
+					if(zro.length && !inf.length) return [Case!ExpLim(one,ExpLim(m,zero))];
 					// Bernoulli-De l'Hôpital.
 					/+static int nesting = 0;
 					  enum nestingLimit=5; // TODO: probably something like this is necessary.
@@ -160,8 +192,6 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 				// TODO: repeated simplification ugly, how to do without?
 			}
 			auto res=expandFlatMap!handleMult(r);
-			auto cond=dIvr(DIvr.Type.eqZ,owZNoDeltas).simplify(facts);
-			if(cond != zero) res~=Case!ExpLim(cond,ExpLim(m,zero));
 			return res;
 		}
 		if(auto p=cast(DPow)x){
@@ -234,8 +264,11 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 	}
 	auto k=doIt(v,e,x);
 	if(!k.length) return null;
-	foreach(c;k) if(!c.expression.limit) return null;
-	DExpr r=zero;
-	foreach(c;k) r=r+c.condition*c.expression.limit;
-	return r.simplify(facts);
+	foreach(c;k) if(c.condition!=zero && !c.expression.limit) return null;
+	DExprSet summands;
+	foreach(c;k){
+		if(c.condition==zero||c.expression.limit==zero) continue;
+		DPlus.insert(summands,c.condition*c.expression.limit);
+	}
+	return dPlus(summands).simplify(facts);
 }
