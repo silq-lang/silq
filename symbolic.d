@@ -385,6 +385,14 @@ private struct Analyzer{
 							err.error("expected one real argument to log",ce.loc);
 						dist.assertTrue(dIvr(DIvr.Type.lZ,-arg),formatError("nonpositive argument to log",e.loc));
 						return dLog(arg);
+					case "sin":
+						if(ce.arg.type!=ℝ)
+							err.error("expected one real argument to sin",ce.loc);
+						return dSin(arg);
+					case "cos":
+						if(ce.arg.type!=ℝ)
+							err.error("expected one real argument to cos",ce.loc);
+						return dSin(arg+dΠ/2);
 					case "abs":
 						if(ce.arg.type!=ℝ)
 							err.error("expected one argument to abs",ce.loc);

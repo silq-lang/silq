@@ -278,7 +278,7 @@ bool isBuiltIn(Identifier id){
 	case "array":
 	case "readCSV":
 	case "π":
-	case "exp","log","abs":
+	case "exp","log","sin","cos","abs":
 	case "floor","ceil":
 	case "cosUnifDist":
 	case "bernoulli": goto case "flip";
@@ -305,7 +305,7 @@ Expression builtIn(Identifier id,Scope sc){
 	case "array": t=forallTy(["a"],typeTy,funTy(tupleTy([ℝ,varTy("a",typeTy)]),arrayTy(varTy("a",typeTy)),false,true),true,false); break;
 	case "readCSV": t=funTy(stringTy,arrayTy(ℝ),false,false); break;
 	case "π": t=ℝ; break;
-	case "exp","log","abs": t=funTy(ℝ,ℝ,false,false); break;
+	case "exp","log","sin","cos","abs": t=funTy(ℝ,ℝ,false,false); break;
 	case "floor","ceil": t=funTy(ℝ,ℝ,false,false); break;
 	case "cosUnifDist": t=funTy(unit,ℝ,false,false); break; // TDOO: remove
 	case "bernoulli": goto case "flip";

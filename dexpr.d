@@ -3065,6 +3065,7 @@ class DSin: DOp{
 	override Precedence precedence(){ return Precedence.none; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		if(formatting==Format.lisp) return text("(sin ",e.toStringImpl(formatting,Precedence.none,binders),")");
+		if(formatting==Format.mathematica) return text("Sin[",e.toStringImpl(formatting,Precedence.none,binders),"]");
 		return "sin("~e.toStringImpl(formatting,Precedence.none,binders)~")";
 	}
 	mixin Visitors;
