@@ -18,6 +18,6 @@ $LDMD -O -release -inline -boundscheck=off -J. *.d -ofpsi
 # ldmd2 -O -release -inline -J. *.d -ofllpsi
 
 if [ ! -f "test/runtests" ]; then
-    $DMD test/runtests.d -oftest/runtests
+    $LDMD test/runtests.d -oftest/runtests
 fi
 
