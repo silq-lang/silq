@@ -424,7 +424,7 @@ private struct Analyzer{
 						}else{
 							auto p=doIt(ce.arg);
 							auto dbv=dDeBruijnVar(1);
-							dist.assertTrue(dIvr(DIvr.Type.eqZ,dSum(dBounded!"[)"(dbv,zero,dField(p,"length")*dIvr(DIvr.Type.lZ,p[dbv])))),"probability of category should be non-negative"); // TODO: dProd?
+							dist.assertTrue(dIvr(DIvr.Type.eqZ,dSum(dBounded!"[)"(dbv,zero,dField(p,"length"))*dIvr(DIvr.Type.lZ,p[dbv]))),"probability of category should be non-negative"); // TODO: dProd?
 							dist.assertTrue(dIvr(DIvr.Type.eqZ,dSum(dBounded!"[)"(dbv,zero,dField(p,"length"))*p[dbv])-1),"probabilities should sum up to 1");
 							auto var=dist.getTmpVar("__c");
 							dist.distribute(categoricalPDF(var,p));
