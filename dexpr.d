@@ -1759,6 +1759,7 @@ bool mustBeLessOrEqualZero(DExpr e){
 			}
 			if(p.operands[1].isFractional()) return true; // TODO: ok?
 		}
+		if(mustBeZeroOrOne(e)) return true;
 		return false;
 	}
 	if(auto m=cast(DMult)e){
@@ -2436,6 +2437,44 @@ class DIvr: DExpr{ // iverson brackets
 		if(type==Type.eqZ||type==Type.neqZ){
 			auto f=e.getFractionalFactor();
 			if(f!=one && f!=zero && f!=mone) return dIvr(type,e/f).simplify(facts);
+		}
+		if(util.among(type,Type.eqZ,Type.neqZ)){
+			if(auto p=cast(DPlus)e){
+				bool allNonNegative=true;
+				bool allNonPositive=true;
+				bool onlyNegativeFractions=true;
+				bool onlyPositiveFractions=true;
+				bool onlyOne=true;
+				foreach(s;p.summands){
+					allNonNegative &= mustBeLessOrEqualZero((-s).simplify(facts));
+					allNonPositive &= mustBeLessOrEqualZero(s);
+					auto f=s.getFractionalFactor().simplify(facts);
+					if(f!=one) onlyOne=false;
+					if(!mustBeLessThanZero(f))
+						onlyNegativeFractions=false;
+					if(!mustBeLessThanZero((-f).simplify(one)))
+						onlyPositiveFractions=false;
+				}
+				if(allNonNegative&&allNonPositive) return dIvr(type,zero).simplify(facts);
+				if(!onlyOne&&(onlyPositiveFractions||onlyNegativeFractions)&&(allNonNegative||allNonPositive)){
+					DExprSet ns;
+					foreach(s;p.summands){
+						if(allNonPositive) s=(-s).simplify(facts);
+						auto f=s.getFractionalFactor().simplify(facts);
+						if(f==zero) continue;
+						ns.insert((s/f).simplify(facts));
+					}
+					DExprSet nf;
+					foreach(s;ns) DMult.insert(nf,dIvr(Type.eqZ,s));
+					auto isZero=dMult(nf).simplify(facts);
+					if(type==Type.eqZ){
+						return isZero;
+					}else{
+						assert(type==Type.neqZ);
+						return dIvr(Type.eqZ,isZero).simplify(facts);
+					}
+				}
+			}
 		}
 		if(e.hasFreeVars())
 			if(auto fct=factorDIvr!(e=>dIvr(type,e))(e))
