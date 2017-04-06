@@ -623,7 +623,9 @@ class Dℚ: DExpr{
 		}else{
 			if(formatting==Format.matlab||formatting==Format.gnuplot)
 				r=text(c.num,"./",c.den);
-			else r=text(c.num,"/",c.den);
+			else if(formatting==Format.lisp){
+				return text("(/ ",c.num," ",c.den,")");
+			}else r=text(c.num,"/",c.den);
 		}
 		if(formatting==Format.maple && c<0){
 			r="("~r~")";
