@@ -2591,9 +2591,6 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 
 	mixin Visitors;
 
-	static DExpr constructHook(DExpr e){
-		return null;
-	}
 	static DExpr staticSimplify(DExpr e,DExpr facts=one){
 		auto ne=e.simplify(one); // cannot use all facts! (might remove a free variable)
 		if(ne != e) return dDelta(ne).simplify(facts);
@@ -3013,9 +3010,6 @@ class DLog: DOp{
 		return text("log(",es,")");
 	}
 	mixin Visitors;
-	static DExpr constructHook(DExpr e){
-		return null;
-	}
 	static DExpr staticSimplify(DExpr e,DExpr facts=one){
 		auto ne=e.simplify(facts);
 		if(ne != e) return dLog(ne).simplify(facts);
@@ -3069,9 +3063,6 @@ class DSin: DOp{
 		return "sin("~e.toStringImpl(formatting,Precedence.none,binders)~")";
 	}
 	mixin Visitors;
-	static DExpr constructHook(DExpr e){
-		return null;
-	}
 	static DExpr staticSimplify(DExpr e,DExpr facts=one){
 		auto ne=e.simplify(facts);
 		if(ne!= e) return dSin(ne).simplify(facts);
@@ -3095,9 +3086,6 @@ class DFloor: DOp{
 		return text("floor(",e.toStringImpl(formatting,Precedence.none,binders),")");
 	}
 	mixin Visitors;
-	static DExpr constructHook(DExpr e){
-		return null;
-	}
 	static DExpr staticSimplify(DExpr e,DExpr facts=one){
 		auto ne=e.simplify(facts);
 		if(ne!= e) return dFloor(ne).simplify(facts);
@@ -3122,9 +3110,6 @@ class DCeil: DOp{
 		return "⌈"~e.toStringImpl(formatting,Precedence.none,binders)~"⌉";
 	}
 	mixin Visitors;
-	static DExpr constructHook(DExpr e){
-		return null;
-	}
 	static DExpr staticSimplify(DExpr e,DExpr facts=one){
 		auto ne=e.simplify(facts);
 		if(ne!= e) return dCeil(ne).simplify(facts);
@@ -3243,9 +3228,6 @@ class DGaussInt: DOp{
 		else return addp(prec,symbol(formatting,binders)~"("~x.toStringImpl(formatting,Precedence.none,binders)~")");
 	}
 
-	static DExpr constructHook(DExpr x){
-		return null;
-	}
 	static DExpr staticSimplify(DExpr x,DExpr facts=one){
 		if(x==dInf){
 			return dΠ^^(one/2);
@@ -3332,9 +3314,6 @@ class DRecord: DExpr{ // Tuples. TODO: real tuple support
 		return r.length!=1?r[0..$-1]~"}":"{}";
 	}
 	mixin Visitors;
-	static DRecord constructHook(DExpr[string] values){
-		return null;
-	}
 	static DRecord staticSimplify(DExpr[string] values,DExpr facts=one){
 		DExpr[string] nvalues;
 		foreach(k,v;values) nvalues[k]=v.simplify(facts);
@@ -3395,9 +3374,6 @@ class DIndex: DOp{
 		if(ne != e || ni != i) return dIndex(ne,ni);
 		return null;
 	}
-	static DExpr constructHook(DExpr e,DExpr i){
-		return null;
-	}
 }
 mixin FactoryFunction!DIndex;
 
@@ -3444,10 +3420,6 @@ class DIUpdate: DOp{
 			return r.simplify(facts);
 		}
 		if(ne != e || ni != i || nn != n) return dIUpdate(ne,ni,nn);
-		return null;
-	}
-
-	static DExpr constructHook(DExpr e,DExpr i,DExpr n){
 		return null;
 	}
 }
@@ -3506,9 +3478,6 @@ class DSlice: DOp{
 		if(ne != e || nl != l || nr != r) return dSlice(ne,nl,nr);
 		return null;
 	}
-	static DExpr constructHook(DExpr e,DExpr l,DExpr r){
-		return null;
-	}
 }
 mixin FactoryFunction!DSlice;
 
@@ -3539,10 +3508,6 @@ class DRUpdate: DOp{ // TODO: allow updating multiple fields at once
 		if(auto rec=cast(DRecord)ne)
 			return rec.update(f,nn).simplify(facts);
 		if(ne != e || nn != n) return dRUpdate(ne,f,nn);
-		return null;
-	}
-
-	static DExpr constructHook(DExpr e,string f,DExpr n){
 		return null;
 	}
 }
@@ -3609,9 +3574,6 @@ class DApply: DOp{
 		return addp(prec,text(fun.toStringImpl(formatting,Precedence.index,binders),"(",arg.toStringImpl(formatting,Precedence.none,binders)[isTpl..$-isTpl],")"));
 	}
 	mixin Visitors;
-	static DApply constructHook(DExpr fun,DExpr arg){
-		return null;
-	}
 	override DExpr simplifyImpl(DExpr facts){
 		auto nfun=fun.simplify(facts),narg=arg.simplify(facts);
 		if(auto l=cast(DLambda)nfun)
@@ -3631,9 +3593,6 @@ class DDistApply: DOp{
 		return addp(prec,text(fun.toStringImpl(formatting,Precedence.index,binders),"(",arg.toStringImpl(formatting,Precedence.none,binders)[isTpl..$-isTpl],")"));
 	}
 	mixin Visitors;
-	static DDistApply constructHook(DExpr fun,DExpr arg){
-		return null;
-	}
 	override DExpr simplifyImpl(DExpr facts){
 		auto nfun=fun.simplify(facts),narg=arg.simplify(one); // cannot use all facts for arg! (might remove a free variable)
 		if(auto l=cast(DLambda)nfun)
@@ -3655,9 +3614,6 @@ class DArray: DExpr{
 		return r;
 	}
 	mixin Visitors;
-	static DArray constructHook(DExpr length,DLambda entries){
-		return null;
-	}
 	static DExpr staticSimplify(DExpr length,DLambda entries,DExpr facts=one){
 		auto nlength=length.simplify(facts);
 		auto nentries=nlength==zero?dLambda(zero):cast(DLambda)entries.simplify(facts);
@@ -3685,9 +3641,6 @@ class DCat: DAssocOp{ // TODO: this should have n arguments, as it is associativ
 		return r?r:this;
 	}
 	mixin Visitors;
-	static DExpr constructHook(DExpr[] operands){
-		return null;
-	}
 	/+private+/ static DExpr staticSimplify(DExpr[] operands,DExpr facts=one){
 		auto nop=operands.map!(a=>a.simplify(facts)).array;
 		if(nop!=operands) return dCat(nop).simplify(facts);
@@ -3774,10 +3727,6 @@ class DField: DOp{
 			}
 		}
 		if(ne != e) return dField(ne,f);
-		return null;
-	}
-
-	static DExpr constructHook(DExpr e,string f){
 		return null;
 	}
 }
