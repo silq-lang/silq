@@ -3533,9 +3533,6 @@ class DLambda: DOp{ // lambda functions DExpr → DExpr
 		assert(!!r);
 		return r;
 	}
-	static DLambda constructHook(DExpr expr){
-		return staticSimplify(expr);
-	}
 	static DLambda staticSimplify(DExpr expr,DExpr facts=one){
 		auto nexpr=expr.simplify(facts.incDeBruijnVar(1,0));
 		if(nexpr != expr){
