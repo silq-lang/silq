@@ -3873,8 +3873,9 @@ class DNormalize: DExpr{
 		if(auto onorm=cast(DNormalize)ne)
 			return onorm;
 		auto nnorm=dIntSmp(dDistApply(ne.incDeBruijnVar(1,0),dDeBruijnVar(1)),facts);
-		if(dIvr(DIvr.type.eqZ,nnorm).simplify(facts)==zero)
-			return dLambda(dDistApply(ne.incDeBruijnVar(1,0),dDeBruijnVar(1))/nnorm).simplify(facts);
+		auto iszero=dIvr(DIvr.type.eqZ,nnorm).simplify(facts);
+		if(iszero==zero) return dLambda(dDistApply(ne.incDeBruijnVar(1,0),dDeBruijnVar(1))/nnorm).simplify(facts);
+		if(iszero==one) return dLambda(dDiscDelta(dDeBruijnVar(1),dErr));
 		if(ne!=e) return dNormalize(ne).simplify(facts);
 		return this;
 	}
