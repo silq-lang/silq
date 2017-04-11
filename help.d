@@ -12,6 +12,7 @@ Usage: psi [OPTION]... [FILE]...
 The options below may be used.
 --plot              call gnuplot to plot the result (experimental)
 --noboundscheck     do not check array bounds
+--nocheck           do not check for error conditions
 
 --cdf               generate cumulative distribution function (instead of generalized probability density)
 --expectation       compute expectation of result ('main' should return a single number)

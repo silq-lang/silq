@@ -39,6 +39,7 @@ struct Options{
 	auto formatting=Format.default_;
 	bool casBench=false;
 	bool noBoundsCheck=false;
+	bool noCheck=false;
 	bool trace=false;
 	bool expectation=false;
 	IntegrationLevel integrationLevel=IntegrationLevel.full;

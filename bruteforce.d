@@ -129,6 +129,7 @@ struct Dist{
 		return r;
 	}
 	Dist assertTrue(DLambda lambda){
+		if(opt.noCheck) return this;
 		auto r=distInit;
 		r.copyNonState(this);
 		foreach(k,v;state){
@@ -345,10 +346,10 @@ struct Dist{
 		r.copyNonState(this);
 		DExpr tot=r.error;
 		foreach(k,v;state) tot=(tot+v).simplify(one);
-		if(tot == zero) r.error=one;
+		if(!opt.noCheck && tot == zero) r.error=one;
 		else if(cast(Dℚ)tot) foreach(k,v;state) r.add(k,(v/tot).simplify(one));
 		else{
-			r.error=(dIvr(DIvr.Type.neqZ,tot)*r.error+dIvr(DIvr.Type.eqZ,tot)).simplify(one);
+			if(!opt.noCheck) r.error=(dIvr(DIvr.Type.neqZ,tot)*r.error+dIvr(DIvr.Type.eqZ,tot)).simplify(one);
 			foreach(k,v;state) r.add(k,((v/tot)*dIvr(DIvr.Type.neqZ,tot)).simplify(one));
 		}
 		return r;
@@ -384,7 +385,7 @@ struct Dist{
 			auto dbf=cast(DBFDist)dApply(d,k).simplify(one);
 			assert(!!dbf,text(dbf," ",d));
 			foreach(dk,dv;dbf.dist.state) r.add(dRUpdate(k,tmp,dField(dk,"`value")).simplify(one),(v*dv).simplify(one));
-			r.error=(r.error+v*dbf.dist.error).simplify(one);
+			if(!opt.noCheck) r.error=(r.error+v*dbf.dist.error).simplify(one);
 		}
 		this=r;
 		if(opt.backend==InferenceMethod.simulate) pickOne();
@@ -409,10 +410,10 @@ struct Dist{
 				val1=(val1+dv*dField(dk,"`value")).simplify(one);
 				val2=(val2+dv).simplify(one);
 			}
-			if(val2==zero) r.error=(r.error+v).simplify(one);
+			if(!opt.noCheck&&val2==zero) r.error=(r.error+v).simplify(one);
 			else if(cast(Dℚ)val2) r.add(dRUpdate(k,tmp,val1/val2).simplify(one),v);
 			else{
-				r.error=(r.error+v*dIvr(DIvr.Type.eqZ,val2)).simplify(one);
+				if(!opt.noCheck) r.error=(r.error+v*dIvr(DIvr.Type.eqZ,val2)).simplify(one);
 				r.add(dRUpdate(k,tmp,val1/val2).simplify(one),(v*dIvr(DIvr.Type.neqZ,val2)).simplify(one));
 			}
 		}
@@ -420,6 +421,7 @@ struct Dist{
 		return dField(db1,tmp);
 	}
 	DExpr distError(DExpr dist){
+		if(opt.noCheck) return zero;
 		auto r=distInit;
 		r.copyNonState(this);
 		auto d=dLambda(dist);

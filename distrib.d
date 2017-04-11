@@ -342,6 +342,7 @@ class Distribution{
 	}
 
 	void assertTrue(DExpr cond,lazy string msg){
+		if(opt.noCheck) return;
 		error=(error+computeProbability(dIvr(DIvr.Type.eqZ,cond))).simplify(one);
 		distribution=distribution*cond;
 	}
@@ -376,23 +377,27 @@ class Distribution{
 		auto factor=distribution;
 		foreach(v;freeVars) factor=dIntSmp(v,factor,one);
 		factor=factor+error;
-		distribution=(dIvr(DIvr.Type.neqZ,factor)*(distribution/factor)).simplify(one);
-		error=(dIvr(DIvr.Type.eqZ,factor)+dIvr(DIvr.Type.neqZ,factor)*(error/factor)).simplify(one);
+		distribution=distribution/factor;
+		if(!opt.noCheck) distribution=dIvr(DIvr.Type.neqZ,factor)*distribution;
+		distribution=distribution.simplify(one);
+		if(!opt.noCheck) error=(dIvr(DIvr.Type.eqZ,factor)+dIvr(DIvr.Type.neqZ,factor)*(error/factor)).simplify(one);
 		/+import type;
 		Distribution r=fromDExpr(dLambda(dNormalize(dApply(toDExpr().incDeBruijnVar(1,0),dDeBruijnVar(1)))),args.length,argsIsTuple,orderedFreeVars,isTuple,orderedFreeVars.map!(x=>cast(Expression)contextTy).array);
 		r.simplify();
 		distribution=r.distribution;
-		error=r.error;+/
+		if(!opt.noCheck) error=r.error;+/
 	}
 	DExpr call(DExpr q,DExpr arg){
 		auto vars=freeVars.dup;
 		auto r=getTmpVar("__r");
-		auto db1=dDeBruijnVar(1);
-		auto ndist=dDistApply(dApply(q,arg),db1);
-		auto nerror=distribution*dInt(dMCase(db1,zero,one)*ndist);
-		distribution=distribution*dInt(dMCase(db1,dDiscDelta(r,db1),zero)*ndist);
-		foreach(v;vars) nerror=dInt(v,nerror);
-		error=error+nerror;
+		if(!opt.noCheck){
+			auto db1=dDeBruijnVar(1);
+			auto ndist=dDistApply(dApply(q,arg),db1);
+			auto nerror=distribution*dInt(dMCase(db1,zero,one)*ndist);
+			distribution=distribution*dInt(dMCase(db1,dDiscDelta(r,db1),zero)*ndist);
+			foreach(v;vars) nerror=dInt(v,nerror);
+			error=error+nerror;
+		}else distribution=distribution*dDistApply(dApply(q,arg),r);
 		return r;
 	}
 	DExpr call(Distribution q,DExpr arg,Expression ty){
@@ -421,10 +426,16 @@ class Distribution{
 		}
 		dist=dist.substituteAll(allVars,allVals);
 		auto db1=dDeBruijnVar(1);
-		auto r=dist*dDiscDelta(db1,dVal(values));
-		foreach(v;vars) r=dInt(v,r);
-		r=r+dDiscDelta(db1,dErr)*error.substituteAll(allVars,allVals);
-		return dLambda(r);
+		if(!opt.noCheck){
+			auto r=dist*dDiscDelta(db1,dVal(values));
+			foreach(v;vars) r=dInt(v,r);
+			r=r+dDiscDelta(db1,dErr)*error.substituteAll(allVars,allVals);
+			return dLambda(r);
+		}else{
+			auto r=dist*dDiscDelta(db1,values);
+			foreach(v;vars) r=dInt(v,r);
+			return dLambda(r);
+		}
 	}
 	
 	DExpr toDExpr()in{assert(freeVarsOrdered&&hasArgs);}body{
@@ -458,9 +469,11 @@ class Distribution{
 		r.addArgs(nargs,argsIsTuple,null);
 		auto args=argsIsTuple?dTuple(cast(DExpr[])r.args):r.args[0];
 		auto ndist=dDistApply(dApply(dexpr,args),db1);
-		auto db3=dDeBruijnVar(3);
-		r.distribution=dInt(r.distribution*dInt(dMCase(db1,dDiscDelta(db3,db1),zero)*ndist));
-		r.error=dInt(dMCase(db1,zero,one)*ndist);
+		if(!opt.noCheck){
+			auto db3=dDeBruijnVar(3);
+			r.distribution=dInt(r.distribution*dInt(dMCase(db1,dDiscDelta(db3,db1),zero)*ndist));
+			r.error=dInt(dMCase(db1,zero,one)*ndist);
+		}else r.distribution=dInt(r.distribution*ndist);
 		r.orderFreeVars(orderedFreeVars,isTuple);
 		return r;
 	}

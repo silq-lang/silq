@@ -109,6 +109,7 @@ int main(string[] args){
 			case "--nointegrate": opt.integrationLevel=IntegrationLevel.none; break;
 			case "--integratedeltas": opt.integrationLevel=IntegrationLevel.deltas; break;
 			case "--noboundscheck": opt.noBoundsCheck=true; break;
+			case "--nocheck": opt.noCheck=true; break;
 			case "--trace": opt.trace=true; break;
 			case "--expectation": opt.expectation=true; break;
 			case "--casbench": opt.casBench=true; break;

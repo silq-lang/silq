@@ -218,12 +218,16 @@ private struct Analyzer{
 											auto idist=new Distribution();
 											idist.addArgs([],true,null);
 											auto d=idist.declareVar("`d");
-											auto dist=dDistApply(distr,d);
 											auto r=idist.declareVar("`r");
-											auto db1=dDeBruijnVar(1);
-											idist.distribute(dMCase(d,dDiscDelta(r,db1),zero)*dist);
-											idist.error=dInt(d,dMCase(d,zero,one)*dist);
-											idist.marginalize(d);
+											if(!opt.noCheck){
+												auto dist=dDistApply(distr,d);
+												auto db1=dDeBruijnVar(1);
+												idist.distribute(dMCase(d,dDiscDelta(r,db1),zero)*dist);
+												idist.error=dInt(d,dMCase(d,zero,one)*dist);
+												idist.marginalize(d);
+											}else{
+												idist.distribute(dDistApply(distr,r));
+											}
 											idist.orderFreeVars([r],false);
 											return idist.toDExpr().simplify(one);
 										case "then": // d.then(f) <-> infer(()=>f(d.sample()))
@@ -233,8 +237,9 @@ private struct Analyzer{
 											auto rdist=new Distribution();
 											rdist.addArgs([],true,null);
 											auto d=rdist.declareVar("`d"),x=rdist.declareVar("`x");
-											auto dist=dDistApply(distr,d);
 											auto db1=dDeBruijnVar(1);
+											assert(!opt.noCheck,"TODO: 'then' in nocheck mode");
+											auto dist=dDistApply(distr,d);
 											rdist.distribute(dMCase(d,dDiscDelta(x,db1),zero)*dist);
 											rdist.error=dInt(d,dMCase(d,zero,one)*dist);
 											auto faty=cast(ForallTy)type;
@@ -266,7 +271,7 @@ private struct Analyzer{
 											assert(tt == ℝ);
 											auto d="`d".dVar,x="`x".dVar;
 											auto db1=dDeBruijnVar(1);
-											auto pdf=dInt(d,dDistApply(distr,d)*dMCase(d,dDiscDelta(x,db1),zero));
+											auto pdf=opt.noCheck?dDistApply(distr,x):dInt(d,dDistApply(distr,d)*dMCase(d,dDiscDelta(x,db1),zero));
 											auto total=dInt(x,pdf),expct=dInt(x,x*pdf);
 											auto idist=new Distribution();
 											idist.addArgs([],true,null);
@@ -277,7 +282,7 @@ private struct Analyzer{
 											return idist.toDExpr().simplify(one);
 										case "error":
 											auto d="`d".dVar,x="`x".dVar;
-											auto error=dInt(d,dDistApply(distr,d)*dMCase(d,zero,one));
+											auto error=opt.noCheck?zero:dInt(d,dDistApply(distr,d)*dMCase(d,zero,one));
 											auto idist=new Distribution();
 											idist.addArgs([],true,null);
 											auto r=idist.declareVar("`r");
