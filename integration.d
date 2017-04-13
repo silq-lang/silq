@@ -23,13 +23,12 @@ private DExpr definiteIntegralImpl(DExpr expr,DExpr facts=one){
 	// TODO: move (most of) the following into the implementation of definiteIntegral
 	auto ow=expr.splitMultAtVar(var);
 	ow[0]=ow[0].incDeBruijnVar(-1,0).simplify(facts);
-	if(ow[0] != one){
+	if(ow[0] != one || ow[1] != expr){ // TODO: second disjunct should not to be necessary
 		if(auto r=definiteIntegral(ow[1],facts)){
 			return (ow[0]*r).simplify(facts);
 		}
 		return null;
 	}
-	assert(expr.factors.all!(x=>x.hasFreeVar(var)),text(ow," ",expr," ",expr.factors.setx));
 	/+foreach(f;expr.factors){
 		if(auto case_=cast(DMCase)f){
 			if(!case_.e.hasFreeVar(dDeBruijnVar(1))){
