@@ -953,7 +953,7 @@ class DPlus: DCommutAssocOp{
 		}
 		if(integralSummands.length){
 			auto integralSum=dPlus(integralSummands);
-			auto simplSum=integralSum.simplify(facts.incDeBruijnVar(1,0));
+			auto simplSum=integralSum.simplify(facts.incDeBruijnVar(1,0).simplify(one));
 			if(integralSum!=simplSum){
 				summands=summands.setMinus(integrals);
 				return dPlus(summands)+dIntSmp(simplSum,facts);
@@ -2821,7 +2821,7 @@ class DInt: DOp{
 	static MapX!(Q!(DExpr,DExpr),DExpr) ssimplifyMemo;
 
 	static DExpr staticSimplify(DExpr expr,DExpr facts=one)in{assert(expr&&facts);}body{
-		auto nexpr=expr.simplify(facts.incDeBruijnVar(1,0));
+		auto nexpr=expr.simplify(facts.incDeBruijnVar(1,0).simplify(one));
 		if(expr != nexpr) return dIntSmp(nexpr,facts);
 		auto ow=expr.splitMultAtVar(dDeBruijnVar(1));
 		ow[0]=ow[0].incDeBruijnVar(-1,0).simplify(facts);
@@ -2884,7 +2884,7 @@ class DSum: DOp{
 			if(expr==zero) return zero;
 			return null;
 		}
-		auto nexpr=expr.simplify(facts.incDeBruijnVar(1,0));
+		auto nexpr=expr.simplify(facts.incDeBruijnVar(1,0).simplify(one));
 		if(nexpr != expr) return dSum(nexpr).simplify(facts);
 		if(opt.integrationLevel!=IntegrationLevel.deltas){
 			if(auto r=computeSum(expr,facts))
@@ -2914,7 +2914,7 @@ class DLim: DOp{
 	}
 
 	static DExpr staticSimplify(DExpr e,DExpr x,DExpr facts=one){
-		auto ne=e.simplify(facts), nx=x.simplify(facts.incDeBruijnVar(1,0));
+		auto ne=e.simplify(facts), nx=x.simplify(facts.incDeBruijnVar(1,0).simplify(one));
 		if(ne != e || nx != x) return dLim(ne,nx).simplify(facts);
 		if(auto r=getLimit(dDeBruijnVar(1),e,x,facts))
 			return r.incDeBruijnVar(-1,0);
@@ -2950,7 +2950,7 @@ class DDiff: DOp{
 	}
 
 	static DExpr staticSimplify(DExpr e,DExpr x,DExpr facts=one){
-		auto ne=e.simplify(facts.incDeBruijnVar(1,0));
+		auto ne=e.simplify(facts.incDeBruijnVar(1,0).simplify(one));
 		if(auto r=differentiate(dDeBruijnVar(1),ne))
 			return unbind(r,x).simplify(facts);
 		return null;
@@ -3534,7 +3534,7 @@ class DLambda: DOp{ // lambda functions DExpr → DExpr
 		return r;
 	}
 	static DLambda staticSimplify(DExpr expr,DExpr facts=one){
-		auto nexpr=expr.simplify(facts.incDeBruijnVar(1,0));
+		auto nexpr=expr.simplify(facts.incDeBruijnVar(1,0).simplify(one));
 		if(nexpr != expr){
 			auto r=dLambda(nexpr).simplify(facts);
 			assert(!r||cast(DLambda)r);
@@ -3763,7 +3763,7 @@ class DMCase: DExpr{ // TODO: generalize?
 	mixin Visitors;
 	override DExpr simplifyImpl(DExpr facts){
 		auto ne=e.simplify(facts);
-		auto nval=val.simplify(facts.incDeBruijnVar(1,0));
+		auto nval=val.simplify(facts.incDeBruijnVar(1,0).simplify(one));
 		auto nerr=err.simplify(facts);
 		if(cast(DMonad)e){
 			if(auto v=cast(DVal)ne)

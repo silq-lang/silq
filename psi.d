@@ -170,6 +170,7 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr;
+	//writeln("[-(∫dξ₁((-21/200+21/200·ξ₁)·(∫dξ₂[-1+ξ₂≤0]·[-ξ₂≤0]·ξ₂·⅟(21/100·ξ₁+7/10·ξ₂))·[-1+ξ₁≤0]·[-ξ₁≤0]·ξ₁+(-3/20·ξ₁+3/20)·[-1+ξ₁≤0]·[-10/3+-ξ₁≠0]·[-ξ₁≤0]·log(21/100·ξ₁+7/10)·ξ₁))·40+-(∫dξ₁(-3/20·log(ξ₁)·ξ₁+3/20·log(ξ₁)·ξ₁²)·[-1+ξ₁≤0]·[-ξ₁≤0]·[ξ₁≠0])·40+-log(100)+log(21)≠0]".dParse.simplify(one));
 	//writeln("[1+√1̅+̅4̅·̅y̅≤0]".dParse.simplify(one));
 	//writeln("δ[x·y]".dParse.linearizeConstraints("x".dVar).simplify(one));
 	//writeln("∫dx [0≤x]·[x≤1]".dParse.simplify(one));

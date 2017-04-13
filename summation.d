@@ -5,7 +5,7 @@ import dexpr, util;
 
 DExpr computeSum(DExpr expr,DExpr facts=one){
 	auto var=dDeBruijnVar(1);
-	auto nexpr=expr.simplify(facts.incDeBruijnVar(1,0));
+	auto nexpr=expr.simplify(facts.incDeBruijnVar(1,0).simplify(one));
 	if(nexpr !is expr) expr=nexpr;
 	if(expr is zero) return zero;
 	auto ow=expr.splitMultAtVar(var); // not a good strategy without modification, due to deltas
@@ -29,7 +29,7 @@ DExpr computeSum(DExpr expr,DExpr facts=one){
 				DExprSet doesNotWork;
 				bool simpler=false;
 				foreach(k;distributeMult(p,expr.withoutFactor(f))){
-					k=k.simplify(facts.incDeBruijnVar(1,0));
+					k=k.simplify(facts.incDeBruijnVar(1,0).simplify(one));
 					auto ow=k.splitMultAtVar(var);
 					auto r=computeSum(ow[1],facts);
 					if(r){
@@ -46,7 +46,7 @@ DExpr computeSum(DExpr expr,DExpr facts=one){
 			}
 		}
 	}
-	nexpr=expr.linearizeConstraints!(x=>!!cast(DIvr)x)(var).simplify(facts.incDeBruijnVar(1,0));
+	nexpr=expr.linearizeConstraints!(x=>!!cast(DIvr)x)(var).simplify(facts.incDeBruijnVar(1,0).simplify(one));
 	if(nexpr !is expr) return computeSum(nexpr,facts);
 
 	// TODO: keep ivrs and nonIvrs separate in DMult
@@ -58,8 +58,8 @@ DExpr computeSum(DExpr expr,DExpr facts=one){
 		if(ivr&&ivr.type!=DIvr.Type.neqZ) ivrs=ivrs*f;
 		else nonIvrs=nonIvrs*f;
 	}
-	ivrs=ivrs.simplify(facts.incDeBruijnVar(1,0));
-	nonIvrs=nonIvrs.simplify(facts.incDeBruijnVar(1,0));
+	ivrs=ivrs.simplify(facts.incDeBruijnVar(1,0).simplify(one));
+	nonIvrs=nonIvrs.simplify(facts.incDeBruijnVar(1,0).simplify(one));
 	DExpr lower,upper;
 	foreach(f;ivrs.factors){
 		if(f is one) break;
