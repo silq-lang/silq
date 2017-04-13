@@ -1,0 +1,39 @@
+// skipped
+
+A := 0, B := 1; // TODO: characters/strings/sum types/...
+red := 0, green := 1, blue := 2;
+
+def dieToProbs(die)=>
+	if die == A { [0, 0.2, 0.8 ] } else
+	if die == B { [0.1, 0.3, 0.6] } else {
+		assert(0);
+	};
+
+def roll(die)=>[red,green,blue][categorical(dieToProbs(die))];
+
+def main(){
+	sidePrior := infer(()=>[red,green,blue][categorical([1/3,1/3,1/3])]);
+	diePrior := infer(()=>[A,B][categorical([1/2,1/2])]);
+	def teacher(die,learner: ℝ → Distribution[ℝ])=>infer((){
+		side := sidePrior.sample();
+		observe(learner(side).sample() == die);
+		return side;
+	});
+	def learner(side,teacher: ℝ → Distribution[ℝ])=>infer((){
+		die := diePrior.sample();
+		observe(side == teacher(die).sample());
+		return die;
+	});
+	def naive_learner(side)=>infer((){
+		die := diePrior.sample();
+		observe(side == roll(die));
+		return die;
+	});
+	cur_learner := naive_learner;
+	depth := 3;
+	for i in [0..depth){
+		cur_teacher := (die)=>teacher(die,cur_learner);
+		cur_learner = (side)=>learner(side,cur_teacher);
+	}
+	return cur_learner(green).sample();
+}

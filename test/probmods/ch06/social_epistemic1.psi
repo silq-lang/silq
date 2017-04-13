@@ -1,0 +1,37 @@
+// skipped
+
+a := 0, b := 1; // TODO: chars and strings.
+bagel := 0, cookie := 1, nothing := 2, state := 3;
+
+def haveCookie(obj)⇒ obj==cookie;
+
+def makeVendingMachine(aEffects: ℝ[],bEffects: ℝ[])(state,action)=>
+	if action == a { [bagel,cookie][categorical(aEffects)] } else
+	if action == b { [bagel,cookie][categorical(bEffects)] } else
+                   { nothing };
+
+def dirichlet(α: ℝ[]){ // TODO: add dirichlet distribution
+	assert(α.length==2&&α[0]==1&&α[1]==1);
+	p := uniform(0,1);
+	return [p,1-p];
+}
+
+def main(){
+	actionPrior := infer(()=>[a,b][categorical([0.5,0.5])]);
+	def chooseAction(goalSatisfied: ℝ → ℝ, transition: ℝ×ℝ → ℝ, state)=>
+		infer((){
+			action := actionPrior.sample();
+			observe(goalSatisfied(transition(state, action)));
+			return action;
+		});
+	goalPosterior := infer((){
+		aEffects := dirichlet([1,1]);
+		bEffects := dirichlet([1,1]);
+		vendingMachine := makeVendingMachine(aEffects,bEffects);
+		goal := [bagel,cookie][categorical([0.5,0.5])];
+		def goalSatisfied(outcome) => outcome==goal;
+		observe(goal==cookie&&chooseAction(goalSatisfied, vendingMachine, state).sample()==b);
+		return bEffects[1];
+	});
+	return goalPosterior.sample(); // expected: TODO: solve integrals (need to integrate polynomial·log)
+}

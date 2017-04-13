@@ -1,0 +1,42 @@
+// skipped
+
+a := 0, b := 1; // TODO: chars and strings.
+bagel := 0, cookie := 1, nothing := 2, state := 3;
+
+def haveCookie(obj) ⇒ obj==cookie;
+
+def dirichlet(α: ℝ[]){ // TODO: add dirichlet distribution
+	assert(α.length==2&&α[0]==2&&α[1]==1);
+	return SampleFrom("(r)=>∫da ∫db δ_r[[i ↦ [i=0]·a+[i=1]·b] (2)]·a·[0≤a]·[a≤1]·δ[a+b-1]"):ℝ[];
+}
+
+def main(){
+	def actionPrior(){
+		// return if flip(0.7) { ['a'] } else { ['a'] ~ actionPrior() } // TODO: recursion
+		if flip(0.7){ return [a]; }
+		if flip(0.7){ return [a,a]; }
+		observe(0);
+	}
+	def chooseAction(goalSatisfied: ℝ → ℝ, transition: ℝ×ℝ[] → ℝ, state)=>
+		infer((){
+			action := actionPrior();
+			observe(goalSatisfied(transition(state, action)));
+			return action;
+		});
+	goalPosterior := infer((){
+		outcomeProbs := [dirichlet([2,1]),dirichlet([2,1])];
+		def buttonsToOutcomeProbs(buttons: ℝ[]){ // TODO: mem/random functions
+			assert(buttons.length==1||buttons.length==2&&buttons[0]==a);
+			if(buttons.length==2){ assert(buttons[1]==a); }
+			return outcomeProbs[buttons.length-1];
+		}
+		def vendingMachine(state,action: ℝ[])=>
+			[bagel,cookie][categorical(buttonsToOutcomeProbs(action))];
+		goal := [bagel,cookie][categorical([0.5,0.5])];
+		def goalSatisfied(outcome) => outcome == goal;
+		chosenAction := chooseAction(goalSatisfied, vendingMachine, state).sample();
+		observe(chosenAction.length==2 && chosenAction[0]==a && chosenAction[1]==a);
+		return (goal==cookie,buttonsToOutcomeProbs([a])[1],buttonsToOutcomeProbs([a,a])[1]);
+	});
+	return goalPosterior.sample(); // expected: TODO: solve integrals (need to integrate polynomial·log and rational functions)
+}
