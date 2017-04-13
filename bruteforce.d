@@ -823,7 +823,7 @@ struct Interpreter{
 								gather(dist.distribution,one);
 								return cur.distSample(dBFDist(smpl));
 							default:
-								break;
+								assert(0, text("unsupported: ",id.name));
 						}
 					}
 				}
