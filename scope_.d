@@ -23,7 +23,6 @@ abstract class Scope{
 	}
 	void redefinitionError(Declaration decl, Declaration prev) in{
 		assert(decl);
-		assert(decl.name.ptr is prev.name.ptr);
 	}body{
 		error(format("redefinition of \"%s\"",decl.name), decl.name.loc);
 		note("previous definition was here",prev.name.loc);
