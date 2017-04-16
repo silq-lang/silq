@@ -6,6 +6,8 @@ if [ ! -d dmd2 ]; then
         ZIPLINK="http://downloads.dlang.org/releases/2.x/2.072.2/$FILE"
         MD5="md5sum"
     elif [[ "$OSTYPE" == "darwin"* ]]; then
+	  # Note that on macOS gnuplot should be installed with x11 set as terminal. 
+	  # Using homebrew: brew install gnuplot --with-x11
         FILE="dmd.2.072.2.osx.zip"
         SUM1="MD5 ($FILE) = 0844f3218043a21dcc7a3fc76605af5d"
         ZIPLINK="http://downloads.dlang.org/releases/2.x/2.072.2/$FILE"
