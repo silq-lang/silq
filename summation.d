@@ -92,6 +92,8 @@ DExpr computeSum(DExpr expr,DExpr facts=one){
 		}
 	}
 	//dw("!! ",nonIvrs," ",lower," ",upper);
+	// TODO: symbolic summation. TODO: use the fact that the loop index is an integer in simplifications.
+	//if(nonIvrs==one) return (dIvr(DIvr.Type.leZ,dCeil(lower)-dFloor(upper))*(dFloor(upper)+1-dCeil(lower))).simplify(facts);
 	// TODO: use more clever summation strategies first
 	auto lq=cast(Dℚ)lower, uq=cast(Dℚ)upper;
 	if(lower && upper && lq && uq){

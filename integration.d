@@ -116,16 +116,14 @@ private DExpr definiteIntegralImpl(DExpr expr,DExpr facts=one){
 		if(auto r=definiteIntegralContinuous(expr,facts))
 			return r;
 	}
-	
-	// pull sums out (TODO: ok?)
-	/+foreach(f;expr.factors){ // TODO: fix this
+	// pull sums out
+	foreach(f;expr.factors){
 		if(auto sum=cast(DSum)f){
-			auto tmp1=freshVar(); // TODO: get rid of this!
-			auto tmp2=freshVar(); // TODO: get rid of this!
-			auto expr=sum.getExpr(tmp1)*expr.withoutFactor(f);
-			return dSum(tmp1,dInt(tmp2,unbind(expr,tmp2))).simplify(facts);
+			auto nexpr=sum.expr.incDeBruijnVar(1,0).substitute(dDeBruijnVar(3),dDeBruijnVar(1)).incDeBruijnVar(-1,2)*expr.withoutFactor(f).incDeBruijnVar(1,1);
+			if(auto r=definiteIntegral(nexpr,facts.incDeBruijnVar(1,0).simplify(one)))
+				return dSum(r).simplify(facts);
 		}
-	}+/
+	}
 	// Fubini
 	DExpr fubini(){
 		bool hasInt=false;
