@@ -1915,6 +1915,42 @@ BoundStatus getBoundForVar(DIvr ivr,DVar var,out DExpr bound){
 	return r;
 }
 
+Q!(bool,DExpr[2]) getBoundsForVar(DExpr ivrs,DVar var,DExpr facts=one){
+	DExpr lower,upper;
+	foreach(f;ivrs.factors){
+		if(f is one) break;
+		auto ivr=cast(DIvr)f;
+		assert(!!ivr);
+		assert(ivr.type!=DIvr.Type.neqZ);
+		DExpr bound;
+		auto status=ivr.getBoundForVar(var,bound);
+		if(bound) bound=bound.incDeBruijnVar(-1,0);
+		final switch(status) with(BoundStatus){
+		case fail:
+			return q(false,cast(DExpr[2])[null,null]);
+		case lowerBound:
+			if(lower) lower=dMax(lower,bound);
+			else lower=bound;
+			lower=lower.simplify(facts);
+			break;
+		case upperBound:
+			if(upper) upper=dMin(upper,bound);
+			else upper=bound;
+			upper=upper.simplify(facts);
+			break;
+		case equal:
+			if(lower) lower=dMax(lower,bound);
+			else lower=bound;
+			if(upper) upper=dMin(upper,bound);
+			else upper=bound;
+			lower=lower.simplify(facts);
+			upper=upper.simplify(facts);
+		}
+	}
+	return q(true,cast(DExpr[2])[lower,upper]);
+}
+
+
 // attempt to produce an equivalent expression where 'var' does not occur non-linearly in constraints
 DExpr linearizeConstraints(alias filter=e=>true)(DExpr e,DVar var){ // TODO: don't re-build the expression if no constraints change.
 	if(!e.hasFreeVar(var)) return e;

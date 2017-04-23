@@ -60,37 +60,9 @@ DExpr computeSum(DExpr expr,DExpr facts=one){
 	}
 	ivrs=ivrs.simplify(facts.incDeBruijnVar(1,0).simplify(one));
 	nonIvrs=nonIvrs.simplify(facts.incDeBruijnVar(1,0).simplify(one));
-	DExpr lower,upper;
-	foreach(f;ivrs.factors){
-		if(f is one) break;
-		auto ivr=cast(DIvr)f;
-		assert(!!ivr);
-		assert(ivr.type!=DIvr.Type.neqZ);
-		DExpr bound;
-		auto status=ivr.getBoundForVar(var,bound);
-		if(bound) bound=bound.incDeBruijnVar(-1,0);
-		final switch(status) with(BoundStatus){
-		case fail:
-			return null;
-		case lowerBound:
-			if(lower) lower=dMax(lower,bound);
-			else lower=bound;
-			lower=lower.simplify(facts);
-			break;
-		case upperBound:
-			if(upper) upper=dMin(upper,bound);
-			else upper=bound;
-			upper=upper.simplify(facts);
-			break;
-		case equal:
-			if(lower) lower=dMax(lower,bound);
-			else lower=bound;
-			if(upper) upper=dMin(upper,bound);
-			else upper=bound;
-			lower=lower.simplify(facts);
-			upper=upper.simplify(facts);
-		}
-	}
+	auto loup=ivrs.getBoundsForVar(var,facts);
+	if(!loup[0]) return null;
+	DExpr lower=loup[1][0],upper=loup[1][1];
 	//dw("!! ",nonIvrs," ",lower," ",upper);
 	// TODO: symbolic summation. TODO: use the fact that the loop index is an integer in simplifications.
 	//if(nonIvrs==one) return (dIvr(DIvr.Type.leZ,dCeil(lower)-dFloor(upper))*(dFloor(upper)+1-dCeil(lower))).simplify(facts);

@@ -201,16 +201,11 @@ private DExpr definiteIntegralContinuous(DExpr expr,DExpr facts)out(res){
 
 	assert(expr.factors.all!(x=>x.hasFreeVar(var)),text(expr," ",var));
 	assert(expr.factors.all!(x=>!cast(DDelta)x));
-	auto ivrsNonIvrs=splitIvrs(expr), ivrs=ivrsNonIvrs[0], nonIvrs=ivrsNonIvrs[1];
-	ivrs=ivrs.simplify(facts.incDeBruijnVar(1,0).simplify(one));
-	nonIvrs=nonIvrs.simplify(facts.incDeBruijnVar(1,0).simplify(one));
-	DExpr lower=null;
-	DExpr upper=null;
-	foreach(f;ivrs.factors){
-		if(f == one) break;
+	DExpr ivrs=one, nonIvrs=one;
+	foreach(f;expr.factors){
 		auto ivr=cast(DIvr)f;
+		if(!ivr){ nonIvrs=nonIvrs*f; continue; }
 		assert(!!ivr);
-		//if(ivr.type==DIvr.Type.eqZ) return null; // TODO: eliminate eqZ early
 		if(ivr.type==DIvr.Type.eqZ||ivr.type==DIvr.Type.neqZ){
 			bool mustHaveZerosOfMeasureZero(){
 				auto e=ivr.e;
@@ -226,47 +221,13 @@ private DExpr definiteIntegralContinuous(DExpr expr,DExpr facts)out(res){
 			}else return null;
 		}
 		assert(ivr.type!=DIvr.Type.lZ);
-		DExpr bound;
-		auto status=ivr.getBoundForVar(var,bound);
-		if(bound) bound=bound.incDeBruijnVar(-1,0);
-		final switch(status) with(BoundStatus){
-			case fail:
-				SolutionInfo info;
-				SolUse usage={caseSplit:true,bound:true};
-				bound=solveFor(ivr.e,var,zero,usage,info);
-				if(!bound) return null;
-				foreach(ref x;info.caseSplits) x.constraint=x.constraint.incDeBruijnVar(-1,0);
-				import std.conv: text;
-				// TODO: fuse some of this with DDelta.performSubstitution?
-				auto constraints=one;
-				foreach(ref x;info.caseSplits)
-					constraints=constraints*dIvr(DIvr.Type.neqZ,x.constraint);
-				//constraints=constraints.simplify(one);
-				auto rest=expr.withoutFactor(ivr);
-				auto r=constraints == zero?zero:
-					constraints*(dIntSmp(dIvr(DIvr.Type.leZ,var-bound)*
-					                     dIvr(DIvr.type.leZ,info.bound.isLower)*rest,one)
-					             +dIntSmp(dIvr(DIvr.Type.lZ,bound-var)*
-					                      dIvr(DIvr.type.leZ,-info.bound.isLower)*rest,one));
-				foreach(ref x;info.caseSplits){
-					auto curConstr=constraints.withoutFactor(dIvr(DIvr.Type.neqZ,x.constraint));
-					r=r+curConstr*dIvr(DIvr.Type.eqZ,x.constraint)*
-						dIntSmp(rest*dIvr(DIvr.Type.leZ,x.expression),one);
-				}
-				return r.simplify(facts);
-			case lowerBound:
-				if(lower) lower=dMax(lower,bound);
-				else lower=bound;
-				lower=lower.simplify(facts);
-				break;
-			case upperBound:
-				if(upper) upper=dMin(upper,bound);
-				else upper=bound;
-				upper=upper.simplify(facts);
-				break;
-			case equal: assert(0);
-			}
+		ivrs=ivrs*ivr;
 	}
+	ivrs=ivrs.simplify(facts.incDeBruijnVar(1,0).simplify(one));
+	nonIvrs=nonIvrs.simplify(facts.incDeBruijnVar(1,0).simplify(one));
+	auto loup=ivrs.getBoundsForVar(var,facts);
+	if(!loup[0]) return null;
+	DExpr lower=loup[1][0],upper=loup[1][1];
 	if(auto r=tryIntegrate(nonIvrs,lower,upper,ivrs))
 		return r.simplify(facts);
 	return null;
