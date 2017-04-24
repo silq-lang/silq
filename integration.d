@@ -203,6 +203,25 @@ private DExpr definiteIntegralContinuous(DExpr expr,DExpr facts)out(res){
 	return null;
 }
 
+DExpr fromTo(DExpr anti,DVar var,DExpr lower,DExpr upper)in{
+	assert(var==dDeBruijnVar(1));
+}body{ // lower=null: lower=-∞. upper=0: upper=∞
+	//dw(anti.substitute(var,lower).simplify(one)," ",lower," ",upper);
+	auto lo=lower?unbind(anti,lower):null;
+	auto up=upper?unbind(anti,upper):null;
+	if(lower&&upper){
+		//dw("??! ",dDiff(var,anti).simplify(one));
+		//dw(anti.substitute(var,upper).simplify(one));
+		//dw(anti.substitute(var,lower).simplify(one));
+		return dIvr(DIvr.Type.leZ,lower-upper)*(up-lo);
+	}
+	if(!lo) lo=dLimSmp(var,-dInf,anti,one).incDeBruijnVar(-1,0);
+	if(!up) up=dLimSmp(var,dInf,anti,one).incDeBruijnVar(-1,0);
+	if(lo.isInfinite() || up.isInfinite()) return null;
+	if(lo.hasLimits() || up.hasLimits()) return null;
+	return up-lo;
+}
+
 
 DExpr tryGetAntiderivative(DExpr nonIvrs,DExpr ivrs){
 	auto var=dDeBruijnVar(1);
@@ -484,22 +503,8 @@ private DExpr tryIntegrateImpl(DExpr nonIvrs,DExpr ivrs){
 	//dw(var," ",nonIvrs," ",ivrs);
 	//dw(antid.antiderivative);
 	//dw(dDiff(var,antid.antiderivative.simplify(one)).simplify(one));
-	if(auto anti=tryGetAntiderivative(nonIvrs,ivrs)){
-		//dw(anti.substitute(var,lower).simplify(one)," ",lower," ",upper);
-		auto lo=lower?unbind(anti,lower):null;
-		auto up=upper?unbind(anti,upper):null;
-		if(lower&&upper){
-			//dw("??! ",dDiff(var,anti).simplify(one));
-			//dw(anti.substitute(var,upper).simplify(one));
-			//dw(anti.substitute(var,lower).simplify(one));
-			return dIvr(DIvr.Type.leZ,lower-upper)*(up-lo);
-		}
-		if(!lo) lo=dLimSmp(var,-dInf,anti,one).incDeBruijnVar(-1,0);
-		if(!up) up=dLimSmp(var,dInf,anti,one).incDeBruijnVar(-1,0);
-		if(lo.isInfinite() || up.isInfinite()) return null;
-		if(lo.hasLimits() || up.hasLimits()) return null;
-		return up-lo;
-	}
+	if(auto anti=tryGetAntiderivative(nonIvrs,ivrs))
+		return anti.fromTo(var,lower,upper);
 	if(auto p=cast(DPlus)nonIvrs.polyNormalize(var)){
 		DExprSet works;
 		DExprSet doesNotWork;
