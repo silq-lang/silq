@@ -195,40 +195,10 @@ private DExpr definiteIntegralContinuous(DExpr expr,DExpr facts)out(res){
 		if(res) successfulIntegrations++;
 	}
 }body{
-	auto var=dDeBruijnVar(1);
 	// ensure integral is continuous
+	auto var=dDeBruijnVar(1);
 	if(!expr.isContinuousMeasureIn(var)) return null;
-
-	assert(expr.factors.all!(x=>x.hasFreeVar(var)),text(expr," ",var));
-	assert(expr.factors.all!(x=>!cast(DDelta)x));
-	DExpr ivrs=one, nonIvrs=one;
-	foreach(f;expr.factors){
-		auto ivr=cast(DIvr)f;
-		if(!ivr){ nonIvrs=nonIvrs*f; continue; }
-		assert(!!ivr);
-		if(ivr.type==DIvr.Type.eqZ||ivr.type==DIvr.Type.neqZ){
-			bool mustHaveZerosOfMeasureZero(){
-				auto e=ivr.e;
-				if(e != e.linearizeConstraints(var)) return false; // TODO: guarantee this condition
-				if(e.hasAny!DIvr) return false; // TODO: make sure this cannot actually happen
-				if(e.hasAny!DFloor||e.hasAny!DCeil) return false;
-				if(e.hasAny!DDistApply) return false; // TODO: some proofs still possible
-				return true;
-			}
-			if(mustHaveZerosOfMeasureZero()){
-				if(ivr.type==DIvr.Type.eqZ) return zero;
-				if(ivr.type==DIvr.Type.neqZ) continue;
-			}else return null;
-		}
-		assert(ivr.type!=DIvr.Type.lZ);
-		ivrs=ivrs*ivr;
-	}
-	ivrs=ivrs.simplify(facts.incDeBruijnVar(1,0).simplify(one));
-	nonIvrs=nonIvrs.simplify(facts.incDeBruijnVar(1,0).simplify(one));
-	auto loup=ivrs.getBoundsForVar(var,facts);
-	if(!loup[0]) return null;
-	DExpr lower=loup[1][0],upper=loup[1][1];
-	if(auto r=tryIntegrate(nonIvrs,lower,upper,ivrs))
+	if(auto r=tryIntegrate(expr,one))
 		return r.simplify(facts);
 	return null;
 }
@@ -498,18 +468,47 @@ AntiD tryGetAntiderivative(DExpr nonIvrs,DExpr ivrs){
 	return AntiD(); // no simpler expression available
 }
 
-MapX!(Q!(DExpr,DExpr,DExpr,DExpr),DExpr) tryIntegrateMemo;
+MapX!(Q!(DExpr,DExpr),DExpr) tryIntegrateMemo;
 
-DExpr tryIntegrate(DExpr nonIvrs,DExpr lower,DExpr upper,DExpr ivrs){
-	auto t=q(nonIvrs,lower,upper,ivrs);
+DExpr tryIntegrate(DExpr nonIvrs,DExpr ivrs){
+	auto t=q(nonIvrs,ivrs);
 	if(t in tryIntegrateMemo) return tryIntegrateMemo[t];
 	auto r=tryIntegrateImpl(t.expand);
 	tryIntegrateMemo[t]=r;
 	return r;
 }
 
-private DExpr tryIntegrateImpl(DExpr nonIvrs,DExpr lower,DExpr upper,DExpr ivrs){
+private DExpr tryIntegrateImpl(DExpr nonIvrs,DExpr ivrs){
 	auto var=dDeBruijnVar(1);
+	assert(nonIvrs.factors.all!(x=>!cast(DDelta)x));
+	assert(ivrs==one||ivrs.factors.all!(x=>!!cast(DIvr)x));
+	DExpr newNonIvrs=one;
+	foreach(f;setx(nonIvrs.factors)){
+		auto ivr=cast(DIvr)f;
+		if(!ivr){ newNonIvrs=newNonIvrs*f; continue; }
+		assert(!!ivr);
+		if(ivr.type==DIvr.Type.eqZ||ivr.type==DIvr.Type.neqZ){
+			bool mustHaveZerosOfMeasureZero(){
+				auto e=ivr.e;
+				if(e != e.linearizeConstraints(var)) return false; // TODO: guarantee this condition
+				if(e.hasAny!DIvr) return false; // TODO: make sure this cannot actually happen
+				if(e.hasAny!DFloor||e.hasAny!DCeil) return false;
+				if(e.hasAny!DDistApply) return false; // TODO: some proofs still possible
+				return true;
+			}
+			if(mustHaveZerosOfMeasureZero()){
+				if(ivr.type==DIvr.Type.eqZ) return zero;
+				if(ivr.type==DIvr.Type.neqZ) continue;
+			}else return null;
+		}
+		assert(ivr.type!=DIvr.Type.lZ);
+		ivrs=ivrs*ivr;
+	}
+	ivrs=ivrs.simplify(one);
+	nonIvrs=newNonIvrs.simplify(one);
+	auto loup=ivrs.getBoundsForVar(var);
+	if(!loup[0]) return null;
+	DExpr lower=loup[1][0],upper=loup[1][1];
 	// TODO: add better approach for antiderivatives	
 	auto antid=tryGetAntiderivative(nonIvrs,ivrs);
 	//dw(var," ",nonIvrs," ",ivrs);
@@ -540,7 +539,7 @@ private DExpr tryIntegrateImpl(DExpr nonIvrs,DExpr lower,DExpr upper,DExpr ivrs)
 		foreach(s;p.summands){
 			auto ow=s.splitMultAtVar(var);
 			ow[0]=ow[0].incDeBruijnVar(-1,0).simplify(one);
-			auto t=tryIntegrate(ow[1],lower,upper,ivrs);
+			auto t=tryIntegrate(ow[1],ivrs);
 			if(t) DPlus.insert(works,ow[0]*t);
 			else DPlus.insert(doesNotWork,s);
 		}
