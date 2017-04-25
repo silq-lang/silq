@@ -20,7 +20,6 @@ private DExpr definiteIntegralImpl(DExpr expr,DExpr facts=one){
 	auto nexpr=expr.simplify(facts.incDeBruijnVar(1,0).simplify(one));
 	if(expr != nexpr) expr=nexpr;
 	if(expr == zero) return zero;
-	// TODO: move (most of) the following into the implementation of definiteIntegral
 	auto ow=expr.splitMultAtVar(var);
 	ow[0]=ow[0].incDeBruijnVar(-1,0).simplify(facts);
 	if(ow[0] != one || ow[1] != expr){ // TODO: second disjunct should not to be necessary
@@ -371,26 +370,32 @@ DExpr tryGetAntiderivative(DExpr expr){
 			return sqrta*x-b/(2*sqrta);
 		}
 		// constraints: none!
-		return dIvr(DIvr.Type.neqZ,a)*fac*dGaussInt(transform(v));
-			//+ dIvr(DIvr.Type.eqZ,a)*tryGetAntiderivative(v,dE^^(b*v+c),ivrs);
-			// TODO: BUG: this is necessary. Need to fix limit code such that it can handle this.
+		auto r=dIvr(DIvr.Type.neqZ,a)*fac*dGaussInt(transform(v));
+		auto isZero=dIvr(DIvr.Type.eqZ,a).simplify(one);
+		if(isZero!=zero){
+			auto rest=tryGetAntiderivative(dE^^(b*v+c));
+			if(!rest) return null;
+			r=r+isZero*rest;
+		}
+		return r;
 	}
 	if(auto gauss=gaussianIntegral(var,expr)) return gauss;
 	// TODO: this is just a list of special cases. Generalize!
 	DExpr doubleGaussIntegral(DVar var,DExpr e){
 		auto gi=cast(DGaussInt)e;
 		if(!gi) return null;
-		auto q=gi.x.asPolynomialIn(var,1);
-		if(!q.initialized) return null;
-		auto a=q.coefficients.get(1,zero),b=q.coefficients.get(0,zero);
-		if(a == zero) return null; // TODO: make "dynamic"
-		static DExpr primitive(DExpr e){
-			if(e == -dInf) return zero;
-			return dGaussInt(e)*e+dE^^(-e^^2)/2;
+		auto ba=gi.x.asLinearFunctionIn(var);
+		auto b=ba[0],a=ba[1];
+		if(a&&b){
+			static DExpr primitive(DExpr e){
+				if(e == -dInf) return zero;
+				return dGaussInt(e)*e+dE^^(-e^^2)/2;
+			}
+			// constraints: upper
+			return dIvr(DIvr.Type.neqZ,a)*primitive(gi.x)/a
+				+ dIvr(DIvr.Type.eqZ,a)*var*dGaussInt(b);
 		}
-		auto fac=one/a;
-		// constraints: upper
-		return fac*primitive(gi.x);
+		return null;
 	}
 	if(auto dgauss=doubleGaussIntegral(var,expr)) return dgauss;
 	DExpr gaussIntTimesGauss(DVar var,DExpr e){
@@ -420,7 +425,7 @@ DExpr tryGetAntiderivative(DExpr expr){
 		static MapX!(Q!(DVar,DExpr),DExpr) memo;
 		if(q(var,e) in memo) return memo[q(var,e)];
 		auto token=freshVar("τ"); // TODO: make sure this does not create a GC issue.
-		memo[q(var,e)]=token; // TODO :get rid of AntiD
+		memo[q(var,e)]=token;
 		auto fail(){
 			memo[q(var,e)]=null;
 			return null;
