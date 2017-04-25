@@ -1,7 +1,7 @@
 // skipped
 
 a := 0, b := 1; // TODO: chars and strings.
-bagel := 2, cookie := 3, nothing := 4, state := 5;
+bagel := 0, cookie := 1, nothing := 2, state := 3;
 
 def haveCookie(obj) ⇒ obj==cookie;
 
@@ -26,5 +26,5 @@ def main(){
 		observe(act()==b && act()==b && act()==b);
 		return goalPrior();
 	});
-	return goalPosterior.sample(); // expected: 1589/2050·δ[-r₁+3]+461/2050·δ[-r₁+2]
+	return goalPosterior.sample(); // expected: δ[-r₁+1]·⅟2+δ[r₁]·⅟2
 }

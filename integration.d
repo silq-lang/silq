@@ -232,6 +232,28 @@ DExpr tryGetAntiderivative(DExpr expr){
 			return ow[0]*rest;
 		return null;
 	}
+	foreach(ff;expr.factors){ // incorporate iverson brackets
+		if(!cast(DIvr)ff) continue;
+		auto ivrsNonIvrs=splitIvrsIntegral(expr);
+		final switch(ivrsNonIvrs[0]) with(SplitIvrsIntegral){
+			case fail: return null;
+			case success: break;
+			case zero: return .zero;
+		}
+		auto ivrs=ivrsNonIvrs[1][0].simplify(one),nonIvrs=ivrsNonIvrs[1][1].simplify(one);
+		assert(ivrs&&nonIvrs);
+		assert(ivrs.factors.all!(x=>x==one||cast(DIvr)x&&x.hasFreeVar(var)));
+		auto loup=ivrs.getBoundsForVar(var);
+		if(!loup[0]) return null;
+		auto lower=loup[1][0],upper=loup[1][1];
+		auto antid=tryGetAntiderivative(nonIvrs);
+		if(!antid) return null;
+		// TODO: handle the case where unbind(antid,lower) or unbind(antid,upper) are infinite properly
+		// (this will 'just work' formally, but it is an ugly hack.)
+		if(lower) antid=dIvr(DIvr.Type.leZ,var-lower)*(antid-unbind(antid,lower));
+		if(upper) antid=dIvr(DIvr.Type.leZ,upper-var)*antid+dIvr(DIvr.Type.lZ,var-upper)*unbind(antid,upper);
+		return antid.simplify(one);
+	}
 	static DExpr safeLog(DExpr e){ // TODO: integrating 1/x over 0 diverges (not a problem for integrals occurring in the analysis)
 		return dLog(e)*dIvr(DIvr.Type.lZ,-e)
 			+ dLog(-e)*dIvr(DIvr.Type.lZ,e);
@@ -424,7 +446,6 @@ DExpr tryGetAntiderivative(DExpr expr){
 		if(!intRest) return fail();
 		auto diffPoly=dDiff(var,polyFact);
 		auto diffRest=(diffPoly*intRest).polyNormalize(var).simplify(one);
-		dw(diffRest);
 		auto intDiffPolyIntRest=tryGetAntiderivative(diffRest);
 		if(!intDiffPolyIntRest) return fail();
 		auto r=polyFact*intRest-intDiffPolyIntRest;
@@ -468,14 +489,17 @@ DExpr tryIntegrate(DExpr nonIvrs,DExpr ivrs){
 	return r;
 }
 
-private DExpr tryIntegrateImpl(DExpr nonIvrs,DExpr ivrs){
+enum SplitIvrsIntegral{
+	fail,
+	success,
+	zero
+}
+Q!(SplitIvrsIntegral,DExpr[2]) splitIvrsIntegral(DExpr expr){
 	auto var=dDeBruijnVar(1);
-	assert(nonIvrs.factors.all!(x=>!cast(DDelta)x));
-	assert(ivrs==one||ivrs.factors.all!(x=>!!cast(DIvr)x));
-	DExpr newNonIvrs=one;
-	foreach(f;setx(nonIvrs.factors)){
+	DExpr ivrs=one,nonIvrs=one;
+	foreach(f;setx(expr.factors)){
 		auto ivr=cast(DIvr)f;
-		if(!ivr){ newNonIvrs=newNonIvrs*f; continue; }
+		if(!ivr){ nonIvrs=nonIvrs*f; continue; }
 		assert(!!ivr);
 		if(ivr.type==DIvr.Type.eqZ||ivr.type==DIvr.Type.neqZ){
 			bool mustHaveZerosOfMeasureZero(){
@@ -487,15 +511,30 @@ private DExpr tryIntegrateImpl(DExpr nonIvrs,DExpr ivrs){
 				return true;
 			}
 			if(mustHaveZerosOfMeasureZero()){
-				if(ivr.type==DIvr.Type.eqZ) return zero;
+				if(ivr.type==DIvr.Type.eqZ) return q(SplitIvrsIntegral.zero,(DExpr[2]).init);
 				if(ivr.type==DIvr.Type.neqZ) continue;
-			}else return null;
+			}else return q(SplitIvrsIntegral.fail,(DExpr[2]).init);
 		}
 		assert(ivr.type!=DIvr.Type.lZ);
 		ivrs=ivrs*ivr;
 	}
-	ivrs=ivrs.simplify(one);
-	nonIvrs=newNonIvrs.simplify(one);
+	return q(SplitIvrsIntegral.success,cast(DExpr[2])[ivrs,nonIvrs]);
+}
+
+
+private DExpr tryIntegrateImpl(DExpr nonIvrs,DExpr ivrs){
+	auto var=dDeBruijnVar(1);
+	assert(nonIvrs.factors.all!(x=>!cast(DDelta)x));
+	assert(ivrs==one||ivrs.factors.all!(x=>!!cast(DIvr)x));
+	auto ivrsNonIvrs=splitIvrsIntegral(nonIvrs);
+	final switch(ivrsNonIvrs[0]) with(SplitIvrsIntegral){
+		case fail: return null;
+		case success: break;
+		case zero: return .zero;
+	}
+	assert(ivrsNonIvrs[1][0]&&ivrsNonIvrs[1][1]);
+	ivrs=(ivrs*ivrsNonIvrs[1][0]).simplify(one);
+	nonIvrs=ivrsNonIvrs[1][1].simplify(one);
 	auto loup=ivrs.getBoundsForVar(var);
 	if(!loup[0]) return null;
 	DExpr lower=loup[1][0],upper=loup[1][1];

@@ -1,7 +1,7 @@
 // skipped
 
 a := 0, b := 1; // TODO: chars and strings.
-bagel := 2, cookie := 3, nothing := 4, state := 5;
+bagel := 0, cookie := 1, nothing := 2, state := 3;
 
 def haveCookie(obj) ⇒ obj==cookie;
 

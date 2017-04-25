@@ -170,6 +170,7 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr;
+	//writeln("∫dx x·log(x)·[1≤x]·[x≤2]".dParse.simplify(one));
 	//writeln("∫dx x·log(x)^2·[1≤x]·[x≤2]".dParse.simplify(one));
 	//writeln("∫dy 1/x·δ[(1+y²)-x]".dParse.simplify(one));
 	//writeln("∫dx [-x+1≠0]·[-x+1≤0]·⅟x·⅟y^(1/2)·δ[y-(-1+x)]".dParse.simplify(one));
