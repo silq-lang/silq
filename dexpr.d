@@ -2862,7 +2862,7 @@ class DInt: DOp{
 		auto ow=expr.splitMultAtVar(dDeBruijnVar(1));
 		ow[0]=ow[0].incDeBruijnVar(-1,0).simplify(facts);
 		if(ow[0]==zero) return zero;
-		if(ow[0] != one) return (ow[0]*dIntSmp(ow[1],facts)).simplify(facts);
+		if(ow[0]!=one||ow[1]!=expr) return (ow[0]*dIntSmp(ow[1],facts)).simplify(facts);
 		//version(DISABLE_INTEGRATION){
 		if(opt.integrationLevel==IntegrationLevel.none)
 			return null;
