@@ -278,15 +278,13 @@ DExpr tryGetAntiderivative(DExpr expr){
 			}
 		}
 		if(!p.operands[0].hasFreeVar(var)){
-			auto k=safeLog(p.operands[0])*p.operands[1];
+			auto k=(safeLog(p.operands[0])*p.operands[1]).simplify(one);
 			// need to integrate e^^(k(x)).
-			auto dk=dDiff(var,k);
-			if(!dk.hasFreeVar(var)){
-				DExpr lo=null,up=null;
-				if(dIvr(DIvr.Type.leZ,k).simplify(one) == one){
-					up=zero;
-				}
-				return dIvr(DIvr.Type.neqZ,dk)*dE^^k/dk;
+			auto ba=k.asLinearFunctionIn(var);
+			auto b=ba[0],a=ba[1];
+			if(a && b){
+				assert(!a.hasFreeVar(var));
+				return dIvr(DIvr.Type.neqZ,a)*dE^^k/a;
 				// + dIvr(DIvr.Type.eqZ,dk)*var*dE^^(k-var*dk);
 				// TODO: BUG: this is necessary. Need to fix limit code such that it can handle this.
 			}
