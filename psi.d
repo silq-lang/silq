@@ -170,6 +170,7 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr;
+	//writeln("∫dx log(a·x+b)^2·[1≤x]·[x≤2]".dParse.simplify(one));
 	//writeln("∫dx 1/(a·x+b)·[1≤x]·[x≤2]".dParse.simplify(one));
 	//writeln("∫dx log(a·x+b)·[1≤x]·[x≤2]".dParse.simplify(one));
 	//writeln("∫dx x/(a·x+b)·[0≤x]·[x≤1]".dParse.simplify(one));

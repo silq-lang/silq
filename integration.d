@@ -345,7 +345,8 @@ DExpr tryGetAntiderivative(DExpr expr){
 						return dIntSmp(t^^(a-1)*dE^^(-t)*dIvr(DIvr.type.leZ,z-t),one);
 					}
 					if(n.c>0)
-						return dIvr(DIvr.Type.neqZ,a*var+b)*mone^^n*dInGamma(n+1,-dLog(a*var+b))/a;
+						return dIvr(DIvr.Type.neqZ,a)*dIvr(DIvr.Type.neqZ,a*var+b)*mone^^n*dInGamma(n+1,-dLog(a*var+b))/a
+							+ dIvr(DIvr.Type.eqZ,a)*var*dLog(b)^^n;
 				}
 			}
 		}
