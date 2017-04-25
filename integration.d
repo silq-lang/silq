@@ -223,21 +223,20 @@ DExpr fromTo(DExpr anti,DVar var,DExpr lower,DExpr upper)in{
 }
 
 
-DExpr tryGetAntiderivative(DExpr nonIvrs,DExpr ivrs){
+DExpr tryGetAntiderivative(DExpr expr){
 	auto var=dDeBruijnVar(1);
-	auto ow=nonIvrs.splitMultAtVar(var);
+	auto ow=expr.splitMultAtVar(var);
 	ow[0]=ow[0].simplify(one);
 	if(ow[0] != one){
-		if(auto rest=tryGetAntiderivative(ow[1].simplify(one),ivrs))
+		if(auto rest=tryGetAntiderivative(ow[1].simplify(one)))
 			return ow[0]*rest;
 		return null;
 	}
-
 	static DExpr safeLog(DExpr e){ // TODO: integrating 1/x over 0 diverges (not a problem for integrals occurring in the analysis)
 		return dLog(e)*dIvr(DIvr.Type.lZ,-e)
 			+ dLog(-e)*dIvr(DIvr.Type.lZ,e);
 	}
-	if(auto p=cast(DPow)nonIvrs){
+	if(auto p=cast(DPow)expr){
 		if(!p.operands[1].hasFreeVar(var)){
 			if(p.operands[0] == var){
 				// constraint: lower && upper
@@ -270,8 +269,8 @@ DExpr tryGetAntiderivative(DExpr nonIvrs,DExpr ivrs){
 			}
 		}
 	}
-	if(nonIvrs == one) return var; // constraint: lower && upper
-	if(auto poly=nonIvrs.asPolynomialIn(var)){
+	if(expr == one) return var; // constraint: lower && upper
+	if(auto poly=expr.asPolynomialIn(var)){
 		DExprSet s;
 		foreach(i,coeff;poly.coefficients){
 			assert(i<size_t.max);
@@ -280,7 +279,7 @@ DExpr tryGetAntiderivative(DExpr nonIvrs,DExpr ivrs){
 		// constraint: lower && upper
 		return dPlus(s);
 	}
-	if(auto p=cast(DLog)nonIvrs){
+	if(auto p=cast(DLog)expr){
 		auto ba=p.e.asLinearFunctionIn(var);
 		auto b=ba[0],a=ba[1];
 		if(a && b){
@@ -292,7 +291,7 @@ DExpr tryGetAntiderivative(DExpr nonIvrs,DExpr ivrs){
 		}
 	}
 	// integrate log(x)ʸ/x to log(x)ʸ⁺¹/(y+1)
-	if(auto p=cast(DMult)nonIvrs){
+	if(auto p=cast(DMult)expr){
 		auto inv=1/var;
 		if(p.hasFactor(inv)){
 			auto without=p.withoutFactor(inv);
@@ -311,7 +310,7 @@ DExpr tryGetAntiderivative(DExpr nonIvrs,DExpr ivrs){
 		}
 	}
 	// integrate log to some positive integer power
-	if(auto p=cast(DPow)nonIvrs){
+	if(auto p=cast(DPow)expr){
 		if(auto l=cast(DLog)p.operands[0]){
 			auto ba=l.e.asLinearFunctionIn(var);
 			auto b=ba[0],a=ba[1];
@@ -355,7 +354,7 @@ DExpr tryGetAntiderivative(DExpr nonIvrs,DExpr ivrs){
 			//+ dIvr(DIvr.Type.eqZ,a)*tryGetAntiderivative(v,dE^^(b*v+c),ivrs);
 			// TODO: BUG: this is necessary. Need to fix limit code such that it can handle this.
 	}
-	if(auto gauss=gaussianIntegral(var,nonIvrs)) return gauss;
+	if(auto gauss=gaussianIntegral(var,expr)) return gauss;
 	// TODO: this is just a list of special cases. Generalize!
 	DExpr doubleGaussIntegral(DVar var,DExpr e){
 		auto gi=cast(DGaussInt)e;
@@ -372,7 +371,7 @@ DExpr tryGetAntiderivative(DExpr nonIvrs,DExpr ivrs){
 		// constraints: upper
 		return fac*primitive(gi.x);
 	}
-	if(auto dgauss=doubleGaussIntegral(var,nonIvrs)) return dgauss;
+	if(auto dgauss=doubleGaussIntegral(var,expr)) return dgauss;
 	DExpr gaussIntTimesGauss(DVar var,DExpr e){
 		//∫dx (d/dx)⁻¹[e^(-x²)](g(x))·f(x) = (d/dx)⁻¹[e^(-x²)](g(x))·∫dx f(x) - ∫dx (g'(x)e^(-g(x)²)·∫dx f(x))
 		auto m=cast(DMult)e;
@@ -387,14 +386,14 @@ DExpr tryGetAntiderivative(DExpr nonIvrs,DExpr ivrs){
 		if(!gaussFact) return null;
 		auto rest=m.withoutFactor(gaussFact);
 		auto gauss=dDiff(var,gaussFact).simplify(one);
-		auto intRest=tryGetAntiderivative(rest,ivrs);
+		auto intRest=tryGetAntiderivative(rest);
 		if(!intRest) return null;
 		if(e == (gauss*intRest).simplify(one)){ // TODO: handle all cases
 			return gaussFact*intRest/2;
 		}
 		return null;
 	}
-	if(auto dgaussTG=gaussIntTimesGauss(var,nonIvrs)) return dgaussTG;
+	if(auto dgaussTG=gaussIntTimesGauss(var,expr)) return dgaussTG;
 	// partial integration for polynomials
 	DExpr partiallyIntegratePolynomials(DVar var,DExpr e){ // TODO: is this well founded?
 		static MapX!(Q!(DVar,DExpr),DExpr) memo;
@@ -421,11 +420,12 @@ DExpr tryGetAntiderivative(DExpr nonIvrs,DExpr ivrs){
 		}
 		if(!polyFact) return fail();
 		auto rest=m.withoutFactor(polyFact);
-		auto intRest=tryGetAntiderivative(rest,ivrs);
+		auto intRest=tryGetAntiderivative(rest);
 		if(!intRest) return fail();
 		auto diffPoly=dDiff(var,polyFact);
 		auto diffRest=(diffPoly*intRest).polyNormalize(var).simplify(one);
-		auto intDiffPolyIntRest=tryGetAntiderivative(diffRest,ivrs);
+		dw(diffRest);
+		auto intDiffPolyIntRest=tryGetAntiderivative(diffRest);
 		if(!intDiffPolyIntRest) return fail();
 		auto r=polyFact*intRest-intDiffPolyIntRest;
 		if(!r.hasFreeVar(token)){ memo[q(var,e)]=r; return r; }
@@ -435,21 +435,21 @@ DExpr tryGetAntiderivative(DExpr nonIvrs,DExpr ivrs){
 		}
 		return fail();
 	}
-	if(auto partPoly=partiallyIntegratePolynomials(var,nonIvrs)) return partPoly;
+	if(auto partPoly=partiallyIntegratePolynomials(var,expr)) return partPoly;
 
 	// x = ∫ u'v
 	// (uv)' = uv'+u'v
 	// ∫(uv)' = ∫uv'+∫u'v
 	// uv+C = ∫uv'+∫u'v
 	// 
-	//auto factors=splitIntegrableFactor(nonIvrs);
+	//auto factors=splitIntegrableFactor(expr);
 	//dw(factors[1]);
 	//dw("!! ",dDiff(var,factors[1]));
 
-	if(auto p=cast(DPlus)nonIvrs.polyNormalize(var)){
+	if(auto p=cast(DPlus)expr.polyNormalize(var)){
 		DExpr r=zero;
 		foreach(s;p.summands){
-			auto a=tryGetAntiderivative(s,ivrs);
+			auto a=tryGetAntiderivative(s);
 			if(!a) return null;
 			r=r+a;
 		}
@@ -503,7 +503,7 @@ private DExpr tryIntegrateImpl(DExpr nonIvrs,DExpr ivrs){
 	//dw(var," ",nonIvrs," ",ivrs);
 	//dw(antid.antiderivative);
 	//dw(dDiff(var,antid.antiderivative.simplify(one)).simplify(one));
-	if(auto anti=tryGetAntiderivative(nonIvrs,ivrs))
+	if(auto anti=tryGetAntiderivative(nonIvrs))
 		return anti.fromTo(var,lower,upper);
 	if(auto p=cast(DPlus)nonIvrs.polyNormalize(var)){
 		DExprSet works;

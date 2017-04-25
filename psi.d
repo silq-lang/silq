@@ -170,6 +170,11 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr;
+	//writeln("∫dx x·log(x)^2·[1≤x]·[x≤2]".dParse.simplify(one));
+	//writeln("∫dy 1/x·δ[(1+y²)-x]".dParse.simplify(one));
+	//writeln("∫dx [-x+1≠0]·[-x+1≤0]·⅟x·⅟y^(1/2)·δ[y-(-1+x)]".dParse.simplify(one));
+	//writeln("∫dx 1/(1+x)·1/y·δ[y-x^(1/3)]".dParse.simplify(one));
+	//writeln("∫dx (1-y)^(1/2)·[-1≤x]·[x≤1]·δ[y-x^2]".dParse.simplify(one));
 	//writeln("∫dξ₁ ξ₁·[-2+ξ₁≤0]·[-ξ₁+1≤0]".dParse.simplify(one));
 	//writeln("∫dx[0≤x]·[x≤1]·[x≠1/2]".dParse.simplify(one));
 	//writeln("[-(∫dξ₁((-21/200+21/200·ξ₁)·(∫dξ₂[-1+ξ₂≤0]·[-ξ₂≤0]·ξ₂·⅟(21/100·ξ₁+7/10·ξ₂))·[-1+ξ₁≤0]·[-ξ₁≤0]·ξ₁+(-3/20·ξ₁+3/20)·[-1+ξ₁≤0]·[-10/3+-ξ₁≠0]·[-ξ₁≤0]·log(21/100·ξ₁+7/10)·ξ₁))·40+-(∫dξ₁(-3/20·log(ξ₁)·ξ₁+3/20·log(ξ₁)·ξ₁²)·[-1+ξ₁≤0]·[-ξ₁≤0]·[ξ₁≠0])·40+-log(100)+log(21)≠0]".dParse.simplify(one));
