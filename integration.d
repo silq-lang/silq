@@ -284,9 +284,8 @@ DExpr tryGetAntiderivative(DExpr expr){
 			auto b=ba[0],a=ba[1];
 			if(a && b){
 				assert(!a.hasFreeVar(var));
-				return dIvr(DIvr.Type.neqZ,a)*dE^^k/a;
-				// + dIvr(DIvr.Type.eqZ,dk)*var*dE^^(k-var*dk);
-				// TODO: BUG: this is necessary. Need to fix limit code such that it can handle this.
+				return dIvr(DIvr.Type.neqZ,a)*dE^^k/a
+					+ dIvr(DIvr.Type.eqZ,a)*var*dE^^b;
 			}
 		}
 	}
