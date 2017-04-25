@@ -270,10 +270,11 @@ DExpr tryGetAntiderivative(DExpr expr){
 			auto ba=p.operands[0].asLinearFunctionIn(var);
 			auto b=ba[0],a=ba[1];
 			if(a && b){
-				return ((safeLog(p.operands[0])*
+				return (dIvr(DIvr.Type.neqZ,a)*((safeLog(p.operands[0])*
 				         dIvr(DIvr.Type.eqZ,p.operands[1]+1)
 				         +(p.operands[0]^^(p.operands[1]+1))/(p.operands[1]+1)*
-				         dIvr(DIvr.Type.neqZ,p.operands[1]+1))/a).simplify(one);
+				          dIvr(DIvr.Type.neqZ,p.operands[1]+1))/a)
+				        +dIvr(DIvr.Type.eqZ,a)*var*b^^p.operands[1]).simplify(one);
 			}
 		}
 		if(!p.operands[0].hasFreeVar(var)){
