@@ -197,7 +197,7 @@ private DExpr definiteIntegralContinuous(DExpr expr,DExpr facts)out(res){
 	// ensure integral is continuous
 	auto var=dDeBruijnVar(1);
 	if(!expr.isContinuousMeasureIn(var)) return null;
-	if(auto r=tryIntegrate(expr,one))
+	if(auto r=tryIntegrate(expr))
 		return r.simplify(facts);
 	return null;
 }
@@ -231,6 +231,8 @@ DExpr tryGetAntiderivative(DExpr expr){
 			return ow[0]*rest;
 		return null;
 	}
+	//auto lexpr=expr.linearizeConstraints(var);
+	//if(lexpr != expr) return tryGetAntiderivative(lexpr);
 	foreach(ff;expr.factors){ // incorporate iverson brackets
 		if(!cast(DIvr)ff) continue;
 		auto ivrsNonIvrs=splitIvrsIntegral(expr);
@@ -483,13 +485,12 @@ DExpr tryGetAntiderivative(DExpr expr){
 	return null; // no simpler expression available
 }
 
-MapX!(Q!(DExpr,DExpr),DExpr) tryIntegrateMemo;
+MapX!(DExpr,DExpr) tryIntegrateMemo;
 
-DExpr tryIntegrate(DExpr nonIvrs,DExpr ivrs){
-	auto t=q(nonIvrs,ivrs);
-	if(t in tryIntegrateMemo) return tryIntegrateMemo[t];
-	auto r=tryIntegrateImpl(t.expand);
-	tryIntegrateMemo[t]=r;
+private DExpr tryIntegrate(DExpr expr){
+	if(expr in tryIntegrateMemo) return tryIntegrateMemo[expr];
+	auto r=tryIntegrateImpl(expr);
+	tryIntegrateMemo[expr]=r;
 	return r;
 }
 
@@ -526,40 +527,42 @@ Q!(SplitIvrsIntegral,DExpr[2]) splitIvrsIntegral(DExpr expr){
 }
 
 
-private DExpr tryIntegrateImpl(DExpr nonIvrs,DExpr ivrs){
+private DExpr tryIntegrateImpl(DExpr expr){
 	auto var=dDeBruijnVar(1);
-	assert(nonIvrs.factors.all!(x=>!cast(DDelta)x));
-	assert(ivrs==one||ivrs.factors.all!(x=>!!cast(DIvr)x));
-	auto ivrsNonIvrs=splitIvrsIntegral(nonIvrs);
+	assert(expr.factors.all!(x=>!cast(DDelta)x));
+	//auto lexpr=expr.linearizeConstraints(var);
+	//if(lexpr != expr) return tryIntegrate(lexpr);
+	auto ivrsNonIvrs=splitIvrsIntegral(expr);
 	final switch(ivrsNonIvrs[0]) with(SplitIvrsIntegral){
 		case fail: return null;
 		case success: break;
 		case zero: return .zero;
 	}
 	assert(ivrsNonIvrs[1][0]&&ivrsNonIvrs[1][1]);
-	ivrs=(ivrs*ivrsNonIvrs[1][0]).simplify(one);
-	nonIvrs=ivrsNonIvrs[1][1].simplify(one);
+	auto ivrs=ivrsNonIvrs[1][0].simplify(one);
+	expr=ivrsNonIvrs[1][1].simplify(one);
+	assert(ivrs==one||ivrs.factors.all!(x=>!!cast(DIvr)x));
 	auto loup=ivrs.getBoundsForVar(var);
 	if(!loup[0]) return null;
 	DExpr lower=loup[1][0],upper=loup[1][1];
 	// TODO: add better approach for antiderivatives	
-	//dw(var," ",nonIvrs," ",ivrs);
+	//dw(var," ",expr," ",ivrs);
 	//dw(antid.antiderivative);
 	//dw(dDiff(var,antid.antiderivative.simplify(one)).simplify(one));
-	if(auto anti=tryGetAntiderivative(nonIvrs))
+	if(auto anti=tryGetAntiderivative(expr))
 		return anti.fromTo(var,lower,upper);
-	if(auto p=cast(DPlus)nonIvrs.polyNormalize(var)){
+	if(auto p=cast(DPlus)expr.polyNormalize(var)){
 		DExprSet works;
 		DExprSet doesNotWork;
 		bool ok=true;
 		foreach(s;p.summands){
 			auto ow=s.splitMultAtVar(var);
 			ow[0]=ow[0].incDeBruijnVar(-1,0).simplify(one);
-			auto t=tryIntegrate(ow[1],ivrs);
+			auto t=tryIntegrate(ow[1]);
 			if(t) DPlus.insert(works,ow[0]*t);
 			else DPlus.insert(doesNotWork,s);
 		}
 		if(works.length) return dPlus(works)+dInt((dPlus(doesNotWork)*ivrs));
-	}//else dw("fail: ","Integrate[",nonIvrs.toString(Format.mathematica),",",var.toString(Format.mathematica),"]");
+	}//else dw("fail: ","Integrate[",expr.toString(Format.mathematica),",",var.toString(Format.mathematica),"]");
 	return null; // no simpler expression available
 }
