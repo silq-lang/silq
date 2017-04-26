@@ -33,5 +33,5 @@ def main(){
 		observe(goal==cookie&&chooseAction(goalSatisfied, vendingMachine, state).sample()==b);
 		return bEffects[1];
 	});
-	return goalPosterior.sample(); // expected: (((-2·log(r₁)+2·log(2))·[r₁≠0]+2·[-1+-r₁≠0]·log(r₁·⅟2+⅟2))·(-r₁·⅟2+⅟2)·[-1+r₁≤0]·[-r₁≤0]·r₁+((-log(r₁)+log(2))·[r₁≠0]+[-1+-r₁≠0]·log(r₁·⅟2+⅟2))·[-1+r₁≤0]·[-r₁≤0]·r₁²)·⅟(-log(2)·⅟3+11/12)
+	return goalPosterior.sample(); // expected: (((-2·log(r₁)+2·log(2))·[r₁≠0]+2·[-1+-r₁≠0]·log(r₁·⅟2+⅟2))·(-r₁·⅟2+⅟2)·[-1+r₁≤0]·[-r₁≤0]·r₁+((-log(r₁)+log(2))·[r₁≠0]+[-1+-r₁≠0]·log(r₁·⅟2+⅟2))·[-1+r₁≤0]·[-r₁≤0]·r₁²)·⅟(-log(2)·⅟3+23/12)
 }

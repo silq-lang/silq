@@ -231,8 +231,8 @@ DExpr tryGetAntiderivative(DExpr expr){
 			return ow[0]*rest;
 		return null;
 	}
-	//auto lexpr=expr.linearizeConstraints(var);
-	//if(lexpr != expr) return tryGetAntiderivative(lexpr);
+	auto lexpr=expr.linearizeConstraints(var).simplify(one);
+	if(lexpr != expr) return tryGetAntiderivative(lexpr);
 	foreach(ff;expr.factors){ // incorporate iverson brackets
 		if(!cast(DIvr)ff) continue;
 		auto ivrsNonIvrs=splitIvrsIntegral(expr);
@@ -473,7 +473,7 @@ DExpr tryGetAntiderivative(DExpr expr){
 	//dw(factors[1]);
 	//dw("!! ",dDiff(var,factors[1]));
 
-	if(auto p=cast(DPlus)expr.polyNormalize(var)){
+	if(auto p=cast(DPlus)expr.polyNormalize(var).simplify(one)){
 		DExpr r=zero;
 		foreach(s;p.summands){
 			auto a=tryGetAntiderivative(s);
@@ -530,8 +530,8 @@ Q!(SplitIvrsIntegral,DExpr[2]) splitIvrsIntegral(DExpr expr){
 private DExpr tryIntegrateImpl(DExpr expr){
 	auto var=dDeBruijnVar(1);
 	assert(expr.factors.all!(x=>!cast(DDelta)x));
-	//auto lexpr=expr.linearizeConstraints(var);
-	//if(lexpr != expr) return tryIntegrate(lexpr);
+	auto lexpr=expr.linearizeConstraints(var).simplify(one);
+	if(lexpr != expr) return tryIntegrate(lexpr);
 	auto ivrsNonIvrs=splitIvrsIntegral(expr);
 	final switch(ivrsNonIvrs[0]) with(SplitIvrsIntegral){
 		case fail: return null;
