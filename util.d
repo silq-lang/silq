@@ -395,6 +395,14 @@ string highNum(T)(T i){ return digitRep(i,highDigits,'⁻'); }
 string asciify(string s){
 	auto t=s.to!dstring; // TODO: why necessary? Phobos bug?
 	t=t.replace("ξ"d,"xi"d);
+	t=t.replace("α"d,"alpha"d);
+	t=t.replace("β"d,"beta"d);
+	t=t.replace("μ"d,"mu"d);
+	t=t.replace("ν"d,"nu"d);
+	t=t.replace("λ"d,"lambda"d);
+	t=t.replace("δ"d,"delta"d); //TODO assert that the final string does only contain ascii characters.
+	//TODO also pass as a second argument the format, so that the greek-letters can get tex names.
+	
 	//pragma(msg, cast(dchar)('₀'+1));
 	foreach(x;0..10)
 		t=t.replace(""d~cast(dchar)('₀'+x),""d~cast(dchar)('0'+x));
