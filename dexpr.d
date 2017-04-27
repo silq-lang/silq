@@ -1868,19 +1868,6 @@ private static DExpr getCommonDenominator(DExpr e){
 	}
 	return r;
 }
-private static DExpr cancelCommonDenominator(DExpr e,DExpr denom){ // TODO: get rid of this
-	DExpr r=zero;
-	auto invDenom=(1/denom).simplify(one);
-	foreach(s;e.summands){
-		DExpr t=s;
-		foreach(f;invDenom.factors){
-			if(t.hasFactor(f)) t=t.withoutFactor(f);
-			else t=t/f;
-		}
-		r=r+t;
-	}
-	return r;
-}
 
 enum BoundStatus{
 	fail,
@@ -2147,7 +2134,15 @@ DExpr solveFor(DExpr lhs,DVar var,DExpr rhs,SolUse usage,ref SolutionInfo info){
 	if(auto p=cast(DPlus)lhs){
 		auto ow=splitPlusAtVar(lhs,var);
 		if(cast(DPlus)ow[1]){
-			if(!usage.caseSplit) return null;
+			/+auto ba=(lhs-rhs).asLinearFunctionIn(var);
+			auto b=ba[0],a=ba[1];
+			if(a&&b){
+				if(usage.bound){ // TODO: correct?
+					info.bound.setLower();
+					info.bound.invertIflZ(a);
+				}
+				return dIvr(DIvr.Type.neqZ,a)*-b/a;// TODO: there is no solution if a=0.
+			}+/
 			return null;
 		}
 		auto r=ow[1].solveFor(var,rhs-ow[0],usage,info); // TODO: withoutSummands
@@ -2515,27 +2510,7 @@ class DIvr: DExpr{ // iverson brackets
 		if(e.hasFreeVars())
 			if(auto fct=factorDIvr!(e=>dIvr(type,e))(e))
 				return fct.simplify(facts);
-		auto denom=getCommonDenominator(e).simplify(facts);
-		if(!cast(Dℚ)denom){
-			// auto dcancel=dDistributeMult(e,denom); // TODO: use this again (inverses should cancel each other immediately during DMult simplification)
-			auto dcancel=cancelCommonDenominator(e,denom);
-			final switch(type) with(Type){
-				case eqZ,neqZ:
-					auto r=dIvr(type,dcancel).simplify(facts);
-					if(!cast(DIvr)r) return r;
-				case leZ,lZ: break;
-					auto r=(dIvr(leZ,-denom)*dIvr(type,dcancel)+
-							dIvr(lZ,denom)*dIvr(type,-dcancel)).simplify(facts);
-					if(r==zero || r==one) return r;
-				// TODO: unfortunately, due to how definiteIntegral is implemented, we
-				// cannot use this rewrite to normalize as follows. Fix this.
-				/+case eqZ,neqZ:
-					return dIvr(type,dcancel).simplify(facts);
-				case leZ,lZ: break;
-					return (dIvr(leZ,-denom)*dIvr(type,dcancel)+
-							dIvr(lZ,denom)*dIvr(type,-dcancel)).simplify(facts);+/
-			}
-		}
+		// TODO: eliminate common denominators in a sum?
 		if(auto l=cast(DLog)e)
 			return dIvr(type,l.e-one).simplify(facts);
 		auto q=e.getFractionalFactor();
