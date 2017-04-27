@@ -2134,15 +2134,20 @@ DExpr solveFor(DExpr lhs,DVar var,DExpr rhs,SolUse usage,ref SolutionInfo info){
 	if(auto p=cast(DPlus)lhs){
 		auto ow=splitPlusAtVar(lhs,var);
 		if(cast(DPlus)ow[1]){
-			/+auto ba=(lhs-rhs).asLinearFunctionIn(var);
+			auto ba=(lhs-rhs).asLinearFunctionIn(var); // TODO: other polynomial equations?
 			auto b=ba[0],a=ba[1];
 			if(a&&b){
-				if(usage.bound){ // TODO: correct?
+				if(couldBeZero(a)){
+					info.needCaseSplit=true;
+					if(usage.caseSplit)
+						info.caseSplits~=SolutionInfo.CaseSplit(a,-b);
+				}
+				if(usage.bound){
 					info.bound.setLower();
 					info.bound.invertIflZ(a);
 				}
-				return dIvr(DIvr.Type.neqZ,a)*-b/a;// TODO: there is no solution if a=0.
-			}+/
+				return -b/a;
+			}
 			return null;
 		}
 		auto r=ow[1].solveFor(var,rhs-ow[0],usage,info); // TODO: withoutSummands
