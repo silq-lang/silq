@@ -170,6 +170,55 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration;
+	//writeln("∫dx log(-x)·x·[-1≤x]·[x≤0]".dParse.simplify(one));
+	//writeln("-[-ξ₀≤0]·[ξ₀≠0]·τ(0,)·⅟2+-[ξ₀≤0]·σ+-ξ₀²·⅟2+-σ+[-ξ₀≤0]·[ξ₀≠0]·log(ξ₀)·ξ₀²·⅟2+[-ξ₀≤0]·ξ₀²·⅟4+[ξ₀=0]·σ·⅟2+[ξ₀≠0]·[ξ₀≤0]·log(-ξ₀)·ξ₀²+[ξ₀≠0]·[ξ₀≤0]·τ(0,)·⅟2".dParse.solveFor("σ".dVar));
+	//writeln(tryGetAntiderivative("log(-ξ₀)·ξ₀".dParse.simplify(one)));
+	//writeln(tryGetAntiderivative("[ξ₀≤0]·log(-ξ₀)·ξ₀".dParse.simplify(one)));
+	//writeln(tryGetAntiderivative("log(-ξ₀)·ξ₀".dParse.simplify(one)).simplify("[ξ₀<0]".dParse.simplify(one)));
+	//writeln(tryGetAntiderivative("ξ₀·log(-ξ₀)".dParse).simplify("[ξ₀<0]".dParse.simplify(one)).substitute(dDeBruijnVar(1));
+	//writeln(dDiff(dDeBruijnVar(1),tryGetAntiderivative("log(-ξ₀)".dParse).simplify("[ξ₀<0]".dParse)));
+	//writeln(dIntSmp("x".dVar,"x*log(-x)·[-1≤x]·[x≤0]".dParse,one).toString(Format.matlab));
+	//writeln(dIntSmp("x".dVar,"(x+1)*log(x)*x·[0≤x]·[x≤1]".dParse,one).toString(Format.matlab));
+	//writeln(dIntSmp("x".dVar,"(-1/2*x+1/2)*log(1/2+1/2*x)*x·[0≤x]·[x≤1]".dParse,one).toString(Format.matlab));
+	//writeln(dIntSmp("x".dVar,"(-1/2*x²+1/2*x)*log(1/2+1/2*x)·[0≤x]·[x≤1]".dParse,one).toString(Format.matlab));
+
+	//auto r="∫dξ₁∫dξ₂((-21/100·ξ₁+21/200+21/200·ξ₁²)·(-ξ₂+1)·[-1+ξ₁≤0]·[-1+ξ₂≤0]·[-ξ₁≤0]·[-ξ₂≤0]·ξ₁·⅟(21/100·ξ₁+7/10·ξ₂)+(-21/200·ξ₂+21/200)·(-ξ₁+1)·[-1+ξ₁≤0]·[-1+ξ₂≤0]·[-ξ₁≤0]·[-ξ₂≤0]·ξ₁²·⅟(21/100·ξ₁+7/10·ξ₂))".dParse.simplify(one);
+	//writeln(r.toString(Format.matlab));
+	/+auto fun="((-21/100·x+21/200+21/200·x²)·(-y+1)·[-1+x≤0]·[-1+y≤0]·[-x≤0]·[-y≤0]·x·⅟(21/100·x+7/10·y)+(-21/200·y+21/200)·(-x+1)·[-1+x≤0]·[-1+y≤0]·[-x≤0]·[-y≤0]·x²·⅟(21/100·x+7/10·y))".dParse.simplify(one);
+	writeln(fun.toString(Format.matlab));+/
+	/+auto fun="λξ₁. λξ₂. ∫dξ₃∫dξ₄((-21/100·ξ₃+21/200+21/200·ξ₃²)·(-ξ₄+1)·[-1+ξ₃≤0]·[-1+ξ₄≤0]·[-ξ₃≤0]·[-ξ₄≤0]·ξ₃·⅟(21/100·ξ₃+7/10·ξ₄)+(-21/200·ξ₄+21/200)·(-ξ₃+1)·[-1+ξ₃≤0]·[-1+ξ₄≤0]·[-ξ₃≤0]·[-ξ₄≤0]·ξ₃²·⅟(21/100·ξ₃+7/10·ξ₄))·δ_ξ₂[(ξ₄,ξ₃)]".dParse.simplify(one);
+	void computeWeight(){
+		auto app=dDistApply(dApply(fun,dTuple([])),dDeBruijnVar(1)).simplify(one);
+		writeln(app);
+		writeln(dIntSmp(app,one).toString(Format.matlab));
+	}
+	//computeWeight();
+	
+	void demonstrate(){
+		import distrib;
+		opt.noCheck=true;
+		auto idist=new Distribution();
+		auto f=idist.declareVar("`f");
+		idist.addArgs([f],false,null);
+		auto fdist=Distribution.fromDExpr(f,0,true,["`val".dVar],false,[tupleTy([ℝ,ℝ])]);
+		fdist.renormalize();
+		auto r=idist.declareVar("`dist");
+		idist.initialize(r,dApply(fdist.toDExpr(),dTuple([])),contextTy());
+		idist.orderFreeVars([r],false);
+		auto infer=idist.toDExpr().simplify(one);
+		writeln(infer);
+		writeln(fun);
+		auto res=dApply(infer,fun).simplify(one);
+		writeln(res);
+		//auto applied = dApply("λξ₁. λξ₂. (∫dξ₃∫dξ₄((-21/100·ξ₃+21/200+21/200·ξ₃²)·(-ξ₄+1)·[-1+ξ₃≤0]·[-1+ξ₄≤0]·[-ξ₃≤0]·[-ξ₄≤0]·ξ₃·⅟(21/100·ξ₃+7/10·ξ₄)+(-21/200·ξ₄+21/200)·(-ξ₃+1)·[-1+ξ₃≤0]·[-1+ξ₄≤0]·[-ξ₃≤0]·[-ξ₄≤0]·ξ₃²·⅟(21/100·ξ₃+7/10·ξ₄))·δ_ξ₂[(ξ₄,ξ₃)])·⅟(-13/400·log(21)+-25471121/324000·log(100)+-454397311/6480000+-8095/162·log(7)+25481651/324000·log(91)+8095/162·log(10))".dParse,one).simplify(one);
+		auto applied=dIntSmp(dDeBruijnVar(1)*dDistApply(res,dDeBruijnVar(1)),one);
+		auto ret=dDistApply(applied,dTuple(["a".dVar,"b".dVar])).simplify(one);
+		writeln(ret);
+		gnuplot(ret,cast(SetX!DNVar)ret.freeVars.setx,"foo","[-10:10]");
+	}
+	demonstrate();+/
+	//auto e="∫dξ₁((-21/200·r₁+21/200)·(-2·r₂+1+r₂²)·[-1+r₁≤0]·[-1+r₂≤0]·[-r₁≤0]·[-r₂≤0]·r₂·⅟((-11333/1080·log(7)+-1368758951/108000000+-21115549/1350000·log(100)+-273/40000·log(21)+11333/1080·log(10)+84499051/5400000·log(91))·r₂+(-11333/324·log(7)+-1368758951/32400000+-21115549/405000·log(100)+-91/4000·log(21)+11333/324·log(10)+84499051/1620000·log(91))·r₁)+(-21/200·r₁+21/200)·(-r₂+1)·[-1+r₁≤0]·[-1+r₂≤0]·[-r₁≤0]·[-r₂≤0]·r₂²·⅟((-11333/1080·log(7)+-1368758951/108000000+-21115549/1350000·log(100)+-273/40000·log(21)+11333/1080·log(10)+84499051/5400000·log(91))·r₂+(-11333/324·log(7)+-1368758951/32400000+-21115549/405000·log(100)+-91/4000·log(21)+11333/324·log(10)+84499051/1620000·log(91))·r₁))·δ_ξ₁[λξ₂. (∫dξ₃∫dξ₄((-21/200·ξ₄+21/200)·(-2·ξ₃+1+ξ₃²)·[-1+ξ₃≤0]·[-1+ξ₄≤0]·[-ξ₃≤0]·[-ξ₄≤0]·ξ₃·⅟(21/100·ξ₃+7/10·ξ₄)+(-21/200·ξ₄+21/200)·(-ξ₃+1)·[-1+ξ₃≤0]·[-1+ξ₄≤0]·[-ξ₃≤0]·[-ξ₄≤0]·ξ₃²·⅟(21/100·ξ₃+7/10·ξ₄))·δ_ξ₂[(ξ₄,ξ₃)])·⅟(-13/400·log(21)+-195536993/3240000+-3016507/40500·log(100)+-8095/162·log(7)+12071293/162000·log(91)+8095/162·log(10))]".dParse.simplify(one);
+	//gnuplot(e,cast(SetX!DNVar)e.freeVars.setx,"foo","[-10:10]");
 	//writeln("[(-log(10)+-log(7)²)·⅟(-log(10)+-log(7))+(log(10)·log(7))·⅟(log(10)+log(7))≠0]".dParse.simplify(one));
 	//writeln("log((log(10)+log(7))·ξ₀+1)·ξ₀".dParse.tryGetAntiderivative);
 	//writeln("((-⅟(2·log(10)·log(7)+log(10)²+log(7)²)+ξ₀·⅟(-log(10)+-log(7)))·([(-log(10)+-log(7))·ξ₀+-1≠0]·[(-log(10)+-log(7))·ξ₀+-1≤0]·log((log(10)+log(7))·ξ₀+1)+[(log(10)+log(7))·ξ₀+1≠0]·[(log(10)+log(7))·ξ₀+1≤0]·log((-log(10)+-log(7))·ξ₀+-1))·[-log(10)+-log(7)≤0]+-[-log(10)+-log(7)≤0]·ξ₀·⅟(-log(10)+-log(7)))·[-ξ₀+-⅟(log(10)+log(7))≤0]·[log(10)+log(7)≠0]+(([(-log(10)+-log(7))·ξ₀+-1≠0]·[(-log(10)+-log(7))·ξ₀+-1≤0]·log((log(10)+log(7))·ξ₀+1)+[(log(10)+log(7))·ξ₀+1≠0]·[(log(10)+log(7))·ξ₀+1≤0]·log((-log(10)+-log(7))·ξ₀+-1))·(ξ₀·⅟(-log(10)+-log(7))+⅟(-2·log(10)·log(7)+-log(10)²+-log(7)²))+-ξ₀·⅟(-log(10)+-log(7)))·[-ξ₀+⅟(-log(10)+-log(7))≤0]·[log(10)+log(7)≠0]·[log(10)+log(7)≤0]+(([(-log(10)+-log(7))·ξ₀+-1≠0]·[(-log(10)+-log(7))·ξ₀+-1≤0]·log((log(10)+log(7))·ξ₀+1)+[(log(10)+log(7))·ξ₀+1≠0]·[(log(10)+log(7))·ξ₀+1≤0]·log((-log(10)+-log(7))·ξ₀+-1))·(ξ₀·⅟(-log(10)+-log(7))+⅟(-2·log(10)·log(7)+-log(10)²+-log(7)²))+-ξ₀·⅟(-log(10)+-log(7))+⅟(2·log(10)·log(7)+log(10)²+log(7)²))·[-log(10)+-log(7)≤0]·[-⅟(-log(10)+-log(7))+ξ₀≤0]·[log(10)+log(7)≠0]+(-⅟(-log(10)+-log(7))+ξ₀)·([(-log(10)+-log(7))·ξ₀+-1≠0]·[(-log(10)+-log(7))·ξ₀+-1≤0]·log((log(10)+log(7))·ξ₀+1)+[(log(10)+log(7))·ξ₀+1≠0]·[(log(10)+log(7))·ξ₀+1≤0]·log((-log(10)+-log(7))·ξ₀+-1))·[log(10)+log(7)≠0]·ξ₀+(-⅟(2·log(10)·log(7)+log(10)²+log(7)²)+ξ₀·⅟(-log(10)+-log(7)))·([(-log(10)+-log(7))·ξ₀+-1≠0]·[(-log(10)+-log(7))·ξ₀+-1≤0]·log((log(10)+log(7))·ξ₀+1)+[(log(10)+log(7))·ξ₀+1≠0]·[(log(10)+log(7))·ξ₀+1≤0]·log((-log(10)+-log(7))·ξ₀+-1))·[log(10)+log(7)≠0]·[log(10)+log(7)≤0]·[ξ₀+⅟(log(10)+log(7))≤0]+-[-log(10)+-log(7)≤0]·[log(10)+log(7)≠0]·τ+-[-ξ₀+⅟(-log(10)+-log(7))≠0]·[-⅟(-log(10)+-log(7))+ξ₀≤0]·[log(10)+log(7)≠0]·[log(10)+log(7)≤0]·⅟(2·log(10)·log(7)+log(10)²+log(7)²)+-[log(10)+log(7)≠0]·[log(10)+log(7)≤0]·[ξ₀+⅟(log(10)+log(7))≤0]·ξ₀·⅟(-log(10)+-log(7))+-[log(10)+log(7)≠0]·[log(10)+log(7)≤0]·[ξ₀+⅟(log(10)+log(7))≤0]·⅟(-2·log(10)·log(7)+-log(10)²+-log(7)²)+-[log(10)+log(7)≠0]·[log(10)+log(7)≤0]·τ+-[log(10)+log(7)≠0]·ξ₀²·⅟2+-τ+[-log(10)+-log(7)≤0]·[-ξ₀+-⅟(log(10)+log(7))≠0]·[log(10)+log(7)≠0]·[ξ₀+⅟(log(10)+log(7))≤0]·⅟(-2·log(10)·log(7)+-log(10)²+-log(7)²)+[log(10)+log(7)=0]·log(-1)·ξ₀²·⅟2".dParse.solveFor("τ".dVar));

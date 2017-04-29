@@ -251,8 +251,8 @@ DExpr tryGetAntiderivative(DExpr expr){
 		if(!antid) return null;
 		// TODO: handle the case where unbind(antid,lower) or unbind(antid,upper) are infinite properly
 		// (this will 'just work' formally, but it is an ugly hack.)
-		if(lower) antid=dIvr(DIvr.Type.leZ,var-lower)*(antid-unbind(antid,lower));
-		if(upper) antid=dIvr(DIvr.Type.leZ,upper-var)*antid+dIvr(DIvr.Type.lZ,var-upper)*unbind(antid,upper);
+		if(lower) antid=dIvr(DIvr.Type.leZ,lower-var)*antid+dIvr(DIvr.Type.lZ,var-lower)*unbind(antid,lower);
+		if(upper) antid=dIvr(DIvr.Type.leZ,var-upper)*antid+dIvr(DIvr.Type.lZ,upper-var)*unbind(antid,upper);
 		return antid.simplify(one);
 	}
 	static DExpr safeLog(DExpr e){ // TODO: integrating 1/x over 0 diverges (not a problem for integrals occurring in the analysis)
@@ -426,7 +426,10 @@ DExpr tryGetAntiderivative(DExpr expr){
 	DExpr partiallyIntegratePolynomials(DVar var,DExpr e){ // TODO: is this well founded?
 		static MapX!(Q!(DVar,DExpr),DExpr) memo;
 		if(q(var,e) in memo) return memo[q(var,e)];
-		auto token=freshVar("τ"); // TODO: make sure this does not create a GC issue.
+		auto tau=freshVar("τ");
+		import std.array: array;
+		auto vars=e.freeVars.setx.array;
+		auto token=dApply(tau,dTuple(cast(DExpr[])vars));
 		memo[q(var,e)]=token;
 		auto fail(){
 			memo[q(var,e)]=null;
@@ -455,8 +458,14 @@ DExpr tryGetAntiderivative(DExpr expr){
 		auto intDiffPolyIntRest=tryGetAntiderivative(diffRest);
 		if(!intDiffPolyIntRest) return fail();
 		auto r=polyFact*intRest-intDiffPolyIntRest;
-		if(!r.hasFreeVar(token)){ memo[q(var,e)]=r; return r; }
-		if(auto s=(r-token).simplify(one).solveFor(token)){
+		if(!r.hasFreeVar(tau)){ memo[q(var,e)]=r; return r; }
+		auto sigma=freshVar("σ");
+		auto h=r.simplify(one).getHoles!(x=>x==token?token:null,DApply);
+		import std.algorithm,std.array,std.range;
+		r=h.expr.substituteAll(h.holes.map!(x=>x.var).array,(cast(DExpr)sigma).repeat(h.holes.length).array);
+		if(auto s=(r-sigma).simplify(one).solveFor(sigma)){
+			s=s.substitute(tau,dLambda(s.incDeBruijnVar(1,1).substituteAll(vars,iota(vars.length).map!(i=>dDeBruijnVar(1)[i.dℚ]).array))).simplify(one);
+			if(s.hasFreeVar(tau)) s=null;
 			memo[q(var,e)]=s;
 			return s;
 		}

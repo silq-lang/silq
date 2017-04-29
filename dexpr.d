@@ -2194,13 +2194,21 @@ DExpr solveFor(DExpr lhs,DVar var){
 	SolUse usage={caseSplit:true,bound:false};
 	if(auto s=lhs.solveFor(var,zero,usage,info)){
 		s=s.simplify(one);
-		auto constraints=one;
-		foreach(ref x;info.caseSplits)
-			constraints=constraints*dIvr(DIvr.Type.neqZ,x.constraint);
+		DExpr[] prefix,suffix;
+		foreach(i,ref x;info.caseSplits){
+			if(!i) prefix~=dIvr(DIvr.Type.neqZ,x.constraint).simplify(one);
+			else prefix~=(prefix[i-1]*dIvr(DIvr.Type.neqZ,x.constraint)).simplify(one);
+		}
+		foreach_reverse(i,ref x;info.caseSplits){
+			if(i+1==info.caseSplits.length) suffix~=dIvr(DIvr.Type.neqZ,x.constraint).simplify(one);
+			else suffix~=(suffix[i+1]*dIvr(DIvr.Type.neqZ,x.constraint)).simplify(one);
+		}
+		auto constraints=(prefix.length?prefix[$-1]:one);
 		constraints=constraints.simplify(one);
+		if(constraints==one) return s;
 		auto r=constraints==zero?zero:constraints*s;
-		foreach(ref x;info.caseSplits){
-			auto curConstr=constraints.withoutFactor(dIvr(DIvr.Type.neqZ,x.constraint));
+		foreach(i,ref x;info.caseSplits){
+			auto curConstr=(i?prefix[i-1]:one)*(i+1<suffix.length?suffix[i+1]:one);
 			auto psol=solveFor(x.expression,var);
 			if(!psol) return null;
 			r=r+curConstr*dIvr(DIvr.Type.eqZ,x.constraint)*psol;
