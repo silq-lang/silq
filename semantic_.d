@@ -140,16 +140,18 @@ Expression presemantic(Declaration expr,Scope sc){
 					assert(dsc.decl.dtype);
 					fd.ret=ctxty;
 				}
-				auto thisid=new Identifier(thisVar.getName);
-				thisid.loc=fd.loc;
-				thisid.scope_=fd.body_.blscope_;
-				thisid.meaning=thisVar;
-				thisid.type=ctxty;
-				thisid.sstate=SemState.completed;
-				auto rete=new ReturnExp(thisid);
-				rete.loc=thisid.loc;
-				rete.sstate=SemState.completed;
-				fd.body_.s~=rete;
+				if(!fd.body_.s.length||!cast(ReturnExp)fd.body_.s[$-1]){
+					auto thisid=new Identifier(thisVar.getName);
+					thisid.loc=fd.loc;
+					thisid.scope_=fd.body_.blscope_;
+					thisid.meaning=thisVar;
+					thisid.type=ctxty;
+					thisid.sstate=SemState.completed;
+					auto rete=new ReturnExp(thisid);
+					rete.loc=thisid.loc;
+					rete.sstate=SemState.completed;
+					fd.body_.s~=rete;
+				}
 				if(dsc.decl.context){
 					fd.context=dsc.decl.context; // TODO: ok?
 					fd.contextVal=dsc.decl.context; // TODO: ok?
@@ -1464,13 +1466,6 @@ ReturnExp returnExpSemantic(ReturnExp ret,Scope sc){
 		sc.error("return statement must be within function",ret.loc);
 		ret.sstate=SemState.error;
 		return ret;
-	}
-	if(auto dsc=isInDataScope(fd.scope_)){
-		if(dsc.decl.name.name==fd.name.name){
-			sc.error("no return statement allowed in constructor",ret.loc);
-			ret.sstate=SemState.error;
-			return ret;
-		}
 	}
 	auto ty=determineType(ret.e,sc);
 	if(!fd.rret && !fd.ret) fd.ret=ty;

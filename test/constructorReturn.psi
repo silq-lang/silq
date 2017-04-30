@@ -1,0 +1,12 @@
+
+dat Foo{
+	x:R;
+	def Foo(){
+		x = 2;
+		return this;
+	}
+}
+
+def main(){
+	return Foo(); // expected: δ_r₁[{.x ↦ 2}]
+}
