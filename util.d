@@ -401,6 +401,7 @@ string asciify(string s){
 	t=t.replace("ν"d,"nu"d);
 	t=t.replace("λ"d,"lambda"d);
 	t=t.replace("δ"d,"delta"d); //TODO assert that the final string does only contain ascii characters.
+	t=t.replace("₋"d,"m");
 	//TODO also pass as a second argument the format, so that the greek-letters can get tex names.
 	
 	//pragma(msg, cast(dchar)('₀'+1));

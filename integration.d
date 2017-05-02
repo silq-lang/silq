@@ -249,10 +249,10 @@ DExpr tryGetAntiderivative(DExpr expr){
 		auto lower=loup[1][0],upper=loup[1][1];
 		auto antid=tryGetAntiderivative(nonIvrs);
 		if(!antid) return null;
-		// TODO: handle the case where unbind(antid,lower) or unbind(antid,upper) are infinite properly
+		// TODO: handle the case where antid.substitute(var,lower) or antid.substitute(var,upper) are infinite properly
 		// (this will 'just work' formally, but it is an ugly hack.)
-		if(lower) antid=dIvr(DIvr.Type.leZ,lower-var)*antid+dIvr(DIvr.Type.lZ,var-lower)*unbind(antid,lower);
-		if(upper) antid=dIvr(DIvr.Type.leZ,var-upper)*antid+dIvr(DIvr.Type.lZ,upper-var)*unbind(antid,upper);
+		if(lower) antid=dIvr(DIvr.Type.leZ,lower-var)*antid+dIvr(DIvr.Type.lZ,var-lower)*antid.substitute(var,lower);
+		if(upper) antid=dIvr(DIvr.Type.leZ,var-upper)*antid+dIvr(DIvr.Type.lZ,upper-var)*antid.substitute(var,upper);
 		return antid.simplify(one);
 	}
 	static DExpr safeLog(DExpr e){ // TODO: integrating 1/x over 0 diverges (not a problem for integrals occurring in the analysis)
@@ -455,7 +455,7 @@ DExpr tryGetAntiderivative(DExpr expr){
 			memo[t]=r;
 			foreach(k,ref v;memo){ // TODO: this is inefficient. only consider new values.
 				if(!v||!v.hasFreeVar(tau)) continue;
-				v=v.substitute(tau,dLambda(r.incDeBruijnVar(1,1).substituteAll(vars,iota(vars.length).map!(i=>dDeBruijnVar(1)[i.dℚ]).array))).simplify(one);
+				v=v.substitute(tau,dLambda(r.substituteAll(vars,iota(vars.length).map!(i=>dDeBruijnVar(1)[i.dℚ]).array))).simplify(one);
 			}
 			return r;
 		}
@@ -479,6 +479,8 @@ DExpr tryGetAntiderivative(DExpr expr){
 		auto diffPoly=dDiff(var,polyFact);
 		auto diffRest=(diffPoly*intRest).polyNormalize(var).simplify(one);
 		auto intDiffPolyIntRest=tryGetAntiderivative(diffRest);
+		//dw("!! ",diffRest.substitute(dDeBruijnVar(2),"k".dVar).simplify(one));
+		//dw("!! ",intDiffPolyIntRest.substitute(dDeBruijnVar(2),"k".dVar).simplify(one));
 		if(!intDiffPolyIntRest) return fail();
 		auto r=polyFact*intRest-intDiffPolyIntRest;
 		if(!r.hasFreeVar(tau)) return succeed(r);
@@ -486,7 +488,7 @@ DExpr tryGetAntiderivative(DExpr expr){
 		auto h=r.simplify(one).getHoles!(x=>x==token?token:null,DDistApply);
 		r=h.expr.substituteAll(h.holes.map!(x=>x.var).array,(cast(DExpr)sigma).repeat(h.holes.length).array);
 		if(auto s=(r-sigma).simplify(one).solveFor(sigma)){
-			s=s.substitute(tau,dLambda(s.incDeBruijnVar(1,1).substituteAll(vars,iota(vars.length).map!(i=>dDeBruijnVar(1)[i.dℚ]).array))).simplify(one);
+			s=s.substitute(tau,dLambda(s.substituteAll(vars,iota(vars.length).map!(i=>dDeBruijnVar(1)[i.dℚ]).array))).simplify(one);
 			if(s.hasFreeVar(tau)) return fail();
 			return succeed(s);
 		}
@@ -574,13 +576,18 @@ private DExpr tryIntegrateImpl(DExpr expr){
 	assert(ivrs==one||ivrs.factors.all!(x=>!!cast(DIvr)x));
 	auto loup=ivrs.getBoundsForVar(var);
 	if(!loup[0]) return null;
-	DExpr lower=loup[1][0],upper=loup[1][1];
-	// TODO: add better approach for antiderivatives	
+	DExpr lower=loup[1][0].maybe!(x=>x.incDeBruijnVar(-1,0)),upper=loup[1][1].maybe!(x=>x.incDeBruijnVar(-1,0));
 	//dw(var," ",expr," ",ivrs);
 	//dw(antid.antiderivative);
 	//dw(dDiff(var,antid.antiderivative.simplify(one)).simplify(one));
-	if(auto anti=tryGetAntiderivative(expr))
+	if(auto anti=tryGetAntiderivative(expr)){
+		/+writeln("integrand: ",expr/+.toString(Format.mathematica)+/);
+		auto r=anti.fromTo(var,lower,upper);
+		if(r) r=r.simplify(one);
+		writeln("integrated: ",r?r.incDeBruijnVar(1,0).toString(/+Format.mathematica+/):"?");
+		dw("loup: ", lower," ",upper);+/
 		return anti.fromTo(var,lower,upper);
+	}
 	if(auto p=cast(DPlus)expr.polyNormalize(var)){
 		DExprSet works;
 		DExprSet doesNotWork;

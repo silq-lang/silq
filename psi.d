@@ -170,6 +170,16 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration;
+	
+	//writeln(tryGetAntiderivative("[-k+-ξ₀≤0]·[k+ξ₀≠0]·k".dParse.simplify(one)).simplify(one));
+	//writeln(tryGetAntiderivative("[-ξ₋₁+-ξ₀≤0]·[ξ₋₁+ξ₀≠0]·ξ₋₁".dParse.simplify(one)).simplify(one).substitute(dDeBruijnVar(2),dVar("k")).simplify(one));
+
+	//writeln("∫dξ₁ [0≤ξ₁]·[ξ₁≤1]·1/(ξ₁+k)*ξ₁".dParse.simplify(one).toString(Format.mathematica));
+	//writeln("∫dξ₁ [0≤ξ₁]·[ξ₁≤1]·1/(ξ₁+ξ₀)*ξ₁".dParse.simplify(one).toString(Format.mathematica));
+
+	//writeln("∫dxi0 [0≤xi0]·[xi0≤1]·1/(-1/2*xi0+-1/2*xim1+1)*xi0".dParse.simplify(one));
+	//writeln("∫dxi0 [0≤xi0]·[xi0≤1] 1/(-21/100*xim1+-7/10*xi0+91/100)*xi0".dParse.simplify(one));
+	//writeln("∫dxi0 [0≤xi0]·[xi0≤1]·1/(21/100*xim1+7/10*xi0)*xi0".dParse.simplify(one));
 	//writeln(tryGetAntiderivative("log(r₁+ξ₀)·ξ₀".dParse.simplify(one)));
 	//writeln(tryGetAntiderivative("ξ₀²·⅟(ξ₀+r₁))".dParse.simplify(one)));
 	//writeln("(∫dξ₁(-2·ξ₁+1+ξ₁²)·[-1+ξ₁≤0]·[-ξ₁≤0]·ξ₁·⅟(-21/100·ξ₁+21/100+7/10·r₁))".dParse.simplify(one));

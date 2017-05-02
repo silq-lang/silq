@@ -62,7 +62,7 @@ DExpr computeSum(DExpr expr,DExpr facts=one){
 	nonIvrs=nonIvrs.simplify(facts.incDeBruijnVar(1,0).simplify(one));
 	auto loup=ivrs.getBoundsForVar(var,facts);
 	if(!loup[0]) return null;
-	DExpr lower=loup[1][0],upper=loup[1][1];
+	DExpr lower=loup[1][0].maybe!(x=>x.incDeBruijnVar(-1,0)),upper=loup[1][1].maybe!(x=>x.incDeBruijnVar(-1,0));
 	//dw("!! ",nonIvrs," ",lower," ",upper);
 	// TODO: symbolic summation. TODO: use the fact that the loop index is an integer in simplifications.
 	//if(nonIvrs==one) return (dIvr(DIvr.Type.leZ,dCeil(lower)-dFloor(upper))*(dFloor(upper)+1-dCeil(lower))).simplify(facts);

@@ -1911,7 +1911,6 @@ Q!(bool,DExpr[2]) getBoundsForVar(DExpr ivrs,DVar var,DExpr facts=one){
 		assert(ivr.type!=DIvr.Type.neqZ);
 		DExpr bound;
 		auto status=ivr.getBoundForVar(var,bound);
-		if(bound) bound=bound.incDeBruijnVar(-1,0);
 		final switch(status) with(BoundStatus){
 		case fail:
 			return q(false,cast(DExpr[2])[null,null]);
