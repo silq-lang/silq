@@ -424,18 +424,41 @@ DExpr tryGetAntiderivative(DExpr expr){
 	if(auto dgaussTG=gaussIntTimesGauss(var,expr)) return dgaussTG;
 	// partial integration for polynomials
 	DExpr partiallyIntegratePolynomials(DVar var,DExpr e){ // TODO: is this well founded?
+		import std.algorithm,std.array,std.range;
 		static MapX!(Q!(DVar,DExpr),DExpr) memo;
-		if(q(var,e) in memo) return memo[q(var,e)];
-		auto tau=freshVar("τ");
+		auto t=q(var,e);
+		if(t in memo) return memo[t];
+		static int whichTau=0;
+		auto tau=freshVar("τ"~lowNum(++whichTau));
+		/+scope(exit){
+			foreach(k,v;memo){
+				assert(!v||!v.hasFreeVar(tau));
+				assert(!k[1].hasFreeVar(tau));
+			}
+		}+/
 		import std.array: array;
 		auto vars=e.freeVars.setx.array;
-		auto token=dApply(tau,dTuple(cast(DExpr[])vars));
-		memo[q(var,e)]=token;
+		auto token=dDistApply(tau,dTuple(cast(DExpr[])vars));
+		memo[t]=token;
 		auto fail(){
-			memo[q(var,e)]=null;
+			memo[t]=null;
+			Q!(DVar,DExpr)[] toRemove;
+			foreach(k,v;memo){ // TODO: this is inefficient. only consider new values.
+				if(!v||!v.hasFreeVar(tau)) continue;
+				toRemove~=k;
+			}
+			foreach(k;toRemove) memo.remove(k);
 			return null;
 		}
-		
+		auto succeed(DExpr r){
+			assert(!r.hasFreeVar(tau));
+			memo[t]=r;
+			foreach(k,ref v;memo){ // TODO: this is inefficient. only consider new values.
+				if(!v||!v.hasFreeVar(tau)) continue;
+				v=v.substitute(tau,dLambda(r.incDeBruijnVar(1,1).substituteAll(vars,iota(vars.length).map!(i=>dDeBruijnVar(1)[i.dℚ]).array))).simplify(one);
+			}
+			return r;
+		}
 		auto m=cast(DMult)e;
 		if(!m) return fail();
 		DExpr polyFact=null;
@@ -458,16 +481,14 @@ DExpr tryGetAntiderivative(DExpr expr){
 		auto intDiffPolyIntRest=tryGetAntiderivative(diffRest);
 		if(!intDiffPolyIntRest) return fail();
 		auto r=polyFact*intRest-intDiffPolyIntRest;
-		if(!r.hasFreeVar(tau)){ memo[q(var,e)]=r; return r; }
+		if(!r.hasFreeVar(tau)) return succeed(r);
 		auto sigma=freshVar("σ");
-		auto h=r.simplify(one).getHoles!(x=>x==token?token:null,DApply);
-		import std.algorithm,std.array,std.range;
+		auto h=r.simplify(one).getHoles!(x=>x==token?token:null,DDistApply);
 		r=h.expr.substituteAll(h.holes.map!(x=>x.var).array,(cast(DExpr)sigma).repeat(h.holes.length).array);
 		if(auto s=(r-sigma).simplify(one).solveFor(sigma)){
 			s=s.substitute(tau,dLambda(s.incDeBruijnVar(1,1).substituteAll(vars,iota(vars.length).map!(i=>dDeBruijnVar(1)[i.dℚ]).array))).simplify(one);
-			if(s.hasFreeVar(tau)) s=null;
-			memo[q(var,e)]=s;
-			return s;
+			if(s.hasFreeVar(tau)) return fail();
+			return succeed(s);
 		}
 		return fail();
 	}

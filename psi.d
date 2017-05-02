@@ -170,6 +170,9 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration;
+	//writeln(tryGetAntiderivative("log(r₁+ξ₀)·ξ₀".dParse.simplify(one)));
+	//writeln(tryGetAntiderivative("ξ₀²·⅟(ξ₀+r₁))".dParse.simplify(one)));
+	//writeln("(∫dξ₁(-2·ξ₁+1+ξ₁²)·[-1+ξ₁≤0]·[-ξ₁≤0]·ξ₁·⅟(-21/100·ξ₁+21/100+7/10·r₁))".dParse.simplify(one));
 	//writeln("∫dx log(-x)·x·[-1≤x]·[x≤0]".dParse.simplify(one));
 	//writeln("-[-ξ₀≤0]·[ξ₀≠0]·τ(0,)·⅟2+-[ξ₀≤0]·σ+-ξ₀²·⅟2+-σ+[-ξ₀≤0]·[ξ₀≠0]·log(ξ₀)·ξ₀²·⅟2+[-ξ₀≤0]·ξ₀²·⅟4+[ξ₀=0]·σ·⅟2+[ξ₀≠0]·[ξ₀≤0]·log(-ξ₀)·ξ₀²+[ξ₀≠0]·[ξ₀≤0]·τ(0,)·⅟2".dParse.solveFor("σ".dVar));
 	//writeln(tryGetAntiderivative("log(-ξ₀)·ξ₀".dParse.simplify(one)));
