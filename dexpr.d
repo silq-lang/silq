@@ -1131,9 +1131,9 @@ class DMult: DCommutAssocOp{
 					if(p.operands[0]==pf.operands[0])
 						return (p.operands[0]^^(p.operands[1]+pf.operands[1])).simplify(facts);
 					static DExpr tryCombine(DExpr a,DExpr b,DExpr facts){
-						if(cast(DMult)a||cast(DMult)b) return null; // TODO: ok?
 						DExprSet s;
 						a=a.simplify(facts), b=b.simplify(facts);
+						if(cast(DMult)a||cast(DMult)b) return null; // TODO: ok?
 						DMult.insertAndSimplify(s,a,facts);
 						DMult.insertAndSimplify(s,b,facts);
 						if(a !in s || b !in s)
@@ -1151,7 +1151,6 @@ class DMult: DCommutAssocOp{
 						if(auto r=tryCombine(a,b,facts))
 							return (r^^exp1).simplify(facts);
 					}
-
 				}
 			}
 			if(cast(DIvr)e2) swap(e1,e2);
@@ -1423,7 +1422,12 @@ class DPow: DBinaryOp{
 		auto ne1=e1.simplify(facts);
 		auto ne2=e2.simplify(facts);
 		if(ne1!=e1||ne2!=e2) return dPow(ne1,ne2).simplify(facts);
-		if(e1 != mone) if(auto c=cast(Dℚ)e1) if(c.c<0) if(e2.isInteger()) return (mone^^e2*dℚ(-c.c)^^e2).simplify(facts);
+		if(e1 != mone){
+			auto c=e1.getFractionalFactor();
+			if(c.c<0)
+				if(e2.isInteger())
+					return (mone^^e2*(-e1)^^e2).simplify(facts);
+		}
 		if(auto m=cast(DMult)e1){
 			DExprSet outside;
 			DExprSet within;

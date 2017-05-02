@@ -170,6 +170,12 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration;
+	//writeln("1/-x".dParse.simplify(one));
+	//writeln("(-1)^(1/2)*(-x)^(1/2)".dParse.simplify(one));
+	//writeln("(1/x)^(1/2)".dParse.simplify(one));
+	//writeln("(2/x)^(1/2)".dParse.simplify(one));	
+	//writeln("(-2)^(1/2)/(-x)^(1/2)".dParse.simplify(one));
+	//writeln(("-1/(-2)^(1/2)".dParse.simplify(one)*"(-x)^(1/2)".dParse.simplify(one)).simplify(one));
 	
 	//writeln(tryGetAntiderivative("[-k+-ξ₀≤0]·[k+ξ₀≠0]·k".dParse.simplify(one)).simplify(one));
 	//writeln(tryGetAntiderivative("[-ξ₋₁+-ξ₀≤0]·[ξ₋₁+ξ₀≠0]·ξ₋₁".dParse.simplify(one)).simplify(one).substitute(dDeBruijnVar(2),dVar("k")).simplify(one));
