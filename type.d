@@ -298,6 +298,7 @@ class ForallTy: Type{
 		Expression[string] subst;
 		foreach(i,n;names) subst[n]=null;
 		foreach(i,aty;atys){
+			if(i>=cod.nargs) continue;
 			if(!cod.argTy(i).unify(aty,subst))
 				return null;
 		}
