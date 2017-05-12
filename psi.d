@@ -593,7 +593,7 @@ void test(){
 	//writeln("(∫dξ₁[-1+√ξ̅₁̅≤0]·[-ξ₁≤0]·[ξ₁≠0]·⅟(-2·[√ξ̅₁̅≠0]·[√ξ̅₁̅≤0]·√ξ̅₁̅+2·√ξ̅₁̅)+∫dξ₁[-1+√ξ̅₁̅≤0]·[-ξ₁≤0]·⅟(-2·[√ξ̅₁̅≠0]·[√ξ̅₁̅≤0]·√ξ̅₁̅+2·√ξ̅₁̅))".dParse);
 	//writeln("-2·[√ξ̅₁̅≠0]·[√ξ̅₁̅≤0]·√ξ̅₁̅+2·√ξ̅₁̅".dParse.simplify("[√ξ̅₁̅≤0]".dParse));
 	//writeln("[√ξ̅₁̅≤0]".dParse.simplify(one));
-	//writeln(DExpr.simplifyMemo);
+	//writeln(DExpr.simplifyCache);
 	//writeln("(2·x·π)^(⅟2)".dParse);
 	/*writeln(linearizeConstraints("[1/x+1≤0]".dParse,"x".dVar));
 	writeln(linearizeConstraints("[x²≤1]".dParse,"x".dVar));
@@ -935,7 +935,7 @@ void test(){
 			 //"256^((-1)²)",
 			 "e^((-1)²)","3"].map!dParse.array;
 	//foreach(ref e;es) e=e.simplify(one);
-	//dw(DExpr.simplifyMemo);
+	//dw(DExpr.simplifyCache);
 	"1^1".dParse.simplify(one);
 	"e^1".dParse.simplify(one);
 	uniqueMapNonCommutAssoc.clear();+/

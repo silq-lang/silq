@@ -94,7 +94,7 @@ abstract class DExpr{
 		writeln("tot: ",tot);
 	}+/
 	
-	static MapX!(Q!(DExpr,DExpr),DExpr) simplifyMemo;
+	static MapX!(Q!(DExpr,DExpr),DExpr) simplifyCache;
 	final DExpr simplify(string file=__FILE__,int line=__LINE__)(DExpr facts){
 		/+static int nested=0;nested++; scope(exit) nested--;
 		if(nested==1){
@@ -105,12 +105,12 @@ abstract class DExpr{
 		}
 		scope(exit) if(nested==1) simplificationTimer[this].stop();+/
 		assert(!cast(DPlus)facts,text(facts));
-		if(q(this,facts) in simplifyMemo) return simplifyMemo[q(this,facts)];
+		if(q(this,facts) in simplifyCache) return simplifyCache[q(this,facts)];
 		if(facts==zero) return zero;
 		auto r=simplifyImpl(facts);
 		assert(!!r,text(typeid(this)));
-		simplifyMemo[q(this,facts)]=r;
-		simplifyMemo[q(r,facts)]=r;
+		simplifyCache[q(this,facts)]=r;
+		simplifyCache[q(r,facts)]=r;
 		/+foreach(ivr;r.allOf!DIvr){ // TODO: remove?
 			assert(ivr == ivr.simplify(facts),text(this," ",r," ",facts));
 			assert(ivr.type != DIvr.Type.lZ);
@@ -119,21 +119,21 @@ abstract class DExpr{
 	}
 
 	// TODO: implement in terms of 'forEachSubExpr'?
-	static MapX!(Q!(DExpr,DVar,DExpr),DExpr) substituteMemo;
+	static MapX!(Q!(DExpr,DVar,DExpr),DExpr) substituteCache;
 	final DExpr substitute(DVar var,DExpr e){
 		auto t=q(this,var,e);
-		if(t in substituteMemo) return substituteMemo[t];
+		if(t in substituteCache) return substituteCache[t];
 		auto r=substituteImpl(var,e);
-		substituteMemo[t]=r;
+		substituteCache[t]=r;
 		return r;
 	}
 	abstract DExpr substituteImpl(DVar var,DExpr e);
-	static MapX!(Q!(DExpr,int,int),DExpr) incDeBruijnVarMemo;
+	static MapX!(Q!(DExpr,int,int),DExpr) incDeBruijnVarCache;
 	final DExpr incDeBruijnVar(int di,int bound){
 		auto t=q(this,di,bound);
-		if(t in incDeBruijnVarMemo) return incDeBruijnVarMemo[t];
+		if(t in incDeBruijnVarCache) return incDeBruijnVarCache[t];
 		auto r=incDeBruijnVarImpl(di,bound);
-		incDeBruijnVarMemo[t]=r;
+		incDeBruijnVarCache[t]=r;
 		return r;
 	}
 	abstract DExpr incDeBruijnVarImpl(int di,int bound);
@@ -1051,12 +1051,12 @@ class DMult: DCommutAssocOp{
 			if(!i) factor=factor.simplify(facts);
 		}
 		// TODO: use suitable data structures
-		static MapX!(Q!(DExpr,DExpr,DExpr),DExpr) combineMemo;
+		static MapX!(Q!(DExpr,DExpr,DExpr),DExpr) combineCache;
 		static DExpr combine()(DExpr e1,DExpr e2,DExpr facts){
-			if(q(e1,e2,facts) in combineMemo) return combineMemo[q(e1,e2,facts)];
+			if(q(e1,e2,facts) in combineCache) return combineCache[q(e1,e2,facts)];
 			auto r=combineImpl(e1,e2,facts);
-			combineMemo[q(e1,e2,facts)]=r;
-			combineMemo[q(e2,e1,facts)]=r;
+			combineCache[q(e1,e2,facts)]=r;
+			combineCache[q(e2,e1,facts)]=r;
 			return r;
 		}
 		static DExpr combineImpl(DExpr e1,DExpr e2,DExpr facts)in{assert(!cast(DMult)e1&&!cast(DMult)e2);}body{
@@ -1261,13 +1261,13 @@ class DMult: DCommutAssocOp{
 		factors.insert(factor);
 	}
 
-	static MapX!(DExpr,DExpr) basicSimplifyMemo;
+	static MapX!(DExpr,DExpr) basicSimplifyCache;
 	final DExpr basicSimplify(){
-		if(this in basicSimplifyMemo) return basicSimplifyMemo[this];
+		if(this in basicSimplifyCache) return basicSimplifyCache[this];
 		DExprSet simple;
 		foreach(f;operands) insertAndSimplify(simple,f,one);
 		auto r=dMult(simple);
-		basicSimplifyMemo[this]=r;
+		basicSimplifyCache[this]=r;
 		return r;
 	}
 
@@ -2856,7 +2856,7 @@ class DInt: DOp{
 		}
 	}
 
-	static MapX!(Q!(DExpr,DExpr),DExpr) ssimplifyMemo;
+	static MapX!(Q!(DExpr,DExpr),DExpr) ssimplifyCache;
 
 	static DExpr staticSimplify(DExpr expr,DExpr facts=one)in{assert(expr&&facts);}body{
 		auto nexpr=expr.simplify(facts.incDeBruijnVar(1,0).simplify(one));
@@ -2908,12 +2908,12 @@ class DSum: DOp{
 			return addp(prec,symbol(formatting,binders)~"_"~DDeBruijnVar.displayName(1,formatting,binders+1)~expr.toStringImpl(formatting,precedence,binders+1));
 		}
 	}
-	static MapX!(Q!(DExpr,DExpr),DExpr) ssimplifyMemo;
-	static DExpr staticSimplifyMemo(DExpr expr,DExpr facts=one){
+	static MapX!(Q!(DExpr,DExpr),DExpr) ssimplifyCache;
+	static DExpr staticSimplifyCache(DExpr expr,DExpr facts=one){
 		auto t=q(expr,facts);
-		if(t in ssimplifyMemo) return ssimplifyMemo[t]; // TODO: better solution available?
+		if(t in ssimplifyCache) return ssimplifyCache[t]; // TODO: better solution available?
 		auto r=staticSimplify(expr,facts);
-		ssimplifyMemo[t]=r?r:t[0];
+		ssimplifyCache[t]=r?r:t[0];
 		return r;
 	}
 

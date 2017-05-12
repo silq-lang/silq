@@ -5,13 +5,13 @@ import options, dexpr, util;
 import std.conv;
 
 
-MapX!(Q!(DExpr,DExpr),DExpr) definiteIntegralMemo;
+MapX!(Q!(DExpr,DExpr),DExpr) definiteIntegralCache;
 
 DExpr definiteIntegral(DExpr expr,DExpr facts=one){
 	auto t=q(expr,facts);
-	if(t in definiteIntegralMemo) return definiteIntegralMemo[t];
+	if(t in definiteIntegralCache) return definiteIntegralCache[t];
 	auto r=definiteIntegralImpl(t.expand);
-	definiteIntegralMemo[t]=r;
+	definiteIntegralCache[t]=r;
 	return r;
 }
 
@@ -517,12 +517,12 @@ DExpr tryGetAntiderivative(DExpr expr){
 	return null; // no simpler expression available
 }
 
-MapX!(DExpr,DExpr) tryIntegrateMemo;
+MapX!(DExpr,DExpr) tryIntegrateCache;
 
 private DExpr tryIntegrate(DExpr expr){
-	if(expr in tryIntegrateMemo) return tryIntegrateMemo[expr];
+	if(expr in tryIntegrateCache) return tryIntegrateCache[expr];
 	auto r=tryIntegrateImpl(expr);
-	tryIntegrateMemo[expr]=r;
+	tryIntegrateCache[expr]=r;
 	return r;
 }
 
