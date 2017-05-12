@@ -129,14 +129,14 @@ abstract class DExpr{
 	}
 	abstract DExpr substituteImpl(DVar var,DExpr e);
 	static MapX!(Q!(DExpr,int,int),DExpr) incDeBruijnVarMemo;
-	final DExpr incDeBruijnVar(int di,int free){
-		auto t=q(this,di,free);
+	final DExpr incDeBruijnVar(int di,int bound){
+		auto t=q(this,di,bound);
 		if(t in incDeBruijnVarMemo) return incDeBruijnVarMemo[t];
-		auto r=incDeBruijnVarImpl(di,free);
+		auto r=incDeBruijnVarImpl(di,bound);
 		incDeBruijnVarMemo[t]=r;
 		return r;
 	}
-	abstract DExpr incDeBruijnVarImpl(int di,int free);
+	abstract DExpr incDeBruijnVarImpl(int di,int bound);
 	abstract int freeVarsImpl(scope int delegate(DVar),ref DExprSet visited);
 	final freeVars(){
 		static struct FreeVars{ // TODO: move to util?
@@ -224,7 +224,7 @@ abstract class DExpr{
 		override int forEachSubExpr(scope int delegate(DExpr) dg){ return 0; }
 		override int freeVarsImpl(scope int delegate(DVar) dg,ref DExprSet visited){ return 0; }
 		override DExpr substituteImpl(DVar var,DExpr e){ assert(var != this); return this; }
-		override DExpr incDeBruijnVarImpl(int di,int free){ return this; }
+		override DExpr incDeBruijnVarImpl(int di,int bound){ return this; }
 		override DExpr simplifyImpl(DExpr facts){ return this; }
 	}
 }
