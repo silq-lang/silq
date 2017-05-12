@@ -144,7 +144,7 @@ Function bodies consist of a sequence of statements, possibly referencing the va
   equals the given value. The probability that the variable is equal to the expression must be zero, but the probability density at that point
   must be positive. *Note:* This is not currently enforced automatically by PSI, therefore some care is required when using this primitive.
 
-- assert(expression); puts the program in the error state in case the expression is not equal to zero (PSI will then report the probability of error).
+- assert(expression); puts the program in the error state in case the expression is equal to zero (PSI will then report the probability of error).
 
 - return (expression1,expression2,...,expressionn); terminates the procedure with the given results.
   If no return statement is provided at the end of a procedure, return (); is automatically inserted.
