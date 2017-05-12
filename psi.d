@@ -117,6 +117,7 @@ int main(string[] args){
 			case "--matlab": opt.formatting=Format.matlab; break;
 			case "--maple": opt.formatting=Format.maple; break;
 			case "--mathematica": opt.formatting=Format.mathematica; break;
+			case "--python": opt.formatting=Format.python; break;
 			case "--sympy": opt.formatting=Format.sympy; break;
 			case "--lisp": opt.formatting=Format.lisp; break;
 			case "--raw": opt.outputForm=OutputForm.raw; break;

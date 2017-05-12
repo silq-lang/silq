@@ -514,7 +514,7 @@ mixin template FactoryFunction(string name,string value){
 alias DExprSet=SetX!DExpr;
 abstract class DVar: DExpr{
 	static string fixName(string name,Format formatting){
-		if(formatting==Format.gnuplot||formatting==Format.sympy||formatting==Format.matlab||formatting==Format.mathematica){
+		if(formatting==Format.gnuplot||formatting==Format.python||formatting==Format.sympy||formatting==Format.matlab||formatting==Format.mathematica){
 			return asciify(name);
 			auto nname=name.to!dstring; // TODO: why necessary? Phobos bug?
 			nname=nname.replace("ξ"d,"xi"d);
@@ -1010,7 +1010,7 @@ class DMult: DCommutAssocOp{
 	alias subExprs=Seq!operands;
 	override @property Precedence precedence(){ return Precedence.mult; }
 	override string symbol(Format formatting,int binders){
-		if(formatting==Format.gnuplot||formatting==Format.maple||formatting==Format.sympy||formatting==Format.mathematica||formatting==Format.lisp) return "*";
+		if(formatting==Format.gnuplot||formatting==Format.python||formatting==Format.maple||formatting==Format.sympy||formatting==Format.mathematica||formatting==Format.lisp) return "*";
 		else if(formatting==Format.matlab) return ".*";
 		else return "·";
 	}
@@ -1379,7 +1379,7 @@ class DPow: DBinaryOp{
 	override @property string symbol(Format formatting,int binders){
 		if(formatting==Format.gnuplot) return "**";
 		else if(formatting==Format.matlab) return ".^";
-		else if(formatting==Format.sympy) return "**";
+		else if(formatting==Format.python||formatting==Format.sympy) return "**";
 		else return "^";
 	}
 	override bool rightAssociative(){ return true; }
@@ -2390,13 +2390,22 @@ class DIvr: DExpr{ // iverson brackets
 					//case leZ: return text("piecewise(",es,"<=0,1,0)");
 					case leZ: return text("piecewise(",es,"<pZ,1,0)");
 				}
+			}else if(formatting==Format.python){
+				auto es=e.toStringImpl(formatting,Precedence.none,binders);
+				string cmp="";
+				final switch(type){
+					case eqZ:  return text("equal(",es,",0)");
+					case neqZ: return text("not_equal(",es,",0)");
+					case lZ: return cmp=text("less(",es,",0)");
+					case leZ: return cmp=text("less_equal(",es,",0)");
+				}
 			}else if(formatting==Format.sympy){
 				auto es=e.toStringImpl(formatting,Precedence.none,binders);
 				final switch(type){
-				case eqZ: return text("Piecewise((1,And(",es,">-pZ,",es,"<pZ)),(0,1))");
-				case neqZ: return text("Piecewise((1,Or(",es,"<-pZ,",es,">pZ)),(0,1))");
-				case lZ: assert(0);
-				case leZ: return text("Piecewise((1,",es,"<pZ),(1,0))");
+					case eqZ: return text("Piecewise((1,And(",es,">-pZ,",es,"<pZ)),(0,1))");
+					case neqZ: return text("Piecewise((1,Or(",es,"<-pZ,",es,">pZ)),(0,1))");
+					case lZ: assert(0);
+					case leZ: return text("Piecewise((1,",es,"<pZ),(1,0))");
 				}
 			}else if(formatting==Format.matlab){
 				return "("~e.toStringImpl(formatting,Precedence.none,binders)~(type==eqZ?"==":type==neqZ?"!=":type==lZ?"<":"<=")~"0)";
@@ -2607,6 +2616,8 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 			return text("Dirac(",e.toStringImpl(formatting,Precedence.none,binders),")");
 			/+auto es=e.toStringImpl(formatting,Precedence.none);
 			return text("piecewise(abs(",es,")<lZ,1/(2*(",es,")))");+/
+		}else if(formatting==Format.python){
+			return text("delta(",e.toStringImpl(formatting,Precedence.none,binders),")");
 		}else if(formatting==Format.sympy){
 			return text("DiracDelta(",e.toStringImpl(formatting,Precedence.none,binders),")");
 		}else if(formatting==Format.lisp){
@@ -2824,7 +2835,7 @@ class DInt: DOp{
 			return text("Integrate[",expr.toStringImpl(formatting,Precedence.none,binders+1),",{",DDeBruijnVar.displayName(1,formatting,binders+1),",-Infinity,Infinity}]");
 		}else if(formatting==Format.maple){
 			return text("int(",expr.toStringImpl(formatting,Precedence.none,binders+1),",",DDeBruijnVar.displayName(1,formatting,binders+1),"=-infinity..infinity)");
-		}else if(formatting==Format.sympy){
+		}else if(formatting==Format.python||formatting==Format.sympy){
 			return text("integrate(",expr.toStringImpl(formatting,Precedence.none,binders+1),",(",DDeBruijnVar.displayName(1,formatting,binders+1),",-oo,oo))");
 		}else if(formatting==Format.gnuplot && !hasFreeVars(this)){
 			writeln("warning: replacing integral by 1");
@@ -2889,7 +2900,7 @@ class DSum: DOp{
 			return text("Sum[",expr.toStringImpl(formatting,Precedence.none,binders+1),",{",DDeBruijnVar.displayName(1,formatting,binders+1),",-Infinity,Infinity}]");
 		}else if(formatting==Format.maple){
 			return text("sum(",expr.toStringImpl(formatting,Precedence.none,binders+1),",",DDeBruijnVar.displayName(1,formatting,binders+1),"=-infinity..infinity)"); // TODO: correct?
-		}else if(formatting==Format.sympy){
+		}else if(formatting==Format.python||formatting==Format.sympy){
 			return text("sum(",expr.toStringImpl(formatting,Precedence.none,binders+1),",(",DDeBruijnVar.displayName(1,formatting,binders+1),",-oo,oo))"); // TODO: correct?
 		}else if(formatting==Format.lisp){
 			return text("(sum ",DDeBruijnVar.displayName(1,formatting,binders+1)," ",expr.toStringImpl(formatting,Precedence.none,binders+1),")");

@@ -7,6 +7,7 @@ enum Format{
 	matlab,
 	maple,
 	mathematica,
+	python,
 	sympy,
 	lisp,
 }
@@ -61,6 +62,7 @@ string casExt(Format formatting=opt.formatting){
 		case matlab: return "m";
 		case mathematica: return "m";
 		case maple: return "mpl";
+		case python: return "py";
 		case sympy: return "py";
 		case lisp: return "lisp";
 	}
