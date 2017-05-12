@@ -81,10 +81,9 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 	if(expected.exists) with(expected){
 		writeln(ex==dist.distribution.toString()?todo?"FIXED":"PASS":todo?"TODO":"FAIL");
 	}
-	auto str=dist.toString(opt.formatting);
 	final switch(opt.outputForm){
 		case OutputForm.default_:
-			writeln(str);
+			writeln(dist.toString(opt.formatting));
 			break;
 		case OutputForm.raw:
 			writeln(dist.distribution.toString(opt.formatting));
@@ -105,7 +104,7 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 		}
 	}
 	bool plotCDF=opt.cdf;
-	if(str.canFind("δ")) plotCDF=true;
+	if(!dist.distribution.isContinuousMeasure()) plotCDF=true;
 	import hashtable;
 	SetX!DNVar varset=dist.freeVars.dup;
 	foreach(a;dist.args) varset.insert(a);

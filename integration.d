@@ -160,34 +160,6 @@ private DExpr definiteIntegralImpl(DExpr expr,DExpr facts=one){
 	return null;
 }
 
-bool isContinuousMeasureIn(DExpr expr,DVar var){
-	if(!expr.hasFreeVar(var)) return true;
-	if(auto d=cast(DDistApply)expr) return !d.arg.hasFreeVar(var);
-	if(auto d=cast(DDelta)expr) return !d.e.hasFreeVar(var);
-	if(auto d=cast(DDiscDelta)expr) return !d.var.hasFreeVar(var);
-	if(cast(DIvr)expr||cast(DVar)expr||cast(DPow)expr||cast(DLog)expr||cast(DSin)expr||cast(DFloor)expr||cast(DCeil)expr||cast(DGaussInt)expr||cast(DAbs)expr)
-		return true;
-	if(auto p=cast(DPlus)expr){
-		foreach(s;p.summands)
-			if(!isContinuousMeasureIn(s,var))
-				return false;
-		return true;
-	}
-	if(auto m=cast(DMult)expr){
-		foreach(f;m.factors)
-			if(!isContinuousMeasureIn(f,var))
-				return false;
-		return true;
-	}
-	if(auto i=cast(DInt)expr) return isContinuousMeasureIn(i.expr,var.incDeBruijnVar(1,0));
-	if(auto c=cast(DMCase)expr){
-		if(!isContinuousMeasureIn(c.val,var.incDeBruijnVar(1,0))) return false;
-		return isContinuousMeasureIn(c.err,var);
-	}
-	return false;
-}
-
-
 private DExpr definiteIntegralContinuous(DExpr expr,DExpr facts)out(res){
 	version(INTEGRATION_STATS){
 		integrations++;

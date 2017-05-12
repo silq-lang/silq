@@ -2606,6 +2606,61 @@ DVar getCanonicalFreeVar(DExpr e){
 bool isMoreCanonicalThan(DExpr e1,DExpr e2){
 	return e1.toHash()<e2.toHash(); // TODO: find something more stable
 }
+
+bool isContinuousMeasure(DExpr expr){
+	if(!expr.hasFreeVars()) return true;
+	if(auto d=cast(DDistApply)expr) return false;
+	if(auto d=cast(DDelta)expr) return false;
+	if(auto d=cast(DDiscDelta)expr) return false;
+	if(cast(DIvr)expr||cast(DVar)expr||cast(DPow)expr||cast(DLog)expr||cast(DSin)expr||cast(DFloor)expr||cast(DCeil)expr||cast(DGaussInt)expr||cast(DAbs)expr)
+		return true;
+	if(auto p=cast(DPlus)expr){
+		foreach(s;p.summands)
+			if(!isContinuousMeasure(s))
+				return false;
+		return true;
+	}
+	if(auto m=cast(DMult)expr){
+		foreach(f;m.factors)
+			if(!isContinuousMeasure(f))
+				return false;
+		return true;
+	}
+	if(auto i=cast(DInt)expr) return isContinuousMeasure(i.expr);
+	if(auto c=cast(DMCase)expr){
+		if(!isContinuousMeasure(c.val)) return false;
+		return isContinuousMeasure(c.err);
+	}
+	return false;
+}
+
+bool isContinuousMeasureIn(DExpr expr,DVar var){ // TODO: get rid of code duplication.
+	if(!expr.hasFreeVar(var)) return true;
+	if(auto d=cast(DDistApply)expr) return !d.arg.hasFreeVar(var);
+	if(auto d=cast(DDelta)expr) return !d.e.hasFreeVar(var);
+	if(auto d=cast(DDiscDelta)expr) return !d.var.hasFreeVar(var);
+	if(cast(DIvr)expr||cast(DVar)expr||cast(DPow)expr||cast(DLog)expr||cast(DSin)expr||cast(DFloor)expr||cast(DCeil)expr||cast(DGaussInt)expr||cast(DAbs)expr)
+		return true;
+	if(auto p=cast(DPlus)expr){
+		foreach(s;p.summands)
+			if(!isContinuousMeasureIn(s,var))
+				return false;
+		return true;
+	}
+	if(auto m=cast(DMult)expr){
+		foreach(f;m.factors)
+			if(!isContinuousMeasureIn(f,var))
+				return false;
+		return true;
+	}
+	if(auto i=cast(DInt)expr) return isContinuousMeasureIn(i.expr,var.incDeBruijnVar(1,0));
+	if(auto c=cast(DMCase)expr){
+		if(!isContinuousMeasureIn(c.val,var.incDeBruijnVar(1,0))) return false;
+		return isContinuousMeasureIn(c.err,var);
+	}
+	return false;
+}
+
 class DDelta: DExpr{ // Dirac delta, for ℝ
 	@even DExpr e;
 	alias subExprs=Seq!e;
