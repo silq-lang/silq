@@ -358,10 +358,10 @@ mixin template Visitors(){
 mixin template FactoryFunction(T){
 	static if(is(T==DIvr)){
 		DExpr dIvr(DIvr.Type type,DExpr e){
-			static MapX!(DExpr,DExpr)[DIvr.Type.max+1] unique;
-			if(e in unique[type]) return unique[type][e];
+			static MapX!(DExpr,DExpr)[DIvr.Type.max+1] cache;
+			if(e in cache[type]) return cache[type][e];
 			auto r=new DIvr(type,e);
-			unique[type][e]=r;
+			cache[type][e]=r;
 			return r;
 		}
 	}else static if(is(T==DFloat)){
@@ -454,10 +454,10 @@ mixin template FactoryFunction(T){
 	static if(is(T.subExprs==Seq!())){
 		mixin(mixin(X!q{
 			auto @(lowerf(T.stringof))(){
-				static T unique=null;
-				if(unique) return unique;
-				unique=new T();
-				return unique;
+				static T cache=null;
+				if(cache) return cache;
+				cache=new T();
+				return cache;
 			}
 		}));
 	}else:
@@ -473,11 +473,11 @@ mixin template FactoryFunction(T){
 			}
 			static if(__traits(hasMember,T,"constructHook"))
 				if(auto r=T.constructHook(args)) return r;
-			static MapX!(TupleX!(typeof(T.subExprs)),T) unique;
+			static MapX!(TupleX!(typeof(T.subExprs)),T) cache;
 			auto t=tuplex(args);
-			if(t in unique) return unique[t];
+			if(t in cache) return cache[t];
 			auto r=new T(args);
-			unique[t]=r;
+			cache[t]=r;
 			return r;
 		}
 	}));
@@ -502,10 +502,10 @@ mixin template FactoryFunction(T){
 mixin template FactoryFunction(string name,string value){
 	mixin(mixin(X!q{
 		auto @(name)(){
-			static typeof(@(value)) unique=null;
-			if(unique) return unique;
-			unique=@(value);
-			return unique;
+			static typeof(@(value)) cache=null;
+			if(cache) return cache;
+			cache=@(value);
+			return cache;
 		}
 	}));
 }
