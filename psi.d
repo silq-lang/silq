@@ -171,6 +171,7 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration;
+	//writeln("∫dξ₁ δ[(-1/2+-ξ₁²·⅟2+ξ₁)·⅟(-ξ₁+1)+r₁]".dParse.simplify(one));
 	//writeln("1/-x".dParse.simplify(one));
 	//writeln("(-1)^(1/2)*(-x)^(1/2)".dParse.simplify(one));
 	//writeln("(1/x)^(1/2)".dParse.simplify(one));

@@ -1385,6 +1385,7 @@ class DPow: DBinaryOp{
 	override bool rightAssociative(){ return true; }
 
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		if(formatting==Format.python) return "nan_to_num("~operands[0].toStringImpl(formatting,precedence.pow,binders)~"**"~operands[1].toStringImpl(formatting,precedence.pow,binders)~")";
 		if(formatting==Format.lisp){
 			if(operands[1]==mone){
 				return text("(/ 1 ",operands[0].toStringImpl(formatting,Precedence.none,binders),")");
@@ -3099,6 +3100,7 @@ class DLog: DOp{
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		if(formatting==Format.lisp) return text("(log ",e.toStringImpl(formatting,prec,binders),")");
 		auto es=e.toStringImpl(formatting,Precedence.none,binders);
+		if(formatting==Format.python) return text("nan_to_num(log(",es,"))");
 		if(formatting==Format.mathematica) return text("Log[",es,"]");
 		return text("log(",es,")");
 	}
