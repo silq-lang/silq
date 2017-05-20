@@ -73,7 +73,7 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 		auto varset=expectation.freeVars.setx;
 		if(opt.plot && (varset.length==1||varset.length==2)){
 			writeln("plotting... ");
-			gnuplot(expectation,dist.freeVars,"expectation",opt.plotRange,opt.plotFile);
+			gnuplot(expectation,cast(SetX!DNVar)varset,"expectation",opt.plotRange,opt.plotFile);
 		}
 		return;
 	}
