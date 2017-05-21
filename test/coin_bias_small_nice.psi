@@ -4,5 +4,5 @@ def main(){
     for i in [0..r.length){
         observe(flip(p)==r[i]);
     }
-    return p; // expected: (-120·p+60+60·p²)·[-1+p≤0]·[-p≤0]·p³
+    return p; // expected: (-120·p⁴+60·p³+60·p⁵)·[-1+p≤0]·[-p≤0]
 }

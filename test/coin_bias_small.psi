@@ -10,5 +10,5 @@ def main(){
     observe(x4==1);
     x5 := flip(p);
     observe(x5==0);
-    return p; // expected: (-30·p+30)·[-1+p≤0]·[-p≤0]·p⁴
+    return p; // expected: (-30·p⁵+30·p⁴)·[-1+p≤0]·[-p≤0]
 }

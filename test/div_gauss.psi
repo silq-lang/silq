@@ -2,6 +2,7 @@
 def main(){
     X := gauss(0,1);
     Y := gauss(0,1);
-    return X/Y; // expected: [(∫dξ₁⅟(ξ₁²·⅟2+⅟2))·⅟π≠0]·⅟(r₁²·⅟2+⅟2)·⅟(∫dξ₁⅟(ξ₁²·⅟2+⅟2))
+    return X/Y; // expected: [∫dξ₁⅟(ξ₁²·π·⅟2+π·⅟2)≠0]·⅟((∫dξ₁⅟(ξ₁²·π·⅟2+π·⅟2))·r₁²·π·⅟2+(∫dξ₁⅟(ξ₁²·π·⅟2+π·⅟2))·π·⅟2)
     // TODO: evaluate normalization constant
+	// TODO: simplify better
 }

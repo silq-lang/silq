@@ -1246,6 +1246,13 @@ class DMult: DCommutAssocOp{
 			/+// TODO: do we want auto-distribution?
 			if(cast(DPlus)e1) return dDistributeMult(e1,e2);
 			if(cast(DPlus)e2) return dDistributeMult(e2,e1);+/
+			// TODO: refine condition
+			// TODO: use faster polynomial multiplication if possible?
+			// (for example, only expand polynomial products in a sum of polynomials)
+			if(isPolynomial(e1) && isPolynomial(e2)){
+				if(cast(DPlus)e1) return dDistributeMult(e1,e2);
+				if(cast(DPlus)e2) return dDistributeMult(e2,e1);
+			}
 			return null;
 		}
 		foreach(f;factors){
@@ -1623,6 +1630,30 @@ DExpr polyNormalize(DExpr e,DVar v=null,long limit=-1){
 	if(r != e) return polyNormalize(r,v,limit);
 	return r;
 
+}
+
+// TODO: keep flag in expressions instead?
+bool isPolynomial(DExpr e){
+	if(cast(DVar)e) return true;
+	if(!e.hasFreeVars()) return true;
+	if(auto p=cast(DPow)e){
+		if(auto q=p.operands[1].isInteger())
+			return q.c.num >= 0 && isPolynomial(p.operands[0]);
+		return false;
+	}
+	if(auto m=cast(DMult)e){
+		foreach(f;m.factors)
+			if(!isPolynomial(f))
+				return false;
+		return true;
+	}
+	if(auto m=cast(DPlus)e){
+		foreach(s;m.summands)
+			if(!isPolynomial(s))
+				return false;
+		return true;
+	}
+	return false;
 }
 
 DPolynomial asPolynomialIn(DExpr e,DVar v,long limit=-1){
