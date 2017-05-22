@@ -356,7 +356,6 @@ struct Dist{
 	}
 	DExpr infer(DExpr fun){
 		assert(opt.backend != InferenceMethod.simulate,"TODO: higher-order inference in simulate backend");
-		MapX!(DExpr,Q!(Dist,DExpr)) byFrame;
 		auto r=distInit;
 		r.copyNonState(this);
 		static uniq=0;
