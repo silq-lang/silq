@@ -4026,6 +4026,10 @@ bool hasFreeVars(DExpr e){ foreach(x;e.freeVars) return true; return false; }
 
 // derived functions
 
+DExpr dIsℤ(DExpr e){
+	return dIvr(DIvr.Type.eqZ,e-dFloor(e));
+}
+
 DExpr dGamma(DExpr t){
 	t=t.incDeBruijnVar(1,0);
 	auto x=dDeBruijnVar(1);
@@ -4038,6 +4042,10 @@ DExpr dBeta(DExpr x,DExpr y){ // constraints: x>0 and y>0
 	return dInt(dBounded!"[]"(t,zero,one)*t^^(x-1)*(1-t)^^(y-1));
 }
 
+DExpr dNChooseK(DExpr n,DExpr k){
+	// TODO: better encoding?
+	return dBounded!"[]"(k,zero,n)*dGamma(n+1)/(dGamma(n-k+1)*dGamma(k+1));
+}
 
 
 

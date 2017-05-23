@@ -96,6 +96,17 @@ Cond[] uniformIntCond(DExpr a,DExpr b){
 	return [Cond(dIvr(DIvr.Type.neqZ,norm),"no integers in range")];
 }
 
+DExpr binomialPDF(DVar var,DExpr n,DExpr p){
+	n=n.incDeBruijnVar(1,0), p=p.incDeBruijnVar(1,0);
+	auto k=dDeBruijnVar(1);
+	return dSumSmp(dNChooseK(n,k)*p^^k*(1-p)^^(n-k)*dDelta(k-var),one);
+}
+Cond[] binomialCond(DExpr n,DExpr p){
+	return [Cond(dIsℤ(n),"n must be an integer"),
+	        Cond(dIvr(DIvr.Type.leZ,-n),"n must be non-negative"),
+	        Cond(dBounded!"[]"(p,zero,one),"parameter p out of range [0..1]")];
+}
+
 DExpr poissonPDF(DVar var,DExpr λ){
 	var=var.incDeBruijnVar(1,0), λ=λ.incDeBruijnVar(1,0);
 	auto x=dDeBruijnVar(1);
