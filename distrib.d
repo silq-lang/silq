@@ -146,12 +146,15 @@ Cond[] poissonCond(DExpr λ){
 }
 
 DExpr betaPDF(DVar var,DExpr α,DExpr β){
-	auto nnorm=var^^(α-1)*(1-var)^^(β-1)*dBounded!"[]"(var,zero,one);
+	auto nnorm=dIvr(DIvr.Type.neqZ,α)*dIvr(DIvr.Type.neqZ,β)*
+		var^^(α-1)*(1-var)^^(β-1)*dBounded!"[]"(var,zero,one)+
+		dIvr(DIvr.Type.eqZ,α)*dDelta(var)+
+		dIvr(DIvr.Type.eqZ,β)*dDelta(1-var);
 	return nnorm/dIntSmp(var,nnorm,one);
 }
 Cond[] betaCond(DExpr α,DExpr β){
-	return [Cond(dIvr(DIvr.Type.lZ,-α),"α must be positive"),
-	        Cond(dIvr(DIvr.Type.lZ,-β),"β must be positive")];
+	return [Cond(dIvr(DIvr.Type.leZ,-α),"α must be non-negative"),
+	        Cond(dIvr(DIvr.Type.leZ,-β),"β must be non-negative")];
 }
 
 DExpr gammaPDF(DVar var,DExpr α,DExpr β){

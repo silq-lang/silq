@@ -1,0 +1,6 @@
+def main(){
+	p := beta(0,0);
+	observe(flip(p));
+	return (p,beta(0,0),beta(1,0),beta(0,1)); // expected: (δ[-p+1]·⅟2+δ[p]·⅟2)·(δ[-r₁+1]+δ[r₁])·[-1+p≤0]·[-p≤0]·p·δ[-r₂+1]·δ[r₃]
+	// TODO: simplify better (δ[p] can be eliminated)
+}
