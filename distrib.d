@@ -172,6 +172,12 @@ Cond[] laplaceCond(DExpr μ,DExpr b){
 	return [Cond(dIvr(DIvr.Type.lZ,-b),"b must be positive")];
 }
 
+DExpr cauchyPDF(DVar var,DExpr x0,DExpr γ){
+	return one/(dΠ*γ*(1+((var-x0)/γ)^^2));
+}
+Cond[] cauchyCond(DExpr x0,DExpr γ){
+	return [Cond(dIvr(DIvr.Type.lZ,-γ),"γ must be positive")];
+}
 
 DExpr exponentialPDF(DVar var,DExpr λ){
 	return λ*dE^^(-λ*var)*dIvr(DIvr.Type.leZ,-var);
