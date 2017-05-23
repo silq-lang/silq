@@ -107,6 +107,15 @@ Cond[] binomialCond(DExpr n,DExpr p){
 	        Cond(dBounded!"[]"(p,zero,one),"parameter p out of range [0..1]")];
 }
 
+DExpr geometricPDF(DVar var,DExpr p){
+	p=p.incDeBruijnVar(1,0);
+	auto i=dDeBruijnVar(1);
+	return dSumSmp(dIvr(DIvr.Type.leZ,-i)*(1-p)^^i*p*dDelta(i-var),one);
+}
+Cond[] geometricCond(DExpr p){
+	return [Cond(dIvr(DIvr.Type.leZ,-p)*dIvr(DIvr.Type.leZ,p-1),"parameter ouside range [0..1]")];
+}
+
 DExpr poissonPDF(DVar var,DExpr λ){
 	var=var.incDeBruijnVar(1,0), λ=λ.incDeBruijnVar(1,0);
 	auto x=dDeBruijnVar(1);
