@@ -1,4 +1,4 @@
 def main(){
     a := [(1,2)];
-    return a[1/2][0]; // expected: TODO: 0
+    return a[1/2][0]; // expected: 0
 }
