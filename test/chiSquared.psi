@@ -1,0 +1,5 @@
+
+def main(){
+	x := gauss(0,1);
+	return x^2; // expected: TODO: ⅟(∫dξ₁[-ξ₁≤0]·⅟e^ξ₁·⅟√ξ̅₁̅)·⅟e^(r₁·⅟2)·⅟√2̅·⅟√r̅₁̅
+}

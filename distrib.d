@@ -35,6 +35,14 @@ Cond[] gaussCond(DExpr μ,DExpr ν){
 	return [Cond(dIvr(DIvr.Type.leZ,-ν),"negative variance")];
 }
 
+DExpr chiSquaredPDF(DVar var,DExpr k){
+	return one/(2^^(k/2)*dGamma(k/2))*var^^(k/2-1)*dE^^(-var/2);
+}
+Cond[] chiSquaredCond(DExpr k){
+	return [Cond(dIsℤ(k),"k must be an integer"),
+	        Cond(dIvr(DIvr.Type.lZ,-k),"k must be positive")];
+}
+
 DExpr rayleighPDF(DVar var,DExpr ν){
 	auto dist=var/(ν)*dE^^-((var)^^2/(2*ν)) * dIvr(DIvr.Type.leZ,-var);
 	return dIvr(DIvr.Type.neqZ,ν)*dist+dIvr(DIvr.Type.eqZ,ν)*dDelta(var);
