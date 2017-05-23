@@ -195,7 +195,9 @@ If arguments don't conform to the constraints of the distribution, the program e
 
 - Gamma(shape,rate) samples from the Gamma distribution with the given shape and rate.
 
-- Laplace(mean,scale) samples from the Laplace distribution with the given mean and positive scale.
+- Laplace(location,scale) samples from the Laplace distribution with the given location and positive scale.
+
+- Cauchy(location,scale) samples from the Cauchy distribution with the given location and positive scale.
 
 - Pareto(shape,scale) samples from the Pareto distribution with the given shape and scale which should be positive real numbers.
 
