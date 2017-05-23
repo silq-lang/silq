@@ -163,10 +163,7 @@ Cond[] gammaCond(DExpr α,DExpr β){
 }
 
 DExpr laplacePDF(DVar var, DExpr μ, DExpr b){
-      auto positive = dE^^(-(var-μ)/b)/(2*b);
-      auto negative = dE^^((var-μ)/b)/(2*b);
-      auto dif = var - μ;
-      return positive * dIvr(DIvr.Type.leZ,-dif) + negative * dIvr(DIvr.Type.leZ,var);
+	return dE^^(-dAbs(var-μ)/b)/(2*b);
 }
 Cond[] laplaceCond(DExpr μ,DExpr b){
 	return [Cond(dIvr(DIvr.Type.lZ,-b),"b must be positive")];
