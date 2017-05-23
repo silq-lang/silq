@@ -487,6 +487,16 @@ class Distribution{
 			return args.length?(freeVars.length?", ":"")~args.map!(a=>a.toString(formatting)~"_").join(","):"";
 		return args.map!(a=>a.toString(formatting)).join(",");
 	}
+
+	string varsToString(Format formatting){
+		DNVar[] vars;
+		if(freeVarsOrdered) vars=orderedFreeVars;
+		else vars=freeVars.array;
+		string r;
+		foreach(v;vars) r~=(formatting==Format.mathematica?v.toString(formatting)~"_":v.toString(formatting))~",";
+		if(vars.length) r=r[0..$-1];
+		return r;
+	}
 	
 	string toString(Format formatting){
 		string initial,middle,errstr;
@@ -500,12 +510,7 @@ class Distribution{
 			middle=text(astr.length&&freeVars.length?"|":"",astr,") = ");
 			errstr=text("Pr[error",astr.length?"|":"",astr,"] = ");
 		}
-		string r=initial;
-		DNVar[] vars;
-		if(freeVarsOrdered) vars=orderedFreeVars;
-		else vars=freeVars.array;
-		foreach(v;vars) r~=(formatting==Format.mathematica?v.toString(formatting)~"_":v.toString(formatting))~",";
-		if(vars.length) r=r[0..$-1];
+		string r=initial~varsToString(formatting);
 		r~=middle~distribution.toString(formatting);
 		if(error != zero) r~="\n"~errstr~error.toString(formatting);
 		return r;

@@ -36,9 +36,17 @@ abstract class Backend{
 
 void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isMain){
 	import type, std.conv : text;
-	if(opt.expectation && fd.ret != ℝ){
-		err.error(text("with --expectation switch, functions should return a single number (not '",fd.ret,"')"),fd.loc);
-		return;
+	if(opt.expectation){
+		bool check(Expression ty){
+			if(ty==ℝ) return true;
+			if(auto tpl=cast(TupleTy)ty)
+				return tpl.types.all!check;
+			return false;
+		}
+		if(!check(fd.ret)){
+			err.error(text("with --expectation switch, '",fd.name,"' should return numbers (not '",fd.ret,"')"),fd.loc);
+			return;
+		}
 	}
 	auto dist=be.analyze(fd,err).dup;
 	if(isMain) dist.renormalize();
@@ -48,15 +56,28 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 	//import hashtable; dist.distribution=approxGaussInt(dist.freeVars.element);
 	if(opt.kill) dist.distribution=dist.distribution.killIntegrals();
 	if(opt.expectation||opt.backend==InferenceMethod.simulate){ // TODO: deal with non-convergent expectations
-		assert(dist.orderedFreeVars.length==1);
-		auto var=dist.orderedFreeVars[0];
-		auto expectation = dIntSmp(var,var*dist.distribution/(one-dist.error),one);
+		auto exp=!dist.isTuple?dist.orderedFreeVars[0]:dTuple(cast(DExpr[])dist.orderedFreeVars);
+		// TODO: do not compute full distribution with --expectation switch
+		DExpr compute(DExpr e,Expression ty){
+			if(ty==ℝ){
+				auto r=e*dist.distribution/(one-dist.error);
+				foreach_reverse(v;dist.orderedFreeVars) r=dIntSmp(v,r,one);
+				return r;
+			}
+			if(auto tpl=cast(TupleTy)ty){
+				DExpr[] r;
+				foreach(i,nty;tpl.types) r~=compute(e[i.dℚ],nty);
+				return dTuple(r);
+			}
+			assert(0);
+		}
+		auto expectation = compute(exp,fd.ret);
 		final switch(opt.backend==InferenceMethod.simulate?OutputForm.raw:opt.outputForm){
 			case OutputForm.default_:
 				auto astr=dist.argsToString(opt.formatting);
 				if(dist.error!=zero && opt.formatting!=Format.mathematica)
 					astr=astr.length?"¬error,"~astr:"¬error,";
-				writeln(opt.formatting==Format.mathematica?"E[":"𝔼[",var.toString(opt.formatting),astr.length?"|"~astr:"","] = ",expectation.toString(opt.formatting));
+				writeln(opt.formatting==Format.mathematica?"E[":"𝔼[",dist.varsToString(opt.formatting),astr.length?"|"~astr:"","] = ",expectation.toString(opt.formatting));
 				if(dist.error != zero) writeln("Pr[error] = ",dist.error.toString(opt.formatting));
 				break;
 			case OutputForm.raw:
