@@ -15,6 +15,6 @@ def main(){
 
     isEffectiveP := FromMarginal(isEffective);
     observe(isEffective);
-    return (isEffectiveP,probIfTreated,probIfControl); // expected: (-2·probIfControl²·probIfTreated⁴+-2·probIfControl⁴·probIfTreated⁴+-3·probIfControl³·probIfTreated⁵+-probIfControl·probIfTreated⁵·⅟2+-probIfControl⁵·probIfTreated⁵·⅟2+2·probIfControl²·probIfTreated⁵+2·probIfControl⁴·probIfTreated⁵+3·probIfControl³·probIfTreated⁴+probIfControl·probIfTreated⁴·⅟2+probIfControl⁵·probIfTreated⁴·⅟2)·(23100/17·δ[-isEffectiveP+1]+7500/17·δ[isEffectiveP])·[-1+probIfControl≤0]·[-1+probIfTreated≤0]·[-probIfControl≤0]·[-probIfTreated≤0]
+    return (isEffectiveP,probIfTreated,probIfControl); // expected: (-124740000/17·probIfControl³·probIfTreated⁵+-20790000/17·probIfControl·probIfTreated⁵+-20790000/17·probIfControl⁵·probIfTreated⁵+-83160000/17·probIfControl²·probIfTreated⁴+-83160000/17·probIfControl⁴·probIfTreated⁴+124740000/17·probIfControl³·probIfTreated⁴+20790000/17·probIfControl·probIfTreated⁴+20790000/17·probIfControl⁵·probIfTreated⁴+83160000/17·probIfControl²·probIfTreated⁵+83160000/17·probIfControl⁴·probIfTreated⁵)·(δ[-isEffectiveP+1]·⅟1800+δ[isEffectiveP]·⅟5544)·[-1+probIfControl≤0]·[-1+probIfTreated≤0]·[-probIfControl≤0]·[-probIfTreated≤0]
     // TODO: keep polynomial in factored form
 }

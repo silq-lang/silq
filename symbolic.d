@@ -599,7 +599,7 @@ private struct Analyzer{
 					assert(idx.a.length==1);
 					auto de=doIt(idx.e);
 					auto di=doIt(idx.a[0]);
-					if(!opt.noBoundsCheck) dist.assertTrue(dIvr(DIvr.Type.leZ,-di)*dIvr(DIvr.Type.lZ,di-dField(de,"length")),formatError("array access out of bounds",idx.loc)); // TODO: check that index is an integer.
+					if(!opt.noBoundsCheck) dist.assertTrue(dIsℤ(di)*dIvr(DIvr.Type.leZ,-di)*dIvr(DIvr.Type.lZ,di-dField(de,"length")),formatError("array access out of bounds",idx.loc));
 					auto r=dIndex(de,di);
 					return r;
 				}else if(auto tt=cast(TupleTy)idx.e.type){
@@ -611,9 +611,9 @@ private struct Analyzer{
 			if(auto sl=cast(SliceExp)e){
 				auto de=doIt(sl.e),dl=doIt(sl.l),dr=doIt(sl.r);
 				if(!opt.noBoundsCheck){
-					dist.assertTrue(dIvr(DIvr.Type.leZ,-dl),formatError("slice lower bound out of bounds",sl.loc));
+					dist.assertTrue(dIsℤ(dl)*dIvr(DIvr.Type.leZ,-dl),formatError("slice lower bound out of bounds",sl.loc));
 					dist.assertTrue(dIvr(DIvr.Type.leZ,dl-dr),formatError("slice lower bound exceeds upper bound",sl.loc));
-					dist.assertTrue(dIvr(DIvr.Type.leZ,dr-dField(de,"length")),formatError("slice upper bound out of bounds",sl.loc));
+					dist.assertTrue(dIsℤ(dr)*dIvr(DIvr.Type.leZ,dr-dField(de,"length")),formatError("slice upper bound out of bounds",sl.loc));
 				}
 				return dSlice(de,dl,dr);
 			}
