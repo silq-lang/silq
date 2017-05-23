@@ -1486,7 +1486,7 @@ class DPow: DBinaryOp{
 			if(q.c<0 && c.c.den!=1)  return (dℚ(c.c.opUnary!"/"())^^-e2).simplify(one);
 			if(c==mone){ // canonicalize powers of -1 (TODO: this only happens in dead subexpressions, can we do something else?)
 				if(q.c>1||q.c<0){
-					auto k=2*qc.den;
+					auto k=2*q.c.den;
 					auto nq = (q.c.num%k+k)%k;
 					return (e1^^(e2*(dℚ(nq)/q))).simplify(facts);
 				}
