@@ -1,0 +1,14 @@
+
+def main(){
+	a := [1,2,3,4,5,6];
+	b := a[1..3];
+	assert(b[0]==2 && b[1]==3);
+	x := (1,2,3,4,5,6);
+	y := x[1..3];
+	assert(y[0]==2&&y[1]==3);
+	l := uniformInt(0,a.length);
+	r := uniformInt(l,a.length);
+	assert(0<=l&&l<=r&&r<=a.length);
+	return a[l..r].length; // expected: ((δ[-length+1]·⅟14+δ[length]·⅟14)·[-1+length≤0]·[-⌊5+length⌋+5+length=0]+(δ[-length+1]·⅟21+δ[-length+2]·⅟21+δ[length]·⅟21)·[-2+length≤0]·[-⌊4+length⌋+4+length=0]+(δ[-length+1]·⅟28+δ[-length+2]·⅟28+δ[-length+3]·⅟28+δ[length]·⅟28)·[-3+length≤0]·[-⌊3+length⌋+3+length=0]+(δ[-length+1]·⅟35+δ[-length+2]·⅟35+δ[-length+3]·⅟35+δ[-length+4]·⅟35+δ[length]·⅟35)·[-4+length≤0]·[-⌊2+length⌋+2+length=0]+(δ[-length+1]·⅟42+δ[-length+2]·⅟42+δ[-length+3]·⅟42+δ[-length+4]·⅟42+δ[-length+5]·⅟42+δ[length]·⅟42)·[-5+length≤0]·[-⌊1+length⌋+1+length=0]+(δ[-length+1]·⅟49+δ[-length+2]·⅟49+δ[-length+3]·⅟49+δ[-length+4]·⅟49+δ[-length+5]·⅟49+δ[-length+6]·⅟49+δ[length]·⅟49)·[-6+length≤0]·[-⌊length⌋+length=0]+δ[length]·⅟7)·[-length≤0]
+	// TODO: completely eliminate bounds checks in the result
+}
