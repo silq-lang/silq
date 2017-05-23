@@ -107,10 +107,21 @@ Cond[] binomialCond(DExpr n,DExpr p){
 	        Cond(dBounded!"[]"(p,zero,one),"parameter p out of range [0..1]")];
 }
 
+DExpr negBinomialPDF(DVar var,DExpr r,DExpr p){
+	r=r.incDeBruijnVar(1,0), p=p.incDeBruijnVar(1,0);
+	auto k=dDeBruijnVar(1);
+	return dSumSmp(dIvr(DIvr.Type.leZ,-k)*(dGamma(r+k)/(dGamma(r)*dGamma(k+1)))*p^^r*(1-p)^^k*dDelta(k-var),one);
+}
+Cond[] negBinomialCond(DExpr r,DExpr p){
+	return [Cond(dIvr(DIvr.Type.lZ,-r),"r must be positive"),
+			Cond(dIvr(DIvr.Type.leZ,-p)*dIvr(DIvr.Type.leZ,p-1),"parameter ouside range [0..1]")];
+}
+
+
 DExpr geometricPDF(DVar var,DExpr p){
 	p=p.incDeBruijnVar(1,0);
 	auto i=dDeBruijnVar(1);
-	return dSumSmp(dIvr(DIvr.Type.leZ,-i)*(1-p)^^i*p*dDelta(i-var),one);
+	return dSumSmp(dIvr(DIvr.Type.leZ,-i)*p*(1-p)^^i*dDelta(i-var),one);
 }
 Cond[] geometricCond(DExpr p){
 	return [Cond(dIvr(DIvr.Type.leZ,-p)*dIvr(DIvr.Type.leZ,p-1),"parameter ouside range [0..1]")];

@@ -1,0 +1,8 @@
+
+def main(){
+	p := uniform(0,1);
+	a := NegBinomial(1,p).expectation();
+	b := Geometric(p).expectation();
+	assert(a!=b);
+	return (); // expected: 0
+}
