@@ -1,0 +1,4 @@
+
+def main(){
+	return laplace(123,0); // expected: δ[-r₁+123]
+}

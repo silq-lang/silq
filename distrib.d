@@ -163,10 +163,11 @@ Cond[] gammaCond(DExpr α,DExpr β){
 }
 
 DExpr laplacePDF(DVar var, DExpr μ, DExpr b){
-	return dE^^(-dAbs(var-μ)/b)/(2*b);
+	return dIvr(DIvr.Type.neqZ,b)*dE^^(-dAbs(var-μ)/b)/(2*b)+
+		dIvr(DIvr.Type.eqZ,b)*dDelta(μ-var);
 }
 Cond[] laplaceCond(DExpr μ,DExpr b){
-	return [Cond(dIvr(DIvr.Type.lZ,-b),"b must be positive")];
+	return [Cond(dIvr(DIvr.Type.leZ,-b),"b must be non-negative")];
 }
 
 DExpr cauchyPDF(DVar var,DExpr x0,DExpr γ){
