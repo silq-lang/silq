@@ -1,0 +1,4 @@
+def main(){
+	return poisson(0); // expected: δ[r₁]
+	// (if an event happens with rate 0, it happens zero times in any interval)
+}

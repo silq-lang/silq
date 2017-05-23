@@ -142,7 +142,7 @@ DExpr poissonPDF(DVar var,DExpr λ){
 	return dE^^-λ*dSumSmp(dIvr(DIvr.Type.leZ,-x)*dDelta(var-x)*λ^^x/dGamma(x+1),one);
 }
 Cond[] poissonCond(DExpr λ){
-	return [Cond(dIvr(DIvr.Type.lZ,-λ),"λ must be positive")];
+	return [Cond(dIvr(DIvr.Type.leZ,-λ),"λ must be non-negative")];
 }
 
 DExpr betaPDF(DVar var,DExpr α,DExpr β){
