@@ -158,11 +158,12 @@ Cond[] betaCond(DExpr α,DExpr β){
 }
 
 DExpr gammaPDF(DVar var,DExpr α,DExpr β){
-	auto nnorm=var^^(α-1)*dE^^(-β*var)*dIvr(DIvr.Type.leZ,-var);
+	auto nnorm=dIvr(DIvr.Type.neqZ,α)*var^^(α-1)*dE^^(-β*var)*dIvr(DIvr.Type.leZ,-var)+
+		dIvr(DIvr.Type.eqZ,α)*dDelta(var);
 	return nnorm/dIntSmp(var,nnorm,one);
 }
 Cond[] gammaCond(DExpr α,DExpr β){
-	return [Cond(dIvr(DIvr.Type.lZ,-α),"α must be positive"),
+	return [Cond(dIvr(DIvr.Type.leZ,-α),"α must be non-negative"),
 	        Cond(dIvr(DIvr.Type.lZ,-β),"β must be positive")];
 }
 
