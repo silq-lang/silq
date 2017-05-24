@@ -160,6 +160,7 @@ class Identifier: Expression{
 			subst[name]=this;
 			return true;
 		}
+		if(name !in subst) return false;
 		if(subst[name]==this) return false;
 		if(subst[name]) return subst[name].unify(rhs,subst);
 		if(rhs.hasFreeVar(name)) return false; // TODO: fixpoint types

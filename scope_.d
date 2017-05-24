@@ -38,8 +38,10 @@ abstract class Scope{
 	}
 	protected final void rename(Declaration decl){
 		for(;;){ // TODO: quite hacky
-			auto d=lookup(decl.rename?decl.rename:decl.name,true);
-			if(!d) break;
+			auto cname=decl.rename?decl.rename:decl.name;
+			auto d=lookup(cname,true);
+			import semantic_: isBuiltIn;
+			if(!d&&!isBuiltIn(cname)) break;
 			decl.rename=new Identifier(decl.getName~"'");
 			decl.rename.loc=decl.name.loc;
 		}

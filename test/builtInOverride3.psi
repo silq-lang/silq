@@ -1,0 +1,14 @@
+// compilation errors
+
+dat Distribution[a]{
+	x: a;
+	def Distribution(x: a){
+		this.x=x;
+	}
+}
+
+def main(){
+	x := Distribution(4);
+	k := ()=>sample(x); // error
+	return k();
+}
