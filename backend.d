@@ -76,7 +76,7 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 			case OutputForm.default_:
 				auto astr=dist.argsToString(opt.formatting);
 				if(dist.error!=zero && opt.formatting!=Format.mathematica)
-					astr=astr.length?"¬error,"~astr:"¬error,";
+					astr=astr.length?"¬error,"~astr:"¬error";
 				writeln(opt.formatting==Format.mathematica?"E[":"𝔼[",dist.varsToString(opt.formatting),astr.length?"|"~astr:"","] = ",expectation.toString(opt.formatting));
 				if(dist.error != zero) writeln("Pr[error] = ",dist.error.toString(opt.formatting));
 				break;
