@@ -278,7 +278,7 @@ private struct Analyzer{
 						return r;
 					}
 					auto arg=util.among(id.name,"categorical","dirac","Dirac","SampleFrom")?null:doIt(ce.arg);
-					switch(id.name){
+					if(isBuiltIn(id)) switch(id.name){
 					case "array": // TODO: make polymorphic
 						assert(ce.arg.type==typeTy);
 						auto idist=new Distribution();
