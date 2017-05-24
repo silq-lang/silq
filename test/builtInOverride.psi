@@ -4,14 +4,15 @@ dat Distribution[a]{
 	def Distribution(x: a){
 		this.x=x;
 	}
-	def sample(){
-		return x;
-	}
+}
+
+def sample[a](d: Distribution[a]){
+	return d.x;
 }
 
 def main(){
 	x := Distribution(4);
-	k := x.sample;
+	k := ()=>sample(x);
 	array := 4;
 	return k()+array; // expected: δ[-r₁+8]
 }

@@ -14,7 +14,7 @@ def main(){
 	actionPrior := infer(()=>[a,b][categorical([0.5,0.5])]);
 	def chooseAction(goalSatisfied: ℝ → ℝ, transition: ℝ×ℝ → ℝ, state)=>
 		infer((){
-			action := actionPrior.sample();
+			action := sample(actionPrior);
 			observe(goalSatisfied(transition(state, action)));
 			return action;
 		});
@@ -22,9 +22,9 @@ def main(){
 		preference := uniform(0,1);
 		def goalPrior()=>[bagel,cookie][flip(preference)];
 		def makeGoal(food)(outcome)=>outcome==food;
-		def act()=>chooseAction(makeGoal(goalPrior()), vendingMachine, state).sample();
+		def act()=>sample(chooseAction(makeGoal(goalPrior()), vendingMachine, state));
 		observe(act()==b && act()==b && act()==b);
 		return goalPrior();
 	});
-	return goalPosterior.sample(); // expected: 1589/2050·δ[-r₁+3]+461/2050·δ[-r₁+2]
+	return sample(goalPosterior); // expected: 1589/2050·δ[-r₁+3]+461/2050·δ[-r₁+2]
 }

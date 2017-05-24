@@ -291,7 +291,7 @@ bool isBuiltIn(Identifier id){
 	}
 	case "Marginal","FromMarginal","SampleFrom":
 	case "Expectation":
-	case "infer","Distribution":
+	case "infer","Distribution","sample","expectation","errorPr":
 		return true;
 	default: return false;
 	}
@@ -339,6 +339,15 @@ Expression builtIn(Identifier id,Scope sc){
 			         forallTy(["f"],funTy(tupleTy([]),varTy("a",typeTy),false,true),
 			                  distributionTy(varTy("a",typeTy),sc),false,false),true,false);
 		break;
+		case "sample":
+			t=forallTy(["a"],typeTy,funTy(distributionTy(varTy("a",typeTy),sc),varTy("a",typeTy),false,false),true,false);
+			break;
+		case "expectation":
+			t=funTy(distributionTy(ℝ,sc),ℝ,false,false);
+			break;
+		case "errorPr":
+			t=forallTy(["a"],typeTy,funTy(distributionTy(varTy("a",typeTy),sc),ℝ,false,false),true,false);
+			break;
 	case "*","R","ℝ","𝟙":
 		id.type=typeTy;
 		if(id.name=="*") return typeTy;
@@ -359,18 +368,6 @@ bool isBuiltIn(FieldExp fe)in{
 		if(fe.f.name=="length"){
 			return true;
 		}
-	}else if(auto ce=cast(CallExp)fe.e.type){
-		if(auto id=cast(Identifier)ce.e){
-			if(id.name=="Distribution"){
-				assert(ce.arg.type == typeTy);
-				auto tt=ce.arg;
-				switch(fe.f.name){
-					case "then","sample","expectation","error":
-						return true;
-					default: return false;
-				}
-			}
-		}
 	}
 	return false;
 }
@@ -379,43 +376,14 @@ Expression builtIn(FieldExp fe,Scope sc)in{
 	assert(fe.e.sstate==SemState.completed);
 }body{
 	if(fe.f.meaning) return null;
-	Expression t=null;
 	if(auto at=cast(ArrayTy)fe.e.type){
 		if(fe.f.name=="length"){
 			fe.type=ℝ;
 			fe.f.sstate=SemState.completed;
 			return fe;
 		}else return null;
-	}else if(auto ce=cast(CallExp)fe.e.type){
-		if(auto id=cast(Identifier)ce.e){
-			if(id.name=="Distribution"){
-				assert(ce.arg.type == typeTy);
-				auto tt=ce.arg;
-				switch(fe.f.name){
-					case "then":
-						string name="a";
-						while(tt.hasFreeVar(name)) name~="'";
-						t=forallTy([name],typeTy,funTy(funTy(tt,varTy(name,typeTy),false,false),expressionSemantic(new CallExp(ce.e,varTy(name,typeTy),true),sc),false,false),true,false) ;
-						break;
-					case "sample":
-						t=funTy(unit,tt,false,true);
-						break;
-					case "expectation":
-						if(tt != ℝ) return null;
-						t=funTy(unit,ℝ,false,true);
-						break;
-					case "error":
-						t=funTy(unit,ℝ,false,false);
-						break;
-					default: return null;
-				}
-			}
-		}
 	}
-	if(!t) return null;
-	fe.type=fe.f.type=t;
-	fe.sstate=fe.f.sstate=SemState.completed;
-	return fe;
+	return null;
 }
 
 bool isFieldDecl(Expression e){

@@ -1,11 +1,11 @@
 // example from: Disintegration and Bayesian Inversion, Both Abstractly and Concretely by K Cho and B Jacobs
 
 def hoursPrior(μ,ν){
-	return infer((){
+	return sample(infer((){
 		r := gauss(μ,ν);
 		observe(0<=r && r<=8);
 		return r;
-	}).sample();
+	}));
 }
 
 def main(){

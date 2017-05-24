@@ -1,29 +1,26 @@
 // skipped
 // TODO: make shape of result deterministic
+// TODO: solve integrals
 
 def then[a,b](d: Distribution[a],f: a→ b){
-	return infer(()=>f(d.sample()));
-}
-
-def expectation(d: Distribution[ℝ]){
-	return d.expectation();
+	return infer(()=>f(sample(d)));
 }
 
 def variance(d: Distribution[ℝ]){
-	return d.then((x)=>x^2).expectation()-d.expectation()^2;
+	return expectation(then(d,(x)=>x^2))-expectation(d)^2;
 }
 
 def main(){
 	k := infer(()=>gauss(2,3));
-	d := variance(k.then((x)=>x+k.sample()));
+	d := variance(then(k,(x)=>x+sample(k)));
 	(a,b,c) :=
 		(expectation(k),
 		 variance(k),
-		 variance(k.then((x)=>x+x)));
+		 variance(then(k,(x)=>x+x)));
 	return (a,b,c,d); // expected: δ[-a+2]·δ[-b+3]·δ[-c+12]·δ[-d+6]
 }
 
 /+def main(a,b){
-	return infer(()=>gauss(a,b)).expectation();
+	return expectation(infer(()=>gauss(a,b)));
 }+/
 

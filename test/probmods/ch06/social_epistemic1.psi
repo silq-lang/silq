@@ -20,7 +20,7 @@ def main(){
 	actionPrior := infer(()=>[a,b][categorical([0.5,0.5])]);
 	def chooseAction(goalSatisfied: ℝ → ℝ, transition: ℝ×ℝ → ℝ, state)=>
 		infer((){
-			action := actionPrior.sample();
+			action := sample(actionPrior);
 			observe(goalSatisfied(transition(state, action)));
 			return action;
 		});
@@ -30,7 +30,7 @@ def main(){
 	vendingMachine := makeVendingMachine(aEffects,bEffects);
 	goal := [bagel,cookie][categorical([0.5,0.5])];
 	def goalSatisfied(outcome) => outcome==goal;
-	observe(goal==cookie&&chooseAction(goalSatisfied, vendingMachine, state).sample()==b);
-	//return bEffects[1]; // expected: ((-2·log(r₁)+2·log(2))·[r₁≠0]+2·[-1+-r₁≠0]·log(r₁·⅟2+⅟2))·[-1+r₁≤0]·[-r₁≤0]·r₁²+((-8·log(r₁)+8·log(2))·[r₁≠0]+8·[-1+-r₁≠0]·log(r₁·⅟2+⅟2))·(-r₁·⅟4+⅟4)·[-1+r₁≤0]·[-r₁≤0]·r₁
+	observe(goal==cookie&&sample(chooseAction(goalSatisfied, vendingMachine, state))==b);
+	//return bEffects[1]; // expected: ((-2·log(r₁)+2·log(2))·[r₁≠0]+2·[-1+-r₁≠0]·log(r₁·⅟2+⅟2))·[-1+r₁≤0]·[-r₁≤0]·r₁
 	return (aEffects[1],bEffects[1])
 }

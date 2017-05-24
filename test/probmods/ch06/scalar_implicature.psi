@@ -16,17 +16,17 @@ def main(){
 	statePrior := infer(()⇒ categorical([1/4,1/4,1/4,1/4]));
 	sentencePrior := infer(()⇒ [all,some,none][categorical([1/3,1/3,1/3])]);
 	def speaker(state, listener: ℝ → Distribution[ℝ])⇒ infer((){
-		words := sentencePrior.sample();
-		observe(state == listener(words).sample());
+		words := sample(sentencePrior);
+		observe(state == sample(listener(words)));
 		return words;
 	});
 	def listener(words, speaker: ℝ → Distribution[ℝ])⇒ infer((){
-		state := statePrior.sample();
-		observe(words == speaker(state).sample());
+		state := sample(statePrior);
+		observe(words == sample(speaker(state)));
 		return state;
 	});
 	def literal_listener(words)⇒ infer((){
-		state := statePrior.sample();
+		state := sample(statePrior);
 		wordsMeaning := meaning(words);
 		observe(wordsMeaning(state));
 		return state;
@@ -37,5 +37,5 @@ def main(){
 		cur_speaker := (state)⇒ speaker(state,cur_listener);
 		cur_listener = (words)⇒ listener(words,cur_speaker);
 	}
-	return cur_listener(some).sample() == 3; // expected: 6140/6141·δ[r₁]+δ[-r₁+1]·⅟6141
+	return sample(cur_listener(some)) == 3; // expected: 6140/6141·δ[r₁]+δ[-r₁+1]·⅟6141
 }

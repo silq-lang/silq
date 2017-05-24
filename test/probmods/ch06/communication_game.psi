@@ -15,17 +15,17 @@ def main(){
 	sidePrior := infer(()=>[red,green,blue][categorical([1/3,1/3,1/3])]);
 	diePrior := infer(()=>[A,B][categorical([1/2,1/2])]);
 	def teacher(die,learner: ℝ → Distribution[ℝ])=>infer((){
-		side := sidePrior.sample();
-		observe(learner(side).sample() == die);
+		side := sample(sidePrior);
+		observe(sample(learner(side)) == die);
 		return side;
 	});
 	def learner(side,teacher: ℝ → Distribution[ℝ])=>infer((){
-		die := diePrior.sample();
-		observe(side == teacher(die).sample());
+		die := sample(diePrior);
+		observe(side == sample(teacher(die)));
 		return die;
 	});
 	def naive_learner(side)=>infer((){
-		die := diePrior.sample();
+		die := sample(diePrior);
 		observe(side == roll(die));
 		return die;
 	});
@@ -35,5 +35,5 @@ def main(){
 		cur_teacher := (die)=>teacher(die,cur_learner);
 		cur_learner = (side)=>learner(side,cur_teacher);
 	}
-	return cur_learner(green).sample();
+	return sample(cur_learner(green));
 }

@@ -207,96 +207,7 @@ private struct Analyzer{
 				if(isBuiltIn(fe)){
 					if(auto at=cast(ArrayTy)fe.e.type){
 						assert(fe.f.name=="length");
-					}else if(auto ce=cast(CallExp)fe.e.type){
-						if(auto id=cast(Identifier)ce.e){
-							assert(ce.arg.type == typeTy);
-							auto tt=ce.arg;
-							if(id.name=="Distribution"){
-								static DExpr get(DExpr distr,Expression tt,Expression type,string name){
-									switch(name){
-										case "sample":
-											auto idist=new Distribution();
-											idist.addArgs([],true,null);
-											auto d=idist.declareVar("`d");
-											auto r=idist.declareVar("`r");
-											if(!opt.noCheck){
-												auto dist=dDistApply(distr,d);
-												auto db1=dDeBruijnVar(1);
-												idist.distribute(dMCase(d,dDiscDelta(r,db1),zero)*dist);
-												idist.error=dInt(d,dMCase(d,zero,one)*dist);
-												idist.marginalize(d);
-											}else{
-												idist.distribute(dDistApply(distr,r));
-											}
-											idist.orderFreeVars([r],false);
-											return idist.toDExpr().simplify(one);
-										case "then": // d.then(f) <-> infer(()=>f(d.sample()))
-											auto idist=new Distribution();
-											auto f=idist.declareVar("`f");
-											idist.addArgs([f],false,null);
-											auto rdist=new Distribution();
-											rdist.addArgs([],true,null);
-											auto d=rdist.declareVar("`d"),x=rdist.declareVar("`x");
-											auto db1=dDeBruijnVar(1);
-											assert(!opt.noCheck,"TODO: 'then' in nocheck mode");
-											auto dist=dDistApply(distr,d);
-											rdist.distribute(dMCase(d,dDiscDelta(x,db1),zero)*dist);
-											rdist.error=dInt(d,dMCase(d,zero,one)*dist);
-											auto faty=cast(ForallTy)type;
-											assert(!!faty);
-											auto fety=cast(FunTy)faty.cod;
-											assert(!!fety);
-											auto fty=cast(FunTy)fety.dom;
-											assert(!!fty);
-											auto summary=Distribution.fromDExpr(f,1,false,["`r".dVar],false,[fty.cod]);
-											auto tmp=rdist.call(summary,x,fty.dom);
-											auto r=rdist.declareVar("`r");
-											rdist.initialize(r,tmp,tt);
-											rdist.marginalize(d);
-											rdist.marginalize(x);
-											rdist.marginalizeTemporaries();
-											rdist.orderFreeVars([r],false);
-											rdist.renormalize();
-											auto res=idist.declareVar("`res");
-											idist.initialize(res,dDistApply(rdist.toDExpr(),dTuple([])),fety.cod);
-											idist.orderFreeVars([res],false);
-											auto gdist=new Distribution(); // generic argument
-											auto a=gdist.declareVar("`a");
-											gdist.addArgs([a],false,null);
-											auto fun=gdist.declareVar("`fun");
-											gdist.initialize(fun,idist.toDExpr(),faty.cod);
-											gdist.orderFreeVars([fun],false);
-											return gdist.toDExpr().simplify(one);
-										case "expectation": // TODO: handle non-convergence
-											assert(tt == ℝ);
-											auto d="`d".dVar,x="`x".dVar;
-											auto db1=dDeBruijnVar(1);
-											auto pdf=opt.noCheck?dDistApply(distr,x):dInt(d,dDistApply(distr,d)*dMCase(d,dDiscDelta(x,db1),zero));
-											auto total=dInt(x,pdf),expct=dInt(x,x*pdf);
-											auto idist=new Distribution();
-											idist.addArgs([],true,null);
-											idist.assertTrue(dIvr(DIvr.Type.neqZ,total),"cannot compute conditional expectation");
-											auto r=idist.declareVar("`r");
-											idist.initialize(r,expct/total,ℝ);
-											idist.orderFreeVars([r],false);
-											return idist.toDExpr().simplify(one);
-										case "error":
-											auto d="`d".dVar,x="`x".dVar;
-											auto error=opt.noCheck?zero:dInt(d,dDistApply(distr,d)*dMCase(d,zero,one));
-											auto idist=new Distribution();
-											idist.addArgs([],true,null);
-											auto r=idist.declareVar("`r");
-											idist.initialize(r,error,ℝ);
-											idist.orderFreeVars([r],false);
-											return idist.toDExpr().simplify(one);
-										default: assert(0);
-									}
-								}
-								import std.functional: memoize;
-								return memoize!get(doIt(fe.e),tt,fe.type,fe.f.name);
-							}
-						}
-					}
+					}else{ assert(0); }
 				}else if(auto fd=cast(FunctionDef)fe.f.meaning){
 					assert(fe.f.scope_&&fe.f.meaning.scope_);
 					auto summary=be.getSummary(fd,fe.f.loc,err);
@@ -569,6 +480,41 @@ private struct Analyzer{
 						idist.initialize(r,dApply(fdist.toDExpr(),dTuple([])),fty.cod);
 						idist.orderFreeVars([r],false);
 						return idist.toDExpr();
+					case "sample":
+						auto idist=new Distribution();
+						auto distr=idist.declareVar("`distr");
+						idist.addArgs([distr],false,null);
+						auto d=idist.declareVar("`d");
+						auto r=idist.declareVar("`r");
+						if(!opt.noCheck){
+							auto dist=dDistApply(distr,d);
+							auto db1=dDeBruijnVar(1);
+							idist.distribute(dMCase(d,dDiscDelta(r,db1),zero)*dist);
+							idist.error=dInt(d,dMCase(d,zero,one)*dist);
+							idist.marginalize(d);
+						}else{
+							idist.distribute(dDistApply(distr,r));
+						}
+						idist.orderFreeVars([r],false);
+						return idist.toDExpr().simplify(one);
+					case "expectation": // TODO: handle non-convergence
+						auto distr=doIt(ce.arg);
+						auto db1=dDeBruijnVar(1);
+						auto d="`d".dVar,x="`x".dVar;
+						auto pdf=opt.noCheck?dDistApply(distr,x):dInt(d,dDistApply(distr,d)*dMCase(d,dDiscDelta(x,db1),zero));
+						auto total=dInt(x,pdf),expct=dInt(x,x*pdf);
+						dist.assertTrue(dIvr(DIvr.Type.neqZ,total),"cannot compute conditional expectation");
+						return expct/total;
+					case "errorPr":
+						auto idist=new Distribution();
+						auto distr=idist.declareVar("`distr");
+						auto d="`d".dVar,x="`x".dVar;
+						auto errorPr=opt.noCheck?zero:dInt(d,dDistApply(distr,d)*dMCase(d,zero,one));
+						idist.addArgs([distr],false,null);
+						auto r=idist.declareVar("`r");
+						idist.initialize(r,errorPr,ℝ);
+						idist.orderFreeVars([r],false);
+						return idist.toDExpr().simplify(one);
 					default: break;
 					}
 				}

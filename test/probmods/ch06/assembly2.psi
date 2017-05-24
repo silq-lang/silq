@@ -6,17 +6,17 @@ def main(){
 	widgetMachine := infer(()=>[0.2,0.3,0.4,0.5,0.6,0.7,0.8][categorical([0.05,0.1,0.2,0.3,0.2,0.1,0.05])]);
 	thresholdPrior := infer(()=>[0.3,0.4,0.5,0.6,0.7][categorical([0.1,0.2,0.4,0.2,0.1])]);
 	def makeGoodWidgetSeq(numWidgets,threshold){
-		return infer((){
+		return sample(infer((){
 			widgets := array(numWidgets,0);
 			assert(numWidgets==3); // TODO: loops
 			for i in [0..n){
-				widgets[i] = widgetMachine.sample();
+				widgets[i] = sample(widgetMachine);
 				observe(widgets[i] > threshold);
 			}
 			return widgets;
-		}).sample();
+		}));
 	}
-	threshold := thresholdPrior.sample();
+	threshold := sample(thresholdPrior);
 	goodWidgetSeq := makeGoodWidgetSeq(3, threshold);
 	observe(goodWidgetSeq[0]==0.6 && goodWidgetSeq[1]==0.7 && goodWidgetSeq[2]==0.8);
 	return threshold;

@@ -15,7 +15,7 @@ def main(){
 	actionPrior := infer(()=>[a,b][categorical([0.5,0.5])]);
 	def chooseAction(goalSatisfied: ℝ → ℝ, transition: ℝ×ℝ → ℝ, state)=>
 		infer((){
-			action := actionPrior.sample();
+			action := sample(actionPrior);
 			observe(goalSatisfied(transition(state, action)));
 			return action;
 		});
@@ -23,8 +23,8 @@ def main(){
 		goal := [bagel,cookie][categorical([0.5,0.5])];
 		goalSatisfied := (outcome) => outcome == goal;
 		actionDist := chooseAction(goalSatisfied, vendingMachine, state);
-		observe(actionDist.sample()==b);
+		observe(sample(actionDist)==b);
 		return goal;
 	});
-	return goalPosterior.sample();
+	return sample(goalPosterior);
 }

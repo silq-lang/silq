@@ -3,7 +3,7 @@
 
 
 def Variance(x:Distribution[ℝ]){
-    return x.then((x)=>x^2).expectation()-x.expectation()^2;
+    return expectation(then((x)=>x^2)(x))-expectation(x)^2;
 }
 
 def main(){
@@ -11,9 +11,11 @@ def main(){
     nu := 36;
     g := infer(()=>gauss(mu,nu));
     //g := Uniform(0,1);
-    mu' := Expectation(g.sample());
+    mu' := Expectation(sample(g));
     nu' := Variance(g);
-    nu'' := Expectation(g.sample()^2)-Expectation(g.sample())^2;
+    nu'' := Expectation(sample(g)^2)-Expectation(sample(g))^2;
     assert(nu' == nu'');
     return (); // expected: 1
 }
+
+def then[a,b](f: a→ b)(d: Distribution[a])=>infer(()=>f(sample(d)));

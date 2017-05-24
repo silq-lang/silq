@@ -1,4 +1,4 @@
 
 def main(k){
-	return ChiSquared(k).expectation(); // expected: TODO: δ[-r₁+k]
+	return expectation(ChiSquared(k)); // expected: TODO: δ[-r₁+k]
 }

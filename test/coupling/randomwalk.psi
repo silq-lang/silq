@@ -31,13 +31,13 @@ def main(){
 
 def TV(a: Distribution[ℝ], b: Distribution[ℝ]){
 	def TVImpl(a: Distribution[ℝ], b: Distribution[ℝ]){
-		return infer((){
-			x := a.sample();
-			p₁ := infer(()=>a.sample()==x).expectation();
-			p₂ := infer(()=>b.sample()==x).expectation();
+		return expectation(infer((){
+			x := sample(a);
+			p₁ := expectation(infer(()=>sample(a)==x));
+			p₂ := expectation(infer(()=>sample(b)==x));
 			if !p₂ { return 1; }
 			return abs(p₁-p₂)/(2*p₁);
-		}).expectation();
+		}));
 	}
 	return (TVImpl(a,b)+TVImpl(b,a))/2;
 }
