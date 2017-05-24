@@ -4,7 +4,7 @@
 import std.stdio, std.path, std.array, std.string, std.algorithm, std.conv;
 import file=std.file;
 import util;
-import lexer, parser, expression, declaration, error;
+import lexer, parser, expression, declaration, error, help;
 import options, scope_, semantic_, summarize, backend;
 
 
@@ -97,7 +97,6 @@ int main(string[] args){
 	bool hasInputFile=false;
 	foreach(x;args){
 		switch(x){
-			import help;
 			case "--help": writeln(help.help); return 0;
 			case "--syntax": writeln(syntax); return 0;
 			case "--distributions":
