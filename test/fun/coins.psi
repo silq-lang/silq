@@ -3,6 +3,6 @@ def main(){
     c2 := flip(1/2);
     bothHeads := c1 && c2;
     observe(bothHeads == 0);
-    return (c1,c2,bothHeads); // expected: (2/3·δ[-c1+1]+2/3·δ[c1])·([c1=0]+[c1≠0]·[c2=0])·(δ[-c2+1]·⅟2+δ[c2]·⅟2)·δ[bothHeads]
+    return (c1,c2,bothHeads); // expected: (1/2·δ[-c2+1]+1/2·δ[c2])·(2/3·δ[-c1+1]+2/3·δ[c1])·([c1=0]+[c1≠0]·[c2=0])·δ[bothHeads]
     // TODO: simplify better
 }

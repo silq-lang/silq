@@ -3,5 +3,5 @@ def main(){
     x=x+1;
     y:=gauss(x,x);
     if y>x { y-=x; }
-    return y; // expected: [-2+y≤0]·e^(-1+-y²·⅟4+y)·⅟2·⅟√π̅+[-y≤0]·[y≠0]·⅟2·⅟e^(y²·⅟4)·⅟√π̅
+    return y; // expected: 1/2·[-2+y≤0]·e^(-1+-1/4·y²+y)·⅟√π̅+1/2·[-y≤0]·[y≠0]·⅟e^(1/4·y²)·⅟√π̅
 }

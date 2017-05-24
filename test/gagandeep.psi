@@ -3,5 +3,5 @@ def main(){
     gagandeepMeansLinuxWine := bernoulli(9/10);
     computerStopsWorking := if gagandeepMeansLinuxWine { bernoulli(1/1000) } else { bernoulli(9/10); };
     observe(computerStopsWorking);
-    return gagandeepMeansLinuxWine; // expected: 100/101·δ[gagandeepMeansLinuxWine]+δ[-gagandeepMeansLinuxWine+1]·⅟101
+    return gagandeepMeansLinuxWine; // expected: 1/101·δ[-gagandeepMeansLinuxWine+1]+100/101·δ[gagandeepMeansLinuxWine]
 }

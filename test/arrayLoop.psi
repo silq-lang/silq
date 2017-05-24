@@ -6,5 +6,5 @@ def main(){
     x := flip(1/2);
     r += x;
     b := array(r-x);    
-    return r; // expected: δ[-r+15]·⅟2+δ[-r+16]·⅟2
+    return r; // expected: 1/2·δ[-r+15]+1/2·δ[-r+16]
 }

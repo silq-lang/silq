@@ -2,5 +2,5 @@
 def main(){
     x := floor(uniformInt(1,5)/2);
     y := ceil(uniformInt(1,5)/2);
-    return (x,y); // expected: (2/25·δ[-x+1]+2/25·δ[-x+2]+δ[x]·⅟25)·(2·δ[-y+1]+2·δ[-y+2]+δ[-y+3])
+    return (x,y); // expected: (1/25·δ[x]+2/25·δ[-x+1]+2/25·δ[-x+2])·(2·δ[-y+1]+2·δ[-y+2]+δ[-y+3])
 }

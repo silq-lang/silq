@@ -11,5 +11,5 @@ def main(){
     for i in [0..3){
         if ind[i] { r += x[i]; }
     }
-    return r; // expected: ⅟2·⅟e^(r²·⅟4)·⅟√π̅
+    return r; // expected: 1/2·⅟e^(1/4·r²)·⅟√π̅
 }

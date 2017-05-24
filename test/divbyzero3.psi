@@ -8,5 +8,5 @@ def main(){
             z = 2;
         }
     }
-    return (); // expected: ⅟4
+    return (); // expected: 1/4
 }

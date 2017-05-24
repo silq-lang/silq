@@ -616,9 +616,7 @@ class Dℚ: DExpr{
 	alias subExprs=Seq!c;
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		string r;
-		if(formatting==Format.default_ && c.num==1 && c.den!=1){
-			r=text("⅟",c.den);
-		}else if(c.den==1){
+		if(c.den==1){
 			r=text(c.num);
 		}else{
 			if(formatting==Format.matlab||formatting==Format.gnuplot)

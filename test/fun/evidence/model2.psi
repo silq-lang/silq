@@ -9,5 +9,5 @@ def main(){
     }else{
         coin = flip(1/2);
     }
-    return coin; // expected: 2/3·δ[-coin+1]+δ[coin]·⅟3
+    return coin; // expected: 1/3·δ[coin]+2/3·δ[-coin+1]
 }

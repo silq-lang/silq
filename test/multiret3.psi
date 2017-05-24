@@ -5,7 +5,7 @@ def main(){
         return 0;
     }
     if x == 1{
-        return 1; // expected: δ[-r₁+1]·⅟2+δ[r₁]·⅟2
+        return 1; // expected: 1/2·δ[-r₁+1]+1/2·δ[r₁]
     }
     assert(0);
 }

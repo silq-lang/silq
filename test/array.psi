@@ -6,5 +6,5 @@ def main(){
     k[1]=flip(0.5);
     // k[2]=Uniform(0,k[UniformInt(0,1)]); // TODO!
     r := k[0]+k[1]+k[2]+k[3]+a[0]+a[1]+a[2];
-    return r; // expected: δ[-r+10]·⅟2+δ[-r+9]·⅟2
+    return r; // expected: 1/2·δ[-r+10]+1/2·δ[-r+9]
 }

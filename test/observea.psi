@@ -7,6 +7,6 @@ def p(a){
 def main(){
     y := flip(1/2);
     r := p(y);
-    return r; // expected: δ[-r+1]·⅟2+δ[r]·⅟2
+    return r; // expected: 1/2·δ[-r+1]+1/2·δ[r]
     // TODO: improve simplification
 }
