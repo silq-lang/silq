@@ -731,14 +731,6 @@ struct Interpreter{
 								auto tt=dce.arg;
 								if(did.name=="Distribution"){
 									switch(fe.f.name){
-										case "sample":
-											return cur.distSample(thisExp);
-										case "then":
-											assert(0,text("TODO: ",fe));
-										case "expectation":
-											return cur.distExpectation(thisExp);
-										case "error":
-											return cur.distError(thisExp);
 										default: assert(0,text("TODO: ",fe));
 									}
 								}
@@ -775,6 +767,15 @@ struct Interpreter{
 							case "`arrayImpl":
 								auto arg=doIt(ce.arg);
 								return dConstArray(arg[0.dℚ],arg[1.dℚ]);
+							case "`sampleImpl":
+								auto arg=doIt(ce.arg);
+								return cur.distSample(arg);
+							case "expectation":
+								auto arg=doIt(ce.arg);
+								return cur.distExpectation(arg);
+							case "`errorPrImpl":
+								auto arg=doIt(ce.arg);
+								return cur.distError(arg);
 							case "exp":
 								auto arg=doIt(ce.arg);
 								return dE^^arg;
