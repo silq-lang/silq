@@ -2097,7 +2097,7 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 				assert(q2.c>=0 && q2.c.den != 1);
 				auto r=dIvr(leZ,-rhs)*doIt(parity,ty,e1,rhs^^dℚ(q2.c.opUnary!"/"));
 				if(ty==leZ){
-					auto oddParity=linearizeConstraints(dIvr(lZ,parity),var);
+					auto oddParity=linearizeConstraints(dIvr(lZ,parity).simplify(one),var);
 					r=oddParity*dIvr(lZ,rhs)+r;
 				}else if(ty==neqZ){
 					static if(isDelta) assert(0);
