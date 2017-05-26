@@ -752,11 +752,18 @@ struct Interpreter{
 							case "categorical":
 								auto arg=doIt(ce.arg);
 								return cur.categorical(arg);
+							case "binomial":
+								auto arg=doIt(ce.arg);
+								auto n=arg[0.dℚ], p=arg[1.dℚ];
+								auto db1=dDeBruijnVar(1);
+								return cur.categorical(dArray(n+1,dLambda(dNChooseK(n,db1)*p^^db1*(1-p)^^(n-db1))));
 							case "Flip","Bernoulli":
 								assert(0,text("TODO: ",ce));
 							case "UniformInt":
 								assert(0,text("TODO: ",ce));
 							case "Categorical":
+								assert(0,text("TODO: ",ce));
+							case "Binomial":
 								assert(0,text("TODO: ",ce));
 							case "Expectation":
 								auto arg=doIt(ce.arg);
