@@ -305,10 +305,10 @@ struct Dist{
 			auto ca=dApply(a,k).simplify(one);
 			FunctionDef fun;
 			DExpr ctx;
-			if(auto bcf=cast(DBFContextFun)cf){
+			if(auto bcf=cast(DDPContextFun)cf){
 				fun=bcf.def;
 				ctx=bcf.ctx;
-			}else if(auto bff=cast(DBFFun)cf) fun=bff.def;
+			}else if(auto bff=cast(DDPFun)cf) fun=bff.def;
 			else assert(0,text(cf," ",typeid(cf)));
 			DExpr nk=k;
 			if(fun.isTuple){
@@ -368,7 +368,7 @@ struct Dist{
 			cur=cur.map(dLambda(dRecord(["`value":dField(db1,"`value")])));
 			cur.tmpVars.clear();
 			cur=cur.normalize();
-			r.add(dRUpdate(k,tmp,dBFDist(cur)),v);
+			r.add(dRUpdate(k,tmp,dDPDist(cur)),v);
 		}
 		this=r;
 		return dField(db1,tmp);
@@ -381,7 +381,7 @@ struct Dist{
 		string tmp="`sample"~lowNum(++uniq);
 		r.addTmpVar(tmp);
 		foreach(k,v;state){
-			auto dbf=cast(DBFDist)dApply(d,k).simplify(one);
+			auto dbf=cast(DDPDist)dApply(d,k).simplify(one);
 			assert(!!dbf,text(dbf," ",d));
 			foreach(dk,dv;dbf.dist.state) r.add(dRUpdate(k,tmp,dField(dk,"`value")).simplify(one),(v*dv).simplify(one));
 			if(!opt.noCheck) r.error=(r.error+v*dbf.dist.error).simplify(one);
@@ -402,7 +402,7 @@ struct Dist{
 		string tmp="`expectation'"~lowNum(++uniq);
 		r.addTmpVar(tmp);
 		foreach(k,v;state){
-			auto dbf=cast(DBFDist)dApply(d,k).simplify(one);
+			auto dbf=cast(DDPDist)dApply(d,k).simplify(one);
 			assert(!!dbf,text(dbf," ",d));
 			DExpr val1=zero,val2=zero;
 			foreach(dk,dv;dbf.dist.state){
@@ -428,7 +428,7 @@ struct Dist{
 		string tmp="`error'"~lowNum(++uniq);
 		r.addTmpVar(tmp);
 		foreach(k,v;state){
-			auto dbf=cast(DBFDist)dApply(d,k).simplify(one);
+			auto dbf=cast(DDPDist)dApply(d,k).simplify(one);
 			assert(!!dbf,text(dbf," ",d));
 			DExpr error=dbf.dist.error;
 			r.add(dRUpdate(k,tmp,error).simplify(one),v);
@@ -493,7 +493,7 @@ DExpr inFrame(DExpr arg){
 }
 
 
-class DBFFun: DExpr{
+class DDPFun: DExpr{
 	FunctionDef def;
 	alias subExprs=Seq!def;
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
@@ -501,8 +501,8 @@ class DBFFun: DExpr{
 	}
 	mixin Constant;
 }
-mixin FactoryFunction!DBFFun;
-class DBFContextFun: DExpr{
+mixin FactoryFunction!DDPFun;
+class DDPContextFun: DExpr{
 	FunctionDef def;
 	DExpr ctx;
 	alias subExprs=Seq!(def,ctx);
@@ -510,11 +510,11 @@ class DBFContextFun: DExpr{
 		return text(def.name?def.name.name:text("(",def,")"),"@(",ctx.toStringImpl(formatting,Precedence.none,binders),")");
 	}
 	mixin Visitors;
-	override DExpr simplifyImpl(DExpr facts){ return dBFContextFun(def,ctx.simplify(facts)); }
+	override DExpr simplifyImpl(DExpr facts){ return dDPContextFun(def,ctx.simplify(facts)); }
 
 }
-mixin FactoryFunction!DBFContextFun;
-class DBFDist: DExpr{
+mixin FactoryFunction!DDPContextFun;
+class DDPDist: DExpr{
 	Dist dist;
 	alias subExprs=Seq!dist;
 	this(Dist dist)in{assert(!dist.tmpVars.length);}body{ this.dist=dist; }
@@ -523,14 +523,14 @@ class DBFDist: DExpr{
 		d.addArgs([],true,null);
 		return dApply(d.toDExpr(),dTuple([])).simplify(one).toStringImpl(formatting,prec,binders);
 	}
-	override DExpr simplifyImpl(DExpr facts){ return dBFDist(dist.simplify(facts)); }
+	override DExpr simplifyImpl(DExpr facts){ return dDPDist(dist.simplify(facts)); }
 	mixin Visitors;
 }
-DBFDist dBFDist(Dist dist)in{assert(!dist.tmpVars.length);}body{
-	static MapX!(TupleX!(MapX!(DExpr,DExpr),DExpr),DBFDist) uniq;
+DDPDist dDPDist(Dist dist)in{assert(!dist.tmpVars.length);}body{
+	static MapX!(TupleX!(MapX!(DExpr,DExpr),DExpr),DDPDist) uniq;
 	auto t=tuplex(dist.state,dist.error);
 	if(t in uniq) return uniq[t];
-	auto r=new DBFDist(dist);
+	auto r=new DDPDist(dist);
 	uniq[t]=r;
 	return r;
 }
@@ -620,7 +620,7 @@ DExpr lookupMeaning(Identifier id)in{assert(!!id);}body{
 				assert(!!fdef);
 				fdef=cast(FunctionDef)functionDefSemantic(fdef,sc);
 				assert(!!fdef);
-				builtIn[id.name]=dBFFun(fdef);
+				builtIn[id.name]=dDPFun(fdef);
 			}
 		}
 		return builtIn[id.name];
@@ -632,8 +632,8 @@ DExpr lookupMeaning(Identifier id)in{assert(!!id);}body{
 		return r?dField(r,id.name):dField(db1,id.name);
 	}
 	if(auto fd=cast(FunctionDef)id.meaning){
-		if(!fd.isNested) return dBFFun(fd);
-		return dBFContextFun(fd,buildContextFor(fd,id.scope_));
+		if(!fd.isNested) return dDPFun(fd);
+		return dDPContextFun(fd,buildContextFor(fd,id.scope_));
 	}
 	assert(0,"unsupported");
  }
@@ -706,9 +706,9 @@ struct Interpreter{
 			if(auto ume=cast(UBitNotExp)e) return -doIt(ume.e)-1;
 			if(auto le=cast(LambdaExp)e){
 				if(le.fd.isNested){
-					return dBFContextFun(le.fd,buildContextFor(le.fd,le.fd.scope_));
+					return dDPContextFun(le.fd,buildContextFor(le.fd,le.fd.scope_));
 				}
-				return dBFFun(le.fd);
+				return dDPFun(le.fd);
 			}
 			if(auto ce=cast(CallExp)e){
 				auto id=cast(Identifier)ce.e;
@@ -821,7 +821,7 @@ struct Interpreter{
 									}
 								}
 								gather(dist.distribution,one);
-								return cur.distSample(dBFDist(smpl));
+								return cur.distSample(dDPDist(smpl));
 							default:
 								assert(0, text("unsupported: ",id.name));
 						}

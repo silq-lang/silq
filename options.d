@@ -14,7 +14,7 @@ enum Format{
 
 enum InferenceMethod{
 	symbolic,
-	bruteforce,
+	dp,
 	simulate,
 }
 

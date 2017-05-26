@@ -121,7 +121,7 @@ int main(string[] args){
 			case "--lisp": opt.formatting=Format.lisp; break;
 			case "--raw": opt.outputForm=OutputForm.raw; break;
 			case "--raw-error": opt.outputForm=OutputForm.rawError; break;
-			case "--bruteforce": opt.backend=InferenceMethod.bruteforce; break;
+			case "--dp": opt.backend=InferenceMethod.dp; break;
 			case "--simulate": opt.backend=InferenceMethod.simulate; break;
 			default:
 				if(x.startsWith("--plot=")){
