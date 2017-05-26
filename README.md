@@ -290,9 +290,9 @@ PSI functions can be used as first-class values:
 ```
 def const(x: R){
     def retX(y: R){
-	    return x;
-	}
-	return retX;
+        return x;
+    }
+    return retX;
 }
 ```
 
@@ -324,7 +324,7 @@ Square argument lists introduce generic type parameters:
 def const[a](x:a)[b](y:b)=>x;
 
 def main(){
-	return const[R](3)[R x R x R](1,2,3);
+    return const[R](3)[R x R x R](1,2,3);
 }
 ```
 
@@ -334,7 +334,7 @@ Generic type parameters are deduced automatically when the square argument list 
 def const[a](x:a)[b](y:b)=>x;
 
 def main(){
-	return const(3)(1,2,3);
+    return const(3)(1,2,3);
 }
 ```
 
@@ -360,9 +360,13 @@ sample[a](p: Distribution[a]): a
 
 expectation(p: Distribution[R]): R
 
+errorPr(p: Distribution[R]): R
+
 ```
 
 The function infer performs nested inference on the given program f and returns the distribution of its results. (This is precisely what PSI does, but with `infer` it can be used arbitrarily within a PSI program.)
+
+*Note:* For technical reasons that will be resolved soon, the implementation of error tracking in the presence of nested inference is very slow. Use the --nocheck flag to disable error tracking and improve performance, at the cost of getting undefined results if an error actually occurs with positive probability.
 
 The function sample samples a value from the given distribution.
 
