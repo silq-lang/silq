@@ -71,8 +71,8 @@ Run './psi --help' to display information about supported command-line options.
 ```
 $ cat example.psi
 def main(){
-    a := Gauss(0,1);
-    b := Gauss(0,1);
+    a := gauss(0,1);
+    b := gauss(0,1);
     return if a > b { a } else { b };
 }
 
@@ -84,12 +84,12 @@ p[r₁_] := (-2^(1/2)*Sqrt[Pi]*(Erf[-1/2^(1/2)*20]+1)/2^2+1/2^(1/2)*2*Sqrt[Pi]*(
 
 $ cat coin_bias_small.psi
 def main(){
-    p := Uniform(0,1);
-    x1 := Bernoulli(p);
+    p := uniform(0,1);
+    x1 := flip(p);
     observe(x1==1);
-    x2 := Bernoulli(p);
+    x2 := flip(p);
     observe(x2==0);
-    x3 := Bernoulli(p);
+    x3 := flip(p);
     observe(x3==1);
     return p;
 }
@@ -114,7 +114,7 @@ PSI operates on files with the *.psi extension.
 Such a file contains one or multiple procedure definitions:
 
 ```
-def procedureName(param1,param2,...,paramn){
+def procedureName(param1:  type1,param2:  type2,...,paramn: typen){
     statements
 }
 ```
@@ -127,7 +127,7 @@ Function bodies consist of a sequence of statements, possibly referencing the va
 
 - variable := expression; introduces a new variable of name 'variable'
 
-- variable = expression; assigns to an existing variable. +=, -=, *=, /=, div= and %= are also supported.
+- variable = expression; assigns to an existing variable. +=, -=, *=, /=, div=, %=, ^=, &&=, ||=, ... are also supported.
 
 - if expression { statements } else { statements } is a conditional. 'else { statements }' is optional
 
@@ -146,7 +146,7 @@ Function bodies consist of a sequence of statements, possibly referencing the va
 
 - assert(expression); puts the program in the error state in case the expression is equal to zero (PSI will then report the probability of error).
 
-- return (expression1,expression2,...,expressionn); terminates the procedure with the given results.
+- return expression; terminates the procedure with the given result.
   If no return statement is provided at the end of a procedure, return (); is automatically inserted.
 
 ### Special statements
@@ -158,7 +158,7 @@ Function bodies consist of a sequence of statements, possibly referencing the va
 ### Expressions
 
 - The following operators are supported and denote the corresponding operations on real numbers with standard C operator precedence (where applicable):
-  expression + expression, expression - expression, expression * expression, expression / expression, expression div expression, expression | expression, expression ⊕ expression, expression & expression
+  expression + expression, expression - expression, expression * expression, expression / expression, expression div expression, expression ^ expression, expression | expression, expression ⊕ expression, expression & expression
 
   -expression
 
@@ -179,53 +179,52 @@ Function bodies consist of a sequence of statements, possibly referencing the va
 Primitive distributions can be sampled arbitrarily within expressions. They are exposed as procedures with special names.
 If arguments don't conform to the constraints of the distribution, the program enters the error state.
 
-- Gauss(mean,variance) samples from the Gaussian distribution with the given mean and non-negative variance.
+- gauss(mean,variance) samples from the Gaussian distribution with the given mean and non-negative variance.
 
-- Uniform(a,b) samples an uniform real number between a and b, with a<=b.
+- uniform(a,b) samples an uniform real number between a and b, with a<=b.
 
-- Bernoulli(p) is 1 with probability p and 0 with probability 1-p, where 0<=p<=1.
+- bernoulli(p) is 1 with probability p and 0 with probability 1-p, where 0<=p<=1.
 
-- UniformInt(a,b) samples an uniform integer between a and b. There should be at least one integer n with a<=n<=b.
+- uniformInt(a,b) samples an uniform integer between a and b. There should be at least one integer n with a<=n<=b.
 
-- Categorical(p) is i with probability p[i] for i in [0..p.length). p should be an array of real numbers of positive length.
+- categorical(p) is i with probability p[i] for i in [0..p.length). p should be an array of real numbers of positive length.
 
-- Exponential(rate) samples from the Exponential distribution with the given positive rate (inverse scale).
+- exponential(rate) samples from the Exponential distribution with the given positive rate (inverse scale).
 
-- Beta(alpha,beta) samples from the Beta distribution with the given positive shape parameters.
+- beta(alpha,beta) samples from the Beta distribution with the given positive shape parameters.
 
-- Gamma(shape,rate) samples from the Gamma distribution with the given shape and rate.
+- gamma(shape,rate) samples from the Gamma distribution with the given shape and rate.
 
-- Laplace(location,scale) samples from the Laplace distribution with the given location and positive scale.
+- laplace(location,scale) samples from the Laplace distribution with the given location and positive scale.
 
-- Cauchy(location,scale) samples from the Cauchy distribution with the given location and positive scale.
+- cauchy(location,scale) samples from the Cauchy distribution with the given location and positive scale.
 
-- Pareto(shape,scale) samples from the Pareto distribution with the given shape and scale which should be positive real numbers.
+- pareto(shape,scale) samples from the Pareto distribution with the given shape and scale which should be positive real numbers.
 
-- StudentT(degrees\_of\_freedom) samples from the StudentT distribution with the given positive degrees of freedom parameter.
+- studentT(degrees\_of\_freedom) samples from the StudentT distribution with the given positive degrees of freedom parameter.
 
-- Weibull(scale,shape) samples from the Weibull distribution with the given positive scale and shape parameters.
+- weibull(scale,shape) samples from the Weibull distribution with the given positive scale and shape parameters.
 
-- Rayleigh(sigma_squared) samples from the Rayleigh distribution with the given non-negative squared scale parameter.
+- rayleigh(sigma_squared) samples from the Rayleigh distribution with the given non-negative squared scale parameter.
 
-- Binomial(n,p) samples from the Binomial distribution with the given number of trials and success probability.
+- binomial(n,p) samples from the Binomial distribution with the given number of trials and success probability.
 
-- NegBinomial(r,p) samples from the Negative Binomial distribution with the given number of failures and success probability.
+- negBinomial(r,p) samples from the Negative Binomial distribution with the given number of failures and success probability.
 
-- Geometric(p) samples from the Geometric distribution with the given success probability.
+- geometric(p) samples from the Geometric distribution with the given success probability.
 
-- Poisson(mean) samples from the Poisson distribution with the given positive mean.
+- poisson(mean) samples from the Poisson distribution with the given positive mean.
   (At this time, expect less-than optimal simplification from PSI for expressions generated by programs sampling from this distribution.)
+
+
+
 
 ### Built-in deterministic functions
 - floor, ceil, exp, log, abs.
 
 ### Special Expressions
 
-- FromMarginal(expression1,expression2,...,expressionn)
-  Samples an n-tuple of values with the same marginal joint probability distribution as the existing expressions expression1,...,expressionn,
-  the sampled tuple is however independent of all existing variables.
-
-- SampleFrom("(variable1,...,variablen;parameter1,...,parameterm) => pdf",argument1,...,argumentm)
+- sampleFrom("(variable1,...,variablen;parameter1,...,parameterm) => pdf",argument1,...,argumentm): type
   This primitive samples an n-tuple of values from the given probability density function.
   The density function can depend both on the values and a set of parameters. To specify the pdf, the
   mathematical operators +-*/^, the constant e, the dirac delta 'delta(expr)', absolute values |expression|
@@ -234,25 +233,88 @@ If arguments don't conform to the constraints of the distribution, the program e
 
   Example:
   ```
-  x := SampleFrom("(x;y) => [-y<=x]*[x<=y]*x^2",y);
-  (x,y,z) := SampleFrom("(x,y,z;w) => [-1<=x]*[x<=1]*[-1<=y]*[y<=1]*|x|*|y|*delta(z-w)",w);
+  x := sampleFrom("(x;y) => [-y<=x]*[x<=y]*x^2",y);
+  (x,y,z) := sampleFrom("(x,y,z;w) => [-1<=x]*[x<=1]*[-1<=y]*[y<=1]*|x|*|y|*delta(z-w)",w);
   ```  
   *Note:* PSI does not currently verify that the given density expression is in fact a generalized probability density, so
-  some care is required when using this primitive.
-  
+  some care is required when using this primitive. Furthermore, PSI will trust any type annotation on sampleFrom. The default type is ℝ.
+
+
+- Marginal(expression): Distribution[type]
+  Returns the Marginal distribution of the given expressions, conditioned on the execution path in the current function. sample(Marginal(expression)) creates an independent value with the same marginal distribution as expression.
+
 - Expectation(expression)
-  Returns the expectation of the given expression conditioned on the current path in the program.
+  Shortcut for expectation(Marginal(expression))
   *Note:* PSI does not currently verify that the expectation of the given expression in fact exists,
-  so some care is required when using this primitive. (e.g. Expectation(Gauss(0,1)/Gauss(0,1)) does not converge.)
+  so some care is required when using this primitive. (e.g. Expectation(gauss(0,1)/gauss(0,1)) does not converge.)
 
 
+### Further language features
 
-### Experimental language features
+#### First-class functions and lambda functions
 
-#### Exponentiation
+PSI functions can be used as first-class values:
 
-Exponentiation is supported as expression ^ expression and expression ^= expression.
-*Note:* PSI does not currently check whether (a,b) is in the domain of exponentiation on real numbers.
+```
+def const(x: R){
+    def retX(y: R){
+	    return x;
+	}
+	return retX;
+}
+```
+
+Lambda syntax can be used to create anonymous function values:
+
+```
+def const(x:R){
+    return (y: R){ return x; }
+}
+```
+
+Function bodies that return an expression can be abbreviated using `=>` syntax:
+
+```
+def const(x:R)=>(y:R)=>x;
+```
+
+PSI function declarations and lambdas can have an arbitrary number of argument lists:
+
+```
+def const(x:R)(y:R)=>x;
+```
+
+#### Generic functions
+
+Square argument lists introduce generic type parameters:
+
+```
+def const[a](x:a)[b](y:b)=>x;
+
+def main(){
+	return const[R](3)[R x R x R](1,2,3);
+}
+```
+
+Generic type parameters are deduced automatically when the square argument list is omitted:
+
+```
+def const[a](x:a)[b](y:b)=>x;
+
+def main(){
+	return const(3)(1,2,3);
+}
+```
+
+
+```
+def id[a](x:a) => x;
+
+def main(){
+    return (id(2), id(id)(1,2)); // p(r₁,r₂) = δ[-r₁+2]·δ_r₂[(1,2)]
+}
+
+````
 
 #### Method calls and tuples
 
@@ -267,11 +329,52 @@ def main(){
 }
 ```
 
+#### Arrays
+
+```
+x := [1,2,3,4,5,6]; // declare array
+return x[UniformInt(0,x.length-1)]; // index randomly into array
+
+x := ([] : R[]); // declare empty array of real numbers
+y := x ~ [1]; // y is the concatenation of x with [1]. ~= is also supported
+
+z := array(UniformInt(1,3),[1,2,3]); // declare array of arrays of random size, initialized with [1,2,3] at all indices
+
+w := x[2..x.length-1]; // slice array (w is [3,4,5])
+```
+
+*Note:* Verifying that array indices and lengths are integers can be costly. Use --noboundscheck to disable bounds checking at the cost of undefined results in case such an error actually occurs.
+
+The length of an array 'a' can be obtained using the expression 'a.length'.
+
+#### Nested inference and the Distribution[a] type
+
+PSI supports the built-in functions:
+
+```
+infer[a](f: 1 -> a): Distribution[a]
+
+sample[a](p: Distribution[a]): a
+
+expectation(p: Distribution[R]): R
+
+```
+
+The function infer performs nested inference on the given program f and returns the distribution of its results. (This is precisely what PSI does, but with `infer` it can be used arbitrarily within a PSI program.)
+
+The function sample samples a value from the given distribution.
+
+The function expectation computes the expectation of the given distribution.
+
+*Note:* PSI does not currently verify that the expectation of the expression in fact exists, so some care is required when using this primitive. (e.g. expectation(infer(()=>gauss(0,1)/gauss(0,1))) does not converge.)
+
+
+
 #### Type annotations
 
 Any expression can be annotated with a type using the (expression : Type) annotation.
 
-A type can be R (real numbers), a Type[], the type of a tuple Type1 x Type2 x ... x Typen, or the name of a custom data type (see below).
+A type can be R (real numbers), a Type[], the type of a tuple Type1 x Type2 x ... x Typen, Distribution[a] or the name of a custom data type (see below).
 The empty tuple has type '1'.
 
 One can annotate method return types:
@@ -282,25 +385,10 @@ def main(): R x R{
 }
 ```
 
-#### General arrays
+####
 
-```
-x := [1,2,3]; // declare array
-return x[UniformInt(0,2)]; // index randomly into array
 
-x := ([] : R[]); // declare empty array of real numbers
-y := x ~ [1]; // y is the concatenation of x with [1]. ~= is also supported
-
-z := array(UniformInt(1,3),[1,2,3]); // declare array of arrays of random size, initialized with [1,2,3] at all indices
-```
-
-*Note:* PSI does not currently verify that array indices and lengths are integers.
-(Indexing into an array using a non-integer index within [0..length) returns the value 0.)
-
-The length of an array 'a' can be obtained using the expression 'a.length'.
-
-*Note:* General arrays are not compatible with arrays obtained using the 'x := array(n)' special construct.
-In order to bypass the special casing, use e.g. 'x := array(n,0)'.
+### Experimental language features
 
 #### Data abstraction
 
