@@ -10,6 +10,8 @@ enum help=`PSI solver
 Usage: psi [OPTION]... [FILE]...
 
 The options below may be used.
+--dp                use dynamic programming backend for discrete distributions (experimental)
+
 --plot              call gnuplot to plot the result (experimental)
 --noboundscheck     do not check array bounds
 --nocheck           do not check for error conditions
