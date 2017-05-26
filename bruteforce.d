@@ -789,7 +789,7 @@ struct Interpreter{
 								return dFloor(doIt(ce.arg));
 							case "ceil":
 								return dCeil(doIt(ce.arg));
-							case "SampleFrom":
+							case "sampleFrom":
 								Expression[] args;
 								if(auto tpl=cast(TupleExp)ce.arg) args=tpl.e;
 								else args=[ce.arg];

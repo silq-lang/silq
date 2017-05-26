@@ -289,7 +289,7 @@ bool isBuiltIn(Identifier id){
 		case name: goto case;
 		case capitalize(name): goto case;
 	}
-	case "Marginal","SampleFrom":
+	case "Marginal","sampleFrom":
 	case "Expectation":
 	case "infer","Distribution","sample","expectation","errorPr":
 		return true;
@@ -331,7 +331,7 @@ Expression builtIn(Identifier id,Scope sc){
 	case "Categorical": t=funTy(arrayTy(ℝ),distributionTy(ℝ,sc),false,false); break;
 	case "dirac": t=forallTy(["a"],typeTy,funTy(varTy("a",typeTy),varTy("a",typeTy),false,false),true,false); break;
 	case "Dirac": t=forallTy(["a"],typeTy,funTy(varTy("a",typeTy),distributionTy(varTy("a",typeTy),sc),false,false),true,false); break;
-	case "Marginal","SampleFrom": t=unit; break; // those are actually magic polymorphic functions
+	case "Marginal","sampleFrom": t=unit; break; // those are actually magic polymorphic functions
 	case "Expectation": t=funTy(ℝ,ℝ,false,false); break;
 	case "Distribution": t=funTy(typeTy,typeTy,true,false); break;
 	case "infer": t=
@@ -860,7 +860,7 @@ Expression callSemantic(CallExp ce,Scope sc){
 			case "Marginal":
 				ce.type=distributionTy(ce.arg.type,sc);
 				break;
-			case "SampleFrom":
+			case "sampleFrom":
 				return handleSampleFrom(ce,sc);
 			default: assert(0,text("TODO: ",id.name));
 		}
@@ -930,7 +930,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 			meaning=sc.lookup(id,false);
 			if(!meaning){
 				if(auto r=builtIn(id,sc)){
-					if(!id.calledDirectly&&util.among(id.name,"Marginal","SampleFrom")){
+					if(!id.calledDirectly&&util.among(id.name,"Marginal","sampleFrom")){
 						sc.error("special operator must be called directly",id.loc);
 						id.sstate=r.sstate=SemState.error;
 					}
@@ -1183,7 +1183,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		}
 		if(auto ce=cast(CallExp)tae.e)
 			if(auto id=cast(Identifier)ce.e)
-				if(id.name=="SampleFrom")
+				if(id.name=="sampleFrom")
 					ce.type=tae.type;
 		if(tae.e.type != tae.type){
 			sc.error(format("type is %s, not %s",tae.e.type,tae.type),tae.loc);
@@ -1555,12 +1555,12 @@ SampleFromInfo analyzeSampleFrom(CallExp ce,ErrorHandler err,Distribution dist=n
 	if(auto tpl=cast(TupleExp)ce.arg) args=tpl.e;
 	else args=[ce.arg];
 	if(args.length==0){
-		err.error("expected arguments to SampleFrom",ce.loc);
+		err.error("expected arguments to sampleFrom",ce.loc);
 		return SampleFromInfo(true);
 	}
 	auto literal=cast(LiteralExp)args[0];
 	if(!literal||literal.lit.type!=Tok!"``"){
-		err.error("first argument to SampleFrom must be string literal",args[0].loc);
+		err.error("first argument to sampleFrom must be string literal",args[0].loc);
 		return SampleFromInfo(true);
 	}
 	VarMapping[] retVars;
@@ -1613,7 +1613,7 @@ SampleFromInfo analyzeSampleFrom(CallExp ce,ErrorHandler err,Distribution dist=n
 		newDist=newDist.substituteAll(retVars.map!(x=>cast(DVar)x.orig).array,retVars.map!(x=>cast(DExpr)x.tmp).array);
 	}
 	if(args.length!=1+paramVars.length){
-		err.error(text("expected ",paramVars.length," additional arguments to SampleFrom"),ce.loc);
+		err.error(text("expected ",paramVars.length," additional arguments to sampleFrom"),ce.loc);
 		return SampleFromInfo(true);
 	}
 	return SampleFromInfo(false,retVars,paramVars,newDist);

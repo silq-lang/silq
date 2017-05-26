@@ -277,7 +277,7 @@ private struct Analyzer{
 						}
 						return r;
 					}
-					auto arg=util.among(id.name,"categorical","dirac","Dirac","SampleFrom")?null:doIt(ce.arg);
+					auto arg=util.among(id.name,"categorical","dirac","Dirac","sampleFrom")?null:doIt(ce.arg);
 					if(isBuiltIn(id)) switch(id.name){
 					case "array": // TODO: make polymorphic
 						assert(ce.arg.type==typeTy);
@@ -425,7 +425,7 @@ private struct Analyzer{
 							if(v != r) idist.marginalize(v);
 						idist.orderFreeVars([r],false);
 						return dApply(idist.toDExpr(),dTuple([]));
-					case "SampleFrom":
+					case "sampleFrom":
 						Expression[] args;
 						if(auto tpl=cast(TupleExp)ce.arg) args=tpl.e;
 						else args=[ce.arg];
