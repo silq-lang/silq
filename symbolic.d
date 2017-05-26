@@ -226,7 +226,15 @@ private struct Analyzer{
 				return cast(IDivExp)e?dFloor(e1/e2):e1/e2;
 			}
 			if(auto me=cast(ModExp)e) return doIt(me.e1)%doIt(me.e2);
-			if(auto pe=cast(PowExp)e) return doIt(pe.e1)^^doIt(pe.e2);
+			if(auto pe=cast(PowExp)e){
+				auto e1=doIt(pe.e1), e2=doIt(pe.e2);
+				// e1>=0 or e2∈ ℤ.
+				auto c1=dIvr(DIvr.Type.neqZ,dIvr(DIvr.Type.leZ,-e1)+dIsℤ(e2));
+				// e1!=0 or e2>=0
+				auto c2=dIvr(DIvr.Type.neqZ,dIvr(DIvr.Type.neqZ,e1)+dIvr(DIvr.Type.leZ,-e2));
+				dist.assertTrue(c1*c2, "arguments outside domain of ^");
+				return e1^^e2;
+			}
 			if(auto ce=cast(CatExp)e) return doIt(ce.e1)~doIt(ce.e2);
 			if(auto ce=cast(BitOrExp)e) return dBitOr(doIt(ce.e1),doIt(ce.e2));
 			if(auto ce=cast(BitXorExp)e) return dBitXor(doIt(ce.e1),doIt(ce.e2));
