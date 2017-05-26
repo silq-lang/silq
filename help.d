@@ -17,7 +17,7 @@ The options below may be used.
 --nocheck           do not check for error conditions
 
 --cdf               generate cumulative distribution function (instead of generalized probability density)
---expectation       compute expectation of result ('main' should return a single number)
+--expectation       compute expectation of result ('main' should return real numbers)
 
 --trace             print statements as they are analyzed
 --raw               print only pdf, cdf or expectation
