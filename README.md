@@ -278,7 +278,7 @@ z := array(UniformInt(1,3),[1,2,3]); // declare array of arrays of random size, 
 w := x[2..x.length-1]; // slice array (w is [3,4,5])
 ```
 
-*Note:* Verifying that array indices and lengths are integers within the array bounds can be costly. Use --noboundscheck to disable bounds checking at the cost of undefined results in case such an error actually occurs.
+*Note:* Verifying that array indices and lengths are integers within the array bounds can be costly. Use --noboundscheck to disable bounds checking at the cost of undefined results in case a bounds actually occurs with positive probability.
 
 The length of an array 'a' can be obtained using the expression 'a.length'.
 
