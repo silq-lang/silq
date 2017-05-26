@@ -125,106 +125,106 @@ There should be a procedure of name 'main', denoting the program entry and exit 
 
 Function bodies consist of a sequence of statements, possibly referencing the variables param1,param2,...,paramn.
 
-- variable := expression; introduces a new variable of name 'variable'
+- `variable := expression;` introduces a new variable of name 'variable'
 
-- variable = expression; assigns to an existing variable. +=, -=, *=, /=, div=, %=, ^=, &&=, ||=, ... are also supported.
+- `variable = expression;` assigns to an existing variable. `+=`, `-=`, `*=`, `/=`, `div=`, `%=`, `^=`, `&&=`, `||=`, ... are also supported.
 
-- if expression { statements } else { statements } is a conditional. 'else { statements }' is optional
+- `if expression { statements } else { statements }` is a conditional. `else { statements }` is optional
 
-- repeat expression { statements } repeats the given statements a number of times given by the expression. The expression should be an integer constant.
+- `repeat expression { statements }` repeats the given statements a number of times given by the expression. The expression should be an integer constant.
 
-- for variable in [start..end){ statement } is a for-loop over a range. Start and end should be integer constants.
+- `for variable in [start..end){ statement }` is a for-loop over a range. Start and end should be integer constants.
   If the exact number of iterations is not known ahead of time, an if statment can be nested within the for loop in order
   to cut off some of the iterations.
 
-- observe(expression); conditions the joint probability distribution of the program variables on the event that the expression is not equal to zero
+- `observe(expression);` conditions the joint probability distribution of the program variables on the event that the expression is not equal to zero
   *Note:* The probability that the expression is not equal to zero should be positive (enforced by PSI during normalization).
   
-- cobserve(expression,value); conditions the joint probability distribution of the program variables on the event that the given expression
+- `cobserve(expression,value);` conditions the joint probability distribution of the program variables on the event that the given expression
   equals the given value. The probability that the variable is equal to the expression must be zero, but the probability density at that point
   must be positive. *Note:* This is not currently enforced automatically by PSI, therefore some care is required when using this primitive.
 
-- assert(expression); puts the program in the error state in case the expression is equal to zero (PSI will then report the probability of error).
+- `assert(expression);` puts the program in the error state in case the expression is equal to zero (PSI will then report the probability of error).
 
-- return expression; terminates the procedure with the given result.
+- `return expression;` terminates the procedure with the given result.
   If no return statement is provided at the end of a procedure, return (); is automatically inserted.
 
 ### Special statements
 
-- a := readCSV(filename); where filename is a string literal (such as "data.csv"), reads the given file containing a comma-separated list of values
+- `a := readCSV(filename);` where filename is a string literal (such as "data.csv"), reads the given file containing a comma-separated list of values
   into a read-only array 'a'. Indexing into such arrays requires deterministic integer indices.
 
 
 ### Expressions
 
 - The following operators are supported and denote the corresponding operations on real numbers with standard C operator precedence (where applicable):
-  expression + expression, expression - expression, expression * expression, expression / expression, expression div expression, expression ^ expression, expression | expression, expression ⊕ expression, expression & expression
+  `expression + expression`, `expression - expression`, `expression * expression`, `expression / expression`, `expression div expression`, `expression ^ expression`, `expression | expression`, `expression ⊕ expression`, `expression & expression`
 
-  -expression
+  `-expression`
 
-  expression < expression, expression > expression, expression <= expression, expression >= expression,
-  expression == expression, expression != expression
+  `expression < expression`, `expression > expression`, `expression <= expression`, `expression >= expression`,
+  `expression == expression`, `expression != expression`
 
-(div is integer division. "a div b" is the same as "floor(a/b)". ⊕ is bitwise xor. The non-unicode syntax is "a xorb b".)
+(`div` is integer division. `a div b` is the same as `floor(a/b)`. `⊕` is bitwise xor. The non-unicode syntax is `a xorb b`.)
 
-- There are logical operators !, && and ||, also with standard C operator precedence.
+- There are logical operators `!`, `&&` and `||`, also with standard C operator precedence.
   (Warning: && and || do not currently use short-circuit evaluation.)
 
-- Conditional expressions are supported: if expression { expression } else { expression }. Only one branch is evaluated.
+- Conditional expressions are supported: `if expression { expression } else { expression }`. Only one branch is evaluated.
 
-- Expressions can be parenthesized in order to change order of precedence, e.g. a*(b+c).
+- Expressions can be parenthesized in order to change order of precedence, e.g. `a*(b+c)`.
 
 ### Primitive Distributions
 
 Primitive distributions can be sampled arbitrarily within expressions. They are exposed as procedures with special names.
 If arguments don't conform to the constraints of the distribution, the program enters the error state.
 
-- gauss(mean,variance) samples from the Gaussian distribution with the given mean and non-negative variance.
+- `gauss(mean,variance)` samples from the Gaussian distribution with the given mean and non-negative variance.
 
-- uniform(a,b) samples an uniform real number between a and b, with a<=b.
+- `uniform(a,b)` samples an uniform real number between a and b, with a<=b.
 
-- bernoulli(p) is 1 with probability p and 0 with probability 1-p, where 0<=p<=1.
+- `bernoulli(p)` is 1 with probability p and 0 with probability 1-p, where 0<=p<=1.
 
-- uniformInt(a,b) samples an uniform integer between a and b. There should be at least one integer n with a<=n<=b.
+- `uniformInt(a,b)` samples an uniform integer between a and b. There should be at least one integer n with a<=n<=b.
 
-- categorical(p) is i with probability p[i] for i in [0..p.length). p should be an array of real numbers of positive length.
+- `categorical(p)` is i with probability p[i] for i in [0..p.length). p should be an array of real numbers of positive length.
 
-- exponential(rate) samples from the Exponential distribution with the given positive rate (inverse scale).
+- `exponential(rate)` samples from the Exponential distribution with the given positive rate (inverse scale).
 
-- beta(alpha,beta) samples from the Beta distribution with the given positive shape parameters.
+- `beta(alpha,beta)` samples from the Beta distribution with the given positive shape parameters.
 
-- gamma(shape,rate) samples from the Gamma distribution with the given shape and rate.
+- `gamma(shape,rate)` samples from the Gamma distribution with the given shape and rate.
 
-- laplace(location,scale) samples from the Laplace distribution with the given location and positive scale.
+- `laplace(location,scale)` samples from the Laplace distribution with the given location and positive scale.
 
-- cauchy(location,scale) samples from the Cauchy distribution with the given location and positive scale.
+- `cauchy(location,scale)` samples from the Cauchy distribution with the given location and positive scale.
 
-- pareto(shape,scale) samples from the Pareto distribution with the given shape and scale which should be positive real numbers.
+- `pareto(shape,scale)` samples from the Pareto distribution with the given shape and scale which should be positive real numbers.
 
-- studentT(degrees\_of\_freedom) samples from the StudentT distribution with the given positive degrees of freedom parameter.
+- `studentT(degrees_of_freedom)` samples from the StudentT distribution with the given positive degrees of freedom parameter.
 
-- weibull(scale,shape) samples from the Weibull distribution with the given positive scale and shape parameters.
+- `weibull(scale,shape)` samples from the Weibull distribution with the given positive scale and shape parameters.
 
-- rayleigh(sigma_squared) samples from the Rayleigh distribution with the given non-negative squared scale parameter.
+- `rayleigh(sigma_squared)` samples from the Rayleigh distribution with the given non-negative squared scale parameter.
 
-- binomial(n,p) samples from the Binomial distribution with the given number of trials and success probability.
+- `binomial(n,p)` samples from the Binomial distribution with the given number of trials and success probability.
 
-- negBinomial(r,p) samples from the Negative Binomial distribution with the given number of failures and success probability.
+- `negBinomial(r,p)` samples from the Negative Binomial distribution with the given number of failures and success probability.
 
-- geometric(p) samples from the Geometric distribution with the given success probability.
+- `geometric(p)` samples from the Geometric distribution with the given success probability.
 
-- poisson(mean) samples from the Poisson distribution with the given positive mean.
+- `poisson(mean)` samples from the Poisson distribution with the given positive mean.
   (At this time, expect less-than optimal simplification from PSI for expressions generated by programs sampling from this distribution.)
 
 
 
 
 ### Built-in deterministic functions
-- floor, ceil, exp, log, abs.
+- `floor`, `ceil`, `exp`, `log`, `abs`.
 
 ### Special Expressions
 
-- sampleFrom("(variable1,...,variablen;parameter1,...,parameterm) => pdf",argument1,...,argumentm): type
+- `sampleFrom("(variable1,...,variablen;parameter1,...,parameterm) => pdf",argument1,...,argumentm): type`
   This primitive samples an n-tuple of values from the given probability density function.
   The density function can depend both on the values and a set of parameters. To specify the pdf, the
   mathematical operators +-*/^, the constant e, the dirac delta 'delta(expr)', absolute values |expression|
@@ -240,13 +240,13 @@ If arguments don't conform to the constraints of the distribution, the program e
   some care is required when using this primitive. Furthermore, PSI will trust any type annotation on sampleFrom. The default type is ℝ.
 
 
-- Marginal(expression): Distribution[type]
+- `Marginal(expression): Distribution[type]`
   Returns the Marginal distribution of the given expressions, conditioned on the execution path in the current function. sample(Marginal(expression)) creates an independent value with the same marginal distribution as expression.
 
-- Expectation(expression)
+- `Expectation(expression)`
   Shortcut for expectation(Marginal(expression))
   *Note:* PSI does not currently verify that the expectation of the given expression in fact exists,
-  so some care is required when using this primitive. (e.g. Expectation(gauss(0,1)/gauss(0,1)) does not converge.)
+  so some care is required when using this primitive. (e.g. `Expectation(gauss(0,1)/gauss(0,1))` does not converge.)
 
 
 ### Further language features
@@ -364,25 +364,25 @@ errorPr(p: Distribution[R]): R
 
 ```
 
-The function infer performs nested inference on the given program f and returns the distribution of its results. (This is precisely what PSI does, but with `infer` it can be used arbitrarily within a PSI program.)
+The function `infer` performs nested inference on the given program `f` and returns the distribution of its results. (This is precisely what PSI does, but with `infer` it can be used arbitrarily within a PSI program.)
 
 *Note:* For technical reasons that will be resolved soon, the implementation of error tracking in the presence of nested inference is very slow. Use the --nocheck flag to disable error tracking and improve performance, at the cost of getting undefined results if an error actually occurs with positive probability.
 
-The function sample samples a value from the given distribution.
+The function `sample` samples a value from the given distribution.
 
-The function expectation computes the expectation of the given distribution.
+The function `expectation` computes the expectation of the given distribution.
 
-*Note:* PSI does not currently verify that the expectation of the expression in fact exists, so some care is required when using this primitive. (e.g. expectation(infer(()=>gauss(0,1)/gauss(0,1))) does not converge.)
+*Note:* PSI does not currently verify that the expectation of the expression in fact exists, so some care is required when using this primitive. (e.g. `expectation(infer(()=>gauss(0,1)/gauss(0,1)))` does not converge.)
 
 The function errorPr computes the probability of error for the given distribution.
 
 
 #### Type annotations
 
-Any expression can be annotated with a type using the (expression : Type) annotation.
+Any expression can be annotated with a type using the `(expression : Type)` annotation.
 
-A type can be R (real numbers), a Type[], the type of a tuple Type1 x Type2 x ... x Typen, Distribution[a] or the name of a custom data type (see below).
-The empty tuple has type '1'.
+A type can be `R` (real numbers), a `Type[]`, the type of a tuple `Type1 x Type2 x ... x Typen`, `Distribution[a]` or the name of a custom data type (see below).
+The empty tuple has type `1`.
 
 One can annotate method return types:
 
