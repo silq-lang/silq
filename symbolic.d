@@ -284,6 +284,7 @@ private struct Analyzer{
 						auto idist=new Distribution();
 						auto len=idist.declareVar("`len"),init=idist.declareVar("`init");
 						idist.addArgs([len,init],true,null);
+						if(!opt.noBoundsCheck) idist.assertTrue(dIsℤ(len), "array length must be an integer");
 						auto r=idist.declareVar("`r");
 						idist.initialize(r,dConstArray(len,init),arrayTy(ce.arg));
 						idist.orderFreeVars([r],false);
