@@ -425,15 +425,6 @@ private struct Analyzer{
 							if(v != r) idist.marginalize(v);
 						idist.orderFreeVars([r],false);
 						return dApply(idist.toDExpr(),dTuple([]));
-					case "FromMarginal":
-						auto tmp=dist.getTmpVar("__mrg");
-						auto ndist=dist.dup();
-						ndist.initialize(tmp,arg,ce.arg.type);
-						foreach(v;dist.freeVars)
-							if(v != tmp) ndist.marginalize(v);
-						ndist.simplify();
-						dist.distribute(ndist.distribution);
-						return tmp;
 					case "SampleFrom":
 						Expression[] args;
 						if(auto tpl=cast(TupleExp)ce.arg) args=tpl.e;
