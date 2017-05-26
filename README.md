@@ -251,6 +251,38 @@ If arguments don't conform to the constraints of the distribution, the program e
 
 ### Further language features
 
+#### Method calls and tuples
+
+```
+def swapped(a,b){
+    return (b,a);
+}
+
+def main(){
+    (z,w) = swapped(1,2);
+    return ((z,w),swapped(z,w)); // p(r₁,r₂) = δ_r₁[(2,1)]·δ_r₂[(1,2)]
+}
+```
+
+#### Arrays
+
+```
+x := [1,2,3,4,5,6]; // declare array
+return x[UniformInt(0,x.length-1)]; // index randomly into array
+
+x := ([] : R[]); // declare empty array of real numbers
+y := x ~ [1]; // y is the concatenation of x with [1]. ~= is also supported
+
+z := array(UniformInt(1,3),[1,2,3]); // declare array of arrays of random size, initialized with [1,2,3] at all indices
+
+w := x[2..x.length-1]; // slice array (w is [3,4,5])
+```
+
+*Note:* Verifying that array indices and lengths are integers can be costly. Use --noboundscheck to disable bounds checking at the cost of undefined results in case such an error actually occurs.
+
+The length of an array 'a' can be obtained using the expression 'a.length'.
+
+
 #### First-class functions and lambda functions
 
 PSI functions can be used as first-class values:
@@ -316,36 +348,6 @@ def main(){
 
 ````
 
-#### Method calls and tuples
-
-```
-def swapped(a,b){
-    return (b,a);
-}
-
-def main(){
-    (z,w) = swapped(1,2);
-    return ((z,w),swapped(z,w)); // p(r₁,r₂) = δ_r₁[(2,1)]·δ_r₂[(1,2)]
-}
-```
-
-#### Arrays
-
-```
-x := [1,2,3,4,5,6]; // declare array
-return x[UniformInt(0,x.length-1)]; // index randomly into array
-
-x := ([] : R[]); // declare empty array of real numbers
-y := x ~ [1]; // y is the concatenation of x with [1]. ~= is also supported
-
-z := array(UniformInt(1,3),[1,2,3]); // declare array of arrays of random size, initialized with [1,2,3] at all indices
-
-w := x[2..x.length-1]; // slice array (w is [3,4,5])
-```
-
-*Note:* Verifying that array indices and lengths are integers can be costly. Use --noboundscheck to disable bounds checking at the cost of undefined results in case such an error actually occurs.
-
-The length of an array 'a' can be obtained using the expression 'a.length'.
 
 #### Nested inference and the Distribution[a] type
 
