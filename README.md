@@ -114,7 +114,7 @@ PSI operates on files with the *.psi extension.
 Such a file contains one or multiple procedure definitions:
 
 ```
-def procedureName(param1:  type1,param2:  type2,...,paramn: typen){
+def procedureName(param1,param2,..., paramn){
     statements
 }
 ```
