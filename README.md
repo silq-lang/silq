@@ -375,7 +375,7 @@ The function `expectation` computes the expectation of the given distribution.
 
 *Note:* PSI does not currently verify that the expectation of the expression in fact exists, so some care is required when using this primitive. (e.g. `expectation(infer(()=>gauss(0,1)/gauss(0,1)))` does not converge.)
 
-The function errorPr computes the probability of error for the given distribution.
+The function `errorPr` computes the probability of error for the given distribution.
 
 
 #### Type annotations
