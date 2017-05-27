@@ -134,9 +134,9 @@ Function bodies consist of a sequence of statements, possibly referencing the va
 - `repeat expression { statements }` repeats the given statements a number of times given by the expression. The expression should be an integer constant.
 
 - `for variable in [start..end){ statement }` is a for-loop over a range. Start and end should be integer constants.
-  If the exact number of iterations is not known ahead of time, an if statment can be nested within the for loop in order to cut off some of the iterations.
+  If the exact number of iterations is not known ahead of time, an if statement can be nested within the for loop in order to cut off some of the iterations.
 
-- `while(expression){ statement }` is a while-loop. Currently, while loops are only supported with the --dp switch and they must have bounded running time.
+- `while expression { statement }` is a while-loop. Currently, while loops are only supported with the --dp switch and they must have bounded running time.
 
 - `observe(expression);` conditions the joint probability distribution of the program variables on the event that the expression is not equal to zero
   *Note:* The probability that the expression is not equal to zero should be positive (enforced by PSI during normalization).
