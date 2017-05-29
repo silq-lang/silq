@@ -2,6 +2,8 @@
 import std.stdio, std.file;
 import std.process, std.string, std.array;
 import std.algorithm, std.conv;
+import std.datetime;
+import std.typecons : Flag, Yes, No;
 
 auto shell(string cmd){
 	return executeShell(cmd).output;
@@ -11,46 +13,63 @@ enum TODOColor=CYAN;
 enum passColor=GREEN;
 enum failColor=RED;
 
+bool fileStartsWithFlag(string source, string flag){
+	immutable f1="//"~flag;
+	immutable f2="// "~flag;
+	immutable h=cast(string)source.read(f2.length);
+	return h.startsWith(f1)||h==f2;
+}
 
 void main(){
-	auto sources=shell("find ./ -type f | grep \\.psi$").splitLines;
+	auto sources=shell("find . -name '*.psi' -type f").splitLines;
 	Summary total;
 	int skipped=0,passed=0;
 	bool colorize=isATTy(stdout);
+	TickDuration totalTime;
 	foreach(source;sources){
-		if((x=>x.startsWith("// skip")||x.startsWith("//skip"))(shell("head -n1 "~source))){
-			if(colorize) writeln(TODOColor,BOLD,"skipping",RESET," ",source);
+		if(source.startsWith("./")) source=source[2..$];
+		if(source.fileStartsWithFlag("skip")){
+			if(colorize) writeln(TODOColor,BOLD,"skipped",RESET,"         ",source);
 			else writeln("skipping ",source);
 			skipped++;
 			continue;
 		}else{
-			if(colorize) write(BOLD,"running",RESET," ",source);
-			else std.stdio.write("running ",source); // DMD bug?
+			if(colorize) write(BOLD,"running",RESET,"         ",source);
+			else write("running"," ",source);
 		}
 		stdout.flush();
 		auto results=source.getResults;
 		auto summary=results.summarize;
 		total+=summary;
+		if(colorize) write("\r");
+		else write(": ");
 		if(summary.isInteresting){
-			int regressions=summary.unexpectedErrors+summary.missingErrors;
-			if(regressions){
-				if(colorize) writeln(": ",failColor,BOLD,"failed",RESET);
-				else writeln(": failed");				
+			int regressions=summary.unexpectedErrors;
+			if(summary.unexpectedErrors){
+				if(colorize) write(failColor,BOLD,"failed ",RESET);
+				else write("failed");
+			}else if (summary.missingErrors) {
+				if(colorize) write(failColor,BOLD,"invalid",RESET);
+				else write("invalid");
 			}else{
 				if(summary.todos||!summary.obsoleteTodos){
-					if(colorize) writeln(": ",TODOColor,BOLD,"TODO",RESET);
-					else writeln(": TODO");
+					if(colorize) write(TODOColor,BOLD," TODO  ",RESET);
+					else write("TODO");
 				}else{
-					if(colorize) writeln(": ",passColor,"fixed",RESET);
-					else writeln(": fixed");					
+					if(colorize) write(passColor,"fixed  ",RESET);
+					else write("fixed");
 				}
 			}
-			writeln(summary);
+			//write(summary);
 		}else{
-			if(colorize) writeln(": ",passColor,BOLD,"passed",RESET);
-			else writeln(": passed");
+			if(colorize) write(passColor,BOLD,"passed ",RESET);
+			else write("passed");
 			passed++;
 		}
+		write(" % 5.0fms".format(results[0].time.to!("msecs",double)));
+		totalTime+=results[0].time;
+		if(colorize) writeln(" ",source);
+		else writeln();
 	}
 	writeln();
 	if(colorize) writeln(BOLD,"TOTAL:",RESET," ",sources.length);
@@ -60,6 +79,7 @@ void main(){
 	if(colorize) writeln(failColor,"skipped:",RESET," ",skipped);
 	else writeln("skipped: ",skipped);
 	writeln(total.toString(colorize,true));
+	if(colorize) writeln("total time: %.1fs".format(totalTime.to!("seconds",double)));	
 }
 
 struct Summary{
@@ -113,28 +133,36 @@ enum Status{
 struct Comparison{
 	Status status;
 	Info info;
+	TickDuration time;
 }
 
 Comparison[] getResults(string source){
-	bool compilationError=(x=>x.startsWith("// compilation error")||x.startsWith("//compilation error"))(shell("head -n1 "~source));
+	bool compilationError=source.fileStartsWithFlag("compilation error");
 	bool foundCompilationError=false;
+	auto sw = StopWatch(Yes.autoStart);
 	auto output = shell("../psi "~source~" 2>&1").splitLines;
+	sw.stop();
 	Comparison[] result;
 	foreach(i,l;output){
 		switch(l.strip){
 		default: break;
-		case "FIXED": result~=Comparison(Status.expected,Info(cast(int)i+1,true,true)); break;
-		case "PASS": result~=Comparison(Status.ok,Info(cast(int)i+1,false,false)); break;
-		case "TODO": result~=Comparison(Status.expected,Info(cast(int)i+1,false,true)); break;
-		case "FAIL": result~=Comparison(Status.unexpected,Info(cast(int)i+1,true,false)); break;
+		case "FIXED": result~=Comparison(Status.expected,Info(cast(int)i+1,true,true),sw.peek()); break;
+		case "PASS": result~=Comparison(Status.ok,Info(cast(int)i+1,false,false),sw.peek()); break;
+		case "TODO": result~=Comparison(Status.expected,Info(cast(int)i+1,false,true),sw.peek()); break;
+		case "FAIL": result~=Comparison(Status.unexpected,Info(cast(int)i+1,true,false),sw.peek()); break;
 		}
 		auto isCompilationError=l.canFind("error: ");
 		if(l.startsWith("core.exception.AssertError")||l.startsWith("Segmentation fault")||!compilationError&&!foundCompilationError&&isCompilationError)
-			result~=Comparison(Status.unexpected,Info(cast(int)i+1,true,false));
+			result~=Comparison(Status.unexpected,Info(cast(int)i+1,true,false),sw.peek());
 		foundCompilationError|=isCompilationError;
 	}
-	if(compilationError&&!foundCompilationError)
-		result~=Comparison(Status.unexpected,Info(0,true,false));
+	if(compilationError){
+		if(!foundCompilationError)
+			result~=Comparison(Status.unexpected,Info(0,true,false),sw.peek());
+		else
+			result~=Comparison(Status.ok,Info(0,false,false),sw.peek());
+	}else if(!result.length)
+		result~=Comparison(Status.missing,Info(0,true,false),sw.peek());
 	return result;
 }
 
@@ -201,10 +229,12 @@ version(Posix){
 	private extern(C) int fileno(shared(_iobuf)*);
 	bool isATTy(ref File f){ // determine whether a given file is connected to a terminal
 		if(environment.get("EMACS")) return false;
+		if(environment.get("TERM")=="dumb") return false;
 		return cast(bool)isatty(fileno(f.getFP()));
 	}
 	int getTabSize(){
 		if(environment.get("EMACS")) return 4;
+		if(environment.get("TERM")=="dumb") return 4;
 		return 8;
 	}
 }else{
