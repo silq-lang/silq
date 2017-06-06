@@ -1,9 +1,11 @@
 #!/bin/bash
 
+VERSION="1.3.0-beta1"
+
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
-    NAME="ldc2-1.2.0-beta1-linux-x86_64"
+    NAME="ldc2-$VERSION-linux-x86_64"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
-    NAME="ldc2-1.2.0-beta1-osx-x86_64"
+    NAME="ldc2-$VERSION-osx-x86_64"
 fi
 
 if [ -d $NAME ]; then
