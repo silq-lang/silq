@@ -240,7 +240,12 @@ enum forEachSubExprImpl(string code)=mixin(X!q{
 			foreach(x;se) @(code);
 		}else static if(is(typeof(se)==DExpr[string])){
 			foreach(k,x;values) @(code);
-		}else static assert(is(typeof(se)==string)||is(typeof(se)==int)||is(typeof(se)==DIvr.Type)||is(typeof(se)==Type)||is(typeof(se)==FunctionDef)||is(typeof(se)==Dist));
+		}else{
+			import type: Type;
+			import declaration: FunctionDef;
+			import dp: Dist;
+			static assert(is(typeof(se)==string)||is(typeof(se)==int)||is(typeof(se)==DIvr.Type)||is(typeof(se)==Type)||is(typeof(se)==FunctionDef)||is(typeof(se)==Dist));
+		}
 	}
 });
 template IncDeBruijnVarType(T){
