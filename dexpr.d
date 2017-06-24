@@ -240,7 +240,7 @@ enum forEachSubExprImpl(string code)=mixin(X!q{
 			foreach(x;se) @(code);
 		}else static if(is(typeof(se)==DExpr[string])){
 			foreach(k,x;values) @(code);
-		}
+		}else static assert(is(typeof(se)==string)||is(typeof(se)==int)||is(typeof(se)==DIvr.Type)||is(typeof(se)==Type)||is(typeof(se)==FunctionDef)||is(typeof(se)==Dist));
 	}
 });
 template IncDeBruijnVarType(T){
@@ -305,7 +305,7 @@ mixin template Visitors(){
 				}
 				static if(is(typeof(sub):DExpr)){
 					nsubs[i]=sub.substitute(cvar,ce);
-				}else static if(is(typeof(sub)==SetX!DExpr)){
+				}else static if(is(typeof(sub)==DExprSet)){
 					if(auto evar=cast(DVar)e){ // TODO: make this unnecessary, this is a hack to improve performance
 						if(!hasFreeVar(evar)){
 							foreach(f;sub) nsubs[i].insert(f.substitute(cvar,ce));
@@ -318,7 +318,13 @@ mixin template Visitors(){
 					foreach(ref x;nsubs[i]) x=x.substitute(cvar,ce);
 				}else static if(is(typeof(sub)==DExpr[string])){
 					foreach(k,v;sub) nsubs[i][k]=v.substitute(cvar,ce);
-				}else nsubs[i]=sub;
+				}else{
+					import type: Type;
+					import declaration: FunctionDef;
+					import dp: Dist;
+					static assert(is(typeof(sub)==string)||is(typeof(sub)==int)||is(typeof(sub)==DIvr.Type)||is(typeof(sub)==Type)||is(typeof(sub)==FunctionDef)||is(typeof(sub)==Dist));
+					nsubs[i]=sub;
+				}
 			}
 			if(nsubs==q(subExprs)) return this;
 			return mixin(lowerf(typeof(this).stringof))(nsubs.expand);
