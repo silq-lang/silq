@@ -244,7 +244,7 @@ enum forEachSubExprImpl(string code)=mixin(X!q{
 			import type: Type;
 			import declaration: FunctionDef;
 			import dp: Dist;
-			static assert(is(typeof(se)==string)||is(typeof(se)==int)||is(typeof(se)==DIvr.Type)||is(typeof(se)==Type)||is(typeof(se)==FunctionDef)||is(typeof(se)==Dist));
+			static assert(is(typeof(se)==string)||is(typeof(se)==int)||is(typeof(se)==DIvr.Type)||is(typeof(se)==Type)||is(typeof(se)==FunctionDef)||is(typeof(se)==Dist), "foreachSubExprImpl is not exhaustive.");
 		}
 	}
 });
