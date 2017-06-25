@@ -1,0 +1,8 @@
+// skipped
+
+def main(){
+	x := uniform(0,log(10)/log(2));
+	return 2^x; // expected: TODO: simplify this better / faster
+	// TODO: simplify e^(log(2)+log(5)) to 10.
+	// TODO: simplify constant Iverson brackets.
+}

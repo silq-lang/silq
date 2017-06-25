@@ -170,6 +170,7 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration;
+	//writeln("δ[y-2^x]".dParse.linearizeConstraints("x".dVar).simplify(one));
 	//writeln("(∫dξ₁[-log(10)+log(ξ₁)≤0]·[-ξ₁+1≤0]·[ξ₁≠0]·⅟ξ₁)".dParse.simplify(one));
 	//writeln("∫dr₁[-log(10)+log(r₁)≤0]·[-r₁+1≤0]·[r₁≠0]·⅟log(10)·⅟r₁".dParse.simplify(one));
 	//writeln("[-1/e^x≤0]".dParse.linearizeConstraints("x".dVar).simplify(one));

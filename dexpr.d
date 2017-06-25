@@ -2117,7 +2117,7 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 				}
 				return r;
 			}else if(!e1.hasFreeVar(var)&&dIvr(DIvr.Type.leZ,e1).simplify(one)==zero){
-				auto r=dIvr(lZ,-rhs)*doIt(parity,ty,dLog(e1)*e2,dLog(rhs));
+				auto r=dIvr(lZ,-rhs)*doIt(parity,ty,(dLog(e1)*e2).simplify(one),dLog(rhs));
 				static if(isDelta) assert(ty==eqZ);
 				if(ty==leZ){
 					auto oddParity=linearizeConstraints(dIvr(lZ,parity).simplify(one),var);
@@ -2137,8 +2137,8 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 		}
 		static if(isDelta){
 			if(lhs != var) unwind(); // TODO: get rid of this?
-			auto diff=dAbs(dDiff(var,cond.e));
-			auto pole=dIvr(eqZ,diff).linearizeConstraints(var).polyNormalize(var).simplify(one);
+			auto diff=dAbs(dDiff(var,cond.e)).simplify(one);
+			auto pole=dIvr(eqZ,diff).simplify(one).linearizeConstraints(var).polyNormalize(var).simplify(one);
 			DExprSet special;
 			foreach(s;pole.summands){
 				DExpr summand=null;
