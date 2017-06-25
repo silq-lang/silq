@@ -3,5 +3,5 @@
 
 def main(){
     x := 1 ⊕ 4;
-    return x;
+    return x; // expected: δ[-x+5]
 }
