@@ -1,0 +1,5 @@
+def main(){
+	x := uniform(0,log(10));
+	return exp(x); // expected: [-log(10)+log(r₁)≤0]·[-r₁+1≤0]·[r₁≠0]·⅟log(10)·⅟r₁
+	// TODO: simplify [-log(10)+log(r₁)≤0] to [-10+r₁≤0]
+}

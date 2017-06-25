@@ -1480,14 +1480,16 @@ class DPow: DBinaryOp{
 				return dℚ(pow(c.c,d.c.num));
 			}
 		}
-		if(auto l=cast(DLog)e2){ // TODO: more principled way of handling this, with more cases
-			if(auto e=cast(DE)e1)
-				return l.e;
-			if(auto d=cast(Dℚ)e1){
-				if(auto c=cast(Dℚ)l.e){
-					if(c.c<d.c) return (c^^dLog(d)).simplify(facts);
-					else return null;
-				}else return (l.e^^dLog(d)).simplify(facts);
+		foreach(f;e2.factors){
+			if(auto l=cast(DLog)f){ // TODO: more principled way of handling this, with more cases
+				if(auto e=cast(DE)e1)
+					return (l.e^^e2.withoutFactor(f)).simplify(facts);
+				if(auto d=cast(Dℚ)e1){
+					if(auto c=cast(Dℚ)l.e){
+						if(c.c<d.c) return (c^^(dLog(d)*e2.withoutFactor(f))).simplify(facts);
+						else return null;
+					}else return (l.e^^(dLog(d)*e2.withoutFactor(f))).simplify(facts);
+				}
 			}
 		}
 		if(auto c=cast(Dℚ)e1){ // TODO: more simplifications with constant base
@@ -2085,8 +2087,8 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 				if(n.c.num<0) return negatePower();
 				if(!(n.c.num&1)){ // even integer power
 					auto z2=rhs^^(1/n), z1=-z2;
+					static if(isDelta) assert(ty==eqZ);
 					if(ty==leZ){
-						static if(isDelta) assert(0);
 						auto le=dIvr(leZ,-rhs)*doIt(mone,ty,e1,z1)*doIt(one,ty,e1,z2);
 						auto ge=dIvr(leZ,rhs)+dIvr(lZ,-rhs)*(doIt(one,ty,e1,z1)+dIvr(neqZ,z2)*doIt(mone,ty,e1,z2));
 						auto evenParity=linearizeConstraints(dIvr(leZ,-parity),var);
@@ -2095,7 +2097,6 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 						return dIvr(leZ,-rhs)*(doIt(one,ty,e1,z1)+dIvr(neqZ,z2)*doIt(one,ty,e1,z2));
 					}else{
 						assert(ty==neqZ);
-						static if(isDelta) assert(0);
 						return dIvr(lZ,rhs)+dIvr(leZ,-rhs)*doIt(one,ty,e1,z1)*doIt(one,ty,e1,z2);
 					}
 				}else{ // odd integer power
@@ -2107,15 +2108,27 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 				if(q2.c<0) return negatePower();
 				assert(q2.c>=0 && q2.c.den != 1);
 				auto r=dIvr(leZ,-rhs)*doIt(parity,ty,e1,rhs^^dℚ(q2.c.opUnary!"/"));
+				static if(isDelta) assert(ty==eqZ);
 				if(ty==leZ){
 					auto oddParity=linearizeConstraints(dIvr(lZ,parity).simplify(one),var);
 					r=oddParity*dIvr(lZ,rhs)+r;
 				}else if(ty==neqZ){
-					static if(isDelta) assert(0);
 					r=dIvr(lZ,rhs)+r;
 				}
 				return r;
+			}else if(!e1.hasFreeVar(var)&&dIvr(DIvr.Type.leZ,e1).simplify(one)==zero){
+				auto r=dIvr(lZ,-rhs)*doIt(parity,ty,dLog(e1)*e2,dLog(rhs));
+				static if(isDelta) assert(ty==eqZ);
+				if(ty==leZ){
+					auto oddParity=linearizeConstraints(dIvr(lZ,parity).simplify(one),var);
+					r=oddParity*dIvr(leZ,rhs)+r;
+				}else if(ty==neqZ){
+					r=dIvr(leZ,rhs)+r;
+				}
+				return r;
 			}
+		}else if(auto l=cast(DLog)lhs){
+			return doIt(parity,ty,l.e,dE^^rhs);
 		}
 		if(ty==leZ){
 			static if(isDelta) assert(0);
@@ -2220,7 +2233,7 @@ DExpr solveFor(DExpr lhs,DVar var,DExpr rhs,SolUse usage,ref SolutionInfo info){
 	}
 	if(auto p=cast(DPow)lhs){
 		if(p.operands[1]==mone){
-			if(couldBeZero(rhs)){ // TODO: is this right? (This is guaranteed never to happen for dirac deltaas, so maybe optimize it out for that caller).
+			if(couldBeZero(rhs)){ // TODO: is this right? (This is guaranteed never to happen for dirac deltas, so maybe optimize it out for that caller).
 				info.needCaseSplit=true;
 				if(usage.caseSplit) info.caseSplits~=SolutionInfo.CaseSplit(rhs,one);
 			}

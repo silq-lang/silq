@@ -170,6 +170,15 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration;
+	//writeln("(∫dξ₁[-log(10)+log(ξ₁)≤0]·[-ξ₁+1≤0]·[ξ₁≠0]·⅟ξ₁)".dParse.simplify(one));
+	//writeln("∫dr₁[-log(10)+log(r₁)≤0]·[-r₁+1≤0]·[r₁≠0]·⅟log(10)·⅟r₁".dParse.simplify(one));
+	//writeln("[-1/e^x≤0]".dParse.linearizeConstraints("x".dVar).simplify(one));
+	//writeln("[-log(10)+log(x)≤0]".dParse.linearizeConstraints("x".dVar).simplify(one));
+	//writeln("(-[⅟e^r₁≤0]·e^(-10+r₁)+[-⅟e^r₁≤0]·e^(-10+r₁))·[-e^r₁≤0]·[-e¹⁰+e^r₁≤0]".dParse.linearizeConstraints("r₁".dVar).simplify(one));
+	//writeln("∫dx[-e¹⁰+x≤0]·[-x≤0]·[x≠0]·δ[-r₁+log(x)]·⅟e¹⁰".dParse.simplify(one));
+	//writeln("[-e¹⁰+x≤0]·[-x≤0]·[x≠0]·δ[-r₁+log(x)]·⅟e¹⁰".dParse.linearizeConstraints("x".dVar).simplify(one));
+	//writeln("δ[x-log(y)]".dParse.linearizeConstraints("y".dVar).simplify(one));
+	//writeln("δ[x-e^y]".dParse.linearizeConstraints("y".dVar).simplify(one));
 	//writeln("∫dξ₁ δ[(-1/2+-ξ₁²·⅟2+ξ₁)·⅟(-ξ₁+1)+r₁]".dParse.simplify(one));
 	//writeln("1/-x".dParse.simplify(one));
 	//writeln("(-1)^(1/2)*(-x)^(1/2)".dParse.simplify(one));
