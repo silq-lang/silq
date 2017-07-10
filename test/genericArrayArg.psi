@@ -1,0 +1,7 @@
+
+def id[a](x:a)⇒x;
+def id_arr[a](x:a[])⇒id[a[]](x);
+
+def main(){
+	return; // expected: 1
+}

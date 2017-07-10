@@ -1034,7 +1034,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 			ce.loc=idx.loc;
 			return expr=callSemantic(ce,sc);
 		}
-		if(auto ty=cast(Type)idx.e)
+		if(idx.e.type==typeTy)
 			if(auto tty=typeSemantic(expr,sc))
 				return tty;
 		propErr(idx.e,idx);
