@@ -5,5 +5,5 @@ def main(){
        x = x + 1;
     }
     z := gauss(0,1)^gauss(0,1);
-    return; // expected: TODO: 0
+    return; // expected: 0
 }
