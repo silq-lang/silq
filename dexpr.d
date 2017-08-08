@@ -235,11 +235,11 @@ enum forEachSubExprImpl(string code)=mixin(X!q{
 	foreach(i,se;subExprs){
 		static if(is(typeof(se):DExpr)){
 			alias x=se;
-			@(code);
+			@(code)
 		}else static if(is(typeof(se)==SetX!DExpr)||is(typeof(se)==DExpr[])||is(typeof(se)==DExpr[2])){
-			foreach(x;se) @(code);
+			foreach(x;se) @(code)
 		}else static if(is(typeof(se)==DExpr[string])){
-			foreach(k,x;values) @(code);
+			foreach(k,x;values) @(code)
 		}else{
 			import type: Type;
 			import declaration: FunctionDef;
@@ -276,7 +276,7 @@ mixin template Visitors(){
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
 		// TODO: fix this.
 		static if(!(is(typeof(this)==DLambda)||is(typeof(this)==DInt)||is(typeof(this)==DSum)||is(typeof(this)==DLim)||is(typeof(this)==DDiff)||is(typeof(this)==DDelta)||is(typeof(this)==DDiscDelta)))
-			mixin(forEachSubExprImpl!"if(auto r=dg(x)) return r");
+			mixin(forEachSubExprImpl!"if(auto r=dg(x)) return r;");
 		return 0;
 	}
 	override int freeVarsImpl(scope int delegate(DVar) dg,ref DExprSet visited){

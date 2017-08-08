@@ -32,9 +32,6 @@ PSI is written in the D programming language. D compilers are available at http:
 ./build.sh creates a debug build.
 ./build-release creates a release build.
 
-*NOTE:* The tests do not currently pass with the release build (PSI computes equivalent, but different expressions).
-(There is a nondeterministic-order-of-iteration issue.)
-
 ### Other platforms
 
 The build instructions given here are for GNU/Linux. PSI also works on other platforms.
