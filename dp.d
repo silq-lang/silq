@@ -80,9 +80,12 @@ struct Dist{
 	}
 	DExpr expectation(DLambda lambda,bool hasFrame){
 		if(!hasFrame){
-			DExpr r=zero;
-			foreach(k,v;state) r=(r+v*dApply(lambda,k)).simplify(one);
-			return r;
+			DExpr r1=zero,r2=zero;
+			foreach(k,v;state){
+				r1=(r1+v*dApply(lambda,k)).simplify(one);
+				r2=(r2+v).simplify(one);
+			}
+			return (r1/r2).simplify(one);
 		}
 		MapX!(DExpr,Q!(Q!(DExpr,DExpr)[],DExpr,DExpr)) byFrame;
 		foreach(k,v;state){
