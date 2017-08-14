@@ -591,6 +591,7 @@ class DDeBruijnVar: DVar{
 	}
 }
 mixin FactoryFunction!DDeBruijnVar;
+@property db1(){ return dDeBruijnVar(1); }
 
 // substitute all variables from 'from' by the respective expressions in 'to' at the same time (avoiding capture)
 DExpr substituteAll(DExpr e,DVar[] from, DExpr[] to)in{assert(from.length==to.length);}body{
@@ -2799,7 +2800,7 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 
 	static DExpr constructHook(DExpr var,DExpr e){
 		static bool isNumeric(DExpr e){ // TODO: merge dDelta and dDiscDelta completely, such that type information is irrelevant
-			return cast(Dℚ)e||cast(DPlus)e||cast(DMult)e||cast(DPow)e||cast(DIvr)e;
+			return cast(Dℚ)e||cast(DPlus)e||cast(DMult)e||cast(DPow)e||cast(DIvr)e||cast(DFloor)e||cast(DCeil)e||cast(DLog)e;
 		}
 		if(isNumeric(e)||isNumeric(var)) return dDelta(var-e);
 		return null;
