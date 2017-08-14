@@ -193,10 +193,11 @@ Cond[] exponentialCond(DExpr λ){
 
 DExpr studentTPDF(DVar var,DExpr ν){ // this has a mean only if ν>1. how to treat this?
 	auto nnorm=(1+var^^2/ν)^^(-(ν+1)/2);
-	return nnorm/dIntSmp(var,nnorm,one);
+	return dIvr(DIvr.Type.neqZ,ν)*nnorm/dIntSmp(var,nnorm,one)+
+		dIvr(DIvr.Type.eqZ,ν)*dDelta(var);
 }
 Cond[] studentTCond(DExpr ν){
-	return [Cond(dIvr(DIvr.Type.lZ,-ν),"ν must be positive")];
+	return [Cond(dIvr(DIvr.Type.leZ,-ν),"ν must be non-negative")];
 }
 
 DExpr weibullPDF(DVar var,DExpr λ,DExpr k){
