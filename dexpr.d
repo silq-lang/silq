@@ -3921,7 +3921,7 @@ class DMCase: DExpr{ // TODO: generalize?
 		auto ne=e.simplify(facts);
 		auto nval=val.simplify(facts.incDeBruijnVar(1,0).simplify(one));
 		auto nerr=err.simplify(facts);
-		if(cast(DMonad)e){
+		if(cast(DMonad)ne){
 			if(auto v=cast(DVal)ne)
 				return unbind(val,v.e).simplify(facts);
 			if(cast(DErr)ne)
