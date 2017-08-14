@@ -272,8 +272,47 @@ struct DParser{
 		if(!cast(DDeBruijnVar)var) --numBinders;
 		expect('.');
 		auto expr=parseDExpr();
-		if(cast(DDeBruijnVar)var) ++numBinders;
+		if(cast(DDeBruijnVar)var) --numBinders;
 		return dLambda(var,expr);
+	}
+
+	DVal parseDVal()in{assert(code.startsWith("val"));}body{
+		code=code["val".length..$];
+		expect('(');
+		auto e=parseDExpr();
+		expect(')');
+		return dVal(e);
+	}
+
+	DErr parseDErr(){
+		expect('⊥');
+		return dErr();
+	}
+
+	DMCase parseDMCase()in{assert(code.startsWith("case"));}body{
+		code=code["case".length..$];
+		expect('(');
+		auto e=parseDExpr();
+		expect(')');
+		expect('{');
+		skipWhitespace();
+		if(!code.startsWith("val"))
+			throw new Exception("expected 'val' case");
+		code=code["val".length..$];
+		expect('(');
+		++numBinders;
+		auto var=parseDVar();
+		if(!cast(DDeBruijnVar)var) --numBinders;
+		expect(')');
+		expect('⇒');
+		auto val=parseDExpr();
+		if(cast(DDeBruijnVar)var) --numBinders;
+		expect(';');
+		expect('⊥');
+		expect('⇒');
+		auto err=parseDExpr();
+		expect('}');
+		return dMCase(e,val.incDeBruijnVar(1,0).substitute(var,db1),err);
 	}
 
 	DExpr parseBase(){
@@ -348,6 +387,9 @@ struct DParser{
 		if(cur()=='|'||code.startsWith("abs")) return parseDAbs();
 		if(code.startsWith("log")) return parseLog();
 		if(code.startsWith("lim")) return parseLim();
+		if(code.startsWith("val")) return parseDVal();
+		if(code.startsWith("⊥")) return parseDErr();
+		if(code.startsWith("case")) return parseDMCase();
 		if(cur()=='⅟'){
 			next();
 			return 1/parseFactor();
@@ -440,7 +482,7 @@ struct DParser{
 	
 	bool hasFactor(){
 		return code.length && !isBinaryOp(cur())
-			&& cur()!=')' && cur()!='}' && cur()!=']' && cur() != '⌋' && cur() != '⌉' && cur!=',';
+			&& cur()!=')' && cur()!='}' && cur()!=']' && cur() != '⌋' && cur() != '⌉' && cur!=',' && cur != ';';
 	}
 
 	DExpr parseJMult(){
