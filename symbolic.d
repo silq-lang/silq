@@ -76,7 +76,7 @@ private struct Analyzer{
 		class Unwind: Exception{ this(){ super(""); } }
 		void unwind(){ throw new Unwind(); }
 		import scope_;
-		DExpr getContextFor(Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{
+		static DExpr getContextFor(Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{
 			DExpr r=null;
 			auto meaningScope=meaning.scope_;
 			if(auto fd=cast(FunctionDef)meaning)
