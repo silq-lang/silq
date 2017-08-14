@@ -201,11 +201,13 @@ Cond[] studentTCond(DExpr ν){
 }
 
 DExpr weibullPDF(DVar var,DExpr λ,DExpr k){
-	return dIvr(DIvr.Type.leZ,-var)*k/λ*(var/λ)^^(k-1)*dE^^(-(var/λ)^^k);
+	return dIvr(DIvr.Type.neqZ,λ)*dIvr(DIvr.Type.neqZ,k)*
+		dIvr(DIvr.Type.leZ,-var)*k/λ*(var/λ)^^(k-1)*dE^^(-(var/λ)^^k)+
+		dIvr(DIvr.Type.neqZ,dIvr(DIvr.Type.eqZ,λ)+dIvr(DIvr.Type.eqZ,k))*dDelta(var);
 }
 Cond[] weibullCond(DExpr λ,DExpr k){
-	return [Cond(dIvr(DIvr.Type.lZ,-λ),"λ must be positive"),
-	        Cond(dIvr(DIvr.Type.lZ,-k),"k must be positive")];
+	return [Cond(dIvr(DIvr.Type.leZ,-λ),"λ must be non-negative"),
+	        Cond(dIvr(DIvr.Type.leZ,-k),"k must be non-negative")];
 }
 
 DExpr categoricalPDF(DVar var,DExpr p){
