@@ -242,12 +242,16 @@ struct DParser{
 		auto oldCurFun=curFun; scope(exit) curFun=oldCurFun;
 		curFun=dVar(s);
 		DExpr[] args;
-		do{
+		bool isTuple=false;
+		for(;;){
 			next();
 			if(cur()!=')') args~=parseDExpr();
-		}while(cur()==',');
+			if(cur()==',') isTuple=true;
+			else break;
+		}
 		expect(')');
-		return dApply(curFun,dTuple(args));
+		if(!args.length) isTuple=true;
+		return dApply(curFun,isTuple?dTuple(args):args[0]);
 	}
 
 	DExpr parseDLambda(){
