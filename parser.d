@@ -66,7 +66,7 @@ int getLbp(TokenType type) pure{ // operator precedence
 	case Tok!">>", Tok!"<<":
 	case Tok!">>>": return 110;
 	case Tok!"->",Tok!"→": // exponential type
-	case Tok!"⇒",Tok!"↦",Tok!"=>": return 115; // goesto
+	// case Tok!"⇒",Tok!"↦",Tok!"=>": return 115; // goesto
 	// additive operators
 	case Tok!"+",Tok!"-",Tok!"~":
 		return 120;
