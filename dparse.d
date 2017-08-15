@@ -233,26 +233,6 @@ struct DParser{
 		string s=parseIdentifier();
 		return varOrBound(s);
 	}
-	DVar curFun=null;
-	DExpr parseDVarDFun(){
-		string s=parseIdentifier();
-		if(cur()!='('){
-			return varOrBound(s);
-		}
-		auto oldCurFun=curFun; scope(exit) curFun=oldCurFun;
-		curFun=dVar(s);
-		DExpr[] args;
-		bool isTuple=false;
-		for(;;){
-			next();
-			if(cur()!=')') args~=parseDExpr();
-			if(cur()==',') isTuple=true;
-			else break;
-		}
-		expect(')');
-		if(!args.length) isTuple=true;
-		return dApply(curFun,isTuple?dTuple(args):args[0]);
-	}
 
 	DExpr parseDLambda(){
 		expect('λ');
@@ -312,6 +292,8 @@ struct DParser{
 		expect('⇒');
 		auto err=parseDExpr();
 		expect('}');
+		// TODO: create a dMCase constructor?
+		if(var==dDeBruijnVar(1)) return dMCase(e,val,err);
 		return dMCase(e,val.incDeBruijnVar(1,0).substitute(var,db1),err);
 	}
 
@@ -404,7 +386,7 @@ struct DParser{
 			next();
 			return dΠ;
 		}
-		return parseDVarDFun();
+		return parseDVar();
 	}
 
 	bool isDIvr(){
@@ -413,11 +395,23 @@ struct DParser{
 		return true;
 	}
 
-	DExpr parseIndex(){
+	DExpr parsePostfix(){
 		auto e=parseBase();
-		while(cur()=='['||cur()=='{'||cur()=='.'){
+		while(cur()=='('||cur()=='['||cur()=='{'||cur()=='.'){
 			if(isDIvr()) return e;
-			if(cur()=='['){
+			if(cur()=='('){
+				DExpr[] args;
+				bool isTuple=false;
+				for(;;){
+					next();
+					if(cur()!=')') args~=parseDExpr();
+					if(cur()==',') isTuple=true;
+					else break;
+				}
+				expect(')');
+				if(!args.length) isTuple=true;
+				e=dApply(e,isTuple?dTuple(args):args[0]);
+			}else if(cur()=='['){
 				next();
 				auto i=parseDExpr();
 				if(cur()=='↦'){
@@ -446,7 +440,7 @@ struct DParser{
 	
 
 	DExpr parseDPow(){
-		auto e=parseIndex();
+		auto e=parsePostfix();
 		if(cur()=='^'){
 			next();
 			return e^^parseFactor();
