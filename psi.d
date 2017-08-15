@@ -25,13 +25,15 @@ string readCode(File f){
 }
 string readCode(string path){ return readCode(File(path)); }
 
-int run(string path){
-	path = getActualPath(path);
-	auto ext = path.extension;
-	if(ext !=".psi"){
-		stderr.writeln(path~": unrecognized extension: "~ext);
-		return 1;
-	}
+string importPath;
+static this(){ importPath = dirName(file.thisExePath); }
+@property string preludePath(){
+	// TODO: use conditional compilation within prelude.psi instead
+	if(opt.noCheck) return "library/prelude-nocheck.psi";
+	return "library/prelude.psi";
+}
+
+int parseFile(string path,ErrorHandler err,ref Expression[] r){
 	string code;
 	try code=readCode(path);
 	catch(Exception){
@@ -40,10 +42,33 @@ int run(string path){
 		return 1;
 	}
 	auto src=new Source(path, code);
+	r=parser.parseFile(src,err);
+	return 0;
+}
+
+int run(string path){
+	path = getActualPath(path);
+	auto ext = path.extension;
+	if(ext !=".psi"){
+		stderr.writeln(path~": unrecognized extension: "~ext);
+		return 1;
+	}
 	auto err=new FormattingErrorHandler();
-	auto exprs=parseFile(src,err);
+	static Scope prsc=null;
+	Expression[] prelude;
+	if(!prsc){
+		if(auto r=parseFile(buildPath(importPath,preludePath),err,prelude))
+			return r;
+		prsc=new TopScope(err);
+		prelude=semantic(prelude,prsc);
+	}
+	Expression[] exprs;
+	if(auto r=parseFile(path,err,exprs))
+		return r;
 	if(err.nerrors) return 1;
-	exprs=semantic(exprs,new TopScope(err));
+	auto sc=new TopScope(err);
+	sc.import_(prsc);
+	exprs=semantic(exprs,sc);
 	if(err.nerrors) return 1;
 	FunctionDef[string] functions;
 	foreach(expr;exprs){
@@ -170,6 +195,8 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration;
+	//writeln("δ___r₁[λξ₁. (∑_ξ₂(1/2)^(1+ξ₂)·[-ξ₂≤0]·δ_ξ₁[val(ξ₂)])·⅟(∑_ξ₂(1/2)^(1+ξ₂)·[-ξ₂≤0])]·(∫dξ₁∫dξ₂[∫dξ₃(case(ξ₃){ val(ξ₄) ⇒ 1;⊥ ⇒ 0})·__r₁(ξ₃)≠0]·δ[(∫dξ₃(case(ξ₃){ val(ξ₄) ⇒ ξ₄;⊥ ⇒ 0})·__r₁(ξ₃))·⅟(∫dξ₃(case(ξ₃){ val(ξ₄) ⇒ 1;⊥ ⇒ 0})·__r₁(ξ₃))+-ξ₂]·δ_ξ₁[val(ξ₂)]·(case(ξ₁){ val(ξ₂) ⇒ δ___r₂[ξ₂];⊥ ⇒ 0}))".dParse.simplify(one));
+	//writeln("(∫dξ₁(δ_ξ₁[val(λξ₂. (∑_ξ₃(1/2)^(1+ξ₃)·[-ξ₃≤0]·δ_ξ₂[val(ξ₃)])·⅟(∑_ξ₃(1/2)^(1+ξ₃)·[-ξ₃≤0]))])·(case(ξ₁){ val(ξ₂) ⇒ δ___r₁[ξ₂];⊥ ⇒ 0}))·(∫dξ₁∫dξ₂[∫dξ₃(case(ξ₃){ val(ξ₄) ⇒ 1;⊥ ⇒ 0})·__r₁(ξ₃)≠0]·δ[(∫dξ₃(case(ξ₃){ val(ξ₄) ⇒ ξ₄;⊥ ⇒ 0})·__r₁(ξ₃))·⅟(∫dξ₃(case(ξ₃){ val(ξ₄) ⇒ 1;⊥ ⇒ 0})·__r₁(ξ₃))+-ξ₂]·δ_ξ₁[val(ξ₂)]·(case(ξ₁){ val(ξ₂) ⇒ δ___r₂[ξ₂];⊥ ⇒ 0}))".dParse.simplify(one));
 	//writeln("δ[y-2^x]".dParse.linearizeConstraints("x".dVar).simplify(one));
 	//writeln("(∫dξ₁[-log(10)+log(ξ₁)≤0]·[-ξ₁+1≤0]·[ξ₁≠0]·⅟ξ₁)".dParse.simplify(one));
 	//writeln("∫dr₁[-log(10)+log(r₁)≤0]·[-r₁+1≤0]·[r₁≠0]·⅟log(10)·⅟r₁".dParse.simplify(one));

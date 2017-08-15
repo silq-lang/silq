@@ -78,9 +78,26 @@ class TopScope: Scope{
 	this(ErrorHandler handler){
 		this.handler_=handler;
 	}
+	final void import_(Scope sc){
+		imports~=sc;
+	}
+	override Declaration lookup(Identifier ident,bool rnsym){
+		if(auto d=super.lookup(ident,rnsym)) return d;
+		Declaration[] ds;
+		foreach(sc;imports) if(auto d=sc.lookup(ident,rnsym)) ds~=d;
+		if(ds.length==1) return ds[0];
+		if(ds.length>1){
+			error(format("multiple imports of '%s'",ident.name),ident.loc);
+			foreach(d;ds) note("declaration here",d.loc);
+			// TODO: return error
+		}
+		return null;
+	}
 	override FunctionDef getFunction(){ return null; }
 	override DatDecl getDatDecl(){ return null; }
 	override ForExp getForExp(){ return null; }
+private:
+	Scope[] imports; // TODO: local imports, import declarations
 }
 
 class NestedScope: Scope{
