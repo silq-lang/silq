@@ -930,7 +930,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 			meaning=sc.lookup(id,false);
 			if(!meaning){
 				if(auto r=builtIn(id,sc)){
-					if(!id.calledDirectly&&util.among(id.name,"Marginal","sampleFrom")){
+					if(!id.calledDirectly&&util.among(id.name,"Expectation","Marginal","sampleFrom")){
 						sc.error("special operator must be called directly",id.loc);
 						id.sstate=r.sstate=SemState.error;
 					}
