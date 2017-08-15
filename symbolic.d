@@ -287,143 +287,14 @@ private struct Analyzer{
 					}
 					auto arg=util.among(id.name,"categorical","dirac","Dirac","sampleFrom")?null:doIt(ce.arg);
 					if(isBuiltIn(id)) switch(id.name){
-					case "array": // TODO: make polymorphic
-						assert(ce.arg.type==typeTy);
-						auto idist=new Distribution();
-						auto len=idist.declareVar("`len"),init=idist.declareVar("`init");
-						idist.addArgs([len,init],true,null);
-						if(!opt.noBoundsCheck) idist.assertTrue(dIsℤ(len), "array length must be an integer");
-						auto r=idist.declareVar("`r");
-						idist.initialize(r,dConstArray(len,init),arrayTy(ce.arg));
-						idist.orderFreeVars([r],false);
-						return idist.toDExpr();
 					case "readCSV":
 						err.error(text("call to 'readCSV' only supported as the right hand side of an assignment"),ce.loc);
 						unwind();
 						assert(0);
-					case "exp":
-						if(ce.arg.type!=ℝ)
-							err.error("expected one real argument to exp",ce.loc);
-						return dE^^arg;
-					case "log":
-						if(ce.arg.type!=ℝ)
-							err.error("expected one real argument to log",ce.loc);
-						dist.assertTrue(dIvr(DIvr.Type.lZ,-arg),formatError("nonpositive argument to log",e.loc));
-						return dLog(arg);
-					case "sin":
-						if(ce.arg.type!=ℝ)
-							err.error("expected one real argument to sin",ce.loc);
-						return dSin(arg);
-					case "cos":
-						if(ce.arg.type!=ℝ)
-							err.error("expected one real argument to cos",ce.loc);
-						return dSin(arg+dΠ/2);
-					case "abs":
-						if(ce.arg.type!=ℝ)
-							err.error("expected one argument to abs",ce.loc);
-						return dAbs(doIt(ce.arg));
-					case "floor":
-						if(ce.arg.type!=ℝ)
-							err.error("expected one real argument to floor",ce.loc);
-						return dFloor(arg);
-					case "ceil":
-						if(ce.arg.type!=ℝ)
-							err.error("expected one real argument to floor",ce.loc);
-						return dCeil(arg);
 					case "cosUnifDist": // TODO: Remove
 						auto var=dist.getTmpVar("__g");
 						dist.distribute(one/dΠ*(1-var^^2)^^-(one/2) * dBounded!"[]"(var,-one, one) * dIvr(DIvr.Type.neqZ,var-one)*dIvr(DIvr.Type.neqZ,var+one));
 						return var;
-					case "categorical":
-						if(ce.arg.type!=arrayTy(ℝ)){
-							err.error("expected one argument (ps: ℝ[]) to categorical",ce.loc);
-							unwind();
-						}
-						auto idd=cast(Identifier)ce.arg;
-						if(idd && idd.name in arrays){
-							// DExpr sum=zero;
-							auto array=arrays[idd.name];
-
-							foreach(x;array){
-								dist.assertTrue(dIvr(DIvr.Type.leZ,-x),"probability of category should be non-negative");
-								// sum=sum+x;
-							}
-							// dist.assertTrue(dIvr(DIvr.Type.eqZ,sum-1),"probabilities should sum up to 1"); // TODO: don't enforce this to vigorously for floats
-							DExpr d=zero;
-							auto var=dist.getTmpVar("__c");
-							foreach(i,x;array) d=d+x*dDelta(var,dℚ(i),ℝ);
-							dist.distribute(d);
-							return var;
-						}else{
-							auto p=doIt(ce.arg);
-							auto dbv=dDeBruijnVar(1);
-							dist.assertTrue(dIvr(DIvr.Type.eqZ,dSum(dBounded!"[)"(dbv,zero,dField(p,"length"))*dIvr(DIvr.Type.lZ,p[dbv]))),"probability of category should be non-negative"); // TODO: dProd?
-							dist.assertTrue(dIvr(DIvr.Type.eqZ,dSum(dBounded!"[)"(dbv,zero,dField(p,"length"))*p[dbv])-1),"probabilities should sum up to 1");
-							auto var=dist.getTmpVar("__c");
-							dist.distribute(categoricalPDF(var,p));
-							return var;
-							//err.error("argument to categorical should be an array",ce.loc);
-							//unwind();
-						}
-					case "dirac":
-						assert(ce.arg.type == typeTy);
-						auto idist=new Distribution();
-						auto x_arg=idist.declareVar("`x");
-						idist.addArgs([x_arg],false,null);
-						auto x_res=idist.declareVar("`x'");
-						idist.initialize(x_res,x_arg,ce.arg);
-						idist.orderFreeVars([x_res],false);
-						return idist.toDExpr();
-					case "Dirac":
-						assert(ce.arg.type == typeTy);
-						auto idist=new Distribution();
-						auto x=idist.declareVar("`x");
-						auto darg=idist.declareVar("`arg");
-						idist.addArgs([darg],false,null);
-						idist.distribute(pdf!"dirac"(x,[darg]));
-						idist.orderFreeVars([x],false);
-						auto rdist=new Distribution();
-						auto varg=rdist.declareVar("`varg");
-						rdist.addArgs([varg],false,null);
-						auto r=rdist.declareVar("`r");
-						auto db1=dDeBruijnVar(1);
-						auto res=dApply(idist.toDExpr(),varg);
-						auto fty=cast(FunTy)ce.type;
-						assert(!!fty);
-						rdist.initialize(r,res,fty.cod);
-						rdist.orderFreeVars([r],false);
-						return rdist.toDExpr();
-					case "bernoulli": goto case "flip";
-					case "Bernoulli": goto case "Flip";
-					foreach(name;ToTuple!distribNames){
-						static if(!util.among(name,"categorical","dirac")){
-							case name:
-								auto nargs=paramNames!name.length;
-								auto args=nargs==1?[arg]:iota(nargs).map!(i=>arg[i.dℚ]).array;
-								foreach(c;cond!name(args))
-									dist.assertTrue(c.cond,formatError(c.error,e.loc));
-								auto var=dist.getTmpVar("__"~name[0]);
-								dist.distribute(pdf!name(var,args));
-								return var;
-						}
-						static if(!util.among(name,"dirac")){
-							case util.capitalize(name):
-								auto nargs=paramNames!name.length;
-								auto args=nargs==1?[arg]:iota(nargs).map!(i=>arg[i.dℚ]).array;
-								foreach(c;cond!name(args))
-									dist.assertTrue(c.cond,formatError(c.error,e.loc));
-
-								auto idist=new Distribution();
-								auto argv=idist.declareVar("`arg");
-								idist.addArgs([argv],false,null);
-								auto vargs=nargs==1?[cast(DExpr)argv]:iota(nargs).map!(i=>argv[i.dℚ]).array;
-								auto x=idist.declareVar("`x");
-								idist.distribute(pdf!name(x,vargs));
-								idist.orderFreeVars([x],false);
-								auto db1=dDeBruijnVar(1);
-								return dApply(idist.toDExpr(),arg);
-						}
-					}
 					case "Marginal":
 						auto idist=dist.dup();
 						auto r=idist.getVar("`r");
@@ -463,58 +334,6 @@ private struct Analyzer{
 						auto tmp=dist.getTmpVar("__exp");
 						dist.distribute(dDelta(tmp,expct/total,ℝ));
 						return tmp;
-					case "infer":
-						if(ce.arg.type!=typeTy){
-							err.error("expected one type argument [a] to infer",ce.loc);
-							unwind();
-						}
-						auto fty=cast(ForallTy)ce.type;
-						auto dfty=cast(ForallTy)fty.dom;
-						assert(dfty&&dfty.dom==unit);
-						auto idist=new Distribution();
-						auto f=idist.declareVar("`f");
-						idist.addArgs([f],false,null);
-						auto fdist=Distribution.fromDExpr(f,0,true,["`val".dVar],false,[dfty.cod]);
-						fdist.renormalize();
-						auto r=idist.declareVar("`dist");
-						idist.initialize(r,dApply(fdist.toDExpr(),dTuple([])),fty.cod);
-						idist.orderFreeVars([r],false);
-						return idist.toDExpr();
-					case "sample":
-						auto idist=new Distribution();
-						auto distr=idist.declareVar("`distr");
-						idist.addArgs([distr],false,null);
-						auto d=idist.declareVar("`d");
-						auto r=idist.declareVar("`r");
-						if(!opt.noCheck){
-							auto dist=dDistApply(distr,d);
-							auto db1=dDeBruijnVar(1);
-							idist.distribute(dMCase(d,dDiscDelta(r,db1),zero)*dist);
-							idist.error=dInt(d,dMCase(d,zero,one)*dist);
-							idist.marginalize(d);
-						}else{
-							idist.distribute(dDistApply(distr,r));
-						}
-						idist.orderFreeVars([r],false);
-						return idist.toDExpr().simplify(one);
-					case "expectation": // TODO: handle non-convergence
-						auto distr=doIt(ce.arg);
-						auto db1=dDeBruijnVar(1);
-						auto d="`d".dVar,x="`x".dVar;
-						auto pdf=opt.noCheck?dDistApply(distr,x):dInt(d,dDistApply(distr,d)*dMCase(d,dDiscDelta(x,db1),zero));
-						auto total=dInt(x,pdf),expct=dInt(x,x*pdf);
-						dist.assertTrue(dIvr(DIvr.Type.neqZ,total),"cannot compute conditional expectation");
-						return expct/total;
-					case "errorPr":
-						auto idist=new Distribution();
-						auto distr=idist.declareVar("`distr");
-						auto d="`d".dVar,x="`x".dVar;
-						auto errorPr=opt.noCheck?zero:dInt(d,dDistApply(distr,d)*dMCase(d,zero,one));
-						idist.addArgs([distr],false,null);
-						auto r=idist.declareVar("`r");
-						idist.initialize(r,errorPr,ℝ);
-						idist.orderFreeVars([r],false);
-						return idist.toDExpr().simplify(one);
 					default: break;
 					}
 				}

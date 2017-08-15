@@ -277,24 +277,13 @@ Expression toplevelSemantic(Expression expr,Scope sc){
 bool isBuiltIn(Identifier id){
 	if(!id||id.meaning) return false;
 	switch(id.name){
-	case "array":
-	case "exp","log","sin","cos","abs":
-	case "floor","ceil":
-	case "bernoulli": goto case "flip";
-	case "Bernoulli": goto case "Flip";
-	foreach(name;ToTuple!distribNames){
-		case name: goto case;
-		case capitalize(name): goto case;
-	}
-	case "infer","Distribution","sample","expectation","errorPr":
-		return false;
-	default: return false;
 	case "π":
 	case "readCSV":
 	case "cosUnifDist":
 	case "Marginal","sampleFrom":
 	case "Expectation":
 		return true;
+	default: return false;
 	}
 }
 
