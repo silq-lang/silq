@@ -430,8 +430,8 @@ private struct Analyzer{
 						idist.hasArgs=false;
 						idist.addArgs([],true,null);
 						idist.initialize(r,arg,ce.arg.type);
-						foreach(v;idist.freeVars)
-							if(v != r) idist.marginalize(v);
+						foreach(v;dist.freeVars)
+							idist.marginalize(v);
 						idist.orderFreeVars([r],false);
 						return dApply(idist.toDExpr(),dTuple([]));
 					case "sampleFrom":
