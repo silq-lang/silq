@@ -36,7 +36,7 @@ Cond[] gaussCond(DExpr μ,DExpr ν){
 }
 
 DExpr chiSquaredPDF(DVar var,DExpr k){
-	return dIvr(DIvr.Type.neqZ,k)/(2^^(k/2)*dGamma(k/2))*var^^(k/2-1)*dE^^(-var/2)+
+	return dIvr(DIvr.Type.neqZ,k)*dIvr(DIvr.Type.leZ,-var)/(2^^(k/2)*dGamma(k/2))*var^^(k/2-1)*dE^^(-var/2)+
 		dIvr(DIvr.Type.eqZ,k)*dDelta(var);
 }
 Cond[] chiSquaredCond(DExpr k){

@@ -1,0 +1,3 @@
+def main(){
+	return gauss(0,1)^2+gauss(0,1)^2; // expected: TODO: 1/2·[-r₁≤0]·⅟e^(1/2·r₁)
+}
