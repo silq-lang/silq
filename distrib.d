@@ -466,7 +466,7 @@ class Distribution{
 		auto vars=orderedFreeVars;
 		assert(isTuple||vars.length==1);
 		auto values=(isTuple&&!stripContext?dTuple(cast(DExpr[])vars):vars[0]).incDeBruijnVar(1,0);
-		auto dist=distribution.incDeBruijnVar(1,0);
+		auto dist=distribution.incDeBruijnVar(2,0);
 		auto db2=dDeBruijnVar(2);
 		auto allVars=cast(DVar[])args;
 		DExpr[] allVals;
