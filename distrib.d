@@ -482,11 +482,11 @@ class Distribution{
 			auto r=dist*dDiscDelta(db1,dVal(values));
 			foreach(v;vars) r=dInt(v,r);
 			r=r+dDiscDelta(db1,dErr)*error.substituteAll(allVars,allVals);
-			return dLambda(r);
+			return dDistLambda(r);
 		}else{
 			auto r=dist*dDiscDelta(db1,values);
 			foreach(v;vars) r=dInt(v,r);
-			return dLambda(r);
+			return dDistLambda(r);
 		}
 	}
 	

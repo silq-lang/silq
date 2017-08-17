@@ -17,12 +17,12 @@ def array[a](length: ℝ, init:a): a[] ⇒ sampleFrom("(r;length,init)=>δ[-r+[i
 
 // first-class inference
 dat Distribution[a]{ } // TODO: dat Distribution[a];
-def infer[a](f:𝟙→ a):Distribution[a] ⇒ sampleFrom("(r;f)=>δ_r[λx.f()(x)/∫dy f()(y)]",f):Distribution[a];
+def infer[a](f:𝟙→ a):Distribution[a] ⇒ sampleFrom("(r;f)=>δ_r[Λx.f()[x]/∫dy f()[y]]",f):Distribution[a];
 def errorPr[a](d:Distribution[a]):ℝ ⇒ 0;
-def sample[a](d:Distribution[a]):a ⇒ sampleFrom("(x;d)=>d(x)",d):a;
+def sample[a](d:Distribution[a]):a ⇒ sampleFrom("(x;d)=>d[x]",d):a;
 def expectation(d:Distribution[ℝ]):ℝ {
-	total := (sampleFrom("(r;d)=>δ[-r+∫dx d(x)]",d):ℝ);
-	expect := (sampleFrom("(r;d)=>δ[-r+∫dx d(x)·x]",d):ℝ);
+	total := (sampleFrom("(r;d)=>δ[-r+∫dx d[x]]",d):ℝ);
+	expect := (sampleFrom("(r;d)=>δ[-r+∫dx d[x]·x]",d):ℝ);
 	return expect/total;
 }
 
@@ -86,8 +86,8 @@ def StudentT(ν:ℝ):Distribution[ℝ] ⇒ infer(() ⇒ sampleFrom("(x;ν)=>[ν�
 def weibull(λ:ℝ,k:ℝ):ℝ ⇒ sampleFrom("(x;l,k)=>([k=0]·[l≠0]+[l=0])·δ[x]+[-x≤0]·[k≠0]·[l≠0]·k·x^(-1+k)·⅟e^(x^k·⅟l^k)·⅟l^k",λ,k):ℝ;
 def Weibull(λ:ℝ,k:ℝ):Distribution[ℝ] ⇒ infer(() ⇒ sampleFrom("(x;l,k)=>([k=0]·[l≠0]+[l=0])·δ[x]+[-x≤0]·[k≠0]·[l≠0]·k·x^(-1+k)·⅟e^(x^k·⅟l^k)·⅟l^k",λ,k):ℝ);
 
-def categorical(p:ℝ[]):ℝ ⇒ sampleFrom("(x;p)=>∑_i[0≤i]·[i<p.length]·p[i]·δ[i-x]",p):ℝ;
-def Categorical(p:ℝ[]):Distribution[ℝ] ⇒ infer(() ⇒ sampleFrom("(x;p)=>∑_i[0≤i]·[i<p.length]·p[i]·δ[i-x]",p):ℝ);
+def categorical(p:ℝ[]):ℝ ⇒ sampleFrom("(x;p)=>∑_i[0≤i]·[i<p.length]·p@[i]·δ[i-x]",p):ℝ;
+def Categorical(p:ℝ[]):Distribution[ℝ] ⇒ infer(() ⇒ sampleFrom("(x;p)=>∑_i[0≤i]·[i<p.length]·p@[i]·δ[i-x]",p):ℝ);
 
 def dirac[a](x:a) ⇒ x;
 def Dirac[a](x:a) ⇒ infer(()=>x);

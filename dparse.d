@@ -256,6 +256,18 @@ struct DParser{
 		return dLambda(var,expr);
 	}
 
+	DExpr parseDDistLambda(){
+		expect('Λ');
+		++numBinders;
+		auto var=parseDVar();
+		if(!cast(DDeBruijnVar)var) --numBinders;
+		expect('.');
+		auto expr=parseDExpr();
+		if(cast(DDeBruijnVar)var) --numBinders;
+		return dDistLambda(var,expr);
+	}
+
+	
 	DVal parseDVal()in{assert(code.startsWith("val"));}body{
 		code=code["val".length..$];
 		expect('(');
@@ -365,6 +377,7 @@ struct DParser{
 		if(cur()=='∫') return parseDInt();
 		if(cur()=='∑'||code.startsWith("sum")) return parseDSum();
 		if(cur()=='λ') return parseDLambda();
+		if(cur()=='Λ') return parseDDistLambda();
 		if(util.among(cur(),'√','∛','∜')) return parseSqrt();
 		if(cur()=='|'||code.startsWith("abs")) return parseDAbs();
 		if(code.startsWith("log")) return parseLog();
@@ -397,7 +410,7 @@ struct DParser{
 
 	DExpr parsePostfix(){
 		auto e=parseBase();
-		while(cur()=='('||cur()=='['||cur()=='{'||cur()=='.'){
+		while(cur()=='('||cur()=='['||code.startsWith("@[")||cur()=='{'||cur()=='.'){
 			if(isDIvr()) return e;
 			if(cur()=='('){
 				DExpr[] args;
@@ -413,6 +426,11 @@ struct DParser{
 				e=dApply(e,isTuple?dTuple(args):args[0]);
 			}else if(cur()=='['){
 				next();
+				auto arg=parseDExpr();
+				expect(']');
+				e=dDistApply(e,arg);
+			}else if(code.startsWith("@[")){
+				code=code["@[".length..$];
 				auto i=parseDExpr();
 				if(cur()=='↦'){
 					next();

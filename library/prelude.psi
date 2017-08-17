@@ -24,19 +24,19 @@ def array[a](length: ℝ, init:a): a[]{
 // first-class inference
 dat Distribution[a]{ } // TODO: dat Distribution[a];
 def infer[a](f:𝟙→ a):Distribution[a]{
-	assert(sampleFrom("(r;f)=>δ_r[∫dy f()(y)]",f)!=0);
-	return sampleFrom("(r;f)=>δ_r[λx.f()(x)/∫dy f()(y)]",f):Distribution[a];
+	assert(sampleFrom("(r;f)=>δ_r[∫dy f()[y]]",f)!=0);
+	return sampleFrom("(r;f)=>δ_r[Λx.f()[x]/∫dy f()[y]]",f):Distribution[a];
 }
-def errorPr[a](d:Distribution[a]):ℝ ⇒ sampleFrom("(r;d)=>δ_r[∫dx d(x)·(case(x){ val(y) ⇒ 0;⊥ ⇒ 1 })]",d):ℝ;
+def errorPr[a](d:Distribution[a]):ℝ ⇒ sampleFrom("(r;d)=>δ_r[∫dx d[x]·(case(x){ val(y) ⇒ 0;⊥ ⇒ 1 })]",d):ℝ;
 def sample[a](d:Distribution[a]):a{
 	err := errorPr(d);
 	assert(sampleFrom("(x;p)=>(1-p)·δ[1-x]+p·δ[x]",err):ℝ);
-	return sampleFrom("(r;d,b)=>∫dx d(x)·(case(x){ val(y) ⇒ δ_r[y];⊥ ⇒ 0 })/(1-b)",d,err):a;
+	return sampleFrom("(r;d,b)=>∫dx d[x]·(case(x){ val(y) ⇒ δ_r[y];⊥ ⇒ 0 })/(1-b)",d,err):a;
 }
 def expectation(d:Distribution[ℝ]):ℝ {
 	// TODO: check convergence
-	total := (sampleFrom("(r;d)=>δ[-r+∫dx d(x)·(case(x){ val(y) ⇒ 1;⊥ ⇒ 0 })]",d):ℝ);
-	expect := (sampleFrom("(r;d)=>δ[-r+∫dx d(x)·(case(x){ val(y) ⇒ y;⊥ ⇒ 0 })]",d):ℝ);
+	total := (sampleFrom("(r;d)=>δ[-r+∫dx d[x]·(case(x){ val(y) ⇒ 1;⊥ ⇒ 0 })]",d):ℝ);
+	expect := (sampleFrom("(r;d)=>δ[-r+∫dx d[x]·(case(x){ val(y) ⇒ y;⊥ ⇒ 0 })]",d):ℝ);
 	return expect/total;
 }
 
@@ -215,12 +215,12 @@ def Weibull(λ:ℝ,k:ℝ):Distribution[ℝ]{
 }
 
 def categorical(p:ℝ[]):ℝ{
-	assert(sampleFrom("(r;p)=>δ[-r+[∑_i[0≤i]·[i<p.length]·[p[i]<0]=0]·[∑_i[0≤i]·[i<p.length]·p[i]=1]]",p):ℝ);
-	return sampleFrom("(x;p)=>∑_i[0≤i]·[i<p.length]·p[i]·δ[i-x]",p):ℝ;
+	assert(sampleFrom("(r;p)=>δ[-r+[∑_i[0≤i]·[i<p.length]·[p@[i]<0]=0]·[∑_i[0≤i]·[i<p.length]·p@[i]=1]]",p):ℝ);
+	return sampleFrom("(x;p)=>∑_i[0≤i]·[i<p.length]·p@[i]·δ[i-x]",p):ℝ;
 }
 def Categorical(p:ℝ[]):Distribution[ℝ]{
-	assert(sampleFrom("(r;p)=>δ[-r+[∑_i[0≤i]·[i<p.length]·[p[i]<0]=0]·[∑_i[0≤i]·[i<p.length]·p[i]=1]]",p):ℝ);
-	return infer(() ⇒ sampleFrom("(x;p)=>∑_i[0≤i]·[i<p.length]·p[i]·δ[i-x]",p):ℝ);
+	assert(sampleFrom("(r;p)=>δ[-r+[∑_i[0≤i]·[i<p.length]·[p@[i]<0]=0]·[∑_i[0≤i]·[i<p.length]·p@[i]=1]]",p):ℝ);
+	return infer(() ⇒ sampleFrom("(x;p)=>∑_i[0≤i]·[i<p.length]·p@[i]·δ[i-x]",p):ℝ);
 }
 
 def dirac[a](x:a) ⇒ x;

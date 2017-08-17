@@ -249,11 +249,11 @@ enum forEachSubExprImpl(string code)=mixin(X!q{
 	}
 });
 template IncDeBruijnVarType(T){
-	static if(is(T:DVar)||is(T==DLambda)) alias IncDeBruijnVarType=T;
+	static if(is(T:DVar)||is(T==DLambda)||is(T==DDistLambda)) alias IncDeBruijnVarType=T;
 	else alias IncDeBruijnVarType=DExpr;
 }
 template SubstituteType(T){
-	static if(is(T==DLambda)) alias SubstituteType=T;
+	static if(is(T==DLambda)||is(T==DDistLambda)) alias SubstituteType=T;
 	else alias SubstituteType=DExpr;
 }
 import std.traits: hasUDA;
@@ -275,7 +275,7 @@ mixin template Visitors(){
 	static if(!IsAbstract!(typeof(this))):
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
 		// TODO: fix this.
-		static if(!(is(typeof(this)==DLambda)||is(typeof(this)==DInt)||is(typeof(this)==DSum)||is(typeof(this)==DLim)||is(typeof(this)==DDiff)||is(typeof(this)==DDelta)||is(typeof(this)==DDiscDelta)))
+		static if(!(is(typeof(this)==DLambda)||is(typeof(this)==DDistLambda)||is(typeof(this)==DInt)||is(typeof(this)==DSum)||is(typeof(this)==DLim)||is(typeof(this)==DDiff)||is(typeof(this)==DDelta)||is(typeof(this)==DDiscDelta)))
 			mixin(forEachSubExprImpl!"if(auto r=dg(x)) return r;");
 		return 0;
 	}
@@ -442,6 +442,22 @@ mixin template FactoryFunction(T){
 		DLambda dLambda(DVar var,DExpr expr)in{assert(var&&expr&&(!cast(DDeBruijnVar)var||var==dDeBruijnVar(1)));}body{
 			if(var==dDeBruijnVar(1)) return dLambda(expr);
 			return dLambda(expr.incDeBruijnVar(1,0).substitute(var,dDeBruijnVar(1)));
+		}
+	}else static if(is(T==DDistLambda)){
+		@disable DExpr dDistLambdaSmp(DVar var,DExpr expr);
+		DDistLambda dDistLambdaSmp(DExpr expr,DExpr facts)in{assert(expr);}body{
+			auto r=dDistLambda(expr).simplify(facts);
+			assert(!!cast(DDistLambda)r);
+			return cast(DDistLambda)cast(void*)r;
+		}
+		DDistLambda dDistLambdaSmp(DVar var,DExpr expr,DExpr facts)in{assert(var&&expr);}body{
+			auto r=dDistLambda(var,expr).simplify(facts);
+			assert(!!cast(DDistLambda)r);
+			return cast(DDistLambda)cast(void*)r;
+		}
+		DDistLambda dDistLambda(DVar var,DExpr expr)in{assert(var&&expr&&(!cast(DDeBruijnVar)var||var==dDeBruijnVar(1)));}body{
+			if(var==dDeBruijnVar(1)) return dDistLambda(expr);
+			return dDistLambda(expr.incDeBruijnVar(1,0).substitute(var,dDeBruijnVar(1)));
 		}
 	}else static if(is(T==DRecord)){
 		auto dRecord(){ return dRecord((DExpr[string]).init); }
@@ -876,6 +892,21 @@ class DPlus: DCommutAssocOp{
 				return null;
 			}
 
+			if(auto p1=cast(DPow)e1){
+				if(p1.operands[0]==mone){
+					if(auto p2=cast(DPow)e2){
+						if(p2.operands[0]==mone){
+							auto diff=(p1.operands[1]-p2.operands[1]).simplify(facts);
+							if(auto z=diff.isInteger()){
+								assert(z.c.den==1);
+								if(z.c.num&1) return zero;
+								return (2*e1).simplify(facts);
+							}
+						}
+					}
+				}
+			}
+			
 			if(auto r=combineFloat(e1,e2)) return r;
 
 			if(auto r=recursiveCombine(e1,e2,facts))
@@ -3486,13 +3517,13 @@ mixin FactoryFunction!DRecord;
 class DIndex: DOp{
 	DExpr e,i; // TODO: multiple indices?
 	alias subExprs=Seq!(e,i);
-	override string symbol(Format formatting,int binders){ return "[]"; }
+	override string symbol(Format formatting,int binders){ return "@("; }
 	override @property Precedence precedence(){
 		return Precedence.index; // TODO: ok? (there is no precedence to the rhs)
 	}
 	override string toStringImpl(Format formatting, Precedence prec, int binders){
 		if(formatting==Format.lisp) return text("(select ",e.toStringImpl(formatting,Precedence.none,binders)," ",i.toStringImpl(formatting,Precedence.none,binders),")");
-		return addp(prec, e.toStringImpl(formatting,Precedence.index,binders)~"["~i.toStringImpl(formatting,Precedence.none,binders)~"]");
+		return addp(prec, e.toStringImpl(formatting,Precedence.index,binders)~"@["~i.toStringImpl(formatting,Precedence.none,binders)~"]");
 	}
 	mixin Visitors;
 	override DExpr simplifyImpl(DExpr facts){
@@ -3736,19 +3767,61 @@ class DApply: DOp{
 }
 mixin FactoryFunction!DApply;
 
+class DDistLambda: DOp{
+	/+private+/ @binder DExpr expr;
+	alias subExprs=Seq!expr;
+	DExpr apply(DExpr e){
+		return unbind(expr,e);
+	}
+	override @property Precedence precedence(){ return Precedence.lambda; }
+	override @property string symbol(Format formatting,int binders){ return "Λ"; }
+	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		if(formatting==Format.lisp)
+			return text("(dist-lambda (",DDeBruijnVar.displayName(1,formatting,binders+1),") ",expr.toStringImpl(formatting,Precedence.none,binders+1),")");
+		// TODO: formatting for other CAS systems
+		return addp(prec,text("Λ",DDeBruijnVar.displayName(1,formatting,binders+1),". ",expr.toStringImpl(formatting,Precedence.lambda,binders+1)));
+	}
+	mixin Visitors;
+	final DDistLambda substitute(DVar var,DExpr expr){
+		auto r=cast(DDistLambda)super.substitute(var,expr);
+		assert(!!r);
+		return r;
+	}
+	static DDistLambda staticSimplify(DExpr expr,DExpr facts=one){
+		auto nexpr=expr.simplify(facts.incDeBruijnVar(1,0).simplify(one));
+		if(nexpr != expr){
+			auto r=dDistLambda(nexpr).simplify(facts);
+			assert(!r||cast(DDistLambda)r);
+			return cast(DDistLambda)r;
+		}
+		return null;
+	}
+	override DDistLambda simplifyImpl(DExpr facts){
+		auto r=staticSimplify(expr,facts);
+		return r?r:this;
+	}
+	final DDistLambda simplify(DExpr facts){
+		auto r=cast(DDistLambda)super.simplify(facts);
+		assert(!!r);
+		return r;
+	}
+}
+mixin FactoryFunction!DDistLambda;
+
+
 class DDistApply: DOp{
 	DExpr fun,arg;
 	alias subExprs=Seq!(fun,arg);
-	override @property string symbol(Format formatting,int binders){ return "("; } // TODO: ambiguous (same syntax as DApply). Replace symbol by ⟦ and also use ⟦ instead of [ for deltas.
-	override @property Precedence precedence(){ return Precedence.index; }
+	override @property string symbol(Format formatting,int binders){ return "["; } // TODO: ambiguous (same syntax as DApply). Replace symbol by ⟦ and also use ⟦ instead of [ for deltas.
+	override @property Precedence precedence(){ return Precedence.apply; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		auto isTpl=!!cast(DTuple)arg;
-		return addp(prec,text(fun.toStringImpl(formatting,Precedence.index,binders),"(",arg.toStringImpl(formatting,Precedence.none,binders)[isTpl..$-isTpl],")"));
+		return addp(prec,text(fun.toStringImpl(formatting,Precedence.index,binders),"[",arg.toStringImpl(formatting,Precedence.none,binders)[isTpl..$-isTpl],"]"));
 	}
 	mixin Visitors;
 	override DExpr simplifyImpl(DExpr facts){
 		auto nfun=fun.simplify(facts),narg=arg.simplify(one); // cannot use all facts for arg! (might remove a free variable)
-		if(auto l=cast(DLambda)nfun)
+		if(auto l=cast(DDistLambda)nfun)
 			return l.apply(narg).simplify(facts);
 		return dDistApply(nfun,narg);
 	}

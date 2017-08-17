@@ -195,6 +195,8 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration;
+	//writeln("λx.f(x)".dParse.substitute("f".dVar,"λx.x".dParse).simplify(one));
+	//writeln("Λx.f[x]".dParse.substitute("f".dVar,"Λx.δ[x]".dParse).simplify(one));
 	//writeln("δ___r₁[λξ₁. (∑_ξ₂(1/2)^(1+ξ₂)·[-ξ₂≤0]·δ_ξ₁[val(ξ₂)])·⅟(∑_ξ₂(1/2)^(1+ξ₂)·[-ξ₂≤0])]·(∫dξ₁∫dξ₂[∫dξ₃(case(ξ₃){ val(ξ₄) ⇒ 1;⊥ ⇒ 0})·__r₁(ξ₃)≠0]·δ[(∫dξ₃(case(ξ₃){ val(ξ₄) ⇒ ξ₄;⊥ ⇒ 0})·__r₁(ξ₃))·⅟(∫dξ₃(case(ξ₃){ val(ξ₄) ⇒ 1;⊥ ⇒ 0})·__r₁(ξ₃))+-ξ₂]·δ_ξ₁[val(ξ₂)]·(case(ξ₁){ val(ξ₂) ⇒ δ___r₂[ξ₂];⊥ ⇒ 0}))".dParse.simplify(one));
 	//writeln("(∫dξ₁(δ_ξ₁[val(λξ₂. (∑_ξ₃(1/2)^(1+ξ₃)·[-ξ₃≤0]·δ_ξ₂[val(ξ₃)])·⅟(∑_ξ₃(1/2)^(1+ξ₃)·[-ξ₃≤0]))])·(case(ξ₁){ val(ξ₂) ⇒ δ___r₁[ξ₂];⊥ ⇒ 0}))·(∫dξ₁∫dξ₂[∫dξ₃(case(ξ₃){ val(ξ₄) ⇒ 1;⊥ ⇒ 0})·__r₁(ξ₃)≠0]·δ[(∫dξ₃(case(ξ₃){ val(ξ₄) ⇒ ξ₄;⊥ ⇒ 0})·__r₁(ξ₃))·⅟(∫dξ₃(case(ξ₃){ val(ξ₄) ⇒ 1;⊥ ⇒ 0})·__r₁(ξ₃))+-ξ₂]·δ_ξ₁[val(ξ₂)]·(case(ξ₁){ val(ξ₂) ⇒ δ___r₂[ξ₂];⊥ ⇒ 0}))".dParse.simplify(one));
 	//writeln("δ[y-2^x]".dParse.linearizeConstraints("x".dVar).simplify(one));
