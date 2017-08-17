@@ -41,6 +41,7 @@ struct Options{
 	bool casBench=false;
 	bool noBoundsCheck=false;
 	bool noCheck=false;
+	bool noNormalize=false;
 	bool trace=false;
 	bool expectation=false;
 	IntegrationLevel integrationLevel=IntegrationLevel.full;
