@@ -49,7 +49,7 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 		}
 	}
 	auto dist=be.analyze(fd,err).dup;
-	if(isMain) dist.renormalize();
+	if(isMain&&!opt.noNormalize) dist.renormalize();
 	import dparse;
 	import approximate;
 	//import hashtable; dist.distribution=approxLog(dist.freeVars.element);

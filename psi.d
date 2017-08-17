@@ -134,6 +134,7 @@ int main(string[] args){
 			case "--integratedeltas": opt.integrationLevel=IntegrationLevel.deltas; break;
 			case "--noboundscheck": opt.noBoundsCheck=true; break;
 			case "--nocheck": opt.noCheck=true; break;
+			case "--nonormalize": opt.noNormalize=true; break;
 			case "--trace": opt.trace=true; break;
 			case "--expectation": opt.expectation=true; break;
 			case "--casbench": opt.casBench=true; break;
