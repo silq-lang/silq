@@ -15,6 +15,7 @@ The options below may be used.
 --plot              call gnuplot to plot the result (experimental)
 --noboundscheck     do not check array bounds
 --nocheck           do not check for error conditions
+--nonormalize       do not renormalize final distribution
 
 --cdf               generate cumulative distribution function (instead of generalized probability density)
 --expectation       compute expectation of result ('main' should return real numbers)
