@@ -614,111 +614,99 @@ struct Interpreter{
 						auto arg=doIt(ce.arg); // TODO: allow temporaries within arguments
 						return cur.call(fun,thisExp,arg,id.scope_);
 					}
-					if(fe && isBuiltIn(fe)){
-						if(auto dce=cast(CallExp)fe.e.type){
-							auto fty=cast(FunTy)fe.e.type;
-							if(auto did=cast(Identifier)dce.e){
-								assert(dce.arg.type == typeTy);
-								auto tt=dce.arg;
-								if(did.name=="Distribution"){
-									switch(fe.f.name){
-										default: assert(0,text("TODO: ",fe));
-									}
-								}
-							}
-						}
-					}
-					if(!fe && isBuiltIn(id)||id.name.startsWith("`")){
-						if(ce.isSquare){ // ignore []-calls on built-ins
-							assert(ce.arg.type == typeTy);
-							return doIt(ce.e);
-						}
+					if(!fe && isBuiltIn(id)){
 						switch(id.name){
-							case "flip","bernoulli":
-								auto arg=doIt(ce.arg);
-								return cur.flip(arg);
-							case "uniformInt":
-								auto arg=doIt(ce.arg);
-								return cur.uniformInt(arg);
-							case "categorical":
-								auto arg=doIt(ce.arg);
-								return cur.categorical(arg);
-							case "binomial":
-								auto arg=doIt(ce.arg);
-								auto n=arg[0.dℚ], p=arg[1.dℚ];
-								return cur.categorical(dArray(n+1,dLambda(dNChooseK(n,db1)*p^^db1*(1-p)^^(n-db1))));
-							case "Flip","Bernoulli":
-								assert(0,text("TODO: ",ce));
-							case "UniformInt":
-								assert(0,text("TODO: ",ce));
-							case "Categorical":
-								assert(0,text("TODO: ",ce));
-							case "Binomial":
-								assert(0,text("TODO: ",ce));
-							case "Expectation":
-								auto arg=doIt(ce.arg);
-								return cur.expectation(dLambda(arg),hasFrame);
-							case "`inferImpl":
-								auto arg=doIt(ce.arg);
-								return cur.infer(arg);
-							case "`arrayImpl":
-								auto arg=doIt(ce.arg);
-								return dConstArray(arg[0.dℚ],arg[1.dℚ]);
-							case "`sampleImpl":
-								auto arg=doIt(ce.arg);
-								return cur.distSample(arg);
-							case "expectation":
-								auto arg=doIt(ce.arg);
-								return cur.distExpectation(arg);
-							case "`errorPrImpl":
-								auto arg=doIt(ce.arg);
-								return cur.distError(arg);
-							case "exp":
-								auto arg=doIt(ce.arg);
-								return dE^^arg;
-							case "log":
-								auto arg=doIt(ce.arg);
-								// TODO: check constraints on argument
-								return dLog(arg);
-							case "abs":
-								return dAbs(doIt(ce.arg));
-							case "floor":
-								return dFloor(doIt(ce.arg));
-							case "ceil":
-								return dCeil(doIt(ce.arg));
+							case "Marginal":
+								assert(0,"TODO");
 							case "sampleFrom":
 								Expression[] args;
 								if(auto tpl=cast(TupleExp)ce.arg) args=tpl.e;
 								else args=[ce.arg];
-								auto dist=new Distribution();
-								auto info=analyzeSampleFrom(ce,new SimpleErrorHandler(),dist);
-								if(info.error) assert(0,"TODO");
-								auto retVars=info.retVars,paramVars=info.paramVars,newDist=info.newDist;
-								foreach(i,pvar;paramVars){
-									auto expr=doIt(args[1+i]);
-									newDist=newDist.substitute(pvar,expr);
+								assert(args.length);
+								auto getArg(){
+									return args[1..$].length==1?doIt(args[1]):dTuple(args[1..$].map!doIt.array);
 								}
-								dist.distribute(newDist);
-								auto tmp=dist.declareVar("`tmp");
-								dist.initialize(tmp,dTuple(cast(DExpr[])retVars.map!(v=>v.tmp).array),contextTy());
-								foreach(v;info.retVars) dist.marginalize(v.tmp);
-								dist.simplify();
-								auto smpl=distInit();
-								void gather(DExpr e,DExpr factor){
-									assert(!cast(DInt)e,text("TODO: ",ce.e));
-									foreach(s;e.summands){
-										foreach(f;s.factors){
-											if(auto dd=cast(DDiscDelta)f){
-												assert(dd.var == tmp);
-												smpl.add(dRecord(["`value":retVars.length==1?dd.e[0.dℚ].simplify(one):dd.e]),(factor*s.withoutFactor(f)).substitute(tmp,dd.e).simplify(one));
-											}else if(auto sm=cast(DPlus)f){
-												gather(sm,factor*s.withoutFactor(f));
-											}
+								auto literal=cast(LiteralExp)args[0];
+								assert(literal&&literal.lit.type==Tok!"``");
+								auto str=literal.lit.str;
+								import samplefrom;
+								final switch(getToken(str)) with(Token){
+									case inferPrecondition:
+										return one; // TODO
+									case infer:
+										return cur.infer(getArg());
+									case errorPr:
+										return cur.distError(getArg());
+									case samplePrecondition:
+										return one; // TODO
+									case sample:
+										if(opt.noCheck){
+											assert(args[1..$].length==1);
+											return cur.distSample(getArg());
+										}else{
+											assert(args[1..$].length==2);
+											return cur.distSample(getArg()[0.dℚ].simplify(one));
 										}
+									case expectation:
+										if(opt.noCheck){
+											assert(args[1..$].length==1);
+											return cur.distExpectation(getArg());
+										}else{
+											assert(args[1..$].length==2);
+											return cur.distExpectation(getArg()[0.dℚ].simplify(one));
+										}
+									case uniformIntPrecondition: // (TODO: remove)
+										return one; // TODO
+									case uniformInt: // uniformInt
+										return cur.uniformInt(getArg());
+									case categoricalPrecondition:
+										return one; // TODO?
+									case categorical:
+										return cur.categorical(getArg());
+									case binomial:
+										assert(args[1..$].length==2);
+										DExpr arg=getArg();
+										auto n_=arg[0.dℚ], p=arg[1.dℚ].incDeBruijnVar(1,0);
+										auto n=n_.incDeBruijnVar(1,0);
+										return cur.categorical(dArray(n_+1,dLambda(dNChooseK(n,db1)*p^^db1*(1-p)^^(n-db1))).simplify(one));
+									case none:
+										static DDPDist[const(char)*] dists; // NOTE: it is actually important that identical strings with different addresses get different entries (parameters are substituted)
+										if(str.ptr !in dists){
+											auto dist=new Distribution();
+											auto info=analyzeSampleFrom(ce,new SimpleErrorHandler(),dist);
+											if(info.error) assert(0,"TODO");
+											auto retVars=info.retVars,paramVars=info.paramVars,newDist=info.newDist;
+											foreach(i,pvar;paramVars){
+												auto expr=doIt(args[1+i]);
+												newDist=newDist.substitute(pvar,expr); // TODO: use substituteAll
+											}
+											dist.distribute(newDist);
+											auto tmp=dist.declareVar("`tmp");
+											dist.initialize(tmp,dTuple(cast(DExpr[])retVars.map!(v=>v.tmp).array),contextTy());
+											foreach(v;info.retVars) dist.marginalize(v.tmp);
+											dist.simplify();
+											auto smpl=distInit();
+											void gather(DExpr e,DExpr factor){
+												assert(!cast(DInt)e,text("TODO: ",ce.e));
+												foreach(s;e.summands){
+													foreach(f;s.factors){
+														if(auto dd=cast(DDiscDelta)f){
+															assert(dd.var == tmp);
+															smpl.add(dRecord(["`value":retVars.length==1?dd.e[0.dℚ].simplify(one):dd.e]),(factor*s.withoutFactor(f)).substitute(tmp,dd.e).simplify(one));
+														}else if(auto sm=cast(DPlus)f){
+															gather(sm,factor*s.withoutFactor(f));
+														}
+													}
+												}
+											}
+											gather(dist.distribution,one);
+											dists[str.ptr]=dDPDist(smpl);
+										}
+										return cur.distSample(dists[str.ptr]);
 									}
-								}
-								gather(dist.distribution,one);
-								return cur.distSample(dDPDist(smpl));
+							case "Expectation":
+								auto arg=doIt(ce.arg);
+								return cur.expectation(dLambda(arg),hasFrame);
 							default:
 								assert(0, text("unsupported: ",id.name));
 						}

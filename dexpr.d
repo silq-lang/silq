@@ -233,7 +233,8 @@ abstract class DExpr{
 struct binder{} struct even{} struct conditionallyEven(alias cond){ } struct isAbstract{}
 enum forEachSubExprImpl(string code)=mixin(X!q{
 	foreach(i,se;subExprs){
-		static if(is(typeof(se):DExpr)){
+		import dp: Dist;
+		static if(is(typeof(se):DExpr)||is(typeof(se)==Dist)){
 			alias x=se;
 			@(code)
 		}else static if(is(typeof(se)==SetX!DExpr)||is(typeof(se)==DExpr[])||is(typeof(se)==DExpr[2])){
@@ -243,7 +244,6 @@ enum forEachSubExprImpl(string code)=mixin(X!q{
 		}else{
 			import type: Type;
 			import declaration: FunctionDef;
-			import dp: Dist;
 			static assert(is(typeof(se)==string)||is(typeof(se)==int)||is(typeof(se)==DIvr.Type)||is(typeof(se)==Type)||is(typeof(se)==FunctionDef)||is(typeof(se)==Dist), "foreachSubExprImpl is not exhaustive.");
 		}
 	}
@@ -275,7 +275,8 @@ mixin template Visitors(){
 	static if(!IsAbstract!(typeof(this))):
 	override int forEachSubExpr(scope int delegate(DExpr) dg){
 		// TODO: fix this.
-		static if(!(is(typeof(this)==DLambda)||is(typeof(this)==DDistLambda)||is(typeof(this)==DInt)||is(typeof(this)==DSum)||is(typeof(this)==DLim)||is(typeof(this)==DDiff)||is(typeof(this)==DDelta)||is(typeof(this)==DDiscDelta)))
+		import dp: DDPDist;
+		static if(!(is(typeof(this)==DDPDist)||is(typeof(this)==DLambda)||is(typeof(this)==DDistLambda)||is(typeof(this)==DInt)||is(typeof(this)==DSum)||is(typeof(this)==DLim)||is(typeof(this)==DDiff)||is(typeof(this)==DDelta)||is(typeof(this)==DDiscDelta)))
 			mixin(forEachSubExprImpl!"if(auto r=dg(x)) return r;");
 		return 0;
 	}
@@ -301,6 +302,7 @@ mixin template Visitors(){
 		static if(is(typeof(this):DVar)) return this==var?e:this;
 		else{
 			Q!(typeof(subExprs)) nsubs;
+			import dp: Dist;
 			foreach(i,sub;subExprs){
 				auto cvar=var,ce=e;
 				import std.traits: hasUDA;
@@ -308,7 +310,7 @@ mixin template Visitors(){
 					cvar=cvar.incDeBruijnVar(1,0);
 					ce=ce.incDeBruijnVar(1,0);
 				}
-				static if(is(typeof(sub):DExpr)){
+				static if(is(typeof(sub):DExpr)||is(typeof(sub)==Dist)){
 					nsubs[i]=sub.substitute(cvar,ce);
 				}else static if(is(typeof(sub)==DExprSet)){
 					if(auto evar=cast(DVar)e){ // TODO: make this unnecessary, this is a hack to improve performance
@@ -326,8 +328,7 @@ mixin template Visitors(){
 				}else{
 					import type: Type;
 					import declaration: FunctionDef;
-					import dp: Dist;
-					static assert(is(typeof(sub)==string)||is(typeof(sub)==int)||is(typeof(sub)==DIvr.Type)||is(typeof(sub)==Type)||is(typeof(sub)==FunctionDef)||is(typeof(sub)==Dist));
+					static assert(is(typeof(sub)==string)||is(typeof(sub)==int)||is(typeof(sub)==DIvr.Type)||is(typeof(sub)==Type)||is(typeof(sub)==FunctionDef));
 					nsubs[i]=sub;
 				}
 			}

@@ -15,6 +15,6 @@ def main(){
 
     isEffectiveP := sample(Marginal(isEffective));
     observe(isEffective);
-    return (isEffectiveP,probIfTreated,probIfControl); // expected: (-10800·probIfControl³·probIfTreated⁵+-1800·probIfControl·probIfTreated⁵+-1800·probIfControl⁵·probIfTreated⁵+-7200·probIfControl²·probIfTreated⁴+-7200·probIfControl⁴·probIfTreated⁴+10800·probIfControl³·probIfTreated⁴+1800·probIfControl·probIfTreated⁴+1800·probIfControl⁵·probIfTreated⁴+7200·probIfControl²·probIfTreated⁵+7200·probIfControl⁴·probIfTreated⁵)·(25/204·δ[isEffectiveP]+77/204·δ[-isEffectiveP+1])·[-1+probIfControl≤0]·[-1+probIfTreated≤0]·[-probIfControl≤0]·[-probIfTreated≤0]
+    return (isEffectiveP,probIfTreated,probIfControl); // expected: (-3600·probIfControl²·probIfTreated⁴+-3600·probIfControl⁴·probIfTreated⁴+-5400·probIfControl³·probIfTreated⁵+-900·probIfControl·probIfTreated⁵+-900·probIfControl⁵·probIfTreated⁵+3600·probIfControl²·probIfTreated⁵+3600·probIfControl⁴·probIfTreated⁵+5400·probIfControl³·probIfTreated⁴+900·probIfControl·probIfTreated⁴+900·probIfControl⁵·probIfTreated⁴)·(25/102·δ[isEffectiveP]+77/102·δ[-isEffectiveP+1])·[-1+probIfControl≤0]·[-1+probIfTreated≤0]·[-probIfControl≤0]·[-probIfTreated≤0]
     // TODO: keep polynomial in factored form
 }

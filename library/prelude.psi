@@ -18,7 +18,7 @@ def inℤ(x:ℝ):ℝ ⇒ x==floor(x);
 
 def array[a](length: ℝ, init:a): a[]{
 	assert(length>=0&&inℤ(length));
-	return sampleFrom("(r;length,init)=>δ[-r+[i↦ init] (length)]",length,init):a[];
+	return sampleFrom("(r;length,init)=>δ_r[[i↦ init] (length)]",length,init):a[];
 }
 
 // first-class inference
