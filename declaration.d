@@ -204,3 +204,35 @@ class MultiDefExp: DefExp{
 
 	mixin VariableFree;
 }
+
+string getActualPath(string path){
+	import std.path, file=std.file, options;
+	auto ext = path.extension;
+	if(ext=="") path = path.setExtension("psi");
+	if(file.exists(path)) return path;
+	foreach_reverse(p;opt.importPath){
+		auto candidate=buildPath(p,path);
+		if(file.exists(candidate))
+			return candidate;
+	}
+	return path;
+}
+
+class ImportExp: Declaration{
+	Expression[] e;
+	this(Expression[] e){
+		super(null);
+		this.e=e;
+	}
+	static string getPath(Expression e){
+		static string doIt(Expression e){
+			import std.path;
+			if(auto i=cast(Identifier)e) return i.name;
+			if(auto f=cast(BinaryExp!(Tok!"."))e) return buildPath(doIt(f.e1),doIt(f.e2));
+			assert(0);
+		}
+		return doIt(e);
+	}
+	override @property string kind(){ return "import declaration"; }
+	override string toString(){ return "import "~e.map!(to!string).join(","); }
+}

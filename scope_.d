@@ -33,13 +33,13 @@ abstract class Scope{
 		if(rnsym&&!r) r=rnsymtab.get(ident.ptr,null);
 		return r;
 	}
-	Declaration lookup(Identifier ident,bool rnsym){
+	Declaration lookup(Identifier ident,bool rnsym,bool lookupImports){
 		return lookupHere(ident,rnsym);
 	}
 	protected final void rename(Declaration decl){
 		for(;;){ // TODO: quite hacky
 			auto cname=decl.rename?decl.rename:decl.name;
-			auto d=lookup(cname,true);
+			auto d=lookup(cname,true,true);
 			import semantic_: isBuiltIn;
 			if(!d&&!isBuiltIn(cname)) break;
 			decl.rename=new Identifier(decl.getName~"'");
@@ -80,16 +80,20 @@ class TopScope: Scope{
 	}
 	final void import_(Scope sc){
 		imports~=sc;
+		// TODO: store a location for better error messages
+		// TODO: allow symbol lookup by full path
 	}
-	override Declaration lookup(Identifier ident,bool rnsym){
-		if(auto d=super.lookup(ident,rnsym)) return d;
-		Declaration[] ds;
-		foreach(sc;imports) if(auto d=sc.lookup(ident,rnsym)) ds~=d;
-		if(ds.length==1) return ds[0];
-		if(ds.length>1){
-			error(format("multiple imports of '%s'",ident.name),ident.loc);
-			foreach(d;ds) note("declaration here",d.loc);
-			// TODO: return error
+	override Declaration lookup(Identifier ident,bool rnsym,bool lookupImports){
+		if(auto d=super.lookup(ident,rnsym,lookupImports)) return d;
+		if(lookupImports){
+			Declaration[] ds;
+			foreach(sc;imports) if(auto d=sc.lookup(ident,rnsym,false)) ds~=d;
+			if(ds.length==1||ds.length>=1&&rnsym) return ds[0];
+			if(ds.length>1){
+				error(format("multiple imports of %s",ident.name),ident.loc);
+				foreach(d;ds) note("declaration here",d.loc);
+				// TODO: return error
+			}
 		}
 		return null;
 	}
@@ -104,9 +108,9 @@ class NestedScope: Scope{
 	Scope parent;
 	override @property ErrorHandler handler(){ return parent.handler; }
 	this(Scope parent){ this.parent=parent; }
-	override Declaration lookup(Identifier ident,bool rnsym){
+	override Declaration lookup(Identifier ident,bool rnsym,bool lookupImports){
 		if(auto decl=lookupHere(ident,rnsym)) return decl;
-		return parent.lookup(ident,rnsym);
+		return parent.lookup(ident,rnsym,lookupImports);
 	}
 
 	override bool isNestedIn(Scope rhs){ return rhs is this || parent.isNestedIn(rhs); }

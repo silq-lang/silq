@@ -46,6 +46,7 @@ struct Options{
 	bool expectation=false;
 	IntegrationLevel integrationLevel=IntegrationLevel.full;
 	OutputForm outputForm;
+	string[] importPath;
 	string[] summarize;
 }
 Options opt; // TODO: get rid of global?

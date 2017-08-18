@@ -560,6 +560,7 @@ struct Parser{
 		switch(ttype){
 			case Tok!"def": return parseFunctionDef();
 			case Tok!"dat": return parseDatDecl();
+			case Tok!"import": return parseImport();
 			case Tok!"return": return parseReturn();
 			case Tok!"if": return parseIte();
 			case Tok!"repeat": return parseRepeat();
@@ -663,6 +664,27 @@ struct Parser{
 		}
 		auto body_=parseCompoundExp!CompoundDecl();
 		return res=New!DatDecl(name,hasParams,cast(Parameter[])params[0],params[1]||params[0].length!=1,body_);
+	}
+	ImportExp parseImport(){
+		mixin(SetLoc!ImportExp);
+		expect(Tok!"import");
+		Expression parsePath(){
+			Expression path=parseIdentifier();
+			while(ttype==Tok!"."){
+				nextToken();
+				auto next=parseIdentifier();
+				path=new BinaryExp!(Tok!("."))(path,next);
+				path.loc=path.loc.to(next.loc);
+			}
+			return path;
+		}
+		Expression[] paths=[parsePath()];
+		while(ttype==Tok!","){
+			nextToken();
+			if(ttype==Tok!";") break;
+			paths~=parsePath();
+		}
+		return res=New!ImportExp(paths);
 	}
 	ReturnExp parseReturn(){
 		mixin(SetLoc!ReturnExp);
@@ -781,4 +803,31 @@ Expression[] parseFile(Source source, ErrorHandler handler){
 		s.put(e);
 	}
 	return s.data;
+}
+
+
+import std.stdio, file=std.file;
+string readCode(File f){
+	// TODO: use memory-mapped file with 4 padding zero bytes
+	auto app=mallocAppender!(char[])();
+	foreach(r;f.byChunk(1024)){app.put(cast(char[])r);}
+	app.put("\0\0\0\0"); // insert 4 padding zero bytes
+	return cast(string)app.data;
+}
+string readCode(string path){ return readCode(File(path)); }
+
+int parseFile(string path,ErrorHandler err,ref Expression[] r,Location loc=Location.init){
+	string code;
+	try code=readCode(path);
+	catch(Exception){
+		string error;
+		if(!file.exists(path)) error = path ~ ": no such file";
+		else error = path ~ ": error reading file";
+		if(loc.line) err.error(error,loc);
+		else stderr.writeln("error: "~error);
+		return 1;
+	}
+	auto src=new Source(path, code);
+	r=parser.parseFile(src,err);
+	return 0;
 }

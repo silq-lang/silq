@@ -7,44 +7,7 @@ import util;
 import lexer, parser, expression, declaration, error, help;
 import options, scope_, semantic_, summarize, backend;
 
-
-string getActualPath(string path){
-	// TODO: search path
-	auto ext = path.extension;
-	if(ext=="") path = path.setExtension("psi");
-	//return file.getcwd().canFind("/test")?path:"test/"~path;
-	return path;
-}
-
-string readCode(File f){
-	// TODO: use memory-mapped file with 4 padding zero bytes
-	auto app=mallocAppender!(char[])();
-	foreach(r;f.byChunk(1024)){app.put(cast(char[])r);}
-	app.put("\0\0\0\0"); // insert 4 padding zero bytes
-	return cast(string)app.data;	
-}
-string readCode(string path){ return readCode(File(path)); }
-
-string importPath;
-static this(){ importPath = dirName(file.thisExePath); }
-@property string preludePath(){
-	// TODO: use conditional compilation within prelude.psi instead
-	if(opt.noCheck) return "library/prelude-nocheck.psi";
-	return "library/prelude.psi";
-}
-
-int parseFile(string path,ErrorHandler err,ref Expression[] r){
-	string code;
-	try code=readCode(path);
-	catch(Exception){
-		if(!file.exists(path)) stderr.writeln(path ~ ": no such file");
-		else stderr.writeln(path ~ ": error reading file");
-		return 1;
-	}
-	auto src=new Source(path, code);
-	r=parser.parseFile(src,err);
-	return 0;
-}
+static this(){ opt.importPath ~= dirName(file.thisExePath); }
 
 int run(string path){
 	path = getActualPath(path);
@@ -54,21 +17,10 @@ int run(string path){
 		return 1;
 	}
 	auto err=new FormattingErrorHandler();
-	static Scope prsc=null;
-	Expression[] prelude;
-	if(!prsc){
-		if(auto r=parseFile(buildPath(importPath,preludePath),err,prelude))
-			return r;
-		prsc=new TopScope(err);
-		prelude=semantic(prelude,prsc);
-	}
-	Expression[] exprs;
-	if(auto r=parseFile(path,err,exprs))
-		return r;
-	if(err.nerrors) return 1;
 	auto sc=new TopScope(err);
-	sc.import_(prsc);
-	exprs=semantic(exprs,sc);
+	Expression[] exprs;
+	if(auto r=importModule(path,err,exprs,sc))
+		return r;
 	if(err.nerrors) return 1;
 	FunctionDef[string] functions;
 	foreach(expr;exprs){

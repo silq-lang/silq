@@ -189,7 +189,61 @@ Expression presemantic(Declaration expr,Scope sc){
 	return expr;
 }
 
+@property string preludePath(){
+	// TODO: use conditional compilation within prelude.psi instead
+	import options;
+	if(opt.noCheck) return "library/prelude-nocheck.psi";
+	return "library/prelude.psi";
+}
+
+int importModule(string path,ErrorHandler err,out Expression[] exprs,out TopScope sc,Location loc=Location.init){
+	import std.typecons: tuple,Tuple;
+	static Tuple!(Expression[],TopScope)[string] modules;
+	if(path in modules){
+		auto exprssc=modules[path];
+		exprs=exprssc[0],sc=exprssc[1];
+		if(!sc){
+			if(loc.line) err.error("circular imports not supported",loc);
+			else stderr.writeln("error: circular imports not supported",loc);
+			return 1;
+		}
+		return 0;
+	}
+	modules[path]=tuple(Expression[].init,TopScope.init);
+	scope(success) modules[path]=tuple(exprs,sc);
+	TopScope prsc=null;
+	Expression[] prelude;
+	if(!prsc && path != preludePath) importModule(preludePath,err,prelude,prsc);
+	import parser;
+	if(auto r=parseFile(getActualPath(path),err,exprs,loc))
+		return r;
+	sc=new TopScope(err);
+	if(prsc) sc.import_(prsc);
+	int nerr=err.nerrors;
+	exprs=semantic(exprs,sc);
+	return nerr!=err.nerrors;
+}
+
 Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
+	if(auto imp=cast(ImportExp)expr){
+		imp.scope_ = sc;
+		auto ctsc=cast(TopScope)sc;
+		if(!ctsc){
+			sc.error("nested imports not supported",imp.loc);
+			imp.sstate=SemState.error;
+			return imp;
+		}
+		foreach(p;imp.e){
+			auto path = getActualPath(ImportExp.getPath(p));
+			Expression[] exprs;
+			TopScope tsc;
+			if(importModule(path,sc.handler,exprs,tsc,imp.loc))
+				imp.sstate=SemState.error;
+			if(tsc) ctsc.import_(tsc);
+		}
+		if(imp.sstate!=SemState.error) imp.sstate=SemState.completed;
+		return imp;
+	}
 	if(auto decl=cast(Declaration)expr){
 		if(!decl.scope_) success&=sc.insert(decl);
 		return decl;
@@ -269,6 +323,10 @@ Expression toplevelSemantic(Expression expr,Scope sc){
 	if(auto dd=cast(DatDecl)expr) return datDeclSemantic(dd,sc);
 	if(cast(BinaryExp!(Tok!":="))expr||cast(DefExp)expr) return colonOrAssignSemantic(expr,sc);
 	if(auto ce=cast(CommaExp)expr) return expectColonOrAssignSemantic(ce,sc);
+	if(auto imp=cast(ImportExp)expr){
+		assert(util.among(imp.sstate,SemState.error,SemState.completed));
+		return imp;
+	}
 	sc.error("not supported at toplevel",expr.loc);
 	expr.sstate=SemState.error;
 	return expr;
@@ -773,7 +831,7 @@ Expression callSemantic(CallExp ce,Scope sc){
 				auto nft=ft;
 				if(auto id=cast(Identifier)fun){
 					if(auto decl=cast(DatDecl)id.meaning){
-						if(auto constructor=cast(FunctionDef)decl.body_.ascope_.lookup(decl.name,false)){
+						if(auto constructor=cast(FunctionDef)decl.body_.ascope_.lookup(decl.name,false,false)){
 							if(auto cty=cast(FunTy)typeForDecl(constructor)){
 								assert(ft.cod is typeTy);
 								nft=forallTy(ft.names,ft.dom,cty,ft.isSquare,ft.isTuple);
@@ -812,7 +870,7 @@ Expression callSemantic(CallExp ce,Scope sc){
 	}else if(auto at=isDataTyId(fun)){
 		auto decl=at.decl;
 		assert(fun.type is typeTy);
-		auto constructor=cast(FunctionDef)decl.body_.ascope_.lookup(decl.name,false);
+		auto constructor=cast(FunctionDef)decl.body_.ascope_.lookup(decl.name,false,false);
 		auto ty=cast(FunTy)typeForDecl(constructor);
 		if(ty&&decl.hasParams){
 			auto nce=cast(CallExp)fun;
@@ -917,7 +975,13 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		id.scope_=sc;
 		auto meaning=id.meaning;
 		if(!meaning){
-			meaning=sc.lookup(id,false);
+			int nerr=sc.handler.nerrors; // TODO: this is a bit hacky
+			meaning=sc.lookup(id,false,true);
+			if(nerr!=sc.handler.nerrors){
+				sc.note("looked up here",id.loc);
+				id.sstate=SemState.error;
+				return id;
+			}
 			if(!meaning){
 				if(auto r=builtIn(id,sc)){
 					if(!id.calledDirectly&&util.among(id.name,"Expectation","Marginal","sampleFrom")){
@@ -926,7 +990,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 					}
 					return r;
 				}
-				sc.error(format("undefined identifier %s",id.name), id.loc);
+				sc.error(format("undefined identifier %s",id.name),id.loc);
 				id.sstate=SemState.error;
 				return id;
 			}
