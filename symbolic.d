@@ -304,6 +304,7 @@ private struct Analyzer{
 						foreach(v;dist.freeVars)
 							idist.marginalize(v);
 						idist.orderFreeVars([r],false);
+						idist.renormalize();
 						return dApply(idist.toDExpr(),dTuple([]));
 					case "sampleFrom":
 						Expression[] args;

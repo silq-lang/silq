@@ -1,6 +1,6 @@
 // prelude file implicitly imported into all psi programs
 // implementation of built-in functions based on 'sampleFrom'
-// caution: some backends may special-case strings
+// caution: some backends may special-case strings (see samplefrom.d)
 
 // deterministic functions
 def exp(x:ℝ):ℝ ⇒ sampleFrom("(y;x)=>δ[-y+e^x]",x);
@@ -35,9 +35,9 @@ def sample[a](d:Distribution[a]):a{
 }
 def expectation(d:Distribution[ℝ]):ℝ {
 	// TODO: check convergence
-	total := (sampleFrom("(r;d)=>δ[-r+∫dx d[x]·(case(x){ val(y) ⇒ 1;⊥ ⇒ 0 })]",d):ℝ);
-	expect := (sampleFrom("(r;d)=>δ[-r+∫dx d[x]·(case(x){ val(y) ⇒ y;⊥ ⇒ 0 })]",d):ℝ);
-	return expect/total;
+	err := errorPr(d);
+	assert(err!=1);
+	return (sampleFrom("(r;d,b)=>δ[-r+∫dx d[x]·(case(x){ val(y) ⇒ y;⊥ ⇒ 0 })/(1-b)]",d,err):ℝ);
 }
 
 // distributions
