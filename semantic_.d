@@ -192,8 +192,8 @@ Expression presemantic(Declaration expr,Scope sc){
 @property string preludePath(){
 	// TODO: use conditional compilation within prelude.psi instead
 	import options;
-	if(opt.noCheck) return "library/prelude-nocheck.psi";
-	return "library/prelude.psi";
+	if(opt.noCheck) return "prelude-nocheck.psi";
+	return "prelude.psi";
 }
 
 int importModule(string path,ErrorHandler err,out Expression[] exprs,out TopScope sc,Location loc=Location.init){

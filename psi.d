@@ -7,7 +7,7 @@ import util;
 import lexer, parser, expression, declaration, error, help;
 import options, scope_, semantic_, summarize, backend;
 
-static this(){ opt.importPath ~= dirName(file.thisExePath); }
+static this(){ opt.importPath ~= buildPath(dirName(file.thisExePath),"library"); }
 
 int run(string path){
 	path = getActualPath(path);
