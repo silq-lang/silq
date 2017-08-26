@@ -148,6 +148,7 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration;
+	//writeln("∫dy∫dx f[x,y]·δ[z-x/y]".dParse.simplify(one).toString(Format.mathematica));
 	//writeln("λx.f(x)".dParse.substitute("f".dVar,"λx.x".dParse).simplify(one));
 	//writeln("Λx.f[x]".dParse.substitute("f".dVar,"Λx.δ[x]".dParse).simplify(one));
 	//writeln("δ___r₁[λξ₁. (∑_ξ₂(1/2)^(1+ξ₂)·[-ξ₂≤0]·δ_ξ₁[val(ξ₂)])·⅟(∑_ξ₂(1/2)^(1+ξ₂)·[-ξ₂≤0])]·(∫dξ₁∫dξ₂[∫dξ₃(case(ξ₃){ val(ξ₄) ⇒ 1;⊥ ⇒ 0})·__r₁(ξ₃)≠0]·δ[(∫dξ₃(case(ξ₃){ val(ξ₄) ⇒ ξ₄;⊥ ⇒ 0})·__r₁(ξ₃))·⅟(∫dξ₃(case(ξ₃){ val(ξ₄) ⇒ 1;⊥ ⇒ 0})·__r₁(ξ₃))+-ξ₂]·δ_ξ₁[val(ξ₂)]·(case(ξ₁){ val(ξ₂) ⇒ δ___r₂[ξ₂];⊥ ⇒ 0}))".dParse.simplify(one));

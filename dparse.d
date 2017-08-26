@@ -425,10 +425,16 @@ struct DParser{
 				if(!args.length) isTuple=true;
 				e=dApply(e,isTuple?dTuple(args):args[0]);
 			}else if(cur()=='['){
-				next();
-				auto arg=parseDExpr();
+				DExpr[] args;
+				bool isTuple=false;
+				for(;;){
+					next();
+					if(cur()!=']') args~=parseDExpr();
+					if(cur()==',') isTuple=true;
+					else break;
+				}
 				expect(']');
-				e=dDistApply(e,arg);
+				e=dDistApply(e,isTuple?dTuple(args):args[0]);
 			}else if(code.startsWith("@[")){
 				code=code["@[".length..$];
 				auto i=parseDExpr();
