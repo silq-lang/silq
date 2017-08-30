@@ -148,6 +148,15 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration;
+	/*DExpr r=zero;
+	foreach(i;0..4){
+		//r = r + dIvr(DIvr.Type.eqZ,dApply("f".dVar,i.dℚ));
+		r = r + dIvr(DIvr.Type.leZ,"x".dVar-i.dℚ);
+	}
+	dw((dE^^r).simplify(one));*/
+	//writeln("[x=0]".dParse.simplify("[x≤-1]".dParse.simplify(one)));
+	//writeln("[x≤4]·[5≤x]".dParse.simplify(one));
+	//writeln("[x≤4]·[x≤3]".dParse.simplify(one));
 	//writeln("∫dy∫dx f[x,y]·δ[z-x/y]".dParse.simplify(one).toString(Format.mathematica));
 	//writeln("λx.f(x)".dParse.substitute("f".dVar,"λx.x".dParse).simplify(one));
 	//writeln("Λx.f[x]".dParse.substitute("f".dVar,"Λx.δ[x]".dParse).simplify(one));

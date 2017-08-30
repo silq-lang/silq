@@ -1563,7 +1563,18 @@ class DPow: DBinaryOp{
 			if(auto f2=cast(DFloat)e2)
 				return (toReal(q1.c)^^f2.c).dFloat;
 		if(auto fct=factorDIvr!(e=>e^^e2)(e1)) return fct.simplify(facts);
-		if(auto fct=factorDIvr!(e=>e1^^e)(e2)) return fct.simplify(facts);
+		/+if(e2.hasAny!DIvr(false)){
+			DExprSet r;
+			foreach(s;e2.summands){
+				if(auto ns=factorDIvr!(e=>e1^^e)(s))
+					s=ns;
+				DMult.insert(r,s);
+			}
+			return dMult(r).simplify(facts);
+		}+/
+		if(auto fct=factorDIvr!(e=>e1^^e)(e2)){
+			return fct.simplify(facts);
+		}
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){
@@ -2390,7 +2401,7 @@ DExpr[2] splitIvrs(DExpr e){
 }
 
 DExpr factorDIvr(alias wrap)(DExpr e){
-	if(!e.hasAny!DIvr) return null;
+	if(!e.hasAny!DIvr(false)) return null;
 	if(auto ivr=cast(DIvr)e) return ivr*wrap(one)+negateDIvr(ivr)*wrap(zero);
 	if(e.factors.all!(x=>!!cast(DIvr)x)) return factorDIvrProduct!wrap(e);
 	auto h=getHoles!(x=>x.factors.any!(y=>!!cast(DIvr)y)?x:null)(e);
@@ -2515,8 +2526,7 @@ class DIvr: DExpr{ // iverson brackets
 		if(auto r=cancelFractions!false(e,type)) return r.simplify(facts);
 		// TODO: make these check faster (also: less convoluted)
 		auto neg=negateDIvr(type,e);
-		neg[1]=neg[1].simplify(facts);
-		bool foundLe=false, foundNeq=false;
+		neg.e=neg.e.simplify(facts);
 		foreach(f;facts.factors){
 			if(auto ivr=cast(DIvr)f){
 				// TODO: more elaborate implication checks
@@ -2531,18 +2541,17 @@ class DIvr: DExpr{ // iverson brackets
 				if(neg.type==ivr.type && (neg.e==ivr.e||
 					type.among(Type.eqZ,Type.neqZ)&&(-neg.e).simplify(facts)==ivr.e))
 					return zero; // TODO: ditto
-				if(neg.type==Type.lZ){
-					if(ivr.type==Type.leZ){
+				if(ivr.type==Type.leZ){
+					if(type==Type.leZ){
+						assert(neg.type==type.lZ);
 						if(neg.e==ivr.e) assert(neg.e.mustBeAtMost(ivr.e),text(neg.e));
-						if(neg.e.mustBeAtMost(ivr.e)) foundLe=true;
-						else if(neg.e.mustBeLessThan(ivr.e)) return zero;
+						if(neg.e.mustBeAtMost(ivr.e)) return dIvr(DIvr.Type.eqZ,e).simplify(facts);
+					}else if(type==Type.eqZ||type==Type.neqZ){
+						if(e.mustBeLessThan(ivr.e)||(-e).mustBeLessThan(ivr.e))
+							return type==Type.eqZ?zero:one;
 					}
 				}
 			}
-		}
-		if(type==type.leZ&&foundLe){
-			assert(type==type.leZ);
-			return dIvr(DIvr.Type.eqZ,e).simplify(facts);
 		}
 		// TODO: better decision procedures
 		if(type==Type.eqZ){
