@@ -1572,9 +1572,7 @@ class DPow: DBinaryOp{
 			}
 			return dMult(r).simplify(facts);
 		}+/
-		if(auto fct=factorDIvr!(e=>e1^^e)(e2)){
-			return fct.simplify(facts);
-		}
+		if(auto fct=factorDIvr!(e=>e1^^e)(e2)) return fct.simplify(facts);
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){
@@ -2524,35 +2522,6 @@ class DIvr: DExpr{ // iverson brackets
 		auto ne=e.simplify(facts);
 		if(ne != e) return dIvr(type,ne).simplify(facts);
 		if(auto r=cancelFractions!false(e,type)) return r.simplify(facts);
-		// TODO: make these check faster (also: less convoluted)
-		auto neg=negateDIvr(type,e);
-		neg.e=neg.e.simplify(facts);
-		foreach(f;facts.factors){
-			if(auto ivr=cast(DIvr)f){
-				// TODO: more elaborate implication checks
-				if(ivr.type==type){
-					if(ivr.e==e) return one;
-					if(ivr.type==Type.leZ){
-						if(e.mustBeAtMost(ivr.e))
-							return one;
-					}
-				}
-				import util: among;
-				if(neg.type==ivr.type && (neg.e==ivr.e||
-					type.among(Type.eqZ,Type.neqZ)&&(-neg.e).simplify(facts)==ivr.e))
-					return zero; // TODO: ditto
-				if(ivr.type==Type.leZ){
-					if(type==Type.leZ){
-						assert(neg.type==type.lZ);
-						if(neg.e==ivr.e) assert(neg.e.mustBeAtMost(ivr.e),text(neg.e));
-						if(neg.e.mustBeAtMost(ivr.e)) return dIvr(DIvr.Type.eqZ,e).simplify(facts);
-					}else if(type==Type.eqZ||type==Type.neqZ){
-						if(e.mustBeLessThan(ivr.e)||(-e).mustBeLessThan(ivr.e))
-							return type==Type.eqZ?zero:one;
-					}
-				}
-			}
-		}
 		// TODO: better decision procedures
 		if(type==Type.eqZ){
 			if(!couldBeZero(e)) return zero;
@@ -2596,6 +2565,35 @@ class DIvr: DExpr{ // iverson brackets
 		if(type==Type.eqZ||type==Type.neqZ){
 			auto f=e.getFractionalFactor();
 			if(f!=one && f!=zero && f!=mone) return dIvr(type,e/f).simplify(facts);
+		}
+		// TODO: make these check faster (also: less convoluted)
+		auto neg=negateDIvr(type,e);
+		neg.e=neg.e.simplify(facts);
+		foreach(f;facts.factors){
+			if(auto ivr=cast(DIvr)f){
+				// TODO: more elaborate implication checks
+				if(ivr.type==type){
+					if(ivr.e==e) return one;
+					if(ivr.type==Type.leZ){
+						if(e.mustBeAtMost(ivr.e))
+							return one;
+					}
+				}
+				import util: among;
+				if(neg.type==ivr.type && (neg.e==ivr.e||
+					type.among(Type.eqZ,Type.neqZ)&&(-neg.e).simplify(facts)==ivr.e))
+					return zero; // TODO: ditto
+				if(ivr.type==Type.leZ){
+					if(type==Type.leZ){
+						assert(neg.type==type.lZ);
+						if(neg.e==ivr.e) assert(neg.e.mustBeAtMost(ivr.e),text(neg.e));
+						if(neg.e.mustBeAtMost(ivr.e)) return dIvr(DIvr.Type.eqZ,e).simplify(facts);
+					}else if(type==Type.eqZ||type==Type.neqZ){
+						if(e.mustBeLessThan(ivr.e)||(-e).mustBeLessThan(ivr.e))
+							return type==Type.eqZ?zero:one;
+					}
+				}
+			}
 		}
 		if(util.among(type,Type.eqZ,Type.neqZ)){
 			if(auto p=cast(DPlus)e){
