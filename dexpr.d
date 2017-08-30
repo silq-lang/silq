@@ -2556,7 +2556,7 @@ class DIvr: DExpr{ // iverson brackets
 		// TODO: better decision procedures
 		if(type==Type.eqZ){
 			if(!couldBeZero(e)) return zero;
-			if(auto eivr=cast(DIvr)e) return negateDIvr(eivr).simplify(one);
+			if(auto eivr=cast(DIvr)e) return negateDIvr(eivr).simplify(facts);
 		}
 		if(type==Type.neqZ){
 			if(!couldBeZero(e)) return one;
@@ -2611,7 +2611,7 @@ class DIvr: DExpr{ // iverson brackets
 					if(f!=one) onlyOne=false;
 					if(!mustBeLessThanZero(f))
 						onlyNegativeFractions=false;
-					if(!mustBeLessThanZero((-f).simplify(one)))
+					if(!mustBeLessThanZero((-f).simplify(facts)))
 						onlyPositiveFractions=false;
 				}
 				if(allNonNegative&&allNonPositive) return dIvr(type,zero).simplify(facts);
