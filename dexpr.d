@@ -1563,16 +1563,16 @@ class DPow: DBinaryOp{
 			if(auto f2=cast(DFloat)e2)
 				return (toReal(q1.c)^^f2.c).dFloat;
 		if(auto fct=factorDIvr!(e=>e^^e2)(e1)) return fct.simplify(facts);
-		/+if(e2.hasAny!DIvr(false)){
+		if(e2.hasAny!DIvr(false)){
 			DExprSet r;
 			foreach(s;e2.summands){
-				if(auto ns=factorDIvr!(e=>e1^^e)(s))
-					s=ns;
-				DMult.insert(r,s);
+				DExpr f;
+				if(auto ns=factorDIvr!(e=>e1^^e)(s)) f=ns;
+				else f=e1^^s;
+				DMult.insert(r,f);
 			}
 			return dMult(r).simplify(facts);
-		}+/
-		if(auto fct=factorDIvr!(e=>e1^^e)(e2)) return fct.simplify(facts);
+		}
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){
