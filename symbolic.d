@@ -121,10 +121,9 @@ private struct Analyzer{
 				msc=fd.realScope;
 			for(auto csc=msc;;csc=(cast(NestedScope)csc).parent){
 				if(!cast(NestedScope)csc) break;
-				foreach(vd;&csc.all!VarDecl){
+				foreach(vd;&csc.all!VarDecl)
 					if(auto var=readVariable(vd,sc))
 						record[vd.getName]=var;
-				}
 				if(!cast(NestedScope)(cast(NestedScope)csc).parent) break;
 				if(auto dsc=cast(DataScope)csc){
 					auto name=dsc.decl.contextName;
@@ -141,31 +140,6 @@ private struct Analyzer{
 		}
 		DExpr lookupMeaning(Identifier id)in{assert(id && id.scope_,text(id," ",id.loc));}body{
 			if(!id.meaning||!id.scope_||!id.meaning.scope_){
-				if(isBuiltIn(id)){ // TODO: this is somewhat hacky
-					static DExpr[string] builtIn;
-					auto fty=cast(FunTy)id.type;
-					assert(!!fty);
-					if(id.name !in builtIn){
-						auto bdist=new Distribution();
-						auto names=iota(fty.nargs).map!(i=>new Identifier("x"~lowNum(i+1))).array;
-						auto arg=fty.isTuple?new TupleExp(cast(Expression[])names):names[0];
-						auto params=new Parameter[](names.length);
-						foreach(i,ref p;params) p=new Parameter(names[i],fty.argTy(i));
-						auto call=new CallExp(id,arg,fty.isSquare);
-						auto bdy=new CompoundExp([new ReturnExp(call)]);
-						auto fdef=new FunctionDef(null,params,fty.isTuple,null,bdy);
-						fdef.isSquare=fty.isSquare;
-						auto sc=new TopScope(err);
-						fdef.scope_=sc;
-						fdef=cast(FunctionDef)presemantic(fdef,sc);
-						assert(!!fdef);
-						fdef=cast(FunctionDef)functionDefSemantic(fdef,sc);
-						assert(!!fdef);
-						bdist=be.analyze(functionDefSemantic(fdef,sc),err);
-						builtIn[id.name]=bdist.toDExpr();
-					}
-					return builtIn[id.name];
-				}
 				err.error("undefined variable '"~id.name~"'",id.loc);
 				return null;
 			}
