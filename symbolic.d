@@ -75,86 +75,19 @@ private struct Analyzer{
 	DExpr transformExp(Exp e){
 		class Unwind: Exception{ this(){ super(""); } }
 		void unwind(){ throw new Unwind(); }
-		import scope_;
-		static DExpr getContextFor(Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{
-			DExpr r=null;
-			auto meaningScope=meaning.scope_;
-			if(auto fd=cast(FunctionDef)meaning)
-				meaningScope=fd.realScope;
-			assert(sc&&sc.isNestedIn(meaningScope));
-			for(auto csc=sc;csc !is meaningScope;){
-				void add(string name){
-					if(!r) r=dVar(name);
-					else r=dField(r,name);
-					assert(!!cast(NestedScope)csc);
-				}
-				assert(cast(NestedScope)csc);
-				if(!cast(NestedScope)(cast(NestedScope)csc).parent) break;
-				if(auto fsc=cast(FunctionScope)csc) add(fsc.getFunction().contextName);
-				else if(cast(AggregateScope)csc) add(csc.getDatDecl().contextName);
-				csc=(cast(NestedScope)csc).parent;
-				if(csc is meaningScope) break;
-				if(auto fsc=cast(FunctionScope)csc){
-					auto fd=fsc.getFunction();
-					assert(!!fd);
-					if(fd.isConstructor){
-						csc=fd.scope_;
-						assert(!!cast(AggregateScope)csc);
-						if(csc is meaningScope) break;
-					}
-				}
-			}
-			return r;
-		}
-		DExpr readVariable(VarDecl var,Scope from){
-			DExpr r=getContextFor(var,from);
-			if(r) return dField(r,var.getName);
-			auto v=dVar(var.getName);
+		import scope_,context;
+		DExpr readLocal(string name){
+			auto v=dVar(name);
 			if(v in dist.freeVars||dist.hasArg(v)) return v;
 			return null;
 		}
-		DExpr buildContextFor()(Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{ // template, forward references 'doIt'
-			if(auto ctx=getContextFor(meaning,sc)) return ctx;
-			DExpr[string] record;
-			auto msc=meaning.scope_;
-			if(auto fd=cast(FunctionDef)meaning)
-				msc=fd.realScope;
-			for(auto csc=msc;;csc=(cast(NestedScope)csc).parent){
-				if(!cast(NestedScope)csc) break;
-				foreach(vd;&csc.all!VarDecl)
-					if(auto var=readVariable(vd,sc))
-						record[vd.getName]=var;
-				if(!cast(NestedScope)(cast(NestedScope)csc).parent) break;
-				if(auto dsc=cast(DataScope)csc){
-					auto name=dsc.decl.contextName;
-					record[name]=dVar(name);
-					break;
-				}
-				if(auto fsc=cast(FunctionScope)csc){
-					auto cname=fsc.getFunction().contextName;
-					record[cname]=dVar(cname);
-					break;
-				}
-			}
-			return dRecord(record);
-		}
-		DExpr lookupMeaning(Identifier id)in{assert(id && id.scope_,text(id," ",id.loc));}body{
-			if(!id.meaning||!id.scope_||!id.meaning.scope_){
-				err.error("undefined variable '"~id.name~"'",id.loc);
-				return null;
-			}
-			if(auto vd=cast(VarDecl)id.meaning){
-				DExpr r=getContextFor(id.meaning,id.scope_);
-				return r?dField(r,id.name):dVar(id.name);
-			}
-			if(auto fd=cast(FunctionDef)id.meaning){
-				auto summary=be.getSummary(fd,id.loc,err);
-				if(fd.isNested)
-					return summary.toDExprWithContext(buildContextFor(fd,id.scope_));
-				return summary.toDExpr();
-			}
-			err.error("unsupported",id.loc);
-			return null;
+		DExpr readFunction(Identifier id)in{ assert(id && id.scope_ && cast(FunctionDef)id.meaning); }body{
+			auto fd=cast(FunctionDef)id.meaning;
+			assert(!!fd);
+			auto summary=be.getSummary(fd,id.loc,err);
+			if(fd.isNested)
+				return summary.toDExprWithContext(buildContextFor!readLocal(fd,id.scope_));
+			return summary.toDExpr();
 		}
 		DExpr doIt(Exp e){
 			if(e.type == typeTy) return dTuple([]); // TODO: get rid of this
@@ -170,7 +103,8 @@ private struct Analyzer{
 					err.error("missing array index",id.loc);
 					unwind();
 				}
-				if(auto r=lookupMeaning(id)) return r;
+				if(auto r=lookupMeaning!(readLocal,readFunction)(id)) return r;
+				err.error("undefined variable '"~id.name~"'",id.loc);
 				unwind();
 			}
 			if(auto fe=cast(FieldExp)e){
@@ -219,7 +153,7 @@ private struct Analyzer{
 			if(auto le=cast(LambdaExp)e){
 				auto summary=be.getSummary(le.fd,le.loc,err);
 				if(le.fd.isNested)
-					return summary.toDExprWithContext(buildContextFor(le.fd,le.fd.scope_));
+					return summary.toDExprWithContext(buildContextFor!readLocal(le.fd,le.fd.scope_));
 				return summary.toDExpr();
 			}
 			if(auto ce=cast(CallExp)e){
@@ -246,7 +180,7 @@ private struct Analyzer{
 						}
 						if(!thisExp)if(fun.isNested){ // nested function calls
 							assert(id.scope_,text(id," ",id.loc));
-							auto ctx=buildContextFor(fun,id.scope_);
+							auto ctx=buildContextFor!readLocal(fun,id.scope_);
 							assert(!!ctx);
 							arg=dTuple([arg,ctx]);
 							argty=tupleTy([argty,contextTy]);

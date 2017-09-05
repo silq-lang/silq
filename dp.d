@@ -273,7 +273,7 @@ struct Dist{
 		auto ncur=pushFrame();
 		if(fun.isConstructor) ncur=ncur.map(dLambda(dRUpdate(db1,fun.thisVar.getName,dRecord())));
 		if(thisExp) ncur=ncur.map(dLambda(dRUpdate(db1,fun.contextName,inFrame(thisExp))));
-		else if(fun.isNested) ncur=ncur.map(dLambda(dRUpdate(db1,fun.contextName,inFrame(buildContextFor(fun,sc)))));
+		else if(fun.isNested) ncur=ncur.map(dLambda(dRUpdate(db1,fun.contextName,inFrame(buildContextFor!readLocal(fun,sc)))));
 		if(fun.isNested&&fun.isConstructor) ncur=ncur.map(dLambda(dRUpdate(db1,fun.thisVar.getName,dRecord([fun.contextName:dField(db1,fun.contextName)]))));
 		if(fun.isTuple){
 			DExpr updates=db1;
@@ -540,6 +540,13 @@ DDPDist dDPDist(Dist dist)in{assert(!dist.tmpVars.length);}body{
 
 import lexer: Tok;
 alias ODefExp=BinaryExp!(Tok!":=");
+DExpr readLocal(string name){ return dField(db1,name); }
+DExpr readFunction(Identifier id)in{ assert(id && id.scope_ && cast(FunctionDef)id.meaning); }body{
+	auto fd=cast(FunctionDef)id.meaning;
+	assert(!!fd);
+	if(!fd.isNested) return dDPFun(fd);
+	return dDPContextFun(fd,buildContextFor!readLocal(fd,id.scope_));
+}
 struct Interpreter{
 	FunctionDef functionDef;
 	CompoundExp statements;
@@ -563,8 +570,8 @@ struct Interpreter{
 			if(auto pl=cast(PlaceholderExp)e) return dVar(pl.ident.name);
 			if(auto id=cast(Identifier)e){
 				if(!id.meaning&&id.name=="π") return dΠ;
-				if(auto r=lookupMeaning(id)) return r;
-				assert(0);
+				if(auto r=lookupMeaning!(readLocal,readFunction)(id)) return r;
+				assert(0,"unsupported");
 			}
 			if(auto fe=cast(FieldExp)e){
 				if(isBuiltIn(fe)){
@@ -597,7 +604,7 @@ struct Interpreter{
 			if(auto ume=cast(UBitNotExp)e) return -doIt(ume.e)-1;
 			if(auto le=cast(LambdaExp)e){
 				if(le.fd.isNested){
-					return dDPContextFun(le.fd,buildContextFor(le.fd,le.fd.scope_));
+					return dDPContextFun(le.fd,buildContextFor!readLocal(le.fd,le.fd.scope_));
 				}
 				return dDPFun(le.fd);
 			}
