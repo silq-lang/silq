@@ -1,0 +1,5 @@
+// skipped
+
+def bar() ⇒ foo()+foo();
+import import1;
+

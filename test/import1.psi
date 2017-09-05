@@ -1,0 +1,3 @@
+// skipped
+
+def foo() ⇒ uniform(0,1);
