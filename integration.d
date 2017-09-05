@@ -16,7 +16,7 @@ DExpr definiteIntegral(DExpr expr,DExpr facts=one){
 }
 
 private DExpr definiteIntegralImpl(DExpr expr,DExpr facts=one){
-	auto var=dDeBruijnVar(1);
+	auto var=db1;
 	auto nexpr=expr.simplify(facts.incDeBruijnVar(1,0).simplify(one));
 	if(expr != nexpr) expr=nexpr;
 	if(expr == zero) return zero;
@@ -30,8 +30,8 @@ private DExpr definiteIntegralImpl(DExpr expr,DExpr facts=one){
 	}
 	/+foreach(f;expr.factors){
 		if(auto case_=cast(DMCase)f){
-			if(!case_.e.hasFreeVar(dDeBruijnVar(1))){
-				auto val=case_.val.incDeBruijnVar(1,0).substitute(dDeBruijnVar(2),dDeBruijnVar(1)).incDeBruijnVar(-1,1);
+			if(!case_.e.hasFreeVar(db1)){
+				auto val=case_.val.incDeBruijnVar(1,0).substitute(db2,db1).incDeBruijnVar(-1,1);
 				auto rest=expr.withoutFactor(f).incDeBruijnVar(1,1);
 				auto vali=definiteIntegral(val*rest,facts);
 				auto erri=definiteIntegral(case_.err*rest,facts);
@@ -118,7 +118,7 @@ private DExpr definiteIntegralImpl(DExpr expr,DExpr facts=one){
 	// pull sums out
 	foreach(f;expr.factors){
 		if(auto sum=cast(DSum)f){
-			auto nexpr=sum.expr.incDeBruijnVar(1,0).substitute(dDeBruijnVar(3),dDeBruijnVar(1)).incDeBruijnVar(-1,2)*expr.withoutFactor(f).incDeBruijnVar(1,1);
+			auto nexpr=sum.expr.incDeBruijnVar(1,0).substitute(db3,db1).incDeBruijnVar(-1,2)*expr.withoutFactor(f).incDeBruijnVar(1,1);
 			if(auto r=definiteIntegral(nexpr,facts.incDeBruijnVar(1,0).simplify(one)))
 				return dSum(r).simplify(facts);
 		}
@@ -148,13 +148,13 @@ private DExpr definiteIntegralImpl(DExpr expr,DExpr facts=one){
 		auto fubiExprNumVars=fubiRec(expr);
 		if(!hasInt) return null;
 		auto fubiExpr=fubiExprNumVars[0], numFubiVars=fubiExprNumVars[1];
-		fubiExpr=fubiExpr.incDeBruijnVar(1,0).substitute(dDeBruijnVar(numFubiVars+1),dDeBruijnVar(1)).incDeBruijnVar(-1,numFubiVars);
+		fubiExpr=fubiExpr.incDeBruijnVar(1,0).substitute(dDeBruijnVar(numFubiVars+1),db1).incDeBruijnVar(-1,numFubiVars);
 		auto r=definiteIntegral(fubiExpr,facts.incDeBruijnVar(numFubiVars-1,0).simplify(one));
 		if(!r) return null;
 		foreach_reverse(v;0..numFubiVars-1) r=dInt(r);
 		return r.simplify(facts);
 	}
-	assert(var == dDeBruijnVar(1));
+	assert(var == db1);
 	if(auto r=fubini()) return r;
 	if(!expr.hasFreeVar(var)) return expr.incDeBruijnVar(-1,0)*dInt(one); // (infinite integral)
 	return null;
@@ -167,7 +167,7 @@ private DExpr definiteIntegralContinuous(DExpr expr,DExpr facts)out(res){
 	}
 }body{
 	// ensure integral is continuous
-	auto var=dDeBruijnVar(1);
+	auto var=db1;
 	if(!expr.isContinuousMeasureIn(var)) return null;
 	if(auto r=tryIntegrate(expr))
 		return r.simplify(facts);
@@ -175,7 +175,7 @@ private DExpr definiteIntegralContinuous(DExpr expr,DExpr facts)out(res){
 }
 
 DExpr fromTo(DExpr anti,DVar var,DExpr lower,DExpr upper)in{
-	assert(var==dDeBruijnVar(1));
+	assert(var==db1);
 }body{ // lower=null: lower=-∞. upper=0: upper=∞
 	//dw(anti.substitute(var,lower).simplify(one)," ",lower," ",upper);
 	auto lo=lower?unbind(anti,lower):null;
@@ -195,7 +195,7 @@ DExpr fromTo(DExpr anti,DVar var,DExpr lower,DExpr upper)in{
 
 
 DExpr tryGetAntiderivative(DExpr expr){
-	auto var=dDeBruijnVar(1);
+	auto var=db1;
 	auto ow=expr.splitMultAtVar(var);
 	ow[0]=ow[0].simplify(one);
 	if(ow[0] != one){
@@ -308,7 +308,7 @@ DExpr tryGetAntiderivative(DExpr expr){
 				if(auto n=p.operands[1].isInteger()){
 					DExpr dInGamma(DExpr a,DExpr z){
 						a=a.incDeBruijnVar(1,0), z=z.incDeBruijnVar(1,0);
-						auto t=dDeBruijnVar(1);
+						auto t=db1;
 						return dIntSmp(t^^(a-1)*dE^^(-t)*dLe(z,t),one);
 					}
 					if(n.c>0)
@@ -424,7 +424,7 @@ DExpr tryGetAntiderivative(DExpr expr){
 			memo[t]=r;
 			foreach(k,ref v;memo){ // TODO: this is inefficient. only consider new values.
 				if(!v||!v.hasFreeVar(tau)) continue;
-				v=v.substitute(tau,dLambda(r.substituteAll(vars,iota(vars.length).map!(i=>dDeBruijnVar(1)[i.dℚ]).array))).simplify(one);
+				v=v.substitute(tau,dLambda(r.substituteAll(vars,iota(vars.length).map!(i=>db1[i.dℚ]).array))).simplify(one);
 			}
 			return r;
 		}
@@ -448,8 +448,8 @@ DExpr tryGetAntiderivative(DExpr expr){
 		auto diffPoly=dDiff(var,polyFact);
 		auto diffRest=(diffPoly*intRest).polyNormalize(var).simplify(one);
 		auto intDiffPolyIntRest=tryGetAntiderivative(diffRest);
-		//dw("!! ",diffRest.substitute(dDeBruijnVar(2),"k".dVar).simplify(one));
-		//dw("!! ",intDiffPolyIntRest.substitute(dDeBruijnVar(2),"k".dVar).simplify(one));
+		//dw("!! ",diffRest.substitute(db2,"k".dVar).simplify(one));
+		//dw("!! ",intDiffPolyIntRest.substitute(db2,"k".dVar).simplify(one));
 		if(!intDiffPolyIntRest) return fail();
 		auto r=polyFact*intRest-intDiffPolyIntRest;
 		if(!r.hasFreeVar(tau)) return succeed(r);
@@ -457,7 +457,7 @@ DExpr tryGetAntiderivative(DExpr expr){
 		auto h=r.simplify(one).getHoles!(x=>x==token?token:null,DDistApply);
 		r=h.expr.substituteAll(h.holes.map!(x=>x.var).array,(cast(DExpr)sigma).repeat(h.holes.length).array);
 		if(auto s=(r-sigma).simplify(one).solveFor(sigma)){
-			s=s.substitute(tau,dLambda(s.substituteAll(vars,iota(vars.length).map!(i=>dDeBruijnVar(1)[i.dℚ]).array))).simplify(one);
+			s=s.substitute(tau,dLambda(s.substituteAll(vars,iota(vars.length).map!(i=>db1[i.dℚ]).array))).simplify(one);
 			if(s.hasFreeVar(tau)) return fail();
 			return succeed(s);
 		}
@@ -501,7 +501,7 @@ enum SplitIvrsIntegral{
 	zero
 }
 Q!(SplitIvrsIntegral,DExpr[2]) splitIvrsIntegral(DExpr expr){
-	auto var=dDeBruijnVar(1);
+	auto var=db1;
 	DExpr ivrs=one,nonIvrs=one;
 	foreach(f;setx(expr.factors)){
 		auto ivr=cast(DIvr)f;
@@ -529,7 +529,7 @@ Q!(SplitIvrsIntegral,DExpr[2]) splitIvrsIntegral(DExpr expr){
 
 
 private DExpr tryIntegrateImpl(DExpr expr){
-	auto var=dDeBruijnVar(1);
+	auto var=db1;
 	assert(expr.factors.all!(x=>!cast(DDelta)x));
 	auto lexpr=expr.linearizeConstraints(var).simplify(one);
 	if(lexpr != expr) return tryIntegrate(lexpr);

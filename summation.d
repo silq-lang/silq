@@ -4,7 +4,7 @@
 import dexpr, util;
 
 DExpr computeSum(DExpr expr,DExpr facts=one){
-	auto var=dDeBruijnVar(1);
+	auto var=db1;
 	auto nexpr=expr.simplify(facts.incDeBruijnVar(1,0).simplify(one));
 	if(nexpr !is expr) expr=nexpr;
 	if(expr is zero) return zero;

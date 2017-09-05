@@ -182,7 +182,7 @@ void test(){
 	//writeln(("-1/(-2)^(1/2)".dParse.simplify(one)*"(-x)^(1/2)".dParse.simplify(one)).simplify(one));
 	
 	//writeln(tryGetAntiderivative("[-k+-ξ₀≤0]·[k+ξ₀≠0]·k".dParse.simplify(one)).simplify(one));
-	//writeln(tryGetAntiderivative("[-ξ₋₁+-ξ₀≤0]·[ξ₋₁+ξ₀≠0]·ξ₋₁".dParse.simplify(one)).simplify(one).substitute(dDeBruijnVar(2),dVar("k")).simplify(one));
+	//writeln(tryGetAntiderivative("[-ξ₋₁+-ξ₀≤0]·[ξ₋₁+ξ₀≠0]·ξ₋₁".dParse.simplify(one)).simplify(one).substitute(db2,dVar("k")).simplify(one));
 
 	//writeln("∫dξ₁ [0≤ξ₁]·[ξ₁≤1]·1/(ξ₁+k)*ξ₁".dParse.simplify(one).toString(Format.mathematica));
 	//writeln("∫dξ₁ [0≤ξ₁]·[ξ₁≤1]·1/(ξ₁+ξ₀)*ξ₁".dParse.simplify(one).toString(Format.mathematica));
@@ -198,8 +198,8 @@ void test(){
 	//writeln(tryGetAntiderivative("log(-ξ₀)·ξ₀".dParse.simplify(one)));
 	//writeln(tryGetAntiderivative("[ξ₀≤0]·log(-ξ₀)·ξ₀".dParse.simplify(one)));
 	//writeln(tryGetAntiderivative("log(-ξ₀)·ξ₀".dParse.simplify(one)).simplify("[ξ₀<0]".dParse.simplify(one)));
-	//writeln(tryGetAntiderivative("ξ₀·log(-ξ₀)".dParse).simplify("[ξ₀<0]".dParse.simplify(one)).substitute(dDeBruijnVar(1));
-	//writeln(dDiff(dDeBruijnVar(1),tryGetAntiderivative("log(-ξ₀)".dParse).simplify("[ξ₀<0]".dParse)));
+	//writeln(tryGetAntiderivative("ξ₀·log(-ξ₀)".dParse).simplify("[ξ₀<0]".dParse.simplify(one)).substitute(db1);
+	//writeln(dDiff(db1,tryGetAntiderivative("log(-ξ₀)".dParse).simplify("[ξ₀<0]".dParse)));
 	//writeln(dIntSmp("x".dVar,"x*log(-x)·[-1≤x]·[x≤0]".dParse,one).toString(Format.matlab));
 	//writeln(dIntSmp("x".dVar,"(x+1)*log(x)*x·[0≤x]·[x≤1]".dParse,one).toString(Format.matlab));
 	//writeln(dIntSmp("x".dVar,"(-1/2*x+1/2)*log(1/2+1/2*x)*x·[0≤x]·[x≤1]".dParse,one).toString(Format.matlab));
@@ -211,7 +211,7 @@ void test(){
 	writeln(fun.toString(Format.matlab));+/
 	/+auto fun="λξ₁. λξ₂. ∫dξ₃∫dξ₄((-21/100·ξ₃+21/200+21/200·ξ₃²)·(-ξ₄+1)·[-1+ξ₃≤0]·[-1+ξ₄≤0]·[-ξ₃≤0]·[-ξ₄≤0]·ξ₃·⅟(21/100·ξ₃+7/10·ξ₄)+(-21/200·ξ₄+21/200)·(-ξ₃+1)·[-1+ξ₃≤0]·[-1+ξ₄≤0]·[-ξ₃≤0]·[-ξ₄≤0]·ξ₃²·⅟(21/100·ξ₃+7/10·ξ₄))·δ_ξ₂[(ξ₄,ξ₃)]".dParse.simplify(one);
 	void computeWeight(){
-		auto app=dDistApply(dApply(fun,dTuple([])),dDeBruijnVar(1)).simplify(one);
+		auto app=dDistApply(dApply(fun,dTuple([])),db1).simplify(one);
 		writeln(app);
 		writeln(dIntSmp(app,one).toString(Format.matlab));
 	}
@@ -234,7 +234,7 @@ void test(){
 		auto res=dApply(infer,fun).simplify(one);
 		writeln(res);
 		//auto applied = dApply("λξ₁. λξ₂. (∫dξ₃∫dξ₄((-21/100·ξ₃+21/200+21/200·ξ₃²)·(-ξ₄+1)·[-1+ξ₃≤0]·[-1+ξ₄≤0]·[-ξ₃≤0]·[-ξ₄≤0]·ξ₃·⅟(21/100·ξ₃+7/10·ξ₄)+(-21/200·ξ₄+21/200)·(-ξ₃+1)·[-1+ξ₃≤0]·[-1+ξ₄≤0]·[-ξ₃≤0]·[-ξ₄≤0]·ξ₃²·⅟(21/100·ξ₃+7/10·ξ₄))·δ_ξ₂[(ξ₄,ξ₃)])·⅟(-13/400·log(21)+-25471121/324000·log(100)+-454397311/6480000+-8095/162·log(7)+25481651/324000·log(91)+8095/162·log(10))".dParse,one).simplify(one);
-		auto applied=dIntSmp(dDeBruijnVar(1)*dDistApply(res,dDeBruijnVar(1)),one);
+		auto applied=dIntSmp(db1*dDistApply(res,db1),one);
 		auto ret=dDistApply(applied,dTuple(["a".dVar,"b".dVar])).simplify(one);
 		writeln(ret);
 		gnuplot(ret,cast(SetX!DNVar)ret.freeVars.setx,"foo","[-10:10]");
@@ -257,7 +257,7 @@ void test(){
 	//writeln("[a·x≤0]".dParse.linearizeConstraints("x".dVar).simplify(one));
 	//import integration;
 	//writeln(tryGetAntiderivative("[-a·ξ₀+-b≤0]·[a·ξ₀+b≠0]·[a≠0]·log(a·ξ₀+b)·⅟a".dParse.simplify(one)));
-	//writeln(tryGetAntiderivative("[-a·x+-b≤0]·[a·x+b≠0]·[a≠0]·log(a·x+b)·⅟a+[a=0]·x·⅟b+[a·x+b≠0]·[a·x+b≤0]·[a≠0]·log(-a·x+-b)·⅟a".dParse.substitute("x".dVar,dDeBruijnVar(1)).simplify(one)));
+	//writeln(tryGetAntiderivative("[-a·x+-b≤0]·[a·x+b≠0]·[a≠0]·log(a·x+b)·⅟a+[a=0]·x·⅟b+[a·x+b≠0]·[a·x+b≤0]·[a≠0]·log(-a·x+-b)·⅟a".dParse.substitute("x".dVar,db1).simplify(one)));
 	//writeln("∫dx x/(5·x+3)·[0≤x]·[x≤1]".dParse.simplify(one).toString(Format.matlab));
 	//writeln("∫dx (d/dx)⁻¹[e^(-x²)](a·x+b)·[1≤x]·[x≤2]".dParse.simplify(one));
 	//writeln("∫dx e^(a·x+b)·[1≤x]·[x≤2]".dParse.simplify(one));
@@ -1071,18 +1071,18 @@ void test(){
 	//dw(e);
 	//auto ii=dInt("x".dVar,dInt("y".dVar,e));
 	//dw(dInt("y".dVar,e));
-	//dw((cast(DInt)ii).expr.substitute(dDeBruijnVar(1),"x".dVar));
-	//writeln("?? ",(cast(DInt)ii).expr.simplify(one).substitute(dDeBruijnVar(1),"x".dVar));
+	//dw((cast(DInt)ii).expr.substitute(db1,"x".dVar));
+	//writeln("?? ",(cast(DInt)ii).expr.simplify(one).substitute(db1,"x".dVar));
 	//dw("***");
-	//writeln("!! ",(cast(DInt)ii).expr.substitute(dDeBruijnVar(1),"x".dVar).simplify(one));
-	// writeln((cast(DInt)ii).expr.simplify(one).substitute(dDeBruijnVar(1),"x".dVar));
+	//writeln("!! ",(cast(DInt)ii).expr.substitute(db1,"x".dVar).simplify(one));
+	// writeln((cast(DInt)ii).expr.simplify(one).substitute(db1,"x".dVar));
 	//writeln(ii.simplify(one));
 	//writeln("(∫dξ₁[-1+z·⅟ξ₁≤0]·[-1+ξ₁≤0]·[-z·⅟ξ₁≠0]·[-z·⅟ξ₁≤0]·[-ξ₁≠0]·[-ξ₁≤0]·log(ξ₁)²·ξ₁)·⅟2·⅟z".dParse.simplify(one));
-	//writeln(dInt("y".dVar,e).substitute("x".dVar,dDeBruijnVar(2)).simplify(one));
-	//writeln(dDelta(-"z".dVar+dDeBruijnVar(1)*dDeBruijnVar(2)).linearizeConstraints(dDeBruijnVar(1)).simplify(one));
+	//writeln(dInt("y".dVar,e).substitute("x".dVar,db2).simplify(one));
+	//writeln(dDelta(-"z".dVar+db1*db2).linearizeConstraints(db1).simplify(one));
 	//dw("***");
-	//writeln(dDelta(-"z".dVar+dDeBruijnVar(1)*dVar("x")).linearizeConstraints(dDeBruijnVar(1)).simplify(one));
-	//writeln(dDiff(dDeBruijnVar(1),dDeBruijnVar(1)*dDeBruijnVar(2)));
+	//writeln(dDelta(-"z".dVar+db1*dVar("x")).linearizeConstraints(db1).simplify(one));
+	//writeln(dDiff(db1,db1*db2));
 	//auto e="[-1+x≤0]·[-x≠0]·[-x≤0]·log(x)²/2".dParse;
 	/+auto e="∫dξ₁[-log(ξ₀)+-ξ₁≤0]·ξ₁^(-1+1+2)·⅟e^ξ₁".dParse;
 	dw(e);
@@ -1175,7 +1175,7 @@ void test(){
 	/+auto e="([ξ₁ ↦ 0] (1))[0 ↦ -ξ₋₁+1+-__u₂]".dParse;
 	dw(e);
 	writeln(e.simplify(one));
-	writeln(e.substitute(dDeBruijnVar(2),"asdf".dVar).simplify(one).substitute("asdf".dVar,dDeBruijnVar(2)));+/
+	writeln(e.substitute(db2,"asdf".dVar).simplify(one).substitute("asdf".dVar,db2));+/
 	//writeln("∫dx [0≤x] [x≤1] 4x³".dParse.simplify(one));
 	//writeln("∑_y∫dx 2q(x,y)f(z)".dParse.simplify(one));
 	//writeln("∫dx x[0] [x[0]≤1]x[1][x[0]≥0] δ_x[[y↦ 1/2] (2)]".dParse.simplify(one));

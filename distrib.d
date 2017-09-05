@@ -89,7 +89,7 @@ Cond[] flipCond(DExpr p){
 DExpr uniformIntPDFNnorm(DVar var,DExpr a,DExpr b){
 	var=var.incDeBruijnVar(1,0);
 	a=a.incDeBruijnVar(1,0), b=b.incDeBruijnVar(1,0);
-	auto x=dDeBruijnVar(1);
+	auto x=db1;
 	return dSumSmp(dBounded!"[]"(x,a,b)*dDelta(var-x),one);
 }
 
@@ -99,7 +99,7 @@ DExpr uniformIntPDF(DVar var,DExpr a,DExpr b){
 }
 Cond[] uniformIntCond(DExpr a,DExpr b){
 	a=a.incDeBruijnVar(1,0), b=b.incDeBruijnVar(1,0);
-	auto x=dDeBruijnVar(1); // TODO: get rid of this!
+	auto x=db1; // TODO: get rid of this!
 	auto nnorm=uniformIntPDFNnorm(x,a,b);
 	auto norm=dIntSmp(nnorm,one);
 	return [Cond(dNeqZ(norm),"no integers in range")];
@@ -107,7 +107,7 @@ Cond[] uniformIntCond(DExpr a,DExpr b){
 
 DExpr binomialPDF(DVar var,DExpr n,DExpr p){
 	n=n.incDeBruijnVar(1,0), p=p.incDeBruijnVar(1,0);
-	auto k=dDeBruijnVar(1);
+	auto k=db1;
 	return dSumSmp(dNChooseK(n,k)*p^^k*(1-p)^^(n-k)*dDelta(k-var),one);
 }
 Cond[] binomialCond(DExpr n,DExpr p){
@@ -118,7 +118,7 @@ Cond[] binomialCond(DExpr n,DExpr p){
 
 DExpr negBinomialPDF(DVar var,DExpr r,DExpr p){
 	r=r.incDeBruijnVar(1,0), p=p.incDeBruijnVar(1,0);
-	auto k=dDeBruijnVar(1);
+	auto k=db1;
 	return dSumSmp(dGeZ(k)*(dGamma(r+k)/(dGamma(r)*dGamma(k+1)))*p^^r*(1-p)^^k*dDelta(k-var),one);
 }
 Cond[] negBinomialCond(DExpr r,DExpr p){
@@ -129,7 +129,7 @@ Cond[] negBinomialCond(DExpr r,DExpr p){
 
 DExpr geometricPDF(DVar var,DExpr p){
 	p=p.incDeBruijnVar(1,0);
-	auto i=dDeBruijnVar(1);
+	auto i=db1;
 	return dSumSmp(dGeZ(i)*p*(1-p)^^i*dDelta(i-var),one);
 }
 Cond[] geometricCond(DExpr p){
@@ -138,7 +138,7 @@ Cond[] geometricCond(DExpr p){
 
 DExpr poissonPDF(DVar var,DExpr λ){
 	var=var.incDeBruijnVar(1,0), λ=λ.incDeBruijnVar(1,0);
-	auto x=dDeBruijnVar(1);
+	auto x=db1;
 	return dE^^-λ*dSumSmp(dGeZ(x)*dDelta(var-x)*λ^^x/dGamma(x+1),one);
 }
 Cond[] poissonCond(DExpr λ){
@@ -210,13 +210,13 @@ Cond[] weibullCond(DExpr λ,DExpr k){
 
 DExpr categoricalPDF(DVar var,DExpr p){
 	var=var.incDeBruijnVar(1,0), p=p.incDeBruijnVar(1,0);
-	auto dbv=dDeBruijnVar(1);
+	auto dbv=db1;
 	auto nnorm=dSum(dBounded!"[)"(dbv,zero,dField(p,"length"))*p[dbv]*dDelta(var-dbv));
 	return nnorm;///dIntSmp(nnorm);
 }
 Cond[] categoricalCond(DExpr p){
 	p=p.incDeBruijnVar(1,0);
-	auto dbv=dDeBruijnVar(1);
+	auto dbv=db1;
 	return [Cond(dEqZ(dSum(dBounded!"[)"(dbv,zero,dField(p,"length")*dLtZ(p[dbv])))),"probability of category should be non-negative"),
 	        Cond(dEqZ(dSum(dBounded!"[)"(dbv,zero,dField(p,"length"))*p[dbv])-1),"probabilities should sum up to 1")];
 }
@@ -432,7 +432,7 @@ class Distribution{
 		distribution=distribution.simplify(one);
 		if(!opt.noCheck) error=(dEqZ(factor)+dNeqZ(factor)*(error/factor)).simplify(one);
 		/+import type;
-		Distribution r=fromDExpr(dLambda(dNormalize(dApply(toDExpr().incDeBruijnVar(1,0),dDeBruijnVar(1)))),args.length,argsIsTuple,orderedFreeVars,isTuple,orderedFreeVars.map!(x=>cast(Expression)contextTy).array);
+		Distribution r=fromDExpr(dLambda(dNormalize(dApply(toDExpr().incDeBruijnVar(1,0),db1))),args.length,argsIsTuple,orderedFreeVars,isTuple,orderedFreeVars.map!(x=>cast(Expression)contextTy).array);
 		r.simplify();
 		distribution=r.distribution;
 		if(!opt.noCheck) error=r.error;+/
@@ -441,7 +441,6 @@ class Distribution{
 		auto vars=freeVars.dup;
 		auto r=getTmpVar("__r");
 		if(!opt.noCheck){
-			auto db1=dDeBruijnVar(1);
 			auto ndist=dDistApply(dApply(q,arg),db1);
 			auto nerror=distribution*dInt(dMCase(db1,zero,one)*ndist);
 			distribution=distribution*dInt(dMCase(db1,dDiscDelta(r,db1),zero)*ndist);
@@ -465,7 +464,6 @@ class Distribution{
 		assert(isTuple||vars.length==1);
 		auto values=(isTuple&&!stripContext?dTuple(cast(DExpr[])vars):vars[0]).incDeBruijnVar(1,0);
 		auto dist=distribution.incDeBruijnVar(2,0);
-		auto db2=dDeBruijnVar(2);
 		auto allVars=cast(DVar[])args;
 		DExpr[] allVals;
 		if(context){
@@ -475,7 +473,6 @@ class Distribution{
 			allVals=iota(0,args.length).map!(i=>argsIsTuple?db2[i.dℚ]:db2).array;
 		}
 		dist=dist.substituteAll(allVars,allVals);
-		auto db1=dDeBruijnVar(1);
 		if(!opt.noCheck){
 			auto r=dist*dDiscDelta(db1,dVal(values));
 			foreach(v;vars) r=dInt(v,r);
@@ -496,7 +493,6 @@ class Distribution{
 		assert(!!this.context);
 		assert(freeVarsOrdered&&hasArgs);
 	}body{
-		auto db1=dDeBruijnVar(1),db2=dDeBruijnVar(2);
 		auto bdy=toDExprLambdaBody(stripContext);
 		context=context.incDeBruijnVar(1,0);
 		bdy=bdy.substitute(db1,dTuple([db1,context]));
@@ -508,7 +504,6 @@ class Distribution{
 		assert(isTuple||orderedFreeVars.length==1);
 	}body{
 		auto r=new Distribution();
-		auto db1=dDeBruijnVar(1);
 		dexpr=dexpr.incDeBruijnVar(1,0);
 		auto values=db1;
 		foreach(i,v;orderedFreeVars){
@@ -520,7 +515,6 @@ class Distribution{
 		auto args=argsIsTuple?dTuple(cast(DExpr[])r.args):r.args[0];
 		auto ndist=dDistApply(dApply(dexpr,args),db1);
 		if(!opt.noCheck){
-			auto db3=dDeBruijnVar(3);
 			r.distribution=dInt(r.distribution*dInt(dMCase(db1,dDiscDelta(db3,db1),zero)*ndist));
 			r.error=dInt(dMCase(db1,zero,one)*ndist);
 		}else r.distribution=dInt(r.distribution*ndist);

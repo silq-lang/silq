@@ -305,7 +305,7 @@ struct DParser{
 		auto err=parseDExpr();
 		expect('}');
 		// TODO: create a dMCase constructor?
-		if(var==dDeBruijnVar(1)) return dMCase(e,val,err);
+		if(var==db1) return dMCase(e,val,err);
 		return dMCase(e,val.incDeBruijnVar(1,0).substitute(var,db1),err);
 	}
 

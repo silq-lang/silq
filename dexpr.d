@@ -290,7 +290,7 @@ mixin template Visitors(){
 				import std.traits: hasUDA;
 				static if(hasUDA!(subExprs[i],binder)){
 					foreach(v;x.freeVars())
-						if(v!=dDeBruijnVar(1))
+						if(v!=db1)
 							if(auto r=dg(v.incDeBruijnVar(-1,0)))
 								return r;
 				}else{ if(auto r=x.freeVarsImpl(dg,visited)) return r; }
@@ -409,7 +409,7 @@ mixin template FactoryFunction(T){
 			return dInt(var,expr).simplify(facts);
 		}
 		DExpr dInt(DVar var,DExpr expr)in{assert(var&&expr&&!cast(DDeBruijnVar)var);}body{
-			return dInt(expr.incDeBruijnVar(1,0).substitute(var,dDeBruijnVar(1)));
+			return dInt(expr.incDeBruijnVar(1,0).substitute(var,db1));
 		}
 	}else static if(is(T==DSum)){
 		@disable DExpr dSumSmp(DVar var,DExpr expr);
@@ -420,7 +420,7 @@ mixin template FactoryFunction(T){
 			return dSum(var,expr).simplify(facts);
 		}
 		DExpr dSum(DVar var,DExpr expr)in{assert(var&&expr&&!cast(DDeBruijnVar)var);}body{
-			return dSum(expr.incDeBruijnVar(1,0).substitute(var,dDeBruijnVar(1)));
+			return dSum(expr.incDeBruijnVar(1,0).substitute(var,db1));
 		}
 	}else static if(is(T==DLim)){
 		@disable DExpr dLimSmp(DVar var,DExpr e,DExpr x);
@@ -430,14 +430,14 @@ mixin template FactoryFunction(T){
 		DExpr dLimSmp(DVar v,DExpr e,DExpr x,DExpr facts){
 			return dLim(v,e,x).simplify(facts);
 		}
-		DExpr dLim(DVar v,DExpr e,DExpr x)in{assert(v&&e&&x&&(!cast(DDeBruijnVar)v||v==dDeBruijnVar(1)));}body{
-			if(v==dDeBruijnVar(1)) return dLim(e,x.incDeBruijnVar(1,1));
-			return dLim(e,x.incDeBruijnVar(1,0).substitute(v,dDeBruijnVar(1)));
+		DExpr dLim(DVar v,DExpr e,DExpr x)in{assert(v&&e&&x&&(!cast(DDeBruijnVar)v||v==db1));}body{
+			if(v==db1) return dLim(e,x.incDeBruijnVar(1,1));
+			return dLim(e,x.incDeBruijnVar(1,0).substitute(v,db1));
 		}
 	}else static if(is(T==DDiff)){
-		DExpr dDiff(DVar v,DExpr e,DExpr x)in{assert(v&&e&&x&&(!cast(DDeBruijnVar)v||v==dDeBruijnVar(1)));}body{
-			if(v==dDeBruijnVar(1)) return dDiff(e.incDeBruijnVar(1,1),x);
-			return dDiff(e.incDeBruijnVar(1,0).substitute(v,dDeBruijnVar(1)),x);
+		DExpr dDiff(DVar v,DExpr e,DExpr x)in{assert(v&&e&&x&&(!cast(DDeBruijnVar)v||v==db1));}body{
+			if(v==db1) return dDiff(e.incDeBruijnVar(1,1),x);
+			return dDiff(e.incDeBruijnVar(1,0).substitute(v,db1),x);
 		}
 		DExpr dDiff(DVar v,DExpr e){ return dDiff(v,e,v); }
 	}else static if(is(T==DLambda)){
@@ -452,9 +452,9 @@ mixin template FactoryFunction(T){
 			assert(!!cast(DLambda)r);
 			return cast(DLambda)cast(void*)r;
 		}
-		DLambda dLambda(DVar var,DExpr expr)in{assert(var&&expr&&(!cast(DDeBruijnVar)var||var==dDeBruijnVar(1)));}body{
-			if(var==dDeBruijnVar(1)) return dLambda(expr);
-			return dLambda(expr.incDeBruijnVar(1,0).substitute(var,dDeBruijnVar(1)));
+		DLambda dLambda(DVar var,DExpr expr)in{assert(var&&expr&&(!cast(DDeBruijnVar)var||var==db1));}body{
+			if(var==db1) return dLambda(expr);
+			return dLambda(expr.incDeBruijnVar(1,0).substitute(var,db1));
 		}
 	}else static if(is(T==DDistLambda)){
 		@disable DExpr dDistLambdaSmp(DVar var,DExpr expr);
@@ -468,9 +468,9 @@ mixin template FactoryFunction(T){
 			assert(!!cast(DDistLambda)r);
 			return cast(DDistLambda)cast(void*)r;
 		}
-		DDistLambda dDistLambda(DVar var,DExpr expr)in{assert(var&&expr&&(!cast(DDeBruijnVar)var||var==dDeBruijnVar(1)));}body{
-			if(var==dDeBruijnVar(1)) return dDistLambda(expr);
-			return dDistLambda(expr.incDeBruijnVar(1,0).substitute(var,dDeBruijnVar(1)));
+		DDistLambda dDistLambda(DVar var,DExpr expr)in{assert(var&&expr&&(!cast(DDeBruijnVar)var||var==db1));}body{
+			if(var==db1) return dDistLambda(expr);
+			return dDistLambda(expr.incDeBruijnVar(1,0).substitute(var,db1));
 		}
 	}else static if(is(T==DRecord)){
 		auto dRecord(){ return dRecord((DExpr[string]).init); }
@@ -481,7 +481,7 @@ mixin template FactoryFunction(T){
 			return dArray(length,dLambda(default_.incDeBruijnVar(1,0)));
 		}
 		auto dArray(DExpr[] entries){
-			auto dbv=dDeBruijnVar(1);
+			auto dbv=db1;
 			// TODO: not necessarily very clean for types that are not real numbers, but can be interpreted in terms of linear algebra
 			DExpr body_=zero;
 			foreach(i,e;entries) body_=body_+dEq(dbv,i.dℚ)*entries[i].incDeBruijnVar(1,0);
@@ -621,6 +621,8 @@ class DDeBruijnVar: DVar{
 }
 mixin FactoryFunction!DDeBruijnVar;
 @property db1(){ return dDeBruijnVar(1); }
+@property db2(){ return dDeBruijnVar(2); }
+@property db3(){ return dDeBruijnVar(3); }
 
 // substitute all variables from 'from' by the respective expressions in 'to' at the same time (avoiding capture)
 DExpr substituteAll(DExpr e,DVar[] from, DExpr[] to)in{assert(from.length==to.length);}body{
@@ -2812,7 +2814,7 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 	}
 
 	static DExpr performSubstitution(DDelta d,DExpr expr,bool caseSplit){
-		auto var=dDeBruijnVar(1);
+		auto var=db1;
 		SolutionInfo info;
 		SolUse usage={caseSplit:caseSplit,bound:false};
 		if(auto s=d.e.solveFor(var,zero,usage,info)){
@@ -2988,7 +2990,7 @@ static ~this(){
 }+/
 
 static DExpr unbind(DExpr expr, DExpr nexpr){
-	return expr.substitute(dDeBruijnVar(1),nexpr.incDeBruijnVar(1,0)).incDeBruijnVar(-1,0);
+	return expr.substitute(db1,nexpr.incDeBruijnVar(1,0)).incDeBruijnVar(-1,0);
 }
 
 import integration;
@@ -3029,7 +3031,7 @@ class DInt: DOp{
 	static DExpr staticSimplify(DExpr expr,DExpr facts=one)in{assert(expr&&facts);}body{
 		auto nexpr=expr.simplify(facts.incDeBruijnVar(1,0).simplify(one));
 		if(expr != nexpr) return dIntSmp(nexpr,facts);
-		auto ow=expr.splitMultAtVar(dDeBruijnVar(1));
+		auto ow=expr.splitMultAtVar(db1);
 		ow[0]=ow[0].incDeBruijnVar(-1,0).simplify(facts);
 		if(ow[0]==zero) return zero;
 		if(ow[0]!=one||ow[1]!=expr) return (ow[0]*dIntSmp(ow[1],facts)).simplify(facts);
@@ -3122,7 +3124,7 @@ class DLim: DOp{
 	static DExpr staticSimplify(DExpr e,DExpr x,DExpr facts=one){
 		auto ne=e.simplify(facts), nx=x.simplify(facts.incDeBruijnVar(1,0).simplify(one));
 		if(ne != e || nx != x) return dLim(ne,nx).simplify(facts);
-		if(auto r=getLimit(dDeBruijnVar(1),e,x,facts))
+		if(auto r=getLimit(db1,e,x,facts))
 			return r.incDeBruijnVar(-1,0);
 		return null;
 	}
@@ -3157,7 +3159,7 @@ class DDiff: DOp{
 
 	static DExpr staticSimplify(DExpr e,DExpr x,DExpr facts=one){
 		auto ne=e.simplify(facts.incDeBruijnVar(1,0).simplify(one));
-		if(auto r=differentiate(dDeBruijnVar(1),ne))
+		if(auto r=differentiate(db1,ne))
 			return unbind(r,x).simplify(facts);
 		return null;
 	}
@@ -3618,7 +3620,7 @@ class DIUpdate: DOp{
 			}
 		}
 		if(auto arr=cast(DArray)ne){
-			auto dbv=dDeBruijnVar(1);
+			auto dbv=db1;
 			auto nni=ni.incDeBruijnVar(1,0);
 			auto nnn=nn.incDeBruijnVar(1,0);
 			auto r=dArray(arr.length,
@@ -3664,7 +3666,7 @@ class DSlice: DOp{
 			}
 		}
 		if(auto arr=cast(DArray)ne){
-			auto dbv=dDeBruijnVar(1);
+			auto dbv=db1;
 			return dArray(nr-nl,dLambda(arr.entries.expr.substitute(dbv,dbv+nl)*dBounded!"[)"(dbv,zero,nr-nl))).simplify(facts);
 		}
 		// distribute over case distinction:
@@ -3762,7 +3764,6 @@ class DLambda: DOp{ // lambda functions DExpr → DExpr
 mixin FactoryFunction!DLambda;
 
 DLambda dTupleLambda(DVar[] args,DExpr fun){
-	auto db1=dDeBruijnVar(1);
 	import std.range: iota;
 	fun=fun.incDeBruijnVar(1,0).substituteAll(args,iota(args.length).map!(i=>db1[dℚ(i)]).array);
 	return dLambda(fun);
@@ -3896,7 +3897,7 @@ class DCat: DAssocOp{ // TODO: this should have n arguments, as it is associativ
 			if(a1&&a1.length==zero) return e2;
 			if(a2&&a2.length==zero) return e1;
 			if(!a1||!a2) return null;
-			auto dbv=dDeBruijnVar(1);
+			auto dbv=db1;
 			return dArray(a1.length+a2.length,
 			              dLambda(a1.entries.expr*dLt(dbv,a1.length)
 			                      +a2.entries.expr.substitute(dbv,dbv-a1.length)*dGe(dbv,a1.length)));
@@ -4067,10 +4068,10 @@ class DNormalize: DExpr{
 		auto ne=e.simplify(facts);
 		if(auto onorm=cast(DNormalize)ne)
 			return onorm;
-		auto nnorm=dIntSmp(dDistApply(ne.incDeBruijnVar(1,0),dDeBruijnVar(1)),facts);
+		auto nnorm=dIntSmp(dDistApply(ne.incDeBruijnVar(1,0),db1),facts);
 		auto iszero=dEqZ(nnorm).simplify(facts);
-		if(iszero==zero) return dLambda(dDistApply(ne.incDeBruijnVar(1,0),dDeBruijnVar(1))/nnorm).simplify(facts);
-		if(iszero==one) return dLambda(dDiscDelta(dDeBruijnVar(1),dErr));
+		if(iszero==zero) return dLambda(dDistApply(ne.incDeBruijnVar(1,0),db1)/nnorm).simplify(facts);
+		if(iszero==one) return dLambda(dDiscDelta(db1,dErr));
 		if(ne!=e) return dNormalize(ne).simplify(facts);
 		return this;
 	}
@@ -4155,13 +4156,13 @@ DExpr dIsℤ(DExpr e){
 
 DExpr dGamma(DExpr t){
 	t=t.incDeBruijnVar(1,0);
-	auto x=dDeBruijnVar(1);
+	auto x=db1;
 	return dInt(x^^(t-1)*dE^^(-x)*dGeZ(x));
 }
 
 DExpr dBeta(DExpr x,DExpr y){ // constraints: x>0 and y>0
 	x=x.incDeBruijnVar(1,0), y=y.incDeBruijnVar(1,0);
-	auto t=dDeBruijnVar(1);
+	auto t=db1;
 	return dInt(dBounded!"[]"(t,zero,one)*t^^(x-1)*(1-t)^^(y-1));
 }
 
