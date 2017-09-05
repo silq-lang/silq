@@ -184,7 +184,7 @@ DExpr fromTo(DExpr anti,DVar var,DExpr lower,DExpr upper)in{
 		//dw("??! ",dDiff(var,anti).simplify(one));
 		//dw(anti.substitute(var,upper).simplify(one));
 		//dw(anti.substitute(var,lower).simplify(one));
-		return dIvr(DIvr.Type.leZ,lower-upper)*(up-lo);
+		return dLe(lower,upper)*(up-lo);
 	}
 	if(!lo) lo=dLimSmp(var,-dInf,anti,one).incDeBruijnVar(-1,0);
 	if(!up) up=dLimSmp(var,dInf,anti,one).incDeBruijnVar(-1,0);
@@ -223,31 +223,30 @@ DExpr tryGetAntiderivative(DExpr expr){
 		if(!antid) return null;
 		// TODO: handle the case where antid.substitute(var,lower) or antid.substitute(var,upper) are infinite properly
 		// (this will 'just work' formally, but it is an ugly hack.)
-		if(lower) antid=dIvr(DIvr.Type.leZ,lower-var)*antid+dIvr(DIvr.Type.lZ,var-lower)*antid.substitute(var,lower);
-		if(upper) antid=dIvr(DIvr.Type.leZ,var-upper)*antid+dIvr(DIvr.Type.lZ,upper-var)*antid.substitute(var,upper);
+		if(lower) antid=dLe(lower,var)*antid+dLt(var,lower)*antid.substitute(var,lower);
+		if(upper) antid=dLe(var,upper)*antid+dLt(upper,var)*antid.substitute(var,upper);
 		return antid.simplify(one);
 	}
 	static DExpr safeLog(DExpr e){ // TODO: integrating 1/x over 0 diverges (not a problem for integrals occurring in the analysis)
-		return dLog(e)*dIvr(DIvr.Type.lZ,-e)
-			+ dLog(-e)*dIvr(DIvr.Type.lZ,e);
+		return dLog(e)*dGtZ(e)+dLog(-e)*dLtZ(e);
 	}
 	if(auto p=cast(DPow)expr){
 		if(!p.operands[1].hasFreeVar(var)){
 			if(p.operands[0] == var){
 				// constraint: lower && upper
 				return (safeLog(var)*
-				        dIvr(DIvr.Type.eqZ,p.operands[1]+1)
+				        dEqZ(p.operands[1]+1)
 				        +(var^^(p.operands[1]+1))/(p.operands[1]+1)*
-				        dIvr(DIvr.Type.neqZ,p.operands[1]+1)).simplify(one);
+				        dNeqZ(p.operands[1]+1)).simplify(one);
 			}
 			auto ba=p.operands[0].asLinearFunctionIn(var);
 			auto b=ba[0],a=ba[1];
 			if(a && b){
-				return (dIvr(DIvr.Type.neqZ,a)*((safeLog(p.operands[0])*
-				         dIvr(DIvr.Type.eqZ,p.operands[1]+1)
+				return (dNeqZ(a)*((safeLog(p.operands[0])*
+				         dEqZ(p.operands[1]+1)
 				         +(p.operands[0]^^(p.operands[1]+1))/(p.operands[1]+1)*
-				          dIvr(DIvr.Type.neqZ,p.operands[1]+1))/a)
-				        +dIvr(DIvr.Type.eqZ,a)*var*b^^p.operands[1]).simplify(one);
+				          dNeqZ(p.operands[1]+1))/a)
+				        +dEqZ(a)*var*b^^p.operands[1]).simplify(one);
 			}
 		}
 		if(!p.operands[0].hasFreeVar(var)){
@@ -257,8 +256,7 @@ DExpr tryGetAntiderivative(DExpr expr){
 			auto b=ba[0],a=ba[1];
 			if(a && b){
 				assert(!a.hasFreeVar(var));
-				return dIvr(DIvr.Type.neqZ,a)*dE^^k/a
-					+ dIvr(DIvr.Type.eqZ,a)*var*dE^^b;
+				return dNeqZ(a)*dE^^k/a + dEqZ(a)*var*dE^^b;
 			}
 		}
 	}
@@ -279,8 +277,7 @@ DExpr tryGetAntiderivative(DExpr expr){
 			static DExpr logIntegral(DVar x,DExpr a, DExpr b){
 				return (x+b/a)*safeLog(a*x+b)-x;
 			}
-			return dIvr(DIvr.Type.neqZ,a)*logIntegral(var,a,b)+
-				dIvr(DIvr.Type.eqZ,a)*var*dLog(b);
+			return dNeqZ(a)*logIntegral(var,a,b)+dEqZ(a)*var*dLog(b);
 		}
 	}
 	// integrate log(x)ʸ/x to log(x)ʸ⁺¹/(y+1)
@@ -297,8 +294,8 @@ DExpr tryGetAntiderivative(DExpr expr){
 					if(l.e == var) y=pw.operands[1];
 			}
 			if(y !is null && !y.hasFreeVar(var)){
-				return dIvr(DIvr.Type.eqZ,y+1)*safeLog(safeLog(var))+
-					dIvr(DIvr.Type.neqZ,y+1)*safeLog(var)^^(y+1)/(y+1);
+				return dEqZ(y+1)*safeLog(safeLog(var))+
+					dNeqZ(y+1)*safeLog(var)^^(y+1)/(y+1);
 			}
 		}
 	}
@@ -312,11 +309,11 @@ DExpr tryGetAntiderivative(DExpr expr){
 					DExpr dInGamma(DExpr a,DExpr z){
 						a=a.incDeBruijnVar(1,0), z=z.incDeBruijnVar(1,0);
 						auto t=dDeBruijnVar(1);
-						return dIntSmp(t^^(a-1)*dE^^(-t)*dIvr(DIvr.type.leZ,z-t),one);
+						return dIntSmp(t^^(a-1)*dE^^(-t)*dLe(z,t),one);
 					}
 					if(n.c>0)
-						return dIvr(DIvr.Type.neqZ,a)*dIvr(DIvr.Type.neqZ,a*var+b)*mone^^n*dInGamma(n+1,-dLog(a*var+b))/a
-							+ dIvr(DIvr.Type.eqZ,a)*var*dLog(b)^^n;
+						return dNeqZ(a)*dNeqZ(a*var+b)*mone^^n*dInGamma(n+1,-dLog(a*var+b))/a
+							+ dEqZ(a)*var*dLog(b)^^n;
 				}
 			}
 		}
@@ -344,8 +341,8 @@ DExpr tryGetAntiderivative(DExpr expr){
 			return sqrta*x-b/(2*sqrta);
 		}
 		// constraints: none!
-		auto r=dIvr(DIvr.Type.neqZ,a)*fac*dGaussInt(transform(v));
-		auto isZero=dIvr(DIvr.Type.eqZ,a).simplify(one);
+		auto r=dNeqZ(a)*fac*dGaussInt(transform(v));
+		auto isZero=dEqZ(a).simplify(one);
 		if(isZero!=zero){
 			auto rest=tryGetAntiderivative(dE^^(b*v+c));
 			if(!rest) return null;
@@ -366,8 +363,8 @@ DExpr tryGetAntiderivative(DExpr expr){
 				return dGaussInt(e)*e+dE^^(-e^^2)/2;
 			}
 			// constraints: upper
-			return dIvr(DIvr.Type.neqZ,a)*primitive(gi.x)/a
-				+ dIvr(DIvr.Type.eqZ,a)*var*dGaussInt(b);
+			return dNeqZ(a)*primitive(gi.x)/a
+				+ dEqZ(a)*var*dGaussInt(b);
 		}
 		return null;
 	}

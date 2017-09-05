@@ -23,7 +23,7 @@ bool growsFasterThanNormalized(DVar v,DExpr e1,DExpr e2){
 	}
 	// dw(x1," ",x2," :: ",y1," ",y2);
 	if(x1 == v && y1 == v){
-		if(dIvr(DIvr.Type.leZ,x2-y2).simplify(one) == zero)
+		if(dLe(x2,y2).simplify(one) == zero)
 			return true;
 	}
 	// TODO: more cases

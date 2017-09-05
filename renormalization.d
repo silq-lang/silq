@@ -89,9 +89,9 @@ DExpr[2] renormalize(DExpr dist,SetX!DVar freeVars){
 	auto factor=dist;
 	foreach(v;freeVars)
 		factor=dIntSmp(v,factor);
-	auto rdist=dIvr(DIvr.Type.neqZ,factor)*(dist/factor).simplify(one);
-	auto err=dIvr(DIvr.Type.eqZ,factor);
-	auto isZ=dIvr(DIvr.Type.eqZ,factor).simplify(one);
+	auto rdist=dNeqZ(factor)*(dist/factor).simplify(one);
+	auto err=dEqZ(factor);
+	auto isZ=dEqZ(factor).simplify(one);
 	/+if(isZ is zero) return [rdist,zero]; // TODO: re-enable after making it correct
 	if(isZ is one){
 		if(auto ndist=ivrsToDeltas(dist)){
@@ -101,7 +101,7 @@ DExpr[2] renormalize(DExpr dist,SetX!DVar freeVars){
 	// TODO: this should work even in the case where we are unable to prove that an integral is
 	// not equal to zero. We also should actually do a good job proving that it is not equal to zero
 	//auto renorm=new RenormExp(dist);
-	//return [dIvr(DIvr.Type.neqZ,factor)*dist/factor+isZ*renorm,isZ*dIvr(DIvr.Type.eqZ,renorm)];
+	//return [dNeqZ(factor)*dist/factor+isZ*renorm,isZ*dEqZ(renorm)];
 	return [rdist,isZ];
 }
 +/

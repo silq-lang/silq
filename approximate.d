@@ -92,7 +92,7 @@ DExpr approxPowEmX2(DExpr e){
 	auto arg=dAbs(e);
 	// range [0, 3]
 	auto poly=[0.0422,-0.4013, 1.3594, -1.7601, 0.1268, 1.0000].getPoly(e);
-	return dIvr(DIvr.Type.leZ,arg-3)*poly;
+	return dLe(arg,3.dℚ)*poly;
 }
 
 
@@ -264,6 +264,6 @@ DExpr killIntegrals(DExpr e){
 
 DExpr approxGaussianPDF(DVar var,DExpr μ,DExpr σsq){
 	auto dist=3*one/(4*(5*σsq)^^(one/2))*(1-(var-μ)^^2/(5*σsq))*dBounded!"[]"(var-μ,-(5*σsq)^^(one/2),(5*σsq)^^(one/2));
-	return dIvr(DIvr.Type.neqZ,σsq)*dist+dIvr(DIvr.Type.eqZ,σsq)*dDelta(var-μ);
+	return dNeqZ(σsq)*dist+dEqZ(σsq)*dDelta(var-μ);
 }
 

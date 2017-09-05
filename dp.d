@@ -144,7 +144,7 @@ struct Dist{
 					r.add(k,v);
 				}
 			}else{
-				r.error = (r.error + v*dIvr(DIvr.Type.eqZ,cond)).simplify(one);
+				r.error = (r.error + v*dEqZ(cond)).simplify(one);
 				r.add(k,(v*cond).simplify(one));
 			}
 		}
@@ -352,8 +352,8 @@ struct Dist{
 		if(!opt.noCheck && tot == zero) r.error=one;
 		else if(cast(Dℚ)tot) foreach(k,v;state) r.add(k,(v/tot).simplify(one));
 		else{
-			if(!opt.noCheck) r.error=(dIvr(DIvr.Type.neqZ,tot)*r.error+dIvr(DIvr.Type.eqZ,tot)).simplify(one);
-			foreach(k,v;state) r.add(k,((v/tot)*dIvr(DIvr.Type.neqZ,tot)).simplify(one));
+			if(!opt.noCheck) r.error=(dNeqZ(tot)*r.error+dEqZ(tot)).simplify(one);
+			foreach(k,v;state) r.add(k,((v/tot)*dNeqZ(tot)).simplify(one));
 		}
 		return r;
 	}
@@ -415,8 +415,8 @@ struct Dist{
 			if(!opt.noCheck&&val2==zero) r.error=(r.error+v).simplify(one);
 			else if(cast(Dℚ)val2) r.add(dRUpdate(k,tmp,val1/val2).simplify(one),v);
 			else{
-				if(!opt.noCheck) r.error=(r.error+v*dIvr(DIvr.Type.eqZ,val2)).simplify(one);
-				r.add(dRUpdate(k,tmp,val1/val2).simplify(one),(v*dIvr(DIvr.Type.neqZ,val2)).simplify(one));
+				if(!opt.noCheck) r.error=(r.error+v*dEqZ(val2)).simplify(one);
+				r.add(dRUpdate(k,tmp,val1/val2).simplify(one),(v*dNeqZ(val2)).simplify(one));
 			}
 		}
 		this=r;
@@ -447,7 +447,7 @@ struct Dist{
 		DExpr cur=zero;
 		foreach(k,v;state){
 			cur=(cur+v).simplify(one);
-			auto r=dIvr(DIvr.Type.leZ,dFloat(f)-cur).simplify(one);
+			auto r=dLe(dFloat(f),cur).simplify(one);
 			assert(r == zero || r == one);
 			if(r == one){
 				error = zero;
@@ -583,7 +583,7 @@ struct Interpreter{
 				auto de=cast(ABinaryExp)e;
 				auto e1=doIt(de.e1);
 				auto e2=doIt(de.e2);
-				cur=cur.assertTrue(dLambda(dIvr(DIvr.Type.neqZ,e2)));
+				cur=cur.assertTrue(dLambda(dNeqZ(e2)));
 				return cast(IDivExp)e?dFloor(e1/e2):e1/e2;
 			}
 			if(auto me=cast(ModExp)e) return doIt(me.e1)%doIt(me.e2);
@@ -593,7 +593,7 @@ struct Interpreter{
 			if(auto ce=cast(BitXorExp)e) return dBitXor(doIt(ce.e1),doIt(ce.e2));
 			if(auto ce=cast(BitAndExp)e) return dBitAnd(doIt(ce.e1),doIt(ce.e2));
 			if(auto ume=cast(UMinusExp)e) return -doIt(ume.e);
-			if(auto ume=cast(UNotExp)e) return dIvr(DIvr.Type.eqZ,doIt(ume.e));
+			if(auto ume=cast(UNotExp)e) return dEqZ(doIt(ume.e));
 			if(auto ume=cast(UBitNotExp)e) return -doIt(ume.e)-1;
 			if(auto le=cast(LambdaExp)e){
 				if(le.fd.isNested){
@@ -730,14 +730,14 @@ struct Interpreter{
 			}else if(auto ite=cast(IteExp)e){
 				auto cond=runExp(ite.cond);
 				auto curP=cur.eraseErrors();
-				cur=cur.observe(dLambda(dIvr(DIvr.Type.neqZ,cond).simplify(one)));
-				curP=curP.observe(dLambda(dIvr(DIvr.Type.eqZ,cond).simplify(one)));
+				cur=cur.observe(dLambda(dNeqZ(cond).simplify(one)));
+				curP=curP.observe(dLambda(dEqZ(cond).simplify(one)));
 				auto thenIntp=Interpreter(functionDef,ite.then,cur,hasFrame);
-				auto r=dIvr(DIvr.Type.neqZ,cond)*thenIntp.runExp(ite.then.s[0]);
+				auto r=dNeqZ(cond)*thenIntp.runExp(ite.then.s[0]);
 				cur=thenIntp.cur;
 				assert(!!ite.othw);
 				auto othwIntp=Interpreter(functionDef,ite.othw,curP,hasFrame);
-				r=r+dIvr(DIvr.Type.eqZ,cond)*othwIntp.runExp(ite.othw);
+				r=r+dEqZ(cond)*othwIntp.runExp(ite.othw);
 				curP=othwIntp.cur;
 				cur+=curP;
 				return r;
@@ -749,7 +749,7 @@ struct Interpreter{
 				return dArray(dexprs);
 			}else if(auto ae=cast(AssertExp)e){
 				if(auto c=runExp(ae.e)){
-					cur=cur.assertTrue(dLambda(dIvr(DIvr.Type.neqZ,c)));
+					cur=cur.assertTrue(dLambda(dNeqZ(c)));
 					return dTuple([]);
 				}
 			}else if(auto tae=cast(TypeAnnotationExp)e){
@@ -772,25 +772,25 @@ struct Interpreter{
 						}else disjuncts.insert(doIt(e));
 					}
 					collect(e);
-					return dIvr(DIvr.Type.neqZ,dPlus(disjuncts));
+					return dNeqZ(dPlus(disjuncts));
 				}else with(DIvr.Type)if(auto b=cast(LtExp)e){
 					mixin(common);
-					return dIvr(lZ,e1-e2);
+					return dLt(e1,e2);
 				}else if(auto b=cast(LeExp)e){
 					mixin(common);
-					return dIvr(leZ,e1-e2);
+					return dLe(e1,e2);
 				}else if(auto b=cast(GtExp)e){
 					mixin(common);
-					return dIvr(lZ,e2-e1);
+					return dGt(e1,e2);
 				}else if(auto b=cast(GeExp)e){
 					mixin(common);
-					return dIvr(leZ,e2-e1);
+					return dGe(e1,e2);
 				}else if(auto b=cast(EqExp)e){
 					mixin(common);
-					return dIvr(eqZ,e2-e1);
+					return dEq(e1,e2);
 				}else if(auto b=cast(NeqExp)e){
 					mixin(common);
-					return dIvr(neqZ,e2-e1);
+					return dNeq(e1,e2);
 				}
 			}
 			assert(0,text("TODO: ",e));
@@ -810,13 +810,13 @@ struct Interpreter{
 			cur.assignTo(lhs,rhs);
 		}else if(isOpAssignExp(e)){
 			DExpr perform(DExpr a,DExpr b){
-				if(cast(OrAssignExp)e) return dIvr(DIvr.Type.neqZ,dIvr(DIvr.Type.neqZ,a)+dIvr(DIvr.Type.neqZ,b));
-				if(cast(AndAssignExp)e) return dIvr(DIvr.Type.neqZ,a)*dIvr(DIvr.Type.neqZ,b);
+				if(cast(OrAssignExp)e) return dNeqZ(dNeqZ(a)+dNeqZ(b));
+				if(cast(AndAssignExp)e) return dNeqZ(a)*dNeqZ(b);
 				if(cast(AddAssignExp)e) return a+b;
 				if(cast(SubAssignExp)e) return a-b;
 				if(cast(MulAssignExp)e) return a*b;
 				if(cast(DivAssignExp)e||cast(IDivAssignExp)e){
-					cur=cur.assertTrue(dLambda(dIvr(DIvr.Type.neqZ,b)));
+					cur=cur.assertTrue(dLambda(dNeqZ(b)));
 					return cast(IDivAssignExp)e?dFloor(a/b):a/b;
 				}
 				if(cast(ModAssignExp)e) return a%b;
@@ -840,8 +840,8 @@ struct Interpreter{
 		}else if(auto ite=cast(IteExp)e){
 			auto cond=runExp(ite.cond);
 			auto curP=cur.eraseErrors();
-			cur=cur.observe(dLambda(dIvr(DIvr.Type.neqZ,cond)));
-			curP=curP.observe(dLambda(dIvr(DIvr.Type.eqZ,cond).simplify(one)));
+			cur=cur.observe(dLambda(dNeqZ(cond)));
+			curP=curP.observe(dLambda(dEqZ(cond).simplify(one)));
 			auto thenIntp=Interpreter(functionDef,ite.then,cur,hasFrame);
 			thenIntp.run(retDist);
 			cur=thenIntp.cur;
@@ -867,8 +867,8 @@ struct Interpreter{
 				intp.cur.state = cur.state;
 				cur.state=typeof(cur.state).init;
 				for(ℤ x=0;;++x){
-					cur += intp.cur.observe(dLambda(dIvr(DIvr.Type.leZ,bound-x)));
-					intp.cur = intp.cur.observe(dLambda(dIvr(DIvr.Type.lZ,x-bound)));
+					cur += intp.cur.observe(dLambda(dLe(bound,x.dℚ)));
+					intp.cur = intp.cur.observe(dLambda(dLt(x.dℚ,bound)));
 					intp.cur.error = zero;
 					if(!intp.cur.state.length) break;
 					if(opt.trace) writeln("repetition: ",x+1);
@@ -895,8 +895,8 @@ struct Interpreter{
 				auto intp=Interpreter(functionDef,fe.bdy,distInit(),hasFrame);
 				intp.cur.state = cur.state;
 				cur.state=typeof(cur.state).init;
-				auto cond = dLambda(dIvr(DIvr.Type.leZ,dField(db1,tmp)-bound).simplify(one));
-				auto ncond = dLambda(dIvr(DIvr.Type.lZ,bound-dField(db1,tmp)).simplify(one));
+				auto cond = dLambda(dLe(dField(db1,tmp),bound).simplify(one));
+				auto ncond = dLambda(dLt(bound,dField(db1,tmp)).simplify(one));
 				auto upd = (dField(db1,tmp)+1).simplify(one);
 				for(int x=0;;++x){
 					cur += intp.cur.observe(ncond);
@@ -916,8 +916,8 @@ struct Interpreter{
 			cur.state=typeof(cur.state).init;
 			while(intp.cur.state.length){
 				auto rcond = intp.runExp(we.cond).simplify(one);
-				auto cond = dLambda(dIvr(DIvr.Type.neqZ,rcond).simplify(one));
-				auto ncond = dLambda(dIvr(DIvr.Type.eqZ,rcond).simplify(one));
+				auto cond = dLambda(dNeqZ(rcond).simplify(one));
+				auto ncond = dLambda(dEqZ(rcond).simplify(one));
 				cur += intp.cur.observe(ncond);
 				intp.cur = intp.cur.observe(cond);
 				intp.cur.error = zero;
@@ -933,11 +933,11 @@ struct Interpreter{
 			retDist += cur.map(dLambda(dRecord(rec)));
 			cur=distInit;
 		}else if(auto ae=cast(AssertExp)e){
-			auto cond=dIvr(DIvr.Type.neqZ,runExp(ae.e));
+			auto cond=dNeqZ(runExp(ae.e));
 			cur=cur.assertTrue(dLambda(cond));
 		}else if(auto oe=cast(ObserveExp)e){
 			assert(opt.backend != InferenceMethod.simulate,"TODO: observe with --simulate");
-			auto cond=dIvr(DIvr.Type.neqZ,runExp(oe.e));
+			auto cond=dNeqZ(runExp(oe.e));
 			cur=cur.observe(dLambda(cond));
 		}else if(auto ce=cast(CommaExp)e){
 			runStm(ce.e1,retDist);

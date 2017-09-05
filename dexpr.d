@@ -376,6 +376,18 @@ mixin template FactoryFunction(T){
 			cache[type][e]=r;
 			return r;
 		}
+		DExpr dEqZ(DExpr e){ return dIvr(DIvr.Type.eqZ,e); }
+		DExpr dNeqZ(DExpr e){ return dIvr(DIvr.Type.neqZ,e); }
+		DExpr dLeZ(DExpr e){ return dIvr(DIvr.Type.leZ,e); }
+		DExpr dGeZ(DExpr e){ return dIvr(DIvr.Type.leZ,-e); }
+		DExpr dLtZ(DExpr e){ return dIvr(DIvr.Type.lZ,e); }
+		DExpr dGtZ(DExpr e){ return dIvr(DIvr.Type.lZ,-e); }
+		DExpr dEq(DExpr e1,DExpr e2){ return dEqZ(e1-e2); }
+		DExpr dNeq(DExpr e1,DExpr e2){ return dNeqZ(e1-e2); }
+		DExpr dLe(DExpr e1,DExpr e2){ return dLeZ(e1-e2); }
+		DExpr dGe(DExpr e1,DExpr e2){ return dLeZ(e2-e1); }
+		DExpr dLt(DExpr e1,DExpr e2){ return dLtZ(e1-e2); }
+		DExpr dGt(DExpr e1,DExpr e2){ return dLtZ(e2-e1); }
 	}else static if(is(T==DFloat)){
 		DExpr dFloat(real c){ return new DFloat(c); }
 	}else:
@@ -472,7 +484,7 @@ mixin template FactoryFunction(T){
 			auto dbv=dDeBruijnVar(1);
 			// TODO: not necessarily very clean for types that are not real numbers, but can be interpreted in terms of linear algebra
 			DExpr body_=zero;
-			foreach(i,e;entries) body_=body_+dIvr(DIvr.Type.eqZ,dbv-i)*entries[i].incDeBruijnVar(1,0);
+			foreach(i,e;entries) body_=body_+dEq(dbv,i.dℚ)*entries[i].incDeBruijnVar(1,0);
 			return dArray(dℚ(ℤ(entries.length)),dLambda(body_));
 		}
 	}else static if(is(T==Dℚ)){
@@ -916,16 +928,16 @@ class DPlus: DCommutAssocOp{
 			static DExpr combineIvr(DExpr e1,DExpr e2,DExpr facts){
 				if(auto ivr1=cast(DIvr)e1){
 					if(ivr1.type==DIvr.Type.eqZ){
-						if(e2==dIvr(DIvr.Type.lZ,ivr1.e).simplify(facts))
-							return dIvr(DIvr.Type.leZ,ivr1.e);
-						if(e2==dIvr(DIvr.Type.lZ,-ivr1.e).simplify(facts))
-							return dIvr(DIvr.Type.leZ,-ivr1.e);
-						if(e2==dIvr(DIvr.Type.neqZ,ivr1.e).simplify(facts))
+						if(e2==dLtZ(ivr1.e).simplify(facts))
+							return dLeZ(ivr1.e);
+						if(e2==dGtZ(ivr1.e).simplify(facts))
+							return dGeZ(ivr1.e);
+						if(e2==dNeqZ(ivr1.e).simplify(facts))
 							return one;
 					}else if(ivr1.type==DIvr.Type.leZ){
-						if(e2==dIvr(DIvr.Type.leZ,-ivr1.e).simplify(facts))
-							return 2*dIvr(DIvr.Type.eqZ,ivr1.e)+dIvr(DIvr.Type.neqZ,ivr1.e);
-						if(e2==dIvr(DIvr.Type.lZ,-ivr1.e).simplify(facts))
+						if(e2==dGeZ(ivr1.e).simplify(facts))
+							return 2*dEqZ(ivr1.e)+dNeqZ(ivr1.e);
+						if(e2==dGtZ(ivr1.e).simplify(facts))
 							return one;
 					}
 				}
@@ -949,7 +961,7 @@ class DPlus: DCommutAssocOp{
 					static DExprSet active;
 					if(notImplied in active) return null; // detect cycles (TODO: can this be avoided?)
 					active.insert(notImplied); scope(exit) active.remove(notImplied);
-					if(dIvr(DIvr.Type.eqZ,notImplied).simplify(facts)==e2) // B ⇔ ¬ C
+					if(dEqZ(notImplied).simplify(facts)==e2) // B ⇔ ¬ C
 						return implied.simplify(facts);
 				}
 				return null;
@@ -1207,7 +1219,7 @@ class DMult: DCommutAssocOp{
 					// combine a≤0 and -a≤0 to a=0
 					if(ivr1.type==leZ&&ivr2.type==leZ){
 						if(ivr1.e==(-ivr2.e).simplify(facts)){
-							auto r=dIvr(eqZ,ivr1.e);
+							auto r=dEqZ(ivr1.e);
 							r=r.simplify(facts);
 							return r;
 						}
@@ -1332,7 +1344,7 @@ class DMult: DCommutAssocOp{
 				return (wo.substitute(var,d.e)*d).simplify(facts);
 		}
 	Louter: foreach(f;this.factors) if(auto d=cast(DDelta)f){
-			auto fact=dIvr(DIvr.Type.eqZ,d.e).simplify(facts);
+			auto fact=dEqZ(d.e).simplify(facts);
 			foreach(f;fact.factors) if(!cast(DIvr)f) continue Louter; // TODO: remove this if possible
 			facts=facts*fact;
 		}
@@ -1444,8 +1456,8 @@ class DPow: DBinaryOp{
 		auto frc=operands[1].getFractionalFactor();
 		if(frc.c<0){
 			if(formatting==Format.matlab||formatting==Format.gnuplot){
-				addp(prec,text(dIvr(DIvr.Type.neqZ,operands[0]).toStringImpl(formatting,Precedence.div,binders),"./",
-							   (operands[0]+dIvr(DIvr.Type.eqZ,operands[0])).toStringImpl(formatting,Precedence.div,binders)),
+				addp(prec,text(dNeqZ(operands[0]).toStringImpl(formatting,Precedence.div,binders),"./",
+				               (operands[0]+dEqZ(operands[0])).toStringImpl(formatting,Precedence.div,binders)),
 					 Precedence.div);
 			}else{
 				auto pre=formatting==Format.default_?"⅟":"1/";
@@ -1483,7 +1495,7 @@ class DPow: DBinaryOp{
 			DExprSet within;
 			bool nat=!!e2.isInteger();
 			foreach(f;m.operands){
-				if(nat||dIvr(DIvr.Type.lZ,f).simplify(facts)==zero)
+				if(nat||dLtZ(f).simplify(facts)==zero)
 					DMult.insert(outside,f^^e2);
 				else DMult.insert(within,f);
 			}
@@ -1497,16 +1509,16 @@ class DPow: DBinaryOp{
 			if(p.operands[0]!=mone){
 				auto e2p=p.operands[1]*e2;
 				if(p.operands[1].isFractional()) return (p.operands[0]^^e2p).simplify(facts);
-				return (dIvr(DIvr.Type.lZ,p.operands[0])*(mone^^p.operands[1])^^e2*(-p.operands[0])^^e2p+
-						dIvr(DIvr.Type.leZ,-p.operands[0])*p.operands[0]^^e2p).simplify(facts);
+				return (dLtZ(p.operands[0])*(mone^^p.operands[1])^^e2*(-p.operands[0])^^e2p+
+				        dGeZ(p.operands[0])*p.operands[0]^^e2p).simplify(facts);
 			}
 		}
 		if(e1==one||e2==zero) return one;
 		if(e1==mone && e2==mone) return mone;
 		if(e2==one) return e1;
 		if(e1.mustBeZeroOrOne()&&(-e2).simplify(facts).mustBeLessOrEqualZero())
-			return (dIvr(DIvr.Type.neqZ,e2)*e1+dIvr(DIvr.Type.eqZ,e2)).simplify(facts);
-		if(e1==zero) return dIvr(DIvr.Type.eqZ,e2).simplify(facts);
+			return (dNeqZ(e2)*e1+dEqZ(e2)).simplify(facts);
+		if(e1==zero) return dEqZ(e2).simplify(facts);
 		if(auto d=e2.isInteger()){
 			if(auto c=cast(Dℚ)e1){
 				assert(d.c.den==1);
@@ -1635,9 +1647,9 @@ struct DPolynomial{
 		auto a=coefficients.get(2,zero);
 		auto b=coefficients.get(1,zero);
 		auto c=coefficients.get(0,zero);
-		r~=Zero(-c/b,dIvr(DIvr.Type.eqZ,a));
-		r~=Zero((-b-(b^^2-4*a*c)^^(one/2))/(2*a),dIvr(DIvr.Type.neqZ,a)*dIvr(DIvr.Type.leZ,-(b^^2-4*a*c)));
-		r~=Zero((-b+(b^^2-4*a*c)^^(one/2))/(2*a),dIvr(DIvr.Type.neqZ,a)*dIvr(DIvr.Type.lZ,-(b^^2-4*a*c)));
+		r~=Zero(-c/b,dEqZ(a)*dNeqZ(b));
+		r~=Zero((-b-(b^^2-4*a*c)^^(one/2))/(2*a),dNeqZ(a)*dGeZ(b^^2-4*a*c));
+		r~=Zero((-b+(b^^2-4*a*c)^^(one/2))/(2*a),dNeqZ(a)*dGtZ(b^^2-4*a*c));
 		return r;
 	}
 }
@@ -1981,8 +1993,8 @@ BoundStatus getBoundForVar(DIvr ivr,DVar var,out DExpr bound){
 		if(cand.hasFreeVar(var)) return r;
 		BoundStatus result;
 		with(DIvr.Type) if(ivr.type==leZ){
-			auto lZ=dIvr(DIvr.Type.lZ,cand).simplify(one)==one;
-			auto gZ=dIvr(DIvr.Type.lZ,-cand).simplify(one)==one;
+			auto lZ=dLtZ(cand).simplify(one)==one;
+			auto gZ=dGtZ(cand).simplify(one)==one;
 			if(!lZ&&!gZ) return r;
 			result=lZ?BoundStatus.lowerBound:BoundStatus.upperBound;
 		}else{
@@ -2073,21 +2085,21 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 					auto z1=(-b-disc^^(one/2))/(2*a),z2=(-b+disc^^(one/2))/(2*a);
 					if(ty==leZ){
 						static if(isDelta) assert(0); // (recursive base case; never happens for deltas)
-						auto evenParity=linearizeConstraints(dIvr(leZ,-parity*a),var);
-						return dIvr(eqZ,a)*doIt(parity,ty,b*var+c,rhs)+
-						  dIvr(neqZ,a)*(
-						    dIvr(lZ,disc)*dIvr(leZ,(lhs-rhs).substitute(var,-b/(2*a)))
-						    +dIvr(leZ,-disc)*(
-						      evenParity*(
-						        dIvr(leZ,-a)*dIvr(leZ,z1-var)*dIvr(leZ,var-z2)
-						        + dIvr(leZ,a)*dIvr(leZ,z2-var)*dIvr(leZ,var-z1)
-						      )+
-						      dIvr(eqZ,evenParity)*(
-						        dIvr(leZ,-a)*(dIvr(leZ,var-z1)+dIvr(neqZ,disc)*dIvr(leZ,z2-var)+dIvr(eqZ,disc)*dIvr(lZ,z2-var))
-						        + dIvr(leZ,a)*(dIvr(leZ,var-z2)+dIvr(neqZ,disc)*dIvr(leZ,z1-var)+dIvr(eqZ,disc)*dIvr(lZ,z1-var))
-						      )
+						auto evenParity=linearizeConstraints(dGeZ(parity*a),var);
+						return dEqZ(a)*doIt(parity,ty,b*var+c,rhs)+
+						dNeqZ(a)*(
+						  dLtZ(disc)*dLeZ((lhs-rhs).substitute(var,-b/(2*a)))+
+						  dGeZ(disc)*(
+						    evenParity*(
+						      dGeZ(a)*dLe(z1,var)*dLe(var,z2)+
+						      dLeZ(a)*dLe(z2,var)*dLe(var,z1)
+						    )+
+						    dEqZ(evenParity)*(
+						      dGeZ(a)*(dLe(var,z1)+dNeqZ(disc)*dLe(z2,var)+dEqZ(disc)*dLt(z2,var))+
+						      dLeZ(a)*(dLe(var,z2)+dNeqZ(disc)*dLe(z1,var)+dEqZ(disc)*dLt(z1,var))
 						    )
-						  );
+						  )
+						);
 					}else if(ty==eqZ){
 						return dIvr(eqZ,a)*doIt(parity,ty,b*var+c,rhs)+
 							dIvr(neqZ,a)*dIvr(leZ,-disc)*(doIt(one,ty,var,z1)+dIvr(neqZ,disc)*doIt(one,ty,var,z2));
@@ -2158,7 +2170,7 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 					r=dIvr(lZ,rhs)+r;
 				}
 				return r;
-			}else if(!e1.hasFreeVar(var)&&dIvr(DIvr.Type.leZ,e1).simplify(one)==zero){
+			}else if(!e1.hasFreeVar(var)&&dLeZ(e1).simplify(one)==zero){
 				auto r=dIvr(lZ,-rhs)*doIt(parity,ty,(dLog(e1)*e2).simplify(one),dLog(rhs));
 				static if(isDelta) assert(ty==eqZ);
 				if(ty==leZ){
@@ -2302,12 +2314,12 @@ DExpr solveFor(DExpr lhs,DVar var){
 		s=s.simplify(one);
 		DExpr[] prefix,suffix;
 		foreach(i,ref x;info.caseSplits){
-			if(!i) prefix~=dIvr(DIvr.Type.neqZ,x.constraint).simplify(one);
-			else prefix~=(prefix[i-1]*dIvr(DIvr.Type.neqZ,x.constraint)).simplify(one);
+			if(!i) prefix~=dNeqZ(x.constraint).simplify(one);
+			else prefix~=(prefix[i-1]*dNeqZ(x.constraint)).simplify(one);
 		}
 		foreach_reverse(i,ref x;info.caseSplits){
-			if(i+1==info.caseSplits.length) suffix~=dIvr(DIvr.Type.neqZ,x.constraint).simplify(one);
-			else suffix~=(suffix[i+1]*dIvr(DIvr.Type.neqZ,x.constraint)).simplify(one);
+			if(i+1==info.caseSplits.length) suffix~=dNeqZ(x.constraint).simplify(one);
+			else suffix~=(suffix[i+1]*dNeqZ(x.constraint)).simplify(one);
 		}
 		auto constraints=(prefix.length?prefix[$-1]:one);
 		constraints=constraints.simplify(one);
@@ -2317,7 +2329,7 @@ DExpr solveFor(DExpr lhs,DVar var){
 			auto curConstr=(i?prefix[i-1]:one)*(i+1<suffix.length?suffix[i+1]:one);
 			auto psol=solveFor(x.expression,var);
 			if(!psol) return null;
-			r=r+curConstr*dIvr(DIvr.Type.eqZ,x.constraint)*psol;
+			r=r+curConstr*dEqZ(x.constraint)*psol;
 		}
 		return r;
 	}
@@ -2587,7 +2599,7 @@ class DIvr: DExpr{ // iverson brackets
 					if(type==Type.leZ){
 						assert(neg.type==type.lZ);
 						if(neg.e==ivr.e) assert(neg.e.mustBeAtMost(ivr.e),text(neg.e));
-						if(neg.e.mustBeAtMost(ivr.e)) return dIvr(DIvr.Type.eqZ,e).simplify(facts);
+						if(neg.e.mustBeAtMost(ivr.e)) return dEqZ(e).simplify(facts);
 					}else if(type==Type.eqZ||type==Type.neqZ){
 						if(e.mustBeLessThan(ivr.e)||(-e).mustBeLessThan(ivr.e))
 							return type==Type.eqZ?zero:one;
@@ -2685,11 +2697,11 @@ class DIvr: DExpr{ // iverson brackets
 mixin FactoryFunction!DIvr;
 
 DExpr dBounded(string what)(DExpr e,DExpr lo,DExpr hi) if(what=="[]"){
-	return dIvr(DIvr.Type.leZ,lo-e)*dIvr(DIvr.Type.leZ,e-hi);
+	return dLe(lo,e)*dLe(e,hi);
 }
 
 DExpr dBounded(string what)(DExpr e,DExpr lo,DExpr hi) if(what=="[)"){
-	return dIvr(DIvr.Type.leZ,lo-e)*dIvr(DIvr.Type.lZ,e-hi);
+	return dLe(lo,e)*dLt(e,hi);
 }
 
 DVar getCanonicalFreeVar(DExpr e){
@@ -2790,7 +2802,7 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 		if(ne != e) return dDelta(ne).simplify(facts);
 		if(auto r=cancelFractions!true(e)) return r.simplify(facts);
 		if(auto fct=factorDIvr!(e=>dDelta(e))(e)) return fct.simplify(facts);
-		if(dIvr(DIvr.Type.eqZ,e).simplify(facts)==zero)
+		if(dEqZ(e).simplify(facts)==zero)
 			return zero;
 		return null;
 	}
@@ -2809,12 +2821,12 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 			if(!caseSplit && info.needCaseSplit) return null;
 			auto constraints=one;
 			foreach(ref x;info.caseSplits)
-				constraints=constraints*dIvr(DIvr.Type.neqZ,x.constraint);
+				constraints=constraints*dNeqZ(x.constraint);
 			auto r=constraints==zero?zero:
 				constraints*unbind(expr,s)/dAbs(dDiff(var,d.e,s));
 			foreach(ref x;info.caseSplits){
-				auto curConstr=constraints.withoutFactor(dIvr(DIvr.Type.neqZ,x.constraint));
-				r=r+curConstr*dIvr(DIvr.Type.eqZ,x.constraint)*dIntSmp(var,expr*dDelta(x.expression),one);
+				auto curConstr=constraints.withoutFactor(dNeqZ(x.constraint));
+				r=r+curConstr*dEqZ(x.constraint)*dIntSmp(var,expr*dDelta(x.expression),one);
 			}
 			return r.simplify(one);
 		}
@@ -2852,7 +2864,7 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 		auto nvar=var.simplify(one);
 		auto ne=e.simplify(one);
 		if(nvar != var || ne != e) return dDiscDelta(nvar,ne).simplify(facts); // (might be rewritten to normal delta)
-		//if(dIvr(DIvr.Type.eq,var,e).simplify(facts) is zero) return zero; // a simplification like this might be possible
+		//if(dEq(var,e).simplify(facts) is zero) return zero; // a simplification like this might be possible (but at the moment we can compare only real numbers
 		if(auto vtpl=cast(DTuple)var){ // δ_(x,y,z,...)[(1,2,3,...)].
 			if(auto etpl=cast(DTuple)e){
 				if(vtpl.values.length==etpl.values.length){
@@ -2942,10 +2954,10 @@ DExpr[2] splitMultAtVar(DExpr e,DVar var){
 }
 
 DExpr dMin(DExpr a,DExpr b){
-	return dIvr(DIvr.Type.lZ,a-b)*a+dIvr(DIvr.Type.leZ,b-a)*b;
+	return dLt(a,b)*a+dLe(b,a)*b;
 }
 DExpr dMax(DExpr a,DExpr b){
-	return dIvr(DIvr.Type.lZ,b-a)*a+dIvr(DIvr.Type.leZ,a-b)*b;
+	return dLt(b,a)*a+dLe(a,b)*b;
 }
 
 version(INTEGRATION_STATS){
@@ -3182,7 +3194,7 @@ class DAbs: DOp{
 				DMult.insert(r,dAbs(f));
 			return dMult(r);
 		}
-		return -e*dIvr(DIvr.Type.lZ,e)+e*dIvr(DIvr.Type.leZ,-e); // TODO: just use this expression from the beginning?
+		return -e*dLtZ(e)+e*dGeZ(e); // TODO: just use this expression from the beginning?
 	}
 	override DExpr simplifyImpl(DExpr facts){
 		auto r=staticSimplify(e);
@@ -3214,7 +3226,7 @@ class DLog: DOp{
 			DExprSet r,s;
 			bool sign=false;
 			foreach(f;m.factors){
-				auto pos=dIvr(DIvr.Type.leZ,-f).simplify(facts);
+				auto pos=dGeZ(f).simplify(facts);
 				if(pos==one)
 					r.insert(f);
 				else if(pos==zero){
@@ -3610,8 +3622,8 @@ class DIUpdate: DOp{
 			auto nni=ni.incDeBruijnVar(1,0);
 			auto nnn=nn.incDeBruijnVar(1,0);
 			auto r=dArray(arr.length,
-						  dLambda(arr.entries.expr*dIvr(DIvr.Type.neqZ,dbv-nni)
-								  + dIvr(DIvr.Type.eqZ,dbv-nni)*nnn));
+			              dLambda(arr.entries.expr*dNeq(dbv,nni)
+			                      + dEq(dbv,nni)*nnn));
 			return r.simplify(facts);
 		}
 		if(ne != e || ni != i || nn != n) return dIUpdate(ne,ni,nn);
@@ -3886,8 +3898,8 @@ class DCat: DAssocOp{ // TODO: this should have n arguments, as it is associativ
 			if(!a1||!a2) return null;
 			auto dbv=dDeBruijnVar(1);
 			return dArray(a1.length+a2.length,
-			              dLambda(a1.entries.expr*dIvr(DIvr.Type.lZ,dbv-a1.length)
-			                      +a2.entries.expr.substitute(dbv,dbv-a1.length)*dIvr(DIvr.Type.leZ,a1.length-dbv)));
+			              dLambda(a1.entries.expr*dLt(dbv,a1.length)
+			                      +a2.entries.expr.substitute(dbv,dbv-a1.length)*dGe(dbv,a1.length)));
 		}
 		nop=[];
 		foreach(i;0..operands.length-1){
@@ -4056,7 +4068,7 @@ class DNormalize: DExpr{
 		if(auto onorm=cast(DNormalize)ne)
 			return onorm;
 		auto nnorm=dIntSmp(dDistApply(ne.incDeBruijnVar(1,0),dDeBruijnVar(1)),facts);
-		auto iszero=dIvr(DIvr.type.eqZ,nnorm).simplify(facts);
+		auto iszero=dEqZ(nnorm).simplify(facts);
 		if(iszero==zero) return dLambda(dDistApply(ne.incDeBruijnVar(1,0),dDeBruijnVar(1))/nnorm).simplify(facts);
 		if(iszero==one) return dLambda(dDiscDelta(dDeBruijnVar(1),dErr));
 		if(ne!=e) return dNormalize(ne).simplify(facts);
@@ -4138,13 +4150,13 @@ bool hasFreeVars(DExpr e){ foreach(x;e.freeVars) return true; return false; }
 // derived functions
 
 DExpr dIsℤ(DExpr e){
-	return dIvr(DIvr.Type.eqZ,e-dFloor(e));
+	return dEq(e,dFloor(e));
 }
 
 DExpr dGamma(DExpr t){
 	t=t.incDeBruijnVar(1,0);
 	auto x=dDeBruijnVar(1);
-	return dInt(x^^(t-1)*dE^^(-x)*dIvr(DIvr.Type.leZ,-x));
+	return dInt(x^^(t-1)*dE^^(-x)*dGeZ(x));
 }
 
 DExpr dBeta(DExpr x,DExpr y){ // constraints: x>0 and y>0

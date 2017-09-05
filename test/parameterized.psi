@@ -1,4 +1,4 @@
 def main(arg1,arg2){
     observe(arg1==arg2);
-    return (arg1,arg2); // expected: [-arg1'+arg2'=0]·δ[-arg1'+arg1]·δ[-arg2'+arg2]
+    return (arg1,arg2); // expected: [-arg2'+arg1'=0]·δ[-arg1'+arg1]·δ[-arg2'+arg2]
 }

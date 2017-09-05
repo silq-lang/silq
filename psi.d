@@ -148,10 +148,11 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration;
+	//writeln("∫dξ₁∫dξ₂(1/2·⅟e^(1/4·ξ₂²)·⅟√π̅)·(1/2·⅟e^(1/4·ξ₁²)·⅟√π̅)·([ξ₁≠0]·[ξ₁≤0]·[ξ₂≠0]·[ξ₂≤0]+[ξ₂≠0]·[ξ₂≤0])".dParse.simplify(one));
 	/*DExpr r=zero;
 	foreach(i;0..4){
-		//r = r + dIvr(DIvr.Type.eqZ,dApply("f".dVar,i.dℚ));
-		r = r + dIvr(DIvr.Type.leZ,"x".dVar-i.dℚ);
+		//r = r + dEqZ(dApply("f".dVar,i.dℚ));
+		r = r + dLe("x".dVar,i.dℚ);
 	}
 	dw((dE^^r).simplify(one));*/
 	//writeln("[x=0]".dParse.simplify("[x≤-1]".dParse.simplify(one)));
@@ -327,11 +328,11 @@ void test(){
 	auto dthen=d.dup(),dothw=d.dup();
 	dthen.assign(y,y-x);
 	writeln(dthen," ",dothw);
-	d=dthen.join(d.vbl,d.symtab,d.freeVars,dothw,dIvr(DIvr.Type.lZ,(x-y)));
+	d=dthen.join(d.vbl,d.symtab,d.freeVars,dothw,dLt(x,y));
 	writeln(d);
 	d.marginalize(tmpx);
 	d.marginalize(x);
-	//writeln((x*dIvr(DIvr.Type.lZ,x)).substitute(x,one+one));
+	//writeln((x*dLtZ(x)).substitute(x,one+one));
 	writeln(d);*/
 	/*auto x="x".dVar,y="y".dVar;
 	writeln(dDiff(x,x^^(x^^2)*y));
@@ -340,7 +341,7 @@ void test(){
 	writeln(dDiff(x,dDiff(x,dE^^(2*x))));
 	writeln(dDiff(x,2^^(dLog(x))));
 	writeln(dLog(dE^^x));
-	writeln(dDiff(y,dInt(x,x*dIvr(DIvr.Type.lZ,-x)*dIvr(DIvr.Type.lZ,x-y))));*/
+	writeln(dDiff(y,dInt(x,x*dGtZ(x)*dLtZ(x,y))));*/
 	/*auto f="f".dVar,x="x".dVar;
 	auto g="g".dVar,y="y".dVar;
 	auto z="z".dVar;
@@ -365,7 +366,7 @@ void test(){
 	writeln(dInt(x,dInt(y,pdf)));*/
 	//(∫dξ₁[-1+ξ₁≤0]·[-ξ₁≤0]·δ[-z+y·ξ₁])·[-1+y≤0]·[-y≤0]
 	/+auto xi1="ξ₁".dVar,y="y".dVar,z="z".dVar;
-	auto res=dInt(xi1,dDelta(y*xi1)*dIvr(DIvr.Type.leZ,xi1));
+	auto res=dInt(xi1,dDelta(y*xi1)*dLeZ(xi1));
 	writeln(res);
 	writeln(dInt(y,res));+/
 	/*auto a="a".dVar,b="b".dVar,r="r".dVar;
@@ -399,7 +400,7 @@ void test(){
 	//writeln("[(-[-1+z≤0]+1)·z+-1≤0]".dParse);
 	//writeln("[(-1+z)·[-z+1≠0]·[-z+1≤0]+-[-1+z≤0]≤0]".dParse);
 	// [([-z+1<0]·z+-1≤0]
-	//writeln("(((-1+w)·[-w+2≤0]+-1)·[-2+w≤0]+(-1+w)·[-w+2≤0])".dParse.factorDIvr!(a=>dIvr(DIvr.Type.leZ,a)));
+	//writeln("(((-1+w)·[-w+2≤0]+-1)·[-2+w≤0]+(-1+w)·[-w+2≤0])".dParse.factorDIvr!(a=>dLeZ(a)));
 	//writeln("x".dVar^^2);
 	//writeln("(∫dξ₁((-1+-ξ₁+x)·[-2+-ξ₁+x≤0]+[-x+2+ξ₁≠0]·[-x+2+ξ₁≤0])²·[-1+ξ₁≤0]·[-2+-ξ₁+x≤0]·[-x+1+ξ₁≤0]·[-x+2+ξ₁≠0]·[-ξ₁≤0])".dParse);
 	//writeln("∫dξ₁(-x+1+ξ₁)·(-ξ₁+x)·[-1+ξ₁≤0]·[-2+-ξ₁+x≤0]·[-x+1+ξ₁≠0]·[-x+1+ξ₁≤0]·[-ξ₁≤0]".dParse);
@@ -435,11 +436,11 @@ void test(){
 	DExpr d=zero;	
 	foreach(i;0..13){
 		foreach(j;0..13){
-			d=d+j*x^^j/(i+1)*dIvr(DIvr.Type.leZ,i-x)*dIvr(DIvr.Type.lZ,x-1-i);
+			d=d+j*x^^j/(i+1)*dLe(i.dℚ,x)*dLt(x,(i+1).dℚ);
 		}
 	}
 	//writeln(d);
-	writeln(dInt("x".dVar,d*dIvr(DIvr.Type.leZ,x-"y".dVar)));+/
+	writeln(dInt("x".dVar,d*dLe(x,"y".dVar)));+/
 	//writeln("([-1+y≤0]·y+[-y+1≠0]·[-y+1≤0])^1000".dParse);
 	//writeln("-[-x+3≤0]+2·[-3+x≤0]·[-x+3≠0]+[-x+3≤0]·x".dParse^^31);
 	//writeln(d);
@@ -777,7 +778,7 @@ void test(){
 	//writeln(parseHakaru("Msum(Weight(x,Msum(Weight(1/3*x,Msum(Weight(1/9*x,Ret(x)),Weight(1/12-1/12*x,Ret(x)))),Weight(1/3-1/3*x,Msum(Weight(1/12*x,Ret(x)),Weight(1/16-1/16*x,Ret(x)))))),Weight(1-x,Msum(Weight(1/4*x,Msum(Weight(1/9*x,Ret(x)),Weight(1/12-1/12*x,Ret(x)))),Weight(1/4-1/4*x,Msum(Weight(1/12*x,Ret(x)),Weight(1/16-1/16*x,Ret(x)))))))")); // 3
 	//writeln(parseHakaru("Msum(Weight(x,Msum(Weight(1/3*x,Msum(Weight(1/3*x,Msum(Weight(1/9*x,Ret(x)),Weight(1/12-1/12*x,Ret(x)))),Weight(1/3-1/3*x,Msum(Weight(1/12*x,Ret(x)),Weight(1/16-1/16*x,Ret(x)))))),Weight(1/3-1/3*x,Msum(Weight(1/4*x,Msum(Weight(1/9*x,Ret(x)),Weight(1/12-1/12*x,Ret(x)))),Weight(1/4-1/4*x,Msum(Weight(1/12*x,Ret(x)),Weight(1/16-1/16*x,Ret(x)))))))),Weight(1-x,Msum(Weight(1/4*x,Msum(Weight(1/3*x,Msum(Weight(1/9*x,Ret(x)),Weight(1/12-1/12*x,Ret(x)))),Weight(1/3-1/3*x,Msum(Weight(1/12*x,Ret(x)),Weight(1/16-1/16*x,Ret(x)))))),Weight(1/4-1/4*x,Msum(Weight(1/4*x,Msum(Weight(1/9*x,Ret(x)),Weight(1/12-1/12*x,Ret(x)))),Weight(1/4-1/4*x,Msum(Weight(1/12*x,Ret(x)),Weight(1/16-1/16*x,Ret(x)))))))))")); // 4
 	//writeln(parseHakaru("Msum(Weight(x,Msum(Weight(1/3*x,Msum(Weight(1/3*x,Msum(Weight(1/3*x,Msum(Weight(1/9*x,Ret(x)),Weight(1/12-1/12*x,Ret(x)))),Weight(1/3-1/3*x,Msum(Weight(1/12*x,Ret(x)),Weight(1/16-1/16*x,Ret(x)))))),Weight(1/3-1/3*x,Msum(Weight(1/4*x,Msum(Weight(1/9*x,Ret(x)),Weight(1/12-1/12*x,Ret(x)))),Weight(1/4-1/4*x,Msum(Weight(1/12*x,Ret(x)),Weight(1/16-1/16*x,Ret(x)))))))),Weight(1/3-1/3*x,Msum(Weight(1/4*x,Msum(Weight(1/3*x,Msum(Weight(1/9*x,Ret(x)),Weight(1/12-1/12*x,Ret(x)))),Weight(1/3-1/3*x,Msum(Weight(1/12*x,Ret(x)),Weight(1/16-1/16*x,Ret(x)))))),Weight(1/4-1/4*x,Msum(Weight(1/4*x,Msum(Weight(1/9*x,Ret(x)),Weight(1/12-1/12*x,Ret(x)))),Weight(1/4-1/4*x,Msum(Weight(1/12*x,Ret(x)),Weight(1/16-1/16*x,Ret(x)))))))))),Weight(1-x,Msum(Weight(1/4*x,Msum(Weight(1/3*x,Msum(Weight(1/3*x,Msum(Weight(1/9*x,Ret(x)),Weight(1/12-1/12*x,Ret(x)))),Weight(1/3-1/3*x,Msum(Weight(1/12*x,Ret(x)),Weight(1/16-1/16*x,Ret(x)))))),Weight(1/3-1/3*x,Msum(Weight(1/4*x,Msum(Weight(1/9*x,Ret(x)),Weight(1/12-1/12*x,Ret(x)))),Weight(1/4-1/4*x,Msum(Weight(1/12*x,Ret(x)),Weight(1/16-1/16*x,Ret(x)))))))),Weight(1/4-1/4*x,Msum(Weight(1/4*x,Msum(Weight(1/3*x,Msum(Weight(1/9*x,Ret(x)),Weight(1/12-1/12*x,Ret(x)))),Weight(1/3-1/3*x,Msum(Weight(1/12*x,Ret(x)),Weight(1/16-1/16*x,Ret(x)))))),Weight(1/4-1/4*x,Msum(Weight(1/4*x,Msum(Weight(1/9*x,Ret(x)),Weight(1/12-1/12*x,Ret(x)))),Weight(1/4-1/4*x,Msum(Weight(1/12*x,Ret(x)),Weight(1/16-1/16*x,Ret(x)))))))))))"));
-	//writeln(dIvr(DIvr.Type.eqZ,dFloat(0.00000001)));
+	//writeln(dEqZ(dFloat(0.00000001)));
 	//writeln(dIntSmp("x".dVar,dSumSmp("n".dVar,dDelta("x".dVar-"n".dVar))));
 	//writeln("∫dξ₁∑_ξ₂[-10+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₁+ξ₂]".dParse.simplify(one));
 	//writeln("∫da(∑_ξ₁δ[-a+ξ₁])·[-10+a≤0]·[-a≤0]".dParse.simplify(one));
@@ -883,7 +884,7 @@ void test(){
 	//writeln(e.simplify(one));
 	//auto e="[-a.length+__u₂≠0]·[-a.length+__u₂≤0]·[a[__u₂].length≤0]".dParse;
 	//writeln(e.substitute("a".dVar,"[ξ₁ ↦ (([ξ₂ ↦ 2·[-1+ξ₂=0]+3·[-2+ξ₂=0]+[ξ₂=0]] (3))·[ξ₁=0]+([ξ₂ ↦ 2·[ξ₂=0]+3·[-1+ξ₂=0]+4·[-2+ξ₂=0]] (3))+([ξ₂ ↦ 5·[ξ₂=0]+6·[-1+ξ₂=0]+7·[-2+ξ₂=0]] (3))·[-2+ξ₁=0])[0 ↦ 2+5·[-2+ξ₁=0]+[ξ₁=0]]·[-1+ξ₁=0]+(([ξ₂ ↦ 2·[-1+ξ₂=0]+3·[-2+ξ₂=0]+[ξ₂=0]] (3))·[ξ₁=0]+([ξ₂ ↦ 5·[ξ₂=0]+6·[-1+ξ₂=0]+7·[-2+ξ₂=0]] (3))·[-2+ξ₁=0])·[-1+ξ₁≠0]] (3)".dParse.simplify(one)));
-	//writeln(dIvr(DIvr.Type.neqZ,dVar("x")*dVar("y")).linearizeConstraints(dVar("x")).simplify(one));
+	//writeln(dNeqZ(dVar("x")*dVar("y")).linearizeConstraints(dVar("x")).simplify(one));
 	//writeln("[x^2<=1]".dParse.linearizeConstraints("x".dVar));
 	//writeln("[-1+-y+z≤0]·[-1+y≤0]·[-y≤0]·[-z+y≤0]·δ[-w+x·z]·δ[-z+x+y]".dParse);
 	//writeln("[2=0]·2".dParse.simplify(one)," ",0^^2);
@@ -1147,7 +1148,7 @@ void test(){
 	dw(e);
 	writeln(e.simplify(one));+/
 	//auto x="x".dVar,a="a".dVar;
-	//writeln(dIvr(DIvr.dIvr(DIvr.Type.eqZ,dAbs(2*x-3*a)+dAbs(a+1-x)-(x+1)).simplify(one));
+	//writeln(dEqZ(dAbs(2*x-3*a)+dAbs(a+1-x)-(x+1)).simplify(one));
 	//writeln("[|2·x-3·a|+|a+1-x|=|x+1|]".dParse.simplify("[0<a]".dParse));
 	// auto e="((([-routes[0]+routes[1]=0]·q(links,this,γ⃗)·δ[-num_shortest+shortest[0]+shortest[1]]·δ_routes[[ξ₁ ↦ [-ξ₁+1=0]·links[0][2].w+[-ξ₁=0]·links[0][1].w] (2)]·δ_shortest[[ξ₁ ↦ [-ξ₁+1=0]+[-ξ₁=0]] (2)]+[-routes[0]+routes[1]≠0]·q(links,this,γ⃗)·δ[-num_shortest+shortest[0]+shortest[1]]·δ_routes[[ξ₁ ↦ [-ξ₁+1=0]·links[0][2].w+[-ξ₁=0]·links[0][1].w] (2)]·δ_shortest[[ξ₁ ↦ [-ξ₁+1=0]·[ξ₁≠0]] (2)])·[-routes[0]+routes[1]≤0]+[-routes[0]+routes[1]≠0]·[-routes[1]+routes[0]≤0]·q(links,this,γ⃗)·δ[-num_shortest+1+shortest[1]]·δ_routes[[ξ₁ ↦ [-ξ₁+1=0]·links[0][2].w+[-ξ₁=0]·links[0][1].w] (2)]·δ_shortest[[ξ₁ ↦ [-1+ξ₁≠0]·[-ξ₁=0]] (2)])·(∑_ξ₁[-num_shortest+ξ₁≤0]·[-ξ₁+1≤0]·δ[-which+ξ₁])·[shortest[0]=0]·[∫dξ₁∑_ξ₂[-num_shortest+ξ₂≤0]·[-ξ₂+1≤0]·δ[-ξ₂+ξ₁]≠0]·⅟(∫dξ₁∑_ξ₂[-num_shortest+ξ₂≤0]·[-ξ₂+1≤0]·δ[-ξ₂+ξ₁])+(∑_ξ₁[-num_shortest+ξ₁≤0]·[-ξ₁+1≤0]·δ[-which+ξ₁])·(∫dξ₁(([-routes[0]+routes[1]=0]·q(ξ₁,this,γ⃗)·δ[-num_shortest+shortest[0]+shortest[1]]·δ_routes[[ξ₂ ↦ [-ξ₂+1=0]·ξ₁[0][2].w+[-ξ₂=0]·ξ₁[0][1].w] (2)]·δ_shortest[[ξ₂ ↦ [-ξ₂+1=0]+[-ξ₂=0]] (2)]+[-routes[0]+routes[1]≠0]·q(ξ₁,this,γ⃗)·δ[-num_shortest+shortest[0]+shortest[1]]·δ_routes[[ξ₂ ↦ [-ξ₂+1=0]·ξ₁[0][2].w+[-ξ₂=0]·ξ₁[0][1].w] (2)]·δ_shortest[[ξ₂ ↦ [-ξ₂+1=0]·[ξ₂≠0]] (2)])·[-routes[0]+routes[1]≤0]+[-routes[0]+routes[1]≠0]·[-routes[1]+routes[0]≤0]·q(ξ₁,this,γ⃗)·δ[-num_shortest+1+shortest[1]]·δ_routes[[ξ₂ ↦ [-ξ₂+1=0]·ξ₁[0][2].w+[-ξ₂=0]·ξ₁[0][1].w] (2)]·δ_shortest[[ξ₂ ↦ [-1+ξ₂≠0]·[-ξ₂=0]] (2)])·δ_links[ξ₁[0 ↦ ξ₁[0][1 ↦ ξ₁[0][1]{.c ↦ -this.c+ξ₁[0][1].c}]]])·[shortest[0]≠0]·[∫dξ₁∑_ξ₂[-num_shortest+ξ₂≤0]·[-ξ₂+1≤0]·δ[-ξ₂+ξ₁]≠0]·⅟(∫dξ₁∑_ξ₂[-num_shortest+ξ₂≤0]·[-ξ₂+1≤0]·δ[-ξ₂+ξ₁]))·[shortest[1]=0]+((∑_ξ₁[-num_shortest+ξ₁≤0]·[-ξ₁+1≤0]·δ[-which+ξ₁])·(∫dξ₁(([-routes[0]+routes[1]=0]·q(ξ₁,this,γ⃗)·δ[-num_shortest+shortest[0]+shortest[1]]·δ_routes[[ξ₂ ↦ [-ξ₂+1=0]·ξ₁[0][2].w+[-ξ₂=0]·ξ₁[0][1].w] (2)]·δ_shortest[[ξ₂ ↦ [-ξ₂+1=0]+[-ξ₂=0]] (2)]+[-routes[0]+routes[1]≠0]·q(ξ₁,this,γ⃗)·δ[-num_shortest+shortest[0]+shortest[1]]·δ_routes[[ξ₂ ↦ [-ξ₂+1=0]·ξ₁[0][2].w+[-ξ₂=0]·ξ₁[0][1].w] (2)]·δ_shortest[[ξ₂ ↦ [-ξ₂+1=0]·[ξ₂≠0]] (2)])·[-routes[0]+routes[1]≤0]+[-routes[0]+routes[1]≠0]·[-routes[1]+routes[0]≤0]·q(ξ₁,this,γ⃗)·δ[-num_shortest+1+shortest[1]]·δ_routes[[ξ₂ ↦ [-ξ₂+1=0]·ξ₁[0][2].w+[-ξ₂=0]·ξ₁[0][1].w] (2)]·δ_shortest[[ξ₂ ↦ [-1+ξ₂≠0]·[-ξ₂=0]] (2)])·δ_links[ξ₁[0 ↦ ξ₁[0][1 ↦ ξ₁[0][1]{.c ↦ -this.c+ξ₁[0][1].c}]][0 ↦ ξ₁[0 ↦ ξ₁[0][1 ↦ ξ₁[0][1]{.c ↦ -this.c+ξ₁[0][1].c}]][0][1 ↦ ξ₁[0 ↦ ξ₁[0][1 ↦ ξ₁[0][1]{.c ↦ -this.c+ξ₁[0][1].c}]][0][1]{.c ↦ -this.c+ξ₁[0 ↦ ξ₁[0][1 ↦ ξ₁[0][1]{.c ↦ -this.c+ξ₁[0][1].c}]][0][1].c}]]])·[shortest[0]≠0]·[∫dξ₁∑_ξ₂[-num_shortest+ξ₂≤0]·[-ξ₂+1≤0]·δ[-ξ₂+ξ₁]≠0]·⅟(∫dξ₁∑_ξ₂[-num_shortest+ξ₂≤0]·[-ξ₂+1≤0]·δ[-ξ₂+ξ₁])+(∑_ξ₁[-num_shortest+ξ₁≤0]·[-ξ₁+1≤0]·δ[-which+ξ₁])·(∫dξ₁(([-routes[0]+routes[1]=0]·q(ξ₁,this,γ⃗)·δ[-num_shortest+shortest[0]+shortest[1]]·δ_routes[[ξ₂ ↦ [-ξ₂+1=0]·ξ₁[0][2].w+[-ξ₂=0]·ξ₁[0][1].w] (2)]·δ_shortest[[ξ₂ ↦ [-ξ₂+1=0]+[-ξ₂=0]] (2)]+[-routes[0]+routes[1]≠0]·q(ξ₁,this,γ⃗)·δ[-num_shortest+shortest[0]+shortest[1]]·δ_routes[[ξ₂ ↦ [-ξ₂+1=0]·ξ₁[0][2].w+[-ξ₂=0]·ξ₁[0][1].w] (2)]·δ_shortest[[ξ₂ ↦ [-ξ₂+1=0]·[ξ₂≠0]] (2)])·[-routes[0]+routes[1]≤0]+[-routes[0]+routes[1]≠0]·[-routes[1]+routes[0]≤0]·q(ξ₁,this,γ⃗)·δ[-num_shortest+1+shortest[1]]·δ_routes[[ξ₂ ↦ [-ξ₂+1=0]·ξ₁[0][2].w+[-ξ₂=0]·ξ₁[0][1].w] (2)]·δ_shortest[[ξ₂ ↦ [-1+ξ₂≠0]·[-ξ₂=0]] (2)])·δ_links[ξ₁[0 ↦ ξ₁[0][1 ↦ ξ₁[0][1]{.c ↦ -this.c+ξ₁[0][1].c}]]])·[shortest[0]=0]·[∫dξ₁∑_ξ₂[-num_shortest+ξ₂≤0]·[-ξ₂+1≤0]·δ[-ξ₂+ξ₁]≠0]·⅟(∫dξ₁∑_ξ₂[-num_shortest+ξ₂≤0]·[-ξ₂+1≤0]·δ[-ξ₂+ξ₁]))·[shortest[1]≠0]".dParse;
 	//auto e="(([-routes[0]+routes[1]=0]·q(links,this,γ⃗)·δ[-num_shortest+shortest[0]+shortest[1]]·δ_routes[[ξ₁ ↦ [-ξ₁+1=0]·links[0][2].w+[-ξ₁=0]·links[0][1].w] (2)]·δ_shortest[[ξ₁ ↦ [-ξ₁+1=0]+[-ξ₁=0]] (2)]+[-routes[0]+routes[1]≠0]·q(links,this,γ⃗)·δ[-num_shortest+shortest[0]+shortest[1]]·δ_routes[[ξ₁ ↦ [-ξ₁+1=0]·links[0][2].w+[-ξ₁=0]·links[0][1].w] (2)]·δ_shortest[[ξ₁ ↦ [-ξ₁+1=0]·[ξ₁≠0]] (2)])·[-routes[0]+routes[1]≤0]+[-routes[0]+routes[1]≠0]·[-routes[1]+routes[0]≤0]·q(links,this,γ⃗)·δ[-num_shortest+1+shortest[1]]·δ_routes[[ξ₁ ↦ [-ξ₁+1=0]·links[0][2].w+[-ξ₁=0]·links[0][1].w] (2)]·δ_shortest[[ξ₁ ↦ [-1+ξ₁≠0]·[-ξ₁=0]] (2)])·(∑_ξ₁[-num_shortest+ξ₁≤0]·[-ξ₁+1≤0]·δ[-which+ξ₁])".dParse;
@@ -1301,7 +1302,7 @@ void test(){
 	/+import std.range;
 	auto vars=iota(0,5).map!(i=>dVar("x"~lowNum(i))).array;
 	DExpr r=zero;
-	foreach(var;vars) r=dIvr(DIvr.Type.neqZ,r+var).simplify(one).polyNormalize().simplify(one);
+	foreach(var;vars) r=dNeqZ(r+var).simplify(one).polyNormalize().simplify(one);
 	writeln(r);+/
 	//writeln(((("ν".dVar)^^(one/2))^^-1).simplify(one));
 	/*import distrib,dexpr,dparse,type;

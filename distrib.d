@@ -29,61 +29,61 @@ Cond[] cond(string name)(DExpr[] args)in{assert(args.length==paramNames!name.len
 
 DExpr gaussPDF(DVar var,DExpr μ,DExpr ν){
 	auto dist=one/(2*dΠ*ν)^^(one/2)*dE^^-((var-μ)^^2/(2*ν));
-	return dIvr(DIvr.Type.neqZ,ν)*dist+dIvr(DIvr.Type.eqZ,ν)*dDelta(var-μ);
+	return dNeqZ(ν)*dist+dEqZ(ν)*dDelta(var-μ);
 }
 Cond[] gaussCond(DExpr μ,DExpr ν){
-	return [Cond(dIvr(DIvr.Type.leZ,-ν),"negative variance")];
+	return [Cond(dGeZ(ν),"negative variance")];
 }
 
 DExpr chiSquaredPDF(DVar var,DExpr k){
-	return dIvr(DIvr.Type.neqZ,k)*dIvr(DIvr.Type.leZ,-var)/(2^^(k/2)*dGamma(k/2))*var^^(k/2-1)*dE^^(-var/2)+
-		dIvr(DIvr.Type.eqZ,k)*dDelta(var);
+	return dNeqZ(k)*dGeZ(var)/(2^^(k/2)*dGamma(k/2))*var^^(k/2-1)*dE^^(-var/2)+
+		dEqZ(k)*dDelta(var);
 }
 Cond[] chiSquaredCond(DExpr k){
 	return [Cond(dIsℤ(k),"k must be an integer"),
-	        Cond(dIvr(DIvr.Type.leZ,-k),"k must be non-negative")];
+	        Cond(dGeZ(k),"k must be non-negative")];
 }
 
 DExpr rayleighPDF(DVar var,DExpr ν){
-	auto dist=var/(ν)*dE^^-((var)^^2/(2*ν)) * dIvr(DIvr.Type.leZ,-var);
-	return dIvr(DIvr.Type.neqZ,ν)*dist+dIvr(DIvr.Type.eqZ,ν)*dDelta(var);
+	auto dist=var/(ν)*dE^^-((var)^^2/(2*ν)) * dGeZ(var);
+	return dNeqZ(ν)*dist+dEqZ(ν)*dDelta(var);
 }
 Cond[] rayleighCond(DExpr ν){
-	return [Cond(dIvr(DIvr.Type.leZ,-ν),"negative scale")];
+	return [Cond(dGeZ(ν),"negative scale")];
 }
 
 DExpr truncatedGaussPDF(DVar var,DExpr μ,DExpr ν,DExpr a,DExpr b){
 	auto gdist=one/(2*dΠ)^^(one/2)*dE^^-((var-μ)^^2/(2*ν));
-	auto dist = gdist/(ν)/(dGaussInt((b-μ)/ν^^(one/2))-dGaussInt((a-μ)/(ν)^^(one/2)))*dBounded!"[]"(var,a,b);
-	return dIvr(DIvr.Type.neqZ,ν)*dist+dIvr(DIvr.Type.eqZ,ν)*dDelta(var-μ);
+	auto dist = gdist/(ν)/(dGaussInt((b-μ)/ν^^(one/2))-dGaussInt((a-μ)/(ν)^^(one/2)));
+	return (dNeqZ(ν)*dist+dEqZ(ν)*dDelta(var-μ))*dBounded!"[]"(var,a,b);
 }
 Cond[] truncatedGaussCond(DExpr μ,DExpr ν,DExpr a,DExpr b){
-	return [Cond(dIvr(DIvr.Type.leZ,-ν),"negative variance"),
-	        Cond(dIvr(DIvr.Type.lZ,a-b),"empty range")];
+	return [Cond(dGeZ(ν),"negative variance"),
+	        Cond(dLt(a,b),"empty range")];
 }
 
 DExpr paretoPDF(DVar var, DExpr a, DExpr b) {
 	auto dist = a * b^^a / var^^(a+one);
-	return dist * dIvr(DIvr.Type.leZ, b-var);
+	return dist * dLe(b,var);
 }
 Cond[] paretoCond(DExpr a, DExpr b){
-	return [Cond(dIvr(DIvr.Type.leZ,-a),"negative scale"),
-	        Cond(dIvr(DIvr.Type.leZ,-b),"negative shape")];
+	return [Cond(dGeZ(a),"negative scale"),
+	        Cond(dGeZ(b),"negative shape")];
 }
 
 DExpr uniformPDF(DVar var,DExpr a,DExpr b){
 	auto diff=b-a, dist=dBounded!"[]"(var,a,b)/diff;
-	return dIvr(DIvr.Type.neqZ,diff)*dist+dIvr(DIvr.Type.eqZ,diff)*dDelta(var-a);
+	return dNeqZ(diff)*dist+dEqZ(diff)*dDelta(var-a);
 }
 Cond[] uniformCond(DExpr a,DExpr b){
-	return [Cond(dIvr(DIvr.Type.leZ,a-b),"empty range")];
+	return [Cond(dLe(a,b),"empty range")];
 }
 
 DExpr flipPDF(DVar var,DExpr p){
 	return dDelta(var)*(1-p)+dDelta(1-var)*p;
 }
 Cond[] flipCond(DExpr p){
-	return [Cond(dIvr(DIvr.Type.leZ,-p)*dIvr(DIvr.Type.leZ,p-1),"parameter ouside range [0..1]")];
+	return [Cond(dBounded!"[]"(p,zero,one),"parameter ouside range [0..1]")];
 }
 
 DExpr uniformIntPDFNnorm(DVar var,DExpr a,DExpr b){
@@ -102,7 +102,7 @@ Cond[] uniformIntCond(DExpr a,DExpr b){
 	auto x=dDeBruijnVar(1); // TODO: get rid of this!
 	auto nnorm=uniformIntPDFNnorm(x,a,b);
 	auto norm=dIntSmp(nnorm,one);
-	return [Cond(dIvr(DIvr.Type.neqZ,norm),"no integers in range")];
+	return [Cond(dNeqZ(norm),"no integers in range")];
 }
 
 DExpr binomialPDF(DVar var,DExpr n,DExpr p){
@@ -112,102 +112,100 @@ DExpr binomialPDF(DVar var,DExpr n,DExpr p){
 }
 Cond[] binomialCond(DExpr n,DExpr p){
 	return [Cond(dIsℤ(n),"n must be an integer"),
-	        Cond(dIvr(DIvr.Type.leZ,-n),"n must be non-negative"),
+	        Cond(dGeZ(n),"n must be non-negative"),
 	        Cond(dBounded!"[]"(p,zero,one),"parameter p out of range [0..1]")];
 }
 
 DExpr negBinomialPDF(DVar var,DExpr r,DExpr p){
 	r=r.incDeBruijnVar(1,0), p=p.incDeBruijnVar(1,0);
 	auto k=dDeBruijnVar(1);
-	return dSumSmp(dIvr(DIvr.Type.leZ,-k)*(dGamma(r+k)/(dGamma(r)*dGamma(k+1)))*p^^r*(1-p)^^k*dDelta(k-var),one);
+	return dSumSmp(dGeZ(k)*(dGamma(r+k)/(dGamma(r)*dGamma(k+1)))*p^^r*(1-p)^^k*dDelta(k-var),one);
 }
 Cond[] negBinomialCond(DExpr r,DExpr p){
-	return [Cond(dIvr(DIvr.Type.lZ,-r),"r must be positive"),
-			Cond(dIvr(DIvr.Type.leZ,-p)*dIvr(DIvr.Type.leZ,p-1),"parameter ouside range [0..1]")];
+	return [Cond(dGtZ(r),"r must be positive"),
+	        Cond(dBounded!"[]"(p,zero,one),"parameter ouside range [0..1]")];
 }
 
 
 DExpr geometricPDF(DVar var,DExpr p){
 	p=p.incDeBruijnVar(1,0);
 	auto i=dDeBruijnVar(1);
-	return dSumSmp(dIvr(DIvr.Type.leZ,-i)*p*(1-p)^^i*dDelta(i-var),one);
+	return dSumSmp(dGeZ(i)*p*(1-p)^^i*dDelta(i-var),one);
 }
 Cond[] geometricCond(DExpr p){
-	return [Cond(dIvr(DIvr.Type.leZ,-p)*dIvr(DIvr.Type.leZ,p-1),"parameter ouside range [0..1]")];
+	return [Cond(dBounded!"[]"(p,zero,one),"parameter ouside range [0..1]")];
 }
 
 DExpr poissonPDF(DVar var,DExpr λ){
 	var=var.incDeBruijnVar(1,0), λ=λ.incDeBruijnVar(1,0);
 	auto x=dDeBruijnVar(1);
-	return dE^^-λ*dSumSmp(dIvr(DIvr.Type.leZ,-x)*dDelta(var-x)*λ^^x/dGamma(x+1),one);
+	return dE^^-λ*dSumSmp(dGeZ(x)*dDelta(var-x)*λ^^x/dGamma(x+1),one);
 }
 Cond[] poissonCond(DExpr λ){
-	return [Cond(dIvr(DIvr.Type.leZ,-λ),"λ must be non-negative")];
+	return [Cond(dGeZ(λ),"λ must be non-negative")];
 }
 
 DExpr betaPDF(DVar var,DExpr α,DExpr β){
-	auto nnorm=dIvr(DIvr.Type.neqZ,α)*dIvr(DIvr.Type.neqZ,β)*
+	auto nnorm=dNeqZ(α)*dNeqZ(β)*
 		var^^(α-1)*(1-var)^^(β-1)*dBounded!"[]"(var,zero,one)+
-		dIvr(DIvr.Type.eqZ,α)*dDelta(var)+
-		dIvr(DIvr.Type.eqZ,β)*dDelta(1-var);
+		dEqZ(α)*dDelta(var)+
+		dEqZ(β)*dDelta(1-var);
 	return nnorm/dIntSmp(var,nnorm,one);
 }
 Cond[] betaCond(DExpr α,DExpr β){
-	return [Cond(dIvr(DIvr.Type.leZ,-α),"α must be non-negative"),
-	        Cond(dIvr(DIvr.Type.leZ,-β),"β must be non-negative")];
+	return [Cond(dGeZ(α),"α must be non-negative"),
+	        Cond(dGeZ(β),"β must be non-negative")];
 }
 
 DExpr gammaPDF(DVar var,DExpr α,DExpr β){
-	auto nnorm=dIvr(DIvr.Type.neqZ,α)*var^^(α-1)*dE^^(-β*var)*dIvr(DIvr.Type.leZ,-var)+
-		dIvr(DIvr.Type.eqZ,α)*dDelta(var);
+	auto nnorm=dNeqZ(α)*var^^(α-1)*dE^^(-β*var)*dGeZ(var)+dEqZ(α)*dDelta(var);
 	return nnorm/dIntSmp(var,nnorm,one);
 }
 Cond[] gammaCond(DExpr α,DExpr β){
-	return [Cond(dIvr(DIvr.Type.leZ,-α),"α must be non-negative"),
-	        Cond(dIvr(DIvr.Type.lZ,-β),"β must be positive")];
+	return [Cond(dGeZ(α),"α must be non-negative"),
+	        Cond(dGtZ(β),"β must be positive")];
 }
 
 DExpr laplacePDF(DVar var, DExpr μ, DExpr b){
-	return dIvr(DIvr.Type.neqZ,b)*dE^^(-dAbs(var-μ)/b)/(2*b)+
-		dIvr(DIvr.Type.eqZ,b)*dDelta(μ-var);
+	return dNeqZ(b)*dE^^(-dAbs(var-μ)/b)/(2*b)+
+		dEqZ(b)*dDelta(μ-var);
 }
 Cond[] laplaceCond(DExpr μ,DExpr b){
-	return [Cond(dIvr(DIvr.Type.leZ,-b),"b must be non-negative")];
+	return [Cond(dGeZ(b),"b must be non-negative")];
 }
 
 DExpr cauchyPDF(DVar var,DExpr x0,DExpr γ){
-	return dIvr(DIvr.Type.neqZ,γ)/(dΠ*γ*(1+((var-x0)/γ)^^2))+
-		dIvr(DIvr.Type.eqZ,γ)*dDelta(x0-var);
+	return dNeqZ(γ)/(dΠ*γ*(1+((var-x0)/γ)^^2))+
+		dEqZ(γ)*dDelta(x0-var);
 }
 Cond[] cauchyCond(DExpr x0,DExpr γ){
-	return [Cond(dIvr(DIvr.Type.leZ,-γ),"γ must be non-negative")];
+	return [Cond(dGeZ(γ),"γ must be non-negative")];
 }
 
 DExpr exponentialPDF(DVar var,DExpr λ){
-	return λ*dE^^(-λ*var)*dIvr(DIvr.Type.leZ,-var);
+	return λ*dE^^(-λ*var)*dGeZ(var);
 }
 Cond[] exponentialCond(DExpr λ){
-	return [Cond(dIvr(DIvr.Type.lZ,-λ),"λ must be positive")];
+	return [Cond(dGtZ(λ),"λ must be positive")];
 }
 
 
 DExpr studentTPDF(DVar var,DExpr ν){ // this has a mean only if ν>1. how to treat this?
 	auto nnorm=(1+var^^2/ν)^^(-(ν+1)/2);
-	return dIvr(DIvr.Type.neqZ,ν)*nnorm/dIntSmp(var,nnorm,one)+
-		dIvr(DIvr.Type.eqZ,ν)*dDelta(var);
+	return dNeqZ(ν)*nnorm/dIntSmp(var,nnorm,one)+dEqZ(ν)*dDelta(var);
 }
 Cond[] studentTCond(DExpr ν){
-	return [Cond(dIvr(DIvr.Type.leZ,-ν),"ν must be non-negative")];
+	return [Cond(dGeZ(ν),"ν must be non-negative")];
 }
 
 DExpr weibullPDF(DVar var,DExpr λ,DExpr k){
-	return dIvr(DIvr.Type.neqZ,λ)*dIvr(DIvr.Type.neqZ,k)*
-		dIvr(DIvr.Type.leZ,-var)*k/λ*(var/λ)^^(k-1)*dE^^(-(var/λ)^^k)+
-		dIvr(DIvr.Type.neqZ,dIvr(DIvr.Type.eqZ,λ)+dIvr(DIvr.Type.eqZ,k))*dDelta(var);
+	return dNeqZ(λ)*dNeqZ(k)*
+		dGeZ(var)*k/λ*(var/λ)^^(k-1)*dE^^(-(var/λ)^^k)+
+		dNeqZ(dEqZ(λ)+dEqZ(k))*dDelta(var);
 }
 Cond[] weibullCond(DExpr λ,DExpr k){
-	return [Cond(dIvr(DIvr.Type.leZ,-λ),"λ must be non-negative"),
-	        Cond(dIvr(DIvr.Type.leZ,-k),"k must be non-negative")];
+	return [Cond(dGeZ(λ),"λ must be non-negative"),
+	        Cond(dGeZ(k),"k must be non-negative")];
 }
 
 DExpr categoricalPDF(DVar var,DExpr p){
@@ -219,8 +217,8 @@ DExpr categoricalPDF(DVar var,DExpr p){
 Cond[] categoricalCond(DExpr p){
 	p=p.incDeBruijnVar(1,0);
 	auto dbv=dDeBruijnVar(1);
-	return [Cond(dIvr(DIvr.Type.eqZ,dSum(dBounded!"[)"(dbv,zero,dField(p,"length")*dIvr(DIvr.Type.lZ,p[dbv])))),"probability of category should be non-negative"),
-	        Cond(dIvr(DIvr.Type.eqZ,dSum(dBounded!"[)"(dbv,zero,dField(p,"length"))*p[dbv])-1),"probabilities should sum up to 1")];
+	return [Cond(dEqZ(dSum(dBounded!"[)"(dbv,zero,dField(p,"length")*dLtZ(p[dbv])))),"probability of category should be non-negative"),
+	        Cond(dEqZ(dSum(dBounded!"[)"(dbv,zero,dField(p,"length"))*p[dbv])-1),"probabilities should sum up to 1")];
 }
 
 DExpr diracPDF(DVar var,DExpr e){
@@ -395,7 +393,7 @@ class Distribution{
 
 	void assertTrue(DExpr cond,lazy string msg){
 		if(opt.noCheck) return;
-		error=(error+computeProbability(dIvr(DIvr.Type.eqZ,cond))).simplify(one);
+		error=(error+computeProbability(dEqZ(cond))).simplify(one);
 		distribution=distribution*cond;
 	}
 	void distribute(DExpr pdf){ distribution=distribution*pdf; }
@@ -430,9 +428,9 @@ class Distribution{
 		foreach(v;freeVars) factor=dIntSmp(v,factor,one);
 		factor=factor+error;
 		distribution=distribution/factor;
-		if(!opt.noCheck) distribution=dIvr(DIvr.Type.neqZ,factor)*distribution;
+		if(!opt.noCheck) distribution=dNeqZ(factor)*distribution;
 		distribution=distribution.simplify(one);
-		if(!opt.noCheck) error=(dIvr(DIvr.Type.eqZ,factor)+dIvr(DIvr.Type.neqZ,factor)*(error/factor)).simplify(one);
+		if(!opt.noCheck) error=(dEqZ(factor)+dNeqZ(factor)*(error/factor)).simplify(one);
 		/+import type;
 		Distribution r=fromDExpr(dLambda(dNormalize(dApply(toDExpr().incDeBruijnVar(1,0),dDeBruijnVar(1)))),args.length,argsIsTuple,orderedFreeVars,isTuple,orderedFreeVars.map!(x=>cast(Expression)contextTy).array);
 		r.simplify();

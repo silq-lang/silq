@@ -222,16 +222,16 @@ private struct Analyzer{
 				auto de=cast(ABinaryExp)e;
 				auto e1=doIt(de.e1);
 				auto e2=doIt(de.e2);
-				dist.assertTrue(dIvr(DIvr.Type.neqZ,e2),formatError("division by zero",e.loc));
+				dist.assertTrue(dNeqZ(e2),formatError("division by zero",e.loc));
 				return cast(IDivExp)e?dFloor(e1/e2):e1/e2;
 			}
 			if(auto me=cast(ModExp)e) return doIt(me.e1)%doIt(me.e2);
 			if(auto pe=cast(PowExp)e){
 				auto e1=doIt(pe.e1), e2=doIt(pe.e2);
 				// e1>=0 or e2∈ ℤ.
-				auto c1=dIvr(DIvr.Type.neqZ,dIvr(DIvr.Type.leZ,-e1)+dIsℤ(e2));
+				auto c1=dNeqZ(dGeZ(e1)+dIsℤ(e2));
 				// e1!=0 or e2>=0
-				auto c2=dIvr(DIvr.Type.neqZ,dIvr(DIvr.Type.neqZ,e1)+dIvr(DIvr.Type.leZ,-e2));
+				auto c2=dNeqZ(dNeqZ(e1)+dGeZ(e2));
 				dist.assertTrue(c1*c2, "arguments outside domain of ^");
 				return e1^^e2;
 			}
@@ -240,7 +240,7 @@ private struct Analyzer{
 			if(auto ce=cast(BitXorExp)e) return dBitXor(doIt(ce.e1),doIt(ce.e2));
 			if(auto ce=cast(BitAndExp)e) return dBitAnd(doIt(ce.e1),doIt(ce.e2));
 			if(auto ume=cast(UMinusExp)e) return -doIt(ume.e);
-			if(auto ume=cast(UNotExp)e) return dIvr(DIvr.Type.eqZ,doIt(ume.e));
+			if(auto ume=cast(UNotExp)e) return dEqZ(doIt(ume.e));
 			if(auto ume=cast(UBitNotExp)e) return -doIt(ume.e)-1;
 			if(auto le=cast(LambdaExp)e){
 				auto summary=be.getSummary(le.fd,le.loc,err);
@@ -293,7 +293,7 @@ private struct Analyzer{
 						assert(0);
 					case "cosUnifDist": // TODO: Remove
 						auto var=dist.getTmpVar("__g");
-						dist.distribute(one/dΠ*(1-var^^2)^^-(one/2) * dBounded!"[]"(var,-one, one) * dIvr(DIvr.Type.neqZ,var-one)*dIvr(DIvr.Type.neqZ,var+one));
+						dist.distribute(one/dΠ*(1-var^^2)^^-(one/2) * dBounded!"[]"(var,-one, one) * dNeq(var,one)*dNeq(var,-one));
 						return var;
 					case "Marginal":
 						auto idist=dist.dup();
@@ -331,7 +331,7 @@ private struct Analyzer{
 							expct=dInt(v,expct);
 						}
 						// for obvious reasons, this will never fail:
-						dist.assertTrue(dIvr(DIvr.Type.neqZ,total),"expectation can be computed only in feasible path");
+						dist.assertTrue(dNeqZ(total),"expectation can be computed only in feasible path");
 						auto tmp=dist.getTmpVar("__exp");
 						dist.distribute(dDelta(tmp,expct/total,ℝ));
 						return tmp;
@@ -365,7 +365,7 @@ private struct Analyzer{
 					assert(idx.a.length==1);
 					auto de=doIt(idx.e);
 					auto di=doIt(idx.a[0]);
-					if(!opt.noBoundsCheck) dist.assertTrue(dIsℤ(di)*dIvr(DIvr.Type.leZ,-di)*dIvr(DIvr.Type.lZ,di-dField(de,"length")),formatError("array access out of bounds",idx.loc));
+					if(!opt.noBoundsCheck) dist.assertTrue(dIsℤ(di)*dGeZ(di)*dLt(di,dField(de,"length")),formatError("array access out of bounds",idx.loc));
 					auto r=dIndex(de,di);
 					return r;
 				}else if(auto tt=cast(TupleTy)idx.e.type){
@@ -377,9 +377,9 @@ private struct Analyzer{
 			if(auto sl=cast(SliceExp)e){
 				auto de=doIt(sl.e),dl=doIt(sl.l),dr=doIt(sl.r);
 				if(!opt.noBoundsCheck){
-					dist.assertTrue(dIsℤ(dl)*dIvr(DIvr.Type.leZ,-dl),formatError("slice lower bound out of bounds",sl.loc));
-					dist.assertTrue(dIvr(DIvr.Type.leZ,dl-dr),formatError("slice lower bound exceeds upper bound",sl.loc));
-					dist.assertTrue(dIsℤ(dr)*dIvr(DIvr.Type.leZ,dr-dField(de,"length")),formatError("slice upper bound out of bounds",sl.loc));
+					dist.assertTrue(dIsℤ(dl)*dGeZ(dl),formatError("slice lower bound out of bounds",sl.loc));
+					dist.assertTrue(dLe(dl,dr),formatError("slice lower bound exceeds upper bound",sl.loc));
+					dist.assertTrue(dIsℤ(dr)*dLe(dr,dField(de,"length")),formatError("slice upper bound out of bounds",sl.loc));
 				}
 				return dSlice(de,dl,dr);
 			}
@@ -399,9 +399,9 @@ private struct Analyzer{
 				auto var=dist.getTmpVar("__ite");
 				dist.initialize(var,dTuple([]),unit); // TODO: get rid of this?
 				auto dthen=dist.dupNoErr();
-				dthen.distribution=dthen.distribution*dIvr(DIvr.Type.neqZ,cond);
+				dthen.distribution=dthen.distribution*dNeqZ(cond);
 				auto dothw=dist.dupNoErr();
-				dothw.distribution=dothw.distribution*dIvr(DIvr.Type.eqZ,cond);
+				dothw.distribution=dothw.distribution*dEqZ(cond);
 				auto athen=Analyzer(be,dthen,err,arrays.dup,deterministic.dup);
 				auto then=athen.transformExp(ite.then);
 				if(!then) unwind();
@@ -459,29 +459,29 @@ private struct Analyzer{
 				return e1*e2;
 			}else if(auto b=cast(OrExp)e){
 				auto e1=doIt(b.e1), e2=doIt(b.e2);
-				return dIvr(DIvr.Type.neqZ,e1+e2);
+				return dNeqZ(e1+e2);
 			}else with(DIvr.Type)if(auto b=cast(LtExp)e){
 				mixin(common);
-				return dIvr(lZ,e1-e2);
+				return dLt(e1,e2);
 			}else if(auto b=cast(LeExp)e){
 				mixin(common);
-				return dIvr(leZ,e1-e2);
+				return dLe(e1,e2);
 			}else if(auto b=cast(GtExp)e){
 				mixin(common);
-				return dIvr(lZ,e2-e1);
+				return dGt(e1,e2);
 			}else if(auto b=cast(GeExp)e){
 				mixin(common);
-				return dIvr(leZ,e2-e1);
+				return dGe(e1,e2);
 			}else if(auto b=cast(EqExp)e){
 				mixin(common);
-				return dIvr(eqZ,e2-e1);
+				return dEq(e1,e2);
 			}else if(auto b=cast(NeqExp)e){
 				mixin(common);
-				return dIvr(neqZ,e2-e1);
+				return dNeq(e1,e2);
 			}else{
 				auto cond=transformExp(e);
 				if(!cond) unwind();
-				return dIvr(DIvr.Type.neqZ,cond);
+				return dNeqZ(cond);
 			}
 			err.error("unsupported",e.loc);
 			throw new Unwind();
@@ -697,7 +697,7 @@ private struct Analyzer{
 					assert(idx.a.length==1);
 					auto index=transformExp(idx.a[0]);
 					if(old&&index&&rhs){
-						if(!opt.noBoundsCheck) dist.assertTrue(dIvr(DIvr.Type.leZ,-index)*dIvr(DIvr.Type.lZ,index-dField(old,"length")),"array access out of bounds"); // TODO: check that index is an integer.
+						if(!opt.noBoundsCheck) dist.assertTrue(dGeZ(index)*dLt(index,dField(old,"length")),"array access out of bounds"); // TODO: check that index is an integer.
 						assignToImpl(idx.e,dIUpdate(old,index,rhs),idx.e.type);
 					}
 				}else{
@@ -782,13 +782,13 @@ private struct Analyzer{
 			dist.marginalizeTemporaries();
 		}else if(isOpAssignExp(e)){
 			DExpr perform(DExpr a,DExpr b){
-				if(cast(OrAssignExp)e) return dIvr(DIvr.Type.neqZ,dIvr(DIvr.Type.neqZ,a)+dIvr(DIvr.Type.neqZ,b));
-				if(cast(AndAssignExp)e) return dIvr(DIvr.Type.neqZ,a)*dIvr(DIvr.Type.neqZ,b);
+				if(cast(OrAssignExp)e) return dNeqZ(dNeqZ(a)+dNeqZ(b));
+				if(cast(AndAssignExp)e) return dNeqZ(a)*dNeqZ(b);
 				if(cast(AddAssignExp)e) return a+b;
 				if(cast(SubAssignExp)e) return a-b;
 				if(cast(MulAssignExp)e) return a*b;
 				if(cast(DivAssignExp)e||cast(IDivAssignExp)e){
-					dist.assertTrue(dIvr(DIvr.Type.neqZ,b),"division by zero");
+					dist.assertTrue(dNeqZ(b),"division by zero");
 					return cast(IDivAssignExp)e?dFloor(a/b):a/b;
 				}
 				if(cast(ModAssignExp)e) return a%b;
@@ -814,9 +814,9 @@ private struct Analyzer{
 		}else if(auto ite=cast(IteExp)e){
 			if(auto c=transformConstr(ite.cond)){
 				auto dthen=dist.dupNoErr();
-				dthen.distribution=dthen.distribution*dIvr(DIvr.Type.neqZ,c);
+				dthen.distribution=dthen.distribution*dNeqZ(c);
 				auto dothw=dist.dupNoErr();
-				dothw.distribution=dothw.distribution*dIvr(DIvr.Type.eqZ,c);
+				dothw.distribution=dothw.distribution*dEqZ(c);
 				auto athen=Analyzer(be,dthen,err,arrays.dup,deterministic.dup);
 				dthen=athen.analyze(ite.then,retDist,functionDef);
 				auto aothw=Analyzer(be,dothw,err,arrays.dup,deterministic.dup);

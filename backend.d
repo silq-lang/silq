@@ -10,7 +10,7 @@ Distribution getCDF(Distribution dist){
 	auto vars=dist.freeVars.dup;
 	foreach(var;vars){
 		auto nvar=dist.getVar("c"~var.name);
-		dist.distribute(dIvr(DIvr.Type.leZ,var-nvar));
+		dist.distribute(dLe(var,nvar));
 		dist.marginalize(var);
 		dist.distribution=dist.distribution.substitute(nvar,var);
 		dist.freeVars.remove(nvar);
