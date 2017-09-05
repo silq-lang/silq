@@ -26,7 +26,7 @@ struct DParser{
 		expect('[');
 		auto exp=parseDExpr();
 		DIvr.Type ty;
-		void doIt(DIvr.Type t,bool negate=false){
+		void doIt(DIvr.Type t,bool negate){
 			next();
 			if(cur()=='0') expect('0');
 			else exp=exp-parseDExpr();
@@ -34,13 +34,14 @@ struct DParser{
 			if(negate) exp=-exp;
 		}
 		switch(cur()) with(DIvr.Type){
-			case '=': doIt(eqZ); break;
+			case '=': doIt(eqZ,false); break;
 			case '≠','!':
-				if(cur()=='!'){ next(); expect('=',false); } doIt(neqZ); break;
+				if(cur()=='!'){ next(); expect('=',false); } doIt(neqZ,false); break;
 			case '<','>':
+				bool b=cur()=='>';
 				if(code.length>=2&&code[1]=='='){
-					bool b=cur()=='>'; next(); doIt(leZ,b);
-				}else doIt(lZ); break;
+					next(); doIt(leZ,b);
+				}else doIt(lZ,b); break;
 			case '≤','≥': doIt(leZ,cur=='≥'); break;
 			default: expect('<'); assert(0);
 		}
