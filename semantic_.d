@@ -337,7 +337,6 @@ bool isBuiltIn(Identifier id){
 	switch(id.name){
 	case "π":
 	case "readCSV":
-	case "cosUnifDist":
 	case "Marginal","sampleFrom":
 	case "Expectation":
 		return true;
@@ -357,7 +356,6 @@ Expression builtIn(Identifier id,Scope sc){
 	case "π": t=ℝ; break;
 	case "exp","log","sin","cos","abs": t=funTy(ℝ,ℝ,false,false); break;
 	case "floor","ceil": t=funTy(ℝ,ℝ,false,false); break;
-	case "cosUnifDist": t=funTy(unit,ℝ,false,false); break; // TDOO: remove
 	case "bernoulli": goto case "flip";
 	case "Bernoulli": goto case "Flip";
 	foreach(name;ToTuple!distribNames){

@@ -291,10 +291,6 @@ private struct Analyzer{
 						err.error(text("call to 'readCSV' only supported as the right hand side of an assignment"),ce.loc);
 						unwind();
 						assert(0);
-					case "cosUnifDist": // TODO: Remove
-						auto var=dist.getTmpVar("__g");
-						dist.distribute(one/dΠ*(1-var^^2)^^-(one/2) * dBounded!"[]"(var,-one, one) * dNeq(var,one)*dNeq(var,-one));
-						return var;
 					case "Marginal":
 						auto idist=dist.dup();
 						auto r=idist.getVar("`r");

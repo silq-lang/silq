@@ -41,6 +41,9 @@ def Pareto(a:ℝ,b:ℝ):Distribution[ℝ] ⇒ infer(()=>sampleFrom("(x;a,b)=>((-
 def uniform(a:ℝ,b:ℝ):ℝ ⇒ sampleFrom("(x;a,b)=>[a≠b]·[a≤x]·[x≤b]·⅟(b-a)+[a=b]·δ[a-x]",a,b):ℝ;
 def Uniform(a:ℝ,b:ℝ):Distribution[ℝ] ⇒ infer(() ⇒ sampleFrom("(x;a,b)=>[a≠b]·[a≤x]·[x≤b]·⅟(b-a)+[a=b]·δ[a-x]",a,b):ℝ);
 
+/+def cosUniform() ⇒ sampleFrom("(r)=>[-1+-r≠0]·[-1+-r≤0]·[-1+r≤0]·[-r+1≠0]·⅟π·⅟√-̅r̅²̅+̅1̅");
+def CosUniform() ⇒ infer(() ⇒ sampleFrom("(r)=>[-1+-r≠0]·[-1+-r≤0]·[-1+r≤0]·[-r+1≠0]·⅟π·⅟√-̅r̅²̅+̅1̅"));+/
+
 def flip(p:ℝ):ℝ ⇒ sampleFrom("(x;p)=>(1-p)·δ[x]+p·δ[1-x]",p):ℝ;
 def Flip(p:ℝ):Distribution[ℝ] ⇒ infer(()=>sampleFrom("(x;p)=>(1-p)·δ[x]+p·δ[1-x]",p):ℝ);
 def bernoulli(p:ℝ) ⇒ flip(p);
