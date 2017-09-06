@@ -1,5 +1,5 @@
 
 def main(){
 	if((x)=>x)(2){ return 1; }
-	return 0; // expected: δ[-r₁+1]
+	return 0; // expected: δ(0)[-r₁+1]
 }

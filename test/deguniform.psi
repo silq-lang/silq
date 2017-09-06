@@ -1,4 +1,4 @@
 def main(){
     x := uniform(0,0);
-    return x; // expected: δ[x]
+    return x; // expected: δ(0)[x]
 }

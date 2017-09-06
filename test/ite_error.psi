@@ -13,5 +13,5 @@ def main(){
     if x { z = 1/x; } else { z=1/(1-x); }
 
     w := if x { flip(1/2) } else { flip(1/3) };
-    return (y,z,w); // expected: 5/12·δ[-w+1]·δ[-y+1]·δ[-z+1]+7/12·δ[-y+1]·δ[-z+1]·δ[w]
+    return (y,z,w); // expected: 5/12·δ(0)[-w+1]·δ(0)[-y+1]·δ(0)[-z+1]+7/12·δ(0)[-y+1]·δ(0)[-z+1]·δ(0)[w]
 }

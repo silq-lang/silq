@@ -11,5 +11,5 @@ def main(){
         obs = y == 0;
     }
     observe(!x && obs);
-    return z; // expected: TODO: δ[-z+1]
+    return z; // expected: TODO: δ(0)[-z+1]
 }

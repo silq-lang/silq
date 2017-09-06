@@ -26,5 +26,5 @@ def main(){
 		observe(act()==b && act()==b && act()==b);
 		return goalPrior();
 	});
-	return sample(goalPosterior); // expected: δ[-r₁+1]·⅟2+δ[r₁]·⅟2
+	return sample(goalPosterior); // expected: δ(0)[-r₁+1]·⅟2+δ(0)[r₁]·⅟2
 }

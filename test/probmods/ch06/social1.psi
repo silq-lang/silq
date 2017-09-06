@@ -19,5 +19,5 @@ def main(){
 			observe(goalSatisfied(transition(state, action)));
 			return action;
 		});
-	return sample(chooseAction(haveCookie, vendingMachine, state)); // expected: δ[-r₁+1]
+	return sample(chooseAction(haveCookie, vendingMachine, state)); // expected: δ(0)[-r₁+1]
 }

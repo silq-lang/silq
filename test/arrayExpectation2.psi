@@ -3,5 +3,5 @@ def main(){
     x := [1,2];
     k := 1;
     l := Expectation(x[uniformInt(0,1)]);
-    return (k,l); // expected: δ[-k+1]·δ[-l+3/2]
+    return (k,l); // expected: δ(0)[-k+1]·δ(0)[-l+3/2]
 }

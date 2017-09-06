@@ -17,7 +17,7 @@ def main(){
 		(expectation(k),
 		 variance(k),
 		 variance(then(k,(x)=>x+x)));
-	return (a,b,c,d); // expected: δ[-a+2]·δ[-b+3]·δ[-c+12]·δ[-d+6]
+	return (a,b,c,d); // expected: δ(0)[-a+2]·δ(0)[-b+3]·δ(0)[-c+12]·δ(0)[-d+6]
 }
 
 /+def main(a,b){

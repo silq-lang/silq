@@ -13,5 +13,5 @@ dat Foo{
 }
 
 def main(){
-	return Foo(3).Bar(); // expected: δ_r₁[{.y ↦ 3,.`outer ↦ {.x ↦ 3}}]
+	return Foo(3).Bar(); // expected: δ({.y ↦ 3,.`outer ↦ {.x ↦ 3}})[r₁]
 }

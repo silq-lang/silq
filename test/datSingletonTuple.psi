@@ -17,7 +17,7 @@ def main(){
 	k := f.foo()[0];
 	f.x = 3;
 	l := f.bar();
-	return (k,l); // expected: δ[-k+2]·δ[-l+3]
+	return (k,l); // expected: δ(0)[-k+2]·δ(0)[-l+3]
 }
 
 

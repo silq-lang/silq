@@ -11,5 +11,5 @@ def bar(x){
 def main(){
     x:=if flip(1/2) { foo } else { bar };
     y:=x(2);
-    return y; // expected: 99/200·δ[-y+2]
+    return y; // expected: 99/200·δ(0)[-y+2]
 }

@@ -12,5 +12,5 @@ def bar(y){
 
 
 def main(){
-    return bar(flip(1/3)); // expected: 3·δ[-3·r₁+1]
+    return bar(flip(1/3)); // expected: 3·δ(0)[-3·r₁+1]
 }

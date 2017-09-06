@@ -15,5 +15,5 @@ def main(){
 		}
 	}
 	f := Foo();
-	return f; // expected: δ_f[{.b ↦ {.k ↦ 2,.`outer' ↦ {.`outer ↦ {.x ↦ 2}}},.`outer ↦ {.x ↦ 2}}]
+	return f; // expected: δ({.b ↦ {.k ↦ 2,.`outer' ↦ {.`outer ↦ {.x ↦ 2}}},.`outer ↦ {.x ↦ 2}})[f]
 }

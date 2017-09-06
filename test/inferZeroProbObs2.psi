@@ -3,7 +3,7 @@ def main(){
 	x := flip(1/2);
 	d := Dirac();
 	y := then((){ observe(x == flip(1/2)+1); return x; })(d);
-	return sample(y); // expected: (1/2·[-r₁+1=0]+1/2·[-r₁+2=0])·(1/2·δ[-r₁+1]+1/2·δ[r₁])·(2·[-r₁+1=0]+2·[-r₁+2=0])·([-r₁+1=0]+[-r₁+2=0])
+	return sample(y); // expected: (1/2·[-r₁+1=0]+1/2·[-r₁+2=0])·(1/2·δ(0)[-r₁+1]+1/2·δ(0)[r₁])·(2·[-r₁+1=0]+2·[-r₁+2=0])·([-r₁+1=0]+[-r₁+2=0])
 	// TODO: simplify better
 }
 

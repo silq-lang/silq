@@ -2,7 +2,7 @@
 def main(){
     /*bound := 3;
     lambda := 4;
-    L := SampleFrom("(L)=>δ[L-e^(-lambda)]"); // TODO: add constant e
+    L := SampleFrom("(L)=>δ(0)[L-e^(-lambda)]"); // TODO: add constant e
     p := 1;
     r := -1;
     for k in [0..bound){
@@ -13,7 +13,7 @@ def main(){
     }
     return r;*/
     lambda := 1;
-    L := SampleFrom("(L)=>δ[L-e^(-lambda)]"); // TODO: add constant e
+    L := SampleFrom("(L)=>δ(0)[L-e^(-lambda)]"); // TODO: add constant e
     u1 := uniform(0,1);
     assert(u1>L);
     u2 := u1*uniform(0,1);

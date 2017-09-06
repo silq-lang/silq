@@ -1,4 +1,4 @@
 
 def main(){
-	return dirac(3); // expected: δ[-r₁+3]
+	return dirac(3); // expected: δ(0)[-r₁+3]
 }

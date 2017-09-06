@@ -1,3 +1,3 @@
 def main(){
-	return chiSquared(0); // expected: δ[r₁]
+	return chiSquared(0); // expected: δ(0)[r₁]
 }

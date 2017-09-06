@@ -14,5 +14,5 @@ dat B{
 
 def main(){
 	a := A([B([A([]:B[]),A([B([]:A[]),B([]:A[])])]),B([]:A[])]);
-	return a.b[0].a[0].b; // expected: δ_b[[]]
+	return a.b[0].a[0].b; // expected: δ([])[b]
 }

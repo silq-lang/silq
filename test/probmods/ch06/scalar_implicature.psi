@@ -37,5 +37,5 @@ def main(){
 		cur_speaker := (state)⇒ speaker(state,cur_listener);
 		cur_listener = (words)⇒ listener(words,cur_speaker);
 	}
-	return sample(cur_listener(some)) == 3; // expected: 6140/6141·δ[r₁]+δ[-r₁+1]·⅟6141
+	return sample(cur_listener(some)) == 3; // expected: 6140/6141·δ(0)[r₁]+δ(0)[-r₁+1]·⅟6141
 }

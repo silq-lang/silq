@@ -5,7 +5,7 @@ def main(){
 	x := flip(1/2);
 	y := infer(()=>x+1);
 	k := then((x)=>(x,x+flip(1/2)))(y);
-	return (sample(then((a,b)=>a+b)(k)),sample(k)[0]); // expected: (δ[-1+-2·r₂+r₁]·⅟2+δ[-2·r₂+r₁]·⅟2)·(δ[-r₂+1]·⅟2+δ[-r₂+2]·⅟2)
+	return (sample(then((a,b)=>a+b)(k)),sample(k)[0]); // expected: (δ(0)[-1+-2·r₂+r₁]·⅟2+δ(0)[-2·r₂+r₁]·⅟2)·(δ(0)[-r₂+1]·⅟2+δ(0)[-r₂+2]·⅟2)
 	//return (sample(then((x:ℝ×ℝ)=>x[0]+x[1])(k)),sample(k)[0]);
 }
 

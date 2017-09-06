@@ -14,5 +14,5 @@ dat Foo{
 
 def main(){
 	f := Foo(2);
-	return f.foo(); // expected: δ[-r₁+2]
+	return f.foo(); // expected: δ(0)[-r₁+2]
 }

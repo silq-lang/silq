@@ -3,6 +3,6 @@ def main(){
     c1 := flip(1/2);
     c2 := flip(1/2);
     observe(c1 || c2);
-    return (c1,c2); // expected: (1/2·δ[-c2+1]+1/2·δ[c2])·(2/3·δ[-c1+1]+2/3·δ[c1])·([c1=0]·[c2≠0]+[c1≠0])
+    return (c1,c2); // expected: (1/2·δ(0)[-c2+1]+1/2·δ(0)[c2])·(2/3·δ(0)[-c1+1]+2/3·δ(0)[c1])·([c1=0]·[c2≠0]+[c1≠0])
     // TODO: make output easier to interpret
 }

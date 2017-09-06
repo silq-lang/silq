@@ -1,4 +1,4 @@
 def sum(a,b){
     r := a + b;
-    return r; // expected: δ[-r+a+b]
+    return r; // expected: δ(0)[-r+a+b]
 }

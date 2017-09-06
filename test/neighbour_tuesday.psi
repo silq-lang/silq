@@ -7,5 +7,5 @@ def main(){
     observe(isGirl1 && bornOnATuesday1 ||
             isGirl2 && bornOnATuesday2);
     bothAreGirls := isGirl1 && isGirl2;
-    return bothAreGirls; // expected: 13/27·δ[-bothAreGirls+1]+14/27·δ[bothAreGirls]
+    return bothAreGirls; // expected: 13/27·δ(0)[-bothAreGirls+1]+14/27·δ(0)[bothAreGirls]
 }

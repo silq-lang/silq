@@ -4,5 +4,5 @@ def main(){
     whichBox := uniformInt(1,3);
     isRed := if whichBox==1 { 1 } else { if whichBox==2 { 0 } else { flip(1/2); } };
     observe(isRed);
-    return whichBox; // expected: 1/3·δ[-whichBox+3]+2/3·δ[-whichBox+1]
+    return whichBox; // expected: 1/3·δ(0)[-whichBox+3]+2/3·δ(0)[-whichBox+1]
 }

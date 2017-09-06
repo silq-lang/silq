@@ -5,5 +5,5 @@ def foo(x){
 
 def main(){
     f := foo(1337);
-    return f(); // expected: δ[-r₁+1337]
+    return f(); // expected: δ(0)[-r₁+1337]
 }

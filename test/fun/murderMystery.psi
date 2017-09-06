@@ -14,5 +14,5 @@ def gunFoundAtScene(gunFound){
 
 def main(){
     posterior := gunFoundAtScene(true);
-    return posterior; // expected: 560·δ[posterior]·⅟569+9·δ[-posterior+1]·⅟569
+    return posterior; // expected: 560·δ(0)[posterior]·⅟569+9·δ(0)[-posterior+1]·⅟569
 }

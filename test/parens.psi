@@ -18,9 +18,9 @@ def main(){
         }
     }
     if cur != 0 { ok = 0; }
-    return ok; // expected: 5/64·δ[-ok+1]+59/64·δ[ok]
+    return ok; // expected: 5/64·δ(0)[-ok+1]+59/64·δ(0)[ok]
     /+observe(ok);
-    return x[1]; // expected: 2·δ[-r₁+1]·⅟5+3·δ[-r₁]·⅟5+/
+    return x[1]; // expected: 2·δ(0)[-r₁+1]·⅟5+3·δ(0)[-r₁]·⅟5+/
 }
 
 /+

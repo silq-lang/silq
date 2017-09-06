@@ -4,5 +4,5 @@ def foo(){
 }
 def main(){
     x := foo();
-    return (x[0],(2,)); // expected: δ[-r₁+1]·δ_r₂[(2,)]
+    return (x[0],(2,)); // expected: δ((2,))[r₂]·δ(0)[-r₁+1]
 }

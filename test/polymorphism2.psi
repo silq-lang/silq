@@ -3,5 +3,5 @@ def id[a](x:a)=>x;
 
 def main(){
     x:=2;
-    return id(()=>x)()+id(3); // expected: δ[-r₁+5]
+    return id(()=>x)()+id(3); // expected: δ(0)[-r₁+5]
 }

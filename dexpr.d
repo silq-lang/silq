@@ -2793,7 +2793,7 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 		}else if(formatting==Format.lisp){
 			return text("(dirac ",e.toStringImpl(formatting,Precedence.none,binders),")");
 		}else{
-			return "δ["~e.toStringImpl(formatting,Precedence.none,binders)~"]"; // TODO: use ⟦ instead of [
+			return "δ(0)["~e.toStringImpl(formatting,Precedence.none,binders)~"]";
 		}
 	}
 
@@ -2836,8 +2836,7 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 		if(formatting==Format.lisp) // TODO: better name
 			return text("(dirac2 ",var.toStringImpl(formatting,Precedence.subscript,binders),e.toStringImpl(formatting,Precedence.none,binders),")");
 		// TODO: encoding for other CAS?
-		return "δ_"~var.toStringImpl(formatting,Precedence.subscript,binders)
-			~"["~e.toStringImpl(formatting,Precedence.none,binders)~"]"; // TODO: use ⟦ instead of [
+		return "δ("~e.toStringImpl(formatting,Precedence.none,binders)~")["~var.toStringImpl(formatting,Precedence.subscript,binders)~"]";
 	}
 
 	mixin Visitors;

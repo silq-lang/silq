@@ -1,5 +1,5 @@
 
 def main(){
     x := uniformInt(1,5);
-    return x % 2; // expected: 2/5·δ[r₁]+3/5·δ[-r₁+1]
+    return x % 2; // expected: 2/5·δ(0)[r₁]+3/5·δ(0)[-r₁+1]
 }

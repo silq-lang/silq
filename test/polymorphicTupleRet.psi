@@ -2,5 +2,5 @@ def f()=>(1,2);
 def call[b](x:𝟙 → b)=>x();
 def main(){
     xs:=call[ℝ×ℝ](f);
-    return xs; // expected: δ[-xs₁+1]·δ[-xs₂+2]
+    return xs; // expected: δ(0)[-xs₁+1]·δ(0)[-xs₂+2]
 }

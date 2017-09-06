@@ -1,5 +1,5 @@
 
 def main(){
     x := [[(1,2)],[(2,3)],[(3,4),(5,6)]];
-    return Expectation(x[uniformInt(0,1)][0][0]+x[2][uniformInt(0,1)][1]); // expected: δ[-r₁+13/2]
+    return Expectation(x[uniformInt(0,1)][0][0]+x[2][uniformInt(0,1)][1]); // expected: δ(0)[-r₁+13/2]
 }

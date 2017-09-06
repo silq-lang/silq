@@ -2,5 +2,5 @@ def main(){
     x := gauss(0,1);
     a := x^2;
     b :=a^(1/2)==(if x > 0 { x } else { -x });
-    return b; // expected: δ[-b+1]
+    return b; // expected: δ(0)[-b+1]
 }

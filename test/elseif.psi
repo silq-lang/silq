@@ -3,5 +3,5 @@ def main(){
     if flip(1/2){ x = 1; }
     else if flip(1/2){ x = 2; }
     else { x = 3; }
-    return x; // expected: 1/2·δ[-x+1]+1/4·δ[-x+2]+1/4·δ[-x+3]
+    return x; // expected: 1/2·δ(0)[-x+1]+1/4·δ(0)[-x+2]+1/4·δ(0)[-x+3]
 }

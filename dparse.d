@@ -64,15 +64,13 @@ struct DParser{
 		if(code.startsWith("delta")) code=code["delta".length..$];
 		else expect('δ');
 		bool round=false;
-		DVar var=null;
-		if(cur()=='_'){ next(); var=parseDVar(); }
-		if(cur()=='('){
-			round=true;
-			next();
-		}else expect('[');
+		expect('(');
 		auto expr=parseDExpr();
-		expect(round?')':']');
-		return var?dDiscDelta(var,expr):dDelta(expr);
+		expect(')');
+		expect('[');
+		DExpr var=parseDExpr();
+		expect(']');
+		return expr is zero?dDelta(var):dDiscDelta(var,expr);
 	}
 		
 	DExpr parseSqrt(){

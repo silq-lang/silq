@@ -6,6 +6,6 @@ def main(){
 	z := expectation(Gauss(3,4));
 	w := sample(Dirac([1,2,3]))[2];
 	y = sample(Dirac(y));
-	return (x,y,z,w); // expected: δ[-w+3]·δ[-y+2/3]·δ[-z+3·⅟2^(3/2)·√8̅]·δ_x[Λξ₁. δ_ξ₁[val(5)]]
+	return (x,y,z,w); // expected: δ(0)[-w+3]·δ(0)[-y+2/3]·δ(0)[-z+3·⅟2^(3/2)·√8̅]·δ(Λξ₁. δ(val(5))[ξ₁])[x]
 	// TODO: simplify ⅟2^(3/2)·√8̅ to 1.
 }
