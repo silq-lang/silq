@@ -2813,23 +2813,14 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 		return r?r:this;
 	}
 
-	static DExpr performSubstitution(DDelta d,DExpr expr,bool caseSplit){
+	static DExpr performSubstitution(DDelta d,DExpr expr){
 		auto var=db1;
 		SolutionInfo info;
-		SolUse usage={caseSplit:caseSplit,bound:false};
+		SolUse usage={caseSplit:false,bound:false};
 		if(auto s=d.e.solveFor(var,zero,usage,info)){
 			s=s.incDeBruijnVar(-1,0).simplify(one);
-			foreach(ref x;info.caseSplits) x.constraint=x.constraint.incDeBruijnVar(-1,0);
-			if(!caseSplit && info.needCaseSplit) return null;
-			auto constraints=one;
-			foreach(ref x;info.caseSplits)
-				constraints=constraints*dNeqZ(x.constraint);
-			auto r=constraints==zero?zero:
-				constraints*unbind(expr,s)/dAbs(dDiff(var,d.e,s));
-			foreach(ref x;info.caseSplits){
-				auto curConstr=constraints.withoutFactor(dNeqZ(x.constraint));
-				r=r+curConstr*dEqZ(x.constraint)*dIntSmp(var,expr*dDelta(x.expression),one);
-			}
+			if(info.needCaseSplit) return null;
+			auto r=unbind(expr,s)/dAbs(dDiff(var,d.e,s));
 			return r.simplify(one);
 		}
 		return null;

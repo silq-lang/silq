@@ -62,7 +62,7 @@ private DExpr definiteIntegralImpl(DExpr expr,DExpr facts=one){
 		foreach(f;expr.factors){
 			if(!f.hasFreeVar(var)) continue;
 			if(auto d=cast(DDelta)f){
-				if(auto r=DDelta.performSubstitution(d,expr.withoutFactor(f),false))
+				if(auto r=DDelta.performSubstitution(d,expr.withoutFactor(f)))
 					return r.simplify(facts);
 			}
 		}

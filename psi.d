@@ -148,6 +148,13 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration;
+	/+import std.range, std.algorithm; // TODO: make this fast
+	enum n=100;
+	DExpr e=dApply("f".dVar,dTuple(iota(0,n).map!(i=>cast(DExpr)dVar("x"~lowNum(i))).array));
+	foreach(i;0..n){
+		e=dInt(dVar("x"~lowNum(i)),e);
+	}
+	dw(e.simplify(one));+/
 	//writeln("∫dξ₁∫dξ₂(1/2·⅟e^(1/4·ξ₂²)·⅟√π̅)·(1/2·⅟e^(1/4·ξ₁²)·⅟√π̅)·([ξ₁≠0]·[ξ₁≤0]·[ξ₂≠0]·[ξ₂≤0]+[ξ₂≠0]·[ξ₂≤0])".dParse.simplify(one));
 	/*DExpr r=zero;
 	foreach(i;0..4){

@@ -64,7 +64,7 @@ DExpr ivrsToDeltas(DExpr dist){
 				foreach(v;ivr.e.freeVars.setx){
 					// TODO: figure out how to deal with tautologies and/or contradictions correctly
 					// TODO: actually do this substitution right
-					if(auto e=DDelta.performSubstitution!false(v,delta,e.withoutFactor(f)*delta,true)){
+					if(auto e=DDelta.performSubstitution!false(v,delta,e.withoutFactor(f)*delta)){
 						auto grad=zero;
 						foreach(v;ivr.e.freeVars.setx) grad=grad+dDiff(v,ivr.e)^^2;
 						return delta*grad^^(one/2)*e;
