@@ -223,7 +223,7 @@ Cond[] categoricalCond(DExpr p){
 
 DExpr diracPDF(DVar var,DExpr e){
 	import type;
-	return dDelta(var,e,varTy("a",typeTy));
+	return dDelta(e,var,varTy("a",typeTy));
 }
 Cond[] diracCond(DExpr e){
 	return [];
@@ -401,7 +401,7 @@ class Distribution{
 		assert(var&&exp&&ty);
 	}body{
 		assert(!distribution.hasFreeVar(var));
-		distribute(dDelta(var,exp,ty));
+		distribute(dDelta(exp,var,ty));
 	}
 	void assign(DNVar var,DExpr exp,Expression ty){
 		if(distribution is zero) return;
@@ -409,7 +409,7 @@ class Distribution{
 		auto nvar=getVar(var.name);
 		distribution=distribution.substitute(var,nvar);
 		exp=exp.substitute(var,nvar);
-		distribute(dDelta(var,exp,ty));
+		distribute(dDelta(exp,var,ty));
 		marginalize(nvar);
 	}
 	void marginalize(DNVar var)in{assert(var in freeVars,text(var)); }body{
@@ -443,7 +443,7 @@ class Distribution{
 		if(!opt.noCheck){
 			auto ndist=dDistApply(dApply(q,arg),db1);
 			auto nerror=distribution*dInt(dMCase(db1,zero,one)*ndist);
-			distribution=distribution*dInt(dMCase(db1,dDiscDelta(r,db1),zero)*ndist);
+			distribution=distribution*dInt(dMCase(db1,dDiscDelta(db1,r),zero)*ndist);
 			foreach(v;vars) nerror=dInt(v,nerror);
 			error=error+nerror;
 		}else distribution=distribution*dDistApply(dApply(q,arg),r);
@@ -474,12 +474,12 @@ class Distribution{
 		}
 		dist=dist.substituteAll(allVars,allVals);
 		if(!opt.noCheck){
-			auto r=dist*dDiscDelta(db1,dVal(values));
+			auto r=dist*dDiscDelta(dVal(values),db1);
 			foreach(v;vars) r=dInt(v,r);
-			r=r+dDiscDelta(db1,dErr)*error.substituteAll(allVars,allVals);
+			r=r+dDiscDelta(dErr,db1)*error.substituteAll(allVars,allVals);
 			return dDistLambda(r);
 		}else{
-			auto r=dist*dDiscDelta(db1,values);
+			auto r=dist*dDiscDelta(values,db1);
 			foreach(v;vars) r=dInt(v,r);
 			return dDistLambda(r);
 		}
@@ -515,7 +515,7 @@ class Distribution{
 		auto args=argsIsTuple?dTuple(cast(DExpr[])r.args):r.args[0];
 		auto ndist=dDistApply(dApply(dexpr,args),db1);
 		if(!opt.noCheck){
-			r.distribution=dInt(r.distribution*dInt(dMCase(db1,dDiscDelta(db3,db1),zero)*ndist));
+			r.distribution=dInt(r.distribution*dInt(dMCase(db1,dDiscDelta(db1,db3),zero)*ndist));
 			r.error=dInt(dMCase(db1,zero,one)*ndist);
 		}else r.distribution=dInt(r.distribution*ndist);
 		r.orderFreeVars(orderedFreeVars,isTuple);

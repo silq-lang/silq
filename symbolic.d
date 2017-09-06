@@ -237,7 +237,7 @@ private struct Analyzer{
 						// for obvious reasons, this will never fail:
 						dist.assertTrue(dNeqZ(total),"expectation can be computed only in feasible path");
 						auto tmp=dist.getTmpVar("__exp");
-						dist.distribute(dDelta(tmp,expct/total,ℝ));
+						dist.distribute(dDelta(expct/total,tmp,ℝ));
 						return tmp;
 					default: break;
 					}
@@ -639,7 +639,7 @@ private struct Analyzer{
 				DVar var=null;
 				if(id.name !in arrays) var=dist.declareVar(id.name);
 				if(var){
-					dist.distribute(dDelta(var,rhs?rhs:zero,rhs?ty:ℝ)); // TODO: zero is not a good default value for types other than ℝ.
+					dist.distribute(dDelta(rhs?rhs:zero,var,rhs?ty:ℝ)); // TODO: zero is not a good default value for types other than ℝ.
 					trackDeterministic(var,rhs,ty);
 				}else err.error("variable already exists",id.loc);
 			}

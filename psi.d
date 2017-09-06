@@ -818,16 +818,16 @@ void test(){
 	//writeln("∫dx x·e^(-r₁²·x²·⅟2+-x²·⅟2)".dParse.simplify(one));
 	//writeln("lim[ξ₁ → ∞]((-(d/dx)⁻¹[e^(-x²)](ξ₁·√r̅₁̅²̅·̅⅟̅2̅+̅⅟̅2̅)·ξ₁·√r̅₁̅²̅·̅⅟̅2̅+̅⅟̅2̅+-e^((-r₁²·⅟2+-⅟2)·ξ₁²)·⅟2)·⅟(r₁²·⅟2+⅟2)+(d/dx)⁻¹[e^(-x²)](ξ₁·√r̅₁̅²̅·̅⅟̅2̅+̅⅟̅2̅)·ξ₁·⅟√r̅₁̅²̅·̅⅟̅2̅+̅⅟̅2̅)".dParse.simplify(one));
 	//writeln("lim[x → ∞] e^((-r₁²·⅟2+-⅟2)·x²)".dParse.simplify(one));
-	//writeln(dInt("x".dVar,dDelta("x".dVar,dTuple([one,one,one]),tupleTy([ℝ,ℝ,ℝ]))/2+dDelta("x".dVar,dTuple([one,one,one+one]),tupleTy([ℝ,ℝ,ℝ]))/2).simplify(one));
-	//writeln(dInt("x".dVar,dInt("y".dVar,dInt("z".dVar,"[0<=y]·[y<=1]·[0<=z]·[z<=1]".dParse*dDelta("x".dVar,dTuple(["y".dVar,"z".dVar]),tupleTy([ℝ,ℝ,ℝ]))))).simplify(one));
+	//writeln(dInt("x".dVar,dDelta(dTuple([one,one,one]),"x".dVar,tupleTy([ℝ,ℝ,ℝ]))/2+dDelta(dTuple([one,one,one+one]),"x".dVar,tupleTy([ℝ,ℝ,ℝ]))/2).simplify(one));
+	//writeln(dInt("x".dVar,dInt("y".dVar,dInt("z".dVar,"[0<=y]·[y<=1]·[0<=z]·[z<=1]".dParse*dDelta(dTuple(["y".dVar,"z".dVar]),"x".dVar,tupleTy([ℝ,ℝ,ℝ]))))).simplify(one));
 	//writeln("∫dξ₁∫dξ₂(∫dξ₃[-1+ξ₃≤0]·[-ξ₃≤0]·δ_ξ₁[(ξ₃,ξ₂)])·[-1+ξ₂≤0]·[-ξ₂≤0]".dParse.simplify(one));
 	//(∫dk[-1+k≤0]·[-k≤0]·δ_x[x₁[0 ↦ k]])·[-x₁.length≤0]·[x₁.length≠0]·δ[-n+2]·δ_x₁[[k ↦ 0] (1)]
-	//auto exp=dIntSmp("k".dVar,"[-1+k≤0]·[-k≤0]".dParse*dDelta("x".dVar,dIUpdate("arr".dVar,zero,"k".dVar),arrayTy(ℝ)))*dDelta("arr".dVar,dArray([zero]),arrayTy(ℝ));
+	//auto exp=dIntSmp("k".dVar,"[-1+k≤0]·[-k≤0]".dParse*dDelta(dIUpdate("arr".dVar,zero,"k".dVar),"x".dVar,arrayTy(ℝ)))*dDelta("arr".dVar,dArray([zero]),arrayTy(ℝ));
 	//writeln(exp);
 	//DEB=true;
 	//writeln(dIntSmp("arr".dVar,exp));
-	//writeln(dIntSmp("k".dVar,"[-1+k≤0]·[-k≤0]".dParse*dDelta("x".dVar,dIUpdate("arr".dVar,zero,"k".dVar),arrayTy(ℝ))).substitute("arr".dVar,dArray([zero])));
-	//writeln(dIntSmp("k".dVar,"[-1+k≤0]·[-k≤0]".dParse*dDelta("x".dVar,dIUpdate(dArray([zero]),zero,"k".dVar),arrayTy(ℝ))));
+	//writeln(dIntSmp("k".dVar,"[-1+k≤0]·[-k≤0]".dParse*dDelta(dIUpdate("arr".dVar,zero,"k".dVar),"x".dVar,arrayTy(ℝ))).substitute("arr".dVar,dArray([zero])));
+	//writeln(dIntSmp("k".dVar,"[-1+k≤0]·[-k≤0]".dParse*dDelta(dIUpdate(dArray([zero]),zero,"k".dVar),"x".dVar,arrayTy(ℝ))));
 	//auto e="((∫dξ₁(∫dξ₂[-1+ξ₂≤0]·[-ξ₂≤0]·δ_t[(-ξ₁+ξ₂,-ξ₂+ξ₁)])·[-1+ξ₁≤0]·[-ξ₁≤0])·⅟2+δ_t[(0,0)]·⅟2)·[-t[0]+-t[1]=0]".dParse;
 	//writeln(dIntSmp("t".dVar,e));
 	//auto e="((∫dξ₁(∫dξ₂[-1+ξ₂≤0]·[-ξ₂≤0]·δ_x[(ξ₂,ξ₁)])·[-1+ξ₁≤0]·[-ξ₁≤0])·δ_y[(x[0],x[1])]·⅟2+(∫dξ₁(∫dξ₂[-1+ξ₂≤0]·[-ξ₂≤0]·δ_x[(ξ₂,ξ₁)])·[-1+ξ₁≤0]·[-ξ₁≤0])·δ_y[(x[1],x[0])]·⅟2)·[-t[0]+-t[1]=0]·δ_t[(-y[0]+x[0],-y[1]+x[1])]".dParse;
@@ -1253,13 +1253,13 @@ void test(){
 	dwguard=false;
 	auto nvar=dVar("nVar");
 	e=e.substitute("infected".dVar,nvar);
-	e=e*dDelta("newInfected".dVar,"infected".dVar,arrayTy(ℝ));
+	e=e*dDelta("infected".dVar,"newInfected".dVar,arrayTy(ℝ));
 	dwguard=true;
 	// dw(e);
 	//auto nvar=dVar("nVar");
 	//e="((((δ_newInfected[[ξ₁ ↦ [-1+ξ₁=0]+[-1+ξ₁≠0]·[ξ₁=0]] (2)]·⅟2+δ_newInfected[[ξ₁ ↦ [-1+ξ₁≠0]·[ξ₁=0]] (2)]·⅟2)·[newInfected[1]=0]·q(γ⃗)·δ[-N+2]+(∫dξ₁(∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])·(∫dξ₂(∑_ξ₃[-N+1+ξ₃≤0]·[-ξ₃≤0]·δ[-ξ₃+ξ₂])·δ_newInfected[[ξ₃ ↦ (([-1+ξ₃=0]+[-1+ξ₃≠0]·[ξ₃=0])·[-ξ₂+ξ₃≠0]+[-ξ₃+ξ₂=0])·[-ξ₁+ξ₃≠0]+[-ξ₃+ξ₁=0]] (2)]))·q(γ⃗)·δ[-N+2]·⅟2+(∫dξ₁(∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])·δ_newInfected[[ξ₂ ↦ [-1+ξ₂≠0]·[-ξ₁+ξ₂≠0]·[ξ₂=0]+[-ξ₂+ξ₁=0]] (2)])·q(γ⃗)·δ[-N+2]·⅟2)·[newInfected[0]=0]·δ[-i+1]·δ_nVar[newInfected]+((∫dξ₁(∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])·(∫dξ₂(∑_ξ₃[-N+1+ξ₃≤0]·[-ξ₃≤0]·δ[-ξ₃+ξ₂])·δ_nVar[[ξ₃ ↦ (([-1+ξ₃=0]+[-1+ξ₃≠0]·[ξ₃=0])·[-ξ₂+ξ₃≠0]+[-ξ₃+ξ₂=0])·[-ξ₁+ξ₃≠0]+[-ξ₃+ξ₁=0]] (2)]))·q(γ⃗)·δ[-N+2]·⅟2+(∫dξ₁(∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])·δ_nVar[[ξ₂ ↦ [-1+ξ₂≠0]·[-ξ₁+ξ₂≠0]·[ξ₂=0]+[-ξ₂+ξ₁=0]] (2)])·q(γ⃗)·δ[-N+2]·⅟2)·(∫dξ₁(∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])·δ_newInfected[nVar[ξ₁ ↦ 1]])·[nVar[0]≠0]·δ[-i+1])·[nVar[1]=0]+(∫dξ₁(((∫dξ₂(∑_ξ₃[-N+1+ξ₃≤0]·[-ξ₃≤0]·δ[-ξ₃+ξ₂])·(∫dξ₃(∑_ξ₄[-N+1+ξ₄≤0]·[-ξ₄≤0]·δ[-ξ₄+ξ₃])·δ_nVar[[ξ₄ ↦ (([-1+ξ₄=0]+[-1+ξ₄≠0]·[ξ₄=0])·[-ξ₃+ξ₄≠0]+[-ξ₄+ξ₃=0])·[-ξ₂+ξ₄≠0]+[-ξ₄+ξ₂=0]] (2)]))·q(γ⃗)·δ[-N+2]·⅟2+(∫dξ₂(∑_ξ₃[-N+1+ξ₃≤0]·[-ξ₃≤0]·δ[-ξ₃+ξ₂])·δ_nVar[[ξ₃ ↦ [-1+ξ₃≠0]·[-ξ₂+ξ₃≠0]·[ξ₃=0]+[-ξ₃+ξ₂=0]] (2)])·q(γ⃗)·δ[-N+2]·⅟2)·(∫dξ₂(∑_ξ₃[-N+1+ξ₃≤0]·[-ξ₃≤0]·δ[-ξ₃+ξ₂])·δ_newInfected[nVar[ξ₂ ↦ 1][ξ₁ ↦ 1]])·[nVar[0]≠0]·δ[-i+1]+((∫dξ₂(∑_ξ₃[-N+1+ξ₃≤0]·[-ξ₃≤0]·δ[-ξ₃+ξ₂])·(∫dξ₃(∑_ξ₄[-N+1+ξ₄≤0]·[-ξ₄≤0]·δ[-ξ₄+ξ₃])·δ_nVar[[ξ₄ ↦ (([-1+ξ₄=0]+[-1+ξ₄≠0]·[ξ₄=0])·[-ξ₃+ξ₄≠0]+[-ξ₄+ξ₃=0])·[-ξ₂+ξ₄≠0]+[-ξ₄+ξ₂=0]] (2)]))·q(γ⃗)·δ[-N+2]·⅟2+(∫dξ₂(∑_ξ₃[-N+1+ξ₃≤0]·[-ξ₃≤0]·δ[-ξ₃+ξ₂])·δ_nVar[[ξ₃ ↦ [-1+ξ₃≠0]·[-ξ₂+ξ₃≠0]·[ξ₃=0]+[-ξ₃+ξ₂=0]] (2)])·q(γ⃗)·δ[-N+2]·⅟2)·[nVar[0]=0]·δ[-i+1]·δ_newInfected[nVar[ξ₁ ↦ 1]])·(∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁]))·[nVar[1]≠0])·δ_newInfected[infected]".dParse;
 	e=dIntSmp(nvar,e,one); // ok!
-	//e=e*dDelta("newInfected".dVar,"infected".dVar,arrayTy(ℝ));
+	//e=e*dDelta("infected".dVar,"newInfected".dVar,arrayTy(ℝ));
 
 	//auto e="(((∫dξ₁(∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])·(∫dξ₂(∑_ξ₃[-N+1+ξ₃≤0]·[-ξ₃≤0]·δ[-ξ₃+ξ₂])·δ_newInfected[[ξ₃ ↦ (([-1+ξ₃=0]+[-1+ξ₃≠0]·[ξ₃=0])·[-ξ₂+ξ₃≠0]+[-ξ₃+ξ₂=0])·[-ξ₁+ξ₃≠0]+[-ξ₃+ξ₁=0]] (2)]))·q(γ⃗)·δ[-N+2]·⅟2+(∫dξ₁(∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])·δ_newInfected[[ξ₂ ↦ [-1+ξ₂≠0]·[-ξ₁+ξ₂≠0]·[ξ₂=0]+[-ξ₂+ξ₁=0]] (2)])·q(γ⃗)·δ[-N+2]·⅟2+q(γ⃗)·δ[-N+2]·δ_newInfected[[ξ₁ ↦ [-1+ξ₁=0]+[-1+ξ₁≠0]·[ξ₁=0]] (2)]·⅟2+q(γ⃗)·δ[-N+2]·δ_newInfected[[ξ₁ ↦ [-1+ξ₁≠0]·[ξ₁=0]] (2)]·⅟2)·[newInfected[0]=0]·[newInfected[1]=0]·δ[-i+1]+(∫dξ₁((∫dξ₂(∑_ξ₃[-N+1+ξ₃≤0]·[-ξ₃≤0]·δ[-ξ₃+ξ₂])·(∫dξ₃(∑_ξ₄[-N+1+ξ₄≤0]·[-ξ₄≤0]·δ[-ξ₄+ξ₃])·(∫dξ₄(∑_ξ₅[-N+1+ξ₅≤0]·[-ξ₅≤0]·δ[-ξ₅+ξ₄])·δ_newInfected[[ξ₅ ↦ (((([-1+ξ₅=0]+[-1+ξ₅≠0]·[ξ₅=0])·[-ξ₄+ξ₅≠0]+[-ξ₅+ξ₄=0])·[-ξ₃+ξ₅≠0]+[-ξ₅+ξ₃=0])·[-ξ₂+ξ₅≠0]+[-ξ₂+ξ₅=0])·[-ξ₁+ξ₅≠0]+[-ξ₅+ξ₁=0]] (2)])))·q(γ⃗)·δ[-N+2]·⅟2+(∫dξ₂(∑_ξ₃[-N+1+ξ₃≤0]·[-ξ₃≤0]·δ[-ξ₃+ξ₂])·(∫dξ₃(∑_ξ₄[-N+1+ξ₄≤0]·[-ξ₄≤0]·δ[-ξ₄+ξ₃])·[-1+ξ₃=0]·δ_newInfected[[ξ₄ ↦ (([-1+ξ₄≠0]·[-ξ₃+ξ₄≠0]·[ξ₄=0]+[-ξ₄+ξ₃=0])·[-ξ₂+ξ₄≠0]+[-ξ₄+ξ₂=0])·[-ξ₁+ξ₄≠0]+[-ξ₁+ξ₄=0]] (2)]))·q(γ⃗)·δ[-N+2]·⅟2)·(∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁]))·δ[-i+1]+(∫dξ₁(∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])·(∫dξ₂(∑_ξ₃[-N+1+ξ₃≤0]·[-ξ₃≤0]·δ[-ξ₃+ξ₂])·[-1+ξ₂≠0]·δ_newInfected[[ξ₃ ↦ ([-1+ξ₃≠0]·[-ξ₂+ξ₃≠0]·[ξ₃=0]+[-ξ₃+ξ₂=0])·[-ξ₁+ξ₃≠0]+[-ξ₃+ξ₁=0]] (2)]))·q(γ⃗)·δ[-N+2]·δ[-i+1]·⅟2)·δ_infected[newInfected]".dParse; // after (infected = newInfected).
 	dwguard=false; scope(exit) dwguard=true;

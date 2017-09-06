@@ -394,11 +394,11 @@ mixin template FactoryFunction(T){
 
 	static if(is(T==DDelta)){
 		import expression; // TODO: remove this import
-		DExpr dDelta(DExpr var,DExpr e,Expression ty){ // TODO: dexpr shouldn't know about expression/type, but this is most convenient for overloading
+		DExpr dDelta(DExpr e,DExpr var,Expression ty){ // TODO: dexpr shouldn't know about expression/type, but this is most convenient for overloading
 			import type;
 			if(ty==ℝ) return dDelta(e-var);
 			assert(cast(TupleTy)ty||cast(ArrayTy)ty||cast(AggregateTy)ty||cast(ContextTy)ty||cast(FunTy)ty||cast(TypeTy)ty||cast(Identifier)ty||cast(CallExp)ty,text(ty)); // TODO: add more supported types
-			return dDiscDelta(var,e);
+			return dDiscDelta(e,var);
 		}
 	}else static if(is(T==DInt)){ // TODO: generalize over DInt, DSum, DLim, DLambda, (DDiff)
 		@disable DExpr dIntSmp(DVar var,DExpr expr);
@@ -2858,9 +2858,8 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 mixin FactoryFunction!DDelta;
 
 class DDiscDelta: DExpr{ // point mass for discrete data types
-	DExpr var; // TODO: figure out what it should mean if var is some expression with multiple free variables
-	DExpr e;
-	alias subExprs=Seq!(var,e);
+	DExpr e,var;
+	alias subExprs=Seq!(e,var);
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		if(formatting==Format.lisp) // TODO: better name
 			return text("(dirac2 ",var.toStringImpl(formatting,Precedence.subscript,binders),e.toStringImpl(formatting,Precedence.none,binders),")");
@@ -2871,28 +2870,27 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 
 	mixin Visitors;
 
-	static DExpr constructHook(DExpr var,DExpr e){
+	static DExpr constructHook(DExpr e,DExpr var){
 		static bool isNumeric(DExpr e){ // TODO: merge dDelta and dDiscDelta completely, such that type information is irrelevant
 			return cast(Dℚ)e||cast(DPlus)e||cast(DMult)e||cast(DPow)e||cast(DIvr)e||cast(DFloor)e||cast(DCeil)e||cast(DLog)e;
 		}
 		if(isNumeric(e)||isNumeric(var)) return dDelta(var-e);
 		return null;
 	}
-	static DExpr staticSimplify(DExpr var,DExpr e,DExpr facts=one){
+	static DExpr staticSimplify(DExpr e,DExpr var,DExpr facts=one){
 		// cannot use all facts during simplification (e.g. see test/tuples5.psi)
 		// the problem is that there might be a relation between e.g. multiple tuple entries, and we are not
 		// allowed to introduce free variables from var into e, or remove free variables from var.
 		// TODO: filter more precisely
-		auto nvar=var.simplify(one);
-		auto ne=e.simplify(one);
-		if(nvar != var || ne != e) return dDiscDelta(nvar,ne).simplify(facts); // (might be rewritten to normal delta)
+		auto ne=e.simplify(one), nvar=var.simplify(one);
+		if(ne != e || nvar != var) return dDiscDelta(ne,nvar).simplify(facts); // (might be rewritten to normal delta)
 		//if(dEq(var,e).simplify(facts) is zero) return zero; // a simplification like this might be possible (but at the moment we can compare only real numbers
-		if(auto vtpl=cast(DTuple)var){ // δ_(x,y,z,...)[(1,2,3,...)].
+		if(auto vtpl=cast(DTuple)var){ // δ(1,2,3,...)[(x,y,z,...)].
 			if(auto etpl=cast(DTuple)e){
 				if(vtpl.values.length==etpl.values.length){
 					DExprSet factors;
 					foreach(i;0..vtpl.values.length)
-						DMult.insert(factors,dDiscDelta(vtpl[i],etpl[i]));
+						DMult.insert(factors,dDiscDelta(etpl[i],vtpl[i]));
 					return dMult(factors).simplify(facts);
 				}
 			}
@@ -2900,7 +2898,7 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){
-		auto r=staticSimplify(var,e,facts);
+		auto r=staticSimplify(e,var,facts);
 		return r?r:this;
 	}
 }
@@ -4091,7 +4089,7 @@ class DNormalize: DExpr{
 		auto nnorm=dIntSmp(dDistApply(ne.incDeBruijnVar(1,0),db1),facts);
 		auto iszero=dEqZ(nnorm).simplify(facts);
 		if(iszero==zero) return dLambda(dDistApply(ne.incDeBruijnVar(1,0),db1)/nnorm).simplify(facts);
-		if(iszero==one) return dLambda(dDiscDelta(db1,dErr));
+		if(iszero==one) return dLambda(dDiscDelta(dErr,db1));
 		if(ne!=e) return dNormalize(ne).simplify(facts);
 		return this;
 	}

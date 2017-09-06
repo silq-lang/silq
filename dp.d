@@ -182,7 +182,7 @@ struct Dist{
 		}
 		auto var=r.declareVar(name);
 		r.distribution=zero;
-		foreach(k,v;state) r.distribution=r.distribution+v*dDiscDelta(var,dField(k,"`value"));
+		foreach(k,v;state) r.distribution=r.distribution+v*dDiscDelta(dField(k,"`value"),var);
 		r.error=error;
 		r.simplify();
 		r.orderFreeVars([var],false);
