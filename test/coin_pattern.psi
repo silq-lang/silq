@@ -1,6 +1,5 @@
 // TODO: extend language such that it supports more involved examples of this type conveniently.
 // We want the inference to detect the case when the coin shows simple patterns.
-// TODO: Result should be simplified better!
 // TODO: we would want to run the same test with different observations here
 
 def main(){
@@ -22,5 +21,5 @@ def main(){
     //observe(x2==0);
     //observe(x3==1);
     observe(x3==0);
-    return has_pattern; // expected: 1/9·δ(0)[has_pattern]+8/9·δ(0)[-has_pattern+1]
+    return has_pattern; // expected: 1/9·δ(0)[has_pattern]+8/9·δ(1)[has_pattern]
 }

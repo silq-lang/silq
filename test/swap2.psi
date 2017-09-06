@@ -3,5 +3,5 @@ def swap(x,y){ return (y,x); }
 def main(){
     (x,y) := (1,2);
     (x,y) = swap(x,y);
-    return (x,y); // expected: δ(0)[-x+2]·δ(0)[-y+1]
+    return (x,y); // expected: δ(1)[y]·δ(2)[x]
 }

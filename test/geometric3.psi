@@ -1,5 +1,5 @@
 
 def main(){
-	return expectation(Geometric(1/2)); // expected: [∑_ξ₁(1/2)^(1+ξ₁)·[-ξ₁≤0]≠0]·δ(0)[(∑_ξ₁(1/2)^(1+ξ₁)·[-ξ₁≤0]·ξ₁)·⅟(∑_ξ₁(1/2)^(1+ξ₁)·[-ξ₁≤0])+-r₁]
+	return expectation(Geometric(1/2)); // expected:  [∑_ξ₁(1/2)^(1+ξ₁)·[-ξ₁≤0]≠0]·δ((∑_ξ₁(1/2)^(1+ξ₁)·[-ξ₁≤0]·ξ₁)·⅟(∑_ξ₁(1/2)^(1+ξ₁)·[-ξ₁≤0]))[r₁]
 	// TODO: compute infinite sums
 }

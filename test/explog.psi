@@ -1,4 +1,4 @@
 def main(){
     x:=exp(1)^100;
-    return log(exp(2*log(x)))+log(2)+exp(0.5); // expected: δ(0)[-r₁+200+log(2)+√e̅]
+    return log(exp(2*log(x)))+log(2)+exp(0.5); // expected: δ(200+log(2)+√e̅)[r₁]
 }

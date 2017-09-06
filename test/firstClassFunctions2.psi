@@ -21,7 +21,7 @@ def main(){
     z := y.foo; // captured by value
     k = 0;
     y.x = 0; // hence these assignments are not visible
-    return (x(),z()); // expected: (1/2·δ(0)[-r₁+1338]+1/2·δ(0)[-r₁+1339])·(1/2·δ(0)[-r₂+1337]+1/2·δ(0)[-r₂+1338])
+    return (x(),z()); // expected: (1/2·δ(1337)[r₂]+1/2·δ(1338)[r₂])·(1/2·δ(1338)[r₁]+1/2·δ(1339)[r₁])
 }
 
 

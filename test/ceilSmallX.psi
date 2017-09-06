@@ -8,5 +8,5 @@ def ceilSmallX(x){
 
 def main(){
     r := ceilSmallX(2.3);
-    return r; // expected: δ(0)[-r+3]
+    return r; // expected: δ(3)[r]
 }

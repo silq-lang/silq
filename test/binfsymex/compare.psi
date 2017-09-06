@@ -15,5 +15,5 @@ def main(){ // compare
         //r = r*(a+b);
         //r = r*a;
     }
-    return r; // expected: 1/4·δ(0)[r]+3/4·δ(0)[-r+1]
+    return r; // expected: 1/4·δ(0)[r]+3/4·δ(1)[r]
 }

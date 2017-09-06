@@ -14,5 +14,5 @@ def main(){ // compare
             x = false;
         }
     }
-    return r; // expected: 1023/2048·δ(0)[r]+1025/2048·δ(0)[-r+1]
+    return r; // expected: 1023/2048·δ(0)[r]+1025/2048·δ(1)[r]
 }

@@ -9,5 +9,5 @@ def main(){
         y += 1;
     }
     r := x==y;
-    return r; // expected: δ(0)[-r+1]
+    return r; // expected: δ(1)[r]
 }

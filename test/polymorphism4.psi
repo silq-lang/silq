@@ -5,5 +5,5 @@ def foo[a,b](x:a×b){
 
 
 def main(){
-    return foo((2,[3,4])); // expected: δ(0)[-r₁+2]
+    return foo((2,[3,4])); // expected: δ(2)[r₁]
 }

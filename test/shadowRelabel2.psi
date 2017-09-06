@@ -7,5 +7,5 @@ def foo(){
 }
 
 def main(){
-    return foo(); // expected: δ(0)[-r₁+2]
+    return foo(); // expected: δ(2)[r₁]
 }

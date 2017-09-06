@@ -2,5 +2,5 @@ def main(){
     x := 1;
     r := 0.0;
     if !x==r { r=1; } else { r=2; }
-    return r; // expected: δ(0)[-r+1]
+    return r; // expected: δ(1)[r]
 }

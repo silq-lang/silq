@@ -18,6 +18,6 @@ def main(){ // didItRain
 
     observe(wetGrass);
     //return rain; // TODO: better simplification for this query?
-    return Expectation(rain); // expected: δ(0)[-r₁+509/719]
+    return Expectation(rain); // expected: δ(509/719)[r₁]
     // TODO: better simplification?
 }

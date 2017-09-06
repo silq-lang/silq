@@ -2,6 +2,6 @@
 def main(){
     c1 := flip(1/2);
     c2 := flip(1/2);
-    return (c1,c2); // expected: (1/2·δ(0)[-c1+1]+1/2·δ(0)[c1])·(1/2·δ(0)[-c2+1]+1/2·δ(0)[c2])
+    return (c1,c2); // expected: (1/2·δ(0)[c1]+1/2·δ(1)[c1])·(1/2·δ(0)[c2]+1/2·δ(1)[c2])
     // TODO: factor out the ⅟2
 }

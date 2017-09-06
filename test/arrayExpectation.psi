@@ -1,4 +1,4 @@
 def main(){
     x := [0,1];
-    return Expectation(x[uniformInt(0,1)]); // expected: δ(0)[-r₁+1/2]
+    return Expectation(x[uniformInt(0,1)]); // expected: δ(1/2)[r₁]
 }

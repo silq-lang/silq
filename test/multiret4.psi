@@ -1,4 +1,4 @@
 def main(){
     if flip(1/2){ assert(0); return 0; }
-    return 1; // expected: 1/2·δ(0)[-r₁+1]
+    return 1; // expected: 1/2·δ(1)[r₁]
 }

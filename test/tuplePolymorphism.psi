@@ -1,5 +1,5 @@
 def id[a](x:a)=>x;
 
 def main(){
-	return (id(),id(3),id(1,[2])); // expected: δ()[r₁]·δ(0)[-r₂+3]·δ(1,[ξ₁ ↦ 2] (1))[r₃]
+	return (id(),id(3),id(1,[2])); // expected: δ()[r₁]·δ(1,[ξ₁ ↦ 2] (1))[r₃]·δ(3)[r₂]
 }

@@ -2,5 +2,5 @@
 x := 1, y := 2;
 
 def main(){
-	return (x,y); // expected: δ(0)[-r₁+1]·δ(0)[-r₂+2]
+	return (x,y); // expected: δ(1)[r₁]·δ(2)[r₂]
 }

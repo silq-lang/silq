@@ -5,5 +5,5 @@ def main(){
 		x := negBinomial(2,p);
 		observe(x<=10); // TODO: make work in unbounded case
 		return x;
-	})); // expected: δ(0)[-r₁+300533/152460]
+	})); // expected: δ(300533/152460)[r₁]
 }

@@ -5,5 +5,5 @@ def main(){
         x = 1;
     }
     z := x >= 1;
-    return z; // expected: 1/2·δ(0)[-z+1]+1/2·δ(0)[z]
+    return z; // expected: 1/2·δ(0)[z]+1/2·δ(1)[z]
 }

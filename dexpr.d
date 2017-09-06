@@ -1417,6 +1417,27 @@ auto operands(T)(DExpr x){
 alias factors=operands!DMult;
 alias summands=operands!DPlus;
 
+DExpr negateSummands(DExpr e){
+	static DExpr negateFactor(DExpr e){
+		bool negated=false;
+		DExprSet r;
+		foreach(f;e.factors){
+			auto q=cast(Dℚ)f;
+			if(!negated && q){
+				negated=true;
+				if(f !is mone) DMult.insert(r,dℚ(-q.c));
+			}else DMult.insert(r,f);
+		}
+		if(!negated) DMult.insert(r,mone);
+		return dMult(r);
+	}
+	DExprSet r;
+	foreach(s;e.summands){
+		DPlus.insert(r,negateFactor(s));
+	}
+	return dPlus(r);
+}
+
 Dℚ getFractionalFactor(DExpr e){
 	ℚ r=1;
 	foreach(f;e.factors)
@@ -2793,7 +2814,15 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 		}else if(formatting==Format.lisp){
 			return text("(dirac ",e.toStringImpl(formatting,Precedence.none,binders),")");
 		}else{
-			return "δ(0)["~e.toStringImpl(formatting,Precedence.none,binders)~"]";
+			DExprSet val,var;
+			foreach(s;e.summands){
+				if(!s.hasFreeVars()) val.insert(s);
+				else var.insert(s);
+			}
+			auto e1=dPlus(val), e2=dPlus(var);
+			if(e2.hasFactor(mone)) e2=e2.withoutFactor(mone);
+			else e1=e1.negateSummands();
+			return "δ("~e1.toStringImpl(formatting,Precedence.none,binders)~")["~e2.toStringImpl(formatting,Precedence.none,binders)~"]";
 		}
 	}
 

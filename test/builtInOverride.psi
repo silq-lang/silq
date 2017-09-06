@@ -14,5 +14,5 @@ def main(){
 	x := Distribution(4);
 	k := ()=>sample(x);
 	array := 4;
-	return k()+array; // expected: δ(0)[-r₁+8]
+	return k()+array; // expected: δ(8)[r₁]
 }

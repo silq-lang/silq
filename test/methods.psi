@@ -12,5 +12,5 @@ def main(){
     k := uniform(0,1);
     r := sum(1,2);
     r += product(r,r);
-    return (r,k); // expected: [-1+k≤0]·[-k≤0]·δ(0)[-r+12]
+    return (r,k); // expected: [-1+k≤0]·[-k≤0]·δ(12)[r]
 }

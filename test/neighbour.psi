@@ -4,5 +4,5 @@ def main(){
     isGirl2 := flip(1/2);
     observe(isGirl1 || isGirl2);
     bothAreGirls := isGirl1 && isGirl2;
-    return bothAreGirls; // expected: 1/3·δ(0)[-bothAreGirls+1]+2/3·δ(0)[bothAreGirls]
+    return bothAreGirls; // expected: 1/3·δ(1)[bothAreGirls]+2/3·δ(0)[bothAreGirls]
 }

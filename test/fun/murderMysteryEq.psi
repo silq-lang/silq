@@ -5,5 +5,5 @@ def main(){
     withGun := if aliceDunnit { flip(0.03) } else { flip(0.8) };
     observe(withGun == gunFound);
     posterior := aliceDunnit;
-    return posterior; // expected: 560/569·δ(0)[posterior]+9/569·δ(0)[-posterior+1]
+    return posterior; // expected: 560/569·δ(0)[posterior]+9/569·δ(1)[posterior]
 }
