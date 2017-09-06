@@ -216,7 +216,7 @@ DExpr approximate(DExpr e){
 				return dIvr(ivr.type,r);
 		}
 		if(auto delta=cast(DDelta)e){
-			if(auto r=doIt(delta.e,necessary))
+			if(auto r=doIt(delta.var,necessary))
 				return dDelta(r);
 		}
 		if(auto intg=cast(DInt)e){

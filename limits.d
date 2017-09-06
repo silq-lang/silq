@@ -129,7 +129,7 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 				auto h=e.getHoles!(x=>cast(DDelta)x,DDelta);
 				auto r=h.expr;
 				foreach(hole;h.holes){
-					r=r.substitute(hole.var,dEqZ(hole.expr.e).simplify(facts));
+					r=r.substitute(hole.var,dEqZ(hole.expr.var).simplify(facts));
 				}
 				return r;
 			}

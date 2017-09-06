@@ -1346,7 +1346,7 @@ class DMult: DCommutAssocOp{
 				return (wo.substitute(var,d.e)*d).simplify(facts);
 		}
 	Louter: foreach(f;this.factors) if(auto d=cast(DDelta)f){
-			auto fact=dEqZ(d.e).simplify(facts);
+			auto fact=dEqZ(d.var).simplify(facts);
 			foreach(f;fact.factors) if(!cast(DIvr)f) continue Louter; // TODO: remove this if possible
 			facts=facts*fact;
 		}
@@ -2214,7 +2214,7 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 		}
 		static if(isDelta){
 			if(lhs != var) unwind(); // TODO: get rid of this?
-			auto diff=dAbs(dDiff(var,cond.e)).simplify(one);
+			auto diff=dAbs(dDiff(var,cond.var)).simplify(one);
 			auto pole=dIvr(eqZ,diff).simplify(one).linearizeConstraints(var).polyNormalize(var).simplify(one);
 			DExprSet special;
 			foreach(s;pole.summands){
@@ -2240,7 +2240,9 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 	}
 	static if(isDelta) auto ty=eqZ;
 	else auto ty=cond.type;
-	try return doIt(one,ty,cond.e.polyNormalize(var),zero);
+	static if(isDelta) auto e=cond.var;
+	else auto e=cond.e;
+	try return doIt(one,ty,e.polyNormalize(var),zero);
 	catch(Unwind) return cond;
 }
 
@@ -2413,7 +2415,7 @@ DExprHoles!T getHoles(alias filter,T=DExpr)(DExpr e){
 		if(auto lg=cast(DLog)e)
 			return dLog(doIt(lg.e));
 		if(auto dl=cast(DDelta)e)
-			return dDelta(doIt(dl.e));
+			return dDelta(doIt(dl.var));
 		if(auto ivr=cast(DIvr)e)
 			return dIvr(ivr.type,doIt(ivr.e));
 		return e;
@@ -2773,7 +2775,7 @@ bool isContinuousMeasure(DExpr expr){
 bool isContinuousMeasureIn(DExpr expr,DVar var){ // TODO: get rid of code duplication.
 	if(!expr.hasFreeVar(var)) return true;
 	if(auto d=cast(DDistApply)expr) return !d.arg.hasFreeVar(var);
-	if(auto d=cast(DDelta)expr) return !d.e.hasFreeVar(var);
+	if(auto d=cast(DDelta)expr) return !d.var.hasFreeVar(var);
 	if(auto d=cast(DDiscDelta)expr) return !d.var.hasFreeVar(var);
 	if(cast(DIvr)expr||cast(DVar)expr||cast(DPow)expr||cast(DLog)expr||cast(DSin)expr||cast(DFloor)expr||cast(DCeil)expr||cast(DGaussInt)expr||cast(DAbs)expr)
 		return true;
@@ -2798,28 +2800,28 @@ bool isContinuousMeasureIn(DExpr expr,DVar var){ // TODO: get rid of code duplic
 }
 
 class DDelta: DExpr{ // Dirac delta, for ℝ
-	@even DExpr e;
-	alias subExprs=Seq!e;
+	@even DExpr var;
+	alias subExprs=Seq!var;
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		if(formatting==Format.mathematica){
-			return text("DiracDelta[",e.toStringImpl(formatting,Precedence.none,binders),"]");
+			return text("DiracDelta[",var.toStringImpl(formatting,Precedence.none,binders),"]");
 		}else if(formatting==Format.maple){
-			return text("Dirac(",e.toStringImpl(formatting,Precedence.none,binders),")");
-			/+auto es=e.toStringImpl(formatting,Precedence.none);
-			return text("piecewise(abs(",es,")<lZ,1/(2*(",es,")))");+/
+			return text("Dirac(",var.toStringImpl(formatting,Precedence.none,binders),")");
+			/+auto vars=var.toStringImpl(formatting,Precedence.none);
+			return text("piecewise(abs(",vars,")<lZ,1/(2*(",vars,")))");+/
 		}else if(formatting==Format.python){
-			return text("delta(",e.toStringImpl(formatting,Precedence.none,binders),")");
+			return text("delta(",var.toStringImpl(formatting,Precedence.none,binders),")");
 		}else if(formatting==Format.sympy){
-			return text("DiracDelta(",e.toStringImpl(formatting,Precedence.none,binders),")");
+			return text("DiracDelta(",var.toStringImpl(formatting,Precedence.none,binders),")");
 		}else if(formatting==Format.lisp){
-			return text("(dirac ",e.toStringImpl(formatting,Precedence.none,binders),")");
+			return text("(dirac ",var.toStringImpl(formatting,Precedence.none,binders),")");
 		}else{
-			DExprSet val,var;
-			foreach(s;e.summands){
-				if(!s.hasFreeVars()) val.insert(s);
-				else var.insert(s);
+			DExprSet vals,vars;
+			foreach(s;var.summands){
+				if(!s.hasFreeVars()) vals.insert(s);
+				else vars.insert(s);
 			}
-			auto e1=dPlus(val), e2=dPlus(var);
+			auto e1=dPlus(vals), e2=dPlus(vars);
 			if(e2.hasFactor(mone)) e2=e2.withoutFactor(mone);
 			else e1=e1.negateSummands();
 			return "δ("~e1.toStringImpl(formatting,Precedence.none,binders)~")["~e2.toStringImpl(formatting,Precedence.none,binders)~"]";
@@ -2828,17 +2830,17 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 
 	mixin Visitors;
 
-	static DExpr staticSimplify(DExpr e,DExpr facts=one){
-		auto ne=e.simplify(one); // cannot use all facts! (might remove a free variable)
-		if(ne != e) return dDelta(ne).simplify(facts);
-		if(auto r=cancelFractions!true(e)) return r.simplify(facts);
-		if(auto fct=factorDIvr!(e=>dDelta(e))(e)) return fct.simplify(facts);
-		if(dEqZ(e).simplify(facts)==zero)
+	static DExpr staticSimplify(DExpr var,DExpr facts=one){
+		auto nvar=var.simplify(one); // cannot use all facts! (might remove a free variable)
+		if(nvar != var) return dDelta(nvar).simplify(facts);
+		if(auto r=cancelFractions!true(nvar)) return r.simplify(facts);
+		if(auto fct=factorDIvr!(var=>dDelta(var))(nvar)) return fct.simplify(facts);
+		if(dEqZ(nvar).simplify(facts)==zero)
 			return zero;
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){
-		auto r=staticSimplify(e,facts);
+		auto r=staticSimplify(var,facts);
 		return r?r:this;
 	}
 
@@ -2846,10 +2848,10 @@ class DDelta: DExpr{ // Dirac delta, for ℝ
 		auto var=db1;
 		SolutionInfo info;
 		SolUse usage={caseSplit:false,bound:false};
-		if(auto s=d.e.solveFor(var,zero,usage,info)){
+		if(auto s=d.var.solveFor(var,zero,usage,info)){
 			s=s.incDeBruijnVar(-1,0).simplify(one);
 			if(info.needCaseSplit) return null;
-			auto r=unbind(expr,s)/dAbs(dDiff(var,d.e,s));
+			auto r=unbind(expr,s)/dAbs(dDiff(var,d.var,s));
 			return r.simplify(one);
 		}
 		return null;
