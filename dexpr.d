@@ -2836,7 +2836,8 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 		if(formatting==Format.lisp) // TODO: better name
 			return text("(dirac2 ",var.toStringImpl(formatting,Precedence.subscript,binders),e.toStringImpl(formatting,Precedence.none,binders),")");
 		// TODO: encoding for other CAS?
-		return "δ("~e.toStringImpl(formatting,Precedence.none,binders)~")["~var.toStringImpl(formatting,Precedence.subscript,binders)~"]";
+		auto isTpl=!!cast(DTuple)e;
+		return "δ("~e.toStringImpl(formatting,Precedence.none,binders)[isTpl..$-isTpl]~")["~var.toStringImpl(formatting,Precedence.subscript,binders)~"]";
 	}
 
 	mixin Visitors;

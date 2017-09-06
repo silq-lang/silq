@@ -64,12 +64,8 @@ struct DParser{
 		if(code.startsWith("delta")) code=code["delta".length..$];
 		else expect('δ');
 		bool round=false;
-		expect('(');
-		auto expr=parseDExpr();
-		expect(')');
-		expect('[');
-		DExpr var=parseDExpr();
-		expect(']');
+		auto expr=parseParenthesized('(',')');
+		auto var=parseParenthesized('[',']');
 		return expr is zero?dDelta(var):dDiscDelta(var,expr);
 	}
 		
@@ -98,9 +94,7 @@ struct DParser{
 	DExpr parseDAbs(){
 		if(code.startsWith("abs")){
 			code=code["abs".length..$];
-			expect('(');
-			auto arg=parseDExpr();
-			expect(')');
+			auto arg=parseParenthesized('(',')');
 			return dAbs(arg);
 		}
 		expect('|');
@@ -114,17 +108,13 @@ struct DParser{
 
 	DExpr parseLog()in{assert(code.startsWith("log"));}body{
 		code=code["log".length..$];
-		expect('(');
-		auto e=parseDExpr();
-		expect(')');
+		auto e=parseParenthesized('(',')');
 		return dLog(e);
 	}
 
 	DExpr parseGaussInt()in{assert(code.startsWith("(d/dx)⁻¹[e^(-x²)]"));}body{
 		code=code["(d/dx)⁻¹[e^(-x²)]".length..$];
-		expect('(');
-		auto e=parseDExpr();
-		expect(')');
+		auto e=parseParenthesized('(',')');
 		return dGaussInt(e);
 	}
 
@@ -269,9 +259,7 @@ struct DParser{
 	
 	DVal parseDVal()in{assert(code.startsWith("val"));}body{
 		code=code["val".length..$];
-		expect('(');
-		auto e=parseDExpr();
-		expect(')');
+		auto e=parseParenthesized('(',')');
 		return dVal(e);
 	}
 
@@ -282,9 +270,7 @@ struct DParser{
 
 	DMCase parseDMCase()in{assert(code.startsWith("case"));}body{
 		code=code["case".length..$];
-		expect('(');
-		auto e=parseDExpr();
-		expect(')');
+		auto e=parseParenthesized('(',')');
 		expect('{');
 		skipWhitespace();
 		if(!code.startsWith("val"))
@@ -308,25 +294,27 @@ struct DParser{
 		return dMCase(e,val.incDeBruijnVar(1,0).substitute(var,db1),err);
 	}
 
+	DExpr parseParenthesized(dchar left,dchar right){
+		expect(left);
+		if(cur()==right) return dTuple([]);
+		auto r=parseDExpr();
+		if(cur()==','){
+			auto values=[r];
+			while(cur()==','){
+				next();
+				if(cur()==right) break;
+				values~=parseDExpr();
+			}
+			expect(right);
+			return dTuple(values);
+		}
+		expect(right);
+		return r;
+	}
+
 	DExpr parseBase(){
 		if(code.startsWith("(d/dx)⁻¹[e^(-x²)]")) return parseGaussInt();
-		if(cur()=='('){
-			next();
-			if(cur()==')') return dTuple([]);
-			auto r=parseDExpr();
-			if(cur()==','){
-				auto values=[r];
-				while(cur()==','){
-					next();
-					if(cur()==')') break;
-					values~=parseDExpr();
-				}
-				expect(')');
-				return dTuple(values);
-			}
-			expect(')');
-			return r;
-		}
+		if(cur()=='(') return parseParenthesized('(',')');
 		if(cur()=='['){
 			if(code.length>=2 && code[1]==']'){
 				code=code[2..$];
