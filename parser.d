@@ -40,13 +40,13 @@ int getLbp(TokenType type) pure{ // operator precedence
 	//case Tok!"..": return 10; // range operator
 	case Tok!",":  return 10; // comma operator
 	// assignment operators
-	case Tok!":": // type annotation
-		return 20;
 	case Tok!"/=",Tok!"div=",Tok!"&=",Tok!"⊕=",Tok!"|=",Tok!"-=":
 	case Tok!"+=",Tok!"<<=",Tok!">>=", Tok!">>>=":
 	case Tok!"=",Tok!"*=",Tok!"%=",Tok!"^=":
 	case Tok!"&&=", Tok!"||=", Tok!"~=":
 	case Tok!":=":
+		return 20;
+	case Tok!":": // type annotation
 		return 30;
 	// logical operators
 	case Tok!"?":  return 40; // conditional operator
