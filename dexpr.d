@@ -2863,6 +2863,8 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 	DExpr e,var;
 	alias subExprs=Seq!(e,var);
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		if(formatting==Format.mathematica)
+			return text("DiracDelta[",(e-var).toStringImpl(formatting,Precedence.none,binders),"]");
 		if(formatting==Format.lisp) // TODO: better name
 			return text("(dirac2 ",var.toStringImpl(formatting,Precedence.subscript,binders),e.toStringImpl(formatting,Precedence.none,binders),")");
 		// TODO: encoding for other CAS?
