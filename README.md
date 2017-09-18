@@ -11,7 +11,7 @@ PSI is described in the paper 'PSI: Exact Symbolic Inference for Probabilistic P
 
 PSI does not currently try to make any guarantees on backwards compatibility.
 If your project depends on PSI, write down the exact commit hash to ensure others can reproduce your results.
-The commit of HEAD at build time is displayed when running ./psi --help.
+The commit of HEAD at build time is displayed when running `./psi --help`.
 
 ## Build Instructions
 
@@ -19,9 +19,9 @@ The commit of HEAD at build time is displayed when running ./psi --help.
 
 #### Quick build
 
-1. Run 'dependencies.sh' to download the DMD D compiler from http://downloads.dlang.org/releases/2.x/2.072.2/dmd.2.072.2.linux.zip and unzip it.
+1. Run `dependencies.sh` to download the DMD D compiler from http://downloads.dlang.org/releases/2.x/2.072.2/dmd.2.072.2.linux.zip and unzip it.
 
-2. Run 'build.sh' to build PSI.
+2. Run `build.sh` to build PSI.
 
 ##### Additional information
 
@@ -55,12 +55,12 @@ cd test
 
 ## Using PSI on your own models
 
-Run './psi example.psi', where 'example.psi' is a file containing the source code for the model.
+Run `./psi example.psi`, where `example.psi` is a file containing the source code for the model.
 The next section ("Quick language guide") briefly introduces the most important language features.
 
 ### Additional command-line options
 
-Run './psi --help' to display information about supported command-line options.
+Run `./psi --help` to display information about supported command-line options.
 
 
 ### Examples
@@ -74,10 +74,10 @@ def main(){
 }
 
 $ psi example.psi
-p(r₁) = (d/dx)⁻¹[e^(-x²)](r₁·⅟√2̅)·2·⅟e^(r₁²·⅟2)·⅟π·⅟√2̅
+p(r₁) = (d/dx)⁻¹[e^(-x²)](r₁·⅟√2̅)·⅟e^(1/2·r₁²)·⅟π·√2̅
 
 $ psi example.psi --mathematica --cdf
-p[r₁_] := (-2^(1/2)*Sqrt[Pi]*(Erf[-1/2^(1/2)*20]+1)/2^2+1/2^(1/2)*2*Sqrt[Pi]*(Erf[1/2^(1/2)*cr1]+1)/2^2)*1/2^(1/2)*1/Pi*Boole[-20+-cr1<=0]
+p[r1_] := 1/Pi*Sqrt[Pi]*(Erf[1/2^(1/2)*r1]+1)/2^2
 
 $ cat coin_bias_small.psi
 def main(){
@@ -92,7 +92,7 @@ def main(){
 }
 
 $ psi coin_bias_small.psi --plot
-p(p) = (-30·p+30)·[-1+p≤0]·[-p≤0]·p⁴
+p(p) = (-12·p³+12·p²)·[-1+p≤0]·[-p≤0]
 plotting... (PDF)
 command: 
 set pointsize 20
@@ -116,13 +116,13 @@ def procedureName(param1,param2,..., paramn){
 }
 ```
 
-There should be a procedure of name 'main', denoting the program entry and exit point.
+There should be a procedure of name `main`, denoting the program entry and exit point.
 
 ### Statements
 
 Function bodies consist of a sequence of statements, possibly referencing the variables param1,param2,...,paramn.
 
-- `variable := expression;` introduces a new variable of name 'variable'
+- `variable := expression;` introduces a new variable of name `variable`
 
 - `variable = expression;` assigns to an existing variable. `+=`, `-=`, `*=`, `/=`, `div=`, `%=`, `^=`, `&&=`, `||=`, ... are also supported.
 
@@ -150,7 +150,7 @@ Function bodies consist of a sequence of statements, possibly referencing the va
 ### Special statements
 
 - `a := readCSV(filename);` where filename is a string literal (such as "data.csv"), reads the given file containing a comma-separated list of values
-  into a read-only array 'a'. Indexing into such arrays requires deterministic integer indices.
+  into a read-only array `a`. Indexing into such arrays requires deterministic integer indices.
 
 
 ### Expressions
@@ -175,7 +175,7 @@ Function bodies consist of a sequence of statements, possibly referencing the va
 ### Primitive Distributions
 
 Primitive distributions can be sampled arbitrarily within expressions. They are exposed as procedures with special names.
-If arguments don't conform to the constraints of the distribution, the program enters the error state.
+If arguments do not conform to the constraints of the distribution, the program enters the error state.
 
 - `gauss(mean,variance)` samples from the Gaussian distribution with the given mean and non-negative variance.
 
@@ -225,7 +225,7 @@ If arguments don't conform to the constraints of the distribution, the program e
 - `sampleFrom("(variable1,...,variablen;parameter1,...,parameterm) => pdf",argument1,...,argumentm): type`
   This primitive samples an n-tuple of values from the given probability density function.
   The density function can depend both on the values and a set of parameters. To specify the pdf, the
-  mathematical operators +-*/^, the constant e, the dirac delta 'delta(expr)', absolute values |expression|
+  mathematical operators `+-*/^`, the constant `e`, the dirac delta `delta(expr)`, absolute values |expression|
   and Iverson brackets of the shape [expression<=expression], [expression<expression], [expression=expression]
   and [expression != expression] can be used, among others.
 
@@ -242,7 +242,7 @@ If arguments don't conform to the constraints of the distribution, the program e
   Returns the Marginal distribution of the given expressions, conditioned on the execution path in the current function. sample(Marginal(expression)) creates an independent value with the same marginal distribution as expression.
 
 - `Expectation(expression)`
-  Shortcut for expectation(Marginal(expression))
+  Shortcut for `expectation(Marginal(expression))`
   *Note:* PSI does not currently verify that the expectation of the given expression in fact exists,
   so some care is required when using this primitive. (e.g. `Expectation(gauss(0,1)/gauss(0,1))` does not converge.)
 
@@ -278,7 +278,7 @@ w := x[2..x.length-1]; // slice array (w is [3,4,5])
 
 *Note:* Verifying that array indices and lengths are integers within the array bounds can be costly. Use --noboundscheck to disable bounds checking at the cost of undefined results in case a bounds actually occurs with positive probability.
 
-The length of an array 'a' can be obtained using the expression 'a.length'.
+The length of an array `a` can be obtained using the expression `a.length`.
 
 
 #### First-class functions and lambda functions
@@ -364,7 +364,7 @@ errorPr(p: Distribution[R]): R
 
 The function `infer` performs nested inference on the given program `f` and returns the distribution of its results. (This is precisely what PSI does, but with `infer` it can be used arbitrarily within a PSI program.)
 
-*Note:* For technical reasons that will be resolved soon, the implementation of error tracking in the presence of nested inference is very slow. Use the --nocheck flag to disable error tracking and improve performance, at the cost of getting undefined results if an error actually occurs with positive probability.
+*Note:* For technical reasons that will be resolved soon, the implementation of error tracking in the presence of nested inference is very slow. Use the `--nocheck` flag to disable error tracking and improve performance, at the cost of getting undefined results if an error actually occurs with positive probability.
 
 The function `sample` samples a value from the given distribution.
 
@@ -489,7 +489,7 @@ hashtable.d:
 
 help.d:
   
-  Implements the --help option and a few other options.
+  Implements the `--help` option and a few other options.
 
 util.d:
   
@@ -497,4 +497,4 @@ util.d:
 
 ## Adding new tests
 
-Add a *.psi file into the 'test' directory. 
+Add a `*.psi` file into the `test` directory.
