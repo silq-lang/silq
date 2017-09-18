@@ -1,0 +1,11 @@
+dat Phantom[a]{
+	def Phantom(){}
+}
+
+def phantom[a]: Phantom[a]{
+	return Phantom[a]();
+}
+
+def main(): Phantom[ℝ]×Phantom[ℝ×ℝ]{
+	return (phantom[ℝ],phantom[ℝ×ℝ]); // expected: δ({})[r₁]·δ({})[r₂]
+}

@@ -179,7 +179,7 @@ Expression presemantic(Declaration expr,Scope sc){
 				pn~=p.getName;
 				pty~=p.vtype;
 			}
-			fd.ret=typeSemantic(fd.rret,sc);
+			fd.ret=typeSemantic(fd.rret,fsc);
 			assert(fd.isTuple||pty.length==1);
 			auto pt=fd.isTuple?tupleTy(pty):pty[0];
 			if(!fd.ret) fd.sstate=SemState.error;
