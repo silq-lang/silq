@@ -613,10 +613,16 @@ private struct Analyzer{
 					if(old) assignToImpl(fe.e,dRUpdate(old,fe.f.name,rhs),fe.e.type);
 				}
 			}else if(auto tpl=cast(TupleExp)lhs){
-				auto tt=cast(TupleTy)ty;
-				assert(!!tt);
-				assert(tpl.e.length==tt.types.length);
-				foreach(k,exp;tpl.e) assignToImpl(exp,rhs[k.dℚ],tt.types[k]);
+				if(!cast(DVar)rhs){
+					auto tmp=dist.getTmpVar("__tpl");
+					dist.initialize(tmp,rhs,ty);
+					assignTo(lhs,tmp,ty,loc);
+				}else{
+					auto tt=cast(TupleTy)ty;
+					assert(!!tt);
+					assert(tpl.e.length==tt.types.length);
+					foreach(k,exp;tpl.e) assignToImpl(exp,rhs[k.dℚ],tt.types[k]);
+				}
 			}else{
 			LbadAssgnmLhs:
 				err.error("invalid left hand side for assignment",lhs.loc);

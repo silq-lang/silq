@@ -3,5 +3,5 @@ def main(){
 	(x,y,z,w) := (1,2,3,4);
 	(x,(y,z))[1] = (z,y);
 	(x,y) = (y,x);
-	return (x,y,z,w); // expected: TODO: δ(0)[-w+4]·δ(0)[-x+3]·δ(0)[-y+1]·δ(0)[-z+2]
+	return (x,y,z,w); // expected: δ(1)[y]·δ(2)[z]·δ(3)[x]·δ(4)[w]
 }

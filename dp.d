@@ -258,8 +258,16 @@ struct Dist{
 				}
 				assignTo(fe.e,dRUpdate(fe.e,fe.f,rhs));
 			}else if(auto tpl=cast(DTuple)lhs){
-				foreach(i;0..tpl.values.length)
-					assignTo(tpl[i],rhs[i.dℚ].simplify(one));
+				if(!cast(DField)rhs){
+					static int unique=0;
+					auto tmp="`tpl"~lowNum(++unique);
+					addTmpVar(tmp);
+					assignTo(dField(db1,tmp),rhs);
+					assignTo(lhs,dField(db1,tmp));
+				}else{
+					foreach(i;0..tpl.values.length)
+						assignTo(tpl[i],rhs[i.dℚ].simplify(one));
+				}
 			}else if(cast(DPlus)lhs||cast(DMult)lhs){
 				// TODO: this could be the case (if cond { a } else { b }) = c;
 				// (this is also not handled in the symbolic backend at the moment)

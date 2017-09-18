@@ -148,6 +148,7 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration;
+	//dw("δ(0)[x-y²]".dParse.linearizeConstraints("y".dVar).simplify(one));
 	/+import std.range, std.algorithm; // TODO: make this fast
 	enum n=100;
 	DExpr e=dApply("f".dVar,dTuple(iota(0,n).map!(i=>cast(DExpr)dVar("x"~lowNum(i))).array));
