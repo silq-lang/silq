@@ -266,12 +266,12 @@ def main(){
 
 ```
 x := [1,2,3,4,5,6]; // declare array
-return x[UniformInt(0,x.length-1)]; // index randomly into array
+return x[uniformInt(0,x.length-1)]; // index randomly into array
 
 x := ([] : R[]); // declare empty array of real numbers
 y := x ~ [1]; // y is the concatenation of x with [1]. ~= is also supported
 
-z := array(UniformInt(1,3),[1,2,3]); // declare array of arrays of random size, initialized with [1,2,3] at all indices
+z := array(uniformInt(1,3),[1,2,3]); // declare array of arrays of random size, initialized with [1,2,3] at all indices
 
 w := x[2..x.length-1]; // slice array (w is [3,4,5])
 ```
