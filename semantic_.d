@@ -340,6 +340,8 @@ bool isBuiltIn(Identifier id){
 	case "Marginal","sampleFrom":
 	case "Expectation":
 		return true;
+	case "*","𝟙",/*"𝟚","B","𝔹","Z","ℤ","Q","ℚ",*/"R","ℝ":
+		return true;
 	default: return false;
 	}
 }
@@ -394,11 +396,15 @@ Expression builtIn(Identifier id,Scope sc){
 		case "errorPr":
 			t=forallTy(["a"],typeTy,funTy(distributionTy(varTy("a",typeTy),sc),ℝ,false,false),true,false);
 			break;
-	case "*","R","ℝ","𝟙":
+	case "*","𝟙","𝟚","B","𝔹","Z","ℤ","Q","ℚ","R","ℝ":
 		id.type=typeTy;
 		if(id.name=="*") return typeTy;
-		if(id.name=="R"||id.name=="ℝ") return ℝ;
 		if(id.name=="𝟙") return unit;
+		// TODO:
+		//if(id.name=="𝟚"||id.name=="B"||id.name=="𝔹") return Bool;
+		//if(id.name=="Z"||id.name=="ℤ") return ℤt;
+		//if(id.name=="Q"||id.name=="ℚ") return ℚt;
+		if(id.name=="R"||id.name=="ℝ") return ℝ;
 	default: return null;
 	}
 	id.type=t;

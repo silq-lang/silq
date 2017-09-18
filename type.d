@@ -23,6 +23,48 @@ class ErrorTy: Type{
 	mixin VariableFree;
 }
 
+class BoolTy: Type{
+	private this(){}
+	override string toString(){
+		return "𝔹";
+	}
+	override bool opEquals(Object o){
+		return !!cast(BoolTy)o;
+	}
+	mixin VariableFree;
+}
+private BoolTy theBool;
+
+BoolTy Bool(){ return theBool?theBool:(theBool=new BoolTy()); }
+
+
+class ℤTy: Type{
+	private this(){}
+	override string toString(){
+		return "ℤ";
+	}
+	override bool opEquals(Object o){
+		return !!cast(ℤTy)o;
+	}
+	mixin VariableFree;
+}
+private ℤTy theℤ;
+
+ℤTy ℤt(){ return theℤ?theℤ:(theℤ=new ℤTy()); }
+
+class ℚTy: Type{
+	private this(){}
+	override string toString(){
+		return "ℚ";
+	}
+	override bool opEquals(Object o){
+		return !!cast(ℚTy)o;
+	}
+	mixin VariableFree;
+}
+private ℚTy theℚ;
+
+ℚTy ℚt(){ return theℚ?theℚ:(theℚ=new ℚTy()); }
 
 class ℝTy: Type{
 	private this(){}
@@ -37,6 +79,7 @@ class ℝTy: Type{
 private ℝTy theℝ;
 
 ℝTy ℝ(){ return theℝ?theℝ:(theℝ=new ℝTy()); }
+
 
 class AggregateTy: Type{
 	DatDecl decl;
