@@ -91,17 +91,13 @@ class FunctionDef: Declaration{
 	@property size_t numArgs(){
 		auto fty=cast(FunTy)ftype;
 		if(!fty) return 0;
-		auto t=cast(Type)fty.dom;
-		if(!t) return 0;
-		return t.numComponents;
+		return fty.dom.numComponents;
 	}
 
 	@property size_t numReturns(){
 		auto fty=cast(FunTy)ftype;
 		if(!fty) return 0;
-		auto t=cast(Type)fty.cod;
-		if(!t) return 0;
-		return t.numComponents;
+		return fty.cod.numComponents;
 	}
 }
 
