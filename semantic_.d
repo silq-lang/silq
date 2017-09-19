@@ -1427,7 +1427,11 @@ bool setFtype(FunctionDef fd){
 	}
 	assert(fd.isTuple||pty.length==1);
 	auto pt=fd.isTuple?tupleTy(pty):pty[0];
-	if(fd.ret&&!fd.ftype) fd.ftype=forallTy(pn,pt,fd.ret,fd.isSquare,fd.isTuple);
+	if(fd.ret&&!fd.ftype){
+		fd.ftype=forallTy(pn,pt,fd.ret,fd.isSquare,fd.isTuple);
+		assert(fd.retNames==[]);
+		fd.retNames = new string[](fd.numReturns);
+	}
 	return true;
 }
 FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
@@ -1452,6 +1456,18 @@ FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 		}
 	}else if(!fd.ret) fd.ret=unit;
 	setFtype(fd);
+	foreach(ref n;fd.retNames) if(n is null) n="r";
+	void[0][string] vars;
+	foreach(p;fd.params) vars[p.name.name]=[];
+	int[string] counts1,counts2;
+	foreach(n;fd.retNames)
+		++counts1[n];
+	foreach(ref n;fd.retNames){
+		if(counts1[n]>1)
+			n~=lowNum(++counts2[n]);
+		while(n in vars) n~="'";
+		vars[n]=[];
+	}
 	if(fd.sstate!=SemState.error)
 		fd.sstate=SemState.completed;
 	return fd;
@@ -1508,6 +1524,15 @@ ReturnExp returnExpSemantic(ReturnExp ret,Scope sc){
 		return ret;
 	}
 	ret.type=unit;
+	if(auto tpl=cast(TupleExp)ret.e){
+		assert(tpl.e.length==fd.numReturns);
+		foreach(i,e;tpl.e){
+			if(auto id=cast(Identifier)e)
+				fd.retNames[i]=id.name;
+			else if(auto fe=cast(FieldExp)e)
+				fd.retNames[i]=fe.f.name;
+		}
+	}
 	return ret;
 }
 

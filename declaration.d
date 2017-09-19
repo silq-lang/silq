@@ -80,6 +80,7 @@ class FunctionDef: Declaration{
 	Type ftype;
 	bool hasReturn;
 	bool isConstructor;
+	string[] retNames;
 
 	@property Scope realScope(){
 		if(isConstructor) return scope_.getDatDecl().scope_;
