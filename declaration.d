@@ -86,6 +86,22 @@ class FunctionDef: Declaration{
 		return scope_;
 	}
 	@property bool isNested(){ return !!cast(NestedScope)realScope; }
+
+	@property size_t numArgs(){
+		auto fty=cast(FunTy)ftype;
+		if(!fty) return 0;
+		auto t=cast(Type)fty.dom;
+		if(!t) return 0;
+		return t.numComponents;
+	}
+
+	@property size_t numReturns(){
+		auto fty=cast(FunTy)ftype;
+		if(!fty) return 0;
+		auto t=cast(Type)fty.cod;
+		if(!t) return 0;
+		return t.numComponents;
+	}
 }
 
 

@@ -148,6 +148,7 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration;
+	//dw("∫dξ₁[-ξ₁≤0]·ξ₁·⅟e^(13·ξ₁²·⅟120)".dParse.simplify(one));
 	//dw("δ(0)[x-y²]".dParse.linearizeConstraints("y".dVar).simplify(one));
 	/+import std.range, std.algorithm; // TODO: make this fast
 	enum n=100;

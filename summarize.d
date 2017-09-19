@@ -10,14 +10,9 @@ string getValue(FunctionDef fd,string property){
 		case "name":
 			return fd.name.toString();
 		case "arg-arity":
-			auto fty=cast(FunTy)fd.ftype;
-			if(!fty) return "-1";
-			return fty.names.length.to!string;
+			return fd.numArgs.to!string;
 		case "ret-arity":
-			auto fty=cast(FunTy)fd.ftype;
-			if(!fty) return "-1";
-			if(auto tpl=cast(TupleTy)fty.cod) return tpl.types.length.to!string;
-			return "1";
+			return fd.numReturns.to!string;
 		default: throw new Exception(text("summarize: unknown key '",property,"'"));
 	}
 }

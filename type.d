@@ -157,6 +157,12 @@ TupleTy tupleTy(Expression[] types)in{
 	return memoize!((Expression[] types)=>new TupleTy(types))(types);
 }
 
+size_t numComponents(Type t){
+	if(auto tpl=cast(TupleTy)t)
+		return tpl.types.length;
+	return 1;
+}
+
 class ArrayTy: Type{
 	Expression next;
 	private this(Expression next)in{
