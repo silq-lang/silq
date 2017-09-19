@@ -99,10 +99,7 @@ private struct Analyzer{
 				return dVar(pl.ident.name);
 			if(auto id=cast(Identifier)e){
 				if(!id.meaning&&id.name=="π") return dΠ;
-				if(id.name in arrays){
-					err.error("missing array index",id.loc);
-					unwind();
-				}
+				if(id.name in arrays) return dArray(arrays[id.name]);
 				if(auto r=lookupMeaning!(readLocal,readFunction)(id)) return r;
 				err.error("undefined variable '"~id.name~"'",id.loc);
 				unwind();
@@ -796,17 +793,6 @@ private struct Analyzer{
 				if(auto tpl=cast(TupleExp)re.e) returns=tpl.e;
 				else{ returns=[re.e]; isTuple=false; }
 				foreach(ret;returns){
-					if(auto id=cast(Identifier)ret){ // TODO: this hack should be removed
-						if(id.name in arrays){
-							foreach(expr;arrays[id.name]){
-								if(auto var=cast(DNVar)expr){
-									vars.insert(var);
-									orderedVars~=var;
-								}
-							}
-							continue;
-						}
-					}
 					auto exp=transformExp(ret);
 					if(!exp) exp=dTuple([]); // TODO: is there a better way?
 					DNVar var=cast(DNVar)exp;
