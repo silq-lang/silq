@@ -4013,7 +4013,8 @@ class DVal: DMonad{
 		return dVal(ne);
 	}
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
-		return text("val(",e.toStringImpl(formatting,Precedence.none,binders),")");
+		auto isTpl=!!cast(DTuple)e;
+		return text("val(",e.toStringImpl(formatting,Precedence.none,binders)[isTpl..$-isTpl],")");
 	}
 }
 mixin FactoryFunction!DVal;
