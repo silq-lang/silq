@@ -225,9 +225,9 @@ If arguments do not conform to the constraints of the distribution, the program 
 - `sampleFrom("(variable1,...,variablen;parameter1,...,parameterm) => pdf",argument1,...,argumentm): type`
   This primitive samples an n-tuple of values from the given probability density function.
   The density function can depend both on the values and a set of parameters. To specify the pdf, the
-  mathematical operators `+-*/^`, the constant `e`, the dirac delta `delta(expr)`, absolute values |expression|
-  and Iverson brackets of the shape [expression<=expression], [expression<expression], [expression=expression]
-  and [expression != expression] can be used, among others.
+  mathematical operators `+-*/^`, the constant `e`, the dirac delta `delta(expr)`, absolute values `|expression|`
+  and Iverson brackets of the shape `[expression<=expression]`, `[expression<expression]`, `[expression=expression]`
+  and `[expression != expression]` can be used, among others.
 
   Example:
   ```
