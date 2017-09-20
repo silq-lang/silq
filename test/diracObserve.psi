@@ -1,0 +1,7 @@
+def main(){
+	d := Dirac(1);
+	return (){
+		a := sample(d);
+		observe(a==1);
+	}; // expected: δ(λξ₁. Λξ₂. δ(val())[ξ₂])[r]
+}
