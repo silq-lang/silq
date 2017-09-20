@@ -213,7 +213,9 @@ int importModule(string path,ErrorHandler err,out Expression[] exprs,out TopScop
 	scope(success) modules[path]=tuple(exprs,sc);
 	TopScope prsc=null;
 	Expression[] prelude;
-	if(!prsc && path != preludePath) importModule(preludePath,err,prelude,prsc);
+	if(!prsc && path != preludePath)
+		if(auto r=importModule(preludePath,err,prelude,prsc))
+			return r;
 	import parser;
 	if(auto r=parseFile(getActualPath(path),err,exprs,loc))
 		return r;
