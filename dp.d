@@ -25,7 +25,9 @@ class Bruteforce: Backend{
 		auto interpreter=Interpreter(def,def.body_,init,false);
 		auto ret=distInit();
 		interpreter.runFun(ret);
-		return ret.toDistribution();
+		assert(!!def.ftype);
+		bool isTuple = !!cast(TupleTy)def.ftype.cod;
+		return ret.toDistribution(def.retNames,isTuple);
 	}
 private:
 	string sourceFile;
@@ -168,24 +170,22 @@ struct Dist{
 		}
 		return r;
 	}
-	Distribution toDistribution(){
+	Distribution toDistribution(string[] names,bool isTuple){
 		auto r=new Distribution();
-		string name="r";
-	Louter:for(;;){ // avoid variable capturing. TODO: make more efficient
-			foreach(k,v;state){
-				if(k.hasFreeVar(dVar(name))||v.hasFreeVar(dVar(name))){
-					name~="'";
-					continue Louter;
-				}
-			}
-			break;
-		}
-		auto var=r.declareVar(name);
+		auto vars=names.map!(name=>r.declareVar(name)).array;
 		r.distribution=zero;
-		foreach(k,v;state) r.distribution=r.distribution+v*dDiscDelta(dField(k,"`value"),var);
+		foreach(k,v;state){
+			auto cur = v;
+			foreach(i,var;vars){
+				assert(!!var);
+				auto val = dField(k,"`value");
+				cur = cur*dDiscDelta(isTuple?val[i.dℚ]:val,var);
+			}
+			r.distribution=r.distribution+cur;
+		}
 		r.error=error;
 		r.simplify();
-		r.orderFreeVars([var],false);
+		r.orderFreeVars(vars,isTuple);
 		return r;
 	}
 	DExpr flip(DExpr p){
@@ -530,7 +530,7 @@ class DDPDist: DExpr{
 	alias subExprs=Seq!dist;
 	this(Dist dist)in{assert(!dist.tmpVars.length);}body{ this.dist=dist; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
-		auto d=dist.toDistribution();
+		auto d=dist.toDistribution(["r"],false);
 		d.addArgs([],true,null);
 		return dApply(d.toDExpr(),dTuple([])).simplify(one).toStringImpl(formatting,prec,binders);
 	}
