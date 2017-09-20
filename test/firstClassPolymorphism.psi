@@ -1,0 +1,15 @@
+
+def id[b](x:b)⇒x;
+
+def main(){
+	f := id: Π[a:*]. a→ a;
+	g := id: Pi[a:*]. a→ a;
+	h := id: Π[a:*](x:a). a;
+	i := id: Pi[a:*](x:a). a;
+	j := ([a:*,b:*]=>id[a×b]): Π[c:*,d:*](x:c,y:d). c×d;
+	k := ([a:*,b:*]=>id[a×b]): Pi[c:*,d:*](x:c,y:d). c×d;
+	l := f[Π[a:*]. a];
+	def crash[a:*]: a{ assert(0); }
+	// return f(g(h(i(j(k(l(crash),0),1))))); // expected: δ(1)[r₂]·δ(λξ₁. Λξ₂. δ(⊥)[ξ₂],0)[r₁]
+	return l(crash); // expected: δ(λξ₁. Λξ₂. δ(⊥)[ξ₂])[r]
+}

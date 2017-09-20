@@ -213,6 +213,21 @@ class StringTy: Type{
 
 StringTy stringTy(){ return memoize!(()=>new StringTy()); }
 
+class RawForallTy: Expression{
+	Parameter[] params;
+	Expression cod;
+	bool isSquare,isTuple;
+	this(Parameter[] params,Expression cod,bool isSquare,bool isTuple){
+		this.params=params; this.cod=cod;
+		this.isSquare=isSquare; this.isTuple=isTuple;
+	}
+	override string toString(){
+		return "<unanalyzed Π type>"; // TODO: format nicely.
+	}
+
+	mixin VariableFree;
+}
+
 class ForallTy: Type{
 	string[] names;
 	Expression dom, cod;

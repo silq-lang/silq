@@ -436,6 +436,23 @@ struct Parser{
 					expect(Tok!"]");
 					return res;
 				}
+			case Tok!"Π", Tok!"Pi":
+				nextToken();
+				Expression parseProduct(){
+					bool isSquare=false;
+					if(ttype==Tok!"[") isSquare=true;
+					expect(isSquare?Tok!"[":Tok!"(");
+					auto params=parseArgumentList!(false,Parameter)(isSquare?Tok!"]":Tok!")");
+					expect(isSquare?Tok!"]":Tok!")");
+					Expression cod;
+					if(ttype!=Tok!"["&&ttype!=Tok!"("){
+						expect(Tok!".");
+						cod = parseType();
+					}else cod=parseProduct();
+					auto isTuple=params[1]||params[0].length!=1;
+					return res=New!RawForallTy(cast(Parameter[])params[0],cod,isSquare,isTuple);
+				}
+				return parseProduct();
 			case Tok!"-":
 				nextToken();
 				return res=New!(UnaryExp!(Tok!"-"))(parseExpression(nbp));

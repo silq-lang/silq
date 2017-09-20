@@ -66,6 +66,18 @@ AggregateTy isDataTyId(Expression e){
 	return null;
 }
 
+void declareParameters(Expression parent,bool isSquare,Parameter[] params,Scope sc){
+	foreach(ref p;params){
+		if(!p.dtype){ // ℝ is the default parameter type for () and * is the default parameter type for []
+			p.dtype=New!Identifier(isSquare?"*":"ℝ");
+			p.dtype.loc=p.loc;
+		}
+		p=cast(Parameter)varDeclSemantic(p,sc);
+		assert(!!p);
+		propErr(p,parent);
+	}
+}
+
 Expression presemantic(Declaration expr,Scope sc){
 	bool success=true; // dummy
 	if(!expr.scope_) makeDeclaration(expr,success,sc);
@@ -78,17 +90,6 @@ Expression presemantic(Declaration expr,Scope sc){
 		var=varDeclSemantic(var,sc);
 		assert(!!var && var.sstate==SemState.completed);
 		return var;
-	}
-	static void declareParameters(Declaration parent,bool isSquare,Parameter[] params,Scope sc){
-		foreach(ref p;params){
-			if(!p.dtype){ // ℝ is the default parameter type for () and * is the default parameter type for []
-				p.dtype=New!Identifier(isSquare?"*":"ℝ");
-				p.dtype.loc=p.loc;
-			}
-			p=cast(Parameter)varDeclSemantic(p,sc);
-			assert(!!p);
-			propErr(p,parent);
-		}		
 	}
 	if(auto dat=cast(DatDecl)expr){
 		if(dat.dtype) return expr;
@@ -1358,7 +1359,19 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		}
 		return funTy(t1,t2,false,false);
 	}
-	
+	if(auto fa=cast(RawForallTy)expr){
+		expr.type=typeTy();
+		auto fsc=new BlockScope(sc);
+		declareParameters(fa,fa.isSquare,fa.params,fsc); // parameter variables
+		auto cod=typeSemantic(fa.cod,fsc);
+		propErr(fa.cod,fa);
+		if(fa.sstate==SemState.error) return fa;
+		auto names=fa.params.map!(p=>p.name.name).array;
+		auto types=fa.params.map!(p=>p.vtype).array;
+		assert(fa.isTuple||types.length==1);
+		auto dom=fa.isTuple?tupleTy(types):types[0];
+		return forallTy(names,dom,cod,fa.isSquare,fa.isTuple);
+	}
 	if(auto ite=cast(IteExp)expr){
 		ite.cond=expressionSemantic(ite.cond,sc);
 		if(ite.then.s.length!=1||ite.othw&&ite.othw.s.length!=1){
