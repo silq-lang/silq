@@ -3,7 +3,7 @@ def main(){
 		return 2;
     }
 	if 1 != 0{
-		return fun(); // expected: δ(2)[r₁]
+		return fun(); // expected: δ(2)[r]
 	}
 	assert(0);
 }

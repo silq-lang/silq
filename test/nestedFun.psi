@@ -11,5 +11,5 @@ def main(){
         }
         return bar()+baz();
     }
-    return foo(); // expected: 1/2·δ(0)[r₁]+1/2·δ(1)[r₁]
+    return foo(); // expected: 1/2·δ(0)[r]+1/2·δ(1)[r]
 }

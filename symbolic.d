@@ -784,69 +784,42 @@ private struct Analyzer{
 		}else if(auto re=cast(ReturnExp)e){
 			auto odist=dist.dup;
 			odist.distribution=odist.error=zero; // code after return is unreachable
-			SetX!DNVar vars;
+			auto exp = transformExp(re.e);
+			auto tty=cast(TupleTy)re.e.type;
 			DNVar[] orderedVars;
-			bool isTuple=true;
-			Expression[] returns;
-			dist.freeVar("r");
-			if(!cast(TupleTy)re.e.type||cast(TupleExp)re.e){
-				if(auto tpl=cast(TupleExp)re.e) returns=tpl.e;
-				else{ returns=[re.e]; isTuple=false; }
-				foreach(ret;returns){
-					auto exp=transformExp(ret);
-					if(!exp) exp=dTuple([]); // TODO: is there a better way?
-					DNVar var=cast(DNVar)exp;
-					if(var && !var.name.startsWith("__")){
-						if(var in vars||functionDef.context&&var.name==functionDef.contextName||dist.hasArg(var)){
-							dist.freeVar(var.name);
-							auto vv=dist.hasArg(var)?dist.getPrimedVar(var.name):dist.getVar(var.name);
-							dist.initialize(vv,var,ret.type);
-							var=vv;
-						}
-						vars.insert(var);
-						orderedVars~=var;
-					}else{
-						if(auto fe=cast(FieldExp)ret){
-							dist.freeVar(fe.f.name);
-							var=dist.declareVar(fe.f.name);
-							if(!var) var=dist.getVar(fe.f.name);
-						}else var=dist.getVar("r");
-						dist.initialize(var,exp,ret.type);
-						dist.simplify();
-						vars.insert(var);
-						orderedVars~=var;
-					}
-				}
-			}else{
-				auto tty=cast(TupleTy)re.e.type;
-				assert(!!tty);
-				auto r=transformExp(re.e);
-				auto id=cast(Identifier)re.e;
-				auto name=id?id.name:"r";
-				dist.freeVar(name);
-				foreach(i,ty;tty.types){
-					auto var=dist.getVar(name);
-					dist.initialize(var,dIndex(r,i.dℚ),ty);
-					vars.insert(var);
-					orderedVars~=var;
+			bool isTuple=!!tty, needIndex=tty&&tty.types.length!=0;
+			void keepOnly(SetX!DNVar keep){
+				foreach(w;dist.freeVars.dup){
+					if(w in keep) continue;
+					dist.marginalize(w);
 				}
 			}
 			if(functionDef.context&&functionDef.contextName.startsWith("this")){
-				// TODO: if this happens, the above is quite pointless. refactor.
-				assert(isTuple||orderedVars.length==1);
-				auto res=isTuple?dTuple(cast(DExpr[])orderedVars):orderedVars[0];
 				auto resv=dist.getVar("__r"),ctxv=dVar(functionDef.contextName);
-				dist.initialize(resv,res,re.e.type);
-				vars.clear();
-				vars.insert(resv);
-				vars.insert(ctxv);
+				dist.initialize(resv,exp,re.e.type);
 				orderedVars=[resv,ctxv];
+				keepOnly(setx(orderedVars));
 				isTuple=true;
+			}else{
+				foreach(n;functionDef.retNames){
+					auto var=dVar(n);
+					assert(!dist.hasArg(var));
+					if(var in dist.freeVars){
+						auto nvar=dist.getVar(var.name);
+						dist.distribution=dist.distribution.substitute(var,nvar);
+						exp=exp.substitute(var,nvar);
+						dist.freeVars.remove(var);
+						dist.freeVars.insert(nvar);
+					}
+				}
+				orderedVars=functionDef.retNames.map!(n=>dist.declareVar(n)).array;
+				foreach(i,var;orderedVars){
+					assert(!!var);
+					dist.initialize(var,needIndex?dIndex(exp,i.dℚ):exp,needIndex?tty.types[i]:re.e.type);
+				}
+				keepOnly(setx(orderedVars));
 			}
-			import hashtable:  setMinus;
-			foreach(w;dist.freeVars.setMinus(vars)){
-				dist.marginalize(w);
-			}
+			assert(isTuple||orderedVars.length==1);
 			dist.orderFreeVars(orderedVars,isTuple);
 			if(!retDist) retDist=dist;
 			else retDist=dist.orderedJoin(retDist);

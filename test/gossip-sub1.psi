@@ -9,5 +9,5 @@ def main(){
         which := uniformInt(0,N-1);
         newInfected[which] = 1;
     }
-    return newInfected[1]; // expected: 1/4·δ(0)[r₁]+3/4·δ(1)[r₁]
+    return newInfected[1]; // expected: 1/4·δ(0)[newInfected₁]+3/4·δ(1)[newInfected₁]
 }

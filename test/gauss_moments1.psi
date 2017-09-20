@@ -1,5 +1,5 @@
 // skipped
-// TODO: fix segfault
+// TODO: make fast
 
 
 def Variance(x:Distribution[ℝ]){

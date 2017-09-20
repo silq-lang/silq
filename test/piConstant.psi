@@ -1,4 +1,4 @@
 
 def main(){
-	return π; // expected: δ(π)[r₁]
+	return π; // expected: δ(π)[r]
 }

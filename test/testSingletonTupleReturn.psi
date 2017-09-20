@@ -9,5 +9,5 @@ def foo(){
 }
 def main(){
     x := foo();
-    return (x[0],Foo().foo()); // expected: δ(1)[r₁]·δ(2,)[r₂]
+    return (x[0],Foo().foo()); // expected: δ(1)[x₀]·δ(2,)[r]
 }

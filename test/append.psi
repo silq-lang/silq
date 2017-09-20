@@ -6,5 +6,5 @@ def main(){
             a ~= [0] ~ [i];
         }
     }
-    return a[uniformInt(0,a.length-1)]; // expected: 23/210·δ(1)[r₁]+23/210·δ(2)[r₁]+23/210·δ(3)[r₁]+47/70·δ(0)[r₁]
+    return a[uniformInt(0,a.length-1)]; // expected: 23/210·δ(1)[aᵢ]+23/210·δ(2)[aᵢ]+23/210·δ(3)[aᵢ]+47/70·δ(0)[aᵢ]
 }

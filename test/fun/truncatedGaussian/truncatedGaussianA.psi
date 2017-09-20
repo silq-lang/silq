@@ -12,5 +12,5 @@ def main(){
     for i in [0..3){
         observe(a[i] > result[i]);
     }
-    return (result[0],result[1],result[2]); // expected: [-1+result₃≤0]·[-1/10+result₂≤0]·[-result₂+1/10≠0]·[-result₃+1≠0]·[result₁≠0]·[result₁≤0]·e^(-1/2·result₁²+-1/2·result₂²+-1/2·result₃²)·⅟(d/dx)⁻¹[e^(-x²)](1/10·⅟√2̅)·⅟(d/dx)⁻¹[e^(-x²)](⅟√2̅)·⅟√2̅·⅟√π̅
+    return (result[0],result[1],result[2]); // expected: [-1+result₂≤0]·[-1/10+result₁≤0]·[-result₁+1/10≠0]·[-result₂+1≠0]·[result₀≠0]·[result₀≤0]·e^(-1/2·result₀²+-1/2·result₁²+-1/2·result₂²)·⅟(d/dx)⁻¹[e^(-x²)](1/10·⅟√2̅)·⅟(d/dx)⁻¹[e^(-x²)](⅟√2̅)·⅟√2̅·⅟√π̅
 }

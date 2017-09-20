@@ -8,5 +8,5 @@ dat Foo{
 }
 
 def main(){
-	return Foo(); // expected: δ({.x ↦ 2})[r₁]
+	return Foo(); // expected: δ({.x ↦ 2})[r]
 }

@@ -3,5 +3,5 @@
 def main(){
 	(x,y) := (exponential(1),exponential(1));
 	observe(x>1&&y>1);
-	return Expectation((x+y)^2); // expected: δ(18)[r₁]
+	return Expectation((x+y)^2); // expected: δ(18)[r]
 }
