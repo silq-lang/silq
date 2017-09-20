@@ -148,6 +148,7 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration;
+	//dw("lim[p→ ∞] (-1/4·(1/p)²+1/2·(1/p))·[-1+(1/p)≤0]·[-(1/p)²+4·(1/p)≠0]·[-(1/p)≤0]·⅟(-1/4·(1/p)²+(1/p))".dParse.simplify(one)); // TODO
 	//dw("∫dξ₁[-ξ₁≤0]·ξ₁·⅟e^(13·ξ₁²·⅟120)".dParse.simplify(one));
 	//dw("δ(0)[x-y²]".dParse.linearizeConstraints("y".dVar).simplify(one));
 	/+import std.range, std.algorithm; // TODO: make this fast

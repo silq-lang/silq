@@ -15,5 +15,5 @@ def main(){
 
     isEffectiveP := sample(Marginal(isEffective));
     observe(isEffective);
-    return (isEffectiveP,probIfTreated,probIfControl); // expected: (-4·probIfControl²·probIfTreated⁴+-4·probIfControl⁴·probIfTreated⁴+-6·probIfControl³·probIfTreated⁵+-probIfControl·probIfTreated⁵+-probIfControl⁵·probIfTreated⁵+4·probIfControl²·probIfTreated⁵+4·probIfControl⁴·probIfTreated⁵+6·probIfControl³·probIfTreated⁴+probIfControl·probIfTreated⁴+probIfControl⁵·probIfTreated⁴)·(11550/17·δ(1)[isEffectiveP]+3750/17·δ(0)[isEffectiveP])·[-1+probIfControl≤0]·[-1+probIfTreated≤0]·[-probIfControl≤0]·[-probIfTreated≤0]
+    return (isEffectiveP,probIfTreated,probIfControl); // expected: (-3600·probIfControl²·probIfTreated⁴+-3600·probIfControl⁴·probIfTreated⁴+-5400·probIfControl³·probIfTreated⁵+-900·probIfControl·probIfTreated⁵+-900·probIfControl⁵·probIfTreated⁵+3600·probIfControl²·probIfTreated⁵+3600·probIfControl⁴·probIfTreated⁵+5400·probIfControl³·probIfTreated⁴+900·probIfControl·probIfTreated⁴+900·probIfControl⁵·probIfTreated⁴)·(25/102·δ(0)[isEffectiveP]+77/102·δ(1)[isEffectiveP])·[-1+probIfControl≤0]·[-1+probIfTreated≤0]·[-probIfControl≤0]·[-probIfTreated≤0]
 }
