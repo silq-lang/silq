@@ -450,7 +450,7 @@ struct Parser{
 						cod = parseType();
 					}else cod=parseProduct();
 					auto isTuple=params[1]||params[0].length!=1;
-					return res=New!RawForallTy(cast(Parameter[])params[0],cod,isSquare,isTuple);
+					return res=New!RawProductTy(cast(Parameter[])params[0],cod,isSquare,isTuple);
 				}
 				return parseProduct();
 			case Tok!"-":

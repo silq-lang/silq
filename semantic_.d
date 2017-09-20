@@ -184,7 +184,7 @@ Expression presemantic(Declaration expr,Scope sc){
 			assert(fd.isTuple||pty.length==1);
 			auto pt=fd.isTuple?tupleTy(pty):pty[0];
 			if(!fd.ret) fd.sstate=SemState.error;
-			else fd.ftype=forallTy(pn,pt,fd.ret,fd.isSquare,fd.isTuple);
+			else fd.ftype=productTy(pn,pt,fd.ret,fd.isSquare,fd.isTuple);
 		}
 	}
 	return expr;
@@ -356,7 +356,7 @@ Expression distributionTy(Expression base,Scope sc){
 Expression builtIn(Identifier id,Scope sc){
 	Expression t=null;
 	switch(id.name){
-	case "array": t=forallTy(["a"],typeTy,funTy(tupleTy([ℝ,varTy("a",typeTy)]),arrayTy(varTy("a",typeTy)),false,true),true,false); break;
+	case "array": t=productTy(["a"],typeTy,funTy(tupleTy([ℝ,varTy("a",typeTy)]),arrayTy(varTy("a",typeTy)),false,true),true,false); break;
 	case "readCSV": t=funTy(stringTy,arrayTy(ℝ),false,false); break;
 	case "π": t=ℝ; break;
 	case "exp","log","sin","cos","abs": t=funTy(ℝ,ℝ,false,false); break;
@@ -380,24 +380,24 @@ Expression builtIn(Identifier id,Scope sc){
 	break;		
 	case "categorical": t=funTy(arrayTy(ℝ),ℝ,false,false); break;
 	case "Categorical": t=funTy(arrayTy(ℝ),distributionTy(ℝ,sc),false,false); break;
-	case "dirac": t=forallTy(["a"],typeTy,funTy(varTy("a",typeTy),varTy("a",typeTy),false,false),true,false); break;
-	case "Dirac": t=forallTy(["a"],typeTy,funTy(varTy("a",typeTy),distributionTy(varTy("a",typeTy),sc),false,false),true,false); break;
+	case "dirac": t=productTy(["a"],typeTy,funTy(varTy("a",typeTy),varTy("a",typeTy),false,false),true,false); break;
+	case "Dirac": t=productTy(["a"],typeTy,funTy(varTy("a",typeTy),distributionTy(varTy("a",typeTy),sc),false,false),true,false); break;
 	case "Marginal","sampleFrom": t=unit; break; // those are actually magic polymorphic functions
 	case "Expectation": t=funTy(ℝ,ℝ,false,false); break;
 	case "Distribution": t=funTy(typeTy,typeTy,true,false); break;
 	case "infer": t=
-			forallTy(["a"],typeTy,
-			         forallTy(["f"],funTy(tupleTy([]),varTy("a",typeTy),false,true),
+			productTy(["a"],typeTy,
+			         productTy(["f"],funTy(tupleTy([]),varTy("a",typeTy),false,true),
 			                  distributionTy(varTy("a",typeTy),sc),false,false),true,false);
 		break;
 		case "sample":
-			t=forallTy(["a"],typeTy,funTy(distributionTy(varTy("a",typeTy),sc),varTy("a",typeTy),false,false),true,false);
+			t=productTy(["a"],typeTy,funTy(distributionTy(varTy("a",typeTy),sc),varTy("a",typeTy),false,false),true,false);
 			break;
 		case "expectation":
 			t=funTy(distributionTy(ℝ,sc),ℝ,false,false);
 			break;
 		case "errorPr":
-			t=forallTy(["a"],typeTy,funTy(distributionTy(varTy("a",typeTy),sc),ℝ,false,false),true,false);
+			t=productTy(["a"],typeTy,funTy(distributionTy(varTy("a",typeTy),sc),ℝ,false,false),true,false);
 			break;
 	case "*","𝟙","𝟚","B","𝔹","Z","ℤ","Q","ℚ","R","ℝ":
 		id.type=typeTy;
@@ -841,12 +841,12 @@ Expression callSemantic(CallExp ce,Scope sc){
 						if(auto constructor=cast(FunctionDef)decl.body_.ascope_.lookup(decl.name,false,false)){
 							if(auto cty=cast(FunTy)typeForDecl(constructor)){
 								assert(ft.cod is typeTy);
-								nft=forallTy(ft.names,ft.dom,cty,ft.isSquare,ft.isTuple);
+								nft=productTy(ft.names,ft.dom,cty,ft.isSquare,ft.isTuple);
 							}
 						}
 					}
 				}
-				if(cast(ForallTy)nft.cod){
+				if(cast(ProductTy)nft.cod){
 					Expression garg;
 					auto tt=nft.tryMatch(ce.arg,garg);
 					if(!tt) return false;
@@ -883,7 +883,7 @@ Expression callSemantic(CallExp ce,Scope sc){
 			auto nce=cast(CallExp)fun;
 			assert(!!nce);
 			auto subst=decl.getSubst(nce.arg);
-			ty=cast(ForallTy)ty.substitute(subst);
+			ty=cast(ProductTy)ty.substitute(subst);
 			assert(!!ty);
 		}
 		if(!constructor||!ty){
@@ -1359,7 +1359,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		}
 		return funTy(t1,t2,false,false);
 	}
-	if(auto fa=cast(RawForallTy)expr){
+	if(auto fa=cast(RawProductTy)expr){
 		expr.type=typeTy();
 		auto fsc=new BlockScope(sc);
 		declareParameters(fa,fa.isSquare,fa.params,fsc); // parameter variables
@@ -1370,7 +1370,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		auto types=fa.params.map!(p=>p.vtype).array;
 		assert(fa.isTuple||types.length==1);
 		auto dom=fa.isTuple?tupleTy(types):types[0];
-		return forallTy(names,dom,cod,fa.isSquare,fa.isTuple);
+		return productTy(names,dom,cod,fa.isSquare,fa.isTuple);
 	}
 	if(auto ite=cast(IteExp)expr){
 		ite.cond=expressionSemantic(ite.cond,sc);
@@ -1444,7 +1444,7 @@ bool setFtype(FunctionDef fd){
 	auto pt=fd.isTuple?tupleTy(pty):pty[0];
 	if(fd.ret){
 		if(!fd.ftype){
-			fd.ftype=forallTy(pn,pt,fd.ret,fd.isSquare,fd.isTuple);
+			fd.ftype=productTy(pn,pt,fd.ret,fd.isSquare,fd.isTuple);
 			assert(fd.retNames==[]);
 		}
 		if(!fd.retNames) fd.retNames = new string[](fd.numReturns);
@@ -1622,7 +1622,7 @@ Expression typeForDecl(Declaration decl){
 		foreach(p;dat.params) if(!p.vtype) return unit; // TODO: ok?
 		assert(dat.isTuple||dat.params.length==1);
 		auto pt=dat.isTuple?tupleTy(dat.params.map!(p=>p.vtype).array):dat.params[0].vtype;
-		return forallTy(dat.params.map!(p=>p.getName).array,pt,typeTy,true,dat.isTuple);
+		return productTy(dat.params.map!(p=>p.getName).array,pt,typeTy,true,dat.isTuple);
 	}
 	if(auto vd=cast(VarDecl)decl){
 		return vd.vtype;

@@ -213,7 +213,7 @@ class StringTy: Type{
 
 StringTy stringTy(){ return memoize!(()=>new StringTy()); }
 
-class RawForallTy: Expression{
+class RawProductTy: Expression{
 	Parameter[] params;
 	Expression cod;
 	bool isSquare,isTuple;
@@ -228,7 +228,7 @@ class RawForallTy: Expression{
 	mixin VariableFree;
 }
 
-class ForallTy: Type{
+class ProductTy: Type{
 	string[] names;
 	Expression dom, cod;
 	bool isSquare,isTuple;
@@ -280,7 +280,7 @@ class ForallTy: Type{
 		if(auto r=dom.freeVarsImpl(dg)) return r;
 		return cod.freeVarsImpl(v=>names.canFind(v)?0:dg(v));
 	}
-	private ForallTy relabel(string oname,string nname)in{
+	private ProductTy relabel(string oname,string nname)in{
 		assert(names.canFind(oname));
 		assert(!hasFreeVar(nname));
 		assert(!names.canFind(nname));
@@ -295,9 +295,9 @@ class ForallTy: Type{
 		auto nnames=names.dup;
 		nnames[i]=nname;
 		auto nvar=varTy(nname,argTy(i));
-		return forallTy(nnames,dom,cod.substitute(oname,nvar),isSquare,isTuple);
+		return productTy(nnames,dom,cod.substitute(oname,nvar),isSquare,isTuple);
 	}
-	private ForallTy relabelAway(string oname)in{
+	private ProductTy relabelAway(string oname)in{
 		assert(names.canFind(oname));
 	}out(r){
 		assert(!r.names.canFind(oname));
@@ -312,20 +312,20 @@ class ForallTy: Type{
 			while(hasFreeVar(nn)||block.hasFreeVar(nn)||nnames[0..i].canFind(nn)) nn~="'";
 		return nnames;
 	}
-	private ForallTy relabelAll(string[] nnames)out(r){
+	private ProductTy relabelAll(string[] nnames)out(r){
 		assert(nnames.length==names.length);
 		foreach(n;nnames) assert(!hasFreeVar(n));
 	}body{
 		Expression[string] subst;
 		foreach(i;0..names.length) subst[names[i]]=varTy(nnames[i],argTy(i));
-		return forallTy(nnames,dom,cod.substitute(subst),isSquare,isTuple);
+		return productTy(nnames,dom,cod.substitute(subst),isSquare,isTuple);
 	}
-	override ForallTy substituteImpl(Expression[string] subst){
+	override ProductTy substituteImpl(Expression[string] subst){
 		foreach(n;names){
 			bool ok=true;
 			foreach(k,v;subst) if(v.hasFreeVar(n)) ok=false;
 			if(ok) continue;
-			auto r=cast(ForallTy)relabelAway(n).substitute(subst);
+			auto r=cast(ProductTy)relabelAway(n).substitute(subst);
 			assert(!!r);
 			return r;
 		}
@@ -333,10 +333,10 @@ class ForallTy: Type{
 		auto nsubst=subst.dup;
 		foreach(n;names) nsubst.remove(n);
 		auto ncod=cod.substitute(nsubst);
-		return forallTy(names,ndom,ncod,isSquare,isTuple);
+		return productTy(names,ndom,ncod,isSquare,isTuple);
 	}
 	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
-		auto r=cast(ForallTy)rhs; // TODO: get rid of duplication (same code in opEquals)
+		auto r=cast(ProductTy)rhs; // TODO: get rid of duplication (same code in opEquals)
 		if(!r) return false;
 		if(isTuple&&!cast(TupleTy)r.dom) return false;
 		r=r.setTuple(isTuple);
@@ -348,8 +348,8 @@ class ForallTy: Type{
 		foreach(k,v;nsubst) subst[k]=v;
 		return res;
 	}
-	Expression tryMatch(Expression arg,out Expression garg)in{assert(isSquare&&cast(ForallTy)cod);}body{
-		auto cod=cast(ForallTy)this.cod;
+	Expression tryMatch(Expression arg,out Expression garg)in{assert(isSquare&&cast(ProductTy)cod);}body{
+		auto cod=cast(ProductTy)this.cod;
 		assert(!!cod);
 		auto nnames=freshNames(arg);
 		if(nnames!=names) return relabelAll(nnames).tryMatch(arg,garg);
@@ -373,7 +373,7 @@ class ForallTy: Type{
 		}
 		if(!isTuple) assert(gargs.length==1);
 		garg=isTuple?new TupleExp(gargs):gargs[0];
-		cod=cast(ForallTy)cod.substitute(subst);
+		cod=cast(ProductTy)cod.substitute(subst);
 		assert(!!cod);
 		return cod.tryApply(arg,false);
 	}
@@ -393,7 +393,7 @@ class ForallTy: Type{
 		return cod.substitute(subst);
 	}
 	override bool opEquals(Object o){
-		auto r=cast(ForallTy)o;
+		auto r=cast(ProductTy)o;
 		if(!r) return false;
 		if(isTuple&&!cast(TupleTy)r.dom) return false;
 		r=r.setTuple(isTuple);
@@ -401,7 +401,7 @@ class ForallTy: Type{
 		r=r.relabelAll(freshNames(r));
 		return dom==r.dom&&cod==r.cod;
 	}
-	private ForallTy setTuple(bool tuple)in{
+	private ProductTy setTuple(bool tuple)in{
 		assert(!tuple||cast(TupleTy)dom);
 	}body{
 		if(tuple==isTuple) return this;
@@ -412,27 +412,27 @@ class ForallTy: Type{
 			nnames=iota(tpl.types.length).map!(i=>"x"~lowNum(i)).array;
 		}else nnames=["x"];
 		foreach(i,ref nn;nnames) while(hasFreeVar(nn)) nn~="'";
-		return forallTy(nnames,dom,cod,isSquare,tuple);
+		return productTy(nnames,dom,cod,isSquare,tuple);
 	}
 }
 
-ForallTy forallTy(string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple)in{
+ProductTy productTy(string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple)in{
 	assert(dom&&cod);
 	if(isTuple){
 		auto tdom=cast(TupleTy)dom;
 		assert(tdom&&names.length==tdom.types.length);
 	}
 }body{
-	return memoize!((string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple)=>new ForallTy(names,dom,cod,isSquare,isTuple))(names,dom,cod,isSquare,isTuple);
+	return memoize!((string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple)=>new ProductTy(names,dom,cod,isSquare,isTuple))(names,dom,cod,isSquare,isTuple);
 }
 
-alias FunTy=ForallTy;
+alias FunTy=ProductTy;
 FunTy funTy(Expression dom,Expression cod,bool isSquare,bool isTuple)in{
 	assert(dom&&cod);
 }body{
 	auto nargs=1+[].length;
 	if(isTuple) if(auto tpl=cast(TupleTy)dom) nargs=tpl.types.length;
-	return forallTy(iota(nargs).map!(_=>"").array,dom,cod,isSquare,isTuple);
+	return productTy(iota(nargs).map!(_=>"").array,dom,cod,isSquare,isTuple);
 }
 
 Identifier varTy(string name,Expression type){
