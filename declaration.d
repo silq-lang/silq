@@ -77,7 +77,7 @@ class FunctionDef: Declaration{
 	VarDecl thisVar; // for constructors
 	@property string contextName()in{assert(!!context);}body{ return context.getName; }
 	Expression ret; // return type
-	Type ftype;
+	FunTy ftype;
 	bool hasReturn;
 	bool isConstructor;
 	string[] retNames;
@@ -89,15 +89,13 @@ class FunctionDef: Declaration{
 	@property bool isNested(){ return !!cast(NestedScope)realScope; }
 
 	@property size_t numArgs(){
-		auto fty=cast(FunTy)ftype;
-		if(!fty) return 0;
-		return fty.dom.numComponents;
+		if(!ftype) return 0;
+		return ftype.dom.numComponents;
 	}
 
 	@property size_t numReturns(){
-		auto fty=cast(FunTy)ftype;
-		if(!fty) return 0;
-		return fty.cod.numComponents;
+		if(!ftype) return 0;
+		return ftype.cod.numComponents;
 	}
 }
 
