@@ -392,6 +392,32 @@ immutable dstring highDigits="⁰¹²³⁴⁵⁶⁷⁸⁹";
 string lowNum(T)(T i){ return digitRep(i,lowDigits,'₋'); }
 string highNum(T)(T i){ return digitRep(i,highDigits,'⁻'); }
 
+immutable dstring lowLetters="ₐ___ₑ__ₕᵢⱼₖₗₘₙₒₚ_ᵣₛₜᵤᵥ_ₓ__";
+static assert(lowLetters.length==26);
+
+string toLow(string s)in{assert(s.length);}body{
+	string r;
+	foreach(dchar c;s){
+		switch(c){
+			case 'a': .. case 'z':
+				if(lowLetters[c-'a']=='_') return null;
+				r~=lowLetters[c-'a'];
+				break;
+			case '0': .. case '9':
+				r~=lowDigits[c-'0'];
+				break;
+			case '-':
+				r~='₋';
+				break;
+			case '+':
+				r~='₊';
+				break;
+			default: return null;
+		}
+	}
+	return r;
+}
+
 string asciify(string s){
 	auto t=s.to!dstring; // TODO: why necessary? Phobos bug?
 	t=t.replace("ξ"d,"xi"d);

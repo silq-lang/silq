@@ -1427,10 +1427,12 @@ bool setFtype(FunctionDef fd){
 	}
 	assert(fd.isTuple||pty.length==1);
 	auto pt=fd.isTuple?tupleTy(pty):pty[0];
-	if(fd.ret&&!fd.ftype){
-		fd.ftype=forallTy(pn,pt,fd.ret,fd.isSquare,fd.isTuple);
-		assert(fd.retNames==[]);
-		fd.retNames = new string[](fd.numReturns);
+	if(fd.ret){
+		if(!fd.ftype){
+			fd.ftype=forallTy(pn,pt,fd.ret,fd.isSquare,fd.isTuple);
+			assert(fd.retNames==[]);
+		}
+		if(!fd.retNames) fd.retNames = new string[](fd.numReturns);
 	}
 	return true;
 }
@@ -1456,7 +1458,10 @@ FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 		}
 	}else if(!fd.ret) fd.ret=unit;
 	setFtype(fd);
-	foreach(ref n;fd.retNames) if(n is null) n="r";
+	foreach(ref n;fd.retNames){
+		if(n is null) n="r";
+		else n=n.stripRight('\'');
+	}
 	void[0][string] vars;
 	foreach(p;fd.params) vars[p.name.name]=[];
 	int[string] counts1,counts2;
@@ -1524,14 +1529,40 @@ ReturnExp returnExpSemantic(ReturnExp ret,Scope sc){
 		return ret;
 	}
 	ret.type=unit;
-	if(auto tpl=cast(TupleExp)ret.e){
-		assert(tpl.e.length==fd.numReturns);
-		foreach(i,e;tpl.e){
-			if(auto id=cast(Identifier)e)
-				fd.retNames[i]=id.name;
-			else if(auto fe=cast(FieldExp)e)
-				fd.retNames[i]=fe.f.name;
+	Expression[] returns;
+	if(auto tpl=cast(TupleExp)ret.e) returns=tpl.e;
+	else returns = [ret.e];
+	static string getName(Expression e){
+		string candidate(Expression e,bool allowNum=false){
+			if(auto id=cast(Identifier)e) return id.name;
+			if(auto fe=cast(FieldExp)e) return fe.f.name;
+			if(auto ie=cast(IndexExp)e){
+				auto idx=candidate(ie.a[0],true);
+				if(!idx) idx="i";
+				auto low=toLow(idx);
+				if(!low) low="_"~idx;
+				auto a=candidate(ie.e);
+				if(!a) return null;
+				return a~low;
+			}
+			if(allowNum){
+				if(auto le=cast(LiteralExp)e){
+					if(le.lit.type==Tok!"0")
+						return le.lit.str;
+				}
+			}
+			return null;
 		}
+		auto r=candidate(e);
+		if(util.among(r.stripRight('\''),"delta","sum","abs","log","lim","val","⊥","case","e","π")) return null;
+		return r;
+	}
+	if(returns.length==fd.retNames.length){
+		foreach(i,e;returns)
+			if(auto n=getName(e)) fd.retNames[i]=n;
+	}else if(returns.length==1){
+		if(auto name=getName(returns[0]))
+			foreach(ref n;fd.retNames) n=name;
 	}
 	return ret;
 }
