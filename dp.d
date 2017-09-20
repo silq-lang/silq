@@ -575,6 +575,7 @@ struct Interpreter{
 		if(!cur.state.length) return zero;
 		// TODO: get rid of code duplication
 		DExpr doIt(Expression e){
+			if(e.type == typeTy) return dTuple([]); // TODO: get rid of this
 			if(auto pl=cast(PlaceholderExp)e) return dVar(pl.ident.name);
 			if(auto id=cast(Identifier)e){
 				if(!id.meaning&&id.name=="π") return dΠ;
