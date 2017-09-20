@@ -14,27 +14,27 @@ enum Token{
 }
 private Token computeToken(string s){
 	switch(s) with(Token){
-		case "(r;f)=>δ_r[∫dy f()[y]]":
-		return inferPrecondition;
-		case "(r;f)=>δ_r[Λx.f()[x]/∫dy f()[y]]":
+		case "(r;f)=>δ(∫dy f()[y])[r]":
+			return inferPrecondition;
+		case "(r;f)=>δ(Λx.f()[x]/∫dy f()[y])[r]":
 			return infer;
-		case "(r;d)=>δ_r[∫dx d[x]·(case(x){ val(y) ⇒ 0;⊥ ⇒ 1 })]":
+		case "(r;d)=>δ(∫dx d[x]·(case(x){ val(y) ⇒ 0;⊥ ⇒ 1 }))[r]":
 			return errorPr;
-		case "(x;p)=>(1-p)·δ[1-x]+p·δ[x]":
+		case "(x;p)=>(1-p)·δ(0)[1-x]+p·δ(0)[x]":
 			return samplePrecondition;
-		case "(r;d,b)=>∫dx d[x]·(case(x){ val(y) ⇒ δ_r[y];⊥ ⇒ 0 })/(1-b)", "(x;d)=>d[x]":
+		case "(r;d,b)=>∫dx d[x]·(case(x){ val(y) ⇒ δ(y)[r];⊥ ⇒ 0 })/(1-b)", "(x;d)=>d[x]":
 			return sample;
-		case "(r;d,b)=>δ[-r+∫dx d[x]·(case(x){ val(y) ⇒ y;⊥ ⇒ 0 })/(1-b)]", "(r;d)=>δ[-r+∫dx d[x]·x]":
+		case "(r;d,b)=>δ(0)[-r+∫dx d[x]·(case(x){ val(y) ⇒ y;⊥ ⇒ 0 })/(1-b)]", "(r;d)=>δ(0)[-r+∫dx d[x]·x]":
 			return expectation;
-		case "(r;a,b)=>δ[-r+∑_i[a≤i]·[i≤b]]": // uniformInt precondition (TODO: remove)
+		case "(r;a,b)=>δ(0)[-r+∑_i[a≤i]·[i≤b]]": // uniformInt precondition (TODO: remove)
 			return uniformIntPrecondition;
-		case "(x;a,b)=>(∑_i[a≤i]·[i≤b]·δ[i-x])·⅟(∑_i[a≤i]·[i≤b])":
+		case "(x;a,b)=>(∑_i[a≤i]·[i≤b]·δ(0)[i-x])·⅟(∑_i[a≤i]·[i≤b])":
 			return uniformInt;
-		case "(r;p)=>δ[-r+[∑_i[0≤i]·[i<p.length]·[p@[i]<0]=0]·[∑_i[0≤i]·[i<p.length]·p@[i]=1]]":
+		case "(r;p)=>δ(0)[-r+[∑_i[0≤i]·[i<p.length]·[p@[i]<0]=0]·[∑_i[0≤i]·[i<p.length]·p@[i]=1]]":
 			return categoricalPrecondition;
-		case "(x;p)=>∑_i[0≤i]·[i<p.length]·p@[i]·δ[i-x]":
+		case "(x;p)=>∑_i[0≤i]·[i<p.length]·p@[i]·δ(0)[i-x]":
 			return categorical;
-		case "(x;n,p)=>∑_ξ₁(-p+1)^(-ξ₁+n)·(∫dξ₂[-ξ₂≤0]·ξ₂^n·⅟e^ξ₂)·[-n+ξ₁≤0]·[-ξ₁≤0]·p^ξ₁·δ[-ξ₁+x]·⅟(∫dξ₂[-ξ₂≤0]·ξ₂^(-ξ₁+n)·⅟e^ξ₂)·⅟(∫dξ₂[-ξ₂≤0]·ξ₂^ξ₁·⅟e^ξ₂)":
+		case "(x;n,p)=>∑_ξ₁(-p+1)^(-ξ₁+n)·(∫dξ₂[-ξ₂≤0]·ξ₂^n·⅟e^ξ₂)·[-n+ξ₁≤0]·[-ξ₁≤0]·p^ξ₁·δ(0)[-ξ₁+x]·⅟(∫dξ₂[-ξ₂≤0]·ξ₂^(-ξ₁+n)·⅟e^ξ₂)·⅟(∫dξ₂[-ξ₂≤0]·ξ₂^ξ₁·⅟e^ξ₂)":
 			return binomial;
 		default:
 			return Token.none;
