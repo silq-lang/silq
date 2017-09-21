@@ -1,3 +1,5 @@
+// skipped
+
 def main(){
     controlGroup := [0,0,1,0,0];
     treatedGroup := [1,0,1,1,1];
@@ -15,5 +17,5 @@ def main(){
 
     isEffectiveP := sample(Marginal(isEffective));
     observe(isEffective);
-    return (isEffectiveP,probIfTreated,probIfControl); // expected: (-3600·probIfControl²·probIfTreated⁴+-3600·probIfControl⁴·probIfTreated⁴+-5400·probIfControl³·probIfTreated⁵+-900·probIfControl·probIfTreated⁵+-900·probIfControl⁵·probIfTreated⁵+3600·probIfControl²·probIfTreated⁵+3600·probIfControl⁴·probIfTreated⁵+5400·probIfControl³·probIfTreated⁴+900·probIfControl·probIfTreated⁴+900·probIfControl⁵·probIfTreated⁴)·(25/102·δ(0)[isEffectiveP]+77/102·δ(1)[isEffectiveP])·[-1+probIfControl≤0]·[-1+probIfTreated≤0]·[-probIfControl≤0]·[-probIfTreated≤0]
+    return (isEffectiveP,probIfTreated,probIfControl); // expected: (-1/2·probIfControl·probIfTreated⁵+-1/2·probIfControl⁵·probIfTreated⁵+-2·probIfControl²·probIfTreated⁴+-2·probIfControl⁴·probIfTreated⁴+-3·probIfControl³·probIfTreated⁵+1/2·probIfControl·probIfTreated⁴+1/2·probIfControl⁵·probIfTreated⁴+2·probIfControl²·probIfTreated⁵+2·probIfControl⁴·probIfTreated⁵+3·probIfControl³·probIfTreated⁴)·(23100/17·δ(1)[isEffectiveP]+7500/17·δ(0)[isEffectiveP])·[-1+probIfControl≤0]·[-1+probIfTreated≤0]·[-probIfControl≤0]·[-probIfTreated≤0]
 }

@@ -148,6 +148,11 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration;
+	//writeln("[a^b≤0]".dParse.simplify(one));
+	//writeln("[a^(-1/2-b^2)≠0]".dParse.simplify(one));
+	//writeln("[e^r≤0]".dParse.simplify(one));
+	//writeln("[x²·y²=0]".dParse.simplify(one));
+	//writeln("lim[ξ₁→ -∞] ξ₁²·(d/dx)⁻¹[e^(-x²)](ξ₁·⅟√n̅u̅)".dParse.simplify("[nu≥0]".dParse.simplify(one)));
 	//dw("lim[p→ ∞] (-1/4·(1/p)²+1/2·(1/p))·[-1+(1/p)≤0]·[-(1/p)²+4·(1/p)≠0]·[-(1/p)≤0]·⅟(-1/4·(1/p)²+(1/p))".dParse.simplify(one)); // TODO
 	//dw("∫dξ₁[-ξ₁≤0]·ξ₁·⅟e^(13·ξ₁²·⅟120)".dParse.simplify(one));
 	//dw("δ(0)[x-y²]".dParse.linearizeConstraints("y".dVar).simplify(one));

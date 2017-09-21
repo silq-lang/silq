@@ -3,7 +3,8 @@
 
 
 def Variance(x:Distribution[ℝ]){
-    return expectation(then((x)=>x^2)(x))-expectation(x)^2;
+    //return expectation(then((x)=>x^2)(x))-expectation(x)^2; // TODO: make this work
+	return Expectation(sample(x)^2)-Expectation(sample(x))^2;
 }
 
 def main(){

@@ -2632,8 +2632,41 @@ class DIvr: DExpr{ // iverson brackets
 				}
 			}
 		}
-		if(util.among(type,Type.eqZ,Type.neqZ)){
-			if(auto p=cast(DPlus)e){
+		if(e.hasFreeVars())
+			if(auto fct=factorDIvr!(e=>dIvr(type,e))(e))
+				return fct.simplify(facts);
+		if(type==Type.leZ){
+			DExprSet nf;
+			foreach(f;e.factors){
+				if(cast(DMult)e?
+				   dLtZ(f).simplify(facts)==zero :
+				   mustBeLessOrEqualZero((-f).simplify(facts))
+				){
+					DMult.insert(nf,dNeqZ(f));
+					continue;
+				}
+				if(auto p=cast(DPow)f){
+					if(auto q=cast(Dℚ)p.operands[1]){
+						assert(q.c.den==1 && q.c.num&1);
+						DMult.insert(nf,p.operands[0]);
+						continue;
+					}
+					if(p.operands[1].getFractionalFactor().c<0){
+						DMult.insert(nf, p.operands[0]^^(-p.operands[1]));
+						continue;
+					}
+				}
+				nf.insert(f);
+			}
+			auto ne2=dMult(nf).simplify(facts);
+			if(ne2!=e) return dIvr(type,ne2).simplify(facts);
+		}else if(util.among(type,Type.eqZ,Type.neqZ)){
+			if(auto m=cast(DMult)e){
+				DExprSet nf;
+				foreach(f;m.factors) DMult.insert(nf,dNeqZ(f));
+				auto ne2=dMult(nf).simplify(facts);
+				if(ne2!=e) return dIvr(type,ne2).simplify(facts);
+			}else if(auto p=cast(DPlus)e){
 				bool allNonNegative=true;
 				bool allNonPositive=true;
 				bool onlyNegativeFractions=true;
@@ -2670,9 +2703,6 @@ class DIvr: DExpr{ // iverson brackets
 				}
 			}
 		}
-		if(e.hasFreeVars())
-			if(auto fct=factorDIvr!(e=>dIvr(type,e))(e))
-				return fct.simplify(facts);
 		// TODO: eliminate common denominators in a sum?
 		if(auto l=cast(DLog)e)
 			return dIvr(type,l.e-one).simplify(facts);

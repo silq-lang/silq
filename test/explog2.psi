@@ -1,5 +1,5 @@
 def main(){
 	x := uniform(0,exp(10));
-	return log(x); // expected: (-[⅟e^r≤0]·e^(-10+r)+[-⅟e^r≤0]·e^(-10+r))·[-e^r≤0]·[-e¹⁰+e^r≤0]
+	return log(x); // expected: [-e^r≤0]·[-e¹⁰+e^r≤0]·e^(-10+r)
 	// TODO: improve simplification
 }
