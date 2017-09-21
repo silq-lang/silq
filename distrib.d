@@ -349,7 +349,7 @@ class Distribution{
 		assert(hasArgs==b.hasArgs && args == b.args);
 		assert(!freeVarsOrdered && !b.freeVarsOrdered);
 		if(error != zero || b.error != zero)
-			r.error=(orig.error+error+b.error).simplify(one);
+			r.error=orig.error+error+b.error;
 		return r;
 	}
 	
