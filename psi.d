@@ -489,7 +489,6 @@ void test(){
 	//writeln("(∫dξ₁(((((((-2557.4741704993198255+629.1897385856640312·ξ₁)·ξ₁+4210.1081976674804537)·ξ₁+-3594.7906656730001487)·ξ₁+1694.9871901131500636)·ξ₁+-436.9879652054199823)·ξ₁+60.1321271299536022)·ξ₁+-5.1644521185101802)·[-1+ξ₁≤0]·[-10·ξ₁+1≤0]·[-w+ξ₁≠0]·[-w·⅟ξ₁≠0]·[-ξ₁+w≤0]·[-ξ₁≤0]·[ξ₁·⅟w≠0]·⅟ξ₁)".dParse);
 	//writeln("∫dtmp((∫dξ₁([-1+tmp≤0]·[-10·tmp+1≤0]+[-10+tmp≤0]·[-tmp+1≤0]+-log(ξ₁))·[-tmp+ξ₁≤0]·[-ξ₁+r≠0]·[-ξ₁+r≤0]·[-ξ₁≠0]·[-ξ₁≤0]·⅟ξ₁)·[-1+tmp≤0]·[-tmp≠0]·[-tmp≤0]·log(tmp))".dParse);
 	//writeln("∫dtmpfubi1((-(∫dξ₁[-1+ξ₁≤0]·[-ξ₁+tmpfubi1≤0]·[-ξ₁≠0]·[-ξ₁≤0]·log(ξ₁))·log(tmpfubi1)+∫dξ₁[-1+ξ₁≤0]·[-10·ξ₁+1≤0]·[-ξ₁+tmpfubi1≤0]·[-ξ₁≠0]·[-ξ₁≤0]·log(ξ₁))·[-tmpfubi1+r≠0]·[-tmpfubi1+r≤0]·[-tmpfubi1≠0]·[-tmpfubi1≤0]·⅟tmpfubi1)".dParse);
-	//import approximate;
 	//writeln(dInt("x".dVar,dBounded!"[]"("x".dVar,zero,one)*-approxLog("x".dVar)).simplify(one));
 	//writeln("∫dξ₁([-10·r+1≠0]·⅟ξ₁+[-10·r+1≤0]·⅟ξ₁)·[-1+ξ₁≤0]·[-10·ξ₁+1≤0]·[-ξ₁+1≠0]·[-ξ₁≠0]·[-ξ₁≤0]".dParse);
 	//writeln("∫dx(log(x)·[-x<0]·[x+-1≤0])".dParse);
@@ -501,7 +500,6 @@ void test(){
 	//writeln("[0.0=0]".dParse);
 	//writeln("(∫dξ₁[-ξ₁+3≠0]·[-ξ₁+3≤0]·⅟e^(3·ξ₁))".dParse.simplify(one));
 	//writeln("[x=0]·δ[x]".dParse.simplify(one));
-	//import approximate;
 	//writeln("∫dx log(x)·1/x·[-x<0]·[x+-y≤0]".dParse.simplify(one).killIntegrals().simplify(one));
 	//writeln("2^(3/2)+2".dParse.simplify(one));
 	//writeln("⅟(2+√2̅)·√2̅".dParse.simplify(one));
@@ -561,7 +559,6 @@ void test(){
 	//writeln("(x-y)·[x=y]".dParse.simplify(one));
 	//writeln("(1+⅟(-x+1))".dParse.simplify(one));
 	//writeln("[2·√2̅+√3̅=0]".dParse.simplify(one));
-	import approximate;
 	//writeln("(∫dξ₁(∫dξ₂(∫dξ₃(-(∫dξ₄(∫dξ₅(d/dx)⁻¹[e^(-x²)](-ξ₄·⅟√3̅0̅+ξ₅·⅟√3̅0̅)·e^(-ξ₅²·⅟30+ξ₂·ξ₅·⅟15))·e^(-ξ₄²·⅟12+10·ξ₄+ξ₃·ξ₄·⅟15))·⅟20·√3̅0̅+3·e^(300+4·ξ₃+ξ₂²·⅟30+ξ₃²·⅟75)·π^(3·⅟2)·⅟2·√1̅2̅)·(d/dx)⁻¹[e^(-x²)](-ξ₁·⅟√3̅0̅+ξ₃·⅟√3̅0̅)·⅟e^(ξ₃²·⅟30))·(∫dξ₃(d/dx)⁻¹[e^(-x²)](-ξ₂·⅟√3̅0̅+ξ₃·⅟√3̅0̅)·e^(-ξ₃²·⅟30+ξ₁·ξ₃·⅟15))·e^(-ξ₂²·⅟12+10·ξ₂))·e^(-ξ₁²·⅟12+10·ξ₁))".dParse.simplify(one).killIntegrals());
 	//writeln("(∫dξ₃(d/dx)⁻¹[e^(-x²)](-ξ₂·⅟√3̅0̅+ξ₃·⅟√3̅0̅)·[0≤ξ₃]·[ξ₃≤1])".dParse.killIntegrals());
 	//e^(-ξ₃²·⅟30+ξ₁·ξ₃·⅟15)

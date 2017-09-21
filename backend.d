@@ -51,10 +51,6 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 	auto dist=be.analyze(fd,err).dup;
 	if(isMain&&!opt.noNormalize) dist.renormalize();
 	import dparse;
-	import approximate;
-	//import hashtable; dist.distribution=approxLog(dist.freeVars.element);
-	//import hashtable; dist.distribution=approxGaussInt(dist.freeVars.element);
-	if(opt.kill) dist.distribution=dist.distribution.killIntegrals();
 	if(opt.expectation||opt.backend==InferenceMethod.simulate){ // TODO: deal with non-convergent expectations
 		auto exp=!dist.isTuple?dist.orderedFreeVars[0]:dTuple(cast(DExpr[])dist.orderedFreeVars);
 		// TODO: do not compute full distribution with --expectation switch
