@@ -3,7 +3,7 @@ def main(){
     i := 1;
     y := 0;
     repeat 5{
-        if flip(1/2) && x == i {
+        if flip(1/2) & x == i { // TODO: make fast with &&
             y = y + 1;
         }
         i = i + flip(1/2);
