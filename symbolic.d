@@ -638,6 +638,25 @@ private struct Analyzer{
 		/+writeln("before: ",dist);
 		 scope(success) writeln("after: ",dist);+/
 		// TODO: visitor?
+		void analyzeIte(Expression iteCond,CompoundExp iteThen,CompoundExp iteOthw){
+			if(auto c=transformConstr(iteCond)){
+				auto dthen=dist.dupNoErr();
+				dthen.distribution=dthen.distribution*dNeqZ(c);
+				auto dothw=dist.dupNoErr();
+				dothw.distribution=dothw.distribution*dEqZ(c);
+				auto athen=Analyzer(be,dthen,err,arrays.dup,deterministic.dup);
+				dthen=athen.analyze(iteThen,retDist,functionDef);
+				auto aothw=Analyzer(be,dothw,err,arrays.dup,deterministic.dup);
+				if(iteOthw) dothw=aothw.analyze(iteOthw,retDist,functionDef);
+				dist=dthen.join(dist,dothw);
+				foreach(k,v;deterministic){
+					if(k in athen.deterministic && k in aothw.deterministic
+						&& athen.deterministic[k] == aothw.deterministic[k]){
+						deterministic[k]=athen.deterministic[k];
+					}else deterministic.remove(k);
+				}
+			}
+		}
 		if(auto nde=cast(DefExp)e){
 			auto de=cast(ODefExp)nde.initializer;
 			assert(!!de);
@@ -694,8 +713,8 @@ private struct Analyzer{
 			dist.marginalizeTemporaries();
 		}else if(isOpAssignExp(e)){
 			DExpr perform(DExpr a,DExpr b){
-				if(cast(OrAssignExp)e) return dNeqZ(dNeqZ(a)+dNeqZ(b));
-				if(cast(AndAssignExp)e) return dNeqZ(a)*dNeqZ(b);
+				//if(cast(OrAssignExp)e) return dNeqZ(dNeqZ(a)+dNeqZ(b));
+				//if(cast(AndAssignExp)e) return dNeqZ(a)*dNeqZ(b);
 				if(cast(AddAssignExp)e) return a+b;
 				if(cast(SubAssignExp)e) return a-b;
 				if(cast(MulAssignExp)e) return a*b;
@@ -716,31 +735,21 @@ private struct Analyzer{
 			}
 			auto be=cast(ABinaryExp)e;
 			assert(!!be);
-			auto lhs=transformExp(be.e1);
-			auto rhs=transformExp(be.e2);
-			assignTo(lhs,perform(lhs,rhs),be.e2.type,be.loc);
+			if(cast(AndAssignExp)be){
+				analyzeIte(be.e1, new CompoundExp([new AssignExp(be.e1,be.e2)]), null);
+			}else if(cast(OrAssignExp)be){
+				analyzeIte(be.e1, new CompoundExp([]), new CompoundExp([new AssignExp(be.e1,be.e2)]));
+			}else{
+				auto lhs=transformExp(be.e1);
+				auto rhs=transformExp(be.e2);
+				assignTo(lhs,perform(lhs,rhs),be.e2.type,be.loc);
+			}
 			dist.marginalizeTemporaries();
 		}else if(auto call=cast(CallExp)e){
 			transformExp(call);
 			dist.marginalizeTemporaries();
 		}else if(auto ite=cast(IteExp)e){
-			if(auto c=transformConstr(ite.cond)){
-				auto dthen=dist.dupNoErr();
-				dthen.distribution=dthen.distribution*dNeqZ(c);
-				auto dothw=dist.dupNoErr();
-				dothw.distribution=dothw.distribution*dEqZ(c);
-				auto athen=Analyzer(be,dthen,err,arrays.dup,deterministic.dup);
-				dthen=athen.analyze(ite.then,retDist,functionDef);
-				auto aothw=Analyzer(be,dothw,err,arrays.dup,deterministic.dup);
-				if(ite.othw) dothw=aothw.analyze(ite.othw,retDist,functionDef);
-				dist=dthen.join(dist,dothw);
-				foreach(k,v;deterministic){
-					if(k in athen.deterministic && k in aothw.deterministic
-						&& athen.deterministic[k] == aothw.deterministic[k]){
-						deterministic[k]=athen.deterministic[k];
-					}else deterministic.remove(k);
-				}
-			}
+			analyzeIte(ite.cond,ite.then,ite.othw);
 		}else if(auto re=cast(RepeatExp)e){
 			if(auto exp=transformExp(re.num)){
 				if(auto num=isDeterministicInteger(exp)){
