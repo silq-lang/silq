@@ -3,6 +3,6 @@ def main(){ // bothHeads
     secondCoin := flip(1/2);
     bothHeads := firstCoin && secondCoin;
     observe(bothHeads == 0);
-    return (firstCoin,secondCoin); // expected: (1/2·δ(0)[firstCoin]+1/2·δ(1)[firstCoin])·(2/3·δ(0)[secondCoin]+2/3·δ(1)[secondCoin])·([firstCoin=0]+[firstCoin≠0]·[secondCoin=0])
+    return (firstCoin,secondCoin); // expected: (1/3·δ(0)[secondCoin]+1/3·δ(1)[secondCoin])·δ(0)[firstCoin]+1/3·δ(0)[secondCoin]·δ(1)[firstCoin]
     // TODO: simplify more
 }

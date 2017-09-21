@@ -72,9 +72,37 @@ private struct Analyzer{
 	ErrorHandler err;
 	DExpr[][string] arrays;
 	DExpr[DVar] deterministic;
+
+	static class Unwind: Exception{ this(){ super(""); } }
+	static void unwind(){ throw new Unwind(); }
+	DExpr transformIte(Expression iteCond,CompoundExp iteThen,CompoundExp iteOthw,bool isConstr=false){
+		auto cond=transformConstr(iteCond);
+		if(!cond) throw new Unwind();
+		auto var=dist.getTmpVar("__ite");
+		dist.initialize(var,dTuple([]),unit); // TODO: get rid of this?
+		auto dthen=dist.dupNoErr();
+		dthen.distribution=dthen.distribution*dNeqZ(cond);
+		auto dothw=dist.dupNoErr();
+		dothw.distribution=dothw.distribution*dEqZ(cond);
+		auto athen=Analyzer(be,dthen,err,arrays.dup,deterministic.dup);
+		auto then=isConstr?athen.transformConstr(iteThen):athen.transformExp(iteThen);
+		if(!then) unwind();
+		athen.dist.assign(var,then,iteThen.s[0].type);
+		if(!iteOthw) unwind();
+		auto aothw=Analyzer(be,dothw,err,arrays.dup,deterministic.dup);
+		auto othw=isConstr?aothw.transformConstr(iteOthw):aothw.transformExp(iteOthw);
+		if(!othw) unwind();
+		aothw.dist.assign(var,othw,iteOthw.s[0].type);
+		dist=athen.dist.join(dist,aothw.dist);
+		foreach(k,v;deterministic){
+			if(k in athen.deterministic && k in aothw.deterministic
+				&& athen.deterministic[k] == aothw.deterministic[k]){
+				deterministic[k]=athen.deterministic[k];
+			}else deterministic.remove(k);
+		}
+		return var;
+	}
 	DExpr transformExp(Exp e){
-		class Unwind: Exception{ this(){ super(""); } }
-		void unwind(){ throw new Unwind(); }
 		import scope_,context;
 		DExpr readLocal(string name){
 			auto v=dVar(name);
@@ -295,34 +323,7 @@ private struct Analyzer{
 				if(cmp.s.length==1)
 					return doIt(cmp.s[0]);
 			}else if(auto ite=cast(IteExp)e){
-				auto cond=transformConstr(ite.cond);
-				if(!cond) throw new Unwind();
-				auto var=dist.getTmpVar("__ite");
-				dist.initialize(var,dTuple([]),unit); // TODO: get rid of this?
-				auto dthen=dist.dupNoErr();
-				dthen.distribution=dthen.distribution*dNeqZ(cond);
-				auto dothw=dist.dupNoErr();
-				dothw.distribution=dothw.distribution*dEqZ(cond);
-				auto athen=Analyzer(be,dthen,err,arrays.dup,deterministic.dup);
-				auto then=athen.transformExp(ite.then);
-				if(!then) unwind();
-				athen.dist.assign(var,then,ite.then.s[0].type);
-				if(!ite.othw){
-					err.error("missing else for if expression",ite.loc);
-					unwind();
-				}
-				auto aothw=Analyzer(be,dothw,err,arrays.dup,deterministic.dup);
-				auto othw=aothw.transformExp(ite.othw);
-				if(!othw) unwind();
-				aothw.dist.assign(var,othw,ite.othw.s[0].type);
-				dist=athen.dist.join(dist,aothw.dist);
-				foreach(k,v;deterministic){
-					if(k in athen.deterministic && k in aothw.deterministic
-						&& athen.deterministic[k] == aothw.deterministic[k]){
-						deterministic[k]=athen.deterministic[k];
-					}else deterministic.remove(k);
-				}
-				return var;
+				return transformIte(ite.cond,ite.then,ite.othw);
 			}else if(auto tpl=cast(TupleExp)e){
 				auto dexprs=tpl.e.map!doIt.array;
 				return dTuple(dexprs);
@@ -356,11 +357,15 @@ private struct Analyzer{
 				if(!e1||!e2) unwind();
 			};
 			if(auto b=cast(AndExp)e){
-				auto e1=doIt(b.e1), e2=doIt(b.e2);
-				return e1*e2;
+				auto oneExp=new LiteralExp(Token(Tok!"0","0"));
+				oneExp.type = ℝ;
+				return transformIte(b.e1,new CompoundExp([b.e2]),new CompoundExp([oneExp]),true);
 			}else if(auto b=cast(OrExp)e){
-				auto e1=doIt(b.e1), e2=doIt(b.e2);
-				return dNeqZ(e1+e2);
+				auto zeroExp=new LiteralExp(Token(Tok!"0","1"));
+				zeroExp.type = ℝ;
+				return transformIte(b.e1,new CompoundExp([zeroExp]),new CompoundExp([b.e2]),true);
+			}else if(auto i=cast(IteExp)e){
+				return transformIte(i.cond,i.then,i.othw,true);
 			}else with(DIvr.Type)if(auto b=cast(LtExp)e){
 				mixin(common);
 				return dLt(e1,e2);
