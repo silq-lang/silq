@@ -148,6 +148,7 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration;
+	//writeln("e^(log(x)+log(y))".dParse.simplify(one));
 	//writeln("[a^b≤0]".dParse.simplify(one));
 	//writeln("[a^(-1/2-b^2)≠0]".dParse.simplify(one));
 	//writeln("[e^r≤0]".dParse.simplify(one));

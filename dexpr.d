@@ -1888,7 +1888,8 @@ bool mustBeLessOrEqualZero(DExpr e){
 				assert(exp.c.den==1);
 				return !(exp.c.num%2)||mustBeGreaterOrEqualZeroImpl(p.operands[0]);
 			}
-			if(p.operands[1].isFractional()) return true; // TODO: ok?
+			if(p.operands[1].isFractional()) return true;
+			if(mustBeGreaterOrEqualZeroImpl(p.operands[0])) return true;
 		}
 		if(mustBeZeroOrOne(e)) return true;
 		return false;
