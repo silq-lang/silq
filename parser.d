@@ -737,15 +737,26 @@ struct Parser{
 		mixin(SetLoc!IteExp);
 		expect(Tok!"if");
 		auto cond=parseCondition();
-		auto then=parseCompoundExp();
-		CompoundExp othw=null;
-		if(ttype == Tok!"else"){
+		CompoundExp then,othw=null;
+		if(ttype==Tok!"then"){
 			nextToken();
-			if(ttype==Tok!"if"){
-				Expression o=parseIte();
-				othw=New!CompoundExp([o]);
-				othw.loc=o.loc;
-			}else othw=parseCompoundExp();
+			auto thenExp = parseExpression();
+			expect(Tok!"else");
+			auto othwExp = parseExpression(rbp!(Tok!","));
+			then=New!CompoundExp([thenExp]);
+			then.loc=thenExp.loc;
+			othw=New!CompoundExp([othwExp]);
+			othw.loc=othwExp.loc;
+		}else{
+			then=parseCompoundExp();
+			if(ttype == Tok!"else"){
+				nextToken();
+				if(ttype==Tok!"if"){
+					Expression o=parseIte();
+					othw=New!CompoundExp([o]);
+					othw.loc=o.loc;
+				}else othw=parseCompoundExp();
+			}
 		}
 		return res=New!IteExp(cond,then,othw);
 	}

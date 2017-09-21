@@ -123,7 +123,7 @@ string[2][] specialTokens =
 	 ["↦",     "MapsTo"                    ]];
 string[2][] compoundTokens = [];
 
-string[] keywords = ["dat","def","true","false","if","else","observe","assert","return","repeat","for","while","in","cobserve","import","Π","Pi"];
+string[] keywords = ["dat","def","true","false","if","then","else","observe","assert","return","repeat","for","while","in","cobserve","import","Π","Pi"];
 
 
 string[2][] tokens = specialTokens ~ complexTokens ~ simpleTokens ~ compoundTokens ~ keywordTokens();
@@ -900,6 +900,7 @@ TokenType isKeyword(string s){
 		case 4:
 			if(s=="true") return Tok!"true";
 			if(s=="else") return Tok!"else";
+			if(s=="then") return Tok!"then";
 			break;
 		case 5:
 			if(s=="false") return Tok!"false";
