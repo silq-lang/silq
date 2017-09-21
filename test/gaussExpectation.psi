@@ -1,4 +1,4 @@
 def main(){
-    x := gauss(0,4/3);
-    return Expectation(x); // expected: TODO: 89·δ(0)[1398+-89·r₁]
+    x := gauss(1398/89,4/3);
+    return Expectation(x); // expected: δ(1398/89)[r]
 }
