@@ -388,8 +388,6 @@ mixin template FactoryFunction(T){
 		DExpr dGe(DExpr e1,DExpr e2){ return dLeZ(e2-e1); }
 		DExpr dLt(DExpr e1,DExpr e2){ return dLtZ(e1-e2); }
 		DExpr dGt(DExpr e1,DExpr e2){ return dLtZ(e2-e1); }
-	}else static if(is(T==DFloat)){
-		DExpr dFloat(real c){ return new DFloat(c); }
 	}else:
 
 	static if(is(T==DDelta)){
