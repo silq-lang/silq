@@ -7,5 +7,6 @@ def main(){
     wet_roof := flip(7/10) && rain;
     wet_grass := flip(9/10) && rain || flip(9/10) && sprinkler;
     observe(wet_grass);
-    return rain; // expected: 210/719·δ(0)[rain]+509/719·δ(1)[rain]
+    return rain; // expected: (1000/6471+1000/719·[rain=0])·(21/100·δ(0)[rain]+9/100·δ(1)[rain])·(27/100+63/100·[rain=0]+63/100·[rain≠0])+500/719·δ(1)[rain]
+	// TODO: simplify to 210/719·δ(0)[rain]+509/719·δ(1)[rain]
 }

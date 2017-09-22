@@ -78,21 +78,33 @@ private struct Analyzer{
 	DExpr transformIte(Expression iteCond,CompoundExp iteThen,CompoundExp iteOthw,bool isConstr=false){
 		auto cond=transformConstr(iteCond);
 		if(!cond) throw new Unwind();
-		auto var=dist.getTmpVar("__ite");
-		dist.initialize(var,dTuple([]),unit); // TODO: get rid of this?
 		auto dthen=dist.dupNoErr();
+		auto var=dthen.getTmpVar("__ite");
+		dthen.initialize(var,dTuple([]),tupleTy([])); // TODO: get rid of this?
 		dthen.distribution=dthen.distribution*dNeqZ(cond);
 		auto dothw=dist.dupNoErr();
+		auto ovar=dothw.getTmpVar("__ite");
+		assert(var==ovar);
+		dothw.initialize(var,dTuple([]),tupleTy([])); // TODO: get rid of this?
 		dothw.distribution=dothw.distribution*dEqZ(cond);
 		auto athen=Analyzer(be,dthen,err,arrays.dup,deterministic.dup);
+		auto tprior=dthen.distribution;
 		auto then=isConstr?athen.transformConstr(iteThen):athen.transformExp(iteThen);
 		if(!then) unwind();
-		athen.dist.assign(var,then,iteThen.s[0].type);
 		if(!iteOthw) unwind();
 		auto aothw=Analyzer(be,dothw,err,arrays.dup,deterministic.dup);
+		auto oprior=dothw.distribution;
 		auto othw=isConstr?aothw.transformConstr(iteOthw):aothw.transformExp(iteOthw);
 		if(!othw) unwind();
+		if(isConstr && aothw.dist.distribution==oprior && aothw.dist.error==zero &&
+		   athen.dist.distribution==tprior && athen.dist.error==zero){
+			auto e1=transformConstr(iteThen), e2=transformConstr(iteOthw);
+			return cond*e1+dEqZ(cond)*e2;
+		}
+		athen.dist.assign(var,then,iteThen.s[0].type);
 		aothw.dist.assign(var,othw,iteOthw.s[0].type);
+		auto dvar=dist.getTmpVar("__ite");
+		dist.initialize(dvar,dTuple([]),tupleTy([]));
 		dist=athen.dist.join(dist,aothw.dist);
 		foreach(k,v;deterministic){
 			if(k in athen.deterministic && k in aothw.deterministic

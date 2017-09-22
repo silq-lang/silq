@@ -298,7 +298,7 @@ class Distribution{
 
 	Distribution dup(){
 		auto r=new Distribution();
-		r.vbl=vbl;
+		r.vbl=vbl.dup;
 		r.freeVars=freeVars.dup();
 		r.distribution=distribution;
 		r.error=error;

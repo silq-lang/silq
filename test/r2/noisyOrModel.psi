@@ -16,7 +16,7 @@ def main(){ // N20n
         n22 = flip(1/10);
         n33 = flip(1/10);
     }
-    n2 := n21 | n22; // TODO: make fast with ||
+    n2 := n21 || n22; // TODO: make fast with ||
     if (n1){
         n31 = flip(4/5);
     }else{
@@ -27,6 +27,6 @@ def main(){ // N20n
     }else{
         n32 = flip(1/10);
     }
-    n3 := n31 | n32 | n33; // TODO: make fast with ||
+    n3 := n31 || n32 || n33; // TODO: make fast with ||
     return n3; // expected: 130307/160000·δ(1)[n3]+29693/160000·δ(0)[n3]
 }

@@ -3451,6 +3451,20 @@ template BitwiseImpl(string which){
 		DExprSet operands;
 		foreach(o;this.operands)
 			insertAndSimplify(operands,o,facts);
+		static if(which=="bitOr"||which=="bitAnd"){
+			if(util.all!(x=>mustBeZeroOrOne(x))(operands)){
+				static if(which=="bitOr"){
+					DExprSet ops;
+					foreach(op;operands) DPlus.insert(ops, dNeqZ(op));
+					return dNeqZ(dPlus(ops)).simplify(facts);
+				}else{
+					static assert(which=="bitAnd");
+					DExprSet ops;
+					foreach(op;operands) DMult.insert(ops, dNeqZ(op));
+					return dMult(ops).simplify(facts);
+				}
+			}
+		}
 		return mixin("d"~upperf(which))(operands);
 	}
 	static DExpr constructHook(DExprSet operands){
