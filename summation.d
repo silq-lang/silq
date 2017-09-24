@@ -68,11 +68,20 @@ DExpr computeSum(DExpr expr,DExpr facts=one){
 	//if(nonIvrs==one) return (dLe(dCeil(lower),dFloor(upper))*(dFloor(upper)+1-dCeil(lower))).simplify(facts);
 	// TODO: use more clever summation strategies first
 	auto lq=cast(Dℚ)lower, uq=cast(Dℚ)upper;
+	import std.format: format;
+	import std.math: ceil, floor;
+	bool isFloat=false;
+	if(!lq && !uq){
+		if(auto f=cast(DFloat)lower){ lq = ℤ(format("%.0f",ceil(f.c))).dℚ; isFloat=true; }
+		if(auto f=cast(DFloat)upper){ uq = ℤ(format("%.0f",floor(f.c))).dℚ; isFloat=true; }
+	}
 	if(lower && upper && lq && uq){
+		import util: ceil, floor;
 		auto low=ceil(lq.c), up=floor(uq.c);
 		DExprSet s;
 		if(low<=up) foreach(i;low..up+1){ // TODO: report bug in std.bigint (the if condition should not be necessary)
-			DPlus.insert(s,unbind(nonIvrs,dℚ(i)).simplify(facts));
+			import std.conv: text, to;
+			DPlus.insert(s,unbind(nonIvrs,isFloat?dFloat(text(i).to!real):dℚ(i)).simplify(facts));
 		}
 		return dPlus(s);
 	}

@@ -6,6 +6,7 @@ import dexpr;
 DExpr differentiate(DVar v,DExpr e){
 	if(v == e) return one;
 	if(cast(Dℚ)e) return zero;
+	if(cast(DFloat)e) return zero;
 	if(auto p=cast(DPlus)e){
 		DExprSet r;
 		foreach(s;p.summands)

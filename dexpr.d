@@ -163,6 +163,11 @@ abstract class DExpr{
 	final Dℚ isInteger(){
 		auto q=cast(Dℚ)this;
 		if(q&&q.c.den==1) return q;
+		if(auto f=cast(DFloat)this){
+			import std.math: floor;
+			import std.format: format;
+			if(f.c==floor(f.c)) return ℤ(format("%.0f",floor(f.c))).dℚ;
+		}
 		return null;
 	}
 
@@ -1132,7 +1137,7 @@ class DMult: DCommutAssocOp{
 			if(auto r=combineInf(e2,e1,facts)) return r.simplify(facts);
 			if(e1==e2) return (e1^^2).simplify(facts);
 			if(e1==zero||e2==zero) return zero;
-			if(cast(Dℚ)e2) swap(e1,e2);
+			if(cast(Dℚ)e2||cast(DFloat)e2) swap(e1,e2);
 			if(auto q1=cast(Dℚ)e1){
 				if(q1.c==1) return e2;
 				if(auto q2=cast(Dℚ)e2)
