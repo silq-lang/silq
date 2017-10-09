@@ -1,0 +1,15 @@
+// By: Everett Hildenbrandt
+
+def main() {
+	d := 7;
+	p := 3;
+	people := array(p,0);
+	for i in [0..p) {
+		bday := uniformInt(0,d-1);
+		for j in [0..i) {
+			if people[j] == bday { return true ; }
+		}
+		people[i] = bday;
+	}
+	return false; // expected: 19/49·δ(1)[r]+30/49·δ(0)[r]
+}

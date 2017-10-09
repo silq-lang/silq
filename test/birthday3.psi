@@ -1,0 +1,13 @@
+// By: Everett Hildenbrandth
+
+def main() {
+	d := 7;
+	p := 3;
+	days := array(d,0);
+	for i in [0..p) {
+		bday := uniformInt(0,d-1);
+		if days[bday] > 0 { return true ; }
+		days[bday] = 1;
+	}
+	return false; // expected: 19/49·δ(1)[r]+30/49·δ(0)[r]
+}
