@@ -3846,7 +3846,7 @@ class DApply: DOp{
 	override @property Precedence precedence(){ return Precedence.apply; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		auto isTpl=!!cast(DTuple)arg;
-		return addp(prec,text(fun.toStringImpl(formatting,Precedence.index,binders),"(",arg.toStringImpl(formatting,Precedence.none,binders)[isTpl..$-isTpl],")"));
+		return addp(prec,text(fun.toStringImpl(formatting,Precedence.apply,binders),"(",arg.toStringImpl(formatting,Precedence.none,binders)[isTpl..$-isTpl],")"));
 	}
 	mixin Visitors;
 	override DExpr simplifyImpl(DExpr facts){
@@ -3907,7 +3907,7 @@ class DDistApply: DOp{
 	override @property Precedence precedence(){ return Precedence.apply; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		auto isTpl=!!cast(DTuple)arg;
-		return addp(prec,text(fun.toStringImpl(formatting,Precedence.index,binders),"[",arg.toStringImpl(formatting,Precedence.none,binders)[isTpl..$-isTpl],"]"));
+		return addp(prec,text(fun.toStringImpl(formatting,Precedence.apply,binders),"[",arg.toStringImpl(formatting,Precedence.none,binders)[isTpl..$-isTpl],"]"));
 	}
 	mixin Visitors;
 	override DExpr simplifyImpl(DExpr facts){
