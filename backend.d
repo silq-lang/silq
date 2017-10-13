@@ -89,6 +89,8 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 		auto varset=expectation.freeVars.setx;
 		if(opt.plot && (varset.length==1||varset.length==2)){
 			writeln("plotting... ");
+			import hashtable;
+			//matlabPlot(expectation.toString(Format.matlab),varset.element.toString(Format.matlab));
 			gnuplot(expectation,cast(SetX!DNVar)varset,"expectation",opt.plotRange,opt.plotFile);
 		}
 		return;
@@ -127,7 +129,7 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 	if(opt.plot && (varset.length==1||varset.length==2)){
 		if(plotCDF&&!opt.cdf) dist=getCDF(dist);
 		writeln("plotting... ",(plotCDF?"(CDF)":"(PDF)"));
-		//matlabPlot(dist.distribution.toString(Format.matlab).replace("q(γ⃗)","1"),dist.freeVars.element.toString(Format.matlab));
+		//matlabPlot(dist.distribution.toString(Format.matlab),dist.freeVars.element.toString(Format.matlab));
 		gnuplot(dist.distribution,varset,plotCDF?"probability":"density",opt.plotRange,opt.plotFile);
 	}
 }
