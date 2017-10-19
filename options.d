@@ -48,6 +48,7 @@ struct Options{
 	OutputForm outputForm;
 	string[] importPath;
 	string[] summarize;
+	ulong numSimulations=1;
 }
 Options opt; // TODO: get rid of global?
 

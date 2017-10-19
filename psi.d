@@ -134,6 +134,17 @@ int main(string[] args){
 					}
 					continue;
 				}
+				if(x.startsWith("--simulate=")){
+					auto rest=x["--simulate=".length..$];
+					try{
+						opt.backend=InferenceMethod.simulate;
+						opt.numSimulations=to!ulong(rest);
+					}catch(Exception){
+						stderr.writeln("error: number of samples needs to be 64-bit unsigned integer");
+						return 1;
+					}
+					continue;
+				}
 				hasInputFile=true;
 				if(auto r=run(x)) return r;
 		}

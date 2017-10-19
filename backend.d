@@ -48,26 +48,52 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 			return;
 		}
 	}
+	static DExpr computeExpectation(Distribution dist, DExpr e,Expression ty){
+		if(opt.backend!=InferenceMethod.simulate){
+			if(auto tpl=cast(TupleTy)ty){
+				DExpr[] r;
+				foreach(i,nty;tpl.types) r~=computeExpectation(dist,e[i.dℚ],nty);
+				return dTuple(r);
+			}
+		}
+		auto r=e*dist.distribution/(one-dist.error);
+		foreach_reverse(v;dist.orderedFreeVars) r=dIntSmp(v,r,one);
+		return r;
+	}
+	if(opt.backend==InferenceMethod.simulate){
+		DExprSet samples;
+		foreach(i;0..opt.numSimulations){
+			auto dist=be.analyze(fd,err).dup;
+			auto exp=!dist.isTuple?dist.orderedFreeVars[0]:dTuple(cast(DExpr[])dist.orderedFreeVars);
+			auto expectation = computeExpectation(dist,exp,fd.ret);
+			if(opt.expectation) DPlus.insert(samples, expectation);
+			else if(dist.error==one){
+				writeln("⊥");
+			}else{
+				writeln(expectation.toString(opt.formatting));
+			}
+		}
+		if(opt.expectation){
+			auto expectation=(dPlus(samples)/opt.numSimulations).simplify(one);
+			writeln(expectation.toString(opt.formatting));
+			auto varset=expectation.freeVars.setx;
+			if(opt.plot && (varset.length==1||varset.length==2)){
+				writeln("plotting... ");
+				import hashtable;
+				//matlabPlot(expectation.toString(Format.matlab),varset.element.toString(Format.matlab));
+				gnuplot(expectation,cast(SetX!DNVar)varset,"expectation",opt.plotRange,opt.plotFile);
+			}
+		}
+		return;
+	}
 	auto dist=be.analyze(fd,err).dup;
 	if(isMain&&!opt.noNormalize) dist.renormalize();
 	import dparse;
-	if(opt.expectation||opt.backend==InferenceMethod.simulate){ // TODO: deal with non-convergent expectations
+	if(opt.expectation){ // TODO: deal with non-convergent expectations
 		auto exp=!dist.isTuple?dist.orderedFreeVars[0]:dTuple(cast(DExpr[])dist.orderedFreeVars);
 		// TODO: do not compute full distribution with --expectation switch
-		DExpr compute(DExpr e,Expression ty){
-			if(opt.backend!=InferenceMethod.simulate){
-				if(auto tpl=cast(TupleTy)ty){
-					DExpr[] r;
-					foreach(i,nty;tpl.types) r~=compute(e[i.dℚ],nty);
-					return dTuple(r);
-				}
-			}
-			auto r=e*dist.distribution/(one-dist.error);
-			foreach_reverse(v;dist.orderedFreeVars) r=dIntSmp(v,r,one);
-			return r;
-		}
-		auto expectation = compute(exp,fd.ret);
-		final switch(opt.backend==InferenceMethod.simulate?OutputForm.raw:opt.outputForm){
+		auto expectation = computeExpectation(dist,exp,fd.ret);
+		final switch(opt.outputForm){
 			case OutputForm.default_:
 				auto astr=dist.argsToString(opt.formatting);
 				if(dist.error!=zero && opt.formatting!=Format.mathematica)
@@ -76,7 +102,7 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 				if(dist.error != zero) writeln("Pr[error] = ",dist.error.toString(opt.formatting));
 				break;
 			case OutputForm.raw:
-				if(opt.backend==InferenceMethod.simulate && dist.error==one){
+				if(dist.error==one){
 					writeln("⊥");
 					break;
 				}
