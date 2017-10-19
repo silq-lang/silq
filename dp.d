@@ -5,6 +5,7 @@ import std.array: array;
 import std.range: iota;
 import std.string: startsWith;
 import std.typecons: q=tuple,Q=Tuple;
+import std.exception: enforce;
 
 import backend,options;
 import distrib,error;
@@ -188,7 +189,7 @@ struct Dist{
 		r.orderFreeVars(vars,isTuple);
 		return r;
 	}
-	DExpr flip(DExpr p){
+	/*DExpr flip(DExpr p){
 		// TODO: check that p is in [0,1]
 		static int unique=0;
 		auto tmp="`flip"~lowNum(++unique);
@@ -198,7 +199,7 @@ struct Dist{
 			 dLambda(dTuple([dRUpdate(db1,tmp,one),p]))]);
 		if(opt.backend==InferenceMethod.simulate) pickOne();
 		return dField(db1,tmp);
-	}
+	}*/
 	DExpr uniformInt(DExpr arg){
 		// TODO: check constraints on arguments
 		auto r=distInit;
@@ -207,19 +208,45 @@ struct Dist{
 		static int unique=0;
 		auto tmp="`uniformInt"~lowNum(++unique);
 		r.addTmpVar(tmp);
-		foreach(k,v;state){
-			auto ab=dApply(lambda,k).simplify(one);
-			auto a=ab[0.dℚ].simplify(one), b=ab[1.dℚ].simplify(one);
-			auto az=a.isInteger(), bz=b.isInteger();
-			assert(az&&bz,text("TODO: ",a," ",b));
-			auto num=dℚ(bz.c.num-az.c.num+1);
-			if(num.c>0){
-				auto nv=(v/num).simplify(one);
-				for(ℤ i=az.c.num;i<=bz.c.num;++i) r.add(dRUpdate(k,tmp,i.dℚ).simplify(one),nv);
-			}else r.error = (r.error + v).simplify(one);
+		if(opt.backend==InferenceMethod.simulate){
+			long low,up;
+			DExpr result=null;
+			foreach(k,v;state){
+				auto ab=dApply(lambda,k).simplify(one);
+				auto a=ab[0.dℚ].simplify(one), b=ab[1.dℚ].simplify(one);
+				static ℤ toNum(string what)(DExpr e){
+					if(auto q=cast(Dℚ)e) return mixin(what~"div")(q.c.num,q.c.den);
+					import std.format: format;
+					import std.math: floor, ceil;
+					if(auto f=cast(DFloat)e) return ℤ(format("%.0s",mixin(what)(f.c)));
+					enforce(0,text("non-constant condition ",e));
+					assert(0);
+				}
+				ℤ lowCand=toNum!"ceil"(a),upCand=toNum!"floor"(b);
+				if(!result){
+					import std.random;
+					enforce(lowCand<=upCand);
+					assert(long.min<=lowCand && upCand<=long.max);
+					low=lowCand.toLong(), up=upCand.toLong();
+					result=dℚ(uniform!"[]"(low,up));
+				}else enforce(low==lowCand && up==upCand);
+				r.add(dRUpdate(k,tmp,result).simplify(one),v);
+			}
+		}else{
+			foreach(k,v;state){
+				auto ab=dApply(lambda,k).simplify(one);
+				auto a=ab[0.dℚ].simplify(one), b=ab[1.dℚ].simplify(one);
+				auto az=a.isInteger(), bz=b.isInteger();
+				assert(az&&bz,text("TODO: ",a," ",b));
+				auto num=dℚ(bz.c.num-az.c.num+1);
+				if(num.c>0){
+					auto nv=(v/num).simplify(one);
+					for(ℤ i=az.c.num;i<=bz.c.num;++i) r.add(dRUpdate(k,tmp,i.dℚ).simplify(one),nv);
+				}else r.error = (r.error + v).simplify(one);
+			}
 		}
 		this=r;
-		if(opt.backend==InferenceMethod.simulate) pickOne();
+		//if(opt.backend==InferenceMethod.simulate) pickOne();
 		return dField(db1,tmp);
 	}
 	DExpr categorical(DExpr arg){
@@ -229,19 +256,55 @@ struct Dist{
 		static int unique=0;
 		auto tmp="`categorical"~lowNum(++unique);
 		r.addTmpVar(tmp);
-		foreach(k,v;state){
-			auto p=dApply(lambda,k).simplify(one);
-			auto l=dField(p,"length").simplify(one);
-			auto lz=l.isInteger();
-			assert(!!lz,"TODO");
-			if(lz!=zero){
-				// TODO: check other preconditions
-				for(ℤ i=0.ℤ;i<lz.c.num;++i)
-					r.add(dRUpdate(k,tmp,i.dℚ).simplify(one),(v*p[i.dℚ]).simplify(one));
-			}else r.error = (r.error + v).simplify(one);
+		if(opt.backend==InferenceMethod.simulate){
+			Dℚ[] p;
+			DExpr result=null;
+			foreach(k,v;state){
+				auto arr=dApply(lambda,k).simplify(one);
+				auto len=dField(arr,"length").simplify(one);
+				auto qlen=cast(Dℚ)len;
+				enforce(!!qlen && qlen.c.den==1);
+				Dℚ[] pCand;
+				DExpr sum=zero;
+				foreach(i;0..qlen.c.num.toLong()){
+					auto cur=cast(Dℚ)arr[i.dℚ].simplify(one);
+					enforce(!!cur);
+					pCand~=cur;
+					sum=(sum+cur).simplify(one);
+				}
+				enforce(sum==one,"category probabilities must sum up to 1");
+				if(!result){
+					import std.random;
+					p=pCand;
+					real f=uniform(0.0L,1.0L);
+					DExpr cur=zero;
+					foreach(i,val;p){
+						cur=(cur+val).simplify(one);
+						auto r=dLe(dFloat(f),cur).simplify(one);
+						assert(r == zero || r == one);
+						if(r==one){
+							result = dℚ(i);
+							break;
+						}
+					}
+				}else enforce(p==pCand);
+				r.add(dRUpdate(k,tmp,result).simplify(one),v);
+			}
+		}else{
+			foreach(k,v;state){
+				auto p=dApply(lambda,k).simplify(one);
+				auto l=dField(p,"length").simplify(one);
+				auto lz=l.isInteger();
+				enforce(!!lz,"TODO");
+				if(lz!=zero){
+					// TODO: check other preconditions
+					for(ℤ i=0.ℤ;i<lz.c.num;++i)
+						r.add(dRUpdate(k,tmp,i.dℚ).simplify(one),(v*p[i.dℚ]).simplify(one));
+				}else r.error = (r.error + v).simplify(one);
+			}
 		}
 		this=r;
-		if(opt.backend==InferenceMethod.simulate) pickOne();
+		//if(opt.backend==InferenceMethod.simulate) pickOne();
 		return dField(db1,tmp);
 	}
 	void assignTo(DExpr lhs,DExpr rhs){
@@ -391,19 +454,43 @@ struct Dist{
 		static uniq=0;
 		string tmp="`sample"~lowNum(++uniq);
 		r.addTmpVar(tmp);
-		foreach(k,v;state){
-			auto dbf=cast(DDPDist)dApply(d,k).simplify(one);
-			assert(!!dbf,text(dbf," ",d));
-			foreach(dk,dv;dbf.dist.state) r.add(dRUpdate(k,tmp,dField(dk,"`value")).simplify(one),(v*dv).simplify(one));
-			if(!opt.noCheck) r.error=(r.error+v*dbf.dist.error).simplify(one);
+		if(opt.backend==InferenceMethod.simulate){
+			DExpr theDist=null;
+			DExpr result=null;
+			foreach(k,v;state){
+				auto dbf=cast(DDPDist)dApply(d,k).simplify(one);
+				assert(!!dbf,text(dbf," ",d));
+				if(!result){
+					theDist=dbf;
+					real f=uniform(0.0L,1.0L);
+					DExpr cur=zero;
+					DExpr sum=zero;
+					foreach(dk,dv;dbf.dist.state)
+						sum=(sum+dv).simplify(one);
+					enforce(sum==one,"probabilities must sum up to 1");
+					foreach(dk,dv;dbf.dist.state){
+						cur=(cur+dv).simplify(one);
+						auto r=dLe(dFloat(f),cur).simplify(one);
+						enforce(r == zero || r == one);
+						if(r==one){
+							result = dField(dk,"`value").simplify(one);
+							break;
+						}
+					}
+				}else enforce(dbf==theDist);
+				r.add(dRUpdate(k,tmp,result).simplify(one),v);
+			}
+		}else{
+			foreach(k,v;state){
+				auto dbf=cast(DDPDist)dApply(d,k).simplify(one);
+				assert(!!dbf,text(dbf," ",d));
+				foreach(dk,dv;dbf.dist.state) r.add(dRUpdate(k,tmp,dField(dk,"`value")).simplify(one),(v*dv).simplify(one));
+				if(!opt.noCheck) r.error=(r.error+v*dbf.dist.error).simplify(one);
+			}
 		}
 		this=r;
-		if(opt.backend==InferenceMethod.simulate) pickOne();
+		// if(opt.backend==InferenceMethod.simulate) pickOne();
 		return dField(db1,tmp);
-	}
-	DExpr distThen(DExpr dist,DExpr arg){
-		// TODO.
-		assert(0,"TODO");
 	}
 	DExpr distExpectation(DExpr dist){
 		auto r=distInit;
@@ -586,8 +673,6 @@ struct Interpreter{
 				if(isBuiltIn(fe)){
 					if(auto at=cast(ArrayTy)fe.e.type){
 						assert(fe.f.name=="length");
-					}else{
-						assert(0,"TODO: first-class built-in methdods");
 					}
 				}
 				return dField(doIt(fe.e),fe.f.name);
@@ -633,7 +718,8 @@ struct Interpreter{
 					if(!fe && isBuiltIn(id)){
 						switch(id.name){
 							case "Marginal":
-								assert(0,"TODO");
+								enforce(0,"TODO");
+								assert(0);
 							case "sampleFrom":
 								Expression[] args;
 								if(auto tpl=cast(TupleExp)ce.arg) args=tpl.e;
@@ -690,7 +776,7 @@ struct Interpreter{
 										if(str.ptr !in dists){
 											auto dist=new Distribution();
 											auto info=analyzeSampleFrom(ce,new SimpleErrorHandler(),dist);
-											if(info.error) assert(0,"TODO");
+											if(info.error) enforce(0,"TODO");
 											auto retVars=info.retVars,paramVars=info.paramVars,newDist=info.newDist;
 											foreach(i,pvar;paramVars){
 												auto expr=doIt(args[1+i]);
@@ -703,7 +789,7 @@ struct Interpreter{
 											dist.simplify();
 											auto smpl=distInit();
 											void gather(DExpr e,DExpr factor){
-												assert(!cast(DInt)e,text("TODO: ",ce.e));
+												enforce(!cast(DInt)e,text("TODO: ",ce.e));
 												foreach(s;e.summands){
 													foreach(f;s.factors){
 														if(auto dd=cast(DDiscDelta)f){
@@ -809,7 +895,8 @@ struct Interpreter{
 					return dNeq(e1,e2);
 				}
 			}
-			assert(0,text("TODO: ",e));
+			enforce(0,text("TODO: ",e));
+			assert(0);
 		}
 		return doIt(e);
 	}
@@ -952,7 +1039,7 @@ struct Interpreter{
 			auto cond=dNeqZ(runExp(ae.e));
 			cur=cur.assertTrue(dLambda(cond));
 		}else if(auto oe=cast(ObserveExp)e){
-			assert(opt.backend != InferenceMethod.simulate,"TODO: observe with --simulate");
+			enforce(opt.backend != InferenceMethod.simulate,"TODO: observe with --simulate");
 			auto cond=dNeqZ(runExp(oe.e));
 			cur=cur.observe(dLambda(cond));
 		}else if(auto ce=cast(CommaExp)e){
@@ -961,7 +1048,7 @@ struct Interpreter{
 		}else if(cast(Declaration)e){
 			// do nothing
 		}else{
-			assert(0,text("TODO: ",e));
+			enforce(0,text("TODO: ",e));
 		}
 		cur=cur.marginalizeTemporaries();
 	}
