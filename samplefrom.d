@@ -11,6 +11,9 @@ enum Token{
 	categoricalPrecondition,
 	categorical,
 	binomial,
+	gauss,
+	uniform,
+	laplace,
 }
 private Token computeToken(string s){
 	switch(s) with(Token){
@@ -36,6 +39,12 @@ private Token computeToken(string s){
 			return categorical;
 		case "(x;n,p)=>∑_ξ₁(-p+1)^(-ξ₁+n)·(∫dξ₂[-ξ₂≤0]·ξ₂^n·⅟e^ξ₂)·[-n+ξ₁≤0]·[-ξ₁≤0]·p^ξ₁·δ(0)[-ξ₁+x]·⅟(∫dξ₂[-ξ₂≤0]·ξ₂^(-ξ₁+n)·⅟e^ξ₂)·⅟(∫dξ₂[-ξ₂≤0]·ξ₂^ξ₁·⅟e^ξ₂)":
 			return binomial;
+		case "(x;μ,ν)=>[ν=0]·δ(0)[-μ+x]+[ν≠0]·e^((-1/2·x²+-1/2·μ²+x·μ)·⅟ν)·⅟√2̅·⅟√ν̅·⅟√π̅":
+			return gauss;
+		case "(x;a,b)=>[a≠b]·[a≤x]·[x≤b]·⅟(b-a)+[a=b]·δ(0)[a-x]":
+			return uniform;
+		case "(x;μ,b)=>(1/2·[-x+μ≤0]·e^((-x+μ)·⅟b)+1/2·[-μ+x≠0]·[-μ+x≤0]·e^((-μ+x)·⅟b))·[b≠0]·⅟b+[b=0]·δ(0)[-μ+x]":
+			return laplace;
 		default:
 			return Token.none;
 	}	

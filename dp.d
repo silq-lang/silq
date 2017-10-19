@@ -732,6 +732,12 @@ struct Interpreter{
 								assert(literal&&literal.lit.type==Tok!"``");
 								auto str=literal.lit.str;
 								import samplefrom;
+								static real toFloat(DExpr e){
+									if(auto q=cast(Dℚ)e) return toReal(q.c);
+									if(auto f=cast(DFloat)e) return f.c;
+									enforce(0,"parameters to sampling procedure must be constant");
+									assert(0);
+								}
 								final switch(getToken(str)) with(Token){
 									case inferPrecondition:
 										return one; // TODO
@@ -771,6 +777,45 @@ struct Interpreter{
 										auto n_=arg[0.dℚ], p=arg[1.dℚ].incDeBruijnVar(1,0);
 										auto n=n_.incDeBruijnVar(1,0);
 										return cur.categorical(dArray(n_+1,dLambda(dNChooseK(n,db1)*p^^db1*(1-p)^^(n-db1))).simplify(one));
+									case gauss:
+										enforce(opt.backend==InferenceMethod.simulate,"cannot sample from Gaussian with --dp");
+										auto arg=dLambda(getArg()).simplify(one);
+										real μ,ν;
+										bool hasResult;
+										DExpr result;
+										foreach(k,v;cur.state){
+											auto args=dApply(arg,k);
+											auto μCand=toFloat(args[0.dℚ].simplify(one)), νCand=toFloat(args[1.dℚ].simplify(one));
+											if(!hasResult){
+												μ=μCand, ν=νCand;
+												import std.math, std.mathspecial, std.random;
+												result=dFloat(μ+sqrt(ν)*normalDistributionInverse(.uniform(0.0L,1.0L)));
+												hasResult=true;
+											}else enforce(μ==μCand && ν==νCand);
+										}
+										assert(hasResult);
+										return result;
+									case uniform:
+										enforce(opt.backend==InferenceMethod.simulate,"cannot sample from Uniform with --dp");
+										auto arg=dLambda(getArg()).simplify(one);
+										real a,b;
+										bool hasResult;
+										DExpr result;
+										foreach(k,v;cur.state){
+											auto args=dApply(arg,k);
+											auto aCand=toFloat(args[0.dℚ].simplify(one)), bCand=toFloat(args[1.dℚ].simplify(one));
+											if(!hasResult){
+												a=aCand, b=bCand;
+												import std.math, std.mathspecial, std.random;
+												result=dFloat(.uniform(a,b));
+												hasResult=true;
+											}else enforce(a==aCand && b==bCand);
+										}
+										assert(hasResult);
+										return result;
+									case laplace:
+										enforce(0,"TODO");
+										assert(0);
 									case none:
 										static DDPDist[const(char)*] dists; // NOTE: it is actually important that identical strings with different addresses get different entries (parameters are substituted)
 										if(str.ptr !in dists){
