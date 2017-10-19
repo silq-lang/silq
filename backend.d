@@ -62,10 +62,11 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 	}
 	if(opt.backend==InferenceMethod.simulate){
 		DExprSet samples;
+		DExpr expectation;
 		foreach(i;0..opt.numSimulations){
 			auto dist=be.analyze(fd,err).dup;
 			auto exp=!dist.isTuple?dist.orderedFreeVars[0]:dTuple(cast(DExpr[])dist.orderedFreeVars);
-			auto expectation = computeExpectation(dist,exp,fd.ret);
+			expectation = computeExpectation(dist,exp,fd.ret);
 			if(opt.expectation) DPlus.insert(samples, expectation);
 			else if(dist.error==one){
 				writeln("⊥");
@@ -74,8 +75,10 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 			}
 		}
 		if(opt.expectation){
-			auto expectation=(dPlus(samples)/opt.numSimulations).simplify(one);
+			expectation=(dPlus(samples)/opt.numSimulations).simplify(one);
 			writeln(expectation.toString(opt.formatting));
+		}
+		if(opt.expectation||opt.numSimulations==1){
 			auto varset=expectation.freeVars.setx;
 			if(opt.plot && (varset.length==1||varset.length==2)){
 				writeln("plotting... ");
