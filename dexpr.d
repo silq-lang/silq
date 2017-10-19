@@ -3301,6 +3301,10 @@ class DLog: DOp{
 		if(auto q=cast(Dℚ)e)
 			if(q.c.den!=1)
 				return dLog(dℚ(q.c.num))-dLog(dℚ(q.c.den));
+		if(auto f=cast(DFloat)e){
+			import std.math: log;
+			return dFloat(log(f.c));
+		}
 		if(auto p=cast(DPow)e){
 			if(auto q=cast(Dℚ)p.operands[1])
 				if(!(q.c.num&1)&&q.c.den==1)
