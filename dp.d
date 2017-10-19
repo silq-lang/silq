@@ -806,7 +806,6 @@ struct Interpreter{
 											auto aCand=toFloat(args[0.dℚ].simplify(one)), bCand=toFloat(args[1.dℚ].simplify(one));
 											if(!hasResult){
 												a=aCand, b=bCand;
-												import std.math, std.mathspecial, std.random;
 												result=dFloat(.uniform(a,b));
 												hasResult=true;
 											}else enforce(a==aCand && b==bCand);
@@ -814,8 +813,23 @@ struct Interpreter{
 										assert(hasResult);
 										return result;
 									case laplace:
-										enforce(0,"TODO");
-										assert(0);
+										enforce(opt.backend==InferenceMethod.simulate,"cannot sample from Uniform with --dp");
+										auto arg=dLambda(getArg()).simplify(one);
+										real μ,b;
+										bool hasResult;
+										DExpr result;
+										foreach(k,v;cur.state){
+											auto args=dApply(arg,k);
+											auto μCand=toFloat(args[0.dℚ].simplify(one)),bCand=toFloat(args[1.dℚ].simplify(one));
+											if(!hasResult){
+												μ=μCand, b=bCand;
+												import std.math: log;
+												result=dFloat(μ+b*(2*.uniform!"[]"(0,1)-1)*log(.uniform!"(]"(0.0L,1.0L)));
+												hasResult=true;
+											}else enforce(μ==μCand && b==bCand);
+										}
+										assert(hasResult);
+										return result;
 									case none:
 										static DDPDist[const(char)*] dists; // NOTE: it is actually important that identical strings with different addresses get different entries (parameters are substituted)
 										if(str.ptr !in dists){
