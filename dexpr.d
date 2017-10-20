@@ -3360,6 +3360,11 @@ class DFloor: DOp{
 		if(ne!= e) return dFloor(ne).simplify(facts);
 		if(auto q=cast(Dℚ)e)
 			return dℚ(floor(q.c));
+		if(auto f=cast(DFloat)e){
+			import std.format: format;
+			import std.math: floor;
+			return ℤ(format("%.0f",floor(f.c))).dℚ;
+		}
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){
@@ -3384,6 +3389,11 @@ class DCeil: DOp{
 		if(ne!= e) return dCeil(ne).simplify(facts);
 		if(auto q=cast(Dℚ)e)
 			return dℚ(ceil(q.c));
+		if(auto f=cast(DFloat)e){
+			import std.format: format;
+			import std.math: ceil;
+			return ℤ(format("%.0f",ceil(f.c))).dℚ;
+		}
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){
