@@ -14,6 +14,8 @@ enum Token{
 	gauss,
 	uniform,
 	laplace,
+	// chiSquared, // TODO
+	rayleigh,
 }
 private Token computeToken(string s){
 	switch(s) with(Token){
@@ -45,6 +47,8 @@ private Token computeToken(string s){
 			return uniform;
 		case "(x;μ,b)=>(1/2·[-x+μ≤0]·e^((-x+μ)·⅟b)+1/2·[-μ+x≠0]·[-μ+x≤0]·e^((-μ+x)·⅟b))·[b≠0]·⅟b+[b=0]·δ(0)[-μ+x]":
 			return laplace;
+		case "(x;ν)=>[-x≤0]·[ν≠0]·x·⅟e^(1/2·x²·⅟ν)·⅟ν+[ν=0]·δ(0)[x]":
+			return rayleigh;
 		default:
 			return Token.none;
 	}	

@@ -813,7 +813,7 @@ struct Interpreter{
 										assert(hasResult);
 										return result;
 									case laplace:
-										enforce(opt.backend==InferenceMethod.simulate,"cannot sample from Uniform with --dp");
+										enforce(opt.backend==InferenceMethod.simulate,"cannot sample from Laplace with --dp");
 										auto arg=dLambda(getArg()).simplify(one);
 										real μ,b;
 										bool hasResult;
@@ -827,6 +827,23 @@ struct Interpreter{
 												result=dFloat(μ+b*(2*.uniform!"[]"(0,1)-1)*log(.uniform!"(]"(0.0L,1.0L)));
 												hasResult=true;
 											}else enforce(μ==μCand && b==bCand);
+										}
+										assert(hasResult);
+										return result;
+									case rayleigh:
+										enforce(opt.backend==InferenceMethod.simulate,"cannot sample from Rayleigh with --dp");
+										auto arg=dLambda(getArg()).simplify(one);
+										real ν;
+										bool hasResult;
+										DExpr result;
+										foreach(k,v;cur.state){
+											auto νCand=toFloat(dApply(arg,k).simplify(one));
+											if(!hasResult){
+												ν=νCand;
+												import std.math: log, sqrt;
+												result=dFloat(sqrt(-2*ν*log(.uniform!"(]"(0.0L,1.0L))));
+												hasResult=true;
+											}else enforce(ν==νCand);
 										}
 										assert(hasResult);
 										return result;
