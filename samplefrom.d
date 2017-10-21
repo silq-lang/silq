@@ -16,6 +16,7 @@ enum Token{
 	laplace,
 	// chiSquared, // TODO
 	rayleigh,
+	pareto,
 }
 private Token computeToken(string s){
 	switch(s) with(Token){
@@ -49,6 +50,8 @@ private Token computeToken(string s){
 			return laplace;
 		case "(x;ν)=>[-x≤0]·[ν≠0]·x·⅟e^(1/2·x²·⅟ν)·⅟ν+[ν=0]·δ(0)[x]":
 			return rayleigh;
+		case "(x;a,b)=>[-x+b≤0]·[-x≤0]·a·b^a·x^(-1+-a)":
+			return pareto;
 		default:
 			return Token.none;
 	}	

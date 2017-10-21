@@ -847,6 +847,24 @@ struct Interpreter{
 										}
 										assert(hasResult);
 										return result;
+									case pareto:
+										enforce(opt.backend==InferenceMethod.simulate,"cannot sample from Pareto with --dp");
+										auto arg=dLambda(getArg()).simplify(one);
+										real a,b;
+										bool hasResult;
+										DExpr result;
+										foreach(k,v;cur.state){
+											auto args=dApply(arg,k);
+											auto aCand=toFloat(args[0.dℚ].simplify(one)),bCand=toFloat(args[1.dℚ].simplify(one));
+											if(!hasResult){
+												a=aCand, b=bCand;
+												import std.math: log;
+												result=dFloat(b/(.uniform!"(]"(0.0L,1.0L)^^(1.0/a)));
+												hasResult=true;
+											}else enforce(a==aCand && b==bCand);
+										}
+										assert(hasResult);
+										return result;
 									case none:
 										static DDPDist[const(char)*] dists; // NOTE: it is actually important that identical strings with different addresses get different entries (parameters are substituted)
 										if(str.ptr !in dists){
