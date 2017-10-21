@@ -806,7 +806,7 @@ struct Interpreter{
 											auto aCand=toFloat(args[0.dℚ].simplify(one)), bCand=toFloat(args[1.dℚ].simplify(one));
 											if(!hasResult){
 												a=aCand, b=bCand;
-												result=dFloat(.uniform(a,b));
+												result=dFloat(.uniform!"[]"(a,b));
 												hasResult=true;
 											}else enforce(a==aCand && b==bCand);
 										}
