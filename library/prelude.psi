@@ -78,12 +78,12 @@ def TruncatedGauss(μ:ℝ,ν:ℝ,a:ℝ,b:ℝ):Distribution[ℝ]{
 }
 
 def pareto(a:ℝ,b:ℝ):ℝ{
-	assert(a>=0 & b>=0);
-	return sampleFrom("(x;a,b)=>((-x)^(-1+-a)·[x≠0]·[x≤0]·⅟(-1)^(1+a)+[-x≤0]·x^(-1+-a))·[-x+b≤0]·a·b^a",a,b):ℝ;
+	assert(a>0 & b>0);
+	return sampleFrom("(x;a,b)=>[-x+b≤0]·[-x≤0]·a·b^a·x^(-1+-a)",a,b):ℝ;
 }
 def Pareto(a:ℝ,b:ℝ):Distribution[ℝ]{
-	assert(a>=0 & b>=0);
-	return infer(()=>sampleFrom("(x;a,b)=>((-x)^(-1+-a)·[x≠0]·[x≤0]·⅟(-1)^(1+a)+[-x≤0]·x^(-1+-a))·[-x+b≤0]·a·b^a",a,b):ℝ);
+	assert(a>0 & b>0);
+	return infer(()=>sampleFrom("(x;a,b)=>[-x+b≤0]·[-x≤0]·a·b^a·x^(-1+-a)",a,b):ℝ);
 }
 
 def uniform(a:ℝ,b:ℝ):ℝ{

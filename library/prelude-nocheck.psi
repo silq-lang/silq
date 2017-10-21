@@ -35,8 +35,8 @@ def Rayleigh(ν:ℝ):Distribution[ℝ] ⇒	infer(() ⇒ sampleFrom("(x;ν)=>[-x�
 def truncatedGauss(μ:ℝ,ν:ℝ,a:ℝ,b:ℝ):ℝ ⇒ sampleFrom("(x;μ,ν,a,b)=>[-b+x≤0]·[-x+a≤0]·[ν≠0]·e^((-1/2·x²+-1/2·μ²+x·μ)·⅟ν)·⅟((d/dx)⁻¹[e^(-x²)]((-μ+b)·⅟√ν̅)+-(d/dx)⁻¹[e^(-x²)]((-μ+a)·⅟√ν̅))·⅟ν·⅟√2̅·⅟√π̅+[ν=0]·δ(0)[-μ+x]",μ,ν,a,b):ℝ;
 def TruncatedGauss(μ:ℝ,ν:ℝ,a:ℝ,b:ℝ):Distribution[ℝ] ⇒ infer(() ⇒ sampleFrom("(x;μ,ν,a,b)=>[-b+x≤0]·[-x+a≤0]·[ν≠0]·e^((-1/2·x²+-1/2·μ²+x·μ)·⅟ν)·⅟((d/dx)⁻¹[e^(-x²)]((-μ+b)·⅟√ν̅)+-(d/dx)⁻¹[e^(-x²)]((-μ+a)·⅟√ν̅))·⅟ν·⅟√2̅·⅟√π̅+[ν=0]·δ(0)[-μ+x]",μ,ν,a,b):ℝ);
 
-def pareto(a:ℝ,b:ℝ):ℝ ⇒ sampleFrom("(x;a,b)=>((-x)^(-1+-a)·[x≠0]·[x≤0]·⅟(-1)^(1+a)+[-x≤0]·x^(-1+-a))·[-x+b≤0]·a·b^a",a,b):ℝ;
-def Pareto(a:ℝ,b:ℝ):Distribution[ℝ] ⇒ infer(()=>sampleFrom("(x;a,b)=>((-x)^(-1+-a)·[x≠0]·[x≤0]·⅟(-1)^(1+a)+[-x≤0]·x^(-1+-a))·[-x+b≤0]·a·b^a",a,b):ℝ);
+def pareto(a:ℝ,b:ℝ):ℝ ⇒ sampleFrom("(x;a,b)=>[-x+b≤0]·[-x≤0]·a·b^a·x^(-1+-a)",a,b):ℝ;
+def Pareto(a:ℝ,b:ℝ):Distribution[ℝ] ⇒ infer(()=>sampleFrom("(x;a,b)=>[-x+b≤0]·[-x≤0]·a·b^a·x^(-1+-a)",a,b):ℝ);
 
 def uniform(a:ℝ,b:ℝ):ℝ ⇒ sampleFrom("(x;a,b)=>[a≠b]·[a≤x]·[x≤b]·⅟(b-a)+[a=b]·δ(0)[a-x]",a,b):ℝ;
 def Uniform(a:ℝ,b:ℝ):Distribution[ℝ] ⇒ infer(() ⇒ sampleFrom("(x;a,b)=>[a≠b]·[a≤x]·[x≤b]·⅟(b-a)+[a=b]·δ(0)[a-x]",a,b):ℝ);

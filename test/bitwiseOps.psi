@@ -14,6 +14,6 @@ def main(){
     w := 5;
     w ⊕= 5;
     assert(!w);
-    return (x,y,z,swap(x,y),~0); // expected: δ(-1)[r₂]·δ(33426)[z]·δ(3388374)[y]·δ(6)[x]·δ(y,6)[r₁]
+    return (x,y,z,swap(x,y),~0); // expected: δ(-1)[r₂]·δ(33426)[z]·δ(3388374)[y]·δ(6)[x]·δ(y,x)[r₁]
 }
 
