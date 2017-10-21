@@ -66,7 +66,7 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 		foreach(i;0..opt.numSimulations){
 			auto dist=be.analyze(fd,err).dup;
 			auto exp=!dist.isTuple?dist.orderedFreeVars[0]:dTuple(cast(DExpr[])dist.orderedFreeVars);
-			expectation = computeExpectation(dist,exp,fd.ret);
+			expectation = computeExpectation(dist,exp,fd.ret).simplify(one);
 			if(opt.expectation) DPlus.insert(samples, expectation);
 			else if(dist.error==one){
 				writeln("⊥");
@@ -95,7 +95,7 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 	if(opt.expectation){ // TODO: deal with non-convergent expectations
 		auto exp=!dist.isTuple?dist.orderedFreeVars[0]:dTuple(cast(DExpr[])dist.orderedFreeVars);
 		// TODO: do not compute full distribution with --expectation switch
-		auto expectation = computeExpectation(dist,exp,fd.ret);
+		auto expectation = computeExpectation(dist,exp,fd.ret).simplify(one);
 		final switch(opt.outputForm){
 			case OutputForm.default_:
 				auto astr=dist.argsToString(opt.formatting);
