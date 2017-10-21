@@ -750,21 +750,25 @@ class DFloat: DExpr{
 		}else if(formatting==Format.maple){
 			if(c<0) r="("~r~")";
 		}else if(formatting==Format.lisp){
-			long exponent=0;
+			long e=0;
 			if(r.canFind("e")){
 				auto x=r.split("e");
 				assert(x.length==2);
-				exponent=to!long(x[1]);
+				e=to!long(x[1]);
 				r=x[0];
 			}
 			if(r.canFind(".")){
 				auto y=r.split(".");
 				assert(y[1].length<=long.max);
-				auto exp="(^ 10 "~text(exponent-cast(long)y[1].length)~")";
-				exponent-=cast(long)y[1].length;
+				auto exp="(^ 10 "~text(e-cast(long)y[1].length)~")";
+				e-=cast(long)y[1].length;
 				r=y[0]~y[1];
 			}
-			if(exponent!=0) r="(* "~r~" (^ 10 "~text(exponent)~"))";
+			//if(e!=0) r="(* "~r~" (^ 10 "~text(e)~"))";
+			if(e!=0){
+				import std.range: repeat;
+				r="("~(e<0?"/":"*")~" "~r~" 1"~'0'.repeat(e<0?-e:e).to!string~")";
+			}
 		}else if(prec>Precedence.uminus&&c<0)
 			r="("~r~")";
 		return r;
