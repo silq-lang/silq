@@ -743,11 +743,28 @@ class DFloat: DExpr{
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		import std.format;
 		string r=format("%.16e",c);
+		assert(all!(c=>'0'<=c&&c<='9'||c=='-'||c=='.'||c=='e')(r),r);
 		if(formatting==Format.mathematica){
 			if(r.canFind("e"))
 				r="("~r.replace("e","*10^")~")";
 		}else if(formatting==Format.maple){
 			if(c<0) r="("~r~")";
+		}else if(formatting==Format.lisp){
+			long exponent=0;
+			if(r.canFind("e")){
+				auto x=r.split("e");
+				assert(x.length==2);
+				exponent=to!long(x[1]);
+				r=x[0];
+			}
+			if(r.canFind(".")){
+				auto y=r.split(".");
+				assert(y[1].length<=long.max);
+				auto exp="(^ 10 "~text(exponent-cast(long)y[1].length)~")";
+				exponent-=cast(long)y[1].length;
+				r=y[0]~y[1];
+			}
+			if(exponent!=0) r="(* "~r~" (^ 10 "~text(exponent)~"))";
 		}else if(prec>Precedence.uminus&&c<0)
 			r="("~r~")";
 		return r;
