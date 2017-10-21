@@ -63,9 +63,19 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 	if(opt.backend==InferenceMethod.simulate){
 		DExprSet samples;
 		DExpr expectation;
+		auto distrib=new Distribution();
+		distrib.distribution=zero;
 		foreach(i;0..opt.numSimulations){
 			auto dist=be.analyze(fd,err).dup;
 			auto exp=!dist.isTuple?dist.orderedFreeVars[0]:dTuple(cast(DExpr[])dist.orderedFreeVars);
+			if(!opt.expectation && opt.cdf){
+				distrib.distribution=distrib.distribution+dist.distribution;
+				if(!distrib.freeVarsOrdered){
+					distrib.freeVars=dist.freeVars.dup;
+					distrib.orderFreeVars(dist.orderedFreeVars,dist.isTuple);
+				}
+				continue;
+			}
 			expectation = computeExpectation(dist,exp,fd.ret).simplify(one);
 			if(opt.expectation) DPlus.insert(samples, expectation);
 			else if(dist.error==one){
@@ -77,8 +87,12 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 		if(opt.expectation){
 			expectation=(dPlus(samples)/opt.numSimulations).simplify(one);
 			writeln(expectation.toString(opt.formatting));
+		}else if(opt.cdf){
+			distrib=distrib.getCDF();
+			expectation=(distrib.distribution/opt.numSimulations).simplify(one);
+			writeln(expectation.toString(opt.formatting));
 		}
-		if(opt.expectation||opt.numSimulations==1){
+		if(opt.expectation||opt.cdf||opt.numSimulations==1){
 			auto varset=expectation.freeVars.setx;
 			if(opt.plot && (varset.length==1||varset.length==2)){
 				writeln("plotting... ");
