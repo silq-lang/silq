@@ -28,7 +28,7 @@ class Bruteforce: Backend{
 		interpreter.runFun(ret);
 		assert(!!def.ftype);
 		bool isTuple = !!cast(TupleTy)def.ftype.cod;
-		return ret.toDistribution(def.retNames,isTuple);
+		return ret.toDistribution(def.params.map!(p=>p.getName).array,def.isTuple,def.retNames,isTuple);
 	}
 private:
 	string sourceFile;
@@ -171,8 +171,7 @@ struct Dist{
 		}
 		return r;
 	}
-	Distribution toDistribution(string[] names,bool isTuple){
-		auto r=new Distribution();
+	private Distribution toDistributionImpl(Distribution r,string[] names,bool isTuple){
 		auto vars=names.map!(name=>r.declareVar(name)).array;
 		r.distribution=zero;
 		foreach(k,v;state){
@@ -188,6 +187,16 @@ struct Dist{
 		r.simplify();
 		r.orderFreeVars(vars,isTuple);
 		return r;
+	}
+	Distribution toDistribution(string[] names,bool isTuple){
+		auto r=new Distribution();
+		return toDistributionImpl(r,names,isTuple);
+	}
+	Distribution toDistribution(string[] paramNames,bool argsIsTuple,string[] names,bool isTuple){
+		auto r=new Distribution();
+		auto args=paramNames.map!(name=>r.declareVar(name)).array;
+		r.addArgs(args,argsIsTuple,null);
+		return toDistributionImpl(r,names,isTuple);
 	}
 	/*DExpr flip(DExpr p){
 		// TODO: check that p is in [0,1]
