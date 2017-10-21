@@ -36,7 +36,7 @@ abstract class Backend{
 
 void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isMain){
 	import type, std.conv : text;
-	if(opt.expectation){
+	if(opt.expectation||opt.cdf){
 		bool check(Expression ty){
 			if(ty==ℝ) return true;
 			if(auto tpl=cast(TupleTy)ty)
@@ -44,7 +44,7 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 			return false;
 		}
 		if(!check(fd.ret)){
-			err.error(text("with --expectation switch, '",fd.name,"' should return numbers (not '",fd.ret,"')"),fd.loc);
+			err.error(text("with ",opt.expectation?"--expectation":"--cdf"," switch, '",fd.name,"' should return numbers (not '",fd.ret,"')"),fd.loc);
 			return;
 		}
 	}
@@ -60,6 +60,19 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 		foreach_reverse(v;dist.orderedFreeVars) r=dIntSmp(v,r,one);
 		return r;
 	}
+	static void printDist(Distribution dist){
+		final switch(opt.outputForm){
+			case OutputForm.default_:
+				writeln(dist.toString(opt.formatting));
+				break;
+			case OutputForm.raw:
+				writeln(dist.distribution.toString(opt.formatting));
+				break;
+			case OutputForm.rawError:
+				writeln(dist.error.toString(opt.formatting));
+				break;
+		}
+	}
 	if(opt.backend==InferenceMethod.simulate){
 		DExprSet samples;
 		DExpr expectation;
@@ -70,8 +83,11 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 			auto exp=!dist.isTuple?dist.orderedFreeVars[0]:dTuple(cast(DExpr[])dist.orderedFreeVars);
 			if(!opt.expectation && opt.cdf){
 				distrib.distribution=distrib.distribution+dist.distribution;
+				distrib.error=distrib.error+dist.error;
 				if(!distrib.freeVarsOrdered){
 					distrib.freeVars=dist.freeVars.dup;
+					foreach(arg;dist.args) distrib.freeVars.insert(arg);
+					distrib.addArgs(dist.args,dist.argsIsTuple,dist.context);
 					distrib.orderFreeVars(dist.orderedFreeVars,dist.isTuple);
 				}
 				continue;
@@ -88,9 +104,12 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 			expectation=(dPlus(samples)/opt.numSimulations).simplify(one);
 			writeln(expectation.toString(opt.formatting));
 		}else if(opt.cdf){
+			distrib.distribution=distrib.distribution/opt.numSimulations;
+			distrib.error=distrib.error/opt.numSimulations;
+			distrib.simplify();
 			distrib=distrib.getCDF();
-			expectation=(distrib.distribution/opt.numSimulations).simplify(one);
-			writeln(expectation.toString(opt.formatting));
+			printDist(distrib);
+			expectation=distrib.distribution;
 		}
 		if(opt.expectation||opt.cdf||opt.numSimulations==1){
 			auto varset=expectation.freeVars.setx;
@@ -142,17 +161,7 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 	if(expected.exists) with(expected){
 		writeln(ex==dist.distribution.toString()?todo?"FIXED":"PASS":todo?"TODO":"FAIL");
 	}
-	final switch(opt.outputForm){
-		case OutputForm.default_:
-			writeln(dist.toString(opt.formatting));
-			break;
-		case OutputForm.raw:
-			writeln(dist.distribution.toString(opt.formatting));
-			break;
-		case OutputForm.rawError:
-			writeln(dist.error.toString(opt.formatting));
-			break;
-	}
+	printDist(dist);
 	if(opt.casBench){
 		import std.file, std.conv;
 		auto bpath=buildPath(dirName(thisExePath()),"test/benchmarks/casBench/",to!string(opt.formatting),setExtension(baseName(path,".psi"),casExt()));
