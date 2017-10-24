@@ -516,6 +516,7 @@ mixin template FactoryFunction(T){
 			}
 			static if(__traits(hasMember,T,"constructHook"))
 				if(auto r=T.constructHook(args)) return r;
+			static if(is(T==DFloat)) if(args[0]==0) return zero;
 			static MapX!(TupleX!(typeof(T.subExprs)),T) cache;
 			auto t=tuplex(args);
 			if(t in cache) return cache[t];
