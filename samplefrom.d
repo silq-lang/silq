@@ -6,6 +6,7 @@ enum Token{
 	samplePrecondition,
 	sample,
 	expectation,
+	flip,
 	uniformIntPrecondition, // TODO: remove
 	uniformInt,
 	categoricalPrecondition,
@@ -32,6 +33,8 @@ private Token computeToken(string s){
 			return sample;
 		case "(r;d,b)=>δ(0)[-r+∫dx d[x]·(case(x){ val(y) ⇒ y;⊥ ⇒ 0 })/(1-b)]", "(r;d)=>δ(0)[-r+∫dx d[x]·x]":
 			return expectation;
+		case "(x;p)=>(1-p)·δ(0)[x]+p·δ(0)[1-x]":
+			return flip;
 		case "(r;a,b)=>δ(0)[-r+∑_i[a≤i]·[i≤b]]": // uniformInt precondition (TODO: remove)
 			return uniformIntPrecondition;
 		case "(x;a,b)=>(∑_i[a≤i]·[i≤b]·δ(0)[i-x])·⅟(∑_i[a≤i]·[i≤b])":

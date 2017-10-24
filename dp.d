@@ -874,7 +874,7 @@ struct Interpreter{
 										}
 										assert(hasResult);
 										return result;
-									case none:
+									case flip, none:
 										static DDPDist[const(char)*] dists; // NOTE: it is actually important that identical strings with different addresses get different entries (parameters are substituted)
 										if(str.ptr !in dists){
 											auto dist=new Distribution();
