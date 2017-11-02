@@ -20,10 +20,10 @@ dat Filter{
 
 def main(){
     data := [1,3,6,10,15];
-    filter := Filter(0,0,0);
+    filter := Filter(0,2,1);
     for i in [0..data.length){
         filter.update(1);
         filter.measureX(data[i],1);
     }
-    return filter.x; // expected: e^(-488601/3382+-89/152·x²+699/38·x)·⅟√π̅·√8̅9̅/̅1̅5̅2̅
+    return filter.x; // expected: 1/2·e^(-1677025/13528+-89/152·x²+1295/76·x)·⅟√π̅·√8̅9̅/̅3̅8̅
 }
