@@ -1626,13 +1626,16 @@ class DPow: DBinaryOp{
 		if(auto fct=factorDIvr!(e=>e^^e2)(e1)) return fct.simplify(facts);
 		if(e2.hasAny!DIvr(false)){
 			DExprSet r;
+			bool changed=false;
 			foreach(s;e2.summands){
 				DExpr f;
-				if(auto ns=factorDIvr!(e=>e1^^e)(s)) f=ns;
-				else f=e1^^s;
+				if(auto ns=factorDIvr!(e=>e1^^e)(s)){
+					changed=true;
+					f=ns;
+				}else f=e1^^s;
 				DMult.insert(r,f);
 			}
-			return dMult(r).simplify(facts);
+			if(changed) return dMult(r).simplify(facts);
 		}
 		return null;
 	}
@@ -2443,8 +2446,56 @@ DExprHoles!T getHoles(alias filter,T=DExpr)(DExpr e){
 			return dLog(doIt(lg.e));
 		if(auto dl=cast(DDelta)e)
 			return dDelta(doIt(dl.var));
+		if(auto dl=cast(DDiscDelta)e)
+			return dDiscDelta(doIt(dl.e),doIt(dl.var));
 		if(auto ivr=cast(DIvr)e)
 			return dIvr(ivr.type,doIt(ivr.e));
+		/+if(auto sn=cast(DSin)e)
+			return dSin(doIt(sn.e));
+		if(auto fl=cast(DFloor)e)
+			return dFloor(doIt(fl.e));
+		if(auto cl=cast(DCeil)e)
+			return dCeil(doIt(cl.e));
+		if(auto bo=cast(DBitOr)e){
+			DExprSet r;
+			foreach(f;bo.operands) DBitOr.insert(r,doIt(f));
+			return dBitOr(r);
+		}
+		if(auto bx=cast(DBitXor)e){
+			DExprSet r;
+			foreach(f;bx.operands) DBitXor.insert(r,doIt(f));
+			return dBitXor(r);
+		}
+		if(auto ba=cast(DBitAnd)e){
+			DExprSet r;
+			foreach(f;ba.operands) DBitAnd.insert(r,doIt(f));
+			return dBitAnd(r);
+		}
+		if(auto tpl=cast(DTuple)e)
+			return dTuple(tpl.values.map!doIt.array);
+		if(auto rcd=cast(DRecord)e){
+			DExpr[string] nvalues;
+			foreach(k,v;rcd.values) nvalues[k]=doIt(v);
+			return dRecord(nvalues);
+		}
+		if(auto ab=cast(DAbs)e)
+			return dAbs(doIt(ab.e));
+		if(auto idx=cast(DIndex)e)
+			return dIndex(doIt(idx.e),doIt(idx.i));
+		if(auto iu=cast(DIUpdate)e)
+			return dIUpdate(doIt(iu.e),doIt(iu.i),doIt(iu.n));
+		if(auto slc=cast(DSlice)e)
+			return dSlice(doIt(e.e),doIt(e.l),doIt(e.r));
+		if(auto ru=cast(DRUpdate)e)
+			return dRUpdate(doIt(e.e),e.f,doIt(e.n));
+		if(auto fld=cast(DField)e)
+			return dField(doIt(fld.e),fld.f);
+		if(auto ap=cast(DApply)e)
+			return dApply(doIt(ap.fun),doIt(ap.arg));
+		if(auto ar=cast(DArray)e)
+			return dArray(doIt(ar.length),ar.entries);
+		if(auto ce=cast(DCat)e)
+		    return dCat(operands.map!doIt.array)+/
 		return e;
 	}
 	r.expr=doIt(e);

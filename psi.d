@@ -159,6 +159,7 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration;
+	//writeln("e^(__r₁₃·centers@[[-i+1=0]])".dParse.simplify(one));
 	//writeln("∑_x[x=1.000]".dParse.simplify(one));
 	//writeln("e^(log(x)+log(y))".dParse.simplify(one));
 	//writeln("[a^b≤0]".dParse.simplify(one));
