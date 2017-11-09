@@ -13,7 +13,7 @@ import dexpr,hashtable,util;
 import expression,declaration,type;
 import semantic_,scope_,context;
 
-import std.random; // (for InferenceMethod.simulate)
+import std.random, sample; // (for InferenceMethod.simulate)
 
 class Bruteforce: Backend{
 	this(string sourceFile){
@@ -798,7 +798,7 @@ struct Interpreter{
 											if(!hasResult){
 												μ=μCand, ν=νCand;
 												import std.math, std.mathspecial, std.random;
-												result=dFloat(μ+sqrt(ν)*normalDistributionInverse(.uniform(0.0L,1.0L)));
+												result=dFloat(sampleGauss(μ,ν));
 												hasResult=true;
 											}else enforce(μ==μCand && ν==νCand);
 										}
@@ -815,7 +815,7 @@ struct Interpreter{
 											auto aCand=toFloat(args[0.dℚ].simplify(one)), bCand=toFloat(args[1.dℚ].simplify(one));
 											if(!hasResult){
 												a=aCand, b=bCand;
-												result=dFloat(.uniform!"[]"(a,b));
+												result=dFloat(sampleUniform(a,b));
 												hasResult=true;
 											}else enforce(a==aCand && b==bCand);
 										}
@@ -833,7 +833,7 @@ struct Interpreter{
 											if(!hasResult){
 												μ=μCand, b=bCand;
 												import std.math: log;
-												result=dFloat(μ+b*(2*.uniform!"[]"(0,1)-1)*log(.uniform!"(]"(0.0L,1.0L)));
+												result=dFloat(sampleLaplace(μ,b));
 												hasResult=true;
 											}else enforce(μ==μCand && b==bCand);
 										}
@@ -850,7 +850,7 @@ struct Interpreter{
 											if(!hasResult){
 												ν=νCand;
 												import std.math: log, sqrt;
-												result=dFloat(sqrt(-2*ν*log(.uniform!"(]"(0.0L,1.0L))));
+												result=dFloat(sampleRayleigh(ν));
 												hasResult=true;
 											}else enforce(ν==νCand);
 										}
@@ -868,7 +868,7 @@ struct Interpreter{
 											if(!hasResult){
 												a=aCand, b=bCand;
 												import std.math: log;
-												result=dFloat(b/(.uniform!"(]"(0.0L,1.0L)^^(1.0/a)));
+												result=dFloat(samplePareto(a,b));
 												hasResult=true;
 											}else enforce(a==aCand && b==bCand);
 										}
