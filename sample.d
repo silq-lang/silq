@@ -1,7 +1,16 @@
-import std.random, std.math, std.mathspecial;
+import std.random, std.math, std.mathspecial, std.exception;
+
+real sampleFlip(real p){
+	return uniform!"[]"(0.0L,1.0L)<=p;
+}
+
+real sampleUniformInt(real a,real b){
+	enforce(ceil(a)>=long.min && floor(b)<=long.max);
+	return uniform!"[]"(cast(long)ceil(a),cast(long)floor(b));
+}
 
 real sampleGauss(real μ,real ν){
-	return (μ+sqrt(ν)*normalDistributionInverse(.uniform(0.0L,1.0L)));
+	return (μ+sqrt(ν)*normalDistributionInverse(uniform!"[]"(0.0L,1.0L)));
 }
 
 real sampleUniform(real a,real b){
