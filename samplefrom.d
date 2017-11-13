@@ -1,5 +1,6 @@
 enum Token{
 	none,
+	array,
 	inferPrecondition,
 	infer,
 	errorPr,
@@ -21,6 +22,8 @@ enum Token{
 }
 private Token computeToken(string s){
 	switch(s) with(Token){
+		case "(r;length,init)=>δ([i↦ init] (length))[r]":
+			return array;
 		case "(r;f)=>δ(∫dy f()[y])[r]":
 			return inferPrecondition;
 		case "(r;f)=>δ(Λx.f()[x]/∫dy f()[y])[r]":

@@ -541,7 +541,7 @@ struct Dist{
 			r.add(dRUpdate(k,tmp,error).simplify(one),v);
 		}
 		this=r;
-		return dField(db1,tmp);		
+		return dField(db1,tmp);
 	}
 	void copyNonState(ref Dist rhs){
 		this.tupleof[1..$]=rhs.tupleof[1..$];
@@ -748,6 +748,9 @@ struct Interpreter{
 									assert(0);
 								}
 								final switch(getToken(str)) with(Token){
+									case array:
+										assert(args[1..$].length==2);
+										return dArray(doIt(args[1]),dLambda(doIt(args[2]).incDeBruijnVar(1,0)));
 									case inferPrecondition:
 										return one; // TODO
 									case infer:
