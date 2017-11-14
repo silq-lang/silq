@@ -91,3 +91,17 @@ def Categorical(p:ℝ[]):Distribution[ℝ] ⇒ infer(() ⇒ sampleFrom("(x;p)=>�
 def dirac[a](x:a) ⇒ x;
 def Dirac[a](x:a) ⇒ infer(()=>x);
 
+def dirichlet(α: ℝ[]){
+	r:=array(α.length,0);
+	sum:=0;
+	for i in [0..α.length){
+		r[i]=gamma(α[i],1);
+		sum+=r[i];
+	}
+	for i in [0..α.length){
+		r[i]/=sum;
+	}
+	return r;
+}
+def Dirichlet(α: ℝ[]) ⇒ infer(()=>dirichlet(α));
+
