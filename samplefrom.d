@@ -26,6 +26,7 @@ enum Token{
 	// chiSquared, // TODO
 	rayleigh,
 	pareto,
+	gamma,
 }
 private Token computeToken(string s){
 	switch(s) with(Token){
@@ -79,6 +80,8 @@ private Token computeToken(string s){
 			return rayleigh;
 		case "(x;a,b)=>[-x+b≤0]·[-x≤0]·a·b^a·x^(-1+-a)":
 			return pareto;
+		case "(x;α,β)=>([-x≤0]·[α≠0]·x^(-1+α)·⅟e^(x·β)+[α=0]·δ(0)[x])·([α=0]+[α≠0]·⅟(∫dξ₁[-ξ₁≤0]·ξ₁^(-1+α)·⅟e^(β·ξ₁)))":
+			return gamma;
 		default:
 			return Token.none;
 	}	

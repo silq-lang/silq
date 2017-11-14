@@ -898,6 +898,24 @@ struct Interpreter{
 										}
 										assert(hasResult);
 										return result;
+									case gamma:
+										enforce(opt.backend==InferenceMethod.simulate,"cannot sample from Gamma with --dp");
+										auto arg=dLambda(getArg()).simplify(one);
+										real α,β;
+										bool hasResult;
+										DExpr result;
+										foreach(k,v;cur.state){
+											auto args=dApply(arg,k);
+											auto αCand=toFloat(args[0.dℚ].simplify(one)),βCand=toFloat(args[1.dℚ].simplify(one));
+											if(!hasResult){
+												α=αCand, β=βCand;
+												import std.math: log;
+												result=dFloat(sampleGamma(α,β));
+												hasResult=true;
+											}else enforce(α==αCand && β==βCand);
+										}
+										assert(hasResult);
+										return result;
 									case flip, none:
 										static DDPDist[const(char)*] dists; // NOTE: it is actually important that identical strings with different addresses get different entries (parameters are substituted)
 										if(str.ptr !in dists){

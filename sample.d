@@ -28,3 +28,16 @@ real sampleRayleigh(real ν){
 real samplePareto(real a,real b){
 	return b/(.uniform!"(]"(0.0L,1.0L)^^(1.0/a));
 }
+
+real sampleGamma(real α,real β){ // Marsaglia & Tang, 2000
+	if(α<1) return sampleGamma(1+α,β)*sampleUniform(0,1)^^(1/α);
+	real d=α-1.0/3.0,c=1.0/sqrt(9.0*d);
+	for(;;){
+		real x=sampleGauss(0,1),v=1+c*x,u;
+		if(v>0){
+			v=v*v*v,u=sampleUniform(0,1);
+			if(u<1-0.331*x*x*x*x||log(u)<0.5*x*x+d*(1-v+log(v)))
+				return β*d*v;
+		}
+	}
+}
