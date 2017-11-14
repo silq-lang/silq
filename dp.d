@@ -748,6 +748,27 @@ struct Interpreter{
 									assert(0);
 								}
 								final switch(getToken(str)) with(Token){
+									case exp:
+										assert(args[1..$].length==1);
+										return dE^^doIt(args[1]);
+									case log:
+										assert(args[1..$].length==1);
+										return dLog(doIt(args[1]));
+									case sin:
+										assert(args[1..$].length==1);
+										return dSin(doIt(args[1]));
+									case cos:
+										assert(args[1..$].length==1);
+										return dCos(doIt(args[1]));
+									case abs:
+										assert(args[1..$].length==1);
+										return dAbs(doIt(args[1]));
+									case floor:
+										assert(args[1..$].length==1);
+										return dFloor(doIt(args[1]));
+									case ceil:
+										assert(args[1..$].length==1);
+										return dCeil(doIt(args[1]));
 									case array:
 										assert(args[1..$].length==2);
 										return dArray(doIt(args[1]),dLambda(doIt(args[2]).incDeBruijnVar(1,0)));

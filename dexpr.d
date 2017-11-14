@@ -3417,6 +3417,7 @@ class DSin: DOp{
 	}
 }
 mixin FactoryFunction!DSin;
+DExpr dCos(DExpr x){ return dSin(x+dΠ/2); }
 
 class DFloor: DOp{
 	DExpr e;

@@ -1,5 +1,12 @@
 enum Token{
 	none,
+	exp,
+	log,
+	sin,
+	cos,
+	abs,
+	floor,
+	ceil,
 	array,
 	inferPrecondition,
 	infer,
@@ -22,6 +29,20 @@ enum Token{
 }
 private Token computeToken(string s){
 	switch(s) with(Token){
+		case "(y;x)=>δ(0)[-y+e^x]":
+			return exp;
+		case "(y;x)=>δ(0)[-y+log(x)]":
+			return log;
+		case "(y;x)=>δ(0)[-y+sin(x)]":
+			return sin;
+		case "(y;x)=>δ(0)[-y+cos(x)]":
+			return cos;
+		case "(y;x)=>δ(0)[-y+|x|]":
+			return abs;
+		case "(y;x)=>δ(0)[-y+⌊x⌋]":
+			return floor;
+		case "(y;x)=>δ(0)[-y+⌈x⌉]":
+			return ceil;
 		case "(r;length,init)=>δ([i↦ init] (length))[r]":
 			return array;
 		case "(r;f)=>δ(∫dy f()[y])[r]":
