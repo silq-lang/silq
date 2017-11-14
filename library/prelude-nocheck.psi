@@ -105,3 +105,48 @@ def dirichlet(α: ℝ[]){
 }
 def Dirichlet(α: ℝ[]) ⇒ infer(()=>dirichlet(α));
 
+def multiGauss(μ: ℝ[], Σ: ℝ[][]){
+	def mmv(A: ℝ[][], b: ℝ[]){
+		r:=array(A.length,0);
+		for i in [0..A.length){
+			for j in [0..b.length){
+				r[i]+=A[i][j]*b[j];
+			}
+		}
+		return r;
+	}
+	def avv(a: ℝ[], b: ℝ[]){
+		r:=array(a.length,0);
+		for i in [0..a.length){
+			r[i]=a[i]+b[i];
+		}
+		return r;
+	}
+	def dot(a: ℝ[], b: ℝ[]){
+		r:=0;
+		for i in [0..a.length){
+			r+=a[i]*b[i];
+		}
+		return r;
+	}
+	def cholesky(A: ℝ[][]){
+		L := array(A.length,array(A.length,0));
+		for i in [0..A.length){
+			for j in [0..i]{
+				t := dot(L[i][0..j],L[j][0..j]);
+				if i == j {
+					L[i][j] = (A[i][j]-t)^(1/2)
+				}else if L[j][j]!=0{
+					L[i][j] = (A[i][j]-t)/L[j][j];
+				}
+			}
+		}
+		return L;
+	}
+	r := array(μ.length,0);
+	for i in [0..r.length){
+		r[i] = gauss(0,1);
+	}
+	return avv(mmv(cholesky(Σ),r),μ);
+}
+def MultiGauss(μ: ℝ[], Σ: ℝ[][])⇒infer(()⇒ multiGauss(μ,Σ));
