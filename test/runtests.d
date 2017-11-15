@@ -1,7 +1,7 @@
 // (this is a little convoluted, as it is adapted from code that had more capabilities)
 import std.stdio, std.file;
 import std.process, std.string, std.array;
-import std.algorithm, std.conv;
+import std.algorithm, std.conv, std.range;
 import std.datetime;
 import std.typecons : Flag, Yes, No;
 
@@ -14,10 +14,14 @@ enum passColor=GREEN;
 enum failColor=RED;
 
 bool fileStartsWithFlag(string source, string flag){
-	immutable f1="//"~flag;
-	immutable f2="// "~flag;
-	immutable h=cast(string)source.read(f2.length);
-	return h.startsWith(f1)||h==f2;
+	auto code=readText(source);
+	code=code.strip();
+	if(code.startsWith("// -*-")||code.startsWith("//-*-")){
+		while(code.length&&code.front!='\n') code.popFront();
+		if(code.length) code.popFront();
+	}
+	immutable f1="//"~flag, f2="// "~flag;
+	return code.startsWith(f1)||code.startsWith(f2);
 }
 
 void main(){
