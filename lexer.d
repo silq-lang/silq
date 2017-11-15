@@ -809,8 +809,10 @@ private:
 		auto s=p;
 		while('0'<=*p && *p<='9') p++;
 		if(*p=='.'&&*(p+1)!='.'){ p++; while('0'<=*p && *p<='9') p++; }
+		bool isFloat=false;
+		if(*p=='e'){ isFloat=true;p++; if(*p=='+'||*p=='-') p++; while('0'<=*p && *p<='9') p++; }
 		Token r;
-		r.type=Tok!"0";
+		r.type=isFloat?Tok!".0":Tok!"0";
 		r.str=s[0..p-s];
 		return r;
 	}
