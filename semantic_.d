@@ -1415,7 +1415,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 	}
 	if(auto lit=cast(LiteralExp)expr){
 		switch(lit.lit.type){
-		case Tok!"0":
+		case Tok!"0",Tok!".0":
 			expr.type=ℝ;
 			return expr;
 		case Tok!"``":

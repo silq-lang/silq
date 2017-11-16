@@ -325,10 +325,13 @@ private struct Analyzer{
 				return dSlice(de,dl,dr);
 			}
 			if(auto le=cast(LiteralExp)e){
-				if(le.lit.type==Tok!"0"){
-					auto n=le.lit.str.split(".");
+				if(le.lit.type==Tok!"0"||le.lit.type==Tok!".0"){
+					auto x=le.lit.str.split("e");
+					auto n=x[0].split(".");
 					if(n.length==1) n~="";
-					return dℚ((n[0]~n[1]).ℤ)/(ℤ(10)^^n[1].length);
+					auto r=dℚ((n[0]~n[1]).ℤ)/(ℤ(10)^^n[1].length);
+					if(x.length==2) r=x[1][0]=='-'?r/pow(ℤ(10),-ℤ(x[1])):r*pow(ℤ(10),ℤ(x[1]));
+					return r;
 				}
 			}
 			if(auto cmp=cast(CompoundExp)e){

@@ -266,22 +266,21 @@ struct Dist{
 		auto tmp="`categorical"~lowNum(++unique);
 		r.addTmpVar(tmp);
 		if(opt.backend==InferenceMethod.simulate){
-			Dℚ[] p;
+			DExpr[] p;
 			DExpr result=null;
 			foreach(k,v;state){
 				auto arr=dApply(lambda,k).simplify(one);
 				auto len=dField(arr,"length").simplify(one);
 				auto qlen=cast(Dℚ)len;
 				enforce(!!qlen && qlen.c.den==1);
-				Dℚ[] pCand;
+				DExpr[] pCand;
 				DExpr sum=zero;
 				foreach(i;0..qlen.c.num.toLong()){
-					auto cur=cast(Dℚ)arr[i.dℚ].simplify(one);
-					enforce(!!cur);
+					auto cur=arr[i.dℚ].simplify(one);
 					pCand~=cur;
 					sum=(sum+cur).simplify(one);
 				}
-				enforce(sum==one,"category probabilities must sum up to 1");
+				enforce(cast(DFloat)sum||sum==one,"category probabilities must sum up to 1");
 				if(!result){
 					import std.random;
 					p=pCand;
@@ -290,7 +289,7 @@ struct Dist{
 					foreach(i,val;p){
 						cur=(cur+val).simplify(one);
 						auto r=dLe(dFloat(f),cur).simplify(one);
-						assert(r == zero || r == one);
+						enforce(r == zero || r == one);
 						if(r==one){
 							result = dℚ(i);
 							break;
@@ -969,6 +968,9 @@ struct Interpreter{
 					auto n=le.lit.str.split(".");
 					if(n.length==1) n~="";
 					return (dℚ((n[0]~n[1]).ℤ)/(ℤ(10)^^n[1].length)).simplify(one);
+				}else if(le.lit.type==Tok!".0"){
+					import std.conv: to;
+					return dFloat(to!real(le.lit.str));
 				}
 			}
 			if(auto cmp=cast(CompoundExp)e){
