@@ -230,7 +230,7 @@ private struct Analyzer{
 						}
 						return r;
 					}
-					auto arg=util.among(id.name,"categorical","dirac","Dirac","sampleFrom")?null:doIt(ce.arg);
+					auto arg=util.among(id.name,"categorical","dirac","Dirac","sampleFrom","readCSV")?null:doIt(ce.arg);
 					if(isBuiltIn(id)) switch(id.name){
 					case "readCSV":
 						err.error(text("call to 'readCSV' only supported as the right hand side of an assignment"),ce.loc);
