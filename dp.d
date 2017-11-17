@@ -915,6 +915,23 @@ struct Interpreter{
 										}
 										assert(hasResult);
 										return result;
+									case exponential:
+										enforce(opt.backend==InferenceMethod.simulate,"cannot sample from Exponential with --dp");
+										auto arg=dLambda(getArg()).simplify(one);
+										real λ;
+										bool hasResult;
+										DExpr result;
+										foreach(k,v;cur.state){
+											auto λCand=toFloat(dApply(arg,k).simplify(one));
+											if(!hasResult){
+												λ=λCand;
+												import std.math: log, sqrt;
+												result=dFloat(sampleExponential(λ));
+												hasResult=true;
+											}else enforce(λ==λCand);
+										}
+										assert(hasResult);
+										return result;
 									case flip, none:
 										static DDPDist[const(char)*] dists; // NOTE: it is actually important that identical strings with different addresses get different entries (parameters are substituted)
 										if(str.ptr !in dists){

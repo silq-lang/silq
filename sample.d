@@ -41,3 +41,7 @@ real sampleGamma(real α,real β){ // Marsaglia & Tang, 2000
 		}
 	}
 }
+
+real sampleExponential(real λ){
+	return -log(uniform!"(]"(0.0L,1.0L))/λ;
+}

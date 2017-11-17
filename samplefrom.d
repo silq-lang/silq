@@ -27,6 +27,7 @@ enum Token{
 	rayleigh,
 	pareto,
 	gamma,
+	exponential,
 }
 private Token computeToken(string s){
 	switch(s) with(Token){
@@ -82,6 +83,8 @@ private Token computeToken(string s){
 			return pareto;
 		case "(x;α,β)=>([-x≤0]·[α≠0]·x^(-1+α)·⅟e^(x·β)+[α=0]·δ(0)[x])·([α=0]+[α≠0]·⅟(∫dξ₁[-ξ₁≤0]·ξ₁^(-1+α)·⅟e^(β·ξ₁)))":
 			return gamma;
+		case "(x;l)=>[0≤x]·l·e^(-x·l)":
+			return exponential;
 		default:
 			return Token.none;
 	}	
