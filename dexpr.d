@@ -11,7 +11,7 @@ static import std.typecons;
 
 import std.algorithm, std.array;
 
-import std.datetime;
+import std.datetime.stopwatch;
 
 struct RecursiveStopWatch{
 	StopWatch sw;
@@ -28,7 +28,7 @@ struct RecursiveStopWatch{
 /+RecursiveStopWatch sw;
 int swCount=0;
 static ~this(){
-	writeln("time: ",sw.peek().to!("seconds",double));
+	writeln("time: ",sw.peek().total!"hnsecs"/1e7);
 	writeln("freq: ",swCount);
 }
 enum measure="swCount++;sw.start();scope(exit)sw.stop();";+/
