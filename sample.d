@@ -37,7 +37,7 @@ real sampleGamma(real α,real β){ // Marsaglia & Tang, 2000
 		if(v>0){
 			v=v*v*v,u=sampleUniform(0,1);
 			if(u<1-0.331*x*x*x*x||log(u)<0.5*x*x+d*(1-v+log(v)))
-				return β*d*v;
+				return d*v/β;
 		}
 	}
 }
