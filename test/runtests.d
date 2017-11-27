@@ -2,7 +2,7 @@
 import std.stdio, std.file;
 import std.process, std.string, std.array;
 import std.algorithm, std.conv, std.range;
-import std.datetime;
+import std.datetime.stopwatch;
 import std.typecons : Flag, Yes, No;
 
 auto shell(string cmd){
@@ -24,12 +24,21 @@ bool fileStartsWithFlag(string source, string flag){
 	return code.startsWith(f1)||code.startsWith(f2);
 }
 
+alias to=std.conv.to;
+
+auto to(string unit,T)(Duration d)if(unit=="seconds"||unit=="msecs"){
+	static if(unit=="seconds") T factor=1e7;
+	else static if(unit=="msecs") T factor=1e4;
+	else static assert(0);
+	return d.total!"hnsecs"/factor;
+}
+
 void main(){
 	auto sources=shell("find . -name '*.psi' -type f").splitLines;
 	Summary total;
 	int skipped=0,passed=0;
 	bool colorize=isATTy(stdout);
-	TickDuration totalTime;
+	Duration totalTime;
 	foreach(source;sources){
 		if(source.startsWith("./")) source=source[2..$];
 		if(source.fileStartsWithFlag("skip")){
@@ -137,7 +146,7 @@ enum Status{
 struct Comparison{
 	Status status;
 	Info info;
-	TickDuration time;
+	Duration time;
 }
 
 Comparison[] getResults(string source){
