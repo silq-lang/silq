@@ -49,6 +49,7 @@ struct Options{
 	string[] importPath;
 	string[] summarize;
 	ulong numSimulations=1;
+	bool dexpr=false;
 }
 Options opt; // TODO: get rid of global?
 

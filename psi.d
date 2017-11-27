@@ -99,6 +99,7 @@ int main(string[] args){
 			case "--lisp": opt.formatting=Format.lisp; break;
 			case "--raw": opt.outputForm=OutputForm.raw; break;
 			case "--raw-error": opt.outputForm=OutputForm.rawError; break;
+			case "--dexpr": opt.dexpr=true; break;
 			case "--dp": opt.backend=InferenceMethod.dp; break;
 			case "--simulate": opt.backend=InferenceMethod.simulate; break;
 			default:
@@ -149,7 +150,11 @@ int main(string[] args){
 				if(auto r=run(x)) return r;
 		}
 	}
-	if(!hasInputFile){
+	if(opt.dexpr){
+		import dparse,dexpr;
+		foreach(line;stdin.byLineCopy)
+			writeln(dParse(line.strip).simplify(one).toString(opt.formatting));
+	}else if(!hasInputFile){
 		stderr.writeln("error: no input files");
 		return 1;
 	}
