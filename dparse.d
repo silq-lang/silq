@@ -21,10 +21,7 @@ struct DParser{
 		if(cur()==c){ if(consume) next(); }
 		else throw new Exception("expected '"~to!string(c)~"' at \""~code~"\"");
 	}
-		
-	DExpr parseDIvr(){
-		expect('[');
-		auto exp=parseDExpr();
+	DExpr parseDIvrRhs(DExpr exp){
 		DIvr.Type ty;
 		void doIt(DIvr.Type t,bool negate){
 			next();
@@ -45,8 +42,15 @@ struct DParser{
 			case '≤','≥': doIt(leZ,cur=='≥'); break;
 			default: expect('<'); assert(0);
 		}
+		if(util.among(cur(),'<','>','≤','≥','=','≠'))
+			return dIvr(ty,exp)*parseDIvrRhs(exp);
 		expect(']');
 		return dIvr(ty,exp);
+	}
+	DExpr parseDIvr(){
+		expect('[');
+		auto exp=parseDExpr();
+		return parseDIvrRhs(exp);
 	}
 	DExpr parseDFloor(){
 		expect('⌊');
