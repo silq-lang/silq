@@ -9,6 +9,9 @@ def sin(x:ℝ):ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+sin(x)]",x);
 def cos(x:ℝ):ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+cos(x)]",x);
 def abs(x:ℝ):ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+|x|]",x);
 
+def min(a:ℝ,b:ℝ):ℝ ⇒ if b<a then b else a;
+def max(a:ℝ,b:ℝ):ℝ ⇒ if a<b then b else a;
+
 def floor(x:ℝ):ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+⌊x⌋]",x);
 def ceil(x:ℝ):ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+⌈x⌉]",x);
 def inℤ(x:ℝ):ℝ ⇒ x==floor(x);
