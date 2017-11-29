@@ -1889,6 +1889,7 @@ bool couldBeZero(DExpr e){
 bool mustBeZeroOrOne(DExpr e){
 	if(e==zero || e==one) return true;
 	if(cast(DIvr)e) return true;
+	if(auto m=cast(DMult)e) return util.all!mustBeZeroOrOne(m.factors);
 	return false;
 }
 

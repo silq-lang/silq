@@ -4,7 +4,7 @@ def mains(){
     y := uniform(0,1);
     k := uniform(0,1);
     a := x*y+k;
-    return a; // expected: (-a·log(a)+a)·[-1+a≤0]·[-a≤0]·[a≠0]+-[-2+a≤0]·[-a+1≠0]·[-a+1≤0]·a+-[-2+a≤0]·[-a+1≠0]·[-a+1≤0]·log(-1+a)+2·[-2+a≤0]·[-a+1≠0]·[-a+1≤0]+[-2+a≤0]·[-a+1≠0]·[-a+1≤0]·a·log(-1+a)
+    return a; // expected: (-[-2+a≤0]·a+-[-2+a≤0]·log(-1+a)+2·[-2+a≤0]+[-2+a≤0]·a·log(-1+a))·[-a+1≠0]·[-a+1≤0]+-[-1+a≤0]·[-a≤0]·[a≠0]·a·log(a)+[-1+a≤0]·[-a≤0]·[a≠0]·a
 	// TODO: compute normalization constant
 	// TODO: pdf does not need factor [a≠0].
 }
