@@ -164,6 +164,16 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration;
+	//writeln("∫dy[0≤y≤1]·[((-12·y+6)·⅟(-3·y+2)+-3)·⅟((-12+24·y)·⅟(-3·y+2)+(-36·y+36·y²+9)·⅟(-3·y+2)²+4)+2·⅟((-3+6·y)·⅟(-3·y+2)+2)≠0]".dParse.simplify(one));
+	//writeln("([((-12·y+6)·⅟(-3·y+2)+-3)·⅟((-3+6·y)·⅟(-3·y+2)+2)²+2·⅟((-3+6·y)·⅟(-3·y+2)+2)≠0]·[((-12·y+6)·⅟(-3·y+2)+-3)·⅟((-3+6·y)·⅟(-3·y+2)+2)²+2·⅟((-3+6·y)·⅟(-3·y+2)+2)≤0]·⅟(((-6+12·y)·⅟(-3·y+2)+3)·⅟((-3+6·y)·⅟(-3·y+2)+2)²+-2·⅟((-3+6·y)·⅟(-3·y+2)+2))+[((-6+12·y)·⅟(-3·y+2)+3)·⅟((-3+6·y)·⅟(-3·y+2)+2)²+-2·⅟((-3+6·y)·⅟(-3·y+2)+2)≤0]·⅟(((-12·y+6)·⅟(-3·y+2)+-3)·⅟((-3+6·y)·⅟(-3·y+2)+2)²+2·⅟((-3+6·y)·⅟(-3·y+2)+2)))·[(-1+2·y)·⅟(-3·y+2)+-1≤0]·[-7·y+2+6·y²≤0]·[-y+2/3≠0]".dParse.simplify(one));
+	//writeln("δ(0)[(1+2·ξ₀)·⅟(2+3·ξ₀)+-y]".dParse.linearizeConstraints(dDeBruijnVar(1)));
+	//writeln("[((-12·ξ₀+6)·⅟(-3·ξ₀+2)+-3)·⅟((-3+6·ξ₀)·⅟(-3·ξ₀+2)+2)²+2·⅟((-3+6·ξ₀)·⅟(-3·ξ₀+2)+2)≤0]".dParse.simplify(one));
+	//gnuplot("∫dx [0≤x≤1]·δ(y)[(2*x+1)/(3*x+2)]".dParse.simplify(one),["y".dVar].setx,"label","[0.6:0.7]");
+	//writeln("1/(3·x+2)²".dParse); // TODO: fix printing
+	//writeln("[-18·x²·⅟(12·x+4+9·x²)+-21·x·⅟(12·x+4+9·x²)+-6·⅟(12·x+4+9·x²)+2=0]".dParse.linearizeConstraints("x".dVar).simplify(one));
+	//writeln("δ(0)[(1+2·x)·⅟(2+3·x)+-y]".dParse.linearizeConstraints("x".dVar).simplify(one)); // TODO: split negative exponents of powers higher than 1
+	//writeln("a/(x+1)+b/(x+2)+c/(x+3)+d/(x+1)+e/(x+2)+f/(x+3)".dParse.simplify(one).splitCommonDenominator());
+	//writeln("[(2*x+1)/(3*x+2)≤y]".dParse.linearizeConstraints("x".dVar).simplify(one));
 	//writeln("e^(__r₁₃·centers@[[-i+1=0]])".dParse.simplify(one));
 	//writeln("∑_x[x=1.000]".dParse.simplify(one));
 	//writeln("e^(log(x)+log(y))".dParse.simplify(one));

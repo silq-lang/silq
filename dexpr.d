@@ -2018,18 +2018,43 @@ DExpr uglyFractionCancellation(DExpr e){
 	return dℚ(ℚ(dlcm,ngcd));
 }
 
-private static DExpr getCommonDenominator(DExpr e){
-	DExpr r=one;
+Q!(DExpr,DExpr) splitCommonDenominator(DExpr e){
+	DExprSet denom;
 	foreach(s;e.summands){
+		DExprSet cden;
 		foreach(f;s.factors){
 			if(auto p=cast(DPow)f){
-				if(p.operands[1] != mone) continue;
-				auto den=p.operands[0];
-				if(!r.hasFactor(den)) r=r*den;
+				auto n=p.operands[1].isInteger();
+				if(n&&n.c<0){
+					assert(n.c.den==1);
+					// TODO: improve
+					DMult.insert(cden,n==mone?p.operands[0]:p.operands[0]^^dℚ(-n.c));
+				}
 			}
 		}
+		if(cden.length) denom.insert(dMult(cden));
 	}
-	return r;
+	if(!denom.length) return q(e,one);
+	DExprSet num;
+	foreach(s;e.summands){
+		DExprSet cnum=denom.dup;
+		foreach(f;s.factors){
+			if(auto p=cast(DPow)f){
+				auto n=p.operands[1].isInteger();
+				if(n&&n.c<0){
+					// TODO: improve calculation of toRemove
+					auto toRemove=n==mone?p.operands[0]:p.operands[0]^^dℚ(-n.c);
+					if(toRemove in cnum){
+						cnum.remove(toRemove);
+						continue;
+					}
+				}
+			}
+			DMult.insert(cnum,f);
+		}
+		DPlus.insert(num,dMult(cnum));
+	}
+	return q(dPlus(num),dMult(denom));
 }
 
 enum BoundStatus{
@@ -2239,6 +2264,14 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 		}else if(auto l=cast(DLog)lhs){
 			return doIt(parity,ty,l.e,dE^^rhs);
 		}
+		lhs=lhs.simplify(one);
+		auto numden=lhs.splitCommonDenominator();
+		numden[1]=numden[1].simplify(one);
+		if(numden[1]!=one){
+			numden[0]=numden[0].simplify(one);
+			auto num=numden[0],den=numden[1];
+			return doIt(parity*den,ty,(num-rhs*den).simplify(one),zero);
+		}
 		if(ty==leZ){
 			static if(isDelta) assert(0);
 			auto evenParity=linearizeConstraints(dIvr(leZ,-parity),var);
@@ -2265,8 +2298,7 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 				if(summand is null) unwind();
 				DPlus.insert(special,summand);
 			}
-			return dIvr(neqZ,diff).linearizeConstraints(var)*dDelta(lhs-rhs)/diff+dPlus
-				(special);
+			return dIvr(neqZ,diff).linearizeConstraints(var)*dDelta(lhs-rhs)/diff+dPlus(special);
 		}
 		else return dIvr(ty,lhs-rhs);
 	}
