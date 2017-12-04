@@ -1510,7 +1510,8 @@ class DPow: DBinaryOp{
 					 Precedence.div);
 			}else{
 				auto pre=formatting==Format.default_?"⅟":"1/";
-				return addp(prec,pre~((operands[0]^^-operands[1]).simplify(one)).toStringImpl(formatting,Precedence.div,binders),Precedence.div);
+				auto exp=(-operands[1]).simplify(one);
+				return addp(prec,pre~(exp==one?operands[0]:operands[0]^^exp).toStringImpl(formatting,Precedence.div,binders),Precedence.div);
 			}
 		}
 		// also nice, but often hard to read: ½⅓¼⅕⅙
