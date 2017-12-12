@@ -164,6 +164,20 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration;
+	//writeln("δ(x^2)[y]".dParse.linearizeConstraints("x".dVar).simplify(one));
+	/+import std.random;
+	Queue!int q;
+	int cur=0,cur2=0;
+	foreach(i;0..1000){
+		if(!q.length||uniform!"[]"(0,5)){
+			writeln("pushing: ",++cur);
+			q.push(cur);
+		}else{
+			int x=q.pop();
+			writeln("popping: ",x);
+			assert(x==++cur2);
+		}
+	}+/
 	//writeln("∫dy[0≤y≤1]·[((-12·y+6)·⅟(-3·y+2)+-3)·⅟((-12+24·y)·⅟(-3·y+2)+(-36·y+36·y²+9)·⅟(-3·y+2)²+4)+2·⅟((-3+6·y)·⅟(-3·y+2)+2)≠0]".dParse.simplify(one));
 	//writeln("([((-12·y+6)·⅟(-3·y+2)+-3)·⅟((-3+6·y)·⅟(-3·y+2)+2)²+2·⅟((-3+6·y)·⅟(-3·y+2)+2)≠0]·[((-12·y+6)·⅟(-3·y+2)+-3)·⅟((-3+6·y)·⅟(-3·y+2)+2)²+2·⅟((-3+6·y)·⅟(-3·y+2)+2)≤0]·⅟(((-6+12·y)·⅟(-3·y+2)+3)·⅟((-3+6·y)·⅟(-3·y+2)+2)²+-2·⅟((-3+6·y)·⅟(-3·y+2)+2))+[((-6+12·y)·⅟(-3·y+2)+3)·⅟((-3+6·y)·⅟(-3·y+2)+2)²+-2·⅟((-3+6·y)·⅟(-3·y+2)+2)≤0]·⅟(((-12·y+6)·⅟(-3·y+2)+-3)·⅟((-3+6·y)·⅟(-3·y+2)+2)²+2·⅟((-3+6·y)·⅟(-3·y+2)+2)))·[(-1+2·y)·⅟(-3·y+2)+-1≤0]·[-7·y+2+6·y²≤0]·[-y+2/3≠0]".dParse.simplify(one));
 	//writeln("δ(0)[(1+2·ξ₀)·⅟(2+3·ξ₀)+-y]".dParse.linearizeConstraints(dDeBruijnVar(1)));

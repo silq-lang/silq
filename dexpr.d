@@ -2504,10 +2504,10 @@ DExprHoles!T getHoles(alias filter,T=DExpr)(DExpr e){
 			DExprSet r;
 			foreach(f;ba.operands) DBitAnd.insert(r,doIt(f));
 			return dBitAnd(r);
-		}
+		}+/
 		if(auto tpl=cast(DTuple)e)
 			return dTuple(tpl.values.map!doIt.array);
-		if(auto rcd=cast(DRecord)e){
+		/+if(auto rcd=cast(DRecord)e){
 			DExpr[string] nvalues;
 			foreach(k,v;rcd.values) nvalues[k]=doIt(v);
 			return dRecord(nvalues);
@@ -3668,7 +3668,7 @@ bool isInfinite(DExpr e){
 	return e==dInf || e==-dInf;
 }
 
-class DTuple: DExpr{ // Tuples. TODO: real tuple support
+class DTuple: DExpr{
 	DExpr[] values;
 	alias subExprs=Seq!values;
 	override string toStringImpl(Format formatting, Precedence prec, int binders){
@@ -3690,7 +3690,29 @@ class DTuple: DExpr{ // Tuples. TODO: real tuple support
 }
 mixin FactoryFunction!DTuple;
 
-class DRecord: DExpr{ // Tuples. TODO: real tuple support
+class DArrayLiteral: DExpr{ // TODO: add support for indexing etc?
+	DExpr[] values;
+	alias subExprs=Seq!values;
+	override string toStringImpl(Format formatting, Precedence prec, int binders){
+		if(formatting==Format.lisp) return text("(array-literal ",values.map!(v=>v.toStringImpl(formatting,Precedence.none,binders)).join(" "),")");
+		return text("[",values.map!(v=>v.toStringImpl(formatting,Precedence.none,binders)).join(","),values.length==1?",":"","]");
+	}
+	mixin Visitors;
+	static DArrayLiteral staticSimplify(DExpr[] values,DExpr facts=one){
+		auto nvalues=values.map!(v=>v.simplify(facts)).array;
+		if(nvalues!=values) return dArrayLiteral(nvalues);
+		return null;
+	}
+	override DExpr simplifyImpl(DExpr facts){
+		auto r=staticSimplify(values,facts);
+		return r?r:this;
+	}
+	final @property size_t length(){ return values.length; }
+	final @property DExpr opIndex(size_t i){ return values[i]; }
+}
+mixin FactoryFunction!DArrayLiteral;
+
+class DRecord: DExpr{
 	DExpr[string] values;
 	alias subExprs=Seq!values;
 	final DRecord update(string f,DExpr n){

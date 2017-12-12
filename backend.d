@@ -97,7 +97,22 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 			else if(dist.error==one){
 				writeln("⊥");
 			}else{
-				writeln(expectation.toString(opt.formatting));
+				DExpr toLiteral()(DArray e){
+					auto n=e.length.isInteger();
+					if(!n||n.c.num>=size_t.max) return e;
+					assert(n.c.den==1);
+					import std.range, std.algorithm;
+					return dArrayLiteral(iota(cast(size_t)n.c.num).map!(i=>readableArrays(e[i.dℚ].simplify(one))).array).simplify(one);
+				}
+				DExpr readableArrays(DExpr e){
+					auto h=e.getHoles!(x=>cast(DArray)x,DArray);
+					auto r=h.expr;
+					foreach(hole;h.holes){
+						r=r.substitute(hole.var,toLiteral(hole.expr));
+					}
+					return r.simplify(one);
+				}
+				writeln(readableArrays(expectation).toString(opt.formatting));
 			}
 		}
 		if(opt.expectation){
