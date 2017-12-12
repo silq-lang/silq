@@ -3780,21 +3780,6 @@ class DIndex: DOp{
 		if(auto arr=cast(DArray)ne){
 			return arr.entries.apply(ni).simplify(facts);
 		}
-		// distribute over case distinction:
-		if(ne==zero) return zero;
-		if(auto p=cast(DPlus)ne){
-			DExprSet r;
-			foreach(s;p.summands) DPlus.insert(r,dIndex(s,ni));
-			return dPlus(r).simplify(facts);
-		}
-		if(auto m=cast(DMult)ne){
-			foreach(fc;m.factors){
-				if(cast(DTuple)fc||cast(DArray)fc)
-					return (m.withoutFactor(fc)*dIndex(fc,ni)).simplify(facts);
-				if(cast(DIvr)fc)
-					return (dIndex(m.withoutFactor(fc),ni)*fc).simplify(facts);
-			}
-		}
 		if(ne != e || ni != i) return dIndex(ne,ni);
 		return null;
 	}
