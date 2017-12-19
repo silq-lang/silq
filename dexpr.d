@@ -3313,7 +3313,7 @@ class DDiff: DOp{
 	override Precedence precedence(){ return Precedence.diff; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		if(formatting==Format.lisp)
-			return text("(differentiate ",DDeBruijnVar.displayName(1,formatting,binders+1)," ",(e==x?e.toStringImpl(formatting,Precedence.none,binders+1):text(e.toStringImpl(formatting,Precedence.none,binders+1)," ",x.toStringImpl(formatting,Precedence.none,binders))));
+			return text("(differentiate ",DDeBruijnVar.displayName(1,formatting,binders+1)," ",e.toStringImpl(formatting,Precedence.none,binders+1)," ",x.toStringImpl(formatting,Precedence.none,binders),")");
 		return addp(prec,symbol(formatting,binders+1)~"["~e.toStringImpl(formatting,Precedence.none,binders+1)~"]("~x.toStringImpl(formatting,Precedence.none,binders)~")");
 	}
 
