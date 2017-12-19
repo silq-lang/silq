@@ -33,6 +33,8 @@ DExpr differentiate(DVar v,DExpr e){
 		return dDiff(v,f.e)*dDelta(dSin(dΠ*e)/dΠ); // TODO: this delta function should be skewed!
 	if(auto g=cast(DGaussInt)e)
 		return dDiff(v,g.x)*dE^^(-g.x^^2);
+	if(auto g=cast(DGaussIntInv)e)
+		return dDiff(v,g.x)*dE^^(e^^2);
 	if(!e.hasFreeVar(v)) return zero;
 	return null;
 }

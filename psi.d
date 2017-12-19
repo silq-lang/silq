@@ -164,6 +164,9 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration;
+	//writeln("(d/dx)⁻¹[e^(-x²)]⁻¹((d/dx)⁻¹[e^(-x²)](f(x)))".dParse.simplify(one));
+	//writeln("(d/dx)⁻¹[e^(-x²)]((d/dx)⁻¹[e^(-x²)]⁻¹(f(x)))".dParse.simplify(one));
+	//writeln(dDiff("x".dVar,"(d/dx)⁻¹[e^(-x²)]⁻¹(f(x))".dParse).simplify(one));
 	//writeln("∫dx δ(0)[(d/dx)⁻¹[e^(-x²)](x·⅟√2̅)+-r₁]".dParse.simplify(one));
 	//writeln(dGaussInt("x".dVar));
 	//writeln(dDiff("x".dVar,"(d/dx)⁻¹[e^(-x²)](2^(1/2)·x)".dParse.simplify(one)));

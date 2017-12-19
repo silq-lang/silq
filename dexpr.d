@@ -3313,8 +3313,8 @@ class DDiff: DOp{
 	override Precedence precedence(){ return Precedence.diff; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		if(formatting==Format.lisp)
-			return text("(differentiate ",DDeBruijnVar.displayName(1,formatting,binders)," ",(e==x?text(e):text(e," ",x)));
-		return addp(prec,symbol(formatting,binders)~"["~e.toStringImpl(formatting,Precedence.none,binders)~"]("~x.toStringImpl(formatting,Precedence.none,binders)~")");
+			return text("(differentiate ",DDeBruijnVar.displayName(1,formatting,binders+1)," ",(e==x?e.toStringImpl(formatting,Precedence.none,binders+1):text(e.toStringImpl(formatting,Precedence.none,binders+1)," ",x.toStringImpl(formatting,Precedence.none,binders))));
+		return addp(prec,symbol(formatting,binders+1)~"["~e.toStringImpl(formatting,Precedence.none,binders+1)~"]("~x.toStringImpl(formatting,Precedence.none,binders)~")");
 	}
 
 	static DExpr constructHook(DExpr e,DExpr x){
@@ -3640,6 +3640,7 @@ class DGaussInt: DOp{
 			return dΠ^^(one/2)/2;
 		}
 		auto nx=x.simplify(facts);
+		if(auto g=cast(DGaussIntInv)nx) return g.x;
 		if(nx != x) return dGaussInt(nx).simplify(facts);
 		if(auto fct=factorDIvr!(e=>dGaussInt(e))(x)) return fct.simplify(facts);
 		return null;
@@ -3651,6 +3652,37 @@ class DGaussInt: DOp{
 	mixin Visitors;
 }
 mixin FactoryFunction!DGaussInt;
+
+class DGaussIntInv: DOp{
+	DExpr x;
+	alias subExprs=Seq!x;
+	override @property string symbol(Format formatting,int binders){ return "(d/dx)⁻¹[e^(-x²)]⁻¹"; }
+	override Precedence precedence(){ return Precedence.diff; }
+	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		if(formatting==Format.gnuplot){
+			return "erfinv(2/sqrt(pi)*("~x.toStringImpl(formatting,Precedence.none,binders)~")-1)";
+		}else if(formatting==Format.mathematica){
+			return "InverseErf[2/Sqrt[Pi]*("~x.toStringImpl(formatting,Precedence.none,binders)~")-1]";
+		}else if(formatting==Format.maple){
+			return "erfinv(2/sqrt(Pi)*("~x.toStringImpl(formatting,Precedence.none,binders)~")-1)";
+		}else if(formatting==Format.matlab) return "erf(2/sqrt(pi)*("~x.toStringImpl(formatting,Precedence.none,binders)~")-1)";
+		else if(formatting==Format.lisp) return text("(inverse-gauss-integral ",x.toStringImpl(formatting,Precedence.none,binders),")");
+		else return addp(prec,symbol(formatting,binders)~"("~x.toStringImpl(formatting,Precedence.none,binders)~")");
+	}
+	static DExpr staticSimplify(DExpr x,DExpr facts=one){
+		auto nx=x.simplify(facts);
+		if(auto g=cast(DGaussInt)nx) return g.x;
+		if(nx != x) return dGaussInt(nx).simplify(facts);
+		if(auto fct=factorDIvr!(e=>dGaussIntInv(e))(x)) return fct.simplify(facts);
+		return null;
+	}
+	override DExpr simplifyImpl(DExpr facts){
+		auto r=staticSimplify(x);
+		return r?r:this;
+	}
+	mixin Visitors;
+}
+mixin FactoryFunction!DGaussIntInv;
 
 class DInf: DExpr{ // TODO: explicit limits?
 	alias subExprs=Seq!();

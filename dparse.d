@@ -117,6 +117,11 @@ struct DParser{
 	}
 
 	DExpr parseGaussInt()in{assert(code.startsWith("(d/dx)⁻¹[e^(-x²)]"));}body{
+		if(code.startsWith("(d/dx)⁻¹[e^(-x²)]⁻¹")){
+			code=code["(d/dx)⁻¹[e^(-x²)]⁻¹".length..$];
+			auto e=parseParenthesized('(',')');
+			return dGaussIntInv(e);
+		}
 		code=code["(d/dx)⁻¹[e^(-x²)]".length..$];
 		auto e=parseParenthesized('(',')');
 		return dGaussInt(e);
