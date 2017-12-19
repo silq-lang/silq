@@ -164,6 +164,7 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration;
+	//writeln("δ(val(([-1+ξ₁≤0]·ξ₁+[-ξ₁+1≠0]·[-ξ₁+1≤0])·[-ξ₁≤0]))[x]".dParse.simplify(one));
 	//writeln("[π^(1/2)≤(d/dx)⁻¹[e^(-x²)](x)]".dParse.linearizeConstraints("x".dVar).simplify(one));
 	//writeln("[(d/dx)⁻¹[e^(-x²)](r·⅟√2̅)+-√π̅≤0]·[(d/dx)⁻¹[e^(-x²)](r·⅟√2̅)·⅟√π̅+-1≤0]·[-(d/dx)⁻¹[e^(-x²)](r·⅟√2̅)+√π̅≠0]·[-(d/dx)⁻¹[e^(-x²)](r·⅟√2̅)·⅟√π̅≤0]".dParse.simplify(one));
 	//writeln("lim[x→ ∞](d/dx)⁻¹[e^(-x²)]⁻¹(π^(1/2)-1/x)".dParse.simplify(one));

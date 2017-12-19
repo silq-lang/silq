@@ -2538,8 +2538,10 @@ DExprHoles!T getHoles(alias filter,T=DExpr)(DExpr e){
 		if(auto ru=cast(DRUpdate)e)
 			return dRUpdate(doIt(e.e),e.f,doIt(e.n));
 		if(auto fld=cast(DField)e)
-			return dField(doIt(fld.e),fld.f);
-		if(auto ap=cast(DApply)e)
+			return dField(doIt(fld.e),fld.f);+/
+		if(auto val=cast(DVal)e)
+			return dVal(doIt(val.e));
+		/+if(auto ap=cast(DApply)e)
 			return dApply(doIt(ap.fun),doIt(ap.arg));
 		if(auto ar=cast(DArray)e)
 			return dArray(doIt(ar.length),ar.entries);
@@ -3045,6 +3047,8 @@ class DDiscDelta: DExpr{ // point mass for discrete data types
 		// TODO: filter more precisely
 		auto ne=e.simplify(one), nvar=var.simplify(one);
 		if(ne != e || nvar != var) return dDiscDelta(ne,nvar).simplify(facts); // (might be rewritten to normal delta)
+		if(auto fct=factorDIvr!(e=>dDiscDelta(e,nvar))(ne)) return fct.simplify(facts);
+		if(auto fct=factorDIvr!(var=>dDiscDelta(ne,var))(nvar)) return fct.simplify(facts);
 		//if(dEq(var,e).simplify(facts) is zero) return zero; // a simplification like this might be possible (but at the moment we can compare only real numbers
 		if(auto vtpl=cast(DTuple)var){ // δ(1,2,3,...)[(x,y,z,...)].
 			if(auto etpl=cast(DTuple)e){
@@ -4270,6 +4274,7 @@ class DMCase: DExpr{ // TODO: generalize?
 			if(cast(DErr)ne)
 				return nerr;
 		}
+		if(auto fact=factorDIvr!(e=>dMCase(e,nval,nerr))(ne)) return fact;
 		if(ne==e&&nerr==err&&nval==val) return this;
 		return dMCase(ne,nval,nerr);
 	}
