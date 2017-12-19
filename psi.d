@@ -164,6 +164,19 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration;
+	//writeln("[π^(1/2)≤(d/dx)⁻¹[e^(-x²)](x)]".dParse.linearizeConstraints("x".dVar).simplify(one));
+	//writeln("[(d/dx)⁻¹[e^(-x²)](r·⅟√2̅)+-√π̅≤0]·[(d/dx)⁻¹[e^(-x²)](r·⅟√2̅)·⅟√π̅+-1≤0]·[-(d/dx)⁻¹[e^(-x²)](r·⅟√2̅)+√π̅≠0]·[-(d/dx)⁻¹[e^(-x²)](r·⅟√2̅)·⅟√π̅≤0]".dParse.simplify(one));
+	//writeln("lim[x→ ∞](d/dx)⁻¹[e^(-x²)]⁻¹(π^(1/2)-1/x)".dParse.simplify(one));
+	//writeln("[(d/dx)⁻¹[e^(-x²)]⁻¹(x)≤10]".dParse.linearizeConstraints("x".dVar).simplify(one));
+	//writeln("[(d/dx)⁻¹[e^(-x²)]⁻¹(x)≤0]".dParse.linearizeConstraints("x".dVar).simplify(one));
+	//writeln("[(d/dx)⁻¹[e^(-x²)](x)≤π^(1/2)/2]".dParse.linearizeConstraints("x".dVar).simplify(one));
+	//writeln("[(d/dx)⁻¹[e^(-x²)](x)≤0]".dParse.linearizeConstraints("x".dVar).simplify(one));
+	//writeln("[(d/dx)⁻¹[e^(-x²)](x)≤π^(1/2)-1/100]".dParse.linearizeConstraints("x".dVar).simplify(one));
+	//writeln("[(d/dx)⁻¹[e^(-x²)](x)≤π^(1/2)/2]".dParse.linearizeConstraints("x".dVar).simplify(one));
+	//writeln("∫dx e^(1/2·x²)·δ(0)[-(d/dx)⁻¹[e^(-x²)]⁻¹(r·√π̅)·√2̅+x]·√2̅·√π̅".dParse.simplify(one));
+	//writeln("(∫dξ₁δ(0)[(d/dx)⁻¹[e^(-x²)](ξ₁·⅟√2̅)·⅟√π̅+-r]·⅟e^(1/2·ξ₁²))·⅟√2̅·⅟√π̅".dParse.simplify(one));
+	//writeln("δ(0)[(d/dx)⁻¹[e^(-x²)](x)-y]".dParse.linearizeConstraints("x".dVar).simplify(one));
+	//writeln("δ(0)[(d/dx)⁻¹[e^(-x²)]⁻¹(x)-y]".dParse.linearizeConstraints("x".dVar).simplify(one));
 	//writeln("d/dx[(d/dx)⁻¹[e^(-x²)]⁻¹(f(x))]".dParse.simplify(one));
 	//writeln("d/dx[(d/dx)⁻¹[e^(-x²)]⁻¹(f(x))](x)".dParse.simplify(one));
 	//writeln("(d/dx)⁻¹[e^(-x²)]⁻¹((d/dx)⁻¹[e^(-x²)](f(x)))".dParse.simplify(one));

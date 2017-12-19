@@ -1846,6 +1846,7 @@ bool couldBeZero(DExpr e){
 	}
 	if(auto p=cast(DPow)e) return couldBeZero(p.operands[0]);
 	if(cast(DGaussInt)e) return false;
+	if(cast(DGaussIntInv)e) return false;
 	if(auto p=cast(DPlus)e){
 		bool allLarge=true,allSmall=true;
 		foreach(s;p.summands){
@@ -2258,11 +2259,23 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 					r=oddParity*dIvr(leZ,rhs)+r;
 				}else if(ty==neqZ){
 					r=dIvr(leZ,rhs)+r;
-				}
+				}else assert(ty==eqZ);
 				return r;
 			}
 		}else if(auto l=cast(DLog)lhs){
 			return doIt(parity,ty,l.e,dE^^rhs);
+		}else if(auto g=cast(DGaussInt)lhs){
+			auto r=dLt(zero,rhs)*dLt(rhs,dΠ^^(one/2))*doIt(parity,ty,g.x,dGaussIntInv(rhs));
+			static if(isDelta) assert(ty==eqZ);
+			if(ty==leZ){
+				auto oddParity=linearizeConstraints(dIvr(lZ,parity).simplify(one),var);
+				auto evenParity=dEqZ(oddParity);
+				r=oddParity*dLe(rhs,zero)+evenParity*dLe(dΠ^^(one/2),rhs)+r;
+			}else if(ty==neqZ) r=dLe(rhs,zero)+dLe(dΠ^^(one/2),rhs)+r;
+			else assert(ty==eqZ);
+			return r;
+		}else if(auto g=cast(DGaussIntInv)lhs){
+			return doIt(parity,ty,g.x,dGaussInt(rhs));
 		}
 		lhs=lhs.simplify(one);
 		auto numden=lhs.splitCommonDenominator();
@@ -2476,6 +2489,8 @@ DExprHoles!T getHoles(alias filter,T=DExpr)(DExpr e){
 			return doIt(p.operands[0])^^doIt(p.operands[1]);
 		if(auto gi=cast(DGaussInt)e)
 			return dGaussInt(doIt(gi.x));
+		if(auto gi=cast(DGaussIntInv)e)
+			return dGaussIntInv(doIt(gi.x));
 		if(auto lg=cast(DLog)e)
 			return dLog(doIt(lg.e));
 		if(auto dl=cast(DDelta)e)
@@ -2892,7 +2907,7 @@ bool isContinuousMeasure(DExpr expr){
 	if(auto d=cast(DDistApply)expr) return false;
 	if(auto d=cast(DDelta)expr) return false;
 	if(auto d=cast(DDiscDelta)expr) return false;
-	if(cast(DIvr)expr||cast(DVar)expr||cast(DPow)expr||cast(DLog)expr||cast(DSin)expr||cast(DFloor)expr||cast(DCeil)expr||cast(DGaussInt)expr||cast(DAbs)expr)
+	if(cast(DIvr)expr||cast(DVar)expr||cast(DPow)expr||cast(DLog)expr||cast(DSin)expr||cast(DFloor)expr||cast(DCeil)expr||cast(DGaussInt)expr||cast(DGaussIntInv)expr||cast(DAbs)expr)
 		return true;
 	if(auto p=cast(DPlus)expr){
 		foreach(s;p.summands)
@@ -2919,7 +2934,7 @@ bool isContinuousMeasureIn(DExpr expr,DVar var){ // TODO: get rid of code duplic
 	if(auto d=cast(DDistApply)expr) return !d.arg.hasFreeVar(var);
 	if(auto d=cast(DDelta)expr) return !d.var.hasFreeVar(var);
 	if(auto d=cast(DDiscDelta)expr) return !d.var.hasFreeVar(var);
-	if(cast(DIvr)expr||cast(DVar)expr||cast(DPow)expr||cast(DLog)expr||cast(DSin)expr||cast(DFloor)expr||cast(DCeil)expr||cast(DGaussInt)expr||cast(DAbs)expr)
+	if(cast(DIvr)expr||cast(DVar)expr||cast(DPow)expr||cast(DLog)expr||cast(DSin)expr||cast(DFloor)expr||cast(DCeil)expr||cast(DGaussInt)expr||cast(DGaussIntInv)expr||cast(DAbs)expr)
 		return true;
 	if(auto p=cast(DPlus)expr){
 		foreach(s;p.summands)
@@ -3660,7 +3675,7 @@ class DGaussIntInv: DOp{
 	override Precedence precedence(){ return Precedence.diff; }
 	override string toStringImpl(Format formatting,Precedence prec,int binders){
 		if(formatting==Format.gnuplot){
-			return "erfinv(2/sqrt(pi)*("~x.toStringImpl(formatting,Precedence.none,binders)~")-1)";
+			return "inverf(2/sqrt(pi)*("~x.toStringImpl(formatting,Precedence.none,binders)~")-1)";
 		}else if(formatting==Format.mathematica){
 			return "InverseErf[2/Sqrt[Pi]*("~x.toStringImpl(formatting,Precedence.none,binders)~")-1]";
 		}else if(formatting==Format.maple){
@@ -3671,8 +3686,9 @@ class DGaussIntInv: DOp{
 	}
 	static DExpr staticSimplify(DExpr x,DExpr facts=one){
 		auto nx=x.simplify(facts);
+		if(nx==(dΠ^^(one/2)/2).simplify(one)) return zero; // TODO: evaluate more cases
 		if(auto g=cast(DGaussInt)nx) return g.x;
-		if(nx != x) return dGaussInt(nx).simplify(facts);
+		if(nx != x) return dGaussIntInv(nx).simplify(facts);
 		if(auto fct=factorDIvr!(e=>dGaussIntInv(e))(x)) return fct.simplify(facts);
 		return null;
 	}

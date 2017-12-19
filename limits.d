@@ -260,6 +260,22 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 			}
 			return r;
 		}
+		if(auto g=cast(DGaussIntInv)x){
+			DExpr handleGaussIntInv(DExpr l){
+				if(!l) return null;
+				if(l.hasLimits()) return null;
+				if(l == -dInf||l == dInf) return null;
+				if(l == zero) return -dInf;
+				if(l == (dΠ^^(one/2)).simplify(one)) return dInf;
+				return dGaussIntInv(l);
+			}
+			auto l=doIt(v,e,g.x);
+			Case!ExpLim[] r;
+			foreach(el;l){
+				r~=Case!ExpLim(el.condition,ExpLim(g,handleGaussIntInv(el.expression.limit)));
+			}
+			return r;
+		}
 		return [];
 	}
 	auto k=doIt(v,e,x);
