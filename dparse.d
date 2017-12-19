@@ -174,6 +174,25 @@ struct DParser{
 		return dLim(var,e,x);
 	}
 
+	DExpr parseDiff()in{assert(code.startsWith("d/d"));}body{
+		code=code["d/d".length..$];
+		++numBinders;
+		auto var=parseDVar();
+		--numBinders;
+		expect('[');
+		if(cast(DDeBruijnVar)var) ++numBinders;
+		auto e=parseDExpr();
+		if(cast(DDeBruijnVar)var) --numBinders;
+		expect(']');
+		DExpr x;
+		if(cur()=='('){
+			next();
+			x=parseDExpr();
+			expect(')');
+		}else x=var;
+		return dDiff(var,e,x);
+	}
+	
 	DExpr parseNumber()in{assert('0'<=cur()&&cur()<='9');}body{
 		ℤ r=0;
 		while('0'<=cur()&&cur()<='9'){
@@ -378,6 +397,7 @@ struct DParser{
 		if(cur()=='|'||code.startsWith("abs")) return parseDAbs();
 		if(code.startsWith("log")) return parseLog();
 		if(code.startsWith("lim")) return parseLim();
+		if(code.startsWith("d/d")) return parseDiff();
 		if(code.startsWith("val")) return parseDVal();
 		if(code.startsWith("⊥")) return parseDErr();
 		if(code.startsWith("case")) return parseDMCase();
