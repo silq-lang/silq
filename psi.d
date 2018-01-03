@@ -164,6 +164,10 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration;
+	//writeln("lim[x → -∞]((d/dx)⁻¹[e^(-x²)](x)·x²)".dParse.simplify(one)); // TODO!
+	//writeln("lim[x → -∞](((d/dx)⁻¹[e^(-x²)](x·√-̅1̅0̅/̅2̅1̅·̅r̅+̅2̅5̅/̅4̅2̅+̅2̅5̅/̅4̅2̅·̅r̅²̅)·[-4·r+5+5·r²≠0]·⅟√-̅1̅0̅/̅2̅1̅·̅r̅+̅2̅5̅/̅4̅2̅+̅2̅5̅/̅4̅2̅·̅r̅²̅+[-4·r+5+5·r²=0]·x)·x+(-(d/dx)⁻¹[e^(-x²)](x·√-̅1̅0̅/̅2̅1̅·̅r̅+̅2̅5̅/̅4̅2̅+̅2̅5̅/̅4̅2̅·̅r̅²̅)·x·√-̅1̅0̅/̅2̅1̅·̅r̅+̅2̅5̅/̅4̅2̅+̅2̅5̅/̅4̅2̅·̅r̅²̅+-1/2·e^(-25/42·r²·x²+-25/42·x²+10/21·r·x²))·[-4·r+5+5·r²≠0]·⅟(-10/21·r+25/42+25/42·r²))".dParse.simplify(one));
+	//writeln("lim[x → -∞](((d/dx)⁻¹[e^(-x²)](x·√-̅1̅0̅/̅2̅1̅·̅r̅+̅2̅5̅/̅4̅2̅+̅2̅5̅/̅4̅2̅·̅r̅²̅)·[-4·r+5+5·r²≠0]·⅟√-̅1̅0̅/̅2̅1̅·̅r̅+̅2̅5̅/̅4̅2̅+̅2̅5̅/̅4̅2̅·̅r̅²̅+[-4·r+5+5·r²=0]·x)·x+(-(d/dx)⁻¹[e^(-x²)](x·√-̅1̅0̅/̅2̅1̅·̅r̅+̅2̅5̅/̅4̅2̅+̅2̅5̅/̅4̅2̅·̅r̅²̅)·x·√-̅1̅0̅/̅2̅1̅·̅r̅+̅2̅5̅/̅4̅2̅+̅2̅5̅/̅4̅2̅·̅r̅²̅+-1/2·e^(-25/42·r²·x²+-25/42·x²+10/21·r·x²))·[-4·r+5+5·r²≠0]·⅟(-10/21·r+25/42+25/42·r²)+-1/2·[-4·r+5+5·r²=0]·x²)".dParse.simplify(one)); // TODO!
+	//writeln("e^(-25/42·r²·ξ₀²+-25/42·ξ₀²+10/21·r·ξ₀²)·ξ₀".dParse.simplify(one).tryGetAntiderivative().simplify(one));
 	//writeln("δ(val(([-1+ξ₁≤0]·ξ₁+[-ξ₁+1≠0]·[-ξ₁+1≤0])·[-ξ₁≤0]))[x]".dParse.simplify(one));
 	//writeln("[π^(1/2)≤(d/dx)⁻¹[e^(-x²)](x)]".dParse.linearizeConstraints("x".dVar).simplify(one));
 	//writeln("[(d/dx)⁻¹[e^(-x²)](r·⅟√2̅)+-√π̅≤0]·[(d/dx)⁻¹[e^(-x²)](r·⅟√2̅)·⅟√π̅+-1≤0]·[-(d/dx)⁻¹[e^(-x²)](r·⅟√2̅)+√π̅≠0]·[-(d/dx)⁻¹[e^(-x²)](r·⅟√2̅)·⅟√π̅≤0]".dParse.simplify(one));
@@ -205,7 +209,7 @@ void test(){
 	//writeln("δ(0)[(1+2·ξ₀)·⅟(2+3·ξ₀)+-y]".dParse.linearizeConstraints(dDeBruijnVar(1)));
 	//writeln("[((-12·ξ₀+6)·⅟(-3·ξ₀+2)+-3)·⅟((-3+6·ξ₀)·⅟(-3·ξ₀+2)+2)²+2·⅟((-3+6·ξ₀)·⅟(-3·ξ₀+2)+2)≤0]".dParse.simplify(one));
 	//gnuplot("∫dx [0≤x≤1]·δ(y)[(2*x+1)/(3*x+2)]".dParse.simplify(one),["y".dVar].setx,"label","[0.6:0.7]");
-	//writeln("1/(3·x+2)²".dParse); // TODO: fix printing
+	//writeln("1/(3·x+2)²".dParse);
 	//writeln("[-18·x²·⅟(12·x+4+9·x²)+-21·x·⅟(12·x+4+9·x²)+-6·⅟(12·x+4+9·x²)+2=0]".dParse.linearizeConstraints("x".dVar).simplify(one));
 	//writeln("δ(0)[(1+2·x)·⅟(2+3·x)+-y]".dParse.linearizeConstraints("x".dVar).simplify(one)); // TODO: split negative exponents of powers higher than 1
 	//writeln("a/(x+1)+b/(x+2)+c/(x+3)+d/(x+1)+e/(x+2)+f/(x+3)".dParse.simplify(one).splitCommonDenominator());
@@ -358,7 +362,7 @@ void test(){
 	//writeln("δ[x·y]".dParse.linearizeConstraints("x".dVar).simplify(one));
 	//writeln("∫dx [0≤x]·[x≤1]".dParse.simplify(one));
 	//writeln("[⅟√3̅7̅4̅4̅8̅7̅·√1̅0̅0̅0̅≤0]".dParse.simplify(one));
-	//writeln(dDiff("x".dVar,"x/(x^2-y^2)^(1/2)".dParse).simplify(one)); // TODO: Fix?
+	//writeln(dDiff("x".dVar,"x/(x^2-y^2)^(1/2)".dParse).simplify(one));
 	/+//auto v="x".dVar;
 	//writeln(dInt(v,dE.dPow(2.dℤ.dMult(3.dℤ.dPlus(3.dℤ).dPlus(3.dℤ))).dPow(v.dPlus(v))));
 	auto d=new Distribution();
@@ -491,7 +495,7 @@ void test(){
 	//writeln("[([x≠0]+1)·(1+[x≠0])≤0]".dParse);
 	//writeln("[x<0]".dParse.simplify("[x≤0]".dParse));
 	//writeln("[x≤0]".dParse.simplify("[-x<0]".dParse));
-	//writeln("[[z≠0]·[z≤0]≤0]".dParse); // TODO: this is convoluted!
+	//writeln("[[z≠0]·[z≤0]≤0]".dParse);
 	//writeln("[z+-3≤0]·[z+-2≤0]".dParse);
 	//writeln("[-3+x≤0]·[-x+2≤0]".dParse);
 	//writeln("[z≤0]".dParse.simplify("[-z≤0]·[z≠0]".dParse));
@@ -599,7 +603,7 @@ void test(){
 	//writeln("lim[ξ₁ → ∞](-ξ₁²·⅟42+20·ξ₁·⅟7+2·y·ξ₁·⅟105+y²·⅟483)".dParse.simplify(one));
 	//writeln(asymptoticNormalize(dVar("tmp"),"20·tmp·⅟7+2·tmp·y·⅟105".dParse));
 
-	//writeln("∫dξ₁(((-2+-2·[-1+ξ₁≤0])·ξ₁+1+[-1+ξ₁≤0])·(1+[-1+ξ₁≤0])·[-1+2·ξ₁≤0]·[-ξ₁+1≤0]+((-1+-[-1+ξ₁≤0])·ξ₁+⅟2+[-1+ξ₁≤0]·⅟2)·(2+2·[-1+ξ₁≤0])·[-1+2·ξ₁≤0]·[-ξ₁+1≤0]+((-[-3+2·ξ₁=0]·⅟2+-⅟2+ξ₁)·(1+[-3+2·ξ₁≤0])+-⅟2+-[-3+2·ξ₁≤0]·⅟2)·[-1+ξ₁≤0]·[-2·ξ₁+3≤0]+((1+[-1+ξ₁≤0])·ξ₁+-⅟2+-[-1+ξ₁≤0]·⅟2)·(4+4·[-1+ξ₁≤0])·[-1+2·ξ₁≤0]·[-ξ₁+1≤0]+(-3·[-ξ₁+2=0]+-3+3)·([-2+ξ₁≤0]+1)·[-1+2·ξ₁≤0]·[-ξ₁+2≤0])".dParse.simplify(one)); // TODO!
+	//writeln("∫dξ₁(((-2+-2·[-1+ξ₁≤0])·ξ₁+1+[-1+ξ₁≤0])·(1+[-1+ξ₁≤0])·[-1+2·ξ₁≤0]·[-ξ₁+1≤0]+((-1+-[-1+ξ₁≤0])·ξ₁+⅟2+[-1+ξ₁≤0]·⅟2)·(2+2·[-1+ξ₁≤0])·[-1+2·ξ₁≤0]·[-ξ₁+1≤0]+((-[-3+2·ξ₁=0]·⅟2+-⅟2+ξ₁)·(1+[-3+2·ξ₁≤0])+-⅟2+-[-3+2·ξ₁≤0]·⅟2)·[-1+ξ₁≤0]·[-2·ξ₁+3≤0]+((1+[-1+ξ₁≤0])·ξ₁+-⅟2+-[-1+ξ₁≤0]·⅟2)·(4+4·[-1+ξ₁≤0])·[-1+2·ξ₁≤0]·[-ξ₁+1≤0]+(-3·[-ξ₁+2=0]+-3+3)·([-2+ξ₁≤0]+1)·[-1+2·ξ₁≤0]·[-ξ₁+2≤0])".dParse.simplify(one));
 
 	//writeln("∫dx⅟2·[-x≤0]·[x+-1≤0]·[x+-z≤0]·[z+-x+-2≤0]".dParse.simplify(one));
 	//writeln("[x+y+z+-5≤0]·[5+-(x+y)≤0]·[z≠0]·[-z≤0]".dParse.simplify(one)); // TODO
@@ -624,7 +628,7 @@ void test(){
 	//writeln("∫db(d/dx)⁻¹[e^(-x²)](b·⅟√2̅)·⅟e^(b²·⅟2)·√2̅".dParse.simplify(one));
 	//writeln("∫dx e^(-(x/√2̅)²)·[x≤b]".dParse.simplify(one));
 	//writeln(dDiff("b".dVar,"(d/dx)⁻¹[e^(-x²)](b·⅟√2̅)".dParse));
-	//writeln("∫dx e^(-x²)·x²·[x≤y]·[-y≤x]".dParse.simplify(one)); // TODO
+	//writeln("∫dx e^(-x²)·x²·[x≤y]·[-y≤x]".dParse.simplify(one));
 	//writeln("∫dξ₁[-1+ξ₁≤0]·[-ξ₁≤0]·ξ₁⁸·⅟e^(ξ₁·⅟2)".dParse.simplify(one));
 	//writeln("(x-y)·[x=y]".dParse.simplify(one));
 	//writeln("(1+⅟(-x+1))".dParse.simplify(one));
@@ -649,7 +653,7 @@ void test(){
 	//writeln("lim[tmp→ -∞](-100·√5̅0̅+-50·tmp·√5̅0̅)·(d/dx)⁻¹[e^(-x²)](2·√5̅0̅+tmp·√5̅0̅)".dParse.simplify(one));
 	//writeln("(∫dξ₁(d/dx)⁻¹[e^(-x²)](-skillB·⅟√3̅0̅+ξ₁·⅟√3̅0̅)·e^(-ξ₁²·⅟30+skillC·ξ₁·⅟15))".dParse.simplify(one));
 	//writeln("(∫dξ₁[ξ₁≤0]·e^(-ξ₁²·⅟50+4·ξ₁)·ξ₁²)".dParse.simplify(one));
-	//auto r=dDiff("x".dVar,dIntSmp("tmp".dVar,"[tmp≤x]".dParse*"(d/dx)⁻¹[e^(-x²)](-2·√5̅0̅+tmp·⅟√5̅0̅)".dParse)).simplify(one); // TODO: simplify better!
+	//auto r=dDiff("x".dVar,dInt("tmp".dVar,"[tmp≤x]".dParse*"(d/dx)⁻¹[e^(-x²)](-2·√5̅0̅+tmp·⅟√5̅0̅)".dParse)).simplify(one); // TODO: simplify better!
 	//writeln(r);
 	//auto r=dIntSmp("tmp".dVar,"[tmp≤x]".dParse*"(d/dx)⁻¹[e^(-x²)](-2·√5̅0̅+tmp·⅟√5̅0̅)".dParse);
 	//matlabPlot(r.toString(),"x");
@@ -665,10 +669,10 @@ void test(){
 	//writeln(dDiff("x".dVar,tryGetAntiderivative("x".dVar,"x²·e^(-x²)".dParse,one).antiderivative).simplify(one));
 	//matlabPlot(r.toString(Format.matlab),"x");
 	//writeln("∫dx(d/dx)⁻¹[e^(-x²)](x)·x".dParse.simplify(one));
-	//writeln("(∫dξ₁ ξ₁²·⅟e^(ξ₁²·⅟200))".dParse.simplify(one));// TODO: improve limit evaluation
+	//writeln("(∫dξ₁ ξ₁²·⅟e^(ξ₁²·⅟200))".dParse.simplify(one));
 	//writeln("1/(-2·a⁴·⅟3+2·a)·∫dx (1-a·x²)·[-a≤x]·[x≤a]".dParse.simplify("[0≤a]".dParse));
 	//writeln("∫dx (1-a²·(x-b/a)²)·[-a²≤x-b/a]·[x-b/a≤a²]".dParse.simplify("[0≤a]".dParse));
-	//writeln("3/(4·5^(1/2))·∫dx (1-x²/5)·x²·[-5^(1/2)≤x]·[x≤5^(1/2)]".dParse.simplify(one)); // TODO: simplify this better
+	//writeln("3/(4·5^(1/2))·∫dx (1-x²/5)·x²·[-5^(1/2)≤x]·[x≤5^(1/2)]".dParse.simplify(one));
 	//writeln((-dVar("x"))^^(one/2));
 	//writeln("(∫dξ₁[-1+√ξ̅₁̅≤0]·[-ξ₁≤0]·[ξ₁≠0]·⅟(-2·[√ξ̅₁̅≠0]·[√ξ̅₁̅≤0]·√ξ̅₁̅+2·√ξ̅₁̅)+∫dξ₁[-1+√ξ̅₁̅≤0]·[-ξ₁≤0]·⅟(-2·[√ξ̅₁̅≠0]·[√ξ̅₁̅≤0]·√ξ̅₁̅+2·√ξ̅₁̅))".dParse);
 	//writeln("-2·[√ξ̅₁̅≠0]·[√ξ̅₁̅≤0]·√ξ̅₁̅+2·√ξ̅₁̅".dParse.simplify("[√ξ̅₁̅≤0]".dParse));
@@ -705,7 +709,7 @@ void test(){
 	//writeln(linearizeConstraints("[1/(x^2+x+1)<=10]".dParse,"x".dVar));
 	//writeln(linearizeConstraints("[x^2+x+1<=1]".dParse,"x".dVar));
 	//writeln(linearizeConstraints("[x^2+x+1<=0]".dParse,"x".dVar));
-	//writeln(linearizeConstraints("δ[x/(1+x)]".dParse,"x".dVar)); // TODO: this can actually work. generalize!
+	//writeln(linearizeConstraints("δ[x/(1+x)]".dParse,"x".dVar));
 	//writeln(linearizeConstraints("δ[x^2-25]".dParse,"x".dVar));
 	//writeln(linearizeConstraints("δ[-c+100000032000004800000448000029120001397760051251201464320032947200585728008200192089456640745472004587520019660800052428800065536·c₁¹⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰⁰]·⅟π".dParse,"c₁".dVar));
 	//writeln("∫dx [0≤x]·[x≤y]·x^100000000000000".dParse.simplify(one));
@@ -774,7 +778,7 @@ void test(){
 	writeln(dIntSmp("x".dVar,x*"f(x,y)*[y!=0]".dParse).simplify(one));*/
 	//writeln("([6+√1̅2̅≤0]·[2+√1̅2̅≤0])^-1)".dParse);
 	//writeln("δ[y-x·(x+1)]".dParse.linearizeConstraints("x".dVar).simplify(one));
-	//writeln("Msum(a,Msum(b,c))".dParse.substituteFun("Msum".dFunVar,"a+b".dParse,["a".dVar,"b".dVar])); // TODO: this should work!
+	//writeln("Msum(a,Msum(b,c))".dParse.substituteFun("Msum".dFunVar,"a+b".dParse,["a".dVar,"b".dVar]));
 	//writeln("Msum(W(a,Msum(b,c),Msum(a,b,c)),d)".dParse.substituteFun("Msum".dFunVar,"x+y".dParse,["x".dVar,"y".dVar]));
 	/*auto e="-[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll²·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[-sim_0₁+1]·δ[-sim_0₂+1]·δ[-sim_1₁+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₂]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟36+-[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll²·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[-sim_0₁+1]·δ[-sim_1₁+1]·δ[-sim_1₂+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₂]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟36+-[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll²·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[-sim_0₂+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₁]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₁]·δ[sim_1₂]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟36+-[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[-sim_0₂+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₁]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₁]·δ[sim_1₂]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟12+[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll²·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[-sim_0₁+1]·δ[-sim_0₂+1]·δ[-sim_1₁+1]·δ[-sim_1₂+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟36+[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[-sim_1₁+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₁]·δ[sim_0₂]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₂]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟12+-[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[-sim_1₂+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₁]·δ[sim_0₂]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₁]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟12+[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[-sim_0₁+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₂]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₁]·δ[sim_1₂]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟12+[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[-sim_0₂+1]·δ[-sim_1₁+1]·δ[-sim_1₂+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₁]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟12+-[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll²·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[-sim_1₂+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₁]·δ[sim_0₂]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₁]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟36+[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₁]·δ[sim_0₂]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₁]·δ[sim_1₂]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟12+[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[-sim_0₁+1]·δ[-sim_0₂+1]·δ[-sim_1₂+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₁]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟12+[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll²·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₁]·δ[sim_0₂]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₁]·δ[sim_1₂]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟36+[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[-sim_0₂+1]·δ[-sim_1₂+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₁]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₁]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟12+[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll²·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[-sim_0₂+1]·δ[-sim_1₂+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₁]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₁]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟36+[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll²·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[-sim_1₁+1]·δ[-sim_1₂+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₁]·δ[sim_0₂]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟36+[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll²·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[-sim_0₂+1]·δ[-sim_1₁+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₁]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₂]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟36+[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll²·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[-sim_0₁+1]·δ[-sim_1₂+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₂]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₁]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟36+[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll²·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[-sim_0₁+1]·δ[-sim_0₂+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₁]·δ[sim_1₂]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟36+-[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[-sim_0₁+1]·δ[-sim_1₁+1]·δ[-sim_1₂+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₂]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟12+-[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[-sim_0₁+1]·δ[-sim_0₂+1]·δ[-sim_1₁+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₂]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟12+-[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll²·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[-sim_1₁+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₁]·δ[sim_0₂]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₂]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟36+[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[-sim_0₁+1]·δ[-sim_1₁+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₂]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₂]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟12+-[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll²·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[-sim_0₂+1]·δ[-sim_1₁+1]·δ[-sim_1₂+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₁]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟36+-[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[-sim_1₁+1]·δ[-sim_1₂+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₁]·δ[sim_0₂]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟12+[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[-sim_0₁+1]·δ[-sim_0₂+1]·δ[-sim_1₁+1]·δ[-sim_1₂+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟12+-[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[-sim_0₂+1]·δ[-sim_1₁+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₁]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₂]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟12+-[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll²·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[-sim_0₁+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₂]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₁]·δ[sim_1₂]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟36+-[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[-sim_0₁+1]·δ[-sim_1₂+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₂]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₁]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟12+[-1+similarityAll≤0]·[-similarityAll≤0]·similarityAll²·δ[-clicks_0₁+1]·δ[-clicks_0₂+1]·δ[-clicks_0₃+1]·δ[-clicks_1₁+1]·δ[-clicks_1₂+1]·δ[-clicks_1₃+1]·δ[-i+1]·δ[-sim_0₁+1]·δ[-sim_1₁+1]·δ[clicks_0₄]·δ[clicks_0₅]·δ[clicks_1₄]·δ[clicks_1₅]·δ[sim_0₂]·δ[sim_0₃]·δ[sim_0₄]·δ[sim_0₅]·δ[sim_1₂]·δ[sim_1₃]·δ[sim_1₄]·δ[sim_1₅]·⅟36".dParse;
 	import std.datetime;
@@ -809,7 +813,7 @@ void test(){
 	//auto bar="∫dx(∫dξ₁∫dξ₂ (δ[x]/(ξ₁^2+ξ₂^2)+δ[x]/(ξ₁^3+ξ₂^3))+∫dξ₁∫dξ₂ (δ[x]/(ξ₁^2+ξ₂^3)+δ[x]/(ξ₁^3+ξ₂^2)))*[x=0]".dParse.simplify(one);
 	//writeln(bar);// ∫dξ₁∫dξ₂ 1/(ξ₁^2+ξ₂^2)
 	//writeln("∫dx∫dy [1/x+y≤0]".dParse.simplify(one));
-	//writeln("∫dx (1/x^(1/2)+-x/x^(1/2))·[0≤x]·[x≤1]".dParse.simplify(one)); // TODO
+	//writeln("∫dx (1/x^(1/2)+-x/x^(1/2))·[0≤x]·[x≤1]".dParse.simplify(one));
 	//writeln("[-2+⅟y≤0]·[-⅟y+1≤0]·[y≠0]·⅟y²".dParse.linearizeConstraints("y".dVar).simplify(one));
 	/+writeln("∫dy log(y)^(-2)·[0<y]·[y≤x]".dParse.simplify(one));
 	writeln("∫dy log(y)^(-1)·[0<y]·[y≤x]".dParse.simplify(one));
@@ -819,7 +823,7 @@ void test(){
 	writeln("∫dy log(y)³·[0<y]·[y≤x]".dParse.simplify(one));
 	writeln("∫dy log(y)⁴·[0<y]·[y≤x]".dParse.simplify(one));+/
 
-	/+writeln("∫dy log(y)^(-2)/y·[1/100<y]·[y≤x]".dParse.simplify(one)); // TODO: 1/log(x)
+	/+writeln("∫dy log(y)^(-2)/y·[1/100<y]·[y≤x]".dParse.simplify(one));
 	writeln("∫dy log(y)^(-1)/y·[1/100<y]·[y≤x]".dParse.simplify(one));
 	writeln("∫dy log(y)/y·[1/100<y]·[y≤x]".dParse.simplify(one));
 	writeln("∫dy log(y)²/y·[1/100<y]·[y≤x]".dParse.simplify(one));
@@ -872,14 +876,14 @@ void test(){
 	//writeln("∫dx ((d/dx)⁻¹[e^(-x²)](x)*x·[0≤x]-x·[0≤x])".dParse.simplify(one));
 	//writeln("∫dξ₁∫dξ₂(∫dξ₃[-ξ₁+ξ₃≤0]·q(ξ₃,ξ₂,γ⃗))·[-ξ₁+ξ₂≤0]·[-ξ₂+ξ₁≠0]".dParse.simplify(one));
 	//writeln("∫dξ₂((0+[-ξ₂+ξ₁=0])·q(ξ₂,ξ₁,γ⃗))".dParse.simplify(one));
-	//writeln("∫dξ₁[-ξ₁≤0]·ξ₁·⅟e^(13·ξ₁²·⅟120)".dParse.simplify(one)); // TODO
+	//writeln("∫dξ₁[-ξ₁≤0]·ξ₁·⅟e^(13·ξ₁²·⅟120)".dParse.simplify(one));
 	//writeln(dIntSmp("x".dVar,"∫dξ₁∫dξ₂ δ[x+ξ₁+ξ₂]".dParse));
 	//writeln("0+∫dξ₁(0+[ξ₁=0])·q(ξ₁,γ⃗)".dParse.simplify(one));
 	//writeln(" ∫dξ₁((-[ξ₁≤0]·⅟ξ₁+[-ξ₁≤0]·⅟ξ₁)·[ξ₁≠0]·q(r·⅟ξ₁,ξ₁,γ⃗)+(∫dξ₂ q(ξ₂,ξ₁,γ⃗))·[ξ₁=0]·δ[r])".dParse.simplify(one));
 	//writeln("∫dξ₂[ξ₁=0]·q(ξ₂,ξ₁,γ⃗)·δ[r]".dParse.simplify(one));
 	//writeln("∫dξ₁([-1+ξ₁≤0]·[-ξ₁≤0]·δ[-tmp+1]·δ[-x₂+1]·δ[-x₆+1]·δ[ξ₁]+[-1+ξ₁≤0]·[-ξ₁≤0]·δ[-x₂+1]·δ[-x₇+ξ₁]·δ[tmp])·([-ξ₁+1≠0]·[-ξ₁+1≤0]+[ξ₁≠0]·[ξ₁≤0])".dParse.simplify(one));
 	//writeln("∫dξ₁(∫dξ₂(∫dξ₃∫dξ₄([-ξ₁·ξ₂+ξ₃≤0]·[-ξ₁·ξ₂+ξ₄≤0]·[-ξ₃+ξ₁·ξ₂≠0]+[-ξ₄+ξ₁·ξ₂≠0]·[-ξ₄+ξ₁·ξ₂≤0])·q(ξ₄,ξ₃,γ⃗))·[-1+ξ₂≤0]·[-ξ₂≤0])·[-1+ξ₁≤0]·[-ξ₁≤0]".dParse.simplify(one));
-	//writeln("∫dξ₁([-1/ξ₁≤0]·[ξ₁≠0]·⅟e^(ξ₁²·⅟2)·√2̅·√π̅)".dParse.simplify(one)); // TODO: this should be π not 2·π
+	//writeln("∫dξ₁([-1/ξ₁≤0]·[ξ₁≠0]·⅟e^(ξ₁²·⅟2)·√2̅·√π̅)".dParse.simplify(one));
 	//writeln("[-1/ξ₁≤0]·[ξ₁≠0]".dParse.linearizeConstraints("ξ₁".dVar));
 	//writeln("((-[⅟x≤0]·x·⅟2+[-⅟x≤0]·x·⅟2)·[ξ₁≠0]·∫dr₁ e^(-r₁²·x²·⅟2+-x²·⅟2))·⅟π".dParse.toString(Format.mathematica));
 	//writeln("(x²)^(1/2)".dParse.simplify(one)); // oops
@@ -978,7 +982,7 @@ void test(){
 	//writeln("(∫dx((d/dx)⁻¹[e^(-x²)](-skill1·⅟√3̅0̅+x·⅟√3̅0̅)·e^(skill1²·⅟30)·⅟600·√3̅0̅+-e^(skill1²·⅟30)·⅟600·√3̅0̅·√π̅)·(d/dx)⁻¹[e^(-x²)](-y·⅟√3̅0̅+x·⅟√3̅0̅)·e^(-x²·⅟30+skill1·x·⅟15))".dParse.simplify(one));
 	//writeln("[d≠0]·(-[d≠0]·log(d)³·⅟2+4·[d≤0]·log(0)³·⅟3+log([d≠0])·log(d)²+log(d)³·⅟3)·([-1+d≤0]·[d≠0]+[d≤0])·[-d≤0]".dParse.simplify(one));
 	//writeln("([-a+b≤0]·[-b≤0]·[a≠0]·⅟a+[a=0]·δ[b])·[-1+a≤0]·[-a≤0]".dParse.simplify(one));
-	//writeln("∫dx 1/x·[-2≤x]·[x≤-1]".dParse.simplify(one));// TODO: fix!
+	//writeln("∫dx 1/x·[-2≤x]·[x≤-1]".dParse.simplify(one));
 	//writeln("log(x^2)".dParse.simplify(one));
 	//writeln("(∫dξ₁[-1+-ξ₁≤0]·[-ξ₁≠0]·[ξ₁≤0]·log(-ξ₁))".dParse.simplify(one));
 	//writeln("∫dx log(x^2)·[-1≤x]·[x≤1]".dParse.simplify(one));
@@ -1312,8 +1316,8 @@ void test(){
 
 	/+auto e="∫dx([-1+x≤0]·[-x≤0]·[x≠0]·⅟e^(r₁²·⅟2·y)·⅟x·δ[y-⅟x²])·⅟√2̅·⅟√π̅".dParse;
 	writeln(dInt("y".dVar,e.simplify(one)).simplify(one)); // TODO: fix+/
-	//writeln("δ[y-⅟x²]".dParse.linearizeConstraints("x".dVar).simplify(one)); // TODO: fix
-	//writeln("[1/x^3=0]".dParse.simplify(one)); // TODO: 0
+	//writeln("δ[y-⅟x²]".dParse.linearizeConstraints("x".dVar).simplify(one));
+	//writeln("[1/x^3=0]".dParse.simplify(one)); // 0
 	//writeln("∫dx [0≤x]·[x≤1]·(x+3)^(-9/10)".dParse.simplify(one));
 	//auto e="(((∫dξ₁(∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])·(∫dξ₂(∑_ξ₃[-N+1+ξ₃≤0]·[-ξ₃≤0]·δ[-ξ₃+ξ₂])·δ_infected[[ξ₃ ↦ (([-1+ξ₃=0]+[-1+ξ₃≠0]·[ξ₃=0])·[-ξ₂+ξ₃≠0]+[-ξ₃+ξ₂=0])·[-ξ₁+ξ₃≠0]+[-ξ₃+ξ₁=0]] (2)]))·q(γ⃗)·δ[-N+2]·⅟2+(∫dξ₁(∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])·δ_infected[[ξ₂ ↦ [-1+ξ₂≠0]·[-ξ₁+ξ₂≠0]·[ξ₂=0]+[-ξ₂+ξ₁=0]] (2)])·q(γ⃗)·δ[-N+2]·⅟2)·(∫dξ₁(∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])·δ_newInfected[infected[ξ₁ ↦ 1][which ↦ 1]])·[infected[0]≠0]·δ[-i+1]+((∫dξ₁(∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])·(∫dξ₂(∑_ξ₃[-N+1+ξ₃≤0]·[-ξ₃≤0]·δ[-ξ₃+ξ₂])·δ_infected[[ξ₃ ↦ (([-1+ξ₃=0]+[-1+ξ₃≠0]·[ξ₃=0])·[-ξ₂+ξ₃≠0]+[-ξ₃+ξ₂=0])·[-ξ₁+ξ₃≠0]+[-ξ₃+ξ₁=0]] (2)]))·q(γ⃗)·δ[-N+2]·⅟2+(∫dξ₁(∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])·δ_infected[[ξ₂ ↦ [-1+ξ₂≠0]·[-ξ₁+ξ₂≠0]·[ξ₂=0]+[-ξ₂+ξ₁=0]] (2)])·q(γ⃗)·δ[-N+2]·⅟2)·[infected[0]=0]·δ[-i+1]·δ_newInfected[infected[which ↦ 1]])·(∑_ξ₁[-N+1+ξ₁≤0]·[-ξ₁≤0]·δ[-which+ξ₁])·[infected[1]≠0]·δ[-j+1]".dParse;
 	//auto e="(((δ_newInfected[[ξ₁ ↦ [-1+ξ₁=0]+[-1+ξ₁≠0]·[ξ₁=0]] (2)]·⅟2+δ_newInfected[[ξ₁ ↦ [-1+ξ₁≠0]·[ξ₁=0]] (2)]·⅟2)·[newInfected[1]=0]·q(γ⃗)·δ[-N+2]+(∫dξ₁(∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])·(∫dξ₂(∑_ξ₃[-N+1+ξ₃≤0]·[-ξ₃≤0]·δ[-ξ₃+ξ₂])·δ_newInfected[[ξ₃ ↦ (([-1+ξ₃=0]+[-1+ξ₃≠0]·[ξ₃=0])·[-ξ₂+ξ₃≠0]+[-ξ₃+ξ₂=0])·[-ξ₁+ξ₃≠0]+[-ξ₃+ξ₁=0]] (2)]))·q(γ⃗)·δ[-N+2]·⅟2+(∫dξ₁(∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])·δ_newInfected[[ξ₂ ↦ [-1+ξ₂≠0]·[-ξ₁+ξ₂≠0]·[ξ₂=0]+[-ξ₂+ξ₁=0]] (2)])·q(γ⃗)·δ[-N+2]·⅟2)·[newInfected[0]=0]·δ[-i+1]·δ_infected[newInfected]+((∫dξ₁(∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])·(∫dξ₂(∑_ξ₃[-N+1+ξ₃≤0]·[-ξ₃≤0]·δ[-ξ₃+ξ₂])·δ_infected[[ξ₃ ↦ (([-1+ξ₃=0]+[-1+ξ₃≠0]·[ξ₃=0])·[-ξ₂+ξ₃≠0]+[-ξ₃+ξ₂=0])·[-ξ₁+ξ₃≠0]+[-ξ₃+ξ₁=0]] (2)]))·q(γ⃗)·δ[-N+2]·⅟2+(∫dξ₁(∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])·δ_infected[[ξ₂ ↦ [-1+ξ₂≠0]·[-ξ₁+ξ₂≠0]·[ξ₂=0]+[-ξ₂+ξ₁=0]] (2)])·q(γ⃗)·δ[-N+2]·⅟2)·(∫dξ₁(∑_ξ₂[-N+1+ξ₂≤0]·[-ξ₂≤0]·δ[-ξ₂+ξ₁])·δ_newInfected[infected[ξ₁ ↦ 1]])·[infected[0]≠0]·δ[-i+1])·(∑_ξ₁[-N+1+ξ₁≤0]·[-ξ₁≤0]·δ[-which+ξ₁])·[infected[1]≠0]·δ[-j+1]".dParse;
