@@ -23,12 +23,13 @@ struct DParser{
 	}
 	DExpr parseDIvrRhs(DExpr exp){
 		DIvr.Type ty;
+		DExpr cexp,nexp;
 		void doIt(DIvr.Type t,bool negate){
 			next();
-			if(cur()=='0') expect('0');
-			else exp=exp-parseDExpr();
+			cexp=parseDExpr();
+			nexp=exp-cexp;
 			ty=t;
-			if(negate) exp=-exp;
+			if(negate) nexp=-nexp;
 		}
 		switch(cur()) with(DIvr.Type){
 			case '=': doIt(eqZ,false); break;
@@ -43,9 +44,9 @@ struct DParser{
 			default: expect('<'); assert(0);
 		}
 		if(util.among(cur(),'<','>','≤','≥','=','≠'))
-			return dIvr(ty,exp)*parseDIvrRhs(exp);
+			return dIvr(ty,nexp)*parseDIvrRhs(cexp);
 		expect(']');
-		return dIvr(ty,exp);
+		return dIvr(ty,nexp);
 	}
 	DExpr parseDIvr(){
 		expect('[');
@@ -78,6 +79,8 @@ struct DParser{
 		if(cur()=='∛'){ next(); e=one/3; }
 		else if(cur()=='∜'){ next(); e=one/4; }
 		else expect('√');
+		if(code.startsWith("(") && !code.startsWith("(̅"))
+			return parseParenthesized('(',')')^^e;
 		string arg;
 		dchar cur=0;
 		string tmp=code;
@@ -92,7 +95,7 @@ struct DParser{
 			if(i&1) code=tmp;
 			i++;
 		}
-		return dParse(arg)^^(one/2);
+		return dParse(arg)^^e;
 	}
 
 	DExpr parseDAbs(){
