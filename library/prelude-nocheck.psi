@@ -153,3 +153,5 @@ def multiGauss(μ: ℝ[], Σ: ℝ[][]){
 	return avv(mmv(cholesky(Σ),r),μ);
 }
 def MultiGauss(μ: ℝ[], Σ: ℝ[][])⇒infer(()⇒ multiGauss(μ,Σ));
+
+__NOCHECK__ := 1;

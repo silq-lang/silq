@@ -309,3 +309,5 @@ def MultiGauss(μ: ℝ[], Σ: ℝ[][]){
 	assert(errorPr(d)==0);
 	return d;
 }
+
+__NOCHECK__ := 0;
