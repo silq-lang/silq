@@ -9,5 +9,5 @@ def main(){
     for i in [0..3){
         observe(a[i] > result[i]);
     }
-    return (result[0],result[1],result[2]); // expected: [result₂≠0]·[result₂≤0]·δ(0)[-result₀+result₂]·δ(0)[-result₁+result₂]·⅟e^(1/2·result₂²)·⅟√π̅·√2̅
+    return (result[0],result[1],result[2]); // expected: [result₂≠0]·[result₂≤0]·δ(0)[-result₀+result₁]·δ(0)[-result₂+result₁]·⅟e^(1/2·result₂²)·⅟√π̅·√2̅
 }

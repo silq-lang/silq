@@ -575,14 +575,6 @@ abstract class DVar: DExpr{
 		assert(!!r);
 		return r;
 	}
-}
-class DNVar: DVar{ // named variables
-	string name;
-	alias subExprs=Seq!(name);
-	override string toStringImpl(Format formatting,Precedence prec,int binders){
-		return fixName(name,formatting);
-	}
-	mixin Visitors;
 	override DExpr simplifyImpl(DExpr facts){
 		// TODO: make more efficient! (e.g. keep hash table in product expressions)
 		foreach(f;facts.factors){
@@ -600,6 +592,14 @@ class DNVar: DVar{ // named variables
 		}
 		return this;
 	}
+}
+class DNVar: DVar{ // named variables
+	string name;
+	alias subExprs=Seq!(name);
+	override string toStringImpl(Format formatting,Precedence prec,int binders){
+		return fixName(name,formatting);
+	}
+	mixin Visitors;
 }
 
 DNVar[string] dVarCache; // TODO: caching desirable? (also need to update parser if not)
@@ -619,9 +619,6 @@ class DDeBruijnVar: DVar{
 		return displayName(i,formatting,binders);
 	}
 	mixin Visitors;
-	override DExpr simplifyImpl(DExpr facts){
-		return this;
-	}
 }
 mixin FactoryFunction!DDeBruijnVar;
 @property db1(){ return dDeBruijnVar(1); }
@@ -3123,7 +3120,7 @@ DExpr[2] splitMultAtVar(DExpr e,DVar var){
 	foreach(f;e.factors){
 		if(f.hasFreeVar(var)){
 			if(auto p=cast(DPow)f){
-				if(p.operands[0].hasFreeVar(var)){
+				if(p.operands[0].hasFreeVar(var)||dLeZ(p.operands[0]).simplify(one)!=zero){
 					DMult.insert(within,f);
 				}else{
 					auto ow=splitPlusAtVar(p.operands[1],var);
@@ -3275,8 +3272,12 @@ class DSum: DOp{
 			if(expr==zero) return zero;
 			return null;
 		}
-		auto nexpr=expr.simplify(facts.incDeBruijnVar(1,0).simplify(one));
+		auto nexpr=expr.simplify((facts.incDeBruijnVar(1,0)*dIsℤ(db1)).simplify(one));
 		if(nexpr != expr) return dSum(nexpr).simplify(facts);
+		auto ow=expr.splitMultAtVar(db1);
+		ow[0]=ow[0].incDeBruijnVar(-1,0).simplify(facts);
+		if(ow[0]==zero) return zero;
+		if(ow[0]!=one||ow[1]!=expr) return (ow[0]*dSumSmp(ow[1],facts)).simplify(facts);
 		if(opt.integrationLevel!=IntegrationLevel.deltas){
 			if(auto r=computeSum(expr,facts))
 				return r.simplify(facts);

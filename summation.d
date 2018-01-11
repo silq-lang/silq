@@ -50,18 +50,28 @@ DExpr computeSum(DExpr expr,DExpr facts=one){
 	nexpr=expr.linearizeConstraints!(x=>!!cast(DIvr)x)(var).simplify(newFacts);
 	if(nexpr != expr) return computeSum(nexpr,facts);
 
+	foreach(f;expr.factors){
+		auto ivr=cast(DIvr)f;
+		if(ivr&&ivr.type==DIvr.Type.eqZ){
+			DExpr bound;
+			auto status=getBoundForVar(ivr,var,bound);
+			if(status==BoundStatus.equal)
+				return dIsℤ(bound)*unbind(expr,bound);
+			else return null;
+		}
+	}
 	// TODO: keep ivrs and nonIvrs separate in DMult
 	DExpr ivrs=one;
 	DExpr nonIvrs=one;
 	foreach(f;expr.factors){
 		assert(f.hasFreeVar(var));
 		auto ivr=cast(DIvr)f;
-		if(ivr&&ivr.type!=DIvr.Type.neqZ) ivrs=ivrs*f;
+		if(ivr&&ivr.type==DIvr.Type.leZ) ivrs=ivrs*f;
 		else nonIvrs=nonIvrs*f;
 	}
 	ivrs=ivrs.simplify(newFacts);
 	nonIvrs=nonIvrs.simplify(newFacts);
-	auto loup=ivrs.getBoundsForVar(var,facts);
+	auto loup=ivrs.getBoundsForVar(var,facts); // TODO: allow ivrs that do not contribute to bound.
 	if(!loup[0]) return null;
 	DExpr lower=loup[1][0].maybe!(x=>x.incDeBruijnVar(-1,0)),upper=loup[1][1].maybe!(x=>x.incDeBruijnVar(-1,0));
 	//dw("!! ",nonIvrs," ",lower," ",upper);

@@ -3,7 +3,7 @@ def main(){
     x := uniform(0,1);
     y := uniform(0,1);
     z := x + y;
-    return z; // expected: (-[-z+1≤0]·z+[-1+z≤0]·z+[-z+1≠0]·[-z+1≤0]+[-z+1≤0])·([-1+z≤0]·[-z+1≠0]·[-z≤0]+[-2+z≤0]·[-z+1≤0])
+    return z; // expected: ((-z+1)·[-z+1≠0]·[-z+1≤0]+[-1+z≤0]·[-z+1≠0]·z+[-z+1≤0])·([-1+z≤0]·[-z+1≠0]·[-z≤0]+[-2+z≤0]·[-z+1≤0])
     // TODO: the expression is correct, but hard to understand.
     // Make it look a little bit closer to max(0,min(1,z)-max(0,z-1))
 }
