@@ -1,6 +1,8 @@
 // Written in the D programming language
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
 
+import std.algorithm;
+
 import dexpr, util;
 
 DExpr computeSum(DExpr expr,DExpr facts=one){
@@ -50,6 +52,9 @@ DExpr computeSum(DExpr expr,DExpr facts=one){
 	nexpr=expr.linearizeConstraints!(x=>!!cast(DIvr)x)(var).simplify(newFacts);
 	if(nexpr != expr) return computeSum(nexpr,facts);
 
+	Q!(DVar,DExpr) factSubsts;
+	DVar[] factSubstVars;
+	DExpr[] factSubstExprs;
 	foreach(f;expr.factors){
 		auto ivr=cast(DIvr)f;
 		if(ivr&&ivr.type==DIvr.Type.eqZ){
@@ -58,6 +63,39 @@ DExpr computeSum(DExpr expr,DExpr facts=one){
 			if(status==BoundStatus.equal)
 				return dIsℤ(bound)*unbind(expr,bound);
 			else return null;
+		}
+		if(auto d=cast(DDelta)f){
+			auto fv=d.freeVars.setx;
+			assert(var in fv);
+			fv.remove(var);
+			auto svar=getCanonicalVar(d.var.freeVars); // TODO: more clever choice?
+			SolutionInfo info;
+			SolUse usage={caseSplit:false,bound:false};
+			auto sol=d.var.solveFor(svar,zero,usage,info);
+			if(sol&&!info.needCaseSplit){
+				factSubstVars~=svar;
+				factSubstExprs~=sol;
+			}
+		}
+	}
+	DExpr newIvrs=one;
+	foreach(fact;newFacts.factors){
+		auto ivr=cast(DIvr)fact;
+		if(ivr&&util.among(ivr.type,DIvr.Type.leZ,DIvr.Type.eqZ)&&factSubstVars.any!(x=>fact.hasFreeVar(x))){
+			auto nivr=cast(DIvr)ivr.substituteAll(factSubstVars,factSubstExprs).simplify(one);
+			assert(!!nivr);
+			if(nivr.type==DIvr.Type.leZ){
+				newIvrs=newIvrs*nivr;
+			}else{
+				if(!expr.hasAny!DDelta&&!expr.hasAny!DDistApply){ // TODO: improve IR to enable less conservative rules (trouble with e.g. (∑ᵢδ(i)[x])·δ(x)(y), as the rewrite to [x=⌊x⌋]·(δ(y)(x))² is not valid.)
+					assert(nivr.type==DIvr.Type.eqZ);
+					DExpr bound; // TODO: get rid of code duplication?
+					auto status=getBoundForVar(nivr,var,bound);
+					if(status==BoundStatus.equal)
+						return dIsℤ(bound)*unbind(expr,bound);
+					else return null;
+				}
+			}
 		}
 	}
 	// TODO: keep ivrs and nonIvrs separate in DMult
@@ -71,12 +109,14 @@ DExpr computeSum(DExpr expr,DExpr facts=one){
 	}
 	ivrs=ivrs.simplify(newFacts);
 	nonIvrs=nonIvrs.simplify(newFacts);
-	auto loup=ivrs.getBoundsForVar(var,facts); // TODO: allow ivrs that do not contribute to bound.
+	auto loup=(ivrs*newIvrs).simplify(one).getBoundsForVar(var,newFacts);
+	// TODO: allow ivrs that do not contribute to bound.
+	// TODO: only use external facts if local facts insufficient?
 	if(!loup[0]) return null;
 	DExpr lower=loup[1][0].maybe!(x=>x.incDeBruijnVar(-1,0)),upper=loup[1][1].maybe!(x=>x.incDeBruijnVar(-1,0));
 	//dw("!! ",nonIvrs," ",lower," ",upper);
 	// TODO: symbolic summation. TODO: use the fact that the loop index is an integer in simplifications.
-	//if(nonIvrs==one) return (dLe(dCeil(lower),dFloor(upper))*(dFloor(upper)+1-dCeil(lower))).simplify(facts);
+	if(nonIvrs==one && lower && upper) return (dLe(dCeil(lower),dFloor(upper))*(dFloor(upper)+1-dCeil(lower))).simplify(facts);
 	// TODO: use more clever summation strategies first
 	auto lq=cast(Dℚ)lower, uq=cast(Dℚ)upper;
 	import std.format: format;

@@ -2885,20 +2885,23 @@ DExpr dBounded(string what)(DExpr e,DExpr lo,DExpr hi) if(what=="[)"){
 	return dLe(lo,e)*dLt(e,hi);
 }
 
-DVar getCanonicalFreeVar(DExpr e){
+bool isMoreCanonicalThan(DExpr e1,DExpr e2){
+	return e1.toHash()<e2.toHash(); // TODO: find something more stable
+}
+
+DVar getCanonicalVar(T)(T vars){
 	DVar r=null;
 	bool isMoreCanonicalThan(DVar a,DVar b){
 		if(b is null) return true;
 		return a.toString()<b.toString();
 	}
-	foreach(v;e.freeVars)
+	foreach(v;vars)
 		if(isMoreCanonicalThan(v,r)) r=v;
 	return r;
 }
 
-
-bool isMoreCanonicalThan(DExpr e1,DExpr e2){
-	return e1.toHash()<e2.toHash(); // TODO: find something more stable
+DVar getCanonicalFreeVar(DExpr e){
+	return getCanonicalVar(e.freeVars);
 }
 
 bool isContinuousMeasure(DExpr expr){
@@ -3285,7 +3288,7 @@ class DSum: DOp{
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){
-		auto r=staticSimplify(expr);
+		auto r=staticSimplify(expr,facts); // TODO: staticSimplify(expr) is significantly faster, fix
 		return r?r:this;
 	}
 	mixin Visitors;

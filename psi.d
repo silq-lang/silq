@@ -164,6 +164,13 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration;
+	//writeln("∑_ξ₁ p@[ξ₁]".dParse.simplify("[∑_ξ₁ p@[ξ₁]=0]".dParse.simplify(one)));
+	//writeln("[-∑_ξ₁[-p.length+ξ₁≠0]·[-p.length+ξ₁≤0]·[-ξ₁≤0]·p@[ξ₁]+1=0]·[-⌊ξ₀⌋+ξ₀=0]".dParse.simplify(one));
+	//writeln("∑_i [0≤i]·[i≤10]·p@[i]".dParse.simplify(one));
+	//writeln("(∑_ξ₁δ(ξ₁)[z])·[z≤1]·[0≤z]".dParse.simplify(one)); // TODO
+	//writeln("∑_ξ₁[ξ₁≤6]·δ(-1)[-ξ₁+x]".dParse.simplify("[0≤x]".dParse.simplify(one)));
+	//writeln("(∑_ξ₁[ξ₁≤6]·δ(ξ₁+1)[x])·[0≤x]".dParse.simplify(one));
+	//writeln("(∑_ξ₁[-1+-length+ξ₁≤0]·[-6+ξ₁≤0]·[-ξ₁+1≤0])".dParse.simplify(one));
 	//writeln("(-p+1)^n·(∫dξ₁[-ξ₁≤0]·ξ₁^n·⅟e^ξ₁)·(∑_ξ₁[-n+ξ₁≤0]·[-ξ₁≤0]·p^ξ₁·δ(0)[-ξ₀+ξ₁]·⅟(-p+1)^ξ₁·⅟(∫dξ₂[-ξ₂≤0]·ξ₂^(-ξ₁+n)·⅟e^ξ₂)·⅟(∫dξ₂[-ξ₂≤0]·ξ₂^ξ₁·⅟e^ξ₂))".dParse.substitute("p".dVar,one).simplify(one));
 	//writeln("∑_i [i=j]".dParse.simplify(one));
 	//writeln("lim[x → -∞]((d/dx)⁻¹[e^(-x²)](x)·x²)".dParse.simplify(one)); // TODO!
