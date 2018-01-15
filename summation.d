@@ -116,8 +116,8 @@ DExpr computeSum(DExpr expr,DExpr facts=one){
 	DExpr lower=loup[1][0].maybe!(x=>x.incDeBruijnVar(-1,0)),upper=loup[1][1].maybe!(x=>x.incDeBruijnVar(-1,0));
 	//dw("!! ",nonIvrs," ",lower," ",upper);
 	// TODO: symbolic summation. TODO: use the fact that the loop index is an integer in simplifications.
-	if(nonIvrs==one && lower && upper) return (dLe(dCeil(lower),dFloor(upper))*(dFloor(upper)+1-dCeil(lower))).simplify(facts);
-	// TODO: use more clever summation strategies first
+	if(auto anti=tryGetDiscreteAntiderivative(nonIvrs))
+		return anti.discreteFromTo(lower,upper);
 	auto lq=cast(Dℚ)lower, uq=cast(Dℚ)upper;
 	import std.format: format;
 	import std.math: ceil, floor;
@@ -135,6 +135,35 @@ DExpr computeSum(DExpr expr,DExpr facts=one){
 			DPlus.insert(s,unbind(nonIvrs,isFloat?dFloat(text(i).to!real):dℚ(i)).simplify(facts));
 		}
 		return dPlus(s);
+	}
+	return null;
+}
+
+DExpr discreteFromTo(DExpr anti,DExpr lower,DExpr upper){
+	auto var=db1;
+	auto lo=lower?unbind(anti,dCeil(lower)):null;
+	auto up=upper?unbind(anti,dFloor(upper)+1):null;
+	if(lower&&upper) return dLe(dCeil(lower),dFloor(upper))*(up-lo);
+	if(!lo) lo=dLimSmp(var,-dInf,anti,one).incDeBruijnVar(-1,0);
+	if(!up) up=dLimSmp(var,dInf,anti,one).incDeBruijnVar(-1,0);
+	if(lo.isInfinite() || up.isInfinite()) return null;
+	if(lo.hasLimits() || up.hasLimits()) return null;
+	return up-lo;
+}
+
+DExpr tryGetDiscreteAntiderivative(DExpr e){
+	auto var=db1;
+	if(e==one) return var;
+	if(auto p=cast(DPow)e){
+		// geometric sum ∑qⁱδi.
+		auto q=p.operands[0], i=p.operands[1];
+		if(!q.hasFreeVar(var)){
+			auto ba=i.asLinearFunctionIn(var);
+			auto b=ba[0],a=ba[1];
+			if(a && b){
+				return (dNeqZ(a)*(q^^(a*var)-1)/(q^^a-1) + dEqZ(a)*var)*q^^b;
+			}
+		}
 	}
 	return null;
 }

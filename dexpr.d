@@ -2885,6 +2885,10 @@ DExpr dBounded(string what)(DExpr e,DExpr lo,DExpr hi) if(what=="[)"){
 	return dLe(lo,e)*dLt(e,hi);
 }
 
+DExpr dBounded(string what)(DExpr e,DExpr lo,DExpr hi) if(what=="()"){
+	return dLt(lo,e)*dLt(e,hi);
+}
+
 bool isMoreCanonicalThan(DExpr e1,DExpr e2){
 	return e1.toHash()<e2.toHash(); // TODO: find something more stable
 }

@@ -206,12 +206,10 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 				if(l0.hasLimits()||l1.hasLimits()) return null;
 				if(l0 == dE && l1 == -dInf) return zero;
 				if(l1 == dInf||l1 == -dInf){
-					/+if(dLeZ(l0).simplify(facts) == zero){ // TODO
-						if(l0 == dE||dLe(l0,one).simplify(facts) == zero)
-							return l1 ==x dInf?dInf:zero;
-						if(dLe(one,l0).simplify(facts) == zero)
-							return l1 == dInf?zero:dInf;
-					}+/
+					if(l1 == dInf && dBounded!"()"(l0,mone,one).simplify(facts) == one)
+						return zero;
+					if(l1 == -dInf && dBounded!"[]"(l0,mone,one).simplify(facts) == zero)
+						return zero;
 					return null;
 				}
 				if(l0 == -dInf){
@@ -224,7 +222,7 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 					}
 					return null;
 				}
-				if(l0 is dInf){
+				if(l0 == dInf){
 					if(dLeZ(l1).simplify(facts) == zero)
 						return dInf;
 					if(dGeZ(l1).simplify(facts) == zero)

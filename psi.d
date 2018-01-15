@@ -164,6 +164,12 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration;
+	//writeln("∑_i [-10≤i≤10]·(-1/2)^i".dParse.simplify(one));
+	//writeln("lim[ξ₁ → ∞]((1/2)^(ξ₁))".dParse.simplify(one));
+	//writeln("∑_i(1/2)^i·[-10≤i]".dParse.simplify(one));
+	//writeln("∑_i(1/2)^(i+1)·[0≤i]".dParse.simplify(one));
+	//writeln("∑_i(1/2)^i·[1≤i]".dParse.simplify(one));
+	//writeln("∑_i(1/2)^i·[0≤i]".dParse.simplify(one));
 	//writeln("∑_ξ₁ p@[ξ₁]".dParse.simplify("[∑_ξ₁ p@[ξ₁]=0]".dParse.simplify(one)));
 	//writeln("[-∑_ξ₁[-p.length+ξ₁≠0]·[-p.length+ξ₁≤0]·[-ξ₁≤0]·p@[ξ₁]+1=0]·[-⌊ξ₀⌋+ξ₀=0]".dParse.simplify(one));
 	//writeln("∑_i [0≤i]·[i≤10]·p@[i]".dParse.simplify(one));

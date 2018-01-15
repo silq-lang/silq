@@ -174,9 +174,8 @@ private DExpr definiteIntegralContinuous(DExpr expr,DExpr facts)out(res){
 	return null;
 }
 
-DExpr fromTo(DExpr anti,DVar var,DExpr lower,DExpr upper)in{
-	assert(var==db1);
-}body{ // lower=null: lower=-∞. upper=0: upper=∞
+DExpr fromTo(DExpr anti,DExpr lower,DExpr upper){ // lower=null: lower=-∞. upper=0: upper=∞
+	auto var=db1;
 	//dw(anti.substitute(var,lower).simplify(one)," ",lower," ",upper);
 	auto lo=lower?unbind(anti,lower):null;
 	auto up=upper?unbind(anti,upper):null;
@@ -551,11 +550,11 @@ private DExpr tryIntegrateImpl(DExpr expr){
 	//dw(dDiff(var,antid.antiderivative.simplify(one)).simplify(one));
 	if(auto anti=tryGetAntiderivative(expr)){
 		/+writeln("integrand: ",expr/+.toString(Format.mathematica)+/);
-		auto r=anti.fromTo(var,lower,upper);
+		auto r=anti.fromTo(lower,upper);
 		if(r) r=r.simplify(one);
 		writeln("integrated: ",r?r.incDeBruijnVar(1,0).toString(/+Format.mathematica+/):"?");
 		dw("loup: ", lower," ",upper);+/
-		return anti.fromTo(var,lower,upper);
+		return anti.fromTo(lower,upper);
 	}
 	if(auto p=cast(DPlus)expr.polyNormalize(var)){
 		DExprSet works;
