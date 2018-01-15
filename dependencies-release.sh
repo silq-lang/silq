@@ -1,17 +1,17 @@
 #!/bin/bash
 
-VERSION="1.6.0-beta1"
+VERSION="1.7.0"
 LINK=https://github.com/ldc-developers/ldc/releases/download/v$VERSION/
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
     NAME="ldc2-$VERSION-linux-x86_64"
     FILE="$NAME.tar.xz"
-    SUM1="b1d720690778e627932c0c5c18ddf178  $FILE"
+    SUM1="c260683a83b9e62444d0b210dd874a41  $FILE"
     MD5="md5sum"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
     NAME="ldc2-$VERSION-osx-x86_64"
     FILE="$NAME.tar.xz"
-    SUM1="MD5 ($FILE) = 31db6a417ac7df069fd73726a1ad8179"
+    SUM1="MD5 ($FILE) = 554429dede0ce63f1e429d185a06748d"
     MD5="md5"
 else
     >&2 echo "This script does not support your platform at this time."
