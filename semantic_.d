@@ -720,6 +720,8 @@ AssignExp assignExpSemantic(AssignExp ae,Scope sc){
 			checkLhs(idx.e);
 		}else if(auto fe=cast(FieldExp)lhs){
 			checkLhs(fe.e);
+		}else if(auto tae=cast(TypeAnnotationExp)lhs){
+			checkLhs(tae.e);
 		}else{
 		LbadAssgnmLhs:
 			sc.error(format("cannot assign to %s",lhs),ae.e1.loc);

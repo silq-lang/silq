@@ -553,7 +553,6 @@ struct Parser{
 							return res=New!(BinaryExp!(Tok!"⊕"))(left,right);
 						}
 					case "x":
-						auto id=tok;
 						nextToken();
 						auto right=parseExpression(rbp!(Tok!"×"),false);
 						return res=New!(BinaryExp!(Tok!"×"))(left,right);
@@ -592,7 +591,7 @@ struct Parser{
 		try left = nud(allowLambda);catch(PEE err){error("found \""~tok.toString()~"\" when expecting expression");nextToken();return new ErrorExp();}
 		return parseExpression2(left, rbp);
 	}
-	auto parseType(){ return parseExpression(rbp!(Tok!",")); }
+	auto parseType(){ return parseExpression(rbp!(Tok!":")); }
 	Expression parseExpression2(Expression left, int rbp = 0){ // left is already known
 		int clbp(){
 			if(ttype==Tok!"i"){

@@ -640,6 +640,8 @@ private struct Analyzer{
 					assert(tpl.e.length==tt.types.length);
 					foreach(k,exp;tpl.e) assignToImpl(exp,rhs[k.dℚ],tt.types[k]);
 				}
+			}else if(auto tae=cast(TypeAnnotationExp)lhs){
+				assignToImpl(tae.e,rhs,ty);
 			}else{
 			LbadAssgnmLhs:
 				err.error("invalid left hand side for assignment",lhs.loc);
