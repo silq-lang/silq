@@ -19,9 +19,9 @@ enum binaryOps=mixin({string r="[";
 bool isRelationalOp(TokenType op){
 	switch(op){
 		// relational operators
-		case Tok!"==",Tok!"!=",Tok!">",Tok!"<":
-		case Tok!">=",Tok!"<=",Tok!"!>",Tok!"!<":
-		case Tok!"!>=",Tok!"!<=",Tok!"<>",Tok!"!<>":
+		case Tok!"==",Tok!"=",Tok!"!=",Tok!"≠",Tok!">",Tok!"<":
+		case Tok!">=",Tok!"≥",Tok!"<=",Tok!"≤",Tok!"!>",Tok!"!<":
+		case Tok!"!>=",Tok!"!≥",Tok!"!<=",Tok!"!≤",Tok!"<>",Tok!"!<>":
 		case Tok!"<>=", Tok!"!<>=":
 			return true;
 		default: return false;
@@ -40,10 +40,15 @@ int getLbp(TokenType type) pure{ // operator precedence
 	//case Tok!"..": return 10; // range operator
 	case Tok!",":  return 10; // comma operator
 	// assignment operators
-	case Tok!"/=",Tok!"div=",Tok!"&=",Tok!"⊕=",Tok!"|=",Tok!"-=":
+	case Tok!"←":
+	case Tok!"/=",Tok!"div=",Tok!"&=",Tok!"∧=",Tok!"⊕=",Tok!"|=",Tok!"∨=",Tok!"-=":
+	case Tok!"/←",Tok!"div←",Tok!"&←",Tok!"∧←",Tok!"⊕←",Tok!"|←",Tok!"∨←",Tok!"-←":
 	case Tok!"+=",Tok!"<<=",Tok!">>=", Tok!">>>=":
-	case Tok!"=",Tok!"*=",Tok!"%=",Tok!"^=":
+	case Tok!"+←",Tok!"<<←",Tok!">>←", Tok!">>>←":
+	case Tok!"*=",Tok!"%=",Tok!"^=":
+	case Tok!"*←",Tok!"·←",Tok!"%←",Tok!"^←":
 	case Tok!"&&=", Tok!"||=", Tok!"~=":
+	case Tok!"&&←", Tok!"||←", Tok!"~←":
 	case Tok!":=":
 		return 20;
 	case Tok!":": // type annotation
@@ -53,13 +58,13 @@ int getLbp(TokenType type) pure{ // operator precedence
 	case Tok!"||": return 50; // logical OR
 	case Tok!"&&": return 60; // logical AND
 	// bitwise operators
-	case Tok!"|": return 70;
+	case Tok!"|",Tok!"∨": return 70;
 	case Tok!"⊕": return 80;
-	case Tok!"&": return 90;
+	case Tok!"&",Tok!"∧": return 90;
 	// relational operators
-	case Tok!"==",Tok!"!=",Tok!">",Tok!"<":
-	case Tok!">=",Tok!"<=",Tok!"!>",Tok!"!<":
-	case Tok!"!>=",Tok!"!<=",Tok!"<>",Tok!"!<>":
+	case Tok!"==",Tok!"=",Tok!"!=",Tok!"≠",Tok!">",Tok!"<":
+	case Tok!">=",Tok!"≥",Tok!"<=",Tok!"≤",Tok!"!>",Tok!"!<":
+	case Tok!"!>=",Tok!"!≥",Tok!"!<=",Tok!"!≤",Tok!"<>",Tok!"!<>":
 	case Tok!"<>=", Tok!"!<>=":
 		return 100;
 	// shift operators
@@ -72,7 +77,7 @@ int getLbp(TokenType type) pure{ // operator precedence
 		return 120;
 	case Tok!"×": // product type
 	// multiplicative operators
-	case Tok!"*",Tok!"/",Tok!"%",Tok!"div":
+	case Tok!"*",Tok!"·",Tok!"/",Tok!"%",Tok!"div":
 		return 130;
 	/*/ prefix operators
 	case Tok!"&",Tok!"++",Tok!"--",Tok!"*":
@@ -401,12 +406,12 @@ struct Parser{
 				}
 				mixin(rule!(LiteralExp,Existing,"t"));
 			mixin(getTTCases(literals,["``","``c","``w","``d","true","false"])); {res=New!LiteralExp(tok); nextToken(); return res;}
-			case Tok!"true":
+			case Tok!"true",Tok!"⊤":
 				nextToken();
 				auto tok=Token(Tok!"0");
 				tok.str="1";
 				return res=New!LiteralExp(tok);
-			case Tok!"false":
+			case Tok!"false",Tok!"⊥":
 				nextToken();
 				auto tok=Token(Tok!"0");
 				tok.str="0";
@@ -456,9 +461,9 @@ struct Parser{
 			case Tok!"-":
 				nextToken();
 				return res=New!(UnaryExp!(Tok!"-"))(parseExpression(nbp));
-			case Tok!"!":
+			case Tok!"!",Tok!"¬":
 				nextToken();
-				return res=New!(UnaryExp!(Tok!"!"))(parseExpression(nbp));
+				return res=New!(UnaryExp!(Tok!"¬"))(parseExpression(nbp));
 			case Tok!"~":
 				nextToken();
 				return res=New!(UnaryExp!(Tok!"~"))(parseExpression(nbp));
@@ -475,7 +480,7 @@ struct Parser{
 	}
 	
 	// left denotation
-	Expression led(Expression left){
+	Expression led(Expression left,bool statement=false){
 		Expression res=null;
 		//Location loc=tok.loc;
 		//scope(success) if(res) res.loc=loc;
@@ -511,15 +516,15 @@ struct Parser{
 				return r;
 			case Tok!":":{
 				nextToken();
-				auto t=parseType();
+				auto t=parseType(statement);
 				res=New!TypeAnnotationExp(left,t);
 				return res;
 			}mixin({string r;
 				foreach(x;binaryOps)
-					if(x!="=>" && x!="." && x!="!" && x!="?" && x!=":"){
+					if(!util.among(x,"=>",".","!","?",":","*","=","==","<=","!<=",">=","!>=","!=","*=","/=","div=","&=","⊕=","|=","-=","+=","<<=",">>=",">>>=","*=","·=","%=","^=","&&=","||=","~=","&","&=","&←","∧=","|","|=","|←","∨=")){
 						r~=mixin(X!q{case Tok!"@(x)":
 							nextToken();
-							auto right=parseExpression(rbp!(Tok!"@(x)"),"@(x)"=="="||"@(x)"==":=");
+							auto right=parseExpression(rbp!(Tok!"@(x)"),"@(x)"=="←"||"@(x)"==":=");
 							static if("@(x)"=="->")
 								alias BE=BinaryExp!(Tok!"→");
 							else alias BE=BinaryExp!(Tok!"@(x)");
@@ -528,15 +533,35 @@ struct Parser{
 					}
 				return r;
 			}());
+			static foreach(x;["/=","div=","&=","⊕=","|=","-=","+=","<<=",">>=",">>>=","%=","^=","&&=","||=","~="])
+				case Tok!x: goto case Tok!(x[0..$-1]~"←");
+			case Tok!"=":
+				if(statement) goto case Tok!"←";
+				goto case;
+			case Tok!"==":
+				nextToken();
+				auto right=parseExpression(rbp!(Tok!"=="),true);
+				return res=New!(BinaryExp!(Tok!"="))(left,right);
+			case Tok!"*": goto case Tok!"·";
+			case Tok!"*=",Tok!"·=": goto case Tok!"·←";
+			case Tok!"<=": goto case Tok!"≤";
+			case Tok!"!<=": goto case Tok!"!≤";
+			case Tok!">=": goto case Tok!"≥";
+			case Tok!"!>=": goto case Tok!"!≥";
+			case Tok!"!=": goto case Tok!"≠";
+			case Tok!"&": goto case Tok!"∧";
+			case Tok!"&←",Tok!"∧=": goto case Tok!"∧←";
+			case Tok!"|": goto case Tok!"∨";
+			case Tok!"|←",Tok!"∨=": goto case Tok!"∨←";
 			case Tok!"i":
 				switch(tok.str){ // TODO: clean this up using code generation
 					case "div":
 						auto id=tok;
 						nextToken();
-						if(ttype==Tok!"=" && id.loc.rep.ptr+id.loc.rep.length==tok.loc.rep.ptr){
+						if((ttype==Tok!"←"||ttype==Tok!"=") && id.loc.rep.ptr+id.loc.rep.length==tok.loc.rep.ptr){
 							nextToken();
 							auto right=parseExpression(rbp!(Tok!"div="),false);
-							return res=New!(BinaryExp!(Tok!"div="))(left,right);
+							return res=New!(BinaryExp!(Tok!"div←"))(left,right);
 						}else{
 							auto right=parseExpression(rbp!(Tok!"div"),false);
 							return res=New!(BinaryExp!(Tok!"div"))(left,right);
@@ -544,10 +569,10 @@ struct Parser{
 					case "xorb":
 						auto id=tok;
 						nextToken();
-						if(ttype==Tok!"=" && id.loc.rep.ptr+id.loc.rep.length==tok.loc.rep.ptr){
+						if((ttype==Tok!"←"||ttype==Tok!"=") && id.loc.rep.ptr+id.loc.rep.length==tok.loc.rep.ptr){
 							nextToken();
 							auto right=parseExpression(rbp!(Tok!"⊕="),false);
-							return res=New!(BinaryExp!(Tok!"⊕="))(left,right);
+							return res=New!(BinaryExp!(Tok!"⊕←"))(left,right);
 						}else{
 							auto right=parseExpression(rbp!(Tok!"⊕"),false);
 							return res=New!(BinaryExp!(Tok!"⊕"))(left,right);
@@ -572,7 +597,7 @@ struct Parser{
 				throw new PEE(str);
 		}
 	}
-	Expression parseExpression(int rbp = 0,bool allowLambda=true){
+	Expression parseExpression(int rbp = 0,bool allowLambda=true,bool statement=false){
 		switch(ttype){
 			case Tok!"def": return parseFunctionDef();
 			case Tok!"dat": return parseDatDecl();
@@ -589,10 +614,10 @@ struct Parser{
 		}
 		Expression left;
 		try left = nud(allowLambda);catch(PEE err){error("found \""~tok.toString()~"\" when expecting expression");nextToken();return new ErrorExp();}
-		return parseExpression2(left, rbp);
+		return parseExpression2(left, rbp, statement);
 	}
-	auto parseType(){ return parseExpression(rbp!(Tok!":")); }
-	Expression parseExpression2(Expression left, int rbp = 0){ // left is already known
+	auto parseType(bool statement=false){ return parseExpression(rbp!(Tok!":"),true,statement); }
+	Expression parseExpression2(Expression left, int rbp = 0, bool statement=false){ // left is already known
 		int clbp(){
 			if(ttype==Tok!"i"){
 				if(tok.str=="div")
@@ -602,12 +627,14 @@ struct Parser{
 				if(tok.str=="x")
 					return arrLbp[Tok!"×"];
 			}
+			if(statement && ttype==Tok!"=")
+				return arrLbp[Tok!"←"];
 			return arrLbp[ttype];
 		}
 		while(rbp < clbp())
-		loop: try left = led(left); catch(PEE err){error(err.msg);}
+		loop: try left = led(left,statement); catch(PEE err){error(err.msg);}
 		if(clbp() == -2 && rbp<lbp!(Tok!"==")){
-			try left = led(left); catch(PEE err){error(err.msg);}
+			try left = led(left,statement); catch(PEE err){error(err.msg);}
 			if(rbp<arrLbp[ttype]) goto loop;
 		}
 		return left;
@@ -617,7 +644,7 @@ struct Parser{
 		expect(Tok!"{");
 		auto s=appender!(Expression[])();
 		while(ttype!=Tok!"}" && ttype!=Tok!"EOF"){
-			auto e=parseExpression();
+			auto e=parseExpression(0,true,true);
 			s.put(e);
 			if(!e.isCompound()&&ttype!=Tok!"}"||ttype==Tok!";")
 			   expect(Tok!";");

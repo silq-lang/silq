@@ -3,8 +3,8 @@
 
 import std.string, utf = std.utf, std.uni;
 import std.stdio, std.conv;
-import std.algorithm : startsWith, swap;
-import std.traits : EnumMembers;
+import std.algorithm;
+import std.traits: EnumMembers;
 
 import core.memory;
 
@@ -41,35 +41,35 @@ string[2][] complexTokens =
 	 ["expected", "ExpectedComment"]];
 string[2][] simpleTokens = 
 	[["/",     "Divide"                    ],
-	 ["/=",    "DivideAssign"              ],
+	 ["/=",    "DivideEqual"               ],
 	 [".",     "Dot"                       ],
 	 ["..",    "DotDot"                    ],
 	 ["...",   "DotDotDot"                 ],
 	 ["&",     "And"                       ],
-	 ["&=",    "AndAssign"                 ],
+	 ["&=",    "AndEqual"                  ],
 	 ["&&",    "AndAnd"                    ],
-	 ["&&=",   "AndAndAssign"              ],
+	 ["&&=",   "AndAndEqual"               ],
 	 ["|",     "Or"                        ],
-	 ["|=",    "OrAssign"                  ],
+	 ["|=",    "OrEqual"                   ],
 	 ["||",    "OrOr"                      ],
-	 ["||=",   "OrOrAssign"                ],
+	 ["||=",   "OrOrEqual"                 ],
 	 ["-",     "Minus"                     ],
-	 ["-=",    "MinusAssign"               ],
+	 ["-=",    "MinusEqual"                ],
 	 ["--",    "MinusMinus"                ],
 	 ["->",    "UglyMapsTo"                ],
 	 ["+",     "Plus"                      ],
-	 ["+=",    "PlusAssign"                ],
+	 ["+=",    "PlusEqual"                 ],
 	 ["++",    "PlusPlus"                  ],
 	 ["<",     "Less"                      ],
 	 ["<=",    "LessEqual"                 ],
 	 ["<<",    "LeftShift"                 ],
-	 ["<<=",   "LeftShiftAssign"           ],
+	 ["<<=",   "LeftShiftEqual"            ],
 	 ["<>",    "LessGreater"               ],
 	 ["<>=",   "LessGreaterEqual"          ],
 	 [">",     "Greater"                   ],
 	 [">=",    "GreaterEqual"              ],
-	 [">>=",   "RightShiftAssign"          ],
-	 [">>>=",  "LogicalRightShiftAssign"   ],
+	 [">>=",   "RightShiftEqual"           ],
+	 [">>>=",  "LogicalRightShiftEqual"    ],
 	 [">>",    "RightShift"                ],
 	 [">>>",   "LogicalRightShift"         ],
 	 ["!",     "ExclamationMark"           ],
@@ -90,19 +90,61 @@ string[2][] simpleTokens =
 	 [",",     "Comma"                     ],
 	 [";",     "Semicolon"                 ],
 	 [":",     "Colon"                     ],
-	 [":=",    "ColonAssign"               ],
+	 [":=",    "ColonEqual"                ],
 	 ["$",     "Dollar"                    ],
-	 ["=",     "Assign"                    ],
+	 ["=",     "Equal"                     ],
 	 ["=>",    "UglyGoesTo"                ],
-	 ["==",    "Equal"                     ],
+	 ["==",    "EqualEqual"                ],
 	 ["*",     "Star"                      ],
-	 ["*=",    "MultiplyAssign"            ],
+	 ["*=",    "MultiplyEqual"             ],
 	 ["%",     "Modulo"                    ],
-	 ["%=",    "ModuloAssign"              ],
+	 ["%=",    "ModuloEqual"               ],
 	 ["^",     "Pow"                       ],
-	 ["^=",    "PowAssign"                 ],
+	 ["^=",    "PowEqual"                  ],
 	 ["~",     "Concat"                    ],
-	 ["~=",    "ConcatAssign"              ]];
+	 ["~=",    "ConcatEqual"              ]];
+string[2][] unicodeTokens =
+	[["·",     "Multiply2"                 ],
+	 ["·=",    "MultiplyEqual2"            ],
+	 ["⊥",     "Bottom",                   ],
+	 ["⊤",     "Top",                      ],
+	 ["¬",     "Negate",                   ],
+	 ["∧",     "And2",                     ],
+	 ["∧=",    "AndEqual2",                ],
+	 ["∧←",    "AndAssign2"                ],
+	 ["⊕",     "Xor"                       ],
+	 ["⊕=",    "XorEqual"                  ],
+	 ["⊕←",    "XorAssign"                 ],
+	 ["∨",     "Or2",                      ],
+	 ["∨=",    "OrEqual2",                 ],
+	 ["∨←",    "OrAssign2",                ],
+	 ["≠",     "NotEqual2"                 ],
+	 ["≤",     "LessEqual2"                ],
+	 ["≥",     "GreaterEqual2"             ],
+	 ["!≤",    "NotLessEqual2"             ],
+	 ["!≥",    "NotGreaterEqual2"          ],
+	 ["@",     "At"                        ],
+	 ["×",     "Times"                     ],
+	 ["→",     "To"                        ],
+	 ["⇒",     "GoesTo"                    ],
+	 ["↦",     "MapsTo"                    ],
+	 ["←",     "Assign",                   ],
+	 ["/←",    "DivideAssign"              ],
+	 ["&←",    "AndAssign"                 ],
+	 ["&&←",   "AndAndAssign"              ],
+	 ["|←",    "OrAssign"                  ],
+	 ["||←",   "OrOrAssign"                ],
+	 ["-←",    "MinusAssign"               ],
+	 ["+←",    "PlusAssign"                ],
+	 ["<<←",   "LeftShiftAssign"           ],
+	 [">>←",   "RightShiftAssign"          ],
+	 [">>>←",  "LogicalRightShiftAssign"   ],
+	 ["*←",    "MultiplyAssign"            ],
+	 ["·←",    "MultiplyAssign2"           ],
+	 ["%←",    "ModuloAssign"              ],
+	 ["^←",    "PowAssign"                 ],
+	 ["~←",    "ConcatAssign"              ],
+	 ["div←",  "IntegerDivisionAssign"     ]];
 string[2][] specialTokens = 
 	[["",      "None",                     ],
 	 [" ",     "Whitespace",               ],
@@ -112,21 +154,16 @@ string[2][] specialTokens =
 	 ["Error", "Error"                     ],
 	 ["__error","ErrorLiteral"             ],
 	 ["div",   "IntegerDivision"           ],
-	 ["div=",  "IntegerDivisionAssign"     ],
-	 ["EOF",   "Eof"                       ],
-	 ["⊕",     "Xor"                       ],
-	 ["⊕=",    "XorAssign"                 ],
-	 ["@",     "At"                        ],
-	 ["×",     "Times"                     ],
-	 ["→",     "To"                        ],
-	 ["⇒",     "GoesTo"                    ],
-	 ["↦",     "MapsTo"                    ]];
+	 ["div=",  "IntegerDivisionEqual"      ],
+	 ["EOF",   "Eof"                       ]];
+
+
 string[2][] compoundTokens = [];
 
 string[] keywords = ["dat","def","true","false","if","then","else","observe","assert","return","repeat","for","while","in","cobserve","import","Π","Pi"];
 
 
-string[2][] tokens = specialTokens ~ complexTokens ~ simpleTokens ~ compoundTokens ~ keywordTokens();
+string[2][] tokens = specialTokens ~ complexTokens ~ simpleTokens ~ unicodeTokens ~ compoundTokens ~ keywordTokens();
 }
 
 private{
@@ -271,19 +308,54 @@ string caseSimpleToken(string prefix="", bool needs = false)pure{
 	foreach(i;simpleTokens){string s=i[0]; if(s.startsWith(prefix)) c++;}
 	if(c==1) r~=`res[0].type = Tok!"`~prefix~'"'~";\nbreak;\n";
 	else{
-		if(needs) r~="switch(*p){\n";
+		if(needs) r~="switch(*p++){\n";
 		foreach(i;simpleTokens){
 			string s = i[0]; if(s[0]=='/' || s[0] == '.' || s=="×") continue; // / can be the start of a comment, . could be the start of a float literal
 			if(s.startsWith(prefix) && s.length==prefix.length+1){
-				r~=`case '`~s[$-1]~"':\n"~(needs?"p++;\n":"");
+				r~=`case '`~s[$-1]~"':\n";
 				r~=caseSimpleToken(s,true);
 			}
 		}
-		if(needs) r~=`default: res[0].type = Tok!"`~prefix~`"`~";\nbreak;\n}\nbreak;\n";
+		// TODO: this hacky and inefficient
+		auto special=unicodeTokens.map!(x=>x[0]).filter!(x=>x.startsWith(prefix)&&x.length>prefix.length&&x[prefix.length]>0x80);
+		if(!special.empty){
+			r~="// "~text(special)~"\n";
+			r~=`
+				case 0x80: .. case 0xFF:
+					len=0; p--;
+					try{auto ch=utf.decode(p[0..4],len);
+						if(isAlphaEx(ch)){ s=p, p+=len; goto identifier; }
+						switch(ch){
+							enum uniStart = unicodeTokens[].map!(x=>x[0].to!(dchar[])).filter!(x=>x.length&&x[0]>=0x80).map!(x=>x[0]).array.sort.uniq.array;
+							static foreach(x;uniStart){
+								case x:
+									enum candidates=unicodeTokens.map!(x=>x[0].idup).filter!(y=>y.startsWith("`~prefix~`"~text(x))).array.sort!"a.length>b.length";
+									static if(candidates.length==1){
+										res[0].type=Tok!(candidates[0]);
+										p+=len;
+										break Lswitch;
+									}else static foreach(y;candidates){ // TODO: get rid of linear search?
+										if(p[0..y.length]==y){
+										   res[0].type=Tok!y;
+										   p+=y.length;
+										   break Lswitch;
+										}
+									}
+									goto default;
+								break Lswitch;
+							}
+							default: break;
+						}
+						s=p, p+=len;
+						if(!isWhite(ch)) errors~=tokError(format("unsupported character '%s'",ch),s[0..len]);
+						// else if(isNewLine(ch)) line++; // TODO: implement this everywhere
+						continue;
+					}catch(Exception){} goto default;`;
+		}
+		if(needs) r~=`default: p--; res[0].type = Tok!"`~prefix~`"`~";\nbreak;\n}\nbreak;\n";
 	}
 	return r;
 }
-
 
 auto lex(Source source){ // pure
 	return Lexer(source);
@@ -405,19 +477,7 @@ private:
 		loop: while(res.length) { // breaks on EOF or buffer full
 			auto begin=p; // start of a token's representation
 			auto sline=line;
-			if(p[0.."×".length]=="×"){
-				p+="×".length;
-				res[0].type = Tok!"×";
-			}else if(p[0.."→".length]=="→"){
-				p+="→".length;
-				res[0].type = Tok!"→";
-			}else if(p[0.."⇒".length]=="⇒"){
-				p+="⇒".length;
-				res[0].type = Tok!"⇒";
-			}else if(p[0.."↦".length]=="↦"){
-				p+="↦".length;
-				res[0].type = Tok!"↦";
-			}else switch(*p++){
+		Lswitch:switch(*p++){
 				// whitespace
 				case 0, 0x1A:
 					res[0].type = Tok!"EOF";
@@ -777,22 +837,6 @@ private:
 					res[0].name = s[0..p-s];
 					res[0].type=isKeyword(res[0].name);
 					break;
-				case 0x80: .. case 0xFF:
-					len=0; p--;
-					try{auto ch=utf.decode(p[0..4],len);
-						s=p, p+=len;
-						if(isAlphaEx(ch)) goto identifier;
-						if(ch=='⊕'){
-							if(*p=='='){
-								res[0].type=Tok!"⊕=";
-								p++;
-							}else res[0].type=Tok!"⊕";
-							break;
-						}
-						if(!isWhite(ch)) errors~=tokError(format("unsupported character '%s'",ch),s[0..len]);
-						// else if(isNewLine(ch)) line++; // TODO: implement this everywhere
-						continue;
-					}catch(Exception){} goto default;
 				default:
 					p--; invCharSeq(); p++;
 					continue;
