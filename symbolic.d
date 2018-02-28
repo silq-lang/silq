@@ -372,13 +372,13 @@ private struct Analyzer{
 				if(!e1||!e2) unwind();
 			};
 			if(auto b=cast(AndExp)e){
-				auto oneExp=new LiteralExp(Token(Tok!"0","0"));
-				oneExp.type = ℝ;
-				return transformIte(b.e1,new CompoundExp([b.e2]),new CompoundExp([oneExp]),true);
-			}else if(auto b=cast(OrExp)e){
-				auto zeroExp=new LiteralExp(Token(Tok!"0","1"));
+				auto zeroExp=new LiteralExp(Token(Tok!"0","0"));
 				zeroExp.type = ℝ;
-				return transformIte(b.e1,new CompoundExp([zeroExp]),new CompoundExp([b.e2]),true);
+				return transformIte(b.e1,new CompoundExp([b.e2]),new CompoundExp([zeroExp]),true);
+			}else if(auto b=cast(OrExp)e){
+				auto oneExp=new LiteralExp(Token(Tok!"0","1"));
+				oneExp.type = ℝ;
+				return transformIte(b.e1,new CompoundExp([oneExp]),new CompoundExp([b.e2]),true);
 			}else if(auto i=cast(IteExp)e){
 				return transformIte(i.cond,i.then,i.othw,true);
 			}else with(DIvr.Type)if(auto b=cast(LtExp)e){
@@ -752,10 +752,17 @@ private struct Analyzer{
 			}
 			auto be=cast(ABinaryExp)e;
 			assert(!!be);
+			Expression setℝ(Expression e){
+				e.type = ℝ;
+				return e;
+			}
 			if(cast(AndAssignExp)be){
-				analyzeIte(be.e1, new CompoundExp([new AssignExp(be.e1,be.e2)]), null);
+				auto zeroExp=setℝ(new LiteralExp(Token(Tok!"0","0")));
+				analyzeIte(be.e1, new CompoundExp([new AssignExp(be.e1,setℝ(new NeqExp(be.e2,zeroExp)))]), new CompoundExp([new AssignExp(be.e1,setℝ(new NeqExp(be.e1,zeroExp)))]));
 			}else if(cast(OrAssignExp)be){
-				analyzeIte(be.e1, new CompoundExp([]), new CompoundExp([new AssignExp(be.e1,be.e2)]));
+				auto zeroExp=setℝ(new LiteralExp(Token(Tok!"0","0")));
+				auto oneExp=setℝ(new LiteralExp(Token(Tok!"0","1")));
+				analyzeIte(be.e1, new CompoundExp([new AssignExp(be.e1,oneExp)]), new CompoundExp([new AssignExp(be.e1,setℝ(new NeqExp(be.e2,zeroExp)))]));
 			}else{
 				auto lhs=transformExp(be.e1);
 				auto rhs=transformExp(be.e2);
