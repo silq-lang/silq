@@ -1,0 +1,6 @@
+
+def main(){
+	x := geometric(1/2);
+	y := geometric(1/2);
+	return x+1==y; // expected: 1/6·δ(1)[r]+5/6·δ(0)[r]
+}

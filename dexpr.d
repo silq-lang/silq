@@ -3493,7 +3493,7 @@ class DFloor: DOp{
 	mixin Visitors;
 	static DExpr staticSimplify(DExpr e,DExpr facts=one){
 		auto ne=e.simplify(facts);
-		if(ne!= e) return dFloor(ne).simplify(facts);
+		if(ne!=e) return dFloor(ne).simplify(facts);
 		if(auto q=cast(Dℚ)e)
 			return dℚ(floor(q.c));
 		if(auto f=cast(DFloat)e){
@@ -3501,6 +3501,15 @@ class DFloor: DOp{
 			import std.math: floor;
 			return ℤ(format("%.0f",floor(f.c))).dℚ;
 		}
+		if(facts.hasFactor(dIsℤ(e))) return e;
+		if(auto p=cast(DPlus)e){
+			DExpr integral=zero;
+			foreach(s;p.summands)
+				if(dIsℤ(s).simplify(facts)==one) integral=integral+s;
+			if(integral != zero) return (integral+dFloor(e-integral)).simplify(facts);
+		}
+		auto q=e.getFractionalFactor();
+		if(q.c<0) return -dCeil(-e).simplify(facts);
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){
@@ -3522,7 +3531,7 @@ class DCeil: DOp{
 	mixin Visitors;
 	static DExpr staticSimplify(DExpr e,DExpr facts=one){
 		auto ne=e.simplify(facts);
-		if(ne!= e) return dCeil(ne).simplify(facts);
+		if(ne!=e) return dCeil(ne).simplify(facts);
 		if(auto q=cast(Dℚ)e)
 			return dℚ(ceil(q.c));
 		if(auto f=cast(DFloat)e){
@@ -3530,6 +3539,15 @@ class DCeil: DOp{
 			import std.math: ceil;
 			return ℤ(format("%.0f",ceil(f.c))).dℚ;
 		}
+		if(facts.hasFactor(dIsℤ(e))) return e;
+		if(auto p=cast(DPlus)e){
+			DExpr integral=zero;
+			foreach(s;p.summands)
+				if(dIsℤ(s).simplify(facts)==one) integral=integral+s;
+			if(integral != zero) return (integral+dCeil(e-integral)).simplify(one);
+		}
+		auto q=e.getFractionalFactor();
+		if(q.c<0) return -dFloor(-e).simplify(facts);
 		return null;
 	}
 	override DExpr simplifyImpl(DExpr facts){
