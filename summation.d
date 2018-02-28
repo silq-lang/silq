@@ -60,9 +60,11 @@ DExpr computeSum(DExpr expr,DExpr facts=one){
 		if(ivr&&ivr.type==DIvr.Type.eqZ){
 			DExpr bound;
 			auto status=getBoundForVar(ivr,var,bound);
-			if(status==BoundStatus.equal)
+			if(status==BoundStatus.equal){
+				bound=bound.incDeBruijnVar(-1,0);
 				return dIsℤ(bound)*unbind(expr,bound);
-			else return null;
+			}
+			return null;
 		}
 		if(auto d=cast(DDelta)f){
 			auto fv=d.freeVars.setx;
@@ -154,6 +156,13 @@ DExpr discreteFromTo(DExpr anti,DExpr lower,DExpr upper){
 DExpr tryGetDiscreteAntiderivative(DExpr e){
 	auto var=db1;
 	if(e==one) return var;
+	auto ow=e.splitMultAtVar(var);
+	ow[0]=ow[0].simplify(one);
+	if(ow[0] != one){
+		if(auto rest=tryGetDiscreteAntiderivative(ow[1].simplify(one)))
+			return ow[0]*rest;
+		return null;
+	}
 	if(auto p=cast(DPow)e){
 		// geometric sum ∑qⁱδi.
 		auto q=p.operands[0], i=p.operands[1];
@@ -164,6 +173,30 @@ DExpr tryGetDiscreteAntiderivative(DExpr e){
 				return (dNeqZ(a)*(q^^(a*var)-1)/(q^^a-1) + dEqZ(a)*var)*q^^b;
 			}
 		}
+	}
+	if(auto m=cast(DMult)e){
+		foreach(f;m.factors){
+			if(auto ivr=cast(DIvr)f){
+				if(ivr.type!=DIvr.Type.neqZ) continue;
+				SolutionInfo info;
+				SolUse usage={caseSplit:false,bound:false};
+				auto val=ivr.e.solveFor(var,zero,usage,info);
+				if(!val||info.needCaseSplit) continue;
+				auto rest=m.withoutFactor(f).simplify(one);
+				auto restAnti=tryGetDiscreteAntiderivative(rest);
+				if(!restAnti) return null;
+				return restAnti-dIsℤ(val)*dGt(var,val)*rest.substitute(var,val);
+			}
+		}
+	}
+	if(auto p=cast(DPlus)e.polyNormalize(var).simplify(one)){
+		DExpr r=zero;
+		foreach(s;p.summands){
+			auto a=tryGetDiscreteAntiderivative(s);
+			if(!a) return null;
+			r=r+a;
+		}
+		return r;
 	}
 	return null;
 }

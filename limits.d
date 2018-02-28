@@ -274,6 +274,31 @@ DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}
 			}
 			return r;
 		}
+		if(auto ivr=cast(DIvr)x){
+			DExpr handleIvr(DExpr l){
+				if(!l) return null;
+				if(l.hasLimits()) return null;
+				if(l == -dInf||l==dInf){
+					with(DIvr.Type){
+						if(ivr.type==neqZ) return one;
+						if(ivr.type==eqZ) return zero;
+						else{
+							assert(ivr.type==leZ);
+							return l==-dInf?one:zero;
+						}
+					}
+				}
+				auto bad=dEqZ(l).simplify(one);
+				if(bad != zero) return null; // TODO?
+				return dIvr(ivr.type,l);
+			}
+			auto l=doIt(v,e,ivr.e);
+			Case!ExpLim[] r;
+			foreach(el;l){
+				r~=Case!ExpLim(el.condition,ExpLim(ivr,handleIvr(el.expression.limit)));
+			}
+			return r;
+		}
 		return [];
 	}
 	auto k=doIt(v,e,x);

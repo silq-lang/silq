@@ -1,0 +1,6 @@
+def main(){
+	x := geometric(1/2);
+	y := geometric(1/2);
+	assert(x ≠ 2 ∧ y ≠ 3);
+	return x = y; // expected: 241/768·δ(1)[r]+389/768·δ(0)[r]
+}
