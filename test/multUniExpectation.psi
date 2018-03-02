@@ -1,0 +1,6 @@
+
+def main(){
+	x := uniform(0,1);
+	y := uniform(0,1);
+	return Expectation(x*y); // expected: δ(1/4)[r]
+}

@@ -391,7 +391,7 @@ DExpr tryGetAntiderivative(DExpr expr){
 	}
 	if(auto dgaussTG=gaussIntTimesGauss(var,expr)) return dgaussTG;
 	// partial integration for polynomials
-	DExpr partiallyIntegratePolynomials(DVar var,DExpr e){ // TODO: is this well founded?
+	static DExpr partiallyIntegratePolynomials(DVar var,DExpr e){ // TODO: is this well founded?
 		import std.algorithm,std.array,std.range;
 		static MapX!(Q!(DVar,DExpr),DExpr) memo;
 		auto t=q(var,e);
@@ -423,7 +423,7 @@ DExpr tryGetAntiderivative(DExpr expr){
 			memo[t]=r;
 			foreach(k,ref v;memo){ // TODO: this is inefficient. only consider new values.
 				if(!v||!v.hasFreeVar(tau)) continue;
-				v=v.substitute(tau,dLambda(r.substituteAll(vars,iota(vars.length).map!(i=>db1[i.dℚ]).array))).simplify(one);
+				v=v.substitute(tau,dDistLambda(r.substituteAll(vars,iota(vars.length).map!(i=>db1[i.dℚ]).array))).simplify(one);
 			}
 			return r;
 		}
@@ -456,7 +456,7 @@ DExpr tryGetAntiderivative(DExpr expr){
 		auto h=r.simplify(one).getHoles!(x=>x==token?token:null,DDistApply);
 		r=h.expr.substituteAll(h.holes.map!(x=>x.var).array,(cast(DExpr)sigma).repeat(h.holes.length).array);
 		if(auto s=(r-sigma).simplify(one).solveFor(sigma)){
-			s=s.substitute(tau,dLambda(s.substituteAll(vars,iota(vars.length).map!(i=>db1[i.dℚ]).array))).simplify(one);
+			s=s.substitute(tau,dDistLambda(s.substituteAll(vars,iota(vars.length).map!(i=>db1[i.dℚ]).array))).simplify(one);
 			if(s.hasFreeVar(tau)) return fail();
 			return succeed(s);
 		}

@@ -164,6 +164,7 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration;
+	//writeln("ξ₀·log(ξ₀)".dParse.tryGetAntiderivative());
 	//writeln("∑_i∑_j[1≤i]·[1≤j]·[i≠j]·2^-(i+j)".dParse.simplify(one));
 	//writeln("∑_i[1≤i]·[i≠j]·2^-i".dParse.simplify(one));
 	//writeln("∑_ξ₁[ξ₁=ξ₀]".dParse.simplify(one));
