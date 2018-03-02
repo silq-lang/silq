@@ -392,6 +392,7 @@ DExpr tryGetAntiderivative(DExpr expr){
 	if(auto dgaussTG=gaussIntTimesGauss(var,expr)) return dgaussTG;
 	// partial integration for polynomials
 	static DExpr partiallyIntegratePolynomials(DVar var,DExpr e){ // TODO: is this well founded?
+		// NOTE: most of this code is duplicated in summation.d
 		import std.algorithm,std.array,std.range;
 		static MapX!(Q!(DVar,DExpr),DExpr) memo;
 		auto t=q(var,e);

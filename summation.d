@@ -84,7 +84,10 @@ DExpr computeSum(DExpr expr,DExpr facts=one){
 	foreach(fact;newFacts.factors){
 		auto ivr=cast(DIvr)fact;
 		if(ivr&&util.among(ivr.type,DIvr.Type.leZ,DIvr.Type.eqZ)&&factSubstVars.any!(x=>fact.hasFreeVar(x))){
-			auto nivr=cast(DIvr)ivr.substituteAll(factSubstVars,factSubstExprs).simplify(one);
+			auto nexp=ivr.substituteAll(factSubstVars,factSubstExprs).simplify(one);
+			if(nexp==zero) return zero;
+			if(nexp==one) continue;
+			auto nivr=cast(DIvr)nexp;
 			assert(!!nivr);
 			if(nivr.type==DIvr.Type.leZ){
 				newIvrs=newIvrs*nivr;
@@ -153,6 +156,10 @@ DExpr discreteFromTo(DExpr anti,DExpr lower,DExpr upper){
 	return up-lo;
 }
 
+DExpr dDiscreteDiff(DVar var,DExpr e){
+	return e.substitute(var,var+1)-e;
+}
+
 DExpr tryGetDiscreteAntiderivative(DExpr e){
 	auto var=db1;
 	if(e==one) return var;
@@ -174,19 +181,17 @@ DExpr tryGetDiscreteAntiderivative(DExpr e){
 			}
 		}
 	}
-	if(auto m=cast(DMult)e){
-		foreach(f;m.factors){
-			if(auto ivr=cast(DIvr)f){
-				if(ivr.type!=DIvr.Type.neqZ) continue;
-				SolutionInfo info;
-				SolUse usage={caseSplit:false,bound:false};
-				auto val=ivr.e.solveFor(var,zero,usage,info);
-				if(!val||info.needCaseSplit) continue;
-				auto rest=m.withoutFactor(f).simplify(one);
-				auto restAnti=tryGetDiscreteAntiderivative(rest);
-				if(!restAnti) return null;
-				return restAnti-dIsℤ(val)*dGt(var,val)*rest.substitute(var,val);
-			}
+	foreach(f;e.factors){
+		if(auto ivr=cast(DIvr)f){
+			if(ivr.type!=DIvr.Type.neqZ) continue;
+			SolutionInfo info;
+			SolUse usage={caseSplit:false,bound:false};
+			auto val=ivr.e.solveFor(var,zero,usage,info);
+			if(!val||info.needCaseSplit) continue;
+			auto rest=e.withoutFactor(f).simplify(one);
+			auto restAnti=tryGetDiscreteAntiderivative(rest);
+			if(!restAnti) return null;
+			return restAnti-dIsℤ(val)*dGt(var,val)*rest.substitute(var,val);
 		}
 	}
 	if(auto p=cast(DPlus)e.polyNormalize(var).simplify(one)){
@@ -198,5 +203,68 @@ DExpr tryGetDiscreteAntiderivative(DExpr e){
 		}
 		return r;
 	}
+	static DExpr partiallySumPolynomials(DVar var,DExpr e){ // TODO: is this well founded?
+		// NOTE: most of this code is duplicated in integration.d
+		import std.algorithm,std.array,std.range;
+		static MapX!(Q!(DVar,DExpr),DExpr) memo;
+		auto t=q(var,e);
+		if(t in memo) return memo[t];
+		static int whichTau=0;
+		auto tau=freshVar("τ"~lowNum(++whichTau));
+		import std.array: array;
+		auto vars=e.freeVars.setx.array;
+		auto token=dApply(tau,dTuple(cast(DExpr[])vars));
+		memo[t]=token;
+		auto fail(){
+			memo[t]=null;
+			Q!(DVar,DExpr)[] toRemove;
+			foreach(k,v;memo){ // TODO: this is inefficient. only consider new values.
+				if(!v||!v.hasFreeVar(tau)) continue;
+				toRemove~=k;
+			}
+			foreach(k;toRemove) memo.remove(k);
+			return null;
+		}
+		auto succeed(DExpr r){
+			assert(!r.hasFreeVar(tau));
+			memo[t]=r;
+			foreach(k,ref v;memo){ // TODO: this is inefficient. only consider new values.
+				if(!v||!v.hasFreeVar(tau)) continue;
+				v=v.substitute(tau,dLambda(r.substituteAll(vars,iota(vars.length).map!(i=>db1[i.dℚ]).array))).simplify(one);
+			}
+			return r;
+		}
+		DExpr polyFact=null;
+		foreach(f;e.factors){
+			if(auto p=cast(DPow)f){
+				if(p.operands[0] == var){
+					if(auto c=p.operands[1].isInteger()){
+						if(c.c>0){ polyFact=p; break; }
+					}
+				}
+			}
+			if(f == var){ polyFact=f; break; }
+		}
+		if(!polyFact) return fail();
+		auto rest=e.withoutFactor(polyFact);
+		auto intRest=tryGetDiscreteAntiderivative(rest);
+		if(!intRest) return fail();
+		auto diffPoly=dDiscreteDiff(var,polyFact);
+		auto diffRest=(diffPoly*intRest.substitute(var,var+1)).polyNormalize(var).simplify(one);
+		auto intDiffPolyIntRest=tryGetDiscreteAntiderivative(diffRest);
+		if(!intDiffPolyIntRest) return fail();
+		auto r=polyFact*intRest-intDiffPolyIntRest;
+		if(!r.hasFreeVar(tau)) return succeed(r);
+		auto sigma=freshVar("σ");
+		auto h=r.simplify(one).getHoles!(x=>x==token?token:null,DApply);
+		r=h.expr.substituteAll(h.holes.map!(x=>x.var).array,(cast(DExpr)sigma).repeat(h.holes.length).array);
+		if(auto s=(r-sigma).simplify(one).solveFor(sigma)){
+			s=s.substitute(tau,dLambda(s.substituteAll(vars,iota(vars.length).map!(i=>db1[i.dℚ]).array))).simplify(one);
+			if(s.hasFreeVar(tau)) return fail();
+			return succeed(s);
+		}
+		return fail();
+	}
+	if(auto partPoly=partiallySumPolynomials(var,e)) return partPoly;
 	return null;
 }

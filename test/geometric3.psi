@@ -1,5 +1,5 @@
 
 def main(){
-	return expectation(Geometric(1/2)); // expected: δ((∑_ξ₁(1/2)^ξ₁·[-ξ₁≤0]·ξ₁)·1/2)[r]
+	return expectation(Geometric(1/2)); // expected: δ(1)[r]
 	// TODO: discrete antiderivative for 2ⁱ·i
 }

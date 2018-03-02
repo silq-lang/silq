@@ -1,0 +1,3 @@
+def main(){
+	return expectation(Geometric(1/10)); // expected: δ(9)[r]
+}
