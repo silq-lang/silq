@@ -3502,12 +3502,20 @@ class DFloor: DOp{
 			return ℤ(format("%.0f",floor(f.c))).dℚ;
 		}
 		if(facts.hasFactor(dIsℤ(e))) return e;
+		if(cast(DIvr)e) return e;
 		if(auto p=cast(DPlus)e){
 			DExpr integral=zero;
 			foreach(s;p.summands)
 				if(dIsℤ(s).simplify(facts)==one) integral=integral+s;
 			if(integral != zero) return (integral+dFloor(e-integral)).simplify(facts);
 		}
+		if(auto m=cast(DMult)e){
+			if(all!(f=>dIsℤ(f).simplify(facts)==one)(m.factors))
+				return e;
+		}
+		if(auto p=cast(DPow)e)
+			if(all!(f=>dIsℤ(f).simplify(facts)==one)(p.operands[]))
+				return e;
 		auto q=e.getFractionalFactor();
 		if(q.c<0) return -dCeil(-e).simplify(facts);
 		return null;
@@ -3540,12 +3548,20 @@ class DCeil: DOp{
 			return ℤ(format("%.0f",ceil(f.c))).dℚ;
 		}
 		if(facts.hasFactor(dIsℤ(e))) return e;
+		if(cast(DIvr)e) return e;
 		if(auto p=cast(DPlus)e){
 			DExpr integral=zero;
 			foreach(s;p.summands)
 				if(dIsℤ(s).simplify(facts)==one) integral=integral+s;
 			if(integral != zero) return (integral+dCeil(e-integral)).simplify(one);
 		}
+		if(auto m=cast(DMult)e){
+			if(all!(f=>dIsℤ(f).simplify(facts)==one)(m.factors))
+				return e;
+		}
+		if(auto p=cast(DPow)e)
+			if(all!(f=>dIsℤ(f).simplify(facts)==one)(p.operands[]))
+				return e;
 		auto q=e.getFractionalFactor();
 		if(q.c<0) return -dFloor(-e).simplify(facts);
 		return null;
