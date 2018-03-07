@@ -3501,8 +3501,8 @@ class DFloor: DOp{
 			import std.math: floor;
 			return ℤ(format("%.0f",floor(f.c))).dℚ;
 		}
+		if(cast(DIvr)e||cast(DCeil)e||cast(DFloor)e) return e;
 		if(facts.hasFactor(dIsℤ(e))) return e;
-		if(cast(DIvr)e) return e;
 		if(auto p=cast(DPlus)e){
 			DExpr integral=zero;
 			foreach(s;p.summands)
@@ -3547,8 +3547,8 @@ class DCeil: DOp{
 			import std.math: ceil;
 			return ℤ(format("%.0f",ceil(f.c))).dℚ;
 		}
+		if(cast(DIvr)e||cast(DCeil)e||cast(DFloor)e) return e;
 		if(facts.hasFactor(dIsℤ(e))) return e;
-		if(cast(DIvr)e) return e;
 		if(auto p=cast(DPlus)e){
 			DExpr integral=zero;
 			foreach(s;p.summands)
