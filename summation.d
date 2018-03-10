@@ -170,17 +170,9 @@ DExpr tryGetDiscreteAntiderivative(DExpr e){
 			return ow[0]*rest;
 		return null;
 	}
-	if(auto p=cast(DPow)e){
-		// geometric sum ∑qⁱδi.
-		auto q=p.operands[0], i=p.operands[1];
-		if(!q.hasFreeVar(var)){
-			auto ba=i.asLinearFunctionIn(var);
-			auto b=ba[0],a=ba[1];
-			if(a && b){
-				return (dNeqZ(a)*(q^^(a*var)-1)/(q^^a-1) + dEqZ(a)*var)*q^^b;
-			}
-		}
-	}
+	auto le=e.linearizeConstraints(var).simplify(one);
+	if(le != e) return tryGetDiscreteAntiderivative(le);
+	// incorporate Iverson brackets
 	foreach(f;e.factors){
 		if(auto ivr=cast(DIvr)f){
 			if(ivr.type!=DIvr.Type.neqZ) continue;
@@ -192,6 +184,34 @@ DExpr tryGetDiscreteAntiderivative(DExpr e){
 			auto restAnti=tryGetDiscreteAntiderivative(rest);
 			if(!restAnti) return null;
 			return restAnti-dIsℤ(val)*dGt(var,val)*rest.substitute(var,val);
+		}
+	}
+	foreach(ff;e.factors){
+		if(!cast(DIvr)ff) continue;
+		auto ivrsNonIvrs=splitIvrs(e);
+		auto ivrs=ivrsNonIvrs[0].simplify(one),nonIvrs=ivrsNonIvrs[1].simplify(one);
+		assert(ivrs&&nonIvrs);
+		assert(ivrs.factors.all!(x=>x==one||cast(DIvr)x&&x.hasFreeVar(var)));
+		auto loup=ivrs.getBoundsForVar(var);
+		if(!loup[0]) return null;
+		auto lower=loup[1][0],upper=loup[1][1];
+		auto antid=tryGetDiscreteAntiderivative(nonIvrs);
+		if(!antid) return null;
+		// TODO: handle the case where antid.substitute(var,lower) or antid.substitute(var,upper) are infinite properly
+		// (this will 'just work' formally, but it is an ugly hack.)
+		if(lower) antid=dLe(lower,var)*antid+dLt(var,lower)*antid.substitute(var,lower);
+		if(upper) antid=dLe(var,upper)*antid+dLt(upper,var)*antid.substitute(var,upper);
+		return antid.simplify(one);
+	}
+	if(auto p=cast(DPow)e){
+		// geometric sum ∑qⁱδi.
+		auto q=p.operands[0], i=p.operands[1];
+		if(!q.hasFreeVar(var)){
+			auto ba=i.asLinearFunctionIn(var);
+			auto b=ba[0],a=ba[1];
+			if(a && b){
+				return (dNeqZ(a)*(q^^(a*var)-1)/(q^^a-1) + dEqZ(a)*var)*q^^b;
+			}
 		}
 	}
 	if(auto p=cast(DPlus)e.polyNormalize(var).simplify(one)){

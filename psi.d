@@ -164,6 +164,17 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration,summation;
+	//writeln("[0≤x]·(3^(x^2)+1)·2^-x-[0≤x]3^(x^2)·2^-x".dParse.simplify(one)); // TODO!
+	//writeln("∑_x[0≤x]·(3^(x^2)+1)·2^-x-∑_x[0≤x]3^(x^2)·2^-x".dParse.simplify(one)); // TODO!
+	//writeln("∑_x([0≤x]-[100≤x])".dParse.simplify(one)); // TODO!
+	//writeln("∫dy(-2^y+2^y·[-y≤0]·[y≠0])·(∑_ξ₁[-ξ₁≤0]·δ(ξ₁)[y]·⅟2^ξ₁)".dParse.simplify(one)); // TODO!
+	//writeln("∫dx[x+y≠0]·(∑_i[-i≤0]·δ(i)[x]·⅟2^i)·(∑_i[-i≤0]·δ(i)[y]·⅟2^i)".dParse.simplify(one));
+	//writeln("∫dx∫dy[x+y≠0]·∑_i∑_j[0≤x]·[0≤y]·2^-(i+j+2)·δ(i)[x]·δ(j)[y]".dParse.simplify(one));
+	//writeln("∫dx∫dyδ([x+y≤0])[r]∑_i∑_j[0≤x]·[0≤y]·2^-(i+j+2)δ(i)[x]δ(j)[y]".dParse.simplify(one));
+	//writeln("(∑_ξ₁(1/2)^ξ₁·(∑_ξ₂(1/2)^ξ₂·[-ξ₂≤0]·[[ξ₁+ξ₂≤0]=0])·[-ξ₁≤0])·1/4".dParse.simplify(one));
+	//writeln("⌊2·x^5⌋".dParse.simplify(dIsℤ("x".dVar)));
+	//writeln("⌊[x=1]⌋".dParse.simplify(one));
+	//writeln("⌈2·x⌉".dParse.simplify(dIsℤ("x".dVar)));
 	//writeln(dDiscreteDiff(db1,"ξ₀²⁵".dParse.tryGetDiscreteAntiderivative()).simplify(one));
 	//writeln("ξ₀·log(ξ₀)".dParse.tryGetAntiderivative());
 	//writeln("∑_i∑_j[1≤i]·[1≤j]·[i≠j]·2^-(i+j)".dParse.simplify(one));
