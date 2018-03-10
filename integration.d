@@ -204,7 +204,7 @@ DExpr tryGetAntiderivative(DExpr expr){
 	}
 	auto lexpr=expr.linearizeConstraints(var).simplify(one);
 	if(lexpr != expr) return tryGetAntiderivative(lexpr);
-	foreach(ff;expr.factors){ // incorporate iverson brackets
+	foreach(ff;expr.factors){ // incorporate Iverson brackets
 		if(!cast(DIvr)ff) continue;
 		auto ivrsNonIvrs=splitIvrsIntegral(expr);
 		final switch(ivrsNonIvrs[0]) with(SplitIvrsIntegral){
