@@ -324,7 +324,6 @@ string caseSimpleToken(string prefix="", bool needs = false)pure{
 				case 0x80: .. case 0xFF:
 					len=0; p--;
 					try{auto ch=utf.decode(p[0..4],len);
-						if(isAlphaEx(ch)){ s=p, p+=len; goto identifier; }
 						switch(ch){
 							enum uniStart = unicodeTokens[].map!(x=>x[0].to!(dchar[])).filter!(x=>x.length&&x[0]>=0x80).map!(x=>x[0]).array.sort.uniq.array;
 							static foreach(x;uniStart){
@@ -345,11 +344,12 @@ string caseSimpleToken(string prefix="", bool needs = false)pure{
 								break Lswitch;
 							}
 							default: break;
-						}
+						}`~(prefix==""?`if(isAlphaEx(ch)){s=p, p+=len; goto identifier; }
 						s=p, p+=len;
 						if(!isWhite(ch)) errors~=tokError(format("unsupported character '%s'",ch),s[0..len]);
 						// else if(isNewLine(ch)) line++; // TODO: implement this everywhere
-						continue;
+						continue;`:`res[0].type = Tok!"`~prefix~`"; break;`)~`
+						
 					}catch(Exception){} goto default;`;
 		}
 		if(needs) r~=`default: p--; res[0].type = Tok!"`~prefix~`"`~";\nbreak;\n}\nbreak;\n";
