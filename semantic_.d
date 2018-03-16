@@ -1649,20 +1649,43 @@ bool definitelyReturns(FunctionDef fd){
 						return true;
 			return false;
 		}
+		alias isFalse=isZero;
+		bool isTrue(Expression e){
+			if(auto le=cast(LiteralExp)e)
+				if(le.lit.type==Tok!"0")
+					return le.lit.str!="0";
+			return false;
+		}
+		bool isPositive(Expression e){
+			if(isZero(e)) return false;
+			if(auto le=cast(LiteralExp)e)
+				if(le.lit.type==Tok!"0")
+					return le.lit.str[0]!='-';
+			return false;
+		}
 		if(auto ae=cast(AssertExp)e)
-			return isZero(ae.e);
+			return isFalse(ae.e);
 		if(auto oe=cast(ObserveExp)e)
-			return isZero(oe.e);
+			return isFalse(oe.e);
 		if(auto ce=cast(CompoundExp)e)
 			return ce.s.any!(x=>doIt(x));
 		if(auto ite=cast(IteExp)e)
 			return doIt(ite.then) && doIt(ite.othw);
-		if(auto fe=cast(ForExp)e)
-			return doIt(fe.bdy);
+		if(auto fe=cast(ForExp)e){
+			auto lle=cast(LiteralExp)fe.left;
+			auto rle=cast(LiteralExp)fe.right;
+			if(lle && rle && lle.lit.type==Tok!"0" && rle.lit.type==Tok!"0"){
+				ℤ l=ℤ(lle.lit.str), r=ℤ(rle.lit.str);
+				l+=cast(long)fe.leftExclusive;
+				r-=cast(long)fe.rightExclusive;
+				return l<=r && doIt(fe.bdy);
+			}
+			return false;
+		}
 		if(auto we=cast(WhileExp)e)
-			return doIt(we.bdy);
+			return isTrue(we.cond) && doIt(we.bdy);
 		if(auto re=cast(RepeatExp)e)
-			return doIt(re.bdy);
+			return isPositive(re.num);
 		return false;
 	}
 	return doIt(fd.body_);
