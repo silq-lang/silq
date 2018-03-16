@@ -832,7 +832,7 @@ private struct Analyzer{
 					dist.marginalize(w);
 				}
 			}
-			if(!exp) return;
+			if(!exp){ dist=odist; return; }
 			if(functionDef.context&&functionDef.contextName.startsWith("this")){
 				auto resv=dist.getVar("__r"),ctxv=dVar(functionDef.contextName);
 				dist.initialize(resv,exp,re.e.type);
