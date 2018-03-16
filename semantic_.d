@@ -1277,7 +1277,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		propErr(e2,e);
 		if(e.sstate==SemState.error)
 			return e;
-		if(e1.type == t1 && e2.type == t1){
+		if(e1.type == t1 && e2.type == t2){
 			e.type=r;
 		}else if(e1.type==typeTy&&name=="power"){
 			if(auto le=cast(LiteralExp)e2){
