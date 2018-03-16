@@ -1343,7 +1343,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		auto t2=typeSemantic(pr.e2,sc);
 		if(!t1||!t2){
 			expr.sstate=SemState.error;
-			return null;
+			return expr;
 		}
 		auto l=cast(TupleTy)t1,r=cast(TupleTy)t2;
 		if(l && r && !pr.e1.brackets && !pr.e2.brackets)
@@ -1358,7 +1358,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		auto t2=typeSemantic(ex.e2,sc);
 		if(!t1||!t2){
 			expr.sstate=SemState.error;
-			return null;
+			return expr;
 		}
 		return funTy(t1,t2,false,false);
 	}
