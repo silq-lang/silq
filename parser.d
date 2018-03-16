@@ -134,7 +134,7 @@ private template doOptParse(T...){
 enum literals=["``","``c","``w","``d","' '","0","0U","0L","0LU",".0f",".0",".0L",".0fi",".0i",".0Li","true","false"];
 private string getTTCases(string[] s,string[] excl = []){
 	string r="case ";
-	foreach(x;s) if(!excl.canFind(x)) r~="Tok!\""~x~"\",";
+	foreach(x;s) if(!excl.canFind(x)) r~=`Tok!"`~x~`",`;
 	return r[0..$-1]~":";
 }
 
