@@ -1,0 +1,6 @@
+
+def main(){
+	x := flip(1/2);
+	y := flip(1/2);
+	return 0^(x-y); // expected: 1/2·δ(1)[r]+1/4·δ(0)[r]
+}
