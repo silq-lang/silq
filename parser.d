@@ -524,7 +524,7 @@ struct Parser{
 					if(!util.among(x,"=>",".","!","?",":","*","=","==","<=","!<=",">=","!>=","!=","*=","/=","div=","&=","⊕=","|=","-=","+=","<<=",">>=",">>>=","*=","·=","%=","^=","&&=","||=","~=","&","&=","&←","∧=","|","|=","|←","∨=")){
 						r~=mixin(X!q{case Tok!"@(x)":
 							nextToken();
-							auto right=parseExpression(rbp!(Tok!"@(x)"),"@(x)"=="←"||"@(x)"==":=");
+							auto right=parseExpression(rbp!(Tok!"@(x)"),"@(x)"=="←"||"@(x)"==":=",statement&&"@(x)"==",");
 							static if("@(x)"=="->")
 								alias BE=BinaryExp!(Tok!"→");
 							else alias BE=BinaryExp!(Tok!"@(x)");
