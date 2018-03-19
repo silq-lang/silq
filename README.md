@@ -19,7 +19,7 @@ The commit of HEAD at build time is displayed when running `./psi --help`.
 
 #### Quick build
 
-1. Run `dependencies.sh` to download the DMD D compiler from http://downloads.dlang.org/releases/2.x/2.072.2/dmd.2.072.2.linux.zip and unzip it.
+1. Run `dependencies.sh` to download the DMD D compiler and unzip it.
 
 2. Run `build.sh` to build PSI.
 
