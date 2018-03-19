@@ -190,13 +190,6 @@ Expression presemantic(Declaration expr,Scope sc){
 	return expr;
 }
 
-@property string preludePath(){
-	// TODO: use conditional compilation within prelude.psi instead
-	import options;
-	if(opt.noCheck) return "prelude-nocheck.psi";
-	return "prelude.psi";
-}
-
 int importModule(string path,ErrorHandler err,out Expression[] exprs,out TopScope sc,Location loc=Location.init){
 	import std.typecons: tuple,Tuple;
 	static Tuple!(Expression[],TopScope)[string] modules;
@@ -214,10 +207,10 @@ int importModule(string path,ErrorHandler err,out Expression[] exprs,out TopScop
 	scope(success) modules[path]=tuple(exprs,sc);
 	TopScope prsc=null;
 	Expression[] prelude;
-	if(!prsc && path != preludePath)
+	import parser;
+	if(!prsc && path != preludePath())
 		if(auto r=importModule(preludePath,err,prelude,prsc))
 			return r;
-	import parser;
 	if(auto r=parseFile(getActualPath(path),err,exprs,loc))
 		return r;
 	sc=new TopScope(err);

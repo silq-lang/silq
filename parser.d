@@ -870,16 +870,30 @@ string readCode(File f){
 }
 string readCode(string path){ return readCode(File(path)); }
 
+@property string preludePath(){
+	// TODO: use conditional compilation within prelude.psi instead
+	import options;
+	if(opt.noCheck) return "prelude-nocheck.psi";
+	return "prelude.psi";
+}
 int parseFile(string path,ErrorHandler err,ref Expression[] r,Location loc=Location.init){
 	string code;
 	try code=readCode(path);
 	catch(Exception){
 		string error;
-		if(!file.exists(path)) error = path ~ ": no such file";
-		else error = path ~ ": error reading file";
-		if(loc.line) err.error(error,loc);
-		else stderr.writeln("error: "~error);
-		return 1;
+		if(!file.exists(path)){
+			// bake prelude into binary as a fallback
+			if(path==preludePath()){
+				assert(path=="prelude.psi" || path=="prelude-nocheck.psi");
+				if(path=="prelude.psi") code = import("prelude.psi") ~ "\0\0\0\0";
+				else code=import("prelude-nocheck.psi") ~ "\0\0\0\0";
+			}else error = path ~ ": no such file";
+		}else error = path ~ ": error reading file";
+		if(error){
+			if(loc.line) err.error(error,loc);
+			else stderr.writeln("error: "~error);
+			return 1;
+		}
 	}
 	auto src=new Source(path, code);
 	r=parser.parseFile(src,err);
