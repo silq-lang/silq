@@ -27,8 +27,8 @@ if [ ! -d $NAME ]; then
     SUM2=`$MD5 $FILE`
 
     if [[ $SUM1 != $SUM2 ]]; then
-	echo "ERROR: md5 sum mismatch"
+        echo "ERROR: md5 sum mismatch"
     else
-	tar -xf $FILE
+        tar -xf $FILE
     fi
 fi

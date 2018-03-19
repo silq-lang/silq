@@ -246,13 +246,6 @@ If arguments do not conform to the constraints of the distribution, the program 
   *Note:* PSI does not currently verify that the expectation of the given expression in fact exists,
   so some care is required when using this primitive. (e.g. `Expectation(gauss(0,1)/gauss(0,1))` does not converge.)
 
-### Prelude files
-All primitive distributions and built-in deterministic functions are implemented in terms of the `sampleFrom` special expression.
-The implementations can be found in `library/prelude.psi` (or `library/prelude-nocheck.psi` if PSI is called with `--nocheck`).
-By default, PSI will attempt to read the prelude library from a `library` folder in the same location as the binary. (This can be overridden by changing the default import path in `psi.d`.)
-Both `library/prelude.psi` and `library/prelude-nocheck.psi` are baked into the PSI binary at build time to be used as a fallback.
-
-
 ### Further language features
 
 #### Method calls and tuples
@@ -396,8 +389,11 @@ def main(): R x R{
 }
 ```
 
-####
-
+### Prelude library
+All built-in functions (except operators) are implemented in terms of the `sampleFrom` special expression.
+Their implementations can be found in `library/prelude.psi` (or `library/prelude-nocheck.psi` if PSI is called with `--nocheck`).
+By default, PSI will attempt to read the prelude library from a `library` folder in the same location as the binary. (This can be overridden by changing the default import path in `psi.d`.)
+Both `library/prelude.psi` and `library/prelude-nocheck.psi` are baked into the PSI binary at build time, to be used as a fallback.
 
 ### Experimental language features
 
