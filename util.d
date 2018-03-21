@@ -440,13 +440,15 @@ string asciify(string s){
 string overline(string s){
 	string r;
 	import std.uni;
-	foreach(dchar d;s){ r~=d; if(!combiningClass(d)) r~="\u0305"; }
+	// TODO: some fonts appear to require the opposite order?
+	foreach(dchar d;s){ if(!combiningClass(d)) r~="\u0305"; r~=d; }
 	return r;
 }
 string underline(string s){
 	string r;
 	import std.uni;
-	foreach(dchar d;s){ r~=d; if(!combiningClass(d)) r~="\u0332"; }
+	// TODO: some fonts appear to require the opposite order?
+	foreach(dchar d;s){ if(!combiningClass(d)) r~="\u0332"; r~=d; }
 	return r;	
 }
 import hashtable;

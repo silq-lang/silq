@@ -74,7 +74,7 @@ def main(){
 }
 
 $ psi example.psi
-p(r₁) = (d/dx)⁻¹[e^(-x²)](r₁·⅟√2̅)·⅟e^(1/2·r₁²)·⅟π·√2̅
+p(r) = (d/dx)⁻¹[e^(-x²)](r·⅟√̅2)·⅟e^(1/2·r²)·⅟π·√̅2
 
 $ psi example.psi --mathematica --cdf
 p[r1_] := 1/Pi*Sqrt[Pi]*(Erf[1/2^(1/2)*r1]+1)/2^2
