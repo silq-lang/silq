@@ -164,6 +164,7 @@ int main(string[] args){
 version=TEST;
 void test(){
 	import dparse,type,dexpr,integration,summation;
+	//writeln("∑_j ∑_i [0≤i≤n-1]·[0≤j≤m-1]·[i≤x·j]".dParse.simplify((dIsℤ("n".dVar)*dIsℤ("m".dVar)).simplify(one))); // ?
 	//writeln("[0≤x]·(3^(x^2)+1)·2^-x-[0≤x]3^(x^2)·2^-x".dParse.simplify(one));
 	//writeln("∑_x[0≤x]·(3^(x^2)+1)·2^-x-∑_x[0≤x]3^(x^2)·2^-x".dParse.simplify(one)); // TODO!
 	//writeln("∑_x([0≤x]-[100≤x])".dParse.simplify(one)); // TODO!
