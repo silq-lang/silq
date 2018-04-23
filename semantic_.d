@@ -1592,6 +1592,7 @@ Expression typeSemantic(Expression expr,Scope sc)in{assert(!!expr&&!!sc);}body{
 	if(at&&at.a==[]){
 		expr.type=typeTy;
 		auto next=typeSemantic(at.e,sc);
+		propErr(at.e,expr);
 		if(!next) return null;
 		return arrayTy(next);
 	}
