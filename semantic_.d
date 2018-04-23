@@ -349,49 +349,10 @@ Expression distributionTy(Expression base,Scope sc){
 Expression builtIn(Identifier id,Scope sc){
 	Expression t=null;
 	switch(id.name){
-	case "array": t=productTy(["a"],typeTy,funTy(tupleTy([ℝ,varTy("a",typeTy)]),arrayTy(varTy("a",typeTy)),false,true),true,false); break;
 	case "readCSV": t=funTy(stringTy,arrayTy(ℝ),false,false); break;
 	case "π": t=ℝ; break;
-	case "exp","log","sin","cos","abs": t=funTy(ℝ,ℝ,false,false); break;
-	case "floor","ceil": t=funTy(ℝ,ℝ,false,false); break;
-	case "bernoulli": goto case "flip";
-	case "Bernoulli": goto case "Flip";
-	foreach(name;ToTuple!distribNames){
-		static if(!util.among(name,"categorical","dirac")){
-			case name:
-				auto nargs=paramNames!name.length;
-				auto argty=nargs==1?ℝ:tupleTy((cast(Expression)ℝ).repeat(nargs).array);
-				t=funTy(argty,ℝ,false,nargs!=1);
-				break;
-			case capitalize(name):
-				auto nargs=paramNames!name.length;
-				auto argty=nargs==1?ℝ:tupleTy((cast(Expression)ℝ).repeat(nargs).array);
-				t=funTy(argty,distributionTy(ℝ,sc),false,nargs!=1);
-				break;
-		}
-	}
-	break;		
-	case "categorical": t=funTy(arrayTy(ℝ),ℝ,false,false); break;
-	case "Categorical": t=funTy(arrayTy(ℝ),distributionTy(ℝ,sc),false,false); break;
-	case "dirac": t=productTy(["a"],typeTy,funTy(varTy("a",typeTy),varTy("a",typeTy),false,false),true,false); break;
-	case "Dirac": t=productTy(["a"],typeTy,funTy(varTy("a",typeTy),distributionTy(varTy("a",typeTy),sc),false,false),true,false); break;
 	case "Marginal","sampleFrom": t=unit; break; // those are actually magic polymorphic functions
 	case "Expectation": t=funTy(ℝ,ℝ,false,false); break;
-	case "Distribution": t=funTy(typeTy,typeTy,true,false); break;
-	case "infer": t=
-			productTy(["a"],typeTy,
-			         productTy(["f"],funTy(tupleTy([]),varTy("a",typeTy),false,true),
-			                  distributionTy(varTy("a",typeTy),sc),false,false),true,false);
-		break;
-		case "sample":
-			t=productTy(["a"],typeTy,funTy(distributionTy(varTy("a",typeTy),sc),varTy("a",typeTy),false,false),true,false);
-			break;
-		case "expectation":
-			t=funTy(distributionTy(ℝ,sc),ℝ,false,false);
-			break;
-		case "errorPr":
-			t=productTy(["a"],typeTy,funTy(distributionTy(varTy("a",typeTy),sc),ℝ,false,false),true,false);
-			break;
 	case "*","𝟙","𝟚","B","𝔹","Z","ℤ","Q","ℚ","R","ℝ":
 		id.type=typeTy;
 		if(id.name=="*") return typeTy;
