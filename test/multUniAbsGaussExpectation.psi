@@ -2,5 +2,5 @@ def main(){
 	x := uniform(0,1);
 	y := uniform(0,1);
 	z := abs(gauss(0,1));
-	return Expectation(x*y*z); // expected: δ(⅟2^(3/2)·⅟√π̅)[r]
+	return Expectation(x*y*z); // expected: δ(⅟2^(3/2)·⅟√̅π)[r]
 }

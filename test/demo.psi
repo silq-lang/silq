@@ -6,5 +6,5 @@ def main(){
     x := gauss(0,1);
     y := x;
     if y<0 { x=3; }
-    return x; // expected: 1/2·δ(3)[x]+[-x≤0]·⅟e^(1/2·x²)·⅟√2̅·⅟√π̅
+    return x; // expected: 1/2·δ(3)[x]+[-x≤0]·⅟e^(1/2·x²)·⅟√̅2·⅟√̅π
 }

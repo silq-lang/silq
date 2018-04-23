@@ -25,5 +25,5 @@ def main(){
         filter.update(1);
         filter.measureX(data[i],1);
     }
-    return filter.x; // expected: 1/2·e^(-1677025/13528+-89/152·x²+1295/76·x)·⅟√π̅·√8̅9̅/̅3̅8̅
+    return filter.x; // expected: 1/2·e^(-1677025/13528+-89/152·x²+1295/76·x)·⅟√̅π·√̅8̅9̅/̅3̅8
 }
