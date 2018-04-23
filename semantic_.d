@@ -336,7 +336,7 @@ bool isBuiltIn(Identifier id){
 	case "Marginal","sampleFrom":
 	case "Expectation":
 		return true;
-	case "*","𝟙",/*"𝟚","B","𝔹","Z","ℤ","Q","ℚ",*/"R","ℝ":
+	case "*","𝟙","𝟚","B","𝔹","N","ℕ","Z","ℤ","Q","ℚ","R","ℝ","C","ℂ":
 		return true;
 	default: return false;
 	}
@@ -353,15 +353,16 @@ Expression builtIn(Identifier id,Scope sc){
 	case "π": t=ℝ; break;
 	case "Marginal","sampleFrom": t=unit; break; // those are actually magic polymorphic functions
 	case "Expectation": t=funTy(ℝ,ℝ,false,false); break;
-	case "*","𝟙","𝟚","B","𝔹","Z","ℤ","Q","ℚ","R","ℝ":
+	case "*","𝟙","𝟚","B","𝔹","Z","ℤ","Q","ℚ","R","ℝ","C","ℂ":
 		id.type=typeTy;
 		if(id.name=="*") return typeTy;
 		if(id.name=="𝟙") return unit;
-		// TODO:
-		//if(id.name=="𝟚"||id.name=="B"||id.name=="𝔹") return Bool;
-		//if(id.name=="Z"||id.name=="ℤ") return ℤt;
-		//if(id.name=="Q"||id.name=="ℚ") return ℚt;
+		if(id.name=="𝟚"||id.name=="B"||id.name=="𝔹") return Bool;
+		if(id.name=="N"||id.name=="ℕ") return ℕt;
+		if(id.name=="Z"||id.name=="ℤ") return ℤt;
+		if(id.name=="Q"||id.name=="ℚ") return ℚt;
 		if(id.name=="R"||id.name=="ℝ") return ℝ;
+		if(id.name=="C"||id.name=="ℂ") return ℂ;
 	default: return null;
 	}
 	id.type=t;
@@ -683,7 +684,7 @@ AssignExp assignExpSemantic(AssignExp ae,Scope sc){
 		}
 	}
 	checkLhs(ae.e1);
-	if(ae.sstate!=SemState.error&&!compatible(ae.e1.type,ae.e2.type)){
+	if(ae.sstate!=SemState.error&&!isSubtype(ae.e2.type,ae.e1.type)){
 		if(auto id=cast(Identifier)ae.e1){
 			sc.error(format("cannot assign %s to variable %s of type %s",ae.e2.type,id,id.type),ae.loc);
 			assert(!!id.meaning);
@@ -1066,7 +1067,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 				sc.error(format("only one index required to index type %s",at),idx.loc);
 				idx.sstate=SemState.error;
 			}else{
-				if(!compatible(ℝ,idx.a[0].type)){
+				if(!isSubtype(idx.a[0].type,ℝ)){
 					sc.error(format("index should be number, not %s",idx.a[0].type),idx.loc);
 					idx.sstate=SemState.error;
 				}else{
@@ -1107,11 +1108,11 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		propErr(sl.r,sl);
 		if(sl.sstate==SemState.error)
 			return sl;
-		if(!compatible(ℝ,sl.l.type)){
+		if(!isSubtype(sl.l.type,ℝ)){
 			sc.error(format("lower bound should be number, not %s",sl.l.type),sl.l.loc);
 			sl.l.sstate=SemState.error;
 		}
-		if(!compatible(ℝ,sl.r.type)){
+		if(!isSubtype(sl.r.type,ℝ)){
 			sc.error(format("upper bound should be number, not %s",sl.r.type),sl.r.loc);
 			sl.r.sstate=SemState.error;
 		}
@@ -1191,7 +1192,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		tae.type=typeSemantic(tae.t,sc);
 		propErr(tae.e,tae);
 		propErr(tae.t,tae);
-		if(tae.sstate==SemState.error)
+		if(!tae.type||tae.sstate==SemState.error)
 			return tae;
 		if(auto arr=cast(ArrayExp)tae.e){
 			if(!arr.e.length)
@@ -1203,7 +1204,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 				if(id.name=="sampleFrom"||id.name=="readCSV"&&tae.type==arrayTy(arrayTy(ℝ)))
 					ce.type=tae.type;
 			}
-		if(tae.e.type != tae.type){
+		if(!isSubtype(tae.e.type,tae.type)){
 			sc.error(format("type is %s, not %s",tae.e.type,tae.type),tae.loc);
 			tae.sstate=SemState.error;
 		}
@@ -1495,7 +1496,7 @@ ReturnExp returnExpSemantic(ReturnExp ret,Scope sc){
 	propErr(ret.e,ret);
 	if(ret.sstate==SemState.error)
 		return ret;
-	if(!compatible(fd.ret,ret.e.type)){
+	if(!isSubtype(ret.e.type,fd.ret)){
 		sc.error(format("%s is incompatible with return type %s",ret.e.type,fd.ret),ret.e.loc);
 		ret.sstate=SemState.error;
 		return ret;

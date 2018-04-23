@@ -5,8 +5,35 @@ import std.array, std.algorithm, std.conv;
 import std.functional, std.range;
 import expression, declaration, util;
 
-bool compatible(Expression lhs,Expression rhs){
-	return lhs.eval() == rhs.eval();
+bool isSameType(Expression lhs,Expression rhs){
+	return lhs.eval() == rhs.eval(); // TODO: evaluation context?
+}
+
+int whichNumeric(Expression t){ // TODO: more general solution
+	if(t==ℕt) return 0;
+	if(t==ℤt) return 1;
+	if(t==ℚt) return 2;
+	if(t==ℝ) return 3;
+	if(t==ℂ) return 4;
+	return -1;
+}
+
+Expression getNumeric(int which){
+	switch(which){
+		case 0: return ℕt;
+		case 1: return ℤt;
+		case 2: return ℚt;
+		case 3: return ℝ;
+		case 4: return ℂ;
+		default: return null;
+	}
+}
+
+bool isSubtype(Expression lhs,Expression rhs){
+	auto l=lhs.eval(), r=rhs.eval();
+	auto wl=whichNumeric(l), wr=whichNumeric(r);
+	if(wl==-1||wr==-1) return l == r;
+	return wl<=wr;
 }
 
 
@@ -37,6 +64,19 @@ private BoolTy theBool;
 
 BoolTy Bool(){ return theBool?theBool:(theBool=new BoolTy()); }
 
+class ℕTy: Type{
+	private this(){}
+	override string toString(){
+		return "ℕ";
+	}
+	override bool opEquals(Object o){
+		return !!cast(ℕTy)o;
+	}
+	mixin VariableFree;
+}
+private ℕTy theℕ;
+
+ℕTy ℕt(){ return theℕ?theℕ:(theℕ=new ℕTy()); }
 
 class ℤTy: Type{
 	private this(){}
@@ -79,6 +119,21 @@ class ℝTy: Type{
 private ℝTy theℝ;
 
 ℝTy ℝ(){ return theℝ?theℝ:(theℝ=new ℝTy()); }
+
+class ℂTy: Type{
+	private this(){}
+	override string toString(){
+		return "ℂ";
+	}
+	override bool opEquals(Object o){
+		return !!cast(ℂTy)o;
+	}
+	mixin VariableFree;
+}
+private ℂTy theℂ;
+
+ℂTy ℂ(){ return theℂ?theℂ:(theℂ=new ℂTy()); }
+
 
 
 class AggregateTy: Type{
@@ -379,7 +434,7 @@ class ProductTy: Type{
 	}
 	Expression tryApply(Expression arg,bool isSquare){
 		if(isSquare != this.isSquare) return null;
-		if(!compatible(dom,arg.type)) return null;
+		if(!isSubtype(arg.type,dom)) return null;
 		Expression[string] subst;
 		if(isTuple){
 			foreach(i,n;names){
