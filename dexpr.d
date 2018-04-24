@@ -93,7 +93,7 @@ abstract class DExpr{
 		}
 		writeln("tot: ",tot);
 	}+/
-	
+
 	static MapX!(Q!(DExpr,DExpr),DExpr) simplifyCache;
 	final DExpr simplify(string file=__FILE__,int line=__LINE__)(DExpr facts){
 		/+static int nested=0;nested++; scope(exit) nested--;
@@ -212,7 +212,7 @@ abstract class DExpr{
 	final DExpr opBinaryRight(string op)(ℚ e)if(ValidBinary!op&&op!="~"){
 		return mixin("e.dℚ "~op~" this");
 	}
-	
+
 	final DExpr opBinary(string op)(real e)if(ValidBinary!op&&op!="~"){
 		return mixin("this "~op~" e.dFloat");
 	}
@@ -783,6 +783,7 @@ class DE: DExpr{
 		if(formatting==Format.gnuplot) return "exp(1)";
 		if(formatting==Format.maple) return "exp(1)";
 		if(formatting==Format.mathematica) return "E";
+		if(formatting==Format.sympy) return "E";
 		return "e";
 	} // TODO: maple
 	mixin Constant;
@@ -796,6 +797,7 @@ class DΠ: DExpr{
 		if(formatting==Format.matlab) return "pi";
 		if(formatting==Format.maple) return "Pi";
 		if(formatting==Format.mathematica) return "Pi";
+		if(formatting==Format.sympy) return "pi";
 		else return "π";
 	}
 	mixin Constant;
@@ -944,7 +946,7 @@ class DPlus: DCommutAssocOp{
 					}
 				}
 			}
-			
+
 			if(auto r=combineFloat(e1,e2)) return r;
 
 			if(auto r=recursiveCombine(e1,e2,facts))
@@ -2708,7 +2710,7 @@ class DIvr: DExpr{ // iverson brackets
 			}
 		}
 	}
-	
+
 	static DExpr staticSimplify(Type type,DExpr e,DExpr facts=one){
 		auto ne=e.simplify(facts);
 		if(ne != e) return dIvr(type,ne).simplify(facts);
@@ -3716,6 +3718,7 @@ class DGaussInt: DOp{
 			return "sqrt(Pi)*(erf("~x.toStringImpl(formatting,Precedence.none,binders)~")+1)/2";
 		}else if(formatting==Format.matlab) return "(sqrt(pi)*(erf("~x.toStringImpl(formatting,Precedence.none,binders)~")+1)/2)";
 		else if(formatting==Format.lisp) return text("(gauss-integral ",x.toStringImpl(formatting,Precedence.none,binders),")");
+		else if(formatting==Format.sympy) return "sqrt(pi)*(erf("~x.toStringImpl(formatting,Precedence.none,binders)~")+1)/2";
 		else return addp(prec,symbol(formatting,binders)~"("~x.toStringImpl(formatting,Precedence.none,binders)~")");
 	}
 
@@ -3756,6 +3759,7 @@ class DGaussIntInv: DOp{
 			return "erfinv(2/sqrt(Pi)*("~x.toStringImpl(formatting,Precedence.none,binders)~")-1)";
 		}else if(formatting==Format.matlab) return "erf(2/sqrt(pi)*("~x.toStringImpl(formatting,Precedence.none,binders)~")-1)";
 		else if(formatting==Format.lisp) return text("(inverse-gauss-integral ",x.toStringImpl(formatting,Precedence.none,binders),")");
+		else if(formatting==Format.sympy) return "erfinv(2/sqrt(pi)*("~x.toStringImpl(formatting,Precedence.none,binders)~")-1)";		
 		else return addp(prec,symbol(formatting,binders)~"("~x.toStringImpl(formatting,Precedence.none,binders)~")");
 	}
 	static DExpr staticSimplify(DExpr x,DExpr facts=one){
@@ -3921,7 +3925,7 @@ class DIUpdate: DOp{
 					" ↦ "~n.toStringImpl(formatting,Precedence.none,binders)~"]");
 	}
 	mixin Visitors;
-	
+
 	override DExpr simplifyImpl(DExpr facts){
 		auto r=staticSimplify(e,i,n,facts);
 		return r?r:this;
@@ -4256,7 +4260,7 @@ class DField: DOp{
 		return addp(prec, e.toStringImpl(formatting,Precedence.field,binders)~"."~f);
 	}
 	mixin Visitors;
-	
+
 	override DExpr simplifyImpl(DExpr facts){
 		auto r=staticSimplify(e,f,facts);
 		return r?r:this;
