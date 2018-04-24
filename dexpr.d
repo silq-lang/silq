@@ -3757,7 +3757,7 @@ class DGaussIntInv: DOp{
 			return "InverseErf[2/Sqrt[Pi]*("~x.toStringImpl(formatting,Precedence.none,binders)~")-1]";
 		}else if(formatting==Format.maple){
 			return "erfinv(2/sqrt(Pi)*("~x.toStringImpl(formatting,Precedence.none,binders)~")-1)";
-		}else if(formatting==Format.matlab) return "erf(2/sqrt(pi)*("~x.toStringImpl(formatting,Precedence.none,binders)~")-1)";
+		}else if(formatting==Format.matlab) return "erfinv(2/sqrt(pi)*("~x.toStringImpl(formatting,Precedence.none,binders)~")-1)";
 		else if(formatting==Format.lisp) return text("(inverse-gauss-integral ",x.toStringImpl(formatting,Precedence.none,binders),")");
 		else if(formatting==Format.sympy) return "erfinv(2/sqrt(pi)*("~x.toStringImpl(formatting,Precedence.none,binders)~")-1)";		
 		else return addp(prec,symbol(formatting,binders)~"("~x.toStringImpl(formatting,Precedence.none,binders)~")");
