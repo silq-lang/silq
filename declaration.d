@@ -107,10 +107,11 @@ enum Variance{
 }
 
 class DatParameter: Parameter{
-	this(Identifier name, Expression type){
+	Variance variance;
+	this(Variance variance, Identifier name, Expression type){
+		this.variance=variance;
 		super(name,type);
 	}
-	Variance variance;
 	override string toString(){
 		final switch(variance)with(Variance){
 			case invariant_: return super.toString();
@@ -137,7 +138,7 @@ class DatDecl: Declaration{
 		this.body_=body_;
 	}
 	override string toString(){
-		return "dat "~getName~body_.toString();
+		return "dat "~getName~(hasParams?text("[",params.map!(to!string).joiner(","),"]"):"")~body_.toString();
 	}
 
 	override bool isCompound(){ return true; }

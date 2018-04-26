@@ -713,7 +713,7 @@ struct Parser{
 			nextToken();
 			t=parseType();
 		}
-		return res=New!DatParameter(i,t);
+		return res=New!DatParameter(variance,i,t);
 	}
 	DatDecl parseDatDecl(){
 		mixin(SetLoc!DatDecl);
