@@ -353,7 +353,7 @@ Expression builtIn(Identifier id,Scope sc){
 	case "π": t=ℝ; break;
 	case "Marginal","sampleFrom": t=unit; break; // those are actually magic polymorphic functions
 	case "Expectation": t=funTy(ℝ,ℝ,false,false); break;
-	case "*","𝟙","𝟚","B","𝔹","Z","ℤ","Q","ℚ","R","ℝ","C","ℂ":
+	case "*","𝟙","𝟚","B","𝔹","N","ℕ","Z","ℤ","Q","ℚ","R","ℝ","C","ℂ":
 		id.type=typeTy;
 		if(id.name=="*") return typeTy;
 		if(id.name=="𝟙") return unit;
@@ -453,7 +453,6 @@ CompoundDecl compoundDeclSemantic(CompoundDecl cd,Scope sc){
 }
 
 Expression statementSemantic(Expression e,Scope sc){
-	alias Bool=ℝ; // TODO: maybe add 𝟚 as specific boolean type?
 	if(auto ce=cast(CallExp)e)
 		return callSemantic(ce,sc);
 	if(auto ite=cast(IteExp)e){
@@ -461,7 +460,7 @@ Expression statementSemantic(Expression e,Scope sc){
 		ite.then=compoundExpSemantic(ite.then,sc);
 		if(ite.othw) ite.othw=compoundExpSemantic(ite.othw,sc);
 		if(ite.cond.sstate==SemState.completed && ite.cond.type!is Bool){
-			sc.error(format("cannot obtain truth value for type %s",ite.cond.type),ite.cond.loc);
+			sc.error(format("condition should have type 𝔹, not %s",ite.cond.type),ite.cond.loc);
 			ite.sstate=SemState.error;
 		}
 		propErr(ite.cond,ite);
@@ -480,24 +479,24 @@ Expression statementSemantic(Expression e,Scope sc){
 	if(isColonOrAssign(e)) return colonOrAssignSemantic(e,sc);
 	if(auto fe=cast(ForExp)e){
 		auto fesc=new ForExpScope(sc,fe);
+		fe.left=expressionSemantic(fe.left,sc);
+		if(fe.left.sstate==SemState.completed && !isSubtype(fe.left.type, ℝ)){
+			sc.error(format("lower bound for loop variable should be a number, not %s",fe.left.type),fe.left.loc);
+			fe.sstate=SemState.error;
+		}
+		fe.right=expressionSemantic(fe.right,sc);
+		if(fe.right.sstate==SemState.completed && !isSubtype(fe.right.type, ℝ)){
+			sc.error(format("upper bound for loop variable should be a number, not %s",fe.right.type),fe.right.loc);
+			fe.sstate=SemState.error;
+		}
 		auto vd=new VarDecl(fe.var);
-		vd.vtype=ℝ;
+		vd.vtype=fe.left.type && fe.right.type ? commonType(fe.left.type, fe.right.type) : ℤt;
 		vd.loc=fe.var.loc;
 		if(!fesc.insert(vd))
 			fe.sstate=SemState.error;
 		fe.var.name=vd.getName;
 		fe.fescope_=fesc;
 		fe.loopVar=vd;
-		fe.left=expressionSemantic(fe.left,sc);
-		if(fe.left.sstate==SemState.completed && fe.left.type!is ℝ){
-			sc.error(format("lower bound for loop variable should be a number, not %s",fe.left.type),fe.left.loc);
-			fe.sstate=SemState.error;
-		}
-		fe.right=expressionSemantic(fe.right,sc);
-		if(fe.right.sstate==SemState.completed && fe.right.type!is ℝ){
-			sc.error(format("upper bound for loop variable should be a number, not %s",fe.right.type),fe.right.loc);
-			fe.sstate=SemState.error;
-		}
 		fe.bdy=compoundExpSemantic(fe.bdy,fesc);
 		assert(!!fe.bdy);
 		propErr(fe.left,fe);
@@ -515,7 +514,7 @@ Expression statementSemantic(Expression e,Scope sc){
 	}
 	if(auto re=cast(RepeatExp)e){
 		re.num=expressionSemantic(re.num,sc);
-		if(re.num.sstate==SemState.completed && re.num.type!is ℝ){
+		if(re.num.sstate==SemState.completed && !isSubtype(re.num.type, ℝ)){
 			sc.error(format("number of iterations should be a number, not %s",re.num.type),re.num.loc);
 			re.sstate=SemState.error;
 		}
@@ -593,9 +592,9 @@ Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
 	bool success=true;
 	if(auto ce=cast(CallExp)be.e2){
 		if(auto id=cast(Identifier)ce.e){
-			if(id.name=="array" && !ce.isSquare){
+			if(id.name=="array" && !ce.isSquare){ // TODO: this is legacy. get rid of this.
 				ce.arg=expressionSemantic(ce.arg,sc);
-				if(ce.arg.type==ℝ){
+				if(isSubtype(ce.arg.type,ℝ)){
 					ce.e.type=funTy(ℝ,arrayTy(ℝ),false,false);
 					ce.e.sstate=SemState.completed;
 				}
@@ -884,7 +883,6 @@ Expression callSemantic(CallExp ce,Scope sc){
 }
 
 Expression expressionSemantic(Expression expr,Scope sc){
-	alias Bool=ℝ; // TODO: maybe add 𝟚 as specific boolean type?
 	if(expr.sstate==SemState.completed||expr.sstate==SemState.error) return expr;
 	if(expr.sstate==SemState.started){
 		sc.error("cyclic dependency",expr.loc);
@@ -1169,18 +1167,24 @@ Expression expressionSemantic(Expression expr,Scope sc){
 	}
 	if(auto arr=cast(ArrayExp)expr){
 		Expression t; bool tok=true;
-		Expression texp;
-		foreach(ref exp;arr.e){
+		foreach(i,ref exp;arr.e){
 			exp=expressionSemantic(exp,sc);
 			propErr(exp,arr);
-			if(t){
-				if(t != exp.type && tok){
-					sc.error(format("incompatible types %s and %s in array literal",t,exp.type),texp.loc);
-					sc.note("incompatible entry",exp.loc);
-					arr.sstate=SemState.error;
-					tok=false;
+			t = commonType(t, exp.type);
+			if(!t&&tok){
+				Expression texp;
+				foreach(j,oexp;arr.e[0..i]){
+					if(!commonType(oexp, exp)){
+						texp=oexp;
+						break;
+					}
 				}
-			}else{ t=exp.type; texp=exp; }
+				assert(texp);
+				sc.error(format("incompatible types %s and %s in array literal",t,exp.type),texp.loc);
+				sc.note("incompatible entry",exp.loc);
+				arr.sstate=SemState.error;
+				tok=false;
+			}
 		}
 		if(arr.e.length){
 			if(arr.e[0].type) arr.type=arrayTy(arr.e[0].type);
@@ -1211,30 +1215,27 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		return tae;
 	}
 
-	Expression handleUnary(string name,Expression e,ref Expression e1,Type t1,Type r){
+	Expression handleUnary(alias determineType)(string name,Expression e,ref Expression e1){
 		e1=expressionSemantic(e1,sc);
 		propErr(e1,e);
 		if(e.sstate==SemState.error)
 			return e;
-		if(e1.type is t1){
-			e.type=r;
-		}else{
-			sc.error(format("incompatible type %s for %s",e1.type,name),r.loc);
+		e.type=determineType(e1.type);
+		if(!e.type){
+			sc.error(format("incompatible type %s for %s",e1.type,name),e1.loc);
 			e.sstate=SemState.error;
 		}
 		return e;
 	}
 	
-	Expression handleBinary(string name,Expression e,ref Expression e1,ref Expression e2,Type t1,Type t2,Type r){
+	Expression handleBinary(alias determineType)(string name,Expression e,ref Expression e1,ref Expression e2){
 		e1=expressionSemantic(e1,sc);
 		e2=expressionSemantic(e2,sc);
 		propErr(e1,e);
 		propErr(e2,e);
 		if(e.sstate==SemState.error)
 			return e;
-		if(e1.type == t1 && e2.type == t2){
-			e.type=r;
-		}else if(e1.type==typeTy&&name=="power"){
+		if(e1.type==typeTy&&name=="power"){
 			if(auto le=cast(LiteralExp)e2){
 				if(le.lit.type==Tok!"0"){
 					if(!le.lit.str.canFind(".")){
@@ -1247,33 +1248,79 @@ Expression expressionSemantic(Expression expr,Scope sc){
 			sc.error("expected non-negative integer constant",e2.loc);
 			e.sstate=SemState.error;
 		}else{
-			sc.error(format("incompatible types %s and %s for %s",e1.type,e2.type,name),e.loc);
-			e.sstate=SemState.error;
+			e.type = determineType(e1.type,e2.type);
+			if(!e.type){
+				sc.error(format("incompatible types %s and %s for %s",e1.type,e2.type,name),e.loc);
+				e.sstate=SemState.error;
+			}
 		}
 		return e;
 	}
-
-	if(auto ae=cast(AddExp)expr) return expr=handleBinary("addition",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
-	if(auto ae=cast(SubExp)expr) return expr=handleBinary("subtraction",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
-	if(auto ae=cast(MulExp)expr) return expr=handleBinary("multiplication",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
-	if(auto ae=cast(DivExp)expr) return expr=handleBinary("division",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
-	if(auto ae=cast(IDivExp)expr) return expr=handleBinary("integer division",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
-	if(auto ae=cast(ModExp)expr) return expr=handleBinary("modulo",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
-	if(auto ae=cast(PowExp)expr) return expr=handleBinary("power",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
-	if(auto ae=cast(BitOrExp)expr) return expr=handleBinary("bitwise or",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
-	if(auto ae=cast(BitXorExp)expr) return expr=handleBinary("bitwise xor",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
-	if(auto ae=cast(BitAndExp)expr) return expr=handleBinary("bitwise and",ae,ae.e1,ae.e2,ℝ,ℝ,ℝ);
-	if(auto ae=cast(UMinusExp)expr) return expr=handleUnary("minus",ae,ae.e,ℝ,ℝ);
-	if(auto ae=cast(UNotExp)expr) return expr=handleUnary("not",ae,ae.e,Bool,Bool);
-	if(auto ae=cast(UBitNotExp)expr) return expr=handleUnary("bitwise not",ae,ae.e,Bool,Bool);
-	if(auto ae=cast(AndExp)expr) return expr=handleBinary("conjunction",ae,ae.e1,ae.e2,Bool,Bool,Bool);
-	if(auto ae=cast(OrExp)expr) return expr=handleBinary("disjunction",ae,ae.e1,ae.e2,Bool,Bool,Bool);
-	if(auto ae=cast(LtExp)expr) return expr=handleBinary("'<'",ae,ae.e1,ae.e2,ℝ,ℝ,Bool);
-	if(auto ae=cast(LeExp)expr) return expr=handleBinary("'≤'",ae,ae.e1,ae.e2,ℝ,ℝ,Bool);
-	if(auto ae=cast(GtExp)expr) return expr=handleBinary("'>'",ae,ae.e1,ae.e2,ℝ,ℝ,Bool);
-	if(auto ae=cast(GeExp)expr) return expr=handleBinary("'≥'",ae,ae.e1,ae.e2,ℝ,ℝ,Bool);
-	if(auto ae=cast(EqExp)expr) return expr=handleBinary("'='",ae,ae.e1,ae.e2,ℝ,ℝ,Bool);
-	if(auto ae=cast(NeqExp)expr) return expr=handleBinary("'≠'",ae,ae.e1,ae.e2,ℝ,ℝ,Bool);
+	static Expression arithmeticType(Expression t1, Expression t2){
+		if(!isNumeric(t1)||!isNumeric(t2)) return null;
+		return commonType(t1,t2);
+	}
+	static Expression subtractionType(Expression t1, Expression t2){
+		auto r=arithmeticType(t1,t2);
+		return r==Bool||r==ℕt?ℤt:r;
+	}
+	static Expression divisionType(Expression t1, Expression t2){
+		auto r=arithmeticType(t1,t2);
+		return util.among(r,Bool,ℕt,ℤt)?ℚt:r;
+	}
+	static Expression iDivType(Expression t1, Expression t2){
+		if(!isNumeric(t1)||!isNumeric(t2)||t1==ℂ||t2==ℂ) return null;
+		return (t1==Bool||t1==ℕt)&&(t2==Bool||t2==ℕt)?ℕt:ℤt;
+	}
+	static Expression moduloType(Expression t1, Expression t2){
+		auto r=arithmeticType(t1,t2);
+		return r==ℤt?ℕt:r; // TODO: more general range information?
+	}
+	static Expression powerType(Expression t1, Expression t2){
+		if(!isNumeric(t1)||!isNumeric(t2)) return null;
+		if(t2==Bool||t2==ℕt) return t1;
+		if(t1==ℂ||t2==ℂ) return ℂ;
+		if(util.among(t1,Bool,ℕt,ℤt,ℚt)&&t2==ℤt) return ℚt;
+		return ℝ; // TODO: good?
+	}
+	static Expression minusBitNotType(Expression t){
+		if(!isNumeric(t)) return null;
+		if(t==Bool||t==ℕt) return ℤt;
+		return t;
+	}
+	static Expression notType(Expression t){
+		if(t!=Bool) return null;
+		return t;
+	}
+	static Expression logicType(Expression t1,Expression t2){
+		if(t1!=Bool||t2!=Bool) return null;
+		return Bool;
+	}
+	static Expression cmpType(Expression t1,Expression t2){
+		if(!isNumeric(t1)||!isNumeric(t2)||t1==ℂ||t2==ℂ) return null;
+		return Bool;
+	}
+	if(auto ae=cast(AddExp)expr) return expr=handleBinary!arithmeticType("addition",ae,ae.e1,ae.e2);
+	if(auto ae=cast(SubExp)expr) return expr=handleBinary!subtractionType("subtraction",ae,ae.e1,ae.e2);
+	if(auto ae=cast(MulExp)expr) return expr=handleBinary!arithmeticType("multiplication",ae,ae.e1,ae.e2);
+	if(auto ae=cast(DivExp)expr) return expr=handleBinary!divisionType("division",ae,ae.e1,ae.e2);
+	if(auto ae=cast(IDivExp)expr) return expr=handleBinary!iDivType("integer division",ae,ae.e1,ae.e2);
+	if(auto ae=cast(ModExp)expr) return expr=handleBinary!moduloType("modulo",ae,ae.e1,ae.e2);
+	if(auto ae=cast(PowExp)expr) return expr=handleBinary!powerType("power",ae,ae.e1,ae.e2);
+	if(auto ae=cast(BitOrExp)expr) return expr=handleBinary!arithmeticType("bitwise or",ae,ae.e1,ae.e2);
+	if(auto ae=cast(BitXorExp)expr) return expr=handleBinary!arithmeticType("bitwise xor",ae,ae.e1,ae.e2);
+	if(auto ae=cast(BitAndExp)expr) return expr=handleBinary!arithmeticType("bitwise and",ae,ae.e1,ae.e2);
+	if(auto ae=cast(UMinusExp)expr) return expr=handleUnary!minusBitNotType("minus",ae,ae.e);
+	if(auto ae=cast(UNotExp)expr) return expr=handleUnary!notType("not",ae,ae.e);
+	if(auto ae=cast(UBitNotExp)expr) return expr=handleUnary!minusBitNotType("bitwise not",ae,ae.e);
+	if(auto ae=cast(AndExp)expr) return expr=handleBinary!logicType("conjunction",ae,ae.e1,ae.e2);
+	if(auto ae=cast(OrExp)expr) return expr=handleBinary!logicType("disjunction",ae,ae.e1,ae.e2);
+	if(auto ae=cast(LtExp)expr) return expr=handleBinary!cmpType("'<'",ae,ae.e1,ae.e2);
+	if(auto ae=cast(LeExp)expr) return expr=handleBinary!cmpType("'≤'",ae,ae.e1,ae.e2);
+	if(auto ae=cast(GtExp)expr) return expr=handleBinary!cmpType("'>'",ae,ae.e1,ae.e2);
+	if(auto ae=cast(GeExp)expr) return expr=handleBinary!cmpType("'≥'",ae,ae.e1,ae.e2);
+	if(auto ae=cast(EqExp)expr) return expr=handleBinary!cmpType("'='",ae,ae.e1,ae.e2);
+	if(auto ae=cast(NeqExp)expr) return expr=handleBinary!cmpType("'≠'",ae,ae.e1,ae.e2);
 
 	if(auto ce=cast(CatExp)expr){
 		ce.e1=expressionSemantic(ce.e1,sc);
@@ -1364,17 +1411,18 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		if(!ite.othw.s[0].type) ite.othw.s[0].type = ite.then.s[0].type;
 		auto t1=ite.then.s[0].type;
 		auto t2=ite.othw.s[0].type;
-		if(t1 && t2 && t1 != t2){
+		ite.type=commonType(t1,t2);
+		if(t1 && t2 && !ite.type){
 			sc.error(format("incompatible types %s and %s for branches of if expression",t1,t2),ite.loc);
 			ite.sstate=SemState.error;
 		}
-		ite.type=t1;
 		return ite;
 	}
 	if(auto lit=cast(LiteralExp)expr){
 		switch(lit.lit.type){
 		case Tok!"0",Tok!".0":
-			expr.type=ℝ;
+			if(!expr.type)
+				expr.type=lit.lit.str.canFind(".")?ℚt:lit.lit.str.canFind("-")?ℤt:ℕt; // TODO: type inference
 			return expr;
 		case Tok!"``":
 			expr.type=stringTy;

@@ -410,12 +410,16 @@ struct Parser{
 				nextToken();
 				auto tok=Token(Tok!"0");
 				tok.str="1";
-				return res=New!LiteralExp(tok);
+				res=New!LiteralExp(tok);
+				res.type=Bool;
+				return res;
 			case Tok!"false",Tok!"⊥":
 				nextToken();
 				auto tok=Token(Tok!"0");
 				tok.str="0";
-				return res=New!LiteralExp(tok);
+				res=New!LiteralExp(tok);
+				res.type=Bool;
+				return res;
 			case Tok!"(",Tok!"[":
 				if(allowLambda){
 					auto state=saveState();

@@ -210,7 +210,7 @@ private struct Analyzer{
 						auto funty=cast(FunTy)ce.e.type;
 						assert(!!funty);
 						auto argty=ce.arg.type;
-						assert(argty == funty.dom,text(argty," ",funty.dom));
+						assert(isSubtype(argty,funty.dom),text(argty," ",funty.dom));
 						if(thisExp){
 							arg=dTuple([arg,thisExp]);
 							argty=tupleTy([argty,fe.e.type]);
@@ -261,10 +261,6 @@ private struct Analyzer{
 						dist.distribute(newDist);
 						return retVars.length==1?retVars[0].tmp:dTuple(cast(DExpr[])retVars.map!(v=>v.tmp).array);
 					case "Expectation":
-						if(ce.arg.type!=ℝ){
-							err.error("expected one real argument (e) to Expectation",ce.loc);
-							unwind();
-						}
 						auto total=dist.distribution;
 						auto expct=dist.distribution*arg;
 						foreach(v;dist.freeVars){ // TODO: handle non-convergence
@@ -488,7 +484,7 @@ private struct Analyzer{
 	}
 
 	void evaluateArrayCall(Identifier id,CallExp call){
-		if(call.arg.type!=ℝ){
+		if(!isSubtype(call.arg.type,ℝ)){
 			err.error("expected one real argument to array",call.loc);
 			return;
 		}
@@ -693,7 +689,7 @@ private struct Analyzer{
 					if(auto cid=cast(Identifier)call.e){
 						switch(cid.name){
 							case "array":
-								if(call.arg.type==ℝ){
+								if(isSubtype(call.arg.type,ℝ)){
 									isSpecial=true;
 									evaluateArrayCall(id,call);
 								}
