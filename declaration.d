@@ -100,13 +100,33 @@ class FunctionDef: Declaration{
 }
 
 
+enum Variance{
+	invariant_,
+	covariant,
+	contravariant,
+}
+
+class DatParameter: Parameter{
+	this(Identifier name, Expression type){
+		super(name,type);
+	}
+	Variance variance;
+	override string toString(){
+		final switch(variance)with(Variance){
+			case invariant_: return super.toString();
+			case covariant: return "+"~super.toString();
+			case contravariant: return "-"~super.toString();
+		}
+	}
+}
+
 class DatDecl: Declaration{
 	AggregateTy dtype;
 	bool hasParams;
-	Parameter[] params;
+	DatParameter[] params;
 	bool isTuple;
 	CompoundDecl body_;
-	this(Identifier name,bool hasParams,Parameter[] params,bool isTuple,CompoundDecl body_)in{
+	this(Identifier name,bool hasParams,DatParameter[] params,bool isTuple,CompoundDecl body_)in{
 		if(hasParams) assert(isTuple||params.length==1);
 		else assert(isTuple&&params.length==0);
 	}body{
@@ -133,7 +153,7 @@ class DatDecl: Declaration{
 		}
 		return subst;
 	}
-	
+
 	// semantic information
 	DataScope dscope_;
 	VarDecl context;

@@ -697,6 +697,24 @@ struct Parser{
 		res.isSquare=isSquare;
 		return res;
 	}
+	DatParameter parseDatParameter(){
+		mixin(SetLoc!DatParameter);
+		auto variance=Variance.invariant_;
+		if(ttype==Tok!"+"){
+			nextToken();
+			variance=Variance.covariant;
+		}else if(ttype==Tok!"-"){
+			nextToken();
+			variance=Variance.contravariant;
+		}
+		auto i=parseIdentifier();
+		Expression t=null;
+		if(ttype==Tok!":"){
+			nextToken();
+			t=parseType();
+		}
+		return res=New!DatParameter(i,t);
+	}
 	DatDecl parseDatDecl(){
 		mixin(SetLoc!DatDecl);
 		expect(Tok!"dat");
@@ -706,11 +724,11 @@ struct Parser{
 		if(ttype==Tok!"["){
 			nextToken();
 			hasParams=true;
-			params=parseArgumentList!(false,Parameter)(Tok!"]");
+			params=parseArgumentList!(false,DatParameter)(Tok!"]");
 			expect(Tok!"]");
 		}
 		auto body_=parseCompoundExp!CompoundDecl();
-		return res=New!DatDecl(name,hasParams,cast(Parameter[])params[0],params[1]||params[0].length!=1,body_);
+		return res=New!DatDecl(name,hasParams,cast(DatParameter[])params[0],params[1]||params[0].length!=1,body_);
 	}
 	ImportExp parseImport(){
 		mixin(SetLoc!ImportExp);

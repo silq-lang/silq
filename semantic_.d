@@ -66,13 +66,13 @@ AggregateTy isDataTyId(Expression e){
 	return null;
 }
 
-void declareParameters(Expression parent,bool isSquare,Parameter[] params,Scope sc){
+void declareParameters(P)(Expression parent,bool isSquare,P[] params,Scope sc)if(is(P==Parameter)||is(P==DatParameter)){
 	foreach(ref p;params){
 		if(!p.dtype){ // ℝ is the default parameter type for () and * is the default parameter type for []
 			p.dtype=New!Identifier(isSquare?"*":"ℝ");
 			p.dtype.loc=p.loc;
 		}
-		p=cast(Parameter)varDeclSemantic(p,sc);
+		p=cast(P)varDeclSemantic(p,sc);
 		assert(!!p);
 		propErr(p,parent);
 	}
@@ -388,7 +388,7 @@ Expression builtIn(FieldExp fe,Scope sc)in{
 	if(fe.f.meaning) return null;
 	if(auto at=cast(ArrayTy)fe.e.type){
 		if(fe.f.name=="length"){
-			fe.type=ℝ;
+			fe.type=ℕt;
 			fe.f.sstate=SemState.completed;
 			return fe;
 		}else return null;
@@ -460,7 +460,7 @@ Expression statementSemantic(Expression e,Scope sc){
 		ite.then=compoundExpSemantic(ite.then,sc);
 		if(ite.othw) ite.othw=compoundExpSemantic(ite.othw,sc);
 		if(ite.cond.sstate==SemState.completed && ite.cond.type!is Bool){
-			sc.error(format("condition should have type 𝔹, not %s",ite.cond.type),ite.cond.loc);
+			sc.error(format("type of condition should be 𝔹, not %s",ite.cond.type),ite.cond.loc);
 			ite.sstate=SemState.error;
 		}
 		propErr(ite.cond,ite);
@@ -527,7 +527,7 @@ Expression statementSemantic(Expression e,Scope sc){
 	if(auto oe=cast(ObserveExp)e){
 		oe.e=expressionSemantic(oe.e,sc);
 		if(oe.e.sstate==SemState.completed && oe.e.type!is Bool){
-			sc.error(format("cannot obtain truth value for type %s",oe.e.type),oe.e.loc);
+			sc.error(format("type of condition should be 𝔹, not %s",oe.e.type),oe.e.loc);
 			oe.sstate=SemState.error;
 		}
 		propErr(oe.e,oe);
@@ -551,7 +551,7 @@ Expression statementSemantic(Expression e,Scope sc){
 	if(auto ae=cast(AssertExp)e){
 		ae.e=expressionSemantic(ae.e,sc);
 		if(ae.e.sstate==SemState.completed && ae.e.type!is Bool){
-			sc.error(format("cannot obtain truth value for type %s",ae.e.type),ae.e.loc);
+			sc.error(format("type of condition should be 𝔹, not %s",ae.e.type),ae.e.loc);
 			ae.sstate=SemState.error;
 		}
 		propErr(ae.e,ae);
@@ -1422,7 +1422,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		switch(lit.lit.type){
 		case Tok!"0",Tok!".0":
 			if(!expr.type)
-				expr.type=lit.lit.str.canFind(".")?ℚt:lit.lit.str.canFind("-")?ℤt:ℕt; // TODO: type inference
+				expr.type=lit.lit.str.canFind(".")?ℝ:lit.lit.str.canFind("-")?ℤt:ℕt; // TODO: type inference
 			return expr;
 		case Tok!"``":
 			expr.type=stringTy;

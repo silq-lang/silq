@@ -9,33 +9,53 @@ bool isSameType(Expression lhs,Expression rhs){
 	return lhs.eval() == rhs.eval(); // TODO: evaluation context?
 }
 
-int whichNumeric(Expression t){ // TODO: more general solution
-	if(t==ℕt) return 0;
-	if(t==ℤt) return 1;
-	if(t==ℚt) return 2;
-	if(t==ℝ) return 3;
-	if(t==ℂ) return 4;
-	return -1;
+enum NumericType{
+	none,
+	Bool,
+	ℕt,
+	ℤt,
+	ℚt,
+	ℝ,
+	ℂ,
+}
+
+NumericType whichNumeric(Expression t){ // TODO: more general solution
+	import std.traits: EnumMembers;
+	static foreach(type;[EnumMembers!NumericType].filter!(x=>x!=NumericType.none))
+		if(mixin(text("t==",type))) return type;
+	return NumericType.none;
+}
+
+bool isNumeric(Expression t){
+	return whichNumeric(t)!=NumericType.none;
 }
 
 Expression getNumeric(int which){
-	switch(which){
-		case 0: return ℕt;
-		case 1: return ℤt;
-		case 2: return ℚt;
-		case 3: return ℝ;
-		case 4: return ℂ;
-		default: return null;
+	final switch(which){
+		import std.traits: EnumMembers;
+		static foreach(type;[EnumMembers!NumericType].filter!(x=>x!=NumericType.none))
+			case mixin(text("NumericType.",type)): return mixin(text(type));
+		case NumericType.none: return null;
 	}
 }
 
 bool isSubtype(Expression lhs,Expression rhs){
+	if(!lhs||!rhs) return false;
 	auto l=lhs.eval(), r=rhs.eval();
 	auto wl=whichNumeric(l), wr=whichNumeric(r);
-	if(wl==-1||wr==-1) return l == r;
+	if(wl==NumericType.none||wr==NumericType.none) return l.isSubtypeImpl(r);
 	return wl<=wr;
 }
 
+Expression commonType(Expression lhs,Expression rhs){ // TODO: more general solution
+	if(!lhs) return rhs;
+	if(!rhs) return lhs;
+	if(lhs == rhs) return lhs;
+	auto l=lhs.eval(), r=rhs.eval();
+	auto wl=whichNumeric(l), wr=whichNumeric(r);
+	if(wl==NumericType.none||wr==NumericType.none) return l.commonTypeImpl(r);
+	return getNumeric(max(wl,wr));
+}
 
 class Type: Expression{
 	this(){ if(!this.type) this.type=typeTy; sstate=SemState.completed; }
@@ -201,6 +221,18 @@ class TupleTy: Type{
 		if(auto r=cast(TupleTy)o)
 			return types==r.types;
 		return false;
+	}
+	override bool isSubtypeImpl(Expression r){
+		auto ltup=this,rtup=cast(TupleTy)r;
+		if(!rtup||ltup.types.length!=rtup.types.length) return false;
+		return all!(i=>isSubtype(ltup.types[i],rtup.types[i]))(iota(ltup.types.length));
+	}
+	override Expression commonTypeImpl(Expression r){
+		auto ltup=this,rtup=cast(TupleTy)r;
+		if(!rtup||ltup.types.length!=rtup.types.length) return null;
+		auto rtypes=zip(ltup.types,rtup.types).map!((t)=>commonType(t.expand)).array;
+		if(any!(x=>x is null)(rtypes)) return null;
+		return tupleTy(rtypes);
 	}
 }
 
