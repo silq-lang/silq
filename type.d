@@ -47,14 +47,21 @@ bool isSubtype(Expression lhs,Expression rhs){
 	return wl<=wr;
 }
 
-Expression commonType(Expression lhs,Expression rhs){ // TODO: more general solution
+Expression combineTypes(Expression lhs,Expression rhs,bool meet){ // TODO: more general solution // TODO: ⊤/⊥?
 	if(!lhs) return rhs;
 	if(!rhs) return lhs;
 	if(lhs == rhs) return lhs;
 	auto l=lhs.eval(), r=rhs.eval();
 	auto wl=whichNumeric(l), wr=whichNumeric(r);
-	if(wl==NumericType.none||wr==NumericType.none) return l.commonTypeImpl(r);
-	return getNumeric(max(wl,wr));
+	if(wl==NumericType.none||wr==NumericType.none) return l.combineTypesImpl(r,meet);
+	return getNumeric(meet?min(wl,wr):max(wl,wr));
+}
+
+Expression joinTypes(Expression lhs,Expression rhs){
+	return combineTypes(lhs,rhs,false);
+}
+Expression meetTypes(Expression lhs,Expression rhs){
+	return combineTypes(lhs,rhs,true);
 }
 
 class Type: Expression{
@@ -227,10 +234,10 @@ class TupleTy: Type{
 		if(!rtup||ltup.types.length!=rtup.types.length) return false;
 		return all!(i=>isSubtype(ltup.types[i],rtup.types[i]))(iota(ltup.types.length));
 	}
-	override Expression commonTypeImpl(Expression r){
+	override Expression combineTypesImpl(Expression r,bool meet){
 		auto ltup=this,rtup=cast(TupleTy)r;
 		if(!rtup||ltup.types.length!=rtup.types.length) return null;
-		auto rtypes=zip(ltup.types,rtup.types).map!((t)=>commonType(t.expand)).array;
+		auto rtypes=zip(ltup.types,rtup.types).map!((t)=>combineTypes(t.expand,meet)).array;
 		if(any!(x=>x is null)(rtypes)) return null;
 		return tupleTy(rtypes);
 	}

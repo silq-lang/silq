@@ -490,7 +490,7 @@ Expression statementSemantic(Expression e,Scope sc){
 			fe.sstate=SemState.error;
 		}
 		auto vd=new VarDecl(fe.var);
-		vd.vtype=fe.left.type && fe.right.type ? commonType(fe.left.type, fe.right.type) : ℤt;
+		vd.vtype=fe.left.type && fe.right.type ? joinTypes(fe.left.type, fe.right.type) : ℤt;
 		vd.loc=fe.var.loc;
 		if(!fesc.insert(vd))
 			fe.sstate=SemState.error;
@@ -1170,11 +1170,11 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		foreach(i,ref exp;arr.e){
 			exp=expressionSemantic(exp,sc);
 			propErr(exp,arr);
-			t = commonType(t, exp.type);
+			t = joinTypes(t, exp.type);
 			if(!t&&tok){
 				Expression texp;
 				foreach(j,oexp;arr.e[0..i]){
-					if(!commonType(oexp, exp)){
+					if(!joinTypes(oexp, exp)){
 						texp=oexp;
 						break;
 					}
@@ -1186,8 +1186,8 @@ Expression expressionSemantic(Expression expr,Scope sc){
 				tok=false;
 			}
 		}
-		if(arr.e.length){
-			if(arr.e[0].type) arr.type=arrayTy(arr.e[0].type);
+		if(arr.e.length && t){
+			if(arr.e[0].type) arr.type=arrayTy(t);
 		}else arr.type=arrayTy(ℝ); // TODO: type inference?
 		return arr;
 	}
@@ -1258,7 +1258,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 	}
 	static Expression arithmeticType(Expression t1, Expression t2){
 		if(!isNumeric(t1)||!isNumeric(t2)) return null;
-		return commonType(t1,t2);
+		return joinTypes(t1,t2);
 	}
 	static Expression subtractionType(Expression t1, Expression t2){
 		auto r=arithmeticType(t1,t2);
@@ -1411,7 +1411,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		if(!ite.othw.s[0].type) ite.othw.s[0].type = ite.then.s[0].type;
 		auto t1=ite.then.s[0].type;
 		auto t2=ite.othw.s[0].type;
-		ite.type=commonType(t1,t2);
+		ite.type=joinTypes(t1,t2);
 		if(t1 && t2 && !ite.type){
 			sc.error(format("incompatible types %s and %s for branches of if expression",t1,t2),ite.loc);
 			ite.sstate=SemState.error;
