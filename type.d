@@ -218,10 +218,10 @@ class TupleTy: Type{
 		foreach(ref t;ntypes) t=t.substitute(subst);
 		return tupleTy(ntypes);
 	}
-	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
 		auto tt=cast(TupleTy)rhs;
 		if(!tt||types.length!=tt.types.length) return false;
-		return all!(i=>types[i].unify(tt.types[i],subst))(iota(types.length));
+		return all!(i=>types[i].unify(tt.types[i],subst,meet))(iota(types.length));
 
 	}
 	override bool opEquals(Object o){
@@ -274,9 +274,9 @@ class ArrayTy: Type{
 	override ArrayTy substituteImpl(Expression[string] subst){
 		return arrayTy(next.substitute(subst));
 	}
-	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
 		auto at=cast(ArrayTy)rhs;
-		return at && next.unifyImpl(at.next,subst);
+		return at && next.unifyImpl(at.next,subst,meet);
 	}
 	override ArrayTy eval(){
 		return arrayTy(next.eval());
@@ -285,6 +285,16 @@ class ArrayTy: Type{
 		if(auto r=cast(ArrayTy)o)
 			return next==r.next;
 		return false;
+	}
+	override bool isSubtypeImpl(Expression r){
+		auto larr=this,rarr=cast(ArrayTy)r;
+		if(!rarr) return false;
+		return isSubtype(larr.next,rarr.next);
+	}
+	override Expression combineTypesImpl(Expression r,bool meet){
+		auto larr=this,rarr=cast(ArrayTy)r;
+		if(!rarr) return null;
+		return arrayTy(combineTypes(larr.next,rarr.next,meet));
 	}
 }
 
@@ -429,7 +439,7 @@ class ProductTy: Type{
 		auto ncod=cod.substitute(nsubst);
 		return productTy(names,ndom,ncod,isSquare,isTuple);
 	}
-	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
 		auto r=cast(ProductTy)rhs; // TODO: get rid of duplication (same code in opEquals)
 		if(!r) return false;
 		if(isTuple&&!cast(TupleTy)r.dom) return false;
@@ -438,7 +448,7 @@ class ProductTy: Type{
 		r=r.relabelAll(freshNames(r));
 		Expression[string] nsubst;
 		foreach(k,v;subst) if(!names.canFind(k)) nsubst[k]=v;
-		auto res=dom.unify(r.dom,nsubst)&&cod.unify(r.cod,nsubst);
+		auto res=dom.unify(r.dom,nsubst,!meet)&&cod.unify(r.cod,nsubst,meet);
 		foreach(k,v;nsubst) subst[k]=v;
 		return res;
 	}
@@ -457,7 +467,7 @@ class ProductTy: Type{
 		foreach(i,n;names) subst[n]=null;
 		foreach(i,aty;atys){
 			if(i>=cod.nargs) continue;
-			if(!cod.argTy(i).unify(aty,subst))
+			if(!cod.argTy(i).unify(aty,subst,false))
 				return null;
 		}
 		auto gargs=new Expression[](names.length);

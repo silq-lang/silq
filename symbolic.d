@@ -286,7 +286,7 @@ private struct Analyzer{
 				auto summary=Distribution.fromDExpr(fun,1,false,results,isTuple,resty);
 				foreach(r;results) dist.freeVars.remove(r), dist.tmpVars.remove(r);
 				auto argty=funty.dom;
-				assert(ce.arg.type == argty);
+				assert(isSubtype(ce.arg.type, argty));
 				auto r=dist.call(summary,doIt(ce.arg),argty);
 				return r;
 			}

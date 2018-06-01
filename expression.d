@@ -46,10 +46,10 @@ abstract class Expression: Node{
 	}
 	abstract Expression substituteImpl(Expression[string] subst); // TODO: name might be free in the _types_ of subexpressions
 
-	final bool unify(Expression rhs,ref Expression[string] subst){
-		return unifyImpl(rhs,subst) || eval().unifyImpl(rhs.eval(),subst);
+	final bool unify(Expression rhs,ref Expression[string] subst, bool meet){
+		return unifyImpl(rhs,subst,meet) || eval().unifyImpl(rhs.eval(),subst,meet);
 	}
-	abstract bool unifyImpl(Expression rhs,ref Expression[string] subst);
+	abstract bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet);
 	
 	static struct FreeVars{
 		Expression self;
@@ -90,7 +90,9 @@ abstract class Expression: Node{
 mixin template VariableFree(){
 	override int freeVarsImpl(scope int delegate(string)){ return 0; }
 	override Expression substituteImpl(Expression[string] subst){ return this; }
-	override bool unifyImpl(Expression rhs,ref Expression[string] subst){ return this==rhs; }
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
+		return combineTypes(this,rhs,meet)!is null;
+	}
 }
 
 class TypeAnnotationExp: Expression{
@@ -112,8 +114,8 @@ class TypeAnnotationExp: Expression{
 		r.loc=loc;
 		return r;
 	}
-	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
-		return e.unify(rhs,subst);
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
+		return e.unify(rhs,subst,meet);
 	}
 }
 
@@ -160,7 +162,7 @@ class Identifier: Expression{
 		if(name in subst) return subst[name];
 		return this;
 	}
-	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
 		if(this==rhs){
 			if(name !in subst) return true;
 			if(subst[name]&&subst[name]!=this) return false;
@@ -169,7 +171,13 @@ class Identifier: Expression{
 		}
 		if(name !in subst) return false;
 		if(subst[name]==this) return false;
-		if(subst[name]) return subst[name].unify(rhs,subst);
+		if(subst[name]){
+			if(!subst[name].unify(rhs,subst,meet))
+				return false;
+			if(auto cmb=combineTypes(subst[name],rhs,meet)) // TODO: good?
+				subst[name]=cmb;
+			return true;
+		}
 		if(rhs.hasFreeVar(name)) return false; // TODO: fixpoint types
 		subst[name]=rhs;
 		return true;
@@ -221,10 +229,10 @@ class UnaryExp(TokenType op): Expression{
 		r.loc=loc;
 		return r;
 	}
-	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
 		auto ue=cast(typeof(this))rhs;
 		if(!ue) return false;
-		return e.unify(ue.e,subst);
+		return e.unify(ue.e,subst,meet);
 	}
 }
 class PostfixExp(TokenType op): Expression{
@@ -242,10 +250,10 @@ class PostfixExp(TokenType op): Expression{
 		r.loc=loc;
 		return r;
 	}
-	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
 		auto pe=cast(PostfixExp)rhs;
 		if(!pe) return false;
-		return e.unify(pe.e,subst);
+		return e.unify(pe.e,subst,meet);
 	}
 }
 
@@ -292,10 +300,10 @@ class IndexExp: Expression{ //e[a...]
 		r.loc=loc;
 		return r;
 	}
-	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
 		auto idx=cast(IndexExp)rhs;
 		if(!idx||a.length!=idx.a.length) return false;
-		return e.unify(idx.e,subst)&&all!(i=>a[i].unify(idx.a[i],subst))(iota(a.length));
+		return e.unify(idx.e,subst,meet)&&all!(i=>a[i].unify(idx.a[i],subst,meet))(iota(a.length));
 	}
 }
 
@@ -355,9 +363,9 @@ class SliceExp: Expression{
 		res.loc=loc;
 		return res;
 	}
-	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
 		auto sl=cast(SliceExp)rhs;
-		return e.unify(sl.e,subst)&&l.unify(sl.l,subst)&&r.unify(sl.r,subst);
+		return e.unify(sl.e,subst,meet)&&l.unify(sl.l,subst,meet)&&r.unify(sl.r,subst,meet);
 	}
 }
 
@@ -396,10 +404,10 @@ class CallExp: Expression{
 		}
 		return r;
 	}
-	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
 		auto ce=cast(CallExp)rhs;
 		if(!ce) return false;
-		return e.unify(ce.e,subst)&&arg.unify(ce.arg,subst);
+		return e.unify(ce.e,subst,meet)&&arg.unify(ce.arg,subst,meet);
 	}
 	override bool opEquals(Object rhs){
 		auto ce=cast(CallExp)rhs;
@@ -505,10 +513,10 @@ class BinaryExp(TokenType op): ABinaryExp{
 		r.loc=loc;
 		return r;
 	}
-	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
 		auto be=cast(typeof(this))rhs;
 		if(!be) return false;
-		return e1.unify(be.e1,subst)&&e2.unify(be.e2,subst);
+		return e1.unify(be.e1,subst,meet)&&e2.unify(be.e2,subst,meet);
 	}
 }
 
@@ -531,10 +539,10 @@ class FieldExp: Expression{
 		r.loc=loc;
 		return r;
 	}
-	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
 		auto fe=cast(FieldExp)rhs;
 		if(!fe||f!=fe.f) return false;
-		return e.unify(rhs,subst);
+		return e.unify(rhs,subst,meet);
 	}
 }
 
@@ -564,11 +572,11 @@ class IteExp: Expression{
 		r.loc=loc;
 		return r;
 	}
-	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
 		auto ite=cast(IteExp)rhs;
 		if(!ite) return false;
-		return cond.unify(ite.cond,subst)&&then.unify(ite.then,subst)
-			&&!othw&&!ite.othw||othw&&ite.othw&&othw.unify(ite.othw,subst);
+		return cond.unify(ite.cond,subst,meet)&&then.unify(ite.then,subst,meet)
+			&&!othw&&!ite.othw||othw&&ite.othw&&othw.unify(ite.othw,subst,meet);
 	}
 }
 
@@ -658,10 +666,10 @@ class TupleExp: Expression{
 		r.loc=loc;
 		return r;
 	}
-	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
 		auto te=cast(TupleExp)rhs;
 		if(!te||e.length!=te.e.length) return false;
-		return all!(i=>e[i].unify(te.e[i],subst))(iota(e.length));
+		return all!(i=>e[i].unify(te.e[i],subst,meet))(iota(e.length));
 	}
 }
 
@@ -698,10 +706,10 @@ class ArrayExp: Expression{
 		r.loc=loc;
 		return r;
 	}
-	override bool unifyImpl(Expression rhs,ref Expression[string] subst){
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
 		auto ae=cast(ArrayExp)rhs;
 		if(!ae||e.length!=ae.e.length) return false;
-		return all!(i=>e[i].unify(ae.e[i],subst))(iota(e.length));
+		return all!(i=>e[i].unify(ae.e[i],subst,meet))(iota(e.length));
 	}
 }
 
