@@ -1216,7 +1216,12 @@ Expression expressionSemantic(Expression expr,Scope sc){
 				if(id.name=="sampleFrom"||id.name=="readCSV"&&tae.type==arrayTy(arrayTy(ℝ)))
 					ce.type=tae.type;
 			}
-		if(!isSubtype(tae.e.type,tae.type)){
+		bool ok=false;
+		if(cast(LiteralExp)tae.e){
+			if(isSubtype(tae.e.type,ℝ)&&isSubtype(ℚt,tae.type))
+				ok=true;
+		}
+		if(!ok && !isSubtype(tae.e.type,tae.type)){
 			sc.error(format("type is %s, not %s",tae.e.type,tae.type),tae.loc);
 			tae.sstate=SemState.error;
 		}
