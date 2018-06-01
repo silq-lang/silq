@@ -722,15 +722,22 @@ ABinaryExp opAssignExpSemantic(ABinaryExp be,Scope sc)in{
 			be.sstate=SemState.error;
 		}
 	}
-	checkULhs(be.e1);
-	bool check(Expression ty){
-		if(cast(CatAssignExp)be) return !!cast(ArrayTy)ty;
-		return ty is ℝ;
+	Expression ce=null;
+	import parser;
+	static foreach(op;binaryOps){
+		static if(op.endsWith("←")){
+			if(auto ae=cast(BinaryExp!(Tok!op))be){
+				ce=new BinaryExp!(Tok!(op[0..$-"←".length]))(be.e1, be.e2);
+				ce.loc=be.loc;
+			}
+		}
 	}
-	if(be.sstate!=SemState.error&&be.e1.type != be.e2.type || !check(be.e1.type)){
-		if(cast(CatAssignExp)be){
-			sc.error(format("incompatible operand types %s and %s",be.e1.type,be.e2.type),be.loc);
-		}else sc.error(format("incompatible operand types %s and %s (should be ℝ and ℝ)",be.e1.type,be.e2.type),be.loc);
+	assert(!!ce);
+	ce=expressionSemantic(ce,sc);
+	propErr(ce, be);
+	checkULhs(be.e1);
+	if(be.sstate!=SemState.error&&!isSubtype(ce.type, be.e1.type)){
+		sc.error(format("incompatible operand types %s and %s",be.e1.type,be.e2.type),be.loc);
 		be.sstate=SemState.error;
 	}
 	be.type=unit;
@@ -1179,9 +1186,10 @@ Expression expressionSemantic(Expression expr,Scope sc){
 						break;
 					}
 				}
-				assert(texp);
-				sc.error(format("incompatible types %s and %s in array literal",t,exp.type),texp.loc);
-				sc.note("incompatible entry",exp.loc);
+				if(texp){
+					sc.error(format("incompatible types %s and %s in array literal",t,exp.type),texp.loc);
+					sc.note("incompatible entry",exp.loc);
+				}
 				arr.sstate=SemState.error;
 				tok=false;
 			}
@@ -1256,16 +1264,18 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		}
 		return e;
 	}
-	static Expression arithmeticType(Expression t1, Expression t2){
+	static Expression arithmeticType(bool preserveBool)(Expression t1, Expression t2){
 		if(!isNumeric(t1)||!isNumeric(t2)) return null;
-		return joinTypes(t1,t2);
+		auto r=joinTypes(t1,t2);
+		static if(!preserveBool) if(r==Bool) return ℕt;
+		return r;
 	}
 	static Expression subtractionType(Expression t1, Expression t2){
-		auto r=arithmeticType(t1,t2);
-		return r==Bool||r==ℕt?ℤt:r;
+		auto r=arithmeticType!false(t1,t2);
+		return r==ℕt?ℤt:r;
 	}
 	static Expression divisionType(Expression t1, Expression t2){
-		auto r=arithmeticType(t1,t2);
+		auto r=arithmeticType!false(t1,t2);
 		return util.among(r,Bool,ℕt,ℤt)?ℚt:r;
 	}
 	static Expression iDivType(Expression t1, Expression t2){
@@ -1273,7 +1283,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		return (t1==Bool||t1==ℕt)&&(t2==Bool||t2==ℕt)?ℕt:ℤt;
 	}
 	static Expression moduloType(Expression t1, Expression t2){
-		auto r=arithmeticType(t1,t2);
+		auto r=arithmeticType!false(t1,t2);
 		return r==ℤt?ℕt:r; // TODO: more general range information?
 	}
 	static Expression powerType(Expression t1, Expression t2){
@@ -1300,16 +1310,16 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		if(!isNumeric(t1)||!isNumeric(t2)||t1==ℂ||t2==ℂ) return null;
 		return Bool;
 	}
-	if(auto ae=cast(AddExp)expr) return expr=handleBinary!arithmeticType("addition",ae,ae.e1,ae.e2);
+	if(auto ae=cast(AddExp)expr) return expr=handleBinary!(arithmeticType!false)("addition",ae,ae.e1,ae.e2);
 	if(auto ae=cast(SubExp)expr) return expr=handleBinary!subtractionType("subtraction",ae,ae.e1,ae.e2);
-	if(auto ae=cast(MulExp)expr) return expr=handleBinary!arithmeticType("multiplication",ae,ae.e1,ae.e2);
+	if(auto ae=cast(MulExp)expr) return expr=handleBinary!(arithmeticType!true)("multiplication",ae,ae.e1,ae.e2);
 	if(auto ae=cast(DivExp)expr) return expr=handleBinary!divisionType("division",ae,ae.e1,ae.e2);
 	if(auto ae=cast(IDivExp)expr) return expr=handleBinary!iDivType("integer division",ae,ae.e1,ae.e2);
 	if(auto ae=cast(ModExp)expr) return expr=handleBinary!moduloType("modulo",ae,ae.e1,ae.e2);
 	if(auto ae=cast(PowExp)expr) return expr=handleBinary!powerType("power",ae,ae.e1,ae.e2);
-	if(auto ae=cast(BitOrExp)expr) return expr=handleBinary!arithmeticType("bitwise or",ae,ae.e1,ae.e2);
-	if(auto ae=cast(BitXorExp)expr) return expr=handleBinary!arithmeticType("bitwise xor",ae,ae.e1,ae.e2);
-	if(auto ae=cast(BitAndExp)expr) return expr=handleBinary!arithmeticType("bitwise and",ae,ae.e1,ae.e2);
+	if(auto ae=cast(BitOrExp)expr) return expr=handleBinary!(arithmeticType!true)("bitwise or",ae,ae.e1,ae.e2);
+	if(auto ae=cast(BitXorExp)expr) return expr=handleBinary!(arithmeticType!true)("bitwise xor",ae,ae.e1,ae.e2);
+	if(auto ae=cast(BitAndExp)expr) return expr=handleBinary!(arithmeticType!true)("bitwise and",ae,ae.e1,ae.e2);
 	if(auto ae=cast(UMinusExp)expr) return expr=handleUnary!minusBitNotType("minus",ae,ae.e);
 	if(auto ae=cast(UNotExp)expr) return expr=handleUnary!notType("not",ae,ae.e);
 	if(auto ae=cast(UBitNotExp)expr) return expr=handleUnary!minusBitNotType("bitwise not",ae,ae.e);
