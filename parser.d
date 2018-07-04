@@ -739,7 +739,7 @@ struct Parser{
 	}
 	Expression parseCondition(){
 		mixin(SetLoc!Expression);
-		if(ttype==Tok!"("||ttype==Tok!"]"){
+		if(ttype==Tok!"("||ttype==Tok!"["){
 			auto state=saveState();
 			while(ttype==Tok!"("||ttype==Tok!"["){
 				nextToken();
