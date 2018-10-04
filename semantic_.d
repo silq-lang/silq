@@ -1435,7 +1435,7 @@ FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 		else n=n.stripRight('\'');
 	}
 	void[0][string] vars;
-	foreach(p;fd.params) vars[p.name.name]=[];
+	foreach(p;fd.params) vars[p.getName]=[];
 	int[string] counts1,counts2;
 	foreach(n;fd.retNames)
 		++counts1[n];
