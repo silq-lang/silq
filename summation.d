@@ -179,7 +179,7 @@ DExpr tryGetDiscreteAntiderivative(DExpr e){
 			SolutionInfo info;
 			SolUse usage={caseSplit:false,bound:false};
 			auto val=ivr.e.solveFor(var,zero,usage,info);
-			if(!val||info.needCaseSplit) continue;
+			if(!val||info.needCaseSplit) return null;
 			auto rest=e.withoutFactor(f).simplify(one);
 			auto restAnti=tryGetDiscreteAntiderivative(rest);
 			if(!restAnti) return null;
