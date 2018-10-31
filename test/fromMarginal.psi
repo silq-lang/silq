@@ -1,7 +1,0 @@
-def main(){
-    x := flip(1/2);
-    y := flip(1/2);
-    z := sample(Marginal(x+y));
-    z = z-x-y;
-    return z; // expected: 1/16·δ(-2)[z]+1/16·δ(2)[z]+1/4·δ(-1)[z]+1/4·δ(1)[z]+3/8·δ(0)[z]
-}

@@ -1,4 +1,0 @@
-def main(){
-    a := if flip(1/4) { [1,2,3] } else { [1,2] };
-    return a[uniformInt(0,2)]; // expected: 1/12·δ(3)[aᵢ]+1/3·δ(1)[aᵢ]+1/3·δ(2)[aᵢ]
-}

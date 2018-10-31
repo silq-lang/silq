@@ -1,3 +1,0 @@
-def main(){
-	return infer(()=>uniform(0,1)); // expected: δ(Λξ₁. ∫dξ₂[-1+ξ₂≤0]·[-ξ₂≤0]·δ(val(ξ₂))[ξ₁])[r]
-}

@@ -1,8 +1,0 @@
-def main(){
-    a := uniform(0,1); b := uniform(0,1);
-    x := (a+b,a-b);
-    return x; // expected: 1/2·[-2+-x₂+x₁≤0]·[-2+x₁+x₂≤0]·[-x₁+-x₂≤0]·[-x₁+x₂≤0]
-    // TODO: canonicalize intermediate results better, e.g. for ∫dξ₁(∫dξ₂[-1+ξ₂≤0]·[-ξ₂≤0]·δ_x[(ξ₁+ξ₂,-ξ₁+ξ₂)])·[-1+ξ₁≤0]·[-ξ₁≤0]
-    // E.g. ∫dξ₁∫dξ₂[-1+ξ₁+ξ₂≤0]·[-1+ξ₂≤0]·[-ξ₁+-ξ₂≤0]·[-ξ₂≤0]·δ_x[(2·ξ₂+ξ₁,ξ₁)]
-    // is another representation of the same distribution
-}

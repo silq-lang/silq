@@ -1,4 +1,0 @@
-def main(arg1,arg2){
-    observe(arg1==arg2);
-    return (arg1,arg2); // expected: [-arg2'+arg1'=0]·δ(0)[-arg1'+arg1]·δ(0)[-arg2'+arg2]
-}

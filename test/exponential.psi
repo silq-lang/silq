@@ -1,5 +1,0 @@
-def main(){
-    x := exponential(3);
-    y := x > 1/3;
-    return y; // expected: (-⅟e+1)·δ(0)[y]+δ(1)[y]·⅟e
-}

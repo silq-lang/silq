@@ -1,5 +1,0 @@
-def main(){
-    x := uniform(0,1) + uniform(0,1);
-    observe(x==1 || x==2);
-    return x; // expected: TODO: δ(0)[-x+2]·⅟2+δ(0)[x]·⅟2
-}

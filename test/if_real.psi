@@ -1,6 +1,0 @@
-def main(){
-    x := uniformInt(-1,1);
-    r := 1;
-    if x { r = 2; }
-    return r; // expected: 1/3·δ(1)[r]+2/3·δ(2)[r]
-}

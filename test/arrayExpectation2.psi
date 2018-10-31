@@ -1,7 +1,0 @@
-
-def main(){
-    x := [1,2];
-    k := 1;
-    l := Expectation(x[uniformInt(0,1)]);
-    return (k,l); // expected: δ(1)[k]·δ(3/2)[l]
-}

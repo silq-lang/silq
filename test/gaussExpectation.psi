@@ -1,4 +1,0 @@
-def main(){
-    x := gauss(1398/89,4/3);
-    return Expectation(x); // expected: δ(1398/89)[r]
-}

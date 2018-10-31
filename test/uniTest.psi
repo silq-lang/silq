@@ -1,5 +1,0 @@
-
-def main(){
-	μ := 3;
-	return -μ; // expected: δ(-3)[r]
-}

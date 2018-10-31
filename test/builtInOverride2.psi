@@ -1,5 +1,0 @@
-
-def main(){
-	array := (a,b)=>(a,b);
-	return array(3,0); // expected: δ(0)[r₂]·δ(3)[r₁]
-}

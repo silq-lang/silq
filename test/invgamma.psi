@@ -1,7 +1,0 @@
-
-def main() {
-    X := gamma(1,1);
-    Z := 1/X;
-    return Z; // expected: [-Z≤0]·[Z≠0]·[∫dξ₁[-ξ₁≤0]·[ξ₁≠0]·⅟e^(⅟ξ₁)·⅟ξ₁²≠0]·⅟(∫dξ₁[-ξ₁≤0]·[ξ₁≠0]·⅟e^(⅟ξ₁)·⅟ξ₁²)·⅟Z²·⅟e^(⅟Z)
-	// TODO: compute normalization constant
-}

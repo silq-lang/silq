@@ -1,6 +1,0 @@
-def main(){
-    a := uniform(0,1);
-    b := uniform(-1,0);
-    c := a*b;
-    return c; // expected: -[-1+-c≤0]·[c≠0]·[c≤0]·log(-c)
-}

@@ -1,8 +1,0 @@
-def main(){
-    evidence := flip(1/2);
-    if evidence {
-        coin := flip(1/2);
-        observe(coin);
-    }
-    return evidence; // expected: 1/3·δ(1)[evidence]+2/3·δ(0)[evidence]
-}

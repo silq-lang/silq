@@ -1,4 +1,0 @@
-def main(){
-    x := uniformInt(0,-1);
-    return; // expected: 0
-}

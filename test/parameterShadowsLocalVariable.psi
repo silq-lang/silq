@@ -1,5 +1,0 @@
-def main(){
-	x := uniform(0,1);
-	def foo(x){ return x; }
-	return foo(x); // expected: [-1+r≤0]·[-r≤0]
-}

@@ -1,5 +1,0 @@
-
-def main(){
-	return expectation(Geometric(1/2)); // expected: δ(1)[r]
-	// TODO: discrete antiderivative for 2ⁱ·i
-}

@@ -1,4 +1,0 @@
-def main(){
-	x := geometric(1/2);
-	return Expectation(x^2); // expected: δ(3)[r]
-}

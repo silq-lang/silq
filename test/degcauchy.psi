@@ -1,3 +1,0 @@
-def main(){
-	return cauchy(7.34,0); // expected: δ(367/50)[r]
-}

@@ -1,7 +1,0 @@
-def main(){
-    // Gagandeep: "My friend put wine on her computer, and it stopped working."
-    gagandeepMeansLinuxWine := bernoulli(9/10);
-    computerStopsWorking := if gagandeepMeansLinuxWine { bernoulli(1/1000) } else { bernoulli(9/10); };
-    observe(computerStopsWorking);
-    return gagandeepMeansLinuxWine; // expected: 1/101·δ(1)[gagandeepMeansLinuxWine]+100/101·δ(0)[gagandeepMeansLinuxWine]
-}

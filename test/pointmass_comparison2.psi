@@ -1,9 +1,0 @@
-
-def main(){
-    x := uniform(0,1);
-    if x < 1/2 {
-        x = 1;
-    }
-    z := x >= 1;
-    return z; // expected: 1/2·δ(0)[z]+1/2·δ(1)[z]
-}

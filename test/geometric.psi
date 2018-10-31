@@ -1,6 +1,0 @@
-
-def main(){
-	x:=geometric(1/3);
-	observe(x<=10);
-	return x; // expected: (∑_ξ₁(2/3)^ξ₁·[-ξ₁≤0]·δ(ξ₁)[x])·59049/175099·[-10+x≤0]
-}

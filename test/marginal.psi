@@ -1,6 +1,0 @@
-
-def main(){
-	x := flip(1/2);
-	k := Marginal(x);
-	return (x,sample(k),sample(k),expectation(k)); // expected: (1/2·δ(0)[r₁]+1/2·δ(1)[r₁])·(1/2·δ(0)[r₂]+1/2·δ(1)[r₂])·(1/2·δ(0)[x]+1/2·δ(1)[x])·δ(1/2)[r₃]
-}

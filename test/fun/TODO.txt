@@ -1,5 +1,0 @@
-mixtureOfGaussians
-bayesPointMachine
-trueSkill
-conference
-LDA

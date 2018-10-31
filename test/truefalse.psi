@@ -1,5 +1,0 @@
-def main(){
-    r := true;
-    if true { r = false }
-    return r; // expected: δ(0)[r]
-}

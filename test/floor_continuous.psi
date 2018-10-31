@@ -1,3 +1,0 @@
-def main(){
-	return floor(exponential(1))==0; // expected: TODO: (-⅟e+1)·δ(0)[-r₁+1]+δ(0)[-r₁]·⅟e
-}

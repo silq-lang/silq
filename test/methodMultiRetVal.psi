@@ -1,8 +1,0 @@
-def Swapped(a,b){
-    return (b,a);
-}
-
-def main(){
-    (x,y) := Swapped(1,2);
-    return (x,y); // expected: δ(1)[y]·δ(2)[x]
-}

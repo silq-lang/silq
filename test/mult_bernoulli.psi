@@ -1,7 +1,0 @@
-
-def main(){
-    a := bernoulli(1/2);
-    b := bernoulli(1/3);
-    c := a*b;
-    return (a,c); // expected: (1/2·δ(0)[a]+1/2·δ(1)[a])·(1/3·δ(0)[-a+c]+2/3·δ(0)[c])
-}

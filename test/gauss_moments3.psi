@@ -1,5 +1,0 @@
-
-def main(){
-    x := gauss(0,1);
-    return Expectation(x^6); // expected: δ(15)[r]
-}

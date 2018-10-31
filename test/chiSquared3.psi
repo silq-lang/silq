@@ -1,3 +1,0 @@
-def main(){
-	return chiSquared(2); // expected: 1/2·[-r≤0]·⅟e^(1/2·r)
-}

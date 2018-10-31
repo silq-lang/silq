@@ -1,6 +1,0 @@
-def main(){ // divide
-    x := uniform(0,1);
-    y := uniform(-1,1);
-    z := x/y;
-    return (); // expected: 1
-}

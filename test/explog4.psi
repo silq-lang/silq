@@ -1,4 +1,0 @@
-def main(){
-	x := uniform(0,1);
-	return 2^x; // expected: [-1+log(r)·⅟log(2)≤0]·[-r+1≤0]·⅟log(2)·⅟r
-}

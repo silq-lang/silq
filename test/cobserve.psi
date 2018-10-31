@@ -1,7 +1,0 @@
-
-def main(){
-    x := uniform(0,1);
-    y := uniform(x,2*x);
-    cobserve(y,2/3);
-    return x; // expected: [-2/3+x≤0]·[-x+1/3≤0]·⅟log(2)·⅟x
-}

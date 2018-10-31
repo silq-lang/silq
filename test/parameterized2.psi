@@ -1,6 +1,0 @@
-def main(arg1,arg2){
-    if(arg1 != arg2){
-        observe(arg1 == arg2);
-    }
-    return; // expected: [-arg2+arg1=0]
-}

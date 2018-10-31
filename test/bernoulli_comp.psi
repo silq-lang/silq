@@ -1,7 +1,0 @@
-def main(){
-    x := bernoulli(1/2);
-    y := x<=1;
-    z := x<1;
-    return (y,z); // expected: 1/2·δ(0)[z]·δ(1)[y]+1/2·δ(1)[y]·δ(1)[z]
-    // TODO: maybe it makes sense to manipulate this in factorized form; certainly it should be returned that way
-}

@@ -1,7 +1,0 @@
-// compilation error
-
-def main(){
-    x := 0;
-    while x<3{ x+=1 }
-    return x; // expected: TODO: δ(0)[-x+3]
-}

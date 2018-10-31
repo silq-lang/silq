@@ -1,4 +1,0 @@
-
-def main(){
-    return pareto(3,0.1); // expected: 3/1000·[-r+1/10≤0]·⅟r⁴
-}

@@ -1,6 +1,0 @@
-
-def main(a){
-    x := gauss(a,1);
-    y := x - x;
-    return y; // expected: δ(0)[y]
-}

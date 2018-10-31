@@ -1,8 +1,0 @@
-
-def main(){
-    x := gauss(0,1);
-    y := uniform(0,1);
-    z := x+y;
-    return z; // expected: ((d/dx)⁻¹[e^(-x²)](-z·⅟√̅2+⅟√̅2)·e^(1/2·z²)+-(d/dx)⁻¹[e^(-x²)](-z·⅟√̅2)·e^(1/2·z²))·[∫dξ₁((d/dx)⁻¹[e^(-x²)](-ξ₁·⅟√̅2+⅟√̅2)·e^(1/2·ξ₁²)+-(d/dx)⁻¹[e^(-x²)](-ξ₁·⅟√̅2)·e^(1/2·ξ₁²))·⅟e^(1/2·ξ₁²)≠0]·⅟(∫dξ₁((d/dx)⁻¹[e^(-x²)](-ξ₁·⅟√̅2+⅟√̅2)·e^(1/2·ξ₁²)+-(d/dx)⁻¹[e^(-x²)](-ξ₁·⅟√̅2)·e^(1/2·ξ₁²))·⅟e^(1/2·ξ₁²))·⅟e^(1/2·z²)
-   // TODO: the analysis should be able to evaluate the normalization factor!
-}

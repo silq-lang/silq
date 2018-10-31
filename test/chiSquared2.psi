@@ -1,4 +1,0 @@
-
-def main(k){
-	return expectation(ChiSquared(k)); // expected: TODO: δ(0)[-r₁+k]
-}

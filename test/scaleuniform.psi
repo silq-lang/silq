@@ -1,6 +1,0 @@
-def main(){
-    x := uniform(0,1);
-    k := 2;
-    y := k*x;
-    return y; // expected: 1/2·[-2+y≤0]·[-y≤0]
-}

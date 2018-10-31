@@ -1,5 +1,0 @@
-def main(){
-	p := beta(0,0);
-	observe(flip(p));
-	return (p,beta(0,0),beta(1,0),beta(0,1)); // expected: (1/2·δ(0)[r₁]+1/2·δ(1)[r₁])·(δ(0)[p]+δ(1)[p])·[-1+p≤0]·[-p≤0]·p·δ(0)[r₃]·δ(1)[r₂]
-}

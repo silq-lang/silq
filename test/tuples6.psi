@@ -1,9 +1,0 @@
-def foo(a,b){
-    return ((a,b),(b,a));
-}
-def main(){
-    k:=foo(1,2)[1];
-    k[0]+=3;
-    k[1]+=k[0];
-    return k; // expected: δ(5)[k₁]·δ(6)[k₂]
-}

@@ -1,9 +1,0 @@
-def main(){
-    //x := gauss(0,1);
-    //y := x<0;
-
-    a := gauss(0,1);
-    b := gauss(0,1);
-    c := a < b;
-    return c; // expected: 1/2·δ(0)[c]+1/2·δ(1)[c]
-}

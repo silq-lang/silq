@@ -1,3 +1,0 @@
-def main(){
-	return infer(()=>bernoulli(1/2)); // expected: δ(Λξ₁. 1/2·δ(val(0))[ξ₁]+1/2·δ(val(1))[ξ₁])[r]
-}

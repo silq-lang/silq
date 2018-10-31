@@ -1,3 +1,0 @@
-def main(){
-	return chiSquared(0); // expected: δ(0)[r]
-}

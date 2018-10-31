@@ -1,4 +1,0 @@
-def main(){
-	y := infer((){ assert(0); });
-	return y; // expected: δ(Λξ₁. δ(⊥)[ξ₁])[y]
-}

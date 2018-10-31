@@ -1,6 +1,0 @@
-def f()=>(1,2);
-def call[b](x:𝟙 → b)=>x();
-def main(){
-    xs:=call[ℝ×ℝ](f);
-    return xs; // expected: δ(1)[xs₁]·δ(2)[xs₂]
-}

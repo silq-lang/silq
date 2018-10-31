@@ -1,4 +1,0 @@
-dat Cell{ x : ℝ; }
-def main(a : Cell[]){
-    return ([]:Cell[])~a~([]:Cell[]); // expected: δ(a)[r]
-}

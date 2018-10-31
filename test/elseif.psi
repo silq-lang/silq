@@ -1,7 +1,0 @@
-def main(){
-    x := 0;
-    if flip(1/2){ x = 1; }
-    else if flip(1/2){ x = 2; }
-    else { x = 3; }
-    return x; // expected: 1/2·δ(1)[x]+1/4·δ(2)[x]+1/4·δ(3)[x]
-}

@@ -1,5 +1,0 @@
-
-def main(){
-	if (x){ return x; }(2)==2{ return 1; }
-	return 0; // expected: δ(1)[r]
-}

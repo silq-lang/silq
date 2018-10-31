@@ -1,8 +1,0 @@
-//skipped
-
-def main() {
-    X := pareto(3,1);
-    Y := pareto(3,1);
-    //Z := pareto(3,1);
-    return X + Y;
-}

@@ -1,3 +1,0 @@
-def main(){
-    return gamma(0,1); // expected: δ(0)[r]
-}

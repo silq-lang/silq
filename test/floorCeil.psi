@@ -1,6 +1,0 @@
-
-def main(){
-    x := floor(uniformInt(1,5)/2);
-    y := ceil(uniformInt(1,5)/2);
-    return (x,y); // expected: (1/5·δ(0)[x]+2/5·δ(1)[x]+2/5·δ(2)[x])·(1/5·δ(3)[y]+2/5·δ(1)[y]+2/5·δ(2)[y])
-}

@@ -1,6 +1,0 @@
-// skipped
-// TODO: by-reference passing?
-
-def swap[T](ref a:T,ref b:T){
-    (a,b) = (b,a);
-}

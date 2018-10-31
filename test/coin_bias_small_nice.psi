@@ -1,8 +1,0 @@
-def main(){
-    p := uniform(0,1);
-    r := [1,1,0,1,0];
-    for i in [0..r.length){
-        observe(flip(p)==r[i]);
-    }
-    return p; // expected: (-120·p⁴+60·p³+60·p⁵)·[-1+p≤0]·[-p≤0]
-}

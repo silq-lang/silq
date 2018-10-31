@@ -1,7 +1,0 @@
-
-def id[a](x:a)=>x;
-
-def main(){
-    x:=2;
-    return id(()=>x)()+id(3); // expected: δ(5)[r]
-}

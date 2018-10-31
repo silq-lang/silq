@@ -1,5 +1,0 @@
-
-def main(){
-    x:= rayleigh(10);
-    return x; // expected: 1/10·[-x≤0]·x·⅟e^(1/20·x²)
-}

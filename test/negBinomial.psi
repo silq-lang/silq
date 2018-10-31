@@ -1,8 +1,0 @@
-
-def main(){
-	p := uniform(0,1);
-	a := expectation(NegBinomial(1,p));
-	b := expectation(Geometric(p));
-	assert(a!=b);
-	return (); // expected: 0
-}

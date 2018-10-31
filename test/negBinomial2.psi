@@ -1,9 +1,0 @@
-
-def main(){
-	return expectation(infer((){
-		p := uniform(0,1);
-		x := negBinomial(2,p);
-		observe(x<=10); // TODO: make work in unbounded case
-		return x;
-	})); // expected: δ(300533/152460)[r]
-}

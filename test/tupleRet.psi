@@ -1,6 +1,0 @@
-def a()=>(1,2);
-def b()=>a();
-def main(){
-    c:=b();
-    return c; // expected: δ(1)[c₁]·δ(2)[c₂]
-}

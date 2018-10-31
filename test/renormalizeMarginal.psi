@@ -1,4 +1,0 @@
-def main(){
-	observe(flip(1/2));
-	return expectation(Marginal(uniform(0,1))); // expected: δ(1/2)[r]
-}

@@ -1,6 +1,0 @@
-
-def main(){
-    x := 0;
-    if flip(1/2){ x=1; }
-    return x; // expected: 1/2·δ(0)[x]+1/2·δ(1)[x]
-}

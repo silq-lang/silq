@@ -1,6 +1,0 @@
-
-def main(){
-    x := uniform(0,1);
-    y := x > 1 || x < 0;
-    return y; // expected: δ(0)[y]
-}

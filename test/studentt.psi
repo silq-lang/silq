@@ -1,6 +1,0 @@
-
-def main(){
-    x := studentT(2);
-    return x; // expected: ⅟(1+1/2·x²)^(3/2)·⅟(∫dξ₁⅟(1+1/2·ξ₁²)^(3/2))
-    // TODO: evaluate normalization constant?
-}
