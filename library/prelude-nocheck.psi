@@ -95,10 +95,10 @@ def dirac[a](x:a) ⇒ x;
 def Dirac[a](x:a) ⇒ infer(()=>x);
 
 def dirichlet(α: ℝ[]){
-	r:=array(α.length,0);
-	sum:=0;
+	r:=array(α.length,0.0);
+	sum:=0.0;
 	for i in [0..α.length){
-		r[i]=gamma(α[i],1);
+		r[i]=gamma(α[i],1.0);
 		sum+=r[i];
 	}
 	for i in [0..α.length){
@@ -110,7 +110,7 @@ def Dirichlet(α: ℝ[]) ⇒ infer(()=>dirichlet(α));
 
 def multiGauss(μ: ℝ[], Σ: ℝ[][]){
 	def mmv(A: ℝ[][], b: ℝ[]){
-		r:=array(A.length,0);
+		r:=array(A.length,0.0);
 		for i in [0..A.length){
 			for j in [0..b.length){
 				r[i]+=A[i][j]*b[j];
@@ -119,21 +119,21 @@ def multiGauss(μ: ℝ[], Σ: ℝ[][]){
 		return r;
 	}
 	def avv(a: ℝ[], b: ℝ[]){
-		r:=array(a.length,0);
+		r:=array(a.length,0.0);
 		for i in [0..a.length){
 			r[i]=a[i]+b[i];
 		}
 		return r;
 	}
 	def dot(a: ℝ[], b: ℝ[]){
-		r:=0;
+		r:=0.0;
 		for i in [0..a.length){
 			r+=a[i]*b[i];
 		}
 		return r;
 	}
 	def cholesky(A: ℝ[][]){
-		L := array(A.length,array(A.length,0));
+		L := array(A.length,array(A.length,0.0));
 		for i in [0..A.length){
 			for j in [0..i]{
 				t := dot(L[i][0..j],L[j][0..j]);
@@ -146,7 +146,7 @@ def multiGauss(μ: ℝ[], Σ: ℝ[][]){
 		}
 		return L;
 	}
-	r := array(μ.length,0);
+	r := array(μ.length,0.0);
 	for i in [0..r.length){
 		r[i] = gauss(0,1);
 	}
