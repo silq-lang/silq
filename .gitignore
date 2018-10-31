@@ -1,6 +1,6 @@
 *~
 *.o
-psi
+hql
 *.def
 *.log
 test/runtests
