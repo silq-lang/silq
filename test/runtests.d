@@ -34,7 +34,7 @@ auto to(string unit,T)(Duration d)if(unit=="seconds"||unit=="msecs"){
 }
 
 void main(){
-	auto sources=shell("find . -name '*.psi' -type f").splitLines;
+	auto sources=shell("find . -name '*.hql' -type f").splitLines;
 	Summary total;
 	int skipped=0,passed=0;
 	bool colorize=isATTy(stdout);

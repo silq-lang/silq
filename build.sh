@@ -12,7 +12,7 @@ else
 fi
 
 # debug build
-$DMD -g -debug -J. -Jlibrary *.d -ofpsi
+$DMD -g -debug -J. -Jlibrary *.d -ofhql
 
 if [ ! -f "test/runtests" ]; then
     $DMD test/runtests.d -oftest/runtests

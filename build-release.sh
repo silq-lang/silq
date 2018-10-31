@@ -16,8 +16,8 @@ fi
 
 # release build
 # TODO: make sure tests run correctly with release build
-$LDMD -O -release -inline -boundscheck=off -J. -Jlibrary *.d -ofpsi
-# ldmd2 -O -release -inline -J. -Jlibrary *.d -ofllpsi
+$LDMD -O -release -inline -boundscheck=off -J. -Jlibrary *.d -ofhql
+# ldmd2 -O -release -inline -J. -Jlibrary *.d -ofllhql
 
 if [ ! -f "test/runtests" ]; then
     $LDMD test/runtests.d -oftest/runtests
