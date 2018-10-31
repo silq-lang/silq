@@ -43,10 +43,6 @@ int run(string path){
 	auto be=Backend.create(path);
 	if(err.nerrors) return 1;
 	if("main" !in functions){
-		if(opt.casBench && functions.length>1){
-			stderr.writeln("cannot extract benchmark: no entry point");
-			return 1;
-		}
 		foreach(expr;exprs){
 			if(auto fd=cast(FunctionDef)expr){
 				writeln(fd.name,":");
@@ -89,7 +85,6 @@ int main(string[] args){
 			case "--nonormalize": opt.noNormalize=true; break;
 			case "--trace": opt.trace=true; break;
 			case "--expectation": opt.expectation=true; break;
-			case "--casbench": opt.casBench=true; break;
 			case "--gnuplot": opt.formatting=Format.gnuplot; break;
 			case "--matlab": opt.formatting=Format.matlab; break;
 			case "--maple": opt.formatting=Format.maple; break;

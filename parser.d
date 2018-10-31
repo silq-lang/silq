@@ -893,10 +893,10 @@ string readCode(File f){
 string readCode(string path){ return readCode(File(path)); }
 
 @property string preludePath(){
-	// TODO: use conditional compilation within prelude.psi instead
+	// TODO: use conditional compilation within prelude.hql instead
 	import options;
-	if(opt.noCheck) return "prelude-nocheck.psi";
-	return "prelude.psi";
+	if(opt.noCheck) return "prelude-nocheck.hql";
+	return "prelude.hql";
 }
 int parseFile(string path,ErrorHandler err,ref Expression[] r,Location loc=Location.init){
 	string code;
@@ -906,9 +906,9 @@ int parseFile(string path,ErrorHandler err,ref Expression[] r,Location loc=Locat
 		if(!file.exists(path)){
 			// bake prelude into binary as a fallback
 			if(path==preludePath()){
-				assert(path=="prelude.psi" || path=="prelude-nocheck.psi");
-				if(path=="prelude.psi") code = import("prelude.psi") ~ "\0\0\0\0";
-				else code=import("prelude-nocheck.psi") ~ "\0\0\0\0";
+				assert(path=="prelude.hql" || path=="prelude-nocheck.hql");
+				if(path=="prelude.hql") code = import("prelude.hql") ~ "\0\0\0\0";
+				else code=import("prelude-nocheck.hql") ~ "\0\0\0\0";
 			}else error = path ~ ": no such file";
 		}else error = path ~ ": error reading file";
 		if(error){
