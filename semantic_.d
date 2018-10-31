@@ -1235,7 +1235,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 			return e;
 		e.type=determineType(e1.type);
 		if(!e.type){
-			sc.error(format("incompatible type %s for %s",e1.type,name),e1.loc);
+			sc.error(format("incompatible type %s for %s",e1.type,name),e.loc);
 			e.sstate=SemState.error;
 		}
 		return e;
