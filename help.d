@@ -6,8 +6,8 @@ import options,util;
 enum commit = tryImport!(".git/"~tryImport!(".git/HEAD","ref: ")["ref: ".length..$],"unknown commit");
 
 // TODO: auto-format depending on size of console
-enum help=`PSI solver
-Usage: psi [OPTION]... [FILE]...
+enum help=`HQL compiler
+Usage: hql [OPTION]... [FILE]...
 
 The options below may be used.
 --dp                use dynamic programming backend for discrete distributions (experimental)
@@ -38,9 +38,8 @@ The options below may be used.
 --distributions     print information about supported primitive distributions and exit
 --help              display this help and exit
 
-Recognized file extensions: *.psi
+Recognized file extensions: *.hql
 
-Source code: http://psisolver.org/
 Commit: `~commit~`
 `;
 
@@ -48,7 +47,7 @@ Commit: `~commit~`
 enum syntax="input language syntax (example)
 see 'test' directory for more examples
 
-"~tryImport!("test/synopsis.psi","example not available for this build.\nConsult http://psisolver.org")["// skipped\n\n".length..$];
+"~tryImport!("test/synopsis.hql","example not available for this build.")["// skipped\n\n".length..$];
 
 
 string computeDistributionDocString(){
