@@ -96,7 +96,7 @@ Expression presemantic(Declaration expr,Scope sc){
 		auto dsc=new DataScope(sc,dat);
 		assert(!dat.dscope_);
 		dat.dscope_=dsc;
-		dat.dtype=new AggregateTy(dat);
+		dat.dtype=new AggregateTy(dat,!dat.isQuantum);
 		if(dat.hasParams) declareParameters(dat,true,dat.params,dsc);
 		if(!dat.body_.ascope_) dat.body_.ascope_=new AggregateScope(dat.dscope_);
 		if(cast(NestedScope)sc) dat.context = addVar("`outer",contextTy(),dat.loc,dsc);
@@ -184,7 +184,7 @@ Expression presemantic(Declaration expr,Scope sc){
 			assert(fd.isTuple||pty.length==1);
 			auto pt=fd.isTuple?tupleTy(pty):pty[0];
 			if(!fd.ret) fd.sstate=SemState.error;
-			else fd.ftype=productTy(pn,pt,fd.ret,fd.isSquare,fd.isTuple);
+			else fd.ftype=productTy(pn,pt,fd.ret,fd.isSquare,fd.isTuple,false); // TODO: make function type classical if no quantum variables captured
 		}
 	}
 	return expr;
@@ -343,26 +343,26 @@ bool isBuiltIn(Identifier id){
 }
 
 Expression distributionTy(Expression base,Scope sc){
-	return typeSemantic(new CallExp(varTy("Distribution",funTy(typeTy,typeTy,true,false)),base,true),sc);
+	return typeSemantic(new CallExp(varTy("Distribution",funTy(typeTy,typeTy,true,false,true)),base,true),sc);
 }
 
 Expression builtIn(Identifier id,Scope sc){
 	Expression t=null;
 	switch(id.name){
-	case "readCSV": t=funTy(stringTy,arrayTy(ℝ),false,false); break;
-	case "π": t=ℝ; break;
+	case "readCSV": t=funTy(stringTy(true),arrayTy(ℝ(true)),false,false,true); break;
+	case "π": t=ℝ(true); break;
 	case "Marginal","sampleFrom": t=unit; break; // those are actually magic polymorphic functions
-	case "Expectation": t=funTy(ℝ,ℝ,false,false); break;
+	case "Expectation": t=funTy(ℝ(false),ℝ(false),false,false,true); break; // TODO: should be lifted
 	case "*","𝟙","𝟚","B","𝔹","N","ℕ","Z","ℤ","Q","ℚ","R","ℝ","C","ℂ":
 		id.type=typeTy;
 		if(id.name=="*") return typeTy;
 		if(id.name=="𝟙") return unit;
-		if(id.name=="𝟚"||id.name=="B"||id.name=="𝔹") return Bool;
-		if(id.name=="N"||id.name=="ℕ") return ℕt;
-		if(id.name=="Z"||id.name=="ℤ") return ℤt;
-		if(id.name=="Q"||id.name=="ℚ") return ℚt;
-		if(id.name=="R"||id.name=="ℝ") return ℝ;
-		if(id.name=="C"||id.name=="ℂ") return ℂ;
+		if(id.name=="𝟚"||id.name=="B"||id.name=="𝔹") return Bool(false);
+		if(id.name=="N"||id.name=="ℕ") return ℕt(false);
+		if(id.name=="Z"||id.name=="ℤ") return ℤt(false);
+		if(id.name=="Q"||id.name=="ℚ") return ℚt(false);
+		if(id.name=="R"||id.name=="ℝ") return ℝ(false);
+		if(id.name=="C"||id.name=="ℂ") return ℂ(false);
 	default: return null;
 	}
 	id.type=t;
@@ -388,7 +388,7 @@ Expression builtIn(FieldExp fe,Scope sc)in{
 	if(fe.f.meaning) return null;
 	if(auto at=cast(ArrayTy)fe.e.type){
 		if(fe.f.name=="length"){
-			fe.type=ℕt;
+			fe.type=ℕt(fe.e.type.isClassical());
 			fe.f.sstate=SemState.completed;
 			return fe;
 		}else return null;
@@ -459,8 +459,8 @@ Expression statementSemantic(Expression e,Scope sc){
 		ite.cond=expressionSemantic(ite.cond,sc);
 		ite.then=compoundExpSemantic(ite.then,sc);
 		if(ite.othw) ite.othw=compoundExpSemantic(ite.othw,sc);
-		if(ite.cond.sstate==SemState.completed && ite.cond.type!is Bool){
-			sc.error(format("type of condition should be 𝔹, not %s",ite.cond.type),ite.cond.loc);
+		if(ite.cond.sstate==SemState.completed && ite.cond.type!is Bool(true)){
+			sc.error(format("type of condition should be !𝔹, not %s",ite.cond.type),ite.cond.loc);
 			ite.sstate=SemState.error;
 		}
 		propErr(ite.cond,ite);
@@ -480,17 +480,17 @@ Expression statementSemantic(Expression e,Scope sc){
 	if(auto fe=cast(ForExp)e){
 		auto fesc=new ForExpScope(sc,fe);
 		fe.left=expressionSemantic(fe.left,sc);
-		if(fe.left.sstate==SemState.completed && !isSubtype(fe.left.type, ℝ)){
-			sc.error(format("lower bound for loop variable should be a number, not %s",fe.left.type),fe.left.loc);
+		if(fe.left.sstate==SemState.completed && !isSubtype(fe.left.type, ℝ(true))){
+			sc.error(format("lower bound for loop variable should be a classical number, not %s",fe.left.type),fe.left.loc);
 			fe.sstate=SemState.error;
 		}
 		fe.right=expressionSemantic(fe.right,sc);
-		if(fe.right.sstate==SemState.completed && !isSubtype(fe.right.type, ℝ)){
-			sc.error(format("upper bound for loop variable should be a number, not %s",fe.right.type),fe.right.loc);
+		if(fe.right.sstate==SemState.completed && !isSubtype(fe.right.type, ℝ(true))){
+			sc.error(format("upper bound for loop variable should be a classical number, not %s",fe.right.type),fe.right.loc);
 			fe.sstate=SemState.error;
 		}
 		auto vd=new VarDecl(fe.var);
-		vd.vtype=fe.left.type && fe.right.type ? joinTypes(fe.left.type, fe.right.type) : ℤt;
+		vd.vtype=fe.left.type && fe.right.type ? joinTypes(fe.left.type, fe.right.type) : ℤt(true);
 		vd.loc=fe.var.loc;
 		if(!fesc.insert(vd))
 			fe.sstate=SemState.error;
@@ -514,7 +514,7 @@ Expression statementSemantic(Expression e,Scope sc){
 	}
 	if(auto re=cast(RepeatExp)e){
 		re.num=expressionSemantic(re.num,sc);
-		if(re.num.sstate==SemState.completed && !isSubtype(re.num.type, ℝ)){
+		if(re.num.sstate==SemState.completed && !isSubtype(re.num.type, ℝ(true))){
 			sc.error(format("number of iterations should be a number, not %s",re.num.type),re.num.loc);
 			re.sstate=SemState.error;
 		}
@@ -526,8 +526,8 @@ Expression statementSemantic(Expression e,Scope sc){
 	}
 	if(auto oe=cast(ObserveExp)e){
 		oe.e=expressionSemantic(oe.e,sc);
-		if(oe.e.sstate==SemState.completed && oe.e.type!is Bool){
-			sc.error(format("type of condition should be 𝔹, not %s",oe.e.type),oe.e.loc);
+		if(oe.e.sstate==SemState.completed && oe.e.type!is Bool(true)){
+			sc.error(format("type of condition should be !𝔹, not %s",oe.e.type),oe.e.loc);
 			oe.sstate=SemState.error;
 		}
 		propErr(oe.e,oe);
@@ -541,8 +541,8 @@ Expression statementSemantic(Expression e,Scope sc){
 		propErr(oe.val,oe);
 		if(oe.sstate==SemState.error)
 			return oe;
-		if(oe.var.type!is ℝ || oe.val.type !is ℝ){
-			sc.error("both arguments to cobserve should be real numbers",oe.loc);
+		if(oe.var.type!is ℝ(true) || oe.val.type !is ℝ(true)){
+			sc.error("both arguments to cobserve should be classical real numbers",oe.loc);
 			oe.sstate=SemState.error;
 		}
 		oe.type=unit;
@@ -550,8 +550,8 @@ Expression statementSemantic(Expression e,Scope sc){
 	}
 	if(auto ae=cast(AssertExp)e){
 		ae.e=expressionSemantic(ae.e,sc);
-		if(ae.e.sstate==SemState.completed && ae.e.type!is Bool){
-			sc.error(format("type of condition should be 𝔹, not %s",ae.e.type),ae.e.loc);
+		if(ae.e.sstate==SemState.completed && ae.e.type!is Bool(true)){
+			sc.error(format("type of condition should be !𝔹, not %s",ae.e.type),ae.e.loc);
 			ae.sstate=SemState.error;
 		}
 		propErr(ae.e,ae);
@@ -594,8 +594,8 @@ Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
 		if(auto id=cast(Identifier)ce.e){
 			if(id.name=="array" && !ce.isSquare){ // TODO: this is legacy. get rid of this.
 				ce.arg=expressionSemantic(ce.arg,sc);
-				if(isSubtype(ce.arg.type,ℝ)){
-					ce.e.type=funTy(ℝ,arrayTy(ℝ),false,false);
+				if(isSubtype(ce.arg.type,ℝ(true))){
+					ce.e.type=funTy(ℝ(true),arrayTy(ℝ(true)),false,false,true);
 					ce.e.sstate=SemState.completed;
 				}
 			}
@@ -804,7 +804,7 @@ Expression callSemantic(CallExp ce,Scope sc){
 						if(auto constructor=cast(FunctionDef)decl.body_.ascope_.lookup(decl.name,false,false)){
 							if(auto cty=cast(FunTy)typeForDecl(constructor)){
 								assert(ft.cod is typeTy);
-								nft=productTy(ft.names,ft.dom,cty,ft.isSquare,ft.isTuple);
+								nft=productTy(ft.names,ft.dom,cty,ft.isSquare,ft.isTuple,true);
 							}
 						}
 					}
@@ -935,11 +935,6 @@ Expression expressionSemantic(Expression expr,Scope sc){
 	}
 	if(auto ce=cast(CallExp)expr)
 		return expr=callSemantic(ce,sc);
-	if(auto pl=cast(PlaceholderExp)expr){
-		pl.type = ℝ;
-		pl.sstate = SemState.completed;
-		return pl;
-	}
 	if(auto id=cast(Identifier)expr){
 		id.scope_=sc;
 		auto meaning=id.meaning;
@@ -1072,8 +1067,8 @@ Expression expressionSemantic(Expression expr,Scope sc){
 				sc.error(format("only one index required to index type %s",at),idx.loc);
 				idx.sstate=SemState.error;
 			}else{
-				if(!isSubtype(idx.a[0].type,ℝ)){
-					sc.error(format("index should be number, not %s",idx.a[0].type),idx.loc);
+				if(!isSubtype(idx.a[0].type,ℝ(true))){
+					sc.error(format("index should be classical number, not %s",idx.a[0].type),idx.loc);
 					idx.sstate=SemState.error;
 				}else{
 					idx.type=at.next;
@@ -1113,12 +1108,12 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		propErr(sl.r,sl);
 		if(sl.sstate==SemState.error)
 			return sl;
-		if(!isSubtype(sl.l.type,ℝ)){
-			sc.error(format("lower bound should be number, not %s",sl.l.type),sl.l.loc);
+		if(!isSubtype(sl.l.type,ℝ(true))){
+			sc.error(format("lower bound should be classical number, not %s",sl.l.type),sl.l.loc);
 			sl.l.sstate=SemState.error;
 		}
-		if(!isSubtype(sl.r.type,ℝ)){
-			sc.error(format("upper bound should be number, not %s",sl.r.type),sl.r.loc);
+		if(!isSubtype(sl.r.type,ℝ(true))){
+			sc.error(format("upper bound should be classical number, not %s",sl.r.type),sl.r.loc);
 			sl.r.sstate=SemState.error;
 		}
 		if(sl.sstate==SemState.error)
@@ -1196,7 +1191,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		}
 		if(arr.e.length && t){
 			if(arr.e[0].type) arr.type=arrayTy(t);
-		}else arr.type=arrayTy(ℝ); // TODO: type inference?
+		}else arr.type=arrayTy(ℝ(true)); // TODO: type inference?
 		return arr;
 	}
 	if(auto tae=cast(TypeAnnotationExp)expr){
@@ -1213,12 +1208,12 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		}
 		if(auto ce=cast(CallExp)tae.e)
 			if(auto id=cast(Identifier)ce.e){
-				if(id.name=="sampleFrom"||id.name=="readCSV"&&tae.type==arrayTy(arrayTy(ℝ)))
+				if(id.name=="sampleFrom"||id.name=="readCSV"&&tae.type==arrayTy(arrayTy(ℝ(true))))
 					ce.type=tae.type;
 			}
 		bool ok=false;
 		if(cast(LiteralExp)tae.e){
-			if(isSubtype(tae.e.type,ℝ)&&isSubtype(ℚt,tae.type))
+			if(isSubtype(tae.e.type,ℝ(false))&&isSubtype(ℚt(true),tae.type))
 				ok=true;
 		}
 		if(!ok && !isSubtype(tae.e.type,tae.type)){
@@ -1272,48 +1267,55 @@ Expression expressionSemantic(Expression expr,Scope sc){
 	static Expression arithmeticType(bool preserveBool)(Expression t1, Expression t2){
 		if(!isNumeric(t1)||!isNumeric(t2)) return null;
 		auto r=joinTypes(t1,t2);
-		static if(!preserveBool) if(r==Bool) return ℕt;
+		static if(!preserveBool){
+			if(r==Bool(true)) return ℕt(true);
+			if(r==Bool(false)) return ℕt(false);
+		}
 		return r;
 	}
 	static Expression subtractionType(Expression t1, Expression t2){
 		auto r=arithmeticType!false(t1,t2);
-		return r==ℕt?ℤt:r;
+		return r==ℕt(true)?ℤt(true):r==ℕt(false)?ℤt(false):r;
 	}
 	static Expression divisionType(Expression t1, Expression t2){
 		auto r=arithmeticType!false(t1,t2);
-		return util.among(r,Bool,ℕt,ℤt)?ℚt:r;
+		return util.among(r,Bool(true),ℕt(true),ℤt(true))?ℚt(true):
+			util.among(r,Bool(false),ℕt(false),ℤt(false))?ℚt(false):r;
 	}
 	static Expression iDivType(Expression t1, Expression t2){
-		if(!isNumeric(t1)||!isNumeric(t2)||t1==ℂ||t2==ℂ) return null;
-		return (t1==Bool||t1==ℕt)&&(t2==Bool||t2==ℕt)?ℕt:ℤt;
+		if(!isNumeric(t1)||!isNumeric(t2)||cast(ℂTy)t1||cast(ℂTy)t2) return null;
+		bool classical=t1.isClassical()&&t2.isClassical();
+		return (cast(BoolTy)t1||cast(ℕTy)t1)&&(cast(BoolTy)t2||cast(ℕTy)t2)?ℕt(classical):ℤt(classical);
 	}
 	static Expression moduloType(Expression t1, Expression t2){
 		auto r=arithmeticType!false(t1,t2);
-		return r==ℤt?ℕt:r; // TODO: more general range information?
+		return r==ℤt(true)?ℕt(true):r==ℤt(false)?ℕt(false):r; // TODO: more general range information?
 	}
 	static Expression powerType(Expression t1, Expression t2){
+		bool classical=t1.isClassical()&&t2.isClassical();
 		if(!isNumeric(t1)||!isNumeric(t2)) return null;
-		if(t2==Bool||t2==ℕt) return t1;
-		if(t1==ℂ||t2==ℂ) return ℂ;
-		if(util.among(t1,Bool,ℕt,ℤt,ℚt)&&t2==ℤt) return ℚt;
-		return ℝ; // TODO: good?
+		if(cast(BoolTy)t1||cast(ℕTy)t2) return Bool(classical);
+		if(cast(ℂTy)t1||cast(ℂTy)t2) return ℂ(classical);
+		if(util.among(t1,Bool(true),ℕt(true),ℤt(true),ℚt(true))&&cast(ℤTy)t2) return ℚt(t2.isClassical);
+		if(util.among(t1,Bool(false),ℕt(false),ℤt(false),ℚt(false))&&cast(ℤTy)t2) return ℚt(false);
+		return ℝ(classical); // TODO: good?
 	}
 	static Expression minusBitNotType(Expression t){
 		if(!isNumeric(t)) return null;
-		if(t==Bool||t==ℕt) return ℤt;
+		if(cast(BoolTy)t||cast(ℕTy)t) return ℤt(t.isClassical());
 		return t;
 	}
 	static Expression notType(Expression t){
-		if(t!=Bool) return null;
+		if(!cast(BoolTy)t) return null;
 		return t;
 	}
 	static Expression logicType(Expression t1,Expression t2){
-		if(t1!=Bool||t2!=Bool) return null;
-		return Bool;
+		if(!cast(BoolTy)t1||!cast(BoolTy)t2) return null;
+		return Bool(t1.isClassical()&&t2.isClassical());
 	}
 	static Expression cmpType(Expression t1,Expression t2){
-		if(!isNumeric(t1)||!isNumeric(t2)||t1==ℂ||t2==ℂ) return null;
-		return Bool;
+		if(!isNumeric(t1)||!isNumeric(t2)||cast(ℂTy)t1||cast(ℂTy)t2) return null;
+		return Bool(t1.isClassical()&&t2.isClassical());
 	}
 	if(auto ae=cast(AddExp)expr) return expr=handleBinary!(arithmeticType!false)("addition",ae,ae.e1,ae.e2);
 	if(auto ae=cast(SubExp)expr) return expr=handleBinary!subtractionType("subtraction",ae,ae.e1,ae.e2);
@@ -1377,7 +1379,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 			expr.sstate=SemState.error;
 			return expr;
 		}
-		return funTy(t1,t2,false,false);
+		return funTy(t1,t2,false,false,true);
 	}
 	if(auto fa=cast(RawProductTy)expr){
 		expr.type=typeTy();
@@ -1390,7 +1392,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		auto types=fa.params.map!(p=>p.vtype).array;
 		assert(fa.isTuple||types.length==1);
 		auto dom=fa.isTuple?tupleTy(types):types[0];
-		return productTy(names,dom,cod,fa.isSquare,fa.isTuple);
+		return productTy(names,dom,cod,fa.isSquare,fa.isTuple,false);
 	}
 	if(auto ite=cast(IteExp)expr){
 		ite.cond=expressionSemantic(ite.cond,sc);
@@ -1437,10 +1439,10 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		switch(lit.lit.type){
 		case Tok!"0",Tok!".0":
 			if(!expr.type)
-				expr.type=lit.lit.str.canFind(".")?ℝ:lit.lit.str.canFind("-")?ℤt:ℕt; // TODO: type inference
+				expr.type=lit.lit.str.canFind(".")?ℝ(true):lit.lit.str.canFind("-")?ℤt(true):ℕt(true); // TODO: type inference
 			return expr;
 		case Tok!"``":
-			expr.type=stringTy;
+			expr.type=stringTy(true);
 			return expr;
 		default: break; // TODO
 		}
@@ -1465,7 +1467,7 @@ bool setFtype(FunctionDef fd){
 	auto pt=fd.isTuple?tupleTy(pty):pty[0];
 	if(fd.ret){
 		if(!fd.ftype){
-			fd.ftype=productTy(pn,pt,fd.ret,fd.isSquare,fd.isTuple);
+			fd.ftype=productTy(pn,pt,fd.ret,fd.isSquare,fd.isTuple,false); // TODO: check whether all captures are classical
 			assert(fd.retNames==[]);
 		}
 		if(!fd.retNames) fd.retNames = new string[](fd.numReturns);
@@ -1644,7 +1646,7 @@ Expression typeForDecl(Declaration decl){
 		foreach(p;dat.params) if(!p.vtype) return unit; // TODO: ok?
 		assert(dat.isTuple||dat.params.length==1);
 		auto pt=dat.isTuple?tupleTy(dat.params.map!(p=>p.vtype).array):dat.params[0].vtype;
-		return productTy(dat.params.map!(p=>p.getName).array,pt,typeTy,true,dat.isTuple);
+		return productTy(dat.params.map!(p=>p.getName).array,pt,typeTy,true,dat.isTuple,true);
 	}
 	if(auto vd=cast(VarDecl)decl){
 		return vd.vtype;
@@ -1799,7 +1801,7 @@ Expression handleSampleFrom(CallExp ce,Scope sc){
 		ce.sstate=SemState.error;
 	}else{
 		 // TODO: this special casing is not very nice:
-		ce.type=info.retVars.length==1?ℝ:tupleTy((cast(Expression)ℝ).repeat(info.retVars.length).array);
+		ce.type=info.retVars.length==1?ℝ(true):tupleTy((cast(Expression)ℝ(true)).repeat(info.retVars.length).array);
 	}
 	return ce;
 }

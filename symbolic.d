@@ -270,7 +270,7 @@ private struct Analyzer{
 						// for obvious reasons, this will never fail:
 						dist.assertTrue(dNeqZ(total),"expectation can be computed only in feasible path");
 						auto tmp=dist.getTmpVar("__exp");
-						dist.distribute(dDelta(expct/total,tmp,ℝ));
+						dist.distribute(dDelta(expct/total,tmp,ℝ(true)));
 						return tmp;
 					default: break;
 					}
@@ -291,7 +291,7 @@ private struct Analyzer{
 				return r;
 			}
 			if(auto idx=cast(IndexExp)e){
-				if(idx.e.type == arrayTy(ℝ)){
+				if(idx.e.type == arrayTy(ℝ(true))){
 					if(auto id=cast(Identifier)idx.e) if(id.name in arrays){
 						auto r=indexArray(idx);
 						if(r) return r;
@@ -369,11 +369,11 @@ private struct Analyzer{
 			};
 			if(auto b=cast(AndExp)e){
 				auto zeroExp=new LiteralExp(Token(Tok!"0","0"));
-				zeroExp.type = ℝ;
+				zeroExp.type = ℝ(true);
 				return transformIte(b.e1,new CompoundExp([b.e2]),new CompoundExp([zeroExp]),true);
 			}else if(auto b=cast(OrExp)e){
 				auto oneExp=new LiteralExp(Token(Tok!"0","1"));
-				oneExp.type = ℝ;
+				oneExp.type = ℝ(true);
 				return transformIte(b.e1,new CompoundExp([oneExp]),new CompoundExp([b.e2]),true);
 			}else if(auto i=cast(IteExp)e){
 				return transformIte(i.cond,i.then,i.othw,true);
@@ -408,7 +408,7 @@ private struct Analyzer{
 	}
 
 	void trackDeterministic(DVar var,DExpr rhs,Expression ty){
-		if(ty != ℝ) return;
+		if(ty != ℝ(true)) return;
 		if(rhs){
 			if(auto nrhs=isObviouslyDeterministic(rhs)){
 				deterministic[var]=nrhs;
@@ -427,14 +427,14 @@ private struct Analyzer{
 		return e.simplify(one);
 	}
 
-	DExpr isDeterministic(DExpr e,Expression ty){ // TODO: track deterministic values for more complex datatypes than 'ℝ"?
-		if(ty != ℝ) return null;
+	DExpr isDeterministic(DExpr e,Expression ty){ // TODO: track deterministic values for more complex datatypes than 'ℝ(true)"?
+		if(ty != ℝ(true)) return null;
 		if(auto r=isObviouslyDeterministic(e))
 			return r;
 		// TODO: this is a glorious hack:
 		auto ndist=dist.dup();
 		auto tmp=ndist.getVar("tmp");
-		ndist.initialize(tmp,e,ℝ);
+		ndist.initialize(tmp,e,ℝ(true));
 		foreach(v;dist.freeVars) ndist.marginalize(v);
 		foreach(f;ndist.distribution.factors)
 			if(!cast(DDelta)f&&!cast(Dℚ)f)
@@ -448,7 +448,7 @@ private struct Analyzer{
 	}
 
 	Dℚ isDeterministicInteger(DExpr e){
-		if(auto r=isDeterministic(e,ℝ))
+		if(auto r=isDeterministic(e,ℝ(true)))
 			if(auto num=r.isInteger()) return num;
 		return null;
 	}
@@ -484,7 +484,7 @@ private struct Analyzer{
 	}
 
 	void evaluateArrayCall(Identifier id,CallExp call){
-		if(!isSubtype(call.arg.type,ℝ)){
+		if(!isSubtype(call.arg.type,ℝ(true))){
 			err.error("expected one real argument to array",call.loc);
 			return;
 		}
@@ -510,13 +510,13 @@ private struct Analyzer{
 		}
 		foreach(k;0..num.c.num.toLong()){
 			auto var=dist.getVar(id.name);
-			dist.initialize(var,zero,ℝ);
+			dist.initialize(var,zero,ℝ(true));
 			arrays[id.name]~=var;
 		}
 	}
 
 	void evaluateReadCSVCall(Identifier id,CallExp call){
-		if(call.arg.type!=stringTy){
+		if(call.arg.type!=stringTy(true)){
 			err.error("expected one string argument (filename) to 'readCSV'",call.loc);
 			return;
 		}
@@ -679,7 +679,7 @@ private struct Analyzer{
 				DVar var=null;
 				if(id.name !in arrays) var=dist.declareVar(id.name);
 				if(var){
-					dist.distribute(dDelta(rhs?rhs:zero,var,rhs?ty:ℝ)); // TODO: zero is not a good default value for types other than ℝ.
+					dist.distribute(dDelta(rhs?rhs:zero,var,rhs?ty:ℝ(true))); // TODO: zero is not a good default value for types other than ℝ(true).
 					trackDeterministic(var,rhs,ty);
 				}else err.error("variable already exists",id.loc);
 			}
@@ -689,7 +689,7 @@ private struct Analyzer{
 					if(auto cid=cast(Identifier)call.e){
 						switch(cid.name){
 							case "array":
-								if(isSubtype(call.arg.type,ℝ)){
+								if(isSubtype(call.arg.type,ℝ(true))){
 									isSpecial=true;
 									evaluateArrayCall(id,call);
 								}
@@ -749,7 +749,7 @@ private struct Analyzer{
 			auto be=cast(ABinaryExp)e;
 			assert(!!be);
 			Expression setℝ(Expression e){
-				e.type = ℝ;
+				e.type = ℝ(true);
 				return e;
 			}
 			if(cast(AndAssignExp)be){
@@ -797,8 +797,8 @@ private struct Analyzer{
 						auto var=cdist.declareVar(fe.var.name);
 						if(var){
 							auto rhs=dℚ(j);
-							cdist.initialize(var,rhs,ℝ);
-							anext.trackDeterministic(var,rhs,ℝ);
+							cdist.initialize(var,rhs,ℝ(true));
+							anext.trackDeterministic(var,rhs,ℝ(true));
 						}else{
 							err.error("variable already exists",fe.var.loc);
 							break;

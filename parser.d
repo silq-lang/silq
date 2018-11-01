@@ -411,14 +411,14 @@ struct Parser{
 				auto tok=Token(Tok!"0");
 				tok.str="1";
 				res=New!LiteralExp(tok);
-				res.type=Bool;
+				res.type=Bool(true);
 				return res;
 			case Tok!"false",Tok!"⊥":
 				nextToken();
 				auto tok=Token(Tok!"0");
 				tok.str="0";
 				res=New!LiteralExp(tok);
-				res.type=Bool;
+				res.type=Bool(true);
 				return res;
 			case Tok!"(",Tok!"[":
 				if(allowLambda){
@@ -727,8 +727,12 @@ struct Parser{
 			params=parseArgumentList!(false,DatParameter)(Tok!"]");
 			expect(Tok!"]");
 		}
+		bool isQuantum=false;
+		if(ttype==Tok!"quantum"){
+			isQuantum=true;
+		}
 		auto body_=parseCompoundExp!CompoundDecl();
-		return res=New!DatDecl(name,hasParams,cast(DatParameter[])params[0],params[1]||params[0].length!=1,body_);
+		return res=New!DatDecl(name,hasParams,cast(DatParameter[])params[0],params[1]||params[0].length!=1,isQuantum,body_);
 	}
 	ImportExp parseImport(){
 		mixin(SetLoc!ImportExp);

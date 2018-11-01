@@ -22,7 +22,7 @@ enum NumericType{
 NumericType whichNumeric(Expression t){ // TODO: more general solution
 	import std.traits: EnumMembers;
 	static foreach(type;[EnumMembers!NumericType].filter!(x=>x!=NumericType.none))
-		if(mixin(text("t==",type))) return type;
+		if(mixin(text("cast(",to!string(type).endsWith("t")?to!string(type)[0..$-1]:to!string(type),"Ty)t"))) return type;
 	return NumericType.none;
 }
 
@@ -30,11 +30,11 @@ bool isNumeric(Expression t){
 	return whichNumeric(t)!=NumericType.none;
 }
 
-Expression getNumeric(int which){
+Expression getNumeric(int which,bool classical){
 	final switch(which){
 		import std.traits: EnumMembers;
 		static foreach(type;[EnumMembers!NumericType].filter!(x=>x!=NumericType.none))
-			case mixin(text("NumericType.",type)): return mixin(text(type));
+			case mixin(text("NumericType.",type)): return mixin(text(type))(classical);
 		case NumericType.none: return null;
 	}
 }
@@ -54,7 +54,7 @@ Expression combineTypes(Expression lhs,Expression rhs,bool meet){ // TODO: more 
 	auto l=lhs.eval(), r=rhs.eval();
 	auto wl=whichNumeric(l), wr=whichNumeric(r);
 	if(wl==NumericType.none||wr==NumericType.none) return l.combineTypesImpl(r,meet);
-	return getNumeric(meet?min(wl,wr):max(wl,wr));
+	return getNumeric(meet?min(wl,wr):max(wl,wr),meet?lhs.isClassical()||rhs.isClassical():lhs.isClassical()&&rhs.isClassical());
 }
 
 Expression joinTypes(Expression lhs,Expression rhs){
@@ -69,104 +69,133 @@ class Type: Expression{
 	override @property string kind(){ return "type"; }
 	override string toString(){ return "T"; }
 	abstract override bool opEquals(Object r);
+	abstract override bool isClassical();
 }
 
 class ErrorTy: Type{
 	this(){}//{sstate = SemState.error;}
 	override string toString(){return "__error";}
+	override bool isClassical(){ return true; }
 	mixin VariableFree;
 }
 
 class BoolTy: Type{
-	private this(){}
+	private bool classical;
+	private this(bool classical){ this.classical=classical; }
 	override string toString(){
-		return "𝔹";
+		return classical?"!𝔹":"𝔹";
 	}
 	override bool opEquals(Object o){
 		return !!cast(BoolTy)o;
 	}
+	override bool isClassical(){
+		return classical;
+	}
 	mixin VariableFree;
 }
-private BoolTy theBool;
+private BoolTy[2] theBool;
 
-BoolTy Bool(){ return theBool?theBool:(theBool=new BoolTy()); }
+BoolTy Bool(bool classical){ return theBool[classical]?theBool[classical]:(theBool[classical]=new BoolTy(classical)); }
 
 class ℕTy: Type{
-	private this(){}
+	private bool classical;
+	private this(bool classical){ this.classical=classical; }
 	override string toString(){
-		return "ℕ";
+		return classical?"!ℕ":"ℕ";
 	}
 	override bool opEquals(Object o){
 		return !!cast(ℕTy)o;
 	}
+	override bool isClassical(){
+		return classical;
+	}
 	mixin VariableFree;
 }
-private ℕTy theℕ;
+private ℕTy[2] theℕ;
 
-ℕTy ℕt(){ return theℕ?theℕ:(theℕ=new ℕTy()); }
+ℕTy ℕt(bool classical){ return theℕ[classical]?theℕ[classical]:(theℕ[classical]=new ℕTy(classical)); }
 
 class ℤTy: Type{
-	private this(){}
+	private bool classical;
+	private this(bool classical){ this.classical=classical; }
 	override string toString(){
-		return "ℤ";
+		return classical?"!ℤ":"ℤ";
 	}
 	override bool opEquals(Object o){
 		return !!cast(ℤTy)o;
 	}
+	override bool isClassical(){
+		return classical;
+	}
 	mixin VariableFree;
 }
-private ℤTy theℤ;
+private ℤTy[2] theℤ;
 
-ℤTy ℤt(){ return theℤ?theℤ:(theℤ=new ℤTy()); }
+ℤTy ℤt(bool classical){ return theℤ[classical]?theℤ[classical]:(theℤ[classical]=new ℤTy(classical)); }
 
 class ℚTy: Type{
-	private this(){}
+	private bool classical;
+	private this(bool classical){ this.classical=classical; }
 	override string toString(){
-		return "ℚ";
+		return classical?"!ℚ":"ℚ";
 	}
 	override bool opEquals(Object o){
 		return !!cast(ℚTy)o;
 	}
+	override bool isClassical(){
+		return classical;
+	}
 	mixin VariableFree;
 }
-private ℚTy theℚ;
+private ℚTy[2] theℚ;
 
-ℚTy ℚt(){ return theℚ?theℚ:(theℚ=new ℚTy()); }
+ℚTy ℚt(bool classical){ return theℚ[classical]?theℚ[classical]:(theℚ[classical]=new ℚTy(classical)); }
 
 class ℝTy: Type{
-	private this(){}
+	private bool classical;
+	private this(bool classical){ this.classical=classical; }
 	override string toString(){
-		return "ℝ";
+		return classical?"!ℝ":"ℝ";
 	}
 	override bool opEquals(Object o){
 		return !!cast(ℝTy)o;
 	}
+	override bool isClassical(){
+		return classical;
+	}
 	mixin VariableFree;
 }
-private ℝTy theℝ;
+private ℝTy[2] theℝ;
 
-ℝTy ℝ(){ return theℝ?theℝ:(theℝ=new ℝTy()); }
+ℝTy ℝ(bool classical){ return theℝ[classical]?theℝ[classical]:(theℝ[classical]=new ℝTy(classical)); }
 
 class ℂTy: Type{
-	private this(){}
+	private bool classical;
+	private this(bool classical){ this.classical=classical; }
 	override string toString(){
-		return "ℂ";
+		return classical?"!ℂ":"ℂ";
 	}
 	override bool opEquals(Object o){
 		return !!cast(ℂTy)o;
 	}
+	override bool isClassical(){
+		return classical;
+	}
 	mixin VariableFree;
 }
-private ℂTy theℂ;
+private ℂTy[2] theℂ;
 
-ℂTy ℂ(){ return theℂ?theℂ:(theℂ=new ℂTy()); }
+ℂTy ℂ(bool classical){ return theℂ[classical]?theℂ[classical]:(theℂ[classical]=new ℂTy(classical)); }
 
 
 
 class AggregateTy: Type{
 	DatDecl decl;
-	this(DatDecl decl){
+	bool classical;
+	this(DatDecl decl,bool classical){
+		if(!classical) assert(decl.isQuantum);
 		this.decl=decl;
+		this.classical=classical;
 	}
 	override bool opEquals(Object o){
 		if(auto r=cast(AggregateTy)o)
@@ -176,6 +205,9 @@ class AggregateTy: Type{
 	override string toString(){
 		return decl.name.name;
 	}
+	override bool isClassical(){
+		return classical;
+	}
 	mixin VariableFree;
 }
 
@@ -183,6 +215,9 @@ class ContextTy: Type{
 	private this(){} // dummy
 	override bool opEquals(Object o){
 		return !!cast(ContextTy)o;
+	}
+	override bool isClassical(){
+		return true;
 	}
 	mixin VariableFree;
 }
@@ -241,6 +276,9 @@ class TupleTy: Type{
 		if(any!(x=>x is null)(rtypes)) return null;
 		return tupleTy(rtypes);
 	}
+	override bool isClassical(){
+		return all!(x=>x.isClassical)(types);
+	}
 }
 
 TupleTy unit(){ return tupleTy([]); }
@@ -296,6 +334,9 @@ class ArrayTy: Type{
 		if(!rarr) return null;
 		return arrayTy(combineTypes(larr.next,rarr.next,meet));
 	}
+	override bool isClassical(){
+		return next.isClassical();
+	}
 }
 
 ArrayTy arrayTy(Expression next)in{
@@ -305,17 +346,21 @@ ArrayTy arrayTy(Expression next)in{
 }
 
 class StringTy: Type{
-	private this(){}
+	bool classical;
+	private this(bool classical){ this.classical=classical; }
 	override string toString(){
-		return "string";
+		return classical?"!string":"string";
 	}
 	override bool opEquals(Object o){
 		return !!cast(StringTy)o;
 	}
+	override bool isClassical(){
+		return classical;
+	}
 	mixin VariableFree;
 }
 
-StringTy stringTy(){ return memoize!(()=>new StringTy()); }
+StringTy stringTy(bool classical){ return memoize!((bool classical)=>new StringTy(classical))(classical); }
 
 class RawProductTy: Expression{
 	Parameter[] params;
@@ -328,7 +373,9 @@ class RawProductTy: Expression{
 	override string toString(){
 		return "<unanalyzed Π type>"; // TODO: format nicely.
 	}
-
+	override bool isClassical(){
+		assert(0);
+	}
 	mixin VariableFree;
 }
 
@@ -336,7 +383,8 @@ class ProductTy: Type{
 	string[] names;
 	Expression dom, cod;
 	bool isSquare,isTuple;
-	private this(string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple)in{
+	bool isClassical_;
+	private this(string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple,bool isClassical_)in{
 		// TODO: assert that all names are distinct
 		if(isTuple){
 			auto tdom=cast(TupleTy)dom;
@@ -347,6 +395,7 @@ class ProductTy: Type{
 	}body{
 		this.names=names; this.dom=dom; this.cod=cod;
 		this.isSquare=isSquare; this.isTuple=isTuple;
+		this.isClassical_=isClassical_;
 	}
 	/+private+/ @property TupleTy tdom()in{ // TODO: make private
 		assert(isTuple);
@@ -399,7 +448,7 @@ class ProductTy: Type{
 		auto nnames=names.dup;
 		nnames[i]=nname;
 		auto nvar=varTy(nname,argTy(i));
-		return productTy(nnames,dom,cod.substitute(oname,nvar),isSquare,isTuple);
+		return productTy(nnames,dom,cod.substitute(oname,nvar),isSquare,isTuple,isClassical_);
 	}
 	private ProductTy relabelAway(string oname)in{
 		assert(names.canFind(oname));
@@ -422,7 +471,7 @@ class ProductTy: Type{
 	}body{
 		Expression[string] subst;
 		foreach(i;0..names.length) subst[names[i]]=varTy(nnames[i],argTy(i));
-		return productTy(nnames,dom,cod.substitute(subst),isSquare,isTuple);
+		return productTy(nnames,dom,cod.substitute(subst),isSquare,isTuple,isClassical_);
 	}
 	override ProductTy substituteImpl(Expression[string] subst){
 		foreach(n;names){
@@ -437,7 +486,7 @@ class ProductTy: Type{
 		auto nsubst=subst.dup;
 		foreach(n;names) nsubst.remove(n);
 		auto ncod=cod.substitute(nsubst);
-		return productTy(names,ndom,ncod,isSquare,isTuple);
+		return productTy(names,ndom,ncod,isSquare,isTuple,isClassical_);
 	}
 	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
 		auto r=cast(ProductTy)rhs; // TODO: get rid of duplication (same code in opEquals)
@@ -516,27 +565,30 @@ class ProductTy: Type{
 			nnames=iota(tpl.types.length).map!(i=>"x"~lowNum(i)).array;
 		}else nnames=["x"];
 		foreach(i,ref nn;nnames) while(hasFreeVar(nn)) nn~="'";
-		return productTy(nnames,dom,cod,isSquare,tuple);
+		return productTy(nnames,dom,cod,isSquare,tuple,isClassical_);
+	}
+	override bool isClassical(){
+		return isClassical_;
 	}
 }
 
-ProductTy productTy(string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple)in{
+ProductTy productTy(string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple,bool isClassical)in{
 	assert(dom&&cod);
 	if(isTuple){
 		auto tdom=cast(TupleTy)dom;
 		assert(tdom&&names.length==tdom.types.length);
 	}
 }body{
-	return memoize!((string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple)=>new ProductTy(names,dom,cod,isSquare,isTuple))(names,dom,cod,isSquare,isTuple);
+	return memoize!((string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple,bool isClassical)=>new ProductTy(names,dom,cod,isSquare,isTuple,isClassical))(names,dom,cod,isSquare,isTuple,isClassical);
 }
 
 alias FunTy=ProductTy;
-FunTy funTy(Expression dom,Expression cod,bool isSquare,bool isTuple)in{
+FunTy funTy(Expression dom,Expression cod,bool isSquare,bool isTuple,bool isClassical)in{
 	assert(dom&&cod);
 }body{
 	auto nargs=1+[].length;
 	if(isTuple) if(auto tpl=cast(TupleTy)dom) nargs=tpl.types.length;
-	return productTy(iota(nargs).map!(_=>"").array,dom,cod,isSquare,isTuple);
+	return productTy(iota(nargs).map!(_=>"").array,dom,cod,isSquare,isTuple,isClassical);
 }
 
 Identifier varTy(string name,Expression type){
@@ -555,6 +607,9 @@ class TypeTy: Type{
 	}
 	override bool opEquals(Object o){
 		return !!cast(TypeTy)o;
+	}
+	override bool isClassical(){
+		return true; // quantum superposition of multiple types not allowed
 	}
 	mixin VariableFree;
 }

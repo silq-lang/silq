@@ -5,7 +5,7 @@ import std.stdio, std.path, std.array, std.string, std.algorithm, std.conv;
 import file=std.file;
 import util;
 import lexer, parser, expression, declaration, error, help;
-import options, scope_, semantic_, summarize, backend;
+import options, scope_, semantic_, summarize;
 
 static this(){ opt.importPath ~= buildPath(dirName(file.thisExePath),"library"); }
 
@@ -40,16 +40,7 @@ int run(string path){
 		}
 		return 0;
 	}
-	auto be=Backend.create(path);
-	if(err.nerrors) return 1;
-	if("main" !in functions){
-		foreach(expr;exprs){
-			if(auto fd=cast(FunctionDef)expr){
-				writeln(fd.name,":");
-				printResult(be,path,fd,err,false);
-			}
-		}
-	}else printResult(be,path,functions["main"],err,true);
+	// TODO: add some backends
 	return !!err.nerrors;
 }
 

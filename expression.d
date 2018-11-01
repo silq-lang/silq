@@ -85,6 +85,10 @@ abstract class Expression: Node{
 		if(this == rhs) return this;
 		return null;
 	}
+
+	bool isClassical(){
+		return type && type.isClassical();
+	}
 }
 
 mixin template VariableFree(){

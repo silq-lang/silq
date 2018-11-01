@@ -38,7 +38,7 @@ void printResult(Backend be,string path,FunctionDef fd,ErrorHandler err,bool isM
 	import type, std.conv : text;
 	if(opt.expectation||opt.cdf){
 		bool check(Expression ty){
-			if(isSubtype(ty,ℂ)) return true;
+			if(isSubtype(ty,ℂ(true))) return true;
 			if(auto tpl=cast(TupleTy)ty)
 				return tpl.types.all!check;
 			return false;

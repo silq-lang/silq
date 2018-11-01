@@ -126,8 +126,9 @@ class DatDecl: Declaration{
 	bool hasParams;
 	DatParameter[] params;
 	bool isTuple;
+	bool isQuantum;
 	CompoundDecl body_;
-	this(Identifier name,bool hasParams,DatParameter[] params,bool isTuple,CompoundDecl body_)in{
+	this(Identifier name,bool hasParams,DatParameter[] params,bool isTuple,bool isQuantum,CompoundDecl body_)in{
 		if(hasParams) assert(isTuple||params.length==1);
 		else assert(isTuple&&params.length==0);
 	}body{
@@ -135,6 +136,7 @@ class DatDecl: Declaration{
 		this.hasParams=hasParams;
 		this.params=params;
 		this.isTuple=isTuple;
+		this.isQuantum=isQuantum;
 		this.body_=body_;
 	}
 	override string toString(){
