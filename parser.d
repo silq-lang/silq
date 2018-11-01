@@ -338,13 +338,18 @@ struct Parser{
 
 	Parameter parseParameter(){
 		mixin(SetLoc!Parameter);
+		bool isConsumed=false;
+		if(ttype==Tok!"consumed"){
+			nextToken();
+			isConsumed=true;
+		}
 		auto i=parseIdentifier();
 		Expression t=null;
 		if(ttype==Tok!":"){
 			nextToken();
 			t=parseType();
 		}
-		return res=New!Parameter(i,t);
+		return res=New!Parameter(isConsumed,i,t);
 	}
 	
 	Q!(Expression[],bool) parseArgumentList(bool nonempty=false, Entry=AssignExp, T...)(TokenType delim, T args){

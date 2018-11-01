@@ -45,8 +45,10 @@ class VarDecl: Declaration{
 }
 
 class Parameter: VarDecl{
-	this(Identifier name, Expression type){
+	bool isConsumed;
+	this(bool isConsumed, Identifier name, Expression type){
 		super(name); this.dtype=type;
+		this.isConsumed=isConsumed;
 	}
 	override string toString(){ return getName~(dtype?": "~dtype.toString():""); }
 	@property override string kind(){ return "parameter"; }
@@ -110,7 +112,7 @@ class DatParameter: Parameter{
 	Variance variance;
 	this(Variance variance, Identifier name, Expression type){
 		this.variance=variance;
-		super(name,type);
+		super(false,name,type);
 	}
 	override string toString(){
 		final switch(variance)with(Variance){

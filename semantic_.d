@@ -170,6 +170,7 @@ Expression presemantic(Declaration expr,Scope sc){
 		}
 		declareParameters(fd,fd.isSquare,fd.params,fsc); // parameter variables
 		if(fd.rret){
+			bool[] pc;
 			string[] pn;
 			Expression[] pty;
 			foreach(p;fd.params){
@@ -177,6 +178,7 @@ Expression presemantic(Declaration expr,Scope sc){
 					assert(fd.sstate==SemState.error);
 					return fd;
 				}
+				pc~=p.isConsumed;
 				pn~=p.getName;
 				pty~=p.vtype;
 			}
@@ -184,7 +186,7 @@ Expression presemantic(Declaration expr,Scope sc){
 			assert(fd.isTuple||pty.length==1);
 			auto pt=fd.isTuple?tupleTy(pty):pty[0];
 			if(!fd.ret) fd.sstate=SemState.error;
-			else fd.ftype=productTy(pn,pt,fd.ret,fd.isSquare,fd.isTuple,false); // TODO: make function type classical if no quantum variables captured
+			else fd.ftype=productTy(pc,pn,pt,fd.ret,fd.isSquare,fd.isTuple,false); // TODO: make function type classical if no quantum variables captured
 		}
 	}
 	return expr;
@@ -804,7 +806,7 @@ Expression callSemantic(CallExp ce,Scope sc){
 						if(auto constructor=cast(FunctionDef)decl.body_.ascope_.lookup(decl.name,false,false)){
 							if(auto cty=cast(FunTy)typeForDecl(constructor)){
 								assert(ft.cod is typeTy);
-								nft=productTy(ft.names,ft.dom,cty,ft.isSquare,ft.isTuple,true);
+								nft=productTy(ft.isConsumed,ft.names,ft.dom,cty,ft.isSquare,ft.isTuple,true);
 							}
 						}
 					}
@@ -1403,11 +1405,12 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		auto cod=typeSemantic(fa.cod,fsc);
 		propErr(fa.cod,fa);
 		if(fa.sstate==SemState.error) return fa;
-		auto names=fa.params.map!(p=>p.getName).array;
+		auto consumed=fa.params.map!(p=>p.isConsumed).array;
+		auto names=fa.params.map!(p=>p.getNames).array;
 		auto types=fa.params.map!(p=>p.vtype).array;
 		assert(fa.isTuple||types.length==1);
 		auto dom=fa.isTuple?tupleTy(types):types[0];
-		return productTy(names,dom,cod,fa.isSquare,fa.isTuple,false);
+		return productTy(consumed,names,dom,cod,fa.isSquare,fa.isTuple,false);
 	}
 	if(auto ite=cast(IteExp)expr){
 		ite.cond=expressionSemantic(ite.cond,sc);
@@ -1468,6 +1471,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 	return expr;
 }
 bool setFtype(FunctionDef fd){
+	bool[] pc;
 	string[] pn;
 	Expression[] pty;
 	foreach(p;fd.params){
@@ -1475,6 +1479,7 @@ bool setFtype(FunctionDef fd){
 			assert(fd.sstate==SemState.error);
 			return false;
 		}
+		pc~=p.isConsumed;
 		pn~=p.getName;
 		pty~=p.vtype;
 	}
@@ -1482,7 +1487,7 @@ bool setFtype(FunctionDef fd){
 	auto pt=fd.isTuple?tupleTy(pty):pty[0];
 	if(fd.ret){
 		if(!fd.ftype){
-			fd.ftype=productTy(pn,pt,fd.ret,fd.isSquare,fd.isTuple,false); // TODO: check whether all captures are classical
+			fd.ftype=productTy(pc,pn,pt,fd.ret,fd.isSquare,fd.isTuple,false); // TODO: check whether all captures are classical
 			assert(fd.retNames==[]);
 		}
 		if(!fd.retNames) fd.retNames = new string[](fd.numReturns);
@@ -1661,7 +1666,7 @@ Expression typeForDecl(Declaration decl){
 		foreach(p;dat.params) if(!p.vtype) return unit; // TODO: ok?
 		assert(dat.isTuple||dat.params.length==1);
 		auto pt=dat.isTuple?tupleTy(dat.params.map!(p=>p.vtype).array):dat.params[0].vtype;
-		return productTy(dat.params.map!(p=>p.getName).array,pt,typeTy,true,dat.isTuple,true);
+		return productTy(dat.params.map!(p=>p.isConsumed).array,dat.params.map!(p=>p.getName).array,pt,typeTy,true,dat.isTuple,true);
 	}
 	if(auto vd=cast(VarDecl)decl){
 		return vd.vtype;
