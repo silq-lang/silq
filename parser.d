@@ -508,7 +508,7 @@ struct Parser{
 				return res;
 			case Tok!"(":
 				auto a=parseParenthesized();
-				mixin(rule!(CallExp,Existing,"left,a"));
+				mixin(rule!(CallExp,Existing,"left,a,false,false"));
 			case Tok!".":
 				auto r=left;
 				while(ttype==Tok!"."){

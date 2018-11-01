@@ -87,7 +87,11 @@ abstract class Expression: Node{
 	}
 
 	bool isClassical(){
-		return type && type.isClassical();
+		return false;
+	}
+	Expression getClassical(){
+		if(isClassical()) return this;
+		return null;
 	}
 }
 
@@ -388,9 +392,13 @@ class CallExp: Expression{
 	Expression e;
 	Expression arg;
 	bool isSquare;
-	this(Expression exp, Expression arg, bool isSquare=false){e=exp; this.arg=arg; this.isSquare=isSquare; }
+	bool isClassical_;
+	this(Expression exp, Expression arg, bool isSquare, bool isClassical_){
+		e=exp; this.arg=arg; this.isSquare=isSquare;
+		this.isClassical_=isClassical_;
+	}
 	override string toString(){
-		return _brk(e.toString()~arg.tupleToString(isSquare));
+		return _brk((isClassical_?"!":"")~e.toString()~arg.tupleToString(isSquare));
 	}
 	override int freeVarsImpl(scope int delegate(string) dg){
 		if(auto r=e.freeVarsImpl(dg)) return r;
@@ -400,7 +408,7 @@ class CallExp: Expression{
 		auto ne=e.substitute(subst);
 		auto narg=arg.substitute(subst);
 		if(ne==e&&narg==arg) return this;
-		auto r=new CallExp(ne,narg,isSquare);
+		auto r=new CallExp(ne,narg,isSquare,isClassical_);
 		r.loc=loc;
 		if(sstate==SemState.completed){
 			r.type=type.substitute(subst);
@@ -470,19 +478,26 @@ class CallExp: Expression{
 						if(!dat.isTuple){
 							assert(dat.params.length==1);
 							assert(arg != rcall.arg); // (checked at start of function)
-							return callSemantic(new CallExp(e,combine(dat.params[0].variance,arg,rcall.arg),isSquare),null);
+							return callSemantic(new CallExp(e,combine(dat.params[0].variance,arg,rcall.arg),isSquare,isClassical_),null);
 						}
 						assert(dat.isTuple);
 						auto tup=cast(TupleTy)arg, rtup=cast(TupleTy)rcall.arg;
 						if(tup && rtup && tup.types.length==dat.params.length && tup.types.length==rtup.types.length){ // TODO: assert this?
 							auto rarg=new TupleExp(iota(tup.types.length).map!(i=>combine(dat.params[i].variance,tup.types[i],rtup.types[i])).array);
-							return callSemantic(new CallExp(e,rarg,isSquare),null);
+							return callSemantic(new CallExp(e,rarg,isSquare,isClassical),null);
 						}
 					}
 				}
 			}
 		}
 		return super.combineTypes(rhs,meet);
+	}
+	override bool isClassical(){
+		return isClassical_;
+	}
+	override Expression getClassical(){
+		if(auto r=super.getClassical()) return r;
+		return new CallExp(e,arg,isSquare,true);
 	}
 }
 

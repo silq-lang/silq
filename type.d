@@ -91,6 +91,9 @@ class BoolTy: Type{
 	override bool isClassical(){
 		return classical;
 	}
+	override BoolTy getClassical(){
+		return Bool(true);
+	}
 	mixin VariableFree;
 }
 private BoolTy[2] theBool;
@@ -108,6 +111,9 @@ class ℕTy: Type{
 	}
 	override bool isClassical(){
 		return classical;
+	}
+	override ℕTy getClassical(){
+		return ℕt(true);
 	}
 	mixin VariableFree;
 }
@@ -127,6 +133,9 @@ class ℤTy: Type{
 	override bool isClassical(){
 		return classical;
 	}
+	override ℤTy getClassical(){
+		return ℤt(true);
+	}
 	mixin VariableFree;
 }
 private ℤTy[2] theℤ;
@@ -144,6 +153,9 @@ class ℚTy: Type{
 	}
 	override bool isClassical(){
 		return classical;
+	}
+	override ℚTy getClassical(){
+		return ℚt(true);
 	}
 	mixin VariableFree;
 }
@@ -163,6 +175,9 @@ class ℝTy: Type{
 	override bool isClassical(){
 		return classical;
 	}
+	override ℝTy getClassical(){
+		return ℝ(true);
+	}
 	mixin VariableFree;
 }
 private ℝTy[2] theℝ;
@@ -181,6 +196,9 @@ class ℂTy: Type{
 	override bool isClassical(){
 		return classical;
 	}
+	override ℂTy getClassical(){
+		return ℂ(true);
+	}
 	mixin VariableFree;
 }
 private ℂTy[2] theℂ;
@@ -192,10 +210,13 @@ private ℂTy[2] theℂ;
 class AggregateTy: Type{
 	DatDecl decl;
 	bool classical;
+	private AggregateTy classicalTy;
 	this(DatDecl decl,bool classical){
 		if(!classical) assert(decl.isQuantum);
 		this.decl=decl;
 		this.classical=classical;
+		if(classical) classicalTy=this;
+		else classicalTy=New!AggregateTy(decl,true);
 	}
 	override bool opEquals(Object o){
 		if(auto r=cast(AggregateTy)o)
@@ -207,6 +228,9 @@ class AggregateTy: Type{
 	}
 	override bool isClassical(){
 		return classical;
+	}
+	override AggregateTy getClassical(){
+		return classicalTy;
 	}
 	mixin VariableFree;
 }

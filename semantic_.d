@@ -126,7 +126,7 @@ Expression presemantic(Declaration expr,Scope sc){
 					return r;
 				}).array;
 				assert(dsc.decl.isTuple||args.length==1);
-				ctxty=callSemantic(new CallExp(ctxty,dsc.decl.isTuple?new TupleExp(args):args[0],true),sc);
+				ctxty=callSemantic(new CallExp(ctxty,dsc.decl.isTuple?new TupleExp(args):args[0],true,false),sc);
 				ctxty.sstate=SemState.completed;
 				assert(ctxty.type == typeTy);
 			}
@@ -343,7 +343,7 @@ bool isBuiltIn(Identifier id){
 }
 
 Expression distributionTy(Expression base,Scope sc){
-	return typeSemantic(new CallExp(varTy("Distribution",funTy(typeTy,typeTy,true,false,true)),base,true),sc);
+	return typeSemantic(new CallExp(varTy("Distribution",funTy(typeTy,typeTy,true,false,true)),base,true,true),sc);
 }
 
 Expression builtIn(Identifier id,Scope sc){
@@ -813,9 +813,9 @@ Expression callSemantic(CallExp ce,Scope sc){
 					Expression garg;
 					auto tt=nft.tryMatch(ce.arg,garg);
 					if(!tt) return false;
-					auto nce=new CallExp(ce.e,garg,true);
+					auto nce=new CallExp(ce.e,garg,true,false);
 					nce.loc=ce.loc;
-					auto nnce=new CallExp(nce,ce.arg,false);
+					auto nnce=new CallExp(nce,ce.arg,false,false);
 					nnce.loc=ce.loc;
 					nnce=cast(CallExp)callSemantic(nnce,sc);
 					assert(nnce&&nnce.type == tt);
@@ -1048,7 +1048,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 			if(!idx.trailingComma&&idx.a.length==1) arg=idx.a[0];
 			else arg=new TupleExp(idx.a);
 			arg.loc=idx.loc;
-			auto ce=new CallExp(idx.e,arg,true);
+			auto ce=new CallExp(idx.e,arg,true,false);
 			ce.loc=idx.loc;
 			return expr=callSemantic(ce,sc);
 		}
@@ -1328,7 +1328,22 @@ Expression expressionSemantic(Expression expr,Scope sc){
 	if(auto ae=cast(BitXorExp)expr) return expr=handleBinary!(arithmeticType!true)("bitwise xor",ae,ae.e1,ae.e2);
 	if(auto ae=cast(BitAndExp)expr) return expr=handleBinary!(arithmeticType!true)("bitwise and",ae,ae.e1,ae.e2);
 	if(auto ae=cast(UMinusExp)expr) return expr=handleUnary!minusBitNotType("minus",ae,ae.e);
-	if(auto ae=cast(UNotExp)expr) return expr=handleUnary!notType("not",ae,ae.e);
+	if(auto ae=cast(UNotExp)expr){
+		ae.e=expressionSemantic(ae.e,sc);
+		if(ae.e.type==typeTy){
+			if(auto ty=typeSemantic(ae.e,sc)){
+				if(auto r=ty.getClassical()){
+					return expr=typeSemantic(r,sc);
+				}else{
+					// TODO: have explicit ClassicalTy
+					sc.error(format("cannot make type %s classical",ae.e),ae.loc);
+					ae.sstate=SemState.error;
+					return ae;
+				}
+			}
+		}
+		return expr=handleUnary!notType("not",ae,ae.e);
+	}
 	if(auto ae=cast(UBitNotExp)expr) return expr=handleUnary!minusBitNotType("bitwise not",ae,ae.e);
 	if(auto ae=cast(AndExp)expr) return expr=handleBinary!logicType("conjunction",ae,ae.e1,ae.e2);
 	if(auto ae=cast(OrExp)expr) return expr=handleBinary!logicType("disjunction",ae,ae.e1,ae.e2);
