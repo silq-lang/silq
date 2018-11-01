@@ -729,6 +729,7 @@ struct Parser{
 		}
 		bool isQuantum=false;
 		if(ttype==Tok!"quantum"){
+			nextToken();
 			isQuantum=true;
 		}
 		auto body_=parseCompoundExp!CompoundDecl();

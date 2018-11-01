@@ -961,6 +961,7 @@ TokenType isKeyword(string s){
 			break;
 		case 7:
 			if(s=="observe") return Tok!"observe";
+			if(s=="quantum") return Tok!"quantum";
 			break;
 		case 8:
 			if(s=="cobserve") return Tok!"cobserve";
