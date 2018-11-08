@@ -2,9 +2,12 @@
 // implementation of built-in functions based on 'sampleFrom'
 // caution: some backends may special-case strings (see samplefrom.d)
 
-dat Int[n: ℕ] /+quantum+/{ } // TODO: dat Int[n: ℕ] quantum;
-dat UInt[n: ℕ] /+quantum+/{ } // TODO: dat Int[n: ℕ] quantum;
-dat Float[n: ℕ] /+quantum+/{ } // TODO: dat Int[n: ℕ] quantum;
+Not supported yet. Use --nocheck.
+
+/+
+dat Int[n: ℕ] quantum{ } // TODO: dat Int[n: ℕ] quantum;
+dat UInt[n: ℕ] quantum{ } // TODO: dat Int[n: ℕ] quantum;
+dat Float[n: ℕ] quantum{ } // TODO: dat Int[n: ℕ] quantum;
 
 // deterministic functions
 def exp(x:ℝ):ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+e^x]",x);
@@ -313,5 +316,5 @@ def MultiGauss(μ: ℝ[], Σ: ℝ[][]){
 	assert(errorPr(d)==0);
 	return d;
 }
-
++/
 __NOCHECK__ := 0;

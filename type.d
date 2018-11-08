@@ -44,6 +44,7 @@ bool isSubtype(Expression lhs,Expression rhs){
 	auto l=lhs.eval(), r=rhs.eval();
 	auto wl=whichNumeric(l), wr=whichNumeric(r);
 	if(wl==NumericType.none||wr==NumericType.none) return l.isSubtypeImpl(r);
+	if(!lhs.isClassical()&&rhs.isClassical()) return false;
 	return wl<=wr;
 }
 
@@ -86,7 +87,8 @@ class BoolTy: Type{
 		return classical?"!𝔹":"𝔹";
 	}
 	override bool opEquals(Object o){
-		return !!cast(BoolTy)o;
+		auto r=cast(BoolTy)o;
+		return r && classical==r.classical;
 	}
 	override bool isClassical(){
 		return classical;
@@ -107,7 +109,8 @@ class ℕTy: Type{
 		return classical?"!ℕ":"ℕ";
 	}
 	override bool opEquals(Object o){
-		return !!cast(ℕTy)o;
+		auto r=cast(ℕTy)o;
+		return r&&classical==r.classical;
 	}
 	override bool isClassical(){
 		return classical;
@@ -128,7 +131,8 @@ class ℤTy: Type{
 		return classical?"!ℤ":"ℤ";
 	}
 	override bool opEquals(Object o){
-		return !!cast(ℤTy)o;
+		auto r=cast(ℤTy)o;
+		return r&&classical==r.classical;
 	}
 	override bool isClassical(){
 		return classical;
@@ -149,7 +153,8 @@ class ℚTy: Type{
 		return classical?"!ℚ":"ℚ";
 	}
 	override bool opEquals(Object o){
-		return !!cast(ℚTy)o;
+		auto r=cast(ℚTy)o;
+		return r&&classical==r.classical;
 	}
 	override bool isClassical(){
 		return classical;
@@ -170,7 +175,8 @@ class ℝTy: Type{
 		return classical?"!ℝ":"ℝ";
 	}
 	override bool opEquals(Object o){
-		return !!cast(ℝTy)o;
+		auto r=cast(ℝTy)o;
+		return r&&classical==r.classical;
 	}
 	override bool isClassical(){
 		return classical;
@@ -191,7 +197,8 @@ class ℂTy: Type{
 		return classical?"!ℂ":"ℂ";
 	}
 	override bool opEquals(Object o){
-		return !!cast(ℂTy)o;
+		auto r=cast(ℂTy)o;
+		return r&&classical==r.classical;
 	}
 	override bool isClassical(){
 		return classical;
@@ -220,7 +227,7 @@ class AggregateTy: Type{
 	}
 	override bool opEquals(Object o){
 		if(auto r=cast(AggregateTy)o)
-			return decl is r.decl;
+			return decl is r.decl && classical==r.classical;
 		return false;
 	}
 	override string toString(){
@@ -386,13 +393,21 @@ class StringTy: Type{
 
 StringTy stringTy(bool classical){ return memoize!((bool classical)=>new StringTy(classical))(classical); }
 
+enum FunctionAnnotation{
+	none,
+	lifted,
+	mfree,
+}
+
 class RawProductTy: Expression{
 	Parameter[] params;
 	Expression cod;
 	bool isSquare,isTuple;
-	this(Parameter[] params,Expression cod,bool isSquare,bool isTuple){
+	FunctionAnnotation annotation;
+	this(Parameter[] params,Expression cod,bool isSquare,bool isTuple,FunctionAnnotation annotation){
 		this.params=params; this.cod=cod;
 		this.isSquare=isSquare; this.isTuple=isTuple;
+		this.annotation=annotation;
 	}
 	override string toString(){
 		return "<unanalyzed Π type>"; // TODO: format nicely.
@@ -408,9 +423,10 @@ class ProductTy: Type{
 	string[] names;
 	Expression dom, cod;
 	bool isSquare,isTuple;
+	FunctionAnnotation annotation;
 	bool isClassical_;
 	private ProductTy classicalTy;
-	private this(bool[] isConsumed,string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple,bool isClassical_)in{
+	private this(bool[] isConsumed,string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple,FunctionAnnotation annotation,bool isClassical_)in{
 		// TODO: assert that all names are distinct
 		if(isTuple){
 			auto tdom=cast(TupleTy)dom;
@@ -422,9 +438,10 @@ class ProductTy: Type{
 		this.isConsumed=isConsumed;
 		this.names=names; this.dom=dom; this.cod=cod;
 		this.isSquare=isSquare; this.isTuple=isTuple;
+		this.annotation=annotation;
 		this.isClassical_=isClassical_;
 		if(this.isClassical) classicalTy=this;
-		else classicalTy=new ProductTy(isConsumed,names,dom,cod,isSquare,isTuple,true);
+		else classicalTy=new ProductTy(isConsumed,names,dom,cod,isSquare,isTuple,annotation,true);
 		// TODO: report DMD bug, New!ProductTy does not work
 	}
 	/+private+/ @property TupleTy tdom()in{ // TODO: make private
@@ -437,6 +454,7 @@ class ProductTy: Type{
 	override string toString(){
 		auto c=cod.toString();
 		auto del=isSquare?"[]":"()";
+		string r;
 		if(!cod.hasAnyFreeVar(names)){
 			string d;
 			if(all!(x=>!x)(isConsumed)){
@@ -454,7 +472,7 @@ class ProductTy: Type{
 				}else d=(isConsumed[0]?"consumed ":"")~dom.toString();
 			}else d=(isConsumed[0]?"(consumed ":"")~dom.toString()~(isConsumed[0]?")":"");
 			if(isSquare||!isTuple&&nargs==1&&cast(FunTy)argTy(0)) d=del[0]~d~del[1];
-			return d~" → "~c;
+			r=d~" →"~(annotation?to!string(annotation):"")~" "~c;
 		}else{
 			assert(names.length);
 			string args;
@@ -462,8 +480,10 @@ class ProductTy: Type{
 				args=zip(isConsumed,names,tdom.types).map!(x=>(x[0]?"consumed ":"")~x[1]~":"~x[2].toString()).join(",");
 				if(nargs==1) args~=",";
 			}else args=(isConsumed[0]?"consumed ":"")~names[0]~":"~dom.toString();
-			return "∏"~del[0]~args~del[1]~". "~c;
+			r="∏"~del[0]~args~del[1]~"."~(annotation?to!string(annotation):"")~" "~c;
 		}
+		if(isClassical_) r="!("~r~")";
+		return r;
 	}
 	@property size_t nargs(){
 		if(isTuple) return tdom.types.length;
@@ -492,7 +512,7 @@ class ProductTy: Type{
 		auto nnames=names.dup;
 		nnames[i]=nname;
 		auto nvar=varTy(nname,argTy(i));
-		return productTy(isConsumed,nnames,dom,cod.substitute(oname,nvar),isSquare,isTuple,isClassical_);
+		return productTy(isConsumed,nnames,dom,cod.substitute(oname,nvar),isSquare,isTuple,annotation,isClassical_);
 	}
 	private ProductTy relabelAway(string oname)in{
 		assert(names.canFind(oname));
@@ -515,7 +535,7 @@ class ProductTy: Type{
 	}body{
 		Expression[string] subst;
 		foreach(i;0..names.length) subst[names[i]]=varTy(nnames[i],argTy(i));
-		return productTy(isConsumed,nnames,dom,cod.substitute(subst),isSquare,isTuple,isClassical_);
+		return productTy(isConsumed,nnames,dom,cod.substitute(subst),isSquare,isTuple,annotation,isClassical_);
 	}
 	override ProductTy substituteImpl(Expression[string] subst){
 		foreach(n;names){
@@ -530,14 +550,17 @@ class ProductTy: Type{
 		auto nsubst=subst.dup;
 		foreach(n;names) nsubst.remove(n);
 		auto ncod=cod.substitute(nsubst);
-		return productTy(isConsumed,names,ndom,ncod,isSquare,isTuple,isClassical_);
+		return productTy(isConsumed,names,ndom,ncod,isSquare,isTuple,annotation,isClassical_);
 	}
 	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
 		auto r=cast(ProductTy)rhs; // TODO: get rid of duplication (same code in opEquals)
 		if(!r) return false;
 		if(isTuple&&!cast(TupleTy)r.dom) return false;
 		r=r.setTuple(isTuple);
-		if(isSquare!=r.isSquare||nargs!=r.nargs) return false;
+		if(!r) return false;
+		if(isConsumed!=r.isConsumed||isSquare!=r.isSquare||annotation!=r.annotation||
+		   isClassical_!=r.isClassical_||nargs!=r.nargs)
+			return false;
 		r=r.relabelAll(freshNames(r));
 		Expression[string] nsubst;
 		foreach(k,v;subst) if(!names.canFind(k)) nsubst[k]=v;
@@ -594,7 +617,11 @@ class ProductTy: Type{
 		if(!r) return false;
 		if(isTuple&&!cast(TupleTy)r.dom) return false;
 		r=r.setTuple(isTuple);
-		if(isSquare!=r.isSquare||isTuple!=r.isTuple||nargs!=r.nargs) return false;
+		if(!r) return false;
+		assert(isTuple==r.isTuple);
+		if(isConsumed!=r.isConsumed||isSquare!=r.isSquare||annotation!=r.annotation||
+		   isClassical_!=r.isClassical_||nargs!=r.nargs)
+			return false;
 		r=r.relabelAll(freshNames(r));
 		return dom==r.dom&&cod==r.cod;
 	}
@@ -603,13 +630,21 @@ class ProductTy: Type{
 	}body{
 		if(tuple==isTuple) return this;
 		string[] nnames;
+		bool[] nIsConsumed;
 		if(tuple){
 			auto tpl=cast(TupleTy)dom;
 			assert(!!tpl);
 			nnames=iota(tpl.types.length).map!(i=>"x"~lowNum(i)).array;
-		}else nnames=["x"];
+			assert(isConsumed.length==1);
+			nIsConsumed=isConsumed[0].repeat(tpl.types.length).array;
+		}else{
+			if(isConsumed.length&&!isConsumed.all!(x=>x==isConsumed[0]))
+				return null;
+			nnames=["x"];
+			nIsConsumed=[isConsumed[0]];
+		}
 		foreach(i,ref nn;nnames) while(hasFreeVar(nn)) nn~="'";
-		return productTy(isConsumed,nnames,dom,cod,isSquare,tuple,isClassical_);
+		return productTy(nIsConsumed,nnames,dom,cod,isSquare,tuple,annotation,isClassical_);
 	}
 	override bool isClassical(){
 		return isClassical_;
@@ -619,23 +654,37 @@ class ProductTy: Type{
 	}
 }
 
-ProductTy productTy(bool[] isConsumed,string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple,bool isClassical)in{
+ProductTy productTy(bool[] isConsumed,string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple,FunctionAnnotation annotation,bool isClassical)in{
 	assert(dom&&cod);
 	if(isTuple){
 		auto tdom=cast(TupleTy)dom;
 		assert(tdom&&names.length==tdom.types.length);
 	}
 }body{
-	return memoize!((bool[] isConsumed,string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple,bool isClassical)=>new ProductTy(isConsumed,names,dom,cod,isSquare,isTuple,isClassical))(isConsumed,names,dom,cod,isSquare,isTuple,isClassical);
+	return memoize!((bool[] isConsumed,string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple,FunctionAnnotation annotation,bool isClassical)=>new ProductTy(isConsumed,names,dom,cod,isSquare,isTuple,annotation,isClassical))(isConsumed,names,dom,cod,isSquare,isTuple,annotation,isClassical);
 }
 
 alias FunTy=ProductTy;
-FunTy funTy(Expression dom,Expression cod,bool isSquare,bool isTuple,bool isClassical)in{
+FunTy funTy(bool[] isConsumed,Expression dom,Expression cod,bool isSquare,bool isTuple,FunctionAnnotation annotation,bool isClassical)in{
 	assert(dom&&cod);
 }body{
 	auto nargs=1+[].length;
 	if(isTuple) if(auto tpl=cast(TupleTy)dom) nargs=tpl.types.length;
-	return productTy(false.repeat(nargs).array,iota(nargs).map!(_=>"").array,dom,cod,isSquare,isTuple,isClassical);
+	return productTy(isConsumed,iota(nargs).map!(_=>"").array,dom,cod,isSquare,isTuple,annotation,isClassical);
+}
+
+FunTy funTy(Expression dom,Expression cod,bool isSquare,bool isTuple,FunctionAnnotation annotation,bool isClassical)in{
+	assert(dom&&cod);
+}body{
+	auto nargs=1+[].length;
+	if(isTuple) if(auto tpl=cast(TupleTy)dom) nargs=tpl.types.length;
+	return funTy(false.repeat(nargs).array,dom,cod,isSquare,isTuple,annotation,isClassical);
+}
+
+FunTy funTy(Expression dom,Expression cod,bool isSquare,bool isTuple,bool isClassical)in{
+	assert(dom&&cod);
+}body{
+	return funTy(dom,cod,isSquare,isTuple,FunctionAnnotation.lifted,isClassical);
 }
 
 Identifier varTy(string name,Expression type){

@@ -11,21 +11,21 @@ dat UInt[n: ℕ] quantum{ } // TODO: dat Int[n: ℕ] quantum;
 dat Float[n: ℕ] quantum{ } // TODO: dat Int[n: ℕ] quantum;
 
 // deterministic functions
-def exp(x:ℝ):ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+e^x]",x);
-def log(x:ℝ):ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+log(x)]",x);
-def sin(x:ℝ):ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+sin(x)]",x);
-def cos(x:ℝ):ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+cos(x)]",x);
-def abs(x:ℝ):ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+|x|]",x);
+def exp(x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+e^x]",x);
+def log(x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+log(x)]",x);
+def sin(x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+sin(x)]",x);
+def cos(x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+cos(x)]",x);
+def abs(x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+|x|]",x);
 
-def min(a:ℝ,b:ℝ):ℝ ⇒ if b<a then b else a;
-def max(a:ℝ,b:ℝ):ℝ ⇒ if a<b then b else a;
+def min(a:ℝ,b:ℝ)lifted :ℝ ⇒ if b<a then b else a;
+def max(a:ℝ,b:ℝ)lifted :ℝ ⇒ if a<b then b else a;
 
-def floor(x:ℝ):ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+⌊x⌋]",x);
-def ceil(x:ℝ):ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+⌈x⌉]",x);
-def inℤ(x:ℝ):ℝ ⇒ x==floor(x);
+def floor(x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+⌊x⌋]",x);
+def ceil(x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+⌈x⌉]",x);
+def inℤ(x:ℝ)lifted :ℝ ⇒ x==floor(x);
 
-def array[a](length: ℝ, init:a): a[] ⇒ sampleFrom("(r;length,init)=>δ([i↦ init] (length))[r]",length,init):a[];
-
+def array[a](length: ℝ, init:a)lifted: a[] ⇒ sampleFrom("(r;length,init)=>δ([i↦ init] (length))[r]",length,init):a[];
+/+
 // first-class inference
 dat Distribution[a]{ } // TODO: dat Distribution[a];
 def infer[a](f:𝟙→ a):Distribution[a] ⇒ sampleFrom("(r;f)=>δ(Λx.f()[x]/∫dy f()[y])[r]",f):Distribution[a];
@@ -161,5 +161,5 @@ def multiGauss(μ: ℝ[], Σ: ℝ[][]){
 	return avv(mmv(cholesky(Σ),r),μ);
 }
 def MultiGauss(μ: ℝ[], Σ: ℝ[][])⇒infer(()⇒ multiGauss(μ,Σ));
-
++/
 __NOCHECK__ := 1;

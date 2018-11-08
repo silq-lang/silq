@@ -459,12 +459,20 @@ struct Parser{
 					auto params=parseArgumentList!(false,Parameter)(isSquare?Tok!"]":Tok!")");
 					expect(isSquare?Tok!"]":Tok!")");
 					Expression cod;
+					auto annotation=FunctionAnnotation.none;
 					if(ttype!=Tok!"["&&ttype!=Tok!"("){
 						expect(Tok!".");
+						if(ttype==Tok!"lifted"){
+							nextToken();
+							annotation=FunctionAnnotation.lifted;
+						}else if(ttype==Tok!"mfree"){
+							nextToken();
+							annotation=FunctionAnnotation.mfree;
+						}
 						cod = parseType();
 					}else cod=parseProduct();
 					auto isTuple=params[1]||params[0].length!=1;
-					return res=New!RawProductTy(cast(Parameter[])params[0],cod,isSquare,isTuple);
+					return res=New!RawProductTy(cast(Parameter[])params[0],cod,isSquare,isTuple,annotation);
 				}
 				return parseProduct();
 			case Tok!"-":
@@ -533,11 +541,22 @@ struct Parser{
 					if(!util.among(x,"=>",".","!","?",":","*","=","==","<=","!<=",">=","!>=","!=","*=","/=","div=","&=","⊕=","|=","-=","+=","<<=",">>=",">>>=","*=","·=","%=","^=","&&=","||=","~=","&","&=","&←","∧=","|","|=","|←","∨=")){
 						r~=mixin(X!q{case Tok!"@(x)":
 							nextToken();
+							static if("@(x)"=="->"||"@(x)"=="→"){
+								auto annotation=FunctionAnnotation.none;
+								if(ttype==Tok!"lifted"){
+									nextToken();
+									annotation=FunctionAnnotation.lifted;
+								}else if(ttype==Tok!"mfree"){
+									nextToken();
+									annotation=FunctionAnnotation.mfree;
+								}
+							}
 							auto right=parseExpression(rbp!(Tok!"@(x)"),"@(x)"=="←"||"@(x)"==":=",statement&&"@(x)"==",");
 							static if("@(x)"=="->")
 								alias BE=BinaryExp!(Tok!"→");
 							else alias BE=BinaryExp!(Tok!"@(x)");
-							return res=New!BE(left,right);
+							static if(is(typeof(annotation))) return New!BE(left,right,annotation);
+							else return res=New!BE(left,right);
 						});
 					}
 				return r;
@@ -678,6 +697,14 @@ struct Parser{
 		expect(isSquare?Tok!"[":Tok!"(");
 		auto params=parseArgumentList!(false,Parameter)(isSquare?Tok!"]":Tok!")");
 		expect(isSquare?Tok!"]":Tok!")");
+		auto annotation=FunctionAnnotation.none;
+		if(ttype==Tok!"lifted"){
+			nextToken();
+			annotation=FunctionAnnotation.lifted;
+		}else if(ttype==Tok!"mfree"){
+			nextToken();
+			annotation=FunctionAnnotation.mfree;
+		}
 		Expression ret=null;
 		if(ttype==Tok!":"){
 			nextToken();
@@ -700,6 +727,7 @@ struct Parser{
 		}else body_=parseCompoundExp();
 		res=New!FunctionDef(name,cast(Parameter[])params[0],params[1]||params[0].length!=1,ret,body_);
 		res.isSquare=isSquare;
+		res.annotation=annotation;
 		return res;
 	}
 	DatParameter parseDatParameter(){

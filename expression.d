@@ -147,6 +147,18 @@ class LiteralExp: Expression{
 	}
 	override bool isConstant(){ return true; }
 
+	override bool opEquals(Object o){
+		auto r=cast(LiteralExp)o;
+		if(!r) return false;
+		if(lit.type!=r.lit.type) return false;
+		switch(lit.type){
+			case Tok!"0":
+				return ℤ(lit.str)==ℤ(r.lit.str);
+			default:
+				return this is r;
+		}
+	}
+
 	mixin VariableFree;
 }
 
@@ -424,7 +436,7 @@ class CallExp: Expression{
 	override bool opEquals(Object rhs){
 		auto ce=cast(CallExp)rhs;
 		if(!ce) return false;
-		return e==ce.e&&arg==ce.arg;
+		return e==ce.e&&arg==ce.arg&&isClassical_==ce.isClassical_;
 	}
 	override bool isSubtypeImpl(Expression rhs){
 		if(this == rhs) return true;
@@ -515,8 +527,14 @@ abstract class ABinaryExp: Expression{
 }
 
 class BinaryExp(TokenType op): ABinaryExp{
-	this(Expression left, Expression right){super(left,right);}
-
+	static if(op==Tok!"→"){
+		FunctionAnnotation annotation;
+		this(Expression left, Expression right,FunctionAnnotation annotation){
+			super(left,right); this.annotation=annotation;
+		}
+	}else{
+		this(Expression left, Expression right){super(left,right);}
+	}
 	override string toString(){
 		return _brk(e1.toString() ~ " "~TokChars!op~" "~e2.toString());
 	}
@@ -528,7 +546,11 @@ class BinaryExp(TokenType op): ABinaryExp{
 		auto ne1=e1.substitute(subst);
 		auto ne2=e2.substitute(subst);
 		if(ne1==e1&&ne2==e2) return this;
-		auto r=new BinaryExp!op(ne1,ne2);
+		static if(op==Tok!"→"){
+			auto r=new BinaryExp!op(ne1,ne2,annotation);
+		}else{
+			auto r=new BinaryExp!op(ne1,ne2);
+		}
 		r.loc=loc;
 		return r;
 	}

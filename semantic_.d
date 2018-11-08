@@ -186,7 +186,7 @@ Expression presemantic(Declaration expr,Scope sc){
 			assert(fd.isTuple||pty.length==1);
 			auto pt=fd.isTuple?tupleTy(pty):pty[0];
 			if(!fd.ret) fd.sstate=SemState.error;
-			else fd.ftype=productTy(pc,pn,pt,fd.ret,fd.isSquare,fd.isTuple,false); // TODO: make function type classical if no quantum variables captured
+			else fd.ftype=productTy(pc,pn,pt,fd.ret,fd.isSquare,fd.isTuple,fd.annotation,false); // TODO: make function type classical if no quantum variables captured
 		}
 	}
 	return expr;
@@ -390,7 +390,7 @@ Expression builtIn(FieldExp fe,Scope sc)in{
 	if(fe.f.meaning) return null;
 	if(auto at=cast(ArrayTy)fe.e.type){
 		if(fe.f.name=="length"){
-			fe.type=ℕt(fe.e.type.isClassical());
+			fe.type=ℕt(true); // no superpositions over arrays with different lengths
 			fe.f.sstate=SemState.completed;
 			return fe;
 		}else return null;
@@ -667,7 +667,10 @@ AssignExp assignExpSemantic(AssignExp ae,Scope sc){
 		return ae;
 	void checkLhs(Expression lhs){
 		if(auto id=cast(Identifier)lhs){
-			if(!checkAssignable(id.meaning,ae.loc,sc))
+			if(!id.type.isClassical()){
+				sc.error("cannot reassign quantum variables", id.loc);
+				ae.sstate=SemState.error;
+			}else if(!checkAssignable(id.meaning,ae.loc,sc))
 				ae.sstate=SemState.error;
 		}else if(auto tpl=cast(TupleExp)lhs){
 			foreach(ref exp;tpl.e)
@@ -806,7 +809,7 @@ Expression callSemantic(CallExp ce,Scope sc){
 						if(auto constructor=cast(FunctionDef)decl.body_.ascope_.lookup(decl.name,false,false)){
 							if(auto cty=cast(FunTy)typeForDecl(constructor)){
 								assert(ft.cod is typeTy);
-								nft=productTy(ft.isConsumed,ft.names,ft.dom,cty,ft.isSquare,ft.isTuple,true);
+								nft=productTy(ft.isConsumed,ft.names,ft.dom,cty,ft.isSquare,ft.isTuple,ft.annotation,true);
 							}
 						}
 					}
@@ -1398,7 +1401,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 			expr.sstate=SemState.error;
 			return expr;
 		}
-		return funTy(t1,t2,false,false,true);
+		return funTy(t1,t2,false,false,ex.annotation,false);
 	}
 	if(auto fa=cast(RawProductTy)expr){
 		expr.type=typeTy();
@@ -1412,7 +1415,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		auto types=fa.params.map!(p=>p.vtype).array;
 		assert(fa.isTuple||types.length==1);
 		auto dom=fa.isTuple?tupleTy(types):types[0];
-		return productTy(consumed,names,dom,cod,fa.isSquare,fa.isTuple,false);
+		return productTy(consumed,names,dom,cod,fa.isSquare,fa.isTuple,fa.annotation,false);
 	}
 	if(auto ite=cast(IteExp)expr){
 		ite.cond=expressionSemantic(ite.cond,sc);
@@ -1489,7 +1492,7 @@ bool setFtype(FunctionDef fd){
 	auto pt=fd.isTuple?tupleTy(pty):pty[0];
 	if(fd.ret){
 		if(!fd.ftype){
-			fd.ftype=productTy(pc,pn,pt,fd.ret,fd.isSquare,fd.isTuple,false); // TODO: check whether all captures are classical
+			fd.ftype=productTy(pc,pn,pt,fd.ret,fd.isSquare,fd.isTuple,fd.annotation,false); // TODO: check whether all captures are classical
 			assert(fd.retNames==[]);
 		}
 		if(!fd.retNames) fd.retNames = new string[](fd.numReturns);
@@ -1668,7 +1671,7 @@ Expression typeForDecl(Declaration decl){
 		foreach(p;dat.params) if(!p.vtype) return unit; // TODO: ok?
 		assert(dat.isTuple||dat.params.length==1);
 		auto pt=dat.isTuple?tupleTy(dat.params.map!(p=>p.vtype).array):dat.params[0].vtype;
-		return productTy(dat.params.map!(p=>p.isConsumed).array,dat.params.map!(p=>p.getName).array,pt,typeTy,true,dat.isTuple,true);
+		return productTy(dat.params.map!(p=>p.isConsumed).array,dat.params.map!(p=>p.getName).array,pt,typeTy,true,dat.isTuple,FunctionAnnotation.lifted,true);
 	}
 	if(auto vd=cast(VarDecl)decl){
 		return vd.vtype;
@@ -1845,7 +1848,7 @@ Expression handleQuantumPrimitive(CallExp ce,Scope sc){
 	}
 	switch(literal.lit.str){
 		case "H":
-			ce.type = funTy(Bool(false),Bool(false),false,false,true);
+			ce.type = funTy([true],Bool(false),Bool(false),false,false,FunctionAnnotation.none,true);
 			break;
 		default:
 			sc.error(format("unknown quantum primitive %s",literal.lit.str),literal.loc);
