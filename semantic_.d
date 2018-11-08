@@ -335,7 +335,7 @@ bool isBuiltIn(Identifier id){
 	switch(id.name){
 	case "π":
 	case "readCSV":
-	case "Marginal","sampleFrom":
+	case "Marginal","sampleFrom","quantumPrimitive":
 	case "Expectation":
 		return true;
 	case "*","𝟙","𝟚","B","𝔹","N","ℕ","Z","ℤ","Q","ℚ","R","ℝ","C","ℂ":
@@ -353,7 +353,7 @@ Expression builtIn(Identifier id,Scope sc){
 	switch(id.name){
 	case "readCSV": t=funTy(stringTy(true),arrayTy(ℝ(true)),false,false,true); break;
 	case "π": t=ℝ(true); break;
-	case "Marginal","sampleFrom": t=unit; break; // those are actually magic polymorphic functions
+	case "Marginal","sampleFrom","quantumPrimitive": t=unit; break; // those are actually magic polymorphic functions
 	case "Expectation": t=funTy(ℝ(false),ℝ(false),false,false,true); break; // TODO: should be lifted
 	case "*","𝟙","𝟚","B","𝔹","N","ℕ","Z","ℤ","Q","ℚ","R","ℝ","C","ℂ":
 		id.type=typeTy;
@@ -882,6 +882,8 @@ Expression callSemantic(CallExp ce,Scope sc){
 				break;
 			case "sampleFrom":
 				return handleSampleFrom(ce,sc);
+			case "quantumPrimitive":
+				return handleQuantumPrimitive(ce,sc);
 			default: assert(0,text("TODO: ",id.name));
 		}
 	}else{
@@ -1822,6 +1824,33 @@ Expression handleSampleFrom(CallExp ce,Scope sc){
 	}else{
 		 // TODO: this special casing is not very nice:
 		ce.type=info.retVars.length==1?ℝ(true):tupleTy((cast(Expression)ℝ(true)).repeat(info.retVars.length).array);
+	}
+	return ce;
+}
+
+Expression handleQuantumPrimitive(CallExp ce,Scope sc){
+	Expression[] args;
+	if(auto tpl=cast(TupleExp)ce.arg) args=tpl.e;
+	else args=[ce.arg];
+	if(args.length==0){
+		sc.error("expected argument to quantumPrimitive",ce.loc);
+		ce.sstate=SemState.error;
+		return ce;
+	}
+	auto literal=cast(LiteralExp)args[0];
+	if(!literal||literal.lit.type!=Tok!"``"){
+		sc.error("first argument to quantumPrimitive must be string literal",args[0].loc);
+		ce.sstate=SemState.error;
+		return ce;
+	}
+	switch(literal.lit.str){
+		case "H":
+			ce.type = funTy(Bool(false),Bool(false),false,false,true);
+			break;
+		default:
+			sc.error(format("unknown quantum primitive %s",literal.lit.str),literal.loc);
+			ce.sstate=SemState.error;
+			break;
 	}
 	return ce;
 }

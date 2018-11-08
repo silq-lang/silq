@@ -409,6 +409,7 @@ class ProductTy: Type{
 	Expression dom, cod;
 	bool isSquare,isTuple;
 	bool isClassical_;
+	private ProductTy classicalTy;
 	private this(bool[] isConsumed,string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple,bool isClassical_)in{
 		// TODO: assert that all names are distinct
 		if(isTuple){
@@ -422,6 +423,9 @@ class ProductTy: Type{
 		this.names=names; this.dom=dom; this.cod=cod;
 		this.isSquare=isSquare; this.isTuple=isTuple;
 		this.isClassical_=isClassical_;
+		if(this.isClassical) classicalTy=this;
+		else classicalTy=new ProductTy(isConsumed,names,dom,cod,isSquare,isTuple,true);
+		// TODO: report DMD bug, New!ProductTy does not work
 	}
 	/+private+/ @property TupleTy tdom()in{ // TODO: make private
 		assert(isTuple);
@@ -609,6 +613,9 @@ class ProductTy: Type{
 	}
 	override bool isClassical(){
 		return isClassical_;
+	}
+	override ProductTy getClassical(){
+		return classicalTy;
 	}
 }
 
