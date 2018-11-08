@@ -43,8 +43,8 @@ bool isSubtype(Expression lhs,Expression rhs){
 	if(!lhs||!rhs) return false;
 	auto l=lhs.eval(), r=rhs.eval();
 	auto wl=whichNumeric(l), wr=whichNumeric(r);
-	if(wl==NumericType.none||wr==NumericType.none) return l.isSubtypeImpl(r);
 	if(!lhs.isClassical()&&rhs.isClassical()) return false;
+	if(wl==NumericType.none||wr==NumericType.none) return l.isSubtypeImpl(r);
 	return wl<=wr;
 }
 
@@ -524,6 +524,11 @@ class ProductTy: Type{
 		while(names.canFind(nname)||hasFreeVar(nname)) nname~="'";
 		return relabel(oname,nname);
 	}
+	private string freshName(string base,Expression block){
+		auto nn=base;
+		while(hasFreeVar(nn)||block.hasFreeVar(nn)) nn~="'";
+		return nn;
+	}
 	private string[] freshNames(Expression block){
 		auto nnames=names.dup;
 		foreach(i,ref nn;nnames)
@@ -625,6 +630,24 @@ class ProductTy: Type{
 			return false;
 		r=r.relabelAll(freshNames(r));
 		return dom==r.dom&&cod==r.cod;
+	}
+	override bool isSubtypeImpl(Expression rhs){
+		auto r=cast(ProductTy)rhs;
+		if(!r) return false;
+		if(isTuple&&!cast(TupleTy)r.dom) return false;
+		r=r.setTuple(isTuple);
+		if(!r) return false;
+		if(isConst!=r.isConst||isSquare!=r.isSquare||nargs!=r.nargs)
+			return false;
+		if(annotation>r.annotation||!isClassical&&r.isClassical)
+			return false;
+		auto name=freshName("x",r);
+		auto vars=varTy(name,r.dom);
+		auto lCod=tryApply(vars,isSquare);
+		auto rCod=r.tryApply(vars,isSquare);
+		if(!lCod) return false;
+		assert(!!rCod);
+		return isSubtype(lCod,rCod);
 	}
 	private ProductTy setTuple(bool tuple)in{
 		assert(!tuple||cast(TupleTy)dom);
