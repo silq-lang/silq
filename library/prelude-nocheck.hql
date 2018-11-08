@@ -2,8 +2,8 @@
 // implementation of built-in functions based on 'sampleFrom'
 // caution: some backends may special-case strings (see samplefrom.d)
 
-def H(consumed x: 𝔹):𝔹{
-	return (quantumPrimitive("H"):!(Π(consumed x:𝔹). 𝔹))(x);
+def H(x: 𝔹):𝔹{
+	return (quantumPrimitive("H"):!(Π(x:𝔹). 𝔹))(x);
 }
 
 dat Int[n: ℕ] quantum{ } // TODO: dat Int[n: ℕ] quantum;

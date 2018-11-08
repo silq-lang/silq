@@ -338,10 +338,10 @@ struct Parser{
 
 	Parameter parseParameter(){
 		mixin(SetLoc!Parameter);
-		bool isConsumed=false;
-		if(ttype==Tok!"consumed"){
+		bool isConst=false;
+		if(ttype==Tok!"const"){
 			nextToken();
-			isConsumed=true;
+			isConst=true;
 		}
 		auto i=parseIdentifier();
 		Expression t=null;
@@ -349,7 +349,7 @@ struct Parser{
 			nextToken();
 			t=parseType();
 		}
-		return res=New!Parameter(isConsumed,i,t);
+		return res=New!Parameter(isConst,i,t);
 	}
 	
 	Q!(Expression[],bool) parseArgumentList(bool nonempty=false, Entry=AssignExp, T...)(TokenType delim, T args){
@@ -484,9 +484,9 @@ struct Parser{
 			case Tok!"~":
 				nextToken();
 				return res=New!(UnaryExp!(Tok!"~"))(parseExpression(nbp));
-			case Tok!"consumed":
+			case Tok!"const":
 				nextToken();
-				return res=New!(UnaryExp!(Tok!"consumed"))(parseExpression(nbp));
+				return res=New!(UnaryExp!(Tok!"const"))(parseExpression(nbp));
 			case Tok!"__error": mixin(rule!(ErrorExp,"_"));
 			//case Tok!"[": mixin(rule!(ArrayLiteralExp,"_","OPT",ArgumentList,"]"));
 			//case Tok!"assert": mixin(rule!(AssertExp,"_","(",ArgumentList,")"));

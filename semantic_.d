@@ -178,7 +178,7 @@ Expression presemantic(Declaration expr,Scope sc){
 					assert(fd.sstate==SemState.error);
 					return fd;
 				}
-				pc~=p.isConsumed;
+				pc~=p.isConst;
 				pn~=p.getName;
 				pty~=p.vtype;
 			}
@@ -809,7 +809,7 @@ Expression callSemantic(CallExp ce,Scope sc){
 						if(auto constructor=cast(FunctionDef)decl.body_.ascope_.lookup(decl.name,false,false)){
 							if(auto cty=cast(FunTy)typeForDecl(constructor)){
 								assert(ft.cod is typeTy);
-								nft=productTy(ft.isConsumed,ft.names,ft.dom,cty,ft.isSquare,ft.isTuple,ft.annotation,true);
+								nft=productTy(ft.isConst,ft.names,ft.dom,cty,ft.isSquare,ft.isTuple,ft.annotation,true);
 							}
 						}
 					}
@@ -1352,8 +1352,8 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		return expr=handleUnary!notType("not",ae,ae.e);
 	}
 	if(auto ae=cast(UBitNotExp)expr) return expr=handleUnary!minusBitNotType("bitwise not",ae,ae.e);
-	if(auto ae=cast(UnaryExp!(Tok!"consumed"))expr){
-		sc.error("invalid 'consumed' annotation", ae.loc);
+	if(auto ae=cast(UnaryExp!(Tok!"const"))expr){
+		sc.error("invalid 'const' annotation", ae.loc);
 		ae.sstate=SemState.error;
 		return ae;
 	}
@@ -1415,12 +1415,12 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		auto cod=typeSemantic(fa.cod,fsc);
 		propErr(fa.cod,fa);
 		if(fa.sstate==SemState.error) return fa;
-		auto consumed=fa.params.map!(p=>p.isConsumed).array;
+		auto const_=fa.params.map!(p=>p.isConst).array;
 		auto names=fa.params.map!(p=>p.getName).array;
 		auto types=fa.params.map!(p=>p.vtype).array;
 		assert(fa.isTuple||types.length==1);
 		auto dom=fa.isTuple?tupleTy(types):types[0];
-		return productTy(consumed,names,dom,cod,fa.isSquare,fa.isTuple,fa.annotation,false);
+		return productTy(const_,names,dom,cod,fa.isSquare,fa.isTuple,fa.annotation,false);
 	}
 	if(auto ite=cast(IteExp)expr){
 		ite.cond=expressionSemantic(ite.cond,sc);
@@ -1489,7 +1489,7 @@ bool setFtype(FunctionDef fd){
 			assert(fd.sstate==SemState.error);
 			return false;
 		}
-		pc~=p.isConsumed;
+		pc~=p.isConst;
 		pn~=p.getName;
 		pty~=p.vtype;
 	}
@@ -1676,7 +1676,7 @@ Expression typeForDecl(Declaration decl){
 		foreach(p;dat.params) if(!p.vtype) return unit; // TODO: ok?
 		assert(dat.isTuple||dat.params.length==1);
 		auto pt=dat.isTuple?tupleTy(dat.params.map!(p=>p.vtype).array):dat.params[0].vtype;
-		return productTy(dat.params.map!(p=>p.isConsumed).array,dat.params.map!(p=>p.getName).array,pt,typeTy,true,dat.isTuple,FunctionAnnotation.lifted,true);
+		return productTy(dat.params.map!(p=>p.isConst).array,dat.params.map!(p=>p.getName).array,pt,typeTy,true,dat.isTuple,FunctionAnnotation.lifted,true);
 	}
 	if(auto vd=cast(VarDecl)decl){
 		return vd.vtype;
@@ -1853,7 +1853,7 @@ Expression handleQuantumPrimitive(CallExp ce,Scope sc){
 	}
 	switch(literal.lit.str){
 		case "H":
-			ce.type = funTy([true],Bool(false),Bool(false),false,false,FunctionAnnotation.none,true);
+			ce.type = funTy([false],Bool(false),Bool(false),false,false,FunctionAnnotation.none,true);
 			break;
 		default:
 			sc.error(format("unknown quantum primitive %s",literal.lit.str),literal.loc);

@@ -160,7 +160,7 @@ string[2][] specialTokens =
 
 string[2][] compoundTokens = [];
 
-string[] keywords = ["dat","def","true","false","if","then","else","observe","assert","return","repeat","for","while","in","cobserve","import","Π","Pi","quantum","consumed","lifted","mfree"];
+string[] keywords = ["dat","def","true","false","if","then","else","observe","assert","return","repeat","for","while","in","cobserve","import","Π","Pi","quantum","const","lifted","mfree"];
 
 
 string[2][] tokens = specialTokens ~ complexTokens ~ simpleTokens ~ unicodeTokens ~ compoundTokens ~ keywordTokens();
@@ -953,6 +953,7 @@ TokenType isKeyword(string s){
 			if(s=="false") return Tok!"false";
 			if(s=="while") return Tok!"while";
 			if(s=="mfree") return Tok!"mfree";
+			if(s=="const") return Tok!"const";
 			break;
 		case 6:
 			if(s=="assert") return Tok!"assert";
@@ -967,7 +968,6 @@ TokenType isKeyword(string s){
 			break;
 		case 8:
 			if(s=="cobserve") return Tok!"cobserve";
-			if(s=="consumed") return Tok!"consumed";
 			break;
 		default: break;
 	}

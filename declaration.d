@@ -45,10 +45,10 @@ class VarDecl: Declaration{
 }
 
 class Parameter: VarDecl{
-	bool isConsumed;
-	this(bool isConsumed, Identifier name, Expression type){
+	bool isConst;
+	this(bool isConst, Identifier name, Expression type){
 		super(name); this.dtype=type;
-		this.isConsumed=isConsumed;
+		this.isConst=isConst;
 	}
 	override string toString(){ return getName~(dtype?": "~dtype.toString():""); }
 	@property override string kind(){ return "parameter"; }
