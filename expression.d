@@ -442,6 +442,7 @@ class CallExp: Expression{
 	override bool isSubtypeImpl(Expression rhs){
 		if(this == rhs) return true;
 		auto rcall = cast(CallExp)rhs;
+		if(!isClassical_ && rcall.isClassical_) return false;
 		if(rcall && type==typeTy && rhs.type==typeTy && e==rcall.e && isSquare==rcall.isSquare){
 			if(auto id=cast(Identifier)e){
 				if(id.meaning){
@@ -457,7 +458,6 @@ class CallExp: Expression{
 						}
 						if(!dat.isTuple){
 							assert(dat.params.length==1);
-							assert(arg != rcall.arg); // (checked at start of function)
 							return check(dat.params[0].variance,arg,rcall.arg);
 						}
 						assert(dat.isTuple);
