@@ -1400,13 +1400,33 @@ Expression expressionSemantic(Expression expr,Scope sc){
 	}
 	if(auto ex=cast(BinaryExp!(Tok!"→"))expr){
 		expr.type=typeTy();
-		auto t1=typeSemantic(ex.e1,sc);
+		Q!(bool[],Expression) getConstAndType(Expression e){
+			if(auto pr=cast(BinaryExp!(Tok!"×"))e){
+				auto t1=getConstAndType(pr.e1);
+				auto t2=getConstAndType(pr.e2);
+				if(!t1[1]||!t2[1]){
+					e.sstate=SemState.error;
+					return q((bool[]).init,Expression.init);
+				}
+				auto l=cast(TupleTy)t1[1],r=cast(TupleTy)t2[1];
+				if(l && r && !pr.e1.brackets && !pr.e2.brackets)
+					return q(t1[0]~t2[0],cast(Expression)tupleTy(l.types~r.types));
+				if(l&&!pr.e1.brackets) return q(t1[0]~t2[0],cast(Expression)tupleTy(l.types~t2[1]));
+				if(r&&!pr.e2.brackets) return q(t1[0]~t2[0],cast(Expression)tupleTy(t1[1]~r.types));
+				return q(t1[0]~t2[0],cast(Expression)tupleTy([t1[1],t2[1]]));
+			}else if(auto ce=cast(UnaryExp!(Tok!"const"))e){
+				return q([true],typeSemantic(ce.e,sc));
+			}else{
+				return q([false],typeSemantic(e,sc));
+			}
+		}
+		auto t1=getConstAndType(ex.e1);
 		auto t2=typeSemantic(ex.e2,sc);
-		if(!t1||!t2){
+		if(!t1[1]||!t2){
 			expr.sstate=SemState.error;
 			return expr;
 		}
-		return funTy(t1,t2,false,false,ex.annotation,false);
+		return funTy(t1[0],t1[1],t2,false,!!cast(TupleTy)t1[1]&&t1[0].length!=1,ex.annotation,false);
 	}
 	if(auto fa=cast(RawProductTy)expr){
 		expr.type=typeTy();
