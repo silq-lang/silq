@@ -1352,6 +1352,11 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		return expr=handleUnary!notType("not",ae,ae.e);
 	}
 	if(auto ae=cast(UBitNotExp)expr) return expr=handleUnary!minusBitNotType("bitwise not",ae,ae.e);
+	if(auto ae=cast(UnaryExp!(Tok!"consumed"))expr){
+		sc.error("invalid 'consumed' annotation", ae.loc);
+		ae.sstate=SemState.error;
+		return ae;
+	}
 	if(auto ae=cast(AndExp)expr) return expr=handleBinary!logicType("conjunction",ae,ae.e1,ae.e2);
 	if(auto ae=cast(OrExp)expr) return expr=handleBinary!logicType("disjunction",ae,ae.e1,ae.e2);
 	if(auto ae=cast(LtExp)expr) return expr=handleBinary!cmpType("'<'",ae,ae.e1,ae.e2);
@@ -1411,7 +1416,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		propErr(fa.cod,fa);
 		if(fa.sstate==SemState.error) return fa;
 		auto consumed=fa.params.map!(p=>p.isConsumed).array;
-		auto names=fa.params.map!(p=>p.getNames).array;
+		auto names=fa.params.map!(p=>p.getName).array;
 		auto types=fa.params.map!(p=>p.vtype).array;
 		assert(fa.isTuple||types.length==1);
 		auto dom=fa.isTuple?tupleTy(types):types[0];

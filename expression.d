@@ -229,7 +229,8 @@ class UnaryExp(TokenType op): Expression{
 	Expression e;
 	this(Expression next){e = next;}
 	override string toString(){
-		return _brk(TokChars!op~e.toString());
+		import std.uni;
+		return _brk(TokChars!op~(TokChars!op[$-1].isAlpha()?" ":"")~e.toString());
 	}
 	static if(op==Tok!"&"){
 		override @property string kind(){
