@@ -12,6 +12,8 @@ class Declaration: Expression{
 	final @property string getName(){ return (rename?rename:name).name; }
 	override string toString(){ return getName; }
 
+	bool isLinear(){ return false; }
+
 	mixin VariableFree;
 
 	// semantic information
@@ -39,6 +41,9 @@ class VarDecl: Declaration{
 	override string toString(){ return getName~(dtype?": "~dtype.toString():vtype?": "~vtype.toString():""); }
 	@property override string kind(){ return "variable"; }
 
+	override bool isLinear(){
+		return true;
+	}
 	// semantic information
 	Expression vtype;
 	Expression initializer;
@@ -49,6 +54,9 @@ class Parameter: VarDecl{
 	this(bool isConst, Identifier name, Expression type){
 		super(name); this.dtype=type;
 		this.isConst=isConst;
+	}
+	override bool isLinear(){
+		return !isConst&&(!vtype||!vtype.isClassical());
 	}
 	override string toString(){ return getName~(dtype?": "~dtype.toString():""); }
 	@property override string kind(){ return "parameter"; }

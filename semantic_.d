@@ -592,22 +592,11 @@ VarDecl varDeclSemantic(VarDecl vd,Scope sc){
 
 Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
 	bool success=true;
-	if(auto ce=cast(CallExp)be.e2){
-		if(auto id=cast(Identifier)ce.e){
-			if(id.name=="array" && !ce.isSquare){ // TODO: this is legacy. get rid of this.
-				ce.arg=expressionSemantic(ce.arg,sc);
-				if(isSubtype(ce.arg.type,ℝ(true))){
-					ce.e.type=funTy(ℝ(true),arrayTy(ℝ(true)),false,false,true);
-					ce.e.sstate=SemState.completed;
-				}
-			}
-		}
-	}
+	auto e2orig=be.e2;
+	be.e2=expressionSemantic(be.e2,sc);
 	auto de=cast(DefExp)makeDeclaration(be,success,sc);
 	if(!de) be.sstate=SemState.error;
 	assert(success && de && de.initializer is be || !de||de.sstate==SemState.error);
-	auto e2orig=be.e2;
-	be.e2=expressionSemantic(be.e2,sc);
 	if(be.e2.sstate==SemState.completed){
 		if(auto tpl=cast(TupleExp)be.e1){
 			if(auto tt=cast(TupleTy)be.e2.type){
@@ -806,7 +795,7 @@ Expression callSemantic(CallExp ce,Scope sc){
 				auto nft=ft;
 				if(auto id=cast(Identifier)fun){
 					if(auto decl=cast(DatDecl)id.meaning){
-						if(auto constructor=cast(FunctionDef)decl.body_.ascope_.lookup(decl.name,false,false)){
+						if(auto constructor=cast(FunctionDef)decl.body_.ascope_.lookup(decl.name,false,false,false)){
 							if(auto cty=cast(FunTy)typeForDecl(constructor)){
 								assert(ft.cod is typeTy);
 								nft=productTy(ft.isConst,ft.names,ft.dom,cty,ft.isSquare,ft.isTuple,ft.annotation,true);
@@ -845,7 +834,7 @@ Expression callSemantic(CallExp ce,Scope sc){
 	}else if(auto at=isDataTyId(fun)){
 		auto decl=at.decl;
 		assert(fun.type is typeTy);
-		auto constructor=cast(FunctionDef)decl.body_.ascope_.lookup(decl.name,false,false);
+		auto constructor=cast(FunctionDef)decl.body_.ascope_.lookup(decl.name,false,false,false);
 		auto ty=cast(FunTy)typeForDecl(constructor);
 		if(ty&&decl.hasParams){
 			auto nce=cast(CallExp)fun;
@@ -947,7 +936,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		auto meaning=id.meaning;
 		if(!meaning){
 			int nerr=sc.handler.nerrors; // TODO: this is a bit hacky
-			meaning=sc.lookup(id,false,true);
+			meaning=sc.lookup(id,false,true,false);
 			if(nerr!=sc.handler.nerrors){
 				sc.note("looked up here",id.loc);
 				id.sstate=SemState.error;
@@ -1027,7 +1016,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		}
 		if(aggrd){
 			if(aggrd.body_.ascope_){
-				auto meaning=aggrd.body_.ascope_.lookupHere(fe.f,false);
+				auto meaning=aggrd.body_.ascope_.lookupHere(fe.f,false,false);
 				if(!meaning) return noMember();
 				fe.f.meaning=meaning;
 				fe.f.name=meaning.getName;

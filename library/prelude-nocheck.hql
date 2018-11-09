@@ -17,14 +17,14 @@ def sin(x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+sin(x)]",x);
 def cos(x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+cos(x)]",x);
 def abs(x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+|x|]",x);
 
-def min(a:ℝ,b:ℝ)lifted :ℝ ⇒ if b<a then b else a;
-def max(a:ℝ,b:ℝ)lifted :ℝ ⇒ if a<b then b else a;
+def min(const a:ℝ,const b:ℝ)lifted :ℝ ⇒ if b<a then b else a;
+def max(const a:ℝ,const b:ℝ)lifted :ℝ ⇒ if a<b then b else a;
 
-def floor(x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+⌊x⌋]",x);
-def ceil(x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+⌈x⌉]",x);
-def inℤ(x:ℝ)lifted :ℝ ⇒ x==floor(x);
+def floor(const x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+⌊x⌋]",x);
+def ceil(const x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+⌈x⌉]",x);
+def inℤ(const x:ℝ)lifted :ℝ ⇒ x==floor(x);
 
-def array[a](length: ℝ, init:a)lifted: a[] ⇒ sampleFrom("(r;length,init)=>δ([i↦ init] (length))[r]",length,init):a[];
+def array[const a](const length: ℝ, const init:a)lifted: a[] ⇒ sampleFrom("(r;length,init)=>δ([i↦ init] (length))[r]",length,init):a[];
 /+
 // first-class inference
 dat Distribution[a]{ } // TODO: dat Distribution[a];

@@ -7,7 +7,7 @@ import lexer, expression, declaration, error;
 abstract class Scope{
 	abstract @property ErrorHandler handler();
 	bool insert(Declaration decl)in{assert(!decl.scope_);}body{
-		if(auto d=symtabLookup(decl.name,false)){
+		if(auto d=symtabLookup(decl.name,false,true)){
 			redefinitionError(decl, d);
 			decl.sstate=SemState.error;
 			return false;
@@ -28,26 +28,30 @@ abstract class Scope{
 		note("previous definition was here",prev.name.loc);
 	}
 
-	protected final Declaration symtabLookup(Identifier ident,bool rnsym){
+	protected final Declaration symtabLookup(Identifier ident,bool rnsym,bool isProbing){
 		auto r=symtab.get(ident.ptr, null);
 		if(rnsym&&!r) r=rnsymtab.get(ident.ptr,null);
+		if(!isProbing&&r&&r.isLinear()){
+			symtab.remove(r.name.ptr);
+			rnsymtab.remove(ident.ptr);
+		}
 		return r;
 	}
-	Declaration lookup(Identifier ident,bool rnsym,bool lookupImports){
-		return lookupHere(ident,rnsym);
+	Declaration lookup(Identifier ident,bool rnsym,bool lookupImports,bool isProbing){
+		return lookupHere(ident,rnsym,isProbing);
 	}
 	protected final void rename(Declaration decl){
 		for(;;){ // TODO: quite hacky
 			auto cname=decl.rename?decl.rename:decl.name;
-			auto d=lookup(cname,true,true);
+			auto d=lookup(cname,true,true,true);
 			import semantic_: isBuiltIn;
 			if(!d&&!isBuiltIn(cname)) break;
 			decl.rename=new Identifier(decl.getName~"'");
 			decl.rename.loc=decl.name.loc;
 		}
 	}
-	final Declaration lookupHere(Identifier ident,bool rnsym){
-		auto r = symtabLookup(ident,rnsym);
+	final Declaration lookupHere(Identifier ident,bool rnsym,bool isProbing){
+		auto r = symtabLookup(ident,rnsym,isProbing);
 		return r;
 	}
 	
@@ -83,11 +87,11 @@ class TopScope: Scope{
 		// TODO: store a location for better error messages
 		// TODO: allow symbol lookup by full path
 	}
-	override Declaration lookup(Identifier ident,bool rnsym,bool lookupImports){
-		if(auto d=super.lookup(ident,rnsym,lookupImports)) return d;
+	override Declaration lookup(Identifier ident,bool rnsym,bool lookupImports,bool isProbing){
+		if(auto d=super.lookup(ident,rnsym,lookupImports,isProbing)) return d;
 		if(lookupImports){
 			Declaration[] ds;
-			foreach(sc;imports) if(auto d=sc.lookup(ident,rnsym,false)) ds~=d;
+			foreach(sc;imports) if(auto d=sc.lookup(ident,rnsym,false,isProbing)) ds~=d;
 			if(ds.length==1||ds.length>=1&&rnsym) return ds[0];
 			if(ds.length>1){
 				error(format("multiple imports of %s",ident.name),ident.loc);
@@ -108,9 +112,9 @@ class NestedScope: Scope{
 	Scope parent;
 	override @property ErrorHandler handler(){ return parent.handler; }
 	this(Scope parent){ this.parent=parent; }
-	override Declaration lookup(Identifier ident,bool rnsym,bool lookupImports){
-		if(auto decl=lookupHere(ident,rnsym)) return decl;
-		return parent.lookup(ident,rnsym,lookupImports);
+	override Declaration lookup(Identifier ident,bool rnsym,bool lookupImports,bool isProbing){
+		if(auto decl=lookupHere(ident,rnsym,isProbing)) return decl;
+		return parent.lookup(ident,rnsym,lookupImports,isProbing);
 	}
 
 	override bool isNestedIn(Scope rhs){ return rhs is this || parent.isNestedIn(rhs); }
