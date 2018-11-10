@@ -174,7 +174,8 @@ private DExpr definiteIntegralContinuous(DExpr expr,DExpr facts)out(res){
 	return null;
 }
 
-DExpr fromTo(DExpr anti,DExpr lower,DExpr upper){ // lower=null: lower=-∞. upper=0: upper=∞
+DExpr fromTo(DExpr anti,DExpr lower,DExpr upper,DExpr lowLeUp=null){ // lower=null: lower=-∞. upper=0: upper=∞
+	if(!lowLeUp) lowLeUp=dLe(lower,upper);
 	auto var=db1;
 	//dw(anti.substitute(var,lower).simplify(one)," ",lower," ",upper);
 	auto lo=lower?unbind(anti,lower):null;
@@ -183,7 +184,7 @@ DExpr fromTo(DExpr anti,DExpr lower,DExpr upper){ // lower=null: lower=-∞. upp
 		//dw("??! ",dDiff(var,anti).simplify(one));
 		//dw(anti.substitute(var,upper).simplify(one));
 		//dw(anti.substitute(var,lower).simplify(one));
-		return dLe(lower,upper)*(up-lo);
+		return lowLeUp*(up-lo);
 	}
 	if(!lo) lo=dLimSmp(var,-dInf,anti,one).incDeBruijnVar(-1,0);
 	if(!up) up=dLimSmp(var,dInf,anti,one).incDeBruijnVar(-1,0);
@@ -545,7 +546,7 @@ private DExpr tryIntegrateImpl(DExpr expr){
 	assert(ivrs==one||ivrs.factors.all!(x=>!!cast(DIvr)x));
 	auto loup=ivrs.getBoundsForVar(var);
 	if(!loup[0]) return null;
-	DExpr lower=loup[1][0].maybe!(x=>x.incDeBruijnVar(-1,0)),upper=loup[1][1].maybe!(x=>x.incDeBruijnVar(-1,0));
+	DExpr lower=loup[1][0].maybe!(x=>x.incDeBruijnVar(-1,0)),upper=loup[1][1].maybe!(x=>x.incDeBruijnVar(-1,0)),lowLeUp=loup[1][2].maybe!(x=>x.incDeBruijnVar(-1,0));
 	//dw(var," ",expr," ",ivrs);
 	//dw(antid.antiderivative);
 	//dw(dDiff(var,antid.antiderivative.simplify(one)).simplify(one));
@@ -555,7 +556,7 @@ private DExpr tryIntegrateImpl(DExpr expr){
 		if(r) r=r.simplify(one);
 		writeln("integrated: ",r?r.incDeBruijnVar(1,0).toString(/+Format.mathematica+/):"?");
 		dw("loup: ", lower," ",upper);+/
-		return anti.fromTo(lower,upper);
+		return anti.fromTo(lower,upper,lowLeUp);
 	}
 	if(auto p=cast(DPlus)expr.polyNormalize(var)){
 		DExprSet works;

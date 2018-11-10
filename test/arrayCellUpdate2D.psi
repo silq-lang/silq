@@ -12,5 +12,5 @@ def main(){
     for flow in [0..2){
 		cells[0][0].c -= uniform(0,1);
     }
-    return cells[0][0].c; // expected: ((-c+1)·[-c≤0]+[c≠0]·[c≤0]+[c≤0]·c)·([-1+-c≤0]·[c≤0]+[-1+c≤0]·[-c≤0]·[c≠0])
+    return cells[0][0].c; // expected: ((-c+1)·[-c≤0]·[c≠0]+[c≠0]·[c≤0]·c+[c≤0])·[-1+-c≤0]·[-1+c≤0]
 }

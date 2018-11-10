@@ -2118,8 +2118,8 @@ BoundStatus getBoundForVar(DIvr ivr,DVar var,out DExpr bound){
 	return r;
 }
 
-Q!(bool,DExpr[2]) getBoundsForVar(DExpr ivrs,DVar var,DExpr facts=one){
-	DExpr lower,upper;
+Q!(bool,DExpr[3]) getBoundsForVar(DExpr ivrs,DVar var,DExpr facts=one){
+	DExprSet lowers,uppers;
 	foreach(f;ivrs.factors){
 		if(f is one) break;
 		auto ivr=cast(DIvr)f;
@@ -2129,29 +2129,27 @@ Q!(bool,DExpr[2]) getBoundsForVar(DExpr ivrs,DVar var,DExpr facts=one){
 		auto status=ivr.getBoundForVar(var,bound);
 		final switch(status) with(BoundStatus){
 		case fail:
-			return q(false,cast(DExpr[2])[null,null]);
+			return q(false,cast(DExpr[3])[null,null,null]);
 		case lowerBound:
-			if(lower) lower=dMax(lower,bound);
-			else lower=bound;
-			lower=lower.simplify(facts);
+			lowers.insert(bound.simplify(facts));
 			break;
 		case upperBound:
-			if(upper) upper=dMin(upper,bound);
-			else upper=bound;
-			upper=upper.simplify(facts);
+			uppers.insert(bound.simplify(facts));
 			break;
 		case equal:
-			if(lower) lower=dMax(lower,bound);
-			else lower=bound;
-			if(upper) upper=dMin(upper,bound);
-			else upper=bound;
-			lower=lower.simplify(facts);
-			upper=upper.simplify(facts);
+			lowers.insert(bound.simplify(facts));
+			uppers.insert(bound.simplify(facts));
 		}
 	}
-	return q(true,cast(DExpr[2])[lower,upper]);
+	DExprSet lowLeUps;
+	foreach(lower;lowers)
+		foreach(upper;uppers)
+			lowLeUps.insert(dLe(lower,upper));
+	auto lower=lowers.length?dMax(lowers).simplify(facts):null;
+	auto upper=uppers.length?dMin(uppers).simplify(facts):null;
+	auto lowLeUp=dMult(lowLeUps);
+	return q(true,cast(DExpr[3 ])[lower,upper,lowLeUp]);
 }
-
 
 // attempt to produce an equivalent expression where 'var' does not occur non-linearly in constraints
 DExpr linearizeConstraints(alias filter=e=>true)(DExpr e,DVar var){ // TODO: don't re-build the expression if no constraints change.
@@ -3179,6 +3177,49 @@ DExpr dMax(DExpr a,DExpr b){
 	return dLt(b,a)*a+dLe(a,b)*b;
 }
 
+DExpr dOpt(string which)(DExprSet exprs)if(which=="min"||which=="max")in{
+	assert(exprs.length);
+}do{
+	DExprSet considered;
+	DExprSet unconsidered=exprs.dup;
+	DExprSet summands;
+	foreach(expr;exprs){
+		DExprSet factors;
+		factors.insert(expr);
+		foreach(cexpr;considered){
+			static if(which=="min"){
+				factors.insert(dLt(expr,cexpr));
+			}else{
+				factors.insert(dGt(expr,cexpr));
+			}
+		}
+		foreach(cexpr;unconsidered){
+			if(cexpr==expr) continue;
+			static if(which=="min"){
+				factors.insert(dLe(expr,cexpr));
+			}else{
+				factors.insert(dGe(expr,cexpr));
+			}
+		}
+		summands.insert(dMult(factors));
+		considered.insert(expr);
+		unconsidered.remove(expr);
+	}
+	return dPlus(summands);
+}
+
+DExpr dMin(DExprSet exprs)in{
+	assert(exprs.length);
+}do{
+	return dOpt!"min"(exprs);
+}
+
+DExpr dMax(DExprSet exprs)in{
+	assert(exprs.length);
+}do{
+	return dOpt!"max"(exprs);
+}
+
 version(INTEGRATION_STATS){
 	int integrations=0;
 	int successfulIntegrations=0;
@@ -3759,7 +3800,7 @@ class DGaussIntInv: DOp{
 			return "erfinv(2/sqrt(Pi)*("~x.toStringImpl(formatting,Precedence.none,binders)~")-1)";
 		}else if(formatting==Format.matlab) return "erfinv(2/sqrt(pi)*("~x.toStringImpl(formatting,Precedence.none,binders)~")-1)";
 		else if(formatting==Format.lisp) return text("(inverse-gauss-integral ",x.toStringImpl(formatting,Precedence.none,binders),")");
-		else if(formatting==Format.sympy) return "erfinv(2/sqrt(pi)*("~x.toStringImpl(formatting,Precedence.none,binders)~")-1)";		
+		else if(formatting==Format.sympy) return "erfinv(2/sqrt(pi)*("~x.toStringImpl(formatting,Precedence.none,binders)~")-1)";
 		else return addp(prec,symbol(formatting,binders)~"("~x.toStringImpl(formatting,Precedence.none,binders)~")");
 	}
 	static DExpr staticSimplify(DExpr x,DExpr facts=one){
@@ -4550,3 +4591,4 @@ auto dPow(string file=__FILE__,int line=__LINE__)(DExpr e1, DExpr e2){
 }
 
 DExpr dDiv(string file=__FILE__,int line=__LINE__)(DExpr e1,DExpr e2){ return e1*dPow!(file,line)(e2,mone); }+/
+
