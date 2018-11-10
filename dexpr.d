@@ -2118,7 +2118,7 @@ BoundStatus getBoundForVar(DIvr ivr,DVar var,out DExpr bound){
 	return r;
 }
 
-Q!(bool,DExpr[3]) getBoundsForVar(DExpr ivrs,DVar var,DExpr facts=one){
+Q!(bool,DExpr[3]) getBoundsForVar(alias boundLe=dLe)(DExpr ivrs,DVar var,DExpr facts=one){
 	DExprSet lowers,uppers;
 	foreach(f;ivrs.factors){
 		if(f is one) break;
@@ -2144,7 +2144,7 @@ Q!(bool,DExpr[3]) getBoundsForVar(DExpr ivrs,DVar var,DExpr facts=one){
 	DExprSet lowLeUps;
 	foreach(lower;lowers)
 		foreach(upper;uppers)
-			lowLeUps.insert(dLe(lower,upper));
+			lowLeUps.insert(boundLe(lower,upper));
 	auto lower=lowers.length?dMax(lowers).simplify(facts):null;
 	auto upper=uppers.length?dMin(uppers).simplify(facts):null;
 	auto lowLeUp=dMult(lowLeUps);

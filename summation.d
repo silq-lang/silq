@@ -114,15 +114,15 @@ DExpr computeSum(DExpr expr,DExpr facts=one){
 	}
 	ivrs=ivrs.simplify(newFacts);
 	nonIvrs=nonIvrs.simplify(newFacts);
-	auto loup=(ivrs*newIvrs).simplify(one).getBoundsForVar(var,newFacts);
+	auto loup=(ivrs*newIvrs).simplify(one).getBoundsForVar!((a,b)=>dLe(dCeil(a),dFloor(b)))(var,newFacts);
 	// TODO: allow ivrs that do not contribute to bound.
 	// TODO: only use external facts if local facts insufficient?
 	if(!loup[0]) return null;
-	DExpr lower=loup[1][0].maybe!(x=>x.incDeBruijnVar(-1,0)),upper=loup[1][1].maybe!(x=>x.incDeBruijnVar(-1,0));
+	DExpr lower=loup[1][0].maybe!(x=>x.incDeBruijnVar(-1,0)),upper=loup[1][1].maybe!(x=>x.incDeBruijnVar(-1,0)),lowLeUp=loup[1][2].maybe!(x=>x.incDeBruijnVar(-1,0));
 	//dw("!! ",nonIvrs," ",lower," ",upper);
 	// TODO: symbolic summation. TODO: use the fact that the loop index is an integer in simplifications.
 	if(auto anti=tryGetDiscreteAntiderivative(nonIvrs))
-		return anti.discreteFromTo(lower,upper);
+		return anti.discreteFromTo(lower,upper,lowLeUp);
 	auto lq=cast(Dℚ)lower, uq=cast(Dℚ)upper;
 	import std.format: format;
 	import std.math: ceil, floor;
@@ -144,11 +144,12 @@ DExpr computeSum(DExpr expr,DExpr facts=one){
 	return null;
 }
 
-DExpr discreteFromTo(DExpr anti,DExpr lower,DExpr upper){
+DExpr discreteFromTo(DExpr anti,DExpr lower,DExpr upper,DExpr lowLeUp=null){
+	if(!lowLeUp) lowLeUp=dLe(dCeil(lower),dFloor(upper));
 	auto var=db1;
 	auto lo=lower?unbind(anti,dCeil(lower)):null;
 	auto up=upper?unbind(anti,dFloor(upper)+1):null;
-	if(lower&&upper) return dLe(dCeil(lower),dFloor(upper))*(up-lo);
+	if(lower&&upper) return lowLeUp*(up-lo);
 	if(!lo) lo=dLimSmp(var,-dInf,anti,one).incDeBruijnVar(-1,0);
 	if(!up) up=dLimSmp(var,dInf,anti,one).incDeBruijnVar(-1,0);
 	if(lo.isInfinite() || up.isInfinite()) return null;
