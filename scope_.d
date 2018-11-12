@@ -1,12 +1,15 @@
 // Written in the D programming language
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
 
-import std.format;
+import std.format, std.conv;
 import lexer, expression, declaration, error;
 
 abstract class Scope{
 	abstract @property ErrorHandler handler();
-	bool insert(Declaration decl)in{assert(!decl.scope_);}body{
+	bool allowsLinear(){
+		return true;
+	}
+	bool insert(Declaration decl)in{assert(!decl.scope_); debug assert(!allowsLinear||!closed,text(decl)); }body{
 		if(auto d=symtabLookup(decl.name,false,true)){
 			redefinitionError(decl, d);
 			decl.sstate=SemState.error;
@@ -54,11 +57,34 @@ abstract class Scope{
 		auto r = symtabLookup(ident,rnsym,isProbing);
 		return r;
 	}
-	
+
 	bool isNestedIn(Scope rhs){ return rhs is this; }
 
 	void error(lazy string err, Location loc){handler.error(err,loc);}
 	void note(lazy string err, Location loc){handler.note(err,loc);}
+
+	debug{
+		bool closed=false;
+		~this(){ if(!closed&&allowsLinear()){ import std.stdio; writeln(typeid(this)," ",__FILE__," ",__LINE__); assert(0); } }
+	}
+
+	bool close(){
+		debug closed=true;
+		bool errors=false;
+		foreach(n,d;rnsymtab){
+			if(!d.isLinear()) continue;
+			symtab.remove(d.name.ptr); // TODO: fix
+			errors=true;
+			error(format("variable '%s' not consumed",d),d.loc);
+		}
+		/+foreach(n,d;symtab){ // TODO!
+			import std.stdio;
+			writeln(d," ",n," ",d.name);
+			assert(!d.isLinear());
+		}+/
+		return errors;
+	}
+
 
 	abstract FunctionDef getFunction();
 	abstract DatDecl getDatDecl();
@@ -79,8 +105,9 @@ private:
 class TopScope: Scope{
 	private ErrorHandler handler_;
 	override @property ErrorHandler handler(){ return handler_; }
-	this(ErrorHandler handler){
-		this.handler_=handler;
+	this(ErrorHandler handler){ this.handler_=handler; }
+	override bool allowsLinear(){
+		return false;
 	}
 	final void import_(Scope sc){
 		imports~=sc;
@@ -118,7 +145,7 @@ class NestedScope: Scope{
 	}
 
 	override bool isNestedIn(Scope rhs){ return rhs is this || parent.isNestedIn(rhs); }
-	
+
 	override FunctionDef getFunction(){ return parent.getFunction(); }
 	override DatDecl getDatDecl(){ return parent.getDatDecl(); }
 	override ForExp getForExp(){ return parent.getForExp(); }
@@ -130,11 +157,15 @@ class FunctionScope: NestedScope{
 		super(parent);
 		this.fd=fd;
 	}
+	~this(){ import std.stdio; writeln(fd.loc.rep); }
 
 	override FunctionDef getFunction(){ return fd; }
 }
 class DataScope: NestedScope{
 	DatDecl decl;
+	override bool allowsLinear(){
+		return false; // TODO!
+	}
 	this(Scope parent,DatDecl decl){
 		super(parent);
 		this.decl=decl;
@@ -147,6 +178,9 @@ class BlockScope: NestedScope{
 }
 class AggregateScope: NestedScope{
 	this(Scope parent){ super(parent); }
+	override bool allowsLinear(){
+		return false; // TODO!
+	}
 }
 class ForExpScope: NestedScope{
 	ForExp fe;

@@ -179,7 +179,12 @@ class Identifier: Expression{
 		return dg(name);
 	}
 	override Expression substituteImpl(Expression[string] subst){
-		if(name in subst) return subst[name];
+		if(name in subst){
+			if(classical)
+				if(auto r=subst[name].getClassical())
+					return r;
+			return subst[name];
+		}
 		return this;
 	}
 	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
@@ -191,6 +196,7 @@ class Identifier: Expression{
 		}
 		if(name !in subst) return false;
 		if(subst[name]==this) return false;
+		if(rhs.isClassical()!=classical) return false;
 		if(subst[name]){
 			if(!subst[name].unify(rhs,subst,meet))
 				return false;
@@ -204,15 +210,27 @@ class Identifier: Expression{
 	}
 	override bool opEquals(Object o){
 		if(auto r=cast(Identifier)o){
-			return name==r.name;
+			return name==r.name && classical==r.classical;
 		}
 		return false;
+	}
+
+	override bool isClassical(){
+		assert(type==typeTy);
+		return classical;
+	}
+
+	override Expression getClassical(){
+		assert(type==typeTy);
+		if(classical) return this;
+		return varTy(name,typeTy,true);
 	}
 
 	// semantic information:
 	Declaration meaning;
 	Scope scope_;
 	bool calledDirectly=false;
+	bool classical=false;
 }
 
 class PlaceholderExp: Expression{

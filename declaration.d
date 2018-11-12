@@ -18,6 +18,7 @@ class Declaration: Expression{
 
 	// semantic information
 	Identifier rename=null;
+	int semanticDepth=0;
 }
 
 class CompoundDecl: Expression{

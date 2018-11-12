@@ -2,8 +2,12 @@
 // implementation of built-in functions based on 'sampleFrom'
 // caution: some backends may special-case strings (see samplefrom.d)
 
-def H(x: 𝔹):𝔹{
-	return (quantumPrimitive("H"):!(Π(x:𝔹). 𝔹))(x);
+def hadamard(x: 𝔹)mfree :𝔹{
+	return (quantumPrimitive("H"):!(Π(x:𝔹).mfree 𝔹))(x);
+}
+def H(x: 𝔹)mfree :𝔹 ⇒ hadamard(x); // TODO: which one of those do we actually want? both?
+def measure[τ](x: τ):!τ{
+	return (quantumPrimitive("M"):!(Π[τ:*].lifted Π(x:τ). !τ))(x);
 }
 
 dat Int[n: ℕ] quantum{ } // TODO: dat Int[n: ℕ] quantum;

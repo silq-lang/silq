@@ -304,6 +304,18 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 	return expr;
 }
 
+bool checkNotLinear(Expression e,Scope sc){
+	if(sc.allowsLinear()) return true;
+	if(auto decl=cast(Declaration)e){
+		if(decl.isLinear()){
+			sc.error(format("cannot make linear declaration '%s' at this location",e),e.loc);
+			e.sstate=SemState.error;
+		}
+	}
+	return true;
+}
+
+
 Expression[] semantic(Expression[] exprs,Scope sc){
 	bool success=true;
 	foreach(ref expr;exprs) if(!cast(BinaryExp!(Tok!":="))expr&&!cast(CommaExp)expr) expr=makeDeclaration(expr,success,sc); // TODO: get rid of special casing?
@@ -311,6 +323,11 @@ Expression[] semantic(Expression[] exprs,Scope sc){
 	foreach(ref expr;exprs){
 		expr=toplevelSemantic(expr,sc);
 		success&=expr.sstate==SemState.completed;
+	}
+	if(!sc.allowsLinear()){
+		foreach(ref expr;exprs){
+			checkNotLinear(expr,sc);
+		}
 	}
 	return exprs;
 }
@@ -442,6 +459,8 @@ Expression nestedDeclSemantic(Expression e,Scope sc){
 CompoundDecl compoundDeclSemantic(CompoundDecl cd,Scope sc){
 	auto asc=cd.ascope_;
 	if(!asc) asc=new AggregateScope(sc);
+	++asc.getDatDecl().semanticDepth;
+	scope(exit) if(--asc.getDatDecl().semanticDepth==0&&!asc.close()) cd.sstate=SemState.error;
 	cd.ascope_=asc;
 	bool success=true; // dummy
 	foreach(ref e;cd.s) e=makeDeclaration(e,success,asc);
@@ -450,11 +469,18 @@ CompoundDecl compoundDeclSemantic(CompoundDecl cd,Scope sc){
 		e=nestedDeclSemantic(e,asc);
 		propErr(e,cd);
 	}
+	if(!sc.allowsLinear()){
+		foreach(ref e;cd.s){
+			checkNotLinear(e,sc);
+			propErr(e,cd);
+		}
+	}
 	cd.type=unit;
-	return cd;	
+	return cd;
 }
 
 Expression statementSemantic(Expression e,Scope sc){
+	assert(sc.allowsLinear());
 	if(auto ce=cast(CallExp)e)
 		return callSemantic(ce,sc);
 	if(auto ite=cast(IteExp)e){
@@ -1328,13 +1354,15 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		ae.e=expressionSemantic(ae.e,sc);
 		if(ae.e.type==typeTy){
 			if(auto ty=typeSemantic(ae.e,sc)){
-				if(auto r=ty.getClassical()){
-					return expr=typeSemantic(r,sc);
-				}else{
-					// TODO: have explicit ClassicalTy
-					sc.error(format("cannot make type %s classical",ae.e),ae.loc);
-					ae.sstate=SemState.error;
-					return ae;
+				if(ty.sstate==SemState.completed){
+					if(auto r=ty.getClassical()){
+						return expr=typeSemantic(r,sc);
+					}else{
+						// TODO: have explicit ClassicalTy
+						sc.error(format("cannot make type %s classical",ae.e),ae.loc);
+						ae.sstate=SemState.error;
+						return ae;
+					}
 				}
 			}
 		}
@@ -1516,7 +1544,10 @@ bool setFtype(FunctionDef fd){
 FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 	if(!fd.scope_) fd=cast(FunctionDef)presemantic(fd,sc);
 	auto fsc=fd.fscope_;
+	++fd.semanticDepth;
+	scope(exit) if(--fd.semanticDepth==0&&!fsc.close()) fd.sstate=SemState.error;
 	assert(!!fsc,text(fd));
+	assert(fsc.allowsLinear());
 	auto bdy=compoundExpSemantic(fd.body_,fsc);
 	assert(!!bdy);
 	fd.body_=bdy;
@@ -1862,7 +1893,10 @@ Expression handleQuantumPrimitive(CallExp ce,Scope sc){
 	}
 	switch(literal.lit.str){
 		case "H":
-			ce.type = funTy([false],Bool(false),Bool(false),false,false,FunctionAnnotation.none,true);
+			ce.type = funTy([false],Bool(false),Bool(false),false,false,FunctionAnnotation.mfree,true);
+			break;
+		case "M":
+			ce.type = productTy([false],["`τ"],typeTy,funTy([false],varTy("`τ",typeTy),varTy("`τ",typeTy,true),false,false,FunctionAnnotation.none,true),true,false,FunctionAnnotation.lifted,true);
 			break;
 		default:
 			sc.error(format("unknown quantum primitive %s",literal.lit.str),literal.loc);

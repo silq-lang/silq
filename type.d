@@ -711,9 +711,10 @@ FunTy funTy(Expression dom,Expression cod,bool isSquare,bool isTuple,bool isClas
 	return funTy(dom,cod,isSquare,isTuple,FunctionAnnotation.lifted,isClassical);
 }
 
-Identifier varTy(string name,Expression type){
+Identifier varTy(string name,Expression type,bool classical=false){
 	return memoize!((string name,Expression type){
 		auto r=new Identifier(name);
+		r.classical=classical;
 		r.type=type;
 		r.sstate=SemState.completed;
 		return r;
