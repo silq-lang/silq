@@ -1323,7 +1323,7 @@ Expression expressionSemantic(Expression expr,Scope sc){
 		auto cod=typeSemantic(fa.cod,fsc);
 		propErr(fa.cod,fa);
 		if(fa.sstate==SemState.error) return fa;
-		auto names=fa.params.map!(p=>p.name.name).array;
+		auto names=fa.params.map!(p=>p.getName).array;
 		auto types=fa.params.map!(p=>p.vtype).array;
 		assert(fa.isTuple||types.length==1);
 		auto dom=fa.isTuple?tupleTy(types):types[0];

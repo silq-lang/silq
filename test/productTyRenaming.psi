@@ -1,0 +1,4 @@
+def main[τ](x: τ):τ{
+	def bar(k: Π[τ:*]. Π(x:τ). τ)⇒k[ℝ](3);
+	return x; // expected: δ(λξ₁. Λξ₂. δ(val(ξ₁))[ξ₂])[r]
+}
