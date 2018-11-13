@@ -22,7 +22,7 @@ int run(string path){
 	if(auto r=importModule(path,err,exprs,sc))
 		return r;
 	if(err.nerrors) return 1;
-	FunctionDef[string] functions;
+	/+FunctionDef[string] functions;
 	foreach(expr;exprs){
 		if(cast(ErrorExp)expr) continue;
 		if(auto fd=cast(FunctionDef)expr){
@@ -39,7 +39,7 @@ int run(string path){
 			return 1;
 		}
 		return 0;
-	}
+	}+/
 	// TODO: add some backends
 	return !!err.nerrors;
 }
