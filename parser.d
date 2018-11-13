@@ -425,6 +425,8 @@ struct Parser{
 				res=New!LiteralExp(tok);
 				res.type=Bool(true);
 				return res;
+			case Tok!"lambda":
+				return parseLambdaExp();
 			case Tok!"(",Tok!"[":
 				if(allowLambda){
 					auto state=saveState();
@@ -496,6 +498,7 @@ struct Parser{
 
 	LambdaExp parseLambdaExp(bool semicolon=false)(){
 		mixin(SetLoc!LambdaExp);
+		if(ttype==Tok!"lambda") nextToken();
 		return res=New!LambdaExp(parseFunctionDef!(true,semicolon));
 	}
 	
@@ -700,6 +703,7 @@ struct Parser{
 		expect(isSquare?Tok!"[":Tok!"(");
 		auto params=parseArgumentList!(false,Parameter)(isSquare?Tok!"]":Tok!")");
 		expect(isSquare?Tok!"]":Tok!")");
+		if(lambda&&ttype==Tok!".") nextToken();
 		auto annotation=FunctionAnnotation.none;
 		if(ttype==Tok!"lifted"){
 			nextToken();
