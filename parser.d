@@ -477,13 +477,13 @@ struct Parser{
 				return parseProduct();
 			case Tok!"-":
 				nextToken();
-				return res=New!(UnaryExp!(Tok!"-"))(parseExpression(nbp));
+				return res=New!(UnaryExp!(Tok!"-"))(parseExpression(nbp,false));
 			case Tok!"!",Tok!"¬":
 				nextToken();
-				return res=New!(UnaryExp!(Tok!"¬"))(parseExpression(nbp));
+				return res=New!(UnaryExp!(Tok!"¬"))(parseExpression(nbp,false));
 			case Tok!"~":
 				nextToken();
-				return res=New!(UnaryExp!(Tok!"~"))(parseExpression(nbp));
+				return res=New!(UnaryExp!(Tok!"~"))(parseExpression(nbp,false));
 			case Tok!"const":
 				nextToken();
 				return res=New!(UnaryExp!(Tok!"const"))(parseExpression(nbp));
