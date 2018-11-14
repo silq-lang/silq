@@ -2,7 +2,7 @@
 // implementation of built-in functions based on 'sampleFrom'
 // caution: some backends may special-case strings (see samplefrom.d)
 
-def dup[τ:*]lifted(const x: τ)lifted: τ ⇒ (quantumPrimitive("dup"):!(Π[τ:*]lifted. !(Π(x:τ)lifted. τ)))(x);
+//def dup[τ:*]lifted(const x: τ)lifted: τ ⇒ (quantumPrimitive("dup"):!(Π[τ:*]lifted. !(Π(x:τ)lifted. τ)))(x);
 def measure[τ]lifted(x: τ):!τ ⇒ (quantumPrimitive("M"):!(Π[τ:*]lifted. !(Π(x:τ). !τ)))(x);
 def H(x: 𝔹)mfree:𝔹 ⇒ (quantumPrimitive("H"):!(Π(x:𝔹)mfree. 𝔹))(x);
 def X(x: 𝔹)mfree:𝔹 ⇒ (quantumPrimitive("X"):!(Π(x:𝔹)mfree. 𝔹))(x);
@@ -12,6 +12,15 @@ def phase(φ: !ℝ)mfree:𝟙 ⇒ (quantumPrimitive("P"):!(Π(φ:!ℝ)mfree. �
 def rotX(x: 𝔹, φ: !ℝ)mfree:𝔹 ⇒ (quantumPrimitive("rX"):!(Π(x: 𝔹, φ: !ℝ)mfree. 𝔹))(x,φ);
 def rotY(x: 𝔹, φ: !ℝ)mfree:𝔹 ⇒ (quantumPrimitive("rY"):!(Π(x: 𝔹, φ: !ℝ)mfree. 𝔹))(x,φ);
 def rotZ(x: 𝔹, φ: !ℝ)mfree:𝔹 ⇒ (quantumPrimitive("rZ"):!(Π(x: 𝔹, φ: !ℝ)mfree. 𝔹))(x,φ);
+
+def reverse[τ,χ,φ]lifted(const f: τ × const χ →mfree φ)lifted:φ × const χ →mfree τ⇒
+  (quantumPrimitive("reverse"):!(Π[τ:*,χ:*,φ:*]lifted. !(const (τ×const χ →mfree φ) →lifted φ×const χ →mfree τ)))(f);
+
+def reverseM[τ,χ,φ]lifted(f: τ × const χ →mfree φ)mfree:φ × const χ →mfree τ{
+	g := reverse(f);
+	forget(f=reverse(g));
+	return g;
+}
 
 dat Int[n: !ℕ] quantum{ } // TODO: dat Int[n: ℕ] quantum;
 dat UInt[n: !ℕ] quantum{ } // TODO: dat Int[n: ℕ] quantum;

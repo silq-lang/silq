@@ -625,9 +625,15 @@ class ProductTy: Type{
 		if(!isSubtype(arg.type,dom)) return null;
 		Expression[string] subst;
 		if(isTuple){
+			auto tdom=cast(TupleTy)dom;
+			assert(!!tdom);
 			foreach(i,n;names){
 				import lexer;
-				subst[n]=new IndexExp(arg,[new LiteralExp(Token(Tok!"0",to!string(i)))],false).eval();
+				auto lit=new LiteralExp(Token(Tok!"0",to!string(i)));
+				lit.type=ℤt(true);
+				auto exp=new IndexExp(arg,[lit],false).eval();
+				exp.type=tdom.types[i];
+				subst[n]=exp;
 			}
 		}else{
 			assert(names.length==1);
@@ -729,13 +735,13 @@ FunTy funTy(Expression dom,Expression cod,bool isSquare,bool isTuple,bool isClas
 }
 
 Identifier varTy(string name,Expression type,bool classical=false){
-	return memoize!((string name,Expression type){
+	return memoize!((string name,Expression type,bool classical){
 		auto r=new Identifier(name);
 		r.classical=classical;
 		r.type=type;
 		r.sstate=SemState.completed;
 		return r;
-	})(name,type);
+	})(name,type,classical);
 }
 
 class TypeTy: Type{

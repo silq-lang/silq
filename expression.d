@@ -53,7 +53,9 @@ abstract class Expression: Node{
 
 	static struct FreeVars{
 		Expression self;
-		int opApply(scope int delegate(string) dg){
+		int opApply(scope int delegate(string) dg)in{
+			assert(!!self);
+		}do{
 			if(auto r=self.freeVarsImpl(dg)) return r;
 			if(self.type != self)
 				foreach(v;self.type.freeVars())
@@ -61,10 +63,14 @@ abstract class Expression: Node{
 			return 0;
 		}
 	}
-	final FreeVars freeVars(){
+	final FreeVars freeVars()in{
+		assert(!!this);
+	}do{
 		return FreeVars(this);
 	}
-	final bool hasFreeVar(string name){
+	final bool hasFreeVar(string name)in{
+		assert(!!this);
+	}do{
 		foreach(var;freeVars){
 			if(var == name)
 				return true;
@@ -177,7 +183,7 @@ class Identifier: Expression{
 		if(n !is null) this.name = n;
 		else this.name = uniq[name] = name;
 	}
-	override string toString(){return _brk(name);}
+	override string toString(){return _brk((classical?"!":"")~name);}
 	override @property string kind(){return "identifier";}
 
 	override int freeVarsImpl(scope int delegate(string) dg){
@@ -342,7 +348,7 @@ class IndexExp: Expression{ //e[a...]
 	override IndexExp substituteImpl(Expression[string] subst){
 		auto ne=e.substitute(subst);
 		auto na=a.dup;
-		foreach(ref x;na) x=substitute(subst);
+		foreach(ref x;na) x=x.substitute(subst);
 		if(ne==e&&na==a) return this;
 		auto r=new IndexExp(ne,na,trailingComma);
 		r.loc=loc;
@@ -352,6 +358,10 @@ class IndexExp: Expression{ //e[a...]
 		auto idx=cast(IndexExp)rhs;
 		if(!idx||a.length!=idx.a.length) return false;
 		return e.unify(idx.e,subst,meet)&&all!(i=>a[i].unify(idx.a[i],subst,meet))(iota(a.length));
+	}
+	override bool opEquals(Object rhs){
+		auto idx=cast(IndexExp)rhs;
+		return idx&&idx.e==e&&idx.a==a;
 	}
 
 	override bool isLifted(){ return e.isLifted() && a.all!(x=>x.isLifted()); }
