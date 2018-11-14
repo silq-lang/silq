@@ -498,7 +498,7 @@ class ProductTy: Type{
 				args=zip(isConst,names,tdom.types).map!(x=>(x[0]?"const ":"")~x[1]~":"~x[2].toString()).join(",");
 				if(nargs==1) args~=",";
 			}else args=(isConst[0]?"const ":"")~names[0]~":"~dom.toString();
-			r="∏"~del[0]~args~del[1]~"."~(annotation?to!string(annotation):"")~" "~c;
+			r="∏"~del[0]~args~del[1]~(annotation?to!string(annotation):"")~". "~c;
 		}
 		if(isClassical_) r="!("~r~")";
 		return r;
