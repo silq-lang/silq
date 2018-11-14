@@ -588,6 +588,21 @@ Expression statementSemantic(Expression e,Scope sc){
 		ae.type=unit;
 		return ae;
 	}
+	if(auto fe=cast(ForgetExp)e){
+		auto var=expressionSemantic(fe.var,sc,false);
+		propErr(var,fe);
+		fe.val=expressionSemantic(fe.val,sc,false);
+		propErr(fe.val,fe);
+		if(!fe.val.isLifted()){
+			sc.error("forget expression must be 'lifted'",fe.val.loc);
+			fe.sstate=SemState.error;
+		}
+		if(fe.var.type&&fe.val.type && !joinTypes(fe.var.type,fe.val.type)){
+			sc.error(format("incompatible types '%s' and '%s' for forget",fe.var.type,fe.val.type),fe.loc);
+			fe.sstate=SemState.error;
+		}
+		return fe;
+	}
 	sc.error("not supported at this location",e.loc);
 	e.sstate=SemState.error;
 	return e;	
@@ -838,6 +853,29 @@ Expression callSemantic(CallExp ce,Scope sc,bool constResult){
 		}
 	}
 	auto fun=ce.e;
+	bool matchArg(FunTy ft){
+		if(ft.isTuple&&ft.annotation!=FunctionAnnotation.lifted){
+			if(auto tpl=cast(TupleExp)ce.arg){
+				foreach(i,ref exp;tpl.e){
+					exp=expressionSemantic(exp,sc,ft.isConst.length==tpl.e.length?ft.isConst[i]:true);
+					propErr(exp,tpl);
+				}
+				if(tpl.sstate!=SemState.error){
+					tpl.type=tupleTy(tpl.e.map!(e=>e.type).array);
+				}
+			}else{
+				ce.arg=expressionSemantic(ce.arg,sc,ft.isConst.length?ft.isConst[0]:false);
+				if(ft.isConst.length&&!ft.isConst.all!(x=>x==ft.isConst[0])){
+					sc.error("cannot match single tuple to function with mixed 'const' and consumed parameters",ce.loc);
+					ce.sstate=SemState.error;
+					return true;
+				}
+			}
+		}else{
+			ce.arg=expressionSemantic(ce.arg,sc,ft.isConst[0]||ft.annotation==FunctionAnnotation.lifted);
+		}
+		return false;
+	}
 	CallExp checkFunCall(FunTy ft){
 		bool tryCall(){
 			if(!ce.isSquare && ft.isSquare){
@@ -853,19 +891,7 @@ Expression callSemantic(CallExp ce,Scope sc,bool constResult){
 					}
 				}
 				if(auto codft=cast(ProductTy)nft.cod){
-					if(codft.isTuple&&codft.annotation!=FunctionAnnotation.lifted){
-						if(auto tpl=cast(TupleExp)ce.arg){
-							foreach(i,ref exp;tpl.e){
-								exp=expressionSemantic(exp,sc,codft.isConst.length==tpl.e.length?codft.isConst[i]:false);
-								propErr(exp,tpl);
-							}
-							if(tpl.sstate!=SemState.error){
-								tpl.type=tupleTy(tpl.e.map!(e=>e.type).array);
-							}
-						}
-					}else{
-						ce.arg=expressionSemantic(ce.arg,sc,codft.isConst[0]||codft.annotation==FunctionAnnotation.lifted);
-					}
+					if(matchArg(codft)) return true;
 					propErr(ce.arg,ce);
 					if(ce.arg.sstate==SemState.error) return true;
 					Expression garg;
@@ -880,19 +906,7 @@ Expression callSemantic(CallExp ce,Scope sc,bool constResult){
 					return true;
 				}
 			}
-			if(ft.isTuple&&ft.annotation!=FunctionAnnotation.lifted){
-				if(auto tpl=cast(TupleExp)ce.arg){
-					foreach(i,ref exp;tpl.e){
-						exp=expressionSemantic(exp,sc,ft.isConst.length==tpl.e.length?ft.isConst[i]:false);
-						propErr(exp,tpl);
-					}
-					if(tpl.sstate!=SemState.error){
-						tpl.type=tupleTy(tpl.e.map!(e=>e.type).array);
-					}
-				}
-			}else{
-				ce.arg=expressionSemantic(ce.arg,sc,ft.isConst[0]||ft.annotation==FunctionAnnotation.lifted);
-			}
+			if(matchArg(ft)) return true;
 			propErr(ce.arg,ce);
 			if(ce.arg.sstate==SemState.error) return true;
 			ce.type=ft.tryApply(ce.arg,ce.isSquare);
