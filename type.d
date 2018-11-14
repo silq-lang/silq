@@ -308,7 +308,12 @@ class TupleTy: Type{
 		return tupleTy(rtypes);
 	}
 	override bool isClassical(){
-		return all!(x=>x.isClassical)(types);
+		return all!(x=>x.isClassical())(types);
+	}
+	override Expression getClassical(){
+		auto ntypes=types.map!(x=>x.getClassical()).array;
+		if(ntypes.any!(x=>x is null)) return null;
+		return tupleTy(ntypes);
 	}
 }
 
@@ -367,6 +372,11 @@ class ArrayTy: Type{
 	}
 	override bool isClassical(){
 		return next.isClassical();
+	}
+	override Expression getClassical(){
+		auto nnext=next.getClassical();
+		if(!nnext) return null;
+		return arrayTy(nnext);
 	}
 }
 
