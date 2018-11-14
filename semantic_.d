@@ -109,6 +109,7 @@ Expression presemantic(Declaration expr,Scope sc){
 		fd.type=unit;
 		fd.fscope_=fsc;
 		assert(!fd.body_.blscope_);
+		declareParameters(fd,fd.isSquare,fd.params,fsc); // parameter variables
 		fd.body_.blscope_=new BlockScope(fsc);
 		if(auto dsc=isInDataScope(sc)){
 			auto id=new Identifier(dsc.decl.name.name);
@@ -168,7 +169,6 @@ Expression presemantic(Declaration expr,Scope sc){
 			fd.contextVal=addVar("`outer",contextTy(),fd.loc,fsc); // TODO: replace contextTy by suitable record type; make name 'outer' available
 			fd.context=fd.contextVal;
 		}
-		declareParameters(fd,fd.isSquare,fd.params,fsc); // parameter variables
 		if(fd.rret){
 			bool[] pc;
 			string[] pn;
@@ -494,6 +494,8 @@ Expression statementSemantic(Expression e,Scope sc){
 		propErr(ite.cond,ite);
 		propErr(ite.then,ite);
 		if(ite.othw) propErr(ite.othw,ite);
+		if(!sc.merge(ite.then.blscope_,ite.othw?cast(Scope)ite.othw.blscope_:new BlockScope(sc)))
+			ite.sstate=SemState.error;
 		ite.type=unit;
 		return ite;
 	}
@@ -1447,7 +1449,8 @@ Expression expressionSemantic(Expression expr,Scope sc){
 	}
 	if(auto fa=cast(RawProductTy)expr){
 		expr.type=typeTy();
-		auto fsc=new BlockScope(sc);
+		auto fsc=new RawProductScope(sc);
+		scope(exit) fsc.forceClose();
 		declareParameters(fa,fa.isSquare,fa.params,fsc); // parameter variables
 		auto cod=typeSemantic(fa.cod,fsc);
 		propErr(fa.cod,fa);
@@ -1545,10 +1548,10 @@ FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 	if(!fd.scope_) fd=cast(FunctionDef)presemantic(fd,sc);
 	auto fsc=fd.fscope_;
 	++fd.semanticDepth;
-	scope(exit) if(--fd.semanticDepth==0&&!fsc.close()) fd.sstate=SemState.error;
 	assert(!!fsc,text(fd));
 	assert(fsc.allowsLinear());
 	auto bdy=compoundExpSemantic(fd.body_,fsc);
+	scope(exit) if(--fd.semanticDepth==0&&(fsc.merge(bdy.blscope_)||fsc.close())) fd.sstate=SemState.error;
 	assert(!!bdy);
 	fd.body_=bdy;
 	fd.type=unit;

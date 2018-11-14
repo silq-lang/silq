@@ -2,17 +2,15 @@
 // implementation of built-in functions based on 'sampleFrom'
 // caution: some backends may special-case strings (see samplefrom.d)
 
-def hadamard(x: 𝔹)mfree :𝔹{
-	return (quantumPrimitive("H"):!(Π(x:𝔹).mfree 𝔹))(x);
-}
-def H(x: 𝔹)mfree :𝔹 ⇒ hadamard(x); // TODO: which one of those do we actually want? both?
-def measure[τ](x: τ):!τ{
-	return (quantumPrimitive("M"):!(Π[τ:*].lifted Π(x:τ). !τ))(x);
-}
+def dup[a:*](x: a)lifted: a ⇒ x;
 
-dat Int[n: ℕ] quantum{ } // TODO: dat Int[n: ℕ] quantum;
-dat UInt[n: ℕ] quantum{ } // TODO: dat Int[n: ℕ] quantum;
-dat Float[n: ℕ] quantum{ } // TODO: dat Int[n: ℕ] quantum;
+def hadamard(x: 𝔹)mfree :𝔹 ⇒ (quantumPrimitive("H"):!(Π(x:𝔹).mfree 𝔹))(x);
+def H(x: 𝔹)mfree :𝔹 ⇒ hadamard(x); // TODO: which one of those do we actually want? both?
+def measure[τ](x: τ):!τ ⇒ (quantumPrimitive("M"):!(Π[τ:*].lifted Π(x:τ). !τ))(x);
+
+dat Int[n: !ℕ] quantum{ } // TODO: dat Int[n: ℕ] quantum;
+dat UInt[n: !ℕ] quantum{ } // TODO: dat Int[n: ℕ] quantum;
+dat Float[n: !ℕ] quantum{ } // TODO: dat Int[n: ℕ] quantum;
 
 // deterministic functions
 def exp(x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+e^x]",x);

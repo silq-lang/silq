@@ -1,7 +1,7 @@
 // Written in the D programming language
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
 
-import std.format, std.conv;
+import std.format, std.conv, std.stdio;
 import lexer, expression, declaration, error;
 
 abstract class Scope{
@@ -64,24 +64,81 @@ abstract class Scope{
 	void note(lazy string err, Location loc){handler.note(err,loc);}
 
 	debug{
-		bool closed=false;
-		~this(){ if(!closed&&allowsLinear()){ import std.stdio; writeln(typeid(this)," ",__FILE__," ",__LINE__); assert(0); } }
+		private bool closed=false;
+		~this(){ if((!closed||allowMerge)&&allowsLinear()){ import std.stdio; writeln(typeid(this)," ",__FILE__," ",__LINE__); assert(0); } }
 	}
 
-	bool close(){
+	bool close()in{
+		assert(!allowMerge);
+	}do{
 		debug closed=true;
 		bool errors=false;
-		foreach(n,d;rnsymtab){
+		foreach(n,d;symtab){
 			if(!d.isLinear()) continue;
-			symtab.remove(d.name.ptr); // TODO: fix
+			if(d.rename) rnsymtab.remove(d.rename.ptr);
 			errors=true;
-			error(format("variable '%s' not consumed",d),d.loc);
+			error(format("variable '%s' is not consumed",d.name),d.loc);
 		}
-		/+foreach(n,d;symtab){ // TODO!
-			import std.stdio;
-			writeln(d," ",n," ",d.name);
-			assert(!d.isLinear());
-		}+/
+		foreach(n,d;rnsymtab) assert(!d.isLinear());
+		return errors;
+	}
+
+	debug private bool allowMerge=false;
+	void nest(NestedScope r)in{
+		assert(allowsLinear());
+		assert(r.parent is this);
+	}do{
+		r.symtab=symtab.dup;
+		r.rnsymtab=rnsymtab.dup;
+		allowMerge=true;
+	}
+
+	bool merge(Scope[] scopes...)in{
+		assert(scopes.length);
+		debug assert(allowMerge);
+	}do{
+		debug allowMerge=false;
+		symtab=scopes[0].symtab.dup;
+		rnsymtab=scopes[0].rnsymtab.dup;
+		bool errors=false;
+		foreach(sym;symtab.dup){
+			foreach(sc;scopes[1..$]){
+				if(sym.name.ptr !in sc.symtab){
+					symtab.remove(sym.name.ptr);
+					if(sym.rename) rnsymtab.remove(sym.rename.ptr);
+					if(sym.isLinear()){
+						error(format("variable '%s' not consumed", sym.name), sym.loc);
+						errors=true;
+					}
+				}else{
+					auto osym=sc.symtab[sym.name.ptr];
+					import semantic_: typeForDecl;
+					if(typeForDecl(osym)!=typeForDecl(sym)){
+						symtab.remove(sym.name.ptr);
+						if(sym.rename) rnsymtab.remove(sym.rename.ptr);
+						if(sym.isLinear()){
+							error(format("variable '%s' not consumed", sym.name), sym.loc);
+							errors=true;
+						}
+					}
+				}
+			}
+		}
+		foreach(sc;scopes[1..$]){
+			foreach(sym;sc.symtab){
+				if(sym.name.ptr !in symtab){
+					if(sym.isLinear()){
+						error(format("variable '%s' not consumed", sym.name), sym.loc);
+						errors=true;
+					}
+				}
+			}
+		}
+		foreach(sc;scopes){
+			sc.symtab.clear();
+			sc.rnsymtab.clear();
+			sc.closed=true;
+		}
 		return errors;
 	}
 
@@ -151,14 +208,20 @@ class NestedScope: Scope{
 	override ForExp getForExp(){ return parent.getForExp(); }
 }
 
+class RawProductScope: NestedScope{
+	this(Scope parent){ super(parent); }
+	void forceClose(){
+		debug closed=true;
+	}
+}
+
 class FunctionScope: NestedScope{
 	FunctionDef fd;
 	this(Scope parent,FunctionDef fd){
 		super(parent);
 		this.fd=fd;
 	}
-	~this(){ import std.stdio; writeln(fd.loc.rep); }
-
+	// ~this(){ import std.stdio; writeln(fd.loc.rep); }
 	override FunctionDef getFunction(){ return fd; }
 }
 class DataScope: NestedScope{
@@ -174,7 +237,15 @@ class DataScope: NestedScope{
 	override DatDecl getDatDecl(){ return decl; }
 }
 class BlockScope: NestedScope{
-	this(Scope parent){ super(parent); }
+	this(Scope parent){
+		super(parent);
+		if(parent.allowsLinear()) parent.nest(this);
+	}
+	override bool close(){
+		auto errors=parent.allowsLinear()?parent.merge(this):false;
+		closed=true;
+		return errors;
+	}
 }
 class AggregateScope: NestedScope{
 	this(Scope parent){ super(parent); }
