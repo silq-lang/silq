@@ -43,7 +43,7 @@ class VarDecl: Declaration{
 	@property override string kind(){ return "variable"; }
 
 	override bool isLinear(){
-		return true;
+		return vtype&&!vtype.isClassical();
 	}
 	// semantic information
 	Expression vtype;

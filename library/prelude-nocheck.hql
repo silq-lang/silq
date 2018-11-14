@@ -2,18 +2,18 @@
 // implementation of built-in functions based on 'sampleFrom'
 // caution: some backends may special-case strings (see samplefrom.d)
 
-def dup[a:*](x: a)lifted: a ⇒ x;
+def dup[a:*](const x: a)lifted: a ⇒ x;
 
 def hadamard(x: 𝔹)mfree :𝔹 ⇒ (quantumPrimitive("H"):!(Π(x:𝔹).mfree 𝔹))(x);
 def H(x: 𝔹)mfree :𝔹 ⇒ hadamard(x); // TODO: which one of those do we actually want? both?
-def measure[τ](x: τ):!τ ⇒ (quantumPrimitive("M"):!(Π[τ:*].lifted Π(x:τ). !τ))(x);
+def measure[τ](x: τ):!τ ⇒ (quantumPrimitive("M"):!(Π[τ:*]. Π(x:τ). !τ))(x);
 
 dat Int[n: !ℕ] quantum{ } // TODO: dat Int[n: ℕ] quantum;
 dat UInt[n: !ℕ] quantum{ } // TODO: dat Int[n: ℕ] quantum;
 dat Float[n: !ℕ] quantum{ } // TODO: dat Int[n: ℕ] quantum;
 
 // deterministic functions
-def exp(x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+e^x]",x);
+/+def exp(x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+e^x]",x);
 def log(x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+log(x)]",x);
 def sin(x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+sin(x)]",x);
 def cos(x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+cos(x)]",x);
@@ -24,7 +24,7 @@ def max(const a:ℝ,const b:ℝ)lifted :ℝ ⇒ if a<b then b else a;
 
 def floor(const x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+⌊x⌋]",x);
 def ceil(const x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+⌈x⌉]",x);
-def inℤ(const x:ℝ)lifted :ℝ ⇒ x==floor(x);
+def inℤ(const x:ℝ)lifted :ℝ ⇒ x==floor(x);+/
 
 def array[const a](const length: ℝ, const init:a)lifted: a[] ⇒ sampleFrom("(r;length,init)=>δ([i↦ init] (length))[r]",length,init):a[];
 /+

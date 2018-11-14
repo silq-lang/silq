@@ -127,7 +127,7 @@ Expression presemantic(Declaration expr,Scope sc){
 					return r;
 				}).array;
 				assert(dsc.decl.isTuple||args.length==1);
-				ctxty=callSemantic(new CallExp(ctxty,dsc.decl.isTuple?new TupleExp(args):args[0],true,false),sc);
+				ctxty=callSemantic(new CallExp(ctxty,dsc.decl.isTuple?new TupleExp(args):args[0],true,false),sc,false);
 				ctxty.sstate=SemState.completed;
 				assert(ctxty.type == typeTy);
 			}
@@ -483,7 +483,7 @@ Expression statementSemantic(Expression e,Scope sc){
 	assert(sc.allowsLinear());
 	scope(exit) sc.resetConst();
 	if(auto ce=cast(CallExp)e)
-		return callSemantic(ce,sc);
+		return callSemantic(ce,sc,true);
 	if(auto ite=cast(IteExp)e){
 		ite.cond=expressionSemantic(ite.cond,sc,true);
 		ite.then=compoundExpSemantic(ite.then,sc);
@@ -597,7 +597,9 @@ Expression statementSemantic(Expression e,Scope sc){
 CompoundExp compoundExpSemantic(CompoundExp ce,Scope sc){
 	if(!ce.blscope_) ce.blscope_=new BlockScope(sc);
 	foreach(ref e;ce.s){
+		//writeln("before: ",e," ",sc.symtab);
 		e=statementSemantic(e,ce.blscope_);
+		//writeln("after: ",e," ",sc.symtab);
 		propErr(e,ce);
 	}
 	ce.type=unit;
@@ -809,14 +811,18 @@ Expression expectColonOrAssignSemantic(Expression e,Scope sc){
 	return e;
 }
 
-Expression callSemantic(CallExp ce,Scope sc){
+Expression callSemantic(CallExp ce,Scope sc,bool constResult){
 	if(auto id=cast(Identifier)ce.e) id.calledDirectly=true;
 	ce.e=expressionSemantic(ce.e,sc,false);
 	propErr(ce.e,ce);
-	ce.arg=expressionSemantic(ce.arg,sc,false); // TODO: const
-	propErr(ce.arg,ce);
 	if(ce.sstate==SemState.error)
 		return ce;
+	scope(exit){
+		if(constResult&&!ce.isLifted()&&!ce.type.isClassical()){
+			sc.error("non-'lifted' quantum expression must be consumed", ce.loc);
+			ce.sstate=SemState.error;
+		}
+	}
 	auto fun=ce.e;
 	CallExp checkFunCall(FunTy ft){
 		bool tryCall(){
@@ -832,7 +838,22 @@ Expression callSemantic(CallExp ce,Scope sc){
 						}
 					}
 				}
-				if(cast(ProductTy)nft.cod){
+				if(auto codft=cast(ProductTy)nft.cod){
+					if(codft.isTuple&&codft.annotation!=FunctionAnnotation.lifted){
+						if(auto tpl=cast(TupleExp)ce.arg){
+							foreach(i,ref exp;tpl.e){
+								exp=expressionSemantic(exp,sc,codft.isConst.length==tpl.e.length?codft.isConst[i]:false);
+								propErr(exp,tpl);
+							}
+							if(tpl.sstate!=SemState.error){
+								tpl.type=tupleTy(tpl.e.map!(e=>e.type).array);
+							}
+						}
+					}else{
+						ce.arg=expressionSemantic(ce.arg,sc,codft.isConst[0]||codft.annotation==FunctionAnnotation.lifted);
+					}
+					propErr(ce.arg,ce);
+					if(ce.arg.sstate==SemState.error) return true;
 					Expression garg;
 					auto tt=nft.tryMatch(ce.arg,garg);
 					if(!tt) return false;
@@ -840,12 +861,27 @@ Expression callSemantic(CallExp ce,Scope sc){
 					nce.loc=ce.loc;
 					auto nnce=new CallExp(nce,ce.arg,false,false);
 					nnce.loc=ce.loc;
-					nnce=cast(CallExp)callSemantic(nnce,sc);
+					nnce=cast(CallExp)callSemantic(nnce,sc,false);
 					assert(nnce&&nnce.type == tt);
 					ce=nnce;
 					return true;
 				}
 			}
+			if(ft.isTuple&&ft.annotation!=FunctionAnnotation.lifted){
+				if(auto tpl=cast(TupleExp)ce.arg){
+					foreach(i,ref exp;tpl.e){
+						exp=expressionSemantic(exp,sc,ft.isConst.length==tpl.e.length?ft.isConst[i]:false);
+						propErr(exp,tpl);
+					}
+					if(tpl.sstate!=SemState.error){
+						tpl.type=tupleTy(tpl.e.map!(e=>e.type).array);
+					}
+				}
+			}else{
+				ce.arg=expressionSemantic(ce.arg,sc,ft.isConst[0]||ft.annotation==FunctionAnnotation.lifted);
+			}
+			propErr(ce.arg,ce);
+			if(ce.arg.sstate==SemState.error) return true;
 			ce.type=ft.tryApply(ce.arg,ce.isSquare);
 			return !!ce.type;
 		}
@@ -925,8 +961,13 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 	expr.sstate=SemState.started;
 	scope(success){
 		if(expr.sstate!=SemState.error){
-			assert(!!expr.type);
-			expr.sstate=SemState.completed;
+			if(constResult&&!expr.isLifted()&&!expr.type.isClassical()){
+				sc.error("non-'lifted' quantum expression must be consumed", expr.loc);
+				expr.sstate=SemState.error;
+			}else{
+				assert(!!expr.type);
+				expr.sstate=SemState.completed;
+			}
 		}
 	}
 	if(auto cd=cast(CompoundDecl)expr)
@@ -959,13 +1000,13 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 		return ret;
 	}
 	if(auto ce=cast(CallExp)expr)
-		return expr=callSemantic(ce,sc);
+		return expr=callSemantic(ce,sc,constResult);
 	if(auto id=cast(Identifier)expr){
 		id.scope_=sc;
 		auto meaning=id.meaning;
 		if(!meaning){
 			int nerr=sc.handler.nerrors; // TODO: this is a bit hacky
-			meaning=sc.lookup(id,false,true,Lookup.consuming);
+			meaning=sc.lookup(id,false,true,constResult?Lookup.constant:Lookup.consuming);
 			if(nerr!=sc.handler.nerrors){
 				sc.note("looked up here",id.loc);
 				id.sstate=SemState.error;
@@ -1075,7 +1116,7 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 			arg.loc=idx.loc;
 			auto ce=new CallExp(idx.e,arg,true,false);
 			ce.loc=idx.loc;
-			return expr=callSemantic(ce,sc);
+			return expr=callSemantic(ce,sc,false);
 		}
 		if(idx.e.type==typeTy)
 			if(auto tty=typeSemantic(expr,sc))
@@ -1446,7 +1487,7 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 			expr.sstate=SemState.error;
 			return expr;
 		}
-		return funTy(t1[0],t1[1],t2,false,!!cast(TupleTy)t1[1]&&t1[0].length!=1,ex.annotation,false);
+		return expr=funTy(t1[0],t1[1],t2,false,!!cast(TupleTy)t1[1]&&t1[0].length!=1,ex.annotation,false);
 	}
 	if(auto fa=cast(RawProductTy)expr){
 		expr.type=typeTy();
@@ -1461,7 +1502,7 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 		auto types=fa.params.map!(p=>p.vtype).array;
 		assert(fa.isTuple||types.length==1);
 		auto dom=fa.isTuple?tupleTy(types):types[0];
-		return productTy(const_,names,dom,cod,fa.isSquare,fa.isTuple,fa.annotation,false);
+		return expr=productTy(const_,names,dom,cod,fa.isSquare,fa.isTuple,fa.annotation,false);
 	}
 	if(auto ite=cast(IteExp)expr){
 		ite.cond=expressionSemantic(ite.cond,sc,true);
@@ -1900,7 +1941,7 @@ Expression handleQuantumPrimitive(CallExp ce,Scope sc){
 			ce.type = funTy([false],Bool(false),Bool(false),false,false,FunctionAnnotation.mfree,true);
 			break;
 		case "M":
-			ce.type = productTy([false],["`τ"],typeTy,funTy([false],varTy("`τ",typeTy),varTy("`τ",typeTy,true),false,false,FunctionAnnotation.none,true),true,false,FunctionAnnotation.lifted,true);
+			ce.type = productTy([false],["`τ"],typeTy,funTy([false],varTy("`τ",typeTy),varTy("`τ",typeTy,true),false,false,FunctionAnnotation.none,true),true,false,FunctionAnnotation.none,true);
 			break;
 		default:
 			sc.error(format("unknown quantum primitive %s",literal.lit.str),literal.loc);

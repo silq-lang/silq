@@ -33,7 +33,7 @@ abstract class Expression: Node{
 	bool isConstant(){ return false; }
 
 	Expression eval(){ return this; }
-	
+
 	abstract int freeVarsImpl(scope int delegate(string) dg);
 	final Expression substitute(string name,Expression exp){
 		return substitute([name:exp]);
@@ -50,7 +50,7 @@ abstract class Expression: Node{
 		return unifyImpl(rhs,subst,meet) || eval().unifyImpl(rhs.eval(),subst,meet);
 	}
 	abstract bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet);
-	
+
 	static struct FreeVars{
 		Expression self;
 		int opApply(scope int delegate(string) dg){
@@ -89,6 +89,7 @@ abstract class Expression: Node{
 	bool isClassical(){
 		return false;
 	}
+	bool isLifted(){ return false; }
 	Expression getClassical(){
 		if(isClassical()) return this;
 		return null;
@@ -159,6 +160,7 @@ class LiteralExp: Expression{
 		}
 	}
 
+	override bool isLifted(){ return true; }
 	mixin VariableFree;
 }
 
@@ -226,6 +228,8 @@ class Identifier: Expression{
 		return varTy(name,typeTy,true);
 	}
 
+	override bool isLifted(){ return true; }
+
 	// semantic information:
 	Declaration meaning;
 	Scope scope_;
@@ -273,6 +277,8 @@ class UnaryExp(TokenType op): Expression{
 		if(!ue) return false;
 		return e.unify(ue.e,subst,meet);
 	}
+
+	override bool isLifted(){ return e.isLifted(); }
 }
 class PostfixExp(TokenType op): Expression{
 	Expression e;
@@ -344,6 +350,9 @@ class IndexExp: Expression{ //e[a...]
 		if(!idx||a.length!=idx.a.length) return false;
 		return e.unify(idx.e,subst,meet)&&all!(i=>a[i].unify(idx.a[i],subst,meet))(iota(a.length));
 	}
+
+	override bool isLifted(){ return e.isLifted() && a.all!(x=>x.isLifted()); }
+
 }
 
 class SliceExp: Expression{
@@ -406,6 +415,8 @@ class SliceExp: Expression{
 		auto sl=cast(SliceExp)rhs;
 		return e.unify(sl.e,subst,meet)&&l.unify(sl.l,subst,meet)&&r.unify(sl.r,subst,meet);
 	}
+
+	override bool isLifted(){ return e.isLifted() && l.isLifted() && r.isLifted(); }
 }
 
 string tupleToString(Expression e,bool isSquare){
@@ -509,13 +520,13 @@ class CallExp: Expression{
 						if(!dat.isTuple){
 							assert(dat.params.length==1);
 							assert(arg != rcall.arg); // (checked at start of function)
-							return callSemantic(new CallExp(e,combine(dat.params[0].variance,arg,rcall.arg),isSquare,isClassical_),null);
+							return callSemantic(new CallExp(e,combine(dat.params[0].variance,arg,rcall.arg),isSquare,isClassical_),null,false);
 						}
 						assert(dat.isTuple);
 						auto tup=cast(TupleTy)arg, rtup=cast(TupleTy)rcall.arg;
 						if(tup && rtup && tup.types.length==dat.params.length && tup.types.length==rtup.types.length){ // TODO: assert this?
 							auto rarg=new TupleExp(iota(tup.types.length).map!(i=>combine(dat.params[i].variance,tup.types[i],rtup.types[i])).array);
-							return callSemantic(new CallExp(e,rarg,isSquare,isClassical),null);
+							return callSemantic(new CallExp(e,rarg,isSquare,isClassical),null,false);
 						}
 					}
 				}
@@ -530,6 +541,12 @@ class CallExp: Expression{
 		if(auto r=super.getClassical()) return r;
 		return new CallExp(e,arg,isSquare,true);
 	}
+
+	override bool isLifted(){
+		auto fty=cast(FunTy)e.type;
+		if(!fty) return false;
+		return fty.annotation==FunctionAnnotation.lifted&&arg.isLifted();
+	}
 }
 
 abstract class ABinaryExp: Expression{
@@ -542,6 +559,9 @@ abstract class ABinaryExp: Expression{
 		if(auto r=e1.freeVarsImpl(dg)) return r;
 		if(auto r=e2.freeVarsImpl(dg)) return r;
 		return 0;
+	}
+	override bool isLifted(){
+		return e1.isLifted() && e2.isLifted();
 	}
 }
 
@@ -604,6 +624,10 @@ class FieldExp: Expression{
 		if(!fe||f!=fe.f) return false;
 		return e.unify(rhs,subst,meet);
 	}
+
+	override bool isLifted(){
+		return e.isLifted();
+	}
 }
 
 class IteExp: Expression{
@@ -637,6 +661,9 @@ class IteExp: Expression{
 		if(!ite) return false;
 		return cond.unify(ite.cond,subst,meet)&&then.unify(ite.then,subst,meet)
 			&&!othw&&!ite.othw||othw&&ite.othw&&othw.unify(ite.othw,subst,meet);
+	}
+	override bool isLifted(){
+		return cond.isLifted() && then.isLifted() && othw.isLifted();
 	}
 }
 
@@ -688,7 +715,7 @@ class WhileExp: Expression{
 	}
 	override string toString(){ return _brk("while "~cond.toString()~bdy.toString()); }
 	override @property string kind(){ return "while loop"; }
-	override bool isCompound(){ return true; }	
+	override bool isCompound(){ return true; }
 
 	mixin VariableFree; // TODO
 }
@@ -731,6 +758,9 @@ class TupleExp: Expression{
 		if(!te||e.length!=te.e.length) return false;
 		return all!(i=>e[i].unify(te.e[i],subst,meet))(iota(e.length));
 	}
+	override bool isLifted(){
+		return e.all!(x=>x.isLifted());
+	}
 }
 
 class LambdaExp: Expression{
@@ -771,6 +801,7 @@ class ArrayExp: Expression{
 		if(!ae||e.length!=ae.e.length) return false;
 		return all!(i=>e[i].unify(ae.e[i],subst,meet))(iota(e.length));
 	}
+	override bool isLifted(){ return e.all!(x=>x.isLifted()); }
 }
 
 class ReturnExp: Expression{
