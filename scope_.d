@@ -4,13 +4,19 @@
 import std.format, std.conv, std.stdio;
 import lexer, expression, declaration, error;
 
+enum Lookup{
+	consuming,
+	constant,
+	probing,
+}
+
 abstract class Scope{
 	abstract @property ErrorHandler handler();
 	bool allowsLinear(){
 		return true;
 	}
 	bool insert(Declaration decl)in{assert(!decl.scope_); debug assert(!allowsLinear||!closed,text(decl)); }body{
-		if(auto d=symtabLookup(decl.name,false,true)){
+		if(auto d=symtabLookup(decl.name,false,Lookup.probing)){
 			redefinitionError(decl, d);
 			decl.sstate=SemState.error;
 			return false;
@@ -31,30 +37,42 @@ abstract class Scope{
 		note("previous definition was here",prev.name.loc);
 	}
 
-	protected final Declaration symtabLookup(Identifier ident,bool rnsym,bool isProbing){
+	void resetConst(){ constBlock.clear(); }
+
+	protected final Declaration symtabLookup(Identifier ident,bool rnsym,Lookup kind){
 		auto r=symtab.get(ident.ptr, null);
 		if(rnsym&&!r) r=rnsymtab.get(ident.ptr,null);
-		if(!isProbing&&r&&r.isLinear()){
-			symtab.remove(r.name.ptr);
-			rnsymtab.remove(ident.ptr);
+		if(kind==Lookup.consuming&&r&&r.isLinear()){
+			if(ident.ptr in constBlock){
+				error(format("cannot consume 'const' variable '%s'",ident), ident.loc);
+				note("variable was made 'const' here", constBlock[ident.ptr].loc);
+				ident.sstate=SemState.error;
+			}else{
+				symtab.remove(r.name.ptr);
+				if(r.rename) rnsymtab.remove(r.rename.ptr);
+			}
+		}
+		if(kind==Lookup.constant&&r&&r.isLinear()){
+			if(ident.ptr !in constBlock)
+				constBlock[ident.ptr]=ident;
 		}
 		return r;
 	}
-	Declaration lookup(Identifier ident,bool rnsym,bool lookupImports,bool isProbing){
-		return lookupHere(ident,rnsym,isProbing);
+	Declaration lookup(Identifier ident,bool rnsym,bool lookupImports,Lookup kind){
+		return lookupHere(ident,rnsym,kind);
 	}
 	protected final void rename(Declaration decl){
 		for(;;){ // TODO: quite hacky
 			auto cname=decl.rename?decl.rename:decl.name;
-			auto d=lookup(cname,true,true,true);
+			auto d=lookup(cname,true,true,Lookup.probing);
 			import semantic_: isBuiltIn;
 			if(!d&&!isBuiltIn(cname)) break;
 			decl.rename=new Identifier(decl.getName~"'");
 			decl.rename.loc=decl.name.loc;
 		}
 	}
-	final Declaration lookupHere(Identifier ident,bool rnsym,bool isProbing){
-		auto r = symtabLookup(ident,rnsym,isProbing);
+	final Declaration lookupHere(Identifier ident,bool rnsym,Lookup kind){
+		auto r = symtabLookup(ident,rnsym,kind);
 		return r;
 	}
 
@@ -155,6 +173,7 @@ abstract class Scope{
 		return 0;
 	}
 private:
+	Identifier[const(char)*] constBlock;
 	Declaration[const(char)*] symtab;
 	Declaration[const(char)*] rnsymtab;
 }
@@ -171,11 +190,11 @@ class TopScope: Scope{
 		// TODO: store a location for better error messages
 		// TODO: allow symbol lookup by full path
 	}
-	override Declaration lookup(Identifier ident,bool rnsym,bool lookupImports,bool isProbing){
-		if(auto d=super.lookup(ident,rnsym,lookupImports,isProbing)) return d;
+	override Declaration lookup(Identifier ident,bool rnsym,bool lookupImports,Lookup kind){
+		if(auto d=super.lookup(ident,rnsym,lookupImports,kind)) return d;
 		if(lookupImports){
 			Declaration[] ds;
-			foreach(sc;imports) if(auto d=sc.lookup(ident,rnsym,false,isProbing)) ds~=d;
+			foreach(sc;imports) if(auto d=sc.lookup(ident,rnsym,false,kind)) ds~=d;
 			if(ds.length==1||ds.length>=1&&rnsym) return ds[0];
 			if(ds.length>1){
 				error(format("multiple imports of %s",ident.name),ident.loc);
@@ -196,9 +215,9 @@ class NestedScope: Scope{
 	Scope parent;
 	override @property ErrorHandler handler(){ return parent.handler; }
 	this(Scope parent){ this.parent=parent; }
-	override Declaration lookup(Identifier ident,bool rnsym,bool lookupImports,bool isProbing){
-		if(auto decl=lookupHere(ident,rnsym,isProbing)) return decl;
-		return parent.lookup(ident,rnsym,lookupImports,isProbing);
+	override Declaration lookup(Identifier ident,bool rnsym,bool lookupImports,Lookup kind){
+		if(auto decl=lookupHere(ident,rnsym,kind)) return decl;
+		return parent.lookup(ident,rnsym,lookupImports,kind);
 	}
 
 	override bool isNestedIn(Scope rhs){ return rhs is this || parent.isNestedIn(rhs); }
