@@ -2,7 +2,7 @@
 // implementation of built-in functions based on 'sampleFrom'
 // caution: some backends may special-case strings (see samplefrom.d)
 
-//def dup[τ:*]lifted(const x: τ)lifted: τ ⇒ (quantumPrimitive("dup"):!(Π[τ:*]lifted. !(Π(x:τ)lifted. τ)))(x);
+def dup[τ:*]lifted(const x: τ)lifted: τ ⇒ (quantumPrimitive("dup"):!(Π[τ:*]lifted. !(Π(x:τ)lifted. τ)))(x);
 def measure[τ]lifted(x: τ):!τ ⇒ (quantumPrimitive("M"):!(Π[τ:*]lifted. !(Π(x:τ). !τ)))(x);
 def H(x: 𝔹)mfree:𝔹 ⇒ (quantumPrimitive("H"):!(Π(x:𝔹)mfree. 𝔹))(x);
 def X(x: 𝔹)mfree:𝔹 ⇒ (quantumPrimitive("X"):!(Π(x:𝔹)mfree. 𝔹))(x);
