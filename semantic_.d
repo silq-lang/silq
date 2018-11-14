@@ -1087,21 +1087,22 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 				return vd.initializer;
 			}
 		}
-		assert(id.sstate!=SemState.completed||!id.type||!id.type.isClassical()==meaning.isLinear());
+		if(id.type&&!id.type.isClassical()&&!constResult){
+			if(auto prm=cast(Parameter)meaning){
+				if(prm.isConst){
+					sc.error(format("use 'dup(%s)' to duplicate 'const' parameter '%s'",prm.name,prm.name), id.loc);
+					id.sstate=SemState.error;
+				}
+			}
+		}
 		if(id.type&&!id.type.isClassical()){
 			for(auto csc=sc;csc !is meaning.scope_;csc=(cast(NestedScope)csc).parent){
 				if(auto fsc=cast(FunctionScope)csc){
 					if(!id.type.isClassical()){
-						if(auto prm=cast(Parameter)meaning){
-							if(prm.isConstant){
-								sc.error("cannot capture constant parameter", id.loc);
-								id.sstate=SemState.error;
-								break;
-							}else if(constResult){
-								sc.error("cannot capture variable as constant", id.loc);
-								id.sstate=SemState.error;
-								break;
-							}
+						if(constResult){
+							sc.error("cannot capture variable as constant", id.loc);
+							id.sstate=SemState.error;
+							break;
 						}
 					}
 					if(fsc.fd.context.vtype==contextTy(true)){
@@ -1993,8 +1994,11 @@ Expression handleQuantumPrimitive(CallExp ce,Scope sc){
 		return ce;
 	}
 	switch(literal.lit.str){
+		case "dup":
+			ce.type = productTy([false],["`τ"],typeTy,funTy([false],varTy("`τ",typeTy),varTy("`τ",typeTy),false,false,FunctionAnnotation.lifted,true),true,false,FunctionAnnotation.lifted,true);
+			break;
 		case "M":
-			ce.type = productTy([false],["`τ"],typeTy,funTy([false],varTy("`τ",typeTy),varTy("`τ",typeTy,true),false,false,FunctionAnnotation.none,true),true,false,FunctionAnnotation.none,true);
+			ce.type = productTy([false],["`τ"],typeTy,funTy([false],varTy("`τ",typeTy),varTy("`τ",typeTy,true),false,false,FunctionAnnotation.none,true),true,false,FunctionAnnotation.lifted,true);
 			break;
 		case "H","X","Y","Z":
 			ce.type = funTy([false],Bool(false),Bool(false),false,false,FunctionAnnotation.mfree,true);
