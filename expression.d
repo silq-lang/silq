@@ -89,11 +89,11 @@ abstract class Expression: Node{
 	bool isClassical(){
 		return false;
 	}
-	bool isLifted(){ return false; }
 	Expression getClassical(){
 		if(isClassical()) return this;
 		return null;
 	}
+	bool isLifted(){ return type&&type.isClassical(); }
 }
 
 mixin template VariableFree(){
@@ -125,6 +125,9 @@ class TypeAnnotationExp: Expression{
 	}
 	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
 		return e.unify(rhs,subst,meet);
+	}
+	override bool isLifted(){
+		return e.isLifted();
 	}
 }
 
@@ -198,7 +201,7 @@ class Identifier: Expression{
 		}
 		if(name !in subst) return false;
 		if(subst[name]==this) return false;
-		if(rhs.isClassical()!=classical) return false;
+		if(rhs.isClassical()<classical) return false;
 		if(subst[name]){
 			if(!subst[name].unify(rhs,subst,meet))
 				return false;
