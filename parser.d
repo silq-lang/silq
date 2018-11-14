@@ -644,6 +644,7 @@ struct Parser{
 			case Tok!"assert": return parseAssert();
 			case Tok!"observe": return parseObserve();
 			case Tok!"cobserve": return parseCObserve();
+			case Tok!"forget": return parseForget();
 			default: break;
 		}
 		Expression left;
@@ -910,6 +911,16 @@ struct Parser{
 		auto val=parseExpression(rbp!(Tok!","));
 		expect(Tok!")");
 		return res=New!CObserveExp(var,val);
+	}
+	ForgetExp parseForget(){
+		mixin(SetLoc!ForgetExp);
+		expect(Tok!"forget");
+		expect(Tok!"(");
+		auto var=parseIdentifier();
+		expect(Tok!"=");
+		auto val=parseExpression(rbp!(Tok!","));
+		expect(Tok!")");
+		return res=New!ForgetExp(var,val);
 	}
 };
 

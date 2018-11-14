@@ -847,3 +847,15 @@ class CObserveExp: Expression{
 
 	mixin VariableFree; // TODO
 }
+
+class ForgetExp: Expression{
+	Identifier var;
+	Expression val;
+	this(Identifier var,Expression val){
+		this.var=var;
+		this.val=val;
+	}
+	override string toString(){ return _brk("forget("~var.toString()~"="~val.toString()~")"); }
+
+	mixin VariableFree; // TODO
+}
