@@ -713,7 +713,7 @@ class ForExp: Expression{
 	override bool isCompound(){ return true; }
 
 	// semantic information
-	ForExpScope fescope_;
+	BlockScope fescope_;
 	VarDecl loopVar;
 
 	mixin VariableFree; // TODO

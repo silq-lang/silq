@@ -509,7 +509,7 @@ Expression statementSemantic(Expression e,Scope sc){
 	if(auto ce=cast(CommaExp)e) return expectColonOrAssignSemantic(ce,sc);
 	if(isColonOrAssign(e)) return colonOrAssignSemantic(e,sc);
 	if(auto fe=cast(ForExp)e){
-		auto fesc=new ForExpScope(sc,fe);
+		assert(!fe.bdy.blscope_);
 		fe.left=expressionSemantic(fe.left,sc,false);
 		if(fe.left.sstate==SemState.completed && !isSubtype(fe.left.type, ℝ(true))){
 			sc.error(format("lower bound for loop variable should be a classical number, not %s",fe.left.type),fe.left.loc);
@@ -520,18 +520,29 @@ Expression statementSemantic(Expression e,Scope sc){
 			sc.error(format("upper bound for loop variable should be a classical number, not %s",fe.right.type),fe.right.loc);
 			fe.sstate=SemState.error;
 		}
+		auto fesc=fe.bdy.blscope_=new BlockScope(sc);
 		auto vd=new VarDecl(fe.var);
 		vd.vtype=fe.left.type && fe.right.type ? joinTypes(fe.left.type, fe.right.type) : ℤt(true);
+		assert(fe.sstate==SemState.error||vd.vtype.isClassical());
+		if(fe.sstate==SemState.error){
+			vd.vtype=vd.vtype.getClassical();
+			if(!vd.vtype) vd.vtype=ℤt(true);
+		}
 		vd.loc=fe.var.loc;
 		if(!fesc.insert(vd))
 			fe.sstate=SemState.error;
 		fe.var.name=vd.getName;
 		fe.fescope_=fesc;
 		fe.loopVar=vd;
-		fe.bdy=compoundExpSemantic(fe.bdy,fesc);
+		fe.bdy=compoundExpSemantic(fe.bdy,sc);
 		assert(!!fe.bdy);
 		propErr(fe.left,fe);
 		propErr(fe.right,fe);
+		propErr(fe.bdy,fe);
+		if(sc.merge(fesc,new BlockScope(sc))){
+			sc.note("possibly consumed in for loop", fe.loc);
+			fe.sstate=SemState.error;
+		}
 		fe.type=unit;
 		return fe;
 	}

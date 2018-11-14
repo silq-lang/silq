@@ -168,7 +168,6 @@ abstract class Scope{
 
 	abstract FunctionDef getFunction();
 	abstract DatDecl getDatDecl();
-	abstract ForExp getForExp();
 	final int all(T)(int delegate(T) dg){
 		foreach(k,v;symtab){
 			auto t=cast(T)v;
@@ -211,7 +210,6 @@ class TopScope: Scope{
 	}
 	override FunctionDef getFunction(){ return null; }
 	override DatDecl getDatDecl(){ return null; }
-	override ForExp getForExp(){ return null; }
 private:
 	Scope[] imports; // TODO: local imports, import declarations
 }
@@ -233,7 +231,6 @@ class NestedScope: Scope{
 
 	override FunctionDef getFunction(){ return parent.getFunction(); }
 	override DatDecl getDatDecl(){ return parent.getDatDecl(); }
-	override ForExp getForExp(){ return parent.getForExp(); }
 }
 
 class RawProductScope: NestedScope{
@@ -288,12 +285,4 @@ class AggregateScope: NestedScope{
 	override bool allowsLinear(){
 		return false; // TODO!
 	}
-}
-class ForExpScope: NestedScope{
-	ForExp fe;
-	this(Scope parent,ForExp fe){
-		super(parent);
-		this.fe=fe;
-	}
-	override ForExp getForExp(){ return fe; }
 }
