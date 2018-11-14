@@ -107,6 +107,7 @@ abstract class Scope{
 		assert(allowsLinear());
 		assert(r.parent is this);
 	}do{
+		r.constBlock=constBlock.dup;
 		r.symtab=symtab.dup;
 		r.rnsymtab=rnsymtab.dup;
 		allowMerge=true;
@@ -267,9 +268,14 @@ class DataScope: NestedScope{
 	override DatDecl getDatDecl(){ return decl; }
 }
 class BlockScope: NestedScope{
-	this(Scope parent){
+	this(Scope parent,FunctionAnnotation restriction_=FunctionAnnotation.none){
 		super(parent);
 		if(parent.allowsLinear()) parent.nest(this);
+		this.restriction_=restriction_;
+	}
+	FunctionAnnotation restriction_;
+	override FunctionAnnotation restriction(){
+		return max(restriction_,super.restriction());
 	}
 	override bool close(){
 		auto errors=parent.allowsLinear()?parent.merge(this):false;

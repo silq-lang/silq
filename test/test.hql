@@ -1,5 +1,24 @@
 
 /+
+def main(x:𝔹){
+	if x{
+		y := H(x);
+	}else{
+		y := H(X(x));
+	}
+	return y;
+}
++/
+/+
+def main(x:𝔹){
+	if x{
+		measure(x);
+	}else{
+		measure(x);
+	}
+}
++/
+/+
 def main(){
 	x := reverse;
 	x = 2;

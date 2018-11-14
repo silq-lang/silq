@@ -485,16 +485,17 @@ Expression statementSemantic(Expression e,Scope sc){
 		return callSemantic(ce,sc,true);
 	if(auto ite=cast(IteExp)e){
 		ite.cond=expressionSemantic(ite.cond,sc,true);
-		ite.then=compoundExpSemantic(ite.then,sc);
-		if(ite.othw) ite.othw=compoundExpSemantic(ite.othw,sc);
-		if(ite.cond.sstate==SemState.completed && ite.cond.type!is Bool(true)){
-			sc.error(format("type of condition should be !𝔹, not %s",ite.cond.type),ite.cond.loc);
+		if(ite.cond.sstate==SemState.completed && !cast(BoolTy)ite.cond.type){
+			sc.error(format("type of condition should be !𝔹 or 𝔹, not %s",ite.cond.type),ite.cond.loc);
 			ite.sstate=SemState.error;
 		}
+		auto restriction_=ite.cond.type==Bool(false)?FunctionAnnotation.mfree:FunctionAnnotation.none;
+		ite.then=compoundExpSemantic(ite.then,sc,restriction_);
+		if(ite.othw) ite.othw=compoundExpSemantic(ite.othw,sc,restriction_);
 		propErr(ite.cond,ite);
 		propErr(ite.then,ite);
 		if(ite.othw) propErr(ite.othw,ite);
-		if(!sc.merge(ite.then.blscope_,ite.othw?cast(Scope)ite.othw.blscope_:new BlockScope(sc)))
+		if(!sc.merge(ite.then.blscope_,ite.othw?cast(Scope)ite.othw.blscope_:new BlockScope(sc,restriction_)))
 			ite.sstate=SemState.error;
 		ite.type=unit;
 		return ite;
@@ -608,8 +609,8 @@ Expression statementSemantic(Expression e,Scope sc){
 	return e;	
 }
 
-CompoundExp compoundExpSemantic(CompoundExp ce,Scope sc){
-	if(!ce.blscope_) ce.blscope_=new BlockScope(sc);
+CompoundExp compoundExpSemantic(CompoundExp ce,Scope sc,FunctionAnnotation restriction_=FunctionAnnotation.none){
+	if(!ce.blscope_) ce.blscope_=new BlockScope(sc,restriction_);
 	foreach(ref e;ce.s){
 		//writeln("before: ",e," ",sc.symtab);
 		e=statementSemantic(e,ce.blscope_);
