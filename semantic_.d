@@ -1947,11 +1947,17 @@ Expression handleQuantumPrimitive(CallExp ce,Scope sc){
 		return ce;
 	}
 	switch(literal.lit.str){
-		case "H":
-			ce.type = funTy([false],Bool(false),Bool(false),false,false,FunctionAnnotation.mfree,true);
-			break;
 		case "M":
 			ce.type = productTy([false],["`τ"],typeTy,funTy([false],varTy("`τ",typeTy),varTy("`τ",typeTy,true),false,false,FunctionAnnotation.none,true),true,false,FunctionAnnotation.none,true);
+			break;
+		case "H","X","Y","Z":
+			ce.type = funTy([false],Bool(false),Bool(false),false,false,FunctionAnnotation.mfree,true);
+			break;
+		case "P":
+			ce.type = funTy([false],ℝ(true),unit,false,false,FunctionAnnotation.mfree,true);
+			break;
+		case "rX","rY","rZ":
+			ce.type = funTy([false],tupleTy([Bool(false),ℝ(true)]),Bool(false),false,false,FunctionAnnotation.mfree,true);
 			break;
 		default:
 			sc.error(format("unknown quantum primitive %s",literal.lit.str),literal.loc);
