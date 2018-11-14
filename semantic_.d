@@ -495,7 +495,7 @@ Expression statementSemantic(Expression e,Scope sc){
 		propErr(ite.cond,ite);
 		propErr(ite.then,ite);
 		if(ite.othw) propErr(ite.othw,ite);
-		if(!sc.merge(ite.then.blscope_,ite.othw?cast(Scope)ite.othw.blscope_:new BlockScope(sc,restriction_)))
+		if(sc.merge(ite.then.blscope_,ite.othw?cast(Scope)ite.othw.blscope_:new BlockScope(sc,restriction_)))
 			ite.sstate=SemState.error;
 		ite.type=unit;
 		return ite;
@@ -537,9 +537,29 @@ Expression statementSemantic(Expression e,Scope sc){
 	}
 	if(auto we=cast(WhileExp)e){
 		we.cond=expressionSemantic(we.cond,sc,false);
+		if(we.cond.sstate==SemState.completed && we.cond.type!=Bool(true)){
+			sc.error(format("type of condition should be !𝔹, not %s",we.cond.type),we.cond.loc);
+			we.sstate=SemState.error;
+		}
 		we.bdy=compoundExpSemantic(we.bdy,sc);
 		propErr(we.cond,we);
 		propErr(we.bdy,we);
+		if(we.cond.sstate==SemState.completed){
+			import parser: parseExpression;
+			auto ncode='\n'.repeat(we.cond.loc.line?we.cond.loc.line-1:0).to!string~we.cond.loc.rep~"\0\0\0\0";
+			auto nsource=new Source(we.cond.loc.source.name,ncode);
+			auto condDup=parseExpression(nsource,sc.handler); // TODO: this is an ugly hack, implement dup
+			assert(!!condDup);
+			condDup.loc=we.cond.loc;
+			condDup=expressionSemantic(condDup,we.bdy.blscope_,false);
+			if(condDup.sstate==SemState.error)
+				sc.note("possibly consumed in while loop", we.loc);
+			propErr(condDup,we);
+		}
+		if(sc.merge(we.bdy.blscope_,new BlockScope(sc))){
+			sc.note("possibly consumed in while loop", we.loc);
+			we.sstate=SemState.error;
+		}
 		we.type=unit;
 		return we;
 	}
