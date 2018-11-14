@@ -4,14 +4,14 @@
 
 def dup[τ:*]lifted(const x: τ)lifted: τ ⇒ x;
 def measure[τ]lifted(x: τ):!τ ⇒ (quantumPrimitive("M"):!(Π[τ:*]. Π(x:τ). !τ))(x);
-def H(x: 𝔹)mfree:𝔹 ⇒ (quantumPrimitive("H"):!(Π(x:𝔹).mfree 𝔹))(x);
-def X(x: 𝔹)mfree:𝔹 ⇒ (quantumPrimitive("X"):!(Π(x:𝔹).mfree 𝔹))(x);
-def Y(x: 𝔹)mfree:𝔹 ⇒ (quantumPrimitive("Y"):!(Π(x:𝔹).mfree 𝔹))(x);
-def Z(x: 𝔹)mfree:𝔹 ⇒ (quantumPrimitive("Z"):!(Π(x:𝔹).mfree 𝔹))(x);
-def phase(φ: !ℝ)mfree:𝟙 ⇒ (quantumPrimitive("P"):!(Π(φ:!ℝ).mfree 𝟙))(φ);
-def rotX(x: 𝔹, φ: !ℝ)mfree:𝔹 ⇒ (quantumPrimitive("rX"):!(Π(x: 𝔹, φ: !ℝ).mfree 𝔹))(x,φ);
-def rotY(x: 𝔹, φ: !ℝ)mfree:𝔹 ⇒ (quantumPrimitive("rY"):!(Π(x: 𝔹, φ: !ℝ).mfree 𝔹))(x,φ);
-def rotZ(x: 𝔹, φ: !ℝ)mfree:𝔹 ⇒ (quantumPrimitive("rZ"):!(Π(x: 𝔹, φ: !ℝ).mfree 𝔹))(x,φ);
+def H(x: 𝔹)mfree:𝔹 ⇒ (quantumPrimitive("H"):!(Π(x:𝔹)mfree. 𝔹))(x);
+def X(x: 𝔹)mfree:𝔹 ⇒ (quantumPrimitive("X"):!(Π(x:𝔹)mfree. 𝔹))(x);
+def Y(x: 𝔹)mfree:𝔹 ⇒ (quantumPrimitive("Y"):!(Π(x:𝔹)mfree. 𝔹))(x);
+def Z(x: 𝔹)mfree:𝔹 ⇒ (quantumPrimitive("Z"):!(Π(x:𝔹)mfree. 𝔹))(x);
+def phase(φ: !ℝ)mfree:𝟙 ⇒ (quantumPrimitive("P"):!(Π(φ:!ℝ)mfree. 𝟙))(φ);
+def rotX(x: 𝔹, φ: !ℝ)mfree:𝔹 ⇒ (quantumPrimitive("rX"):!(Π(x: 𝔹, φ: !ℝ)mfree. 𝔹))(x,φ);
+def rotY(x: 𝔹, φ: !ℝ)mfree:𝔹 ⇒ (quantumPrimitive("rY"):!(Π(x: 𝔹, φ: !ℝ)mfree. 𝔹))(x,φ);
+def rotZ(x: 𝔹, φ: !ℝ)mfree:𝔹 ⇒ (quantumPrimitive("rZ"):!(Π(x: 𝔹, φ: !ℝ)mfree. 𝔹))(x,φ);
 
 dat Int[n: !ℕ] quantum{ } // TODO: dat Int[n: ℕ] quantum;
 dat UInt[n: !ℕ] quantum{ } // TODO: dat Int[n: ℕ] quantum;

@@ -463,7 +463,6 @@ struct Parser{
 					Expression cod;
 					auto annotation=FunctionAnnotation.none;
 					if(ttype!=Tok!"["&&ttype!=Tok!"("){
-						expect(Tok!".");
 						if(ttype==Tok!"lifted"){
 							nextToken();
 							annotation=FunctionAnnotation.lifted;
@@ -471,6 +470,7 @@ struct Parser{
 							nextToken();
 							annotation=FunctionAnnotation.mfree;
 						}
+						expect(Tok!".");
 						cod = parseType();
 					}else cod=parseProduct();
 					auto isTuple=params[1]||params[0].length!=1;
@@ -703,7 +703,6 @@ struct Parser{
 		expect(isSquare?Tok!"[":Tok!"(");
 		auto params=parseArgumentList!(false,Parameter)(isSquare?Tok!"]":Tok!")");
 		expect(isSquare?Tok!"]":Tok!")");
-		if(lambda&&ttype==Tok!".") nextToken();
 		auto annotation=FunctionAnnotation.none;
 		if(ttype==Tok!"lifted"){
 			nextToken();
@@ -718,7 +717,7 @@ struct Parser{
 			ret=parseType();
 		}
 		CompoundExp body_;
-		if(util.among(ttype,Tok!"⇒",Tok!"↦",Tok!"=>",Tok!"(",Tok!"[")){
+		if(util.among(ttype,Tok!"⇒",Tok!"↦",Tok!"=>",Tok!"(",Tok!"[")||lambda&&ttype==Tok!"."&&peek.type!=Tok!"{"){
 			Expression e;
 			if(ttype==Tok!"("||ttype==Tok!"["){
 				e=parseLambdaExp!semicolon();
@@ -731,7 +730,10 @@ struct Parser{
 			r.loc=e.loc;
 			body_= New!CompoundExp([cast(Expression)r]);
 			body_.loc=e.loc;
-		}else body_=parseCompoundExp();
+		}else{
+			if(lambda&&ttype==Tok!".") nextToken();
+			body_=parseCompoundExp();
+		}
 		res=New!FunctionDef(name,cast(Parameter[])params[0],params[1]||params[0].length!=1,ret,body_);
 		res.isSquare=isSquare;
 		res.annotation=annotation;
