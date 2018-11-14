@@ -1,8 +1,8 @@
 // Written in the D programming language
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
 
-import std.format, std.conv, std.stdio;
-import lexer, expression, declaration, error;
+import std.format, std.conv, std.algorithm, std.stdio;
+import lexer, expression, declaration, type, error;
 
 enum Lookup{
 	consuming,
@@ -161,6 +161,9 @@ abstract class Scope{
 		return errors;
 	}
 
+	FunctionAnnotation restriction(){
+		return FunctionAnnotation.none;
+	}
 
 	abstract FunctionDef getFunction();
 	abstract DatDecl getDatDecl();
@@ -221,6 +224,10 @@ class NestedScope: Scope{
 		return parent.lookup(ident,rnsym,lookupImports,kind);
 	}
 
+	override FunctionAnnotation restriction(){
+		return parent.restriction();
+	}
+
 	override bool isNestedIn(Scope rhs){ return rhs is this || parent.isNestedIn(rhs); }
 
 	override FunctionDef getFunction(){ return parent.getFunction(); }
@@ -240,6 +247,9 @@ class FunctionScope: NestedScope{
 	this(Scope parent,FunctionDef fd){
 		super(parent);
 		this.fd=fd;
+	}
+	override FunctionAnnotation restriction(){
+		return fd.annotation;
 	}
 	// ~this(){ import std.stdio; writeln(fd.loc.rep); }
 	override FunctionDef getFunction(){ return fd; }

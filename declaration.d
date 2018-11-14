@@ -77,7 +77,7 @@ class FunctionDef: Declaration{
 	}
 	override string toString(){
 		string d=isSquare?"[]":"()";
-		return "def "~(name?getName:"")~d[0]~join(map!(to!string)(params),",")~(isTuple&&params.length==1?",":"")~d[1]~body_.toString();
+		return "def "~(name?getName:"")~d[0]~join(map!(to!string)(params),",")~(isTuple&&params.length==1?",":"")~d[1]~(annotation?text(annotation):"")~body_.toString();
 	}
 
 	override bool isCompound(){ return true; }

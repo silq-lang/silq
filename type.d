@@ -395,8 +395,8 @@ StringTy stringTy(bool classical){ return memoize!((bool classical)=>new StringT
 
 enum FunctionAnnotation{
 	none,
-	lifted,
 	mfree,
+	lifted,
 }
 
 class RawProductTy: Expression{
@@ -639,7 +639,7 @@ class ProductTy: Type{
 		if(!r) return false;
 		if(isConst!=r.isConst||isSquare!=r.isSquare||nargs!=r.nargs)
 			return false;
-		if(annotation>r.annotation||!isClassical&&r.isClassical)
+		if(annotation<r.annotation||!isClassical&&r.isClassical)
 			return false;
 		auto name=freshName("x",r);
 		auto vars=varTy(name,r.dom);

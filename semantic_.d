@@ -817,10 +817,21 @@ Expression callSemantic(CallExp ce,Scope sc,bool constResult){
 	propErr(ce.e,ce);
 	if(ce.sstate==SemState.error)
 		return ce;
-	scope(exit){
-		if(constResult&&!ce.isLifted()&&!ce.type.isClassical()){
-			sc.error("non-'lifted' quantum expression must be consumed", ce.loc);
-			ce.sstate=SemState.error;
+	scope(success){
+		if(ce&&ce.sstate!=SemState.error){
+			if(auto ft=cast(FunTy)ce.e.type){
+				if(ft.annotation<sc.restriction()){
+					if(ft.annotation==FunctionAnnotation.none){
+						sc.error(format("cannot call function '%s' in '%s' context", ce.e, sc.restriction()), ce.loc);
+					}else{
+						sc.error(format("cannot call '%s' function '%s' in '%s' context", ft.annotation, ce.e, sc.restriction()), ce.loc);
+					}
+					ce.sstate=SemState.error;
+				}else if(constResult&&!ce.isLifted()&&!ce.type.isClassical()){
+					sc.error("non-'lifted' quantum expression must be consumed", ce.loc);
+					ce.sstate=SemState.error;
+				}
+			}
 		}
 	}
 	auto fun=ce.e;
@@ -862,7 +873,6 @@ Expression callSemantic(CallExp ce,Scope sc,bool constResult){
 					auto nnce=new CallExp(nce,ce.arg,false,false);
 					nnce.loc=ce.loc;
 					nnce=cast(CallExp)callSemantic(nnce,sc,false);
-					assert(nnce&&nnce.type == tt);
 					ce=nnce;
 					return true;
 				}
@@ -960,7 +970,7 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 	assert(expr.sstate==SemState.initial);
 	expr.sstate=SemState.started;
 	scope(success){
-		if(expr.sstate!=SemState.error){
+		if(expr&&expr.sstate!=SemState.error){
 			if(constResult&&!expr.isLifted()&&!expr.type.isClassical()){
 				sc.error("non-'lifted' quantum expression must be consumed", expr.loc);
 				expr.sstate=SemState.error;
