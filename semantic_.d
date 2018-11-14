@@ -1087,28 +1087,26 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 				return vd.initializer;
 			}
 		}
-		if(id.type&&!id.type.isClassical()&&!constResult){
-			if(auto prm=cast(Parameter)meaning){
-				if(prm.isConst){
-					sc.error(format("use 'dup(%s)' to duplicate 'const' parameter '%s'",prm.name,prm.name), id.loc);
-					id.sstate=SemState.error;
+		if(id.sstate==SemState.completed&&!id.type.isClassical()){
+			if(!constResult){
+				if(auto prm=cast(Parameter)meaning){
+					if(prm.isConst){
+						sc.error(format("use 'dup(%s)' to duplicate 'const' parameter '%s'",prm.name,prm.name), id.loc);
+						id.sstate=SemState.error;
+					}
 				}
 			}
-		}
-		if(id.type&&!id.type.isClassical()){
 			for(auto csc=sc;csc !is meaning.scope_;csc=(cast(NestedScope)csc).parent){
 				if(auto fsc=cast(FunctionScope)csc){
-					if(!id.type.isClassical()){
-						if(constResult){
-							sc.error("cannot capture variable as constant", id.loc);
-							id.sstate=SemState.error;
-							break;
-						}
+					if(constResult){
+						sc.error("cannot capture variable as constant", id.loc);
+						id.sstate=SemState.error;
+						break;
 					}
-					if(fsc.fd.context.vtype==contextTy(true)){
+					if(fsc.fd&&fsc.fd.context&&fsc.fd.context.vtype==contextTy(true)){
 						if(!fsc.fd.ftype) fsc.fd.context.vtype=contextTy(false);
 						else{
-							assert(fsc.fd.ftype.isClassical());
+							assert(!fsc.fd.ftype||fsc.fd.ftype.isClassical());
 							sc.error("cannot capture quantum variable in classical function", id.loc);
 							id.sstate=SemState.error;
 							break;
