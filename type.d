@@ -243,17 +243,24 @@ class AggregateTy: Type{
 }
 
 class ContextTy: Type{
-	private this(){} // dummy
+	private this(bool classical){
+		this.classical=classical;
+	}
 	override bool opEquals(Object o){
-		return !!cast(ContextTy)o;
+		auto ctx=cast(ContextTy)o;
+		return ctx&&ctx.classical==classical;
 	}
 	override bool isClassical(){
-		return true;
+		return classical;
 	}
+	override string toString(){
+		return (classical?"!":"")~"`Ctx";
+	}
+	private bool classical;
 	mixin VariableFree;
 }
-private ContextTy theContextTy;
-ContextTy contextTy(){ return theContextTy?theContextTy:(theContextTy=new ContextTy()); }
+private ContextTy[2] theContextTy;
+ContextTy contextTy(bool classical){ return theContextTy[classical]?theContextTy[classical]:(theContextTy[classical]=new ContextTy(classical)); }
 
 
 

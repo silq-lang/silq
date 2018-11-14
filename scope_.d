@@ -96,7 +96,7 @@ abstract class Scope{
 			if(!d.isLinear()) continue;
 			if(d.rename) rnsymtab.remove(d.rename.ptr);
 			errors=true;
-			error(format("variable '%s' is not consumed",d.name),d.loc);
+			error(format("%s '%s' is not consumed",d.kind,d.name),d.loc);
 		}
 		foreach(n,d;rnsymtab) assert(!d.isLinear());
 		return errors;

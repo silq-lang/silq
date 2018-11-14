@@ -99,7 +99,7 @@ Expression presemantic(Declaration expr,Scope sc){
 		dat.dtype=new AggregateTy(dat,!dat.isQuantum);
 		if(dat.hasParams) declareParameters(dat,true,dat.params,dsc);
 		if(!dat.body_.ascope_) dat.body_.ascope_=new AggregateScope(dat.dscope_);
-		if(cast(NestedScope)sc) dat.context = addVar("`outer",contextTy(),dat.loc,dsc);
+		if(cast(NestedScope)sc) dat.context = addVar("`outer",contextTy(true),dat.loc,dsc);
 		foreach(ref exp;dat.body_.s) exp=makeDeclaration(exp,success,dat.body_.ascope_);
 		foreach(ref exp;dat.body_.s) if(auto decl=cast(Declaration)exp) exp=presemantic(decl,dat.body_.ascope_);
 	}
@@ -166,7 +166,7 @@ Expression presemantic(Declaration expr,Scope sc){
 			}
 			assert(dsc.decl.dtype);
 		}else if(auto nsc=cast(NestedScope)sc){
-			fd.contextVal=addVar("`outer",contextTy(),fd.loc,fsc); // TODO: replace contextTy by suitable record type; make name 'outer' available
+			fd.contextVal=addVar("`outer",contextTy(true),fd.loc,fsc); // TODO: replace contextTy by suitable record type; make name 'outer' available
 			fd.context=fd.contextVal;
 		}
 		if(fd.rret){
@@ -186,7 +186,7 @@ Expression presemantic(Declaration expr,Scope sc){
 			assert(fd.isTuple||pty.length==1);
 			auto pt=fd.isTuple?tupleTy(pty):pty[0];
 			if(!fd.ret) fd.sstate=SemState.error;
-			else fd.ftype=productTy(pc,pn,pt,fd.ret,fd.isSquare,fd.isTuple,fd.annotation,false); // TODO: make function type classical if no quantum variables captured
+			else if(cast(TopScope)sc) fd.ftype=productTy(pc,pn,pt,fd.ret,fd.isSquare,fd.isTuple,fd.annotation,true);
 		}
 	}
 	return expr;
@@ -304,15 +304,14 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 	return expr;
 }
 
-bool checkNotLinear(Expression e,Scope sc){
-	if(sc.allowsLinear()) return true;
+void checkNotLinear(Expression e,Scope sc){
+	if(sc.allowsLinear()) return;
 	if(auto decl=cast(Declaration)e){
 		if(decl.isLinear()){
 			sc.error(format("cannot make linear declaration '%s' at this location",e),e.loc);
 			e.sstate=SemState.error;
 		}
 	}
-	return true;
 }
 
 
@@ -1074,6 +1073,35 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 				return vd.initializer;
 			}
 		}
+		assert(id.sstate!=SemState.completed||!id.type||!id.type.isClassical()==meaning.isLinear());
+		if(id.type&&!id.type.isClassical()){
+			for(auto csc=sc;csc !is meaning.scope_;csc=(cast(NestedScope)csc).parent){
+				if(auto fsc=cast(FunctionScope)csc){
+					if(!id.type.isClassical()){
+						if(auto prm=cast(Parameter)meaning){
+							if(prm.isConstant){
+								sc.error("cannot capture constant parameter", id.loc);
+								id.sstate=SemState.error;
+								break;
+							}else if(constResult){
+								sc.error("cannot capture variable as constant", id.loc);
+								id.sstate=SemState.error;
+								break;
+							}
+						}
+					}
+					if(fsc.fd.context.vtype==contextTy(true)){
+						if(!fsc.fd.ftype) fsc.fd.context.vtype=contextTy(false);
+						else{
+							assert(fsc.fd.ftype.isClassical());
+							sc.error("cannot capture quantum variable in classical function", id.loc);
+							id.sstate=SemState.error;
+							break;
+						}
+					}
+				}
+			}
+		}
 		return id;
 	}
 	if(auto fe=cast(FieldExp)expr){
@@ -1593,7 +1621,7 @@ bool setFtype(FunctionDef fd){
 	auto pt=fd.isTuple?tupleTy(pty):pty[0];
 	if(fd.ret){
 		if(!fd.ftype){
-			fd.ftype=productTy(pc,pn,pt,fd.ret,fd.isSquare,fd.isTuple,fd.annotation,false); // TODO: check whether all captures are classical
+			fd.ftype=productTy(pc,pn,pt,fd.ret,fd.isSquare,fd.isTuple,fd.annotation,!fd.context||fd.context.vtype==contextTy(true));
 			assert(fd.retNames==[]);
 		}
 		if(!fd.retNames) fd.retNames = new string[](fd.numReturns);
@@ -1656,7 +1684,7 @@ DatDecl datDeclSemantic(DatDecl dat,Scope sc){
 }
 
 Expression determineType(ref Expression e,Scope sc){
-	if(auto le=cast(LambdaExp)e){
+	/+if(auto le=cast(LambdaExp)e){
 		assert(!!le.fd);
 		if(!le.fd.scope_){
 			le.fd.scope_=sc;
@@ -1665,7 +1693,7 @@ Expression determineType(ref Expression e,Scope sc){
 		}
 		if(auto ty=le.fd.ftype)
 			return ty;
-	}
+	}+/
 	e=expressionSemantic(e,sc,false);
 	return e.type;
 }

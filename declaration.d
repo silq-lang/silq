@@ -12,7 +12,7 @@ class Declaration: Expression{
 	final @property string getName(){ return (rename?rename:name).name; }
 	override string toString(){ return getName; }
 
-	bool isLinear(){ return false; }
+	bool isLinear(){ return true; }
 
 	mixin VariableFree;
 
@@ -81,6 +81,9 @@ class FunctionDef: Declaration{
 	}
 
 	override bool isCompound(){ return true; }
+	override bool isLinear(){ return ftype && !ftype.isClassical(); }
+
+	@property override string kind(){ return "function"; }
 
 	// semantic information
 	FunctionScope fscope_;
@@ -156,6 +159,7 @@ class DatDecl: Declaration{
 	}
 
 	override bool isCompound(){ return true; }
+	override bool isLinear(){ return false; }
 
 	final Expression[string] getSubst(Expression arg){
 		Expression[string] subst;
@@ -281,4 +285,5 @@ class ImportExp: Declaration{
 	}
 	override @property string kind(){ return "import declaration"; }
 	override string toString(){ return "import "~e.map!(to!string).join(","); }
+	override bool isLinear(){ return false; }
 }

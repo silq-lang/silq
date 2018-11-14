@@ -220,7 +220,7 @@ private struct Analyzer{
 							auto ctx=buildContextFor!readLocal(fun,id.scope_);
 							assert(!!ctx);
 							arg=dTuple([arg,ctx]);
-							argty=tupleTy([argty,contextTy]);
+							argty=tupleTy([argty,contextTy(false)]);
 						}
 						auto r=dist.call(summary,arg,argty);
 						if(thisExp&&!fun.isConstructor){

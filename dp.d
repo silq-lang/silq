@@ -945,7 +945,7 @@ struct Interpreter{
 											}
 											dist.distribute(newDist);
 											auto tmp=dist.declareVar("`tmp");
-											dist.initialize(tmp,dTuple(cast(DExpr[])retVars.map!(v=>v.tmp).array),contextTy());
+											dist.initialize(tmp,dTuple(cast(DExpr[])retVars.map!(v=>v.tmp).array),contextTy(false));
 											foreach(v;info.retVars) dist.marginalize(v.tmp);
 											dist.simplify();
 											auto smpl=distInit();
