@@ -831,6 +831,10 @@ Expression callSemantic(CallExp ce,Scope sc,bool constResult){
 					sc.error("non-'lifted' quantum expression must be consumed", ce.loc);
 					ce.sstate=SemState.error;
 				}
+				if(ce.arg.type.isClassical()&&ft.annotation>=FunctionAnnotation.lifted){
+					if(auto classical=ce.type.getClassical())
+						ce.type=classical;
+				}
 			}
 		}
 	}
