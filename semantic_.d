@@ -565,13 +565,17 @@ Expression statementSemantic(Expression e,Scope sc){
 	}
 	if(auto re=cast(RepeatExp)e){
 		re.num=expressionSemantic(re.num,sc,false);
-		if(re.num.sstate==SemState.completed && !isSubtype(re.num.type, ℝ(true))){
-			sc.error(format("number of iterations should be a number, not %s",re.num.type),re.num.loc);
+		if(re.num.sstate==SemState.completed && !isSubtype(re.num.type, ℤt(true))){
+			sc.error(format("number of iterations should be a classical integer, not %s",re.num.type),re.num.loc);
 			re.sstate=SemState.error;
 		}
 		re.bdy=compoundExpSemantic(re.bdy,sc);
 		propErr(re.num,re);
 		propErr(re.bdy,re);
+		if(sc.merge(re.bdy.blscope_,new BlockScope(sc))){
+			sc.note("possibly consumed in repeat loop", re.loc);
+			re.sstate=SemState.error;
+		}
 		re.type=unit;
 		return re;
 	}
