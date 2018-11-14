@@ -40,6 +40,7 @@ abstract class Scope{
 	void resetConst(){ constBlock.clear(); }
 
 	protected final Declaration symtabLookup(Identifier ident,bool rnsym,Lookup kind){
+		if(allowMerge) return null;
 		auto r=symtab.get(ident.ptr, null);
 		if(rnsym&&!r) r=rnsymtab.get(ident.ptr,null);
 		if(kind==Lookup.consuming&&r&&r.isLinear()){
@@ -125,7 +126,7 @@ abstract class Scope{
 					symtab.remove(sym.name.ptr);
 					if(sym.rename) rnsymtab.remove(sym.rename.ptr);
 					if(sym.isLinear()){
-						error(format("variable '%s' not consumed", sym.name), sym.loc);
+						error(format("variable '%s' is not consumed", sym.name), sym.loc);
 						errors=true;
 					}
 				}else{
@@ -135,7 +136,7 @@ abstract class Scope{
 						symtab.remove(sym.name.ptr);
 						if(sym.rename) rnsymtab.remove(sym.rename.ptr);
 						if(sym.isLinear()){
-							error(format("variable '%s' not consumed", sym.name), sym.loc);
+							error(format("variable '%s' is not consumed", sym.name), sym.loc);
 							errors=true;
 						}
 					}
@@ -146,7 +147,7 @@ abstract class Scope{
 			foreach(sym;sc.symtab){
 				if(sym.name.ptr !in symtab){
 					if(sym.isLinear()){
-						error(format("variable '%s' not consumed", sym.name), sym.loc);
+						error(format("variable '%s' is not consumed", sym.name), sym.loc);
 						errors=true;
 					}
 				}
