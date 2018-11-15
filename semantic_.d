@@ -1256,6 +1256,18 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 					idx.type=at.next;
 				}
 			}
+		}else if(auto vt=cast(VectorTy)idx.e.type){
+			if(idx.a.length!=1){
+				sc.error(format("only one index required to index type %s",vt),idx.loc);
+				idx.sstate=SemState.error;
+			}else{
+				if(!isSubtype(idx.a[0].type,ℤt(true))){
+					sc.error(format("index should be classical integer, not %s",idx.a[0].type),idx.loc);
+					idx.sstate=SemState.error;
+				}else{
+					idx.type=vt.next;
+				}
+			}
 		}/+else if(auto tt=cast(TupleTy)idx.e.type){
 			if(idx.a.length!=1){
 				sc.error(format("only one index required to index type %s",tt),idx.loc);
