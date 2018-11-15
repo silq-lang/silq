@@ -54,7 +54,8 @@ Expression combineTypes(Expression lhs,Expression rhs,bool meet){ // TODO: more 
 	if(lhs == rhs) return lhs;
 	auto l=lhs.eval(), r=rhs.eval();
 	auto wl=whichNumeric(l), wr=whichNumeric(r);
-	if(wl==NumericType.none||wr==NumericType.none) return l.combineTypesImpl(r,meet);
+	if(wl==NumericType.none&&wr==NumericType.none) return l.combineTypesImpl(r,meet);
+	if(wl==NumericType.none||wr==NumericType.none) return null;
 	return getNumeric(meet?min(wl,wr):max(wl,wr),meet?lhs.isClassical()||rhs.isClassical():lhs.isClassical()&&rhs.isClassical());
 }
 

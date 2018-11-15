@@ -548,12 +548,16 @@ class CallExp: Expression{
 						if(!dat.isTuple){
 							assert(dat.params.length==1);
 							assert(arg != rcall.arg); // (checked at start of function)
-							return callSemantic(new CallExp(e,combine(dat.params[0].variance,arg,rcall.arg),isSquare,isClassical_),null,false);
+							auto combined=combine(dat.params[0].variance,arg,rcall.arg);
+							if(!combined) return null;
+							return callSemantic(new CallExp(e,combined,isSquare,isClassical_),null,false);
 						}
 						assert(dat.isTuple);
 						auto tup=cast(TupleTy)arg, rtup=cast(TupleTy)rcall.arg;
 						if(tup && rtup && tup.types.length==dat.params.length && tup.types.length==rtup.types.length){ // TODO: assert this?
-							auto rarg=new TupleExp(iota(tup.types.length).map!(i=>combine(dat.params[i].variance,tup.types[i],rtup.types[i])).array);
+							auto combined=iota(tup.types.length).map!(i=>combine(dat.params[i].variance,tup.types[i],rtup.types[i])).array;
+							if(combined.any!(x=>x is null)) return null;
+							auto rarg=new TupleExp(combined);
 							return callSemantic(new CallExp(e,rarg,isSquare,isClassical),null,false);
 						}
 					}

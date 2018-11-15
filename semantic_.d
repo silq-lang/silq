@@ -1475,11 +1475,12 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 		return e;
 	}
 	static Expression arithmeticType(bool preserveBool)(Expression t1, Expression t2){
-		if(t1==t2 && preludeNumericTypeName(t1) != null) return t1;
 		if(isInt(t1) && isSubtype(t2,ℤt(true))) return t1;
 		if(isInt(t2) && isSubtype(t1,ℤt(true))) return t2;
 		if(isUint(t1) && isSubtype(t2,ℕt(true))) return t1;
 		if(isUint(t2) && isSubtype(t1,ℕt(true))) return t2;
+		if(preludeNumericTypeName(t1) != null||preludeNumericTypeName(t2) != null)
+			return joinTypes(t1,t2);
 		if(!isNumeric(t1)||!isNumeric(t2)) return null;
 		auto r=joinTypes(t1,t2);
 		static if(!preserveBool){
@@ -1530,10 +1531,10 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 		return Bool(t1.isClassical()&&t2.isClassical());
 	}
 	static Expression cmpType(Expression t1,Expression t2){
-		if(t1==t2 && preludeNumericTypeName(t1) != null) return t1;
-		if(preludeNumericTypeName(t1) != null && (isNumeric(t1) || isNumeric(t2))) return t1;
-		if(preludeNumericTypeName(t2) != null && (isNumeric(t1) || isNumeric(t2))) return t2;
-		if(!isNumeric(t1)||!isNumeric(t2)||cast(ℂTy)t1||cast(ℂTy)t2) return null;
+		if(preludeNumericTypeName(t1) != null||preludeNumericTypeName(t2) != null){
+			if(!(joinTypes(t1,t2)||isNumeric(t1)||isNumeric(t2)))
+			   return null;
+		}else if(!isNumeric(t1)||!isNumeric(t2)||cast(ℂTy)t1||cast(ℂTy)t2) return null;
 		return Bool(t1.isClassical()&&t2.isClassical());
 	}
 	if(auto ae=cast(AddExp)expr) return expr=handleBinary!(arithmeticType!false)("addition",ae,ae.e1,ae.e2);
