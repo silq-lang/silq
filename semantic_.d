@@ -1053,6 +1053,10 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 				expr.sstate=SemState.completed;
 			}
 		}
+		if(expr.type==ℕt(false)||expr.type==ℚt(false)||expr.type==ℝ(false)||expr.type==ℂ(false)){
+			sc.error(format("instances of type '%s' not realizable",expr.type),expr.loc);
+			expr.sstate=SemState.error;
+		}
 	}
 	if(auto cd=cast(CompoundDecl)expr)
 		return compoundDeclSemantic(cd,sc);
