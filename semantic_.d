@@ -679,6 +679,7 @@ VarDecl varDeclSemantic(VarDecl vd,Scope sc){
 }
 
 Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
+	if(cast(IndexExp)be.e1) return indexReplaceSemantic(be,sc);
 	bool success=true;
 	auto e2orig=be.e2;
 	be.e2=expressionSemantic(be.e2,sc,false);
@@ -716,19 +717,68 @@ Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
 	return r;
 }
 
-bool checkAssignable(Declaration meaning,Location loc,Scope sc){
+IndexExp indexToReplace=null;
+Expression indexReplaceSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{
+	assert(cast(IndexExp)be.e1);
+}do{
+	assert(!indexToReplace);
+	indexToReplace=cast(IndexExp)be.e1;
+	indexToReplace.e=expressionSemantic(indexToReplace.e,sc,false); // consume array
+	if(indexToReplace.e.type&&indexToReplace.e.type.isClassical()){
+		sc.error(format("use assignment statement '%s = %s' to assign to classical array component",be.e1,be.e2),be.loc);
+		be.sstate=SemState.error;
+		indexToReplace=null;
+		return be;
+	}
+	be.e1=expressionSemantic(indexToReplace,sc,false);
+	propErr(be.e1,be);
+	if(be.sstate==SemState.error) indexToReplace=null;
+	else if(!indexToReplace.a[0].isLifted()){
+		sc.error("index for component replacement must be 'lifted'",indexToReplace.a[0].loc);
+		be.sstate=SemState.error;
+		indexToReplace=null;
+	}
+	auto id=indexToReplace?cast(Identifier)indexToReplace.e:null;
+	if(indexToReplace&&!checkAssignable(id?id.meaning:null,indexToReplace.e.loc,sc,true)){
+		be.sstate=SemState.error;
+		indexToReplace=null;
+	}
+	be.e2=expressionSemantic(be.e2,sc,false);
+	propErr(be.e2,be);
+	if(indexToReplace){
+		sc.error("reassigned component must be consumed in right-hand side", be.e1.loc);
+		be.sstate=SemState.error;
+		indexToReplace=null;
+	}
+	if(id) addVar(id.name,id.type,be.loc,sc);
+	be.type=unit;
+	if(be.sstate!=SemState.error) be.sstate=SemState.completed;
+	return be;
+}
+
+bool checkAssignable(Declaration meaning,Location loc,Scope sc,bool quantumAssign=false){
 	if(!cast(VarDecl)meaning){
 		sc.error("can only assign to variables",loc);
 		return false;
 	}else if(cast(Parameter)meaning){
 		sc.error("cannot reassign parameters (use :=)",loc);
 		return false;
-	}else for(auto csc=sc;csc !is meaning.scope_;csc=(cast(NestedScope)csc).parent){
-		if(auto fsc=cast(FunctionScope)csc){
-			// TODO: what needs to be done to lift this restriction?
-			// TODO: method calls are also implicit assignments.
-			sc.error("cannot assign to variable in closure context (capturing by value)",loc);
+	}else{
+		auto vd=cast(VarDecl)meaning;
+		if(!quantumAssign&&!vd.vtype.isClassical()){
+			sc.error("cannot reassign quantum variables", loc);
 			return false;
+		}else if(vd.vtype==typeTy){
+			sc.error("cannot reassign type variables", loc);
+			return false;
+		}
+		for(auto csc=sc;csc !is meaning.scope_;csc=(cast(NestedScope)csc).parent){
+			if(auto fsc=cast(FunctionScope)csc){
+				// TODO: what needs to be done to lift this restriction?
+				// TODO: method calls are also implicit assignments.
+				sc.error("cannot assign to variable in closure context (capturing by value)",loc);
+				return false;
+			}
 		}
 	}
 	return true;
@@ -744,13 +794,7 @@ AssignExp assignExpSemantic(AssignExp ae,Scope sc){
 		return ae;
 	void checkLhs(Expression lhs){
 		if(auto id=cast(Identifier)lhs){
-			if(!id.type.isClassical()){
-				sc.error("cannot reassign quantum variables", id.loc);
-				ae.sstate=SemState.error;
-			}else if(id.type==typeTy){
-				sc.error("cannot reassign type variables", id.loc);
-				ae.sstate=SemState.error;
-			}else if(!checkAssignable(id.meaning,ae.loc,sc))
+			if(!checkAssignable(id.meaning,ae.loc,sc))
 				ae.sstate=SemState.error;
 		}else if(auto tpl=cast(TupleExp)lhs){
 			foreach(ref exp;tpl.e)
@@ -925,15 +969,15 @@ Expression callSemantic(CallExp ce,Scope sc,bool constResult){
 					tpl.type=tupleTy(tpl.e.map!(e=>e.type).array);
 				}
 			}else{
-				ce.arg=expressionSemantic(ce.arg,sc,ft.isConst.length?ft.isConst[0]:false);
-				if(ft.isConst.length&&!ft.isConst.all!(x=>x==ft.isConst[0])){
+				ce.arg=expressionSemantic(ce.arg,sc,ft.isConst.length?ft.isConst[0]:true);
+				if(!ft.isConst.all!(x=>x==ft.isConst[0])){
 					sc.error("cannot match single tuple to function with mixed 'const' and consumed parameters",ce.loc);
 					ce.sstate=SemState.error;
 					return true;
 				}
 			}
 		}else{
-			ce.arg=expressionSemantic(ce.arg,sc,ft.isConst[0]||ft.annotation==FunctionAnnotation.lifted);
+			ce.arg=expressionSemantic(ce.arg,sc,(ft.isConst.length?ft.isConst[0]:true)||ft.annotation==FunctionAnnotation.lifted);
 		}
 		return false;
 	}
@@ -1247,8 +1291,22 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 		else return noMember();
 	}
 	if(auto idx=cast(IndexExp)expr){
+		bool replaceIndex=false;
+		if(indexToReplace){
+			auto rid=cast(Identifier)indexToReplace.e;
+			assert(rid && rid.meaning);
+			if(auto cid=cast(Identifier)idx.e){
+				if(rid.name==cid.name){
+					if(!cid.meaning){
+						cid.meaning=rid.meaning;
+						replaceIndex=true;
+					}
+				}
+			}
+		}
 		idx.e=expressionSemantic(idx.e,sc,true);
 		if(auto ft=cast(FunTy)idx.e.type){
+			assert(!replaceIndex);
 			Expression arg;
 			if(!idx.trailingComma&&idx.a.length==1) arg=idx.a[0];
 			else arg=new TupleExp(idx.a);
@@ -1257,9 +1315,11 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 			ce.loc=idx.loc;
 			return expr=callSemantic(ce,sc,false);
 		}
-		if(idx.e.type==typeTy)
+		if(idx.e.type==typeTy){
+			assert(!replaceIndex);
 			if(auto tty=typeSemantic(expr,sc))
 				return tty;
+		}
 		propErr(idx.e,idx);
 		foreach(ref a;idx.a){
 			a=expressionSemantic(a,sc,false);
@@ -1313,6 +1373,19 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 		}+/else{
 			sc.error(format("type %s is not indexable",idx.e.type),idx.loc);
 			idx.sstate=SemState.error;
+		}
+		if(replaceIndex){
+			if(idx != indexToReplace){
+				sc.error("indices for component replacement must be identical",idx.loc);
+				sc.note("replaced component is here",indexToReplace.loc);
+				idx.sstate=SemState.error;
+			}
+			if(constResult){
+				sc.error("replaced component must be consumed",idx.loc);
+				sc.note("replaced component is here",indexToReplace.loc);
+				idx.sstate=SemState.error;
+			}
+			indexToReplace=null;
 		}
 		return idx;
 	}

@@ -293,6 +293,10 @@ class UnaryExp(TokenType op): Expression{
 		if(!ue) return false;
 		return e.unify(ue.e,subst,meet);
 	}
+	override bool opEquals(Object o){
+		auto ue=cast(UnaryExp!op)o;
+		return ue&&e==ue.e;
+	}
 
 	override bool isLifted(){ return e.isLifted(); }
 }
@@ -633,6 +637,10 @@ class BinaryExp(TokenType op): ABinaryExp{
 		if(!be) return false;
 		return e1.unify(be.e1,subst,meet)&&e2.unify(be.e2,subst,meet);
 	}
+	override bool opEquals(Object o){
+		auto be=cast(BinaryExp!op)o;
+		return be && e1==be.e1&&e2==be.e2;
+	}
 }
 
 class FieldExp: Expression{
@@ -792,6 +800,10 @@ class TupleExp: Expression{
 		auto te=cast(TupleExp)rhs;
 		if(!te||e.length!=te.e.length) return false;
 		return all!(i=>e[i].unify(te.e[i],subst,meet))(iota(e.length));
+	}
+	override bool opEquals(Object o){
+		auto tpl=cast(TupleExp)o;
+		return tpl&&e==tpl.e;
 	}
 	override bool isLifted(){
 		return e.all!(x=>x.isLifted());
