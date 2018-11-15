@@ -643,7 +643,7 @@ Expression statementSemantic(Expression e,Scope sc){
 		}
 		fe.val=expressionSemantic(fe.val,sc,true);
 		propErr(fe.val,fe);
-		if(!fe.val.isLifted()){
+		if(fe.sstate!=SemState.error&&!fe.val.isLifted()){
 			sc.error("forget expression must be 'lifted'",fe.val.loc);
 			fe.sstate=SemState.error;
 		}
