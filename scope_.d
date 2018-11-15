@@ -160,6 +160,8 @@ abstract class Scope{
 			sc.rnsymtab.clear();
 			sc.closed=true;
 		}
+		foreach(k,v;symtab) v.scope_=this;
+		foreach(k,v;rnsymtab) v.scope_=this;
 		return errors;
 	}
 

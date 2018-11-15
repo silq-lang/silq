@@ -78,19 +78,19 @@ void declareParameters(P)(Expression parent,bool isSquare,P[] params,Scope sc)if
 	}
 }
 
+VarDecl addVar(string name,Expression ty,Location loc,Scope sc){
+	auto id=new Identifier(name);
+	id.loc=loc;
+	auto var=new VarDecl(id);
+	var.loc=loc;
+	var.vtype=ty;
+	var=varDeclSemantic(var,sc);
+	assert(!!var && var.sstate==SemState.completed);
+	return var;
+}
 Expression presemantic(Declaration expr,Scope sc){
 	bool success=true; // dummy
 	if(!expr.scope_) makeDeclaration(expr,success,sc);
-	static VarDecl addVar(string name,Expression ty,Location loc,Scope sc){
-		auto id=new Identifier(name);
-		id.loc=loc;
-		auto var=new VarDecl(id);
-		var.loc=loc;
-		var.vtype=ty;
-		var=varDeclSemantic(var,sc);
-		assert(!!var && var.sstate==SemState.completed);
-		return var;
-	}
 	if(auto dat=cast(DatDecl)expr){
 		if(dat.dtype) return expr;
 		auto dsc=new DataScope(sc,dat);
@@ -784,11 +784,15 @@ bool isOpAssignExp(Expression e){
 	return cast(OrAssignExp)e||cast(AndAssignExp)e||cast(AddAssignExp)e||cast(SubAssignExp)e||cast(MulAssignExp)e||cast(DivAssignExp)e||cast(IDivAssignExp)e||cast(ModAssignExp)e||cast(PowAssignExp)e||cast(CatAssignExp)e||cast(BitOrAssignExp)e||cast(BitXorAssignExp)e||cast(BitAndAssignExp)e;
 }
 
+bool isInvertibleOpAssignExp(Expression e){
+	return cast(AddAssignExp)e||cast(SubAssignExp)e||cast(CatAssignExp)e;
+}
+
 ABinaryExp opAssignExpSemantic(ABinaryExp be,Scope sc)in{
 	assert(isOpAssignExp(be));
 }body{
-	be.e1=expressionSemantic(be.e1,sc,true); // TODO: ok?
-	be.e2=expressionSemantic(be.e2,sc,false);
+	be.e1=expressionSemantic(be.e1,sc,false); // TODO: ok?
+	be.e2=expressionSemantic(be.e2,sc,!cast(CatAssignExp)be);
 	propErr(be.e1,be);
 	propErr(be.e2,be);
 	if(be.sstate==SemState.error)
@@ -824,6 +828,17 @@ ABinaryExp opAssignExpSemantic(ABinaryExp be,Scope sc)in{
 	if(be.sstate!=SemState.error&&!isSubtype(ce.type, be.e1.type)){
 		sc.error(format("incompatible operand types %s and %s",be.e1.type,be.e2.type),be.loc);
 		be.sstate=SemState.error;
+	}
+	auto id=cast(Identifier)be.e1;
+	if(be.sstate!=SemState.error&&!be.e1.type.isClassical()){
+		if(!id){
+			sc.error(format("cannot update-assign to quantum expression %s",be.e1),be.e1.loc);
+			be.sstate=SemState.error;
+		}else if(!isInvertibleOpAssignExp(be)){
+			sc.error("quantum update must be invertible",be.loc);
+			be.sstate=SemState.error;
+		}
+		if(id) addVar(id.name,id.type,be.loc,sc);
 	}
 	be.type=unit;
 	if(be.sstate!=SemState.error) be.sstate=SemState.completed;
@@ -1164,7 +1179,7 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 					}
 				}
 			}
-			if(!meaning.scope_.isNestedIn(sc)) // TODO: make unnecessary using explicit φ declarations
+			assert(sc.isNestedIn(meaning.scope_));
 			for(auto csc=sc;csc !is meaning.scope_;csc=(cast(NestedScope)csc).parent){
 				if(auto fsc=cast(FunctionScope)csc){
 					if(constResult){
@@ -1417,11 +1432,11 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 		if(cast(LiteralExp)tae.e){
 			if(isSubtype(tae.e.type,ℝ(false))&&isSubtype(ℚt(true),tae.type))
 				ok=true;
-			if(isSubtype(tae.e.type,ℤt(false))&&(isUint(tae.type)||isInt(tae.type)))
-				ok=true;
 			if(isSubtype(tae.e.type,ℝ(false))&&(isRat(tae.type)||isFloat(tae.type)))
 				ok=true;
 		}
+		if(isSubtype(tae.e.type,ℤt(false))&&(isUint(tae.type)||isInt(tae.type))&&tae.e.type.isClassical()>=tae.type.isClassical())
+			ok=true;
 		if(!ok && !isSubtype(tae.e.type,tae.type)){
 			sc.error(format("type is %s, not %s",tae.e.type,tae.type),tae.loc);
 			tae.sstate=SemState.error;
@@ -1475,10 +1490,10 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 		return e;
 	}
 	static Expression arithmeticType(bool preserveBool)(Expression t1, Expression t2){
-		if(isInt(t1) && isSubtype(t2,ℤt(true))) return t1;
-		if(isInt(t2) && isSubtype(t1,ℤt(true))) return t2;
-		if(isUint(t1) && isSubtype(t2,ℕt(true))) return t1;
-		if(isUint(t2) && isSubtype(t1,ℕt(true))) return t2;
+		if(isInt(t1) && isSubtype(t2,ℤt(t1.isClassical()))) return t1; // TODO: automatic promotion to quantum
+		if(isInt(t2) && isSubtype(t1,ℤt(t1.isClassical()))) return t2;
+		if(isUint(t1) && isSubtype(t2,ℕt(t1.isClassical()))) return t1;
+		if(isUint(t2) && isSubtype(t1,ℕt(t1.isClassical()))) return t2;
 		if(preludeNumericTypeName(t1) != null||preludeNumericTypeName(t2) != null)
 			return joinTypes(t1,t2);
 		if(!isNumeric(t1)||!isNumeric(t2)) return null;
