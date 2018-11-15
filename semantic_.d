@@ -648,7 +648,7 @@ Expression statementSemantic(Expression e,Scope sc){
 	}
 	sc.error("not supported at this location",e.loc);
 	e.sstate=SemState.error;
-	return e;	
+	return e;
 }
 
 CompoundExp compoundExpSemantic(CompoundExp ce,Scope sc,FunctionAnnotation restriction_=FunctionAnnotation.none){
@@ -721,28 +721,29 @@ IndexExp indexToReplace=null;
 Expression indexReplaceSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{
 	assert(cast(IndexExp)be.e1);
 }do{
-	assert(!indexToReplace);
-	indexToReplace=cast(IndexExp)be.e1;
-	indexToReplace.e=expressionSemantic(indexToReplace.e,sc,false); // consume array
-	if(indexToReplace.e.type&&indexToReplace.e.type.isClassical()){
+	auto theIndex=cast(IndexExp)be.e1;
+	theIndex.e=expressionSemantic(theIndex.e,sc,false); // consume array
+	if(theIndex.e.type&&theIndex.e.type.isClassical()){
 		sc.error(format("use assignment statement '%s = %s' to assign to classical array component",be.e1,be.e2),be.loc);
 		be.sstate=SemState.error;
-		indexToReplace=null;
+		theIndex=null;
 		return be;
 	}
-	be.e1=expressionSemantic(indexToReplace,sc,false);
+	be.e1=expressionSemantic(theIndex,sc,false);
 	propErr(be.e1,be);
-	if(be.sstate==SemState.error) indexToReplace=null;
-	else if(!indexToReplace.a[0].isLifted()){
-		sc.error("index for component replacement must be 'lifted'",indexToReplace.a[0].loc);
+	if(be.sstate==SemState.error) theIndex=null;
+	else if(!theIndex.a[0].isLifted()){
+		sc.error("index for component replacement must be 'lifted'",theIndex.a[0].loc);
 		be.sstate=SemState.error;
-		indexToReplace=null;
+		theIndex=null;
 	}
-	auto id=indexToReplace?cast(Identifier)indexToReplace.e:null;
-	if(indexToReplace&&!checkAssignable(id?id.meaning:null,indexToReplace.e.loc,sc,true)){
+	auto id=theIndex?cast(Identifier)theIndex.e:null;
+	if(theIndex&&!checkAssignable(id?id.meaning:null,theIndex.e.loc,sc,true)){
 		be.sstate=SemState.error;
-		indexToReplace=null;
+		theIndex=null;
 	}
+	assert(!indexToReplace);
+	indexToReplace=theIndex;
 	be.e2=expressionSemantic(be.e2,sc,false);
 	propErr(be.e2,be);
 	if(indexToReplace){
@@ -760,8 +761,8 @@ bool checkAssignable(Declaration meaning,Location loc,Scope sc,bool quantumAssig
 	if(!cast(VarDecl)meaning){
 		sc.error("can only assign to variables",loc);
 		return false;
-	}else if(cast(Parameter)meaning){
-		sc.error("cannot reassign parameters (use :=)",loc);
+	}else if(cast(Parameter)meaning&&(cast(Parameter)meaning).isConst){
+		sc.error("cannot reassign 'const' parameters",loc);
 		return false;
 	}else{
 		auto vd=cast(VarDecl)meaning;
@@ -829,7 +830,7 @@ bool isOpAssignExp(Expression e){
 }
 
 bool isInvertibleOpAssignExp(Expression e){
-	return cast(AddAssignExp)e||cast(SubAssignExp)e||cast(CatAssignExp)e;
+	return cast(AddAssignExp)e||cast(SubAssignExp)e||cast(CatAssignExp)e||cast(BitXorAssignExp)e;
 }
 
 ABinaryExp opAssignExpSemantic(ABinaryExp be,Scope sc)in{
@@ -1351,6 +1352,18 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 					idx.type=vt.next;
 				}
 			}
+		}else if(isInt(idx.e.type)||isUint(idx.e.type)){
+			if(idx.a.length!=1){
+				sc.error(format("only one index required to index type %s",idx.e.type),idx.loc);
+				idx.sstate=SemState.error;
+			}else{
+				if(!isSubtype(idx.a[0].type,ℤt(true))){
+					sc.error(format("index should be classical integer, not %s",idx.a[0].type),idx.loc);
+					idx.sstate=SemState.error;
+				}else{
+					idx.type=Bool(idx.e.type.isClassical());
+				}
+			}
 		}/+else if(auto tt=cast(TupleTy)idx.e.type){
 			if(idx.a.length!=1){
 				sc.error(format("only one index required to index type %s",tt),idx.loc);
@@ -1533,7 +1546,7 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 		}
 		return e;
 	}
-	
+
 	Expression handleBinary(alias determineType)(string name,Expression e,ref Expression e1,ref Expression e2){
 		e1=expressionSemantic(e1,sc,true);
 		e2=expressionSemantic(e2,sc,true);
@@ -2090,7 +2103,7 @@ struct SampleFromInfo{
 	bool error;
 	VarMapping[] retVars;
 	DNVar[] paramVars;
-	DExpr newDist;	
+	DExpr newDist;
 }
 
 import distrib; // TODO: separate concerns properly, move the relevant parts back to analysis.d
