@@ -2032,7 +2032,7 @@ Expression handleQuantumPrimitive(CallExp ce,Scope sc){
 			ce.type = productTy([false],["`τ"],typeTy,funTy([false],varTy("`τ",typeTy),varTy("`τ",typeTy),false,false,FunctionAnnotation.lifted,true),true,false,FunctionAnnotation.lifted,true);
 			break;
 		case "reverse":
-			ce.type = productTy([false,false,false],["`τ","`χ","`φ"],tupleTy([typeTy,typeTy,typeTy]),funTy([true],funTy([false,true],tupleTy([varTy("`τ",typeTy),varTy("`χ",typeTy)]),varTy("`φ",typeTy),false,true,FunctionAnnotation.mfree,false),funTy([false,true],tupleTy([varTy("`φ",typeTy),varTy("`χ",typeTy)]),varTy("`τ",typeTy),false,true,FunctionAnnotation.mfree,false),false,false,FunctionAnnotation.lifted,true),true,true,FunctionAnnotation.lifted,true);
+			ce.type = productTy([false,false,false],["`τ","`χ","`φ"],tupleTy([typeTy,typeTy,typeTy]),funTy([false],funTy([false,true],tupleTy([varTy("`τ",typeTy),varTy("`χ",typeTy)]),varTy("`φ",typeTy),false,true,FunctionAnnotation.mfree,true),funTy([false,true],tupleTy([varTy("`φ",typeTy),varTy("`χ",typeTy)]),varTy("`τ",typeTy),false,true,FunctionAnnotation.mfree,true),false,false,FunctionAnnotation.lifted,true),true,true,FunctionAnnotation.lifted,true);
 			break;
 		case "M":
 			ce.type = productTy([false],["`τ"],typeTy,funTy([false],varTy("`τ",typeTy),varTy("`τ",typeTy,true),false,false,FunctionAnnotation.none,true),true,false,FunctionAnnotation.lifted,true);

@@ -1,7 +1,8 @@
 /+
 def main(x:ℕ){
 	f := λ(a:𝟙,const b:𝟙)mfree. x;
-	reverseM[𝟙,𝟙,ℕ](f)(1337,());
+	g := dup(f);
+	reverse[𝟙,𝟙,ℕ](f)(g((),()),());
 }
 +/
 /+
@@ -13,7 +14,7 @@ def main(x:ℕ){
 		forget(x=xpy-y);
 		return (xpy,y);
 	};
-	return reverseM[ℕ,𝟙,ℕ×𝔹](f)((x,H(false)),());
+	return reverse[ℕ,𝟙,ℕ×𝔹](f)((x,H(false)),());
 }
 +/
 /+
