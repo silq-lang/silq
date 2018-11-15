@@ -532,7 +532,6 @@ class CallExp: Expression{
 						import semantic_: callSemantic; // TODO: get rid of this?
 						if(!dat.isTuple){
 							assert(dat.params.length==1);
-							assert(arg != rcall.arg); // (checked at start of function)
 							return callSemantic(new CallExp(e,combine(dat.params[0].variance,arg,rcall.arg),isSquare,isClassical_),null,false);
 						}
 						assert(dat.isTuple);
