@@ -258,7 +258,7 @@ class MultiDefExp: DefExp{
 string getActualPath(string path){
 	import std.path, file=std.file, options;
 	auto ext = path.extension;
-	if(ext=="") path = path.setExtension("psi");
+	if(ext=="") path = path.setExtension("hql");
 	if(file.exists(path)) return path;
 	foreach_reverse(p;opt.importPath){
 		auto candidate=buildPath(p,path);
