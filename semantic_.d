@@ -285,7 +285,7 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 			foreach(vd;vds) propErr(vd,de);
 			return de;
 		}else{
-			sc.error("left hand side of definition must be identifier or tuple of identifiers",expr.loc);
+			sc.error("left-hand side of definition must be identifier or tuple of identifiers",expr.loc);
 			success=false;
 		}
 		success&=expr.sstate==SemState.completed;
@@ -634,7 +634,14 @@ Expression statementSemantic(Expression e,Scope sc){
 	if(auto fe=cast(ForgetExp)e){
 		auto var=expressionSemantic(fe.var,sc,false);
 		propErr(var,fe);
-		fe.val=expressionSemantic(fe.val,sc,false);
+		if(!cast(Identifier)fe.var){
+			auto tpl=cast(TupleExp)fe.var;
+			if(!tpl||!tpl.e.all!(x=>!!cast(Identifier)x)){
+				sc.error("left-hand side of 'forget' must be identifier or tuple of identifiers",fe.var.loc);
+				fe.sstate=fe.var.sstate=SemState.error;
+			}
+		}
+		fe.val=expressionSemantic(fe.val,sc,true);
 		propErr(fe.val,fe);
 		if(!fe.val.isLifted()){
 			sc.error("forget expression must be 'lifted'",fe.val.loc);

@@ -919,9 +919,9 @@ struct Parser{
 		mixin(SetLoc!ForgetExp);
 		expect(Tok!"forget");
 		expect(Tok!"(");
-		auto var=parseIdentifier();
+		auto var=parseExpression(rbp!(Tok!"="));
 		expect(Tok!"=");
-		auto val=parseExpression(rbp!(Tok!","));
+		auto val=parseExpression(rbp!(Tok!"="));
 		expect(Tok!")");
 		return res=New!ForgetExp(var,val);
 	}

@@ -893,9 +893,9 @@ class CObserveExp: Expression{
 }
 
 class ForgetExp: Expression{
-	Identifier var;
+	Expression var;
 	Expression val;
-	this(Identifier var,Expression val){
+	this(Expression var,Expression val){
 		this.var=var;
 		this.val=val;
 	}
