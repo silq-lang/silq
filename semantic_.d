@@ -843,7 +843,7 @@ ABinaryExp opAssignExpSemantic(ABinaryExp be,Scope sc)in{
 		return be;
 	void checkULhs(Expression lhs){
 		if(auto id=cast(Identifier)lhs){
-			if(!checkAssignable(id.meaning,be.loc,sc))
+			if(!checkAssignable(id.meaning,be.loc,sc,isInvertibleOpAssignExp(be)))
 			   be.sstate=SemState.error;
 		}else if(auto idx=cast(IndexExp)lhs){
 			checkULhs(idx.e);
