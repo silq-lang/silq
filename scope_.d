@@ -113,7 +113,7 @@ abstract class Scope{
 		allowMerge=true;
 	}
 
-	bool merge(Scope[] scopes...)in{
+	bool merge(bool quantumControl,Scope[] scopes...)in{
 		assert(scopes.length);
 		debug assert(allowMerge);
 	}do{
@@ -134,7 +134,7 @@ abstract class Scope{
 					auto osym=sc.symtab[sym.name.ptr];
 					import semantic_: typeForDecl;
 					auto ot=typeForDecl(osym),st=typeForDecl(sym);
-					if(ot!=st||st.hasClassicalComponent()){
+					if(ot!=st||quantumControl&&st.hasClassicalComponent()){
 						symtab.remove(sym.name.ptr);
 						if(sym.rename) rnsymtab.remove(sym.rename.ptr);
 						if(sym.isLinear()){
@@ -279,7 +279,7 @@ class BlockScope: NestedScope{
 		return max(restriction_,super.restriction());
 	}
 	override bool close(){
-		auto errors=parent.allowsLinear()?parent.merge(this):false;
+		auto errors=parent.allowsLinear()?parent.merge(false,this):false;
 		closed=true;
 		return errors;
 	}

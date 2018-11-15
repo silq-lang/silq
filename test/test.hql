@@ -1,4 +1,61 @@
 /+
+def main(){
+	c := H(false);
+	if c{
+		//x := H(false);
+		y := [dup(c),1,2];
+	}else{
+		//x := H(true);
+		y := [dup(c),2];
+	}
+	c:=H(c);
+	forget(c=false);
+	return y;
+}
++/
+/+
+def id[x](a:x):x;
+
+def main(){
+	x := id(2);
+}
++/
+/+
+def main[n:!ℕ](x: 𝔹^n){
+	//y := x[1];
+	y := x;
+	y[1] := true;
+	return (y);
+}
++/
+
+/+
+def zero(n:!ℕ):int[n]{
+	return 0:int[n];
+}+/
+
+/+
+def main(){
+	x := 0: int[64];
+	//y := true : !𝔹;
+	y := x+1:ℕ;
+	//z := measure(y);
+	//forget(x=z-1);
+}
++/
+
+/+
+def f[k:!ℕ](x: int[k]){
+	return x;
+}
+
+def main(i: int[32]){
+	return f(i);
+}
++/
+
+
+/+
 def main(x:ℕ){
 	f := λ(a:𝟙,const b:𝟙)mfree. x;
 	g := dup(f);

@@ -495,13 +495,14 @@ Expression statementSemantic(Expression e,Scope sc){
 			sc.error(format("type of condition should be !𝔹 or 𝔹, not %s",ite.cond.type),ite.cond.loc);
 			ite.sstate=SemState.error;
 		}
-		auto restriction_=ite.cond.type==Bool(false)?FunctionAnnotation.mfree:FunctionAnnotation.none;
+		auto quantumControl=ite.cond.type!=Bool(true);
+		auto restriction_=quantumControl?FunctionAnnotation.mfree:FunctionAnnotation.none;
 		ite.then=compoundExpSemantic(ite.then,sc,restriction_);
 		if(ite.othw) ite.othw=compoundExpSemantic(ite.othw,sc,restriction_);
 		propErr(ite.cond,ite);
 		propErr(ite.then,ite);
 		if(ite.othw) propErr(ite.othw,ite);
-		if(sc.merge(ite.then.blscope_,ite.othw?cast(Scope)ite.othw.blscope_:new BlockScope(sc,restriction_)))
+		if(sc.merge(quantumControl,ite.then.blscope_,ite.othw?cast(Scope)ite.othw.blscope_:new BlockScope(sc,restriction_)))
 			ite.sstate=SemState.error;
 		ite.type=unit;
 		return ite;
@@ -545,7 +546,7 @@ Expression statementSemantic(Expression e,Scope sc){
 		propErr(fe.left,fe);
 		propErr(fe.right,fe);
 		propErr(fe.bdy,fe);
-		if(sc.merge(fesc,new BlockScope(sc))){
+		if(sc.merge(false,fesc,new BlockScope(sc))){
 			sc.note("possibly consumed in for loop", fe.loc);
 			fe.sstate=SemState.error;
 		}
@@ -573,7 +574,7 @@ Expression statementSemantic(Expression e,Scope sc){
 				sc.note("possibly consumed in while loop", we.loc);
 			propErr(condDup,we);
 		}
-		if(sc.merge(we.bdy.blscope_,new BlockScope(sc))){
+		if(sc.merge(false,we.bdy.blscope_,new BlockScope(sc))){
 			sc.note("possibly consumed in while loop", we.loc);
 			we.sstate=SemState.error;
 		}
@@ -589,7 +590,7 @@ Expression statementSemantic(Expression e,Scope sc){
 		re.bdy=compoundExpSemantic(re.bdy,sc);
 		propErr(re.num,re);
 		propErr(re.bdy,re);
-		if(sc.merge(re.bdy.blscope_,new BlockScope(sc))){
+		if(sc.merge(false,re.bdy.blscope_,new BlockScope(sc))){
 			sc.note("possibly consumed in repeat loop", re.loc);
 			re.sstate=SemState.error;
 		}
@@ -1186,7 +1187,7 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 		return id;
 	}
 	if(auto fe=cast(FieldExp)expr){
-		fe.e=expressionSemantic(fe.e,sc,false);
+		fe.e=expressionSemantic(fe.e,sc,true);
 		propErr(fe.e,fe);
 		if(fe.sstate==SemState.error)
 			return fe;
@@ -1747,7 +1748,7 @@ FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 	auto bdy=fd.body_?compoundExpSemantic(fd.body_,fsc):null;
 	scope(exit){
 		if(bdy){
-			if(--fd.semanticDepth==0&&(fsc.merge(bdy.blscope_)||fsc.close())) fd.sstate=SemState.error;
+			if(--fd.semanticDepth==0&&(fsc.merge(false,bdy.blscope_)||fsc.close())) fd.sstate=SemState.error;
 		}else{
 			fsc.forceClose();
 		}
