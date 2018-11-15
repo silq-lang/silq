@@ -688,6 +688,7 @@ VarDecl varDeclSemantic(VarDecl vd,Scope sc){
 
 Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
 	if(cast(IndexExp)be.e1) return indexReplaceSemantic(be,sc);
+	if(auto tpl=cast(TupleExp)be.e1) if(tpl.e.all!(x=>!!cast(IndexExp)x)) return permuteSemantic(be,sc);
 	bool success=true;
 	auto e2orig=be.e2;
 	be.e2=expressionSemantic(be.e2,sc,false);
@@ -762,6 +763,35 @@ Expression indexReplaceSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{
 	if(id) addVar(id.name,id.type,be.loc,sc);
 	be.type=unit;
 	if(be.sstate!=SemState.error) be.sstate=SemState.completed;
+	return be;
+}
+
+Expression permuteSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{
+	auto tpl=cast(TupleExp)be.e1;
+	assert(tpl&&tpl.e.all!(x=>!!cast(IndexExp)x));
+}do{
+	be.e1=expressionSemantic(be.e1,sc,false);
+	propErr(be.e1,be);
+	be.e2=expressionSemantic(be.e2,sc,false);
+	propErr(be.e2,be);
+	if(be.e1.type&&be.e1.type.isClassical()){
+		sc.error(format("use assignment statement '%s = %s' to assign to classical array components",be.e1,be.e2),be.loc);
+		be.sstate=SemState.error;
+		return be;
+	}
+	auto tpl1=cast(TupleExp)be.e1, tpl2=cast(TupleExp)be.e2;
+	if(!tpl1||!tpl2||tpl1.e.length!=2||tpl2.e.length!=2||tpl1.e[0]!=tpl2.e[1]||tpl1.e[1]!=tpl2.e[0]){
+		sc.error("only swapping supported in permute statement", be.loc);
+		be.sstate=SemState.error;
+		return be;
+	}
+	auto exprs=chain(tpl1.e,tpl2.e).map!(x=>cast(IndexExp)x).array;
+	if(!exprs.all!(x=>!!x)||!exprs.all!(x=>!!cast(Identifier)x.e&&x.e==exprs[0].e)){
+		sc.error("only swapping values in same array supported in permute statement", be.loc);
+		be.sstate=SemState.error;
+		return be;
+	}
+	be.sstate=SemState.completed; // TODO: redefine array variable in local scope?
 	return be;
 }
 
