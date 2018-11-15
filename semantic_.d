@@ -1123,7 +1123,7 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 				return vd.initializer;
 			}
 		}
-		if(id.sstate==SemState.completed&&!id.type.isClassical()){
+		if(id.type&&!id.type.isClassical()){
 			if(!constResult){
 				if(auto prm=cast(Parameter)meaning){
 					if(prm.isConst){
