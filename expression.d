@@ -210,12 +210,14 @@ class Identifier: Expression{
 		}
 		if(name !in subst) return false;
 		if(subst[name]==this) return false;
-		if(rhs.isClassical()<classical) return false;
+		if(type==typeTy&&rhs.type==typeTy)
+			if(rhs.isClassical()<classical) return false;
 		if(subst[name]){
 			if(!subst[name].unify(rhs,subst,meet))
 				return false;
-			if(auto cmb=combineTypes(subst[name],rhs,meet)) // TODO: good?
-				subst[name]=cmb;
+			if(subst[name].type==typeTy&&rhs.type==typeTy)
+				if(auto cmb=combineTypes(subst[name],rhs,meet)) // TODO: good?
+					subst[name]=cmb;
 			return true;
 		}
 		if(rhs.hasFreeVar(name)) return false; // TODO: fixpoint types
