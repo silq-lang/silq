@@ -95,6 +95,9 @@ abstract class Expression: Node{
 	bool isClassical(){
 		return false;
 	}
+	bool hasClassicalComponent(){
+		return true;
+	}
 	Expression getClassical(){
 		if(isClassical()) return this;
 		return null;
@@ -227,6 +230,10 @@ class Identifier: Expression{
 	}
 
 	override bool isClassical(){
+		assert(type==typeTy);
+		return classical;
+	}
+	override bool hasClassicalComponent(){
 		assert(type==typeTy);
 		return classical;
 	}
@@ -556,6 +563,9 @@ class CallExp: Expression{
 		return super.combineTypes(rhs,meet);
 	}
 	override bool isClassical(){
+		return isClassical_;
+	}
+	override bool hasClassicalComponent(){
 		return isClassical_;
 	}
 	override Expression getClassical(){

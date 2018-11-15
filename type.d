@@ -93,6 +93,9 @@ class BoolTy: Type{
 	override bool isClassical(){
 		return classical;
 	}
+	override bool hasClassicalComponent(){
+		return classical;
+	}
 	override BoolTy getClassical(){
 		return Bool(true);
 	}
@@ -113,6 +116,9 @@ class ℕTy: Type{
 		return r&&classical==r.classical;
 	}
 	override bool isClassical(){
+		return classical;
+	}
+	override bool hasClassicalComponent(){
 		return classical;
 	}
 	override ℕTy getClassical(){
@@ -137,6 +143,9 @@ class ℤTy: Type{
 	override bool isClassical(){
 		return classical;
 	}
+	override bool hasClassicalComponent(){
+		return classical;
+	}
 	override ℤTy getClassical(){
 		return ℤt(true);
 	}
@@ -157,6 +166,9 @@ class ℚTy: Type{
 		return r&&classical==r.classical;
 	}
 	override bool isClassical(){
+		return classical;
+	}
+	override bool hasClassicalComponent(){
 		return classical;
 	}
 	override ℚTy getClassical(){
@@ -181,6 +193,9 @@ class ℝTy: Type{
 	override bool isClassical(){
 		return classical;
 	}
+	override bool hasClassicalComponent(){
+		return classical;
+	}
 	override ℝTy getClassical(){
 		return ℝ(true);
 	}
@@ -201,6 +216,9 @@ class ℂTy: Type{
 		return r&&classical==r.classical;
 	}
 	override bool isClassical(){
+		return classical;
+	}
+	override bool hasClassicalComponent(){
 		return classical;
 	}
 	override ℂTy getClassical(){
@@ -236,6 +254,9 @@ class AggregateTy: Type{
 	override bool isClassical(){
 		return classical;
 	}
+	override bool hasClassicalComponent(){
+		return classical;
+	}
 	override AggregateTy getClassical(){
 		return classicalTy;
 	}
@@ -251,6 +272,9 @@ class ContextTy: Type{
 		return ctx&&ctx.classical==classical;
 	}
 	override bool isClassical(){
+		return classical;
+	}
+	override bool hasClassicalComponent(){
 		return classical;
 	}
 	override string toString(){
@@ -317,6 +341,9 @@ class TupleTy: Type{
 	override bool isClassical(){
 		return all!(x=>x.isClassical())(types);
 	}
+	override bool hasClassicalComponent(){
+		return any!(x=>x.isClassical())(types);
+	}
 	override Expression getClassical(){
 		auto ntypes=types.map!(x=>x.getClassical()).array;
 		if(ntypes.any!(x=>x is null)) return null;
@@ -380,6 +407,9 @@ class ArrayTy: Type{
 	override bool isClassical(){
 		return next.isClassical();
 	}
+	override bool hasClassicalComponent(){
+		return true; // length is classical
+	}
 	override Expression getClassical(){
 		auto nnext=next.getClassical();
 		if(!nnext) return null;
@@ -438,6 +468,9 @@ class VectorTy: Type{
 	override bool isClassical(){
 		return next.isClassical();
 	}
+	override bool hasClassicalComponent(){
+		return next.hasClassicalComponent();
+	}
 	override Expression getClassical(){
 		auto nnext=next.getClassical();
 		if(!nnext) return null;
@@ -465,6 +498,9 @@ class StringTy: Type{
 	override bool isClassical(){
 		return classical;
 	}
+	override bool hasClassicalComponent(){
+		return true; // length is classical
+	}
 	mixin VariableFree;
 }
 
@@ -490,6 +526,9 @@ class RawProductTy: Expression{
 		return "<unanalyzed Π type>"; // TODO: format nicely.
 	}
 	override bool isClassical(){
+		assert(0);
+	}
+	override bool hasClassicalComponent(){
 		assert(0);
 	}
 	mixin VariableFree;
@@ -756,6 +795,9 @@ class ProductTy: Type{
 	override bool isClassical(){
 		return isClassical_;
 	}
+	override bool hasClassicalComponent(){
+		return true; // code is classical
+	}
 	override ProductTy getClassical(){
 		return classicalTy;
 	}
@@ -814,6 +856,9 @@ class TypeTy: Type{
 	}
 	override bool isClassical(){
 		return true; // quantum superposition of multiple types not allowed
+	}
+	override bool hasClassicalComponent(){
+		return true;
 	}
 	mixin VariableFree;
 }

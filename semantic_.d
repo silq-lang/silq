@@ -1163,6 +1163,7 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 					}
 				}
 			}
+			if(!meaning.scope_.isNestedIn(sc)) // TODO: make unnecessary using explicit φ declarations
 			for(auto csc=sc;csc !is meaning.scope_;csc=(cast(NestedScope)csc).parent){
 				if(auto fsc=cast(FunctionScope)csc){
 					if(constResult){

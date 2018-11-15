@@ -133,7 +133,8 @@ abstract class Scope{
 				}else{
 					auto osym=sc.symtab[sym.name.ptr];
 					import semantic_: typeForDecl;
-					if(typeForDecl(osym)!=typeForDecl(sym)){
+					auto ot=typeForDecl(osym),st=typeForDecl(sym);
+					if(ot!=st||st.hasClassicalComponent()){
 						symtab.remove(sym.name.ptr);
 						if(sym.rename) rnsymtab.remove(sym.rename.ptr);
 						if(sym.isLinear()){
