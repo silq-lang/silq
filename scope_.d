@@ -249,6 +249,9 @@ class FunctionScope: NestedScope{
 	override FunctionAnnotation restriction(){
 		return fd.annotation;
 	}
+	void forceClose(){
+		debug closed=true;
+	}
 	// ~this(){ import std.stdio; writeln(fd.loc.rep); }
 	override FunctionDef getFunction(){ return fd; }
 }

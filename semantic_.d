@@ -126,7 +126,13 @@ Expression presemantic(Declaration expr,Scope sc){
 			assert(fd.isTuple||pty.length==1);
 			auto pt=fd.isTuple?tupleTy(pty):pty[0];
 			if(!fd.ret) fd.sstate=SemState.error;
-			else if(cast(TopScope)sc) fd.ftype=productTy(pc,pn,pt,fd.ret,fd.isSquare,fd.isTuple,fd.annotation,true);
+			else if(cast(TopScope)sc||!fd.body_) fd.ftype=productTy(pc,pn,pt,fd.ret,fd.isSquare,fd.isTuple,fd.annotation,true);
+			if(!fd.body_) return expr;
+		}
+		if(!fd.body_){
+			sc.error("function without body should have a return type annotation",fd.loc);
+			fd.sstate=SemState.error;
+			return expr;
 		}
 		assert(!fd.body_.blscope_);
 		fd.body_.blscope_=new BlockScope(fsc);
@@ -1737,23 +1743,30 @@ FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 	++fd.semanticDepth;
 	assert(!!fsc,text(fd));
 	assert(fsc.allowsLinear());
-	auto bdy=compoundExpSemantic(fd.body_,fsc);
-	scope(exit) if(--fd.semanticDepth==0&&(fsc.merge(bdy.blscope_)||fsc.close())) fd.sstate=SemState.error;
-	assert(!!bdy);
+	auto bdy=fd.body_?compoundExpSemantic(fd.body_,fsc):null;
+	scope(exit){
+		if(bdy){
+			if(--fd.semanticDepth==0&&(fsc.merge(bdy.blscope_)||fsc.close())) fd.sstate=SemState.error;
+		}else{
+			fsc.forceClose();
+		}
+	}
 	fd.body_=bdy;
 	fd.type=unit;
-	propErr(bdy,fd);
-	if(!definitelyReturns(fd)){
-		if(!fd.ret || fd.ret == unit){
-			auto tpl=new TupleExp([]);
-			tpl.loc=fd.loc;
-			auto rete=new ReturnExp(tpl);
-			rete.loc=fd.loc;
-			fd.body_.s~=returnExpSemantic(rete,fd.body_.blscope_);
-		}else{
-			sc.error("control flow might reach end of function (add return or assert(0) statement)",fd.loc);
-			fd.sstate=SemState.error;
-		}
+	if(bdy){
+		propErr(bdy,fd);
+		if(!definitelyReturns(fd)){
+			if(!fd.ret || fd.ret == unit){
+				auto tpl=new TupleExp([]);
+				tpl.loc=fd.loc;
+				auto rete=new ReturnExp(tpl);
+				rete.loc=fd.loc;
+				fd.body_.s~=returnExpSemantic(rete,fd.body_.blscope_);
+			}else{
+				sc.error("control flow might reach end of function (add return or assert(0) statement)",fd.loc);
+				fd.sstate=SemState.error;
+			}
+		}else if(!fd.ret) fd.ret=unit;
 	}else if(!fd.ret) fd.ret=unit;
 	setFtype(fd);
 	foreach(ref n;fd.retNames){
