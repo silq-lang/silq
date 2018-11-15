@@ -108,8 +108,27 @@ Expression presemantic(Declaration expr,Scope sc){
 		auto fsc=new FunctionScope(sc,fd);
 		fd.type=unit;
 		fd.fscope_=fsc;
-		assert(!fd.body_.blscope_);
 		declareParameters(fd,fd.isSquare,fd.params,fsc); // parameter variables
+		if(fd.rret){
+			bool[] pc;
+			string[] pn;
+			Expression[] pty;
+			foreach(p;fd.params){
+				if(!p.vtype){
+					assert(fd.sstate==SemState.error);
+					return fd;
+				}
+				pc~=p.isConst;
+				pn~=p.getName;
+				pty~=p.vtype;
+			}
+			fd.ret=typeSemantic(fd.rret,fsc);
+			assert(fd.isTuple||pty.length==1);
+			auto pt=fd.isTuple?tupleTy(pty):pty[0];
+			if(!fd.ret) fd.sstate=SemState.error;
+			else if(cast(TopScope)sc) fd.ftype=productTy(pc,pn,pt,fd.ret,fd.isSquare,fd.isTuple,fd.annotation,true);
+		}
+		assert(!fd.body_.blscope_);
 		fd.body_.blscope_=new BlockScope(fsc);
 		if(auto dsc=isInDataScope(sc)){
 			auto id=new Identifier(dsc.decl.name.name);
@@ -168,25 +187,6 @@ Expression presemantic(Declaration expr,Scope sc){
 		}else if(auto nsc=cast(NestedScope)sc){
 			fd.contextVal=addVar("`outer",contextTy(true),fd.loc,fsc); // TODO: replace contextTy by suitable record type; make name 'outer' available
 			fd.context=fd.contextVal;
-		}
-		if(fd.rret){
-			bool[] pc;
-			string[] pn;
-			Expression[] pty;
-			foreach(p;fd.params){
-				if(!p.vtype){
-					assert(fd.sstate==SemState.error);
-					return fd;
-				}
-				pc~=p.isConst;
-				pn~=p.getName;
-				pty~=p.vtype;
-			}
-			fd.ret=typeSemantic(fd.rret,fsc);
-			assert(fd.isTuple||pty.length==1);
-			auto pt=fd.isTuple?tupleTy(pty):pty[0];
-			if(!fd.ret) fd.sstate=SemState.error;
-			else if(cast(TopScope)sc) fd.ftype=productTy(pc,pn,pt,fd.ret,fd.isSquare,fd.isTuple,fd.annotation,true);
 		}
 	}
 	return expr;
