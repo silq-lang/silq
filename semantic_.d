@@ -1534,6 +1534,12 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 		}
 		if(isSubtype(tae.e.type,ℤt(false))&&(isUint(tae.type)||isInt(tae.type))&&tae.e.type.isClassical()>=tae.type.isClassical())
 			ok=true;
+		if(isUint(tae.e.type)&&isSubtype(ℕt(tae.e.type.isClassical()),tae.type))
+			ok=true;
+		if(isInt(tae.e.type)&&isSubtype(ℤt(tae.e.type.isClassical()),tae.type))
+			ok=true;
+		if((isRat(tae.e.type)||isFloat(tae.e.type))&&isSubtype(ℚt(tae.e.type.isClassical()),tae.type))
+			ok=true;
 		if(!ok && !isSubtype(tae.e.type,tae.type)){
 			sc.error(format("type is %s, not %s",tae.e.type,tae.type),tae.loc);
 			tae.sstate=SemState.error;
