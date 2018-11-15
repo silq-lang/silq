@@ -70,7 +70,7 @@ int getLbp(TokenType type) pure{ // operator precedence
 	// shift operators
 	case Tok!">>", Tok!"<<":
 	case Tok!">>>": return 110;
-	case Tok!"->",Tok!"→": // exponential type
+	case Tok!"->",Tok!"→",Tok!"!": // exponential type
 	// case Tok!"⇒",Tok!"↦",Tok!"=>": return 115; // goesto
 	// additive operators
 	case Tok!"+",Tok!"-",Tok!"~":
@@ -88,8 +88,6 @@ int getLbp(TokenType type) pure{ // operator precedence
 	case Tok!".",Tok!"++",Tok!"--":
 	case Tok!"(", Tok!"[": // function call and indexing
 		return 160;
-	// template instantiation
-	case Tok!"!":  return 170;
 	//case Tok!"i": return 45; //infix
 	default: return -1;
 	}
@@ -583,6 +581,12 @@ struct Parser{
 			case Tok!">=": goto case Tok!"≥";
 			case Tok!"!>=": goto case Tok!"!≥";
 			case Tok!"!=": goto case Tok!"≠";
+			case Tok!"!":
+				auto next=peek.type;
+				if(next==Tok!"→"||next==Tok!"->"){
+					nextToken();
+					return res=New!(UnaryExp!(Tok!"¬"))(led(left,statement));
+				}else goto default;
 			case Tok!"&": goto case Tok!"∧";
 			case Tok!"&←",Tok!"∧=": goto case Tok!"∧←";
 			case Tok!"|": goto case Tok!"∨";
