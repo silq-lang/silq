@@ -38,7 +38,9 @@ def floor(const x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+⌊x⌋]",x);
 def ceil(const x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+⌈x⌉]",x);
 def inℤ(const x:ℝ)lifted :ℝ ⇒ x==floor(x);+/
 
-def array[const a](const length: ℝ, const init:a)lifted: a[] ⇒ sampleFrom("(r;length,init)=>δ([i↦ init] (length))[r]",length,init):a[];
+def array[const a]lifted(const length: ℝ, const init:a)lifted: a[] ⇒ sampleFrom("(r;length,init)=>δ([i↦ init] (length))[r]",length,init):a[];
+def vector[const a:*]lifted(const n:!ℕ,const x:a)lifted:a^n ⇒ sampleFrom("(r;length,init)=>δ([i↦ init] (length))[r]",length,init):a^n;
+
 /+
 // first-class inference
 dat Distribution[a]{ } // TODO: dat Distribution[a];

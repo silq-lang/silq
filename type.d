@@ -393,6 +393,66 @@ ArrayTy arrayTy(Expression next)in{
 	return memoize!((Expression next)=>new ArrayTy(next))(next);
 }
 
+class VectorTy: Type{
+	Expression next,num;
+	private this(Expression next,Expression num)in{
+		assert(next.type==typeTy);
+	}body{
+		this.next=next;
+		this.num=num;
+	}
+	override string toString(){
+		bool p=cast(FunTy)next||cast(TupleTy)next&&next!is unit;
+		bool q=!cast(Identifier)num&&!cast(LiteralExp)num; // TODO: improve
+		return (p?"("~next.toString()~")^":next.toString()~"^")~(q?"("~num.toString()~")":num.toString());
+	}
+	override int freeVarsImpl(scope int delegate(string) dg){
+		if(auto r=next.freeVarsImpl(dg)) return r;
+		return num.freeVarsImpl(dg);
+	}
+	override VectorTy substituteImpl(Expression[string] subst){
+		return vectorTy(next.substitute(subst),num.substitute(subst));
+	}
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
+		auto vt=cast(VectorTy)rhs;
+		return vt && next.unifyImpl(vt.next,subst,meet) && num.unifyImpl(vt.num,subst,meet);
+	}
+	override VectorTy eval(){
+		return vectorTy(next.eval(),num.eval());
+	}
+	override bool opEquals(Object o){
+		if(auto r=cast(VectorTy)o)
+			return next==r.next&&num==r.num;
+		return false;
+	}
+	override bool isSubtypeImpl(Expression r){
+		auto larr=this,rarr=cast(VectorTy)r;
+		if(!rarr) return false;
+		return isSubtype(larr.next,rarr.next) && num==rarr.num;
+	}
+	override Expression combineTypesImpl(Expression r,bool meet){
+		auto larr=this,rarr=cast(VectorTy)r;
+		if(!rarr||num!=rarr.num) return null;
+		return vectorTy(combineTypes(larr.next,rarr.next,meet),num);
+	}
+	override bool isClassical(){
+		return next.isClassical();
+	}
+	override Expression getClassical(){
+		auto nnext=next.getClassical();
+		if(!nnext) return null;
+		return vectorTy(nnext,num);
+	}
+}
+
+VectorTy vectorTy(Expression next,Expression num)in{
+	assert(next&&next.type==typeTy);
+	assert(num&&isSubtype(num.type,ℕt(true)));
+}body{
+	return memoize!((Expression next,Expression num)=>new VectorTy(next,num))(next,num);
+}
+
+
 class StringTy: Type{
 	bool classical;
 	private this(bool classical){ this.classical=classical; }

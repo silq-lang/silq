@@ -1430,7 +1430,7 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 		if(e.sstate==SemState.error)
 			return e;
 		if(e1.type==typeTy&&name=="power"){
-			if(auto le=cast(LiteralExp)e2){
+			/+if(auto le=cast(LiteralExp)e2){
 				if(le.lit.type==Tok!"0"){
 					if(!le.lit.str.canFind(".")){
 						auto n=ℤ(le.lit.str);
@@ -1440,7 +1440,11 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 				}
 			}
 			sc.error("expected non-negative integer constant",e2.loc);
-			e.sstate=SemState.error;
+			e.sstate=SemState.error;+/
+			if(!isSubtype(e2.type,ℕt(true))){
+				sc.error(format("vector length should be of type !ℕ, not %s",e2), e2.loc);
+				e.sstate=SemState.error;
+			}else return vectorTy(e1,e2);
 		}else{
 			e.type = determineType(e1.type,e2.type);
 			if(!e.type){
