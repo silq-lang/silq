@@ -1429,11 +1429,15 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 					ce.type=tae.type;
 			}
 		bool ok=false;
-		if(cast(LiteralExp)tae.e){
+		if(auto lit=cast(LiteralExp)tae.e){
 			if(isSubtype(tae.e.type,ℝ(false))&&isSubtype(ℚt(true),tae.type))
 				ok=true;
 			if(isSubtype(tae.e.type,ℝ(false))&&(isRat(tae.type)||isFloat(tae.type)))
 				ok=true;
+			if(cast(BoolTy)tae.type&&lit.lit.type==Tok!"0"){
+				auto val=ℤ(lit.lit.str);
+				if(val==0||val==1) ok=true;
+			}
 		}
 		if(isSubtype(tae.e.type,ℤt(false))&&(isUint(tae.type)||isInt(tae.type))&&tae.e.type.isClassical()>=tae.type.isClassical())
 			ok=true;
