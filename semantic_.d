@@ -274,6 +274,7 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 			VarDecl[] vds;
 			foreach(exp;tpl.e){
 				auto id=cast(Identifier)exp;
+				if(!id) goto LnoIdTuple;
 				vds~=new VarDecl(id);
 				vds[$-1].loc=id.loc;
 				success&=sc.insert(vds[$-1]);
@@ -284,7 +285,7 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 			de.loc=be.loc;
 			foreach(vd;vds) propErr(vd,de);
 			return de;
-		}else{
+		}else LnoIdTuple:{
 			sc.error("left-hand side of definition must be identifier or tuple of identifiers",expr.loc);
 			success=false;
 		}
