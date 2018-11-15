@@ -484,8 +484,8 @@ class CallExp: Expression{
 	override bool isSubtypeImpl(Expression rhs){
 		if(this == rhs) return true;
 		auto rcall = cast(CallExp)rhs;
-		if(!isClassical_ && rcall.isClassical_) return false;
 		if(rcall && type==typeTy && rhs.type==typeTy && e==rcall.e && isSquare==rcall.isSquare){
+			if(!isClassical_ && rcall.isClassical_) return false;
 			if(auto id=cast(Identifier)e){
 				if(id.meaning){
 					if(auto dat=cast(DatDecl)id.meaning){
@@ -517,6 +517,14 @@ class CallExp: Expression{
 		if(this == rhs) return this;
 		auto rcall = cast(CallExp)rhs;
 		if(rcall && type==typeTy && rhs.type==typeTy && e==rcall.e && isSquare==rcall.isSquare){
+			if(e==rcall.e&&arg==rcall.arg){
+				if(isClassical_ && !rcall.isClassical_){
+					return meet?this:rcall;
+				}else{
+					assert(rcall.isClassical && !isClassical_);
+					return !meet?this:rcall;
+				}
+			}
 			if(auto id=cast(Identifier)e){
 				if(id.meaning){
 					if(auto dat=cast(DatDecl)id.meaning){
@@ -532,6 +540,7 @@ class CallExp: Expression{
 						import semantic_: callSemantic; // TODO: get rid of this?
 						if(!dat.isTuple){
 							assert(dat.params.length==1);
+							assert(arg != rcall.arg); // (checked at start of function)
 							return callSemantic(new CallExp(e,combine(dat.params[0].variance,arg,rcall.arg),isSquare,isClassical_),null,false);
 						}
 						assert(dat.isTuple);
