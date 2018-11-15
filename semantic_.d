@@ -192,9 +192,9 @@ Expression presemantic(Declaration expr,Scope sc){
 	return expr;
 }
 
+import std.typecons: tuple,Tuple;
+static Tuple!(Expression[],TopScope)[string] modules;
 int importModule(string path,ErrorHandler err,out Expression[] exprs,out TopScope sc,Location loc=Location.init){
-	import std.typecons: tuple,Tuple;
-	static Tuple!(Expression[],TopScope)[string] modules;
 	if(path in modules){
 		auto exprssc=modules[path];
 		exprs=exprssc[0],sc=exprssc[1];
@@ -209,10 +209,10 @@ int importModule(string path,ErrorHandler err,out Expression[] exprs,out TopScop
 	scope(success) modules[path]=tuple(exprs,sc);
 	TopScope prsc=null;
 	Expression[] prelude;
-	import parser;
 	if(!prsc && path != preludePath())
 		if(auto r=importModule(preludePath,err,prelude,prsc))
 			return r;
+	import parser;
 	if(auto r=parseFile(getActualPath(path),err,exprs,loc))
 		return r;
 	sc=new TopScope(err);
@@ -698,7 +698,7 @@ Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
 			de.type=unit;
 		}
 		if(cast(TopScope)sc){
-			if(!be.e2.isConstant() && !cast(PlaceholderExp)be.e2){
+			if(!be.e2.isConstant() && !cast(PlaceholderExp)be.e2 && be.e2.type!=typeTy){
 				sc.error("global constant initializer must be a constant",e2orig.loc);
 				if(de){ de.setError(); be.sstate=SemState.error; }
 			}
@@ -739,6 +739,9 @@ AssignExp assignExpSemantic(AssignExp ae,Scope sc){
 		if(auto id=cast(Identifier)lhs){
 			if(!id.type.isClassical()){
 				sc.error("cannot reassign quantum variables", id.loc);
+				ae.sstate=SemState.error;
+			}else if(id.type==typeTy){
+				sc.error("cannot reassign type variables", id.loc);
 				ae.sstate=SemState.error;
 			}else if(!checkAssignable(id.meaning,ae.loc,sc))
 				ae.sstate=SemState.error;
@@ -1013,6 +1016,24 @@ Expression callSemantic(CallExp ce,Scope sc,bool constResult){
 	return ce;
 }
 
+import parser: preludePath;
+string preludeNumericTypeName(Expression e){
+	if(preludePath() !in modules) return null;
+	auto exprssc=modules[preludePath()];
+	auto sc=exprssc[1];
+	auto ce=cast(CallExp)e;
+	if(!ce) return null;
+	auto id=cast(Identifier)ce.e;
+	if(!id) return null;
+	if(!id.meaning||id.meaning.scope_ !is sc) return null;
+	return id.name;
+}
+
+bool isInt(Expression e){ return preludeNumericTypeName(e)=="int"; }
+bool isUint(Expression e){ return preludeNumericTypeName(e)=="uint"; }
+bool isFloat(Expression e){ return preludeNumericTypeName(e)=="float"; }
+bool isRat(Expression e){ return preludeNumericTypeName(e)=="rat"; }
+
 Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 	if(expr.sstate==SemState.completed||expr.sstate==SemState.error) return expr;
 	if(expr.sstate==SemState.started){
@@ -1115,7 +1136,7 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 			}
 		}
 		if(auto vd=cast(VarDecl)id.meaning){
-			if(cast(TopScope)vd.scope_){
+			if(cast(TopScope)vd.scope_||vd.vtype==typeTy&&vd.initializer){
 				if(!vd.initializer||vd.initializer.sstate!=SemState.completed){
 					id.sstate=SemState.error;
 					return id;
@@ -1371,6 +1392,10 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 		bool ok=false;
 		if(cast(LiteralExp)tae.e){
 			if(isSubtype(tae.e.type,ℝ(false))&&isSubtype(ℚt(true),tae.type))
+				ok=true;
+			if(isSubtype(tae.e.type,ℤt(false))&&(isUint(tae.type)||isInt(tae.type)))
+				ok=true;
+			if(isSubtype(tae.e.type,ℝ(false))&&(isRat(tae.type)||isFloat(tae.type)))
 				ok=true;
 		}
 		if(!ok && !isSubtype(tae.e.type,tae.type)){

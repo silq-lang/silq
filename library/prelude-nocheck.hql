@@ -16,19 +16,23 @@ def rotZ(x: 𝔹, φ: !ℝ)mfree:𝔹 ⇒ (quantumPrimitive("rZ"):!(Π(x: 𝔹, 
 def reverse[τ,χ,φ]lifted(f: !(τ × const χ →mfree φ))lifted:φ × const χ →mfree τ⇒
   (quantumPrimitive("reverse"):!(Π[τ:*,χ:*,φ:*]lifted. !(!(τ×const χ →mfree φ) →lifted !(φ×const χ →mfree τ))))(f);
 
-dat Int[n: !ℕ] quantum{ } // TODO: dat Int[n: ℕ] quantum;
-dat UInt[n: !ℕ] quantum{ } // TODO: dat Int[n: ℕ] quantum;
-dat Float[n: !ℕ] quantum{ } // TODO: dat Int[n: ℕ] quantum;
+dat int[n: !ℕ] quantum{}
+dat uint[n: !ℕ] quantum{}
+dat float[e: !ℕ, m: !ℕ] quantum{}
+float32:=float[8,24];
+float64:=float[11,53];
+bool:=𝔹;
+dat rat[n: !ℕ, m: !ℕ] quantum{}
 
 // deterministic functions
-/+def exp(x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+e^x]",x);
-def log(x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+log(x)]",x);
-def sin(x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+sin(x)]",x);
-def cos(x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+cos(x)]",x);
-def abs(x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+|x|]",x);
+/+def exp(const x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+e^x]",x);
+def log(const x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+log(x)]",x);
+def sin(const x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+sin(x)]",x);
+def cos(const x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+cos(x)]",x);
+def abs(const x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+|x|]",x);
 
-def min(const a:ℝ,const b:ℝ)lifted :ℝ ⇒ if b<a then b else a;
-def max(const a:ℝ,const b:ℝ)lifted :ℝ ⇒ if a<b then b else a;
+def min(const a:ℝ,const b:ℝ)lifted :ℝ ⇒ if b<a then dup(b) else dup(a);
+def max(const a:ℝ,const b:ℝ)lifted :ℝ ⇒ if a<b then dup(b) else dup(a);
 
 def floor(const x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+⌊x⌋]",x);
 def ceil(const x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+⌈x⌉]",x);
