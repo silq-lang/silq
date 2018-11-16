@@ -755,8 +755,8 @@ Expression indexReplaceSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{
 	propErr(be.e1,be);
 	Identifier id;
 	bool check(IndexExp e){
-		if(e&&!e.a[0].isLifted()){
-			sc.error("index for component replacement must be 'lifted'",e.a[0].loc);
+		if(e&&(!e.a[0].isLifted()||e.a[0].type&&!e.a[0].type.isClassical())){
+			sc.error("index for component replacement must be 'lifted' and classical",e.a[0].loc);
 			return false;
 		}
 		if(e) if(auto idx=cast(IndexExp)e.e) return check(idx);
@@ -812,8 +812,8 @@ Expression permuteSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{
 	foreach(e;chain(tpl1.e,tpl2.e)){
 		if(auto idx=cast(IndexExp)e){
 			bool check(IndexExp e){
-				if(e&&!e.a[0].isLifted()){
-					sc.error("index in permute statement must be 'lifted'",e.a[0].loc);
+				if(e&&(!e.a[0].isLifted()||e.a[0].type&&!e.a[0].type.isClassical())){
+					sc.error("index in permute statement must be 'lifted' and classical",e.a[0].loc);
 					return false;
 				}
 				if(e) if(auto idx=cast(IndexExp)e.e) return check(idx);
@@ -1386,47 +1386,30 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 		}
 		propErr(idx.e,idx);
 		foreach(ref a;idx.a){
-			a=expressionSemantic(a,sc,false);
+			a=expressionSemantic(a,sc,true);
 			propErr(a,idx);
 		}
 		if(idx.sstate==SemState.error)
 			return idx;
-		if(auto at=cast(ArrayTy)idx.e.type){
-			if(idx.a.length!=1){
-				sc.error(format("only one index required to index type %s",at),idx.loc);
-				idx.sstate=SemState.error;
-			}else{
-				if(!isSubtype(idx.a[0].type,ℤt(true))){
-					sc.error(format("index should be classical integer, not %s",idx.a[0].type),idx.loc);
-					idx.sstate=SemState.error;
-				}else{
-					idx.type=at.next;
-				}
-			}
-		}else if(auto vt=cast(VectorTy)idx.e.type){
-			if(idx.a.length!=1){
-				sc.error(format("only one index required to index type %s",vt),idx.loc);
-				idx.sstate=SemState.error;
-			}else{
-				if(!isSubtype(idx.a[0].type,ℤt(true))){
-					sc.error(format("index should be classical integer, not %s",idx.a[0].type),idx.loc);
-					idx.sstate=SemState.error;
-				}else{
-					idx.type=vt.next;
-				}
-			}
-		}else if(isInt(idx.e.type)||isUint(idx.e.type)){
+		void check(Expression next){
 			if(idx.a.length!=1){
 				sc.error(format("only one index required to index type %s",idx.e.type),idx.loc);
 				idx.sstate=SemState.error;
 			}else{
-				if(!isSubtype(idx.a[0].type,ℤt(true))){
-					sc.error(format("index should be classical integer, not %s",idx.a[0].type),idx.loc);
+				if(!isSubtype(idx.a[0].type,ℤt(true))&&!isInt(idx.a[0].type)&&!isUint(idx.a[0].type)){
+					sc.error(format("index should be integer, not %s",idx.a[0].type),idx.loc);
 					idx.sstate=SemState.error;
 				}else{
-					idx.type=Bool(idx.e.type.isClassical());
+					idx.type=next;
 				}
 			}
+		}
+		if(auto at=cast(ArrayTy)idx.e.type){
+			check(at.next);
+		}else if(auto vt=cast(VectorTy)idx.e.type){
+			check(vt.next);
+		}else if(isInt(idx.e.type)||isUint(idx.e.type)){
+			check(Bool(idx.e.type.isClassical()));
 		}else if(auto tt=cast(TupleTy)idx.e.type){
 			if(idx.a.length!=1){
 				sc.error(format("only one index required to index type %s",tt),idx.loc);
