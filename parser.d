@@ -728,6 +728,7 @@ struct Parser{
 		}else if(util.among(ttype,Tok!"⇒",Tok!"↦",Tok!"=>",Tok!"(",Tok!"[")||lambda&&ttype==Tok!"."&&peek.type!=Tok!"{"){
 			Expression e;
 			if(ttype==Tok!"("||ttype==Tok!"["){
+				if(annotation==Annotation.none) annotation=Annotation.lifted;
 				e=parseLambdaExp!semicolon();
 			}else{
 				nextToken();
