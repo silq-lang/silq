@@ -325,8 +325,12 @@ void checkNotLinear(Expression e,Scope sc){
 Expression[] semantic(Expression[] exprs,Scope sc){
 	bool success=true;
 	foreach(ref expr;exprs) if(!cast(BinaryExp!(Tok!":="))expr&&!cast(CommaExp)expr) expr=makeDeclaration(expr,success,sc); // TODO: get rid of special casing?
-	foreach(ref expr;exprs) if(auto decl=cast(Declaration)expr) expr=presemantic(decl,sc);
+	/+foreach(ref expr;exprs){
+	 if(auto decl=cast(Declaration)expr) expr=presemantic(decl,sc);
+		if(cast(BinaryExp!(Tok!":="))expr) expr=makeDeclaration(expr,success,sc);
+	}+/
 	foreach(ref expr;exprs){
+		if(auto decl=cast(Declaration)expr) expr=presemantic(decl,sc);
 		expr=toplevelSemantic(expr,sc);
 		success&=expr.sstate==SemState.completed;
 	}
@@ -1402,7 +1406,7 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 					idx.type=Bool(idx.e.type.isClassical());
 				}
 			}
-		}/+else if(auto tt=cast(TupleTy)idx.e.type){
+		}else if(auto tt=cast(TupleTy)idx.e.type){
 			if(idx.a.length!=1){
 				sc.error(format("only one index required to index type %s",tt),idx.loc);
 				idx.sstate=SemState.error;
@@ -1421,7 +1425,7 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 					}
 				}
 			}
-		}+/else{
+		}else{
 			sc.error(format("type %s is not indexable",idx.e.type),idx.loc);
 			idx.sstate=SemState.error;
 		}

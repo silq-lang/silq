@@ -120,6 +120,9 @@ class TypeAnnotationExp: Expression{
 	}
 	override @property string kind(){ return e.kind; }
 	override string toString(){ return _brk(e.toString()~": "~t.toString()); }
+	override bool isConstant(){
+		return e.isConstant();
+	}
 	override int freeVarsImpl(scope int delegate(string) dg){
 		if(auto r=e.freeVarsImpl(dg)) return r;
 		return t.freeVarsImpl(dg);
@@ -579,14 +582,22 @@ class CallExp: Expression{
 		return isClassical_;
 	}
 	override Expression getClassical(){
+		assert(type==typeTy);
 		if(auto r=super.getClassical()) return r;
-		return new CallExp(e,arg,isSquare,true);
+		auto r=new CallExp(e,arg,isSquare,true);
+		r.type=typeTy;
+		r.sstate=sstate;
+		return r;
 	}
 
 	override bool isLifted(){
 		auto fty=cast(FunTy)e.type;
 		if(!fty) return false;
 		return fty.annotation==FunctionAnnotation.lifted&&arg.isLifted();
+	}
+
+	override Expression eval(){
+		return this;
 	}
 }
 
