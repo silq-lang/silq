@@ -1035,6 +1035,7 @@ Expression callSemantic(CallExp ce,Scope sc,bool constResult){
 					if(auto classical=ce.type.getClassical())
 						ce.type=classical;
 				}
+				if(!ce.isMfree()) sc.cannotForget();
 			}
 		}
 	}

@@ -246,7 +246,6 @@ class Identifier: Expression{
 		assert(type==typeTy);
 		return classical;
 	}
-
 	override Expression getClassical(){
 		assert(type==typeTy);
 		if(classical) return this;

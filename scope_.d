@@ -93,13 +93,18 @@ abstract class Scope{
 		debug closed=true;
 		bool errors=false;
 		foreach(n,d;symtab){
-			if(!d.isLinear()||restriction()>=Annotation.lifted) continue;
+			if(!d.isLinear()||d.canForget) continue;
 			if(d.rename) rnsymtab.remove(d.rename.ptr);
 			errors=true;
 			error(format("%s '%s' is not consumed",d.kind,d.name),d.loc);
 		}
-		if(restriction()<Annotation.lifted) foreach(n,d;rnsymtab) assert(!d.isLinear());
+		foreach(n,d;rnsymtab) assert(!d.isLinear()||d.canForget);
 		return errors;
+	}
+
+	void cannotForget(){
+		foreach(k,v;symtab) v.canForget=false;
+		foreach(k,v;rnsymtab) v.canForget=false;
 	}
 
 	debug private bool allowMerge=false;
@@ -123,10 +128,16 @@ abstract class Scope{
 		bool errors=false;
 		foreach(sym;symtab.dup){
 			foreach(sc;scopes[1..$]){
+				auto osym=sc.symtab.get(sym.name.ptr,null);
+				if(osym) sym.canForget&=osym.canForget;
+			}
+		}
+		foreach(sym;symtab.dup){
+			foreach(sc;scopes[1..$]){
 				if(sym.name.ptr !in sc.symtab){
 					symtab.remove(sym.name.ptr);
 					if(sym.rename) rnsymtab.remove(sym.rename.ptr);
-					if(sym.isLinear()&&restriction()<Annotation.lifted){
+					if(sym.isLinear()&&!sym.canForget){
 						error(format("variable '%s' is not consumed", sym.name), sym.loc);
 						errors=true;
 					}
@@ -137,7 +148,7 @@ abstract class Scope{
 					if((sym.scope_ is scopes[0]||osym.scope_ is sc)&&ot&&st&&(ot!=st||quantumControl&&st.hasClassicalComponent())){
 						symtab.remove(sym.name.ptr);
 						if(sym.rename) rnsymtab.remove(sym.rename.ptr);
-						if(sym.isLinear()&&restriction()<Annotation.lifted){
+						if(sym.isLinear()&&!sym.canForget){
 							error(format("variable '%s' is not consumed", sym.name), sym.loc);
 							errors=true;
 						}
@@ -148,7 +159,7 @@ abstract class Scope{
 		foreach(sc;scopes[1..$]){
 			foreach(sym;sc.symtab){
 				if(sym.name.ptr !in symtab){
-					if(sym.isLinear()&&restriction()<Annotation.lifted){
+					if(sym.isLinear()&&!sym.canForget){
 						error(format("variable '%s' is not consumed", sym.name), sym.loc);
 						errors=true;
 					}

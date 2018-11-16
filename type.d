@@ -91,6 +91,7 @@ class Type: Expression{
 	override string toString(){ return "T"; }
 	abstract override bool opEquals(Object r);
 	abstract override bool isClassical();
+	override Annotation getAnnotation(){ return Annotation.lifted; }
 }
 
 class ErrorTy: Type{

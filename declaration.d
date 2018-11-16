@@ -19,6 +19,7 @@ class Declaration: Expression{
 	// semantic information
 	Identifier rename=null;
 	int semanticDepth=0;
+	bool canForget=false;
 }
 
 class CompoundDecl: Expression{
@@ -208,6 +209,7 @@ class SingleDefExp: DefExp{
 	override void setInitializer(){
 		assert(!decl.initializer&&initializer);
 		decl.initializer=initializer.e2;
+		if(initializer.e2.isLifted()) decl.canForget=true;
 	}
 	override void setError(){
 		decl.sstate=sstate=SemState.error;
@@ -245,6 +247,7 @@ class MultiDefExp: DefExp{
 		foreach(i;0..decls.length){
 			assert(!decls[i].initializer);
 			decls[i].initializer=tpl.e[i];
+			if(tpl.e[i].isLifted()) decls[i].canForget=true;
 		}
 	}
 	override void setError(){
