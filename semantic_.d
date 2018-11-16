@@ -833,14 +833,7 @@ Expression permuteSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{
 			}
 		}
 	}
-	auto exprs=chain(tpl1.e,tpl2.e).map!(x=>cast(IndexExp)x).filter!(x=>!!x).array;
-	// TODO: check that indices are lifted
-	if(!exprs.all!(x=>!!getIdFromIndex(x)&&getIdFromIndex(x)==getIdFromIndex(exprs[0]))){
-		sc.error("only swapping values in same array supported in permute statement", be.loc);
-		be.sstate=SemState.error;
-		return be;
-	}
-	be.sstate=SemState.completed; // TODO: redefine array variable in local scope?
+	be.sstate=SemState.completed; // TODO: redefine variables in local scope?
 	return be;
 }
 
@@ -853,7 +846,7 @@ bool checkAssignable(Declaration meaning,Location loc,Scope sc,bool quantumAssig
 		return false;
 	}else{
 		auto vd=cast(VarDecl)meaning;
-		if(!quantumAssign&&!vd.vtype.isClassical()){
+		if(!quantumAssign&&!vd.vtype.isClassical()&&sc.restriction()<FunctionAnnotation.lifted){
 			sc.error("cannot reassign quantum variables", loc);
 			return false;
 		}else if(vd.vtype==typeTy){
