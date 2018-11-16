@@ -756,7 +756,7 @@ Expression indexReplaceSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{
 	Identifier id;
 	bool check(IndexExp e){
 		if(e&&!e.a[0].isLifted()){
-			sc.error("index for component replacement must be 'lifted'",theIndex.a[0].loc);
+			sc.error("index for component replacement must be 'lifted'",e.a[0].loc);
 			return false;
 		}
 		if(e) if(auto idx=cast(IndexExp)e.e) return check(idx);
@@ -809,8 +809,33 @@ Expression permuteSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{
 		be.sstate=SemState.error;
 		return be;
 	}
-	auto exprs=chain(tpl1.e,tpl2.e).map!(x=>cast(IndexExp)x).array;
-	if(exprs.all!(x=>!!x)&&!exprs.all!(x=>!!getIdFromIndex(x)&&x.e==exprs[0].e)){ // TODO: things like swap(a[i][j], a[j][i])
+	foreach(e;chain(tpl1.e,tpl2.e)){
+		if(auto idx=cast(IndexExp)e){
+			bool check(IndexExp e){
+				if(e&&!e.a[0].isLifted()){
+					sc.error("index in permute statement must be 'lifted'",e.a[0].loc);
+					return false;
+				}
+				if(e) if(auto idx=cast(IndexExp)e.e) return check(idx);
+				auto id=e?cast(Identifier)e.e:null;
+				if(e&&!checkAssignable(id?id.meaning:null,id.loc,sc,true))
+					return false;
+				return true;
+			}
+			if(!check(idx)){
+				be.sstate=SemState.error;
+				return be;
+			}
+		}else if(auto id=cast(Identifier)e){
+			if(!checkAssignable(id.meaning,id.loc,sc,true)){
+				be.sstate=SemState.error;
+				return be;
+			}
+		}
+	}
+	auto exprs=chain(tpl1.e,tpl2.e).map!(x=>cast(IndexExp)x).filter!(x=>!!x).array;
+	// TODO: check that indices are lifted
+	if(!exprs.all!(x=>!!getIdFromIndex(x)&&getIdFromIndex(x)==getIdFromIndex(exprs[0]))){
 		sc.error("only swapping values in same array supported in permute statement", be.loc);
 		be.sstate=SemState.error;
 		return be;
