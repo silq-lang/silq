@@ -730,12 +730,21 @@ Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
 	return r;
 }
 
+Identifier getIdFromIndex(IndexExp e){
+	if(auto idx=cast(IndexExp)e.e) return getIdFromIndex(idx);
+	return cast(Identifier)e.e;
+}
+
 IndexExp indexToReplace=null;
 Expression indexReplaceSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{
 	assert(cast(IndexExp)be.e1);
 }do{
 	auto theIndex=cast(IndexExp)be.e1;
-	theIndex.e=expressionSemantic(theIndex.e,sc,false); // consume array
+	void consumeArray(IndexExp e){
+		if(auto idx=cast(IndexExp)e.e) return consumeArray(idx);
+		e.e=expressionSemantic(e.e,sc,false); // consume array
+	}
+	consumeArray(theIndex);
 	if(theIndex.e.type&&theIndex.e.type.isClassical()){
 		sc.error(format("use assignment statement '%s = %s' to assign to classical array component",be.e1,be.e2),be.loc);
 		be.sstate=SemState.error;
@@ -744,14 +753,20 @@ Expression indexReplaceSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{
 	}
 	be.e1=expressionSemantic(theIndex,sc,false);
 	propErr(be.e1,be);
-	if(be.sstate==SemState.error) theIndex=null;
-	else if(!theIndex.a[0].isLifted()){
-		sc.error("index for component replacement must be 'lifted'",theIndex.a[0].loc);
-		be.sstate=SemState.error;
-		theIndex=null;
+	Identifier id;
+	bool check(IndexExp e){
+		if(e&&!e.a[0].isLifted()){
+			sc.error("index for component replacement must be 'lifted'",theIndex.a[0].loc);
+			return false;
+		}
+		if(e) if(auto idx=cast(IndexExp)e.e) return check(idx);
+		id=e?cast(Identifier)e.e:null;
+		if(e&&!checkAssignable(id?id.meaning:null,theIndex.e.loc,sc,true))
+			return false;
+		return true;
 	}
-	auto id=theIndex?cast(Identifier)theIndex.e:null;
-	if(theIndex&&!checkAssignable(id?id.meaning:null,theIndex.e.loc,sc,true)){
+	if(be.sstate==SemState.error) theIndex=null;
+	else if(!check(theIndex)){
 		be.sstate=SemState.error;
 		theIndex=null;
 	}
@@ -1336,9 +1351,9 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 	if(auto idx=cast(IndexExp)expr){
 		bool replaceIndex=false;
 		if(indexToReplace){
-			auto rid=cast(Identifier)indexToReplace.e;
+			auto rid=getIdFromIndex(indexToReplace);
 			assert(rid && rid.meaning);
-			if(auto cid=cast(Identifier)idx.e){
+			if(auto cid=getIdFromIndex(idx)){
 				if(rid.name==cid.name){
 					if(!cid.meaning){
 						cid.meaning=rid.meaning;

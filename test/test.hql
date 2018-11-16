@@ -1,3 +1,78 @@
+
+
+/+def Node[k:!ℕ]lifted ⇒ int[k];
+
+def edgeOracle_spec[k:!ℕ]lifted ⇒ ((const int[k] x const int[k] x 𝔹) !-> 𝔹);
+
+def QWTFP_spec[k:!ℕ]lifted ⇒ (!N x !N x edgeOracle_spec[k]);
+
+def a5_SETUP[k:!ℕ](oracle:!QWTFP_spec[k], const tt:int[2^oracle[1]]) : (𝔹^(2^oracle[1]))^(2^oracle[1]) {
+    (n, r, edgeOracle) := oracle;
+    rr := 2^r;
+    ee := vector(2^oracle[1], vector(2^oracle[1], false:𝔹));
+
+    // Todo: CHECK INDICES!
+    for k in [0..2^r) {
+        for j in [0..2^r) {
+            ee[k][j] := edgeOracle(tt[j], tt[k], ee[k][j]);
+    }    }
+
+    return ee;
+}
++/
+/+
+def a4_Hadamard_Array[k:!N](q:𝔹^k) : 𝔹^k {
+    for j in [0..k) { q[j] := H(q[j]); }
+    return q;
+}
+
+def a4_Hadamard_Array_Array[k:!N,l:!N](q:(𝔹^k)^l) : (𝔹^k)^l {
+    for i in [0..l) {
+        q[i] := a4_Hadamard_Array(q[i]);
+    }
+    return q;
+}
+
+// -------------------------------------------------------------
+
+def a7_Diffuse_Array[k:!N](q:𝔹^k) : 𝔹^k {
+    q := a4_Hadamard_Array(q);
+    if q == array(k,false) { phase(π); }
+    q := a4_Hadamard_Array(q);
+	return q;
+}
+
+// -------------------------------------------------------------
+
+def flipWith_Array[l:!N](const p: 𝔹^l, q:𝔹^l) : 𝔹^l {
+    for i in[0..l) {
+        if p[i] { q[i] := X(q[i]); }
+    }
+    return q;
+}
++/
+
+
+/+def QFT[n:!N]lifted(psi:uint[n]) mfree: uint[n];
+
+def inverse[τ,χ]lifted(f: τ !→ mfree χ)lifted(x:χ)mfree ⇒ reverse(λ(x:τ,const _:𝟙)mfree. f(x))(x,());
+
+def PeriodFinding[n:!N](f:!(uint[n] -> lifted uint[n])):!N{
+    cand := 0:uint[n];
+    //for k in [0..n) { cand[k] := H(cand[k]); }
+    ancilla := f(cand);
+	cand := inverse(QFT[n])(cand);
+    measure(ancilla);
+    return measure(cand):!N;
+}
++/
+/+
+def main(){
+	x := 0: !int[100];
+	//x[0]⊕=1:𝔹;
+	x[1]=1:!𝔹;
+}
++/
 /+
 def main(){
 	c := H(false);
