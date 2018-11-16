@@ -1683,7 +1683,13 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 		if(preludeNumericTypeName(t1) != null||preludeNumericTypeName(t2) != null){
 			if(!(joinTypes(t1,t2)||isNumeric(t1)||isNumeric(t2)))
 			   return null;
-		}else if(!isNumeric(t1)||!isNumeric(t2)||cast(ℂTy)t1||cast(ℂTy)t2) return null;
+		}else{
+			auto a1=cast(ArrayTy)t1,a2=cast(ArrayTy)t2;
+			auto v1=cast(VectorTy)t1,v2=cast(VectorTy)t2;
+			Expression n1=a1?a1.next:v1?v1.next:null,n2=a2?a2.next:v2?v2.next:null;
+			if(n1&&n2) return cmpType(n1,n2);
+			if(!isNumeric(t1)||!isNumeric(t2)||cast(ℂTy)t1||cast(ℂTy)t2) return null;
+		}
 		return Bool(t1.isClassical()&&t2.isClassical());
 	}
 	if(auto ae=cast(AddExp)expr) return expr=handleBinary!(arithmeticType!false)("addition",ae,ae.e1,ae.e2);
