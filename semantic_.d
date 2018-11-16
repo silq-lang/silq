@@ -501,7 +501,7 @@ Expression statementSemantic(Expression e,Scope sc){
 			ite.sstate=SemState.error;
 		}
 		auto quantumControl=ite.cond.type!=Bool(true);
-		auto restriction_=quantumControl?FunctionAnnotation.mfree:FunctionAnnotation.none;
+		auto restriction_=quantumControl?Annotation.mfree:Annotation.none;
 		ite.then=compoundExpSemantic(ite.then,sc,restriction_);
 		if(ite.othw) ite.othw=compoundExpSemantic(ite.othw,sc,restriction_);
 		propErr(ite.cond,ite);
@@ -663,7 +663,7 @@ Expression statementSemantic(Expression e,Scope sc){
 	return e;
 }
 
-CompoundExp compoundExpSemantic(CompoundExp ce,Scope sc,FunctionAnnotation restriction_=FunctionAnnotation.none){
+CompoundExp compoundExpSemantic(CompoundExp ce,Scope sc,Annotation restriction_=Annotation.none){
 	if(!ce.blscope_) ce.blscope_=new BlockScope(sc,restriction_);
 	foreach(ref e;ce.s){
 		//writeln("before: ",e," ",sc.symtab);
@@ -846,7 +846,7 @@ bool checkAssignable(Declaration meaning,Location loc,Scope sc,bool quantumAssig
 		return false;
 	}else{
 		auto vd=cast(VarDecl)meaning;
-		if(!quantumAssign&&!vd.vtype.isClassical()&&sc.restriction()<FunctionAnnotation.lifted){
+		if(!quantumAssign&&!vd.vtype.isClassical()&&sc.restriction()<Annotation.lifted){
 			sc.error("cannot reassign quantum variables", loc);
 			return false;
 		}else if(vd.vtype==typeTy){
@@ -1021,7 +1021,7 @@ Expression callSemantic(CallExp ce,Scope sc,bool constResult){
 		if(ce&&ce.sstate!=SemState.error){
 			if(auto ft=cast(FunTy)ce.e.type){
 				if(ft.annotation<sc.restriction()){
-					if(ft.annotation==FunctionAnnotation.none){
+					if(ft.annotation==Annotation.none){
 						sc.error(format("cannot call function '%s' in '%s' context", ce.e, sc.restriction()), ce.loc);
 					}else{
 						sc.error(format("cannot call '%s' function '%s' in '%s' context", ft.annotation, ce.e, sc.restriction()), ce.loc);
@@ -1031,7 +1031,7 @@ Expression callSemantic(CallExp ce,Scope sc,bool constResult){
 					sc.error("non-'lifted' quantum expression must be consumed", ce.loc);
 					ce.sstate=SemState.error;
 				}
-				if(ce.arg.type.isClassical()&&ft.annotation>=FunctionAnnotation.lifted){
+				if(ce.arg.type.isClassical()&&ft.annotation>=Annotation.lifted){
 					if(auto classical=ce.type.getClassical())
 						ce.type=classical;
 				}
@@ -1040,7 +1040,7 @@ Expression callSemantic(CallExp ce,Scope sc,bool constResult){
 	}
 	auto fun=ce.e;
 	bool matchArg(FunTy ft){
-		if(ft.isTuple&&ft.annotation!=FunctionAnnotation.lifted){
+		if(ft.isTuple&&ft.annotation!=Annotation.lifted){
 			if(auto tpl=cast(TupleExp)ce.arg){
 				foreach(i,ref exp;tpl.e){
 					exp=expressionSemantic(exp,sc,ft.isConst.length==tpl.e.length?ft.isConst[i]:true);
@@ -1058,7 +1058,7 @@ Expression callSemantic(CallExp ce,Scope sc,bool constResult){
 				}
 			}
 		}else{
-			ce.arg=expressionSemantic(ce.arg,sc,(ft.isConst.length?ft.isConst[0]:true)||ft.annotation==FunctionAnnotation.lifted);
+			ce.arg=expressionSemantic(ce.arg,sc,(ft.isConst.length?ft.isConst[0]:true)||ft.annotation==Annotation.lifted);
 		}
 		return false;
 	}
@@ -2101,7 +2101,7 @@ Expression typeForDecl(Declaration decl){
 		foreach(p;dat.params) if(!p.vtype) return unit; // TODO: ok?
 		assert(dat.isTuple||dat.params.length==1);
 		auto pt=dat.isTuple?tupleTy(dat.params.map!(p=>p.vtype).array):dat.params[0].vtype;
-		return productTy(dat.params.map!(p=>p.isConst).array,dat.params.map!(p=>p.getName).array,pt,typeTy,true,dat.isTuple,FunctionAnnotation.lifted,true);
+		return productTy(dat.params.map!(p=>p.isConst).array,dat.params.map!(p=>p.getName).array,pt,typeTy,true,dat.isTuple,Annotation.lifted,true);
 	}
 	if(auto vd=cast(VarDecl)decl){
 		return vd.vtype;
@@ -2278,22 +2278,22 @@ Expression handleQuantumPrimitive(CallExp ce,Scope sc){
 	}
 	switch(literal.lit.str){
 		case "dup":
-			ce.type = productTy([false],["`τ"],typeTy,funTy([false],varTy("`τ",typeTy),varTy("`τ",typeTy),false,false,FunctionAnnotation.lifted,true),true,false,FunctionAnnotation.lifted,true);
+			ce.type = productTy([false],["`τ"],typeTy,funTy([false],varTy("`τ",typeTy),varTy("`τ",typeTy),false,false,Annotation.lifted,true),true,false,Annotation.lifted,true);
 			break;
 		case "reverse":
-			ce.type = productTy([false,false,false],["`τ","`χ","`φ"],tupleTy([typeTy,typeTy,typeTy]),funTy([false],funTy([false,true],tupleTy([varTy("`τ",typeTy),varTy("`χ",typeTy)]),varTy("`φ",typeTy),false,true,FunctionAnnotation.mfree,true),funTy([false,true],tupleTy([varTy("`φ",typeTy),varTy("`χ",typeTy)]),varTy("`τ",typeTy),false,true,FunctionAnnotation.mfree,true),false,false,FunctionAnnotation.lifted,true),true,true,FunctionAnnotation.lifted,true);
+			ce.type = productTy([false,false,false],["`τ","`χ","`φ"],tupleTy([typeTy,typeTy,typeTy]),funTy([false],funTy([false,true],tupleTy([varTy("`τ",typeTy),varTy("`χ",typeTy)]),varTy("`φ",typeTy),false,true,Annotation.mfree,true),funTy([false,true],tupleTy([varTy("`φ",typeTy),varTy("`χ",typeTy)]),varTy("`τ",typeTy),false,true,Annotation.mfree,true),false,false,Annotation.lifted,true),true,true,Annotation.lifted,true);
 			break;
 		case "M":
-			ce.type = productTy([false],["`τ"],typeTy,funTy([false],varTy("`τ",typeTy),varTy("`τ",typeTy,true),false,false,FunctionAnnotation.none,true),true,false,FunctionAnnotation.lifted,true);
+			ce.type = productTy([false],["`τ"],typeTy,funTy([false],varTy("`τ",typeTy),varTy("`τ",typeTy,true),false,false,Annotation.none,true),true,false,Annotation.lifted,true);
 			break;
 		case "H","X","Y","Z":
-			ce.type = funTy([false],Bool(false),Bool(false),false,false,FunctionAnnotation.mfree,true);
+			ce.type = funTy([false],Bool(false),Bool(false),false,false,Annotation.mfree,true);
 			break;
 		case "P":
-			ce.type = funTy([false],ℝ(true),unit,false,false,FunctionAnnotation.mfree,true);
+			ce.type = funTy([false],ℝ(true),unit,false,false,Annotation.mfree,true);
 			break;
 		case "rX","rY","rZ":
-			ce.type = funTy([false],tupleTy([Bool(false),ℝ(true)]),Bool(false),false,false,FunctionAnnotation.mfree,true);
+			ce.type = funTy([false],tupleTy([Bool(false),ℝ(true)]),Bool(false),false,false,Annotation.mfree,true);
 			break;
 		default:
 			sc.error(format("unknown quantum primitive %s",literal.lit.str),literal.loc);

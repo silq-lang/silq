@@ -459,14 +459,14 @@ struct Parser{
 					auto params=parseArgumentList!(false,Parameter)(isSquare?Tok!"]":Tok!")");
 					expect(isSquare?Tok!"]":Tok!")");
 					Expression cod;
-					auto annotation=FunctionAnnotation.none;
+					auto annotation=Annotation.none;
 					if(ttype!=Tok!"["&&ttype!=Tok!"("){
 						if(ttype==Tok!"lifted"){
 							nextToken();
-							annotation=FunctionAnnotation.lifted;
+							annotation=Annotation.lifted;
 						}else if(ttype==Tok!"mfree"){
 							nextToken();
-							annotation=FunctionAnnotation.mfree;
+							annotation=Annotation.mfree;
 						}
 						expect(Tok!".");
 						cod = parseType();
@@ -546,13 +546,13 @@ struct Parser{
 						r~=mixin(X!q{case Tok!"@(x)":
 							nextToken();
 							static if("@(x)"=="->"||"@(x)"=="→"){
-								auto annotation=FunctionAnnotation.none;
+								auto annotation=Annotation.none;
 								if(ttype==Tok!"lifted"){
 									nextToken();
-									annotation=FunctionAnnotation.lifted;
+									annotation=Annotation.lifted;
 								}else if(ttype==Tok!"mfree"){
 									nextToken();
-									annotation=FunctionAnnotation.mfree;
+									annotation=Annotation.mfree;
 								}
 							}
 							auto right=parseExpression(rbp!(Tok!"@(x)"),"@(x)"=="←"||"@(x)"==":=",statement&&"@(x)"==",");
@@ -708,13 +708,13 @@ struct Parser{
 		expect(isSquare?Tok!"[":Tok!"(");
 		auto params=parseArgumentList!(false,Parameter)(isSquare?Tok!"]":Tok!")");
 		expect(isSquare?Tok!"]":Tok!")");
-		auto annotation=FunctionAnnotation.none;
+		auto annotation=Annotation.none;
 		if(ttype==Tok!"lifted"){
 			nextToken();
-			annotation=FunctionAnnotation.lifted;
+			annotation=Annotation.lifted;
 		}else if(ttype==Tok!"mfree"){
 			nextToken();
-			annotation=FunctionAnnotation.mfree;
+			annotation=Annotation.mfree;
 		}
 		Expression ret=null;
 		if(ttype==Tok!":"){

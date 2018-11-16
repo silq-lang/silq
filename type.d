@@ -526,7 +526,7 @@ class StringTy: Type{
 
 StringTy stringTy(bool classical){ return memoize!((bool classical)=>new StringTy(classical))(classical); }
 
-enum FunctionAnnotation{
+enum Annotation{
 	none,
 	mfree,
 	lifted,
@@ -536,8 +536,8 @@ class RawProductTy: Expression{
 	Parameter[] params;
 	Expression cod;
 	bool isSquare,isTuple;
-	FunctionAnnotation annotation;
-	this(Parameter[] params,Expression cod,bool isSquare,bool isTuple,FunctionAnnotation annotation){
+	Annotation annotation;
+	this(Parameter[] params,Expression cod,bool isSquare,bool isTuple,Annotation annotation){
 		this.params=params; this.cod=cod;
 		this.isSquare=isSquare; this.isTuple=isTuple;
 		this.annotation=annotation;
@@ -559,10 +559,10 @@ class ProductTy: Type{
 	string[] names;
 	Expression dom, cod;
 	bool isSquare,isTuple;
-	FunctionAnnotation annotation;
+	Annotation annotation;
 	bool isClassical_;
 	private ProductTy classicalTy;
-	private this(bool[] isConst,string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple,FunctionAnnotation annotation,bool isClassical_)in{
+	private this(bool[] isConst,string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple,Annotation annotation,bool isClassical_)in{
 		// TODO: assert that all names are distinct
 		if(isTuple){
 			auto tdom=cast(TupleTy)dom;
@@ -823,18 +823,18 @@ class ProductTy: Type{
 	}
 }
 
-ProductTy productTy(bool[] isConst,string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple,FunctionAnnotation annotation,bool isClassical)in{
+ProductTy productTy(bool[] isConst,string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple,Annotation annotation,bool isClassical)in{
 	assert(dom&&cod);
 	if(isTuple){
 		auto tdom=cast(TupleTy)dom;
 		assert(tdom&&names.length==tdom.types.length);
 	}
 }body{
-	return memoize!((bool[] isConst,string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple,FunctionAnnotation annotation,bool isClassical)=>new ProductTy(isConst,names,dom,cod,isSquare,isTuple,annotation,isClassical))(isConst,names,dom,cod,isSquare,isTuple,annotation,isClassical);
+	return memoize!((bool[] isConst,string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple,Annotation annotation,bool isClassical)=>new ProductTy(isConst,names,dom,cod,isSquare,isTuple,annotation,isClassical))(isConst,names,dom,cod,isSquare,isTuple,annotation,isClassical);
 }
 
 alias FunTy=ProductTy;
-FunTy funTy(bool[] isConst,Expression dom,Expression cod,bool isSquare,bool isTuple,FunctionAnnotation annotation,bool isClassical)in{
+FunTy funTy(bool[] isConst,Expression dom,Expression cod,bool isSquare,bool isTuple,Annotation annotation,bool isClassical)in{
 	assert(dom&&cod);
 }body{
 	auto nargs=1+[].length;
@@ -842,7 +842,7 @@ FunTy funTy(bool[] isConst,Expression dom,Expression cod,bool isSquare,bool isTu
 	return productTy(isConst,iota(nargs).map!(_=>"").array,dom,cod,isSquare,isTuple,annotation,isClassical);
 }
 
-FunTy funTy(Expression dom,Expression cod,bool isSquare,bool isTuple,FunctionAnnotation annotation,bool isClassical)in{
+FunTy funTy(Expression dom,Expression cod,bool isSquare,bool isTuple,Annotation annotation,bool isClassical)in{
 	assert(dom&&cod);
 }body{
 	auto nargs=1+[].length;
@@ -853,7 +853,7 @@ FunTy funTy(Expression dom,Expression cod,bool isSquare,bool isTuple,FunctionAnn
 FunTy funTy(Expression dom,Expression cod,bool isSquare,bool isTuple,bool isClassical)in{
 	assert(dom&&cod);
 }body{
-	return funTy(dom,cod,isSquare,isTuple,FunctionAnnotation.lifted,isClassical);
+	return funTy(dom,cod,isSquare,isTuple,Annotation.lifted,isClassical);
 }
 
 Identifier varTy(string name,Expression type,bool classical=false){

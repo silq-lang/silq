@@ -93,12 +93,12 @@ abstract class Scope{
 		debug closed=true;
 		bool errors=false;
 		foreach(n,d;symtab){
-			if(!d.isLinear()||restriction()>=FunctionAnnotation.lifted) continue;
+			if(!d.isLinear()||restriction()>=Annotation.lifted) continue;
 			if(d.rename) rnsymtab.remove(d.rename.ptr);
 			errors=true;
 			error(format("%s '%s' is not consumed",d.kind,d.name),d.loc);
 		}
-		if(restriction()<FunctionAnnotation.lifted) foreach(n,d;rnsymtab) assert(!d.isLinear());
+		if(restriction()<Annotation.lifted) foreach(n,d;rnsymtab) assert(!d.isLinear());
 		return errors;
 	}
 
@@ -126,7 +126,7 @@ abstract class Scope{
 				if(sym.name.ptr !in sc.symtab){
 					symtab.remove(sym.name.ptr);
 					if(sym.rename) rnsymtab.remove(sym.rename.ptr);
-					if(sym.isLinear()&&restriction()<FunctionAnnotation.lifted){
+					if(sym.isLinear()&&restriction()<Annotation.lifted){
 						error(format("variable '%s' is not consumed", sym.name), sym.loc);
 						errors=true;
 					}
@@ -137,7 +137,7 @@ abstract class Scope{
 					if((sym.scope_ is scopes[0]||osym.scope_ is sc)&&ot&&st&&(ot!=st||quantumControl&&st.hasClassicalComponent())){
 						symtab.remove(sym.name.ptr);
 						if(sym.rename) rnsymtab.remove(sym.rename.ptr);
-						if(sym.isLinear()&&restriction()<FunctionAnnotation.lifted){
+						if(sym.isLinear()&&restriction()<Annotation.lifted){
 							error(format("variable '%s' is not consumed", sym.name), sym.loc);
 							errors=true;
 						}
@@ -148,7 +148,7 @@ abstract class Scope{
 		foreach(sc;scopes[1..$]){
 			foreach(sym;sc.symtab){
 				if(sym.name.ptr !in symtab){
-					if(sym.isLinear()&&restriction()<FunctionAnnotation.lifted){
+					if(sym.isLinear()&&restriction()<Annotation.lifted){
 						error(format("variable '%s' is not consumed", sym.name), sym.loc);
 						errors=true;
 					}
@@ -165,8 +165,8 @@ abstract class Scope{
 		return errors;
 	}
 
-	FunctionAnnotation restriction(){
-		return FunctionAnnotation.none;
+	Annotation restriction(){
+		return Annotation.none;
 	}
 
 	abstract FunctionDef getFunction();
@@ -226,7 +226,7 @@ class NestedScope: Scope{
 		return parent.lookup(ident,rnsym,lookupImports,kind);
 	}
 
-	override FunctionAnnotation restriction(){
+	override Annotation restriction(){
 		return parent.restriction();
 	}
 
@@ -249,7 +249,7 @@ class FunctionScope: NestedScope{
 		super(parent);
 		this.fd=fd;
 	}
-	override FunctionAnnotation restriction(){
+	override Annotation restriction(){
 		return fd.annotation;
 	}
 	void forceClose(){
@@ -271,13 +271,13 @@ class DataScope: NestedScope{
 	override DatDecl getDatDecl(){ return decl; }
 }
 class BlockScope: NestedScope{
-	this(Scope parent,FunctionAnnotation restriction_=FunctionAnnotation.none){
+	this(Scope parent,Annotation restriction_=Annotation.none){
 		super(parent);
 		if(parent.allowsLinear()) parent.nest(this);
 		this.restriction_=restriction_;
 	}
-	FunctionAnnotation restriction_;
-	override FunctionAnnotation restriction(){
+	Annotation restriction_;
+	override Annotation restriction(){
 		return max(restriction_,super.restriction());
 	}
 	override bool close(){

@@ -102,7 +102,11 @@ abstract class Expression: Node{
 		if(isClassical()) return this;
 		return null;
 	}
-	bool isLifted(){ return type&&type.isClassical(); }
+	Annotation getAnnotation(){
+		return Annotation.none;
+	}
+	final bool isLifted(){ return getAnnotation()>=Annotation.lifted; }
+	bool isMfree(){ return getAnnotation()>=Annotation.mfree; }
 }
 
 mixin template VariableFree(){
@@ -138,8 +142,8 @@ class TypeAnnotationExp: Expression{
 	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
 		return e.unify(rhs,subst,meet);
 	}
-	override bool isLifted(){
-		return e.isLifted();
+	override Annotation getAnnotation(){
+		return e.getAnnotation();
 	}
 }
 
@@ -175,7 +179,7 @@ class LiteralExp: Expression{
 		}
 	}
 
-	override bool isLifted(){ return true; }
+	override Annotation getAnnotation(){ return Annotation.lifted; }
 	mixin VariableFree;
 }
 
@@ -249,7 +253,7 @@ class Identifier: Expression{
 		return varTy(name,typeTy,true);
 	}
 
-	override bool isLifted(){ return true; }
+	override Annotation getAnnotation(){ return Annotation.lifted; }
 
 	// semantic information:
 	Declaration meaning;
@@ -303,7 +307,7 @@ class UnaryExp(TokenType op): Expression{
 		return ue&&e==ue.e;
 	}
 
-	override bool isLifted(){ return e.isLifted(); }
+	override Annotation getAnnotation(){ return e.getAnnotation(); }
 }
 class PostfixExp(TokenType op): Expression{
 	Expression e;
@@ -380,7 +384,7 @@ class IndexExp: Expression{ //e[a...]
 		return idx&&idx.e==e&&idx.a==a;
 	}
 
-	override bool isLifted(){ return e.isLifted() && a.all!(x=>x.isLifted()); }
+	override Annotation getAnnotation(){ return reduce!min(e.getAnnotation(), a.map!(x=>x.getAnnotation())); }
 
 }
 
@@ -445,7 +449,7 @@ class SliceExp: Expression{
 		return e.unify(sl.e,subst,meet)&&l.unify(sl.l,subst,meet)&&r.unify(sl.r,subst,meet);
 	}
 
-	override bool isLifted(){ return e.isLifted() && l.isLifted() && r.isLifted(); }
+	override Annotation getAnnotation(){ return min(e.getAnnotation(), l.getAnnotation(), r.getAnnotation()); }
 }
 
 string tupleToString(Expression e,bool isSquare){
@@ -592,10 +596,10 @@ class CallExp: Expression{
 		return r;
 	}
 
-	override bool isLifted(){
+	override Annotation getAnnotation(){
 		auto fty=cast(FunTy)e.type;
-		if(!fty) return false;
-		return fty.annotation==FunctionAnnotation.lifted&&arg.isLifted();
+		if(!fty) return Annotation.none;
+		return min(fty.annotation,arg.getAnnotation());
 	}
 
 	override Expression eval(){
@@ -614,15 +618,15 @@ abstract class ABinaryExp: Expression{
 		if(auto r=e2.freeVarsImpl(dg)) return r;
 		return 0;
 	}
-	override bool isLifted(){
-		return e1.isLifted() && e2.isLifted();
+	override Annotation getAnnotation(){
+		return min(e1.getAnnotation(), e2.getAnnotation());
 	}
 }
 
 class BinaryExp(TokenType op): ABinaryExp{
 	static if(op==Tok!"→"){
-		FunctionAnnotation annotation;
-		this(Expression left, Expression right,FunctionAnnotation annotation){
+		Annotation annotation;
+		this(Expression left, Expression right,Annotation annotation){
 			super(left,right); this.annotation=annotation;
 		}
 	}else{
@@ -683,8 +687,8 @@ class FieldExp: Expression{
 		return e.unify(rhs,subst,meet);
 	}
 
-	override bool isLifted(){
-		return e.isLifted();
+	override Annotation getAnnotation(){
+		return e.getAnnotation();
 	}
 }
 
@@ -720,8 +724,8 @@ class IteExp: Expression{
 		return cond.unify(ite.cond,subst,meet)&&then.unify(ite.then,subst,meet)
 			&&!othw&&!ite.othw||othw&&ite.othw&&othw.unify(ite.othw,subst,meet);
 	}
-	override bool isLifted(){
-		return cond.isLifted() && then.isLifted() && othw.isLifted();
+	override Annotation getAnnotation(){
+		return min(cond.getAnnotation(), then.getAnnotation(), othw.getAnnotation());
 	}
 }
 
@@ -820,8 +824,8 @@ class TupleExp: Expression{
 		auto tpl=cast(TupleExp)o;
 		return tpl&&e==tpl.e;
 	}
-	override bool isLifted(){
-		return e.all!(x=>x.isLifted());
+	override Annotation getAnnotation(){
+		return reduce!min(Annotation.lifted, e.map!(x=>x.getAnnotation()));
 	}
 }
 
@@ -863,7 +867,7 @@ class ArrayExp: Expression{
 		if(!ae||e.length!=ae.e.length) return false;
 		return all!(i=>e[i].unify(ae.e[i],subst,meet))(iota(e.length));
 	}
-	override bool isLifted(){ return e.all!(x=>x.isLifted()); }
+	override Annotation getAnnotation(){ return reduce!min(Annotation.lifted,e.map!(x=>x.getAnnotation())); }
 }
 
 class ReturnExp: Expression{

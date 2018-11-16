@@ -69,7 +69,7 @@ class FunctionDef: Declaration{
 	Expression rret;
 	CompoundExp body_;
 	bool isSquare=false;
-	auto annotation=FunctionAnnotation.none;
+	auto annotation=Annotation.none;
 	this(Identifier name, Parameter[] params, bool isTuple, Expression rret, CompoundExp body_)in{
 		assert(isTuple||params.length==1);
 	}body{
