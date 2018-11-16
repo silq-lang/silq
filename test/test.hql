@@ -1,3 +1,83 @@
+/+
+def main(){
+	x := false:𝔹;
+	if x{
+		y := false;
+		z := x;
+	}
+}
++/
+/+
+def flipWith_Array[l:!N](const p:𝔹^l, q:𝔹^l) mfree : 𝔹^l {
+	for i in[0..l) {
+		if p[i] { q[i] := X(q[i]); }
+	}
+	return q;
+}
+
+def a8_FetchT_Array[n:!N, rr:!N, r:!N](const i:int[r], const tt:int[n]^rr) : int[n] {
+	ttd := 0:int[n];
+	for j in [0..rr) {
+		if i == j {
+			ttd := flipWith_Array(tt[j]:B^n, ttd:B^n):int[n];
+	}	}	
+	return ttd;
+}
++/
+
+/+def flipWith_Array[l:!N](const p:𝔹^l, q:𝔹^l)mfree : 𝔹^l {
+	for i in[0..l) {
+		if p[i] { q[i] := X(q[i]); }
+	}
+	return q;
+}
+
+def a8_FetchT_Array[n:!N, rr:!N, r:!N](const i:int[r], const tt:int[n]^rr) : int[n] {
+	ttd := 0:int[n];
+	for j in [0..rr) {
+		if i == j {
+			ttd := flipWith_Array(tt[j]:B^n, ttd:B^n):int[n];
+	}	}	
+	return ttd;
+}
++/
+
+/+
+def a12_FetchStoreE[rr:!N,r:!N](const i:int[r], qs: (𝔹^rr)^rr, 
+	ps: 𝔹^rr) : (𝔹^rr)^rr x 𝔹^rr {
+
+	for j in [0..rr) {
+		for l in [0..j) {
+			if i == j { (qs[j][l], ps[l]) := (ps[l], qs[j][l]); }
+			if i == l { (qs[j][l], ps[j]) := (ps[j], qs[j][l]); }
+		}
+	}
+	return (qs, ps);
+}
++/
+/+
+def main(){
+	y := 0:𝔹;
+	x := dup(y);
+	//forget(y=measure(x)+1);
+	z := measure(H(false));
+	//forget(y=x);
+	//return x;
+}
++/
+
+/+
+def main(x: 𝔹){
+	y := dup(x);
+	x := H(x);
+	return x;
+}
++/
+/+def main(x: 𝔹)lifted{
+	y := dup(x); // TODO: ok
+	return x;
+}
++/
 
 
 /+def Node[k:!ℕ]lifted ⇒ int[k];

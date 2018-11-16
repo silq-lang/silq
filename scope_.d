@@ -38,15 +38,16 @@ abstract class Scope{
 	}
 
 	void resetConst(){ constBlock.clear(); }
+	Identifier isConst(Identifier ident){ return constBlock.get(ident.ptr, null); }
 
 	protected final Declaration symtabLookup(Identifier ident,bool rnsym,Lookup kind){
 		if(allowMerge) return null;
 		auto r=symtab.get(ident.ptr, null);
 		if(rnsym&&!r) r=rnsymtab.get(ident.ptr,null);
 		if(kind==Lookup.consuming&&r&&r.isLinear()){
-			if(ident.ptr in constBlock){
+			if(auto read=isConst(ident)){
 				error(format("cannot consume 'const' variable '%s'",ident), ident.loc);
-				note("variable was made 'const' here", constBlock[ident.ptr].loc);
+				note("variable was made 'const' here", read.loc);
 				ident.sstate=SemState.error;
 			}else{
 				symtab.remove(r.name.ptr);
@@ -112,7 +113,6 @@ abstract class Scope{
 		assert(allowsLinear());
 		assert(r.parent is this);
 	}do{
-		r.constBlock=constBlock.dup;
 		r.symtab=symtab.dup;
 		r.rnsymtab=rnsymtab.dup;
 		allowMerge=true;
@@ -237,8 +237,10 @@ class NestedScope: Scope{
 		return parent.lookup(ident,rnsym,lookupImports,kind);
 	}
 
-	override Annotation restriction(){
-		return parent.restriction();
+	override Annotation restriction(){ return parent.restriction(); }
+	override Identifier isConst(Identifier ident){
+		if(auto r=super.isConst(ident)) return r;
+		return parent.isConst(ident);
 	}
 
 	override bool isNestedIn(Scope rhs){ return rhs is this || parent.isNestedIn(rhs); }
