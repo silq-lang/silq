@@ -527,6 +527,8 @@ class CallExp: Expression{
 				}
 			}
 		}
+		if(isInt(this)||isUint(this)&&isSubtype(vectorTy(Bool(isClassical_),arg),rhs)) // TODO: add this in combineTypesImpl
+			return true;
 		return super.isSubtypeImpl(rhs);
 	}
 	override Expression combineTypesImpl(Expression rhs, bool meet){

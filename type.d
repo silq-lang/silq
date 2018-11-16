@@ -39,6 +39,25 @@ Expression getNumeric(int which,bool classical){
 	}
 }
 
+string preludeNumericTypeName(Expression e){
+	import parser: preludePath;
+	import semantic_: modules;
+	if(preludePath() !in modules) return null;
+	auto exprssc=modules[preludePath()];
+	auto sc=exprssc[1];
+	auto ce=cast(CallExp)e;
+	if(!ce) return null;
+	auto id=cast(Identifier)ce.e;
+	if(!id) return null;
+	if(!id.meaning||id.meaning.scope_ !is sc) return null;
+	return id.name;
+}
+
+bool isInt(Expression e){ return preludeNumericTypeName(e)=="int"; }
+bool isUint(Expression e){ return preludeNumericTypeName(e)=="uint"; }
+bool isFloat(Expression e){ return preludeNumericTypeName(e)=="float"; }
+bool isRat(Expression e){ return preludeNumericTypeName(e)=="rat"; }
+
 bool isSubtype(Expression lhs,Expression rhs){
 	if(!lhs||!rhs) return false;
 	auto l=lhs.eval(), r=rhs.eval();

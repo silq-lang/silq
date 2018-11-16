@@ -215,10 +215,10 @@ int importModule(string path,ErrorHandler err,out Expression[] exprs,out TopScop
 	scope(success) modules[path]=tuple(exprs,sc);
 	TopScope prsc=null;
 	Expression[] prelude;
+	import parser;
 	if(!prsc && path != preludePath())
 		if(auto r=importModule(preludePath,err,prelude,prsc))
 			return r;
-	import parser;
 	if(auto r=parseFile(getActualPath(path),err,exprs,loc))
 		return r;
 	sc=new TopScope(err);
@@ -1139,24 +1139,6 @@ Expression callSemantic(CallExp ce,Scope sc,bool constResult){
 	}
 	return ce;
 }
-
-import parser: preludePath;
-string preludeNumericTypeName(Expression e){
-	if(preludePath() !in modules) return null;
-	auto exprssc=modules[preludePath()];
-	auto sc=exprssc[1];
-	auto ce=cast(CallExp)e;
-	if(!ce) return null;
-	auto id=cast(Identifier)ce.e;
-	if(!id) return null;
-	if(!id.meaning||id.meaning.scope_ !is sc) return null;
-	return id.name;
-}
-
-bool isInt(Expression e){ return preludeNumericTypeName(e)=="int"; }
-bool isUint(Expression e){ return preludeNumericTypeName(e)=="uint"; }
-bool isFloat(Expression e){ return preludeNumericTypeName(e)=="float"; }
-bool isRat(Expression e){ return preludeNumericTypeName(e)=="rat"; }
 
 Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 	if(expr.sstate==SemState.completed||expr.sstate==SemState.error) return expr;
