@@ -1571,21 +1571,27 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 				if(val==0||val==1) ok=true;
 			}
 		}
-		if(isSubtype(tae.e.type,ℤt(false))&&(isUint(tae.type)||isInt(tae.type))&&tae.e.type.isClassical()>=tae.type.isClassical())
-			ok=true;
-		if(isUint(tae.e.type)&&isSubtype(ℕt(tae.e.type.isClassical()),tae.type))
-			ok=true;
-		if(isInt(tae.e.type)&&isSubtype(ℤt(tae.e.type.isClassical()),tae.type))
-			ok=true;
-		if((isRat(tae.e.type)||isFloat(tae.e.type))&&isSubtype(ℚt(tae.e.type.isClassical()),tae.type))
-			ok=true;
-		auto ce1=cast(CallExp)tae.e.type;
-		if(ce1&&(isInt(ce1)||isUint(ce1))&&isSubtype(vectorTy(Bool(ce1.isClassical()),ce1.arg),tae.type))
-			ok=true;
-		auto ce2=cast(CallExp)tae.type;
-		if(ce2&&(isInt(ce2)||isUint(ce2))&&isSubtype(tae.e.type,vectorTy(Bool(ce2.isClassical()),ce2.arg)))
-			ok=true;
-		if(!ok && !isSubtype(tae.e.type,tae.type)){
+		bool explicitConversion(Expression from,Expression to){
+			if(isSubtype(from,ℤt(false))&&(isUint(to)||isInt(to))&&from.isClassical()>=to.isClassical())
+				return true;
+			if(isUint(from)&&isSubtype(ℕt(from.isClassical()),to))
+				return true;
+			if(isInt(from)&&isSubtype(ℤt(from.isClassical()),to))
+				return true;
+			if((isRat(from)||isFloat(from))&&isSubtype(ℚt(from.isClassical()),to))
+				return true;
+			auto ce1=cast(CallExp)from;
+			if(ce1&&(isInt(ce1)||isUint(ce1))&&isSubtype(vectorTy(Bool(ce1.isClassical()),ce1.arg),to))
+				return true;
+			auto ce2=cast(CallExp)to;
+			if(ce2&&(isInt(ce2)||isUint(ce2))&&isSubtype(from,vectorTy(Bool(ce2.isClassical()),ce2.arg)))
+				return true;
+			auto tpl1=cast(TupleTy)from, tpl2=cast(TupleTy)to;
+			if(tpl1&&tpl2&&tpl1.types.length==tpl2.types.length&&zip(tpl1.types,tpl2.types).all!(x=>explicitConversion(x.expand)))
+				return true;
+			return false;
+		}
+		if(!ok&&!explicitConversion(tae.e.type,tae.type) && !isSubtype(tae.e.type,tae.type)){
 			sc.error(format("type is %s, not %s",tae.e.type,tae.type),tae.loc);
 			tae.sstate=SemState.error;
 		}
