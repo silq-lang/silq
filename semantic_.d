@@ -1133,6 +1133,10 @@ Expression callSemantic(CallExp ce,Scope sc,bool constResult){
 						constArgTypes1=tpl.types[0..numConstArgs1];
 						argTypes=tpl.types[numConstArgs1..numConstArgs1+numArgs];
 						constArgTypes2=tpl.types[numConstArgs1+numArgs..$];
+						if(argTypes.length==0){
+							assert(constArgTypes2.length==0);
+							swap(constArgTypes1,constArgTypes2);
+						}
 					}
 					if(auto tpl=cast(TupleTy)ft2.cod){
 						returnTypes=tpl.types;
