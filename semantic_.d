@@ -1639,6 +1639,12 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 			auto tpl1=cast(TupleTy)from, tpl2=cast(TupleTy)to;
 			if(tpl1&&tpl2&&tpl1.types.length==tpl2.types.length&&zip(tpl1.types,tpl2.types).all!(x=>explicitConversion(x.expand)))
 				return true;
+			auto arr1=cast(ArrayTy)from, arr2=cast(ArrayTy)to;
+			if(arr1&&arr2&&explicitConversion(arr1.next,arr2.next))
+				return true;
+			auto vec1=cast(VectorTy)from, vec2=cast(VectorTy)to;
+			if(vec1&&vec2&&vec1.num==vec2.num&&explicitConversion(vec1.next,vec2.next))
+				return true;
 			return false;
 		}
 		if(!ok&&!explicitConversion(tae.e.type,tae.type) && !isSubtype(tae.e.type,tae.type)){
