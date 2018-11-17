@@ -89,7 +89,7 @@ abstract class Scope{
 	}
 
 	bool close()in{
-		assert(!allowMerge);
+		debug assert(!allowMerge);
 	}do{
 		debug closed=true;
 		bool errors=false;
@@ -108,7 +108,7 @@ abstract class Scope{
 		foreach(k,v;rnsymtab) v.canForget=false;
 	}
 
-	debug private bool allowMerge=false;
+	private bool allowMerge=false;
 	void nest(NestedScope r)in{
 		assert(allowsLinear());
 		assert(r.parent is this);
@@ -122,7 +122,7 @@ abstract class Scope{
 		assert(scopes.length);
 		debug assert(allowMerge);
 	}do{
-		debug allowMerge=false;
+		allowMerge=false;
 		symtab=scopes[0].symtab.dup;
 		rnsymtab=scopes[0].rnsymtab.dup;
 		bool errors=false;
@@ -169,7 +169,7 @@ abstract class Scope{
 		foreach(sc;scopes){
 			sc.symtab.clear();
 			sc.rnsymtab.clear();
-			sc.closed=true;
+			debug sc.closed=true;
 		}
 		foreach(k,v;symtab) v.scope_=this;
 		foreach(k,v;rnsymtab) v.scope_=this;
@@ -295,7 +295,7 @@ class BlockScope: NestedScope{
 	}
 	override bool close(){
 		auto errors=parent.allowsLinear()?parent.merge(false,this):false;
-		closed=true;
+		debug closed=true;
 		return errors;
 	}
 }
