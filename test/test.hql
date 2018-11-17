@@ -1,9 +1,16 @@
+
+/+
+def main(x:𝔹^5){
+	//x := 0:int[5];
+	return x[x:int[5]];
+}
++/
+
 /+
 def main(){
 	x := false:𝔹;
 	if x{
-		y := false;
-		z := x;
+		z := H(false):𝔹;
 	}
 }
 +/
