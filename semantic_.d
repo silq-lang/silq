@@ -735,7 +735,6 @@ Identifier getIdFromIndex(IndexExp e){
 	return cast(Identifier)e.e;
 }
 
-IndexExp indexToReplace=null;
 Expression indexReplaceSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{
 	assert(cast(IndexExp)be.e1);
 }do{
@@ -770,14 +769,14 @@ Expression indexReplaceSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{
 		be.sstate=SemState.error;
 		theIndex=null;
 	}
-	assert(!indexToReplace);
-	indexToReplace=theIndex;
+	assert(!sc.indexToReplace);
+	sc.indexToReplace=theIndex;
 	be.e2=expressionSemantic(be.e2,sc,false);
 	propErr(be.e2,be);
-	if(indexToReplace){
+	if(sc.indexToReplace){
 		sc.error("reassigned component must be consumed in right-hand side", be.e1.loc);
 		be.sstate=SemState.error;
-		indexToReplace=null;
+		sc.indexToReplace=null;
 	}
 	if(id) addVar(id.name,id.type,be.loc,sc);
 	be.type=unit;
@@ -1404,8 +1403,8 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 	}
 	if(auto idx=cast(IndexExp)expr){
 		bool replaceIndex=false;
-		if(indexToReplace){
-			auto rid=getIdFromIndex(indexToReplace);
+		if(sc.indexToReplace){
+			auto rid=getIdFromIndex(sc.indexToReplace);
 			assert(rid && rid.meaning);
 			if(auto cid=getIdFromIndex(idx)){
 				if(rid.name==cid.name){
@@ -1482,17 +1481,17 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 			idx.sstate=SemState.error;
 		}
 		if(replaceIndex){
-			if(idx != indexToReplace){
+			if(idx != sc.indexToReplace){
 				sc.error("indices for component replacement must be identical",idx.loc);
-				sc.note("replaced component is here",indexToReplace.loc);
+				sc.note("replaced component is here",sc.indexToReplace.loc);
 				idx.sstate=SemState.error;
 			}
 			if(constResult){
 				sc.error("replaced component must be consumed",idx.loc);
-				sc.note("replaced component is here",indexToReplace.loc);
+				sc.note("replaced component is here",sc.indexToReplace.loc);
 				idx.sstate=SemState.error;
 			}
-			indexToReplace=null;
+			sc.indexToReplace=null;
 		}
 		return idx;
 	}

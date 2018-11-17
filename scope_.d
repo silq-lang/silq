@@ -190,6 +190,7 @@ abstract class Scope{
 		}
 		return 0;
 	}
+	IndexExp indexToReplace=null;
 private:
 	Identifier[const(char)*] constBlock;
 	Declaration[const(char)*] symtab;
