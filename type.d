@@ -477,9 +477,10 @@ class VectorTy: Type{
 		return false;
 	}
 	override bool isSubtypeImpl(Expression r){
-		auto larr=this,rarr=cast(VectorTy)r;
-		if(!rarr) return false;
-		return isSubtype(larr.next,rarr.next) && num==rarr.num;
+		if(auto rarr=cast(ArrayTy)r) return isSubtype(next,rarr.next);
+		auto lvec=this,rvec=cast(VectorTy)r;
+		if(!rvec) return false;
+		return isSubtype(lvec.next,rvec.next) && num==rvec.num;
 	}
 	override Expression combineTypesImpl(Expression r,bool meet){
 		auto larr=this,rarr=cast(VectorTy)r;
