@@ -541,7 +541,7 @@ Expression statementSemantic(Expression e,Scope sc){
 			if(!vd.vtype) vd.vtype=ℤt(true);
 		}
 		vd.loc=fe.var.loc;
-		if(!fesc.insert(vd))
+		if(vd.name.name!="_"&&!fesc.insert(vd))
 			fe.sstate=SemState.error;
 		fe.var.name=vd.getName;
 		fe.fescope_=fesc;
