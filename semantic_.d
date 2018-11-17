@@ -1114,32 +1114,35 @@ Expression callSemantic(CallExp ce,Scope sc,bool constResult){
 			ce.arg=expressionSemantic(ce.arg,sc,ft.isConst.length?ft.isConst[0]:true);
 			if(auto ft2=cast(FunTy)ce.arg.type){
 				if(!ft2.cod.hasAnyFreeVar(ft2.names) && ft2.annotation>=Annotation.mfree && !ft2.isSquare && ft2.isClassical()){
+					Expression[] constArgTypes1;
 					Expression[] argTypes;
-					Expression[] constArgTypes;
+					Expression[] constArgTypes2;
 					Expression[] returnTypes;
 					bool ok=true;
 					if(!ft2.isTuple){
 						assert(ft2.isConst.length==1);
-						if(ft2.isConst[0]) constArgTypes=[ft2.dom];
+						if(ft2.isConst[0]) constArgTypes1=[ft2.dom];
 						else argTypes=[ft2.dom];
 					}else{
 						auto tpl=cast(TupleTy)ft2.dom;
 						assert(!!tpl && tpl.types.length==ft2.isConst.length);
-						auto numArgs=ft2.isConst.until!(x=>x).walkLength;
-						auto numConstArgs=ft2.isConst[numArgs..$].until!(x=>!x).walkLength;
-						ok=numArgs+numConstArgs==tpl.types.length;
-						argTypes=tpl.types[0..numArgs];
-						constArgTypes=tpl.types[numArgs..$];
+						auto numConstArgs1=ft2.isConst.until!(x=>!x).walkLength;
+						auto numArgs=ft2.isConst[numConstArgs1..$].until!(x=>x).walkLength;
+						auto numConstArgs2=ft2.isConst[numConstArgs1+numArgs..$].until!(x=>!x).walkLength;
+						ok=numConstArgs1+numArgs+numConstArgs2==tpl.types.length;
+						constArgTypes1=tpl.types[0..numConstArgs1];
+						argTypes=tpl.types[numConstArgs1..numConstArgs1+numArgs];
+						constArgTypes2=tpl.types[numConstArgs1+numArgs..$];
 					}
 					if(auto tpl=cast(TupleTy)ft2.cod){
 						returnTypes=tpl.types;
 					}else returnTypes=[ft2.cod];
 					if(ok){
-						auto nargTypes=returnTypes~constArgTypes;
+						auto nargTypes=constArgTypes1~returnTypes~constArgTypes2;
 						auto nreturnTypes=argTypes;
 						auto dom=nargTypes.length==1?nargTypes[0]:tupleTy(nargTypes);
 						auto cod=nreturnTypes.length==1?nreturnTypes[0]:tupleTy(nreturnTypes);
-						auto isConst=chain(false.repeat(returnTypes.length),true.repeat(constArgTypes.length)).array;
+						auto isConst=chain(true.repeat(constArgTypes1.length),false.repeat(returnTypes.length),true.repeat(constArgTypes2.length)).array;
 						ce.type=funTy(isConst,dom,cod,false,isConst.length!=1,Annotation.mfree,true);
 						return ce;
 					}
