@@ -845,8 +845,8 @@ bool checkAssignable(Declaration meaning,Location loc,Scope sc,bool quantumAssig
 		return false;
 	}else{
 		auto vd=cast(VarDecl)meaning;
-		if(!quantumAssign&&!vd.vtype.isClassical()&&sc.restriction()<Annotation.lifted){
-			sc.error("cannot reassign quantum variables", loc);
+		if(!quantumAssign&&!vd.vtype.isClassical()&&!meaning.canForget){
+			sc.error("cannot reassign quantum variable", loc);
 			return false;
 		}else if(vd.vtype==typeTy){
 			sc.error("cannot reassign type variables", loc);
@@ -866,7 +866,7 @@ bool checkAssignable(Declaration meaning,Location loc,Scope sc,bool quantumAssig
 
 AssignExp assignExpSemantic(AssignExp ae,Scope sc){
 	ae.type=unit;
-	ae.e1=expressionSemantic(ae.e1,sc,false);
+	ae.e1=expressionSemantic(ae.e1,sc,true); // reassigned variable should not be consumed (otherwise, can use ':=')
 	ae.e2=expressionSemantic(ae.e2,sc,false);
 	propErr(ae.e1,ae);
 	propErr(ae.e2,ae);
@@ -1046,7 +1046,7 @@ Expression callSemantic(CallExp ce,Scope sc,bool constResult){
 					if(auto classical=ce.type.getClassical())
 						ce.type=classical;
 				}
-				if(!ce.isMfree()) sc.cannotForget();
+				if(!ce.isLifted()) sc.cannotForget();
 			}
 		}
 	}
