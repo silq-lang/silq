@@ -145,7 +145,7 @@ abstract class Scope{
 					auto osym=sc.symtab[sym.name.ptr];
 					import semantic_: typeForDecl;
 					auto ot=typeForDecl(osym),st=typeForDecl(sym);
-					if((sym.scope_ is scopes[0]||osym.scope_ is sc)&&ot&&st&&(ot!=st||quantumControl&&st.hasClassicalComponent())){
+					if((sym.scope_ is scopes[0]||osym.scope_ is sc)&&ot&&st&&(ot!=st||osym.canForget!=sym.canForget||quantumControl&&st.hasClassicalComponent())){
 						symtab.remove(sym.name.ptr);
 						if(sym.rename) rnsymtab.remove(sym.rename.ptr);
 						if(sym.isLinear()&&!sym.canForget){
