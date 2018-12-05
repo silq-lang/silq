@@ -1985,6 +1985,7 @@ bool setFtype(FunctionDef fd){
 			assert(fd.retNames==[]);
 		}
 		if(!fd.retNames) fd.retNames = new string[](fd.numReturns);
+		assert(fd.fscope_||fd.sstate==SemState.error);
 	}
 	return true;
 }
@@ -1996,6 +1997,20 @@ FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 	assert(fsc.allowsLinear());
 	auto bdy=fd.body_?compoundExpSemantic(fd.body_,fsc):null;
 	scope(exit){
+		foreach(x;fd.ret.components){
+			if(auto id=cast(Identifier)x){
+				assert(!!id.meaning);
+				auto allowMerge=fsc.allowMerge;
+				fsc.allowMerge=false;
+				auto meaning=fsc.lookup(id,false,true,Lookup.probing);
+				fsc.allowMerge=allowMerge;
+				assert(!meaning||!meaning.isLinear);
+				if(meaning !is id.meaning){
+					fsc.error(format("variable '%s' in function return type does not appear in function scope", id.name), fd.loc);
+					fd.sstate=SemState.error;
+				}
+			}
+		}
 		if(bdy){
 			if(--fd.semanticDepth==0&&(fsc.merge(false,bdy.blscope_)||fsc.close())) fd.sstate=SemState.error;
 		}else{

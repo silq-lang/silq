@@ -108,7 +108,7 @@ abstract class Scope{
 		foreach(k,v;rnsymtab) v.canForget=false;
 	}
 
-	private bool allowMerge=false;
+	bool allowMerge=false;
 	void nest(NestedScope r)in{
 		assert(allowsLinear());
 		assert(r.parent is this);
