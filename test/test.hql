@@ -5,7 +5,6 @@ def main(x:𝔹^5){
 	return x[x:int[5]];
 }
 +/
-
 /+
 def main(){
 	x := false:𝔹;

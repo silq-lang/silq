@@ -296,7 +296,14 @@ class Identifier: Expression{
 	override Expression getClassical(){
 		assert(type==typeTy);
 		if(classical) return this;
-		return varTy(name,typeTy,true);
+		if(!meaning) return varTy(name,typeTy,true);
+		auto r=new Identifier(name);
+		r.classical=true;
+		r.type=type;
+		r.meaning=meaning;
+		r.sstate=SemState.completed;
+		return r;
+
 	}
 
 	override Annotation getAnnotation(){ return Annotation.lifted; }

@@ -916,6 +916,25 @@ Identifier varTy(string name,Expression type,bool classical=false){
 	})(name,type,classical);
 }
 
+struct FreeIdentifiers{
+	Expression self;
+	int opApply(scope int delegate(Identifier) dg){
+		int rec(Expression e){
+			if(auto id=cast(Identifier)e) if(auto r=dg(id)) return r;
+			// TODO: ProductTy, LambdaExp
+			foreach(x;e.components)
+				if(auto r=rec(x))
+					return r;
+			return 0;
+		}
+		return rec(self);
+	}
+}
+auto freeIdentifiers(Expression self){
+	return FreeIdentifiers(self);
+}
+
+
 class TypeTy: Type{
 	this(){ this.type=this; super(); }
 	override string toString(){

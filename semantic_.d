@@ -732,6 +732,24 @@ Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
 		}
 	}else if(de) de.setError();
 	auto r=de?de:be;
+	if(be.e2.type && be.e2.type.sstate==SemState.completed){
+		if(auto fd=sc.getFunction()){
+			auto fsc=fd.fscope_;
+			assert(!!fsc);
+			foreach(id;be.e2.type.freeIdentifiers){
+				assert(!!id.meaning);
+				auto allowMerge=fsc.allowMerge;
+				fsc.allowMerge=false;
+				auto meaning=fsc.lookup(id,false,true,Lookup.probing);
+				fsc.allowMerge=allowMerge;
+				assert(!meaning||!meaning.isLinear);
+				if(meaning !is id.meaning){
+					fsc.error(format("cannot use local variable '%s' in type of local variable", id.name), be.loc);
+					fd.sstate=SemState.error;
+				}
+			}
+		}
+	}
 	if(r.sstate!=SemState.error) r.sstate=SemState.completed;
 	return r;
 }
@@ -1997,8 +2015,8 @@ FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 	assert(fsc.allowsLinear());
 	auto bdy=fd.body_?compoundExpSemantic(fd.body_,fsc):null;
 	scope(exit){
-		foreach(x;fd.ret.components){
-			if(auto id=cast(Identifier)x){
+		if(fd.ret&&fd.ret.sstate==SemState.completed){
+			foreach(id;fd.ret.freeIdentifiers){
 				assert(!!id.meaning);
 				auto allowMerge=fsc.allowMerge;
 				fsc.allowMerge=false;
