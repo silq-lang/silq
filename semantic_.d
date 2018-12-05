@@ -1898,7 +1898,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 				return q([true],typeSemantic(ce.e,sc));
 			}else{
 				auto ty=typeSemantic(e,sc);
-				return q([ty.impliesConst()],ty);
+				return q([ty.impliesConst()||ex.annotation>=Annotation.lifted],ty);
 			}
 		}
 		auto t1=getConstAndType(ex.e1);

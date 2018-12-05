@@ -280,7 +280,7 @@ class Identifier: Expression{
 	}
 	override bool opEquals(Object o){
 		if(auto r=cast(Identifier)o){
-			return name==r.name && classical==r.classical;
+			return name==r.name && classical==r.classical && meaning==r.meaning;
 		}
 		return false;
 	}
