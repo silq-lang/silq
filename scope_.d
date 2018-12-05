@@ -143,9 +143,10 @@ abstract class Scope{
 					}
 				}else{
 					auto osym=sc.symtab[sym.name.ptr];
+					sym.canForget&=osym.canForget; // TODO: make phi declaration instead
 					import semantic_: typeForDecl;
 					auto ot=typeForDecl(osym),st=typeForDecl(sym);
-					if((sym.scope_ is scopes[0]||osym.scope_ is sc)&&ot&&st&&(ot!=st||osym.canForget!=sym.canForget||quantumControl&&st.hasClassicalComponent())){
+					if((sym.scope_ is scopes[0]||osym.scope_ is sc)&&ot&&st&&(ot!=st||quantumControl&&st.hasClassicalComponent())){
 						symtab.remove(sym.name.ptr);
 						if(sym.rename) rnsymtab.remove(sym.rename.ptr);
 						if(sym.isLinear()&&!sym.canForget){
@@ -251,7 +252,14 @@ class NestedScope: Scope{
 }
 
 class RawProductScope: NestedScope{
-	this(Scope parent){ super(parent); }
+	Annotation annotation;
+	this(Scope parent,Annotation annotation){
+		super(parent);
+		this.annotation=annotation;
+	}
+	override Annotation restriction(){
+		return annotation;
+	}
 	void forceClose(){
 		debug closed=true;
 	}

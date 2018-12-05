@@ -684,6 +684,12 @@ VarDecl varDeclSemantic(VarDecl vd,Scope sc){
 		assert(vd.dtype,text(vd));
 		vd.vtype=typeSemantic(vd.dtype,sc);
 	}
+	if(auto prm=cast(Parameter)vd){
+		if(sc.restriction>=Annotation.lifted)
+			prm.isConst=true;
+		if(vd.vtype&&vd.vtype.impliesConst())
+			prm.isConst=true;
+	}
 	if(!vd.vtype) vd.sstate=SemState.error;
 	if(vd.sstate!=SemState.error)
 		vd.sstate=SemState.completed;
@@ -1626,6 +1632,7 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 			}
 		}
 		bool explicitConversion(Expression from,Expression to){
+			if(isSubtype(from,to)) return true;
 			if(isSubtype(from,ℤt(false))&&(isUint(to)||isInt(to))&&from.isClassical()>=to.isClassical())
 				return true;
 			if(isUint(from)&&isSubtype(ℕt(from.isClassical()),to))
@@ -1867,7 +1874,8 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 			}else if(auto ce=cast(UnaryExp!(Tok!"const"))e){
 				return q([true],typeSemantic(ce.e,sc));
 			}else{
-				return q([false],typeSemantic(e,sc));
+				auto ty=typeSemantic(e,sc);
+				return q([ty.impliesConst()],ty);
 			}
 		}
 		auto t1=getConstAndType(ex.e1);
@@ -1880,7 +1888,7 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 	}
 	if(auto fa=cast(RawProductTy)expr){
 		expr.type=typeTy();
-		auto fsc=new RawProductScope(sc);
+		auto fsc=new RawProductScope(sc,fa.annotation);
 		scope(exit) fsc.forceClose();
 		declareParameters(fa,fa.isSquare,fa.params,fsc); // parameter variables
 		auto cod=typeSemantic(fa.cod,fsc);
@@ -2334,22 +2342,22 @@ Expression handleQuantumPrimitive(CallExp ce,Scope sc){
 	}
 	switch(literal.lit.str){
 		case "dup":
-			ce.type = productTy([false],["`τ"],typeTy,funTy([false],varTy("`τ",typeTy),varTy("`τ",typeTy),false,false,Annotation.lifted,true),true,false,Annotation.lifted,true);
+			ce.type = productTy([true],["`τ"],typeTy,funTy([true],varTy("`τ",typeTy),varTy("`τ",typeTy),false,false,Annotation.lifted,true),true,false,Annotation.lifted,true);
 			break;
 		case "reverse":
-			ce.type = productTy([false,false,false],["`τ","`χ","`φ"],tupleTy([typeTy,typeTy,typeTy]),funTy([false],funTy([false,true],tupleTy([varTy("`τ",typeTy),varTy("`χ",typeTy)]),varTy("`φ",typeTy),false,true,Annotation.mfree,true),funTy([false,true],tupleTy([varTy("`φ",typeTy),varTy("`χ",typeTy)]),varTy("`τ",typeTy),false,true,Annotation.mfree,true),false,false,Annotation.lifted,true),true,true,Annotation.lifted,true);
+			ce.type = productTy([true,true,true],["`τ","`χ","`φ"],tupleTy([typeTy,typeTy,typeTy]),funTy([true],funTy([false,true],tupleTy([varTy("`τ",typeTy),varTy("`χ",typeTy)]),varTy("`φ",typeTy),false,true,Annotation.mfree,true),funTy([false,true],tupleTy([varTy("`φ",typeTy),varTy("`χ",typeTy)]),varTy("`τ",typeTy),false,true,Annotation.mfree,true),false,false,Annotation.lifted,true),true,true,Annotation.lifted,true);
 			break;
 		case "M":
-			ce.type = productTy([false],["`τ"],typeTy,funTy([false],varTy("`τ",typeTy),varTy("`τ",typeTy,true),false,false,Annotation.none,true),true,false,Annotation.lifted,true);
+			ce.type = productTy([true],["`τ"],typeTy,funTy([false],varTy("`τ",typeTy),varTy("`τ",typeTy,true),false,false,Annotation.none,true),true,false,Annotation.lifted,true);
 			break;
 		case "H","X","Y","Z":
 			ce.type = funTy([false],Bool(false),Bool(false),false,false,Annotation.mfree,true);
 			break;
 		case "P":
-			ce.type = funTy([false],ℝ(true),unit,false,false,Annotation.mfree,true);
+			ce.type = funTy([true],ℝ(true),unit,false,false,Annotation.mfree,true);
 			break;
 		case "rX","rY","rZ":
-			ce.type = funTy([false],tupleTy([Bool(false),ℝ(true)]),Bool(false),false,false,Annotation.mfree,true);
+			ce.type = funTy([false,true],tupleTy([Bool(false),ℝ(true)]),Bool(false),false,true,Annotation.mfree,true);
 			break;
 		default:
 			sc.error(format("unknown quantum primitive %s",literal.lit.str),literal.loc);

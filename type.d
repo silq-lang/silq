@@ -806,10 +806,11 @@ class ProductTy: Type{
 			assert(isConst.length==1);
 			nIsConst=isConst[0].repeat(tpl.types.length).array;
 		}else{
-			if(isConst.length&&!isConst.all!(x=>x==isConst[0]))
+			auto isConst2=iota(nargs).filter!(i=>!argTy(i).impliesConst()).map!(i=>isConst[i]);
+			if(!isConst2.empty&&!isConst2.all!(x=>x==isConst2.front))
 				return null;
 			nnames=["x"];
-			nIsConst=[isConst[0]];
+			nIsConst=[isConst2.empty?true:isConst2.front];
 		}
 		foreach(i,ref nn;nnames) while(hasFreeVar(nn)) nn~="'";
 		return productTy(nIsConst,nnames,dom,cod,isSquare,tuple,annotation,isClassical_);
@@ -831,6 +832,7 @@ ProductTy productTy(bool[] isConst,string[] names,Expression dom,Expression cod,
 		auto tdom=cast(TupleTy)dom;
 		assert(tdom&&names.length==tdom.types.length);
 	}
+	assert(annotation<Annotation.lifted||all(isConst));
 }body{
 	return memoize!((bool[] isConst,string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple,Annotation annotation,bool isClassical)=>new ProductTy(isConst,names,dom,cod,isSquare,isTuple,annotation,isClassical))(isConst,names,dom,cod,isSquare,isTuple,annotation,isClassical);
 }
@@ -838,6 +840,7 @@ ProductTy productTy(bool[] isConst,string[] names,Expression dom,Expression cod,
 alias FunTy=ProductTy;
 FunTy funTy(bool[] isConst,Expression dom,Expression cod,bool isSquare,bool isTuple,Annotation annotation,bool isClassical)in{
 	assert(dom&&cod);
+	assert(annotation<Annotation.lifted||all(isConst));
 }body{
 	auto nargs=1+[].length;
 	if(isTuple) if(auto tpl=cast(TupleTy)dom) nargs=tpl.types.length;
@@ -846,6 +849,7 @@ FunTy funTy(bool[] isConst,Expression dom,Expression cod,bool isSquare,bool isTu
 
 FunTy funTy(Expression dom,Expression cod,bool isSquare,bool isTuple,Annotation annotation,bool isClassical)in{
 	assert(dom&&cod);
+	assert(annotation<Annotation.lifted);
 }body{
 	auto nargs=1+[].length;
 	if(isTuple) if(auto tpl=cast(TupleTy)dom) nargs=tpl.types.length;

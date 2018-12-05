@@ -95,6 +95,9 @@ abstract class Expression: Node{
 	bool isClassical(){
 		return false;
 	}
+	bool impliesConst(){
+		return isClassical();
+	}
 	bool hasClassicalComponent(){
 		return true;
 	}
