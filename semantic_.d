@@ -1658,7 +1658,7 @@ Expression expressionSemantic(Expression expr,Scope sc,bool constResult){
 				return true;
 			return false;
 		}
-		if(!ok&&!explicitConversion(tae.e.type,tae.type) && !isSubtype(tae.e.type,tae.type)){
+		if(!ok&&!explicitConversion(tae.e.type,tae.type)){
 			sc.error(format("type is %s, not %s",tae.e.type,tae.type),tae.loc);
 			tae.sstate=SemState.error;
 		}
