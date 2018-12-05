@@ -1229,11 +1229,6 @@ enum ConstResult:bool{
 	yes,
 }
 
-enum WithinType:bool{
-	no,
-	yes,
-}
-
 Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 	if(expr.sstate==SemState.completed||expr.sstate==SemState.error) return expr;
 	if(expr.sstate==SemState.started){
