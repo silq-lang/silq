@@ -2008,6 +2008,7 @@ bool setFtype(FunctionDef fd){
 	return true;
 }
 FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
+	if(fd.sstate==SemState.completed) return fd;
 	if(!fd.fscope_) fd=cast(FunctionDef)presemantic(fd,sc); // TODO: why does checking for fd.scope_ not work? (test3.hql)
 	auto fsc=fd.fscope_;
 	++fd.semanticDepth;
