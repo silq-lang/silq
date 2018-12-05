@@ -121,6 +121,9 @@ class BoolTy: Type{
 		return Bool(true);
 	}
 	mixin VariableFree;
+	override int componentsImpl(scope int delegate(Expression) dg){
+		return 0;
+	}
 }
 private BoolTy[2] theBool;
 
@@ -146,6 +149,9 @@ class ℕTy: Type{
 		return ℕt(true);
 	}
 	mixin VariableFree;
+	override int componentsImpl(scope int delegate(Expression) dg){
+		return 0;
+	}
 }
 private ℕTy[2] theℕ;
 
@@ -171,6 +177,9 @@ class ℤTy: Type{
 		return ℤt(true);
 	}
 	mixin VariableFree;
+	override int componentsImpl(scope int delegate(Expression) dg){
+		return 0;
+	}
 }
 private ℤTy[2] theℤ;
 
@@ -196,6 +205,9 @@ class ℚTy: Type{
 		return ℚt(true);
 	}
 	mixin VariableFree;
+	override int componentsImpl(scope int delegate(Expression) dg){
+		return 0;
+	}
 }
 private ℚTy[2] theℚ;
 
@@ -221,6 +233,9 @@ class ℝTy: Type{
 		return ℝ(true);
 	}
 	mixin VariableFree;
+	override int componentsImpl(scope int delegate(Expression) dg){
+		return 0;
+	}
 }
 private ℝTy[2] theℝ;
 
@@ -246,6 +261,9 @@ class ℂTy: Type{
 		return ℂ(true);
 	}
 	mixin VariableFree;
+	override int componentsImpl(scope int delegate(Expression) dg){
+		return 0;
+	}
 }
 private ℂTy[2] theℂ;
 
@@ -282,6 +300,9 @@ class AggregateTy: Type{
 		return classicalTy;
 	}
 	mixin VariableFree;
+	override int componentsImpl(scope int delegate(Expression) e){
+		return 0;
+	}
 }
 
 class ContextTy: Type{
@@ -303,6 +324,9 @@ class ContextTy: Type{
 	}
 	private bool classical;
 	mixin VariableFree;
+	override int componentsImpl(scope int delegate(Expression) e){
+		return 0;
+	}
 }
 private ContextTy[2] theContextTy;
 ContextTy contextTy(bool classical){ return theContextTy[classical]?theContextTy[classical]:(theContextTy[classical]=new ContextTy(classical)); }
@@ -370,6 +394,10 @@ class TupleTy: Type{
 		if(ntypes.any!(x=>x is null)) return null;
 		return tupleTy(ntypes);
 	}
+	override int componentsImpl(scope int delegate(Expression) dg){
+		foreach(x;types) if(auto r=dg(x)) return r;
+		return 0;
+	}
 }
 
 TupleTy unit(){ return tupleTy([]); }
@@ -436,6 +464,9 @@ class ArrayTy: Type{
 		if(!nnext) return null;
 		return arrayTy(nnext);
 	}
+	override int componentsImpl(scope int delegate(Expression) dg){
+		return dg(next);
+	}
 }
 
 ArrayTy arrayTy(Expression next)in{
@@ -498,6 +529,10 @@ class VectorTy: Type{
 		if(!nnext) return null;
 		return vectorTy(nnext,num);
 	}
+	override int componentsImpl(scope int delegate(Expression) dg){
+		if(auto r=dg(next)) return r;
+		return dg(num);
+	}
 }
 
 VectorTy vectorTy(Expression next,Expression num)in{
@@ -524,6 +559,9 @@ class StringTy: Type{
 		return true; // length is classical
 	}
 	mixin VariableFree;
+	override int componentsImpl(scope int delegate(Expression) dg){
+		return 0;
+	}
 }
 
 StringTy stringTy(bool classical){ return memoize!((bool classical)=>new StringTy(classical))(classical); }
@@ -554,6 +592,9 @@ class RawProductTy: Expression{
 		assert(0);
 	}
 	mixin VariableFree;
+	override int componentsImpl(scope int delegate(Expression) dg){
+		return 0;
+	}
 }
 
 class ProductTy: Type{
@@ -824,6 +865,9 @@ class ProductTy: Type{
 	override ProductTy getClassical(){
 		return classicalTy;
 	}
+	override int componentsImpl(scope int delegate(Expression) e){
+		return 0; // TODO: ok?
+	}
 }
 
 ProductTy productTy(bool[] isConst,string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple,Annotation annotation,bool isClassical)in{
@@ -887,6 +931,9 @@ class TypeTy: Type{
 		return true;
 	}
 	mixin VariableFree;
+	override int componentsImpl(scope int delegate(Expression) dg){
+		return 0;
+	}
 }
 private TypeTy theTypeTy;
 TypeTy typeTy(){ return theTypeTy?theTypeTy:(theTypeTy=new TypeTy()); }

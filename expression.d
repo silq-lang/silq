@@ -34,7 +34,6 @@ abstract class Expression: Node{
 
 	Expression eval(){ return this; }
 
-	abstract int freeVarsImpl(scope int delegate(string) dg);
 	final Expression substitute(string name,Expression exp){
 		return substitute([name:exp]);
 	}
@@ -51,6 +50,7 @@ abstract class Expression: Node{
 	}
 	abstract bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet);
 
+	abstract int freeVarsImpl(scope int delegate(string) dg);
 	static struct FreeVars{
 		Expression self;
 		int opApply(scope int delegate(string) dg)in{
@@ -83,6 +83,41 @@ abstract class Expression: Node{
 				return true;
 		}
 		return false;
+	}
+	abstract int componentsImpl(scope int delegate(Expression) dg);
+	static struct Components{
+		Expression self;
+		bool ignoreTypes;
+		int opApply(scope int delegate(Expression) dg)in{
+			assert(!!self);
+		}do{
+			if(auto r=self.componentsImpl(dg)) return r;
+			return 0;
+		}
+	}
+	final Components components()in{
+		assert(!!this);
+	}do{
+		return Components(this,false);
+	}
+	final int subexpressionsImpl(scope int delegate(Expression) dg){
+		if(auto r=dg(this)) return r;
+		foreach(x;components) if(auto r=x.subexpressionsImpl(dg)) return r;
+		return 0;
+	}
+	static struct Subexpressions{
+		Expression self;
+		int opApply(scope int delegate(Expression) dg)in{
+			assert(!!self);
+		}do{
+			if(auto r=self.subexpressionsImpl(dg)) return r;
+			return 0;
+		}
+	}
+	final Subexpressions subexpressions()in{
+		assert(!!this);
+	}do{
+		return Subexpressions(this);
 	}
 	bool isSubtypeImpl(Expression rhs){
 		return this == rhs;
@@ -134,6 +169,10 @@ class TypeAnnotationExp: Expression{
 		if(auto r=e.freeVarsImpl(dg)) return r;
 		return t.freeVarsImpl(dg);
 	}
+	override int componentsImpl(scope int delegate(Expression) dg){
+		if(auto r=dg(e)) return r;
+		return dg(t);
+	}
 	override TypeAnnotationExp substituteImpl(Expression[string] subst){
 		auto ne=e.substitute(subst);
 		auto nt=t.substitute(subst);
@@ -158,6 +197,9 @@ class ErrorExp: Expression{
 	override string toString(){return _brk("__error");}
 
 	mixin VariableFree;
+	override int componentsImpl(scope int delegate(Expression) dg){
+		return 0;
+	}
 }
 
 class LiteralExp: Expression{
@@ -183,6 +225,7 @@ class LiteralExp: Expression{
 	}
 
 	override Annotation getAnnotation(){ return Annotation.lifted; }
+	override int componentsImpl(scope int delegate(Expression) dg){ return 0; }
 	mixin VariableFree;
 }
 
@@ -202,6 +245,7 @@ class Identifier: Expression{
 	override int freeVarsImpl(scope int delegate(string) dg){
 		return dg(name);
 	}
+	override int componentsImpl(scope int delegate(Expression) dg){ return 0; }
 	override Expression substituteImpl(Expression[string] subst){
 		if(name in subst){
 			if(classical)
@@ -271,6 +315,7 @@ class PlaceholderExp: Expression{
 	override @property string kind(){ return "placeholder"; }
 
 	mixin VariableFree;
+	override int componentsImpl(scope int delegate(Expression) dg){ return 0; }
 }
 
 
@@ -291,6 +336,9 @@ class UnaryExp(TokenType op): Expression{
 
 	override int freeVarsImpl(scope int delegate(string) dg){
 		return e.freeVarsImpl(dg);
+	}
+	override int componentsImpl(scope int delegate(Expression) dg){
+		return dg(e);
 	}
 	override UnaryExp substituteImpl(Expression[string] subst){
 		auto ne=e.substitute(subst);
@@ -318,6 +366,9 @@ class PostfixExp(TokenType op): Expression{
 
 	override int freeVarsImpl(scope int delegate(string) dg){
 		return e.freeVarsImpl(dg);
+	}
+	override int componentsImpl(scope int delegate(Expression) dg){
+		return dg(e);
 	}
 	override PostfixExp substituteImpl(Expression[string] subst){
 		auto ne=e.substitute(subst);
@@ -365,6 +416,11 @@ class IndexExp: Expression{ //e[a...]
 	override int freeVarsImpl(scope int delegate(string) dg){
 		if(auto r=e.freeVarsImpl(dg)) return r;
 		foreach(x;a) if(auto r=x.freeVarsImpl(dg)) return r;
+		return 0;
+	}
+	override int componentsImpl(scope int delegate(Expression) dg){
+		if(auto r=dg(e)) return r;
+		foreach(x;a) if(auto r=dg(x)) return r;
 		return 0;
 	}
 	override IndexExp substituteImpl(Expression[string] subst){
@@ -437,6 +493,12 @@ class SliceExp: Expression{
 		if(auto x=r.freeVarsImpl(dg)) return x;
 		return 0;
 	}
+	override int componentsImpl(scope int delegate(Expression) dg){
+		if(auto x=dg(e)) return x;
+		if(auto x=dg(l)) return x;
+		if(auto x=dg(r)) return x;
+		return 0;
+	}
 	override SliceExp substituteImpl(Expression[string] subst){
 		auto ne=e.substitute(subst);
 		auto nl=l.substitute(subst);
@@ -480,6 +542,10 @@ class CallExp: Expression{
 	override int freeVarsImpl(scope int delegate(string) dg){
 		if(auto r=e.freeVarsImpl(dg)) return r;
 		return arg.freeVarsImpl(dg);
+	}
+	override int componentsImpl(scope int delegate(Expression) dg){
+		if(auto r=dg(e)) return r;
+		return dg(arg);
 	}
 	override CallExp substituteImpl(Expression[string] subst){
 		auto ne=e.substitute(subst);
@@ -618,6 +684,11 @@ abstract class ABinaryExp: Expression{
 		if(auto r=e2.freeVarsImpl(dg)) return r;
 		return 0;
 	}
+	override int componentsImpl(scope int delegate(Expression) dg){
+		if(auto r=dg(e1)) return r;
+		if(auto r=dg(e2)) return r;
+		return 0;
+	}
 	override Annotation getAnnotation(){
 		return min(e1.getAnnotation(), e2.getAnnotation());
 	}
@@ -674,6 +745,9 @@ class FieldExp: Expression{
 	override int freeVarsImpl(scope int delegate(string) dg){
 		return e.freeVarsImpl(dg);
 	}
+	override int componentsImpl(scope int delegate(Expression) dg){
+		return dg(e);
+	}
 	override FieldExp substituteImpl(Expression[string] subst){
 		auto ne=e.substitute(subst);
 		if(ne==e) return this;
@@ -708,6 +782,12 @@ class IteExp: Expression{
 		if(othw) if(auto r=othw.freeVarsImpl(dg)) return r;
 		return 0;
 	}
+	override int componentsImpl(scope int delegate(Expression) dg){
+		if(auto r=dg(cond)) return r;
+		if(auto r=dg(then)) return r;
+		if(othw) if(auto r=othw.subexpressionsImpl(dg)) return r;
+		return 0;
+	}
 	override IteExp substituteImpl(Expression[string] subst){
 		auto ncond=cond.substitute(subst);
 		auto nthen=cast(CompoundExp)then.substitute(subst);
@@ -740,6 +820,10 @@ class RepeatExp: Expression{
 	override bool isCompound(){ return true; }
 
 	mixin VariableFree; // TODO
+	override int componentsImpl(scope int delegate(Expression) dg){
+		if(auto r=dg(num)) return r;
+		return dg(bdy);
+	}
 }
 
 class ForExp: Expression{
@@ -766,6 +850,9 @@ class ForExp: Expression{
 	VarDecl loopVar;
 
 	mixin VariableFree; // TODO
+	override int componentsImpl(scope int delegate(Expression) dg){
+		return 0; // TODO: ok?
+	}
 }
 
 class WhileExp: Expression{
@@ -780,6 +867,10 @@ class WhileExp: Expression{
 	override bool isCompound(){ return true; }
 
 	mixin VariableFree; // TODO
+	override int componentsImpl(scope int delegate(Expression) dg){
+		if(auto r=dg(cond)) return r;
+		return dg(bdy);
+	}
 }
 
 class CompoundExp: Expression{
@@ -792,7 +883,26 @@ class CompoundExp: Expression{
 	// semantic information
 	BlockScope blscope_;
 
-	mixin VariableFree; // TODO!
+	override int freeVarsImpl(scope int delegate(string) dg){
+		foreach(x;s) if(auto r=x.freeVarsImpl(dg)) return r;
+		return 0;
+	}
+	override int componentsImpl(scope int delegate(Expression) dg){
+		foreach(x;s) if(auto r=dg(x)) return r;
+		return 0;
+	}
+	override Expression substituteImpl(Expression[string] subst){
+		auto ns=s.dup;
+		foreach(ref x;ns) x=x.substitute(subst);
+		if(ns==s) return this;
+		auto r=new CompoundExp(ns);
+		r.loc=loc;
+		return r;
+
+	}
+	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
+		return false;
+	}
 }
 
 class TupleExp: Expression{
@@ -805,6 +915,10 @@ class TupleExp: Expression{
 
 	override int freeVarsImpl(scope int delegate(string) dg){
 		foreach(x;e) if(auto r=x.freeVarsImpl(dg)) return r;
+		return 0;
+	}
+	override int componentsImpl(scope int delegate(Expression) dg){
+		foreach(x;e) if(auto r=dg(x)) return r;
 		return 0;
 	}
 	override TupleExp substituteImpl(Expression[string] subst){
@@ -840,6 +954,9 @@ class LambdaExp: Expression{
 	}
 
 	mixin VariableFree; // TODO!
+	override int componentsImpl(scope int delegate(Expression) dg){
+		return 0; // TODO: ok?
+	}
 }
 
 class ArrayExp: Expression{
@@ -852,6 +969,10 @@ class ArrayExp: Expression{
 
 	override int freeVarsImpl(scope int delegate(string) dg){
 		foreach(x;e) if(auto r=x.freeVarsImpl(dg)) return r;
+		return 0;
+	}
+	override int componentsImpl(scope int delegate(Expression) dg){
+		foreach(x;e) if(auto r=dg(x)) return r;
 		return 0;
 	}
 	override ArrayExp substituteImpl(Expression[string] subst){
@@ -879,6 +1000,7 @@ class ReturnExp: Expression{
 
 	string expected;
 	mixin VariableFree; // TODO!
+	override int componentsImpl(scope int delegate(Expression) dg){ return dg(e); }
 }
 
 class AssertExp: Expression{
@@ -888,6 +1010,9 @@ class AssertExp: Expression{
 	}
 	override string toString(){ return _brk("assert("~e.toString()~")"); }
 	mixin VariableFree; // TODO!
+	override int componentsImpl(scope int delegate(Expression) dg){
+		return dg(e);
+	}
 }
 
 class ObserveExp: Expression{
@@ -898,6 +1023,9 @@ class ObserveExp: Expression{
 	override string toString(){ return _brk("observe("~e.toString()~")"); }
 
 	mixin VariableFree; // TODO
+	override int componentsImpl(scope int delegate(Expression) dg){
+		return dg(e);
+	}
 }
 
 class CObserveExp: Expression{
@@ -909,6 +1037,10 @@ class CObserveExp: Expression{
 	override string toString(){ return _brk("cobserve("~var.toString()~","~val.toString()~")"); }
 
 	mixin VariableFree; // TODO
+	override int componentsImpl(scope int delegate(Expression) dg){
+		if(auto r=dg(var)) return r;
+		return dg(val);
+	}
 }
 
 class ForgetExp: Expression{
@@ -921,4 +1053,8 @@ class ForgetExp: Expression{
 	override string toString(){ return _brk("forget("~var.toString()~"="~val.toString()~")"); }
 
 	mixin VariableFree; // TODO
+	override int componentsImpl(scope int delegate(Expression) dg){
+		if(auto r=dg(var)) return r;
+		return dg(val);
+	}
 }

@@ -15,6 +15,7 @@ class Declaration: Expression{
 	bool isLinear(){ return true; }
 
 	mixin VariableFree;
+	override int componentsImpl(scope int delegate(Expression) dg){ return 0; }
 
 	// semantic information
 	Identifier rename=null;
@@ -28,6 +29,7 @@ class CompoundDecl: Expression{
 
 	override string toString(){return "{\n"~indent(join(map!(a=>a.toString()~(a.isCompound()?"":";"))(s),"\n"))~"\n}";}
 	override bool isCompound(){ return true; }
+	override int componentsImpl(scope int delegate(Expression) dg){ return 0; }
 
 	// semantic information
 	AggregateScope ascope_;
@@ -216,6 +218,9 @@ class SingleDefExp: DefExp{
 	}
 
 	mixin VariableFree; // TODO
+	override int componentsImpl(scope int delegate(Expression) dg){
+		return 0; // TODO: ok?
+	}
 }
 
 class MultiDefExp: DefExp{
@@ -256,6 +261,9 @@ class MultiDefExp: DefExp{
 	}
 
 	mixin VariableFree;
+	override int componentsImpl(scope int delegate(Expression) dg){
+		return 0; // TODO: ok?
+	}
 }
 
 string getActualPath(string path){
