@@ -869,7 +869,7 @@ bool checkAssignable(Declaration meaning,Location loc,Scope sc,bool quantumAssig
 		return false;
 	}else{
 		auto vd=cast(VarDecl)meaning;
-		if(!quantumAssign&&!vd.vtype.isClassical()&&!meaning.canForget){
+		if(!quantumAssign&&!vd.vtype.isClassical()&&!sc.canForget(meaning)){
 			sc.error("cannot reassign quantum variable", loc);
 			return false;
 		}else if(vd.vtype==typeTy){
@@ -1070,7 +1070,6 @@ Expression callSemantic(CallExp ce,Scope sc,ConstResult constResult){
 					if(auto classical=ce.type.getClassical())
 						ce.type=classical;
 				}
-				if(!ce.isLifted()) sc.cannotForget();
 			}
 		}
 	}

@@ -3,6 +3,64 @@
 
 import std.format, std.conv, std.algorithm, std.stdio;
 import lexer, expression, declaration, type, error;
+import util;
+
+struct Dependency{
+	bool isTop;
+	SetX!(const(char)*) dependencies;
+	void joinWith(Dependency rhs){
+		if(isTop) return;
+		if(rhs.isTop){
+			this=rhs;
+			return;
+		}
+		foreach(x;rhs.dependencies)
+			dependencies.insert(x);
+	}
+	void replace(const(char)* name, Dependency rhs){
+		if(name !in dependencies) return;
+		dependencies.remove(name);
+		joinWith(rhs);
+	}
+	Dependency dup(){
+		return Dependency(isTop, dependencies.dup);
+	}
+}
+
+struct Dependencies{
+	Dependency[const(char)*] dependencies;
+	void joinWith(Dependencies rhs){
+		foreach(k,ref v;dependencies){
+			if(k in rhs.dependencies)
+				v.joinWith(rhs.dependencies[k]);
+		}
+	}
+	void pushUp(const(char)* removed)in{
+		assert(removed in dependencies);
+	}body{
+		Dependency x=dependencies[removed];
+		dependencies.remove(removed);
+		foreach(k,ref v;dependencies)
+			v.replace(removed, x);
+	}
+	void add(const(char)* decl){
+		if(decl in dependencies)
+			return;
+		dependencies[decl]=Dependency(true);
+	}
+	Dependencies dup(){
+		Dependency[const(char)*] result;
+		foreach(k,ref v;dependencies)
+			result[k]=v.dup;
+		return Dependencies(result);
+	}
+	bool canForget(const(char)* decl){
+		return !dependencies[decl].isTop;
+	}
+	void clear(){
+		dependencies.clear();
+	}
+}
 
 enum Lookup{
 	consuming,
@@ -27,6 +85,7 @@ abstract class Scope{
 			assert(decl.rename.ptr !in rnsymtab);
 			rnsymtab[decl.rename.ptr]=decl;
 		}
+		dependencies.add(decl.getName.ptr);
 		decl.scope_=this;
 		return true;
 	}
@@ -94,18 +153,21 @@ abstract class Scope{
 		debug closed=true;
 		bool errors=false;
 		foreach(n,d;symtab){
-			if(!d.isLinear()||d.canForget) continue;
+			if(!d.isLinear()||canForget(d)) continue;
 			if(d.rename) rnsymtab.remove(d.rename.ptr);
 			errors=true;
 			error(format("%s '%s' is not consumed",d.kind,d.name),d.loc);
 		}
-		foreach(n,d;rnsymtab) assert(!d.isLinear()||d.canForget);
+		foreach(n,d;rnsymtab) assert(!d.isLinear()||canForget(d));
 		return errors;
 	}
 
-	void cannotForget(){
-		foreach(k,v;symtab) v.canForget=false;
-		foreach(k,v;rnsymtab) v.canForget=false;
+	void addDependency(Declaration decl, Dependency dep){
+		dependencies.dependencies[decl.getName.ptr]=dep;
+	}
+	
+	bool canForget(Declaration decl){
+		return dependencies.canForget(decl.getName.ptr);
 	}
 
 	bool allowMerge=false;
@@ -113,6 +175,7 @@ abstract class Scope{
 		assert(allowsLinear());
 		assert(r.parent is this);
 	}do{
+		r.dependencies=dependencies.dup;
 		r.symtab=symtab.dup;
 		r.rnsymtab=rnsymtab.dup;
 		allowMerge=true;
@@ -123,33 +186,29 @@ abstract class Scope{
 		debug assert(allowMerge);
 	}do{
 		allowMerge=false;
+		dependencies=scopes[0].dependencies.dup;
 		symtab=scopes[0].symtab.dup;
 		rnsymtab=scopes[0].rnsymtab.dup;
 		bool errors=false;
-		foreach(sym;symtab.dup){
-			foreach(sc;scopes[1..$]){
-				auto osym=sc.symtab.get(sym.name.ptr,null);
-				if(osym) sym.canForget&=osym.canForget;
-			}
-		}
+		foreach(sc;scopes[1..$])
+			dependencies.joinWith(sc.dependencies);
 		foreach(sym;symtab.dup){
 			foreach(sc;scopes[1..$]){
 				if(sym.name.ptr !in sc.symtab){
 					symtab.remove(sym.name.ptr);
 					if(sym.rename) rnsymtab.remove(sym.rename.ptr);
-					if(sym.isLinear()&&!sym.canForget){
+					if(sym.isLinear()&&!canForget(sym)){
 						error(format("variable '%s' is not consumed", sym.name), sym.loc);
 						errors=true;
 					}
 				}else{
 					auto osym=sc.symtab[sym.name.ptr];
-					sym.canForget&=osym.canForget; // TODO: make phi declaration instead
 					import semantic_: typeForDecl;
 					auto ot=typeForDecl(osym),st=typeForDecl(sym);
 					if((sym.scope_ is scopes[0]||osym.scope_ is sc)&&ot&&st&&(ot!=st||quantumControl&&st.hasClassicalComponent())){
 						symtab.remove(sym.name.ptr);
 						if(sym.rename) rnsymtab.remove(sym.rename.ptr);
-						if(sym.isLinear()&&!sym.canForget){
+						if(sym.isLinear()&&!canForget(sym)){
 							error(format("variable '%s' is not consumed", sym.name), sym.loc);
 							errors=true;
 						}
@@ -160,7 +219,7 @@ abstract class Scope{
 		foreach(sc;scopes[1..$]){
 			foreach(sym;sc.symtab){
 				if(sym.name.ptr !in symtab){
-					if(sym.isLinear()&&!sym.canForget){
+					if(sym.isLinear()&&!sc.canForget(sym)){
 						error(format("variable '%s' is not consumed", sym.name), sym.loc);
 						errors=true;
 					}
@@ -168,9 +227,14 @@ abstract class Scope{
 			}
 		}
 		foreach(sc;scopes){
+			sc.dependencies.clear();
 			sc.symtab.clear();
 			sc.rnsymtab.clear();
 			debug sc.closed=true;
+		}
+		foreach(k,v;dependencies.dependencies.dup){
+			if(k !in symtab && k !in rnsymtab)
+				dependencies.dependencies.remove(k);
 		}
 		foreach(k,v;symtab) v.scope_=this;
 		foreach(k,v;rnsymtab) v.scope_=this;
@@ -193,6 +257,7 @@ abstract class Scope{
 	}
 	IndexExp indexToReplace=null;
 private:
+	Dependencies dependencies;
 	Identifier[const(char)*] constBlock;
 	Declaration[const(char)*] symtab;
 	Declaration[const(char)*] rnsymtab;

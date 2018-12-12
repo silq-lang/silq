@@ -20,7 +20,6 @@ class Declaration: Expression{
 	// semantic information
 	Identifier rename=null;
 	int semanticDepth=0;
-	bool canForget=false;
 }
 
 class CompoundDecl: Expression{
@@ -191,6 +190,8 @@ abstract class DefExp: Expression{
 	abstract void setType(Expression type);
 	abstract void setInitializer();
 	abstract void setError();
+
+	abstract int varDecls(scope int delegate(VarDecl) dg);
 }
 
 class SingleDefExp: DefExp{
@@ -211,10 +212,13 @@ class SingleDefExp: DefExp{
 	override void setInitializer(){
 		assert(!decl.initializer&&initializer);
 		decl.initializer=initializer.e2;
-		if(initializer.e2.isLifted()) decl.canForget=true;
 	}
 	override void setError(){
 		decl.sstate=sstate=SemState.error;
+	}
+
+	override int varDecls(scope int delegate(VarDecl) dg){
+		return dg(decl);
 	}
 
 	mixin VariableFree; // TODO
@@ -252,12 +256,16 @@ class MultiDefExp: DefExp{
 		foreach(i;0..decls.length){
 			assert(!decls[i].initializer);
 			decls[i].initializer=tpl.e[i];
-			if(tpl.e[i].isLifted()) decls[i].canForget=true;
 		}
 	}
 	override void setError(){
 		foreach(decl;decls_) decl.sstate=SemState.error;
 		sstate=SemState.error;
+	}
+
+	override int varDecls(scope int delegate(VarDecl) dg){
+		foreach(decl;decls_) if(auto r=dg(decl)) return r;
+		return 0;
 	}
 
 	mixin VariableFree;
