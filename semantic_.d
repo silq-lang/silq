@@ -502,8 +502,8 @@ Expression statementSemantic(Expression e,Scope sc){
 		}
 		auto quantumControl=ite.cond.type!=Bool(true);
 		auto restriction_=quantumControl?Annotation.mfree:Annotation.none;
-		ite.then=compoundExpSemantic(ite.then,sc,restriction_);
-		if(ite.othw) ite.othw=compoundExpSemantic(ite.othw,sc,restriction_);
+		ite.then=controlledCompoundExpSemantic(ite.then,sc,ite.cond,restriction_);
+		if(ite.othw) ite.othw=controlledCompoundExpSemantic(ite.othw,sc,ite.cond,restriction_);
 		propErr(ite.cond,ite);
 		propErr(ite.then,ite);
 		if(ite.othw) propErr(ite.othw,ite);
@@ -676,6 +676,16 @@ Expression statementSemantic(Expression e,Scope sc){
 	return e;
 }
 
+CompoundExp controlledCompoundExpSemantic(CompoundExp ce,Scope sc,Expression control,Annotation restriction_)in{
+	assert(!ce.blscope_);
+}do{
+	if(control.isLifted()){
+		ce.blscope_=new BlockScope(sc,restriction_);
+		ce.blscope_.addControlDependency(control.getDependency());
+	}
+	return compoundExpSemantic(ce,sc,restriction_);
+}
+
 CompoundExp compoundExpSemantic(CompoundExp ce,Scope sc,Annotation restriction_=Annotation.none){
 	if(!ce.blscope_) ce.blscope_=new BlockScope(sc,restriction_);
 	foreach(ref e;ce.s){
@@ -709,6 +719,17 @@ VarDecl varDeclSemantic(VarDecl vd,Scope sc){
 	return vd;
 }
 
+Dependency getDependency(Expression e)in{
+	assert(e.isLifted());
+}do{
+	SetX!string names;
+	foreach(id;e.freeIdentifiers){
+		if(!id.type.isClassical)
+			names.insert(id.name);
+	}
+	return Dependency(false, names);
+}
+
 Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
 	if(cast(IndexExp)be.e1) return indexReplaceSemantic(be,sc);
 	if(auto tpl=cast(TupleExp)be.e1) if(tpl.e.any!(x=>!!cast(IndexExp)x)) return permuteSemantic(be,sc);
@@ -736,6 +757,12 @@ Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
 				de.setInitializer();
 			}
 			de.type=unit;
+			if(sc.getFunction()){
+				foreach(vd;de.decls){
+					if(vd.initializer.isLifted())
+						sc.addDependency(vd, vd.initializer.getDependency());
+				}
+			}
 		}
 		if(cast(TopScope)sc){
 			if(!be.e2.isConstant() && !cast(PlaceholderExp)be.e2 && be.e2.type!=typeTy){

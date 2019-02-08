@@ -7,7 +7,7 @@ import util;
 
 struct Dependency{
 	bool isTop;
-	SetX!(const(char)*) dependencies;
+	SetX!string dependencies;
 	void joinWith(Dependency rhs){
 		if(isTop) return;
 		if(rhs.isTop){
@@ -17,7 +17,7 @@ struct Dependency{
 		foreach(x;rhs.dependencies)
 			dependencies.insert(x);
 	}
-	void replace(const(char)* name, Dependency rhs){
+	void replace(string name, Dependency rhs){
 		if(name !in dependencies) return;
 		dependencies.remove(name);
 		joinWith(rhs);
@@ -28,14 +28,14 @@ struct Dependency{
 }
 
 struct Dependencies{
-	Dependency[const(char)*] dependencies;
+	Dependency[string] dependencies;
 	void joinWith(Dependencies rhs){
 		foreach(k,ref v;dependencies){
 			if(k in rhs.dependencies)
 				v.joinWith(rhs.dependencies[k]);
 		}
 	}
-	void pushUp(const(char)* removed)in{
+	void pushUp(string removed)in{
 		assert(removed in dependencies);
 	}body{
 		Dependency x=dependencies[removed];
@@ -43,18 +43,18 @@ struct Dependencies{
 		foreach(k,ref v;dependencies)
 			v.replace(removed, x);
 	}
-	void add(const(char)* decl){
+	void add(string decl){
 		if(decl in dependencies)
 			return;
 		dependencies[decl]=Dependency(true);
 	}
 	Dependencies dup(){
-		Dependency[const(char)*] result;
+		Dependency[string] result;
 		foreach(k,ref v;dependencies)
 			result[k]=v.dup;
 		return Dependencies(result);
 	}
-	bool canForget(const(char)* decl){
+	bool canForget(string decl){
 		return !dependencies[decl].isTop;
 	}
 	void clear(){
@@ -85,7 +85,7 @@ abstract class Scope{
 			assert(decl.rename.ptr !in rnsymtab);
 			rnsymtab[decl.rename.ptr]=decl;
 		}
-		dependencies.add(decl.getName.ptr);
+		dependencies.add(decl.getName);
 		decl.scope_=this;
 		return true;
 	}
@@ -99,6 +99,13 @@ abstract class Scope{
 	void resetConst(){ constBlock.clear(); }
 	Identifier isConst(Identifier ident){ return constBlock.get(ident.ptr, null); }
 
+	final void consume(Declaration decl){
+		symtab.remove(decl.name.ptr);
+		if(decl.rename) rnsymtab.remove(decl.rename.ptr);
+		dependencies.pushUp(decl.getName);
+		writeln(dependencies," ",decl.name);
+	}
+
 	protected final Declaration symtabLookup(Identifier ident,bool rnsym,Lookup kind){
 		if(allowMerge) return null;
 		auto r=symtab.get(ident.ptr, null);
@@ -108,10 +115,7 @@ abstract class Scope{
 				error(format("cannot consume 'const' variable '%s'",ident), ident.loc);
 				note("variable was made 'const' here", read.loc);
 				ident.sstate=SemState.error;
-			}else{
-				symtab.remove(r.name.ptr);
-				if(r.rename) rnsymtab.remove(r.rename.ptr);
-			}
+			}else consume(r);
 		}
 		if(kind==Lookup.constant&&r&&r.isLinear()){
 			if(ident.ptr !in constBlock)
@@ -162,12 +166,18 @@ abstract class Scope{
 		return errors;
 	}
 
-	void addDependency(Declaration decl, Dependency dep){
-		dependencies.dependencies[decl.getName.ptr]=dep;
+	private auto controlDependency=Dependency(false,SetX!string.init);
+	void addControlDependency(Dependency dep){
+		controlDependency.joinWith(dep);
 	}
-	
+
+	void addDependency(Declaration decl, Dependency dep){
+		dep.joinWith(controlDependency);
+		dependencies.dependencies[decl.getName]=dep;
+	}
+
 	bool canForget(Declaration decl){
-		return dependencies.canForget(decl.getName.ptr);
+		return dependencies.canForget(decl.getName);
 	}
 
 	bool allowMerge=false;
@@ -175,6 +185,7 @@ abstract class Scope{
 		assert(allowsLinear());
 		assert(r.parent is this);
 	}do{
+		r.controlDependency.joinWith(controlDependency);
 		r.dependencies=dependencies.dup;
 		r.symtab=symtab.dup;
 		r.rnsymtab=rnsymtab.dup;
@@ -233,7 +244,7 @@ abstract class Scope{
 			debug sc.closed=true;
 		}
 		foreach(k,v;dependencies.dependencies.dup){
-			if(k !in symtab && k !in rnsymtab)
+			if(k.ptr !in symtab && k.ptr !in rnsymtab)
 				dependencies.dependencies.remove(k);
 		}
 		foreach(k,v;symtab) v.scope_=this;
