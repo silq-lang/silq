@@ -261,7 +261,9 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 	}
 	if(auto be=cast(BinaryExp!(Tok!":="))expr){
 		if(auto id=cast(Identifier)be.e1){
-			auto vd=new VarDecl(id);
+			auto nid=new Identifier(id.name);
+			nid.loc=id.loc;
+			auto vd=new VarDecl(nid);
 			vd.loc=id.loc;
 			success&=sc.insert(vd);
 			id.name=vd.getName;
@@ -275,7 +277,9 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 			foreach(exp;tpl.e){
 				auto id=cast(Identifier)exp;
 				if(!id) goto LnoIdTuple;
-				vds~=new VarDecl(id);
+				auto nid=new Identifier(id.name);
+				nid.loc=id.loc;
+				vds~=new VarDecl(nid);
 				vds[$-1].loc=id.loc;
 				success&=sc.insert(vds[$-1]);
 				id.name=vds[$-1].getName;
@@ -667,7 +671,7 @@ Expression statementSemantic(Expression e,Scope sc){
 				fe.sstate=SemState.error;
 			}
 		}else if(!canForgetImplicitly){
-			sc.error(format("cannot synthesize forget expression for variable '%s'",var),fe.loc);
+			sc.error(format("cannot synthesize forget expression for '%s'",var),fe.loc);
 		}
 		return fe;
 	}
@@ -755,6 +759,10 @@ Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
 			if(de.sstate!=SemState.error){
 				de.setType(be.e2.type);
 				de.setInitializer();
+			}
+			foreach(vd;de.decls){
+				auto nvd=varDeclSemantic(vd,sc);
+				assert(nvd is vd);
 			}
 			de.type=unit;
 			if(sc.getFunction()){
@@ -1026,7 +1034,7 @@ ABinaryExp opAssignExpSemantic(ABinaryExp be,Scope sc)in{
 			sc.error("quantum update must be invertible",be.loc);
 			be.sstate=SemState.error;
 		}
-		if(id) addVar(id.name,id.type,be.loc,sc);
+		if(id&&id.meaning&&id.meaning.name) addVar(id.meaning.name.name,id.type,be.loc,sc);
 	}
 	be.type=unit;
 	if(be.sstate!=SemState.error) be.sstate=SemState.completed;
