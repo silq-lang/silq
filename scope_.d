@@ -204,6 +204,9 @@ abstract class Scope{
 		dependencies.dependencies[decl.getName]=dep;
 	}
 
+	final bool dependencyTracked(Identifier id){
+		return !!(id.name in dependencies.dependencies);
+	}
 	final Dependency getDependency(Identifier id)in{
 		assert(id.sstate==SemState.completed);
 	}do{

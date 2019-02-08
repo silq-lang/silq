@@ -53,3 +53,16 @@ def f4(x: 𝔹){
 	forget(y);
 	return x;
 }
+
+def f5(x: 𝔹){
+	__show(__query("dep",x));
+	z := dup(x);
+	__show(__query("dep",z)); // {x}
+	f := (){
+		y:=z;
+		__show(__query("dep",y)); // ⊤, even though {x} in outer scope
+		//forget(y);
+		return y;
+	};
+	return (f,x);
+}

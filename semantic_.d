@@ -694,7 +694,7 @@ CompoundExp controlledCompoundExpSemantic(CompoundExp ce,Scope sc,Expression con
 }do{
 	if(control.isLifted()){
 		ce.blscope_=new BlockScope(sc,restriction_);
-		ce.blscope_.addControlDependency(control.getDependency());
+		ce.blscope_.addControlDependency(control.getDependency(ce.blscope_));
 	}
 	return compoundExpSemantic(ce,sc,restriction_);
 }
@@ -732,13 +732,16 @@ VarDecl varDeclSemantic(VarDecl vd,Scope sc){
 	return vd;
 }
 
-Dependency getDependency(Expression e)in{
+Dependency getDependency(Expression e,Scope sc)in{
 	assert(e.isLifted());
 }do{
 	SetX!string names;
 	foreach(id;e.freeIdentifiers){
-		if(!id.type.isClassical)
+		if(!id.type.isClassical){
+			if(!sc.dependencyTracked(id)) // for variables captured in closure
+				return Dependency(true);
 			names.insert(id.name);
+		}
 	}
 	return Dependency(false, names);
 }
@@ -778,10 +781,10 @@ Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
 				foreach(vd;de.decls){
 					if(vd.initializer){
 						if(vd.initializer.isLifted())
-							sc.addDependency(vd, vd.initializer.getDependency());
+							sc.addDependency(vd, vd.initializer.getDependency(sc));
 					}else if(be.e2){
 						if(be.e2.isLifted())
-							sc.addDependency(vd, be.e2.getDependency());
+							sc.addDependency(vd, be.e2.getDependency(sc));
 					}
 				}
 			}
@@ -1067,7 +1070,7 @@ ABinaryExp opAssignExpSemantic(ABinaryExp be,Scope sc)in{
 		if(id&&id.meaning&&id.meaning.name){
 			if(be.e2.isLifted()){
 				auto dependency=sc.getDependency(id.meaning);
-				dependency.joinWith(be.e2.getDependency());
+				dependency.joinWith(be.e2.getDependency(sc));
 				sc.consume(id.meaning);
 				sc.pushConsumed();
 				auto var=addVar(id.meaning.name.name,id.type,be.loc,sc);
@@ -2118,6 +2121,7 @@ FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 	assert(fsc.allowsLinear());
 	auto bdy=fd.body_?compoundExpSemantic(fd.body_,fsc):null;
 	scope(exit){
+		fsc.pushConsumed();
 		if(fd.ret&&fd.ret.sstate==SemState.completed){
 			foreach(id;fd.ret.freeIdentifiers){
 				assert(!!id.meaning);
@@ -2533,9 +2537,11 @@ Expression handleQuery(CallExp ce,Scope sc){
 				args[1]=expressionSemantic(args[1],sc,ConstResult.yes);
 				auto dep="{}";
 				if(auto id=cast(Identifier)args[1]){
-					auto dependency=sc.getDependency(id);
-					if(dependency.isTop) dep="⊤";
-					else dep=dependency.dependencies.to!string;
+					if(id.sstate==SemState.completed){
+						auto dependency=sc.getDependency(id);
+						if(dependency.isTop) dep="⊤";
+						else dep=dependency.dependencies.to!string;
+					}
 				}
 				Token tok;
 				tok.type=Tok!"``";
