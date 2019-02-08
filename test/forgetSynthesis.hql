@@ -2,8 +2,9 @@ def f0(x: int[32]){
 	y := dup(x);
 	z := dup(y);
 	k := dup(z);
-	forget(z=x);
-	forget(y=x);
+	forget(z);
+	forget(y);
+	//forget((z,y));
 	forget(k);
 	return x;
 }

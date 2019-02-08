@@ -1325,7 +1325,9 @@ Expression callSemantic(CallExp ce,Scope sc,ConstResult constResult){
 				return handleQuantumPrimitive(ce,sc);
 			case "__show":
 				ce.arg=expressionSemantic(ce.arg,sc,ConstResult.yes);
-				writeln(ce.arg);
+				auto lit=cast(LiteralExp)ce.arg;
+				if(lit&&lit.lit.type==Tok!"``") writeln(lit.lit.str);
+				else writeln(ce.arg);
 				ce.type=unit;
 				break;
 			case "__query":
