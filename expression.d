@@ -1057,7 +1057,7 @@ class ForgetExp: Expression{
 		this.var=var;
 		this.val=val;
 	}
-	override string toString(){ return _brk("forget("~var.toString()~"="~val.toString()~")"); }
+	override string toString(){ return _brk("forget("~var.toString()~(val?"="~val.toString():"")~")"); }
 
 	mixin VariableFree; // TODO
 	override int componentsImpl(scope int delegate(Expression) dg){

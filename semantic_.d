@@ -637,6 +637,15 @@ Expression statementSemantic(Expression e,Scope sc){
 		return ae;
 	}
 	if(auto fe=cast(ForgetExp)e){
+		bool canForgetImplicitly;
+		bool checkImplicitForget(Expression var){
+			auto id=cast(Identifier)var;
+			if(!id) return false;
+			auto meaning=sc.lookup(id,false,true,Lookup.probing);
+			return meaning&&sc.canForget(meaning);
+		}
+		if(auto tpl=cast(TupleExp)fe.var) canForgetImplicitly=tpl.e.all!checkImplicitForget;
+		else canForgetImplicitly=checkImplicitForget(fe.var);
 		auto var=expressionSemantic(fe.var,sc,ConstResult.no);
 		propErr(var,fe);
 		if(!cast(Identifier)fe.var){
@@ -646,15 +655,19 @@ Expression statementSemantic(Expression e,Scope sc){
 				fe.sstate=fe.var.sstate=SemState.error;
 			}
 		}
-		fe.val=expressionSemantic(fe.val,sc,ConstResult.yes);
-		propErr(fe.val,fe);
-		if(fe.sstate!=SemState.error&&!fe.val.isLifted()){
-			sc.error("forget expression must be 'lifted'",fe.val.loc);
-			fe.sstate=SemState.error;
-		}
-		if(fe.var.type&&fe.val.type && !joinTypes(fe.var.type,fe.val.type)){
-			sc.error(format("incompatible types '%s' and '%s' for forget",fe.var.type,fe.val.type),fe.loc);
-			fe.sstate=SemState.error;
+		if(fe.val){
+			fe.val=expressionSemantic(fe.val,sc,ConstResult.yes);
+			propErr(fe.val,fe);
+			if(fe.sstate!=SemState.error&&!fe.val.isLifted()){
+				sc.error("forget expression must be 'lifted'",fe.val.loc);
+				fe.sstate=SemState.error;
+			}
+			if(fe.var.type&&fe.val.type && !joinTypes(fe.var.type,fe.val.type)){
+				sc.error(format("incompatible types '%s' and '%s' for forget",fe.var.type,fe.val.type),fe.loc);
+				fe.sstate=SemState.error;
+			}
+		}else if(!canForgetImplicitly){
+			sc.error(format("cannot synthesize forget expression for variable '%s'",var),fe.loc);
 		}
 		return fe;
 	}

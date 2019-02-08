@@ -925,8 +925,11 @@ struct Parser{
 		expect(Tok!"forget");
 		expect(Tok!"(");
 		auto var=parseExpression(rbp!(Tok!"="));
-		expect(Tok!"=");
-		auto val=parseExpression(rbp!(Tok!"="));
+		Expression val=null;
+		if(ttype==Tok!"="){
+			nextToken();
+			val=parseExpression(rbp!(Tok!"="));
+		}
 		expect(Tok!")");
 		return res=New!ForgetExp(var,val);
 	}
