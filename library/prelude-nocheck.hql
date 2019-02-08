@@ -1,6 +1,4 @@
-// prelude file implicitly imported into all psi programs (with --nocheck)
-// implementation of built-in functions based on 'sampleFrom'
-// caution: some backends may special-case strings (see samplefrom.d)
+// prelude file implicitly imported into all hql programs (with --nocheck, default for now)
 
 def dup[τ:*]lifted(const x: τ)lifted: τ ⇒ (quantumPrimitive("dup"):!(Π[τ:*]lifted. !(Π(x:τ)lifted. τ)))(x);
 def measure[τ]lifted(x: τ):!τ ⇒ (quantumPrimitive("M"):!(Π[τ:*]lifted. !(Π(x:τ). !τ)))(x);

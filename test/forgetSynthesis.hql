@@ -1,0 +1,54 @@
+def f0(x: int[32]){
+	y := dup(x);
+	z := dup(y);
+	k := dup(z);
+	forget(z=x);
+	forget(y=x);
+	forget(k);
+	return x;
+}
+
+def f1(x: int[32],y: int[32]){
+	if x>2{
+		if y > 2{
+			z := 1:𝔹;
+		}else{
+			z := 0:𝔹;
+		}
+	}else{
+		z := 0:𝔹;
+	}
+	__show(__query("dep",z));
+	forget(z);
+	return (x,y);
+}
+
+
+k:=2;
+
+def f2(x: int[32], y: int[32]){
+	k := dup(x);
+	while measure(H(false)){
+		k += y;
+	}
+	__show(__query("dep",k));
+	forget(k);
+	return (x,y);
+}
+
+def f3(x: int[32]){
+	y := dup(x);
+	z := y;
+	__show(__query("dep",z));
+	z div= 2;
+	forget(z);
+	return x;
+}
+
+def f4(x: 𝔹){
+	y := dup(x);
+	y = !y; // TODO: make X lifted
+	__show(__query("dep",y));
+	forget(y);
+	return x;
+}

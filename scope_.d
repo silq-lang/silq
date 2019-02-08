@@ -22,6 +22,12 @@ struct Dependency{
 		dependencies.remove(name);
 		joinWith(rhs);
 	}
+	void rename(string decl,string ndecl){
+		if(decl in dependencies){
+			dependencies.remove(decl);
+			dependencies.insert(ndecl);
+		}
+	}
 	Dependency dup(){
 		return Dependency(isTop, dependencies.dup);
 	}
@@ -36,16 +42,24 @@ struct Dependencies{
 		}
 	}
 	void pushUp(string removed)in{
-		assert(removed in dependencies);
+		assert(removed in dependencies,removed);
 	}body{
 		Dependency x=dependencies[removed];
 		dependencies.remove(removed);
 		foreach(k,ref v;dependencies)
 			v.replace(removed, x);
 	}
-	void add(string decl){
-		if(decl in dependencies)
-			return;
+	void rename(string decl,string ndecl)in{
+		assert(decl in dependencies);
+		assert(ndecl !in dependencies);
+	}do{
+		foreach(k,ref v;dependencies) v.rename(decl,ndecl);
+		dependencies[ndecl]=dependencies[decl];
+		dependencies.remove(decl);
+	}
+	void add(string decl)in{
+		assert(decl !in dependencies);
+	}do{
 		dependencies[decl]=Dependency(true);
 	}
 	Dependencies dup(){
@@ -54,7 +68,9 @@ struct Dependencies{
 			result[k]=v.dup;
 		return Dependencies(result);
 	}
-	bool canForget(string decl){
+	bool canForget(string decl)in{
+		assert(decl in dependencies);
+	}do{
 		return !dependencies[decl].isTop;
 	}
 	void clear(){
@@ -85,6 +101,13 @@ abstract class Scope{
 			assert(decl.rename.ptr !in rnsymtab);
 			rnsymtab[decl.rename.ptr]=decl;
 		}
+		if(decl.getName in dependencies.dependencies){
+			assert(toPush.canFind(decl.getName),text(decl," ",toPush));
+			auto ndecl="`renamed`"~decl.getName;
+			assert(ndecl !in dependencies.dependencies);
+			foreach(ref x;toPush) if(x == decl.getName) x=ndecl;
+			dependencies.rename(decl.getName,ndecl);
+		}
 		dependencies.add(decl.getName);
 		decl.scope_=this;
 		return true;
@@ -99,10 +122,16 @@ abstract class Scope{
 	void resetConst(){ constBlock.clear(); }
 	Identifier isConst(Identifier ident){ return constBlock.get(ident.ptr, null); }
 
+	/+private+/ string[] toPush;
 	final void consume(Declaration decl){
 		symtab.remove(decl.name.ptr);
 		if(decl.rename) rnsymtab.remove(decl.rename.ptr);
-		dependencies.pushUp(decl.getName);
+		toPush~=decl.getName;
+	}
+	final void pushConsumed(){
+		foreach(name;toPush)
+			dependencies.pushUp(name);
+		toPush=[];
 	}
 
 	protected final Declaration symtabLookup(Identifier ident,bool rnsym,Lookup kind){
@@ -175,11 +204,21 @@ abstract class Scope{
 		dependencies.dependencies[decl.getName]=dep;
 	}
 
-	Dependency getDependency(Identifier id){
+	final Dependency getDependency(Identifier id)in{
+		assert(id.sstate==SemState.completed);
+	}do{
 		return dependencies.dependencies.get(id.name,Dependency(true));
 	}
+	final Dependency getDependency(Declaration decl)in{
+		assert(decl.sstate==SemState.completed,text(decl," ",decl.sstate));
+	}do{
+		return dependencies.dependencies.get(decl.getName,Dependency(true));
+	}
 
-	bool canForget(Declaration decl){
+	bool canForget(Declaration decl)in{
+		assert(decl.sstate==SemState.completed);
+		assert(toPush.length==0);
+	}do{
 		return dependencies.canForget(decl.getName);
 	}
 
@@ -197,6 +236,8 @@ abstract class Scope{
 
 	bool merge(bool quantumControl,Scope[] scopes...)in{
 		assert(scopes.length);
+		assert(toPush.length==0);
+		assert(scopes.all!(sc=>sc.toPush.length==0));
 		debug assert(allowMerge);
 	}do{
 		allowMerge=false;

@@ -495,11 +495,15 @@ CompoundDecl compoundDeclSemantic(CompoundDecl cd,Scope sc){
 
 Expression statementSemantic(Expression e,Scope sc){
 	assert(sc.allowsLinear());
-	scope(exit) sc.resetConst();
+	scope(exit){
+		sc.pushConsumed();
+		sc.resetConst();
+	}
 	if(auto ce=cast(CallExp)e)
 		return callSemantic(ce,sc,ConstResult.yes);
 	if(auto ite=cast(IteExp)e){
 		ite.cond=expressionSemantic(ite.cond,sc,ConstResult.yes);
+		sc.pushConsumed();
 		if(ite.cond.sstate==SemState.completed && !cast(BoolTy)ite.cond.type){
 			sc.error(format("type of condition should be !𝔹 or 𝔹, not %s",ite.cond.type),ite.cond.loc);
 			ite.sstate=SemState.error;
@@ -527,11 +531,13 @@ Expression statementSemantic(Expression e,Scope sc){
 	if(auto fe=cast(ForExp)e){
 		assert(!fe.bdy.blscope_);
 		fe.left=expressionSemantic(fe.left,sc,ConstResult.no);
+		sc.pushConsumed();
 		if(fe.left.sstate==SemState.completed && !isSubtype(fe.left.type, ℝ(true))){
 			sc.error(format("lower bound for loop variable should be a classical number, not %s",fe.left.type),fe.left.loc);
 			fe.sstate=SemState.error;
 		}
 		fe.right=expressionSemantic(fe.right,sc,ConstResult.no);
+		sc.pushConsumed();
 		if(fe.right.sstate==SemState.completed && !isSubtype(fe.right.type, ℝ(true))){
 			sc.error(format("upper bound for loop variable should be a classical number, not %s",fe.right.type),fe.right.loc);
 			fe.sstate=SemState.error;
@@ -564,6 +570,7 @@ Expression statementSemantic(Expression e,Scope sc){
 	}
 	if(auto we=cast(WhileExp)e){
 		we.cond=expressionSemantic(we.cond,sc,ConstResult.no);
+		sc.pushConsumed();
 		if(we.cond.sstate==SemState.completed && we.cond.type!=Bool(true)){
 			sc.error(format("type of condition should be !𝔹, not %s",we.cond.type),we.cond.loc);
 			we.sstate=SemState.error;
@@ -579,6 +586,7 @@ Expression statementSemantic(Expression e,Scope sc){
 			assert(!!condDup);
 			condDup.loc=we.cond.loc;
 			condDup=expressionSemantic(condDup,we.bdy.blscope_,ConstResult.no);
+			we.bdy.blscope_.pushConsumed();
 			if(condDup.sstate==SemState.error)
 				sc.note("possibly consumed in while loop", we.loc);
 			propErr(condDup,we);
@@ -592,6 +600,7 @@ Expression statementSemantic(Expression e,Scope sc){
 	}
 	if(auto re=cast(RepeatExp)e){
 		re.num=expressionSemantic(re.num,sc,ConstResult.no);
+		sc.pushConsumed();
 		if(re.num.sstate==SemState.completed && !isSubtype(re.num.type, ℤt(true))){
 			sc.error(format("number of iterations should be a classical integer, not %s",re.num.type),re.num.loc);
 			re.sstate=SemState.error;
@@ -759,16 +768,21 @@ Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
 			if(de.sstate!=SemState.error){
 				de.setType(be.e2.type);
 				de.setInitializer();
-			}
-			foreach(vd;de.decls){
-				auto nvd=varDeclSemantic(vd,sc);
-				assert(nvd is vd);
+				foreach(vd;de.decls){
+					auto nvd=varDeclSemantic(vd,sc);
+					assert(nvd is vd);
+				}
 			}
 			de.type=unit;
-			if(sc.getFunction()){
+			if(de.sstate!=SemState.error&&sc.getFunction()){
 				foreach(vd;de.decls){
-					if(vd.initializer.isLifted())
-						sc.addDependency(vd, vd.initializer.getDependency());
+					if(vd.initializer){
+						if(vd.initializer.isLifted())
+							sc.addDependency(vd, vd.initializer.getDependency());
+					}else if(be.e2){
+						if(be.e2.isLifted())
+							sc.addDependency(vd, be.e2.getDependency());
+					}
 				}
 			}
 		}
@@ -987,7 +1001,23 @@ bool isInvertibleOpAssignExp(Expression e){
 ABinaryExp opAssignExpSemantic(ABinaryExp be,Scope sc)in{
 	assert(isOpAssignExp(be));
 }body{
-	be.e1=expressionSemantic(be.e1,sc,ConstResult.no); // TODO: ok?
+	if(auto id=cast(Identifier)be.e1){
+		int nerr=sc.handler.nerrors; // TODO: this is a bit hacky
+		auto meaning=sc.lookup(id,false,true,Lookup.probing);
+		if(nerr!=sc.handler.nerrors){
+			sc.note("looked up here",id.loc);
+			return be;
+		}
+		if(meaning){
+			id.meaning=meaning;
+			id.name=meaning.getName;
+			id.type=typeForDecl(meaning);
+			id.sstate=SemState.completed;
+		}else{
+			sc.error(format("undefined identifier %s",id.name),id.loc);
+			id.sstate=SemState.error;
+		}
+	}else be.e1=expressionSemantic(be.e1,sc,ConstResult.no);
 	be.e2=expressionSemantic(be.e2,sc,cast(CatAssignExp)be?ConstResult.no:ConstResult.yes);
 	propErr(be.e1,be);
 	propErr(be.e2,be);
@@ -1030,11 +1060,24 @@ ABinaryExp opAssignExpSemantic(ABinaryExp be,Scope sc)in{
 		if(!id){
 			sc.error(format("cannot update-assign to quantum expression %s",be.e1),be.e1.loc);
 			be.sstate=SemState.error;
-		}else if(!isInvertibleOpAssignExp(be)){
+		}else if(!isInvertibleOpAssignExp(be)&&id.meaning&&!sc.canForget(id.meaning)){
 			sc.error("quantum update must be invertible",be.loc);
 			be.sstate=SemState.error;
 		}
-		if(id&&id.meaning&&id.meaning.name) addVar(id.meaning.name.name,id.type,be.loc,sc);
+		if(id&&id.meaning&&id.meaning.name){
+			if(be.e2.isLifted()){
+				auto dependency=sc.getDependency(id.meaning);
+				dependency.joinWith(be.e2.getDependency());
+				sc.consume(id.meaning);
+				sc.pushConsumed();
+				auto var=addVar(id.meaning.name.name,id.type,be.loc,sc);
+				sc.addDependency(var,dependency);
+			}else{
+				sc.consume(id.meaning);
+				sc.pushConsumed();
+				auto var=addVar(id.meaning.name.name,id.type,be.loc,sc);
+			}
+		}
 	}
 	be.type=unit;
 	if(be.sstate!=SemState.error) be.sstate=SemState.completed;
@@ -1789,9 +1832,9 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 	}
 	static Expression arithmeticType(bool preserveBool)(Expression t1, Expression t2){
 		if(isInt(t1) && isSubtype(t2,ℤt(t1.isClassical()))) return t1; // TODO: automatic promotion to quantum
-		if(isInt(t2) && isSubtype(t1,ℤt(t1.isClassical()))) return t2;
+		if(isInt(t2) && isSubtype(t1,ℤt(t2.isClassical()))) return t2;
 		if(isUint(t1) && isSubtype(t2,ℕt(t1.isClassical()))) return t1;
-		if(isUint(t2) && isSubtype(t1,ℕt(t1.isClassical()))) return t2;
+		if(isUint(t2) && isSubtype(t1,ℕt(t2.isClassical()))) return t2;
 		if(preludeNumericTypeName(t1) != null||preludeNumericTypeName(t2) != null)
 			return joinTypes(t1,t2);
 		if(!isNumeric(t1)||!isNumeric(t2)) return null;
@@ -1813,7 +1856,9 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 			util.among(r,Bool(false),ℕt(false),ℤt(false))?ℚt(false):r;
 	}
 	static Expression iDivType(Expression t1, Expression t2){
-		if(!isNumeric(t1)||!isNumeric(t2)||cast(ℂTy)t1||cast(ℂTy)t2) return null;
+		auto r=arithmeticType!false(t1,t2);
+		if(isInt(r)||isUint(r)) return r;
+		if(cast(ℂTy)t1||cast(ℂTy)t2) return null;
 		bool classical=t1.isClassical()&&t2.isClassical();
 		return (cast(BoolTy)t1||cast(ℕTy)t1)&&(cast(BoolTy)t2||cast(ℕTy)t2)?ℕt(classical):ℤt(classical);
 	}
@@ -1980,6 +2025,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 	}
 	if(auto ite=cast(IteExp)expr){
 		ite.cond=expressionSemantic(ite.cond,sc,ConstResult.yes);
+		sc.pushConsumed();
 		if(ite.then.s.length!=1||ite.othw&&ite.othw.s.length!=1){
 			sc.error("branches of if expression must be single expressions;",ite.loc);
 			ite.sstate=SemState.error;

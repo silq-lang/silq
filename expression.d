@@ -652,7 +652,7 @@ class CallExp: Expression{
 				}
 			}
 		}
-		return super.combineTypes(rhs,meet);
+		return super.combineTypesImpl(rhs,meet);
 	}
 	override bool isClassical(){
 		return isClassical_;
