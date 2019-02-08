@@ -103,7 +103,6 @@ abstract class Scope{
 		symtab.remove(decl.name.ptr);
 		if(decl.rename) rnsymtab.remove(decl.rename.ptr);
 		dependencies.pushUp(decl.getName);
-		writeln(dependencies," ",decl.name);
 	}
 
 	protected final Declaration symtabLookup(Identifier ident,bool rnsym,Lookup kind){
@@ -174,6 +173,10 @@ abstract class Scope{
 	void addDependency(Declaration decl, Dependency dep){
 		dep.joinWith(controlDependency);
 		dependencies.dependencies[decl.getName]=dep;
+	}
+
+	Dependency getDependency(Identifier id){
+		return dependencies.dependencies.get(id.name,Dependency(true));
 	}
 
 	bool canForget(Declaration decl){

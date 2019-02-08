@@ -362,7 +362,7 @@ bool isBuiltIn(Identifier id){
 	switch(id.name){
 	case "π":
 	case "readCSV":
-	case "Marginal","sampleFrom","quantumPrimitive":
+	case "Marginal","sampleFrom","quantumPrimitive","__show","__query":
 	case "Expectation":
 		return true;
 	case "*","𝟙","𝟚","B","𝔹","N","ℕ","Z","ℤ","Q","ℚ","R","ℝ","C","ℂ":
@@ -380,7 +380,7 @@ Expression builtIn(Identifier id,Scope sc){
 	switch(id.name){
 	case "readCSV": t=funTy(stringTy(true),arrayTy(ℝ(true)),false,false,true); break;
 	case "π": t=ℝ(true); break;
-	case "Marginal","sampleFrom","quantumPrimitive": t=unit; break; // those are actually magic polymorphic functions
+	case "Marginal","sampleFrom","quantumPrimitive","__query","__show": t=unit; break; // those are actually magic polymorphic functions
 	case "Expectation": t=funTy(ℝ(false),ℝ(false),false,false,true); break; // TODO: should be lifted
 	case "*","𝟙","𝟚","B","𝔹","N","ℕ","Z","ℤ","Q","ℚ","R","ℝ","C","ℂ":
 		id.type=typeTy;
@@ -1272,6 +1272,13 @@ Expression callSemantic(CallExp ce,Scope sc,ConstResult constResult){
 				return handleSampleFrom(ce,sc);
 			case "quantumPrimitive":
 				return handleQuantumPrimitive(ce,sc);
+			case "__show":
+				ce.arg=expressionSemantic(ce.arg,sc,ConstResult.yes);
+				writeln(ce.arg);
+				ce.type=unit;
+				break;
+			case "__query":
+				return handleQuery(ce,sc);
 			default: assert(0,text("TODO: ",id.name));
 		}
 	}else{
@@ -1354,7 +1361,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 			}
 			if(!meaning){
 				if(auto r=builtIn(id,sc)){
-					if(!id.calledDirectly&&util.among(id.name,"Expectation","Marginal","sampleFrom")){
+					if(!id.calledDirectly&&util.among(id.name,"Expectation","Marginal","sampleFrom","__query","__show")){
 						sc.error("special operator must be called directly",id.loc);
 						id.sstate=r.sstate=SemState.error;
 					}
@@ -2439,6 +2446,52 @@ Expression handleQuantumPrimitive(CallExp ce,Scope sc){
 			break;
 		default:
 			sc.error(format("unknown quantum primitive %s",literal.lit.str),literal.loc);
+			ce.sstate=SemState.error;
+			break;
+	}
+	return ce;
+}
+
+Expression handleQuery(CallExp ce,Scope sc){
+	Expression[] args;
+	if(auto tpl=cast(TupleExp)ce.arg) args=tpl.e;
+	else args=[ce.arg];
+	if(args.length==0){
+		sc.error("expected argument to __query",ce.loc);
+		ce.sstate=SemState.error;
+		return ce;
+	}
+	auto literal=cast(LiteralExp)args[0];
+	if(!literal||literal.lit.type!=Tok!"``"){
+		sc.error("first argument to __query must be string literal",args[0].loc);
+		ce.sstate=SemState.error;
+		return ce;
+	}
+	switch(literal.lit.str){
+		case "dep":
+			if(args.length!=2||!cast(Identifier)args[1]){
+				sc.error("expected single variable as argument to 'dep' query", ce.loc);
+				ce.sstate=SemState.error;
+				break;
+			}else{
+				args[1]=expressionSemantic(args[1],sc,ConstResult.yes);
+				auto dep="{}";
+				if(auto id=cast(Identifier)args[1]){
+					auto dependency=sc.getDependency(id);
+					if(dependency.isTop) dep="⊤";
+					else dep=dependency.dependencies.to!string;
+				}
+				Token tok;
+				tok.type=Tok!"``";
+				tok.str=dep;
+				auto nlit=New!LiteralExp(tok);
+				nlit.loc=ce.loc;
+				nlit.type=stringTy(true);
+				nlit.sstate=SemState.completed;
+				return nlit;
+			}
+		default:
+			sc.error(format("unknown query '%s'",literal.lit.str),literal.loc);
 			ce.sstate=SemState.error;
 			break;
 	}
