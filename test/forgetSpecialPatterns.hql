@@ -1,11 +1,11 @@
 
 // Check this pattern:
 //
-//    x    y
-//     \  /
-//       z
-//       |
-//       a
+//    x   y
+//     \ /
+//      z
+//      |
+//      a
 //
 def f0(x:int[32],y:int[32]){
 	z := x + y;
