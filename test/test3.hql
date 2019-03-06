@@ -1,7 +1,7 @@
 // TODO: add lifted annotation
 
 // Node := Int(bits=n)
-// Node := 𝔹[];
+Node := 𝔹[];
 // // TODO: edgeOracle lifted?
 // edgeOracle_spec := !((const Node x const Node x 𝔹) -> 𝔹);
 // QWTFP_spec := !Int x !Int x edgeOracle_spec;
@@ -114,31 +114,33 @@ def a5_SETUP[n:!N, rr:!N](edgeOracle:((const int[n] x const int[n] x 𝔹) !-> �
 	return ee;
 }
 
-// // // TODO: make high level, ttd, eed allocated in f. 
-// // def a6_QWSH(oracle:!QWTFP_spec, tt: Node[], 
-// // 	i: Int, v: Node, ee: 𝔹[][]) : Node[] x Int x v x 𝔹[][] {
-// def a6_QWSH[n:!N, rr:!N](edgeOracle:((const int[n] x const int[n] x 𝔹) !-> 𝔹), 
-// 	tt:int[n]^rr, i: Int, v:int[n], 
-// 	ee:(𝔹^rr)^rr) : int[n]^rr x Int x int[n] x (𝔹^rr)^rr {
+// // TODO: make high level, ttd, eed allocated in f. 
+// def a6_QWSH(oracle:!QWTFP_spec, tt: Node[], 
+// 	i: int, v: Node, ee: 𝔹[][]) : Node[] x int x v x 𝔹[][] {
+def a6_QWSH[n:!N, r:!N, rr:!N](
+	edgeOracle:((const int[n] x const int[n] x 𝔹) !-> 𝔹), 
+	tt:int[n]^rr, 
+	i:int[r], 
+	v:int[n], 
+	ee:(𝔹^rr)^rr ) : int[n]^rr x int[r] x int[n] x (𝔹^rr)^rr {
 
-// 	//todo check if capturing here is enough
-// 	f := lambda (i:const Int, tt:Node[], ee:𝔹[][]) . {
-// 		eed := array(2^r,False);
-// 		ttd := tt[i]; //qram_fetch_Array(i, tt);
-// 		(ee, eed) := a12_FetchStoreE(i, ee, eed);
-// 		eed := a13_UPDATE(oracle, tt, ttd, eed);
-// 		tt := qram_store_Array(i, tt, ttd);
-// 		// tt[i] := ttd;
-// 		return ttd, ee, eed, tt;
-// 	};
+	//todo check if capturing here is enough
+	f := lambda (const i: int[r], tt:Node[], ee:(𝔹^rr)^rr) . {
+		eed := array(2^rr,false):𝔹[];
+		ttd := tt[i]; 									//qram_fetch_Array(i, tt);
+		(ee, eed) := a12_FetchStoreE(i, ee, eed);
+		eed = a13_UPDATE(edgeOracle, tt, ttd, eed);
+		tt = a9_StoreT_Array(i, tt, ttd); //tt = qram_store_Array(i, tt, ttd); // tt[i] := ttd;
+		return (ttd, ee, eed, tt);
+	};
 	
-// 	i, v := a7_DIFFUSE_Int_Array([i, v]);
-// 	ttd,ee,eed,tt := f(i,tt,ee);
-// 	ttd, v := v, ttd;
-// 	tt,ee := reverse(f)(i,ttd,ee,eed,tt);
+	(i, v) = a7_DIFFUSE_Pair(i, v);
+	(ttd,ee,eed,tt) = f(i,tt,ee);
+	(ttd, v) = (v, ttd);
+	(tt,ee) = reverse(f)(i,ttd,ee,eed,tt);
 
-// 	return tt, i, v, ee;
-// // }
+	return (tt, i, v, ee);
+}
 
 
 def a7_Diffuse_Array[k:!N](q:𝔹^k) : 𝔹^k {
@@ -244,8 +246,7 @@ def a11_FetchE[rr:!N,r:!N](const i:int[r], const qs:(𝔹^rr)^rr) lifted : 𝔹^
 }
 
 
-def a12_FetchStoreE[rr:!N,r:!N](const i:int[r], qs: (𝔹^rr)^rr, 
-	ps: 𝔹^rr) : (𝔹^rr)^rr x 𝔹^rr {
+def a12_FetchStoreE[rr:!N,r:!N](const i:int[r], qs: (𝔹^rr)^rr, ps: 𝔹^rr) : (𝔹^rr)^rr x 𝔹^rr {
 
 	for j in [0..rr) {
 		for l in [0..j) {
@@ -440,7 +441,7 @@ def floor(r:!R) lifted : !N;
 
 // def a20_GCQWStep(oracle:!QWTFP_spec, tt:const Node[], ee:const 𝔹[][], w:const Node, 
 // 	gcqwRegs:GCQWRegs) : GCQWRegs {
-def a20_GCQWStep[n:!N, rr:!N, r:!N, rbar:!N, rrbar:!N](edgeOracle:((const int[n] x const int[n] x 𝔹) !-> 𝔹), 
+/*def a20_GCQWStep[n:!N, rr:!N, r:!N, rbar:!N, rrbar:!N](edgeOracle:((const int[n] x const int[n] x 𝔹) !-> 𝔹), 
 	const tt: int[n]^rrbar, const ee:(𝔹^rr)^rr, const w:int[n], 
 	gcqwRegs:(int[r]^rrbar x int[rbar] x int[r] x 𝔹^rrbar x int[rrbar] x 𝔹)
 	      ) : int[r]^rrbar x int[rbar] x int[r] x 𝔹^rrbar x int[rrbar] x 𝔹 {
@@ -456,7 +457,7 @@ def a20_GCQWStep[n:!N, rr:!N, r:!N, rbar:!N, rrbar:!N](edgeOracle:((const int[n]
 	(eew, cTri) := reverse(help_a20_2)(edgeOracle, tau, iota, tt, ee, tau, taud, eewd, cTri, eew);
 
 	return (tau, iota, sigma, eew, cTri, triTestT);
-}
+}*/
 
 
 // // todo: add w
@@ -465,7 +466,7 @@ def a20_GCQWStep[n:!N, rr:!N, r:!N, rbar:!N, rrbar:!N](edgeOracle:((const int[n]
 // 	rr:!Int, rrbar:!Int, n:!Int) :
 // 	Node x 𝔹[] x Int x 𝔹 x 𝔹[] {
 
-def help_a20_2[n:!N, r:!N, rr:!N, rbar:!N, rrbar:!N](
+/*def help_a20_2[n:!N, r:!N, rr:!N, rbar:!N, rrbar:!N](
 	edgeOracle:((const int[n] x const int[n] x 𝔹) !-> 𝔹), 
 	const w:int[n], tau:int[r]^rrbar, 
 	const iota:int[rbar], eew:𝔹^rrbar,
@@ -486,4 +487,4 @@ def help_a20_2[n:!N, r:!N, rr:!N, rbar:!N, rrbar:!N](
 	tau := a9_StoreT_Array(iota, tau, taud);
 
 	return (tau, taud, eewd, cTri, eew);
-}
+}*/
