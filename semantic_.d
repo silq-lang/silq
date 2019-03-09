@@ -737,7 +737,7 @@ Dependency getDependency(Expression e,Scope sc)in{
 }do{
 	SetX!string names;
 	foreach(id;e.freeIdentifiers){
-		if(!id.type.isClassical){
+		if(id.type&&!id.type.isClassical){
 			if(!sc.dependencyTracked(id)) // for variables captured in closure
 				return Dependency(true);
 			names.insert(id.name);
