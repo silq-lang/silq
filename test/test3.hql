@@ -89,25 +89,25 @@
 // // 	return hzreg;
 // // }
 
-def a4_HADAMARD_Array[k:!N](q:𝔹^k) : 𝔹^k {
+def a4_HADAMARD_Array[k:!N](q:𝔹^k) mfree: 𝔹^k {
 	for j in [0..k) { q[j] := H(q[j]); }
 	return q;
 }
 
-def a4_HADAMARD_Int[k:!N](q:int[k]) : int[k] {
+def a4_HADAMARD_Int[k:!N](q:int[k]) mfree: int[k] {
 	for j in [0..k) { q[j] := H(q[j]); }
 	return q;
 }
 
 // maybe not needed
-def a4_HADAMARD_Array_Array[k:!N,l:!N](q:(𝔹^k)^l) : (𝔹^k)^l {
+def a4_HADAMARD_Array_Array[k:!N,l:!N](q:(𝔹^k)^l) mfree: (𝔹^k)^l {
 	for i in [0..l) {
 		q[i] := a4_HADAMARD_Array(q[i]);
 	}
 	return q;
 }
 
-def a4_HADAMARD_Array_Int[k:!N,l:!N](q:int[k]^l) : int[k]^l {
+def a4_HADAMARD_Array_Int[k:!N,l:!N](q:int[k]^l) mfree: int[k]^l {
 	for i in [0..l) {
 		q[i] := a4_HADAMARD_Int(q[i]);
 	}
@@ -115,8 +115,8 @@ def a4_HADAMARD_Array_Int[k:!N,l:!N](q:int[k]^l) : int[k]^l {
 }
 
 //def a5_SETUP(oracle:!QWTFP_spec, tt:const Node[]) : 𝔹[][] {
-def a5_SETUP[n:!N, rr:!N](edgeOracle:((const int[n] x const int[n] x 𝔹) !-> 𝔹), 
-	const tt:int[n]^rr) : (𝔹^rr)^rr {
+def a5_SETUP[n:!N, rr:!N](edgeOracle:((const int[n] x const int[n] x 𝔹) !->mfree 𝔹), 
+	const tt:int[n]^rr) mfree: (𝔹^rr)^rr {
 
 	ee := vector(rr,vector(rr,false)):(B^rr)^rr;
 
@@ -137,7 +137,7 @@ def a6_QWSH[n:!N, r:!N, rr:!N](
 	tt:int[n]^rr, 
 	i:int[r], 
 	v:int[n], 
-	ee:(𝔹^rr)^rr ) : int[n]^rr x int[r] x int[n] x (𝔹^rr)^rr {
+	ee:(𝔹^rr)^rr ) mfree: int[n]^rr x int[r] x int[n] x (𝔹^rr)^rr {
 
 	//todo check if capturing here is enough
 	// tt:Node[]
@@ -159,21 +159,28 @@ def a6_QWSH[n:!N, r:!N, rr:!N](
 }
 
 
-def a7_Diffuse_Array[k:!N](q:𝔹^k) : 𝔹^k {
+def a7_Diffuse_Array[k:!N](q:𝔹^k) mfree: 𝔹^k {
 	q := a4_HADAMARD_Array(q);
 	if q == array(k,false) { phase(π); }
 	q := a4_HADAMARD_Array(q);
 	return q;
 }
 
-def a7_Diffuse_Array_Array[k:!N,l:!N](q:(𝔹^k)^l) : (𝔹^k)^l {
+def a7_Diffuse_Int[k:!N](q:int[k]) mfree: int[k] {
+	q := a4_HADAMARD_Int(q);
+	if q == 0 { phase(π); }
+	q := a4_HADAMARD_Int(q);
+	return q;
+}
+
+def a7_Diffuse_Array_Array[k:!N,l:!N](q:(𝔹^k)^l) mfree: (𝔹^k)^l {
 	q := a4_HADAMARD_Array_Array(q);
 	if q == array(l,array(k,false)) { phase(π); }
 	q := a4_HADAMARD_Array_Array(q);
 	return q;
 }
 
-def a7_Diffuse_Pair[k:!N, l:!N](p:int[k], q:int[l]) : int[k] x int[l] {
+def a7_Diffuse_Pair[k:!N, l:!N](p:int[k], q:int[l]) mfree: int[k] x int[l] {
 	p := a4_HADAMARD_Array(p:B^k):int[k];
 	q := a4_HADAMARD_Array(q:B^l):int[l];
 	if q == 0 && p==0 { phase(π); }
@@ -242,7 +249,7 @@ def a9_StoreT_Array[n:!N, rr:!N, r:!N](const i:int[r], tt: int[n]^rr, const ttd:
 }
 
 // def a10_FetchStoreT[k:!Int](i:const Int[k], tt:𝔹[], ttd:𝔹) : 𝔹[] x 𝔹 {
-def a10_FetchStoreT[rr:!N, r:!N](const i:int[r], tt:B^rr, ttd:𝔹) : 𝔹^rr x 𝔹 {
+def a10_FetchStoreT[rr:!N, r:!N](const i:int[r], tt:B^rr, ttd:𝔹) mfree : 𝔹^rr x 𝔹 {
 	for j in [0..rr) {
 		if i == j {
 			(tt[j], ttd) := (ttd, tt[j]);
@@ -382,123 +389,131 @@ def a17_TriangleTestTw[n:!N, rr:!N](edgeOracle:((const int[n] x const int[n] x �
 // TODO: why does this compile?
 // //CHECK for Consumed and so on
 // def a18_TriangleEdgeSearch(oracle:!QWTFP_spec, tt:const Node[], ee:const 𝔹[][], triTestT:const 𝔹) : Node {
-def a18_TriangleEdgeSearch[n:!N, rr:!N](
-	edgeOracle:((const int[n] x const int[n] x 𝔹) !->mfree 𝔹),
-	const tt: int[n]^rr, 
-	const ee:(𝔹^rr)^rr, 
-	const triTestT:𝔹) : int[n] {
+// def a18_TriangleEdgeSearch[n:!N, rr:!N](
+// 	edgeOracle:((const int[n] x const int[n] x 𝔹) !->mfree 𝔹),
+// 	const tt: int[n]^rr, 
+// 	const ee:(𝔹^rr)^rr, 
+// 	const triTestT:𝔹) : int[n] {
 	
-	// n, r, edgeOracle := oracle;
-	tG := floor(π/4 * sqrt(2^n));
+// 	// n, r, edgeOracle := oracle;
+// 	tG := floor(π/4 * sqrt(2^n));
 
-	w := 0:int[n]; //array(n,False);//0:Node[n];
-	w := a4_HADAMARD_Int(w);
+// 	w := 0:int[n]; //array(n,False);//0:Node[n];
+// 	w := a4_HADAMARD_Int(w);
 
-	for _ in [0..tG) {
-		cTri := a19_GCQWalk(oracle, tt, ee, w, triTestT);
+// 	for _ in [0..tG) {
+// 		cTri := a19_GCQWalk(oracle, tt, ee, w, triTestT);
 
-		if triTestT == 0 && !(cTri == 0) { phase(π); }
+// 		if triTestT == 0 && !(cTri == 0) { phase(π); }
 
-		reverse(a19_GCQWalk)(oracle, tt, ee, w, triTestT, cTri);
-		w := a7_DIFFUSE(w);
-	}
-	return w;
-}
+// 		reverse(a19_GCQWalk)(oracle, tt, ee, w, triTestT, cTri);
+// 		w := a7_Diffuse_Int(w);
+// 	}
+// 	return w;
+// }
 
 
 // // triTestT needs to be consumed
 // // or break up the tuple structure -> maybe even lifted
 // def a19_GCQWalk(oracle:!QWTFP_spec, tt:const Node[], ee:const 𝔹[][], 
 // 	w:const Node, triTestT:const 𝔹) : Int {
-def a19_GCQWalk[n:!N, rr:!N](
-	//oracle:!QWTFP_spec, 
-	edgeOracle:((const int[n] x const int[n] x 𝔹) !->mfree 𝔹),
-	const tt: int[n]^rr, 
-	const ee: (𝔹^rr)^rr, 
-	const w: int[n], 
-	const triTestT: 𝔹) {
+// def a19_GCQWalk[n:!N, rr:!N](
+// 	//oracle:!QWTFP_spec, 
+// 	edgeOracle:((const int[n] x const int[n] x 𝔹) !->mfree 𝔹),
+// 	const tt: int[n]^rr, 
+// 	const ee: (𝔹^rr)^rr, 
+// 	const w: int[n], 
+// 	const triTestT: 𝔹) {
 
-	//(n, r, edgeOracle) := oracle;
+// 	//(n, r, edgeOracle) := oracle;
 
-	// nn = 2^n;
-	//rr = 2^r;
-	r := log_int(2,rr);
-	rbar := max([2 * r / 3, 1]);  
-	rrbar := floor(2^rbar); // here actually integer
-	tbarm := max([rr / rrbar, 1]);
-	tbarw := floor(sqrt(rrbar));
+// 	// nn = 2^n;
+// 	//rr = 2^r;
+// 	r := log_int(2,rr);
+// 	rbar := max([2 * r / 3, 1]);  
+// 	rrbar := floor(2^rbar); // here actually integer
+// 	tbarm := max([rr / rrbar, 1]);
+// 	tbarw := floor(sqrt(rrbar));
 
-	//cTri := 0:int[rrbar];
-	cTri := 0:int[floor(2^max([2*log_int(2,rr)/3,1]))];
+// 	//cTri := 0:int[rrbar];
+// 	cTri := 0:int[floor(2^max([2*log_int(2,rr)/3,1]))];
 
-	// tau := vector(rrbar,0:int[r]):(int[r])^rrbar;
-	tau := vector( floor(2^max([2*log_int(2,rr)/3,1])) , 0 : int[log_int(2,rr)]):(int[log_int(2,rr)] )^floor(2^max([2*log_int(2,rr)/3,1]));
+// 	// tau := vector(rrbar,0:int[r]):(int[r])^rrbar;
+// 	tau := vector( floor(2^max([2*log_int(2,rr)/3,1])) , 0 : int[log_int(2,rr)]):(int[log_int(2,rr)] )^floor(2^max([2*log_int(2,rr)/3,1]));
 
-	//type is 
-	//int[log_int(2,rr)]^(floor(2 ^ max([2 · log_int(2,rr) / 3,1]))) //, not 
-	//int[log_int(2,rr)]^(floor(2 ^ max([2 · log_int(2,rr) / 3,1])))
+// 	//type is 
+// 	//int[log_int(2,rr)]^(floor(2 ^ max([2 · log_int(2,rr) / 3,1]))) //, not 
+// 	//int[log_int(2,rr)]^(floor(2 ^ max([2 · log_int(2,rr) / 3,1])))
 
 
-	// iota := 0:int[rbar];
-	iota := 0:int[floor(max([2 * log_int(2,rr) / 3, 1]))];
-	//sigma := 0:int[r];
-	sigma := 0:int[log_int(2,rr)];
-	// eew := array(rrbar,false):𝔹^rrbar;
-	eew := vector(floor(2^max([2*log_int(2,rr)/3,1])), false:𝔹):𝔹^floor(2^max([2*log_int(2,rr)/3,1]));
+// 	// iota := 0:int[rbar];
+// 	iota := 0:int[floor(max([2 * log_int(2,rr) / 3, 1]))];
+// 	//sigma := 0:int[r];
+// 	sigma := 0:int[log_int(2,rr)];
+// 	// eew := array(rrbar,false):𝔹^rrbar;
+// 	eew := vector(floor(2^max([2*log_int(2,rr)/3,1])), false:𝔹):𝔹^floor(2^max([2*log_int(2,rr)/3,1]));
 
-	//tau := a4_Hadamard_Array_Int(tau);
-	iota := a4_HADAMARD_Int(iota);
-	sigma := a4_HADAMARD_Int(sigma);
+// 	//tau := a4_Hadamard_Array_Int(tau);
+// 	iota := a4_HADAMARD_Int(iota);
+// 	sigma := a4_HADAMARD_Int(sigma);
 
-	for j in [0..eew.length) {
-		eew[j] := edgeOracle(tt[tau[j]], w, eew[j])
-	}
+// 	for j in [0..eew.length) {
+// 		eew[j] := edgeOracle(tt[tau[j]], w, eew[j])
+// 	}
 
-	for j in [0..rrbar) {
-		for k in [j+1..rrbar) {
-			if ee[tau[j]][tau[k]] && eew[j] && eew[k] {
-				cTri += 1;
-	}	}	}
+// 	for j in [0..rrbar) {
+// 		for k in [j+1..rrbar) {
+// 			if ee[tau[j]][tau[k]] && eew[j] && eew[k] {
+// 				cTri += 1;
+// 	}	}	}
 
-	for _ in [0..tbarm) {
-		if triTestT == 0 && !(cTri == 0) { phase(pi); }
+// 	for _ in [0..tbarm) {
+// 		if triTestT == 0 && !(cTri == 0) { phase(π); }
 
-		gcqwRegs := (tau, iota, sigma, eew, cTri, triTestT);
+// 		gcqwRegs := (tau, iota, sigma, eew, cTri, triTestT);
 
-		for _ in [0..tbarw) {
-			gcqwRegs := a20_GCQWStep(tt, ee, w, gcqwRegs);
-		}
-	}
+// 		for _ in [0..tbarw) {
+// 			gcqwRegs := a20_GCQWStep(tt, ee, w, gcqwRegs);
+// 		}
+// 	}
 
-	// // Todo: Clarify this
-	// // Why is this forget here valid? deleted in with the reverse in a18?
-	// forget(tau = array(rrbar,0:Int[r]));
-	// forget(iota = array(rbar,False));
-	// forget(sigma = array(r,False));
-	// forget(eew = array(rrbar,False));
+// 	// // Todo: Clarify this
+// 	// // Why is this forget here valid? deleted in with the reverse in a18?
+// 	forget(tau = array(rrbar,0:int[r]));
+// 	forget(iota = array(rbar,false));
+// 	forget(sigma = array(r,false));
+// 	forget(eew = array(rrbar,false));
 
-	return cTri;
-}
+// 	return cTri;
+// }
 
 // def a20_GCQWStep(oracle:!QWTFP_spec, tt:const Node[], ee:const 𝔹[][], w:const Node, 
 // 	gcqwRegs:GCQWRegs) : GCQWRegs {
-/*def a20_GCQWStep[n:!N, rr:!N, r:!N, rbar:!N, rrbar:!N](edgeOracle:((const int[n] x const int[n] x 𝔹) !-> 𝔹), 
-	const tt: int[n]^rrbar, const ee:(𝔹^rr)^rr, const w:int[n], 
-	gcqwRegs:(int[r]^rrbar x int[rbar] x int[r] x 𝔹^rrbar x int[rrbar] x 𝔹)
-	      ) : int[r]^rrbar x int[rbar] x int[r] x 𝔹^rrbar x int[rrbar] x 𝔹 {
+def a20_GCQWStep[n:!N, rr:!N, r:!N, rbar:!N, rrbar:!N](
+	const edgeOracle:((const int[n] x const int[n] x 𝔹) !->mfree 𝔹), 
+	const tt: int[n]^rr, 
+	const ee:(𝔹^rr)^rr, 
+	const w:int[n], 
+	//gcqwRegs:(int[r]^rrbar x int[rbar] x int[r] x 𝔹^rrbar x int[rrbar] x 𝔹)
+	tau:int[r]^rrbar, 
+	iota:int[rbar],
+	sigma:int[r],
+	eew:𝔹^rrbar,
+	cTri:int[rrbar],
+	//triTestT:𝔹
+	) mfree //: int[r]^rrbar x int[rbar] x int[r] x 𝔹^rrbar x int[rrbar] x 𝔹 
+	{
 
-	(tau, iota, sigma, eew, cTri, triTestT) := gcqwRegs;
+	//(tau, iota, sigma, eew, cTri, triTestT) := gcqwRegs;
 
 	(iota, sigma) := a7_Diffuse_Pair(iota, sigma);
 
-	(tau, taud, eewd, cTri, eew) := help_a20_2(edgeOracle, w, tau, iota, eew, cTri, tt, ee);
-
+	(tau, taud, eewd, cTri, eew) := help_a20_2(tau, eew, cTri, edgeOracle, w, iota, tt, ee);
 	(taud, sigma) := (sigma, taud); //a14_SWAP(taud, sigma);
+	(tau, eew, cTri) := reverse(help_a20_2)(tau, taud, eewd, cTri, eew, edgeOracle, w, iota, tt, ee);
 
-	(eew, cTri) := reverse(help_a20_2)(edgeOracle, tau, iota, tt, ee, tau, taud, eewd, cTri, eew);
-
-	return (tau, iota, sigma, eew, cTri, triTestT);
-}*/
+	return (tau, iota, sigma, eew, cTri);
+}
 
 
 // // todo: add w
@@ -507,12 +522,16 @@ def a19_GCQWalk[n:!N, rr:!N](
 // 	rr:!Int, rrbar:!Int, n:!Int) :
 // 	Node x 𝔹[] x Int x 𝔹 x 𝔹[] {
 
-/*def help_a20_2[n:!N, r:!N, rr:!N, rbar:!N, rrbar:!N](
-	edgeOracle:((const int[n] x const int[n] x 𝔹) !-> 𝔹), 
-	const w:int[n], tau:int[r]^rrbar, 
-	const iota:int[rbar], eew:𝔹^rrbar,
-	cTri:int[rrbar], const tt:int[n]^rr, const ee:(𝔹^rr)^rr) :
-	int[r]^rrbar x int[r] x 𝔹 x int[rrbar] x 𝔹^rrbar {
+def help_a20_2[n:!N, r:!N, rr:!N, rbar:!N, rrbar:!N](
+	tau:int[r]^rrbar, 
+	eew:𝔹^rrbar,
+	cTri:int[rrbar], 
+	const edgeOracle:((const int[n] x const int[n] x 𝔹) !->mfree 𝔹), 
+	const w:int[n], 
+	const iota:int[rbar], 
+	const tt:int[n]^rr, 
+	const ee:(𝔹^rr)^rr) mfree : int[r]^rrbar x int[r] x 𝔹 x int[rrbar] x 𝔹^rrbar 
+	{
 
 	eewd := false:B;
 
@@ -528,4 +547,4 @@ def a19_GCQWalk[n:!N, rr:!N](
 	tau := a9_StoreT_Array(iota, tau, taud);
 
 	return (tau, taud, eewd, cTri, eew);
-}*/
+}
