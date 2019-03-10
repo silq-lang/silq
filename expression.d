@@ -974,6 +974,11 @@ class ArrayExp: Expression{
 	override string toString(){ return _brk("["~e.map!(to!string).join(",")~"]");}
 	override bool isConstant(){ return e.all!(x=>x.isConstant()); }
 
+	override bool opEquals(Object o){
+		auto r=cast(ArrayExp)o;
+		return r&&e==r.e;
+	}
+
 	override int freeVarsImpl(scope int delegate(string) dg){
 		foreach(x;e) if(auto r=x.freeVarsImpl(dg)) return r;
 		return 0;
