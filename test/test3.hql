@@ -29,7 +29,8 @@ def a1[n:!N](
 	// i := a4_HADAMARD_Array(0:Int[r]);
 	tt := a4_HADAMARD_Array_Int(vector(2^r,0:int[n])); // a4_HADAMARD( array(rr,0:Int[n]) );
 	i := a4_HADAMARD_Int(0:int[r]);
-	v := a4_HADAMARD_Array(vector(n,false:B));
+	//v := a4_HADAMARD_Array(vector(n,false:B));
+	v := a4_HADAMARD_Int(0:int[n]);
 
 	ee := a5_SETUP(edgeOracle, tt);
 
@@ -47,22 +48,24 @@ def a1[n:!N](
 
 	//triTestT gets set to true, if triangle found within tt
 	//triTestTw gets set to true, if a pair of nodes formes a 
-	//triangle with anode from w
-	(w, triTestT, triTestTw) = a15_TestTriangleEdges(edgeOracle, tt, ee);
+	//triangle with a node from w
+	(w, triTestT, triTestTw) := a15_TestTriangleEdges(edgeOracle, tt, ee);
 
 	// ToDo: rewrite this here to qor(testTEdge, [triTestT, triTestTw], [True, True])
 	// Todo: high-level should have testTEdge as a return only
 
 	//testTEdge := qor(testTEdge, [(triTestT, true), (triTestTw, true)]);
 	testTEdge := X(testTEdge);
-	if (triTestT == true && triTestTW == true) { testTEdge := X(testTEdge); }
+	if (triTestT == true && triTestTw == true) { testTEdge := X(testTEdge); }
 
 
-	testTMeasure := Measure(testTEdge);
-  	wMeasure := Measure(w); //wMeasure contains a node of the triangle
-  	ttMeasure := Measure(tt); //other two nodes in TMeasure
-  	eeMeasure := Measure(ee);
-  	// delete(i, v, triTestT, triTestTw);
+	testTMeasure := measure(testTEdge);
+  	wMeasure := measure(w); //wMeasure contains a node of the triangle
+  	ttMeasure := measure(tt); //other two nodes in TMeasure
+  	eeMeasure := measure(ee);
+  	//delete(i, v, triTestT, triTestTw);
+	measure(i); measure(v); measure(triTestTw);
+	
   	return (testTMeasure, wMeasure, ttMeasure, eeMeasure);
 }
 
