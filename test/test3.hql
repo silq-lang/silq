@@ -65,7 +65,7 @@ def a1[n:!N](
   	eeMeasure := measure(ee);
   	//delete(i, v, triTestT, triTestTw);
 	measure(i); measure(v); measure(triTestTw);
-	
+
   	return (testTMeasure, wMeasure, ttMeasure, eeMeasure);
 }
 
@@ -177,26 +177,6 @@ def a6_QWSH[n:!N, r:!N](
 	return (tt, i, v, ee);
 }
 
-
-//  !(∏[const n:!ℕ,const r:!ℕ]lifted. 
-//  !((const (!(const int[n] × const int[n] × 𝔹 →mfree 𝔹))) × 
-//  int[n]^((2 ^ r)) × 
-//  int[r] × 
-//  int[n] × 
-//  𝔹^((2 ^ r))^((2 ^ r)) 
- 
-//  →mfree 
-//  int[n]^((2 ^ r)) × 
-//  int[r] × 
-//  int[n] × 
-//  𝔹^((2 ^ r))^((2 ^ r)))) 
- 
-//  cannot be called with arguments 
-//  (!(const int[n] × const int[n] × 𝔹 →mfree 𝔹)) × 
-//  int[n]^(2 ^ r) × 
-//  int[r] × 
-//  𝔹^n × 
-//  𝔹^(2 ^ r)^(2 ^ r)
 
 def a7_Diffuse_Array[k:!N](q:𝔹^k) mfree: 𝔹^k {
 	q := a4_HADAMARD_Array(q);
@@ -598,33 +578,3 @@ def help_a20_2[n:!N, rr:!N](
 
 	return (tau, taud, eewd, cTri, eew);
 }
-
-
-// !(∏[const n:!ℕ,const rr:!ℕ,const r:!ℕ,const rbar:!ℕ,const rrbar:!ℕ]lifted. 
-
-// !((const (!(const int[n] × const int[n] × 𝔹 →mfree 𝔹))) × 
-// 	const int[n]^rr × 
-// 	const 𝔹^rr^rr × 
-// 	const int[n] × 
-// 	int[log_int(2,rr)]^(floor(2 ^ max([2 · log_int(2,rr) / 3,1]))) × 
-// 	int[floor(max([2 · log_int(2,rr) / 3,1]))] × 
-// 	int[log_int(2,rr)] × 
-// 	𝔹^(floor(2 ^ max([2 · log_int(2,rr) / 3,1]))) × 
-// 	int[floor(2 ^ max([2 · log_int(2,rr) / 3,1]))] 
-	
-// 	→mfree 
-// 	int[log_int(2,rr)]^(floor(2 ^ max([2 · log_int(2,rr) / 3,1]))) × 
-// 	int[floor(max([2 · log_int(2,rr) / 3,1]))] × 
-// 	int[log_int(2,rr)] × 𝔹^(floor(2 ^ max([2 · log_int(2,rr) / 3,1]))) × 
-// 	int[floor(2 ^ max([2 · log_int(2,rr) / 3,1]))])) c
-	
-// 	annot be called with arguments 
-// 	(!(const int[n] × const int[n] × 𝔹 →mfree 𝔹)) × 
-// 	int[n]^rr × 
-// 	𝔹^rr^rr × 
-// 	int[n] × 
-// 	int[log_int(2,rr)]^(floor(2 ^ max([2 · log_int(2,rr) / 3,1]))) × 
-// 	int[floor(max([2 · log_int(2,rr) / 3,1]))] × 
-// 	int[log_int(2,rr)] × 
-// 	𝔹^(floor(2 ^ max([2 · log_int(2,rr) / 3,1]))) × 
-// 	int[floor(2 ^ max([2 · log_int(2,rr) / 3,1]))]
