@@ -112,10 +112,10 @@ def a4_HADAMARD_Int[k:!N](q:int[k]) mfree {
 	return q;
 }
 
-def a4_Hadamard_Int2[rr:!N](q:int[log_int(2,rr)]) mfree {
-	for j in [0..log_int(2,rr)) { q[j] := H(q[j]); }
-	return q;
-}
+// def a4_Hadamard_Int2[rr:!N](q:int[log_int(2,rr)]) mfree {
+// 	for j in [0..log_int(2,rr)) { q[j] := H(q[j]); }
+// 	return q;
+// }
 
 // maybe not needed
 def a4_HADAMARD_Array_Array[k:!N,l:!N](q:(𝔹^k)^l) mfree: (𝔹^k)^l {
@@ -474,7 +474,8 @@ def a19_GCQWalk[n:!N, rr:!N](
 
 	// tau := a4_Hadamard_Array_Int(tau);
 	for k in [ 0..floor(2^max([2*log_int(2,rr)/3,1])) ) {
-		tau[k] := a4_Hadamard_Int2(tau[k]);
+		// tau[k] := a4_Hadamard_Int2(tau[k]);
+		tau[k] := a4_HADAMARD_Int[log_int(2,rr)](tau[k]);
 	}
 
 	iota := a4_HADAMARD_Int(iota);
