@@ -9,55 +9,65 @@
 // GCQWRegs := Int[] x Int x Int x 𝔹[] x Int x 𝔹;
 
 
-// def a1(oracle:QWTFP_spec) : !𝔹 x !Node x !Int[n]^rr x !𝔹[][] {
-// 	n, r, edgeOracle = oracle;
+//def a1(oracle:QWTFP_spec) : !𝔹 x !Node x !Int[n]^rr x !𝔹[][] {
+def a1[n:!N](
+	const edgeOracle:((const int[n] x const int[n] x 𝔹) !->mfree 𝔹),
+	const r:!N) {
+	// n, r, edgeOracle = oracle;
 
-// 	// nn := 2^n; not used 
-// 	rr := 2^r;
-// 	// rbar := max([2*r / 3, 1]); not used
-// 	// rrbar := 2^rbar; 
-// 	tm := 2^(n-r);
-// 	tw := floor(sqrt(rr));
+	// nn := 2^n; not used 
+	rr := 2^r;
+	// rbar := max([2*r / 3, 1]); not used
+	// rrbar := 2^rbar; 
+	tm := 2^(n-r);
+	// tw := floor(sqrt(rr));
+	tw := floor(sqrt(2^r));
 
-// 	testTEdge := False;
+	testTEdge := false:𝔹;
 
-// 	tt := a4_HADAMARD_Array_Array(array(rr,array(n,False))); // a4_HADAMARD( array(rr,0:Int[n]) );
-// 	i := a4_HADAMARD_Array(0:Int[r]);
-// 	v := a4_HADAMARD_Array(array(n,False));
+	// tt := a4_HADAMARD_Array_Int(vector(rr,0:int[n])); // a4_HADAMARD( array(rr,0:Int[n]) );
+	// i := a4_HADAMARD_Array(0:Int[r]);
+	tt := a4_HADAMARD_Array_Int(vector(2^r,0:int[n])); // a4_HADAMARD( array(rr,0:Int[n]) );
+	i := a4_HADAMARD_Int(0:int[r]);
+	v := a4_HADAMARD_Array(vector(n,false:B));
 
-// 	ee := a5_SETUP(oracle, tt);
+	ee := a5_SETUP(edgeOracle, tt);
 
-// 	for _ in [0..tm) {
-// 		w, triTestT, triTestTw := a15_TestTriangleEdges(oracle, tt, ee);
-// 		if !(triTestT == 0 && triTestTw == 0) { 
-// 			phase(pi); 
-// 		}
-// 		reverse(a15_TestTriangleEdges)(w, triTestT, triTestTw);
+	for _ in [0..tm) {
+		(w, triTestT, triTestTw) := a15_TestTriangleEdges(edgeOracle, tt, ee);
+		if !(triTestT == 0 && triTestTw == 0) { 
+			phase(π); 
+		}
+		reverse(a15_TestTriangleEdges[n, 2^r])(w, triTestT, triTestTw, edgeOracle, tt, ee);
 
-// 		for _ in [0..tw) {
-// 			tt, i, v, ee := a6_QWSH(oracle, tt, i, v, ee)
-// 		}	
-// 	}
+		for _ in [0..tw) {
+			(tt, i, v, ee) := a6_QWSH(edgeOracle, tt, i, v, ee)
+		}	
+	}
 
-// 	//triTestT gets set to true, if triangle found within tt
-// 	//triTestTw gets set to true, if a pair of nodes formes a 
-// 	//triangle with anode from w
-// 	w, triTestT, triTestTw = a15_TestTriangleEdges(oracle, tt, ee);
+	//triTestT gets set to true, if triangle found within tt
+	//triTestTw gets set to true, if a pair of nodes formes a 
+	//triangle with anode from w
+	(w, triTestT, triTestTw) = a15_TestTriangleEdges(edgeOracle, tt, ee);
 
-// 	// ToDo: rewrite this here to qor(testTEdge, [triTestT, triTestTw], [True, True])
-// 	// Todo: high-level should have testTEdge as a return only
-// 	testTEdge := qor(testTEdge, [(triTestT, True), (triTestTw, True)]);
+	// ToDo: rewrite this here to qor(testTEdge, [triTestT, triTestTw], [True, True])
+	// Todo: high-level should have testTEdge as a return only
 
-// 	testTMeasure := Measure(testTEdge);
-//   	wMeasure := Measure(w); //wMeasure contains a node of the triangle
-//   	ttMeasure := Measure(tt); //other two nodes in TMeasure
-//   	eeMeasure := Measure(ee);
-//   	// delete(i, v, triTestT, triTestTw);
-//   	return testTMeasure, wMeasure, ttMeasure, eeMeasure;
-// }
+	//testTEdge := qor(testTEdge, [(triTestT, true), (triTestTw, true)]);
+	testTEdge := X(testTEdge);
+	if (triTestT == true && triTestTW == true) { testTEdge := X(testTEdge); }
+
+
+	testTMeasure := Measure(testTEdge);
+  	wMeasure := Measure(w); //wMeasure contains a node of the triangle
+  	ttMeasure := Measure(tt); //other two nodes in TMeasure
+  	eeMeasure := Measure(ee);
+  	// delete(i, v, triTestT, triTestTw);
+  	return (testTMeasure, wMeasure, ttMeasure, eeMeasure);
+}
 
 // // ToDo: discuss this. maybe introduction of read only references. 
-// def allEqual(cs:const (𝔹, !𝔹)^k) : 𝔹 {
+// def allEqual[k:!N](const cs: (𝔹, !𝔹)^k) : 𝔹 {
 // 	cs0 = [];
 // 	cs1 = [];
 // 	for l in [0..k) {
@@ -67,8 +77,8 @@
 // 	return cs0 == cs1;
 // }
 
-// // can be made lifted
-// def qor[k:!Int](q: 𝔹, cs:const (𝔹, !𝔹)^k) : 𝔹 {
+// can be made lifted
+// def qor[k:!N](q: 𝔹, const cs: (𝔹, !𝔹)^k) : 𝔹 {
 // 	q := !q;
 // 	if allEqual(cs) { q := !q; }
 // 	return q;
@@ -94,8 +104,13 @@ def a4_HADAMARD_Array[k:!N](q:𝔹^k) mfree: 𝔹^k {
 	return q;
 }
 
-def a4_HADAMARD_Int[k:!N](q:int[k]) mfree: int[k] {
+def a4_HADAMARD_Int[k:!N](q:int[k]) mfree {
 	for j in [0..k) { q[j] := H(q[j]); }
+	return q;
+}
+
+def a4_Hadamard_Int2[rr:!N](q:int[log_int(2,rr)]) mfree {
+	for j in [0..log_int(2,rr)) { q[j] := H(q[j]); }
 	return q;
 }
 
@@ -107,7 +122,7 @@ def a4_HADAMARD_Array_Array[k:!N,l:!N](q:(𝔹^k)^l) mfree: (𝔹^k)^l {
 	return q;
 }
 
-def a4_HADAMARD_Array_Int[k:!N,l:!N](q:int[k]^l) mfree: int[k]^l {
+def a4_HADAMARD_Array_Int[k:!N,l:!N](q:int[k]^l) mfree {
 	for i in [0..l) {
 		q[i] := a4_HADAMARD_Int(q[i]);
 	}
@@ -132,17 +147,18 @@ def a5_SETUP[n:!N, rr:!N](edgeOracle:((const int[n] x const int[n] x 𝔹) !->mf
 //TODO: CHANGE ORDER FOR F (-> REVERSE)
 // def a6_QWSH(oracle:!QWTFP_spec, tt: Node[], 
 // 	i: int, v: Node, ee: 𝔹[][]) : Node[] x int x v x 𝔹[][] {
-def a6_QWSH[n:!N, r:!N, rr:!N](
-	edgeOracle:((const int[n] x const int[n] x 𝔹) !->mfree 𝔹), 
-	tt:int[n]^rr, 
+def a6_QWSH[n:!N, r:!N](
+	const edgeOracle:((const int[n] x const int[n] x 𝔹) !->mfree 𝔹), 
+	tt:int[n]^(2^r), 
 	i:int[r], 
 	v:int[n], 
-	ee:(𝔹^rr)^rr ) mfree: int[n]^rr x int[r] x int[n] x (𝔹^rr)^rr {
+	ee:(𝔹^(2^r))^(2^r) ) mfree //: int[n]^rr x int[r] x int[n] x (𝔹^(2^r))^(2^r) 
+	{
 
 	//todo check if capturing here is enough
 	// tt:Node[]
-	f := lambda (const i: int[r], tt:int[n]^rr, ee:(𝔹^rr)^rr) mfree . {
-		eed := vector(rr, false):𝔹^rr;
+	f := lambda (const i: int[r], tt:int[n]^(2^r), ee:(𝔹^(2^r))^(2^r)) mfree . {
+		eed := vector(2^r, false):𝔹^(2^r);
 		ttd := tt[i]; 									//qram_fetch_Array(i, tt);
 		(ee, eed) := a12_FetchStoreE(i, ee, eed);
 		eed := a13_UPDATE(edgeOracle, tt, ttd, eed);
@@ -158,6 +174,26 @@ def a6_QWSH[n:!N, r:!N, rr:!N](
 	return (tt, i, v, ee);
 }
 
+
+//  !(∏[const n:!ℕ,const r:!ℕ]lifted. 
+//  !((const (!(const int[n] × const int[n] × 𝔹 →mfree 𝔹))) × 
+//  int[n]^((2 ^ r)) × 
+//  int[r] × 
+//  int[n] × 
+//  𝔹^((2 ^ r))^((2 ^ r)) 
+ 
+//  →mfree 
+//  int[n]^((2 ^ r)) × 
+//  int[r] × 
+//  int[n] × 
+//  𝔹^((2 ^ r))^((2 ^ r)))) 
+ 
+//  cannot be called with arguments 
+//  (!(const int[n] × const int[n] × 𝔹 →mfree 𝔹)) × 
+//  int[n]^(2 ^ r) × 
+//  int[r] × 
+//  𝔹^n × 
+//  𝔹^(2 ^ r)^(2 ^ r)
 
 def a7_Diffuse_Array[k:!N](q:𝔹^k) mfree: 𝔹^k {
 	q := a4_HADAMARD_Array(q);
@@ -308,14 +344,18 @@ def a13_UPDATE[n:!N, rr:!N](edgeOracle:((const int[n] x const int[n] x 𝔹) !->
 // //   qram_swap = a10_FetchStoreT
 // // }
 
-// def a15_TestTriangleEdges(oracle:!QWTFP_spec, tt:const Node[], ee:const 𝔹[][]) : Node x 𝔹 x 𝔹 {
+//def a15_TestTriangleEdges(oracle:!QWTFP_spec, tt:const Node[], ee:const 𝔹[][]) : Node x 𝔹 x 𝔹 {
+def a15_TestTriangleEdges[n:!N, rr:!N](
+	const edgeOracle:((const int[n] x const int[n] x 𝔹) !->mfree 𝔹),
+	const tt:int[n]^rr,
+	const ee:(𝔹^rr)^rr) mfree {
 
-// 	triTestT := a16_TriangleTestT(ee);
-// 	w := a18_TriangleEdgeSearch(oracle, tt, ee, triTestT);
-// 	triTestTw := a17_TriangleTestTw(oracle, tt, ee, w);
+	triTestT := a16_TriangleTestT(ee);
+	w := a18_TriangleEdgeSearch(edgeOracle, tt, ee, triTestT);
+	triTestTw := a17_TriangleTestTw(edgeOracle, tt, ee, w);
 
-// 	return w, triTestT, triTestTw;
-// }
+	return (w, triTestT, triTestTw);
+}
 
 def choose(n:!N, k:!N) lifted : !N;
 def logBase(n:!N, a:!N) lifted : !R;
@@ -326,7 +366,7 @@ def max(r:!R[]) lifted : !R;
 def log_int(n:!N, a:!N) lifted : !N;
 
 // // Todo: implement choose
-def a16_TriangleTestT[rr:!N](const ee:(𝔹^rr)^rr) : 𝔹 {
+def a16_TriangleTestT[rr:!N](const ee:(𝔹^rr)^rr) mfree {
 	
 	// m := ceiling(logBase(2,choose(rr, 3)));
 
@@ -354,7 +394,7 @@ def a16_TriangleTestT[rr:!N](const ee:(𝔹^rr)^rr) : 𝔹 {
 // // 
 // def a17_TriangleTestTw(oralce:!QWTFP_spec, tt:const Node[], ee:const 𝔹[][], w:const Node) lifted : 𝔹 {
 def a17_TriangleTestTw[n:!N, rr:!N](edgeOracle:((const int[n] x const int[n] x 𝔹) !->mfree 𝔹),
-	const tt:int[n]^rr, const ee:(𝔹^rr)^rr, const w:int[n]) : 𝔹 {
+	const tt:int[n]^rr, const ee:(𝔹^rr)^rr, const w:int[n]) mfree {
 
 	//rr = ee.length;
 	//m := ceiling(logBase(2,choose(rr,2)));
@@ -389,118 +429,108 @@ def a17_TriangleTestTw[n:!N, rr:!N](edgeOracle:((const int[n] x const int[n] x �
 // TODO: why does this compile?
 // //CHECK for Consumed and so on
 // def a18_TriangleEdgeSearch(oracle:!QWTFP_spec, tt:const Node[], ee:const 𝔹[][], triTestT:const 𝔹) : Node {
-// def a18_TriangleEdgeSearch[n:!N, rr:!N](
-// 	edgeOracle:((const int[n] x const int[n] x 𝔹) !->mfree 𝔹),
-// 	const tt: int[n]^rr, 
-// 	const ee:(𝔹^rr)^rr, 
-// 	const triTestT:𝔹) : int[n] {
+def a18_TriangleEdgeSearch[n:!N, rr:!N](
+	const edgeOracle:((const int[n] x const int[n] x 𝔹) !->mfree 𝔹),
+	const tt: int[n]^rr, 
+	const ee: (𝔹^rr)^rr, 
+	const triTestT:𝔹) mfree {
 	
-// 	// n, r, edgeOracle := oracle;
-// 	tG := floor(π/4 * sqrt(2^n));
+	// n, r, edgeOracle := oracle;
+	tG := floor(π/4 * sqrt(2^n));
 
-// 	w := 0:int[n]; //array(n,False);//0:Node[n];
-// 	w := a4_HADAMARD_Int(w);
+	w := 0:int[n]; //array(n,False);//0:Node[n];
+	w := a4_HADAMARD_Int(w);
 
-// 	for _ in [0..tG) {
-// 		cTri := a19_GCQWalk(oracle, tt, ee, w, triTestT);
+	for _ in [0..tG) {
+		cTri := a19_GCQWalk(edgeOracle, tt, ee, w, triTestT);
 
-// 		if triTestT == 0 && !(cTri == 0) { phase(π); }
+		if triTestT == 0 && !(cTri == false) { phase(π); }
 
-// 		reverse(a19_GCQWalk)(oracle, tt, ee, w, triTestT, cTri);
-// 		w := a7_Diffuse_Int(w);
-// 	}
-// 	return w;
-// }
+		reverse(a19_GCQWalk[n, rr])(cTri, edgeOracle, tt, ee, w, triTestT);
+		w := a7_Diffuse_Int(w);
+	}
+	return w;
+}
 
 
 // // triTestT needs to be consumed
 // // or break up the tuple structure -> maybe even lifted
 // def a19_GCQWalk(oracle:!QWTFP_spec, tt:const Node[], ee:const 𝔹[][], 
 // 	w:const Node, triTestT:const 𝔹) : Int {
-// def a19_GCQWalk[n:!N, rr:!N](
-// 	//oracle:!QWTFP_spec, 
-// 	edgeOracle:((const int[n] x const int[n] x 𝔹) !->mfree 𝔹),
-// 	const tt: int[n]^rr, 
-// 	const ee: (𝔹^rr)^rr, 
-// 	const w: int[n], 
-// 	const triTestT: 𝔹) {
+def a19_GCQWalk[n:!N, rr:!N](
+	//oracle:!QWTFP_spec, 
+	const edgeOracle:((const int[n] x const int[n] x 𝔹) !->mfree 𝔹),
+	const tt: int[n]^rr, 
+	const ee: (𝔹^rr)^rr, 
+	const w: int[n], 
+	const triTestT: 𝔹) mfree {
 
-// 	//(n, r, edgeOracle) := oracle;
+	//(n, r, edgeOracle) := oracle;
 
-// 	// nn = 2^n;
-// 	//rr = 2^r;
-// 	r := log_int(2,rr);
-// 	rbar := max([2 * r / 3, 1]);  
-// 	rrbar := floor(2^rbar); // here actually integer
-// 	tbarm := max([rr / rrbar, 1]);
-// 	tbarw := floor(sqrt(rrbar));
+	// nn = 2^n;
+	//rr = 2^r;
+	r := log_int(2,rr);
+	rbar := max([2 * r / 3, 1]);  
+	rrbar := floor(2^rbar); // here actually integer
+	tbarm := max([rr / rrbar, 1]);
+	tbarw := floor(sqrt(rrbar));
 
-// 	//cTri := 0:int[rrbar];
-// 	cTri := 0:int[floor(2^max([2*log_int(2,rr)/3,1]))];
+	//cTri := 0:int[rrbar];
+	cTri := 0:int[floor(2^max([2*log_int(2,rr)/3,1]))];
 
-// 	// tau := vector(rrbar,0:int[r]):(int[r])^rrbar;
-// 	// tau := vector( floor(2^max([2*log_int(2,rr)/3,1])) , 0 : int[log_int(2,rr)]):(int[log_int(2,rr)] )^floor(2^max([2*log_int(2,rr)/3,1]));
-// 	tau := vector( floor(2^max([2*log_int(2,rr)/3,1])), 0:int[log_int(2,rr)]);// :(int[log_int(2,rr)] )^floor(2^max([2*log_int(2,rr)/3,1]));
+	// tau := vector(rrbar,0:int[r]):(int[r])^rrbar;
+	// tau := vector( floor(2^max([2*log_int(2,rr)/3,1])) , 0 : int[log_int(2,rr)]):(int[log_int(2,rr)] )^floor(2^max([2*log_int(2,rr)/3,1]));
+	tau := vector( floor(2^max([2*log_int(2,rr)/3,1])), 0:int[log_int(2,rr)]);// :(int[log_int(2,rr)] )^floor(2^max([2*log_int(2,rr)/3,1]));
 
-// 	// iota := 0:int[rbar];
-// 	iota := 0:int[floor(max([2 * log_int(2,rr) / 3, 1]))];
-// 	//sigma := 0:int[r];
-// 	sigma := 0:int[log_int(2,rr)];
-// 	// eew := array(rrbar,false):𝔹^rrbar;
-// 	eew := vector(floor(2^max([2*log_int(2,rr)/3,1])), false:B);//:𝔹^floor(2^max([2*log_int(2,rr)/3,1]));
+	// iota := 0:int[rbar];
+	iota := 0:int[floor(max([2 * log_int(2,rr) / 3, 1]))];
+	//sigma := 0:int[r];
+	sigma := 0:int[log_int(2,rr)];
+	// eew := array(rrbar,false):𝔹^rrbar;
+	eew := vector(floor(2^max([2*log_int(2,rr)/3,1])), false:B);//:𝔹^floor(2^max([2*log_int(2,rr)/3,1]));
 
-// 	//tau := a4_Hadamard_Array_Int(tau);
-// 	iota := a4_HADAMARD_Int(iota);
-// 	sigma := a4_HADAMARD_Int(sigma);
+	// tau := a4_Hadamard_Array_Int(tau);
+	for k in [ 0..floor(2^max([2*log_int(2,rr)/3,1])) ) {
+		tau[k] := a4_Hadamard_Int2(tau[k]);
+	}
 
-// 	// for j in [0..eew.length) {
-// 	for j in [ 0..floor(2^max([2*log_int(2,rr)/3,1])) ) {
-// 		eew[j] := edgeOracle(tt[tau[j]], w, eew[j])
-// 	}
+	iota := a4_HADAMARD_Int(iota);
+	sigma := a4_HADAMARD_Int(sigma);
 
-// 	for j in [0..rrbar) {
-// 		for k in [j+1..rrbar) {
-// 			if ee[tau[j]][tau[k]] && eew[j] && eew[k] {
-// 				cTri += 1;
-// 	}	}	}
+	// for j in [0..eew.length) {
+	for j in [ 0..floor(2^max([2*log_int(2,rr)/3,1])) ) {
+		eew[j] := edgeOracle(tt[tau[j]], w, eew[j])
+	}
 
-// 	for _ in [0..tbarm) {
-// 		if triTestT == 0 && !(cTri == 0) { phase(π); }
-// 		//gcqwRegs := (tau, iota, sigma, eew, cTri, triTestT);
-// 		for _ in [0..tbarw) {
-// 			// gcqwRegs := a20_GCQWStep(tt, ee, w, gcqwRegs);
-// 			(tau, iota, sigma, eew, cTri) := a20_GCQWStep(edgeOracle, tt, ee, w, tau, iota, sigma, eew, cTri);
-// 		}
-// 	}
+	for j in [0..rrbar) {
+		for k in [j+1..rrbar) {
+			if ee[tau[j]][tau[k]] && eew[j] && eew[k] {
+				cTri += 1;
+	}	}	}
 
-// 	// // Todo: Clarify this
-// 	// // Why is this forget here valid? deleted in with the reverse in a18?
-// 	forget( tau = vector( floor(2^max([2*log_int(2,rr)/3,1])), 0:int[log_int(2,rr)]) );
-// 	forget( iota = (0:int[floor(max([2 * log_int(2,rr) / 3, 1]))]) );
-// 	forget( sigma = (0:int[log_int(2,rr)]) );
-// 	forget( eew = vector(floor(2^max([2*log_int(2,rr)/3,1])), false:B) );
+	for _ in [0..tbarm) {
+		if triTestT == 0 && !(cTri == 0) { phase(π); }
+		//gcqwRegs := (tau, iota, sigma, eew, cTri, triTestT);
+		for _ in [0..tbarw) {
+			// gcqwRegs := a20_GCQWStep(tt, ee, w, gcqwRegs);
+			(tau, iota, sigma, eew, cTri) := a20_GCQWStep(edgeOracle, tt, ee, w, tau, iota, sigma, eew, cTri);
+		}
+	}
 
-// 	return cTri;
-// }
+	// // Todo: Clarify this
+	// // Why is this forget here valid? deleted in with the reverse in a18?
+	forget( tau = vector( floor(2^max([2*log_int(2,rr)/3,1])), 0:int[log_int(2,rr)]) );
+	forget( iota = (0:int[floor(max([2 * log_int(2,rr) / 3, 1]))]) );
+	forget( sigma = (0:int[log_int(2,rr)]) );
+	forget( eew = vector(floor(2^max([2*log_int(2,rr)/3,1])), false:B) );
 
-
-
-// function of type 
-// !([const !ℕ × const !ℕ × const !ℕ × const !ℕ × const !ℕ] →lifted 𝟙) //cannot be called with arguments 
-// (!(const int[n] × const int[n] × 𝔹 →mfree 𝔹)) × 
-// int[n]^rr × 
-// 𝔹^rr^rr × 
-// int[n] × 
-// int[log_int(2,rr)]^(floor(2 ^ max([2 · log_int(2,rr) / 3,1]))) × 
-// int[floor(max([2 · log_int(2,rr) / 3,1]))] × 
-// int[log_int(2,rr)] × 
-// 𝔹^(floor(2 ^ max([2 · log_int(2,rr) / 3,1]))) × 
-// int[floor(2 ^ max([2 · log_int(2,rr) / 3,1]))]
+	return cTri;
+}
 
 
 // def a20_GCQWStep(oracle:!QWTFP_spec, tt:const Node[], ee:const 𝔹[][], w:const Node, 
 // 	gcqwRegs:GCQWRegs) : GCQWRegs {
-def a20_GCQWStep[n:!N, rr:!N, r:!N, rbar:!N, rrbar:!N](
+def a20_GCQWStep[n:!N, rr:!N](
 	const edgeOracle:((const int[n] x const int[n] x 𝔹) !->mfree 𝔹), 
 	const tt: int[n]^rr, 
 	const ee:(𝔹^rr)^rr, 
@@ -527,7 +557,7 @@ def a20_GCQWStep[n:!N, rr:!N, r:!N, rbar:!N, rrbar:!N](
 	(tau, taud, eewd, cTri, eew) := help_a20_2(tau, eew, cTri, edgeOracle, w, iota, tt, ee);
 	(taud, sigma) := (sigma, taud); //a14_SWAP(taud, sigma);
 	// (tau, eew, cTri) := reverse(help_a20_2)(tau, taud, eewd, cTri, eew, edgeOracle, w, iota, tt, ee);
-	(tau, eew, cTri) := reverse(help_a20_2[n,r,rr,rbar,rrbar])(tau, taud, eewd, cTri, eew, edgeOracle, w, iota, tt, ee);
+	(tau, eew, cTri) := reverse(help_a20_2[n,rr])(tau, taud, eewd, cTri, eew, edgeOracle, w, iota, tt, ee);
 
 	return (tau, iota, sigma, eew, cTri);
 }
@@ -539,7 +569,7 @@ def a20_GCQWStep[n:!N, rr:!N, r:!N, rbar:!N, rrbar:!N](
 // 	rr:!Int, rrbar:!Int, n:!Int) :
 // 	Node x 𝔹[] x Int x 𝔹 x 𝔹[] {
 
-def help_a20_2[n:!N, r:!N, rr:!N, rbar:!N, rrbar:!N](
+def help_a20_2[n:!N, rr:!N](
 	tau:int[log_int(2,rr)]^floor(2^max([2*log_int(2,rr)/3,1])), // tau:int[r]^rrbar, 
 	eew:𝔹^floor(2^max([2*log_int(2,rr)/3,1])), // eew:𝔹^rrbar,
 	cTri:int[floor(2^max([2*log_int(2,rr)/3,1]))], // cTri:int[rrbar], 
@@ -555,7 +585,7 @@ def help_a20_2[n:!N, r:!N, rr:!N, rbar:!N, rrbar:!N](
 	taud := tau[iota]; 
 	(eew, eewd) := a10_FetchStoreT(iota, eew, eewd);
 
-	for k in [0..rrbar) {
+	for k in [ 0..floor(2^max([2*log_int(2,rr)/3,1])) ) {
 		if ee[taud][tau[k]] && eewd && eew[k] {
 			cTri -= 1;
 	}	}
@@ -567,28 +597,31 @@ def help_a20_2[n:!N, r:!N, rr:!N, rbar:!N, rrbar:!N](
 }
 
 
-// !(∏[const n:!ℕ,const r:!ℕ,const rr:!ℕ,const rbar:!ℕ,const rrbar:!ℕ] lifted. 
-// !(int[log_int(2,rr)]^(floor(2 ^ max([2 · log_int(2,rr) / 3,1]))) × 
-// 𝔹^(floor(2 ^ max([2 · log_int(2,rr) / 3,1]))) × 
-// int[floor(2 ^ max([2 · log_int(2,rr) / 3,1]))] × 
-// (const (!(const int[n] × const int[n] × 𝔹 →mfree 𝔹))) × 
-// const int[n] × 
-// const int[floor(max([2 · log_int(2,rr) / 3,1]))] × 
-// const int[n]^rr × 
-// const 𝔹^rr^rr 
-// →mfree 
-// int[log_int(2,rr)]^(floor(2 ^ max([2 · log_int(2,rr) / 3,1]))) × 
-// int[log_int(2,rr)] × 
-// 𝔹 × 
-// int[floor(2 ^ max([2 · log_int(2,rr) / 3,1]))] × 
-// 𝔹^(floor(2 ^ max([2 · log_int(2,rr) / 3,1]))))) 
+// !(∏[const n:!ℕ,const rr:!ℕ,const r:!ℕ,const rbar:!ℕ,const rrbar:!ℕ]lifted. 
 
-// cannot be called with arguments 
-// int[log_int(2,rr)]^(floor(2 ^ max([2 · log_int(2,rr) / 3,1]))) × 
-// 𝔹^(floor(2 ^ max([2 · log_int(2,rr) / 3,1]))) × 
-// int[floor(2 ^ max([2 · log_int(2,rr) / 3,1]))] × 
-// (!(const int[n] × const int[n] × 𝔹 →mfree 𝔹)) × 
-// int[n] × 
-// int[floor(max([2 · log_int(2,rr) / 3,1]))] × 
-// int[n]^rr × 
-// 𝔹^rr^rr
+// !((const (!(const int[n] × const int[n] × 𝔹 →mfree 𝔹))) × 
+// 	const int[n]^rr × 
+// 	const 𝔹^rr^rr × 
+// 	const int[n] × 
+// 	int[log_int(2,rr)]^(floor(2 ^ max([2 · log_int(2,rr) / 3,1]))) × 
+// 	int[floor(max([2 · log_int(2,rr) / 3,1]))] × 
+// 	int[log_int(2,rr)] × 
+// 	𝔹^(floor(2 ^ max([2 · log_int(2,rr) / 3,1]))) × 
+// 	int[floor(2 ^ max([2 · log_int(2,rr) / 3,1]))] 
+	
+// 	→mfree 
+// 	int[log_int(2,rr)]^(floor(2 ^ max([2 · log_int(2,rr) / 3,1]))) × 
+// 	int[floor(max([2 · log_int(2,rr) / 3,1]))] × 
+// 	int[log_int(2,rr)] × 𝔹^(floor(2 ^ max([2 · log_int(2,rr) / 3,1]))) × 
+// 	int[floor(2 ^ max([2 · log_int(2,rr) / 3,1]))])) c
+	
+// 	annot be called with arguments 
+// 	(!(const int[n] × const int[n] × 𝔹 →mfree 𝔹)) × 
+// 	int[n]^rr × 
+// 	𝔹^rr^rr × 
+// 	int[n] × 
+// 	int[log_int(2,rr)]^(floor(2 ^ max([2 · log_int(2,rr) / 3,1]))) × 
+// 	int[floor(max([2 · log_int(2,rr) / 3,1]))] × 
+// 	int[log_int(2,rr)] × 
+// 	𝔹^(floor(2 ^ max([2 · log_int(2,rr) / 3,1]))) × 
+// 	int[floor(2 ^ max([2 · log_int(2,rr) / 3,1]))]
