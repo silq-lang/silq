@@ -108,8 +108,9 @@ def a4_HADAMARD_Array[k:!N](q:𝔹^k) mfree: 𝔹^k {
 }
 
 def a4_HADAMARD_Int[k:!N](q:int[k]) mfree {
-	for j in [0..k) { q[j] := H(q[j]); }
-	return q;
+	// for j in [0..k) { q[j] := H(q[j]); }
+	// return q;
+	return a4_HADAMARD_Array(q:𝔹^k):int[k];
 }
 
 // def a4_Hadamard_Int2[rr:!N](q:int[log_int(2,rr)]) mfree {
@@ -126,10 +127,11 @@ def a4_HADAMARD_Array_Array[k:!N,l:!N](q:(𝔹^k)^l) mfree: (𝔹^k)^l {
 }
 
 def a4_HADAMARD_Array_Int[k:!N,l:!N](q:int[k]^l) mfree {
-	for i in [0..l) {
-		q[i] := a4_HADAMARD_Int(q[i]);
-	}
-	return q;
+	// for i in [0..l) {
+	// 	q[i] := a4_HADAMARD_Int(q[i]);
+	// }
+	// return q;
+	return a4_HADAMARD_Array_Array(q:(B^k)^l):int[k]^l;
 }
 
 //def a5_SETUP(oracle:!QWTFP_spec, tt:const Node[]) : 𝔹[][] {
@@ -186,10 +188,11 @@ def a7_Diffuse_Array[k:!N](q:𝔹^k) mfree: 𝔹^k {
 }
 
 def a7_Diffuse_Int[k:!N](q:int[k]) mfree: int[k] {
-	q := a4_HADAMARD_Int(q);
-	if q == 0 { phase(π); }
-	q := a4_HADAMARD_Int(q);
-	return q;
+	// q := a4_HADAMARD_Int(q);
+	// if q == 0 { phase(π); }
+	// q := a4_HADAMARD_Int(q);
+	// return q;
+	return a7_Diffuse_Array(q:𝔹^k):int[k];
 }
 
 def a7_Diffuse_Array_Array[k:!N,l:!N](q:(𝔹^k)^l) mfree: (𝔹^k)^l {
@@ -475,11 +478,15 @@ def a19_GCQWalk[n:!N, rr:!N](
 	// tau := a4_Hadamard_Array_Int(tau);
 	for k in [ 0..floor(2^max([2*log_int(2,rr)/3,1])) ) {
 		// tau[k] := a4_Hadamard_Int2(tau[k]);
-		tau[k] := a4_HADAMARD_Int[log_int(2,rr)](tau[k]);
+		// tau[k] := a4_HADAMARD_Int[log_int(2,rr)](tau[k]);
+		tau[k] := a4_HADAMARD_Int(tau[k]);
+		// tau[k] := a4_HADAMARD_Array(tau[k]:B^log_int(2,rr)):int[log_int(2,rr)];
 	}
 
 	iota := a4_HADAMARD_Int(iota);
 	sigma := a4_HADAMARD_Int(sigma);
+	// iota := a4_HADAMARD_Array(iota:B^floor(max([2 * log_int(2,rr) / 3, 1]))):int[floor(max([2 * log_int(2,rr)];
+	// sigma := a4_HADAMARD_Array(sigma:B^log_int(2,rr)):int[log_int(2,rr)];
 
 	// for j in [0..eew.length) {
 	for j in [ 0..floor(2^max([2*log_int(2,rr)/3,1])) ) {
