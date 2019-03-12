@@ -16,7 +16,7 @@ def a1[n:!N](
 	// n, r, edgeOracle = oracle;
 
 	// nn := 2^n; not used 
-	rr := 2^r;
+	// rr := 2^r;
 	// rbar := max([2*r / 3, 1]); not used
 	// rrbar := 2^rbar; 
 	tm := 2^(n-r);
