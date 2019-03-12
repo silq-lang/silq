@@ -2,7 +2,7 @@
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
 
 import std.array,std.algorithm,std.range;
-import std.format, std.conv;
+import std.format, std.conv, std.typecons:Q=Tuple,q=tuple;
 import lexer,scope_,expression,type,declaration,error,util;
 
 alias CommaExp=BinaryExp!(Tok!",");
@@ -366,9 +366,9 @@ bool isBuiltIn(Identifier id){
 	switch(id.name){
 	case "π":
 	case "readCSV":
-	case "Marginal","sampleFrom","quantumPrimitive","__show","__query":
-	case "Expectation":
-		return true;
+	case /+"Marginal","sampleFrom",+/"quantumPrimitive","__show","__query":
+	/+case "Expectation":
+		return true;+/
 	case "*","𝟙","𝟚","B","𝔹","N","ℕ","Z","ℤ","Q","ℚ","R","ℝ","C","ℂ":
 		return true;
 	default: return false;
@@ -1319,11 +1319,11 @@ Expression callSemantic(CallExp ce,Scope sc,ConstResult constResult){
 	}else if(isBuiltIn(cast(Identifier)ce.e)){
 		auto id=cast(Identifier)ce.e;
 		switch(id.name){
-			case "Marginal":
+			/+case "Marginal":
 				ce.type=distributionTy(ce.arg.type,sc);
 				break;
 			case "sampleFrom":
-				return handleSampleFrom(ce,sc);
+				return handleSampleFrom(ce,sc);+/
 			case "quantumPrimitive":
 				return handleQuantumPrimitive(ce,sc);
 			case "__show":
@@ -2376,7 +2376,7 @@ bool definitelyReturns(FunctionDef fd){
 	return doIt(fd.body_);
 }
 
-
+/+
 import dexpr;
 struct VarMapping{
 	DNVar orig;
@@ -2469,7 +2469,7 @@ Expression handleSampleFrom(CallExp ce,Scope sc){
 	}
 	return ce;
 }
-
++/
 Expression handleQuantumPrimitive(CallExp ce,Scope sc){
 	Expression[] args;
 	if(auto tpl=cast(TupleExp)ce.arg) args=tpl.e;

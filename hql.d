@@ -22,7 +22,7 @@ int run(string path){
 	if(auto r=importModule(path,err,exprs,sc))
 		return r;
 	if(err.nerrors) return 1;
-	/+FunctionDef[string] functions;
+	FunctionDef[string] functions;
 	foreach(expr;exprs){
 		if(cast(ErrorExp)expr) continue;
 		if(auto fd=cast(FunctionDef)expr){
@@ -39,8 +39,16 @@ int run(string path){
 			return 1;
 		}
 		return 0;
-	}+/
+	}
 	// TODO: add some backends
+	if(err.nerrors) return 1;
+	if(opt.backend==BackendType.run){
+		import qsim;
+		auto be=new QSim(path);
+		if("main" in functions){
+			writeln(be.run(functions["main"],err));
+		}
+	}
 	return !!err.nerrors;
 }
 
@@ -61,11 +69,11 @@ int main(string[] args){
 	bool hasInputFile=false;
 	foreach(x;args){
 		switch(x){
-			case "--help": writeln(help.help); return 0;
-			case "--syntax": writeln(syntax); return 0;
-			case "--distributions":
+			//case "--help": writeln(help.help); return 0;
+			//case "--syntax": writeln(syntax); return 0;
+			/+case "--distributions":
 				writeln(computeDistributionDocString());
-				return 0;
+				return 0;+/
 			case "--cdf": opt.cdf=true; break;
 			case "--plot": opt.plot=true; break;
 			case "--kill": opt.kill=true; break;
@@ -85,9 +93,7 @@ int main(string[] args){
 			case "--lisp": opt.formatting=Format.lisp; break;
 			case "--raw": opt.outputForm=OutputForm.raw; break;
 			case "--raw-error": opt.outputForm=OutputForm.rawError; break;
-			case "--dexpr": opt.dexpr=true; break;
-			case "--dp": opt.backend=InferenceMethod.dp; break;
-			case "--simulate": opt.backend=InferenceMethod.simulate; break;
+			case "--run": opt.backend=BackendType.run; break;
 			default:
 				if(x.startsWith("--plot=")){
 					auto rest=x["--plot=".length..$];
@@ -121,11 +127,11 @@ int main(string[] args){
 					}
 					continue;
 				}
-				if(x.startsWith("--simulate=")){
-					auto rest=x["--simulate=".length..$];
+				if(x.startsWith("--run=")){
+					auto rest=x["--run=".length..$];
 					try{
-						opt.backend=InferenceMethod.simulate;
-						opt.numSimulations=to!ulong(rest);
+						opt.backend=BackendType.run;
+						opt.numRuns=to!ulong(rest);
 					}catch(Exception){
 						stderr.writeln("error: number of samples needs to be 64-bit unsigned integer");
 						return 1;
@@ -136,11 +142,7 @@ int main(string[] args){
 				if(auto r=run(x)) return r;
 		}
 	}
-	if(opt.dexpr){
-		import dparse,dexpr;
-		foreach(line;stdin.byLineCopy)
-			writeln(dParse(line.strip).simplify(one).toString(opt.formatting));
-	}else if(!hasInputFile){
+	if(!hasInputFile){
 		stderr.writeln("error: no input files");
 		return 1;
 	}

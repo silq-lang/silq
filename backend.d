@@ -1,4 +1,4 @@
-// Written in the D programming language
+/+// Written in the D programming language
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
 
 import options,declaration,distrib,error,dexpr,util;
@@ -251,3 +251,4 @@ void gnuplot(DExpr expr,SetX!DNVar varset,string label,string range="[-1:3]",str
 	else input.writeEnd.writeln("bind \"x\" \"exit\"\n");
 	input.writeEnd.flush();	
 }
++/

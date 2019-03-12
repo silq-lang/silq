@@ -12,10 +12,9 @@ enum Format{
 	lisp,
 }
 
-enum InferenceMethod{
-	symbolic,
-	dp,
-	simulate,
+enum BackendType{
+	none,
+	run,
 }
 
 enum OutputForm{
@@ -31,7 +30,7 @@ enum IntegrationLevel{
 }
 
 struct Options{
-	InferenceMethod backend;
+	BackendType backend;
 	bool plot=false;
 	string plotRange="[-10:10]";
 	string plotFile="";
@@ -48,8 +47,7 @@ struct Options{
 	OutputForm outputForm;
 	string[] importPath;
 	string[] summarize;
-	ulong numSimulations=1;
-	bool dexpr=false;
+	ulong numRuns=1;
 }
 Options opt; // TODO: get rid of global?
 
