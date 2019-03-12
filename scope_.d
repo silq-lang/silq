@@ -294,8 +294,8 @@ abstract class Scope{
 			if(k.ptr !in symtab && k.ptr !in rnsymtab)
 				dependencies.dependencies.remove(k);
 		}
-		foreach(k,v;symtab) v.scope_=this;
-		foreach(k,v;rnsymtab) v.scope_=this;
+		foreach(k,v;symtab) if(!this.isNestedIn(v.scope_)) v.scope_=this;
+		foreach(k,v;rnsymtab) if(!this.isNestedIn(v.scope_)) v.scope_=this;
 		return errors;
 	}
 
