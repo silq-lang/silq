@@ -104,6 +104,11 @@ struct QState{
 			ubyte[max(array_.sizeof,record.sizeof,quval.sizeof,fval.sizeof,qval.sizeof,zval.sizeof,bval.sizeof)] bits;
 		}
 		Value opUnary(string op)(){
+			static if(op=="-"){
+				if(type==ℝ(true)) return makeReal(mixin(op~` fval`));
+				if(type==ℚt(true)) return makeRational(mixin(op~` qval`));
+				if(type==ℤt(true)) return makeInteger(mixin(op~` zval`));
+			}
 			enforce(0,text("TODO: '",op,"' for type ",this.type));
 			assert(0);
 		}
