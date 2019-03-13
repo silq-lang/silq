@@ -1875,10 +1875,11 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 	static Expression powerType(Expression t1, Expression t2){
 		bool classical=t1.isClassical()&&t2.isClassical();
 		if(!isNumeric(t1)||!isNumeric(t2)) return null;
-		if(cast(BoolTy)t1||cast(ℕTy)t2) return Bool(classical);
+		if(cast(BoolTy)t1&&isSubtype(t2,ℕt(classical))) return Bool(classical);
+		if(cast(ℕTy)t1&&isSubtype(t2,ℕt(classical))) return ℕt(classical);
 		if(cast(ℂTy)t1||cast(ℂTy)t2) return ℂ(classical);
-		if(util.among(t1,Bool(true),ℕt(true),ℤt(true),ℚt(true))&&cast(ℤTy)t2) return ℚt(t2.isClassical);
-		if(util.among(t1,Bool(false),ℕt(false),ℤt(false),ℚt(false))&&cast(ℤTy)t2) return ℚt(false);
+		if(util.among(t1,Bool(true),ℕt(true),ℤt(true),ℚt(true))&&isSubtype(t2,ℤt(false))) return ℚt(t2.isClassical);
+		if(util.among(t1,Bool(false),ℕt(false),ℤt(false),ℚt(false))&&isSubtype(t2,ℤt(false))) return ℚt(false);
 		return ℝ(classical); // TODO: good?
 	}
 	static Expression minusBitNotType(Expression t){
