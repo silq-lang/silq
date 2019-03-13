@@ -46,7 +46,14 @@ int run(string path){
 		import qsim;
 		auto be=new QSim(path);
 		if("main" in functions){
-			writeln(be.run(functions["main"],err));
+			auto fun=functions["main"];
+			if(fun.ret.isClassical()){
+				foreach(i;0..opt.numRuns)
+					writeln(be.run(fun,err).vars["`value"]);
+			}else{
+				stderr.writeln("error: returning quantum values from main not supported");
+				return 1;
+			}
 		}
 	}
 	return !!err.nerrors;
@@ -151,7 +158,7 @@ int main(string[] args){
 
 version=TEST;
 void test(){
-	import dparse,type,dexpr,integration,summation;
+	//import dparse,type,dexpr,integration,summation;
 	//writeln(dMin([cast(DExpr)"a".dVar,"b".dVar,"c".dVar,"d".dVar].setx).simplify(one));
 	//writeln("∫dξ₁(-90·x_1²·x_2⁵)·[-16+x_1≤0]·[-2+-3·x_1+2·x_2≤0]·[-22+-ξ₁≤0]·[-4+-x_2+7·ξ₁+9·x_1≤0]·[-5+-x_2+4·x_1+7·ξ₁≤0]·[-5·ξ₁+-7+5·x_1≤0]·[-61+-x_2≤0]·[-70+ξ₁≤0]·[-75+x_2≤0]·[-77+-x_1≤0]·[-9+7·ξ₁+x_1+x_2≤0]·[8+x_2+ξ₁≤0]".dParse.simplify(one));
 	//writeln("[0≤a]·[0≤b]·∫dx [a·x≤c]·[d≤b·x]".dParse.simplify(one));

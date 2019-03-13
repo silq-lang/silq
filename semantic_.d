@@ -1015,6 +1015,7 @@ ABinaryExp opAssignExpSemantic(ABinaryExp be,Scope sc)in{
 			id.meaning=meaning;
 			id.name=meaning.getName;
 			id.type=typeForDecl(meaning);
+			id.scope_=sc;
 			id.sstate=SemState.completed;
 		}else{
 			sc.error(format("undefined identifier %s",id.name),id.loc);

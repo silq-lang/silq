@@ -53,7 +53,7 @@ struct QState{
 		if(abs(state[k]) < zeroThreshold) state.remove(k);
 	}
 	void opOpAssign(string op:"+")(QState r){
-		// assert(vars==r.vars);
+		foreach(k,v;r.vars) vars[k]=v;
 		foreach(k,v;r.state) add(k,v);
 	}
 	Q!(QState,QState) split(Value cond){
@@ -72,9 +72,9 @@ struct QState{
 		return q(then,othw);
 	}
 	QState map(alias f)(){
-		
+
 	}
-	
+
 	alias R=double;
 	alias C=Complex!double;
 	abstract class QuVal{
@@ -105,10 +105,15 @@ struct QState{
 		}
 		Value opUnary(string op)(){
 			enforce(0,text("TODO: '",op,"' for type ",this.type));
-			assert(0);			
+			assert(0);
 		}
-		Value opBinary(string op)(Value b){
-			enforce(0,text("TODO: '",op,"' for types ",this.type," and ",b.type));
+		Value opBinary(string op)(Value r){
+			static if(["+","-","*","/"].canFind(op)){
+				if(type==ℝ(true)&&r.type==ℝ(true)) return makeReal(mixin(`fval `~op~` r.fval`));
+				if(type==ℚt(true)&&r.type==ℚt(true)) return makeRational(mixin(`qval `~op~` r.qval`));
+				if(type==ℤt(true)&&r.type==ℤt(true)) return makeInteger(mixin(`zval `~op~` r.zval`));
+			}
+			enforce(0,text("TODO: '",op,"' for types ",this.type," and ",r.type));
 			assert(0);
 		}
 		Value opBinary(string op)(long b){
@@ -123,9 +128,13 @@ struct QState{
 		}
 		Value neqZ(){
 			enforce(0,text("TODO: 'eqZ' for type ",this.type));
-			assert(0);			
+			assert(0);
 		}
 		Value lt(Value r){
+			if(type==ℝ(true)&&r.type==ℝ(true)) return makeBool(fval<r.fval);
+			if(type==ℚt(true)&&r.type==ℚt(true)) return makeBool(qval<r.qval);
+			if(type==ℤt(true)&&r.type==ℤt(true)||type==ℕt(true)&&r.type==ℕt(true)) return makeBool(zval<r.zval);
+			if(type==Bool(true)&&r.type==Bool(true))
 			enforce(0,text("TODO: 'lt' for types ",this.type," ",r.type));
 			assert(0);
 		}
@@ -162,18 +171,28 @@ struct QState{
 			return quval.get(state);
 		}
 		bool asBoolean()in{
-			assert(type is Bool(true));
+			assert(type==Bool(true),text(type));
 		}do{
 			return bval;
 		}
 		bool isClassicalInteger(){
-			return type.isClassical()&&(isInt(type)||isUint(type)||type is ℤt(true));
+			return type.isClassical()&&(isInt(type)||isUint(type)||type==ℤt(true));
 		}
 		ℤ asInteger()in{
 			assert(isClassicalInteger());
 		}do{
+			if(type==ℤt(true)) return zval;
 			enforce(0,text("TODO: asInteger for type ",type));
 			assert(0);
+		}
+		string toString(){
+			if(type.isClassical()){
+				if(type==ℝ(true)) return text(fval,":",type);
+				if(type==ℚt(true)) return text(qval,":",type);
+				if(type==ℤt(true)) return text(zval,":",type);
+				if(type==Bool(true)) return text(bval,":",type);
+			}
+			return text("_:",type);
 		}
 	}
 	static assert(Value.sizeof==Type.sizeof+Value.bits.sizeof);
@@ -240,7 +259,7 @@ struct QState{
 		return r;
 	}
 	static Value readField(Value r,string s){
-		assert(r.type is contextTy(false));
+		assert(r.type==contextTy(false));
 		return r.record[s];
 	}
 	static Value makeTuple(Expression type,Value[] tuple)in{
@@ -267,6 +286,12 @@ struct QState{
 		r.fval=to!R(value);
 		return r;
 	}
+	static Value makeReal(R value){
+		Value r;
+		r.type=ℝ(true);
+		r.fval=value;
+		return r;
+	}
 	static Value makeRational(ℚ value){
 		Value r;
 		r.type=ℚt(true);
@@ -277,6 +302,12 @@ struct QState{
 		Value r;
 		r.type=ℤt(true);
 		r.zval=value;
+		return r;
+	}
+	static Value makeBool(bool value){
+		Value r;
+		r.type=Bool(true);
+		r.bval=value;
 		return r;
 	}
 	Value makeFunction(FunctionDef fd,Value* context){
@@ -312,7 +343,7 @@ struct QState{
 				assert(0);
 			}
 		}
-		enforce(then.type is othw.type,"TODO: ite branches with different types");
+		enforce(then.type==othw.type,"TODO: ite branches with different types");
 		Value r;
 		r.type=then.type;
 		r.quval=new IteQuVal(cond,then,othw);
@@ -472,13 +503,18 @@ struct Interpreter(QState){
 			if(auto idx=cast(IndexExp)e) return qstate.readIndex(doIt(idx.e),doIt(idx.a[0])); // TODO: bounds checking
 			if(auto sl=cast(SliceExp)e) return qstate.makeSlice(doIt(sl.e),doIt(sl.l),doIt(sl.r)); // TODO: bounds checking
 			if(auto le=cast(LiteralExp)e){
-				if(le.lit.type==Tok!"0"){
-					auto n=le.lit.str.split(".");
-					if(n.length==1) n~="";
-					return QState.makeRational(ℚ((n[0]~n[1]).ℤ,ℤ(10)^^n[1].length));
-				}else if(le.lit.type==Tok!".0"){
-					import std.conv: to;
-					return qstate.makeReal(le.lit.str);
+				if(util.among(le.lit.type,Tok!"0",Tok!".0")){
+					if(le.type==ℚt(true)){
+						auto n=le.lit.str.split(".");
+						if(n.length==1) n~="";
+						return QState.makeRational(ℚ((n[0]~n[1]).ℤ,ℤ(10)^^n[1].length));
+					}else if(util.among(le.type,ℤt(true),ℕt(true))){
+						return QState.makeInteger(ℤ(le.lit.str));
+					}else if(le.type==ℝ(true)){
+						return QState.makeReal(le.lit.str);
+					}else if(le.type==Bool(true)){
+						return QState.makeBool(le.lit.str=="1");
+					}
 				}
 			}
 			if(auto cmp=cast(CompoundExp)e){
@@ -540,10 +576,15 @@ struct Interpreter(QState){
 					return e1.neq(e2);
 				}
 			}
-			enforce(0,text("TODO: ",e));
+			enforce(0,text("TODO: ",e," ",e.type));
 			assert(0);
 		}
 		return doIt(e);
+	}
+	void assignTo(Expression lhs,QState.Value rhs){
+		if(auto id=cast(Identifier)lhs){
+			qstate.assignTo(id.name,rhs);
+		}else enforce(0,"TODO: unpacking assignments");
 	}
 	void runStm(Expression e,ref QState retState){
 		if(!qstate.state.length) return;
@@ -551,11 +592,11 @@ struct Interpreter(QState){
 		if(auto nde=cast(DefExp)e){
 			auto de=cast(ODefExp)nde.initializer;
 			assert(!!de);
-			auto lhs=runExp(de.e1), rhs=runExp(de.e2);
-			qstate.assignTo(lhs,rhs);
+			auto lhs=de.e1, rhs=runExp(de.e2);
+			assignTo(lhs,rhs);
 		}else if(auto ae=cast(AssignExp)e){
-			auto lhs=runExp(ae.e1),rhs=runExp(ae.e2);
-			qstate.assignTo(lhs,rhs);
+			auto lhs=ae.e1,rhs=runExp(ae.e2);
+			assignTo(lhs,rhs);
 		}else if(isOpAssignExp(e)){
 			QState.Value perform(QState.Value a,QState.Value b){
 				if(cast(OrAssignExp)e) return a|b;
@@ -580,9 +621,8 @@ struct Interpreter(QState){
 			}
 			auto be=cast(ABinaryExp)e;
 			assert(!!be);
-			auto lhs=runExp(be.e1); // TODO: keep lhs stable!
-			auto rhs=runExp(be.e2);
-			qstate.assignTo(lhs,perform(lhs,rhs));
+			auto lhs=runExp(be.e1),rhs=runExp(be.e2);
+			assignTo(be.e1,perform(lhs,rhs));
 		}else if(auto call=cast(CallExp)e){
 			runExp(call);
 		}else if(auto ite=cast(IteExp)e){
@@ -656,11 +696,10 @@ struct Interpreter(QState){
 				}
 			}
 		}else if(auto we=cast(WhileExp)e){
-			auto intp=Interpreter(functionDef,we.bdy,QState.empty(),hasFrame);
-			intp.qstate.state=qstate.state;
+			auto intp=Interpreter(functionDef,we.bdy,qstate,hasFrame);
 			qstate.state=typeof(qstate.state).init;
-			auto cond = intp.runExp(we.cond);
 			while(intp.qstate.state.length){
+				auto cond = intp.runExp(we.cond);
 				auto thenOthw=intp.qstate.split(cond);
 				qstate += thenOthw[1];
 				intp.qstate = thenOthw[0];
@@ -675,8 +714,8 @@ struct Interpreter(QState){
 			qstate.assignTo("`value",value);
 			if(hasFrame){
 				assert("`frame" in qstate.vars);
-				assert(qstate.vars.length==2); // `value and `frame
-			}else assert(qstate.vars.length==1); // only `value
+				//assert(qstate.vars.length==2); // `value and `frame
+			}//else assert(qstate.vars.length==1); // only `value
 			retState += qstate; // TODO: compute distributions?
 			qstate=QState.empty();
 		}else if(auto ae=cast(AssertExp)e){
