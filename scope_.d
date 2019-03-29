@@ -219,9 +219,10 @@ abstract class Scope{
 	}
 
 	bool canForget(Declaration decl)in{
-		assert(decl.sstate==SemState.completed);
 		assert(toPush.length==0);
 	}do{
+		if(decl.sstate==SemState.error) return true;
+		assert(decl.sstate==SemState.completed);
 		return dependencies.canForget(decl.getName);
 	}
 

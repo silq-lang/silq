@@ -1,4 +1,29 @@
+def abc(){
+    b := f(cand);
+    if b{
+        phase(π);
+    }
+    forget(b=f(cand));
+}
 
+/+
+def main(){
+	//x := 0:!ℤ;
+	//repeat 10 { x -= 2; }
+	//return 2.0*π*2^(-1);
+	x := 2.0^-1;
+	x = "";
+}
++/
+/+
+def main(){
+	x := 0:𝔹;
+	if x {
+		return 1:𝔹; // TODO: this should be an error!
+	}
+	return x;
+}
++/
 /+
 def main(x:𝔹^5){
 	//x := 0:int[5];
