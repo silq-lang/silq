@@ -525,6 +525,7 @@ struct Parser{
 				return res;
 			case Tok!"(":
 				auto a=parseParenthesized();
+				if(a.brackets) a.brackets--;
 				mixin(rule!(CallExp,Existing,"left,a,false,false"));
 			case Tok!".":
 				auto r=left;
