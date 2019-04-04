@@ -839,7 +839,7 @@ Expression indexReplaceSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{
 		theIndex=null;
 		return be;
 	}
-	be.e1=expressionSemantic(theIndex,sc,ConstResult.no);
+	be.e1=expressionSemantic(theIndex,sc,ConstResult.yes);
 	propErr(be.e1,be);
 	Identifier id;
 	bool check(IndexExp e){
@@ -1631,6 +1631,9 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 				idx.sstate=SemState.error;
 			}
 			sc.indexToReplace=null;
+		}else if(!constResult){
+			sc.error(format("use 'dup(%s)' to duplicate array entry before consumption",idx), idx.loc);
+			idx.sstate=SemState.error;
 		}
 		return idx;
 	}
