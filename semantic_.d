@@ -1631,9 +1631,6 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 				idx.sstate=SemState.error;
 			}
 			sc.indexToReplace=null;
-		}else if(!constResult){
-			sc.error(format("use 'dup(%s)' to duplicate array entry before consumption",idx), idx.loc);
-			idx.sstate=SemState.error;
 		}
 		return idx;
 	}
