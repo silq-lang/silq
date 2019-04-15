@@ -956,9 +956,7 @@ bool checkAssignable(Declaration meaning,Location loc,Scope sc,bool quantumAssig
 AssignExp assignExpSemantic(AssignExp ae,Scope sc){
 	ae.type=unit;
 	ae.e1=expressionSemantic(ae.e1,sc,ConstResult.yes); // reassigned variable should not be consumed (otherwise, can use ':=')
-	ae.e2=expressionSemantic(ae.e2,sc,ConstResult.no);
 	propErr(ae.e1,ae);
-	propErr(ae.e2,ae);
 	if(ae.sstate==SemState.error)
 		return ae;
 	void checkLhs(Expression lhs){
@@ -966,7 +964,7 @@ AssignExp assignExpSemantic(AssignExp ae,Scope sc){
 			if(!checkAssignable(id.meaning,ae.loc,sc))
 				ae.sstate=SemState.error;
 		}else if(auto tpl=cast(TupleExp)lhs){
-			foreach(ref exp;tpl.e)
+			foreach(exp;tpl.e)
 				checkLhs(exp);
 		}else if(auto idx=cast(IndexExp)lhs){
 			checkLhs(idx.e);
@@ -981,6 +979,8 @@ AssignExp assignExpSemantic(AssignExp ae,Scope sc){
 		}
 	}
 	checkLhs(ae.e1);
+	ae.e2=expressionSemantic(ae.e2,sc,ConstResult.no);
+	propErr(ae.e2,ae);
 	if(ae.sstate!=SemState.error&&!isSubtype(ae.e2.type,ae.e1.type)){
 		if(auto id=cast(Identifier)ae.e1){
 			sc.error(format("cannot assign %s to variable %s of type %s",ae.e2.type,id,id.type),ae.loc);
@@ -988,6 +988,59 @@ AssignExp assignExpSemantic(AssignExp ae,Scope sc){
 			sc.note("declared here",id.meaning.loc);
 		}else sc.error(format("cannot assign %s to %s",ae.e2.type,ae.e1.type),ae.loc);
 		ae.sstate=SemState.error;
+	}
+	enum Stage{
+		collectDeps,
+		consumeLhs,
+		defineVars
+	}
+	Dependency[] dependencies;
+	int curDependency;
+	void updateDependencies(Expression lhs,Expression rhs,bool expandTuples,Stage stage){
+		if(auto id=cast(Identifier)lhs){
+			if(id&&id.meaning&&id.meaning.name){
+				final switch(stage){
+					case Stage.collectDeps:
+						if(rhs.isLifted()) dependencies~=rhs.getDependency(sc);
+						break;
+					case Stage.consumeLhs:
+						sc.consume(id.meaning);
+						break;
+					case Stage.defineVars:
+						auto name=id.meaning.name.name;
+						auto var=addVar(name,id.type,lhs.loc,sc);
+						if(rhs.isLifted()) sc.addDependency(var,dependencies[curDependency++]);
+						break;
+				}
+			}
+		}else if(auto tpll=cast(TupleExp)lhs){
+			bool ok=false;
+			if(expandTuples){
+				if(auto tplr=cast(TupleExp)rhs){
+					if(tpll.e.length==tplr.e.length){
+						foreach(i;0..tpll.e.length)
+							updateDependencies(tpll.e[i],tplr.e[i],true,stage);
+						ok=true;
+					}
+				}
+			}
+			if(!ok) foreach(exp;tpll.e) updateDependencies(exp,rhs,false,stage);
+		}else if(auto idx=cast(IndexExp)lhs){
+			updateDependencies(idx.e,rhs,false,stage);
+		}else if(auto fe=cast(FieldExp)lhs){
+			updateDependencies(fe.e,rhs,false,stage);
+		}else if(auto tae=cast(TypeAnnotationExp)lhs){
+			updateDependencies(tae.e,rhs,expandTuples,stage);
+		}else assert(0);
+	}
+	if(ae.sstate!=SemState.error){
+		updateDependencies(ae.e1,ae.e2,true,Stage.collectDeps);
+		updateDependencies(ae.e1,ae.e2,true,Stage.consumeLhs);
+		foreach(ref dependency;dependencies)
+			foreach(name;sc.toPush)
+				sc.pushUp(dependency, name);
+		sc.pushConsumed();
+		updateDependencies(ae.e1,ae.e2,true,Stage.defineVars);
 	}
 	if(ae.sstate!=SemState.error) ae.sstate=SemState.completed;
 	return ae;
@@ -1064,7 +1117,7 @@ ABinaryExp opAssignExpSemantic(ABinaryExp be,Scope sc)in{
 		if(!id){
 			sc.error(format("cannot update-assign to quantum expression %s",be.e1),be.e1.loc);
 			be.sstate=SemState.error;
-		}else if(!isInvertibleOpAssignExp(be)&&id.meaning&&!sc.canForget(id.meaning)){
+		}else if((!isInvertibleOpAssignExp(be)||be.e2.hasFreeIdentifier(id.name))&&id.meaning&&!sc.canForget(id.meaning)){
 			sc.error("quantum update must be invertible",be.loc);
 			be.sstate=SemState.error;
 		}
@@ -1074,7 +1127,9 @@ ABinaryExp opAssignExpSemantic(ABinaryExp be,Scope sc)in{
 				dependency.joinWith(be.e2.getDependency(sc));
 				sc.consume(id.meaning);
 				sc.pushConsumed();
-				auto var=addVar(id.meaning.name.name,id.type,be.loc,sc);
+				auto name=id.meaning.name.name;
+				auto var=addVar(name,id.type,be.loc,sc);
+				dependency.remove(name);
 				sc.addDependency(var,dependency);
 			}else{
 				sc.consume(id.meaning);

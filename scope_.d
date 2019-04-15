@@ -28,6 +28,9 @@ struct Dependency{
 			dependencies.insert(ndecl);
 		}
 	}
+	void remove(string decl){
+		dependencies.remove(decl);
+	}
 	Dependency dup(){
 		return Dependency(isTop, dependencies.dup);
 	}
@@ -128,6 +131,9 @@ abstract class Scope{
 		if(decl.rename) rnsymtab.remove(decl.rename.ptr);
 		toPush~=decl.getName;
 	}
+	final void pushUp(ref Dependency dependency,string removed){
+		dependency.replace(removed,dependencies.dependencies[removed]);
+	}
 	final void pushConsumed(){
 		foreach(name;toPush)
 			dependencies.pushUp(name);
@@ -219,7 +225,7 @@ abstract class Scope{
 	}
 
 	bool canForget(Declaration decl)in{
-		assert(toPush.length==0);
+		assert(toPush.length==0,text(toPush));
 	}do{
 		if(decl.sstate==SemState.error) return true;
 		assert(decl.sstate==SemState.completed);

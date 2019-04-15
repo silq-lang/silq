@@ -933,7 +933,10 @@ struct FreeIdentifiers{
 auto freeIdentifiers(Expression self){
 	return FreeIdentifiers(self);
 }
-
+bool hasFreeIdentifier(Expression self,string name){
+	foreach(id;self.freeIdentifiers) if(id.name==name) return true;
+	return false;
+}
 
 class TypeTy: Type{
 	this(){ this.type=this; super(); }
