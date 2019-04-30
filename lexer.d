@@ -606,8 +606,8 @@ private:
 				// token string
 				case 'q':
 					if(*p=='"') goto delimitedstring;
-					if(*p!='{') goto case 'Q';
-					p++; s = p; sl = line;
+					/+if(*p!='{') +/goto case 'Q';
+					/+p++; s = p; sl = line;
 					del = 0;
 					readtstring: for(int nest=1;;){ // TODO: implement more efficiently
 						Token tt;
@@ -625,7 +625,7 @@ private:
 					}
 					res[0].type = Tok!"``";
 					res[0].str = s[0..p-s-1]; // reference to code
-					goto lexstringsuffix;
+					goto lexstringsuffix;+/
 					delimitedstring:
 					res[0].type = Tok!"``";
 					s=++p; sl=line;
