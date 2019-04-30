@@ -1637,7 +1637,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 				sc.error(format("only one index required to index type %s",idx.e.type),idx.loc);
 				idx.sstate=SemState.error;
 			}else{
-				if(!isSubtype(idx.a[0].type,ℤt(true))&&!isInt(idx.a[0].type)&&!isUint(idx.a[0].type)){
+				if(!isSubtype(idx.a[0].type,ℤt(true))&&!isSubtype(idx.a[0].type,Bool(false))&&!isInt(idx.a[0].type)&&!isUint(idx.a[0].type)){
 					sc.error(format("index should be integer, not %s",idx.a[0].type),idx.loc);
 					idx.sstate=SemState.error;
 				}else{
