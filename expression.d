@@ -450,7 +450,6 @@ class IndexExp: Expression{ //e[a...]
 	}
 
 	override Annotation getAnnotation(){ return reduce!min(e.getAnnotation(), a.map!(x=>x.getAnnotation())); }
-
 }
 
 class SliceExp: Expression{
@@ -910,6 +909,7 @@ class CompoundExp: Expression{
 	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
 		return false;
 	}
+	override Annotation getAnnotation(){ return reduce!min(Annotation.max, s.map!(x=>x.getAnnotation())); }
 }
 
 class TupleExp: Expression{
