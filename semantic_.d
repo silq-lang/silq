@@ -22,6 +22,7 @@ alias BitXorAssignExp=BinaryExp!(Tok!"⊕←");
 alias BitAndAssignExp=BinaryExp!(Tok!"∧←");
 alias AddExp=BinaryExp!(Tok!"+");
 alias SubExp=BinaryExp!(Tok!"-");
+alias NSubExp=BinaryExp!(Tok!"sub");
 alias MulExp=BinaryExp!(Tok!"·");
 alias DivExp=BinaryExp!(Tok!"/");
 alias IDivExp=BinaryExp!(Tok!"div");
@@ -1737,7 +1738,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 			}
 			sl.type=tupleTy(tt.types[cast(size_t)lc..cast(size_t)rc]);
 		}else{
-			sc.error(format("type %s is not slicable",sl.e.type),sl.loc);
+			sc.error(format("type %s is not sliceable",sl.e.type),sl.loc);
 			sl.sstate=SemState.error;
 		}
 		return sl;
@@ -1823,10 +1824,10 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 			if((isRat(from)||isFloat(from))&&isSubtype(ℚt(from.isClassical()),to))
 				return true;
 			auto ce1=cast(CallExp)from;
-			if(ce1&&(isInt(ce1)||isUint(ce1))&&isSubtype(vectorTy(Bool(ce1.isClassical()),ce1.arg),to))
+			if(ce1&&(isInt(ce1)||isUint(ce1))&&(isSubtype(vectorTy(Bool(ce1.isClassical()),ce1.arg),to)||isSubtype(arrayTy(Bool(ce1.isClassical())),to)))
 				return true;
 			auto ce2=cast(CallExp)to;
-			if(ce2&&(isInt(ce2)||isUint(ce2))&&isSubtype(from,vectorTy(Bool(ce2.isClassical()),ce2.arg)))
+			if(ce2&&(isInt(ce2)||isUint(ce2))&&(isSubtype(from,vectorTy(Bool(ce2.isClassical()),ce2.arg))||isSubtype(from,arrayTy(Bool(ce2.isClassical())))))
 				return true;
 			auto tpl1=cast(TupleTy)from, tpl2=cast(TupleTy)to;
 			if(tpl1&&tpl2&&tpl1.types.length==tpl2.types.length&&zip(tpl1.types,tpl2.types).all!(x=>explicitConversion(x.expand)))
@@ -1836,6 +1837,10 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 				return true;
 			auto vec1=cast(VectorTy)from, vec2=cast(VectorTy)to;
 			if(vec1&&vec2&&vec1.num==vec2.num&&explicitConversion(vec1.next,vec2.next))
+				return true;
+			if(arr1&&vec2&&explicitConversion(arr1.next,vec2.next))
+				return true;
+			if(vec1&&arr2&&explicitConversion(vec1.next,arr2.next))
 				return true;
 			return false;
 		}
@@ -1923,6 +1928,13 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 		bool classical=t1.isClassical()&&t2.isClassical();
 		return (cast(BoolTy)t1||cast(ℕTy)t1)&&(cast(BoolTy)t2||cast(ℕTy)t2)?ℕt(classical):ℤt(classical);
 	}
+	static Expression nSubType(Expression t1, Expression t2){
+		auto r=arithmeticType!true(t1,t2);
+		if(isUint(r)) return r;
+		if(isSubtype(r,ℕt(false))) return r;
+		if(isSubtype(r,ℤt(false))) return ℕt(r.isClassical());
+		return null;
+	}
 	static Expression moduloType(Expression t1, Expression t2){
 		auto r=arithmeticType!false(t1,t2);
 		return r==ℤt(true)?ℕt(true):r==ℤt(false)?ℕt(false):r; // TODO: more general range information?
@@ -1965,6 +1977,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 	}
 	if(auto ae=cast(AddExp)expr) return expr=handleBinary!(arithmeticType!false)("addition",ae,ae.e1,ae.e2);
 	if(auto ae=cast(SubExp)expr) return expr=handleBinary!subtractionType("subtraction",ae,ae.e1,ae.e2);
+	if(auto ae=cast(NSubExp)expr) return expr=handleBinary!nSubType("natural subtraction",ae,ae.e1,ae.e2);
 	if(auto ae=cast(MulExp)expr) return expr=handleBinary!(arithmeticType!true)("multiplication",ae,ae.e1,ae.e2);
 	if(auto ae=cast(DivExp)expr) return expr=handleBinary!divisionType("division",ae,ae.e1,ae.e2);
 	if(auto ae=cast(IDivExp)expr) return expr=handleBinary!iDivType("integer division",ae,ae.e1,ae.e2);

@@ -41,8 +41,8 @@ int getLbp(TokenType type) pure{ // operator precedence
 	case Tok!",":  return 10; // comma operator
 	// assignment operators
 	case Tok!"←":
-	case Tok!"/=",Tok!"div=",Tok!"&=",Tok!"∧=",Tok!"⊕=",Tok!"|=",Tok!"∨=",Tok!"-=":
-	case Tok!"/←",Tok!"div←",Tok!"&←",Tok!"∧←",Tok!"⊕←",Tok!"|←",Tok!"∨←",Tok!"-←":
+	case Tok!"/=",Tok!"div=",Tok!"&=",Tok!"∧=",Tok!"⊕=",Tok!"|=",Tok!"∨=",Tok!"-=",Tok!"sub=":
+	case Tok!"/←",Tok!"div←",Tok!"&←",Tok!"∧←",Tok!"⊕←",Tok!"|←",Tok!"∨←",Tok!"-←",Tok!"sub←":
 	case Tok!"+=",Tok!"<<=",Tok!">>=", Tok!">>>=":
 	case Tok!"+←",Tok!"<<←",Tok!">>←", Tok!">>>←":
 	case Tok!"*=",Tok!"%=",Tok!"^=":
@@ -73,7 +73,7 @@ int getLbp(TokenType type) pure{ // operator precedence
 	case Tok!"->",Tok!"→",Tok!"!": // exponential type
 	// case Tok!"⇒",Tok!"↦",Tok!"=>": return 115; // goesto
 	// additive operators
-	case Tok!"+",Tok!"-",Tok!"~":
+	case Tok!"+",Tok!"-",Tok!"~",Tok!"sub":
 		return 120;
 	case Tok!"×": // product type
 	// multiplicative operators
@@ -543,7 +543,7 @@ struct Parser{
 				return res;
 			}mixin({string r;
 				foreach(x;binaryOps)
-					if(!util.among(x,"=>",".","!","?",":","*","=","==","<=","!<=",">=","!>=","!=","*=","/=","div=","&=","⊕=","|=","-=","+=","<<=",">>=",">>>=","*=","·=","%=","^=","&&=","||=","~=","&","&=","&←","∧=","|","|=","|←","∨=")){
+					if(!util.among(x,"=>",".","!","?",":","*","=","==","<=","!<=",">=","!>=","!=","*=","/=","div=","&=","⊕=","|=","-=","sub=","+=","<<=",">>=",">>>=","*=","·=","%=","^=","&&=","||=","~=","&","&=","&←","∧=","|","|=","|←","∨=")){
 						r~=mixin(X!q{case Tok!"@(x)":
 							nextToken();
 							static if("@(x)"=="->"||"@(x)"=="→"){
@@ -566,7 +566,7 @@ struct Parser{
 					}
 				return r;
 			}());
-			static foreach(x;["/=","div=","&=","⊕=","|=","-=","+=","<<=",">>=",">>>=","%=","^=","&&=","||=","~="])
+			static foreach(x;["/=","div=","&=","⊕=","|=","-=","sub=","+=","<<=",">>=",">>>=","%=","^=","&&=","||=","~="])
 				case Tok!x: goto case Tok!(x[0..$-1]~"←");
 			case Tok!"=":
 				if(statement) goto case Tok!"←";
@@ -604,6 +604,17 @@ struct Parser{
 						}else{
 							auto right=parseExpression(rbp!(Tok!"div"),false);
 							return res=New!(BinaryExp!(Tok!"div"))(left,right);
+						}
+					case "sub":
+						auto id=tok;
+						nextToken();
+						if((ttype==Tok!"←"||ttype==Tok!"=") && id.loc.rep.ptr+id.loc.rep.length==tok.loc.rep.ptr){
+							nextToken();
+							auto right=parseExpression(rbp!(Tok!"sub="),false);
+							return res=New!(BinaryExp!(Tok!"sub←"))(left,right);
+						}else{
+							auto right=parseExpression(rbp!(Tok!"div"),false);
+							return res=New!(BinaryExp!(Tok!"sub"))(left,right);
 						}
 					case "xorb":
 						auto id=tok;
@@ -661,9 +672,11 @@ struct Parser{
 		int clbp(){
 			if(ttype==Tok!"i"){
 				if(tok.str=="div")
-					return arrLbp[peek().type==Tok!"="?Tok!"div=":Tok!"div"];
+					return arrLbp[util.among(peek().type,Tok!"←",Tok!"=")?Tok!"div←":Tok!"div"];
+				if(tok.str=="sub")
+					return arrLbp[util.among(peek().type,Tok!"←",Tok!"=")?Tok!"sub←":Tok!"div"];
 				if(tok.str=="xorb")
-					return arrLbp[peek().type==Tok!"="?Tok!"⊕=":Tok!"⊕"];
+					return arrLbp[util.among(peek().type,Tok!"←",Tok!"=")?Tok!"⊕←":Tok!"⊕"];
 				if(tok.str=="x")
 					return arrLbp[Tok!"×"];
 			}

@@ -144,7 +144,8 @@ string[2][] unicodeTokens =
 	 ["%←",    "ModuloAssign"              ],
 	 ["^←",    "PowAssign"                 ],
 	 ["~←",    "ConcatAssign"              ],
-	 ["div←",  "IntegerDivisionAssign"     ]];
+	 ["div←",  "IntegerDivisionAssign"     ],
+	 ["sub←",  "NaturalMinusAssign"        ]];
 string[2][] specialTokens = 
 	[["",      "None",                     ],
 	 [" ",     "Whitespace",               ],
@@ -155,6 +156,8 @@ string[2][] specialTokens =
 	 ["__error","ErrorLiteral"             ],
 	 ["div",   "IntegerDivision"           ],
 	 ["div=",  "IntegerDivisionEqual"      ],
+	 ["sub",   "NaturalMinus"              ],
+	 ["sub=",  "NaturalMinusEqual"         ],
 	 ["EOF",   "Eof"                       ]];
 
 
