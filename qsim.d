@@ -127,13 +127,18 @@ struct QState{
 		Value opBinary(string op)(ℤ b){
 			return mixin(`this `~op~` makeInteger(b)`);
 		}
+		bool eqZImpl(){
+			if(type==ℝ(true)) return fval==0;
+			if(type==ℚt(true)) return qval==0;
+			if(type==ℤt(true)) return zval==0;
+			if(type==Bool(true)) return bval==0;
+			enforce(0,text("TODO: 'eqZ'/'neqZ' for type ",this.type));
+		}
 		Value eqZ(){
-			enforce(0,text("TODO: 'eqZ' for type ",this.type));
-			assert(0);
+			return makeBool(eqZImpl());
 		}
 		Value neqZ(){
-			enforce(0,text("TODO: 'eqZ' for type ",this.type));
-			assert(0);
+			return makeBool(!eqZImpl());
 		}
 		Value lt(Value r){
 			if(type==ℝ(true)&&r.type==ℝ(true)) return makeBool(fval<r.fval);
