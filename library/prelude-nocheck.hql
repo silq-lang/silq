@@ -36,8 +36,8 @@ def floor(const x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+⌊x⌋]",x);
 def ceil(const x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+⌈x⌉]",x);
 def inℤ(const x:ℝ)lifted :ℝ ⇒ x==floor(x);+/
 
-def array[const a]lifted(const length: ℝ, const init:a)lifted: a[];
-def vector[const a:*]lifted(const n:!ℕ,const x:a)lifted:a^n;
+def array[const τ]lifted(n: !ℕ,const x:τ)lifted:τ[]⇒(quantumPrimitive("array"):!(Π[τ:*]lifted. !ℕ×const τ→lifted τ[]))(n,x);
+def vector[const τ:*]lifted(n:!ℕ,const x:τ)lifted:τ^n⇒(quantumPrimitive("vector"):!(Π[τ:*]lifted. Π(n:!ℕ,const x:τ)lifted. τ^n))(n,x);
 
 /+
 // first-class inference
