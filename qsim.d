@@ -38,6 +38,9 @@ private:
 }
 
 enum zeroThreshold=1e-8;
+bool isToplevelClassical(Expression ty){
+	return ty.isClassical()||cast(TupleTy)ty||cast(ArrayTy)ty||cast(VectorTy)ty||cast(ProductTy)ty;
+}
 struct QState{
 	C[Σ] state;
 	Value[string] vars;
@@ -71,15 +74,23 @@ struct QState{
 		}
 		return q(then,othw);
 	}
-	QState map(alias f)(){
-
+	QState map(alias f,T...)(T args){
+		QState new_;
+		new_.copyNonState(this);
+		foreach(k,v;state){
+			auto nk=f(k,args);
+			enforce(nk !in new_.state);
+			new_.state[nk]=v;
+		}
+		return new_;
 	}
-
 	alias R=double;
 	alias C=Complex!double;
-	abstract class QuVal{
+	abstract class QVal{
 		abstract Value get(Σ);
-		abstract Σ forget(Σ);
+		void assign(ref QState state,Value rhs){
+			enforce(0,text("can't assign to quval ",this));
+		}
 	}
 	struct Closure{
 		FunctionDef fun;
@@ -87,21 +98,193 @@ struct QState{
 	}
 	struct Value{
 		Expression type;
+		enum Tag{
+			array_,
+			record,
+			closure,
+			quval,
+			fval,
+			qval,
+			zval,
+			bval,
+		}
+		static Tag getTag(Expression type){
+			if(cast(ArrayTy)type||cast(VectorTy)type||cast(TupleTy)type) return Tag.array_;
+			if(cast(ContextTy)type) return Tag.record;
+			if(cast(ProductTy)type) return Tag.closure;
+			if(!type.isClassical()){
+				assert(!type.isToplevelClassical());
+				return Tag.quval;
+			}
+			if(type==ℝ(true)) return Tag.fval;
+			if(type==ℚt(true)) return Tag.qval;
+			if(type==ℤt(true)) return Tag.zval;
+			if(type==Bool(true)) return Tag.bval;
+			if(type==typeTy) return Tag.bval; // TODO: ok?
+			enforce(0,text("TODO: representation for type ",type));
+			assert(0);
+		}
+		@property Tag tag(){
+			return getTag(type);
+		}
 		bool opCast(T:bool)(){ return !!type; }
 		void opAssign(Value rhs){
+			// TODO: make safe
 			type=rhs.type;
-			bits=rhs.bits;
+			Lswitch:final switch(tag){
+				import std.traits:EnumMembers;
+				static foreach(t;EnumMembers!Tag)
+				case t: mixin(`this.`~to!string(t)~`=rhs.`~to!string(t)~`;`); break Lswitch;
+			}
 		}
+		this(this){
+			if(!type) return;
+			auto tt=tag;
+			Lswitch:final switch(tt){
+				import std.traits:EnumMembers;
+				static foreach(t;EnumMembers!Tag)
+				case t: static if(__traits(hasMember,mixin(to!string(t)),"__postblit")) mixin(`this.`~to!string(t)~`.__postblit();`);
+			}
+			if(tt==Tag.array_) array_=array_.dup;
+			if(tt==Tag.record) record=record.dup; // TODO: necessary?
+		}
+		void assign(ref QState state,Value rhs){
+			assert(type==rhs.type);
+			assert(!type.isToplevelClassical);
+			assert(tag==Tag.quval);
+			quval.assign(state,rhs);
+		}
+
 		union{
 			Value[] array_;
 			Value[string] record;
 			Closure closure;
-			QuVal quval;
+			QVal quval;
 			R fval;
 			ℚ qval;
 			ℤ zval;
 			bool bval;
 			ubyte[max(array_.sizeof,record.sizeof,quval.sizeof,fval.sizeof,qval.sizeof,zval.sizeof,bval.sizeof)] bits;
+		}
+
+		Value convertTo(Expression ntype){
+			if(type==ntype) return this;
+			auto ntag=getTag(ntype);
+			final switch(tag){
+				case Tag.array_:
+					if(ntag==Tag.array_){
+						Value r;
+						r.type=ntype;
+						break; // TODO
+					}
+					break;
+				case Tag.record:
+					break;
+				case Tag.closure:
+					assert(ntag==Tag.closure);
+					Value r=this;
+					r.type=ntype;
+					return r;
+					break;
+				case Tag.quval:
+					break; // TODO
+				case Tag.fval:
+					break;
+				case Tag.qval:
+					if(ntag==Tag.fval){
+						Value r;
+						r.type=ntype;
+						r.fval=to!R(to!string(qval.num))/to!R(to!string(qval.den)); // TODO: better?
+						return r;
+					}
+					break;
+				case Tag.zval:
+					if(ntag==Tag.qval){
+						Value r;
+						r.type=ntype;
+						r.qval=ℚ(zval);
+						return r;
+					}
+					if(ntag==Tag.fval){
+						Value r;
+						r.type=ntype;
+						r.fval=to!R(to!string(zval)); // TODO: better?
+						return r;
+					}
+					break;
+				case Tag.bval:
+					if(ntag==Tag.zval){
+						Value r;
+						r.type=ntype;
+						r.zval=ℤ(cast(int)bval);
+						return r;
+					}
+					if(ntag==Tag.qval){
+						Value r;
+						r.type=ntype;
+						r.qval=ℚ(bval);
+						return r;
+					}
+					if(ntag==Tag.fval){
+						Value r;
+						r.type=ntype;
+						r.fval=to!R(bval);
+						return r;
+					}
+			}
+			enforce(0,text("TODO: convert ",type," to ",ntype));
+			assert(0);
+		}
+		
+		Value inFrame(){
+			return this;
+			/+Value r;
+			r.type=type;
+			final switch(tag){
+				case Tag.array_:
+					r.array_=array_.map!(v=>v.inFrame).array;
+					break;
+				case Tag.record:
+					Value[string] nr;
+					foreach(k,v;record)
+						nr[k]=v.inFrame();
+					r.record=nr;
+					break;
+				case Tag.closure:
+					r.closure=Closure(closure.fun,[closure.context.inFrame()].ptr);
+					break;
+				case Tag.quval:
+					r.quval=quval.inFrame();
+					break;
+				case Tag.fval: r.fval=fval; break;
+				case Tag.qval: r.qval=qval; break;
+				case Tag.zval: r.zval=zval; break;
+				case Tag.bval: r.bval=bval; break;
+			}
+			return r;+/
+		}
+		Value opIndex(size_t i)in{
+			assert(tag==Tag.array_);
+		}do{
+			return array_[i];
+		}
+		Value opIndex(Value i){
+			if(i.isClassicalInteger()) return this[to!size_t(i.asInteger())];
+			enforce(0,text("TODO: indexing for types ",this.type," and ",i.type));
+			assert(0);
+		}
+		Value opSlice(size_t l,size_t r)in{
+			assert(tag==Tag.array_);
+		}do{
+			Value res;
+			res.type=type;
+			res.array_=array_[l..r];
+			return res;
+		}
+		Value opSlice(Value l,Value r){
+			if(l.isClassicalInteger()&&r.isClassicalInteger()) return this[to!size_t(l.asInteger())..to!size_t(r.asInteger())];
+			enforce(0,text("TODO: slicing for types ",this.type,", ",l.type," and ",r.type));
+			assert(0);
 		}
 		Value opUnary(string op)(){
 			static if(op=="-"){
@@ -114,9 +297,19 @@ struct QState{
 		}
 		Value opBinary(string op)(Value r){
 			static if(["+","-","*","/"].canFind(op)){
-				if(type==ℝ(true)&&r.type==ℝ(true)) return makeReal(mixin(`fval `~op~` r.fval`));
-				if(type==ℚt(true)&&r.type==ℚt(true)) return makeRational(mixin(`qval `~op~` r.qval`));
-				if(type==ℤt(true)&&r.type==ℤt(true)) return makeInteger(mixin(`zval `~op~` r.zval`));
+				Expression ntype=null;
+				if(type!=r.type){
+					ntype=joinTypes(type,r.type);
+					if(ntype){
+						if(op=="/"&&isSubtype(ntype,ℚt(false)))
+							ntype=ℚt(ntype.isClassical());
+						return mixin(`this.convertTo(ntype) `~op~` r.convertTo(ntype)`);
+					}
+				}else{
+					if(type==ℝ(true)) return makeReal(mixin(`fval `~op~` r.fval`));
+					if(type==ℚt(true)) return makeRational(mixin(`qval `~op~` r.qval`));
+					if(type==ℤt(true)) return makeInteger(mixin(`zval `~op~` r.zval`));
+				}
 			}
 			enforce(0,text("TODO: '",op,"' for types ",this.type," and ",r.type));
 			assert(0);
@@ -133,6 +326,7 @@ struct QState{
 			if(type==ℤt(true)) return zval==0;
 			if(type==Bool(true)) return bval==0;
 			enforce(0,text("TODO: 'eqZ'/'neqZ' for type ",this.type));
+			assert(0);
 		}
 		Value eqZ(){
 			return makeBool(eqZImpl());
@@ -186,12 +380,13 @@ struct QState{
 			return bval;
 		}
 		bool isClassicalInteger(){
-			return type.isClassical()&&(isInt(type)||isUint(type)||type==ℤt(true));
+			return type.isClassical()&&(isInt(type)||isUint(type)||type==ℤt(true)||type==Bool(true));
 		}
 		ℤ asInteger()in{
 			assert(isClassicalInteger());
 		}do{
 			if(type==ℤt(true)) return zval;
+			if(type==Bool(true)) return ℤ(cast(int)bval);
 			enforce(0,text("TODO: asInteger for type ",type));
 			assert(0);
 		}
@@ -221,7 +416,16 @@ struct QState{
 		return r;
 	}
 	struct Σ{
-		ubyte[] data;
+		alias Ref=size_t;
+		Value[Ref] qvars;
+		static Ref curRef=0;
+		Ref assign(Ref ref_,Value v){
+			qvars[ref_]=v;
+			return ref_;
+		}
+		void forget(Ref ref_){
+			qvars.remove(ref_);
+		}
 	}
 	static QState empty(){ return QState.init; }
 	static QState unit(){
@@ -230,18 +434,41 @@ struct QState{
 		return qstate;
 	}
 	QState pushFrame(){
-		Value[string] nvars;
-		foreach(name,val;vars) nvars[name]=makeRecord(["`frame":val]);
+		Value[string] nvars,nnvars;
+		foreach(k,v;vars) nvars[k]=v.inFrame();
+		nnvars["`frame"]=makeRecord(nvars);
+		return QState(state,nnvars);
+	}
+	QState popFrame(){
+		auto frame=vars["`frame"];
+		enforce(frame.tag==Value.Tag.record);
+		Value[string] nvars=frame.record.dup;
 		return QState(state,nvars);
 	}
-	QState popFrame(string tmpVar){
-		enforce(0,"TODO: function calls");
-		assert(0);
+	static Value inFrame(Value v){
+		return v.inFrame();
 	}
 	Value call(FunctionDef fun,Value thisExp,Value arg,Scope sc){
 		auto ncur=pushFrame();
-		enforce(0,"TODO: function calls");
-		assert(0);
+		enforce(!thisExp,"TODO: method calls");
+		enforce(!fun.isConstructor,"TODO: constructors");
+		if(fun.isNested){
+			enforce(0,"TODO: nested function calls");
+		}
+		if(fun.isTuple){
+			auto args=iota(fun.params.length).map!(i=>inFrame(arg[i]));
+			foreach(i,prm;fun.params){
+				ncur.assignTo(prm.getName,inFrame(arg[i])); // TODO: faster: parallel assignment to parameters
+			}
+		}else{
+			assert(fun.params.length==1);
+			ncur.assignTo(fun.params[0].getName,inFrame(arg));
+		}
+		auto intp=Interpreter!QState(fun,fun.body_,ncur,true);
+		auto nnstate=QState.empty();
+		intp.runFun(nnstate);
+		this=nnstate.popFrame();
+		return nnstate.vars["`value"];
 	}
 	QState assertTrue(Value val)in{
 		assert(val.type==Bool(true));
@@ -282,14 +509,6 @@ struct QState{
 	}
 	alias makeArray=makeTuple;
 	alias makeVector=makeTuple;
-	Value readIndex(Value r,Value i){
-		enforce(0,"TODO: readIndex");
-		assert(0);
-	}
-	Value makeSlice(Value v,Value l,Value r){
-		enforce(0,"TODO: makeSlice");
-		assert(0);
-	}
 	static Value makeReal(string value){
 		Value r;
 		r.type=ℝ(true);
@@ -340,7 +559,7 @@ struct QState{
 		assert(cast(BoolTy)cond.type);
 	}do{
 		if(cond.type.isClassical) return cond.asBoolean?then:othw;
-		static class IteQuVal: QuVal{
+		static class IteQVal: QVal{
 			Value cond,then,othw;
 			this(Value cond,Value then,Value othw){
 				this.cond=cond, this.then=then, this.othw=othw;
@@ -348,22 +567,95 @@ struct QState{
 			override Value get(Σ s){
 				return cond.classicalValue(s)?then.classicalValue(s):othw.classicalValue(s);
 			}
-			override Σ forget(Σ s){
-				enforce(0,"TODO?");
-				assert(0);
-			}
 		}
 		enforce(then.type==othw.type,"TODO: ite branches with different types");
 		Value r;
 		r.type=then.type;
-		r.quval=new IteQuVal(cond,then,othw);
+		r.quval=new IteQVal(cond,then,othw);
 		return r;
 	}
+	Value makeQVar(Value v)in{
+		assert(!v.type.isClassical());
+	}do{
+		static class QVar: QVal{
+			Σ.Ref ref_;
+			this(Σ.Ref ref_){ this.ref_=ref_; }
+			override Value get(Σ s){
+				return s.qvars[ref_];
+			}
+			override void assign(ref QState state,Value rhs){
+				state.assignTo(ref_,rhs);
+			}
+		}
+		Value r;
+		r.type=v.type;
+		auto ref_=Σ.curRef++;
+		static Σ addVariable(Σ s,Σ.Ref ref_,Value v){
+			enforce(ref_ !in s.qvars);
+			s.assign(ref_,v);
+			return s;
+		}
+		this=map!addVariable(ref_,v);
+		r.quval=new QVar(ref_);
+		return r;
+	}
+	private void assignTo(Σ.Ref var,Value rhs){
+		static Σ assign(Σ s,Σ.Ref var,Value rhs){
+			s.assign(var,rhs);
+			return s;
+		}
+		this=map!assign(var,rhs);
+	}
 	void assignTo(string lhs,Value rhs){
-		vars[lhs]=rhs;
+		if(rhs.type.isToplevelClassical()){
+			vars[lhs]=rhs;
+			return;
+		}
+		if(lhs in vars){
+			auto var=vars[lhs];
+			enforce(!var.type.isToplevelClassical());
+			enforce(var.type==rhs.type);
+			var.assign(this,rhs);
+		}else vars[lhs]=makeQVar(rhs);
 	}
 	void assignTo(Value lhs,Value rhs){
 		enforce(0,"TODO: assignTo");
+		assert(0);
+	}
+	Value H(Value x){
+		enforce(0,"TODO: hadamard");
+		assert(0);
+	}
+	Value X(Value x){
+		enforce(0,"TODO: X");
+		assert(0);
+	}
+	Value Y(Value x){
+		enforce(0,"TODO: Y");
+		assert(0);
+	}
+	Value Z(Value x){
+		enforce(0,"TODO: Z");
+		assert(0);
+	}
+	Value phase(Value φ){
+		enforce(0,"TODO: Z");
+		assert(0);
+	}
+	Value rX(Value args){
+		enforce(0,"TODO: rX");
+		assert(0);
+	}
+	Value rY(Value args){
+		enforce(0,"TODO: rY");
+		assert(0);
+	}
+	Value rZ(Value args){
+		enforce(0,"TODO: rY");
+		assert(0);
+	}
+	Value measure(Value arg){
+		enforce(0,"TODO: measure");
 		assert(0);
 	}
 }
@@ -487,8 +779,23 @@ struct Interpreter(QState){
 			if(auto ume=cast(UBitNotExp)e) return ~doIt(ume.e);
 			if(auto le=cast(LambdaExp)e) return qstate.makeFunction(le.fd,le.fd.scope_);
 			if(auto ce=cast(CallExp)e){
-				auto id=cast(Identifier)ce.e;
-				auto fe=cast(FieldExp)ce.e;
+				static Expression unwrap(Expression e){
+					if(auto tae=cast(TypeAnnotationExp)e)
+						return unwrap(tae.e);
+					return e;
+				}
+				static string getQuantumOp(Expression qpArg){
+					auto opExp=qpArg;
+					if(auto tpl=cast(TupleExp)opExp){
+						enforce(tpl.e.length==1);
+						opExp=tpl.e[0];
+					}
+					auto opLit=cast(LiteralExp)opExp;
+					enforce(!!opLit&&opLit.lit.type==Tok!"``");
+					return opLit.lit.str;
+				}
+				auto id=cast(Identifier)unwrap(ce.e);
+				auto fe=cast(FieldExp)unwrap(ce.e);
 				QState.Value thisExp=QState.nullValue;
 				if(fe){
 					id=fe.f;
@@ -501,17 +808,62 @@ struct Interpreter(QState){
 					}
 					if(!fe && isBuiltIn(id)){
 						switch(id.name){
+							case "quantumPrimitive":
+								enforce(0,"quantum primitive cannot be used as first-class value");
+								assert(0);
 							default:
 								enforce(0,text("TODO: ",id.name));
 								assert(0);
+						}
+					}
+				}else if(auto ce2=cast(CallExp)unwrap(ce.e)){
+					if(auto id2=cast(Identifier)unwrap(ce2.e)){
+						if(isBuiltIn(id2)){
+							switch(id2.name){
+								case "quantumPrimitive":
+									switch(getQuantumOp(ce2.arg)){
+										case "dup": enforce(0,"quantumPrimitive(\"dup\")[τ] cannot be used as first-class value"); assert(0);
+										case "reverse":  enforce(0,"quantumPrimitive(\"reverse\")[τ] cannot be used as first-class value"); assert(0);
+										case "M": enforce(0,"quantumPrimitive(\"M\")[τ] cannot be used as first-class value"); assert(0);
+										case "H": return qstate.H(doIt(ce.arg));
+										case "X": return qstate.X(doIt(ce.arg));
+										case "Y": return qstate.Y(doIt(ce.arg));
+										case "Z": return qstate.Z(doIt(ce.arg));
+										case "P": return qstate.phase(doIt(ce.arg));
+										case "rX": return qstate.rX(doIt(ce.arg));
+										case "rY": return qstate.rY(doIt(ce.arg));
+										case "rZ": return qstate.rZ(doIt(ce.arg));
+										default: break;
+									}
+									break;
+								default:
+									break;
+							}
+						}
+					}else if(auto ce3=cast(CallExp)unwrap(ce2.e)){
+						if(auto id3=cast(Identifier)unwrap(ce3.e)){
+							if(isBuiltIn(id3)){
+								switch(id3.name){
+									case "quantumPrimitive":
+										switch(getQuantumOp(ce3.arg)){
+											case "dup": return doIt(ce.arg);
+											case "reverse": enforce(0,"TODO: reverse"); assert(0);
+											case "M": return qstate.measure(doIt(ce.arg));
+											default: break;
+										}
+										break;
+									default:
+										break;
+								}
+							}
 						}
 					}
 				}
 				auto fun=doIt(ce.e), arg=doIt(ce.arg);
 				return qstate.call(fun,arg);
 			}
-			if(auto idx=cast(IndexExp)e) return qstate.readIndex(doIt(idx.e),doIt(idx.a[0])); // TODO: bounds checking
-			if(auto sl=cast(SliceExp)e) return qstate.makeSlice(doIt(sl.e),doIt(sl.l),doIt(sl.r)); // TODO: bounds checking
+			if(auto idx=cast(IndexExp)e) return doIt(idx.e)[doIt(idx.a[0])]; // TODO: bounds checking
+			if(auto sl=cast(SliceExp)e) return doIt(sl.e)[doIt(sl.l)..doIt(sl.r)]; // TODO: bounds checking
 			if(auto le=cast(LiteralExp)e){
 				if(util.among(le.lit.type,Tok!"0",Tok!".0")){
 					if(le.type==ℚt(true)){
@@ -545,7 +897,9 @@ struct Interpreter(QState){
 				auto values=tpl.e.map!doIt.array;
 				return QState.makeTuple(e.type,values);
 			}else if(auto arr=cast(ArrayExp)e){
-				auto values=arr.e.map!doIt.array;
+				auto et=arr.type.elementType;
+				assert(!!et);
+				auto values=arr.e.map!(v=>doIt(v).convertTo(et)).array;
 				return QState.makeArray(e.type,values);
 			}else if(auto ae=cast(AssertExp)e){
 				if(auto c=runExp(ae.e)){
@@ -553,7 +907,7 @@ struct Interpreter(QState){
 					return qstate.makeTuple(unit,[]);
 				}
 			}else if(auto tae=cast(TypeAnnotationExp)e){
-				return doIt(tae.e);
+				return doIt(tae.e).convertTo(tae.type);
 			}else if(cast(Type)e)
 				return qstate.makeTuple(unit,[]); // 'erase' types
 			else{
@@ -594,7 +948,7 @@ struct Interpreter(QState){
 	void assignTo(Expression lhs,QState.Value rhs){
 		if(auto id=cast(Identifier)lhs){
 			qstate.assignTo(id.name,rhs);
-		}else enforce(0,"TODO: unpacking assignments");
+		}else enforce(0,"TODO: assignments to non-variables");
 	}
 	void runStm(Expression e,ref QState retState){
 		if(!qstate.state.length) return;

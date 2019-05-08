@@ -542,6 +542,13 @@ VectorTy vectorTy(Expression next,Expression num)in{
 	return memoize!((Expression next,Expression num)=>new VectorTy(next,num))(next,num);
 }
 
+static Expression elementType(Expression ty){
+	if(auto at=cast(ArrayTy)ty) return at.next;
+	if(auto vt=cast(VectorTy)ty) return vt.next;
+	return null;
+}
+
+
 
 class StringTy: Type{
 	bool classical;
