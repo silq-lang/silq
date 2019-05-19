@@ -182,7 +182,7 @@ abstract class Scope{
 
 	debug{
 		private bool closed=false;
-		~this(){ if((!closed||allowMerge)&&allowsLinear()){ import std.stdio; writeln(typeid(this)," ",__FILE__," ",__LINE__); assert(0); } }
+		~this(){ debug if((!closed||allowMerge)&&allowsLinear()){ import std.stdio; writeln(typeid(this)," ",__FILE__," ",__LINE__); assert(0); } }
 	}
 
 	bool close()in{

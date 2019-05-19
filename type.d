@@ -742,7 +742,16 @@ class ProductTy: Type{
 		auto nsubst=subst.dup;
 		foreach(n;names) nsubst.remove(n);
 		auto ncod=cod.substitute(nsubst);
-		return productTy(isConst,names,ndom,ncod,isSquare,isTuple,annotation,isClassical_);
+		auto nIsConst=isConst;
+		if(auto tpl=cast(TupleTy)ncod){ // TODO: it might be better to maintain this invariant upon construction
+			assert(nIsConst.length==tpl.types.length);
+			if(iota(nIsConst.length).any!(i=>!nIsConst[i]&&tpl.types[i].impliesConst)){
+				nIsConst=nIsConst.dup;
+				foreach(i;0..nIsConst.length) if(!nIsConst[i]&&tpl.types[i].impliesConst) nIsConst[i]=true;
+			}
+		}else if(ncod.impliesConst&&iota(nIsConst.length).any!(i=>!nIsConst[i]))
+			nIsConst=true.repeat(isConst.length).array;
+		return productTy(nIsConst,names,ndom,ncod,isSquare,isTuple,annotation,isClassical_);
 	}
 	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
 		auto r=cast(ProductTy)rhs; // TODO: get rid of duplication (same code in opEquals)
