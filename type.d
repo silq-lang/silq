@@ -763,7 +763,8 @@ class ProductTy: Type{
 		if(isTuple&&!cast(TupleTy)r.dom) return false;
 		r=r.setTuple(isTuple);
 		if(!r) return false;
-		if(isConst!=r.isConst||isSquare!=r.isSquare||annotation!=r.annotation||
+		if(isConst.length!=r.isConst.length) return false;
+		if(isSquare!=r.isSquare||annotation>r.annotation||
 		   isClassical_!=r.isClassical_||nargs!=r.nargs)
 			return false;
 		r=r.relabelAll(freshNames(r));
