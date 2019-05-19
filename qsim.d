@@ -356,34 +356,25 @@ struct QState{
 		Value neqZ(){
 			return makeBool(!eqZImpl());
 		}
-		Value lt(Value r){
-			if(type==ℝ(true)&&r.type==ℝ(true)) return makeBool(fval<r.fval);
-			if(type==ℚt(true)&&r.type==ℚt(true)) return makeBool(qval<r.qval);
-			if(type==ℤt(true)&&r.type==ℤt(true)||type==ℕt(true)&&r.type==ℕt(true)) return makeBool(zval<r.zval);
-			if(type==Bool(true)&&r.type==Bool(true))
-			enforce(0,text("TODO: 'lt' for types ",this.type," ",r.type));
+		Value compare(string op)(Value r){
+			if(type!=r.type){
+				auto ntype=joinTypes(type,r.type);
+				if(ntype) return this.convertTo(ntype).compare!op(r.convertTo(ntype));
+			}else{
+				if(type==ℝ(true)) return makeBool(mixin(`fval `~op~` r.fval`));
+				if(type==ℚt(true)) return makeBool(mixin(`qval `~op~` r.qval`));
+				if(type==ℤt(true)||type==ℕt(true)) return makeBool(mixin(`zval `~op~` r.zval`));
+				if(type==Bool(true)&&r.type==Bool(true)) return makeBool(mixin(`bval `~op~` r.bval`));
+			}
+			enforce(0,text("TODO: '",op,"' for types ",this.type," ",r.type));
 			assert(0);
 		}
-		Value le(Value r){
-			enforce(0,text("TODO: 'le' for types ",this.type," ",r.type));
-			assert(0);
-		}
-		Value gt(Value r){
-			enforce(0,text("TODO: 'lt' for types ",this.type," ",r.type));
-			assert(0);
-		}
-		Value ge(Value r){
-			enforce(0,text("TODO: 'lt' for types ",this.type," ",r.type));
-			assert(0);
-		}
-		Value eq(Value r){
-			enforce(0,text("TODO: 'eq' for types ",this.type," ",r.type));
-			assert(0);
-		}
-		Value neq(Value r){
-			enforce(0,text("TODO: 'neq' for types ",this.type," ",r.type));
-			assert(0);
-		}
+		Value lt(Value r){ return compare!"<"(r); }
+		Value le(Value r){ return compare!"<="(r); }
+		Value gt(Value r){ return compare!">"(r); }
+		Value ge(Value r){ return compare!">="(r); }
+		Value eq(Value r){ return compare!"=="(r); }
+		Value neq(Value r){ return compare!"!="(r); }
 		Value floor(){
 			enforce(0,text("TODO: floor for type ",this.type));
 			assert(0);
@@ -477,11 +468,13 @@ struct QState{
 		return v.inFrame();
 	}
 	Value call(FunctionDef fun,Value thisExp,Value arg,Scope sc,Value* context=null){
-		assert(context||sc);
 		auto ncur=pushFrame();
 		enforce(!thisExp,"TODO: method calls");
 		enforce(!fun.isConstructor,"TODO: constructors");
-		if(fun.isNested) ncur.assignTo(fun.contextName,context?*context:inFrame(buildContextFor(this,fun,sc)));
+		if(fun.isNested){
+			assert(context||sc);
+			ncur.assignTo(fun.contextName,context?*context:inFrame(buildContextFor(this,fun,sc)));
+		}
 		if(fun.isTuple){
 			auto args=iota(fun.params.length).map!(i=>inFrame(arg[i]));
 			foreach(i,prm;fun.params){
@@ -792,7 +785,11 @@ struct Interpreter(QState){
 			}
 			if(auto ae=cast(AddExp)e) return doIt(ae.e1)+doIt(ae.e2);
 			if(auto me=cast(SubExp)e) return doIt(me.e1)-doIt(me.e2);
-			if(auto me=cast(MulExp)e) return doIt(me.e1)*doIt(me.e2);
+			if(auto me=cast(NSubExp)e){
+				auto a=doIt(me.e1),b=doIt(me.e2);
+				enforce(a.ge(b).bval,"result of sub is negative");
+				return a-b;
+			}if(auto me=cast(MulExp)e) return doIt(me.e1)*doIt(me.e2);
 			if(cast(DivExp)e||cast(IDivExp)e){
 				auto de=cast(ABinaryExp)e;
 				auto e1=doIt(de.e1);
