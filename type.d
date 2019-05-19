@@ -644,6 +644,7 @@ class ProductTy: Type{
 		if(!cod.hasAnyFreeVar(names)){
 			string d;
 			string addp(bool const_,Expression a){
+				if(const_&&a.impliesConst()) const_=false;
 				if(cast(FunTy)a) return "("~(const_?"const (":"")~a.toString()~(const_?")":"")~")";
 				if(cast(TupleTy)a) return (const_?"const (":"")~a.toString()~(const_?")":"");
 				return (const_?"const ":"")~a.toString();
