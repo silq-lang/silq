@@ -654,13 +654,13 @@ class ProductTy: Type{
 			}else if(auto tpl=cast(TupleTy)dom){
 				if(isTuple){
 					assert(!!tpl.types.length);
-					if(tpl.types.length==1) return "("~(isConst[0]?"const ":"")~tpl.types[0].toString()~")¹";
+					if(tpl.types.length==1) return "("~(isConst[0]&&!tpl.types[0].impliesConst()?"const ":"")~tpl.types[0].toString()~")¹";
 					assert(tpl.types.length==isConst.length);
-					d=zip(isConst,tpl.types).map!(a=>(cast(TupleTy)a[1]&&a[1]!is unit?"("~(a[0]?"const ":"")~a[1].toString()~")":addp(a[0],a[1]))).join(" × ");
+					d=zip(isConst,tpl.types).map!(a=>(cast(TupleTy)a[1]&&a[1]!is unit?"("~(a[0]&&!a[1].impliesConst()?"const ":"")~a[1].toString()~")":addp(a[0],a[1]))).join(" × ");
 				}else d=addp(isConst[0],dom);
 			}else d=addp(isConst[0],dom);
 			if(isSquare||!isTuple&&nargs==1&&cast(FunTy)argTy(0)) d=del[0]~d~del[1];
-			r=d~" →"~(annotation?to!string(annotation):"")~" "~c;
+			r=d~" "~(isClassical?"!":"")~"→"~(annotation?to!string(annotation):"")~" "~c;
 		}else{
 			assert(names.length);
 			string args;
@@ -668,9 +668,8 @@ class ProductTy: Type{
 				args=zip(isConst,names,tdom.types).map!(x=>(x[0]?"const ":"")~x[1]~":"~x[2].toString()).join(",");
 				if(nargs==1) args~=",";
 			}else args=(isConst[0]?"const ":"")~names[0]~":"~dom.toString();
-			r="∏"~del[0]~args~del[1]~(annotation?to!string(annotation):"")~". "~c;
+			r=(isClassical?"!":"")~"∏"~del[0]~args~del[1]~(annotation?to!string(annotation):"")~". "~c;
 		}
-		if(isClassical_) r="!("~r~")";
 		return r;
 	}
 	@property size_t nargs(){
@@ -744,14 +743,17 @@ class ProductTy: Type{
 		foreach(n;names) nsubst.remove(n);
 		auto ncod=cod.substitute(nsubst);
 		auto nIsConst=isConst;
-		if(auto tpl=cast(TupleTy)ncod){ // TODO: it might be better to maintain this invariant upon construction
+		if(auto tpl=cast(TupleTy)ndom){ // TODO: it might be better to maintain this invariant upon construction
 			assert(nIsConst.length==tpl.types.length);
 			if(iota(nIsConst.length).any!(i=>!nIsConst[i]&&tpl.types[i].impliesConst)){
 				nIsConst=nIsConst.dup;
 				foreach(i;0..nIsConst.length) if(!nIsConst[i]&&tpl.types[i].impliesConst) nIsConst[i]=true;
 			}
-		}else if(ncod.impliesConst&&iota(nIsConst.length).any!(i=>!nIsConst[i]))
-			nIsConst=true.repeat(isConst.length).array;
+		}else{
+			assert(nIsConst.length==1);
+			if(ndom.impliesConst&&!nIsConst[0])
+				nIsConst=[true];
+		}
 		return productTy(nIsConst,names,ndom,ncod,isSquare,isTuple,annotation,isClassical_);
 	}
 	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
