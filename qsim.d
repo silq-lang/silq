@@ -41,6 +41,14 @@ enum zeroThreshold=1e-8;
 bool isToplevelClassical(Expression ty){
 	return ty.isClassical()||cast(TupleTy)ty||cast(ArrayTy)ty||cast(VectorTy)ty||cast(ContextTy)ty||cast(ProductTy)ty;
 }
+
+void hadamardUnitary(alias add,QState)(QState.Value c){
+	alias C=QState.C;
+	enforce(c.tag==QState.Value.Tag.bval);
+	enum norm=C(sqrt(1.0/2.0));
+	if(!c.bval){ add(c,norm); add(c.eqZ,norm); }
+	else{    add(c.eqZ,norm);    add(c,-norm); }
+}
 struct QState{
 	MapX!(Σ,C) state;
 	Record vars;
@@ -86,10 +94,60 @@ struct QState{
 	}
 	alias R=double;
 	alias C=Complex!double;
-	abstract class QVal{
+	static abstract class QVal{
+		override string toString(){ return "_"; }
 		abstract Value get(Σ);
 		void assign(ref QState state,Value rhs){
 			enforce(0,text("can't assign to quval ",this));
+		}
+		void removeVar(ref Σ σ){}
+		final Value applyUnitary(alias unitary)(ref QState qs,Expression type){
+			QState nstate;
+			nstate.copyNonState(qs);
+			auto ref_=Σ.curRef++; // TODO: reuse reference of x if possible
+			foreach(k,v;qs.state){
+				void add(Value nk,C nv){
+					auto σ=k.dup;
+					σ.assign(ref_,nk);
+					removeVar(σ);
+					nstate.add(σ,nv*v);
+				}
+				unitary!add(get(k));
+			}
+			Value r;
+			r.type=type;
+			r.quval=new QVar(ref_);
+			qs=nstate;
+			return r;
+		}
+	}
+	static class QConst: QVal{
+		Value constant;
+		override string toString(){ return constant.toStringImpl(); }
+		this(Value constant){ this.constant=constant; }
+		override Value get(Σ){ return constant; }
+	}
+	static class QVar: QVal{
+		Σ.Ref ref_;
+		override string toString(){ return text("ref(",ref_,")"); }
+		this(Σ.Ref ref_){ this.ref_=ref_; }
+		override Value get(Σ s){
+			return s.qvars[ref_];
+		}
+		override void removeVar(ref Σ s){
+			s.qvars.remove(ref_);
+		}
+		override void assign(ref QState state,Value rhs){
+			state.assignTo(ref_,rhs);
+		}
+	}
+	static class ConvertQVal: QVal{
+		QVal value;
+		Expression ntype;
+		this(QVal value,Expression ntype){ this.value=value; }
+		override Value get(Σ σ){ return value.get(σ).convertTo(ntype); }
+		override void removeVar(ref Σ σ){
+			// TODO: some conversions need variables to be removed
 		}
 	}
 	alias Record=HashMap!(string,Value,(a,b)=>a==b,(a)=>typeid(a).getHash(&a));
@@ -147,7 +205,7 @@ struct QState{
 			final switch(tag){
 				import std.traits:EnumMembers;
 				static foreach(t;EnumMembers!Tag){
-					case t: writeln(t); return mixin(`this.`~text(t)~`==rhs.`~text(t));
+					case t: return mixin(`this.`~text(t)~`==rhs.`~text(t));
 				}
 			}
 		}
@@ -176,7 +234,10 @@ struct QState{
 			assert(tag==Tag.quval);
 			quval.assign(state,rhs);
 		}
-
+		Value applyUnitary(alias unitary)(ref QState qs,Expression type){
+			enforce(tag==Tag.quval);
+			return quval.applyUnitary!unitary(qs,type);
+		}
 		union{
 			Value[] array_;
 			Record record;
@@ -191,8 +252,21 @@ struct QState{
 
 		Value convertTo(Expression ntype){
 			if(type==ntype) return this;
-			auto ntag=getTag(ntype);
-			final switch(tag){
+			auto otag=tag, ntag=getTag(ntype);
+			if(otag==Tag.quval){
+				enforce(ntag==Tag.quval);
+				Value r;
+				r.type=ntype;
+				r.quval=new ConvertQVal(quval,ntype);
+				return r;
+			}else if(ntag==Tag.quval){
+				auto constant=convertTo(ntype.getClassical());
+				Value r;
+				r.type=ntype;
+				r.quval=new QConst(convertTo(ntype.getClassical()));
+				return r;
+			}
+			final switch(otag){
 				case Tag.array_:
 					if(ntag==Tag.array_){
 						Value r;
@@ -254,6 +328,7 @@ struct QState{
 						return r;
 					}
 			}
+			if(ntag==Tag.bval) return neqZ;
 			enforce(0,text("TODO: convert ",type," to ",ntype));
 			assert(0);
 		}
@@ -403,19 +478,22 @@ struct QState{
 			enforce(0,text("TODO: asInteger for type ",type));
 			assert(0);
 		}
-		string toString(){
-			if(type==typeTy) return "_:*";
+		string toStringImpl(){
+			if(type==typeTy) return "_";
 			final switch(tag){
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.bval])
-				case t: return text(mixin(text(t)),":",type);
+				case t: return text(mixin(text(t)));
 				case Tag.closure: return text("⟨",closure.fun,",",*closure.context,"⟩");
 				case Tag.array_: return text("[",array_.map!text.join(","),"]");
 				case Tag.record:
 					auto r="{";
 					foreach(k,v;record) r~=text(".",k," ↦ ",v,",");
 					return r.length!=1?r[0..$-1]~"}":"{}";
-				case Tag.quval: return text("_:",type);
+				case Tag.quval: return quval.toString();
 			}
+		}
+		string toString(){
+			return text(toStringImpl(),":",type);
 		}
 	}
 	static assert(Value.sizeof==Type.sizeof+Value.bits.sizeof);
@@ -436,9 +514,10 @@ struct QState{
 	struct Σ{
 		alias Ref=size_t;
 		HashMap!(Ref,Value,(a,b)=>a==b,a=>a) qvars;
+		Σ dup(){ return Σ(qvars.dup); }
 		static Ref curRef=0;
 		Ref assign(Ref ref_,Value v){
-			qvars[ref_]=v;
+			qvars[ref_]=v.classicalValue(this);
 			return ref_;
 		}
 		void forget(Ref ref_){
@@ -468,21 +547,21 @@ struct QState{
 		return v.inFrame();
 	}
 	Value call(FunctionDef fun,Value thisExp,Value arg,Scope sc,Value* context=null){
+		enforce(fun.body_,text("error: need function body to simulate function ",fun));
 		auto ncur=pushFrame();
 		enforce(!thisExp,"TODO: method calls");
 		enforce(!fun.isConstructor,"TODO: constructors");
 		if(fun.isNested){
 			assert(context||sc);
-			ncur.assignTo(fun.contextName,context?*context:inFrame(buildContextFor(this,fun,sc)));
+			ncur.passParameter(fun.contextName,context?*context:inFrame(buildContextFor(this,fun,sc)));
 		}
 		if(fun.isTuple){
 			auto args=iota(fun.params.length).map!(i=>inFrame(arg[i]));
-			foreach(i,prm;fun.params){
-				ncur.assignTo(prm.getName,inFrame(arg[i])); // TODO: faster: parallel assignment to parameters
-			}
+			foreach(i,prm;fun.params)
+				ncur.passParameter(prm.getName,inFrame(arg[i])); // TODO: faster: parallel assignment to parameters
 		}else{
 			assert(fun.params.length==1);
-			ncur.assignTo(fun.params[0].getName,inFrame(arg));
+			ncur.passParameter(fun.params[0].getName,inFrame(arg));
 		}
 		auto intp=Interpreter!QState(fun,fun.body_,ncur,true);
 		auto nnstate=QState.empty();
@@ -501,8 +580,10 @@ struct QState{
 		return call(fun.closure.fun,nullValue,arg,null,fun.closure.context);
 	}
 
-	Value readLocal(string s){
-		return vars[s];
+	Value readLocal(string s,bool isConst){
+		auto r=vars[s];
+		if(!isConst&&!r.type.isToplevelClassical()) vars.remove(s);
+		return r;
 	}
 	static Value makeRecord(Record record){
 		Value r;
@@ -592,16 +673,6 @@ struct QState{
 	Value makeQVar(Value v)in{
 		assert(!v.type.isClassical());
 	}do{
-		static class QVar: QVal{
-			Σ.Ref ref_;
-			this(Σ.Ref ref_){ this.ref_=ref_; }
-			override Value get(Σ s){
-				return s.qvars[ref_];
-			}
-			override void assign(ref QState state,Value rhs){
-				state.assignTo(ref_,rhs);
-			}
-		}
 		Value r;
 		r.type=v.type;
 		auto ref_=Σ.curRef++;
@@ -632,17 +703,22 @@ struct QState{
 			enforce(var.type==rhs.type);
 			var.assign(this,rhs);
 		}else{
-			auto qvar=makeQVar(rhs);
+			enforce(rhs.tag==Value.Tag.quval);
+			Value qvar=rhs;
+			if(!cast(QVar)qvar.quval) qvar=makeQVar(rhs);
 			vars[lhs]=qvar;
 		}
+	}
+	void passParameter(string prm,Value rhs){
+		enforce(prm!in vars);
+		vars[prm]=rhs;
 	}
 	void assignTo(Value lhs,Value rhs){
 		enforce(0,"TODO: assignTo");
 		assert(0);
 	}
 	Value H(Value x){
-		enforce(0,"TODO: hadamard");
-		assert(0);
+		return x.applyUnitary!hadamardUnitary(this,x.type);
 	}
 	Value X(Value x){
 		enforce(0,"TODO: X");
@@ -680,6 +756,7 @@ struct QState{
 	}
 	alias vector=array_;
 	Value measure(Value arg){
+		writeln(this);
 		enforce(0,"TODO: measure");
 		assert(0);
 	}
@@ -690,7 +767,7 @@ struct QState{
 QState.Value readVariable(QState)(QState qstate,VarDecl var,Scope from){
 	QState.Value r=getContextFor(qstate,var,from);
 	if(r) return qstate.readField(r,var.getName);
-	return qstate.readLocal(var.getName);
+	return qstate.readLocal(var.getName,!var.isConstant);
 }
 QState.Value getContextFor(QState)(QState qstate,Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{
 	QState.Value r=QState.nullValue;
@@ -700,7 +777,7 @@ QState.Value getContextFor(QState)(QState qstate,Declaration meaning,Scope sc)in
 	assert(sc&&sc.isNestedIn(meaningScope));
 	for(auto csc=sc;csc !is meaningScope;){
 		void add(string name){
-			if(!r) r=qstate.readLocal(name);
+			if(!r) r=qstate.readLocal(name,true);
 			else r=qstate.readField(r,name);
 			assert(!!cast(NestedScope)csc);
 		}
@@ -731,12 +808,12 @@ QState.Value buildContextFor(QState)(QState qstate,Declaration meaning,Scope sc)
 		if(!cast(NestedScope)(cast(NestedScope)csc).parent) break;
 		if(auto dsc=cast(DataScope)csc){
 			auto name=dsc.decl.contextName;
-			record[name]=qstate.readLocal(name);
+			record[name]=qstate.readLocal(name,true);
 			break;
 		}
 		if(auto fsc=cast(FunctionScope)csc){
 			auto cname=fsc.getFunction().contextName;
-			record[cname]=qstate.readLocal(cname);
+			record[cname]=qstate.readLocal(cname,true);
 			break;
 		}
 	}
@@ -744,10 +821,16 @@ QState.Value buildContextFor(QState)(QState qstate,Declaration meaning,Scope sc)
 }
 QState.Value lookupMeaning(QState)(QState qstate,Identifier id)in{assert(id && id.scope_,text(id," ",id.loc));}body{
 	if(!id.meaning||!id.scope_||!id.meaning.scope_)
-		return qstate.readLocal(id.name);
+		return qstate.readLocal(id.name,false);
 	if(auto vd=cast(VarDecl)id.meaning){
 		auto r=getContextFor(qstate,id.meaning,id.scope_);
-		return r?qstate.readField(r,id.name):qstate.readLocal(id.name);
+		auto p=cast(Parameter)vd;
+		auto isConst=p&&p.isConst;
+		if(r){
+			enforce(isConst,"TODO");
+			return qstate.readField(r,id.name);
+		}
+		return qstate.readLocal(id.name,isConst);
 	}
 	if(cast(FunctionDef)id.meaning) return qstate.readFunction(id);
 	return QState.nullValue;
@@ -1107,7 +1190,7 @@ struct Interpreter(QState){
 		}else if(auto re=cast(ReturnExp)e){
 			auto value = runExp(re.e);
 			if(functionDef.context&&functionDef.contextName.startsWith("this"))
-				value = QState.makeTuple(tupleTy([re.e.type,contextTy(true)]),[value,qstate.readLocal(functionDef.contextName)]);
+				value = QState.makeTuple(tupleTy([re.e.type,contextTy(true)]),[value,qstate.readLocal(functionDef.contextName,false)]);
 			qstate.assignTo("`value",value);
 			if(hasFrame){
 				assert("`frame" in qstate.vars);
