@@ -2,8 +2,8 @@ import std.conv: text, to;
 import std.string: split;
 import std.algorithm;
 import std.array: array;
-import std.range: iota;
-import std.string: startsWith;
+import std.range: iota, zip, repeat;
+import std.string: startsWith,join;
 import std.typecons: q=tuple,Q=Tuple;
 import std.exception: enforce;
 
@@ -39,11 +39,11 @@ private:
 
 enum zeroThreshold=1e-8;
 bool isToplevelClassical(Expression ty){
-	return ty.isClassical()||cast(TupleTy)ty||cast(ArrayTy)ty||cast(VectorTy)ty||cast(ProductTy)ty;
+	return ty.isClassical()||cast(TupleTy)ty||cast(ArrayTy)ty||cast(VectorTy)ty||cast(ContextTy)ty||cast(ProductTy)ty;
 }
 struct QState{
-	C[Σ] state;
-	Value[string] vars;
+	MapX!(Σ,C) state;
+	Record vars;
 	QState dup(){
 		return QState(state.dup,vars.dup);
 	}
@@ -92,9 +92,12 @@ struct QState{
 			enforce(0,text("can't assign to quval ",this));
 		}
 	}
+	alias Record=HashMap!(string,Value,(a,b)=>a==b,(a)=>typeid(a).getHash(&a));
 	struct Closure{
 		FunctionDef fun;
 		Value* context;
+		hash_t toHash(){ return context?tuplex(fun,*context).toHash():fun.toHash(); }
+		bool opEquals(Closure rhs){ return fun==rhs.fun && (context is rhs.context || context&&rhs.context&&*context==*rhs.context); }
 	}
 	struct Value{
 		Expression type;
@@ -134,7 +137,26 @@ struct QState{
 			Lswitch:final switch(tag){
 				import std.traits:EnumMembers;
 				static foreach(t;EnumMembers!Tag)
-				case t: mixin(`this.`~to!string(t)~`=rhs.`~to!string(t)~`;`); break Lswitch;
+				case t: mixin(`this.`~text(t)~`=rhs.`~text(t)~`;`); break Lswitch;
+			}
+		}
+		bool opEquals(Value rhs){
+			if(type!=rhs.type) return false;
+			if(!type) return true;
+			assert(tag==rhs.tag);
+			final switch(tag){
+				import std.traits:EnumMembers;
+				static foreach(t;EnumMembers!Tag){
+					case t: writeln(t); return mixin(`this.`~text(t)~`==rhs.`~text(t));
+				}
+			}
+		}
+		hash_t toHash(){
+			if(!type) return 0;
+			final switch(tag){
+				import std.traits:EnumMembers;
+				static foreach(t;EnumMembers!Tag)
+				case t: return tuplex(type,mixin(text(t))).toHash();
 			}
 		}
 		this(this){
@@ -143,7 +165,7 @@ struct QState{
 			Lswitch:final switch(tt){
 				import std.traits:EnumMembers;
 				static foreach(t;EnumMembers!Tag)
-				case t: static if(__traits(hasMember,mixin(to!string(t)),"__postblit")) mixin(`this.`~to!string(t)~`.__postblit();`);
+				case t: static if(__traits(hasMember,mixin(text(t)),"__postblit")) mixin(`this.`~text(t)~`.__postblit();`);
 			}
 			if(tt==Tag.array_) array_=array_.dup;
 			if(tt==Tag.record) record=record.dup; // TODO: necessary?
@@ -157,7 +179,7 @@ struct QState{
 
 		union{
 			Value[] array_;
-			Value[string] record;
+			Record record;
 			Closure closure;
 			QVal quval;
 			R fval;
@@ -194,7 +216,7 @@ struct QState{
 					if(ntag==Tag.fval){
 						Value r;
 						r.type=ntype;
-						r.fval=to!R(to!string(qval.num))/to!R(to!string(qval.den)); // TODO: better?
+						r.fval=to!R(text(qval.num))/to!R(text(qval.den)); // TODO: better?
 						return r;
 					}
 					break;
@@ -208,7 +230,7 @@ struct QState{
 					if(ntag==Tag.fval){
 						Value r;
 						r.type=ntype;
-						r.fval=to!R(to!string(zval)); // TODO: better?
+						r.fval=to!R(text(zval)); // TODO: better?
 						return r;
 					}
 					break;
@@ -391,13 +413,18 @@ struct QState{
 			assert(0);
 		}
 		string toString(){
-			if(type.isClassical()){
-				if(type==ℝ(true)) return text(fval,":",type);
-				if(type==ℚt(true)) return text(qval,":",type);
-				if(type==ℤt(true)) return text(zval,":",type);
-				if(type==Bool(true)) return text(bval,":",type);
+			if(type==typeTy) return "_:*";
+			final switch(tag){
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.bval])
+				case t: return text(mixin(text(t)),":",type);
+				case Tag.closure: return text("⟨",closure.fun,",",*closure.context,"⟩");
+				case Tag.array_: return text("[",array_.map!text.join(","),"]");
+				case Tag.record:
+					auto r="{";
+					foreach(k,v;record) r~=text(".",k," ↦ ",v,",");
+					return r.length!=1?r[0..$-1]~"}":"{}";
+				case Tag.quval: return text("_:",type);
 			}
-			return text("_:",type);
 		}
 	}
 	static assert(Value.sizeof==Type.sizeof+Value.bits.sizeof);
@@ -417,7 +444,7 @@ struct QState{
 	}
 	struct Σ{
 		alias Ref=size_t;
-		Value[Ref] qvars;
+		HashMap!(Ref,Value,(a,b)=>a==b,a=>a) qvars;
 		static Ref curRef=0;
 		Ref assign(Ref ref_,Value v){
 			qvars[ref_]=v;
@@ -426,6 +453,7 @@ struct QState{
 		void forget(Ref ref_){
 			qvars.remove(ref_);
 		}
+		hash_t toHash(){ return qvars.toHash(); }
 	}
 	static QState empty(){ return QState.init; }
 	static QState unit(){
@@ -434,7 +462,7 @@ struct QState{
 		return qstate;
 	}
 	QState pushFrame(){
-		Value[string] nvars,nnvars;
+		Record nvars,nnvars;
 		foreach(k,v;vars) nvars[k]=v.inFrame();
 		nnvars["`frame"]=makeRecord(nvars);
 		return QState(state,nnvars);
@@ -442,19 +470,18 @@ struct QState{
 	QState popFrame(){
 		auto frame=vars["`frame"];
 		enforce(frame.tag==Value.Tag.record);
-		Value[string] nvars=frame.record.dup;
+		Record nvars=frame.record.dup;
 		return QState(state,nvars);
 	}
 	static Value inFrame(Value v){
 		return v.inFrame();
 	}
-	Value call(FunctionDef fun,Value thisExp,Value arg,Scope sc){
+	Value call(FunctionDef fun,Value thisExp,Value arg,Scope sc,Value* context=null){
+		assert(context||sc);
 		auto ncur=pushFrame();
 		enforce(!thisExp,"TODO: method calls");
 		enforce(!fun.isConstructor,"TODO: constructors");
-		if(fun.isNested){
-			enforce(0,"TODO: nested function calls");
-		}
+		if(fun.isNested) ncur.assignTo(fun.contextName,context?*context:inFrame(buildContextFor(this,fun,sc)));
 		if(fun.isTuple){
 			auto args=iota(fun.params.length).map!(i=>inFrame(arg[i]));
 			foreach(i,prm;fun.params){
@@ -476,20 +503,15 @@ struct QState{
 		if(!val.asBoolean) enforce(0,"TODO: assertion failures");
 		return this;
 	}
-	private QState callImpl(Value fun,Value arg){
-		enforce(0,"TODO: function calls");
-		assert(0);
-	}
 	Value call(Value fun,Value arg){
-		auto r=callImpl(fun,arg);
-		enforce(0,"TODO: function calls");
-		assert(0);
+		enforce(fun.tag==Value.Tag.closure);
+		return call(fun.closure.fun,nullValue,arg,null,fun.closure.context);
 	}
 
 	Value readLocal(string s){
 		return vars[s];
 	}
-	static Value makeRecord(Value[string] record){
+	static Value makeRecord(Record record){
 		Value r;
 		r.type=contextTy(false);
 		r.record=record;
@@ -616,7 +638,10 @@ struct QState{
 			enforce(!var.type.isToplevelClassical());
 			enforce(var.type==rhs.type);
 			var.assign(this,rhs);
-		}else vars[lhs]=makeQVar(rhs);
+		}else{
+			auto qvar=makeQVar(rhs);
+			vars[lhs]=qvar;
+		}
 	}
 	void assignTo(Value lhs,Value rhs){
 		enforce(0,"TODO: assignTo");
@@ -654,6 +679,13 @@ struct QState{
 		enforce(0,"TODO: rY");
 		assert(0);
 	}
+	Value array_(Expression type,Value arg){
+		enforce(arg.tag==Value.Tag.array_);
+		enforce(arg.array_.length==2);
+		enforce(arg.array_[0].isClassicalInteger());
+		return makeArray(type,arg.array_[1].repeat(to!size_t(arg.array_[0].asInteger)).array);
+	}
+	alias vector=array_;
 	Value measure(Value arg){
 		enforce(0,"TODO: measure");
 		assert(0);
@@ -694,7 +726,7 @@ QState.Value getContextFor(QState)(QState qstate,Declaration meaning,Scope sc)in
 }
 QState.Value buildContextFor(QState)(QState qstate,Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{ // template, forward references 'doIt'
 	if(auto ctx=getContextFor(qstate,meaning,sc)) return ctx;
-	QState.Value[string] record;
+	QState.Record record;
 	auto msc=meaning.scope_;
 	if(auto fd=cast(FunctionDef)meaning)
 		msc=fd.realScope;
@@ -823,6 +855,8 @@ struct Interpreter(QState){
 								case "quantumPrimitive":
 									switch(getQuantumOp(ce2.arg)){
 										case "dup": enforce(0,"quantumPrimitive(\"dup\")[τ] cannot be used as first-class value"); assert(0);
+										case "array": enforce(0,"quantumPrimitive(\"array\")[τ] cannot be used as first-class value"); assert(0);
+										case "vector": enforce(0,"quantumPrimitive(\"vector\")[τ] cannot be used as first-class value"); assert(0);
 										case "reverse":  enforce(0,"quantumPrimitive(\"reverse\")[τ] cannot be used as first-class value"); assert(0);
 										case "M": enforce(0,"quantumPrimitive(\"M\")[τ] cannot be used as first-class value"); assert(0);
 										case "H": return qstate.H(doIt(ce.arg));
@@ -847,6 +881,8 @@ struct Interpreter(QState){
 									case "quantumPrimitive":
 										switch(getQuantumOp(ce3.arg)){
 											case "dup": return doIt(ce.arg);
+											case "array": return qstate.array_(ce.type,doIt(ce.arg));
+											case "vector": return qstate.vector(ce.type,doIt(ce.arg));
 											case "reverse": enforce(0,"TODO: reverse"); assert(0);
 											case "M": return qstate.measure(doIt(ce.arg));
 											default: break;

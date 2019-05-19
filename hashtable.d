@@ -126,7 +126,7 @@ struct HashMap(K_, V_, alias eq_ , alias h_){
 	}
 	hash_t toHash()(){
 		hash_t r=0;
-		foreach(ref x;es) foreach(ref b;x) r+=FNV(b.k.toHash(),FNV(b.v.toHash(),fnvb)); // TODO: improve
+		foreach(ref x;es) foreach(ref b;x) r+=FNV(h(b.k),FNV(b.v.toHash(),fnvb)); // TODO: improve
 		return r;
 	}
 
@@ -138,7 +138,7 @@ struct HashMap(K_, V_, alias eq_ , alias h_){
 		return HashMap(oes, length);
 	}
 
-	static if(is(typeof(text(K.init,V.init))))
+	//static if(is(typeof(text(K.init,V.init))))
 	string toString(){
 		//return text("[",join(map!(_=>text(_.k,":",_.v))(filter!"a.e"(es)),", "),"]");// wtf
 		auto r="[";
