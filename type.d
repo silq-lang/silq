@@ -643,23 +643,24 @@ class ProductTy: Type{
 		string r;
 		if(!cod.hasAnyFreeVar(names)){
 			string d;
-			string addp(bool const_,Expression a){
+			string addp(bool const_,Expression a,string del="()"){
 				if(const_&&a.impliesConst()) const_=false;
-				if(cast(FunTy)a) return "("~(const_?"const (":"")~a.toString()~(const_?")":"")~")";
+				if(cast(FunTy)a) return del[0]~(const_?"const (":"")~a.toString()~(const_?")":"")~del[1];
 				if(cast(TupleTy)a) return (const_?"const (":"")~a.toString()~(const_?")":"");
 				return (const_?"const ":"")~a.toString();
 			}
 			if(all!(x=>!x)(isConst)){
 				d=dom.toString();
+				if(isSquare) d=del[0]~d~del[1];
 			}else if(auto tpl=cast(TupleTy)dom){
 				if(isTuple){
 					assert(!!tpl.types.length);
 					if(tpl.types.length==1) return "("~(isConst[0]&&!tpl.types[0].impliesConst()?"const ":"")~tpl.types[0].toString()~")¹";
 					assert(tpl.types.length==isConst.length);
 					d=zip(isConst,tpl.types).map!(a=>(cast(TupleTy)a[1]&&a[1]!is unit?"("~(a[0]&&!a[1].impliesConst()?"const ":"")~a[1].toString()~")":addp(a[0],a[1]))).join(" × ");
-				}else d=addp(isConst[0],dom);
-			}else d=addp(isConst[0],dom);
-			if(isSquare||!isTuple&&nargs==1&&cast(FunTy)argTy(0)) d=del[0]~d~del[1];
+					if(isSquare) d=del[0]~d~del[1];
+				}else d=addp(isConst[0],dom,del);
+			}else d=addp(isConst[0],dom,del);
 			r=d~" "~(isClassical?"!":"")~"→"~(annotation?to!string(annotation):"")~" "~c;
 		}else{
 			assert(names.length);
