@@ -745,6 +745,8 @@ class ProductTy: Type{
 		auto ncod=cod.substitute(nsubst);
 		auto nIsConst=isConst;
 		if(auto tpl=cast(TupleTy)ndom){ // TODO: it might be better to maintain this invariant upon construction
+			if(nIsConst.length==1&&tpl.types.length!=1)
+				nIsConst=nIsConst[0].repeat(tpl.types.length).array;
 			assert(nIsConst.length==tpl.types.length);
 			if(iota(nIsConst.length).any!(i=>!nIsConst[i]&&tpl.types[i].impliesConst)){
 				nIsConst=nIsConst.dup;
