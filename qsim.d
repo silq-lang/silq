@@ -38,11 +38,11 @@ private:
 }
 
 string formatQValue(QState qs,QState.Value value){ // (only makes sense if value contains the full quantum state)
-	if(value.type.isClassical()) return value.toString();
+	if(value.type.isClassical()) return value.toStringImpl();
 	string r;
 	foreach(k,v;qs.state){
 		if(r.length) r~="+";
-		r~=text("(",v,")·|",value.classicalValue(k),"⟩");
+		r~=text("(",v,")·|",value.classicalValue(k).toStringImpl(),"⟩");
 	}
 	return r;
 }
@@ -112,6 +112,7 @@ struct QState{
 		}
 		void removeVar(ref Σ σ){}
 		final Value applyUnitary(alias unitary)(ref QState qs,Expression type){
+			// TODO: get rid of code duplication
 			QState nstate;
 			nstate.copyNonState(qs);
 			auto ref_=Σ.curRef++; // TODO: reuse reference of x if possible
@@ -123,6 +124,25 @@ struct QState{
 					nstate.add(σ,nv*v);
 				}
 				unitary!add(get(k));
+			}
+			Value r;
+			r.type=type;
+			r.quval=new QVar(ref_);
+			qs=nstate;
+			return r;
+		}
+		static Value applyUnitaryToClassical(alias unitary)(ref QState qs,Value value,Expression type){
+			// TODO: get rid of code duplication
+			QState nstate;
+			nstate.copyNonState(qs);
+			auto ref_=Σ.curRef++; // TODO: reuse reference of x if possible
+			foreach(k,v;qs.state){
+				void add(Value nk,C nv){
+					auto σ=k.dup;
+					σ.assign(ref_,nk);
+					nstate.add(σ,nv*v);
+				}
+				unitary!add(value);
 			}
 			Value r;
 			r.type=type;
@@ -157,8 +177,30 @@ struct QState{
 		this(QVal value,Expression ntype){ this.value=value; }
 		override Value get(Σ σ){ return value.get(σ).convertTo(ntype); }
 		override void removeVar(ref Σ σ){
-			// TODO: some conversions need variables to be removed
+			value.removeVar(σ);
 		}
+	}
+	static class IndexQVal: QVal{
+		QVal value;
+		size_t i;
+		this(QVal value,size_t i){ this.value=value; this.i=i; }
+		override Value get(Σ σ){ return value.get(σ)[i]; }
+	}
+	static class BinOpQVal(string op):QVal{
+		Value l,r;
+		this(Value l,Value r){ this.l=l; this.r=r; }
+		override Value get(Σ σ){ return mixin(`l.classicalValue(σ) `~op~` r.classicalValue(σ)`); }
+	}
+	static class MemberFunctionQVal(string fun,T...):QVal{
+		Value value;
+		T args;
+		this(Value value,T args){ this.value=value; this.args=args; }
+		override Value get(Σ σ){ return mixin(`value.classicalValue(σ).`~fun)(args); }
+	}
+	static class CompareQVal(string op):QVal{
+		Value l,r;
+		this(Value l,Value r){ this.l=l; this.r=r; }
+		override Value get(Σ σ){ return l.classicalValue(σ).compare!op(r.classicalValue(σ)); }
 	}
 	alias Record=HashMap!(string,Value,(a,b)=>a==b,(a)=>typeid(a).getHash(&a));
 	struct Closure{
@@ -193,6 +235,8 @@ struct QState{
 			if(type==ℤt(true)) return Tag.zval;
 			if(type==Bool(true)) return Tag.bval;
 			if(type==typeTy) return Tag.bval; // TODO: ok?
+			if(isInt(type)||isUint(type)) return Tag.zval; // TODO: wrap-around
+			if(isUint(type)) return Tag.zval; // TODO: wrap-around
 			enforce(0,text("TODO: representation for type ",type));
 			assert(0);
 		}
@@ -246,6 +290,7 @@ struct QState{
 			quval.assign(state,rhs);
 		}
 		Value applyUnitary(alias unitary)(ref QState qs,Expression type){
+			if(this.type.isClassical()) return QVal.applyUnitaryToClassical!unitary(qs,this,type);
 			enforce(tag==Tag.quval);
 			return quval.applyUnitary!unitary(qs,type);
 		}
@@ -274,7 +319,7 @@ struct QState{
 				auto constant=convertTo(ntype.getClassical());
 				Value r;
 				r.type=ntype;
-				r.quval=new QConst(convertTo(ntype.getClassical()));
+				r.quval=new QConst(constant);
 				return r;
 			}
 			final switch(otag){
@@ -306,6 +351,12 @@ struct QState{
 					}
 					break;
 				case Tag.zval:
+					if(ntag==Tag.zval){
+						Value r;
+						r.type=ntype; // TODO: wraparound for int[n] and uint[n]
+						r.zval=zval;
+						return r;
+					}
 					if(ntag==Tag.qval){
 						Value r;
 						r.type=ntype;
@@ -372,9 +423,18 @@ struct QState{
 			return r;+/
 		}
 		Value opIndex(size_t i)in{
-			assert(tag==Tag.array_);
+			assert(tag==Tag.array_||isInt(type)||isUint(type));
 		}do{
-			return array_[i];
+			if(tag==Tag.array_) return array_[i];
+			if(tag==Tag.quval){
+				assert(isInt(type)||isUint(type));
+				Value r;
+				r.type=Bool(false);
+				r.quval=new IndexQVal(quval,i);
+				return r;
+			}
+			enforce(tag==Tag.zval);
+			return makeBool(((ℤ(1)<<i)&zval)!=0); // TODO: this needs to be bounds-checked
 		}
 		Value opIndex(Value i){
 			if(i.isClassicalInteger()) return this[to!size_t(i.asInteger())];
@@ -403,22 +463,35 @@ struct QState{
 			enforce(0,text("TODO: '",op,"' for type ",this.type));
 			assert(0);
 		}
-		Value opBinary(string op)(Value r){
+		static Expression binaryType(string op)(Expression l,Expression r){
+			Expression ntype=joinTypes(l,r);
 			static if(["+","-","*","/"].canFind(op)){
-				Expression ntype=null;
-				if(type!=r.type){
-					ntype=joinTypes(type,r.type);
-					if(ntype){
-						if(op=="/"&&isSubtype(ntype,ℚt(false)))
-							ntype=ℚt(ntype.isClassical());
-						return mixin(`this.convertTo(ntype) `~op~` r.convertTo(ntype)`);
-					}
+				if(ntype){
+					if(op=="/"&&isSubtype(ntype,ℚt(false)))
+						ntype=ℚt(ntype.isClassical());
+					return ntype;
+				}
+			}
+			static if(is(typeof((bool a,bool b){ bool c=mixin(`a `~op~` b`); })))
+				if(cast(BoolTy)ntype) return ntype;
+			enforce(0,text("TODO: '",op,"' for types ",l," and ",r));
+			assert(0);
+		}
+		Value opBinary(string op)(Value r){
+			auto ntype=binaryType!op(type,r.type);
+			if(!ntype.isClassical()) return makeQVal(new BinOpQVal!op(this,r),ntype);
+			assert(!!ntype);
+			static if(["+","-","*","/"].canFind(op)){
+				if(type!=ntype||r.type!=ntype){
+					return mixin(`this.convertTo(ntype) `~op~` r.convertTo(ntype)`);
 				}else{
 					if(type==ℝ(true)) return makeReal(mixin(`fval `~op~` r.fval`));
 					if(type==ℚt(true)) return makeRational(mixin(`qval `~op~` r.qval`));
 					if(type==ℤt(true)) return makeInteger(mixin(`zval `~op~` r.zval`));
 				}
 			}
+			static if(is(typeof((bool a,bool b){ bool c=mixin(`a `~op~` b`); })))
+				if(type==Bool(true)&&r.type==Bool(true)) return makeBool(mixin(`bval `~op~` r.bval`));
 			enforce(0,text("TODO: '",op,"' for types ",this.type," and ",r.type));
 			assert(0);
 		}
@@ -437,12 +510,20 @@ struct QState{
 			assert(0);
 		}
 		Value eqZ(){
+			if(!type.isClassical()){
+				Value r;
+				r.type=Bool(false);
+				r.quval=new MemberFunctionQVal!"eqZ"(this);
+				return r;
+			}
 			return makeBool(eqZImpl());
 		}
 		Value neqZ(){
+			if(!type.isClassical()) return makeQVal(new MemberFunctionQVal!"neqZ"(this),Bool(false));
 			return makeBool(!eqZImpl());
 		}
 		Value compare(string op)(Value r){
+			if(!type.isClassical()||!r.type.isClassical()) return makeQVal(new CompareQVal!op(this,r),Bool(false));
 			if(type!=r.type){
 				auto ntype=joinTypes(type,r.type);
 				if(ntype) return this.convertTo(ntype).compare!op(r.convertTo(ntype));
@@ -462,16 +543,42 @@ struct QState{
 		Value eq(Value r){ return compare!"=="(r); }
 		Value neq(Value r){ return compare!"!="(r); }
 		Value floor(){
+			//if(!type.isClassical()) return makeQVal(new MemberFunctionQVal!"floor"(this),ntype); // TODO: determine type
 			enforce(0,text("TODO: floor for type ",this.type));
 			assert(0);
 		}
 		Value ceil(){
+			//if(!type.isClassical()) return makeQVal(new MemberFunctionQVal!"ceil"(this),ntype); // TODO: determine type
 			enforce(0,text("TODO: ceil for type ",this.type));
 			assert(0);
 		}
 		Value classicalValue(Σ state){
-			if(type.isClassical) return this;
-			return quval.get(state);
+			final switch(tag){
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.bval])
+				case t: assert(type.isClassical); return this;
+				case Tag.closure:
+					Value r;
+					r.type=type.getClassical();
+					assert(r.tag==Tag.closure);
+					r.closure=Closure(closure.fun,closure.context?[closure.context.classicalValue(state)].ptr:null);
+					return r;
+				case Tag.array_:
+					Value r;
+					r.type=type.getClassical();
+					assert(r.tag==Tag.array_);
+					r.array_=array_.map!(x=>x.classicalValue(state)).array;
+					return r;
+				case Tag.record:
+					Record nrecord;
+					foreach(k,v;record) nrecord[k]=v.classicalValue(state);
+					Value r;
+					r.type=type.getClassical();
+					assert(r.tag==Tag.record);
+					r.record=nrecord;
+					return r;
+				case Tag.quval:
+					return quval.get(state);
+			}
 		}
 		bool asBoolean()in{
 			assert(type==Bool(true),text(type));
@@ -496,11 +603,14 @@ struct QState{
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval])
 				case t: return text(mixin(text(t)));
 				case Tag.bval: return bval?"1":"0";
-				case Tag.closure: return text("⟨",closure.fun,",",*closure.context,"⟩");
-				case Tag.array_: return text("[",array_.map!text.join(","),"]");
+				case Tag.closure: return text("⟨",closure.fun,",",closure.context.toStringImpl(),"⟩");
+				case Tag.array_:
+					string prn="()";
+					if(cast(ArrayTy)type) prn="[]";
+					return text(prn[0],array_.map!(x=>x.toStringImpl).join(","),prn[1]);
 				case Tag.record:
 					auto r="{";
-					foreach(k,v;record) r~=text(".",k," ↦ ",v,",");
+					foreach(k,v;record) r~=text(".",k," ↦ ",v.toStringImpl(),",");
 					return r.length!=1?r[0..$-1]~"}":"{}";
 				case Tag.quval: return quval.toString();
 			}
@@ -700,6 +810,13 @@ struct QState{
 		r.quval=new QVar(ref_);
 		return r;
 	}
+	static Value makeQVal(QVal quval,Expression type){
+		Value r;
+		r.type=type;
+		enforce(r.tag==Value.Tag.quval);
+		r.quval=quval;
+		return r;
+	}
 	private void assignTo(Σ.Ref var,Value rhs){
 		static Σ assign(Σ s,Σ.Ref var,Value rhs){
 			s.assign(var,rhs);
@@ -733,7 +850,7 @@ struct QState{
 		assert(0);
 	}
 	Value H(Value x){
-		return x.applyUnitary!hadamardUnitary(this,x.type);
+		return x.applyUnitary!hadamardUnitary(this,Bool(false));
 	}
 	Value X(Value x){
 		enforce(0,"TODO: X");
