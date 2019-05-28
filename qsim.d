@@ -97,7 +97,7 @@ struct QState{
 		new_.copyNonState(this);
 		foreach(k,v;state){
 			auto nk=f(k,args);
-			enforce(nk !in new_.state);
+			enforce(nk !in new_.state,"bad forget"); // TODO: good error reporting, e.g. for forget
 			new_.state[nk]=v;
 		}
 		return new_;
@@ -109,6 +109,12 @@ struct QState{
 		abstract Value get(Σ);
 		void assign(ref QState state,Value rhs){
 			enforce(0,text("can't assign to quval ",this));
+		}
+		QVal dup(ref QState state,Value self){
+			return this;
+		}
+		void forget(ref QState state,Value rhs){
+			enforce(0,text("can't forget quval ",this));
 		}
 		void removeVar(ref Σ σ){}
 		final Value applyUnitary(alias unitary)(ref QState qs,Expression type){
@@ -169,6 +175,14 @@ struct QState{
 		}
 		override void assign(ref QState state,Value rhs){
 			state.assignTo(ref_,rhs);
+		}
+		override QVar dup(ref QState state,Value self){
+			auto nref_=Σ.curRef++;
+			state.assignTo(nref_,self);
+			return new QVar(nref_);
+		}
+		override void forget(ref QState state,Value rhs){
+			state.forget(ref_,rhs);
 		}
 	}
 	static class ConvertQVal: QVal{
@@ -253,6 +267,35 @@ struct QState{
 				case t: mixin(`this.`~text(t)~`=rhs.`~text(t)~`;`); break Lswitch;
 			}
 		}
+		Value dup(ref QState state){
+			if(type.isClassical) return this;
+			final switch(tag){
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.bval])
+				case t: assert(type.isClassical); return this;
+				case Tag.closure:
+					Value r;
+					r.type=type;
+					r.closure=Closure(closure.fun,closure.context?[closure.context.dup(state)].ptr:null);
+					return r;
+				case Tag.array_:
+					Value r;
+					r.type=type;
+					r.array_=array_.map!(x=>x.dup(state)).array;
+					return r;
+				case Tag.record:
+					Record nrecord;
+					foreach(k,v;record) nrecord[k]=v.dup(state);
+					Value r;
+					r.type=type;
+					r.record=nrecord;
+					return r;
+				case Tag.quval:
+					Value r;
+					r.type=type;
+					r.quval=quval.dup(state,this);
+					return r;
+			}
+		}
 		bool opEquals(Value rhs){
 			if(type!=rhs.type) return false;
 			if(!type) return true;
@@ -288,6 +331,29 @@ struct QState{
 			assert(!type.isToplevelClassical);
 			assert(tag==Tag.quval);
 			quval.assign(state,rhs);
+		}
+		void forget(ref QState state,Value rhs){
+			enforce(type==rhs.type,text("TODO: forget with types ",type," ",rhs.type));
+			final switch(tag){
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.bval])
+				case t: assert(type.isClassical); return;
+				case Tag.closure:
+					assert(rhs.tag==Tag.closure);
+					if(closure.context) return closure.context.forget(state,*rhs.closure.context);
+					return;
+				case Tag.array_:
+					assert(rhs.tag==Tag.array_);
+					enforce(array_.length==rhs.array_.length,"inconsistent array lengths for forget"); // TODO: good error reporting
+					foreach(i,ref x;array_) x.forget(state,rhs.array_[i]);
+					return;
+				case Tag.record:
+					assert(rhs.tag==Tag.record);
+					foreach(k,v;rhs.record) enforce(k in record);
+					foreach(k,v;record) v.forget(state,rhs.record[k]);
+					return;
+				case Tag.quval:
+					return quval.forget(state,rhs);
+			}
 		}
 		Value applyUnitary(alias unitary)(ref QState qs,Expression type){
 			if(this.type.isClassical()) return QVal.applyUnitaryToClassical!unitary(qs,this,type);
@@ -646,6 +712,10 @@ struct QState{
 		void forget(Ref ref_){
 			qvars.remove(ref_);
 		}
+		void forget(Ref ref_,Value v){
+			enforce(qvars[ref_]==v.classicalValue(this),"bad forget"); // TODO: better error reporting
+			forget(ref_);
+		}
 		hash_t toHash(){ return qvars.toHash(); }
 	}
 	static QState empty(){ return QState.init; }
@@ -824,6 +894,13 @@ struct QState{
 		}
 		this=map!assign(var,rhs);
 	}
+	private void forget(Σ.Ref var,Value rhs){
+		static Σ forgetImpl(Σ s,Σ.Ref var,Value rhs){
+			s.forget(var,rhs);
+			return s;
+		}
+		this=map!forgetImpl(var,rhs);
+	}
 	void assignTo(string lhs,Value rhs){
 		if(rhs.type.isToplevelClassical()){
 			vars[lhs]=rhs;
@@ -840,6 +917,11 @@ struct QState{
 			if(!cast(QVar)qvar.quval) qvar=makeQVar(rhs);
 			vars[lhs]=qvar;
 		}
+	}
+	void forget(string lhs,Value rhs){
+		enforce(lhs in vars);
+		vars[lhs].forget(this,rhs);
+		vars.remove(lhs);
 	}
 	void passParameter(string prm,Value rhs){
 		enforce(prm!in vars);
@@ -884,7 +966,7 @@ struct QState{
 		enforce(arg.tag==Value.Tag.array_);
 		enforce(arg.array_.length==2);
 		enforce(arg.array_[0].isClassicalInteger());
-		return makeArray(type,arg.array_[1].repeat(to!size_t(arg.array_[0].asInteger)).array);
+		return makeArray(type,iota(to!size_t(arg.array_[0].asInteger)).map!(_=>arg.array_[1].dup(this)).array);
 	}
 	alias vector=array_;
 	Value measure(Value arg){
@@ -1112,7 +1194,7 @@ struct Interpreter(QState){
 								switch(id3.name){
 									case "quantumPrimitive":
 										switch(getQuantumOp(ce3.arg)){
-											case "dup": return doIt(ce.arg);
+											case "dup": return doIt(ce.arg).dup(qstate);
 											case "array": return qstate.array_(ce.type,doIt(ce.arg));
 											case "vector": return qstate.vector(ce.type,doIt(ce.arg));
 											case "reverse": enforce(0,"TODO: reverse"); assert(0);
@@ -1216,7 +1298,17 @@ struct Interpreter(QState){
 	void assignTo(Expression lhs,QState.Value rhs){
 		if(auto id=cast(Identifier)lhs){
 			qstate.assignTo(id.name,rhs);
-		}else enforce(0,"TODO: assignments to non-variables");
+		}else if(auto tpl=cast(TupleExp)lhs){
+			enforce(rhs.tag==QState.Value.Tag.array_);
+			enforce(tpl.e.length==rhs.array_.length);
+			foreach(i;0..tpl.e.length)
+				assignTo(tpl.e[i],rhs[i]);
+		}else enforce(0,text("TODO: assignment to ",lhs));
+	}
+	void forget(Expression lhs,QState.Value rhs){
+		if(auto id=cast(Identifier)lhs){
+			qstate.forget(id.name,rhs);
+		}else enforce(0,text("TODO: forget for ",lhs));
 	}
 	void runStm(Expression e,ref QState retState){
 		if(!qstate.state.length) return;
@@ -1359,6 +1451,8 @@ struct Interpreter(QState){
 		}else if(auto oe=cast(ObserveExp)e){
 			enforce(0,"TODO: observe?");
 			assert(0);
+		}else if(auto fe=cast(ForgetExp)e){
+			forget(fe.var,runExp(fe.val));
 		}else if(auto ce=cast(CommaExp)e){
 			runStm(ce.e1,retState);
 			runStm(ce.e2,retState);
