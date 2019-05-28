@@ -47,12 +47,9 @@ int run(string path){
 		auto be=new QSim(path);
 		if("main" in functions){
 			auto fun=functions["main"];
-			if(fun.ret.isClassical()){
-				foreach(i;0..opt.numRuns)
-					writeln(be.run(fun,err).vars["`value"]);
-			}else{
-				stderr.writeln("error: returning quantum values from main not supported");
-				return 1;
+			foreach(i;0..opt.numRuns){
+				auto qstate=be.run(fun,err);
+				writeln(qstate.formatQValue(qstate.vars["`value"]));
 			}
 		}
 	}

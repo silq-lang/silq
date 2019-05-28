@@ -37,6 +37,16 @@ private:
 	string sourceFile;
 }
 
+string formatQValue(QState qs,QState.Value value){ // (only makes sense if value contains the full quantum state)
+	if(value.type.isClassical()) return value.toString();
+	string r;
+	foreach(k,v;qs.state){
+		if(r.length) r~="+";
+		r~=text("(",v,")·|",value.classicalValue(k),"⟩");
+	}
+	return r;
+}
+
 enum zeroThreshold=1e-8;
 bool isToplevelClassical(Expression ty){
 	return ty.isClassical()||cast(TupleTy)ty||cast(ArrayTy)ty||cast(VectorTy)ty||cast(ContextTy)ty||cast(ProductTy)ty;
@@ -483,8 +493,9 @@ struct QState{
 			if(!type) return "Value.init";
 			if(type==typeTy) return "_";
 			final switch(tag){
-				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.bval])
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval])
 				case t: return text(mixin(text(t)));
+				case Tag.bval: return bval?"1":"0";
 				case Tag.closure: return text("⟨",closure.fun,",",*closure.context,"⟩");
 				case Tag.array_: return text("[",array_.map!text.join(","),"]");
 				case Tag.record:
