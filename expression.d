@@ -313,6 +313,7 @@ class Identifier: Expression{
 	Scope scope_;
 	bool calledDirectly=false;
 	bool classical=false;
+	bool constLookup=true;
 }
 
 class PlaceholderExp: Expression{

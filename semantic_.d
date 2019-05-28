@@ -1463,6 +1463,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 		return expr=callSemantic(ce,sc,constResult);
 	if(auto id=cast(Identifier)expr){
 		id.scope_=sc;
+		id.constLookup=constResult;
 		auto meaning=id.meaning;
 		if(!meaning){
 			int nerr=sc.handler.nerrors; // TODO: this is a bit hacky

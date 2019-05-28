@@ -170,6 +170,7 @@ struct QState{
 			bval,
 		}
 		static Tag getTag(Expression type){
+			assert(!!type);
 			if(cast(ArrayTy)type||cast(VectorTy)type||cast(TupleTy)type) return Tag.array_;
 			if(cast(ContextTy)type) return Tag.record;
 			if(cast(ProductTy)type) return Tag.closure;
@@ -479,6 +480,7 @@ struct QState{
 			assert(0);
 		}
 		string toStringImpl(){
+			if(!type) return "Value.init";
 			if(type==typeTy) return "_";
 			final switch(tag){
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.bval])
@@ -580,9 +582,9 @@ struct QState{
 		return call(fun.closure.fun,nullValue,arg,null,fun.closure.context);
 	}
 
-	Value readLocal(string s,bool isConst){
+	Value readLocal(string s,bool constLookup){
 		auto r=vars[s];
-		if(!isConst&&!r.type.isToplevelClassical()) vars.remove(s);
+		if(!constLookup&&!r.type.isClassical()) vars.remove(s);
 		return r;
 	}
 	static Value makeRecord(Record record){
@@ -591,9 +593,11 @@ struct QState{
 		r.record=record;
 		return r;
 	}
-	static Value readField(Value r,string s){
+	static Value readField(Value r,string s,bool constLookup){
 		assert(r.type==contextTy(false));
-		return r.record[s];
+		auto res=r.record[s];
+		if(!constLookup&&!res.type.isClassical()) r.record.remove(s); // TODO: ok?
+		return res;
 	}
 	static Value makeTuple(Expression type,Value[] tuple)in{
 		assert(!!cast(TupleTy)type||cast(ArrayTy)type||cast(VectorTy)type);
@@ -764,12 +768,12 @@ struct QState{
 
 
 // TODO: move this to semantic_, as a rewrite
-QState.Value readVariable(QState)(QState qstate,VarDecl var,Scope from){
+QState.Value readVariable(QState)(ref QState qstate,VarDecl var,Scope from,bool constLookup){
 	QState.Value r=getContextFor(qstate,var,from);
-	if(r) return qstate.readField(r,var.getName);
-	return qstate.readLocal(var.getName,!var.isConstant);
+	if(r) return qstate.readField(r,var.getName,constLookup);
+	return qstate.readLocal(var.getName,constLookup);
 }
-QState.Value getContextFor(QState)(QState qstate,Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{
+QState.Value getContextFor(QState)(ref QState qstate,Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{
 	QState.Value r=QState.nullValue;
 	auto meaningScope=meaning.scope_;
 	if(auto fd=cast(FunctionDef)meaning)
@@ -778,7 +782,7 @@ QState.Value getContextFor(QState)(QState qstate,Declaration meaning,Scope sc)in
 	for(auto csc=sc;csc !is meaningScope;){
 		void add(string name){
 			if(!r) r=qstate.readLocal(name,true);
-			else r=qstate.readField(r,name);
+			else r=qstate.readField(r,name,true);
 			assert(!!cast(NestedScope)csc);
 		}
 		assert(cast(NestedScope)csc);
@@ -794,7 +798,7 @@ QState.Value getContextFor(QState)(QState qstate,Declaration meaning,Scope sc)in
 	}
 	return r;
 }
-QState.Value buildContextFor(QState)(QState qstate,Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{ // template, forward references 'doIt'
+QState.Value buildContextFor(QState)(ref QState qstate,Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{ // TODO: callers of this should only read the required context (and possibly consume)
 	if(auto ctx=getContextFor(qstate,meaning,sc)) return ctx;
 	QState.Record record;
 	auto msc=meaning.scope_;
@@ -802,9 +806,7 @@ QState.Value buildContextFor(QState)(QState qstate,Declaration meaning,Scope sc)
 		msc=fd.realScope;
 	for(auto csc=msc;;csc=(cast(NestedScope)csc).parent){
 		if(!cast(NestedScope)csc) break;
-		foreach(vd;&csc.all!VarDecl)
-			if(auto var=readVariable(qstate,vd,sc))
-				record[vd.getName]=var;
+		record=qstate.vars.dup;
 		if(!cast(NestedScope)(cast(NestedScope)csc).parent) break;
 		if(auto dsc=cast(DataScope)csc){
 			auto name=dsc.decl.contextName;
@@ -819,18 +821,13 @@ QState.Value buildContextFor(QState)(QState qstate,Declaration meaning,Scope sc)
 	}
 	return QState.makeRecord(record);
 }
-QState.Value lookupMeaning(QState)(QState qstate,Identifier id)in{assert(id && id.scope_,text(id," ",id.loc));}body{
+QState.Value lookupMeaning(QState)(ref QState qstate,Identifier id)in{assert(id && id.scope_,text(id," ",id.loc));}body{
 	if(!id.meaning||!id.scope_||!id.meaning.scope_)
-		return qstate.readLocal(id.name,false);
+		return qstate.readLocal(id.name,id.constLookup);
 	if(auto vd=cast(VarDecl)id.meaning){
 		auto r=getContextFor(qstate,id.meaning,id.scope_);
-		auto p=cast(Parameter)vd;
-		auto isConst=p&&p.isConst;
-		if(r){
-			enforce(isConst,"TODO");
-			return qstate.readField(r,id.name);
-		}
-		return qstate.readLocal(id.name,isConst);
+		if(r) return qstate.readField(r,id.name,id.constLookup);
+		return qstate.readLocal(id.name,id.constLookup);
 	}
 	if(cast(FunctionDef)id.meaning) return qstate.readFunction(id);
 	return QState.nullValue;
@@ -864,7 +861,9 @@ struct Interpreter(QState){
 						assert(fe.f.name=="length");
 					}
 				}
-				return qstate.readField(doIt(fe.e),fe.f.name);
+				static assert(!__traits(compiles,fe.constLookup));
+				// TODO: non-constant field lookup
+				return qstate.readField(doIt(fe.e),fe.f.name,true);
 			}
 			if(auto ae=cast(AddExp)e) return doIt(ae.e1)+doIt(ae.e2);
 			if(auto me=cast(SubExp)e) return doIt(me.e1)-doIt(me.e2);
@@ -1068,7 +1067,10 @@ struct Interpreter(QState){
 	}
 	void runStm(Expression e,ref QState retState){
 		if(!qstate.state.length) return;
-		if(opt.trace) writeln("statement: ",e);
+		if(opt.trace){
+			writeln("state: ",qstate);
+			writeln("statement: ",e);
+		}
 		if(auto nde=cast(DefExp)e){
 			auto de=cast(ODefExp)nde.initializer;
 			assert(!!de);
