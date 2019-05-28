@@ -760,9 +760,34 @@ struct QState{
 	}
 	alias vector=array_;
 	Value measure(Value arg){
-		writeln(this);
-		enforce(0,"TODO: measure");
-		assert(0);
+		MapX!(Value,C) candidates;
+		foreach(k,v;state){
+			auto candidate=arg.classicalValue(k);
+			if(candidate!in candidates) candidates[candidate]=v;
+			else candidates[candidate]+=v;
+		}
+		Value result;
+		R random=uniform!"[]"(R(0),R(1));
+		R current=0.0;
+		foreach(k,v;candidates){
+			current+=sqAbs(v);
+			if(current>=random){
+				result=k;
+				break;
+			}
+		}
+		MapX!(Σ,C) nstate;
+		R total=0.0f;
+		foreach(k,v;state){
+			auto candidate=arg.classicalValue(k);
+			if(candidate!=result) continue;
+			total+=v.sqAbs();
+			nstate[k]=v;
+		}
+		total=sqrt(total);
+		foreach(k,ref v;nstate) v/=total;
+		state=nstate;
+		return result;
 	}
 }
 
