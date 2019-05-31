@@ -2234,7 +2234,7 @@ FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 				rete.loc=fd.loc;
 				fd.body_.s~=returnExpSemantic(rete,fd.body_.blscope_);
 			}else{
-				sc.error("control flow might reach end of function (add return or assert(0) statement)",fd.loc);
+				sc.error("control flow might reach end of function (add return or assert(false) statement)",fd.loc);
 				fd.sstate=SemState.error;
 			}
 		}else if(!fd.ret) fd.ret=unit;
@@ -2408,6 +2408,8 @@ bool definitelyReturns(FunctionDef fd){
 		if(auto ret=cast(ReturnExp)e)
 			return true;
 		bool isZero(Expression e){
+			if(auto tae=cast(TypeAnnotationExp)e)
+				return isZero(tae.e);
 			if(auto le=cast(LiteralExp)e)
 				if(le.lit.type==Tok!"0")
 					if(le.lit.str=="0")
