@@ -1513,7 +1513,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 				expr.sstate=SemState.completed;
 			}
 		}
-		if(expr.type==ℕt(false)||expr.type==ℚt(false)||expr.type==ℝ(false)||expr.type==ℂ(false)){
+		if(expr.type==ℕt(false)||expr.type==ℤt(false)||expr.type==ℚt(false)||expr.type==ℝ(false)||expr.type==ℂ(false)){
 			sc.error(format("instances of type '%s' not realizable",expr.type),expr.loc);
 			expr.sstate=SemState.error;
 		}

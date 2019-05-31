@@ -110,7 +110,7 @@ struct QState{
 	alias R=double;
 	alias C=Complex!double;
 	static abstract class QVal{
-		override string toString(){ return "_"; }
+		override string toString(){ return text("_ (",typeid(this),")"); }
 		abstract Value get(Σ);
 		final QVar toVar(ref QState state,Value self){
 			auto nref_=Σ.curRef++;
@@ -118,6 +118,9 @@ struct QState{
 			return new QVar(nref_);
 		}
 		void forget(ref QState state,Value rhs){
+			enforce(0,text("can't forget quval ",this));
+		}
+		void forget(ref QState state){
 			enforce(0,text("can't forget quval ",this));
 		}
 		void removeVar(ref Σ σ){}
@@ -183,11 +186,14 @@ struct QState{
 		override void forget(ref QState state,Value rhs){
 			state.forget(ref_,rhs);
 		}
+		override void forget(ref QState state){
+			state.forget(ref_);
+		}
 	}
 	static class ConvertQVal: QVal{
 		QVal value;
 		Expression ntype;
-		this(QVal value,Expression ntype){ this.value=value; }
+		this(QVal value,Expression ntype){ this.value=value; this.ntype=ntype.getClassical(); }
 		override Value get(Σ σ){ return value.get(σ).convertTo(ntype); }
 		override void removeVar(ref Σ σ){
 			value.removeVar(σ);
@@ -332,7 +338,7 @@ struct QState{
 		}
 		void assign(ref QState state,Value rhs){
 			assert(type==rhs.type);
-			assert(!type.isToplevelClassical);
+			assert(!type.isClassical);
 			assert(tag==Tag.quval);
 			Lswitch: final switch(tag){
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.bval])
@@ -376,6 +382,24 @@ struct QState{
 					return;
 				case Tag.quval:
 					return quval.forget(state,rhs);
+			}
+		}
+		void forget(ref QState state){
+			// TODO: get rid of code duplication
+			final switch(tag){
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.bval])
+				case t: assert(type.isClassical); return;
+				case Tag.closure:
+					if(closure.context) return closure.context.forget(state);
+					return;
+				case Tag.array_:
+					foreach(i,ref x;array_) x.forget(state);
+					return;
+				case Tag.record:
+					foreach(k,v;record) v.forget(state);
+					return;
+				case Tag.quval:
+					return quval.forget(state);
 			}
 		}
 		Value applyUnitary(alias unitary)(ref QState qs,Expression type){
@@ -560,7 +584,8 @@ struct QState{
 				static if(is(typeof(mixin(op~` qval`))))
 					if(type==ℚt(true)) return makeRational(mixin(op~` qval`));
 				static if(is(typeof(mixin(op~` zval`))))
-					if(type==ℤt(true)) return makeInteger(mixin(op~` zval`));
+					if(type==ℤt(true)||isInt(type)||isUint(type))
+						return makeInteger(mixin(op~` zval`)); // TODO: wraparound
 				if(type==Bool(true)){
 					static if(op=="~") return makeBool(!bval);
 					else return makeInteger(mixin(op~` ℤ(cast(int)bval)`));
@@ -620,7 +645,8 @@ struct QState{
 				static if(is(typeof(mixin(`qval `~op~` r.qval`))))
 					if(type==ℚt(true)) return makeRational(mixin(`qval `~op~` r.qval`));
 				static if(is(typeof(mixin(`zval `~op~` r.zval`))))
-					if(type==ℤt(true)) return makeInteger(mixin(`zval `~op~` r.zval`));
+					if(type==ℤt(true)||isInt(type)||isUint(type))
+						return makeInteger(mixin(`zval `~op~` r.zval`)); // TODO: wraparound
 				static if(is(typeof((bool a,bool b){ bool c=mixin(`a `~op~` b`); })))
 					if(type==Bool(true)&&r.type==Bool(true)) return makeBool(mixin(`bval `~op~` r.bval`));
 				enforce(0,text("TODO: '",op,"' for types ",this.type," and ",r.type));
@@ -757,7 +783,9 @@ struct QState{
 				case Tag.quval: return quval.toString();
 			}
 		}
-		string toBasisStringImpl(){
+		string toBasisStringImpl()in{
+			assert(type.isClassical(),text(this));
+		}do{
 			return text("|",toStringImpl(),"⟩");
 		}
 		string toString(){
@@ -980,6 +1008,13 @@ struct QState{
 		}
 		this=map!forgetImpl(var,rhs);
 	}
+	private void forget(Σ.Ref var){
+		static Σ forgetImpl(Σ s,Σ.Ref var){
+			s.forget(var);
+			return s;
+		}
+		this=map!forgetImpl(var);
+	}
 	void assignTo(string lhs,Value rhs){
 		if(rhs.type.isToplevelClassical()){
 			vars[lhs]=rhs;
@@ -1005,9 +1040,14 @@ struct QState{
 		vars[lhs].forget(this,rhs);
 		vars.remove(lhs);
 	}
+	void forget(string lhs){
+		enforce(lhs in vars);
+		vars[lhs].forget(this);
+		vars.remove(lhs);
+	}
 	void passParameter(string prm,Value rhs){
 		enforce(prm!in vars);
-		vars[prm]=rhs;
+		vars[prm]=rhs; // TODO: this may be inefficient
 	}
 	Value H(Value x){
 		return x.applyUnitary!hadamardUnitary(this,Bool(false));
@@ -1272,7 +1312,7 @@ struct Interpreter(QState){
 								switch(id3.name){
 									case "quantumPrimitive":
 										switch(getQuantumOp(ce3.arg)){
-											case "dup": return doIt(ce.arg);
+											case "dup": return doIt(ce.arg).toVar(qstate);
 											case "array": return qstate.array_(ce.type,doIt(ce.arg));
 											case "vector": return qstate.vector(ce.type,doIt(ce.arg));
 											case "reverse": enforce(0,"TODO: reverse"); assert(0);
@@ -1388,6 +1428,11 @@ struct Interpreter(QState){
 			qstate.forget(id.name,rhs);
 		}else enforce(0,text("TODO: forget for ",lhs));
 	}
+	void forget(Expression lhs){
+		if(auto id=cast(Identifier)lhs){
+			qstate.forget(id.name);
+		}else enforce(0,text("TODO: forget for ",lhs));
+	}
 	void runStm(Expression e,ref QState retState){
 		if(!qstate.state.length) return;
 		if(opt.trace){
@@ -1430,7 +1475,8 @@ struct Interpreter(QState){
 			auto be=cast(ABinaryExp)e;
 			assert(!!be);
 			auto lhs=runExp(be.e1),rhs=runExp(be.e2);
-			lhs.assign(qstate,perform(lhs,rhs));
+			if(!lhs.type.isClassical()) lhs.assign(qstate,perform(lhs,rhs));
+			else assignTo(be.e1,perform(lhs,rhs));
 		}else if(auto call=cast(CallExp)e){
 			runExp(call);
 		}else if(auto ite=cast(IteExp)e){
@@ -1533,7 +1579,8 @@ struct Interpreter(QState){
 			enforce(0,"TODO: observe?");
 			assert(0);
 		}else if(auto fe=cast(ForgetExp)e){
-			forget(fe.var,runExp(fe.val));
+			if(fe.val) forget(fe.var,runExp(fe.val));
+			else forget(fe.var);
 		}else if(auto ce=cast(CommaExp)e){
 			runStm(ce.e1,retState);
 			runStm(ce.e2,retState);
