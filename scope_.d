@@ -123,7 +123,7 @@ abstract class Scope{
 	}
 
 	void resetConst(){ constBlock.clear(); }
-	Identifier isConst(Identifier ident){ return constBlock.get(ident.ptr, null); }
+	Identifier isConst(Declaration decl){ return constBlock.get(decl, null); }
 
 	/+private+/ string[] toPush;
 	final void consume(Declaration decl){
@@ -145,15 +145,15 @@ abstract class Scope{
 		auto r=symtab.get(ident.ptr, null);
 		if(rnsym&&!r) r=rnsymtab.get(ident.ptr,null);
 		if(kind==Lookup.consuming&&r&&r.isLinear()){
-			if(auto read=isConst(ident)){
+			if(auto read=isConst(r)){
 				error(format("cannot consume 'const' variable '%s'",ident), ident.loc);
 				note("variable was made 'const' here", read.loc);
 				ident.sstate=SemState.error;
 			}else consume(r);
 		}
 		if(kind==Lookup.constant&&r&&r.isLinear()){
-			if(ident.ptr !in constBlock)
-				constBlock[ident.ptr]=ident;
+			if(r !in constBlock)
+				constBlock[r]=ident;
 		}
 		return r;
 	}
@@ -323,7 +323,7 @@ abstract class Scope{
 	IndexExp indexToReplace=null;
 private:
 	Dependencies dependencies;
-	Identifier[const(char)*] constBlock;
+	Identifier[Declaration] constBlock;
 	Declaration[const(char)*] symtab;
 	Declaration[const(char)*] rnsymtab;
 }
@@ -370,9 +370,9 @@ class NestedScope: Scope{
 	}
 
 	override Annotation restriction(){ return parent.restriction(); }
-	override Identifier isConst(Identifier ident){
-		if(auto r=super.isConst(ident)) return r;
-		return parent.isConst(ident);
+	override Identifier isConst(Declaration decl){
+		if(auto r=super.isConst(decl)) return r;
+		return parent.isConst(decl);
 	}
 
 	override bool isNestedIn(Scope rhs){ return rhs is this || parent.isNestedIn(rhs); }
