@@ -238,10 +238,10 @@ class MultiDefExp: DefExp{
 	}
 	override void setType(Expression type){
 		assert(!!type);
-		if(auto tt=cast(TupleTy)type){
-			if(tt.types.length==decls_.length){
+		if(auto tt=type.isTupleTy()){
+			if(tt.length==decls_.length){
 				foreach(i,decl;decls_){
-					decl.vtype=tt.types[i];
+					decl.vtype=tt[i];
 				}
 			}
 		}else{

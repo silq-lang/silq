@@ -758,9 +758,9 @@ Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
 	assert(success && de && de.initializer is be || !de||de.sstate==SemState.error);
 	if(be.e2.sstate==SemState.completed){
 		if(auto tpl=cast(TupleExp)be.e1){
-			if(auto tt=cast(TupleTy)be.e2.type){
-				if(tpl.length!=tt.types.length){
-					sc.error(text("inconsistent number of tuple entries for definition: ",tpl.length," vs. ",tt.types.length),de.loc);
+			if(auto tt=be.e2.type.isTupleTy){
+				if(tpl.length!=tt.length){
+					sc.error(text("inconsistent number of tuple entries for definition: ",tpl.length," vs. ",tt.length),de.loc);
 					if(de){ de.setError(); be.sstate=SemState.error; }
 				}
 			}else{
@@ -1298,22 +1298,22 @@ Expression callSemantic(CallExp ce,Scope sc,ConstResult constResult){
 						if(ft2.isConst[0]) constArgTypes1=[ft2.dom];
 						else argTypes=[ft2.dom];
 					}else{
-						auto tpl=cast(TupleTy)ft2.dom;
-						assert(!!tpl && tpl.types.length==ft2.isConst.length);
+						auto tpl=ft2.dom.isTupleTy;
+						assert(!!tpl && tpl.length==ft2.isConst.length);
 						auto numConstArgs1=ft2.isConst.until!(x=>!x).walkLength;
 						auto numArgs=ft2.isConst[numConstArgs1..$].until!(x=>x).walkLength;
 						auto numConstArgs2=ft2.isConst[numConstArgs1+numArgs..$].until!(x=>!x).walkLength;
-						ok=numConstArgs1+numArgs+numConstArgs2==tpl.types.length;
-						constArgTypes1=tpl.types[0..numConstArgs1];
-						argTypes=tpl.types[numConstArgs1..numConstArgs1+numArgs];
-						constArgTypes2=tpl.types[numConstArgs1+numArgs..$];
+						ok=numConstArgs1+numArgs+numConstArgs2==tpl.length;
+						constArgTypes1=iota(numConstArgs1).map!(i=>tpl[i]).array;
+						argTypes=iota(numConstArgs1,numConstArgs1+numArgs).map!(i=>tpl[i]).array;
+						constArgTypes2=iota(numConstArgs1+numArgs,tpl.length).map!(i=>tpl[i]).array;
 						if(argTypes.length==0){
 							assert(constArgTypes2.length==0);
 							swap(constArgTypes1,constArgTypes2);
 						}
 					}
-					if(auto tpl=cast(TupleTy)ft2.cod){
-						returnTypes=tpl.types;
+					if(auto tpl=ft2.cod.isTupleTy){
+						returnTypes=iota(tpl.length).map!(i=>tpl[i]).array;
 					}else returnTypes=[ft2.cod];
 					if(ok){
 						auto nargTypes=constArgTypes1~returnTypes~constArgTypes2;
@@ -1404,6 +1404,86 @@ Expression callSemantic(CallExp ce,Scope sc,ConstResult constResult){
 enum ConstResult:bool{
 	no,
 	yes,
+}
+
+Expression arithmeticType(bool preserveBool)(Expression t1, Expression t2){
+	if(isInt(t1) && isSubtype(t2,ℤt(t1.isClassical()))) return t1; // TODO: automatic promotion to quantum
+	if(isInt(t2) && isSubtype(t1,ℤt(t2.isClassical()))) return t2;
+	if(isUint(t1) && isSubtype(t2,ℕt(t1.isClassical()))) return t1;
+	if(isUint(t2) && isSubtype(t1,ℕt(t2.isClassical()))) return t2;
+	if(preludeNumericTypeName(t1) != null||preludeNumericTypeName(t2) != null)
+		return joinTypes(t1,t2);
+	if(!isNumeric(t1)||!isNumeric(t2)) return null;
+	auto r=joinTypes(t1,t2);
+	static if(!preserveBool){
+		if(r==Bool(true)) return ℕt(true);
+		if(r==Bool(false)) return ℕt(false);
+	}
+	return r;
+}
+Expression subtractionType(Expression t1, Expression t2){
+	auto r=arithmeticType!false(t1,t2);
+	return r==ℕt(true)?ℤt(true):r==ℕt(false)?ℤt(false):r;
+}
+Expression divisionType(Expression t1, Expression t2){
+	auto r=arithmeticType!false(t1,t2);
+	if(isInt(r)||isUint(r)) return null; // TODO: add a special operator for float and rat?
+	return util.among(r,Bool(true),ℕt(true),ℤt(true))?ℚt(true):
+		util.among(r,Bool(false),ℕt(false),ℤt(false))?ℚt(false):r;
+}
+Expression iDivType(Expression t1, Expression t2){
+	auto r=arithmeticType!false(t1,t2);
+	if(isInt(r)||isUint(r)) return r;
+	if(cast(ℂTy)t1||cast(ℂTy)t2) return null;
+	bool classical=t1.isClassical()&&t2.isClassical();
+	return (cast(BoolTy)t1||cast(ℕTy)t1)&&(cast(BoolTy)t2||cast(ℕTy)t2)?ℕt(classical):ℤt(classical);
+}
+Expression nSubType(Expression t1, Expression t2){
+	auto r=arithmeticType!true(t1,t2);
+	if(isUint(r)) return r;
+	if(isSubtype(r,ℕt(false))) return r;
+	if(isSubtype(r,ℤt(false))) return ℕt(r.isClassical());
+	return null;
+}
+Expression moduloType(Expression t1, Expression t2){
+	auto r=arithmeticType!false(t1,t2);
+	return r==ℤt(true)?ℕt(true):r==ℤt(false)?ℕt(false):r; // TODO: more general range information?
+}
+Expression powerType(Expression t1, Expression t2){
+	bool classical=t1.isClassical()&&t2.isClassical();
+	if(!isNumeric(t1)||!isNumeric(t2)) return null;
+	if(cast(BoolTy)t1&&isSubtype(t2,ℕt(classical))) return Bool(classical);
+	if(cast(ℕTy)t1&&isSubtype(t2,ℕt(classical))) return ℕt(classical);
+	if(cast(ℂTy)t1||cast(ℂTy)t2) return ℂ(classical);
+	if(util.among(t1,Bool(true),ℕt(true),ℤt(true),ℚt(true))&&isSubtype(t2,ℤt(false))) return ℚt(t2.isClassical);
+	if(util.among(t1,Bool(false),ℕt(false),ℤt(false),ℚt(false))&&isSubtype(t2,ℤt(false))) return ℚt(false);
+	return ℝ(classical); // TODO: good?
+}
+Expression minusBitNotType(Expression t){
+	if(!isNumeric(t)) return null;
+	if(cast(BoolTy)t||cast(ℕTy)t) return ℤt(t.isClassical());
+	return t;
+}
+Expression notType(Expression t){
+	if(!cast(BoolTy)t) return null;
+	return t;
+}
+Expression logicType(Expression t1,Expression t2){
+	if(!cast(BoolTy)t1||!cast(BoolTy)t2) return null;
+	return Bool(t1.isClassical()&&t2.isClassical());
+}
+Expression cmpType(Expression t1,Expression t2){
+	if(preludeNumericTypeName(t1) != null||preludeNumericTypeName(t2) != null){
+		if(!(joinTypes(t1,t2)||isNumeric(t1)||isNumeric(t2)))
+			return null;
+	}else{
+		auto a1=cast(ArrayTy)t1,a2=cast(ArrayTy)t2;
+		auto v1=cast(VectorTy)t1,v2=cast(VectorTy)t2;
+		Expression n1=a1?a1.next:v1?v1.next:null,n2=a2?a2.next:v2?v2.next:null;
+		if(n1&&n2) return cmpType(n1,n2);
+		if(!isNumeric(t1)||!isNumeric(t2)||cast(ℂTy)t1||cast(ℂTy)t2) return null;
+	}
+	return Bool(t1.isClassical()&&t2.isClassical());
 }
 
 Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
@@ -1712,14 +1792,14 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 			return sl;
 		if(auto at=cast(ArrayTy)sl.e.type){
 			sl.type=at;
-		}else if(auto tt=cast(TupleTy)sl.e.type){
+		}else if(auto tt=sl.e.type.isTupleTy){
 			auto llit=cast(LiteralExp)sl.l, rlit=cast(LiteralExp)sl.r;
 			if(!llit||llit.lit.type!=Tok!"0"){
-				sc.error(format("slice lower bound for type %s should be integer constant",tt),sl.loc);
+				sc.error(format("slice lower bound for type %s should be integer constant",cast(Expression)tt),sl.loc);
 				sl.sstate=SemState.error;
 			}
 			if(!rlit||rlit.lit.type!=Tok!"0"){
-				sc.error(format("slice upper bound for type %s should be integer constant",tt),sl.loc);
+				sc.error(format("slice upper bound for type %s should be integer constant",cast(Expression)tt),sl.loc);
 				sl.sstate=SemState.error;
 			}
 			if(sl.sstate==SemState.error)
@@ -1733,11 +1813,11 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 				sc.error("slice lower bound exceeds slice upper bound",sl.loc);
 				sl.sstate=SemState.error;
 			}
-			if(rc>tt.types.length){
-				sc.error(format("slice upper bound for type %s exceeds %s",tt,tt.types.length),sl.loc);
+			if(rc>tt.length){
+				sc.error(format("slice upper bound for type %s exceeds %s",tt,tt.length),sl.loc);
 				sl.sstate=SemState.error;
 			}
-			sl.type=tupleTy(tt.types[cast(size_t)lc..cast(size_t)rc]);
+			sl.type=tt[cast(size_t)lc..cast(size_t)rc];
 		}else{
 			sc.error(format("type %s is not sliceable",sl.e.type),sl.loc);
 			sl.sstate=SemState.error;
@@ -1897,85 +1977,6 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 		}
 		return e;
 	}
-	static Expression arithmeticType(bool preserveBool)(Expression t1, Expression t2){
-		if(isInt(t1) && isSubtype(t2,ℤt(t1.isClassical()))) return t1; // TODO: automatic promotion to quantum
-		if(isInt(t2) && isSubtype(t1,ℤt(t2.isClassical()))) return t2;
-		if(isUint(t1) && isSubtype(t2,ℕt(t1.isClassical()))) return t1;
-		if(isUint(t2) && isSubtype(t1,ℕt(t2.isClassical()))) return t2;
-		if(preludeNumericTypeName(t1) != null||preludeNumericTypeName(t2) != null)
-			return joinTypes(t1,t2);
-		if(!isNumeric(t1)||!isNumeric(t2)) return null;
-		auto r=joinTypes(t1,t2);
-		static if(!preserveBool){
-			if(r==Bool(true)) return ℕt(true);
-			if(r==Bool(false)) return ℕt(false);
-		}
-		return r;
-	}
-	static Expression subtractionType(Expression t1, Expression t2){
-		auto r=arithmeticType!false(t1,t2);
-		return r==ℕt(true)?ℤt(true):r==ℕt(false)?ℤt(false):r;
-	}
-	static Expression divisionType(Expression t1, Expression t2){
-		auto r=arithmeticType!false(t1,t2);
-		if(isInt(r)||isUint(r)) return null; // TODO: add a special operator for float and rat?
-		return util.among(r,Bool(true),ℕt(true),ℤt(true))?ℚt(true):
-			util.among(r,Bool(false),ℕt(false),ℤt(false))?ℚt(false):r;
-	}
-	static Expression iDivType(Expression t1, Expression t2){
-		auto r=arithmeticType!false(t1,t2);
-		if(isInt(r)||isUint(r)) return r;
-		if(cast(ℂTy)t1||cast(ℂTy)t2) return null;
-		bool classical=t1.isClassical()&&t2.isClassical();
-		return (cast(BoolTy)t1||cast(ℕTy)t1)&&(cast(BoolTy)t2||cast(ℕTy)t2)?ℕt(classical):ℤt(classical);
-	}
-	static Expression nSubType(Expression t1, Expression t2){
-		auto r=arithmeticType!true(t1,t2);
-		if(isUint(r)) return r;
-		if(isSubtype(r,ℕt(false))) return r;
-		if(isSubtype(r,ℤt(false))) return ℕt(r.isClassical());
-		return null;
-	}
-	static Expression moduloType(Expression t1, Expression t2){
-		auto r=arithmeticType!false(t1,t2);
-		return r==ℤt(true)?ℕt(true):r==ℤt(false)?ℕt(false):r; // TODO: more general range information?
-	}
-	static Expression powerType(Expression t1, Expression t2){
-		bool classical=t1.isClassical()&&t2.isClassical();
-		if(!isNumeric(t1)||!isNumeric(t2)) return null;
-		if(cast(BoolTy)t1&&isSubtype(t2,ℕt(classical))) return Bool(classical);
-		if(cast(ℕTy)t1&&isSubtype(t2,ℕt(classical))) return ℕt(classical);
-		if(cast(ℂTy)t1||cast(ℂTy)t2) return ℂ(classical);
-		if(util.among(t1,Bool(true),ℕt(true),ℤt(true),ℚt(true))&&isSubtype(t2,ℤt(false))) return ℚt(t2.isClassical);
-		if(util.among(t1,Bool(false),ℕt(false),ℤt(false),ℚt(false))&&isSubtype(t2,ℤt(false))) return ℚt(false);
-		return ℝ(classical); // TODO: good?
-	}
-	static Expression minusBitNotType(Expression t){
-		if(!isNumeric(t)) return null;
-		if(cast(BoolTy)t||cast(ℕTy)t) return ℤt(t.isClassical());
-		return t;
-	}
-	static Expression notType(Expression t){
-		if(!cast(BoolTy)t) return null;
-		return t;
-	}
-	static Expression logicType(Expression t1,Expression t2){
-		if(!cast(BoolTy)t1||!cast(BoolTy)t2) return null;
-		return Bool(t1.isClassical()&&t2.isClassical());
-	}
-	static Expression cmpType(Expression t1,Expression t2){
-		if(preludeNumericTypeName(t1) != null||preludeNumericTypeName(t2) != null){
-			if(!(joinTypes(t1,t2)||isNumeric(t1)||isNumeric(t2)))
-			   return null;
-		}else{
-			auto a1=cast(ArrayTy)t1,a2=cast(ArrayTy)t2;
-			auto v1=cast(VectorTy)t1,v2=cast(VectorTy)t2;
-			Expression n1=a1?a1.next:v1?v1.next:null,n2=a2?a2.next:v2?v2.next:null;
-			if(n1&&n2) return cmpType(n1,n2);
-			if(!isNumeric(t1)||!isNumeric(t2)||cast(ℂTy)t1||cast(ℂTy)t2) return null;
-		}
-		return Bool(t1.isClassical()&&t2.isClassical());
-	}
 	if(auto ae=cast(AddExp)expr) return expr=handleBinary!(arithmeticType!false)("addition",ae,ae.e1,ae.e2);
 	if(auto ae=cast(SubExp)expr) return expr=handleBinary!subtractionType("subtraction",ae,ae.e1,ae.e2);
 	if(auto ae=cast(NSubExp)expr) return expr=handleBinary!nSubType("natural subtraction",ae,ae.e1,ae.e2);
@@ -2046,11 +2047,11 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 			expr.sstate=SemState.error;
 			return expr;
 		}
-		auto l=cast(TupleTy)t1,r=cast(TupleTy)t2;
+		auto l=t1.isTupleTy(),r=t2.isTupleTy();
 		if(l && r && !pr.e1.brackets && !pr.e2.brackets)
-			return tupleTy(l.types~r.types);
-		if(l&&!pr.e1.brackets) return tupleTy(l.types~t2);
-		if(r&&!pr.e2.brackets) return tupleTy(t1~r.types);
+			return tupleTy(chain(iota(l.length).map!(i=>l[i]),iota(r.length).map!(i=>r[i])).array);
+		if(l&&!pr.e1.brackets) return tupleTy(chain(iota(l.length).map!(i=>l[i]),only(t2)).array);
+		if(r&&!pr.e2.brackets) return tupleTy(chain(only(t1),iota(r.length).map!(i=>r[i])).array);
 		return tupleTy([t1,t2]);
 	}
 	if(auto ex=cast(BinaryExp!(Tok!"→"))expr){
@@ -2063,11 +2064,11 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 					e.sstate=SemState.error;
 					return q((bool[]).init,Expression.init);
 				}
-				auto l=cast(TupleTy)t1[1],r=cast(TupleTy)t2[1];
+				auto l=t1[1].isTupleTy,r=t2[1].isTupleTy;
 				if(l && r && !pr.e1.brackets && !pr.e2.brackets)
-					return q(t1[0]~t2[0],cast(Expression)tupleTy(l.types~r.types));
-				if(l&&!pr.e1.brackets) return q(t1[0]~t2[0],cast(Expression)tupleTy(l.types~t2[1]));
-				if(r&&!pr.e2.brackets) return q(t1[0]~t2[0],cast(Expression)tupleTy(t1[1]~r.types));
+					return q(t1[0]~t2[0],cast(Expression)tupleTy(chain(iota(l.length).map!(i=>l[i]),iota(r.length).map!(i=>r[i])).array));
+				if(l&&!pr.e1.brackets) return q(t1[0]~t2[0],cast(Expression)tupleTy(chain(iota(l.length).map!(i=>l[i]),only(t2[1])).array));
+				if(r&&!pr.e2.brackets) return q(t1[0]~t2[0],cast(Expression)tupleTy(chain(only(t1[1]),iota(r.length).map!(i=>r[i])).array));
 				return q(t1[0]~t2[0],cast(Expression)tupleTy([t1[1],t2[1]]));
 			}else if(auto ce=cast(UnaryExp!(Tok!"const"))e){
 				return q([true],typeSemantic(ce.e,sc));
@@ -2082,7 +2083,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 			expr.sstate=SemState.error;
 			return expr;
 		}
-		return expr=funTy(t1[0],t1[1],t2,false,!!cast(TupleTy)t1[1]&&t1[0].length!=1,ex.annotation,false);
+		return expr=funTy(t1[0],t1[1],t2,false,!!t1[1].isTupleTy()&&t1[0].length!=1,ex.annotation,false);
 	}
 	if(auto fa=cast(RawProductTy)expr){
 		expr.type=typeTy();

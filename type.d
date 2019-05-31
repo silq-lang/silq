@@ -331,12 +331,21 @@ class ContextTy: Type{
 private ContextTy[2] theContextTy;
 ContextTy contextTy(bool classical){ return theContextTy[classical]?theContextTy[classical]:(theContextTy[classical]=new ContextTy(classical)); }
 
+interface ITupleTy{
+	@property size_t length();
+	Expression opIndex(size_t i);
+	Expression opSlice(size_t l,size_t r);
+}
 
-
-class TupleTy: Type{
+class TupleTy: Type,ITupleTy{
 	Expression[] types;
+	override ITupleTy isTupleTy(){ return this; }
+	@property size_t length(){ return types.length; }
+	Expression opIndex(size_t i){ return types[i]; }
+	Expression opSlice(size_t l,size_t r){ return tupleTy(types[l..r]); }
 	private this(Expression[] types)in{
 		assert(types.all!(x=>x.type==typeTy));
+		assert(!types.length||!types[1..$].all!(x=>x==types[0]));
 	}body{
 		this.types=types;
 	}
@@ -347,7 +356,7 @@ class TupleTy: Type{
 			if(cast(FunTy)a) return "("~a.toString()~")";
 			return a.toString();
 		}
-		return types.map!(a=>cast(TupleTy)a&&a!is unit?"("~a.toString()~")":addp(a)).join(" × ");
+		return types.map!(a=>a.isTupleTy()&&a!is unit?"("~a.toString()~")":addp(a)).join(" × ");
 	}
 	override int freeVarsImpl(scope int delegate(string) dg){
 		foreach(t;types)
@@ -355,15 +364,15 @@ class TupleTy: Type{
 				return r;
 		return 0;
 	}
-	override TupleTy substituteImpl(Expression[string] subst){
+	override Type substituteImpl(Expression[string] subst){
 		auto ntypes=types.dup;
 		foreach(ref t;ntypes) t=t.substitute(subst);
 		return tupleTy(ntypes);
 	}
 	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
-		auto tt=cast(TupleTy)rhs;
-		if(!tt||types.length!=tt.types.length) return false;
-		return all!(i=>types[i].unify(tt.types[i],subst,meet))(iota(types.length));
+		auto tt=rhs.isTupleTy();
+		if(!tt||types.length!=tt.length) return false;
+		return all!(i=>types[i].unify(tt[i],subst,meet))(iota(types.length));
 
 	}
 	override bool opEquals(Object o){
@@ -372,14 +381,14 @@ class TupleTy: Type{
 		return false;
 	}
 	override bool isSubtypeImpl(Expression r){
-		auto ltup=this,rtup=cast(TupleTy)r;
-		if(!rtup||ltup.types.length!=rtup.types.length) return false;
-		return all!(i=>isSubtype(ltup.types[i],rtup.types[i]))(iota(ltup.types.length));
+		auto ltup=this,rtup=r.isTupleTy();
+		if(!rtup||ltup.types.length!=rtup.length) return false;
+		return all!(i=>isSubtype(ltup.types[i],rtup[i]))(iota(ltup.types.length));
 	}
 	override Expression combineTypesImpl(Expression r,bool meet){
-		auto ltup=this,rtup=cast(TupleTy)r;
-		if(!rtup||ltup.types.length!=rtup.types.length) return null;
-		auto rtypes=zip(ltup.types,rtup.types).map!((t)=>combineTypes(t.expand,meet)).array;
+		auto ltup=this,rtup=r.isTupleTy();
+		if(!rtup||ltup.types.length!=rtup.length) return null;
+		auto rtypes=zip(ltup.types,iota(rtup.length).map!(i=>rtup[i])).map!((t)=>combineTypes(t.expand,meet)).array;
 		if(any!(x=>x is null)(rtypes)) return null;
 		return tupleTy(rtypes);
 	}
@@ -400,17 +409,24 @@ class TupleTy: Type{
 	}
 }
 
-TupleTy unit(){ return tupleTy([]); }
+Type unit(){ return tupleTy([]); }
 
-TupleTy tupleTy(Expression[] types)in{
+Type tupleTy(Expression[] types)in{
 	assert(types.all!(x=>x.type==typeTy));
 }body{
+	import lexer: Token,Tok;
+	if(types.length&&types.all!(x=>x==types[0])){
+		auto len=new LiteralExp(Token(Tok!"0",to!string(types.length))); // TODO: make this more convenient
+		len.sstate=SemState.completed;
+		len.type=ℕt(true);
+		return vectorTy(types[0],len);
+	}
 	return memoize!((Expression[] types)=>new TupleTy(types))(types);
 }
 
 size_t numComponents(Expression t){
-	if(auto tpl=cast(TupleTy)t)
-		return tpl.types.length;
+	if(auto tpl=t.isTupleTy())
+		return tpl.length;
 	return 1;
 }
 
@@ -422,7 +438,7 @@ class ArrayTy: Type{
 		this.next=next;
 	}
 	override string toString(){
-		bool p=cast(FunTy)next||cast(TupleTy)next&&next!is unit;
+		bool p=cast(FunTy)next||next.isTupleTy()&&next!is unit;
 		return p?"("~next.toString()~")[]":next.toString()~"[]";
 	}
 	override int freeVarsImpl(scope int delegate(string) dg){
@@ -475,8 +491,27 @@ ArrayTy arrayTy(Expression next)in{
 	return memoize!((Expression next)=>new ArrayTy(next))(next);
 }
 
-class VectorTy: Type{
+class VectorTy: Type, ITupleTy{
 	Expression next,num;
+	override ITupleTy isTupleTy(){
+		if(cast(LiteralExp)num) return this;
+		return null;
+	}
+	@property size_t length(){
+		auto lit=cast(LiteralExp)num;
+		assert(!!lit);
+		return to!size_t(lit.lit.str); // TODO: avoid crash if length is too big
+	}
+	Expression opIndex(size_t i){ return next; }
+	Expression opSlice(size_t l,size_t r){
+		assert(0<=l&&l<=r&&r<=length);
+		auto len=r-l;
+		import lexer: Token,Tok;
+		auto lit=new LiteralExp(Token(Tok!"0",to!string(len))); // TODO: make this more convenient
+		lit.type=ℕt(true);
+		lit.sstate=SemState.completed;
+		return vectorTy(next,lit);
+	}
 	private this(Expression next,Expression num)in{
 		assert(next.type==typeTy);
 	}body{
@@ -484,7 +519,7 @@ class VectorTy: Type{
 		this.num=num;
 	}
 	override string toString(){
-		bool p=cast(FunTy)next||cast(TupleTy)next&&next!is unit;
+		bool p=cast(FunTy)next||next.isTupleTy&&next!is unit;
 		bool q=!cast(Identifier)num&&!cast(LiteralExp)num; // TODO: improve
 		return (p?"("~next.toString()~")^":next.toString()~"^")~(q?"("~num.toString()~")":num.toString());
 	}
@@ -615,9 +650,9 @@ class ProductTy: Type{
 	private this(bool[] isConst,string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple,Annotation annotation,bool isClassical_)in{
 		// TODO: assert that all names are distinct
 		if(isTuple){
-			auto tdom=cast(TupleTy)dom;
+			auto tdom=dom.isTupleTy;
 			assert(!!tdom);
-			assert(names.length==tdom.types.length);
+			assert(names.length==tdom.length);
 		}else assert(names.length==1);
 		assert(cod.type==typeTy,text(cod));
 	}body{
@@ -630,10 +665,10 @@ class ProductTy: Type{
 		else classicalTy=new ProductTy(isConst,names,dom,cod,isSquare,isTuple,annotation,true);
 		// TODO: report DMD bug, New!ProductTy does not work
 	}
-	/+private+/ @property TupleTy tdom()in{ // TODO: make private
+	/+private+/ @property ITupleTy tdom()in{ // TODO: make private
 		assert(isTuple);
 	}body{
-		auto r=cast(TupleTy)dom;
+		auto r=dom.isTupleTy;
 		assert(!!r);
 		return r;
 	}
@@ -646,18 +681,18 @@ class ProductTy: Type{
 			string addp(bool const_,Expression a,string del="()"){
 				if(const_&&a.impliesConst()) const_=false;
 				if(cast(FunTy)a) return del[0]~(const_?"const (":"")~a.toString()~(const_?")":"")~del[1];
-				if(cast(TupleTy)a) return (const_?"const (":"")~a.toString()~(const_?")":"");
+				if(a.isTupleTy()) return (const_?"const (":"")~a.toString()~(const_?")":"");
 				return (const_?"const ":"")~a.toString();
 			}
 			if(all!(x=>!x)(isConst)){
 				d=dom.toString();
 				if(isSquare) d=del[0]~d~del[1];
-			}else if(auto tpl=cast(TupleTy)dom){
+			}else if(auto tpl=dom.isTupleTy()){
 				if(isTuple){
-					assert(!!tpl.types.length);
-					if(tpl.types.length==1) return "("~(isConst[0]&&!tpl.types[0].impliesConst()?"const ":"")~tpl.types[0].toString()~")¹";
-					assert(tpl.types.length==isConst.length);
-					d=zip(isConst,tpl.types).map!(a=>(cast(TupleTy)a[1]&&a[1]!is unit?"("~(a[0]&&!a[1].impliesConst()?"const ":"")~a[1].toString()~")":addp(a[0],a[1]))).join(" × ");
+					assert(!!tpl.length);
+					if(tpl.length==1) return "("~(isConst[0]&&!tpl[0].impliesConst()?"const ":"")~tpl[0].toString()~")¹";
+					assert(tpl.length==isConst.length);
+					d=zip(isConst,iota(tpl.length).map!(i=>tpl[i])).map!(a=>(a[1].isTupleTy()&&a[1]!is unit?"("~(a[0]&&!a[1].impliesConst()?"const ":"")~a[1].toString()~")":addp(a[0],a[1]))).join(" × ");
 					if(isSquare) d=del[0]~d~del[1];
 				}else d=addp(isConst[0],dom,del);
 			}else d=addp(isConst[0],dom,del);
@@ -666,7 +701,7 @@ class ProductTy: Type{
 			assert(names.length);
 			string args;
 			if(isTuple){
-				args=zip(isConst,names,tdom.types).map!(x=>(x[0]?"const ":"")~x[1]~":"~x[2].toString()).join(",");
+				args=zip(isConst,names,iota(tdom.length).map!(i=>tdom[i])).map!(x=>(x[0]?"const ":"")~x[1]~":"~x[2].toString()).join(",");
 				if(nargs==1) args~=",";
 			}else args=(isConst[0]?"const ":"")~names[0]~":"~dom.toString();
 			r=(isClassical?"!":"")~"∏"~del[0]~args~del[1]~(annotation?to!string(annotation):"")~". "~c;
@@ -674,11 +709,11 @@ class ProductTy: Type{
 		return r;
 	}
 	@property size_t nargs(){
-		if(isTuple) return tdom.types.length;
+		if(isTuple) return tdom.length;
 		return 1;
 	}
 	Expression argTy(size_t i)in{assert(i<nargs);}body{
-		if(isTuple) return tdom.types[i];
+		if(isTuple) return tdom[i];
 		return dom;
 	}
 	override int freeVarsImpl(scope int delegate(string) dg){
@@ -744,13 +779,13 @@ class ProductTy: Type{
 		foreach(n;names) nsubst.remove(n);
 		auto ncod=cod.substitute(nsubst);
 		auto nIsConst=isConst;
-		if(auto tpl=cast(TupleTy)ndom){ // TODO: it might be better to maintain this invariant upon construction
-			if(nIsConst.length==1&&tpl.types.length!=1)
-				nIsConst=nIsConst[0].repeat(tpl.types.length).array;
-			assert(nIsConst.length==tpl.types.length);
-			if(iota(nIsConst.length).any!(i=>!nIsConst[i]&&tpl.types[i].impliesConst)){
+		if(auto tpl=ndom.isTupleTy()){ // TODO: it might be better to maintain this invariant upon construction
+			if(nIsConst.length==1&&tpl.length!=1)
+				nIsConst=nIsConst[0].repeat(tpl.length).array;
+			assert(nIsConst.length==tpl.length);
+			if(iota(nIsConst.length).any!(i=>!nIsConst[i]&&tpl[i].impliesConst)){
 				nIsConst=nIsConst.dup;
-				foreach(i;0..nIsConst.length) if(!nIsConst[i]&&tpl.types[i].impliesConst) nIsConst[i]=true;
+				foreach(i;0..nIsConst.length) if(!nIsConst[i]&&tpl[i].impliesConst) nIsConst[i]=true;
 			}
 		}else{
 			assert(nIsConst.length==1);
@@ -762,7 +797,7 @@ class ProductTy: Type{
 	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
 		auto r=cast(ProductTy)rhs; // TODO: get rid of duplication (same code in opEquals)
 		if(!r) return false;
-		if(isTuple&&!cast(TupleTy)r.dom) return false;
+		if(isTuple&&!r.dom.isTupleTy()) return false;
 		r=r.setTuple(isTuple);
 		if(!r) return false;
 		if(isConst.length!=r.isConst.length) return false;
@@ -782,9 +817,9 @@ class ProductTy: Type{
 		auto nnames=freshNames(arg);
 		if(nnames!=names) return relabelAll(nnames).tryMatch(arg,garg);
 		Expression[] atys;
-		auto tpl=cast(TupleTy)arg.type;
+		auto tpl=arg.type.isTupleTy();
 		if(cod.isTuple&&tpl){
-			atys=tpl.types;
+			atys=iota(tpl.length).map!(i=>tpl[i]).array;
 			if(atys.length!=cod.nargs) return null;
 		}else atys=[arg.type];
 		Expression[string] subst;
@@ -810,14 +845,14 @@ class ProductTy: Type{
 		if(!isSubtype(arg.type,dom)) return null;
 		Expression[string] subst;
 		if(isTuple){
-			auto tdom=cast(TupleTy)dom;
+			auto tdom=dom.isTupleTy();
 			assert(!!tdom);
 			foreach(i,n;names){
 				import lexer;
 				auto lit=new LiteralExp(Token(Tok!"0",to!string(i)));
 				lit.type=ℤt(true);
 				auto exp=new IndexExp(arg,[lit],false).eval();
-				exp.type=tdom.types[i];
+				exp.type=tdom[i];
 				subst[n]=exp;
 			}
 		}else{
@@ -829,7 +864,7 @@ class ProductTy: Type{
 	override bool opEquals(Object o){
 		auto r=cast(ProductTy)o;
 		if(!r) return false;
-		if(isTuple&&!cast(TupleTy)r.dom) return false;
+		if(isTuple&&!r.dom.isTupleTy()) return false;
 		r=r.setTuple(isTuple);
 		if(!r) return false;
 		assert(isTuple==r.isTuple);
@@ -842,7 +877,7 @@ class ProductTy: Type{
 	override bool isSubtypeImpl(Expression rhs){
 		auto r=cast(ProductTy)rhs;
 		if(!r) return false;
-		if(isTuple&&!cast(TupleTy)r.dom) return false;
+		if(isTuple&&!r.dom.isTupleTy()) return false;
 		r=r.setTuple(isTuple);
 		if(!r) return false;
 		if(isConst!=r.isConst||isSquare!=r.isSquare||nargs!=r.nargs)
@@ -858,17 +893,17 @@ class ProductTy: Type{
 		return isSubtype(lCod,rCod);
 	}
 	private ProductTy setTuple(bool tuple)in{
-		assert(!tuple||cast(TupleTy)dom);
+		assert(!tuple||dom.isTupleTy());
 	}body{
 		if(tuple==isTuple) return this;
 		string[] nnames;
 		bool[] nIsConst;
 		if(tuple){
-			auto tpl=cast(TupleTy)dom;
+			auto tpl=dom.isTupleTy();
 			assert(!!tpl);
-			nnames=iota(tpl.types.length).map!(i=>"x"~lowNum(i)).array;
+			nnames=iota(tpl.length).map!(i=>"x"~lowNum(i)).array;
 			assert(isConst.length==1);
-			nIsConst=isConst[0].repeat(tpl.types.length).array;
+			nIsConst=isConst[0].repeat(tpl.length).array;
 		}else{
 			auto isConst2=iota(nargs).filter!(i=>!argTy(i).impliesConst()).map!(i=>isConst[i]);
 			if(!isConst2.empty&&!isConst2.all!(x=>x==isConst2.front))
@@ -896,8 +931,8 @@ class ProductTy: Type{
 ProductTy productTy(bool[] isConst,string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple,Annotation annotation,bool isClassical)in{
 	assert(dom&&cod);
 	if(isTuple){
-		auto tdom=cast(TupleTy)dom;
-		assert(tdom&&names.length==tdom.types.length);
+		auto tdom=dom.isTupleTy();
+		assert(tdom&&names.length==tdom.length);
 	}
 	assert(annotation<Annotation.lifted||all(isConst));
 }body{
@@ -910,7 +945,7 @@ FunTy funTy(bool[] isConst,Expression dom,Expression cod,bool isSquare,bool isTu
 	assert(annotation<Annotation.lifted||all(isConst));
 }body{
 	auto nargs=1+[].length;
-	if(isTuple) if(auto tpl=cast(TupleTy)dom) nargs=tpl.types.length;
+	if(isTuple) if(auto tpl=dom.isTupleTy()) nargs=tpl.length;
 	return productTy(isConst,iota(nargs).map!(_=>"").array,dom,cod,isSquare,isTuple,annotation,isClassical);
 }
 
@@ -919,7 +954,7 @@ FunTy funTy(Expression dom,Expression cod,bool isSquare,bool isTuple,Annotation 
 	assert(annotation<Annotation.lifted);
 }body{
 	auto nargs=1+[].length;
-	if(isTuple) if(auto tpl=cast(TupleTy)dom) nargs=tpl.types.length;
+	if(isTuple) if(auto tpl=dom.isTupleTy()) nargs=tpl.length;
 	return funTy(false.repeat(nargs).array,dom,cod,isSquare,isTuple,annotation,isClassical);
 }
 

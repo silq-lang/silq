@@ -27,7 +27,7 @@ class Bruteforce: Backend{
 		auto ret=distInit();
 		interpreter.runFun(ret);
 		assert(!!def.ftype);
-		bool isTuple = !!cast(TupleTy)def.ftype.cod;
+		bool isTuple = !!def.ftype.cod.isTupleTy;
 		return ret.toDistribution(def.params.map!(p=>p.getName).array,def.isTuple,def.retNames,isTuple);
 	}
 private:

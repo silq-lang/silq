@@ -127,6 +127,9 @@ abstract class Expression: Node{
 		return null;
 	}
 
+	ITupleTy isTupleTy(){
+		return null;
+	}
 	bool isClassical(){
 		return false;
 	}
@@ -203,7 +206,7 @@ class ErrorExp: Expression{
 }
 
 class LiteralExp: Expression{
-	Token lit;
+	Token lit; // TODO: add literal expressions with dedicated types
 	this(Token lit){ // TODO: suitable contract
 		this.lit=lit;
 	}
@@ -598,9 +601,9 @@ class CallExp: Expression{
 							return check(dat.params[0].variance,arg,rcall.arg);
 						}
 						assert(dat.isTuple);
-						auto tup=cast(TupleTy)arg, rtup=cast(TupleTy)rcall.arg;
-						if(tup && rtup && tup.types.length==dat.params.length && tup.types.length==rtup.types.length){ // TODO: assert this?
-							return iota(tup.types.length).all!(i=>check(dat.params[i].variance,tup.types[i],rtup.types[i]));
+						auto tup=arg.isTupleTy(), rtup=rcall.arg.isTupleTy();
+						if(tup && rtup && tup.length==dat.params.length && tup.length==rtup.length){ // TODO: assert this?
+							return iota(tup.length).all!(i=>check(dat.params[i].variance,tup[i],rtup[i]));
 						}
 					}
 				}
@@ -641,9 +644,9 @@ class CallExp: Expression{
 							return callSemantic(new CallExp(e,combined,isSquare,isClassical_),null,ConstResult.no);
 						}
 						assert(dat.isTuple);
-						auto tup=cast(TupleTy)arg, rtup=cast(TupleTy)rcall.arg;
-						if(tup && rtup && tup.types.length==dat.params.length && tup.types.length==rtup.types.length){ // TODO: assert this?
-							auto combined=iota(tup.types.length).map!(i=>combine(dat.params[i].variance,tup.types[i],rtup.types[i])).array;
+						auto tup=arg.isTupleTy(), rtup=rcall.arg.isTupleTy();
+						if(tup && rtup && tup.length==dat.params.length && tup.length==rtup.length){ // TODO: assert this?
+							auto combined=iota(tup.length).map!(i=>combine(dat.params[i].variance,tup[i],rtup[i])).array;
 							if(combined.any!(x=>x is null)) return null;
 							auto rarg=new TupleExp(combined);
 							return callSemantic(new CallExp(e,rarg,isSquare,isClassical),null,ConstResult.no);
