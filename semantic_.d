@@ -69,9 +69,17 @@ AggregateTy isDataTyId(Expression e){
 
 void declareParameters(P)(Expression parent,bool isSquare,P[] params,Scope sc)if(is(P==Parameter)||is(P==DatParameter)){
 	foreach(ref p;params){
-		if(!p.dtype){ // ℝ is the default parameter type for () and * is the default parameter type for []
-			p.dtype=New!Identifier(isSquare?"*":"ℝ");
-			p.dtype.loc=p.loc;
+		if(!p.dtype){ // !ℝ is the default parameter type for () and * is the default parameter type for []
+			if(isSquare){
+				auto id=New!Identifier("*");
+				id.loc=p.loc;
+				p.dtype=id;
+			}else{
+				auto id=New!Identifier(isSquare?"*":"ℝ");
+				id.loc=p.loc;
+				p.dtype=New!(UnaryExp!(Tok!"!"))(id);
+				p.dtype.loc=p.loc;
+			}
 		}
 		p=cast(P)varDeclSemantic(p,sc);
 		assert(!!p);
