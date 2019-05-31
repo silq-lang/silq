@@ -42,7 +42,7 @@ string formatQValue(QState qs,QState.Value value){ // (only makes sense if value
 	string r;
 	foreach(k,v;qs.state){
 		if(r.length) r~="+";
-		r~=text("(",v,")·|",value.classicalValue(k).toStringImpl(),"⟩");
+		r~=text("(",v,")·",value.classicalValue(k).toBasisStringImpl());
 	}
 	return r;
 }
@@ -756,6 +756,9 @@ struct QState{
 					return r.length!=1?r[0..$-1]~"}":"{}";
 				case Tag.quval: return quval.toString();
 			}
+		}
+		string toBasisStringImpl(){
+			return text("|",toStringImpl(),"⟩");
 		}
 		string toString(){
 			return text(toStringImpl(),":",type);
