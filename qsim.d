@@ -67,8 +67,10 @@ void xUnitary(alias add,QState)(QState.Value c){
 struct QState{
 	MapX!(Σ,C) state;
 	Record vars;
+	QVar[] popFrameCleanup;
+
 	QState dup(){
-		return QState(state.dup,vars.dup);
+		return QState(state.dup,vars.dup,popFrameCleanup);
 	}
 	void copyNonState(ref QState rhs){
 		this.tupleof[1..$]=rhs.tupleof[1..$];
@@ -111,8 +113,8 @@ struct QState{
 	alias C=Complex!double;
 	static abstract class QVal{
 		override string toString(){ return text("_ (",typeid(this),")"); }
-		abstract Value get(Σ);
-		final QVar dup(ref QState state,Value self){
+		abstract Value get(ref Σ);
+		QVar dup(ref QState state,Value self){
 			auto nref_=Σ.curRef++;
 			state.assignTo(nref_,self);
 			return new QVar(nref_);
@@ -122,6 +124,14 @@ struct QState{
 		}
 		void forget(ref QState state){
 			enforce(0,text("can't forget quval ",this));
+		}
+		QVal setConstLifted(){
+			return this;
+		}
+		QVar parameterVar(ref QState state,Value self){
+			auto r=dup(state,self);
+			state.popFrameCleanup~=r;
+			return r;
 		}
 		void removeVar(ref Σ σ){}
 		final Value applyUnitary(alias unitary)(ref QState qs,Expression type){
@@ -168,14 +178,17 @@ struct QState{
 		Value constant;
 		override string toString(){ return constant.toStringImpl(); }
 		this(Value constant){ this.constant=constant; }
-		override Value get(Σ){ return constant; }
+		override Value get(ref Σ){ return constant; }
 	}
 	static class QVar: QVal{
 		Σ.Ref ref_;
+		bool constLifted=false;
 		override string toString(){ return text("ref(",ref_,")"); }
 		this(Σ.Ref ref_){ this.ref_=ref_; }
-		override Value get(Σ s){
-			return s.qvars[ref_];
+		override Value get(ref Σ s){
+			auto r=s.qvars[ref_];
+			if(constLifted) removeVar(s);
+			return r;
 		}
 		override void removeVar(ref Σ s){
 			s.qvars.remove(ref_);
@@ -183,48 +196,70 @@ struct QState{
 		void assign(ref QState state,Value rhs){
 			state.assignTo(ref_,rhs);
 		}
+		override QVar dup(ref QState state,Value self){
+			if(constLifted){ constLifted=false; return this; }
+			return super.dup(state,self);
+		}
 		override void forget(ref QState state,Value rhs){
 			state.forget(ref_,rhs);
 		}
 		override void forget(ref QState state){
 			state.forget(ref_);
 		}
+		override QVar setConstLifted(){
+			constLifted=true;
+			return this;
+		}
+		override QVar parameterVar(ref QState state,Value self){
+			if(constLifted){ constLifted=false; state.popFrameCleanup~=this; }
+			return this;
+		}
 	}
 	static class ConvertQVal: QVal{
 		QVal value;
 		Expression ntype;
 		this(QVal value,Expression ntype){ this.value=value; this.ntype=ntype.getClassical(); }
-		override Value get(Σ σ){ return value.get(σ).convertTo(ntype); }
+		override Value get(ref Σ σ){ return value.get(σ).convertTo(ntype); }
 		override void removeVar(ref Σ σ){
 			value.removeVar(σ);
+		}
+		override void forget(ref QState state,Value rhs){
+			value.forget(state,rhs);
+		}
+		override void forget(ref QState state){
+			value.forget(state);
+		}
+		override QVal setConstLifted(){
+			value=value.setConstLifted();
+			return this;
 		}
 	}
 	static class IndexQVal: QVal{
 		QVal value;
 		size_t i;
 		this(QVal value,size_t i){ this.value=value; this.i=i; }
-		override Value get(Σ σ){ return value.get(σ)[i]; }
+		override Value get(ref Σ σ){ return value.get(σ)[i]; }
 	}
 	static class UnOpQVal(string op):QVal{
 		Value value;
 		this(Value value){ this.value=value; }
-		override Value get(Σ σ){ return value.classicalValue(σ).opUnary!op; }
+		override Value get(ref Σ σ){ return value.classicalValue(σ).opUnary!op; }
 	}
 	static class BinOpQVal(string op):QVal{
 		Value l,r;
 		this(Value l,Value r){ this.l=l; this.r=r; }
-		override Value get(Σ σ){ return l.classicalValue(σ).opBinary!op(r.classicalValue(σ)); }
+		override Value get(ref Σ σ){ return l.classicalValue(σ).opBinary!op(r.classicalValue(σ)); }
 	}
 	static class MemberFunctionQVal(string fun,T...):QVal{
 		Value value;
 		T args;
 		this(Value value,T args){ this.value=value; this.args=args; }
-		override Value get(Σ σ){ return mixin(`value.classicalValue(σ).`~fun)(args); }
+		override Value get(ref Σ σ){ return mixin(`value.classicalValue(σ).`~fun)(args); }
 	}
 	static class CompareQVal(string op):QVal{
 		Value l,r;
 		this(Value l,Value r){ this.l=l; this.r=r; }
-		override Value get(Σ σ){ return l.classicalValue(σ).compare!op(r.classicalValue(σ)); }
+		override Value get(ref Σ σ){ return l.classicalValue(σ).compare!op(r.classicalValue(σ)); }
 	}
 	alias Record=HashMap!(string,Value,(a,b)=>a==b,(a)=>typeid(a).getHash(&a));
 	struct Closure{
@@ -303,6 +338,35 @@ struct QState{
 					Value r;
 					r.type=type;
 					r.quval=quval.dup(state,this);
+					return r;
+			}
+		}
+		Value parameterVar(ref QState state){
+			if(type.isClassical) return this;
+			final switch(tag){
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.bval])
+				case t: assert(0);
+				case Tag.closure:
+					Value r;
+					r.type=type;
+					r.closure=Closure(closure.fun,closure.context?[closure.context.parameterVar(state)].ptr:null);
+					return r;
+				case Tag.array_:
+					Value r;
+					r.type=type;
+					r.array_=array_.map!(x=>x.parameterVar(state)).array;
+					return r;
+				case Tag.record:
+					Record nrecord;
+					foreach(k,v;record) nrecord[k]=v.parameterVar(state);
+					Value r;
+					r.type=type;
+					r.record=nrecord;
+					return r;
+				case Tag.quval:
+					Value r;
+					r.type=type;
+					r.quval=quval.parameterVar(state,this);
 					return r;
 			}
 		}
@@ -400,6 +464,22 @@ struct QState{
 					return;
 				case Tag.quval:
 					return quval.forget(state);
+			}
+		}
+		Value setConstLifted(){
+			final switch(tag){
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.bval])
+				case t: assert(type.isClassical); return this;
+				case Tag.closure: enforce(0,"TODO?"); assert(0);
+				case Tag.array_: return makeArray(type,array_.map!(x=>x.setConstLifted()).array);
+				case Tag.record:
+					Record nrecord;
+					foreach(k,v;record) nrecord[k]=v.setConstLifted();
+					Value r;
+					r.type=type;
+					r.record=nrecord;
+					return r;
+				case Tag.quval: return makeQVal(quval.setConstLifted(),type);
 			}
 		}
 		Value applyUnitary(alias unitary)(ref QState qs,Expression type){
@@ -825,7 +905,9 @@ struct QState{
 		}
 		hash_t toHash(){ return qvars.toHash(); }
 	}
-	static QState empty(){ return QState.init; }
+	static QState empty(){
+		return QState.init;
+	}
 	static QState unit(){
 		QState qstate;
 		qstate.state[Σ.init]=C(1.0);
@@ -837,11 +919,12 @@ struct QState{
 		nnvars["`frame"]=makeRecord(nvars);
 		return QState(state,nnvars);
 	}
-	QState popFrame(){
+	QState popFrame(QVar[] previousPopFrameCleanup){
+		foreach(qvar;popFrameCleanup) qvar.forget(this);
 		auto frame=vars["`frame"];
 		enforce(frame.tag==Value.Tag.record);
 		Record nvars=frame.record.dup;
-		return QState(state,nvars);
+		return QState(state,nvars,previousPopFrameCleanup);
 	}
 	static Value inFrame(Value v){
 		return v.inFrame();
@@ -865,8 +948,9 @@ struct QState{
 		}
 		auto intp=Interpreter!QState(fun,fun.body_,ncur,true);
 		auto nnstate=QState.empty();
+		nnstate.popFrameCleanup=ncur.popFrameCleanup;
 		intp.runFun(nnstate);
-		this=nnstate.popFrame();
+		this=nnstate.popFrame(this.popFrameCleanup);
 		return nnstate.vars["`value"];
 	}
 	QState assertTrue(Value val)in{
@@ -969,7 +1053,7 @@ struct QState{
 			this(Value cond,Value then,Value othw){
 				this.cond=cond, this.then=then, this.othw=othw;
 			}
-			override Value get(Σ s){
+			override Value get(ref Σ s){
 				return cond.classicalValue(s)?then.classicalValue(s):othw.classicalValue(s);
 			}
 		}
@@ -982,6 +1066,7 @@ struct QState{
 	Value makeQVar(Value v)in{
 		assert(!v.type.isClassical());
 	}do{
+		v=v.setConstLifted();
 		Value r;
 		r.type=v.type;
 		auto ref_=Σ.curRef++;
@@ -1054,7 +1139,7 @@ struct QState{
 	}
 	void passParameter(string prm,Value rhs){
 		enforce(prm!in vars);
-		vars[prm]=rhs; // TODO: this may be inefficient
+		vars[prm]=rhs.parameterVar(this); // TODO: this may be inefficient
 	}
 	Value H(Value x){
 		return x.applyUnitary!hadamardUnitary(this,Bool(false));
@@ -1208,8 +1293,14 @@ struct Interpreter(QState){
 		this.hasFrame=hasFrame;
 	}
 	QState.Value runExp(Expression e){
+		QState.Value doIt()(Expression e){
+			auto r=doIt2(e);
+			if(e.constLookup&&!cast(Identifier)e&&!cast(TupleExp)e&&!cast(IndexExp)e&&!cast(TypeAnnotationExp)e&&e.isLifted())
+				r=r.setConstLifted();
+			return r;
+		}
 		// TODO: get rid of code duplication
-		QState.Value doIt(Expression e){
+		QState.Value doIt2(Expression e){
 			if(e.type == typeTy) return QState.typeValue; // TODO: get rid of this
 			if(auto id=cast(Identifier)e){
 				if(!id.meaning&&id.name=="π") return QState.π;
@@ -1222,7 +1313,7 @@ struct Interpreter(QState){
 						assert(fe.f.name=="length");
 					}
 				}
-				static assert(!__traits(compiles,fe.constLookup));
+				enforce(fe.constLookup);
 				// TODO: non-constant field lookup
 				return qstate.readField(doIt(fe.e),fe.f.name,true);
 			}
@@ -1370,7 +1461,7 @@ struct Interpreter(QState){
 				qstate+=othwIntp.qstate;
 				return QState.ite(cond,thenIntp.runExp(ite.then.s[0]),othwIntp.runExp(ite.othw));
 			}else if(auto tpl=cast(TupleExp)e){
-				auto values=tpl.e.map!doIt.array;
+				auto values=tpl.e.map!(e=>doIt(e)).array; // DMD bug: map!doIt does not work
 				return QState.makeTuple(e.type,values);
 			}else if(auto arr=cast(ArrayExp)e){
 				auto et=arr.type.elementType;

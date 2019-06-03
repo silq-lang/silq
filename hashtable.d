@@ -62,7 +62,8 @@ struct HashMap(K_, V_, alias eq_ , alias h_){
 			foreach(ref e; es[h(k)%$])
 				if(eq(k, e.k)) return e.v;
 		}
-		assert(0, "key not found");
+		static if(is(typeof(text(k)))) assert(0, text("key not found: ",k));
+		else assert(0, "key not found");
 	}
 
 	bool remove(K k){

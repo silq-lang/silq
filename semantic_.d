@@ -1504,6 +1504,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 	assert(expr.sstate==SemState.initial);
 	expr.sstate=SemState.started;
 	scope(success){
+		expr.constLookup=constResult;
 		if(expr&&expr.sstate!=SemState.error){
 			if(constResult&&!expr.isLifted()&&!expr.type.isClassical()){
 				sc.error("non-'lifted' quantum expression must be consumed", expr.loc);
@@ -1551,7 +1552,6 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 		return expr=callSemantic(ce,sc,constResult);
 	if(auto id=cast(Identifier)expr){
 		id.scope_=sc;
-		id.constLookup=constResult;
 		auto meaning=id.meaning;
 		if(!meaning){
 			int nerr=sc.handler.nerrors; // TODO: this is a bit hacky

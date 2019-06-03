@@ -148,6 +148,8 @@ abstract class Expression: Node{
 	}
 	final bool isLifted(){ return getAnnotation()>=Annotation.lifted; }
 	bool isMfree(){ return getAnnotation()>=Annotation.mfree; }
+	// semantic information
+	bool constLookup=true;
 }
 
 mixin template VariableFree(){
@@ -316,7 +318,6 @@ class Identifier: Expression{
 	Scope scope_;
 	bool calledDirectly=false;
 	bool classical=false;
-	bool constLookup=true;
 }
 
 class PlaceholderExp: Expression{
