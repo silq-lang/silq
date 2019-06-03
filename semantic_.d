@@ -1891,18 +1891,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 				if(id.name=="sampleFrom"||id.name=="readCSV"&&tae.type==arrayTy(arrayTy(ℝ(true))))
 					ce.type=tae.type;
 			}
-		bool ok=false;
-		if(auto lit=cast(LiteralExp)tae.e){
-			if(isSubtype(tae.e.type,ℝ(false))&&isSubtype(ℚt(true),tae.type))
-				ok=true;
-			if(isSubtype(tae.e.type,ℝ(false))&&(isRat(tae.type)||isFloat(tae.type)))
-				ok=true;
-			if(cast(BoolTy)tae.type&&lit.lit.type==Tok!"0"){
-				auto val=ℤ(lit.lit.str);
-				if(val==0||val==1) ok=true;
-			}
-		}
-		bool explicitConversion(Expression from,Expression to){
+		bool typeExplicitConversion(Expression from,Expression to){
 			if(isSubtype(from,to)) return true;
 			if(isSubtype(from,ℤt(false))&&(isUint(to)||isInt(to))&&from.isClassical()>=to.isClassical())
 				return true;
@@ -1919,21 +1908,40 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 			if(ce2&&(isInt(ce2)||isUint(ce2))&&(isSubtype(from,vectorTy(Bool(ce2.isClassical()),ce2.arg))||isSubtype(from,arrayTy(Bool(ce2.isClassical())))))
 				return true;
 			auto tpl1=cast(TupleTy)from, tpl2=cast(TupleTy)to;
-			if(tpl1&&tpl2&&tpl1.types.length==tpl2.types.length&&zip(tpl1.types,tpl2.types).all!(x=>explicitConversion(x.expand)))
+			if(tpl1&&tpl2&&tpl1.types.length==tpl2.types.length&&zip(tpl1.types,tpl2.types).all!(x=>typeExplicitConversion(x.expand)))
 				return true;
 			auto arr1=cast(ArrayTy)from, arr2=cast(ArrayTy)to;
-			if(arr1&&arr2&&explicitConversion(arr1.next,arr2.next))
+			if(arr1&&arr2&&typeExplicitConversion(arr1.next,arr2.next))
 				return true;
 			auto vec1=cast(VectorTy)from, vec2=cast(VectorTy)to;
-			if(vec1&&vec2&&vec1.num==vec2.num&&explicitConversion(vec1.next,vec2.next))
+			if(vec1&&vec2&&vec1.num==vec2.num&&typeExplicitConversion(vec1.next,vec2.next))
 				return true;
-			if(arr1&&vec2&&explicitConversion(arr1.next,vec2.next))
+			if(arr1&&vec2&&typeExplicitConversion(arr1.next,vec2.next))
 				return true;
-			if(vec1&&arr2&&explicitConversion(vec1.next,arr2.next))
+			if(vec1&&arr2&&typeExplicitConversion(vec1.next,arr2.next))
 				return true;
 			return false;
 		}
-		if(!ok&&!explicitConversion(tae.e.type,tae.type)){
+		bool explicitConversion(Expression expr,Expression type){
+			if(typeExplicitConversion(expr.type,type)) return true;
+			if(auto lit=cast(LiteralExp)expr){
+				if(isSubtype(expr.type,ℝ(false))&&isSubtype(ℚt(true),type))
+					return true;
+				if(isSubtype(expr.type,ℝ(false))&&(isRat(type)||isFloat(type)))
+					return true;
+				if(cast(BoolTy)type&&lit.lit.type==Tok!"0"){
+					auto val=ℤ(lit.lit.str);
+					if(val==0||val==1) return true;
+				}
+			}
+			if(auto tpl1=cast(TupleExp)expr){
+				if(auto tpl2=type.isTupleTy()){
+					return tpl1.e.length==tpl2.length&&iota(tpl1.e.length).all!(i=>explicitConversion(tpl1.e[i],tpl2[i]));
+				}
+			}
+			return false;
+		}
+		if(!explicitConversion(tae.e,tae.type)){
 			sc.error(format("type is %s, not %s",tae.e.type,tae.type),tae.loc);
 			tae.sstate=SemState.error;
 		}
