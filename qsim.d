@@ -112,7 +112,7 @@ struct QState{
 	static abstract class QVal{
 		override string toString(){ return text("_ (",typeid(this),")"); }
 		abstract Value get(Σ);
-		final QVar toVar(ref QState state,Value self){
+		final QVar dup(ref QState state,Value self){
 			auto nref_=Σ.curRef++;
 			state.assignTo(nref_,self);
 			return new QVar(nref_);
@@ -277,7 +277,7 @@ struct QState{
 				case t: mixin(`this.`~text(t)~`=rhs.`~text(t)~`;`); break Lswitch;
 			}
 		}
-		Value toVar(ref QState state){
+		Value dup(ref QState state){
 			if(type.isClassical) return this;
 			final switch(tag){
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.bval])
@@ -285,16 +285,16 @@ struct QState{
 				case Tag.closure:
 					Value r;
 					r.type=type;
-					r.closure=Closure(closure.fun,closure.context?[closure.context.toVar(state)].ptr:null);
+					r.closure=Closure(closure.fun,closure.context?[closure.context.dup(state)].ptr:null);
 					return r;
 				case Tag.array_:
 					Value r;
 					r.type=type;
-					r.array_=array_.map!(x=>x.toVar(state)).array;
+					r.array_=array_.map!(x=>x.dup(state)).array;
 					return r;
 				case Tag.record:
 					Record nrecord;
-					foreach(k,v;record) nrecord[k]=v.toVar(state);
+					foreach(k,v;record) nrecord[k]=v.dup(state);
 					Value r;
 					r.type=type;
 					r.record=nrecord;
@@ -302,7 +302,7 @@ struct QState{
 				case Tag.quval:
 					Value r;
 					r.type=type;
-					r.quval=quval.toVar(state,this);
+					r.quval=quval.dup(state,this);
 					return r;
 			}
 		}
@@ -644,10 +644,10 @@ struct QState{
 					if(type==ℝ(true)) return makeReal(mixin(`fval `~op~` r.fval`));
 				static if(is(typeof(mixin(`qval `~op~` r.qval`))))
 					if(type==ℚt(true)) return makeRational(mixin(`qval `~op~` r.qval`));
-				static if(is(typeof(mixin(`zval `~op~` r.zval`))))
+				static if(is(typeof(mixin(`zval `~op~` r.zval`)))){
 					if(type==ℤt(true)||isInt(type)||isUint(type))
-						return makeInteger(mixin(`zval `~op~` r.zval`)); // TODO: wraparound
-				static if(is(typeof((bool a,bool b){ bool c=mixin(`a `~op~` b`); })))
+						return makeInteger(mixin(`zval `~op~` r.zval`),type); // TODO: wraparound
+			   }static if(is(typeof((bool a,bool b){ bool c=mixin(`a `~op~` b`); })))
 					if(type==Bool(true)&&r.type==Bool(true)) return makeBool(mixin(`bval `~op~` r.bval`));
 				enforce(0,text("TODO: '",op,"' for types ",this.type," and ",r.type));
 				assert(0);
@@ -931,6 +931,13 @@ struct QState{
 		r.zval=value;
 		return r;
 	}
+	static Value makeInteger(ℤ value,Expression type){
+		Value r;
+		r.type=type;
+		assert(r.tag==Value.Tag.zval);
+		r.zval=value;
+		return r;
+	}
 	static Value makeBool(bool value){
 		Value r;
 		r.type=Bool(true);
@@ -1084,7 +1091,7 @@ struct QState{
 		enforce(arg.tag==Value.Tag.array_);
 		enforce(arg.array_.length==2);
 		enforce(arg.array_[0].isClassicalInteger());
-		return makeArray(type,iota(to!size_t(arg.array_[0].asInteger)).map!(_=>arg.array_[1].toVar(this)).array);
+		return makeArray(type,iota(to!size_t(arg.array_[0].asInteger)).map!(_=>arg.array_[1].dup(this)).array);
 	}
 	alias vector=array_;
 	Value measure(Value arg){
@@ -1115,6 +1122,7 @@ struct QState{
 		total=sqrt(total);
 		foreach(k,ref v;nstate) v/=total;
 		state=nstate;
+		arg.forget(this);
 		return result;
 	}
 }
@@ -1312,7 +1320,7 @@ struct Interpreter(QState){
 								switch(id3.name){
 									case "quantumPrimitive":
 										switch(getQuantumOp(ce3.arg)){
-											case "dup": return doIt(ce.arg).toVar(qstate);
+											case "dup": return doIt(ce.arg).dup(qstate);
 											case "array": return qstate.array_(ce.type,doIt(ce.arg));
 											case "vector": return qstate.vector(ce.type,doIt(ce.arg));
 											case "reverse": enforce(0,"TODO: reverse"); assert(0);
