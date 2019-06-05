@@ -1776,7 +1776,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 				idx.sstate=SemState.error;
 			}
 			sc.indexToReplace=null;
-		}
+		}else constResult=ConstResult.yes; // (causes implicit duplication)
 		return idx;
 	}
 	if(auto sl=cast(SliceExp)expr){
@@ -1937,6 +1937,9 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 			if(auto tpl1=cast(TupleExp)expr){
 				if(auto tpl2=type.isTupleTy()){
 					return tpl1.e.length==tpl2.length&&iota(tpl1.e.length).all!(i=>explicitConversion(tpl1.e[i],tpl2[i]));
+				}
+				if(auto arr=cast(ArrayTy)type){
+					return iota(tpl1.e.length).all!(i=>explicitConversion(tpl1.e[i],arr.next));
 				}
 			}
 			return false;

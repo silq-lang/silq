@@ -47,7 +47,7 @@ string formatQValue(QState qs,QState.Value value){ // (only makes sense if value
 	return r;
 }
 
-enum zeroThreshold=1e-8;
+enum zeroThreshold=1e-16;
 bool isToplevelClassical(Expression ty){
 	return ty.isClassical()||cast(TupleTy)ty||cast(ArrayTy)ty||cast(VectorTy)ty||cast(ContextTy)ty||cast(ProductTy)ty;
 }
@@ -352,11 +352,8 @@ struct QState{
 					r.closure=Closure(closure.fun,closure.context?[closure.context.parameterVar(state)].ptr:null);
 					return r;
 				case Tag.array_:
-					Value r;
-					r.type=type;
-					r.array_=array_.map!(x=>x.parameterVar(state)).array;
-					return r;
-				case Tag.record:
+					return this;
+				case Tag.record: // TODO: get rid of this
 					Record nrecord;
 					foreach(k,v;record) nrecord[k]=v.parameterVar(state);
 					Value r;
@@ -402,12 +399,12 @@ struct QState{
 		}
 		void assign(ref QState state,Value rhs){
 			assert(type==rhs.type);
-			assert(!type.isClassical);
+			if(type.isClassical){ this=rhs; return; }
 			assert(tag==Tag.quval);
 			Lswitch: final switch(tag){
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.bval])
-				case t: break Lswitch;
-				case Tag.closure: break;
+				case t: this=rhs; break Lswitch;
+				case Tag.closure: this=rhs; break;
 				case Tag.array_:
 					enforce(rhs.tag==Tag.array_);
 					enforce(array_.length==rhs.array_.length);
@@ -466,11 +463,17 @@ struct QState{
 					return quval.forget(state);
 			}
 		}
-		Value setConstLifted(){
+		Value setConstLifted(){ // TODO: do this in-place
 			final switch(tag){
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.bval])
 				case t: assert(type.isClassical); return this;
-				case Tag.closure: enforce(0,"TODO?"); assert(0);
+				case Tag.closure:
+					Closure nclosure=this.closure;
+					if(nclosure.context) *nclosure.context=(*closure.context).setConstLifted();
+					Value r;
+					r.type=type;
+					r.closure=nclosure;
+					return r;
 				case Tag.array_: return makeArray(type,array_.map!(x=>x.setConstLifted()).array);
 				case Tag.record:
 					Record nrecord;
@@ -501,6 +504,7 @@ struct QState{
 
 		Value convertTo(Expression ntype){
 			if(type==ntype) return this;
+			// TODO: do this in-place?
 			auto otag=tag, ntag=getTag(ntype);
 			if(otag==Tag.quval){
 				enforce(ntag==Tag.quval);
@@ -520,7 +524,15 @@ struct QState{
 					if(ntag==Tag.array_){
 						Value r;
 						r.type=ntype;
-						break; // TODO
+						if(auto tpl=ntype.isTupleTy()){
+							assert(array_.length==tpl.length);
+							r.array_=iota(array_.length).map!(i=>array_[i].convertTo(tpl[i])).array;
+						}else{
+							auto arr=cast(ArrayTy)ntype;
+							assert(!!arr);
+							r.array_=array_.map!(v=>v.convertTo(arr.next)).array;
+						}
+						return r;
 					}
 					break;
 				case Tag.record:
@@ -532,7 +544,7 @@ struct QState{
 					return r;
 					break;
 				case Tag.quval:
-					break; // TODO
+					assert(0);
 				case Tag.fval:
 					break;
 				case Tag.qval:
@@ -770,6 +782,24 @@ struct QState{
 				if(type==ℚt(true)) return makeBool(mixin(`qval `~op~` r.qval`));
 				if(type==ℤt(true)||type==ℕt(true)) return makeBool(mixin(`zval `~op~` r.zval`));
 				if(type==Bool(true)&&r.type==Bool(true)) return makeBool(mixin(`bval `~op~` r.bval`));
+			}
+			if(tag==Tag.array_&&r.tag==Tag.array_){
+				static if(op=="==") if(array_.length!=r.array_.length) return makeBool(false);
+				static if(op=="!=") if(array_.length!=r.array_.length) return makeBool(true);
+				int equalPrefix=0;
+				for(;equalPrefix<min(array_.length,r.array_.length);equalPrefix++)
+					if(array_[equalPrefix]!=r.array_[equalPrefix]) break;
+				static if(op!="=="&&op!="!="){
+					if(util.among(equalPrefix,array_.length,r.array_.length)){
+						if(array_.length==r.array_.length){
+							enum equalAllowed=op=="<="||op==">=";
+							return makeBool(equalAllowed);
+						}else return makeBool(mixin(`array_.length `~op~` r.array_.length`));
+					}else return array_[equalPrefix].compare!op(r.array_[equalPrefix]);
+				}else{
+					static if(op=="==") return makeBool(equalPrefix==array_.length);
+					else return makeBool(equalPrefix!=array_.length);
+				}
 			}
 			enforce(0,text("TODO: '",op,"' for types ",this.type," ",r.type));
 			assert(0);
@@ -1107,25 +1137,37 @@ struct QState{
 		}
 		this=map!forgetImpl(var);
 	}
-	void assignTo(string lhs,Value rhs){
+	void assignTo(ref Value var,Value rhs){
+		enforce(var.type==rhs.type);
 		if(rhs.type.isToplevelClassical()){
-			vars[lhs]=rhs;
+			enforce(var.type.isClassical()||var.tag!=Value.Tag.array_,"TODO");
+			var=rhs;
 			return;
 		}
-		if(lhs in vars){
-			auto var=vars[lhs];
-			enforce(!var.type.isToplevelClassical());
-			enforce(var.type==rhs.type);
-			assert(var.tag==Value.Tag.quval);
-			if(auto quvar=cast(QVar)var.quval){
-				quvar.assign(this,rhs);
-				return;
-			}
+		assert(!var.type.isToplevelClassical());
+		assert(var.tag==Value.Tag.quval);
+		if(auto quvar=cast(QVar)var.quval){
+			quvar.assign(this,rhs);
+			return;
 		}
+	}
+	Value toVar(Value rhs){
+		if(rhs.type.isClassical())
+			return rhs;
+		if(rhs.tag==Value.Tag.array_){
+			foreach(ref x;rhs.array_) x=toVar(x); // TODO: ok?
+			return rhs;
+		}
+		if(rhs.type.isToplevelClassical())
+			return rhs;
 		enforce(rhs.tag==Value.Tag.quval);
 		Value qvar=rhs;
 		if(!cast(QVar)qvar.quval) qvar=makeQVar(rhs);
-		vars[lhs]=qvar;
+		return qvar;
+	}
+	void assignTo(string lhs,Value rhs){
+		if(lhs in vars) assignTo(vars[lhs],rhs);
+		else vars[lhs]=toVar(rhs);
 	}
 	void forget(string lhs,Value rhs){
 		enforce(lhs in vars);
@@ -1146,7 +1188,6 @@ struct QState{
 	}
 	Value X(Value x){
 		return x.applyUnitary!xUnitary(this,Bool(false));
-		assert(0);
 	}
 	Value Y(Value x){
 		enforce(0,"TODO: Y");
@@ -1157,8 +1198,13 @@ struct QState{
 		assert(0);
 	}
 	Value phase(Value φ){
-		enforce(0,"TODO: Z");
-		assert(0);
+		enforce(φ.tag==Value.Tag.fval);
+		typeof(state) new_;
+		foreach(k,v;state){
+			new_[k]=cast(C)std.complex.expi(φ.fval)*v;
+		}
+		state=new_;
+		return makeTuple(type.unit,[]);
 	}
 	Value rX(Value args){
 		enforce(0,"TODO: rX");
@@ -1180,19 +1226,29 @@ struct QState{
 	}
 	alias vector=array_;
 	Value measure(Value arg){
-		MapX!(Value,C) candidates;
+		MapX!(Value,R) candidates;
+		R one=0;
 		foreach(k,v;state){
 			auto candidate=arg.classicalValue(k);
-			if(candidate!in candidates) candidates[candidate]=v;
-			else candidates[candidate]+=v;
+			if(candidate!in candidates) candidates[candidate]=sqAbs(v);
+			else candidates[candidate]+=sqAbs(v);
+			one+=sqAbs(v);
 		}
 		Value result;
-		R random=uniform!"[]"(R(0),R(1));
+		R random=uniform!"[]"(R(0),one);
 		R current=0.0;
+		bool ok=false;
 		foreach(k,v;candidates){
 			current+=sqAbs(v);
 			if(current>=random){
 				result=k;
+				ok=true;
+				break;
+			}
+		}
+		if(!ok){
+			foreach(k,v;candidates){
+				result=k; // TODO: distribute rounding error equally among candidates?
 				break;
 			}
 		}
@@ -1201,7 +1257,7 @@ struct QState{
 		foreach(k,v;state){
 			auto candidate=arg.classicalValue(k);
 			if(candidate!=result) continue;
-			total+=v.sqAbs();
+			total+=sqAbs(v);
 			nstate[k]=v;
 		}
 		total=sqrt(total);
@@ -1295,7 +1351,7 @@ struct Interpreter(QState){
 	QState.Value runExp(Expression e){
 		QState.Value doIt()(Expression e){
 			auto r=doIt2(e);
-			if(e.constLookup&&!cast(Identifier)e&&!cast(TupleExp)e&&!cast(IndexExp)e&&!cast(TypeAnnotationExp)e&&e.isLifted())
+			if(e.constLookup&&!cast(Identifier)e&&!cast(TupleExp)e&&!cast(TypeAnnotationExp)e&&e.isLifted())
 				r=r.setConstLifted();
 			return r;
 		}
@@ -1429,8 +1485,16 @@ struct Interpreter(QState){
 				auto fun=doIt(ce.e), arg=doIt(ce.arg);
 				return qstate.call(fun,arg);
 			}
-			if(auto idx=cast(IndexExp)e) return doIt(idx.e)[doIt(idx.a[0])]; // TODO: bounds checking
-			if(auto sl=cast(SliceExp)e) return doIt(sl.e)[doIt(sl.l)..doIt(sl.r)]; // TODO: bounds checking
+			if(auto idx=cast(IndexExp)e){
+				auto r=doIt2(idx.e)[doIt(idx.a[0])];
+				if(idx.constLookup) r=r.dup(qstate);
+				return r;
+			}
+			if(auto sl=cast(SliceExp)e){
+				auto r=doIt(sl.e)[doIt(sl.l)..doIt(sl.r)];
+				if(sl.constLookup) r=r.dup(qstate);
+				return r;
+			}
 			if(auto le=cast(LiteralExp)e){
 				if(util.among(le.lit.type,Tok!"0",Tok!".0")){
 					if(le.type==ℚt(true)){
@@ -1520,7 +1584,36 @@ struct Interpreter(QState){
 			enforce(tpl.e.length==rhs.array_.length);
 			foreach(i;0..tpl.e.length)
 				assignTo(tpl.e[i],rhs[i]);
-		}else runExp(lhs).assign(qstate,rhs);
+		}else if(auto idx=cast(IndexExp)lhs){
+			static struct Assignable{
+				string name;
+				QState.Value[] indices;
+				void assign(ref QState state,QState.Value rhs){
+					enforce(name in state.vars);
+					auto var=state.vars[name];
+					enforce(indices.all!(x=>x.type.isClassical()),var.type.isClassical()?"TODO: fix type checker":"TODO");
+					void doIt(ref QState.Value value,QState.Value[] indices){
+						if(!indices.length){ value=rhs; return; }
+						enforce(var.tag==QState.Value.Tag.array_,"TODO");
+						doIt(var.array_[to!size_t(indices[0].asInteger)],indices[1..$]);
+					}
+					doIt(var,indices);
+					state.vars[name]=var;
+				}
+			}
+			Assignable getAssignable(Expression lhs){
+				if(auto id=cast(Identifier)lhs) return Assignable(id.name,[]);
+				if(auto idx=cast(IndexExp)lhs){
+					auto a=getAssignable(idx.e);
+					enforce(idx.a.length==1,"TODO");
+					a.indices~=runExp(idx.a[0]);
+					return a;
+				}
+				enforce(0,"TODO");
+				assert(0);
+			}
+			getAssignable(lhs).assign(qstate,rhs);
+		}else enforce(0,"TODO");
 	}
 	void forget(Expression lhs,QState.Value rhs){
 		if(auto id=cast(Identifier)lhs){
