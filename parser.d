@@ -434,7 +434,7 @@ struct Parser{
 						nextToken();
 					}
 					switch(ttype){
-						case Tok!"{",Tok!"⇒",Tok!"↦",Tok!"=>":
+						case Tok!"{",Tok!"⇒",Tok!"↦",Tok!"=>",Tok!"lifted",Tok!"mfree":
 							restoreState(state);
 							return parseLambdaExp();
 						default: break;
