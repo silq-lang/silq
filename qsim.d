@@ -211,7 +211,7 @@ struct QState{
 			return this;
 		}
 		override QVar parameterVar(ref QState state,Value self){
-			if(constLifted){ constLifted=false; assert(0); state.popFrameCleanup~=this; }
+			if(constLifted){ constLifted=false; state.popFrameCleanup~=this; }
 			return this;
 		}
 	}
@@ -1612,8 +1612,21 @@ struct Interpreter(QState){
 					enforce(indices.all!(x=>x.isClassical()),var.isClassical()?"TODO: fix type checker":"TODO");
 					void doIt(ref QState.Value value,QState.Value[] indices){
 						if(!indices.length){ value=rhs; return; }
-						enforce(var.tag==QState.Value.Tag.array_,"TODO");
-						doIt(var.array_[to!size_t(indices[0].asInteger)],indices[1..$]);
+						switch(var.tag){
+							case QState.Value.Tag.array_:
+								doIt(var.array_[to!size_t(indices[0].asInteger)],indices[1..$]);
+								return;
+							case QState.Value.Tag.zval:
+								enforce(indices.length==1);
+								auto index=to!size_t(indices[0].asInteger);
+								enforce(rhs.tag==QState.Value.Tag.bval);
+								value.zval=value.zval&~(ℤ(1)<<index)|(ℤ(cast(int)rhs.bval)<<index);
+								return;
+							case QState.Value.Tag.quval:
+								enforce(0,text("TODO: ",var.tag));
+								assert(0);
+							default: enforce(0,text("TODO: ",var.tag));
+						}
 					}
 					doIt(var,indices);
 					state.vars[name]=var;
