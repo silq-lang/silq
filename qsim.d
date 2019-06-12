@@ -211,7 +211,7 @@ struct QState{
 			return this;
 		}
 		override QVar parameterVar(ref QState state,Value self){
-			if(constLifted){ constLifted=false; state.popFrameCleanup~=this; }
+			if(constLifted){ constLifted=false; assert(0); state.popFrameCleanup~=this; }
 			return this;
 		}
 	}
@@ -347,10 +347,7 @@ struct QState{
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.bval])
 				case t: assert(0);
 				case Tag.closure:
-					Value r;
-					r.type=type;
-					r.closure=Closure(closure.fun,closure.context?[closure.context.parameterVar(state)].ptr:null);
-					return r;
+					return this;
 				case Tag.array_:
 					return this;
 				case Tag.record: // TODO: get rid of this
@@ -791,15 +788,6 @@ struct QState{
 		}
 		Value compare(string op)(Value r){
 			if(!isClassical()||!r.isClassical()) return makeQVal(new CompareQVal!op(this,r),Bool(false));
-			if(type!=r.type){
-				auto ntype=joinTypes(type,r.type);
-				if(ntype) return this.convertTo(ntype).compare!op(r.convertTo(ntype));
-			}else{
-				if(type==ℝ(true)) return makeBool(mixin(`fval `~op~` r.fval`));
-				if(type==ℚt(true)) return makeBool(mixin(`qval `~op~` r.qval`));
-				if(type==ℤt(true)||type==ℕt(true)) return makeBool(mixin(`zval `~op~` r.zval`));
-				if(type==Bool(true)&&r.type==Bool(true)) return makeBool(mixin(`bval `~op~` r.bval`));
-			}
 			if(tag==Tag.array_&&r.tag==Tag.array_){
 				static if(op=="==") if(array_.length!=r.array_.length) return makeBool(false);
 				static if(op=="!=") if(array_.length!=r.array_.length) return makeBool(true);
@@ -817,6 +805,15 @@ struct QState{
 					static if(op=="==") return makeBool(equalPrefix==array_.length);
 					else return makeBool(equalPrefix!=array_.length);
 				}
+			}
+			if(type!=r.type){
+				auto ntype=joinTypes(type,r.type);
+				if(ntype) return this.convertTo(ntype).compare!op(r.convertTo(ntype));
+			}else{
+				if(type==ℝ(true)) return makeBool(mixin(`fval `~op~` r.fval`));
+				if(type==ℚt(true)) return makeBool(mixin(`qval `~op~` r.qval`));
+				if(type==ℤt(true)||type==ℕt(true)) return makeBool(mixin(`zval `~op~` r.zval`));
+				if(type==Bool(true)&&r.type==Bool(true)) return makeBool(mixin(`bval `~op~` r.bval`));
 			}
 			enforce(0,text("TODO: '",op,"' for types ",this.type," ",r.type));
 			assert(0);
@@ -902,7 +899,7 @@ struct QState{
 				case Tag.array_:
 					string prn="()";
 					if(cast(ArrayTy)type) prn="[]";
-					return text(prn[0],array_.map!(x=>x.toStringImpl).join(","),prn[1]);
+					return text(prn[0],array_.map!(x=>x.toStringImpl).join(","),(array_.length==1&&prn=="()"?",":""),prn[1]);
 				case Tag.record:
 					auto r="{";
 					foreach(k,v;record) r~=text(".",k," ↦ ",v.toStringImpl(),",");
@@ -983,7 +980,7 @@ struct QState{
 		enforce(!fun.isConstructor,"TODO: constructors");
 		if(fun.isNested){
 			assert(context||sc);
-			ncur.passParameter(fun.contextName,context?*context:inFrame(buildContextFor(this,fun,sc)));
+			ncur.passContext(fun.contextName,context?*context:inFrame(buildContextFor(this,fun,sc)));
 		}
 		if(fun.isTuple){
 			auto args=iota(fun.params.length).map!(i=>inFrame(arg[i]));
@@ -1199,6 +1196,10 @@ struct QState{
 	void passParameter(string prm,Value rhs){
 		enforce(prm!in vars);
 		vars[prm]=rhs.parameterVar(this); // TODO: this may be inefficient
+	}
+	void passContext(string ctx,Value rhs){
+		enforce(ctx!in vars);
+		vars[ctx]=rhs;
 	}
 	Value H(Value x){
 		return x.applyUnitary!hadamardUnitary(this,Bool(false));
