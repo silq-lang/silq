@@ -467,7 +467,9 @@ class ArrayTy: Type{
 	override Expression combineTypesImpl(Expression r,bool meet){
 		auto larr=this,rarr=cast(ArrayTy)r;
 		if(!rarr) return null;
-		return arrayTy(combineTypes(larr.next,rarr.next,meet));
+		auto combinedNext=combineTypes(larr.next,rarr.next,meet);
+		if(!combinedNext) return null;
+		return arrayTy(combinedNext);
 	}
 	override bool isClassical(){
 		return next.isClassical();
@@ -551,7 +553,9 @@ class VectorTy: Type, ITupleTy{
 	override Expression combineTypesImpl(Expression r,bool meet){
 		auto larr=this,rarr=cast(VectorTy)r;
 		if(!rarr||num!=rarr.num) return null;
-		return vectorTy(combineTypes(larr.next,rarr.next,meet),num);
+		auto combinedNext=combineTypes(larr.next,rarr.next,meet);
+		if(!combinedNext) return null;
+		return vectorTy(combinedNext,num);
 	}
 	override bool isClassical(){
 		return next.isClassical();
