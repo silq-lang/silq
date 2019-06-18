@@ -1052,6 +1052,7 @@ struct QState{
 	}
 	Value call(FunctionDef fun,Value thisExp,Value arg,Scope sc,Value* context=null){
 		enforce(!thisExp,"TODO: method calls");
+		enforce(!fun.isReverse,"TODO: reverse");
 		if(!fun.body_){ // TODO: move this logic somewhere else
 			switch(fun.getName){
 				case "floor": return arg.floor();
@@ -1799,7 +1800,7 @@ struct Interpreter(QState){
 			if(!lhs.isClassical()) lhs.assign(qstate,perform(lhs,rhs));
 			else assignTo(be.e1,perform(lhs,rhs));
 		}else if(auto call=cast(CallExp)e){
-			runExp(call);
+			runExp(call).forget(qstate);
 		}else if(auto ite=cast(IteExp)e){
 			auto cond=runExp(ite.cond);
 			auto thenOthw=qstate.split(cond);

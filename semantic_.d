@@ -680,7 +680,7 @@ Expression statementSemantic(Expression e,Scope sc){
 		if(fe.val){
 			fe.val=expressionSemantic(fe.val,sc,ConstResult.yes);
 			propErr(fe.val,fe);
-			if(fe.sstate!=SemState.error&&!fe.val.isQfree()){
+			if(fe.sstate!=SemState.error&&!fe.val.isLifted()){
 				sc.error("forget expression must be 'lifted'",fe.val.loc);
 				fe.sstate=SemState.error;
 			}
@@ -850,7 +850,7 @@ Expression indexReplaceSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{
 	propErr(be.e1,be);
 	Identifier id;
 	bool check(IndexExp e){
-		if(e&&(!e.a[0].isQfree()||e.a[0].type&&!e.a[0].type.isClassical())){
+		if(e&&(!e.a[0].isLifted()||e.a[0].type&&!e.a[0].type.isClassical())){
 			sc.error("index for component replacement must be 'lifted' and classical",e.a[0].loc);
 			return false;
 		}
@@ -907,7 +907,7 @@ Expression permuteSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{
 	foreach(e;chain(tpl1.e,tpl2.e)){
 		if(auto idx=cast(IndexExp)e){
 			bool check(IndexExp e){
-				if(e&&(!e.a[0].isQfree()||e.a[0].type&&!e.a[0].type.isClassical())){
+				if(e&&(!e.a[0].isLifted()||e.a[0].type&&!e.a[0].type.isClassical())){
 					sc.error("index in permute statement must be 'lifted' and classical",e.a[0].loc);
 					return false;
 				}
@@ -1192,14 +1192,19 @@ Expression expectColonOrAssignSemantic(Expression e,Scope sc){
 }
 
 bool isReverse(Expression e){
+	auto id=cast(Identifier)e;
+	if(!id) return false;
+	if(id.name!="reverse") return false;
+	return id.meaning&&isReverse(id.meaning);
+}
+bool isReverse(Declaration decl){
 	import parser: preludePath;
 	import semantic_: modules;
 	if(preludePath() !in modules) return false;
 	auto exprssc=modules[preludePath()];
 	auto sc=exprssc[1];
-	auto id=cast(Identifier)e;
-	if(!id||!id.meaning||id.meaning.scope_ !is sc) return false;
-	return id.name=="reverse";
+	if(!decl||decl.scope_ !is sc) return false;
+	return decl.getName=="reverse";
 }
 
 
@@ -1219,7 +1224,7 @@ Expression callSemantic(CallExp ce,Scope sc,ConstResult constResult){
 						sc.error(format("cannot call '%s' function '%s' in '%s' context", ft.annotation, ce.e, sc.restriction()), ce.loc);
 					}
 					ce.sstate=SemState.error;
-				}else if(constResult&&!ce.isQfree()&&!ce.type.isClassical()){
+				}else if(constResult&&!ce.isLifted()&&!ce.type.isClassical()){
 					sc.error("non-'lifted' quantum expression must be consumed", ce.loc);
 					ce.sstate=SemState.error;
 				}
@@ -1342,7 +1347,8 @@ Expression callSemantic(CallExp ce,Scope sc,ConstResult constResult){
 						auto dom=nargTypes.length==1?nargTypes[0]:tupleTy(nargTypes);
 						auto cod=nreturnTypes.length==1?nreturnTypes[0]:tupleTy(nreturnTypes);
 						auto isConst=chain(true.repeat(constArgTypes1.length),false.repeat(returnTypes.length),true.repeat(constArgTypes2.length)).array;
-						ce.type=funTy(isConst,dom,cod,false,isConst.length!=1,Annotation.mfree,true);
+						auto annotation=ft2.annotation;
+						ce.type=funTy(isConst,dom,cod,false,isConst.length!=1,annotation,true);
 						return ce;
 					}
 				}
@@ -1519,7 +1525,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 	scope(success){
 		expr.constLookup=constResult;
 		if(expr&&expr.sstate!=SemState.error){
-			if(constResult&&!expr.isQfree()&&!expr.type.isClassical()){
+			if(constResult&&!expr.isLifted()&&!expr.type.isClassical()){
 				sc.error("non-'lifted' quantum expression must be consumed", expr.loc);
 				expr.sstate=SemState.error;
 			}else{

@@ -148,8 +148,19 @@ abstract class Expression: Node{
 	}
 	final bool isQfree(){ return getAnnotation()>=Annotation.qfree; }
 	final bool isMfree(){ return getAnnotation()>=Annotation.mfree; }
+
 	// semantic information
 	bool constLookup=true;
+	final bool consumes(){
+		if(!constLookup&&cast(Identifier)this&&(!type||!type.isClassical())) return true;
+		foreach(e;components)
+			if(e.consumes())
+				return true;
+		return false;
+	}
+	final bool isLifted(){
+		return isQfree()&&!consumes();
+	}
 }
 
 mixin template VariableFree(){
