@@ -1430,8 +1430,8 @@ enum ConstResult:bool{
 Expression arithmeticType(bool preserveBool)(Expression t1, Expression t2){
 	if(isInt(t1) && isSubtype(t2,ℤt(t1.isClassical()))) return t1; // TODO: automatic promotion to quantum
 	if(isInt(t2) && isSubtype(t1,ℤt(t2.isClassical()))) return t2;
-	if(isUint(t1) && isSubtype(t2,ℕt(t1.isClassical()))) return t1;
-	if(isUint(t2) && isSubtype(t1,ℕt(t2.isClassical()))) return t2;
+	if(isUint(t1) && isSubtype(t2,ℤt(t1.isClassical()))) return t1;
+	if(isUint(t2) && isSubtype(t1,ℤt(t2.isClassical()))) return t2;
 	if(preludeNumericTypeName(t1) != null||preludeNumericTypeName(t2) != null)
 		return joinTypes(t1,t2);
 	if(!isNumeric(t1)||!isNumeric(t2)) return null;
@@ -2463,14 +2463,14 @@ bool definitelyReturns(FunctionDef fd){
 		if(auto ite=cast(IteExp)e)
 			return doIt(ite.then) && doIt(ite.othw);
 		if(auto fe=cast(ForExp)e){
-			auto lle=cast(LiteralExp)fe.left;
+			/+auto lle=cast(LiteralExp)fe.left;
 			auto rle=cast(LiteralExp)fe.right;
-			if(lle && rle && lle.lit.type==Tok!"0" && rle.lit.type==Tok!"0"){
+			if(lle && rle && lle.lit.type==Tok!"0" && rle.lit.type==Tok!"0"){ // TODO: parse values correctly
 				ℤ l=ℤ(lle.lit.str), r=ℤ(rle.lit.str);
 				l+=cast(long)fe.leftExclusive;
 				r-=cast(long)fe.rightExclusive;
 				return l<=r && doIt(fe.bdy);
-			}
+			}+/
 			return false;
 		}
 		if(auto we=cast(WhileExp)e)

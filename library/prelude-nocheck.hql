@@ -23,18 +23,40 @@ bool:=𝔹;
 dat rat[n: !ℕ, m: !ℕ] quantum{}
 
 // deterministic functions
-/+def exp(const x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+e^x]",x);
-def log(const x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+log(x)]",x);
-def sin(const x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+sin(x)]",x);
-def cos(const x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+cos(x)]",x);
-def abs(const x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+|x|]",x);
+def floor(x:!ℝ)lifted:!ℤ;
+def ceil(x:!ℝ)lifted:!ℤ;
+def round(x:!ℝ)lifted:!ℤ ⇒ floor(x+1/2);
+def inℤ(const x:!ℝ)lifted:!𝔹 ⇒ x==floor(x);
+def sqrt(x:!ℝ):!ℝ;
+def exp(x:!ℝ):!ℝ;
+def log(x:!ℝ):!ℝ;
+def sin(x:!ℝ):!ℝ;
+def asin(x:!ℝ):!ℝ;
+def cos(x:!ℝ):!ℝ;
+def acos(x:!ℝ):!ℝ;
+def tan(x:!ℝ):!ℝ;
+def atan(x:!ℝ):!ℝ;
 
-def min(const a:ℝ,const b:ℝ)lifted :ℝ ⇒ if b<a then dup(b) else dup(a);
-def max(const a:ℝ,const b:ℝ)lifted :ℝ ⇒ if a<b then dup(b) else dup(a);
-
-def floor(const x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+⌊x⌋]",x);
-def ceil(const x:ℝ)lifted :ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+⌈x⌉]",x);
-def inℤ(const x:ℝ)lifted :ℝ ⇒ x==floor(x);+/
+// TODO: make the following functions generic
+def abs(x:!ℝ)lifted:!ℝ ⇒ if x<0 then -x else x;
+def min[n:!ℕ](x:!ℝ^n)lifted:!ℝ{
+	r:=x[0];
+	for i in [1..n){
+		if x[i]<r{
+			r=x[i];
+		}
+	}
+	return r;
+}
+def max[n:!ℕ](x:!ℝ^n)lifted:!ℝ{
+	r:=x[0];
+	for i in [1..n){
+		if x[i]>r{
+			r=x[i];
+		}
+	}
+	return r;
+}
 
 def array[const τ]lifted(n: !ℕ,const x:τ)lifted:τ[]⇒(quantumPrimitive("array"):!(Π[τ:*]lifted. !ℕ×const τ→lifted τ[]))(n,x);
 def vector[const τ:*]lifted(n:!ℕ,const x:τ)lifted:τ^n⇒(quantumPrimitive("vector"):!(Π[τ:*]lifted. Π(n:!ℕ,const x:τ)lifted. τ^n))(n,x);

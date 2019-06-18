@@ -12,6 +12,7 @@ import distrib,error;
 import hashtable,util;
 import expression,declaration,type;
 import semantic_,scope_;
+import util;
 
 import std.random, sample;
 import std.complex, std.math;
@@ -48,7 +49,9 @@ string formatQValue(QState qs,QState.Value value){ // (only makes sense if value
 }
 
 enum zeroThreshold=1e-16;
-bool isToplevelClassical(Expression ty){
+bool isToplevelClassical(Expression ty)in{
+	assert(!!ty);
+}do{
 	return ty.isClassical()||cast(TupleTy)ty||cast(ArrayTy)ty||cast(VectorTy)ty||cast(ContextTy)ty||cast(ProductTy)ty;
 }
 
@@ -99,13 +102,18 @@ struct QState{
 		}
 		return q(then,othw);
 	}
-	QState map(alias f,T...)(T args){
+	QState map(alias f,bool checkInterference=true,T...)(T args){
 		QState new_;
 		new_.copyNonState(this);
 		foreach(k,v;state){
 			auto nk=f(k,args);
-			enforce(nk !in new_.state,"bad forget"); // TODO: good error reporting, e.g. for forget
-			new_.state[nk]=v;
+			static if(checkInterference){
+				enforce(nk !in new_.state,"bad forget"); // TODO: good error reporting, e.g. for forget
+				new_.state[nk]=v;
+			}else{
+				if(nk in new_.state) new_.state[nk]+=v;
+				else new_.state[nk]=v;
+			}
 		}
 		return new_;
 	}
@@ -255,6 +263,12 @@ struct QState{
 		T args;
 		this(Value value,T args){ this.value=value; this.args=args; }
 		override Value get(ref Σ σ){ return mixin(`value.classicalValue(σ).`~fun)(args); }
+	}
+	static class FunctionQVal(alias fun,T...):QVal{
+		Value value;
+		T args;
+		this(Value value,T args){ this.value=value; this.args=args; }
+		override Value get(ref Σ σ){ return fun(value,args); }
 	}
 	static class CompareQVal(string op):QVal{
 		Value l,r;
@@ -517,11 +531,12 @@ struct QState{
 		}
 
 		Value convertTo(Expression ntype){
+			if(ntype==ℕt(true)) ntype=ℤt(true);
 			if(type==ntype) return this;
 			// TODO: do this in-place?
 			auto otag=tag, ntag=getTag(ntype);
 			if(otag==Tag.quval){
-				enforce(ntag==Tag.quval);
+				enforce(ntag==Tag.quval,"TODO");
 				Value r;
 				r.type=ntype;
 				r.quval=new ConvertQVal(quval,ntype);
@@ -718,8 +733,9 @@ struct QState{
 			else static if(op=="^") return arithmeticType!true(t1,t2);
 			else static if(op=="&") return arithmeticType!true(t1,t2);
 			else static if(op=="~") return t1; // TODO: add function to semantic instead
+			else static if(op=="<<"||op==">>") return arithmeticType!false(t1,t1); // TODO: add function to semantic instead
 			else{
-				enforce(0,text("TODO: '",op,"' for types ",l," and ",r));
+				enforce(0,text("TODO: '",op,"' for types ",t1," and ",t2));
 				assert(0);
 			}
 		}
@@ -729,6 +745,7 @@ struct QState{
 			// ^^ needs special handling
 			// ~ needs special handling
 			auto ntype=binaryType!op(type,r.type);
+			if(ntype==ℕt(true)) ntype=ℤt(true);
 			if(!ntype.isToplevelClassical()) return makeQVal(new BinOpQVal!op(this,r),ntype);
 			assert(!!ntype);
 			static if(op=="^^"){
@@ -738,23 +755,40 @@ struct QState{
 				//if(cast(ℂTy)t1||cast(ℂTy)t2) return t1^^t2; // ?
 				if(util.among(t1,Bool(true),ℕt(true),ℤt(true),ℚt(true))&&isSubtype(t2,ℤt(false)))
 					return makeRational(pow(asRational(),r.asInteger()));
-				return convertTo(ℝ(true))^^r.convertTo(ℝ(true));
 				if(type==Bool(true)) return makeBool(neqZ||r.eqZ);
+				if(t1!=ℝ(true)||t2!=ℝ(true))
+					return convertTo(ℝ(true))^^r.convertTo(ℝ(true));
+				return makeReal(fval^^r.fval);
 			}else static if(op=="~"){
 				enforce(0,"TODO: ~");
 				assert(0);
 			}else{
 				if(type!=ntype||r.type!=ntype)
-					return mixin(`this.convertTo(ntype) `~op~` r.convertTo(ntype)`);
+					return this.convertTo(ntype).opBinary!op(r.convertTo(ntype));
+				static if(op=="/") enforce(!r.eqZImpl,"division by zero");
 				static if(is(typeof(mixin(`fval `~op~` r.fval`))))
 					if(type==ℝ(true)) return makeReal(mixin(`fval `~op~` r.fval`));
 				static if(is(typeof(mixin(`qval `~op~` r.qval`))))
 					if(type==ℚt(true)) return makeRational(mixin(`qval `~op~` r.qval`));
 				static if(is(typeof(mixin(`zval `~op~` r.zval`)))){
-					if(type==ℤt(true)||isInt(type)||isUint(type))
-						return makeInteger(mixin(`zval `~op~` r.zval`),type); // TODO: wraparound
-			   }static if(is(typeof((bool a,bool b){ bool c=mixin(`a `~op~` b`); })))
+					if(type==ℤt(true)||isInt(type)||isUint(type)){
+						return makeInteger(mixin(`zval `~op~` r.zval`),ntype); // TODO: wraparound
+					}
+				}
+				static if(op=="div"){
+					enforce(!r.eqZImpl,"division by zero");
+					final switch(tag){
+						case Tag.fval: return (this/r).floor();
+						case Tag.qval: return makeInteger(.floor(qval/r.qval));
+						case Tag.zval: return makeInteger(zval/r.zval);
+						case Tag.bval: return makeInteger(ℤ(bval/r.bval));
+						case Tag.closure,Tag.array_,Tag.record,Tag.quval: break;
+					}
+				}
+				static if(is(typeof((bool a,bool b){ bool c=mixin(`a `~op~` b`); })))
 					if(type==Bool(true)&&r.type==Bool(true)) return makeBool(mixin(`bval `~op~` r.bval`));
+				static if(op=="<<"||op==">>")
+					return makeInteger(mixin(`asInteger() `~op~` to!size_t(r.asInteger())`),ntype); // TODO: ok?
 				enforce(0,text("TODO: '",op,"' for types ",this.type," and ",r.type));
 				assert(0);
 			}
@@ -806,14 +840,17 @@ struct QState{
 					else return makeBool(equalPrefix!=array_.length);
 				}
 			}
-			if(type!=r.type){
+			if(tag!=r.tag){ // TODO: use nested switches instead
 				auto ntype=joinTypes(type,r.type);
 				if(ntype) return this.convertTo(ntype).compare!op(r.convertTo(ntype));
 			}else{
-				if(type==ℝ(true)) return makeBool(mixin(`fval `~op~` r.fval`));
-				if(type==ℚt(true)) return makeBool(mixin(`qval `~op~` r.qval`));
-				if(type==ℤt(true)||type==ℕt(true)) return makeBool(mixin(`zval `~op~` r.zval`));
-				if(type==Bool(true)&&r.type==Bool(true)) return makeBool(mixin(`bval `~op~` r.bval`));
+				final switch(tag){
+					case Tag.fval: return makeBool(mixin(`fval `~op~` r.fval`));
+					case Tag.qval: return makeBool(mixin(`qval `~op~` r.qval`));
+					case Tag.zval: return makeBool(mixin(`zval `~op~` r.zval`));
+					case Tag.bval: return makeBool(mixin(`bval `~op~` r.bval`));
+					case Tag.closure,Tag.array_,Tag.record,Tag.quval: break;
+				}
 			}
 			enforce(0,text("TODO: '",op,"' for types ",this.type," ",r.type));
 			assert(0);
@@ -825,15 +862,55 @@ struct QState{
 		Value eq(Value r){ return compare!"=="(r); }
 		Value neq(Value r){ return compare!"!="(r); }
 		Value floor(){
-			//if(!isClassical()) return makeQVal(new MemberFunctionQVal!"floor"(this),ntype); // TODO: determine type
+			final switch(tag){
+				case Tag.qval: return makeInteger(.floor(qval));
+				static foreach(t;[Tag.zval,Tag.bval])
+				case t: return this;
+				case Tag.fval: return makeInteger(ℤ(.floor(fval).to!string)); // TODO: more efficient variant?
+				case Tag.closure,Tag.array_,Tag.record: break;
+				case Tag.quval: return makeQVal(new MemberFunctionQVal!"floor"(this),type==ℝ(true)?ℤt(true):type);
+			}
 			enforce(0,text("TODO: floor for type ",this.type));
 			assert(0);
 		}
 		Value ceil(){
-			//if(!isClassical()) return makeQVal(new MemberFunctionQVal!"ceil"(this),ntype); // TODO: determine type
-			enforce(0,text("TODO: ceil for type ",this.type));
+			final switch(tag){
+				case Tag.qval: return makeInteger(.ceil(qval));
+				static foreach(t;[Tag.zval,Tag.bval])
+				case t: return this;
+				case Tag.fval: return makeInteger(ℤ(.ceil(fval).to!string)); // TODO: more efficient variant?
+				case Tag.closure,Tag.array_,Tag.record: break;
+				case Tag.quval: return makeQVal(new MemberFunctionQVal!"ceil"(this),type==ℝ(true)?ℤt(true):type);
+			}
+			enforce(0,text("TODO: floor for type ",this.type));
 			assert(0);
 		}
+		Value realFunction(alias f)(){
+			final switch(tag){
+				static foreach(t;[Tag.qval,Tag.zval,Tag.bval])
+				case t: return convertTo(ℝ(true)).realFunction!f();
+				case Tag.fval: return makeReal(f(fval));
+				case Tag.closure,Tag.array_,Tag.record: break;
+				case Tag.quval: return makeQVal(new FunctionQVal!(v=>v.realFunction!f())(this),type==ℝ(true)?ℤt(true):type);
+			}
+			enforce(0,text("TODO: real functions for type ",this.type));
+			assert(0);
+		}
+		Value sqrt(){ return realFunction!(.sqrt)(); }
+		Value sin(){ return realFunction!(.sin)(); }
+		Value exp(){ return realFunction!(.exp)(); }
+		Value log(){ return realFunction!(.log)(); }
+		Value asin(){ return realFunction!(.asin)(); }
+		//Value csc(){ return realFunction!(.csc)(); }
+		//Value acsc(){ return realFunction!(.acsc)(); }
+		Value cos(){ return realFunction!(.cos)(); }
+		Value acos(){ return realFunction!(.acos)(); }
+		//Value sec(){ return realFunction!(.sec)(); }
+		//Value asec(){ return realFunction!(.asec)(); }
+		Value tan(){ return realFunction!(.tan)(); }
+		Value atan(){ return realFunction!(.atan)(); }
+		//Value cot(){ return realFunction!(.cot)(); }
+		//Value acot(){ return realFunction!(.acot)(); }
 		Value classicalValue(Σ state){
 			final switch(tag){
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.bval])
@@ -974,9 +1051,31 @@ struct QState{
 		return v.inFrame();
 	}
 	Value call(FunctionDef fun,Value thisExp,Value arg,Scope sc,Value* context=null){
+		enforce(!thisExp,"TODO: method calls");
+		if(!fun.body_){ // TODO: move this logic somewhere else
+			switch(fun.getName){
+				case "floor": return arg.floor();
+				case "ceil": return arg.ceil();
+				case "sqrt": return arg.sqrt();
+				case "exp": return arg.exp();
+				case "log": return arg.log();
+				case "sin": return arg.sin();
+				case "asin","arcsin": return arg.asin();
+				//case "csc": return arg.csc();
+				//case "acsc","arccsc": return arg.acsc();
+				case "cos": return arg.cos();
+				case "acos","arccos": return arg.acos();
+				//case "sec": return arg.sec();
+				//case "asec","arcsec": return arg.asec();
+				case "tan": return arg.tan();
+				case "atan","arctan": return arg.atan();
+				//case "cot": return arg.cot();
+				//case "acot","arccot": return arg.acot();
+				default: break;
+			}
+		}
 		enforce(fun.body_,text("error: need function body to simulate function ",fun));
 		auto ncur=pushFrame();
-		enforce(!thisExp,"TODO: method calls");
 		enforce(!fun.isConstructor,"TODO: constructors");
 		if(fun.isNested){
 			assert(context||sc);
@@ -1135,7 +1234,7 @@ struct QState{
 			s.assign(var,rhs);
 			return s;
 		}
-		this=map!assign(var,rhs);
+		this=map!(assign,false)(var,rhs);
 	}
 	private void forget(Σ.Ref var,Value rhs){
 		static Σ forgetImpl(Σ s,Σ.Ref var,Value rhs){
@@ -1369,7 +1468,7 @@ struct Interpreter(QState){
 	QState.Value runExp(Expression e){
 		QState.Value doIt()(Expression e){
 			auto r=doIt2(e);
-			if(e.constLookup&&!cast(Identifier)e&&!cast(TupleExp)e&&!cast(TypeAnnotationExp)e&&e.isLifted())
+			if(e.constLookup&&!cast(Identifier)e&&!cast(TupleExp)e&&!cast(TypeAnnotationExp)e&&e.isQfree())
 				r=r.setConstLifted();
 			return r;
 		}
@@ -1398,13 +1497,8 @@ struct Interpreter(QState){
 				enforce(a.ge(b).bval,"result of sub is negative");
 				return a-b;
 			}if(auto me=cast(MulExp)e) return doIt(me.e1)*doIt(me.e2);
-			if(cast(DivExp)e||cast(IDivExp)e){
-				auto de=cast(ABinaryExp)e;
-				auto e1=doIt(de.e1);
-				auto e2=doIt(de.e2);
-				enforce(0,text("TODO: ",e));
-				assert(0);
-			}
+			if(auto de=cast(DivExp)e) return doIt(de.e1)/doIt(de.e2);
+			if(auto de=cast(IDivExp)e) return doIt(de.e1).opBinary!"div"(doIt(de.e2));
 			if(auto me=cast(ModExp)e) return doIt(me.e1)%doIt(me.e2);
 			if(auto pe=cast(PowExp)e) return doIt(pe.e1)^^doIt(pe.e2);
 			if(auto ce=cast(CatExp)e) return doIt(ce.e1)~doIt(ce.e2);
@@ -1623,8 +1717,12 @@ struct Interpreter(QState){
 								value.zval=value.zval&~(ℤ(1)<<index)|(ℤ(cast(int)rhs.bval)<<index);
 								return;
 							case QState.Value.Tag.quval:
-								enforce(0,text("TODO: ",var.tag));
-								assert(0);
+								enforce(indices.length==1);
+								auto index=to!size_t(indices[0].asInteger);
+								// TODO: bounds check
+								rhs.setConstLifted();
+								value.assign(state,value&state.makeInteger(~(ℤ(1)<<index))|(rhs<<index));
+								return;
 							default: enforce(0,text("TODO: ",var.tag));
 						}
 					}
@@ -1757,8 +1855,7 @@ struct Interpreter(QState){
 			}else{
 				auto loopIndex=fe.leftExclusive?l.floor()+1:l.ceil();
 				auto bound=fe.rightExclusive?r.ceil()-1:r.floor();
-				auto intp=Interpreter(functionDef,fe.bdy,QState.empty(),hasFrame);
-				intp.qstate.state = qstate.state;
+				auto intp=Interpreter(functionDef,fe.bdy,qstate,hasFrame);
 				qstate.state=typeof(qstate.state).init;
 				for(int x=0;;++x){
 					auto ncond=bound.lt(loopIndex+x);
