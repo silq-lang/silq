@@ -1,10 +1,469 @@
+/+import grover;
+def main()⇒grover((x:uint[6])lifted⇒x==42);
++/
+/+def main(){
+	return 2 sub 1;
+}+/
+/+import conv;
+def main(){
+	x:=vector(3,0:𝔹);
+	for i in [0..3){ x[i]:=H(x[i]); }
+	for i in [0..floor(π/4*sqrt(2^3))){
+		if toInt(dup(x))==5{ phase(π); }
+		for k in [0..3){ x[k]:=H(x[k]); }
+		if toInt(dup(x))==0{ phase(π); }
+		for k in [0..3){ x[k]:=H(x[k]); }
+	}
+	return measure(toInt(x));
+}+/
+/+
+def main(){
+	x:=0:uint[3];
+	for i in [0..3){ x[i]:=H(x[i]); }
+	for i in [0..floor(π/4*sqrt(2^3))){
+		if x==5{ phase(π); }
+		for k in [0..3){ x[k]:=H(x[k]); }
+		if x!=0{ phase(π); }
+		for k in [0..3){ x[k]:=H(x[k]); }
+	}
+	return measure(x)==5;
+}
++/
+/+
+def main(){
+	x:=H(0:𝔹);
+	def f(g: 𝔹→qfree 𝔹)qfree{
+		return g(x);
+	}
+	return f((x:𝔹)qfree⇒x);
+}
++/
+/+
+def id[a](x:a)qfree⇒x;
 
 def main(){
-	(x,y,z):=(1,2,3);
-	(x,y,z)=(1,2,4);
-	return (x,y,z);
+	//x:=([a]qfree⇒reverse(id[a]))(id);
+	//f:=id;
+	y:=0:𝔹;
+	x:=id(y);
+	__show(__query("dep",x));
+}
++/
+/+
+def uniform_entangle[n:!ℕ](bits:(!𝔹^n)^4) mfree {
+    anc:=0:int[2];
+    for j in [0..2){ anc[j]:=H(anc[j]); }
+	qs:=vector(n,false:𝔹);
+
+    for i in [0..n-1] {
+        for a in [0..3] {
+            if anc == a && bits[a][i] {
+                qs[i] := X(qs[i]);
+            }
+        }            
+    }
+    return (anc, qs);
 }
 
+def solve[n:!ℕ](bits:(!𝔹^n)^4) {
+    (anc, qs) := uniform_entangle(bits);
+    result := dup(qs);
+    reverse(uniform_entangle[n])(bits, anc, qs);
+    return result;
+}
++/
+/+def uniform_entangle[n:!ℕ](bits:(!𝔹^n)^4) mfree {
+    anc:=0:int[2];
+    for j in [0..2){ anc[j]:=H(anc[j]); }
+	qs:=vector(n,false:𝔹);
+
+    for i in [0..n-1] {
+        for a in [0..3] {
+            if anc == a && bits[a][i] {
+                qs[i] := X(qs[i]);
+            }
+        }            
+    }
+    return (anc, qs);
+}
+
+
+def solve[n:!ℕ](bits:(!𝔹^n)^4) {
+    (anc, qs) := uniform_entangle(bits);
+    result := dup(qs);
+    reverse(uniform_entangle[n])(anc, qs);
+    return result;
+}
++/
+/+
+def main(){
+	/+x:=0:!int[3];
+	x[0]=!x[0];
+	x[1]=1:!𝔹;+/
+	y:=0:int[3];
+	//y[0]:=H(y[0]);
+	y[0]=1:𝔹;
+	//return (x,y);
+	return y;
+}
++/
+/+def solve[n:!ℕ](f: 𝔹^n !→lifted 𝔹){
+	x:=0:int[n];
+	for i in [0..n){ x[i] := H(x[i]); }
+	if f(x:𝔹^n){ phase(π); }
+	for i in [0..n){ x[i] := H(x[i]); }
+	return measure(x)==0;
+}
+//import codeforces.summer18.warmup.i;
+def main(){
+	f := λ[n:!ℕ](x: 𝔹^n)lifted{
+		r:=0:𝔹;
+		for i in [0..n){
+			r⊕=x[i];
+		}
+		return r;
+	};
+	g := λ[n:!ℕ](x: 𝔹^n)lifted⇒0:𝔹;
+	x:=solve[1](f[1]); // TODO: improve unification
+	y:=solve[1](g[1]);
+	return (x,y);
+}+/
+
+/+def solve[n:!ℕ](f: 𝔹^n !→lifted 𝔹){
+	x:=vector(n,0:𝔹);
+	for i in [0..n){ x[i] := H(x[i]); }
+	if f(x){ phase(π); }
+	for i in [0..n){ x[i] := H(x[i]); }
+	return measure(x)==vector(n,0:!𝔹);
+}
+//import codeforces.summer18.warmup.i;
+def main(){
+	f := λ[n:!ℕ](x: 𝔹^n)lifted{
+		r:=0:𝔹;
+		for i in [0..n){
+			r⊕=x[i];
+		}
+		return r;
+	};
+	g := λ[n:!ℕ](x: 𝔹^n)lifted⇒0:𝔹;
+	x:=solve[1](f[1]); // TODO: improve unification
+	y:=solve[1](g[1]);
+	return (x,y);
+}+/
+
+/+
+def solve[n:!ℕ](f: 𝔹^n !→lifted 𝔹){
+	x:=vector(n,0:𝔹);
+	for i in [0..n){ x[i] := H(x[i]); }
+	if f(x){ phase(π); }
+	for i in [0..n){ x[i] := H(x[i]); }
+	return measure(x)==vector(n,0:𝔹);
+}
+//import codeforces.summer18.warmup.i;
+def main(){
+	f := λ[n:!ℕ](x: 𝔹^n)lifted{
+		r:=0:𝔹;
+		for i in [0..n){
+			r⊕=x[i];
+		}
+		return r;
+	};
+	g := λ[n:!ℕ](x: 𝔹^n)lifted⇒0:𝔹;
+	x:=solve[1](f[1]); // TODO: improve unification
+	y:=solve[1](g[1]);
+	return (x,y);
+}
++/
+/+def solve(f: 𝟙 !→ 𝟙){
+	return (0:!𝔹)==(0:𝔹);
+}
+def main(){
+	g := λ()()⇒();
+	x := solve(g());
+	y := solve(g());
+	return (x,y);
+}
++/
+/+
+def main():!𝔹×!𝔹{
+	a:=vector(1,0:!𝔹);
+	x:=a==vector(1,0:!𝔹);
+	b:=vector(1,0:!𝔹);
+	y:=b==vector(1,0:!𝔹);
+	return (x,y);
+}
++/
+/+
+def solve(f: 𝔹^1 !→lifted 𝔹){
+	x:=vector(1,0:!𝔹);
+	return x==vector(1,0:𝔹);
+}
+def main(){
+	g := λ[n:!ℕ](x: 𝔹^n)lifted⇒0:𝔹;
+	x := solve(g[1]);
+	y := solve(g[1]);
+	return (x,y);
+}
++/
+/+
+def main(){
+	n:=10;
+	y:=measure(H(0:𝔹),H(0:𝔹),H(0:𝔹),H(0:𝔹),H(0:𝔹),H(0:𝔹),H(0:𝔹),H(0:𝔹),H(0:𝔹),H(0:𝔹));
+	x:=vector(10,0:𝔹);
+	for i in [0..n){ x[i]:=H(x[i]); }
+	r := 0:𝔹;
+	for i in [0..n){ r⊕=x[i]&y[i]; }
+	if r { phase(π); }
+	forget(r);
+	for i in [0..n){ x[i]:=H(x[i]); }
+	assert(measure(x)==y);
+}
++/
+/+
+def main(){
+	n:=4;
+	applyPhase:=measure(H(0:𝔹));
+	x:=vector(4,0:𝔹);
+	for i in [0..n){ x[i]:=H(x[i]); }
+	r := 0:𝔹;
+	for i in [0..n){ r⊕=x[i]; }
+	if r&&applyPhase { phase(π); }
+	forget(r);
+	for i in [0..n){ x[i]:=H(x[i]); }
+	return (applyPhase,measure(x)==vector(4,0:!𝔹)); // TODO: correct type for vectors and tuples
+}+/
+
+/+
+def main(){
+	x:=(0,1,1,0):𝔹^4;
+	i:=0:int[2];
+	i[0]:=H(i[0]); // TODO
+	i[1]:=H(i[1]);
+	r:=x[i];
+	return (x,r,i);
+}
++/
+/+import codeforces.summer18.warmup.h;
+def main(){
+	x := (1,0,1,0,1):𝔹^5;
+	r := solve(x);
+	return (x,r);
+}
++/
+/+
+import codeforces.summer18.warmup.g;
+def main(){
+	return solve(x,3);
+}
++/
+/+
+def main(){
+	x:=(0,1,1,0):𝔹^4;
+	x[0]:=H(x[0]);
+	return x;
+}
++/
+/+
+def main(){
+	x:=(0,1,1,0):𝔹^4;
+	a:=0:𝔹;
+	(a,x[0]):=(x[0],a);
+	a:=H(a);
+	(a,x[0]):=(x[0],a);
+	forget(a=(0:𝔹));
+	return x;
+}
++/
+/+
+def main(){
+	x:=(0,1,1,0):𝔹^4;
+	x[0]=1:𝔹;
+	return x;
+}
++/
+
+/+
+def id[τ:*](const x:τ)lifted⇒dup(x);
+
+def main(){
+	return id(0:𝔹);
+}
++/
+/+
+def sum[n:!ℕ](const a:int[32]^n)lifted{
+	r:=0:int[32];
+	for i in [0..n){
+		r+=a[i];
+	}
+	return r;
+}
+
+def add(n:!ℕ,const x:int[32])lifted{
+	r:=0:int[32];
+	for i in [0..n){
+		r+=x;
+	}
+	return r;
+}
+
+def main(){
+	b := H(0:𝔹);
+	a := vector(10,b:int[32]);
+	r:=add(10,sum(a));
+	return (a,b,r);
+}
++/
+/+def main(){
+	a := 0:𝔹;
+	b:=dup(dup(dup(dup(dup(a))))); // TODO: use only two variables
+	measure(a,b);
+	x:=0;
+}
++/
+/+
+def sum(const a:int[32])lifted{
+	//r:=dup(a);
+	r:=0:int[32];
+	r+=a;
+	return r;
+}
+
+def main(){
+	b := H(0:𝔹);
+	a := dup(b:int[32]);
+    r:=sum(sum(sum(a)));
+	return measure(a,b,r);
+}
++/
+/+
+def main(){
+	b:=H(0:𝔹);
+	a:=dup(b);
+	return (a,b);
+}
++/
+/+
+def main(){
+	b := H(0:𝔹);
+	x := b:int[32];
+	return x;
+}
++/
+/+def main(){
+	b:=H(0:𝔹);
+	a:=dup(b:int[32]);
+	measure(a,b);
+	x:=0;
+}
++/
+/+
+def sum(const a:int[32])lifted{
+	//r:=0:int[32];
+	//r+=a;
+	r:=dup(a);
+	return r;
+}
+
+def main(){
+	b := H(0:𝔹);
+	a := dup(b:int[32]);
+	r:=sum(a);
+	measure(a,b,r);
+	x:=0;
+}
++/
+/+
+def f(t:int[32]){
+	return t;
+}
+
+def main(){
+	a := 0:int[32];
+	b := 1:int[32];
+	x := f(a+b);
+	forget(a=(0:int[32]));
+	forget(b=(1:int[32]));
+	return x;
+}
++/
+/+
+def f()lifted⇒0:int[32];
+def main(){
+	y:=f()+f();
+	return (y);
+}
++/
+/+
+def main(){
+	x := H(0:𝔹);
+	f := dup(()⇒x); // error
+}+/
+//def f[a,b,c](x:a,y:b,z:c)⇒(x,y,z);
+/+
+def geom(){
+	if measure(H(0:𝔹)){ return 0; }
+	return 1+geom();
+}
+
+def main(){
+	return geom();
+}
++/
+/+
+def main(){
+	x:=0;
+	forget(x);
+	return x;	
+}
++/
+/+
+def main(){
+	x:=H(0:𝔹);
+	z:=H(0:𝔹);
+	fy₁:=lambda(const z:𝔹)lifted⇒dup(z);
+	fy₂:=lambda(const z:𝔹)lifted⇒!z;
+	fy₃:=lambda(const x:𝔹,const z:𝔹)lifted⇒if x then fy₁(z) else fy₂(z);
+	if x{
+		y:=dup(z);
+	}else{
+		y:=!z;
+	}
+	//y:=if x then dup(z) else !z;
+	forget(y=fy₃(x,z));
+	return (x,z);
+}
++/
+/+
+def main(){
+	x:=H(0:𝔹);
+	if true{
+		y:=dup(x);
+		forget(y);
+	}
+	x:=H(x);
+	return x;
+}
++/
+/+
+def main(){
+	x:=H(0:𝔹);
+	def f(x:𝔹)⇒H(x);
+	y:=x;
+	y:=f(y);
+	return y;
+}
++/
+/+
+def main(){
+	x:=1:𝔹;
+	if x{
+		def f[a,b,c](x:a,y:b,z:c)⇒(x,y,z);
+		return (1,2,3);
+	}else{
+		return (2,3,4);
+	}
+}
++/
 /+def main(){
 	x:=vector(3,0:𝔹);
 	//x[0]:=H(x[0]);
@@ -13,8 +472,6 @@ def main(){
 +/
 
 /+
-// import codeforces.summer18.warmup.h; // TODO.
-// import codeforces.summer18.warmup.g; // TODO.
 import codeforces.summer18.warmup.f;
 def main(){
 	x:=vector(3,0:𝔹);
