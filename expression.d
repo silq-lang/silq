@@ -146,8 +146,8 @@ abstract class Expression: Node{
 	Annotation getAnnotation(){
 		return Annotation.none;
 	}
-	final bool isLifted(){ return getAnnotation()>=Annotation.qfree; }
-	bool isMfree(){ return getAnnotation()>=Annotation.mfree; }
+	final bool isQfree(){ return getAnnotation()>=Annotation.qfree; }
+	final bool isMfree(){ return getAnnotation()>=Annotation.mfree; }
 	// semantic information
 	bool constLookup=true;
 }
@@ -708,8 +708,9 @@ abstract class ABinaryExp: Expression{
 class BinaryExp(TokenType op): ABinaryExp{
 	static if(op==Tok!"→"){
 		Annotation annotation;
-		this(Expression left, Expression right,Annotation annotation){
-			super(left,right); this.annotation=annotation;
+		bool isLifted;
+		this(Expression left, Expression right,Annotation annotation,bool isLifted){
+			super(left,right); this.annotation=annotation; this.isLifted=isLifted;
 		}
 	}else{
 		this(Expression left, Expression right){super(left,right);}
@@ -726,7 +727,7 @@ class BinaryExp(TokenType op): ABinaryExp{
 		auto ne2=e2.substitute(subst);
 		if(ne1==e1&&ne2==e2) return this;
 		static if(op==Tok!"→"){
-			auto r=new BinaryExp!op(ne1,ne2,annotation);
+			auto r=new BinaryExp!op(ne1,ne2,annotation,isLifted);
 		}else{
 			auto r=new BinaryExp!op(ne1,ne2);
 		}

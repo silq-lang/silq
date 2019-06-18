@@ -680,7 +680,7 @@ Expression statementSemantic(Expression e,Scope sc){
 		if(fe.val){
 			fe.val=expressionSemantic(fe.val,sc,ConstResult.yes);
 			propErr(fe.val,fe);
-			if(fe.sstate!=SemState.error&&!fe.val.isLifted()){
+			if(fe.sstate!=SemState.error&&!fe.val.isQfree()){
 				sc.error("forget expression must be 'lifted'",fe.val.loc);
 				fe.sstate=SemState.error;
 			}
@@ -701,7 +701,7 @@ Expression statementSemantic(Expression e,Scope sc){
 CompoundExp controlledCompoundExpSemantic(CompoundExp ce,Scope sc,Expression control,Annotation restriction_)in{
 	assert(!ce.blscope_);
 }do{
-	if(control.isLifted()){
+	if(control.isQfree()){
 		ce.blscope_=new BlockScope(sc,restriction_);
 		ce.blscope_.addControlDependency(control.getDependency(ce.blscope_));
 	}
@@ -730,8 +730,6 @@ VarDecl varDeclSemantic(VarDecl vd,Scope sc){
 		vd.vtype=typeSemantic(vd.dtype,sc);
 	}
 	if(auto prm=cast(Parameter)vd){
-		if(sc.restriction>=Annotation.qfree)
-			prm.isConst=true;
 		if(vd.vtype&&vd.vtype.impliesConst())
 			prm.isConst=true;
 	}
@@ -742,7 +740,7 @@ VarDecl varDeclSemantic(VarDecl vd,Scope sc){
 }
 
 Dependency getDependency(Expression e,Scope sc)in{
-	assert(e.isLifted());
+	assert(e.isQfree());
 }do{
 	SetX!string names;
 	foreach(id;e.freeIdentifiers){
@@ -789,10 +787,10 @@ Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
 			if(de.sstate!=SemState.error&&sc.getFunction()){
 				foreach(vd;de.decls){
 					if(vd.initializer){
-						if(vd.initializer.isLifted())
+						if(vd.initializer.isQfree())
 							sc.addDependency(vd, vd.initializer.getDependency(sc));
 					}else if(be.e2){
-						if(be.e2.isLifted())
+						if(be.e2.isQfree())
 							sc.addDependency(vd, be.e2.getDependency(sc));
 					}
 				}
@@ -852,7 +850,7 @@ Expression indexReplaceSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{
 	propErr(be.e1,be);
 	Identifier id;
 	bool check(IndexExp e){
-		if(e&&(!e.a[0].isLifted()||e.a[0].type&&!e.a[0].type.isClassical())){
+		if(e&&(!e.a[0].isQfree()||e.a[0].type&&!e.a[0].type.isClassical())){
 			sc.error("index for component replacement must be 'lifted' and classical",e.a[0].loc);
 			return false;
 		}
@@ -909,7 +907,7 @@ Expression permuteSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{
 	foreach(e;chain(tpl1.e,tpl2.e)){
 		if(auto idx=cast(IndexExp)e){
 			bool check(IndexExp e){
-				if(e&&(!e.a[0].isLifted()||e.a[0].type&&!e.a[0].type.isClassical())){
+				if(e&&(!e.a[0].isQfree()||e.a[0].type&&!e.a[0].type.isClassical())){
 					sc.error("index in permute statement must be 'lifted' and classical",e.a[0].loc);
 					return false;
 				}
@@ -1010,7 +1008,7 @@ AssignExp assignExpSemantic(AssignExp ae,Scope sc){
 			if(id&&id.meaning&&id.meaning.name){
 				final switch(stage){
 					case Stage.collectDeps:
-						if(rhs.isLifted()) dependencies~=rhs.getDependency(sc);
+						if(rhs.isQfree()) dependencies~=rhs.getDependency(sc);
 						break;
 					case Stage.consumeLhs:
 						sc.consume(id.meaning);
@@ -1018,7 +1016,7 @@ AssignExp assignExpSemantic(AssignExp ae,Scope sc){
 					case Stage.defineVars:
 						auto name=id.meaning.name.name;
 						auto var=addVar(name,id.type,lhs.loc,sc);
-						if(rhs.isLifted()) sc.addDependency(var,dependencies[curDependency++]);
+						if(rhs.isQfree()) sc.addDependency(var,dependencies[curDependency++]);
 						break;
 				}
 			}
@@ -1131,7 +1129,7 @@ ABinaryExp opAssignExpSemantic(ABinaryExp be,Scope sc)in{
 			be.sstate=SemState.error;
 		}
 		if(id&&id.meaning&&id.meaning.name){
-			if(be.e2.isLifted()){
+			if(be.e2.isQfree()){
 				auto dependency=sc.getDependency(id.meaning);
 				dependency.joinWith(be.e2.getDependency(sc));
 				sc.consume(id.meaning);
@@ -1221,7 +1219,7 @@ Expression callSemantic(CallExp ce,Scope sc,ConstResult constResult){
 						sc.error(format("cannot call '%s' function '%s' in '%s' context", ft.annotation, ce.e, sc.restriction()), ce.loc);
 					}
 					ce.sstate=SemState.error;
-				}else if(constResult&&!ce.isLifted()&&!ce.type.isClassical()){
+				}else if(constResult&&!ce.isQfree()&&!ce.type.isClassical()){
 					sc.error("non-'lifted' quantum expression must be consumed", ce.loc);
 					ce.sstate=SemState.error;
 				}
@@ -1234,7 +1232,7 @@ Expression callSemantic(CallExp ce,Scope sc,ConstResult constResult){
 	}
 	auto fun=ce.e;
 	bool matchArg(FunTy ft){
-		if(ft.isTuple&&ft.annotation!=Annotation.qfree){
+		if(ft.isTuple){
 			if(auto tpl=cast(TupleExp)ce.arg){
 				foreach(i,ref exp;tpl.e){
 					exp=expressionSemantic(exp,sc,(ft.isConst.length==tpl.e.length?ft.isConst[i]:true)?ConstResult.yes:ConstResult.no);
@@ -1252,7 +1250,8 @@ Expression callSemantic(CallExp ce,Scope sc,ConstResult constResult){
 				}
 			}
 		}else{
-			ce.arg=expressionSemantic(ce.arg,sc,((ft.isConst.length?ft.isConst[0]:true)||ft.annotation==Annotation.qfree)?ConstResult.yes:ConstResult.no);
+			assert(ft.isConst.length==1);
+			ce.arg=expressionSemantic(ce.arg,sc,ft.isConst[0]?ConstResult.yes:ConstResult.no);
 		}
 		return false;
 	}
@@ -1520,7 +1519,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 	scope(success){
 		expr.constLookup=constResult;
 		if(expr&&expr.sstate!=SemState.error){
-			if(constResult&&!expr.isLifted()&&!expr.type.isClassical()){
+			if(constResult&&!expr.isQfree()&&!expr.type.isClassical()){
 				sc.error("non-'lifted' quantum expression must be consumed", expr.loc);
 				expr.sstate=SemState.error;
 			}else{
@@ -2107,7 +2106,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 				return q([true],typeSemantic(ce.e,sc));
 			}else{
 				auto ty=typeSemantic(e,sc);
-				return q([ty.impliesConst()||ex.annotation>=Annotation.qfree],ty);
+				return q([ty.impliesConst()||ex.isLifted],ty);
 			}
 		}
 		auto t1=getConstAndType(ex.e1);

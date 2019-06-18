@@ -941,7 +941,6 @@ ProductTy productTy(bool[] isConst,string[] names,Expression dom,Expression cod,
 		auto tdom=dom.isTupleTy();
 		assert(tdom&&names.length==tdom.length&&isConst.length==tdom.length);
 	}else assert(names.length==1&&isConst.length==1);
-	assert(annotation<Annotation.qfree||all(isConst));
 }body{
 	return memoize!((bool[] isConst,string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple,Annotation annotation,bool isClassical)=>new ProductTy(isConst,names,dom,cod,isSquare,isTuple,annotation,isClassical))(isConst,names,dom,cod,isSquare,isTuple,annotation,isClassical);
 }
@@ -949,7 +948,6 @@ ProductTy productTy(bool[] isConst,string[] names,Expression dom,Expression cod,
 alias FunTy=ProductTy;
 FunTy funTy(bool[] isConst,Expression dom,Expression cod,bool isSquare,bool isTuple,Annotation annotation,bool isClassical)in{
 	assert(dom&&cod);
-	assert(annotation<Annotation.qfree||all(isConst));
 }body{
 	auto nargs=1+[].length;
 	if(isTuple) if(auto tpl=dom.isTupleTy()) nargs=tpl.length;
@@ -958,7 +956,6 @@ FunTy funTy(bool[] isConst,Expression dom,Expression cod,bool isSquare,bool isTu
 
 FunTy funTy(Expression dom,Expression cod,bool isSquare,bool isTuple,Annotation annotation,bool isClassical)in{
 	assert(dom&&cod);
-	assert(annotation<Annotation.qfree);
 }body{
 	auto nargs=1+[].length;
 	if(isTuple) if(auto tpl=dom.isTupleTy()) nargs=tpl.length;

@@ -460,14 +460,17 @@ struct Parser{
 					expect(isSquare?Tok!"]":Tok!")");
 					Expression cod;
 					auto annotation=Annotation.none;
+					bool isLifted=false;
 					if(ttype!=Tok!"["&&ttype!=Tok!"("){
 						if(ttype==Tok!"lifted"||ttype==Tok!"qfree"){
+							isLifted=ttype==Tok!"lifted";
 							nextToken();
 							annotation=Annotation.qfree;
 						}else if(ttype==Tok!"mfree"){
 							nextToken();
 							annotation=Annotation.mfree;
 						}
+						if(isLifted) foreach(p;cast(Parameter[])params[0]) p.isConst=true;
 						expect(Tok!".");
 						cod = parseType();
 					}else cod=parseProduct();
@@ -548,7 +551,9 @@ struct Parser{
 							nextToken();
 							static if("@(x)"=="->"||"@(x)"=="→"){
 								auto annotation=Annotation.none;
+								bool isLifted=false;
 								if(ttype==Tok!"lifted"||ttype==Tok!"qfree"){
+									isLifted=ttype==Tok!"lifted";
 									nextToken();
 									annotation=Annotation.qfree;
 								}else if(ttype==Tok!"mfree"){
@@ -560,7 +565,7 @@ struct Parser{
 							static if("@(x)"=="->")
 								alias BE=BinaryExp!(Tok!"→");
 							else alias BE=BinaryExp!(Tok!"@(x)");
-							static if(is(typeof(annotation))) return New!BE(left,right,annotation);
+							static if(is(typeof(annotation))) return New!BE(left,right,annotation,isLifted);
 							else return res=New!BE(left,right);
 						});
 					}
@@ -723,13 +728,16 @@ struct Parser{
 		auto params=parseArgumentList!(false,Parameter)(isSquare?Tok!"]":Tok!")");
 		expect(isSquare?Tok!"]":Tok!")");
 		auto annotation=Annotation.none;
+		bool isLifted=false;
 		if(ttype==Tok!"lifted"||ttype==Tok!"qfree"){
+			isLifted=ttype==Tok!"lifted";
 			nextToken();
 			annotation=Annotation.qfree;
 		}else if(ttype==Tok!"mfree"){
 			nextToken();
 			annotation=Annotation.mfree;
 		}
+		if(isLifted) foreach(p;cast(Parameter[])params[0]) p.isConst=true;
 		Expression ret=null;
 		if(ttype==Tok!":"){
 			nextToken();
