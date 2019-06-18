@@ -1311,7 +1311,11 @@ Expression callSemantic(CallExp ce,Scope sc,ConstResult constResult){
 						auto numConstArgs1=ft2.isConst.until!(x=>!x).walkLength;
 						auto numArgs=ft2.isConst[numConstArgs1..$].until!(x=>x).walkLength;
 						auto numConstArgs2=ft2.isConst[numConstArgs1+numArgs..$].until!(x=>!x).walkLength;
-						ok=numConstArgs1+numArgs+numConstArgs2==tpl.length;
+						if(numConstArgs1+numArgs+numConstArgs2!=tpl.length){
+							ok=false;
+							sc.error("reversed function cannot mix 'const' and consumed arguments",ce.arg.loc);
+							ce.sstate=SemState.error;
+						}
 						constArgTypes1=iota(numConstArgs1).map!(i=>tpl[i]).array;
 						argTypes=iota(numConstArgs1,numConstArgs1+numArgs).map!(i=>tpl[i]).array;
 						constArgTypes2=iota(numConstArgs1+numArgs,tpl.length).map!(i=>tpl[i]).array;
@@ -1320,9 +1324,19 @@ Expression callSemantic(CallExp ce,Scope sc,ConstResult constResult){
 							swap(constArgTypes1,constArgTypes2);
 						}
 					}
+					if(argTypes.any!(t=>t.hasClassicalComponent())){
+						ok=false;
+						sc.error("reversed function cannot have classical components in consumed arguments",ce.arg.loc);
+						ce.sstate=SemState.error;
+					}
 					if(auto tpl=ft2.cod.isTupleTy){
 						returnTypes=iota(tpl.length).map!(i=>tpl[i]).array;
 					}else returnTypes=[ft2.cod];
+					if(returnTypes.any!(t=>t.hasClassicalComponent())){
+						ok=false;
+						sc.error("reversed function cannot have classical components in return value",ce.arg.loc);
+						ce.sstate=SemState.error;
+					}
 					if(ok){
 						auto nargTypes=constArgTypes1~returnTypes~constArgTypes2;
 						auto nreturnTypes=argTypes;
@@ -1335,7 +1349,7 @@ Expression callSemantic(CallExp ce,Scope sc,ConstResult constResult){
 				}
 			}
 		}
-		if(!tryCall()){
+		if(ce.sstate!=SemState.error&&!tryCall()){
 			auto aty=ce.arg.type;
 			if(ce.isSquare!=ft.isSquare)
 				sc.error(text("function of type ",ft," cannot be called with arguments ",ce.isSquare?"[":"",aty,ce.isSquare?"]":""),ce.loc);
