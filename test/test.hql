@@ -1,3 +1,18 @@
+/+
+def main(){
+	def id(x:𝔹)lifted⇒dup(x);
+	x:=H(0:𝔹);
+	id(x);
+	x:=H(x);
+	return x;
+}
++/
+/+
+def main()qfree{
+	def foo(x:𝔹,const y:𝔹)qfree⇒x;
+	return reverse(foo)(0:𝔹,0:𝔹);
+}
++/
 /+import grover;
 def main()⇒grover((x:uint[6])lifted⇒x==42);
 +/
