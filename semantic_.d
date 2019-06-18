@@ -730,7 +730,7 @@ VarDecl varDeclSemantic(VarDecl vd,Scope sc){
 		vd.vtype=typeSemantic(vd.dtype,sc);
 	}
 	if(auto prm=cast(Parameter)vd){
-		if(sc.restriction>=Annotation.lifted)
+		if(sc.restriction>=Annotation.qfree)
 			prm.isConst=true;
 		if(vd.vtype&&vd.vtype.impliesConst())
 			prm.isConst=true;
@@ -1225,7 +1225,7 @@ Expression callSemantic(CallExp ce,Scope sc,ConstResult constResult){
 					sc.error("non-'lifted' quantum expression must be consumed", ce.loc);
 					ce.sstate=SemState.error;
 				}
-				if(ce.arg.type.isClassical()&&ft.annotation>=Annotation.lifted){
+				if(ce.arg.type.isClassical()&&ft.annotation>=Annotation.qfree){
 					if(auto classical=ce.type.getClassical())
 						ce.type=classical;
 				}
@@ -1234,7 +1234,7 @@ Expression callSemantic(CallExp ce,Scope sc,ConstResult constResult){
 	}
 	auto fun=ce.e;
 	bool matchArg(FunTy ft){
-		if(ft.isTuple&&ft.annotation!=Annotation.lifted){
+		if(ft.isTuple&&ft.annotation!=Annotation.qfree){
 			if(auto tpl=cast(TupleExp)ce.arg){
 				foreach(i,ref exp;tpl.e){
 					exp=expressionSemantic(exp,sc,(ft.isConst.length==tpl.e.length?ft.isConst[i]:true)?ConstResult.yes:ConstResult.no);
@@ -1252,7 +1252,7 @@ Expression callSemantic(CallExp ce,Scope sc,ConstResult constResult){
 				}
 			}
 		}else{
-			ce.arg=expressionSemantic(ce.arg,sc,((ft.isConst.length?ft.isConst[0]:true)||ft.annotation==Annotation.lifted)?ConstResult.yes:ConstResult.no);
+			ce.arg=expressionSemantic(ce.arg,sc,((ft.isConst.length?ft.isConst[0]:true)||ft.annotation==Annotation.qfree)?ConstResult.yes:ConstResult.no);
 		}
 		return false;
 	}
@@ -2107,7 +2107,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 				return q([true],typeSemantic(ce.e,sc));
 			}else{
 				auto ty=typeSemantic(e,sc);
-				return q([ty.impliesConst()||ex.annotation>=Annotation.lifted],ty);
+				return q([ty.impliesConst()||ex.annotation>=Annotation.qfree],ty);
 			}
 		}
 		auto t1=getConstAndType(ex.e1);
@@ -2415,7 +2415,7 @@ Expression typeForDecl(Declaration decl){
 		foreach(p;dat.params) if(!p.vtype) return unit; // TODO: ok?
 		assert(dat.isTuple||dat.params.length==1);
 		auto pt=dat.isTuple?tupleTy(dat.params.map!(p=>p.vtype).array):dat.params[0].vtype;
-		return productTy(dat.params.map!(p=>p.isConst).array,dat.params.map!(p=>p.getName).array,pt,typeTy,true,dat.isTuple,Annotation.lifted,true);
+		return productTy(dat.params.map!(p=>p.isConst).array,dat.params.map!(p=>p.getName).array,pt,typeTy,true,dat.isTuple,Annotation.qfree,true);
 	}
 	if(auto vd=cast(VarDecl)decl){
 		return vd.vtype;
@@ -2594,19 +2594,19 @@ Expression handleQuantumPrimitive(CallExp ce,Scope sc){
 	}
 	switch(literal.lit.str){
 		case "dup":
-			ce.type = productTy([true],["`τ"],typeTy,funTy([true],varTy("`τ",typeTy),varTy("`τ",typeTy),false,false,Annotation.lifted,true),true,false,Annotation.lifted,true);
+			ce.type = productTy([true],["`τ"],typeTy,funTy([true],varTy("`τ",typeTy),varTy("`τ",typeTy),false,false,Annotation.qfree,true),true,false,Annotation.qfree,true);
 			break;
 		case "array":
-			ce.type = productTy([true],["`τ"],typeTy,funTy([true,true],tupleTy([ℕt(true),varTy("`τ",typeTy)]),arrayTy(varTy("`τ",typeTy)),false,true,Annotation.lifted,true),true,false,Annotation.lifted,true);
+			ce.type = productTy([true],["`τ"],typeTy,funTy([true,true],tupleTy([ℕt(true),varTy("`τ",typeTy)]),arrayTy(varTy("`τ",typeTy)),false,true,Annotation.qfree,true),true,false,Annotation.qfree,true);
 			break;
 		case "vector":
-			ce.type = productTy([true],["`τ"],typeTy,productTy([true,true],["`n","`x"],tupleTy([ℕt(true),varTy("`τ",typeTy)]),vectorTy(varTy("`τ",typeTy),varTy("`n",ℕt(true))),false,true,Annotation.lifted,true),true,false,Annotation.lifted,true);
+			ce.type = productTy([true],["`τ"],typeTy,productTy([true,true],["`n","`x"],tupleTy([ℕt(true),varTy("`τ",typeTy)]),vectorTy(varTy("`τ",typeTy),varTy("`n",ℕt(true))),false,true,Annotation.qfree,true),true,false,Annotation.qfree,true);
 			break;
 		case "reverse":
-			ce.type = productTy([true,true,true],["`τ","`χ","`φ"],tupleTy([typeTy,typeTy,typeTy]),funTy([true],funTy([false,true],tupleTy([varTy("`τ",typeTy),varTy("`χ",typeTy)]),varTy("`φ",typeTy),false,true,Annotation.mfree,true),funTy([false,true],tupleTy([varTy("`φ",typeTy),varTy("`χ",typeTy)]),varTy("`τ",typeTy),false,true,Annotation.mfree,true),false,false,Annotation.lifted,true),true,true,Annotation.lifted,true);
+			ce.type = productTy([true,true,true],["`τ","`χ","`φ"],tupleTy([typeTy,typeTy,typeTy]),funTy([true],funTy([false,true],tupleTy([varTy("`τ",typeTy),varTy("`χ",typeTy)]),varTy("`φ",typeTy),false,true,Annotation.mfree,true),funTy([false,true],tupleTy([varTy("`φ",typeTy),varTy("`χ",typeTy)]),varTy("`τ",typeTy),false,true,Annotation.mfree,true),false,false,Annotation.qfree,true),true,true,Annotation.qfree,true);
 			break;
 		case "M":
-			ce.type = productTy([true],["`τ"],typeTy,funTy([false],varTy("`τ",typeTy),varTy("`τ",typeTy,true),false,false,Annotation.none,true),true,false,Annotation.lifted,true);
+			ce.type = productTy([true],["`τ"],typeTy,funTy([false],varTy("`τ",typeTy),varTy("`τ",typeTy,true),false,false,Annotation.none,true),true,false,Annotation.qfree,true);
 			break;
 		case "H","X","Y","Z":
 			ce.type = funTy([false],Bool(false),Bool(false),false,false,Annotation.mfree,true);

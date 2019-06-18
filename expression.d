@@ -146,7 +146,7 @@ abstract class Expression: Node{
 	Annotation getAnnotation(){
 		return Annotation.none;
 	}
-	final bool isLifted(){ return getAnnotation()>=Annotation.lifted; }
+	final bool isLifted(){ return getAnnotation()>=Annotation.qfree; }
 	bool isMfree(){ return getAnnotation()>=Annotation.mfree; }
 	// semantic information
 	bool constLookup=true;
@@ -229,7 +229,7 @@ class LiteralExp: Expression{
 		}
 	}
 
-	override Annotation getAnnotation(){ return Annotation.lifted; }
+	override Annotation getAnnotation(){ return Annotation.qfree; }
 	override int componentsImpl(scope int delegate(Expression) dg){ return 0; }
 	mixin VariableFree;
 }
@@ -311,7 +311,7 @@ class Identifier: Expression{
 
 	}
 
-	override Annotation getAnnotation(){ return Annotation.lifted; }
+	override Annotation getAnnotation(){ return Annotation.qfree; }
 
 	// semantic information:
 	Declaration meaning;
@@ -951,7 +951,7 @@ class TupleExp: Expression{
 		return tpl&&e==tpl.e;
 	}
 	override Annotation getAnnotation(){
-		return reduce!min(Annotation.lifted, e.map!(x=>x.getAnnotation()));
+		return reduce!min(Annotation.qfree, e.map!(x=>x.getAnnotation()));
 	}
 }
 
@@ -1005,7 +1005,7 @@ class ArrayExp: Expression{
 		if(!ae||e.length!=ae.e.length) return false;
 		return all!(i=>e[i].unify(ae.e[i],subst,meet))(iota(e.length));
 	}
-	override Annotation getAnnotation(){ return reduce!min(Annotation.lifted,e.map!(x=>x.getAnnotation())); }
+	override Annotation getAnnotation(){ return reduce!min(Annotation.qfree,e.map!(x=>x.getAnnotation())); }
 }
 
 class ReturnExp: Expression{

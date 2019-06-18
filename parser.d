@@ -434,7 +434,7 @@ struct Parser{
 						nextToken();
 					}
 					switch(ttype){
-						case Tok!"{",Tok!"⇒",Tok!"↦",Tok!"=>",Tok!"lifted",Tok!"mfree":
+						case Tok!"{",Tok!"⇒",Tok!"↦",Tok!"=>",Tok!"lifted",Tok!"qfree",Tok!"mfree":
 							restoreState(state);
 							return parseLambdaExp();
 						default: break;
@@ -461,9 +461,9 @@ struct Parser{
 					Expression cod;
 					auto annotation=Annotation.none;
 					if(ttype!=Tok!"["&&ttype!=Tok!"("){
-						if(ttype==Tok!"lifted"){
+						if(ttype==Tok!"lifted"||ttype==Tok!"qfree"){
 							nextToken();
-							annotation=Annotation.lifted;
+							annotation=Annotation.qfree;
 						}else if(ttype==Tok!"mfree"){
 							nextToken();
 							annotation=Annotation.mfree;
@@ -548,9 +548,9 @@ struct Parser{
 							nextToken();
 							static if("@(x)"=="->"||"@(x)"=="→"){
 								auto annotation=Annotation.none;
-								if(ttype==Tok!"lifted"){
+								if(ttype==Tok!"lifted"||ttype==Tok!"qfree"){
 									nextToken();
-									annotation=Annotation.lifted;
+									annotation=Annotation.qfree;
 								}else if(ttype==Tok!"mfree"){
 									nextToken();
 									annotation=Annotation.mfree;
@@ -723,9 +723,9 @@ struct Parser{
 		auto params=parseArgumentList!(false,Parameter)(isSquare?Tok!"]":Tok!")");
 		expect(isSquare?Tok!"]":Tok!")");
 		auto annotation=Annotation.none;
-		if(ttype==Tok!"lifted"){
+		if(ttype==Tok!"lifted"||ttype==Tok!"qfree"){
 			nextToken();
-			annotation=Annotation.lifted;
+			annotation=Annotation.qfree;
 		}else if(ttype==Tok!"mfree"){
 			nextToken();
 			annotation=Annotation.mfree;
@@ -742,7 +742,7 @@ struct Parser{
 		}else if(util.among(ttype,Tok!"⇒",Tok!"↦",Tok!"=>",Tok!"(",Tok!"[")||lambda&&ttype==Tok!"."&&peek.type!=Tok!"{"){
 			Expression e;
 			if(ttype==Tok!"("||ttype==Tok!"["){
-				if(annotation==Annotation.none) annotation=Annotation.lifted;
+				if(annotation==Annotation.none) annotation=Annotation.qfree;
 				e=parseLambdaExp!semicolon();
 			}else{
 				nextToken();
