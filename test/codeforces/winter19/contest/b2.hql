@@ -11,6 +11,6 @@ def solve(q:𝔹){
 	q⊕=a;
 	if q{ a:=H(a); }
 	q⊕=a;
-	(r₀,r₁):=(measure(a),measure(q));
+	(r₀,r₁):=measure(a,q);
 	return 2·r₁+r₀;
 }
