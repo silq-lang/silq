@@ -657,7 +657,11 @@ class ProductTy: Type{
 			auto tdom=dom.isTupleTy;
 			assert(!!tdom);
 			assert(names.length==tdom.length);
-		}else assert(names.length==1);
+			assert(isConst.length==tdom.length);
+		}else{
+			assert(names.length==1);
+			assert(isConst.length==1);
+		}
 		assert(cod.type==typeTy,text(cod));
 	}body{
 		this.isConst=isConst;
@@ -783,10 +787,9 @@ class ProductTy: Type{
 		foreach(n;names) nsubst.remove(n);
 		auto ncod=cod.substitute(nsubst);
 		auto nIsConst=isConst;
-		if(auto tpl=ndom.isTupleTy()){ // TODO: it might be better to maintain this invariant upon construction
-			if(nIsConst.length==1&&tpl.length!=1)
-				nIsConst=nIsConst[0].repeat(tpl.length).array;
-			assert(nIsConst.length==tpl.length);
+		if(isTuple){
+			auto tpl=ndom.isTupleTy();
+			assert(tpl&&tpl.length==nIsConst.length);
 			if(iota(nIsConst.length).any!(i=>!nIsConst[i]&&tpl[i].impliesConst)){
 				nIsConst=nIsConst.dup;
 				foreach(i;0..nIsConst.length) if(!nIsConst[i]&&tpl[i].impliesConst) nIsConst[i]=true;
@@ -936,8 +939,8 @@ ProductTy productTy(bool[] isConst,string[] names,Expression dom,Expression cod,
 	assert(dom&&cod);
 	if(isTuple){
 		auto tdom=dom.isTupleTy();
-		assert(tdom&&names.length==tdom.length);
-	}
+		assert(tdom&&names.length==tdom.length&&isConst.length==tdom.length);
+	}else assert(names.length==1&&isConst.length==1);
 	assert(annotation<Annotation.lifted||all(isConst));
 }body{
 	return memoize!((bool[] isConst,string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple,Annotation annotation,bool isClassical)=>new ProductTy(isConst,names,dom,cod,isSquare,isTuple,annotation,isClassical))(isConst,names,dom,cod,isSquare,isTuple,annotation,isClassical);
