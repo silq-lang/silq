@@ -1323,10 +1323,10 @@ Expression callSemantic(CallExp ce,Scope sc,ConstResult constResult){
 						constArgTypes1=iota(numConstArgs1).map!(i=>tpl[i]).array;
 						argTypes=iota(numConstArgs1,numConstArgs1+numArgs).map!(i=>tpl[i]).array;
 						constArgTypes2=iota(numConstArgs1+numArgs,tpl.length).map!(i=>tpl[i]).array;
-						if(argTypes.length==0){
-							assert(constArgTypes2.length==0);
-							swap(constArgTypes1,constArgTypes2);
-						}
+					}
+					if(argTypes.length==0){
+						assert(constArgTypes2.length==0);
+						swap(constArgTypes1,constArgTypes2);
 					}
 					if(argTypes.any!(t=>t.hasClassicalComponent())){
 						ok=false;
