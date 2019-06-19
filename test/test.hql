@@ -1,5 +1,23 @@
 /+
 def main(){
+	x:=H(0:𝔹);
+	y:=dup(x);
+	z:=dup(y);
+	forget((y,z)=(x,x));
+	y:=dup(x);
+	z:=dup(y);
+	forget(y,z);
+	forget(H(x)=(0:𝔹));
+}
++/
+/+
+def main(){
+	f:=[a]⇒reverse(dup[a]);
+	f=3;
+}
++/
+/+
+def main(){
 	def id(x:𝔹)lifted⇒dup(x);
 	x:=H(0:𝔹);
 	id(x);

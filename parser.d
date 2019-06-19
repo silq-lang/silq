@@ -951,6 +951,14 @@ struct Parser{
 		if(ttype==Tok!"="){
 			nextToken();
 			val=parseExpression(rbp!(Tok!"="));
+		}else if(ttype==Tok!","){
+			auto tpl=[var];
+			while(ttype==Tok!","){
+				nextToken();
+				if(ttype==Tok!")") break;
+				tpl~=parseExpression(rbp!(Tok!","));
+			}
+			var=New!TupleExp(tpl);
 		}
 		expect(Tok!")");
 		return res=New!ForgetExp(var,val);

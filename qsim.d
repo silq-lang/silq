@@ -1283,16 +1283,6 @@ struct QState{
 		if(lhs in vars) assignTo(vars[lhs],rhs);
 		else vars[lhs]=toVar(rhs);
 	}
-	void forget(string lhs,Value rhs){
-		enforce(lhs in vars);
-		vars[lhs].forget(this,rhs);
-		vars.remove(lhs);
-	}
-	void forget(string lhs){
-		enforce(lhs in vars);
-		vars[lhs].forget(this);
-		vars.remove(lhs);
-	}
 	void passParameter(string prm,Value rhs){
 		enforce(prm!in vars);
 		vars[prm]=rhs.parameterVar(this); // TODO: this may be inefficient
@@ -1745,15 +1735,11 @@ struct Interpreter(QState){
 			getAssignable(lhs).assign(qstate,rhs);
 		}else enforce(0,"TODO");
 	}
-	void forget(Expression lhs,QState.Value rhs){
-		if(auto id=cast(Identifier)lhs){
-			qstate.forget(id.name,rhs);
-		}else enforce(0,text("TODO: forget for ",lhs));
+	void forget(QState.Value lhs,QState.Value rhs){
+		lhs.forget(qstate,rhs);
 	}
-	void forget(Expression lhs){
-		if(auto id=cast(Identifier)lhs){
-			qstate.forget(id.name);
-		}else enforce(0,text("TODO: forget for ",lhs));
+	void forget(QState.Value lhs){
+		lhs.forget(qstate);
 	}
 	void runStm(Expression e,ref QState retState){
 		if(!qstate.state.length) return;
@@ -1900,8 +1886,8 @@ struct Interpreter(QState){
 			enforce(0,"TODO: observe?");
 			assert(0);
 		}else if(auto fe=cast(ForgetExp)e){
-			if(fe.val) forget(fe.var,runExp(fe.val));
-			else forget(fe.var);
+			if(fe.val) forget(runExp(fe.var),runExp(fe.val));
+			else forget(runExp(fe.var));
 		}else if(auto ce=cast(CommaExp)e){
 			runStm(ce.e1,retState);
 			runStm(ce.e2,retState);
