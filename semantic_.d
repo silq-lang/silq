@@ -880,7 +880,7 @@ Expression permuteSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{
 }do{
 	be.e1=expressionSemantic(be.e1,sc,ConstResult.yes);
 	propErr(be.e1,be);
-	be.e2=expressionSemantic(be.e2,sc,ConstResult.yes);
+	be.e2=expressionSemantic(be.e2,sc,ConstResult.no);
 	propErr(be.e2,be);
 	if(be.e1.type&&be.e1.type.isClassical()){
 		sc.error(format("use assignment statement '%s = %s' to assign to classical array components",be.e1,be.e2),be.loc);
