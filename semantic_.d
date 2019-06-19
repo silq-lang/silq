@@ -2615,7 +2615,7 @@ Expression handleQuantumPrimitive(CallExp ce,Scope sc){
 			ce.type = funTy([true],ℝ(true),unit,false,false,Annotation.mfree,true);
 			break;
 		case "rX","rY","rZ":
-			ce.type = funTy([false,true],tupleTy([Bool(false),ℝ(true)]),Bool(false),false,true,Annotation.mfree,true);
+			ce.type = funTy([true,false],tupleTy([ℝ(true),Bool(false)]),Bool(false),false,true,Annotation.mfree,true);
 			break;
 		default:
 			sc.error(format("unknown quantum primitive %s",literal.lit.str),literal.loc);

@@ -7,9 +7,9 @@ def X(x: 𝔹)qfree:𝔹 ⇒ (quantumPrimitive("X"):!(Π(x:𝔹)qfree. 𝔹))(x)
 def Y(x: 𝔹)mfree:𝔹 ⇒ (quantumPrimitive("Y"):!(Π(x:𝔹)mfree. 𝔹))(x);
 def Z(x: 𝔹)mfree:𝔹 ⇒ (quantumPrimitive("Z"):!(Π(x:𝔹)mfree. 𝔹))(x);
 def phase(φ: !ℝ)mfree:𝟙 ⇒ (quantumPrimitive("P"):!(Π(φ:!ℝ)mfree. 𝟙))(φ);
-def rotX(x: 𝔹, φ: !ℝ)mfree:𝔹 ⇒ (quantumPrimitive("rX"):!(Π(x: 𝔹, φ: !ℝ)mfree. 𝔹))(x,φ);
-def rotY(x: 𝔹, φ: !ℝ)mfree:𝔹 ⇒ (quantumPrimitive("rY"):!(Π(x: 𝔹, φ: !ℝ)mfree. 𝔹))(x,φ);
-def rotZ(x: 𝔹, φ: !ℝ)mfree:𝔹 ⇒ (quantumPrimitive("rZ"):!(Π(x: 𝔹, φ: !ℝ)mfree. 𝔹))(x,φ);
+def rotX(φ: !ℝ, x: 𝔹)mfree:𝔹 ⇒ (quantumPrimitive("rX"):!(Π(φ: !ℝ, x: 𝔹)mfree. 𝔹))(φ,x);
+def rotY(φ: !ℝ, x: 𝔹)mfree:𝔹 ⇒ (quantumPrimitive("rY"):!(Π(φ: !ℝ, x: 𝔹)mfree. 𝔹))(φ,x);
+def rotZ(φ: !ℝ, x: 𝔹)mfree:𝔹 ⇒ (quantumPrimitive("rZ"):!(Π(φ: !ℝ, x: 𝔹)mfree. 𝔹))(φ,x);
 
 def reverse[τ,χ,φ]lifted(f: !(τ × const χ →mfree φ))lifted:φ × const χ →mfree τ⇒
   (quantumPrimitive("reverse"):!(Π[τ:*,χ:*,φ:*]lifted. !(!(τ×const χ →mfree φ) →lifted !(φ×const χ →mfree τ))))(f);

@@ -1,6 +1,8 @@
-def main()qfree{
-	x:=X(0:𝔹);
-	return x;
+def main(){
+	x:=H(0:𝔹);
+	y:=dup(x);
+	y=0:𝔹;
+	return H(x);
 }
 
 /+

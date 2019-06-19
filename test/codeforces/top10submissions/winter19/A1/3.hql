@@ -6,7 +6,7 @@ def WState[n:!N](q0:𝔹,q1s:𝔹^n) mfree {
         q0 := X(q0);
     } else {
         theta := arcsin(1.0 / sqrt(n));
-        q0 := rotY(q0, 2*theta);
+        q0 := rotY(2*theta, q0);
 
         if !q0{
             (q1s[0], q1s[1..n]) := WState[n-1](q1s[0], q1s[1..n]);

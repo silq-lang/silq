@@ -8,7 +8,7 @@ def toW[n:!ℕ]lifted:𝔹^n →mfree 𝔹^n⇒lambda(qs:𝔹^n)mfree:𝔹^n{
 	head:=qs[0];
 	tail:=(qs:𝔹[])[1..n]:𝔹^(n sub 1);
 	forget(qs=(([head]~(tail:𝔹[])):𝔹^n));
-	head:=rotY(head,θ);
+	head:=rotY(θ,head);
 	if !head { tail := toW(tail); }
 	result:=([head]~(tail:𝔹[])): 𝔹^n;
 	forget(head=result[0]);

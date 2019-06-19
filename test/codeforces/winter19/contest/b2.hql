@@ -7,7 +7,7 @@ def solve(q:𝔹){
 	if q{ a:=H(a); }
 	if a{ phase(π/4); }
 	q:=X(q);
-	if !a{ q:=rotY(q,-2·acos(sqrt(2/3))); }
+	if !a{ q:=rotY(-2·acos(sqrt(2/3)),q); }
 	q⊕=a;
 	if q{ a:=H(a); }
 	q⊕=a;

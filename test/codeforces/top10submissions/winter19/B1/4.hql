@@ -2,7 +2,7 @@ def arccos(x:!ℝ)lifted:!ℝ;
 def sqrt(x:!ℝ)lifted:!ℝ;
 
 def prepare(q0:𝔹, q1:𝔹, q2:𝔹) mfree {
-    q0 := rotY(q0, arccos(1./sqrt(3.))·2);
+    q0 := rotY(arccos(1./sqrt(3.))·2, q0);
     if q0{
         q1 := H(q1);
         if q1{
