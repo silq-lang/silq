@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 contestID = 1002
 startrank = 1
 endrank = 10
-competition_name = {1002 : "Summer 2018", 1116 : "Winter 2019"}[contestID]
+competition_name = {1002 : "summer18", 1116 : "winter19"}[contestID]
 
 url_overview = 'https://codeforces.com/api/contest.standings?' \
                f'contestId={contestID}&from={startrank}&count={endrank}'
