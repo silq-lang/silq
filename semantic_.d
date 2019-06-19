@@ -2591,7 +2591,8 @@ Expression handleQuantumPrimitive(CallExp ce,Scope sc){
 		ce.sstate=SemState.error;
 		return ce;
 	}
-	switch(literal.lit.str){
+	auto op=literal.lit.str;
+	switch(op){
 		case "dup":
 			ce.type = productTy([true],["`τ"],typeTy,funTy([true],varTy("`τ",typeTy),varTy("`τ",typeTy),false,false,Annotation.qfree,true),true,false,Annotation.qfree,true);
 			break;
@@ -2608,7 +2609,7 @@ Expression handleQuantumPrimitive(CallExp ce,Scope sc){
 			ce.type = productTy([true],["`τ"],typeTy,funTy([false],varTy("`τ",typeTy),varTy("`τ",typeTy,true),false,false,Annotation.none,true),true,false,Annotation.qfree,true);
 			break;
 		case "H","X","Y","Z":
-			ce.type = funTy([false],Bool(false),Bool(false),false,false,Annotation.mfree,true);
+			ce.type = funTy([false],Bool(false),Bool(false),false,false,op=="X"?Annotation.qfree:Annotation.mfree,true);
 			break;
 		case "P":
 			ce.type = funTy([true],ℝ(true),unit,false,false,Annotation.mfree,true);

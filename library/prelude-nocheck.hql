@@ -3,7 +3,7 @@
 def dup[τ:*]lifted(const x: τ)lifted: τ ⇒ (quantumPrimitive("dup"):!(Π[τ:*]lifted. !(Π(x:τ)lifted. τ)))(x);
 def measure[τ]lifted(x: τ):!τ ⇒ (quantumPrimitive("M"):!(Π[τ:*]lifted. !(Π(x:τ). !τ)))(x);
 def H(x: 𝔹)mfree:𝔹 ⇒ (quantumPrimitive("H"):!(Π(x:𝔹)mfree. 𝔹))(x);
-def X(x: 𝔹)mfree:𝔹 ⇒ (quantumPrimitive("X"):!(Π(x:𝔹)mfree. 𝔹))(x);
+def X(x: 𝔹)qfree:𝔹 ⇒ (quantumPrimitive("X"):!(Π(x:𝔹)qfree. 𝔹))(x);
 def Y(x: 𝔹)mfree:𝔹 ⇒ (quantumPrimitive("Y"):!(Π(x:𝔹)mfree. 𝔹))(x);
 def Z(x: 𝔹)mfree:𝔹 ⇒ (quantumPrimitive("Z"):!(Π(x:𝔹)mfree. 𝔹))(x);
 def phase(φ: !ℝ)mfree:𝟙 ⇒ (quantumPrimitive("P"):!(Π(φ:!ℝ)mfree. 𝟙))(φ);

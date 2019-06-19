@@ -1,3 +1,34 @@
+def main()qfree{
+	x:=X(0:𝔹);
+	return x;
+}
+
+/+
+def main(){
+	x:=H(0:𝔹);
+	if true{
+		y:=dup(x);
+	}
+	return H(x); // TODO: ∣0⟩
+}
++/
+/+def main(n:!ℕ){
+	qs:=vector(n,vector(n,0:𝔹));
+	def f[a](x:a)⇒x;
+	for i in [0..n){
+		for j in [0..n){
+			(qs[i],qs[j]):=(qs[j],qs[i]);
+		}
+	}
+}
++/
+/+
+def solve(n:!ℕ){
+	qs:=vector(n,0:𝔹);
+	for i in [0..n){ qs[i]:=H(qs[i]); }
+	return qs;
+}
++/
 /+
 def main(){
 	x:=H(0:𝔹);
