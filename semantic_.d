@@ -831,6 +831,7 @@ Expression indexReplaceSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{
 	void consumeArray(IndexExp e){
 		if(auto idx=cast(IndexExp)e.e) return consumeArray(idx);
 		e.e=expressionSemantic(e.e,sc,ConstResult.no); // consume array
+		e.e.constLookup=true;
 	}
 	consumeArray(theIndex);
 	if(theIndex.e.type&&theIndex.e.type.isClassical()){
