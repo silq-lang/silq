@@ -1,10 +1,17 @@
+/+
 def main(){
+	φ:=2*asin(0.5);
+	x:=0:𝔹;
+	return rotZ(φ,x);
+}
++/
+/+def main(){
 	x:=H(0:𝔹);
 	y:=dup(x);
 	y=0:𝔹;
 	return H(x);
 }
-
++/
 /+
 def main(){
 	x:=H(0:𝔹);

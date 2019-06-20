@@ -55,18 +55,41 @@ bool isToplevelClassical(Expression ty)in{
 	return ty.isClassical()||cast(TupleTy)ty||cast(ArrayTy)ty||cast(VectorTy)ty||cast(ContextTy)ty||cast(ProductTy)ty;
 }
 
-void hadamardUnitary(alias add,QState)(QState.Value c){
+void hadamardUnitary(alias add,QState)(QState.Value x){
 	alias C=QState.C;
-	enforce(c.tag==QState.Value.Tag.bval);
+	enforce(x.tag==QState.Value.Tag.bval);
 	enum norm=C(sqrt(1.0/2.0));
-	if(!c.bval){ add(c,norm); add(c.eqZ,norm); }
-	else{    add(c.eqZ,norm);    add(c,-norm); }
+	if(!x.bval){ add(x,norm); add(x.eqZ,norm); }
+	else{    add(x.eqZ,norm);    add(x,-norm); }
 }
-void xUnitary(alias add,QState)(QState.Value c){
+void xUnitary(alias add,QState)(QState.Value x){
 	alias C=QState.C;
-	enforce(c.tag==QState.Value.Tag.bval);
-	add(c.eqZ,C(1.0));
+	enforce(x.tag==QState.Value.Tag.bval);
+	add(x.eqZ,C(1.0));
 }
+void yUnitary(alias add,QState)(QState.Value x){
+	alias C=QState.C;
+	enforce(x.tag==QState.Value.Tag.bval);
+	add(x.eqZ,C(0.0,x.eqZImpl?1.0:-1.0));
+}
+void zUnitary(alias add,QState)(QState.Value x){
+	alias C=QState.C;
+	enforce(x.tag==QState.Value.Tag.bval);
+	add(x,C(x.eqZImpl?1.0:-1.0));
+}
+// (string mixin as workaround for DMD compiler bug)
+enum rotUnitary(string D)=mixin(X!q{
+	void r@(D)Unitary(alias add,QState)(QState.Value x,QState.R φ){
+		alias C=QState.C;
+		enforce(x.tag==QState.Value.Tag.bval);
+		add(x,C(cos(0.5*φ),0.0));
+		@(lowerf(D))Unitary!((k,v)=>add(k,C(0.0,-sin(0.5*φ))*v))(x);
+	}
+});
+pragma(msg, rotUnitary!"X");
+mixin(rotUnitary!"X");
+mixin(rotUnitary!"Y");
+mixin(rotUnitary!"Z");
 struct QState{
 	MapX!(Σ,C) state;
 	Record vars;
@@ -142,7 +165,7 @@ struct QState{
 			return r;
 		}
 		void removeVar(ref Σ σ){}
-		final Value applyUnitary(alias unitary)(ref QState qs,Expression type){
+		final Value applyUnitary(alias unitary,T...)(ref QState qs,Expression type,T controls){
 			// TODO: get rid of code duplication
 			QState nstate;
 			nstate.copyNonState(qs);
@@ -154,7 +177,7 @@ struct QState{
 					removeVar(σ);
 					nstate.add(σ,nv*v);
 				}
-				unitary!add(get(k));
+				unitary!(add,QState)(get(k),controls);
 			}
 			Value r;
 			r.type=type;
@@ -162,7 +185,7 @@ struct QState{
 			qs=nstate;
 			return r;
 		}
-		static Value applyUnitaryToClassical(alias unitary)(ref QState qs,Value value,Expression type){
+		static Value applyUnitaryToClassical(alias unitary,T...)(ref QState qs,Value value,Expression type,T controls){
 			// TODO: get rid of code duplication
 			QState nstate;
 			nstate.copyNonState(qs);
@@ -173,7 +196,7 @@ struct QState{
 					σ.assign(ref_,nk);
 					nstate.add(σ,nv*v);
 				}
-				unitary!add(value);
+				unitary!(add,QState)(value,controls);
 			}
 			Value r;
 			r.type=type;
@@ -316,7 +339,7 @@ struct QState{
 		@property Tag tag(){
 			return getTag(type);
 		}
-		bool opCast(T:bool)(){ return !!type; }
+		bool isValid(){ return !!type; }
 		void opAssign(Value rhs){
 			// TODO: make safe
 			type=rhs.type;
@@ -496,10 +519,10 @@ struct QState{
 				case Tag.quval: return makeQVal(quval.setConstLifted(),type);
 			}
 		}
-		Value applyUnitary(alias unitary)(ref QState qs,Expression type){
-			if(this.isClassical()) return QVal.applyUnitaryToClassical!unitary(qs,this,type);
+		Value applyUnitary(alias unitary,T...)(ref QState qs,Expression type,T controls){
+			if(this.isClassical()) return QVal.applyUnitaryToClassical!unitary(qs,this,type,controls);
 			enforce(tag==Tag.quval);
-			return quval.applyUnitary!unitary(qs,type);
+			return quval.applyUnitary!unitary(qs,type,controls);
 		}
 		union{
 			Value[] array_;
@@ -750,12 +773,12 @@ struct QState{
 			assert(!!ntype);
 			static if(op=="^^"){
 				auto t1=type,t2=r.type;
-				if(t1==Bool(true)&&isSubtype(t2,ℕt(true))) return makeBool(neqZ||r.eqZ);
+				if(t1==Bool(true)&&isSubtype(t2,ℕt(true))) return makeBool(neqZImpl||r.eqZImpl);
 				if(cast(ℕTy)t1&&isSubtype(t2,ℕt(true))) return makeInteger(pow(asInteger,r.asInteger));
 				//if(cast(ℂTy)t1||cast(ℂTy)t2) return t1^^t2; // ?
 				if(util.among(t1,Bool(true),ℕt(true),ℤt(true),ℚt(true))&&isSubtype(t2,ℤt(false)))
 					return makeRational(pow(asRational(),r.asInteger()));
-				if(type==Bool(true)) return makeBool(neqZ||r.eqZ);
+				if(type==Bool(true)) return makeBool(neqZImpl||r.eqZImpl);
 				if(t1!=ℝ(true)||t2!=ℝ(true))
 					return convertTo(ℝ(true))^^r.convertTo(ℝ(true));
 				return makeReal(fval^^r.fval);
@@ -816,9 +839,10 @@ struct QState{
 			}
 			return makeBool(eqZImpl());
 		}
+		bool neqZImpl(){ return !eqZImpl(); }
 		Value neqZ(){
 			if(!isClassical()) return makeQVal(new MemberFunctionQVal!"neqZ"(this),Bool(false));
-			return makeBool(!eqZImpl());
+			return makeBool(neqZImpl());
 		}
 		Value compare(string op)(Value r){
 			if(!isClassical()||!r.isClassical()) return makeQVal(new CompareQVal!op(this,r),Bool(false));
@@ -1051,7 +1075,7 @@ struct QState{
 		return v.inFrame();
 	}
 	Value call(FunctionDef fun,Value thisExp,Value arg,Scope sc,Value* context=null){
-		enforce(!thisExp,"TODO: method calls");
+		enforce(!thisExp.isValid,"TODO: method calls");
 		enforce(!fun.isReverse,"TODO: reverse");
 		if(!fun.body_){ // TODO: move this logic somewhere else
 			switch(fun.getName){
@@ -1198,7 +1222,7 @@ struct QState{
 				this.cond=cond, this.then=then, this.othw=othw;
 			}
 			override Value get(ref Σ s){
-				return cond.classicalValue(s)?then.classicalValue(s):othw.classicalValue(s);
+				return cond.classicalValue(s).neqZImpl?then.classicalValue(s):othw.classicalValue(s);
 			}
 		}
 		enforce(then.type==othw.type,"TODO: ite branches with different types");
@@ -1298,12 +1322,10 @@ struct QState{
 		return x.applyUnitary!xUnitary(this,Bool(false));
 	}
 	Value Y(Value x){
-		enforce(0,"TODO: Y");
-		assert(0);
+		return x.applyUnitary!yUnitary(this,Bool(false));
 	}
 	Value Z(Value x){
-		enforce(0,"TODO: Z");
-		assert(0);
+		return x.applyUnitary!zUnitary(this,Bool(false));
 	}
 	Value phase(Value φ){
 		enforce(φ.tag==Value.Tag.fval);
@@ -1314,17 +1336,21 @@ struct QState{
 		state=new_;
 		return makeTuple(type.unit,[]);
 	}
+	private Value rot(alias unitary)(Value args){
+		enforce(args.tag==Value.Tag.array_);
+		enforce(args.array_.length==2);
+		auto φ=args.array_[0],x=args.array_[1];
+		enforce(φ.tag==Value.Tag.fval);
+		return x.applyUnitary!unitary(this,Bool(false),φ.fval);
+	}
 	Value rX(Value args){
-		enforce(0,"TODO: rX");
-		assert(0);
+		return rot!rXUnitary(args);
 	}
 	Value rY(Value args){
-		enforce(0,"TODO: rY");
-		assert(0);
+		return rot!rYUnitary(args);
 	}
 	Value rZ(Value args){
-		enforce(0,"TODO: rY");
-		assert(0);
+		return rot!rZUnitary(args);
 	}
 	Value array_(Expression type,Value arg){
 		enforce(arg.tag==Value.Tag.array_);
@@ -1391,7 +1417,7 @@ QState.Value getContextFor(QState)(ref QState qstate,Declaration meaning,Scope s
 	assert(sc&&sc.isNestedIn(meaningScope));
 	for(auto csc=sc;csc !is meaningScope;){
 		void add(string name){
-			if(!r) r=qstate.readLocal(name,true);
+			if(!r.isValid) r=qstate.readLocal(name,true);
 			else r=qstate.readField(r,name,true);
 			assert(!!cast(NestedScope)csc);
 		}
@@ -1409,7 +1435,8 @@ QState.Value getContextFor(QState)(ref QState qstate,Declaration meaning,Scope s
 	return r;
 }
 QState.Value buildContextFor(QState)(ref QState qstate,Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{ // TODO: callers of this should only read the required context (and possibly consume)
-	if(auto ctx=getContextFor(qstate,meaning,sc)) return ctx;
+	auto ctx=getContextFor(qstate,meaning,sc);
+	if(ctx.isValid) return ctx;
 	QState.Record record;
 	auto msc=meaning.scope_;
 	if(auto fd=cast(FunctionDef)meaning)
@@ -1436,7 +1463,7 @@ QState.Value lookupMeaning(QState)(ref QState qstate,Identifier id)in{assert(id 
 		return qstate.readLocal(id.name,id.constLookup);
 	if(auto vd=cast(VarDecl)id.meaning){
 		auto r=getContextFor(qstate,id.meaning,id.scope_);
-		if(r) return qstate.readField(r,id.name,id.constLookup);
+		if(r.isValid) return qstate.readField(r,id.name,id.constLookup);
 		return qstate.readLocal(id.name,id.constLookup);
 	}
 	if(cast(FunctionDef)id.meaning) return qstate.readFunction(id);
@@ -1468,7 +1495,8 @@ struct Interpreter(QState){
 			if(e.type == typeTy) return QState.typeValue; // TODO: get rid of this
 			if(auto id=cast(Identifier)e){
 				if(!id.meaning&&id.name=="π") return QState.π;
-				if(auto r=lookupMeaning(qstate,id)) return r;
+				auto r=lookupMeaning(qstate,id);
+				if(r.isValid) return r;
 				assert(0,"unsupported");
 			}
 			if(auto fe=cast(FieldExp)e){
@@ -1636,7 +1664,8 @@ struct Interpreter(QState){
 				auto values=arr.e.map!(v=>doIt(v).convertTo(et)).array;
 				return QState.makeArray(e.type,values);
 			}else if(auto ae=cast(AssertExp)e){
-				if(auto c=runExp(ae.e)){
+				auto c=runExp(ae.e);
+				if(c.isValid){
 					qstate=qstate.assertTrue(c);
 					return qstate.makeTuple(unit,[]);
 				}
