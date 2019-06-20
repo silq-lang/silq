@@ -1,6 +1,4 @@
 // https://codeforces.com/contest/1116/problem/B1
-def asin(x:!ℝ)lifted:!ℝ;
-def sqrt(x:!ℝ)lifted:!ℝ;
 def toW[n:!ℕ]lifted:𝔹^n →mfree 𝔹^n⇒lambda(qs:𝔹^n)mfree:𝔹^n{
 	if n==0{ return ((0:int[0]):𝔹[]):𝔹^n; }
 	if n==1{ return [1:𝔹]:𝔹^n; }
