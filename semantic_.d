@@ -673,7 +673,7 @@ Expression statementSemantic(Expression e,Scope sc){
 		if(fe.val){
 			fe.val=expressionSemantic(fe.val,sc,ConstResult.yes);
 			propErr(fe.val,fe);
-			if(fe.sstate!=SemState.error&&!fe.val.isLifted()){
+			if(fe.sstate!=SemState.error&&!fe.val.isLifted(sc)){
 				sc.error("forget expression must be 'lifted'",fe.val.loc);
 				fe.sstate=SemState.error;
 			}
@@ -745,6 +745,18 @@ Dependency getDependency(Expression e,Scope sc)in{
 	}
 	return Dependency(false, names);
 }
+
+bool consumes(Expression e){
+	if(!e.constLookup&&cast(Identifier)e&&(!e.type||!e.type.isClassical())) return true;
+	foreach(c;e.components)
+		if(c.consumes())
+			return true;
+	return false;
+}
+bool isLifted(Expression e,Scope sc){
+	return e.isQfree()&&!e.consumes();
+}
+
 
 Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
 	if(cast(IndexExp)be.e1) return indexReplaceSemantic(be,sc);
@@ -844,7 +856,7 @@ Expression indexReplaceSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{
 	propErr(be.e1,be);
 	Identifier id;
 	bool check(IndexExp e){
-		if(e&&(!e.a[0].isLifted()||e.a[0].type&&!e.a[0].type.isClassical())){
+		if(e&&(!e.a[0].isLifted(sc)||e.a[0].type&&!e.a[0].type.isClassical())){
 			sc.error("index for component replacement must be 'lifted' and classical",e.a[0].loc);
 			return false;
 		}
@@ -901,7 +913,7 @@ Expression permuteSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{
 	foreach(e;chain(tpl1.e,tpl2.e)){
 		if(auto idx=cast(IndexExp)e){
 			bool check(IndexExp e){
-				if(e&&(!e.a[0].isLifted()||e.a[0].type&&!e.a[0].type.isClassical())){
+				if(e&&(!e.a[0].isLifted(sc)||e.a[0].type&&!e.a[0].type.isClassical())){
 					sc.error("index in permute statement must be 'lifted' and classical",e.a[0].loc);
 					return false;
 				}
@@ -1218,7 +1230,7 @@ Expression callSemantic(CallExp ce,Scope sc,ConstResult constResult){
 						sc.error(format("cannot call '%s' function '%s' in '%s' context", ft.annotation, ce.e, sc.restriction()), ce.loc);
 					}
 					ce.sstate=SemState.error;
-				}else if(constResult&&!ce.isLifted()&&!ce.type.isClassical()){
+				}else if(constResult&&!ce.isLifted(sc)&&!ce.type.isClassical()){
 					sc.error("non-'lifted' quantum expression must be consumed", ce.loc);
 					ce.sstate=SemState.error;
 				}
@@ -1519,7 +1531,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 	scope(success){
 		expr.constLookup=constResult;
 		if(expr&&expr.sstate!=SemState.error){
-			if(constResult&&!expr.isLifted()&&!expr.type.isClassical()){
+			if(constResult&&!expr.isLifted(sc)&&!expr.type.isClassical()){
 				sc.error("non-'lifted' quantum expression must be consumed", expr.loc);
 				expr.sstate=SemState.error;
 			}else{

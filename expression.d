@@ -151,16 +151,6 @@ abstract class Expression: Node{
 
 	// semantic information
 	bool constLookup=true;
-	final bool consumes(){
-		if(!constLookup&&cast(Identifier)this&&(!type||!type.isClassical())) return true;
-		foreach(e;components)
-			if(e.consumes())
-				return true;
-		return false;
-	}
-	final bool isLifted(){
-		return isQfree()&&!consumes();
-	}
 }
 
 mixin template VariableFree(){
