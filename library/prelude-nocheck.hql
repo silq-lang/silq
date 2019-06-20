@@ -26,16 +26,16 @@ dat rat[n: !ℕ, m: !ℕ] quantum{}
 def floor(x:!ℝ)lifted:!ℤ;
 def ceil(x:!ℝ)lifted:!ℤ;
 def round(x:!ℝ)lifted:!ℤ ⇒ floor(x+1/2);
-def inℤ(const x:!ℝ)lifted:!𝔹 ⇒ x==floor(x);
-def sqrt(x:!ℝ):!ℝ;
-def exp(x:!ℝ):!ℝ;
-def log(x:!ℝ):!ℝ;
-def sin(x:!ℝ):!ℝ;
-def asin(x:!ℝ):!ℝ;
-def cos(x:!ℝ):!ℝ;
-def acos(x:!ℝ):!ℝ;
-def tan(x:!ℝ):!ℝ;
-def atan(x:!ℝ):!ℝ;
+def inℤ(x:!ℝ)lifted:!𝔹 ⇒ x==floor(x);
+def sqrt(x:!ℝ)lifted:!ℝ;
+def exp(x:!ℝ)lifted:!ℝ;
+def log(x:!ℝ)lifted:!ℝ;
+def sin(x:!ℝ)lifted:!ℝ;
+def asin(x:!ℝ)lifted:!ℝ;
+def cos(x:!ℝ)lifted:!ℝ;
+def acos(x:!ℝ)lifted:!ℝ;
+def tan(x:!ℝ)lifted:!ℝ;
+def atan(x:!ℝ)lifted:!ℝ;
 
 // TODO: make the following functions generic
 def abs(x:!ℝ)lifted:!ℝ ⇒ if x<0 then -x else x;
