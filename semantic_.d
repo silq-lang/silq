@@ -1097,7 +1097,7 @@ ABinaryExp opAssignExpSemantic(ABinaryExp be,Scope sc)in{
 	void checkULhs(Expression lhs){
 		if(auto id=cast(Identifier)lhs){
 			if(!checkAssignable(id.meaning,be.loc,sc,isInvertibleOpAssignExp(be)))
-			   be.sstate=SemState.error;
+				be.sstate=SemState.error;
 		}else if(auto idx=cast(IndexExp)lhs){
 			checkULhs(idx.e);
 		}else if(auto fe=cast(FieldExp)lhs){
@@ -2068,8 +2068,8 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 	if(auto ae=cast(NeqExp)expr) return expr=handleBinary!cmpType("'≠'",ae,ae.e1,ae.e2);
 
 	if(auto ce=cast(CatExp)expr){
-		ce.e1=expressionSemantic(ce.e1,sc,ConstResult.yes);
-		ce.e2=expressionSemantic(ce.e2,sc,ConstResult.yes);
+		ce.e1=expressionSemantic(ce.e1,sc,constResult);
+		ce.e2=expressionSemantic(ce.e2,sc,constResult);
 		propErr(ce.e1,ce);
 		propErr(ce.e2,ce);
 		if(ce.sstate==SemState.error)
