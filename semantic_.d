@@ -735,15 +735,16 @@ VarDecl varDeclSemantic(VarDecl vd,Scope sc){
 Dependency getDependency(Expression e,Scope sc)in{
 	assert(e.isQfree());
 }do{
-	SetX!string names;
+	auto result=Dependency(false);
 	foreach(id;e.freeIdentifiers){
 		if(id.type&&!id.type.isClassical){
 			if(!sc.dependencyTracked(id)) // for variables captured in closure
 				return Dependency(true);
-			names.insert(id.name);
+			result.dependencies.insert(id.name);
+			if(!id.constLookup) result.replace(id.name,sc.getDependency(id));
 		}
 	}
-	return Dependency(false, names);
+	return result;
 }
 
 bool consumes(Expression e){
@@ -754,7 +755,7 @@ bool consumes(Expression e){
 	return false;
 }
 bool isLifted(Expression e,Scope sc){
-	return e.isQfree()&&!e.consumes();
+	return e.isQfree()&&!e.getDependency(sc).isTop;
 }
 
 
