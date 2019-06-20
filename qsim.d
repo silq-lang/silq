@@ -86,10 +86,10 @@ enum rotUnitary(string D)=mixin(X!q{
 		@(lowerf(D))Unitary!((k,v)=>add(k,C(0.0,-sin(0.5*φ))*v))(x);
 	}
 });
-pragma(msg, rotUnitary!"X");
 mixin(rotUnitary!"X");
 mixin(rotUnitary!"Y");
 mixin(rotUnitary!"Z");
+
 struct QState{
 	MapX!(Σ,C) state;
 	Record vars;
@@ -579,11 +579,11 @@ struct QState{
 						if(auto tpl=ntype.isTupleTy()){
 							assert(array_.length==tpl.length);
 							r.array_=iota(array_.length).map!(i=>array_[i].convertTo(tpl[i])).array;
-						}else{
-							auto arr=cast(ArrayTy)ntype;
-							assert(!!arr);
+						}else if(auto arr=cast(ArrayTy)ntype){
 							r.array_=array_.map!(v=>v.convertTo(arr.next)).array;
-						}
+						}else if(auto vec=cast(VectorTy)ntype){
+							r.array_=array_.map!(v=>v.convertTo(vec.next)).array;
+						}else assert(0);
 						return r;
 					}
 					break;
