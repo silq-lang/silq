@@ -31,14 +31,14 @@
 		adjoint controlled auto;
     }
 
-	operation Test() : Unit {
-		using (qs = Qubit[4]) {
-			H(qs[0]);
-			H(qs[1]);
-			H(qs[2]);
-			Solve(Most(qs), Tail(qs));
-			DumpMachine(());
-			ResetAll(qs);
-		}
-	}
+	// operation Test() : Unit {
+	// 	using (qs = Qubit[4]) {
+	// 		H(qs[0]);
+	// 		H(qs[1]);
+	// 		H(qs[2]);
+	// 		Solve(Most(qs), Tail(qs));
+	// 		DumpMachine(());
+	// 		ResetAll(qs);
+	// 	}
+	// }
 }

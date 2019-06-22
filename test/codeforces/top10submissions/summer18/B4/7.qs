@@ -18,22 +18,22 @@
         }
     }
 
-    operation Simulate(n : Int) : Int {
-        body {
-            mutable measurment = 0;
-            using (register = Qubit[2]) {
-                let q = register;
-                if (n % 2 == 1) {
-                    X(q[0]);
-                }
-                if ((n / 2) % 2 == 1) {
-                    X(q[1]);
-                }
-                ApplyToEach(H(_), q);
-                set measurment = Solve(q);
-                ResetAll(register);
-            }
-            return measurment;
-        } 
-    }
+    // operation Simulate(n : Int) : Int {
+    //     body {
+    //         mutable measurment = 0;
+    //         using (register = Qubit[2]) {
+    //             let q = register;
+    //             if (n % 2 == 1) {
+    //                 X(q[0]);
+    //             }
+    //             if ((n / 2) % 2 == 1) {
+    //                 X(q[1]);
+    //             }
+    //             ApplyToEach(H(_), q);
+    //             set measurment = Solve(q);
+    //             ResetAll(register);
+    //         }
+    //         return measurment;
+    //     } 
+    // }
 }

@@ -44,12 +44,12 @@
 		adjoint controlled auto;
     }
 
-	operation Test() : Unit {
-		using (qs = Qubit[10]) {
-			ApplyToEach(H, Most(qs));
-			Solve(Most(qs), Tail(qs));
-			DumpMachine(());
-			ResetAll(qs);
-		}
-	}
+	// operation Test() : Unit {
+	// 	using (qs = Qubit[10]) {
+	// 		ApplyToEach(H, Most(qs));
+	// 		Solve(Most(qs), Tail(qs));
+	// 		DumpMachine(());
+	// 		ResetAll(qs);
+	// 	}
+	// }
 }

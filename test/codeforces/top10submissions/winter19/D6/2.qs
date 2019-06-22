@@ -13,14 +13,14 @@ namespace Solution {
 		adjoint auto;
 	}
 
-	operation Add_slow (qs : Qubit[], V : Int) : Unit {
-		body (...) {
-			for (i in 0..V-1) {
-				Incre(qs);
-			}
-		}
-		adjoint auto;
-	}
+	// operation Add_slow (qs : Qubit[], V : Int) : Unit {
+	// 	body (...) {
+	// 		for (i in 0..V-1) {
+	// 			Incre(qs);
+	// 		}
+	// 	}
+	// 	adjoint auto;
+	// }
 
 	operation Add (qs : Qubit[], V : Int) : Unit {
 		body (...) {

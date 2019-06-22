@@ -1,11 +1,11 @@
 // https://codeforces.com/contest/1116/problem/D6
-def swap[n:!ℕ](a:!𝔹^n,b:!𝔹^n,x:𝔹^n)mfree{
-	def f(const x:𝔹^n)lifted⇒if x==a then b else if x==b then a else dup(x);
+def swap[n:!ℕ](a:!𝔹^n,b:!𝔹^n,x:𝔹^n){
+	def f(x:𝔹^n)lifted⇒if x==a then b else if x==b then a else dup(x);
 	y:=f(x);
 	forget(x=f(y));
 	return y;
 }
-def embed2x2[n:!ℕ](i:!ℕ,j:!ℕ,f:𝔹 !→mfree 𝔹,x:𝔹^n)mfree{
+def embed2x2[n:!ℕ](i:!ℕ,j:!ℕ,f:𝔹 !→ 𝔹,x:𝔹^n){
 	(zero,one):=((0:!uint[n]):!𝔹^n,(1:!uint[n]):!𝔹^n);
 	(a,b):=((i:!uint[n]):!𝔹^n,(j:!uint[n]):!𝔹^n);
 	x:=swap(a,zero,x);

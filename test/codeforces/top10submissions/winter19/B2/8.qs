@@ -7,56 +7,56 @@ namespace Solution
     open Microsoft.Quantum.Extensions.Diagnostics;
     open Microsoft.Quantum.Extensions.Convert;
 
-    operation SolveTest() : Unit 
-    {
-        using (q = Qubit())
-        {
-            mutable count = new Int[3];
+    // operation SolveTest() : Unit 
+    // {
+    //     using (q = Qubit())
+    //     {
+    //         mutable count = new Int[3];
 
-            if (false) {
-                Message("0 =============================");
-                for (i in 0..4) {
-                    Generate(0, q);
-                    let v = Solve(q);
+    //         if (false) {
+    //             Message("0 =============================");
+    //             for (i in 0..4) {
+    //                 Generate(0, q);
+    //                 let v = Solve(q);
 
-                    Reset(q);
-                }
-                Message("1 =============================");
-                for (i in 0..4) {
-                    Generate(1, q);
-                    let v = Solve(q);
+    //                 Reset(q);
+    //             }
+    //             Message("1 =============================");
+    //             for (i in 0..4) {
+    //                 Generate(1, q);
+    //                 let v = Solve(q);
 
-                    Reset(q);
-                }
-                Message("2 =============================");
-                for (i in 0..4) {
-                    Generate(2, q);
-                    let v = Solve(q);
+    //                 Reset(q);
+    //             }
+    //             Message("2 =============================");
+    //             for (i in 0..4) {
+    //                 Generate(2, q);
+    //                 let v = Solve(q);
 
-                    Reset(q);
-                }
-            }
+    //                 Reset(q);
+    //             }
+    //         }
 
-            if (true) {
-                for (i in 0 .. 100)
-                {
-                    Generate(i%3, q);
+    //         if (true) {
+    //             for (i in 0 .. 100)
+    //             {
+    //                 Generate(i%3, q);
                 
-                    if (Solve(q) == i%3) {
-                        Message($"Wrong on {i%3}");
-                    }
+    //                 if (Solve(q) == i%3) {
+    //                     Message($"Wrong on {i%3}");
+    //                 }
 
-                    Reset(q);
-                }
-            }
-        }
-    }
+    //                 Reset(q);
+    //             }
+    //         }
+    //     }
+    // }
 
-    operation Generate(ans: Int, q: Qubit) : Unit
-    {
-        H(q);
-        Rz(ToDouble(ans) * 2.0 * PI() / 3.0, q);
-    }
+    // operation Generate(ans: Int, q: Qubit) : Unit
+    // {
+    //     H(q);
+    //     Rz(ToDouble(ans) * 2.0 * PI() / 3.0, q);
+    // }
 
     operation Solve(q: Qubit) : Int
     {

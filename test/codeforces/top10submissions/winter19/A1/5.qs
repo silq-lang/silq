@@ -31,14 +31,14 @@ namespace Solution {
     }
     
     // ------------- Operation which is called from C# -------------------
-    operation RunQsharp () : Bool {
-        body {
-            for (j in 0..4) {
-                using (Q = Qubit[4]) {
+    // operation RunQsharp () : Bool {
+    //     body {
+    //         for (j in 0..4) {
+    //             using (Q = Qubit[4]) {
                 
-                }
-            }
-            return false;
-        }
-    }
+    //             }
+    //         }
+    //         return false;
+    //     }
+    // }
 }

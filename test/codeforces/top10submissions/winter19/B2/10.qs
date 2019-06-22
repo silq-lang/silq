@@ -157,28 +157,28 @@ namespace Solution {
     }
 
 
-	operation MMain(sign: Int) : String {
-			mutable mess = "";
-			for(it in 0..19){
-				using (qubit = Qubit[1]) {
-						let amplitudes = [1.0, 1.0];
-						let phases = [0.0, 3.14159265358*ToDouble(sign)*2.0/3.0];
-						mutable weights = new ComplexPolar[2];
-						for (idx in 0..1) {
-							set weights[idx] = ComplexPolar(amplitudes[idx], phases[idx]);
-						}
-						let fun = StatePreparationComplexCoefficients(weights);
-						let num = BigEndian(qubit);
-						fun(num);
-						//DumpMachine("");
-						let result = Solve(qubit[0]);
-						//DumpMachine("");
+	// operation MMain(sign: Int) : String {
+	// 		mutable mess = "";
+	// 		for(it in 0..19){
+	// 			using (qubit = Qubit[1]) {
+	// 					let amplitudes = [1.0, 1.0];
+	// 					let phases = [0.0, 3.14159265358*ToDouble(sign)*2.0/3.0];
+	// 					mutable weights = new ComplexPolar[2];
+	// 					for (idx in 0..1) {
+	// 						set weights[idx] = ComplexPolar(amplitudes[idx], phases[idx]);
+	// 					}
+	// 					let fun = StatePreparationComplexCoefficients(weights);
+	// 					let num = BigEndian(qubit);
+	// 					fun(num);
+	// 					//DumpMachine("");
+	// 					let result = Solve(qubit[0]);
+	// 					//DumpMachine("");
 						
 						
-						set mess = mess + $"{sign}={result};#";
-						ResetAll(qubit);
-				}
-			}
-			return mess;
-	}
+	// 					set mess = mess + $"{sign}={result};#";
+	// 					ResetAll(qubit);
+	// 			}
+	// 		}
+	// 		return mess;
+	// }
 }

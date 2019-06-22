@@ -46,25 +46,25 @@
         }
     }
 
-	operation BellTest (count: Int) : Int[]
-    {
-        body
-        {
-            mutable cnt = new Int[8];
-            using (qs = Qubit[3])
-            {
-                for (test in 1..count)
-                {
-					Solve(qs, [true; false; false], [false; true; true]);
+	// operation BellTest (count: Int) : Int[]
+    // {
+    //     body
+    //     {
+    //         mutable cnt = new Int[8];
+    //         using (qs = Qubit[3])
+    //         {
+    //             for (test in 1..count)
+    //             {
+	// 				Solve(qs, [true; false; false], [false; true; true]);
 
-                    let res = ResultAsInt([M(qs[0]); M(qs[1]); M(qs[2])]);//; M(qs[3]); M(qs[4])]);
+    //                 let res = ResultAsInt([M(qs[0]); M(qs[1]); M(qs[2])]);//; M(qs[3]); M(qs[4])]);
 
-					set cnt[res] = cnt[res] + 1;
+	// 				set cnt[res] = cnt[res] + 1;
 
-                    ResetAll (qs);
-                }
-            }
-            return cnt;
-        }
-    }
+    //                 ResetAll (qs);
+    //             }
+    //         }
+    //         return cnt;
+    //     }
+    // }
 }

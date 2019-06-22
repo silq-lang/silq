@@ -28,31 +28,31 @@
         }
     }
 
-    operation Simulate(n : Int) : Int[] {
-        body {
-            mutable measurment = new Int[n];
-            mutable b = new Bool[n];
-            for (i in 0..(n-1)) {
-                if (i % 3 == 0) {
-                    set b[i] = true;
-                }
-            }
-            mutable c = new Bool[n];
-            for (i in 0..(n-1)) {
-                if (i % 2 == 0) {
-                    set c[i] = true;
-                }
-            }
-            using (register = Qubit[n]) {
-                let q = register;
-                Solve(q, b, c);
-                for (i in 0..(n-1)) {
-                    if (M(q[i]) == One) 
-                        { set measurment[i] = 1; }
-                }
-                ResetAll(register);
-            }
-            return measurment;
-        } 
-    }
+    // operation Simulate(n : Int) : Int[] {
+    //     body {
+    //         mutable measurment = new Int[n];
+    //         mutable b = new Bool[n];
+    //         for (i in 0..(n-1)) {
+    //             if (i % 3 == 0) {
+    //                 set b[i] = true;
+    //             }
+    //         }
+    //         mutable c = new Bool[n];
+    //         for (i in 0..(n-1)) {
+    //             if (i % 2 == 0) {
+    //                 set c[i] = true;
+    //             }
+    //         }
+    //         using (register = Qubit[n]) {
+    //             let q = register;
+    //             Solve(q, b, c);
+    //             for (i in 0..(n-1)) {
+    //                 if (M(q[i]) == One) 
+    //                     { set measurment[i] = 1; }
+    //             }
+    //             ResetAll(register);
+    //         }
+    //         return measurment;
+    //     } 
+    // }
 }

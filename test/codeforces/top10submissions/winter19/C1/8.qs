@@ -6,9 +6,9 @@ namespace Solution
     open Microsoft.Quantum.Extensions.Testing;
     open Microsoft.Quantum.Extensions.Diagnostics;
 
-    operation SolveTest() : Unit 
-    {
-    }
+    // operation SolveTest() : Unit 
+    // {
+    // }
 
     operation Solve (x : Qubit[], y : Qubit) : Unit {
         body (...) 

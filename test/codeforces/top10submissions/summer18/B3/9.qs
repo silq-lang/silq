@@ -19,26 +19,26 @@
         }
     }
 
-	operation BellTest (count: Int) : Int[]
-    {
-        body
-        {
-            mutable cnt = new Int[4];
-            using (qs = Qubit[2])
-            {
-				X(qs[0]);
-				H(qs[0]);
-				H(qs[1]);
-				DumpMachine("C:/Users/vilim/source/repos/CFSummer18/B3/dump");
+	// operation BellTest (count: Int) : Int[]
+    // {
+    //     body
+    //     {
+    //         mutable cnt = new Int[4];
+    //         using (qs = Qubit[2])
+    //         {
+	// 			X(qs[0]);
+	// 			H(qs[0]);
+	// 			H(qs[1]);
+	// 			DumpMachine("C:/Users/vilim/source/repos/CFSummer18/B3/dump");
 
-                for (test in 1..count)
-                {
-					set cnt[Solve(qs)] = cnt[Solve(qs)] + 1;
-                }
+    //             for (test in 1..count)
+    //             {
+	// 				set cnt[Solve(qs)] = cnt[Solve(qs)] + 1;
+    //             }
 
-				ResetAll(qs);
-            }
-            return cnt;
-        }
-    }
+	// 			ResetAll(qs);
+    //         }
+    //         return cnt;
+    //     }
+    // }
 }

@@ -1,4 +1,4 @@
-https://codeforces.com/contest/1002/problem/A3
+//https://codeforces.com/contest/1002/problem/A3
 def solve[n:!ℕ](bits: (!𝔹^n)^2){
 	k := 0;
 	for j in [1..n){

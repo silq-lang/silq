@@ -28,27 +28,27 @@
         }
     }
 
-	operation BellTest (count: Int) : Int[]
-    {
-        body
-        {
-            mutable cnt = new Int[3];
-            using (qs = Qubit[1])
-            {
-                for (test in 1..count)
-                {
-					ResetAll(qs);
-					if (test % 2 == 0)
-					{
-						H(qs[0]);
-					}
-					let x = Solve(qs[0]) + 1;
-					set cnt[x] = cnt[x] + 1;
-                }
+	// operation BellTest (count: Int) : Int[]
+    // {
+    //     body
+    //     {
+    //         mutable cnt = new Int[3];
+    //         using (qs = Qubit[1])
+    //         {
+    //             for (test in 1..count)
+    //             {
+	// 				ResetAll(qs);
+	// 				if (test % 2 == 0)
+	// 				{
+	// 					H(qs[0]);
+	// 				}
+	// 				let x = Solve(qs[0]) + 1;
+	// 				set cnt[x] = cnt[x] + 1;
+    //             }
 
-				ResetAll(qs);
-            }
-            return cnt;
-        }
-    }
+	// 			ResetAll(qs);
+    //         }
+    //         return cnt;
+    //     }
+    // }
 }

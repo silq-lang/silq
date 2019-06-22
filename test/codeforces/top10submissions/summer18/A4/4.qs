@@ -53,28 +53,28 @@ namespace Solution {
     }
     
     // ------------- Operation which is called from C# -------------------
-    operation RunQsharp () : Bool
-    {
-        body
-        {
-            for (j in 0..4) {
-                using (Q = Qubit[4]) {
-                    Solve(Q);
+    // operation RunQsharp () : Bool
+    // {
+    //     body
+    //     {
+    //         for (j in 0..4) {
+    //             using (Q = Qubit[4]) {
+    //                 Solve(Q);
                     
-                    for (i in 0..3) {
-                        if (M(Q[i]) == Zero) {
-                            Message("0");
-                        } else {
-                            Message("1");
-                        }
-                    }
-                    Message("Z");
-                    for (i in 0..3) {
-                        Set(Zero,Q[i]);
-                    }
-                }
-            }
-            return false;
-        }
-    }
+    //                 for (i in 0..3) {
+    //                     if (M(Q[i]) == Zero) {
+    //                         Message("0");
+    //                     } else {
+    //                         Message("1");
+    //                     }
+    //                 }
+    //                 Message("Z");
+    //                 for (i in 0..3) {
+    //                     Set(Zero,Q[i]);
+    //                 }
+    //             }
+    //         }
+    //         return false;
+    //     }
+    // }
 }

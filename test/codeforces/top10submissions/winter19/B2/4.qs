@@ -38,18 +38,18 @@
 		}
     }
 
-	operation Test() : Unit {
-		using (q = Qubit()) {
-			mutable cnt = 0;
-			for (i in 0..1000) {
-				H(q);
-				R1(4. * PI() / 3., q);
-				if (Solve(q) == 2) {
-					set cnt = cnt + 1;
-				}
-				Reset(q);
-			}
-			Message(ToStringI(cnt));
-		}
-	}
+	// operation Test() : Unit {
+	// 	using (q = Qubit()) {
+	// 		mutable cnt = 0;
+	// 		for (i in 0..1000) {
+	// 			H(q);
+	// 			R1(4. * PI() / 3., q);
+	// 			if (Solve(q) == 2) {
+	// 				set cnt = cnt + 1;
+	// 			}
+	// 			Reset(q);
+	// 		}
+	// 		Message(ToStringI(cnt));
+	// 	}
+	// }
 }

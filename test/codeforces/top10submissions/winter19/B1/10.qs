@@ -23,37 +23,37 @@ namespace Solution {
         }
     }
 
-	operation MMain(sign: Int) : String {
-			mutable mess = "";
-			using (qubit = Qubit[3]) {
-					if(sign == 0){
-						let amplitudes = [0.0, 1.0, 1.0, 0.0, 1.0];
-						let phases = [0.0, 0.0, 3.14159265358*2.0/3.0, 0.0, 3.14159265358*4.0/3.0];
-						mutable weights = new ComplexPolar[5];
-						for (idx in 0..4) {
-							set weights[idx] = ComplexPolar(amplitudes[idx], phases[idx]);
-						}
-						let fun = StatePreparationComplexCoefficients(weights);
-						let num = BigEndian(qubit);
-						fun(num);
-					} else {
-						let amplitudes = [0.0, 1.0, 1.0, 0.0, 1.0];
-						let phases = [0.0, 0.0, 3.14159265358*4.0/3.0, 0.0, 3.14159265358*2.0/3.0];
-						mutable weights = new ComplexPolar[5];
-						for (idx in 0..4) {
-							set weights[idx] = ComplexPolar(amplitudes[idx], phases[idx]);
-						}
-						let fun = StatePreparationComplexCoefficients(weights);
-						let num = BigEndian(qubit);
-						fun(num);
-					}
-					DumpMachine("");
-					let result = Solve(qubit);
+	// operation MMain(sign: Int) : String {
+	// 		mutable mess = "";
+	// 		using (qubit = Qubit[3]) {
+	// 				if(sign == 0){
+	// 					let amplitudes = [0.0, 1.0, 1.0, 0.0, 1.0];
+	// 					let phases = [0.0, 0.0, 3.14159265358*2.0/3.0, 0.0, 3.14159265358*4.0/3.0];
+	// 					mutable weights = new ComplexPolar[5];
+	// 					for (idx in 0..4) {
+	// 						set weights[idx] = ComplexPolar(amplitudes[idx], phases[idx]);
+	// 					}
+	// 					let fun = StatePreparationComplexCoefficients(weights);
+	// 					let num = BigEndian(qubit);
+	// 					fun(num);
+	// 				} else {
+	// 					let amplitudes = [0.0, 1.0, 1.0, 0.0, 1.0];
+	// 					let phases = [0.0, 0.0, 3.14159265358*4.0/3.0, 0.0, 3.14159265358*2.0/3.0];
+	// 					mutable weights = new ComplexPolar[5];
+	// 					for (idx in 0..4) {
+	// 						set weights[idx] = ComplexPolar(amplitudes[idx], phases[idx]);
+	// 					}
+	// 					let fun = StatePreparationComplexCoefficients(weights);
+	// 					let num = BigEndian(qubit);
+	// 					fun(num);
+	// 				}
+	// 				DumpMachine("");
+	// 				let result = Solve(qubit);
 					
 					
-					set mess = mess + $"{sign}={result};#";
-					ResetAll(qubit);
-			}
-			return mess;
-	}
+	// 				set mess = mess + $"{sign}={result};#";
+	// 				ResetAll(qubit);
+	// 		}
+	// 		return mess;
+	// }
 }

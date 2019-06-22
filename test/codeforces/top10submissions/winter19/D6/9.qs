@@ -92,16 +92,16 @@ namespace Solution{
     adjoint auto;
     controlled adjoint auto;
   }
-  operation XOR (x: Qubit[], k: Int): Unit{
-    body(...){
-    let N = Length(x);
-    for(i in 0..N-1){
-      if( iss(k,i) ){
-        X(x[i]);
-      }
-    }
-    }controlled auto;
-    adjoint auto;
-    controlled adjoint auto;
-  }
+  // operation XOR (x: Qubit[], k: Int): Unit{
+  //   body(...){
+  //   let N = Length(x);
+  //   for(i in 0..N-1){
+  //     if( iss(k,i) ){
+  //       X(x[i]);
+  //     }
+  //   }
+  //   }controlled auto;
+  //   adjoint auto;
+  //   controlled adjoint auto;
+  // }
 }

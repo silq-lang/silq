@@ -21,34 +21,34 @@ namespace Solution
         }
     }
 
-    operation DumpUnitaryToFiles (N : Int, unitary : (Qubit[] => Unit)) : Unit {
-        let size = 1 <<< N;
+    // operation DumpUnitaryToFiles (N : Int, unitary : (Qubit[] => Unit)) : Unit {
+    //     let size = 1 <<< N;
         
-        using (qs = Qubit[N]) {
-            for (k in 0 .. size - 1) {                
-                // Prepare k-th basis vector
-                let binary = BoolArrFromPositiveInt(k, N);
+    //     using (qs = Qubit[N]) {
+    //         for (k in 0 .. size - 1) {                
+    //             // Prepare k-th basis vector
+    //             let binary = BoolArrFromPositiveInt(k, N);
                 
-                //Message($"{k}/{N} = {binary}");
-                // binary is little-endian notation, so the second vector tried has qubit 0 in state 1 and the rest in state 0
-                ApplyPauliFromBitString(PauliX, true, binary, qs);
+    //             //Message($"{k}/{N} = {binary}");
+    //             // binary is little-endian notation, so the second vector tried has qubit 0 in state 1 and the rest in state 0
+    //             ApplyPauliFromBitString(PauliX, true, binary, qs);
                 
-                // Apply the operation
-                Solve(qs);
+    //             // Apply the operation
+    //             Solve(qs);
                 
-                // Dump the contents of the k-th column
-                DumpMachine($"DU_{N}_{k}.txt");
+    //             // Dump the contents of the k-th column
+    //             DumpMachine($"DU_{N}_{k}.txt");
                 
-                ResetAll(qs);
-            }
-        }
-    }
+    //             ResetAll(qs);
+    //         }
+    //     }
+    // }
 
-    // The operation which is called from C# code
-    operation CallDumpUnitary (N : Int) : Unit {
-        // make sure the operation passed to DumpUnitaryToFiles matches the number of qubits set in Driver.cs
-        let unitary = ApplyToEach(I, _);
+    // // The operation which is called from C# code
+    // operation CallDumpUnitary (N : Int) : Unit {
+    //     // make sure the operation passed to DumpUnitaryToFiles matches the number of qubits set in Driver.cs
+    //     let unitary = ApplyToEach(I, _);
 
-        DumpUnitaryToFiles(N, unitary);
-    }
+    //     DumpUnitaryToFiles(N, unitary);
+    // }
 }

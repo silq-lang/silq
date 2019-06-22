@@ -7,12 +7,12 @@ namespace Solution {
     open Microsoft.Quantum.Canon;
     open Microsoft.Quantum.Extensions.Convert;
 
-    operation Set (desired: Result, q1: Qubit) : () {
-        body {
-            let current = M(q1);
-            if (desired != current) { X(q1); }
-        }
-    }
+    // operation Set (desired: Result, q1: Qubit) : () {
+    //     body {
+    //         let current = M(q1);
+    //         if (desired != current) { X(q1); }
+    //     }
+    // }
     operation shiftUp(qs: Qubit[]) : Unit {
         let N = Length(qs);
         using (tmp = Qubit[N+1]) {
@@ -57,26 +57,26 @@ namespace Solution {
         }
     }
 
-    operation get(Q: Qubit) : String {
-        let x = M(Q);
-        if (x == Zero) { return "Zero"; }
-        return "One";
-    }
+    // operation get(Q: Qubit) : String {
+    //     let x = M(Q);
+    //     if (x == Zero) { return "Zero"; }
+    //     return "One";
+    // }
     
     
     
-    // ------------- Operation which is called from C# -------------------
-    operation RunQsharp () : Bool {
-        body {
-            for (i in 0..20) {
-                using (Q = Qubit[3]) {
-                    // X(Q[2]);
-                    // Solve(Q);
-                    // Message("HUH "+get(Q[0])+" "+get(Q[1])+" "+get(Q[2])); // +" "+get(Q[2])
-                    // ResetAll(Q);
-                }
-            }
-            return false;
-        }
-    }
+    // // ------------- Operation which is called from C# -------------------
+    // operation RunQsharp () : Bool {
+    //     body {
+    //         for (i in 0..20) {
+    //             using (Q = Qubit[3]) {
+    //                 // X(Q[2]);
+    //                 // Solve(Q);
+    //                 // Message("HUH "+get(Q[0])+" "+get(Q[1])+" "+get(Q[2])); // +" "+get(Q[2])
+    //                 // ResetAll(Q);
+    //             }
+    //         }
+    //         return false;
+    //     }
+    // }
 }

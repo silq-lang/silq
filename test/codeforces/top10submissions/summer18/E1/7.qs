@@ -2,17 +2,17 @@
     open Microsoft.Quantum.Primitive;
     open Microsoft.Quantum.Canon;
 
-    operation fun(x : Qubit[], y : Qubit) : () {
-        body {
-            CNOT(x[0], y);
-        }
-    }
+    // operation fun(x : Qubit[], y : Qubit) : () {
+    //     body {
+    //         CNOT(x[0], y);
+    //     }
+    // }
 
-    operation one(x : Qubit[], y : Qubit) : () {
-        body {
-            ApplyToEach(CNOT(_, y), x);
-        }
-    }
+    // operation one(x : Qubit[], y : Qubit) : () {
+    //     body {
+    //         ApplyToEach(CNOT(_, y), x);
+    //     }
+    // }
 
     operation Solve (n : Int, f : ((Qubit[], Qubit) => ())) : Int[] {
         body {
@@ -37,9 +37,9 @@
         }
     }
 
-    operation Simulate(n : Int) : Int[] {
-        body {
-            return Solve(n, fun);
-        } 
-    }
+    // operation Simulate(n : Int) : Int[] {
+    //     body {
+    //         return Solve(n, fun);
+    //     } 
+    // }
 }

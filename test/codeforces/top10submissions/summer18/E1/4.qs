@@ -3,14 +3,14 @@ namespace Solution
     open Microsoft.Quantum.Canon;
     open Microsoft.Quantum.Primitive;
 
-    operation Set (desired: Result, q1: Qubit) : ()
-    {
-        body
-        {
-            let current = M(q1);
-            if (desired != current) { X(q1); }
-        }
-    }
+    // operation Set (desired: Result, q1: Qubit) : ()
+    // {
+    //     body
+    //     {
+    //         let current = M(q1);
+    //         if (desired != current) { X(q1); }
+    //     }
+    // }
 
     operation Solve (N : Int, Uf : ((Qubit[], Qubit) => ())) : Int[]
     {

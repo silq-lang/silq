@@ -25,11 +25,11 @@
         }
     }
 
-	operation Test() : Unit {
-		using (qs = Qubit[3]) {
-			Solve(qs, [[false, false, false], [false, false, true], [false, true, false], [true, false, false]]);
-			DumpMachine(());
-			ResetAll(qs);
-		}
-	}
+	// operation Test() : Unit {
+	// 	using (qs = Qubit[3]) {
+	// 		Solve(qs, [[false, false, false], [false, false, true], [false, true, false], [true, false, false]]);
+	// 		DumpMachine(());
+	// 		ResetAll(qs);
+	// 	}
+	// }
 }

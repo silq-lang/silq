@@ -6,12 +6,12 @@ namespace Solution {
     open Microsoft.Quantum.Primitive;
     open Microsoft.Quantum.Canon;
 
-    operation Set (desired: Result, q1: Qubit) : () {
-        body {
-            let current = M(q1);
-            if (desired != current) { X(q1); }
-        }
-    }
+    // operation Set (desired: Result, q1: Qubit) : () {
+    //     body {
+    //         let current = M(q1);
+    //         if (desired != current) { X(q1); }
+    //     }
+    // }
 
     operation Solve (qs : Qubit[]) : Unit {
         // your code here
@@ -30,14 +30,14 @@ namespace Solution {
     }
     
     // ------------- Operation which is called from C# -------------------
-    operation RunQsharp () : Bool {
-        body {
-            for (j in 0..4) {
-                using (Q = Qubit[4]) {
+    // operation RunQsharp () : Bool {
+    //     body {
+    //         for (j in 0..4) {
+    //             using (Q = Qubit[4]) {
                 
-                }
-            }
-            return false;
-        }
-    }
+    //             }
+    //         }
+    //         return false;
+    //     }
+    // }
 }

@@ -16,11 +16,11 @@
         }
     }
 
-	operation Test() : Unit {
-		using (qs = Qubit[2]) {
-			Solve(qs);
-			DumpMachine(());
-			ResetAll(qs);
-		}
-	}
+	// operation Test() : Unit {
+	// 	using (qs = Qubit[2]) {
+	// 		Solve(qs);
+	// 		DumpMachine(());
+	// 		ResetAll(qs);
+	// 	}
+	// }
 }

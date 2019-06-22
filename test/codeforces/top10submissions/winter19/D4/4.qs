@@ -46,10 +46,10 @@
 		adjoint controlled auto;
     }
 
-	operation Test() : Unit {
-		using (qs = Qubit[10]) {
-			DumpMachine(());
-			ResetAll(qs);
-		}
-	}
+	// operation Test() : Unit {
+	// 	using (qs = Qubit[10]) {
+	// 		DumpMachine(());
+	// 		ResetAll(qs);
+	// 	}
+	// }
 }

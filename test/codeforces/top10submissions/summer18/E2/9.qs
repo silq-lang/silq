@@ -3,29 +3,29 @@
     open Microsoft.Quantum.Primitive;
     open Microsoft.Quantum.Canon;
 
-    operation OracleImpl (x : Qubit[], y : Qubit, b : Int[]) : ()
-    {
-        body
-        {
-			for (i in 0..Length(x)-1)
-			{
-				if (b[i] == 1)
-				{
-					CNOT(x[i], y);
-				}
-				else
-				{
-					CNOT(x[i], y);
-					X(y);
-				}
-			}
-        }
-    }
+    // operation OracleImpl (x : Qubit[], y : Qubit, b : Int[]) : ()
+    // {
+    //     body
+    //     {
+	// 		for (i in 0..Length(x)-1)
+	// 		{
+	// 			if (b[i] == 1)
+	// 			{
+	// 				CNOT(x[i], y);
+	// 			}
+	// 			else
+	// 			{
+	// 				CNOT(x[i], y);
+	// 				X(y);
+	// 			}
+	// 		}
+    //     }
+    // }
 
-	function Oracle(b: Int[]): ((Qubit[], Qubit) => ())
-	{
-		return OracleImpl(_, _, b);
-	}
+	// function Oracle(b: Int[]): ((Qubit[], Qubit) => ())
+	// {
+	// 	return OracleImpl(_, _, b);
+	// }
 
     operation Solve (N : Int, Uf : ((Qubit[], Qubit) => ())) : Int[]
     {
@@ -56,11 +56,11 @@
         }
     }
 
-	operation Test(b: Int[]): Int[]
-	{
-		body
-		{
-			return Solve(Length(b), Oracle(b));
-		}
-	}
+	// operation Test(b: Int[]): Int[]
+	// {
+	// 	body
+	// 	{
+	// 		return Solve(Length(b), Oracle(b));
+	// 	}
+	// }
 }

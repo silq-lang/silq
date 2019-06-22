@@ -6,17 +6,17 @@ namespace Solution
     open Microsoft.Quantum.Extensions.Testing;
     open Microsoft.Quantum.Extensions.Diagnostics;
 
-    operation SolveTest() : Unit 
-    {
-        using (qs = Qubit[2])
-        {
-            Solve(qs);
+    // operation SolveTest() : Unit 
+    // {
+    //     using (qs = Qubit[2])
+    //     {
+    //         Solve(qs);
 
-            DumpRegister((), qs);
+    //         DumpRegister((), qs);
 
-            ResetAll(qs);
-        }
-    }
+    //         ResetAll(qs);
+    //     }
+    // }
 
     operation Solve (qs : Qubit[]) : Unit 
     {

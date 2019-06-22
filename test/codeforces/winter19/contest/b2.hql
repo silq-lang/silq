@@ -1,9 +1,9 @@
 // https://codeforces.com/contest/1116/problem/B2
-def acos(x:!ℝ)lifted:!ℝ;
-def sqrt(x:!ℝ)lifted:!ℝ;
 def solve(q:𝔹){
 	a:=0:𝔹;
-	q:=Z(q);
+	if q {
+		phase(π);
+	}
 	if q{ a:=H(a); }
 	if a{ phase(π/4); }
 	q:=X(q);

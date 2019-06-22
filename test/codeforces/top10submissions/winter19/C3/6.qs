@@ -2,11 +2,11 @@ namespace Solution {
     open Microsoft.Quantum.Primitive;
     open Microsoft.Quantum.Canon;
 
-    operation addU(x : Qubit[]): Unit {
+    // operation addU(x : Qubit[]): Unit {
         
-        controlled auto;
-        adjoint auto;
-    }
+    //     controlled auto;
+    //     adjoint auto;
+    // }
 
     operation Solve (x : Qubit[], y : Qubit) : Unit {
         body (...) {

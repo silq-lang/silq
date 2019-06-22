@@ -17,18 +17,18 @@
         }
     }
 
-    operation Simulate(n : Int) : Int {
-        body {
-            mutable measurment = 0;
-            using (register = Qubit[1]) {
-                let x = register[0];
-                if (n == 1) {
-                    H(x);
-                }
-                set measurment = Solve(x);
-                ResetAll(register);
-            }
-            return measurment;
-        } 
-    }
+    // operation Simulate(n : Int) : Int {
+    //     body {
+    //         mutable measurment = 0;
+    //         using (register = Qubit[1]) {
+    //             let x = register[0];
+    //             if (n == 1) {
+    //                 H(x);
+    //             }
+    //             set measurment = Solve(x);
+    //             ResetAll(register);
+    //         }
+    //         return measurment;
+    //     } 
+    // }
 }

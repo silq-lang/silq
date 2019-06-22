@@ -6,46 +6,46 @@ namespace Solution {
 	open Microsoft.Quantum.Extensions.Diagnostics;
 
 
-	operation MakeState (q : Qubit, number: Double) : Unit {
-		body (...) { 
-			let theta = 2.0*PI()/3.0;
-			H(q);
-			R1(theta*number, q);
-		}
-		adjoint auto;
-    }
+	// operation MakeState (q : Qubit, number: Double) : Unit {
+	// 	body (...) { 
+	// 		let theta = 2.0*PI()/3.0;
+	// 		H(q);
+	// 		R1(theta*number, q);
+	// 	}
+	// 	adjoint auto;
+    // }
 
-	operation WState (qs : Qubit[]) : Unit {
-        body (...) {
-            let n = Length(qs);
-            if (n == 1) {
-                X(qs[0]);
-            } else {
-                let theta = ArcSin(1.0 / Sqrt(ToDouble(n)));
-                Ry(2.0 * theta, qs[0]);
+	// operation WState (qs : Qubit[]) : Unit {
+    //     body (...) {
+    //         let n = Length(qs);
+    //         if (n == 1) {
+    //             X(qs[0]);
+    //         } else {
+    //             let theta = ArcSin(1.0 / Sqrt(ToDouble(n)));
+    //             Ry(2.0 * theta, qs[0]);
                 
-                X(qs[0]);
-                Controlled WState(qs[0 .. 0], qs[1 .. n - 1]);
-                X(qs[0]);
-            }
-		}       
-		adjoint invert;
-        controlled distribute;
-        controlled adjoint distribute;
-    }
+    //             X(qs[0]);
+    //             Controlled WState(qs[0 .. 0], qs[1 .. n - 1]);
+    //             X(qs[0]);
+    //         }
+	// 	}       
+	// 	adjoint invert;
+    //     controlled distribute;
+    //     controlled adjoint distribute;
+    // }
 
 
-	operation Gen2 (qs : Qubit[]) : Unit {
-		body (...) {
-			using (t = Qubit[1]) {
-				WState([qs[0], qs[1], t[0]]);
-				X(qs[0]); X(qs[1]);
-				Controlled X (qs, t[0]);
-				X(qs[0]); X(qs[1]);
-			}
-		}
-		adjoint auto;
-    }
+	// operation Gen2 (qs : Qubit[]) : Unit {
+	// 	body (...) {
+	// 		using (t = Qubit[1]) {
+	// 			WState([qs[0], qs[1], t[0]]);
+	// 			X(qs[0]); X(qs[1]);
+	// 			Controlled X (qs, t[0]);
+	// 			X(qs[0]); X(qs[1]);
+	// 		}
+	// 	}
+	// 	adjoint auto;
+    // }
 
 	operation U1d (q : Qubit) : Unit {
 		body (...) {

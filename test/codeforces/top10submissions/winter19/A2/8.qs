@@ -7,24 +7,24 @@ namespace Solution
     open Microsoft.Quantum.Extensions.Diagnostics;
     open Microsoft.Quantum.Extensions.Convert;
 
-    operation SolveTest() : Unit 
-    {
-        using (qs = Qubit[4])
-        {
-            mutable bits = new Bool[][4];
+    // operation SolveTest() : Unit 
+    // {
+    //     using (qs = Qubit[4])
+    //     {
+    //         mutable bits = new Bool[][4];
             
-            set bits[0] = [true, false, false, false];
-            set bits[1] = [false, true, false, false];
-            set bits[2] = [false, false, true, false];
-            set bits[3] = [false, false, false, true];
+    //         set bits[0] = [true, false, false, false];
+    //         set bits[1] = [false, true, false, false];
+    //         set bits[2] = [false, false, true, false];
+    //         set bits[3] = [false, false, false, true];
 
-            Solve(qs, bits);
+    //         Solve(qs, bits);
     
-            DumpRegister((), qs);
+    //         DumpRegister((), qs);
 
-            ResetAll(qs);
-        }
-    }
+    //         ResetAll(qs);
+    //     }
+    // }
 
     operation Solve(qs: Qubit[], bits: Bool[][]) : Unit
     {

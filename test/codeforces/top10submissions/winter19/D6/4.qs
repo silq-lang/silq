@@ -35,10 +35,10 @@
         }
     }
 
-	operation Test() : Unit {
-		using (qs = Qubit[3]) {
-			DumpMachine(());
-			ResetAll(qs);
-		}
-	}
+	// operation Test() : Unit {
+	// 	using (qs = Qubit[3]) {
+	// 		DumpMachine(());
+	// 		ResetAll(qs);
+	// 	}
+	// }
 }

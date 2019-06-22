@@ -7,12 +7,12 @@ namespace Solution {
     open Microsoft.Quantum.Canon;
     open Microsoft.Quantum.Extensions.Convert;
 
-    operation Set (desired: Result, q1: Qubit) : () {
-        body {
-            let current = M(q1);
-            if (desired != current) { X(q1); }
-        }
-    }
+    // operation Set (desired: Result, q1: Qubit) : () {
+    //     body {
+    //         let current = M(q1);
+    //         if (desired != current) { X(q1); }
+    //     }
+    // }
     
     operation hmid(qs: Qubit[]) : Unit {
         CNOT(qs[0],qs[1]);

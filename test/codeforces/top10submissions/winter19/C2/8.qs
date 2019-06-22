@@ -7,24 +7,24 @@ namespace Solution
     open Microsoft.Quantum.Extensions.Diagnostics;
     open Microsoft.Quantum.Extensions.Convert;
 
-    operation SolveTest() : Unit 
-    {
-        using ((qs, ans) = (Qubit[3], Qubit()))
-        {
-            X(qs[0]);
-            //H(qs[1]);
-            //H(qs[2]);
+    // operation SolveTest() : Unit 
+    // {
+    //     using ((qs, ans) = (Qubit[3], Qubit()))
+    //     {
+    //         X(qs[0]);
+    //         //H(qs[1]);
+    //         //H(qs[2]);
 
-            DumpRegister((), qs);
+    //         DumpRegister((), qs);
 
-            Solve(qs, ans);
+    //         Solve(qs, ans);
 
-            DumpRegister((), qs + [ans]);
+    //         DumpRegister((), qs + [ans]);
 
-            ResetAll(qs);
-            Reset(ans);
-        }
-    }
+    //         ResetAll(qs);
+    //         Reset(ans);
+    //     }
+    // }
 
     operation Solve (x : Qubit[], y : Qubit) : Unit 
     {

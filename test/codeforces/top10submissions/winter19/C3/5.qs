@@ -45,15 +45,15 @@ namespace Solution {
     }
     
     // ------------- Operation which is called from C# -------------------
-    operation RunQsharp () : Bool {
-        body {
-            for (j in 0..4) {
-                using (Q = Qubit()) {
-                    // X(Q);
-                    // CNOT(Q,Q);
-                }
-            }
-            return false;
-        }
-    }
+    // operation RunQsharp () : Bool {
+    //     body {
+    //         for (j in 0..4) {
+    //             using (Q = Qubit()) {
+    //                 // X(Q);
+    //                 // CNOT(Q,Q);
+    //             }
+    //         }
+    //         return false;
+    //     }
+    // }
 }

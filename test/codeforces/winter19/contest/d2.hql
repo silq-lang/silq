@@ -1,5 +1,5 @@
 // https://codeforces.com/contest/1116/problem/D2
-def solve[n:!ℕ](qs:𝔹^n)mfree{
+def solve[n:!ℕ](qs:𝔹^n){
 	seen:=0:𝔹;
 	for i in [1..n){
 		bit:=qs[n-i];
