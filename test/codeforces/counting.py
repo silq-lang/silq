@@ -19,8 +19,8 @@ def counting(s):
 
 
 # path = './summer18/contest/'
-# path = './top10submissions/winter19/'
-path = './top10submissions/summer18/'
+path = './top10submissions/winter19/'
+# path = './top10submissions/summer18/'
 
 kind = {'Q#':'.qs', 'HQL':'.hql'}['Q#']
 
@@ -92,15 +92,30 @@ for directorie in os.listdir(path):
     result_numbers = result_numbers[keep,:]
     result_names = array(func_names)[keep]
 
-    output_file = open(os.path.join(path,'evals', f'{directorie}_eval.tex'),'w')
-    output_file.write(' && ' + ' && '.join(file_names) + '\n')
+
+    output_file = open(os.path.join(path, 'evals', f'{directorie}_eval.tex'), 'w')
+    # Surrounding:
+    output_file.write('\\centering \n')
+    output_file.write('\\begin{adjustbox}{width=\\columnwidth,center} \n')
+    alignment = ' c'
+    output_file.write('\\begin{tabular}' + '{' + f'{ alignment*(1+len(files)) }' + '}' + '\n')
+    # Header
+    output_file.write(' & ' + ' & '.join(file_names) + '\\\\' + '\n')
+    output_file.write('\hline \n')
+    # Functions
     for k in range(0, len(result_names)):
-        output_file.write('\code{'+result_names[k] + '} && ' + ' && '.join([str(x) for x in result_numbers[k,:]]) + '\n')
+        output_file.write('\code{'+result_names[k] + '} & ' + ' & '.join([str(x) for x in result_numbers[k,:]]) + '\\\\' + '\n')
     output_file.write('\hline \n')
+    # Functors
     for k in range(0, len(functor_names)):
-        output_file.write('\code{' + functor_names[k] + '} &&' + ' && '.join([str(x) for x in result_numbers_functors[k,:]]) + '\n')
+        output_file.write('\code{' + functor_names[k] + '} &' + ' & '.join([str(x) for x in result_numbers_functors[k,:]]) + '\\\\' + '\n')
     output_file.write('\hline \n')
-    output_file.write('\code{Line numbers} &&' + ' && '.join([str(x) for x in line_numbers]))
+    # Line count
+    output_file.write('\code{Line numbers} & ' + ' & '.join([str(x) for x in line_numbers]) + '\\\\' + '\n')
+    # Surrounding
+    output_file.write('\\end{tabular} \n')
+    output_file.write('\\end{adjustbox} \n')
+
     output_file.close()
 
 
