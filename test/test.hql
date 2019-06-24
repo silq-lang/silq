@@ -1,3 +1,120 @@
+
+def foo(const x:𝔹){ // TODO
+	y:=0:𝔹;
+	z:=1:𝔹;
+	if x{
+		return y;
+	}else{
+		return z;
+	}
+}
+
+def main(){
+	return foo(1:𝔹);
+}
+
+/+
+def main(){
+	x:=0:𝔹;
+	y:=0:𝔹;
+	while(measure(H(0:𝔹))){
+		x=H(y);
+	}
+	return x;
+}
++/
+/+def main(){
+	x:=H(0:𝔹);
+	y:=dup(x);
+	while(measure(H(0:𝔹))){ // error
+		forget(y);
+	}
+	return H(x);
+}
++/
+/+
+def main(){
+	x:=H(0:𝔹);
+	y:=dup(x);
+	while(measure(x)){
+		forget(y=true);
+		x:=H(0:𝔹);
+		y:=dup(x);
+	}
+	return y;
+}
++/
+/+def main(){
+	x:=H(0:𝔹);
+	while(measure(H(0:𝔹))){
+		y:=dup(x); // TODO!
+	}
+	return H(x);
+}
++/
+/+
+def main(){
+	x:=H(0:𝔹);
+	if x{
+		y:=dup(x);
+	}else{
+		z:=dup(x);
+	}
+	return H(x);
+}
++/
+/+def main(){
+	x:=H(0:𝔹);
+	y:=dup(x);
+	z:=measure(H(0:𝔹));
+	if z{
+		forget(y=dup(x));
+	}
+	return (z,H(x));
+}
++/
+/+def main(){
+	x:=H(0:𝔹);
+	y:=0:𝔹;
+	return (if x then y else H(y), x); // TODO
+}+/
+/+
+def main(){
+	x:=H(0:𝔹);
+	for i in [0..10){
+		y:=dup(x);
+	}
+	return x;
+}
++/
+/+def main(){
+	x:=H(0:𝔹);
+	repeat 10{
+		y:=dup(x);
+	}
+	return H(x);
+}
++/
+
+/+
+def main(){
+	x:=H(0:𝔹);
+	if true{
+		y:=dup(x);
+		//forget(y);
+	}
+	return H(x);
+}
++/
+/+def main(){
+	x:=H(0:𝔹);
+	if true{
+		y:=dup(x);
+		//forget(y=dup(x));
+	}
+	r:=H(x);
+	return r;
+}+/
 /+
 def main(){
 	x:=0:𝔹;

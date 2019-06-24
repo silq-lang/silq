@@ -520,11 +520,15 @@ Expression statementSemantic(Expression e,Scope sc){
 		auto quantumControl=ite.cond.type!=Bool(true);
 		auto restriction_=quantumControl?Annotation.mfree:Annotation.none;
 		ite.then=controlledCompoundExpSemantic(ite.then,sc,ite.cond,restriction_);
-		if(ite.othw) ite.othw=controlledCompoundExpSemantic(ite.othw,sc,ite.cond,restriction_);
+		if(!ite.othw){
+			ite.othw=New!CompoundExp((Expression[]).init);
+			ite.othw.loc=ite.loc;
+		}
+		ite.othw=controlledCompoundExpSemantic(ite.othw,sc,ite.cond,restriction_);
 		propErr(ite.cond,ite);
 		propErr(ite.then,ite);
-		if(ite.othw) propErr(ite.othw,ite);
-		if(sc.merge(quantumControl,ite.then.blscope_,ite.othw?cast(Scope)ite.othw.blscope_:new BlockScope(sc,restriction_)))
+		propErr(ite.othw,ite);
+		if(sc.merge(quantumControl,ite.then.blscope_,ite.othw.blscope_))
 			ite.sstate=SemState.error;
 		ite.type=unit;
 		return ite;
@@ -570,8 +574,15 @@ Expression statementSemantic(Expression e,Scope sc){
 		propErr(fe.left,fe);
 		propErr(fe.right,fe);
 		propErr(fe.bdy,fe);
-		if(sc.merge(false,fesc,new BlockScope(sc))){
+		auto forgetScope=new BlockScope(sc);
+		if(sc.merge(false,fesc,forgetScope)){
 			sc.note("possibly consumed in for loop", fe.loc);
+			fe.sstate=SemState.error;
+		}
+		if(forgetScope.forgottenVars.length){
+			sc.error("variables potentially consumed multiple times in for loop",fe.loc);
+			foreach(decl;forgetScope.forgottenVars)
+				sc.note(format("variable '%s'",decl.name),decl.loc);
 			fe.sstate=SemState.error;
 		}
 		fe.type=unit;
@@ -600,8 +611,15 @@ Expression statementSemantic(Expression e,Scope sc){
 				sc.note("possibly consumed in while loop", we.loc);
 			propErr(condDup,we);
 		}
-		if(sc.merge(false,we.bdy.blscope_,new BlockScope(sc))){
+		auto forgetScope=new BlockScope(sc);
+		if(sc.merge(false,we.bdy.blscope_,forgetScope)){
 			sc.note("possibly consumed in while loop", we.loc);
+			we.sstate=SemState.error;
+		}
+		if(forgetScope.forgottenVars.length){
+			sc.error("variables potentially consumed multiple times in while loop", we.loc);
+			foreach(decl;forgetScope.forgottenVars)
+				sc.note(format("variable '%s'",decl.name),decl.loc);
 			we.sstate=SemState.error;
 		}
 		we.type=unit;
@@ -617,8 +635,15 @@ Expression statementSemantic(Expression e,Scope sc){
 		re.bdy=compoundExpSemantic(re.bdy,sc);
 		propErr(re.num,re);
 		propErr(re.bdy,re);
-		if(sc.merge(false,re.bdy.blscope_,new BlockScope(sc))){
+		auto forgetScope=new BlockScope(sc);
+		if(sc.merge(false,re.bdy.blscope_,forgetScope)){
 			sc.note("possibly consumed in repeat loop", re.loc);
+			re.sstate=SemState.error;
+		}
+		if(forgetScope.forgottenVars.length){
+			sc.error("variables potentially consumed multiple times in repeat loop", re.loc);
+			foreach(decl;forgetScope.forgottenVars)
+				sc.note(format("variable '%s'",decl.name),decl.loc);
 			re.sstate=SemState.error;
 		}
 		re.type=unit;

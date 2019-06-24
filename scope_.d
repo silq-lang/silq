@@ -196,7 +196,7 @@ abstract class Scope{
 		debug closed=true;
 		bool errors=false;
 		foreach(n,d;symtab){
-			if(!d.isLinear()||canForget(d)) continue;
+			if(!d.isLinear()||canForgetAppend(d)) continue;
 			if(d.rename) rnsymtab.remove(d.rename.ptr);
 			errors=true;
 			error(format("%s '%s' is not consumed",d.kind,d.name),d.loc);
@@ -237,6 +237,15 @@ abstract class Scope{
 		return dependencies.canForget(decl.getName);
 	}
 
+	Declaration[] forgottenVars;
+	final bool canForgetAppend(Declaration decl){
+		if(canForget(decl)){
+			forgottenVars~=decl;
+			return true;
+		}
+		return false;
+	}
+
 	bool allowMerge=false;
 	void nest(NestedScope r)in{
 		assert(allowsLinear());
@@ -267,7 +276,7 @@ abstract class Scope{
 				if(sym.name.ptr !in sc.symtab){
 					symtab.remove(sym.name.ptr);
 					if(sym.rename) rnsymtab.remove(sym.rename.ptr);
-					if(sym.isLinear()&&!canForget(sym)){
+					if(sym.isLinear()&&!scopes[0].canForgetAppend(sym)){
 						error(format("variable '%s' is not consumed", sym.name), sym.loc);
 						errors=true;
 					}
@@ -278,7 +287,7 @@ abstract class Scope{
 					if((sym.scope_ is scopes[0]||osym.scope_ is sc)&&ot&&st&&(ot!=st||quantumControl&&st.hasClassicalComponent())){
 						symtab.remove(sym.name.ptr);
 						if(sym.rename) rnsymtab.remove(sym.rename.ptr);
-						if(sym.isLinear()&&!canForget(sym)){
+						if(sym.isLinear()&&!scopes[0].canForgetAppend(sym)){
 							error(format("variable '%s' is not consumed", sym.name), sym.loc);
 							errors=true;
 						}
@@ -289,7 +298,7 @@ abstract class Scope{
 		foreach(sc;scopes[1..$]){
 			foreach(sym;sc.symtab){
 				if(sym.name.ptr !in symtab){
-					if(sym.isLinear()&&!sc.canForget(sym)){
+					if(sym.isLinear()&&!sc.canForgetAppend(sym)){
 						error(format("variable '%s' is not consumed", sym.name), sym.loc);
 						errors=true;
 					}

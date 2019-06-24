@@ -114,6 +114,7 @@ struct QState{
 		QState then,othw;
 		then.copyNonState(this);
 		othw.copyNonState(this);
+		othw.vars=othw.vars.dup;
 		if(cond.isClassical()){
 			if(cond.asBoolean) then=this;
 			else othw=this;
@@ -456,7 +457,7 @@ struct QState{
 			assert(0,text("can't assign to constant ",this," ",rhs));
 		}
 		void forget(ref QState state,Value rhs){
-			enforce(type==rhs.type,text("TODO: forget with types ",type," ",rhs.type));
+			enforce(type.getClassical()==rhs.type.getClassical(),text("TODO: forget with types ",type," ",rhs.type));
 			final switch(tag){
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.bval])
 				case t: assert(isClassical); return;
@@ -1296,6 +1297,13 @@ struct QState{
 		}
 		this=map!forgetImpl(var);
 	}
+	void forgetLocals(Scope scope_){
+		foreach(var;scope_.forgottenVars){
+			auto name=var.getName;
+			vars[name].forget(this);
+			vars.remove(name);
+		}
+	}
 	void assignTo(ref Value var,Value rhs){
 		enforce(var.type==rhs.type);
 		var.assign(this,rhs);
@@ -1504,6 +1512,7 @@ struct Interpreter(QState){
 		this.hasFrame=hasFrame;
 	}
 	QState.Value runExp(Expression e){
+		if(!qstate.state.length) return QState.Value.init;
 		QState.Value doIt()(Expression e){
 			auto r=doIt2(e);
 			if(e.constLookup&&!cast(Identifier)e&&!cast(TupleExp)e&&!cast(TypeAnnotationExp)e&&e.isQfree())
@@ -1668,13 +1677,17 @@ struct Interpreter(QState){
 				auto cond=runExp(ite.cond);
 				auto thenElse=qstate.split(cond);
 				qstate=thenElse[0];
-				auto othw=thenElse[1];
 				auto thenIntp=Interpreter!QState(functionDef,ite.then,qstate,hasFrame);
+				auto then=thenIntp.runExp(ite.then.s[0]);
 				assert(!!ite.othw);
-				auto othwIntp=Interpreter(functionDef,ite.othw,othw,hasFrame);
+				auto othwState=thenElse[1];
+				auto othwIntp=Interpreter(functionDef,ite.othw,othwState,hasFrame);
+				auto othw=othwIntp.runExp(ite.othw);
+				thenIntp.qstate.forgetLocals(ite.then.blscope_);
+				othwIntp.qstate.forgetLocals(ite.othw.blscope_);
 				qstate=thenIntp.qstate;
 				qstate+=othwIntp.qstate;
-				return QState.ite(cond,thenIntp.runExp(ite.then.s[0]),othwIntp.runExp(ite.othw));
+				return QState.ite(cond,then,othw);
 			}else if(auto tpl=cast(TupleExp)e){
 				auto values=tpl.e.map!(e=>doIt(e)).array; // DMD bug: map!doIt does not work
 				return QState.makeTuple(e.type,values);
@@ -1854,11 +1867,12 @@ struct Interpreter(QState){
 			auto thenIntp=Interpreter(functionDef,ite.then,qstate,hasFrame);
 			thenIntp.run(retState);
 			qstate=thenIntp.qstate;
-			if(ite.othw){
-				auto othwIntp=Interpreter(functionDef,ite.othw,othw,hasFrame);
-				othwIntp.run(retState);
-				othw=othwIntp.qstate;
-			}
+			enforce(!!ite.othw);
+			auto othwIntp=Interpreter(functionDef,ite.othw,othw,hasFrame);
+			othwIntp.run(retState);
+			othw=othwIntp.qstate;
+			qstate.forgetLocals(ite.then.blscope_);
+			othw.forgetLocals(ite.othw.blscope_);
 			qstate+=othw;
 		}else if(auto re=cast(RepeatExp)e){
 			auto rep=runExp(re.num);
@@ -1868,13 +1882,13 @@ struct Interpreter(QState){
 				foreach(x;0.ℤ..z){
 					if(opt.trace) writeln("repetition: ",x+1);
 					intp.run(retState);
-					// TODO: marginalize locals
+					intp.qstate.forgetLocals(re.bdy.blscope_);
 				}
 				qstate=intp.qstate;
 			}else{
-				auto bound=rep.floor();
-				auto intp=Interpreter(functionDef,re.bdy,QState.empty(),hasFrame);
-				intp.qstate.state = qstate.state;
+				enforce(0,"TODO?");
+				/+auto bound=rep.floor();
+				auto intp=Interpreter(functionDef,re.bdy,qstate,hasFrame);
 				qstate.state=typeof(qstate.state).init;
 				for(ℤ x=0;;++x){
 					auto thenOthw=intp.qstate.split(bound.le(QState.makeInteger(x)));
@@ -1884,7 +1898,8 @@ struct Interpreter(QState){
 					if(!intp.qstate.state.length) break;
 					if(opt.trace) writeln("repetition: ",x+1);
 					intp.run(retState);
-				}
+					intp.qstate.forgetLocals(re.bdy.blscope_);
+				}+/
 			}
 		}else if(auto fe=cast(ForExp)e){
 			auto l=runExp(fe.left), r=runExp(fe.right);
@@ -1895,11 +1910,12 @@ struct Interpreter(QState){
 					if(opt.trace) writeln("loop-index: ",j);
 					intp.qstate.assignTo(fe.var.name,qstate.makeInteger(j));
 					intp.run(retState);
-					// TODO: marginalize locals
+					intp.qstate.forgetLocals(fe.bdy.blscope_);
 				}
 				qstate=intp.qstate;
 			}else{
-				auto loopIndex=fe.leftExclusive?l.floor()+1:l.ceil();
+				enforce(0,"TODO?");
+				/+auto loopIndex=fe.leftExclusive?l.floor()+1:l.ceil();
 				auto bound=fe.rightExclusive?r.ceil()-1:r.floor();
 				auto intp=Interpreter(functionDef,fe.bdy,qstate,hasFrame);
 				qstate.state=typeof(qstate.state).init;
@@ -1913,25 +1929,29 @@ struct Interpreter(QState){
 					intp.qstate.assignTo(fe.var.name,loopIndex+x);
 					if(opt.trace) writeln("repetition: ",x+1);
 					intp.run(retState);
-				}
+					intp.qstate.forgetLocals(fe.bdy.blscope_);
+				}+/
 			}
 		}else if(auto we=cast(WhileExp)e){
 			auto intp=Interpreter(functionDef,we.bdy,qstate,hasFrame);
 			qstate.state=typeof(qstate.state).init;
-			while(intp.qstate.state.length){
+			for(;;){
 				auto cond = intp.runExp(we.cond);
 				auto thenOthw=intp.qstate.split(cond);
 				qstate += thenOthw[1];
 				intp.qstate = thenOthw[0];
-				//intp.qstate.error = zero;
+				if(!intp.qstate.state.length) break;
 				intp.run(retState);
-				// TODO: marginalize locals
+				intp.qstate.forgetLocals(we.bdy.blscope_);
 			}
 		}else if(auto re=cast(ReturnExp)e){
 			auto value = runExp(re.e);
 			if(functionDef.context&&functionDef.contextName.startsWith("this"))
 				value = QState.makeTuple(tupleTy([re.e.type,contextTy(true)]),[value,qstate.readLocal(functionDef.contextName,false)]);
 			qstate.assignTo("`value",value);
+			if(functionDef.isNested) // caller takes care of context
+				qstate.vars.remove(functionDef.contextName);
+			qstate.forgetLocals(functionDef.body_.blscope_);
 			if(hasFrame){
 				assert("`frame" in qstate.vars);
 				//assert(qstate.vars.length==2); // `value and `frame
