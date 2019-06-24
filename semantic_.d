@@ -1529,7 +1529,10 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 	}
 	assert(expr.sstate==SemState.initial);
 	expr.sstate=SemState.started;
+	Scope.ConstBlockContext constSave;
+	if(!constResult) constSave=sc.saveConst();
 	scope(success){
+		if(!constResult) sc.resetConst(constSave);
 		expr.constLookup=constResult;
 		if(expr&&expr.sstate!=SemState.error){
 			if(constResult&&!expr.isLifted(sc)&&!expr.type.isClassical()){

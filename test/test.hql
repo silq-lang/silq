@@ -1,8 +1,91 @@
 /+
 def main(){
-	φ:=2*asin(0.5);
 	x:=0:𝔹;
-	return rotZ(φ,x);
+	if x{ x:=X(x); } // error
+}
++/
+/+
+def foo[n:!ℕ](const a:int[n],b:int[n]){
+	b+=a;
+	return b;
+}
+def bar[n:!ℕ](a:int[n]]){
+	foo(a,a); // error
+	return a;
+}
++/
+/+
+def add[n:!ℕ](a:int[n],b:int[n]){
+	return (a+b,a,b); // ok
+}
++/
+/+
+def main(){
+	x:=H(0:𝔹);
+	y:=dup(x);
+	x⊕=x;
+	return (x,y);
+}
++/
+/+
+def main(){
+	a:=array(2,[]:𝔹[]);
+	x:=measure(H(0:𝔹));
+	a[x]~=[0:𝔹];// TODO
+	return a;
+}
++/
+/+
+def main(){
+	x:=[]:𝔹[];
+	x:=x~[H(false)];
+	y:=dup(x)~[H(false)];
+	/*x~=[H(0:𝔹)];
+	y:=dup(x);
+	y~=[H(0:𝔹)];*/
+	return (x,y);
+}
++/
+/+
+def main(){
+	x := 0: int[32];
+	a := []: 𝔹[];
+	for i in [0..10){ a~=[H(false)]; }
+	for i in [0..10){ x+=a[i]; }
+	x:=measure(x);
+	return a;
+}
++/
+/+
+def main(){
+	f:=(x:𝔹)qfree⇒ x;
+	x:=H(0:𝔹);
+	y:=dup(x);
+	z:=f(y);
+	forget(z);
+	y:=dup(x);
+	z:=dup(f(y));
+	forget(z);
+	a:=0:!𝔹;
+	b:=f(a);
+	b=a;
+	return x;
+}
++/
+/+
+def solve(){
+	(q₀,q₁):=(1:𝔹,1:𝔹);
+	while measure(q₀&q₁){
+		measure(q₀,q₁);
+		(q₀,q₁):=(H(0:𝔹),H(0:𝔹));
+	}
+	return (q₀,q₁);
+}
++/
+/+
+def main(){
+	φ:=2*asin(0.5);
+	return rotY(φ,0:𝔹);
 }
 +/
 /+def main(){

@@ -122,6 +122,11 @@ abstract class Scope{
 		note("previous definition was here",prev.name.loc);
 	}
 
+	struct ConstBlockContext{
+		private Identifier[Declaration] constBlock;
+	}
+	ConstBlockContext saveConst(){ return ConstBlockContext(constBlock); }
+	void resetConst(ConstBlockContext previous){ constBlock=previous.constBlock; }
 	void resetConst(){ constBlock.clear(); }
 	Identifier isConst(Declaration decl){ return constBlock.get(decl, null); }
 
