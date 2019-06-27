@@ -1,4 +1,11 @@
 /+
+def main(){
+	x:=vector(1,0:int[1]);
+	x[0][0]:=H(x[0][0]);
+	return x;
+}
++/
+/+
 def solve[n:!ℕ](bits: !𝔹^n){
 	x:=H(0:𝔹);
 	qs := if x then bits else (0:int[n]):𝔹^n;
@@ -46,6 +53,7 @@ def main(){
 /+
 def array2vec[n:!ℕ][τ](a: τ[])qfree:τ^n{ // TODO
 	assert(a.length==n);
+	if n==0{ return (); } // TODO
 	return array2vec[n div 2](a[0..n div 2])~array2vec[(n+1) div 2](a[n div 2..n]); // TODO
 }
 +/
