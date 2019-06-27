@@ -1,4 +1,102 @@
+/+
+def solve[n:!ℕ](bits: !𝔹^n){
+	x:=H(0:𝔹);
+	qs := if x then bits else (0:int[n]):𝔹^n;
+	forget(x=qs[0]);
+	return qs;
+}
+// import codeforces.summer18.contest.a2;
 
+def main(){
+	return solve(1:!𝔹,0:!𝔹,0:!𝔹,1:!𝔹,0:!𝔹,1:!𝔹); // TODO
+}
++/
+/+
+import codeforces.summer18.contest.a1;
+def main(){
+	return solve(3);
+}
++/
+/+
+def main(){
+	x:=0:int[1];
+	x[0]:=H(x[0]);
+	x[0]:=H(x[0]);
+	return x;
+}
++/
+/+
+def main(){
+	x:=[]:𝔹[];
+	y:=H(0:𝔹);
+	x~=[y];
+	x[0]:=H(x[0]);
+	return x;
+}
++/
+
+/+
+def main(){
+	x:=vector(1,0:𝔹);
+	x[0] := H(x[0]);
+	x[0] := H(x[0]);
+	return x;
+}
++/
+/+
+def array2vec[n:!ℕ][τ](a: τ[])qfree:τ^n{ // TODO
+	assert(a.length==n);
+	return array2vec[n div 2](a[0..n div 2])~array2vec[(n+1) div 2](a[n div 2..n]); // TODO
+}
++/
+/+
+def main(){
+	assert(1:!𝔹);
+}
++/
+/+def main(){
+	x:=((vector(3,1:𝔹):int[3]):𝔹^3):𝔹[];
+	return x;
+}+/
+/+
+def main(){
+	x:=(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16):int[4]^16;
+	return x;
+}
++/
+/+
+def main(){
+	//x:=2:!int[2];
+	//y:=x:!ℤ;
+	x:=(0:int[3]);
+	x[1]:=H(x[1]);
+	y:=x:𝔹^3;
+	return y;
+}
++/
+/+
+def main(){
+	x:=-3:int[3];
+	x+=3;
+	return x;
+}
++/
+/+
+def main(){
+	x:=0:int[2];
+	y:=0:int[3];
+	z:=x+y; // error
+}
++/
+/+
+def f(const x:𝔹)lifted⇒dup(x);
+
+def main(){
+	y:=f(measure(H(0:𝔹)));
+	//__show(__query("dep",y));
+}
++/
+/+
 def foo(const x:𝔹){ // TODO
 	y:=0:𝔹;
 	z:=1:𝔹;
@@ -12,7 +110,7 @@ def foo(const x:𝔹){ // TODO
 def main(){
 	return foo(1:𝔹);
 }
-
++/
 /+
 def main(){
 	x:=0:𝔹;
@@ -397,8 +495,8 @@ def main(){
 		return r;
 	};
 	g := λ[n:!ℕ](x: 𝔹^n)lifted⇒0:𝔹;
-	x:=solve[1](f[1]); // TODO: improve unification
-	y:=solve[1](g[1]);
+	x:=solve(f[1]);
+	y:=solve(g[1]);
 	return (x,y);
 }+/
 

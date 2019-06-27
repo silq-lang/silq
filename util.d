@@ -494,6 +494,10 @@ struct TupleX(T...){
 }
 auto tuplex(T...)(T t){ return TupleX!T(t); }
 
+int opCmp(T)(T a,T b)if(is(typeof(a<b))){
+	return a<b?-1:a==b?0:1;
+}
+
 import std.bigint;
 alias ℤ=BigInt;
 
@@ -636,6 +640,63 @@ auto nC(ℤ n){
 ℤ floor(ℚ x){
 	return floordiv(x.num,x.den);
 }
+
+struct BitInt(bool signed=true){
+	size_t nbits;
+	ℤ val;
+	this(size_t nbits,ℤ val){
+		this.nbits=nbits;
+		this.val=val;
+		wrap();
+	}
+	void wrap(){
+		val&=(ℤ(1)<<nbits)-1;
+		static if(signed) if(nbits&&val&(ℤ(1)<<(nbits-1))) val-=(ℤ(1)<<nbits);
+	}
+	BitInt opBinary(string op)(BitInt r)if(!op.among("<<",">>"))in{
+		assert(nbits==r.nbits);
+	}do{
+		return BitInt(nbits,mixin(`val `~op~` r.val`));
+	}
+	BitInt opBinary(string op)(size_t r)if(op.among("<<",">>")){
+		// TODO: shortcut for r>=nbits?
+		return BitInt(nbits,mixin(`val `~op~` r`));
+	}
+	BitInt opUnary(string op)(){
+		return BitInt(nbits,mixin(op~` val`));
+	}
+	bool opEquals(bool signed)(BitInt!signed rhs){
+		return val==rhs.val;
+	}
+	int opCmp(bool signed)(BitInt!signed rhs){
+		return val.opCmp(rhs.val);
+	}
+	bool opEquals(T)(T rhs)if(!is(rhs==BitInt)&&is(typeof(val==ℤ(rhs)))){
+		return val==ℤ(rhs);
+	}
+	int opCmp(T)(T rhs)if(!is(rhs==BitInt)&&is(typeof(val.opCmp(ℤ(rhs))))){
+		return val.opCmp(rhs);
+	}
+	bool opEquals(double rhs){
+		return toReal(val)==rhs; // TODO: improve?
+	}
+	int opCmp(double rhs){
+		return toReal(val).opCmp(rhs); // TODO: improve?
+	}
+	bool opEquals(ℚ rhs){
+		return rhs==val;
+	}
+	int opCmp(ℚ rhs){
+		return -rhs.opCmp(val);
+	}
+	string toString(){
+		return text(val);
+	}
+	hash_t toHash(){
+		return FNV(nbits,FNV(val.toHash()));
+	}
+}
+
 
 template tryImport(string filename,string alt=""){
 	static if(__traits(compiles,import(filename))) enum tryImport = import(filename)[0..$-1];

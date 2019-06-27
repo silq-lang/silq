@@ -1970,8 +1970,6 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 			auto vec1=cast(VectorTy)from, vec2=cast(VectorTy)to;
 			if(vec1&&vec2&&vec1.num==vec2.num&&typeExplicitConversion(vec1.next,vec2.next))
 				return true;
-			if(arr1&&vec2&&typeExplicitConversion(arr1.next,vec2.next))
-				return true;
 			if(vec1&&arr2&&typeExplicitConversion(vec1.next,arr2.next))
 				return true;
 			return false;

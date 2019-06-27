@@ -248,10 +248,10 @@ struct QState{
 		}
 	}
 	static class ConvertQVal: QVal{
-		QVal value;
+		Value value;
 		Expression ntype;
-		this(QVal value,Expression ntype){ this.value=value; this.ntype=ntype.getClassical(); }
-		override Value get(ref Σ σ){ return value.get(σ).convertTo(ntype); }
+		this(Value value,Expression ntype){ this.value=value; this.ntype=ntype.getClassical(); }
+		override Value get(ref Σ σ){ return value.classicalValue(σ).convertTo(ntype); }
 		override void removeVar(ref Σ σ){
 			value.removeVar(σ);
 		}
@@ -316,6 +316,8 @@ struct QState{
 			fval,
 			qval,
 			zval,
+			intval,
+			uintval,
 			bval,
 		}
 		static Tag getTag(Expression type){
@@ -332,8 +334,8 @@ struct QState{
 			if(type==ℤt(true)) return Tag.zval;
 			if(type==Bool(true)) return Tag.bval;
 			if(type==typeTy) return Tag.bval; // TODO: ok?
-			if(isInt(type)||isUint(type)) return Tag.zval; // TODO: wrap-around
-			if(isUint(type)) return Tag.zval; // TODO: wrap-around
+			if(isInt(type)) return Tag.intval;
+			if(isUint(type)) return Tag.uintval;
 			enforce(0,text("TODO: representation for type ",type));
 			assert(0);
 		}
@@ -353,7 +355,7 @@ struct QState{
 		Value dup(ref QState state){
 			if(isClassical) return this;
 			final switch(tag){
-				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.bval])
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
 				case t: assert(0);
 				case Tag.closure:
 					Value r;
@@ -382,7 +384,7 @@ struct QState{
 		Value parameterVar(ref QState state){
 			if(isClassical) return this;
 			final switch(tag){
-				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.bval])
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
 				case t: assert(0);
 				case Tag.closure:
 					return this;
@@ -436,7 +438,7 @@ struct QState{
 			assert(type==rhs.type);
 			if(isClassical){ this=rhs; return; }
 			Lswitch: final switch(tag){
-				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.bval])
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
 				case t: this=rhs; break Lswitch;
 				case Tag.closure: this=rhs; break;
 				case Tag.array_:
@@ -456,10 +458,27 @@ struct QState{
 			}
 			assert(0,text("can't assign to constant ",this," ",rhs));
 		}
+		void removeVar(ref Σ σ){
+			final switch(tag){
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
+				case t: assert(isClassical); return;
+				case Tag.closure:
+					if(closure.context) return closure.context.removeVar(σ);
+					return;
+				case Tag.array_:
+					foreach(i,ref x;array_) x.removeVar(σ);
+					return;
+				case Tag.record:
+					foreach(k,v;record) v.removeVar(σ);
+					return;
+				case Tag.quval:
+					return quval.removeVar(σ);
+			}
+		}
 		void forget(ref QState state,Value rhs){
 			enforce(type.getClassical()==rhs.type.getClassical(),text("TODO: forget with types ",type," ",rhs.type));
 			final switch(tag){
-				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.bval])
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
 				case t: assert(isClassical); return;
 				case Tag.closure:
 					assert(rhs.tag==Tag.closure);
@@ -482,7 +501,7 @@ struct QState{
 		void forget(ref QState state){
 			// TODO: get rid of code duplication
 			final switch(tag){
-				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.bval])
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
 				case t: assert(isClassical); return;
 				case Tag.closure:
 					if(closure.context) return closure.context.forget(state);
@@ -499,7 +518,7 @@ struct QState{
 		}
 		Value setConstLifted(){ // TODO: do this in-place
 			final switch(tag){
-				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.bval])
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
 				case t: assert(isClassical); return this;
 				case Tag.closure:
 					Closure nclosure=this.closure;
@@ -532,12 +551,14 @@ struct QState{
 			R fval;
 			ℚ qval;
 			ℤ zval;
+			BitInt!true intval;
+			BitInt!false uintval;
 			bool bval;
 			ubyte[max(array_.sizeof,record.sizeof,quval.sizeof,fval.sizeof,qval.sizeof,zval.sizeof,bval.sizeof)] bits;
 		}
 		bool isClassical(){
 			final switch(tag){
-				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.bval])
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
 				case t: return true;
 				case Tag.closure:
 					if(closure.context) return (*closure.context).isClassical();
@@ -558,18 +579,19 @@ struct QState{
 			if(type==ntype) return this;
 			// TODO: do this in-place?
 			auto otag=tag, ntag=getTag(ntype);
-			if(otag==Tag.quval){
-				enforce(ntag==Tag.quval,"TODO");
-				Value r;
-				r.type=ntype;
-				r.quval=new ConvertQVal(quval,ntype);
-				return r;
-			}else if(ntag==Tag.quval){
-				auto constant=convertTo(ntype.getClassical());
-				Value r;
-				r.type=ntype;
-				r.quval=new QConst(constant);
-				return r;
+			if(ntag==tag.quval){
+				if(isClassical()){
+					auto constant=convertTo(ntype.getClassical());
+					Value r;
+					r.type=ntype;
+					r.quval=new QConst(constant);
+					return r;
+				}else{
+					Value r;
+					r.type=ntype;
+					r.quval=new ConvertQVal(this,ntype);
+					return r;
+				}
 			}
 			final switch(otag){
 				case Tag.array_:
@@ -586,6 +608,15 @@ struct QState{
 						}else assert(0);
 						return r;
 					}
+					if(ntag==Tag.intval||ntag==Tag.uintval){
+						ℤ r=0;
+						foreach(i,ref v;array_){
+							assert(v.tag==Tag.bval);
+							if(v.bval) r+=ℤ(1)<<i;
+						}
+						if(ntag==Tag.intval) return makeInt(BitInt!true(array_.length,r),ntype);
+						return makeUint(BitInt!false(array_.length,r),ntype);
+					}
 					break;
 				case Tag.record:
 					break;
@@ -596,7 +627,8 @@ struct QState{
 					return r;
 					break;
 				case Tag.quval:
-					assert(0);
+					// can happen when converting from int[n]/uint[n] to array (TODO: store n classically?)
+					break;
 				case Tag.fval:
 					break;
 				case Tag.qval:
@@ -608,12 +640,6 @@ struct QState{
 					}
 					break;
 				case Tag.zval:
-					if(ntag==Tag.zval){
-						Value r;
-						r.type=ntype; // TODO: wraparound for int[n] and uint[n]
-						r.zval=zval;
-						return r;
-					}
 					if(ntag==Tag.qval){
 						Value r;
 						r.type=ntype;
@@ -625,6 +651,20 @@ struct QState{
 						r.type=ntype;
 						r.fval=toReal(zval);
 						return r;
+					}
+					break;
+				case Tag.intval,Tag.uintval:
+					if(ntag==Tag.array_){
+						size_t nbits=0;
+						ℤ val=0;
+						if(otag==Tag.intval){
+							nbits=intval.nbits;
+							val=intval.val;
+						}else{
+							nbits=uintval.nbits;
+							val=uintval.val;
+						}
+						return makeArray(ntype,iota(nbits).map!(i=>makeBool(!!(val&(1<<i)))).array);
 					}
 					break;
 				case Tag.bval:
@@ -682,16 +722,19 @@ struct QState{
 		Value opIndex(size_t i)in{
 			assert(tag==Tag.array_||isInt(type)||isUint(type));
 		}do{
-			if(tag==Tag.array_) return array_[i];
-			if(tag==Tag.quval){
-				assert(isInt(type)||isUint(type));
-				Value r;
-				r.type=Bool(false);
-				r.quval=new IndexQVal(quval,i);
-				return r;
+			final switch(tag){
+				case Tag.array_: return array_[i];
+				case Tag.quval:
+					assert(isInt(type)||isUint(type));
+					Value r;
+					r.type=Bool(false);
+					r.quval=new IndexQVal(quval,i);
+					return r;
+				case Tag.uintval: return makeBool((uintval.val&(ℤ(1)<<i))!=0);
+				case Tag.intval: return makeBool((intval.val&(ℤ(1)<<i))!=0);
+				case Tag.fval,Tag.qval,Tag.zval,Tag.bval: enforce(0,"TODO?"); assert(0);
+				case Tag.record,Tag.closure: assert(0);
 			}
-			enforce(tag==Tag.zval);
-			return makeBool(((ℤ(1)<<i)&zval)!=0); // TODO: this needs to be bounds-checked
 		}
 		Value opIndex(Value i){
 			if(i.isClassicalInteger()) return this[to!size_t(i.asInteger())];
@@ -773,12 +816,12 @@ struct QState{
 			assert(!!ntype);
 			static if(op=="^^"){
 				auto t1=type,t2=r.type;
-				if(t1==Bool(true)&&isSubtype(t2,ℕt(true))) return makeBool(neqZImpl||r.eqZImpl);
+				if(t1==Bool(true)&&isSubtype(t2,ℕt(true))) return makeBool(asBoolean||r.asBoolean);
 				if(cast(ℕTy)t1&&isSubtype(t2,ℕt(true))) return makeInteger(pow(asInteger,r.asInteger));
 				//if(cast(ℂTy)t1||cast(ℂTy)t2) return t1^^t2; // ?
 				if(util.among(t1,Bool(true),ℕt(true),ℤt(true),ℚt(true))&&isSubtype(t2,ℤt(false)))
 					return makeRational(pow(asRational(),r.asInteger()));
-				if(type==Bool(true)) return makeBool(neqZImpl||r.eqZImpl);
+				if(type==Bool(true)) return makeBool(asBoolean||r.asBoolean);
 				if(t1!=ℝ(true)||t2!=ℝ(true))
 					return convertTo(ℝ(true))^^r.convertTo(ℝ(true));
 				return makeReal(fval^^r.fval);
@@ -789,36 +832,51 @@ struct QState{
 				enforce(result.tag==Tag.array_);
 				result.array_=array_~r.array_;
 				return result;
+			}else static if(op=="<<"||op==">>"){
+				if(type==ℤt(true)) return makeInteger(mixin(`zval `~op~` to!size_t(r.asInteger())`));
+				if(type==Bool(true)) return makeInteger(mixin(`ℤ(cast(int)bval) `~op~` to!size_t(r.asInteger())`));
+				if(isInt(type)) return makeInt(mixin(`intval `~op~` to!size_t(r.asInteger())`),type);
+				if(isUint(type)) return makeUint(mixin(`uintval `~op~` to!size_t(r.asInteger())`),type);
 			}else{
-				if(type!=ntype||r.type!=ntype)
+				if(type!=ntype||r.type!=ntype){
+					if(type==ntype&&r.type==ℤt(true)){
+						if(isInt(type)) return this.opBinary!op(makeInt(BitInt!true(intval.nbits,r.zval),ntype));
+						if(isUint(type)) return this.opBinary!op(makeUint(BitInt!false(uintval.nbits,r.zval),ntype));
+					}else if(type==ℤt(true)&&r.type==ntype){
+						if(isInt(r.type)) return makeInt(BitInt!true(r.intval.nbits,zval),ntype).opBinary!op(r);
+						if(isUint(r.type)) return makeUint(BitInt!false(r.uintval.nbits,zval),ntype).opBinary!op(r);
+						// TODO: rat
+					}
 					return this.convertTo(ntype).opBinary!op(r.convertTo(ntype));
+				}
 				static if(op=="/") enforce(!r.eqZImpl,"division by zero");
 				static if(is(typeof(mixin(`fval `~op~` r.fval`))))
 					if(type==ℝ(true)) return makeReal(mixin(`fval `~op~` r.fval`));
 				static if(is(typeof(mixin(`qval `~op~` r.qval`))))
 					if(type==ℚt(true)) return makeRational(mixin(`qval `~op~` r.qval`));
-				static if(is(typeof(mixin(`zval `~op~` r.zval`)))){
-					if(type==ℤt(true)||isInt(type)||isUint(type)){
-						return makeInteger(mixin(`zval `~op~` r.zval`),ntype); // TODO: wraparound
-					}
-				}
+				static if(is(typeof(mixin(`zval `~op~` r.zval`))))
+					if(type==ℤt(true)) return makeInteger(mixin(`zval `~op~` r.zval`));
+				static if(is(typeof(mixin(`intval `~op~` r.intval`))))
+					if(isInt(type)) return makeInt(mixin(`intval `~op~` r.intval`),ntype);
+				static if(is(typeof(mixin(`uintval `~op~` r.uintval`))))
+					if(isUint(type)) return makeUint(mixin(`uintval `~op~` r.uintval`),ntype);
 				static if(op=="div"){
 					enforce(!r.eqZImpl,"division by zero");
 					final switch(tag){
 						case Tag.fval: return (this/r).floor();
 						case Tag.qval: return makeInteger(.floor(qval/r.qval));
 						case Tag.zval: return makeInteger(zval/r.zval);
+						case Tag.intval: return makeInt(intval/r.intval,type);
+						case Tag.uintval: return makeUint(uintval/r.uintval,ntype);
 						case Tag.bval: return makeInteger(ℤ(bval/r.bval));
 						case Tag.closure,Tag.array_,Tag.record,Tag.quval: break;
 					}
 				}
 				static if(is(typeof((bool a,bool b){ bool c=mixin(`a `~op~` b`); })))
 					if(type==Bool(true)&&r.type==Bool(true)) return makeBool(mixin(`bval `~op~` r.bval`));
-				static if(op=="<<"||op==">>")
-					return makeInteger(mixin(`asInteger() `~op~` to!size_t(r.asInteger())`),ntype); // TODO: ok?
-				enforce(0,text("TODO: '",op,"' for types ",this.type," and ",r.type));
-				assert(0);
 			}
+			enforce(0,text("TODO: '",op,"' for types ",this.type," and ",r.type));
+			assert(0);
 		}
 		Value opBinary(string op)(long b){
 			return mixin(`this `~op~` makeInteger(ℤ(b))`);
@@ -827,10 +885,12 @@ struct QState{
 			return mixin(`this `~op~` makeInteger(b)`);
 		}
 		bool eqZImpl(){
-			if(type==ℝ(true)) return fval==0;
-			if(type==ℚt(true)) return qval==0;
-			if(type==ℤt(true)) return zval==0;
-			if(type==Bool(true)) return bval==0;
+			final switch(tag){
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.uintval,Tag.intval,Tag.bval])
+				case t: return mixin(text(t,`==0`));
+				case Tag.array_,Tag.record,Tag.closure: break;
+				case Tag.quval: break;
+			}
 			enforce(0,text("TODO: 'eqZ'/'neqZ' for type ",this.type));
 			assert(0);
 		}
@@ -868,10 +928,13 @@ struct QState{
 					else return makeBool(equalPrefix!=array_.length);
 				}
 			}
-			enum supportedTags=[Tag.fval,Tag.qval,Tag.zval,Tag.bval];
+			enum supportedTags=[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval];
 			enum unsupportedTags=[Tag.closure,Tag.array_,Tag.record,Tag.quval];
 			static bool compareImpl(S,T)(S a,T b){
-				static if(is(S==T)||(is(S==ℚ)&&is(T==ℤ)||is(S==ℤ)&&is(T==ℚ))) return mixin(text(`a `,op,` b`));
+				static if(is(S==T)||(is(S==ℚ)&&is(T==ℤ)||is(S==ℤ)&&is(T==ℚ))||
+				          is(S==BitInt!true)||is(S==BitInt!false)||
+				          is(T==BitInt!true)||is(T==BitInt!false))
+					return mixin(text(`a `,op,` b`));
 				else static if(is(S==double)){
 					static if(is(T==ℚ)||is(T==ℤ)) return mixin(text(`a `,op,` toReal(b)`)); // TODO: improve
 					else static if(is(T==bool)) return mixin(text(`a `,op,` to!R(b)`));
@@ -910,8 +973,8 @@ struct QState{
 		Value floor(){
 			final switch(tag){
 				case Tag.qval: return makeInteger(.floor(qval));
-				static foreach(t;[Tag.zval,Tag.bval])
-				case t: return this;
+				case Tag.zval,Tag.bval: return this;
+				case Tag.intval,Tag.uintval: break;
 				case Tag.fval: return makeInteger(ℤ(.floor(fval).to!string)); // TODO: more efficient variant?
 				case Tag.closure,Tag.array_,Tag.record: break;
 				case Tag.quval: return makeQVal(new MemberFunctionQVal!"floor"(this),type==ℝ(true)?ℤt(true):type);
@@ -922,8 +985,8 @@ struct QState{
 		Value ceil(){
 			final switch(tag){
 				case Tag.qval: return makeInteger(.ceil(qval));
-				static foreach(t;[Tag.zval,Tag.bval])
-				case t: return this;
+				case Tag.zval,Tag.bval: return this;
+				case Tag.intval,Tag.uintval: break;
 				case Tag.fval: return makeInteger(ℤ(.ceil(fval).to!string)); // TODO: more efficient variant?
 				case Tag.closure,Tag.array_,Tag.record: break;
 				case Tag.quval: return makeQVal(new MemberFunctionQVal!"ceil"(this),type==ℝ(true)?ℤt(true):type);
@@ -933,9 +996,9 @@ struct QState{
 		}
 		Value realFunction(alias f)(){
 			final switch(tag){
-				static foreach(t;[Tag.qval,Tag.zval,Tag.bval])
-				case t: return convertTo(ℝ(true)).realFunction!f();
+				case Tag.qval,Tag.zval,Tag.bval: return convertTo(ℝ(true)).realFunction!f();
 				case Tag.fval: return makeReal(f(fval));
+				case Tag.intval,Tag.uintval: break;
 				case Tag.closure,Tag.array_,Tag.record: break;
 				case Tag.quval: return makeQVal(new FunctionQVal!(v=>v.realFunction!f())(this),type==ℝ(true)?ℤt(true):type);
 			}
@@ -959,7 +1022,7 @@ struct QState{
 		//Value acot(){ return realFunction!(.acot)(); }
 		Value classicalValue(Σ state){
 			final switch(tag){
-				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.bval])
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
 				case t: assert(isClassical); return this;
 				case Tag.closure:
 					Value r;
@@ -996,8 +1059,9 @@ struct QState{
 		ℤ asInteger()in{
 			assert(isClassicalInteger());
 		}do{
-			if(isInt(type)||isUint(type)) return zval;
 			if(type==ℤt(true)) return zval;
+			if(isInt(type)) return intval.val;
+			if(isUint(type)) return uintval.val;
 			if(type==Bool(true)) return ℤ(cast(int)bval);
 			enforce(0,text("TODO: asInteger for type ",type));
 			assert(0);
@@ -1015,7 +1079,7 @@ struct QState{
 			if(!type) return "Value.init";
 			if(type==typeTy) return "_";
 			final switch(tag){
-				static foreach(t;[Tag.fval,Tag.qval,Tag.zval])
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval])
 				case t: return text(mixin(text(t)));
 				case Tag.bval: return bval?"1":"0";
 				case Tag.closure: return text("⟨",closure.fun,",",closure.context.toStringImpl(),"⟩");
@@ -1146,7 +1210,7 @@ struct QState{
 	QState assertTrue(Value val)in{
 		assert(val.type==Bool(true));
 	}do{
-		if(!val.asBoolean) enforce(0,"TODO: assertion failures");
+		if(!val.asBoolean) enforce(0,"assertion failure");
 		return this;
 	}
 	Value call(Value fun,Value arg){
@@ -1205,11 +1269,18 @@ struct QState{
 		r.zval=value;
 		return r;
 	}
-	static Value makeInteger(ℤ value,Expression type){
+	static Value makeInt(BitInt!true value,Expression type){
 		Value r;
 		r.type=type;
-		assert(r.tag==Value.Tag.zval);
-		r.zval=value;
+		assert(r.tag==Value.Tag.intval,text(type));
+		r.intval=value;
+		return r;
+	}
+	static Value makeUint(BitInt!false value,Expression type){
+		Value r;
+		r.type=type;
+		assert(r.tag==Value.Tag.uintval);
+		r.uintval=value;
 		return r;
 	}
 	static Value makeBool(bool value){
@@ -1244,7 +1315,7 @@ struct QState{
 				this.cond=cond, this.then=then, this.othw=othw;
 			}
 			override Value get(ref Σ s){
-				return cond.classicalValue(s).neqZImpl?then.classicalValue(s):othw.classicalValue(s);
+				return cond.classicalValue(s).asBoolean?then.classicalValue(s):othw.classicalValue(s);
 			}
 		}
 		enforce(then.type==othw.type,"TODO: ite branches with different types");
@@ -1298,6 +1369,7 @@ struct QState{
 		this=map!forgetImpl(var);
 	}
 	void forgetLocals(Scope scope_){
+		if(!state.length) return;
 		foreach(var;scope_.forgottenVars){
 			auto name=var.getName;
 			vars[name].forget(this);
@@ -1703,7 +1775,55 @@ struct Interpreter(QState){
 					return qstate.makeTuple(unit,[]);
 				}
 			}else if(auto tae=cast(TypeAnnotationExp)e){
-				return doIt(tae.e).convertTo(tae.type);
+				QState.Value convertTo(QState.Value value,Expression type){
+					if(isSubtype(value.type,type)) return value.convertTo(type);
+					if(isSubtype(value.type,ℤt(true))){
+						auto ce=cast(CallExp)type;
+						if(ce&&isUint(type))
+							return qstate.makeUint(BitInt!false(to!size_t(runExp(ce.arg).asInteger()),value.asInteger()),type.getClassical()).convertTo(type);
+						if(ce&&isInt(type))
+							return qstate.makeInt(BitInt!true(to!size_t(runExp(ce.arg).asInteger()),value.asInteger()),type.getClassical()).convertTo(type);
+					}
+					if(isUint(value.type)&&isSubtype(ℕt(true),type)){
+						assert(value.tag==QState.Value.Tag.uintval);
+						return qstate.makeInteger(value.uintval.val).convertTo(type);
+					}
+					if(isInt(value.type)&&isSubtype(ℤt(true),type)){
+						assert(value.tag==QState.Value.Tag.intval);
+						return qstate.makeInteger(value.uintval.val).convertTo(type);
+					}
+					// TODO: rat
+					if(auto tpl=cast(TupleTy)type){
+						if(value.tag==QState.Value.Tag.array_){
+							enforce(value.array_.length==tpl.length);
+							return qstate.makeTuple(type,iota(tpl.length).map!(i=>convertTo(value.array_[i],tpl[i])).array);
+						}
+					}else if(auto arr=cast(ArrayTy)type){
+						if(value.tag==QState.Value.Tag.array_)
+							return qstate.makeTuple(type,value.array_.map!(v=>convertTo(v,arr.next)).array);
+					}else if(auto vec=cast(VectorTy)type){
+						if(value.tag==QState.Value.Tag.array_)
+							return qstate.makeTuple(type,value.array_.map!(v=>convertTo(v,vec.next)).array);
+					}
+					// TODO: maybe solve this by always storing the length of integers classically.
+					auto ce=cast(CallExp)value.type;
+					if((isInt(value.type)||isUint(value.type))&&!value.type.isClassical()&&QState.Value.getTag(type)==QState.Value.Tag.array_){
+						assert(!type.isClassical);
+						assert(qstate.state.length);
+						size_t nbits;
+						Lforeach: foreach(k,v;qstate.state){
+							auto classical=value.classicalValue(k);
+							switch(classical.tag){
+								case QState.Value.Tag.intval: nbits=classical.intval.nbits; break Lforeach;
+								case QState.Value.Tag.uintval: nbits=classical.uintval.nbits; break Lforeach;
+								default: assert(0);
+							}
+						}
+						return qstate.makeTuple(arrayTy(Bool(false)),iota(nbits).map!(i=>(value&qstate.makeInteger(ℤ(1)<<i)).neqZ).array).convertTo(type);
+					}
+					return value.convertTo(type); // TODO!
+				}
+				return convertTo(doIt(tae.e),tae.type);
 			}else if(cast(Type)e)
 				return qstate.makeTuple(unit,[]); // 'erase' types
 			else{
@@ -1761,13 +1881,14 @@ struct Interpreter(QState){
 					enforce(indices.all!(x=>x.isClassical()),var.isClassical()?"TODO: fix type checker":"TODO");
 					void doIt(ref QState.Value value,QState.Value[] indices){
 						if(!indices.length){
+							rhs.setConstLifted();
 							static if(isCat) state.catAssignTo(value,rhs);
 							else state.assignTo(value,rhs);
 							return;
 						}
-						switch(var.tag){
+						switch(value.tag){
 							case QState.Value.Tag.array_:
-								doIt(var.array_[to!size_t(indices[0].asInteger)],indices[1..$]);
+								doIt(value.array_[to!size_t(indices[0].asInteger)],indices[1..$]);
 								return;
 							case QState.Value.Tag.zval:
 								enforce(indices.length==1);
@@ -1782,7 +1903,7 @@ struct Interpreter(QState){
 								rhs.setConstLifted();
 								value.assign(state,value&state.makeInteger(~(ℤ(1)<<index))|(rhs<<index));
 								return;
-							default: enforce(0,text("TODO: ",var.tag));
+							default: enforce(0,text("TODO: ",value.tag));
 						}
 					}
 					doIt(var,indices);
