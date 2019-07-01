@@ -12,9 +12,6 @@ def main(){
 }
 +/
 /+
-def foo(const x:𝔹):!ℕ{
-	return if x then 0 else 1; // TODO: error
-}
 def bar(const x:𝔹):!ℕ{
 	if x { return 0; } // TODO: error
 	else { return 1; }
@@ -63,36 +60,6 @@ def WState[n:!N](q0:𝔹,q1s:𝔹^n) {
     return (q0, q1s)
 }
 +/
-
-/+
-def solve(f: 𝔹^2 !→lifted 𝔹){
-	x:=vector(1,0:!𝔹);
-	return x==vector(1,0:𝔹);
-}
-def main(){
-	g := λ[n:!ℕ](x: 𝔹^n)lifted⇒0:𝔹;
-	f := g[2];
-	x:=solve(f);
-	y:=solve(f);
-	return (x,y);
-}+/
-
-/+def solve(f: 𝔹^0 !→lifted 𝔹){
-	x:=vector(1,0:𝔹);
-	return measure(x)==vector(1,0:𝔹);
-}
-def main(){
-	g := λ[n:!ℕ](x: 𝔹^n)lifted⇒0:𝔹;
-	x:=solve(g[0]); // TODO
-	return x;
-}+/
-
-/+def main(){
-	x:=(1,2);
-	y:=H(0:𝔹):int[2];
-	x[y]=3; // TODO: this shouldn't compile
-	return y;
-}+/
 
 /+
 def main(){
