@@ -1,4 +1,15 @@
+def main(){
+	x:=0:𝔹;
+	forget(x=0);
+}
 
+/+
+import codeforces.summer18.contest.a4;
+
+def main(){
+	return solve(0);
+}
++/
 /+
 def main(){
 	n:=measure(H(0:𝔹)):!ℕ;
@@ -10,13 +21,6 @@ def main(){
 	n=3;
 	x:=measure(foo()):!ℤ;
 	return x;
-}
-+/
-/+
-import codeforces.summer18.contest.a4;
-
-def main(){
-	return solve(0);
 }
 +/
 /+import codeforces.summer18.contest.a3; // TODO: make compile without type annotation

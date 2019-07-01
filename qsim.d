@@ -487,12 +487,11 @@ struct QState{
 			}
 		}
 		void forget(ref QState state,Value rhs){
-			enforce(type.getClassical()==rhs.type.getClassical(),text("TODO: forget with types ",type," ",rhs.type));
 			final switch(tag){
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
 				case t: assert(isClassical); return;
 				case Tag.closure:
-					assert(rhs.tag==Tag.closure);
+					enforce(rhs.tag==Tag.closure);
 					if(closure.context) return closure.context.forget(state,*rhs.closure.context);
 					return;
 				case Tag.array_:
@@ -501,7 +500,7 @@ struct QState{
 					foreach(i,ref x;array_) x.forget(state,rhs.array_[i]);
 					return;
 				case Tag.record:
-					assert(rhs.tag==Tag.record);
+					enforce(rhs.tag==Tag.record);
 					foreach(k,v;rhs.record) enforce(k in record);
 					foreach(k,v;record) v.forget(state,rhs.record[k]);
 					return;
@@ -1118,7 +1117,8 @@ struct QState{
 			qvars.remove(ref_);
 		}
 		void forget(Ref ref_,Value v){
-			enforce(qvars[ref_]==v.classicalValue(this),"bad forget"); // TODO: better error reporting
+			auto val=qvars[ref_];
+			enforce(val==v.classicalValue(this).convertTo(val.type),"bad forget"); // TODO: better error reporting
 			forget(ref_);
 		}
 		hash_t toHash(){ return qvars.toHash(); }
