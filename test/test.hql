@@ -1,7 +1,38 @@
+
+/+
+def main(){
+	x:=2:!uint[10];
+	y:=dup(x);
+	(x[0],x[1])=(x[1],x[0]);
+	return x;
+}
++/
+/+
+def main(){
+	x:=2:uint[10];
+	(x[0],x[1]):=(x[1],x[0]);
+	return x;
+}
++/
+/+
+def main(){
+	x:=0:!uint[10];
+	x[5]=1:!𝔹;
+	return x;
+}
++/
+/+
+def main(){
+	(x,a):=(0:𝔹,[1:𝔹]);
+	(x,a[0]):=(a[0],x);
+	return (x,a);
+}
++/
+/+
 def main(){
 	return H(reverse(reverse(H))(0:𝔹));
 }
-
++/
 /+
 def main(){
 	x:=vector(1,0:int[1]);

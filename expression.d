@@ -744,6 +744,10 @@ class BinaryExp(TokenType op): ABinaryExp{
 		auto be=cast(BinaryExp!op)o;
 		return be && e1==be.e1&&e2==be.e2;
 	}
+	// semantic information
+	static if(op==Tok!":="){
+		bool isSwap=false;
+	}
 }
 
 class FieldExp: Expression{

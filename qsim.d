@@ -45,6 +45,7 @@ string formatQValue(QState qs,QState.Value value){ // (only makes sense if value
 		if(r.length) r~="+";
 		r~=text("(",v,")·",value.classicalValue(k).toBasisStringImpl());
 	}
+	if(!r.length) return "0";
 	return r;
 }
 
@@ -1745,6 +1746,78 @@ struct Interpreter(QState){
 		}
 		return doIt(e);
 	}
+	static struct Assignable(bool isCat){
+		string name;
+		QState.Value[] indices;
+		QState.Value read(ref QState state){
+			enforce(name in state.vars);
+			auto var=state.vars[name];
+			enforce(indices.all!(x=>x.isClassical()),var.isClassical()?"TODO: fix type checker":"TODO");
+			QState.Value doIt(ref QState.Value value,QState.Value[] indices){
+				if(!indices.length) return value;
+				switch(value.tag){
+					case QState.Value.Tag.array_:
+						return doIt(value.array_[to!size_t(indices[0].asInteger)],indices[1..$]);
+					case QState.Value.Tag.intval,QState.Value.Tag.uintval,QState.Value.Tag.quval:
+						enforce(indices.length==1);
+						auto index=to!size_t(indices[0].asInteger);
+						return value[index];
+					default: enforce(0,text("TODO: ",value.tag)); assert(0);
+				}
+			}
+			return doIt(var,indices);
+		}
+		void assign(ref QState state,QState.Value rhs){
+			enforce(name in state.vars);
+			auto var=state.vars[name];
+			enforce(indices.all!(x=>x.isClassical()),var.isClassical()?"TODO: fix type checker":"TODO");
+			void doIt(ref QState.Value value,QState.Value[] indices){
+				if(!indices.length){
+					rhs.setConstLifted();
+					static if(isCat) state.catAssignTo(value,rhs);
+					else state.assignTo(value,rhs);
+					return;
+				}
+				switch(value.tag){
+					case QState.Value.Tag.array_:
+						doIt(value.array_[to!size_t(indices[0].asInteger)],indices[1..$]);
+						return;
+					case QState.Value.Tag.zval:
+						enforce(indices.length==1);
+						auto index=to!size_t(indices[0].asInteger);
+						enforce(rhs.tag==QState.Value.Tag.bval);
+						value.zval=value.zval&~(ℤ(1)<<index)|(ℤ(cast(int)rhs.bval)<<index);
+						return;
+					case QState.Value.Tag.intval,QState.Value.Tag.uintval:
+						enforce(indices.length==1);
+						auto index=to!size_t(indices[0].asInteger);
+						value.assign(state,value&state.makeInteger(~(ℤ(1)<<index))|(rhs<<index));
+						return;
+					case QState.Value.Tag.quval:
+						enforce(indices.length==1);
+						auto index=to!size_t(indices[0].asInteger);
+						// TODO: bounds check
+						rhs.setConstLifted();
+						value.assign(state,value&state.makeInteger(~(ℤ(1)<<index))|(rhs<<index));
+						return;
+					default: enforce(0,text("TODO: ",value.tag));
+				}
+			}
+			doIt(var,indices);
+			state.vars[name]=var;
+		}
+	}
+	Assignable!isCat getAssignable(bool isCat)(Expression lhs){
+		if(auto id=cast(Identifier)lhs) return Assignable!isCat(id.name,[]);
+		if(auto idx=cast(IndexExp)lhs){
+			auto a=getAssignable!isCat(idx.e);
+			enforce(idx.a.length==1,"TODO");
+			a.indices~=runExp(idx.a[0]);
+			return a;
+		}
+		enforce(0,text("TODO: assign to ",lhs));
+		assert(0);
+	}
 	void assignTo(bool isCat=false)(Expression lhs,QState.Value rhs){
 		if(auto id=cast(Identifier)lhs){
 			static if(isCat) qstate.catAssignTo(id.name,rhs);
@@ -1756,60 +1829,19 @@ struct Interpreter(QState){
 			foreach(i;0..tpl.e.length)
 				assignTo!isCat(tpl.e[i],rhs[i]);
 		}else if(auto idx=cast(IndexExp)lhs){
-			static struct Assignable{
-				string name;
-				QState.Value[] indices;
-				void assign(ref QState state,QState.Value rhs){
-					enforce(name in state.vars);
-					auto var=state.vars[name];
-					enforce(indices.all!(x=>x.isClassical()),var.isClassical()?"TODO: fix type checker":"TODO");
-					void doIt(ref QState.Value value,QState.Value[] indices){
-						if(!indices.length){
-							rhs.setConstLifted();
-							static if(isCat) state.catAssignTo(value,rhs);
-							else state.assignTo(value,rhs);
-							return;
-						}
-						switch(value.tag){
-							case QState.Value.Tag.array_:
-								doIt(value.array_[to!size_t(indices[0].asInteger)],indices[1..$]);
-								return;
-							case QState.Value.Tag.zval:
-								enforce(indices.length==1);
-								auto index=to!size_t(indices[0].asInteger);
-								enforce(rhs.tag==QState.Value.Tag.bval);
-								value.zval=value.zval&~(ℤ(1)<<index)|(ℤ(cast(int)rhs.bval)<<index);
-								return;
-							case QState.Value.Tag.quval:
-								enforce(indices.length==1);
-								auto index=to!size_t(indices[0].asInteger);
-								// TODO: bounds check
-								rhs.setConstLifted();
-								value.assign(state,value&state.makeInteger(~(ℤ(1)<<index))|(rhs<<index));
-								return;
-							default: enforce(0,text("TODO: ",value.tag));
-						}
-					}
-					doIt(var,indices);
-					state.vars[name]=var;
-				}
-			}
-			Assignable getAssignable(Expression lhs){
-				if(auto id=cast(Identifier)lhs) return Assignable(id.name,[]);
-				if(auto idx=cast(IndexExp)lhs){
-					auto a=getAssignable(idx.e);
-					enforce(idx.a.length==1,"TODO");
-					a.indices~=runExp(idx.a[0]);
-					return a;
-				}
-				enforce(0,"TODO");
-				assert(0);
-			}
-			getAssignable(lhs).assign(qstate,rhs);
+			getAssignable!isCat(lhs).assign(qstate,rhs);
 		}else enforce(0,"TODO");
 	}
 	void catAssignTo(Expression lhs,QState.Value rhs){
 		return assignTo!true(lhs,rhs);
+	}
+	void swap(Expression e1,Expression e2){ // TODO: swap Values directly if supported
+		auto a1=getAssignable!false(e1);
+		auto a2=getAssignable!false(e2);
+		auto tmp=a1.read(qstate).dup(qstate);
+		a1.assign(qstate,a2.read(qstate));
+		tmp.setConstLifted();
+		a2.assign(qstate,tmp);
 	}
 	void forget(QState.Value lhs,QState.Value rhs){
 		lhs.forget(qstate,rhs);
@@ -1832,8 +1864,14 @@ struct Interpreter(QState){
 			auto lhs=ae.e1,rhs=runExp(ae.e2);
 			assignTo(lhs,rhs);
 		}else if(auto ae=cast(BinaryExp!(Tok!":="))e){
-			auto lhs=ae.e1,rhs=runExp(ae.e2);
-			assignTo(lhs,rhs);
+			if(ae.isSwap){
+				auto tpl=cast(TupleExp)ae.e2;
+				enforce(!!tpl);
+				swap(tpl.e[0],tpl.e[1]);
+			}else{
+				auto lhs=ae.e1,rhs=runExp(ae.e2);
+				assignTo(lhs,rhs);
+			}
 		}else if(auto ce=cast(CatAssignExp)e){
 			auto lhs=ce.e1,rhs=runExp(ce.e2);
 			catAssignTo(lhs,rhs);

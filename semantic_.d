@@ -862,7 +862,7 @@ Identifier getIdFromIndex(IndexExp e){
 	return cast(Identifier)e.e;
 }
 
-Expression indexReplaceSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{
+Expression indexReplaceSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{ // TODO: generalize colonAssignSemantic to cover this
 	assert(cast(IndexExp)be.e1);
 }do{
 	auto theIndex=cast(IndexExp)be.e1;
@@ -912,7 +912,7 @@ Expression indexReplaceSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{
 	return be;
 }
 
-Expression permuteSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{
+Expression permuteSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{ // TODO: generalize colonAssignSemantic to cover this
 	auto tpl=cast(TupleExp)be.e1;
 	assert(tpl&&tpl.e.any!(x=>!!cast(IndexExp)x));
 }do{
@@ -931,6 +931,7 @@ Expression permuteSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{
 		be.sstate=SemState.error;
 		return be;
 	}
+	be.isSwap=true;
 	if(!chain(tpl1.e,tpl2.e).all!(x=>!!cast(IndexExp)x||!!cast(Identifier)x)){
 		sc.error("only swapping of variables and array components supported in permute statement", be.loc);
 		be.sstate=SemState.error;
@@ -1033,22 +1034,36 @@ AssignExp assignExpSemantic(AssignExp ae,Scope sc){
 		consumeLhs,
 		defineVars
 	}
-	Dependency[] dependencies;
+	Dependency[string] dependencies;
 	int curDependency;
+	void[0][string] consumed;
+	void[0][string] defined;
 	void updateDependencies(Expression lhs,Expression rhs,bool expandTuples,Stage stage){
 		if(auto id=cast(Identifier)lhs){
 			if(id&&id.meaning&&id.meaning.name){
 				final switch(stage){
 					case Stage.collectDeps:
-						if(rhs.isQfree()) dependencies~=rhs.getDependency(sc);
+						if(rhs.isQfree()){
+							if(id.meaning.getName in dependencies){
+								auto dep=dependencies[id.meaning.getName];
+								dep.joinWith(rhs.getDependency(sc));
+								dependencies[id.meaning.getName]=dep;
+							}else dependencies[id.meaning.getName]=rhs.getDependency(sc);
+						}
 						break;
 					case Stage.consumeLhs:
-						sc.consume(id.meaning);
+						if(id.meaning.getName !in consumed){
+							sc.consume(id.meaning);
+							consumed[id.name]=[];
+						}
 						break;
 					case Stage.defineVars:
-						auto name=id.meaning.name.name;
-						auto var=addVar(name,id.type,lhs.loc,sc);
-						if(rhs.isQfree()) sc.addDependency(var,dependencies[curDependency++]);
+						auto name=id.meaning.getName;
+						if(name !in defined){
+							auto var=addVar(name,id.type,lhs.loc,sc);
+							if(rhs.isQfree()) sc.addDependency(var,dependencies[name]);
+							defined[id.name]=[];
+						}
 						break;
 				}
 			}
