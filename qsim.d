@@ -108,8 +108,39 @@ struct QState{
 		if(abs(state[k]) < zeroThreshold) state.remove(k);
 	}
 	void opOpAssign(string op:"+")(QState r){
-		foreach(k,v;r.vars) vars[k]=v;
-		foreach(k,v;r.state) add(k,v);
+		Σ.Ref[Σ.Ref] relabeling;
+		void relabel(Value to,Value from){
+			auto tag=to.tag;
+			enforce(tag==from.tag);
+			final switch(tag){
+				case Value.Tag.array_:
+					enforce(to.array_.length==from.array_.length);
+					foreach(i;0..to.array_.length)
+						relabel(to.array_[i],from.array_[i]);
+					break;
+				case Value.Tag.record:
+					foreach(k,v;to.record)
+						relabel(v,from.record[k]);
+					break;
+				case Value.Tag.quval:
+					auto tquvar=cast(QVar)to.quval;
+					auto fquvar=cast(QVar)from.quval;
+					if(tquvar&&fquvar&&fquvar.ref_!=tquvar.ref_) relabeling[fquvar.ref_]=tquvar.ref_;
+					break;
+				case Value.Tag.closure:
+					break;
+				case Value.Tag.fval,Value.Tag.qval,Value.Tag.zval,Value.Tag.uintval,Value.Tag.intval,Value.Tag.bval:
+					break;
+			}
+		}
+		foreach(k,v;r.vars){
+			if(k in vars) relabel(vars[k],v);
+			else vars[k]=v;
+		}
+		foreach(k,v;r.state){
+			k.relabel(relabeling);
+			add(k,v);
+		}
 	}
 	Q!(QState,QState) split(Value cond){
 		QState then,othw;
@@ -1089,6 +1120,14 @@ struct QState{
 			forget(ref_);
 		}
 		hash_t toHash(){ return qvars.toHash(); }
+		void relabel(Ref to,Ref from){
+			enforce(from in qvars&&to!in qvars);
+			qvars[to]=qvars[from];
+			qvars.remove(from);
+		}
+		void relabel(Ref[Ref] relabeling){
+			foreach(from,to;relabeling) relabel(to,from);
+		}
 	}
 	static QState empty(){
 		return QState.init;

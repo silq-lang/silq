@@ -1,14 +1,26 @@
-
+/+
+def main(){
+	x:=H(false);
+	if x{
+		y:=2:int[3];
+	}else{
+		y:=3:int[3];
+	}
+	forget(x=(y==2));
+	return y;
+}
++/
+/+
 def main(){
 	bits:=(true,false,true);
 	x:=H(0:𝔹);
-	//if x { qs₁ := bits:𝔹^3; }else{ qs₁ := vector(3,0:𝔹); }
+	if x { qs₁ := bits:𝔹^3; }else{ qs₁ := vector(3,0:𝔹); }
 	qs₂ := if x then bits else vector(3,0:𝔹);
-	forget(x=qs₂[0]);
-	//return (qs₁,qs₂);
-	return qs₂;
+	forget(x=qs₁[0]);
+	forget(qs₂=qs₁);
+	return qs₁;
 }
-
++/
 /+
 def main(){
 	x:=2:!uint[10];
