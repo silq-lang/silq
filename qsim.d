@@ -180,9 +180,7 @@ struct QState{
 				}
 				unitary!(add,QState)(get(k),controls);
 			}
-			Value r;
-			r.type=type;
-			r.quval=new QVar(ref_);
+			auto r=makeQuval(type,new QVar(ref_));
 			qs=nstate;
 			return r;
 		}
@@ -199,9 +197,7 @@ struct QState{
 				}
 				unitary!(add,QState)(value,controls);
 			}
-			Value r;
-			r.type=type;
-			r.quval=new QVar(ref_);
+			auto r=makeQuval(type,new QVar(ref_));
 			qs=nstate;
 			return r;
 		}
@@ -302,8 +298,12 @@ struct QState{
 	alias Record=HashMap!(string,Value,(a,b)=>a==b,(a)=>typeid(a).getHash(&a));
 	struct Closure{
 		FunctionDef fun;
+		bool isReversed=false;
 		Value* context;
-		hash_t toHash(){ return context?tuplex(fun,*context).toHash():fun.toHash(); }
+		this(FunctionDef fun,bool isReversed,Value* context){
+			this.fun=fun; this.isReversed=isReversed; this.context=context;
+		}
+		hash_t toHash(){ return context?tuplex(fun,isReversed,*context).toHash():tuplex(fun,isReversed).toHash(); }
 		bool opEquals(Closure rhs){ return fun==rhs.fun && (context is rhs.context || context&&rhs.context&&*context==*rhs.context); }
 	}
 	struct Value{
@@ -358,27 +358,13 @@ struct QState{
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
 				case t: assert(0);
 				case Tag.closure:
-					Value r;
-					r.type=type;
-					r.closure=Closure(closure.fun,closure.context?[closure.context.dup(state)].ptr:null);
-					return r;
-				case Tag.array_:
-					Value r;
-					r.type=type;
-					r.array_=array_.map!(x=>x.dup(state)).array;
-					return r;
+					return state.makeClosure(type,Closure(closure.fun,closure.isReversed,closure.context?[closure.context.dup(state)].ptr:null));
+				case Tag.array_: return state.makeArray(type,array_.map!(x=>x.dup(state)).array);
 				case Tag.record:
 					Record nrecord;
 					foreach(k,v;record) nrecord[k]=v.dup(state);
-					Value r;
-					r.type=type;
-					r.record=nrecord;
-					return r;
-				case Tag.quval:
-					Value r;
-					r.type=type;
-					r.quval=quval.dup(state,this);
-					return r;
+					return state.makeRecord(type,nrecord);
+				case Tag.quval: return state.makeQuval(type,quval.dup(state,this));
 			}
 		}
 		Value parameterVar(ref QState state){
@@ -393,15 +379,8 @@ struct QState{
 				case Tag.record: // TODO: get rid of this
 					Record nrecord;
 					foreach(k,v;record) nrecord[k]=v.parameterVar(state);
-					Value r;
-					r.type=type;
-					r.record=nrecord;
-					return r;
-				case Tag.quval:
-					Value r;
-					r.type=type;
-					r.quval=quval.parameterVar(state,this);
-					return r;
+					return state.makeRecord(type,nrecord);
+				case Tag.quval: return state.makeQuval(type,quval.parameterVar(state,this));
 			}
 		}
 		bool opEquals(Value rhs){
@@ -523,19 +502,13 @@ struct QState{
 				case Tag.closure:
 					Closure nclosure=this.closure;
 					if(nclosure.context) *nclosure.context=(*closure.context).setConstLifted();
-					Value r;
-					r.type=type;
-					r.closure=nclosure;
-					return r;
+					return makeClosure(type,nclosure);
 				case Tag.array_: return makeArray(type,array_.map!(x=>x.setConstLifted()).array);
 				case Tag.record:
 					Record nrecord;
 					foreach(k,v;record) nrecord[k]=v.setConstLifted();
-					Value r;
-					r.type=type;
-					r.record=nrecord;
-					return r;
-				case Tag.quval: return makeQVal(quval.setConstLifted(),type);
+					return makeRecord(type,nrecord);
+				case Tag.quval: return makeQuval(type,quval.setConstLifted());
 			}
 		}
 		Value applyUnitary(alias unitary,T...)(ref QState qs,Expression type,T controls){
@@ -582,31 +555,20 @@ struct QState{
 			if(ntag==tag.quval){
 				if(isClassical()){
 					auto constant=convertTo(ntype.getClassical());
-					Value r;
-					r.type=ntype;
-					r.quval=new QConst(constant);
-					return r;
-				}else{
-					Value r;
-					r.type=ntype;
-					r.quval=new ConvertQVal(this,ntype);
-					return r;
-				}
+					return makeQuval(ntype,new QConst(constant));
+				}else return makeQuval(ntype,new ConvertQVal(this,ntype));
 			}
 			final switch(otag){
 				case Tag.array_:
 					if(ntag==Tag.array_){
-						Value r;
-						r.type=ntype;
 						if(auto tpl=ntype.isTupleTy()){
 							assert(array_.length==tpl.length);
-							r.array_=iota(array_.length).map!(i=>array_[i].convertTo(tpl[i])).array;
+							return makeArray(ntype,iota(array_.length).map!(i=>array_[i].convertTo(tpl[i])).array);
 						}else if(auto arr=cast(ArrayTy)ntype){
-							r.array_=array_.map!(v=>v.convertTo(arr.next)).array;
+							return makeArray(ntype,array_.map!(v=>v.convertTo(arr.next)).array);
 						}else if(auto vec=cast(VectorTy)ntype){
-							r.array_=array_.map!(v=>v.convertTo(vec.next)).array;
+							return makeArray(ntype,array_.map!(v=>v.convertTo(vec.next)).array);
 						}else assert(0);
-						return r;
 					}
 					if(ntag==Tag.intval||ntag==Tag.uintval){
 						ℤ r=0;
@@ -614,44 +576,26 @@ struct QState{
 							assert(v.tag==Tag.bval);
 							if(v.bval) r+=ℤ(1)<<i;
 						}
-						if(ntag==Tag.intval) return makeInt(BitInt!true(array_.length,r),ntype);
-						return makeUint(BitInt!false(array_.length,r),ntype);
+						if(ntag==Tag.intval) return makeInt(ntype,BitInt!true(array_.length,r));
+						return makeUint(ntype,BitInt!false(array_.length,r));
 					}
 					break;
 				case Tag.record:
 					break;
 				case Tag.closure:
 					assert(ntag==Tag.closure);
-					Value r=this;
-					r.type=ntype;
-					return r;
-					break;
+					return makeClosure(ntype,closure);
 				case Tag.quval:
 					// can happen when converting from int[n]/uint[n] to array (TODO: store n classically?)
 					break;
 				case Tag.fval:
 					break;
 				case Tag.qval:
-					if(ntag==Tag.fval){
-						Value r;
-						r.type=ntype;
-						r.fval=toReal(qval);
-						return r;
-					}
+					if(ntag==Tag.fval) return makeReal(toReal(qval));
 					break;
 				case Tag.zval:
-					if(ntag==Tag.qval){
-						Value r;
-						r.type=ntype;
-						r.qval=ℚ(zval);
-						return r;
-					}
-					if(ntag==Tag.fval){
-						Value r;
-						r.type=ntype;
-						r.fval=toReal(zval);
-						return r;
-					}
+					if(ntag==Tag.qval) return makeRational(ℚ(zval));
+					if(ntag==Tag.fval) return makeReal(toReal(zval));
 					break;
 				case Tag.intval,Tag.uintval:
 					if(ntag==Tag.array_){
@@ -668,24 +612,9 @@ struct QState{
 					}
 					break;
 				case Tag.bval:
-					if(ntag==Tag.zval){
-						Value r;
-						r.type=ntype;
-						r.zval=ℤ(cast(int)bval);
-						return r;
-					}
-					if(ntag==Tag.qval){
-						Value r;
-						r.type=ntype;
-						r.qval=ℚ(bval);
-						return r;
-					}
-					if(ntag==Tag.fval){
-						Value r;
-						r.type=ntype;
-						r.fval=to!R(bval);
-						return r;
-					}
+					if(ntag==Tag.zval) return makeInteger(ℤ(cast(int)bval));
+					if(ntag==Tag.qval) return makeRational(ℚ(bval));
+					if(ntag==Tag.fval) return makeReal(to!R(bval));
 			}
 			if(ntag==Tag.bval) return neqZ;
 			enforce(0,text("TODO: convert ",type," to ",ntype));
@@ -694,30 +623,6 @@ struct QState{
 
 		Value inFrame(){
 			return this;
-			/+Value r;
-			r.type=type;
-			final switch(tag){
-				case Tag.array_:
-					r.array_=array_.map!(v=>v.inFrame).array;
-					break;
-				case Tag.record:
-					Value[string] nr;
-					foreach(k,v;record)
-						nr[k]=v.inFrame();
-					r.record=nr;
-					break;
-				case Tag.closure:
-					r.closure=Closure(closure.fun,[closure.context.inFrame()].ptr);
-					break;
-				case Tag.quval:
-					r.quval=quval.inFrame();
-					break;
-				case Tag.fval: r.fval=fval; break;
-				case Tag.qval: r.qval=qval; break;
-				case Tag.zval: r.zval=zval; break;
-				case Tag.bval: r.bval=bval; break;
-			}
-			return r;+/
 		}
 		Value opIndex(size_t i)in{
 			assert(tag==Tag.array_||isInt(type)||isUint(type));
@@ -726,10 +631,7 @@ struct QState{
 				case Tag.array_: return array_[i];
 				case Tag.quval:
 					assert(isInt(type)||isUint(type));
-					Value r;
-					r.type=Bool(false);
-					r.quval=new IndexQVal(quval,i);
-					return r;
+					return makeQuval(Bool(false),new IndexQVal(quval,i));
 				case Tag.uintval: return makeBool((uintval.val&(ℤ(1)<<i))!=0);
 				case Tag.intval: return makeBool((intval.val&(ℤ(1)<<i))!=0);
 				case Tag.fval,Tag.qval,Tag.zval,Tag.bval: enforce(0,"TODO?"); assert(0);
@@ -744,10 +646,7 @@ struct QState{
 		Value opSlice(size_t l,size_t r)in{
 			assert(tag==Tag.array_);
 		}do{
-			Value res;
-			res.type=type;
-			res.array_=array_[l..r];
-			return res;
+			return makeArray(type,array_[l..r]);
 		}
 		Value opSlice(Value l,Value r){
 			if(l.isClassicalInteger()&&r.isClassicalInteger()) return this[to!size_t(l.asInteger())..to!size_t(r.asInteger())];
@@ -764,7 +663,7 @@ struct QState{
 		}
 		Value opUnary(string op)(){
 			auto ntype=unaryType!op(type);
-			if(!ntype.isToplevelClassical()) return makeQVal(new UnOpQVal!op(this),ntype);
+			if(!ntype.isToplevelClassical()) return makeQuval(ntype,new UnOpQVal!op(this));
 			static if(op=="-"||op=="~"){
 				static if(is(typeof(mixin(op~` fval`))))
 					if(type==ℝ(true)) return makeReal(mixin(op~` fval`));
@@ -812,7 +711,7 @@ struct QState{
 			// ~ needs special handling
 			auto ntype=binaryType!op(type,r.type);
 			if(ntype==ℕt(true)) ntype=ℤt(true);
-			if(!ntype.isToplevelClassical()) return makeQVal(new BinOpQVal!op(this,r),ntype);
+			if(!ntype.isToplevelClassical()) return makeQuval(ntype,new BinOpQVal!op(this,r));
 			assert(!!ntype);
 			static if(op=="^^"){
 				auto t1=type,t2=r.type;
@@ -827,24 +726,20 @@ struct QState{
 				return makeReal(fval^^r.fval);
 			}else static if(op=="~"){
 				enforce(tag==Tag.array_&&r.tag==Tag.array_);
-				Value result;
-				result.type=ntype;
-				enforce(result.tag==Tag.array_);
-				result.array_=array_~r.array_;
-				return result;
+				return makeArray(ntype,array_~r.array_);
 			}else static if(op=="<<"||op==">>"){
 				if(type==ℤt(true)) return makeInteger(mixin(`zval `~op~` to!size_t(r.asInteger())`));
 				if(type==Bool(true)) return makeInteger(mixin(`ℤ(cast(int)bval) `~op~` to!size_t(r.asInteger())`));
-				if(isInt(type)) return makeInt(mixin(`intval `~op~` to!size_t(r.asInteger())`),type);
-				if(isUint(type)) return makeUint(mixin(`uintval `~op~` to!size_t(r.asInteger())`),type);
+				if(isInt(type)) return makeInt(type,mixin(`intval `~op~` to!size_t(r.asInteger())`));
+				if(isUint(type)) return makeUint(type,mixin(`uintval `~op~` to!size_t(r.asInteger())`));
 			}else{
 				if(type!=ntype||r.type!=ntype){
 					if(type==ntype&&r.type==ℤt(true)){
-						if(isInt(type)) return this.opBinary!op(makeInt(BitInt!true(intval.nbits,r.zval),ntype));
-						if(isUint(type)) return this.opBinary!op(makeUint(BitInt!false(uintval.nbits,r.zval),ntype));
+						if(isInt(type)) return this.opBinary!op(makeInt(ntype,BitInt!true(intval.nbits,r.zval)));
+						if(isUint(type)) return this.opBinary!op(makeUint(ntype,BitInt!false(uintval.nbits,r.zval)));
 					}else if(type==ℤt(true)&&r.type==ntype){
-						if(isInt(r.type)) return makeInt(BitInt!true(r.intval.nbits,zval),ntype).opBinary!op(r);
-						if(isUint(r.type)) return makeUint(BitInt!false(r.uintval.nbits,zval),ntype).opBinary!op(r);
+						if(isInt(r.type)) return makeInt(ntype,BitInt!true(r.intval.nbits,zval)).opBinary!op(r);
+						if(isUint(r.type)) return makeUint(ntype,BitInt!false(r.uintval.nbits,zval)).opBinary!op(r);
 						// TODO: rat
 					}
 					return this.convertTo(ntype).opBinary!op(r.convertTo(ntype));
@@ -857,17 +752,17 @@ struct QState{
 				static if(is(typeof(mixin(`zval `~op~` r.zval`))))
 					if(type==ℤt(true)) return makeInteger(mixin(`zval `~op~` r.zval`));
 				static if(is(typeof(mixin(`intval `~op~` r.intval`))))
-					if(isInt(type)) return makeInt(mixin(`intval `~op~` r.intval`),ntype);
+					if(isInt(type)) return makeInt(ntype,mixin(`intval `~op~` r.intval`));
 				static if(is(typeof(mixin(`uintval `~op~` r.uintval`))))
-					if(isUint(type)) return makeUint(mixin(`uintval `~op~` r.uintval`),ntype);
+					if(isUint(type)) return makeUint(ntype,mixin(`uintval `~op~` r.uintval`));
 				static if(op=="div"){
 					enforce(!r.eqZImpl,"division by zero");
 					final switch(tag){
 						case Tag.fval: return (this/r).floor();
 						case Tag.qval: return makeInteger(.floor(qval/r.qval));
 						case Tag.zval: return makeInteger(zval/r.zval);
-						case Tag.intval: return makeInt(intval/r.intval,type);
-						case Tag.uintval: return makeUint(uintval/r.uintval,ntype);
+						case Tag.intval: return makeInt(type,intval/r.intval);
+						case Tag.uintval: return makeUint(ntype,uintval/r.uintval);
 						case Tag.bval: return makeInteger(ℤ(bval/r.bval));
 						case Tag.closure,Tag.array_,Tag.record,Tag.quval: break;
 					}
@@ -895,21 +790,16 @@ struct QState{
 			assert(0);
 		}
 		Value eqZ(){
-			if(!isClassical()){
-				Value r;
-				r.type=Bool(false);
-				r.quval=new MemberFunctionQVal!"eqZ"(this);
-				return r;
-			}
+			if(!isClassical()) return makeQuval(Bool(false),new MemberFunctionQVal!"eqZ"(this));
 			return makeBool(eqZImpl());
 		}
 		bool neqZImpl(){ return !eqZImpl(); }
 		Value neqZ(){
-			if(!isClassical()) return makeQVal(new MemberFunctionQVal!"neqZ"(this),Bool(false));
+			if(!isClassical()) return makeQuval(Bool(false),new MemberFunctionQVal!"neqZ"(this));
 			return makeBool(neqZImpl());
 		}
 		Value compare(string op)(Value r){
-			if(!isClassical()||!r.isClassical()) return makeQVal(new CompareQVal!op(this,r),Bool(false));
+			if(!isClassical()||!r.isClassical()) return makeQuval(Bool(false),new CompareQVal!op(this,r));
 			if(tag==Tag.array_&&r.tag==Tag.array_){
 				static if(op=="==") if(array_.length!=r.array_.length) return makeBool(false);
 				static if(op=="!=") if(array_.length!=r.array_.length) return makeBool(true);
@@ -977,7 +867,7 @@ struct QState{
 				case Tag.intval,Tag.uintval: break;
 				case Tag.fval: return makeInteger(ℤ(.floor(fval).to!string)); // TODO: more efficient variant?
 				case Tag.closure,Tag.array_,Tag.record: break;
-				case Tag.quval: return makeQVal(new MemberFunctionQVal!"floor"(this),type==ℝ(true)?ℤt(true):type);
+				case Tag.quval: return makeQuval(type==ℝ(true)?ℤt(true):type,new MemberFunctionQVal!"floor"(this));
 			}
 			enforce(0,text("TODO: floor for type ",this.type));
 			assert(0);
@@ -989,7 +879,7 @@ struct QState{
 				case Tag.intval,Tag.uintval: break;
 				case Tag.fval: return makeInteger(ℤ(.ceil(fval).to!string)); // TODO: more efficient variant?
 				case Tag.closure,Tag.array_,Tag.record: break;
-				case Tag.quval: return makeQVal(new MemberFunctionQVal!"ceil"(this),type==ℝ(true)?ℤt(true):type);
+				case Tag.quval: return makeQuval(type==ℝ(true)?ℤt(true):type,new MemberFunctionQVal!"ceil"(this));
 			}
 			enforce(0,text("TODO: floor for type ",this.type));
 			assert(0);
@@ -1000,7 +890,7 @@ struct QState{
 				case Tag.fval: return makeReal(f(fval));
 				case Tag.intval,Tag.uintval: break;
 				case Tag.closure,Tag.array_,Tag.record: break;
-				case Tag.quval: return makeQVal(new FunctionQVal!(v=>v.realFunction!f())(this),type==ℝ(true)?ℤt(true):type);
+				case Tag.quval: return makeQuval(type==ℝ(true)?ℤt(true):type,new FunctionQVal!(v=>v.realFunction!f())(this));
 			}
 			enforce(0,text("TODO: real functions for type ",this.type));
 			assert(0);
@@ -1025,27 +915,14 @@ struct QState{
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
 				case t: assert(isClassical); return this;
 				case Tag.closure:
-					Value r;
-					r.type=type.getClassical();
-					assert(r.tag==Tag.closure);
-					r.closure=Closure(closure.fun,closure.context?[closure.context.classicalValue(state)].ptr:null);
-					return r;
+					return makeClosure(type.getClassical(),Closure(closure.fun,closure.isReversed,closure.context?[closure.context.classicalValue(state)].ptr:null));
 				case Tag.array_:
-					Value r;
-					r.type=type.getClassical();
-					assert(r.tag==Tag.array_);
-					r.array_=array_.map!(x=>x.classicalValue(state)).array;
-					return r;
+					return makeArray(type.getClassical(),array_.map!(x=>x.classicalValue(state)).array);
 				case Tag.record:
 					Record nrecord;
 					foreach(k,v;record) nrecord[k]=v.classicalValue(state);
-					Value r;
-					r.type=type.getClassical();
-					assert(r.tag==Tag.record);
-					r.record=nrecord;
-					return r;
-				case Tag.quval:
-					return quval.get(state);
+					return makeRecord(type.getClassical(),nrecord);
+				case Tag.quval: return quval.get(state);
 			}
 		}
 		bool asBoolean()in{
@@ -1082,7 +959,7 @@ struct QState{
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval])
 				case t: return text(mixin(text(t)));
 				case Tag.bval: return bval?"1":"0";
-				case Tag.closure: return text("⟨",closure.fun,",",closure.context.toStringImpl(),"⟩");
+				case Tag.closure: return text("⟨",closure.fun,",",closure.isReversed,(closure.context?text(",",closure.context.toStringImpl()):""),"⟩");
 				case Tag.array_:
 					string prn="()";
 					if(cast(ArrayTy)type) prn="[]";
@@ -1104,6 +981,87 @@ struct QState{
 		}
 	}
 	static assert(Value.sizeof==Type.sizeof+Value.bits.sizeof);
+	static Value makeTuple(Expression type,Value[] tuple)in{
+		assert(!!cast(TupleTy)type||cast(ArrayTy)type||cast(VectorTy)type);
+	}do{
+		Value r;
+		r.type=type;
+		r.array_=tuple;
+		return r;
+	}
+	alias makeArray=makeTuple;
+	alias makeVector=makeTuple;
+		static Value makeRecord(Record record){
+		Value r;
+		r.type=contextTy(false);
+		r.record=record;
+		return r;
+	}
+	static Value makeRecord(Expression type,Record record){
+		Value r;
+		r.type=type;
+		enforce(r.tag==Value.Tag.record);
+		r.record=record;
+		return r;
+	}
+	static Value makeClosure(Expression type,Closure closure){
+		Value r;
+		r.type=type;
+		enforce(r.tag==Value.Tag.closure);
+		r.closure=closure;
+		return r;
+	}
+	static Value makeQuval(Expression type,QVal quval){
+		Value r;
+		r.type=type;
+		enforce(r.tag==Value.Tag.quval);
+		r.quval=quval;
+		return r;
+	}
+	static Value makeReal(string value){
+		Value r;
+		r.type=ℝ(true);
+		r.fval=to!R(value);
+		return r;
+	}
+	static Value makeReal(R value){
+		Value r;
+		r.type=ℝ(true);
+		r.fval=value;
+		return r;
+	}
+	static Value makeRational(ℚ value){
+		Value r;
+		r.type=ℚt(true);
+		r.qval=value;
+		return r;
+	}
+	static Value makeInteger(ℤ value){
+		Value r;
+		r.type=ℤt(true);
+		r.zval=value;
+		return r;
+	}
+	static Value makeInt(Expression type,BitInt!true value){
+		Value r;
+		r.type=type;
+		assert(r.tag==Value.Tag.intval,text(type));
+		r.intval=value;
+		return r;
+	}
+	static Value makeUint(Expression type,BitInt!false value){
+		Value r;
+		r.type=type;
+		assert(r.tag==Value.Tag.uintval);
+		r.uintval=value;
+		return r;
+	}
+	static Value makeBool(bool value){
+		Value r;
+		r.type=Bool(true);
+		r.bval=value;
+		return r;
+	}
 	static Value nullValue(){
 		return Value.init;
 	}
@@ -1112,12 +1070,7 @@ struct QState{
 		r.type=typeTy;
 		return r;
 	}
-	static Value π(){
-		Value r;
-		r.type=ℝ(true);
-		r.fval=PI;
-		return r;
-	}
+	static Value π(){ return makeReal(PI); }
 	struct Σ{
 		alias Ref=size_t;
 		HashMap!(Ref,Value,(a,b)=>a==b,a=>a) qvars;
@@ -1160,26 +1113,41 @@ struct QState{
 	static Value inFrame(Value v){
 		return v.inFrame();
 	}
-	Value call(FunctionDef fun,Value thisExp,Value arg,Scope sc,Value* context=null){
+	void passParameter(string prm,Value rhs){
+		enforce(prm!in vars);
+		vars[prm]=rhs.parameterVar(this); // TODO: this may be inefficient
+	}
+	void passContext(string ctx,Value rhs){
+		enforce(ctx!in vars);
+		vars[ctx]=rhs;
+	}
+	Value call(FunctionDef fun,bool isReversed,Value thisExp,Value arg,Scope sc,Value* context,Expression type){
+		enforce(!isReversed,"TODO: reversed function calls");
+		Value fix(Value arg){
+			return arg; // TODO
+		}
+		if(fun.isReverse){
+			enforce(arg.tag==Value.Tag.closure);
+			return makeClosure(type,Closure(arg.closure.fun,!arg.closure.isReversed,arg.closure.context));
+		}
 		enforce(!thisExp.isValid,"TODO: method calls");
-		enforce(!fun.isReverse,"TODO: reverse");
 		if(!fun.body_){ // TODO: move this logic somewhere else
 			switch(fun.getName){
-				case "floor": return arg.floor();
-				case "ceil": return arg.ceil();
-				case "sqrt": return arg.sqrt();
-				case "exp": return arg.exp();
-				case "log": return arg.log();
-				case "sin": return arg.sin();
-				case "asin","arcsin": return arg.asin();
+				case "floor": return fix(arg.floor());
+				case "ceil": return fix(arg.ceil());
+				case "sqrt": return fix(arg.sqrt());
+				case "exp": return fix(arg.exp());
+				case "log": return fix(arg.log());
+				case "sin": return fix(arg.sin());
+				case "asin","arcsin": return fix(arg.asin());
 				//case "csc": return arg.csc();
 				//case "acsc","arccsc": return arg.acsc();
-				case "cos": return arg.cos();
-				case "acos","arccos": return arg.acos();
+				case "cos": return fix(arg.cos());
+				case "acos","arccos": return fix(arg.acos());
 				//case "sec": return arg.sec();
 				//case "asec","arcsec": return arg.asec();
-				case "tan": return arg.tan();
-				case "atan","arctan": return arg.atan();
+				case "tan": return fix(arg.tan());
+				case "atan","arctan": return fix(arg.atan());
 				//case "cot": return arg.cot();
 				//case "acot","arccot": return arg.acot();
 				default: break;
@@ -1205,7 +1173,11 @@ struct QState{
 		nnstate.popFrameCleanup=ncur.popFrameCleanup;
 		intp.runFun(nnstate);
 		this=nnstate.popFrame(this.popFrameCleanup);
-		return nnstate.vars["`value"];
+		return fix(nnstate.vars["`value"]);
+	}
+	Value call(Value fun,Value arg,Expression type){
+		enforce(fun.tag==Value.Tag.closure);
+		return call(fun.closure.fun,fun.closure.isReversed,nullValue,arg,null,fun.closure.context,type);
 	}
 	QState assertTrue(Value val)in{
 		assert(val.type==Bool(true));
@@ -1213,20 +1185,9 @@ struct QState{
 		if(!val.asBoolean) enforce(0,"assertion failure");
 		return this;
 	}
-	Value call(Value fun,Value arg){
-		enforce(fun.tag==Value.Tag.closure);
-		return call(fun.closure.fun,nullValue,arg,null,fun.closure.context);
-	}
-
 	Value readLocal(string s,bool constLookup){
 		auto r=vars[s];
 		if(!constLookup&&!r.isClassical()) vars.remove(s);
-		return r;
-	}
-	static Value makeRecord(Record record){
-		Value r;
-		r.type=contextTy(false);
-		r.record=record;
 		return r;
 	}
 	static Value readField(Value r,string s,bool constLookup){
@@ -1235,65 +1196,8 @@ struct QState{
 		if(!constLookup&&!res.isClassical()) r.record.remove(s); // TODO: ok?
 		return res;
 	}
-	static Value makeTuple(Expression type,Value[] tuple)in{
-		assert(!!cast(TupleTy)type||cast(ArrayTy)type||cast(VectorTy)type);
-	}do{
-		Value r;
-		r.type=type;
-		r.array_=tuple;
-		return r;
-	}
-	alias makeArray=makeTuple;
-	alias makeVector=makeTuple;
-	static Value makeReal(string value){
-		Value r;
-		r.type=ℝ(true);
-		r.fval=to!R(value);
-		return r;
-	}
-	static Value makeReal(R value){
-		Value r;
-		r.type=ℝ(true);
-		r.fval=value;
-		return r;
-	}
-	static Value makeRational(ℚ value){
-		Value r;
-		r.type=ℚt(true);
-		r.qval=value;
-		return r;
-	}
-	static Value makeInteger(ℤ value){
-		Value r;
-		r.type=ℤt(true);
-		r.zval=value;
-		return r;
-	}
-	static Value makeInt(BitInt!true value,Expression type){
-		Value r;
-		r.type=type;
-		assert(r.tag==Value.Tag.intval,text(type));
-		r.intval=value;
-		return r;
-	}
-	static Value makeUint(BitInt!false value,Expression type){
-		Value r;
-		r.type=type;
-		assert(r.tag==Value.Tag.uintval);
-		r.uintval=value;
-		return r;
-	}
-	static Value makeBool(bool value){
-		Value r;
-		r.type=Bool(true);
-		r.bval=value;
-		return r;
-	}
 	Value makeFunction(FunctionDef fd,Value* context){
-		Value r;
-		r.type=fd.ftype;
-		r.closure=Closure(fd,context);
-		return r;
+		return makeClosure(fd.ftype,Closure(fd,false,context));
 	}
 	Value makeFunction(FunctionDef fd,Scope from){
 		Value* context=null;
@@ -1319,17 +1223,12 @@ struct QState{
 			}
 		}
 		enforce(then.type==othw.type,"TODO: ite branches with different types");
-		Value r;
-		r.type=then.type;
-		r.quval=new IteQVal(cond,then,othw);
-		return r;
+		return makeQuval(then.type,new IteQVal(cond,then,othw));
 	}
 	Value makeQVar(Value v)in{
 		assert(!v.isClassical());
 	}do{
 		v=v.setConstLifted();
-		Value r;
-		r.type=v.type;
 		auto ref_=Σ.curRef++;
 		static Σ addVariable(Σ s,Σ.Ref ref_,Value v){
 			enforce(ref_ !in s.qvars);
@@ -1337,15 +1236,7 @@ struct QState{
 			return s;
 		}
 		this=map!addVariable(ref_,v);
-		r.quval=new QVar(ref_);
-		return r;
-	}
-	static Value makeQVal(QVal quval,Expression type){
-		Value r;
-		r.type=type;
-		enforce(r.tag==Value.Tag.quval);
-		r.quval=quval;
-		return r;
+		return makeQuval(v.type,new QVar(ref_));
 	}
 	private void assignTo(Σ.Ref var,Value rhs){
 		static Σ assign(Σ s,Σ.Ref var,Value rhs){
@@ -1406,14 +1297,6 @@ struct QState{
 		enforce(lhs in vars);
 		enforce(vars[lhs].tag==QState.Value.Tag.array_&&rhs.tag==QState.Value.Tag.array_);
 		vars[lhs].array_~=rhs.array_;
-	}
-	void passParameter(string prm,Value rhs){
-		enforce(prm!in vars);
-		vars[prm]=rhs.parameterVar(this); // TODO: this may be inefficient
-	}
-	void passContext(string ctx,Value rhs){
-		enforce(ctx!in vars);
-		vars[ctx]=rhs;
 	}
 	Value H(Value x){
 		return x.applyUnitary!hadamardUnitary(this,Bool(false));
@@ -1574,6 +1457,7 @@ import lexer: Tok;
 alias ODefExp=BinaryExp!(Tok!":=");
 struct Interpreter(QState){
 	FunctionDef functionDef;
+	enum isReversed=false; // TODO
 	CompoundExp statements;
 	QState qstate;
 	bool hasFrame=false;
@@ -1654,8 +1538,8 @@ struct Interpreter(QState){
 				}
 				if(id){
 					if(auto fun=cast(FunctionDef)id.meaning){
-						auto arg=doIt(ce.arg); // TODO: allow temporaries within arguments
-						return qstate.call(fun,thisExp,arg,id.scope_);
+						auto arg=doIt(ce.arg);
+						return qstate.call(fun,false,thisExp,arg,id.scope_,null,ce.type);
 					}
 					if(!fe && isBuiltIn(id)){
 						switch(id.name){
@@ -1715,7 +1599,7 @@ struct Interpreter(QState){
 					}
 				}
 				auto fun=doIt(ce.e), arg=doIt(ce.arg);
-				return qstate.call(fun,arg);
+				return qstate.call(fun,arg,ce.type);
 			}
 			if(auto idx=cast(IndexExp)e){
 				auto r=doIt2(idx.e)[doIt(idx.a[0])];
@@ -1780,9 +1664,9 @@ struct Interpreter(QState){
 					if(isSubtype(value.type,ℤt(true))){
 						auto ce=cast(CallExp)type;
 						if(ce&&isUint(type))
-							return qstate.makeUint(BitInt!false(to!size_t(runExp(ce.arg).asInteger()),value.asInteger()),type.getClassical()).convertTo(type);
+							return qstate.makeUint(type.getClassical(),BitInt!false(to!size_t(runExp(ce.arg).asInteger()),value.asInteger())).convertTo(type);
 						if(ce&&isInt(type))
-							return qstate.makeInt(BitInt!true(to!size_t(runExp(ce.arg).asInteger()),value.asInteger()),type.getClassical()).convertTo(type);
+							return qstate.makeInt(type.getClassical(),BitInt!true(to!size_t(runExp(ce.arg).asInteger()),value.asInteger())).convertTo(type);
 					}
 					if(isUint(value.type)&&isSubtype(ℕt(true),type)){
 						assert(value.tag==QState.Value.Tag.uintval);

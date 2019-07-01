@@ -1,3 +1,7 @@
+def main(){
+	return H(reverse(reverse(H))(0:𝔹));
+}
+
 /+
 def main(){
 	x:=vector(1,0:int[1]);
