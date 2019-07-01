@@ -983,7 +983,15 @@ struct FreeIdentifiers{
 	int opApply(scope int delegate(Identifier) dg){
 		int rec(Expression e){
 			if(auto id=cast(Identifier)e) if(auto r=dg(id)) return r;
-			// TODO: ProductTy, LambdaExp
+			if(auto pt=cast(ProductTy)e){
+				foreach(id;pt.dom.freeIdentifiers)
+					if(auto r=dg(id)) return r;
+				foreach(id;pt.cod.freeIdentifiers){
+					if(pt.names.canFind(id.name)) continue;
+					if(auto r=dg(id)) return r;
+				}
+			}
+			// TODO: LambdaExp
 			foreach(x;e.components)
 				if(auto r=rec(x))
 					return r;

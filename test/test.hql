@@ -1,4 +1,24 @@
 
+/+
+def main(){
+	n:=measure(H(0:𝔹)):!ℕ;
+	def foo(){ // error
+		x:=0:int[n];
+		return x;
+	}
+	y:=0:int[n]; // error
+	n=3;
+	x:=measure(foo()):!ℤ;
+	return x;
+}
++/
+/+
+import codeforces.summer18.contest.a4;
+
+def main(){
+	return solve(0);
+}
++/
 /+import codeforces.summer18.contest.a3; // TODO: make compile without type annotation
 def main(){
 	return solve((false,true,true),(false,true,false));

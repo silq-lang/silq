@@ -841,13 +841,8 @@ Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
 			assert(!!fsc);
 			foreach(id;be.e2.type.freeIdentifiers){
 				assert(!!id.meaning);
-				auto allowMerge=fsc.allowMerge;
-				fsc.allowMerge=false;
-				auto meaning=fsc.lookup(id,false,true,Lookup.probing);
-				fsc.allowMerge=allowMerge;
-				assert(!meaning||!meaning.isLinear);
-				if(meaning !is id.meaning){
-					fsc.error(format("cannot use local variable '%s' in type of local variable", id.name), be.loc);
+				if(isAssignable(id.meaning,sc)){
+					fsc.error(format("cannot use reassignable variable '%s' in type of local variable", id.name), be.loc);
 					fd.sstate=SemState.error;
 				}
 			}
@@ -963,6 +958,15 @@ Expression permuteSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{ // TODO: general
 	}
 	be.sstate=SemState.completed; // TODO: redefine variables in local scope?
 	return be;
+}
+
+bool isAssignable(Declaration meaning,Scope sc){
+	if(!cast(VarDecl)meaning) return false;
+	if(cast(Parameter)meaning&&(cast(Parameter)meaning).isConst) return false;
+	for(auto csc=sc;csc !is meaning.scope_;csc=(cast(NestedScope)csc).parent)
+		if(auto fsc=cast(FunctionScope)csc)
+			return false;
+	return true;
 }
 
 bool checkAssignable(Declaration meaning,Location loc,Scope sc,bool quantumAssign=false){
@@ -2356,6 +2360,17 @@ FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 	}
 	if(fd.sstate!=SemState.error)
 		fd.sstate=SemState.completed;
+	if(fd.sstate==SemState.completed){
+		if(auto ofd=sc.getFunction()){
+			foreach(id;fd.ftype.freeIdentifiers){
+				assert(!!id.meaning);
+				if(isAssignable(id.meaning,sc)){
+					sc.error(format("cannot use reassignable variable '%s' in type of local function", id.name), fd.loc);
+					ofd.sstate=SemState.error;
+				}
+			}
+		}
+	}
 	return fd;
 }
 
