@@ -1,4 +1,14 @@
 
+def main(){
+	bits:=(true,false,true);
+	x:=H(0:𝔹);
+	//if x { qs₁ := bits:𝔹^3; }else{ qs₁ := vector(3,0:𝔹); }
+	qs₂ := if x then bits else vector(3,0:𝔹);
+	forget(x=qs₂[0]);
+	//return (qs₁,qs₂);
+	return qs₂;
+}
+
 /+
 def main(){
 	x:=2:!uint[10];

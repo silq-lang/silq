@@ -1211,9 +1211,10 @@ struct QState{
 		return makeFunction(fd,id.scope_);
 	}
 	static Value ite(Value cond,Value then,Value othw)in{
+		assert(then.type==othw.type);
+		assert(!cond.isClassical);
 		assert(cast(BoolTy)cond.type);
 	}do{
-		if(cond.isClassical) return cond.asBoolean?then:othw;
 		static class IteQVal: QVal{
 			Value cond,then,othw;
 			this(Value cond,Value then,Value othw){
@@ -1223,8 +1224,18 @@ struct QState{
 				return cond.classicalValue(s).asBoolean?then.classicalValue(s):othw.classicalValue(s);
 			}
 		}
-		enforce(then.type==othw.type,"TODO: ite branches with different types");
-		return makeQuval(then.type,new IteQVal(cond,then,othw));
+		auto type=then.type;
+		final switch(Value.getTag(type)){
+			case Value.Tag.array_:
+				enforce(then.tag==Value.Tag.array_&&othw.tag==Value.Tag.array_);
+				enforce(then.array_.length==othw.array_.length);
+				return makeArray(type,zip(then.array_,othw.array_).map!(x=>ite(cond,x[0],x[1])).array);
+			case Value.Tag.closure: enforce(0,"TODO"); assert(0);
+			case Value.Tag.record: enforce(0,"TODO?"); assert(0);
+			case Value.Tag.quval: return makeQuval(then.type,new IteQVal(cond,then.convertTo(type),othw.convertTo(type)));
+			case Value.Tag.fval,Value.Tag.qval,Value.Tag.zval,Value.Tag.uintval,Value.Tag.intval,Value.Tag.bval:
+				assert(0);
+		}
 	}
 	Value makeQVar(Value v)in{
 		assert(!v.isClassical());
@@ -1632,19 +1643,35 @@ struct Interpreter(QState){
 					return doIt(cmp.s[0]);
 			}else if(auto ite=cast(IteExp)e){
 				auto cond=runExp(ite.cond);
-				auto thenElse=qstate.split(cond);
-				qstate=thenElse[0];
-				auto thenIntp=Interpreter!QState(functionDef,ite.then,qstate,hasFrame);
-				auto then=thenIntp.runExp(ite.then.s[0]);
-				assert(!!ite.othw);
-				auto othwState=thenElse[1];
-				auto othwIntp=Interpreter(functionDef,ite.othw,othwState,hasFrame);
-				auto othw=othwIntp.runExp(ite.othw);
-				thenIntp.qstate.forgetLocals(ite.then.blscope_);
-				othwIntp.qstate.forgetLocals(ite.othw.blscope_);
-				qstate=thenIntp.qstate;
-				qstate+=othwIntp.qstate;
-				return QState.ite(cond,then,othw);
+				if(cond.isClassical()){
+					if(cond.neqZImpl){
+						auto thenIntp=Interpreter!QState(functionDef,ite.then,qstate,hasFrame);
+						auto then=thenIntp.runExp(ite.then.s[0]).convertTo(ite.type);
+						thenIntp.qstate.forgetLocals(ite.then.blscope_);
+						qstate=thenIntp.qstate;
+					}else{
+						auto othwIntp=Interpreter!QState(functionDef,ite.othw,qstate,hasFrame);
+						auto othw=othwIntp.runExp(ite.othw.s[0]).convertTo(ite.type);
+						othwIntp.qstate.forgetLocals(ite.othw.blscope_);
+						qstate=othwIntp.qstate;
+					}
+				}else{
+					auto thenElse=qstate.split(cond);
+					qstate=thenElse[0];
+					auto thenIntp=Interpreter!QState(functionDef,ite.then,qstate,hasFrame);
+					auto then=thenIntp.runExp(ite.then.s[0]);
+					thenIntp.qstate.forgetLocals(ite.then.blscope_);
+					assert(!!ite.othw);
+					auto othwState=thenElse[1];
+					auto othwIntp=Interpreter(functionDef,ite.othw,othwState,hasFrame);
+					auto othw=othwIntp.runExp(ite.othw);
+					othwIntp.qstate.forgetLocals(ite.othw.blscope_);
+					qstate=thenIntp.qstate;
+					qstate+=othwIntp.qstate;
+					then=then.convertTo(ite.type);
+					othw=othw.convertTo(ite.type);
+					return QState.ite(cond,then,othw);
+				}
 			}else if(auto tpl=cast(TupleExp)e){
 				auto values=tpl.e.map!(e=>doIt(e)).array; // DMD bug: map!doIt does not work
 				return QState.makeTuple(e.type,values);

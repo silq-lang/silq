@@ -2188,13 +2188,19 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 	}
 	if(auto ite=cast(IteExp)expr){
 		ite.cond=expressionSemantic(ite.cond,sc,ConstResult.yes);
+		if(ite.cond.sstate==SemState.completed && !cast(BoolTy)ite.cond.type){
+			sc.error(format("type of condition should be !𝔹 or 𝔹, not %s",ite.cond.type),ite.cond.loc);
+			ite.sstate=SemState.error;
+		}
 		sc.pushConsumed();
 		if(ite.then.s.length!=1||ite.othw&&ite.othw.s.length!=1){
 			sc.error("branches of if expression must be single expressions;",ite.loc);
 			ite.sstate=SemState.error;
 			return ite;
 		}
-		Expression branchSemantic(Expression branch){
+		auto quantumControl=ite.cond.type!=Bool(true);
+		auto restriction_=quantumControl?Annotation.mfree:Annotation.none;
+		Expression branchSemantic(Expression branch,Scope sc){
 			if(auto ae=cast(AssertExp)branch){
 				branch=statementSemantic(branch,sc);
 				if(auto lit=cast(LiteralExp)ae.e)
@@ -2203,14 +2209,18 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 			}else branch=expressionSemantic(branch,sc,ConstResult.no);
 			return branch;
 		}
-		ite.then.s[0]=branchSemantic(ite.then.s[0]);
+		ite.then.blscope_=new BlockScope(sc,restriction_);
+		ite.then.s[0]=branchSemantic(ite.then.s[0],ite.then.blscope_);
+		ite.then.blscope_.pushConsumed();
 		propErr(ite.then.s[0],ite.then);
 		if(!ite.othw){
 			sc.error("missing else for if expression",ite.loc);
 			ite.sstate=SemState.error;
 			return ite;
 		}
-		ite.othw.s[0]=branchSemantic(ite.othw.s[0]);
+		ite.othw.blscope_=new BlockScope(sc,restriction_);
+		ite.othw.s[0]=branchSemantic(ite.othw.s[0],ite.othw.blscope_);
+		ite.othw.blscope_.pushConsumed();
 		propErr(ite.othw.s[0],ite.othw);
 		propErr(ite.cond,ite);
 		propErr(ite.then,ite);
@@ -2226,6 +2236,8 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 			sc.error(format("incompatible types %s and %s for branches of if expression",t1,t2),ite.loc);
 			ite.sstate=SemState.error;
 		}
+		if(sc.merge(quantumControl,ite.then.blscope_,ite.othw.blscope_))
+			ite.sstate=SemState.error;
 		return ite;
 	}
 	if(auto lit=cast(LiteralExp)expr){
