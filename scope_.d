@@ -285,6 +285,8 @@ abstract class Scope{
 					import semantic_: typeForDecl;
 					auto ot=typeForDecl(osym),st=typeForDecl(sym);
 					if((sym.scope_ is scopes[0]||osym.scope_ is sc)&&ot&&st&&(ot!=st||quantumControl&&st.hasClassicalComponent())){
+						// TODO: join type if possible
+						// TODO: automatically promote to quantum if possible
 						symtab.remove(sym.name.ptr);
 						if(sym.rename) rnsymtab.remove(sym.rename.ptr);
 						if(sym.isLinear()&&!scopes[0].canForgetAppend(sym)){

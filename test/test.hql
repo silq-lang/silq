@@ -1,3 +1,17 @@
+
+/+import codeforces.summer18.contest.a3; // TODO: make compile without type annotation
+def main(){
+	return solve((false,true,true),(false,true,false));
+}
++/
+/+
+def main(){
+	a:=[[0:𝔹],[1:𝔹,H(0:𝔹)]];
+	x:=H(0:𝔹);
+	r:=a[x];
+	return (r,a,x);
+}
++/
 /+
 def main(){
 	x:=H(false);
@@ -72,7 +86,7 @@ def solve[n:!ℕ](bits: !𝔹^n){
 // import codeforces.summer18.contest.a2;
 
 def main(){
-	return solve(1:!𝔹,0:!𝔹,0:!𝔹,1:!𝔹,0:!𝔹,1:!𝔹); // TODO
+	return solve(1:!𝔹,0:!𝔹,0:!𝔹,1:!𝔹,0:!𝔹,1:!𝔹);
 }
 +/
 /+

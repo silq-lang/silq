@@ -7,7 +7,7 @@ def solve[n:!ℕ](bits: (!𝔹^n)^2){
 		}
 	}
 	i:=H(0:𝔹);
-	qs:=bits[i];
+	qs:=if i then bits[1] else bits[0]:𝔹^n;
 	forget(i=(qs[k]==bits[1][k]));
 	return qs;
 }

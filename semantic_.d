@@ -1801,6 +1801,10 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 					idx.sstate=SemState.error;
 				}else{
 					idx.type=next;
+					if(!idx.a[0].type.isClassical()&&idx.type.hasClassicalComponent()){
+						sc.error(format("cannot use quantum index to index array whose elements of type '%s' have classical components",idx.type),idx.loc);
+						idx.sstate=SemState.error;
+					}
 				}
 			}
 		}
@@ -2234,6 +2238,11 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 		ite.type=joinTypes(t1,t2);
 		if(t1 && t2 && !ite.type){
 			sc.error(format("incompatible types %s and %s for branches of if expression",t1,t2),ite.loc);
+			ite.sstate=SemState.error;
+		}
+		if(quantumControl&&ite.type&&ite.type.hasClassicalComponent()){
+			// TODO: automatically promote to quantum if possible
+			sc.error(format("type '%s' of if expression with quantum control has classical components",ite.type),ite.loc);
 			ite.sstate=SemState.error;
 		}
 		if(sc.merge(quantumControl,ite.then.blscope_,ite.othw.blscope_))
