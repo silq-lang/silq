@@ -747,11 +747,13 @@ struct QState{
 			assert(!!ntype);
 			static if(op=="^^"){
 				auto t1=type,t2=r.type;
-				if(t1==Bool(true)&&isSubtype(t2,ℕt(true))) return makeBool(asBoolean||r.asBoolean);
-				if(cast(ℕTy)t1&&isSubtype(t2,ℕt(true))) return makeInteger(pow(asInteger,r.asInteger));
+				if(t1==Bool(true)&&isSubtype(t2,ℕt(true))) return makeBool(asBoolean||!r.asBoolean);
 				//if(cast(ℂTy)t1||cast(ℂTy)t2) return t1^^t2; // ?
-				if(util.among(t1,Bool(true),ℕt(true),ℤt(true),ℚt(true))&&isSubtype(t2,ℤt(false)))
-					return makeRational(pow(asRational(),r.asInteger()));
+				if(util.among(t1,Bool(true),ℕt(true),ℤt(true),ℚt(true))&&isSubtype(t2,ℤt(false))){
+					auto p=r.asInteger();
+					if(t1!=ℚt(true)&&p>=0) return makeInteger(pow(asInteger(),p)); // TODO: this is a hack
+					return makeRational(pow(asRational(),p));
+				}
 				if(type==Bool(true)) return makeBool(asBoolean||r.asBoolean);
 				if(t1!=ℝ(true)||t2!=ℝ(true))
 					return convertTo(ℝ(true))^^r.convertTo(ℝ(true));
@@ -1818,7 +1820,7 @@ struct Interpreter(QState){
 		QState.Value read(ref QState state){
 			enforce(name in state.vars);
 			auto var=state.vars[name];
-			enforce(indices.all!(x=>x.isClassical()),var.isClassical()?"TODO: fix type checker":"TODO");
+			enforce(indices.all!(x=>x.isClassical()),"TODO");
 			QState.Value doIt(ref QState.Value value,QState.Value[] indices){
 				if(!indices.length) return value;
 				switch(value.tag){
