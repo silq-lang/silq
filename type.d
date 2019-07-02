@@ -842,9 +842,14 @@ class ProductTy: Type{
 			gargs[i]=subst[n];
 		}
 		if(!isTuple) assert(gargs.length==1);
-		garg=isTuple?new TupleExp(gargs):gargs[0];
-		cod=cast(ProductTy)cod.substitute(subst);
-		assert(!!cod);
+		if(isTuple){
+			auto tgarg=new TupleExp(gargs);
+			tgarg.type=tupleTy(gargs.map!(garg=>garg.type).array);
+			tgarg.sstate=SemState.completed;
+			garg=tgarg;
+		}else garg=gargs[0];
+		cod=cast(ProductTy)tryApply(garg,true);
+		if(!cod) return null;
 		return cod.tryApply(arg,false);
 	}
 	Expression tryApply(Expression arg,bool isSquare){

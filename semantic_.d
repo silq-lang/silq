@@ -2063,7 +2063,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 			sc.error("expected non-negative integer constant",e2.loc);
 			e.sstate=SemState.error;+/
 			if(!isSubtype(e2.type,ℕt(true))){
-				sc.error(format("vector length should be of type !ℕ, not %s",e2), e2.loc);
+				sc.error(format("vector length should be of type !ℕ, not %s",e2.type), e2.loc);
 				e.sstate=SemState.error;
 			}else return vectorTy(e1,e2);
 		}else{

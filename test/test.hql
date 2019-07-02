@@ -1,4 +1,44 @@
 /+
+def fun[n:!𝔹](x:𝔹^n)⇒x;
+
+def main(){
+	x:=fun(0:𝔹,1:𝔹); // error
+	y:=fun(); // TODO?
+	z:=fun(0:𝔹,); // TODO?
+	return (x,y,z);
+}
++/
+/+import codeforces.summer18.contest.e1;
+def main(){
+	b:=measure(H(0:𝔹),H(0:𝔹),H(0:𝔹),H(0:𝔹),H(0:𝔹));
+	def makeF[n:!ℕ](b:!𝔹^n)(x:𝔹^n)lifted{
+		r:=0:𝔹;
+		for k in [0..5){
+			r⊕=b[k]&x[k];
+		}
+		return r;
+	};
+	f:=makeF(b);
+	g:=makeF(solve(f));
+	return (f,g);
+}
++/
+/+
+import codeforces.summer18.contest.e1;
+def main(){
+	b:=measure(H(0:𝔹),H(0:𝔹),H(0:𝔹),H(0:𝔹),H(0:𝔹));
+	f:=(x:𝔹^5)lifted{
+		r:=0:𝔹;
+		for k in [0..5){
+			r⊕=b[k]&x[k];
+		}
+		return r;
+	};
+	assert(solve(f)==b);
+	return b;
+}
++/
+/+
 import codeforces.summer18.contest.d3;
 def main(){
 	x:=(H(0:𝔹),H(0:𝔹),H(0:𝔹));
