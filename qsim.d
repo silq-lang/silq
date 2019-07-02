@@ -107,34 +107,34 @@ struct QState{
 		else state[k]=v;
 		if(abs(state[k]) < zeroThreshold) state.remove(k);
 	}
+	void updateRelabeling(ref Σ.Ref[Σ.Ref] relabeling,Value to,Value from){
+		auto tag=to.tag;
+		enforce(tag==from.tag);
+		final switch(tag){
+			case Value.Tag.array_:
+				enforce(to.array_.length==from.array_.length);
+				foreach(i;0..to.array_.length)
+					updateRelabeling(relabeling,to.array_[i],from.array_[i]);
+				break;
+			case Value.Tag.record:
+				foreach(k,v;to.record)
+					updateRelabeling(relabeling,v,from.record[k]);
+				break;
+			case Value.Tag.quval:
+				auto tquvar=cast(QVar)to.quval;
+				auto fquvar=cast(QVar)from.quval;
+				if(tquvar&&fquvar&&fquvar.ref_!=tquvar.ref_) relabeling[fquvar.ref_]=tquvar.ref_;
+				break;
+			case Value.Tag.closure:
+				break;
+			case Value.Tag.fval,Value.Tag.qval,Value.Tag.zval,Value.Tag.uintval,Value.Tag.intval,Value.Tag.bval:
+				break;
+		}
+	}
 	void opOpAssign(string op:"+")(QState r){
 		Σ.Ref[Σ.Ref] relabeling;
-		void relabel(Value to,Value from){
-			auto tag=to.tag;
-			enforce(tag==from.tag);
-			final switch(tag){
-				case Value.Tag.array_:
-					enforce(to.array_.length==from.array_.length);
-					foreach(i;0..to.array_.length)
-						relabel(to.array_[i],from.array_[i]);
-					break;
-				case Value.Tag.record:
-					foreach(k,v;to.record)
-						relabel(v,from.record[k]);
-					break;
-				case Value.Tag.quval:
-					auto tquvar=cast(QVar)to.quval;
-					auto fquvar=cast(QVar)from.quval;
-					if(tquvar&&fquvar&&fquvar.ref_!=tquvar.ref_) relabeling[fquvar.ref_]=tquvar.ref_;
-					break;
-				case Value.Tag.closure:
-					break;
-				case Value.Tag.fval,Value.Tag.qval,Value.Tag.zval,Value.Tag.uintval,Value.Tag.intval,Value.Tag.bval:
-					break;
-			}
-		}
 		foreach(k,v;r.vars){
-			if(k in vars) relabel(vars[k],v);
+			if(k in vars) updateRelabeling(relabeling,vars[k],v);
 			else vars[k]=v;
 		}
 		foreach(k,v;r.state){
@@ -243,7 +243,7 @@ struct QState{
 	static class QVar: QVal{
 		Σ.Ref ref_;
 		bool constLifted=false;
-		override string toString(){ return text("ref(",ref_,")"); }
+		override string toString(){ assert(ref_!=9,"!!!?"); return text("ref(",ref_,")"); }
 		this(Σ.Ref ref_){ this.ref_=ref_; }
 		override Value get(ref Σ s){
 			auto r=s.qvars[ref_];
@@ -295,10 +295,9 @@ struct QState{
 		}
 	}
 	static class IndexQVal: QVal{
-		QVal value;
-		size_t i;
-		this(QVal value,size_t i){ this.value=value; this.i=i; }
-		override Value get(ref Σ σ){ return value.get(σ)[i]; }
+		Value value,i;
+		this(Value value,Value i){ this.value=value; this.i=i; }
+		override Value get(ref Σ σ){ return value.classicalValue(σ)[i.classicalValue(σ)]; }
 	}
 	static class UnOpQVal(string op):QVal{
 		Value value;
@@ -662,7 +661,7 @@ struct QState{
 				case Tag.array_: return array_[i];
 				case Tag.quval:
 					assert(isInt(type)||isUint(type));
-					return makeQuval(Bool(false),new IndexQVal(quval,i));
+					return makeQuval(Bool(false),new IndexQVal(this,makeInteger(ℤ(i))));
 				case Tag.uintval: return makeBool((uintval.val&(ℤ(1)<<i))!=0);
 				case Tag.intval: return makeBool((intval.val&(ℤ(1)<<i))!=0);
 				case Tag.fval,Tag.qval,Tag.zval,Tag.bval: enforce(0,"TODO?"); assert(0);
@@ -671,8 +670,22 @@ struct QState{
 		}
 		Value opIndex(Value i){
 			if(i.isClassicalInteger()) return this[to!size_t(i.asInteger())];
-			enforce(0,text("TODO: indexing for types ",this.type," and ",i.type));
-			assert(0);
+			final switch(tag){
+				case Tag.array_:
+					// TODO: bounds checking
+					Value build(Value[] array_){ // TODO: this is a hack
+						if(array_.length==1) return array_[0];
+						auto cond=i.compare!"<"(makeInteger(ℤ(array_.length/2)));
+						return ite(cond,build(array_[0..$/2]),build(array_[$/2..$]));
+					}
+					enforce(array_.length,"array index out of bounds");
+					return build(array_);
+				case Tag.uintval,Tag.intval,Tag.quval:
+					assert(isInt(type)||isUint(type));
+					return makeQuval(Bool(false),new IndexQVal(this,i));
+				case Tag.fval,Tag.qval,Tag.zval,Tag.bval: enforce(0,"TODO?"); assert(0);
+				case Tag.record,Tag.closure: assert(0);
+			}
 		}
 		Value opSlice(size_t l,size_t r)in{
 			assert(tag==Tag.array_);
@@ -729,7 +742,7 @@ struct QState{
 			else static if(op=="^") return arithmeticType!true(t1,t2);
 			else static if(op=="&") return arithmeticType!true(t1,t2);
 			else static if(op=="~") return t1; // TODO: add function to semantic instead
-			else static if(op=="<<"||op==">>") return arithmeticType!false(t1,t1); // TODO: add function to semantic instead
+			else static if(op=="<<"||op==">>") return arithmeticType!false(arithmeticType!false(t1,t1),t2); // TODO: add function to semantic instead
 			else{
 				enforce(0,text("TODO: '",op,"' for types ",t1," and ",t2));
 				assert(0);
@@ -1264,6 +1277,11 @@ struct QState{
 			override Value get(ref Σ s){
 				return cond.classicalValue(s).asBoolean?then.classicalValue(s):othw.classicalValue(s);
 			}
+			override QVal setConstLifted(){
+				then=then.setConstLifted();
+				othw=othw.setConstLifted();
+				return this;
+			}
 		}
 		auto type=then.type;
 		final switch(Value.getTag(type)){
@@ -1656,7 +1674,7 @@ struct Interpreter(QState){
 			}
 			if(auto idx=cast(IndexExp)e){
 				auto r=doIt2(idx.e)[doIt(idx.a[0])];
-				if(idx.constLookup) r=r.dup(qstate);
+				if(idx.constLookup&&!idx.indexed) r=r.dup(qstate);
 				return r;
 			}
 			if(auto sl=cast(SliceExp)e){
@@ -1690,11 +1708,13 @@ struct Interpreter(QState){
 						auto then=thenIntp.runExp(ite.then.s[0]).convertTo(ite.type);
 						thenIntp.qstate.forgetLocals(ite.then.blscope_);
 						qstate=thenIntp.qstate;
+						return then;
 					}else{
 						auto othwIntp=Interpreter!QState(functionDef,ite.othw,qstate,hasFrame);
 						auto othw=othwIntp.runExp(ite.othw.s[0]).convertTo(ite.type);
 						othwIntp.qstate.forgetLocals(ite.othw.blscope_);
 						qstate=othwIntp.qstate;
+						return othw;
 					}
 				}else{
 					auto thenElse=qstate.split(cond);
@@ -1702,16 +1722,22 @@ struct Interpreter(QState){
 					auto thenIntp=Interpreter!QState(functionDef,ite.then,qstate,hasFrame);
 					auto then=thenIntp.runExp(ite.then.s[0]);
 					thenIntp.qstate.forgetLocals(ite.then.blscope_);
+					thenIntp.qstate.assignTo("`result",then);
 					assert(!!ite.othw);
 					auto othwState=thenElse[1];
 					auto othwIntp=Interpreter(functionDef,ite.othw,othwState,hasFrame);
 					auto othw=othwIntp.runExp(ite.othw);
 					othwIntp.qstate.forgetLocals(ite.othw.blscope_);
+					othwIntp.qstate.assignTo("`result",othw);
 					qstate=thenIntp.qstate;
 					qstate+=othwIntp.qstate;
-					then=then.convertTo(ite.type);
-					othw=othw.convertTo(ite.type);
-					return QState.ite(cond,then,othw);
+					if(then.isValid) then=then.convertTo(ite.type);
+					if(othw.isValid) othw=othw.convertTo(ite.type);
+					if(!then.isValid) return othw; // constant conditions
+					if(!othw.isValid) return then;
+					auto var=qstate.vars["`result"];
+					qstate.vars.remove("`result");
+					return var;
 				}
 			}else if(auto tpl=cast(TupleExp)e){
 				auto values=tpl.e.map!(e=>doIt(e)).array; // DMD bug: map!doIt does not work
@@ -1838,40 +1864,40 @@ struct Interpreter(QState){
 		void assign(ref QState state,QState.Value rhs){
 			enforce(name in state.vars);
 			auto var=state.vars[name];
-			enforce(indices.all!(x=>x.isClassical()),var.isClassical()?"TODO: fix type checker":"TODO");
-			void doIt(ref QState.Value value,QState.Value[] indices){
+			void doIt(ref QState.Value value,QState.Value[] indices,QState.Value condition){
 				if(!indices.length){
+					auto nrhs=rhs;
+					if(condition.isValid)
+						nrhs=state.ite(condition,nrhs,value);
 					rhs.setConstLifted();
-					static if(isCat) state.catAssignTo(value,rhs);
-					else state.assignTo(value,rhs);
+					static if(isCat) state.catAssignTo(value,nrhs);
+					else state.assignTo(value,nrhs);
 					return;
 				}
-				switch(value.tag){
+				auto tag=value.tag;
+				switch(tag){
 					case QState.Value.Tag.array_:
-						doIt(value.array_[to!size_t(indices[0].asInteger)],indices[1..$]);
+						if(indices[0].isClassical()) doIt(value.array_[to!size_t(indices[0].asInteger)],indices[1..$],condition);
+						else{
+							foreach(i;0..value.array_.length){
+								auto ncond=indices[0].compare!"=="(qstate.makeInteger(ℤ(i)));
+								doIt(value.array_[i],indices[1..$],condition.isValid?condition&ncond:ncond);
+							}
+						}
 						return;
-					case QState.Value.Tag.zval:
+					case QState.Value.Tag.intval,QState.Value.Tag.uintval,QState.Value.Tag.quval:
 						enforce(indices.length==1);
-						auto index=to!size_t(indices[0].asInteger);
-						enforce(rhs.tag==QState.Value.Tag.bval);
-						value.zval=value.zval&~(ℤ(1)<<index)|(ℤ(cast(int)rhs.bval)<<index);
-						return;
-					case QState.Value.Tag.intval,QState.Value.Tag.uintval:
-						enforce(indices.length==1);
-						auto index=to!size_t(indices[0].asInteger);
-						value.assign(state,value&state.makeInteger(~(ℤ(1)<<index))|(rhs<<index));
-						return;
-					case QState.Value.Tag.quval:
-						enforce(indices.length==1);
-						auto index=to!size_t(indices[0].asInteger);
+						auto index=indices[0];
 						// TODO: bounds check
 						rhs.setConstLifted();
-						value.assign(state,value&state.makeInteger(~(ℤ(1)<<index))|(rhs<<index));
+						auto nrhs=value&~(state.makeInteger(ℤ(1))<<index)|(rhs<<index);
+						if(condition.isValid) nrhs=state.ite(condition,nrhs,value);
+						value.assign(state,nrhs);
 						return;
 					default: enforce(0,text("TODO: ",value.tag));
 				}
 			}
-			doIt(var,indices);
+			doIt(var,indices,state.nullValue);
 			state.vars[name]=var;
 		}
 	}
@@ -1880,7 +1906,8 @@ struct Interpreter(QState){
 		if(auto idx=cast(IndexExp)lhs){
 			auto a=getAssignable!isCat(idx.e);
 			enforce(idx.a.length==1,"TODO");
-			a.indices~=runExp(idx.a[0]);
+			auto index=runExp(idx.a[0]);
+			a.indices~=index;
 			return a;
 		}
 		enforce(0,text("TODO: assign to ",lhs));

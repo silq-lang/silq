@@ -1,4 +1,58 @@
 /+
+import codeforces.summer18.contest.a4;
+
+def main(){
+	return solve(2);
+}
++/
+/+
+def main(){
+	i:=H(0:𝔹);
+	x:=array(2,0:𝔹);
+	x[0] = if i==0 then 1:𝔹 else 0:𝔹;
+	k:=if x[0] then 0:𝔹 else 1:𝔹;
+	return (x,i,k);
+}
++/
+/+
+def main(){
+	x:=H(0:𝔹);
+	return ((measure(0)+1)+(x:int[3]),x);
+}
++/
+/+
+def main(){
+	x:=array(2,0:𝔹);
+	i:=H(0:𝔹);
+	x[i]=1:𝔹;
+	forget(i=x[1]);
+	return x;
+}
++/
+/+
+def main(){
+	x:=array(2,0:uint[2]);
+	i:=H(0:𝔹);
+	j:=H(0:𝔹);
+	x[i][j]=1:𝔹;
+	forget(i=if x[0][0]|x[0][1] then 0:𝔹 else 1:𝔹);
+	forget(j=if x[0][0]|x[1][0] then 0:𝔹 else 1:𝔹);
+	return x;
+}
++/
+/+
+def main(){
+	x:=array(2,vector(2,0:𝔹));
+	i:=H(0:𝔹);
+	j:=H(0:𝔹);
+	x[i][j]=1:𝔹;
+	forget(i=if x[0][0]|x[0][1] then 0:𝔹 else 1:𝔹);
+	forget(j=if x[0][0]|x[1][0] then 0:𝔹 else 1:𝔹);
+	return x;
+}
++/
+
+/+
 def foo(const x:𝔹):!ℕ{
 	return if x then 0 else 1; // error
 }
@@ -39,13 +93,6 @@ def main(){
 def main(){
 	x:=0:𝔹;
 	forget(x=0);
-}
-+/
-/+
-import codeforces.summer18.contest.a4;
-
-def main(){
-	return solve(0);
 }
 +/
 /+

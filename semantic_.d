@@ -1772,7 +1772,9 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 				}
 			}
 		}
+		idx.e.indexed=true;
 		idx.e=expressionSemantic(idx.e,sc,ConstResult.yes);
+		idx.e.indexed=true;
 		if(auto ft=cast(FunTy)idx.e.type){
 			assert(!replaceIndex);
 			Expression arg;
