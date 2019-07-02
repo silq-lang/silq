@@ -1,5 +1,20 @@
 /+
 def main(){
+	n:=100; // TODO: make running time scale linearly in n!
+	a:=vector(n,1:𝔹);
+	r:=0:int[32];
+	def index(a: 𝔹^n,i:!ℕ)lifted{
+		return a[i];
+	}
+	for i in [0..n){
+		r+=a[i];
+		r+=index(a,i);
+	}
+	return r;
+}
++/
+/+
+def main(){
 	x:=H(0:𝔹);
 	k:=H(0:𝔹);
 	f:=()=>x; // TODO: this shouldn't get a reference to k
