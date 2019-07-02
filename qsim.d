@@ -780,12 +780,12 @@ struct QState{
 				if(isUint(type)) return makeUint(type,mixin(`uintval `~op~` to!size_t(r.asInteger())`));
 			}else{
 				if(type!=ntype||r.type!=ntype){
-					if(type==ntype&&r.type==ℤt(true)){
-						if(isInt(type)) return this.opBinary!op(makeInt(ntype,BitInt!true(intval.nbits,r.zval)));
-						if(isUint(type)) return this.opBinary!op(makeUint(ntype,BitInt!false(uintval.nbits,r.zval)));
+					if(type==ntype&&util.among(r.type,Bool(true),ℤt(true))){
+						if(isInt(type)) return this.opBinary!op(makeInt(ntype,BitInt!true(intval.nbits,r.asInteger())));
+						if(isUint(type)) return this.opBinary!op(makeUint(ntype,BitInt!false(uintval.nbits,r.asInteger())));
 					}else if(type==ℤt(true)&&r.type==ntype){
-						if(isInt(r.type)) return makeInt(ntype,BitInt!true(r.intval.nbits,zval)).opBinary!op(r);
-						if(isUint(r.type)) return makeUint(ntype,BitInt!false(r.uintval.nbits,zval)).opBinary!op(r);
+						if(isInt(r.type)) return makeInt(ntype,BitInt!true(r.intval.nbits,asInteger())).opBinary!op(r);
+						if(isUint(r.type)) return makeUint(ntype,BitInt!false(r.uintval.nbits,asInteger())).opBinary!op(r);
 						// TODO: rat
 					}
 					return this.convertTo(ntype).opBinary!op(r.convertTo(ntype));

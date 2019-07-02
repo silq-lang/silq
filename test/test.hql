@@ -1,3 +1,65 @@
+/+
+import codeforces.summer18.contest.d3;
+def main(){
+	x:=(H(0:𝔹),H(0:𝔹),H(0:𝔹));
+	r:=solve(x);
+	return (x,r);
+}
++/
+/+
+import codeforces.summer18.contest.d2;
+def main(){
+	x:=(H(0:𝔹),H(0:𝔹));
+	r:=solve(x,(false,true));
+	return (x,r);
+}
++/
+/+
+import codeforces.summer18.contest.d1;
+def main(){
+	x:=(H(0:𝔹),H(0:𝔹));
+	r:=solve(x,(true,true));
+	return (x,r);
+}
++/
+/+
+import codeforces.summer18.contest.c2;
+def main(){
+	r:=measure(H(0:𝔹));
+	if r==0{
+		x:=0:𝔹;
+	}else{
+		x:=H(0:𝔹);
+	}
+	s:=solve(x);
+	assert(s=-1||s=r);
+	return s;
+}
++/
+/+
+import codeforces.summer18.contest.c1;
+def main(){
+	r:=measure(H(0:𝔹));
+	if r==0{
+		x:=0:𝔹;
+	}else{
+		x:=H(0:𝔹);
+	}
+	return solve(x)==r;
+}
++/
+/+
+import codeforces.summer18.contest.b4;
+def main(){
+	for i in [0:!𝔹..1:!𝔹]{
+		for j in [0:!𝔹..1:!𝔹]{
+			qs:=(H(i:𝔹),H(j:𝔹));
+			if qs[0]||qs[1]{ phase(π); }
+			assert(solve(qs)==((i,j):!uint[2]));
+		}
+	}
+}
++/
 /+import codeforces.summer18.contest.b3;
 def main(){
 	results:=[]:!ℤ[];
