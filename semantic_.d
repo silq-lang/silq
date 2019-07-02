@@ -2310,17 +2310,14 @@ FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 	auto bdy=fd.body_?compoundExpSemantic(fd.body_,fsc):null;
 	scope(exit){
 		fsc.pushConsumed();
-		if(fd.ret&&fd.ret.sstate==SemState.completed){
-			foreach(id;fd.ret.freeIdentifiers){
-				assert(!!id.meaning);
-				auto allowMerge=fsc.allowMerge;
-				fsc.allowMerge=false;
-				auto meaning=fsc.lookup(id,false,true,Lookup.probing);
-				fsc.allowMerge=allowMerge;
-				assert(!meaning||!meaning.isLinear);
-				if(meaning !is id.meaning){
-					fsc.error(format("variable '%s' in function return type does not appear in function scope", id.name), fd.loc);
-					fd.sstate=SemState.error;
+		if(fd.sstate==SemState.completed){
+			if(auto ofd=sc.getFunction()){
+				foreach(id;fd.ftype.freeIdentifiers){
+					assert(!!id.meaning);
+					if(isAssignable(id.meaning,sc)){
+						sc.error(format("cannot use reassignable variable '%s' in type of local function", id.name), fd.loc);
+						ofd.sstate=SemState.error;
+					}
 				}
 			}
 		}
@@ -2365,17 +2362,6 @@ FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 	}
 	if(fd.sstate!=SemState.error)
 		fd.sstate=SemState.completed;
-	if(fd.sstate==SemState.completed){
-		if(auto ofd=sc.getFunction()){
-			foreach(id;fd.ftype.freeIdentifiers){
-				assert(!!id.meaning);
-				if(isAssignable(id.meaning,sc)){
-					sc.error(format("cannot use reassignable variable '%s' in type of local function", id.name), fd.loc);
-					ofd.sstate=SemState.error;
-				}
-			}
-		}
-	}
 	return fd;
 }
 

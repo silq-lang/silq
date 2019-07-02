@@ -1,4 +1,12 @@
 /+
+def floor(n:!ℕ)⇒2*n;
+
+def main(){
+	x:=0:int[floor(3)];
+	return x;
+}
++/
+/+
 def fun[n:!𝔹](x:𝔹^n)⇒x;
 
 def main(){
