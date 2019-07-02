@@ -151,7 +151,7 @@ abstract class Expression: Node{
 
 	// semantic information
 	bool constLookup=true;
-	bool indexed=false;
+	bool byRef=false;
 }
 
 mixin template VariableFree(){

@@ -1,3 +1,41 @@
+/+import codeforces.summer18.contest.b3;
+def main(){
+	results:=[]:!ℤ[];
+	for i in [0:!𝔹..1:!𝔹]{
+		for j in [0:!𝔹..1:!𝔹]{
+			def prepare()⇒(H(i),H(j));
+			assert(solve(prepare())==((j,i):!uint[2]));
+			results~=[solve(prepare())];
+			results~=[((j,i):!uint[2]):!ℕ];
+			assert(results[results.length-2]==results[results.length-1]);
+		}
+	}
+	return results;
+}
++/
+/+
+import codeforces.summer18.contest.b2;
+def main(){
+	x:=H(0:𝔹);
+	ghz:=vector(3,x);
+	forget(x=ghz[0]);
+	w:=vector(4,0:𝔹);
+	i:=(H(0:𝔹),H(0:𝔹)):uint[2];
+	w[i]=1:𝔹;
+	forget(i=λ(w:𝔹^4)lifted{
+		for i in [0..3){ if w[i]==1{ return i:uint[2]; } }
+		return 3:uint[2];
+	}(w));
+	assert((solve(ghz),solve(w))==(0,1));
+}
++/
+/+
+import codeforces.summer18.contest.b1;
+def main(){
+	return solve(false,true,false);
+	//return solve(H(false),false,false); // TODO!
+}
++/
 /+
 import codeforces.summer18.contest.a4;
 

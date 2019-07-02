@@ -1714,7 +1714,9 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 		return id;
 	}
 	if(auto fe=cast(FieldExp)expr){
+		fe.e.byRef=true;
 		fe.e=expressionSemantic(fe.e,sc,ConstResult.yes);
+		fe.e.byRef=true;
 		propErr(fe.e,fe);
 		if(fe.sstate==SemState.error)
 			return fe;
@@ -1772,9 +1774,9 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 				}
 			}
 		}
-		idx.e.indexed=true;
+		idx.e.byRef=true;
 		idx.e=expressionSemantic(idx.e,sc,ConstResult.yes);
-		idx.e.indexed=true;
+		idx.e.byRef=true;
 		if(auto ft=cast(FunTy)idx.e.type){
 			assert(!replaceIndex);
 			Expression arg;
@@ -2125,8 +2127,9 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 		propErr(ce.e2,ce);
 		if(ce.sstate==SemState.error)
 			return ce;
-		if(cast(ArrayTy)ce.e1.type && ce.e1.type == ce.e2.type){
-			ce.type=ce.e1.type;
+		auto ntype=joinTypes(ce.e1.type,ce.e2.type);
+		if(cast(ArrayTy)ce.e1.type && ntype){
+			ce.type=ntype;
 		}else{
 			sc.error(format("incompatible types %s and %s for ~",ce.e1.type,ce.e2.type),ce.loc);
 			ce.sstate=SemState.error;

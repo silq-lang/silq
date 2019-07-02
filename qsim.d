@@ -1556,12 +1556,15 @@ struct Interpreter(QState){
 				assert(0,"unsupported");
 			}
 			if(auto fe=cast(FieldExp)e){
+				enforce(fe.constLookup);
 				if(isBuiltIn(fe)){
 					if(auto at=cast(ArrayTy)fe.e.type){
 						assert(fe.f.name=="length");
+						auto r=doIt(fe.e);
+						enforce(r.tag==QState.Value.Tag.array_);
+						return qstate.makeInteger(ℤ(r.array_.length));
 					}
 				}
-				enforce(fe.constLookup);
 				// TODO: non-constant field lookup
 				return qstate.readField(doIt(fe.e),fe.f.name,true);
 			}
@@ -1674,7 +1677,7 @@ struct Interpreter(QState){
 			}
 			if(auto idx=cast(IndexExp)e){
 				auto r=doIt2(idx.e)[doIt(idx.a[0])];
-				if(idx.constLookup&&!idx.indexed) r=r.dup(qstate);
+				if(idx.constLookup&&!idx.byRef) r=r.dup(qstate);
 				return r;
 			}
 			if(auto sl=cast(SliceExp)e){
@@ -2046,7 +2049,7 @@ struct Interpreter(QState){
 				auto intp=Interpreter(functionDef,fe.bdy,qstate,hasFrame);
 				for(ℤ j=lz+cast(int)fe.leftExclusive;j+cast(int)fe.rightExclusive<=rz;j++){
 					if(opt.trace) writeln("loop-index: ",j);
-					intp.qstate.assignTo(fe.var.name,qstate.makeInteger(j));
+					intp.qstate.assignTo(fe.var.name,qstate.makeInteger(j).convertTo(fe.loopVar.vtype));
 					intp.run(retState);
 					intp.qstate.forgetLocals(fe.bdy.blscope_);
 				}
