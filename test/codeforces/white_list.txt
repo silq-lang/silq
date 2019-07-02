@@ -20,6 +20,7 @@ Most
 PI
 PositiveIntFromBoolArr
 Random
+RandomInt
 Rest
 SplitArray
 Sqrt
@@ -27,3 +28,5 @@ Tail
 ToBigInt
 ToDouble
 ToStringI
+Xor
+XOR

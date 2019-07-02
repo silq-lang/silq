@@ -1,31 +1,31 @@
 \centering 
 \begin{adjustbox}{width=\columnwidth,center} 
-\begin{tabular}{ c c c c c c c c c c c}
- & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10\\
+\begin{tabular}{ c c c c c c c c c c c c}
+ & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & average \\  
 \hline 
-\code{CCNOT} & 0 & 1 & 0 & 1 & 0 & 1 & 0 & 0 & 0 & 0\\
-\code{CNOT} & 0 & 0 & 0 & 1 & 2 & 0 & 3 & 4 & 2 & 0\\
-\code{H} & 0 & 0 & 0 & 1 & 1 & 0 & 1 & 0 & 1 & 0\\
-\code{M} & 0 & 1 & 1 & 0 & 2 & 1 & 3 & 3 & 0 & 3\\
-\code{MeasureInteger} & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0\\
-\code{MultiM} & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0\\
-\code{MultiX} & 4 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\
-\code{R1} & 0 & 0 & 2 & 2 & 2 & 0 & 0 & 0 & 2 & 0\\
-\code{ResultAsInt} & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 0\\
-\code{Ry} & 0 & 1 & 1 & 1 & 1 & 1 & 1 & 2 & 1 & 0\\
-\code{Rz} & 0 & 2 & 0 & 0 & 0 & 2 & 1 & 2 & 0 & 0\\
-\code{S} & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\
-\code{StatePreparationComplexCoefficients} & 2 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1\\
-\code{X} & 0 & 4 & 6 & 1 & 2 & 4 & 0 & 1 & 0 & 0\\
-\code{Z} & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\
+\code{CCNOT} &  & 1 &  & 1 &  & 1 &  &  &  &  & 0.3 \\  
+\code{CNOT} &  &  &  & 1 & 2 &  & 3 & 4 & 2 &  & 1.2 \\  
+\code{H} &  &  &  & 1 & 1 &  & 1 &  & 1 &  & 0.4 \\  
+\code{M} &  & 1 & 1 &  & 2 & 1 & 3 & 3 &  & 3 & 1.4 \\  
+\code{MeasureInteger} &  &  &  &  &  &  &  &  & 1 &  & 0.1 \\  
+\code{MultiM} & 1 &  &  & 1 &  &  &  &  &  &  & 0.2 \\  
+\code{MultiX} & 4 &  &  &  &  &  &  &  &  &  & 0.4 \\  
+\code{R1} &  &  & 2 & 2 & 2 &  &  &  & 2 &  & 0.8 \\  
+\code{ResultAsInt} & 1 &  &  & 1 &  &  &  &  &  &  & 0.2 \\  
+\code{Ry} &  & 1 & 1 & 1 & 1 & 1 & 1 & 2 & 1 &  & 0.9 \\  
+\code{Rz} &  & 2 &  &  &  & 2 & 1 & 2 &  &  & 0.7 \\  
+\code{S} & 1 &  &  &  &  &  &  &  &  &  & 0.1 \\  
+\code{StatePreparationComplexCoefficients} & 2 &  &  &  &  &  &  &  &  & 1 & 0.3 \\  
+\code{X} &  & 4 & 6 & 1 & 2 & 4 &  & 1 &  &  & 1.8 \\  
+\code{Z} & 1 &  &  &  &  &  &  &  &  &  & 0.1 \\  
 \hline 
-\code{Adjoint} &2 & 0 & 1 & 1 & 0 & 0 & 0 & 1 & 0 & 1\\
-\code{Controlled} &2 & 4 & 2 & 1 & 1 & 4 & 2 & 1 & 1 & 0\\
-\code{adjoint self} &0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0\\
-\code{adjoint auto} &0 & 0 & 1 & 1 & 0 & 2 & 0 & 0 & 0 & 0\\
-\code{controlled auto} &0 & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 0 & 0\\
-\code{controlled adjoint auto} &0 & 0 & 0 & 0 & 0 & 1 & 0 & 0 & 0 & 0\\
+\code{Adjoint} & 2 &  & 1 & 1 &  &  &  & 1 &  & 1 & 0.6 \\  
+\code{Controlled} & 2 & 4 & 2 & 1 & 1 & 4 & 2 & 1 & 1 &  & 1.8 \\  
+\code{adjoint auto} &  &  & 1 & 1 &  & 2 &  &  &  &  & 0.4 \\  
+\code{controlled auto} &  & 1 &  &  &  & 1 &  &  &  &  & 0.2 \\  
+\code{controlled adjoint auto} &  &  &  &  &  & 1 &  &  &  &  & 0.1 \\  
 \hline 
-\code{Line numbers} & 16 & 24 & 86 & 18 & 11 & 33 & 13 & 28 & 11 & 18\\
+Lines of code & 16 & 24 & 86 & 18 & 11 & 33 & 13 & 28 & 11 & 18 & 25.8 \\  
+\hline 
 \end{tabular} 
 \end{adjustbox} 

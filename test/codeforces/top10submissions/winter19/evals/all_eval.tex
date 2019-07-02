@@ -1,0 +1,51 @@
+\centering 
+\begin{adjustbox}{width=\columnwidth,center} 
+\begin{tabular}{ c c c c c c c c c c c c}
+ & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & average \\  
+\hline 
+\code{ApplyPauliFromBitString} &  &  &  & 4 &  &  &  &  &  &  & 0.4 \\  
+\code{ApplyToEach} &  &  &  & 2 &  &  &  & 7 & 6 &  & 1.5 \\  
+\code{ApplyToEachA} &  &  &  &  &  &  &  & 8 & 3 &  & 1.1 \\  
+\code{ApplyToEachC} &  &  &  & 1 &  &  &  &  &  &  & 0.1 \\  
+\code{ApplyToEachCA} & 1 &  &  & 5 &  &  &  &  & 7 & 6 & 1.9 \\  
+\code{CCNOT} & 6 & 10 &  & 1 & 2 & 9 & 31 &  & 1 & 4 & 6.4 \\  
+\code{CNOT} & 5 & 15 & 12 & 14 & 20 & 17 & 13 & 23 & 18 & 15 & 15.2 \\  
+\code{ControlledOnBitString} & 2 &  &  & 6 &  &  &  &  &  & 2 & 1.0 \\  
+\code{ControlledOnInt} & 4 &  &  & 6 &  &  &  &  &  &  & 1.0 \\  
+\code{H} & 13 & 11 & 13 & 14 & 13 & 10 & 13 & 12 & 13 & 15 & 12.7 \\  
+\code{IntegerIncrementLE} &  &  &  & 2 &  &  &  &  &  & 4 & 0.6 \\  
+\code{M} &  & 3 & 3 &  & 12 & 3 & 5 & 4 &  & 8 & 3.8 \\  
+\code{Measure} &  &  &  &  &  &  &  & 1 &  &  & 0.1 \\  
+\code{MeasureInteger} &  &  &  & 1 &  &  &  &  & 2 &  & 0.3 \\  
+\code{MultiM} & 2 &  &  & 1 &  &  &  &  &  &  & 0.3 \\  
+\code{MultiX} & 9 &  &  & 2 &  &  &  &  &  &  & 1.1 \\  
+\code{QFT} &  &  &  &  &  &  &  &  &  & 1 & 0.1 \\  
+\code{R1} &  &  & 2 & 2 & 2 &  &  &  & 5 &  & 1.1 \\  
+\code{Reset} & 1 &  &  & 1 & 2 &  &  & 1 &  &  & 0.5 \\  
+\code{ResetAll} &  &  & 1 &  &  &  &  &  &  & 3 & 0.4 \\  
+\code{ResultAsInt} & 2 &  &  & 1 &  &  &  &  &  &  & 0.3 \\  
+\code{Rx} &  &  &  & 1 &  &  & 1 &  &  &  & 0.2 \\  
+\code{Ry} & 2 & 3 & 3 & 2 & 3 & 4 & 4 & 8 & 6 & 2 & 3.7 \\  
+\code{Rz} &  & 4 &  & 1 &  & 5 & 1 & 2 &  & 2 & 1.5 \\  
+\code{S} & 2 &  & 1 &  & 1 &  &  & 1 &  &  & 0.5 \\  
+\code{SWAP} &  & 1 & 1 & 1 &  & 1 &  & 5 & 1 & 1 & 1.1 \\  
+\code{StatePreparationComplexCoefficients} & 2 &  &  &  &  &  &  &  &  & 1 & 0.3 \\  
+\code{StatePreparationPositiveCoefficients} &  &  &  &  &  &  &  &  &  & 1 & 0.1 \\  
+\code{WithA} &  &  &  &  &  &  &  &  & 1 &  & 0.1 \\  
+\code{X} & 18 & 62 & 50 & 36 & 98 & 65 & 119 & 64 & 58 & 27 & 59.7 \\  
+\code{Z} & 1 & 1 & 2 &  & 4 &  &  &  &  &  & 0.8 \\  
+\hline 
+\code{Adjoint} & 2 & 1 & 8 & 2 &  & 1 &  & 2 &  & 3 & 1.9 \\  
+\code{Controlled} & 14 & 26 & 27 & 25 & 37 & 27 & 30 & 57 & 36 & 12 & 29.1 \\  
+\code{adjoint self} & 1 &  &  & 3 &  &  &  & 1 &  &  & 0.5 \\  
+\code{adjoint auto} & 2 & 5 & 23 & 15 & 5 & 8 & 3 & 4 & 9 & 8 & 8.2 \\  
+\code{controlled auto} &  & 2 & 10 & 28 &  & 2 &  & 4 & 6 &  & 5.2 \\  
+\code{controlled adjoint auto} &  &  &  & 2 &  & 2 &  &  & 1 & 4 & 0.9 \\  
+\hline 
+Primitives & 15 & 9 & 10 & 21 & 10 & 8 & 8 & 12 & 12 & 15 & 12.0 \\  
+Functors & 4 & 4 & 4 & 6 & 2 & 5 & 2 & 5 & 4 & 4 & 4.0 \\  
+Classical gates & 34 & 98 & 73 & 57 & 142 & 103 & 174 & 102 & 88 & 58 & 92.9 \\  
+Lines of code & 163 & 322 & 461 & 298 & 367 & 358 & 543 & 610 & 323 & 282 & 372.7 \\  
+\hline 
+\end{tabular} 
+\end{adjustbox} 

@@ -1,7 +1,9 @@
 import os
 import pprint
 import re
-from numpy import array, zeros, delete, savetxt
+from numpy import array, zeros, delete, savetxt, amax, sum, all, str, count_nonzero, vstack
+from statistics import mean
+from natsort import natsorted
 
 def counting(s):
     s = s.strip()
@@ -16,111 +18,145 @@ def counting(s):
     else:
         return 1
 
+def writer(file, entries):
+    file.write(' & '.join([str(entrie) if entrie != 0 else '' for entrie in entries]))
+    file.write(' \\\\  \n')
+
+
+def table_writer(file, top_row, left_column, list_of_matrices, func_last):
+    file.write('\\centering \n')
+    file.write('\\begin{adjustbox}{width=\\columnwidth,center} \n')
+    alignment = ' c'
+    file.write('\\begin{tabular}' + '{' + f'{ alignment*len(top_row) }' + '}' + '\n')
+
+    writer(file, top_row)
+    file.write('\hline \n')
+
+    offset = 0
+    for matrix_idx, matrix in enumerate(list_of_matrices):
+        if matrix.size:
+            if matrix.shape[0] == matrix.size:
+                writer(file, [left_column[offset]] + list(matrix) + [func_last(1.*matrix)])
+                offset += 1
+
+            else:
+                for k in range(matrix.shape[0]):
+                    writer(file, [left_column[offset + k]] + list(matrix[k, :]) + [func_last(1.*matrix[k, :])])
+                offset += matrix.shape[0]
+
+            if matrix_idx < len(list_of_matrices):
+                file.write('\hline \n')
+
+    file.write('\\end{tabular} \n')
+    file.write('\\end{adjustbox} \n')
+
+
+def count_all(code_submission, column, result_numbers, result_numbers_functors, line_numbers):
+    for line in code_submission:
+        line_numbers[column] += counting(line)
+        line_no_comment = re.split('//', line)[0]
+
+        if not line_no_comment.strip():
+            continue
+
+        for idx in range(len(func_names)):
+            pattern1 = f'(^|[\W]){func_names[idx]}([\W]|$)'
+            result_numbers[idx, column] += len(re.findall(pattern1, line_no_comment))
+
+        for idx in range(len(functor_names)):
+            pattern2 = f'(^|[\W]){functor_names[idx]}([\W]|$)'
+            result_numbers_functors[idx, column] += len(re.findall(pattern2, line_no_comment))
+
+def remove_zeros(names, numbers):
+    keep = ~all(numbers==0, axis=len(numbers.shape)-1)
+    names = names[keep]
+    numbers = numbers[keep]
+    return names, numbers
 
 
 # path = './summer18/contest/'
-path = './top10submissions/winter19/'
-# path = './top10submissions/summer18/'
+# path = './top10submissions/winter19/'
+path = './top10submissions/summer18/'
+# path = './temp/'
 
 kind = {'Q#':'.qs', 'HQL':'.hql'}['Q#']
 
-# Load function names:
+with open('func_names.txt', 'r') as file:
+    func_names = [line.strip() for line in file if line.strip() != '']
 
-# if kind == '.qs':
-func_names_file = open('func_names.txt', 'r')
-func_names = [line.strip() for line in func_names_file if line.strip()!='']
-func_names_file.close()
+with open('white_list.txt', 'r') as file:
+    white_list = [line.strip() for line in file if line.strip() != '']
 
-func_names = list(dict.fromkeys(func_names))
+func_names = list(set(func_names).difference(set(white_list)))
 func_names.sort()
+# func_names = func_names[260:280]
+func_names = array(func_names)
 
-# for line in func_names_file:
-#     if line.strip() != '':
-#         func_names.append(line.strip())
+functor_names = array(['Adjoint', 'Controlled', 'adjoint self',
+                 'adjoint auto', 'controlled auto', 'controlled adjoint auto'])
 
-white_list_file = open('white_list.txt', 'r')
-white_list = [line.strip() for line in white_list_file if line.strip() != '']
-white_list_file.close()
 
-functor_names = ['Adjoint', 'Controlled', 'adjoint self',
-                 'adjoint auto', 'controlled auto', 'controlled adjoint auto']
+directorie = list(set(os.listdir(path)).difference({'evals'}))[0]
+contestants = len([file for file in os.listdir(os.path.join(path, directorie)) if file.endswith(kind)])
+
+result_numbers_comm = zeros([func_names.size, contestants], dtype=int)
+result_numbers_functors_comm = zeros([functor_names.size, contestants], dtype=int)
+line_numbers_comm = zeros(contestants, dtype=int)
+
 
 for directorie in os.listdir(path):
     print(directorie)
-    num_func_submissions = []
-    keepers = [False] * len(func_names)
 
-    files = os.listdir(os.path.join(path,directorie))
-    files = [int(file[:-len(kind)]) for file in files if file.endswith(kind)]
-    files.sort()
-    file_names = [str(file) for file in files]
-    files = [file_name+kind for file_name in file_names]
+    files = natsorted([file for file in os.listdir(os.path.join(path,directorie)) if file.endswith(kind)])
 
-    result_numbers = zeros([len(func_names), len(files)], dtype=int)
+    if len(files) == 0:
+        continue
 
-    result_numbers_functors = zeros([len(functor_names), len(files)], dtype=int)
+    result_numbers = zeros([func_names.size, len(files)], dtype=int)
+    result_numbers_functors = zeros([functor_names.size, len(files)], dtype=int)
+    line_numbers = zeros(len(files), dtype=int)
 
-    line_numbers = [0] * len(files)
+    for column_idx, file_name in enumerate(files):
+        print(file_name)
+        with open(os.path.join(path,directorie,file_name), 'r') as code_submission:
+            count_all(code_submission, column_idx, result_numbers, result_numbers_functors, line_numbers)
 
-    for file_idx, file in enumerate(files):
-        print(file)
-        code_submission = open(os.path.join(path,directorie,file), 'r')
-
-        for line in code_submission:
-            line_numbers[file_idx] += counting(line)
-            line_no_comment = re.split('//', line)[0]
-
-            for idx in range(0, len(func_names)):
-                pattern = f'(^|[\W]){func_names[idx]}([\W]|$)'
-                occurences = len(re.findall(pattern, line_no_comment))
-                if occurences:
-                    result_numbers[idx, file_idx] += occurences
-                    keepers[idx] = True
+    result_numbers_comm += result_numbers
+    result_numbers_functors_comm += result_numbers_functors
+    line_numbers_comm += line_numbers
 
 
-            for idx in range(0, len(functor_names)):
-                pattern = f'(^|[\W]){functor_names[idx]}([\W]|$)'
-                occurences = len(re.findall(pattern, line_no_comment))
-                if occurences:
-                    result_numbers_functors[idx, file_idx] += occurences
+    result_names, result_numbers = remove_zeros(func_names, result_numbers)
+    result_name_functors, result_numbers_functors = remove_zeros(functor_names, result_numbers_functors)
+
+    with open(os.path.join(path, 'evals', f'{directorie}_eval.tex'), 'w') as output_file:
+        table_writer(file = output_file,
+                     top_row = [''] + [file[:-len(kind)] for file in files] + ['average'],
+                     left_column = ['\code{'+rn+'}' for rn in list(result_names)] + ['\code{'+rnf+'}' for rnf in list(result_name_functors)] + ['Lines of code'],
+                     list_of_matrices = [result_numbers, result_numbers_functors, line_numbers],
+                     func_last = mean)
 
 
-    for white_listed in white_list:
-        keepers[func_names.index(white_listed)] = False
-
-    keep = [k for k, b in enumerate(keepers) if b]
-    result_numbers = result_numbers[keep,:]
-    result_names = array(func_names)[keep]
-
-
-    output_file = open(os.path.join(path, 'evals', f'{directorie}_eval.tex'), 'w')
-    # Surrounding:
-    output_file.write('\\centering \n')
-    output_file.write('\\begin{adjustbox}{width=\\columnwidth,center} \n')
-    alignment = ' c'
-    output_file.write('\\begin{tabular}' + '{' + f'{ alignment*(1+len(files)) }' + '}' + '\n')
-    # Header
-    output_file.write(' & ' + ' & '.join(file_names) + '\\\\' + '\n')
-    output_file.write('\hline \n')
-    # Functions
-    for k in range(0, len(result_names)):
-        output_file.write('\code{'+result_names[k] + '} & ' + ' & '.join([str(x) for x in result_numbers[k,:]]) + '\\\\' + '\n')
-    output_file.write('\hline \n')
-    # Functors
-    for k in range(0, len(functor_names)):
-        output_file.write('\code{' + functor_names[k] + '} &' + ' & '.join([str(x) for x in result_numbers_functors[k,:]]) + '\\\\' + '\n')
-    output_file.write('\hline \n')
-    # Line count
-    output_file.write('\code{Line numbers} & ' + ' & '.join([str(x) for x in line_numbers]) + '\\\\' + '\n')
-    # Surrounding
-    output_file.write('\\end{tabular} \n')
-    output_file.write('\\end{adjustbox} \n')
-
-    output_file.close()
+result_names_comm, result_numbers_comm = remove_zeros(func_names, result_numbers_comm)
+result_name_functors_comm, result_numbers_functors_comm = remove_zeros(functor_names, result_numbers_functors_comm)
 
 
 
+classical_gates_list = ['CCNOT', 'CNOT', 'H', 'M', 'R1', 'Rx', 'Ry', 'Rz', 'S', 'Swap', 'T', 'X', 'Y', 'Z']
+classical_gates_list = list(set(result_names_comm).intersection(set(classical_gates_list)))
+classical_gates_idxs = [list(result_names_comm).index(classical_gate) for classical_gate in classical_gates_list]
 
-
-
+with open(os.path.join(path, 'evals', 'all_eval.tex'), 'w') as output_file:
+    table_writer(file=output_file,
+                 top_row=[''] + [k for k in range(1,1+contestants)] + ['average'],
+                 left_column=['\code{' + rn + '}' for rn in list(result_names_comm)] +
+                             ['\code{' + rnf + '}' for rnf in list(result_name_functors_comm)] +
+                             ['Primitives', 'Functors', 'Classical gates', 'Lines of code'],
+                 list_of_matrices=[result_numbers_comm,
+                                   result_numbers_functors_comm,
+                                   vstack([count_nonzero(result_numbers_comm, axis=0),
+                                           count_nonzero(result_numbers_functors_comm,axis=0),
+                                           sum(result_numbers_comm[classical_gates_idxs], axis=0),
+                                           line_numbers_comm])],
+                 func_last=mean)
 
