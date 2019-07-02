@@ -1,5 +1,47 @@
 /+
 def main(){
+	a:=H(0:𝔹);
+	b:=1:𝔹;
+	c:=H(0:𝔹);
+	measure(H(0:𝔹));
+	x:=if c then dup(a) else b; // ok
+	return (c,x,a);
+}
++/
+/+
+def main(){
+	a:=H(0:𝔹);
+	b:=1:𝔹;
+	c:=H(0:𝔹);
+	x:=if c then a else b; // error
+	return (c,x,a,b);
+}
++/
+/+def main(){
+	a:=0:𝔹;
+	b:=1:𝔹;
+	c:=H(0:𝔹);
+	x:=dup(if c then a else b);
+	return (c,x,a,b);
+}
++/
+/+
+def main(){
+	a:=0:𝔹;
+	b:=1:𝔹;
+	c:=H(0:𝔹);
+	x:=if c then a else b;
+	return (c,x);
+}
++/
+/+
+def main()qfree{
+	f:=λ(a:int[2],b:int[2]). (a,b);
+	return reverse(H);
+}
++/
+/+
+def main(){
 	n:=3;
 	n+=1;
 	a:=vector(n,0:𝔹); // ok

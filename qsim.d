@@ -1277,11 +1277,6 @@ struct QState{
 			override Value get(ref Σ s){
 				return cond.classicalValue(s).asBoolean?then.classicalValue(s):othw.classicalValue(s);
 			}
-			override QVal setConstLifted(){
-				then=then.setConstLifted();
-				othw=othw.setConstLifted();
-				return this;
-			}
 		}
 		auto type=then.type;
 		final switch(Value.getTag(type)){
@@ -1700,10 +1695,7 @@ struct Interpreter(QState){
 					}
 				}
 			}
-			if(auto cmp=cast(CompoundExp)e){
-				if(cmp.s.length==1)
-					return doIt(cmp.s[0]);
-			}else if(auto ite=cast(IteExp)e){
+			if(auto ite=cast(IteExp)e){
 				auto cond=runExp(ite.cond);
 				if(cond.isClassical()){
 					if(cond.neqZImpl){
@@ -1725,22 +1717,26 @@ struct Interpreter(QState){
 					auto thenIntp=Interpreter!QState(functionDef,ite.then,qstate,hasFrame);
 					auto then=thenIntp.runExp(ite.then.s[0]);
 					thenIntp.qstate.forgetLocals(ite.then.blscope_);
-					thenIntp.qstate.assignTo("`result",then);
+					auto constLookup=ite.constLookup;
 					assert(!!ite.othw);
+					assert(ite.then.s[0].constLookup==constLookup&&ite.othw.s[0].constLookup==constLookup);
+					if(!constLookup) thenIntp.qstate.assignTo("`result",then);
 					auto othwState=thenElse[1];
 					auto othwIntp=Interpreter(functionDef,ite.othw,othwState,hasFrame);
-					auto othw=othwIntp.runExp(ite.othw);
+					auto othw=othwIntp.runExp(ite.othw.s[0]);
 					othwIntp.qstate.forgetLocals(ite.othw.blscope_);
-					othwIntp.qstate.assignTo("`result",othw);
+					if(!constLookup) othwIntp.qstate.assignTo("`result",othw);
 					qstate=thenIntp.qstate;
 					qstate+=othwIntp.qstate;
 					if(then.isValid) then=then.convertTo(ite.type);
 					if(othw.isValid) othw=othw.convertTo(ite.type);
 					if(!then.isValid) return othw; // constant conditions
 					if(!othw.isValid) return then;
-					auto var=qstate.vars["`result"];
-					qstate.vars.remove("`result");
-					return var;
+					if(!constLookup){
+						auto var=qstate.vars["`result"];
+						qstate.vars.remove("`result");
+						return var;
+					}else return qstate.ite(cond,then,othw);
 				}
 			}else if(auto tpl=cast(TupleExp)e){
 				auto values=tpl.e.map!(e=>doIt(e)).array; // DMD bug: map!doIt does not work

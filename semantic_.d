@@ -2232,7 +2232,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 				if(auto lit=cast(LiteralExp)ae.e)
 					if(lit.lit.type==Tok!"0" && lit.lit.str=="0")
 						branch.type=null;
-			}else branch=expressionSemantic(branch,sc,ConstResult.no);
+			}else branch=expressionSemantic(branch,sc,constResult);
 			return branch;
 		}
 		ite.then.blscope_=new BlockScope(sc,restriction_);
@@ -2267,8 +2267,10 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 			sc.error(format("type '%s' of if expression with quantum control has classical components",ite.type),ite.loc);
 			ite.sstate=SemState.error;
 		}
-		if(sc.merge(quantumControl,ite.then.blscope_,ite.othw.blscope_))
+		if(sc.merge(quantumControl,ite.then.blscope_,ite.othw.blscope_)){
+			sc.note("consumed in one branch of if expression", ite.loc);
 			ite.sstate=SemState.error;
+		}
 		return ite;
 	}
 	if(auto lit=cast(LiteralExp)expr){
