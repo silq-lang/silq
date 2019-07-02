@@ -1696,7 +1696,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 			}
 		}
 		if(id.type&&!id.type.isClassical()){
-			if(!constResult){
+			if(!constResult){ // TODO: remove?
 				if(auto prm=cast(Parameter)meaning){
 					if(prm.isConst){
 						sc.error(format("use 'dup(%s)' to duplicate 'const' parameter '%s'",prm.name,prm.name), id.loc);

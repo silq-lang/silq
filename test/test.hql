@@ -1,4 +1,13 @@
 /+
+def f(const x:B){
+	y:=H(x); // TODO?
+	return (x,y); // TODO?
+}
+def main(){
+	return f(0:𝔹);
+}
++/
+/+
 def main(){
 	a:=H(0:𝔹);
 	b:=1:𝔹;

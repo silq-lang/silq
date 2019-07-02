@@ -1513,6 +1513,7 @@ QState.Value lookupMeaning(QState)(ref QState qstate,Identifier id)in{assert(id 
 	if(auto vd=cast(VarDecl)id.meaning){
 		auto r=getContextFor(qstate,id.meaning,id.scope_);
 		if(r.isValid) return qstate.readField(r,id.name,id.constLookup);
+		if(!id.type.isClassical()&&vd.isConst) return qstate.readLocal(id.name,true).dup(qstate);
 		return qstate.readLocal(id.name,id.constLookup);
 	}
 	if(cast(FunctionDef)id.meaning) return qstate.readFunction(id);
@@ -1547,8 +1548,8 @@ struct Interpreter(QState){
 			if(auto id=cast(Identifier)e){
 				if(!id.meaning&&id.name=="π") return QState.π;
 				auto r=lookupMeaning(qstate,id);
-				if(r.isValid) return r;
-				assert(0,"unsupported");
+				enforce(r.isValid,"unsupported");
+				return r;
 			}
 			if(auto fe=cast(FieldExp)e){
 				enforce(fe.constLookup);
