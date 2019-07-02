@@ -836,16 +836,9 @@ Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
 	}else if(de) de.setError();
 	auto r=de?de:be;
 	if(be.e2.type && be.e2.type.sstate==SemState.completed){
-		if(auto fd=sc.getFunction()){
-			auto fsc=fd.fscope_;
-			assert(!!fsc);
-			foreach(id;be.e2.type.freeIdentifiers){
-				assert(!!id.meaning);
-				if(isAssignable(id.meaning,sc)){
-					fsc.error(format("cannot use reassignable variable '%s' in type of local variable", id.name), be.loc);
-					fd.sstate=SemState.error;
-				}
-			}
+		foreach(id;be.e2.type.freeIdentifiers){
+			assert(!!id.meaning);
+			typeConstBlock(id.meaning,be,sc);
 		}
 	}
 	if(r.sstate!=SemState.error) r.sstate=SemState.completed;
@@ -960,9 +953,18 @@ Expression permuteSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{ // TODO: general
 	return be;
 }
 
+void typeConstBlock(Declaration decl,Expression blocker,Scope sc){
+	if(!isAssignable(decl,sc)) return;
+	if(auto vd=cast(VarDecl)decl){
+		vd.isConst=true;
+		vd.typeConstBlocker=blocker;
+	}
+	assert(!isAssignable(decl,sc));
+}
+
 bool isAssignable(Declaration meaning,Scope sc){
-	if(!cast(VarDecl)meaning) return false;
-	if(cast(Parameter)meaning&&(cast(Parameter)meaning).isConst) return false;
+	auto vd=cast(VarDecl)meaning;
+	if(!vd||vd.isConst) return false;
 	for(auto csc=sc;csc !is meaning.scope_;csc=(cast(NestedScope)csc).parent)
 		if(auto fsc=cast(FunctionScope)csc)
 			return false;
@@ -970,14 +972,25 @@ bool isAssignable(Declaration meaning,Scope sc){
 }
 
 bool checkAssignable(Declaration meaning,Location loc,Scope sc,bool quantumAssign=false){
-	if(!cast(VarDecl)meaning){
-		sc.error("can only assign to variables",loc);
+	auto vd=cast(VarDecl)meaning;
+	if(!vd||vd.isConst){
+		if(vd.isConst){
+			sc.error("cannot reassign 'const' variables",loc);
+			if(vd.typeConstBlocker){
+				string name;
+				if(auto decl=cast(Declaration)vd.typeConstBlocker) name=decl.getName;
+				if(name){
+					sc.note(format("'%s' was made 'const' because it appeared in type of '%s'",vd.name,name),vd.typeConstBlocker.loc);
+				}else{
+					sc.note(format("'%s' was made 'const' because it appeared in type of local variable",vd.name),vd.typeConstBlocker.loc);
+				}
+			}
+		}else sc.error("can only assign to variables",loc);
 		return false;
 	}else if(cast(Parameter)meaning&&(cast(Parameter)meaning).isConst){
 		sc.error("cannot reassign 'const' parameters",loc);
 		return false;
 	}else{
-		auto vd=cast(VarDecl)meaning;
 		if(!quantumAssign&&!vd.vtype.isClassical()&&!sc.canForget(meaning)){
 			sc.error("cannot reassign quantum variable", loc);
 			return false;
@@ -2311,14 +2324,15 @@ FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 	scope(exit){
 		fsc.pushConsumed();
 		if(fd.sstate==SemState.completed){
-			if(auto ofd=sc.getFunction()){
-				foreach(id;fd.ftype.freeIdentifiers){
-					assert(!!id.meaning);
-					if(isAssignable(id.meaning,sc)){
-						sc.error(format("cannot use reassignable variable '%s' in type of local function", id.name), fd.loc);
-						ofd.sstate=SemState.error;
-					}
+			foreach(id;fd.ftype.freeIdentifiers){
+				assert(!!id.meaning);
+				auto meaning=sc.lookup(id,false,true,Lookup.probing);
+				assert(!meaning||!meaning.isLinear);
+				if(meaning !is id.meaning){
+					fsc.error(format("local variable '%s' appears in function return type", id.name), fd.loc);
+					fd.sstate=SemState.error;
 				}
+				typeConstBlock(id.meaning,fd,sc);
 			}
 		}
 		if(bdy){

@@ -1,4 +1,12 @@
 /+
+def main(){
+	n:=3;
+	n+=1;
+	a:=vector(n,0:𝔹); // ok
+	n+=1; // error
+}
++/
+/+
 def floor(n:!ℕ)⇒2*n;
 
 def main(){

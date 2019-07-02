@@ -40,6 +40,7 @@ class CompoundDecl: Expression{
 
 class VarDecl: Declaration{
 	Expression dtype;
+	bool isConst;
 	this(Identifier name){ super(name); }
 	override string toString(){ return getName~(dtype?": "~dtype.toString():vtype?": "~vtype.toString():""); }
 	@property override string kind(){ return "variable"; }
@@ -50,10 +51,10 @@ class VarDecl: Declaration{
 	// semantic information
 	Expression vtype;
 	Expression initializer;
+	Expression typeConstBlocker=null;
 }
 
 class Parameter: VarDecl{
-	bool isConst;
 	this(bool isConst, Identifier name, Expression type){
 		super(name); this.dtype=type;
 		this.isConst=isConst;
