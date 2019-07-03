@@ -1,7 +1,18 @@
 /+
 def f(const x:B){
-	y:=H(x); // TODO?
-	return (x,y); // TODO?
+	return ()=>x; // error. TODO?
+}
+def main(){
+	a:=H(0:𝔹);
+	x:=f(a)();
+	forget(a=x);
+	return H(x);
+}
++/
+/+
+def f(const x:B){
+	y:=H(x);
+	return (x,y);
 }
 def main(){
 	return f(0:𝔹);

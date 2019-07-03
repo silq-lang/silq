@@ -1686,7 +1686,8 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 				}
 			}
 		}
-		if(auto vd=cast(VarDecl)id.meaning){
+		auto vd=cast(VarDecl)id.meaning;
+		if(vd){
 			if(cast(TopScope)vd.scope_||vd.vtype==typeTy&&vd.initializer){
 				if(!vd.initializer||vd.initializer.sstate!=SemState.completed){
 					id.sstate=SemState.error;
@@ -1696,19 +1697,16 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 			}
 		}
 		if(id.type&&!id.type.isClassical()){
-			if(!constResult){ // TODO: remove?
-				if(auto prm=cast(Parameter)meaning){
-					if(prm.isConst){
-						sc.error(format("use 'dup(%s)' to duplicate 'const' parameter '%s'",prm.name,prm.name), id.loc);
-						id.sstate=SemState.error;
-					}
-				}
-			}
 			assert(sc.isNestedIn(meaning.scope_));
 			for(auto csc=sc;csc !is meaning.scope_;csc=(cast(NestedScope)csc).parent){
 				if(auto fsc=cast(FunctionScope)csc){
 					if(constResult){
 						sc.error("cannot capture variable as constant", id.loc);
+						id.sstate=SemState.error;
+						break;
+					}
+					if(vd&&vd.isConst){
+						sc.error("cannot capture 'const' variable", id.loc);
 						id.sstate=SemState.error;
 						break;
 					}
