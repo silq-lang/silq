@@ -93,6 +93,10 @@ class FunctionDef: Declaration{
 	VarDecl context;
 	VarDecl contextVal;
 	VarDecl thisVar; // for constructors
+	Identifier[] captures;
+	void addCapture(Identifier id){
+		captures~=id;
+	}
 	@property string contextName()in{assert(!!context);}body{ return context.getName; }
 	Expression ret; // return type
 	FunTy ftype;

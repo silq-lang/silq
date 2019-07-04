@@ -306,6 +306,7 @@ class AggregateTy: Type{
 }
 
 class ContextTy: Type{
+	private bool classical;
 	private this(bool classical){
 		this.classical=classical;
 	}
@@ -322,7 +323,9 @@ class ContextTy: Type{
 	override string toString(){
 		return (classical?"!":"")~"`Ctx";
 	}
-	private bool classical;
+	override ContextTy getClassical(){
+		return contextTy(true);
+	}
 	mixin VariableFree;
 	override int componentsImpl(scope int delegate(Expression) e){
 		return 0;

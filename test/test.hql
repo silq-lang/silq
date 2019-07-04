@@ -1,4 +1,43 @@
 /+
+def main(){
+	x:=2;
+	def f()=>x;
+	def g()=>f();
+	return g();
+}
++/
+/+
+x:=2;
+def main(){
+	def f()=>x;
+	def g()=>f();
+	return g();
+}
++/
+/+
+def main(){
+	x:=H(0:𝔹);
+	y:=H(0:𝔹);
+	def f()=>x;
+	g:=dup(f);
+	forget(H(y)=0);
+	return (f(),g());
+}
++/
+/+
+def main(){
+	x:=H(0:𝔹);
+	k:=H(0:𝔹);
+	f:=()=>x;
+	g:=dup(f);
+	(x,y):=(f(),g());
+	forget(y=x);
+	forget(H(x)=0);
+	k:=H(k);
+	return k; // should be 0
+}
++/
+/+
 def f(const x:B){
 	return ()=>x; // error. TODO?
 }

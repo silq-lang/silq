@@ -1212,9 +1212,9 @@ struct QState{
 		auto ncur=pushFrame();
 		enforce(!fun.isConstructor,"TODO: constructors");
 		if(fun.isNested){
-			assert(context||sc);
-			ncur.passContext(fun.contextName,context?*context:inFrame(buildContextFor(this,fun,sc)));
-		}
+			assert(!!context);
+			ncur.passContext(fun.contextName,*context);
+		}else assert(!context);
 		if(fun.isTuple){
 			auto args=iota(fun.params.length).map!(i=>inFrame(arg[i]));
 			foreach(i,prm;fun.params)
@@ -1254,15 +1254,13 @@ struct QState{
 	Value makeFunction(FunctionDef fd,Value* context){
 		return makeClosure(fd.ftype,Closure(fd,false,context));
 	}
-	Value makeFunction(FunctionDef fd,Scope from){
+	Value makeFunction(FunctionDef fd){
 		Value* context=null;
-		if(fd.isNested) context=[buildContextFor(this,fd,from)].ptr;
+		if(fd.isNested) context=[buildContextFor(this,fd)].ptr;
 		return makeFunction(fd,context);
 	}
-	Value readFunction(Identifier id){
-		auto fd=cast(FunctionDef)id.meaning;
-		assert(!!fd);
-		return makeFunction(fd,id.scope_);
+	void declareFunction(FunctionDef fd){
+		vars[fd.getName]=makeFunction(fd);
 	}
 	static Value ite(Value cond,Value then,Value othw)in{
 		assert(then.type==othw.type);
@@ -1465,59 +1463,38 @@ QState.Value getContextFor(QState)(ref QState qstate,Declaration meaning,Scope s
 		meaningScope=fd.realScope;
 	assert(sc&&sc.isNestedIn(meaningScope));
 	for(auto csc=sc;csc !is meaningScope;){
-		void add(string name){
-			if(!r.isValid) r=qstate.readLocal(name,true);
-			else r=qstate.readField(r,name,true);
-			assert(!!cast(NestedScope)csc);
-		}
 		assert(cast(NestedScope)csc);
 		if(!cast(NestedScope)(cast(NestedScope)csc).parent) break;
 		if(auto fsc=cast(FunctionScope)csc){
 			auto fd=fsc.getFunction();
-			if(fd.isConstructor){
+			/+if(fd.isConstructor){
 				if(meaning is fd.thisVar) break;
-				add(fd.thisVar.getName);
-			}else add(fd.contextName);
-		}else if(cast(AggregateScope)csc) add(csc.getDatDecl().contextName);
+				return qstate.readLocal(fd.thisVar.getName,true);
+			}else+/
+			return qstate.readLocal(fd.contextName,true);
+		}//else if(cast(AggregateScope)csc) return qstate.readLocal(csc.getDatDecl().contextName);
 		csc=(cast(NestedScope)csc).parent;
 	}
 	return r;
 }
-QState.Value buildContextFor(QState)(ref QState qstate,Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{ // TODO: callers of this should only read the required context (and possibly consume)
-	auto ctx=getContextFor(qstate,meaning,sc);
-	if(ctx.isValid) return ctx;
+QState.Value buildContextFor(QState)(ref QState qstate,FunctionDef fd)in{assert(fd&&fd.scope_);}body{
 	QState.Record record;
-	auto msc=meaning.scope_;
-	if(auto fd=cast(FunctionDef)meaning)
-		msc=fd.realScope;
-	for(auto csc=msc;;csc=(cast(NestedScope)csc).parent){
-		if(!cast(NestedScope)csc) break;
-		record=qstate.vars.dup;
-		if(!cast(NestedScope)(cast(NestedScope)csc).parent) break;
-		if(auto dsc=cast(DataScope)csc){
-			auto name=dsc.decl.contextName;
-			record[name]=qstate.readLocal(name,true);
-			break;
-		}
-		if(auto fsc=cast(FunctionScope)csc){
-			auto cname=fsc.getFunction().contextName;
-			record[cname]=qstate.readLocal(cname,true);
-			break;
-		}
-	}
+	foreach(id;fd.captures) record[id.name]=lookupMeaning(qstate,id,fd.scope_);
 	return QState.makeRecord(record);
 }
-QState.Value lookupMeaning(QState)(ref QState qstate,Identifier id)in{assert(id && id.scope_,text(id," ",id.loc));}body{
-	if(!id.meaning||!id.scope_||!id.meaning.scope_)
+QState.Value lookupMeaning(QState)(ref QState qstate,Identifier id,Scope sc=null)in{assert(id && id.scope_,text(id," ",id.loc));}body{
+	if(!sc) sc=id.scope_;
+	if(!id.meaning||!sc||!id.meaning.scope_)
 		return qstate.readLocal(id.name,id.constLookup);
-	if(auto vd=cast(VarDecl)id.meaning){
-		auto r=getContextFor(qstate,id.meaning,id.scope_);
-		if(r.isValid) return qstate.readField(r,id.name,id.constLookup);
-		if(!id.type.isClassical()&&vd.isConst) return qstate.readLocal(id.name,true).dup(qstate);
-		return qstate.readLocal(id.name,id.constLookup);
-	}
-	if(cast(FunctionDef)id.meaning) return qstate.readFunction(id);
-	return QState.nullValue;
+	if(auto fd=cast(FunctionDef)id.meaning)
+		if(!fd.isNested())
+			return qstate.makeFunction(fd);
+	auto r=getContextFor(qstate,id.meaning,sc);
+	if(r.isValid) return qstate.readField(r,id.name,id.constLookup);
+	if(auto vd=cast(VarDecl)id)
+		if(!id.type.isClassical()&&vd.isConst)
+			return qstate.readLocal(id.name,true).dup(qstate);
+	return qstate.readLocal(id.name,id.constLookup);
 }
 
 import lexer: Tok;
@@ -1582,7 +1559,7 @@ struct Interpreter(QState){
 			if(auto ume=cast(UMinusExp)e) return -doIt(ume.e);
 			if(auto ume=cast(UNotExp)e) return doIt(ume.e).eqZ;
 			if(auto ume=cast(UBitNotExp)e) return ~doIt(ume.e);
-			if(auto le=cast(LambdaExp)e) return qstate.makeFunction(le.fd,le.fd.scope_);
+			if(auto le=cast(LambdaExp)e) return qstate.makeFunction(le.fd);
 			if(auto ce=cast(CallExp)e){
 				static Expression unwrap(Expression e){
 					if(auto tae=cast(TypeAnnotationExp)e)
@@ -1607,10 +1584,6 @@ struct Interpreter(QState){
 					thisExp=doIt(fe.e);
 				}
 				if(id){
-					if(auto fun=cast(FunctionDef)id.meaning){
-						auto arg=doIt(ce.arg);
-						return qstate.call(fun,false,thisExp,arg,id.scope_,null,ce.type);
-					}
 					if(!fe && isBuiltIn(id)){
 						switch(id.name){
 							case "quantumPrimitive":
@@ -2108,6 +2081,8 @@ struct Interpreter(QState){
 		}else if(auto ce=cast(CommaExp)e){
 			runStm(ce.e1,retState);
 			runStm(ce.e2,retState);
+		}else if(auto fd=cast(FunctionDef)e){
+			qstate.declareFunction(fd);
 		}else if(cast(Declaration)e){
 			// do nothing
 		}else{

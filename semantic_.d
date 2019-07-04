@@ -1673,7 +1673,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 			id.sstate=SemState.error;
 		}
 		if(id.type != typeTy()){
-			if(auto dsc=isInDataScope(id.meaning.scope_)){
+			if(auto dsc=isInDataScope(meaning.scope_)){
 				if(auto decl=sc.getDatDecl()){
 					if(decl is dsc.decl){
 						auto this_=new Identifier("this");
@@ -1686,7 +1686,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 				}
 			}
 		}
-		auto vd=cast(VarDecl)id.meaning;
+		auto vd=cast(VarDecl)meaning;
 		if(vd){
 			if(cast(TopScope)vd.scope_||vd.vtype==typeTy&&vd.initializer){
 				if(!vd.initializer||vd.initializer.sstate!=SemState.completed){
@@ -1696,29 +1696,32 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 				return vd.initializer;
 			}
 		}
-		if(id.type&&!id.type.isClassical()){
+		if(id.type&&meaning.scope_.getFunction()){
+			bool captureChecked=id.type.isClassical();
 			assert(sc.isNestedIn(meaning.scope_));
 			for(auto csc=sc;csc !is meaning.scope_;csc=(cast(NestedScope)csc).parent){
 				if(auto fsc=cast(FunctionScope)csc){
-					if(constResult){
-						sc.error("cannot capture variable as constant", id.loc);
-						id.sstate=SemState.error;
-						break;
-					}
-					if(vd&&vd.isConst){
-						sc.error("cannot capture 'const' variable", id.loc);
-						id.sstate=SemState.error;
-						break;
-					}
-					if(fsc.fd&&fsc.fd.context&&fsc.fd.context.vtype==contextTy(true)){
-						if(!fsc.fd.ftype) fsc.fd.context.vtype=contextTy(false);
-						else{
-							assert(!fsc.fd.ftype||fsc.fd.ftype.isClassical());
-							sc.error("cannot capture quantum variable in classical function", id.loc);
+					if(!captureChecked){
+						captureChecked=true;
+						if(constResult){
+							sc.error("cannot capture variable as constant", id.loc);
 							id.sstate=SemState.error;
 							break;
+						}else if(vd&&vd.isConst){
+							sc.error("cannot capture 'const' variable", id.loc);
+							id.sstate=SemState.error;
+							break;
+						}else if(fsc.fd&&fsc.fd.context&&fsc.fd.context.vtype==contextTy(true)){
+							if(!fsc.fd.ftype) fsc.fd.context.vtype=contextTy(false);
+							else{
+								assert(!fsc.fd.ftype||fsc.fd.ftype.isClassical());
+								sc.error("cannot capture quantum variable in classical function", id.loc);
+								id.sstate=SemState.error;
+								break;
+							}
 						}
 					}
+					fsc.fd.addCapture(id);
 				}
 			}
 		}

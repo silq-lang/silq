@@ -14,19 +14,6 @@ def main(){
 }
 +/
 /+
-def main(){
-	x:=H(0:𝔹);
-	k:=H(0:𝔹);
-	f:=()=>x; // TODO: this shouldn't get a reference to k
-	g:=dup(f); // then this doesn't duplicate k
-	(x,y):=(f(),g());
-	forget(y=x);
-	forget(H(x)=0);
-	k:=H(k);
-	return k; // should be 0
-}
-+/
-/+
 def bar(const x:𝔹):!ℕ{
 	if x { return 0; } // TODO: error
 	else { return 1; }
