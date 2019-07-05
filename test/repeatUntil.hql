@@ -1,0 +1,9 @@
+// TODO
+/+
+def solve(){
+	repeat{ (q₀,q₁):=(H(0:𝔹),H(0:𝔹)); }
+	until(!measure(q₀&q₁))
+	else{ measure(q₀,q₁) }
+	return (q₀,q₁);
+}
++/

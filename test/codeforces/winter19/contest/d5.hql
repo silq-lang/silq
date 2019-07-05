@@ -1,6 +1,6 @@
 // https://codeforces.com/contest/1116/problem/D5
 def solve(qs:𝔹^3){
-	x:=qs:int[3];
+	x:=qs as int[3];
 	x+=2;
 
 	c:=x[2];
@@ -11,10 +11,10 @@ def solve(qs:𝔹^3){
 	if c{ x[1]:=X(x[1]); }
 	forget(c=(x[0]&x[2]));
 
-	x[0] := H(x[0])	
+	x[0] := H(x[0]);
 	x-=2;
 	for i in [0..3){ x[i]:=X(x[i]); }
-	qs:=x:𝔹^3;
+	qs:=x as 𝔹^3;
 	return qs;
 }
 

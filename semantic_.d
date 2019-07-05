@@ -560,8 +560,8 @@ Expression statementSemantic(Expression e,Scope sc){
 		vd.vtype=fe.left.type && fe.right.type ? joinTypes(fe.left.type, fe.right.type) : ℤt(true);
 		assert(fe.sstate==SemState.error||vd.vtype.isClassical());
 		if(fe.sstate==SemState.error){
-			vd.vtype=vd.vtype.getClassical();
 			if(!vd.vtype) vd.vtype=ℤt(true);
+			vd.vtype=vd.vtype.getClassical();
 		}
 		vd.loc=fe.var.loc;
 		if(vd.name.name!="_"&&!fesc.insert(vd))
@@ -965,7 +965,7 @@ void typeConstBlock(Declaration decl,Expression blocker,Scope sc){
 bool isAssignable(Declaration meaning,Scope sc){
 	auto vd=cast(VarDecl)meaning;
 	if(!vd||vd.isConst) return false;
-	for(auto csc=sc;csc !is meaning.scope_;csc=(cast(NestedScope)csc).parent)
+	for(auto csc=sc;csc !is meaning.scope_&&cast(NestedScope)csc;csc=(cast(NestedScope)csc).parent)
 		if(auto fsc=cast(FunctionScope)csc)
 			return false;
 	return true;
@@ -1977,68 +1977,110 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 		if(!tae.type||tae.sstate==SemState.error)
 			return tae;
 		if(auto arr=cast(ArrayExp)tae.e){
-			if(!arr.e.length)
+			if(!arr.e.length){
 				if(auto aty=cast(ArrayTy)tae.type)
 					arr.type=aty;
+				if(auto vty=cast(VectorTy)tae.type)
+					arr.type=arrayTy(vty.next);
+			}
 		}
 		if(auto ce=cast(CallExp)tae.e)
 			if(auto id=cast(Identifier)ce.e){
 				if(id.name=="sampleFrom"||id.name=="readCSV"&&tae.type==arrayTy(arrayTy(ℝ(true))))
 					ce.type=tae.type;
 			}
-		bool typeExplicitConversion(Expression from,Expression to){
+		bool typeExplicitConversion(Expression from,Expression to,TypeAnnotationType annotationType){
 			if(isSubtype(from,to)) return true;
-			if(isSubtype(from,ℤt(false))&&(isUint(to)||isInt(to))&&from.isClassical()>=to.isClassical())
-				return true;
-			if(isUint(from)&&isSubtype(ℕt(from.isClassical()),to))
-				return true;
-			if(isInt(from)&&isSubtype(ℤt(from.isClassical()),to))
-				return true;
-			if((isRat(from)||isFloat(from))&&isSubtype(ℚt(from.isClassical()),to))
-				return true;
-			auto ce1=cast(CallExp)from;
-			if(ce1&&(isInt(ce1)||isUint(ce1))&&(isSubtype(vectorTy(Bool(ce1.isClassical()),ce1.arg),to)||isSubtype(arrayTy(Bool(ce1.isClassical())),to)))
-				return true;
-			auto ce2=cast(CallExp)to;
-			if(ce2&&(isInt(ce2)||isUint(ce2))&&(isSubtype(from,vectorTy(Bool(ce2.isClassical()),ce2.arg))||isSubtype(from,arrayTy(Bool(ce2.isClassical())))))
-				return true;
-			auto tpl1=cast(TupleTy)from, tpl2=cast(TupleTy)to;
-			if(tpl1&&tpl2&&tpl1.types.length==tpl2.types.length&&zip(tpl1.types,tpl2.types).all!(x=>typeExplicitConversion(x.expand)))
+			if(annotationType>=annotationType.conversion){
+				if(isSubtype(from,ℤt(false))&&(isUint(to)||isInt(to))&&from.isClassical()>=to.isClassical())
+					return true;
+				if(isUint(from)&&isSubtype(ℕt(from.isClassical()),to))
+					return true;
+				if(isInt(from)&&isSubtype(ℤt(from.isClassical()),to))
+					return true;
+				if((isRat(from)||isFloat(from))&&isSubtype(ℚt(from.isClassical()),to))
+					return true;
+				auto ce1=cast(CallExp)from;
+				if(ce1&&(isInt(ce1)||isUint(ce1))&&(isSubtype(vectorTy(Bool(ce1.isClassical()),ce1.arg),to)||isSubtype(arrayTy(Bool(ce1.isClassical())),to)))
+					return true;
+				auto ce2=cast(CallExp)to;
+				if(ce2&&(isInt(ce2)||isUint(ce2))&&(isSubtype(from,vectorTy(Bool(ce2.isClassical()),ce2.arg))||isSubtype(from,arrayTy(Bool(ce2.isClassical())))))
+					return true;
+			}
+			auto tpl1=from.isTupleTy(), tpl2=to.isTupleTy();
+			if(tpl1&&tpl2&&tpl1.length==tpl2.length&&iota(tpl1.length).all!(i=>typeExplicitConversion(tpl1[i],tpl2[i],annotationType)))
 				return true;
 			auto arr1=cast(ArrayTy)from, arr2=cast(ArrayTy)to;
-			if(arr1&&arr2&&typeExplicitConversion(arr1.next,arr2.next))
+			if(arr1&&arr2&&typeExplicitConversion(arr1.next,arr2.next,annotationType))
 				return true;
 			auto vec1=cast(VectorTy)from, vec2=cast(VectorTy)to;
-			if(vec1&&vec2&&vec1.num==vec2.num&&typeExplicitConversion(vec1.next,vec2.next))
+			if(vec1&&vec2&&vec1.num==vec2.num&&typeExplicitConversion(vec1.next,vec2.next,annotationType))
 				return true;
-			if(vec1&&arr2&&typeExplicitConversion(vec1.next,arr2.next))
+			if(vec1&&arr2&&typeExplicitConversion(vec1.next,arr2.next,annotationType))
 				return true;
+			if(annotationType==TypeAnnotationType.coercion){
+				if(vec1&&vec2&&typeExplicitConversion(vec1.next,vec2.next,annotationType))
+					return true;
+				if(arr1&&vec2&&typeExplicitConversion(arr1.next,vec2.next,annotationType))
+					return true;
+				if(vec1&&tpl2&&iota(tpl2.length).all!(i=>typeExplicitConversion(vec1.next,tpl2[i],annotationType)))
+					return true;
+				if(tpl1&&vec2&&iota(tpl1.length).all!(i=>typeExplicitConversion(tpl1[i],vec2.next,annotationType)))
+					return true;
+			}
 			return false;
 		}
-		bool explicitConversion(Expression expr,Expression type){
-			if(typeExplicitConversion(expr.type,type)) return true;
-			if(auto lit=cast(LiteralExp)expr){
+		bool explicitConversion(Expression expr,Expression type,TypeAnnotationType annotationType){
+			auto lit=cast(LiteralExp)expr;
+			bool isLiteral=lit||cast(UMinusExp)expr&&cast(LiteralExp)(cast(UMinusExp)expr).e;
+			if(isLiteral){
+				if(isSubtype(expr.type,ℕt(false))&&(isUint(type)||isInt(type)))
+					return true;
+				if(isSubtype(expr.type,ℤt(false))&&isInt(type))
+					return true;
 				if(isSubtype(expr.type,ℝ(false))&&isSubtype(ℚt(true),type))
 					return true;
 				if(isSubtype(expr.type,ℝ(false))&&(isRat(type)||isFloat(type)))
 					return true;
-				if(cast(BoolTy)type&&lit.lit.type==Tok!"0"){
+				if(lit&&cast(BoolTy)type&&lit.lit.type==Tok!"0"){
 					auto val=ℤ(lit.lit.str);
 					if(val==0||val==1) return true;
 				}
 			}
+			if(typeExplicitConversion(expr.type,type,annotationType)) return true;
 			if(auto tpl1=cast(TupleExp)expr){
 				if(auto tpl2=type.isTupleTy()){
-					return tpl1.e.length==tpl2.length&&iota(tpl1.e.length).all!(i=>explicitConversion(tpl1.e[i],tpl2[i]));
+					return tpl1.e.length==tpl2.length&&iota(tpl1.e.length).all!(i=>explicitConversion(tpl1.e[i],tpl2[i],annotationType));
 				}
 				if(auto arr=cast(ArrayTy)type){
-					return iota(tpl1.e.length).all!(i=>explicitConversion(tpl1.e[i],arr.next));
+					return iota(tpl1.e.length).all!(i=>explicitConversion(tpl1.e[i],arr.next,annotationType));
+				}
+				if(annotationType==TypeAnnotationType.coercion){
+					if(auto vec2=cast(VectorTy)type){
+						return iota(tpl1.e.length).all!(i=>explicitConversion(tpl1.e[i],vec2.next,annotationType));
+					}
 				}
 			}
 			return false;
 		}
-		if(!explicitConversion(tae.e,tae.type)){
-			sc.error(format("type is %s, not %s",tae.e.type,tae.type),tae.loc);
+		if(!explicitConversion(tae.e,tae.type,tae.annotationType)){
+			final switch(tae.annotationType){
+				case TypeAnnotationType.annotation:
+					sc.error(format("type is %s, not %s",tae.e.type,tae.type),tae.loc);
+					if(explicitConversion(tae.e,tae.type,TypeAnnotationType.conversion))
+						sc.note(format("explicit conversion possible, use '%s as %s'",tae.e,tae.type),tae.loc);
+					else if(explicitConversion(tae.e,tae.type,TypeAnnotationType.coercion))
+						sc.note(format("(unsafe type coercion possible)"),tae.loc);
+					break;
+				case TypeAnnotationType.conversion:
+					sc.error(format("cannot convert from type %s to %s",tae.e.type,tae.type),tae.loc);
+					if(explicitConversion(tae.e,tae.type,TypeAnnotationType.coercion))
+						sc.note(format("(unsafe type coercion possible)"),tae.loc);
+					break;
+				case TypeAnnotationType.coercion:
+					sc.error(format("cannot coerce type %s to %s",tae.e.type,tae.type),tae.loc);
+					break;
+			}
 			tae.sstate=SemState.error;
 		}
 		return tae;

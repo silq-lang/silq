@@ -163,7 +163,7 @@ string[2][] specialTokens =
 
 string[2][] compoundTokens = [];
 
-string[] keywords = ["dat","def","true","false","if","then","else","observe","assert","return","repeat","for","while","in","cobserve","import","Π","Pi","quantum","const","lifted","qfree","mfree","λ","lambda","forget"];
+string[] keywords = ["dat","def","true","false","if","then","else","observe","assert","return","repeat","for","while","in","cobserve","import","Π","Pi","quantum","const","lifted","qfree","mfree","λ","lambda","forget","as","coerce"];
 
 
 string[2][] tokens = specialTokens ~ complexTokens ~ simpleTokens ~ unicodeTokens ~ compoundTokens ~ keywordTokens();
@@ -936,46 +936,9 @@ private string isKw(string[] cases){
 	return r~="default: break;}";
 }
 TokenType isKeyword(string s){
-	switch(s.length){
-		case 2:
-			if(s=="if") return Tok!"if";
-			if(s=="in") return Tok!"in";
-			if(s=="Π"||s=="Pi") return Tok!"Pi";
-			if(s=="λ") return Tok!"lambda";
-			break;
-		case 3:
-			if(s=="dat") return Tok!"dat";
-			if(s=="def") return Tok!"def";
-			if(s=="for") return Tok!"for";
-			break;
-		case 4:
-			if(s=="true") return Tok!"true";
-			if(s=="else") return Tok!"else";
-			if(s=="then") return Tok!"then";
-			break;
-		case 5:
-			if(s=="false") return Tok!"false";
-			if(s=="while") return Tok!"while";
-			if(s=="mfree") return Tok!"mfree";
-			if(s=="qfree") return Tok!"qfree";
-			if(s=="const") return Tok!"const";
-			break;
-		case 6:
-			if(s=="assert") return Tok!"assert";
-			if(s=="import") return Tok!"import";
-			if(s=="return") return Tok!"return";
-			if(s=="repeat") return Tok!"repeat";
-			if(s=="lifted") return Tok!"lifted";
-			if(s=="lambda") return Tok!"lambda";
-			if(s=="forget") return Tok!"forget";
-			break;
-		case 7:
-			if(s=="observe") return Tok!"observe";
-			if(s=="quantum") return Tok!"quantum";
-			break;
-		case 8:
-			if(s=="cobserve") return Tok!"cobserve";
-			break;
+	switch(s){
+		static foreach(t;keywords)
+		case t: return Tok!t;
 		default: break;
 	}
 	return Tok!"i";

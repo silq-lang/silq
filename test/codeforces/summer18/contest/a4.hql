@@ -6,7 +6,7 @@ def solve(k:!ℕ){
 	qs[i]=X(qs[i]);
 	forget(i=lambda(qs:𝔹^(2^k))lifted{
 		i:=0:uint[k];
-		for j in [0..2^k){ if qs[j]{ i=j:uint[k]; } }
+		for j in [0..2^k){ if qs[j]{ i=j as uint[k]; } }
 		return i;
 	}(qs));
 	return qs;

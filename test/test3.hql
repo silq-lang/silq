@@ -108,7 +108,7 @@ def a4_HADAMARD_Array[k:!N](q:𝔹^k) mfree: 𝔹^k {
 def a4_HADAMARD_Int[k:!N](q:int[k]) mfree {
 	// for j in [0..k) { q[j] := H(q[j]); }
 	// return q;
-	return a4_HADAMARD_Array(q:𝔹^k):int[k];
+	return a4_HADAMARD_Array(q as 𝔹^k) as int[k];
 }
 
 // def a4_Hadamard_Int2[rr:!N](q:int[log_int(2,rr)]) mfree {
@@ -129,7 +129,7 @@ def a4_HADAMARD_Array_Int[k:!N,l:!N](q:int[k]^l) mfree {
 	// 	q[i] := a4_HADAMARD_Int(q[i]);
 	// }
 	// return q;
-	return a4_HADAMARD_Array_Array(q:(B^k)^l):int[k]^l;
+	return a4_HADAMARD_Array_Array(q as (B^k)^l) as int[k]^l;
 }
 
 // //def a5_SETUP(oracle:!QWTFP_spec, tt:const Node[]) : 𝔹[][] {
@@ -190,7 +190,7 @@ def a7_Diffuse_Int[k:!N](q:int[k]) mfree: int[k] {
 	// if q == 0 { phase(π); }
 	// q := a4_HADAMARD_Int(q);
 	// return q;
-	return a7_Diffuse_Array(q:𝔹^k):int[k];
+	return a7_Diffuse_Array(q as 𝔹^k) as int[k];
 }
 
 def a7_Diffuse_Array_Array[k:!N,l:!N](q:(𝔹^k)^l) mfree: (𝔹^k)^l {
@@ -201,11 +201,11 @@ def a7_Diffuse_Array_Array[k:!N,l:!N](q:(𝔹^k)^l) mfree: (𝔹^k)^l {
 }
 
 def a7_Diffuse_Pair[k:!N, l:!N](p:int[k], q:int[l]) mfree: int[k] x int[l] {
-	p := a4_HADAMARD_Array(p:B^k):int[k];
-	q := a4_HADAMARD_Array(q:B^l):int[l];
+	p := a4_HADAMARD_Array(p as B^k) as int[k];
+	q := a4_HADAMARD_Array(q as B^l) as int[l];
 	if q == 0 && p==0 { phase(π); }
-	p := a4_HADAMARD_Array(p:B^k):int[k];
-	q := a4_HADAMARD_Array(q:B^l):int[l];
+	p := a4_HADAMARD_Array(p as B^k) as int[k];
+	q := a4_HADAMARD_Array(q as B^l) as int[l];
 	return (p,q);
 }
 
@@ -243,7 +243,7 @@ def a8_FetchT_Array[n:!N, rr:!N, r:!N](const i:int[r], const tt:int[n]^rr) : int
 	ttd := 0:int[n];
 	for j in [0..rr) {
 		if i == j {
-			ttd := flipWith_Array(tt[j]:B^n, ttd:B^n):int[n];
+			ttd := flipWith_Array(tt[j] as B^n, ttd as B^n) as int[n];
 	}	}	
 	return ttd;
 }
@@ -263,7 +263,7 @@ def a9_StoreT_Array[n:!N, rr:!N, r:!N](const i:int[r], tt: int[n]^rr, const ttd:
 	mfree : int[n]^rr {
 	for j in [0..rr) {
 		if i==j {
-			tt[j] := flipWith_Array(ttd:B^n, tt[j]:B^n):int[n];
+			tt[j] := flipWith_Array(ttd as B^n, tt[j] as B^n) as int[n];
 	}	}
 	return tt;
 }

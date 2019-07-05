@@ -23,5 +23,5 @@ def grover[n:!N](f:!(const uint[n] -> lifted B)):!N{
 		forget(b = f(cand));
 		cand:=groverDiffusion(cand);
 	}
-	return measure(cand):!N;
+	return measure(cand) as !N;
 }

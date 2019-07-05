@@ -162,13 +162,24 @@ mixin template VariableFree(){
 	}
 }
 
+enum TypeAnnotationType{
+	annotation,
+	conversion,
+	coercion,
+}
+
 class TypeAnnotationExp: Expression{
 	Expression e,t;
-	this(Expression e, Expression t){
+	TypeAnnotationType annotationType;
+	this(Expression e, Expression t, TypeAnnotationType annotationType){
 		this.e=e; this.t=t;
+		this.annotationType=annotationType;
 	}
 	override @property string kind(){ return e.kind; }
-	override string toString(){ return _brk(e.toString()~": "~t.toString()); }
+	override string toString(){
+		static immutable op=[": "," as "," coerce "];
+		return _brk(e.toString()~op[annotationType]~t.toString());
+	}
 	override bool isConstant(){
 		return e.isConstant();
 	}
@@ -184,7 +195,7 @@ class TypeAnnotationExp: Expression{
 		auto ne=e.substitute(subst);
 		auto nt=t.substitute(subst);
 		if(ne==e&&nt==t) return this;
-		auto r=new TypeAnnotationExp(ne,nt);
+		auto r=new TypeAnnotationExp(ne,nt,annotationType);
 		r.loc=loc;
 		return r;
 	}

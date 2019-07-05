@@ -6,8 +6,8 @@ def swap[n:!ℕ](a:!𝔹^n,b:!𝔹^n,x:𝔹^n){
 	return y;
 }
 def embed2x2[n:!ℕ](i:!ℕ,j:!ℕ,f:𝔹 !→ 𝔹,x:𝔹^n){
-	(zero,one):=((0:!uint[n]):!𝔹^n,(1:!uint[n]):!𝔹^n);
-	(a,b):=((i:!uint[n]):!𝔹^n,(j:!uint[n]):!𝔹^n);
+	(zero,one):=((0:!uint[n]) as !𝔹^n,(1:!uint[n]) as !𝔹^n);
+	(a,b):=((i as !uint[n]) as !𝔹^n,(j as !uint[n]) as !𝔹^n);
 	x:=swap(a,zero,x);
 	x:=swap(if b!=zero then b else a,one,x);
 	x[0]:=f(x[0]);

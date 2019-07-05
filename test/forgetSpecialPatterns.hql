@@ -31,7 +31,7 @@ def f1(a:int[32]){
 	b := a + 1;
 	c := a + 2;
 
-	forget(a=0); // unsafe forget, ok due to additional knowledge
+	forget(a = 0:int[32]); // unsafe forget, ok due to additional knowledge
 
 	__show(__query("dep", b)); // should print ⊤
 	__show(__query("dep", c)); // should print ⊤

@@ -22,7 +22,7 @@ class QSim{
 		this.sourceFile=sourceFile;
 	}
 	QState run(FunctionDef def,ErrorHandler err){
-		enforce(!def.params.length);
+		enforce(!def.params.length,"main function with parameters not supported in simulator");
 		/+DExpr[string] fields;
 		foreach(i,a;def.params) fields[a.getName]=dVar(a.getName);
 		DExpr init=dRecord(fields);+/
@@ -192,9 +192,13 @@ struct QState{
 		QVal setConstLifted(){
 			return this;
 		}
-		QVar parameterVar(ref QState state,Value self){
-			auto r=dup(state,self);
-			state.popFrameCleanup~=r;
+		Value toVar(ref QState state,Value self,bool cleanUp){
+			auto r=state.makeQVar(self);
+			if(cleanUp){
+				auto var=cast(QVar)r.quval;
+				assert(!!var);
+				state.popFrameCleanup~=var;
+			}
 			return r;
 		}
 		void removeVar(ref Σ σ){}
@@ -243,7 +247,7 @@ struct QState{
 	static class QVar: QVal{
 		Σ.Ref ref_;
 		bool constLifted=false;
-		override string toString(){ assert(ref_!=9,"!!!?"); return text("ref(",ref_,")"); }
+		override string toString(){ return text("ref(",ref_,")"); }
 		this(Σ.Ref ref_){ this.ref_=ref_; }
 		override Value get(ref Σ s){
 			auto r=s.qvars[ref_];
@@ -270,9 +274,9 @@ struct QState{
 			constLifted=true;
 			return this;
 		}
-		override QVar parameterVar(ref QState state,Value self){
-			if(constLifted){ constLifted=false; state.popFrameCleanup~=this; }
-			return this;
+		override Value toVar(ref QState state,Value self,bool cleanUp){
+			if(constLifted&&cleanUp){ constLifted=false; state.popFrameCleanup~=this; }
+			return self;
 		}
 	}
 	static class ConvertQVal: QVal{
@@ -398,7 +402,7 @@ struct QState{
 				case Tag.quval: return state.makeQuval(type,quval.dup(state,this));
 			}
 		}
-		Value parameterVar(ref QState state){
+		Value toVar(ref QState state,bool cleanUp){
 			if(isClassical) return this;
 			final switch(tag){
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
@@ -406,12 +410,12 @@ struct QState{
 				case Tag.closure:
 					return this;
 				case Tag.array_:
-					return this;
+					return makeArray(type,array_.map!(v=>v.toVar(state,cleanUp)).array); // TODO: this can be inefficient, avoid
 				case Tag.record: // TODO: get rid of this
 					Record nrecord;
-					foreach(k,v;record) nrecord[k]=v.parameterVar(state);
+					foreach(k,v;record) nrecord[k]=v.toVar(state,cleanUp);
 					return state.makeRecord(type,nrecord);
-				case Tag.quval: return state.makeQuval(type,quval.parameterVar(state,this));
+				case Tag.quval: return quval.toVar(state,this,cleanUp);
 			}
 		}
 		bool opEquals(Value rhs){
@@ -445,7 +449,7 @@ struct QState{
 			if(tt==Tag.record) record=record.dup; // TODO: necessary?
 		}
 		void assign(ref QState state,Value rhs){
-			assert(type==rhs.type);
+			assert(tag==rhs.tag);
 			if(isClassical){ this=rhs; return; }
 			Lswitch: final switch(tag){
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
@@ -1168,9 +1172,10 @@ struct QState{
 	static Value inFrame(Value v){
 		return v.inFrame();
 	}
-	void passParameter(string prm,Value rhs){
+	void passParameter(string prm,bool isConst,Value rhs){
 		enforce(prm!in vars);
-		vars[prm]=rhs.parameterVar(this); // TODO: this may be inefficient
+		bool cleanUp=isConst;
+		vars[prm]=rhs.toVar(this,cleanUp); // TODO: this may be inefficient (it iterates over arrays to check whether components are variables)
 	}
 	void passContext(string ctx,Value rhs){
 		enforce(ctx!in vars);
@@ -1218,10 +1223,10 @@ struct QState{
 		if(fun.isTuple){
 			auto args=iota(fun.params.length).map!(i=>inFrame(arg[i]));
 			foreach(i,prm;fun.params)
-				ncur.passParameter(prm.getName,inFrame(arg[i])); // TODO: faster: parallel assignment to parameters
+				ncur.passParameter(prm.getName,prm.isConst,inFrame(arg[i])); // TODO: faster: parallel assignment to parameters
 		}else{
 			assert(fun.params.length==1);
-			ncur.passParameter(fun.params[0].getName,inFrame(arg));
+			ncur.passParameter(fun.params[0].getName,fun.params[0].isConst,inFrame(arg));
 		}
 		auto intp=Interpreter!QState(fun,fun.body_,ncur,true);
 		auto nnstate=QState.empty();
@@ -1260,7 +1265,15 @@ struct QState{
 		return makeFunction(fd,context);
 	}
 	void declareFunction(FunctionDef fd){
-		vars[fd.getName]=makeFunction(fd);
+		vars[fd.getName]=nullValue;
+		auto result=makeFunction(fd);
+		assert(result.tag==Value.Tag.closure);
+		if(result.closure.context){
+			assert(result.closure.context.tag==Value.Tag.record);
+			foreach(k,ref v;result.closure.context.record)
+				if(!v.isValid) enforce(0,"TODO: recursive nested functions");
+		}
+		vars[fd.getName]=result;
 	}
 	static Value ite(Value cond,Value then,Value othw)in{
 		assert(then.type==othw.type);
@@ -1332,30 +1345,16 @@ struct QState{
 		}
 	}
 	void assignTo(ref Value var,Value rhs){
-		enforce(var.type==rhs.type);
+		enforce(var.tag==rhs.tag);
 		var.assign(this,rhs);
 	}
 	void catAssignTo(ref Value var,Value rhs){
 		enforce(var.tag==QState.Value.Tag.array_&&rhs.tag==QState.Value.Tag.array_);
 		var.array_~=rhs.array_;
 	}
-	Value toVar(Value rhs){
-		if(rhs.isClassical())
-			return rhs;
-		if(rhs.tag==Value.Tag.array_){
-			foreach(ref x;rhs.array_) x=toVar(x); // TODO: ok?
-			return rhs;
-		}
-		if(rhs.isToplevelClassical())
-			return rhs;
-		enforce(rhs.tag==Value.Tag.quval);
-		Value qvar=rhs;
-		if(!cast(QVar)qvar.quval) qvar=makeQVar(rhs);
-		return qvar;
-	}
 	void assignTo(string lhs,Value rhs){
 		if(lhs in vars) assignTo(vars[lhs],rhs);
-		else vars[lhs]=toVar(rhs);
+		else vars[lhs]=rhs.toVar(this,false);
 	}
 	void catAssignTo(string lhs,Value rhs){
 		enforce(lhs in vars);
@@ -1491,9 +1490,9 @@ QState.Value lookupMeaning(QState)(ref QState qstate,Identifier id,Scope sc=null
 			return qstate.makeFunction(fd);
 	auto r=getContextFor(qstate,id.meaning,sc);
 	if(r.isValid) return qstate.readField(r,id.name,id.constLookup);
-	if(auto vd=cast(VarDecl)id)
-		if(!id.type.isClassical()&&vd.isConst)
-			return qstate.readLocal(id.name,true).dup(qstate);
+	if(!id.constLookup&&!id.type.isClassical())
+		if(auto vd=cast(VarDecl)id.meaning)
+			if(vd.isConst) return qstate.readLocal(id.name,true).dup(qstate);
 	return qstate.readLocal(id.name,id.constLookup);
 }
 
@@ -1589,6 +1588,8 @@ struct Interpreter(QState){
 							case "quantumPrimitive":
 								enforce(0,"quantum primitive cannot be used as first-class value");
 								assert(0);
+							case "show__":
+								return qstate.makeTuple(type.unit,[]);
 							default:
 								enforce(0,text("TODO: ",id.name));
 								assert(0);
@@ -1690,27 +1691,25 @@ struct Interpreter(QState){
 					qstate=thenElse[0];
 					auto thenIntp=Interpreter!QState(functionDef,ite.then,qstate,hasFrame);
 					auto then=thenIntp.runExp(ite.then.s[0]);
+					if(then.isValid) then=then.convertTo(ite.type);
 					thenIntp.qstate.forgetLocals(ite.then.blscope_);
 					auto constLookup=ite.constLookup;
 					assert(!!ite.othw);
 					assert(ite.then.s[0].constLookup==constLookup&&ite.othw.s[0].constLookup==constLookup);
-					if(!constLookup) thenIntp.qstate.assignTo("`result",then);
+					thenIntp.qstate.assignTo("`result",then);
 					auto othwState=thenElse[1];
 					auto othwIntp=Interpreter(functionDef,ite.othw,othwState,hasFrame);
 					auto othw=othwIntp.runExp(ite.othw.s[0]);
-					othwIntp.qstate.forgetLocals(ite.othw.blscope_);
-					if(!constLookup) othwIntp.qstate.assignTo("`result",othw);
-					qstate=thenIntp.qstate;
-					qstate+=othwIntp.qstate;
-					if(then.isValid) then=then.convertTo(ite.type);
 					if(othw.isValid) othw=othw.convertTo(ite.type);
 					if(!then.isValid) return othw; // constant conditions
 					if(!othw.isValid) return then;
-					if(!constLookup){
-						auto var=qstate.vars["`result"];
-						qstate.vars.remove("`result");
-						return var;
-					}else return qstate.ite(cond,then,othw);
+					othwIntp.qstate.forgetLocals(ite.othw.blscope_);
+					othwIntp.qstate.assignTo("`result",othw);
+					qstate=thenIntp.qstate;
+					qstate+=othwIntp.qstate;
+					auto var=qstate.vars["`result"];
+					qstate.vars.remove("`result");
+					return var;
 				}
 			}else if(auto tpl=cast(TupleExp)e){
 				auto values=tpl.e.map!(e=>doIt(e)).array; // DMD bug: map!doIt does not work
@@ -1754,8 +1753,10 @@ struct Interpreter(QState){
 						if(value.tag==QState.Value.Tag.array_)
 							return qstate.makeTuple(type,value.array_.map!(v=>convertTo(v,arr.next)).array);
 					}else if(auto vec=cast(VectorTy)type){
-						if(value.tag==QState.Value.Tag.array_)
+						if(value.tag==QState.Value.Tag.array_){
+							enforce(qstate.makeInteger(ℤ(value.array_.length)).compare!"=="(doIt(vec.num)).neqZImpl,"length mismatch for conversion to vector");
 							return qstate.makeTuple(type,value.array_.map!(v=>convertTo(v,vec.next)).array);
+						}
 					}
 					// TODO: maybe solve this by always storing the length of integers classically.
 					auto ce=cast(CallExp)value.type;

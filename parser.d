@@ -51,7 +51,7 @@ int getLbp(TokenType type) pure{ // operator precedence
 	case Tok!"&&←", Tok!"||←", Tok!"~←":
 	case Tok!":=":
 		return 20;
-	case Tok!":": // type annotation
+	case Tok!":",Tok!"as",Tok!"coerce": // type annotation, safe type conversion, unsafe type conversion
 		return 30;
 	// logical operators
 	case Tok!"?":  return 40; // conditional operator
@@ -423,7 +423,7 @@ struct Parser{
 				res=New!LiteralExp(tok);
 				res.type=Bool(true);
 				return res;
-			case Tok!"lambda":
+			case Tok!"lambda",Tok!"λ":
 				return parseLambdaExp();
 			case Tok!"(",Tok!"[":
 				if(allowLambda){
@@ -499,7 +499,7 @@ struct Parser{
 
 	LambdaExp parseLambdaExp(bool semicolon=false)(){
 		mixin(SetLoc!LambdaExp);
-		if(ttype==Tok!"lambda") nextToken();
+		if(util.among(ttype,Tok!"lambda",Tok!"λ")) nextToken();
 		return res=New!LambdaExp(parseFunctionDef!(true,semicolon));
 	}
 	
@@ -539,14 +539,21 @@ struct Parser{
 					r.loc=loc.to(tok.loc);
 				}
 				return r;
-			case Tok!":":{
+			case Tok!":",Tok!"as",Tok!"coerce":{
+				TypeAnnotationType type;
+				switch(ttype){
+					case Tok!":": type=TypeAnnotationType.annotation; break;
+					case Tok!"as": type=TypeAnnotationType.conversion; break;
+					case Tok!"coerce": type=TypeAnnotationType.coercion; break;
+					default: assert(0);
+				}
 				nextToken();
 				auto t=parseType(statement);
-				res=New!TypeAnnotationExp(left,t);
+				res=New!TypeAnnotationExp(left,t,type);
 				return res;
 			}mixin({string r;
 				foreach(x;binaryOps)
-					if(!util.among(x,"=>",".","!","?",":","*","=","==","<=","!<=",">=","!>=","!=","*=","/=","div=","&=","⊕=","|=","-=","sub=","+=","<<=",">>=",">>>=","*=","·=","%=","^=","&&=","||=","~=","&","&=","&←","∧=","|","|=","|←","∨=")){
+					if(!util.among(x,"=>",".","!","?",":","as","coerce","*","=","==","<=","!<=",">=","!>=","!=","*=","/=","div=","&=","⊕=","|=","-=","sub=","+=","<<=",">>=",">>>=","*=","·=","%=","^=","&&=","||=","~=","&","&=","&←","∧=","|","|=","|←","∨=")){
 						r~=mixin(X!q{case Tok!"@(x)":
 							nextToken();
 							static if("@(x)"=="->"||"@(x)"=="→"){
@@ -950,7 +957,7 @@ struct Parser{
 		Expression val=null;
 		if(ttype==Tok!"="){
 			nextToken();
-			val=parseExpression(rbp!(Tok!"="));
+			val=parseExpression(rbp!(Tok!"←"));
 		}else if(ttype==Tok!","){
 			auto tpl=[var];
 			while(ttype==Tok!","){

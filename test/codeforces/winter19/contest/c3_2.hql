@@ -1,10 +1,17 @@
 // https://codeforces.com/contest/1116/problem/C3
 def solve[n:!ℕ](const x:𝔹^n)lifted{
-	(z,o,t):=(1:𝔹,0:𝔹,0:𝔹);
+	(z,o,t):=(1,0,0):𝔹^3;
 	for i in [0..n){
 		if x[i]{
 			(o,t,z):=(z,o,t);
 		}
 	}
-	return z;
+	r:=dup(z);
+	for i in [0..n){ // TODO: synthesize
+		if x[i]{
+			(z,o,t):=(o,t,z);
+		}
+	}
+	forget((z,o,t)=(1,0,0):𝔹^3);
+	return r;
 }

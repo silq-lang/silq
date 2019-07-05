@@ -1,3 +1,45 @@
+/+def main(){
+	x:=0:𝔹;
+	if true:𝔹 {
+		forget(x);
+		x:=1:𝔹;
+	}
+	return x;
+}+/
+/+
+def main(){
+	f:=(x:𝔹^1)lifted⇒();
+	x:=0:uint[1];
+	x[0]:=H(x[0]);
+	f(x as 𝔹^1);
+	x[0]:=H(x[0]);
+	return x; // 0
+}
++/
+/+
+import qft;
+
+def main(){
+	return QFT(1:uint[6]);
+}
++/
+
+/+
+def main(){
+	x:=vector(3,0:𝔹);
+	y:=array(3,0:𝔹);
+	x=y coerce 𝔹^3;
+	return x;
+}
++/
+
+/+def main(){
+	//H(x):=0;
+	//forget(H(x)=0);
+	//n:=3;
+	//x:=(0:int[n]):uint[n];
+}
++/
 /+
 def main(){
 	x:=2;
@@ -49,7 +91,7 @@ def main(){
 }
 +/
 /+
-def f(const x:B){
+def f(const x:𝔹){
 	y:=H(x);
 	return (x,y);
 }
@@ -212,20 +254,21 @@ def main(){
 		for j in [0:!𝔹..1:!𝔹]{
 			qs:=(H(i:𝔹),H(j:𝔹));
 			if qs[0]||qs[1]{ phase(π); }
-			assert(solve(qs)==((i,j):!uint[2]));
+			assert(solve(qs)==((i,j) as !uint[2]));
 		}
 	}
 }
 +/
-/+import codeforces.summer18.contest.b3;
+/+
+import codeforces.summer18.contest.b3;
 def main(){
 	results:=[]:!ℤ[];
 	for i in [0:!𝔹..1:!𝔹]{
 		for j in [0:!𝔹..1:!𝔹]{
 			def prepare()⇒(H(i),H(j));
-			assert(solve(prepare())==((j,i):!uint[2]));
+			assert(solve(prepare())==((j,i) as !uint[2]));
 			results~=[solve(prepare())];
-			results~=[((j,i):!uint[2]):!ℕ];
+			results~=[((j,i) as !uint[2]) as !ℕ];
 			assert(results[results.length-2]==results[results.length-1]);
 		}
 	}
@@ -239,10 +282,10 @@ def main(){
 	ghz:=vector(3,x);
 	forget(x=ghz[0]);
 	w:=vector(4,0:𝔹);
-	i:=(H(0:𝔹),H(0:𝔹)):uint[2];
+	i:=(H(0:𝔹),H(0:𝔹)) as uint[2];
 	w[i]=1:𝔹;
 	forget(i=λ(w:𝔹^4)lifted{
-		for i in [0..3){ if w[i]==1{ return i:uint[2]; } }
+		for i in [0..3){ if w[i]==1{ return i as uint[2]; } }
 		return 3:uint[2];
 	}(w));
 	assert((solve(ghz),solve(w))==(0,1));
@@ -274,7 +317,7 @@ def main(){
 /+
 def main(){
 	x:=H(0:𝔹);
-	return ((measure(0)+1)+(x:int[3]),x);
+	return ((measure(0)+1)+(x as int[3]),x); // TODO
 }
 +/
 /+
@@ -341,7 +384,7 @@ def main(){
 /+
 def main(){
 	x:=(1,2);
-	y:=H(0:𝔹):int[2];
+	y:=H(0:𝔹) as int[2];
 	x[y]=3; // error
 	return y;
 }
@@ -386,7 +429,7 @@ def main(){
 	}else{
 		y:=3:int[3];
 	}
-	forget(x=(y==2));
+	forget(x=y==2);
 	return y;
 }
 +/
@@ -445,14 +488,14 @@ def main(){
 /+
 def solve[n:!ℕ](bits: !𝔹^n){
 	x:=H(0:𝔹);
-	qs := if x then bits else (0:int[n]):𝔹^n;
+	qs := if x then bits else (0:int[n]) as 𝔹^n;
 	forget(x=qs[0]);
 	return qs;
 }
 // import codeforces.summer18.contest.a2;
 
 def main(){
-	return solve(1:!𝔹,0:!𝔹,0:!𝔹,1:!𝔹,0:!𝔹,1:!𝔹);
+	return solve((1,0,0,1,0,1):!𝔹^6);
 }
 +/
 /+
@@ -478,7 +521,6 @@ def main(){
 	return x;
 }
 +/
-
 /+
 def main(){
 	x:=vector(1,0:𝔹);
@@ -499,10 +541,12 @@ def main(){
 	assert(1:!𝔹);
 }
 +/
-/+def main(){
-	x:=((vector(3,1:𝔹):int[3]):𝔹^3):𝔹[];
+/+
+def main(){
+	x:=((vector(3,1:𝔹) as int[3]) as 𝔹^3):𝔹[];
 	return x;
-}+/
+}
++/
 /+
 def main(){
 	x:=(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16):int[4]^16;
@@ -515,7 +559,7 @@ def main(){
 	//y:=x:!ℤ;
 	x:=(0:int[3]);
 	x[1]:=H(x[1]);
-	y:=x:𝔹^3;
+	y:=x as 𝔹^3;
 	return y;
 }
 +/
@@ -560,7 +604,7 @@ def main(){
 def main(){
 	x:=0:𝔹;
 	y:=0:𝔹;
-	while(measure(H(0:𝔹))){
+	while(measure(H(0:𝔹))){ // error
 		x=H(y);
 	}
 	return x;
@@ -587,10 +631,11 @@ def main(){
 	return y;
 }
 +/
-/+def main(){
+/+
+def main(){
 	x:=H(0:𝔹);
 	while(measure(H(0:𝔹))){
-		y:=dup(x); // TODO!
+		y:=dup(x);
 	}
 	return H(x);
 }
@@ -616,10 +661,11 @@ def main(){
 	return (z,H(x));
 }
 +/
-/+def main(){
+/+
+def main(){
 	x:=H(0:𝔹);
 	y:=0:𝔹;
-	return (if x then y else H(y), x); // TODO
+	return (if x then y else H(y), x);
 }+/
 /+
 def main(){
@@ -638,7 +684,6 @@ def main(){
 	return H(x);
 }
 +/
-
 /+
 def main(){
 	x:=H(0:𝔹);
@@ -669,7 +714,7 @@ def foo[n:!ℕ](const a:int[n],b:int[n]){
 	b+=a;
 	return b;
 }
-def bar[n:!ℕ](a:int[n]]){
+def bar[n:!ℕ](a:int[n]){
 	foo(a,a); // error
 	return a;
 }
@@ -790,7 +835,7 @@ def main(){
 	y:=dup(x);
 	z:=dup(y);
 	forget(y,z);
-	forget(H(x)=(0:𝔹));
+	forget(H(x)=0:𝔹);
 }
 +/
 /+
@@ -820,18 +865,20 @@ def main()⇒grover((x:uint[6])lifted⇒x==42);
 /+def main(){
 	return 2 sub 1;
 }+/
-/+import conv;
+/+
+import conv;
 def main(){
 	x:=vector(3,0:𝔹);
 	for i in [0..3){ x[i]:=H(x[i]); }
-	for i in [0..floor(π/4*sqrt(2^3))){
-		if toInt(dup(x))==5{ phase(π); }
+	for i in [0..round(π/4*sqrt(2^3))){
+		if toUint(dup(x))==5{ phase(π); }
 		for k in [0..3){ x[k]:=H(x[k]); }
-		if toInt(dup(x))==0{ phase(π); }
+		if toUint(dup(x))==0{ phase(π); }
 		for k in [0..3){ x[k]:=H(x[k]); }
 	}
-	return measure(toInt(x));
-}+/
+	return measure(toUint(x));
+}
++/
 /+
 def main(){
 	x:=0:uint[3];
@@ -851,7 +898,7 @@ def main(){
 	def f(g: 𝔹→qfree 𝔹)qfree{
 		return g(x);
 	}
-	return f((x:𝔹)qfree⇒x);
+	return H(f((x:𝔹)qfree⇒x));
 }
 +/
 /+
@@ -862,7 +909,7 @@ def main(){
 	//f:=id;
 	y:=0:𝔹;
 	x:=id(y);
-	__show(__query("dep",x));
+	//__show(__query("dep",x));
 }
 +/
 /+
@@ -884,30 +931,7 @@ def uniform_entangle[n:!ℕ](bits:(!𝔹^n)^4) mfree {
 def solve[n:!ℕ](bits:(!𝔹^n)^4) {
     (anc, qs) := uniform_entangle(bits);
     result := dup(qs);
-    reverse(uniform_entangle[n])(bits, anc, qs);
-    return result;
-}
-+/
-/+def uniform_entangle[n:!ℕ](bits:(!𝔹^n)^4) mfree {
-    anc:=0:int[2];
-    for j in [0..2){ anc[j]:=H(anc[j]); }
-	qs:=vector(n,false:𝔹);
-
-    for i in [0..n-1] {
-        for a in [0..3] {
-            if anc == a && bits[a][i] {
-                qs[i] := X(qs[i]);
-            }
-        }            
-    }
-    return (anc, qs);
-}
-
-
-def solve[n:!ℕ](bits:(!𝔹^n)^4) {
-    (anc, qs) := uniform_entangle(bits);
-    result := dup(qs);
-    reverse(uniform_entangle[n])(anc, qs);
+    reverse(uniform_entangle[n])(anc, qs, bits);
     return result;
 }
 +/
@@ -923,10 +947,11 @@ def main(){
 	return y;
 }
 +/
-/+def solve[n:!ℕ](f: 𝔹^n !→lifted 𝔹){
+/+
+def solve[n:!ℕ](f: 𝔹^n !→lifted 𝔹){
 	x:=0:int[n];
 	for i in [0..n){ x[i] := H(x[i]); }
-	if f(x:𝔹^n){ phase(π); }
+	if f(x as 𝔹^n){ phase(π); }
 	for i in [0..n){ x[i] := H(x[i]); }
 	return measure(x)==0;
 }
@@ -943,9 +968,10 @@ def main(){
 	x:=solve(f[1]);
 	y:=solve(g[1]);
 	return (x,y);
-}+/
-
-/+def solve[n:!ℕ](f: 𝔹^n !→lifted 𝔹){
+}
++/
+/+
+def solve[n:!ℕ](f: 𝔹^n !→lifted 𝔹){
 	x:=vector(n,0:𝔹);
 	for i in [0..n){ x[i] := H(x[i]); }
 	if f(x){ phase(π); }
@@ -962,31 +988,8 @@ def main(){
 		return r;
 	};
 	g := λ[n:!ℕ](x: 𝔹^n)lifted⇒0:𝔹;
-	x:=solve[1](f[1]); // TODO: improve unification
-	y:=solve[1](g[1]);
-	return (x,y);
-}+/
-
-/+
-def solve[n:!ℕ](f: 𝔹^n !→lifted 𝔹){
-	x:=vector(n,0:𝔹);
-	for i in [0..n){ x[i] := H(x[i]); }
-	if f(x){ phase(π); }
-	for i in [0..n){ x[i] := H(x[i]); }
-	return measure(x)==vector(n,0:𝔹);
-}
-//import codeforces.summer18.warmup.i;
-def main(){
-	f := λ[n:!ℕ](x: 𝔹^n)lifted{
-		r:=0:𝔹;
-		for i in [0..n){
-			r⊕=x[i];
-		}
-		return r;
-	};
-	g := λ[n:!ℕ](x: 𝔹^n)lifted⇒0:𝔹;
-	x:=solve[1](f[1]); // TODO: improve unification
-	y:=solve[1](g[1]);
+	x:=solve(f[1]);
+	y:=solve(g[1]);
 	return (x,y);
 }
 +/
@@ -1069,6 +1072,7 @@ def main(){
 /+
 import codeforces.summer18.warmup.g;
 def main(){
+	x:=(0,0,1,0,1):𝔹^5;
 	return solve(x,3);
 }
 +/
@@ -1124,7 +1128,7 @@ def add(n:!ℕ,const x:int[32])lifted{
 
 def main(){
 	b := H(0:𝔹);
-	a := vector(10,b:int[32]);
+	a := vector(10,b as int[32]); // TODO
 	r:=add(10,sum(a));
 	return (a,b,r);
 }
@@ -1146,7 +1150,7 @@ def sum(const a:int[32])lifted{
 
 def main(){
 	b := H(0:𝔹);
-	a := dup(b:int[32]);
+	a := dup(b as int[32]); // TODO
     r:=sum(sum(sum(a)));
 	return measure(a,b,r);
 }
@@ -1165,9 +1169,10 @@ def main(){
 	return x;
 }
 +/
-/+def main(){
+/+
+def main(){
 	b:=H(0:𝔹);
-	a:=dup(b:int[32]);
+	a:=dup(b as int[32]); // TODO
 	measure(a,b);
 	x:=0;
 }
@@ -1182,7 +1187,7 @@ def sum(const a:int[32])lifted{
 
 def main(){
 	b := H(0:𝔹);
-	a := dup(b:int[32]);
+	a := dup(b as int[32]); // TODO
 	r:=sum(a);
 	measure(a,b,r);
 	x:=0;
@@ -1213,7 +1218,8 @@ def main(){
 def main(){
 	x := H(0:𝔹);
 	f := dup(()⇒x); // error
-}+/
+}
++/
 //def f[a,b,c](x:a,y:b,z:c)⇒(x,y,z);
 /+
 def geom(){
@@ -1229,7 +1235,7 @@ def main(){
 def main(){
 	x:=0;
 	forget(x);
-	return x;	
+	return x; // TODO: error?
 }
 +/
 /+
@@ -1301,10 +1307,11 @@ def main(){
 }
 +/
 /+
-import codeforces.summer18.warmup.d; // TODO: check task again
+import codeforces.summer18.warmup.d; 
 
 def main(){
-	return solve(0:𝔹);
+	assert(solve(H(0:𝔹))==1);
+	assert(solve(H(1:𝔹))==-1);
 }
 +/
 /+
@@ -1314,8 +1321,11 @@ def fib(f: !ℕ !→ !ℕ)(n:!ℕ){
 }
 
 def fix[a](f: (a!→a)!→(a!→a)){
-	def g(x:a):a⇒f(g)(x);
+	def g(x:a):a⇒f(g)(x); // TODO
 	return g;
+}
+def main(){
+	return fix(fib)(10);
 }
 +/
 /+
@@ -1323,11 +1333,11 @@ def fib(n:!ℕ):!ℕ{
 	if n<=1{ return n; }
 	return fib(n sub 1)+fib(n sub 2);
 }
-
 def main(){
-	return fix(fib)(10);
+	return fib(10);
 }
 +/
+
 /+def main(){
 	//x := [1,2,3:!ℝ];
 	x := vector(3,1);
@@ -1381,7 +1391,8 @@ def bad[n:!ℕ](x:uint[n])mfree{
 def bad[n:!ℕ](x:uint[n])mfree{
 	s := 0: uint[n];
 	s = x;
-	s = 0;
+	s = 0; // error
+	return s;
 }
 +/
 /+
@@ -1391,10 +1402,9 @@ def f(const a:𝔹[],x:𝔹,y:!𝔹):𝔹{
 	}
 	return x;
 }
-
 def main(n:!ℕ){
 	a := array(n,0:𝔹);
-	a[0] := f(a,a[0],true);
+	a[0] := f(a,a[0],true); // error
 	return a;
 }
 +/
@@ -1402,10 +1412,10 @@ def main(n:!ℕ){
 /+
 def main[n:!ℕ](a: 𝔹[], i: int[n]){
 	x := a[i];
+	forget(x); // TODO: don't require this
 	return (a,i);
 }
 +/
-
 /+def f[a](const b: a[])[b](const c: b[]){
 
 }+/
@@ -1435,9 +1445,9 @@ def main(){
 }
 +/
 
-
-/+def f(const x:𝔹)lifted{
-	phase(π);
+/+
+def f(const x:𝔹)lifted{
+	phase(π); // error
 	return ();
 }
 
@@ -1465,7 +1475,7 @@ x = "";
 +/
 	/+
 	def main(){
-		x := 0:𝔹;
+		x := 1:𝔹;
 		if x {
 			return 1:𝔹; // TODO: this should be an error!
 		}

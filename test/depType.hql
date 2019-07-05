@@ -1,13 +1,13 @@
 
 def main(){
 	n := 32;
-	x := 0: !int[n]; // TODO
-	n = 20; // TODO: error
+	x := 0: !int[n];
+	n = 20; // error
 }
 
 def foo(){ // error
 	n := 32;
-	x := 0: !int[n]; // TODO
+	x := 0: !int[n];
 	return x;
 }
 

@@ -11,5 +11,5 @@ def grover[n:!ℕ](f: const uint[n] !→ lifted 𝔹):!ℕ{
 		}
 		cand:=groverDiffusion(cand);
 	}
-	return measure(cand):!ℕ;
+	return measure(cand) as !ℕ;
 }
