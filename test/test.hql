@@ -1,3 +1,13 @@
+/+def fib[m:!ℕ]:!int[m]→!int[m]{ // TODO: automatically add annotations
+	return (n:!int[m]){
+		if n<=1{ return n; }
+		return fib(n - 1)+fib(n - 2);
+	}
+}
+def main(){
+	return fib(10:!int[10]);
+}
++/
 /+def main(){
 	x:=0:𝔹;
 	if true:𝔹 {
