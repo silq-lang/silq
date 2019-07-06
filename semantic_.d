@@ -2211,10 +2211,12 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 			return expr;
 		}
 		auto l=t1.isTupleTy(),r=t2.isTupleTy();
-		if(l && r && !pr.e1.brackets && !pr.e2.brackets)
+		auto merge1=!pr.e1.brackets&&l&&l.length;
+		auto merge2=!pr.e2.brackets&&r&&r.length;
+		if(merge1 && merge2)
 			return tupleTy(chain(iota(l.length).map!(i=>l[i]),iota(r.length).map!(i=>r[i])).array);
-		if(l&&!pr.e1.brackets) return tupleTy(chain(iota(l.length).map!(i=>l[i]),only(t2)).array);
-		if(r&&!pr.e2.brackets) return tupleTy(chain(only(t1),iota(r.length).map!(i=>r[i])).array);
+		if(merge1) return tupleTy(chain(iota(l.length).map!(i=>l[i]),only(t2)).array);
+		if(merge2) return tupleTy(chain(only(t1),iota(r.length).map!(i=>r[i])).array);
 		return tupleTy([t1,t2]);
 	}
 	if(auto ex=cast(BinaryExp!(Tok!"→"))expr){
@@ -2228,16 +2230,18 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 					return q((bool[]).init,Expression.init);
 				}
 				auto l=t1[1].isTupleTy,r=t2[1].isTupleTy;
-				if(l && r && !pr.e1.brackets && !pr.e2.brackets)
+				auto merge1=!pr.e1.brackets&&l&&l.length;
+				auto merge2=!pr.e2.brackets&&r&&r.length;
+				if(merge1 && merge2)
 					return q(t1[0]~t2[0],cast(Expression)tupleTy(chain(iota(l.length).map!(i=>l[i]),iota(r.length).map!(i=>r[i])).array));
-				if(l&&!pr.e1.brackets) return q(t1[0]~t2[0],cast(Expression)tupleTy(chain(iota(l.length).map!(i=>l[i]),only(t2[1])).array));
-				if(r&&!pr.e2.brackets) return q(t1[0]~t2[0],cast(Expression)tupleTy(chain(only(t1[1]),iota(r.length).map!(i=>r[i])).array));
+				if(merge1) return q(t1[0]~t2[0],cast(Expression)tupleTy(chain(iota(l.length).map!(i=>l[i]),only(t2[1])).array));
+				if(merge2) return q(t1[0]~t2[0],cast(Expression)tupleTy(chain(only(t1[1]),iota(r.length).map!(i=>r[i])).array));
 				return q(t1[0]~t2[0],cast(Expression)tupleTy([t1[1],t2[1]]));
 			}else if(auto ce=cast(UnaryExp!(Tok!"const"))e){
 				return q([true],typeSemantic(ce.e,sc));
 			}else{
 				auto ty=typeSemantic(e,sc);
-				return q([ty.impliesConst()||ex.isLifted],ty);
+				return q([ty&&ty.impliesConst()||ex.isLifted],ty);
 			}
 		}
 		auto t1=getConstAndType(ex.e1);

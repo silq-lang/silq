@@ -956,6 +956,10 @@ ProductTy productTy(bool[] isConst,string[] names,Expression dom,Expression cod,
 alias FunTy=ProductTy;
 FunTy funTy(bool[] isConst,Expression dom,Expression cod,bool isSquare,bool isTuple,Annotation annotation,bool isClassical)in{
 	assert(dom&&cod);
+	if(isTuple){
+		auto tdom=dom.isTupleTy();
+		assert(isConst.length==tdom.length);
+	}else assert(isConst.length==1);
 }body{
 	auto nargs=1+[].length;
 	if(isTuple) if(auto tpl=dom.isTupleTy()) nargs=tpl.length;

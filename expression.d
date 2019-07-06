@@ -39,8 +39,10 @@ abstract class Expression: Node{
 	}
 	final Expression substitute(Expression[string] subst){
 		auto r=substituteImpl(subst);
-		if(type == this) r.type=r;
-		else r.type=type.substitute(subst);
+		if(type){
+			if(type == this) r.type=r;
+			else r.type=type.substitute(subst);
+		}
 		return r;
 	}
 	abstract Expression substituteImpl(Expression[string] subst); // TODO: name might be free in the _types_ of subexpressions

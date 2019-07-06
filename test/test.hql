@@ -1,3 +1,120 @@
+/+
+/+
+def QFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
+	for k in [0..n div 2){
+		(ψ[k],ψ[n-k-1]) := (ψ[n-k-1],ψ[k]);
+	}
+	for k in [0..n){
+		ψ[k] := H(ψ[k]);
+		for l in [k+1..n){
+			if ψ[l] && ψ[k]{
+				phase(2·π·2^(k-l-1));
+			}
+		}
+	}
+	return ψ;
+}
++/
+
+def seq[a,b,c,d](f: !(Π[τ]lifted. a×const d×(b×const d!→mfree τ)!→mfree τ),g: !(Π[τ]lifted. b×const d×(c×const d!→mfree τ)!→mfree τ))[τ](x:a,const k:d,ret:c×const d!→mfree τ)mfree⇒f[τ](x,k,(y:b,const k:d)mfree⇒g[τ](y,k,ret));
+
+def QFT_norm[n:!ℕ]()mfree{
+	f:=[τ](ψ: uint[n], const d:𝟙, ret: uint[n]×const 𝟙!→mfree τ)mfree⇒ret(ψ,d);
+	for k in [0..n div 2){
+		f=seq[uint[n],uint[n],uint[n],𝟙](f,[τ](ψ: uint[n], const d:𝟙, ret: uint[n]×const 𝟙!→mfree τ)mfree{ (ψ[k],ψ[n-k-1]) := (ψ[n-k-1],ψ[k]); return ret(ψ,d); });
+	}
+	for k in [0..n){
+		f=seq[uint[n],uint[n],uint[n],𝟙](f,[τ](ψ: uint[n], const d:𝟙, ret: uint[n]×const 𝟙!→mfree τ)mfree{ ψ[k] := H(ψ[k]); return ret(ψ,d); });
+		for l in [k+1..n){
+			f=seq[uint[n],uint[n],uint[n],𝟙](f,[τ](ψ: uint[n], const d:𝟙, ret: uint[n]×const 𝟙!→mfree τ)mfree{
+				if ψ[l] && ψ[k]{
+					phase(2·π·2^(k-l-1));
+				}
+				return ret(ψ,d);
+			});
+		}
+	}
+	f=seq[uint[n],uint[n],uint[n],𝟙](f,[τ](ψ: uint[n],const d:𝟙,ret: uint[n]×const 𝟙!→mfree τ)mfree⇒ret(ψ,d));
+	return ((),f);
+}
+
+def QFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
+	return QFT_norm[n]()[1][uint[n]](ψ,(),(ψ: uint[n],const d:𝟙)mfree⇒ψ);
+}
+
+def iQFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
+	for kr in [0..n){
+		k:=n sub 1 sub kr;
+		for l in [k+1..n){
+			if ψ[l] && ψ[k]{
+				phase(-2·π·2^(k-l-1));
+			}
+		}
+		ψ[k] := H(ψ[k]);
+	}
+	for k in [0..n div 2){
+		(ψ[k],ψ[n-k-1]) := (ψ[n-k-1],ψ[k]);
+	}
+	return ψ;
+}
+/+
+def phaseUint[n:!ℕ](const φ: uint[n])mfree{
+	for i in [0..n){ if φ[i]{ phase(2·π·2^i/2^n); } }
+}
+def QFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
+	for k in [0..n){
+		j:=n sub 1 sub k;
+		ψ[j] := H(ψ[j]); // ψ'[j] = 1/√2(|0⟩+expi(2π·2^k·(ψ&2^j)/2^n)|1⟩)
+		if ψ[j]{ phaseUint(2^k·(ψ⊕2^j)); }// ψ''[j] = 1/√2(|0⟩+expi(2π·2^k·ψ/2^n)|1⟩)
+	}
+	for k in [0..n div 2){
+		(ψ[k],ψ[n-k-1]) := (ψ[n-k-1],ψ[k]);
+	}
+	return ψ;
+}
++/
+/+
+def phaseUint[n:!ℕ](const φ: uint[n])mfree{
+	for i in [0..n){ if (φ&2^i)!=0{ phase(2·π·2^(i-n)); } }
+}
+def QFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
+	for k in [0..n){
+		j:=n sub 1 sub k;
+		ψ[j] := H(ψ[j]);
+		if (ψ&2^j)!=0{ phaseUint(2^k*ψ⊕2^(n sub 1)); }
+	}
+	for k in [0..n div 2){
+		(ψ[k],ψ[n-k-1]) := (ψ[n-k-1],ψ[k]);
+	}
+	return ψ;
+}
++/
+def main(){
+	n:=8;
+	/+x:=0:uint[n];
+	for i in [0..n){ x[i]:=H(x[i]); }
+	def f(x:uint[n])lifted⇒x%5;
+	measure(f(x));
+	return (measure(iQFT(x)) as !ℕ)/2^n+0.0;+/ // TODO: coerce uint[n] to uint[6]
+		//x[1]:=H(x[1]);
+	x:=measure(H(false),H(false),H(false),H(false));
+	r:=iQFT(QFT(x as uint[4]));
+	// forget((x as uint[4])=r); // TODO: fix simulator
+	//return measure(x as uint[4])==measure(r);
+	return (x as uint[4],r);
+	//x[1]:=H(x[1]);
+	//return x;
+	/+x:=measure(H(false),H(false),H(false),H(false));
+	forget(iQFT(QFT(x as uint[4]))=x as uint[4]); // TODO: fix+/
+}
++/
+
+/+def main(){
+	reverse(measure[int[32]]);
+	x:=H(0:𝔹);
+	f:=()mfree=>x;
+	reverse(f);
+}+/
 /+def fib[m:!ℕ]:!int[m]→!int[m]{ // TODO: automatically add annotations
 	return (n:!int[m]){
 		if n<=1{ return n; }

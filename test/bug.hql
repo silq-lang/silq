@@ -1,4 +1,8 @@
-
+/+
+def main(){
+	f:=(g:𝔹×𝔹const 𝟙→𝔹)⇒g(false,false,()); // crash
+}
++/
 /+
 def main(){
 	n:=100; // TODO: make running time scale linearly in n!
