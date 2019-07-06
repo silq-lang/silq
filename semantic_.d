@@ -7,6 +7,7 @@ import lexer,scope_,expression,type,declaration,error,util;
 
 alias CommaExp=BinaryExp!(Tok!",");
 alias AssignExp=BinaryExp!(Tok!"←");
+alias DefineExp=BinaryExp!(Tok!":=");
 alias OrAssignExp=BinaryExp!(Tok!"||←");
 alias AndAssignExp=BinaryExp!(Tok!"&&←");
 alias AddAssignExp=BinaryExp!(Tok!"+←");
@@ -268,7 +269,7 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 		propErr(ce.e2,ce);
 		return ce;
 	}
-	if(auto be=cast(BinaryExp!(Tok!":="))expr){
+	if(auto be=cast(DefineExp)expr){
 		if(auto id=cast(Identifier)be.e1){
 			auto nid=new Identifier(id.name);
 			nid.loc=id.loc;
@@ -337,10 +338,10 @@ void checkNotLinear(Expression e,Scope sc){
 
 Expression[] semantic(Expression[] exprs,Scope sc){
 	bool success=true;
-	foreach(ref expr;exprs) if(!cast(BinaryExp!(Tok!":="))expr&&!cast(CommaExp)expr) expr=makeDeclaration(expr,success,sc); // TODO: get rid of special casing?
+	foreach(ref expr;exprs) if(!cast(DefineExp)expr&&!cast(CommaExp)expr) expr=makeDeclaration(expr,success,sc); // TODO: get rid of special casing?
 	/+foreach(ref expr;exprs){
 	 if(auto decl=cast(Declaration)expr) expr=presemantic(decl,sc);
-		if(cast(BinaryExp!(Tok!":="))expr) expr=makeDeclaration(expr,success,sc);
+		if(cast(DefineExp)expr) expr=makeDeclaration(expr,success,sc);
 	}+/
 	foreach(ref expr;exprs){
 		if(auto decl=cast(Declaration)expr) expr=presemantic(decl,sc);
@@ -359,8 +360,8 @@ Expression toplevelSemantic(Expression expr,Scope sc){
 	if(expr.sstate==SemState.error) return expr;
 	if(auto fd=cast(FunctionDef)expr) return functionDefSemantic(fd,sc);
 	if(auto dd=cast(DatDecl)expr) return datDeclSemantic(dd,sc);
-	if(cast(BinaryExp!(Tok!":="))expr||cast(DefExp)expr) return colonOrAssignSemantic(expr,sc);
-	if(auto ce=cast(CommaExp)expr) return expectColonOrAssignSemantic(ce,sc);
+	if(cast(DefineExp)expr||cast(DefExp)expr) return defineOrAssignSemantic(expr,sc);
+	if(auto ce=cast(CommaExp)expr) return expectDefineOrAssignSemantic(ce,sc);
 	if(auto imp=cast(ImportExp)expr){
 		assert(util.among(imp.sstate,SemState.error,SemState.completed));
 		return imp;
@@ -539,8 +540,8 @@ Expression statementSemantic(Expression e,Scope sc){
 		return functionDefSemantic(fd,sc);
 	if(auto dd=cast(DatDecl)e)
 		return datDeclSemantic(dd,sc);
-	if(auto ce=cast(CommaExp)e) return expectColonOrAssignSemantic(ce,sc);
-	if(isColonOrAssign(e)) return colonOrAssignSemantic(e,sc);
+	if(auto ce=cast(CommaExp)e) return expectDefineOrAssignSemantic(ce,sc);
+	if(isDefineOrAssign(e)) return defineOrAssignSemantic(e,sc);
 	if(auto fe=cast(ForExp)e){
 		assert(!fe.bdy.blscope_);
 		fe.left=expressionSemantic(fe.left,sc,ConstResult.no);
@@ -784,7 +785,7 @@ bool isLifted(Expression e,Scope sc){
 }
 
 
-Expression colonAssignSemantic(BinaryExp!(Tok!":=") be,Scope sc){
+Expression defineSemantic(DefineExp be,Scope sc){
 	if(cast(IndexExp)be.e1) return indexReplaceSemantic(be,sc);
 	if(auto tpl=cast(TupleExp)be.e1) if(tpl.e.any!(x=>!!cast(IndexExp)x)) return permuteSemantic(be,sc);
 	bool success=true;
@@ -850,7 +851,7 @@ Identifier getIdFromIndex(IndexExp e){
 	return cast(Identifier)e.e;
 }
 
-Expression indexReplaceSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{ // TODO: generalize colonAssignSemantic to cover this
+Expression indexReplaceSemantic(DefineExp be,Scope sc)in{ // TODO: generalize defineSemantic to cover this
 	assert(cast(IndexExp)be.e1);
 }do{
 	auto theIndex=cast(IndexExp)be.e1;
@@ -900,7 +901,7 @@ Expression indexReplaceSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{ // TODO: ge
 	return be;
 }
 
-Expression permuteSemantic(BinaryExp!(Tok!":=") be,Scope sc)in{ // TODO: generalize colonAssignSemantic to cover this
+Expression permuteSemantic(DefineExp be,Scope sc)in{ // TODO: generalize defineSemantic to cover this
 	auto tpl=cast(TupleExp)be.e1;
 	assert(tpl&&tpl.e.any!(x=>!!cast(IndexExp)x));
 }do{
@@ -1226,30 +1227,30 @@ Expression assignSemantic(Expression e,Scope sc)in{
 	assert(0);
 }
 
-bool isColonOrAssign(Expression e){
-	return isAssignment(e)||cast(BinaryExp!(Tok!":="))e||cast(DefExp)e;
+bool isDefineOrAssign(Expression e){
+	return isAssignment(e)||cast(DefineExp)e||cast(DefExp)e;
 }
 
-Expression colonOrAssignSemantic(Expression e,Scope sc)in{
-	assert(isColonOrAssign(e));
+Expression defineOrAssignSemantic(Expression e,Scope sc)in{
+	assert(isDefineOrAssign(e));
 }body{
 	if(isAssignment(e)) return assignSemantic(e,sc);
-	if(auto be=cast(BinaryExp!(Tok!":="))e) return colonAssignSemantic(be,sc);
+	if(auto be=cast(DefineExp)e) return defineSemantic(be,sc);
 	if(cast(DefExp)e) return e; // TODO: ok?
 	assert(0);
 }
 
-Expression expectColonOrAssignSemantic(Expression e,Scope sc){
+Expression expectDefineOrAssignSemantic(Expression e,Scope sc){
 	if(auto ce=cast(CommaExp)e){
-		ce.e1=expectColonOrAssignSemantic(ce.e1,sc);
+		ce.e1=expectDefineOrAssignSemantic(ce.e1,sc);
 		propErr(ce.e1,ce);
-		ce.e2=expectColonOrAssignSemantic(ce.e2,sc);
+		ce.e2=expectDefineOrAssignSemantic(ce.e2,sc);
 		propErr(ce.e2,ce);
 		ce.type=unit;
 		if(ce.sstate!=SemState.error) ce.sstate=SemState.completed;
 		return ce;
 	}
-	if(isColonOrAssign(e)) return colonOrAssignSemantic(e,sc);
+	if(isDefineOrAssign(e)) return defineOrAssignSemantic(e,sc);
 	sc.error("expected assignment or variable declaration",e.loc);
 	e.sstate=SemState.error;
 	return e;
@@ -2222,16 +2223,22 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 	if(auto ex=cast(BinaryExp!(Tok!"→"))expr){
 		expr.type=typeTy();
 		Q!(bool[],Expression) getConstAndType(Expression e){
+			Q!(bool[],Expression) base(Expression e){
+				auto ty=typeSemantic(e,sc);
+				return q([ty&&ty.impliesConst()||ex.isLifted],ty);
+			}
 			if(auto pr=cast(BinaryExp!(Tok!"×"))e){
-				auto t1=getConstAndType(pr.e1);
-				auto t2=getConstAndType(pr.e2);
+				auto merge1=!pr.e1.brackets;
+				auto t1=merge1?getConstAndType(pr.e1):base(pr.e1);
+				auto merge2=!pr.e2.brackets;
+				auto t2=merge2?getConstAndType(pr.e2):base(pr.e2);
 				if(!t1[1]||!t2[1]){
 					e.sstate=SemState.error;
 					return q((bool[]).init,Expression.init);
 				}
 				auto l=t1[1].isTupleTy,r=t2[1].isTupleTy;
-				auto merge1=!pr.e1.brackets&&l&&l.length;
-				auto merge2=!pr.e2.brackets&&r&&r.length;
+				merge1&=l&&l.length;
+				merge2&=r&&r.length;
 				if(merge1 && merge2)
 					return q(t1[0]~t2[0],cast(Expression)tupleTy(chain(iota(l.length).map!(i=>l[i]),iota(r.length).map!(i=>r[i])).array));
 				if(merge1) return q(t1[0]~t2[0],cast(Expression)tupleTy(chain(iota(l.length).map!(i=>l[i]),only(t2[1])).array));
@@ -2239,10 +2246,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 				return q(t1[0]~t2[0],cast(Expression)tupleTy([t1[1],t2[1]]));
 			}else if(auto ce=cast(UnaryExp!(Tok!"const"))e){
 				return q([true],typeSemantic(ce.e,sc));
-			}else{
-				auto ty=typeSemantic(e,sc);
-				return q([ty&&ty.impliesConst()||ex.isLifted],ty);
-			}
+			}else return base(e);
 		}
 		auto t1=getConstAndType(ex.e1);
 		auto t2=typeSemantic(ex.e2,sc);

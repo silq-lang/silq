@@ -1497,7 +1497,6 @@ QState.Value lookupMeaning(QState)(ref QState qstate,Identifier id,Scope sc=null
 }
 
 import lexer: Tok;
-alias ODefExp=BinaryExp!(Tok!":=");
 struct Interpreter(QState){
 	FunctionDef functionDef;
 	enum isReversed=false; // TODO
@@ -1925,14 +1924,14 @@ struct Interpreter(QState){
 			writeln("statement: ",e);
 		}
 		if(auto nde=cast(DefExp)e){
-			auto de=cast(ODefExp)nde.initializer;
+			auto de=cast(DefineExp)nde.initializer;
 			assert(!!de);
 			auto lhs=de.e1, rhs=runExp(de.e2);
 			assignTo(lhs,rhs);
 		}else if(auto ae=cast(AssignExp)e){
 			auto lhs=ae.e1,rhs=runExp(ae.e2);
 			assignTo(lhs,rhs);
-		}else if(auto ae=cast(BinaryExp!(Tok!":="))e){
+		}else if(auto ae=cast(DefineExp)e){
 			if(ae.isSwap){
 				auto tpl=cast(TupleExp)ae.e2;
 				enforce(!!tpl);
