@@ -85,7 +85,7 @@ Expression meetTypes(Expression lhs,Expression rhs){
 	return combineTypes(lhs,rhs,true);
 }
 
-class Type: Expression{
+abstract class Type: Expression{
 	this(){ if(!this.type) this.type=typeTy; sstate=SemState.completed; }
 	override @property string kind(){ return "type"; }
 	override string toString(){ return "T"; }
@@ -96,6 +96,9 @@ class Type: Expression{
 
 class ErrorTy: Type{
 	this(){}//{sstate = SemState.error;}
+	override ErrorTy copyImpl(CopyArgs args){
+		return this;
+	}
 	override string toString(){return "__error";}
 	override bool isClassical(){ return true; }
 	mixin VariableFree;
@@ -104,6 +107,9 @@ class ErrorTy: Type{
 class BoolTy: Type{
 	private bool classical;
 	private this(bool classical){ this.classical=classical; }
+	override BoolTy copyImpl(CopyArgs args){
+		return this;
+	}
 	override string toString(){
 		return classical?"!𝔹":"𝔹";
 	}
@@ -132,6 +138,9 @@ BoolTy Bool(bool classical){ return theBool[classical]?theBool[classical]:(theBo
 class ℕTy: Type{
 	private bool classical;
 	private this(bool classical){ this.classical=classical; }
+	override ℕTy copyImpl(CopyArgs args){
+		return this;
+	}
 	override string toString(){
 		return classical?"!ℕ":"ℕ";
 	}
@@ -160,6 +169,9 @@ private ℕTy[2] theℕ;
 class ℤTy: Type{
 	private bool classical;
 	private this(bool classical){ this.classical=classical; }
+	override ℤTy copyImpl(CopyArgs args){
+		return this;
+	}
 	override string toString(){
 		return classical?"!ℤ":"ℤ";
 	}
@@ -188,6 +200,9 @@ private ℤTy[2] theℤ;
 class ℚTy: Type{
 	private bool classical;
 	private this(bool classical){ this.classical=classical; }
+	override ℚTy copyImpl(CopyArgs args){
+		return this;
+	}
 	override string toString(){
 		return classical?"!ℚ":"ℚ";
 	}
@@ -216,6 +231,9 @@ private ℚTy[2] theℚ;
 class ℝTy: Type{
 	private bool classical;
 	private this(bool classical){ this.classical=classical; }
+	override ℝTy copyImpl(CopyArgs args){
+		return this;
+	}
 	override string toString(){
 		return classical?"!ℝ":"ℝ";
 	}
@@ -244,6 +262,9 @@ private ℝTy[2] theℝ;
 class ℂTy: Type{
 	private bool classical;
 	private this(bool classical){ this.classical=classical; }
+	override ℂTy copyImpl(CopyArgs args){
+		return this;
+	}
 	override string toString(){
 		return classical?"!ℂ":"ℂ";
 	}
@@ -282,6 +303,9 @@ class AggregateTy: Type{
 		if(classical) classicalTy=this;
 		else classicalTy=New!AggregateTy(decl,true);
 	}
+	override AggregateTy copyImpl(CopyArgs args){
+		return this;
+	}
 	override bool opEquals(Object o){
 		if(auto r=cast(AggregateTy)o)
 			return decl is r.decl && classical==r.classical;
@@ -309,6 +333,9 @@ class ContextTy: Type{
 	private bool classical;
 	private this(bool classical){
 		this.classical=classical;
+	}
+	override ContextTy copyImpl(CopyArgs args){
+		return this;
 	}
 	override bool opEquals(Object o){
 		auto ctx=cast(ContextTy)o;
@@ -351,6 +378,9 @@ class TupleTy: Type,ITupleTy{
 		assert(!types.length||!types[1..$].all!(x=>x==types[0]));
 	}body{
 		this.types=types;
+	}
+	override TupleTy copyImpl(CopyArgs args){
+		return this;
 	}
 	override string toString(){
 		if(!types.length) return "𝟙";
@@ -440,6 +470,9 @@ class ArrayTy: Type{
 	}body{
 		this.next=next;
 	}
+	override ArrayTy copyImpl(CopyArgs args){
+		return this;
+	}
 	override string toString(){
 		bool p=cast(FunTy)next||next.isTupleTy()&&next!is unit;
 		return p?"("~next.toString()~")[]":next.toString()~"[]";
@@ -501,6 +534,9 @@ class VectorTy: Type, ITupleTy{
 	override ITupleTy isTupleTy(){
 		if(cast(LiteralExp)num) return this;
 		return null;
+	}
+	override VectorTy copyImpl(CopyArgs args){
+		return this;
 	}
 	@property size_t length(){
 		auto lit=cast(LiteralExp)num;
@@ -595,6 +631,9 @@ static Expression elementType(Expression ty){
 class StringTy: Type{
 	bool classical;
 	private this(bool classical){ this.classical=classical; }
+	override StringTy copyImpl(CopyArgs args){
+		return this;
+	}
 	override string toString(){
 		return classical?"!string":"string";
 	}
@@ -630,6 +669,9 @@ class RawProductTy: Expression{
 		this.params=params; this.cod=cod;
 		this.isSquare=isSquare; this.isTuple=isTuple;
 		this.annotation=annotation;
+	}
+	override RawProductTy copyImpl(CopyArgs args){
+		return new RawProductTy(params.map!(p=>p.copy(args)).array,cod.copy(args),isSquare,isTuple,annotation);
 	}
 	override string toString(){
 		return "<unanalyzed Π type>"; // TODO: format nicely.
@@ -675,6 +717,9 @@ class ProductTy: Type{
 		if(this.isClassical) classicalTy=this;
 		else classicalTy=new ProductTy(isConst,names,dom,cod,isSquare,isTuple,annotation,true);
 		// TODO: report DMD bug, New!ProductTy does not work
+	}
+	override ProductTy copyImpl(CopyArgs args){
+		return this;
 	}
 	/+private+/ @property ITupleTy tdom()in{ // TODO: make private
 		assert(isTuple);
@@ -1022,6 +1067,9 @@ bool hasFreeIdentifier(Expression self,string name){
 
 class TypeTy: Type{
 	this(){ this.type=this; super(); }
+	override TypeTy copyImpl(CopyArgs args){
+		return this;
+	}
 	override string toString(){
 		return "*";
 	}

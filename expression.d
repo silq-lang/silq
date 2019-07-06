@@ -1,7 +1,7 @@
 // Written in the D programming language
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
 
-import std.array, std.algorithm, std.range, std.conv, std.string;
+import std.array, std.algorithm, std.range, std.conv, std.string, std.exception;
 
 import lexer, parser, scope_, type, declaration, util;
 
@@ -25,6 +25,23 @@ abstract class Node{
 abstract class Expression: Node{
 	Expression type;
 	int brackets=0;
+
+	struct CopyArgs{
+		bool preserveSemantic=false;
+	}
+	abstract Expression copyImpl(CopyArgs args);
+	final T copy(this T)(CopyArgs args=CopyArgs.init){
+		auto r=(cast(T)this).copyImpl(args);
+		assert(!!r);
+		if(args.preserveSemantic){
+			r.sstate=sstate;
+			r.type=type;
+		}
+		r.brackets=brackets;
+		r.loc=loc;
+		return r;
+	}
+
 	override string toString(){return _brk("{}()");}
 	protected string _brk(string s){return std.array.replicate("(",brackets)~s~std.array.replicate(")",brackets); return s;}
 
@@ -177,6 +194,9 @@ class TypeAnnotationExp: Expression{
 		this.e=e; this.t=t;
 		this.annotationType=annotationType;
 	}
+	override TypeAnnotationExp copyImpl(CopyArgs args){
+		return new TypeAnnotationExp(e,t,annotationType);
+	}
 	override @property string kind(){ return e.kind; }
 	override string toString(){
 		static immutable op=[": "," as "," coerce "];
@@ -215,6 +235,9 @@ UnaryExp!(Tok!"&") isAddressExp(Expression self){return cast(UnaryExp!(Tok!"&"))
 class ErrorExp: Expression{
 	this(){}//{sstate = SemState.error;}
 	override string toString(){return _brk("__error");}
+	override ErrorExp copyImpl(CopyArgs args){
+		return new ErrorExp();
+	}
 
 	mixin VariableFree;
 	override int componentsImpl(scope int delegate(Expression) dg){
@@ -226,6 +249,9 @@ class LiteralExp: Expression{
 	Token lit; // TODO: add literal expressions with dedicated types
 	this(Token lit){ // TODO: suitable contract
 		this.lit=lit;
+	}
+	override LiteralExp copyImpl(CopyArgs args){
+		return new LiteralExp(lit);
 	}
 	override string toString(){
 		return _brk(lit.toString());
@@ -258,6 +284,10 @@ class Identifier: Expression{
 		auto n=uniq.get(name,null);
 		if(n !is null) this.name = n;
 		else this.name = uniq[name] = name;
+	}
+	override Identifier copyImpl(CopyArgs args){
+		enforce(!args.preserveSemantic,"TODO");
+		return new Identifier(name);
 	}
 	override string toString(){return _brk((classical?"!":"")~name);}
 	override @property string kind(){return "identifier";}
@@ -338,6 +368,9 @@ class Identifier: Expression{
 class PlaceholderExp: Expression{
 	Identifier ident;
 	this(Identifier ident){ this.ident = ident; }
+	override PlaceholderExp copyImpl(CopyArgs args){
+		return new PlaceholderExp(ident.copy(args));
+	}
 	override string toString(){ return _brk("?"); }
 	override @property string kind(){ return "placeholder"; }
 
@@ -349,6 +382,9 @@ class PlaceholderExp: Expression{
 class UnaryExp(TokenType op): Expression{
 	Expression e;
 	this(Expression next){e = next;}
+	override UnaryExp!op copyImpl(CopyArgs args){
+		return new UnaryExp!op(e.copy(args));
+	}
 	override string toString(){
 		import std.uni;
 		return _brk(TokChars!op~(TokChars!op[$-1].isAlpha()?" ":"")~e.toString());
@@ -389,6 +425,9 @@ class UnaryExp(TokenType op): Expression{
 class PostfixExp(TokenType op): Expression{
 	Expression e;
 	this(Expression next){e = next;}
+	override PostfixExp!op copyImpl(CopyArgs args){
+		return new PostfixExp!op(e.copy(args));
+	}
 	override string toString(){return _brk(e.toString()~TokChars!op);}
 
 	override int freeVarsImpl(scope int delegate(string) dg){
@@ -416,6 +455,9 @@ class IndexExp: Expression{ //e[a...]
 	Expression[] a;
 	bool trailingComma;
 	this(Expression exp, Expression[] args, bool trailingComma){e=exp; a=args; this.trailingComma=trailingComma; }
+	override IndexExp copyImpl(CopyArgs args){
+		return new IndexExp(e.copy(args),a.map!(a=>a.copy(args)).array,trailingComma);
+	}
 	override string toString(){
 		return _brk(e.toString()~'['~join(map!(to!string)(a),",")~(trailingComma?",":"")~']');
 	}
@@ -476,6 +518,9 @@ class SliceExp: Expression{
 	Expression e;
 	Expression l,r;
 	this(Expression exp, Expression left,Expression right){e=exp; l=left; r=right; }
+	override SliceExp copyImpl(CopyArgs args){
+		return new SliceExp(e.copy(args),l.copy(args),r.copy(args));
+	}
 	override string toString(){
 		return _brk(e.toString()~'['~l.toString()~".."~r.toString()~']');
 	}
@@ -561,6 +606,9 @@ class CallExp: Expression{
 	this(Expression exp, Expression arg, bool isSquare, bool isClassical_){
 		e=exp; this.arg=arg; this.isSquare=isSquare;
 		this.isClassical_=isClassical_;
+	}
+	override CallExp copyImpl(CopyArgs args){
+		return new CallExp(e.copy(args),arg.copy(args),isSquare,isClassical);
 	}
 	override string toString(){
 		return _brk((isClassical_?"!":"")~e.toString()~arg.tupleToString(isSquare));
@@ -727,8 +775,14 @@ class BinaryExp(TokenType op): ABinaryExp{
 		this(Expression left, Expression right,Annotation annotation,bool isLifted){
 			super(left,right); this.annotation=annotation; this.isLifted=isLifted;
 		}
+		override BinaryExp!op copyImpl(CopyArgs args){
+			return new BinaryExp!op(e1.copy(args),e2.copy(args),annotation,isLifted);
+		}
 	}else{
 		this(Expression left, Expression right){super(left,right);}
+		override BinaryExp!op copyImpl(CopyArgs args){
+			return new BinaryExp!op(e1.copy(args),e2.copy(args));
+		}
 	}
 	override string toString(){
 		return _brk(e1.toString() ~ " "~TokChars!op~" "~e2.toString());
@@ -769,6 +823,11 @@ class FieldExp: Expression{
 	Identifier f;
 
 	this(Expression e,Identifier f){ this.e=e; this.f=f; }
+
+	override FieldExp copyImpl(CopyArgs args){
+		return new FieldExp(e.copy(args),f.copy(args));
+	}
+
 	override string toString(){
 		return _brk(e.toString()~"."~f.toString());
 	}
@@ -802,6 +861,9 @@ class IteExp: Expression{
 	CompoundExp then, othw;
 	this(Expression cond, CompoundExp then, CompoundExp othw){
 		this.cond=cond; this.then=then; this.othw=othw;
+	}
+	override IteExp copyImpl(CopyArgs args){
+		return new IteExp(cond.copy(args),then.copy(args),othw.copy(args));
 	}
 	override string toString(){return _brk("if "~cond.toString() ~ " " ~ then.toString() ~ (othw?" else " ~ (othw.s.length==1&&cast(IteExp)othw.s[0]?othw.s[0].toString():othw.toString()):""));}
 
@@ -846,6 +908,9 @@ class RepeatExp: Expression{
 	this(Expression num, CompoundExp bdy){
 		this.num=num; this.bdy=bdy;
 	}
+	override RepeatExp copyImpl(CopyArgs args){
+		return new RepeatExp(num.copy(args),bdy.copy(args));
+	}
 	override string toString(){ return _brk("repeat "~num.toString()~" "~bdy.toString()); }
 	override @property string kind(){ return "repeat loop"; }
 	override bool isCompound(){ return true; }
@@ -870,6 +935,10 @@ class ForExp: Expression{
 		this.rightExclusive=rightExclusive; this.right=right;
 		this.bdy=bdy;
 	}
+	override ForExp copyImpl(CopyArgs args){
+		enforce(!args.preserveSemantic,"TODO");
+		return new ForExp(var.copy(args),leftExclusive,left.copy(args),rightExclusive,right.copy(args),bdy.copy(args));
+	}
 	override string toString(){ return _brk("for "~var.toString()~" in "~
 											(leftExclusive?"(":"[")~left.toString()~".."~right.toString()~
 											(rightExclusive?")":"]")~bdy.toString()); }
@@ -893,6 +962,9 @@ class WhileExp: Expression{
 		this.cond=cond;
 		this.bdy=bdy;
 	}
+	override WhileExp copyImpl(CopyArgs args){
+		return new WhileExp(cond.copy(args),bdy.copy(args));
+	}
 	override string toString(){ return _brk("while "~cond.toString()~bdy.toString()); }
 	override @property string kind(){ return "while loop"; }
 	override bool isCompound(){ return true; }
@@ -907,6 +979,9 @@ class WhileExp: Expression{
 class CompoundExp: Expression{
 	Expression[] s;
 	this(Expression[] ss){s=ss;}
+	override CompoundExp copyImpl(CopyArgs args){
+		return new CompoundExp(s.map!(e=>e.copy(args)).array);
+	}
 
 	override string toString(){return "{\n"~indent(join(map!(a=>a.toString()~(a.isCompound()?"":";"))(s),"\n"))~"\n}";}
 	override bool isCompound(){ return true; }
@@ -941,6 +1016,9 @@ class TupleExp: Expression{
 	Expression[] e;
 	this(Expression[] e){
 		this.e=e;
+	}
+	override TupleExp copyImpl(CopyArgs args){
+		return new TupleExp(e.map!(e=>e.copy(args)).array);
 	}
 	override string toString(){ return _brk("("~e.map!(to!string).join(",")~")"); }
 	final @property size_t length(){ return e.length; }
@@ -980,6 +1058,9 @@ class LambdaExp: Expression{
 	this(FunctionDef fd){
 		this.fd=fd;
 	}
+	override LambdaExp copyImpl(CopyArgs args){
+		return new LambdaExp(fd.copy(args));
+	}
 	override string toString(){
 		string d=fd.isSquare?"[]":"()";
 		return _brk(d[0]~join(map!(to!string)(fd.params),",")~d[1]~fd.body_.toString());
@@ -995,6 +1076,9 @@ class ArrayExp: Expression{
 	Expression[] e;
 	this(Expression[] e){
 		this.e=e;
+	}
+	override ArrayExp copyImpl(CopyArgs args){
+		return new ArrayExp(e.map!(e=>e.copy(args)).array);
 	}
 	override string toString(){ return _brk("["~e.map!(to!string).join(",")~"]");}
 	override bool isConstant(){ return e.all!(x=>x.isConstant()); }
@@ -1033,6 +1117,9 @@ class ReturnExp: Expression{
 	this(Expression e){
 		this.e=e;
 	}
+	override ReturnExp copyImpl(CopyArgs args){
+		return new ReturnExp(e.copy(args));
+	}
 	override string toString(){ return "return"~(e?" "~e.toString():""); }
 
 	string expected;
@@ -1045,6 +1132,9 @@ class AssertExp: Expression{
 	this(Expression e){
 		this.e=e;
 	}
+	override AssertExp copyImpl(CopyArgs args){
+		return new AssertExp(e.copy(args));
+	}
 	override string toString(){ return _brk("assert("~e.toString()~")"); }
 	mixin VariableFree; // TODO!
 	override int componentsImpl(scope int delegate(Expression) dg){
@@ -1056,6 +1146,9 @@ class ObserveExp: Expression{
 	Expression e;
 	this(Expression e){
 		this.e=e;
+	}
+	override ObserveExp copyImpl(CopyArgs args){
+		return new ObserveExp(e.copy(args));
 	}
 	override string toString(){ return _brk("observe("~e.toString()~")"); }
 
@@ -1070,6 +1163,9 @@ class CObserveExp: Expression{
 	Expression val;
 	this(Expression var,Expression val){
 		this.var=var; this.val=val;
+	}
+	override CObserveExp copyImpl(CopyArgs args){
+		return new CObserveExp(var.copy(args),val.copy(args));
 	}
 	override string toString(){ return _brk("cobserve("~var.toString()~","~val.toString()~")"); }
 
@@ -1086,6 +1182,9 @@ class ForgetExp: Expression{
 	this(Expression var,Expression val){
 		this.var=var;
 		this.val=val;
+	}
+	override ForgetExp copyImpl(CopyArgs args){
+		return new ForgetExp(var.copy(args),val.copy(args));
 	}
 	override string toString(){ return _brk("forget("~var.toString()~(val?"="~val.toString():"")~")"); }
 

@@ -1,10 +1,10 @@
 // Written in the D programming language
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
 
-import std.array, std.algorithm, std.conv;
+import std.array, std.algorithm, std.conv, std.exception;
 import lexer, type, expression, scope_, util;
 
-class Declaration: Expression{
+abstract class Declaration: Expression{
 	Identifier name;
 	Scope scope_;
 	this(Identifier name){ this.name=name; }
@@ -25,6 +25,9 @@ class Declaration: Expression{
 class CompoundDecl: Expression{
 	Expression[] s;
 	this(Expression[] ss){s=ss;}
+	override CompoundDecl copyImpl(CopyArgs args){
+		return new CompoundDecl(s.map!(s=>s.copy(args)).array);
+	}
 
 	override string toString(){return "{\n"~indent(join(map!(a=>a.toString()~(a.isCompound()?"":";"))(s),"\n"))~"\n}";}
 	override bool isCompound(){ return true; }
@@ -42,6 +45,13 @@ class VarDecl: Declaration{
 	Expression dtype;
 	bool isConst;
 	this(Identifier name){ super(name); }
+	override VarDecl copyImpl(CopyArgs args){
+		enforce(!args.preserveSemantic,"TODO");
+		//return new VarDecl(dtype.copy(args));
+		auto r=new VarDecl((rename?rename:name).copy(args));
+		if(dtype) r.dtype=dtype.copy(args);
+		return r;
+	}
 	override string toString(){ return getName~(dtype?": "~dtype.toString():vtype?": "~vtype.toString():""); }
 	@property override string kind(){ return "variable"; }
 
@@ -58,6 +68,10 @@ class Parameter: VarDecl{
 	this(bool isConst, Identifier name, Expression type){
 		super(name); this.dtype=type;
 		this.isConst=isConst;
+	}
+	override Parameter copyImpl(CopyArgs args){
+		enforce(!args.preserveSemantic,"TODO");
+		return new Parameter(isConst,(rename?rename:name).copy(args),dtype);
 	}
 	override bool isLinear(){
 		return !isConst&&(!vtype||!vtype.isClassical());
@@ -77,6 +91,10 @@ class FunctionDef: Declaration{
 		assert(isTuple||params.length==1);
 	}body{
 		super(name); this.params=params; this.isTuple=isTuple; this.rret=rret; this.body_=body_;
+	}
+	override FunctionDef copyImpl(CopyArgs args){
+		enforce(!args.preserveSemantic,"TODO");
+		return new FunctionDef((rename?rename:name).copy(args),params.map!(p=>p.copy(args)).array,isTuple,rret.copy(args),body_.copy(args));
 	}
 	override string toString(){
 		string d=isSquare?"[]":"()";
@@ -134,6 +152,9 @@ class DatParameter: Parameter{
 		this.variance=variance;
 		super(false,name,type);
 	}
+	override DatParameter copyImpl(CopyArgs args){
+		return new DatParameter(variance,(rename?rename:name).copy(args),dtype.copy(args));
+	}
 	override string toString(){
 		final switch(variance)with(Variance){
 			case invariant_: return super.toString();
@@ -160,6 +181,9 @@ class DatDecl: Declaration{
 		this.isTuple=isTuple;
 		this.isQuantum=isQuantum;
 		this.body_=body_;
+	}
+	override DatDecl copyImpl(CopyArgs args){
+		return new DatDecl((rename?rename:name).copy(args),hasParams,params.map!(p=>p.copy(args)).array,isTuple,isQuantum,body_.copy(args));
 	}
 	override string toString(){
 		return "dat "~getName~(hasParams?text("[",params.map!(to!string).joiner(","),"]"):"")~body_.toString();
@@ -205,6 +229,9 @@ class SingleDefExp: DefExp{
 	this(VarDecl decl, BinaryExp!(Tok!":=") init){
 		this.decl=decl; super(init);
 	}
+	override SingleDefExp copyImpl(CopyArgs args){
+		return new SingleDefExp(decl.copy(args),initializer.copy(args));
+	}
 	override string toString(){
 		return initializer.toString();
 	}
@@ -237,6 +264,9 @@ class MultiDefExp: DefExp{
 	override VarDecl[] decls(){ return decls_; }
 	this(VarDecl[] decls_,BinaryExp!(Tok!":=") init){
 		this.decls_=decls_; super(init);
+	}
+	override MultiDefExp copyImpl(CopyArgs args){
+		return new MultiDefExp(decls_.map!(d=>d.copy(args)).array,initializer.copy(args));
 	}
 	override string toString(){
 		return initializer.toString();
@@ -297,6 +327,9 @@ class ImportExp: Declaration{
 	this(Expression[] e){
 		super(null);
 		this.e=e;
+	}
+	override ImportExp copyImpl(CopyArgs args){
+		return new ImportExp(e.map!(e=>e.copy(args)).array);
 	}
 	static string getPath(Expression e){
 		static string doIt(Expression e){
