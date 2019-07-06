@@ -1970,6 +1970,8 @@ struct Interpreter(QState){
 			lhs.assign(qstate,perform(lhs,rhs));
 		}else if(auto call=cast(CallExp)e){
 			runExp(call).forget(qstate);
+		}else if(auto ce=cast(CompoundExp)e){
+			foreach(s;ce.s) runStm(s,retState);
 		}else if(auto ite=cast(IteExp)e){
 			auto cond=runExp(ite.cond);
 			auto thenOthw=qstate.split(cond);

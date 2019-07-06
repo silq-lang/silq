@@ -1,4 +1,32 @@
 /+
+def main(){
+	(x,(y,z)):=(1,(2,3));
+	return (x,y,z);
+}
++/
+/+
+def main(){
+	(reverse(H)(x),reverse(H)(y)):=(H(0:𝔹),H(1:𝔹));
+	return (x,y);
+}
++/
+/+
+def main(){
+	reverse(H)(x):=H(0:𝔹);
+	return x;
+}
++/
+/+
+def main(){
+	y:=H(false);
+	z:=dup(y);
+	dup[𝔹](y):=z;
+	k:=0:𝔹;
+	dup[𝔹](false):=k;
+	return y;
+}
++/
+/+
 /+
 def QFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
 	for k in [0..n div 2){

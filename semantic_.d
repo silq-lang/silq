@@ -511,6 +511,13 @@ Expression statementSemantic(Expression e,Scope sc){
 	}
 	if(auto ce=cast(CallExp)e)
 		return callSemantic(ce,sc,ConstResult.yes);
+	if(auto ce=cast(CompoundExp)e){
+		foreach(ref s;ce.s){
+			s=statementSemantic(s,sc);
+			propErr(s,ce);
+		}
+		return ce;
+	}
 	if(auto ite=cast(IteExp)e){
 		ite.cond=expressionSemantic(ite.cond,sc,ConstResult.yes);
 		sc.pushConsumed();
@@ -788,6 +795,12 @@ bool isLifted(Expression e,Scope sc){
 Expression defineSemantic(DefineExp be,Scope sc){
 	if(cast(IndexExp)be.e1) return indexReplaceSemantic(be,sc);
 	if(auto tpl=cast(TupleExp)be.e1) if(tpl.e.any!(x=>!!cast(IndexExp)x)) return permuteSemantic(be,sc);
+	import reverse;
+	if(auto e=lowerDefine(be,sc)){
+		if(e.sstate!=SemState.error)
+			return statementSemantic(e,sc);
+		return e;
+	}
 	bool success=true;
 	auto e2orig=be.e2;
 	be.e2=expressionSemantic(be.e2,sc,ConstResult.no);
