@@ -1364,11 +1364,11 @@ Expression callSemantic(CallExp ce,Scope sc,ConstResult constResult){
 			ce.arg=expressionSemantic(ce.arg,sc,(ft.isConst.length?ft.isConst[0]:true)?ConstResult.yes:ConstResult.no);
 			if(auto ft2=cast(FunTy)ce.arg.type){
 				if(ft2.annotation<Annotation.mfree){
-					sc.error("reversed function must be 'mfree'",ce.loc);
+					sc.error("reversed function must be 'mfree'",ce.arg.loc);
 					ce.sstate=SemState.error;
 				}
 				if(!ft2.isClassical()){
-					sc.error("reversed function must be classical",ce.loc);
+					sc.error("reversed function must be classical",ce.arg.loc);
 					ce.sstate=SemState.error;
 				}
 				if(ce.sstate!=SemState.error&&!ft2.cod.hasAnyFreeVar(ft2.names)&&!ft2.isSquare){
