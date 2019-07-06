@@ -1363,7 +1363,15 @@ Expression callSemantic(CallExp ce,Scope sc,ConstResult constResult){
 		if(isReverse(ce.e)){
 			ce.arg=expressionSemantic(ce.arg,sc,(ft.isConst.length?ft.isConst[0]:true)?ConstResult.yes:ConstResult.no);
 			if(auto ft2=cast(FunTy)ce.arg.type){
-				if(!ft2.cod.hasAnyFreeVar(ft2.names) && ft2.annotation>=Annotation.mfree && !ft2.isSquare && ft2.isClassical()){
+				if(ft2.annotation<Annotation.mfree){
+					sc.error("reversed function must be 'mfree'",ce.loc);
+					ce.sstate=SemState.error;
+				}
+				if(!ft2.isClassical()){
+					sc.error("reversed function must be classical",ce.loc);
+					ce.sstate=SemState.error;
+				}
+				if(ce.sstate!=SemState.error&&!ft2.cod.hasAnyFreeVar(ft2.names)&&!ft2.isSquare){
 					Expression[] constArgTypes1;
 					Expression[] argTypes;
 					Expression[] constArgTypes2;
