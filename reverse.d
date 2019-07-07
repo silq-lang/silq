@@ -28,13 +28,13 @@ Identifier getReverse(Location loc,Scope isc){
 
 Expression lowerDefine(Expression lhs,Expression rhs,Location loc,Scope sc){
 	Expression res;
-	scope(success) if(res) res.loc=loc;
+	scope(success) if(res){ res.loc=loc; }
 	Expression error(){
 		res=new DefineExp(lhs,rhs);
 		res.sstate=SemState.error;
 		return res;
 	}
-	bool validDefLhs=!!cast(Identifier)lhs;
+	bool validDefLhs=!!cast(Identifier)lhs||cast(IndexExp)lhs;
 	if(auto tpl=cast(TupleExp)lhs) validDefLhs=tpl.e.all!(e=>!!cast(Identifier)e);
 	if(validDefLhs) return res=new DefineExp(lhs,rhs);
 	if(auto tpll=cast(TupleExp)lhs){
@@ -78,30 +78,52 @@ Expression lowerDefine(Expression lhs,Expression rhs,Location loc,Scope sc){
 				sc.error("reversed function cannot mix 'const' and consumed arguments",ce.arg.loc); // TODO: automatically reorder arguments
 				return error();
 			}
-			if(!numArgs) return res=new ForgetExp(rhs,lhs);
+			size_t numReturns;
+			if(auto tpl=ft.cod.isTupleTy) numReturns=tpl.length;
+			else numReturns=1;
+			// if(!numArgs&&rhs.isLifted()) return res=new ForgetExp(rhs,lhs); // TODO?
 			auto rev=getReverse(ce.e.loc,sc);
 			if(rev.sstate!=SemState.completed) return error();
 			auto reversed=new CallExp(rev,ce.e,false,false);
 			reversed.loc=ce.e.loc;
 			Expression newlhs,newarg;
+			Expression[] tmp;
+			DefineExp d1=null;
+			if(auto tpl=cast(TupleExp)rhs) tmp=tpl.e;
+			else if(ft.cod.isTupleTy()){
+				auto names=iota(numReturns).map!(_=>freshName()).array;
+				auto vars=new TupleExp(iota(numReturns).map!(delegate Expression(i){ auto id=new Identifier(names[i]); id.loc=rhs.loc; return id; }).array);
+				vars.loc=loc;
+				d1=new DefineExp(vars,rhs);
+				d1.loc=loc;
+				tmp=iota(numReturns).map!(delegate Expression(i){ auto id=new Identifier(names[i]); id.loc=rhs.loc; return id; }).array;
+			}else tmp=[rhs];
 			if(auto tpl=cast(TupleExp)ce.arg){
 				newlhs=new TupleExp(tpl.e[numConstArgs1..numConstArgs1+numArgs]);
 				newlhs.loc=ce.arg.loc;
-				Expression[] erhs;
-				if(auto tpll=cast(TupleExp)lhs) erhs=tpll.e;
-				else erhs=[rhs];
-				newarg=new TupleExp(tpl.e[0..numConstArgs1]~erhs~tpl.e[numConstArgs1+numArgs..$]);
+				newarg=new TupleExp(tpl.e[0..numConstArgs1]~tmp~tpl.e[numConstArgs1+numArgs..$]);
 				newarg.loc=lhs.loc;
 			}else if(numArgs==ft.nargs){
 				newlhs=ce.arg;
-				newarg=rhs;
+				if(tmp.length!=1) newarg=new TupleExp(tmp);
+				else newarg=tmp[0];
+				newarg.loc=loc;
+			}else if(!numArgs){
+				newlhs=new TupleExp([]);
+				newlhs.loc=ce.arg.loc;
+				if(!tmp.length) newarg=ce.arg;
+				else newarg=new TupleExp(tmp~[ce.arg]);
+				newarg.loc=lhs.loc;
 			}else{
 				sc.error("cannot match single tuple to function with mixed 'const' and consumed parameters",ce.loc);
 				return error();
 			}
 			auto newrhs=new CallExp(reversed,newarg,ce.isSquare,ce.isClassical);
 			newrhs.loc=newarg.loc;
-			return lowerDefine(newlhs,newrhs,loc,sc);
+			auto d2=lowerDefine(newlhs,newrhs,loc,sc);
+			d2.loc=loc;
+			if(d1) return res=new CompoundExp([d1,d2]);
+			return d2;
 		}
 	}
 	sc.error("expression not supported as definition left-hand side",lhs.loc);
@@ -110,12 +132,12 @@ Expression lowerDefine(Expression lhs,Expression rhs,Location loc,Scope sc){
 // rev(x:=y;) ⇒ y:=x;
 // rev(x:=H(y);) ⇒ H(y):=x; ⇒ y:=reverse(H)(x);
 // rev(x:=dup(y);) ⇒ dup(y):=x; ⇒ ():=reverse(dup)(x,y) ⇒ ():=forget(x=dup(y));
-// rev(x:=CNOT(a,b);) ⇒ CNOT(a,b):=x; ⇒ a:=reverse(CNOT)(x,y);
+// rev(x:=CNOT(a,b);) ⇒ CNOT(a,b):=x; ⇒ a:=reverse(CNOT)(x,b);
 
 Expression lowerDefine(DefineExp e,Scope sc){
 	if(e.sstate==SemState.error) return e;
-	bool validDefLhs=!!cast(Identifier)e.e1;
-	if(auto tpl=cast(TupleExp)e.e1) validDefLhs=tpl.e.all!(e=>!!cast(Identifier)e);
+	bool validDefLhs=cast(Identifier)e.e1||cast(IndexExp)e.e1;
+	if(auto tpl=cast(TupleExp)e.e1) validDefLhs=tpl.e.all!(e=>cast(Identifier)e||cast(IndexExp)e);
 	if(validDefLhs) return null;
 	return lowerDefine(e.e1,e.e2,e.loc,sc);
 }
