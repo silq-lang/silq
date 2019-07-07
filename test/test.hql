@@ -1,4 +1,73 @@
 /+
+def QFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
+	for k in [0..n div 2){
+		(ψ[k],ψ[n-k-1]) := (ψ[n-k-1],ψ[k]);
+	}
+	for k in [0..n){
+		ψ[k] := H(ψ[k]);
+		for l in [k+1..n){
+			if ψ[l] && ψ[k]{
+				phase(2·π·2^(k-l-1));
+			}
+		}
+	}
+	return ψ;
+}
+def iQFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
+	for k in (n..-1..0]{
+		for l in (n..-1..k+1]{
+			if ψ[l] && ψ[k]{
+				//phase(2·π·2^(k-l-1)):=(); // TODO: simulate
+				reverse(phase)(-2·π·2^(k-l-1)):=();
+			}
+		}
+		//H(ψ[k]) := ψ[k]; // TODO: simulate
+		reverse(H)(ψ[k]) := ψ[k];
+	}
+	for k in (n div 2..-1..0]{
+		(ψ[n-k-1],ψ[k]) := (ψ[k],ψ[n-k-1]);
+	}
+	return ψ;
+}
+def main(){
+	x:=measure(H(false),H(false),H(false),H(false));
+	r:=iQFT(QFT(x as uint[4]));
+	return (x as uint[4],r);
+}
++/
+/+
+def main(){
+	a:=[]:ℕ[];
+	n:=4;
+	for i in [0..1..n){
+		a~=[i];
+	}
+	for i in [n..-1..0]{
+		a~=[i];
+	}
+	return a;
+}
++/
+/+
+def main(){
+	def f(const x:𝔹){
+		measure(x);
+		return ();
+	}
+	x:=H(0:𝔹);
+	reverse(phase)(π/2):=f(x);
+	phase(-π/2);
+	return x;
+}
++/
+/+def main(){
+	f:=()=>(0,1):𝔹^2;
+	id:=(x:𝔹)qfree⇒x;
+	(x,reverse(id)(y)):=f();
+	return (x,y);
+}
++/
+/+
 def main(){
 	(x,(y,z)):=(1,(2,3));
 	return (x,y,z);

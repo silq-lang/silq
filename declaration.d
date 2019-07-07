@@ -94,7 +94,7 @@ class FunctionDef: Declaration{
 	}
 	override FunctionDef copyImpl(CopyArgs args){
 		enforce(!args.preserveSemantic,"TODO");
-		return new FunctionDef((rename?rename:name).copy(args),params.map!(p=>p.copy(args)).array,isTuple,rret.copy(args),body_.copy(args));
+		return new FunctionDef((rename?rename:name?name:null).copy(args),params.map!(p=>p.copy(args)).array,isTuple,rret?rret.copy(args):null,body_?body_.copy(args):null);
 	}
 	override string toString(){
 		string d=isSquare?"[]":"()";

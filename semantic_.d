@@ -557,6 +557,13 @@ Expression statementSemantic(Expression e,Scope sc){
 			sc.error(format("lower bound for loop variable should be a classical number, not %s",fe.left.type),fe.left.loc);
 			fe.sstate=SemState.error;
 		}
+		if(fe.step){
+			fe.step=expressionSemantic(fe.step,sc,ConstResult.no);
+			if(fe.step.sstate==SemState.completed && !isSubtype(fe.step.type, ℤt(true))){
+				sc.error(format("step should be a classical integer, not %s",fe.step.type),fe.step.loc);
+				fe.sstate=SemState.error;
+			}
+		}
 		fe.right=expressionSemantic(fe.right,sc,ConstResult.no);
 		sc.pushConsumed();
 		if(fe.right.sstate==SemState.completed && !isSubtype(fe.right.type, ℝ(true))){

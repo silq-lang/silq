@@ -916,12 +916,18 @@ struct Parser{
 		if(tok.type==Tok!"("){ leftExclusive=true; nextToken(); }
 		else expect(Tok!"[");
 		auto left=parseExpression();
+		Expression step=null;
 		expect(Tok!"..");
 		auto right=parseExpression();
+		if(ttype==Tok!".."){
+			nextToken();
+			step=right;
+			right=parseExpression();
+		}
 		if(tok.type==Tok!")"){ rightExclusive=true; nextToken(); }
 		else expect(Tok!"]");
 		auto bdy=parseCompoundExp();
-		return res=New!ForExp(var,leftExclusive,left,rightExclusive,right,bdy);
+		return res=New!ForExp(var,leftExclusive,left,step,rightExclusive,right,bdy);
 	}
 	AssertExp parseAssert(){
 		mixin(SetLoc!AssertExp);

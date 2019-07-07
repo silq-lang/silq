@@ -2015,15 +2015,20 @@ struct Interpreter(QState){
 				}+/
 			}
 		}else if(auto fe=cast(ForExp)e){
-			auto l=runExp(fe.left), r=runExp(fe.right);
-			if(l.isClassicalInteger()&&r.isClassicalInteger()){
-				auto lz=l.asInteger(),rz=r.asInteger();
+			auto l=runExp(fe.left), r=runExp(fe.right), s=fe.step?runExp(fe.step):qstate.makeInteger(ℤ(1));
+			if(l.isClassicalInteger()&&r.isClassicalInteger()&&s.isClassicalInteger()){
+				auto lz=l.asInteger(),rz=r.asInteger(),sz=s.asInteger();
 				auto intp=Interpreter(functionDef,fe.bdy,qstate,hasFrame);
-				for(ℤ j=lz+cast(int)fe.leftExclusive;j+cast(int)fe.rightExclusive<=rz;j++){
+				enum body_=q{
 					if(opt.trace) writeln("loop-index: ",j);
 					intp.qstate.assignTo(fe.var.name,qstate.makeInteger(j).convertTo(fe.loopVar.vtype));
 					intp.run(retState);
 					intp.qstate.forgetLocals(fe.bdy.blscope_);
+				};
+				if(sz>=0){
+					for(ℤ j=lz+cast(int)fe.leftExclusive;j+cast(int)fe.rightExclusive<=rz;j+=sz) mixin(body_);
+				}else{
+					for(ℤ j=lz-cast(int)fe.leftExclusive;j-cast(int)fe.rightExclusive>=rz;j+=sz) mixin(body_);
 				}
 				qstate=intp.qstate;
 			}else{

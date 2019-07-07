@@ -863,7 +863,7 @@ class IteExp: Expression{
 		this.cond=cond; this.then=then; this.othw=othw;
 	}
 	override IteExp copyImpl(CopyArgs args){
-		return new IteExp(cond.copy(args),then.copy(args),othw.copy(args));
+		return new IteExp(cond.copy(args),then.copy(args),othw?othw.copy(args):null);
 	}
 	override string toString(){return _brk("if "~cond.toString() ~ " " ~ then.toString() ~ (othw?" else " ~ (othw.s.length==1&&cast(IteExp)othw.s[0]?othw.s[0].toString():othw.toString()):""));}
 
@@ -926,22 +926,24 @@ class ForExp: Expression{
 	Identifier var;
 	bool leftExclusive;
 	Expression left;
+	Expression step;
 	bool rightExclusive;
 	Expression right;
 	CompoundExp bdy;
-	this(Identifier var,bool leftExclusive,Expression left,bool rightExclusive,Expression right,CompoundExp bdy){
+	this(Identifier var,bool leftExclusive,Expression left,Expression step,bool rightExclusive,Expression right,CompoundExp bdy){
 		this.var=var;
 		this.leftExclusive=leftExclusive; this.left=left;
+		this.step=step;
 		this.rightExclusive=rightExclusive; this.right=right;
 		this.bdy=bdy;
 	}
 	override ForExp copyImpl(CopyArgs args){
 		enforce(!args.preserveSemantic,"TODO");
-		return new ForExp(var.copy(args),leftExclusive,left.copy(args),rightExclusive,right.copy(args),bdy.copy(args));
+		return new ForExp(var.copy(args),leftExclusive,left.copy(args),step?step.copy(args):null,rightExclusive,right.copy(args),bdy.copy(args));
 	}
 	override string toString(){ return _brk("for "~var.toString()~" in "~
-											(leftExclusive?"(":"[")~left.toString()~".."~right.toString()~
-											(rightExclusive?")":"]")~bdy.toString()); }
+	                                        (leftExclusive?"(":"[")~left.toString()~".."~(step?step.toString()~"..":"")~right.toString()~
+	                                        (rightExclusive?")":"]")~bdy.toString()); }
 	override @property string kind(){ return "for loop"; }
 	override bool isCompound(){ return true; }
 
@@ -1020,7 +1022,7 @@ class TupleExp: Expression{
 	override TupleExp copyImpl(CopyArgs args){
 		return new TupleExp(e.map!(e=>e.copy(args)).array);
 	}
-	override string toString(){ return _brk("("~e.map!(to!string).join(",")~")"); }
+	override string toString(){ return _brk("("~e.map!(to!string).join(",")~(e.length==1?",":"")~")"); }
 	final @property size_t length(){ return e.length; }
 
 	override int freeVarsImpl(scope int delegate(string) dg){
