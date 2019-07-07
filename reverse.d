@@ -47,8 +47,13 @@ Expression lowerDefine(Expression lhs,Expression rhs,Location loc,Scope sc){
 			if(es.any!(x=>!x)) return null;
 			return res=new CompoundExp(es);
 		}else{
-			// TODO: tuple unpacking with non-trivial left-hand side
-			return null;
+			auto tmp=new TupleExp(iota(tpll.length).map!(delegate Expression(i){ auto id=new Identifier(freshName); id.loc=rhs.loc; return id; }).array);
+			tmp.loc=loc;
+			auto d1=new DefineExp(tmp,rhs);
+			d1.loc=loc;
+			auto d2=new DefineExp(lhs,tmp);
+			d2.loc=loc;
+			return res=new CompoundExp([d1,d2]);
 		}
 	}
 	if(auto ce=cast(CallExp)lhs){
