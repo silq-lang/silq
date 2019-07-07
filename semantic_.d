@@ -781,7 +781,10 @@ Dependency getDependency(Expression e,Scope sc)in{
 			if(!sc.dependencyTracked(id)) // for variables captured in closure
 				return Dependency(true);
 			result.dependencies.insert(id.name);
-			if(!id.constLookup) result.replace(id.name,sc.getDependency(id));
+			if(!id.constLookup){
+				auto vd=cast(VarDecl)id.meaning;
+				if(!vd||!vd.isConst) result.replace(id.name,sc.getDependency(id));
+			}
 		}
 	}
 	return result;
