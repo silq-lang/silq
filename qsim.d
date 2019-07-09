@@ -1504,7 +1504,7 @@ struct Interpreter(QState){
 		if(!qstate.state.length) return QState.Value.init;
 		QState.Value doIt()(Expression e){
 			auto r=doIt2(e);
-			if(e.constLookup&&!cast(Identifier)e&&!cast(TupleExp)e&&!cast(TypeAnnotationExp)e&&e.isQfree())
+			if(e.constLookup&&!cast(Identifier)e&&!cast(TupleExp)e&&!cast(ArrayExp)e&&!cast(IndexExp)e&&!cast(SliceExp)e&&!cast(CatExp)e&&!cast(TypeAnnotationExp)e&&e.isQfree())
 				r=r.setConstLifted();
 			return r;
 		}
@@ -1627,12 +1627,12 @@ struct Interpreter(QState){
 			}
 			if(auto idx=cast(IndexExp)e){
 				auto r=doIt2(idx.e)[doIt(idx.a[0])];
-				if(idx.constLookup&&!idx.byRef) r=r.dup(qstate);
+				if(!idx.constLookup&&!idx.byRef) r=r.dup(qstate);
 				return r;
 			}
 			if(auto sl=cast(SliceExp)e){
 				auto r=doIt(sl.e)[doIt(sl.l)..doIt(sl.r)];
-				if(sl.constLookup) r=r.dup(qstate);
+				if(!sl.constLookup) r=r.dup(qstate);
 				return r;
 			}
 			if(auto le=cast(LiteralExp)e){
@@ -1820,10 +1820,10 @@ struct Interpreter(QState){
 			auto var=state.vars[name];
 			void doIt(ref QState.Value value,QState.Value[] indices,QState.Value condition){
 				if(!indices.length){
+					rhs.setConstLifted();
 					auto nrhs=rhs;
 					if(condition.isValid)
 						nrhs=state.ite(condition,nrhs,value);
-					rhs.setConstLifted();
 					static if(isCat) state.catAssignTo(value,nrhs);
 					else state.assignTo(value,nrhs);
 					return;

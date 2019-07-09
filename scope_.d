@@ -199,7 +199,7 @@ abstract class Scope{
 			if(!d.isLinear()||canForgetAppend(d)) continue;
 			if(d.rename) rnsymtab.remove(d.rename.ptr);
 			errors=true;
-			error(format("%s '%s' is not consumed",d.kind,d.name),d.loc);
+			error(format("%s '%s' is not consumed",d.kind,d.getName),d.loc);
 		}
 		foreach(n,d;rnsymtab) assert(!d.isLinear()||canForget(d));
 		return errors;
@@ -277,7 +277,7 @@ abstract class Scope{
 					symtab.remove(sym.name.ptr);
 					if(sym.rename) rnsymtab.remove(sym.rename.ptr);
 					if(sym.isLinear()&&!scopes[0].canForgetAppend(sym)){
-						error(format("variable '%s' is not consumed", sym.name), sym.loc);
+						error(format("variable '%s' is not consumed", sym.getName), sym.loc);
 						errors=true;
 					}
 				}else{
@@ -290,7 +290,7 @@ abstract class Scope{
 						symtab.remove(sym.name.ptr);
 						if(sym.rename) rnsymtab.remove(sym.rename.ptr);
 						if(sym.isLinear()&&!scopes[0].canForgetAppend(sym)){
-							error(format("variable '%s' is not consumed", sym.name), sym.loc);
+							error(format("variable '%s' is not consumed", sym.getName), sym.loc);
 							errors=true;
 						}
 					}
@@ -301,7 +301,7 @@ abstract class Scope{
 			foreach(sym;sc.symtab){
 				if(sym.name.ptr !in symtab){
 					if(sym.isLinear()&&!sc.canForgetAppend(sym)){
-						error(format("variable '%s' is not consumed", sym.name), sym.loc);
+						error(format("variable '%s' is not consumed", sym.getName), sym.loc);
 						errors=true;
 					}
 				}

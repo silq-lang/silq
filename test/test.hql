@@ -1,4 +1,67 @@
 /+
+def main(){
+	qs:=(H(0:𝔹),H(0:𝔹)) coerce 𝔹^2;
+	head:=qs[0];
+	tail:=(qs:𝔹[])[1..2] coerce 𝔹^(2 sub 1);
+	forget(qs=[head]~(tail:𝔹[]) coerce 𝔹^2);
+	qs:=[head]~(tail:𝔹[]) coerce 𝔹^2;
+	return qs;
+}
++/
+/+
+def main(){
+	qs:=(H(0:𝔹),H(0:𝔹)) coerce 𝔹^2;
+	head:=qs[0];
+	tail:=(qs:𝔹[])[1..2] coerce 𝔹^(2 sub 1);
+	forget(qs=[head]~(tail:𝔹[]) coerce B^2);
+	return (head,tail);
+}
++/
+/+
+def main(){
+	qs:=(H(0:𝔹),H(0:𝔹)) coerce 𝔹^2;
+	head:=qs[0];
+	tail:=(qs:𝔹[])[1..2] coerce 𝔹^(2 sub 1);
+	forget(qs=dup([head]~(tail:𝔹[])) coerce B^2);
+	return (head,tail);
+}
++/
+/+
+def main(){
+	qs:=(H(0:𝔹),H(0:𝔹)) coerce 𝔹^2;
+	head:=qs[0];
+	tail:=(qs:𝔹[])[1..2] coerce 𝔹^(2 sub 1);
+	ws:=dup([head]~(tail:𝔹[])) coerce B^2;
+	forget(qs=ws);
+	return (ws,head,tail);
+}
++/
+/+
+def main(){
+	qs:=(H(0:𝔹),H(0:𝔹)) coerce 𝔹^2;
+	head:=qs[0];
+	tail:=(qs:𝔹[])[1..2] coerce 𝔹^(2 sub 1);
+	ws:=dup([head]~(tail:𝔹[]));
+	return (qs,ws,head,tail);
+}
++/
+/+
+def main(){
+	x:=[0:𝔹];
+	x[0]:=H(x[0]);
+	return x;
+}
++/
+/+
+def main(){
+	x:=H(0:𝔹);
+	qs:=array(1,x);
+	forget(x=qs[0]);
+	ws:=qs[0..1];
+	return (qs,ws);
+}
++/
+/+
 def foo(a:int[32],b:int[32],const c:int[32],const d:int[32])mfree⇒(a,b);
 def main(){
 	f:=reverse(foo);
@@ -23,7 +86,7 @@ def foo(){
 //def main()⇒reverse(dup[𝔹^4]);
 def main()⇒foo;
 +/
-
+/+
 def QFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
 	for k in [0..n div 2){
 		(ψ[k],ψ[n-k-1]) := (ψ[n-k-1],ψ[k]);
@@ -45,7 +108,7 @@ def main(){
 	forget(r=(x as uint[4]));
 	return (x as !uint[4], reverse(QFT[10]));
 }
-
++/
 
 /+
 def main(){

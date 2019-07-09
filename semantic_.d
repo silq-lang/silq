@@ -1773,9 +1773,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 		return id;
 	}
 	if(auto fe=cast(FieldExp)expr){
-		fe.e.byRef=true;
 		fe.e=expressionSemantic(fe.e,sc,ConstResult.yes);
-		fe.e.byRef=true;
 		propErr(fe.e,fe);
 		if(fe.sstate==SemState.error)
 			return fe;
@@ -1833,9 +1831,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 				}
 			}
 		}
-		idx.e.byRef=true;
 		idx.e=expressionSemantic(idx.e,sc,ConstResult.yes);
-		idx.e.byRef=true;
 		if(auto ft=cast(FunTy)idx.e.type){
 			assert(!replaceIndex);
 			Expression arg;
@@ -1905,6 +1901,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 			idx.sstate=SemState.error;
 		}
 		if(replaceIndex){
+			idx.byRef=true;
 			if(idx != sc.indexToReplace){
 				sc.error("indices for component replacement must be identical",idx.loc);
 				sc.note("replaced component is here",sc.indexToReplace.loc);
@@ -1916,7 +1913,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 				idx.sstate=SemState.error;
 			}
 			sc.indexToReplace=null;
-		}else constResult=ConstResult.yes; // (causes implicit duplication)
+		}
 		return idx;
 	}
 	if(auto sl=cast(SliceExp)expr){
