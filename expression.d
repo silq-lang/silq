@@ -287,6 +287,7 @@ class Identifier: Expression{
 	}
 	override Identifier copyImpl(CopyArgs args){
 		enforce(!args.preserveSemantic,"TODO");
+		if(meaning&&meaning.name) return new Identifier(meaning.name.name); // TODO: this is a hack
 		return new Identifier(name);
 	}
 	override string toString(){return _brk((classical?"!":"")~name);}

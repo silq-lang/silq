@@ -6,13 +6,20 @@ string freshName(){
 	return text("__tmp",counter++);
 }
 
-Identifier getReverse(Location loc,Scope isc){
+Expression constantExp(size_t l){
+	Token tok;
+	tok.type=Tok!"0";
+	tok.str=to!string(l);
+	return new LiteralExp(tok);
+}
+
+Identifier getPreludeSymbol(string name,Location loc,Scope isc){
 	import parser: preludePath;
 	import semantic_: modules;
 	if(preludePath() !in modules) return null;
 	auto exprssc=modules[preludePath()];
 	auto sc=exprssc[1];
-	auto res=new Identifier("reverse");
+	auto res=new Identifier(name);
 	res.loc=loc;
 	res.scope_=isc;
 	res.meaning=sc.lookup(res,false,false,Lookup.consuming);
@@ -26,7 +33,18 @@ Identifier getReverse(Location loc,Scope isc){
 	return res;
 }
 
-Expression lowerDefine(bool analyzed)(Expression olhs,Expression orhs,Location loc,Scope sc){
+
+Identifier getReverse(Location loc,Scope isc){
+	return getPreludeSymbol("reverse",loc,isc);
+}
+Identifier getDup(Location loc,Scope isc){
+	return getPreludeSymbol("dup",loc,isc);
+}
+
+
+Expression lowerDefine(bool analyzed)(Expression olhs,Expression orhs,Location loc,Scope sc)in{
+	assert(loc.line);
+}do{
 	Expression res;
 	scope(success) if(res){ res.loc=loc; }
 	static if(analyzed) Expression nlhs;
@@ -63,17 +81,34 @@ Expression lowerDefine(bool analyzed)(Expression olhs,Expression orhs,Location l
 		if(auto tpl=cast(TupleExp)lhs) if(!tpl.e.length) return rhs;
 		return res=new DefineExp(lhs,rhs);
 	}
-	if(auto tpll=cast(TupleExp)lhs){
-		if(auto tplr=cast(TupleExp)rhs){
-			enforce(tpll.e.length==tplr.e.length);
-			Expression[] es;
-			foreach(i;0..tpll.e.length){
-				es~=lowerDefine!analyzed(tpll.e[i],tplr.e[i],loc,sc); // TODO: evaluation order okay?
+	if(auto arr=cast(ArrayExp)olhs){
+		auto newLhs=new TupleExp(arr.copy().e);
+		newLhs.loc=lhs.loc;
+		auto newRhs=orhs;
+		if(auto aty=cast(ArrayTy)arr.type){
+			auto tty=tupleTy(aty.next.repeat(arr.e.length).array);
+			newRhs=new TypeAnnotationExp(orhs,tty,TypeAnnotationType.coercion);
+			newRhs.type=tty;
+			newRhs.loc=orhs.loc;
+		}
+		return lowerDefine!analyzed(newLhs,newRhs,loc,sc);
+	}
+	if(auto tpll=cast(TupleExp)olhs){
+		void handleRhs(R)(){
+			if(auto tplr=cast(R)orhs){
+				enforce(tpll.e.length==tplr.e.length);
+				Expression[] es;
+				foreach(i;0..tpll.e.length){
+					es~=lowerDefine!analyzed(tpll.e[i],tplr.e[i],loc,sc); // TODO: evaluation order okay?
+				}
+				if(es.any!(x=>!x)) return;
+				res=new CompoundExp(es);
 			}
-			if(es.any!(x=>!x)) return null;
-			return res=new CompoundExp(es);
-		}else{
-			auto tmp=new TupleExp(iota(tpll.length).map!(delegate Expression(i){ auto id=new Identifier(freshName); id.loc=rhs.loc; return id; }).array);
+		}
+		handleRhs!TupleExp();
+		handleRhs!ArrayExp();
+		if(!res){
+			auto tmp=new TupleExp(iota(tpll.e.length).map!(delegate Expression(i){ auto id=new Identifier(freshName); id.loc=rhs.loc; return id; }).array);
 			tmp.loc=loc;
 			auto d1=new DefineExp(tmp,rhs);
 			d1.loc=loc;
@@ -86,34 +121,108 @@ Expression lowerDefine(bool analyzed)(Expression olhs,Expression orhs,Location l
 		if(cast(AddExp)lhs||cast(SubExp)lhs||cast(NSubExp)lhs||cast(MulExp)lhs||cast(DivExp)lhs||cast(IDivExp)lhs||cast(ModExp)lhs||cast(PowExp)lhs||cast(BitOrExp)lhs||cast(BitXorExp)lhs||cast(BitAndExp)lhs||cast(UMinusExp)lhs||cast(UNotExp)lhs||cast(UBitNotExp)lhs||cast(AndExp)lhs||cast(OrExp)lhs||cast(LtExp)lhs||cast(LeExp)lhs||cast(GtExp)lhs||cast(GeExp)lhs||cast(EqExp)lhs||cast(NeqExp)lhs)
 			return true;
 		if(cast(LiteralExp)e) return true;
+		if(cast(SliceExp)e) return true;
 		if(auto tae=cast(TypeAnnotationExp)e)
 			return isLiftedBuiltIn(tae.e);
 		return false;
 	}
 	if(isLiftedBuiltIn(lhs)) return forget();
-	if(auto tae=cast(TypeAnnotationExp)lhs){
+	if(auto tae=cast(TypeAnnotationExp)olhs){
 		if(isLiftedBuiltIn(tae.e)) return forget();
 		static if(analyzed){
 			if(olhs.type){
-				if(!orhs.type||orhs.type!=olhs.type){
-					auto newRhs=new TypeAnnotationExp(rhs,olhs.type,TypeAnnotationType.coercion);
+				if(!orhs.type||orhs.type!=tae.e.type){
+					auto newRhs=new TypeAnnotationExp(rhs,tae.e.type,TypeAnnotationType.coercion);
 					newRhs.loc=rhs.loc;
 					return lowerDefine!analyzed(tae.e,newRhs,loc,sc);
-				}else return lowerDefine!analyzed(tae.e,rhs,loc,sc);
+				}else return lowerDefine!analyzed(tae.e,orhs,loc,sc);
 			}
 		}
-		if(tae.annotationType==TypeAnnotationType.annotation){ // TOOD: only do this if lhs is variable
-			auto newRhs=new TypeAnnotationExp(rhs,tae.t,TypeAnnotationType.annotation);
-			newRhs.loc=rhs.loc;
-			return lowerDefine!analyzed(tae.e,newRhs,loc,sc);
-		}
-		// TODO: support this, where possible
-		sc.error("type conversion not supported as definition left-hand side",tae.loc);
-		return error();
+		// TOOD: only do this if lhs is variable
+		auto newRhs=new TypeAnnotationExp(rhs,tae.t,tae.annotationType);
+		newRhs.loc=rhs.loc;
+		return lowerDefine!analyzed(tae.e,newRhs,loc,sc);
 	}
-	if(auto ce=cast(CatExp)lhs){
-		sc.error("concatenation not supported as definition left-hand side",ce.loc); // TODO
-		return error();
+	if(auto ce=cast(CatExp)olhs){
+		Expression knownLength(Expression e){
+			Expression res;
+			scope(exit) if(res) res.loc=e.loc;
+			if(auto arr=cast(ArrayExp)e) return res=constantExp(arr.e.length);
+			if(auto tpl=cast(TupleExp)e) return res=constantExp(tpl.e.length);
+			if(auto tae=cast(TypeAnnotationExp)e){
+				if(auto vec=cast(VectorTy)tae.t)
+					return vec.num.copy();
+				if(auto pow=cast(PowExp)tae.t)
+					return pow.e2.copy();
+				return knownLength(tae.e);
+			}
+			if(e.type){
+				if(auto vec=cast(VectorTy)e.type)
+					return vec.num.copy();
+			}
+			return null;
+		}
+		auto l1=knownLength(ce.e1),l2=knownLength(ce.e2);
+		if(!l1&&!l2){
+			sc.error("concatenation of arrays of unknown length not supported as definition left-hand side",ce.loc);
+			return error();
+		}
+		auto tmp=new Identifier(freshName);
+		tmp.loc=olhs.loc;
+		auto tmpLen(){
+			auto id=new Identifier("length");
+			id.loc=tmp.loc;
+			return new FieldExp(tmp.copy(),id);
+		}
+		if(!l1){
+			auto l=tmpLen();
+			l.loc=l2.loc;
+			auto s=new SubExp(l,l2);
+			s.loc=l2.loc;
+			l1=s;
+		}else if(!l2){
+			auto l=tmpLen();
+			l.loc=l1.loc;
+			auto s=new SubExp(l,l1);
+			s.loc=l1.loc;
+			l2=s;
+		}
+		assert(l1&&l2);
+		// TODO: nicer runtime error message for inconsistent array lengths?
+		auto d1=new DefineExp(tmp,rhs);
+		d1.loc=loc;
+		auto z=constantExp(0);
+		z.loc=olhs.loc;
+		auto l=tmpLen();
+		l.loc=olhs.loc;
+		auto tmp1=tmp.copy();
+		tmp1.loc=rhs.loc;
+		Expression s1=new SliceExp(tmp1,z,l1);
+		s1.loc=tmp1.loc;
+		auto tmp2=tmp.copy();
+		tmp2.loc=rhs.loc;
+		Expression s2=new SliceExp(tmp1,l1.copy(),l);
+		s2.loc=tmp2.loc;
+		auto d2=lowerDefine!analyzed(ce.e1,s1,loc,sc);
+		d2.loc=loc;
+		auto d3=lowerDefine!analyzed(ce.e2,s2,loc,sc);
+		d3.loc=loc;
+		auto tmp3=tmp.copy();
+		tmp3.loc=rhs.loc;
+		auto fe=new ForgetExp(tmp3,ce.copy());
+		fe.loc=loc;
+		return res=new CompoundExp([d1,d2,d3,fe]);
+	}
+	if(auto fe=cast(ForgetExp)lhs){
+		auto tpl=cast(TupleExp)rhs;
+		enforce(!tpl||tpl.length==0);
+		auto dup=getDup(fe.val.loc,sc);
+		auto nval=new CallExp(dup,fe.val,false,false);
+		nval.type=fe.val.type;
+		nval.loc=fe.val.loc;
+		auto def=lowerDefine!analyzed(fe.var,nval,loc,sc);
+		if(!tpl) return res=new CompoundExp([rhs,def]);
+		return def;
 	}
 	if(auto ce=cast(CallExp)lhs){
 		ce.e=expressionSemantic(ce.e,sc,ConstResult.yes);
@@ -346,10 +455,10 @@ FunctionDef reverseFunction(FunctionDef fd)in{
 	Expression argRet=new ReturnExp(argExp);
 	argRet.loc=argExp.loc;
 	Expression[] statements;
-	body_.s=(returnTypes.length||!cast(TupleExp)ret.e?[retDef]:[])~reverseStatements(fd.body_.s[0..$-1],fd.fscope_)~[argRet];
-	/+writeln(fd);
+	body_.s=mergeCompound((returnTypes.length||!cast(TupleExp)ret.e?[retDef]:[])~reverseStatements(fd.body_.s[0..$-1],fd.fscope_)~[argRet]);
+	writeln(fd);
 	writeln("-reverse→");
-	writeln(result);+/
+	writeln(result);
 	result=functionDefSemantic(result,sc);
 	enforce(result.sstate==SemState.completed,text("semantic errors while reversing function"));
 	result.reversed=fd;
@@ -586,10 +695,7 @@ Expression reverseStatement(Expression e,Scope sc){
 		auto right=fe.left.copy();
 		auto ostep=fe.step?fe.step.copy():null;
 		if(!ostep){
-			Token tok;
-			tok.type=Tok!"0";
-			tok.str="1";
-			ostep=new LiteralExp(tok);
+			ostep=constantExp(1);
 			ostep.loc=left.loc.to(right.loc);
 		}
 		auto step=new UMinusExp(ostep);
@@ -612,7 +718,12 @@ Expression reverseStatement(Expression e,Scope sc){
 	if(auto oe=cast(ObserveExp)e) enforce(0);
 	if(auto oe=cast(CObserveExp)e) enforce(0);
 	if(auto ae=cast(AssertExp)e) return ae.copy();
-	if(auto fe=cast(ForgetExp)e) return lowerDefine!true(fe.var,fe.val,fe.loc,sc);
+	if(auto fe=cast(ForgetExp)e){
+		auto tpl=new TupleExp([]);
+		tpl.type=unit;
+		tpl.loc=fe.loc;
+		return lowerDefine!true(fe,tpl,fe.loc,sc);
+	}
 	sc.error("reversal unsupported",e.loc);
 	return error();
 }

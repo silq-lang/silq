@@ -1814,7 +1814,11 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 				}
 				return fe;
 			}else return noMember();
-		}else if(auto r=builtIn(fe,sc)) return r;
+		}else if(auto vt=cast(VectorTy)fe.e.type){
+			if(fe.f.name=="length"){
+				return expr=expressionSemantic(vt.num.copy(),sc,ConstResult.no);// TODO: preserve semantic on clone
+			}else return noMember();
+		}else if(auto r=builtIn(fe,sc)) return expr=r;
 		else return noMember();
 	}
 	if(auto idx=cast(IndexExp)expr){
