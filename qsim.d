@@ -1605,7 +1605,7 @@ struct Interpreter(QState){
 											case "dup": return doIt(ce.arg).dup(qstate);
 											case "array": return qstate.array_(ce.type,doIt(ce.arg));
 											case "vector": return qstate.vector(ce.type,doIt(ce.arg));
-											case "reverse": enforce(0);
+											case "reverse": enforce(0); break;
 											case "M": return qstate.measure(doIt(ce.arg));
 											default: break;
 										}
