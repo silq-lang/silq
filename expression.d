@@ -195,12 +195,12 @@ class TypeAnnotationExp: Expression{
 		this.annotationType=annotationType;
 	}
 	override TypeAnnotationExp copyImpl(CopyArgs args){
-		return new TypeAnnotationExp(e,t,annotationType);
+		return new TypeAnnotationExp(e.copy(args),t.copy(args),annotationType);
 	}
 	override @property string kind(){ return e.kind; }
 	override string toString(){
 		static immutable op=[": "," as "," coerce "];
-		return _brk(e.toString()~op[annotationType]~t.toString());
+		return _brk(e.toString()~op[annotationType]~(type?type.toString():t.toString()));
 	}
 	override bool isConstant(){
 		return e.isConstant();
@@ -865,7 +865,7 @@ class IteExp: Expression{
 	override IteExp copyImpl(CopyArgs args){
 		return new IteExp(cond.copy(args),then.copy(args),othw?othw.copy(args):null);
 	}
-	override string toString(){return _brk("if "~cond.toString() ~ " " ~ then.toString() ~ (othw?" else " ~ (othw.s.length==1&&cast(IteExp)othw.s[0]?othw.s[0].toString():othw.toString()):""));}
+	override string toString(){return _brk("if "~cond.toString() ~ " " ~ then.toString() ~ (othw&&othw.s.length?" else " ~ (othw.s.length==1&&cast(IteExp)othw.s[0]?othw.s[0].toString():othw.toString()):""));}
 
 	override bool isCompound(){ return true; }
 

@@ -1,4 +1,68 @@
 /+
+def foo(a:int[32],b:int[32],const c:int[32],const d:int[32])mfree⇒(a,b);
+def main(){
+	f:=reverse(foo);
+	return f;
+}
++/
+/+
+def rev[a](f: const a!→mfree a)⇒reverse(f);
+def main(){
+	f:=reverse(dup[𝔹^2]); // 𝔹×𝔹×const 𝔹×const 𝔹 !→qfree 𝟙
+	g:=rev(dup[𝔹^2]);     // (𝔹^2)×(const 𝔹^2) !→qfree 𝟙
+	return (f,g);
+}
++/
+/+
+def foo(){
+	x:=(H(false),H(false),H(false),H(false));
+	r:=dup(x as uint[4]);
+	dup[𝔹^4](r as 𝔹^4):=x;
+	return r;
+}
+//def main()⇒reverse(dup[𝔹^4]);
+def main()⇒foo;
++/
+
+def QFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
+	for k in [0..n div 2){
+		(ψ[k],ψ[n-k-1]) := (ψ[n-k-1],ψ[k]);
+	}
+	for k in [0..n){
+		ψ[k] := H(ψ[k]);
+		for l in [k+1..n){
+			if ψ[l] && ψ[k]{
+				phase(2·π·2^(k-l-1));
+			}
+		}
+	}
+	return ψ;
+}
+def main(){
+	x:=measure(H(false),H(false),H(false),H(false));
+	iQFT:=[n:!ℕ]⇒reverse(QFT[n]);
+	r:=iQFT(QFT(x as uint[4]));
+	forget(r=(x as uint[4]));
+	return (x as !uint[4], reverse(QFT[10]));
+}
+
+
+/+
+def main(){
+	x:=(H(false),H(false),H(false),H(false));
+	r:=dup(x as uint[4]);
+	forget((r as 𝔹^4)=x);
+	return x;
+}
++/
+/+
+def main(){
+	x:=measure(H(false),H(false),H(false),H(false));
+	r:=dup(x);
+	forget((r as 𝔹^4)=x);
+}
++/
+/+
 def QFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
 	for k in [0..n div 2){
 		(ψ[k],ψ[n-k-1]) := (ψ[n-k-1],ψ[k]);
@@ -17,11 +81,127 @@ def iQFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
 	for k in (n..-1..0]{
 		for l in (n..-1..k+1]{
 			if ψ[l] && ψ[k]{
-				//phase(2·π·2^(k-l-1)):=(); // TODO: simulate
+				phase(2·π·2^(k-l-1)):=();
+			}
+		}
+		H(ψ[k]) := ψ[k];
+	}
+	for k in (n div 2..-1..0]{
+		(ψ[n-k-1],ψ[k]) := (ψ[k],ψ[n-k-1]);
+	}
+	return ψ;
+}
+def main(){
+	x:=measure(H(false),H(false),H(false),H(false));
+	r:=iQFT(QFT(x as uint[4]));
+	return (x as uint[4],r);
+}
++/
+/+
+def main(){
+	x:=H(0:𝔹);
+	x:=rotY(0.2,x);
+	x:=reverse(rotZ)(0.2,x);
+	return H(x);
+}
++/
+/+
+def main(){
+	x:=H(0:𝔹);
+	x:=rotY(0.2,x);
+	x:=reverse(rotY)(0.2,x);
+	return H(x);
+}
++/
+/+
+def main(){
+	x:=H(0:𝔹);
+	x:=rotX(0.2,x);
+	x:=reverse(rotX)(0.2,x);
+	return H(x);
+}
++/
+/+
+def main(){
+	x:=H(0:𝔹);
+	if x{
+		reverse(phase)(π/2);
+		phase(π/2);
+	}
+	return H(x);
+}
++/
+/+
+def main(){
+	return reverse(X)(0:𝔹);
+}
++/
+/+
+def main(){
+	return reverse(H)(0:𝔹);
+}+/
+/+
+def main(){
+	a:=H(0:𝔹);
+	b:=dup(a);
+	():=forget(a=b);
+	return H(b);
+}
++/
+/+
+def f(x:𝔹)qfree⇒x;
+def g(x:𝔹)qfree{
+	(f:𝔹!→qfree 𝔹)(y):=x:𝔹;
+	return y;
+}
+def main():!𝔹⇒reverse(g)(0:!𝔹); // TODO: result should be classical
++/
+/+
+def foo(const x:int[32])mfree{
+	a:=x:int[32];
+	b:=2*x:int[32];
+	c:=a+b;
+	return (a,b,c);
+}
+
+def revFoo(const x:int[32],r:int[32]^3)mfree{
+	(a,b,c):=r;
+	a+b:=c;
+	2*x:int[32]:=b;
+	dup[int[32]](x):=a;
+	return ();
+}
+
+def main(){
+	//return foo(1:int[32]);
+	//return revFoo((1,2,3):int[32]^3);
+	return reverse(foo)(1:int[32],2:int[32],3:int[32],1:int[32]);
+	//return reverse(revFoo)(1:int[32]);
+}
++/
+
+/+
+def QFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
+	for k in [0..n div 2){
+		(ψ[k],ψ[n-k-1]) := (ψ[n-k-1],ψ[k]);
+	}
+	for k in [0..n){
+		ψ[k] := H(ψ[k]);
+		for l in [k+1..n){
+			if ψ[l] && ψ[k]{
+				phase(2·π·2^(k-l-1));
+			}
+		}
+	}
+	return ψ;
+}
+def iQFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
+	for k in (n..-1..0]{
+		for l in (n..-1..k+1]{
+			if ψ[l] && ψ[k]{
 				reverse(phase)(-2·π·2^(k-l-1)):=();
 			}
 		}
-		//H(ψ[k]) := ψ[k]; // TODO: simulate
 		reverse(H)(ψ[k]) := ψ[k];
 	}
 	for k in (n div 2..-1..0]{

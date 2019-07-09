@@ -1,7 +1,7 @@
 // Written in the D programming language
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
 
-import std.array,std.algorithm,std.range;
+import std.array,std.algorithm,std.range,std.exception;
 import std.format, std.conv, std.typecons:Q=Tuple,q=tuple;
 import lexer,scope_,expression,type,declaration,error,util;
 
@@ -698,34 +698,7 @@ Expression statementSemantic(Expression e,Scope sc){
 		ae.type=unit;
 		return ae;
 	}
-	if(auto fe=cast(ForgetExp)e){
-		bool canForgetImplicitly;
-		bool checkImplicitForget(Expression var){
-			auto id=cast(Identifier)var;
-			if(!id) return false;
-			auto meaning=sc.lookup(id,false,true,Lookup.probing);
-			return meaning&&sc.canForget(meaning);
-		}
-		if(auto tpl=cast(TupleExp)fe.var) canForgetImplicitly=tpl.e.all!checkImplicitForget;
-		else canForgetImplicitly=checkImplicitForget(fe.var);
-		auto var=expressionSemantic(fe.var,sc,ConstResult.no);
-		propErr(var,fe);
-		if(fe.val){
-			fe.val=expressionSemantic(fe.val,sc,ConstResult.yes);
-			propErr(fe.val,fe);
-			if(fe.sstate!=SemState.error&&!fe.val.isLifted(sc)){
-				sc.error("forget expression must be 'lifted'",fe.val.loc);
-				fe.sstate=SemState.error;
-			}
-			if(fe.var.type&&fe.val.type && !joinTypes(fe.var.type,fe.val.type)){
-				sc.error(format("incompatible types '%s' and '%s' for forget",fe.var.type,fe.val.type),fe.loc);
-				fe.sstate=SemState.error;
-			}
-		}else if(!canForgetImplicitly){
-			sc.error(format("cannot synthesize forget expression for '%s'",var),fe.loc);
-		}
-		return fe;
-	}
+	if(auto fe=cast(ForgetExp)e) return expressionSemantic(fe,sc,ConstResult.yes);
 	sc.error("not supported at this location",e.loc);
 	e.sstate=SemState.error;
 	return e;
@@ -806,7 +779,7 @@ Expression defineSemantic(DefineExp be,Scope sc){
 	if(cast(IndexExp)be.e1) return indexReplaceSemantic(be,sc);
 	if(auto tpl=cast(TupleExp)be.e1) if(tpl.e.any!(x=>!!cast(IndexExp)x)) return permuteSemantic(be,sc);
 	import reverse;
-	if(auto e=lowerDefine(be,sc)){
+	if(auto e=lowerDefine!false(be,sc)){
 		if(e.sstate!=SemState.error)
 			return statementSemantic(e,sc);
 		return e;
@@ -1292,6 +1265,7 @@ bool isReverse(Declaration decl){
 	auto exprssc=modules[preludePath()];
 	auto sc=exprssc[1];
 	if(!decl||decl.scope_ !is sc) return false;
+	if(!decl.name) return false;
 	return decl.getName=="reverse";
 }
 
@@ -1421,6 +1395,10 @@ Expression callSemantic(CallExp ce,Scope sc,ConstResult constResult){
 						constArgTypes2=iota(numConstArgs1+numArgs,tpl.length).map!(i=>tpl[i]).array;
 					}
 					if(argTypes.length==0){
+						if(constArgTypes1.length==1){
+							if(auto tpl=constArgTypes1[0].isTupleTy())
+								constArgTypes1=iota(tpl.length).map!(i=>tpl[i]).array;
+						}
 						assert(constArgTypes2.length==0);
 						swap(constArgTypes1,constArgTypes2);
 					}
@@ -1609,6 +1587,12 @@ Expression cmpType(Expression t1,Expression t2){
 	return Bool(t1.isClassical()&&t2.isClassical());
 }
 
+Expression unwrap(Expression e){
+	if(auto tae=cast(TypeAnnotationExp)e)
+		return unwrap(tae.e);
+	return e;
+}
+
 Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 	if(expr.sstate==SemState.completed||expr.sstate==SemState.error) return expr;
 	if(expr.sstate==SemState.started){
@@ -1668,6 +1652,35 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 	}
 	if(auto ce=cast(CallExp)expr)
 		return expr=callSemantic(ce,sc,constResult);
+	if(auto fe=cast(ForgetExp)expr){
+		bool canForgetImplicitly;
+		bool checkImplicitForget(Expression var){
+			auto id=cast(Identifier)var;
+			if(!id) return false;
+			auto meaning=sc.lookup(id,false,true,Lookup.probing);
+			return meaning&&sc.canForget(meaning);
+		}
+		if(auto tpl=cast(TupleExp)fe.var) canForgetImplicitly=tpl.e.all!checkImplicitForget;
+		else canForgetImplicitly=checkImplicitForget(fe.var);
+		auto var=expressionSemantic(fe.var,sc,ConstResult.no);
+		propErr(var,fe);
+		if(fe.val){
+			fe.val=expressionSemantic(fe.val,sc,ConstResult.yes);
+			propErr(fe.val,fe);
+			if(fe.sstate!=SemState.error&&!fe.val.isLifted(sc)){
+				sc.error("forget expression must be 'lifted'",fe.val.loc);
+				fe.sstate=SemState.error;
+			}
+			if(fe.var.type&&fe.val.type && !joinTypes(fe.var.type,fe.val.type)){
+				sc.error(format("incompatible types '%s' and '%s' for forget",fe.var.type,fe.val.type),fe.loc);
+				fe.sstate=SemState.error;
+			}
+		}else if(!canForgetImplicitly){
+			sc.error(format("cannot synthesize forget expression for '%s'",var),fe.loc);
+		}
+		fe.type=unit;
+		return fe;
+	}
 	if(auto id=cast(Identifier)expr){
 		id.scope_=sc;
 		auto meaning=id.meaning;
@@ -2753,6 +2766,17 @@ Expression handleSampleFrom(CallExp ce,Scope sc){
 	return ce;
 }
 +/
+
+string getQuantumOp(Expression qpArg){
+	auto opExp=qpArg;
+	if(auto tpl=cast(TupleExp)opExp){
+		enforce(tpl.e.length==1);
+		opExp=tpl.e[0];
+	}
+	auto opLit=cast(LiteralExp)opExp;
+	enforce(!!opLit&&opLit.lit.type==Tok!"``");
+	return opLit.lit.str;
+}
 Expression handleQuantumPrimitive(CallExp ce,Scope sc){
 	Expression[] args;
 	if(auto tpl=cast(TupleExp)ce.arg) args=tpl.e;

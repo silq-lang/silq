@@ -183,12 +183,8 @@ struct QState{
 			state.assignTo(nref_,self);
 			return new QVar(nref_);
 		}
-		void forget(ref QState state,Value rhs){
-			enforce(0,text("can't forget quval ",this));
-		}
-		void forget(ref QState state){
-			enforce(0,text("can't forget quval ",this));
-		}
+		void forget(ref QState state,Value rhs){ }
+		void forget(ref QState state){ }
 		QVal setConstLifted(){
 			return this;
 		}
@@ -293,10 +289,6 @@ struct QState{
 		override void forget(ref QState state){
 			value.forget(state);
 		}
-		override QVal setConstLifted(){
-			value=value.setConstLifted();
-			return this;
-		}
 	}
 	static class IndexQVal: QVal{
 		Value value,i;
@@ -333,12 +325,11 @@ struct QState{
 	alias Record=HashMap!(string,Value,(a,b)=>a==b,(a)=>typeid(a).getHash(&a));
 	struct Closure{
 		FunctionDef fun;
-		bool isReversed=false;
 		Value* context;
-		this(FunctionDef fun,bool isReversed,Value* context){
-			this.fun=fun; this.isReversed=isReversed; this.context=context;
+		this(FunctionDef fun,Value* context){
+			this.fun=fun; this.context=context;
 		}
-		hash_t toHash(){ return context?tuplex(fun,isReversed,*context).toHash():tuplex(fun,isReversed).toHash(); }
+		hash_t toHash(){ return context?tuplex(fun,*context).toHash():fun.toHash(); }
 		bool opEquals(Closure rhs){ return fun==rhs.fun && (context is rhs.context || context&&rhs.context&&*context==*rhs.context); }
 	}
 	struct Value{
@@ -393,7 +384,7 @@ struct QState{
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
 				case t: assert(0);
 				case Tag.closure:
-					return state.makeClosure(type,Closure(closure.fun,closure.isReversed,closure.context?[closure.context.dup(state)].ptr:null));
+					return state.makeClosure(type,Closure(closure.fun,closure.context?[closure.context.dup(state)].ptr:null));
 				case Tag.array_: return state.makeArray(type,array_.map!(x=>x.dup(state)).array);
 				case Tag.record:
 					Record nrecord;
@@ -965,7 +956,7 @@ struct QState{
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
 				case t: assert(isClassical); return this;
 				case Tag.closure:
-					return makeClosure(type.getClassical(),Closure(closure.fun,closure.isReversed,closure.context?[closure.context.classicalValue(state)].ptr:null));
+					return makeClosure(type.getClassical(),Closure(closure.fun,closure.context?[closure.context.classicalValue(state)].ptr:null));
 				case Tag.array_:
 					return makeArray(type.getClassical(),array_.map!(x=>x.classicalValue(state)).array);
 				case Tag.record:
@@ -1009,7 +1000,7 @@ struct QState{
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval])
 				case t: return text(mixin(text(t)));
 				case Tag.bval: return bval?"1":"0";
-				case Tag.closure: return text("⟨",closure.fun,",",closure.isReversed,(closure.context?text(",",closure.context.toStringImpl()):""),"⟩");
+				case Tag.closure: return text("⟨",closure.fun,",",(closure.context?closure.context.toStringImpl():""),"⟩");
 				case Tag.array_:
 					string prn="()";
 					if(cast(ArrayTy)type) prn="[]";
@@ -1181,15 +1172,11 @@ struct QState{
 		enforce(ctx!in vars);
 		vars[ctx]=rhs;
 	}
-	Value call(FunctionDef fun,bool isReversed,Value thisExp,Value arg,Scope sc,Value* context,Expression type){
-		enforce(!isReversed,"TODO: reversed function calls");
+	Value call(FunctionDef fun,Value thisExp,Value arg,Scope sc,Value* context,Expression type){
 		Value fix(Value arg){
 			return arg; // TODO
 		}
-		if(fun.isReverse){
-			enforce(arg.tag==Value.Tag.closure);
-			return makeClosure(type,Closure(arg.closure.fun,!arg.closure.isReversed,arg.closure.context));
-		}
+		if(fun.isReverse) return reverse(type,arg);
 		enforce(!thisExp.isValid,"TODO: method calls");
 		if(!fun.body_){ // TODO: move this logic somewhere else
 			switch(fun.getName){
@@ -1237,7 +1224,7 @@ struct QState{
 	}
 	Value call(Value fun,Value arg,Expression type){
 		enforce(fun.tag==Value.Tag.closure);
-		return call(fun.closure.fun,fun.closure.isReversed,nullValue,arg,null,fun.closure.context,type);
+		return call(fun.closure.fun,nullValue,arg,null,fun.closure.context,type);
 	}
 	QState assertTrue(Value val)in{
 		assert(val.type==Bool(true));
@@ -1257,7 +1244,7 @@ struct QState{
 		return res;
 	}
 	Value makeFunction(FunctionDef fd,Value* context){
-		return makeClosure(fd.ftype,Closure(fd,false,context));
+		return makeClosure(fd.ftype,Closure(fd,context));
 	}
 	Value makeFunction(FunctionDef fd){
 		Value* context=null;
@@ -1405,6 +1392,11 @@ struct QState{
 		return makeArray(type,iota(to!size_t(arg.array_[0].asInteger)).map!(_=>arg.array_[1].dup(this)).array);
 	}
 	alias vector=array_;
+	Value reverse(Expression type,Value arg){
+		import reverse;
+		enforce(arg.tag==Value.Tag.closure);
+		return makeClosure(type,Closure(reverseFunction(arg.closure.fun),arg.closure.context));
+	}
 	Value measure(Value arg){
 		MapX!(Value,R) candidates;
 		R one=0;
@@ -1499,7 +1491,6 @@ QState.Value lookupMeaning(QState)(ref QState qstate,Identifier id,Scope sc=null
 import lexer: Tok;
 struct Interpreter(QState){
 	FunctionDef functionDef;
-	enum isReversed=false; // TODO
 	CompoundExp statements;
 	QState qstate;
 	bool hasFrame=false;
@@ -1559,21 +1550,6 @@ struct Interpreter(QState){
 			if(auto ume=cast(UBitNotExp)e) return ~doIt(ume.e);
 			if(auto le=cast(LambdaExp)e) return qstate.makeFunction(le.fd);
 			if(auto ce=cast(CallExp)e){
-				static Expression unwrap(Expression e){
-					if(auto tae=cast(TypeAnnotationExp)e)
-						return unwrap(tae.e);
-					return e;
-				}
-				static string getQuantumOp(Expression qpArg){
-					auto opExp=qpArg;
-					if(auto tpl=cast(TupleExp)opExp){
-						enforce(tpl.e.length==1);
-						opExp=tpl.e[0];
-					}
-					auto opLit=cast(LiteralExp)opExp;
-					enforce(!!opLit&&opLit.lit.type==Tok!"``");
-					return opLit.lit.str;
-				}
 				auto id=cast(Identifier)unwrap(ce.e);
 				auto fe=cast(FieldExp)unwrap(ce.e);
 				QState.Value thisExp=QState.nullValue;
@@ -1629,7 +1605,7 @@ struct Interpreter(QState){
 											case "dup": return doIt(ce.arg).dup(qstate);
 											case "array": return qstate.array_(ce.type,doIt(ce.arg));
 											case "vector": return qstate.vector(ce.type,doIt(ce.arg));
-											case "reverse": enforce(0,"TODO: reverse"); assert(0);
+											case "reverse": enforce(0);
 											case "M": return qstate.measure(doIt(ce.arg));
 											default: break;
 										}
@@ -1643,6 +1619,11 @@ struct Interpreter(QState){
 				}
 				auto fun=doIt(ce.e), arg=doIt(ce.arg);
 				return qstate.call(fun,arg,ce.type);
+			}
+			if(auto fe=cast(ForgetExp)e){
+				if(fe.val) forget(runExp(fe.var),runExp(fe.val));
+				else forget(runExp(fe.var));
+				return qstate.makeTuple(unit,[]);
 			}
 			if(auto idx=cast(IndexExp)e){
 				auto r=doIt2(idx.e)[doIt(idx.a[0])];

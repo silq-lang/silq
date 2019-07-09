@@ -137,6 +137,8 @@ class FunctionDef: Declaration{
 		if(!ftype) return 0;
 		return ftype.cod.numComponents;
 	}
+
+	FunctionDef reversed=null;
 }
 
 
