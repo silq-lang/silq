@@ -1,5 +1,44 @@
 //import codeforces.winter19.contest.b1;
-
+/+
+def foo()mfree{
+	x:=0:!𝔹;
+	y:=H(x);
+	return y;
+}
+def main()⇒reverse(foo)(H(0:𝔹));
++/
+/+
+def foo(const y:𝔹)mfree{
+	x:=H(y);
+	return x;
+}
+def main()⇒reverse(foo)(H(0:𝔹),0:!𝔹);
++/
+/+
+def toW[n:!ℕ]lifted:𝔹^n →mfree 𝔹^n⇒lambda(qs:𝔹^n)mfree:𝔹^n{
+	if n==1{ qs[0]:=X(qs[0]); }
+	else if n>1{
+		(([head] coerce 𝔹^1):𝔹[])~((tail coerce 𝔹^(n sub 1)):𝔹[]):=(qs:𝔹[]);
+		θ:=asin(1/sqrt(n));
+		head:=rotY(θ,head);
+		if !head { tail := toW(tail); }
+		qs:=[head]~(tail:𝔹[]) coerce B^n;
+	}
+	return qs;
+};
+def solve(qs:𝔹^3):!𝔹{
+	if qs[1]{ phase(-2·π/3); }
+	if qs[2]{ phase(-4·π/3); }
+	qs:=reverse(toW[3])(qs);
+	return measure(qs as int[3])!=0;
+}
+def main(){
+	qs:=toW(vector(3,0:𝔹));
+	if qs[1]{ phase(2·π/3); }
+	if qs[2]{ phase(4·π/3); }
+	return solve(qs);
+}
++/
 /+
 def toW[n:!ℕ]lifted:𝔹^n →mfree 𝔹^n⇒lambda(qs:𝔹^n)mfree:𝔹^n{
 	if n==1{ qs[0]:=X(qs[0]); }
@@ -12,34 +51,32 @@ def toW[n:!ℕ]lifted:𝔹^n →mfree 𝔹^n⇒lambda(qs:𝔹^n)mfree:𝔹^n{
 	}
 	return qs;
 };
-+/
-/+
+
 def fromW[n:!ℕ]lifted:𝔹^n→mfree 𝔹^n⇒lambda(qs:𝔹^n)mfree:𝔹^n{
-	if n = 1 {
-		qs[0] := reverse(X)(qs[0]);
+    if n = 1 {
+        qs[0] := reverse(X)(qs[0]);
     } else if n > 1 {
         θ := asin(1 / sqrt(n));
-        __tmp1 := qs coerce 𝔹[];
-        (head,) := __tmp1[0..1] coerce 𝔹^1;
-        tail := __tmp1[1..__tmp1.length] coerce 𝔹^((n sub 1));
-        forget(__tmp1=[head] ~ (tail: 𝔹[]));
+        __tmp2 := qs coerce 𝔹[];
+        (head,) := __tmp2[0..1] coerce 𝔹^1;
+        tail := __tmp2[1..__tmp2.length] coerce 𝔹^((n sub 1));
+        forget(__tmp2=[head] ~ (tail: 𝔹[]));
         if ¬head {
             tail := fromW(tail);
         }
         head := reverse(rotY)(θ,head);
-        qs := dup(([head] ~ (tail: 𝔹[])) coerce 𝔹 ^ n);
-        forget(tail=(qs: 𝔹[])[1..n] coerce 𝔹 ^ (n sub 1));
-        dup[𝔹](qs[0]) := head;
+        __tmp0 := dup((([head] coerce 𝔹 ^ 1): 𝔹[]) ~ ((tail coerce 𝔹 ^ (n sub 1)): 𝔹[]));
+        forget(tail=(__tmp0[1..__tmp0.length]: 𝔹[]) coerce 𝔹 ^ (n sub 1));
+        forget((head,)=(__tmp0[0..1]: 𝔹[]) coerce 𝔹 ^ 1);
+        qs := __tmp0 coerce 𝔹^n;
     }
     return qs;
 };
-+/
-/+
+
 def solve(qs:𝔹^3):!𝔹{
 	if qs[1]{ phase(-2·π/3); }
 	if qs[2]{ phase(-4·π/3); }
-	qs:=reverse(toW[3])(qs);
-	//qs:=fromW(qs);
+	qs:=fromW(qs);
  	return measure(qs as int[3])!=0;
 }
 def main(){

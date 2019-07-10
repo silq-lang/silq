@@ -717,9 +717,9 @@ CompoundExp controlledCompoundExpSemantic(CompoundExp ce,Scope sc,Expression con
 CompoundExp compoundExpSemantic(CompoundExp ce,Scope sc,Annotation restriction_=Annotation.none){
 	if(!ce.blscope_) ce.blscope_=new BlockScope(sc,restriction_);
 	foreach(ref e;ce.s){
-		//writeln("before: ",e," ",sc.symtab);
+		//writeln("before: ",e," ",typeid(e)," ",e.sstate," ",ce.blscope_.symtab);
 		e=statementSemantic(e,ce.blscope_);
-		//writeln("after: ",e," ",sc.symtab);
+		//writeln("after: ",e," ",typeid(e)," ",e.sstate," ",ce.blscope_.symtab);
 		propErr(e,ce);
 	}
 	ce.type=unit;

@@ -68,9 +68,18 @@ Expression lowerDefine(bool analyzed)(Expression olhs,Expression orhs,Location l
 	}
 	Expression forget(){ return res=new ForgetExp(rhs,lhs); }
 	static if(analyzed){
+		if(olhs.type&&olhs.type.isClassical()&&!olhs.consumes)
+			return forget();
+		if(auto id=cast(Identifier)olhs){
+			if(auto vd=cast(VarDecl)id.meaning){
+				if(vd.isConst)
+					return forget();
+			}
+		}
+		 // TODO: get rid of this
 		if(auto id=cast(Identifier)lhs){
 			if(auto meaning=cast(VarDecl)sc.lookup(id,false,false,Lookup.probing)){
-				if(meaning.isConst)
+				if(meaning.isConst||typeForDecl(meaning).isClassical)
 					return forget();
 			}
 		}
@@ -213,11 +222,11 @@ Expression lowerDefine(bool analyzed)(Expression olhs,Expression orhs,Location l
 		fe.loc=loc;
 		return res=new CompoundExp([d1,d2,d3,fe]);
 	}
-	if(auto fe=cast(ForgetExp)lhs){
+	if(auto fe=cast(ForgetExp)olhs){
 		auto tpl=cast(TupleExp)rhs;
 		enforce(!tpl||tpl.length==0);
 		auto dup=getDup(fe.val.loc,sc);
-		auto nval=new CallExp(dup,fe.val,false,false);
+		auto nval=new CallExp(dup,fe.val.copy(),false,false);
 		nval.type=fe.val.type;
 		nval.loc=fe.val.loc;
 		auto def=lowerDefine!analyzed(fe.var,nval,loc,sc);
@@ -262,6 +271,7 @@ Expression lowerDefine(bool analyzed)(Expression olhs,Expression orhs,Location l
 				d1.loc=loc;
 				tmp=iota(numReturns).map!(delegate Expression(i){ auto id=new Identifier(names[i]); id.loc=rhs.loc; return id; }).array;
 			}else tmp=[rhs];
+			// TODO: if analyzed, predetermine a type for newlhs
 			if(auto tpl=cast(TupleExp)ce.arg){
 				auto newlhss=tpl.e[numConstArgs1..numConstArgs1+numArgs];
 				if(newlhss.length==1) newlhs=newlhss[0];
@@ -456,9 +466,9 @@ FunctionDef reverseFunction(FunctionDef fd)in{
 	argRet.loc=argExp.loc;
 	Expression[] statements;
 	body_.s=mergeCompound((returnTypes.length||!cast(TupleExp)ret.e?[retDef]:[])~reverseStatements(fd.body_.s[0..$-1],fd.fscope_)~[argRet]);
-	writeln(fd);
+	/+writeln(fd);
 	writeln("-reverse→");
-	writeln(result);
+	writeln(result);+/
 	result=functionDefSemantic(result,sc);
 	enforce(result.sstate==SemState.completed,text("semantic errors while reversing function"));
 	result.reversed=fd;
@@ -596,7 +606,10 @@ Expression[] mergeCompound(Expression[] s){
 Expression[] reverseStatements(Expression[] statements,Scope sc){
 	statements=mergeCompound(statements);
 	Expression[] classicalStatements=statements.filter!(s=>classifyStatement(s)==ComputationClass.classical).array;
-	foreach(ref e;classicalStatements) e=e.copy();
+	foreach(ref e;classicalStatements){
+		if(auto de=cast(DefExp)e) e=de.initializer.copy();
+		else e=e.copy();
+	}
 	Expression[] quantumStatements=statements.retro.filter!(s=>classifyStatement(s)!=ComputationClass.classical).array;
 	foreach(ref e;quantumStatements) e=reverseStatement(e,sc);
 	return classicalStatements~quantumStatements;
