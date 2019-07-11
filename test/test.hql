@@ -586,6 +586,7 @@ def iQFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
 	}
 	return ψ;
 }
+
 /+
 def phaseUint[n:!ℕ](const φ: uint[n])mfree{
 	for i in [0..n){ if φ[i]{ phase(2·π·2^i/2^n); } }
@@ -618,6 +619,7 @@ def QFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
 	return ψ;
 }
 +/
+
 def main(){
 	n:=8;
 	/+x:=0:uint[n];
@@ -627,8 +629,8 @@ def main(){
 	return (measure(iQFT(x)) as !ℕ)/2^n+0.0;+/ // TODO: coerce uint[n] to uint[6]
 		//x[1]:=H(x[1]);
 	x:=measure(H(false),H(false),H(false),H(false));
-	r:=iQFT(QFT(x as uint[4]));
-	//r:=([n:!ℕ]⇒reverse(QFT[n]))(QFT(x as uint[4])); // TODO
+	//r:=iQFT(QFT(x as uint[4]));
+	r:=([n:!ℕ]⇒reverse(QFT[n]))(QFT(x as uint[4]));
 	// forget((x as uint[4])=r); // TODO: fix simulator
 	//return measure(x as uint[4])==measure(r);
 	return (x as uint[4],r);

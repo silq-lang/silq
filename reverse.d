@@ -281,11 +281,11 @@ Expression lowerDefine(bool analyzed)(Expression olhs,Expression orhs,Location l
 			Expression newlhs,newarg;
 			// TODO: if analyzed, predetermine a type for newlhs
 			if(!numArgs){
-				/+newlhs=new TupleExp([]);
+				if(ft.annotation>=Annotation.qfree) return forget();
+				newlhs=new TupleExp([]);
 				newlhs.loc=ce.arg.loc;
 				newarg=new TupleExp([ce.arg,orhs]);
-				newarg.loc=lhs.loc;+/
-				return forget();
+				newarg.loc=lhs.loc;
 			}else if(auto tpl=cast(TupleExp)ce.arg){
 				auto newlhss=tpl.e[numConstArgs1..numConstArgs1+numArgs];
 				if(newlhss.length==1) newlhs=newlhss[0];
@@ -393,6 +393,15 @@ FunctionDef reverseFunction(FunctionDef fd)in{
 }do{
 	if(fd.reversed) return fd.reversed;
 	auto sc=fd.scope_, ft=fd.ftype;
+	auto asc=sc;
+	foreach(id;fd.captures){ // TODO: this is a bit hacky
+		if(id.meaning&&id.meaning.scope_&&!id.meaning.scope_.lookupHere(id,false,Lookup.probing)){
+			auto scope_=id.meaning.scope_;
+			id.meaning.scope_=null;
+			if(!scope_.insert(id.meaning,true))
+				fd.sstate=SemState.error;
+		}
+	}
 	Expression[] constArgTypes1; // TODO: get rid of code dupliction
 	Expression[] argTypes;
 	Expression[] constArgTypes2;
