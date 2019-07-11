@@ -37,7 +37,7 @@ def a1[n:!N](
 	for _ in [0..tm) {
 		(w, triTestT, triTestTw) := a15_TestTriangleEdges(edgeOracle, tt, ee);
 		if !(triTestT == 0 && triTestTw == 0) { phase(π); }
-		reverse(a15_TestTriangleEdges[n, 2^r])(w, triTestT, triTestTw, edgeOracle, tt, ee);
+		reverse(a15_TestTriangleEdges[n, 2^r])(edgeOracle, tt, ee, (w, triTestT, triTestTw));
 
 		for _ in [0..tw) {
 			(tt, i, v, ee) := a6_QWSH(edgeOracle, tt, i, v, ee)
@@ -162,7 +162,7 @@ def a6_QWSH[n:!N, r:!N](const edgeOracle:((const int[n] x const int[n] x 𝔹) !
 	(i, v) := a7_Diffuse_Pair(i, v);
 	(ttd,ee,eed,tt) := f(i,tt,ee);
 	(ttd, v) := (v, ttd);
-	(tt,ee) := reverse(f)(i,ttd,ee,eed,tt);
+	(tt,ee) := reverse(f)(i,(ttd,ee,eed,tt));
 
 	return (tt, i, v, ee);
 }
@@ -360,7 +360,7 @@ def a16_TriangleTestT[rr:!N](const ee:(𝔹^rr)^rr) mfree {
 	cTri := f(ee);
 	triTestT := true:𝔹;
 	if cTri == 0 { triTestT := X(triTestT); }
-	reverse(f)(cTri, ee);
+	reverse(f)(ee, cTri);
 	return triTestT;
 }
 
@@ -396,7 +396,7 @@ def a17_TriangleTestTw[n:!N, rr:!N](edgeOracle:((const int[n] x const int[n] x �
 	triTestTW := true:B;
 	if cTri == 0 { triTestTW := X(triTestTW); }
 
-	reverse(f)(eed,cTri,tt,ee,w);
+	reverse(f)(tt,ee,w,(eed,cTri));
 
 	return triTestTW;
 }
@@ -416,7 +416,7 @@ def a18_TriangleEdgeSearch[n:!N, rr:!N](const edgeOracle:((const int[n] x const 
 	for _ in [0..floor(π/4 * sqrt(2^n))) {
 		cTri := a19_GCQWalk(edgeOracle, tt, ee, w, triTestT);
 		if triTestT == 0 && !(cTri == false) { phase(π); }
-		reverse(a19_GCQWalk[n, rr])(cTri, edgeOracle, tt, ee, w, triTestT);
+		reverse(a19_GCQWalk[n, rr])(edgeOracle, tt, ee, w, triTestT, cTri);
 		
 		w := a7_Diffuse_Int(w);
 	}
@@ -492,7 +492,7 @@ def a20_GCQWStep[n:!N, r:!N, rbar:!N, rrbar:!N, rr:!N](const edgeOracle:((const 
 	(iota, sigma) := a7_Diffuse_Pair(iota, sigma);
 	(tau, taud, eewd, cTri, eew) := help_a20_2(tau, eew, cTri, edgeOracle, w, iota, tt, ee);
 	(taud, sigma) := (sigma, taud); 
-	(tau, eew, cTri) := reverse(help_a20_2[n,r,rr,rbar,rrbar])(tau, taud, eewd, cTri, eew, edgeOracle, w, iota, tt, ee);
+		(tau, eew, cTri) := reverse(help_a20_2[n,r,rr,rbar,rrbar])((tau, taud, eewd, cTri, eew), edgeOracle, w, iota, tt, ee);
 
 	return (tau, iota, sigma, eew, cTri);
 }

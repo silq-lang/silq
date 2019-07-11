@@ -4,7 +4,7 @@ def bar[n:!ℕ](psi:uint[n],phi:uint[n],const l: uint[n],const k: uint[n]) mfree
 def test1[n:!ℕ](f: uint[n] !-> lifted uint[n]):!ℕ{
 	cand1 := 0: uint[n];
 	cand2 := 0: uint[n];
-    cand := reverse(foo[n])(cand1,cand2,0:uint[n]);
+    cand := reverse(foo[n])((cand1,cand2),0:uint[n]);
     return measure(cand) as !ℕ;
 }
 def test2[n:!ℕ](f: uint[n] !-> lifted uint[n]):!ℕ×!ℕ{

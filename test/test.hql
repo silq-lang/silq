@@ -1,3 +1,65 @@
+
+/+
+def main(){
+	x:=[H(0:𝔹),H(1:𝔹)];
+	y:=x coerce int[3]; // runtime error
+	return y;
+}
++/
+/+
+def foo(a:𝔹^2)mfree{
+	b:=a[0];
+	a[0]:=H(a[0]);
+	H(a[0]):=a[0];
+	return (a,b);
+}
+def main()⇒reverse(foo)((1,0):𝔹^2,1:𝔹);
++/
+/+
+def main(){
+	x:=(H(0:𝔹),);
+	y:=(x[0..1]:𝔹[]);
+	forget((x:𝔹[])=y);
+	y[0]:=H(y[0]);
+	return y;
+}
++/
+/+def main(){
+	x:=(H(0:𝔹),);
+	x:=(x:𝔹[]);
+	x[0]:=H(x[0]);
+	return x;
+}
++/
+/+
+def main(){
+	def foo[a](x:a){
+		def id(x:a)mfree⇒(dup(x),x);
+		return reverse(id)(dup(x),x);
+	}
+	return (foo([0,1]),foo(H(0:𝔹)));
+}
++/
+/+
+import qft;
+
+def main(){
+	return QFT(([n:!ℕ]⇒reverse(QFT[n]))(1:int[6]));
+}
++/
+/+
+def main(){
+	f:=reverse(dup[𝔹^2]);
+	g:=([a]⇒reverse(dup[a]))[𝔹^2];
+	x:=(H(0:𝔹),H(0:𝔹));
+	y:=dup(x);
+	f(y,x);
+	x:=reverse(g)(y,());
+	reverse(reverse(g))(y,x);
+	(a,b):=y;
+	return (H(a),H(b));
+}
++/
 //import codeforces.winter19.contest.b1;
 /+
 def foo()mfree{
@@ -12,7 +74,7 @@ def foo(const y:𝔹)mfree{
 	x:=H(y);
 	return x;
 }
-def main()⇒reverse(foo)(H(0:𝔹),0:!𝔹);
+def main()⇒reverse(foo)(0:!𝔹,H(0:𝔹));
 +/
 /+
 def toW[n:!ℕ]lifted:𝔹^n →mfree 𝔹^n⇒lambda(qs:𝔹^n)mfree:𝔹^n{
@@ -93,7 +155,8 @@ def main(){
 	tail:=(qs:𝔹[])[1..2] coerce 𝔹^(2 sub 1);
 	forget(qs=[head]~(tail:𝔹[]) coerce 𝔹^2);
 	qs:=[head]~(tail:𝔹[]) coerce 𝔹^2;
-	return qs;
+	(qs₀,qs₁):=qs;
+	return (H(qs₀),H(qs₁));
 }
 +/
 /+
@@ -101,8 +164,9 @@ def main(){
 	qs:=(H(0:𝔹),H(0:𝔹)) coerce 𝔹^2;
 	head:=qs[0];
 	tail:=(qs:𝔹[])[1..2] coerce 𝔹^(2 sub 1);
-	forget(qs=[head]~(tail:𝔹[]) coerce B^2);
-	return (head,tail);
+	forget(qs=[head]~(tail:𝔹[]) coerce 𝔹^2);
+	(tail,):=tail coerce 𝔹^1;
+	return (H(head),H(tail));
 }
 +/
 /+
@@ -110,8 +174,9 @@ def main(){
 	qs:=(H(0:𝔹),H(0:𝔹)) coerce 𝔹^2;
 	head:=qs[0];
 	tail:=(qs:𝔹[])[1..2] coerce 𝔹^(2 sub 1);
-	forget(qs=dup([head]~(tail:𝔹[])) coerce B^2);
-	return (head,tail);
+	forget(qs=dup([head]~(tail:𝔹[])) coerce 𝔹^2);
+	(tail,):=tail coerce 𝔹^1;
+	return (H(head),H(tail));
 }
 +/
 /+
@@ -121,7 +186,9 @@ def main(){
 	tail:=(qs:𝔹[])[1..2] coerce 𝔹^(2 sub 1);
 	ws:=dup([head]~(tail:𝔹[])) coerce B^2;
 	forget(qs=ws);
-	return (ws,head,tail);
+	forget([head]~(tail:𝔹[])=ws:𝔹[]);
+	(ws₀,ws₁):=ws;
+	return (H(ws₀),H(ws₁));
 }
 +/
 /+
@@ -159,8 +226,8 @@ def main(){
 /+
 def rev[a](f: const a!→mfree a)⇒reverse(f);
 def main(){
-	f:=reverse(dup[𝔹^2]); // 𝔹×𝔹×const 𝔹×const 𝔹 !→qfree 𝟙
-	g:=rev(dup[𝔹^2]);     // (𝔹^2)×(const 𝔹^2) !→qfree 𝟙
+	f:=reverse(dup[𝔹^2]); // (const 𝔹^2)×(𝔹^2) !→qfree 𝟙
+	g:=rev(dup[𝔹^2]);     // (const 𝔹^2)×(𝔹^2) !→qfree 𝟙
 	return (f,g);
 }
 +/
@@ -197,13 +264,46 @@ def main(){
 	return (x as !uint[4], reverse(QFT[10]));
 }
 +/
-
+/+
+def main(){
+	x:=[H(0:𝔹),];
+	(x,):=x coerce 𝔹^1;
+	return H(x);
+}
++/
+/+
+def main(){
+	x:=(H(0:𝔹),);
+	y:=x as int[1];
+	(x,):=dup(dup(y) as 𝔹^1);
+	forget((x,)=dup(dup(y) as 𝔹^1));
+	(x,):=y as 𝔹^1;
+	return H(x);
+}
++/
+/+
+def main(){
+	x:=(H(0:𝔹),);
+	y:=x as int[1];
+	(x₀,):=y as 𝔹^1;
+	return H(x₀);
+}
++/
+/+
+def main(){
+	x:=(H(0:𝔹),H(0:𝔹));
+	y:=x as int[2];
+	(x₀,x₁):=y as 𝔹^2;
+	return (H(x₀),H(x₁));
+}
++/
 /+
 def main(){
 	x:=(H(false),H(false),H(false),H(false));
 	r:=dup(x as uint[4]);
 	forget((r as 𝔹^4)=x);
-	return x;
+	(x₀,x₁,x₂,x₃):=x;
+	return (H(x₀),H(x₁),H(x₂),H(x₃));
 }
 +/
 /+
@@ -251,7 +351,7 @@ def main(){
 /+
 def main(){
 	x:=H(0:𝔹);
-	x:=rotY(0.2,x);
+	x:=rotZ(0.2,x);
 	x:=reverse(rotZ)(0.2,x);
 	return H(x);
 }
@@ -276,7 +376,7 @@ def main(){
 def main(){
 	x:=H(0:𝔹);
 	if x{
-		reverse(phase)(π/2);
+		reverse(phase)(π/2,());
 		phase(π/2);
 	}
 	return H(x);
@@ -305,7 +405,7 @@ def g(x:𝔹)qfree{
 	(f:𝔹!→qfree 𝔹)(y):=x:𝔹;
 	return y;
 }
-def main():!𝔹⇒reverse(g)(0:!𝔹); // TODO: result should be classical
+def main():!𝔹⇒reverse(g)(0:!𝔹);
 +/
 /+
 def foo(const x:int[32])mfree{
@@ -324,10 +424,9 @@ def revFoo(const x:int[32],r:int[32]^3)mfree{
 }
 
 def main(){
-	//return foo(1:int[32]);
-	//return revFoo((1,2,3):int[32]^3);
-	return reverse(foo)(1:int[32],2:int[32],3:int[32],1:int[32]);
-	//return reverse(revFoo)(1:int[32]);
+	revFoo(1:int[32],(1,2,3):int[32]^3);
+	reverse(foo)(1:int[32],(1:int[32],2:int[32],3:int[32]));
+	return (foo(1:int[32]),reverse(revFoo)(1:int[32],()));
 }
 +/
 
@@ -350,7 +449,7 @@ def iQFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
 	for k in (n..-1..0]{
 		for l in (n..-1..k+1]{
 			if ψ[l] && ψ[k]{
-				reverse(phase)(-2·π·2^(k-l-1)):=();
+				reverse(phase)(-2·π·2^(k-l-1),()):=();
 			}
 		}
 		reverse(H)(ψ[k]) := ψ[k];
@@ -386,12 +485,13 @@ def main(){
 		return ();
 	}
 	x:=H(0:𝔹);
-	reverse(phase)(π/2):=f(x);
+	reverse(phase)(π/2,()):=f(x);
 	phase(-π/2);
 	return x;
 }
 +/
-/+def main(){
+/+
+def main(){
 	f:=()=>(0,1):𝔹^2;
 	id:=(x:𝔹)qfree⇒x;
 	(x,reverse(id)(y)):=f();
@@ -417,7 +517,7 @@ def main(){
 }
 +/
 /+
-def main(){
+def foo()mfree{
 	y:=H(false);
 	z:=dup(y);
 	dup[𝔹](y):=z;
@@ -425,8 +525,9 @@ def main(){
 	dup[𝔹](false):=k;
 	return y;
 }
+def main()⇒reverse(foo);
 +/
-/+
+
 /+
 def QFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
 	for k in [0..n div 2){
@@ -443,7 +544,7 @@ def QFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
 	return ψ;
 }
 +/
-
+/+
 def seq[a,b,c,d](f: !(Π[τ]lifted. a×const d×(b×const d!→mfree τ)!→mfree τ),g: !(Π[τ]lifted. b×const d×(c×const d!→mfree τ)!→mfree τ))[τ](x:a,const k:d,ret:c×const d!→mfree τ)mfree⇒f[τ](x,k,(y:b,const k:d)mfree⇒g[τ](y,k,ret));
 
 def QFT_norm[n:!ℕ]()mfree{
@@ -527,6 +628,7 @@ def main(){
 		//x[1]:=H(x[1]);
 	x:=measure(H(false),H(false),H(false),H(false));
 	r:=iQFT(QFT(x as uint[4]));
+	//r:=([n:!ℕ]⇒reverse(QFT[n]))(QFT(x as uint[4])); // TODO
 	// forget((x as uint[4])=r); // TODO: fix simulator
 	//return measure(x as uint[4])==measure(r);
 	return (x as uint[4],r);
@@ -536,13 +638,21 @@ def main(){
 	forget(iQFT(QFT(x as uint[4]))=x as uint[4]); // TODO: fix+/
 }
 +/
-
-/+def main(){
-	reverse(measure[int[32]]);
+/+
+def foo()mfree{
+	x:=0:𝔹;
+	forget(x); // TODO
+}
+def main()⇒reverse(foo);
++/
+/+
+def main(){
+	reverse(measure[int[32]]); // error
 	x:=H(0:𝔹);
 	f:=()mfree=>x;
-	reverse(f);
-}+/
+	reverse(f); // error
+}
++/
 /+def fib[m:!ℕ]:!int[m]→!int[m]{ // TODO: automatically add annotations
 	return (n:!int[m]){
 		if n<=1{ return n; }
@@ -575,10 +685,9 @@ def main(){
 import qft;
 
 def main(){
-	return QFT(1:uint[6]);
+	return QFT(1:int[6]);
 }
 +/
-
 /+
 def main(){
 	x:=vector(3,0:𝔹);
@@ -587,12 +696,12 @@ def main(){
 	return x;
 }
 +/
-
-/+def main(){
-	//H(x):=0;
-	//forget(H(x)=0);
-	//n:=3;
-	//x:=(0:int[n]):uint[n];
+/+
+def main(){
+	H(x):=0; // error
+	forget(H(x)=0);
+	n:=3;
+	x:=(0:int[n]):uint[n]; // error
 }
 +/
 /+
@@ -666,11 +775,11 @@ def main(){
 +/
 /+
 def main(){
-	a:=H(0:𝔹);
+	a:=H(0:𝔹); // error
 	b:=1:𝔹;
 	c:=H(0:𝔹);
-	x:=if c then a else b; // error
-	return (c,x,a,b);
+	x:=if c then a else b;
+	return (c,x,a,b); // error
 }
 +/
 /+def main(){
@@ -939,7 +1048,10 @@ def main(){
 /+
 def main(){
 	x:=(1,2);
-	y:=H(0:𝔹) as int[2];
+	//y:=H(0:𝔹) as int[2]; // TODO
+	yb:=H(0:𝔹);
+	y:=if yb then 1:int[2] else 0:int[2];
+	forget(yb=if y==1 then 1:𝔹 else 0:𝔹);
 	x[y]=3; // error
 	return y;
 }
@@ -953,13 +1065,13 @@ def main(){
 /+
 def main(){
 	n:=measure(H(0:𝔹)):!ℕ;
-	def foo(){ // error
+	def foo(){
 		x:=0:int[n];
 		return x;
 	}
-	y:=0:int[n]; // error
-	n=3;
-	x:=measure(foo()):!ℤ;
+	y:=0:int[n];
+	n=3; // error
+	x:=measure(foo()) as !ℤ;
 	return x;
 }
 +/
@@ -972,7 +1084,7 @@ def main(){
 def main(){
 	a:=[[0:𝔹],[1:𝔹,H(0:𝔹)]];
 	x:=H(0:𝔹);
-	r:=a[x];
+	r:=a[x]; // error
 	return (r,a,x);
 }
 +/
@@ -1098,6 +1210,18 @@ def main(){
 +/
 /+
 def main(){
+	x:=dup((vector(3,1:𝔹) as int[3]) as 𝔹^3);
+	return x;
+}
++/
+/+
+def main(){
+	x:=(vector(3,1:𝔹) as int[3]) as 𝔹^3;
+	return x;
+}
++/
+/+
+def main(){
 	x:=((vector(3,1:𝔹) as int[3]) as 𝔹^3):𝔹[];
 	return x;
 }
@@ -1141,7 +1265,7 @@ def main(){
 }
 +/
 /+
-def foo(const x:𝔹){ // TODO
+def foo(const x:𝔹){
 	y:=0:𝔹;
 	z:=1:𝔹;
 	if x{
@@ -1297,6 +1421,13 @@ def main(){
 +/
 /+
 def main(){
+	x:=[H(0:𝔹)];
+	y:=dup(x);
+	return (x,y);
+}
++/
+/+
+def main(){
 	x:=[]:𝔹[];
 	x:=x~[H(false)];
 	y:=dup(x)~[H(false)];
@@ -1426,6 +1557,20 @@ def main(){
 	x:=vector(3,0:𝔹);
 	for i in [0..3){ x[i]:=H(x[i]); }
 	for i in [0..round(π/4*sqrt(2^3))){
+		if ([n:!ℕ]⇒reverse(toVecU[n]))(dup(x))==5{ phase(π); } // TODO
+		for k in [0..3){ x[k]:=H(x[k]); }
+		if ([n:!ℕ]⇒reverse(toVecU[n]))(dup(x))==0{ phase(π); } // TODO
+		for k in [0..3){ x[k]:=H(x[k]); }
+	}
+	return measure(toUint(x));
+}
++/
+/+
+import conv;
+def main(){
+	x:=vector(3,0:𝔹);
+	for i in [0..3){ x[i]:=H(x[i]); }
+	for i in [0..round(π/4*sqrt(2^3))){
 		if toUint(dup(x))==5{ phase(π); }
 		for k in [0..3){ x[k]:=H(x[k]); }
 		if toUint(dup(x))==0{ phase(π); }
@@ -1468,7 +1613,7 @@ def main(){
 }
 +/
 /+
-def uniform_entangle[n:!ℕ](bits:(!𝔹^n)^4) mfree {
+def uniform_entangle[n:!ℕ](bits:(!𝔹^n)^4)mfree{
     anc:=0:int[2];
     for j in [0..2){ anc[j]:=H(anc[j]); }
 	qs:=vector(n,false:𝔹);
@@ -1483,11 +1628,56 @@ def uniform_entangle[n:!ℕ](bits:(!𝔹^n)^4) mfree {
     return (anc, qs);
 }
 
+def rev_entangle[n:!ℕ](bits:(!𝔹^n)^4, r:int[2]×𝔹^n)mfree{
+	(anc,qs) := r;
+    for i in [n - 1..-1..0]{
+        for a in [3..-1..0]{
+            if anc = a && bits[a][i] {
+                qs[i] := X(qs[i]);
+            }
+        }
+    }
+    forget(qs=vector[𝔹](n,0: 𝔹));
+    for j in (2..-1..0]{
+        anc[j] := H(anc[j]);
+    }
+    forget(anc=0: int[2]);
+    return ();
+}
+
 def solve[n:!ℕ](bits:(!𝔹^n)^4) {
     (anc, qs) := uniform_entangle(bits);
-    result := dup(qs);
-    reverse(uniform_entangle[n])(anc, qs, bits);
-    return result;
+    //result := dup(qs);
+    reverse(uniform_entangle[n])(bits, (anc, qs));
+	//rev_entangle(bits, (anc, qs));
+    //return result;
+}
+
+def main(){
+	return solve(((0,0,0),(1,0,0),(0,1,0),(0,0,1)):!(𝔹^3)^4);
+}
++/
+/+
+def solve[n:!ℕ](bits:(!𝔹^n)^4){
+    anc:=0:uint[2];
+    for j in [0..2){ anc[j]:=H(anc[j]); }
+    qs:=(bits:(𝔹^n)^4)[anc];
+	for j in [0..3] {
+		if qs==bits[j]{
+			anc⊕=j;
+		}
+	}
+	forget(anc=0:uint[2]);
+    return qs;
+}
+def main()⇒solve(((0,0,0),(1,0,0),(0,1,0),(0,0,1)):!(𝔹^3)^4);
++/
+/+
+def main(){
+    anc:=0:int[1];
+    for j in [0..1){ anc[j]:=H(anc[j]); }
+	for j in [0..1){ anc[j]:=H(anc[j]); }
+    return forget(anc=0: int[1]);
 }
 +/
 /+
@@ -1720,7 +1910,7 @@ def main(){
 /+
 def main(){
 	b := H(0:𝔹);
-	x := b:int[32];
+	x := b as int[32]; // TODO
 	return x;
 }
 +/

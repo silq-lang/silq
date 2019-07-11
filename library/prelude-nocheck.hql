@@ -11,8 +11,8 @@ def rotX(φ: !ℝ, x: 𝔹)mfree:𝔹 ⇒ (quantumPrimitive("rX"):!(Π(φ: !ℝ,
 def rotY(φ: !ℝ, x: 𝔹)mfree:𝔹 ⇒ (quantumPrimitive("rY"):!(Π(φ: !ℝ, x: 𝔹)mfree. 𝔹))(φ,x);
 def rotZ(φ: !ℝ, x: 𝔹)mfree:𝔹 ⇒ (quantumPrimitive("rZ"):!(Π(φ: !ℝ, x: 𝔹)mfree. 𝔹))(φ,x);
 
-def reverse[τ,χ,φ]lifted(f: !(τ × const χ →mfree φ))lifted:φ × const χ →mfree τ⇒
-  (quantumPrimitive("reverse"):!(Π[τ:*,χ:*,φ:*]lifted. !(!(τ×const χ →mfree φ) →lifted !(φ×const χ →mfree τ))))(f);
+def reverse[τ,χ,φ]lifted(f: !(const τ × χ →mfree φ))lifted:const τ × φ →mfree χ⇒
+  (quantumPrimitive("reverse"):!(Π[τ:*,χ:*,φ:*]lifted. !(!(const τ×χ →mfree φ) →lifted !(const τ × φ →mfree χ))))(f);
 
 dat int[n: !ℕ] quantum{}
 dat uint[n: !ℕ] quantum{}

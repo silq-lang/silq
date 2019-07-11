@@ -87,6 +87,7 @@ int main(string[] args){
 			case "--nocheck": opt.noCheck=true; break;
 			case "--nonormalize": opt.noNormalize=true; break;
 			case "--trace": opt.trace=true; break;
+			case "--dump-reverse": opt.dumpReverse=true; break;
 			case "--expectation": opt.expectation=true; break;
 			case "--gnuplot": opt.formatting=Format.gnuplot; break;
 			case "--matlab": opt.formatting=Format.matlab; break;

@@ -41,6 +41,42 @@ Identifier getDup(Location loc,Scope isc){
 	return getPreludeSymbol("dup",loc,isc);
 }
 
+bool isClassicalExp(Expression e){
+	return e.type&&e.subexpressions.all!(x=>!x.type||x.type.isClassical())&&e.isQfree()&&!e.consumes;
+}
+bool hasImplicitDup(Expression olhs,Scope sc){
+	if(olhs.byRef) return false;
+	if(auto idx=cast(IndexExp)olhs)
+		return true;
+	if(auto id=cast(Identifier)olhs){
+		if(isClassicalExp(olhs)) return true;
+		if(id.meaning){
+			if(typeForDecl(id.meaning).isClassical())
+				return true;
+			if(auto vd=cast(VarDecl)id.meaning){
+				if(vd.isConst)
+					return true;
+			}
+		}
+	}
+	// TODO: get rid of this
+	if(auto id=cast(Identifier)olhs){
+		if(auto meaning=cast(VarDecl)sc.lookup(id,false,false,Lookup.probing)){
+			if(meaning.isConst||typeForDecl(meaning).isClassical)
+				return true;
+		}
+	}
+	return false;
+}
+
+bool validDefLhs(bool analyzed)(Expression olhs,Scope sc){
+	bool validDefEntry(Expression e){
+		static if(analyzed) if(hasImplicitDup(e,sc)) return false;
+		return cast(Identifier)e||cast(IndexExp)e;
+	}
+	if(auto tpl=cast(TupleExp)olhs) return tpl.e.all!validDefEntry;
+	return validDefEntry(olhs);
+}
 
 Expression lowerDefine(bool analyzed)(Expression olhs,Expression orhs,Location loc,Scope sc)in{
 	assert(loc.line);
@@ -66,29 +102,14 @@ Expression lowerDefine(bool analyzed)(Expression olhs,Expression orhs,Location l
 		res.sstate=SemState.error;
 		return res;
 	}
-	Expression forget(){ return res=new ForgetExp(rhs,lhs); }
-	static if(analyzed){
-		if(olhs.type&&olhs.type.isClassical()&&!olhs.consumes)
-			return forget();
-		if(auto id=cast(Identifier)olhs){
-			if(auto vd=cast(VarDecl)id.meaning){
-				if(vd.isConst)
-					return forget();
-			}
-		}
-		 // TODO: get rid of this
-		if(auto id=cast(Identifier)lhs){
-			if(auto meaning=cast(VarDecl)sc.lookup(id,false,false,Lookup.probing)){
-				if(meaning.isConst||typeForDecl(meaning).isClassical)
-					return forget();
-			}
-		}
-	}
-	bool validDefLhs=!!cast(Identifier)lhs||cast(IndexExp)lhs;
-	if(auto tpl=cast(TupleExp)lhs) validDefLhs=tpl.e.all!(e=>!!cast(Identifier)e||cast(IndexExp)e);
-	if(validDefLhs){
+	if(validDefLhs!analyzed(olhs,sc)){
 		if(auto tpl=cast(TupleExp)lhs) if(!tpl.e.length) return rhs;
 		return res=new DefineExp(lhs,rhs);
+	}
+	Expression forget(){ return res=new ForgetExp(rhs,lhs); }
+	static if(analyzed){
+		if(hasImplicitDup(olhs,sc)) // TODO: automatically synthesize implicit dups in semantic?
+			return forget();
 	}
 	if(auto arr=cast(ArrayExp)olhs){
 		auto newLhs=new TupleExp(arr.copy().e);
@@ -107,8 +128,8 @@ Expression lowerDefine(bool analyzed)(Expression olhs,Expression orhs,Location l
 			if(auto tplr=cast(R)orhs){
 				enforce(tpll.e.length==tplr.e.length);
 				Expression[] es;
-				foreach(i;0..tpll.e.length){
-					es~=lowerDefine!analyzed(tpll.e[i],tplr.e[i],loc,sc); // TODO: evaluation order okay?
+				foreach_reverse(i;0..tpll.e.length){
+					es~=lowerDefine!analyzed(tpll.e[i],tplr.e[i],loc,sc); // TODO: evaluation order of rhs okay?
 				}
 				if(es.any!(x=>!x)) return;
 				res=new CompoundExp(es);
@@ -117,14 +138,13 @@ Expression lowerDefine(bool analyzed)(Expression olhs,Expression orhs,Location l
 		handleRhs!TupleExp();
 		handleRhs!ArrayExp();
 		if(!res){
-			auto tmp=new TupleExp(iota(tpll.e.length).map!(delegate Expression(i){ auto id=new Identifier(freshName); id.loc=rhs.loc; return id; }).array);
+			auto tmp=new TupleExp(iota(tpll.e.length).map!(delegate Expression(i){ auto id=new Identifier(freshName); id.loc=orhs.loc; return id; }).array);
 			tmp.loc=loc;
-			auto d1=new DefineExp(tmp,rhs);
-			d1.loc=loc;
-			auto d2=new DefineExp(lhs,tmp);
-			d2.loc=loc;
-			return res=new CompoundExp([d1,d2]);
+			auto d1=lowerDefine!false(tmp,rhs,loc,sc);
+			auto d2=lowerDefine!analyzed(olhs,tmp,loc,sc);
+			res=new CompoundExp([d1,d2]);
 		}
+		return res;
 	}
 	bool isLiftedBuiltIn(Expression e){
 		if(cast(AddExp)lhs||cast(SubExp)lhs||cast(NSubExp)lhs||cast(MulExp)lhs||cast(DivExp)lhs||cast(IDivExp)lhs||cast(ModExp)lhs||cast(PowExp)lhs||cast(BitOrExp)lhs||cast(BitXorExp)lhs||cast(BitAndExp)lhs||cast(UMinusExp)lhs||cast(UNotExp)lhs||cast(UBitNotExp)lhs||cast(AndExp)lhs||cast(OrExp)lhs||cast(LtExp)lhs||cast(LeExp)lhs||cast(GtExp)lhs||cast(GeExp)lhs||cast(EqExp)lhs||cast(NeqExp)lhs)
@@ -137,7 +157,6 @@ Expression lowerDefine(bool analyzed)(Expression olhs,Expression orhs,Location l
 	}
 	if(isLiftedBuiltIn(lhs)) return forget();
 	if(auto tae=cast(TypeAnnotationExp)olhs){
-		if(isLiftedBuiltIn(tae.e)) return forget();
 		static if(analyzed){
 			if(olhs.type){
 				if(!orhs.type||orhs.type!=tae.e.type){
@@ -198,8 +217,7 @@ Expression lowerDefine(bool analyzed)(Expression olhs,Expression orhs,Location l
 		}
 		assert(l1&&l2);
 		// TODO: nicer runtime error message for inconsistent array lengths?
-		auto d1=new DefineExp(tmp,rhs);
-		d1.loc=loc;
+		auto d1=lowerDefine!analyzed(tmp,orhs,loc,sc);
 		auto z=constantExp(0);
 		z.loc=olhs.loc;
 		auto l=tmpLen();
@@ -223,6 +241,10 @@ Expression lowerDefine(bool analyzed)(Expression olhs,Expression orhs,Location l
 		return res=new CompoundExp([d1,d2,d3,fe]);
 	}
 	if(auto fe=cast(ForgetExp)olhs){
+		if(!fe.val){
+			sc.error("reversal of implicit forget not supported yet",fe.loc);
+			return error();
+		}
 		auto tpl=cast(TupleExp)rhs;
 		enforce(!tpl||tpl.length==0);
 		auto dup=getDup(fe.val.loc,sc);
@@ -233,8 +255,8 @@ Expression lowerDefine(bool analyzed)(Expression olhs,Expression orhs,Location l
 		if(!tpl) return res=new CompoundExp([rhs,def]);
 		return def;
 	}
-	if(auto ce=cast(CallExp)lhs){
-		ce.e=expressionSemantic(ce.e,sc,ConstResult.yes);
+	if(auto ce=cast(CallExp)olhs){
+		if(!ce.e.type) ce.e=expressionSemantic(ce.e,sc,ConstResult.yes);
 		if(auto ft=cast(FunTy)ce.e.type){
 			if(ft.isSquare&&!ce.isSquare){
 				sc.error("implicit function call not supported as definition left-hand side",ce.loc); // TODO
@@ -255,43 +277,28 @@ Expression lowerDefine(bool analyzed)(Expression olhs,Expression orhs,Location l
 				sc.error("reversed function cannot mix 'const' and consumed arguments",ce.arg.loc); // TODO: automatically reorder arguments
 				return error();
 			}
-			size_t numReturns;
-			if(auto tpl=ft.cod.isTupleTy) numReturns=tpl.length;
-			else numReturns=1;
 			// if(!numArgs&&rhs.isLifted()) return res=new ForgetExp(rhs,lhs); // TODO?
 			Expression newlhs,newarg;
-			Expression[] tmp;
-			DefineExp d1=null;
-			if(auto tpl=cast(TupleExp)rhs) tmp=tpl.e;
-			else if(ft.cod.isTupleTy()){
-				auto names=iota(numReturns).map!(_=>freshName()).array;
-				auto vars=new TupleExp(iota(numReturns).map!(delegate Expression(i){ auto id=new Identifier(names[i]); id.loc=rhs.loc; return id; }).array);
-				vars.loc=loc;
-				d1=new DefineExp(vars,rhs);
-				d1.loc=loc;
-				tmp=iota(numReturns).map!(delegate Expression(i){ auto id=new Identifier(names[i]); id.loc=rhs.loc; return id; }).array;
-			}else tmp=[rhs];
 			// TODO: if analyzed, predetermine a type for newlhs
-			if(auto tpl=cast(TupleExp)ce.arg){
+			if(!numArgs){
+				/+newlhs=new TupleExp([]);
+				newlhs.loc=ce.arg.loc;
+				newarg=new TupleExp([ce.arg,orhs]);
+				newarg.loc=lhs.loc;+/
+				return forget();
+			}else if(auto tpl=cast(TupleExp)ce.arg){
 				auto newlhss=tpl.e[numConstArgs1..numConstArgs1+numArgs];
 				if(newlhss.length==1) newlhs=newlhss[0];
 				else newlhs=new TupleExp(newlhss);
 				newlhs.loc=ce.arg.loc;
-				auto newargs=tpl.e[0..numConstArgs1]~tmp~tpl.e[numConstArgs1+numArgs..$];
+				auto newargs=tpl.e[0..numConstArgs1]~[rhs]~tpl.e[numConstArgs1+numArgs..$];
 				if(newargs.length==1) newarg=newargs[0];
 				else newarg=new TupleExp(newargs);
 				newarg.loc=lhs.loc;
 			}else if(numArgs==ft.nargs){
 				newlhs=ce.arg;
-				if(tmp.length!=1) newarg=new TupleExp(tmp);
-				else newarg=tmp[0];
+				newarg=orhs;
 				newarg.loc=loc;
-			}else if(!numArgs){
-				newlhs=new TupleExp([]);
-				newlhs.loc=ce.arg.loc;
-				if(!tmp.length) newarg=ce.arg;
-				else newarg=new TupleExp(tmp~[ce.arg]);
-				newarg.loc=lhs.loc;
 			}else{
 				sc.error("cannot match single tuple to function with mixed 'const' and consumed parameters",ce.loc);
 				return error();
@@ -308,7 +315,10 @@ Expression lowerDefine(bool analyzed)(Expression olhs,Expression orhs,Location l
 									case "P":
 										reversed=ce.e;
 										reversed.loc=ce.e.loc;
-										auto negated=new UMinusExp(newarg);
+										auto tpl=cast(TupleExp)newarg;
+										enforce(tpl&&tpl.length==2);
+										// note: this ignores side-effects of rhs, if any
+										auto negated=new UMinusExp(tpl.e[0]);
 										negated.loc=newarg.loc;
 										newarg=negated;
 										break;
@@ -341,7 +351,7 @@ Expression lowerDefine(bool analyzed)(Expression olhs,Expression orhs,Location l
 											case "dup":
 												auto tpl=cast(TupleExp)newarg;
 												enforce(tpl&&tpl.length==2);
-												newrhs=new ForgetExp(tpl.e[0],tpl.e[1]);
+												newrhs=new ForgetExp(tpl.e[1],tpl.e[0]);
 												break;
 											default:
 												sc.error(format("cannot reverse quantum primitive '%s'",op),ce2.loc);
@@ -362,13 +372,10 @@ Expression lowerDefine(bool analyzed)(Expression olhs,Expression orhs,Location l
 			}
 			if(!newrhs) newrhs=new CallExp(reversed,newarg,ce.isSquare,ce.isClassical);
 			newrhs.loc=newarg.loc;
-			auto d2=lowerDefine!analyzed(newlhs,newrhs,loc,sc);
-			d2.loc=loc;
-			if(d1) return res=new CompoundExp([d1,d2]);
-			return d2;
+			return lowerDefine!analyzed(newlhs,newrhs,loc,sc);
 		}
 	}
-	sc.error("expression not supported as definition left-hand side",lhs.loc);
+	sc.error("expression not supported as definition left-hand side",olhs.loc);
 	return error();
 }
 // rev(x:=y;) ⇒ y:=x;
@@ -378,9 +385,7 @@ Expression lowerDefine(bool analyzed)(Expression olhs,Expression orhs,Location l
 
 Expression lowerDefine(bool analyzed)(DefineExp e,Scope sc){
 	if(e.sstate==SemState.error) return e;
-	bool validDefLhs=cast(Identifier)e.e1||cast(IndexExp)e.e1;
-	if(auto tpl=cast(TupleExp)e.e1) validDefLhs=tpl.e.all!(e=>cast(Identifier)e||cast(IndexExp)e);
-	if(validDefLhs) return null;
+	if(validDefLhs!analyzed(e.e1,sc)) return null;
 	return lowerDefine!analyzed(e.e1,e.e2,e.loc,sc);
 }
 FunctionDef reverseFunction(FunctionDef fd)in{
@@ -391,7 +396,7 @@ FunctionDef reverseFunction(FunctionDef fd)in{
 	Expression[] constArgTypes1; // TODO: get rid of code dupliction
 	Expression[] argTypes;
 	Expression[] constArgTypes2;
-	Expression[] returnTypes;
+	Expression returnType;
 	if(!ft.isTuple){
 		assert(ft.isConst.length==1);
 		if(ft.isConst[0]) constArgTypes1=[ft.dom];
@@ -407,28 +412,23 @@ FunctionDef reverseFunction(FunctionDef fd)in{
 		argTypes=iota(numConstArgs1,numConstArgs1+numArgs).map!(i=>tpl[i]).array;
 		constArgTypes2=iota(numConstArgs1+numArgs,tpl.length).map!(i=>tpl[i]).array;
 	}
-	if(argTypes.length==0){
-		assert(constArgTypes2.length==0);
-		swap(constArgTypes1,constArgTypes2);
-	}
 	enforce(!argTypes.any!(t=>t.hasClassicalComponent()),"reversed function cannot have classical components in consumed arguments");
-	if(auto tpl=ft.cod.isTupleTy){
-		returnTypes=iota(tpl.length).map!(i=>tpl[i]).array;
-	}else returnTypes=[ft.cod];
-
-	auto nargTypes=constArgTypes1~returnTypes~constArgTypes2;
+	returnType=ft.cod;
+	auto nargTypes=constArgTypes1~[returnType]~constArgTypes2;
 	auto nreturnTypes=argTypes;
 	auto dom=nargTypes.length==1?nargTypes[0]:tupleTy(nargTypes);
 	auto cod=nreturnTypes.length==1?nreturnTypes[0]:tupleTy(nreturnTypes);
-	auto isConst=chain(true.repeat(constArgTypes1.length),false.repeat(returnTypes.length),true.repeat(constArgTypes2.length)).array;
+	auto isConst=chain(true.repeat(constArgTypes1.length),only(returnType.impliesConst()),true.repeat(constArgTypes2.length)).array;
 	auto annotation=ft.annotation;
-	auto rpnames=iota(returnTypes.length).map!(_=>freshName()).array;
-	auto pnames=chain(fd.params[0..constArgTypes1.length].map!(p=>p.getName),rpnames,fd.params[chain(constArgTypes1,argTypes).length..$].map!(p=>p.getName));
 	auto ret=fd.body_.s.length?cast(ReturnExp)fd.body_.s[$-1]:null;
 	if(!ret){
 		sc.error("reversing early returns not supported yet",fd.loc);
 		return null;
 	}
+	string rpname;
+	if(auto id=cast(Identifier)ret.e) rpname=(id.meaning&&id.meaning.name?id.meaning.name:id).name;
+	else rpname=freshName();
+	auto pnames=chain(fd.params[0..constArgTypes1.length].map!(p=>p.name.name),only(rpname),fd.params[chain(constArgTypes1,argTypes).length..$].map!(p=>p.name.name));
 	auto params=iota(nargTypes.length).map!((i){
 		auto pname=new Identifier(pnames[i]);
 		pname.loc=fd.loc;
@@ -436,13 +436,9 @@ FunctionDef reverseFunction(FunctionDef fd)in{
 		param.loc=pname.loc;
 		return param;
 	}).array;
-	auto makeRet(size_t i){
-		Expression id=new Identifier(rpnames[i]);
-		id.loc=ret.loc;
-		id.type=returnTypes[i];
-		return id;
-	}
-	auto retRhs=returnTypes.length==1?makeRet(0):new TupleExp(iota(returnTypes.length).map!makeRet.array);
+	auto retRhs=new Identifier(rpname);
+	retRhs.loc=ret.loc;
+	retRhs.type=returnType;
 	retRhs.loc=ret.loc;
 	auto body_=new CompoundExp([]);
 	body_.loc=fd.body_.loc;
@@ -452,26 +448,37 @@ FunctionDef reverseFunction(FunctionDef fd)in{
 	result.scope_=sc;
 	result=cast(FunctionDef)presemantic(result,sc);
 	assert(!!result);
-	auto retDef=lowerDefine!true(ret.e,retRhs,ret.loc,result.fscope_);
-	auto argNames=fd.params[constArgTypes1.length..constArgTypes1.length+argTypes.length].map!(p=>p.getName);
+	bool retDefNecessary=(returnType!=unit||!cast(TupleExp)ret.e)&&!cast(Identifier)ret.e;
+	auto retDef=retDefNecessary?lowerDefine!true(ret.e,retRhs,ret.loc,result.fscope_):null;
+	auto argNames=fd.params[constArgTypes1.length..constArgTypes1.length+argTypes.length].map!(p=>p.name.name);
 	auto makeArg(size_t i){
-		Expression id=new Identifier(argNames[i]);
-		id.loc=ret.loc;
-		id.type=argTypes[i];
-		return id;
+		if(argTypes[i]==unit){ // unit is classical yet can be consumed
+			Expression r=new TupleExp([]);
+			r.loc=ret.loc;
+			r.type=unit;
+			return r;
+		}else{
+			Expression id=new Identifier(argNames[i]);
+			id.loc=ret.loc;
+			id.type=argTypes[i];
+			return id;
+		}
 	}
 	auto argExp=argTypes.length==1?makeArg(0):new TupleExp(iota(argTypes.length).map!makeArg.array);
 	argExp.loc=fd.loc; // TODO: use precise parameter locations
 	Expression argRet=new ReturnExp(argExp);
 	argRet.loc=argExp.loc;
 	Expression[] statements;
-	body_.s=mergeCompound((returnTypes.length||!cast(TupleExp)ret.e?[retDef]:[])~reverseStatements(fd.body_.s[0..$-1],fd.fscope_)~[argRet]);
-	/+writeln(fd);
-	writeln("-reverse→");
-	writeln(result);+/
+	body_.s=mergeCompound((retDef?[retDef]:[])~reverseStatements(fd.body_.s[0..$-1],fd.fscope_)~[argRet]);
+	import options;
+	if(opt.dumpReverse){
+		writeln(fd);
+		writeln("-reverse→");
+		writeln(result);
+	}
 	result=functionDefSemantic(result,sc);
 	enforce(result.sstate==SemState.completed,text("semantic errors while reversing function"));
-	result.reversed=fd;
+	if(argTypes.length==1) result.reversed=fd;
 	fd.reversed=result;
 	return result;
 }
@@ -497,7 +504,7 @@ ComputationClass join(ComputationClass a,ComputationClass b){
 
 ComputationClass classifyExpression(Expression e){
 	with(ComputationClass){
-		if(e.type.isClassical()&&!e.consumes) return classical;
+		if(isClassicalExp(e)) return classical;
 		if(e.type.hasClassicalComponent()) return mixed;
 		return quantum;
 	}

@@ -48,11 +48,11 @@ class VarDecl: Declaration{
 	override VarDecl copyImpl(CopyArgs args){
 		enforce(!args.preserveSemantic,"TODO");
 		//return new VarDecl(dtype.copy(args));
-		auto r=new VarDecl(name.copy(args));
+		auto r=new VarDecl(name?name.copy(args):null);
 		if(dtype) r.dtype=dtype.copy(args);
 		return r;
 	}
-	override string toString(){ return getName~(dtype?": "~dtype.toString():vtype?": "~vtype.toString():""); }
+	override string toString(){ return (isConst?"const ":"")~getName~(dtype?": "~dtype.toString():vtype?": "~vtype.toString():""); }
 	@property override string kind(){ return "variable"; }
 
 	override bool isLinear(){
@@ -71,12 +71,12 @@ class Parameter: VarDecl{
 	}
 	override Parameter copyImpl(CopyArgs args){
 		enforce(!args.preserveSemantic,"TODO");
-		return new Parameter(isConst,name.copy(args),dtype);
+		return new Parameter(isConst,name?name.copy(args):null,dtype?dtype.copy(args):dtype);
 	}
 	override bool isLinear(){
 		return !isConst&&(!vtype||!vtype.isClassical());
 	}
-	override string toString(){ return getName~(dtype?": "~dtype.toString():""); }
+	override string toString(){ return (isConst?"const ":"")~getName~(dtype?": "~dtype.toString():""); }
 	@property override string kind(){ return "parameter"; }
 }
 
@@ -94,7 +94,9 @@ class FunctionDef: Declaration{
 	}
 	override FunctionDef copyImpl(CopyArgs args){
 		enforce(!args.preserveSemantic,"TODO");
-		return new FunctionDef(name.copy(args),params.map!(p=>p.copy(args)).array,isTuple,rret?rret.copy(args):null,body_?body_.copy(args):null);
+		auto r=new FunctionDef(name?name.copy(args):null,params.map!(p=>p.copy(args)).array,isTuple,rret?rret.copy(args):null,body_?body_.copy(args):null);
+		r.annotation=annotation;
+		return r;
 	}
 	override string toString(){
 		string d=isSquare?"[]":"()";
@@ -155,7 +157,7 @@ class DatParameter: Parameter{
 		super(false,name,type);
 	}
 	override DatParameter copyImpl(CopyArgs args){
-		return new DatParameter(variance,name.copy(args),dtype.copy(args));
+		return new DatParameter(variance,name?name.copy(args):null,dtype.copy(args));
 	}
 	override string toString(){
 		final switch(variance)with(Variance){
@@ -185,7 +187,7 @@ class DatDecl: Declaration{
 		this.body_=body_;
 	}
 	override DatDecl copyImpl(CopyArgs args){
-		return new DatDecl(name.copy(args),hasParams,params.map!(p=>p.copy(args)).array,isTuple,isQuantum,body_.copy(args));
+		return new DatDecl(name?name.copy(args):null,hasParams,params.map!(p=>p.copy(args)).array,isTuple,isQuantum,body_.copy(args));
 	}
 	override string toString(){
 		return "dat "~getName~(hasParams?text("[",params.map!(to!string).joiner(","),"]"):"")~body_.toString();

@@ -42,6 +42,7 @@ struct Options{
 	bool noCheck=true;
 	bool noNormalize=false;
 	bool trace=false;
+	bool dumpReverse=false;
 	bool expectation=false;
 	IntegrationLevel integrationLevel=IntegrationLevel.full;
 	OutputForm outputForm;

@@ -31,7 +31,8 @@ abstract class Expression: Node{
 	}
 	abstract Expression copyImpl(CopyArgs args);
 	final T copy(this T)(CopyArgs args=CopyArgs.init){
-		auto r=(cast(T)this).copyImpl(args);
+		auto self=cast(T)this;
+		auto r=self.copyImpl(args);
 		assert(!!r);
 		if(args.preserveSemantic){
 			r.sstate=sstate;
@@ -153,6 +154,7 @@ abstract class Expression: Node{
 		return false;
 	}
 	bool impliesConst(){
+		if(auto tpl=isTupleTy()) if(tpl.length==0) return false;
 		return isClassical();
 	}
 	bool hasClassicalComponent(){
@@ -251,7 +253,9 @@ class LiteralExp: Expression{
 		this.lit=lit;
 	}
 	override LiteralExp copyImpl(CopyArgs args){
-		return new LiteralExp(lit);
+		auto r=new LiteralExp(lit);
+		r.type=type;
+		return r;
 	}
 	override string toString(){
 		return _brk(lit.toString());
@@ -287,7 +291,7 @@ class Identifier: Expression{
 	}
 	override Identifier copyImpl(CopyArgs args){
 		enforce(!args.preserveSemantic,"TODO");
-		if(meaning&&meaning.name) return new Identifier(meaning.name.name); // TODO: this is a hack
+		if(meaning&&meaning.name&&meaning.name.name.length) return new Identifier(meaning.name.name); // TODO: this is a hack
 		return new Identifier(name);
 	}
 	override string toString(){return _brk((classical?"!":"")~name);}
@@ -1187,7 +1191,7 @@ class ForgetExp: Expression{
 		this.val=val;
 	}
 	override ForgetExp copyImpl(CopyArgs args){
-		return new ForgetExp(var.copy(args),val.copy(args));
+		return new ForgetExp(var.copy(args),val?val.copy(args):null);
 	}
 	override string toString(){ return _brk("forget("~var.toString()~(val?"="~val.toString():"")~")"); }
 

@@ -781,10 +781,12 @@ class ProductTy: Type{
 		assert(!hasFreeVar(nname));
 		assert(!names.canFind(nname));
 	}out(r){
-		assert(r.names.canFind(nname));
-		assert(!r.names.canFind(oname));
+		if(oname!=""&&oname!=nname){
+			assert(r.names.canFind(nname));
+			assert(!r.names.canFind(oname));
+		}
 	}body{
-		if(oname==nname) return this;
+		if(oname==""||oname==nname) return this;
 		import std.algorithm;
 		auto i=names.countUntil(oname);
 		assert(i!=-1);
@@ -796,8 +798,9 @@ class ProductTy: Type{
 	private ProductTy relabelAway(string oname)in{
 		assert(names.canFind(oname));
 	}out(r){
-		assert(!r.names.canFind(oname));
+		if(oname!="") assert(!r.names.canFind(oname));
 	}body{
+		if(oname=="") return this;
 		auto nname=oname;
 		while(names.canFind(nname)||hasFreeVar(nname)) nname~="'";
 		return relabel(oname,nname);
@@ -823,6 +826,7 @@ class ProductTy: Type{
 	}
 	override ProductTy substituteImpl(Expression[string] subst){
 		foreach(n;names){
+			if(n=="") continue;
 			bool ok=true;
 			foreach(k,v;subst) if(v.hasFreeVar(n)) ok=false;
 			if(ok) continue;

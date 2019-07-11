@@ -1,4 +1,4 @@
-// Written in the D programming language
+x// Written in the D programming language
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
 
 import std.array,std.algorithm,std.range,std.exception;
@@ -503,8 +503,9 @@ CompoundDecl compoundDeclSemantic(CompoundDecl cd,Scope sc){
 	return cd;
 }
 
-Expression statementSemantic(Expression e,Scope sc){
+Expression statementSemantic(Expression e,Scope sc)in{
 	assert(sc.allowsLinear());
+}do{
 	scope(exit){
 		sc.pushConsumed();
 		sc.resetConst();
@@ -779,10 +780,12 @@ Expression defineSemantic(DefineExp be,Scope sc){
 	if(cast(IndexExp)be.e1) return indexReplaceSemantic(be,sc);
 	if(auto tpl=cast(TupleExp)be.e1) if(tpl.e.any!(x=>!!cast(IndexExp)x)) return permuteSemantic(be,sc);
 	import reverse;
-	if(auto e=lowerDefine!false(be,sc)){
-		if(e.sstate!=SemState.error)
-			return statementSemantic(e,sc);
-		return e;
+	if(sc.allowsLinear){
+		if(auto e=lowerDefine!false(be,sc)){
+			if(e.sstate!=SemState.error)
+				return statementSemantic(e,sc);
+			return e;
+		}
 	}
 	bool success=true;
 	auto e2orig=be.e2;
@@ -891,7 +894,7 @@ Expression indexReplaceSemantic(DefineExp be,Scope sc)in{ // TODO: generalize de
 		be.sstate=SemState.error;
 		sc.indexToReplace=null;
 	}
-	if(id) addVar(id.name,id.type,be.loc,sc);
+	if(id&&id.type) addVar(id.name,id.type,be.loc,sc);
 	be.type=unit;
 	if(be.sstate!=SemState.error) be.sstate=SemState.completed;
 	return be;
@@ -924,6 +927,7 @@ Expression permuteSemantic(DefineExp be,Scope sc)in{ // TODO: generalize defineS
 	}
 	foreach(e;chain(tpl1.e,tpl2.e)){
 		if(auto idx=cast(IndexExp)e){
+			idx.byRef=true;
 			bool check(IndexExp e){
 				if(e&&(!e.a[0].isLifted(sc)||e.a[0].type&&!e.a[0].type.isClassical())){
 					sc.error("index in permute statement must be 'lifted' and classical",e.a[0].loc);
@@ -1373,7 +1377,7 @@ Expression callSemantic(CallExp ce,Scope sc,ConstResult constResult){
 					Expression[] constArgTypes1;
 					Expression[] argTypes;
 					Expression[] constArgTypes2;
-					Expression[] returnTypes;
+					Expression returnType;
 					bool ok=true;
 					if(!ft2.isTuple){
 						assert(ft2.isConst.length==1);
@@ -1394,33 +1398,23 @@ Expression callSemantic(CallExp ce,Scope sc,ConstResult constResult){
 						argTypes=iota(numConstArgs1,numConstArgs1+numArgs).map!(i=>tpl[i]).array;
 						constArgTypes2=iota(numConstArgs1+numArgs,tpl.length).map!(i=>tpl[i]).array;
 					}
-					if(argTypes.length==0){
-						if(constArgTypes1.length==1){
-							if(auto tpl=constArgTypes1[0].isTupleTy())
-								constArgTypes1=iota(tpl.length).map!(i=>tpl[i]).array;
-						}
-						assert(constArgTypes2.length==0);
-						swap(constArgTypes1,constArgTypes2);
-					}
 					if(argTypes.any!(t=>t.hasClassicalComponent())){
 						ok=false;
 						sc.error("reversed function cannot have classical components in consumed arguments",ce.arg.loc);
 						ce.sstate=SemState.error;
 					}
-					if(auto tpl=ft2.cod.isTupleTy){
-						returnTypes=iota(tpl.length).map!(i=>tpl[i]).array;
-					}else returnTypes=[ft2.cod];
-					if(returnTypes.any!(t=>t.hasClassicalComponent())){
+					returnType=ft2.cod;
+					if(returnType.hasClassicalComponent()){
 						ok=false;
 						sc.error("reversed function cannot have classical components in return value",ce.arg.loc);
 						ce.sstate=SemState.error;
 					}
 					if(ok){
-						auto nargTypes=constArgTypes1~returnTypes~constArgTypes2;
+						auto nargTypes=constArgTypes1~[returnType]~constArgTypes2;
 						auto nreturnTypes=argTypes;
 						auto dom=nargTypes.length==1?nargTypes[0]:tupleTy(nargTypes);
 						auto cod=nreturnTypes.length==1?nreturnTypes[0]:tupleTy(nreturnTypes);
-						auto isConst=chain(true.repeat(constArgTypes1.length),false.repeat(returnTypes.length),true.repeat(constArgTypes2.length)).array;
+						auto isConst=chain(true.repeat(constArgTypes1.length),only(returnType.impliesConst()),true.repeat(constArgTypes2.length)).array;
 						auto annotation=ft2.annotation;
 						ce.type=funTy(isConst,dom,cod,false,isConst.length!=1,annotation,true);
 						return ce;
@@ -2038,7 +2032,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 		bool typeExplicitConversion(Expression from,Expression to,TypeAnnotationType annotationType){
 			if(isSubtype(from,to)) return true;
 			if(annotationType>=annotationType.conversion){
-				if(isSubtype(from,ℤt(false))&&(isUint(to)||isInt(to))&&from.isClassical()>=to.isClassical())
+				if(isSubtype(from,ℤt(true))&&(isUint(to)||isInt(to))&&to.isClassical())
 					return true;
 				if(isUint(from)&&isSubtype(ℕt(from.isClassical()),to))
 					return true;
@@ -2050,7 +2044,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 				if(ce1&&(isInt(ce1)||isUint(ce1))&&(isSubtype(vectorTy(Bool(ce1.isClassical()),ce1.arg),to)||isSubtype(arrayTy(Bool(ce1.isClassical())),to)))
 					return true;
 				auto ce2=cast(CallExp)to;
-				if(ce2&&(isInt(ce2)||isUint(ce2))&&(isSubtype(from,vectorTy(Bool(ce2.isClassical()),ce2.arg))||isSubtype(from,arrayTy(Bool(ce2.isClassical())))))
+				if(ce2&&(isInt(ce2)||isUint(ce2))&&(isSubtype(from,vectorTy(Bool(ce2.isClassical()),ce2.arg))||annotationType==TypeAnnotationType.coercion&&isSubtype(from,arrayTy(Bool(ce2.isClassical())))))
 					return true;
 			}
 			auto tpl1=from.isTupleTy(), tpl2=to.isTupleTy();
@@ -2805,7 +2799,7 @@ Expression handleQuantumPrimitive(CallExp ce,Scope sc){
 			ce.type = productTy([true],["`τ"],typeTy,productTy([true,true],["`n","`x"],tupleTy([ℕt(true),varTy("`τ",typeTy)]),vectorTy(varTy("`τ",typeTy),varTy("`n",ℕt(true))),false,true,Annotation.qfree,true),true,false,Annotation.qfree,true);
 			break;
 		case "reverse":
-			ce.type = productTy([true,true,true],["`τ","`χ","`φ"],tupleTy([typeTy,typeTy,typeTy]),funTy([true],funTy([false,true],tupleTy([varTy("`τ",typeTy),varTy("`χ",typeTy)]),varTy("`φ",typeTy),false,true,Annotation.mfree,true),funTy([false,true],tupleTy([varTy("`φ",typeTy),varTy("`χ",typeTy)]),varTy("`τ",typeTy),false,true,Annotation.mfree,true),false,false,Annotation.qfree,true),true,true,Annotation.qfree,true);
+			ce.type = productTy([true,true,true],["`τ","`χ","`φ"],tupleTy([typeTy,typeTy,typeTy]),funTy([true],funTy([true,false],tupleTy([varTy("`τ",typeTy),varTy("`χ",typeTy)]),varTy("`φ",typeTy),false,true,Annotation.mfree,true),funTy([true,false],tupleTy([varTy("`τ",typeTy),varTy("`φ",typeTy)]),varTy("`χ",typeTy),false,true,Annotation.mfree,true),false,false,Annotation.qfree,true),true,true,Annotation.qfree,true);
 			break;
 		case "M":
 			ce.type = productTy([true],["`τ"],typeTy,funTy([false],varTy("`τ",typeTy),varTy("`τ",typeTy,true),false,false,Annotation.none,true),true,false,Annotation.qfree,true);
