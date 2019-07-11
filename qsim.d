@@ -49,7 +49,7 @@ string formatQValue(QState qs,QState.Value value){ // (only makes sense if value
 	return r;
 }
 
-enum zeroThreshold=1e-16;
+enum zeroThreshold=1e-15; // TODO: make configurable
 bool isToplevelClassical(Expression ty)in{
 	assert(!!ty);
 }do{
@@ -105,7 +105,7 @@ struct QState{
 	void add(Σ k,C v){
 		if(k in state) state[k]+=v;
 		else state[k]=v;
-		if(abs(state[k]) < zeroThreshold) state.remove(k);
+		if(abs(state[k]) <= zeroThreshold) state.remove(k);
 	}
 	void updateRelabeling(ref Σ.Ref[Σ.Ref] relabeling,Value to,Value from){
 		auto tag=to.tag;
