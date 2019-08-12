@@ -74,7 +74,7 @@ def remove_zeros(names, numbers):
     return names, numbers
 
 
-# path = './summer18/contest/'
+# path = '../summer18/contest/'
 # path = './top10submissions/winter19/'
 path = './top10submissions/summer18/'
 # path = './temp/'
