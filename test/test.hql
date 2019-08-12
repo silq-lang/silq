@@ -1,5 +1,10 @@
 /+
 def main(){
+	print(measure(H(0:𝔹)));
+}
++/
+/+
+def main(){
 	x:=0:𝔹;
 	forget(x=1:𝔹);
 }

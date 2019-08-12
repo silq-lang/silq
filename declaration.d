@@ -9,7 +9,7 @@ abstract class Declaration: Expression{
 	Scope scope_;
 	this(Identifier name){ this.name=name; }
 	override @property string kind(){ return "declaration"; }
-	final @property string getName(){ return (rename?rename:name).name; }
+	final @property string getName(){ auto r=rename?rename:name; return r?r.name:""; }
 	override string toString(){ return getName; }
 
 	bool isLinear(){ return true; }

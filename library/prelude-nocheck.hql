@@ -58,8 +58,13 @@ def max[n:!ℕ](x:!ℝ^n)lifted:!ℝ{
 	return r;
 }
 
-def array[const τ]lifted(n: !ℕ,const x:τ)lifted:τ[]⇒(quantumPrimitive("array"):!(Π[τ:*]lifted. !ℕ×const τ→lifted τ[]))(n,x);
-def vector[const τ:*]lifted(n:!ℕ,const x:τ)lifted:τ^n⇒(quantumPrimitive("vector"):!(Π[τ:*]lifted. Π(n:!ℕ,const x:τ)lifted. τ^n))(n,x);
+def array[τ:*](n: !ℕ,const x:τ)lifted:τ[]⇒(quantumPrimitive("array"):!(Π[τ:*]lifted. !ℕ×const τ→lifted τ[]))(n,x);
+def vector[τ:*](n:!ℕ,const x:τ)lifted:τ^n⇒(quantumPrimitive("vector"):!(Π[τ:*]lifted. Π(n:!ℕ,const x:τ)lifted. τ^n))(n,x);
+
+def print[τ:*](x:!τ)lifted{
+	def printImpl(x:!τ)lifted:𝟙;
+	printImpl(x);
+}
 
 /+
 // first-class inference
