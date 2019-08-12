@@ -11,11 +11,25 @@ import options;
 import distrib,error;
 import hashtable,util;
 import expression,declaration,type;
-import semantic_,scope_;
+import lexer,semantic_,scope_;
 import util;
 
 import std.random, sample;
 import std.complex, std.math;
+
+class LocalizedException: Exception{
+	Location loc;
+	Location[] stackTrace;
+	this(Exception e,Location loc){
+		super(e.msg,e.file,e.line,e);
+		this.loc=loc;
+	}
+}
+LocalizedException localizedException(Exception e,Location loc){
+	if(auto r=cast(LocalizedException)e) return r;
+	return new LocalizedException(e,loc);
+}
+
 
 class QSim{
 	this(string sourceFile){
@@ -29,7 +43,14 @@ class QSim{
 		auto init=QState.unit();
 		auto interpreter=Interpreter!QState(def,def.body_,init,false);
 		auto ret=QState.empty();
-		interpreter.runFun(ret);
+		try{
+			interpreter.runFun(ret);
+		}catch(LocalizedException ex){
+			err.error(ex.msg,ex.loc);
+			foreach(loc;ex.stackTrace)
+				err.note("called from here",loc);
+			return QState.empty();
+		}
 		assert(!!def.ftype);
 		bool isTuple = !!def.ftype.cod.isTupleTy;
 		return ret;
@@ -1168,7 +1189,7 @@ struct QState{
 		enforce(ctx!in vars);
 		vars[ctx]=rhs;
 	}
-	Value call(FunctionDef fun,Value thisExp,Value arg,Scope sc,Value* context,Expression type){
+	Value call(FunctionDef fun,Value thisExp,Value arg,Scope sc,Value* context,Expression type,Location loc){
 		Value fix(Value arg){
 			return arg; // TODO
 		}
@@ -1214,13 +1235,18 @@ struct QState{
 		auto intp=Interpreter!QState(fun,fun.body_,ncur,true);
 		auto nnstate=QState.empty();
 		nnstate.popFrameCleanup=ncur.popFrameCleanup;
-		intp.runFun(nnstate);
+		try{
+			intp.runFun(nnstate);
+		}catch(LocalizedException ex){
+			ex.stackTrace~=loc;
+			throw ex;
+		}
 		this=nnstate.popFrame(this.popFrameCleanup);
 		return fix(nnstate.vars["`value"]);
 	}
-	Value call(Value fun,Value arg,Expression type){
+	Value call(Value fun,Value arg,Expression type,Location loc){
 		enforce(fun.tag==Value.Tag.closure);
-		return call(fun.closure.fun,nullValue,arg,null,fun.closure.context,type);
+		return call(fun.closure.fun,nullValue,arg,null,fun.closure.context,type,loc);
 	}
 	QState assertTrue(Value val)in{
 		assert(val.type==Bool(true));
@@ -1502,10 +1528,14 @@ struct Interpreter(QState){
 	QState.Value runExp(Expression e){
 		if(!qstate.state.length) return QState.Value.init;
 		QState.Value doIt()(Expression e){
-			auto r=doIt2(e);
-			if(e.constLookup&&consumeConst(e))
-				r=r.consumeOnRead();
-			return r;
+			try{
+				auto r=doIt2(e);
+				if(e.constLookup&&consumeConst(e))
+					r=r.consumeOnRead();
+				return r;
+			}catch(Exception ex){
+				throw localizedException(ex,e.loc);
+			}
 		}
 		// TODO: get rid of code duplication
 		QState.Value doIt2(Expression e){
@@ -1617,7 +1647,7 @@ struct Interpreter(QState){
 					}
 				}
 				auto fun=doIt(ce.e), arg=doIt(ce.arg);
-				return qstate.call(fun,arg,ce.type);
+				return qstate.call(fun,arg,ce.type,ce.loc);
 			}
 			if(auto fe=cast(ForgetExp)e){
 				if(fe.val) forget(runExp(fe.var),runExp(fe.val));
@@ -1915,6 +1945,13 @@ struct Interpreter(QState){
 		lhs.forget(qstate);
 	}
 	void runStm(Expression e,ref QState retState){
+		try{
+			runStm2(e,retState);
+		}catch(Exception ex){
+			throw localizedException(ex,e.loc);
+		}
+	}
+	void runStm2(Expression e,ref QState retState){
 		if(!qstate.state.length) return;
 		if(opt.trace){
 			writeln("state: ",qstate);

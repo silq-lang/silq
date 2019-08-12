@@ -49,7 +49,8 @@ int run(string path){
 			auto fun=functions["main"];
 			foreach(i;0..opt.numRuns){
 				auto qstate=be.run(fun,err);
-				writeln(qstate.formatQValue(qstate.vars["`value"]));
+				if("`value" in qstate.vars)
+					writeln(qstate.formatQValue(qstate.vars["`value"]));
 			}
 		}
 	}

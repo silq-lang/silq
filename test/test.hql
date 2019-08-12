@@ -1,4 +1,20 @@
-
+/+
+def main(){
+	x:=0:𝔹;
+	forget(x=1:𝔹);
+}
++/
+/+
+def main(){
+	def foo(){
+		def bar(){
+			return 1/0;
+		}
+		return bar();
+	}
+	return foo();
+}
++/
 /+
 def main(){
 	x:=[H(0:𝔹),H(1:𝔹)];
