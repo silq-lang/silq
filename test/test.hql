@@ -1,4 +1,58 @@
 /+
+def foo(i:!ℤ)(j:!ℤ)(k:!ℤ):!ℕ{
+	if i>0{ return 2*foo(i-1)(k)(j); }
+	if k>0{ return 3*foo(i)(k-1)(j); }
+	if j>0{ return 5*foo(i)(k)(j-1); }
+	return 1;
+}
+
+def bar(i:!ℤ)qfree{
+	x:=2;
+	return lambda(j:!ℤ)qfree{
+		y:=3;
+		return lambda(k:!ℤ)qfree:!ℕ{
+			z:=5;
+			if i>0{ return x*bar(i-1)(k)(j); }
+			if k>0{ return y*bar(i)(k-1)(j); }
+			if j>0{ return z*bar(i)(k)(j-1); }
+			return 1;
+		}
+	}
+}
+
+def baz(i:!ℤ)qfree{
+	x:=2;
+	return lambda(j:!ℤ)qfree:!ℤ!→qfree !ℕ{
+		y:=3;
+		return lambda(k:!ℤ)qfree{
+			z:=5;
+			if i>0{ return x*baz(i-1)(k)(j); }
+			if k>0{ return y*baz(i)(k-1)(j); }
+			if j>0{ return z*baz(i)(k)(j-1); }
+			return 1;
+		}
+	}
+}
+
+def qux(i:!ℤ)qfree:!ℤ!→qfree!ℤ!→qfree!ℕ{
+	x:=2;
+	return lambda(j:!ℤ)qfree{
+		y:=3;
+		return lambda(k:!ℤ)qfree{
+			z:=5;
+			if i>0{ return x*qux(i-1)(k)(j); }
+			if k>0{ return y*qux(i)(k-1)(j); }
+			if j>0{ return z*qux(i)(k)(j-1); }
+			return 1;
+		}
+	}
+}
+
+def main(){
+	return foo(1)(2)(3)+bar(1)(2)(3)+baz(1)(2)(3);
+}
++/
+/+
 def main(){
 	print(measure(H(0:𝔹)));
 }

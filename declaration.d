@@ -120,6 +120,7 @@ class FunctionDef: Declaration{
 	@property string contextName()in{assert(!!context);}body{ return context.getName; }
 	Expression ret; // return type
 	FunTy ftype;
+	void delegate(Expression)[] ftypeCallbacks; // called as soon as ftype has been determined
 	bool hasReturn;
 	bool isConstructor;
 	string[] retNames;

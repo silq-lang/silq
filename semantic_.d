@@ -270,14 +270,19 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 		return ce;
 	}
 	if(auto be=cast(DefineExp)expr){
-		if(auto id=cast(Identifier)be.e1){
+		VarDecl makeVar(Identifier id){
 			auto nid=new Identifier(id.name);
 			nid.loc=id.loc;
 			auto vd=new VarDecl(nid);
 			vd.loc=id.loc;
-			success&=sc.insert(vd);
+			if(be.e2.sstate!=SemState.error||!sc.lookupHere(nid,false,Lookup.probing))
+				success&=sc.insert(vd);
 			id.name=vd.getName;
 			id.scope_=sc;
+			return vd;
+		}
+		if(auto id=cast(Identifier)be.e1){
+			auto vd=makeVar(id);
 			auto de=new SingleDefExp(vd,be);
 			de.loc=be.loc;
 			propErr(vd,de);
@@ -287,13 +292,7 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 			foreach(exp;tpl.e){
 				auto id=cast(Identifier)exp;
 				if(!id) goto LnoIdTuple;
-				auto nid=new Identifier(id.name);
-				nid.loc=id.loc;
-				vds~=new VarDecl(nid);
-				vds[$-1].loc=id.loc;
-				success&=sc.insert(vds[$-1]);
-				id.name=vds[$-1].getName;
-				id.scope_=sc;
+				vds~=makeVar(id);
 			}
 			auto de=new MultiDefExp(vds,be);
 			de.loc=be.loc;
@@ -1592,6 +1591,11 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 	if(expr.sstate==SemState.started){
 		sc.error("cyclic dependency",expr.loc);
 		expr.sstate=SemState.error;
+		FunctionDef fd=null;
+		if(auto le=cast(LambdaExp)expr) fd=le.fd;
+		else if(auto id=cast(Identifier)expr) fd=cast(FunctionDef)id.meaning;
+		if(fd&&!fd.rret)
+			sc.note("possibly caused by missing return type annotation for recursive function",fd.loc);
 		return expr;
 	}
 	assert(expr.sstate==SemState.initial);
@@ -2381,6 +2385,8 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 	return expr;
 }
 bool setFtype(FunctionDef fd){
+	if(fd.ftype) return true;
+	if(!fd.ret) return false;
 	bool[] pc;
 	string[] pn;
 	Expression[] pty;
@@ -2395,14 +2401,13 @@ bool setFtype(FunctionDef fd){
 	}
 	assert(fd.isTuple||pty.length==1);
 	auto pt=fd.isTuple?tupleTy(pty):pty[0];
-	if(fd.ret){
-		if(!fd.ftype){
-			fd.ftype=productTy(pc,pn,pt,fd.ret,fd.isSquare,fd.isTuple,fd.annotation,!fd.context||fd.context.vtype==contextTy(true));
-			assert(fd.retNames==[]);
-		}
-		if(!fd.retNames) fd.retNames = new string[](fd.numReturns);
-		assert(fd.fscope_||fd.sstate==SemState.error);
-	}
+	fd.ftype=productTy(pc,pn,pt,fd.ret,fd.isSquare,fd.isTuple,fd.annotation,!fd.context||fd.context.vtype==contextTy(true));
+	assert(fd.retNames==[]);
+	if(!fd.retNames) fd.retNames = new string[](fd.numReturns);
+	assert(fd.fscope_||fd.sstate==SemState.error);
+	foreach(callback;fd.ftypeCallbacks)
+		callback(fd.ftype);
+	fd.ftypeCallbacks=[];
 	return true;
 }
 FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
@@ -2446,7 +2451,7 @@ FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 				sc.error("control flow might reach end of function (add return or assert(false) statement)",fd.loc);
 				fd.sstate=SemState.error;
 			}
-		}else if(!fd.ret) fd.ret=unit;
+		}
 	}else if(!fd.ret) fd.ret=unit;
 	setFtype(fd);
 	foreach(ref n;fd.retNames){
@@ -2479,8 +2484,9 @@ DatDecl datDeclSemantic(DatDecl dat,Scope sc){
 	return dat;
 }
 
-Expression determineType(ref Expression e,Scope sc){
-	/+if(auto le=cast(LambdaExp)e){
+void determineType(ref Expression e,Scope sc,void delegate(Expression) future){
+	if(e.type) return future(e.type);
+	if(auto le=cast(LambdaExp)e){
 		assert(!!le.fd);
 		if(!le.fd.scope_){
 			le.fd.scope_=sc;
@@ -2488,10 +2494,12 @@ Expression determineType(ref Expression e,Scope sc){
 			assert(!!le.fd);
 		}
 		if(auto ty=le.fd.ftype)
-			return ty;
-	}+/
+			return future(ty);
+		le.fd.ftypeCallbacks~=future;
+		return;
+	}
 	e=expressionSemantic(e,sc,ConstResult.no);
-	return e.type;
+	return future(e.type);
 }
 
 ReturnExp returnExpSemantic(ReturnExp ret,Scope sc){
@@ -2502,11 +2510,13 @@ ReturnExp returnExpSemantic(ReturnExp ret,Scope sc){
 		ret.sstate=SemState.error;
 		return ret;
 	}
-	auto ty=determineType(ret.e,sc);
-	if(!fd.rret && !fd.ret) fd.ret=ty;
-	setFtype(fd);
-	if(ret.e.sstate!=SemState.completed)
-		ret.e=expressionSemantic(ret.e,sc,ConstResult.no);
+	if(!fd.rret && !fd.ret){
+		determineType(ret.e,sc,(ty){
+			fd.ret=ty;
+			setFtype(fd);
+		});
+	}
+	ret.e=expressionSemantic(ret.e,sc,ConstResult.no);
 	if(cast(CommaExp)ret.e){
 		sc.error("use parentheses for multiple return values",ret.e.loc);
 		ret.sstate=SemState.error;
