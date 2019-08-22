@@ -1257,7 +1257,7 @@ struct QState{
 	}
 	Value readLocal(string s,bool constLookup){
 		auto r=vars[s];
-		if(!constLookup&&!r.isClassical()) vars.remove(s);
+		if(!constLookup&&r.type&&!r.isClassical()) vars.remove(s);
 		return r;
 	}
 	static Value readField(Value r,string s,bool constLookup){

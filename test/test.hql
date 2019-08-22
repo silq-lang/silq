@@ -1,4 +1,13 @@
 /+
+def main(){
+	def fib(n:!ℕ):!ℕ{
+		if n<=1{ return n; }
+		return fib(n sub 1)+fib(n sub 2);
+	}
+	return fib(3);
+}
++/
+/+
 def foo(i:!ℤ)(j:!ℤ)(k:!ℤ):!ℕ{
 	if i>0{ return 2*foo(i-1)(k)(j); }
 	if k>0{ return 3*foo(i)(k-1)(j); }
