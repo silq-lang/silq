@@ -36,7 +36,10 @@ class QSim{
 		this.sourceFile=sourceFile;
 	}
 	QState run(FunctionDef def,ErrorHandler err){
-		enforce(!def.params.length,"main function with parameters not supported in simulator");
+		if(def.params.length){
+			err.error("main function with parameters not supported in simulator",def.loc);
+			return QState.empty();
+		}
 		/+DExpr[string] fields;
 		foreach(i,a;def.params) fields[a.getName]=dVar(a.getName);
 		DExpr init=dRecord(fields);+/

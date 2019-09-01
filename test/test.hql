@@ -1,4 +1,14 @@
 /+
+def main(const x:𝔹){}
++/
+/+
+import qft;
+
+def main(){
+	return ([n:!ℕ]⇒reverse(QFT[n]))(QFT(45:int[10]));
+}
++/
+/+
 def main(){
 	def fib(n:!ℕ):!ℕ{
 		if n<=1{ return n; }
