@@ -2042,7 +2042,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 		bool typeExplicitConversion(Expression from,Expression to,TypeAnnotationType annotationType){
 			if(isSubtype(from,to)) return true;
 			if(annotationType>=annotationType.conversion){
-				if(isSubtype(from,ℤt(true))&&(isUint(to)||isInt(to))&&to.isClassical())
+				if(isSubtype(from,ℤt(true))&&(isUint(to)||isInt(to)))
 					return true;
 				if(isUint(from)&&isSubtype(ℕt(from.isClassical()),to))
 					return true;
