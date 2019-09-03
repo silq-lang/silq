@@ -1,4 +1,29 @@
 /+
+def main(){
+	x:=12;
+	y:=x as int[32];
+	return y;
+}
++/
+/+
+def thirds[a,n:!ℕ](x:a^n){
+	//(u:a^(n div 3))~(v:a^(n div 3))~w:=x; // TODO
+	//(u:a^(n div 3))~x:=x; // TODO
+	//(v:a^(n div 3))~w:=x; // TODO
+	//return (u,v,w);
+	return x;
+}
+def main(){
+	return thirds(0,1,2,3,4,5,6,7,8,9);
+}
++/
+/+
+def main(){
+	(x,)~(y,)~(z,):=(0,1,2);
+	return (x,y,z);
+}
++/
+/+
 def foo[n:!ℕ](x:𝔹^(1+n sub (n sub 3))):𝔹^4⇒x;
 +/
 /+
