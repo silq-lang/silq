@@ -50,7 +50,17 @@ abstract class Expression: Node{
 	bool isCompound(){ return false; }
 	bool isConstant(){ return false; }
 
-	Expression eval(){ return this; }
+	final Expression eval(){
+		auto ntype=!type?null:type is this?this:type.eval();
+		auto r=evalImpl(ntype);
+		if(!r.type) r.type=ntype;
+		else if(r is this) return r;
+		else assert(r.type==ntype,text(this," ",typeid(this)));
+		r.loc=loc;
+		r.sstate=SemState.completed;
+		return r;
+	}
+	abstract Expression evalImpl(Expression ntype);
 
 	final Expression substitute(string name,Expression exp){
 		return substitute([name:exp]);
@@ -229,6 +239,11 @@ class TypeAnnotationExp: Expression{
 	override Annotation getAnnotation(){
 		return e.getAnnotation();
 	}
+	override Expression evalImpl(Expression ntype){
+		auto ne = e.eval(), nt = t.eval();
+		if(ne == e && nt == t && ntype == type) return this;
+		return new TypeAnnotationExp(ne,nt,annotationType);
+	}
 }
 
 // workaround for the bug:
@@ -241,6 +256,7 @@ class ErrorExp: Expression{
 		return new ErrorExp();
 	}
 
+	override Expression evalImpl(Expression ntype){ return this; }
 	mixin VariableFree;
 	override int componentsImpl(scope int delegate(Expression) dg){
 		return 0;
@@ -275,6 +291,10 @@ class LiteralExp: Expression{
 	}
 
 	override Annotation getAnnotation(){ return Annotation.qfree; }
+	override Expression evalImpl(Expression ntype){
+		if(ntype == type) return this;
+		return new LiteralExp(lit);
+	}
 	override int componentsImpl(scope int delegate(Expression) dg){ return 0; }
 	mixin VariableFree;
 }
@@ -362,7 +382,10 @@ class Identifier: Expression{
 	}
 
 	override Annotation getAnnotation(){ return Annotation.qfree; }
-
+	override Expression evalImpl(Expression ntype){
+		if(ntype==type) return this;
+		return new Identifier(name);
+	}
 	// semantic information:
 	Declaration meaning;
 	Scope scope_;
@@ -379,6 +402,7 @@ class PlaceholderExp: Expression{
 	override string toString(){ return _brk("?"); }
 	override @property string kind(){ return "placeholder"; }
 
+	override Expression evalImpl(Expression ntype){ return this; }
 	mixin VariableFree;
 	override int componentsImpl(scope int delegate(Expression) dg){ return 0; }
 }
@@ -426,6 +450,12 @@ class UnaryExp(TokenType op): Expression{
 	}
 
 	override Annotation getAnnotation(){ return e.getAnnotation(); }
+
+	override Expression evalImpl(Expression ntype){
+		auto ne=e.eval();
+		if(ne == e && ntype == type) return this;
+		return new UnaryExp!op(ne);
+	}
 }
 class PostfixExp(TokenType op): Expression{
 	Expression e;
@@ -453,6 +483,12 @@ class PostfixExp(TokenType op): Expression{
 		if(!pe) return false;
 		return e.unify(pe.e,subst,meet);
 	}
+
+	override Expression evalImpl(Expression ntype){
+		auto ne=e.eval();
+		if(ne==e&&ntype==type) return this;
+		return new PostfixExp!op(ne);
+	}
 }
 
 class IndexExp: Expression{ //e[a...]
@@ -466,7 +502,7 @@ class IndexExp: Expression{ //e[a...]
 	override string toString(){
 		return _brk(e.toString()~'['~join(map!(to!string)(a),",")~(trailingComma?",":"")~']');
 	}
-	override Expression eval(){
+	override Expression evalImpl(Expression ntype){
 		if(a.length!=1) return this;
 		auto ne=e.eval();
 		auto na=a.dup;
@@ -478,14 +514,12 @@ class IndexExp: Expression{ //e[a...]
 			if(auto le=cast(LiteralExp)na[0]){
 				if(le.lit.type==Tok!"0"&&!le.lit.str.canFind(".")){
 					auto idx=ℤ(le.lit.str);
-					if(0<=idx&&idx<exprs.length) return exprs[cast(size_t)idx];
+					if(0<=idx&&idx<exprs.length) return exprs[cast(size_t)idx].evalImpl(ntype);
 				}
 			}
 		}
-		if(ne==e && na==a) return this;
-		auto r=new IndexExp(ne,na,trailingComma);
-		r.loc=loc;
-		return r;
+		if(ne==e && na==a && ntype == type) return this;
+		return new IndexExp(ne,na,trailingComma);
 	}
 	override int freeVarsImpl(scope int delegate(string) dg){
 		if(auto r=e.freeVarsImpl(dg)) return r;
@@ -529,7 +563,7 @@ class SliceExp: Expression{
 	override string toString(){
 		return _brk(e.toString()~'['~l.toString()~".."~r.toString()~']');
 	}
-	override Expression eval(){
+	override Expression evalImpl(Expression ntype){
 		auto ne=e.eval(), nl=l.eval(), nr=r.eval();
 		Expression[] exprs;
 		auto tpl=cast(TupleExp)ne, arr=cast(ArrayExp)ne;
@@ -558,10 +592,8 @@ class SliceExp: Expression{
 				}
 			}
 		}
-		if(ne==e && nl==l && nr==r) return this;
-		auto res=new SliceExp(ne,nl,nr);
-		res.loc=loc;
-		return res;
+		if(ne==e && nl==l && nr==r && ntype == type) return this;
+		return new SliceExp(ne,nl,nr);
 	}
 	override int freeVarsImpl(scope int delegate(string) dg){
 		if(auto x=e.freeVarsImpl(dg)) return x;
@@ -747,8 +779,10 @@ class CallExp: Expression{
 		return min(fty.annotation,arg.getAnnotation());
 	}
 
-	override Expression eval(){
-		return this;
+	override Expression evalImpl(Expression ntype){
+		auto ne=e.eval(), narg=arg.eval();
+		if(ne == e && narg == arg && ntype == type) return this;
+		return new CallExp(ne,narg,isSquare,isClassical_);
 	}
 }
 
@@ -813,6 +847,100 @@ class BinaryExp(TokenType op): ABinaryExp{
 		if(!be) return false;
 		return e1.unify(be.e1,subst,meet)&&e2.unify(be.e2,subst,meet);
 	}
+
+	override Expression evalImpl(Expression ntype){
+		static if(op!=Tok!"→"){
+			auto ne1=e1.eval(), ne2=e2.eval();
+			auto make(TokenType op)(BinaryExp!op exp){
+				exp.type=ntype;
+				exp.loc=exp.e1.loc.to(exp.e2.loc);
+				exp.sstate=SemState.completed;
+				return exp;
+			}
+			static if(op==Tok!"+"){
+				{auto le1=cast(LiteralExp)ne1,le2=cast(LiteralExp)ne2;
+				if(le1&&le2&&le1.lit.type==Tok!"0"&&le2.lit.type==Tok!"0"){
+					Token tok;
+					tok.type=Tok!"0";
+					tok.str=text(ℤ(le1.lit.str)+ℤ(le2.lit.str)); // TODO: replace literal exp internal representation
+					auto r=new LiteralExp(tok);
+					r.type=ntype;
+					r.sstate=SemState.completed;
+					return r;
+				}
+				if(le1&&le1.lit.type==Tok!"0"&&le1.lit.str=="0") return ne2.evalImpl(ntype);
+				if(le2&&le2.lit.type==Tok!"0"&&le2.lit.str=="0") return ne1.evalImpl(ntype);
+				if(le1&&!le2) return new BinaryExp!op(ne2,ne1).evalImpl(ntype);
+				}
+				static foreach(sub1;[Tok!"-",Tok!"sub"]){
+					if(auto se1=cast(BinaryExp!sub1)ne1){
+						static foreach(sub2;[Tok!"-",Tok!"sub"]){
+							if(auto se2=cast(BinaryExp!sub2)ne2){
+								auto nb0=make(new BinaryExp!op(se1.e1,se2.e2));
+								auto nb1=make(new BinaryExp!sub1(nb0,se1.e2));
+								auto nb2=make(new BinaryExp!sub2(nb1,se2.e2));
+								return nb2.evalImpl(ntype);
+							}
+						}
+						auto le1=cast(LiteralExp)se1.e2,le2=cast(LiteralExp)ne2;
+						if(le1&&le2&&le1.lit.type==Tok!"0"&&le2.lit.type==Tok!"0"){
+							Token tok;
+							tok.type=Tok!"0";
+							tok.str=text(ℤ(le1.lit.str)-ℤ(le2.lit.str)); // TODO: replace literal exp internal representation
+							auto nle=new LiteralExp(tok);
+							nle.loc=le1.loc.to(le2.loc);
+							nle.type=ntype;
+							nle.sstate=SemState.completed;
+							return make(new BinaryExp!sub1(se1.e1,nle)).evalImpl(ntype);
+						}
+					}
+				}
+				if(auto ae2=cast(BinaryExp!(Tok!"+"))ne2){
+					auto nb0=new BinaryExp!op(ne1,ae2.e1);
+					nb0.type=ntype;
+					nb0.loc=nb0.e1.loc.to(nb0.e2.loc);
+					nb0.sstate=SemState.completed;
+					auto nb1=new BinaryExp!op(nb0,ae2.e2);
+					nb1.type=ntype;
+					nb1.loc=nb1.e1.loc.to(nb1.e2.loc);
+					return nb1.evalImpl(ntype);
+				}
+			}else static if(op==Tok!"-"||op==Tok!"sub"){
+				if(ne1==ne2){
+					Token tok;
+					tok.type=Tok!"0";
+					tok.str="0";
+					return new LiteralExp(tok);
+				}
+				{auto le1=cast(LiteralExp)ne1,le2=cast(LiteralExp)ne2;
+				if(le1&&le2){
+					if(le1.lit.type==Tok!"0"&&le2.lit.type==Tok!"0"){
+						Token tok;
+						tok.type=Tok!"0";
+						tok.str=text(ℤ(le1.lit.str)-ℤ(le2.lit.str)); // TODO: replace literal exp internal representation
+						return new LiteralExp(tok);
+					}
+				}
+				if(le2&&le2.lit.type==Tok!"0"&&le2.lit.str=="0") return ne1.evalImpl(ntype);
+				}
+				static foreach(sub2;[Tok!"-",Tok!"sub"]){
+					if(auto se2=cast(BinaryExp!sub2)ne2){
+						auto nb0=new BinaryExp!op(ne1,se2.e1);
+						nb0.type=ntype;
+						nb0.loc=nb0.e1.loc.to(nb0.e2.loc);
+						nb0.sstate=SemState.completed;
+						auto nb1=new BinaryExp!(Tok!"+")(nb0,se2.e2);
+						nb1.type=ntype;
+						nb1.loc=nb1.e1.loc.to(nb1.e2.loc);
+						return nb1.evalImpl(ntype);
+					}
+				}
+			}
+			if(ne1 == e1 && ne2 == e1 && ntype == type) return this;
+			return new BinaryExp!op(ne1,ne2);
+		}else return this;
+	}
+
 	override bool opEquals(Object o){
 		auto be=cast(BinaryExp!op)o;
 		return be && e1==be.e1&&e2==be.e2;
@@ -858,6 +986,12 @@ class FieldExp: Expression{
 
 	override Annotation getAnnotation(){
 		return e.getAnnotation();
+	}
+
+	override Expression evalImpl(Expression ntype){
+		auto ne=e.eval();
+		if(ne == e && ntype == type) return this;
+		return new FieldExp(ne,f);
 	}
 }
 
@@ -905,6 +1039,12 @@ class IteExp: Expression{
 	override Annotation getAnnotation(){
 		return min(cond.getAnnotation(), then.getAnnotation(), othw.getAnnotation());
 	}
+	override Expression evalImpl(Expression ntype){
+		auto ncond=cond.eval(),nthen=cast(CompoundExp)then.eval(),nothw=cast(CompoundExp)othw.eval();
+		assert(nthen&&nothw); // TODO: check statically
+		if(ncond==cond&&nthen==then&&nothw==othw&&ntype==type) return this;
+		return new IteExp(ncond,nthen,nothw);
+	}
 }
 
 class RepeatExp: Expression{
@@ -920,6 +1060,7 @@ class RepeatExp: Expression{
 	override @property string kind(){ return "repeat loop"; }
 	override bool isCompound(){ return true; }
 
+	override Expression evalImpl(Expression ntype){ return this; }
 	mixin VariableFree; // TODO
 	override int componentsImpl(scope int delegate(Expression) dg){
 		if(auto r=dg(num)) return r;
@@ -956,6 +1097,7 @@ class ForExp: Expression{
 	BlockScope fescope_;
 	VarDecl loopVar;
 
+	override Expression evalImpl(Expression ntype){ return this; }
 	mixin VariableFree; // TODO
 	override int componentsImpl(scope int delegate(Expression) dg){
 		return 0; // TODO: ok?
@@ -976,6 +1118,7 @@ class WhileExp: Expression{
 	override @property string kind(){ return "while loop"; }
 	override bool isCompound(){ return true; }
 
+	override Expression evalImpl(Expression ntype){ return this; }
 	mixin VariableFree; // TODO
 	override int componentsImpl(scope int delegate(Expression) dg){
 		if(auto r=dg(cond)) return r;
@@ -1017,6 +1160,11 @@ class CompoundExp: Expression{
 		return false;
 	}
 	override Annotation getAnnotation(){ return reduce!min(Annotation.max, s.map!(x=>x.getAnnotation())); }
+	override CompoundExp evalImpl(Expression ntype){
+		auto ns=s.map!(s=>s.eval()).array;
+		if(ns == s && ntype==type) return this;
+		return new CompoundExp(ns);
+	}
 }
 
 class TupleExp: Expression{
@@ -1058,6 +1206,11 @@ class TupleExp: Expression{
 	override Annotation getAnnotation(){
 		return reduce!min(Annotation.qfree, e.map!(x=>x.getAnnotation()));
 	}
+	override Expression evalImpl(Expression ntype){
+		auto ne=e.map!(e=>e.eval()).array;
+		if(ne == e && ntype==type) return this;
+		return new TupleExp(ne);
+	}
 }
 
 class LambdaExp: Expression{
@@ -1077,6 +1230,7 @@ class LambdaExp: Expression{
 	override int componentsImpl(scope int delegate(Expression) dg){
 		return 0; // TODO: ok?
 	}
+	override Expression evalImpl(Expression ntype){ return this; } // TODO: partially evaluate lambdas?
 }
 
 class ArrayExp: Expression{
@@ -1117,6 +1271,11 @@ class ArrayExp: Expression{
 		return all!(i=>e[i].unify(ae.e[i],subst,meet))(iota(e.length));
 	}
 	override Annotation getAnnotation(){ return reduce!min(Annotation.qfree,e.map!(x=>x.getAnnotation())); }
+	override Expression evalImpl(Expression ntype){
+		auto ne=e.map!(e=>e.eval()).array;
+		if(ne == e && ntype==type) return this;
+		return new ArrayExp(ne);
+	}
 }
 
 class ReturnExp: Expression{
@@ -1130,6 +1289,12 @@ class ReturnExp: Expression{
 	override string toString(){ return "return"~(e?" "~e.toString():""); }
 
 	string expected;
+
+	override Expression evalImpl(Expression ntype){
+		auto ne=e.eval();
+		if(ne==e&&ntype==type) return this;
+		return new ReturnExp(e);
+	}
 	mixin VariableFree; // TODO!
 	override int componentsImpl(scope int delegate(Expression) dg){ return dg(e); }
 }
@@ -1143,6 +1308,12 @@ class AssertExp: Expression{
 		return new AssertExp(e.copy(args));
 	}
 	override string toString(){ return _brk("assert("~e.toString()~")"); }
+
+	override Expression evalImpl(Expression ntype){
+		auto ne=e.eval();
+		if(ne==e&&ntype==type) return this;
+		return new AssertExp(e);
+	}
 	mixin VariableFree; // TODO!
 	override int componentsImpl(scope int delegate(Expression) dg){
 		return dg(e);
@@ -1159,6 +1330,11 @@ class ObserveExp: Expression{
 	}
 	override string toString(){ return _brk("observe("~e.toString()~")"); }
 
+	override Expression evalImpl(Expression ntype){
+		auto ne=e.eval();
+		if(ne==e&&ntype==type) return this;
+		return new ObserveExp(e);
+	}
 	mixin VariableFree; // TODO
 	override int componentsImpl(scope int delegate(Expression) dg){
 		return dg(e);
@@ -1176,6 +1352,11 @@ class CObserveExp: Expression{
 	}
 	override string toString(){ return _brk("cobserve("~var.toString()~","~val.toString()~")"); }
 
+	override Expression evalImpl(Expression ntype){
+		auto nval=val.eval();
+		if(nval==val&&ntype==type) return this;
+		return new CObserveExp(var,val);
+	}
 	mixin VariableFree; // TODO
 	override int componentsImpl(scope int delegate(Expression) dg){
 		if(auto r=dg(var)) return r;
@@ -1195,6 +1376,11 @@ class ForgetExp: Expression{
 	}
 	override string toString(){ return _brk("forget("~var.toString()~(val?"="~val.toString():"")~")"); }
 
+	override Expression evalImpl(Expression ntype){
+		auto nval=val.eval();
+		if(nval==val&&ntype==type) return this;
+		return new ForgetExp(var,nval);
+	}
 	mixin VariableFree; // TODO
 	override int componentsImpl(scope int delegate(Expression) dg){
 		if(auto r=dg(var)) return r;

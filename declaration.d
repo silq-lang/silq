@@ -14,6 +14,8 @@ abstract class Declaration: Expression{
 
 	bool isLinear(){ return true; }
 
+	override Expression evalImpl(Expression ntype){ return this; }
+
 	mixin VariableFree;
 	override int componentsImpl(scope int delegate(Expression) dg){ return 0; }
 
@@ -35,6 +37,8 @@ class CompoundDecl: Expression{
 
 	// semantic information
 	AggregateScope ascope_;
+
+	override Expression evalImpl(Expression ntype){ return this; }
 
 	mixin VariableFree; // TODO!
 }
@@ -258,6 +262,7 @@ class SingleDefExp: DefExp{
 		return dg(decl);
 	}
 
+	override Expression evalImpl(Expression ntype){ return this; }
 	mixin VariableFree; // TODO
 	override int componentsImpl(scope int delegate(Expression) dg){
 		return 0; // TODO: ok?
@@ -308,6 +313,7 @@ class MultiDefExp: DefExp{
 		return 0;
 	}
 
+	override Expression evalImpl(Expression ntype){ return this; }
 	mixin VariableFree;
 	override int componentsImpl(scope int delegate(Expression) dg){
 		return 0; // TODO: ok?

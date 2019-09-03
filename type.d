@@ -126,6 +126,7 @@ class BoolTy: Type{
 	override BoolTy getClassical(){
 		return Bool(true);
 	}
+	override Expression evalImpl(Expression ntype){ return this; }
 	mixin VariableFree;
 	override int componentsImpl(scope int delegate(Expression) dg){
 		return 0;
@@ -157,6 +158,8 @@ class ℕTy: Type{
 	override ℕTy getClassical(){
 		return ℕt(true);
 	}
+
+	override Expression evalImpl(Expression ntype){ return this; }
 	mixin VariableFree;
 	override int componentsImpl(scope int delegate(Expression) dg){
 		return 0;
@@ -188,6 +191,7 @@ class ℤTy: Type{
 	override ℤTy getClassical(){
 		return ℤt(true);
 	}
+	override Expression evalImpl(Expression ntype){ return this; }
 	mixin VariableFree;
 	override int componentsImpl(scope int delegate(Expression) dg){
 		return 0;
@@ -219,6 +223,7 @@ class ℚTy: Type{
 	override ℚTy getClassical(){
 		return ℚt(true);
 	}
+	override Expression evalImpl(Expression ntype){ return this; }
 	mixin VariableFree;
 	override int componentsImpl(scope int delegate(Expression) dg){
 		return 0;
@@ -250,6 +255,7 @@ class ℝTy: Type{
 	override ℝTy getClassical(){
 		return ℝ(true);
 	}
+	override Expression evalImpl(Expression ntype){ return this; }
 	mixin VariableFree;
 	override int componentsImpl(scope int delegate(Expression) dg){
 		return 0;
@@ -281,6 +287,7 @@ class ℂTy: Type{
 	override ℂTy getClassical(){
 		return ℂ(true);
 	}
+	override Expression evalImpl(Expression ntype){ return this; }
 	mixin VariableFree;
 	override int componentsImpl(scope int delegate(Expression) dg){
 		return 0;
@@ -323,6 +330,8 @@ class AggregateTy: Type{
 	override AggregateTy getClassical(){
 		return classicalTy;
 	}
+
+	override Expression evalImpl(Expression ntype){ return this; }
 	mixin VariableFree;
 	override int componentsImpl(scope int delegate(Expression) e){
 		return 0;
@@ -353,6 +362,7 @@ class ContextTy: Type{
 	override ContextTy getClassical(){
 		return contextTy(true);
 	}
+	override Expression evalImpl(Expression ntype){ return this; }
 	mixin VariableFree;
 	override int componentsImpl(scope int delegate(Expression) e){
 		return 0;
@@ -440,6 +450,12 @@ class TupleTy: Type,ITupleTy{
 		foreach(x;types) if(auto r=dg(x)) return r;
 		return 0;
 	}
+	override Expression evalImpl(Expression ntype){
+		assert(ntype==typeTy);
+		auto ntypes=types.map!(t=>t.eval()).array;
+		if(ntypes==types) return this;
+		return tupleTy(ntypes);
+	}
 }
 
 Type unit(){ return tupleTy([]); }
@@ -487,7 +503,8 @@ class ArrayTy: Type{
 		auto at=cast(ArrayTy)rhs;
 		return at && next.unifyImpl(at.next,subst,meet);
 	}
-	override ArrayTy eval(){
+	override ArrayTy evalImpl(Expression ntype){
+		assert(ntype==typeTy);
 		return arrayTy(next.eval());
 	}
 	override bool opEquals(Object o){
@@ -575,7 +592,8 @@ class VectorTy: Type, ITupleTy{
 		auto vt=cast(VectorTy)rhs;
 		return vt && next.unifyImpl(vt.next,subst,meet) && num.unifyImpl(vt.num,subst,meet);
 	}
-	override VectorTy eval(){
+	override VectorTy evalImpl(Expression ntype){
+		assert(ntype==typeTy);
 		return vectorTy(next.eval(),num.eval());
 	}
 	override bool opEquals(Object o){
@@ -626,8 +644,6 @@ static Expression elementType(Expression ty){
 	return null;
 }
 
-
-
 class StringTy: Type{
 	bool classical;
 	private this(bool classical){ this.classical=classical; }
@@ -646,6 +662,7 @@ class StringTy: Type{
 	override bool hasClassicalComponent(){
 		return true; // length is classical
 	}
+	override Expression evalImpl(Expression ntype){ return this; }
 	mixin VariableFree;
 	override int componentsImpl(scope int delegate(Expression) dg){
 		return 0;
@@ -682,6 +699,8 @@ class RawProductTy: Expression{
 	override bool hasClassicalComponent(){
 		assert(0);
 	}
+
+	override Expression evalImpl(Expression ntype){ return this; }
 	mixin VariableFree;
 	override int componentsImpl(scope int delegate(Expression) dg){
 		return 0;
@@ -915,9 +934,10 @@ class ProductTy: Type{
 				import lexer;
 				auto lit=new LiteralExp(Token(Tok!"0",to!string(i)));
 				lit.type=ℤt(true);
-				auto exp=new IndexExp(arg,[lit],false).eval();
+				auto exp=new IndexExp(arg,[lit],false);
 				exp.type=tdom[i];
-				subst[n]=exp;
+				exp.sstate=SemState.completed;
+				subst[n]=exp.eval();
 			}
 		}else{
 			assert(names.length==1);
@@ -989,6 +1009,12 @@ class ProductTy: Type{
 	}
 	override int componentsImpl(scope int delegate(Expression) e){
 		return 0; // TODO: ok?
+	}
+	override Expression evalImpl(Expression ntype){
+		assert(ntype==typeTy);
+		auto ndom=dom.eval(),ncod=cod.eval();
+		if(ndom==dom&&ncod==cod) return this;
+		return productTy(isConst,names,ndom,ncod,isSquare,isTuple,annotation,isClassical_);
 	}
 }
 
@@ -1086,6 +1112,7 @@ class TypeTy: Type{
 	override bool hasClassicalComponent(){
 		return true;
 	}
+	override Expression evalImpl(Expression ntype){ return this; }
 	mixin VariableFree;
 	override int componentsImpl(scope int delegate(Expression) dg){
 		return 0;

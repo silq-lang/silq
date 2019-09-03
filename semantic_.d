@@ -1939,6 +1939,11 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 			return sl;
 		if(auto at=cast(ArrayTy)sl.e.type){
 			sl.type=at;
+		}else if(auto vt=cast(VectorTy)sl.e.type){
+			auto se=new NSubExp(sl.r,sl.l);
+			se.type=ℕt(true);
+			se.sstate=SemState.completed;
+			sl.type=vectorTy(vt.next,se.eval());
 		}else if(auto tt=sl.e.type.isTupleTy){
 			auto llit=cast(LiteralExp)sl.l, rlit=cast(LiteralExp)sl.r;
 			if(!llit||llit.lit.type!=Tok!"0"){
@@ -1969,6 +1974,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 			sc.error(format("type %s is not sliceable",sl.e.type),sl.loc);
 			sl.sstate=SemState.error;
 		}
+		sl.sstate=SemState.completed;
 		return sl;
 	}
 	if(cast(CommaExp)expr){
@@ -2227,10 +2233,22 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 		propErr(ce.e2,ce);
 		if(ce.sstate==SemState.error)
 			return ce;
-		auto ntype=joinTypes(ce.e1.type,ce.e2.type);
-		if(cast(ArrayTy)ce.e1.type && ntype){
-			ce.type=ntype;
+		auto vt1=cast(VectorTy)ce.e1.type,vt2=cast(VectorTy)ce.e2.type;
+		assert(!ce.type);
+		if(vt1&&vt2){
+			if(auto netype=joinTypes(vt1.next,vt2.next)){
+				auto add=new AddExp(vt1.num,vt2.num);
+				add.type=ℕt(true);
+				add.sstate=SemState.completed;
+				auto ntype=vectorTy(netype,add.eval()); // TODO: evaluation context
+				ce.type=ntype;
+			}
 		}else{
+			auto ntype=joinTypes(ce.e1.type,ce.e2.type);
+			if(cast(ArrayTy)ntype)
+				ce.type=ntype;
+		}
+		if(!ce.type){
 			sc.error(format("incompatible types %s and %s for ~",ce.e1.type,ce.e2.type),ce.loc);
 			ce.sstate=SemState.error;
 		}

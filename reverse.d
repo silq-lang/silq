@@ -205,13 +205,13 @@ Expression lowerDefine(bool analyzed)(Expression olhs,Expression orhs,Location l
 		if(!l1){
 			auto l=tmpLen();
 			l.loc=l2.loc;
-			auto s=new SubExp(l,l2);
+			auto s=new NSubExp(l,l2);
 			s.loc=l2.loc;
 			l1=s;
 		}else if(!l2){
 			auto l=tmpLen();
 			l.loc=l1.loc;
-			auto s=new SubExp(l,l1);
+			auto s=new NSubExp(l,l1);
 			s.loc=l1.loc;
 			l2=s;
 		}

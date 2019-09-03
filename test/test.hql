@@ -1,4 +1,45 @@
 /+
+def foo[n:!ℕ](x:𝔹^(1+n sub (n sub 3))):𝔹^4⇒x;
++/
+/+
+def foo[n:!ℕ](x:𝔹^(n+(1+n))):𝔹^(n+n+1)⇒x;
++/
+/+
+def foo[n:!ℕ](x:𝔹^n){
+	(h,)~t:=x;
+	x:=(h,)~t;
+	return x;
+}
+
+def main(){
+	return foo(0:𝔹,1:𝔹,0:𝔹,0:𝔹,1:𝔹);
+}
++/
+/+
+def main(){
+	(h,)~t:=(0,1,2,3);
+	return (h,t);
+}
++/
+/+
+def main(){
+	(x,)~(1,2,y):=(0,1,2,3);
+	(1,z,3):=(1,2,3);
+	//(1,2,3):=(1,2,2); // TODO: runtime error
+	return (x,y,z);
+}
++/
+/+
+def main(){
+	head:=0;
+	tail:=(1,2,3);
+	result:=(head,)~tail;
+	result=(1,2,3,4);
+	return result;
+}
++/
+
+/+
 def main(const x:𝔹){}
 +/
 /+

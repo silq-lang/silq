@@ -3,10 +3,10 @@ def toW[n:!ℕ](qs:𝔹^n)mfree:𝔹^n{
 	if n==1{ qs[0]:=X(qs[0]); }
 	else if n>1{
 		θ:=2·asin(1/sqrt(n));
-		(([head] coerce 𝔹^1):𝔹[])~((tail coerce 𝔹^(n sub 1)):𝔹[]):=(qs:𝔹[]);
+		(head,)~tail:=qs;
 		head:=rotY(θ,head);
 		if !head { tail := toW(tail); }
-		qs:=[head]~(tail:𝔹[]) coerce B^n;
+		qs:=(head,)~tail;
 	}
 	return qs;
 }
