@@ -1,5 +1,63 @@
 /+
 def main(){
+	x:=-1;
+	y:=x coerce !ℕ;
+	return y;
+}
++/
+/+
+def main(){
+	def foo(x:!𝔹){ return 2; }
+	return (foo coerce !ℚ!→!𝔹)(1/2); // TODO: catch at runtime?
+}
++/
+/+
+def main(){
+	return (0,1,2,0,1,2) coerce !𝔹^6;
+}
++/
+/+
+def main(){
+	return (2:!int[32]) coerce !ℚ;
+}
++/
+/+
+def main(){
+	return 2.2 coerce !𝔹;
+}
++/
+/+
+def main(){
+	x:=π;
+	y:=x coerce !ℚ;
+	return y;
+}
++/
+/+
+def main(){
+	x:=0:!ℤ;
+	y:=x coerce !ℕ;
+	return y;
+}
++/
+/+
+def main(){
+	x:=8:!int[3];
+	y:=x as !ℤ;
+	return y;
+}
++/
+/+
+def main(){
+	//n:=32;
+	//x:=0:int[n];
+	//x:=x as uint[n];
+	y:=((0,1,2):!ℕ^3) as !ℕ×!ℤ×!int[3];
+	return y;
+}
++/
+/+
+def main(){
 	x:=12;
 	y:=x as int[32];
 	return y;

@@ -2077,6 +2077,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 					return true;
 				if(tpl1&&vec2&&iota(tpl1.length).all!(i=>typeExplicitConversion(tpl1[i],vec2.next,annotationType)))
 					return true;
+				if(from.isClassical()&&isSubtype(to.getClassical(),from)&&from.isNumeric) return true;
 			}
 			return false;
 		}
@@ -2092,7 +2093,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 					return true;
 				if(isSubtype(expr.type,ℝ(false))&&(isRat(type)||isFloat(type)))
 					return true;
-				if(lit&&cast(BoolTy)type&&lit.lit.type==Tok!"0"){
+				if(lit&&cast(BoolTy)type&&lit.lit.type==Tok!"0"&&!lit.lit.str.canFind(".")){
 					auto val=ℤ(lit.lit.str);
 					if(val==0||val==1) return true;
 				}

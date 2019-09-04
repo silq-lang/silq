@@ -634,15 +634,30 @@ struct QState{
 					// can happen when converting from int[n]/uint[n] to array (TODO: store n classically?)
 					break;
 				case Tag.fval:
+					if(ntag==Tag.bval) return neqZ;
+					if(ntag==Tag.zval||ntag==Tag.qval){
+						static assert(R.sizeof*8==64);
+						import std.numeric;
+						enum precision=64, exponentWidth=15, flags=CustomFloatFlags.signed;
+						enum bias=2^^(exponentWidth-1)-1;
+						CustomFloat!(precision,exponentWidth,flags,bias) tmp=fval;
+						auto r=ℚ((tmp.sign?-1:1)*ℤ(tmp.significand))*pow(ℚ(2),ℤ(tmp.exponent)-bias-precision+1);
+						if(ntag==Tag.qval) return makeRational(r);
+						if(ntag==Tag.zval) return makeInteger(.floor(r));
+					}
 					break;
 				case Tag.qval:
+					if(ntag==Tag.bval) return neqZ;
+					if(ntag==Tag.zval) return makeInteger(.floor(qval));
 					if(ntag==Tag.fval) return makeReal(toReal(qval));
 					break;
 				case Tag.zval:
+					if(ntag==Tag.bval) return neqZ;
 					if(ntag==Tag.qval) return makeRational(ℚ(zval));
 					if(ntag==Tag.fval) return makeReal(toReal(zval));
 					break;
 				case Tag.intval,Tag.uintval:
+					if(ntag==Tag.bval) return neqZ;
 					if(ntag==Tag.array_){
 						size_t nbits=0;
 						ℤ val=0;
@@ -1755,6 +1770,7 @@ struct Interpreter(QState){
 							auto ce=cast(CallExp)type;
 							if(ce&&(isUint(type)||isInt(type))&&value.tag==QState.Value.Tag.array_)
 								enforce(qstate.makeInteger(ℤ(value.array_.length)).compare!"=="(doIt(ce.arg)).neqZImpl,"length mismatch for conversion to fixed-size integer");
+							if(type==ℕt(true)) enforce(value.compare!">="(qstate.makeInteger(ℤ(0))).neqZImpl,"negative value not representable as a natural number");
 						}
 						return value.convertTo(type);
 					}
