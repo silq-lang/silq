@@ -73,6 +73,12 @@ string formatQValue(QState qs,QState.Value value){ // (only makes sense if value
 	return r;
 }
 
+long smallValue(ℤ value){
+	if(long.min<=value&&value<=long.max) return to!long(value);
+	enforce(0,"value too large");
+	assert(0);
+}
+
 enum zeroThreshold=1e-15; // TODO: make configurable
 bool isToplevelClassical(Expression ty)in{
 	assert(!!ty);
@@ -684,22 +690,27 @@ struct QState{
 		Value inFrame(){
 			return this;
 		}
-		Value opIndex(size_t i)in{
+		Value opIndex(ℤ i)in{
 			assert(tag==Tag.array_||isInt(type)||isUint(type));
 		}do{
 			final switch(tag){
-				case Tag.array_: return array_[i];
+				case Tag.array_: enforce(0<=i&&i<array_.length,"index out of bounds"); return array_[to!size_t(i)];
 				case Tag.quval:
 					assert(isInt(type)||isUint(type));
 					return makeQuval(Bool(false),new IndexQVal(this,makeInteger(ℤ(i))));
-				case Tag.uintval: return makeBool((uintval.val&(ℤ(1)<<i))!=0);
-				case Tag.intval: return makeBool((intval.val&(ℤ(1)<<i))!=0);
+				case Tag.uintval:
+					enforce(0<=i&&i<uintval.nbits,"index out of bounds");
+					return makeBool((uintval.val&(ℤ(1)<<to!size_t(i)))!=0);
+				case Tag.intval:
+					enforce(0<=i,"index out of bounds");
+					if(i>=size_t.max) return makeBool(false);
+					return makeBool((intval.val&(ℤ(1)<<to!size_t(i)))!=0);
 				case Tag.fval,Tag.qval,Tag.zval,Tag.bval: enforce(0,"TODO?"); assert(0);
 				case Tag.record,Tag.closure: assert(0);
 			}
 		}
 		Value opIndex(Value i){
-			if(i.isClassicalInteger()) return this[to!size_t(i.asInteger())];
+			if(i.isClassicalInteger()) return this[i.asInteger()];
 			final switch(tag){
 				case Tag.array_:
 					// TODO: bounds checking
@@ -717,13 +728,15 @@ struct QState{
 				case Tag.record,Tag.closure: assert(0);
 			}
 		}
-		Value opSlice(size_t l,size_t r)in{
+		Value opSlice(ℤ l,ℤ r)in{
 			assert(tag==Tag.array_);
 		}do{
-			return makeArray(type,array_[l..r]);
+			enforce(r<=array_.length,"slice upper bound exceeds array length");
+			enforce(l<=r,"slice lower bound exceeds slice upper bound");
+			return makeArray(type,array_[to!size_t(l)..to!size_t(r)]);
 		}
 		Value opSlice(Value l,Value r){
-			if(l.isClassicalInteger()&&r.isClassicalInteger()) return this[to!size_t(l.asInteger())..to!size_t(r.asInteger())];
+			if(l.isClassicalInteger()&&r.isClassicalInteger()) return this[l.asInteger()..r.asInteger()];
 			enforce(0,text("TODO: slicing for types ",this.type,", ",l.type," and ",r.type));
 			assert(0);
 		}
@@ -804,10 +817,10 @@ struct QState{
 				enforce(tag==Tag.array_&&r.tag==Tag.array_);
 				return makeArray(ntype,array_~r.array_);
 			}else static if(op=="<<"||op==">>"){
-				if(type==ℤt(true)) return makeInteger(mixin(`zval `~op~` to!size_t(r.asInteger())`));
-				if(type==Bool(true)) return makeInteger(mixin(`ℤ(cast(int)bval) `~op~` to!size_t(r.asInteger())`));
-				if(isInt(type)) return makeInt(type,mixin(`intval `~op~` to!size_t(r.asInteger())`));
-				if(isUint(type)) return makeUint(type,mixin(`uintval `~op~` to!size_t(r.asInteger())`));
+				if(type==ℤt(true)) return makeInteger(mixin(`zval `~op~` smallValue(r.asInteger())`));
+				if(type==Bool(true)) return makeInteger(mixin(`ℤ(cast(int)bval) `~op~` smallValue(r.asInteger())`));
+				if(isInt(type)) return makeInt(type,mixin(`intval `~op~` smallValue(r.asInteger())`));
+				if(isUint(type)) return makeUint(type,mixin(`uintval `~op~` smallValue(r.asInteger())`));
 			}else{
 				if(type!=ntype||r.type!=ntype){
 					if(type==ntype&&util.among(r.type,Bool(true),ℤt(true))){
@@ -1244,9 +1257,10 @@ struct QState{
 			ncur.passContext(fun.contextName,*context);
 		}else assert(!context);
 		if(fun.isTuple){
-			auto args=iota(fun.params.length).map!(i=>inFrame(arg[i]));
+			enforce(arg.tag==Value.Tag.array_);
+			auto args=iota(fun.params.length).map!(i=>inFrame(arg.array_[i]));
 			foreach(i,prm;fun.params)
-				ncur.passParameter(prm.getName,prm.isConst,inFrame(arg[i])); // TODO: faster: parallel assignment to parameters
+				ncur.passParameter(prm.getName,prm.isConst,inFrame(arg.array_[i])); // TODO: faster: parallel assignment to parameters
 		}else{
 			assert(fun.params.length==1);
 			ncur.passParameter(fun.params[0].getName,fun.params[0].isConst,inFrame(arg));
@@ -1430,7 +1444,7 @@ struct QState{
 		enforce(arg.tag==Value.Tag.array_);
 		enforce(arg.array_.length==2);
 		enforce(arg.array_[0].isClassicalInteger());
-		return makeArray(type,iota(to!size_t(arg.array_[0].asInteger)).map!(_=>arg.array_[1].dup(this)).array);
+		return makeArray(type,iota(smallValue(arg.array_[0].asInteger)).map!(_=>arg.array_[1].dup(this)).array);
 	}
 	alias vector=array_;
 	Value reverse(Expression type,Value arg){
@@ -1778,9 +1792,9 @@ struct Interpreter(QState){
 					if(isSubtype(value.type,ℤt(true))){
 						auto ce=cast(CallExp)type;
 						if(ce&&isUint(type))
-							return qstate.makeUint(type.getClassical(),BitInt!false(to!size_t(runExp(ce.arg).asInteger()),value.asInteger())).convertTo(type);
+							return qstate.makeUint(type.getClassical(),BitInt!false(smallValue(runExp(ce.arg).asInteger()),value.asInteger())).convertTo(type);
 						if(ce&&isInt(type))
-							return qstate.makeInt(type.getClassical(),BitInt!true(to!size_t(runExp(ce.arg).asInteger()),value.asInteger())).convertTo(type);
+							return qstate.makeInt(type.getClassical(),BitInt!true(smallValue(runExp(ce.arg).asInteger()),value.asInteger())).convertTo(type);
 					}
 					if(isUint(value.type)&&isSubtype(ℕt(true),type)){
 						assert(value.tag==QState.Value.Tag.uintval);
@@ -1810,7 +1824,7 @@ struct Interpreter(QState){
 						assert(!type.isClassical);
 						auto len=doIt(ce.arg); // TODO: maybe store lengths classically instead
 						enforce(len.isClassicalInteger());
-						auto nbits=to!size_t(len.asInteger());
+						auto nbits=smallValue(len.asInteger());
 						auto tmp=value.dup(qstate); // TODO: don't do this if value is already a variable
 						auto r=qstate.makeTuple(arrayTy(Bool(false)),iota(nbits).map!(i=>(tmp&qstate.makeInteger(ℤ(1)<<i)).neqZ).array).convertTo(type).toVar(qstate,false);
 						tmp.forget(qstate);
@@ -1863,28 +1877,32 @@ struct Interpreter(QState){
 	static struct Assignable(bool isCat){
 		string name;
 		QState.Value[] indices;
+		Location[] locations;
 		QState.Value read(ref QState state){
 			enforce(name in state.vars);
 			auto var=state.vars[name];
 			enforce(indices.all!(x=>x.isClassical()),"TODO");
-			QState.Value doIt(ref QState.Value value,QState.Value[] indices){
+			QState.Value doIt(ref QState.Value value,QState.Value[] indices,Location[] locations){
 				if(!indices.length) return value;
 				switch(value.tag){
 					case QState.Value.Tag.array_:
-						return doIt(value.array_[to!size_t(indices[0].asInteger)],indices[1..$]);
+						auto index=indices[0].asInteger;
+						if(index>=value.array_.length)
+							throw new LocalizedException(new Exception("index out of bounds"),locations[0]);
+						return doIt(value.array_[to!size_t(index)],indices[1..$],locations[1..$]);
 					case QState.Value.Tag.intval,QState.Value.Tag.uintval,QState.Value.Tag.quval:
 						enforce(indices.length==1);
-						auto index=to!size_t(indices[0].asInteger);
+						auto index=indices[0].asInteger;
 						return value[index];
 					default: enforce(0,text("TODO: ",value.tag)); assert(0);
 				}
 			}
-			return doIt(var,indices);
+			return doIt(var,indices,locations);
 		}
 		void assign(ref QState state,QState.Value rhs){
 			enforce(name in state.vars);
 			auto var=state.vars[name];
-			void doIt(ref QState.Value value,QState.Value[] indices,QState.Value condition){
+			void doIt(ref QState.Value value,QState.Value[] indices,Location[] locations,QState.Value condition){
 				if(!indices.length){
 					rhs.consumeOnRead();
 					auto nrhs=rhs;
@@ -1897,11 +1915,15 @@ struct Interpreter(QState){
 				auto tag=value.tag;
 				switch(tag){
 					case QState.Value.Tag.array_:
-						if(indices[0].isClassical()) doIt(value.array_[to!size_t(indices[0].asInteger)],indices[1..$],condition);
-						else{
+						if(indices[0].isClassical()){
+							auto index=indices[0].asInteger;
+							if(index>=value.array_.length)
+								throw new LocalizedException(new Exception("index out of bounds"),locations[0]);
+							doIt(value.array_[to!size_t(index)],indices[1..$],locations[1..$],condition);
+						}else{
 							foreach(i;0..value.array_.length){
 								auto ncond=indices[0].compare!"=="(qstate.makeInteger(ℤ(i)));
-								doIt(value.array_[i],indices[1..$],condition.isValid?condition&ncond:ncond);
+								doIt(value.array_[i],indices[1..$],locations[1..$],condition.isValid?condition&ncond:ncond);
 							}
 						}
 						return;
@@ -1917,7 +1939,7 @@ struct Interpreter(QState){
 					default: enforce(0,text("TODO: ",value.tag));
 				}
 			}
-			doIt(var,indices,state.nullValue);
+			doIt(var,indices,locations,state.nullValue);
 			state.vars[name]=var;
 		}
 	}
@@ -1928,6 +1950,7 @@ struct Interpreter(QState){
 			enforce(idx.a.length==1,"TODO");
 			auto index=runExp(idx.a[0]);
 			a.indices~=index;
+			a.locations~=idx.loc;
 			return a;
 		}
 		enforce(0,text("TODO: assign to ",lhs));
@@ -1942,7 +1965,7 @@ struct Interpreter(QState){
 			enforce(rhs.tag==QState.Value.Tag.array_);
 			enforce(tpl.e.length==rhs.array_.length);
 			foreach(i;0..tpl.e.length)
-				assignTo!isCat(tpl.e[i],rhs[i]);
+				assignTo!isCat(tpl.e[i],rhs.array_[i]);
 		}else if(auto idx=cast(IndexExp)lhs){
 			getAssignable!isCat(lhs).assign(qstate,rhs);
 		}else enforce(0,"TODO");

@@ -1,5 +1,62 @@
 /+
 def main(){
+	b:=H(0:𝔹);
+	x:=if b then -1:int[32] else 0:int[32];
+	forget(b=x==-1);
+	r:=x[x]; // error.
+	return (x,r);
+}
++/
+/+
+def main(){
+	x:=[1,2,3];
+	x[2^100]=2;
+}
++/
+/+
+def main(){
+	x:=[1,2,3];
+	x[-1]=2;
+}
++/
+/+
+def main(){
+	x:=(0,0,0):𝔹^3;
+	x[3]:=H(x[3]);
+	return x;
+}
++/
+/+
+def main(){
+	x:=[1,2,3];
+	(x[3],x[0])=(x[0],x[3]);
+}
++/
+/+
+def main(){
+	x:=[1,2,3];
+	x[3]+=1;
+}+/
+/+
+def main(){
+	x:=[1,2,3];
+	y:=x[2..1];
+}
++/
+/+
+def main(){
+	x:=[1,2,3];
+	x[3]=2; // error
+}
++/
+/+
+def main(){
+	x:=[1,2,3];
+	return x[3]; // error
+}
++/
+/+
+def main(){
 	x:=-1;
 	y:=x coerce !ℕ;
 	return y;
