@@ -4,7 +4,7 @@ Silq is a high-level programming language for quantum computing with a strong st
 
 ## Build Instructions
 
-### GNU/Linux
+### GNU/Linux and OSX
 
 #### Quick build
 
