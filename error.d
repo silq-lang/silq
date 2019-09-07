@@ -4,7 +4,7 @@
 import std.stdio;
 import std.string, std.range, std.array, std.uni;
 
-import lexer, util;
+import lexer, util, options;
 
 
 abstract class ErrorHandler{
@@ -26,6 +26,7 @@ abstract class ErrorHandler{
 	this(){
 		tabsize=getTabSize();
 	}
+	void finalize(){}
 }
 class SimpleErrorHandler: ErrorHandler{
 	override void error(lazy string err, Location loc){
@@ -40,6 +41,41 @@ class SimpleErrorHandler: ErrorHandler{
 
 enum underlineArrow  = "^";
 enum underlineStroke = "─";
+
+ErrorHandler makeErrorHandler(ErrorFormat format){
+	final switch(format) with(ErrorFormat){
+		case default_: return new FormattingErrorHandler();
+		case json: return new JSONErrorHandler();
+	}
+}
+import std.json;
+class JSONErrorHandler: ErrorHandler{
+	alias JSONValue JS;
+	JS[] result=[];
+	private JS makeJS(string error, Location loc, string severity, bool addRelated){
+		auto source=loc.source.name;
+		auto start=getStart(loc,tabsize);
+		auto end=getEnd(loc,tabsize);
+		auto sourceJS=JS(source);
+		auto startJS=JS(["line": JS(start.line), "column": JS(start.column)]);
+		auto endJS=JS(["line": JS(end.line), "column": JS(end.column)]);
+		auto messageJS=JS(error);
+		auto severityJS=JS(severity);
+		auto diagnosticJS=JS(["source": sourceJS, "start": startJS, "end": endJS, "message": messageJS, "severity": severityJS]);
+		if(addRelated){
+			auto relatedInformationJS=JS((JS[]).init);
+			diagnosticJS["relatedInformation"]=relatedInformationJS;
+		}
+		return diagnosticJS;
+	}
+	override void error(lazy string error, Location loc){
+		result~=makeJS(error,loc,"error",true);
+	}
+	override void note(lazy string note, Location loc){
+		result[$-1]["relatedInformation"]~=[makeJS(note,loc,"note",false)];
+	}
+	override void finalize(){ stderr.writeln(result); }
+}
 
 
 // TODO: remove code duplication
@@ -76,7 +112,7 @@ protected:
 		stderr.writeln(line);
 	}
 	void highlight(int column, int ntabs, string rep){
-		foreach(i;0..column-1-ntabs*(getTabsize()-1)) stderr.write(i<ntabs?"\t":" ");
+		foreach(i;0..column-ntabs*(getTabsize()-1)) stderr.write(i<ntabs?"\t":" ");
 		stderr.write(underlineArrow);
 		rep.popFront();
 		foreach(dchar x;rep){if(isNewLine(x)) break; stderr.write(underlineStroke);}
@@ -95,7 +131,7 @@ protected:
 	}
 	override void highlight(int column, int ntabs, string rep){
 		if(isATTy(stderr)){
-			foreach(i;0..column-1-ntabs*(getTabsize()-1)) stderr.write(i<ntabs?"\t":" ");
+			foreach(i;0..column-ntabs*(getTabsize()-1)) stderr.write(i<ntabs?"\t":" ");
 			//stderr.write(CSI~"A",GREEN,";",CSI~"D",CSI~"B");
 			stderr.write(BOLD,GREEN,underlineArrow);
 			rep.popFront();

@@ -12,6 +12,11 @@ enum Format{
 	lisp,
 }
 
+enum ErrorFormat{
+	default_,
+	json,
+}
+
 enum BackendType{
 	none,
 	run,
@@ -37,6 +42,7 @@ struct Options{
 	bool cdf=false;
 	bool kill=false;
 	auto formatting=Format.default_;
+	auto errorFormat=ErrorFormat.default_;
 	bool casBench=false;
 	bool noBoundsCheck=false;
 	bool noCheck=true;

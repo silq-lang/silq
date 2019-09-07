@@ -16,7 +16,8 @@ int run(string path){
 		stderr.writeln(path~": unrecognized extension: "~ext);
 		return 1;
 	}
-	auto err=new FormattingErrorHandler();
+	auto err=makeErrorHandler(opt.errorFormat);
+	scope(exit) err.finalize();
 	auto sc=new TopScope(err);
 	Expression[] exprs;
 	if(auto r=importModule(path,err,exprs,sc))
@@ -79,29 +80,30 @@ int main(string[] args){
 			/+case "--distributions":
 				writeln(computeDistributionDocString());
 				return 0;+/
-			case "--cdf": opt.cdf=true; break;
-			case "--plot": opt.plot=true; break;
-			case "--kill": opt.kill=true; break;
-			case "--nointegrate": opt.integrationLevel=IntegrationLevel.none; break;
-			case "--integratedeltas": opt.integrationLevel=IntegrationLevel.deltas; break;
+			//case "--cdf": opt.cdf=true; break;
+			//case "--plot": opt.plot=true; break;
+			//case "--kill": opt.kill=true; break;
+			//case "--nointegrate": opt.integrationLevel=IntegrationLevel.none; break;
+			//case "--integratedeltas": opt.integrationLevel=IntegrationLevel.deltas; break;
 			case "--noboundscheck": opt.noBoundsCheck=true; break;
 			case "--nocheck": opt.noCheck=true; break;
-			case "--nonormalize": opt.noNormalize=true; break;
-			case "--trace": opt.trace=true; break;
+			//case "--nonormalize": opt.noNormalize=true; break;
+			//case "--trace": opt.trace=true; break;
 			case "--dump-reverse": opt.dumpReverse=true; break;
-			case "--expectation": opt.expectation=true; break;
-			case "--gnuplot": opt.formatting=Format.gnuplot; break;
-			case "--matlab": opt.formatting=Format.matlab; break;
-			case "--maple": opt.formatting=Format.maple; break;
-			case "--mathematica": opt.formatting=Format.mathematica; break;
-			case "--python": opt.formatting=Format.python; break;
-			case "--sympy": opt.formatting=Format.sympy; break;
-			case "--lisp": opt.formatting=Format.lisp; break;
-			case "--raw": opt.outputForm=OutputForm.raw; break;
-			case "--raw-error": opt.outputForm=OutputForm.rawError; break;
+			//case "--expectation": opt.expectation=true; break;
+			//case "--gnuplot": opt.formatting=Format.gnuplot; break;
+			//case "--matlab": opt.formatting=Format.matlab; break;
+			//case "--maple": opt.formatting=Format.maple; break;
+			//case "--mathematica": opt.formatting=Format.mathematica; break;
+			//case "--python": opt.formatting=Format.python; break;
+			//case "--sympy": opt.formatting=Format.sympy; break;
+			//case "--lisp": opt.formatting=Format.lisp; break;
+			case "--error-json": opt.errorFormat=ErrorFormat.json; break;
+			//case "--raw": opt.outputForm=OutputForm.raw; break;
+			//case "--raw-error": opt.outputForm=OutputForm.rawError; break;
 			case "--run": opt.backend=BackendType.run; break;
 			default:
-				if(x.startsWith("--plot=")){
+				/+if(x.startsWith("--plot=")){
 					auto rest=x["--plot=".length..$];
 					import std.regex;
 					auto r=regex(r"^\[-?[0-9]+(\.[0-9]+)?:-?[0-9]+(\.[0-9]+)?\]$");
@@ -113,12 +115,12 @@ int main(string[] args){
 						stderr.writeln("error: plot range needs to be of format [l:r], where l and r are decimal numbers");
 						return 1;
 					}
-				}
-				if(x.startsWith("--plot-file=")){
+				}+/
+				/+if(x.startsWith("--plot-file=")){
 					opt.plot=true;
 					opt.plotFile=x["--plot-file=".length..$];
 					continue;
-				}
+				}+/
 				if(x.startsWith("--summarize=")){
 					auto rest=x["--summarize=".length..$];
 					import std.regex: regex, match;

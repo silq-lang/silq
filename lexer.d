@@ -5,6 +5,7 @@ import std.string, utf = std.utf, std.uni;
 import std.stdio, std.conv;
 import std.algorithm;
 import std.traits: EnumMembers;
+import std.typecons;
 
 import core.memory;
 
@@ -255,13 +256,31 @@ struct Location{
 }
 import std.array;
 int getColumn(Location loc, int tabsize){
+	return getStart(loc, tabsize).column;
+}
+int charWidth(dchar dc){
+	return 1; // TODO: actually use width of characters
+}
+Tuple!(int,"line",int,"column") getStart(Location loc, int tabsize){
 	int res=0;
 	auto l=loc.source.getLineOf(loc.rep);
 	for(;!l.empty&&l[0]&&l.ptr<loc.rep.ptr; l.popFront()){
 		if(l.front=='\t') res=res-res%tabsize+tabsize;
 		else res++;
 	}
-	return res+1;
+	return tuple!("line","column")(loc.line,res);
+}
+Tuple!(int,"line",int,"column") getEnd(Location loc, int tabsize){
+	int res=0;
+	auto lines=loc.rep.splitLines();
+	auto llen=lines.length;
+	auto end=lines.back();
+	auto l=loc.source.getLineOf(end);
+	for(;!l.empty&&l[0]&&l.ptr<loc.rep.ptr+loc.rep.length; l.popFront()){
+		if(l.front=='\t') res=res-res%tabsize+tabsize;
+		else res++; // TODO: actually use width of characters
+	}
+	return tuple!("line","column")(to!int(loc.line+llen-1),res);
 }
 
 struct Token{
