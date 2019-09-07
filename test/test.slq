@@ -1,5 +1,36 @@
 /+
 def main(){
+	k:=0;
+	for i in [0..100){
+		k+=i;
+	}
+	return k;
+}
++/
+/+
+def main(){
+	k:=1:!ℤ;
+	k+=1:!ℤ;
+	a:=array(1,0);
+	a[0]+=1;
+	return (k,a);
+}
++/
+/+
+def foo(x:𝔹)mfree{
+	y:=0;
+	for i in [0..10){
+		x⊕=1:𝔹;
+		y+=1;
+	}
+	return x;
+}
+def main(){
+	return reverse(foo)(0:𝔹);
+}
++/
+/+
+def main(){
 	b:=H(0:𝔹);
 	x:=if b then -1:int[32] else 0:int[32];
 	forget(b=x==-1);

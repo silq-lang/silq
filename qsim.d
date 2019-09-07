@@ -2043,8 +2043,9 @@ struct Interpreter(QState){
 			}
 			auto be=cast(ABinaryExp)e;
 			assert(!!be);
-			auto lhs=runExp(be.e1),rhs=runExp(be.e2);
-			lhs.assign(qstate,perform(lhs,rhs));
+			auto ass=getAssignable!false(be.e1);
+			auto lhs=ass.read(qstate),rhs=runExp(be.e2);
+			ass.assign(qstate,perform(lhs,rhs));
 		}else if(auto call=cast(CallExp)e){
 			runExp(call).forget(qstate);
 		}else if(auto ce=cast(CompoundExp)e){
