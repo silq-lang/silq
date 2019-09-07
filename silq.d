@@ -12,7 +12,7 @@ static this(){ opt.importPath ~= buildPath(dirName(file.thisExePath),"library");
 int run(string path){
 	path = getActualPath(path);
 	auto ext = path.extension;
-	if(ext !=".hql"){
+	if(ext !=".slq"){
 		stderr.writeln(path~": unrecognized extension: "~ext);
 		return 1;
 	}
