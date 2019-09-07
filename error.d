@@ -52,6 +52,7 @@ import std.json;
 class JSONErrorHandler: ErrorHandler{
 	alias JSONValue JS;
 	JS[] result=[];
+	this(){ tabsize=1; }
 	private JS makeJS(string error, Location loc, string severity, bool addRelated){
 		auto source=loc.source.name;
 		auto start=getStart(loc,tabsize);

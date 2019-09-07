@@ -20,6 +20,7 @@ The options below may be used.
 
 Recognized file extensions: *.slq
 
+Build: `~__DATE__~` `~__TIME__~`
 Commit: `~commit~`
 `;
 
