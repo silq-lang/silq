@@ -92,7 +92,7 @@ abstract class Scope{
 	bool allowsLinear(){
 		return true;
 	}
-	bool insert(Declaration decl,bool force=false)in{assert(!decl.scope_); debug assert(force||!allowsLinear||!closed,text(decl)); }body{
+	bool insert(Declaration decl,bool force=false)in{assert(!decl.scope_); /+debug assert(force||!allowsLinear||!closed,text(decl))+/; }body{
 		if(auto d=symtabLookup(decl.name,false,Lookup.probing)){
 			redefinitionError(decl, d);
 			decl.sstate=SemState.error;
@@ -191,7 +191,7 @@ abstract class Scope{
 	}
 
 	bool close()in{
-		debug assert(!allowMerge);
+		//debug assert(!allowMerge);
 	}do{
 		debug closed=true;
 		bool errors=false;
@@ -262,7 +262,7 @@ abstract class Scope{
 		assert(scopes.length);
 		assert(toPush.length==0);
 		assert(scopes.all!(sc=>sc.toPush.length==0));
-		debug assert(allowMerge);
+		//debug assert(allowMerge);
 	}do{
 		allowMerge=false;
 		dependencies=scopes[0].dependencies.dup;
