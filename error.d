@@ -69,6 +69,7 @@ class JSONErrorHandler: ErrorHandler{
 		return diagnosticJS;
 	}
 	override void error(lazy string error, Location loc){
+		nerrors++;
 		result~=makeJS(error,loc,"error",true);
 	}
 	override void note(lazy string note, Location loc){

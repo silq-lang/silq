@@ -92,7 +92,7 @@ abstract class Scope{
 	bool allowsLinear(){
 		return true;
 	}
-	bool insert(Declaration decl,bool force=false)in{assert(!decl.scope_); /+debug assert(force||!allowsLinear||!closed,text(decl))+/; }body{
+	bool insert(Declaration decl,bool force=false)in{assert(!decl.scope_); /+debug assert(force||!allowsLinear||!closed,text(decl));+/ }body{
 		if(auto d=symtabLookup(decl.name,false,Lookup.probing)){
 			redefinitionError(decl, d);
 			decl.sstate=SemState.error;
