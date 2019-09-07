@@ -318,7 +318,8 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 			return vd;
 		}
 	}
-	sc.error("not a declaration: "~expr.toString()~" ",expr.loc);
+	if(expr.sstate!=SemState.error&&expr.loc.line!=0)
+		sc.error("not a declaration: "~expr.toString()~" ",expr.loc);
 	expr.sstate=SemState.error;
 	success=false;
 	return expr;

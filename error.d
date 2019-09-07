@@ -70,10 +70,12 @@ class JSONErrorHandler: ErrorHandler{
 		return diagnosticJS;
 	}
 	override void error(lazy string error, Location loc){
+		if(!loc.line) return;
 		nerrors++;
 		result~=makeJS(error,loc,"error",true);
 	}
 	override void note(lazy string note, Location loc){
+		if(!loc.line) return;
 		result[$-1]["relatedInformation"]~=[makeJS(note,loc,"note",false)];
 	}
 	override void finalize(){ stderr.writeln(result); }
