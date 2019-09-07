@@ -1,4 +1,4 @@
-/+// Written in the D programming language
+// Written in the D programming language
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
 
 import options,util;
@@ -7,35 +7,15 @@ enum commit = tryImport!(".git/"~tryImport!(".git/HEAD","ref: ")["ref: ".length.
 
 // TODO: auto-format depending on size of console
 enum help=`Silq type checker and simulator
-Usage: slq [OPTION]... [FILE]...
+Usage: silq [OPTION]... [FILE]...
 
 The options below may be used.
---dp                use dynamic programming backend for discrete distributions (experimental)
-
---plot              call gnuplot to plot the result (experimental)
---noboundscheck     do not check array bounds
---nocheck           do not check for error conditions
---nonormalize       do not renormalize final distribution
-
---cdf               generate cumulative distribution function (instead of generalized probability density)
---expectation       compute expectation of result ('main' should return real numbers)
-
---trace             print statements as they are analyzed
---raw               print only pdf, cdf or expectation
---raw-error         print only error probability
+--run               run main function in simulator
+--trace             print statements as they run together with the program state
 
 --summarize=...     summarize function declarations and exit (ex: --summarize=[name,arg-arity,ret-arity])
+--error-json        print diagnostics in json format
 
---nointegrate       do not evaluate integrals
---integratedeltas   do not evaluate continuous integrals
-
---gnuplot           print output in gnuplot format (experimental)
---mathematica       print output in mathematica format (experimental)
---maple             print output in maple format (experimental)
---lisp              print output in lisp format (experimental)
-
---syntax            print example demonstrating language syntax and exit
---distributions     print information about supported primitive distributions and exit
 --help              display this help and exit
 
 Recognized file extensions: *.slq
@@ -68,4 +48,3 @@ string computeDistributionDocString(){
 	return r;
 }
 
-+/

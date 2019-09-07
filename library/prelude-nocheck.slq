@@ -1,4 +1,4 @@
-// prelude file implicitly imported into all hql programs (with --nocheck, default for now)
+// prelude file implicitly imported into all silq programs (with --nocheck, default for now)
 
 def dup[τ:*]lifted(const x: τ)lifted: τ ⇒ (quantumPrimitive("dup"):!(Π[τ:*]lifted. !(Π(x:τ)lifted. τ)))(x);
 def measure[τ]lifted(x: τ):!τ ⇒ (quantumPrimitive("M"):!(Π[τ:*]lifted. !(Π(x:τ). !τ)))(x);

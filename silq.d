@@ -75,7 +75,7 @@ int main(string[] args){
 	bool hasInputFile=false;
 	foreach(x;args){
 		switch(x){
-			//case "--help": writeln(help.help); return 0;
+			case "--help": writeln(help.help); return 0;
 			//case "--syntax": writeln(syntax); return 0;
 			/+case "--distributions":
 				writeln(computeDistributionDocString());
@@ -88,7 +88,7 @@ int main(string[] args){
 			case "--noboundscheck": opt.noBoundsCheck=true; break;
 			case "--nocheck": opt.noCheck=true; break;
 			//case "--nonormalize": opt.noNormalize=true; break;
-			//case "--trace": opt.trace=true; break;
+			case "--trace": opt.trace=true; break;
 			case "--dump-reverse": opt.dumpReverse=true; break;
 			//case "--expectation": opt.expectation=true; break;
 			//case "--gnuplot": opt.formatting=Format.gnuplot; break;

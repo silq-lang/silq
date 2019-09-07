@@ -1,3 +1,4 @@
+/+
 // (this is a little convoluted, as it is adapted from code that had more capabilities)
 import std.stdio, std.file;
 import std.process, std.string, std.array;
@@ -34,7 +35,7 @@ auto to(string unit,T)(Duration d)if(unit=="seconds"||unit=="msecs"){
 }
 
 void main(){
-	auto sources=shell("find . -name '*.hql' -type f").splitLines;
+	auto sources=shell("find . -name '*.slq' -type f").splitLines;
 	Summary total;
 	int skipped=0,passed=0;
 	bool colorize=isATTy(stdout);
@@ -253,3 +254,4 @@ version(Posix){
 }else{
 	bool isATTy(ref File){return false;}
 }
++/
