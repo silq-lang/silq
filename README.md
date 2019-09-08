@@ -34,8 +34,9 @@ $ ./dependencies.sh && ./build.sh
 
 ## Using Silq
 
-Run `./silq example.slq`, where `example.slq` is a Silq source file.
-The next section ("Quick language guide") briefly introduces the most important language features.
+Run `./silq example.slq`, where `example.slq` is a Silq source file to type check that source file.
+
+Run `./silq example.slq --run`, where `example.slq` is a Silq source file to type check and simulate the main function in that source file.
 
 ### Additional command-line options
 
