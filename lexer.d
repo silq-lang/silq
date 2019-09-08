@@ -261,24 +261,26 @@ int getColumn(Location loc, int tabsize){
 int charWidth(dchar dc){
 	return 1; // TODO: actually use width of characters
 }
-Tuple!(int,"line",int,"column") getStart(Location loc, int tabsize){
+Tuple!(int,"line",int,"column") getStart(bool units=false)(Location loc, int tabsize){
+	static if(units) tabsize=1;
 	int res=0;
 	auto l=loc.source.getLineOf(loc.rep);
-	for(;!l.empty&&l[0]&&l.ptr<loc.rep.ptr; l.popFront()){
-		if(l.front=='\t') res=res-res%tabsize+tabsize;
-		else res++;
+	for(;!l.empty&&l[0]&&l.ptr<loc.rep.ptr; mixin(units?`l=l[1..$]`:`l.popFront()`)){
+		if(l[0]=='\t') res=res-res%tabsize+tabsize;
+		else res+=mixin(units?`1`:`charWidth(l.front)`);
 	}
 	return tuple!("line","column")(loc.line,res);
 }
-Tuple!(int,"line",int,"column") getEnd(Location loc, int tabsize){
+Tuple!(int,"line",int,"column") getEnd(bool units=false)(Location loc, int tabsize){
+	static if(units) tabsize=1;
 	int res=0;
 	auto lines=loc.rep.splitLines();
 	auto llen=lines.length;
 	auto end=lines.back();
 	auto l=loc.source.getLineOf(end);
-	for(;!l.empty&&l[0]&&l.ptr<loc.rep.ptr+loc.rep.length; l.popFront()){
-		if(l.front=='\t') res=res-res%tabsize+tabsize;
-		else res++; // TODO: actually use width of characters
+	for(;!l.empty&&l[0]&&l.ptr<loc.rep.ptr+loc.rep.length; mixin(units?`l=l[1..$]`:`l.popFront()`)){
+		if(l[0]=='\t') res=res-res%tabsize+tabsize;
+		else res+=mixin(units?`1`:`charWidth(l.front)`);
 	}
 	return tuple!("line","column")(to!int(loc.line+llen-1),res);
 }

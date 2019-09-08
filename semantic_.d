@@ -251,8 +251,10 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 			auto path = getActualPath(ImportExp.getPath(p));
 			Expression[] exprs;
 			TopScope tsc;
-			if(importModule(path,sc.handler,exprs,tsc,imp.loc))
+			if(importModule(path,sc.handler,exprs,tsc,imp.loc)){
+				sc.error("errors in imported file",imp.loc);
 				imp.sstate=SemState.error;
+			}
 			if(tsc) ctsc.import_(tsc);
 		}
 		if(imp.sstate!=SemState.error) imp.sstate=SemState.completed;
@@ -706,7 +708,7 @@ Expression statementSemantic(Expression e,Scope sc)in{
 }
 
 CompoundExp controlledCompoundExpSemantic(CompoundExp ce,Scope sc,Expression control,Annotation restriction_)in{
-	assert(!ce.blscope_);
+	//assert(!ce.blscope_);
 }do{
 	if(control.isQfree()){
 		ce.blscope_=new BlockScope(sc,restriction_);
