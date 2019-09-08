@@ -1,4 +1,10 @@
 /+
+def main(){
+	y:=3;
+	return (x:!ℕ)⇒(z:!ℕ)⇒x+y+z;
+}
++/
+/+
 def foo[n](qs:𝔹^n){
 	if n == 1{
 		measure(qs);

@@ -80,7 +80,7 @@ class Parameter: VarDecl{
 	override bool isLinear(){
 		return !isConst&&(!vtype||!vtype.isClassical());
 	}
-	override string toString(){ return (isConst?"const ":"")~getName~(dtype?": "~dtype.toString():""); }
+	override string toString(){ return (isConst?"const ":"")~getName~(vtype?": "~vtype.toString():dtype?": "~dtype.toString():""); }
 	@property override string kind(){ return "parameter"; }
 }
 
@@ -104,7 +104,7 @@ class FunctionDef: Declaration{
 	}
 	override string toString(){
 		string d=isSquare?"[]":"()";
-		return "def "~(name?getName:"")~d[0]~join(map!(to!string)(params),",")~(isTuple&&params.length==1?",":"")~d[1]~(annotation?text(annotation):"")~(body_?body_.toString():";");
+		return "def "~(name?getName:"")~d[0]~join(map!(to!string)(params),",")~(isTuple&&params.length==1?",":"")~d[1]~(annotation?text(annotation):"")~(body_?body_.toStringFunctionDef():";");
 	}
 
 	override bool isCompound(){ return true; }

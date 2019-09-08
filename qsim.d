@@ -1048,14 +1048,14 @@ struct QState{
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval])
 				case t: return text(mixin(text(t)));
 				case Tag.bval: return bval?"1":"0";
-				case Tag.closure: return text("⟨",closure.fun,(closure.context?text(",",closure.context.toStringImpl()):""),"⟩");
+				case Tag.closure: return text("⟨",text(closure.fun)[4..$],(closure.context?text(",",closure.context.toStringImpl()):""),"⟩");
 				case Tag.array_:
 					string prn="()";
 					if(cast(ArrayTy)type) prn="[]";
 					return text(prn[0],array_.map!(x=>x.toStringImpl).join(","),(array_.length==1&&prn=="()"?",":""),prn[1]);
 				case Tag.record:
 					auto r="{";
-					foreach(k,v;record) r~=text(".",k," ↦ ",v.toStringImpl(),",");
+					foreach(k,v;record) r~=text(k," ↦ ",v.toStringImpl(),",");
 					return r.length!=1?r[0..$-1]~"}":"{}";
 				case Tag.quval: return quval.toString();
 			}

@@ -1005,7 +1005,6 @@ class IteExp: Expression{
 		return new IteExp(cond.copy(args),then.copy(args),othw?othw.copy(args):null);
 	}
 	override string toString(){return _brk("if "~cond.toString() ~ " " ~ then.toString() ~ (othw&&othw.s.length?" else " ~ (othw.s.length==1&&cast(IteExp)othw.s[0]?othw.s[0].toString():othw.toString()):""));}
-
 	override bool isCompound(){ return true; }
 
 	override int freeVarsImpl(scope int delegate(string) dg){
@@ -1134,6 +1133,15 @@ class CompoundExp: Expression{
 	}
 
 	override string toString(){return "{\n"~indent(join(map!(a=>a.toString()~(a.isCompound()?"":";"))(s),"\n"))~"\n}";}
+	string toStringFunctionDef(){
+		if(s.length==1)
+			if(auto ret=cast(ReturnExp)s[0]){
+				if(auto le=cast(LambdaExp)ret.e)
+					return le.toString;
+				return " ⇒ "~ret.e.toString();
+			}
+		return toString();
+	}
 	override bool isCompound(){ return true; }
 
 	// semantic information
@@ -1223,7 +1231,7 @@ class LambdaExp: Expression{
 	}
 	override string toString(){
 		string d=fd.isSquare?"[]":"()";
-		return _brk(d[0]~join(map!(to!string)(fd.params),",")~d[1]~fd.body_.toString());
+		return _brk(d[0]~join(map!(to!string)(fd.params),",")~d[1]~fd.body_.toStringFunctionDef());
 	}
 
 	mixin VariableFree; // TODO!
