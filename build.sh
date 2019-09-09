@@ -13,7 +13,3 @@ fi
 
 # debug build
 $DMD -g -debug -J. -Jlibrary *.d -ofsilq
-
-if [ ! -f "test/runtests" ]; then
-    $DMD test/runtests.d -oftest/runtests
-fi

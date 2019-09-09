@@ -2,16 +2,14 @@
 
 VERSION="1.16.0-beta2"
 LINK=https://github.com/ldc-developers/ldc/releases/download/v$VERSION/
-
+NAME="ldc2-$VERSION-windows-x64"
+FILE="$NAME.7z"
+SUM="aad474ef5ccbfcbbb163800c4ebc3a2e"
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
-    NAME="ldc2-$VERSION-linux-x86_64"
-    FILE="$NAME.tar.xz"
-    SUM1="2a56674550fa1ef1351b65275941969f  $FILE"
+    SUM1="$SUM  $FILE"
     MD5="md5sum"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
-    NAME="ldc2-$VERSION-osx-x86_64"
-    FILE="$NAME.tar.xz"
-    SUM1="MD5 ($FILE) = cc57302988c590036c93f0f3fad3f6fc"
+    SUM1="MD5 ($FILE) = $SUM"
     MD5="md5"
 else
     >&2 echo "This script does not support your platform at this time."
@@ -29,8 +27,8 @@ if [ ! -d $NAME ]; then
     if [[ $SUM1 != $SUM2 ]]; then
         echo "ERROR: md5 sum mismatch"
         echo "EXPECTED: $SUM1"
-        echo "GOT: $SUM2"
+        echo "GOT     : $SUM2"
     else
-        tar -xf $FILE
+        7z x $FILE
     fi
 fi

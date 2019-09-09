@@ -15,4 +15,6 @@ Cuba*
 *.exe
 *.obj
 dmd*
+ldc2-*
+docker-ldc-darwin
 **#*#

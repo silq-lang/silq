@@ -22,11 +22,13 @@ if [ ! -d dmd2 ]; then
 
     ZIPLINK="http://downloads.dlang.org/releases/2.x/$VERSION/$FILE"
     
-    wget $ZIPLINK
+    wget -nc $ZIPLINK
     SUM2=`$MD5 $FILE`
 
     if [[ $SUM1 != $SUM2 ]]; then
         echo "ERROR: md5 sum mismatch"
+        echo "EXPECTED: $SUM1"
+        echo "GOT     : $SUM2"
     else
         unzip $FILE
     fi
