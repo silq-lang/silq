@@ -55,8 +55,8 @@ class JSONErrorHandler: ErrorHandler{
 	this(){ tabsize=1; }
 	private JS makeJS(string error, Location loc, string severity, bool addRelated){
 		auto source=loc.source.name;
-		auto start=getStart(loc,tabsize);
-		auto end=getEnd(loc,tabsize);
+		auto start=getStart!wchar(loc,1);
+		auto end=getEnd!wchar(loc,1);
 		auto sourceJS=JS(source);
 		auto startJS=JS(["line": JS(start.line), "column": JS(start.column)]);
 		auto endJS=JS(["line": JS(end.line), "column": JS(end.column)]);

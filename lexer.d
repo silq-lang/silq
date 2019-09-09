@@ -6,6 +6,7 @@ import std.stdio, std.conv;
 import std.algorithm;
 import std.traits: EnumMembers;
 import std.typecons;
+import std.utf;
 
 import core.memory;
 
@@ -261,26 +262,24 @@ int getColumn(Location loc, int tabsize){
 int charWidth(dchar dc){
 	return 1; // TODO: actually use width of characters
 }
-Tuple!(int,"line",int,"column") getStart(bool units=false)(Location loc, int tabsize){
-	static if(units) tabsize=1;
+Tuple!(int,"line",int,"column") getStart(T=dchar)(Location loc, int tabsize){
 	int res=0;
 	auto l=loc.source.getLineOf(loc.rep);
-	for(;!l.empty&&l[0]&&l.ptr<loc.rep.ptr; mixin(units?`l=l[1..$]`:`l.popFront()`)){
+	for(;!l.empty&&l[0]&&l.ptr<loc.rep.ptr; l.popFront()){
 		if(l[0]=='\t') res=res-res%tabsize+tabsize;
-		else res+=mixin(units?`1`:`charWidth(l.front)`);
+		else res+=l.front.codeLength!T();
 	}
 	return tuple!("line","column")(loc.line,res);
 }
-Tuple!(int,"line",int,"column") getEnd(bool units=false)(Location loc, int tabsize){
-	static if(units) tabsize=1;
+Tuple!(int,"line",int,"column") getEnd(T=dchar)(Location loc, int tabsize){
 	int res=0;
 	auto lines=loc.rep.splitLines();
 	auto llen=lines.length;
 	auto end=lines.back();
 	auto l=loc.source.getLineOf(end);
-	for(;!l.empty&&l[0]&&l.ptr<loc.rep.ptr+loc.rep.length; mixin(units?`l=l[1..$]`:`l.popFront()`)){
+	for(;!l.empty&&l.front&&l.ptr<loc.rep.ptr+loc.rep.length; l.popFront()){
 		if(l[0]=='\t') res=res-res%tabsize+tabsize;
-		else res+=mixin(units?`1`:`charWidth(l.front)`);
+		else res+=l.front.codeLength!T();
 	}
 	return tuple!("line","column")(to!int(loc.line+llen-1),res);
 }
