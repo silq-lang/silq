@@ -388,6 +388,7 @@ class Identifier: Expression{
 	}
 	// semantic information:
 	Declaration meaning;
+	bool substitute=false;
 	Scope scope_;
 	bool calledDirectly=false;
 	bool classical=false;

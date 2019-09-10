@@ -1735,11 +1735,10 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 		auto vd=cast(VarDecl)meaning;
 		if(vd){
 			if(cast(TopScope)vd.scope_||vd.vtype==typeTy&&vd.initializer){
-				if(!vd.initializer||vd.initializer.sstate!=SemState.completed){
+				if(!vd.initializer||vd.initializer.sstate!=SemState.completed)
 					id.sstate=SemState.error;
-					return id;
-				}
-				return vd.initializer;
+				id.substitute=true;
+				return id;
 			}
 		}
 		if(id.type&&meaning.scope_.getFunction()){

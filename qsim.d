@@ -1575,6 +1575,10 @@ struct Interpreter(QState){
 			if(e.type == typeTy) return QState.typeValue; // TODO: get rid of this
 			if(auto id=cast(Identifier)e){
 				if(!id.meaning&&id.name=="π") return QState.π;
+				if(id.substitute){
+					if(auto vd=cast(VarDecl)id.meaning)
+						return doIt2(vd.initializer);
+				}
 				auto r=lookupMeaning(qstate,id);
 				enforce(r.isValid,"unsupported");
 				return r;
