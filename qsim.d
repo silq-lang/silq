@@ -674,7 +674,7 @@ struct QState{
 							nbits=uintval.nbits;
 							val=uintval.val;
 						}
-						return makeArray(ntype,iota(nbits).map!(i=>makeBool(!!(val&(1<<i)))).array);
+						return makeArray(ntype.getClassical(),iota(nbits).map!(i=>makeBool(!!(val&(1<<i)))).array).convertTo(ntype);
 					}
 					break;
 				case Tag.bval:
@@ -1981,7 +1981,7 @@ struct Interpreter(QState){
 		auto a1=getAssignable!false(e1);
 		auto a2=getAssignable!false(e2);
 		auto tmp=a1.read(qstate).dup(qstate);
-		a1.assign(qstate,a2.read(qstate));
+		a1.assign(qstate,a2.read(qstate).dup(qstate));
 		tmp.consumeOnRead();
 		a2.assign(qstate,tmp);
 	}
