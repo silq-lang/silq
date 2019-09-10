@@ -711,3 +711,10 @@ string uncapitalize(string s){
 	if(!s.length) return s;
 	return s[0].toLower().to!string~s[1..$];	
 }
+
+int displayWidth(dchar dc){
+	return 1; // TODO: actually use width of characters
+}
+int displayWidth(string s){
+	return s.map!(c=>displayWidth(c)).fold!"a+b"(0);
+}

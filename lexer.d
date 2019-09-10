@@ -259,9 +259,6 @@ import std.array;
 int getColumn(Location loc, int tabsize){
 	return getStart(loc, tabsize).column;
 }
-int charWidth(dchar dc){
-	return 1; // TODO: actually use width of characters
-}
 Tuple!(int,"line",int,"column") getStart(T=dchar)(Location loc, int tabsize){
 	int res=0;
 	auto l=loc.source.getLineOf(loc.rep);

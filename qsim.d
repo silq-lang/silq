@@ -2,7 +2,7 @@ import std.conv: text, to;
 import std.string: split;
 import std.algorithm;
 import std.array: array;
-import std.range: iota, zip, repeat;
+import std.range: iota, zip, repeat, walkLength;
 import std.string: startsWith,join;
 import std.typecons: q=tuple,Q=Tuple;
 import std.exception: enforce;
@@ -131,13 +131,20 @@ struct QState{
 	string toString(){
 		FormattingOptions opt={type: FormattingType.dump};
 		string r="/────────\nQUANTUM STATE\n";
+		Q!(string,string)[] vk;
+		foreach(k,v;state)
+			vk~=q(text("(",v,")·"),k.toStringImpl(opt));
+		if(state.length){
+			auto maxlen=vk.map!(x=>x[0].displayWidth).reduce!max;
+			foreach(ref t;vk) t[0]=text(' '.repeat(maxlen-t[0].displayWidth),t[0]);
+		}
 		bool first=true;
-		foreach(k,v;state){
+		foreach(t;vk){
 			if(first){
 				first=false;
 				if(state.length>1) r~=" ";
 			}else r~="\n+";
-			r~=text("(",v,")·",k.toStringImpl(opt));
+			r~=text(t.expand);
 		}
 		r~="\n\nVARIABLES\n";
 		alias Mapping=Q!(string,Value);
