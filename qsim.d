@@ -131,9 +131,10 @@ struct QState{
 	string toString(){
 		FormattingOptions opt={type: FormattingType.dump};
 		string r="/────────\nQUANTUM STATE\n";
-		Q!(string,string)[] vk;
+		Q!(string,Σ.Sortable)[] vk;
 		foreach(k,v;state)
-			vk~=q(text("(",v,")·"),k.toStringImpl(opt));
+			vk~=q(text("(",v,")·"),k.toSortable());
+		sort!"a[1]<b[1]"(vk);
 		if(state.length){
 			auto maxlen=vk.map!(x=>x[0].displayWidth).reduce!max;
 			foreach(ref t;vk) t[0]=text(' '.repeat(maxlen-t[0].displayWidth),t[0]);
@@ -144,7 +145,7 @@ struct QState{
 				first=false;
 				if(state.length>1) r~=" ";
 			}else r~="\n+";
-			r~=text(t.expand);
+			r~=text(t[0],t[1].toStringImpl(opt));
 		}
 		r~="\n\nVARIABLES\n";
 		alias Mapping=Q!(string,Value);
@@ -1237,13 +1238,35 @@ struct QState{
 		void relabel(Ref[Ref] relabeling){
 			foreach(from,to;relabeling) relabel(to,from);
 		}
-		string toStringImpl(FormattingOptions opt){
+		struct Sortable{
+			Q!(Ref,Value)[] values;
+			private static int cmp(Value a,Value b){
+				enforce(a.type==b.type);
+				if(util.among(a.tag,Value.Tag.closure,Value.Tag.record)) return 0; // TODO: compare those
+				return a.lt(b).neqZImpl?-1:a.eq(b).neqZImpl?0:1;
+			}
+			int opCmp(Sortable rhs){
+				enforce(values.length==rhs.values.length);
+				foreach(i;0..values.length){
+					enforce(values[i][0]==rhs.values[i][0]);
+					int current=cmp(values[i][1],rhs.values[i][1]);
+					if(current!=0) return current;
+				}
+				return 0;
+			}
+			string toStringImpl(FormattingOptions opt){
+				if(!values.length) return "|⟩";
+				return values.map!(t=>text("|",t[1].toStringImpl(opt),"⟩",lowNum(t[0]))).join("⊗");
+			}
+		}
+		Sortable toSortable(){
 			Q!(Ref,Value)[] values;
 			foreach(k,v;qvars) values~=q(k,v);
 			sort!"a[0]<b[0]"(values);
-			bool first=true;
-			if(!values.length) return "|⟩";
-			return values.map!(t=>text("|",t[1].toStringImpl(opt),"⟩",lowNum(t[0]))).join("⊗");
+			return Sortable(values);
+		}
+		string toStringImpl(FormattingOptions opt){
+			return toSortable().toStringImpl(opt);
 		}
 		string toString(){ return toStringImpl(FormattingOptions.init); }
 	}
