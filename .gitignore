@@ -1,6 +1,7 @@
 *~
 *.o
 silq
+silq-osx
 *.def
 *.log
 test/runtests
