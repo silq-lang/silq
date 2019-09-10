@@ -1245,7 +1245,7 @@ struct QState{
 				case "atan","arctan": return fix(arg.atan());
 				//case "cot": return arg.cot();
 				//case "acot","arccot": return arg.acot();
-				case "printImpl": writeln(arg.toStringImpl()); return fix(makeTuple(.unit,[]));
+				case "printImpl": writeln(arg.toStringImpl()); stdout.flush(); return fix(makeTuple(.unit,[]));
 				default: break;
 			}
 		}
