@@ -62,8 +62,10 @@ private:
 	string sourceFile;
 }
 
+private alias FormattingOptions=QState.Value.FormattingOptions;
+private alias FormattingType=QState.Value.FormattingOptions.FormattingType;
 string formatQValue(QState qs,QState.Value value){ // (only makes sense if value contains the full quantum state)
-	if(value.isClassical()) return value.toStringImpl();
+	if(value.isClassical()) return value.toStringImpl(FormattingOptions.init);
 	string r;
 	foreach(k,v;qs.state){
 		if(r.length) r~="+";
@@ -125,6 +127,41 @@ struct QState{
 	MapX!(Σ,C) state;
 	Record vars;
 	QVar[] popFrameCleanup;
+
+	string toString(){
+		FormattingOptions opt={type: FormattingType.dump};
+		string r="/────────\nQUANTUM STATE\n";
+		bool first=true;
+		foreach(k,v;state){
+			if(first){
+				first=false;
+				if(state.length>1) r~=" ";
+			}else r~="\n+";
+			r~=text("(",v,")·",k.toStringImpl(opt));
+		}
+		r~="\n\nVARIABLES\n";
+		alias Mapping=Q!(string,Value);
+		Mapping[] mappings;
+		foreach(var,val;vars) mappings~=q(var,val);
+		bool special(string name){
+			return name.length&&name[0]=='`';
+		}
+		bool compare(Mapping a,Mapping b){
+			return q(special(a[0]),a[0])<q(special(b[0]),b[0]);
+		}
+		sort!compare(mappings);
+		foreach(i,t;mappings){
+			if(i&&special(t[0])&&!special(mappings[i-1][0]))
+				r~="\n";
+			r~=text(t[0]," ↦ ",t[1].toStringImpl(opt),"\n");
+		}
+		r~="────────/";
+		return r;
+	}
+
+	void dump(){
+		writeln(toString());
+	}
 
 	QState dup(){
 		return QState(state.dup,vars.dup,popFrameCleanup);
@@ -263,7 +300,7 @@ struct QState{
 	}
 	static class QConst: QVal{
 		Value constant;
-		override string toString(){ return constant.toStringImpl(); }
+		override string toString(){ return constant.toStringImpl(FormattingOptions.init); }
 		this(Value constant){ this.constant=constant; }
 		override Value get(ref Σ){ return constant; }
 	}
@@ -1041,21 +1078,28 @@ struct QState{
 			if(type==ℚt(true)) return qval;
 			return ℚ(asInteger());
 		}
-		string toStringImpl(){
+		struct FormattingOptions{
+			enum FormattingType{
+				default_,
+				dump,
+			}
+			FormattingType type;
+		}
+		string toStringImpl(FormattingOptions opt){
 			if(!type) return "Value.init";
 			if(type==typeTy) return "_";
 			final switch(tag){
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval])
 				case t: return text(mixin(text(t)));
 				case Tag.bval: return bval?"1":"0";
-				case Tag.closure: return text("⟨",text(closure.fun)[4..$],(closure.context?text(",",closure.context.toStringImpl()):""),"⟩");
+				case Tag.closure: return text("⟨",text(closure.fun)[4..$],(closure.context?text(",",closure.context.toStringImpl(opt)):""),"⟩");
 				case Tag.array_:
 					string prn="()";
 					if(cast(ArrayTy)type) prn="[]";
-					return text(prn[0],array_.map!(x=>x.toStringImpl).join(","),(array_.length==1&&prn=="()"?",":""),prn[1]);
+					return text(prn[0],array_.map!(x=>x.toStringImpl(opt)).join(","),(array_.length==1&&prn=="()"?",":""),prn[1]);
 				case Tag.record:
 					auto r="{";
-					foreach(k,v;record) r~=text(k," ↦ ",v.toStringImpl(),",");
+					foreach(k,v;record) r~=text(k," ↦ ",v.toStringImpl(opt),",");
 					return r.length!=1?r[0..$-1]~"}":"{}";
 				case Tag.quval: return quval.toString();
 			}
@@ -1063,10 +1107,10 @@ struct QState{
 		string toBasisStringImpl()in{
 			assert(isClassical(),text(this));
 		}do{
-			return text("|",toStringImpl(),"⟩");
+			return text("|",toStringImpl(FormattingOptions.init),"⟩");
 		}
 		string toString(){
-			return text(toStringImpl(),":",type);
+			return text(toStringImpl(FormattingOptions.init),":",type);
 		}
 	}
 	static assert(Value.sizeof==Type.sizeof+Value.bits.sizeof);
@@ -1186,6 +1230,15 @@ struct QState{
 		void relabel(Ref[Ref] relabeling){
 			foreach(from,to;relabeling) relabel(to,from);
 		}
+		string toStringImpl(FormattingOptions opt){
+			Q!(Ref,Value)[] values;
+			foreach(k,v;qvars) values~=q(k,v);
+			sort!"a[0]<b[0]"(values);
+			bool first=true;
+			if(!values.length) return "|⟩";
+			return values.map!(t=>text("|",t[1].toStringImpl(opt),"⟩",lowNum(t[0]))).join("⊗");
+		}
+		string toString(){ return toStringImpl(FormattingOptions.init); }
 	}
 	static QState empty(){
 		return QState.init;
@@ -1245,7 +1298,11 @@ struct QState{
 				case "atan","arctan": return fix(arg.atan());
 				//case "cot": return arg.cot();
 				//case "acot","arccot": return arg.acot();
-				case "printImpl": writeln(arg.toStringImpl()); stdout.flush(); return fix(makeTuple(.unit,[]));
+				case "printImpl":
+					FormattingOptions opt={type: FormattingType.dump};
+					writeln(arg.toStringImpl(opt)); stdout.flush(); return fix(makeTuple(.unit,[]));
+				case "dump": dump(); stdout.flush(); return fix(makeTuple(.unit,[]));
+				case "exit": enforce(0, "terminated by exit call"); assert(0);
 				default: break;
 			}
 		}
@@ -1525,7 +1582,7 @@ QState.Value getContextFor(QState)(ref QState qstate,Declaration meaning,Scope s
 }
 QState.Value buildContextFor(QState)(ref QState qstate,FunctionDef fd)in{assert(fd&&fd.scope_);}body{
 	QState.Record record;
-	foreach(id;fd.captures) record[id.name]=lookupMeaning(qstate,id,fd.scope_);
+	foreach(id;fd.captures) record[id.name]=lookupMeaning(qstate,id,fd.fscope_.parent);
 	return QState.makeRecord(record);
 }
 QState.Value lookupMeaning(QState)(ref QState qstate,Identifier id,Scope sc=null)in{assert(id && id.scope_,text(id," ",id.loc));}body{
@@ -2000,9 +2057,12 @@ struct Interpreter(QState){
 	}
 	void runStm2(Expression e,ref QState retState){
 		if(!qstate.state.length) return;
-		if(opt.trace){
-			writeln("state: ",qstate);
-			writeln("statement: ",e);
+		if(opt.trace && !isInPrelude(functionDef)){
+			writeln(qstate);
+			writeln();
+			writeln("STATEMENT");
+			writeln(e);
+			writeln();
 		}
 		if(auto nde=cast(DefExp)e){
 			auto de=cast(DefineExp)nde.initializer;

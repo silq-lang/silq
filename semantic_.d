@@ -238,6 +238,14 @@ int importModule(string path,ErrorHandler err,out Expression[] exprs,out TopScop
 	return nerr!=err.nerrors;
 }
 
+bool isInPrelude(Declaration decl){
+	import parser: preludePath;
+	auto ppath=preludePath();
+	if(ppath !in modules) return false;
+	auto psc=modules[ppath];
+	return decl.scope_.isNestedIn(psc[1]);
+}
+
 Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 	if(auto imp=cast(ImportExp)expr){
 		imp.scope_ = sc;

@@ -1,5 +1,19 @@
 /+
 def main(){
+	x:=0:𝔹;
+	z:=0:!ℕ;
+	def foo(){
+		y:=H(z coerce 𝔹);
+		dump();
+		exit();
+		return y;
+	}
+	z=2;
+	return foo();
+}
++/
+/+
+def main(){
     qs := vector(1,0:𝔹);
 	y:=0:𝔹;
 	(y,qs[0]):=(qs[0],y);
