@@ -1716,7 +1716,7 @@ struct Interpreter(QState){
 							case "quantumPrimitive":
 								enforce(0,"quantum primitive cannot be used as first-class value");
 								assert(0);
-							case "show__":
+							case "__show","__query":
 								return qstate.makeTuple(type.unit,[]);
 							default:
 								enforce(0,text("TODO: ",id.name));
