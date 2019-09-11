@@ -604,8 +604,11 @@ class VectorTy: Type, ITupleTy{
 	override bool isSubtypeImpl(Expression r){
 		if(auto rarr=cast(ArrayTy)r) return isSubtype(next,rarr.next);
 		auto lvec=this,rvec=cast(VectorTy)r;
-		if(!rvec) return false;
-		return isSubtype(lvec.next,rvec.next) && num==rvec.num;
+		if(rvec) return isSubtype(lvec.next,rvec.next) && num==rvec.num;
+		auto ltup=this.isTupleTy(),rtup=r.isTupleTy();
+		if(!ltup||!rtup) return false;
+		if(!rtup||ltup.length!=rtup.length) return false;
+		return all!(i=>isSubtype(ltup[i],rtup[i]))(iota(ltup.length));
 	}
 	override Expression combineTypesImpl(Expression r,bool meet){
 		auto larr=this,rarr=cast(VectorTy)r;
