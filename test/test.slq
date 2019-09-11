@@ -1,5 +1,38 @@
 /+
 def main(){
+	x:=0:𝔹;
+	y:=0:𝔹;
+	x:=X(x);
+	if x{
+		y:=X(y);
+	}
+	forget(y); // TODO: make this unnecessary
+	return x;
+}
++/
+/+
+def main(){
+	a:=vector(10,0:𝔹);
+	b:=vector(10,0:𝔹);
+	c:=a~b;
+	(a:𝔹^10)~b:=c;
+	return (a,b);
+}
++/
+/+def foo(x:!𝔹,y:𝔹){
+	if x{
+		y:=measure(y);
+	}
+	return y;
+}
+
+def main(){
+	y:=H(0:𝔹);
+	return foo(true,y);
+}
++/
+/+
+def main(){
 	x:=array(5,0:𝔹);
 	for i in [0..5){
 		x[i]:=H(x[i]);

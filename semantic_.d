@@ -800,6 +800,29 @@ Expression defineSemantic(DefineExp be,Scope sc){
 	bool success=true;
 	auto e2orig=be.e2;
 	be.e2=expressionSemantic(be.e2,sc,ConstResult.no);
+	Dependency[] dependencies;
+	if(be.e2.sstate==SemState.completed&&sc.getFunction()){
+		bool ok=false;
+		if(auto tpl1=cast(TupleExp)be.e1){
+			dependencies.length=tpl1.length;
+			if(auto tpl2=cast(TupleExp)be.e2){
+				if(tpl1.length==tpl2.length){
+					ok=true;
+					foreach(i;0..tpl1.length)
+						if(tpl2.e[i].isQfree())
+							dependencies[i]=tpl2.e[i].getDependency(sc);
+				}
+			}
+			if(!ok){
+				auto dep=be.e2.getDependency(sc);
+				foreach(i;0..tpl1.length)
+					dependencies[i]=dep;
+			}
+		}else{
+			dependencies.length=1;
+			if(be.e2.isQfree()) dependencies[0]=be.e2.getDependency(sc);
+		}
+	}
 	auto de=cast(DefExp)makeDeclaration(be,success,sc);
 	if(!de) be.sstate=SemState.error;
 	assert(success && de && de.initializer is be || !de||de.sstate==SemState.error);
@@ -825,17 +848,11 @@ Expression defineSemantic(DefineExp be,Scope sc){
 				}
 			}
 			de.type=unit;
-			if(de.sstate!=SemState.error&&sc.getFunction()){
-				foreach(vd;de.decls){
-					if(vd.initializer){
-						if(vd.initializer.isQfree())
-							sc.addDependency(vd, vd.initializer.getDependency(sc));
-					}else if(be.e2){
-						if(be.e2.isQfree())
-							sc.addDependency(vd, be.e2.getDependency(sc));
-					}
-				}
-			}
+			auto decls=de.decls;
+			if(de.sstate!=SemState.error&&sc.getFunction()&&decls.length==dependencies.length)
+				foreach(i,vd;decls)
+					if(vd.initializer&&vd.initializer.isQfree())
+						sc.addDependency(vd,dependencies[i]);
 		}
 		if(cast(TopScope)sc){
 			if(!be.e2.isConstant() && !cast(PlaceholderExp)be.e2 && be.e2.type!=typeTy){
