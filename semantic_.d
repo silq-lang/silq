@@ -2024,8 +2024,8 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 		foreach(i,ref exp;arr.e){
 			exp=expressionSemantic(exp,sc,constResult);
 			propErr(exp,arr);
-			t = joinTypes(t, exp.type);
-			if(!t&&tok){
+			auto nt = joinTypes(t, exp.type);
+			if(!nt&&tok){
 				Expression texp;
 				foreach(j,oexp;arr.e[0..i]){
 					if(!joinTypes(oexp, exp)){
@@ -2039,7 +2039,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 				}
 				arr.sstate=SemState.error;
 				tok=false;
-			}
+			}else t=nt;
 		}
 		if(arr.e.length && t){
 			if(arr.e[0].type) arr.type=arrayTy(t);
