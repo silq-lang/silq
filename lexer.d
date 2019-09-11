@@ -165,7 +165,7 @@ string[2][] specialTokens =
 
 string[2][] compoundTokens = [];
 
-string[] keywords = ["dat","def","true","false","if","then","else","observe","assert","return","repeat","for","while","in","cobserve","import","Π","Pi","quantum","const","lifted","qfree","mfree","λ","lambda","forget","as","coerce"];
+string[] keywords = ["dat","def","true","false","if","then","else","observe","assert","return","repeat","for","while","in","cobserve","import","Π","Pi","quantum","const","lifted","qfree","mfree","λ","lambda","forget","as","coerce","classical"];
 
 
 string[2][] tokens = specialTokens ~ complexTokens ~ simpleTokens ~ unicodeTokens ~ compoundTokens ~ keywordTokens();

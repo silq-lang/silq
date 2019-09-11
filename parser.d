@@ -70,7 +70,7 @@ int getLbp(TokenType type) pure{ // operator precedence
 	// shift operators
 	case Tok!">>", Tok!"<<":
 	case Tok!">>>": return 110;
-	case Tok!"->",Tok!"→",Tok!"!": // exponential type
+	case Tok!"->",Tok!"→",Tok!"!",Tok!"classical": // exponential type
 	// case Tok!"⇒",Tok!"↦",Tok!"=>": return 115; // goesto
 	// additive operators
 	case Tok!"+",Tok!"-",Tok!"~",Tok!"sub":
@@ -481,7 +481,7 @@ struct Parser{
 			case Tok!"-":
 				nextToken();
 				return res=New!(UnaryExp!(Tok!"-"))(parseExpression(nbp,false));
-			case Tok!"!",Tok!"¬":
+			case Tok!"!",Tok!"¬",Tok!"classical":
 				nextToken();
 				return res=New!(UnaryExp!(Tok!"¬"))(parseExpression(nbp,false));
 			case Tok!"~":
@@ -553,7 +553,7 @@ struct Parser{
 				return res;
 			}mixin({string r;
 				foreach(x;binaryOps)
-					if(!util.among(x,"=>",".","!","?",":","as","coerce","*","=","==","<=","!<=",">=","!>=","!=","*=","/=","div=","&=","⊕=","|=","-=","sub=","+=","<<=",">>=",">>>=","*=","·=","%=","^=","&&=","||=","~=","&","&=","&←","∧=","|","|=","|←","∨=")){
+					if(!util.among(x,"=>",".","!","classical","?",":","as","coerce","*","=","==","<=","!<=",">=","!>=","!=","*=","/=","div=","&=","⊕=","|=","-=","sub=","+=","<<=",">>=",">>>=","*=","·=","%=","^=","&&=","||=","~=","&","&=","&←","∧=","|","|=","|←","∨=")){
 						r~=mixin(X!q{case Tok!"@(x)":
 							nextToken();
 							static if("@(x)"=="->"||"@(x)"=="→"){
@@ -594,7 +594,7 @@ struct Parser{
 			case Tok!">=": goto case Tok!"≥";
 			case Tok!"!>=": goto case Tok!"!≥";
 			case Tok!"!=": goto case Tok!"≠";
-			case Tok!"!":
+			case Tok!"!",Tok!"classical":
 				auto next=peek.type;
 				if(next==Tok!"→"||next==Tok!"->"){
 					nextToken();
