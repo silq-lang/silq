@@ -1,6 +1,3 @@
-def round(x:!R) lifted :!N;
-def sqrt(x:!R) lifted :!R;
-
 def groverDiffusion[n:!N](cand:uint[n]) mfree: uint[n] {
 	for k in [0..n) { cand[k] := H(cand[k]); }
 	if cand!=0 {
