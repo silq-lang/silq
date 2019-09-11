@@ -425,15 +425,24 @@ class TupleTy: Type,ITupleTy{
 	}
 	override bool isSubtypeImpl(Expression r){
 		auto ltup=this,rtup=r.isTupleTy();
-		if(!rtup||ltup.types.length!=rtup.length) return false;
-		return all!(i=>isSubtype(ltup.types[i],rtup[i]))(iota(ltup.types.length));
+		if(rtup&&ltup.types.length==rtup.length)
+		   return all!(i=>isSubtype(ltup.types[i],rtup[i]))(iota(ltup.types.length));
+		auto rarr=cast(ArrayTy)r;
+		if(rarr) return all!(i=>isSubtype(ltup.types[i],rarr.next))(iota(ltup.types.length));
+		return false;
 	}
 	override Expression combineTypesImpl(Expression r,bool meet){
 		auto ltup=this,rtup=r.isTupleTy();
-		if(!rtup||ltup.types.length!=rtup.length) return null;
-		auto rtypes=zip(ltup.types,iota(rtup.length).map!(i=>rtup[i])).map!((t)=>combineTypes(t.expand,meet)).array;
-		if(any!(x=>x is null)(rtypes)) return null;
-		return tupleTy(rtypes);
+		if(rtup&&ltup.types.length==rtup.length){
+			auto rtypes=zip(ltup.types,iota(rtup.length).map!(i=>rtup[i])).map!((t)=>combineTypes(t.expand,meet)).array;
+			if(any!(x=>x is null)(rtypes)) return null;
+			return tupleTy(rtypes);
+		}
+		if(auto rarr=cast(ArrayTy)r){
+			auto rtype=ltup.types.fold!((a,b)=>combineTypes(a,b,meet))(rarr.next);
+			if(rtype) return arrayTy(rtype);
+		}
+		return null;
 	}
 	override bool isClassical(){
 		return all!(x=>x.isClassical())(types);
@@ -519,10 +528,19 @@ class ArrayTy: Type{
 	}
 	override Expression combineTypesImpl(Expression r,bool meet){
 		auto larr=this,rarr=cast(ArrayTy)r;
-		if(!rarr) return null;
-		auto combinedNext=combineTypes(larr.next,rarr.next,meet);
-		if(!combinedNext) return null;
-		return arrayTy(combinedNext);
+		if(rarr){
+			auto combinedNext=combineTypes(larr.next,rarr.next,meet);
+			if(combinedNext) return arrayTy(combinedNext);
+		}
+		if(auto rvec=cast(VectorTy)r){
+			auto nnext=combineTypes(next,rvec.next,meet);
+			if(nnext) return arrayTy(nnext);
+		}
+		if(auto rtup=r.isTupleTy()){
+			auto rtype=iota(rtup.length).map!(i=>rtup[i]).fold!((a,b)=>combineTypes(a,b,meet))(next);
+			if(rtype) return arrayTy(rtype);
+		}
+		return null;
 	}
 	override bool isClassical(){
 		return next.isClassical();
@@ -606,16 +624,28 @@ class VectorTy: Type, ITupleTy{
 		auto lvec=this,rvec=cast(VectorTy)r;
 		if(rvec) return isSubtype(lvec.next,rvec.next) && num==rvec.num;
 		auto ltup=this.isTupleTy(),rtup=r.isTupleTy();
-		if(!ltup||!rtup) return false;
-		if(!rtup||ltup.length!=rtup.length) return false;
-		return all!(i=>isSubtype(ltup[i],rtup[i]))(iota(ltup.length));
+		if(ltup&&rtup&&ltup.length==rtup.length)
+			return all!(i=>isSubtype(ltup[i],rtup[i]))(iota(ltup.length));
+		return false;
 	}
 	override Expression combineTypesImpl(Expression r,bool meet){
-		auto larr=this,rarr=cast(VectorTy)r;
-		if(!rarr||num!=rarr.num) return null;
-		auto combinedNext=combineTypes(larr.next,rarr.next,meet);
-		if(!combinedNext) return null;
-		return vectorTy(combinedNext,num);
+		if(auto rarr=cast(ArrayTy)r){
+			auto nnext=combineTypes(next,rarr.next,meet);
+			if(nnext) return arrayTy(nnext);
+		}
+		auto lvec=this,rvec=cast(VectorTy)r;
+		if(rvec&&num==rvec.num){
+			auto combinedNext=combineTypes(lvec.next,rvec.next,meet);
+			if(!combinedNext) return null;
+			return vectorTy(combinedNext,num);
+		}
+		auto ltup=this.isTupleTy(),rtup=r.isTupleTy();
+		if(ltup&&rtup&&ltup.length==rtup.length){
+			auto rtypes=iota(ltup.length).map!(i=>combineTypes(ltup[i],rtup[i],meet)).array;
+			if(any!(x=>x is null)(rtypes)) return null;
+			return tupleTy(rtypes);
+		}
+		return null;
 	}
 	override bool isClassical(){
 		return next.isClassical();
