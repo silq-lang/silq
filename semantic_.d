@@ -137,7 +137,18 @@ Expression presemantic(Declaration expr,Scope sc){
 			auto pt=fd.isTuple?tupleTy(pty):pty[0];
 			if(!fd.ret) fd.sstate=SemState.error;
 			else fd.ftype=productTy(pc,pn,pt,fd.ret,fd.isSquare,fd.isTuple,fd.annotation,true);
-			if(!fd.body_) return expr;
+			if(!fd.body_){
+				switch(fd.getName){
+					case "invQImpl":
+						// capture c:
+						auto id=new Identifier("c");
+						id.loc=fd.loc;
+						expressionSemantic(id,fsc,ConstResult.yes);
+						break;
+					default: break;
+				}
+				return expr;
+			}
 		}
 		if(!fd.body_){
 			sc.error("function without body should have a return type annotation",fd.loc);

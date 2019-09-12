@@ -70,7 +70,7 @@ S escape(S)(S i,bool isc=false)if(isSomeString!S){ // TODO: COW, replace with st
 			case '\0': r~="\\0"; break;
 			case ' ':  r~=" "; break;
 			default:
-				if(uni.isWhite(x)) r~=format("\\u%4.4X",cast(uint)x); // wtf? 
+				if(uni.isWhite(x)) r~=format("\\u%4.4X",cast(uint)x); // wtf?
 				else r~=x; break;
 		}
 	}
@@ -97,7 +97,7 @@ string lowerf(string s){
 
 string upperf(string s){
 	if('a'<=s[0]&&s[0]<='z') return cast(char)(s[0]+('A'-'a'))~s[1..$];
-	return s;	
+	return s;
 }
 
 
@@ -196,7 +196,7 @@ struct GCAlloc{
 private void[] _mlp;
 struct ChunkGCAlloc{
 	static:
-	auto New(T,A...)(A args){ // Simple chunk allocator on top of the GC. Way faster, but not precise		
+	auto New(T,A...)(A args){ // Simple chunk allocator on top of the GC. Way faster, but not precise
 		auto dg={A a; return new T(a);};
 		static assert(__traits(compiles, {A a;return new T(a);}), "cannot create instance of class "~T.stringof);
 		return emplace!T(NewImpl(__traits(classInstanceSize, T)),args);
@@ -429,7 +429,7 @@ string asciify(string s){
 	t=t.replace("δ"d,"delta"d); //TODO assert that the final string does only contain ascii characters.
 	t=t.replace("₋"d,"m");
 	//TODO also pass as a second argument the format, so that the greek-letters can get tex names.
-	
+
 	//pragma(msg, cast(dchar)('₀'+1));
 	foreach(x;0..10)
 		t=t.replace(""d~cast(dchar)('₀'+x),""d~cast(dchar)('0'+x));
@@ -449,7 +449,7 @@ string underline(string s){
 	import std.uni;
 	// TODO: some fonts appear to require the opposite order?
 	foreach(dchar d;s){ if(!combiningClass(d)) r~="\u0332"; r~=d; }
-	return r;	
+	return r;
 }
 import hashtable;
 //alias setxEq=ID!((a,b)=>a==b);
@@ -509,14 +509,22 @@ alias ℤ=BigInt;
 }
 
 ℤ gcd(ℤ a,ℤ b){
-	if(a==b) return a;
-	if(b>a) swap(a,b);
-	if(b==0) return a;
 	if(b<0) return a<0?-gcd(-a,-b):gcd(a,-b);
-	if(!(a%2)&&!(b%2)) return 2*gcd(a/2,b/2);
+	ℤ f=1;
+Lstart:;
+	if(a==b) return a*f;
+	if(b>a) swap(a,b);
+	if(b==0) return a*f;
+
+	/+if(!(a%2)&&!(b%2)) return 2*gcd(a/2,b/2);
 	else if(!(b%2)) return gcd(a,b/2);
 	else if(!(a%2)) return gcd(a/2,b);
-	return gcd(a-b,b);
+	return gcd(a-b,b);+/
+	if(!(a%2)&&!(b%2)){f*=2; a/=2; b/=2; goto Lstart;}
+	else if(!(b%2)){b/=2; goto Lstart;}
+	else if(!(a%2)){a/=2; goto Lstart;}
+	a-=b; goto Lstart;
+
 }
 
 ℤ lcm(ℤ a,ℤ b){ return a*(b/gcd(a,b)); }
@@ -525,6 +533,9 @@ struct ℚ{
 	ℤ num=0,den=1;
 	this(long num){
 		this(num.ℤ);
+	}
+	this(long num,long den){
+		this(num.ℤ,den.ℤ);
 	}
 	this(ℤ num){
 		this.num=num;
@@ -591,9 +602,18 @@ struct ℚ{
 }
 
 long toLong(ℤ a){ return a.to!string.to!long; } // TODO: do properly
-//double toDouble(ℤ a){ return a.to!string.to!double; } // TODO: do properly
+double toDouble(ℤ a){ return a.to!string.to!double; } // TODO: do properly
+double toDouble(ℚ a){ return toReal(a.num)/toReal(a.den); } // TODO: do properly
 real toReal(ℤ a){ return a.to!string.to!real; } // TODO: do properly
-real toReal(ℚ a){ return toReal(a.num)/toReal(a.den); }
+real toReal(ℚ a){ return toReal(a.num)/toReal(a.den); } // TODO: do properly
+
+ℚ toℚ(T)(T arg)if(is(T==float)||is(T==double)||is(T==real)){
+	import std.numeric;
+	enum precision=64, exponentWidth=15, flags=CustomFloatFlags.signed;
+	enum bias=2^^(exponentWidth-1)-1;
+	CustomFloat!(precision,exponentWidth,flags,bias) tmp=arg;
+	return ℚ((tmp.sign?-1:1)*ℤ(tmp.significand))*pow(ℚ(2),ℤ(tmp.exponent)-bias-precision+1);
+}
 
 ℤ abs(ℤ x){ return x<0?-x:x; }
 ℚ abs(ℚ x){ return ℚ(abs(x.num),x.den); }
@@ -639,6 +659,10 @@ auto nC(ℤ n){
 
 ℤ floor(ℚ x){
 	return floordiv(x.num,x.den);
+}
+
+ℤ round(ℚ x){
+	return floor(x+ℚ(1,2));
 }
 
 struct BitInt(bool signed=true){
@@ -709,7 +733,7 @@ string capitalize(string s){ // (only works with ascii for now)
 }
 string uncapitalize(string s){
 	if(!s.length) return s;
-	return s[0].toLower().to!string~s[1..$];	
+	return s[0].toLower().to!string~s[1..$];
 }
 
 int displayWidth(dchar dc){

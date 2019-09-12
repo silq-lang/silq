@@ -1,4 +1,42 @@
 /+
+import int_fixed_point_util;
+def main()⇒toRange[-1.0,1.0](sinQ[1000,1000](fromAngle[1000](π/4)));
++/
+/+
+import int_fixed_point_util;
+def main()⇒toRange[0.0,1](invQ[10,10,0.1](fromRange[0,1][10](0.2)));
++/
+/+
+import int_fixed_point_util;
+
+def main(){
+	x:=H(0:𝔹);
+	if x{ phaseQ(fromAngle[20](π/3)); }
+	if x{ phaseQ(fromAngle[20](-π/3)); }
+	return H(x);
+}
++/
+
+/+import int_fixed_point_util;
+def main()⇒toAngle(asinQ[50,100](fromRange[-1,1][50](-0.3)));+/
+/+
+import int_fixed_point_util;
+def main(){
+	x:=0:uint[5];
+	for i in [0..5){
+		x[i]:=H(x[i]);
+	}
+	r:=asinQ[5,10](x);
+	(x,r):=measure(x,r);
+	return (toRange[-1.0,1.0](x),toAngle(r),x,r);
+}
++/
+/+
+def main(){
+	return 2;
+}
++/
+/+
 def task[state](
 	numbers: !ℝ[],
 	prepareState: !(Π(n:!ℕ). state^n),
@@ -1235,14 +1273,14 @@ def iQFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
 }
 
 /+
-def phaseUint[n:!ℕ](const φ: uint[n])mfree{
+def phaseQ[n:!ℕ](const φ: uint[n])mfree{
 	for i in [0..n){ if φ[i]{ phase(2·π·2^i/2^n); } }
 }
 def QFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
 	for k in [0..n){
 		j:=n sub 1 sub k;
 		ψ[j] := H(ψ[j]); // ψ'[j] = 1/√2(|0⟩+expi(2π·2^k·(ψ&2^j)/2^n)|1⟩)
-		if ψ[j]{ phaseUint(2^k·(ψ⊕2^j)); }// ψ''[j] = 1/√2(|0⟩+expi(2π·2^k·ψ/2^n)|1⟩)
+		if ψ[j]{ phaseQ(2^k·(ψ⊕2^j)); }// ψ''[j] = 1/√2(|0⟩+expi(2π·2^k·ψ/2^n)|1⟩)
 	}
 	for k in [0..n div 2){
 		(ψ[k],ψ[n-k-1]) := (ψ[n-k-1],ψ[k]);
@@ -1251,14 +1289,14 @@ def QFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
 }
 +/
 /+
-def phaseUint[n:!ℕ](const φ: uint[n])mfree{
+def phaseQ[n:!ℕ](const φ: uint[n])mfree{
 	for i in [0..n){ if (φ&2^i)!=0{ phase(2·π·2^(i-n)); } }
 }
 def QFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
 	for k in [0..n){
 		j:=n sub 1 sub k;
 		ψ[j] := H(ψ[j]);
-		if (ψ&2^j)!=0{ phaseUint(2^k*ψ⊕2^(n sub 1)); }
+		if (ψ&2^j)!=0{ phaseQ(2^k*ψ⊕2^(n sub 1)); }
 	}
 	for k in [0..n div 2){
 		(ψ[k],ψ[n-k-1]) := (ψ[n-k-1],ψ[k]);
