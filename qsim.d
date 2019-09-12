@@ -1466,7 +1466,7 @@ struct QState{
 		}
 		this=map!forgetImpl(var);
 	}
-	void closeScope(Scope scope_){
+	void forgetVars(Scope scope_){
 		if(!state.length) return;
 		foreach(var;scope_.forgottenVars){
 			auto name=var.getName;
@@ -1708,6 +1708,16 @@ struct Interpreter(QState){
 		if(consumeArg) value.consumeOnRead(); // TODO: ok?
 		return default_();
 	}
+	void closeScope(Scope sc){
+		if(!qstate.state.length) return;
+		qstate.forgetVars(sc);
+		foreach(merged;sc.mergedVars){
+			auto name=merged[0].getName;
+			auto type=merged[1];
+			enforce(name in qstate.vars);
+			qstate.vars[name]=convertTo(qstate.vars[name],type,true).toVar(qstate,false);
+		}
+	}
 	QState.Value runExp(Expression e){
 		if(!qstate.state.length) return QState.Value.init;
 		QState.Value doIt()(Expression e){
@@ -1872,13 +1882,13 @@ struct Interpreter(QState){
 					if(cond.neqZImpl){
 						auto thenIntp=Interpreter!QState(functionDef,ite.then,qstate,hasFrame);
 						auto then=thenIntp.convertTo(ite.then.s[0],ite.type);
-						thenIntp.qstate.closeScope(ite.then.blscope_);
+						thenIntp.closeScope(ite.then.blscope_);
 						qstate=thenIntp.qstate;
 						return then;
 					}else{
 						auto othwIntp=Interpreter!QState(functionDef,ite.othw,qstate,hasFrame);
 						auto othw=othwIntp.convertTo(ite.othw.s[0],ite.type);
-						othwIntp.qstate.closeScope(ite.othw.blscope_);
+						othwIntp.closeScope(ite.othw.blscope_);
 						qstate=othwIntp.qstate;
 						return othw;
 					}
@@ -1887,7 +1897,7 @@ struct Interpreter(QState){
 					qstate=thenElse[0];
 					auto thenIntp=Interpreter!QState(functionDef,ite.then,qstate,hasFrame);
 					auto then=thenIntp.convertTo(ite.then.s[0],ite.type);
-					thenIntp.qstate.closeScope(ite.then.blscope_);
+					thenIntp.closeScope(ite.then.blscope_);
 					auto constLookup=ite.constLookup;
 					assert(!!ite.othw);
 					assert(ite.then.s[0].constLookup==constLookup&&ite.othw.s[0].constLookup==constLookup);
@@ -1895,9 +1905,9 @@ struct Interpreter(QState){
 					auto othwState=thenElse[1];
 					auto othwIntp=Interpreter(functionDef,ite.othw,othwState,hasFrame);
 					auto othw=othwIntp.convertTo(ite.othw.s[0],ite.type);
+					othwIntp.closeScope(ite.othw.blscope_);
 					if(!then.isValid) return othw; // constant conditions
 					if(!othw.isValid) return then;
-					othwIntp.qstate.closeScope(ite.othw.blscope_);
 					othwIntp.qstate.assignTo("`result",othw);
 					qstate=thenIntp.qstate;
 					qstate+=othwIntp.qstate;
@@ -2150,13 +2160,13 @@ struct Interpreter(QState){
 			auto othw=thenOthw[1];
 			auto thenIntp=Interpreter(functionDef,ite.then,qstate,hasFrame);
 			thenIntp.run(retState);
+			thenIntp.closeScope(ite.then.blscope_);
 			qstate=thenIntp.qstate;
 			enforce(!!ite.othw);
 			auto othwIntp=Interpreter(functionDef,ite.othw,othw,hasFrame);
 			othwIntp.run(retState);
+			othwIntp.closeScope(ite.othw.blscope_);
 			othw=othwIntp.qstate;
-			qstate.closeScope(ite.then.blscope_);
-			othw.closeScope(ite.othw.blscope_);
 			qstate+=othw;
 		}else if(auto re=cast(RepeatExp)e){
 			auto rep=runExp(re.num);
@@ -2166,7 +2176,7 @@ struct Interpreter(QState){
 				foreach(x;0.ℤ..z){
 					if(opt.trace) writeln("repetition: ",x+1);
 					intp.run(retState);
-					intp.qstate.closeScope(re.bdy.blscope_);
+					intp.closeScope(re.bdy.blscope_);
 				}
 				qstate=intp.qstate;
 			}else{
@@ -2182,7 +2192,7 @@ struct Interpreter(QState){
 					if(!intp.qstate.state.length) break;
 					if(opt.trace) writeln("repetition: ",x+1);
 					intp.run(retState);
-					intp.qstate.closeScope(re.bdy.blscope_);
+					intp.closeScope(re.bdy.blscope_);
 				}+/
 			}
 		}else if(auto fe=cast(ForExp)e){
@@ -2194,7 +2204,7 @@ struct Interpreter(QState){
 					if(opt.trace) writeln("loop-index: ",j);
 					intp.qstate.assignTo(fe.var.name,qstate.makeInteger(j).convertTo(fe.loopVar.vtype));
 					intp.run(retState);
-					intp.qstate.closeScope(fe.bdy.blscope_);
+					intp.closeScope(fe.bdy.blscope_);
 				};
 				if(sz>=0){
 					for(ℤ j=lz+cast(int)fe.leftExclusive;j+cast(int)fe.rightExclusive<=rz;j+=sz) mixin(body_);
@@ -2218,7 +2228,7 @@ struct Interpreter(QState){
 					intp.qstate.assignTo(fe.var.name,loopIndex+x);
 					if(opt.trace) writeln("repetition: ",x+1);
 					intp.run(retState);
-					intp.qstate.closeScope(fe.bdy.blscope_);
+					intp.closeScope(fe.bdy.blscope_);
 				}+/
 			}
 		}else if(auto we=cast(WhileExp)e){
@@ -2231,7 +2241,7 @@ struct Interpreter(QState){
 				intp.qstate = thenOthw[0];
 				if(!intp.qstate.state.length) break;
 				intp.run(retState);
-				intp.qstate.closeScope(we.bdy.blscope_);
+				intp.closeScope(we.bdy.blscope_);
 			}
 		}else if(auto re=cast(ReturnExp)e){
 			auto value = runExp(re.e);
@@ -2240,7 +2250,7 @@ struct Interpreter(QState){
 			qstate.assignTo("`value",value);
 			if(functionDef.isNested) // caller takes care of context
 				qstate.vars.remove(functionDef.contextName);
-			qstate.closeScope(functionDef.body_.blscope_);
+			closeScope(functionDef.body_.blscope_);
 			if(hasFrame){
 				assert("`frame" in qstate.vars);
 				//assert(qstate.vars.length==2); // `value and `frame

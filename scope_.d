@@ -2,6 +2,7 @@
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
 
 import std.format, std.conv, std.algorithm, std.stdio;
+import std.typecons:Q=Tuple,q=tuple;
 import lexer, expression, declaration, type, error;
 import util;
 
@@ -245,6 +246,10 @@ abstract class Scope{
 		}
 		return false;
 	}
+	Q!(Declaration,Expression)[] mergedVars;
+	final void mergeVar(Declaration decl,Expression ntype){
+		mergedVars~=q(decl,ntype);
+	}
 
 	bool allowMerge=false;
 	void nest(NestedScope r)in{
@@ -300,7 +305,7 @@ abstract class Scope{
 								}
 							}
 							// TODO: automatically promote to quantum if possible
-							if(ot&&nt&&ot!=nt){
+							if(st&&nt&&st!=nt){ // TODO: more efficient implementation for more than 2 scopes
 								symtab.remove(sym.name.ptr);
 								if(sym.rename) rnsymtab.remove(sym.rename.ptr);
 								auto id=new Identifier(sym.name.name);
@@ -317,7 +322,9 @@ abstract class Scope{
 								var.vtype=nt;
 								import semantic_:varDeclSemantic;
 								varDeclSemantic(var,this);
+								scopes[0].mergeVar(sym,nt);
 							}
+							if(ot&&nt&&ot!=nt) sc.mergeVar(osym,nt);
 						}
 					}
 				}

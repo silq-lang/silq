@@ -1,4 +1,10 @@
 /+
+def foo[n:!𝔹](){
+	qs:=vector(n,0:𝔹);
+	return qs;
+}
++/
+/+
 def main(){
 	f:=(g:𝔹×𝔹const 𝟙→𝔹)⇒g(false,false,()); // crash
 }
