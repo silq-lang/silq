@@ -1,4 +1,17 @@
 /+
+def create_bill[n:!N](){
+	bill:=0:uint[n];
+	return (bill);
+}
+
+def main(){
+	n:=5;
+	bill:=create_bill[n]();
+	bill:=measure(bill):uint[n];
+	measure(bill);
+}
++/
+/+
 def main(){
     repeat 100{ }
 }

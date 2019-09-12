@@ -29,7 +29,7 @@ LocalizedException localizedException(Exception e,Location loc){
 	if(auto r=cast(LocalizedException)e) return r;
 	return new LocalizedException(e,loc);
 }
-version=LOCALIZE;
+//version=LOCALIZE;
 
 class QSim{
 	this(string sourceFile){
@@ -693,19 +693,23 @@ struct QState{
 						if(ntag==Tag.qval) return makeRational(r);
 						if(ntag==Tag.zval) return makeInteger(.floor(r));
 					}
+					if(ntag==Tag.fval) return this;
 					break;
 				case Tag.qval:
 					if(ntag==Tag.bval) return neqZ;
 					if(ntag==Tag.zval) return makeInteger(.floor(qval));
+					if(ntag==Tag.qval) return this;
 					if(ntag==Tag.fval) return makeReal(toReal(qval));
 					break;
 				case Tag.zval:
 					if(ntag==Tag.bval) return neqZ;
+					if(ntag==Tag.zval) return this;
 					if(ntag==Tag.qval) return makeRational(ℚ(zval));
 					if(ntag==Tag.fval) return makeReal(toReal(zval));
 					break;
 				case Tag.intval,Tag.uintval:
 					if(ntag==Tag.bval) return neqZ;
+					if(ntag==tag) return this;
 					if(ntag==Tag.array_){
 						size_t nbits=0;
 						ℤ val=0;
@@ -720,6 +724,7 @@ struct QState{
 					}
 					break;
 				case Tag.bval:
+					if(ntag==Tag.bval) return this;
 					if(ntag==Tag.zval) return makeInteger(ℤ(cast(int)bval));
 					if(ntag==Tag.qval) return makeRational(ℚ(bval));
 					if(ntag==Tag.fval) return makeReal(to!R(bval));
