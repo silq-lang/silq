@@ -1,4 +1,14 @@
 /+
+def myX(b:𝔹){
+    b:=X(b);
+    return b;
+}
+def main(){
+    b:=myX(false);
+    measure(b);
+}
++/
+/+
 def determine(bill:𝔹)⇒bill;
 def main(){
 	bill:=1:𝔹;
