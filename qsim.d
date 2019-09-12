@@ -434,7 +434,7 @@ struct QState{
 			if(type==typeTy) return Tag.bval; // TODO: ok?
 			if(isInt(type)) return Tag.intval;
 			if(isUint(type)) return Tag.uintval;
-			enforce(0,text("TODO: representation for type ",type));
+			enforce(0,text("TODO: representation for type ",type," ",typeid(type)));
 			assert(0);
 		}
 		@property Tag tag(){
@@ -646,6 +646,7 @@ struct QState{
 
 		Value convertTo(Expression ntype){
 			if(ntype==ℕt(true)) ntype=ℤt(true);
+			if(cast(Identifier)ntype) return this;
 			// TODO: do this in-place?
 			auto otag=tag, ntag=getTag(ntype);
 			if(ntag==tag.quval){
@@ -1652,7 +1653,10 @@ struct Interpreter(QState){
 		return value;
 	}
 	QState.Value convertTo(QState.Value value,Expression type,bool consumeArg){
-		if(consumeArg&&value.type==type) return value;
+		if(value.type==type||cast(Identifier)type){
+			if(consumeArg) return value;
+			return value.dup(qstate);
+		}
 		QState.Value default_(){
 			if(consumeArg) value.consumeOnRead(); // TODO: ok?
 			auto ce=cast(CallExp)type;
@@ -1744,7 +1748,7 @@ struct Interpreter(QState){
 				return r;
 			}
 			if(auto fe=cast(FieldExp)e){
-				enforce(fe.constLookup);
+				enforce(fe.type.isClassical||fe.constLookup);
 				if(isBuiltIn(fe)){
 					if(auto at=cast(ArrayTy)fe.e.type){
 						assert(fe.f.name=="length");
@@ -2063,7 +2067,7 @@ struct Interpreter(QState){
 		}else if(auto tpl=cast(TupleExp)lhs){
 			enforce(!isCat);
 			enforce(rhs.tag==QState.Value.Tag.array_);
-			enforce(tpl.e.length==rhs.array_.length);
+			enforce(tpl.e.length==rhs.array_.length,"length mismatch for pattern matching against array");
 			foreach(i;0..tpl.e.length)
 				assignTo!isCat(tpl.e[i],rhs.array_[i]);
 		}else if(auto idx=cast(IndexExp)lhs){

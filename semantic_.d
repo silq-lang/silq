@@ -835,7 +835,7 @@ Expression defineSemantic(DefineExp be,Scope sc){
 					sc.error(text("inconsistent number of tuple entries for definition: ",tpl.length," vs. ",tt.length),de.loc);
 					if(de){ de.setError(); be.sstate=SemState.error; }
 				}
-			}else{
+			}else if(!cast(ArrayTy)be.e2.type){
 				sc.error(format("cannot unpack type %s as a tuple",be.e2.type),de.loc);
 				if(de){ de.setError(); be.sstate=SemState.error; }
 			}
@@ -2319,7 +2319,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 					e.sstate=SemState.error;
 					return q((bool[]).init,Expression.init);
 				}
-				auto l=t1[1].isTupleTy,r=t2[1].isTupleTy;
+				auto l=cast(TupleTy)t1[1],r=cast(TupleTy)t2[1];
 				merge1&=l&&l.length;
 				merge2&=r&&r.length;
 				if(merge1 && merge2)

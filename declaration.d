@@ -289,9 +289,11 @@ class MultiDefExp: DefExp{
 					decl.vtype=tt[i];
 				}
 			}
-		}else{
-			assert(0,"TODO!");
-		}
+		}else if(auto at=cast(ArrayTy)type){
+			foreach(i,decl;decls_){
+				decl.vtype=at.next;
+			}
+		}else assert(0,"TODO!");
 	}
 	override void setInitializer(){
 		assert(initializer);

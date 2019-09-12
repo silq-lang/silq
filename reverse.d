@@ -103,7 +103,7 @@ Expression lowerDefine(bool analyzed)(Expression olhs,Expression orhs,Location l
 		return res;
 	}
 	if(validDefLhs!analyzed(olhs,sc)){
-		if(auto tpl=cast(TupleExp)lhs) if(!tpl.e.length) return rhs;
+		if(auto tpl=cast(TupleExp)lhs) if(!tpl.e.length&&(cast(CallExp)rhs||cast(ForgetExp)rhs)) return rhs;
 		return res=new DefineExp(lhs,rhs);
 	}
 	Expression forget(){ return res=new ForgetExp(rhs,lhs); }
@@ -115,7 +115,7 @@ Expression lowerDefine(bool analyzed)(Expression olhs,Expression orhs,Location l
 		auto newLhs=new TupleExp(arr.copy().e);
 		newLhs.loc=lhs.loc;
 		auto newRhs=orhs;
-		if(auto aty=cast(ArrayTy)arr.type){
+		if(auto aty=cast(ArrayTy)orhs.type){
 			auto tty=tupleTy(aty.next.repeat(arr.e.length).array);
 			newRhs=new TypeAnnotationExp(orhs,tty,TypeAnnotationType.coercion);
 			newRhs.type=tty;
