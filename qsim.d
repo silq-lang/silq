@@ -209,15 +209,8 @@ struct QState{
 	void opOpAssign(string op:"+")(QState r){
 		Σ.Ref[Σ.Ref] relabeling;
 		foreach(k,ref v;r.vars){
-			if(k in vars){
-				if(vars[k].tag!=v.tag){
-					auto nt=joinTypes(vars[k].type,v.type);
-					enforce(!!nt);
-					vars[k]=vars[k].convertTo(nt).toVar(this,false);
-					v=v.convertTo(nt).toVar(r,false);
-				}
-				updateRelabeling(relabeling,vars[k],v);
-			}else vars[k]=v;
+			if(k in vars) updateRelabeling(relabeling,vars[k],v);
+			else vars[k]=v;
 		}
 		foreach(k,v;r.state){
 			k.relabel(relabeling);
@@ -1253,7 +1246,8 @@ struct QState{
 				return a.lt(b).neqZImpl?-1:a.eq(b).neqZImpl?0:1;
 			}
 			int opCmp(Sortable rhs){
-				enforce(values.length==rhs.values.length);
+				if(values.length!=rhs.values.length) return 0;
+				//enforce(values.length==rhs.values.length);
 				foreach(i;0..values.length){
 					enforce(values[i][0]==rhs.values[i][0]);
 					int current=cmp(values[i][1],rhs.values[i][1]);
@@ -1472,7 +1466,7 @@ struct QState{
 		}
 		this=map!forgetImpl(var);
 	}
-	void forgetLocals(Scope scope_){
+	void closeScope(Scope scope_){
 		if(!state.length) return;
 		foreach(var;scope_.forgottenVars){
 			auto name=var.getName;
@@ -1652,6 +1646,68 @@ struct Interpreter(QState){
 	bool consumeConst(Expression e){
 		return !cast(Identifier)e&&!cast(TupleExp)e&&!cast(ArrayExp)e&&!cast(IndexExp)e&&!cast(SliceExp)e&&!cast(CatExp)e&&!cast(TypeAnnotationExp)e&&e.isQfree();
 	}
+	QState.Value convertTo(Expression e,Expression type){
+		auto value=runExp(e);
+		if(value.isValid) value=convertTo(value,type,!e.constLookup);
+		return value;
+	}
+	QState.Value convertTo(QState.Value value,Expression type,bool consumeArg){
+		if(consumeArg&&value.type==type) return value;
+		QState.Value default_(){
+			if(consumeArg) value.consumeOnRead(); // TODO: ok?
+			auto ce=cast(CallExp)type;
+			if(ce&&(isUint(type)||isInt(type))&&value.tag==QState.Value.Tag.array_)
+				enforce(qstate.makeInteger(ℤ(value.array_.length)).compare!"=="(runExp(ce.arg)).neqZImpl,"length mismatch for conversion to fixed-size integer");
+			if(type==ℕt(true)) enforce(value.compare!">="(qstate.makeInteger(ℤ(0))).neqZImpl,"negative value not representable as a natural number");
+			return value.convertTo(type);
+		}
+		if(isSubtype(value.type,type)) return default_();
+		if(isSubtype(value.type,ℤt(true))){
+			auto ce=cast(CallExp)type;
+			if(ce&&isUint(type))
+				return qstate.makeUint(type.getClassical(),BitInt!false(smallValue(runExp(ce.arg).asInteger()),value.asInteger())).convertTo(type);
+			if(ce&&isInt(type))
+				return qstate.makeInt(type.getClassical(),BitInt!true(smallValue(runExp(ce.arg).asInteger()),value.asInteger())).convertTo(type);
+		}
+		if(isUint(value.type)&&isSubtype(ℕt(true),type)){
+			assert(value.tag==QState.Value.Tag.uintval);
+			return qstate.makeInteger(value.uintval.val).convertTo(type);
+		}
+		if(isInt(value.type)&&isSubtype(ℤt(true),type)){
+			assert(value.tag==QState.Value.Tag.intval);
+			return qstate.makeInteger(value.uintval.val).convertTo(type);
+		}
+		// TODO: rat
+		if(auto tpl=cast(TupleTy)type){
+			if(value.tag==QState.Value.Tag.array_){
+				enforce(value.array_.length==tpl.length);
+				return qstate.makeTuple(type,iota(tpl.length).map!(i=>convertTo(value.array_[i],tpl[i],consumeArg)).array);
+			}
+		}else if(auto arr=cast(ArrayTy)type){
+			if(value.tag==QState.Value.Tag.array_)
+				return qstate.makeTuple(type,value.array_.map!(v=>convertTo(v,arr.next,consumeArg)).array);
+		}else if(auto vec=cast(VectorTy)type){
+			if(value.tag==QState.Value.Tag.array_){
+				enforce(qstate.makeInteger(ℤ(value.array_.length)).compare!"=="(runExp(vec.num)).neqZImpl,"length mismatch for conversion to vector");
+				return qstate.makeTuple(type,value.array_.map!(v=>convertTo(v,vec.next,consumeArg)).array);
+			}
+		}
+		auto ce=cast(CallExp)value.type;
+		if((isInt(value.type)||isUint(value.type))&&!value.type.isClassical()&&QState.Value.getTag(type)==QState.Value.Tag.array_){
+			assert(!type.isClassical);
+			auto len=runExp(ce.arg); // TODO: maybe store lengths classically instead
+			enforce(len.isClassicalInteger());
+			auto nbits=smallValue(len.asInteger());
+			auto tmp=value.dup(qstate); // TODO: don't do this if value is already a variable
+			auto r=qstate.makeTuple(arrayTy(Bool(false)),iota(nbits).map!(i=>(tmp&qstate.makeInteger(ℤ(1)<<i)).neqZ).array).convertTo(type).toVar(qstate,false);
+			tmp.forget(qstate);
+			if(consumeArg) value.forget(qstate);
+			else r.consumeOnRead();
+			return r;
+		}
+		if(consumeArg) value.consumeOnRead(); // TODO: ok?
+		return default_();
+	}
 	QState.Value runExp(Expression e){
 		if(!qstate.state.length) return QState.Value.init;
 		QState.Value doIt()(Expression e){
@@ -1815,14 +1871,14 @@ struct Interpreter(QState){
 				if(cond.isClassical()){
 					if(cond.neqZImpl){
 						auto thenIntp=Interpreter!QState(functionDef,ite.then,qstate,hasFrame);
-						auto then=thenIntp.runExp(ite.then.s[0]).convertTo(ite.type);
-						thenIntp.qstate.forgetLocals(ite.then.blscope_);
+						auto then=thenIntp.convertTo(ite.then.s[0],ite.type);
+						thenIntp.qstate.closeScope(ite.then.blscope_);
 						qstate=thenIntp.qstate;
 						return then;
 					}else{
 						auto othwIntp=Interpreter!QState(functionDef,ite.othw,qstate,hasFrame);
-						auto othw=othwIntp.runExp(ite.othw.s[0]).convertTo(ite.type);
-						othwIntp.qstate.forgetLocals(ite.othw.blscope_);
+						auto othw=othwIntp.convertTo(ite.othw.s[0],ite.type);
+						othwIntp.qstate.closeScope(ite.othw.blscope_);
 						qstate=othwIntp.qstate;
 						return othw;
 					}
@@ -1830,20 +1886,18 @@ struct Interpreter(QState){
 					auto thenElse=qstate.split(cond);
 					qstate=thenElse[0];
 					auto thenIntp=Interpreter!QState(functionDef,ite.then,qstate,hasFrame);
-					auto then=thenIntp.runExp(ite.then.s[0]);
-					if(then.isValid) then=then.convertTo(ite.type);
-					thenIntp.qstate.forgetLocals(ite.then.blscope_);
+					auto then=thenIntp.convertTo(ite.then.s[0],ite.type);
+					thenIntp.qstate.closeScope(ite.then.blscope_);
 					auto constLookup=ite.constLookup;
 					assert(!!ite.othw);
 					assert(ite.then.s[0].constLookup==constLookup&&ite.othw.s[0].constLookup==constLookup);
 					thenIntp.qstate.assignTo("`result",then);
 					auto othwState=thenElse[1];
 					auto othwIntp=Interpreter(functionDef,ite.othw,othwState,hasFrame);
-					auto othw=othwIntp.runExp(ite.othw.s[0]);
-					if(othw.isValid) othw=othw.convertTo(ite.type);
+					auto othw=othwIntp.convertTo(ite.othw.s[0],ite.type);
 					if(!then.isValid) return othw; // constant conditions
 					if(!othw.isValid) return then;
-					othwIntp.qstate.forgetLocals(ite.othw.blscope_);
+					othwIntp.qstate.closeScope(ite.othw.blscope_);
 					othwIntp.qstate.assignTo("`result",othw);
 					qstate=thenIntp.qstate;
 					qstate+=othwIntp.qstate;
@@ -1859,10 +1913,7 @@ struct Interpreter(QState){
 				assert(!!et);
 				auto values=arr.e.map!((e){
 					auto value=doIt(e);
-					if(e.type!=et){
-						if(!arr.constLookup) value.consumeOnRead();
-						value=value.convertTo(et);
-					}
+					if(e.type!=et) value=convertTo(value,et,!e.constLookup);
 					return value;
 				}).array;
 				return QState.makeArray(e.type,values);
@@ -1874,67 +1925,8 @@ struct Interpreter(QState){
 				}
 			}else if(auto tae=cast(TypeAnnotationExp)e){
 				if(tae.e.type==tae.type) return doIt(tae.e);
-				QState.Value convertTo(QState.Value value,Expression type,bool consumeArg){
-					if(consumeArg&&value.type==type) return value;
-					QState.Value default_(){
-						if(consumeArg) value.consumeOnRead(); // TODO: ok?
-						if(tae.annotationType==TypeAnnotationType.coercion){
-							auto ce=cast(CallExp)type;
-							if(ce&&(isUint(type)||isInt(type))&&value.tag==QState.Value.Tag.array_)
-								enforce(qstate.makeInteger(ℤ(value.array_.length)).compare!"=="(doIt(ce.arg)).neqZImpl,"length mismatch for conversion to fixed-size integer");
-							if(type==ℕt(true)) enforce(value.compare!">="(qstate.makeInteger(ℤ(0))).neqZImpl,"negative value not representable as a natural number");
-						}
-						return value.convertTo(type);
-					}
-					if(isSubtype(value.type,type)) return default_();
-					if(isSubtype(value.type,ℤt(true))){
-						auto ce=cast(CallExp)type;
-						if(ce&&isUint(type))
-							return qstate.makeUint(type.getClassical(),BitInt!false(smallValue(runExp(ce.arg).asInteger()),value.asInteger())).convertTo(type);
-						if(ce&&isInt(type))
-							return qstate.makeInt(type.getClassical(),BitInt!true(smallValue(runExp(ce.arg).asInteger()),value.asInteger())).convertTo(type);
-					}
-					if(isUint(value.type)&&isSubtype(ℕt(true),type)){
-						assert(value.tag==QState.Value.Tag.uintval);
-						return qstate.makeInteger(value.uintval.val).convertTo(type);
-					}
-					if(isInt(value.type)&&isSubtype(ℤt(true),type)){
-						assert(value.tag==QState.Value.Tag.intval);
-						return qstate.makeInteger(value.uintval.val).convertTo(type);
-					}
-					// TODO: rat
-					if(auto tpl=cast(TupleTy)type){
-						if(value.tag==QState.Value.Tag.array_){
-							enforce(value.array_.length==tpl.length);
-							return qstate.makeTuple(type,iota(tpl.length).map!(i=>convertTo(value.array_[i],tpl[i],consumeArg)).array);
-						}
-					}else if(auto arr=cast(ArrayTy)type){
-						if(value.tag==QState.Value.Tag.array_)
-							return qstate.makeTuple(type,value.array_.map!(v=>convertTo(v,arr.next,consumeArg)).array);
-					}else if(auto vec=cast(VectorTy)type){
-						if(value.tag==QState.Value.Tag.array_){
-							enforce(qstate.makeInteger(ℤ(value.array_.length)).compare!"=="(doIt(vec.num)).neqZImpl,"length mismatch for conversion to vector");
-							return qstate.makeTuple(type,value.array_.map!(v=>convertTo(v,vec.next,consumeArg)).array);
-						}
-					}
-					auto ce=cast(CallExp)value.type;
-					if((isInt(value.type)||isUint(value.type))&&!value.type.isClassical()&&QState.Value.getTag(type)==QState.Value.Tag.array_){
-						assert(!type.isClassical);
-						auto len=doIt(ce.arg); // TODO: maybe store lengths classically instead
-						enforce(len.isClassicalInteger());
-						auto nbits=smallValue(len.asInteger());
-						auto tmp=value.dup(qstate); // TODO: don't do this if value is already a variable
-						auto r=qstate.makeTuple(arrayTy(Bool(false)),iota(nbits).map!(i=>(tmp&qstate.makeInteger(ℤ(1)<<i)).neqZ).array).convertTo(type).toVar(qstate,false);
-						tmp.forget(qstate);
-						if(consumeArg) value.forget(qstate);
-						if(tae.constLookup) r.consumeOnRead();
-						return r;
-					}
-					if(consumeArg) value.consumeOnRead(); // TODO: ok?
-					return default_();
-				}
 				bool consume=!tae.constLookup;
-				return convertTo(doIt(tae.e),tae.type,!tae.constLookup);
+				return convertTo(doIt(tae.e),tae.type,consume);
 			}else if(cast(Type)e)
 				return qstate.makeTuple(unit,[]); // 'erase' types
 			else{
@@ -2163,8 +2155,8 @@ struct Interpreter(QState){
 			auto othwIntp=Interpreter(functionDef,ite.othw,othw,hasFrame);
 			othwIntp.run(retState);
 			othw=othwIntp.qstate;
-			qstate.forgetLocals(ite.then.blscope_);
-			othw.forgetLocals(ite.othw.blscope_);
+			qstate.closeScope(ite.then.blscope_);
+			othw.closeScope(ite.othw.blscope_);
 			qstate+=othw;
 		}else if(auto re=cast(RepeatExp)e){
 			auto rep=runExp(re.num);
@@ -2174,7 +2166,7 @@ struct Interpreter(QState){
 				foreach(x;0.ℤ..z){
 					if(opt.trace) writeln("repetition: ",x+1);
 					intp.run(retState);
-					intp.qstate.forgetLocals(re.bdy.blscope_);
+					intp.qstate.closeScope(re.bdy.blscope_);
 				}
 				qstate=intp.qstate;
 			}else{
@@ -2190,7 +2182,7 @@ struct Interpreter(QState){
 					if(!intp.qstate.state.length) break;
 					if(opt.trace) writeln("repetition: ",x+1);
 					intp.run(retState);
-					intp.qstate.forgetLocals(re.bdy.blscope_);
+					intp.qstate.closeScope(re.bdy.blscope_);
 				}+/
 			}
 		}else if(auto fe=cast(ForExp)e){
@@ -2202,7 +2194,7 @@ struct Interpreter(QState){
 					if(opt.trace) writeln("loop-index: ",j);
 					intp.qstate.assignTo(fe.var.name,qstate.makeInteger(j).convertTo(fe.loopVar.vtype));
 					intp.run(retState);
-					intp.qstate.forgetLocals(fe.bdy.blscope_);
+					intp.qstate.closeScope(fe.bdy.blscope_);
 				};
 				if(sz>=0){
 					for(ℤ j=lz+cast(int)fe.leftExclusive;j+cast(int)fe.rightExclusive<=rz;j+=sz) mixin(body_);
@@ -2226,7 +2218,7 @@ struct Interpreter(QState){
 					intp.qstate.assignTo(fe.var.name,loopIndex+x);
 					if(opt.trace) writeln("repetition: ",x+1);
 					intp.run(retState);
-					intp.qstate.forgetLocals(fe.bdy.blscope_);
+					intp.qstate.closeScope(fe.bdy.blscope_);
 				}+/
 			}
 		}else if(auto we=cast(WhileExp)e){
@@ -2239,7 +2231,7 @@ struct Interpreter(QState){
 				intp.qstate = thenOthw[0];
 				if(!intp.qstate.state.length) break;
 				intp.run(retState);
-				intp.qstate.forgetLocals(we.bdy.blscope_);
+				intp.qstate.closeScope(we.bdy.blscope_);
 			}
 		}else if(auto re=cast(ReturnExp)e){
 			auto value = runExp(re.e);
@@ -2248,7 +2240,7 @@ struct Interpreter(QState){
 			qstate.assignTo("`value",value);
 			if(functionDef.isNested) // caller takes care of context
 				qstate.vars.remove(functionDef.contextName);
-			qstate.forgetLocals(functionDef.body_.blscope_);
+			qstate.closeScope(functionDef.body_.blscope_);
 			if(hasFrame){
 				assert("`frame" in qstate.vars);
 				//assert(qstate.vars.length==2); // `value and `frame
