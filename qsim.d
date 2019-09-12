@@ -208,9 +208,16 @@ struct QState{
 	}
 	void opOpAssign(string op:"+")(QState r){
 		Σ.Ref[Σ.Ref] relabeling;
-		foreach(k,v;r.vars){
-			if(k in vars) updateRelabeling(relabeling,vars[k],v);
-			else vars[k]=v;
+		foreach(k,ref v;r.vars){
+			if(k in vars){
+				if(vars[k].tag!=v.tag){
+					auto nt=joinTypes(vars[k].type,v.type);
+					enforce(!!nt);
+					vars[k]=vars[k].convertTo(nt).toVar(this,false);
+					v=v.convertTo(nt).toVar(r,false);
+				}
+				updateRelabeling(relabeling,vars[k],v);
+			}else vars[k]=v;
 		}
 		foreach(k,v;r.state){
 			k.relabel(relabeling);

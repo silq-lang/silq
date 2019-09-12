@@ -282,16 +282,42 @@ abstract class Scope{
 					}
 				}else{
 					auto osym=sc.symtab[sym.name.ptr];
-					import semantic_: typeForDecl;
-					auto ot=typeForDecl(osym),st=typeForDecl(sym);
-					if((sym.scope_ is scopes[0]||osym.scope_ is sc)&&ot&&st&&(ot!=st||quantumControl&&st.hasClassicalComponent())){
-						// TODO: join type if possible
-						// TODO: automatically promote to quantum if possible
-						symtab.remove(sym.name.ptr);
-						if(sym.rename) rnsymtab.remove(sym.rename.ptr);
-						if(sym.isLinear()&&!scopes[0].canForgetAppend(sym)){
-							error(format("variable '%s' is not consumed", sym.getName), sym.loc);
-							errors=true;
+					if((sym.scope_ is scopes[0]||osym.scope_ is sc)){
+						import semantic_: typeForDecl;
+						auto ot=typeForDecl(osym),st=typeForDecl(sym);
+						if(!ot) ot=st;
+						if(!st) st=ot;
+						if(ot&&st){
+							auto nt=ot&&st?joinTypes(ot,st):null;
+							if(!nt||quantumControl&&nt.hasClassicalComponent()){
+								symtab.remove(sym.name.ptr);
+								if(sym.rename) rnsymtab.remove(sym.rename.ptr);
+								if(sym.isLinear()&&!scopes[0].canForgetAppend(sym)||
+								   osym.isLinear()&&!sc.canForgetAppend(osym)){
+									error(format("variable '%s' is not consumed", sym.getName), sym.loc);
+									if(!nt) note(format("declared with incompatible types '%s' and '%s' in different branches",ot,st), osym.loc);
+									errors=true;
+								}
+							}
+							// TODO: automatically promote to quantum if possible
+							if(ot&&nt&&ot!=nt){
+								symtab.remove(sym.name.ptr);
+								if(sym.rename) rnsymtab.remove(sym.rename.ptr);
+								auto id=new Identifier(sym.name.name);
+								id.loc=sym.name.loc;
+								auto var=new VarDecl(id);
+								var.loc=sym.loc;
+								if(sym.rename){
+									var.rename=new Identifier(sym.rename.name);
+									var.rename.loc=sym.rename.loc;
+								}
+								var.scope_=this;
+								symtab[var.name.ptr]=var;
+								if(var.rename) rnsymtab[var.rename.ptr]=var;
+								var.vtype=nt;
+								import semantic_:varDeclSemantic;
+								varDeclSemantic(var,this);
+							}
 						}
 					}
 				}

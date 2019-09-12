@@ -547,8 +547,10 @@ Expression statementSemantic(Expression e,Scope sc)in{
 		propErr(ite.cond,ite);
 		propErr(ite.then,ite);
 		propErr(ite.othw,ite);
-		if(sc.merge(quantumControl,ite.then.blscope_,ite.othw.blscope_))
+		if(sc.merge(quantumControl,ite.then.blscope_,ite.othw.blscope_)){
+			sc.note("consumed in one branch of if expression", ite.loc);
 			ite.sstate=SemState.error;
+		}
 		ite.type=unit;
 		return ite;
 	}
