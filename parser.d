@@ -679,7 +679,7 @@ struct Parser{
 		try left = nud(allowLambda);catch(PEE err){error("found \""~tok.toString()~"\" when expecting expression");nextToken();return new ErrorExp();}
 		return parseExpression2(left, rbp, statement);
 	}
-	auto parseType(bool statement=false){ return parseExpression(rbp!(Tok!":"),true,statement); }
+	auto parseType(bool statement=false){ return parseExpression(rbp!(Tok!":"),false,statement); }
 	Expression parseExpression2(Expression left, int rbp = 0, bool statement=false){ // left is already known
 		int clbp(){
 			if(ttype==Tok!"i"){
