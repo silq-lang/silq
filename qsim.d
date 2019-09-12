@@ -1734,7 +1734,7 @@ struct Interpreter(QState){
 		QState.Value doIt2(Expression e){
 			if(e.type == typeTy) return QState.typeValue; // TODO: get rid of this
 			if(auto id=cast(Identifier)e){
-				if(!id.meaning&&id.name=="π") return QState.π;
+				if(!id.meaning&&util.among(id.name,"π","pi")) return QState.π;
 				if(id.substitute){
 					if(auto vd=cast(VarDecl)id.meaning)
 						return doIt2(vd.initializer);

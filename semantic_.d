@@ -384,7 +384,7 @@ Expression toplevelSemantic(Expression expr,Scope sc){
 bool isBuiltIn(Identifier id){
 	if(!id||id.meaning) return false;
 	switch(id.name){
-	case "π":
+	case "π","pi":
 	case "readCSV":
 	case /+"Marginal","sampleFrom",+/"quantumPrimitive","__show","__query":
 	/+case "Expectation":
@@ -403,7 +403,7 @@ Expression builtIn(Identifier id,Scope sc){
 	Expression t=null;
 	switch(id.name){
 	case "readCSV": t=funTy(stringTy(true),arrayTy(ℝ(true)),false,false,true); break;
-	case "π": t=ℝ(true); break;
+	case "π","pi": t=ℝ(true); break;
 	case "Marginal","sampleFrom","quantumPrimitive","__query","__show": t=unit; break; // those are actually magic polymorphic functions
 	case "Expectation": t=funTy(ℝ(false),ℝ(false),false,false,true); break; // TODO: should be lifted
 	case "*","𝟙","𝟚","B","𝔹","N","ℕ","Z","ℤ","Q","ℚ","R","ℝ","C","ℂ":
@@ -2603,7 +2603,7 @@ ReturnExp returnExpSemantic(ReturnExp ret,Scope sc){
 			return null;
 		}
 		auto r=candidate(e);
-		if(util.among(r.stripRight('\''),"delta","sum","abs","log","lim","val","⊥","case","e","π")) return null;
+		if(util.among(r.stripRight('\''),"delta","sum","abs","log","lim","val","⊥","case","e","π","pi")) return null;
 		return r;
 	}
 	if(returns.length==fd.retNames.length){
