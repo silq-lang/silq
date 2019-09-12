@@ -1,9 +1,9 @@
 import qft;
 
-def phaseEstimation[k:!N](
+def phaseEstimation[k:!ℕ](
     const U:(int[k] !->mfree int[k]), 
     u:int[k], 
-    precision:!N) {
+    precision:!ℕ) {
 
     ancilla := 0:int[precision];
     for i in [0..precision) { ancilla[i] := H(ancilla[i]); }
