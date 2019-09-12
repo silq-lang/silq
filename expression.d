@@ -679,7 +679,7 @@ class CallExp: Expression{
 	override bool opEquals(Object rhs){
 		auto ce=cast(CallExp)rhs;
 		if(!ce) return false;
-		return e==ce.e&&arg==ce.arg&&isClassical_==ce.isClassical_;
+		return e==ce.e&&arg==ce.arg&&isSquare==ce.isSquare&&isClassical_==ce.isClassical_;
 	}
 	override bool isSubtypeImpl(Expression rhs){
 		if(this == rhs) return true;
