@@ -1,3 +1,8 @@
+/+
+def main(){
+    repeat 100{ }
+}
++/
 //def main():(!𝔹^2)[]⇒[(true,false)];
 /+
 def myX(b:𝔹){

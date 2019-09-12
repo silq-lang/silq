@@ -2730,7 +2730,7 @@ bool definitelyReturns(FunctionDef fd){
 		if(auto we=cast(WhileExp)e)
 			return isTrue(we.cond) && doIt(we.bdy);
 		if(auto re=cast(RepeatExp)e)
-			return isPositive(re.num);
+			return isPositive(re.num) && doIt(re.bdy);
 		return false;
 	}
 	return doIt(fd.body_);
