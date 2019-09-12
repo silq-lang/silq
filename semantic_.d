@@ -221,20 +221,20 @@ Expression presemantic(Declaration expr,Scope sc){
 
 import std.typecons: tuple,Tuple;
 static Tuple!(Expression[],TopScope)[string] modules;
+TopScope prsc=null;
 int importModule(string path,ErrorHandler err,out Expression[] exprs,out TopScope sc,Location loc=Location.init){
 	if(path in modules){
 		auto exprssc=modules[path];
 		exprs=exprssc[0],sc=exprssc[1];
 		if(!sc){
 			if(loc.line) err.error("circular imports not supported",loc);
-			else stderr.writeln("error: circular imports not supported",loc);
+			else stderr.writeln("error: circular imports not supported");
 			return 1;
 		}
 		return 0;
 	}
 	modules[path]=tuple(Expression[].init,TopScope.init);
 	scope(success) modules[path]=tuple(exprs,sc);
-	TopScope prsc=null;
 	Expression[] prelude;
 	import parser;
 	if(!prsc && path != preludePath())
@@ -246,7 +246,11 @@ int importModule(string path,ErrorHandler err,out Expression[] exprs,out TopScop
 	if(prsc) sc.import_(prsc);
 	int nerr=err.nerrors;
 	exprs=semantic(exprs,sc);
-	return nerr!=err.nerrors;
+	if(nerr!=err.nerrors){
+		if(loc.line) sc.error("errors in imported file",loc);
+		return 1;
+	}
+	return 0;
 }
 
 bool isInPrelude(Declaration decl){
@@ -271,7 +275,6 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 			Expression[] exprs;
 			TopScope tsc;
 			if(importModule(path,sc.handler,exprs,tsc,imp.loc)){
-				sc.error("errors in imported file",imp.loc);
 				imp.sstate=SemState.error;
 			}
 			if(tsc) ctsc.import_(tsc);
