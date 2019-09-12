@@ -40,7 +40,7 @@ def phaseQ[n:!ℕ](const φ:int[n])mfree{
 	for i in [0..n){ if φ[i]{ phase(2·π·2^i/2^n); } }
 }
 def rotXQ[n:!ℕ](const φ:int[n],x:𝔹)mfree{
-	for i in [0..n){ if φ[i]{ x:=rotY(2·π·2^i/2^n,x); } }
+	for i in [0..n){ if φ[i]{ x:=rotX(2·π·2^i/2^n,x); } }
 	return x;
 }
 def rotYQ[n:!ℕ](const φ:int[n],x:𝔹)mfree{
@@ -48,6 +48,6 @@ def rotYQ[n:!ℕ](const φ:int[n],x:𝔹)mfree{
 	return x;
 }
 def rotZQ[n:!ℕ](const φ:int[n],x:𝔹)mfree{
-	for i in [0..n){ if φ[i]{ x:=rotY(2·π·2^i/2^n,x); } }
+	for i in [0..n){ if φ[i]{ x:=rotZ(2·π·2^i/2^n,x); } }
 	return x;
 }
