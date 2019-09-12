@@ -1,4 +1,4 @@
-
+/+
 def task[state](
 	numbers: !ℝ[],
 	prepareState: !(Π(n:!ℕ). state^n),
@@ -24,7 +24,7 @@ def main(){
 	numbers:=[1/2,1/2];
 	return task[𝔹^2](numbers,prepareState);
 }
-
++/
 /+
 def test[τ](x:τ[]){
 	[a]~b:=x;

@@ -815,7 +815,7 @@ Expression defineSemantic(DefineExp be,Scope sc){
 							dependencies[i]=tpl2.e[i].getDependency(sc);
 				}
 			}
-			if(!ok){
+			if(!ok&&be.e2.isQfree()){
 				auto dep=be.e2.getDependency(sc);
 				foreach(i;0..tpl1.length)
 					dependencies[i]=dep;
