@@ -1,4 +1,18 @@
 /+
+def determine(bill:𝔹)⇒bill;
+def main(){
+	bill:=1:𝔹;
+	secret:=0;
+	if false{
+	}else{
+		bill:=determine(bill);
+		secret=3;
+	}
+	assert(secret==3);
+	return (bill,secret);
+}
++/
+/+
 import int_fixed_point_util;
 def main()⇒toRange[-1.0,1.0](sinQ[1000,1000](fromAngle[1000](π/4)));
 +/

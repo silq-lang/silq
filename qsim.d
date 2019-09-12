@@ -2252,19 +2252,33 @@ struct Interpreter(QState){
 			foreach(s;ce.s) runStm(s,retState);
 		}else if(auto ite=cast(IteExp)e){
 			auto cond=runExp(ite.cond);
-			auto thenOthw=qstate.split(cond);
-			qstate=thenOthw[0];
-			auto othw=thenOthw[1];
-			auto thenIntp=Interpreter(functionDef,ite.then,qstate,hasFrame);
-			thenIntp.run(retState);
-			thenIntp.closeScope(ite.then.blscope_);
-			qstate=thenIntp.qstate;
-			enforce(!!ite.othw);
-			auto othwIntp=Interpreter(functionDef,ite.othw,othw,hasFrame);
-			othwIntp.run(retState);
-			othwIntp.closeScope(ite.othw.blscope_);
-			othw=othwIntp.qstate;
-			qstate+=othw;
+			if(cond.isClassical()){
+				if(cond.neqZImpl){
+					auto thenIntp=Interpreter!QState(functionDef,ite.then,qstate,hasFrame);
+					thenIntp.run(retState);
+					thenIntp.closeScope(ite.then.blscope_);
+					qstate=thenIntp.qstate;
+				}else{
+					auto othwIntp=Interpreter!QState(functionDef,ite.othw,qstate,hasFrame);
+					othwIntp.run(retState);
+					othwIntp.closeScope(ite.othw.blscope_);
+					qstate=othwIntp.qstate;
+				}
+			}else{
+				auto thenOthw=qstate.split(cond);
+				qstate=thenOthw[0];
+				auto othw=thenOthw[1];
+				auto thenIntp=Interpreter(functionDef,ite.then,qstate,hasFrame);
+				thenIntp.run(retState);
+				thenIntp.closeScope(ite.then.blscope_);
+				qstate=thenIntp.qstate;
+				enforce(!!ite.othw);
+				auto othwIntp=Interpreter(functionDef,ite.othw,othw,hasFrame);
+				othwIntp.run(retState);
+				othwIntp.closeScope(ite.othw.blscope_);
+				othw=othwIntp.qstate;
+				qstate+=othw;
+			}
 		}else if(auto re=cast(RepeatExp)e){
 			auto rep=runExp(re.num);
 			if(rep.isℤ()){
