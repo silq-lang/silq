@@ -1,7 +1,7 @@
 import qft;
 
 def phaseEstimation[k:!ℕ](
-    const U:(int[k] !->mfree int[k]), 
+    U:int[k] !->mfree int[k],
     u:int[k], 
     precision:!ℕ) {
 

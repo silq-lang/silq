@@ -1807,7 +1807,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 							}
 						}
 					}
-					fsc.fd.addCapture(id);
+					sc.addCapture(id);
 				}
 			}
 		}

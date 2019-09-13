@@ -252,6 +252,7 @@ abstract class Scope{
 	}
 
 	bool allowMerge=false;
+	SetX!NestedScope activeNestedScopes;
 	void nest(NestedScope r)in{
 		assert(allowsLinear());
 		assert(r.parent is this);
@@ -261,14 +262,17 @@ abstract class Scope{
 		r.symtab=symtab.dup;
 		r.rnsymtab=rnsymtab.dup;
 		allowMerge=true;
+		activeNestedScopes.insert(r);
 	}
 
-	bool merge(bool quantumControl,Scope[] scopes...)in{
+	bool merge(bool quantumControl,NestedScope[] scopes...)in{
 		assert(scopes.length);
 		assert(toPush.length==0);
 		assert(scopes.all!(sc=>sc.toPush.length==0));
 		//debug assert(allowMerge);
 	}do{
+		foreach(sc;scopes)
+			activeNestedScopes.remove(sc);
 		allowMerge=false;
 		dependencies=scopes[0].dependencies.dup;
 		symtab=scopes[0].symtab.dup;
@@ -308,20 +312,7 @@ abstract class Scope{
 							if(st&&nt&&st!=nt){ // TODO: more efficient implementation for more than 2 scopes
 								symtab.remove(sym.name.ptr);
 								if(sym.rename) rnsymtab.remove(sym.rename.ptr);
-								auto id=new Identifier(sym.name.name);
-								id.loc=sym.name.loc;
-								auto var=new VarDecl(id);
-								var.loc=sym.loc;
-								if(sym.rename){
-									var.rename=new Identifier(sym.rename.name);
-									var.rename.loc=sym.rename.loc;
-								}
-								var.scope_=this;
-								symtab[var.name.ptr]=var;
-								if(var.rename) rnsymtab[var.rename.ptr]=var;
-								var.vtype=nt;
-								import semantic_:varDeclSemantic;
-								varDeclSemantic(var,this);
+								addVariable(sym,nt);
 								scopes[0].mergeVar(sym,nt);
 							}
 							if(ot&&nt&&ot!=nt) sc.mergeVar(osym,nt);
@@ -353,6 +344,35 @@ abstract class Scope{
 		foreach(k,v;symtab) if(!this.isNestedIn(v.scope_)) v.scope_=this;
 		foreach(k,v;rnsymtab) if(!this.isNestedIn(v.scope_)) v.scope_=this;
 		return errors;
+	}
+
+	final bool addVariable(Declaration decl,Expression type,bool isFirstDef=false){
+		auto id=new Identifier(decl.name.name);
+		id.loc=decl.name.loc;
+		auto var=new VarDecl(id);
+		var.loc=decl.loc;
+		if(decl.rename){
+			var.rename=new Identifier(decl.rename.name);
+			var.rename.loc=decl.rename.loc;
+		}
+		dependencies.add(var.getName);
+		var.scope_=this;
+		if(auto d=symtabLookup(var.name,false,Lookup.probing)){
+			if(isFirstDef) redefinitionError(d,var);
+			else redefinitionError(var,d);
+			return false;
+		}
+		symtab[var.name.ptr]=var;
+		if(var.rename) rnsymtab[var.rename.ptr]=var;
+		var.vtype=type;
+		import semantic_:varDeclSemantic;
+		varDeclSemantic(var,this);
+		return var.sstate==SemState.completed;
+	}
+
+	bool addCaptureImpl(Identifier id,Scope ignore){ return true; }
+	final bool addCapture(Identifier id){
+		return addCaptureImpl(id,this);
 	}
 
 	Annotation restriction(){
@@ -426,6 +446,22 @@ class NestedScope: Scope{
 
 	override bool isNestedIn(Scope rhs){ return rhs is this || parent.isNestedIn(rhs); }
 
+	private bool insertCapture(Identifier id,Scope ignore){
+		if(this is ignore) return true;
+		if(!id.meaning) return false;
+		import semantic_: typeForDecl;
+		if(!id.meaning.isLinear()) return true;
+		auto type=typeForDecl(id.meaning);
+		if(!type) return false;
+		return addVariable(id.meaning,type,true);
+	}
+	override bool addCaptureImpl(Identifier id,Scope ignore){
+		foreach(sc;activeNestedScopes)
+			if(!sc.insertCapture(id,ignore))
+				return false;
+		return parent.addCaptureImpl(id,ignore);
+	}
+
 	override FunctionDef getFunction(){ return parent.getFunction(); }
 	override DatDecl getDatDecl(){ return parent.getDatDecl(); }
 }
@@ -449,6 +485,13 @@ class FunctionScope: NestedScope{
 	this(Scope parent,FunctionDef fd){
 		super(parent);
 		this.fd=fd;
+	}
+	override bool addCaptureImpl(Identifier id,Scope ignore){
+		foreach(sc;activeNestedScopes)
+			sc.insertCapture(id,ignore);
+		insertCapture(id,ignore);
+		fd.addCapture(id);
+		return true;
 	}
 	override Annotation restriction(){
 		return fd.annotation;

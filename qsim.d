@@ -1389,8 +1389,16 @@ struct QState{
 		bool cleanUp=isConst;
 		vars[prm]=rhs.toVar(this,cleanUp); // TODO: this may be inefficient (it iterates over arrays to check whether components are variables)
 	}
-	void passContext(string ctx,Value rhs){
+	void passContext(Identifier[] captures,string ctx,Value rhs){
 		enforce(ctx!in vars);
+		enforce(rhs.tag==Value.Tag.record);
+		foreach(cap;captures){
+			enforce(cap.name in rhs.record);
+			if(cap.meaning.isLinear()){
+				vars[cap.name]=rhs.record[cap.name];
+				rhs.record.remove(cap.name);
+			}
+		}
 		vars[ctx]=rhs;
 	}
 	Value call(FunctionDef fun,Value thisExp,Value arg,Scope sc,Value* context,Expression type,Location loc){
@@ -1448,7 +1456,7 @@ struct QState{
 		enforce(!fun.isConstructor,"TODO: constructors");
 		if(fun.isNested){
 			assert(!!context);
-			ncur.passContext(fun.contextName,*context);
+			ncur.passContext(fun.captures,fun.contextName,*context);
 		}else assert(!context);
 		if(fun.isTuple){
 			enforce(arg.tag==Value.Tag.array_);
@@ -1697,25 +1705,9 @@ QState.Value readVariable(QState)(ref QState qstate,VarDecl var,Scope from,bool 
 	return qstate.readLocal(var.getName,constLookup);
 }
 QState.Value getContextFor(QState)(ref QState qstate,Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{
-	QState.Value r=QState.nullValue;
-	auto meaningScope=meaning.scope_;
-	if(auto fd=cast(FunctionDef)meaning)
-		meaningScope=fd.realScope;
-	assert(sc&&sc.isNestedIn(meaningScope));
-	for(auto csc=sc;csc !is meaningScope;){
-		assert(cast(NestedScope)csc);
-		if(!cast(NestedScope)(cast(NestedScope)csc).parent) break;
-		if(auto fsc=cast(FunctionScope)csc){
-			auto fd=fsc.getFunction();
-			/+if(fd.isConstructor){
-				if(meaning is fd.thisVar) break;
-				return qstate.readLocal(fd.thisVar.getName,true);
-			}else+/
-			return qstate.readLocal(fd.contextName,true);
-		}//else if(cast(AggregateScope)csc) return qstate.readLocal(csc.getDatDecl().contextName);
-		csc=(cast(NestedScope)csc).parent;
-	}
-	return r;
+	if(meaning.getName in qstate.vars) return QState.nullValue;
+	if(auto fd=sc.getFunction()) return qstate.readLocal(fd.contextName,true);
+	return QState.nullValue;
 }
 QState.Value buildContextFor(QState)(ref QState qstate,FunctionDef fd)in{assert(fd&&fd.scope_);}body{
 	QState.Record record;
