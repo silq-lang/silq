@@ -201,6 +201,8 @@ struct QState{
 				if(tquvar&&fquvar&&fquvar.ref_!=tquvar.ref_) relabeling[fquvar.ref_]=tquvar.ref_;
 				break;
 			case Value.Tag.closure:
+				/+if(to.closure.context&&from.closure.context)
+					updateRelabeling(relabeling,*to.closure.context,*from.closure.context);+/
 				break;
 			case Value.Tag.fval,Value.Tag.qval,Value.Tag.zval,Value.Tag.uintval,Value.Tag.intval,Value.Tag.bval:
 				break;
@@ -471,7 +473,7 @@ struct QState{
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
 				case t: assert(0);
 				case Tag.closure:
-					return this;
+					return state.makeClosure(type,Closure(closure.fun,closure.context?[closure.context.toVar(state,cleanUp)].ptr:null));
 				case Tag.array_:
 					return makeArray(type,array_.map!(v=>v.toVar(state,cleanUp)).array); // TODO: this can be inefficient, avoid
 				case Tag.record: // TODO: get rid of this
@@ -517,7 +519,11 @@ struct QState{
 			Lswitch: final switch(tag){
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
 				case t: this=rhs; break Lswitch;
-				case Tag.closure: this=rhs; break;
+				case Tag.closure:
+					this=rhs;
+					/+if(closure.context&&rhs.closure.context)
+						(*closure.context).assign(state,*rhs.closure.context);+/
+					return;
 				case Tag.array_:
 					enforce(rhs.tag==Tag.array_);
 					enforce(array_.length==rhs.array_.length);
