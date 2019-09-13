@@ -520,20 +520,29 @@ struct QState{
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
 				case t: this=rhs; break Lswitch;
 				case Tag.closure:
-					this=rhs;
-					/+if(closure.context&&rhs.closure.context)
-						(*closure.context).assign(state,*rhs.closure.context);+/
+					if(closure.context&&rhs.closure.context)
+						(*closure.context).assign(state,*rhs.closure.context);
 					return;
 				case Tag.array_:
 					enforce(rhs.tag==Tag.array_);
-					enforce(array_.length==rhs.array_.length);
-					foreach(i;0..array_.length)
-						array_[i].assign(state,rhs.array_[i]);
+					if(array_.length==rhs.array_.length){
+						foreach(i;0..array_.length)
+							array_[i].assign(state,rhs.array_[i]);
+					}else{
+						forget(state);
+						this=rhs.dup(state);
+					}
 					return;
 				case Tag.record:
 					enforce(rhs.tag==Tag.record);
-					foreach(k,v;rhs.record) enforce(k in record);
-					foreach(k,v;record) v.assign(state,rhs.record[k]);
+					bool ok=true;
+					foreach(k,v;rhs.record) if(k !in record) ok=false;
+					foreach(k,v;record) if(k !in rhs.record) ok=false;
+					if(ok) foreach(k,v;record) v.assign(state,rhs.record[k]);
+					else{
+						forget(state);
+						this=rhs.dup(state);
+					}
 					return;
 				case Tag.quval:
 					if(auto quvar=cast(QVar)quval) // TODO: ok?
