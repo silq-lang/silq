@@ -29,7 +29,7 @@ LocalizedException localizedException(Exception e,Location loc){
 	if(auto r=cast(LocalizedException)e) return r;
 	return new LocalizedException(e,loc);
 }
-//version=LOCALIZE;
+version=LOCALIZE;
 
 class QSim{
 	this(string sourceFile){
