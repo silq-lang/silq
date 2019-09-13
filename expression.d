@@ -268,6 +268,15 @@ class LiteralExp: Expression{
 	this(Token lit){ // TODO: suitable contract
 		this.lit=lit;
 	}
+	static LiteralExp makeInteger(size_t i){
+		Token tok;
+		tok.type=Tok!"0";
+		tok.str=to!string(i);
+		auto r=new LiteralExp(tok);
+		r.type=ℕt(true);
+		r.sstate=SemState.completed;
+		return r;
+	}
 	override LiteralExp copyImpl(CopyArgs args){
 		auto r=new LiteralExp(lit);
 		r.type=type;

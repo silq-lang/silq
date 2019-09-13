@@ -474,9 +474,7 @@ Type tupleTy(Expression[] types)in{
 }body{
 	import lexer: Token,Tok;
 	if(types.length&&types.all!(x=>x==types[0])){
-		auto len=new LiteralExp(Token(Tok!"0",to!string(types.length))); // TODO: make this more convenient
-		len.sstate=SemState.completed;
-		len.type=ℕt(true);
+		auto len=LiteralExp.makeInteger(types.length);
 		return vectorTy(types[0],len);
 	}
 	return memoize!((Expression[] types)=>new TupleTy(types))(types);
@@ -509,8 +507,13 @@ class ArrayTy: Type{
 		return arrayTy(next.substitute(subst));
 	}
 	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
-		auto at=cast(ArrayTy)rhs;
-		return at && next.unifyImpl(at.next,subst,meet);
+		if(auto vt=cast(VectorTy)rhs)
+			return next.unifyImpl(vt.next,subst,meet);
+		if(auto tt=cast(TupleTy)rhs)
+			return tt.types.all!(ty=>next.unifyImpl(ty,subst,meet));
+		if(auto at=cast(ArrayTy)rhs)
+			return next.unifyImpl(at.next,subst,meet);
+		return false;
 	}
 	override ArrayTy evalImpl(Expression ntype){
 		assert(ntype==typeTy);
@@ -581,12 +584,8 @@ class VectorTy: Type, ITupleTy{
 	Expression opIndex(size_t i){ return next; }
 	Expression opSlice(size_t l,size_t r){
 		assert(0<=l&&l<=r&&r<=length);
-		auto len=r-l;
-		import lexer: Token,Tok;
-		auto lit=new LiteralExp(Token(Tok!"0",to!string(len))); // TODO: make this more convenient
-		lit.type=ℕt(true);
-		lit.sstate=SemState.completed;
-		return vectorTy(next,lit);
+		auto len=LiteralExp.makeInteger(r-l);
+		return vectorTy(next,len);
 	}
 	private this(Expression next,Expression num)in{
 		assert(next.type==typeTy);
@@ -607,8 +606,11 @@ class VectorTy: Type, ITupleTy{
 		return vectorTy(next.substitute(subst),num.substitute(subst));
 	}
 	override bool unifyImpl(Expression rhs,ref Expression[string] subst,bool meet){
-		auto vt=cast(VectorTy)rhs;
-		return vt && next.unifyImpl(vt.next,subst,meet) && num.unifyImpl(vt.num,subst,meet);
+		if(auto tt=cast(TupleTy)rhs)
+			return tt.types.all!(ty=>next.unifyImpl(ty,subst,meet)) && num.unifyImpl(LiteralExp.makeInteger(tt.length),subst,meet);
+		if(auto vt=cast(VectorTy)rhs)
+			return next.unifyImpl(vt.next,subst,meet) && num.unifyImpl(vt.num,subst,meet);
+		return false;
 	}
 	override VectorTy evalImpl(Expression ntype){
 		assert(ntype==typeTy);
@@ -965,9 +967,7 @@ class ProductTy: Type{
 			assert(!!tdom);
 			foreach(i,n;names){
 				import lexer;
-				auto lit=new LiteralExp(Token(Tok!"0",to!string(i)));
-				lit.type=ℤt(true);
-				auto exp=new IndexExp(arg,[lit],false);
+				auto exp=new IndexExp(arg,[LiteralExp.makeInteger(i)],false);
 				exp.type=tdom[i];
 				exp.sstate=SemState.completed;
 				subst[n]=exp.eval();
