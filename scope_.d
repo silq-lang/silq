@@ -355,8 +355,6 @@ abstract class Scope{
 			var.rename=new Identifier(decl.rename.name);
 			var.rename.loc=decl.rename.loc;
 		}
-		dependencies.add(var.getName);
-		var.scope_=this;
 		if(auto d=symtabLookup(var.name,false,Lookup.probing)){
 			if(isFirstDef) redefinitionError(d,var);
 			else redefinitionError(var,d);
@@ -365,6 +363,9 @@ abstract class Scope{
 		symtab[var.name.ptr]=var;
 		if(var.rename) rnsymtab[var.rename.ptr]=var;
 		var.vtype=type;
+		if(var.getName !in dependencies.dependencies)
+			dependencies.add(var.getName);
+		var.scope_=this;
 		import semantic_:varDeclSemantic;
 		varDeclSemantic(var,this);
 		return var.sstate==SemState.completed;
