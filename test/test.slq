@@ -1,5 +1,14 @@
 /+
 def main(){
+	x:=array(10,0:𝔹);
+	for i in [0..10){
+		x[i]:=measure(x[i]);
+	}
+	return x;
+}
++/
+/+
+def main(){
 	x:=H(0:𝔹);
 	def foo(){
 		y:=H(0:𝔹);

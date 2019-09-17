@@ -29,7 +29,7 @@ LocalizedException localizedException(Exception e,Location loc){
 	if(auto r=cast(LocalizedException)e) return r;
 	return new LocalizedException(e,loc);
 }
-version=LOCALIZE;
+//version=LOCALIZE;
 
 class QSim{
 	this(string sourceFile){
@@ -514,7 +514,7 @@ struct QState{
 			if(tt==Tag.record) record=record.dup; // TODO: necessary?
 		}
 		void assign(ref QState state,Value rhs){
-			if(isClassical){ this=rhs; return; }
+			if(rhs.isClassical()){ this=rhs; return; }
 			assert(tag==rhs.tag);
 			Lswitch: final switch(tag){
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
@@ -1589,7 +1589,7 @@ struct QState{
 		}
 	}
 	void assignTo(ref Value var,Value rhs){
-		enforce(var.isClassical()||var.tag==rhs.tag);
+		enforce(rhs.isClassical()||var.tag==rhs.tag);
 		var.assign(this,rhs);
 	}
 	void catAssignTo(ref Value var,Value rhs){
