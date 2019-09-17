@@ -239,23 +239,26 @@ class SingleDefExp: DefExp{
 		this.decl=decl; super(init);
 	}
 	override SingleDefExp copyImpl(CopyArgs args){
-		return new SingleDefExp(decl.copy(args),initializer.copy(args));
+		return new SingleDefExp(decl?decl.copy(args):null,initializer.copy(args));
 	}
 	override string toString(){
 		return initializer.toString();
 	}
 
 	override void setType(Expression type){
+		if(!decl) return;
 		assert(!!type);
 		decl.vtype=type;
 		if(!decl.vtype) decl.sstate=SemState.error;
 	}
 	override void setInitializer(){
+		if(!decl) return;
 		assert(!decl.initializer&&initializer);
 		decl.initializer=initializer.e2;
 	}
 	override void setError(){
-		decl.sstate=sstate=SemState.error;
+		if(decl) decl.sstate=SemState.error;
+		sstate=SemState.error;
 	}
 
 	override int varDecls(scope int delegate(VarDecl) dg){
@@ -276,7 +279,7 @@ class MultiDefExp: DefExp{
 		this.decls_=decls_; super(init);
 	}
 	override MultiDefExp copyImpl(CopyArgs args){
-		return new MultiDefExp(decls_.map!(d=>d.copy(args)).array,initializer.copy(args));
+		return new MultiDefExp(decls_.map!(d=>d?d.copy(args):null).array,initializer.copy(args));
 	}
 	override string toString(){
 		return initializer.toString();
@@ -286,32 +289,33 @@ class MultiDefExp: DefExp{
 		if(auto tt=type.isTupleTy()){
 			if(tt.length==decls_.length){
 				foreach(i,decl;decls_){
-					decl.vtype=tt[i];
+					if(decl) decl.vtype=tt[i];
 				}
 			}
 		}else if(auto at=cast(ArrayTy)type){
 			foreach(i,decl;decls_){
-				decl.vtype=at.next;
+				if(decl) decl.vtype=at.next;
 			}
 		}else assert(0,"TODO!");
 	}
 	override void setInitializer(){
-		assert(initializer);
+		assert(!!initializer);
 		auto tpl=cast(TupleExp)initializer.e2;
 		if(!tpl) return;
-		assert(tpl.length==decls.length);
+		if(tpl.length!=decls.length) return;
 		foreach(i;0..decls.length){
+			if(!decls[i]) continue;
 			assert(!decls[i].initializer);
 			decls[i].initializer=tpl.e[i];
 		}
 	}
 	override void setError(){
-		foreach(decl;decls_) decl.sstate=SemState.error;
+		foreach(decl;decls_) if(decl) decl.sstate=SemState.error;
 		sstate=SemState.error;
 	}
 
 	override int varDecls(scope int delegate(VarDecl) dg){
-		foreach(decl;decls_) if(auto r=dg(decl)) return r;
+		foreach(decl;decls_) if(decl) if(auto r=dg(decl)) return r;
 		return 0;
 	}
 

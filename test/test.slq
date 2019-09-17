@@ -1,5 +1,52 @@
 /+
 def main(){
+	n:=3;
+	x:=vector(n,0:𝔹);
+	for i in [0..n){
+		x[i]:=H(x[i]);
+	}
+	for i in [0..n){
+		(a,x[i]):=(x[i],1:𝔹); // TODO
+		__show(__query("dep",a)); // TODO: ⊤
+	}
+	return x coerce 𝔹^3;
+}
++/
+/+
+def foo(x:𝔹){
+	y:=if x then 2:int[3] else 0:int[3];
+	forget(x=y!=0);
+	return y;
+}
+
+def main(){
+	a:=(0:𝔹,1:𝔹,0:𝔹);
+	for i in [0..3){
+		a[i]:=foo(a[i]); // error
+	}
+	if a[0]{}
+	return a;
+}
++/
+/+
+def measure_H(x:𝔹){
+    x:=H(x);
+    ret:=measure(x);
+    return (H(ret),ret);
+}
+
+def main(){
+    x:=vector(2,0:𝔹);
+	y:=[]:𝔹[];
+    for i in [0..2){
+        (ret,x[i]):=measure_H(x[i]); // TODO
+		y~=[ret];
+    }
+    return (x,y);
+}
++/
+/+
+def main(){
 	x:=vector(3,0:𝔹);
 	x[0]=true;
 	x[0]=H(0:𝔹);

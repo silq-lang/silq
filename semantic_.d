@@ -314,16 +314,20 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 		}else if(auto tpl=cast(TupleExp)be.e1){
 			VarDecl[] vds;
 			foreach(exp;tpl.e){
-				auto id=cast(Identifier)exp;
-				if(!id) goto LnoIdTuple;
-				vds~=makeVar(id);
+				/+if(auto idx=cast(IndexExp)exp) vds~=null; // TODO
+				else+/ if(auto id=cast(Identifier)exp) vds~=makeVar(id);
+				else goto LnoIdTuple;
 			}
 			auto de=new MultiDefExp(vds,be);
 			de.loc=be.loc;
-			foreach(vd;vds) propErr(vd,de);
+			foreach(vd;vds) if(vd) propErr(vd,de);
+			return de;
+		}else if(cast(IndexExp)be.e1){
+			auto de=new SingleDefExp(null,be);
+			de.loc=be.loc;
 			return de;
 		}else LnoIdTuple:{
-			sc.error("left-hand side of definition must be identifier or tuple of identifiers",expr.loc);
+			sc.error("left-hand side of definition must be identifier or tuple of identifiers",be.e1.loc);
 			success=false;
 		}
 		success&=expr.sstate==SemState.completed;
@@ -803,8 +807,7 @@ bool isLifted(Expression e,Scope sc){
 
 
 Expression defineSemantic(DefineExp be,Scope sc){
-	if(cast(IndexExp)be.e1) return indexReplaceSemantic(be,sc);
-	if(auto tpl=cast(TupleExp)be.e1) if(tpl.e.any!(x=>!!cast(IndexExp)x)) return permuteSemantic(be,sc);
+	if(auto tpl=cast(TupleExp)be.e1) if(tpl.e.count!(x=>!!cast(IndexExp)x)>1) return permuteSemantic(be,sc);
 	import reverse;
 	if(sc.allowsLinear){
 		if(auto e=lowerDefine!false(be,sc)){
@@ -815,7 +818,18 @@ Expression defineSemantic(DefineExp be,Scope sc){
 	}
 	bool success=true;
 	auto e2orig=be.e2;
-	be.e2=expressionSemantic(be.e2,sc,ConstResult.no);
+	auto tpl=cast(TupleExp)be.e1;
+	if(tpl&&tpl.e.count!(x=>!!cast(IndexExp)x)==1){
+		foreach(ref e;tpl.e){
+			if(auto idx=cast(IndexExp)e){
+				e=indexReplaceSemantic(idx,be.e2,be.loc,sc);
+				propErr(e,be);
+			}
+		}
+	}else if(auto idx=cast(IndexExp)be.e1){
+		be.e1=indexReplaceSemantic(idx,be.e2,be.loc,sc);
+		propErr(be.e1,be);
+	}else be.e2=expressionSemantic(be.e2,sc,ConstResult.no);
 	Dependency[] dependencies;
 	if(be.e2.sstate==SemState.completed&&sc.getFunction()){
 		bool ok=false;
@@ -842,9 +856,10 @@ Expression defineSemantic(DefineExp be,Scope sc){
 	auto de=cast(DefExp)makeDeclaration(be,success,sc);
 	if(!de) be.sstate=SemState.error;
 	assert(success && de && de.initializer is be || !de||de.sstate==SemState.error);
+	auto tt=be.e2.type.isTupleTy;
 	if(be.e2.sstate==SemState.completed){
-		if(auto tpl=cast(TupleExp)be.e1){
-			if(auto tt=be.e2.type.isTupleTy){
+		if(tpl){
+			if(tt){
 				if(tpl.length!=tt.length){
 					sc.error(text("inconsistent number of tuple entries for definition: ",tpl.length," vs. ",tt.length),de.loc);
 					if(de){ de.setError(); be.sstate=SemState.error; }
@@ -858,17 +873,32 @@ Expression defineSemantic(DefineExp be,Scope sc){
 			if(de.sstate!=SemState.error){
 				de.setType(be.e2.type);
 				de.setInitializer();
-				foreach(vd;de.decls){
-					auto nvd=varDeclSemantic(vd,sc);
-					assert(nvd is vd);
+				foreach(i,vd;de.decls){
+					if(vd){
+						auto nvd=varDeclSemantic(vd,sc);
+						assert(nvd is vd);
+					}else if(tpl&&tt){
+						if(tpl.e.length>i&&tpl.e[i].type&&tt.length>i){
+							if(!isSubtype(tt[i],tpl.e[i].type)){
+								sc.error(format("cannot assign %s to %s",tt[i].type,tpl.e[i].type),tpl.e[i].loc);
+								be.sstate=SemState.error;
+							}
+						}
+					}else if(be.e1.type&&be.e2.type){
+						if(!isSubtype(be.e2.type,be.e1.type)){
+							sc.error(format("cannot assign %s to %s",be.e2.type,be.e1.type),be.loc);
+							be.sstate=SemState.error;
+						}
+					}
 				}
 			}
 			de.type=unit;
 			auto decls=de.decls;
 			if(de.sstate!=SemState.error&&sc.getFunction()&&decls.length==dependencies.length)
 				foreach(i,vd;decls)
-					if(vd.initializer&&vd.initializer.isQfree())
+					if(vd&&vd.initializer&&vd.initializer.isQfree())
 						sc.addDependency(vd,dependencies[i]);
+			propErr(be,de);
 		}
 		if(cast(TopScope)sc){
 			if(!be.e2.isConstant() && !cast(PlaceholderExp)be.e2 && be.e2.type!=typeTy){
@@ -893,10 +923,7 @@ Identifier getIdFromIndex(IndexExp e){
 	return cast(Identifier)e.e;
 }
 
-Expression indexReplaceSemantic(DefineExp be,Scope sc)in{ // TODO: generalize defineSemantic to cover this
-	assert(cast(IndexExp)be.e1);
-}do{
-	auto theIndex=cast(IndexExp)be.e1;
+Expression indexReplaceSemantic(IndexExp theIndex,ref Expression rhs,Location loc,Scope sc){
 	void consumeArray(IndexExp e){
 		if(auto idx=cast(IndexExp)e.e) return consumeArray(idx);
 		e.e=expressionSemantic(e.e,sc,ConstResult.no); // consume array
@@ -904,13 +931,13 @@ Expression indexReplaceSemantic(DefineExp be,Scope sc)in{ // TODO: generalize de
 	}
 	consumeArray(theIndex);
 	if(theIndex.e.type&&theIndex.e.type.isClassical()){
-		sc.error(format("use assignment statement '%s = %s' to assign to classical array component",be.e1,be.e2),be.loc);
-		be.sstate=SemState.error;
-		theIndex=null;
-		return be;
+		sc.error(format("use assignment statement '%s = %s' to assign to classical array component",theIndex,rhs),loc);
+		theIndex.sstate=SemState.error;
+		return theIndex;
 	}
-	be.e1=expressionSemantic(theIndex,sc,ConstResult.yes);
-	propErr(be.e1,be);
+	auto nIndex=cast(IndexExp)expressionSemantic(theIndex,sc,ConstResult.yes);
+	assert(!!nIndex); // TODO: this might change
+	theIndex=nIndex;
 	Identifier id;
 	bool check(IndexExp e){
 		if(e&&(!e.a[0].isLifted(sc)||e.a[0].type&&!e.a[0].type.isClassical())){
@@ -923,24 +950,22 @@ Expression indexReplaceSemantic(DefineExp be,Scope sc)in{ // TODO: generalize de
 			return false;
 		return true;
 	}
-	if(be.sstate==SemState.error) theIndex=null;
+	if(theIndex.sstate==SemState.error) theIndex=null;
 	else if(!check(theIndex)){
-		be.sstate=SemState.error;
+		theIndex.sstate=SemState.error;
 		theIndex=null;
 	}
 	assert(!sc.indexToReplace);
 	sc.indexToReplace=theIndex;
-	be.e2=expressionSemantic(be.e2,sc,ConstResult.no);
-	propErr(be.e2,be);
+	rhs=expressionSemantic(rhs,sc,ConstResult.no);
 	if(sc.indexToReplace){
-		sc.error("reassigned component must be consumed in right-hand side", be.e1.loc);
-		be.sstate=SemState.error;
+		sc.error("reassigned component must be consumed in right-hand side", theIndex.loc);
+		theIndex.sstate=SemState.error;
 		sc.indexToReplace=null;
 	}
-	if(id&&id.type) addVar(id.name,id.type,be.loc,sc);
-	be.type=unit;
-	if(be.sstate!=SemState.error) be.sstate=SemState.completed;
-	return be;
+	if(id&&id.type) addVar(id.name,id.type,loc,sc);
+	if(theIndex.sstate!=SemState.error) theIndex.sstate=SemState.completed;
+	return theIndex;
 }
 
 Expression permuteSemantic(DefineExp be,Scope sc)in{ // TODO: generalize defineSemantic to cover this
