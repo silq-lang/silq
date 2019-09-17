@@ -2003,13 +2003,13 @@ struct Interpreter(QState){
 					auto constLookup=ite.constLookup;
 					assert(!!ite.othw);
 					assert(ite.then.s[0].constLookup==constLookup&&ite.othw.s[0].constLookup==constLookup);
-					thenIntp.qstate.assignTo("`result",then);
 					auto othwState=thenElse[1];
 					auto othwIntp=Interpreter(functionDef,ite.othw,othwState,hasFrame);
 					auto othw=othwIntp.convertTo(ite.othw.s[0],ite.type);
 					othwIntp.closeScope(ite.othw.blscope_);
-					if(!then.isValid) return othw; // constant conditions
-					if(!othw.isValid) return then;
+					if(!then.isValid){ qstate=othwIntp.qstate; return othw; } // constant conditions
+					if(!othw.isValid){ qstate=thenIntp.qstate; return then; }
+					thenIntp.qstate.assignTo("`result",then);
 					othwIntp.qstate.assignTo("`result",othw);
 					qstate=thenIntp.qstate;
 					qstate+=othwIntp.qstate;
