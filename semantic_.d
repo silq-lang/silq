@@ -2539,7 +2539,8 @@ FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 				fd.sstate=SemState.error;
 			}
 		}
-	}else if(!fd.ret) fd.ret=unit;
+	}
+	if(!fd.ret) fd.ret=unit; // TODO: add bottom type
 	setFtype(fd);
 	foreach(ref n;fd.retNames){
 		if(n is null) n="r";
