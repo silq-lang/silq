@@ -1,5 +1,13 @@
 /+
 def main(){
+	x:=vector(3,0:𝔹);
+	x[0]=true;
+	x[0]=H(0:𝔹);
+	return x;
+}
++/
+/+
+def main(){
 	x:=array(10,0:𝔹);
 	for i in [0..10){
 		x[i]:=measure(x[i]);

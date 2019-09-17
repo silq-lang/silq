@@ -514,7 +514,17 @@ struct QState{
 			if(tt==Tag.record) record=record.dup; // TODO: necessary?
 		}
 		void assign(ref QState state,Value rhs){
-			if(rhs.isClassical()){ this=rhs; return; }
+			if(isClassical()){
+				enforce(rhs.isClassical);
+				this=rhs;
+				return;
+			}
+			if(rhs.isClassical()){
+				Value nrhs;
+				nrhs.type=type;
+				nrhs.quval=new QConst(rhs);
+				return assign(state,nrhs);
+			}
 			assert(tag==rhs.tag);
 			Lswitch: final switch(tag){
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
@@ -1589,7 +1599,6 @@ struct QState{
 		}
 	}
 	void assignTo(ref Value var,Value rhs){
-		enforce(rhs.isClassical()||var.tag==rhs.tag);
 		var.assign(this,rhs);
 	}
 	void catAssignTo(ref Value var,Value rhs){
