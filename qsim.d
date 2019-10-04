@@ -2365,16 +2365,14 @@ struct Interpreter(QState){
 			}
 		}else if(auto we=cast(WhileExp)e){
 			auto intp=Interpreter(functionDef,we.bdy,qstate,hasFrame);
-			qstate.state=typeof(qstate.state).init;
 			for(;;){
-				auto cond = intp.runExp(we.cond);
-				auto thenOthw=intp.qstate.split(cond);
-				qstate += thenOthw[1];
-				intp.qstate = thenOthw[0];
+				auto cond=intp.runExp(we.cond);
+				if(!cond.asBoolean) break;
 				if(!intp.qstate.state.length) break;
 				intp.run(retState);
 				intp.closeScope(we.bdy.blscope_);
 			}
+			qstate=intp.qstate;
 		}else if(auto re=cast(ReturnExp)e){
 			auto value = runExp(re.e);
 			if(functionDef.context&&functionDef.contextName.startsWith("this"))
