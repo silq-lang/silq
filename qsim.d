@@ -2366,9 +2366,9 @@ struct Interpreter(QState){
 		}else if(auto we=cast(WhileExp)e){
 			auto intp=Interpreter(functionDef,we.bdy,qstate,hasFrame);
 			for(;;){
+				if(!intp.qstate.state.length) break;
 				auto cond=intp.runExp(we.cond);
 				if(!cond.asBoolean) break;
-				if(!intp.qstate.state.length) break;
 				intp.run(retState);
 				intp.closeScope(we.bdy.blscope_);
 			}
