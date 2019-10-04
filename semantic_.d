@@ -2613,7 +2613,7 @@ ReturnExp returnExpSemantic(ReturnExp ret,Scope sc){
 		sc.error("use parentheses for multiple return values",ret.e.loc);
 		ret.sstate=SemState.error;
 	}
-	if(ret.e.type.isClassical()&&sc.controlDependency!=Dependency(false,SetX!string.init)){
+	if(ret.e.type&&ret.e.type.isClassical()&&sc.controlDependency!=Dependency(false,SetX!string.init)){
 		sc.error("cannot return quantum-controlled classical value",ret.e.loc); // TODO: automatically promote to quantum?
 		ret.sstate=SemState.error;
 	}
