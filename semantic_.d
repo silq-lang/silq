@@ -565,7 +565,13 @@ Expression statementSemantic(Expression e,Scope sc)in{
 		propErr(ite.cond,ite);
 		propErr(ite.then,ite);
 		propErr(ite.othw,ite);
-		if(sc.merge(quantumControl,ite.then.blscope_,ite.othw.blscope_)){
+		NestedScope[] scs;
+		if(!quantumControl){
+			if(definitelyReturns(ite.then)) scs=[ite.othw.blscope_];
+			else if(definitelyReturns(ite.othw)) scs=[ite.then.blscope_];
+			else scs=[ite.then.blscope_,ite.othw.blscope_];
+		}else scs=[ite.then.blscope_,ite.othw.blscope_];
+		if(sc.merge(quantumControl,scs)){
 			sc.note("consumed in one branch of if expression", ite.loc);
 			ite.sstate=SemState.error;
 		}

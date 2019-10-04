@@ -1,4 +1,33 @@
 /+
+def main(){
+	x:=H(1:𝔹);
+	if measure(H(0:𝔹)){
+		return X(x);
+	}else{
+		return x;
+	}
+}
++/
+/+
+def main(){
+	x:=H(1:𝔹);
+	if measure(H(0:𝔹)){
+	}else{
+		return x;
+	}
+	return X(x);
+}
++/
+/+
+def main(){
+	x:=H(1:𝔹);
+	if measure(H(0:𝔹)){
+		return x;
+	}
+	return X(x);
+}
++/
+/+
 def foo(const x:𝔹){
 	if x{
 		return 1:!𝔹; // error
