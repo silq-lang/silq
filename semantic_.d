@@ -314,8 +314,8 @@ Expression makeDeclaration(Expression expr,ref bool success,Scope sc){
 		}else if(auto tpl=cast(TupleExp)be.e1){
 			VarDecl[] vds;
 			foreach(exp;tpl.e){
-				/+if(auto idx=cast(IndexExp)exp) vds~=null; // TODO
-				else+/ if(auto id=cast(Identifier)exp) vds~=makeVar(id);
+				if(auto idx=cast(IndexExp)exp) vds~=null; // TODO
+				else if(auto id=cast(Identifier)exp) vds~=makeVar(id);
 				else goto LnoIdTuple;
 			}
 			auto de=new MultiDefExp(vds,be);
@@ -856,7 +856,7 @@ Expression defineSemantic(DefineExp be,Scope sc){
 	auto de=cast(DefExp)makeDeclaration(be,success,sc);
 	if(!de) be.sstate=SemState.error;
 	assert(success && de && de.initializer is be || !de||de.sstate==SemState.error);
-	auto tt=be.e2.type.isTupleTy;
+	auto tt=be.e2.type?be.e2.type.isTupleTy:null;
 	if(be.e2.sstate==SemState.completed){
 		if(tpl){
 			if(tt){
@@ -880,7 +880,7 @@ Expression defineSemantic(DefineExp be,Scope sc){
 					}else if(tpl&&tt){
 						if(tpl.e.length>i&&tpl.e[i].type&&tt.length>i){
 							if(!isSubtype(tt[i],tpl.e[i].type)){
-								sc.error(format("cannot assign %s to %s",tt[i].type,tpl.e[i].type),tpl.e[i].loc);
+								sc.error(format("cannot assign %s to %s",tt[i],tpl.e[i].type),tpl.e[i].loc);
 								be.sstate=SemState.error;
 							}
 						}
