@@ -1,4 +1,115 @@
 /+
+def foo(const x:𝔹){
+	if x{
+		return 1:!𝔹; // error
+	}else{
+		return 0:!𝔹; // error
+	}
+}
+def main(){
+	x:=H(0:𝔹);
+	while foo(x){}
+	return x;
+}
++/
+/+
+def foo(const x:𝔹){
+	y:=H(1:𝔹); // error. TODO?
+	if !x{
+	}else{
+		return y;
+	}
+	return X(y);
+}
+
+def main(){
+	x:=H(0:𝔹);
+	forget(H(foo(x))=1);
+	return x; // (0.707107+0i)·|1⟩+(-0.707107-0i)·|0⟩
+}
++/
+/+
+def foo(const x:𝔹){
+	y:=H(1:𝔹);
+	if x{
+		return y;
+	}else{
+		return X(y);
+	}
+}
+
+def main(){
+	x:=H(0:𝔹);
+	forget(H(foo(x))=1);
+	return x; // (0.707107+0i)·|1⟩+(-0.707107-0i)·|0⟩
+}
++/
+/+
+def foo(const x:𝔹){
+	y:=H(1:𝔹); // error. TODO?
+	if x{
+		return y;
+	}
+	return X(y);
+}
+
+def main(){
+	x:=H(0:𝔹);
+	forget(H(foo(x))=1);
+	return x; // (0.707107+0i)·|1⟩+(-0.707107-0i)·|0⟩
+}
++/
+/+
+def foo(x:𝔹){
+	y:=dup(x); // error
+	if y{
+		return x;
+	}else{
+		return X(x);
+	}
+}
+def main(){
+	x:=H(0:𝔹);
+	return foo(x);
+}
++/
+/+
+def foo(const x:𝔹){
+	while true{
+		y:=dup(x);
+		return 0:𝔹;
+	}
+}
++/
+/+
+def main(){
+	x:=H(0:𝔹);
+	y:=foo(x);
+	forget(y=0);
+	return H(x);
+}
++/
+
+/+
+def main(){
+	x:=H(0:𝔹); // error
+	if x{
+		return 1;
+	}
+	measure(x);
+	return 0;
+	/+x:=measure(x);
+	return x;+/
+}
++/
+/+
+def main() {
+	for i in [0..2){
+		return 1;
+	}
+    return 1;
+}+/
+/+
 def id(x:!ℝ):!ℝ ⇒ x;
 def main(){
 	k:=3;

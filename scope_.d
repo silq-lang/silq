@@ -93,7 +93,7 @@ abstract class Scope{
 	bool allowsLinear(){
 		return true;
 	}
-	bool insert(Declaration decl,bool force=false)in{assert(!decl.scope_); /+debug assert(force||!allowsLinear||!closed,text(decl));+/ }body{
+	bool insert(Declaration decl,bool force=false)in{assert(!decl.scope_);}body{
 		if(auto d=symtabLookup(decl.name,false,Lookup.probing)){
 			if(decl.sstate!=SemState.error) redefinitionError(decl, d);
 			decl.sstate=SemState.error;
@@ -186,27 +186,26 @@ abstract class Scope{
 	void error(lazy string err, Location loc){handler.error(err,loc);}
 	void note(lazy string err, Location loc){handler.note(err,loc);}
 
-	debug{
-		private bool closed=false;
-		~this(){ /+debug if((!closed||allowMerge)&&allowsLinear()){ import std.stdio; writeln(typeid(this)," ",__FILE__," ",__LINE__); assert(0); }+/ }
-	}
-
-	bool close()in{
-		//debug assert(!allowMerge);
-	}do{
-		debug closed=true;
+	final bool close(){
 		bool errors=false;
-		foreach(n,d;symtab){
-			if(!d.isLinear()||canForgetAppend(d)) continue;
-			if(d.rename) rnsymtab.remove(d.rename.ptr);
-			errors=true;
-			error(format("%s '%s' is not consumed",d.kind,d.getName),d.loc);
+		foreach(n,d;symtab.dup){
+			if(d.isLinear()){
+				if(!canForgetAppend(d)){
+					errors=true;
+					if(d.sstate!=SemState.error)
+						error(format("%s '%s' is not consumed",d.kind,d.getName),d.loc);
+					d.sstate=SemState.error;
+				}else{
+					consume(d);
+					pushConsumed();
+				}
+			}
 		}
 		foreach(n,d;rnsymtab) assert(!d.isLinear()||canForget(d));
 		return errors;
 	}
 
-	private auto controlDependency=Dependency(false,SetX!string.init);
+	auto controlDependency=Dependency(false,SetX!string.init);
 	void addControlDependency(Dependency dep){
 		controlDependency.joinWith(dep);
 	}
@@ -335,7 +334,6 @@ abstract class Scope{
 			sc.dependencies.clear();
 			sc.symtab.clear();
 			sc.rnsymtab.clear();
-			debug sc.closed=true;
 		}
 		foreach(k,v;dependencies.dependencies.dup){
 			if(k.ptr !in symtab && k.ptr !in rnsymtab)
@@ -476,9 +474,7 @@ class RawProductScope: NestedScope{
 	override Annotation restriction(){
 		return annotation;
 	}
-	void forceClose(){
-		debug closed=true;
-	}
+	void forceClose(){}
 }
 
 class FunctionScope: NestedScope{
@@ -497,9 +493,7 @@ class FunctionScope: NestedScope{
 	override Annotation restriction(){
 		return fd.annotation;
 	}
-	void forceClose(){
-		debug closed=true;
-	}
+	void forceClose(){}
 	// ~this(){ import std.stdio; writeln(fd.loc.rep); }
 	override FunctionDef getFunction(){ return fd; }
 }
@@ -524,11 +518,6 @@ class BlockScope: NestedScope{
 	Annotation restriction_;
 	override Annotation restriction(){
 		return max(restriction_,super.restriction());
-	}
-	override bool close(){
-		auto errors=parent.allowsLinear()?parent.merge(false,this):false;
-		debug closed=true;
-		return errors;
 	}
 }
 class AggregateScope: NestedScope{

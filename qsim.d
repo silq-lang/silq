@@ -29,7 +29,8 @@ LocalizedException localizedException(Exception e,Location loc){
 	if(auto r=cast(LocalizedException)e) return r;
 	return new LocalizedException(e,loc);
 }
-//version=LOCALIZE;
+version=LOCALIZE;
+version(LOCALIZE){}else pragma(msg,"NOTE: error messages not formatted");
 
 class QSim{
 	this(string sourceFile){
@@ -2380,7 +2381,7 @@ struct Interpreter(QState){
 			qstate.assignTo("`value",value);
 			if(functionDef.isNested) // caller takes care of context
 				qstate.vars.remove(functionDef.contextName);
-			closeScope(functionDef.body_.blscope_);
+			closeScope(re.scope_);
 			if(hasFrame){
 				assert("`frame" in qstate.vars);
 				//assert(qstate.vars.length==2); // `value and `frame

@@ -738,9 +738,11 @@ Expression statementSemantic(Expression e,Scope sc)in{
 CompoundExp controlledCompoundExpSemantic(CompoundExp ce,Scope sc,Expression control,Annotation restriction_)in{
 	//assert(!ce.blscope_);
 }do{
-	if(control.isQfree()){
-		ce.blscope_=new BlockScope(sc,restriction_);
-		ce.blscope_.addControlDependency(control.getDependency(ce.blscope_));
+	if(control.type&&!control.type.isClassical()){
+		if(control.isQfree()){
+			ce.blscope_=new BlockScope(sc,restriction_);
+			ce.blscope_.addControlDependency(control.getDependency(ce.blscope_));
+		}else ce.blscope_.addControlDependency(Dependency(true,SetX!string.init));
 	}
 	return compoundExpSemantic(ce,sc,restriction_);
 }
@@ -2527,7 +2529,7 @@ FunctionDef functionDefSemantic(FunctionDef fd,Scope sc){
 	fd.type=unit;
 	if(bdy){
 		propErr(bdy,fd);
-		if(!definitelyReturns(fd)){
+		if(!definitelyReturns(bdy)){
 			if(!fd.ret || fd.ret == unit){
 				auto tpl=new TupleExp([]);
 				tpl.loc=fd.loc;
@@ -2592,6 +2594,7 @@ void determineType(ref Expression e,Scope sc,void delegate(Expression) future){
 
 ReturnExp returnExpSemantic(ReturnExp ret,Scope sc){
 	if(ret.sstate==SemState.completed) return ret;
+	ret.scope_=sc;
 	auto fd=sc.getFunction();
 	if(!fd){
 		sc.error("return statement must be within function",ret.loc);
@@ -2605,13 +2608,23 @@ ReturnExp returnExpSemantic(ReturnExp ret,Scope sc){
 		});
 	}
 	ret.e=expressionSemantic(ret.e,sc,ConstResult.no);
+	propErr(ret.e,ret);
 	if(cast(CommaExp)ret.e){
 		sc.error("use parentheses for multiple return values",ret.e.loc);
 		ret.sstate=SemState.error;
 	}
-	propErr(ret.e,ret);
+	if(ret.e.type.isClassical()&&sc.controlDependency!=Dependency(false,SetX!string.init)){
+		sc.error("cannot return quantum-controlled classical value",ret.e.loc); // TODO: automatically promote to quantum?
+		ret.sstate=SemState.error;
+	}
 	if(ret.sstate==SemState.error)
 		return ret;
+	sc.pushConsumed();
+	if(sc.close()){
+		sc.note("at function return",ret.loc);
+		ret.sstate=SemState.error;
+		return ret;
+	}
 	if(!isSubtype(ret.e.type,fd.ret)){
 		sc.error(format("%s is incompatible with return type %s",ret.e.type,fd.ret),ret.e.loc);
 		ret.sstate=SemState.error;
@@ -2710,59 +2723,56 @@ Expression typeForDecl(Declaration decl){
 	return unit; // TODO
 }
 
-bool definitelyReturns(FunctionDef fd){
-	bool doIt(Expression e){
-		if(auto ret=cast(ReturnExp)e)
-			return true;
-		bool isZero(Expression e){
-			if(auto tae=cast(TypeAnnotationExp)e)
-				return isZero(tae.e);
-			if(auto le=cast(LiteralExp)e)
-				if(le.lit.type==Tok!"0")
-					if(le.lit.str=="0")
-						return true;
-			return false;
-		}
-		alias isFalse=isZero;
-		bool isTrue(Expression e){
-			if(auto le=cast(LiteralExp)e)
-				if(le.lit.type==Tok!"0")
-					return le.lit.str!="0";
-			return false;
-		}
-		bool isPositive(Expression e){
-			if(isZero(e)) return false;
-			if(auto le=cast(LiteralExp)e)
-				if(le.lit.type==Tok!"0")
-					return le.lit.str[0]!='-';
-			return false;
-		}
-		if(auto ae=cast(AssertExp)e)
-			return isFalse(ae.e);
-		if(auto oe=cast(ObserveExp)e)
-			return isFalse(oe.e);
-		if(auto ce=cast(CompoundExp)e)
-			return ce.s.any!(x=>doIt(x));
-		if(auto ite=cast(IteExp)e)
-			return doIt(ite.then) && doIt(ite.othw);
-		if(auto fe=cast(ForExp)e){
-			/+auto lle=cast(LiteralExp)fe.left;
-			auto rle=cast(LiteralExp)fe.right;
-			if(lle && rle && lle.lit.type==Tok!"0" && rle.lit.type==Tok!"0"){ // TODO: parse values correctly
-				ℤ l=ℤ(lle.lit.str), r=ℤ(rle.lit.str);
-				l+=cast(long)fe.leftExclusive;
-				r-=cast(long)fe.rightExclusive;
-				return l<=r && doIt(fe.bdy);
-			}+/
-			return false;
-		}
-		if(auto we=cast(WhileExp)e)
-			return isTrue(we.cond) && doIt(we.bdy);
-		if(auto re=cast(RepeatExp)e)
-			return isPositive(re.num) && doIt(re.bdy);
+bool definitelyReturns(Expression e){
+	if(auto ret=cast(ReturnExp)e)
+		return true;
+	bool isZero(Expression e){
+		if(auto tae=cast(TypeAnnotationExp)e)
+			return isZero(tae.e);
+		if(auto le=cast(LiteralExp)e)
+			if(le.lit.type==Tok!"0")
+				if(le.lit.str=="0")
+					return true;
 		return false;
 	}
-	return doIt(fd.body_);
+	alias isFalse=isZero;
+	bool isTrue(Expression e){
+		if(auto le=cast(LiteralExp)e)
+			if(le.lit.type==Tok!"0")
+				return le.lit.str!="0";
+		return false;
+	}
+	bool isPositive(Expression e){
+		if(isZero(e)) return false;
+		if(auto le=cast(LiteralExp)e)
+			if(le.lit.type==Tok!"0")
+				return le.lit.str[0]!='-';
+		return false;
+		}
+	if(auto ae=cast(AssertExp)e)
+		return isFalse(ae.e);
+	if(auto oe=cast(ObserveExp)e)
+		return isFalse(oe.e);
+	if(auto ce=cast(CompoundExp)e)
+		return ce.s.any!(x=>definitelyReturns(x));
+	if(auto ite=cast(IteExp)e)
+		return definitelyReturns(ite.then) && definitelyReturns(ite.othw);
+	if(auto fe=cast(ForExp)e){
+		/+auto lle=cast(LiteralExp)fe.left;
+		auto rle=cast(LiteralExp)fe.right;
+		if(lle && rle && lle.lit.type==Tok!"0" && rle.lit.type==Tok!"0"){ // TODO: parse values correctly
+			ℤ l=ℤ(lle.lit.str), r=ℤ(rle.lit.str);
+			l+=cast(long)fe.leftExclusive;
+			r-=cast(long)fe.rightExclusive;
+			return l<=r && definitelyReturns(fe.bdy);
+		}+/
+		return false;
+	}
+	if(auto we=cast(WhileExp)e)
+		return isTrue(we.cond) && definitelyReturns(we.bdy);
+	if(auto re=cast(RepeatExp)e)
+		return isPositive(re.num) && definitelyReturns(re.bdy);
+	return false;
 }
 
 /+

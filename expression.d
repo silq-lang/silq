@@ -1315,6 +1315,9 @@ class ReturnExp: Expression{
 	}
 	mixin VariableFree; // TODO!
 	override int componentsImpl(scope int delegate(Expression) dg){ return dg(e); }
+
+	// semantic information:
+	Scope scope_;
 }
 
 class AssertExp: Expression{
