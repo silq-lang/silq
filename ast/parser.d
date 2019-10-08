@@ -414,20 +414,22 @@ struct Parser{
 				}
 				mixin(rule!(LiteralExp,Existing,"t"));
 			mixin(getTTCases(literals,["``","``c","``w","``d","true","false"])); {res=New!LiteralExp(tok); nextToken(); return res;}
-			case Tok!"true",Tok!"⊤":
+			case Tok!"true",Tok!"⊤":{
 				nextToken();
 				auto tok=Token(Tok!"0");
 				tok.str="1";
 				res=New!LiteralExp(tok);
 				res.type=Bool(true);
 				return res;
-			case Tok!"false",Tok!"⊥":
+			}
+			case Tok!"false",Tok!"⊥":{
 				nextToken();
 				auto tok=Token(Tok!"0");
 				tok.str="0";
 				res=New!LiteralExp(tok);
 				res.type=Bool(true);
 				return res;
+			}
 			static if(language==silq){
 				case Tok!"lambda",Tok!"λ": // TODO: add support in PSI as well?
 					return parseLambdaExp();
