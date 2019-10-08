@@ -1,6 +1,7 @@
 // Written in the D programming language
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
 module ast.lexer;
+import astopt;
 
 import std.string, utf = std.utf, std.uni;
 import std.stdio, std.conv;
@@ -166,7 +167,7 @@ string[2][] specialTokens =
 
 string[2][] compoundTokens = [];
 
-string[] keywords = ["dat","def","true","false","if","then","else","observe","assert","return","repeat","for","while","in","cobserve","import","Π","Pi","quantum","const","lifted","qfree","mfree","λ","lambda","forget","as","coerce","classical"];
+string[] keywords = ["dat","def","true","false","if","then","else","observe","assert","return","repeat","for","while","in","cobserve","import","Π","Pi","as","coerce"]~(language==silq?["λ","lambda","quantum","const","lifted","qfree","mfree","forget","classical"]:[]);
 
 
 string[2][] tokens = specialTokens ~ complexTokens ~ simpleTokens ~ unicodeTokens ~ compoundTokens ~ keywordTokens();

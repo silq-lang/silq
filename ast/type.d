@@ -1,6 +1,7 @@
 // Written in the D programming language
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
 module ast.type;
+import astopt;
 
 import std.array, std.algorithm, std.conv;
 import std.functional, std.range;
@@ -41,7 +42,6 @@ Expression getNumeric(int which,bool classical){
 }
 
 string preludeNumericTypeName(Expression e){
-	import ast.parser: preludePath;
 	import ast.semantic_: modules;
 	if(preludePath() !in modules) return null;
 	auto exprssc=modules[preludePath()];
@@ -112,7 +112,8 @@ class BoolTy: Type{
 		return this;
 	}
 	override string toString(){
-		return classical?"!𝔹":"𝔹";
+		static if(language==silq) return classical?"!𝔹":"𝔹";
+		else return "𝔹";
 	}
 	override bool opEquals(Object o){
 		auto r=cast(BoolTy)o;
@@ -133,18 +134,26 @@ class BoolTy: Type{
 		return 0;
 	}
 }
-private BoolTy[2] theBool;
+static if(language==silq) private BoolTy[2] theBool;
+else private BoolTy theBool;
 
-BoolTy Bool(bool classical){ return theBool[classical]?theBool[classical]:(theBool[classical]=new BoolTy(classical)); }
+BoolTy Bool(bool classical){
+	static if(language==silq) return theBool[classical]?theBool[classical]:(theBool[classical]=new BoolTy(classical));
+	else return theBool?theBool:(theBool=new BoolTy(true));
+}
 
 class ℕTy: Type{
-	private bool classical;
-	private this(bool classical){ this.classical=classical; }
+	static if(language==silq) private bool classical;
+	else private enum classical=true;
+	private this(bool classical){
+		static if(language==silq) this.classical=classical;
+	}
 	override ℕTy copyImpl(CopyArgs args){
 		return this;
 	}
 	override string toString(){
-		return classical?"!ℕ":"ℕ";
+		static if(language==silq) return classical?"!ℕ":"ℕ";
+		else return "ℕ";
 	}
 	override bool opEquals(Object o){
 		auto r=cast(ℕTy)o;
@@ -166,18 +175,26 @@ class ℕTy: Type{
 		return 0;
 	}
 }
-private ℕTy[2] theℕ;
+static if(language==silq) private ℕTy[2] theℕ;
+else private ℕTy theℕ;
 
-ℕTy ℕt(bool classical){ return theℕ[classical]?theℕ[classical]:(theℕ[classical]=new ℕTy(classical)); }
+ℕTy ℕt(bool classical){
+	static if(language==silq) return theℕ[classical]?theℕ[classical]:(theℕ[classical]=new ℕTy(classical));
+	else return theℕ?theℕ:(theℕ=new ℕTy(true));
+}
 
 class ℤTy: Type{
-	private bool classical;
-	private this(bool classical){ this.classical=classical; }
+	static if(language==silq) private bool classical;
+	else private enum classical=true;
+	private this(bool classical){
+		static if(language==silq) this.classical=classical;
+	}
 	override ℤTy copyImpl(CopyArgs args){
 		return this;
 	}
 	override string toString(){
-		return classical?"!ℤ":"ℤ";
+		static if(language==silq) return classical?"!ℤ":"ℤ";
+		else return "ℤ";
 	}
 	override bool opEquals(Object o){
 		auto r=cast(ℤTy)o;
@@ -198,18 +215,26 @@ class ℤTy: Type{
 		return 0;
 	}
 }
-private ℤTy[2] theℤ;
+static if(language==silq) private ℤTy[2] theℤ;
+else private ℤTy theℤ;
 
-ℤTy ℤt(bool classical){ return theℤ[classical]?theℤ[classical]:(theℤ[classical]=new ℤTy(classical)); }
+ℤTy ℤt(bool classical){
+	static if(language==silq) return theℤ[classical]?theℤ[classical]:(theℤ[classical]=new ℤTy(classical));
+	else return theℤ?theℤ:(theℤ=new ℤTy(true));
+}
 
 class ℚTy: Type{
-	private bool classical;
-	private this(bool classical){ this.classical=classical; }
+	static if(language==silq) private bool classical;
+	else private enum classical=true;
+	private this(bool classical){
+		static if(language==silq) this.classical=classical;
+	}
 	override ℚTy copyImpl(CopyArgs args){
 		return this;
 	}
 	override string toString(){
-		return classical?"!ℚ":"ℚ";
+		static if(language==silq) return classical?"!ℚ":"ℚ";
+		else return "ℚ";
 	}
 	override bool opEquals(Object o){
 		auto r=cast(ℚTy)o;
@@ -230,18 +255,26 @@ class ℚTy: Type{
 		return 0;
 	}
 }
-private ℚTy[2] theℚ;
+static if(language==silq) private ℚTy[2] theℚ;
+else private ℚTy theℚ;
 
-ℚTy ℚt(bool classical){ return theℚ[classical]?theℚ[classical]:(theℚ[classical]=new ℚTy(classical)); }
+ℚTy ℚt(bool classical){
+	static if(language==silq) return theℚ[classical]?theℚ[classical]:(theℚ[classical]=new ℚTy(classical));
+	else return theℚ?theℚ:(theℚ=new ℚTy(true));
+}
 
 class ℝTy: Type{
-	private bool classical;
-	private this(bool classical){ this.classical=classical; }
+	static if(language==silq) private bool classical;
+	else private enum classical=true;
+	private this(bool classical){
+		static if(language==silq) this.classical=classical;
+	}
 	override ℝTy copyImpl(CopyArgs args){
 		return this;
 	}
 	override string toString(){
-		return classical?"!ℝ":"ℝ";
+		static if(language==silq) return classical?"!ℝ":"ℝ";
+		else return "ℝ";
 	}
 	override bool opEquals(Object o){
 		auto r=cast(ℝTy)o;
@@ -262,18 +295,26 @@ class ℝTy: Type{
 		return 0;
 	}
 }
-private ℝTy[2] theℝ;
+static if(language==silq) private ℝTy[2] theℝ;
+else private ℝTy theℝ;
 
-ℝTy ℝ(bool classical){ return theℝ[classical]?theℝ[classical]:(theℝ[classical]=new ℝTy(classical)); }
+ℝTy ℝ(bool classical){
+	static if(language==silq) return theℝ[classical]?theℝ[classical]:(theℝ[classical]=new ℝTy(classical));
+	else return theℝ?theℝ:(theℝ=new ℝTy(true));
+}
 
 class ℂTy: Type{
-	private bool classical;
-	private this(bool classical){ this.classical=classical; }
+	static if(language==silq) private bool classical;
+	else private enum classical=true;
+	private this(bool classical){
+		static if(language==silq) this.classical=classical;
+	}
 	override ℂTy copyImpl(CopyArgs args){
 		return this;
 	}
 	override string toString(){
-		return classical?"!ℂ":"ℂ";
+		static if(language==silq) return classical?"!ℂ":"ℂ";
+		return "ℂ";
 	}
 	override bool opEquals(Object o){
 		auto r=cast(ℂTy)o;
@@ -294,22 +335,30 @@ class ℂTy: Type{
 		return 0;
 	}
 }
-private ℂTy[2] theℂ;
+static if(language==silq) private ℂTy[2] theℂ;
+else private ℂTy theℂ;
 
-ℂTy ℂ(bool classical){ return theℂ[classical]?theℂ[classical]:(theℂ[classical]=new ℂTy(classical)); }
+ℂTy ℂ(bool classical){
+	static if(language==silq) return theℂ[classical]?theℂ[classical]:(theℂ[classical]=new ℂTy(classical));
+	else return theℂ?theℂ:(theℂ=new ℂTy(true));
+}
 
 
 
 class AggregateTy: Type{
 	DatDecl decl;
-	bool classical;
-	private AggregateTy classicalTy;
+	static if(language==silq){
+		bool classical;
+		private AggregateTy classicalTy;
+	}else enum classical=true;
 	this(DatDecl decl,bool classical){
 		if(!classical) assert(decl.isQuantum);
 		this.decl=decl;
-		this.classical=classical;
-		if(classical) classicalTy=this;
-		else classicalTy=New!AggregateTy(decl,true);
+		static if(language==silq){
+			this.classical=classical;
+			if(classical) classicalTy=this;
+			else classicalTy=New!AggregateTy(decl,true);
+		}
 	}
 	override AggregateTy copyImpl(CopyArgs args){
 		return this;
@@ -329,7 +378,8 @@ class AggregateTy: Type{
 		return classical;
 	}
 	override AggregateTy getClassical(){
-		return classicalTy;
+		static if(language==silq) return classicalTy;
+		else return this;
 	}
 
 	override Expression evalImpl(Expression ntype){ return this; }
@@ -340,9 +390,10 @@ class AggregateTy: Type{
 }
 
 class ContextTy: Type{
-	private bool classical;
+	static if(language==silq) private bool classical;
+	else private enum classical=true;
 	private this(bool classical){
-		this.classical=classical;
+		static if(language==silq) this.classical=classical;
 	}
 	override ContextTy copyImpl(CopyArgs args){
 		return this;
@@ -358,7 +409,8 @@ class ContextTy: Type{
 		return classical;
 	}
 	override string toString(){
-		return (classical?"!":"")~"`Ctx";
+		static if(language==silq) return (classical?"!":"")~"`Ctx";
+		else return "`Ctx";
 	}
 	override ContextTy getClassical(){
 		return contextTy(true);
@@ -369,8 +421,12 @@ class ContextTy: Type{
 		return 0;
 	}
 }
-private ContextTy[2] theContextTy;
-ContextTy contextTy(bool classical){ return theContextTy[classical]?theContextTy[classical]:(theContextTy[classical]=new ContextTy(classical)); }
+static if(language==silq) private ContextTy[2] theContextTy;
+else private ContextTy theContextTy;
+ContextTy contextTy(bool classical){
+	static if(language==silq) return theContextTy[classical]?theContextTy[classical]:(theContextTy[classical]=new ContextTy(classical));
+	else return theContextTy?theContextTy:(theContextTy=new ContextTy(true));
+}
 
 interface ITupleTy{
 	@property size_t length();
@@ -681,13 +737,17 @@ static Expression elementType(Expression ty){
 }
 
 class StringTy: Type{
-	bool classical;
-	private this(bool classical){ this.classical=classical; }
+	static if(language==silq) bool classical;
+	else enum classical=true;
+	private this(bool classical){
+		static if(language==silq) this.classical=classical;
+	}
 	override StringTy copyImpl(CopyArgs args){
 		return this;
 	}
 	override string toString(){
-		return classical?"!string":"string";
+		static if(language==silq) return classical?"!string":"string";
+		else return "string";
 	}
 	override bool opEquals(Object o){
 		return !!cast(StringTy)o;
@@ -705,7 +765,10 @@ class StringTy: Type{
 	}
 }
 
-StringTy stringTy(bool classical){ return memoize!((bool classical)=>new StringTy(classical))(classical); }
+StringTy stringTy(bool classical){
+	static if(language==silq) return memoize!((bool classical)=>new StringTy(classical))(classical);
+	else return memoize!(()=>new StringTy(true));
+}
 
 enum Annotation{
 	none,
@@ -749,8 +812,10 @@ class ProductTy: Type{
 	Expression dom, cod;
 	bool isSquare,isTuple;
 	Annotation annotation;
-	bool isClassical_;
-	private ProductTy classicalTy;
+	static if(language==silq){
+		bool isClassical_;
+		private ProductTy classicalTy;
+	}else enum isClassical_=true;
 	private this(bool[] isConst,string[] names,Expression dom,Expression cod,bool isSquare,bool isTuple,Annotation annotation,bool isClassical_)in{
 		// TODO: assert that all names are distinct
 		if(isTuple){
@@ -764,13 +829,14 @@ class ProductTy: Type{
 		}
 		assert(cod.type==typeTy,text(cod));
 	}body{
-		this.isConst=isConst;
+		this.isConst=isConst; // TODO: don't track this in PSI
 		this.names=names; this.dom=dom; this.cod=cod;
 		this.isSquare=isSquare; this.isTuple=isTuple;
 		this.annotation=annotation;
-		this.isClassical_=isClassical_;
-		if(this.isClassical) classicalTy=this;
-		else classicalTy=new ProductTy(isConst,names,dom,cod,isSquare,isTuple,annotation,true);
+		static if(language==silq){this.isClassical_=isClassical_;
+			if(this.isClassical) classicalTy=this;
+			else classicalTy=new ProductTy(isConst,names,dom,cod,isSquare,isTuple,annotation,true);
+		}
 		// TODO: report DMD bug, New!ProductTy does not work
 	}
 	override ProductTy copyImpl(CopyArgs args){
@@ -807,7 +873,9 @@ class ProductTy: Type{
 					if(isSquare) d=del[0]~d~del[1];
 				}else d=addp(isConst[0],dom,del);
 			}else d=addp(isConst[0],dom,del);
-			r=d~" "~(isClassical?"!":"")~"→"~(annotation?to!string(annotation):"")~" "~c;
+			static if(language==silq) auto arrow=(isClassical?"!":"")~"→";
+			else enum arrow="→";
+			r=d~" "~arrow~(annotation?to!string(annotation):"")~" "~c;
 		}else{
 			assert(names.length);
 			string args;
@@ -815,7 +883,9 @@ class ProductTy: Type{
 				args=zip(isConst,names,iota(tdom.length).map!(i=>tdom[i])).map!(x=>(x[0]?"const ":"")~x[1]~":"~x[2].toString()).join(",");
 				if(nargs==1) args~=",";
 			}else args=(isConst[0]?"const ":"")~names[0]~":"~dom.toString();
-			r=(isClassical?"!":"")~"∏"~del[0]~args~del[1]~(annotation?to!string(annotation):"")~". "~c;
+			static if(language==silq) auto pi=(isClassical?"!":"")~"∏";
+			else enum pi="Π";
+			r=pi~del[0]~args~del[1]~(annotation?to!string(annotation):"")~". "~c;
 		}
 		return r;
 	}
@@ -1039,7 +1109,8 @@ class ProductTy: Type{
 		return true; // code is classical
 	}
 	override ProductTy getClassical(){
-		return classicalTy;
+		static if(language==silq) return classicalTy;
+		else return this;
 	}
 	override int componentsImpl(scope int delegate(Expression) e){
 		return 0; // TODO: ok?
@@ -1092,7 +1163,7 @@ FunTy funTy(Expression dom,Expression cod,bool isSquare,bool isTuple,bool isClas
 Identifier varTy(string name,Expression type,bool classical=false){
 	return memoize!((string name,Expression type,bool classical){
 		auto r=new Identifier(name);
-		r.classical=classical;
+		static if(language==silq) r.classical=classical;
 		r.type=type;
 		r.sstate=SemState.completed;
 		return r;

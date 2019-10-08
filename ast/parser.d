@@ -1,6 +1,7 @@
 // Written in the D programming language
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
 module ast.parser;
+import astopt;
 
 import std.array, std.typetuple, std.algorithm, std.conv;
 import std.traits: EnumMembers;
@@ -71,7 +72,8 @@ int getLbp(TokenType type) pure{ // operator precedence
 	// shift operators
 	case Tok!">>", Tok!"<<":
 	case Tok!">>>": return 110;
-	case Tok!"->",Tok!"→",Tok!"!",Tok!"classical": // exponential type
+	case Tok!"->",Tok!"→": // exponential type
+	static if(language==silq) case Tok!"!",Tok!"classical":{}
 	// case Tok!"⇒",Tok!"↦",Tok!"=>": return 115; // goesto
 	// additive operators
 	case Tok!"+",Tok!"-",Tok!"~",Tok!"sub":
@@ -338,9 +340,11 @@ struct Parser{
 	Parameter parseParameter(){
 		mixin(SetLoc!Parameter);
 		bool isConst=false;
-		if(ttype==Tok!"const"){
-			nextToken();
-			isConst=true;
+		static if(language==silq){
+			if(ttype==Tok!"const"){
+				nextToken();
+				isConst=true;
+			}
 		}
 		auto i=parseIdentifier();
 		Expression t=null;
@@ -424,8 +428,10 @@ struct Parser{
 				res=New!LiteralExp(tok);
 				res.type=Bool(true);
 				return res;
-			case Tok!"lambda",Tok!"λ":
-				return parseLambdaExp();
+			static if(language==silq){
+				case Tok!"lambda",Tok!"λ": // TODO: add support in PSI as well?
+					return parseLambdaExp();
+			}
 			case Tok!"(",Tok!"[":
 				if(allowLambda){
 					auto state=saveState();
@@ -435,7 +441,8 @@ struct Parser{
 						nextToken();
 					}
 					switch(ttype){
-						case Tok!"{",Tok!"⇒",Tok!"↦",Tok!"=>",Tok!"lifted",Tok!"qfree",Tok!"mfree":
+						case Tok!"{",Tok!"⇒",Tok!"↦",Tok!"=>":
+						static if(language==silq) case Tok!"lifted",Tok!"qfree",Tok!"mfree":{}
 							restoreState(state);
 							return parseLambdaExp();
 						default: break;
@@ -463,15 +470,17 @@ struct Parser{
 					auto annotation=Annotation.none;
 					bool isLifted=false;
 					if(ttype!=Tok!"["&&ttype!=Tok!"("){
-						if(ttype==Tok!"lifted"||ttype==Tok!"qfree"){
-							isLifted=ttype==Tok!"lifted";
-							nextToken();
-							annotation=Annotation.qfree;
-						}else if(ttype==Tok!"mfree"){
-							nextToken();
-							annotation=Annotation.mfree;
+						static if(language==silq){
+							if(ttype==Tok!"lifted"||ttype==Tok!"qfree"){
+								isLifted=ttype==Tok!"lifted";
+								nextToken();
+								annotation=Annotation.qfree;
+							}else if(ttype==Tok!"mfree"){
+								nextToken();
+								annotation=Annotation.mfree;
+							}
+							if(isLifted) foreach(p;cast(Parameter[])params[0]) p.isConst=true;
 						}
-						if(isLifted) foreach(p;cast(Parameter[])params[0]) p.isConst=true;
 						expect(Tok!".");
 						cod = parseType();
 					}else cod=parseProduct();
@@ -482,15 +491,18 @@ struct Parser{
 			case Tok!"-":
 				nextToken();
 				return res=New!(UnaryExp!(Tok!"-"))(parseExpression(nbp,false));
-			case Tok!"!",Tok!"¬",Tok!"classical":
+			case Tok!"!",Tok!"¬":
+			static if(language==silq) case Tok!"classical":{} // TODO: distinguish from ! when used within an expression
 				nextToken();
 				return res=New!(UnaryExp!(Tok!"¬"))(parseExpression(nbp,false));
 			case Tok!"~":
 				nextToken();
 				return res=New!(UnaryExp!(Tok!"~"))(parseExpression(nbp,false));
-			case Tok!"const":
-				nextToken();
-				return res=New!(UnaryExp!(Tok!"const"))(parseExpression(nbp));
+			static if(language==silq){
+				case Tok!"const":
+					nextToken();
+					return res=New!(UnaryExp!(Tok!"const"))(parseExpression(nbp));
+			}
 			case Tok!"__error": mixin(rule!(ErrorExp,"_"));
 			//case Tok!"[": mixin(rule!(ArrayLiteralExp,"_","OPT",ArgumentList,"]"));
 			//case Tok!"assert": mixin(rule!(AssertExp,"_","(",ArgumentList,")"));
@@ -500,7 +512,7 @@ struct Parser{
 
 	LambdaExp parseLambdaExp(bool semicolon=false)(){
 		mixin(SetLoc!LambdaExp);
-		if(util.among(ttype,Tok!"lambda",Tok!"λ")) nextToken();
+		static if(language==silq) if(util.among(ttype,Tok!"lambda",Tok!"λ")) nextToken(); // TODO: add support in PSI as well?
 		return res=New!LambdaExp(parseFunctionDef!(true,semicolon));
 	}
 	
@@ -560,13 +572,15 @@ struct Parser{
 							static if("@(x)"=="->"||"@(x)"=="→"){
 								auto annotation=Annotation.none;
 								bool isLifted=false;
-								if(ttype==Tok!"lifted"||ttype==Tok!"qfree"){
-									isLifted=ttype==Tok!"lifted";
-									nextToken();
-									annotation=Annotation.qfree;
-								}else if(ttype==Tok!"mfree"){
-									nextToken();
-									annotation=Annotation.mfree;
+								static if(language==silq){
+									if(ttype==Tok!"lifted"||ttype==Tok!"qfree"){
+										isLifted=ttype==Tok!"lifted";
+										nextToken();
+										annotation=Annotation.qfree;
+									}else if(ttype==Tok!"mfree"){
+										nextToken();
+										annotation=Annotation.mfree;
+									}
 								}
 							}
 							auto right=parseExpression(rbp!(Tok!"@(x)"),"@(x)"=="←"||"@(x)"==":=",statement&&"@(x)"==",");
@@ -595,12 +609,14 @@ struct Parser{
 			case Tok!">=": goto case Tok!"≥";
 			case Tok!"!>=": goto case Tok!"!≥";
 			case Tok!"!=": goto case Tok!"≠";
-			case Tok!"!",Tok!"classical":
-				auto next=peek.type;
-				if(next==Tok!"→"||next==Tok!"->"){
-					nextToken();
-					return res=New!(UnaryExp!(Tok!"¬"))(led(left,statement));
-				}else goto default;
+			static if(language==silq){
+				case Tok!"!",Tok!"classical":
+					auto next=peek.type;
+					if(next==Tok!"→"||next==Tok!"->"){
+						nextToken();
+						return res=New!(UnaryExp!(Tok!"¬"))(led(left,statement));
+					}else goto default;
+			}
 			case Tok!"&": goto case Tok!"∧";
 			case Tok!"&←",Tok!"∧=": goto case Tok!"∧←";
 			case Tok!"|": goto case Tok!"∨";
@@ -671,9 +687,9 @@ struct Parser{
 			case Tok!"for": return parseFor();
 			case Tok!"while": return parseWhile();
 			case Tok!"assert": return parseAssert();
-			case Tok!"observe": return parseObserve();
-			case Tok!"cobserve": return parseCObserve();
-			case Tok!"forget": return parseForget();
+			static if(language==psi) case Tok!"observe": return parseObserve();
+			static if(language==psi) case Tok!"cobserve": return parseCObserve();
+			static if(language==silq) case Tok!"forget": return parseForget();
 			default: break;
 		}
 		Expression left;
@@ -737,15 +753,17 @@ struct Parser{
 		expect(isSquare?Tok!"]":Tok!")");
 		auto annotation=Annotation.none;
 		bool isLifted=false;
-		if(ttype==Tok!"lifted"||ttype==Tok!"qfree"){
-			isLifted=ttype==Tok!"lifted";
-			nextToken();
-			annotation=Annotation.qfree;
-		}else if(ttype==Tok!"mfree"){
-			nextToken();
-			annotation=Annotation.mfree;
+		static if(language==silq){
+			if(ttype==Tok!"lifted"||ttype==Tok!"qfree"){
+				isLifted=ttype==Tok!"lifted";
+				nextToken();
+				annotation=Annotation.qfree;
+			}else if(ttype==Tok!"mfree"){
+				nextToken();
+				annotation=Annotation.mfree;
+			}
+			if(isLifted) foreach(p;cast(Parameter[])params[0]) p.isConst=true;
 		}
-		if(isLifted) foreach(p;cast(Parameter[])params[0]) p.isConst=true;
 		Expression ret=null;
 		if(ttype==Tok!":"){
 			nextToken();
@@ -809,9 +827,11 @@ struct Parser{
 			expect(Tok!"]");
 		}
 		bool isQuantum=false;
-		if(ttype==Tok!"quantum"){
-			nextToken();
-			isQuantum=true;
+		static if(language==silq){
+			if(ttype==Tok!"quantum"){
+				nextToken();
+				isQuantum=true;
+			}
 		}
 		auto body_=parseCompoundExp!CompoundDecl();
 		return res=New!DatDecl(name,hasParams,cast(DatParameter[])params[0],params[1]||params[0].length!=1,isQuantum,body_);
@@ -938,7 +958,7 @@ struct Parser{
 		expect(Tok!")");
 		return res=New!AssertExp(exp);
 	}
-	ObserveExp parseObserve(){
+	static if(language==psi) ObserveExp parseObserve(){
 		mixin(SetLoc!ObserveExp);
 		expect(Tok!"observe");
 		expect(Tok!"(");
@@ -946,7 +966,7 @@ struct Parser{
 		expect(Tok!")");
 		return res=New!ObserveExp(exp);
 	}
-	CObserveExp parseCObserve(){
+	static if(language==psi) CObserveExp parseCObserve(){
 		mixin(SetLoc!CObserveExp);
 		expect(Tok!"cobserve");
 		expect(Tok!"(");
@@ -956,7 +976,7 @@ struct Parser{
 		expect(Tok!")");
 		return res=New!CObserveExp(var,val);
 	}
-	ForgetExp parseForget(){
+	static if(language==silq) ForgetExp parseForget(){
 		mixin(SetLoc!ForgetExp);
 		expect(Tok!"forget");
 		expect(Tok!"(");
@@ -1005,12 +1025,6 @@ string readCode(File f){
 }
 string readCode(string path){ return readCode(File(path)); }
 
-@property string preludePath(){
-	// TODO: use conditional compilation within prelude.slq instead
-	import options;
-	if(opt.noCheck) return "prelude-nocheck.slq";
-	return "prelude.slq";
-}
 int parseFile(string path,ErrorHandler err,ref Expression[] r,Location loc=Location.init){
 	string code;
 	try code=readCode(path);

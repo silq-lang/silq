@@ -5,14 +5,18 @@ import std.stdio, std.path, std.array, std.string, std.algorithm, std.conv;
 import file=std.file;
 import util;
 import ast.lexer, ast.parser, ast.expression, ast.declaration, ast.error, help;
+import astopt;
 import options, ast.scope_, ast.semantic_, ast.summarize;
 
-static this(){ opt.importPath ~= buildPath(dirName(file.thisExePath),"library"); }
+static this(){
+	opt.importPath ~= buildPath(dirName(file.thisExePath),"library");
+	static if(language==psi) opt.importPath ~= buildPath(dirName(file.thisExePath),"..","..","..","..","ras","psi","library"); // TODO: remove
+}
 
 int run(string path){
 	path = getActualPath(path);
 	auto ext = path.extension;
-	if(ext !=".slq"){
+	if(ext != (language==astopt.silq?".slq":".psi")){ // TODO: support only language==silq
 		stderr.writeln(path~": unrecognized extension: "~ext);
 		return 1;
 	}

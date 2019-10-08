@@ -1,6 +1,7 @@
 // Written in the D programming language
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
 module ast.reverse;
+import astopt;
 
 import std.stdio,std.conv,std.format,std.algorithm,std.range,std.exception;
 import ast.lexer,ast.scope_,ast.expression,ast.type,ast.declaration,ast.semantic_,ast.error,util;
@@ -12,7 +13,6 @@ bool isReverse(Expression e){
 	return id.meaning&&isReverse(id.meaning);
 }
 bool isReverse(Declaration decl){
-	import ast.parser: preludePath;
 	if(preludePath() !in modules) return false;
 	auto exprssc=modules[preludePath()];
 	auto sc=exprssc[1];
@@ -33,7 +33,6 @@ Expression constantExp(size_t l){
 }
 
 Identifier getPreludeSymbol(string name,Location loc,Scope isc){
-	import ast.parser: preludePath;
 	import ast.semantic_: modules;
 	if(preludePath() !in modules) return null;
 	auto exprssc=modules[preludePath()];
@@ -327,7 +326,7 @@ Expression lowerDefine(bool analyzed)(Expression olhs,Expression orhs,Location l
 				if(auto id=cast(Identifier)unwrap(ce2.e)){
 					if(isBuiltIn(id)){
 						switch(id.name){
-							case "quantumPrimitive":
+							static if(language==silq) case "quantumPrimitive":{
 								auto op=getQuantumOp(ce2.arg);
 								switch(op){
 									case "H","X","Y","Z": reversed=ce.e; break;
@@ -357,6 +356,7 @@ Expression lowerDefine(bool analyzed)(Expression olhs,Expression orhs,Location l
 										return error();
 								}
 								break;
+							}
 							default: break;
 						}
 					}
@@ -364,7 +364,7 @@ Expression lowerDefine(bool analyzed)(Expression olhs,Expression orhs,Location l
 						if(auto id3=cast(Identifier)unwrap(ce3.e)){
 							if(isBuiltIn(id3)){
 								switch(id3.name){
-									case "quantumPrimitive":
+									static if(language==silq) case "quantumPrimitive":{
 										auto op=getQuantumOp(ce3.arg);
 										switch(op){
 											case "dup":
@@ -377,6 +377,7 @@ Expression lowerDefine(bool analyzed)(Expression olhs,Expression orhs,Location l
 												return error();
 										}
 										break;
+									}
 									default: break;
 								}
 							}

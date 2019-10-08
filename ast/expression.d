@@ -5,6 +5,7 @@ module ast.expression;
 import std.array, std.algorithm, std.range, std.conv, std.string, std.exception;
 
 import ast.lexer, ast.parser, ast.scope_, ast.type, ast.declaration, util;
+import astopt;
 
 enum SemState{
 	initial,
@@ -324,7 +325,10 @@ class Identifier: Expression{
 		if(meaning&&meaning.name&&meaning.name.name.length) return new Identifier(meaning.name.name); // TODO: this is a hack
 		return new Identifier(name);
 	}
-	override string toString(){return _brk((classical?"!":"")~name);}
+	override string toString(){
+		static if(language==silq) return _brk((classical?"!":"")~name);
+		else return _brk(name);
+	}
 	override @property string kind(){return "identifier";}
 
 	override int freeVarsImpl(scope int delegate(string) dg){
@@ -333,9 +337,11 @@ class Identifier: Expression{
 	override int componentsImpl(scope int delegate(Expression) dg){ return 0; }
 	override Expression substituteImpl(Expression[string] subst){
 		if(name in subst){
-			if(classical)
-				if(auto r=subst[name].getClassical())
-					return r;
+			static if(language==silq){
+				if(classical)
+					if(auto r=subst[name].getClassical())
+						return r;
+			}
 			return subst[name];
 		}
 		return this;
@@ -349,8 +355,10 @@ class Identifier: Expression{
 		}
 		if(name !in subst) return false;
 		if(subst[name]==this) return false;
-		if(type==typeTy&&rhs.type==typeTy)
-			if(rhs.isClassical()<classical) return false;
+		static if(language==silq){
+			if(type==typeTy&&rhs.type==typeTy)
+				if(rhs.isClassical()<classical) return false;
+		}
 		if(subst[name]){
 			if(!subst[name].unify(rhs,subst,meet))
 				return false;
@@ -379,16 +387,17 @@ class Identifier: Expression{
 		return classical;
 	}
 	override Expression getClassical(){
-		assert(type==typeTy);
-		if(classical) return this;
-		if(!meaning) return varTy(name,typeTy,true);
-		auto r=new Identifier(name);
-		r.classical=true;
-		r.type=type;
-		r.meaning=meaning;
-		r.sstate=SemState.completed;
-		return r;
-
+		static if(language==silq){
+			assert(type==typeTy);
+			if(classical) return this;
+			if(!meaning) return varTy(name,typeTy,true);
+			auto r=new Identifier(name);
+			r.classical=true;
+			r.type=type;
+			r.meaning=meaning;
+			r.sstate=SemState.completed;
+			return r;
+		}else return this;
 	}
 
 	override Annotation getAnnotation(){ return Annotation.qfree; }
@@ -401,7 +410,8 @@ class Identifier: Expression{
 	bool substitute=false;
 	Scope scope_;
 	bool calledDirectly=false;
-	bool classical=false;
+	static if(language==silq) bool classical=false;
+	else enum classical=true;
 }
 
 class PlaceholderExp: Expression{
@@ -650,16 +660,18 @@ class CallExp: Expression{
 	Expression e;
 	Expression arg;
 	bool isSquare;
-	bool isClassical_;
+	static if(language==silq) bool isClassical_;
+	else enum isClassical_=true;
 	this(Expression exp, Expression arg, bool isSquare, bool isClassical_){
 		e=exp; this.arg=arg; this.isSquare=isSquare;
-		this.isClassical_=isClassical_;
+		static if(language==silq) this.isClassical_=isClassical_;
 	}
 	override CallExp copyImpl(CopyArgs args){
 		return new CallExp(e.copy(args),arg.copy(args),isSquare,isClassical);
 	}
 	override string toString(){
-		return _brk((isClassical_?"!":"")~e.toString()~arg.tupleToString(isSquare));
+		static if(language==silq) return _brk((isClassical_?"!":"")~e.toString()~arg.tupleToString(isSquare));
+		else return _brk(e.toString()~arg.tupleToString(isSquare));
 	}
 	override int freeVarsImpl(scope int delegate(string) dg){
 		if(auto r=e.freeVarsImpl(dg)) return r;
@@ -776,12 +788,14 @@ class CallExp: Expression{
 		return isClassical_;
 	}
 	override Expression getClassical(){
-		assert(type==typeTy);
-		if(auto r=super.getClassical()) return r;
-		auto r=new CallExp(e,arg,isSquare,true);
-		r.type=typeTy;
-		r.sstate=sstate;
-		return r;
+		static if(language==silq){
+			assert(type==typeTy);
+			if(auto r=super.getClassical()) return r;
+			auto r=new CallExp(e,arg,isSquare,true);
+			r.type=typeTy;
+			r.sstate=sstate;
+			return r;
+		}else return this;
 	}
 
 	override Annotation getAnnotation(){

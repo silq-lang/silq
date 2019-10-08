@@ -1,6 +1,7 @@
 // Written in the D programming language
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
 module ast.semantic_;
+import astopt;
 
 import std.array,std.algorithm,std.range,std.exception;
 import std.format, std.conv, std.typecons:Q=Tuple,q=tuple;
@@ -79,8 +80,10 @@ void declareParameters(P)(Expression parent,bool isSquare,P[] params,Scope sc)if
 			}else{
 				auto id=New!Identifier(isSquare?"*":"ℝ");
 				id.loc=p.loc;
-				p.dtype=New!(UnaryExp!(Tok!"!"))(id);
-				p.dtype.loc=p.loc;
+				static if(language==silq){
+					p.dtype=New!(UnaryExp!(Tok!"!"))(id);
+					p.dtype.loc=p.loc;
+				}else p.dtype=id;
 			}
 		}
 		p=cast(P)varDeclSemantic(p,sc);
@@ -255,7 +258,6 @@ int importModule(string path,ErrorHandler err,out Expression[] exprs,out TopScop
 }
 
 bool isInPrelude(Declaration decl){
-	import ast.parser: preludePath;
 	auto ppath=preludePath();
 	if(ppath !in modules) return false;
 	auto psc=modules[ppath];
@@ -405,9 +407,14 @@ bool isBuiltIn(Identifier id){
 	switch(id.name){
 	case "π","pi":
 	case "readCSV":
-	case /+"Marginal","sampleFrom",+/"quantumPrimitive","__show","__query":
-	/+case "Expectation":
-		return true;+/
+	static if(language==silq){
+		case "quantumPrimitive","__show","__query":
+			return true;
+	}else static if(language==psi){
+		case "Marginal","sampleFrom":
+		case "Expectation":
+			return true;
+	}else static assert(0);
 	case "*","𝟙","𝟚","B","𝔹","N","ℕ","Z","ℤ","Q","ℚ","R","ℝ","C","ℂ":
 		return true;
 	default: return false;
@@ -1530,22 +1537,25 @@ Expression callSemantic(CallExp ce,Scope sc,ConstResult constResult){
 	}else if(isBuiltIn(cast(Identifier)ce.e)){
 		auto id=cast(Identifier)ce.e;
 		switch(id.name){
-			/+case "Marginal":
-				ce.type=distributionTy(ce.arg.type,sc);
-				break;
-			case "sampleFrom":
-				return handleSampleFrom(ce,sc);+/
-			case "quantumPrimitive":
-				return handleQuantumPrimitive(ce,sc);
-			case "__show":
-				ce.arg=expressionSemantic(ce.arg,sc,ConstResult.yes);
-				auto lit=cast(LiteralExp)ce.arg;
-				if(lit&&lit.lit.type==Tok!"``") writeln(lit.lit.str);
-				else writeln(ce.arg);
-				ce.type=unit;
-				break;
-			case "__query":
-				return handleQuery(ce,sc);
+			static if(language==silq){
+				case "quantumPrimitive":
+					return handleQuantumPrimitive(ce,sc);
+				case "__show":
+					ce.arg=expressionSemantic(ce.arg,sc,ConstResult.yes);
+					auto lit=cast(LiteralExp)ce.arg;
+					if(lit&&lit.lit.type==Tok!"``") writeln(lit.lit.str);
+					else writeln(ce.arg);
+					ce.type=unit;
+					break;
+				case "__query":
+					return handleQuery(ce,sc);
+			}else static if(language==psi){
+				case "Marginal":
+					ce.type=distributionTy(ce.arg.type,sc);
+					break;
+				case "sampleFrom":
+					return handleSampleFrom(ce,sc);
+			}
 			default: assert(0,text("TODO: ",id.name));
 		}
 	}else{
@@ -1663,20 +1673,27 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 	Scope.ConstBlockContext constSave;
 	if(!constResult) constSave=sc.saveConst();
 	scope(success){
-		if(!constResult) sc.resetConst(constSave);
-		expr.constLookup=constResult;
-		if(expr&&expr.sstate!=SemState.error){
-			if(constResult&&!expr.isLifted(sc)&&!expr.type.isClassical()){
-				sc.error("non-'lifted' quantum expression must be consumed", expr.loc);
+		static if(language==silq){
+			if(!constResult) sc.resetConst(constSave);
+			expr.constLookup=constResult;
+			if(expr&&expr.sstate!=SemState.error){
+				if(constResult&&!expr.isLifted(sc)&&!expr.type.isClassical()){
+					sc.error("non-'lifted' quantum expression must be consumed", expr.loc);
+					expr.sstate=SemState.error;
+				}else{
+					assert(!!expr.type);
+					expr.sstate=SemState.completed;
+				}
+			}
+			if(expr.type==ℕt(false)||expr.type==ℤt(false)||expr.type==ℚt(false)||expr.type==ℝ(false)||expr.type==ℂ(false)){
+				sc.error(format("instances of type '%s' not realizable",expr.type),expr.loc);
 				expr.sstate=SemState.error;
-			}else{
+			}
+		}else{
+			if(expr&&expr.sstate!=SemState.error){
 				assert(!!expr.type);
 				expr.sstate=SemState.completed;
 			}
-		}
-		if(expr.type==ℕt(false)||expr.type==ℤt(false)||expr.type==ℚt(false)||expr.type==ℝ(false)||expr.type==ℂ(false)){
-			sc.error(format("instances of type '%s' not realizable",expr.type),expr.loc);
-			expr.sstate=SemState.error;
 		}
 	}
 	if(auto cd=cast(CompoundDecl)expr)
@@ -2255,7 +2272,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 	if(auto ae=cast(UMinusExp)expr) return expr=handleUnary!minusBitNotType("minus",ae,ae.e);
 	if(auto ae=cast(UNotExp)expr){
 		ae.e=expressionSemantic(ae.e,sc,ConstResult.yes);
-		if(ae.e.type==typeTy){
+		static if(language==silq) if(ae.e.type==typeTy){
 			if(auto ty=typeSemantic(ae.e,sc)){
 				if(ty.sstate==SemState.completed){
 					if(auto r=ty.getClassical()){
@@ -2272,7 +2289,7 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 		return expr=handleUnary!notType("not",ae,ae.e);
 	}
 	if(auto ae=cast(UBitNotExp)expr) return expr=handleUnary!minusBitNotType("bitwise not",ae,ae.e);
-	if(auto ae=cast(UnaryExp!(Tok!"const"))expr){
+	static if(language==silq) if(auto ae=cast(UnaryExp!(Tok!"const"))expr){
 		sc.error("invalid 'const' annotation", ae.loc);
 		ae.sstate=SemState.error;
 		return ae;
@@ -2357,9 +2374,10 @@ Expression expressionSemantic(Expression expr,Scope sc,ConstResult constResult){
 				if(merge1) return q(t1[0]~t2[0],cast(Expression)tupleTy(chain(iota(l.length).map!(i=>l[i]),only(t2[1])).array));
 				if(merge2) return q(t1[0]~t2[0],cast(Expression)tupleTy(chain(only(t1[1]),iota(r.length).map!(i=>r[i])).array));
 				return q(t1[0]~t2[0],cast(Expression)tupleTy([t1[1],t2[1]]));
-			}else if(auto ce=cast(UnaryExp!(Tok!"const"))e){
+			}else static if(language==silq) if(auto ce=cast(UnaryExp!(Tok!"const"))e){
 				return q([true],typeSemantic(ce.e,sc));
-			}else return base(e);
+			}
+			return base(e);
 		}
 		auto t1=getConstAndType(ex.e1);
 		auto t2=typeSemantic(ex.e2,sc);
@@ -2764,7 +2782,7 @@ bool definitelyReturns(Expression e){
 	return false;
 }
 
-/+
+static if(language==psi){
 import dexpr;
 struct VarMapping{
 	DNVar orig;
@@ -2794,7 +2812,7 @@ SampleFromInfo analyzeSampleFrom(CallExp ce,ErrorHandler err,Distribution dist=n
 	VarMapping[] retVars;
 	DNVar[] paramVars;
 	DExpr newDist;
-	import hashtable;
+	import util.hashtable;
 	HSet!(string,(a,b)=>a==b,a=>typeid(string).getHash(&a)) names;
 	try{
 		import dparse;
@@ -2857,7 +2875,7 @@ Expression handleSampleFrom(CallExp ce,Scope sc){
 	}
 	return ce;
 }
-+/
+}else static if(language==silq){
 
 string getQuantumOp(Expression qpArg){
 	auto opExp=qpArg;
@@ -2964,4 +2982,6 @@ Expression handleQuery(CallExp ce,Scope sc){
 			break;
 	}
 	return ce;
+}
+
 }

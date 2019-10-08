@@ -8,6 +8,7 @@ import std.typecons: q=tuple,Q=Tuple;
 import std.exception: enforce;
 
 import options;
+import astopt;
 import util.hashtable,util;
 import ast.expression,ast.declaration,ast.type;
 import ast.lexer,ast.semantic_,ast.reverse,ast.scope_,ast.error;
@@ -1896,11 +1897,13 @@ struct Interpreter(QState){
 				if(id){
 					if(!fe && isBuiltIn(id)){
 						switch(id.name){
-							case "quantumPrimitive":
-								enforce(0,"quantum primitive cannot be used as first-class value");
-								assert(0);
-							case "__show","__query":
-								return qstate.makeTuple(ast.type.unit,[]);
+							static if(language==silq){
+								case "quantumPrimitive":
+									enforce(0,"quantum primitive cannot be used as first-class value");
+									assert(0);
+								case "__show","__query":
+									return qstate.makeTuple(ast.type.unit,[]);
+							}
 							default:
 								enforce(0,text("TODO: ",id.name));
 								assert(0);
@@ -1910,7 +1913,7 @@ struct Interpreter(QState){
 					if(auto id2=cast(Identifier)unwrap(ce2.e)){
 						if(isBuiltIn(id2)){
 							switch(id2.name){
-								case "quantumPrimitive":
+								static if(language==silq) case "quantumPrimitive":
 									switch(getQuantumOp(ce2.arg)){
 										case "dup": enforce(0,"quantumPrimitive(\"dup\")[τ] cannot be used as first-class value"); assert(0);
 										case "array": enforce(0,"quantumPrimitive(\"array\")[τ] cannot be used as first-class value"); assert(0);
@@ -1936,7 +1939,7 @@ struct Interpreter(QState){
 						if(auto id3=cast(Identifier)unwrap(ce3.e)){
 							if(isBuiltIn(id3)){
 								switch(id3.name){
-									case "quantumPrimitive":
+									static if(language==silq) case "quantumPrimitive":
 										switch(getQuantumOp(ce3.arg)){
 											case "dup": return doIt(ce.arg).dup(qstate);
 											case "array": return qstate.array_(ce.type,doIt(ce.arg));
