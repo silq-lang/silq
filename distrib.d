@@ -3,7 +3,7 @@
 
 import std.algorithm, std.range, std.array, std.conv;
 
-import options, dexpr, expression, util;
+import options, dexpr, ast.expression, util;
 
 struct Cond{
 	DExpr cond;
@@ -222,7 +222,7 @@ Cond[] categoricalCond(DExpr p){
 }
 
 DExpr diracPDF(DVar var,DExpr e){
-	import type;
+	import ast.type;
 	return dDelta(e,var,varTy("a",typeTy));
 }
 Cond[] diracCond(DExpr e){

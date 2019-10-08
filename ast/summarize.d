@@ -1,5 +1,9 @@
+// Written in the D programming language
+// License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
+module ast.summarize;
+
 import std.algorithm, std.array, std.conv;
-import declaration, type, error;
+import ast.declaration, ast.type, ast.error;
 
 string[] getSummary(FunctionDef fd,string[] entries){
 	return entries.map!(e=>getValue(fd,e)).array;

@@ -4,7 +4,7 @@
 // TODO: the caches should use weak references
 
 import std.conv;
-import options, hashtable, util;
+import options, util.hashtable, util;
 
 alias Q=TupleX, q=tuplex;
 static import std.typecons;
@@ -247,8 +247,8 @@ enum forEachSubExprImpl(string code)=mixin(X!q{
 		}else static if(is(typeof(se)==DExpr[string])){
 			foreach(k,x;values) @(code)
 		}else{
-			import type: Type;
-			import declaration: FunctionDef;
+			import ast.type: Type;
+			import ast.declaration: FunctionDef;
 			static assert(is(typeof(se)==string)||is(typeof(se)==int)||is(typeof(se)==DIvr.Type)||is(typeof(se)==Type)||is(typeof(se)==FunctionDef)||is(typeof(se)==Dist), "foreachSubExprImpl is not exhaustive.");
 		}
 	}
@@ -331,8 +331,8 @@ mixin template Visitors(){
 				}else static if(is(typeof(sub)==DExpr[string])){
 					foreach(k,v;sub) nsubs[i][k]=v.substitute(cvar,ce);
 				}else{
-					import type: Type;
-					import declaration: FunctionDef;
+					import ast.type: Type;
+					import ast.declaration: FunctionDef;
 					static assert(is(typeof(sub)==string)||is(typeof(sub)==int)||is(typeof(sub)==DIvr.Type)||is(typeof(sub)==Type)||is(typeof(sub)==FunctionDef));
 					nsubs[i]=sub;
 				}
@@ -396,9 +396,9 @@ mixin template FactoryFunction(T){
 	}else:
 
 	static if(is(T==DDelta)){
-		import expression; // TODO: remove this import
+		import ast.expression; // TODO: remove this import
 		DExpr dDelta(DExpr e,DExpr var,Expression ty){ // TODO: dexpr shouldn't know about expression/type, but this is most convenient for overloading
-			import type;
+			import ast.type;
 			if(isSubtype(ty,ℝ(true))) return dDelta(e-var);
 			assert(cast(TupleTy)ty||cast(ArrayTy)ty||cast(AggregateTy)ty||cast(ContextTy)ty||cast(FunTy)ty||cast(TypeTy)ty||cast(Identifier)ty||cast(CallExp)ty,text(ty)); // TODO: add more supported types
 			return dDiscDelta(e,var);

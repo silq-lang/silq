@@ -4,8 +4,8 @@
 import std.stdio, std.path, std.array, std.string, std.algorithm, std.conv;
 import file=std.file;
 import util;
-import lexer, parser, expression, declaration, error, help;
-import options, scope_, semantic_, summarize;
+import ast.lexer, ast.parser, ast.expression, ast.declaration, ast.error, help;
+import options, ast.scope_, ast.semantic_, ast.summarize;
 
 static this(){ opt.importPath ~= buildPath(dirName(file.thisExePath),"library"); }
 

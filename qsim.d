@@ -8,10 +8,9 @@ import std.typecons: q=tuple,Q=Tuple;
 import std.exception: enforce;
 
 import options;
-import distrib,error;
-import hashtable,util;
-import expression,declaration,type;
-import lexer,semantic_,scope_;
+import util.hashtable,util;
+import ast.expression,ast.declaration,ast.type;
+import ast.lexer,ast.semantic_,ast.reverse,ast.scope_,ast.error;
 import util;
 
 import std.random, sample;
@@ -1634,7 +1633,7 @@ struct QState{
 			new_[k]=cast(C)std.complex.expi(φ.fval)*v;
 		}
 		state=new_;
-		return makeTuple(type.unit,[]);
+		return makeTuple(ast.type.unit,[]);
 	}
 	private Value rot(alias unitary)(Value args){
 		enforce(args.tag==Value.Tag.array_);
@@ -1660,7 +1659,7 @@ struct QState{
 	}
 	alias vector=array_;
 	Value reverse(Expression type,Value arg){
-		import reverse;
+		import ast.reverse;
 		enforce(arg.tag==Value.Tag.closure);
 		return makeClosure(type,Closure(reverseFunction(arg.closure.fun),arg.closure.context));
 	}
@@ -1739,7 +1738,6 @@ QState.Value lookupMeaning(QState)(ref QState qstate,Identifier id,Scope sc=null
 	return qstate.readLocal(id.name,id.constLookup);
 }
 
-import lexer: Tok;
 struct Interpreter(QState){
 	FunctionDef functionDef;
 	CompoundExp statements;
@@ -1902,7 +1900,7 @@ struct Interpreter(QState){
 								enforce(0,"quantum primitive cannot be used as first-class value");
 								assert(0);
 							case "__show","__query":
-								return qstate.makeTuple(type.unit,[]);
+								return qstate.makeTuple(ast.type.unit,[]);
 							default:
 								enforce(0,text("TODO: ",id.name));
 								assert(0);

@@ -1,9 +1,10 @@
 // Written in the D programming language
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
+module ast.expression;
 
 import std.array, std.algorithm, std.range, std.conv, std.string, std.exception;
 
-import lexer, parser, scope_, type, declaration, util;
+import ast.lexer, ast.parser, ast.scope_, ast.type, ast.declaration, util;
 
 enum SemState{
 	initial,
@@ -746,7 +747,7 @@ class CallExp: Expression{
 								case Variance.contravariant: return combineTypes(t1,t2,!meet);
 							}
 						}
-						import semantic_: ConstResult, callSemantic; // TODO: get rid of this?
+						import ast.semantic_: ConstResult, callSemantic; // TODO: get rid of this?
 						if(!dat.isTuple){
 							assert(dat.params.length==1);
 							assert(arg != rcall.arg); // (checked at start of function)

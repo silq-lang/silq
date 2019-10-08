@@ -1,9 +1,10 @@
 // Written in the D programming language
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
+module ast.type;
 
 import std.array, std.algorithm, std.conv;
 import std.functional, std.range;
-import expression, declaration, util;
+import ast.expression, ast.declaration, util;
 
 bool isSameType(Expression lhs,Expression rhs){
 	return lhs.eval() == rhs.eval(); // TODO: evaluation context?
@@ -40,8 +41,8 @@ Expression getNumeric(int which,bool classical){
 }
 
 string preludeNumericTypeName(Expression e){
-	import parser: preludePath;
-	import semantic_: modules;
+	import ast.parser: preludePath;
+	import ast.semantic_: modules;
 	if(preludePath() !in modules) return null;
 	auto exprssc=modules[preludePath()];
 	auto sc=exprssc[1];
@@ -472,7 +473,7 @@ Type unit(){ return tupleTy([]); }
 Type tupleTy(Expression[] types)in{
 	assert(types.all!(x=>x.type==typeTy));
 }body{
-	import lexer: Token,Tok;
+	import ast.lexer: Token,Tok;
 	if(types.length&&types.all!(x=>x==types[0])){
 		auto len=LiteralExp.makeInteger(types.length);
 		return vectorTy(types[0],len);
@@ -966,7 +967,7 @@ class ProductTy: Type{
 			auto tdom=dom.isTupleTy();
 			assert(!!tdom);
 			foreach(i,n;names){
-				import lexer;
+				import ast.lexer;
 				auto exp=new IndexExp(arg,[LiteralExp.makeInteger(i)],false);
 				exp.type=tdom[i];
 				exp.sstate=SemState.completed;

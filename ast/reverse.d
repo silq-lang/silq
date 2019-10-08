@@ -1,6 +1,25 @@
-import std.stdio,std.conv,std.format,std.algorithm,std.range,std.exception;
-import lexer,scope_,expression,type,declaration,semantic_,error,util;
+// Written in the D programming language
+// License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
+module ast.reverse;
 
+import std.stdio,std.conv,std.format,std.algorithm,std.range,std.exception;
+import ast.lexer,ast.scope_,ast.expression,ast.type,ast.declaration,ast.semantic_,ast.error,util;
+
+bool isReverse(Expression e){
+	auto id=cast(Identifier)e;
+	if(!id) return false;
+	if(id.name!="reverse") return false;
+	return id.meaning&&isReverse(id.meaning);
+}
+bool isReverse(Declaration decl){
+	import ast.parser: preludePath;
+	if(preludePath() !in modules) return false;
+	auto exprssc=modules[preludePath()];
+	auto sc=exprssc[1];
+	if(!decl||decl.scope_ !is sc) return false;
+	if(!decl.name) return false;
+	return decl.getName=="reverse";
+}
 string freshName(){
 	static int counter=0;
 	return text("__tmp",counter++);
@@ -14,8 +33,8 @@ Expression constantExp(size_t l){
 }
 
 Identifier getPreludeSymbol(string name,Location loc,Scope isc){
-	import parser: preludePath;
-	import semantic_: modules;
+	import ast.parser: preludePath;
+	import ast.semantic_: modules;
 	if(preludePath() !in modules) return null;
 	auto exprssc=modules[preludePath()];
 	auto sc=exprssc[1];

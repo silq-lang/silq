@@ -1,10 +1,11 @@
 // Written in the D programming language
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
+module ast.error;
 
 import std.stdio;
 import std.string, std.range, std.array, std.uni;
 
-import lexer, util, options;
+import ast.lexer, util, options;
 
 
 abstract class ErrorHandler{
@@ -124,7 +125,7 @@ protected:
 	}
 }
 
-import terminal;
+import util.terminal;
 class FormattingErrorHandler: VerboseErrorHandler{
 protected:
 	override void write(string source, int line, int column, string error, bool isNote = false){

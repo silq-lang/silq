@@ -12,4 +12,4 @@ else
 fi
 
 # debug build
-$DMD -g -debug -J. -Jlibrary *.d -ofsilq
+$DMD -g -debug -J. -Jlibrary *.d ast/*.d util/*.d -ofsilq

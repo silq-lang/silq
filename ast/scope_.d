@@ -1,9 +1,10 @@
 // Written in the D programming language
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
+module ast.scope_;
 
 import std.format, std.conv, std.algorithm, std.stdio;
 import std.typecons:Q=Tuple,q=tuple;
-import lexer, expression, declaration, type, error;
+import ast.lexer, ast.expression, ast.declaration, ast.type, ast.error;
 import util;
 
 struct Dependency{
@@ -170,7 +171,7 @@ abstract class Scope{
 		for(;;){ // TODO: quite hacky
 			auto cname=decl.rename?decl.rename:decl.name;
 			auto d=lookup(cname,true,true,Lookup.probing);
-			import semantic_: isBuiltIn;
+			import ast.semantic_: isBuiltIn;
 			if(!d&&!isBuiltIn(cname)) break;
 			decl.rename=new Identifier(decl.getName~"'");
 			decl.rename.loc=decl.name.loc;
@@ -291,7 +292,7 @@ abstract class Scope{
 				}else{
 					auto osym=sc.symtab[sym.name.ptr];
 					if((sym.scope_ is scopes[0]||osym.scope_ is sc)){
-						import semantic_: typeForDecl;
+						import ast.semantic_: typeForDecl;
 						auto ot=typeForDecl(osym),st=typeForDecl(sym);
 						if(!ot) ot=st;
 						if(!st) st=ot;
@@ -364,7 +365,7 @@ abstract class Scope{
 		if(var.getName !in dependencies.dependencies)
 			dependencies.add(var.getName);
 		var.scope_=this;
-		import semantic_:varDeclSemantic;
+		import ast.semantic_:varDeclSemantic;
 		varDeclSemantic(var,this);
 		return var.sstate==SemState.completed;
 	}
@@ -448,7 +449,7 @@ class NestedScope: Scope{
 	private bool insertCapture(Identifier id,Scope ignore){
 		if(this is ignore) return true;
 		if(!id.meaning) return false;
-		import semantic_: typeForDecl;
+		import ast.semantic_: typeForDecl;
 		if(!id.meaning.isLinear()) return true;
 		auto type=typeForDecl(id.meaning);
 		if(!type) return false;

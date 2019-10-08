@@ -1,5 +1,6 @@
 // Written in the D programming language
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
+module util;
 
 // FOR DEBUGGING ONLY
 public import std.stdio;
@@ -451,7 +452,7 @@ string underline(string s){
 	foreach(dchar d;s){ if(!combiningClass(d)) r~="\u0332"; r~=d; }
 	return r;
 }
-import hashtable;
+import util.hashtable;
 //alias setxEq=ID!((a,b)=>a==b);
 //alias setxToHash=ID!(a=>a.toHash());
 //alias SetX(T)=HSet!(T,setxEq,setxToHash);

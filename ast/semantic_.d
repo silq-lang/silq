@@ -1,9 +1,10 @@
 // Written in the D programming language
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
+module ast.semantic_;
 
 import std.array,std.algorithm,std.range,std.exception;
 import std.format, std.conv, std.typecons:Q=Tuple,q=tuple;
-import lexer,scope_,expression,type,declaration,error,util;
+import ast.lexer,ast.scope_,ast.expression,ast.type,ast.declaration,ast.error,ast.reverse,util;
 
 alias CommaExp=BinaryExp!(Tok!",");
 alias AssignExp=BinaryExp!(Tok!"←");
@@ -236,7 +237,7 @@ int importModule(string path,ErrorHandler err,out Expression[] exprs,out TopScop
 	modules[path]=tuple(Expression[].init,TopScope.init);
 	scope(success) modules[path]=tuple(exprs,sc);
 	Expression[] prelude;
-	import parser;
+	import ast.parser;
 	if(!prsc && path != preludePath())
 		if(auto r=importModule(preludePath,err,prelude,prsc))
 			return r;
@@ -254,7 +255,7 @@ int importModule(string path,ErrorHandler err,out Expression[] exprs,out TopScop
 }
 
 bool isInPrelude(Declaration decl){
-	import parser: preludePath;
+	import ast.parser: preludePath;
 	auto ppath=preludePath();
 	if(ppath !in modules) return false;
 	auto psc=modules[ppath];
@@ -651,7 +652,7 @@ Expression statementSemantic(Expression e,Scope sc)in{
 		propErr(we.cond,we);
 		propErr(we.bdy,we);
 		if(we.cond.sstate==SemState.completed){
-			import parser: parseExpression;
+			import ast.parser: parseExpression;
 			auto ncode='\n'.repeat(we.cond.loc.line?we.cond.loc.line-1:0).to!string~we.cond.loc.rep~"\0\0\0\0";
 			auto nsource=new Source(we.cond.loc.source.name,ncode);
 			auto condDup=parseExpression(nsource,sc.handler); // TODO: this is an ugly hack, implement dup
@@ -816,7 +817,6 @@ bool isLifted(Expression e,Scope sc){
 
 Expression defineSemantic(DefineExp be,Scope sc){
 	if(auto tpl=cast(TupleExp)be.e1) if(tpl.e.count!(x=>!!cast(IndexExp)x)>1) return permuteSemantic(be,sc);
-	import reverse;
 	if(sc.allowsLinear){
 		if(auto e=lowerDefine!false(be,sc)){
 			if(e.sstate!=SemState.error)
@@ -1243,7 +1243,7 @@ ABinaryExp opAssignExpSemantic(ABinaryExp be,Scope sc)in{
 		}
 	}
 	Expression ce=null;
-	import parser;
+	import ast.parser;
 	static foreach(op;binaryOps){
 		static if(op.endsWith("←")){
 			if(auto ae=cast(BinaryExp!(Tok!op))be){
@@ -1330,23 +1330,6 @@ Expression expectDefineOrAssignSemantic(Expression e,Scope sc){
 	sc.error("expected assignment or variable declaration",e.loc);
 	e.sstate=SemState.error;
 	return e;
-}
-
-bool isReverse(Expression e){
-	auto id=cast(Identifier)e;
-	if(!id) return false;
-	if(id.name!="reverse") return false;
-	return id.meaning&&isReverse(id.meaning);
-}
-bool isReverse(Declaration decl){
-	import parser: preludePath;
-	import semantic_: modules;
-	if(preludePath() !in modules) return false;
-	auto exprssc=modules[preludePath()];
-	auto sc=exprssc[1];
-	if(!decl||decl.scope_ !is sc) return false;
-	if(!decl.name) return false;
-	return decl.getName=="reverse";
 }
 
 

@@ -1,8 +1,9 @@
 // Written in the D programming language
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
+module ast.declaration;
 
 import std.array, std.algorithm, std.conv, std.exception;
-import lexer, type, expression, scope_, util;
+import ast.lexer, ast.type, ast.expression, ast.scope_, util;
 
 abstract class Declaration: Expression{
 	Identifier name;

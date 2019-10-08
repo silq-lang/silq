@@ -15,5 +15,5 @@ else
 fi
 
 # release build
-$LDMD -O -inline -J. -Jlibrary *.d -ofsilq
+$LDMD -O -inline -J. -Jlibrary *.d ast/*.d util/*.d -ofsilq
 

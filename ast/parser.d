@@ -1,10 +1,11 @@
 // Written in the D programming language
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
+module ast.parser;
 
 import std.array, std.typetuple, std.algorithm, std.conv;
 import std.traits: EnumMembers;
 import std.typecons: Q=Tuple,q=tuple;
-import lexer, error, util, expression, type, declaration;
+import ast.lexer, ast.error, ast.expression, ast.type, ast.declaration, util;
 // (re-purposed D parser, a little bit messy for now.)
 
 
@@ -1030,6 +1031,6 @@ int parseFile(string path,ErrorHandler err,ref Expression[] r,Location loc=Locat
 		}
 	}
 	auto src=new Source(path, code);
-	r=parser.parseFile(src,err);
+	r=.parseFile(src,err);
 	return 0;
 }
