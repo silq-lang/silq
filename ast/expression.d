@@ -270,10 +270,10 @@ class LiteralExp: Expression{
 	this(Token lit){ // TODO: suitable contract
 		this.lit=lit;
 	}
-	static LiteralExp makeInteger(size_t i){
+	static LiteralExp makeInteger(T)(T i)if(text(T.init)=="0"){
 		Token tok;
 		tok.type=Tok!"0";
-		tok.str=to!string(i);
+		tok.str=text(i);
 		auto r=new LiteralExp(tok);
 		r.type=ℕt(true);
 		r.sstate=SemState.completed;
@@ -876,26 +876,19 @@ class BinaryExp(TokenType op): ABinaryExp{
 	override Expression evalImpl(Expression ntype){
 		static if(op!=Tok!"→"){
 			auto ne1=e1.eval(), ne2=e2.eval();
-			auto make(TokenType op)(BinaryExp!op exp){
+			auto make(Expression exp){
 				exp.type=ntype;
-				exp.loc=exp.e1.loc.to(exp.e2.loc);
+				exp.loc=ne1.loc.to(ne2.loc);
 				exp.sstate=SemState.completed;
-				return exp;
+				return exp.evalImpl(ntype);
 			}
 			static if(op==Tok!"+"){
 				{auto le1=cast(LiteralExp)ne1,le2=cast(LiteralExp)ne2;
-				if(le1&&le2&&le1.lit.type==Tok!"0"&&le2.lit.type==Tok!"0"){
-					Token tok;
-					tok.type=Tok!"0";
-					tok.str=text(ℤ(le1.lit.str)+ℤ(le2.lit.str)); // TODO: replace literal exp internal representation
-					auto r=new LiteralExp(tok);
-					r.type=ntype;
-					r.sstate=SemState.completed;
-					return r;
-				}
+				if(le1&&le2&&le1.lit.type==Tok!"0"&&le2.lit.type==Tok!"0")
+					return make(LiteralExp.makeInteger(ℤ(le1.lit.str)+ℤ(le2.lit.str))); // TODO: replace literal exp internal representation
 				if(le1&&le1.lit.type==Tok!"0"&&le1.lit.str=="0") return ne2.evalImpl(ntype);
 				if(le2&&le2.lit.type==Tok!"0"&&le2.lit.str=="0") return ne1.evalImpl(ntype);
-				if(le1&&!le2) return new BinaryExp!op(ne2,ne1).evalImpl(ntype);
+				if(le1&&!le2) return make(new BinaryExp!op(ne2,ne1));
 				}
 				static foreach(sub1;[Tok!"-",Tok!"sub"]){
 					if(auto se1=cast(BinaryExp!sub1)ne1){
@@ -909,14 +902,11 @@ class BinaryExp(TokenType op): ABinaryExp{
 						}
 						auto le1=cast(LiteralExp)se1.e2,le2=cast(LiteralExp)ne2;
 						if(le1&&le2&&le1.lit.type==Tok!"0"&&le2.lit.type==Tok!"0"){
-							Token tok;
-							tok.type=Tok!"0";
-							tok.str=text(ℤ(le1.lit.str)-ℤ(le2.lit.str)); // TODO: replace literal exp internal representation
-							auto nle=new LiteralExp(tok);
+							auto nle=LiteralExp.makeInteger(ℤ(le1.lit.str)-ℤ(le2.lit.str)); // TODO: replace literal exp internal representation
 							nle.loc=le1.loc.to(le2.loc);
 							nle.type=ntype;
 							nle.sstate=SemState.completed;
-							return make(new BinaryExp!sub1(se1.e1,nle)).evalImpl(ntype);
+							return make(new BinaryExp!sub1(se1.e1,nle));
 						}
 					}
 				}
@@ -930,6 +920,11 @@ class BinaryExp(TokenType op): ABinaryExp{
 					nb1.loc=nb1.e1.loc.to(nb1.e2.loc);
 					return nb1.evalImpl(ntype);
 				}
+				if(ne1==ne2){
+					auto two=LiteralExp.makeInteger(2);
+					two.loc=ne1.loc;
+					return make(new BinaryExp!(Tok!"·")(two,ne2));
+				}
 			}else static if(op==Tok!"-"||op==Tok!"sub"){
 				if(ne1==ne2){
 					Token tok;
@@ -938,12 +933,12 @@ class BinaryExp(TokenType op): ABinaryExp{
 					return new LiteralExp(tok);
 				}
 				{auto le1=cast(LiteralExp)ne1,le2=cast(LiteralExp)ne2;
-				if(le1&&le2){
-					if(le1.lit.type==Tok!"0"&&le2.lit.type==Tok!"0"){
-						Token tok;
-						tok.type=Tok!"0";
-						tok.str=text(ℤ(le1.lit.str)-ℤ(le2.lit.str)); // TODO: replace literal exp internal representation
-						return new LiteralExp(tok);
+				if(le1&&le2&&le1.lit.type==Tok!"0"&&le2.lit.type==Tok!"0"){
+					auto v=ℤ(le1.lit.str)-ℤ(le2.lit.str);
+					static if(op==Tok!"sub"){
+						if(v>=0) return make(LiteralExp.makeInteger(v)); // TODO: replace literal exp internal representation
+					}else{
+						return make(LiteralExp.makeInteger(v)); // TODO: replace literal exp internal representation
 					}
 				}
 				if(le2&&le2.lit.type==Tok!"0"&&le2.lit.str=="0") return ne1.evalImpl(ntype);
@@ -958,6 +953,56 @@ class BinaryExp(TokenType op): ABinaryExp{
 						nb1.type=ntype;
 						nb1.loc=nb1.e1.loc.to(nb1.e2.loc);
 						return nb1.evalImpl(ntype);
+					}
+				}
+			}else static if(op==Tok!"·"){
+				{auto le1=cast(LiteralExp)ne1,le2=cast(LiteralExp)ne2;
+				if(le1&&le2&&le1.lit.type==Tok!"0"&&le2.lit.type==Tok!"0")
+					return make(LiteralExp.makeInteger(ℤ(le1.lit.str)*ℤ(le2.lit.str))); // TODO: replace literal exp internal representation
+				if(le1&&le1.lit.type==Tok!"0"&&le1.lit.str=="0") return le1.evalImpl(ntype);
+				if(le2&&le2.lit.type==Tok!"0"&&le2.lit.str=="0") return le2.evalImpl(ntype);
+				if(le1&&le1.lit.type==Tok!"0"&&le1.lit.str=="1") return ne2.evalImpl(ntype);
+				if(le2&&le2.lit.type==Tok!"0"&&le2.lit.str=="1") return ne1.evalImpl(ntype);
+				if(le2&&!le1) return make(new BinaryExp!op(ne2,ne1));
+				}
+			}
+			static if(op==Tok!"+"||op==Tok!"-"||op==Tok!"sub"){
+				if(auto me1=cast(BinaryExp!(Tok!"·"))ne1){
+					if(auto le1=cast(LiteralExp)me1.e1){
+						if(me1.e2==ne2){
+							auto one=LiteralExp.makeInteger(1);
+							one.loc=le1.loc;
+							auto a=new BinaryExp!op(le1,one);
+							a.loc=le1.loc;
+							a.type=le1.type;
+							a.sstate=SemState.completed;
+							return make(new BinaryExp!(Tok!"·")(a,me1.e2));
+						}
+						if(auto me2=cast(BinaryExp!(Tok!"·"))ne2){
+							if(auto le2=cast(LiteralExp)me2.e1){
+								if(me1.e2==me2.e2){
+									auto a=new BinaryExp!op(le1,le2);
+									a.loc=ne1.loc.to(ne2.loc);
+									if(le1.type==le2.type) a.type=le1.type;
+									else a.type=ntype;
+									a.sstate=SemState.completed;
+									return make(new BinaryExp!(Tok!"·")(a,me1.e2));
+								}
+							}
+						}
+					}
+				}
+				if(auto me2=cast(BinaryExp!(Tok!"·"))ne2){
+					if(auto le2=cast(LiteralExp)me2.e1){
+						if(me2.e2==ne1){
+							auto one=LiteralExp.makeInteger(1);
+							one.loc=le2.loc;
+							auto a=new BinaryExp!op(one,le2);
+							a.loc=le2.loc;
+							a.type=le2.type;
+							a.sstate=SemState.completed;
+							return make(new BinaryExp!(Tok!"·")(a,ne1));
+						}
 					}
 				}
 			}
