@@ -644,7 +644,7 @@ struct Parser{
 							auto right=parseExpression(rbp!(Tok!"sub="),false);
 							return res=New!(BinaryExp!(Tok!"sub←"))(left,right);
 						}else{
-							auto right=parseExpression(rbp!(Tok!"div"),false);
+							auto right=parseExpression(rbp!(Tok!"sub"),false);
 							return res=New!(BinaryExp!(Tok!"sub"))(left,right);
 						}
 					case "xorb":
@@ -705,7 +705,7 @@ struct Parser{
 				if(tok.str=="div")
 					return arrLbp[util.among(peek().type,Tok!"←",Tok!"=")?Tok!"div←":Tok!"div"];
 				if(tok.str=="sub")
-					return arrLbp[util.among(peek().type,Tok!"←",Tok!"=")?Tok!"sub←":Tok!"div"];
+					return arrLbp[util.among(peek().type,Tok!"←",Tok!"=")?Tok!"sub←":Tok!"sub"];
 				if(tok.str=="xorb")
 					return arrLbp[util.among(peek().type,Tok!"←",Tok!"=")?Tok!"⊕←":Tok!"⊕"];
 				if(tok.str=="x")
