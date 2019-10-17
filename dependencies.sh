@@ -33,3 +33,6 @@ if [ ! -d dmd2 ]; then
         unzip $FILE
     fi
 fi
+
+git submodule init
+git submodule update

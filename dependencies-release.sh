@@ -34,3 +34,6 @@ if [ ! -d $NAME ]; then
         tar -xf $FILE
     fi
 fi
+
+git submodule init
+git submodule update
