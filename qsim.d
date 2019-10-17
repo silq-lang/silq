@@ -1592,11 +1592,13 @@ struct QState{
 		this=map!forgetImpl(var);
 	}
 	void forgetVars(Scope scope_){
-		if(!state.length) return;
-		foreach(var;scope_.forgottenVars){
-			auto name=var.getName;
-			vars[name].forget(this);
-			vars.remove(name);
+		static if(language==silq){
+			if(!state.length) return;
+			foreach(var;scope_.forgottenVars){
+				auto name=var.getName;
+				vars[name].forget(this);
+				vars.remove(name);
+			}
 		}
 	}
 	void assignTo(ref Value var,Value rhs){

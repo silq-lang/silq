@@ -60,7 +60,8 @@ Identifier getDup(Location loc,Scope isc){
 }
 
 bool isClassicalExp(Expression e){
-	return e.type&&e.subexpressions.all!(x=>!x.type||x.type.isClassical())&&e.isQfree()&&!e.consumes;
+	static if(language==silq) return e.type&&e.subexpressions.all!(x=>!x.type||x.type.isClassical())&&e.isQfree()&&!e.consumes;
+	else return true;
 }
 bool hasImplicitDup(Expression olhs,Scope sc){
 	if(olhs.byRef) return false;
@@ -580,7 +581,8 @@ ComputationClass classifyStatement(Expression e){
 			return mixed;
 		}
 		auto classifyBody(CompoundExp e){
-			if(e.blscope_&&e.blscope_.forgottenVars.length) return unsupported;
+			static if(language==silq)
+				if(e.blscope_&&e.blscope_.forgottenVars.length) return unsupported;
 			bool anyQuantum=false;
 			bool anyMixed=false;
 			bool anyUnsupported=false;
@@ -666,9 +668,11 @@ Expression reverseStatement(Expression e,Scope sc){
 	if(auto ce=cast(CompoundExp)e){
 		auto res=new CompoundExp(reverseStatements(ce.s,sc));
 		res.loc=ce.loc;
-		if(ce.blscope_&&ce.blscope_.forgottenVars.length){
-			sc.error("reversal of implicit forget not supported yet",ce.loc);
-			res.sstate=SemState.error;
+		static if(language==silq){
+			if(ce.blscope_&&ce.blscope_.forgottenVars.length){
+				sc.error("reversal of implicit forget not supported yet",ce.loc);
+				res.sstate=SemState.error;
+			}
 		}
 		return res;
 	}
