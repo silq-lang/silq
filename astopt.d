@@ -7,6 +7,8 @@ alias psi=Language.psi;
 alias silq=Language.silq;
 enum language=silq;
 
+enum defaultExtension="slq";
+
 @property string preludePath(){
 	// TODO: use conditional compilation within prelude.slq instead
 	import options;
