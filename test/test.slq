@@ -1,4 +1,82 @@
 /+
+def main(){
+	x:=H(0:𝔹);
+	assert(x); // error
+	return x;
+}
++/
+/+
+def foo(c:!𝔹)mfree{
+	x:=H(1:𝔹);
+	def bar()mfree⇒if c then (0,x) else (1,X(x));
+	return bar;
+}
+def main(){
+	c:=measure(H(0:𝔹));
+	x:=H(0:𝔹);
+	if x{
+		(a,H(b)):=foo(c)();
+	}else{
+		b:=1:𝔹;
+	}
+	measure(b);
+	(a,b):=(c,H(x));
+	assert(measure(a≠b));
+	return (a,b);
+}
++/
+/+
+def foo(){
+	x:=H(0:𝔹);
+	def bar(y:𝔹){
+		if y { x:=X(x); }else{ x:=x; }
+		return measure(x,H(y));
+	}
+	return bar;
+}
+def main(){
+	return foo();
+}
++/
+/+
+def foo[a](x:a){
+	def bar(y:a){
+		a:=measure(H(0:𝔹));
+		b:=measure(H(0:𝔹));
+		if a{
+			if b{
+				return (0,(x,y));
+			}else{
+				return (1,(y,x));
+			}
+		}else{
+			if b{
+				return (2,(y,x));
+			}else{
+				return (3,(x,y));
+			}
+		}
+	}
+	return bar;
+}
+def main(){
+	return foo(0:𝔹)(1:𝔹);
+}
++/
+/+
+def foo[a](x:a){
+    def bar[a](y:a)=>(x,y);
+    return bar([1]);
+}
+
+//def foo[a](x:a)(y:a)⇒()⇒(x,y);
+def main(){
+	x:=H(0:𝔹);
+    r:=foo(x);
+    return r;
+}
++/
+/+
 def main(f:𝔹!→𝔹,z:𝔹){
     y:=0:𝔹;
     if H(z){ // error
