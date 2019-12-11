@@ -1,0 +1,81 @@
+
+def task[state](
+	numbers: !ℝ[],
+	prepareState: !(Π(n:!ℕ). state^n),
+	first: state×!ℝ!→!𝔹^2,
+	intermediate: state×!𝔹^2×!ℝ!→!𝔹^2,
+	last: state×!𝔹^2×!ℝ!→!𝔹,
+){
+	n:=numbers.length;
+	φ:=prepareState(n):state[];
+	[head]~φ:=φ;
+	bits:=first(head,numbers[0]);
+	for i in [1..n-1){
+		[head]~φ:=φ;
+		bits=intermediate(head,bits,numbers[i]);
+	}
+	[head]~φ:=φ;
+	result:=last(head,bits,numbers[n-1]);
+	[]:=φ;
+	return result;
+}
+
+def cheat(numbers: !ℝ[]){
+	x:=0:!ℝ;
+	for i in [0..numbers.length){
+		x+=numbers[i];
+	}
+	return round(x)%2!=0;
+}
+def solve(numbers: !ℝ[])⇒task[𝔹^2](numbers,prepareState,first,intermediate,last);
+
+def prepareState(n:!ℕ){
+	φ:=[]:(𝔹^2)[];
+	last:=0:𝔹;
+	for i in [0..n){
+		bit:=H(0:𝔹);
+		next:=dup(bit);
+		φ~=[(last,bit)];
+		last:=next;
+	}
+	measure(last);
+	return φ coerce (𝔹^2)^n;
+}
+
+def send(shared:𝔹,message:𝔹){
+	if message { shared:=X(shared); }
+	message:=H(message);
+	return measure(shared,message);
+}
+def receive(shared:𝔹,bits:!𝔹^2){
+	if bits[0]{ shared:=X(shared); }
+	if bits[1]{ shared:=Z(shared); }
+	return shared;
+}
+
+def apply(number:!ℝ,const qbit:𝔹)mfree⇒if qbit then phase(π·number) else ();
+def first(qbits: 𝔹^2,number:!ℝ){
+	(_,next):=qbits;
+	measure(_);
+	qbit:=H(0:𝔹);
+	apply(number,qbit);
+	return send(next,qbit);
+}
+def intermediate(qbits:𝔹^2,bits:!𝔹^2,number:!ℝ){
+	(prev,next):=qbits;
+	qbit:=receive(prev,bits);
+	apply(number,qbit);
+	return send(next,qbit);
+}
+def last(qbits:𝔹^2,bits:!𝔹^2,number:!ℝ){
+	(prev,_):=qbits;
+	measure(_);
+	qbit:=receive(prev,bits);
+	apply(number,qbit);
+	return measure(H(qbit));
+}
+def main(){
+	numbers₀:=[1/2,1/3,1/6,1];
+	numbers₁:=[1/2,1/2];
+	return (solve(numbers₀),solve(numbers₁));
+}

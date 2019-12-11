@@ -1,0 +1,4 @@
+// args: --run
+
+import int_fixed_point_util;
+def main()⇒toRange[-1.0,1.0](sinQ[1000,1000](fromAngle[1000](π/4)));

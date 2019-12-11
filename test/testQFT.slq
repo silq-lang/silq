@@ -1,0 +1,8 @@
+// args: --run
+
+import qft;
+def main(){
+	r:=reverse(QFT[3])(QFT(0:int[3]));
+	assert(measure(dup(r))=0);
+	return r;
+}

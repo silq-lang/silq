@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	(x,)~(1,2,y):=(0,1,2,3);
+	(1,z,3):=(1,2,3);
+	(1,2,3):=(1,2,2); // TODO: runtime error
+	return (x,y,z);
+}

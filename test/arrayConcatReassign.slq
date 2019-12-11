@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	head:=0;
+	tail:=(1,2,3);
+	result:=(head,)~tail;
+	result=(1,2,3,4);
+	return result;
+}

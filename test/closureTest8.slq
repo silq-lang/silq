@@ -1,0 +1,13 @@
+
+def main(){
+	x:=H(0:𝔹);
+	def foo(){
+		if measure(H(0:𝔹)){
+			x:=H(x);
+		}else{
+			x:=X(x);
+		}
+		return x;
+	}
+	return foo();
+}

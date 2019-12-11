@@ -1,0 +1,7 @@
+def main(){
+	def foo[a](x:a){
+		def id(x:a)mfree⇒(dup(x),x);
+		return reverse(id)(dup(x),x);
+	}
+	return (foo([0,1]),foo(H(0:𝔹)));
+}

@@ -1,0 +1,11 @@
+// args: --run
+
+def foo[n:!ℕ](x:𝔹^n){
+	(h,)~t:=x;
+	x:=(h,)~t;
+	return x;
+}
+
+def main(){
+	return foo(0:𝔹,1:𝔹,0:𝔹,0:𝔹,1:𝔹);
+}

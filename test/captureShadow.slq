@@ -1,0 +1,12 @@
+// args: --run
+
+def main(){
+	x:=2;
+	def foo(){
+		y:=x;
+		x:=3;
+		z:=x;
+		return (y,z);
+	}
+	assert(foo()==(2,3));
+}

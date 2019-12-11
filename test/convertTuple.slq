@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	//n:=32;
+	//x:=0:int[n];
+	//x:=x as uint[n];
+	y:=((0,1,2):!ℕ^3) as !ℕ×!ℤ×!int[3];
+	return y;
+}

@@ -1,0 +1,14 @@
+// args: --run
+
+def determine(bill:𝔹)⇒bill;
+def main(){
+	bill:=1:𝔹;
+	secret:=0;
+	if false{
+	}else{
+		bill:=determine(bill);
+		secret=3;
+	}
+	assert(secret==3);
+	return (bill,secret);
+}

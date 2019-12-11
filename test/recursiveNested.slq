@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	def fib(n:!ℕ):!ℕ{ // TODO
+		if n<=1{ return n; }
+		return fib(n sub 1)+fib(n sub 2);
+	}
+	return fib(3);
+}

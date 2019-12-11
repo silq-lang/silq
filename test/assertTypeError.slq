@@ -1,0 +1,6 @@
+
+def main(){
+	x:=H(0:𝔹);
+	assert(x); // error
+	return x;
+}

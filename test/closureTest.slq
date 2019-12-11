@@ -1,0 +1,20 @@
+// args: --run
+
+def foo(c:!𝔹)mfree{
+	x:=H(1:𝔹);
+	def bar()mfree⇒if c then (0,x) else (1,X(x));
+	return bar;
+}
+def main(){
+	c:=measure(H(0:𝔹));
+	x:=H(0:𝔹);
+	if x{
+		(a,H(b)):=foo(c)();
+	}else{
+		b:=1:𝔹;
+	}
+	measure(b);
+	(a,b):=(c,H(x));
+	assert(measure(a≠b));
+	return (a,b);
+}

@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	x:=π;
+	y:=x coerce !ℚ;
+	return y;
+}

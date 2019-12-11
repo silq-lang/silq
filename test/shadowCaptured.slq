@@ -1,0 +1,10 @@
+// args: --run
+
+def main(){
+	x:=2;
+	def foo(){
+		if measure(H(0:𝔹)) { x:=x+1; } // TODO: error?
+		return x;
+	}
+	assert(foo()==2);
+}

@@ -1,0 +1,12 @@
+// args: --run
+
+def foo[a](x:a){
+    def bar[a](y:a)=>(x,y);
+    return bar([1]);
+}
+
+def main(){
+	x:=H(0:𝔹);
+    r:=foo(x);
+    return r;
+}

@@ -1,0 +1,11 @@
+// args: --run
+
+def main(){
+	qs := (0:int[3]);
+	x:=0:𝔹;
+	(x,qs[0]):=(qs[0],x);
+	x:=H(x);
+	(qs[0],x):=(x,qs[0]);
+	forget(x=0);
+	return qs;
+}

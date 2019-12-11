@@ -1,0 +1,17 @@
+// args: --run
+
+def measure_H(x:𝔹){
+    x:=H(x);
+    ret:=measure(x);
+    return (H(ret),ret);
+}
+
+def main(){
+    x:=vector(2,0:𝔹);
+	y:=[]:𝔹[];
+    for i in [0..2){
+        (ret,x[i]):=measure_H(x[i]);
+		y~=[ret];
+    }
+    return (x,y);
+}

@@ -1,0 +1,10 @@
+// args: --run
+
+def main(){
+	k:=1:!ℤ;
+	k+=1:!ℤ;
+	a:=array(1,0);
+	a[0]+=1;
+	assert((k,a)=(2,[1])); // TODO
+	return (k,a);
+}

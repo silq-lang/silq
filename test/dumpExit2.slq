@@ -1,0 +1,14 @@
+// args: --run
+
+def main(){
+	x:=0:𝔹;
+	z:=0:!ℕ;
+	def foo(){
+		y:=H(z coerce 𝔹);
+		dump();
+		exit();
+		return y;
+	}
+	z=2;
+	return foo();
+}

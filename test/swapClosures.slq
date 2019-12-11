@@ -1,0 +1,15 @@
+// args: --run=10
+
+def main(){
+	x:=H(0:𝔹);
+	y:=H(1:𝔹);
+	def foo()⇒x;
+	def bar()⇒y;
+	(foo,bar):=(bar,foo);
+	a:=[foo,bar];
+	(a[0],a[1]):=(a[1],a[0]);
+	(foo,bar):=a;
+	assert(measure(H(foo()))==0);
+	assert(measure(H(bar()))==1);
+
+}

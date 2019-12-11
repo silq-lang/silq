@@ -1,0 +1,12 @@
+// args: --run
+
+def main(){
+	x:=H(0:𝔹);
+	y:=0:𝔹;
+	x:=X(x);
+	if x{
+		y:=X(y);
+	}
+	forget(y); // TODO: make this unnecessary
+	return x;
+}

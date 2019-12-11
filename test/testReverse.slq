@@ -1,0 +1,9 @@
+// args: --run
+
+def foo(a:𝔹^2)mfree{
+	b:=a[0];
+	a[0]:=H(a[0]);
+	H(a[0]):=a[0];
+	return (a,b);
+}
+def main()⇒reverse(foo)((1,0):𝔹^2,1:𝔹);

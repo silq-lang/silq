@@ -1,0 +1,8 @@
+// args: --run
+
+def foo[a](x:a)(y:a)⇒()⇒(x,y);
+def main(){
+	x:=H(0:𝔹);
+    r:=foo(x);
+    return r;
+}

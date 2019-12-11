@@ -1,0 +1,32 @@
+// args: --run
+
+arrayLength := 3;
+
+def map(f: !ℝ !→ !ℝ){
+    return (arr: !ℝ[]){
+        result := [];
+        for i in [0..arrayLength){
+            result ~= [f(arr[i])];
+        }
+        return result;
+    }
+}
+
+def all(f: !ℝ !→ !𝔹){
+    return (arr: !ℝ[]){
+        result := true;
+        for i in [0..arrayLength){
+            result &&= f(arr[i]);
+        }
+        return result;
+    }
+}
+
+def main(){
+	def flip(x:!ℝ)⇒true;
+    g := map(flip);
+    a := [1/2,1/3,1/4];
+    h := (x:!ℝ)=>x!=0;
+    r := all(h)(g(a));
+	assert(r);
+}

@@ -1,0 +1,12 @@
+// args: --run
+
+import int_fixed_point_util;
+def main(){
+	x:=0:uint[5];
+	for i in [0..5){
+		x[i]:=H(x[i]);
+	}
+	r:=asinQ[5,10](x);
+	(x,r):=measure(x,r);
+	return (toRange[-1.0,1.0](x),toAngle(r),x,r);
+}

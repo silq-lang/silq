@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	x:=H(0:𝔹);
+	x₀:=if x then (1:!𝔹,0:𝔹) else vector(2,0:𝔹);
+	x₁:=if x then vector(2,0:𝔹) else (1:!𝔹,0:𝔹);
+	return (x,x₀,x₁);
+}

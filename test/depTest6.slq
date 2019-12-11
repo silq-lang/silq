@@ -1,0 +1,13 @@
+// args: --run
+
+def foo(x:𝔹,y:𝔹,z:𝔹){
+	a:=dup(if x then y else z);
+	__show(__query("dep",a));
+	if x{
+		b:=dup(y);
+	}else{
+		b:=dup(z);
+	}
+	__show(__query("dep",b));
+	return (x,y,z,a,b);
+}

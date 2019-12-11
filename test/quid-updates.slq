@@ -1,0 +1,126 @@
+// explicit requests from participants:
+import int_fixed_point_util;
+def main₀()⇒toRange[-1.0,1.0](sinQ[1000,1000](fromAngle[1000](π/4)));
+
+// ---
+	
+// import int_fixed_point_util;
+def main₁()⇒toRange[0.0,1](invQ[10,10,0.1](fromRange[0,1][10](0.2)));
+
+// ---
+
+// import int_fixed_point_util;
+
+def main₂(){
+	x:=H(0:𝔹);
+	if x{ phaseQ(fromAngle[20](π/3)); }
+	if x{ phaseQ(fromAngle[20](-π/3)); }
+	return H(x);
+}
+
+// ---
+
+// import int_fixed_point_util;
+def main₃()⇒toAngle(asinQ[50,100](fromRange[-1,1][50](-0.3)));
+
+// ---
+
+// import int_fixed_point_util;
+def main₄(){
+	x:=0:uint[5];
+	for i in [0..5){
+		x[i]:=H(x[i]);
+	}
+	r:=asinQ[5,10](x);
+	(x,r):=measure(x,r);
+	return (toRange[-1.0,1.0](x),toAngle(r),x,r);
+}
+
+
+// ---
+
+def main₅(){
+	x:=H(0:𝔹);
+	if measure(H(0:𝔹)){
+		x:=measure(x);
+	}
+	return x; // new: works, combines types !𝔹 and 𝔹 of x to 𝔹
+}
+
+def main₆(){
+	x:=H(0:𝔹);
+	y:=0:𝔹;
+	x:=X(x);
+	if x{
+		y:=X(y);
+	}
+	forget(y); // new: works
+	return x;
+}
+
+
+// --------------
+
+
+
+// other improvements:
+
+def main₇(){
+	x:=H(0:𝔹);
+	def foo(){
+		// x:=x; // no longer needed
+		y:=H(0:𝔹);
+		if y { x:=H(x); }
+		return (x,y);
+	}
+	return foo();
+}
+
+// ---
+
+def foo[a](x:!a^2){}
+def bar[a](x:!a[]){}
+def main₈(){
+	x:=(1,-1);
+	foo(x); // new: works
+	y:=vector(2,1);
+	bar(x); // new: works
+	bar(y); // new: works
+}
+
+// ---
+
+def test[τ](x:τ[]){
+	[a]~b:=x; // pattern matching against array concatenation
+	return (a,b);
+}
+
+// ---
+
+def main₉(){
+	a:=[1,2,3];
+	[x,y,z]:=a; // pattern matching against array literals
+	return (x,y);
+}
+
+// ---
+
+def main₁₀(){
+	x:=H(0:𝔹);
+	x₀:=if x then (1:!𝔹,0:𝔹) else vector(2,0:𝔹); // new: works
+	x₁:=if x then vector(2,0:𝔹) else (1:!𝔹,0:𝔹); // new: works
+	return (x,x₀,x₁);
+}
+
+// ---
+
+def main₁₁(){
+	def r()⇒measure(H(0:𝔹));
+	x₀:=if r() then (0:!𝔹,0:𝔹) else vector(2,0:𝔹); // new: works
+	x₁:=if r() then vector(2,0:𝔹) else (0:!𝔹,0:𝔹); // new: works
+	y₀:=if r() then array(2,0:𝔹) else (0:!𝔹,0:𝔹); // new: works
+	y₁:=if r() then (0:!𝔹,0:𝔹) else array(2,0:𝔹); // new: works
+	z₀:=if r() then vector(2,0:𝔹) else array(2,0:𝔹); // new: works
+	z₁:=if r() then array(2,0:𝔹) else vector(2,0:𝔹); // new: works
+	return (x₀,x₁,y₀,y₁,z₀,z₁);
+}

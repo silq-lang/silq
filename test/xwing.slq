@@ -1,0 +1,27 @@
+// args: --run
+
+def main(){
+    x := 0:!int[30];
+    y := x as B^30;
+    return solve(y);
+}
+
+def solve[n:!ℕ](qs:𝔹^n){
+	x:=0:𝔹;
+	// swap x with LSB of qs
+	(x,qs[0]):=(qs[0],x);
+	if x{
+		for i in [1..n){
+			qs[i]:=X(qs[i]);
+		}
+	}
+	x:=H(x);
+	if x{
+		for i in [1..n){
+			qs[i]:=X(qs[i]);
+		}
+	}
+	(qs[0],x):=(x,qs[0]);
+	forget(x=0);
+	return qs;
+}

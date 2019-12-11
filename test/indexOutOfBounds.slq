@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	b:=H(0:𝔹);
+	x:=if b then -1:int[32] else 0:int[32];
+	forget(b=x==-1);
+	r:=x[x]; // error.
+	return (x,r);
+}

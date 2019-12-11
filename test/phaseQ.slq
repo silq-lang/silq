@@ -1,0 +1,10 @@
+// args: --run
+
+import int_fixed_point_util;
+
+def main(){
+	x:=H(0:𝔹);
+	if x{ phaseQ(fromAngle[20](π/3)); }
+	if x{ phaseQ(fromAngle[20](-π/3)); }
+	return H(x);
+}

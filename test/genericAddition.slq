@@ -1,0 +1,10 @@
+// args: --run
+
+def foo[n:!ℕ](const a:uint[n]){
+    res := 0:uint[n];
+    res = res + a;
+    return measure(res);
+}
+def main() {
+    return foo(0:uint[2]);
+}

@@ -1,0 +1,10 @@
+// args: --run
+
+def main(){
+	x:=array(10,0:𝔹);
+	for i in [0..10){
+		x[i]:=measure(x[i]);
+	}
+	assert(measure(x==array(10,false)));
+	return x;
+}

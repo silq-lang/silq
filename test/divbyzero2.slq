@@ -1,0 +1,11 @@
+// args: --run
+
+def main(){
+	def foo(){
+		def bar(){
+			return 1/0; // error
+		}
+		return bar();
+	}
+	return foo();
+}

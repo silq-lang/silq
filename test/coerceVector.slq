@@ -1,0 +1,5 @@
+// args: --run
+
+def main(){
+	return (0,1,2,0,1,2) coerce !𝔹^6;
+}

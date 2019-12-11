@@ -1,0 +1,14 @@
+// args: --run
+
+def foo(const x:𝔹){
+	while true{
+		y:=dup(x);
+		return 0:𝔹;
+	}
+}
+def main(){
+	x:=H(0:𝔹);
+	y:=foo(x);
+	forget(y=0);
+	assert(measure(H(x))=0);
+}

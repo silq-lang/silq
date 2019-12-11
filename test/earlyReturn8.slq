@@ -1,0 +1,12 @@
+// args: --run
+
+def foo() {
+	for i in [0..2){
+		return 1;
+	}
+    return 2;
+}
+
+def main(){
+	assert(foo()==1);
+}

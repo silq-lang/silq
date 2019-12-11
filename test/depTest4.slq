@@ -1,0 +1,13 @@
+// args: --run
+
+def main(){
+	n:=3;
+	x:=array(n,0:𝔹);
+	/+for i in [0..n){
+		x[i]:=H(x[i]);
+	}+/
+	y:=H(0:𝔹);
+	x[0]=dup(y); // TODO
+	__show(__query("dep",x));
+	return y;
+}

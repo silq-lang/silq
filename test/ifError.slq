@@ -1,0 +1,8 @@
+
+def main(f:𝔹!→𝔹,z:𝔹){
+    y:=0:𝔹;
+    if H(z){ // error
+        y:=H(y);
+    }
+    return (y,z); // error
+}

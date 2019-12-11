@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	x:=(0,0,0):𝔹^3;
+	x[3]:=H(x[3]); // error
+	return x;
+}

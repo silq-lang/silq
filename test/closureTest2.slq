@@ -1,0 +1,13 @@
+// args: --run
+
+def foo(){
+	x:=H(0:𝔹);
+	def bar(y:𝔹){
+		if y { x:=X(x); }else{ x:=x; }
+		return measure(x,H(y));
+	}
+	return bar;
+}
+def main(){
+	return foo();
+}

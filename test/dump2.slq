@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	x:=rotY(2·asin(1/2),0:𝔹);
+	dump();
+	return x;
+}

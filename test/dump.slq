@@ -1,0 +1,13 @@
+// args: --run
+
+def main(){
+	x:=array(10,0:𝔹);
+	for i in [0..3){
+		x[i]:=H(x[i]);
+	}
+	dump();
+	for i in [0..3){
+		x[i]:=H(x[i]);
+	}
+	return x;
+}

@@ -1,0 +1,15 @@
+// args: --run
+
+def main(){
+	f:=reverse(dup[𝔹^2]);
+	g:=([a]⇒reverse(dup[a]))[𝔹^2];
+	x:=(H(0:𝔹),H(0:𝔹));
+	y:=dup(x);
+	f(y,x);
+	x:=reverse(g)(y,());
+	reverse(reverse(g))(y,x);
+	(a,b):=y;
+	r:=(H(a),H(b));
+	assert(measure(r==(0,0)));
+	return r;
+}

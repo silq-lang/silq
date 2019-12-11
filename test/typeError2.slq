@@ -1,0 +1,15 @@
+// args: --run
+
+def main(){
+	def foo(){
+		c:=H(0:𝔹);
+		x:=1:int[3];
+		if true{
+			measure(x);
+			x:=0:int[3];
+			x[0]:=H(x[0]);
+		}
+		return (c,x);
+	}
+	return H(foo()); // error
+}

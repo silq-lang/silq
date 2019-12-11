@@ -1,0 +1,10 @@
+// args: --run
+
+def main(){
+	x:=(H(0:𝔹),);
+	y:=(x[0..1]:𝔹[]);
+	forget((x:𝔹[])=y);
+	y[0]:=H(y[0]);
+	assert(measure(y[0]==0));
+	return y;
+}

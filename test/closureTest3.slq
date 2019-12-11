@@ -1,0 +1,25 @@
+// args: --run
+
+def foo[a](x:a){
+	def bar(y:a){
+		a:=measure(H(0:𝔹));
+		b:=measure(H(0:𝔹));
+		if a{
+			if b{
+				return (0,(x,y));
+			}else{
+				return (1,(y,x));
+			}
+		}else{
+			if b{
+				return (2,(y,x));
+			}else{
+				return (3,(x,y));
+			}
+		}
+	}
+	return bar;
+}
+def main(){
+	return foo(0:𝔹)(1:𝔹);
+}

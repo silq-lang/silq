@@ -1,0 +1,10 @@
+// args: --run
+
+def main(){
+	k:=0;
+	for i in [0..100){
+		k+=i;
+	}
+	assert(k==4950);
+	return k;
+}

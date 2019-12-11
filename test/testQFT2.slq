@@ -1,0 +1,9 @@
+// args: --run
+
+import qft;
+
+def main(){
+	r:=([n:!ℕ]⇒reverse(QFT[n]))(QFT(45:int[10]));
+	assert(measure(r==45));
+	return r;
+}

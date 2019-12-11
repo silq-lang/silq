@@ -1,0 +1,10 @@
+def main(){
+	x:=0:𝔹;
+	a:=dup(x);
+	y:=H(0:𝔹);
+	if y{
+		x=1:𝔹; // TODO
+	}
+	__show(__query("dep",x));
+	return y;
+}

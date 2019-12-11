@@ -1,0 +1,12 @@
+// args: --run
+
+def main(){
+	x:=0:𝔹;
+	y:=0:𝔹;
+	x:=X(x);
+	if x{
+		y:=X(y);
+	}
+	forget(y);
+	return x;
+}

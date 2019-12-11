@@ -1,0 +1,6 @@
+// args: --run
+
+def main(){
+	(h,)~t:=(0,1,2,3);
+	return (h,t);
+}

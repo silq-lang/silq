@@ -1,0 +1,2 @@
+// args: --run
+def main(const x:𝔹){} // error

@@ -1,0 +1,4 @@
+// args: --run
+
+import int_fixed_point_util;
+def main()⇒toAngle(asinQ[50,100](fromRange[-1,1][50](-0.3)));

@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	x:=H(1:𝔹);
+	if measure(H(0:𝔹)){
+		return x;
+	}
+	return X(x);
+}

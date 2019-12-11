@@ -1,0 +1,14 @@
+// args: --run
+
+def id(x:!ℝ):!ℝ ⇒ x;
+def foo(){
+	k:=3;
+    while(id(k)>2) {
+        k=1;
+    }
+	return k;
+}
+
+def main(){
+	assert(foo()==1);
+}

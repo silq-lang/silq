@@ -1,0 +1,7 @@
+// skipped
+// TODO: allow regression tester to test this
+
+def main(){
+	x:=H(0:𝔹);
+	y:=reverse(dup[𝔹])(0:𝔹,x:𝔹); // error: bad forget
+}

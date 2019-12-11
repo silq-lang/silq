@@ -1,0 +1,11 @@
+
+def main(){
+	x:=H(0:𝔹); // error
+	if x{
+		return 1;
+	}
+	measure(x);
+	return 0;
+	/+x:=measure(x);
+	return x;+/
+}

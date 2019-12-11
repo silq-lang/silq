@@ -1,0 +1,27 @@
+// args: --run
+
+def task[state](
+	numbers: !ℝ[],
+	prepareState: !(Π(n:!ℕ). state^n),
+){
+	n:=numbers.length;
+	φ:=prepareState(n):state[];
+	[head]~φ:=φ;
+	measure(head,φ);
+}
+def prepareState(n:!ℕ){
+	φ:=[]:(𝔹^2)[];
+	last:=0:𝔹;
+	for i in [0..n){
+		bit:=H(0:𝔹);
+		next:=dup(bit);
+		φ~=[(last,bit)];
+		last:=next;
+	}
+	measure(last);
+	return φ coerce (𝔹^2)^n;
+}
+def main(){
+	numbers:=[1/2,1/2];
+	return task[𝔹^2](numbers,prepareState);
+}

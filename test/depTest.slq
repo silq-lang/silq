@@ -1,0 +1,9 @@
+def id(x:𝔹)lifted⇒x;
+def main(){
+	x:=H(0:𝔹);
+	x:=measure(x);
+	if id(x){
+		y:=2;
+		__show(__query("dep",y)); // {}
+	}
+}

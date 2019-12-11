@@ -1,0 +1,4 @@
+// args: --run
+
+import int_fixed_point_util;
+def main()⇒toRange[0.0,1](invQ[10,10,0.1](fromRange[0,1][10](0.2)));

@@ -1,0 +1,6 @@
+// args: --run
+
+def main(){
+	y:=3;
+	return (x:!ℕ)⇒(z:!ℕ)⇒x+y+z;
+}

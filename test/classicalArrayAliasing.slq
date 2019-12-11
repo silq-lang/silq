@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	a:=[1,2,3];
+	b:=dup(a);
+	a[0]=2;
+	assert(b[0]==1);
+	return b;
+}

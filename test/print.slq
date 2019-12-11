@@ -1,0 +1,5 @@
+// args: --run
+
+def main(){
+	print(measure(H(0:𝔹)));
+}

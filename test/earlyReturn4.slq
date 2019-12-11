@@ -1,0 +1,14 @@
+
+def foo(const x:𝔹){
+	y:=H(1:𝔹); // error. TODO?
+	if x{
+		return y;
+	}
+	return X(y); // error
+}
+
+def main(){
+	x:=H(0:𝔹);
+	forget(H(foo(x))=1);
+	return x; // (0.707107+0i)·|1⟩+(-0.707107-0i)·|0⟩
+}

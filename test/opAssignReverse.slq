@@ -1,0 +1,13 @@
+// args: --run
+
+def foo(x:𝔹)mfree{
+	y:=0;
+	for i in [0..10){
+		x⊕=1:𝔹;
+		y+=1; // TODO
+	}
+	return x;
+}
+def main(){
+	return reverse(foo)(0:𝔹); // TODO
+}

@@ -1,0 +1,11 @@
+// args: --run
+
+def foo[a](x:!a^2){}
+def bar[a](x:!a[]){}
+def main(){
+	x:=(1,-1);
+	foo(x);
+	y:=vector(2,1);
+	bar(x);
+	bar(y);
+}

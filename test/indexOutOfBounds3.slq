@@ -1,0 +1,7 @@
+// args: --run
+// TODO: nicer error message
+
+def main(){
+	x:=[1,2,3];
+	x[-1]=2; // error
+}

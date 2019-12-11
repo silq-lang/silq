@@ -1,0 +1,17 @@
+// args: --run
+
+def main(){
+	x:=H(0:𝔹);
+	def foo(){
+		y:=H(0:𝔹);
+		z:=H(0:𝔹);
+		if y {
+			if z{
+			}else{
+				x:=H(x);
+			}
+		}
+		return (x,y,z);
+	}
+	return foo();
+}
