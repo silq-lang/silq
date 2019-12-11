@@ -129,6 +129,23 @@ struct QState{
 	Record vars;
 	QVar[] popFrameCleanup;
 
+	static Value dupValue(Value v){
+		auto tt=v.tag;
+		if(tt==QState.Value.Tag.array_) v.array_=dupValue(v.array_);
+		if(tt==QState.Value.Tag.record) v.record=dupValue(v.record);
+		return v;
+	}
+	static Value[] dupValue(QState.Value[] r){
+		r=r.dup;
+		foreach(ref v;r) v=dupValue(v);
+		return r;
+	}
+	static Record dupValue(Record r){
+		r=r.dup;
+		foreach(k,ref v;r) v=dupValue(v);
+		return r;
+	}
+
 	string toString(){
 		FormattingOptions opt={type: FormattingType.dump};
 		string r="/────────\nQUANTUM STATE\n";
@@ -173,7 +190,7 @@ struct QState{
 	}
 
 	QState dup(){
-		return QState(state.dup,vars.dup,popFrameCleanup);
+		return QState(state.dup,dupValue(vars),popFrameCleanup);
 	}
 	void copyNonState(ref QState rhs){
 		this.tupleof[1..$]=rhs.tupleof[1..$];
@@ -224,7 +241,7 @@ struct QState{
 		QState then,othw;
 		then.copyNonState(this);
 		othw.copyNonState(this);
-		othw.vars=othw.vars.dup;
+		othw.vars=dupValue(othw.vars);
 		if(cond.isClassical()){
 			if(cond.asBoolean) then=this;
 			else othw=this;
@@ -447,6 +464,7 @@ struct QState{
 		void opAssign(Value rhs){
 			// TODO: make safe
 			type=rhs.type;
+			if(!type) return;
 			Lswitch:final switch(tag){
 				import std.traits:EnumMembers;
 				static foreach(t;EnumMembers!Tag)
@@ -454,10 +472,9 @@ struct QState{
 			}
 		}
 		Value dup(ref QState state){
-			if(isClassical) return this;
 			final switch(tag){
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
-				case t: assert(0);
+				case t: return this;
 				case Tag.closure:
 					return state.makeClosure(type,Closure(closure.fun,closure.context?[closure.context.dup(state)].ptr:null));
 				case Tag.array_: return state.makeArray(type,array_.map!(x=>x.dup(state)).array);
@@ -511,13 +528,12 @@ struct QState{
 				static foreach(t;EnumMembers!Tag)
 				case t: static if(__traits(hasMember,mixin(text(t)),"__postblit")) mixin(`this.`~text(t)~`.__postblit();`);
 			}
-			if(tt==Tag.array_) array_=array_.dup;
-			if(tt==Tag.record) record=record.dup; // TODO: necessary?
 		}
 		void assign(ref QState state,Value rhs){
+			if(!type){ this=rhs; return; }
 			if(isClassical()){
 				enforce(rhs.isClassical);
-				this=rhs;
+				this=rhs.dup(state);
 				return;
 			}
 			if(rhs.isClassical()){
@@ -1967,8 +1983,16 @@ struct Interpreter(QState){
 				return qstate.makeTuple(unit,[]);
 			}
 			if(auto idx=cast(IndexExp)e){
-				auto r=doIt2(idx.e)[doIt(idx.a[0])];
-				if(!idx.constLookup&&!idx.byRef) r=r.dup(qstate);
+				auto a=doIt2(idx.e),i=doIt(idx.a[0]);
+				auto r=a[i];
+				if(!idx.constLookup){
+					if(idx.byRef){
+						assert(i.isℤ());
+						if(a.tag==QState.Value.Tag.array_){
+							a.array_[i.asℤ.to!size_t]=QState.Value.init;
+						}else r=r.dup(qstate).consumeOnRead();
+					}else r=r.dup(qstate);
+				}
 				return r;
 			}
 			if(auto sl=cast(SliceExp)e){
@@ -2122,7 +2146,7 @@ struct Interpreter(QState){
 			auto var=state.vars[name];
 			void doIt(ref QState.Value value,QState.Value[] indices,Location[] locations,QState.Value condition){
 				if(!indices.length){
-					rhs.consumeOnRead();
+					if(!value.isValid) rhs.consumeOnRead();
 					auto nrhs=rhs;
 					if(condition.isValid)
 						nrhs=state.ite(condition,nrhs,value);
