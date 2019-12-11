@@ -1,4 +1,3 @@
-
 def main(){
 	n := 32;
 	x := 0: !int[n];

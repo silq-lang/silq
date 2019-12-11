@@ -1,5 +1,3 @@
-// compilation errors
-
 def main(const n: int[32],b:!ℤ)lifted:int[32]×int[32]×int[32]{
 	y₁ := main: const !int[32]×!𝔹 →lifted 𝟙; // error
 	y₂ := main: Π(const n: int[32],x: !𝔹) lifted. 𝟙; // error

@@ -1,10 +1,10 @@
-/+
+
 // (this is a little convoluted, as it is adapted from code that had more capabilities)
 import std.stdio, std.file;
 import std.process, std.string, std.array;
 import std.algorithm, std.conv, std.range;
 import std.datetime.stopwatch;
-import std.typecons : Flag, Yes, No;
+import std.typecons : Flag, Yes, No, Tuple, tuple;
 
 auto shell(string cmd){
 	return executeShell(cmd).output;
@@ -52,7 +52,8 @@ void main(){
 			else write("running"," ",source);
 		}
 		stdout.flush();
-		auto results=source.getResults;
+		auto resultsTime=source.getResults;
+		auto results=resultsTime[0],time=resultsTime[1];
 		auto summary=results.summarize;
 		total+=summary;
 		if(colorize) write("\r");
@@ -62,7 +63,7 @@ void main(){
 			if(summary.unexpectedErrors){
 				if(colorize) write(failColor,BOLD,"failed ",RESET);
 				else write("failed");
-			}else if (summary.missingErrors) {
+			}else if(summary.missingErrors) {
 				if(colorize) write(failColor,BOLD,"invalid",RESET);
 				else write("invalid");
 			}else{
@@ -80,8 +81,8 @@ void main(){
 			else write("passed");
 			passed++;
 		}
-		write(" % 5.0fms".format(results[0].time.to!("msecs",double)));
-		totalTime+=results[0].time;
+		write(" % 5.0fms".format(time.to!("msecs",double)));
+		totalTime+=time;
 		if(colorize) writeln(" ",source);
 		else writeln();
 	}
@@ -147,37 +148,54 @@ enum Status{
 struct Comparison{
 	Status status;
 	Info info;
-	Duration time;
 }
 
-Comparison[] getResults(string source){
-	bool compilationError=source.fileStartsWithFlag("compilation error");
-	bool foundCompilationError=false;
-	auto sw = StopWatch(Yes.autoStart);
-	auto output = shell("../psi "~source~" 2>&1").splitLines;
-	sw.stop();
+auto compare(Info[] expected, int[] actual){
+	int ai=0;
 	Comparison[] result;
+	foreach(i,x;expected){
+		while(ai<actual.length&&actual[ai]<x.line) ai++;
+		if(ai==actual.length){
+			foreach(xx;expected[i..$])
+				result~=Comparison(Status.missing, xx);
+			break;
+		}
+		result~=Comparison(x.line==actual[ai]?Status.expected:Status.missing,x);
+	}
+	ai=0;
+	foreach(i,a;actual){
+		while(ai<expected.length&&expected[ai].line<a) ai++;
+		if(ai==expected.length){
+			foreach(aa;actual[i..$])
+				result~=Comparison(Status.unexpected, Info(aa,true,false));
+			break;
+		}
+		if(expected[ai].line!=a) result~=Comparison(Status.unexpected, Info(a, true, false));
+	}
+	return result;
+}
+
+Tuple!(Comparison[],Duration) getResults(string source){
+	auto expected=source.getExpected;
+	string[] output;
+	auto sw = StopWatch(Yes.autoStart);
+	auto actual = source.getActual(output);
+	sw.stop();
+	auto result=compare(expected, actual);
 	foreach(i,l;output){
 		switch(l.strip){
 		default: break;
-		case "FIXED": result~=Comparison(Status.expected,Info(cast(int)i+1,true,true),sw.peek()); break;
-		case "PASS": result~=Comparison(Status.ok,Info(cast(int)i+1,false,false),sw.peek()); break;
-		case "TODO": result~=Comparison(Status.expected,Info(cast(int)i+1,false,true),sw.peek()); break;
-		case "FAIL": result~=Comparison(Status.unexpected,Info(cast(int)i+1,true,false),sw.peek()); break;
+		case "FIXED": result~=Comparison(Status.expected,Info(cast(int)i+1,true,true)); break;
+		case "PASS": result~=Comparison(Status.ok,Info(cast(int)i+1,false,false)); break;
+		case "TODO": result~=Comparison(Status.expected,Info(cast(int)i+1,false,true)); break;
+		case "FAIL": result~=Comparison(Status.unexpected,Info(cast(int)i+1,true,false)); break;
 		}
-		auto isCompilationError=l.canFind("error: ");
-		if(l.startsWith("core.exception.AssertError")||l.startsWith("Segmentation fault")||!compilationError&&!foundCompilationError&&isCompilationError)
-			result~=Comparison(Status.unexpected,Info(cast(int)i+1,true,false),sw.peek());
-		foundCompilationError|=isCompilationError;
+		if(l.startsWith("core.exception.AssertError")||l.startsWith("Segmentation fault"))
+			result~=Comparison(Status.unexpected,Info(cast(int)i+1,true,false));
 	}
-	if(compilationError){
-		if(!foundCompilationError)
-			result~=Comparison(Status.unexpected,Info(0,true,false),sw.peek());
-		else
-			result~=Comparison(Status.ok,Info(0,false,false),sw.peek());
-	}else if(!result.length)
-		result~=Comparison(Status.missing,Info(0,true,false),sw.peek());
-	return result;
+	if(!result.length)
+		result~=Comparison(Status.ok,Info(0,true,false));
+	return tuple(result,sw.peek());
 }
 
 auto summarize(Comparison[] comp){
@@ -223,7 +241,95 @@ auto summarize(Comparison[] comp){
 	return result;
 }
 
+struct Comment{
+	int line;
+	string text;
+}
 
+auto comments(string code){
+	Comment[] result;
+	int line=1;
+	for(;;){
+		if(code.startsWith("//")){
+			code.popFront(); code.popFront();
+			auto start = code.ptr;
+			while(!code.empty&&code.front!='\n')
+				code.popFront();
+			auto text = start[0..code.ptr-start];
+			result~=Comment(line,text);
+		}
+		if(code.startsWith("\n")) line++;
+		if(code.startsWith("/*"))
+			while(!code.startsWith("*/")){
+				if(code.startsWith("\n")) line++;
+				code.popFront();
+			}
+		if(code.startsWith("/+")){
+			int nest=1;
+			code.popFront();
+			while(nest){
+				code.popFront();
+				if(code.startsWith("\n")) line++;
+				else if(code.startsWith("/+")){
+					code.popFront();
+					nest++;
+				}else if(code.startsWith("+/")){
+					code.popFront();
+					nest--;
+				}
+			}
+		}
+		if(code.empty) break;
+		code.popFront();
+	}
+	return result;
+}
+
+auto analyze(Comment comment){
+	Info result;
+	result.line=comment.line;
+	result.error=comment.text.canFind("error");
+	result.todo=comment.text.canFind("TODO")&&!comment.text.canFind("// TODO");
+	return result;
+}
+
+auto getExpected(string source){
+	Info[] result;
+	auto code = source.readText;
+	foreach(comment;code.comments){
+		auto info = comment.analyze;
+		if(info.error||info.todo)
+			result~=info;
+	}
+	return result;
+}
+
+int[] getActual(string source,out string[] output){
+	auto fin=File(source,"r");
+	auto args=fin.readln();
+	if(args.startsWith("// args: "))
+		args=args["// args: ".length..$].strip()~" ";
+	else args="";
+	output = shell("../silq "~args~source~" 2>&1").splitLines;
+	int[] result;
+	static bool isBad(string x){
+		if(x.canFind(": error")) return true;
+		if(x.startsWith("core.exception.AssertError"))
+			return true;
+		return false;
+	}
+	foreach(err;output.filter!isBad){
+		while(err.startsWith("<mixin@")) err=err["<mixin@".length..$];
+		if(err.startsWith(source~":")){
+			auto tmp = err[(source~":").length..$];
+			auto line = tmp.parse!int;
+			result~=line;
+		}else if(err.startsWith("core.exception.AssertError"))
+			result~=-1;
+	}
+	result=result.sort.uniq.array;
+	return result;
+}
 
 // (copy of terminal.d)
 enum CSI = "\033[";
@@ -254,4 +360,4 @@ version(Posix){
 }else{
 	bool isATTy(ref File){return false;}
 }
-+/
+
