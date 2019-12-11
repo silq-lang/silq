@@ -751,7 +751,11 @@ struct QState{
 					break;
 				case Tag.intval,Tag.uintval:
 					if(ntag==Tag.bval) return neqZ;
-					if(ntag==tag) return this;
+					if(ntag==tag){
+						auto r=this;
+						r.type=ntype;
+						return r;
+					}
 					if(ntag==Tag.array_){
 						size_t nbits=0;
 						ℤ val=0;
@@ -886,6 +890,7 @@ struct QState{
 			// ^^ needs special handling
 			// ~ needs special handling
 			auto ntype=binaryType!op(type,r.type);
+			if(!ntype) ntype=type; // TODO: this is a hack
 			if(ntype==ℕt(true)) ntype=ℤt(true);
 			if(!ntype.isToplevelClassical()) return makeQuval(ntype,new BinOpQVal!op(this,r));
 			assert(!!ntype);
