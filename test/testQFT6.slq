@@ -1,0 +1,7 @@
+// args: --run
+
+import qft;
+
+def main(){
+	return QFT(1:int[6]);
+}

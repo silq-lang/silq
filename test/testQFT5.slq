@@ -1,0 +1,36 @@
+// args: --run
+
+def QFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
+	for k in [0..n div 2){
+		(ψ[k],ψ[n-k-1]) := (ψ[n-k-1],ψ[k]);
+	}
+	for k in [0..n){
+		ψ[k] := H(ψ[k]);
+		for l in [k+1..n){
+			if ψ[l] && ψ[k]{
+				phase(2·π·2^(k-l-1));
+			}
+		}
+	}
+	return ψ;
+}
+def iQFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
+	for k in (n..-1..0]{
+		for l in (n..-1..k+1]{
+			if ψ[l] && ψ[k]{
+				phase(2·π·2^(k-l-1)):=();
+			}
+		}
+		H(ψ[k]) := ψ[k];
+	}
+	for k in (n div 2..-1..0]{
+		(ψ[n-k-1],ψ[k]) := (ψ[k],ψ[n-k-1]);
+	}
+	return ψ;
+}
+def main(){
+	x:=measure(H(false),H(false),H(false),H(false));
+	r:=iQFT(QFT(x as uint[4]));
+	assert(measure((x as uint[4])==r));
+	return (x as uint[4],r);
+}

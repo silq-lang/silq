@@ -1,0 +1,24 @@
+// args: --run
+
+def phaseQ[n:!ℕ](const φ: uint[n])mfree{
+	for i in [0..n){ if (φ&2^i)!=0{ phase(2·π·2^(i-n)); } }
+}
+def QFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
+	for k in [0..n){
+		j:=n sub 1 sub k;
+		ψ[j] := H(ψ[j]);
+		if (ψ&2^j)!=0{ phaseQ(2^k*ψ⊕2^(n sub 1)); }
+	}
+	for k in [0..n div 2){
+		(ψ[k],ψ[n-k-1]) := (ψ[n-k-1],ψ[k]);
+	}
+	return ψ;
+}
+
+def main(){
+	n:=8;
+	x:=measure(H(false),H(false),H(false),H(false));
+	r:=([n:!ℕ]⇒reverse(QFT[n]))(QFT(x as uint[4]));
+	assert(measure((x as uint[4])==r));
+	return (x as uint[4],r);
+}
