@@ -1,0 +1,7 @@
+// args: --run
+
+def main() {
+    x := vector(1, 0:B);
+    x[0] := X(x[0]); 
+    measure(x);
+}

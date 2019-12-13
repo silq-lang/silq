@@ -5,7 +5,7 @@ def foo(const x:𝔹){
 	}else{
 		return y;
 	}
-	return X(y);
+	return X(y); // error
 }
 
 def main(){

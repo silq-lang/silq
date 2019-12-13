@@ -988,7 +988,7 @@ struct QState{
 				static if(op=="!=") if(array_.length!=r.array_.length) return makeBool(true);
 				int equalPrefix=0;
 				for(;equalPrefix<min(array_.length,r.array_.length);equalPrefix++)
-					if(array_[equalPrefix]!=r.array_[equalPrefix]) break;
+					if(array_[equalPrefix].compare!"!="(r.array_[equalPrefix]).neqZImpl) break;
 				static if(op!="=="&&op!="!="){
 					if(util.among(equalPrefix,array_.length,r.array_.length)){
 						if(array_.length==r.array_.length){
@@ -1642,6 +1642,7 @@ struct QState{
 		return x.applyUnitary!hadamardUnitary(this,Bool(false));
 	}
 	Value X(Value x){
+		if(x.isClassical()) return x.eqZ;
 		return x.applyUnitary!xUnitary(this,Bool(false));
 	}
 	Value Y(Value x){
@@ -2151,7 +2152,7 @@ struct Interpreter(QState){
 			auto var=state.vars[name];
 			void doIt(ref QState.Value value,QState.Value[] indices,Location[] locations,QState.Value condition){
 				if(!indices.length){
-					if(!value.isValid) rhs.consumeOnRead();
+					if(value.isValid) rhs.consumeOnRead();
 					auto nrhs=rhs;
 					if(condition.isValid)
 						nrhs=state.ite(condition,nrhs,value);

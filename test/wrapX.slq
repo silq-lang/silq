@@ -6,5 +6,5 @@ def myX(b:𝔹){
 }
 def main(){
     b:=myX(false);
-    measure(b);
+    return measure(b);
 }

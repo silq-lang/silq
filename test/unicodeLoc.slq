@@ -4,7 +4,7 @@ def foo[n:!ℕ](qs:𝔹^n){
 	if n == 1{
 		measure(qs);
 		qs:=vector(n,0:𝔹); x:=2:𝔹; // error
-		y:=(1:𝔹)~3;
+		y:=(1:𝔹)~3; // error
 		/+💩+/ x:=2~3; // TODO: fix location
 	}
 	return qs;
