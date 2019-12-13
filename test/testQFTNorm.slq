@@ -98,17 +98,16 @@ def main(){
 	for i in [0..n){ x[i]:=H(x[i]); }
 	def f(x:uint[n])lifted⇒x%5;
 	measure(f(x));
-	return (measure(iQFT(x)) as !ℕ)/2^n+0.0;+/ // TODO: coerce uint[n] to uint[6]
+	return (measure(iQFT(x)) as !ℕ)/2^n+0.0;+/
 		//x[1]:=H(x[1]);
 	x:=measure(H(false),H(false),H(false),H(false));
+	//forget(iQFT(QFT(x as uint[4]))=x as uint[4]); // TODO
 	//r:=iQFT(QFT(x as uint[4]));
 	r:=([n:!ℕ]⇒reverse(QFT[n]))(QFT(x as uint[4]));
-	// forget((x as uint[4])=r); // TODO: fix simulator
+	// forget((x as uint[4])=r);
 	//return measure(x as uint[4])==measure(r);
 	assert(measure((x as uint[4])==r));
 	return (x as uint[4],r);
 	//x[1]:=H(x[1]);
 	//return x;
-	/+x:=measure(H(false),H(false),H(false),H(false));
-	forget(iQFT(QFT(x as uint[4]))=x as uint[4]); // TODO: fix+/
 }

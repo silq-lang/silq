@@ -5,7 +5,7 @@ def main(){
 	x:=array(3,0:𝔹);
 	for i in [0..3){
 		x[i]:=id(x[i]);
-		__show(__query("dep",x)); // TODO: {}
+		__show(__query("dep",x)); // // TODO: {}
 	}
 	return x;
 }

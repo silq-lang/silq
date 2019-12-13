@@ -7,7 +7,7 @@ def solve[n:!ℕ](const x:𝔹^n)lifted{
 		}
 	}
 	r:=dup(z);
-	for i in [0..n){ // TODO: synthesize
+	for i in [0..n){ // // TODO: synthesize
 		if x[i]{
 			(z,o,t):=(o,t,z);
 		}

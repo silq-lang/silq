@@ -1,5 +1,4 @@
-// TODO: add lifted annotation
-/+
+
 // Node := Int(bits=n)
 // Node := 𝔹[];
 // // TODO: edgeOracle lifted?
@@ -485,4 +484,4 @@ def help_a20_2[n:!N, r:!N, rr:!N, rbar:!N, rrbar:!N](
 
 	return (tau, eew, cTri, taud, eewd);
 }
-+/
+
