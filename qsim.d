@@ -1652,7 +1652,7 @@ struct QState{
 		return x.applyUnitary!zUnitary(this,Bool(false));
 	}
 	Value phase(Value φ){
-		enforce(φ.tag==Value.Tag.fval);
+		φ=φ.convertTo(ℝ(true));
 		typeof(state) new_;
 		foreach(k,v;state){
 			new_[k]=cast(C)std.complex.expi(φ.fval)*v;
