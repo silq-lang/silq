@@ -67,7 +67,7 @@ void main(){
 				if(colorize) write(failColor,BOLD,"invalid",RESET);
 				else write("invalid");
 			}else{
-				if(summary.todos||!summary.obsoleteTodos){
+				if(summary.todos&&!summary.obsoleteTodos){
 					if(colorize) write(TODOColor,BOLD," TODO  ",RESET);
 					else write("TODO");
 				}else{
