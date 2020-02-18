@@ -1665,7 +1665,7 @@ struct QState{
 		enforce(args.tag==Value.Tag.array_);
 		enforce(args.array_.length==2);
 		auto φ=args.array_[0],x=args.array_[1];
-		enforce(φ.tag==Value.Tag.fval);
+		φ=φ.convertTo(ℝ(true));
 		return x.applyUnitary!unitary(this,Bool(false),φ.fval);
 	}
 	Value rX(Value args){

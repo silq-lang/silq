@@ -1,12 +1,6 @@
 
 /+
 def main(){
-	phase(π);
-	return 0:𝔹;
-}
-+/
-/+
-def main(){
 	a:=(1:𝔹,H(0:𝔹),1:𝔹);
 	i:=1:uint[2];
 	measure(a[i]);

@@ -1,0 +1,10 @@
+// args: --run
+
+def main(){
+	phase(-1);
+	x:=0:𝔹;
+	x:=rotX(-1,x);
+	x:=rotY(-1,x);
+	x:=rotZ(-1,x);
+	return x;
+}
