@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	f:=()=>(0,1):𝔹^2;
+	id:=(x:𝔹)qfree⇒x;
+	(x,reverse(id)(y)):=f();
+	assert(measure((x,y)==(0,1)));
+	return (x,y);
+}

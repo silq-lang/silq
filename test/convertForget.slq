@@ -1,0 +1,11 @@
+// args: --run
+
+def main(){
+	x:=(H(false),H(false),H(false),H(false));
+	r:=dup(x as uint[4]);
+	forget((r as 𝔹^4)=x);
+	(x₀,x₁,x₂,x₃):=x;
+	r:=(H(x₀),H(x₁),H(x₂),H(x₃));
+	assert(measure(r==vector(4,false)));
+	return r;
+}

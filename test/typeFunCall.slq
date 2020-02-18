@@ -1,0 +1,8 @@
+
+def twice(n:!ℕ)⇒2*n;
+
+def main(){
+	x:=0:int[twice(3)];
+	x:=x:int[6]; // TODO
+	return x;
+}

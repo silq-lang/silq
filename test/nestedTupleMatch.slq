@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	(x,(y,z)):=(1,(2,3));
+	assert((x,y,z)==(1,2,3));
+	return (x,y,z);
+}

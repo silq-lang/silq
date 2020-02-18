@@ -1,0 +1,5 @@
+def foo(const y:𝔹)mfree{
+	x:=H(y);
+	return x;
+}
+def main()⇒reverse(foo)(0:!𝔹,H(0:𝔹));

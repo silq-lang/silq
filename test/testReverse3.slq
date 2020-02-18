@@ -1,0 +1,10 @@
+// args: --run
+
+def foo()mfree{
+	x:=(H(false),H(false),H(false),H(false));
+	r:=dup(x as uint[4]);
+	dup[𝔹^4](r as 𝔹^4):=x;
+	return r;
+}
+//def main()⇒reverse(dup[𝔹^4]);
+def main()⇒reverse(foo);

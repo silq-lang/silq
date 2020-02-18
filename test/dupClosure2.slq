@@ -1,0 +1,14 @@
+// args: --run
+
+def main(){
+	x:=H(0:𝔹);
+	k:=H(0:𝔹);
+	f:=()=>x;
+	g:=dup(f);
+	(x,y):=(f(),g());
+	forget(y=x);
+	forget(H(x)=0);
+	k:=H(k);
+	assert(measure(!k));
+	return k;
+}

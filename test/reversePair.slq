@@ -1,0 +1,7 @@
+// args: --run
+
+def foo(a:int[32],b:int[32],const c:int[32],const d:int[32])mfree⇒(a,b);
+def main(){
+	f:=reverse(foo);
+	return f;
+}

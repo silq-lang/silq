@@ -1,0 +1,17 @@
+// args: --run
+
+import codeforces.summer18.contest.b3;
+def main(){
+	results:=[]:!ℤ[];
+	for i in [0:!𝔹..1:!𝔹]{
+		for j in [0:!𝔹..1:!𝔹]{
+			def prepare()⇒(H(i),H(j));
+			assert(solve(prepare())==((j,i) as !uint[2]));
+			results~=[solve(prepare())];
+			results~=[((j,i) as !uint[2]) as !ℕ];
+			assert(results[results.length-2]==results[results.length-1]);
+		}
+	}
+	assert(results==[0,0,1,1,2,2,3,3]);
+	return results;
+}

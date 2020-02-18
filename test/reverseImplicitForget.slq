@@ -1,0 +1,7 @@
+// args: --run
+
+def foo()mfree{
+	x:=0:𝔹; // TODO
+	forget(x); // TODO
+}
+def main()⇒reverse(foo); // TODO

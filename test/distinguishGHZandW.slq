@@ -1,0 +1,16 @@
+// args: --run
+
+import codeforces.summer18.contest.b2;
+def main(){
+	x:=H(0:𝔹);
+	ghz:=vector(3,x);
+	forget(x=ghz[0]);
+	w:=vector(4,0:𝔹);
+	i:=(H(0:𝔹),H(0:𝔹)) as uint[2];
+	w[i]=1:𝔹;
+	forget(i=λ(w:𝔹^4)lifted{
+		for i in [0..3){ if w[i]==1{ return i as uint[2]; } }
+		return 3:uint[2];
+	}(w));
+	assert((solve(ghz),solve(w))==(0,1));
+}

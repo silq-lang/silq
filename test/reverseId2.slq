@@ -1,0 +1,10 @@
+// args: --run
+
+def f(x:𝔹)qfree⇒x;
+def g(x:𝔹)qfree{
+	(f:𝔹!→qfree 𝔹)(y):=x:𝔹;
+	return y;
+}
+def main(){
+	assert(!reverse(g)(0:!𝔹));
+}

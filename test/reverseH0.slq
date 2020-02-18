@@ -1,0 +1,8 @@
+// args: --run
+
+def foo()mfree{
+	x:=0:!𝔹;
+	y:=H(x);
+	return y;
+}
+def main()⇒reverse(foo)(H(0:𝔹));

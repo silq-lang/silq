@@ -1,0 +1,12 @@
+// args: --run
+
+def main(){
+	x:=(H(0:𝔹),);
+	y:=x as int[1];
+	(x,):=dup(dup(y) as 𝔹^1);
+	forget((x,)=dup(dup(y) as 𝔹^1));
+	(x,):=y as 𝔹^1;
+	x:=H(x);
+	assert(measure(x==0));
+	return x;
+}

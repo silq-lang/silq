@@ -1,0 +1,24 @@
+// args: --run
+
+def foo(const x:int[32])mfree{
+	a:=x:int[32];
+	b:=2*x:int[32];
+	c:=a+b;
+	return (a,b,c);
+}
+
+def revFoo(const x:int[32],r:int[32]^3)mfree{
+	(a,b,c):=r;
+	a+b:=c;
+	2*x:int[32]:=b;
+	dup[int[32]](x):=a;
+	return ();
+}
+
+def main(){
+	revFoo(1:int[32],(1,2,3):int[32]^3);
+	reverse(foo)(1:int[32],(1:int[32],2:int[32],3:int[32]));
+	(a,b):=(foo(1:int[32]),reverse(revFoo)(1:int[32],()));
+	assert(measure(a==b));
+	return (a,b);
+}

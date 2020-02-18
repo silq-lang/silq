@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	x:=[H(0:𝔹),];
+	(x,):=x coerce 𝔹^1;
+	return H(x);
+}

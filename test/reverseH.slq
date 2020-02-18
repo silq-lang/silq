@@ -1,0 +1,3 @@
+def main(){
+	assert(measure(H(reverse(H)(0:𝔹)))==0);
+}

@@ -1,0 +1,10 @@
+// args: --run
+
+def main(){
+	x:=(H(0:𝔹),H(0:𝔹));
+	y:=x as int[2];
+	(x₀,x₁):=y as 𝔹^2;
+	r:=(H(x₀),H(x₁));
+	assert(measure(r==vector(2,false)));
+	return r;
+}

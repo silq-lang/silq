@@ -1,0 +1,9 @@
+// args: --run
+
+def f(const x:𝔹){
+	y:=H(x);
+	return (x,y);
+}
+def main(){
+	return f(0:𝔹);
+}

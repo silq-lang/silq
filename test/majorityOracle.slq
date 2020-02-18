@@ -1,0 +1,10 @@
+// args: --run
+
+import codeforces.summer18.contest.d3;
+def main(){
+	x:=(H(0:𝔹),H(0:𝔹),H(0:𝔹));
+	r:=solve(x);
+	// // TODO: assert(measure(r==((x[0] as uint[3])+x[1]+x[2]>=2)))x
+	assert(measure(r==((if x[0] then 1:uint[3] else 0:uint[3])+x[1]+x[2]>=2)));
+	return (x,r);
+}

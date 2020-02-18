@@ -1,0 +1,6 @@
+// args: --run
+
+import codeforces.summer18.contest.b1;
+def main(){
+	return (solve(false,true,false),solve(H(false),false,false));
+}

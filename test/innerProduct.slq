@@ -1,0 +1,9 @@
+// args: --run
+
+import codeforces.summer18.contest.d1;
+def main(){
+	x:=(H(0:𝔹),H(0:𝔹));
+	r:=solve(x,(true,true));
+	assert(measure(r==(x[0]⊕x[1])));
+	return (x,r);
+}

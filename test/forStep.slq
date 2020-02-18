@@ -1,0 +1,14 @@
+// args: --run
+
+def main(){
+	a:=[]:!ℕ[];
+	n:=4;
+	for i in [0..1..n){
+		a~=[i];
+	}
+	for i in [n..-1..0]{
+		a~=[i];
+	}
+	assert(a==[0,1,2,3,4,3,2,1,0]);
+	return a;
+}

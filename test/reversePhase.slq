@@ -1,0 +1,12 @@
+// args: --run
+
+def main(){
+	x:=H(0:𝔹);
+	if x{
+		reverse(phase)(π/2,());
+		phase(π/2);
+	}
+	x:=H(x);
+	assert(measure(!x));
+	return x;
+}

@@ -1,0 +1,11 @@
+// args: --run
+
+def main(){
+	f:=(x:𝔹^1)lifted⇒();
+	x:=0:uint[1];
+	x[0]:=H(x[0]);
+	f(x as 𝔹^1);
+	x[0]:=H(x[0]);
+	assert(measure(x==0));
+	return x;
+}

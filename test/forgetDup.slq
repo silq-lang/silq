@@ -1,0 +1,6 @@
+// args: --run
+def main(){
+	x:=measure(H(false),H(false),H(false),H(false));
+	r:=dup(x);
+	forget((r as 𝔹^4)=x);
+}

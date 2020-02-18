@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	x:=vector(3,0:𝔹);
+	y:=array(3,0:𝔹);
+	x=y coerce 𝔹^3;
+	assert(measure(x==vector(3,false)));
+	return x;
+}

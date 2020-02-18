@@ -1,4 +1,9 @@
-
+/+
+def main(){
+	a:=[]:ℕ[]; // TODO: error here?
+	a~=[1];
+}
++/
 /+
 /+
 A solution to Renato’s communication game:

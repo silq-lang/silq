@@ -1,0 +1,12 @@
+// args: --run
+
+import codeforces.summer18.contest.b4;
+def main(){
+	for i in [0:!𝔹..1:!𝔹]{
+		for j in [0:!𝔹..1:!𝔹]{
+			qs:=(H(i:𝔹),H(j:𝔹));
+			if qs[0]||qs[1]{ phase(π); }
+			assert(solve(qs)==((i,j) as !uint[2]));
+		}
+	}
+}

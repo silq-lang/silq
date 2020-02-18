@@ -1,0 +1,13 @@
+// args: --run
+import codeforces.summer18.contest.c2;
+def main(){
+	r:=measure(H(0:𝔹));
+	if r==0{
+		x:=0:𝔹;
+	}else{
+		x:=H(0:𝔹);
+	}
+	s:=solve(x);
+	assert(s=-1||s=r);
+	return s;
+}

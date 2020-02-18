@@ -1,0 +1,7 @@
+// args: --run
+
+import codeforces.summer18.contest.a4;
+
+def main(){
+	return solve(2);
+}

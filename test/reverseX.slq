@@ -1,0 +1,5 @@
+// args: --run
+
+def main(){
+	assert(measure(reverse(X)(0:𝔹)==1));
+}

@@ -1,0 +1,9 @@
+// args: --run
+
+def fib[m:!ℕ](n:!int[m]){
+	if n<=1{ return n; }
+	return fib(n - 1)+fib(n - 2);
+}
+def main(){
+	assert(fib(10:!int[10])==55);
+}

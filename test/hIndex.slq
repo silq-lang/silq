@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	x:=[0:𝔹];
+	x[0]:=H(x[0]);
+	return x;
+}

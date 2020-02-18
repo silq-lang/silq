@@ -1,0 +1,15 @@
+// args: --run
+
+import codeforces.summer18.contest.e1;
+def main(){
+	b:=measure(H(0:𝔹),H(0:𝔹),H(0:𝔹),H(0:𝔹),H(0:𝔹));
+	f:=(x:𝔹^5)lifted{
+		r:=0:𝔹;
+		for k in [0..5){
+			r⊕=b[k]&x[k];
+		}
+		return r;
+	};
+	assert(solve(f)==b);
+	return b;
+}
