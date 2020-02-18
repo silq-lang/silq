@@ -11,5 +11,4 @@ def main(){
 	(foo,bar):=a;
 	assert(measure(H(foo()))==0);
 	assert(measure(H(bar()))==1);
-
 }

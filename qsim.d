@@ -547,6 +547,7 @@ struct QState{
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
 				case t: this=rhs; break Lswitch;
 				case Tag.closure:
+					closure.fun=rhs.closure.fun;
 					if(closure.context&&rhs.closure.context)
 						(*closure.context).assign(state,*rhs.closure.context);
 					return;
