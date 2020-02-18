@@ -1,0 +1,12 @@
+// TODO: add a note explaining why ps disappears
+def foo(const q:𝔹)lifted:𝔹{
+	ps := [false];
+	if q { ps[0] = true; }
+	return ps; // error
+}
+
+def bar(const q:𝔹)lifted:𝔹{
+	p := false;
+	if q { p = true; }
+	return p; // TODO
+}

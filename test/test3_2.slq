@@ -132,9 +132,9 @@ def a6_QWSH[n:!N, r:!N, rr:!N](edgeOracle:((const int[n] x const int[n] x 𝔹) 
 	};
 	
 	(i, v) := a7_Diffuse_Pair(i, v);
-	(ttd,ee,eed,tt) := f(i,tt,ee);
-	(ttd, v) := (v, ttd);
-	(tt,ee) := reverse(f)(i,ttd,ee,eed,tt);
+	(ttd,ee,eed,tt) := f(i,tt,ee); // error
+	(ttd, v) := (v, ttd); // error
+	(tt,ee) := reverse(f)(i,ttd,ee,eed,tt); // error
 
 	return (tt, i, v, ee);
 }
@@ -197,7 +197,7 @@ def a8_FetchT_Array[n:!N, rr:!N, r:!N](const i:int[r], const tt:int[n]^rr) : int
 	ttd := 0:int[n];
 	for j in [0..rr) {
 		if i == j {
-			ttd := flipWith_Array(tt[j]:B^n, ttd:B^n):int[n];
+			ttd := flipWith_Array(tt[j]:B^n, ttd:B^n):int[n]; // error
 	}	}	
 	return ttd;
 }
@@ -237,9 +237,9 @@ def a11_FetchE[rr:!N,r:!N](const i:int[r], const qs:(𝔹^rr)^rr) lifted : 𝔹^
 	for j in [0..rr) {
 		for k in [0..j) {
 			if qs[j][k] && i == j { ps[k] = !ps[k]; }
-			if qs[j][k] && i == k { ps[j] = !ps[j]; }
+			if qs[j][k] && i == k { ps[j] = !ps[j]; } // TODO
 	}	}
-	return ps;
+	return ps; // TODO
 }
 
 

@@ -1,4 +1,4 @@
-// TODO: add lifted annotation
+// // TODO: add lifted annotation
 
 // Node := Int(bits=n)
 // Node := 𝔹;
@@ -143,7 +143,7 @@ def a5_SETUP[n:!N, rr:!N](edgeOracle:((const int[n] x const int[n] x 𝔹) !->mf
 }
 
 // // TODO: make high level, ttd, eed allocated in f. 
-//TODO: CHANGE ORDER FOR F (-> REVERSE)
+// // TODO: CHANGE ORDER FOR F (-> REVERSE)
 // def a6_QWSH(oracle:!QWTFP_spec, tt: Node[], 
 // 	i: int, v: Node, ee: 𝔹[][]) : Node[] x int x v x 𝔹[][] {
 def a6_QWSH[n:!N, r:!N](const edgeOracle:((const int[n] x const int[n] x 𝔹) !->mfree 𝔹), 
@@ -401,7 +401,7 @@ def a17_TriangleTestTw[n:!N, rr:!N](edgeOracle:((const int[n] x const int[n] x �
 	return triTestTW;
 }
 
-// TODO: why does this compile?
+// // TODO: why does this compile?
 // //CHECK for Consumed and so on
 // def a18_TriangleEdgeSearch(oracle:!QWTFP_spec, tt:const Node[], ee:const 𝔹[][], triTestT:const 𝔹) : Node {
 def a18_TriangleEdgeSearch[n:!N, rr:!N](const edgeOracle:((const int[n] x const int[n] x 𝔹) !->mfree 𝔹),

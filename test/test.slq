@@ -1,4 +1,26 @@
 
+/+
+def main(){
+	phase(π);
+	return 0:𝔹;
+}
++/
+/+
+def main(){
+	a:=(1:𝔹,H(0:𝔹),1:𝔹);
+	i:=1:uint[2];
+	measure(a[i]);
+	return (a[i],a,i);
+}
++/
+/+
+def foo[n:!ℕ](x:!𝔹^n):!ℕ⇒n;
+
+def main(){
+	return foo(false,false,false);
+}
++/
+
 //import codeforces.winter19.contest.b1;
 /+
 def foo()mfree{
