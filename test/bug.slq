@@ -1,13 +1,4 @@
-/+
-def id(x:𝔹)qfree→x;
-def main(){
-	x:=array(3,0:𝔹);
-	for i in [0..3){
-		x[i]:=id(x[i]);
-	}
-	return x;
-}
-+/
+
 /+
 /+
 A solution to Renato’s communication game:
