@@ -1,0 +1,6 @@
+
+def test[estate](
+	prepareState: Π(n:!ℕ) → estate^n // error
+){
+
+} // error

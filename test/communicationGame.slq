@@ -1,0 +1,77 @@
+/+
+Renato’s communication game
+───────────────────────────
+n players, who can communicate only two classical bits on a chain: A₀ → A₁ -> A₂ ⋯ → Aₙ₋₁ -> Referee
+Each player Aᵢ receives as input a real number αᵢ. Promise: ∑ᵢαᵢ is a natural number k.
+The player Aₙ₋₁ should tell the referee whether k is even or odd.
+The players are allowed to share a strategy (in particular, to share a large entangled state)
+before the game starts (i.e. before they know the αs).
++/
+
+/+
+Solution idea
+─────────────
+The players can propagate a single qubit q with quantum teleportation.
+The first player prepares the qubit in the |+⟩ state and the i-th player changes
+the phase of |1⟩ by π·αᵢ. In the end, q is in the state 1/√2(|0⟩+e^(iπk)|1⟩), and
+therefore H(q) yields the parity of k, which player n-1 sends to the referee.
++/
+
+def makeTeleporter(){ // quantum teleportation with send and receive ends
+	shared₀:=H(0:𝔹);
+	shared₁:=dup(shared₀);
+	def send(message:𝔹){
+		if message { shared₀:=X(shared₀); }
+		return measure(shared₀,H(message));
+	}
+	def receive(bits:!𝔹^2){
+		if bits[0]{ shared₁:=X(shared₁); }
+		if bits[1]{ shared₁:=Z(shared₁); }
+		return shared₁;
+	}
+	return (send,receive); // send and receive are called at most once (checked by type system)
+}
+
+def fill[τ](n:!ℕ,f:𝟙!→τ):τ^n⇒if n==0 then ()coerce τ^n else fill(n sub 1,f)~(f(),);
+
+def prepareState(n:!ℕ){ // prepares n pieces of quantum data, distributed to players
+	φ:=fill(n,makeTeleporter); // create a quantum teleportation channel for each player
+	for i in (n-1..-1..0]{ // distribute receive ends to make ring topology
+		(φ[i][1],φ[i+1][1]):=(φ[i+1][1],φ[i][1]);
+	}
+	return φ;
+}
+def start(send:𝔹→!𝔹^2,α₀:!ℝ){ // strategy for player 0
+	q:=H(0:𝔹);
+	if q { phase(π·α₀); }
+	return send(q);
+}
+def forward(send:𝔹→!𝔹^2,receive:!𝔹^2→𝔹,bits:!𝔹^2,αᵢ:!ℝ){ // strategy for players 1, …, n-2
+	q:=receive(bits);
+	if q { phase(π·αᵢ); }
+	return send(q);
+}
+def end(receive:!𝔹^2→𝔹,bits:!𝔹^2,αₙ₋₁:!ℝ){ // strategy for player n-1.
+	q:=receive(bits);
+	if q { phase(π·αₙ₋₁); }
+	return measure(H(q));
+}
+def solve[n:!ℕ](α:!ℝ^n){ // simulates one game
+	φ:=prepareState(n):((𝔹→!𝔹^2)×(!𝔹^2→𝔹))[]; // create ring topology in variable-length array
+	[(send,receive)]~φ:=φ; // pop off send and receive ends for player 0
+	measure(receive); // player 0's receive end is unused, trace it out
+	bits:=start(send,α[0]);
+	for i in [1..n-1){
+		[(send,receive)]~φ:=φ;
+		bits=forward(send,receive,bits,α[i]);
+	}
+	[(send,receive)]:=φ;
+	measure(send); // player n-1's send end is unused, trace it out
+	return end(receive,bits,α[n-1]);
+}
+
+def main(){
+	α₀:=(1/2,1/3+sqrt(3),1/3,1/2-sqrt(3),1/3); // k₀=2
+	α₁:=(1/2,3-sqrt(2),1/3,1/6,1+sqrt(2));     // k₁=5
+	return (solve(α₀),solve(α₁));
+}

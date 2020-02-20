@@ -1,0 +1,1 @@
+def prepareState(n:!ℕ):(𝔹^2)[]{ return [(false,true)]; }

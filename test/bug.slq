@@ -4,165 +4,12 @@ def main(){
 	a~=[1];
 }
 +/
-/+
-/+
-A solution to Renato’s communication game:
-n players, who can communicate only two classical bits on a chain: A₁ → A₂ -> A₃ ⋯ → Aₙ -> Referee
-Each player Aᵢ receives as input a real number αᵢ. Promise: the sum of all {αᵢ} is a natural number K.
-Last player Aₙ should tell the referee whether K is even or odd.
-Players are allowed to share a strategy (in particular, to share a large entangled state) before the game starts (i.e. before they know the αs).
-+/
 
-/+
-Solution idea: The players can propagate a single qubit x with quantum teleportation.
-The first player prepares the qubit in the |+⟩ state and the i-th player changes
-the phase of |1⟩ by π·αᵢ. In the end, x is in the state
-+/
+//def foo[n:!𝔹]()⇒vector(n,0:𝔹);
 
-def makeTeleporter(){ // quantum teleportation with send and receive ends
-	shared₀:=H(0:𝔹);
-	shared₁:=dup(shared₀);
-	def send(message:𝔹){
-		if message { shared₀:=X(shared₀); }
-		return measure(shared₀,H(message));
-	}
-	def receive(bits:!𝔹^2){
-		if bits[0]{ shared₁:=X(shared₁); }
-		if bits[1]{ shared₁:=Z(shared₁); }
-		return shared₁;
-	}
-	return (send,receive); // type system checks that send and receive are used twice
-}
-
-def fill[τ](n:!ℕ,f:𝟙!→τ):τ^n⇒if n==0 then ()coerce τ^n else fillVec(n sub 1,f)~(f(),);
-
-def prepareState(n:!ℕ){
-	φ:=fill(n+1,makeTeleporter); // create a quantum teleportation channel for each player
-	for i in (n..-1..0]{ // distribute receive ends to make ring topology
-		(φ[i][1],φ[i+1][1]):=(φ[i+1][1],φ[i][1]);
-	}
-	return φ;
-}
-def apply(α:!ℝ,const qbit:𝔹)mfree{
-	if qbit { phase(π·α); }
-}
-def start(send:𝔹→!𝔹^2,α:!ℝ){
-	x:=H(0:𝔹);
-	apply(α,x);
-	return send(x);
-}
-def forward(send:𝔹→!𝔹^2,receive:!𝔹^2→𝔹,bits:!𝔹^2,α:!ℝ){
-	x:=receive(bits);
-	apply(α,x);
-	return send(x);
-}
-def end(receive:!𝔹^2→𝔹,bits:!𝔹^2,α:!ℝ){
-	x:=receive(bits);
-	apply(α,x);
-	return measure(H(x));
-}
-def solve[n:!ℕ](α:!ℝ^n){
-	φ:=prepareState(n):((𝔹→!𝔹^2)×(!𝔹^2→𝔹))[];
-	[(send,receive)]~φ:=φ;
-	measure(receive);
-	bits:=start(send,α[0]);
-	for i in [1..n){
-		[(send,receive)]~φ:=φ;
-		bits=forward(send,receive,bits,α[i]);
-	}
-	[(send,receive)]~φ:=φ;
-	measure(send,φ);
-	return end(receive,bits,α[n-1]);
-}
-
-def main(){
-	α₀:=(1/2,1/3+sqrt(3),1/3,1/2-sqrt(3),1/3); // K=2
-	α₁:=(1/2,3-sqrt(2),1/3,1/6,1+sqrt(2)); // K=5
-	return (solve(α₀),solve(α₁));
-}
-+/
-
-/+
-def makeTeleporter(){
-	(shared₀,shared₁):=vector(2,H(0:𝔹));
-	shared₁:=dup(shared₀);
-	def send(message:𝔹){
-		if message { shared₀:=X(shared₀); }
-		message:=H(message);
-		return measure(shared₀,message);
-	}
-	def receive(bits:!𝔹^2){
-		if bits[0]{ shared₁:=X(shared₁); }
-		if bits[1]{ shared₁:=Z(shared₁); }
-		return shared₁;
-	}
-	return (send,receive);
-}
-def fillVec[τ](n:!ℕ,f:𝟙!→τ):τ^n⇒if n==0 then ()coerce τ^n else fillVec(n sub 1,f)~(f(),);
-def prepareState(n:!ℕ){
-	φ:=fillVec(n,makeTeleporter);
-	for i in (n-1..-1..0]{ (φ[i][1],φ[i+1][1]):=(φ[i+1][1],φ[i][1]); }
-	return φ;
-}
-def apply(number:!ℝ,const qbit:𝔹)mfree⇒if qbit then phase(π·number) else ();
-def start(send:𝔹→!𝔹^2,number:!ℝ){
-	x:=H(0:𝔹);
-	apply(number,x);
-	return send(x);
-}
-def forward(send:𝔹→!𝔹^2,receive:!𝔹^2→𝔹,bits:!𝔹^2,number:!ℝ){
-	x:=receive(bits);
-	apply(number,x);
-	return send(x);
-}
-def end(receive:!𝔹^2→𝔹,bits:!𝔹^2,number:!ℝ){
-	x:=receive(bits);
-	apply(number,x);
-	return measure(H(x));
-}
-def solve[n:!ℕ](numbers:!ℝ^n){
-	φ:=prepareState(numbers.length):((𝔹→!𝔹^2)×(!𝔹^2→𝔹))[];
-	[(send,receive)]~φ:=φ;
-	measure(receive);
-	bits:=start(send,numbers[0]);
-	for i in [1..n-1){
-		[(send,receive)]~φ:=φ;
-		bits=forward(send,receive,bits,numbers[i]);
-	}
-	[(send,receive)]~φ:=φ;
-	measure(send,φ);
-	return end(receive,bits,numbers[n-1]);
-}
-def main(){
-	numbers₀:=(1/2,1/3+sqrt(3),1/3,1/2-sqrt(3),1/3); // sum: 2
-	numbers₁:=(1/2,3-sqrt(2),1/3,1/6,1+sqrt(2)); // sum: 5
-	return (solve(numbers₀),solve(numbers₁));
-}
-+/
-
-//def prepareState(n:!ℕ):(𝔹^2)[]{}
-
-/+
-def test[estate](
-	prepareState: Π(n:!ℕ) → estate^n
-){
-
-}
-+/
-/+
-def foo[n:!𝔹](){
-	qs:=vector(n,0:𝔹);
-	return qs;
-}
-+/
 /+
 def main(){
-	f:=(g:𝔹×𝔹const 𝟙→𝔹)⇒g(false,false,()); // crash
-}
-+/
-/+
-def main(){
-	n:=100; // TODO: make running time scale linearly in n!
+	n:=200; // TODO: make running time scale linearly in n!
 	a:=vector(n,1:𝔹);
 	r:=0:int[32];
 	def index(a: 𝔹^n,i:!ℕ)lifted{
@@ -175,12 +22,7 @@ def main(){
 	return r;
 }
 +/
-/+
-def bar(const x:𝔹):!ℕ{
-	if x { return 0; } // TODO: error
-	else { return 1; }
-}
-+/
+
 /+def main(){
 	x:=0:𝔹;
 	y:=0:𝔹;

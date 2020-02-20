@@ -1,0 +1,4 @@
+def bar(const x:𝔹):!ℕ{
+	if x { return 0; } // error
+	else { return 1; } // error
+}

@@ -1,0 +1,20 @@
+// skipped
+
+def makeTeleporter(){
+	(shared₀,shared₁):=vector(2,H(0:𝔹)); // TODO?x
+	shared₁:=dup(shared₀);
+	shared₀:=H(0:𝔹);
+	shared₁:=dup(shared₀);
+
+	def send(message:𝔹){
+		if message { shared₀:=X(shared₀); }
+		message:=H(message);
+		return measure(shared₀,message);
+	}
+	def receive(bits:!𝔹^2){
+		if bits[0]{ shared₁:=X(shared₁); }
+		if bits[1]{ shared₁:=Z(shared₁); }
+		return shared₁;
+	}
+	return (send,receive);
+}
