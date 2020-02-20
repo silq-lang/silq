@@ -2082,7 +2082,9 @@ struct Interpreter(QState){
 			}else if(auto tae=cast(TypeAnnotationExp)e){
 				if(tae.e.type==tae.type) return doIt(tae.e);
 				bool consume=!tae.constLookup;
-				return convertTo(doIt(tae.e),tae.type,consume);
+				auto r=convertTo(doIt(tae.e),tae.type,consume);
+				if(tae.constLookup) r=r.consumeOnRead();
+				return r;
 			}else if(cast(Type)e)
 				return qstate.makeTuple(unit,[]); // 'erase' types
 			else{

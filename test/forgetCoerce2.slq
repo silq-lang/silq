@@ -1,0 +1,13 @@
+// args: --run
+
+def main(){
+	qs:=(H(0:𝔹),H(0:𝔹)) coerce 𝔹^2;
+	head:=qs[0];
+	tail:=(qs:𝔹[])[1..2] coerce 𝔹^(2 sub 1);
+	forget(qs=[head]~(tail:𝔹[]) coerce 𝔹^2);
+	qs:=[head]~(tail:𝔹[]) coerce 𝔹^2;
+	(qs₀,qs₁):=qs;
+	(qs₀,qs₁):=(H(qs₀),H(qs₁));
+	assert(measure(qs₀=0&qs₁=0));
+	return (qs₀,qs₁);
+}

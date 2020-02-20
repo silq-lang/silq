@@ -15,58 +15,6 @@ def main(){
 +/
 
 //import codeforces.winter19.contest.b1;
-/+
-def main(){
-	qs:=(H(0:𝔹),H(0:𝔹)) coerce 𝔹^2;
-	head:=qs[0];
-	tail:=(qs:𝔹[])[1..2] coerce 𝔹^(2 sub 1);
-	forget(qs=[head]~(tail:𝔹[]) coerce 𝔹^2);
-	qs:=[head]~(tail:𝔹[]) coerce 𝔹^2;
-	(qs₀,qs₁):=qs;
-	return (H(qs₀),H(qs₁));
-}
-+/
-/+
-def main(){
-	qs:=(H(0:𝔹),H(0:𝔹)) coerce 𝔹^2;
-	head:=qs[0];
-	tail:=(qs:𝔹[])[1..2] coerce 𝔹^(2 sub 1);
-	forget(qs=[head]~(tail:𝔹[]) coerce 𝔹^2);
-	(tail,):=tail coerce 𝔹^1;
-	return (H(head),H(tail));
-}
-+/
-/+
-def main(){
-	qs:=(H(0:𝔹),H(0:𝔹)) coerce 𝔹^2;
-	head:=qs[0];
-	tail:=(qs:𝔹[])[1..2] coerce 𝔹^(2 sub 1);
-	forget(qs=dup([head]~(tail:𝔹[])) coerce 𝔹^2);
-	(tail,):=tail coerce 𝔹^1;
-	return (H(head),H(tail));
-}
-+/
-/+
-def main(){
-	qs:=(H(0:𝔹),H(0:𝔹)) coerce 𝔹^2;
-	head:=qs[0];
-	tail:=(qs:𝔹[])[1..2] coerce 𝔹^(2 sub 1);
-	ws:=dup([head]~(tail:𝔹[])) coerce B^2;
-	forget(qs=ws);
-	forget([head]~(tail:𝔹[])=ws:𝔹[]);
-	(ws₀,ws₁):=ws;
-	return (H(ws₀),H(ws₁));
-}
-+/
-/+
-def main(){
-	qs:=(H(0:𝔹),H(0:𝔹)) coerce 𝔹^2;
-	head:=qs[0];
-	tail:=(qs:𝔹[])[1..2] coerce 𝔹^(2 sub 1);
-	ws:=dup([head]~(tail:𝔹[]));
-	return (qs,ws,head,tail);
-}
-+/
 
 /+
 def main(){
