@@ -4,6 +4,7 @@ import re
 from numpy import array, zeros, delete, savetxt, amax, sum, all, str, count_nonzero, vstack
 from statistics import mean
 from natsort import natsorted
+import argparse
 
 def counting(s):
     s = s.strip()
@@ -75,10 +76,22 @@ def remove_zeros(names, numbers):
 
 
 # path = '../summer18/contest/'
-path = '../winter19/contest/'
+# path = '../winter19/contest/'
 # path = './top10submissions/winter19/'
 # path = './top10submissions/summer18/'
 # path = './temp/'
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-path', type=str, required=True)
+
+args = parser.parse_args()
+print(args.path)
+assert(args.path in ['../summer18/contest/',
+                     '../winter19/contest/', 
+                     './top10submissions/winter19/',
+                     './top10submissions/summer18/'])
+
+path = args.path
 
 kind = {'Q#':'.qs', 'HQL':'.hql'}['Q#']
 
@@ -94,7 +107,7 @@ func_names.sort()
 func_names = array(func_names)
 
 functor_names = array(['Adjoint', 'Controlled', 'adjoint self',
-                 'adjoint auto', 'controlled auto', 'controlled adjoint auto'])
+                'adjoint auto', 'controlled auto', 'controlled adjoint auto'])
 
 
 if path == './top10submissions/summer18/' or path == './top10submissions/winter19/':
