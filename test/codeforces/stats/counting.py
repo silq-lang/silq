@@ -75,8 +75,9 @@ def remove_zeros(names, numbers):
 
 
 # path = '../summer18/contest/'
+path = '../winter19/contest/'
 # path = './top10submissions/winter19/'
-path = './top10submissions/summer18/'
+# path = './top10submissions/summer18/'
 # path = './temp/'
 
 kind = {'Q#':'.qs', 'HQL':'.hql'}['Q#']
@@ -96,67 +97,89 @@ functor_names = array(['Adjoint', 'Controlled', 'adjoint self',
                  'adjoint auto', 'controlled auto', 'controlled adjoint auto'])
 
 
-directorie = list(set(os.listdir(path)).difference({'evals'}))[0]
-contestants = len([file for file in os.listdir(os.path.join(path, directorie)) if file.endswith(kind)])
+if path == './top10submissions/summer18/' or path == './top10submissions/winter19/':
+    directory = list(set(os.listdir(path)).difference({'evals'}))[0]
+    contestants = len([file for file in os.listdir(os.path.join(path, directory)) if file.endswith(kind)])
 
-result_numbers_comm = zeros([func_names.size, contestants], dtype=int)
-result_numbers_functors_comm = zeros([functor_names.size, contestants], dtype=int)
-line_numbers_comm = zeros(contestants, dtype=int)
+    result_numbers_comm = zeros([func_names.size, contestants], dtype=int)
+    result_numbers_functors_comm = zeros([functor_names.size, contestants], dtype=int)
+    line_numbers_comm = zeros(contestants, dtype=int)
 
 
-for directorie in os.listdir(path):
-    print(directorie)
+    for directory in os.listdir(path):
+        print(directory)
 
-    files = natsorted([file for file in os.listdir(os.path.join(path,directorie)) if file.endswith(kind)])
+        files = natsorted([file for file in os.listdir(os.path.join(path,directory)) if file.endswith(kind)])
 
-    if len(files) == 0:
-        continue
+        if len(files) == 0:
+            continue
+
+        result_numbers = zeros([func_names.size, len(files)], dtype=int)
+        result_numbers_functors = zeros([functor_names.size, len(files)], dtype=int)
+        line_numbers = zeros(len(files), dtype=int)
+
+        for column_idx, file_name in enumerate(files):
+            print(file_name)
+            with open(os.path.join(path,directory,file_name), 'r') as code_submission:
+                count_all(code_submission, column_idx, result_numbers, result_numbers_functors, line_numbers)
+
+        result_numbers_comm += result_numbers
+        result_numbers_functors_comm += result_numbers_functors
+        line_numbers_comm += line_numbers
+
+
+        result_names, result_numbers = remove_zeros(func_names, result_numbers)
+        result_name_functors, result_numbers_functors = remove_zeros(functor_names, result_numbers_functors)
+
+        with open(os.path.join(path, 'evals', f'{directory}_eval.tex'), 'w') as output_file:
+            table_writer(file = output_file,
+                        top_row = [''] + [file[:-len(kind)] for file in files] + ['average'],
+                        left_column = ['\code{'+rn+'}' for rn in list(result_names)] + ['\code{'+rnf+'}' for rnf in list(result_name_functors)] + ['Lines of code'],
+                        list_of_matrices = [result_numbers, result_numbers_functors, line_numbers],
+                        func_last = mean)
+
+
+    result_names_comm, result_numbers_comm = remove_zeros(func_names, result_numbers_comm)
+    result_name_functors_comm, result_numbers_functors_comm = remove_zeros(functor_names, result_numbers_functors_comm)
+
+
+
+    classical_gates_list = ['CCNOT', 'CNOT', 'H', 'M', 'R1', 'Rx', 'Ry', 'Rz', 'S', 'Swap', 'T', 'X', 'Y', 'Z']
+    classical_gates_list = list(set(result_names_comm).intersection(set(classical_gates_list)))
+    classical_gates_idxs = [list(result_names_comm).index(classical_gate) for classical_gate in classical_gates_list]
+
+    with open(os.path.join(path, 'evals', 'all_eval.tex'), 'w') as output_file:
+        table_writer(file=output_file,
+                    top_row=[''] + [k for k in range(1,1+contestants)] + ['average'],
+                    left_column=['\code{' + rn + '}' for rn in list(result_names_comm)] +
+                                ['\code{' + rnf + '}' for rnf in list(result_name_functors_comm)] +
+                                ['Primitives', 'Functors', 'Classical gates', 'Lines of code'],
+                    list_of_matrices=[result_numbers_comm,
+                                    result_numbers_functors_comm,
+                                    vstack([count_nonzero(result_numbers_comm, axis=0),
+                                            count_nonzero(result_numbers_functors_comm,axis=0),
+                                            sum(result_numbers_comm[classical_gates_idxs], axis=0),
+                                            line_numbers_comm])],
+                    func_last=mean)
+else:
+    files = natsorted([file for file in os.listdir(os.path.join(path)) if file.endswith(kind)])
 
     result_numbers = zeros([func_names.size, len(files)], dtype=int)
     result_numbers_functors = zeros([functor_names.size, len(files)], dtype=int)
     line_numbers = zeros(len(files), dtype=int)
 
+
     for column_idx, file_name in enumerate(files):
         print(file_name)
-        with open(os.path.join(path,directorie,file_name), 'r') as code_submission:
+        with open(os.path.join(path,file_name), 'r') as code_submission:
             count_all(code_submission, column_idx, result_numbers, result_numbers_functors, line_numbers)
-
-    result_numbers_comm += result_numbers
-    result_numbers_functors_comm += result_numbers_functors
-    line_numbers_comm += line_numbers
-
 
     result_names, result_numbers = remove_zeros(func_names, result_numbers)
     result_name_functors, result_numbers_functors = remove_zeros(functor_names, result_numbers_functors)
 
-    with open(os.path.join(path, 'evals', f'{directorie}_eval.tex'), 'w') as output_file:
-        table_writer(file = output_file,
-                     top_row = [''] + [file[:-len(kind)] for file in files] + ['average'],
-                     left_column = ['\code{'+rn+'}' for rn in list(result_names)] + ['\code{'+rnf+'}' for rnf in list(result_name_functors)] + ['Lines of code'],
-                     list_of_matrices = [result_numbers, result_numbers_functors, line_numbers],
-                     func_last = mean)
-
-
-result_names_comm, result_numbers_comm = remove_zeros(func_names, result_numbers_comm)
-result_name_functors_comm, result_numbers_functors_comm = remove_zeros(functor_names, result_numbers_functors_comm)
-
-
-
-classical_gates_list = ['CCNOT', 'CNOT', 'H', 'M', 'R1', 'Rx', 'Ry', 'Rz', 'S', 'Swap', 'T', 'X', 'Y', 'Z']
-classical_gates_list = list(set(result_names_comm).intersection(set(classical_gates_list)))
-classical_gates_idxs = [list(result_names_comm).index(classical_gate) for classical_gate in classical_gates_list]
-
-with open(os.path.join(path, 'evals', 'all_eval.tex'), 'w') as output_file:
-    table_writer(file=output_file,
-                 top_row=[''] + [k for k in range(1,1+contestants)] + ['average'],
-                 left_column=['\code{' + rn + '}' for rn in list(result_names_comm)] +
-                             ['\code{' + rnf + '}' for rnf in list(result_name_functors_comm)] +
-                             ['Primitives', 'Functors', 'Classical gates', 'Lines of code'],
-                 list_of_matrices=[result_numbers_comm,
-                                   result_numbers_functors_comm,
-                                   vstack([count_nonzero(result_numbers_comm, axis=0),
-                                           count_nonzero(result_numbers_functors_comm,axis=0),
-                                           sum(result_numbers_comm[classical_gates_idxs], axis=0),
-                                           line_numbers_comm])],
-                 func_last=mean)
-
+    with open(os.path.join(path, 'eval.tex'), 'w') as output_file:
+            table_writer(file = output_file,
+                        top_row = [''] + [file[:-len(kind)] for file in files] + ['average'],
+                        left_column = ['\code{'+rn+'}' for rn in list(result_names)] + ['\code{'+rnf+'}' for rnf in list(result_name_functors)] + ['Lines of code'],
+                        list_of_matrices = [result_numbers, result_numbers_functors, line_numbers],
+                        func_last = sum)

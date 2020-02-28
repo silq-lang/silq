@@ -1,0 +1,36 @@
+\centering 
+\begin{adjustbox}{width=\columnwidth,center} 
+\begin{tabular}{ c c c c c c c c c c c c c c c}
+ & a1 & a2 & b1 & b2 & c1 & c2 & c3 & d1 & d2 & d3 & d4 & d5 & d6 & average \\  
+\hline 
+\code{ApplyToEach} &  & 1 &  &  &  &  &  &  &  & 2 &  &  &  & 3.0 \\  
+\code{ApplyToEachC} &  &  &  &  &  &  &  &  &  &  & 1 &  &  & 1.0 \\  
+\code{ApplyToEachCA} &  &  &  &  &  &  &  &  & 1 &  &  &  &  & 1.0 \\  
+\code{CCNOT} &  &  &  &  &  &  &  &  &  &  &  & 1 &  & 1.0 \\  
+\code{CNOT} &  &  &  & 3 &  & 2 &  &  &  & 2 &  & 3 & 2 & 12.0 \\  
+\code{ControlledOnBitString} &  & 2 &  &  &  &  & 2 &  &  &  &  &  &  & 4.0 \\  
+\code{ControlledOnInt} &  & 1 & 1 & 1 &  & 2 & 1 &  & 1 &  &  &  &  & 7.0 \\  
+\code{H} &  & 1 &  & 2 &  &  &  & 1 & 1 & 1 & 1 & 2 & 1 & 10.0 \\  
+\code{M} &  &  &  & 1 &  &  &  &  &  &  &  &  &  & 1.0 \\  
+\code{MResetZ} &  &  &  & 1 &  &  &  &  &  &  &  &  &  & 1.0 \\  
+\code{MeasureInteger} &  &  & 1 &  &  &  &  &  &  &  &  &  &  & 1.0 \\  
+\code{PrepareUniformSuperposition} & 1 &  &  &  &  &  &  &  &  &  &  &  &  & 1.0 \\  
+\code{R1} &  &  & 2 &  &  &  &  &  &  &  &  &  &  & 2.0 \\  
+\code{Ry} &  &  & 1 & 1 &  &  &  &  &  &  &  &  &  & 2.0 \\  
+\code{S} &  &  &  & 1 &  &  &  &  &  &  &  &  &  & 1.0 \\  
+\code{SWAP} &  &  &  &  &  &  &  &  &  &  &  &  & 1 & 1.0 \\  
+\code{WithA} &  &  &  &  &  &  & 1 &  &  &  &  &  &  & 1.0 \\  
+\code{X} &  & 3 & 1 & 1 & 2 & 3 & 3 &  &  &  & 5 & 2 & 4 & 24.0 \\  
+\code{Z} &  &  &  & 1 &  &  &  &  &  &  &  &  &  & 1.0 \\  
+\hline 
+\code{Adjoint} &  &  & 1 &  & 1 & 1 &  &  &  &  &  &  & 1 & 4.0 \\  
+\code{Controlled} &  &  &  & 2 & 1 &  &  &  & 1 &  & 3 & 1 & 2 & 10.0 \\  
+\code{adjoint self} &  &  &  &  &  & 1 &  &  &  &  &  &  &  & 1.0 \\  
+\code{adjoint auto} &  &  & 2 &  & 2 & 1 & 2 &  & 2 &  &  &  & 1 & 10.0 \\  
+\code{controlled auto} &  &  & 1 &  &  &  &  &  & 1 &  & 1 &  &  & 3.0 \\  
+\code{controlled adjoint auto} &  &  & 1 &  &  &  &  &  & 1 &  &  &  &  & 2.0 \\  
+\hline 
+Lines of code & 3 & 20 & 21 & 30 & 18 & 27 & 19 & 3 & 12 & 5 & 21 & 10 & 53 & 242.0 \\  
+\hline 
+\end{tabular} 
+\end{adjustbox} 
