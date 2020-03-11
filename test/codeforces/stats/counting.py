@@ -109,6 +109,8 @@ func_names = array(func_names)
 functor_names = array(['Adjoint', 'Controlled', 'adjoint self',
                 'adjoint auto', 'controlled auto', 'controlled adjoint auto'])
 
+# Standard quantum gates
+classical_gates_list = ['CCNOT', 'CNOT', 'H', 'R1', 'Rx', 'Ry', 'Rz', 'S', 'Swap', 'T', 'X', 'Y', 'Z']
 
 if path == './top10submissions/summer18/' or path == './top10submissions/winter19/':
     directory = list(set(os.listdir(path)).difference({'evals'}))[0]
@@ -154,10 +156,7 @@ if path == './top10submissions/summer18/' or path == './top10submissions/winter1
 
     result_names_comm, result_numbers_comm = remove_zeros(func_names, result_numbers_comm)
     result_name_functors_comm, result_numbers_functors_comm = remove_zeros(functor_names, result_numbers_functors_comm)
-
-
-
-    classical_gates_list = ['CCNOT', 'CNOT', 'H', 'M', 'R1', 'Rx', 'Ry', 'Rz', 'S', 'Swap', 'T', 'X', 'Y', 'Z']
+    
     classical_gates_list = list(set(result_names_comm).intersection(set(classical_gates_list)))
     classical_gates_idxs = [list(result_names_comm).index(classical_gate) for classical_gate in classical_gates_list]
 
@@ -166,7 +165,7 @@ if path == './top10submissions/summer18/' or path == './top10submissions/winter1
                     top_row=[''] + [k for k in range(1,1+contestants)] + ['average'],
                     left_column=['\code{' + rn + '}' for rn in list(result_names_comm)] +
                                 ['\code{' + rnf + '}' for rnf in list(result_name_functors_comm)] +
-                                ['Primitives', 'Functors', 'Classical gates', 'Lines of code'],
+                                ['Primitives', 'Functors', 'Standard quantum gates', 'Lines of code'],
                     list_of_matrices=[result_numbers_comm,
                                     result_numbers_functors_comm,
                                     vstack([count_nonzero(result_numbers_comm, axis=0),
