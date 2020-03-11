@@ -149,7 +149,9 @@ if path == './top10submissions/summer18/' or path == './top10submissions/winter1
         with open(os.path.join(path, 'evals', f'{directory}_eval.tex'), 'w') as output_file:
             table_writer(file = output_file,
                         top_row = [''] + [file[:-len(kind)] for file in files] + ['average'],
-                        left_column = ['\code{'+rn+'}' for rn in list(result_names)] + ['\code{'+rnf+'}' for rnf in list(result_name_functors)] + ['Lines of code'],
+                        left_column = ['\code{'+rn+'}' for rn in list(result_names)] + 
+                                      ['\code{'+rnf+'}' for rnf in list(result_name_functors)] + 
+                                      ['Lines of code'],
                         list_of_matrices = [result_numbers, result_numbers_functors, line_numbers],
                         func_last = mean)
 
@@ -192,6 +194,8 @@ else:
     with open(os.path.join(path, 'eval.tex'), 'w') as output_file:
             table_writer(file = output_file,
                         top_row = [''] + [file[:-len(kind)] for file in files] + ['Sum'],
-                        left_column = ['\code{'+rn+'}' for rn in list(result_names)] + ['\code{'+rnf+'}' for rnf in list(result_name_functors)] + ['Lines of code'],
+                        left_column = ['\code{'+rn+'}' for rn in list(result_names)] + 
+                                      ['\code{'+rnf+'}' for rnf in list(result_name_functors)] + 
+                                      ['Lines of code'],
                         list_of_matrices = [result_numbers, result_numbers_functors, line_numbers],
                         func_last = sum)
