@@ -28,7 +28,7 @@ def table_writer(file, top_row, left_column, list_of_matrices, func_last):
     file.write('\\centering \n')
     file.write('\\begin{adjustbox}{width=\\columnwidth,center} \n')
     alignment = ' c'
-    file.write('\\begin{tabular}' + '{' + f'{ alignment*len(top_row) }' + '}' + '\n')
+    file.write('\\begin{tabular}' + '{@{}' + f'{ alignment*len(top_row) }' + '@{}}' + '\n')
 
     writer(file, top_row)
     file.write('\hline \n')
@@ -93,24 +93,31 @@ assert(args.path in ['../summer18/contest/',
 
 path = args.path
 
-kind = {'Q#':'.qs', 'HQL':'.hql'}['Q#']
+kind = {'Q#':'.qs', 'Silq':'.slq'}['Q#']
 
-with open('func_names.txt', 'r') as file:
-    func_names = [line.strip() for line in file if line.strip() != '']
+func_names = []
+if kind == '.qs':
+    with open('func_names.txt', 'r') as file:
+        func_names = [line.strip() for line in file if line.strip() != '']
 
-with open('white_list.txt', 'r') as file:
-    white_list = [line.strip() for line in file if line.strip() != '']
+    with open('white_list.txt', 'r') as file:
+        white_list = [line.strip() for line in file if line.strip() != '']
 
-func_names = list(set(func_names).difference(set(white_list)))
-func_names.sort()
-# func_names = func_names[260:280]
-func_names = array(func_names)
+    func_names = list(set(func_names).difference(set(white_list)))
+    func_names.sort()
+    # func_names = func_names[260:280]
+    func_names = array(func_names)
 
-functor_names = array(['Adjoint', 'Controlled', 'adjoint self',
-                'adjoint auto', 'controlled auto', 'controlled adjoint auto'])
+    functor_names = array(['Adjoint', 'Controlled', 'adjoint self',
+                    'adjoint auto', 'controlled auto', 'controlled adjoint auto'])
+
+elif kind == '.slq':
+    func_names = array(['dup', 'forget', 'H', 'measure', 'phase', 'reverse', 'rotX', 'rotY', 'rotZ', 'X', 'Y', 'Z'])
+    functor_names = array(['mfree', 'qfree', 'lifted'])
+
 
 # Standard quantum gates
-classical_gates_list = ['CCNOT', 'CNOT', 'H', 'R1', 'Rx', 'Ry', 'Rz', 'S', 'Swap', 'T', 'X', 'Y', 'Z']
+classical_gates_list = ['CCNOT', 'CNOT', 'H', 'R1', 'Rx', 'Ry', 'Rz', 'S', 'SWAP', 'T', 'X', 'Y', 'Z'] + ['rotX', 'rotY', 'rotZ']
 
 if path == './top10submissions/summer18/' or path == './top10submissions/winter19/':
     directory = list(set(os.listdir(path)).difference({'evals'}))[0]
@@ -170,10 +177,10 @@ if path == './top10submissions/summer18/' or path == './top10submissions/winter1
                                 ['Primitives', 'Functors', 'Standard quantum gates', 'Lines of code'],
                     list_of_matrices=[result_numbers_comm,
                                     result_numbers_functors_comm,
-                                    vstack([count_nonzero(result_numbers_comm, axis=0),
-                                            count_nonzero(result_numbers_functors_comm,axis=0),
-                                            sum(result_numbers_comm[classical_gates_idxs], axis=0),
-                                            line_numbers_comm])],
+                                    vstack([count_nonzero(result_numbers_comm, axis=0), # 'Primitives'
+                                            count_nonzero(result_numbers_functors_comm,axis=0), # 'Functors'
+                                            sum(result_numbers_comm[classical_gates_idxs], axis=0), # 'Standard quantum gates'
+                                            line_numbers_comm])], # 'Lines of Code'
                     func_last=mean)
 else:
     files = natsorted([file for file in os.listdir(os.path.join(path)) if file.endswith(kind)])
@@ -191,11 +198,17 @@ else:
     result_names, result_numbers = remove_zeros(func_names, result_numbers)
     result_name_functors, result_numbers_functors = remove_zeros(functor_names, result_numbers_functors)
 
+    classical_gates_list = list(set(result_names).intersection(set(classical_gates_list)))
+    classical_gates_idxs = [list(result_names).index(classical_gate) for classical_gate in classical_gates_list]
+
     with open(os.path.join(path, 'eval.tex'), 'w') as output_file:
             table_writer(file = output_file,
                         top_row = [''] + [file[:-len(kind)] for file in files] + ['Sum'],
                         left_column = ['\code{'+rn+'}' for rn in list(result_names)] + 
                                       ['\code{'+rnf+'}' for rnf in list(result_name_functors)] + 
-                                      ['Lines of code'],
-                        list_of_matrices = [result_numbers, result_numbers_functors, line_numbers],
+                                      ['Standard quantum gates', 'Lines of code'],
+                        list_of_matrices = [result_numbers,
+                                            result_numbers_functors, # 'Functors'
+                                            vstack([sum(result_numbers[classical_gates_idxs], axis=0), # 'Standard quantum gates'
+                                                    line_numbers])], # 'Lines of Code'
                         func_last = sum)
