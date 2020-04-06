@@ -66,6 +66,17 @@ int main(string[] args){
 	//import core.memory; GC.disable();
 	version(TEST) test();
 	if(args.length) args.popFront();
+	auto idx=args.countUntil("--read-args");
+	if(idx<args.length){
+		args=args[0..idx]~args[idx+1..$];
+		foreach(filename;args){
+			if(filename.startsWith("--")) continue;
+			auto firstLine=File(filename).readln().strip();
+			if(firstLine.startsWith("// args: ")) args=firstLine["// args: ".length..$].split~args;
+			else if(firstLine.startsWith("//args: ")) args=firstLine["//args: ".length..$].split~args;
+			break;
+		}
+	}
 	bool isFormatting(string flag){
 		import std.traits: EnumMembers;
 		import std.conv: to;
