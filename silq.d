@@ -161,6 +161,16 @@ int main(string[] args){
 					}
 					continue;
 				}
+				if(x.startsWith("--seed=")){
+					import std.random;
+					try{
+						rndGen.seed(to!uint(x["--seed=".length..$]));
+					}catch(Exception){
+						stderr.writeln("error: random seed must be 32-bit unsigned integer");
+						return 1;
+					}
+					continue;
+				}
 				hasInputFile=true;
 				if(auto r=run(x)) return r;
 		}
