@@ -1,0 +1,9 @@
+// args: --run
+
+def myH(ψ:𝔹){ 
+    ψ := H(ψ);
+    return ψ;
+}
+def main() {
+	return myH(false);
+}

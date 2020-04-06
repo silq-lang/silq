@@ -532,8 +532,8 @@ struct QState{
 		void assign(ref QState state,Value rhs){
 			if(!type){ this=rhs; return; }
 			if(isClassical()){
-				enforce(rhs.isClassical);
-				this=rhs.dup(state);
+				if(rhs.isClassical) this=rhs.dup(state);
+				else this=rhs.toVar(state,false);
 				return;
 			}
 			if(rhs.isClassical()){
