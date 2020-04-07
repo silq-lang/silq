@@ -1,0 +1,19 @@
+// args: --run
+
+def map[a,b](f: a!→mfree b)[n:!ℕ](x:a^n)mfree{
+	x:=x:a[];
+	y:=[]:b[];
+	for i in [0..n){
+		(h,)~x:=x;
+		y:=y~[f(h)];
+	}
+	[]:=x;
+	return y coerce b^n;
+}
+
+def main(){
+	x:=0:uint[3];
+	x:=x as 𝔹^3;
+	mapH:=reverse(map(H)[3]);
+	return mapH(x);
+}

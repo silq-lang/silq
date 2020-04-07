@@ -1,0 +1,13 @@
+// args: --run
+def rmap[b](h:b)mfree{
+    __tmp1 := (h,) coerce b[];
+    __tmp0 := dup[b[]](__tmp1);
+    forget(__tmp1=__tmp0[0..1]);
+	return (__tmp0);
+}
+
+def main(){
+	mapH:=rmap;
+	(H(r),):=mapH(H(0:𝔹));
+	assert(measure(r)==0);
+}
