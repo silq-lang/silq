@@ -1,0 +1,21 @@
+// args: --run
+
+def flatten[τ,n:!ℕ,m:!ℕ](tuple:(τ^n)^m)mfree:τ^(n*m){
+	if m==0{
+		() := tuple coerce τ^0;
+		ret := () coerce τ^(n*m);
+	} else {
+		(head,)~tail := tuple;
+		tail := flatten[τ,n,m sub 1](tail);
+		ret := head~tail coerce τ^(n*m);
+	}
+	return ret;
+}
+
+def main(){
+	x:=[[true,true],[false,false]] coerce (𝔹^2)^2;
+	y:=flatten(x);
+	x:=reverse(flatten[𝔹,2,2])(y);
+	assert(measure(x==(((1,1),(0,0)):(𝔹^2)^2)));
+	return x;
+}
