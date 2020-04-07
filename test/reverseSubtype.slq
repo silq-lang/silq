@@ -1,0 +1,19 @@
+// args: --run
+def map[τ,σ](f:τ !→mfree σ)[n:!ℕ](φ:τ^n)mfree:σ^n{
+	if n==0{
+		forget(φ=());
+		ret := () coerce σ^n;
+	}else{
+		(head,)~tail := φ;
+		head := f(head);
+		tail := map[τ,σ](f)(tail);
+		ret := (head,)~tail;
+	}
+	return ret;
+}
+def main(){
+	x:=0:uint[3];
+	x:=x as 𝔹^3;
+	mapH:=reverse(map(H)[3]);
+	return mapH(x);
+}
