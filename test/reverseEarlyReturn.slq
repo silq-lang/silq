@@ -1,0 +1,19 @@
+def map[τ,σ](f:τ !→mfree σ)[n:!ℕ](tuple:τ^n)mfree:σ^n{ // TODO
+	if n==0{
+		forget(tuple=());
+		return () coerce σ^n;
+	} else {
+		(head,)~tail := tuple;
+		head := f(head);
+		tail := map[τ,σ](f)[n sub 1](tail);
+		return (head,)~tail;
+	}
+}
+
+def main(){
+	x:=0:uint[3];
+	x:=x as 𝔹^3;
+	mapH:=reverse(map(H)[3]); // TODO
+	return mapH(x);
+}
+
