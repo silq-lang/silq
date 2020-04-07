@@ -689,7 +689,7 @@ struct QState{
 
 		Value convertTo(Expression ntype){
 			if(ntype==ℕt(true)) ntype=ℤt(true);
-			if(cast(Identifier)ntype) return this;
+			if(cast(Identifier)ntype) ntype=type;
 			// TODO: do this in-place?
 			auto otag=tag, ntag=getTag(ntype);
 			if(ntag==tag.quval){
@@ -697,7 +697,7 @@ struct QState{
 					auto constant=convertTo(ntype.getClassical());
 					return makeQuval(ntype,new QConst(constant));
 				}else return makeQuval(ntype,new ConvertQVal(this,ntype));
-			}else if(type==ntype) return this;
+			}else if(isClassical()&&type==ntype) return this;
 			final switch(otag){
 				case Tag.array_:
 					if(ntag==Tag.array_){
