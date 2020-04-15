@@ -8,7 +8,7 @@ def groverDiffusion[n:!N](cand:uint[n]) mfree: uint[n] {
 }
 
 def grover[n:!N](f:!(const uint[n] -> lifted B)):!N{
-	nIterations:= round(π / 4 * sqrt(2^n));
+	nIterations:=floor(π/(4·asin(2^(-n/2))));
 	cand:=0:uint[n];
     for k in [0..n) { cand[k] := H(cand[k]); }
 
