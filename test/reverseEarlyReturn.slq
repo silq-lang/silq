@@ -1,3 +1,5 @@
+// args: --run
+
 def map[τ,σ](f:τ !→mfree σ)[n:!ℕ](tuple:τ^n)mfree:σ^n{ // TODO
 	if n==0{
 		forget(tuple=());
