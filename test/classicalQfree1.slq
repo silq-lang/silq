@@ -1,0 +1,15 @@
+// args: --run
+
+def my_true():!𝔹{
+	return true;
+}
+
+def my_id(x:𝔹)lifted:𝔹{
+	return x;
+}
+
+def main(){
+	x := my_id(my_true());
+	assert(x);
+	assert(my_id(my_true()));
+}
