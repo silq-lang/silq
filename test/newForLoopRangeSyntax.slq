@@ -1,0 +1,10 @@
+// args: --run
+
+def main(){
+	x:=[]:!ℕ[];
+	for i in 0..2 {
+		x~=[i];
+	}
+	assert(x==[0,1]);
+	return x;
+}
