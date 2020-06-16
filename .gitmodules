@@ -1,6 +1,6 @@
 [submodule "ast"]
 	path = ast
-	url = git@github.com:tgehr/ast.git
+	url = https://github.com/tgehr/ast.git
 [submodule "util"]
 	path = util
-	url = git@github.com:tgehr/util
+	url = https://github.com/tgehr/util
