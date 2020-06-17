@@ -4,7 +4,7 @@ Silq is a high-level programming language for quantum computing with a strong st
 More information: https://silq.ethz.ch
 
 ## Installation
-To install without building from source, see: https://silq.ethz.ch/install
+To install without building from source via vscode plugin, see: https://silq.ethz.ch/install
 
 ## Build Instructions
 
