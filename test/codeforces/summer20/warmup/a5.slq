@@ -1,0 +1,17 @@
+def solve(unitary: 𝔹!→mfree 𝔹){
+	x:=H(0:𝔹);
+	y:=1:𝔹;
+	if x{
+		y:=unitary(y);
+	}
+	measure(y);
+	return !measure(H(x)):!ℕ;
+}
+
+def mZ(x:𝔹)mfree{
+	x:=Z(x);
+	phase(π);
+	return x;
+}
+
+// def main()⇒solve(mZ);

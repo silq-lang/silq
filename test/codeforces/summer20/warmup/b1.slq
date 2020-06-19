@@ -1,0 +1,5 @@
+def solve[n:!ℕ](register: 𝔹^n){
+	result:=(register as uint[n])+1 as 𝔹^n;
+	forget(register=(result as uint[n])-1 as 𝔹^n);
+	return result;
+}

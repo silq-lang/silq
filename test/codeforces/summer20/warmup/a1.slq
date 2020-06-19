@@ -1,0 +1,1 @@
+def solve(unitary: 𝔹 !→mfree 𝔹)⇒measure(unitary(0:𝔹)):!ℕ;

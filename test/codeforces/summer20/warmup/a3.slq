@@ -1,0 +1,5 @@
+def solve(unitary: 𝔹!→mfree 𝔹){
+	x:=H(0:𝔹);
+	for i in 0..2{ x:=unitary(x); }
+	return measure(H(x)):!ℕ;
+}
