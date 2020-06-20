@@ -851,8 +851,10 @@ struct QState{
 				static if(is(typeof(mixin(op~` qval`))))
 					if(type==ℚt(true)) return makeRational(mixin(op~` qval`));
 				static if(is(typeof(mixin(op~` zval`))))
-					if(type==ℤt(true)||isInt(type)||isUint(type))
+					if(type==ℤt(true))
 						return makeInteger(mixin(op~` zval`)); // TODO: wraparound
+				if(isInt(type)) return makeInt(type,mixin(op~` intval`));
+				if(isUint(type)) return makeUint(type,mixin(op~` uintval`));
 				if(type==Bool(true)){
 					static if(op=="~") return makeBool(!bval);
 					else return makeInteger(mixin(op~` ℤ(cast(int)bval)`));

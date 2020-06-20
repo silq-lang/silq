@@ -1,0 +1,11 @@
+// args: --run
+
+def main(){
+	x:=1:int[2];
+	y:=-x;
+	forget(x=-y);
+	x:=~y;
+	forget(y=~x);
+	assert(measure(x=0));
+	return x;
+}
