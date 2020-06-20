@@ -11,6 +11,15 @@ def rotX(φ: !ℝ, x: 𝔹)mfree:𝔹 ⇒ (quantumPrimitive("rX"):!(Π(φ: !ℝ,
 def rotY(φ: !ℝ, x: 𝔹)mfree:𝔹 ⇒ (quantumPrimitive("rY"):!(Π(φ: !ℝ, x: 𝔹)mfree. 𝔹))(φ,x);
 def rotZ(φ: !ℝ, x: 𝔹)mfree:𝔹 ⇒ (quantumPrimitive("rZ"):!(Π(φ: !ℝ, x: 𝔹)mfree. 𝔹))(φ,x);
 
+def I(x:𝔹)qfree ⇒ x;
+def S(x:𝔹)mfree{
+	if x { phase(π/2); }
+	return x;
+}
+def CNOT(const x:𝔹,y:𝔹)qfree{
+	y⊕=x;
+	return y;
+}
 def reverse[τ,χ,φ]lifted(f: !(const τ × χ →mfree φ))lifted:const τ × φ →mfree χ⇒
   (quantumPrimitive("reverse"):!(Π[τ:*,χ:*,φ:*]lifted. !(!(const τ×χ →mfree φ) →lifted !(const τ × φ →mfree χ))))(f);
 
