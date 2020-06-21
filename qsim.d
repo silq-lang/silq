@@ -130,6 +130,7 @@ struct QState{
 	QVar[] popFrameCleanup;
 
 	static Value dupValue(Value v){
+		if(!v.type) return Value.init;
 		auto tt=v.tag;
 		if(tt==QState.Value.Tag.array_) v.array_=dupValue(v.array_);
 		if(tt==QState.Value.Tag.record) v.record=dupValue(v.record);
@@ -201,6 +202,7 @@ struct QState{
 		if(abs(state[k]) <= zeroThreshold) state.remove(k);
 	}
 	void updateRelabeling(ref Σ.Ref[Σ.Ref] relabeling,Value to,Value from){
+		if(!to.type) return;
 		auto tag=to.tag;
 		enforce(tag==from.tag);
 		final switch(tag){

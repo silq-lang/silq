@@ -1,0 +1,11 @@
+// args: --run
+def R(q:B){
+	if q { }
+	return q;
+}
+def main(){
+	qs := vector(1,0:B);
+	qs[0] := R(qs[0]);
+	assert(measure(qs[0]==0));
+	return qs;
+}
