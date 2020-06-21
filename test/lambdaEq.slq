@@ -1,0 +1,6 @@
+
+def main(){
+	(a,b):=(0,1);
+	if (a,b)=(1,0){ return true; }
+	return false;
+}
