@@ -1,0 +1,12 @@
+def bitor[n:!ℕ,m:!ℕ](x:int[m]^n)lifted{
+	r:=0:int[m];
+	for i in 0..n{
+		r|=x[i];
+	}
+	return r;
+}
+
+def main(){
+	x:=(1,2,3,4):int[4]^4;
+	return reverse(bitor[4,4])(x,7:int[4]);
+}
