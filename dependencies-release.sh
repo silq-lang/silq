@@ -1,18 +1,18 @@
 #!/bin/bash
 
-VERSION="1.18.0"
+VERSION="1.22.0"
 LINK=https://github.com/ldc-developers/ldc/releases/download/v$VERSION/
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
     NAME="ldc2-$VERSION-linux-x86_64"
     FILE="$NAME.tar.xz"
-    SUM1="2d00012388e2af2324c5e9bc57d73dcd  $FILE"
+    SUM1="bd6a0b6b1aa484119297b466cc5f91d2  $FILE"
     MD5="md5sum"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
     NAME="ldc2-$VERSION-osx-x86_64"
     FILE="$NAME.tar.xz"
-    SUM1="MD5 ($FILE) = efa70c4a558cdf2ef8d80a79c673bfde"
-    MD5="md5"
+    SUM1="MD5 ($FILE) = ff53cc4270ca95dc1313213c31b66d2e"
+    MD5="md5sum"
 else
     >&2 echo "This script does not support your platform at this time."
     >&2 echo "Try to obtain the ldc d compiler manually from:"

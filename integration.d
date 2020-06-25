@@ -84,12 +84,12 @@ private DExpr definiteIntegralImpl(DExpr expr,DExpr facts=one){
 					bool simpler=false;
 					foreach(k;distributeMult(p,expr.withoutFactor(f))){
 						k=k.simplify(facts.incDeBruijnVar(1,0).simplify(one));
-						auto ow=k.splitMultAtVar(var);
-						ow[0]=ow[0].incDeBruijnVar(-1,0).simplify(facts);
-						if(ow[0] == zero){ simpler=true; continue; }
-						auto r=definiteIntegral(ow[1],facts);
+						auto ow2=k.splitMultAtVar(var);
+						ow2[0]=ow2[0].incDeBruijnVar(-1,0).simplify(facts);
+						if(ow2[0] == zero){ simpler=true; continue; }
+						auto r=definiteIntegral(ow2[1],facts);
 						if(r){
-							DPlus.insert(works,ow[0]*r);
+							DPlus.insert(works,ow2[0]*r);
 							simpler=true;
 						}else DPlus.insert(doesNotWork,k);
 					}
@@ -118,8 +118,8 @@ private DExpr definiteIntegralImpl(DExpr expr,DExpr facts=one){
 	// pull sums out
 	foreach(f;expr.factors){
 		if(auto sum=cast(DSum)f){
-			auto nexpr=sum.expr.incDeBruijnVar(1,0).substitute(db3,db1).incDeBruijnVar(-1,2)*expr.withoutFactor(f).incDeBruijnVar(1,1);
-			if(auto r=definiteIntegral(nexpr,facts.incDeBruijnVar(1,0).simplify(one)))
+			auto nexpr2=sum.expr.incDeBruijnVar(1,0).substitute(db3,db1).incDeBruijnVar(-1,2)*expr.withoutFactor(f).incDeBruijnVar(1,1);
+			if(auto r=definiteIntegral(nexpr2,facts.incDeBruijnVar(1,0).simplify(one)))
 				return dSum(r).simplify(facts);
 		}
 	}

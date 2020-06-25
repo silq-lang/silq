@@ -33,11 +33,11 @@ DExpr computeSum(DExpr expr,DExpr facts=one){
 				bool simpler=false;
 				foreach(k;distributeMult(p,expr.withoutFactor(f))){
 					k=k.simplify(newFacts);
-					auto ow=k.splitMultAtVar(var);
-					auto r=computeSum(ow[1],facts);
+					auto ow2=k.splitMultAtVar(var);
+					auto r=computeSum(ow2[1],facts);
 					if(r){
-						ow[0]=ow[0].incDeBruijnVar(-1,0);
-						DPlus.insert(works,ow[0]*r);
+						ow2[0]=ow2[0].incDeBruijnVar(-1,0);
+						DPlus.insert(works,ow2[0]*r);
 						simpler=true;
 					}else DPlus.insert(doesNotWork,k);
 				}
