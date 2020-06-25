@@ -1,0 +1,6 @@
+// args: --error-json
+
+def main[r:!ℕ](){
+	for i in [0..r] { x:=0; }
+	asdf
+}

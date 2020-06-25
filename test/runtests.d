@@ -288,7 +288,8 @@ auto comments(string code){
 auto analyze(Comment comment){
 	Info result;
 	result.line=comment.line;
-	result.error=comment.text.canFind("error");
+	auto rest=comment.text.find("error");
+	result.error=rest.startsWith("error")&&!rest.startsWith("error-");
 	result.todo=comment.text.canFind("TODO")&&!comment.text.canFind("// TODO");
 	return result;
 }
