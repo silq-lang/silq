@@ -1814,6 +1814,19 @@ struct Interpreter(QState){
 			if(consumeArg) return value;
 			return value.dup(qstate);
 		}
+		if(isUint(type)||isInt(type)){
+			auto ce=cast(CallExp)type;
+			auto len=runExp(ce.arg);
+			if(!cast(LiteralExp)ce.arg){ // TODO: this is a hack, store integer bit lengths classically instead
+				auto llen=LiteralExp.makeInteger(len.asℤ);
+				llen.loc=ce.arg.loc;
+				auto ntype=new CallExp(ce.e,llen,ce.isSquare,ce.isClassical);
+				ntype.type=type.type;
+				ntype.sstate=SemState.completed;
+				ntype.loc=type.loc;
+				type=ntype;
+			}
+		}
 		QState.Value default_(){
 			if(consumeArg) value.consumeOnRead(); // TODO: ok?
 			auto ce=cast(CallExp)type;
