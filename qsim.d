@@ -923,8 +923,20 @@ struct QState{
 			}else{
 				if(type!=ntype||r.type!=ntype){
 					if(type==ntype&&util.among(r.type,Bool(true),ℤt(true))){
-						if(isInt(type)) return this.opBinary!op(makeInt(ntype,BitInt!true(intval.nbits,r.asℤ())));
-						if(isUint(type)) return this.opBinary!op(makeUint(ntype,BitInt!false(uintval.nbits,r.asℤ())));
+						static if(op=="%"){
+							alias abs=util.abs;
+							if(isInt(type)){
+								auto rz=abs(r.asℤ);
+								return makeInt(ntype,BitInt!true(intval.nbits,(intval.val%rz+rz)%rz));
+							}
+							if(isUint(type)){
+								auto rz=abs(r.asℤ);
+								return makeUint(ntype,BitInt!false(uintval.nbits,uintval.val%rz));
+							}
+						}else{
+							if(isInt(type)) return this.opBinary!op(makeInt(ntype,BitInt!true(intval.nbits,r.asℤ())));
+							if(isUint(type)) return this.opBinary!op(makeUint(ntype,BitInt!false(uintval.nbits,r.asℤ())));
+						}
 					}else if(type==ℤt(true)&&r.type==ntype){
 						if(isInt(r.type)) return makeInt(ntype,BitInt!true(r.intval.nbits,asℤ())).opBinary!op(r);
 						if(isUint(r.type)) return makeUint(ntype,BitInt!false(r.uintval.nbits,asℤ())).opBinary!op(r);
@@ -933,23 +945,33 @@ struct QState{
 					return this.convertTo(ntype).opBinary!op(r.convertTo(ntype));
 				}
 				static if(op=="/") enforce(!r.eqZImpl,"division by zero");
-				static if(is(typeof(mixin(`fval `~op~` r.fval`))))
-					if(type==ℝ(true)) return makeReal(mixin(`fval `~op~` r.fval`));
-				static if(is(typeof(mixin(`qval `~op~` r.qval`))))
-					if(type==ℚt(true)) return makeRational(mixin(`qval `~op~` r.qval`));
-				static if(is(typeof(mixin(`zval `~op~` r.zval`))))
-					if(type==ℤt(true)) return makeInteger(mixin(`zval `~op~` r.zval`));
-				static if(is(typeof(mixin(`intval `~op~` r.intval`))))
-					if(isInt(type)) return makeInt(ntype,mixin(`intval `~op~` r.intval`));
-				static if(is(typeof(mixin(`uintval `~op~` r.uintval`))))
-					if(isUint(type)) return makeUint(ntype,mixin(`uintval `~op~` r.uintval`));
+				static if(op=="%"){ // TODO: make more efficient
+					if(type==ℝ(true)) return makeReal(((fval%abs(r.fval))+abs(r.fval))%abs(r.fval)); // TODO: make numerically sound
+					alias abs=util.abs;
+					alias floor=util.floor;
+					if(type==ℚt(true)) return makeRational(qval-ℚ(floor(qval/r.qval))*r.qval);
+					if(type==ℤt(true)) return makeInteger((zval%abs(r.zval)+abs(r.zval))%abs(r.zval));
+					if(isInt(type)) return makeInt(ntype,(intval%abs(r.intval)+abs(r.intval))%abs(r.intval));
+					if(isUint(type)) return makeUint(ntype,uintval%r.uintval);
+				}else{
+					static if(is(typeof(mixin(`fval `~op~` r.fval`))))
+						if(type==ℝ(true)) return makeReal(mixin(`fval `~op~` r.fval`));
+					static if(is(typeof(mixin(`qval `~op~` r.qval`))))
+						if(type==ℚt(true)) return makeRational(mixin(`qval `~op~` r.qval`));
+					static if(is(typeof(mixin(`zval `~op~` r.zval`))))
+						if(type==ℤt(true)) return makeInteger(mixin(`zval `~op~` r.zval`));
+					static if(is(typeof(mixin(`intval `~op~` r.intval`))))
+						if(isInt(type)) return makeInt(ntype,mixin(`intval `~op~` r.intval`));
+					static if(is(typeof(mixin(`uintval `~op~` r.uintval`))))
+						if(isUint(type)) return makeUint(ntype,mixin(`uintval `~op~` r.uintval`));
+				}
 				static if(op=="div"){
 					enforce(!r.eqZImpl,"division by zero");
 					final switch(tag){
 						case Tag.fval: return (this/r).floor();
 						case Tag.qval: return makeInteger(.floor(qval/r.qval));
-						case Tag.zval: return makeInteger(zval/r.zval);
-						case Tag.intval: return makeInt(type,intval/r.intval);
+						case Tag.zval: return makeInteger(floordiv(zval,r.zval));
+						case Tag.intval: return makeInt(type,BitInt!true(intval.nbits,floordiv(intval.val,r.intval.val)));
 						case Tag.uintval: return makeUint(ntype,uintval/r.uintval);
 						case Tag.bval: return makeInteger(ℤ(bval/r.bval));
 						case Tag.closure,Tag.array_,Tag.record,Tag.quval: break;
