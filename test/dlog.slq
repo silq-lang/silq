@@ -1,0 +1,70 @@
+// implementation of Shor's algorithm for discrete log
+// following https://www.cs.umd.edu/~amchilds/teaching/w08/l02.pdf
+
+p:=17;      // Fermat prime modulus for ℤ^*_p
+N:=p sub 1; // size of cyclic group (note: has to be power of two)
+n:=4;       // log₂ N.
+
+// compute δ=dlog_g(x), i.e., g^δ=x, for some generator g of ℤ^*_p.
+def dlog(g:!ℕ,x:!ℕ){
+	while true{
+		(α,β):=(uniformSuperposition[n](N),uniformSuperposition[n](N));
+		measure(powm(x as uint[n+1],α)·powm(g as uint[n+1],N-β)%p);
+		(μ,ν):=measure(QFT(α),QFT(β)) as !ℕ^2;
+		(d,iν):=egcd(ν,N);
+		if d=1{ return -μ*iν%N; }
+	}
+}
+
+def main()⇒dlog(3,3^13%p);
+
+
+// pad x with b zero bits
+def pad[a:!ℕ](x:uint[a],b:!ℕ)qfree⇒((x as 𝔹^a)~vector(b,0:𝔹)) as uint[a+b];
+
+// compute a^b%p
+def powm[n:!ℕ,m:!ℕ](a:uint[n],b:uint[m])lifted: uint[2·n]{
+	(r,x):=(1:uint[2·n], pad(a,n));
+	for i in 0..m{
+		if b[i]{
+			r=r·x%p;
+		}
+		x=x·x%p;
+	}
+	return r;
+}
+
+// generate uniform superposition of |0⟩,…,|N-1⟩
+def uniformSuperposition[n:!ℕ](N:!ℕ){
+	while true {
+		x:=0:uint[n];
+		for i in 0..n{ x[i]:=H(x[i]); }
+		if measure(x<N){ return x; }
+		measure(x);
+	}
+}
+
+// QFT for ℤ_(2^n).
+def QFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
+	for k in [0..n div 2){
+		(ψ[k],ψ[n-k-1]) := (ψ[n-k-1],ψ[k]);
+	}
+	for k in [0..n){
+		ψ[k] := H(ψ[k]);
+		for l in [k+1..n){
+			if ψ[l] && ψ[k]{
+				phase(2·π · 2^(k-l-1));
+			}
+		}
+	}
+	return ψ;
+}
+
+// compute d=gcd(a,b) and k with a·k ≡ d (mod b)
+def egcd(a:!ℤ,b:!ℤ){
+	(x,y,u,v):=(a,b,1,0):!ℤ^4;
+	while y≠0{
+		(x,y,u,v)=(y,x%y,v,u-(x div y)·v);
+	}
+	return (x,u);
+}
