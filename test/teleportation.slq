@@ -1,0 +1,35 @@
+// Function for alice to  operate on 'msg'
+def alice[n:!ℕ](msg:uint[n], qr:uint[n]):!uint[n]^2 {
+	// Perform a Bell measurement
+	for i in [0..n) {
+		if msg[i] { qr[i] := X(qr[i]); }
+		msg[i] := H(msg[i]);
+	}
+
+	return measure(msg, qr);
+}
+
+// Function for bob to recreate 'msg'
+def bob[n:!ℕ](qr:uint[n], aliceBits:!uint[n]^2):uint[n] {
+	// Conditionally perform bit-flip and/or phase-flip on bob's qureg
+	for i in [0..n) {
+		if aliceBits[0][i] { qr[i] := Z(qr[i]); }
+		if aliceBits[1][i] { qr[i] := X(qr[i]); }
+	}
+
+	return qr;
+}
+
+def createBellPair[n:!ℕ]():uint[n]^2 {
+	// Create qureg0 in superposition
+	x := 0:uint[n];
+	for i in [0..n) { x[i] := H(x[i]); }
+
+	// Perform a CNOT on each qubit of qureg1
+	y := 0:uint[n];
+	for i in [0..n) {
+		if x[i] { y[i] := X(y[i]); }
+	}
+
+	return (x, y);
+}
