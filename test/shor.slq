@@ -67,7 +67,7 @@ def factorise[n:!ℕ](a:!ℕ, N:!uint[n]):!ℝ[] {
 			got_factors[1] = (N as !ℝ) / got_factors[0];
 		}
 		else if got_factors[1] != 0 && (N as !ℝ) % got_factors[1] == 0 {
-			got_factors[1] = (N as !ℝ) / got_factors[1];
+			got_factors[0] = (N as !ℝ) / got_factors[1];
 		}
 	}
 
