@@ -1,0 +1,75 @@
+// Some examples
+//a := 5; N := 14:!uint[4];
+a := 7; N := 15:!uint[4];
+//a := 13; N := 21:!uint[5];
+//a := 13; N := 22:!uint[5];
+//a := 11; N := 26:!uint[5];
+//a := 11; N := 35:!uint[6]; // Takes a really long time
+def main() => factorise(a, N);
+
+// Euclid's algorithm for GCD
+def gcd(a:!ℝ, b:!ℝ):!ℝ {
+	if a == 0 {
+		return b;
+	}
+	return gcd(b%a, a);
+}
+
+// Inverse Quantum Fourier Transform
+def invQFT[n:!ℕ](x:uint[n]):uint[n] {
+	for i in [0..n) {
+		for j in [n-i..n) {
+			r := x[n-i-1];
+			if r { x[j] := rotZ(-π/(2^(j-(n-i-1))), x[j]); }
+			forget(r = x[n-i-1]);
+		}
+		x[n-i-1] := H(x[n-i-1]);
+	}
+	return x;
+}
+
+// Classical post-processing
+def extract_factors(a:!ℕ, N:!ℕ, r:!ℕ):!ℝ[] {
+	// 'meas_val' has to be even
+	if (r % 2) != 0 { return (0, 1); }
+
+	// (a^(r/2) mod N) + 1 != 0 mod N
+	num := (a^(r/2) % N);
+	if ((num + 1) % 15) == 0 { return (1, 0); }
+
+	return (gcd(num+1, N), gcd(num-1, N));
+}
+
+// Combining everything
+def factorise[n:!ℕ](a:!ℕ, N:!uint[n]):!ℝ[] {
+	got_factors := array(2, 0:!ℝ);
+
+	while got_factors[0] == 0 && got_factors[1] == 0 {
+		x := 0:uint[2*n]; // Register for storing superposition
+		w := 0:uint[n]; // Modular exponentiation register
+
+		for i in [0..2*n) { x[i] := H(x[i]); } // Creating equal superposition
+
+		for  j in [0..2*n) {
+			if x[j] { w = (a^(2^j)) % N; } // Modular exponentiation
+		}
+
+		measure(w);
+
+		x := invQFT(x); // Converting from fourier basis to computational basis
+		got_factors = extract_factors(a as !ℕ, N as !ℕ, measure(x) as !ℕ);
+
+		if got_factors[0] == 1 || got_factors[1] == 1 {
+			got_factors[0] = 0; got_factors[1] = 0;
+		}
+
+		if got_factors[0] != 0 && (N as !ℝ) % got_factors[0] == 0 {
+			got_factors[1] = (N as !ℝ) / got_factors[0];
+		}
+		else if got_factors[1] != 0 && (N as !ℝ) % got_factors[1] == 0 {
+			got_factors[1] = (N as !ℝ) / got_factors[1];
+		}
+	}
+
+	return got_factors;
+}
