@@ -2,3 +2,5 @@ def main(){ // error
 	n:=2;
 	return 0:int[n];
 }
+
+f:=(){ m:=2; return 0:int[m]; }; // error
