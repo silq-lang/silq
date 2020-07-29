@@ -1,0 +1,1 @@
+def f[n:!ℕ](cand:const int[n])⇒cand=1; // error
