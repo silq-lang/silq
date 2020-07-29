@@ -1,0 +1,1 @@
+def foo[n:ℕ](f:int[n]!→𝔹){} // error
