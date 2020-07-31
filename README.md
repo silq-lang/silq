@@ -20,6 +20,23 @@ To install via vscode without building from source, see: https://silq.ethz.ch/in
 
 Silq is written in the D programming language. D compilers are available at http://dlang.org/download.html.
 
+### FreeBSD
+
+Silq can be built from a port or installed as a binary package on FreeBSD/amd64. 
+Other FreeBSD platforms do currently lack the D language support required by silq.
+
+To install from source, assuming an up-to-date ports tree is available:
+```
+$ cd /usr/ports/lang/silq
+$ make install
+```
+(Or use portmaster or any of the other ports management tools available in FreeBSD ...)
+
+To install from a package:
+```
+$ pkg install silq
+```
+
 ### Other platforms
 
 The build instructions given here are for GNU/Linux and OSX. Silq can also be built on other platforms.
