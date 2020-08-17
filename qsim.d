@@ -2029,7 +2029,7 @@ struct Interpreter(QState){
 				return qstate.makeTuple(unit,[]);
 			}
 			if(auto idx=cast(IndexExp)e){
-				auto a=doIt2(idx.e),i=doIt(idx.a[0]);
+				auto a=doIt2(idx.e),i=doIt(idx.a);
 				auto r=a[i];
 				if(!idx.constLookup){
 					if(idx.byRef){
@@ -2240,8 +2240,7 @@ struct Interpreter(QState){
 		if(auto id=cast(Identifier)lhs) return Assignable!isCat(id.name,[]);
 		if(auto idx=cast(IndexExp)lhs){
 			auto a=getAssignable!isCat(idx.e);
-			enforce(idx.a.length==1,"TODO");
-			auto index=runExp(idx.a[0]);
+			auto index=runExp(idx.a);
 			a.indices~=index;
 			a.locations~=idx.loc;
 			return a;
