@@ -849,7 +849,8 @@ struct QState{
 			assert(0);
 		}
 		static Expression unaryType(string op)(Expression t){
-			static if(op=="-"||op=="~") return minusBitNotType(t);
+			static if(op=="-") return minusType(t);
+			else static if(op=="~") return bitNotType(t);
 			else static if(op=="!") return handleUnary!notType(t);
 			else{
 				enforce(0,text("TODO: '",op,"' for type ",t));
