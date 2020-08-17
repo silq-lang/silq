@@ -807,6 +807,18 @@ struct QState{
 		}
 		Value opIndex(Value i){
 			if(i.isℤ()) return this[i.asℤ()];
+			if(cast(ArrayTy)i.type||cast(VectorTy)i.type||cast(TupleTy)i.type){
+				if(cast(TupleTy)type){
+					auto values=i.array_.map!(v=>this[v]).array;
+					auto ntype=tupleTy(values.map!(v=>v.type).array);
+					return makeTuple(ntype,values);
+				}
+				auto values=i.array_.map!(v=>this[v]).array;
+				auto ntype=!values.length?ast.type.unit:values.map!(v=>v.type).fold!joinTypes;
+				if(cast(ArrayTy)i.type) ntype=arrayTy(ntype);
+				if(auto vt=cast(VectorTy)i.type) ntype=vectorTy(ntype,vt.num);
+				return makeArray(arrayTy(ntype),values);
+			}
 			final switch(tag){
 				case Tag.array_:
 					// TODO: bounds checking
