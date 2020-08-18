@@ -4,7 +4,7 @@ VERSION="1.18.0"
 LINK=https://github.com/ldc-developers/ldc/releases/download/v$VERSION/
 NAME="ldc2-$VERSION-windows-x64"
 FILE="$NAME.7z"
-SUM="aad474ef5ccbfcbbb163800c4ebc3a2e"
+SUM="c969adbded90fc4df62a78422d38f49f"
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
     SUM1="$SUM  $FILE"
     MD5="md5sum"
