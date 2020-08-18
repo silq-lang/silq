@@ -20,3 +20,5 @@ enum defaultExtension="slq";
 		return "prelude.psi";		
 	}else static assert(0);
 }
+
+bool allowUnsafeCaptureConst=false;

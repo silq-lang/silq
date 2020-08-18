@@ -1,0 +1,12 @@
+// args: --unsafe-capture-const --run
+def makeF[n:!ℕ](const x:uint[n]){
+	def f(const y:uint[n]){
+		return x+y;
+	}
+	return f;
+}
+
+def main(){
+	x:=1:uint[2];
+	return makeF(x)(2:uint[2]);
+}

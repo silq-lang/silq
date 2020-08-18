@@ -340,6 +340,7 @@ struct QState{
 		override string toString(){ return text("ref(",ref_,")"); }
 		this(Σ.Ref ref_){ this.ref_=ref_; }
 		override Value get(ref Σ s){
+			if(astopt.allowUnsafeCaptureConst) enforce(ref_ in s.qvars, "dangling reference");
 			auto r=s.qvars[ref_];
 			if(consumedOnRead) removeVar(s);
 			return r;
