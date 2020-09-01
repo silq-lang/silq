@@ -1,0 +1,13 @@
+// args: --unsafe-capture-const --run
+def foo(xs:𝔹^1)lifted{
+	def bar()lifted⇒dup(xs[0]);
+	return bar;
+}
+
+def main(){
+	xs:=(H(0:𝔹),);
+	f:=foo(xs);
+	y:=f();
+	forget(xs=(y,));
+	assert(!measure(H(y)));
+}

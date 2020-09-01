@@ -1,0 +1,13 @@
+// args: --unsafe-capture-const --run
+def builder[n:!ℕ](array: int[n]^n)lifted{
+    def f(function: int[n] !→ lifted 𝔹, i: int[n])lifted {
+        return function(array[i]);
+    }
+    return f;
+}
+
+def main(){
+	x:=(0:int[2],1:int[2]);
+	f:=builder(x);
+	assert(measure(f((x:int[2])lifted⇒x[0],0:int[2])==0));
+}
