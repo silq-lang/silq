@@ -1476,7 +1476,8 @@ struct QState{
 	}
 	Value call(FunctionDef fun,Value thisExp,Value arg,Scope sc,Value* context,Expression type,Location loc){
 		Value fix(Value arg){
-			return arg; // TODO
+			if(type.isClassical()&&!arg.isClassical()) return measure(arg); // TODO: improve simulator so this is not needed
+			return arg;
 		}
 		if(fun.isReverse) return reverse(type,arg);
 		enforce(!thisExp.isValid,"TODO: method calls");

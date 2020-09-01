@@ -1,0 +1,9 @@
+def foo()lifted⇒0:𝔹;
+def bar(x:𝔹)lifted⇒1:𝔹;
+def main(){
+	x:=foo();
+	y:=bar(0:!𝔹);
+	measure(x,y);
+	assert((x,y)==(0,1));
+	return (x,y);
+}
