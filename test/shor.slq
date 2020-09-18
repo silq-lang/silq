@@ -58,14 +58,14 @@ def order(a:!ℕ,N:!ℕ){
 	b:=1:!ℤ;
 	while a^b%N≠1{
 		def f(b:uint[n])lifted⇒powm(a as uint[n],b,N);
-		c:=candidates(quantumSubroutine(f)/2^n);
+		c:=candidates(estimatePhase(f)/2^n);
 		for i in [0..c.length){
 			if a^c[i]%N=1{ b=c[i]; }
 		}
 	}
 	return b coerce !ℕ;
 }
-def quantumSubroutine[n:!ℕ](f:uint[n] !→lifted uint[n]):!ℕ{
+def estimatePhase[n:!ℕ](f:uint[n] !→lifted uint[n]):!ℕ{
     cand := 0:uint[n];
     for k in [0..n) { cand[k] := H(cand[k]); }
     measure(f(cand));
