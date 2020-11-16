@@ -10,10 +10,10 @@ def groverDiffusion[n:!N](cand:uint[n]) mfree: uint[n] {
 def grover[n:!N](f:!(const uint[n] -> lifted B)):!N{
 	nIterations:=floor(π/(4·asin(2^(-n/2))));
 	cand:=0:uint[n];
-    for k in [0..n) { cand[k] := H(cand[k]); }
+	for k in [0..n) { cand[k] := H(cand[k]); }
 
 	for k in [0..nIterations){
-        b := f(cand);
+		b := f(cand);
 		if b {
 			phase(π);
 		}
