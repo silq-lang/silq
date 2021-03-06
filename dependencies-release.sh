@@ -11,7 +11,7 @@ if [[ "$OSTYPE" == "linux-gnu" ]]; then
 elif [[ "$OSTYPE" == "darwin"* ]]; then
     NAME="ldc2-$VERSION-osx-x86_64"
     FILE="$NAME.tar.xz"
-    SUM1="MD5 ($FILE) = ff53cc4270ca95dc1313213c31b66d2e"
+    SUM1="ff53cc4270ca95dc1313213c31b66d2e  $FILE"
     MD5="md5sum"
 else
     >&2 echo "This script does not support your platform at this time."
