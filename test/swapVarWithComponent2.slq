@@ -1,0 +1,13 @@
+// args: --run
+
+n := 2;
+def main(){
+	y:=0:uint[n];
+	for i in 0..n{
+		(a,b):=(0,0):𝔹^2;
+		(b,y[i]):=(y[i],b);
+		a:=CNOT(b,a);
+		forget((a,b)=(0,0));
+	}
+	return y;
+}

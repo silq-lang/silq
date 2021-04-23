@@ -366,7 +366,10 @@ struct QState{
 			return this;
 		}
 		override Value toVar(ref QState state,Value self,bool cleanUp){
-			if(consumedOnRead&&cleanUp){ consumedOnRead=false; state.popFrameCleanup~=this; }
+			if(consumedOnRead){
+				consumedOnRead=false;
+				if(cleanUp) state.popFrameCleanup~=this;
+			}
 			return self;
 		}
 	}
@@ -2313,9 +2316,7 @@ struct Interpreter(QState){
 		}
 		if(auto nde=cast(DefExp)e){
 			auto de=cast(DefineExp)nde.initializer;
-			assert(!!de);
-			auto lhs=de.e1, rhs=runExp(de.e2);
-			assignTo(lhs,rhs);
+			runStm2(de,retState);
 		}else if(auto ae=cast(AssignExp)e){
 			auto lhs=ae.e1,rhs=runExp(ae.e2);
 			assignTo(lhs,rhs);
