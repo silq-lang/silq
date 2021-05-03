@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	x:=(1,2,3):int[3]^3;
+	(x[1],x[1]):=(x[1],x[1]);
+	assert(measure(x)==(1,2,3));
+}

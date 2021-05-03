@@ -1,0 +1,22 @@
+// args: --run
+
+def id[τ:*](arg: τ)⇒arg;
+
+def main(){
+	n:=3;
+	a:=vector(n,0:𝔹);
+	a=vector(n+1 sub 1,0:𝔹);
+	a[1]=1:𝔹;
+	(a[1],a[0]):=(H(a[0]),a[1]);
+	for i in 0..n{ a[i]:=H(a[i]); }
+	for i in 0..n-1{
+		(a[i],a[i+1]):=id(a[i+1],a[i]);
+		(a[i],a[i+1]):=id(a[1+i],a[i]);
+		(a[i+1],a[i]):=(a[i],a[i+1]);
+		(a[i+1],a[i]):=id(a[i],a[i+1]);
+		(a[i+1],a[i]):=id(a[i],a[1+i]);
+	}
+	for i in 0..n{ a[i]:=H(a[i]); }
+	(a[2],a[1],a[0]):=(H(a[0]),a[2],a[1]);
+	assert(measure(a)==(0,1,0));
+}

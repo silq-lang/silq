@@ -1,0 +1,25 @@
+// args: --run
+
+def main(){
+	x:=vector(4,0:𝔹);
+	//for i in 0..4{ (x[i],x[(i+1)%4]):=(H(x[(i+1)%4]),x[i]); } // TODO
+	for k in 0..3{
+		for i in 0..3{ (x[i],x[i+1]):=(H(x[i+1]),x[i]); }
+		(x[3],x[0]):=(H(x[0]),x[3]);
+		
+		(x[3],x[0]):=(H(x[0]),x[3]);
+		for i in (3..-1..0]{ (x[i],x[i+1]):=(H(x[i+1]),x[i]); }
+	}
+
+	for i in 0..3{ x[i+1]:=CNOT(x[i],x[i+1]); }
+
+	for k in 0..3{
+		for i in 1..4{ (x[i-1],x[i]):=(H(x[i]),x[i-1]); }
+		(x[3],x[0]):=(H(x[0]),x[3]);
+		
+		(x[3],x[0]):=(H(x[0]),x[3]);
+		for i in (4..-1..1]{ (x[i-1],x[i]):=(H(x[i]),x[i-1]); }
+	}
+	
+	assert(measure(x)==vector(4,0));
+}

@@ -2322,7 +2322,7 @@ struct Interpreter(QState){
 			assignTo(lhs,rhs);
 		}else if(auto ae=cast(DefineExp)e){
 			if(ae.isSwap){
-				auto tpl=cast(TupleExp)ae.e2;
+				auto tpl=cast(TupleExp)unwrap(ae.e2);
 				enforce(!!tpl);
 				swap(tpl.e[0],tpl.e[1]);
 			}else{

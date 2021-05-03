@@ -1,0 +1,20 @@
+// args: --run
+def W(a:𝔹,b:𝔹)mfree{
+	a:=H(a);
+	a⊕=b;
+	b:=H(b);
+	b⊕=a;
+	return (a,b);
+}
+
+n:=2;
+def main(){
+	x:=1:uint[n];
+	for i in 0..n{ x[i]:=H(x[i]); }
+	y:=0:uint[n];
+	for i in 0..n{ y[i]:=H(y[i]); }
+	for i in [0..n){
+		(x[i], y[i]) := W(x[i], y[i]);
+	}
+	return (x,y);
+}
