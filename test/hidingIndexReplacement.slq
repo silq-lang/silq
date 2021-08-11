@@ -1,0 +1,13 @@
+// args: --run
+
+def id(a:B)mfree{
+	return a
+}
+def main(){
+    x:=(0,1):!ℕ^2;
+	def foo(x:uint[2])mfree{
+		x[0]:=id(x[0]);
+		return x;
+	}
+	assert(measure(foo(1:uint[2]))==1);
+}
