@@ -1,0 +1,19 @@
+// args: --run
+
+def op[n:!N](const q:uint[n], anc:B)mfree{
+	for i in [0..n){
+		anc xorb=q[i];
+	}
+	return anc;
+}
+n:=3;
+def main(){
+	q := 0:uint[n];
+	anc := op(q, 0:B);
+	forget(reverse(op)(q,anc)=0:𝔹);
+	anc := op(q, 0:B);
+	0:B := reverse(op)(q,anc);
+	anc := op(q, 0:B);
+	op(q, 0:𝔹) := anc;
+	assert(measure(q)==0);
+}

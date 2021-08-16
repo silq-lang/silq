@@ -3,6 +3,7 @@
 import qft;
 def main(){
 	r:=reverse(QFT[3])(QFT(0:int[3]));
+	r:=reverse(QFT)(QFT(r));
 	assert(measure(dup(r))=0);
 	return r;
 }

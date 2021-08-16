@@ -16,7 +16,7 @@ def QFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
 }
 def main(){
 	x:=measure(H(false),H(false),H(false),H(false));
-	iQFT:=[n:!ℕ]⇒reverse(QFT[n]);
+	iQFT:=reverse(QFT);
 	r:=iQFT(QFT(x as uint[4]));
 	forget(r=(x as uint[4]));
 	return (x as !uint[4], reverse(QFT[10]));
