@@ -1,3 +1,239 @@
+// skipped
+
+def foo(a:!ℕ)(b:!ℕ)⇒a+b+c;
+
+/+
+def main(){
+	//x:=(1,1):𝔹 x 𝔹;
+	x:=uint;
+	return x[3];
+}
++/
+//def main()⇒measure(H(0:𝔹));
+
+/+
+def main(){
+	n:=3,m:=3;
+	x:=vector(n,vector(m,0:𝔹));
+	(x[1],x[1][2],x[2][1],x[2]):=(x[2],x[2][1],x[1][2],x[1]);
+}
++/
+
+/+
+def map[a,b,n:!ℕ](f: a!→mfree b, xs: a^n)mfree: b^n{
+	if n==0{ forget(xs=()); result := () coerce b^n; }
+	else { (x,)~xs:=xs; result := (f(x),)~map(f, xs); }
+	return result;
+}
+
+def zip[a,b,n:!ℕ](xs:a^n,ys:b^n)qfree:(a×b)^n{
+	xs:=xs:a[];
+	ys:=ys:b[];
+	r:=[]:(a×b)[];
+	repeat n{
+		(x,)~xs:=xs;
+		(y,)~ys:=ys;
+		r~=[(x,y)];
+	}
+	return r coerce (a×b)^n;
+}
+
+def unzip[a,b,n:!ℕ](xs:(a×b)^n)qfree:a^n×b^n{
+	xs:=xs:(a×b)[];
+	rs:=[]:a[];
+	qs:=[]:b[];
+	repeat n{
+		((r,q),)~xs:=xs;
+		rs~=[r];
+		qs~=[q];
+	}
+	return (rs,qs) coerce a^n×b^n;
+}
+
+def W(a:𝔹,b:𝔹)mfree{
+	a:=H(a);
+	a⊕=b;
+	b:=H(b);
+	b⊕=a;
+	return (a,b);
+}
+
+n:=2;
+def main(){
+	x:=0:uint[n];
+	// do some stuff to x
+	y:=0:uint[n];
+	// do some stuff to y
+	(x,y):=unzip(map(W, zip(x as 𝔹^n,y as 𝔹^n))) as int[n]^2;
+	return (x,y);
+}
++/
+
+/+
+def map[a,b,n:!ℕ](f: a!→mfree b, xs: a^n)mfree: b^n{
+	if n==0{ forget(xs=()); result := () coerce b^n; }
+	else { (x,)~xs:=xs; result := (f(x),)~map(f, xs); }
+	return result;
+}
+def concatenate[a,m:!ℕ,n₁:!ℕ,n₂:!ℕ](xss: (a^n₁)^m, yss: (a^n₂)^m)qfree: (a^(n₁+n₂))^m{
+	if m == 0{
+		forget(xss=());
+		forget(yss=());
+		return () coerce (a^(n₁+n₂))^m;
+	}
+	(xs,)~xss:=xss;
+	(ys,)~yss:=yss;
+	return (xs~ys,)~concatenate(xss,yss);
+}
+
+def transpose[a,m:!ℕ,n:!ℕ](xss:(a^n)^m)qfree:(a^m)^n{
+	if m == 0 {
+		forget(xss=());
+		result:=vector(n,():a^0) coerce (a^m)^n;
+	}else if m == 1{
+		(xs,)~xss:=xss;
+		forget(xss=());
+		r:=[]:(a^1)[];
+		xs:=xs:a[];
+		for i in 0..n{
+			(x,)~xs:=xs;
+			r~=[(x,)];
+		}
+		forget(xs=());
+		result:=r coerce (a^m)^n;
+	}else{
+		(xs,)~xss:=xss;
+		result:=concatenate(transpose(xs,),transpose(xss));
+	}
+	return result;
+}
++/
+
+/+
+n := 2;
+def main(){
+	x:=0:uint[n];
+	// do some stuff to x
+	y:=0:uint[n];
+	// do some stuff to y
+	for i in 0..n{
+		// move (x[i], y[i]) out of array:
+		(a,b) := (x[i],y[i]):𝔹^2;
+		x[i] := CNOT(a,x[i]);
+		y[i] := CNOT(b,y[i]);
+		// apply gate
+		(a,b) := W(a,b);
+		// move (a,b) back into array:
+		x[i] := CNOT(a,x[i]);
+		y[i] := CNOT(b,y[i]);
+		forget((a,b)=(x[i],y[i]));
+	}
+	return (x,y);
+}
++/
+
+/+
+def foo[n:!ℕ](xs:ℝ^n){
+	return xs;
+}
+
+def bar[n:!ℕ,m:!ℕ](xs:ℝ^n,ys:ℝ^m):ℝ^(n+m){
+	return xs~ys;
+}
+
+def main(){
+	//return foo[4](1,2,3,4);
+	return bar((1,2),(3,4,5));
+}
++/
+
+/+
+def main(){
+	return rotY(π/4,0:𝔹);
+}
++/
+/+
+n:=10;
+def main(){
+	x:=vector(n sub 1,0:𝔹);
+	/+for i in 0..n-1{ x[i]:=H(x[i]); }
+	y:=1:𝔹;
+	for i in 0..n-1{ y⊕=x[i]; } }
+	x:=x~(y,);
+	for i in 0..n{ x[i]:=H(x[i]); }+/
+	y:=H(0:𝔹);
+	for i in 0..n{ x[i]:=CNOT(y,x[i]); }
+	x:=x~(y,);
+	return x;
+}
++/
+
+/+
+def x1_xor_xn[n:!ℕ](x:𝔹^n)lifted⇒x[0]⊕all(x[1..n]);
+
+def main(){
+	x:=-1 sub -2 coerce !ℕ;
+	return x1_xor_xn();
+}
+
+def all[n:!ℕ](x:𝔹^n)lifted{
+	r:=1:𝔹;
+	for i in 0..n{ r&=x[i]; }
+	return r;
+}
++/
+/+
+def main(){
+	x:=H(0:𝔹);
+	return CNOT(dup(x),x);
+}
++/
+
+/+def deutsch(f: 𝔹 !→lifted 𝔹){
+	x:=H(0:𝔹);
+	if f(x){ phase(π); }
+	return measure(H(x));
+}+/
+/+def main(){
+	x:=vector(6,0:𝔹);
+	return x;
+}
++/
+
+/+
+def main[n:!ℕ](){
+	return (𝔹, int[n]):*^2;
+}
++/
+/+
+def main(){
+	x≔1;
+}
++/
+/+
+def main(){
+	x:=1:𝔹;
+	y:=dup(x);
+	//return (x,Z(y));
+	dump();
+	return (x,y);
+}
++/
+/+
+def main(){
+	//return H(0:𝔹,1:𝔹,0:𝔹);
+	x:=(0:𝔹,1:𝔹,0:𝔹);
+	//x[0,1]:=H(x[0,1]);
+	return x[0,2,1];
+}
++/
+/+
+def builder2(const a:𝔹) {
+    def f2()const: 𝔹{
+        return a;
+    }
+    return f2;
+}+/
 /+
 def main(){
 	a:=(1:𝔹,H(0:𝔹),1:𝔹);

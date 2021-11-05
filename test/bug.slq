@@ -1,3 +1,10 @@
+
+/+
+def main(){
+	[1,2]:=[1,2,3]; // TODO: error
+}
++/
+
 /+
 def main(){
 	a:=[]:ℕ[]; // TODO: error here?

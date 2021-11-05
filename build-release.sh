@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.22.0"
+VERSION="1.28.0"
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
     NAME="ldc2-$VERSION-linux-x86_64"

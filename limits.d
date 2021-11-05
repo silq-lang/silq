@@ -70,7 +70,7 @@ auto expandFlatMap(alias a)(Case!ExpLim[][] r){
 }
 
 
-DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}body{ // TODO: handle iverson brackets in some way
+DExpr getLimit(DVar v,DExpr e,DExpr x,DExpr facts=one)in{assert(isInfinite(e));}do{ // TODO: handle iverson brackets in some way
 	e=e.simplify(facts);
 	x=x.simplify(facts);
 	Case!ExpLim[] doIt(DVar v,DExpr e,DExpr x){

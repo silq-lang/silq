@@ -272,7 +272,7 @@ mixin template Visitors(){
 		static if(is(typeof(this)==DIvr)){
 			foreach(d;args[1].allOf!DDelta) assert(0,text(args[1]));
 		}
-	}body{
+	}do{
 		subExprs=args;
 	}
 	static if(is(typeof(subExprs)==Seq!(DExpr[2])))
@@ -411,7 +411,7 @@ mixin template FactoryFunction(T){
 		DExpr dIntSmp(DVar var,DExpr expr,DExpr facts){
 			return dInt(var,expr).simplify(facts);
 		}
-		DExpr dInt(DVar var,DExpr expr)in{assert(var&&expr&&!cast(DDeBruijnVar)var);}body{
+		DExpr dInt(DVar var,DExpr expr)in{assert(var&&expr&&!cast(DDeBruijnVar)var);}do{
 			return dInt(expr.incDeBruijnVar(1,0).substitute(var,db1));
 		}
 	}else static if(is(T==DSum)){
@@ -422,7 +422,7 @@ mixin template FactoryFunction(T){
 		DExpr dSumSmp(DVar var,DExpr expr,DExpr facts){
 			return dSum(var,expr).simplify(facts);
 		}
-		DExpr dSum(DVar var,DExpr expr)in{assert(var&&expr&&!cast(DDeBruijnVar)var);}body{
+		DExpr dSum(DVar var,DExpr expr)in{assert(var&&expr&&!cast(DDeBruijnVar)var);}do{
 			return dSum(expr.incDeBruijnVar(1,0).substitute(var,db1));
 		}
 	}else static if(is(T==DLim)){
@@ -433,45 +433,45 @@ mixin template FactoryFunction(T){
 		DExpr dLimSmp(DVar v,DExpr e,DExpr x,DExpr facts){
 			return dLim(v,e,x).simplify(facts);
 		}
-		DExpr dLim(DVar v,DExpr e,DExpr x)in{assert(v&&e&&x&&(!cast(DDeBruijnVar)v||v==db1));}body{
+		DExpr dLim(DVar v,DExpr e,DExpr x)in{assert(v&&e&&x&&(!cast(DDeBruijnVar)v||v==db1));}do{
 			if(v==db1) return dLim(e,x.incDeBruijnVar(1,1));
 			return dLim(e,x.incDeBruijnVar(1,0).substitute(v,db1));
 		}
 	}else static if(is(T==DDiff)){
-		DExpr dDiff(DVar v,DExpr e,DExpr x)in{assert(v&&e&&x&&(!cast(DDeBruijnVar)v||v==db1));}body{
+		DExpr dDiff(DVar v,DExpr e,DExpr x)in{assert(v&&e&&x&&(!cast(DDeBruijnVar)v||v==db1));}do{
 			if(v==db1) return dDiff(e.incDeBruijnVar(1,1),x);
 			return dDiff(e.incDeBruijnVar(1,0).substitute(v,db1),x);
 		}
 		DExpr dDiff(DVar v,DExpr e){ return dDiff(v,e,v); }
 	}else static if(is(T==DLambda)){
 		@disable DExpr dLambdaSmp(DVar var,DExpr expr);
-		DLambda dLambdaSmp(DExpr expr,DExpr facts)in{assert(expr);}body{
+		DLambda dLambdaSmp(DExpr expr,DExpr facts)in{assert(expr);}do{
 			auto r=dLambda(expr).simplify(facts);
 			assert(!!cast(DLambda)r);
 			return cast(DLambda)cast(void*)r;
 		}
-		DLambda dLambdaSmp(DVar var,DExpr expr,DExpr facts)in{assert(var&&expr);}body{
+		DLambda dLambdaSmp(DVar var,DExpr expr,DExpr facts)in{assert(var&&expr);}do{
 			auto r=dLambda(var,expr).simplify(facts);
 			assert(!!cast(DLambda)r);
 			return cast(DLambda)cast(void*)r;
 		}
-		DLambda dLambda(DVar var,DExpr expr)in{assert(var&&expr&&(!cast(DDeBruijnVar)var||var==db1));}body{
+		DLambda dLambda(DVar var,DExpr expr)in{assert(var&&expr&&(!cast(DDeBruijnVar)var||var==db1));}do{
 			if(var==db1) return dLambda(expr);
 			return dLambda(expr.incDeBruijnVar(1,0).substitute(var,db1));
 		}
 	}else static if(is(T==DDistLambda)){
 		@disable DExpr dDistLambdaSmp(DVar var,DExpr expr);
-		DDistLambda dDistLambdaSmp(DExpr expr,DExpr facts)in{assert(expr);}body{
+		DDistLambda dDistLambdaSmp(DExpr expr,DExpr facts)in{assert(expr);}do{
 			auto r=dDistLambda(expr).simplify(facts);
 			assert(!!cast(DDistLambda)r);
 			return cast(DDistLambda)cast(void*)r;
 		}
-		DDistLambda dDistLambdaSmp(DVar var,DExpr expr,DExpr facts)in{assert(var&&expr);}body{
+		DDistLambda dDistLambdaSmp(DVar var,DExpr expr,DExpr facts)in{assert(var&&expr);}do{
 			auto r=dDistLambda(var,expr).simplify(facts);
 			assert(!!cast(DDistLambda)r);
 			return cast(DDistLambda)cast(void*)r;
 		}
-		DDistLambda dDistLambda(DVar var,DExpr expr)in{assert(var&&expr&&(!cast(DDeBruijnVar)var||var==db1));}body{
+		DDistLambda dDistLambda(DVar var,DExpr expr)in{assert(var&&expr&&(!cast(DDeBruijnVar)var||var==db1));}do{
 			if(var==db1) return dDistLambda(expr);
 			return dDistLambda(expr.incDeBruijnVar(1,0).substitute(var,db1));
 		}
@@ -486,9 +486,9 @@ mixin template FactoryFunction(T){
 		auto dArray(DExpr[] entries){
 			auto dbv=db1;
 			// TODO: not necessarily very clean for types that are not real numbers, but can be interpreted in terms of linear algebra
-			DExpr body_=zero;
-			foreach(i,e;entries) body_=body_+dEq(dbv,i.dℚ)*entries[i].incDeBruijnVar(1,0);
-			return dArray(dℚ(ℤ(entries.length)),dLambda(body_));
+			DExpr do_=zero;
+			foreach(i,e;entries) do_=do_+dEq(dbv,i.dℚ)*entries[i].incDeBruijnVar(1,0);
+			return dArray(dℚ(ℤ(entries.length)),dLambda(do_));
 		}
 	}else static if(is(T==Dℚ)){
 		DExpr dℚ(long c){ return dℚ(ℚ(c)); }
@@ -626,7 +626,7 @@ mixin FactoryFunction!DDeBruijnVar;
 @property db3(){ return dDeBruijnVar(3); }
 
 // substitute all variables from 'from' by the respective expressions in 'to' at the same time (avoiding capture)
-DExpr substituteAll(DExpr e,DVar[] from, DExpr[] to)in{assert(from.length==to.length);}body{
+DExpr substituteAll(DExpr e,DVar[] from, DExpr[] to)in{assert(from.length==to.length);}do{
 	assert(from.length<int.max);
 	auto ne=e;
 	auto vars=from.map!(a=>freshVar).array; // TODO: get rid of this!
@@ -700,13 +700,13 @@ Dℚ nthRoot(ℚ x,ℤ n){
 	return null;
 }
 
-ℤ ceilLog2(ℤ x)in{assert(x>=1);}body{
+ℤ ceilLog2(ℤ x)in{assert(x>=1);}do{
 	ℤ r=0;
 	for(ℤ y=1;y<x;y*=2) ++r;
 	return r;
 }
 
-Dℚ[2] isPower(ℤ x,size_t bound=-1)in{assert(x>=0);}body{ // TODO: return Maybe!(ℤ[2])
+Dℚ[2] isPower(ℤ x,size_t bound=-1)in{assert(x>=0);}do{ // TODO: return Maybe!(ℤ[2])
 	if(x<4) return [null,null];
 	ℤ i = ceilLog2(x);
 	if(bound!=-1) if(i>bound) return [null,null];
@@ -716,7 +716,7 @@ Dℚ[2] isPower(ℤ x,size_t bound=-1)in{assert(x>=0);}body{ // TODO: return May
 	return [null,null];
 }
 
-Dℚ integerLog(ℤ x,ℤ b)in{assert(x>0);}body{ // TODO: return Maybe!ℤ
+Dℚ integerLog(ℤ x,ℤ b)in{assert(x>0);}do{ // TODO: return Maybe!ℤ
 	if(x==1) return cast(Dℚ)zero;
 	if(x%b) return null;
 	ℤ r=0,d=1;
@@ -873,7 +873,7 @@ class DPlus: DCommutAssocOp{
 	override @property string symbol(Format formatting,int binders){ return "+"; }
 	mixin Visitors;
 
-	static void insert(ref DExprSet summands,DExpr summand)in{assert(!!summand);}body{
+	static void insert(ref DExprSet summands,DExpr summand)in{assert(!!summand);}do{
 		if(summand==zero) return;
 		if(summand in summands){
 			summands.remove(summand);
@@ -1139,7 +1139,7 @@ class DMult: DCommutAssocOp{
 	}
 	mixin Visitors;
 
-	static void insert(string file=__FILE__,int line=__LINE__)(ref DExprSet factors,DExpr factor)in{assert(!!factor);}body{
+	static void insert(string file=__FILE__,int line=__LINE__)(ref DExprSet factors,DExpr factor)in{assert(!!factor);}do{
 		if(factor==one) return;
 		if(factor==zero) factors.clear();
 		if(zero in factors) return;
@@ -1150,7 +1150,7 @@ class DMult: DCommutAssocOp{
 			factors.insert(factor);
 		}
 	}
-	static void insertAndSimplify(ref DExprSet factors,DExpr factor,DExpr facts)in{assert(factor&&facts);}body{
+	static void insertAndSimplify(ref DExprSet factors,DExpr factor,DExpr facts)in{assert(factor&&facts);}do{
 		foreach(i;0..2){
 			if(auto dm=cast(DMult)factor){
 				foreach(f;dm.factors)
@@ -1168,7 +1168,7 @@ class DMult: DCommutAssocOp{
 			combineCache[q(e2,e1,facts)]=r;
 			return r;
 		}
-		static DExpr combineImpl(DExpr e1,DExpr e2,DExpr facts)in{assert(!cast(DMult)e1&&!cast(DMult)e2);}body{
+		static DExpr combineImpl(DExpr e1,DExpr e2,DExpr facts)in{assert(!cast(DMult)e1&&!cast(DMult)e2);}do{
 			if(e1==one) return e2;
 			if(e2==one) return e1;
 			static DExpr combineInf(DExpr e1,DExpr e2,DExpr facts){
@@ -1708,7 +1708,7 @@ struct DPolynomial{
 	long degree=-1;
 	bool initialized(){ return !!var; }
 	T opCast(T:bool)(){ return initialized(); }
-	void addCoeff(long exp,DExpr coeff)in{assert(exp>=0);}body{
+	void addCoeff(long exp,DExpr coeff)in{assert(exp>=0);}do{
 		degree=max(degree,exp);
 		coefficients[exp]=coefficients.get(exp,zero)+coeff;
 	}
@@ -1722,7 +1722,7 @@ struct DPolynomial{
 		DExpr expr;
 		DExpr cond;
 	}
-	Zero[] zeros()in{assert(degree<=2);}body{ // TODO: get rid of allocation?
+	Zero[] zeros()in{assert(degree<=2);}do{ // TODO: get rid of allocation?
 		Zero[] r;
 		auto a=coefficients.get(2,zero);
 		auto b=coefficients.get(1,zero);
@@ -2173,7 +2173,7 @@ DExpr linearizeConstraints(alias filter=e=>true)(DExpr e,DVar var){ // TODO: don
 }
 
 DExpr linearizeConstraint(T)(T cond,DVar var) if(is(T==DIvr)||is(T==DDelta))
-in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,leZ));}body{
+in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,leZ));}do{
 	alias Type=DIvr.Type;
 	alias eqZ=Type.eqZ, neqZ=Type.neqZ, leZ=Type.leZ, lZ=Type.lZ;
 	enum isDelta=is(T==DDelta);
@@ -2229,7 +2229,7 @@ in{static if(is(T==DIvr)) with(DIvr.Type) assert(util.among(cond.type,eqZ,neqZ,l
 			DExpr negatePower()in{
 				auto q2=cast(Dℚ)e2;
 				assert(!!q2 && q2.c<0);
-			}body{
+			}do{
 				auto lhsInv=e1^^(-e2);
 				auto r=dIvr(neqZ,rhs)*doIt(-parity*rhs*lhsInv,ty,lhsInv.polyNormalize(var),rhs^^mone);
 				if(ty==leZ){
@@ -2619,7 +2619,7 @@ DExpr factorDIvrProduct(alias wrap)(DExpr e){
 
 DExpr negateDIvrProduct(DExpr ivrs)in{
 	assert(ivrs.factors.all!(x=>!!cast(DIvr)x));
-}body{
+}do{
 	auto r=zero;
 	auto cur=one;
 	foreach(f;ivrs.factors){
@@ -2633,7 +2633,7 @@ DExpr negateDIvrProduct(DExpr ivrs)in{
 
 DExpr factorDIvrProduct(alias wrap)(DExpr ivrs,DExpr nonIvrs)in{
 	assert(ivrs.factors.all!(x=>!!cast(DIvr)x));
-}body{
+}do{
 	auto tt=wrap(nonIvrs),ff=wrap(zero);
 	auto r=ivrs*tt;
 	return ivrs*tt+negateDIvrProduct(ivrs)*ff;
@@ -3285,7 +3285,7 @@ class DInt: DOp{
 
 	static MapX!(Q!(DExpr,DExpr),DExpr) ssimplifyCache;
 
-	static DExpr staticSimplify(DExpr expr,DExpr facts=one)in{assert(expr&&facts);}body{
+	static DExpr staticSimplify(DExpr expr,DExpr facts=one)in{assert(expr&&facts);}do{
 		auto nexpr=expr.simplify(facts.incDeBruijnVar(1,0).simplify(one));
 		if(expr != nexpr) return dIntSmp(nexpr,facts);
 		auto ow=expr.splitMultAtVar(db1);
@@ -3654,7 +3654,7 @@ template BitwiseImpl(string which){
 	override @property Precedence precedence(){ return mixin("Precedence."~which); }
 	override @property string symbol(Format formatting,int binders){ return " "~which~" "; }
 	mixin Visitors;
-	static void insert(ref DExprSet operands,DExpr operand)in{assert(!!operand);}body{
+	static void insert(ref DExprSet operands,DExpr operand)in{assert(!!operand);}do{
 		if(operand==zero){
 			static if(which=="bitAnd") operands.clear();
 			else static if(which=="bitOr"||which=="bitXor") return;

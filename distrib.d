@@ -19,11 +19,11 @@ enum distribNames=[__traits(allMembers,distrib)].filter!(x=>x.endsWith("PDF")).m
 import std.traits: ParameterIdentifierTuple;
 enum paramNames(string name)=[ParameterIdentifierTuple!(mixin(name~"PDF"))[1..$]];
 
-DExpr pdf(string name)(DVar var,DExpr[] args)in{assert(args.length==paramNames!name.length);}body{
+DExpr pdf(string name)(DVar var,DExpr[] args)in{assert(args.length==paramNames!name.length);}do{
 	return mixin(text(name,"PDF(var,",iota(paramNames!name.length).map!(i=>text("args[",i,"]")).join(","),")"));
 }
 
-Cond[] cond(string name)(DExpr[] args)in{assert(args.length==paramNames!name.length);}body{
+Cond[] cond(string name)(DExpr[] args)in{assert(args.length==paramNames!name.length);}do{
 	return mixin(text(name,"Cond(",iota(paramNames!name.length).map!(i=>text("args[",i,"]")).join(","),")"));
 }
 
@@ -249,7 +249,7 @@ class Distribution{
 		assert(isTuple||args.length==1);
 		foreach(v;args) assert(v in freeVars);
 		assert(!ctx||ctx in freeVars);
-	}body{
+	}do{
 		hasArgs=true;
 		this.args=args;
 		argsIsTuple=isTuple;
@@ -278,7 +278,7 @@ class Distribution{
 			assert(v in freeVars);
 		// TODO: this does not check that variables occur at most once in orderedFreeVars
 		assert(isTuple||orderedFreeVars.length==1);+/
-	}body{
+	}do{
 		freeVarsOrdered=true;
 		this.orderedFreeVars=orderedFreeVars;
 		this.isTuple=isTuple;
@@ -318,7 +318,7 @@ class Distribution{
 		return r;
 	}
 
-	Distribution orderedJoin(Distribution b)in{assert(freeVarsOrdered && b.freeVarsOrdered);}body{
+	Distribution orderedJoin(Distribution b)in{assert(freeVarsOrdered && b.freeVarsOrdered);}do{
 		auto r=dup();
 		auto bdist = b.distribution.substituteAll(cast(DVar[])b.orderedFreeVars,cast(DExpr[])orderedFreeVars);
 		r.distribution=r.distribution+bdist;
@@ -399,7 +399,7 @@ class Distribution{
 	void distribute(DExpr pdf){ distribution=distribution*pdf; }
 	void initialize(DNVar var,DExpr exp,Expression ty)in{
 		assert(var&&exp&&ty);
-	}body{
+	}do{
 		assert(!distribution.hasFreeVar(var));
 		distribute(dDelta(exp,var,ty));
 	}
@@ -412,7 +412,7 @@ class Distribution{
 		distribute(dDelta(exp,var,ty));
 		marginalize(nvar);
 	}
-	void marginalize(DNVar var)in{assert(var in freeVars,text(var)); }body{
+	void marginalize(DNVar var)in{assert(var in freeVars,text(var)); }do{
 		//assert(distribution.hasFreeVar(var),text(distribution," ",var));
 		//writeln("marginalizing: ",var,"\ndistribution: ",distribution,"\nmarginalized: ",dInt(var,distribution));
 		distribution=dIntSmp(var,distribution,one);
@@ -459,7 +459,7 @@ class Distribution{
 
 	private DExpr toDExprLambdaBody(bool stripContext=false)in{
 		assert(!stripContext||isTuple&&orderedFreeVars.length==2);
-	}body{
+	}do{
 		auto vars=orderedFreeVars;
 		assert(isTuple||vars.length==1);
 		auto values=(isTuple&&!stripContext?dTuple(cast(DExpr[])vars):vars[0]).incDeBruijnVar(1,0);
@@ -485,14 +485,14 @@ class Distribution{
 		}
 	}
 	
-	DExpr toDExpr()in{assert(freeVarsOrdered&&hasArgs);}body{
+	DExpr toDExpr()in{assert(freeVarsOrdered&&hasArgs);}do{
 		return dLambda(toDExprLambdaBody());
 	}
 
 	DExpr toDExprWithContext(DExpr context,bool stripContext=false)in{
 		assert(!!this.context);
 		assert(freeVarsOrdered&&hasArgs);
-	}body{
+	}do{
 		auto bdy=toDExprLambdaBody(stripContext);
 		context=context.incDeBruijnVar(1,0);
 		bdy=bdy.substitute(db1,dTuple([db1,context]));
@@ -502,7 +502,7 @@ class Distribution{
 	static Distribution fromDExpr(DExpr dexpr,size_t nargs,bool argsIsTuple,DNVar[] orderedFreeVars,bool isTuple,Expression[] types)in{
 		assert(argsIsTuple||nargs==1);
 		assert(isTuple||orderedFreeVars.length==1);
-	}body{
+	}do{
 		auto r=new Distribution();
 		dexpr=dexpr.incDeBruijnVar(1,0);
 		auto values=db1;

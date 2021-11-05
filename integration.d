@@ -165,7 +165,7 @@ private DExpr definiteIntegralContinuous(DExpr expr,DExpr facts)out(res){
 		integrations++;
 		if(res) successfulIntegrations++;
 	}
-}body{
+}do{
 	// ensure integral is continuous
 	auto var=db1;
 	if(!expr.isContinuousMeasureIn(var)) return null;

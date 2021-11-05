@@ -1783,17 +1783,17 @@ QState.Value readVariable(QState)(ref QState qstate,VarDecl var,Scope from,bool 
 	if(r) return qstate.readField(r,var.getName,constLookup);
 	return qstate.readLocal(var.getName,constLookup);
 }
-QState.Value getContextFor(QState)(ref QState qstate,Declaration meaning,Scope sc)in{assert(meaning&&sc);}body{
+QState.Value getContextFor(QState)(ref QState qstate,Declaration meaning,Scope sc)in{assert(meaning&&sc);}do{
 	if(meaning.getName in qstate.vars) return QState.nullValue;
 	if(auto fd=sc.getFunction()) return qstate.readLocal(fd.contextName,true);
 	return QState.nullValue;
 }
-QState.Value buildContextFor(QState)(ref QState qstate,FunctionDef fd)in{assert(fd&&fd.scope_);}body{
+QState.Value buildContextFor(QState)(ref QState qstate,FunctionDef fd)in{assert(fd&&fd.scope_);}do{
 	QState.Record record;
 	foreach(id;fd.captures) record[id.name]=lookupMeaning(qstate,id,fd.fscope_.parent);
 	return QState.makeRecord(record);
 }
-QState.Value lookupMeaning(QState)(ref QState qstate,Identifier id,Scope sc=null)in{assert(id && id.scope_,text(id," ",id.loc));}body{
+QState.Value lookupMeaning(QState)(ref QState qstate,Identifier id,Scope sc=null)in{assert(id && id.scope_,text(id," ",id.loc));}do{
 	if(!sc) sc=id.scope_;
 	if(!id.meaning||!sc||!id.meaning.scope_)
 		return qstate.readLocal(id.name,id.constLookup);
