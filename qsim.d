@@ -14,7 +14,7 @@ import ast.expression,ast.declaration,ast.type;
 import ast.lexer,ast.semantic_,ast.reverse,ast.scope_,ast.error;
 import util;
 
-import std.random, sample;
+import std.random;
 import std.complex, std.math;
 
 class LocalizedException: Exception{
