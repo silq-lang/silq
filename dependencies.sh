@@ -33,5 +33,5 @@ if [ ! -d dmd2 ]; then
     fi
 fi
 
-#git submodule init
-#git submodule update
+git submodule init
+git submodule update
