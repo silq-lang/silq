@@ -66,11 +66,11 @@ def order(a:!ℕ,N:!ℕ){
 	return b coerce !ℕ;
 }
 def estimatePhase[n:!ℕ](f:uint[n] !→lifted uint[n]):!ℕ{
-    cand := 0:uint[n];
-    for k in [0..n) { cand[k] := H(cand[k]); }
-    measure(f(cand));
+	cand := 0:uint[n];
+	for k in [0..n) { cand[k] := H(cand[k]); }
+	measure(f(cand));
 	cand := reverse(QFT[n])(cand);
-    return measure(cand) as !ℕ;
+	return measure(cand) as !ℕ;
 }
 def candidates(q:!ℚ){ // TODO: probably this can be improved
 	res:=[]:!ℤ[];
