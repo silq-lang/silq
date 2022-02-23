@@ -1,0 +1,28 @@
+// args: --run
+import qft;
+
+def draper_add_impl[n:!ℕ](a: int[n],const b: int[n])mfree: int[n]{
+	a := QFT(a);
+	for k in [0..n){
+		for l in [0..n-k){
+			if a[k] && b[l]{
+				phase(2·π·2^(k+l-n));
+			}
+		}
+	}
+	return reverse(QFT)(a);
+}
+
+def draper_add[n:!ℕ](a: int[n],const b: int[n])qfree: int[n]{
+	return (draper_add_impl[n] pun int[n]×const int[n]!→qfree int[n])(a,b);
+}
+
+def main(){
+	n:=3;
+	i:=1, j:=2;
+	a:=i as int[n], b:=j as int[n];
+	c:=draper_add(dup(a),b);
+	forget(c=draper_add(dup(a),b));
+	k:=measure(draper_add(a,b));
+	assert((k as !int[n])==(i+j as !int[n]));
+}

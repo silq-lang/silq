@@ -1,0 +1,13 @@
+// args: --run
+
+def foo_base(x:𝔹) ⇒ H(H(x));
+def foo(x:𝔹)qfree⇒(foo_base pun 𝔹!→qfree 𝔹)(x);
+def bar(x:𝔹)lifted⇒foo(x);
+
+def main(){
+	x:=H(0:𝔹);
+	x:=foo(x);
+	y:=bar(x);
+	forget(x=bar(y));
+	assert(measure(H(y))=0);
+}

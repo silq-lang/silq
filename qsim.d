@@ -2137,7 +2137,7 @@ struct Interpreter(QState){
 					return qstate.makeTuple(unit,[]);
 				}
 			}else if(auto tae=cast(TypeAnnotationExp)e){
-				if(tae.e.type==tae.type) return doIt(tae.e);
+				if(tae.e.type==tae.type||tae.annotationType==TypeAnnotationType.punning) return doIt(tae.e);
 				bool consume=!tae.constLookup;
 				auto r=convertTo(doIt(tae.e),tae.type,consume);
 				if(tae.constLookup) r=r.consumeOnRead();
