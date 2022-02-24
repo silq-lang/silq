@@ -1,7 +1,7 @@
 // skipped
 
 def makeTeleporter(){
-	(shared₀,shared₁):=vector(2,H(0:𝔹)); // TODO?x
+	(shared₀,shared₁):=vector(2,H(0:𝔹)); // TODO?
 	shared₁:=dup(shared₀);
 	shared₀:=H(0:𝔹);
 	shared₁:=dup(shared₀);

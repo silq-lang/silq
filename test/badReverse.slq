@@ -1,5 +1,5 @@
 // skipped
-// TODO: allow regression tester to test this
+// TODO: allow regression tester to test this (error is shown in prelude)
 
 def main(){
 	x:=H(0:𝔹);
