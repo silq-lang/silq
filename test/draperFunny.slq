@@ -1,0 +1,21 @@
+import qftPretty;
+
+def draper_add_impl[n:!ℕ](a: uint[n],const b: uint[n])mfree: uint[n]{
+	a:=QFT(a);
+	phaseQ(a·b);
+	return reverse(QFT)(a);
+}
+
+def draper_add[n:!ℕ](a: uint[n],const b: uint[n])qfree: uint[n]{
+	return (draper_add_impl[n] pun uint[n]×const uint[n]!→qfree uint[n])(a,b);
+}
+
+def main(){
+	n:=3;
+	i:=1, j:=2;
+	a:=i as uint[n], b:=j as uint[n];
+	c:=draper_add(dup(a),b);
+	forget(c=draper_add(dup(a),b));
+	k:=measure(draper_add(a,b));
+	assert((k as !uint[n])==(i+j as !uint[n]));
+}
