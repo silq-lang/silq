@@ -2149,10 +2149,14 @@ struct Interpreter(QState){
 					auto e1=doIt(b.e1),e2=doIt(b.e2);
 				};
 				if(auto b=cast(AndExp)e){
-					mixin(common);
+					auto e1=doIt(b.e1);
+					if(e1.isClassical()&&e1.eqZImpl) return e1;
+					auto e2=doIt(b.e2);
 					return e1&e2;
 				}else if(auto b=cast(OrExp)e){
-					mixin(common);
+					auto e1=doIt(b.e1);
+					if(e1.isClassical()&&e1.neqZImpl) return e1;
+					auto e2=doIt(b.e2);
 					return e1|e2;
 				}else if(auto b=cast(LtExp)e){
 					mixin(common);

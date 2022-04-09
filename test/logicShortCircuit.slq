@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	a:=[];
+	if false && a[0]==-1 { }
+	if true || a[0]==-1 { }
+}
