@@ -942,14 +942,8 @@ struct QState{
 					if(type==ntype&&util.among(r.type,Bool(true),ℤt(true))){
 						static if(op=="%"){
 							alias abs=util.abs;
-							if(isInt(type)){
-								auto rz=abs(r.asℤ);
-								return makeInt(ntype,BitInt!true(intval.nbits,(intval.val%rz+rz)%rz));
-							}
-							if(isUint(type)){
-								auto rz=abs(r.asℤ);
-								return makeUint(ntype,BitInt!false(uintval.nbits,uintval.val%rz));
-							}
+							if(isInt(type)) return makeInt(ntype,BitInt!true(intval.nbits, floormod(intval.val, r.asℤ)));
+							if(isUint(type)) return makeUint(ntype,BitInt!false(uintval.nbits,floormod(uintval.val, r.asℤ)));
 						}else{
 							if(isInt(type)) return this.opBinary!op(makeInt(ntype,BitInt!true(intval.nbits,r.asℤ())));
 							if(isUint(type)) return this.opBinary!op(makeUint(ntype,BitInt!false(uintval.nbits,r.asℤ())));
@@ -967,8 +961,8 @@ struct QState{
 					alias abs=util.abs;
 					alias floor=util.floor;
 					if(type==ℚt(true)) return makeRational(qval-ℚ(floor(qval/r.qval))*r.qval);
-					if(type==ℤt(true)) return makeInteger((zval%abs(r.zval)+abs(r.zval))%abs(r.zval));
-					if(isInt(type)) return makeInt(ntype,(intval%abs(r.intval)+abs(r.intval))%abs(r.intval));
+					if(type==ℤt(true)) return makeInteger(floormod(zval, r.zval));
+					if(isInt(type)) return makeInt(ntype,floormod(intval,r.intval));
 					if(isUint(type)) return makeUint(ntype,uintval%r.uintval);
 				}else{
 					static if(is(typeof(mixin(`fval `~op~` r.fval`))))
