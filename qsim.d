@@ -1389,13 +1389,13 @@ struct QState{
 			forget(ref_);
 		}
 		hash_t toHash(){ return qvars.toHash(); }
-		void relabel(Ref to,Ref from){
-			enforce(from in qvars&&to!in qvars);
-			qvars[to]=qvars[from];
-			qvars.remove(from);
-		}
 		void relabel(Ref[Ref] relabeling){
-			foreach(from,to;relabeling) relabel(to,from);
+			typeof(qvars) nqvars; // TODO: apply permutation in place
+			foreach(ref_,qvar;qvars){
+				if(auto to=ref_ in relabeling) nqvars[*to]=qvar;
+				else nqvars[ref_]=qvar;
+			}
+			qvars=nqvars;
 		}
 		struct Sortable{
 			Q!(Ref,Value)[] values;
