@@ -1,0 +1,17 @@
+// args: --run
+
+def foo[a]qfree{
+	return (x:a)qfree{
+		return (b:!ℕ)qfree{
+			return (c:!ℕ)qfree⇒x;
+		};
+	};
+}
+
+def main(){
+	for i in 0..20{
+		x:=H(0:𝔹);
+		f:=foo(x)(0);
+		assert(measure(H(f(0)))==0);
+	}
+}
