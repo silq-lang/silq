@@ -33,9 +33,6 @@ version=LOCALIZE;
 version(LOCALIZE){}else pragma(msg,"NOTE: error messages not formatted");
 
 class QSim{
-	this(string sourceFile){
-		this.sourceFile=sourceFile;
-	}
 	QState run(FunctionDef def,ErrorHandler err){
 		if(def.params.length){
 			err.error("main function with parameters not supported in simulator",def.loc);
@@ -56,17 +53,37 @@ class QSim{
 			return QState.empty();
 		}
 		assert(!!def.ftype);
-		bool isTuple = !!def.ftype.cod.isTupleTy;
+		//bool isTuple = !!def.ftype.cod.isTupleTy;
 		return ret;
 	}
-private:
-	string sourceFile;
 }
 
-private alias FormattingOptions=QState.Value.FormattingOptions;
-private alias FormattingType=QState.Value.FormattingOptions.FormattingType;
-string formatQValue(QState qs,QState.Value value){ // (only makes sense if value contains the full quantum state)
-	if(value.isClassical()) return value.toStringImpl(FormattingOptions.init);
+class QTape{
+	FunctionDef run(FunctionDef def,ErrorHandler err){
+		if(def.params.length){
+			err.error("main function with parameters not yet supported during taping",def.loc);
+			return null;
+		}
+		auto init=QTapeState.unit(); // TODO: parameters
+		auto interpreter=Interpreter!QTapeState(def,def.body_,init,false);
+		auto ret=QTapeState.empty();
+		try{
+			interpreter.runFun(ret);
+		}catch(LocalizedException ex){
+			err.error(ex.msg,ex.loc);
+			foreach(loc;ex.stackTrace)
+				err.note("called from here",loc);
+			return null;
+		}
+		assert(!!def.ftype);
+		//bool isTuple = !!def.ftype.cod.isTupleTy;
+		writeln(ret); // TODO: remove
+		return null;
+	}
+}
+
+string formatQValue(QState)(QState qs,QState.Value value){ // (only makes sense if value contains the full quantum state)
+	if(value.isClassical()) return value.toStringImpl(QState.FormattingOptions.init);
 	string r;
 	foreach(k,v;qs.state){
 		if(r.length) r~="+";
@@ -124,19 +141,76 @@ mixin(rotUnitary!"X");
 mixin(rotUnitary!"Y");
 mixin(rotUnitary!"Z");
 
-struct QState{
-	MapX!(Σ,C) state;
+enum QStateType{
+	standard,
+	tape,
+}
+
+alias QState=QStateImpl!(QStateType.standard);
+alias QTapeState=QStateImpl!(QStateType.tape);
+
+struct QStateImpl(QStateType qStateType){
+	static if(qStateType==QStateType.standard){
+		alias StateImpl=MapX!(Σ,C);
+	}else static if(qStateType==QStateType.tape){
+		static struct StateImpl{
+			bool empty=true;
+			Expression[] tape;
+			static struct Split{
+				Value cond;
+				bool isTrue;
+				Expression[] tape;
+			}
+			Split[] splitStack; // TODO: Stack!Split
+			auto dup(){
+				return StateImpl(empty,tape.dup,splitStack.dup);
+			}
+			Q!(StateImpl,StateImpl) split(Value cond){
+				if(empty) return q(this,this);
+				auto splitStack1=splitStack~Split(cond,true,tape); // TODO: faster stack push?
+				auto splitStack2=[Split(cond,false,[])];
+				writeln("if ",cond); // TODO: remove
+				return q(StateImpl(false,[],splitStack1),StateImpl(false,[],splitStack2));
+			}
+			void merge(StateImpl rhs){
+				if(rhs.empty){
+					assert(!rhs.tape.length);
+					return;
+				}
+				if(empty){
+					assert(!tape.length);
+					this=rhs;
+					return;
+				}
+				assert(splitStack.length&&rhs.splitStack.length);
+				auto split1=splitStack[$-1],split2=rhs.splitStack[$-1];
+				assert(split1.cond is split2.cond);
+				auto cond=split1.cond;
+				assert(split1.isTrue&&!split2.isTrue);
+				splitStack=splitStack[0..$-1], rhs.splitStack=rhs.splitStack[0..$-1];
+				assert(rhs.splitStack==[]);
+				splitStack.assumeSafeAppend();
+				assert(split2.tape==[]);
+				auto thenTape=tape;
+				auto othwTape=rhs.tape;
+				tape=split1.tape;
+				writeln("merge ",cond," ",thenTape," ",othwTape);
+				//enforce(0,"TODO: push IteExp on tape");
+			}
+		}
+	}else static assert(0);
+	StateImpl state;
 	Record vars;
 	QVar[] popFrameCleanup;
 
 	static Value dupValue(Value v){
 		if(!v.type) return Value.init;
 		auto tt=v.tag;
-		if(tt==QState.Value.Tag.array_) v.array_=dupValue(v.array_);
-		if(tt==QState.Value.Tag.record) v.record=dupValue(v.record);
+		if(tt==QStateImpl.Value.Tag.array_) v.array_=dupValue(v.array_);
+		if(tt==QStateImpl.Value.Tag.record) v.record=dupValue(v.record);
 		return v;
 	}
-	static Value[] dupValue(QState.Value[] r){
+	static Value[] dupValue(QStateImpl.Value[] r){
 		r=r.dup;
 		foreach(ref v;r) v=dupValue(v);
 		return r;
@@ -150,22 +224,26 @@ struct QState{
 	string toString(){
 		FormattingOptions opt={type: FormattingType.dump};
 		string r="/────────\nQUANTUM STATE\n";
-		Q!(string,Σ.Sortable)[] vk;
-		foreach(k,v;state)
-			vk~=q(text("(",v,")·"),k.toSortable());
-		sort!"a[1]<b[1]"(vk);
-		if(state.length){
-			auto maxlen=vk.map!(x=>x[0].displayWidth).reduce!max;
-			foreach(ref t;vk) t[0]=text(' '.repeat(maxlen-t[0].displayWidth),t[0]);
-		}
-		bool first=true;
-		foreach(t;vk){
-			if(first){
-				first=false;
-				if(state.length>1) r~=" ";
-			}else r~="\n+";
-			r~=text(t[0],t[1].toStringImpl(opt));
-		}
+		static if(qStateType==QStateType.standard){
+			Q!(string,Σ.Sortable)[] vk;
+			foreach(k,v;state)
+				vk~=q(text("(",v,")·"),k.toSortable());
+			sort!"a[1]<b[1]"(vk);
+			if(state.length){
+				auto maxlen=vk.map!(x=>x[0].displayWidth).reduce!max;
+				foreach(ref t;vk) t[0]=text(' '.repeat(maxlen-t[0].displayWidth),t[0]);
+			}
+			bool first=true;
+			foreach(t;vk){
+				if(first){
+					first=false;
+					if(state.length>1) r~=" ";
+				}else r~="\n+";
+				r~=text(t[0],t[1].toStringImpl(opt));
+			}
+		}else static if(qStateType==QStateType.tape){
+			r~=state.tape.map!(x=>text(x)).join(";\n");
+		}else static assert(0);
 		r~="\n\nVARIABLES\n";
 		alias Mapping=Q!(string,Value);
 		Mapping[] mappings;
@@ -190,13 +268,13 @@ struct QState{
 		writeln(toString());
 	}
 
-	QState dup(){
-		return QState(state.dup,dupValue(vars),popFrameCleanup);
+	QStateImpl dup(){
+		return QStateImpl(state.dup,dupValue(vars),popFrameCleanup);
 	}
-	void copyNonState(ref QState rhs){
+	void copyNonState(ref QStateImpl rhs){
 		this.tupleof[1..$]=rhs.tupleof[1..$];
 	}
-	void add(Σ k,C v){
+	static if(qStateType==QStateType.standard) void add(Σ k,C v){
 		if(k in state) state[k]+=v;
 		else state[k]=v;
 		if(abs(state[k]) <= zeroThreshold) state.remove(k);
@@ -228,19 +306,30 @@ struct QState{
 				break;
 		}
 	}
-	void opOpAssign(string op:"+")(QState r){
+	void opOpAssign(string op:"+")(QStateImpl r){
 		Σ.Ref[Σ.Ref] relabeling;
 		foreach(k,ref v;r.vars){
 			if(k in vars) updateRelabeling(relabeling,vars[k],v);
 			else vars[k]=v;
 		}
-		foreach(k,v;r.state){
-			k.relabel(relabeling);
-			add(k,v);
-		}
+		static if(qStateType==QStateType.standard){
+			foreach(k,v;r.state){
+				k.relabel(relabeling);
+				add(k,v);
+			}
+		}else static if(qStateType==QStateType.tape){
+			static if(qStateType==QStateType.standard){
+				// do nothing
+			}else static if(qStateType==QStateType.tape){
+				if(relabeling.length)
+				   writeln("relabeling variables with mapping ",relabeling);
+				// enforce(0,"TODO");
+			}else static assert(0);
+			this.state.merge(r.state);
+		}else static assert(0);
 	}
-	Q!(QState,QState) split(Value cond){
-		QState then,othw;
+	Q!(QStateImpl,QStateImpl) split(Value cond){
+		QStateImpl then,othw;
 		then.copyNonState(this);
 		othw.copyNonState(this);
 		othw.vars=dupValue(othw.vars);
@@ -248,15 +337,21 @@ struct QState{
 			if(cond.asBoolean) then=this;
 			else othw=this;
 		}else{
-			foreach(k,v;state){
-				if(cond.classicalValue(k).asBoolean) then.add(k,v);
-				else othw.add(k,v);
-			}
+			static if(qStateType==QStateType.standard){
+				foreach(k,v;state){
+					if(cond.classicalValue(k).asBoolean) then.add(k,v);
+					else othw.add(k,v);
+				}
+			}else static if(qStateType==QStateType.tape){
+				auto states=state.split(cond);
+				then.state=states[0];
+				othw.state=states[1];
+			}else static assert(0);
 		}
 		return q(then,othw);
 	}
-	QState map(alias f,bool checkInterference=true,T...)(T args){
-		QState new_;
+	static if(qStateType==QStateType.standard) QStateImpl map(alias f,bool checkInterference=true,T...)(T args){
+		QStateImpl new_;
 		new_.copyNonState(this);
 		foreach(k,v;state){
 			auto nk=f(k,args);
@@ -272,29 +367,34 @@ struct QState{
 	static abstract class QVal{
 		override string toString(){ return text("_ (",typeid(this),")"); }
 		abstract Value get(ref Σ);
-		QVar dup(ref QState state,Value self){
+		QVar dup(ref QStateImpl state,Value self){
 			auto nref_=Σ.curRef++;
 			state.assignTo(nref_,self);
 			return new QVar(nref_);
 		}
-		void forget(ref QState state,Value rhs){ }
-		void forget(ref QState state){ }
+		void forget(ref QStateImpl state,Value rhs){ }
+		void forget(ref QStateImpl state){ }
 		QVal consumeOnRead(){
 			return this;
 		}
-		Value toVar(ref QState state,Value self,bool cleanUp){
+		Value toVar(ref QStateImpl state,Value self,bool cleanUp){
 			auto r=state.makeQVar(self);
 			if(cleanUp){
 				auto var=cast(QVar)r.quval;
 				assert(!!var);
 				state.popFrameCleanup~=var;
 			}
+			static if(qStateType==QStateType.standard){
+				// do nothing
+			}else static if(qStateType==QStateType.tape){
+				writeln("initializing ",r," with ",self);// TODO: remove
+			}else static assert(0);
 			return r;
 		}
 		void removeVar(ref Σ σ){}
-		final Value applyUnitary(alias unitary,T...)(ref QState qs,Expression type,T controls){
+		final Value applyUnitary(alias unitary,T...)(ref QStateImpl qs,Expression type,T controls){
 			// TODO: get rid of code duplication
-			QState nstate;
+			QStateImpl nstate;
 			nstate.copyNonState(qs);
 			auto ref_=Σ.curRef++; // TODO: reuse reference of x if possible
 			foreach(k,v;qs.state){
@@ -304,15 +404,15 @@ struct QState{
 					removeVar(σ);
 					nstate.add(σ,nv*v);
 				}
-				unitary!(add,QState)(get(k),controls);
+				unitary!(add,QStateImpl)(get(k),controls);
 			}
 			auto r=makeQuval(type,new QVar(ref_));
 			qs=nstate;
 			return r;
 		}
-		static Value applyUnitaryToClassical(alias unitary,T...)(ref QState qs,Value value,Expression type,T controls){
+		static Value applyUnitaryToClassical(alias unitary,T...)(ref QStateImpl qs,Value value,Expression type,T controls){
 			// TODO: get rid of code duplication
-			QState nstate;
+			QStateImpl nstate;
 			nstate.copyNonState(qs);
 			auto ref_=Σ.curRef++; // TODO: reuse reference of x if possible
 			foreach(k,v;qs.state){
@@ -321,7 +421,7 @@ struct QState{
 					σ.assign(ref_,nk);
 					nstate.add(σ,nv*v);
 				}
-				unitary!(add,QState)(value,controls);
+				unitary!(add,QStateImpl)(value,controls);
 			}
 			auto r=makeQuval(type,new QVar(ref_));
 			qs=nstate;
@@ -348,24 +448,24 @@ struct QState{
 		override void removeVar(ref Σ s){
 			s.qvars.remove(ref_);
 		}
-		void assign(ref QState state,Value rhs){
+		void assign(ref QStateImpl state,Value rhs){
 			state.assignTo(ref_,rhs);
 		}
-		override QVar dup(ref QState state,Value self){
+		override QVar dup(ref QStateImpl state,Value self){
 			if(consumedOnRead){ consumedOnRead=false; return this; }
 			return super.dup(state,self);
 		}
-		override void forget(ref QState state,Value rhs){
+		override void forget(ref QStateImpl state,Value rhs){
 			state.forget(ref_,rhs);
 		}
-		override void forget(ref QState state){
+		override void forget(ref QStateImpl state){
 			state.forget(ref_);
 		}
 		override QVar consumeOnRead(){
 			consumedOnRead=true;
 			return this;
 		}
-		override Value toVar(ref QState state,Value self,bool cleanUp){
+		override Value toVar(ref QStateImpl state,Value self,bool cleanUp){
 			if(consumedOnRead){
 				consumedOnRead=false;
 				if(cleanUp) state.popFrameCleanup~=this;
@@ -381,10 +481,10 @@ struct QState{
 		override void removeVar(ref Σ σ){
 			value.removeVar(σ);
 		}
-		override void forget(ref QState state,Value rhs){
+		override void forget(ref QStateImpl state,Value rhs){
 			value.forget(state,rhs);
 		}
-		override void forget(ref QState state){
+		override void forget(ref QStateImpl state){
 			value.forget(state);
 		}
 	}
@@ -430,6 +530,8 @@ struct QState{
 		hash_t toHash(){ return context?tuplex(fun,*context).toHash():fun.toHash(); }
 		bool opEquals(Closure rhs){ return fun==rhs.fun && (context is rhs.context || context&&rhs.context&&*context==*rhs.context); }
 	}
+	alias FormattingOptions=Value.FormattingOptions;
+	alias FormattingType=Value.FormattingOptions.FormattingType;
 	struct Value{
 		Expression type;
 		enum Tag{
@@ -477,7 +579,7 @@ struct QState{
 				case t: mixin(`this.`~text(t)~`=rhs.`~text(t)~`;`); break Lswitch;
 			}
 		}
-		Value dup(ref QState state){
+		Value dup(ref QStateImpl state){
 			final switch(tag){
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
 				case t: return this;
@@ -491,7 +593,7 @@ struct QState{
 				case Tag.quval: return state.makeQuval(type,quval.dup(state,this));
 			}
 		}
-		Value toVar(ref QState state,bool cleanUp){
+		Value toVar(ref QStateImpl state,bool cleanUp){
 			if(isClassical) return this;
 			final switch(tag){
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
@@ -535,7 +637,7 @@ struct QState{
 				case t: static if(__traits(hasMember,mixin(text(t)),"__postblit")) mixin(`this.`~text(t)~`.__postblit();`);
 			}
 		}
-		void assign(ref QState state,Value rhs){
+		void assign(ref QStateImpl state,Value rhs){
 			if(!type){ this=rhs; return; }
 			if(isClassical()){
 				if(rhs.isClassical) this=rhs.dup(state);
@@ -601,7 +703,7 @@ struct QState{
 					return quval.removeVar(σ);
 			}
 		}
-		void forget(ref QState state,Value rhs){
+		void forget(ref QStateImpl state,Value rhs){
 			final switch(tag){
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
 				case t: assert(isClassical); return;
@@ -623,7 +725,7 @@ struct QState{
 					return quval.forget(state,rhs);
 			}
 		}
-		void forget(ref QState state){
+		void forget(ref QStateImpl state){
 			// TODO: get rid of code duplication
 			final switch(tag){
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
@@ -657,10 +759,43 @@ struct QState{
 				case Tag.quval: return makeQuval(type,quval.consumeOnRead());
 			}
 		}
-		Value applyUnitary(alias unitary,T...)(ref QState qs,Expression type,T controls){
-			if(this.isClassical()) return QVal.applyUnitaryToClassical!unitary(qs,this,type,controls);
-			enforce(tag==Tag.quval);
-			return quval.applyUnitary!unitary(qs,type,controls);
+		Value applyUnitary(alias unitary,T...)(ref QStateImpl qs,Expression type,T controls){
+			static if(qStateType==QStateType.standard){
+				if(this.isClassical()) return QVal.applyUnitaryToClassical!unitary(qs,this,type,controls);
+				enforce(tag==Tag.quval);
+				return quval.applyUnitary!unitary(qs,type,controls);
+			}else static if(qStateType==QStateType.tape){
+				static if(__traits(isSame,unitary,hadamardUnitary)){
+					writeln("H(",this,")");
+					//enforce(0,"TODO");
+					return this;
+				}else static if(__traits(isSame,unitary,xUnitary)){
+					writeln("X(",this,")");
+					//enforce(0,"TODO";)
+					return this;
+				}else static if(__traits(isSame,unitary,yUnitary)){
+					writeln("Y(",this,")");
+					//enforce(0,"TODO");
+					return this;
+				}else static if(__traits(isSame,unitary,zUnitary)){
+					writeln("Z(",this,")");
+					//enforce(0,"TODO");
+					return this;
+				}else static if(__traits(isSame,unitary,rXUnitary)){
+					writeln("rX(",this,")");
+					//enforce(0,"TODO");
+					return this;
+				}else static if(__traits(isSame,unitary,rYUnitary)){
+					writeln("rY(",this,")");
+					//enforce(0,"TODO");
+					return this;
+				}else static if(__traits(isSame,unitary,rZUnitary)){
+					writeln("rZ(",this,")");
+					//enforce(0,"TODO");
+					return this;
+				}else static assert(0);
+				return Value.init;
+			}else static assert(0);
 		}
 		union{
 			Value[] array_;
@@ -1245,7 +1380,7 @@ struct QState{
 			static assert(is(R==double));
 			return toDouble(asℚ());
 		}
-		struct FormattingOptions{
+		static struct FormattingOptions{
 			enum FormattingType{
 				default_,
 				dump,
@@ -1430,26 +1565,37 @@ struct QState{
 		}
 		string toString(){ return toStringImpl(FormattingOptions.init); }
 	}
-	static QState empty(){
-		return QState.init;
+	static QStateImpl empty(){
+		return QStateImpl.init;
 	}
-	static QState unit(){
-		QState qstate;
-		qstate.state[Σ.init]=C(1.0);
+	bool isEmpty(){
+		static if(qStateType==QStateType.standard){
+			return !state.length;
+		}else static if(qStateType==QStateType.tape){
+			return state.empty;
+		}else static assert(0);
+	}
+	static QStateImpl unit(){
+		QStateImpl qstate;
+		static if(qStateType==QStateType.standard){
+			qstate.state[Σ.init]=C(1.0);
+		}else static if(qStateType==QStateType.tape){
+			qstate.state.empty=false;
+		}else static assert(0);
 		return qstate;
 	}
-	QState pushFrame(){
+	QStateImpl pushFrame(){
 		Record nvars,nnvars;
 		foreach(k,v;vars) nvars[k]=v.inFrame();
 		nnvars["`frame"]=makeRecord(nvars);
-		return QState(state,nnvars);
+		return QStateImpl(state,nnvars);
 	}
-	QState popFrame(QVar[] previousPopFrameCleanup){
+	QStateImpl popFrame(QVar[] previousPopFrameCleanup){
 		foreach(qvar;popFrameCleanup) qvar.forget(this);
 		auto frame=vars["`frame"];
 		enforce(frame.tag==Value.Tag.record);
 		Record nvars=frame.record.dup;
-		return QState(state,nvars,previousPopFrameCleanup);
+		return QStateImpl(state,nvars,previousPopFrameCleanup);
 	}
 	static Value inFrame(Value v){
 		return v.inFrame();
@@ -1538,8 +1684,8 @@ struct QState{
 			assert(fun.params.length==1);
 			ncur.passParameter(fun.params[0].getName,fun.params[0].isConst,inFrame(arg));
 		}
-		auto intp=Interpreter!QState(fun,fun.body_,ncur,true);
-		auto nnstate=QState.empty();
+		auto intp=Interpreter!QStateImpl(fun,fun.body_,ncur,true);
+		auto nnstate=QStateImpl.empty();
 		nnstate.popFrameCleanup=ncur.popFrameCleanup;
 		try{
 			intp.runFun(nnstate);
@@ -1554,7 +1700,7 @@ struct QState{
 		enforce(fun.tag==Value.Tag.closure);
 		return call(fun.closure.fun,nullValue,arg,null,fun.closure.context,type,loc);
 	}
-	QState assertTrue(Value val)in{
+	QStateImpl assertTrue(Value val)in{
 		assert(val.type==Bool(true));
 	}do{
 		if(!val.asBoolean) enforce(0,"assertion failure");
@@ -1622,38 +1768,58 @@ struct QState{
 	}do{
 		v=v.consumeOnRead();
 		auto ref_=Σ.curRef++;
-		static Σ addVariable(Σ s,Σ.Ref ref_,Value v){
-			enforce(ref_ !in s.qvars);
-			s.assign(ref_,v);
-			return s;
-		}
-		this=map!addVariable(ref_,v);
+		static if(qStateType==QStateType.standard){
+			static Σ addVariable(Σ s,Σ.Ref ref_,Value v){
+				enforce(ref_ !in s.qvars);
+				s.assign(ref_,v);
+				return s;
+			}
+			this=map!addVariable(ref_,v);
+		}else static if(qStateType==QStateType.tape){
+			// do nothing
+			writeln("allocating ",ref_); // TODO: remove
+		}else static assert(0);
 		return makeQuval(v.type,new QVar(ref_));
 	}
 	private void assignTo(Σ.Ref var,Value rhs){
-		static Σ assign(Σ s,Σ.Ref var,Value rhs){
-			s.assign(var,rhs);
-			return s;
-		}
-		this=map!(assign,false)(var,rhs);
+		static if(qStateType==QStateType.standard){
+			static Σ assign(Σ s,Σ.Ref var,Value rhs){
+				s.assign(var,rhs);
+				return s;
+			}
+			this=map!(assign,false)(var,rhs);
+		}else static if(qStateType==QStateType.tape){
+			writeln("assigning ",rhs," to ",var);
+			//enforce(0,"TODO");
+		}else static assert(0);
 	}
 	private void forget(Σ.Ref var,Value rhs){
-		static Σ forgetImpl(Σ s,Σ.Ref var,Value rhs){
-			s.forget(var,rhs);
-			return s;
-		}
-		this=map!forgetImpl(var,rhs);
+		static if(qStateType==QStateType.standard){
+			static Σ forgetImpl(Σ s,Σ.Ref var,Value rhs){
+				s.forget(var,rhs);
+				return s;
+			}
+			this=map!forgetImpl(var,rhs);
+		}else static if(qStateType==QStateType.tape){
+			writeln("forgetting ",var," as ",rhs);
+			//enforce(0,"TODO");
+		}else static assert(0);
 	}
 	private void forget(Σ.Ref var){
-		static Σ forgetImpl(Σ s,Σ.Ref var){
-			s.forget(var);
-			return s;
-		}
-		this=map!forgetImpl(var);
+		static if(qStateType==QStateType.standard){
+			static Σ forgetImpl(Σ s,Σ.Ref var){
+				s.forget(var);
+				return s;
+			}
+			this=map!forgetImpl(var);
+		}else static if(qStateType==QStateType.tape){
+			writeln("forgetting ",var);
+			//enforce(0,"TODO");
+		}else static assert(0);
 	}
 	void forgetVars(Scope scope_){
 		static if(language==silq){
-			if(!state.length) return;
+			if(isEmpty) return;
 			foreach(var;scope_.forgottenVars){
 				auto name=var.getName;
 				vars[name].forget(this);
@@ -1665,7 +1831,7 @@ struct QState{
 		var.assign(this,rhs);
 	}
 	void catAssignTo(ref Value var,Value rhs){
-		enforce(var.tag==QState.Value.Tag.array_&&rhs.tag==QState.Value.Tag.array_);
+		enforce(var.tag==QStateImpl.Value.Tag.array_&&rhs.tag==QStateImpl.Value.Tag.array_);
 		var.array_~=rhs.array_;
 	}
 	void assignTo(string lhs,Value rhs){
@@ -1674,7 +1840,7 @@ struct QState{
 	}
 	void catAssignTo(string lhs,Value rhs){
 		enforce(lhs in vars);
-		enforce(vars[lhs].tag==QState.Value.Tag.array_&&rhs.tag==QState.Value.Tag.array_);
+		enforce(vars[lhs].tag==QStateImpl.Value.Tag.array_&&rhs.tag==QStateImpl.Value.Tag.array_);
 		vars[lhs].array_~=rhs.array_;
 	}
 	Value H(Value x){
@@ -1691,12 +1857,16 @@ struct QState{
 		return x.applyUnitary!zUnitary(this,Bool(false));
 	}
 	Value phase(Value φ){
-		φ=φ.convertTo(ℝ(true));
-		typeof(state) new_;
-		foreach(k,v;state){
-			new_[k]=cast(C)std.complex.expi(φ.fval)*v;
+		static if(qStateType==QStateType.standard){
+			φ=φ.convertTo(ℝ(true));
+			typeof(state) new_;
+			foreach(k,v;state){
+				new_[k]=cast(C)std.complex.expi(φ.fval)*v;
+			}
+			state=new_;
+		}else{
+			enforce(0,"TODO");
 		}
-		state=new_;
 		return makeTuple(ast.type.unit,[]);
 	}
 	private Value rot(alias unitary)(Value args){
@@ -1728,45 +1898,50 @@ struct QState{
 		return makeClosure(type,Closure(reverseFunction(arg.closure.fun),arg.closure.context));
 	}
 	Value measure(Value arg){
-		MapX!(Value,R) candidates;
-		R one=0;
-		foreach(k,v;state){
-			auto candidate=arg.classicalValue(k);
-			if(candidate!in candidates) candidates[candidate]=sqAbs(v);
-			else candidates[candidate]+=sqAbs(v);
-			one+=sqAbs(v);
-		}
-		Value result;
-		R random=uniform!"[]"(R(0),one);
-		R current=0.0;
-		bool ok=false;
-		foreach(k,v;candidates){
-			current+=v;
-			if(current>=random){
-				result=k;
-				ok=true;
-				break;
+		static if(qStateType==QStateType.standard){
+			MapX!(Value,R) candidates;
+			R one=0;
+			foreach(k,v;state){
+				auto candidate=arg.classicalValue(k);
+				if(candidate!in candidates) candidates[candidate]=sqAbs(v);
+				else candidates[candidate]+=sqAbs(v);
+				one+=sqAbs(v);
 			}
-		}
-		if(!ok){
+			Value result;
+			R random=uniform!"[]"(R(0),one);
+			R current=0.0;
+			bool ok=false;
 			foreach(k,v;candidates){
-				result=k; // TODO: distribute rounding error equally among candidates?
-				break;
+				current+=v;
+				if(current>=random){
+					result=k;
+					ok=true;
+					break;
+				}
 			}
-		}
-		MapX!(Σ,C) nstate;
-		R total=0.0f;
-		foreach(k,v;state){
-			auto candidate=arg.classicalValue(k);
-			if(candidate!=result) continue;
-			total+=sqAbs(v);
-			nstate[k]=v;
-		}
-		total=sqrt(total);
-		foreach(k,ref v;nstate) v/=total;
-		state=nstate;
-		arg.forget(this);
-		return result;
+			if(!ok){
+				foreach(k,v;candidates){
+					result=k; // TODO: distribute rounding error equally among candidates?
+					break;
+				}
+			}
+			MapX!(Σ,C) nstate;
+			R total=0.0f;
+			foreach(k,v;state){
+				auto candidate=arg.classicalValue(k);
+				if(candidate!=result) continue;
+				total+=sqAbs(v);
+				nstate[k]=v;
+			}
+			total=sqrt(total);
+			foreach(k,ref v;nstate) v/=total;
+			state=nstate;
+			arg.forget(this);
+			return result;
+		}else static if(qStateType==QStateType.tape){
+			enforce(0,"cannot measure qubits in --tape mode");
+			return Value.init;
+		}else static assert(0);
 	}
 }
 
@@ -1895,7 +2070,7 @@ struct Interpreter(QState){
 		return default_();
 	}
 	void closeScope(Scope sc){
-		if(!qstate.state.length) return;
+		if(qstate.isEmpty) return;
 		qstate.forgetVars(sc);
 		foreach(merged;sc.mergedVars){
 			auto name=merged[0].getName;
@@ -1905,7 +2080,7 @@ struct Interpreter(QState){
 		}
 	}
 	QState.Value runExp(Expression e){
-		if(!qstate.state.length) return QState.Value.init;
+		if(qstate.isEmpty) return QState.Value.init;
 		QState.Value doIt()(Expression e){
 			try{
 				auto r=doIt2(e);
@@ -2320,7 +2495,7 @@ struct Interpreter(QState){
 		}
 	}
 	void runStm2(Expression e,ref QState retState){
-		if(!qstate.state.length) return;
+		if(qstate.isEmpty) return;
 		if(opt.trace && !isInPrelude(functionDef)){
 			writeln(qstate);
 			writeln();
@@ -2426,7 +2601,7 @@ struct Interpreter(QState){
 					qstate += thenOthw[0];
 					intp.qstate = thenOthw[1];
 					//intp.qstate.error = zero;
-					if(!intp.qstate.state.length) break;
+					if(intp.qstate.isEmpty) break;
 					if(opt.trace) writeln("repetition: ",x+1);
 					intp.run(retState);
 					intp.closeScope(re.bdy.blscope_);
@@ -2461,7 +2636,7 @@ struct Interpreter(QState){
 					qstate += othwThen[0];
 					intp.qstate = othwThen[1];
 					//intp.qstate.error = zero;
-					if(!intp.qstate.state.length) break;
+					if(intp.qstate.isEmpty) break;
 					intp.qstate.assignTo(fe.var.name,loopIndex+x);
 					if(opt.trace) writeln("repetition: ",x+1);
 					intp.run(retState);
@@ -2471,7 +2646,7 @@ struct Interpreter(QState){
 		}else if(auto we=cast(WhileExp)e){
 			auto intp=Interpreter(functionDef,we.bdy,qstate,hasFrame);
 			for(;;){
-				if(!intp.qstate.state.length) break;
+				if(intp.qstate.isEmpty) break;
 				auto cond=intp.runExp(we.cond);
 				if(!cond.asBoolean) break;
 				intp.run(retState);

@@ -1,0 +1,17 @@
+// args: --tape
+
+def main(){
+	n:=3;
+	k:=0:𝔹;
+	x:=vector(n,k);
+	for i in 0..n{
+		x[i]:=((x:𝔹)=>Z(H(x)))(x[i]);
+	}
+	if x[0]{
+		k:=X(k);
+		y:=0:𝔹;
+	}else{
+		y:=1:𝔹;
+	}
+	return (x:𝔹[],k,y);
+}

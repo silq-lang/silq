@@ -20,6 +20,7 @@ enum ErrorFormat{
 enum BackendType{
 	none,
 	run,
+	tape,
 }
 
 enum OutputForm{

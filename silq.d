@@ -45,19 +45,28 @@ int run(string path){
 		}
 		return 0;
 	}
-	// TODO: add some backends
 	if(err.nerrors) return 1;
-	if(opt.backend==BackendType.run){
-		import qsim;
-		auto be=new QSim(path);
-		if("main" in functions){
-			auto fun=functions["main"];
-			foreach(i;0..opt.numRuns){
-				auto qstate=be.run(fun,err);
-				if("`value" in qstate.vars)
-					writeln(qstate.formatQValue(qstate.vars["`value"]));
+	final switch(opt.backend){
+		case BackendType.none: break;
+		case BackendType.run:
+			import qsim;
+			auto be=new QSim();
+			if("main" in functions){
+				auto fun=functions["main"];
+				foreach(i;0..opt.numRuns){
+					auto qstate=be.run(fun,err);
+					if("`value" in qstate.vars)
+						writeln(qstate.formatQValue(qstate.vars["`value"]));
+				}
 			}
-		}
+			break;
+		case BackendType.tape:
+			import qsim;
+			auto be=new QTape();
+			if("main" in functions){
+				auto fun=functions["main"];
+				writeln(be.run(fun,err));
+			}
 	}
 	return !!err.nerrors;
 }
@@ -117,6 +126,7 @@ int main(string[] args){
 			//case "--raw": opt.outputForm=OutputForm.raw; break;
 			//case "--raw-error": opt.outputForm=OutputForm.rawError; break;
 			case "--run": opt.backend=BackendType.run; break;
+			case "--tape": opt.backend=BackendType.tape; break;
 			case "--unsafe-capture-const": astopt.allowUnsafeCaptureConst=true; break;
 			default:
 				/+if(x.startsWith("--plot=")){
