@@ -476,6 +476,7 @@ struct QStateImpl(QStateType qStateType){
 	static class ConvertQVal: QVal{
 		Value value;
 		Expression ntype;
+		override string toString(){ return text("(",value,")"," coerce ",ntype,")"); }
 		this(Value value,Expression ntype){ this.value=value; this.ntype=ntype.getClassical(); }
 		override Value get(ref Σ σ){ return value.classicalValue(σ).convertTo(ntype); }
 		override void removeVar(ref Σ σ){
@@ -490,33 +491,53 @@ struct QStateImpl(QStateType qStateType){
 	}
 	static class IndexQVal: QVal{
 		Value value,i;
+		override string toString(){ return text("(",value,")[",i,"]"); }
 		this(Value value,Value i){ this.value=value; this.i=i; }
 		override Value get(ref Σ σ){ return value.classicalValue(σ)[i.classicalValue(σ)]; }
 	}
 	static class UnOpQVal(string op):QVal{
 		Value value;
+		override string toString(){ return text(op,"(",value,")"); }
 		this(Value value){ this.value=value; }
 		override Value get(ref Σ σ){ return value.classicalValue(σ).opUnary!op; }
 	}
 	static class BinOpQVal(string op):QVal{
 		Value l,r;
+		override string toString(){ return text("(",l,")",op,"(",r,")"); }
 		this(Value l,Value r){ this.l=l; this.r=r; }
 		override Value get(ref Σ σ){ return l.classicalValue(σ).opBinary!op(r.classicalValue(σ)); }
 	}
 	static class MemberFunctionQVal(string fun,T...):QVal{
 		Value value;
 		T args;
+		override string toString(){
+			auto r=text("(",value,").",fun,"(");
+			foreach(i,ref arg;args){
+				if(i) r~=",";
+				r~=text(arg);
+			}
+			return r;
+		}
 		this(Value value,T args){ this.value=value; this.args=args; }
 		override Value get(ref Σ σ){ return mixin(`value.classicalValue(σ).`~fun)(args); }
 	}
 	static class FunctionQVal(alias fun,T...):QVal{
 		Value value;
 		T args;
+		override string toString(){
+			auto r=text(__traits(identifier,fun),"(");
+			foreach(i,ref arg;args){
+				if(i) r~=",";
+				r~=text(arg);
+			}
+			return r;
+		}
 		this(Value value,T args){ this.value=value; this.args=args; }
 		override Value get(ref Σ σ){ return fun(value.classicalValue(σ),args); }
 	}
 	static class CompareQVal(string op):QVal{
 		Value l,r;
+		override string toString(){ return text("(",l,op,r,")"); }
 		this(Value l,Value r){ this.l=l; this.r=r; }
 		override Value get(ref Σ σ){ return l.classicalValue(σ).compare!op(r.classicalValue(σ)); }
 	}
@@ -1865,7 +1886,8 @@ struct QStateImpl(QStateType qStateType){
 			}
 			state=new_;
 		}else{
-			enforce(0,"TODO");
+			writeln("P(",φ,")");
+			//enforce(0,"TODO");
 		}
 		return makeTuple(ast.type.unit,[]);
 	}

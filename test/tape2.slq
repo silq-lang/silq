@@ -1,0 +1,43 @@
+// args: --tape
+import qft,groverDiffusion;
+
+def groverMfree[n:!ℕ](f: const uint[n] !→ lifted 𝔹)mfree: uint[n]{
+	nIterations:=floor(π/(4·asin(2^(-n/2))));
+	cand:=0:uint[n];
+    for k in [0..n){ cand[k]:=H(cand[k]); }
+	for k in [0..nIterations){
+		if f(cand){ phase(π); }
+		cand:=groverDiffusion(cand);
+	}
+	return cand;
+}
+
+def deutschJozsaMfree[n:!ℕ](f: 𝔹^n !→lifted 𝔹)mfree: 𝔹^n{
+	x:=0:int[n];
+	for i in [0..n){ x[i] := H(x[i]); }
+	if f(x as 𝔹^n){ phase(π); }
+	for i in [0..n){ x[i] := H(x[i]); }
+	return x as 𝔹^n;
+}
+
+
+def bernsteinVaziraniMfree()mfree:𝔹^5{
+	b:=(0,1,0,1,1):!𝔹^5;
+	f:=(x:𝔹^5)lifted{
+		r:=0:𝔹;
+		for k in [0..5){
+			r⊕=b[k]&x[k];
+		}
+		return r;
+	};
+	return deutschJozsaMfree(f);
+}
+
+def main(){
+	n:=3;
+	r:=reverse(QFT[3])(QFT(0:int[3]));
+	r:=reverse(QFT)(QFT(r));
+	s:=groverMfree((x:uint[6])lifted⇒x==42);
+	t:=bernsteinVaziraniMfree();
+	return (r,s,t);
+}
