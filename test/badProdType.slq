@@ -1,0 +1,5 @@
+
+def sum[a,b] ⇒ Π[c](f: a!→c, g: b!→c). c;
+def inl[a,b](x:a)[c](f: a!→c, g: b!→c)⇒f(x);
+def inr[a,b](x:b)[c](f: a!→c, g: b!→c)⇒g(x);
+def match[c](val: Π[c](f: a!→c, g: b!→c). c, f: a!→c, g: b!→c)⇒val(f,g); // error
