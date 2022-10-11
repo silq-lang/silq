@@ -1,4 +1,26 @@
 
+
+/+
+def main(){
+	x:=[]:(𝟙!→ !ℤ)[];
+	for i in [0..10){
+		x~=[()=>i as !ℤ]; // TODO: should be fine
+	}
+	y:=[]:ℤ[];
+	for i in [0..10){
+		y~=[x[i]()];
+	}
+	return y;
+}
++/
+/+
+def main(){
+	x:=H(0:𝔹);
+	x:=((x:𝔹)qfree⇒x)(x);
+	// TODO: error
+	__show(__query("dep", x));
+}
++/
 /+
 def main(){
 	[1,2]:=[1,2,3]; // TODO: error
