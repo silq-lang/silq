@@ -2,7 +2,7 @@
 
 def main(){
 	f:=reverse(dup[𝔹^2]);
-	g:=([a]⇒reverse(dup[a]))[𝔹^2];
+	g:=([a]⇒reverse(dup[a]))[𝔹^2]; // TODO: add type of types without classical components
 	x:=(H(0:𝔹),H(0:𝔹));
 	y:=dup(x);
 	f(y,x);
