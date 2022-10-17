@@ -1,0 +1,12 @@
+// args: --run
+
+def compose[f: !ℕ!->qfree !ℕ, g: 𝟙!->qfree !ℕ](): (!ℕ^f(g()))[] {
+	return [vector(f(g()), 0:!ℕ)]; // note
+}
+
+def foo(x: !ℕ)qfree: !ℕ {
+	assert(false); // error
+	return x;
+}
+def bar()qfree: !ℕ ⇒ 0;
+def main() ⇒ compose[foo,bar](); // note
