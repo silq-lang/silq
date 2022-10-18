@@ -1,0 +1,12 @@
+
+def zerovec(n:!ℕ){
+	return vector(n,0:𝔹);
+}
+
+def main(){
+	x:=0:𝔹;
+	v:=vector(measure(x),0:𝔹); // error
+	y:=0:𝔹;
+	w:=zerovec(measure(y)); // error
+	return w;
+}
