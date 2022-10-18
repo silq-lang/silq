@@ -1,0 +1,10 @@
+// args: --run
+
+def main(){
+	x:=H(0:𝔹);
+	y:=dup(x);
+	(a,b):=((measure(x),).length,H(y));
+	b:=H(b);
+	assert(a==1&&measure(b==0||b==1));
+	return (a,b);
+}
