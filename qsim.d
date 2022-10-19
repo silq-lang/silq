@@ -2036,8 +2036,7 @@ struct Interpreter(QState){
 				return qstate.call(fun,arg,ce.type,ce.loc);
 			}
 			if(auto fe=cast(ForgetExp)e){
-				if(fe.val) forget(runExp(fe.var),runExp(fe.val));
-				else forget(runExp(fe.var));
+				forget(fe);
 				return qstate.makeTuple(unit,[]);
 			}
 			if(auto idx=cast(IndexExp)e){
@@ -2295,6 +2294,23 @@ struct Interpreter(QState){
 	void forget(QState.Value lhs){
 		lhs.forget(qstate);
 	}
+	void forget(ForgetExp fe){
+		if(fe.var.type&&fe.var.type.isClassical){
+			void doForget(Expression e){
+				if(auto id=cast(Identifier)e){
+					assert(id.name in qstate.vars);
+					qstate.vars.remove(id.name);
+				}else if(auto tpl=cast(TupleExp)e){
+					foreach(t;tpl.e)
+						doForget(t);
+				}
+			}
+			doForget(fe.var);
+		}else{
+			if(fe.val) forget(runExp(fe.var),runExp(fe.val));
+			else forget(runExp(fe.var));
+		}
+	}
 	void runStm(Expression e,ref QState retState){
 		try{
 			runStm2(e,retState);
@@ -2483,8 +2499,7 @@ struct Interpreter(QState){
 			enforce(0,"TODO: observe?");
 			assert(0);
 		}else if(auto fe=cast(ForgetExp)e){
-			if(fe.val) forget(runExp(fe.var),runExp(fe.val));
-			else forget(runExp(fe.var));
+			forget(fe);
 		}else if(auto ce=cast(CommaExp)e){
 			runStm(ce.e1,retState);
 			runStm(ce.e2,retState);
