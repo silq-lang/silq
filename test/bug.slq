@@ -1,18 +1,4 @@
 
-
-/+
-def main(){
-	x:=[]:(𝟙!→ !ℤ)[];
-	for i in [0..10){
-		x~=[()=>i as !ℤ]; // TODO: should be fine
-	}
-	y:=[]:ℤ[];
-	for i in [0..10){
-		y~=[x[i]()];
-	}
-	return y;
-}
-+/
 /+
 def main(){
 	x:=H(0:𝔹);
