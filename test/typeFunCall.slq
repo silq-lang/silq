@@ -1,5 +1,5 @@
 
-def twice(n:!ℕ)⇒2*n;
+def twice(n:!ℕ)qfree⇒2*n;
 
 def main(){
 	x:=0:int[twice(3)];
