@@ -1,8 +1,8 @@
-
 /+
 def main(){
 	x:=H(0:𝔹);
-	x:=((x:𝔹)qfree⇒x)(x);
+	//x:=((x:𝔹)qfree⇒x)(x);
+	x:=x;
 	// TODO: error
 	__show(__query("dep", x));
 }
@@ -37,15 +37,16 @@ def main(){
 	return r;
 }
 +/
-
-/+def main(){
+/+
+def main(){
 	x:=0:𝔹;
 	y:=0:𝔹;
 	while(measure(H(0:𝔹))){
 		x=H(dup(y)); // TODO: error
 	}
 	return x;
-}+/
+}
++/
 /+def main(){
 	x:=H(0:𝔹);
 	y:=dup(x);
@@ -62,12 +63,12 @@ def main(){
 	return x;
 }
 +/
-/+
 
+/+
 def arcsin(q:!ℝ) lifted :!ℝ;
 def sqrt(q:!ℝ) lifted :!ℝ;
 
-def WState[n:!N](q0:𝔹,q1s:𝔹^n) {
+def WState[n:!N](q0:𝔹,q1s:𝔹^n)mfree:𝔹×𝔹^n {
     if n+1==1{
         q0 := X(q0);
     } else {
@@ -83,12 +84,43 @@ def WState[n:!N](q0:𝔹,q1s:𝔹^n) {
 +/
 
 /+
-def main(){
-	x := 0;
-	forget(x); // TODO: remove x, even if classical
-	return x;  // TODO: error
+def arcsin(q:!ℝ) lifted :!ℝ;
+def sqrt(q:!ℝ) lifted :!ℝ;
+
+def WState[n:!N](q0:𝔹,q1s:𝔹^n)mfree:𝔹×𝔹^n {
+    if n+1==1{
+        q0 := X(q0);
+    } else {
+        theta := arcsin(1.0 / sqrt(n));
+        q0 := rotY(2*theta, q0);
+
+        if !q0{
+            (q1s[0], q1s[1..n]) := WState[n sub 1](q1s[0], q1s[1..n]); // TODO
+        }
+    }
+    return (q0, q1s)
 }
 +/
+
+/+
+def arcsin(q:!ℝ) lifted :!ℝ;
+def sqrt(q:!ℝ) lifted :!ℝ;
+
+def WState[n:!N](q0:𝔹,q1s:𝔹^n)mfree:𝔹×𝔹^n {
+    if n+1==1{
+        q0 := X(q0);
+    } else {
+        theta := arcsin(1.0 / sqrt(n));
+        q0 := rotY(2*theta, q0);
+
+        if !q0{
+            (q1s[0], q1s[1..n]) := WState[n-1 coerce !ℕ](q1s[0], q1s[1..n]); // TODO
+        }
+    }
+    return (q0, q1s)
+}
++/
+
 /+
 def main(){
 	x := 0:𝔹;
