@@ -1,16 +1,13 @@
 // https://codeforces.com/contest/1116/problem/D2
-def solve[n:!ℕ](qs:𝔹^n){
-	seen:=0:𝔹;
-	for i in [1..n){
-		bit:=qs[n-i];
-		if !seen&&bit{
-			for j in [0..n-i){
-				qs[j]:=H(qs[j]);
-			}
+def solve[n:!ℕ](qs:𝔹^n)mfree:𝔹^n{
+	if n>1{
+		bit:=qs[n-1];
+		if bit{
+			for i in 0..n-1{ qs[i]:=H(qs[i]); }
+		}else{
+			qs[0..n sub 1]:=solve(qs[0..n-1]);
 		}
-		forget(bit=qs[n-i]);
-		seen|=qs[n-i];
+		forget(bit=qs[n-1]);
 	}
-	forget(seen);
 	return qs;
 }

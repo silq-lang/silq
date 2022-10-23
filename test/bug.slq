@@ -37,17 +37,9 @@ def main(){
 	return r;
 }
 +/
+
 /+
 def main(){
-	x:=0:𝔹;
-	y:=0:𝔹;
-	while(measure(H(0:𝔹))){
-		x=H(dup(y)); // TODO: error
-	}
-	return x;
-}
-+/
-/+def main(){
 	x:=H(0:𝔹);
 	y:=dup(x);
 	while(measure(H(0:𝔹))){
@@ -55,14 +47,9 @@ def main(){
 		y:=dup(x); // TODO
 	}
 	return H(x);
-}+/
-/+
-def main(){
-	x:=0:int[32];
-	for i in [0..4){ x[i]=H(x[i]); } // TODO: error
-	return x;
 }
 +/
+
 
 /+
 def arcsin(q:!ℝ) lifted :!ℝ;
@@ -121,13 +108,4 @@ def WState[n:!N](q0:𝔹,q1s:𝔹^n)mfree:𝔹×𝔹^n {
 }
 +/
 
-/+
-def main(){
-	x := 0:𝔹;
-	for i in [0..10){
-		forget(x); // TODO: error!
-		x := H(0:𝔹);
-	}
-	return x;
-}
-+/
+

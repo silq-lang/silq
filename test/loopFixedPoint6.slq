@@ -1,0 +1,37 @@
+
+def test1(){
+	x:=H(0:𝔹);
+	y:=H(0:𝔹);
+	z:=dup(x);
+	while measure(H(0:𝔹)){
+		z=dup(y);
+	}
+	//forget(H(x)=0);
+	//forget(H(y)=0);
+	forget(z); // ok
+	measure(x,y);
+}
+
+def test2(){
+	x:=H(0:𝔹);
+	y:=H(0:𝔹);
+	z:=dup(x);
+	while measure(H(0:𝔹)){
+		z=dup(y);
+	}
+	forget(H(x)=0);
+	forget(z); // error
+	forget(H(y)=0);
+}
+
+def test3(){
+	x:=H(0:𝔹);
+	y:=H(0:𝔹);
+	z:=dup(x);
+	while measure(H(0:𝔹)){
+		z=dup(y);
+	}
+	forget(H(y)=0);
+	forget(z); // error
+	forget(H(x)=0);
+}

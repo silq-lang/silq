@@ -1,0 +1,32 @@
+
+def foo(x:!ℕ){
+	assert(x==floor(x));
+	print(x);
+}
+
+def main(){
+	n:=10;
+	k:=10;
+	for i in 0..n{
+		foo(k); // error
+		t:=k;
+		forget(k);
+		k:=t/2;
+	}
+	forget(k);
+	k:=10;
+	while k>1/1000{
+		foo(k); // error
+		t:=k;
+		forget(k);
+		k:=t/2;
+	}
+	forget(k);
+	k:=10;
+	repeat 10{
+		foo(k); // error
+		t:=k;
+		forget(k);
+		k:=t/2;
+	}
+}
