@@ -1,3 +1,4 @@
 def main(){
-	(x,)~y:=(); // error (TODO: better error message)
+	(x,)~y:=(); // error
+	// (TODO: better error message)
 }
