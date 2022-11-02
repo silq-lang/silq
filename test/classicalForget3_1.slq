@@ -1,11 +1,9 @@
-
 def main(){
-	(x,)~y:=(1,2,3);
-	/+__tmp0 := (1,2,3);
+	__tmp0 := (1,2,3);
 	__tmp1 := __tmp0[0..1];
 	y := __tmp0[1..3];
 	forget(__tmp0=__tmp1 ~ y);
 	(x,) := __tmp1;
-	forget(x,y);+/
-	return __tmp1; // TODO: error
+	forget(__tmp1);
+	return (x,y);
 }
