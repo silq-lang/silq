@@ -1,0 +1,8 @@
+// args: --run
+
+x:=1;
+def main(){
+	x:=2;
+	x=3;
+	assert(x==3);
+}
