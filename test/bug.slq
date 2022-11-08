@@ -28,6 +28,35 @@ def main(){
 +/
 
 /+
+def foo[n:!ℕ, rr:!ℕ](
+	const r:!ℕ,
+	const ee:(𝔹^rr)^rr,
+)mfree{
+	rbar := max(2 * r div 3, 1) coerce !ℕ;
+	rrbar := 2^rbar;
+
+	tau := vector(rrbar,0:int[r]);
+	for i in [0..rrbar){ for j in [0..r){ tau[i][j]:=H(tau[i][j]); } }
+	eew := vector(rrbar,false):B^rrbar;
+	for i in [0..rrbar){ eew[i]:=H(eew[i]); }
+
+	// snippet from Figure 2
+	cTri := 0:int[rrbar];
+	for j in [0..rrbar) {
+		for k in [j+1..rrbar) {
+			if ee[tau[j]][tau[k]] && eew[j] && eew[k] { // crash
+				cTri += 1;
+	}	}	}
+    // ---------------------
+	return (tau as int[r][], eew as 𝔹[], cTri as 𝔹[]);
+}
+
+def main(){
+	return foo[2,2](2,vector(2,vector(2,true)));
+}
++/
+
+/+
 def main(){
 	a:=[]:ℕ[]; // TODO: error here?
 	a~=[1];
