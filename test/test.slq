@@ -1,7 +1,782 @@
 // skipped
 
-def foo(a:!ℕ)(b:!ℕ)⇒a+b+c;
+/+
+def main(){
+	x:=0:uint[(1,2.0).length];
+	y:=x:uint[2];
+}
++/
+/+
+def main(){
+	//x:=(H(0:𝔹),H(1:𝔹),H(2:𝔹));
+	//z:=H(0:𝔹);
+	//y:=
+	print(1,23);
+	exit();
+}
++/
+/+
+def main(){
+	x:=(0:!𝔹,H(0:𝔹));
+	x[1]:=H(x[1]);
+	return x;
+}
++/
+/+
+def main(){
+	x:=(0,1/2);
+	i:=0;
+	return x[i];
+}
++/
+/+
+def main(){
+	x:=-2;
+	return x^0:!ℕ;
+}
++/
+/+
+def expensive_pure_computation()qfree⇒3;
 
+def main(){
+	x:=0:int[expensive_pure_computation()];
+}
++/
+
+/+
+def main(){
+	x:=(1,[2,3],4);
+	y:=(3,4);
+	return x~y;
+}
++/
+/+
+def main(){
+	x:=1:𝔹;
+	//forget(x=3);
+	reverse(dup[𝔹])(H(measure(x)),x);
+	//return x;
+}
++/
+/+
+def main(){
+	x:=H(0:𝔹);
+	y:=H(0:𝔹);
+	forget((dup(x),dup(y))=(x,y));
+	return (x,y);
+}
++/
+/+
+def f(const x:𝔹)qfree⇒x;
+
+def main(){
+	x:=f(0:𝔹);
+	y:=f(x);
+	def foo(){
+		y:=y;
+		__show(__query("dep",y));
+	}
+}
++/
+/+
+def f(a:𝔹,b:𝔹,c:𝔹)⇒((a,b),c);
+
+def main(){
+	a:=(0,0,0):𝔹^3;
+	((a[0],a[1]),a[2]):=f(a[0],a[1],a[2]); // TODO
+	return a;
+}
++/
+/+
+def f(a:𝔹,b:𝔹,c:𝔹)⇒((a,b),c);
+
+def main(){
+	(a,b,c):=(0,0,0):𝔹^3;
+	((a,b),c):=f(a,b,c); // ok
+	return (a,b,c);
+}
++/
+
+/+
+def main(){
+	a:=(0:𝔹,0:𝔹);
+	(H(a[1]),a[0]):=a; // error	
+}
++/
+/+
+def main(){
+	a:=(0:𝔹,0:𝔹);
+	def f(a:𝔹,b:𝔹)mfree⇒(H(a),b);
+	f(a[0],a[1]):=(a[1],a[0]); // ok
+	return a;
+}
++/
+/+
+def main(){
+	a:=(0:𝔹,0:𝔹);
+	(H(a[0]),a[1]):=(a[1],a[0]); // TODO
+	return a;
+}
++/
+/+
+def f₁(const z: 𝔹) qfree: 𝔹 {
+	return !z;
+}
+def f₂() qfree: 𝔹^2 {
+	return (0:𝔹, 0:𝔹);
+}
+
+def main() {
+	x := H(0:𝔹);
+	y := H(0:𝔹);
+	a := 0:𝔹;
+	b := 0:𝔹;
+	c := 0:𝔹;
+	if x {
+		(a,b) = f₂();
+		c = f₁(y);
+	} else {
+		a = f₁(y);
+		(b,c) = f₂();
+	}
+	__show(__query("dep",a));
+	__show(__query("dep",b));
+	__show(__query("dep",c));
+	forget(a,c);
+	if b {
+		y := X(y);
+	} else {
+		y := Z(y);
+	}
+	forget(b);
+	return (x, y);
+}
++/
+
+/+
+def main(){
+	x:=0:!𝔹;
+	while true{
+		y:=[x];
+		forget(x);
+		x:=y;
+	}
+}
++/
+/+
+def main(){
+	x:=1:*;
+}
++/
+/+
+def main(){
+	//x:=2:!int[3];
+	//return x: !ℕ;
+	x:=2:Π(x:ℕ). ℕ;
+}
++/
+/+
+def main(){
+	x:=2:!ℂ;
+	y:=abs(x);
+	__show(__query("type",y));
+	return x+2;
+}
++/
+/+
+def main(){
+	//x:=.0;
+	//__show(__query("type",x));
+	//x:=1+if true { 5 } else { 3 };
+	//if false then def foo(){} else def foo() ⇒ 3;
+	//x:=1+(x:=2);
+	return foo();
+}
++/
+//y:=(1,2,3);
+//a:=2;
+
+/+
+def main(){
+	a:=vector(10,0:𝔹);
+	(a[0],b):=(H(a[0]),1:𝔹);
+	__show(__query("dep",a)); // ⊤
+	__show(__query("dep",b)); // {}
+	measure(a);
+}
++/
+/+
+def main(){
+	a:=vector(10,0:𝔹);
+	a[0]:=H(a[0]);
+	__show(__query("dep",a)); // ⊤
+	measure(a);
+}
++/
+/+
+def foo(x:𝔹,y:𝔹){
+	//z:=dup(x);
+	a:=dup(x);
+	b:=dup(y);
+	__show(__query("dep",a));
+	__show(__query("dep",b));
+	(a,b):=(b,a);
+	__show(__query("dep",a));
+	__show(__query("dep",b));
+	//__show(__query("dep",z));
+	return (x,y);
+}
++/
+/+
+def foo(x:𝟙)⇒();
+
+def main(){
+	x:=();
+	foo(x);
+	return x:𝟙;
+}
++/
+/+
+def wat[f: 𝔹!->qfree !ℕ,g: 1->qfree 𝔹](): (!𝔹^f(g()))[]{ // error
+    return ();
+}
+def mi(x: 𝔹): !ℕ {
+	r := measure(x) as !ℕ;
+	print(r);
+	return r;
+}
+
+def main(){
+	x := H(0:𝔹);
+	y := dup(x);
+	wat[mi, lambda(). x]();
+	return y;
+}
++/
+/+
+def main(){
+	x:=vector(5,0:𝔹);
+	y:=H(x[0]);
+	return (x,y);
+}
++/
+
+/+
+def arrId(a: B[]) mfree: B[] {
+	return a;
+}
+
+def doThenRev[T](f: T!->mfree T, val: T): T {
+	return reverse(f)(f(val));
+}
+
+def main() {
+	if measure(H(0:B)) {
+		v := doThenRev[B[]](arrId, []: B[]);
+	} else {
+		v := []: B[];
+	}
+	return v;
+}
++/
+/+
+def main(){
+	x:=[]:(𝔹^2)[];
+	y:=x coerce (𝔹^3)[];
+}
++/
+/+
+def main() {
+	a := [0:B];
+	(x: B^1)~a := a;
+	return (x,a);
+}
++/
+
+/+
+def sum[a,b] ⇒ Π[c](f: a!→c, g: b!→c). c;
+def inl[a,b](x:a)[c](f: a!→c, g: b!→c)⇒f(x);
+def inr[a,b](x:b)[c](f: a!→c, g: b!→c)⇒g(x);
+def match[a,b,c](val: Π[c](f: a!→c, g: b!→c). c, f: a!→c, g: b!→c)⇒val(f,g);
+
+def main(){
+	x:=inl[𝔹,𝔹^2](H(0:𝔹)); // error
+	y:=inr[𝔹,𝔹^2](H(0:𝔹),H(1:𝔹)); // error
+}
++/
+
+/+
+def sum[a,b] ⇒ Π[c](f: a!→c, g: b!→c). c;
+def inl[a,b](x:a)[c](f: a!→c, g: b!→c)⇒f(x);
+def inr[a,b](x:b)[c](f: a!→c, g: b!→c)⇒g(x);
+def match[a,b,c](val: Π[c](f: a!→c, g: b!→c). c, f: a!→c, g: b!→c)⇒val(f,g);
+
+def main(){
+	k:=H(0:𝔹);
+	if measure(k){
+		x:=inl[𝔹,𝔹^2](H(0:𝔹));
+	}else{
+		x:=inr[𝔹,𝔹^2](H(0:𝔹),H(1:𝔹));
+	}
+	//dump();
+	//y:=inr[𝔹,𝔹^2](H(0:𝔹),H(1:𝔹));
+	//measure(y);
+	return match[𝔹,𝔹^2,!ℕ]( // TODO: should be able to infer
+		x,
+		(a:𝔹)⇒measure(a):!ℕ,
+		(b:𝔹^2){ (u,v):=measure(b); return u+v; },
+	);
+	//dump();
+}
++/
+
+
+/+
+def main(){
+	x:=H(0:𝔹);
+	y:=H(1:𝔹);
+	return x;
+	measure(y);
+}
++/
+/+
+def main()⇒(3,3)=(2,1);
++/
+/+
+def list[τ:*]⇒Π[a:*](nil: !a)(cons: !τ×!a!→lifted !a). a;
+def nil[τ:*][a:*](nil:!a)(cons:!τ×!a!→lifted!a)lifted⇒nil;
+def cons[τ:*](head:!τ,tail:!Π[a:*]lifted. !Π(nil: !a)lifted. !Π(cons: !τ×!a!→lifted!a)lifted. !a)[a:*](nil:!a)(cons:!τ×!a!→lifted!a)lifted⇒cons(head,tail[a](nil)(cons));
+def foldr[τ:*,a:*](nil:!a,cons:!τ×!a!→lifted!a)(xs: !Π[a:*]lifted. !Π(nil: !a)lifted. !Π(cons: !τ×!a!→lifted!a)lifted. !a)lifted⇒xs[a](nil)(cons);
+def len[τ:*]⇒foldr[τ,ℕ](0,(x:!τ,l:!ℕ)qfree⇒1+l);
+
+def sum(xs: !Π[a:*]lifted. !Π(nil: !a)lifted. !Π(cons: !ℕ×!a!→lifted!a)lifted.!a)⇒foldr[ℕ,ℕ](0,(x:!ℕ,y:!ℕ)qfree⇒x+y)(xs);
+
+def main()⇒sum(cons[!ℕ](2,cons[!ℕ](1,nil[!ℕ])));
++/
+
+def partition[n:!ℕ](xs: !ℕ^n,l:!ℕ,r:!ℕ,p:!ℕ){
+	ys:=xs;
+	q:=p;
+	(ys[p],ys[r])=(ys[r],ys[p]);
+	(i,j):=(l,r-1);
+	done:=false;
+	while !done{
+		while i≤j && ys[i]<ys[r]{ i+=1; }
+		while i≤j && ys[j]≥ys[r]{ j-=1; }
+		if i>j { (ys[i],ys[r])=(ys[r],ys[i]); q=i; done=true; }
+		else { (ys[i],ys[j])=(ys[j],ys[i]); i+=1, j-=1; }
+	}
+	return (ys,q);
+}
+/+
+def quickSelect[n:!ℕ](xs: !ℕ^n,l:!ℕ,r:!ℕ,k:!ℕ){
+	p:=(l+r) div 2; // TODO: random
+	(ys,t):=partition(xs,l,r,p);
+	print(xs,ys,l,r,t);
+	if t==k { return ys; }
+	if t>k { return quickSelect(ys,l,t sub 1,k); }
+	else { return quickSelect(ys,t+1,r,k); }
+}
+
+def main(){
+	return quickSelect((1,2,3,4,0,5,6),0,6,6);
+	//return quickSelect((0,1,0,1,0,0,0),0,6,2);
+}
++/
+/+
+def foo(f: 𝟙→𝔹){
+	if f(){}
+}
++/
+/+
+def main(){
+	x:=1:!int[5];
+	y:=2:!int[5];
+	return x div y;
+}
++/
+/+
+def high_level[θ:!ℝ](ψ₀:𝔹,ψ₁:𝔹,cat:𝔹)mfree{
+	if ψ₀∧ψ₁ ∨ ψ₀∧!cat ∨ ψ₁∧!cat { phase(2·θ); }
+	cat⊕=ψ₀⊕ψ₁;
+	return (ψ₀,ψ₁,cat);
+}
++/
+/+def high_level[θ:!ℝ](ψ₀:𝔹,ψ₁:𝔹,cat:𝔹)mfree{
+	def tmp(ψ₀:𝔹,ψ₁:𝔹,cat:𝔹)lifted⇒ψ₀∧ψ₁ ∨ ψ₀∧!cat ∨ ψ₁∧!cat;
+	forget(rotZ(2·θ,tmp(ψ₀,ψ₁,cat))=tmp(ψ₀,ψ₁,cat));
+	cat⊕=ψ₀⊕ψ₁;
+	return (ψ₀,ψ₁,cat);
+}+/
+/+
+def low_level[θ:!ℝ](ψ₀:𝔹,ψ₁:𝔹,cat:𝔹)mfree{
+	cat:=X(cat);
+	ψ₁⊕=ψ₀;
+	cat⊕=ψ₀;
+	forget(rotZ(2·θ,ψ₀⊕(ψ₁∧cat))=ψ₀⊕(ψ₁∧cat));
+	cat⊕=ψ₁;
+	cat⊕=ψ₀;
+	ψ₁⊕=ψ₀;
+	cat:=X(cat);
+	return (ψ₀,ψ₁,cat);
+}
++/
+
+def dummy[θ:!ℝ](ψ₀:𝔹,ψ₁:𝔹,cat:𝔹)mfree{
+	return (rotZ(θ,ψ₀), rotZ(θ,ψ₁), cat);
+	//if ψ₀ { phase(θ); }
+	//if ψ₁ { phase(θ); }
+	//return (ψ₀,ψ₁,cat);
+}
+/+
+def main(){
+	θ:=π/3;
+	cat:=rotZ(θ,H(0:𝔹));
+	(ψ₀,ψ₁):=(H(0:𝔹),H(1:𝔹));
+	//measure(ψ₀,ψ₁);
+	(ψ₀,ψ₁,cat):=dummy[θ](ψ₀,ψ₁,cat);
+	(ψ₀,ψ₁,cat):=reverse(high_level[θ])(ψ₀,ψ₁,cat);
+	return (H(ψ₀),H(ψ₁),H(rotZ(-θ,cat)));
+	//measure(cat,ψ₁);
+	//return (ψ₀);
+	/*x:=0:𝔹;
+	if x { phase(π); } else { phase(-π); }
+	return x;//rotZ(-π,x);*/
+}
++/
+/+
+def fib[n:!ℕ](const x: uint[n])qfree: uint[n]{
+	if x <= 1 { return x; }
+	else { return fib(x-1)+fib(x-2); }
+}
+
+def main(){
+	k:=H(0:𝔹);
+	return (fib((0:uint[4])+k),k);
+}
++/
+
+/+
+import qftPretty;
+def main(){
+	n:=5;
+	x:=0:uint[5];
+	y:=13:uint[5];
+	y[0]:=H(y[0]);
+	//x:=QFT(x);
+	for i in [0..n){ x[i]:=H(x[i]); }
+	phaseQ(x*y);
+	x:=reverse(QFT)(x);
+	//forget(y=x);
+	return (x,y);
+}
++/
+//def add[n:!ℕ](a:uint[n],b:uint[n])lifted⇒a+b;
+/+
+def add[n:!ℕ](a:uint[n],b:uint[n])lifted{
+	c:=0:uint[n];
+	carry:=0:𝔹;
+	for i in [0..n){
+		c[i]=a[i]⊕b[i]⊕carry;
+		carry=a[i]&b[i]|a[i]&carry|b[i]&carry;
+	}
+	return c;
+}
+
+def main(){
+	a:=13:uint[32];
+	b:=24:uint[32];
+	a[0]:=H(a[0]);
+	b[1]:=H(b[1]);
+	return (add(a,b),a,b);
+}
++/
+/+
+import qftPretty;
+
+def draper_mult_impl[n:!ℕ](const a: uint[n],const b: uint[n])mfree: uint[n]{
+	φ:=QFT(0:uint[n]);
+	for i in [0..n){
+		for j in [0..n){
+			if φ[i] && b[j]{ phaseQ(2^(i+j)·a); }
+		}
+	}
+	return reverse(QFT)(φ);
+}
+
+def draper_mult[n:!ℕ](const a: uint[n],const b: uint[n])qfree: uint[n]{
+	return (draper_mult_impl[n] pun const uint[n]×const uint[n]!→qfree uint[n])(a,b);
+}
+
+def main(){
+	n:=3;
+	i:=3, j:=2;
+	a:=i as uint[3], b:=j as uint[3];
+	c:=draper_mult_impl(dup(a),b);
+	//forget(c=draper_add(dup(a),b));
+	//k:=measure(draper_add(a,b));
+	//assert((k as !uint[n])==(i*j as !uint[n]));
+	return c;
+}
++/
+
+/+
+import qft;
+
+def draper_add_impl[n:!ℕ](a: int[n],const b: int[n])mfree: int[n]{
+	a := QFT(a);
+	for k in [0..n){
+		for l in [0..n-k){
+			if a[k] && b[l]{
+				phase(2·π·2^(k+l-n));
+			}
+		}
+	}
+	return reverse(QFT)(a);
+}
+
+def draper_add[n:!ℕ](a: int[n],const b: int[n])qfree: int[n]{
+	return (draper_add_impl[n] pun int[n]×const int[n]!→qfree int[n])(a,b);
+}
+
+def main(){
+	for i in [-2^3..2^3){
+		for j in [-2^3..2^3){
+			a:=i as int[4], b:=j as int[4];
+			c:=draper_add(dup(a),b);
+			forget(c=draper_add(dup(a),b));
+			k:=measure(draper_add(a,b));
+			print(i,j,i+j,k,(i+j)%(2^4),k%(2^4),(-8)%16);
+			assert(k%2^4==(i+j)%2^4); // TODO: investigate this
+		}
+	}
+	dump();
+}
++/
+/+
+def foo(a:!ℕ)(b:!ℕ)⇒a+b;
+
+def main(){
+	return foo(1)(2);
+}
++/
+
+/+
+def higherRankedFunction(f: !Pi[a:*]. a!->a) => f([f(1),f(2)]);
+def main() ⇒ higherRankedFunction([a:*](x:a)=>x);
++/
+/+
+def main(){
+	x:=false;
+	y:=false;
+	if x {
+		y=true;
+	}else{
+		y=false;
+	}
+	//y:=true;
+	//return y;
+}
++/
+/+
+def foo[n:!ℕ](xs:!ℕ^n,ys:!ℕ^n)lifted{
+	print(n);
+	return (xs,ys);
+}
+
+def main(){
+	print(foo((1,2,3,4),(1,2,3,4)));
+}
++/
+
+/+
+def zip[σ:*,τ:*,n:!ℕ](xs: σ^n, ys: τ^n)mfree: (σ×τ)^n {
+	if n=0 {
+		():=xs coerce σ^0;
+		():=ys coerce τ^0;
+		r:=() coerce (σ×τ)^n;
+	} else {
+		xs~(x,) := xs;
+		ys~(y,) := ys;
+		r := zip(xs,ys)~((x,y),);
+	}
+	return r;
+	/*xs:=xs:σ[];
+	ys:=ys:τ[];
+	r:=[]:(σ×τ)[];
+	for i in 0..n{
+		(xs~(x,),ys~(y,)) := (xs,ys);
+		r~=[(x,y)];
+	}
+	__show(__query("type",xs));
+	():=xs;
+	():=ys;
+	return r coerce (σ×τ)^n;*/
+}
+
+def unzip[τ:*,n:!ℕ](x: (τ^2)^n){
+	zip(x,y):=x;
+	return (x,y);
+}
+
+def map[σ:*,τ:*](f: σ !→mfree τ)[n:!ℕ](xs: σ^n)mfree: τ^n{
+	ys := []:τ[];
+	xs := xs:σ[];
+	for i in 0..n{
+		(x,)~xs := xs;
+		ys~=[f(x)];
+	}
+	//__show(__query("dep",xs));
+	():=xs;
+	return ys coerce τ^n;
+	/+if n=0{
+		():=xs coerce σ^0;
+		r:=() coerce τ^n;
+	}else{
+		(x,)~xs := xs;
+		r:=(f(x),)~map(f)(xs);
+	}
+	return r;+/
+}
+
+def add(x:!ℤ)(y:!ℤ) ⇒ x+y;
+
+def main(){
+	//return zip((1,2,3),(3,4,5));
+	//zip(x,y) :=
+	//return unzip((1,3),(2,4),(3,5));
+	def mapzip[σ:*,τ:*,n:!ℕ,m:!ℕ]qfree ⇒ map(zip[σ,τ,n])[m];
+	/*return mapzip(
+		((1,2,3), (3,4,5)),
+		((0,2,3), (5,4,5)),
+	);*/
+	//mapzip(x):=(((1,3),(2,4),(3,5)),((0,5),(2,4),(3,5)));
+	//return x;
+	return unzip((1,2),(3,4),(4,5));
+}
++/
+
+/+
+def add[n:!ℕ](x: !ℤ^n, y: !ℤ^n){
+	r := vector(n, 0:!ℤ);
+	for i in 0..n{
+		r[i]=x[i]+y[i];
+	}
+	return r;
+}
+
+def main(){
+	n := 2+3*measure(H(0:𝔹))+measure(H(0:𝔹));
+	x := vector(n, 0);
+	y := vector(n, 0);
+	return add(x,y):!ℤ[];
+}
++/
+/+
+def f[T:*](x:T){
+	return x;
+}
+
+def main(){
+	//x := 4;
+	//return f(x);
+	return (1,2):!ℤ^2;
+}
++/
+
+/+
+def main(){
+	return 30 % -40;
+}
++/
+/+
+def makeTeleporter(){
+	shared₀:=H(0:𝔹);
+	shared₁:=dup(shared₀);
+	def send(message:𝔹){
+		shared₀:=shared₀;
+		shared₀⊕=message;
+		return measure(H(message),shared₀);
+	}
+	def receive(p:!𝔹,f:!𝔹){
+		shared₁:=shared₁;
+		if p && shared₁ { phase(π); }
+		if f { shared₁:=X(shared₁); }
+		return shared₁;
+	}
+	return (send,receive);
+}
+
+def main(){
+	(send,receive):=makeTeleporter();
+	//return (send,receive);
+	x:=send(H(1:𝔹));
+	return receive(x);
+}
++/
+/+
+def deutsch(f: 𝔹×𝔹 → 𝔹×𝔹){
+	x:=H(0:𝔹);
+	anc:=H(1:𝔹);
+	(x,anc):=f(x,anc);
+	measure(anc);
+	return x;
+}
+
+def main(){
+
+}
++/
+/+
+def main(){
+	x:=H(0:𝔹);
+	y:=H(0:𝔹);
+	return x;
+}
++/
+/+
+def deutsch(f: 𝔹 !→lifted 𝔹){
+	x:=H(0:𝔹);
+	y:=H(1:𝔹);
+	if f(x){ phase(π); }
+	return measure(H(x));
+}
++/
+/+
+def func[n:!ℕ](const p:B, q:uint[n]){
+    if p {
+        q = 3:uint[n];  // Error: cannot reassign quantum variable
+    }
+    return q;
+}
++/
+/*
+def main(){
+	q := 0:uint[n];
+	anc := op(q, 0:B);
+}
+*/
+/*
+def main(){
+	def bar(){
+		x:=0:𝔹;
+		def foo(x:𝔹){
+			x:=x;
+			return x;
+		}
+		return foo(x);
+	}
+	return bar();
+}
+*/
+/+
+def main(){
+	return int[2^-1];
+}
++/
+/+
+def foo(a:!ℕ)(b:!ℕ)⇒a+b+c;
++/
 /+
 def main(){
 	//x:=(1,1):𝔹 x 𝔹;
