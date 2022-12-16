@@ -2334,6 +2334,7 @@ struct Interpreter(QState){
 		}else if(auto ae=cast(AssignExp)e){
 			auto lhs=ae.e1,rhs=runExp(ae.e2);
 			assignTo(lhs,rhs);
+			forget(rhs);
 		}else if(auto ae=cast(DefineExp)e){
 			if(ae.isSwap){
 				auto tpl=cast(TupleExp)unwrap(ae.e2);
