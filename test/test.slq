@@ -1,5 +1,103 @@
 // skipped
+/+
+def f(a: B) {
+	y := !a;
+	y := X(y);
+	a := H(a);
+	__show(__query("dep",y));
+	forget(y);
+	return a;
+}
++/
 
+/+
+def foo(x:𝔹,y:𝔹,n:!ℕ){
+	(a,b):=(dup(x),dup(y));
+	repeat n{
+		(a,b):=(b,a);
+	}
+	__show(__query("dep",a)); // {y, x}
+	__show(__query("dep",b)); // {y, x}
+}
++/
+/+
+def main(){
+	x:=1;
+	y:=H(0:𝔹);
+	if y{
+	}else{
+	}
+	measure(y);
+	return x;
+}
++/
+/+
+def factored(const cond:𝔹,x:𝔹)mfree{
+	if cond{
+		x:=H(x);
+	}else{
+		//a:=H(a);
+	}
+	return (x);
+}
++/
+/+
+def foo(a:𝔹,const cond:𝔹,const cond2:𝔹){
+	if cond2 {
+	x:=!a;
+	y:=!x;
+	if cond{
+		x:=H(x);
+		// forget(y=a);
+	}else{
+		a:=H(a);
+		// forget(y=!x)
+		//z:=x;
+	}
+	//(x):=factored(cond,x);
+	__show(__query("dep",y));
+	forget(y); // TODO: error
+	return (a,x);
+	}else{
+		return (a,0:𝔹);
+	}
+}
++/
+
+/+
+def main(){
+	x:=0:!ℂ;
+	y:=1:!ℤ;
+	return x^y;
+}
++/
+
+/+
+def main(){
+	foo(bar(x,y),z);
+}
++/
+
+/+
+x:=foo()+y;
+y:=2;
+
+def foo():ℤ{ assert(false); }
++/
+
+//(x,y):=(1,2);
+//y:=x;
+
+/+
+def main(){
+	return 764/382;
+}
++/
+/+
+def main(){
+	(x:!ℕ,y:!ℤ) := (-2,3);
+}
++/
 /+
 def main(){
 	x:=0:uint[(1,2.0).length];
@@ -100,7 +198,7 @@ def main(){
 /+
 def main(){
 	a:=(0:𝔹,0:𝔹);
-	(H(a[1]),a[0]):=a; // error	
+	(H(a[1]),a[0]):=a; // error
 }
 +/
 /+
@@ -260,6 +358,64 @@ def main(){
 	return (x,y);
 }
 +/
+/*
+def main(){
+	q := 0:uint[n];
+	anc := op(q, 0:B);
+}
+*/
+/*
+def main(){
+	def bar(){
+		x:=0:𝔹;
+		def foo(x:𝔹){
+			x:=x;
+			return x;
+		}
+		return foo(x);
+	}
+	return bar();
+}
+*/
+/+
+def main(){
+	return int[2^-1];
+}
++/
+/+
+def foo(a:!ℕ)(b:!ℕ)⇒a+b+c;
++/
+
+/+
+def main(){
+	x:=0:uint[10];
+	y:=-1:int[10];
+	return x<y;
+}
++/
+/+
+def main(){
+	return -4&-2;
+}
++/
+
+/+
+def main(){
+	return (1,2)~(3,4.0); // TODO
+}
++/
+/+
+def main(){
+	x:=2:int[32];
+	return x^2; // TODO: should work with exponent of type !ℕ
+}
++/
+/+
+def main(){
+	x:=0:classical B;
+	x=0:𝔹;
+}
++/
 
 /+
 def arrId(a: B[]) mfree: B[] {
@@ -292,6 +448,50 @@ def main() {
 	return (x,a);
 }
 +/
+/+
+def main(){
+	x:=0:𝔹;
+	v:=vector(measure(x),0:𝔹):*;
+
+}
++/
+
+/+
+def wat[f: B!->!N,g: 1->B](): (!B^f(g()))[]{
+    return ();
+}
+
+def mi(x: B): !N {
+	r := measure(x) as !N;
+	print(r);
+	return r;
+}
+
+def main(){
+	x := H(0:𝔹);
+	y := dup(x);
+	wat[mi, lambda(). x]();
+	return y;
+}
++/
+/+
+def wat[f: B!->!N, g: 1!->B](): (B^f(g()))[] {
+	//return [vector(f(g()), 0:B)];
+	return ();
+}
+
+def mi(x: B): !N {
+	return measure(x) as !N;
+}
+
+def mkh(): B {
+	return H(0:B);
+}
+
+def main() {
+	return wat[mi,mkh]();
+}
++/
 
 /+
 def sum[a,b] ⇒ Π[c](f: a!→c, g: b!→c). c;
@@ -313,7 +513,7 @@ def match[a,b,c](val: Π[c](f: a!→c, g: b!→c). c, f: a!→c, g: b!→c)⇒va
 
 def main(){
 	k:=H(0:𝔹);
-	if measure(k){
+	if k{
 		x:=inl[𝔹,𝔹^2](H(0:𝔹));
 	}else{
 		x:=inr[𝔹,𝔹^2](H(0:𝔹),H(1:𝔹));
@@ -353,6 +553,7 @@ def sum(xs: !Π[a:*]lifted. !Π(nil: !a)lifted. !Π(cons: !ℕ×!a!→lifted!a)l
 
 def main()⇒sum(cons[!ℕ](2,cons[!ℕ](1,nil[!ℕ])));
 +/
+/+
 
 def partition[n:!ℕ](xs: !ℕ^n,l:!ℕ,r:!ℕ,p:!ℕ){
 	ys:=xs;
@@ -368,7 +569,6 @@ def partition[n:!ℕ](xs: !ℕ^n,l:!ℕ,r:!ℕ,p:!ℕ){
 	}
 	return (ys,q);
 }
-/+
 def quickSelect[n:!ℕ](xs: !ℕ^n,l:!ℕ,r:!ℕ,k:!ℕ){
 	p:=(l+r) div 2; // TODO: random
 	(ys,t):=partition(xs,l,r,p);

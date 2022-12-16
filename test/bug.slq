@@ -1,3 +1,18 @@
+/+
+def main(){
+	x:=1:!ℕ;
+	y:=2:uint[10];
+	z:=y sub x; // TODO
+	return z;
+}
++/
+
+/+
+def main(){
+	x:=1/2;
+	return x|x; // TODO: error
+}
++/
 
 /+
 def main(){

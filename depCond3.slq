@@ -1,0 +1,17 @@
+
+def foo(a:𝔹,const cond:𝔹,const cond2:𝔹){
+	if cond {
+		x:=0:𝔹;
+		__show(__query("dep",x)); // {cond}. better: {}
+		if cond2{
+			x=1:𝔹;
+			__show(__query("dep",x)); // {cond,cond2}. better: {}
+		}
+		__show(__query("dep",x)); // {cond,cond2}. better: {cond2}
+	}else{
+		x:=0:𝔹;
+		__show(__query("dep",x)); // {cond}. better: {}
+	}
+	__show(__query("dep",x)); // {cond,cond2}
+	return a;
+}

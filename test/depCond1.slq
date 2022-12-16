@@ -1,0 +1,14 @@
+
+def foo(a:𝔹,const cond:𝔹,const cond2:𝔹){
+	x:=!a;
+	y:=!x;
+	if cond{
+		x:=H(x);
+	}else{
+		__show(__query("dep",x));
+	}
+	__show(__query("dep",y)); // {a, cond, x} // TODO: this should be {a, cond}
+	x:=H(x);
+	forget(y); // TODO
+	return (a,x);
+}
