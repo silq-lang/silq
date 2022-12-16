@@ -28,20 +28,12 @@ def main(){
 }
 +/
 /+
-def main(){
-	x:=H(0:𝔹);
-	//x:=((x:𝔹)qfree⇒x)(x);
-	x:=x;
-	// TODO: error
-	__show(__query("dep", x));
-}
 +/
 /+
 def main(){
 	[1,2]:=[1,2,3]; // TODO: error
 }
 +/
-
 /+
 def foo[n:!ℕ, rr:!ℕ](
 	const r:!ℕ,

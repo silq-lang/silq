@@ -1,0 +1,10 @@
+
+def main(){
+	x:=H(0:𝔹);
+	y:=dup(x);
+	y:=y; // error
+	__show(__query("dep",y)); // {x}
+	x:=H(x);
+	__show(__query("dep",y)); // ⊤
+	return x;
+}
