@@ -1,0 +1,16 @@
+def f(a: 𝔹) {
+	x := !a;
+	y := !x;
+	if y {
+		x := H(x);
+	} else {
+		a := H(a);
+	}
+	__show(__query("dep", y)); // ⊤
+	z := !y;
+	__show(__query("dep", z)); // {y}
+	forget(y); // error
+	__show(__query("dep", z)); // ⊤
+	forget(z); // error
+	return (a, x);
+}
