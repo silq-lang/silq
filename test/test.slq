@@ -1,4 +1,144 @@
 // skipped
+
+/+
+def main(){
+	x:=H(0:𝔹);
+	def f[i:!ℕ] ⇒ x;
+	f[i]:=f[i]; // TODO (have to detect that this is not an array assignment)
+}
++/
+/+
+def main(){
+	x:=H(0:𝔹);
+	a:=vector(3,x);
+	(a[0],a[0],a[0]):=(a[0],a[0],a[0]); // error
+	return (x,a);
+}
++/
+/+
+def main(){
+	a:=(0,1):𝔹^2;
+	(a[0],a[1]):=(a[0],a[1]);
+	assert(measure(a)==(0,1)); // TODO
+}
++/
+/+
+def main(){
+	x:=H(0:𝔹);
+	a:=vector(3,x);
+	(a[0],f):=(0:𝔹,() ⇒ a[0]); // TODO?
+	forget(a);
+	forget(f);
+	return x;
+}
++/
+/+
+def main(){
+	x:=H(0:𝔹);
+	a:=vector(3,x);
+	__show(__query("dep",a));
+	(a[0],b):=(a[0],a[1]);
+	__show(__query("dep",a));
+	forget(a,b);
+	return x;
+}
++/
+/+
+def main(){
+	x:=1:𝔹;
+	y:=H(dup(x));
+	if y {
+		phase(π);
+	}
+	y:=H(y);
+	assert(measure(y=x));
+	forget(y=x);
+	return x;
+}
++/
+
+/+
+def main(){
+	x:=0:𝔹;
+	y:=f(dup(x));
+	if y {
+		z:=1:𝔹;
+	}else{
+		z:=0:𝔹;
+	}
+	y:=reverse(f)(y);
+	assert(measure(y=x));
+	forget(y=x);
+	return z;
+}
++/
+
+/+
+def project0(x:𝔹){
+	assert(measure(x=0));
+	0:=x;
+}
+def project1(x:𝔹){
+	assert(measure(x=1));
+	1:=x;
+}
+
+def main(){
+	x:=0:𝔹;
+	y:=H(0:𝔹);
+	assert(measure(x=y));
+	dup(x):=y;
+}
+
+def main(){
+	0:=H(0:𝔹);
+	x:=1:𝔹;
+	y:=H(dup(x));
+	if y{
+		z:=H(x);
+	}else{
+		z:=H(x);
+	}
+	y:=H(y);
+	assert(measure(z==y));
+	forget(y=z);
+	return z;
+}
++/
+
+/+
+def main(){
+	x:=H(0:𝔹);
+	y:=dup(x);
+	measure(dup(x));
+	forget(y);
+	return x;
+}
++/
+/+
+def f(a: 𝔹){
+	x:=!a; // x ↦ {a}
+	y:=!x; // x ↦ {a}, y ↦ {x}
+	if y {
+		xp := dup(x); // xp ↦ {x}, x ↦ {a}, y ↦ {x}
+		__show(__query("dep",xp));
+		xp := H(xp);
+		// y ↦ {x}, x ↦ {a}
+	} else {
+		xp := dup(x); // x=xp, y ↦ {x}, x ↦ {a}
+		// x↦{xp}, y ↦ {x}, xp ↦ {a}
+		a := H(a);
+		// x ↦ {xp}, y ↦ {x}, xp ↦ {a}
+	}
+	// x ↦ {xp}, y → {xp}
+	(x,xp) := (xp,x); // x → ⊤,
+	// x ↦ {y, a, ap}, y ↦ {cond, x, xp}
+	__show(__query("dep",y));
+	forget(xp);
+	return (x,a,y);
+}
++/
+
 /+
 def f(a: B) {
 	y := !a;
