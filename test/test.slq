@@ -1,10 +1,115 @@
 // skipped
 
+
+/+
+def f[n:!ℕ](x:𝔹^n)mfree⇒x;
+
+n:=3;
+def main(){
+	x:=H(0:𝔹);
+	a:=vector(n,x);
+	forget(x=a[0]);
+	a[0]:=H(a[0]);
+	f(b):=a;
+	return b;
+}
++/
+
+//a:=vector(3,0:𝔹); // TODO
+//(x,y):=(1,2); // TODO
+//a[0]:=a[0]; // error
+
+/+
+def f[n:!ℕ](const x:𝔹^n)mfree⇒x; // TODO (just explicitly synthesize dup/move in semantic)
+
+n:=3;
+def main(){
+	a:=vector(n,0:𝔹);
+	b:=dup(a);
+	f(b):=a;
+	return b;
+}
++/
+
+/+
+def main(){
+	[x,y]:=(1,2/3);
+	__show(__query("type",y));
+}
++/
 /+
 def main(){
 	x:=H(0:𝔹);
-	def f[i:!ℕ] ⇒ x;
-	f[i]:=f[i]; // TODO (have to detect that this is not an array assignment)
+	a:=vector(10,x);
+	a[0..2]:=a[0..3];
+	forget(a);
+	return x;
+}
++/
+/+
+def main(){
+	y:=0:𝔹;
+	z:=0:𝔹;
+	((x:𝔹)⇒(x,y)):=((x:𝔹)⇒(x,z)) // error
+}
++/
+/+
+def main(){
+	x:=H(0:𝔹);
+	a:=vector(10,x);
+	y:=0:𝔹;
+	(a[0],y):=(y,a[0]);
+	forget(a); // TODO
+	return x;
+}
++/
+/+
+def main(){
+	y:=3:int[4];
+	(1:int[4])+(3:int[4]):=y;
+}
++/
+
+/+
+def main(){
+	x:=H(0:𝔹);
+	if x {
+		(a,b):=(1:int[3],2:int[3]);
+	} else {
+		(b,a):=(1:int[3],2:int[3])
+	}
+	a[0]:=H(H(a[0]));
+	b[0]:=H(H(b[0]));
+	(1:int[3],2:int[3]) := if x then (a,b) else (b,a);
+	forget(H(x)=0);
+}
++/
+/+
+def main(){
+	x:=H(0:𝔹);
+	if x {
+		(a,b):=(1:int[3],2:int[3]);
+	} else {
+		(b,a):=(1:int[3],2:int[3])
+	}
+	a[0]:=H(H(a[0])); // error
+	b[0]:=H(H(b[0])); // error
+	1:int[3]:= if x { a } else { b };
+	forget(H(x)=0);
+}
++/
+
+/+
+def main(){
+	x:=H(0:𝔹);
+	(if x { (a,b) } else { (b,a) }) := (1:int[3],2:int[3]); // TODO
+	return (x,a,b);
+}
++/
+/+
+def main(){
+	def f[x:𝔹]mfree ⇒ x;
+	f[x]:=f[H(0:𝔹)]; // TODO
 }
 +/
 /+
