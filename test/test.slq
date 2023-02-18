@@ -1,5 +1,62 @@
 // skipped
 
+/+
+def main()⇒reverse((x:uint[1])mfree{ x[0]:=H(x[0]); return x; })(0:uint[1]);
++/
+/+
+def main(){
+	n:=3;
+	x:=0:int[n];
+	x[0]:=3; // TODO: better error message
+	return x;
+}
++/
+/+
+def rQFT[n:!ℕ](ψ: int[n])mfree{
+    for k in (n..-1..0]{
+        for l in (n..-1..k + 1]{
+            if ψ[k] && ψ[l] {
+                reverse(phase)(2 · π · 2 ^ (k - l - 1),());
+            }
+        }
+        __tmp2 := ψ[k];
+        __tmp2 := reverse(H)(__tmp2);
+        ψ[k] := __tmp2;
+    }
+    for k in (n div 2..-1..0]{
+        __tmp1 := ψ[n - k - 1];
+        __tmp0 := ψ[k];
+        (__tmp1,__tmp0) := (__tmp0,__tmp1)^2;
+        ψ[n - k - 1] := __tmp1;
+        ψ[k] := __tmp0;
+    }
+    return ψ coerce int[n];
+}
+
+def main(){
+	return rQFT(0:int[2]);
+}
++/
+/+
+def f[n:!ℕ]⇒vector(n,0:𝔹);
+def main(){
+	f[1][2]:=H(f[1][2]); // error
+}+/
+
+/+
+def main(){
+	n:=3;
+	a:=vector(n,0:𝔹);
+	a=vector(n+1 sub 1,0:𝔹);
+	a[1]=1:𝔹;
+	for i in 0..n-1{
+		(a[i],a[i+1]):=(a[i+1],a[i]);
+		(a[i],a[i]):=(a[i],a[i]);
+	}
+	__show(__query("dep",a));
+	return a:𝔹[];
+}
++/
 
 /+
 def f[n:!ℕ](x:𝔹^n)mfree⇒x;
