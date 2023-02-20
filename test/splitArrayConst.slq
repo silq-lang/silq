@@ -1,4 +1,5 @@
 def main() {
-   a := vector(2, 1:B);
-   if a[0]{a[1]:=X(a[1]);} // TODO
+	a := vector(2, 1:B);
+	if a[0]{a[1]:=X(a[1]);} // TODO
+	return a;
 }
