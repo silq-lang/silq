@@ -1,6 +1,21 @@
 // skipped
 
 /+
+def main(){
+	b[0]:=0; // error
+}
++/
+/+
+def main(){
+	f:=(x:!ℝ)⇒(-1/2≤x∧x≤1/2):!ℝ;
+	for i in [0..1){
+		d:=1/(2·i+1);
+		f=(x:!ℝ)⇒f(x+d/2);
+	}
+	return f;
+}
++/
+/+
 def rev[τ:*,n:!ℕ](xs:τ^n)qfree{
 	for i in 0..n div 2{
 		(xs[i],xs[n-1-i]):=(xs[n-1-i],xs[i]);
