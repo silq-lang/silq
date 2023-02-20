@@ -1,4 +1,27 @@
 // skipped
+
+/+
+def rev[τ:*,n:!ℕ](xs:τ^n)qfree{
+	for i in 0..n div 2{
+		(xs[i],xs[n-1-i]):=(xs[n-1-i],xs[i]);
+	}
+	return xs;
+}
+
+def main(){
+	x:=H(H(0:𝔹));
+	a:=(dup(x),!x,!x);
+	forget(x=a[0]);
+	//a:=(0,1,1):𝔹^3;
+	assert(measure(reverse(rev[𝔹,3])(a))==(1,1,0));
+}
++/
+/+
+def main(){
+	a:=(0,0,0);
+	a[0]:=1; // error
+}
++/
 /+
 def main(){
 	a:=(0:𝔹,0:𝔹);
@@ -14,7 +37,9 @@ def H_n[n:!ℕ](ψ: int[n])mfree: int[n]{
 	}
 	return ψ;
 }
-def main()⇒assert(measure(H_n(reverse(H_n)(0:int[3])))==0);
+def main(){
+	assert(measure(H_n(reverse(H_n)(0:int[3])))==0);
+}
 +/
 /+
 def main()⇒reverse((x:uint[1])mfree{ x[0]:=H(x[0]); return x; })(0:uint[1]);
