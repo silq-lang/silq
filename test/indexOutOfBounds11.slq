@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	x:=0:int[3];
+	x[-1]=1:𝔹; // TODO: error
+	return x;
+}

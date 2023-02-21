@@ -802,8 +802,7 @@ struct QState{
 					enforce(0<=i&&i<uintval.nbits,"index out of bounds");
 					return makeBool((uintval.val&(ℤ(1)<<to!size_t(i)))!=0);
 				case Tag.intval:
-					enforce(0<=i,"index out of bounds");
-					if(i>=size_t.max) return makeBool(false);
+					enforce(0<=i&&i<intval.nbits,"index out of bounds");
 					return makeBool((intval.val&(ℤ(1)<<to!size_t(i)))!=0);
 				case Tag.fval,Tag.qval,Tag.zval,Tag.bval: enforce(0,"TODO?"); assert(0);
 				case Tag.record,Tag.closure: assert(0);
@@ -2189,7 +2188,7 @@ struct Interpreter(QState){
 				switch(value.tag){
 					case QState.Value.Tag.array_:
 						auto index=indices[0].asℤ;
-						if(index>=value.array_.length){
+						if(!(0<=index&&index<value.array_.length)){
 							auto ex=new Exception("index out of bounds");
 							version(LOCALIZE) ex=new LocalizedException(ex,locations[0]);
 							throw ex;
