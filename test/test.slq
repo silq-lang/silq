@@ -2,9 +2,32 @@
 
 /+
 def main(){
-	b[0]:=0; // error
+	a:=vector(1,0:𝔹);
+	H(a[0]):=a[0];
+	a[0]:=H(a[0]);
+	assert(measure(a)[0]==0);
+	//a:=vector(2,0:𝔹);
+	//a[1]=1:𝔹;
+	//(H(a[0]),a[1]):=(a[1],H(a[0]));
+	(x,y):=(0:𝔹,1:𝔹);
+	(H(x),y):=(y,H(x));
+	//(x,y,z):=(1,0,0):𝔹^3;
+	//(x,y,z):=(z,x,y);
+	//(x,y,z):=(y,z,x);
+	//return (x,y,z);
+	assert(measure(H(x),H(y))=(1,0));
 }
 +/
+/+
+def main(){
+	a:=vector(3,0:𝔹);
+	__show(__query("dep",a));
+	a[0]:=H(a[0]);
+	__show(__query("dep",a));
+	return a;
+}
++/
+
 /+
 def main(){
 	f:=(x:!ℝ)⇒(-1/2≤x∧x≤1/2):!ℝ;
@@ -13,58 +36,6 @@ def main(){
 		f=(x:!ℝ)⇒f(x+d/2);
 	}
 	return f;
-}
-+/
-/+
-def rev[τ:*,n:!ℕ](xs:τ^n)qfree{
-	for i in 0..n div 2{
-		(xs[i],xs[n-1-i]):=(xs[n-1-i],xs[i]);
-	}
-	return xs;
-}
-
-def main(){
-	x:=H(H(0:𝔹));
-	a:=(dup(x),!x,!x);
-	forget(x=a[0]);
-	//a:=(0,1,1):𝔹^3;
-	assert(measure(reverse(rev[𝔹,3])(a))==(1,1,0));
-}
-+/
-/+
-def main(){
-	a:=(0,0,0);
-	a[0]:=1; // error
-}
-+/
-/+
-def main(){
-	a:=(0:𝔹,0:𝔹);
-	x:=H(0:𝔹);
-	a[x]:=X(a[x]); // TODO
-	return (a,x);
-}
-+/
-/+
-def H_n[n:!ℕ](ψ: int[n])mfree: int[n]{
-	for k in [0..n){
-		ψ[k] := H(ψ[k]);
-	}
-	return ψ;
-}
-def main(){
-	assert(measure(H_n(reverse(H_n)(0:int[3])))==0);
-}
-+/
-/+
-def main()⇒reverse((x:uint[1])mfree{ x[0]:=H(x[0]); return x; })(0:uint[1]);
-+/
-/+
-def main(){
-	n:=3;
-	x:=0:int[n];
-	x[0]:=3; // TODO: better error message
-	return x;
 }
 +/
 /+
@@ -93,185 +64,15 @@ def main(){
 	return rQFT(0:int[2]);
 }
 +/
-/+
-def f[n:!ℕ]⇒vector(n,0:𝔹);
-def main(){
-	f[1][2]:=H(f[1][2]); // error
-}+/
-
-/+
-def main(){
-	n:=3;
-	a:=vector(n,0:𝔹);
-	a=vector(n+1 sub 1,0:𝔹);
-	a[1]=1:𝔹;
-	for i in 0..n-1{
-		(a[i],a[i+1]):=(a[i+1],a[i]);
-		(a[i],a[i]):=(a[i],a[i]);
-	}
-	__show(__query("dep",a));
-	return a:𝔹[];
-}
-+/
-
-/+
-def f[n:!ℕ](x:𝔹^n)mfree⇒x;
-
-n:=3;
-def main(){
-	x:=H(0:𝔹);
-	a:=vector(n,x);
-	forget(x=a[0]);
-	a[0]:=H(a[0]);
-	f(b):=a;
-	return b;
-}
-+/
 
 //a:=vector(3,0:𝔹); // TODO
 //(x,y):=(1,2); // TODO
 //a[0]:=a[0]; // error
 
 /+
-def f[n:!ℕ](const x:𝔹^n)mfree⇒x; // TODO (just explicitly synthesize dup/move in semantic)
-
-n:=3;
-def main(){
-	a:=vector(n,0:𝔹);
-	b:=dup(a);
-	f(b):=a;
-	return b;
-}
-+/
-
-/+
 def main(){
 	[x,y]:=(1,2/3);
 	__show(__query("type",y));
-}
-+/
-/+
-def main(){
-	x:=H(0:𝔹);
-	a:=vector(10,x);
-	a[0..2]:=a[0..3];
-	forget(a);
-	return x;
-}
-+/
-/+
-def main(){
-	y:=0:𝔹;
-	z:=0:𝔹;
-	((x:𝔹)⇒(x,y)):=((x:𝔹)⇒(x,z)) // error
-}
-+/
-/+
-def main(){
-	x:=H(0:𝔹);
-	a:=vector(10,x);
-	y:=0:𝔹;
-	(a[0],y):=(y,a[0]);
-	forget(a); // TODO
-	return x;
-}
-+/
-/+
-def main(){
-	y:=3:int[4];
-	(1:int[4])+(3:int[4]):=y;
-}
-+/
-
-/+
-def main(){
-	x:=H(0:𝔹);
-	if x {
-		(a,b):=(1:int[3],2:int[3]);
-	} else {
-		(b,a):=(1:int[3],2:int[3])
-	}
-	a[0]:=H(H(a[0]));
-	b[0]:=H(H(b[0]));
-	(1:int[3],2:int[3]) := if x then (a,b) else (b,a);
-	forget(H(x)=0);
-}
-+/
-/+
-def main(){
-	x:=H(0:𝔹);
-	if x {
-		(a,b):=(1:int[3],2:int[3]);
-	} else {
-		(b,a):=(1:int[3],2:int[3])
-	}
-	a[0]:=H(H(a[0])); // error
-	b[0]:=H(H(b[0])); // error
-	1:int[3]:= if x { a } else { b };
-	forget(H(x)=0);
-}
-+/
-
-/+
-def main(){
-	x:=H(0:𝔹);
-	(if x { (a,b) } else { (b,a) }) := (1:int[3],2:int[3]); // TODO
-	return (x,a,b);
-}
-+/
-/+
-def main(){
-	def f[x:𝔹]mfree ⇒ x;
-	f[x]:=f[H(0:𝔹)]; // TODO
-}
-+/
-/+
-def main(){
-	x:=H(0:𝔹);
-	a:=vector(3,x);
-	(a[0],a[0],a[0]):=(a[0],a[0],a[0]); // error
-	return (x,a);
-}
-+/
-/+
-def main(){
-	a:=(0,1):𝔹^2;
-	(a[0],a[1]):=(a[0],a[1]);
-	assert(measure(a)==(0,1)); // TODO
-}
-+/
-/+
-def main(){
-	x:=H(0:𝔹);
-	a:=vector(3,x);
-	(a[0],f):=(0:𝔹,() ⇒ a[0]); // TODO?
-	forget(a);
-	forget(f);
-	return x;
-}
-+/
-/+
-def main(){
-	x:=H(0:𝔹);
-	a:=vector(3,x);
-	__show(__query("dep",a));
-	(a[0],b):=(a[0],a[1]);
-	__show(__query("dep",a));
-	forget(a,b);
-	return x;
-}
-+/
-/+
-def main(){
-	x:=1:𝔹;
-	y:=H(dup(x));
-	if y {
-		phase(π);
-	}
-	y:=H(y);
-	assert(measure(y=x));
-	forget(y=x);
-	return x;
 }
 +/
 
@@ -534,46 +335,7 @@ def main(){
 	}
 }
 +/
-/+
-def f(a:𝔹,b:𝔹,c:𝔹)⇒((a,b),c);
 
-def main(){
-	a:=(0,0,0):𝔹^3;
-	((a[0],a[1]),a[2]):=f(a[0],a[1],a[2]); // TODO
-	return a;
-}
-+/
-/+
-def f(a:𝔹,b:𝔹,c:𝔹)⇒((a,b),c);
-
-def main(){
-	(a,b,c):=(0,0,0):𝔹^3;
-	((a,b),c):=f(a,b,c); // ok
-	return (a,b,c);
-}
-+/
-
-/+
-def main(){
-	a:=(0:𝔹,0:𝔹);
-	(H(a[1]),a[0]):=a; // error
-}
-+/
-/+
-def main(){
-	a:=(0:𝔹,0:𝔹);
-	def f(a:𝔹,b:𝔹)mfree⇒(H(a),b);
-	f(a[0],a[1]):=(a[1],a[0]); // ok
-	return a;
-}
-+/
-/+
-def main(){
-	a:=(0:𝔹,0:𝔹);
-	(H(a[0]),a[1]):=(a[1],a[0]); // TODO
-	return a;
-}
-+/
 /+
 def f₁(const z: 𝔹) qfree: 𝔹 {
 	return !z;
@@ -611,17 +373,7 @@ def main() {
 
 /+
 def main(){
-	x:=0:!𝔹;
-	while true{
-		y:=[x];
-		forget(x);
-		x:=y;
-	}
-}
-+/
-/+
-def main(){
-	x:=1:*;
+	x:=1:*; // TODO?
 }
 +/
 /+

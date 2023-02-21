@@ -1,0 +1,13 @@
+// https://codeforces.com/contest/1116/problem/D2
+def solve[n:!ℕ](qs:𝔹^n)mfree:𝔹^n{
+	if n>1{
+		bit:=qs[n-1];
+		if bit{
+			for i in 0..n-1{ qs[i]:=H(qs[i]); }
+		}else{
+			qs[0..n sub 1]:=solve(qs[0..n-1]); // TODO
+		}
+		forget(bit=qs[n-1]);
+	}
+	return qs;
+}

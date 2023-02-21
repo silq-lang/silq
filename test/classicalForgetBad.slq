@@ -1,0 +1,6 @@
+// args: --run
+
+def main(){
+	y:=3:!int[4];
+	(1:!int[4])+(3:!int[4]):=y; // TODO: error
+}

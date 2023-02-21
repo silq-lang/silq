@@ -1,0 +1,11 @@
+// args: --run
+
+def H_n[n:!ℕ](ψ: int[n])mfree: int[n]{
+	for k in [0..n){
+		ψ[k] := H(ψ[k]);
+	}
+	return ψ;
+}
+def main(){
+	assert(measure(H_n(reverse(H_n)(0:int[3])))==0);
+}

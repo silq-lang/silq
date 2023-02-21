@@ -1,0 +1,14 @@
+// args: --run
+
+def main(){
+	x:=H(0:𝔹);
+	if x {
+		(a,b):=(1:int[3],2:int[3]);
+	} else {
+		(b,a):=(1:int[3],2:int[3])
+	}
+	a[0]:=H(H(a[0]));
+	b[0]:=H(H(b[0]));
+	(1:int[3],2:int[3]) := if x then (a,b) else (b,a);
+	forget(H(x)=0);
+}

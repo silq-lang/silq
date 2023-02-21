@@ -1,0 +1,3 @@
+// args: --run
+
+def main()⇒reverse((x:uint[1])mfree{ x[0]:=H(x[0]); return x; })(0:uint[1]);

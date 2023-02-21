@@ -1,0 +1,10 @@
+// args: --run
+
+def f(a:𝔹,b:𝔹,c:𝔹)⇒((a,b),c);
+
+def main(){
+	(a,b,c):=(0,0,1):𝔹^3;
+	((c,b),a):=f(a,b,c); // ok
+	assert(measure((a,b,c)==(1,0,0)));
+	return (a,b,c);
+}

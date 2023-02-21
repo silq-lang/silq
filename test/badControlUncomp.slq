@@ -1,0 +1,13 @@
+// args: --run
+
+def main(){
+	x:=1:𝔹;
+	y:=H(dup(x));
+	if y {
+		phase(π);
+	}
+	y:=H(y);
+	assert(measure(y=x)); // error
+	forget(y=x);
+	return x;
+}

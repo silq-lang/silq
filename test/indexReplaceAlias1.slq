@@ -1,0 +1,7 @@
+
+def main(){
+	x:=H(0:𝔹);
+	a:=vector(3,x);
+	(a[0],a[0],a[0]):=(a[0],a[0],a[0]); // error
+	return (x,a);
+}

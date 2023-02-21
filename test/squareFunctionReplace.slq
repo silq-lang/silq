@@ -1,0 +1,5 @@
+
+def f[n:!ℕ]⇒vector(n,0:𝔹);
+def main(){
+	f[1][2]:=H(f[1][2]); // error
+}

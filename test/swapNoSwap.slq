@@ -1,0 +1,15 @@
+// args: --run
+
+def main(){
+	n:=3;
+	a:=vector(n,0:𝔹);
+	a=vector(n+1 sub 1,0:𝔹);
+	for i in 0..n-1 { a[i]=1:𝔹; }
+	for i in 0..n-1{
+		(a[i],a[i+1]):=(a[i+1],a[i]);
+		(a[i],a[i]):=(a[i],a[i]);
+	}
+	__show(__query("dep",a)); // {}
+	assert(measure(a==(1,0,1)));
+	return dup(a):𝔹[];
+}
