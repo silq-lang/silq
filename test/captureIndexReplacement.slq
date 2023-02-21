@@ -5,6 +5,6 @@ def main(){
 	a:=vector(3,x);
 	(a[0],f):=(0:𝔹,() ⇒ a[0]); // TODO
 	forget(a); // TODO
-	forget(f); // TODO
+	forget(f);
 	return x;
 }

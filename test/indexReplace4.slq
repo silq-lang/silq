@@ -1,0 +1,26 @@
+// args: --run
+
+def main(){
+	a:=vector(1,0:𝔹);
+	H(a[0]):=a[0];
+	a[0]:=H(a[0]);
+	assert(measure(a)[0]==0);
+	a:=vector(2,0:𝔹);
+	a[1]=1:𝔹;
+	(H(a[0]),a[1]):=(a[1],H(a[0]));
+	(x,y):=a;
+	assert(measure(H(x),H(y))=(1,0));
+	(x,y):=(0:𝔹,1:𝔹);
+	(H(x),y):=(y,H(x));
+	assert(measure(H(x),H(y))=(1,0));
+	(x,y,z):=(1,0,0):𝔹^3;
+	(x,y,z):=(z,x,y);
+	assert(measure((x,y,z)=(0,1,0)));
+	(x,y,z):=(y,z,x);
+	assert(measure(x,y,z)=(1,0,0));
+	a:=(1,0,0):𝔹^3;
+	(a[0],a[1],a[2]):=(a[2],a[0],a[1]);
+	assert(measure(a=(0,1,0)));
+	(a[0],a[1],a[2]):=(a[1],a[2],a[0]);
+	assert(measure(a)=(1,0,0));
+}
