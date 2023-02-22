@@ -2,6 +2,25 @@
 
 /+
 def main(){
+	x:=H(0:𝔹);
+	if x{
+		f:=()=>x; // error
+	}
+}
++/
+
+/+
+def f(x:𝔹,y:𝔹,const z:𝔹^2)⇒((x,y),z);
+
+def main(){
+	a:=vector(2,0:𝔹);
+	((a[0],a[1]),b):=f(a[0],a[1],dup(a)); // TODO: error
+	return (a,b);
+}
++/
+
+/+
+def main(){
 	a:=vector(3,0:𝔹);
 	__show(__query("dep",a));
 	a[0]:=H(a[0]);
