@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	a:=(0:𝔹,);
+	b:=(1:𝔹,);
+	(a[0],b[0]):=(b[0],a[0]);
+	assert(measure(a~b=(1,0)));
+	return (a,b);
+}
