@@ -1,0 +1,12 @@
+
+def f(const x:𝔹,y:𝔹)mfree⇒(x,y);
+
+n:=3;
+def main(){
+	a:=H(0:𝔹);
+	b:=dup(a);
+	z:=dup(a);
+	f(b,c):=(a,z);
+	forget(b=c);
+	return c;
+}
