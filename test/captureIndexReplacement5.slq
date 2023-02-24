@@ -1,0 +1,13 @@
+
+def main(){
+	x:=H(0:𝔹);
+	a:=vector(3,x);
+	(a[0],f):=(0:𝔹,(){
+		x:=a[0];
+		(a[1],a[2]):=(a[2],a[1]); // TODO: error
+		return x;
+	});
+	forget(a=(0,x,x));
+	forget(f()=x);
+	assert(measure(H(x))=0);
+}
