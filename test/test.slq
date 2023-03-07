@@ -1,6 +1,19 @@
 // skipped
 
 /+
+def main() {
+	if measure(H(0:B)) {
+		T := !(B^2);
+		a := (0:!B,1:!B):T;
+	} else {
+		T := !Q;
+		a := (1/3):T;
+	}
+	measure(a); // TODO
+}
++/
+
+/+
 def main(){
        q := vector(5, 0:𝔹);
        (q₀, q₁, q₂, q₃, q₄) := q;
