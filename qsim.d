@@ -2,9 +2,10 @@ import std.conv: text, to;
 import std.string: split;
 import std.algorithm;
 import std.array: array;
-import std.range: iota, zip, repeat, walkLength;
+import std.range: iota, repeat, walkLength;
+import util.range: zip;
 import std.string: startsWith,join;
-import std.typecons: q=tuple,Q=Tuple;
+import util.tuple: q=tuple,Q=Tuple;
 import std.exception: enforce;
 
 import options;
@@ -427,7 +428,7 @@ struct QState{
 		this(FunctionDef fun,Value* context){
 			this.fun=fun; this.context=context;
 		}
-		hash_t toHash(){ return context?tuplex(fun,*context).toHash():fun.toHash(); }
+		hash_t toHash(){ return context?q(fun,*context).toHash():fun.toHash(); }
 		bool opEquals(Closure rhs){ return fun==rhs.fun && (context is rhs.context || context&&rhs.context&&*context==*rhs.context); }
 	}
 	struct Value{
@@ -530,7 +531,7 @@ struct QState{
 				import std.traits:EnumMembers;
 				static foreach(t;EnumMembers!Tag){
 					case t:
-						return tuplex(type,mixin(text(t))).toHash();
+						return q(type,mixin(text(t))).toHash();
 				}
 			}
 		}
