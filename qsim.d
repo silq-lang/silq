@@ -1861,7 +1861,7 @@ struct Interpreter(QState){
 		}
 		if(isInt(value.type)&&isSubtype(ℤt(true),type)){
 			assert(value.tag==QState.Value.Tag.intval);
-			return qstate.makeInteger(value.uintval.val).convertTo(type);
+			return qstate.makeInteger(value.intval.val).convertTo(type);
 		}
 		// TODO: rat
 		if(auto tpl=cast(TupleTy)type){
