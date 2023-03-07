@@ -480,8 +480,10 @@ struct QState{
 		}
 		Value dup(ref QState state){
 			final switch(tag){
-				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
-				case t: return this;
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval]){
+					case t:
+						return this;
+				}
 				case Tag.closure:
 					return state.makeClosure(type,Closure(closure.fun,closure.context?[closure.context.dup(state)].ptr:null));
 				case Tag.array_: return state.makeArray(type,array_.map!(x=>x.dup(state)).array);
@@ -495,8 +497,10 @@ struct QState{
 		Value toVar(ref QState state,bool cleanUp){
 			if(isClassical) return this;
 			final switch(tag){
-				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
-				case t: assert(0);
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval]){
+					case t:
+						assert(0);
+				}
 				case Tag.closure:
 					return state.makeClosure(type,Closure(closure.fun,closure.context?[closure.context.toVar(state,cleanUp)].ptr:null));
 				case Tag.array_:
@@ -515,7 +519,8 @@ struct QState{
 			final switch(tag){
 				import std.traits:EnumMembers;
 				static foreach(t;EnumMembers!Tag){
-					case t: return mixin(`this.`~text(t)~`==rhs.`~text(t));
+					case t:
+						return mixin(`this.`~text(t)~`==rhs.`~text(t));
 				}
 			}
 		}
@@ -523,8 +528,10 @@ struct QState{
 			if(!type) return 0;
 			final switch(tag){
 				import std.traits:EnumMembers;
-				static foreach(t;EnumMembers!Tag)
-				case t: return tuplex(type,mixin(text(t))).toHash();
+				static foreach(t;EnumMembers!Tag){
+					case t:
+						return tuplex(type,mixin(text(t))).toHash();
+				}
 			}
 		}
 		this(this){
@@ -532,8 +539,12 @@ struct QState{
 			auto tt=tag;
 			Lswitch:final switch(tt){
 				import std.traits:EnumMembers;
-				static foreach(t;EnumMembers!Tag)
-				case t: static if(__traits(hasMember,mixin(text(t)),"__postblit")) mixin(`this.`~text(t)~`.__postblit();`);
+				static foreach(t;EnumMembers!Tag){
+					case t:
+						static if(__traits(hasMember,mixin(text(t)),"__postblit"))
+							mixin(`this.`~text(t)~`.__postblit();`);
+						break Lswitch;
+				}
 			}
 		}
 		void assign(ref QState state,Value rhs){
@@ -551,8 +562,11 @@ struct QState{
 			}
 			assert(tag==rhs.tag);
 			Lswitch: final switch(tag){
-				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
-				case t: this=rhs; break Lswitch;
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval]){
+					case t:
+						this=rhs;
+						break Lswitch;
+				}
 				case Tag.closure:
 					closure.fun=rhs.closure.fun;
 					if(closure.context&&rhs.closure.context)
@@ -587,8 +601,11 @@ struct QState{
 		}
 		void removeVar(ref Σ σ){
 			final switch(tag){
-				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
-				case t: assert(isClassical); return;
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval]){
+					case t:
+						assert(isClassical);
+						return;
+				}
 				case Tag.closure:
 					if(closure.context) return closure.context.removeVar(σ);
 					return;
@@ -604,8 +621,11 @@ struct QState{
 		}
 		void forget(ref QState state,Value rhs){
 			final switch(tag){
-				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
-				case t: assert(isClassical); return;
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval]){
+					case t:
+						assert(isClassical);
+						return;
+				}
 				case Tag.closure:
 					enforce(rhs.tag==Tag.closure);
 					if(closure.context) return closure.context.forget(state,*rhs.closure.context);
@@ -627,8 +647,11 @@ struct QState{
 		void forget(ref QState state){
 			// TODO: get rid of code duplication
 			final switch(tag){
-				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
-				case t: assert(isClassical); return;
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval]){
+					case t:
+						assert(isClassical);
+						return;
+				}
 				case Tag.closure:
 					if(closure.context) return closure.context.forget(state);
 					return;
@@ -644,8 +667,11 @@ struct QState{
 		}
 		Value consumeOnRead(){ // TODO: do this in-place
 			final switch(tag){
-				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
-				case t: assert(isClassical); return this;
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval]){
+					case t:
+						assert(isClassical);
+						return this;
+				}
 				case Tag.closure:
 					Closure nclosure=this.closure;
 					if(nclosure.context) *nclosure.context=(*closure.context).consumeOnRead();
@@ -678,8 +704,10 @@ struct QState{
 		}
 		bool isClassical(){
 			final switch(tag){
-				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
-				case t: return true;
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval]){
+					case t:
+						return true;
+				}
 				case Tag.closure:
 					if(closure.context) return (*closure.context).isClassical();
 					return true;
@@ -1002,8 +1030,10 @@ struct QState{
 		}
 		bool eqZImpl(){
 			final switch(tag){
-				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.uintval,Tag.intval,Tag.bval])
-				case t: return mixin(text(t,`==0`));
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.uintval,Tag.intval,Tag.bval]){
+					case t:
+						return mixin(text(t,`==0`));
+				}
 				case Tag.array_,Tag.record,Tag.closure: break;
 				case Tag.quval: break;
 			}
@@ -1065,12 +1095,14 @@ struct QState{
 							static foreach(rtag;supportedTags){
 								case rtag: return makeBool(mixin(text(`compareImpl(`,ltag,`,r.`,rtag,`)`)));
 							}
-							static foreach(rtag;unsupportedTags)
-							case rtag: break Louter;
+							static foreach(rtag;unsupportedTags){
+								case rtag: break Louter;
+							}
 						}
 				}
-				static foreach(tag;unsupportedTags)
+				static foreach(tag;unsupportedTags){
 					case tag: break Louter;
+				}
 			}
 			enforce(0,text("TODO: '",op,"' for types ",this.type," ",r.type));
 			assert(0);
@@ -1195,8 +1227,11 @@ struct QState{
 
 		Value classicalValue(Σ state){
 			final switch(tag){
-				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval])
-				case t: assert(isClassical); return this;
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval]){
+					case t:
+						assert(isClassical);
+						return this;
+				}
 				case Tag.closure:
 					return makeClosure(type.getClassical(),Closure(closure.fun,closure.context?[closure.context.classicalValue(state)].ptr:null));
 				case Tag.array_:
@@ -1256,8 +1291,10 @@ struct QState{
 			if(!type) return "Value.init";
 			if(type==typeTy) return "_";
 			final switch(tag){
-				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval])
-				case t: return text(mixin(text(t)));
+				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval]){
+					case t:
+						return text(mixin(text(t)));
+				}
 				case Tag.bval: return bval?"1":"0";
 				case Tag.closure: return text("⟨",text(closure.fun)[4..$],(closure.context?text(",",closure.context.toStringImpl(opt)):""),"⟩");
 				case Tag.array_:
