@@ -473,8 +473,9 @@ struct QState{
 			if(!type) return;
 			Lswitch:final switch(tag){
 				import std.traits:EnumMembers;
-				static foreach(t;EnumMembers!Tag)
-				case t: mixin(`this.`~text(t)~`=rhs.`~text(t)~`;`); break Lswitch;
+				static foreach(t;EnumMembers!Tag){
+					case t: mixin(`this.`~text(t)~`=rhs.`~text(t)~`;`); break Lswitch;
+				}
 			}
 		}
 		Value dup(ref QState state){
