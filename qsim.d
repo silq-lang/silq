@@ -1590,6 +1590,13 @@ struct QState{
 	}
 	Value call(Value fun,Value arg,Expression type,Location loc){
 		enforce(fun.tag==Value.Tag.closure);
+		auto context=fun.closure.context;
+		if(context&&fun.isClassical){ // non-linear function
+			auto cvar=fun.closure.fun.context;
+			assert(!!cvar);
+			if(!cvar.vtype.isClassical) // expects linear context
+				fun=fun.dup(this);
+		}
 		return call(fun.closure.fun,nullValue,arg,null,fun.closure.context,type,loc);
 	}
 	QState assertTrue(Value val)in{

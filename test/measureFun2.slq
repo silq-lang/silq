@@ -1,0 +1,10 @@
+
+def makeF()mfree{
+	x:=H(0:𝔹);
+	return ()mfree⇒x;
+}
+
+def main() {
+	f:=measure(makeF());
+	assert(measure(f())==measure(f()));
+}
