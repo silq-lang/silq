@@ -1,6 +1,32 @@
 // skipped
 
 /+
+def main(){
+	n:=3;
+	x:=vector(n,0:𝔹);
+	forget(n); // TODO: error?
+	x:=x:𝔹[];
+	return x;
+}
++/
+
+/+
+def main(){
+	n:=3;
+	x:=vector(n,0:𝔹);
+	c:=measure(H(0:𝔹));
+	if c{
+		forget(x);
+		forget(n);
+		n:=4;
+		x:=vector(n,0:𝔹);
+	}
+	__show(__query("type",x));
+	return (c,x);
+}
++/
+
+/+
 def main() {
 	if measure(H(0:B)) {
 		T := !(B^2);
