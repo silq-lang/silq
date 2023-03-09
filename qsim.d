@@ -1592,9 +1592,8 @@ struct QState{
 		enforce(fun.tag==Value.Tag.closure);
 		auto context=fun.closure.context;
 		if(context&&fun.isClassical){ // non-linear function
-			auto cvar=fun.closure.fun.context;
-			assert(!!cvar);
-			if(!cvar.vtype.isClassical) // expects linear context
+			auto cvar=fun.closure.fun.context; // can be null if function has no body
+			if(cvar&&!cvar.vtype.isClassical) // expects linear context
 				fun=fun.dup(this);
 		}
 		return call(fun.closure.fun,nullValue,arg,null,fun.closure.context,type,loc);
