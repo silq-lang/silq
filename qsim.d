@@ -2111,6 +2111,8 @@ struct Interpreter(QState){
 						return QState.makeInteger(ℤ(le.lit.str));
 					}else if(le.type==ℝ(true)){
 						return QState.makeReal(le.lit.str);
+					}else if(isInt(le.type)||isUint(le.type)){
+						return convertTo(QState.makeInteger(ℤ(le.lit.str)), le.type, false);
 					}else if(le.type==Bool(true)){
 						return QState.makeBool(le.lit.str=="1");
 					}
