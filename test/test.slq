@@ -2,6 +2,36 @@
 
 /+
 def main(){
+	i:=0;
+	a:=(0,1):𝔹^2;
+	b:=(0,1):𝔹^2;
+	(a[i],a[i+1]):=(a[i],a[i+1]);
+	return a;
+}
++/
+
+/+
+def main(){
+	i:=0;
+	a:=(0,1):𝔹^2;
+	b:=(0,1):𝔹^2;
+	(a[i],a[i+1]):=(a[i],b[i+1]); // TODO: better error message
+	return a;
+}
++/
+
+
+/+
+k:=2;
+def f2(x: int[32], y: int[32]){
+	k := dup(x);
+	forget(k);
+	return (x,y);
+}
++/
+
+/+
+def main(){
 	n:=3;
 	x:=vector(n,0:𝔹);
 	forget(n); // TODO: error?
