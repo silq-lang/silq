@@ -2398,6 +2398,10 @@ struct Interpreter(QState){
 				if(cast(AndAssignExp)e) return a&b;
 				if(cast(AddAssignExp)e) return a+b;
 				if(cast(SubAssignExp)e) return a-b;
+				if(cast(NSubAssignExp)e){
+					enforce(a.ge(b).bval,"result of sub is negative");
+					return a-b;
+				}
 				if(cast(MulAssignExp)e) return a*b;
 				if(cast(DivAssignExp)e||cast(IDivAssignExp)e){
 					qstate=qstate.assertTrue(b.neqZ);
