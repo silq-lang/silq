@@ -1,0 +1,7 @@
+
+def main(){
+	n:=3;
+	x:=vector(n,0:𝔹);
+	forget(n); // TODO
+	return x;
+}
