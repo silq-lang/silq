@@ -2,6 +2,32 @@
 
 /+
 def main(){
+	f:=reverse((const x:𝔹[],y:𝔹[])mfree⇒y); // error
+	r:=reverse;
+	return r((const x:𝔹[],y:𝔹[])mfree⇒y); // TODO: error
+}
++/
+
+/+
+def main(){
+	r:=reverse;
+	return r((const x:𝔹,y:𝔹)mfree⇒y); // TODO
+}
++/
+
+/+
+def id(x:!ℕ)⇒x;
+
+def main(){
+	n:=3,m:=4;
+	a:=5,b:=6;
+	(n,(a,b))=(m,(b,a));
+	return (n,(a,b));
+}
++/
+
+/+
+def main(){
 	i:=0;
 	a:=(0,1):𝔹^2;
 	b:=(0,1):𝔹^2;
