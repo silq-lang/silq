@@ -1514,7 +1514,6 @@ struct QState{
 			if(type.isClassical()&&!arg.isClassical()) return measure(arg); // TODO: improve simulator so this is not needed
 			return arg;
 		}
-		if(fun.isReverse) return reverse(type,arg);
 		enforce(!thisExp.isValid,"TODO: method calls");
 		if(!fun.body_){ // TODO: move this logic somewhere else
 			switch(fun.getName){
@@ -2007,74 +2006,46 @@ struct Interpreter(QState){
 			if(auto ume=cast(UBitNotExp)e) return ~doIt(ume.e);
 			if(auto le=cast(LambdaExp)e) return qstate.makeFunction(le.fd);
 			if(auto ce=cast(CallExp)e){
-				auto id=cast(Identifier)unwrap(ce.e);
-				auto fe=cast(FieldExp)unwrap(ce.e);
+				auto target=unwrap(ce.e);
+				auto id=cast(Identifier)target;
+				auto fe=cast(FieldExp)target;
 				QState.Value thisExp=QState.nullValue;
 				if(fe){
 					id=fe.f;
 					thisExp=doIt(fe.e);
-				}
-				if(id){
-					if(!fe && isBuiltIn(id)){
-						switch(id.name){
-							static if(language==silq){
-								case "quantumPrimitive":
-									enforce(0,"quantum primitive cannot be used as first-class value");
-									assert(0);
-								case "__show","__query":
-									return qstate.makeTuple(ast.type.unit,[]);
-							}
-							default:
-								enforce(0,text("TODO: ",id.name));
+				} else {
+					switch(isBuiltIn(id)){
+						case BuiltIn.none:
+							break;
+						static if(language==silq){
+							case BuiltIn.quantumPrimitive:
+								enforce(0,"quantum primitive cannot be used as first-class value");
 								assert(0);
+							case BuiltIn.show,BuiltIn.query:
+								return qstate.makeTuple(ast.type.unit,[]);
 						}
+						default:
+							enforce(0,text("TODO: ",id.name));
+							assert(0);
 					}
-				}else if(auto ce2=cast(CallExp)unwrap(ce.e)){
-					if(auto id2=cast(Identifier)unwrap(ce2.e)){
-						if(isBuiltIn(id2)){
-							switch(id2.name){
-								static if(language==silq) case "quantumPrimitive":
-									switch(getQuantumOp(ce2.arg)){
-										case "dup": enforce(0,"quantumPrimitive(\"dup\")[τ] cannot be used as first-class value"); assert(0);
-										case "array": enforce(0,"quantumPrimitive(\"array\")[τ] cannot be used as first-class value"); assert(0);
-										case "vector": enforce(0,"quantumPrimitive(\"vector\")[τ] cannot be used as first-class value"); assert(0);
-										case "reverse":  enforce(0,"quantumPrimitive(\"reverse\")[τ] cannot be used as first-class value"); assert(0);
-										case "M": enforce(0,"quantumPrimitive(\"M\")[τ] cannot be used as first-class value"); assert(0);
-										case "H": return qstate.H(doIt(ce.arg));
-										case "X": return qstate.X(doIt(ce.arg));
-										case "Y": return qstate.Y(doIt(ce.arg));
-										case "Z": return qstate.Z(doIt(ce.arg));
-										case "P": return qstate.phase(doIt(ce.arg));
-										case "rX": return qstate.rX(doIt(ce.arg));
-										case "rY": return qstate.rY(doIt(ce.arg));
-										case "rZ": return qstate.rZ(doIt(ce.arg));
-										default: break;
-									}
-									break;
-								default:
-									break;
-							}
-						}
-					}else if(auto ce3=cast(CallExp)unwrap(ce2.e)){
-						if(auto id3=cast(Identifier)unwrap(ce3.e)){
-							if(isBuiltIn(id3)){
-								switch(id3.name){
-									static if(language==silq) case "quantumPrimitive":
-										switch(getQuantumOp(ce3.arg)){
-											case "dup": return doIt(ce.arg).dup(qstate);
-											case "array": return qstate.array_(ce.type,doIt(ce.arg));
-											case "vector": return qstate.vector(ce.type,doIt(ce.arg));
-											case "reverse": enforce(0); break;
-											case "M": return qstate.measure(doIt(ce.arg));
-											default: break;
-										}
-										break;
-									default:
-										break;
-								}
-							}
-						}
-					}
+				}
+
+				static if(language==silq) switch(isQuantumPrimitive(target)){
+					case null: break;
+					case "dup": return doIt(ce.arg).dup(qstate);
+					case "array": return qstate.array_(ce.type,doIt(ce.arg));
+					case "vector": return qstate.vector(ce.type,doIt(ce.arg));
+					case "reverse": return qstate.reverse(ce.type,doIt(ce.arg));
+					case "M": return qstate.measure(doIt(ce.arg));
+					case "H": return qstate.H(doIt(ce.arg));
+					case "X": return qstate.X(doIt(ce.arg));
+					case "Y": return qstate.Y(doIt(ce.arg));
+					case "Z": return qstate.Z(doIt(ce.arg));
+					case "P": return qstate.phase(doIt(ce.arg));
+					case "rX": return qstate.rX(doIt(ce.arg));
+					case "rY": return qstate.rY(doIt(ce.arg));
+					case "rZ": return qstate.rZ(doIt(ce.arg));
+					default: enforce(0, text("TODO QuantumPrimitive: ", ce.e)); assert(0);
 				}
 				auto fun=doIt(ce.e), arg=doIt(ce.arg);
 				return qstate.call(fun,arg,ce.type,ce.loc);
