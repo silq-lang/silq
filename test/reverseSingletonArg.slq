@@ -1,0 +1,14 @@
+// args: --run
+
+def f₁(x:𝔹,)mfree⇒x;
+def f₂(y:𝔹^1)mfree{
+	(x,):=y;
+	return x;
+}
+def main(){
+	g₁:=reverse(f₁);
+	(y₁,):=g₁(0:𝔹);
+	g₂:=reverse(f₂);
+	(y₂,):=g₂(1:𝔹);
+	forget((y₁,y₂)=(0,1));
+}
