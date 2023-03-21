@@ -1832,15 +1832,18 @@ QState.Value buildContextFor(QState)(ref QState qstate,FunctionDef fd)in{assert(
 }
 QState.Value lookupMeaning(QState)(ref QState qstate,Identifier id,Scope sc=null)in{assert(id && id.scope_,text(id," ",id.loc));}do{
 	if(!sc) sc=id.scope_;
-	if(!id.meaning||!sc||!id.meaning.scope_)
+	auto meaning=id.meaning;
+	if(!meaning||!sc||!meaning.scope_)
 		return qstate.readLocal(id.name,id.constLookup);
-	if(auto fd=cast(FunctionDef)id.meaning)
+	if(auto dd=cast(DatDecl)meaning)
+		meaning=dd.toFunctionDef();
+	if(auto fd=cast(FunctionDef)meaning)
 		if(!fd.isNested())
 			return qstate.makeFunction(fd);
-	auto r=getContextFor(qstate,id.meaning,sc);
+	auto r=getContextFor(qstate,meaning,sc);
 	if(r.isValid) return qstate.readField(r,id.name,id.constLookup);
 	if(!id.constLookup&&!id.type.isClassical())
-		if(auto vd=cast(VarDecl)id.meaning)
+		if(auto vd=cast(VarDecl)meaning)
 			if(vd.isConst) return qstate.readLocal(id.name,true).dup(qstate);
 	return qstate.readLocal(id.name,id.constLookup);
 }

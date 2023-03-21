@@ -1,0 +1,23 @@
+// args: --run
+
+def f[w: !Pi[_:!ℕ]lifted. *](
+	make: !Pi[n: !ℕ]lifted. !ℕ×const 𝔹 !→qfree w[n],
+	add: !Pi[n: !ℕ]lifted. (w[n] x w[n]) !→lifted w[n],
+){
+	a := make[6](42,0:𝔹);
+	b := make[6](1,0:𝔹);
+	c := add[6](a, b);
+	return c;
+}
+
+def makeUint[n: !ℕ](x: !ℕ,const dummy: 𝔹)qfree: uint[n]⇒x as uint[n];
+def iaddUint[n: !ℕ](x: uint[n],y: uint[n])lifted: uint[n]⇒x+y;
+
+def makeInt[n: !ℕ](x: !ℕ,const dummy: 𝔹)qfree: int[n]⇒ x as int[n];
+def iaddInt[n: !ℕ](x: int[n],y: int[n])lifted: int[n]⇒x+y;
+
+def main(){
+	r:=(f[uint](makeUint, iaddUint), f[int](makeInt, iaddInt));
+	assert(measure(r==(43,-21)));
+	return r;
+}

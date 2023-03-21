@@ -1,6 +1,45 @@
 // skipped
 
 /+
+def f(const a:int[1],b:int[2])mfree:int[3] × int[4]{
+	forget(b=(0:int[2]));
+	return (0:int[3], 0:int[4]);
+}
++/
+
+/+
+def f(x:𝔹,)mfree⇒x;
+
+def main(){
+	__show(__query("type",reverse(f)));
+}
++/
+
+/+
+def main(){
+	for i in [0..10){
+		f:=((const x:𝔹)⇒x+2): const 𝔹!→!ℕ;
+	}
+}
++/
+
+/+
+def main(){
+	//def f()⇒2;
+	//forget(f);
+	return H(0:𝔹);
+}
++/
+
+/+
+def main(){
+	x:=((0,2):!int[2]^2) as !ℤ^2;
+	return x;
+}
++/
+
+
+/+
 def main(){
 	f:=reverse((const x:𝔹[],y:𝔹[])mfree⇒y); // error
 	r:=reverse;
@@ -45,7 +84,6 @@ def main(){
 	return a;
 }
 +/
-
 
 /+
 k:=2;

@@ -1,0 +1,35 @@
+// args: --run
+
+def f[w: !Pi[_:!ℕ]lifted. *](
+	make: !Pi[n: !ℕ]lifted. !ℕ !→ w[n],
+	inplaceAdd: !Pi[n: !ℕ]lifted. (w[n] x const w[n]) !→ w[n],
+){
+	a := make[6](42);
+	b := make[6](1);
+	a := inplaceAdd[6](a, b);
+	return (a, b);
+}
+
+def makeUint[n: !ℕ](x: !ℕ)qfree: uint[n]{
+	return x as uint[n];
+}
+
+def iaddUint[n: !ℕ](x: uint[n],const y: uint[n])qfree: uint[n]{
+	x += y;
+	return x;
+}
+
+def makeInt[n: !ℕ](x: !ℕ)qfree: int[n]{
+	return x as int[n];
+}
+
+def iaddInt[n: !ℕ](x: int[n],const y: int[n])qfree: int[n]{
+	x += y;
+	return x;
+}
+
+def main(){
+	r:=(f[uint](makeUint, iaddUint), f[int](makeInt, iaddInt));
+	assert(measure(r==((43,1),(-21,1))));
+	return r;
+}

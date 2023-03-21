@@ -1,0 +1,4 @@
+// args: --run
+
+def makeType[w: !Pi[_: !ℕ] lifted. *]()⇒w[42];
+def main()⇒makeType[uint];
