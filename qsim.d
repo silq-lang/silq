@@ -458,7 +458,7 @@ struct QState{
 			if(type==ℚt(true)) return Tag.qval;
 			if(type==ℤt(true)) return Tag.zval;
 			if(type==Bool(true)) return Tag.bval;
-			if(type==typeTy) return Tag.bval; // TODO: ok?
+			if(isTypeTy(type)) return Tag.bval; // TODO: ok?
 			if(isInt(type)) return Tag.intval;
 			if(isUint(type)) return Tag.uintval;
 			enforce(0,text("TODO: representation for type ",type," ",typeid(type)));
@@ -1290,7 +1290,7 @@ struct QState{
 		}
 		string toStringImpl(FormattingOptions opt){
 			if(!type) return "Value.init";
-			if(type==typeTy) return "_";
+			if(isTypeTy(type)) return "_";
 			final switch(tag){
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval]){
 					case t:
@@ -1403,9 +1403,11 @@ struct QState{
 	static Value nullValue(){
 		return Value.init;
 	}
-	static Value typeValue(){
+	static Value typeValue(Expression type)in{
+		assert(isTypeTy(type));
+	}do{
 		Value r;
-		r.type=typeTy;
+		r.type=type;
 		return r;
 	}
 	static Value π(){ return makeReal(PI); }
@@ -1965,7 +1967,7 @@ struct Interpreter(QState){
 		}
 		// TODO: get rid of code duplication
 		QState.Value doIt2(Expression e){
-			if(e.type == typeTy) return QState.typeValue; // TODO: get rid of this
+			if(isType(e)) return QState.typeValue(e.type); // TODO: get rid of this
 			if(auto id=cast(Identifier)e){
 				if(!id.meaning&&util.among(id.name,"π","pi")) return QState.π;
 				if(id.substitute){
