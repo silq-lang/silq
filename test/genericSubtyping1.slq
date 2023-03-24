@@ -1,0 +1,7 @@
+// args: --run
+
+def f[τ](x:!τ)mfree:τ⇒x;
+def main(){
+	x:=f[𝔹](0:!𝔹);
+	return x;
+}
