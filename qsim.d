@@ -1594,7 +1594,7 @@ struct QState{
 		auto context=fun.closure.context;
 		if(context&&fun.isClassical){ // non-linear function
 			auto cvar=fun.closure.fun.context; // can be null if function has no body
-			if(cvar&&!cvar.vtype.isClassical) // expects linear context
+			if(cvar&&!cvar.isLinear)
 				fun=fun.dup(this);
 		}
 		return call(fun.closure.fun,nullValue,arg,null,fun.closure.context,type,loc);
@@ -1880,7 +1880,7 @@ struct Interpreter(QState){
 			if(!cast(LiteralExp)ce.arg){ // TODO: this is a hack, store integer bit lengths classically instead
 				auto llen=LiteralExp.makeInteger(len.asℤ);
 				llen.loc=ce.arg.loc;
-				auto ntype=new CallExp(ce.e,llen,ce.isSquare,ce.isClassical);
+				auto ntype=new CallExp(ce.e,llen,ce.isSquare,ce.isClassical_);
 				ntype.type=type.type;
 				ntype.sstate=SemState.completed;
 				ntype.loc=type.loc;
