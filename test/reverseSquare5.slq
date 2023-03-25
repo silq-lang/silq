@@ -1,0 +1,20 @@
+
+def foo()⇒reverse(dup); // TODO
+def id[τ](const y:𝔹,x:τ)mfree⇒x;
+def bar()⇒reverse(id); // TODO
+def nop[τ](const x:τ)mfree⇒();
+def baz()⇒reverse(nop);
+
+def weird[τ](x:𝔹)mfree⇒x;
+def qux()⇒reverse(weird);
+
+def main(){
+	x:=H(0:𝔹);
+	nop(nop(x));
+	y:=baz()(x,());
+	bar(y)(x,y);
+	z:=reverse(reverse(dup))(x,()); // TODO
+	foo()(x,z);
+	forget(H(x)=0);
+	return qux()[𝔹^10](0:𝔹);
+}
