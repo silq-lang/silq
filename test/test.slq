@@ -1,5 +1,63 @@
 // skipped
+/+
+def main(){
+	x:=();
+	():=x;
+	return x;
+}
++/
 
+/+
+def main(){
+	x:=((x:𝔹)qfree⇒x)(true);
+	__show(__query("type",x)); // !𝔹
+	return x;
+}
++/
+/+
+def fib₁[n:!ℕ](i: int[n])lifted:int[n] ⇒ if i≤2 then i else fib₁(i-2)+fib₁(i-1);
+def fib₂[n:!ℕ](i: int[n])lifted:int[n]{
+	(a,b):=(0,1):int[n]^2;
+	j:=1:int[n];
+	while true{
+		if j<i{
+			x:=dup(b);
+			a+=x;
+			(a,b):=(b,a);
+			forget(x);
+		}
+		j=(j+(j<i));
+	}
+	r:=if i≤1 then i else dup(b);
+	forget(a,b);
+	return r;
+}
+
+def fibber(f: !Π[n:!ℕ]lifted. int[n] !→lifted int[n]×𝔹)[n:!ℕ](i:int[n])lifted: int[n]×𝔹{
+	if i≤1{ return (i,true); }
+	(a,a_ready):=f(i-2);
+	(b,b_ready):=f(i-1);
+	return (a+b,a_ready&b_ready);
+}
+
+def fib₃[n:!ℕ](i:int[n]): int[n]{
+	fib:=[n:!ℕ](i:int[n])lifted⇒(0:int[n],false:𝔹);
+	r:=0:int[n];
+	done:=false;
+	while !done{
+		forget(r);
+		fib=fibber(fib);
+		(r,done):=fib(i);
+		done:=measure(done);
+		__show(__query("type",done));
+	}
+	return r;
+}
+
+def main(){
+	return fib₃(10:int[10]);
+}
++/
 /+
 def foo(){
 	x:=H(0:𝔹);

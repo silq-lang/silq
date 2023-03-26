@@ -1,0 +1,23 @@
+// args: --run
+
+def map[a,b](f: a!→mfree b)[n:!ℕ](xs:a^n)mfree:b^n{
+	ys:=();
+	for i in 0..n{
+		(x,)~xs:=xs;
+		ys~=(f(x),);
+	}
+	():=xs;
+	return ys coerce b^n;
+}
+
+def main(){
+	x:=();
+	x~=(0:𝔹,);
+	x~=(1:𝔹,);
+	x~=(0:𝔹,);
+	r:=measure(map(X)(x));
+	assert(r==(1,0,1));
+	s:=measure(reverse(map(X))(r));
+	assert(s==(0,1,0));
+	return (r,s);
+}
