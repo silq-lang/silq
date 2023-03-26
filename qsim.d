@@ -458,9 +458,10 @@ struct QState{
 			if(type==ℚt(true)) return Tag.qval;
 			if(type==ℤt(true)) return Tag.zval;
 			if(type==Bool(true)) return Tag.bval;
-			if(isTypeTy(type)) return Tag.bval; // TODO: ok?
 			if(isInt(type)) return Tag.intval;
 			if(isUint(type)) return Tag.uintval;
+			if(type==typeTy||type==ctypeTy||type==qtypeTy) return Tag.bval; // (optimization)
+			if(isTypeTy(type)) return Tag.bval; // TODO: ok?
 			enforce(0,text("TODO: representation for type ",type," ",typeid(type)));
 			assert(0);
 		}
