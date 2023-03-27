@@ -1,0 +1,23 @@
+// args: --run
+
+def foo(x: !Π(n:!ℕ,m:!ℕ)qfree. 𝔹^(n+m))qfree⇒x(2,3);
+def bar(x: !Π(n:!ℕ^2)qfree. 𝔹^(n[0]+n[1]))qfree⇒x(3,4);
+
+def zeros₁(u:!ℕ,v:!ℕ)qfree⇒vector(u+v,0:𝔹);
+def zeros₂(kl:!ℕ^2)qfree⇒vector(kl[0]+kl[1],0:𝔹);
+
+def main(){
+	t₀:=foo(zeros₁);
+	t₁:=bar(zeros₁);
+	t₂:=foo(zeros₂);
+	t₃:=bar(zeros₂);
+	x:=measure(H(0:𝔹));
+	if x{
+		a:=foo;
+		b:=zeros₁;
+	}else{
+		a:=bar;
+		b:=zeros₂;
+	}
+	return a(b);
+}
