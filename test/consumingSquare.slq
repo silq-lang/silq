@@ -1,6 +1,6 @@
 // args: --run
 
-def foo[g: 1->B]()⇒g();
+def foo[moved g: 1->B]()⇒g();
 
 def main(){
 	x := H(0:𝔹);

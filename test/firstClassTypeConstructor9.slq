@@ -10,14 +10,14 @@ def f[w: !Pi[_:!ℕ]lifted. *](
 	return c;
 }
 
-def makeUint[n: !ℕ](const x: !ℕ,const dummy:𝔹)qfree: uint[n]⇒x as uint[n];
+def makeUint[n: !ℕ](x: !ℕ,const dummy:𝔹)qfree: uint[n]⇒x as uint[n];
 def iaddUint[n: !ℕ](x: uint[n],y: uint[n])lifted: uint[n]⇒x+y;
 
-def makeInt[n: !ℕ](const x: !ℕ,const dummy:𝔹)qfree: int[n]⇒ x as int[n];
+def makeInt[n: !ℕ](x: !ℕ,const dummy:𝔹)qfree: int[n]⇒ x as int[n];
 def iaddInt[n: !ℕ](x: int[n],y: int[n])lifted: int[n]⇒x+y;
 
 def main(){
-	r:=(f[uint](makeUint, iaddUint), f[int](makeInt, iaddInt));
+	r:=(f[uint](makeUint, iaddUint), f[int](makeInt, iaddInt)); // TODO?
 	assert(r==(43,-21));
 	return r;
 }

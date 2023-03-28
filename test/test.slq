@@ -1,4 +1,22 @@
 // skipped
+
+/+
+def bad(φ:!ℝ,_:𝟙)mfree⇒_;
+def main(){
+	__show(__query("type",bad));
+	reverse(bad)(π/2,()):=();
+}
++/
+
+/+
+def f(w: !Π[moved _:!ℕ]lifted. qtype){}
+//def f[moved _:!ℕ]⇒int[_];
+def main(){
+	f(int);
+	__show(__query("type",f));
+}
++/
+
 /+
 def main(){
 	x:=();
