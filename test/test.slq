@@ -1,6 +1,12 @@
 // skipped
 
 /+
+def main(){
+	x:=();
+	x:=move(x)~(0:𝔹,);
+}
++/
+/+
 def bad(φ:!ℝ,_:𝟙)mfree⇒_;
 def main(){
 	__show(__query("type",bad));

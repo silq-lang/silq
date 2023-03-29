@@ -1,7 +1,7 @@
 
-def foo()⇒reverse(dup); // TODO
+def foo()⇒reverse(dup);
 def id[τ](const y:𝔹,x:τ)mfree⇒x;
-def bar()⇒reverse(id); // TODO
+def bar()⇒reverse(id);
 def nop[τ](const x:τ)mfree⇒();
 def baz()⇒reverse(nop);
 
@@ -13,7 +13,7 @@ def main(){
 	nop(nop(x));
 	y:=baz()(x,());
 	bar(y)(x,y);
-	z:=reverse(reverse(dup))(x,()); // TODO
+	z:=reverse(reverse(dup))(x,());
 	foo()(x,z);
 	forget(H(x)=0);
 	return qux()[𝔹^10](0:𝔹);
