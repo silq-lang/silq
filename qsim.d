@@ -726,7 +726,7 @@ struct QState{
 
 		Value convertTo(Expression ntype){
 			if(ntype==ℕt(true)) ntype=ℤt(true);
-			if(cast(Identifier)ntype) ntype=type;
+			try{ getTag(ntype); }catch(Exception){ ntype=type; } // TODO: get rid of this
 			// TODO: do this in-place?
 			auto otag=tag, ntag=getTag(ntype);
 			if(ntag==tag.quval){
@@ -1950,7 +1950,8 @@ struct Interpreter(QState){
 			auto name=merged[0].getName;
 			auto type=merged[1];
 			enforce(name in qstate.vars);
-			qstate.vars[name]=convertTo(qstate.vars[name],type,true).toVar(qstate,false);
+			if(qstate.vars[name].type !is type)
+				qstate.vars[name]=convertTo(qstate.vars[name],type,true).toVar(qstate,false);
 		}
 	}
 	QState.Value runExp(Expression e){
@@ -2511,9 +2512,9 @@ struct Interpreter(QState){
 			if(functionDef.context&&functionDef.contextName.startsWith("this"))
 				value = QState.makeTuple(tupleTy([re.e.type,contextTy(true)]),[value,qstate.readLocal(functionDef.contextName,false)]);
 			qstate.assignTo("`value",value);
+			closeScope(re.scope_);
 			if(functionDef.isNested) // caller takes care of context
 				qstate.vars.remove(functionDef.contextName);
-			closeScope(re.scope_);
 			if(hasFrame){
 				assert("`frame" in qstate.vars);
 				//assert(qstate.vars.length==2); // `value and `frame
