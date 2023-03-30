@@ -7,8 +7,8 @@ def foo(a:𝔹,const cond:𝔹,const cond2:𝔹){
 	}else{
 		__show(__query("dep",x));
 	}
-	__show(__query("dep",y)); // {a, cond, x} // TODO: this should be {a, cond}
+	__show(__query("dep",y)); // {a, cond}
 	x:=H(x);
-	forget(y); // TODO
+	forget(y);
 	return (a,x);
 }

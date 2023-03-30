@@ -4,16 +4,11 @@ def foo(a:𝔹,const cond:𝔹,const cond2:𝔹){
 		y:=!x;
 		if cond{
 			x:=H(x);
-			// forget(y=a);
 		}else{
-			a:=H(a); // other test case: comment out this block,
-		             // should work with y depending on a
-			// forget(y=!x)
-			// z:=x;
+			a:=H(a);
 		}
-		//(x):=factored(cond,x);
-		__show(__query("dep",y));
-		forget(y); // TODO: error
+		__show(__query("dep",y)); // ⊤
+		forget(y); // error
 		return (a,x);
 	}else{
 		return (a,0:𝔹);

@@ -1,5 +1,39 @@
 // skipped
-
+/+
+def pad[a:!ℕ](x:uint[a],b:!ℕ)qfree⇒((x as 𝔹^a)~vector(b,0:𝔹)) as uint[a+b];
+def powm[n:!ℕ,m:!ℕ](a:uint[n],b:uint[m])lifted: uint[2·n]{
+	(r,x):=(1:uint[2·n], pad(a,n));
+	for i in 0..m{
+		__show(__query("dep",r));
+		if b[i]{
+			__show("1");
+			__show(__query("dep",r));
+			__show(__query("dep",x));
+			r=r·x;
+			__show(__query("dep",r));
+			__show(__query("dep",x));
+			__show("2");
+		}else{
+			__show("3");
+			__show(__query("dep",r));
+			__show(__query("dep",x));
+			__show("4");
+		}
+		x=x·x;
+	}
+	return r;
+}
++/
+/+
+def main(){
+	x:=2;
+	if true{
+		x=3;
+	}else{
+		x=4;
+	}
+}
++/
 /+
 def main(){
 	x:=();
