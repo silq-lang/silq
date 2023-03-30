@@ -1,0 +1,14 @@
+
+def main(){
+	x:=H(0:𝔹);
+	n:=0;
+	m:=0;
+	if x{
+	}else{
+		n+=1:!ℤ;
+		m=1:!ℤ;
+	}
+	n+=1; // error
+	m+=1; // error
+	return (x, n, m); // error
+}

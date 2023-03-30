@@ -1,0 +1,12 @@
+def main(){
+	x:=false:𝔹;
+	n:=0;
+	m:=0;
+	if x{
+		n+=1:!ℤ;
+		m=1:!ℤ;
+	}
+	n+=1; // error
+	m+=1; // error
+	return (n, m); // error
+}
