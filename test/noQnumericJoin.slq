@@ -1,0 +1,9 @@
+
+def main(){
+	if measure(H(false)){
+		x:=0:𝔹;
+	}else{
+		x:=1;
+	}
+	return x; // error
+}
