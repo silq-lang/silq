@@ -7,7 +7,7 @@ def foo(a:𝔹,const cond:𝔹,const cond2:𝔹){
 	}else{
 		a:=H(a);
 	}
-	__show(__query("dep",y)); // ⊤
-	forget(y); // error
+	__show(__query("dep",y)); // {a, cond, x} // TODO: ⊤
+	forget(y); // TODO: error
 	return (a,x);
 }
