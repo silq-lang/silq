@@ -1947,8 +1947,10 @@ struct Interpreter(QState){
 		if(!qstate.state.length) return;
 		qstate.forgetVars(sc);
 		foreach(merged;sc.mergedVars){
-			auto name=merged[0].getName;
-			auto type=merged[1];
+			auto name=merged.getName;
+			assert(!!merged.mergedInto);
+			import ast.semantic_:typeForDecl;
+			auto type=typeForDecl(merged.mergedInto);
 			enforce(name in qstate.vars);
 			if(qstate.vars[name].type !is type)
 				qstate.vars[name]=convertTo(qstate.vars[name],type,true).toVar(qstate,false);
