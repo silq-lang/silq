@@ -14,6 +14,5 @@ else
     LDMD="ldmd2"
 fi
 
-# release build
-$LDMD -O -inline -J. -Jlibrary *.d ast/*.d util/*.d -ofsilq
+$LDMD -J. -Jlibrary *.d ast/*.d util/*.d -ofsilq
 

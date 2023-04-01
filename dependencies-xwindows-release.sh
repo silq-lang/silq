@@ -1,10 +1,10 @@
 #!/bin/bash
 
-VERSION="1.18.0"
+VERSION="1.32.0"
 LINK=https://github.com/ldc-developers/ldc/releases/download/v$VERSION/
 NAME="ldc2-$VERSION-windows-x64"
 FILE="$NAME.7z"
-SUM="c969adbded90fc4df62a78422d38f49f"
+SUM="d06bc24a51068ca0ff163b3b8fb0db02"
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
     SUM1="$SUM  $FILE"
     MD5="md5sum"

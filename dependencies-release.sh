@@ -1,12 +1,12 @@
 #!/bin/bash
 
-VERSION="1.28.0"
+VERSION="1.32.0"
 LINK=https://github.com/ldc-developers/ldc/releases/download/v$VERSION/
 
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
     NAME="ldc2-$VERSION-linux-x86_64"
     FILE="$NAME.tar.xz"
-    SUM1="009a62736fd578210e2321a0c96d41e3  $FILE"
+    SUM1="395fb064a9f1b2383ee39d4f988612aa  $FILE"
     MD5="md5sum"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
     NAME="ldc2-$VERSION-osx-x86_64"
