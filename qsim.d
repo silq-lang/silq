@@ -1915,7 +1915,7 @@ struct Interpreter(QState){
 		// TODO: rat
 		if(auto tpl=cast(TupleTy)type){
 			if(value.tag==QState.Value.Tag.array_){
-				enforce(value.array_.length==tpl.length);
+				enforce(value.array_.length==tpl.length,"length mismatch for conversion to tuple");
 				return qstate.makeTuple(type,iota(tpl.length).map!(i=>convertTo(value.array_[i],tpl[i],consumeArg)).array);
 			}
 		}else if(auto arr=cast(ArrayTy)type){

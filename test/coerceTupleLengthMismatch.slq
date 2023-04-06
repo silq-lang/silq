@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	n:=2;
+	x:=vector(n,0:!𝔹);
+	y:=x coerce !𝔹×!ℕ×!ℕ; // error
+}
