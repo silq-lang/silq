@@ -1,0 +1,7 @@
+
+def main(){
+	n:=2,m:=3;
+	x:=0:int[n];
+	y:=x coerce int[m]; // error
+	// (need to go through vector)
+}
