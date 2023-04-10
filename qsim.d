@@ -1517,6 +1517,7 @@ struct QState{
 			if(type.isClassical()&&!arg.isClassical()) return measure(arg); // TODO: improve simulator so this is not needed
 			return arg;
 		}
+		if(fun.isReverse) return reverse(type,arg);
 		enforce(!thisExp.isValid,"TODO: method calls");
 		if(!fun.body_){ // TODO: move this logic somewhere else
 			switch(fun.getName){
@@ -2044,7 +2045,6 @@ struct Interpreter(QState){
 					case "dup": return doIt(ce.arg).dup(qstate);
 					case "array": return qstate.array_(ce.type,doIt(ce.arg));
 					case "vector": return qstate.vector(ce.type,doIt(ce.arg));
-					case "reverse": return qstate.reverse(ce.type,doIt(ce.arg));
 					case "M": return qstate.measure(doIt(ce.arg));
 					case "H": return qstate.H(doIt(ce.arg));
 					case "X": return qstate.X(doIt(ce.arg));
