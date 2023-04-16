@@ -1,0 +1,13 @@
+
+def f(const x:𝔹,y:𝔹)mfree⇒y;
+def g[τ](const x:τ,y:τ)mfree⇒y;
+
+def main(){
+	a:=0:𝔹;
+	c:=1:𝔹;
+	f(a,b):=c;
+	x:=0:𝔹;
+	z:=1:𝔹;
+	g(x,y):=z; // TODO
+	return (b,y); // TODO
+}

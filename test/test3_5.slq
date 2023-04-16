@@ -362,7 +362,7 @@ def a17_TriangleTestTw[n:!N, rr:!N](edgeOracle:((const int[n] x const int[n] x ð
 	triTestTW := true:B;
 	if cTri == 0 { triTestTW := X(triTestTW); }
 
-	reverse(f)(tt,ee,w,(eed,cTri));
+	reverse(f)((tt,ee,w),(eed,cTri));
 
 	return triTestTW;
 }
@@ -465,7 +465,7 @@ def a20_GCQWStep[n:!N, r:!N, rr:!N, rbar:!N, rrbar:!N](edgeOracle:((const int[n]
 
 	(taud, sigma) := (sigma, taud); //a14_SWAP(taud, sigma);
 
-	(tau, eew, cTri) := reverse(help_a20_2[n,r,rr,rbar,rrbar])((tau, eew, cTri, taud, eewd), edgeOracle, w, iota, tt, ee);
+	(tau, eew, cTri) := reverse(help_a20_2[n,r,rr,rbar,rrbar])((tau, eew, cTri, taud, eewd), (edgeOracle, w, iota, tt, ee));
 
 	return (tau, iota, sigma, eew, cTri);
 }

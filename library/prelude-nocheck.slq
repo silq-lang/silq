@@ -20,8 +20,14 @@ def CNOT(const x:𝔹,y:𝔹)qfree{
 	y⊕=x;
 	return y;
 }
-def reverse[τ:*,χ:qtype,φ:qtype](f: const τ×χ !→mfree φ)lifted: const τ×φ !→mfree χ⇒
-	quantumPrimitive("reverse", (const τ×χ !→mfree φ) !→lifted (const τ×φ !→mfree χ))(f);
+def reverse[τ:*,χ:qtype,φ:qtype](f: const τ×χ !→mfree φ)(const c: τ, x:φ)mfree: χ{
+	f(c,y):=x;
+	return y;
+}
+def __reverse_qfree[τ:*,χ:qtype,φ:qtype](f: const τ×χ !→qfree φ)(const c: τ, x:φ)qfree: χ{ // TODO: use attribute polymorphism instead
+	f(c,y):=x;
+	return y;
+}
 
 dat int[n: !ℕ] quantum{}
 dat uint[n: !ℕ] quantum{}

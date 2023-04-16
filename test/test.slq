@@ -1,5 +1,140 @@
 // skipped
 
+
+/+
+def map[a:qtype](f: a!→mfree a)[n:!ℕ](x:a^n)mfree{
+	y:=[]:a[];
+	for i in [0..n){
+		(h,)~x:=x;
+		y:=y~[f(h)];
+	}
+	[]:=x;
+	return y coerce a^n;
+}
+
+def main(){
+	x:=0:uint[3];
+	x:=x as 𝔹^3;
+	mapH:=reverse(map(H)[3]);
+	return mapH(x);
+}
++/
+
+
+/+
+def foo(x:𝔹,y:𝔹)mfree⇒(x,y);
+def main(){
+	foo(x,y,z):=(0,1):𝔹^2; // error
+	return (x,y);
+}
++/	
+
+/+
+def main(){
+	reverse(phase)(π/2):=();
+	f:=(const a: !ℝ,moved b: 𝟙)mfree{
+		forget(b=());
+		return ();
+	};
+	f(π,()):=();
+}
++/
+/+
+def main(){
+	x:=H(0:𝔹);
+	x:=reverse(rotY)(π,x);
+	x:=reverse[!ℝ,𝔹,𝔹]((const a: !ℝ,moved b: 𝔹)mfree{
+		return rotY(a,b);
+	})(π,x);
+	return x;
+}
++/
+/+
+def main(){
+	//reverse[!ℝ,𝟙,𝟙]((const φ:!ℝ,_:𝟙)mfree⇒phase(φ))(π/2,());
+	reverse(phase)(π/2);
+	x:=H(0:𝔹);
+	if x{
+		phase(π):=();
+	}
+	return H(x);
+}
++/
+/+
+def id1[τ,n:!ℕ](y:τ^n)qfree⇒y;
+def id2[a,b](xs:a,ys:b)mfree⇒(xs,ys);
+
+def main(){
+	a:=reverse(id1[int[8],2])((0,1):int[8]^2);
+	b:=reverse(id2[𝔹,𝔹])((0,1):𝔹^2);
+	assert(measure((a,b)==((0,1),(0,1))));
+	return (a,b);
+}
++/
+/+
+def main(){
+	(((const a:𝟙,x:𝔹^2)mfree{
+		(u,v):=x;
+		return (v,u);
+	})((),x)):=(0,1):𝔹^2;
+	assert(measure(x==(1,0)));
+	return x;
+}
++/
+/+
+def id[τ](x:τ)qfree⇒x;
+
+def main(){
+	id(x):=0:𝔹; // TODO
+	return x;
+}
++/
+
+/+
+def main(){
+	x:=0:𝔹;
+	x:=reverse(X)(x);
+	return (x);
+}
++/
+
+/+
+def main(){
+	(x,y):=(0,1):𝔹^2;
+	z:=reverse(CNOT)(x,y);
+	return (x,z);
+}
++/
+
+/+
+def f(x:𝔹^2)mfree{
+	(a,b):=x;
+	forget(b=a);
+	return a;
+}
+
+def main(){
+	f(x,y):=0:𝔹;
+	__show(__query("type",x));
+	return (x,y);
+}
++/
+/+
+def main(){
+	(x:int[2],):=(0:𝔹,);
+	return x;
+}
++/
+/+
+def solve[n:!ℕ](qs:𝔹^n){
+	x:=measure(qs);
+	return x;
+}
+
+def main(){
+	return solve(0:𝔹,);
+}
++/
 /+
 def min(x:!ℝ)lifted:!ℝ{
 	r:=x;

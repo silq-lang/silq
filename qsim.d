@@ -1,6 +1,6 @@
 import std.conv: text, to;
 import std.string: split;
-import std.algorithm;
+import std.algorithm, std.range;
 import std.array: array;
 import std.range: iota, repeat, walkLength;
 import util.range: zip;
@@ -1504,7 +1504,7 @@ struct QState{
 		enforce(ctx!in vars);
 		enforce(rhs.tag==Value.Tag.record);
 		foreach(cap;captures){
-			enforce(cap.name in rhs.record);
+			enforce(cap.name in rhs.record,text("missing capture ",cap," in ",rhs.record));
 			if(cap.meaning.isLinear()){
 				vars[cap.name]=rhs.record[cap.name];
 				rhs.record.remove(cap.name);
@@ -1517,7 +1517,6 @@ struct QState{
 			if(type.isClassical()&&!arg.isClassical()) return measure(arg); // TODO: improve simulator so this is not needed
 			return arg;
 		}
-		if(fun.isReverse) return reverse(type,arg);
 		enforce(!thisExp.isValid,"TODO: method calls");
 		if(!fun.body_){ // TODO: move this logic somewhere else
 			switch(fun.getName){
@@ -1771,7 +1770,7 @@ struct QState{
 	alias vector=array_;
 	Value reverse(Expression type,Value arg){
 		import ast.reverse;
-		enforce(arg.tag==Value.Tag.closure);
+		enforce(arg.tag==Value.Tag.closure,text(arg));
 		return makeClosure(type,Closure(reverseFunction(arg.closure.fun),arg.closure.context));
 	}
 	Value measure(Value arg){
@@ -2301,7 +2300,91 @@ struct Interpreter(QState){
 				assignTo!isCat(tpl.e[i],rhs.array_[i]);
 		}else if(auto idx=cast(IndexExp)lhs){
 			getAssignable!isCat(lhs).assign(qstate,rhs);
-		}else enforce(0,"TODO");
+		}else if(auto ce=cast(CallExp)lhs){
+			auto f=ce.e,ft=cast(ProductTy)f.type;
+			enforce(!!ft,"reversed function call not supported");
+			auto fv=runExp(f);
+			if(fv.tag==QState.Value.Tag.closure){
+				auto rf=reverseFunction(fv.closure.fun), rft=rf.ftype;
+				auto rfv=qstate.makeClosure(rft,QState.Closure(rf,fv.closure.context));
+				auto rfret=rft.cod; // TODO: probably semantic analysis has to explicitly compute this
+				auto r=reverseCallRewriter(ft,ce.loc); // TODO: would be nice to not require this
+				QState.Value constArg;
+				if(ft.isConstForReverse.all){
+					constArg=runExp(ce.arg);
+				}else if(!ft.isConstForReverse.any){
+					// no const arg
+					enforce(rf.params.length==1&&equal(rft.isConstForReverse,only(false))&&!rft.isTuple);
+				}else{
+					assert(ft.isTuple);
+					auto tpl=cast(TupleExp)ce.arg;
+					enforce(!!tpl&&tpl.length==ft.isConst.length);
+					QState.Value[] cargs;
+					if(r.constTuple){
+						foreach(i,arg;tpl.e){
+							if(ft.isConstForReverse[i]){
+								cargs~=runExp(arg);
+							}
+						}
+					}else{
+						enforce(ft.isConstForReverse.count!(x=>x)==1);
+						foreach(i,arg;tpl.e){
+							if(ft.isConstForReverse[i]){
+								constArg=runExp(arg);
+								break;
+							}
+						}
+					}
+					if(r.constTuple) constArg=qstate.makeTuple(r.constType,cargs);
+				}
+				void assignMoved(QState.Value result){
+					if(!ft.isConstForReverse.any) return assignTo(ce.arg,result);
+					if(ft.isConstForReverse.all){
+						assert(rft.cod is unit);
+						return;
+					}
+					auto tpl=cast(TupleExp)ce.arg;
+					enforce(!!tpl);
+					if(r.movedTuple){
+						enforce(result.tag==QState.Value.Tag.array_);
+						enforce(ft.isConstForReverse.count!(x=>!x)==result.array_.length);
+						foreach(i,arg;tpl.e){
+							if(!ft.isConstForReverse[i])
+								assignTo(arg,result.array_[i]);
+						}
+					}else{
+						enforce(ft.isConstForReverse.count!(x=>!x)==1);
+						foreach(i,arg;tpl.e){
+							if(!ft.isConstForReverse[i]){
+								assignTo(arg,result);
+								break;
+							}
+						}
+					}
+				}
+				if(rf.params.length==2){
+					enforce(rft.isConst[0]!=rft.isConst[1]);
+					auto constLast=rft.isConst[1];
+					auto args=constLast?[rhs,constArg]:[constArg,rhs];
+					auto aty=tupleTy(constLast?[r.movedType,r.constType]:[r.constType,r.movedType]); // TODO: get rid of this
+					auto arg=qstate.makeTuple(aty,args);
+					auto result=qstate.call(rfv,arg,rfret,ce.loc);
+					assignMoved(result);
+				}else{
+					enforce(rf.params.length==1);
+					if(rft.isConst.all){
+						enforce(rhs.tag==QState.Value.Tag.array_&&rhs.array_.length==0);
+						// assignment is on unit. can just drop rhs.
+						auto result=qstate.call(rfv,constArg,rfret,ce.loc);
+						assignMoved(result);
+					}else{
+						assert(!rft.isConst.any);
+						auto result=qstate.call(rfv,rhs,rfret,ce.loc);
+						assignMoved(result);
+					}
+				}
+			}
+		}else enforce(0,text("TODO: assign to ",lhs));
 	}
 	void catAssignTo(Expression lhs,QState.Value rhs){
 		return assignTo!true(lhs,rhs);
