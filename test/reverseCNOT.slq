@@ -1,0 +1,7 @@
+// args: --run
+
+def main()qfree{
+	(x,y):=(0,1):𝔹^2;
+	z:=reverse(CNOT)(x,y);
+	return (x,z);
+}

@@ -1,0 +1,12 @@
+def f(const x:𝔹,y:𝔹)⇒y;
+def g[τ](const x:τ,y:τ)⇒y;
+
+def main(){
+	a:=0:𝔹;
+	c:=1:𝔹;
+	f(a,b):=c; // error
+	x:=0:𝔹;
+	z:=1:𝔹;
+	g(x,y):=z; // error
+	return (b,y);
+}

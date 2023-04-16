@@ -12,7 +12,7 @@ def a1[n:!ℕ](
 	for _ in [0..tm) {
 		(w, triTestT, triTestTw) := a15_TestTriangleEdges(edgeOracle, tt, ee);
 		if !(triTestT == 0 && triTestTw == 0) { phase(π); }
-		reverse(a15_TestTriangleEdges[n, 2^r])(edgeOracle, tt, ee, (w, triTestT, triTestTw));
+		reverse(a15_TestTriangleEdges[n, 2^r])((edgeOracle, tt, ee), (w, triTestT, triTestTw));
 		for _ in [0..tw) {
 			(tt, i, v, ee) := a6_QWSH(edgeOracle, tt, i, v, ee)
 		}	
@@ -159,7 +159,7 @@ def a17_TriangleTestTw[n:!ℕ, rr:!ℕ](edgeOracle:((const int[n] x const int[n]
 	(eed, cTri) := f(tt, ee, w);
 	triTestTW := true:B;
 	if cTri == 0 { triTestTW := X(triTestTW); }
-	reverse(f)(tt,ee,w,(eed,cTri));
+	reverse(f)((tt,ee,w),(eed,cTri));
 	return triTestTW;
 }
 def a18_TriangleEdgeSearch[n:!ℕ, rr:!ℕ](const edgeOracle:((const int[n] x const int[n] x 𝔹) !->mfree 𝔹),
@@ -169,7 +169,7 @@ def a18_TriangleEdgeSearch[n:!ℕ, rr:!ℕ](const edgeOracle:((const int[n] x co
 	for _ in [0..floor(π/4 * sqrt(2^n))) {
 		cTri := a19_GCQWalk(edgeOracle, tt, ee, w, triTestT);
 		if triTestT == 0 && !(cTri == false) { phase(π); }
-		reverse(a19_GCQWalk[n, rr])(edgeOracle,tt,ee,w,triTestT,cTri);
+		reverse(a19_GCQWalk[n, rr])((edgeOracle,tt,ee,w,triTestT),cTri);
 		w := a7_Diffuse_Int(w);
 	}
 	return w;
@@ -217,7 +217,7 @@ def a20_GCQWStep[n:!ℕ, r:!ℕ, rbar:!ℕ, rrbar:!ℕ, rr:!ℕ](const edgeOracl
 	(iota, sigma) := a7_Diffuse_Pair(iota, sigma);
 	(tau, taud, eewd, cTri, eew) := help_a20_2(tau, eew, cTri, edgeOracle, w, iota, tt, ee);
 	(taud, sigma) := (sigma, taud); 
-	(tau, eew, cTri) := reverse(help_a20_2[n,r,rr,rbar,rrbar])((tau, taud, eewd, cTri, eew), edgeOracle, w, iota, tt, ee);
+	(tau, eew, cTri) := reverse(help_a20_2[n,r,rr,rbar,rrbar])((tau, taud, eewd, cTri, eew), (edgeOracle, w, iota, tt, ee));
 	return (tau, iota, sigma, eew, cTri);
 }
 def help_a20_2[n:!ℕ, r:!ℕ, rr:!ℕ, rbar:!ℕ, rrbar:!ℕ](tau:int[r]^rrbar, eew:𝔹^rrbar,

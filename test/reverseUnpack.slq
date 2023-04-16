@@ -1,0 +1,14 @@
+// args: --run
+
+def f(x:𝔹^2)mfree{
+	(a,b):=x;
+	forget(b=a);
+	return a;
+}
+
+def main(){
+	f(x,y):=0:𝔹;
+	__show(__query("type",x)); // 𝔹
+	assert(measure(x=0&&y=0));
+	return (x,y);
+}

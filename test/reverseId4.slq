@@ -1,0 +1,12 @@
+// args: --run
+
+def id[n:!ℕ](ψ: uint[n])mfree: uint[n]{
+	return ψ;
+}
+def main(){
+	n:=8;
+	x:=(0,0,0,0):!𝔹^4;
+	r:=([n:!ℕ]⇒reverse(id[n]))(id(x as uint[4]));
+	assert(measure((x as uint[4])==r));
+	return (x as uint[4],r);
+}

@@ -1,0 +1,10 @@
+// args: --run
+
+def main(){
+	(((const a:𝟙,x:𝔹^2)mfree{
+		(u,v):=x;
+		return (v,u);
+	})((),x)):=(0,1):𝔹^2;
+	assert(measure(x==(1,0)));
+	return x;
+}

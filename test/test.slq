@@ -1,6 +1,16 @@
 // skipped
 
 /+
+def solve[n:!ℕ](qs:𝔹^n){
+	x:=measure(qs);
+	return x;
+}
+
+def main(){
+	return solve(0:𝔹,);
+}
++/
+/+
 def min(x:!ℝ)lifted:!ℝ{
 	r:=x;
 	if true{

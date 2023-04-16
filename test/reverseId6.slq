@@ -1,0 +1,11 @@
+// args: --run
+
+def id1[τ,n:!ℕ](y:τ^n)qfree⇒y;
+def id2[a,b](xs:a,ys:b)mfree⇒(xs,ys);
+
+def main(){
+	a:=reverse(id1[int[8],2])((0,1):int[8]^2);
+	b:=reverse(id2[𝔹,𝔹])((0,1):𝔹^2);
+	assert(measure((a,b)==((0,1),(0,1))));
+	return (a,b);
+}

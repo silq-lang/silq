@@ -1,0 +1,7 @@
+// args: --run
+
+def main()qfree{
+	x:=0:𝔹;
+	x:=reverse(X)(x);
+	return (x);
+}

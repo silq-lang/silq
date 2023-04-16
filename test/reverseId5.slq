@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	def id_n[n:!ℕ](x:𝔹^n)mfree⇒x;
+	r:=([n:!ℕ]⇒reverse(id_n[n]))(id_n(vector(10,0:𝔹)));
+	s:=([n:!ℕ]⇒reverse(id_n[n]))[10](id_n(vector(10,0:𝔹)));
+	return (r,s);
+}

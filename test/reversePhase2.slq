@@ -1,0 +1,10 @@
+// args: --run
+
+def main(){
+	reverse(phase)(π/2):=();
+	f:=(const a: !ℝ,moved b: 𝟙)mfree{
+		forget(b=());
+		return ();
+	};
+	f(π,()):=();
+}

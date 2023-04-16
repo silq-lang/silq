@@ -1,0 +1,8 @@
+// args: --run
+
+def id[τ](x:τ)qfree⇒x;
+
+def main(){
+	id(x):=0:𝔹;
+	return x;
+}

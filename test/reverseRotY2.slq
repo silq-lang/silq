@@ -1,0 +1,10 @@
+// args: --run
+
+def main(){
+	x:=H(0:𝔹);
+	x:=reverse(rotY)(π,x);
+	x:=reverse[!ℝ,𝔹,𝔹]((const a: !ℝ,moved b: 𝔹)mfree{
+		return rotY(a,b);
+	})(π,x);
+	return x;
+}
