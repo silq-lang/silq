@@ -1951,7 +1951,7 @@ struct Interpreter(QState){
 			assert(!!merged.mergedInto);
 			import ast.semantic_:typeForDecl;
 			auto type=typeForDecl(merged.mergedInto);
-			enforce(name in qstate.vars);
+			enforce(name in qstate.vars,text("missing variable ",name," when closing scope"));
 			if(qstate.vars[name].type !is type)
 				qstate.vars[name]=convertTo(qstate.vars[name],type,true).toVar(qstate,false);
 		}

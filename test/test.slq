@@ -1,4 +1,36 @@
 // skipped
+def main(){
+	x:=H(0:𝔹);
+	y:=H(0:𝔹);
+	a:=measure(H(0:𝔹));
+	b:=measure(H(0:𝔹));
+	def foo(){
+		//(x,y):=(x,y);
+		if a{
+			if b{
+				t:=(x,y);
+			}else{
+				t:=(x,y);
+			}
+		}else{
+			if b{
+				t:=(x,y);
+			}else{
+				t:=(x,y);
+			}
+		}
+		return t;
+	}
+	return foo;
+}
+
+/+
+def main(){
+	x:=2;
+	def foo()⇒x;
+	return foo;
+}
++/
 
 /+
 def solve[n:!ℕ](qs:𝔹^n){
@@ -1063,13 +1095,14 @@ def low_level[θ:!ℝ](ψ₀:𝔹,ψ₁:𝔹,cat:𝔹)mfree{
 	return (ψ₀,ψ₁,cat);
 }
 +/
-
+/+
 def dummy[θ:!ℝ](ψ₀:𝔹,ψ₁:𝔹,cat:𝔹)mfree{
 	return (rotZ(θ,ψ₀), rotZ(θ,ψ₁), cat);
 	//if ψ₀ { phase(θ); }
 	//if ψ₁ { phase(θ); }
 	//return (ψ₀,ψ₁,cat);
 }
++/
 /+
 def main(){
 	θ:=π/3;
