@@ -1500,14 +1500,15 @@ struct QState{
 		bool cleanUp=isConst;
 		vars[prm]=rhs.toVar(this,cleanUp); // TODO: this may be inefficient (it iterates over arrays to check whether components are variables)
 	}
-	void passContext(Identifier[] captures,string ctx,Value rhs){
+	void passContext(Identifier[][Declaration] captures,string ctx,Value rhs){
 		enforce(ctx!in vars);
 		enforce(rhs.tag==Value.Tag.record);
-		foreach(cap;captures){
-			enforce(cap.name in rhs.record,text("missing capture ",cap," in ",rhs.record));
-			if(cap.meaning.isLinear()){
-				vars[cap.name]=rhs.record[cap.name];
-				rhs.record.remove(cap.name);
+		foreach(meaning,_;captures){
+			auto name=meaning.getName;
+			enforce(name in rhs.record,text("missing capture ",name," in ",rhs.record));
+			if(meaning.isLinear()){
+				vars[name]=rhs.record[name];
+				rhs.record.remove(name);
 			}
 		}
 		vars[ctx]=rhs;
@@ -1830,25 +1831,35 @@ QState.Value getContextFor(QState)(ref QState qstate,Declaration meaning,Scope s
 }
 QState.Value buildContextFor(QState)(ref QState qstate,FunctionDef fd)in{assert(fd&&fd.scope_);}do{
 	QState.Record record;
-	foreach(id;fd.captures) record[id.name]=lookupMeaning(qstate,id,fd.fscope_.parent);
+	foreach(decl,_;fd.captures){
+		auto name=decl.getName;
+		auto constLookup=!decl.isLinear; // TODO: improve?
+		record[name]=lookupMeaning(qstate,decl,constLookup,fd.fscope_.parent);
+	}
 	return QState.makeRecord(record);
 }
+
 QState.Value lookupMeaning(QState)(ref QState qstate,Identifier id,Scope sc=null)in{assert(id && id.scope_,text(id," ",id.loc));}do{
-	if(!sc) sc=id.scope_;
 	auto meaning=id.meaning;
+	auto constLookup=id.constLookup;
+	if(!sc) sc=id.scope_;
 	if(!meaning||!sc||!meaning.scope_)
 		return qstate.readLocal(id.name,id.constLookup);
+	return lookupMeaning(qstate,meaning,constLookup,sc);
+}
+
+QState.Value lookupMeaning(QState)(ref QState qstate,Declaration meaning,bool constLookup,Scope sc)in{assert(!!meaning);}do{
+	auto name=meaning.getName;
 	if(auto dd=cast(DatDecl)meaning)
 		meaning=dd.toFunctionDef();
 	if(auto fd=cast(FunctionDef)meaning)
 		if(!fd.isNested())
 			return qstate.makeFunction(fd);
 	auto r=getContextFor(qstate,meaning,sc);
-	if(r.isValid) return qstate.readField(r,id.name,id.constLookup);
-	if(!id.constLookup&&!id.type.isClassical())
-		if(auto vd=cast(VarDecl)meaning)
-			if(vd.isConst) return qstate.readLocal(id.name,true).dup(qstate);
-	return qstate.readLocal(id.name,id.constLookup);
+	if(r.isValid) return qstate.readField(r,name,constLookup);
+	if(!constLookup&&!meaning.isLinear)
+		return qstate.readLocal(name,true).dup(qstate);
+	return qstate.readLocal(name,constLookup);
 }
 
 struct Interpreter(QState){
