@@ -1,4 +1,28 @@
 // skipped
+
+/+
+def main(){
+	[a,(b,c)]:=[1,2]; // error
+	return [a,b];
+}
++/
+/+
+def main(){
+	x:=vector(2,vector(2,0:𝔹));
+	x[0]:=x[0]:𝔹[]; // error
+}
++/
+/+
+x:=3;
+
+def main(){
+	//2+3:=(1,2);
+	x:=3:uint[16];
+	//():=forget(x=3);
+	forget(x=3);
+}
++/
+/+
 def main(){
 	x:=H(0:𝔹);
 	y:=H(0:𝔹);
@@ -23,7 +47,7 @@ def main(){
 	}
 	return foo;
 }
-
++/
 /+
 def main(){
 	x:=2;
