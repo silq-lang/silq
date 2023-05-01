@@ -1,4 +1,22 @@
 // skipped
+/+
+def main(){
+	x:=0:!int[2];
+	y:=0:!int[2];
+	return x^y;
+}
++/
+/+
+def main(){
+	x:=0:𝔹;
+	(y,z,w,t):=(1,0,0,0);
+	for i in 0..10{
+		(z,t,y,w)=(y/10,w,t,z);
+		x:=H(x);
+	}
+	return x;
+}
++/
 
 /+
 def main(){
