@@ -1,0 +1,6 @@
+n:=10;
+def main(){
+	x:=-1:!int[n]:ctype as !𝔹^n:ctype as !uint[n]:ctype;
+	assert(x=1023);
+	return x;
+}
