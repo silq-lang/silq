@@ -1,0 +1,6 @@
+
+def main(){
+	forget(x=2:int[10]):=();
+	assert(measure(x=2));
+	return x;
+}

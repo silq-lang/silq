@@ -1,0 +1,4 @@
+def main(){
+	forget(x):=(); // error 
+	return x; // error
+}
