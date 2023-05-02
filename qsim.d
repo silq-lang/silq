@@ -2078,10 +2078,12 @@ struct Interpreter(QState){
 				auto r=a[i];
 				if(!idx.constLookup){
 					if(idx.byRef){
-						assert(i.isℤ());
-						if(a.tag==QState.Value.Tag.array_){
-							a.array_[i.asℤ.to!size_t]=QState.Value.init;
-						}else r=r.dup(qstate).consumeOnRead();
+						// enforce(i.isℤ(),"quantum component replacement not supported yet");
+						if(i.isℤ()){ // TODO: this is a bit hacky, improve
+							if(a.tag==QState.Value.Tag.array_){
+								a.array_[i.asℤ.to!size_t]=QState.Value.init;
+							}else r=r.dup(qstate).consumeOnRead();
+						}
 					}else r=r.dup(qstate);
 				}
 				return r;
@@ -2256,19 +2258,25 @@ struct Interpreter(QState){
 				auto tag=value.tag;
 				switch(tag){
 					case QState.Value.Tag.array_:
+						noreturn outOfBounds(){
+							auto ex=new Exception("index out of bounds");
+							version(LOCALIZE) ex=new LocalizedException(ex,locations[0]);
+							throw ex;
+						}
 						if(indices[0].isClassical()){
 							auto index=indices[0].asℤ;
-							if(index>=value.array_.length){
-								auto ex=new Exception("index out of bounds");
-								version(LOCALIZE) ex=new LocalizedException(ex,locations[0]);
-								throw ex;
-							}
+							if(index<0||index>=value.array_.length) outOfBounds();
 							doIt(value.array_[to!size_t(index)],indices[1..$],locations[1..$],condition);
 						}else{
 							foreach(i;0..value.array_.length){
 								auto ncond=indices[0].compare!"=="(qstate.makeInteger(ℤ(i)));
 								doIt(value.array_[i],indices[1..$],locations[1..$],condition.isValid?condition&ncond:ncond);
 							}
+							auto check=indices[0].compare!"<"(qstate.makeInteger(ℤ(0)))|indices[0].compare!">="(qstate.makeInteger(ℤ(value.array_.length)));
+							auto ccheck=condition.isValid?condition&check:check;
+							foreach(k,v;state.state) // TODO: this is very inefficient
+								if(ccheck.classicalValue(k).neqZImpl)
+									outOfBounds();
 						}
 						return;
 					case QState.Value.Tag.intval,QState.Value.Tag.uintval,QState.Value.Tag.quval:
