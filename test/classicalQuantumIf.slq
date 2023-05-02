@@ -1,0 +1,12 @@
+// args: --run
+
+def foo(x:𝔹)qfree{
+	if x{
+		assert(false); // TODO: error?
+	}
+	return x;
+}
+
+def main(){
+	foo(false);
+}
