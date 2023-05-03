@@ -1,0 +1,9 @@
+
+def main(){
+	x:=H(0:𝔹);
+	def foo():𝔹{ // TODO
+		if measure(H(0:𝔹)){ return foo(); }
+		return x; // TODO
+	}
+	return foo();
+}
