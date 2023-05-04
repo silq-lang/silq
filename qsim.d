@@ -1826,7 +1826,9 @@ QState.Value readVariable(QState)(ref QState qstate,VarDecl var,Scope from,bool 
 }
 QState.Value getContextFor(QState)(ref QState qstate,Declaration meaning,Scope sc)in{assert(meaning&&sc);}do{
 	if(meaning.getName in qstate.vars) return QState.nullValue;
-	if(auto fd=sc.getFunction()) return qstate.readLocal(fd.contextName,true);
+	if(auto fd=sc.getFunction())
+		if(fd.context && fd.contextName in qstate.vars)
+			return qstate.readLocal(fd.contextName,true);
 	return QState.nullValue;
 }
 QState.Value buildContextFor(QState)(ref QState qstate,FunctionDef fd)in{assert(fd&&fd.scope_);}do{
@@ -1855,11 +1857,15 @@ QState.Value lookupMeaning(QState)(ref QState qstate,Declaration meaning,bool co
 	auto name=meaning.getName;
 	if(auto dd=cast(DatDecl)meaning)
 		meaning=dd.toFunctionDef();
-	if(auto fd=cast(FunctionDef)meaning)
-		if(!fd.isNested())
-			return qstate.makeFunction(fd);
 	auto r=getContextFor(qstate,meaning,sc);
-	if(r.isValid) return qstate.readField(r,name,constLookup);
+	if(r.isValid){
+		assert(r.tag==QState.Value.Tag.record);
+		if(name in r.record)
+			return qstate.readField(r,name,constLookup);
+	}
+	if(auto fd=cast(FunctionDef)meaning)
+		if(!fd.isNested()||name !in qstate.vars)
+			return qstate.makeFunction(fd);
 	if(!constLookup&&!meaning.isLinear)
 		return qstate.readLocal(name,true).dup(qstate);
 	return qstate.readLocal(name,constLookup);

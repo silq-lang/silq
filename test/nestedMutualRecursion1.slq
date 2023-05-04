@@ -1,0 +1,14 @@
+// args: --run
+
+def main(){
+	def foo(n:!ℕ):𝔹{
+		def bar(n:!ℕ):𝔹{
+			if n=0{ return H(0:𝔹); }
+			return H(foo(n sub 1));
+		}
+		return bar(n);
+	}
+	x:=foo(5);
+	assert(measure(x=0));
+	return x;
+}
