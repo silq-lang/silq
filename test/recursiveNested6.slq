@@ -1,12 +1,12 @@
-// args: --run
 
 def main(){
 	x:=H(0:𝔹);
-	def foo(n:!ℕ){
+	def foo(n:!ℕ):𝔹{
+		x:=H(x);
 		if n=0{ return x; }
-		return H(foo(n sub 1));
+		return foo(n sub 1); // TODO?
 	}
-	x:=foo(5);
+	x:=foo(4);
 	assert(measure(x=0));
 	return x;
 }

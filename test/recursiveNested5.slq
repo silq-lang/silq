@@ -1,3 +1,4 @@
+
 def main(){
 	x:=H(0:𝔹);
 	def foo():𝔹{
@@ -5,5 +6,5 @@ def main(){
 		if measure(H(0:𝔹)){ return 0:𝔹; }
 		return foo(); // error
 	}
-	return foo(); // TODO
+	return foo();
 }

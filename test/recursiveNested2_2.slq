@@ -4,7 +4,7 @@ def main(){
 	x:=H(0:𝔹);
 	def foo(n:!ℕ){
 		if n=0{ return x; }
-		return H(foo(n sub 1));
+		else{ return H(foo(n sub 1)); }
 	}
 	x:=foo(5);
 	assert(measure(x=0));

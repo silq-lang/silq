@@ -1845,6 +1845,9 @@ QState.Value lookupMeaning(QState)(ref QState qstate,Identifier id,Scope sc=null
 	if(!sc) sc=id.scope_;
 	if(!meaning||!sc||!meaning.scope_)
 		return qstate.readLocal(id.name,id.constLookup);
+	if(id.lazyCapture)
+		if(auto fd=cast(FunctionDef)meaning)
+			return qstate.makeFunction(fd);
 	return lookupMeaning(qstate,meaning,constLookup,sc);
 }
 
