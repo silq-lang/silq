@@ -1538,9 +1538,6 @@ struct QState{
 				case "atan","arctan": return fix(arg.atan());
 				//case "cot": return arg.cot();
 				//case "acot","arccot": return arg.acot();
-				case "printImpl":
-					FormattingOptions opt={type: FormattingType.dump};
-					writeln(arg.toStringImpl(opt)); stdout.flush(); return fix(makeTuple(.unit,[]));
 				case "dump": dump(); stdout.flush(); return fix(makeTuple(.unit,[]));
 				case "exit": enforce(0, "terminated by exit call"); assert(0);
 
@@ -2047,8 +2044,8 @@ struct Interpreter(QState){
 						case BuiltIn.none:
 							break;
 						static if(language==silq){
-							case BuiltIn.quantumPrimitive:
-								enforce(0,"quantum primitive cannot be used as first-class value");
+							case BuiltIn.primitive:
+								enforce(0,"primitive function cannot be used as first-class value");
 								assert(0);
 							case BuiltIn.show,BuiltIn.query:
 								return qstate.makeTuple(ast.type.unit,[]);
@@ -2059,7 +2056,7 @@ struct Interpreter(QState){
 					}
 				}
 
-				static if(language==silq) switch(isQuantumPrimitive(target)){
+				static if(language==silq) switch(isPrimitive(target)){
 					case null: break;
 					case "dup": return doIt(ce.arg).dup(qstate);
 					case "array": return qstate.array_(ce.type,doIt(ce.arg));
@@ -2073,6 +2070,10 @@ struct Interpreter(QState){
 					case "rX": return qstate.rX(doIt(ce.arg));
 					case "rY": return qstate.rY(doIt(ce.arg));
 					case "rZ": return qstate.rZ(doIt(ce.arg));
+					case "print":
+					   FormattingOptions opt={type: FormattingType.dump};
+					   writeln(doIt(ce.arg).toStringImpl(opt)); stdout.flush();
+					   return qstate.makeTuple(.unit,[]);
 					default: enforce(0, text("TODO QuantumPrimitive: ", ce.e)); assert(0);
 				}
 				auto fun=doIt(ce.e), arg=doIt(ce.arg);
