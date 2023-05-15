@@ -1605,6 +1605,7 @@ struct QState{
 		return this;
 	}
 	Value readLocal(string s,bool constLookup){
+		//enforce(s in vars,text("local variable '",s,"' not found"));
 		auto r=vars[s];
 		if(!constLookup&&r.type&&!r.isClassical()) vars.remove(s);
 		return r;
@@ -1766,10 +1767,11 @@ struct QState{
 		return makeArray(type,iota(smallValue(arg.array_[0].asℤ)).map!(_=>arg.array_[1].dup(this)).array);
 	}
 	alias vector=array_;
-	Value reverse(Expression type,Value arg){
+	Value reverse(ref QState qstate,Expression type,Value arg){
 		import ast.reverse;
 		enforce(arg.tag==Value.Tag.closure,text(arg));
 		return makeClosure(type,Closure(reverseFunction(arg.closure.fun),arg.closure.context));
+		//return qstate.makeFunction(reverseFunction(arg.closure.fun));
 	}
 	Value measure(Value arg){
 		MapX!(Value,R) candidates;
@@ -2335,7 +2337,9 @@ struct Interpreter(QState){
 			auto fv=runExp(f);
 			if(fv.tag==QState.Value.Tag.closure){
 				auto rf=reverseFunction(fv.closure.fun), rft=rf.ftype;
-				auto rfv=qstate.makeClosure(rft,QState.Closure(rf,fv.closure.context));
+				auto context=fv.closure.context;
+				auto rfv=qstate.makeClosure(rft,QState.Closure(rf,context));
+				//auto rfv=qstate.makeFunction(rf);
 				auto rfret=rft.cod; // TODO: probably semantic analysis has to explicitly compute this
 				auto r=reverseCallRewriter(ft,ce.loc); // TODO: would be nice to not require this
 				QState.Value constArg;

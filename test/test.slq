@@ -1,6 +1,17 @@
 // skipped
 
 /+
+def f(x: B) mfree: B^2 {
+	y := dup(x);
+	y := H(y);
+	return (x, y);
+}
+def main(){
+	return reverse(f)(0:𝔹,1:𝔹);
+}
++/
+
+/+
 def foo(x:𝔹)(y:𝔹)⇒(y,x);
 def bar(z:𝔹)⇒z;
 

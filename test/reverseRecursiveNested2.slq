@@ -1,0 +1,29 @@
+// args: --run
+
+def makeUniform(k:!ℕ):uint[log₂(k)]{
+	while true{
+		x:=0:uint[log₂(k)];
+		for i in 0..log₂(k){ x[i]:=H(x[i]); }
+		if measure(x<k){ return x; }
+		measure(x);
+	}
+}
+
+def log₂(k:!ℕ)qfree:!ℕ ⇒ if k=1 then 0 else 1+log₂((k+1) div 2);
+
+def uniformToW[k:!ℕ](x:uint[log₂(k)])qfree:𝔹^k{
+	y:=vector(k,0:𝔹);
+	for i in 0..k{ y[i]=x=i; }
+	def getx(const y:𝔹^k,const i:!ℕ)qfree:uint[log₂(k)]{
+		if i==0{ return 0 as uint[log₂(k)]; }
+		if y[i]{ return i as uint[log₂(k)]; }
+		return getx(y,i sub 1);
+	}
+	getx(y,k sub 1):=x; // TODO
+	//forget(x=getx(y,k sub 1));
+	return y;
+}
+
+def main(){
+	return uniformToW(makeUniform(3));
+}
