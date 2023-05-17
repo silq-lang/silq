@@ -1,6 +1,49 @@
 // skipped
 
 /+
+def main(){
+	x:=0:𝔹;
+	y:=0:𝔹;
+	x:=H(x);
+	if x{ phase(π); }
+	x:=H(x);
+	return (x,y);
+}
++/
+/+
+def f(x: uint[10]) mfree {
+	x' := (x * 3) % 29;
+	forget(x = (x' * 10) % 29);
+	x'[0] := H(x'[0]);
+	return x';
+}
+
+def main() {
+	for i in [0..29) {
+		x := i as uint[10];
+		x := f(x);
+		if x!=28 {
+			phase(pi/2);
+		}
+		f(x) := x;
+		measure(x);
+	}
+}
++/
+/+
+def H(x:𝔹){
+	x:=rotY(-π/4,x);
+	if x{ phase(π); }
+	x:=rotY(π/4,x);
+	return x;
+}
+def main(){
+	x:=1:𝔹;
+	return H(1:𝔹);
+}
++/
+
+/+
 import grover;
 def main(){
 	f:=(x:uint[8])lifted⇒x·3=15;
@@ -484,7 +527,6 @@ def main(){
 }
 +/
 
-+/
 /+
 def foo(a:!ℕ)(b:!ℕ)⇒a+b;
 
