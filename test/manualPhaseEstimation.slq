@@ -1,0 +1,49 @@
+// args: --run
+
+def log₂(k:!ℕ)qfree:!ℕ ⇒ if k=1 then 0 else 1+log₂((k+1) div 2);
+def majority[n:!ℕ](x:𝔹^n)lifted{
+	count:=0:uint[log₂(n+1)];
+	for i in 0..n{ count+=x[i]; }
+	return count>n div 2;
+}
+
+def phaseQ[n:!ℕ](const φ:uint[n])mfree{
+	for i in [0..n){ if φ[i]{ phase(2·π·2^i/2^n); } }
+}
+n:=3;
+m:=3;
+def main(){
+	φ:=7:uint[n];
+	φ[0]:=H(φ[0]);
+	U:=[k:!ℕ](φ:uint[n])mfree{
+		phaseQ(2^k·φ);
+		return φ;
+	};
+	estimate:=0:uint[m];
+	samples:=9;
+	for i in 0..m{
+		get_cands:=(const estimate:uint[m],φ:uint[n])mfree{
+			cands:=[]:𝔹[];
+			for k in 0..samples{
+				x:=H(0:𝔹);
+				if x{
+					φ:=U[m sub 1 sub i](φ);
+					phaseQ(-2^(m sub 1 sub i)·estimate);
+				}
+				cands~=[H(x)];
+			}
+			return (cands coerce 𝔹^samples,φ);
+		};
+		get_majority:=(const estimate:uint[m],φ:uint[n]){
+			(cands,φ):=get_cands(estimate,φ);
+			result:=majority(cands);
+			get_cands(estimate,φ):=(cands,φ);
+			return (result,φ);
+		};
+		(x,φ):=get_majority(estimate,φ);
+		(estimate[i],x):=(x,estimate[i]);
+		forget(x=0);
+	}
+	forget(φ=estimate);
+	return estimate;
+}
