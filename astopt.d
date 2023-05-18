@@ -22,3 +22,4 @@ enum defaultExtension="slq";
 }
 
 bool allowUnsafeCaptureConst=false;
+bool projectForget=false;

@@ -256,15 +256,27 @@ struct QState{
 		}
 		return q(then,othw);
 	}
+	QState project(Value cond){ return split(cond)[0]; }
+	R totalProb(){ return state.values.map!sqAbs.sum; }
 	QState map(alias f,bool checkInterference=true,T...)(T args){
 		QState new_;
 		new_.copyNonState(this);
-		foreach(k,v;state){
-			auto nk=f(k,args);
-			static if(checkInterference){
-				enforce(nk !in new_.state,"bad forget"); // TODO: good error reporting, e.g. for forget
-				new_.state[nk]=v;
-			}else new_.add(nk,v);
+		if(!astopt.projectForget){
+			foreach(k,v;state){
+				auto nk=f(k,args);
+				static if(checkInterference){
+					enforce(nk !in new_.state,"bad forget"); // TODO: good error reporting, e.g. for forget
+					new_.state[nk]=v;
+				}else new_.add(nk,v);
+			}
+		}else{
+			foreach(k,v;state){
+				auto nk=f(k,args);
+				static if(checkInterference){
+					if(nk !in new_.state||abs(new_.state[nk])<abs(v))
+						new_.state[nk]=v;
+				}else new_.add(nk,v);
+			}			
 		}
 		return new_;
 	}
@@ -2431,6 +2443,7 @@ struct Interpreter(QState){
 		a2.assign(qstate,tmp);
 	}
 	void forget(QState.Value lhs,QState.Value rhs){
+		if(astopt.projectForget) qstate=qstate.project(lhs.eq(rhs));
 		lhs.forget(qstate,rhs);
 	}
 	void forget(QState.Value lhs){

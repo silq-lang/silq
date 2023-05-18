@@ -56,6 +56,11 @@ int run(string path){
 				auto qstate=be.run(fun,err);
 				if("`value" in qstate.vars)
 					writeln(qstate.formatQValue(qstate.vars["`value"]));
+				if(astopt.projectForget){
+					auto total=qstate.totalProb();
+					if(total>zeroThreshold)
+						writefln("Pr[error] = %f",1.0L-total);
+				}
 			}
 		}
 	}
@@ -118,6 +123,7 @@ int main(string[] args){
 			//case "--raw-error": opt.outputForm=OutputForm.rawError; break;
 			case "--run": opt.backend=BackendType.run; break;
 			case "--unsafe-capture-const": astopt.allowUnsafeCaptureConst=true; break;
+			case "--project-forget": astopt.projectForget=true; break;
 			default:
 				/+if(x.startsWith("--plot=")){
 					auto rest=x["--plot=".length..$];

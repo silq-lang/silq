@@ -1,4 +1,5 @@
-// args: --run
+// skipped
+// args: --run --project-forget
 
 def log₂(k:!ℕ)qfree:!ℕ ⇒ if k=1 then 0 else 1+log₂((k+1) div 2);
 def majority[n:!ℕ](x:𝔹^n)lifted{
@@ -11,16 +12,16 @@ def phaseQ[n:!ℕ](const φ:uint[n])mfree{
 	for i in [0..n){ if φ[i]{ phase(2·π·2^i/2^n); } }
 }
 n:=3;
-m:=3;
+m:=2;
 def main(){
-	φ:=7:uint[n];
+	φ:=5:uint[n];
 	φ[0]:=H(φ[0]);
 	U:=[k:!ℕ](φ:uint[n])mfree{
 		phaseQ(2^k·φ);
 		return φ;
 	};
 	estimate:=0:uint[m];
-	samples:=3; // (perfect estimate anyway)
+	samples:=5;
 	for i in 0..m{
 		get_cands:=(const estimate:uint[m],φ:uint[n])mfree{
 			cands:=[]:𝔹[];
@@ -44,6 +45,5 @@ def main(){
 		(estimate[i],x):=(x,estimate[i]);
 		forget(x=0);
 	}
-	forget(φ=estimate);
-	return estimate;
+	return (φ,estimate);
 }
