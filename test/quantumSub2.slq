@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	x:=2:!ℕ;
+	y:=1:uint[10];
+	z:=y sub x; // error
+	return z;
+}

@@ -958,7 +958,10 @@ struct QState{
 			if(ntype==ℕt(true)) ntype=ℤt(true);
 			if(!ntype.isToplevelClassical()) return makeQuval(ntype,new BinOpQVal!op(this,r));
 			assert(!!ntype);
-			static if(op=="^^"){
+			static if(op=="sub"){
+				enforce(this.ge(r).neqZImpl,"result of sub is negative");
+				return this-r;
+			}else static if(op=="^^"){
 				auto t1=type,t2=r.type;
 				if(t1==Bool(true)&&isSubtype(t2,ℕt(true))) return makeBool(asBoolean||!r.asBoolean);
 				//if(cast(ℂTy)t1||cast(ℂTy)t2) return t1^^t2; // ?
@@ -2028,11 +2031,8 @@ struct Interpreter(QState){
 			}
 			if(auto ae=cast(AddExp)e) return doIt(ae.e1)+doIt(ae.e2);
 			if(auto me=cast(SubExp)e) return doIt(me.e1)-doIt(me.e2);
-			if(auto me=cast(NSubExp)e){
-				auto a=doIt(me.e1),b=doIt(me.e2);
-				enforce(a.ge(b).bval,"result of sub is negative");
-				return a-b;
-			}if(auto me=cast(MulExp)e) return doIt(me.e1)*doIt(me.e2);
+			if(auto se=cast(NSubExp)e) return doIt(se.e1).opBinary!"sub"(doIt(se.e2));
+			if(auto me=cast(MulExp)e) return doIt(me.e1)*doIt(me.e2);
 			if(auto de=cast(DivExp)e) return doIt(de.e1)/doIt(de.e2);
 			if(auto de=cast(IDivExp)e) return doIt(de.e1).opBinary!"div"(doIt(de.e2));
 			if(auto me=cast(ModExp)e) return doIt(me.e1)%doIt(me.e2);
