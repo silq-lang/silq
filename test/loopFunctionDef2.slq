@@ -1,0 +1,11 @@
+// args: --run
+
+def main(){
+	x:=10;
+	for i in 0..9{
+		def foo()⇒2*x;
+		x-=foo();
+	}
+	assert(x=-10);
+	return x;
+}

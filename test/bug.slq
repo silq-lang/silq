@@ -3,16 +3,6 @@ def main() {
 	forget(2+2=5);
 }
 +/
-/+
-def main(){
-	x:=0;
-	for i in 0..10{
-		def foo()⇒2;
-		x+=foo();
-	}
-	return x;
-}
-+/
 
 /+
 def foo[n:!ℕ](const φ:uint[n])mfree{}

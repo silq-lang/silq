@@ -1,0 +1,16 @@
+// args: --run
+
+def main(){
+	x:=10;
+	for i in 0..9{
+		def foo(){
+			if measure(H(0:𝔹))&&measure(H(0:𝔹)){
+				return 2*x;
+			}
+			return foo();
+		}
+		x-=foo();
+	}
+	assert(x=-10);
+	return x;
+}

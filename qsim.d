@@ -1631,19 +1631,19 @@ struct QState{
 	Value makeFunction(FunctionDef fd,Value* context){
 		return makeClosure(fd.ftype,Closure(fd,context));
 	}
-	Value makeFunction(FunctionDef fd){
+	Value makeFunction(FunctionDef fd,Scope sc){
 		Value* context=null;
-		if(fd.isNested) context=[buildContextFor(this,fd)].ptr;
+		if(fd.isNested) context=[buildContextFor(this,fd,sc)].ptr;
 		return makeFunction(fd,context);
 	}
 	void declareFunction(FunctionDef fd){
 		vars[fd.getName]=nullValue;
-		auto result=makeFunction(fd);
+		auto result=makeFunction(fd,fd.scope_);
 		assert(result.tag==Value.Tag.closure);
 		if(result.closure.context){
 			assert(result.closure.context.tag==Value.Tag.record);
 			foreach(k,ref v;result.closure.context.record)
-				if(!v.isValid) enforce(0,"TODO: recursive nested functions");
+				if(!v.isValid) enforce(0,"invalid nested function");
 		}
 		vars[fd.getName]=result;
 	}
@@ -1842,12 +1842,12 @@ QState.Value getContextFor(QState)(ref QState qstate,Declaration meaning,Scope s
 			return qstate.readLocal(fd.contextName,true);
 	return QState.nullValue;
 }
-QState.Value buildContextFor(QState)(ref QState qstate,FunctionDef fd)in{assert(fd&&fd.scope_);}do{
+QState.Value buildContextFor(QState)(ref QState qstate,FunctionDef fd,Scope sc)in{assert(fd&&fd.scope_);}do{
 	QState.Record record;
 	foreach(decl,_;fd.captures){
 		auto name=decl.getName;
 		auto constLookup=!decl.isLinear; // TODO: improve?
-		record[name]=lookupMeaning(qstate,decl,constLookup,fd.fscope_.parent);
+		record[name]=lookupMeaning(qstate,decl,constLookup,sc);
 	}
 	return QState.makeRecord(record);
 }
@@ -1860,7 +1860,7 @@ QState.Value lookupMeaning(QState)(ref QState qstate,Identifier id,Scope sc=null
 		return qstate.readLocal(id.name,id.constLookup);
 	if(id.lazyCapture)
 		if(auto fd=cast(FunctionDef)meaning)
-			return qstate.makeFunction(fd);
+			return qstate.makeFunction(fd,sc);
 	return lookupMeaning(qstate,meaning,constLookup,sc);
 }
 
@@ -1876,7 +1876,7 @@ QState.Value lookupMeaning(QState)(ref QState qstate,Declaration meaning,bool co
 	}
 	if(auto fd=cast(FunctionDef)meaning)
 		if(!fd.isNested()||name !in qstate.vars)
-			return qstate.makeFunction(fd);
+			return qstate.makeFunction(fd,sc);
 	if(!constLookup&&!meaning.isLinear)
 		return qstate.readLocal(name,true).dup(qstate);
 	return qstate.readLocal(name,constLookup);
@@ -2044,7 +2044,7 @@ struct Interpreter(QState){
 			if(auto ume=cast(UMinusExp)e) return -doIt(ume.e);
 			if(auto ume=cast(UNotExp)e) return doIt(ume.e).eqZ;
 			if(auto ume=cast(UBitNotExp)e) return ~doIt(ume.e);
-			if(auto le=cast(LambdaExp)e) return qstate.makeFunction(le.fd);
+			if(auto le=cast(LambdaExp)e) return qstate.makeFunction(le.fd,le.fd.scope_);
 			if(auto ce=cast(CallExp)e){
 				auto target=unwrap(ce.e);
 				auto id=cast(Identifier)target;
