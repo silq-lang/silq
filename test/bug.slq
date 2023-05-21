@@ -5,20 +5,6 @@ def main() {
 +/
 
 /+
-// segfaults with ldc 1.28.0 without -O
-def makeF() mfree: 1 → mfree B {
-	x := H(0:B);
-	return () mfree ⇒ x;
-}
-
-def main() {
-	f := makeF();
-	return f();
-}
-+/
-
-
-/+
 def main(){
 	x:=1:!ℕ;
 	y:=2:uint[10];
