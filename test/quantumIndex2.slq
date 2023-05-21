@@ -1,0 +1,4 @@
+// args: --run
+
+def index[m:!ℕ,n:!ℕ](xs:uint[m][],i:uint[n])lifted⇒xs[i];
+def main()⇒index(vector(10,0:uint[8]),3:uint[10]);

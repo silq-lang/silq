@@ -1651,7 +1651,7 @@ struct QState{
 		vars[fd.getName]=result;
 	}
 	static Value ite(Value cond,Value then,Value othw)in{
-		assert(then.type==othw.type);
+		assert(then.type.getClassical==othw.type.getClassical);
 		assert(!cond.isClassical);
 		assert(cast(BoolTy)cond.type);
 	}do{
@@ -1672,8 +1672,13 @@ struct QState{
 				return makeArray(type,zip(then.array_,othw.array_).map!(x=>ite(cond,x[0],x[1])).array);
 			case Value.Tag.closure: enforce(0,"TODO"); assert(0);
 			case Value.Tag.record: enforce(0,"TODO?"); assert(0);
-			case Value.Tag.quval: return makeQuval(then.type,new IteQVal(cond,then.convertTo(type),othw.convertTo(type)));
-			case Value.Tag.fval,Value.Tag.qval,Value.Tag.zval,Value.Tag.uintval,Value.Tag.intval,Value.Tag.bval:
+			case Value.Tag.uintval,Value.Tag.intval,Value.Tag.bval:
+				type=type.getQuantum();
+				enforce(isQuantum(type));
+				goto case;
+			case Value.Tag.quval: return makeQuval(type,new IteQVal(cond,then.convertTo(type),othw.convertTo(type)));
+			case Value.Tag.fval,Value.Tag.qval,Value.Tag.zval:
+				enforce(0,"unsupported");
 				assert(0);
 		}
 	}
