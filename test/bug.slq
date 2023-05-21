@@ -5,16 +5,6 @@ def main() {
 +/
 
 /+
-def foo[n:!ℕ](const φ:uint[n])mfree{}
-def main(){
-	n:=2;
-	φ:=3:!uint[n];
-	bar:=()mfree⇒foo(φ);
-	bar();
-}
-+/
-
-/+
 // segfaults with ldc 1.28.0 without -O
 def makeF() mfree: 1 → mfree B {
 	x := H(0:B);
