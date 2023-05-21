@@ -23,7 +23,7 @@ def main(){
 	estimate:=0:uint[m];
 	samples:=5;
 	for i in 0..m{
-		get_cands:=(const estimate:uint[m],φ:uint[n])mfree{
+		def get_cands(const estimate:uint[m],φ:uint[n])mfree{
 			cands:=[]:𝔹[];
 			for k in 0..samples{
 				x:=H(0:𝔹);
@@ -35,7 +35,7 @@ def main(){
 			}
 			return (cands coerce 𝔹^samples,φ);
 		};
-		get_majority:=(const estimate:uint[m],φ:uint[n]){
+		def get_majority(const estimate:uint[m],φ:uint[n]){
 			(cands,φ):=get_cands(estimate,φ);
 			result:=majority(cands);
 			get_cands(estimate,φ):=(cands,φ);
