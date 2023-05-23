@@ -2107,11 +2107,11 @@ struct Interpreter(QState){
 				auto r=a[i];
 				if(!idx.constLookup){
 					if(idx.byRef){
-						// enforce(i.isℤ(),"quantum component replacement not supported yet");
-						if(i.isℤ()){ // TODO: this is a bit hacky, improve
-							if(a.tag==QState.Value.Tag.array_){
-								a.array_[i.asℤ.to!size_t]=QState.Value.init;
-							}else r=r.dup(qstate).consumeOnRead();
+						if(a.tag==QState.Value.Tag.array_&&i.isℤ()){
+							a.array_[i.asℤ.to!size_t]=QState.Value.init;
+						}else{
+							r=r.dup(qstate).consumeOnRead();
+							getAssignable!false(idx).assign(qstate,QState.makeBool(false)); // TODO: a bit hacky
 						}
 					}else r=r.dup(qstate);
 				}
