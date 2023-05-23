@@ -1,0 +1,38 @@
+def QFT[n:!ℕ](ψ: int[n])mfree: int[n]{
+	for k in [0..n div 2){
+		(ψ[k],ψ[n-k-1]) := (ψ[n-k-1],ψ[k]);
+	}
+	for k in [0..n){
+		ψ[k] := H(ψ[k]);
+		for l in [k+1..n){
+			if ψ[k] && ψ[l]{
+				phase(2·π·2^(k-l-1));
+			}
+		}
+	}
+	return ψ;
+}
+
+def scQFT[n:!ℕ](ψ: int[n]): !int[n]{
+	for k in [0..n div 2){
+		(ψ[k],ψ[n-k-1]) := (ψ[n-k-1],ψ[k]);
+	}
+	for k in [0..n){
+		ψ[k] := measure(H(ψ[k]));
+		for l in [k+1..n){
+			if ψ[k] && ψ[l]{
+				phase(2·π·2^(k-l-1));
+			}
+		}
+	}
+	return measure(ψ);
+}
+
+n:=5;
+def main(){
+	x:=0:int[n];
+	for i in 0..n{ x[i]:=H(x[i]); }
+	x:=measure(x);
+	assert(scQFT(reverse(QFT)(x))==x);
+	return x;
+}

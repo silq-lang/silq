@@ -2313,7 +2313,9 @@ struct Interpreter(QState){
 						auto index=indices[0];
 						// TODO: bounds check
 						rhs.consumeOnRead();
-						auto nrhs=value&~(state.makeInteger(ℤ(1))<<index)|(rhs<<index);
+						auto nrhsz=value&~(state.makeInteger(ℤ(1))<<index);
+						auto nrhso=nrhsz|state.makeInteger(ℤ(1))<<index;
+						auto nrhs=rhs.isClassical()?(rhs.neqZImpl?nrhso:nrhsz):state.ite(rhs,nrhso,nrhsz);
 						if(condition.isValid) nrhs=state.ite(condition,nrhs,value);
 						value.assign(state,nrhs);
 						return;
