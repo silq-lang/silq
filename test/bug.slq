@@ -1,3 +1,13 @@
+
+/+
+def f[n:!ℕ](x:uint[n])mfree⇒x;
+def main(){
+	n:=1;
+	r:=reverse(f[n])(0:uint[n]); // TODO
+	return measure(r) as !ℤ;
+}
++/
+
 /+
 def main() {
 	forget(2+2=5);
