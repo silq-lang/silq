@@ -1,6 +1,31 @@
 // skipped
 
 /+
+def f(x: 𝔹) mfree: 𝔹^2 {
+	y := dup(x);
+	// x := H(x);
+	y := H(y);
+	return (x, y);
+}
+
+def f'(x: 𝔹) mfree: 𝔹^2 {
+	(x, y) := f(x);
+	z := dup(y);
+	f(x) := (x, y);
+	return (x, z);
+}
+
+def main() {
+	return f'(0:𝔹);
+}
++/
+/+
+
+def main(){
+	return 1%-2;
+}
++/
+/+
 def main(){
 	x:=0:𝔹;
 	y:=0:𝔹;

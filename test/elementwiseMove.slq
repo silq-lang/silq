@@ -1,0 +1,15 @@
+// args: --run
+
+def main(){
+	xs:=(H(0:𝔹),H(0:𝔹),H(0:𝔹));
+	ys:=();
+	for i in 0..3{
+		[x]~xs:=xs;
+		ys~=[x];
+	}
+	():=xs;
+	for i in 0..3{
+		ys[i]:=H(ys[i]);
+	}
+	assert(measure(ys)==(0,0,0));
+}

@@ -1,0 +1,12 @@
+// args: --run
+
+def main(){
+	n:=10;
+	x:=H(0:𝔹);
+	(a,b,c):=(1,1,1):!ℕ^3;
+	for i in 0..n{
+		x:=x;
+		(a,b)=(-b,1/a);
+	}
+	assert(measure(H(x))==0);
+}
