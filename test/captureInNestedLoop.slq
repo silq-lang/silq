@@ -1,0 +1,14 @@
+// args: --run
+
+def main(){
+	x:=0:𝔹;
+	f:=(){
+		for i in 0..2{
+			for j in 0..2{
+				x:=x;
+			}
+		}
+		return x;
+	};
+	assert(measure(f())==0);
+}
