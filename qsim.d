@@ -822,7 +822,7 @@ struct QState{
 				case Tag.bval:
 					if(ntag==Tag.bval) return this;
 					if(ntag==Tag.zval) return makeInteger(ℤ(cast(int)bval));
-					if(ntag==Tag.qval) return makeRational(ℚ(bval));
+					if(ntag==Tag.qval) return makeRational(ℚ(cast(int)bval));
 					if(ntag==Tag.fval) return makeReal(to!R(bval));
 			}
 			if(ntag==Tag.bval) return neqZ;
