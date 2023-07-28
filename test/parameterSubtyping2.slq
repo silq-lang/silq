@@ -9,11 +9,11 @@ def bar₃(foo: moved 𝔹 !→ 𝔹){}
 def main(): const 𝔹 !→ 𝔹{
 	bar₁(foo₁);
 	bar₁(foo₂); // error
-	bar₁(foo₃); // error
+	bar₁(foo₃);
 	bar₂(foo₁); // error
 	bar₂(foo₂);
 	bar₂(foo₃); // error
-	bar₃(foo₁); // error
+	bar₃(foo₁);
 	bar₃(foo₂); // error
 	bar₃(foo₃);
 	if measure(H(0:𝔹)){

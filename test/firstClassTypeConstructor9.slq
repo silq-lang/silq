@@ -17,7 +17,7 @@ def makeInt[n: !ℕ](x: !ℕ,const dummy:𝔹)qfree: int[n]⇒ x as int[n];
 def iaddInt[n: !ℕ](x: int[n],y: int[n])lifted: int[n]⇒x+y;
 
 def main(){
-	r:=(f[uint](makeUint, iaddUint), f[int](makeInt, iaddInt)); // TODO?
+	r:=(f[uint](makeUint, iaddUint), f[int](makeInt, iaddInt));
 	assert(r==(43,-21));
 	return r;
 }
