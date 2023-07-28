@@ -3,7 +3,7 @@ def main(){
 	if measure(H(false)){
 		x:=0:𝔹;
 	}else{
-		x:=1;
+		x:=1:!ℕ;
 	}
 	return x; // error
 }
