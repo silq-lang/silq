@@ -1,0 +1,11 @@
+// args: --run
+
+def foo₁(moved x:!ℕ)⇒x;
+
+def main(){
+	x:=2;
+	foo₂:=foo₁: const !ℕ →! ℕ;
+	y:=foo₂(x);
+	assert(x==y);
+	return (x,y);
+}

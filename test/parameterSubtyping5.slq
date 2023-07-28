@@ -1,0 +1,9 @@
+// args: --run
+
+def foo₂(const x:!ℕ)⇒x;
+
+def main(){
+	x:=2;
+	foo₁:=foo₂: moved !ℕ →! ℕ;
+	return foo₁(x);
+}

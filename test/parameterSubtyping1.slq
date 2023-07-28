@@ -1,0 +1,22 @@
+// args: --run
+
+def foo₁(x:!𝔹){}
+def foo₂(const x:!𝔹){}
+def foo₃(moved x:!𝔹){}
+
+def bar₁(foo: !𝔹 !→ 𝟙){}
+def bar₂(foo: const !𝔹 !→ 𝟙){}
+def bar₃(foo: moved !𝔹 !→ 𝟙){}
+
+def main(): const !𝔹 !→ 𝟙{
+	bar₁(foo₁); bar₁(foo₂); bar₁(foo₃);
+	bar₂(foo₁); bar₂(foo₂); bar₂(foo₃);
+	bar₃(foo₁); bar₃(foo₂); bar₃(foo₃);
+	if measure(H(0:𝔹)){
+		return foo₁;
+	}else if measure(H(0:𝔹)){
+		return foo₂;
+	}else{
+		return foo₃;
+	}
+}
