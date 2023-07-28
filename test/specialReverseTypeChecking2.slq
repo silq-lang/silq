@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	x:=H(0:𝔹);
+	y:=reverse(reverse(dup))(x);
+	forget(y=x);
+	assert(measure(H(x))=0);
+}

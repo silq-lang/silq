@@ -13,7 +13,7 @@ def main(){
 	nop(nop(x));
 	y:=baz()(x,());
 	bar(y)(x,y);
-	z:=reverse(reverse(dup))(x,());
+	z:=reverse(reverse(dup))(x);
 	foo()(x,z);
 	forget(H(x)=0);
 	return qux()[𝔹^10](0:𝔹);

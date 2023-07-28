@@ -1,0 +1,22 @@
+// args: --run
+
+def foo(f: const 𝔹 × const 𝔹 × 𝔹 !→mfree 𝔹){
+	return reverse(f);
+}
+
+def bar(const x: 𝔹, const y: 𝔹, z: 𝔹)mfree{
+	if x { z:=X(z); }
+	if y { z:=X(z); }
+	return z;
+}
+
+def main(){
+	x:=H(1:𝔹);
+	y:=H(1:𝔹);
+	z:=H(1:𝔹);
+	z:=foo(bar)(x,y,z);
+	x:=H(x);
+	y:=H(y);
+	z:=H(z);
+	assert(measure(x,y,z)=(0,0,1));
+}
