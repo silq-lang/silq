@@ -325,7 +325,7 @@ int[] getActual(string source,out string[] output){
 			auto tmp = err[(source~":").length..$];
 			auto line = tmp.parse!int;
 			result~=line;
-		}else if(err.startsWith("core.exception.AssertError"))
+		}else
 			result~=-1;
 	}
 	result=result.sort.uniq.array;

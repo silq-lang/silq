@@ -1,0 +1,11 @@
+// args: --run
+
+def main() {
+	assert(floor(3.5) == 3);
+	assert(floor(-3.5) == -4);
+	assert(sqrt(4) == 2);
+
+	// Assuming real == IEEE double,
+	assert(sqrt(5) == 2.23606797749979);
+	assert(cos(1) == 0.5403023058681398);
+}

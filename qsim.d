@@ -1536,23 +1536,6 @@ struct QState{
 		enforce(!thisExp.isValid,"TODO: method calls");
 		if(!fun.body_){ // TODO: move this logic somewhere else
 			switch(fun.getName){
-				case "floor": return fix(arg.floor());
-				case "ceil": return fix(arg.ceil());
-				case "sqrt": return fix(arg.sqrt());
-				case "exp": return fix(arg.exp());
-				case "log": return fix(arg.log());
-				case "sin": return fix(arg.sin());
-				case "asin","arcsin": return fix(arg.asin());
-				//case "csc": return arg.csc();
-				//case "acsc","arccsc": return arg.acsc();
-				case "cos": return fix(arg.cos());
-				case "acos","arccos": return fix(arg.acos());
-				//case "sec": return arg.sec();
-				//case "asec","arcsec": return arg.asec();
-				case "tan": return fix(arg.tan());
-				case "atan","arctan": return fix(arg.atan());
-				//case "cot": return arg.cot();
-				//case "acot","arccot": return arg.acot();
 				case "dump": dump(); stdout.flush(); return fix(makeTuple(.unit,[]));
 				case "exit": enforce(0, "terminated by exit call"); assert(0);
 
@@ -2093,7 +2076,24 @@ struct Interpreter(QState){
 					   FormattingOptions opt={type: FormattingType.dump};
 					   writeln(doIt(ce.arg).toStringImpl(opt)); stdout.flush();
 					   return qstate.makeTuple(.unit,[]);
-					default: enforce(0, text("TODO QuantumPrimitive: ", ce.e)); assert(0);
+					case "real.floor": return doIt(ce.arg).floor();
+					case "real.ceil": return doIt(ce.arg).ceil();
+					case "real.sqrt": return doIt(ce.arg).sqrt();
+					case "real.exp": return doIt(ce.arg).exp();
+					case "real.log": return doIt(ce.arg).log();
+					case "real.sin": return doIt(ce.arg).sin();
+					case "real.asin": return doIt(ce.arg).asin();
+					//case "real.csc": return doIt(ce.arg).csc();
+					//case "real.acsc": return doIt(ce.arg).acsc();
+					case "real.cos": return doIt(ce.arg).cos();
+					case "real.acos": return doIt(ce.arg).acos();
+					//case "real.sec": return doIt(ce.arg).sec();
+					//case "real.asec": return doIt(ce.arg).asec();
+					case "real.tan": return doIt(ce.arg).tan();
+					case "real.atan": return doIt(ce.arg).atan();
+					//case "real.cot": return doIt(ce.arg).cot();
+					//case "real.acot": return doIt(ce.arg).acot();
+					default: enforce(0, text("TODO Primitive: ", ce.e)); assert(0);
 				}
 				auto fun=doIt(ce.e), arg=doIt(ce.arg);
 				return qstate.call(fun,arg,ce.type,ce.loc);
