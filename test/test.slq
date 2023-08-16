@@ -1,6 +1,37 @@
 // skipped
 
 /+
+def f(x:𝔹)mfree⇒x;
+
+def main(){
+	x:=H(0:𝔹);
+	y:=f(dup(x));
+	if y{
+		// ops
+	}
+	f(y):=y;
+	assert(measure(y=x));
+	forget(y=x);
+	return x;
+}
++/
+
+/+
+def main(){
+	x:=H(0:𝔹);
+	y:=dup(x);
+	z:=H(0:𝔹);
+	if z{
+		forget(y);
+		x:=H(x); // TODO: error
+	}else{
+		//forget(y);
+		//y:=H(y);
+	}
+	return (x,z);
+}
++/
+/+
 def f(x: 𝔹) mfree: 𝔹^2 {
 	y := dup(x);
 	// x := H(x);

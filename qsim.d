@@ -544,7 +544,7 @@ struct QState{
 				import std.traits:EnumMembers;
 				static foreach(t;EnumMembers!Tag){
 					case t:
-						return q(type,mixin(text(t))).toHash();
+						return q(t,mixin(text(t))).toHash();
 				}
 			}
 		}
