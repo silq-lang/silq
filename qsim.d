@@ -2651,7 +2651,7 @@ struct Interpreter(QState){
 				value = QState.makeTuple(tupleTy([re.e.type,contextTy(true)]),[value,qstate.readLocal(functionDef.contextName,false)]);
 			qstate.assignTo("`value",value);
 			static if(language==silq) qstate.forgetVars(re.forgottenVars);
-			closeScope(re.scope_);
+			//closeScope(re.scope_);
 			if(functionDef.isNested) // caller takes care of context
 				qstate.vars.remove(functionDef.contextName);
 			if(hasFrame){

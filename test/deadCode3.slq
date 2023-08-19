@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	repeat 2{
+		return ();
+		x:=2;
+	}
+}
