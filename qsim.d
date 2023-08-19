@@ -1699,10 +1699,10 @@ struct QState{
 		}
 		this=map!forgetImpl(var);
 	}
-	void forgetVars(Scope scope_){
-		static if(language==silq){
+	static if(language==silq){
+		void forgetVars(Declaration[] forgottenVars){
 			if(!state.length) return;
-			foreach(var;scope_.forgottenVars){
+			foreach(var;forgottenVars){
 				auto name=var.getName;
 				vars[name].forget(this);
 				vars.remove(name);
@@ -1967,7 +1967,7 @@ struct Interpreter(QState){
 	}
 	void closeScope(Scope sc){
 		if(!qstate.state.length) return;
-		qstate.forgetVars(sc);
+		static if(language==silq) qstate.forgetVars(sc.forgottenVars);
 		foreach(merged;sc.mergedVars){
 			auto name=merged.getName;
 			assert(!!merged.mergedInto);
@@ -2650,6 +2650,7 @@ struct Interpreter(QState){
 			if(functionDef.context&&functionDef.contextName.startsWith("this"))
 				value = QState.makeTuple(tupleTy([re.e.type,contextTy(true)]),[value,qstate.readLocal(functionDef.contextName,false)]);
 			qstate.assignTo("`value",value);
+			static if(language==silq) qstate.forgetVars(re.forgottenVars);
 			closeScope(re.scope_);
 			if(functionDef.isNested) // caller takes care of context
 				qstate.vars.remove(functionDef.contextName);

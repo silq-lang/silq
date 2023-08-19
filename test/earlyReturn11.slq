@@ -1,0 +1,10 @@
+// args: --run
+
+def main() {
+    if true {
+        return;
+    } else {
+        v := 1; // (v not in mergedVars)
+        return;
+    }
+}
