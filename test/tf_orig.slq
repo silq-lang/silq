@@ -10,9 +10,9 @@ def a1[n:!N](
 	v := a4_HADAMARD_Int(0:int[n]);
 	ee := a5_SETUP(edgeOracle, tt);
 	for _ in [0..tm) {
-		(w, triTestT, triTestTw) := a15_TestTriangleEdges(edgeOracle, tt, ee); // error
+		(w, triTestT, triTestTw) := a15_TestTriangleEdges(edgeOracle, tt, ee);
 		if !(triTestT == 0 && triTestTw == 0) { phase(π); }
-		reverse(a15_TestTriangleEdges[n, 2^r])(w, triTestT, triTestTw, edgeOracle, tt, ee); // error
+		reverse(a15_TestTriangleEdges[n, 2^r])(w, triTestT, triTestTw, edgeOracle, tt, ee);
 		for _ in [0..tw) {
 			(tt, i, v, ee) := a6_QWSH(edgeOracle, tt, i, v, ee)
 		}	
@@ -168,7 +168,7 @@ def a18_TriangleEdgeSearch[n:!N, rr:!N](const edgeOracle:((const int[n] x const 
 	w := a4_HADAMARD_Int(w);
 	for _ in [0..floor(π/4 * sqrt(2^n))) {
 		cTri := a19_GCQWalk(edgeOracle, tt, ee, w, triTestT);
-		if triTestT == 0 && !(cTri == false) { phase(π); } // error
+		if triTestT == 0 && !(cTri == false) { phase(π); }
 		reverse(a19_GCQWalk[n, rr])(cTri, edgeOracle, tt, ee, w, triTestT);
 		w := a7_Diffuse_Int(w);
 	}
@@ -215,8 +215,8 @@ def a20_GCQWStep[n:!N, r:!N, rbar:!N, rrbar:!N, rr:!N](const edgeOracle:((const 
 	const tt: int[n]^rr, const ee: (𝔹^rr)^rr, const w: int[n], tau:int[r]^rrbar, iota:int[rbar],
 	sigma:int[r], eew:𝔹^rrbar, cTri:int[rrbar]) mfree {
 	(iota, sigma) := a7_Diffuse_Pair(iota, sigma);
-	(tau, taud, eewd, cTri, eew) := help_a20_2(tau, eew, cTri, edgeOracle, w, iota, tt, ee); // error
-	(taud, sigma) := (sigma, taud); // error
+	(tau, taud, eewd, cTri, eew) := help_a20_2(tau, eew, cTri, edgeOracle, w, iota, tt, ee);
+	(taud, sigma) := (sigma, taud);
 	(tau, eew, cTri) := reverse(help_a20_2[n,r,rr,rbar,rrbar])(tau, taud, eewd, cTri, eew, edgeOracle, w, iota, tt, ee);
 	return (tau, iota, sigma, eew, cTri);
 }
