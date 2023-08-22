@@ -1,0 +1,6 @@
+// args: --run
+
+def main(){
+    def g() ⇒ ();
+    return g();
+}
