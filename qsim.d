@@ -2572,6 +2572,10 @@ struct Interpreter(QState){
 				othw=othwIntp.qstate;
 				qstate+=othw;
 			}
+		}else if(auto with_=cast(WithExp)e){
+			runStm(with_.trans,retState);
+			runStm(with_.bdy,retState);
+			runStm(with_.itrans,retState);
 		}else if(auto re=cast(RepeatExp)e){
 			auto rep=runExp(re.num);
 			if(rep.isℤ()){

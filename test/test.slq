@@ -1,5 +1,55 @@
 // skipped
+/+
+k:=0;
+def main(){
+	forget(k);
+	x:=k;
+	def foo(){
+		forget(x=0);
+	}
+	foo();
+	foo();
+}
++/
+/+
+def main(){
+	x:=reverse(reverse);
+}
++/
+/+
+def main(){
+	return 3%-2;
+}
++/
+/+
+def main(){
+    program(f1);
+    program(f2);
+}
 
+def program(f:𝔹!→mfree 𝔹){
+    x:=0:𝔹;
+    y:=f(dup(x));
+    if y{
+        x:=H(x);
+    }
+	dump();
+    y:=reverse(f)(y);
+	assert(measure(y=x));
+	forget(y=x);
+    dump();
+    measure(x);
+}
+
+def f1(x:𝔹)mfree{
+    return rotY(π/2,x);
+}
+
+def f2(x:𝔹)mfree{
+    x:=Z(x);
+    return rotY(π/2,x);
+}
++/
 /+
 def f(x:𝔹)mfree⇒x;
 
