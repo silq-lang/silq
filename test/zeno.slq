@@ -1,0 +1,11 @@
+
+def main(){
+	x:=0:𝔹;
+	results:=();
+	for i in 0..100{
+		x:=rotY(π/100,x);
+		x:=measure(x);
+	}
+	assert(measure(x=0));
+	return x;
+}

@@ -12,4 +12,5 @@ else
 fi
 
 # debug build
-$DMD -g -debug -J. -Jlibrary *.d ast/*.d util/*.d -ofsilq
+$DMD -g -debug -version=CHECK_AST -J. -Jlibrary *.d ast/*.d util/*.d -ofsilq
+#$DMD -g -debug -J. -Jlibrary *.d ast/*.d util/*.d -ofsilq

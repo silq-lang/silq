@@ -1,0 +1,9 @@
+
+def main(){
+	α:=0.5;
+	x:=rotY(asin(sqrt(α)),0:𝔹);
+	exists:=true:𝔹;
+	exists&=!x;
+	exists&=!x;
+	return (x,exists);
+}

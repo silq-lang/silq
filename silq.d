@@ -45,6 +45,14 @@ int run(string path){
 		}
 		return 0;
 	}
+	version(CHECK_AST){
+		foreach(expr;exprs){
+			if(auto fd=cast(FunctionDef)expr){
+				import ast.checker:checkFunction;
+				checkFunction(fd);
+			}
+		}
+	}
 	// TODO: add some backends
 	if(err.nerrors) return 1;
 	if(opt.backend==BackendType.run){
