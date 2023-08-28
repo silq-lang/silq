@@ -6,34 +6,28 @@ def fromRange[a:!ℝ,b:!ℝ][n:!ℕ](x:!ℝ)lifted⇒round((x-a)/(b-a)·(2^n-1))
 def toRange[a:!ℝ,b:!ℝ][n:!ℕ](x:!uint[n])lifted⇒a+(x as !ℤ)/(2^n-1)·(b-a);
 
 /// computes fromRange[-1,1][n](sin(toAngle[m](x)))
-def sinQ[m:!ℕ,n:!ℕ]lifted{
-	def sinQImpl(x:int[m])lifted:uint[n];
-	return sinQImpl;
+def sinQ[m:!ℕ,n:!ℕ]lifted(x:int[m])lifted:uint[n]{
+	return __primitive("qfixed.sin", int[m] !→lifted uint[n])(x);
 }
 
 /// computes fromAngle[n](asin(toRange[-1,1][m](x)))
-def asinQ[m:!ℕ,n:!ℕ]lifted{
-	def asinQImpl(x:uint[m])lifted:int[n];
-	return asinQImpl;
+def asinQ[m:!ℕ,n:!ℕ](x:uint[m])lifted:int[n]{
+	return __primitive("qfixed.asin", uint[m] !→lifted int[n])(x);
 }
 
 /// computes fromRange[-1,1][n](cos(toAngle[m](x)))
-def cosQ[m:!ℕ,n:!ℕ]lifted{
-	def cosQImpl(x:int[m])lifted:uint[n];
-	return cosQImpl;
+def cosQ[m:!ℕ,n:!ℕ]lifted(x:int[m])lifted:uint[n]{
+	return __primitive("qfixed.cos", int[m] !→lifted uint[n])(x);
 }
 
 /// computes fromAngle[n](acos(toRange[-1,1][m](x)))
-def acosQ[m:!ℕ,n:!ℕ]lifted{
-	def acosQImpl(x:uint[m])lifted:int[n];
-	return acosQImpl;
+def acosQ[m:!ℕ,n:!ℕ](x:uint[m])lifted:int[n]{
+	return __primitive("qfixed.acos", uint[m] !→lifted int[n])(x);
 }
 
 /// computes fromRange[0,1][n](c/toRange[0,1][m](x))
-def invQ[m:!ℕ,n:!ℕ,c:!ℝ]lifted{
-	assert(0<=c);
-	def invQImpl(x:uint[m])lifted:uint[n];
-	return invQImpl;
+def invQ[m:!ℕ,n:!ℕ,c:!ℝ](x:uint[m])lifted:uint[n]{
+	return __primitive("qfixed.inv", uint[m] × !ℝ !→lifted uint[n])(x, c);
 }
 
 def phaseQ[n:!ℕ](const φ:int[n])mfree{

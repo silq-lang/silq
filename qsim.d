@@ -1539,22 +1539,6 @@ struct QState{
 				case "dump": dump(); stdout.flush(); return fix(makeTuple(.unit,[]));
 				case "exit": enforce(0, "terminated by exit call"); assert(0);
 
-				static foreach(f;["sinQ","asinQ","cosQ","acosQ"]){
-					case f~"Impl":
-						enforce(context);
-						enforce(context.tag==Value.Tag.record && "n" in context.record);
-						auto n=context.record["n"];
-						enforce(n.isℤ());
-						return fix(mixin(`arg.`~f)(n.asℤ(),fun.ret));
-				}
-				case "invQImpl":
-					enforce(context);
-					enforce(context.tag==Value.Tag.record && "n" in context.record && "c" in context.record);
-					auto n=context.record["n"];
-					enforce(n.isℤ());
-					auto c=context.record["c"];
-					enforce(c.isℝ());
-					return fix(arg.invQ(n.asℤ(),fun.ret,c.asℝ()));
 				default: break;
 			}
 		}
@@ -2093,6 +2077,30 @@ struct Interpreter(QState){
 					case "real.atan": return doIt(ce.arg).atan();
 					//case "real.cot": return doIt(ce.arg).cot();
 					//case "real.acot": return doIt(ce.arg).acot();
+					static foreach(f;["sin","asin","cos","acos"]){
+						case "qfixed."~f:
+							Expression ret = ce.type;
+							assert(isInt(ret) || isUint(ret));
+							QState.Value n = doIt((cast(CallExp) ret).arg);
+							QState.Value arg = doIt(ce.arg);
+							return mixin(`arg.`~f~`Q`)(n.asℤ(),ret);
+					}
+					case "qfixed.inv":
+						Expression ret = ce.type;
+						assert(isUint(ret));
+						auto paramTy = cast(TupleTy) ce.arg.type;
+						assert(paramTy);
+						assert(paramTy.types.length == 2);
+						assert(isUint(paramTy[0]));
+						assert(paramTy[1] is ℝ());
+						QState.Value n = doIt((cast(CallExp) ret).arg);
+						QState.Value args = doIt(ce.arg);
+						assert(args.tag == QState.Value.Tag.array_);
+						assert(args.array_.length == 2);
+						QState.Value arg = args.array_[0];
+						auto c = args.array_[0].asℝ();
+						enforce(0 <= c, "invQ argument negative");
+						return arg.invQ(n.asℤ(), ret, c);
 					default: enforce(0, text("TODO Primitive: ", ce.e)); assert(0);
 				}
 				auto fun=doIt(ce.e), arg=doIt(ce.arg);
