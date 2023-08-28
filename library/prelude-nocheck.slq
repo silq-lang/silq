@@ -79,8 +79,13 @@ def vector[τ:*](n:!ℕ,const x:τ)lifted:τ^n⇒__primitive("vector", !Π(n:!�
 def print[τ:*](x:!τ)lifted{
 	__primitive("print", !τ !-> lifted 𝟙)(x);
 }
-def dump()lifted:𝟙;
-def exit()lifted:𝟙;
+def dump()lifted:𝟙{
+	__primitive("dump", 𝟙 !-> lifted 𝟙)();
+}
+def exit()lifted:𝟙{
+	__primitive("exit", 𝟙 !-> lifted 𝟙)();
+	assert(0:!𝔹);
+}
 
 /+
 // first-class inference

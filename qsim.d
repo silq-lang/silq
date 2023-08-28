@@ -51,9 +51,18 @@ class QSim{
 		try{
 			interpreter.runFun(ret);
 		}catch(LocalizedException ex){
-			err.error(ex.msg,ex.loc);
-			foreach(loc;ex.stackTrace)
-				err.note("called from here",loc);
+			Location loc = ex.loc;
+			size_t i=0;
+			// Suppress stack frames in prelude
+			auto preludeSource = modules[preludePath()][0][0].loc.source;
+			while(loc.source is preludeSource && i<ex.stackTrace.length) {
+				loc=ex.stackTrace[i];
+				i++;
+			}
+			err.error(ex.msg,loc);
+			for(;i<ex.stackTrace.length;i++){
+				err.note("called from here",ex.stackTrace[i]);
+			}
 			return QState.empty();
 		}
 		assert(!!def.ftype);
@@ -1534,14 +1543,6 @@ struct QState{
 			return arg;
 		}
 		enforce(!thisExp.isValid,"TODO: method calls");
-		if(!fun.body_){ // TODO: move this logic somewhere else
-			switch(fun.getName){
-				case "dump": dump(); stdout.flush(); return fix(makeTuple(.unit,[]));
-				case "exit": enforce(0, "terminated by exit call"); assert(0);
-
-				default: break;
-			}
-		}
 		enforce(fun.body_,text("error: need function body to simulate function ",fun));
 		auto ncur=pushFrame();
 		enforce(!fun.isConstructor,"TODO: constructors");
@@ -2044,6 +2045,13 @@ struct Interpreter(QState){
 
 				static if(language==silq) switch(isPrimitive(target)){
 					case null: break;
+					case "dump":
+					   qstate.dump();
+					   stdout.flush();
+					   return qstate.makeTuple(.unit,[]);
+					case "exit":
+					   enforce(0, "terminated by exit call");
+					   break;
 					case "dup": return doIt(ce.arg).dup(qstate);
 					case "array": return qstate.array_(ce.type,doIt(ce.arg));
 					case "vector": return qstate.vector(ce.type,doIt(ce.arg));
