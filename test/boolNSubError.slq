@@ -1,0 +1,7 @@
+// args: --run
+
+def main() {
+	bF := 0: !B;
+	bT := 1: !B;
+	return bF sub bT; // error
+}

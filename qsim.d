@@ -969,6 +969,7 @@ struct QState{
 			assert(!!ntype);
 			static if(op=="sub"){
 				enforce(this.ge(r).neqZImpl,"result of sub is negative");
+				if(cast(BoolTy)ntype) return this.gt(r);
 				return this-r;
 			}else static if(op=="^^"){
 				auto t1=type,t2=r.type;
