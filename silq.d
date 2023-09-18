@@ -32,7 +32,7 @@ int run(string path){
 		if(cast(ErrorExp)expr) continue;
 		if(auto fd=cast(FunctionDef)expr){
 			functions[fd.name.name]=fd;
-		}else if(!cast(Declaration)expr&&!cast(DefExp)expr&&!cast(CommaExp)expr) err.error("top level expression must be declaration",expr.loc);
+		}else if(!cast(Declaration)expr&&!cast(DefineExp)expr&&!cast(CommaExp)expr) err.error("top level expression must be declaration",expr.loc);
 	}
 	if(opt.summarize.length){
 		try{

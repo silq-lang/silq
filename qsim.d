@@ -2507,10 +2507,7 @@ struct Interpreter(QState){
 			writeln(e);
 			writeln();
 		}
-		if(auto nde=cast(DefExp)e){
-			auto de=cast(DefineExp)nde.initializer;
-			runStm2(de,retState);
-		}else if(auto ae=cast(AssignExp)e){
+		if(auto ae=cast(AssignExp)e){
 			auto lhs=ae.e1,rhs=runExp(ae.e2);
 			assignTo(lhs,rhs);
 			forget(rhs);
