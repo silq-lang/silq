@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.32.0"
+VERSION=$(cat version-ldc.txt)
 LINK=https://github.com/ldc-developers/ldc/releases/download/v$VERSION/
 NAME="ldc2-$VERSION-windows-x64"
 FILE="$NAME.7z"

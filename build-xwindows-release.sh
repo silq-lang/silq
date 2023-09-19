@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.32.0"
+VERSION=$(cat version-ldc.txt)
 NAME="ldc2-$VERSION-windows-x64"
 
 LDMD="wine ./$NAME/bin/ldmd2.exe";

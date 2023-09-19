@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="1.32.0"
+VERSION=$(cat version-ldc.txt)
 
 git clone git@github.com:jacob-carlborg/docker-ldc-darwin.git
 cd docker-ldc-darwin
