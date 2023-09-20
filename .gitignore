@@ -1,6 +1,7 @@
 *~
 *.o
 *.a
+*.wasm
 silq
 silq-osx
 *.def

@@ -13,10 +13,11 @@ import astopt;
 import util.hashtable,util;
 import ast.expression,ast.declaration,ast.type;
 import ast.lexer,ast.semantic_,ast.reverse,ast.scope_,ast.error;
-import util;
+import util, util.io;
 
 import std.random;
-import std.complex, std.math;
+import std.complex;
+import util.math;
 
 class LocalizedException: Exception{
 	Location loc;

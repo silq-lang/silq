@@ -1,9 +1,9 @@
 // Written in the D programming language
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
 
-import std.stdio, std.path, std.array, std.string, std.algorithm, std.conv;
-import file=std.file;
-import util;
+import util.path;
+import std.array, std.string, std.algorithm, std.conv;
+import util, util.io;
 import ast.lexer, ast.parser, ast.expression, ast.declaration, ast.error, help;
 import astopt;
 import options, ast.scope_, ast.semantic_, ast.summarize;
