@@ -14,4 +14,8 @@ else
     LDMD="ldmd2"
 fi
 
-$LDMD -Iutil/wasm-stub -version=WASM -mtriple=wasm64-unknown-unknown-wasm -L-mwasm64 -L-allow-undefined -L--no-entry -J. -Jlibrary *.d ast/*.d util/*.d -ofsilq
+$LDMD -Iwebassembly/arsd-webassembly -Iutil/wasm-stub -version=WASM -mtriple=wasm64-unknown-unknown-wasm -L-mwasm64 -L-allow-undefined -L--no-entry -J. -Jlibrary *.d ast/*.d util/*.d -ofsilq
+
+#$LDMD -Iwebassembly/arsd-webassembly -Iutil/wasm-stub -version=WASM -mtriple=wasm64-unknown-unknown-wasm -L-mwasm64 -L--no-entry -L--error-limit=0 -J. -Jlibrary *.d ast/*.d util/*.d -ofsilq
+
+# $LDMD -Iwebassembly/arsd-webassembly -Iutil/wasm-stub -version=WASM -mtriple=wasm32-unknown-unknown-wasm -L-mwasm32 -L-allow-undefined -L--no-entry -J. -Jlibrary *.d ast/*.d util/*.d -ofsilq
