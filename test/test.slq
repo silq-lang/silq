@@ -1,4 +1,28 @@
 // skipped
+
+def main(){
+	return 1.5:!ℚ;
+}
+
+/+
+def main(){
+	x:=H(0:𝔹);
+	def f(x:𝔹):𝔹^1 ⇒ (x,);
+	return f(x).length;
+}
++/
+/+
+def main(){
+	n:=5;
+	//xs:=vector(n,0:𝔹);
+	//with x:=xs[1] { x:=H(x); }
+	x:=0:𝔹;
+	with x:=H(x){
+		x:=H(x);
+	}
+	return x;
+}
++/
 /+
 k:=0;
 def main(){
