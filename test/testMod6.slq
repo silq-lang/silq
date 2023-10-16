@@ -1,0 +1,8 @@
+
+def main(){
+	n:=8;
+	a:=0:uint[n];
+	b:=0:int[n];
+	u:=(a%true):uint[n];
+	v:=(b%true):int[n];
+}

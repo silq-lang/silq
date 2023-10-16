@@ -1,0 +1,22 @@
+// args: --run
+n:=8;
+def main(){
+	a:=13:uint[n];
+	b:=-17:int[n];
+	t:=1:𝔹;
+	f:=0:𝔹;
+
+	assert(measure(a%t=0));
+	assert(measure(b%t=0));
+
+	assert(measure(f%a=0));
+	assert(measure(f%b=0));
+
+	assert(measure(t%a=1));
+	assert(measure(t%b=-16));
+
+	assert(measure(!(f%t)));
+	assert(measure(!(t%t)));
+
+	assert(measure(a%6=1/2+1/2));
+}

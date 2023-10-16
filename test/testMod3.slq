@@ -1,0 +1,34 @@
+// args: --run
+n:=8;
+def approx(a:!ℝ,b:!ℝ)⇒abs(a-b)≤1.0e-10;
+def main(){
+	a:=13:uint[n];
+	b:=-17:int[n];
+	c:=23:!ℕ;
+	d:=-29:!ℤ;
+	e:=5/3:!ℚ;
+	f:=-7/5:!ℚ;
+	g:=0.137:!ℝ;
+	h:=-1.37:!ℝ;
+	assert(measure(a%a=0));
+	assert(measure(a%b=-4));
+	assert(measure(a%c=13));
+	assert(measure(b%a=9));
+	assert(measure(b%b=0));
+	assert(measure(c%a=10));
+	assert(measure(c%b=-11));
+	assert(measure(d%a=10));
+	assert(measure(d%b=-12));
+	
+	assert(measure(a%true=0));
+	assert(measure(b%true=0));
+
+	assert(measure(false%a=0));
+	assert(measure(false%b=0));
+
+	assert(measure(true%a=1));
+	assert(measure(true%b=-16));
+
+	assert(!(false%true));
+	assert(!(true%true));
+}

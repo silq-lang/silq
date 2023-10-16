@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	x:=-891734;
+	M:=11248253:!uint[32];
+	assert(x%M=10356519);
+	assert(x%M=x%(M as !ℤ));
+	return (x%M:!uint[32],x%(M as !ℤ));
+}
