@@ -1,0 +1,10 @@
+def f[n:!ℕ](x:𝔹^n)mfree{
+	x:=2; // error
+	if n≠0{
+		(H(a),)~f[n sub 1](b):=x; // error
+		r:=(a,)~b; // error
+	}else{
+		r:=x;
+	}
+	return r;
+}
