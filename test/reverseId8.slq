@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	def foo[a:qtype](x:a){
+		def id(x:a)mfree⇒(dup(x),x);
+		return reverse(id)(dup(x),x);
+	}
+	return (foo((0,1):𝔹^2),foo(H(0:𝔹)));
+}

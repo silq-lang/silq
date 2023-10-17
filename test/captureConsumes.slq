@@ -8,6 +8,6 @@ def foo(const f: 1→𝔹)qfree: 𝟙 { return; }
 def bar(x: 𝔹)qfree: 𝟙⇒foo(()⇒x); // error
 def main(){
 	foo(()⇒H(0:𝔹)); // ok
-	x := H(0:B); // error (not really needed)
+	x := H(0:B);
 	return bar(x);
 }

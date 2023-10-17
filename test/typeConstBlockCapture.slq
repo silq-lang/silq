@@ -1,7 +1,7 @@
 
 def main(){
 	x:=(0,0):𝔹[];
-	for i in 0..2{ x[i]:=H(x[i]); } // TODO
+	for i in 0..2{ x[i]:=H(x[i]); }
 	k:=(0,0) coerce 𝔹^x.length;
 	f:=()=>x; // error
 	x:=0:int[2]; // error

@@ -7,6 +7,6 @@ def foo(x:𝔹){
 	}
 }
 def main(){
-	x:=H(0:𝔹); // error
+	x:=H(0:𝔹);
 	return foo(x);
 }

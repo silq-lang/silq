@@ -1,0 +1,10 @@
+// args: --run
+
+def foo[n:!ℕ](b:!𝔹,x:uint[n]):uint[n]{
+    if b { assert(false); } else { }
+    return x;
+}
+
+def main(){
+	assert(measure(foo(false, 2:uint[3]))=2);
+}
