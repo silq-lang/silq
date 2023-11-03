@@ -1,0 +1,7 @@
+// args: --run
+
+def main() {
+	num := 16902157913843545776 as !uint[64] as !𝔹^64 as !uint[64];
+	assert(num = 16902157913843545776);
+	return num;
+}

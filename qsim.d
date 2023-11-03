@@ -830,7 +830,7 @@ struct QState{
 							val=uintval.val;
 						}
 						if(ntag==Tag.array_)
-							return makeArray(ntype.getClassical(),iota(nbits).map!(i=>makeBool(!!(val&(1<<i)))).array).convertTo(ntype);
+							return makeArray(ntype.getClassical(),iota(nbits).map!(i=>makeBool(!!(val&(ℤ(1)<<i)))).array).convertTo(ntype);
 						if(ntag==Tag.intval) return makeInt(ntype,BitInt!true(nbits,val));
 						assert(ntag==Tag.uintval);
 						return makeUint(ntype,BitInt!false(nbits,val));
