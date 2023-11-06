@@ -1,0 +1,10 @@
+// args: --run=10
+
+def f[n:!ℕ](x:𝔹^n,const y:𝔹)qfree:𝔹^n⇒x;
+def main() {
+	x:=(H(0:𝔹),);
+	y:=H(0:𝔹);
+	f(x,y):=x;
+	x[0]:=H(x[0]);
+	assert(measure(x,H(y))=((0,),0));
+}
