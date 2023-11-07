@@ -1,0 +1,11 @@
+
+def f[n:!ℕ](const x:𝔹^n)mfree⇒();
+def g[n:!ℕ](const x:𝔹^n,y:𝔹)mfree⇒y;
+def main(){
+	g(x,x,x):=(); // error
+	g[2](x,x,x):=(); // error
+	x:=0:𝔹;
+	f(x):=(); // error
+	f[2](x):=2; // error
+}
+

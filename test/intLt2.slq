@@ -1,0 +1,32 @@
+def intLt₁[n:!ℕ](x:𝔹^n,y:𝔹^n)lifted:𝔹{
+    if n=0{ return false; }
+	r := intLt₁(x[0..n-1],y[0..n-1]); // TODO
+	return if x[n-1]=y[n-1] then r else y[n-1];
+}
+
+def intLt₂[n:!ℕ](x:𝔹^n,y:𝔹^n)lifted:𝔹{ // TODO
+    if n=0{ return false; }
+	with r := intLt₂(x[0..n-1],y[0..n-1]) do // TODO
+		return if x[n-1]=y[n-1] then dup(r) else y[n-1];
+}
+
+def intLt₃[n:!ℕ](x:𝔹^n,y:𝔹^n)lifted:𝔹{
+    if n=0{ return false; }
+	r := intLt₃(x[0..n-1],y[0..n-1]); // TODO
+	res := if x[n-1]=y[n-1] then dup(r) else y[n-1];
+	intLt₃(x[0..n sub 1],y[0..n sub 1]):=r; // TODO
+	return res; // TODO
+}
+
+def intLt₄[n:!ℕ](x:𝔹^n,y:𝔹^n)lifted:𝔹=>if n=0 then false else if x[n-1]!=y[n-1] then y[n-1] else intLt₄(x[0..n-1],y[0..n-1]); // TODO
+
+def main(){
+	for i in 0..3{
+		for j in 0..3{
+			assert((i<j)==measure(intLt₁(i as uint[2] as 𝔹^2, j as uint[2] as 𝔹^2)));
+			assert((i<j)==measure(intLt₂(i as uint[2] as 𝔹^2, j as uint[2] as 𝔹^2)));
+			assert((i<j)==measure(intLt₃(i as uint[2] as 𝔹^2, j as uint[2] as 𝔹^2)));
+			assert((i<j)==measure(intLt₄(i as uint[2] as 𝔹^2, j as uint[2] as 𝔹^2)));
+		}
+	}
+}

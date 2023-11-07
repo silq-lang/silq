@@ -1,0 +1,11 @@
+// args: --run
+
+def f[n:!ℕ](x:𝔹^n)mfree⇒x;
+def main(){
+	f(x,):=(false,);
+	f[1](x₁,):=(false,);
+	f(y,z):=(true,false);
+	f[2](y₁,z₁):=(true,false);
+	forget((x₁,y₁,z₁)=(x,y,z));
+	return (x,y,z);
+}

@@ -1,0 +1,12 @@
+// args: --run
+
+def f[n:!ℕ](const x:𝔹^n)mfree⇒();
+def main(){
+	x:=false;
+	f(x,):=();
+	f[1](x,):=();
+	f(x,x):=();
+	f[2](x,x):=();
+	f(x,x,x):=();
+	f[3](x,x,x):=();
+}

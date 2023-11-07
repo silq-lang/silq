@@ -2,9 +2,15 @@
 
 /+
 def main(){
+	return H(Z(rotZ(π,H(0:𝔹))));
+}
++/
+/+
+def main(){
 	return 1e-10; // TODO
 }
 +/
+
 /+
 def main(){
 	return 1.5:!ℚ;

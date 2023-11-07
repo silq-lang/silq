@@ -1,0 +1,57 @@
+// skipped
+
+// args: --run
+
+def deutsch₁(f: const 𝔹!→lifted 𝔹){
+	x:=0:𝔹;
+	with x:=H(x) do if f(x){ phase(π); }
+	return x;
+}
+
+def deutsch₂(f: const 𝔹!→lifted 𝔹){
+	x:=0:𝔹;
+	with x:=H(x) do f(x):=Z(f(x));
+	return x;
+}
+
+def deutsch₃(f: const 𝔹!→lifted 𝔹){
+	x:=0:𝔹;
+	with x:=H(x) do reverse(f)(x,Z(f(x)));
+	return x;
+}
+
+def deutsch₄(f: const 𝔹!→lifted 𝔹){
+	x:=0:𝔹;
+	with x:=H(x){
+		if f(x){
+			phase(π);
+		}
+	}
+	return x;
+}
+
+def deutsch₅(f: const 𝔹!→lifted 𝔹){
+	x:=0:𝔹;
+	with{
+		x:=H(x)
+	}do{
+		if f(x){
+			phase(π);
+		}
+	}
+	return x;
+}
+
+
+def main(){
+	n:=5;
+	deutschs:=(deutsch₁,deutsch₂,deutsch₃,deutsch₄,deutsch₅);
+	for i in 0..n{
+		deutsch:=deutschs[i];
+		assert(!measure(deutsch((const x:𝔹)lifted⇒ if x then 0:𝔹 else 0:𝔹)));
+		assert(!measure(deutsch((const x:𝔹)lifted⇒ if x then 1:𝔹 else 1:𝔹)));
+		assert(measure(deutsch((const x:𝔹)lifted⇒ if x then 0:𝔹 else 1:𝔹)));
+		assert(measure(deutsch((const x:𝔹)lifted⇒ if x then 1:𝔹 else 0:𝔹)));
+	}
+}
+
