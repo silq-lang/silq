@@ -1,0 +1,34 @@
+// args: --run
+
+def f₁[n:!ℕ](const x:𝔹^n)mfree⇒();
+def f₂[n:!ℕ](const x:𝔹^n,const y:𝔹^n)mfree⇒();
+def f₃[n:!ℕ](const x:𝔹^n,const y:𝔹^n,z:𝔹^n)mfree⇒z;
+def f₄[n:!ℕ](const x:𝔹^n,const y:𝔹^n,z:𝔹^n,w:𝔹^n)mfree⇒(z,w);
+
+def g₃[n:!ℕ](z:𝔹^n,const x:𝔹^n,const y:𝔹^n)mfree⇒z;
+def g₄[n:!ℕ](z:𝔹^n,w:𝔹^n,const x:𝔹^n,const y:𝔹^n)mfree⇒(z,w);
+
+def h₁[n:!ℕ](x:𝔹^n)mfree⇒x;
+def h₂[n:!ℕ](x:𝔹^n,y:𝔹^n)mfree⇒(x,y);
+def h₃[n:!ℕ](x:𝔹^n,y:𝔹^n,const z:𝔹^n)mfree⇒(x,y);
+
+def i₃[n:!ℕ](const z:𝔹^n,x:𝔹^n,y:𝔹^n)mfree⇒(x,y);
+
+def main(){
+	x:=(0:𝔹,);
+	y:=(1:𝔹,);
+	z:=(0:𝔹,);
+	w:=(1:𝔹,);
+	f₁(x):=();
+	f₂(x,y):=();
+	f₃(x,y,z):=z;
+	f₄(x,y,z,w):=(w,z);
+	g₃(z,x,y):=z;
+	g₄(x,y,z,w):=(y,x);
+	h₁(x):=x;
+	h₂(x,y):=(y,x);
+	h₃(x,y,z):=(y,x);
+	i₃(z,x,y):=(x,y);
+	assert(measure((x[0],y[0]),(z[0],w[0]))==((1,0),(1,0)));
+	return ((x,y),(z,w));
+}

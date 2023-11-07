@@ -2435,9 +2435,10 @@ struct Interpreter(QState){
 					if(r.movedTuple){
 						enforce(result.tag==QState.Value.Tag.array_);
 						enforce(ft.isConstForReverse.count!(x=>!x)==result.array_.length);
+						size_t j=0;
 						foreach(i,arg;tpl.e){
 							if(!ft.isConstForReverse[i])
-								assignTo(arg,result.array_[i]);
+								assignTo(arg,result.array_[j++]);
 						}
 					}else{
 						enforce(ft.isConstForReverse.count!(x=>!x)==1);
@@ -2449,7 +2450,16 @@ struct Interpreter(QState){
 						}
 					}
 				}
-				if(rf.params.length==2){
+				if(rft.isConst.all){
+					enforce(rhs.tag==QState.Value.Tag.array_&&rhs.array_.length==0);
+					// assignment is on unit. can just drop rhs.
+					auto result=qstate.call(rfv,constArg,rfret,ce.loc);
+					assignMoved(result);
+				}else if(!rft.isConst.any){
+					assert(!rft.isConst.any);
+					auto result=qstate.call(rfv,rhs,rfret,ce.loc);
+					assignMoved(result);
+				}else if(rf.params.length==2){
 					enforce(rft.isConst[0]!=rft.isConst[1]);
 					auto constLast=rft.isConst[1];
 					auto args=constLast?[rhs,constArg]:[constArg,rhs];
@@ -2457,19 +2467,7 @@ struct Interpreter(QState){
 					auto arg=qstate.makeTuple(aty,args);
 					auto result=qstate.call(rfv,arg,rfret,ce.loc);
 					assignMoved(result);
-				}else{
-					enforce(rf.params.length==1);
-					if(rft.isConst.all){
-						enforce(rhs.tag==QState.Value.Tag.array_&&rhs.array_.length==0);
-						// assignment is on unit. can just drop rhs.
-						auto result=qstate.call(rfv,constArg,rfret,ce.loc);
-						assignMoved(result);
-					}else{
-						assert(!rft.isConst.any);
-						auto result=qstate.call(rfv,rhs,rfret,ce.loc);
-						assignMoved(result);
-					}
-				}
+				}else enforce(0,"reversed call not supported");
 			}
 		}else enforce(0,text("TODO: assign to ",lhs));
 	}
