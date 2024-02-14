@@ -1,0 +1,11 @@
+def f() qfree: !N {
+	return 42;
+}
+g := f;
+h := g;
+def main() {
+	__show(__query("type", f));
+	__show(__query("type", g));
+	__show(__query("type", h));
+	return (f(), g(), h());
+}

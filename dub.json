@@ -1,0 +1,54 @@
+{
+	"name": "silq",
+	"dflags": [],
+	"subPackages": [
+		{
+			"name": "util",
+			"targetType": "library",
+			"sourceFiles": [
+				"util/hashtable.d",
+				"util/io.d",
+				"util/math.d",
+				"util/package.d",
+				"util/path.d",
+				"util/range.d",
+				"util/terminal.d",
+				"util/tuple.d",
+				"util/optparse.d"
+			]
+		},
+		{
+			"name": "ast",
+			"targetType": "library",
+			"dependencies": {
+				"silq:util": "*"
+			},
+			"sourcePaths": ["ast"],
+			"sourceFiles": ["astopt.d"],
+			"stringImportPaths": ["library"]
+		},
+		{
+			"name": "common",
+			"targetType": "library",
+			"buildRequirements": ["allowWarnings"],
+			"dependencies": {
+				"silq:util": "*",
+				"silq:ast": "*"
+			},
+			"sourceFiles": ["options.d", "help.d", "qsim.d"]
+		}
+	],
+	"dependencies": {
+		"silq:util": "*",
+		"silq:ast": "*",
+		"silq:common": "*"
+	},
+	"configurations": [
+		{
+			"name": "executable",
+			"mainSourceFile": "silq.d",
+			"sourceFiles": ["silq.d", "hqir.d"],
+			"targetType": "executable"
+		}
+	]
+}

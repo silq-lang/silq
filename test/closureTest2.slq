@@ -9,5 +9,5 @@ def foo(){
 	return bar;
 }
 def main(){
-	return foo();
+	return foo()(H(0:B));
 }

@@ -1,7 +1,7 @@
 // args: --run --project-forget
 
 def main(){
-	x:=H(0:𝔹);
+	x:=H(0:B);
 	y:=0:𝔹;
 	forget(x=0);
 	return y;

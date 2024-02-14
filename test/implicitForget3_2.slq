@@ -11,4 +11,4 @@ def foo(){
 	}
 	H(0):=a;
 }
-def main()⇒foo;
+def main()⇒foo();

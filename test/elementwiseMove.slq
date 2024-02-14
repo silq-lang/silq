@@ -2,10 +2,10 @@
 
 def main(){
 	xs:=(H(0:𝔹),H(0:𝔹),H(0:𝔹));
-	ys:=();
+	ys:=[]:B[];
 	for i in 0..3{
 		[x]~xs:=xs;
-		ys~=[x];
+		ys := ys~[x];
 	}
 	():=xs;
 	for i in 0..3{

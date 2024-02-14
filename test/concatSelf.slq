@@ -1,0 +1,5 @@
+def main() {
+	x := [H(0:B)]: B[];
+	x ~= [dup(x[0])];
+	return x;
+}

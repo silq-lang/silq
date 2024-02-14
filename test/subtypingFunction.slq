@@ -1,0 +1,11 @@
+def simple(x: B[]): B[] {
+	return x;
+}
+
+def caller[n: !N](const f: B^n -> B[]): B[] {
+	return f(vector(n, false));
+}
+
+def main() {
+	return caller[5](simple);
+}

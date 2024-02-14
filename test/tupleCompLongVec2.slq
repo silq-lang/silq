@@ -1,6 +1,7 @@
+// args: --run
 
 def main(){
-	x:=vector(2^100,0);
+	x:=vector(2^100,0); /// run_error
 	y:=(1,2/3);
 	return x≤y;
 }

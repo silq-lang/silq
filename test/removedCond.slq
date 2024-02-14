@@ -1,0 +1,43 @@
+def f(moved x: B) @noinline qfree: B {
+	return x;
+}
+
+def makesGarbage(const x: B, const y: B) qfree: B {
+	if x {
+		r := 1:B;
+	} else {
+		tmp := f(dup(y));
+		r := !tmp;
+	}
+	return r;
+}
+
+def main() {
+	/* The two `x`s and the two `y`s are equivalent, so the `makesGarbage` calls
+	 * are marked as a compute-uncompute pair. The temporary `tmp` is computed
+	 * and uncomputed with syntactically different (but equivalent) conditions.
+	 *
+	 * At runtime, `tmp` is found to be a duplicate of `y`, so we don't bother
+	 * materializing it until necessary. It becomes necessary to materialize it
+	 * once `y` gets uncomputed, however. The problem is that at the time `y` is
+	 * uncomputed, `x` no longer exists, so materializing `tmp` fails.
+	 */
+	x := f(0:B);
+	y := f(1:B);
+	r := makesGarbage(x, y);
+	forget(x);
+	// Do something to `y` so that it gets uncomputed later.
+	y2 := X(y);
+	forget(y2);
+
+	// Prevent `r` from being optimized out.
+	z := !r;
+
+	x := f(0:B);
+	y := f(1:B);
+	makesGarbage(x, y) := r;
+	forget(x);
+	forget(y);
+
+	return z;
+}

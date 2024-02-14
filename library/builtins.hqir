@@ -1,0 +1,664 @@
+def silq_builtin.alloc_qubit($val) [artificial]
+	if[$val=0] %qb0 := qfree_call[qbuiltin.alloc_0]
+	if[$val=1] %qb1 := qfree_call[qbuiltin.alloc_1]
+	%res := cmerge($val) <- %qb0, %qb1
+	return %res
+
+
+def silq_builtin.measure_uint($n) <- %val
+	$lit0 := literal[0]
+	$lit1 := literal[1]
+	$lit2 := literal[2]
+	$qt_qubit := literal[qt_qubit]
+	$qt_single := qt_vector($lit1, $qt_qubit)
+	$done := int_cmp_eq($n, $lit0)
+	%val0, %val1 := csplit($done) <- %val
+	if[$done=1] qfree_call_rev[qbuiltin.alloc_unit] <- %val1
+	if[$done=0] $nm1 := int_linear[-1, 1]($n)
+	if[$done=0] $qt_nm1 := qt_vector($nm1, $qt_qubit)
+	if[$done=0] %init, %tail := qfree_call_rev[qbuiltin.cat]($lit1, $qt_single, $nm1, $qt_nm1) <- %val0
+	if[$done=0] %head := qfree_call_rev[qbuiltin.pack]($qt_qubit) <- %init
+	if[$done=0] $head := call[qbuiltin.measure_qubit]() <- %head
+	if[$done=0] $headnum := cond($head, $lit0, $lit1)
+	if[$done=0] $tail := call[silq_builtin.measure_uint]($nm1) <- %tail
+	if[$done=0] $r := int_linear[0,1,2]($headnum, $tail)
+	$val := cond($done, $r, $lit0)
+	return $val
+
+
+def silq_builtin.alloc_uint($n, $val)
+	$lit0 := literal[0]
+	$lit1 := literal[1]
+	$lit2 := literal[2]
+	$qt_qubit := literal[qt_qubit]
+	$qt_single := qt_vector($lit1, $qt_qubit)
+	$done := int_cmp_eq($lit0, $n)
+	if[$done=1] %res_if_done := qfree_call[qbuiltin.alloc_unit]()
+	if[$done=0] $nm1 := int_linear[-1, 1]($n)
+	if[$done=0] $qt_nm1 := qt_vector($nm1, $qt_qubit)
+	if[$done=0] $headnum := int_bit_and($val, $lit1)
+	if[$done=0] $head := int_cmp_eq($headnum, $lit1)
+	if[$done=0] %head := qfree_call[silq_builtin.alloc_qubit]($head)
+	if[$done=0] %init := qfree_call[qbuiltin.pack]($qt_qubit) <- %head
+	if[$done=0] $tail := int_div($val, $lit2)
+	if[$done=0] %tail := qfree_call[silq_builtin.alloc_uint]($nm1, $tail)
+	if[$done=0] %res_if_work := qfree_call[qbuiltin.cat]($lit1, $qt_single, $nm1, $qt_nm1) <- %init, %tail
+	%res := cmerge($done) <- %res_if_work, %res_if_done
+	return %res
+
+
+def silq_builtin.repeat($n, $qt, %val)
+	$lit0 := literal[0]
+	$lit1 := literal[1]
+	$done := int_cmp_eq($lit0, $n)
+	if[$done=1] %res_if_done := qfree_call[qbuiltin.alloc_unit]()
+	if[$done=0] $nm1 := int_linear[-1, 1]($n)
+	if[$done=0] %head := qfree_call[qbuiltin.dup](%val)
+	if[$done=0] $qt_init := qt_vector($lit1, $qt)
+	if[$done=0] %init := qfree_call[qbuiltin.pack]($qt) <- %head
+	if[$done=0] $qt_tail := qt_vector($nm1, $qt)
+	if[$done=0] %tail := qfree_call[silq_builtin.repeat]($nm1, $qt, %val)
+	if[$done=0] %res_if_work := qfree_call[qbuiltin.cat]($lit1, $qt_init, $nm1, $qt_tail) <- %init, %tail
+	%res := cmerge($done) <- %res_if_work, %res_if_done
+	return %res
+
+
+def silq_builtin.cindex_i($n, $qt, $i, %arr) [noinline]
+	$lit0 := literal[0]
+	$lit1 := literal[1]
+	$i1 := int_linear[1,1]($i)
+	%rlist := qfree_call[silq_builtin.cslice_i]($n, $qt, $i, $i1, %arr)
+	%r := qfree_call_rev[qbuiltin.pack]($qt) <- %rlist
+	return %r
+
+
+def silq_builtin.cindex_d($n, $qts, $i, %arr) [noinline]
+	$lit0 := literal[0]
+	$lit1 := literal[1]
+	$i1 := int_linear[1,1]($i)
+	%rlist := qfree_call[silq_builtin.cslice_d]($n, $qts, $i, $i1, %arr)
+	$qt := box_index[builtin.qtypes]($n, $qts, $i)
+	%r := qfree_call_rev[qbuiltin.pack]($qt) <- %rlist
+	return %r
+
+
+def silq_builtin.cslice_i($n, $qt, $i1, $i2, %arr)
+	%tmp := qfree_call[qbuiltin.dup](%arr)
+	$qt12 := qt_vector($i2, $qt)
+	$nmi2 := int_linear[0,1,-1]($n, $i2)
+	$qt3 := qt_vector($nmi2, $qt)
+	%p12, %p3 := qfree_call_rev[qbuiltin.cat]($i2, $qt12, $nmi2, $qt3) <- %tmp
+	$qt1 := qt_vector($i1, $qt)
+	$nr := int_linear[0,1,-1]($i2, $i1)
+	$qtr := qt_vector($nr, $qt)
+	%p1, %p2 := qfree_call_rev[qbuiltin.cat]($i1, $qt1, $nr, $qtr) <- %p12
+	autoforget <- %p1
+	autoforget <- %p3
+	return %p2
+
+
+def silq_builtin.cslice_d($n, $qts, $i1, $i2, %arr)
+	$lit0 := literal[0]
+	%tmp := qfree_call[qbuiltin.dup](%arr)
+	$qt12 := classical_call[silq_builtin.qt_offset]($n, $qts, $lit0, $i2)
+	$nmi2 := int_linear[0,1,-1]($n, $i2)
+	$qt3 := classical_call[silq_builtin.qt_offset]($n, $qts, $i2, $n)
+	%p12, %p3 := qfree_call_rev[qbuiltin.cat]($i2, $qt12, $nmi2, $qt3) <- %tmp
+	$qt1 := classical_call[silq_builtin.qt_offset]($n, $qts, $lit0, $i1)
+	$nr := int_linear[0,1,-1]($i2, $i1)
+	$qtr := classical_call[silq_builtin.qt_offset]($n, $qts, $i1, $i2)
+	%p1, %p2 := qfree_call_rev[qbuiltin.cat]($i1, $qt1, $nr, $qtr) <- %p12
+	autoforget <- %p1
+	autoforget <- %p3
+	return %p2
+
+
+def silq_builtin.cswap_i($n, $qt, $n_l) <- %arr, %val [noinline]
+	$lit0 := literal[0]
+	$lit1 := literal[1]
+	$n_lm := int_linear[1,1]($n_l)
+	$n_r := int_linear[-1,1,-1]($n, $n_l)
+	$qt_lm := qt_vector($n_lm, $qt)
+	$qt_l := qt_vector($n_l, $qt)
+	$qt_m := qt_vector($lit1, $qt)
+	$qt_r := qt_vector($n_r, $qt)
+	%arr_lm, %arr_r := qfree_call_rev[qbuiltin.cat]($n_lm, $qt_lm, $n_r, $qt_r) <- %arr
+	%arr_l, %arr_m := qfree_call_rev[qbuiltin.cat]($n_l, $qt_l, $lit1, $qt_m) <- %arr_lm
+	%val2 := qfree_call_rev[qbuiltin.pack]($qt) <- %arr_m
+	%arr2_m := qfree_call[qbuiltin.pack]($qt) <- %val
+	%arr2_lm := qfree_call[qbuiltin.cat]($n_l, $qt_l, $lit1, $qt_m) <- %arr_l, %arr2_m
+	%arr2 := qfree_call[qbuiltin.cat]($n_lm, $qt_lm, $n_r, $qt_r) <- %arr2_lm, %arr_r
+	return %arr2, %val2
+
+
+def silq_builtin.cswap_d($n, $qts1, $qts2, $n_l) <- %arr, %val [noinline]
+	$lit0 := literal[0]
+	$lit1 := literal[1]
+	$n_lm := int_linear[1,1]($n_l)
+	$n_r := int_linear[-1,1,-1]($n, $n_l)
+	$qt_l := classical_call[silq_builtin.qt_offset]($n, $qts1, $lit0, $n_l)
+	$qt_r := classical_call[silq_builtin.qt_offset]($n, $qts1, $n_lm, $n)
+	$qt1 := box_index[builtin.qtypes]($n, $qts1, $n_l)
+	$qt2 := box_index[builtin.qtypes]($n, $qts2, $n_l)
+	$qt_m1 := qt_vector($lit1, $qt1)
+	$qt_m2 := qt_vector($lit1, $qt2)
+	$qt_lm1 := classical_call[silq_builtin.qt_offset]($n, $qts1, $lit0, $n_lm)
+	$qt_lm2 := classical_call[silq_builtin.qt_offset]($n, $qts2, $lit0, $n_lm)
+	%arr_lm, %arr_r := qfree_call_rev[qbuiltin.cat]($n_lm, $qt_lm1, $n_r, $qt_r) <- %arr
+	%arr_l, %arr_m := qfree_call_rev[qbuiltin.cat]($n_l, $qt_l, $lit1, $qt_m1) <- %arr_lm
+	%val2 := qfree_call_rev[qbuiltin.pack]($qt1) <- %arr_m
+	%arr2_m := qfree_call[qbuiltin.pack]($qt2) <- %val
+	%arr2_lm := qfree_call[qbuiltin.cat]($n_l, $qt_l, $lit1, $qt_m2) <- %arr_l, %arr2_m
+	%arr2 := qfree_call[qbuiltin.cat]($n_lm, $qt_lm2, $n_r, $qt_r) <- %arr2_lm, %arr_r
+	return %arr2, %val2
+
+
+def silq_builtin.int_to_bits($n, $val)
+	$lit0 := literal[0]
+	$lit1 := literal[1]
+	$lit2 := literal[2]
+	$done := int_cmp_eq($lit0, $n)
+	if[$done=1] $res_if_done := box[silq.tuple]()
+	if[$done=0] $nm1 := int_linear[-1, 1]($n)
+	if[$done=0] $init := classical_call[silq_builtin.int_to_bits]($nm1, $val)
+	if[$done=0] $hi := int_pow($lit2, $nm1)
+	if[$done=0] $m := int_bit_and($hi, $val)
+	if[$done=0] $last := int_cmp_eq($hi, $m)
+	if[$done=0] $tail := box[silq.tuple]($last)
+	if[$done=0] $res_if_work := box_cat[silq.tuple]($nm1, $init, $lit1, $tail)
+	$res := cond($done, $res_if_work, $res_if_done)
+	return $res
+
+
+def silq_builtin.bits_to_int($n, $bits)
+	$lit0 := literal[0]
+	$lit1 := literal[1]
+	$lit2 := literal[2]
+	$done := int_cmp_eq($lit0, $n)
+	if[$done=1] $res_if_done := literal[0]
+	if[$done=0] $nm1 := int_linear[-1, 1]($n)
+	if[$done=0] $head_bit := box_index[silq.tuple]($n, $bits, $lit0)
+	if[$done=0] $head_val := cond($head_bit, $lit0, $lit1)
+	if[$done=0] $tail_bits := box_slice[silq.tuple]($n, $bits, $lit1, $n)
+	if[$done=0] $tail_val := classical_call[silq_builtin.bits_to_int]($nm1, $tail_bits)
+	if[$done=0] $res_if_work := int_linear[0, 1, 2]($head_val, $tail_val)
+	$res := cond($done, $res_if_work, $lit0)
+	return $res
+
+
+def silq_builtin.qfunc_moved_bitvec($func, $cap_qt, $cap_bv, $arg_classical, %fake_cap_const, %arg_const) <- %fake_cap_moved, %arg_moved
+	qfree_call_rev[qbuiltin.alloc_unit]() <- %fake_cap_moved
+	%real_cap := qfree_call[qbuiltin.alloc_bitvec]($cap_qt, $cap_bv)
+	$r, %r := call($func, $arg_classical, %fake_cap_const, %arg_const) <- %real_cap, %arg_moved
+	return $r, %r
+
+def silq_builtin.qfunc_const_bitvec($func, $cap_qt, $cap_bv, $arg_classical, %fake_cap_const, %arg_const) <- %fake_cap_moved, %arg_moved
+	%real_cap := qfree_call[qbuiltin.alloc_bitvec]($cap_qt, $cap_bv)
+	$r, %r := call($func, $arg_classical, %real_cap, %arg_const) <- %fake_cap_moved, %arg_moved
+	autoforget <- %real_cap
+	return $r, %r
+
+
+def silq_builtin.qtype_const($qt, $cc) [artificial]
+	return $qt
+
+def silq_builtin.promote_unit($cc) [artificial]
+	$r := literal[null]
+	%r := qfree_call[qbuiltin.alloc_unit]()
+	return $r, %r
+
+def silq_builtin.measure_unit($cc) <- %qc [artificial]
+	$r := literal[null]
+	qfree_call_rev[qbuiltin.alloc_unit]() <- %qc
+	return $r
+
+def silq_builtin.promote_classical($cc) [artificial]
+	%r := qfree_call[qbuiltin.alloc_unit]()
+	return $cc, %r
+
+def silq_builtin.measure_classical($cc) <- %qc [artificial]
+	qfree_call_rev[qbuiltin.alloc_unit]() <- %qc
+	return $cc
+
+def silq_builtin.promote_qubit($cc) [artificial]
+	$r := literal[null]
+	%r := qfree_call[silq_builtin.alloc_qubit]($cc)
+	return $r, %r
+
+def silq_builtin.measure_qubit($cc) <- %qc [artificial]
+	$r := call[qbuiltin.measure_qubit] <- %qc
+	return $r
+
+def silq_builtin.qtype_qfunc($cc) [artificial]
+	$lit1 := literal[1]
+	$lit2 := literal[2]
+	$qt := box_index[silq.qfunc]($lit2, $cc, $lit1)
+	return $qt
+
+def silq_builtin.promote_qfunc($cc) [artificial]
+	$qt_unit := literal[qt_unit]
+	$r := box[silq.qfunc]($cc, $qt_unit)
+	%r := qfree_call[qbuiltin.alloc_unit]()
+	return $r, %r
+
+def silq_builtin.measure_qfunc_moved($cc) <- %qc [artificial]
+	$lit0 := literal[0]
+	$lit1 := literal[1]
+	$lit2 := literal[2]
+	$cfunc := box_index[silq.qfunc]($lit2, $cc, $lit0)
+	$cap_qt := box_index[silq.qfunc]($lit2, $cc, $lit1)
+	$cap_bv := call[qbuiltin.measure_bitvec]($cap_qt) <- %qc
+	$r := func[silq_builtin.qfunc_moved_bitvec]($cfunc, $cap_qt, $cap_bv)
+	return $r
+
+def silq_builtin.measure_qfunc_const($cc) <- %qc [artificial]
+	$lit0 := literal[0]
+	$lit1 := literal[1]
+	$lit2 := literal[2]
+	$cfunc := box_index[silq.qfunc]($lit2, $cc, $lit0)
+	$cap_qt := box_index[silq.qfunc]($lit2, $cc, $lit1)
+	$cap_bv := call[qbuiltin.measure_bitvec]($cap_qt) <- %qc
+	$r := func[silq_builtin.qfunc_const_bitvec]($cfunc, $cap_qt, $cap_bv)
+	return $r
+
+
+def silq_builtin.iter_tuple($f, $n)
+	$lit0 := literal[0]
+	$lit1 := literal[1]
+	$done := int_cmp_eq($lit0, $n)
+	if[$done=1] $res_if_done := box[silq.tuple]()
+	if[$done=0] $nm1 := int_linear[-1, 1]($n)
+	if[$done=0] $init := classical_call[silq_builtin.iter_tuple]($f, $nm1)
+	if[$done=0] $last := classical_call($f, $nm1)
+	if[$done=0] $tail := box[silq.tuple]($last)
+	if[$done=0] $res_if_work := box_cat[silq.tuple]($nm1, $init, $lit1, $tail)
+	$res := cond($done, $res_if_work, $res_if_done)
+	return $res
+
+
+def silq_builtin.iter_qtypes($f, $n)
+	$lit0 := literal[0]
+	$lit1 := literal[1]
+	$done := int_cmp_eq($lit0, $n)
+	if[$done=1] $res_if_done := box[builtin.qtypes]()
+	if[$done=0] $nm1 := int_linear[-1, 1]($n)
+	if[$done=0] $init := classical_call[silq_builtin.iter_qtypes]($f, $nm1)
+	if[$done=0] $last := classical_call($f, $nm1)
+	if[$done=0] $tail := box[builtin.qtypes]($last)
+	if[$done=0] $res_if_work := box_cat[builtin.qtypes]($nm1, $init, $lit1, $tail)
+	$res := cond($done, $res_if_work, $res_if_done)
+	return $res
+
+
+def silq_builtin.qtype_vec_d($n, $qtypeF, $cc, $i) [artificial]
+	$i1 := int_linear[1, 1]($i)
+	$cci := box_index[silq.tuple]($n, $cc, $i)
+	$qti := classical_call($qtypeF, $cci)
+	return $qti
+
+
+def silq_builtin.qt_offset($n, $qtypes, $i, $j)
+	$prefix := box_slice[builtin.qtypes]($n, $qtypes, $i, $j)
+	$m := int_linear[0,1,-1]($j, $i)
+	$qt := qt_array($m, $prefix)
+	return $qt
+
+
+def silq_builtin.measure_vec_i($subF, $n, $qtype_in, $c, $i) <- %q_in_raw
+	$lit0 := literal[0]
+	$lit1 := literal[1]
+	$done := int_cmp_eq($i, $lit0)
+	%q_in, %q_in_empty := csplit($done) <- %q_in_raw
+
+	if[$done=1] qfree_call_rev[qbuiltin.alloc_unit]() <- %q_in_empty
+	if[$done=1] $c_out_empty := box[silq.tuple]()
+
+	if[$done=0] $im1 := int_linear[-1, 1]($i)
+
+	if[$done=0] $qtrp_in := qt_vector($im1, $qtype_in)
+	if[$done=0] $qtip_in := qt_tuple($qtype_in)
+	if[$done=0] %qrp_in, %qip_in := qfree_call_rev[qbuiltin.cat]($im1, $qtrp_in, $lit1, $qtip_in) <- %q_in
+	if[$done=0] %qi_in := qfree_call_rev[qbuiltin.pack]($qtype_in) <- %qip_in
+	if[$done=0] $cr_out := call[silq_builtin.measure_vec_i]($subF, $n, $qtype_in, $c, $im1) <- %qrp_in
+
+	if[$done=0] $ci_in := box_index[silq.tuple]($n, $c, $im1)
+	if[$done=0] $ci_out := call($subF, $ci_in) <- %qi_in
+	if[$done=0] $cip_out := box[silq.tuple]($ci_out)
+	if[$done=0] $c_out := box_cat[silq.tuple]($im1, $cr_out, $lit1, $cip_out)
+
+	$c_out_raw := cond($done, $c_out, $c_out_empty)
+	return $c_out_raw
+
+def silq_builtin.measure_vec_d($subF, $n, $qtypes_in, $c, $i) <- %q_in_raw
+	$lit0 := literal[0]
+	$lit1 := literal[1]
+	$done := int_cmp_eq($i, $lit0)
+	%q_in, %q_in_empty := csplit($done) <- %q_in_raw
+
+	if[$done=1] qfree_call_rev[qbuiltin.alloc_unit]() <- %q_in_empty
+	if[$done=1] $c_out_empty := box[silq.tuple]()
+
+	if[$done=0] $im1 := int_linear[-1, 1]($i)
+
+	if[$done=0] $qtype_in := box_index[builtin.qtypes]($n, $qtypes_in, $im1)
+	if[$done=0] $qtrp_in := classical_call[silq_builtin.qt_offset]($n, $qtypes_in, $lit0, $im1)
+	if[$done=0] $qtip_in := qt_tuple($qtype_in)
+	if[$done=0] %qrp_in, %qip_in := qfree_call_rev[qbuiltin.cat]($im1, $qtrp_in, $lit1, $qtip_in) <- %q_in
+	if[$done=0] %qi_in := qfree_call_rev[qbuiltin.pack]($qtype_in) <- %qip_in
+	if[$done=0] $cr_out := call[silq_builtin.measure_vec_d]($subF, $n, $qtypes_in, $c, $im1) <- %qrp_in
+
+	if[$done=0] $ci_in := box_index[silq.tuple]($n, $c, $im1)
+	if[$done=0] $ci_out := call($subF, $ci_in) <- %qi_in
+	if[$done=0] $cip_out := box[silq.tuple]($ci_out)
+	if[$done=0] $c_out := box_cat[silq.tuple]($im1, $cr_out, $lit1, $cip_out)
+
+	$c_out_raw := cond($done, $c_out, $c_out_empty)
+	return $c_out_raw
+
+
+def silq_builtin.promote_vec_i($subF, $n, $qtype_out, $c, $i)
+	$lit0 := literal[0]
+	$lit1 := literal[1]
+	$done := int_cmp_eq($i, $lit0)
+
+	if[$done=0] $im1 := int_linear[-1, 1]($i)
+
+	if[$done=0] %qrp_out := qfree_call[silq_builtin.promote_vec_i]($subF, $n, $qtype_out, $c, $im1)
+
+	if[$done=0] $ci := box_index[silq.tuple]($n, $c, $im1)
+	if[$done=0] %qi_out := qfree_call($subF, $ci)
+	if[$done=0] %qip_out := qfree_call[qbuiltin.pack]($qtype_out) <- %qi_out
+
+	if[$done=0] $qtrp_out := qt_vector($im1, $qtype_out)
+	if[$done=0] $qtip_out := qt_tuple($qtype_out)
+	if[$done=0] %q_out := qfree_call[qbuiltin.cat]($im1, $qtrp_out, $lit1, $qtip_out) <- %qrp_out, %qip_out
+
+	if[$done=1] %q_out_empty := qfree_call[qbuiltin.alloc_unit]()
+	%q_out_raw := cmerge($done) <- %q_out, %q_out_empty
+	return %q_out_raw
+
+def silq_builtin.promote_vec_d($subF, $n, $qtypes_out, $c, $i)
+	$lit0 := literal[0]
+	$lit1 := literal[1]
+	$done := int_cmp_eq($i, $lit0)
+
+	if[$done=0] $im1 := int_linear[-1, 1]($i)
+
+	if[$done=0] %qrp_out := qfree_call[silq_builtin.promote_vec_d]($subF, $n, $qtypes_out, $c, $im1)
+
+	if[$done=0] $ci := box_index[silq.tuple]($n, $c, $im1)
+	if[$done=0] %qi_out := qfree_call($subF, $ci)
+	if[$done=0] $qti_out := box_index[builtin.qtypes]($n, $qtypes_out, $im1)
+	if[$done=0] %qip_out := qfree_call[qbuiltin.pack]($qti_out) <- %qi_out
+
+	if[$done=0] $qtrp_out := classical_call[silq_builtin.qt_offset]($n, $qtypes_out, $lit0, $im1)
+	if[$done=0] $qtip_out := qt_tuple($qti_out)
+	if[$done=0] %q_out := qfree_call[qbuiltin.cat]($im1, $qtrp_out, $lit1, $qtip_out) <- %qrp_out, %qip_out
+
+	if[$done=1] %q_out_empty := qfree_call[qbuiltin.alloc_unit]()
+	%q_out_raw := cmerge($done) <- %q_out, %q_out_empty
+	return %q_out_raw
+
+
+def silq_builtin.convert_vec_c($subF, $n, $c, $i) [artificial]
+	$ci := box_index[silq.tuple]($n, $c, $i)
+	$r := classical_call($subF, $ci)
+	return $r
+
+
+def silq_builtin.convert_vec_qi($subF, $n, $qtype_in, $qtype_out, $c, $i) <- %q_in_raw
+	$lit0 := literal[0]
+	$lit1 := literal[1]
+	$done := int_cmp_eq($i, $lit0)
+	%q_in, %q_in_empty := csplit($done) <- %q_in_raw
+	if[$done=1] qfree_call_rev[qbuiltin.alloc_unit]() <- %q_in_empty
+
+	if[$done=0] $im1 := int_linear[-1, 1]($i)
+	if[$done=0] $qtrp_in := qt_vector($im1, $qtype_in)
+	if[$done=0] $qtip_in := qt_tuple($qtype_in)
+	if[$done=0] %qrp_in, %qip_in := qfree_call_rev[qbuiltin.cat]($im1, $qtrp_in, $lit1, $qtip_in) <- %q_in
+
+	if[$done=0] %qrp_out := qfree_call[silq_builtin.convert_vec_qi]($subF, $n, $qtype_in, $qtype_out, $c, $im1) <- %qrp_in
+
+	if[$done=0] $ci := box_index[silq.tuple]($n, $c, $im1)
+	if[$done=0] %qi_in := qfree_call_rev[qbuiltin.pack]($qtype_in) <- %qip_in
+	if[$done=0] %qi_out := qfree_call($subF, $ci) <- %qi_in
+	if[$done=0] %qip_out := qfree_call[qbuiltin.pack]($qtype_out) <- %qi_out
+
+	if[$done=0] $qtrp_out := qt_vector($im1, $qtype_out)
+	if[$done=0] $qtip_out := qt_tuple($qtype_out)
+	if[$done=0] %q_out := qfree_call[qbuiltin.cat]($im1, $qtrp_out, $lit1, $qtip_out) <- %qrp_out, %qip_out
+
+	if[$done=1] %q_out_empty := qfree_call[qbuiltin.alloc_unit]()
+	%q_out_raw := cmerge($done) <- %q_out, %q_out_empty
+	return %q_out_raw
+
+
+def silq_builtin.convert_vec_qd($subF, $n, $qtypes_in, $qtypes_out, $c, $i) <- %q_in_raw
+	$lit0 := literal[0]
+	$lit1 := literal[1]
+	$done := int_cmp_eq($i, $lit0)
+	%q_in, %q_in_empty := csplit($done) <- %q_in_raw
+	if[$done=1] qfree_call_rev[qbuiltin.alloc_unit]() <- %q_in_empty
+
+	if[$done=0] $im1 := int_linear[-1, 1]($i)
+	if[$done=0] $qtrp_in := classical_call[silq_builtin.qt_offset]($n, $qtypes_in, $lit0, $im1)
+	if[$done=0] $qti_in := box_index[builtin.qtypes]($n, $qtypes_in, $im1)
+	if[$done=0] $qtip_in := qt_tuple($qti_in)
+	if[$done=0] %qrp_in, %qip_in := qfree_call_rev[qbuiltin.cat]($im1, $qtrp_in, $lit1, $qtip_in) <- %q_in
+
+	if[$done=0] %qrp_out := qfree_call[silq_builtin.convert_vec_qd]($subF, $n, $qtypes_in, $qtypes_out, $c, $im1) <- %qrp_in
+
+	if[$done=0] $ci := box_index[silq.tuple]($n, $c, $im1)
+	if[$done=0] %qi_in := qfree_call_rev[qbuiltin.pack]($qti_in) <- %qip_in
+	if[$done=0] %qi_out := qfree_call($subF, $ci) <- %qi_in
+	if[$done=0] $qti_out := box_index[builtin.qtypes]($n, $qtypes_out, $im1)
+	if[$done=0] %qip_out := qfree_call[qbuiltin.pack]($qti_out) <- %qi_out
+
+	if[$done=0] $qtrp_out := classical_call[silq_builtin.qt_offset]($n, $qtypes_out, $lit0, $im1)
+	if[$done=0] $qtip_out := qt_tuple($qti_out)
+	if[$done=0] %q_out := qfree_call[qbuiltin.cat]($im1, $qtrp_out, $lit1, $qtip_out) <- %qrp_out, %qip_out
+
+	if[$done=1] %q_out_empty := qfree_call[qbuiltin.alloc_unit]()
+	%q_out_raw := cmerge($done) <- %q_out, %q_out_empty
+	return %q_out_raw
+
+
+def primitive.dup($t, $c, %q) [artificial]
+	%q2 := qfree_call[qbuiltin.dup](%q)
+	return $c, %q2
+
+def primitive.M($t, $c) <- %q [artificial]
+	$lit2 := literal[2]
+	$lit3 := literal[3]
+	$f := box_index[silq.rtti]($lit3, $t, $lit2)
+	$r := call($f, $c) <- %q
+	return $r
+
+def primitive.vector($t, $n, $c, %q) [artificial]
+	$lit0 := literal[0]
+	$lit3 := literal[3]
+	$f := box_index[silq.rtti]($lit3, $t, $lit0)
+	$qt := classical_call($f, $c)
+	$cn := box_repeat[silq.tuple]($n, $c)
+	%qn := qfree_call[silq_builtin.repeat]($n, $qt, %q)
+	return $cn, %qn
+
+def primitive.exit()
+	$r := abort
+	return $r
+
+def primitive.dump()
+	return
+
+def primitive.print($t, $c)
+	classical_call[silq_builtin.print]($c)
+	return
+
+
+def primitive.int.eq($x, $y) [artificial]
+	$r := int_cmp_eq($x, $y)
+	return $r
+
+def primitive.int.lt($x, $y) [artificial]
+	$r := int_cmp_lt($x, $y)
+	return $r
+
+def primitive.int.add($a, $b) [artificial]
+	$r := int_linear[0,1,1]($a, $b)
+	return $r
+
+def primitive.int.sub($a, $b) [artificial]
+	$r := int_linear[0,1,-1]($a, $b)
+	return $r
+
+def primitive.int.neg($a) [artificial]
+	$r := int_linear[0,-1]($a)
+	return $r
+
+def primitive.int.mul($a, $b) [artificial]
+	$r := int_mul($a, $b)
+	return $r
+
+def primitive.int.div($a, $b) [artificial]
+	$r := int_div($a, $b)
+	return $r
+
+def primitive.int.mod($a, $b) [artificial]
+	$r := int_mod($a, $b)
+	return $r
+
+def primitive.int.pow($a, $b) [artificial]
+	$r := int_pow($a, $b)
+	return $r
+
+def primitive.int.and($a, $b) [artificial]
+	$r := int_bit_and($a, $b)
+	return $r
+
+def primitive.int.or($a, $b) [artificial]
+	$r := int_bit_or($a, $b)
+	return $r
+
+def primitive.int.xor($a, $b) [artificial]
+	$r := int_bit_xor($a, $b)
+	return $r
+
+
+def primitive.real.eq($x, $y) [artificial]
+	$r := float_cmp_eq($x, $y)
+	return $r
+
+def primitive.real.lt($x, $y) [artificial]
+	$r := float_cmp_lt($x, $y)
+	return $r
+
+def primitive.real.neg($x) [artificial]
+	$y := float_neg($x)
+	return $y
+
+def primitive.real.add($a, $b) [artificial]
+	$r := float_add($a, $b)
+	return $r
+
+def primitive.real.sub($a, $b) [artificial]
+	$r := float_sub($a, $b)
+	return $r
+
+def primitive.real.mul($a, $b) [artificial]
+	$r := float_mul($a, $b)
+	return $r
+
+def primitive.real.div($a, $b) [artificial]
+	$r := float_div($a, $b)
+	return $r
+
+def primitive.real.powf($a, $b) [artificial]
+	$r := float_pow($a, $b)
+	return $r
+
+def primitive.real.powi($a, $b) [artificial]
+	$bf := float_from_int($b)
+	$r := float_pow($a, $bf)
+	return $r
+
+def primitive.real.sqrt($a) [artificial]
+	$r := float_sqrt($a)
+	return $r
+
+def primitive.real.exp($a) [artificial]
+	$r := float_exp($a)
+	return $r
+
+def primitive.real.log($a) [artificial]
+	$r := float_log($a)
+	return $r
+
+def primitive.real.sin($a) [artificial]
+	$r := float_sin($a)
+	return $r
+
+def primitive.real.cos($a) [artificial]
+	$r := float_cos($a)
+	return $r
+
+def primitive.real.tan($a) [artificial]
+	$r := float_tan($a)
+	return $r
+
+def primitive.real.asin($a) [artificial]
+	$r := float_asin($a)
+	return $r
+
+def primitive.real.acos($a) [artificial]
+	$r := float_acos($a)
+	return $r
+
+def primitive.real.atan($a) [artificial]
+	$r := float_atan($a)
+	return $r
+
+def primitive.real.floor($a) [artificial]
+	$r := float_floor_int($a)
+	return $r
+
+def primitive.real.ceil($a) [artificial]
+	$r := float_ceil_int($a)
+	return $r
+
+
+def primitive.X() <- %x [artificial]
+	%y := qfree_call[qbuiltin.X] <- %x
+	return %y
+
+def primitive.rX($a) <- %x [artificial]
+	%y := mfree_call[qbuiltin.rX]($a) <- %x
+	return %y
+
+def primitive.Y() <- %x [artificial]
+	%y := mfree_call[qbuiltin.Y] <- %x
+	return %y
+
+def primitive.rY($a) <- %x [artificial]
+	%y := mfree_call[qbuiltin.rY]($a) <- %x
+	return %y
+
+def primitive.Z() <- %x [artificial]
+	$pi := literal[float(3622009729038561421, -60)]
+	if[%x=1] mfree_call[qbuiltin.phase]($pi)
+	return %x
+
+def primitive.rZ($a, %x) [artificial]
+	$lit_half := literal[float(1, -1)]
+	$half_a := float_mul($a, $lit_half)
+	mfree_call_rev[qbuiltin.phase]($half_a)
+	if[%x=1] mfree_call[qbuiltin.phase]($a)
+	return
+
+def primitive.H() <- %x [artificial]
+	%y := mfree_call[qbuiltin.H] <- %x
+	return %y
+
+def primitive.P($a) [artificial]
+	mfree_call[qbuiltin.phase]($a)
+	return

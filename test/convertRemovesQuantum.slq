@@ -1,0 +1,13 @@
+def makeZero(): !N {
+	return 0;
+}
+
+def main() {
+	x := makeZero();
+	zero := H(H(0:B));
+	if true {
+		v1 := vector(x, zero) coerce unit;
+		v2 := vector(0, zero): unit;
+	}
+	return zero;
+}

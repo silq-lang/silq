@@ -1,0 +1,10 @@
+// args: --run
+
+def mul[n: !N](x: uint[n], y: uint[n]) lifted: uint[n] {
+	return x * y;
+}
+
+def main() {
+	z := mul[5](7:!uint[5], 5:!uint[5]);
+	return (z, 3);
+}

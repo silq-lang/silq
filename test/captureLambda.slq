@@ -1,0 +1,5 @@
+def main() {
+	f := lambda (). ();
+	return (lambda (). f())();
+}
+

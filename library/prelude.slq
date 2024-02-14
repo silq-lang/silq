@@ -158,8 +158,8 @@ def vector[τ:*](n:!ℕ,const x:τ) @[artificial] lifted: τ^n {
 }
 
 def print[τ:*](x:!τ) @[artificial] lifted: 𝟙 {
-	def impl(x: !τ) @[extern="primitive.print"] lifted: 𝟙; // TODO: make unnecessary
-	impl(x);
+	def impl[τ': ctype](x: τ') @[extern="primitive.print"] lifted: 𝟙; // TODO: make unnecessary
+	impl[!τ](x);
 }
 def dump() @[extern="primitive.dump"] lifted: 𝟙;
 def exit() @[extern="primitive.exit"] lifted: ⊥;

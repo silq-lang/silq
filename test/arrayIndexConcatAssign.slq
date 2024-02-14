@@ -3,6 +3,9 @@
 def main(){
 	a:=array(2,[]:𝔹[]);
 	x:=measure(H(0:𝔹));
-	a[x]~=[0:𝔹];
-	return a;
+	a[x]~=[H(0):𝔹];
+	a := measure(a);
+	assert(a[x].length == 1);
+	assert(a[1-x].length == 0);
+	return (x, a);
 }

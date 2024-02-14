@@ -1,0 +1,4 @@
+def f() mfree: B^0 { return (); }
+def main(){
+	return f(): unit;
+}

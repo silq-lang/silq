@@ -1,0 +1,118 @@
+// args: --run
+
+def main(){
+	assert(measure((6:uint[3]) div (3:!N)) == 2);
+	assert(measure((7:uint[3]) div (3:!N)) == 2);
+	assert(measure((6:uint[3]) % (3:!N)) == 0);
+	assert(measure((7:uint[3]) % (3:!N)) == 1);
+
+	assert(measure((6:uint[3]) div (3:!Z)) == 2);
+	assert(measure((7:uint[3]) div (3:!Z)) == 2);
+	// assert(measure((6:uint[3]) % (3:!Z)) == 0);
+	// assert(measure((7:uint[3]) % (3:!Z)) == 1);
+
+	assert(measure((6:uint[3]) div (-3:!Z)) == 6);
+	assert(measure((7:uint[3]) div (-3:!Z)) == 5);
+	// assert(measure((6:uint[3]) % (-3:!Z)) == 0);
+	// assert(measure((7:uint[3]) % (-3:!Z)) == -2);
+
+	assert(measure((6:int[4]) div (3:!N)) == 2);
+	assert(measure((7:int[4]) div (3:!N)) == 2);
+	assert(measure((6:int[4]) % (3:!N)) == 0);
+	assert(measure((7:int[4]) % (3:!N)) == 1);
+
+	assert(measure((6:int[4]) div (3:!Z)) == 2);
+	assert(measure((7:int[4]) div (3:!Z)) == 2);
+	assert(measure((6:int[4]) % (3:!Z)) == 0);
+	assert(measure((7:int[4]) % (3:!Z)) == 1);
+
+	assert(measure((6:int[4]) div (-3:!Z)) == -2);
+	assert(measure((7:int[4]) div (-3:!Z)) == -3);
+	assert(measure((6:int[4]) % (-3:!Z)) == 0);
+	assert(measure((7:int[4]) % (-3:!Z)) == -2);
+
+	assert(measure((-6:int[4]) div (3:!N)) == -2);
+	assert(measure((-7:int[4]) div (3:!N)) == -3);
+	assert(measure((-6:int[4]) % (3:!N)) == 0);
+	assert(measure((-7:int[4]) % (3:!N)) == 2);
+
+	assert(measure((-6:int[4]) div (3:!Z)) == -2);
+	assert(measure((-7:int[4]) div (3:!Z)) == -3);
+	assert(measure((-6:int[4]) % (3:!Z)) == 0);
+	assert(measure((-7:int[4]) % (3:!Z)) == 2);
+
+	assert(measure((-6:int[4]) div (-3:!Z)) == 2);
+	assert(measure((-7:int[4]) div (-3:!Z)) == 2);
+	assert(measure((-6:int[4]) % (-3:!Z)) == 0);
+	assert(measure((-7:int[4]) % (-3:!Z)) == -1);
+
+	assert(measure((6:!N) div (3:uint[2])) == 2);
+	assert(measure((7:!N) div (3:uint[2])) == 2);
+	assert(measure((6:!N) % (3:uint[2])) == 0);
+	assert(measure((7:!N) % (3:uint[2])) == 1);
+
+	assert(measure((6:!N) div (3:uint[3])) == 2);
+	assert(measure((7:!N) div (3:uint[3])) == 2);
+	assert(measure((6:!N) % (3:uint[3])) == 0);
+	assert(measure((7:!N) % (3:uint[3])) == 1);
+
+	// assert(measure((6:!Z) div (3:uint[2])) == 2);
+	// assert(measure((7:!Z) div (3:uint[2])) == 2);
+	assert(measure((6:!Z) % (3:uint[2])) == 0);
+	assert(measure((7:!Z) % (3:uint[2])) == 1);
+
+	// assert(measure((6:!Z) div (3:uint[3])) == 2);
+	// assert(measure((7:!Z) div (3:uint[3])) == 2);
+	assert(measure((6:!Z) % (3:uint[3])) == 0);
+	assert(measure((7:!Z) % (3:uint[3])) == 1);
+
+	// assert(measure((-6:!Z) div (3:uint[2])) == 2);
+	// assert(measure((-7:!Z) div (3:uint[2])) == 1);
+	assert(measure((-6:!Z) % (3:uint[2])) == 0);
+	assert(measure((-7:!Z) % (3:uint[2])) == 2);
+
+	// assert(measure((-6:!Z) % (3:uint[3])) == 6);
+	// assert(measure((-7:!Z) % (3:uint[3])) == 5);
+	assert(measure((-6:!Z) % (3:uint[3])) == 0);
+	assert(measure((-7:!Z) % (3:uint[3])) == 2);
+
+	assert(measure((6:!N) div (-3:int[3])) == -2);
+	assert(measure((7:!N) div (-3:int[3])) == -3);
+	assert(measure((6:!N) % (-3:int[3])) == 0);
+	assert(measure((7:!N) % (-3:int[3])) == -2);
+
+	assert(measure((6:!N) div (-3:int[4])) == -2);
+	assert(measure((7:!N) div (-3:int[4])) == -3);
+	assert(measure((6:!N) % (-3:int[4])) == 0);
+	assert(measure((7:!N) % (-3:int[4])) == -2);
+
+	assert(measure((6:!Z) div (-3:int[3])) == -2);
+	assert(measure((7:!Z) div (-3:int[3])) == -3);
+	assert(measure((6:!Z) % (-3:int[3])) == 0);
+	assert(measure((7:!Z) % (-3:int[3])) == -2);
+
+	assert(measure((6:!Z) div (-3:int[4])) == -2);
+	assert(measure((7:!Z) div (-3:int[4])) == -3);
+	assert(measure((6:!Z) % (-3:int[4])) == 0);
+	assert(measure((7:!Z) % (-3:int[4])) == -2);
+
+	assert(measure((-6:!Z) div (3:int[3])) == -2);
+	assert(measure((-7:!Z) div (3:int[3])) == -3);
+	assert(measure((-6:!Z) % (3:int[3])) == 0);
+	assert(measure((-7:!Z) % (3:int[3])) == 2);
+
+	assert(measure((-6:!Z) div (3:int[4])) == -2);
+	assert(measure((-7:!Z) div (3:int[4])) == -3);
+	assert(measure((-6:!Z) % (3:int[4])) == 0);
+	assert(measure((-7:!Z) % (3:int[4])) == 2);
+
+	assert(measure((-6:!Z) div (-3:int[3])) == 2);
+	assert(measure((-7:!Z) div (-3:int[3])) == 2);
+	assert(measure((-6:!Z) % (-3:int[3])) == 0);
+	assert(measure((-7:!Z) % (-3:int[3])) == -1);
+
+	assert(measure((-6:!Z) div (-3:int[4])) == 2);
+	assert(measure((-7:!Z) div (-3:int[4])) == 2);
+	assert(measure((-6:!Z) % (-3:int[4])) == 0);
+	assert(measure((-7:!Z) % (-3:int[4])) == -1);
+}

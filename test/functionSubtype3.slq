@@ -1,0 +1,22 @@
+// args: --run
+
+def g(n: !Q) qfree: !N {
+	return 1;
+}
+
+def xorb_(a: B, const b: B) qfree: B {
+	if b {
+		a := X(a);
+	}
+	return a;
+}
+
+def f(const x: B, const y: B, const z: !Q) qfree: B^g(z) {
+	return (xorb_(x, y),) coerce B^g(z);
+}
+
+def main(){
+	f2:=f as (const !B x const B x !N) !-> qfree 𝔹[];
+	x := H(0:B);
+	return (f2(true, x, 42), x);
+}

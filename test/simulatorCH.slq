@@ -1,0 +1,9 @@
+def main(): B x B {
+	x := H(0:B);
+	if x {
+		y := 0:B;
+	} else {
+		y := H(0:B);
+	}
+	return (x, y);
+}

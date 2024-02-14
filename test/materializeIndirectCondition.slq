@@ -1,0 +1,17 @@
+def call(f: unit !-> !B): !B {
+	return f();
+}
+
+def main() {
+	def f() {
+		return true;
+	}
+
+	if measure(H(0:B)) {
+		r := call(f);
+	} else {
+		r := call(f);
+	}
+
+	return r;
+}

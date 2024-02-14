@@ -1,5 +1,8 @@
+// args: --run
 
-def fake_measure[τ:*](x:τ)mfree:!τ;
+def fake_measure[τ:*](x:τ)mfree:!τ {
+	assert(0); /// run_error
+}
 
 def foo[a:qtype,b](f: a→mfree b)(ys:b^1):a^1{
 	(fake_measure(f)(x),):=ys;

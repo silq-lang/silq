@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	qs := (1:!int[3]);
+	(qs[1],qs[0]):=(qs[0],qs[1]);
+	assert(qs=2);
+	return qs;
+}

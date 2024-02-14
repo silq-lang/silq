@@ -9,6 +9,7 @@ import util, util.io;
 import ast.lexer, ast.parser, ast.expression, ast.declaration, ast.error, help;
 import astopt;
 import options, ast.scope_, ast.modules, ast.summarize;
+import hqir=hqir;
 
 static this(){
 	astopt.importPath ~= buildPath(dirName(file.thisExePath),"library");
@@ -56,6 +57,38 @@ scope class QSimBackend: Backend {
 			}
 		}
 		return !!err.nerrors;
+	}
+}
+
+scope class HQIRBackend: Backend {
+	hqir.Options opt;
+	File outFile;
+	bool outClose;
+	string compileFunc;
+
+	this() {
+		this.outFile = stdout;
+		this.outClose = false;
+	}
+
+	override int run(FunctionDef fun, FunctionDef[string] functions, ErrorHandler err) {
+		auto be = new hqir.Writer(outFile, opt);
+		if(!fun){
+			auto pfun = compileFunc in functions;
+			if(pfun) fun = *pfun;
+		}
+		if(fun){
+			be.dump([fun]);
+		}else{
+			be.dump(functions.byValue().array);
+		}
+		return 0;
+	}
+
+	~this() {
+		if(outClose) {
+			outFile.close();
+		}
 	}
 }
 
@@ -121,6 +154,7 @@ int main(string[] args){
 	bool useStdin = false;
 	scope auto qsimBackend = new QSimBackend();
 	scope auto summarizeBackend = new SummarizeBackend();
+	scope auto hqirBackend = new HQIRBackend();
 
 	string jsonOut = null;
 
@@ -209,6 +243,30 @@ int main(string[] args){
 		})
 		.add!("project-forget")((bool v) {
 			opt.projectForget = v;
+			return 0;
+		})
+		.addOptional!("compile")((string arg) {
+			backend = hqirBackend;
+			hqirBackend.compileFunc = arg;
+			astopt.removeLoops = true;
+			return 0;
+		})
+		.add!("output", 'o')((string arg) {
+			if(hqirBackend.outClose) {
+				hqirBackend.outFile.close();
+			}
+			if(arg == "-") {
+				hqirBackend.outFile = stdout;
+				hqirBackend.outClose = false;
+			} else if(arg.startsWith("/dev/fd/")) {
+				// Don't bother reopening; reuse the file descriptor instead.
+				int fd = to!int(arg["/dev/fd/".length..$]);
+				hqirBackend.outFile.fdopen(fd, "w");
+				hqirBackend.outClose = true;
+			} else {
+				hqirBackend.outFile.open(arg, "w");
+				hqirBackend.outClose = true;
+			}
 			return 0;
 		})
 		.add!("summarize")((string arg) {

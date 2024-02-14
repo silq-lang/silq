@@ -9,7 +9,7 @@ def qNOT[n:!ℕ](const i:uint[n],xs:𝔹^2^n){
 }
 
 def succ[n:!ℕ](x:uint[n])qfree{ x+=1; return x; }
-def index[n:!ℕ][m:!ℕ](const xs:𝔹^m)lifted:uint[n]⇒if m≤1||xs[0] then 0:uint[n] else succ(index[n](xs[1..m]));
+def index[n:!ℕ][m:!ℕ](const xs:𝔹^m)lifted:uint[n]⇒if m≤1 then 0:uint[n] else if xs[0] then 0:uint[n] else succ(index[n](xs[1..m]));
 n:=2;
 def main(){
 	xs:=vector(2^n,0:𝔹);
