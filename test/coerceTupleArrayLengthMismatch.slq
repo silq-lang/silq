@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	x:=[1,2,1/2,1/2];
+	y:=x coerce !ℕ×!ℕ×!ℚ; // error
+	return y;
+}

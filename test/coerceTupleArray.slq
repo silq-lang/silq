@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	x:=[1,2,1/2];
+	y:=x coerce !ℕ×!ℕ×!ℚ;
+	a:=(1,2/2,4/4):!ℕ×!ℚ×!ℚ;
+	b:=a coerce !ℕ[];
+	return (y,b);
+}
