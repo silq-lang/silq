@@ -1,0 +1,6 @@
+def main(){
+	x:=0:uint[n]; // error
+	for i in 0..10{
+		forget(x);
+	}
+}
