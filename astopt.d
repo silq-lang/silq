@@ -13,7 +13,6 @@ enum defaultExtension="slq";
 	// TODO: use conditional compilation within prelude.slq instead
 	import options;
 	static if(language==silq){
-		if(opt.noCheck) return "prelude-nocheck.slq";
 		return "prelude.slq";
 	}else static if(language==psi){
 		if(opt.noCheck) return "prelude-nocheck.psi";

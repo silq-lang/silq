@@ -1,240 +1,165 @@
-// prelude file implicitly imported into all psi programs
-// implementation of built-in functions based on 'sampleFrom'
-// caution: some backends may special-case strings (see samplefrom.d)
+// prelude file implicitly imported into all silq programs
 
-Not supported yet. Use --nocheck.
+def dup[τ:*](const x: τ)lifted: τ ⇒ __primitive("dup", !Π(x:τ)lifted. τ)(x);
+def measure[τ](x: τ):!τ ⇒ __primitive("M", !Π(x:τ). !τ)(x);
+def H(x: 𝔹)mfree:𝔹 ⇒ __primitive("H", !Π(x:𝔹)mfree. 𝔹)(x);
+def X(x: 𝔹)qfree:𝔹 ⇒ __primitive("X", !Π(x:𝔹)qfree. 𝔹)(x);
+def Y(x: 𝔹)mfree:𝔹 ⇒ __primitive("Y", !Π(x:𝔹)mfree. 𝔹)(x);
+def Z(x: 𝔹)mfree:𝔹 ⇒ __primitive("Z", !Π(x:𝔹)mfree. 𝔹)(x);
+def phase(φ: !ℝ)mfree:𝟙 ⇒ __primitive("P", !Π(φ:!ℝ)mfree. 𝟙)(φ);
+def rotX(φ: !ℝ, x: 𝔹)mfree:𝔹 ⇒ __primitive("rX", !Π(φ: !ℝ, x: 𝔹)mfree. 𝔹)(φ,x);
+def rotY(φ: !ℝ, x: 𝔹)mfree:𝔹 ⇒ __primitive("rY", !Π(φ: !ℝ, x: 𝔹)mfree. 𝔹)(φ,x);
+def rotZ(φ: !ℝ, x: 𝔹)mfree:𝔹 ⇒ __primitive("rZ", !Π(φ: !ℝ, x: 𝔹)mfree. 𝔹)(φ,x);
 
-/+
-dat Int[n: ℕ] quantum{ } // TODO: dat Int[n: ℕ] quantum;
-dat UInt[n: ℕ] quantum{ } // TODO: dat Int[n: ℕ] quantum;
-dat Float[n: ℕ] quantum{ } // TODO: dat Int[n: ℕ] quantum;
+def I(x:𝔹)qfree ⇒ x;
+def S(x:𝔹)mfree{
+	if x { phase(π/2); }
+	return x;
+}
+def CNOT(const x:𝔹,y:𝔹)qfree{
+	y⊕=x;
+	return y;
+}
+def reverse[τ:*,χ:qtype,φ:qtype](f: const τ×χ !→mfree φ)(const c: τ, x:φ)mfree: χ{
+	f(c,y):=x;
+	return y;
+}
+def __reverse_qfree[τ:*,χ:qtype,φ:qtype](f: const τ×χ !→qfree φ)(const c: τ, x:φ)qfree: χ{ // TODO: use attribute polymorphism instead
+	f(c,y):=x;
+	return y;
+}
+
+dat int[n: !ℕ] quantum{}
+dat uint[n: !ℕ] quantum{}
+dat float[e: !ℕ, m: !ℕ] quantum{}
+float32:=float[8,24];
+float64:=float[11,53];
+bool:=𝔹;
+dat rat[n: !ℕ, m: !ℕ] quantum{}
 
 // deterministic functions
-def exp(x:ℝ):ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+e^x]",x);
-def log(x:ℝ):ℝ{
-	assert(x>0);
-	return sampleFrom("(y;x)=>δ(0)[-y+log(x)]",x);
+def floor(x:!ℝ)lifted:!ℤ⇒__primitive("real.floor", !ℝ !→lifted !ℤ)(x);
+def ceil(x:!ℝ)lifted:!ℤ⇒__primitive("real.ceil", !ℝ !→lifted !ℤ)(x);
+def round(x:!ℝ)lifted:!ℤ ⇒ floor(x+1/2);
+def inℤ(x:!ℝ)lifted:!𝔹 ⇒ x==floor(x);
+def sqrt(x:!ℝ)lifted:!ℝ⇒__primitive("real.sqrt", !ℝ !→lifted !ℝ)(x);
+def exp(x:!ℝ)lifted:!ℝ⇒__primitive("real.exp", !ℝ !→lifted !ℝ)(x);
+def log(x:!ℝ)lifted:!ℝ⇒__primitive("real.log", !ℝ !→lifted !ℝ)(x);
+def sin(x:!ℝ)lifted:!ℝ⇒__primitive("real.sin", !ℝ !→lifted !ℝ)(x);
+def asin(x:!ℝ)lifted:!ℝ⇒__primitive("real.asin", !ℝ !→lifted !ℝ)(x);
+def cos(x:!ℝ)lifted:!ℝ⇒__primitive("real.cos", !ℝ !→lifted !ℝ)(x);
+def acos(x:!ℝ)lifted:!ℝ⇒__primitive("real.acos", !ℝ !→lifted !ℝ)(x);
+def tan(x:!ℝ)lifted:!ℝ⇒__primitive("real.tan", !ℝ !→lifted !ℝ)(x);
+def atan(x:!ℝ)lifted:!ℝ⇒__primitive("real.atan", !ℝ !→lifted !ℝ)(x);
+
+// TODO: make the following functions generic
+def abs(x:!ℝ)lifted:!ℝ ⇒ if x<0 then -x else x;
+def min[n:!ℕ](x:!ℝ^n)lifted:!ℝ{
+	r:=x[0];
+	for i in [1..n){
+		if x[i]<r{
+			r=x[i];
+		}
+	}
+	return r;
 }
-def sin(x:ℝ):ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+sin(x)]",x);
-def cos(x:ℝ):ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+cos(x)]",x);
-def abs(x:ℝ):ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+|x|]",x);
-
-def min(a:ℝ,b:ℝ):ℝ ⇒ if b<a then b else a;
-def max(a:ℝ,b:ℝ):ℝ ⇒ if a<b then b else a;
-
-def floor(x:ℝ):ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+⌊x⌋]",x);
-def ceil(x:ℝ):ℝ ⇒ sampleFrom("(y;x)=>δ(0)[-y+⌈x⌉]",x);
-def inℤ(x:ℝ):𝔹 ⇒ x==floor(x);
-
-def array[a](length: ℝ, init:a): a[]{
-	assert(length>=0&inℤ(length));
-	return sampleFrom("(r;length,init)=>δ([i↦ init] (length))[r]",length,init):a[];
+def max[n:!ℕ](x:!ℝ^n)lifted:!ℝ{
+	r:=x[0];
+	for i in [1..n){
+		if x[i]>r{
+			r=x[i];
+		}
+	}
+	return r;
 }
 
+def array[τ:*](n: !ℕ,const x:τ)lifted:τ[]⇒__primitive("array", !ℕ×const τ!→lifted τ[])(n,x);
+def vector[τ:*](n:!ℕ,const x:τ)lifted:τ^n⇒__primitive("vector", !Π(n:!ℕ,const x:τ)lifted. τ^n)(n,x);
+
+def print[τ:*](x:!τ)lifted{
+	__primitive("print", !τ !-> lifted 𝟙)(x);
+}
+def dump()lifted:𝟙{
+	__primitive("dump", 𝟙 !-> lifted 𝟙)();
+}
+def exit()lifted:𝟙{
+	__primitive("exit", 𝟙 !-> lifted 𝟙)();
+	assert(0:!𝔹);
+}
+
+/+
 // first-class inference
 dat Distribution[a]{ } // TODO: dat Distribution[a];
-def infer[a](f:𝟙→ a):Distribution[a]{
-	assert(sampleFrom("(r;f)=>δ(∫dy f()[y])[r]",f)!=0);
-	return sampleFrom("(r;f)=>δ(Λx.f()[x]/∫dy f()[y])[r]",f):Distribution[a];
-}
-def errorPr[a](d:Distribution[a]):ℝ ⇒ sampleFrom("(r;d)=>δ(∫dx d[x]·(case(x){ val(y) ⇒ 0;⊥ ⇒ 1 }))[r]",d):ℝ;
-def sample[a](d:Distribution[a]):a{
-	err := errorPr(d);
-	assert(sampleFrom("(x;p)=>(1-p)·δ(0)[1-x]+p·δ(0)[x]",err):𝔹);
-	return sampleFrom("(r;d,b)=>∫dx d[x]·(case(x){ val(y) ⇒ δ(y)[r];⊥ ⇒ 0 })/(1-b)",d,err):a;
-}
-def expectation(d:Distribution[ℝ]):ℝ {
-	// TODO: check convergence
-	err := errorPr(d);
-	assert(err!=1);
-	return (sampleFrom("(r;d,b)=>δ(0)[-r+∫dx d[x]·(case(x){ val(y) ⇒ y;⊥ ⇒ 0 })/(1-b)]",d,err):ℝ);
-}
+def infer[a](f:𝟙→ a):Distribution[a] ⇒ sampleFrom("(r;f)=>δ(Λx.f()[x]/∫dy f()[y])[r]",f):Distribution[a];
+def errorPr[a](d:Distribution[a]):ℝ ⇒ 0;
+def sample[a](d:Distribution[a]):a ⇒ sampleFrom("(x;d)=>d[x]",d):a;
+def expectation(d:Distribution[ℝ]):ℝ ⇒ (sampleFrom("(r;d)=>δ(0)[-r+∫dx d[x]·x]",d):ℝ);
 
 // distributions
-def gauss(μ:ℝ,ν:ℝ):ℝ{
-	assert(ν>=0); // TODO: preconditions
-	return sampleFrom("(x;μ,ν)=>[ν=0]·δ(0)[-μ+x]+[ν≠0]·e^((-1/2·x²+-1/2·μ²+x·μ)·⅟ν)·⅟√2̅·⅟√ν̅·⅟√π̅",μ,ν);
-}
-def Gauss(μ:ℝ,ν:ℝ):Distribution[ℝ]{
-	assert(ν>=0);
-	return infer(()=>(sampleFrom("(x;μ,ν)=>[ν=0]·δ(0)[-μ+x]+[ν≠0]·e^((-1/2·x²+-1/2·μ²+x·μ)·⅟ν)·⅟√2̅·⅟√ν̅·⅟√π̅",μ,ν):ℝ));
-}
+def gauss(μ:ℝ,ν:ℝ):ℝ ⇒ sampleFrom("(x;μ,ν)=>[ν=0]·δ(0)[-μ+x]+[ν≠0]·e^((-1/2·x²+-1/2·μ²+x·μ)·⅟ν)·⅟√2̅·⅟√ν̅·⅟√π̅",μ,ν);
+def Gauss(μ:ℝ,ν:ℝ):Distribution[ℝ] ⇒ infer(()=>(sampleFrom("(x;μ,ν)=>[ν=0]·δ(0)[-μ+x]+[ν≠0]·e^((-1/2·x²+-1/2·μ²+x·μ)·⅟ν)·⅟√2̅·⅟√ν̅·⅟√π̅",μ,ν):ℝ));
 
-def chiSquared(k:ℝ):ℝ{
-	assert(k>=0 & inℤ(k));
-	return sampleFrom("(x;k)=>[-x≤0]·[k≠0]·x^(-1+1/2·k)·⅟(∫dξ₁[-ξ₁≤0]·ξ₁^(-1+1/2·k)·⅟e^ξ₁)·⅟2^(1/2·k)·⅟e^(1/2·x)+[k=0]·δ(0)[x]",k):ℝ;
-}
-def ChiSquared(k:ℝ):Distribution[ℝ]{
-	assert(k>=0 & inℤ(k));
-	return infer(() ⇒ sampleFrom("(x;k)=>[-x≤0]·[k≠0]·x^(-1+1/2·k)·⅟(∫dξ₁[-ξ₁≤0]·ξ₁^(-1+1/2·k)·⅟e^ξ₁)·⅟2^(1/2·k)·⅟e^(1/2·x)+[k=0]·δ(0)[x]",k):ℝ);	
-}
+def chiSquared(k:ℝ):ℝ ⇒ sampleFrom("(x;k)=>[-x≤0]·[k≠0]·x^(-1+1/2·k)·⅟(∫dξ₁[-ξ₁≤0]·ξ₁^(-1+1/2·k)·⅟e^ξ₁)·⅟2^(1/2·k)·⅟e^(1/2·x)+[k=0]·δ(0)[x]",k):ℝ;
+def ChiSquared(k:ℝ):Distribution[ℝ] ⇒ infer(() ⇒ sampleFrom("(x;k)=>[-x≤0]·[k≠0]·x^(-1+1/2·k)·⅟(∫dξ₁[-ξ₁≤0]·ξ₁^(-1+1/2·k)·⅟e^ξ₁)·⅟2^(1/2·k)·⅟e^(1/2·x)+[k=0]·δ(0)[x]",k):ℝ);
 
-def rayleigh(ν:ℝ):ℝ{
-	assert(ν>=0);
-	return sampleFrom("(x;ν)=>[-x≤0]·[ν≠0]·x·⅟e^(1/2·x²·⅟ν)·⅟ν+[ν=0]·δ(0)[x]",ν):ℝ;
-}
-def Rayleigh(ν:ℝ):Distribution[ℝ]{
-	assert(ν>=0);
-	return infer(() ⇒ sampleFrom("(x;ν)=>[-x≤0]·[ν≠0]·x·⅟e^(1/2·x²·⅟ν)·⅟ν+[ν=0]·δ(0)[x]",ν):ℝ);
-}
+def rayleigh(ν:ℝ):ℝ ⇒ sampleFrom("(x;ν)=>[-x≤0]·[ν≠0]·x·⅟e^(1/2·x²·⅟ν)·⅟ν+[ν=0]·δ(0)[x]",ν):ℝ;
+def Rayleigh(ν:ℝ):Distribution[ℝ] ⇒	infer(() ⇒ sampleFrom("(x;ν)=>[-x≤0]·[ν≠0]·x·⅟e^(1/2·x²·⅟ν)·⅟ν+[ν=0]·δ(0)[x]",ν):ℝ);
 
-def truncatedGauss(μ:ℝ,ν:ℝ,a:ℝ,b:ℝ):ℝ{
-	assert(ν>=0 & a<b);
-	return sampleFrom("(x;μ,ν,a,b)=>[-b+x≤0]·[-x+a≤0]·[ν≠0]·e^((-1/2·x²+-1/2·μ²+x·μ)·⅟ν)·⅟((d/dx)⁻¹[e^(-x²)]((-μ+b)·⅟√ν̅)+-(d/dx)⁻¹[e^(-x²)]((-μ+a)·⅟√ν̅))·⅟ν·⅟√2̅·⅟√π̅+[ν=0]·δ(0)[-μ+x]",μ,ν,a,b):ℝ;
-}
-def TruncatedGauss(μ:ℝ,ν:ℝ,a:ℝ,b:ℝ):Distribution[ℝ]{
-	assert(ν>=0 & a<b);
-	return infer(() ⇒ sampleFrom("(x;μ,ν,a,b)=>[-b+x≤0]·[-x+a≤0]·[ν≠0]·e^((-1/2·x²+-1/2·μ²+x·μ)·⅟ν)·⅟((d/dx)⁻¹[e^(-x²)]((-μ+b)·⅟√ν̅)+-(d/dx)⁻¹[e^(-x²)]((-μ+a)·⅟√ν̅))·⅟ν·⅟√2̅·⅟√π̅+[ν=0]·δ(0)[-μ+x]",μ,ν,a,b):ℝ);
-}
+def truncatedGauss(μ:ℝ,ν:ℝ,a:ℝ,b:ℝ):ℝ ⇒ sampleFrom("(x;μ,ν,a,b)=>[-b+x≤0]·[-x+a≤0]·[ν≠0]·e^((-1/2·x²+-1/2·μ²+x·μ)·⅟ν)·⅟((d/dx)⁻¹[e^(-x²)]((-μ+b)·⅟√ν̅)+-(d/dx)⁻¹[e^(-x²)]((-μ+a)·⅟√ν̅))·⅟ν·⅟√2̅·⅟√π̅+[ν=0]·δ(0)[-μ+x]",μ,ν,a,b):ℝ;
+def TruncatedGauss(μ:ℝ,ν:ℝ,a:ℝ,b:ℝ):Distribution[ℝ] ⇒ infer(() ⇒ sampleFrom("(x;μ,ν,a,b)=>[-b+x≤0]·[-x+a≤0]·[ν≠0]·e^((-1/2·x²+-1/2·μ²+x·μ)·⅟ν)·⅟((d/dx)⁻¹[e^(-x²)]((-μ+b)·⅟√ν̅)+-(d/dx)⁻¹[e^(-x²)]((-μ+a)·⅟√ν̅))·⅟ν·⅟√2̅·⅟√π̅+[ν=0]·δ(0)[-μ+x]",μ,ν,a,b):ℝ);
 
-def pareto(a:ℝ,b:ℝ):ℝ{
-	assert(a>0 & b>0);
-	return sampleFrom("(x;a,b)=>[-x+b≤0]·[-x≤0]·a·b^a·x^(-1+-a)",a,b):ℝ;
-}
-def Pareto(a:ℝ,b:ℝ):Distribution[ℝ]{
-	assert(a>0 & b>0);
-	return infer(()=>sampleFrom("(x;a,b)=>[-x+b≤0]·[-x≤0]·a·b^a·x^(-1+-a)",a,b):ℝ);
-}
+def pareto(a:ℝ,b:ℝ):ℝ ⇒ sampleFrom("(x;a,b)=>[-x+b≤0]·[-x≤0]·a·b^a·x^(-1+-a)",a,b):ℝ;
+def Pareto(a:ℝ,b:ℝ):Distribution[ℝ] ⇒ infer(()=>sampleFrom("(x;a,b)=>[-x+b≤0]·[-x≤0]·a·b^a·x^(-1+-a)",a,b):ℝ);
 
-def uniform(a:ℝ,b:ℝ):ℝ{
-	assert(a<=b);
-	return sampleFrom("(x;a,b)=>[a≠b]·[a≤x]·[x≤b]·⅟(b-a)+[a=b]·δ(0)[a-x]",a,b):ℝ;
-}
-def Uniform(a:ℝ,b:ℝ):Distribution[ℝ]{
-	assert(a<=b);
-	return infer(() ⇒ sampleFrom("(x;a,b)=>[a≠b]·[a≤x]·[x≤b]·⅟(b-a)+[a=b]·δ(0)[a-x]",a,b):ℝ);
-}
+def uniform(a:ℝ,b:ℝ):ℝ ⇒ sampleFrom("(x;a,b)=>[a≠b]·[a≤x]·[x≤b]·⅟(b-a)+[a=b]·δ(0)[a-x]",a,b):ℝ;
+def Uniform(a:ℝ,b:ℝ):Distribution[ℝ] ⇒ infer(() ⇒ sampleFrom("(x;a,b)=>[a≠b]·[a≤x]·[x≤b]·⅟(b-a)+[a=b]·δ(0)[a-x]",a,b):ℝ);
 
 /+def cosUniform() ⇒ sampleFrom("(r)=>[-1+-r≠0]·[-1+-r≤0]·[-1+r≤0]·[-r+1≠0]·⅟π·⅟√-̅r̅²̅+̅1̅");
 def CosUniform() ⇒ infer(() ⇒ sampleFrom("(r)=>[-1+-r≠0]·[-1+-r≤0]·[-1+r≤0]·[-r+1≠0]·⅟π·⅟√-̅r̅²̅+̅1̅"));+/
 
-def flip(p:ℝ):ℝ{
-	assert(0<=p&p<=1); // TODO: p in [0..1]
-	return sampleFrom("(x;p)=>(1-p)·δ(0)[x]+p·δ(0)[1-x]",p):ℝ;
-}
-def Flip(p:ℝ):Distribution[ℝ]{
-	assert(0<=p&p<=1); // TODO: p in [0..1]
-	return infer(()=>sampleFrom("(x;p)=>(1-p)·δ(0)[x]+p·δ(0)[1-x]",p):ℝ);
-}
+def flip(p:ℝ):ℝ ⇒ sampleFrom("(x;p)=>(1-p)·δ(0)[x]+p·δ(0)[1-x]",p):ℝ;
+def Flip(p:ℝ):Distribution[ℝ] ⇒ infer(()=>sampleFrom("(x;p)=>(1-p)·δ(0)[x]+p·δ(0)[1-x]",p):ℝ);
 def bernoulli(p:ℝ) ⇒ flip(p);
 def Bernoulli(p:ℝ) ⇒ Flip(p);
 
-def uniformInt(a:ℝ,b:ℝ):ℝ{
-	assert((sampleFrom("(r;a,b)=>δ(0)[-r+∑_i[a≤i]·[i≤b]]",a,b):ℝ)!=0);
-	return sampleFrom("(x;a,b)=>(∑_i[a≤i]·[i≤b]·δ(0)[i-x])·⅟(∑_i[a≤i]·[i≤b])",a,b):ℝ;
-}
-def UniformInt(a:ℝ,b:ℝ):Distribution[ℝ]{
-	assert((sampleFrom("(r;a,b)=>δ(0)[-r+∑_i[a≤i]·[i≤b]]",a,b):ℝ)!=0);
-	return infer(() ⇒ sampleFrom("(x;a,b)=>(∑_i[a≤i]·[i≤b]·δ(0)[i-x])·⅟(∑_i[a≤i]·[i≤b])",a,b):ℝ);
-}
+def uniformInt(a:ℝ,b:ℝ):ℝ ⇒ sampleFrom("(x;a,b)=>(∑_i[a≤i]·[i≤b]·δ(0)[i-x])·⅟(∑_i[a≤i]·[i≤b])",a,b):ℝ;
+def UniformInt(a:ℝ,b:ℝ):Distribution[ℝ] ⇒ infer(() ⇒ sampleFrom("(x;a,b)=>(∑_i[a≤i]·[i≤b]·δ(0)[i-x])·⅟(∑_i[a≤i]·[i≤b])",a,b):ℝ);
 
-def binomial(n:ℝ,p:ℝ):ℝ{
-	assert(0<=p&p<=1 & n>=0 & inℤ(n));
-	return sampleFrom("(x;n,p)=>∑_ξ₁(-p+1)^(-ξ₁+n)·(∫dξ₂[-ξ₂≤0]·ξ₂^n·⅟e^ξ₂)·[-n+ξ₁≤0]·[-ξ₁≤0]·p^ξ₁·δ(0)[-ξ₁+x]·⅟(∫dξ₂[-ξ₂≤0]·ξ₂^(-ξ₁+n)·⅟e^ξ₂)·⅟(∫dξ₂[-ξ₂≤0]·ξ₂^ξ₁·⅟e^ξ₂)",n,p):ℝ;
-}
-def Binomial(n:ℝ,p:ℝ):Distribution[ℝ]{
-	assert(0<=p&p<=1 & n>=0 & inℤ(n));
-	return infer(() ⇒ sampleFrom("(x;n,p)=>∑_ξ₁(-p+1)^(-ξ₁+n)·(∫dξ₂[-ξ₂≤0]·ξ₂^n·⅟e^ξ₂)·[-n+ξ₁≤0]·[-ξ₁≤0]·p^ξ₁·δ(0)[-ξ₁+x]·⅟(∫dξ₂[-ξ₂≤0]·ξ₂^(-ξ₁+n)·⅟e^ξ₂)·⅟(∫dξ₂[-ξ₂≤0]·ξ₂^ξ₁·⅟e^ξ₂)",n,p):ℝ);
-}
+def binomial(n:ℝ,p:ℝ):ℝ ⇒ sampleFrom("(x;n,p)=>∑_ξ₁(-p+1)^(-ξ₁+n)·(∫dξ₂[-ξ₂≤0]·ξ₂^n·⅟e^ξ₂)·[-n+ξ₁≤0]·[-ξ₁≤0]·p^ξ₁·δ(0)[-ξ₁+x]·⅟(∫dξ₂[-ξ₂≤0]·ξ₂^(-ξ₁+n)·⅟e^ξ₂)·⅟(∫dξ₂[-ξ₂≤0]·ξ₂^ξ₁·⅟e^ξ₂)",n,p):ℝ;
+def Binomial(n:ℝ,p:ℝ):Distribution[ℝ] ⇒ infer(() ⇒ sampleFrom("(x;n,p)=>∑_ξ₁(-p+1)^(-ξ₁+n)·(∫dξ₂[-ξ₂≤0]·ξ₂^n·⅟e^ξ₂)·[-n+ξ₁≤0]·[-ξ₁≤0]·p^ξ₁·δ(0)[-ξ₁+x]·⅟(∫dξ₂[-ξ₂≤0]·ξ₂^(-ξ₁+n)·⅟e^ξ₂)·⅟(∫dξ₂[-ξ₂≤0]·ξ₂^ξ₁·⅟e^ξ₂)",n,p):ℝ);
 
-def negBinomial(r:ℝ,p:ℝ):ℝ{
-	assert(r>0 & 0<=p&p<=1);
-	return sampleFrom("(x;r,p)=>∑_ξ₁(-p+1)^ξ₁·(∫dξ₂[-ξ₂≤0]·ξ₂^(-1+r+ξ₁)·⅟e^ξ₂)·[-ξ₁≤0]·p^r·δ(0)[-ξ₁+x]·⅟(∫dξ₂[-ξ₂≤0]·ξ₂^(-1+r)·⅟e^ξ₂)·⅟(∫dξ₂[-ξ₂≤0]·ξ₂^ξ₁·⅟e^ξ₂)",r,p):ℝ;
-}
-def NegBinomial(r:ℝ,p:ℝ):Distribution[ℝ]{
-	assert(r>0 & 0<=p&p<=1);
-	return infer(() ⇒ sampleFrom("(x;r,p)=>∑_ξ₁(-p+1)^ξ₁·(∫dξ₂[-ξ₂≤0]·ξ₂^(-1+r+ξ₁)·⅟e^ξ₂)·[-ξ₁≤0]·p^r·δ(0)[-ξ₁+x]·⅟(∫dξ₂[-ξ₂≤0]·ξ₂^(-1+r)·⅟e^ξ₂)·⅟(∫dξ₂[-ξ₂≤0]·ξ₂^ξ₁·⅟e^ξ₂)",r,p):ℝ);
-}
+def negBinomial(r:ℝ,p:ℝ):ℝ ⇒ sampleFrom("(x;r,p)=>∑_ξ₁(-p+1)^ξ₁·(∫dξ₂[-ξ₂≤0]·ξ₂^(-1+r+ξ₁)·⅟e^ξ₂)·[-ξ₁≤0]·p^r·δ(0)[-ξ₁+x]·⅟(∫dξ₂[-ξ₂≤0]·ξ₂^(-1+r)·⅟e^ξ₂)·⅟(∫dξ₂[-ξ₂≤0]·ξ₂^ξ₁·⅟e^ξ₂)",r,p):ℝ;
+def NegBinomial(r:ℝ,p:ℝ):Distribution[ℝ] ⇒ infer(() ⇒ sampleFrom("(x;r,p)=>∑_ξ₁(-p+1)^ξ₁·(∫dξ₂[-ξ₂≤0]·ξ₂^(-1+r+ξ₁)·⅟e^ξ₂)·[-ξ₁≤0]·p^r·δ(0)[-ξ₁+x]·⅟(∫dξ₂[-ξ₂≤0]·ξ₂^(-1+r)·⅟e^ξ₂)·⅟(∫dξ₂[-ξ₂≤0]·ξ₂^ξ₁·⅟e^ξ₂)",r,p):ℝ);
 
-def geometric(p:ℝ):ℝ{
-	assert(0<=p & p<=1);
-	return sampleFrom("(x;p)=>∑_i[0≤i]·(1-p)^i·p·δ(0)[i-x]",p);
-}
-def Geometric(p:ℝ):Distribution[ℝ]{
-	assert(0<=p & p<=1);
-	return infer(() ⇒ sampleFrom("(x;p)=>∑_i[0≤i]·(1-p)^i·p·δ(0)[i-x]",p));
-}
+def geometric(p:ℝ):ℝ ⇒ sampleFrom("(x;p)=>∑_i[0≤i]·(1-p)^i·p·δ(0)[i-x]",p);
+def Geometric(p:ℝ):Distribution[ℝ] ⇒ infer(() ⇒ sampleFrom("(x;p)=>∑_i[0≤i]·(1-p)^i·p·δ(0)[i-x]",p));
 
-def poisson(λ:ℝ):ℝ{
-	assert(λ>=0);
-	return sampleFrom("(x;l)=>(∑_ξ₁[-ξ₁≤0]·δ(0)[-ξ₁+x]·l^ξ₁·⅟(∫dξ₂[-ξ₂≤0]·ξ₂^ξ₁·⅟e^ξ₂))·⅟e^l",λ);
-}
-def Poisson(λ:ℝ):Distribution[ℝ]{
-	assert(λ>=0);
-	return infer(() ⇒ sampleFrom("(x;l)=>(∑_ξ₁[-ξ₁≤0]·δ(0)[-ξ₁+x]·l^ξ₁·⅟(∫dξ₂[-ξ₂≤0]·ξ₂^ξ₁·⅟e^ξ₂))·⅟e^l",λ));
-}
+def poisson(λ:ℝ):ℝ ⇒ sampleFrom("(x;l)=>(∑_ξ₁[-ξ₁≤0]·δ(0)[-ξ₁+x]·l^ξ₁·⅟(∫dξ₂[-ξ₂≤0]·ξ₂^ξ₁·⅟e^ξ₂))·⅟e^l",λ);
+def Poisson(λ:ℝ):Distribution[ℝ] ⇒ infer(() ⇒ sampleFrom("(x;l)=>(∑_ξ₁[-ξ₁≤0]·δ(0)[-ξ₁+x]·l^ξ₁·⅟(∫dξ₂[-ξ₂≤0]·ξ₂^ξ₁·⅟e^ξ₂))·⅟e^l",λ));
 
-def beta(α:ℝ,β:ℝ):ℝ{
-	assert(α>=0 & β>=0);
-	return sampleFrom("(x;α,β)=>((-x+1)^(-1+β)·[-1+x≤0]·[-x≤0]·[α≠0]·[β≠0]·x^(-1+α)+[α=0]·δ(0)[x]+[β=0]·δ(0)[-x+1])·(1/2·[α=0]·[β=0]+[α=0]·[β≠0]+[α≠0]·[β=0]+[α≠0]·[β≠0]·⅟(∫dξ₁(-ξ₁+1)^(-1+β)·[-1+ξ₁≤0]·[-ξ₁≤0]·ξ₁^(-1+α)))",α,β):ℝ;
-}
-def Beta(α:ℝ,β:ℝ):Distribution[ℝ]{
-	assert(α>=0 & β>=0);
-	return infer(()=>sampleFrom("(x;α,β)=>((-x+1)^(-1+β)·[-1+x≤0]·[-x≤0]·[α≠0]·[β≠0]·x^(-1+α)+[α=0]·δ(0)[x]+[β=0]·δ(0)[-x+1])·(1/2·[α=0]·[β=0]+[α=0]·[β≠0]+[α≠0]·[β=0]+[α≠0]·[β≠0]·⅟(∫dξ₁(-ξ₁+1)^(-1+β)·[-1+ξ₁≤0]·[-ξ₁≤0]·ξ₁^(-1+α)))",α,β):ℝ);
-}
+def beta(α:ℝ,β:ℝ):ℝ ⇒ sampleFrom("(x;α,β)=>((-x+1)^(-1+β)·[-1+x≤0]·[-x≤0]·[α≠0]·[β≠0]·x^(-1+α)+[α=0]·δ(0)[x]+[β=0]·δ(0)[-x+1])·(1/2·[α=0]·[β=0]+[α=0]·[β≠0]+[α≠0]·[β=0]+[α≠0]·[β≠0]·⅟(∫dξ₁(-ξ₁+1)^(-1+β)·[-1+ξ₁≤0]·[-ξ₁≤0]·ξ₁^(-1+α)))",α,β):ℝ;
+def Beta(α:ℝ,β:ℝ):Distribution[ℝ] ⇒ infer(()=>sampleFrom("(x;α,β)=>((-x+1)^(-1+β)·[-1+x≤0]·[-x≤0]·[α≠0]·[β≠0]·x^(-1+α)+[α=0]·δ(0)[x]+[β=0]·δ(0)[-x+1])·(1/2·[α=0]·[β=0]+[α=0]·[β≠0]+[α≠0]·[β=0]+[α≠0]·[β≠0]·⅟(∫dξ₁(-ξ₁+1)^(-1+β)·[-1+ξ₁≤0]·[-ξ₁≤0]·ξ₁^(-1+α)))",α,β):ℝ);
 
-def gamma(α:ℝ,β:ℝ):ℝ{
-	assert(α>=0 & β>0); // for β=0, this would be the uniform distribution on the non-negative reals
-	return sampleFrom("(x;α,β)=>([-x≤0]·[α≠0]·x^(-1+α)·⅟e^(x·β)+[α=0]·δ(0)[x])·([α=0]+[α≠0]·⅟(∫dξ₁[-ξ₁≤0]·ξ₁^(-1+α)·⅟e^(β·ξ₁)))",α,β):ℝ;
-}
-def Gamma(α:ℝ,β:ℝ):Distribution[ℝ]{
-	assert(α>=0 & β>0);
-	return infer(() ⇒ sampleFrom("(x;α,β)=>([-x≤0]·[α≠0]·x^(-1+α)·⅟e^(x·β)+[α=0]·δ(0)[x])·([α=0]+[α≠0]·⅟(∫dξ₁[-ξ₁≤0]·ξ₁^(-1+α)·⅟e^(β·ξ₁)))",α,β):ℝ);
-}
+def gamma(α:ℝ,β:ℝ):ℝ ⇒ sampleFrom("(x;α,β)=>([-x≤0]·[α≠0]·x^(-1+α)·⅟e^(x·β)+[α=0]·δ(0)[x])·([α=0]+[α≠0]·⅟(∫dξ₁[-ξ₁≤0]·ξ₁^(-1+α)·⅟e^(β·ξ₁)))",α,β):ℝ;
+def Gamma(α:ℝ,β:ℝ):Distribution[ℝ] ⇒ infer(() ⇒ sampleFrom("(x;α,β)=>([-x≤0]·[α≠0]·x^(-1+α)·⅟e^(x·β)+[α=0]·δ(0)[x])·([α=0]+[α≠0]·⅟(∫dξ₁[-ξ₁≤0]·ξ₁^(-1+α)·⅟e^(β·ξ₁)))",α,β):ℝ);
 
-def laplace(μ:ℝ,b:ℝ):ℝ{
-	assert(b>=0);
-	return sampleFrom("(x;μ,b)=>(1/2·[-x+μ≤0]·e^((-x+μ)·⅟b)+1/2·[-μ+x≠0]·[-μ+x≤0]·e^((-μ+x)·⅟b))·[b≠0]·⅟b+[b=0]·δ(0)[-μ+x]",μ,b):ℝ;
-}
-def Laplace(μ:ℝ,b:ℝ):Distribution[ℝ]{
-	assert(b>=0);
-	return infer(() ⇒ sampleFrom("(x;μ,b)=>(1/2·[-x+μ≤0]·e^((-x+μ)·⅟b)+1/2·[-μ+x≠0]·[-μ+x≤0]·e^((-μ+x)·⅟b))·[b≠0]·⅟b+[b=0]·δ(0)[-μ+x]",μ,b):ℝ);
-}
+def laplace(μ:ℝ,b:ℝ):ℝ ⇒ sampleFrom("(x;μ,b)=>(1/2·[-x+μ≤0]·e^((-x+μ)·⅟b)+1/2·[-μ+x≠0]·[-μ+x≤0]·e^((-μ+x)·⅟b))·[b≠0]·⅟b+[b=0]·δ(0)[-μ+x]",μ,b):ℝ;
+def Laplace(μ:ℝ,b:ℝ):Distribution[ℝ] ⇒ infer(() ⇒ sampleFrom("(x;μ,b)=>(1/2·[-x+μ≤0]·e^((-x+μ)·⅟b)+1/2·[-μ+x≠0]·[-μ+x≤0]·e^((-μ+x)·⅟b))·[b≠0]·⅟b+[b=0]·δ(0)[-μ+x]",μ,b):ℝ);
 
-def cauchy(x₀:ℝ,γ:ℝ):ℝ{
-	assert(γ>=0);
-	return sampleFrom("(x;x₀,γ)=>[γ=0]·δ(0)[-x₀+x]+[γ≠0]·⅟((-2·x·x₀·π+x₀²·π+x²·π)·⅟γ²+π)·⅟γ",x₀,γ):ℝ;
-}
-def Cauchy(x₀:ℝ,γ:ℝ):Distribution[ℝ]{
-	assert(γ>=0);
-	return infer(() ⇒ sampleFrom("(x;x₀,γ)=>[γ=0]·δ(0)[-x₀+x]+[γ≠0]·⅟((-2·x·x₀·π+x₀²·π+x²·π)·⅟γ²+π)·⅟γ",x₀,γ):ℝ);
-}
+def cauchy(x₀:ℝ,γ:ℝ):ℝ ⇒ sampleFrom("(x;x₀,γ)=>[γ=0]·δ(0)[-x₀+x]+[γ≠0]·⅟((-2·x·x₀·π+x₀²·π+x²·π)·⅟γ²+π)·⅟γ",x₀,γ):ℝ;
+def Cauchy(x₀:ℝ,γ:ℝ):Distribution[ℝ] ⇒ infer(() ⇒ sampleFrom("(x;x₀,γ)=>[γ=0]·δ(0)[-x₀+x]+[γ≠0]·⅟((-2·x·x₀·π+x₀²·π+x²·π)·⅟γ²+π)·⅟γ",x₀,γ):ℝ);
 
-def exponential(λ:ℝ):ℝ{
-	assert(λ>0); // for λ=0, this would be the uniform distribution on the non-negative reals
-	return sampleFrom("(x;l)=>[0≤x]·l·e^(-x·l)",λ):ℝ;
-}
-def Exponential(λ:ℝ):Distribution[ℝ]{
-	assert(λ>0); // for λ=0, this would be the uniform distribution on the non-negative reals
-	return infer(() ⇒ sampleFrom("(x;l)=>[0≤x]·l·e^(-x·l)",λ):ℝ);
-}
+def exponential(λ:ℝ):ℝ ⇒ sampleFrom("(x;l)=>[0≤x]·l·e^(-x·l)",λ):ℝ;
+def Exponential(λ:ℝ):Distribution[ℝ] ⇒ infer(() ⇒ sampleFrom("(x;l)=>[0≤x]·l·e^(-x·l)",λ):ℝ);
 
-def studentT(ν:ℝ):ℝ{
-	assert(ν>=0);
-	return sampleFrom("(x;ν)=>[ν≠0]·(1+x²·⅟ν)^(-1/2+-1/2·ν)·⅟(∫dξ₁(1+ξ₁²·⅟ν)^(-1/2+-1/2·ν))+[ν=0]·δ(0)[x]",ν):ℝ;
-}
-def StudentT(ν:ℝ):Distribution[ℝ]{
-	assert(ν>=0);
-	return infer(() ⇒ sampleFrom("(x;ν)=>[ν≠0]·(1+x²·⅟ν)^(-1/2+-1/2·ν)·⅟(∫dξ₁(1+ξ₁²·⅟ν)^(-1/2+-1/2·ν))+[ν=0]·δ(0)[x]",ν):ℝ);
-}
+def studentT(ν:ℝ):ℝ ⇒ sampleFrom("(x;ν)=>[ν≠0]·(1+x²·⅟ν)^(-1/2+-1/2·ν)·⅟(∫dξ₁(1+ξ₁²·⅟ν)^(-1/2+-1/2·ν))+[ν=0]·δ(0)[x]",ν):ℝ;
+def StudentT(ν:ℝ):Distribution[ℝ] ⇒ infer(() ⇒ sampleFrom("(x;ν)=>[ν≠0]·(1+x²·⅟ν)^(-1/2+-1/2·ν)·⅟(∫dξ₁(1+ξ₁²·⅟ν)^(-1/2+-1/2·ν))+[ν=0]·δ(0)[x]",ν):ℝ);
 
-def weibull(λ:ℝ,k:ℝ):ℝ{
-	assert(λ>=0 & k>=0);
-	return sampleFrom("(x;l,k)=>([k=0]·[l≠0]+[l=0])·δ(0)[x]+[-x≤0]·[k≠0]·[l≠0]·k·x^(-1+k)·⅟e^(x^k·⅟l^k)·⅟l^k",λ,k):ℝ;
-}
-def Weibull(λ:ℝ,k:ℝ):Distribution[ℝ]{
-	assert(λ>=0 & k>=0);
-	return infer(() ⇒ sampleFrom("(x;l,k)=>([k=0]·[l≠0]+[l=0])·δ(0)[x]+[-x≤0]·[k≠0]·[l≠0]·k·x^(-1+k)·⅟e^(x^k·⅟l^k)·⅟l^k",λ,k):ℝ);
-}
+def weibull(λ:ℝ,k:ℝ):ℝ ⇒ sampleFrom("(x;l,k)=>([k=0]·[l≠0]+[l=0])·δ(0)[x]+[-x≤0]·[k≠0]·[l≠0]·k·x^(-1+k)·⅟e^(x^k·⅟l^k)·⅟l^k",λ,k):ℝ;
+def Weibull(λ:ℝ,k:ℝ):Distribution[ℝ] ⇒ infer(() ⇒ sampleFrom("(x;l,k)=>([k=0]·[l≠0]+[l=0])·δ(0)[x]+[-x≤0]·[k≠0]·[l≠0]·k·x^(-1+k)·⅟e^(x^k·⅟l^k)·⅟l^k",λ,k):ℝ);
 
-def categorical(p:ℝ[]):ℝ{
-	assert(sampleFrom("(r;p)=>δ(0)[-r+[∑_i[0≤i]·[i<p.length]·[p@[i]<0]=0]·[∑_i[0≤i]·[i<p.length]·p@[i]=1]]",p):𝔹);
-	return sampleFrom("(x;p)=>∑_i[0≤i]·[i<p.length]·p@[i]·δ(0)[i-x]",p):ℝ;
-}
-def Categorical(p:ℝ[]):Distribution[ℝ]{
-	assert(sampleFrom("(r;p)=>δ(0)[-r+[∑_i[0≤i]·[i<p.length]·[p@[i]<0]=0]·[∑_i[0≤i]·[i<p.length]·p@[i]=1]]",p):𝔹);
-	return infer(() ⇒ sampleFrom("(x;p)=>∑_i[0≤i]·[i<p.length]·p@[i]·δ(0)[i-x]",p):ℝ);
-}
+def categorical(p:ℝ[]):ℝ ⇒ sampleFrom("(x;p)=>∑_i[0≤i]·[i<p.length]·p@[i]·δ(0)[i-x]",p):ℝ;
+def Categorical(p:ℝ[]):Distribution[ℝ] ⇒ infer(() ⇒ sampleFrom("(x;p)=>∑_i[0≤i]·[i<p.length]·p@[i]·δ(0)[i-x]",p):ℝ);
 
 def dirac[a](x:a) ⇒ x;
 def Dirac[a](x:a) ⇒ infer(()=>x);
@@ -243,7 +168,7 @@ def dirichlet(α: ℝ[]){
 	r:=array(α.length,0.0);
 	sum:=0.0;
 	for i in [0..α.length){
-		r[i]=gamma(α[i],1);
+		r[i]=gamma(α[i],1.0);
 		sum+=r[i];
 	}
 	for i in [0..α.length){
@@ -251,12 +176,7 @@ def dirichlet(α: ℝ[]){
 	}
 	return r;
 }
-def Dirichlet(α: ℝ[]){
-	for i in [0..α.length){
-		assert(α[i]>0);
-	}
-	return infer(()=>dirichlet(α));
-}
+def Dirichlet(α: ℝ[]) ⇒ infer(()=>dirichlet(α));
 
 def multiGauss(μ: ℝ[], Σ: ℝ[][]){
 	def mmv(A: ℝ[][], b: ℝ[]){
@@ -269,7 +189,6 @@ def multiGauss(μ: ℝ[], Σ: ℝ[][]){
 		return r;
 	}
 	def avv(a: ℝ[], b: ℝ[]){
-		assert(a.length==b.length);
 		r:=array(a.length,0.0);
 		for i in [0..a.length){
 			r[i]=a[i]+b[i];
@@ -277,7 +196,6 @@ def multiGauss(μ: ℝ[], Σ: ℝ[][]){
 		return r;
 	}
 	def dot(a: ℝ[], b: ℝ[]){
-		assert(a.length==b.length);
 		r:=0.0;
 		for i in [0..a.length){
 			r+=a[i]*b[i];
@@ -285,18 +203,11 @@ def multiGauss(μ: ℝ[], Σ: ℝ[][]){
 		return r;
 	}
 	def cholesky(A: ℝ[][]){
-		for i in [0..A.length){
-			assert(A[i].length==A.length);
-			for j in [0..A[i].length){
-				assert(A[i][j]==A[j][i]);
-			}
-		}
 		L := array(A.length,array(A.length,0.0));
 		for i in [0..A.length){
 			for j in [0..i]{
 				t := dot(L[i][0..j],L[j][0..j]);
 				if i == j {
-					assert(A[i][j]>=t);
 					L[i][j] = (A[i][j]-t)^(1/2)
 				}else if L[j][j]!=0{
 					L[i][j] = (A[i][j]-t)/L[j][j];
@@ -311,10 +222,6 @@ def multiGauss(μ: ℝ[], Σ: ℝ[][]){
 	}
 	return avv(mmv(cholesky(Σ),r),μ);
 }
-def MultiGauss(μ: ℝ[], Σ: ℝ[][]){
-	d := infer(()⇒ multiGauss(μ,Σ));
-	assert(errorPr(d)==0);
-	return d;
-}
+def MultiGauss(μ: ℝ[], Σ: ℝ[][])⇒infer(()⇒ multiGauss(μ,Σ));
 +/
-__NOCHECK__ := 0;
+__NOCHECK__ := 1;

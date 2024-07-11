@@ -90,67 +90,19 @@ int main(string[] args){
 			break;
 		}
 	}
-	bool isFormatting(string flag){
-		import std.traits: EnumMembers;
-		import std.conv: to;
-		foreach(m;EnumMembers!Format){
-			if(m==Format.default_) continue;
-			if(flag=="--"~to!string(m)) return true;
-		}
-		return false;
-	}
-	args.sort!((a,b)=>a.startsWith("--")>b.startsWith("--")||a.startsWith("--")&&b.startsWith("--")&&isFormatting(a)&&!isFormatting(b)); // TODO: make better
+	args.sort!((a,b)=>a.startsWith("--")>b.startsWith("--"));
 	bool hasInputFile=false;
 	foreach(x;args){
 		switch(x){
 			case "--help": writeln(help.help); return 0;
-			//case "--syntax": writeln(syntax); return 0;
-			/+case "--distributions":
-				writeln(computeDistributionDocString());
-				return 0;+/
-			//case "--cdf": opt.cdf=true; break;
-			//case "--plot": opt.plot=true; break;
-			//case "--kill": opt.kill=true; break;
-			//case "--nointegrate": opt.integrationLevel=IntegrationLevel.none; break;
-			//case "--integratedeltas": opt.integrationLevel=IntegrationLevel.deltas; break;
 			case "--noboundscheck": opt.noBoundsCheck=true; break;
-			case "--nocheck": opt.noCheck=true; break;
-			//case "--nonormalize": opt.noNormalize=true; break;
 			case "--trace": opt.trace=true; break;
 			case "--dump-reverse": opt.dumpReverse=true; break;
-			//case "--expectation": opt.expectation=true; break;
-			//case "--gnuplot": opt.formatting=Format.gnuplot; break;
-			//case "--matlab": opt.formatting=Format.matlab; break;
-			//case "--maple": opt.formatting=Format.maple; break;
-			//case "--mathematica": opt.formatting=Format.mathematica; break;
-			//case "--python": opt.formatting=Format.python; break;
-			//case "--sympy": opt.formatting=Format.sympy; break;
-			//case "--lisp": opt.formatting=Format.lisp; break;
 			case "--error-json": opt.errorFormat=ErrorFormat.json; break;
-			//case "--raw": opt.outputForm=OutputForm.raw; break;
-			//case "--raw-error": opt.outputForm=OutputForm.rawError; break;
 			case "--run": opt.backend=BackendType.run; break;
 			case "--unsafe-capture-const": astopt.allowUnsafeCaptureConst=true; break;
 			case "--project-forget": astopt.projectForget=true; break;
 			default:
-				/+if(x.startsWith("--plot=")){
-					auto rest=x["--plot=".length..$];
-					import std.regex;
-					auto r=regex(r"^\[-?[0-9]+(\.[0-9]+)?:-?[0-9]+(\.[0-9]+)?\]$");
-					if(match(rest,r)){
-						opt.plot=true;
-						opt.plotRange=rest;
-						continue;
-					}else{
-						stderr.writeln("error: plot range needs to be of format [l:r], where l and r are decimal numbers");
-						return 1;
-					}
-				}+/
-				/+if(x.startsWith("--plot-file=")){
-					opt.plot=true;
-					opt.plotFile=x["--plot-file=".length..$];
-					continue;
-				}+/
 				if(x.startsWith("--summarize=")){
 					auto rest=x["--summarize=".length..$];
 					import std.regex: regex, match;
