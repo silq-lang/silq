@@ -31,11 +31,11 @@ def __reverse_qfree[τ:*,χ:qtype,φ:qtype](f: const τ×χ !→qfree φ)(const 
 
 dat int[n: !ℕ] quantum{}
 dat uint[n: !ℕ] quantum{}
-dat float[e: !ℕ, m: !ℕ] quantum{}
-float32:=float[8,24];
-float64:=float[11,53];
+// dat float[e: !ℕ, m: !ℕ] quantum{}
+// float32:=float[8,24];
+// float64:=float[11,53];
 bool:=𝔹;
-dat rat[n: !ℕ, m: !ℕ] quantum{}
+// dat rat[n: !ℕ, m: !ℕ] quantum{}
 
 // deterministic functions
 def floor(x:!ℝ)lifted:!ℤ⇒__primitive("real.floor", !ℝ !→lifted !ℤ)(x);
