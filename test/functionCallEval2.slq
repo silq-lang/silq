@@ -1,0 +1,6 @@
+
+def f(): !ℕ ⇒ measure(H(0:B)) as !ℕ;
+def main(): 𝔹^1 {
+	x := (42:uint[6]) as 𝔹^6;
+	return x[f()..f()+1]; // error
+}
