@@ -10,14 +10,11 @@ enum language=silq;
 enum defaultExtension="slq";
 
 @property string preludePath(){
-	// TODO: use conditional compilation within prelude.slq instead
-	import options;
-	static if(language==silq){
-		return "prelude.slq";
-	}else static if(language==psi){
-		if(opt.noCheck) return "prelude-nocheck.psi";
-		return "prelude.psi";		
-	}else static assert(0);
+	return "prelude.slq";
+}
+
+@property string operatorsPath(){
+	return "__internal/operators.slq";
 }
 
 bool allowUnsafeCaptureConst=false;
