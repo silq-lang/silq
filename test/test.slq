@@ -1,6 +1,55 @@
 // skipped
 
 /+
+def pack4(w0: uint[16], w1: uint[16], w2: uint[16], w3: uint[16]) qfree: uint[64] {
+	return ((w0 as B^16) ~ (w1 as B^16) ~ (w2 as B^16) ~ (w3 as B^16)) as uint[64];
+}
+
+def main() {
+	num := 16902157913843545776 as !uint[64];
+	pack4(k0, k1, k2, k3) := num;
+	return (num, pack4(k0, k1, k2, k3));
+}
++/
+
+
+/+
+def foo(const x:𝔹){
+	__show(__query("dep",x));
+}
+
+def main(){
+	n:=2+measure(H(0:𝔹));
+	x:=vector(n,0:𝔹);
+	for i in 0..n{ x[i]:=H(x[i]); }
+}
++/
+/+
+def main(){
+	/+x:=0:𝔹;
+	y:=H(dup(x));
+	z:=dup(y);
+	y:=H(y);
+	assert(measure(x=y));
+	forget(y=x);
+	return z;+/
+	x:=H(0:𝔹);    // |0⟩+|1⟩
+	tmp:=dup(x);  // |00⟩+|11⟩
+	y:=H(tmp);    // |0+⟩+|1-⟩
+		          // = |00⟩+|01⟩+|10⟩-|11⟩
+	x:=H(x);      // |+0⟩+|+1⟩+|-0⟩-|-1⟩ = |00⟩+|10⟩+|01⟩-|11⟩+|00⟩-|10⟩-|01⟩+|11⟩
+	              // = |00⟩+|11⟩
+	return (x,y);
+}
++/
+
+/+
+def main(){
+	return -1:int[0];
+}
++/
+
+/+
 def main(){
 	x:=H(0:𝔹);
 	y:=dup(x);

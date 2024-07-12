@@ -1,5 +1,15 @@
 
 /+
+def f(x:𝔹^2,const y:𝔹)qfree:𝔹^2⇒x;
+def main(){
+	x:=(H(0:B),);
+	y:=H(0:B);
+	f(x,y):=x; // TODO: error
+	return (x,y);
+}
++/
+
+/+
 def polyPauliRotY[d:!ℕ](coeffs:!ℝ^(d+1))[n:!ℕ](const state:𝔹^n,target:a)mfree{
 	rotation_coeffs:=vector(2^n,0:!ℝ);
 	rotation_coeffs=for2_(0,d+1)((i:!ℕ,rotation_coeffs:!ℝ^(2^n),mcoeffs:!ℕ^(2^n))qfree{
