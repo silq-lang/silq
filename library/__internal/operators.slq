@@ -44,7 +44,7 @@ def __sub_u[n:!ℕ](a:uint[n],b:uint[n])lifted:uint[n];
 def __sub_uℤ[n:!ℕ](a:uint[n],b:!ℤ)lifted:uint[n];
 def __sub_ℤu[n:!ℕ](a:!ℤ,b:uint[n])lifted:uint[n];
 
-def __sub_ℕ(a:!ℕ,b:!ℕ)lifted:!ℕ; 
+def __sub_ℕ(a:!ℕ,b:!ℕ)lifted:!ℕ;
 def __sub_ℤ(a:!ℤ,b:!ℤ)lifted:!ℤ;
 def __sub_ℚ(a:!ℚ,b:!ℚ)lifted:!ℚ;
 def __sub_ℝ(a:!ℝ,b:!ℝ)lifted:!ℝ;
@@ -70,7 +70,7 @@ def __mul_u[n:!ℕ](a:uint[n],b:uint[n])lifted:uint[n];
 def __mul_uℤ[n:!ℕ](a:uint[n],b:!ℤ)lifted:uint[n];
 def __mul_ℤu[n:!ℕ](a:!ℤ,b:uint[n])lifted:uint[n];
 
-def __mul_ℕ(a:!ℕ,b:!ℕ)lifted:!ℕ; 
+def __mul_ℕ(a:!ℕ,b:!ℕ)lifted:!ℕ;
 def __mul_ℤ(a:!ℤ,b:!ℤ)lifted:!ℤ;
 def __mul_ℚ(a:!ℚ,b:!ℚ)lifted:!ℚ;
 def __mul_ℝ(a:!ℝ,b:!ℝ)lifted:!ℝ;
@@ -96,8 +96,15 @@ def __idiv_ℚ(a:!ℚ,b:!ℚ)lifted:!ℤ;
 def __idiv_ℝ(a:!ℝ,b:!ℝ)lifted:!ℤ;
 
 // a % b
-def __mod_s[n:!ℕ](a:int[n],b:int[n])lifted:int[n];
-def __mod_u[n:!ℕ](a:uint[n],b:uint[n])lifted:int[n];
+def __mod_s[m:!ℕ,n:!ℕ](a:int[m],b:int[n])lifted:int[n];
+def __mod_ℤs[n:!ℕ](a:!ℤ,b:int[n])lifted:int[n];
+
+def __mod_u[m:!ℕ,n:!ℕ](a:uint[m],b:uint[n])lifted:uint[n];
+def __mod_ℤu[n:!ℕ](a:!ℤ,b:uint[n])lifted:uint[n];
+def __mod_uℕ[n:!ℕ](a:uint[n],b:!ℕ)lifted:uint[n];
+
+def __mod_us[m:!ℕ,n:!ℕ](a:uint[m],b:int[n])lifted:int[n];
+def __mod_su[m:!ℕ,n:!ℕ](a:int[m],b:uint[n])lifted:uint[n];
 
 def __mod_ℕ(a:!ℕ,b:!ℕ)lifted:!ℕ;
 def __mod_ℤ(a:!ℤ,b:!ℤ)lifted:!ℤ;
@@ -162,4 +169,145 @@ def __andb_ℤ(a:!ℤ,b:!ℤ)lifted:!ℤ;
 
 // binary assignment operators
 
-// TODO
+// a+=b
+def __add_assign_s[n:!ℕ](moved a:int[n],const b:int[n])qfree:int[n];
+def __add_assign_sℤ[n:!ℕ](moved a:int[n],const b:!ℤ)qfree:int[n];
+def __add_assign_ℤs[n:!ℕ](moved b:!ℤ,const a:int[n])qfree:int[n]; // TODO: might be confusing
+
+def __add_assign_u[n:!ℕ](moved a:uint[n],const b:uint[n])qfree:uint[n];
+def __add_assign_uℤ[n:!ℕ](moved a:uint[n],const b:!ℤ)qfree:uint[n];
+def __add_assign_ℤu[n:!ℕ](moved b:!ℤ,const a:uint[n])qfree:uint[n]; // TODO: might be confusing
+
+def __add_assign_ℕ(moved a:!ℕ,const b:!ℕ)qfree:!ℕ;
+def __add_assign_ℤ(moved a:!ℤ,const b:!ℤ)qfree:!ℤ;
+def __add_assign_ℚ(moved a:!ℚ,const b:!ℚ)qfree:!ℚ;
+def __add_assign_ℝ(moved a:!ℝ,const b:!ℝ)qfree:!ℝ;
+def __add_assign_ℂ(moved a:!ℂ,const b:!ℂ)qfree:!ℂ;
+
+// a-=b
+def __sub_assign_s[n:!ℕ](moved a:int[n],const b:int[n])qfree:int[n];
+def __sub_assign_sℤ[n:!ℕ](moved a:int[n],const b:!ℤ)qfree:int[n];
+def __sub_assign_ℤs[n:!ℕ](moved a:!ℤ,const b:int[n])qfree:int[n]; // TODO: might be confusing
+
+def __sub_assign_u[n:!ℕ](moved a:uint[n],const b:uint[n])qfree:uint[n];
+def __sub_assign_uℤ[n:!ℕ](moved a:uint[n],const b:!ℤ)qfree:uint[n];
+def __sub_assign_ℤu[n:!ℕ](moved a:!ℤ,const b:uint[n])qfree:uint[n]; // TODO: might be confusing
+
+def __sub_assign_ℕ(moved a:!ℕ,const b:!ℕ)qfree:!ℕ;
+def __sub_assign_ℤ(moved a:!ℤ,const b:!ℤ)qfree:!ℤ;
+def __sub_assign_ℚ(moved a:!ℚ,const b:!ℚ)qfree:!ℚ;
+def __sub_assign_ℝ(moved a:!ℝ,const b:!ℝ)qfree:!ℝ;
+def __sub_assign_ℂ(moved a:!ℂ,const b:!ℂ)qfree:!ℂ;
+
+// a sub= b
+def __nsub_assign_s[n:!ℕ](moved a:int[n],const b:int[n])qfree:int[n];
+def __nsub_assign_sℤ[n:!ℕ](moved a:int[n],const b:!ℤ)qfree:int[n];
+def __nsub_assign_ℤs[n:!ℕ](moved a:!ℤ,const b:int[n])qfree:int[n];  // TODO: might be confusing
+
+def __nsub_assign_u[n:!ℕ](moved a:uint[n],const b:uint[n])qfree:uint[n];
+def __nsub_assign_uℤ[n:!ℕ](moved a:uint[n],const b:!ℤ)qfree:uint[n];
+def __nsub_assign_ℤu[n:!ℕ](moved a:!ℤ,const b:uint[n])qfree:uint[n];  // TODO: might be confusing
+
+def __nsub_assign_ℤ(moved a:!ℤ,const b:!ℤ)qfree:!ℕ;
+
+// a·=b
+def __mul_assign_s[n:!ℕ](moved a:!int[n],const b:!int[n])qfree:!int[n];
+def __mul_assign_sℤ[n:!ℕ](moved a:!int[n],const b:!ℤ)qfree:!int[n];
+def __mul_assign_ℤs[n:!ℕ](moved a:!ℤ,const b:!int[n])qfree:!int[n];  // TODO: might be confusing
+
+def __mul_assign_u[n:!ℕ](moved a:!uint[n],const b:!uint[n])qfree:!uint[n];
+def __mul_assign_uℤ[n:!ℕ](moved a:uint[n],const b:!ℤ)qfree:!uint[n];
+def __mul_assign_ℤu[n:!ℕ](moved a:!ℤ,const b:!uint[n])qfree:!uint[n];  // TODO: might be confusing
+
+def __mul_assign_ℕ(moved a:!ℕ,const b:!ℕ)qfree:!ℕ;
+def __mul_assign_ℤ(moved a:!ℤ,const b:!ℤ)qfree:!ℤ;
+def __mul_assign_ℚ(moved a:!ℚ,const b:!ℚ)qfree:!ℚ;
+def __mul_assign_ℝ(moved a:!ℝ,const b:!ℝ)qfree:!ℝ;
+def __mul_assign_ℂ(moved a:!ℂ,const b:!ℂ)qfree:!ℂ;
+
+// a/=b
+def __div_assign_ℚ(moved a:!ℚ,const b:!ℚ)qfree:!ℚ;
+def __div_assign_ℝ(moved a:!ℝ,const b:!ℝ)qfree:!ℝ;
+def __div_assign_ℂ(moved a:!ℂ,const b:!ℂ)qfree:!ℂ;
+
+// a div= b
+def __idiv_assign_s[n:!ℕ](moved a:!int[n],const b:!int[n])qfree:!int[n];
+def __idiv_assign_sℤ[n:!ℕ](moved a:!int[n],const b:!ℤ)qfree:!int[n];
+def __idiv_assign_ℤs[n:!ℕ](moved a:!ℤ,const b:int[n])qfree:!int[n]; // TODO: might be confusing
+
+def __idiv_assign_u[n:!ℕ](moved a:!uint[n],const b:!uint[n])qfree:!uint[n];
+def __idiv_assign_uℤ[n:!ℕ](moved a:!uint[n],const b:!ℤ)qfree:!uint[n];
+def __idiv_assign_ℤu[n:!ℕ](moved a:!ℤ,const b:!uint[n])qfree:!uint[n];  // TODO: might be confusing
+
+def __idiv_assign_ℕ(a:!ℕ,b:!ℕ)qfree:!ℕ;
+def __idiv_assign_ℤ(a:!ℤ,b:!ℤ)qfree:!ℤ;
+def __idiv_assign_ℚ(a:!ℚ,b:!ℚ)qfree:!ℤ;
+def __idiv_assign_ℝ(a:!ℝ,b:!ℝ)qfree:!ℤ;
+
+// a %= b
+def __mod_assign_s[m:!ℕ,n:!ℕ](moved a:int[m],const b:int[n])qfree:int[n];
+def __mod_assign_ℤs[n:!ℕ](moved a:!ℤ,const b:int[n])qfree:int[n];
+
+def __mod_assign_u[m:!ℕ,n:!ℕ](moved a:uint[m],const b:uint[n])qfree:uint[n];
+def __mod_assign_ℤu[n:!ℕ](moved a:!ℤ,const b:uint[n])qfree:uint[n];
+def __mod_assign_uℕ[n:!ℕ](moved a:uint[n],const b:!ℕ)qfree:uint[n];
+
+def __mod_assign_us[m:!ℕ,n:!ℕ](moved a:uint[m],const b:int[n])qfree:int[n];
+def __mod_assign_su[m:!ℕ,n:!ℕ](moved a:int[m],const b:uint[n])qfree:uint[n];
+
+def __mod_assign_ℕ(moved a:!ℕ,const b:!ℕ)qfree:!ℕ;
+def __mod_assign_ℤ(moved a:!ℤ,const b:!ℤ)qfree:!ℤ;
+def __mod_assign_ℚ(moved a:!ℚ,const b:!ℚ)qfree:!ℚ;
+def __mod_assign_ℝ(moved a:!ℝ,const b:!ℝ)qfree:!ℝ;
+
+// a ^= b
+def __pow_assign_ℕ(moved a:!ℕ,const b:!ℕ)qfree:!ℕ;
+def __pow_assign_ℤℕ(moved a:!ℤ,const b:!ℕ)qfree:!ℤ;
+def __pow_assign_ℚℕ(moved a:!ℚ,const b:!ℕ)qfree:!ℚ;
+def __pow_assign_ℝℕ(moved a:!ℕ,const b:!ℕ)qfree:!ℝ;
+
+def __pow_assign_ℚℤ(moved a:!ℚ,const b:!ℤ)qfree:!ℚ;
+def __pow_assign_ℝℚ(moved a:!ℝ,const b:!ℚ)qfree:!ℝ;
+def __pow_assign_ℝℝ(moved a:!ℝ,const b:!ℝ)qfree:!ℝ;
+
+// a ~= b
+
+// def __cat_tt[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](moved x:∏ σ,const y:∏ τ)qfree:∏(σ~τ);
+def __cat_assign_vv[n:!ℕ,m:!ℕ,a:*](moved xs:a^n,const ys:a^m)qfree:a^(n+m);
+def __cat_assign_aa[a:*](moved xs:a[],const ys:a[])qfree:a[];
+
+// a |= b
+def __orb_assign_s[n:!ℕ](moved a:int[n],const b:int[n])qfree:int[n];
+def __orb_assign_sℤ[n:!ℕ](moved a:int[n],const b:!ℤ)qfree:int[n];
+def __orb_assign_ℤs[n:!ℕ](moved a:!ℤ,const b:!int[n])qfree:int[n]; // TODO: potentially confusing
+
+def __orb_assign_u[n:!ℕ](moved a:uint[n],const b:uint[n])qfree:uint[n];
+def __orb_assign_uℤ[n:!ℕ](moved a:uint[n],const b:!ℤ)qfree:uint[n];
+def __orb_assign_ℤu[n:!ℕ](moved a:!ℤ,const b:!uint[n])qfree:uint[n]; // TODO: potentially confusing
+
+def __orb_assign_ℕ(moved a:!ℕ,const b:!ℕ)qfree:!ℕ;
+def __orb_assign_ℤ(moved a:!ℤ,const b:!ℤ)qfree:!ℤ;
+
+// a ⊕= b
+def __xorb_assign_s[n:!ℕ](moved a:int[n],const b:int[n])qfree:int[n];
+def __xorb_assign_sℤ[n:!ℕ](moved a:int[n],const b:!ℤ)qfree:int[n];
+def __xorb_assign_ℤs[n:!ℕ](moved a:!ℤ,const b:!int[n])qfree:int[n]; // TODO: potentially confusing
+
+def __xorb_assign_u[n:!ℕ](moved a:uint[n],const b:uint[n])qfree:uint[n];
+def __xorb_assign_uℤ[n:!ℕ](moved a:uint[n],const b:!ℤ)qfree:uint[n];
+def __xorb_assign_ℤu[n:!ℕ](moved a:!ℤ,const b:!uint[n])qfree:uint[n]; // TODO: potentially confusing
+
+def __xorb_assign_ℕ(moved a:!ℕ,const b:!ℕ)qfree:!ℕ;
+def __xorb_assign_ℤ(moved a:!ℤ,const b:!ℤ)qfree:!ℤ;
+
+// a &= b
+def __andb_assign_s[n:!ℕ](moved a:int[n],const b:int[n])qfree:int[n];
+def __andb_assign_sℤ[n:!ℕ](moved a:int[n],const b:!ℤ)qfree:int[n];
+def __andb_assign_ℤs[n:!ℕ](moved a:!ℤ,const b:!int[n])qfree:int[n];
+
+def __andb_assign_u[n:!ℕ](a:uint[n],b:uint[n])qfree:uint[n];
+def __andb_assign_uℤ[n:!ℕ](a:uint[n],b:!ℤ)qfree:uint[n];
+def __andb_assign_ℤu[n:!ℕ](a:!ℤ,b:!uint[n])qfree:uint[n];
+
+def __andb_assign_ℕ(a:!ℕ,b:!ℕ)qfree:!ℕ;
+def __andb_assign_ℤ(a:!ℤ,b:!ℤ)qfree:!ℤ;
