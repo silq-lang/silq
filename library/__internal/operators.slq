@@ -123,9 +123,9 @@ def __pow_ℝℝ(a:!ℝ,b:!ℝ)lifted:!ℝ;
 
 // a ~ b
 
-// def __cat_tt[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](x:∏ σ,y:∏ τ)lifted:∏(σ~τ);
-def __cat_vv[n:!ℕ,m:!ℕ,a:*](xs:a^n,ys:a^m)lifted:a^(n+m);
-def __cat_aa[a:*](xs:a[],ys:a[])lifted:a[];
+// def __cat_tt[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](moved x:∏ σ,moved y:∏ τ)qfree:∏(σ~τ);
+def __cat_vv[n:!ℕ,m:!ℕ,a:*](moved xs:a^n,moved ys:a^m)qfree:a^(n+m);
+def __cat_aa[a:*](moved xs:a[],moved ys:a[])qfree:a[];
 
 // a | b
 def __orb_s[n:!ℕ](a:int[n],b:int[n])lifted:int[n];
@@ -165,7 +165,59 @@ def __andb_ℤ(a:!ℤ,b:!ℤ)lifted:!ℤ;
 
 // comparison operators
 
-// TODO
+// def __lt_tt[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](x:∏ σ,y:∏ τ)lifted:∏(σ~τ);
+def __lt_vv[n:!ℕ,m:!ℕ,a:*](xs:a^n,ys:a^m)lifted:𝔹;
+def __lt_aa[a:*](xs:a[],ys:a[])lifted:𝔹;
+
+def __lt_𝔹(a:𝔹,b:𝔹)lifted:𝔹;
+def __lt_ℕ(a:!ℕ,b:!ℕ)lifted:!𝔹;
+def __lt_ℚ(a:!ℚ,b:!ℚ)lifted:!𝔹;
+def __lt_ℝ(a:!ℝ,b:!ℝ)lifted:!𝔹;
+
+// def __le_tt[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](x:∏ σ,y:∏ τ)lifted:∏(σ~τ);
+def __le_vv[n:!ℕ,m:!ℕ,a:*](xs:a^n,ys:a^m)lifted:𝔹;
+def __le_aa[a:*](xs:a[],ys:a[])lifted:𝔹;
+
+def __le_𝔹(a:𝔹,b:𝔹)lifted:𝔹;
+def __le_ℕ(a:!ℕ,b:!ℕ)lifted:!𝔹;
+def __le_ℚ(a:!ℚ,b:!ℚ)lifted:!𝔹;
+def __le_ℝ(a:!ℝ,b:!ℝ)lifted:!𝔹;
+
+// def __gt_tt[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](x:∏ σ,y:∏ τ)lifted:∏(σ~τ);
+def __gt_vv[n:!ℕ,m:!ℕ,a:*](xs:a^n,ys:a^m)lifted:𝔹;
+def __gt_aa[a:*](xs:a[],ys:a[])lifted:𝔹;
+
+def __gt_𝔹(a:𝔹,b:𝔹)lifted:𝔹;
+def __gt_ℕ(a:!ℕ,b:!ℕ)lifted:!𝔹;
+def __gt_ℚ(a:!ℚ,b:!ℚ)lifted:!𝔹;
+def __gt_ℝ(a:!ℝ,b:!ℝ)lifted:!𝔹;
+
+// def __ge_tt[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](x:∏ σ,y:∏ τ)lifted:∏(σ~τ);
+def __ge_vv[n:!ℕ,m:!ℕ,a:*](xs:a^n,ys:a^m)lifted:𝔹;
+def __ge_aa[a:*](xs:a[],ys:a[])lifted:𝔹;
+
+def __ge_𝔹(a:𝔹,b:𝔹)lifted:𝔹;
+def __ge_ℕ(a:!ℕ,b:!ℕ)lifted:!𝔹;
+def __ge_ℚ(a:!ℚ,b:!ℚ)lifted:!𝔹;
+def __ge_ℝ(a:!ℝ,b:!ℝ)lifted:!𝔹;
+
+// def __eq_tt[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](x:∏ σ,y:∏ τ)lifted:∏(σ~τ);
+def __eq_vv[n:!ℕ,m:!ℕ,a:*](xs:a^n,ys:a^m)lifted:𝔹;
+def __eq_aa[a:*](xs:a[],ys:a[])lifted:𝔹;
+
+def __eq_𝔹(a:𝔹,b:𝔹)lifted:𝔹;
+def __eq_ℕ(a:!ℕ,b:!ℕ)lifted:!𝔹;
+def __eq_ℚ(a:!ℚ,b:!ℚ)lifted:!𝔹;
+def __eq_ℝ(a:!ℝ,b:!ℝ)lifted:!𝔹;
+
+// def __neq_tt[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](x:∏ σ,y:∏ τ)lifted:∏(σ~τ);
+def __neq_vv[n:!ℕ,m:!ℕ,a:*](xs:a^n,ys:a^m)lifted:𝔹;
+def __neq_aa[a:*](xs:a[],ys:a[])lifted:𝔹;
+
+def __neq_𝔹(a:𝔹,b:𝔹)lifted:𝔹;
+def __neq_ℕ(a:!ℕ,b:!ℕ)lifted:!𝔹;
+def __neq_ℚ(a:!ℚ,b:!ℚ)lifted:!𝔹;
+def __neq_ℝ(a:!ℝ,b:!ℝ)lifted:!𝔹;
 
 // binary assignment operators
 
