@@ -14,8 +14,8 @@ def intLt₃[n:!ℕ](x:𝔹^n,y:𝔹^n)lifted:𝔹{
     if n=0{ return false; }
 	r := intLt₃(x[0..n-1],y[0..n-1]); // TODO
 	res := if x[n-1]=y[n-1] then dup(r) else y[n-1];
-	intLt₃(x[0..n sub 1],y[0..n sub 1]):=r; // TODO
-	return res; // TODO
+	intLt₃(x[0..n sub 1],y[0..n sub 1]):=r;
+	return res;
 }
 
 def intLt₄[n:!ℕ](x:𝔹^n,y:𝔹^n)lifted:𝔹=>if n=0 then false else if x[n-1]!=y[n-1] then y[n-1] else intLt₄(x[0..n-1],y[0..n-1]); // TODO
