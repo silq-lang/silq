@@ -1,0 +1,2 @@
+
+def x[cond:!𝔹,t1:*,t2:*](arg: if cond then t1 else t2): if cond then !t1 else !t2 ⇒ measure(arg);
