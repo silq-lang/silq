@@ -1,0 +1,9 @@
+// args: --run
+
+def f(const x:!𝔹[])qfree:!𝔹^x.length{
+	return x coerce !𝔹^x.length;
+}
+def main(){
+	f2:=f as !𝔹^5→qfree 𝔹[];
+	return f2(vector(5,false));
+}
