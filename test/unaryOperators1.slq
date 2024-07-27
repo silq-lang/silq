@@ -1,0 +1,42 @@
+// args: --run
+
+def main(){
+	b:=0:𝔹;
+	s:=1:int[16];
+	u:=2:uint[16];
+	n:=3:!ℕ;
+	z:=-3:!ℤ;
+	q:=1/2:!ℚ;
+	r:=4.5:!ℝ;
+	// c:=0:!ℂ; // TODO
+	bn:=!b;
+	!b:=bn;
+
+	sm:=-s;
+	-s:=sm;
+	um:=-u;
+	-u:=um;
+	nm:=-n;
+	-n:=nm;
+	zm:=-z;
+	-z:=zm;
+	qm:=-q;
+	-q:=qm;
+	rm:=-r;
+	-r:=rm;
+	// cm:=-c; // TODO
+	// -c:=c; // TODO
+
+	sf:=~s;
+	~s:=sf;
+	uf:=~u;
+	~u:=uf;
+	nf:=~n;
+	~n:=nf;
+	zf:=~z;
+	~z:=zf;
+	// qf:=~q; // TODO?
+	// ~q:=qf; // TODO?
+	// rf:=~r; // TODO?
+	// ~r:=rf; // TODO?
+}

@@ -3,20 +3,27 @@
 // unary operators
 
 // !b
-def __unot(b:𝔹)lifted:𝔹;
+def __not_𝔹(b:𝔹)lifted:𝔹;
 
 // -x
 def __uminus_s[n:!ℕ](x:int[n])lifted:int[n];
 def __uminus_u[n:!ℕ](x:uint[n])lifted:uint[n];
 
-def __uminus_ℤ(x:!ℤ)lifted:!ℤ; // -x
-def __uminus_ℚ(x:!ℚ)lifted:!ℚ; // -x
-def __uminus_ℝ(x:!ℝ)lifted:!ℝ; // -x
-def __uminus_ℂ(x:!ℂ)lifted:!ℂ; // -x
+def __uminus_ℕ(x:!ℕ)lifted:!ℤ;
+def __uminus_ℤ(x:!ℤ)lifted:!ℤ;
+def __uminus_ℚ(x:!ℚ)lifted:!ℚ;
+def __uminus_ℝ(x:!ℝ)lifted:!ℝ;
+def __uminus_ℂ(x:!ℂ)lifted:!ℂ;
 
 // ~x
 def __bitnot_s[n:!ℕ](x:int[n])lifted:int[n];
 def __bitnot_u[n:!ℕ](x:uint[n])lifted:uint[n];
+
+def __bitnot_ℕ(x:!ℕ)lifted:!ℤ;
+def __bitnot_ℤ(x:!ℤ)lifted:!ℤ;
+// def __bitnot_ℚ(x:!ℚ)lifted:!ℚ; // TODO?
+// def __bitnot_ℝ(x:!ℝ)lifted:!ℝ; // TODO?
+// def __bitnot_ℂ(x:!ℂ)lifted:!ℂ; // TODO?
 
 // binary operators
 
@@ -123,9 +130,9 @@ def __pow_ℝℝ(a:!ℝ,b:!ℝ)lifted:!ℝ;
 
 // a ~ b
 
-// def __cat_tt[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](moved x:∏ σ,moved y:∏ τ)qfree:∏(σ~τ);
-def __cat_vv[n:!ℕ,m:!ℕ,a:*](moved xs:a^n,moved ys:a^m)qfree:a^(n+m);
-def __cat_aa[a:*](moved xs:a[],moved ys:a[])qfree:a[];
+// def __cat_t[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](moved x:∏ σ,moved y:∏ τ)qfree:∏(σ~τ);
+def __cat_v[n:!ℕ,m:!ℕ,a:*](moved xs:a^n,moved ys:a^m)qfree:a^(n+m);
+def __cat_a[a:*](moved xs:a[],moved ys:a[])qfree:a[];
 
 // a | b
 def __orb_s[n:!ℕ](a:int[n],b:int[n])lifted:int[n];
@@ -165,54 +172,54 @@ def __andb_ℤ(a:!ℤ,b:!ℤ)lifted:!ℤ;
 
 // comparison operators
 
-// def __lt_tt[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](x:∏ σ,y:∏ τ)lifted:∏(σ~τ);
-def __lt_vv[n:!ℕ,m:!ℕ,a:*](xs:a^n,ys:a^m)lifted:𝔹;
-def __lt_aa[a:*](xs:a[],ys:a[])lifted:𝔹;
+// def __lt_t[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](x:∏ σ,y:∏ τ)lifted:∏(σ~τ);
+def __lt_v[n:!ℕ,m:!ℕ,a:*](xs:a^n,ys:a^m)lifted:𝔹;
+def __lt_a[a:*](xs:a[],ys:a[])lifted:𝔹;
 
 def __lt_𝔹(a:𝔹,b:𝔹)lifted:𝔹;
 def __lt_ℕ(a:!ℕ,b:!ℕ)lifted:!𝔹;
 def __lt_ℚ(a:!ℚ,b:!ℚ)lifted:!𝔹;
 def __lt_ℝ(a:!ℝ,b:!ℝ)lifted:!𝔹;
 
-// def __le_tt[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](x:∏ σ,y:∏ τ)lifted:∏(σ~τ);
-def __le_vv[n:!ℕ,m:!ℕ,a:*](xs:a^n,ys:a^m)lifted:𝔹;
-def __le_aa[a:*](xs:a[],ys:a[])lifted:𝔹;
+// def __le_t[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](x:∏ σ,y:∏ τ)lifted:∏(σ~τ);
+def __le_v[n:!ℕ,m:!ℕ,a:*](xs:a^n,ys:a^m)lifted:𝔹;
+def __le_a[a:*](xs:a[],ys:a[])lifted:𝔹;
 
 def __le_𝔹(a:𝔹,b:𝔹)lifted:𝔹;
 def __le_ℕ(a:!ℕ,b:!ℕ)lifted:!𝔹;
 def __le_ℚ(a:!ℚ,b:!ℚ)lifted:!𝔹;
 def __le_ℝ(a:!ℝ,b:!ℝ)lifted:!𝔹;
 
-// def __gt_tt[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](x:∏ σ,y:∏ τ)lifted:∏(σ~τ);
-def __gt_vv[n:!ℕ,m:!ℕ,a:*](xs:a^n,ys:a^m)lifted:𝔹;
-def __gt_aa[a:*](xs:a[],ys:a[])lifted:𝔹;
+// def __gt_t[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](x:∏ σ,y:∏ τ)lifted:∏(σ~τ);
+def __gt_v[n:!ℕ,m:!ℕ,a:*](xs:a^n,ys:a^m)lifted:𝔹;
+def __gt_a[a:*](xs:a[],ys:a[])lifted:𝔹;
 
 def __gt_𝔹(a:𝔹,b:𝔹)lifted:𝔹;
 def __gt_ℕ(a:!ℕ,b:!ℕ)lifted:!𝔹;
 def __gt_ℚ(a:!ℚ,b:!ℚ)lifted:!𝔹;
 def __gt_ℝ(a:!ℝ,b:!ℝ)lifted:!𝔹;
 
-// def __ge_tt[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](x:∏ σ,y:∏ τ)lifted:∏(σ~τ);
-def __ge_vv[n:!ℕ,m:!ℕ,a:*](xs:a^n,ys:a^m)lifted:𝔹;
-def __ge_aa[a:*](xs:a[],ys:a[])lifted:𝔹;
+// def __ge_t[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](x:∏ σ,y:∏ τ)lifted:∏(σ~τ);
+def __ge_v[n:!ℕ,m:!ℕ,a:*](xs:a^n,ys:a^m)lifted:𝔹;
+def __ge_a[a:*](xs:a[],ys:a[])lifted:𝔹;
 
 def __ge_𝔹(a:𝔹,b:𝔹)lifted:𝔹;
 def __ge_ℕ(a:!ℕ,b:!ℕ)lifted:!𝔹;
 def __ge_ℚ(a:!ℚ,b:!ℚ)lifted:!𝔹;
 def __ge_ℝ(a:!ℝ,b:!ℝ)lifted:!𝔹;
 
-// def __eq_tt[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](x:∏ σ,y:∏ τ)lifted:∏(σ~τ);
-def __eq_vv[n:!ℕ,m:!ℕ,a:*](xs:a^n,ys:a^m)lifted:𝔹;
-def __eq_aa[a:*](xs:a[],ys:a[])lifted:𝔹;
+// def __eq_t[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](x:∏ σ,y:∏ τ)lifted:∏(σ~τ);
+def __eq_v[n:!ℕ,m:!ℕ,a:*](xs:a^n,ys:a^m)lifted:𝔹;
+def __eq_a[a:*](xs:a[],ys:a[])lifted:𝔹;
 
 def __eq_𝔹(a:𝔹,b:𝔹)lifted:𝔹;
 def __eq_ℕ(a:!ℕ,b:!ℕ)lifted:!𝔹;
 def __eq_ℚ(a:!ℚ,b:!ℚ)lifted:!𝔹;
 def __eq_ℝ(a:!ℝ,b:!ℝ)lifted:!𝔹;
 
-// def __neq_tt[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](x:∏ σ,y:∏ τ)lifted:∏(σ~τ);
-def __neq_vv[n:!ℕ,m:!ℕ,a:*](xs:a^n,ys:a^m)lifted:𝔹;
-def __neq_aa[a:*](xs:a[],ys:a[])lifted:𝔹;
+// def __neq_t[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](x:∏ σ,y:∏ τ)lifted:∏(σ~τ);
+def __neq_v[n:!ℕ,m:!ℕ,a:*](xs:a^n,ys:a^m)lifted:𝔹;
+def __neq_a[a:*](xs:a[],ys:a[])lifted:𝔹;
 
 def __neq_𝔹(a:𝔹,b:𝔹)lifted:𝔹;
 def __neq_ℕ(a:!ℕ,b:!ℕ)lifted:!𝔹;
@@ -324,9 +331,9 @@ def __pow_assign_ℝℝ(moved a:!ℝ,const b:!ℝ)qfree:!ℝ;
 
 // a ~= b
 
-// def __cat_tt[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](moved x:∏ σ,moved y:∏ τ)qfree:∏(σ~τ);
-def __cat_assign_vv[n:!ℕ,m:!ℕ,a:*](moved xs:a^n,moved ys:a^m)qfree:a^(n+m);
-def __cat_assign_aa[a:*](moved xs:a[],moved ys:a[])qfree:a[];
+// def __cat_t[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](moved x:∏ σ,moved y:∏ τ)qfree:∏(σ~τ);
+def __cat_assign_v[n:!ℕ,m:!ℕ,a:*](moved xs:a^n,moved ys:a^m)qfree:a^(n+m);
+def __cat_assign_a[a:*](moved xs:a[],moved ys:a[])qfree:a[];
 
 // a |= b
 def __orb_assign_s[n:!ℕ](moved a:!int[n],const b:int[n])qfree:int[n];

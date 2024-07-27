@@ -13,6 +13,7 @@ enum defaultExtension="slq";
 	return "prelude.slq";
 }
 
+enum operatorLowering=true;
 @property string operatorsPath(){
 	return "__internal/operators.slq";
 }
