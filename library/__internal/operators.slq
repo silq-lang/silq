@@ -16,6 +16,8 @@ def __uminus_ℝ(x:!ℝ)lifted:!ℝ;
 def __uminus_ℂ(x:!ℂ)lifted:!ℂ;
 
 // ~x
+def __bitnot_𝔹(b:𝔹)lifted:𝔹;
+
 def __bitnot_s[n:!ℕ](x:int[n])lifted:int[n];
 def __bitnot_u[n:!ℕ](x:uint[n])lifted:uint[n];
 
