@@ -1,0 +1,9 @@
+
+def main(){
+	x:=H(0:𝔹);
+	y:=dup(x);
+	def f(){ y:=y; } // TODO: error
+	x:=H(x);
+	f();
+	return x;
+}

@@ -95,18 +95,6 @@ def nextCoeffs[n:!ℕ](mcoeffs:!ℕ^(2^n))qfree{
 +/
 
 /+
-def for_(i:!ℕ,n:!ℕ)[a:*,b:*](f: !ℕ×const a×b!→qfree b)(const x:a,y:b)qfree:b⇒if i<n then for_(i+1,n)(f)(x,f(i,x,y)) else y;
-def mult[n:!ℕ](const x:uint[n],const y:uint[n],b:uint[n])qfree{
-	for_(0,n)((i:!ℕ,const y:uint[n],b:uint[n]){
-		a:=(vector(i,0:𝔹)~(if x[i] then (y as 𝔹^n)[0..n sub i] else vector(n sub i,0:𝔹))) as uint[n]; // (crash)
-		b+=a;
-		return b;
-	});
-	return b;
-}
-+/
-
-/+
 def sum[n:!ℕ](weights:!ℕ^n)qfree:!ℕ ⇒ if n=0 then 0 else weights[0]+sum(weights[1..n]);
 def log₂(x:!ℝ)qfree⇒log(x)/log(2);
 def num_sum_bits[n:!ℕ](weights:!ℕ^n)qfree: !ℕ ⇒ if sum(weights)>0 then floor(log₂(sum(weights)))+1 coerce !ℕ else 1;
