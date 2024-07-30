@@ -34,8 +34,8 @@ auto to(string unit,T)(Duration d)if(unit=="seconds"||unit=="msecs"){
 	return d.total!"hnsecs"/factor;
 }
 
-void main(){
-	auto sources=shell("find . -name '*.slq' -type f").splitLines;
+void main(string[] args){
+	auto sources=args.length==1?shell("find . -name '*.slq' -type f").splitLines:args[1..$];
 	Summary total;
 	int skipped=0,passed=0;
 	bool colorize=isATTy(stdout);
@@ -314,7 +314,7 @@ int[] getActual(string source,out string[] output){
 	output = shell("../silq "~args~source~" 2>&1").splitLines;
 	int[] result;
 	static bool isBad(string x){
-		if(x.canFind(": error")) return true;
+		if(x.canFind(": error:")) return true;
 		if(x.startsWith("core.exception.AssertError"))
 			return true;
 		return false;
@@ -325,8 +325,9 @@ int[] getActual(string source,out string[] output){
 			auto tmp = err[(source~":").length..$];
 			auto line = tmp.parse!int;
 			result~=line;
-		}else
+		}else{
 			result~=-1;
+		}
 	}
 	result=result.sort.uniq.array;
 	return result;

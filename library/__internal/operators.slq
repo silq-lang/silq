@@ -31,10 +31,14 @@ def __bitnot_ℤ(x:!ℤ)lifted:!ℤ;
 
 // a+b
 def __add_s[n:!ℕ](a:int[n],b:int[n])lifted:int[n];
+def __add_s𝔹[n:!ℕ](a:int[n],b:𝔹)lifted:int[n];
+def __add_𝔹s[n:!ℕ](b:𝔹,a:int[n])lifted:int[n];
 def __add_sℤ[n:!ℕ](a:int[n],b:!ℤ)lifted:int[n];
 def __add_ℤs[n:!ℕ](b:!ℤ,a:int[n])lifted:int[n];
 
 def __add_u[n:!ℕ](a:uint[n],b:uint[n])lifted:uint[n];
+def __add_u𝔹[n:!ℕ](a:uint[n],b:𝔹)lifted:uint[n];
+def __add_𝔹u[n:!ℕ](b:𝔹,a:uint[n])lifted:uint[n];
 def __add_uℤ[n:!ℕ](a:uint[n],b:!ℤ)lifted:uint[n];
 def __add_ℤu[n:!ℕ](b:!ℤ,a:uint[n])lifted:uint[n];
 
@@ -46,28 +50,38 @@ def __add_ℂ(a:!ℂ,b:!ℂ)lifted:!ℂ;
 
 // a-b
 def __sub_s[n:!ℕ](a:int[n],b:int[n])lifted:int[n];
+def __sub_s𝔹[n:!ℕ](a:int[n],b:𝔹)lifted:int[n];
+def __sub_𝔹s[n:!ℕ](a:𝔹,b:int[n])lifted:int[n];
 def __sub_sℤ[n:!ℕ](a:int[n],b:!ℤ)lifted:int[n];
 def __sub_ℤs[n:!ℕ](a:!ℤ,b:int[n])lifted:int[n];
 
 def __sub_u[n:!ℕ](a:uint[n],b:uint[n])lifted:uint[n];
+def __sub_u𝔹[n:!ℕ](a:uint[n],b:𝔹)lifted:uint[n];
+def __sub_𝔹u[n:!ℕ](a:𝔹,b:uint[n])lifted:uint[n];
 def __sub_uℤ[n:!ℕ](a:uint[n],b:!ℤ)lifted:uint[n];
 def __sub_ℤu[n:!ℕ](a:!ℤ,b:uint[n])lifted:uint[n];
 
-def __sub_ℕ(a:!ℕ,b:!ℕ)lifted:!ℕ;
+def __sub_ℕ(a:!ℕ,b:!ℕ)lifted:!ℤ;
 def __sub_ℤ(a:!ℤ,b:!ℤ)lifted:!ℤ;
 def __sub_ℚ(a:!ℚ,b:!ℚ)lifted:!ℚ;
 def __sub_ℝ(a:!ℝ,b:!ℝ)lifted:!ℝ;
 def __sub_ℂ(a:!ℂ,b:!ℂ)lifted:!ℂ;
 
 // a sub b
-def __nsub_s[n:!ℕ](a:int[n],b:int[n])lifted:int[n];
+/+def __nsub_s[n:!ℕ](a:int[n],b:int[n])lifted:int[n];
+def __nsub_s𝔹[n:!ℕ](a:int[n],b:𝔹)lifted:int[n];
+def __nsub_𝔹s[n:!ℕ](a:𝔹,b:int[n])lifted:int[n];
 def __nsub_sℤ[n:!ℕ](a:int[n],b:!ℤ)lifted:int[n];
-def __nsub_ℤs[n:!ℕ](a:!ℤ,b:int[n])lifted:int[n];
+def __nsub_ℤs[n:!ℕ](a:!ℤ,b:int[n])lifted:int[n];+/
 
 def __nsub_u[n:!ℕ](a:uint[n],b:uint[n])lifted:uint[n];
+def __nsub_u𝔹[n:!ℕ](a:uint[n],b:𝔹)lifted:uint[n];
+def __nsub_𝔹u[n:!ℕ](a:𝔹,b:uint[n])lifted:uint[n];
 def __nsub_uℤ[n:!ℕ](a:uint[n],b:!ℤ)lifted:uint[n];
 def __nsub_ℤu[n:!ℕ](a:!ℤ,b:uint[n])lifted:uint[n];
 
+def __nsub_𝔹(a:𝔹,b:𝔹)lifted:𝔹;
+def __nsub_ℕ(a:!ℕ,b:!ℕ)lifted:!ℕ;
 def __nsub_ℤ(a:!ℤ,b:!ℤ)lifted:!ℕ;
 
 // a·b
