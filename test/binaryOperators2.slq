@@ -42,6 +42,7 @@ def main(){
 	abcb:=bc+b; // error
 	abcs:=bc+s:int[16];
 	abcu:=bc+u:uint[16];
+	abcbc:=bc+bc:!ℕ;
 	abcn:=bc+n:!ℕ;
 	abcz:=bc+z:!ℤ;
 	abcq:=bc+q:!ℚ;
@@ -113,6 +114,7 @@ def main(){
 	sbcb:=bc-b; // error
 	sbcs:=bc-s;
 	sbcu:=bc-u;
+	sbcbc:=bc-bc:!ℤ;
 	sbcn:=bc-n:!ℤ;
 	sbcz:=bc-z:!ℤ;
 	sbcq:=bc-q:!ℚ;
@@ -185,6 +187,7 @@ def main(){
 	nsbcb:=bc sub b;
 	nsbcs:=bc sub s; // error
 	nsbcu:=bc sub u:uint[16];
+	nsbcbc:=bc sub bc:!ℕ;
 	nsmall:=0:!ℕ;
 	nsbcn:=bc sub nsmall:!ℕ;
 	nsbcz:=bc sub z:!ℤ;

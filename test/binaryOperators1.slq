@@ -24,6 +24,7 @@ def main(){
 	aun₂:=u+1:uint[16];
 	abcs:=bc+s:int[16];
 	abcu:=bc+u:uint[16];
+	abcbc:=bc+bc:!ℕ;
 	abcn:=bc+n:!ℕ;
 	abcz:=bc+z:!ℤ;
 	abcq:=bc+q:!ℚ;
@@ -64,6 +65,7 @@ def main(){
 	sun₂:=u-1:uint[16];
 	sbcs:=bc-s;
 	sbcu:=bc-u;
+	sbcbc:=bc-bc:!ℤ;
 	sbcn:=bc-n:!ℤ;
 	sbcz:=bc-z:!ℤ;
 	sbcq:=bc-q:!ℚ;
@@ -104,6 +106,7 @@ def main(){
 	nsbbc:=b sub bc:𝔹;
 	nsbcb:=bc sub b:𝔹;
 	nsbcu:=bc sub usmall:uint[16];
+	nsbcbc:=bc sub bc:!ℕ;
 	nsbcn:=bc sub nsmall:!ℕ;
 	nsbcz:=bc sub z:!ℤ;
 	nsnu₂:=10 sub u;

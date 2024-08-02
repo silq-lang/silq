@@ -42,6 +42,7 @@ def __add_𝔹u[n:!ℕ](b:𝔹,a:uint[n])lifted:uint[n];
 def __add_uℤ[n:!ℕ](a:uint[n],b:!ℤ)lifted:uint[n];
 def __add_ℤu[n:!ℕ](b:!ℤ,a:uint[n])lifted:uint[n];
 
+def __add_𝔹(a:!ℕ,b:!ℕ)lifted:!ℕ;
 def __add_ℕ(a:!ℕ,b:!ℕ)lifted:!ℕ;
 def __add_ℤ(a:!ℤ,b:!ℤ)lifted:!ℤ;
 def __add_ℚ(a:!ℚ,b:!ℚ)lifted:!ℚ;
@@ -61,6 +62,7 @@ def __sub_𝔹u[n:!ℕ](a:𝔹,b:uint[n])lifted:uint[n];
 def __sub_uℤ[n:!ℕ](a:uint[n],b:!ℤ)lifted:uint[n];
 def __sub_ℤu[n:!ℕ](a:!ℤ,b:uint[n])lifted:uint[n];
 
+def __sub_𝔹(a:!𝔹,b:!𝔹)lifted:!ℤ;
 def __sub_ℕ(a:!ℕ,b:!ℕ)lifted:!ℤ;
 def __sub_ℤ(a:!ℤ,b:!ℤ)lifted:!ℤ;
 def __sub_ℚ(a:!ℚ,b:!ℚ)lifted:!ℚ;
