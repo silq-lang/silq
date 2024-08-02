@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	x:=12:!int[16];
+	b:=1:𝔹;
+	r:=(x*b+(x+b)) + x div b;
+	assert(measure(r=37));
+	return r;
+}
