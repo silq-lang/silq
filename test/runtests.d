@@ -35,6 +35,7 @@ auto to(string unit,T)(Duration d)if(unit=="seconds"||unit=="msecs"){
 }
 
 void main(string[] args){
+	bool writeLines=args.length!=1;
 	auto sources=args.length==1?shell("find . -name '*.slq' -type f").splitLines:args[1..$];
 	Summary total;
 	int skipped=0,passed=0;
@@ -54,9 +55,10 @@ void main(string[] args){
 		stdout.flush();
 		auto resultsTime=source.getResults;
 		auto results=resultsTime[0],time=resultsTime[1];
-		auto summary=results.summarize;
+		auto summary=results.summarize(writeLines);
 		total+=summary;
-		if(colorize) write("\r");
+		if(writeLines) writeln();
+		else if(colorize) write("\r");
 		else write(": ");
 		if(summary.isInteresting){
 			int regressions=summary.unexpectedErrors;
@@ -198,7 +200,8 @@ Tuple!(Comparison[],Duration) getResults(string source){
 	return tuple(result,sw.peek());
 }
 
-auto summarize(Comparison[] comp){
+auto summarize(Comparison[] comp,bool writeLines){
+	if(writeLines) writeln();
 	Summary result;
 	if(!comp.length) result.unspecified++;
 	foreach(c;comp){
@@ -207,31 +210,35 @@ auto summarize(Comparison[] comp){
 				if(c.info.error){
 					if(c.info.todo){
 						result.obsoleteTodos++;
-						//writeln("FIX AT LINE ",c.info.line);
+						if(writeLines) writeln("FIX AT LINE ",c.info.line);
 					}else result.expectedErrors++;
 				}else{
-					if(c.info.todo) result.todos++;
-					else{
+					if(c.info.todo){
+						result.todos++;
+						if(writeLines) writeln("TODO AT LINE ",c.info.line);
+					}else{
 						result.missingErrors++;
-						//writeln("REGRESSION AT LINE ",c.info.line);
+						if(writeLines) writeln("REGRESSION AT LINE ",c.info.line);
 					}
 				}
 				break;
 			case unexpected:
 				assert(c.info.error);
 				result.unexpectedErrors++;
-				//writeln("REGRESSION AT LINE ",c.info.line);
+				if(writeLines) writeln("REGRESSION AT LINE ",c.info.line);
 				break;
 			case missing:
 				if(c.info.todo){
-					if(c.info.error) result.todos++;
-					else{
+					if(c.info.error){
+						result.todos++;
+						if(writeLines) writeln("TODO ERROR AT LINE ",c.info.line);
+					}else{
 						result.obsoleteTodos++;
-						//writeln("FIX AT LINE ",c.info.line);
+						if(writeLines) writeln("FIX AT LINE ",c.info.line);
 					}
 				}else{
 					result.missingErrors++;
-					//writeln("REGRESSION AT LINE ",c.info.line);
+					if(writeLines) writeln("REGRESSION AT LINE ",c.info.line);
 				}
 				break;
 			case ok:
