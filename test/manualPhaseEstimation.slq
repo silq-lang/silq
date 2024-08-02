@@ -16,7 +16,7 @@ def main(){
 	φ:=7:uint[n];
 	φ[0]:=H(φ[0]);
 	U:=[k:!ℕ](φ:uint[n])mfree{
-		phaseQ(2^k·φ);
+		phaseQ((2^k as uint[n])·φ);
 		return φ;
 	};
 	estimate:=0:uint[m];
@@ -28,7 +28,7 @@ def main(){
 				x:=H(0:𝔹);
 				if x{
 					φ:=U[m sub 1 sub i](φ);
-					phaseQ(-2^(m sub 1 sub i)·estimate);
+					phaseQ(-(2^(m sub 1 sub i) as uint[m])·estimate);
 				}
 				cands~=[H(x)];
 			}

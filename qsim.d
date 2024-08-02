@@ -1057,7 +1057,7 @@ struct QState{
 						case Tag.zval: return makeInteger(floordiv(zval,r.zval));
 						case Tag.intval: return makeInt(type,BitInt!true(intval.nbits,floordiv(intval.val,r.intval.val)));
 						case Tag.uintval: return makeUint(ntype,uintval/r.uintval);
-						case Tag.bval: return makeInteger(ℤ(bval/r.bval));
+						case Tag.bval: return makeBool(bval/r.bval);
 						case Tag.closure,Tag.array_,Tag.record,Tag.quval: break;
 					}
 				}

@@ -1,0 +1,16 @@
+// args: --run
+
+def main() {
+	bF:=0:!𝔹;
+	bT:=1:!𝔹;
+	qF:=0:𝔹;
+	qT:=1:𝔹;
+	assert(bT div bT);
+	assert(!(bF div bT)); 
+	assert(measure(qT div qT));
+	assert(!measure(qF div qT));
+	assert(measure(qT div bT));
+	assert(!measure(qF div bT));
+	assert(measure(bT div qT));
+	assert(!measure(bF div qT));
+}

@@ -7,7 +7,7 @@ def QFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
 	for k in [0..n){
 		j:=n sub 1 sub k;
 		ψ[j] := H(ψ[j]);
-		if (ψ&2^j)!=0{ phaseQ(2^k*ψ⊕2^(n sub 1)); }
+		if (ψ&2^j)!=0{ phaseQ((2^k as uint[n])*ψ⊕2^(n sub 1)); }
 	}
 	for k in [0..n div 2){
 		(ψ[k],ψ[n-k-1]) := (ψ[n-k-1],ψ[k]);

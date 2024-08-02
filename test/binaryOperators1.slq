@@ -22,7 +22,6 @@ def main(){
 	auu:=u+u:uint[16];
 	aubc:=u+bc:uint[16];
 	aun₂:=u+1:uint[16];
-	auz₂:=u+-1:uint[16];
 	abcs:=bc+s:int[16];
 	abcu:=bc+u:uint[16];
 	abcn:=bc+n:!ℕ;
@@ -37,7 +36,6 @@ def main(){
 	anq:=n+q:!ℚ;
 	anr:=n+r:!ℝ;
 	azs₂:=-1+s:int[16];
-	azu₂:=-1+u:uint[16];
 	azbc:=z+bc:!ℤ;
 	azn:=z+n:!ℤ;
 	azz:=z+z:!ℤ;
@@ -64,7 +62,6 @@ def main(){
 	sub:=u-b:uint[16];
 	suu:=u-u:uint[16];
 	sun₂:=u-1:uint[16];
-	suz₂:=u - -1:uint[16];
 	sbcs:=bc-s;
 	sbcu:=bc-u;
 	sbcn:=bc-n:!ℤ;
@@ -79,7 +76,6 @@ def main(){
 	snq:=n-q:!ℚ;
 	snr:=n-r:!ℝ;
 	szs₂:=-1-s:int[16];
-	szu₂:=-1-u:uint[16];
 	szbc:=z-bc:!ℤ;
 	szn:=z-n:!ℤ;
 	szz:=z-z:!ℤ;
@@ -99,9 +95,9 @@ def main(){
 	nsub:=u sub b:uint[16];
 	nsuu:=u sub u:uint[16];
 	nsubc:=u sub bc:uint[16];
-	nsun₂:=u sub 1:uint[16];
-	nsuz₂:=u sub -1:uint[16];
 	nsmall:=0:!ℕ;
+	nsun:=u sub nsmall;
+	nsun₂:=u sub 1:uint[16];
 	nsbb:=b sub b;
 	usmall:=0:uint[16];
 	nsbu:=b sub usmall:uint[16];
@@ -114,7 +110,6 @@ def main(){
 	nsnbc:=n sub bc:!ℕ;
 	nsnn:=n sub n:!ℕ;
 	nsnz:=n sub z:!ℤ;
-	nszu₂:=-(-10) sub u:uint[16];
 	zlarge:=-(-10);
 	nszbc:=zlarge sub bc:!ℤ;
 	nszn:=zlarge sub n:!ℤ;
