@@ -1,4 +1,12 @@
 
+
+
+/+
+def bar(x: !Π(n:!ℕ^1)qfree. 𝔹^n)qfree⇒x(3,); // crash
+def zeros(m:!ℕ,)qfree⇒vector(m,0:𝔹);
+def main()⇒bar(zeros₁);
++/
+
 /+
 def f(x:𝔹^2,const y:𝔹)qfree:𝔹^2⇒x;
 def main(){

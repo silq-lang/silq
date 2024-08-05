@@ -1,6 +1,42 @@
 // skipped
 
 /+
+def x[cond:!𝔹,t1:*,t2:*](arg:(()qfree=>if cond { t1 } else { t2 })()) {
+	return measure(arg); // TODO
+}
++/
+
+/+
+def main() {
+	x := false;
+	y := H(0:B);
+	z := dup(y);
+	return (x && measure(y), H(z)); // TODO: error
+}
++/
+
+/+
+def main(){
+	x:=1:uint[2];
+	//y:=true:𝔹 coerce uint[2];
+	//return x+y;
+	//return -2 sub -2;
+	//return x^2;
+	return -3&-5/2;
+}
++/
+
+/+
+def foo():!𝔹{ assert(false); } // TODO
+
+def main(){
+	x:=true;
+	x||=foo();
+	return x;
+}
++/
+
+/+
 def pack4(w0: uint[16], w1: uint[16], w2: uint[16], w3: uint[16]) qfree: uint[64] {
 	return ((w0 as B^16) ~ (w1 as B^16) ~ (w2 as B^16) ~ (w3 as B^16)) as uint[64];
 }
