@@ -1751,27 +1751,22 @@ struct QState{
 		state=new_;
 		return makeTuple(ast.type.unit,[]);
 	}
-	private Value rot(alias unitary)(Value args){
-		enforce(args.tag==Value.Tag.array_);
-		enforce(args.array_.length==2);
-		auto φ=args.array_[0],x=args.array_[1];
+	Value rot(alias unitary)(Value φ, Value x){
 		φ=φ.convertTo(ℝ(true));
 		return x.applyUnitary!unitary(this,Bool(false),φ.fval);
 	}
-	Value rX(Value args){
-		return rot!rXUnitary(args);
+	Value rX(Value φ, Value x){
+		return rot!rXUnitary(φ, x);
 	}
-	Value rY(Value args){
-		return rot!rYUnitary(args);
+	Value rY(Value φ, Value x){
+		return rot!rYUnitary(φ, x);
 	}
-	Value rZ(Value args){
-		return rot!rZUnitary(args);
+	Value rZ(Value φ, Value x){
+		return rot!rZUnitary(φ, x);
 	}
-	Value array_(Expression type,Value arg){
-		enforce(arg.tag==Value.Tag.array_);
-		enforce(arg.array_.length==2);
-		enforce(arg.array_[0].isℤ());
-		return makeArray(type,iota(smallValue(arg.array_[0].asℤ)).map!(_=>arg.array_[1].dup(this)).array);
+	Value array_(Expression type, Value len, Value val){
+		enforce(len.isℤ());
+		return makeArray(type,iota(smallValue(len.asℤ)).map!(_=>val.dup(this)).array);
 	}
 	alias vector=array_;
 	Value reverse(ref QState qstate,Expression type,Value arg){
@@ -2000,9 +1995,8 @@ struct Interpreter(QState){
 			if(isType(e)) return QState.typeValue(e.type); // TODO: get rid of this
 			if(auto id=cast(Identifier)e){
 				if(!id.meaning&&util.among(id.name,"π","pi")) return QState.π;
-				if(id.substitute){
-					if(auto vd=cast(VarDecl)id.meaning)
-						return doIt2(vd.initializer);
+				if(auto init=id.getInitializer()){
+					return doIt2(init);
 				}
 				auto r=lookupMeaning(qstate,id);
 				enforce(r.isValid,"unsupported");
@@ -2037,6 +2031,88 @@ struct Interpreter(QState){
 			if(auto ume=cast(UNotExp)e) return doIt(ume.e).eqZ;
 			if(auto ume=cast(UBitNotExp)e) return ~doIt(ume.e);
 			if(auto le=cast(LambdaExp)e) return qstate.makeFunction(le.fd,le.fd.scope_);
+			static if(language==silq) if(string prim=isPrimitiveCall(e)){
+				Expression[] argExpr = (cast(TupleExp)(cast(CallExp)e).arg).e;
+				QState.Value[] args = argExpr.map!(arg => doIt(arg)).array;
+				switch(prim){
+					case "dump":
+					   enforce(args.length==0);
+					   qstate.dump();
+					   stdout.flush();
+					   return qstate.makeTuple(.unit,[]);
+					case "exit":
+					   enforce(args.length==0);
+					   enforce(0, "terminated by exit call");
+					   break;
+					case "dup":
+					   enforce(args.length==1);
+					   return args[0].dup(qstate);
+					case "array":
+						enforce(args.length==2);
+						return qstate.array_(e.type, args[0], args[1]);
+					case "vector":
+						enforce(args.length==2);
+						return qstate.vector(e.type, args[0], args[1]);
+					case "M":
+						enforce(args.length==1);
+						return qstate.measure(args[0]);
+					case "H":
+						enforce(args.length==1);
+						return qstate.H(args[0]);
+					case "X":
+						enforce(args.length==1);
+						return qstate.X(args[0]);
+					case "Y":
+						enforce(args.length==1);
+						return qstate.Y(args[0]);
+					case "Z":
+						enforce(args.length==1);
+						return qstate.Z(args[0]);
+					case "P":
+						enforce(args.length==1);
+						return qstate.phase(args[0]);
+					case "rX":
+						enforce(args.length==2);
+						return qstate.rX(args[0], args[1]);
+					case "rY":
+						enforce(args.length==2);
+						return qstate.rY(args[0], args[1]);
+					case "rZ":
+						enforce(args.length==2);
+						qstate.rZ(args[0], args[1].dup(qstate)).forget(qstate);
+					   return qstate.makeTuple(.unit,[]);
+					case "print": {
+						enforce(args.length==1);
+						FormattingOptions opt={type: FormattingType.dump};
+						writeln(args[0].toStringImpl(opt)); stdout.flush();
+						return qstate.makeTuple(.unit,[]);
+					}
+					static foreach(f;["floor","ceil","sqrt","exp","log","sin","asin","cos","acos","tan","atan"]){
+						case "real." ~ f:
+							assert(args.length==1);
+							return mixin(`args[0].`~f)();
+					}
+					static foreach(f;["sin","asin","cos","acos"]){
+						case "qfixed."~f:
+							assert(args.length==1);
+							Expression ret = e.type;
+							assert(isInt(ret) || isUint(ret));
+							QState.Value n = doIt((cast(CallExp) ret).arg);
+							return mixin(`args[0].`~f~`Q`)(n.asℤ(),ret);
+					}
+					case "qfixed.inv": {
+						Expression ret = e.type;
+						assert(isUint(ret));
+						QState.Value n = doIt((cast(CallExp) ret).arg);
+						assert(args.length == 2);
+						QState.Value x = args[0];
+						auto c = args[1].asℝ();
+						enforce(0 <= c, "invQ argument negative");
+						return x.invQ(n.asℤ(), ret, c);
+					}
+					default: enforce(0, text("TODO Primitive: ", prim)); assert(0);
+				}
+			}
 			if(auto ce=cast(CallExp)e){
 				auto target=unwrap(ce.e);
 				auto id=cast(Identifier)target;
@@ -2045,6 +2121,8 @@ struct Interpreter(QState){
 				if(fe){
 					id=fe.f;
 					thisExp=doIt(fe.e);
+					enforce(0, "TODO: method call");
+					assert(0);
 				} else {
 					switch(isBuiltIn(id)){
 						case BuiltIn.none:
@@ -2061,76 +2139,8 @@ struct Interpreter(QState){
 							assert(0);
 					}
 				}
-
-				static if(language==silq) switch(isPrimitive(target)){
-					case null: break;
-					case "dump":
-					   qstate.dump();
-					   stdout.flush();
-					   return qstate.makeTuple(.unit,[]);
-					case "exit":
-					   enforce(0, "terminated by exit call");
-					   break;
-					case "dup": return doIt(ce.arg).dup(qstate);
-					case "array": return qstate.array_(ce.type,doIt(ce.arg));
-					case "vector": return qstate.vector(ce.type,doIt(ce.arg));
-					case "M": return qstate.measure(doIt(ce.arg));
-					case "H": return qstate.H(doIt(ce.arg));
-					case "X": return qstate.X(doIt(ce.arg));
-					case "Y": return qstate.Y(doIt(ce.arg));
-					case "Z": return qstate.Z(doIt(ce.arg));
-					case "P": return qstate.phase(doIt(ce.arg));
-					case "rX": return qstate.rX(doIt(ce.arg));
-					case "rY": return qstate.rY(doIt(ce.arg));
-					case "rZ": return qstate.rZ(doIt(ce.arg));
-					case "print":
-					   FormattingOptions opt={type: FormattingType.dump};
-					   writeln(doIt(ce.arg).toStringImpl(opt)); stdout.flush();
-					   return qstate.makeTuple(.unit,[]);
-					case "real.floor": return doIt(ce.arg).floor();
-					case "real.ceil": return doIt(ce.arg).ceil();
-					case "real.sqrt": return doIt(ce.arg).sqrt();
-					case "real.exp": return doIt(ce.arg).exp();
-					case "real.log": return doIt(ce.arg).log();
-					case "real.sin": return doIt(ce.arg).sin();
-					case "real.asin": return doIt(ce.arg).asin();
-					//case "real.csc": return doIt(ce.arg).csc();
-					//case "real.acsc": return doIt(ce.arg).acsc();
-					case "real.cos": return doIt(ce.arg).cos();
-					case "real.acos": return doIt(ce.arg).acos();
-					//case "real.sec": return doIt(ce.arg).sec();
-					//case "real.asec": return doIt(ce.arg).asec();
-					case "real.tan": return doIt(ce.arg).tan();
-					case "real.atan": return doIt(ce.arg).atan();
-					//case "real.cot": return doIt(ce.arg).cot();
-					//case "real.acot": return doIt(ce.arg).acot();
-					static foreach(f;["sin","asin","cos","acos"]){
-						case "qfixed."~f:
-							Expression ret = ce.type;
-							assert(isInt(ret) || isUint(ret));
-							QState.Value n = doIt((cast(CallExp) ret).arg);
-							QState.Value arg = doIt(ce.arg);
-							return mixin(`arg.`~f~`Q`)(n.asℤ(),ret);
-					}
-					case "qfixed.inv":
-						Expression ret = ce.type;
-						assert(isUint(ret));
-						auto paramTy = cast(TupleTy) ce.arg.type;
-						assert(paramTy);
-						assert(paramTy.types.length == 2);
-						assert(isUint(paramTy[0]));
-						assert(paramTy[1] is ℝ());
-						QState.Value n = doIt((cast(CallExp) ret).arg);
-						QState.Value args = doIt(ce.arg);
-						assert(args.tag == QState.Value.Tag.array_);
-						assert(args.array_.length == 2);
-						QState.Value arg = args.array_[0];
-						auto c = args.array_[0].asℝ();
-						enforce(0 <= c, "invQ argument negative");
-						return arg.invQ(n.asℤ(), ret, c);
-					default: enforce(0, text("TODO Primitive: ", ce.e)); assert(0);
-				}
-				auto fun=doIt(ce.e), arg=doIt(ce.arg);
+				auto fun=doIt(ce.e);
+				auto arg=doIt(ce.arg);
 				return qstate.call(fun,arg,ce.type,ce.loc);
 			}
 			if(auto fe=cast(ForgetExp)e){
