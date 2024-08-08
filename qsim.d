@@ -480,8 +480,7 @@ struct QState{
 			if(type==ℚt(true)) return Tag.qval;
 			if(type==ℤt(true)) return Tag.zval;
 			if(type==Bool(true)) return Tag.bval;
-			if(isInt(type)) return Tag.intval;
-			if(isUint(type)) return Tag.uintval;
+			if(auto intTy=isFixedIntTy(type)) return intTy.isSigned ? Tag.intval : Tag.uintval;
 			if(type==typeTy||type==ctypeTy||type==qtypeTy) return Tag.bval; // (optimization)
 			if(isTypeTy(type)) return Tag.bval; // TODO: ok?
 			enforce(0,text("TODO: representation for type ",type," ",typeid(type)));
@@ -851,12 +850,12 @@ struct QState{
 			return this;
 		}
 		Value opIndex(ℤ i)in{
-			assert(tag==Tag.array_||isInt(type)||isUint(type));
+			assert(tag==Tag.array_||isFixedIntTy(type));
 		}do{
 			final switch(tag){
 				case Tag.array_: enforce(0<=i&&i<array_.length,"index out of bounds"); return array_[to!size_t(i)];
 				case Tag.quval:
-					assert(isInt(type)||isUint(type));
+					assert(isFixedIntTy(type));
 					return makeQuval(Bool(false),new IndexQVal(this,makeInteger(ℤ(i))));
 				case Tag.uintval:
 					enforce(0<=i&&i<uintval.nbits,"index out of bounds");
@@ -893,7 +892,7 @@ struct QState{
 					enforce(array_.length,"array index out of bounds");
 					return build(array_,0);
 				case Tag.uintval,Tag.intval,Tag.quval:
-					assert(isInt(type)||isUint(type));
+					assert(isFixedIntTy(type));
 					return makeQuval(Bool(false),new IndexQVal(this,i));
 				case Tag.fval,Tag.qval,Tag.zval,Tag.bval: enforce(0,"TODO?"); assert(0);
 				case Tag.record,Tag.closure: assert(0);
@@ -931,8 +930,10 @@ struct QState{
 				static if(is(typeof(mixin(op~` zval`))))
 					if(type==ℤt(true))
 						return makeInteger(mixin(op~` zval`)); // TODO: wraparound
-				if(isInt(type)) return makeInt(type,mixin(op~` intval`));
-				if(isUint(type)) return makeUint(type,mixin(op~` uintval`));
+				if(auto intTy=isFixedIntTy(type)){
+					if(intTy.isSigned) return makeInt(type,mixin(op~` intval`));
+					else return makeUint(type,mixin(op~` uintval`));
+				}
 				if(type==Bool(true)){
 					static if(op=="~") return makeBool(!bval);
 					else return makeInteger(mixin(op~` ℤ(cast(int)bval)`));
@@ -998,8 +999,10 @@ struct QState{
 			}else static if(op=="<<"||op==">>"){
 				if(type==ℤt(true)) return makeInteger(mixin(`zval `~op~` smallValue(r.asℤ())`));
 				if(type==Bool(true)) return makeInteger(mixin(`ℤ(cast(int)bval) `~op~` smallValue(r.asℤ())`));
-				if(isInt(type)) return makeInt(type,mixin(`intval `~op~` smallValue(r.asℤ())`));
-				if(isUint(type)) return makeUint(type,mixin(`uintval `~op~` smallValue(r.asℤ())`));
+				if(auto intTy=isFixedIntTy(type)){
+					if(intTy.isSigned) return makeInt(type,mixin(`intval `~op~` smallValue(r.asℤ())`));
+					else return makeUint(type,mixin(`uintval `~op~` smallValue(r.asℤ())`));
+				}
 			}else{
 				static if(op=="/"||op=="%") enforce(!r.eqZImpl,"division by zero");
 				if(type!=ntype||r.type!=ntype){
@@ -1011,16 +1014,21 @@ struct QState{
 							if(tag==Tag.intval) nbits=intval.nbits;
 							else if(tag==Tag.uintval) nbits=uintval.nbits;
 						}
-						if(isInt(ntype)) return makeInt(ntype,BitInt!true(nbits, floormod(asℤ, r.asℤ)));
-						else if(isUint(ntype)) return makeUint(ntype,BitInt!false(nbits, floormod(asℤ, r.asℤ)));
-						else if(ntype==Bool(true)) return makeBool(!!floormod(asℤ, r.asℤ));
+						if(auto intTy=isFixedIntTy(ntype)){
+							if(intTy.isSigned) return makeInt(ntype,BitInt!true(nbits, floormod(asℤ, r.asℤ)));
+							else return makeUint(ntype,BitInt!false(nbits, floormod(asℤ, r.asℤ)));
+						}else if(ntype==Bool(true)) return makeBool(!!floormod(asℤ, r.asℤ));
 					}else{
 						if(type==ntype&&util.among(r.type,Bool(true),ℕt(true),ℤt(true))){
-							if(isInt(type)) return this.opBinary!op(makeInt(ntype,BitInt!true(intval.nbits,r.asℤ())));
-							if(isUint(type)) return this.opBinary!op(makeUint(ntype,BitInt!false(uintval.nbits,r.asℤ())));
+							if(auto intTy=isFixedIntTy(type)){
+								if(intTy.isSigned) return this.opBinary!op(makeInt(ntype,BitInt!true(intval.nbits,r.asℤ())));
+								else return this.opBinary!op(makeUint(ntype,BitInt!false(uintval.nbits,r.asℤ())));
+							}
 						}else if(util.among(type,Bool(true),ℕt(true),ℤt(true))&&r.type==ntype){
-							if(isInt(r.type)) return makeInt(ntype,BitInt!true(r.intval.nbits,asℤ())).opBinary!op(r);
-							if(isUint(r.type)) return makeUint(ntype,BitInt!false(r.uintval.nbits,asℤ())).opBinary!op(r);
+							if(auto intTy=isFixedIntTy(r.type)){
+								if(intTy.isSigned) return makeInt(ntype,BitInt!true(r.intval.nbits,asℤ())).opBinary!op(r);
+								else return makeUint(ntype,BitInt!false(r.uintval.nbits,asℤ())).opBinary!op(r);
+							}
 							// TODO: rat
 						}
 					}
@@ -1032,10 +1040,12 @@ struct QState{
 					alias floor=util.floor;
 					if(type==ℚt(true)) return makeRational(qval-ℚ(floor(qval/r.qval))*r.qval);
 					if(type==ℤt(true)) return makeInteger(floormod(zval, r.zval));
-					if(isInt(type)) return makeInt(ntype,floormod(intval,r.intval));
-					if(isUint(type)){
-						if(r.eqZImpl) return this;
-						return makeUint(ntype,uintval%r.uintval);
+					if(auto intTy=isFixedIntTy(type)){
+						if(intTy.isSigned) return makeInt(ntype,floormod(intval,r.intval));
+						else{
+							if(r.eqZImpl) return this;
+							return makeUint(ntype,uintval%r.uintval);
+						}
 					}
 				}else{
 					static if(is(typeof(mixin(`fval `~op~` r.fval`))))
@@ -1294,14 +1304,13 @@ struct QState{
 			return bval;
 		}
 		bool isℤ(){
-			return isClassical()&&(isInt(type)||isUint(type)||type==ℤt(true)||type==Bool(true));
+			return isClassical()&&(isFixedIntTy(type)||type==ℤt(true)||type==Bool(true));
 		}
 		ℤ asℤ()in{
 			assert(isℤ());
 		}do{
 			if(type==ℤt(true)) return zval;
-			if(isInt(type)) return intval.val;
-			if(isUint(type)) return uintval.val;
+			if(auto intTy=isFixedIntTy(type)) return intTy.isSigned ? intval.val : uintval.val;
 			if(type==Bool(true)) return ℤ(cast(int)bval);
 			enforce(0,text("TODO: asℤ for type ",type));
 			assert(0);
@@ -1896,12 +1905,12 @@ struct Interpreter(QState){
 			if(consumeArg) return value;
 			return value.dup(qstate);
 		}
-		if(isUint(type)||isInt(type)){
-			auto ce=cast(CallExp)type;
-			auto len=runExp(ce.arg);
-			if(!cast(LiteralExp)ce.arg){ // TODO: this is a hack, store integer bit lengths classically instead
+		if(auto intTy=isFixedIntTy(type)){
+			auto len=runExp(intTy.bits);
+			if(!cast(LiteralExp)intTy.bits){ // TODO: this is a hack, store integer bit lengths classically instead
 				auto llen=LiteralExp.makeInteger(len.asℤ);
-				llen.loc=ce.arg.loc;
+				llen.loc=intTy.bits.loc;
+				auto ce=cast(CallExp)type;
 				auto ntype=new CallExp(ce.e,llen,ce.isSquare,ce.isClassical_);
 				ntype.type=type.type;
 				ntype.sstate=SemState.completed;
@@ -1911,19 +1920,21 @@ struct Interpreter(QState){
 		}
 		QState.Value default_(){
 			if(consumeArg) value.consumeOnRead(); // TODO: ok?
-			auto ce=cast(CallExp)type;
-			if(ce&&(isUint(type)||isInt(type))&&value.tag==QState.Value.Tag.array_)
-				enforce(qstate.makeInteger(ℤ(value.array_.length)).compare!"=="(runExp(ce.arg)).neqZImpl,"length mismatch for conversion to fixed-size integer");
+			if(auto intTy=isFixedIntTy(type)){
+				if(value.tag==QState.Value.Tag.array_)
+					enforce(qstate.makeInteger(ℤ(value.array_.length)).compare!"=="(runExp(intTy.bits)).neqZImpl,"length mismatch for conversion to fixed-size integer");
+			}
 			if(type==ℕt(true)) enforce(value.compare!">="(qstate.makeInteger(ℤ(0))).neqZImpl,"negative value not representable as a natural number");
 			return value.convertTo(type);
 		}
 		if(isSubtype(value.type,type)) return default_();
 		if(isSubtype(value.type,ℤt(true))){
-			auto ce=cast(CallExp)type;
-			if(ce&&isUint(type))
-				return qstate.makeUint(type.getClassical(),BitInt!false(smallValue(runExp(ce.arg).asℤ()),value.asℤ())).convertTo(type);
-			if(ce&&isInt(type))
-				return qstate.makeInt(type.getClassical(),BitInt!true(smallValue(runExp(ce.arg).asℤ()),value.asℤ())).convertTo(type);
+			if(auto intTy=isFixedIntTy(type)){
+				if(intTy.isSigned)
+					return qstate.makeInt(type.getClassical(),BitInt!true(smallValue(runExp(intTy.bits).asℤ()),value.asℤ())).convertTo(type);
+				else
+					return qstate.makeUint(type.getClassical(),BitInt!false(smallValue(runExp(intTy.bits).asℤ()),value.asℤ())).convertTo(type);
+			}
 		}
 		if(isUint(value.type)&&isSubtype(ℕt(true),type)){
 			assert(value.tag==QState.Value.Tag.uintval);
@@ -1948,18 +1959,19 @@ struct Interpreter(QState){
 				return qstate.makeTuple(type,value.array_.map!(v=>convertTo(v,vec.next,consumeArg)).array);
 			}
 		}
-		auto ce=cast(CallExp)value.type;
-		if((isInt(value.type)||isUint(value.type))&&!value.type.isClassical()&&QState.Value.getTag(type)==QState.Value.Tag.array_){
-			assert(!type.isClassical);
-			auto len=runExp(ce.arg); // TODO: maybe store lengths classically instead
-			enforce(len.isℤ());
-			auto nbits=smallValue(len.asℤ());
-			auto tmp=value.dup(qstate); // TODO: don't do this if value is already a variable
-			auto r=qstate.makeTuple(arrayTy(Bool(false)),iota(nbits).map!(i=>(tmp&qstate.makeInteger(ℤ(1)<<i)).neqZ).array).convertTo(type).toVar(qstate,false);
-			tmp.forget(qstate);
-			if(consumeArg) value.forget(qstate);
-			else r.consumeOnRead();
-			return r;
+		if(auto intTy=isFixedIntTy(value.type)){
+			if(!intTy.isClassical&&QState.Value.getTag(type)==QState.Value.Tag.array_){
+				assert(!type.isClassical);
+				auto len=runExp(intTy.bits); // TODO: maybe store lengths classically instead
+				enforce(len.isℤ());
+				auto nbits=smallValue(len.asℤ());
+				auto tmp=value.dup(qstate); // TODO: don't do this if value is already a variable
+				auto r=qstate.makeTuple(arrayTy(Bool(false)),iota(nbits).map!(i=>(tmp&qstate.makeInteger(ℤ(1)<<i)).neqZ).array).convertTo(type).toVar(qstate,false);
+				tmp.forget(qstate);
+				if(consumeArg) value.forget(qstate);
+				else r.consumeOnRead();
+				return r;
+			}
 		}
 		if(consumeArg) value.consumeOnRead(); // TODO: ok?
 		return default_();
@@ -2096,14 +2108,19 @@ struct Interpreter(QState){
 						case "qfixed."~f:
 							assert(args.length==1);
 							Expression ret = e.type;
-							assert(isInt(ret) || isUint(ret));
-							QState.Value n = doIt((cast(CallExp) ret).arg);
+							auto retInt = isFixedIntTy(ret);
+							assert(retInt);
+							assert(!retInt.isClassical);
+							QState.Value n = doIt(retInt.bits);
 							return mixin(`args[0].`~f~`Q`)(n.asℤ(),ret);
 					}
 					case "qfixed.inv": {
 						Expression ret = e.type;
-						assert(isUint(ret));
-						QState.Value n = doIt((cast(CallExp) ret).arg);
+						auto retInt = isFixedIntTy(ret);
+						assert(retInt);
+						assert(!retInt.isSigned);
+						assert(!retInt.isClassical);
+						QState.Value n = doIt(retInt.bits);
 						assert(args.length == 2);
 						QState.Value x = args[0];
 						auto c = args[1].asℝ();
@@ -2177,7 +2194,7 @@ struct Interpreter(QState){
 						return QState.makeInteger(ℤ(le.lit.str));
 					}else if(le.type==ℝ(true)){
 						return QState.makeReal(le.lit.str);
-					}else if(isInt(le.type)||isUint(le.type)){
+					}else if(isFixedIntTy(le.type)){
 						return convertTo(QState.makeInteger(ℤ(le.lit.str)), le.type, false);
 					}else if(le.type==Bool(true)){
 						return QState.makeBool(le.lit.str=="1");
