@@ -1,0 +1,9 @@
+
+x := !ℕ;
+def main(){
+	def foo(n:x)=>dup[x](n);
+	__show(__query("type", foo));
+	def bar(n:x)=>dup[x](dup[x](n));
+	__show(__query("type", bar));
+	return foo(bar(2));
+}

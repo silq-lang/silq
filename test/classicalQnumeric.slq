@@ -1,5 +1,5 @@
 
 t:=ℤ;
 def main(){
-	return 0:!t; // TODO
+	return 0:!t;
 }

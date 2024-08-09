@@ -1,0 +1,11 @@
+// args: --run
+
+x:=!ℕ;
+y:=ℕ;
+def foo(n:x)=>dup(n);
+def bar(n:!y)⇒dup(n);
+def main(){
+	r:=foo(2)+bar(3);
+	assert(r==5);
+	return r;
+}
