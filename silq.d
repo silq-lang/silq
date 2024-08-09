@@ -6,7 +6,7 @@ import std.array, std.string, std.algorithm, std.conv;
 import util, util.io;
 import ast.lexer, ast.parser, ast.expression, ast.declaration, ast.error, help;
 import astopt;
-import options, ast.scope_, ast.semantic_, ast.summarize;
+import options, ast.scope_, ast.modules, ast.summarize;
 
 static this(){
 	opt.importPath ~= buildPath(dirName(file.thisExePath),"library");
