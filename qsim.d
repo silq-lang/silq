@@ -19,9 +19,14 @@ import std.random;
 import std.complex;
 import util.math;
 
+struct FrameInfo {
+	FunctionDef fd;
+	Location loc; // location within caller, not `fd`
+}
+
 class LocalizedException: Exception{
 	Location loc;
-	Location[] stackTrace;
+	FrameInfo[] stackTrace;
 	this(Exception e,Location loc){
 		super(e.msg,e.file,e.line,e);
 		this.loc=loc;
@@ -55,14 +60,13 @@ class QSim{
 			Location loc = ex.loc;
 			size_t i=0;
 			// Suppress stack frames in prelude
-			auto preludeSource = modules[preludePath()][0][0].loc.source;
-			while(loc.source is preludeSource && i<ex.stackTrace.length) {
-				loc=ex.stackTrace[i];
+			while(i<ex.stackTrace.length && ex.stackTrace[i].fd.hasAttribute("artificial")) {
+				loc=ex.stackTrace[i].loc;
 				i++;
 			}
 			err.error(ex.msg,loc);
 			for(;i<ex.stackTrace.length;i++){
-				err.note("called from here",ex.stackTrace[i]);
+				err.note("called from here",ex.stackTrace[i].loc);
 			}
 			return QState.empty();
 		}
@@ -1574,6 +1578,18 @@ struct QState{
 		enforce(fun.body_,text("error: need function body to simulate function ",fun));
 		auto ncur=pushFrame();
 		enforce(!fun.isConstructor,"TODO: constructors");
+		if(fun.hasAttribute("trace")){
+			string[2] paren = fun.isSquare ? ["[", "]"] : arg.tag==Value.Tag.array_ ? ["", ""] : ["(", ")"];
+			string name = fun.getName;
+			if(name.length==0) {
+				auto parent = fun;
+				while(parent && parent.getName.length==0) parent = parent.scope_.getFunction();
+				name = (parent ? parent.getName : "") ~ ".lambda";
+			}
+			FormattingOptions opt = {type: FormattingType.dump};
+			writeln(name ~ paren[0] ~ arg.toStringImpl(opt) ~ paren[1]);
+			stdout.flush();
+		}
 		if(fun.isNested){
 			assert(!!context);
 			ncur.passContext(fun.captures,fun.contextName,*context);
@@ -1593,7 +1609,7 @@ struct QState{
 		try{
 			intp.runFun(nnstate);
 		}catch(LocalizedException ex){
-			ex.stackTrace~=loc;
+			ex.stackTrace~=FrameInfo(fun, loc);
 			throw ex;
 		}
 		this=nnstate.popFrame(this.popFrameCleanup);
@@ -2543,7 +2559,7 @@ struct Interpreter(QState){
 	}
 	void runStm2(Expression e,ref QState retState){
 		if(!qstate.state.length) return;
-		if(opt.trace && !isInPrelude(functionDef)){
+		if(opt.trace && !functionDef.hasAttribute("artificial")){
 			writeln(qstate);
 			writeln();
 			writeln("STATEMENT");

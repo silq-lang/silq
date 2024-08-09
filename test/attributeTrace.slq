@@ -1,0 +1,12 @@
+def generic1[n: !N](x: !B^n) @trace qfree: B^n {
+	return x;
+}
+
+def generic2[n: !N] @trace (x: !B^n) @trace qfree: B^n {
+	return x;
+}
+
+def main() {
+	generic1(());
+	generic2(());
+}
