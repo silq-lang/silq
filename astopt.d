@@ -9,14 +9,11 @@ enum language=silq;
 
 enum defaultExtension="slq";
 
-@property string preludePath(){
-	return "prelude.slq";
-}
+immutable string[] preludePaths=["prelude.slq"];
+immutable int preludeIndex=0;
 
 enum operatorLowering=true;
-@property string operatorsPath(){
-	return "__internal/operators.slq";
-}
+immutable string operatorsPath= "__internal/operators.slq";
 
 bool allowUnsafeCaptureConst=false;
 bool projectForget=false;
