@@ -35,9 +35,11 @@ auto to(string unit,T)(Duration d)if(unit=="seconds"||unit=="msecs"){
 }
 
 bool dashDashBad=false;
+bool dashDashTodo=false;
 int parseFlags(string[] flags){
 	foreach(flag;flags){
 		if(flag=="--bad") dashDashBad=true;
+		else if(flag=="--todo") dashDashTodo=true;
 		else{
 			stderr.writeln("unrecognized flag: ",flag);
 			return 1;
@@ -61,7 +63,7 @@ int main(string[] args){
 	foreach(source;sources){
 		if(source.startsWith("./")) source=source[2..$];
 		if(source.fileStartsWithFlag("skip")){
-			if(!dashDashBad){
+			if(!dashDashBad&&!dashDashTodo){
 				if(colorize) writeln(TODOColor,BOLD,"skipped",RESET,"         ",source);
 				else writeln("skipping ",source);
 			}
@@ -69,7 +71,7 @@ int main(string[] args){
 			continue;
 		}else{
 			if(colorize) write(CLEAR_LINE,BOLD,"running",RESET,"         ",source);
-			else if(!dashDashBad) std.stdio.write("running ",source);
+			else if(!dashDashBad&&!dashDashTodo) std.stdio.write("running ",source);
 		}
 		stdout.flush();
 		auto resultsTime=source.getResults;
@@ -78,28 +80,30 @@ int main(string[] args){
 		total+=summary;
 		if(writeLines) writeln();
 		else if(colorize) write("\r");
-		else if(!dashDashBad) write(": ");
+		else if(!dashDashBad&&!dashDashTodo) write(": ");
 		if(summary.isInteresting){
 			if(summary.unexpectedErrors){
 				if(colorize) write(failColor,BOLD,"failed ",RESET);
-				else if(!dashDashBad) std.stdio.write("failed");
+				else if(!dashDashBad&&!dashDashTodo) std.stdio.write("failed");
 				else std.stdio.write("running ",source,": failed");
 			}else if(summary.missingErrors) {
 				if(colorize) write(failColor,BOLD,"invalid",RESET);
-				else if(!dashDashBad) std.stdio.write("invalid",);
+				else if(!dashDashBad&&!dashDashTodo) std.stdio.write("invalid",);
 				else std.stdio.write("running ",source,": invalid");
 			}else if(!dashDashBad){
 				if(summary.todos&&!summary.obsoleteTodos){
 					if(colorize) write(TODOColor,BOLD," TODO  ",RESET);
-					else write("TODO");
+					else if(!dashDashTodo) write("TODO");
+					else std.stdio.write("running ",source,": TODO");
 				}else{
 					if(colorize) write(passColor,"fixed  ",RESET);
-					else write("fixed");
+					else if(!dashDashTodo) write("fixed");
+					else std.stdio.write("running ",source,": fixed");
 				}
 			}
 			//write(summary);
 		}
-		if(!dashDashBad||summary.isBad){
+		if((!dashDashBad||summary.isBad)&&(!dashDashTodo||summary.isInteresting)){
 			if(!summary.isInteresting){
 				if(colorize) write(passColor,BOLD,"passed ",RESET);
 				else std.stdio.write("passed");
@@ -110,7 +114,7 @@ int main(string[] args){
 			totalTime+=time;
 			if(colorize) writeln(" ",source);
 			else writeln();
-		}else std.stdio.write("\r",CLEAR_LINE);
+		}else if(colorize) std.stdio.write("\r",CLEAR_LINE);
 	}
 	writeln();
 	if(colorize) writeln(BOLD,"TOTAL:",RESET," ",sources.length);
