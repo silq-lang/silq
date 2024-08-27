@@ -69,7 +69,7 @@ int main(string[] args){
 			continue;
 		}else{
 			if(colorize) write(CLEAR_LINE,BOLD,"running",RESET,"         ",source);
-			else if(!dashDashBad) write("running"," ",source);
+			else if(!dashDashBad) std.stdio.write("running ",source);
 		}
 		stdout.flush();
 		auto resultsTime=source.getResults;
@@ -80,13 +80,14 @@ int main(string[] args){
 		else if(colorize) write("\r");
 		else if(!dashDashBad) write(": ");
 		if(summary.isInteresting){
-			int regressions=summary.unexpectedErrors;
 			if(summary.unexpectedErrors){
 				if(colorize) write(failColor,BOLD,"failed ",RESET);
-				else std.stdio.write("failed ",source);
+				else if(!dashDashBad) std.stdio.write("failed");
+				else std.stdio.write("running ",source,": failed");
 			}else if(summary.missingErrors) {
 				if(colorize) write(failColor,BOLD,"invalid",RESET);
-				else std.stdio.write("invalid ",source);
+				else if(!dashDashBad) std.stdio.write("invalid",);
+				else std.stdio.write("running ",source,": invalid");
 			}else if(!dashDashBad){
 				if(summary.todos&&!summary.obsoleteTodos){
 					if(colorize) write(TODOColor,BOLD," TODO  ",RESET);
@@ -98,17 +99,18 @@ int main(string[] args){
 			}
 			//write(summary);
 		}
-		if(!dashDashBad||summary.unexpectedErrors||summary.missingErrors){
+		if(!dashDashBad||summary.isBad){
 			if(!summary.isInteresting){
 				if(colorize) write(passColor,BOLD,"passed ",RESET);
-				else std.stdio.write("passed ",source);
+				else std.stdio.write("passed");
 				passed++;
+				if(colorize) writef(" % 5.0fms",time.to!("msecs",double));
+				else writef(" in %.0fms",time.to!("msecs",double));
 			}
-			write(" % 5.0fms".format(time.to!("msecs",double)));
 			totalTime+=time;
 			if(colorize) writeln(" ",source);
 			else writeln();
-		}
+		}else std.stdio.write("\r",CLEAR_LINE);
 	}
 	writeln();
 	if(colorize) writeln(BOLD,"TOTAL:",RESET," ",sources.length);
@@ -151,6 +153,9 @@ struct Summary{
 	bool isInteresting(){
 		foreach(i,x;this.tupleof) if(i!=1&&x) return true;
 		return false;
+	}
+	bool isBad(){
+		return unexpectedErrors||missingErrors;
 	}
 	void opOpAssign(string op:"+")(Summary rhs){
 		foreach(i,ref x;this.tupleof) x+=rhs.tupleof[i];
