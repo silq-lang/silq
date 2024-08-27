@@ -4,7 +4,7 @@
 
 // !b
 def __not_b(b:𝔹)lifted:𝔹;
-def __not_B(b:𝔹)lifted:𝔹;
+def __not_B(b:!𝔹)lifted:!𝔹;
 
 // -x
 def __uminus_s[n:!ℕ](x:int[n])lifted:int[n];
@@ -20,7 +20,7 @@ def __uminus_C(x:!ℂ)lifted:!ℂ;
 
 // ~x
 def __bitnot_b(b:𝔹)lifted:𝔹;
-def __bitnot_B(b:!𝔹)lifted:𝔹;
+def __bitnot_B(b:!𝔹)lifted:!𝔹;
 
 def __bitnot_s[n:!ℕ](x:int[n])lifted:int[n];
 def __bitnot_S[n:!ℕ](x:!int[n])lifted:!int[n];
@@ -272,7 +272,7 @@ def __andb_ℤ(a:!ℤ,b:!ℤ)lifted:!ℤ;
 def __lt_b(a:𝔹,b:𝔹)lifted:𝔹;
 def __lt_bB(a:𝔹,b:!𝔹)lifted:𝔹;
 def __lt_Bb(a:!𝔹,b:𝔹)lifted:𝔹;
-def __lt_BB(a:!𝔹,b:!𝔹)lifted:!𝔹;
+def __lt_B(a:!𝔹,b:!𝔹)lifted:!𝔹;
 
 def __lt_Nb(a:!ℕ,b:𝔹)lifted:𝔹;
 def __lt_bN(a:𝔹,b:!ℕ)lifted:𝔹;
@@ -356,7 +356,7 @@ def __lt_R(a:!ℝ,b:!ℝ)lifted:!𝔹;
 def __le_b(a:𝔹,b:𝔹)lifted:𝔹;
 def __le_bB(a:𝔹,b:!𝔹)lifted:𝔹;
 def __le_Bb(a:!𝔹,b:𝔹)lifted:𝔹;
-def __le_BB(a:!𝔹,b:!𝔹)lifted:!𝔹;
+def __le_B(a:!𝔹,b:!𝔹)lifted:!𝔹;
 
 def __le_Nb(a:!ℕ,b:𝔹)lifted:𝔹;
 def __le_bN(a:𝔹,b:!ℕ)lifted:𝔹;
@@ -440,7 +440,7 @@ def __le_R(a:!ℝ,b:!ℝ)lifted:!𝔹;
 def __gt_b(a:𝔹,b:𝔹)lifted:𝔹;
 def __gt_bB(a:𝔹,b:!𝔹)lifted:𝔹;
 def __gt_Bb(a:!𝔹,b:𝔹)lifted:𝔹;
-def __gt_BB(a:!𝔹,b:!𝔹)lifted:!𝔹;
+def __gt_B(a:!𝔹,b:!𝔹)lifted:!𝔹;
 
 def __gt_Nb(a:!ℕ,b:𝔹)lifted:𝔹;
 def __gt_bN(a:𝔹,b:!ℕ)lifted:𝔹;
@@ -524,7 +524,7 @@ def __gt_R(a:!ℝ,b:!ℝ)lifted:!𝔹;
 def __ge_b(a:𝔹,b:𝔹)lifted:𝔹;
 def __ge_bB(a:𝔹,b:!𝔹)lifted:𝔹;
 def __ge_Bb(a:!𝔹,b:𝔹)lifted:𝔹;
-def __ge_BB(a:!𝔹,b:!𝔹)lifted:!𝔹;
+def __ge_B(a:!𝔹,b:!𝔹)lifted:!𝔹;
 
 def __ge_Nb(a:!ℕ,b:𝔹)lifted:𝔹;
 def __ge_bN(a:𝔹,b:!ℕ)lifted:𝔹;
@@ -608,7 +608,7 @@ def __ge_R(a:!ℝ,b:!ℝ)lifted:!𝔹;
 def __eq_b(a:𝔹,b:𝔹)lifted:𝔹;
 def __eq_bB(a:𝔹,b:!𝔹)lifted:𝔹;
 def __eq_Bb(a:!𝔹,b:𝔹)lifted:𝔹;
-def __eq_BB(a:!𝔹,b:!𝔹)lifted:!𝔹;
+def __eq_B(a:!𝔹,b:!𝔹)lifted:!𝔹;
 
 def __eq_Nb(a:!ℕ,b:𝔹)lifted:𝔹;
 def __eq_bN(a:𝔹,b:!ℕ)lifted:𝔹;
@@ -703,7 +703,7 @@ def __eq_C(a:!ℂ,b:!ℂ)lifted:!𝔹;
 def __neq_b(a:𝔹,b:𝔹)lifted:𝔹;
 def __neq_bB(a:𝔹,b:!𝔹)lifted:𝔹;
 def __neq_Bb(a:!𝔹,b:𝔹)lifted:𝔹;
-def __neq_BB(a:!𝔹,b:!𝔹)lifted:!𝔹;
+def __neq_B(a:!𝔹,b:!𝔹)lifted:!𝔹;
 
 def __neq_Nb(a:!ℕ,b:𝔹)lifted:𝔹;
 def __neq_bN(a:𝔹,b:!ℕ)lifted:𝔹;
