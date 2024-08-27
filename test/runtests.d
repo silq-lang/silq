@@ -112,7 +112,7 @@ int main(string[] args){
 				else writef(" in %.0fms",time.to!("msecs",double));
 			}
 			totalTime+=time;
-			if(colorize) writeln(" ",source);
+			if(colorize) writeln(" ",source,CLEAR_LINE);
 			else writeln();
 		}else if(colorize) std.stdio.write("\r",CLEAR_LINE);
 	}
