@@ -33,6 +33,7 @@ def __bitnot_Z(x:!ℤ)lifted:!ℤ;
 // def __bitnot_R(x:!ℝ)lifted:!ℝ; // TODO?
 // def __bitnot_C(x:!ℂ)lifted:!ℂ; // TODO?
 
+
 // binary operators
 
 // a+b
@@ -264,61 +265,535 @@ def __andb_ℤu[n:!ℕ](a:!ℤ,b:!uint[n])lifted:uint[n];
 def __andb_ℕ(a:!ℕ,b:!ℕ)lifted:!ℕ;
 def __andb_ℤ(a:!ℤ,b:!ℤ)lifted:!ℤ;
 
+
 // comparison operators
 
-def __lt_t[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](x:∏ σ,y:∏ τ)lifted:∏(σ~τ);
-def __lt_v[n:!ℕ,m:!ℕ,a:*](xs:a^n,ys:a^m)lifted:𝔹;
-def __lt_a[a:*](xs:a[],ys:a[])lifted:𝔹;
+// a < b
+def __lt_b(a:𝔹,b:𝔹)lifted:𝔹;
+def __lt_bB(a:𝔹,b:!𝔹)lifted:𝔹;
+def __lt_Bb(a:!𝔹,b:𝔹)lifted:𝔹;
+def __lt_BB(a:!𝔹,b:!𝔹)lifted:!𝔹;
 
-def __lt_𝔹(a:𝔹,b:𝔹)lifted:𝔹;
-def __lt_ℕ(a:!ℕ,b:!ℕ)lifted:!𝔹;
-def __lt_ℚ(a:!ℚ,b:!ℚ)lifted:!𝔹;
-def __lt_ℝ(a:!ℝ,b:!ℝ)lifted:!𝔹;
+def __lt_Nb(a:!ℕ,b:𝔹)lifted:𝔹;
+def __lt_bN(a:𝔹,b:!ℕ)lifted:𝔹;
+def __lt_Zb(a:!ℤ,b:𝔹)lifted:𝔹;
+def __lt_bZ(a:𝔹,b:!ℤ)lifted:𝔹;
+def __lt_Qb(a:!ℚ,b:𝔹)lifted:𝔹;
+def __lt_bQ(a:𝔹,b:!ℚ)lifted:𝔹;
+def __lt_Rb(a:!ℝ,b:𝔹)lifted:𝔹;
+def __lt_bR(a:𝔹,b:!ℝ)lifted:𝔹;
 
-def __le_t[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](x:∏ σ,y:∏ τ)lifted:∏(σ~τ);
-def __le_v[n:!ℕ,m:!ℕ,a:*](xs:a^n,ys:a^m)lifted:𝔹;
-def __le_a[a:*](xs:a[],ys:a[])lifted:𝔹;
+def __lt_s[n:!ℕ](a:int[n],b:int[n])lifted:𝔹;
+def __lt_Ss[n:!ℕ](a:!int[n],b:int[n])lifted:𝔹;
+def __lt_sS[n:!ℕ](a:int[n],b:!int[n])lifted:𝔹;
+def __lt_S[n:!ℕ](a:!int[n],b:!int[n])lifted:!𝔹;
 
-def __le_𝔹(a:𝔹,b:𝔹)lifted:𝔹;
-def __le_ℕ(a:!ℕ,b:!ℕ)lifted:!𝔹;
-def __le_ℚ(a:!ℚ,b:!ℚ)lifted:!𝔹;
-def __le_ℝ(a:!ℝ,b:!ℝ)lifted:!𝔹;
+def __lt_sb[n:!ℕ](a:int[n],b:𝔹)lifted:𝔹;
+def __lt_bs[n:!ℕ](a:𝔹,b:int[n])lifted:𝔹;
+def __lt_Sb[n:!ℕ](a:!int[n],b:𝔹)lifted:𝔹;
+def __lt_bS[n:!ℕ](a:𝔹,b:!int[n])lifted:𝔹;
+def __lt_sB[n:!ℕ](a:int[n],b:!𝔹)lifted:𝔹;
+def __lt_Bs[n:!ℕ](a:!𝔹,b:int[n])lifted:𝔹;
+def __lt_SB[n:!ℕ](a:!int[n],b:!𝔹)lifted:!𝔹;
+def __lt_BS[n:!ℕ](a:!𝔹,b:!int[n])lifted:!𝔹;
 
-def __gt_t[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](x:∏ σ,y:∏ τ)lifted:∏(σ~τ);
-def __gt_v[n:!ℕ,m:!ℕ,a:*](xs:a^n,ys:a^m)lifted:𝔹;
-def __gt_a[a:*](xs:a[],ys:a[])lifted:𝔹;
+def __lt_Ns[n:!ℕ](a:!ℕ,b:int[n])lifted:𝔹;
+def __lt_sN[n:!ℕ](a:int[n],b:!ℕ)lifted:𝔹;
+def __lt_Zs[n:!ℕ](a:!ℤ,b:int[n])lifted:𝔹;
+def __lt_sZ[n:!ℕ](a:int[n],b:!ℤ)lifted:𝔹;
+def __lt_Qs[n:!ℕ](a:!ℚ,b:int[n])lifted:𝔹;
+def __lt_sQ[n:!ℕ](a:int[n],b:!ℚ)lifted:𝔹;
+def __lt_Rs[n:!ℕ](a:!ℝ,b:int[n])lifted:𝔹;
+def __lt_sR[n:!ℕ](a:int[n],b:!ℝ)lifted:𝔹;
 
-def __gt_𝔹(a:𝔹,b:𝔹)lifted:𝔹;
-def __gt_ℕ(a:!ℕ,b:!ℕ)lifted:!𝔹;
-def __gt_ℚ(a:!ℚ,b:!ℚ)lifted:!𝔹;
-def __gt_ℝ(a:!ℝ,b:!ℝ)lifted:!𝔹;
+def __lt_NS[n:!ℕ](a:!ℕ,b:!int[n])lifted:!𝔹;
+def __lt_SN[n:!ℕ](a:!int[n],b:!ℕ)lifted:!𝔹;
+def __lt_ZS[n:!ℕ](a:!ℤ,b:!int[n])lifted:!𝔹;
+def __lt_SZ[n:!ℕ](a:!int[n],b:!ℤ)lifted:!𝔹;
+def __lt_QS[n:!ℕ](a:!ℚ,b:!int[n])lifted:!𝔹;
+def __lt_SQ[n:!ℕ](a:!int[n],b:!ℚ)lifted:!𝔹;
+def __lt_RS[n:!ℕ](a:!ℝ,b:!int[n])lifted:!𝔹;
+def __lt_SR[n:!ℕ](a:!int[n],b:!ℝ)lifted:!𝔹;
 
-def __ge_t[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](x:∏ σ,y:∏ τ)lifted:∏(σ~τ);
-def __ge_v[n:!ℕ,m:!ℕ,a:*](xs:a^n,ys:a^m)lifted:𝔹;
-def __ge_a[a:*](xs:a[],ys:a[])lifted:𝔹;
+def __lt_u[n:!ℕ](a:uint[n],b:uint[n])lifted:𝔹;
+def __lt_Uu[n:!ℕ](a:!uint[n],b:uint[n])lifted:𝔹;
+def __lt_uU[n:!ℕ](a:uint[n],b:!uint[n])lifted:𝔹;
+def __lt_U[n:!ℕ](a:!uint[n],b:!uint[n])lifted:!𝔹;
 
-def __ge_𝔹(a:𝔹,b:𝔹)lifted:𝔹;
-def __ge_ℕ(a:!ℕ,b:!ℕ)lifted:!𝔹;
-def __ge_ℚ(a:!ℚ,b:!ℚ)lifted:!𝔹;
-def __ge_ℝ(a:!ℝ,b:!ℝ)lifted:!𝔹;
+def __lt_ub[n:!ℕ](a:uint[n],b:𝔹)lifted:𝔹;
+def __lt_bu[n:!ℕ](a:𝔹,b:uint[n])lifted:𝔹;
+def __lt_Ub[n:!ℕ](a:!uint[n],b:𝔹)lifted:𝔹;
+def __lt_bU[n:!ℕ](a:𝔹,b:!uint[n])lifted:𝔹;
+def __lt_uB[n:!ℕ](a:uint[n],b:!𝔹)lifted:𝔹;
+def __lt_Bu[n:!ℕ](a:!𝔹,b:uint[n])lifted:𝔹;
+def __lt_UB[n:!ℕ](a:!uint[n],b:!𝔹)lifted:!𝔹;
+def __lt_BU[n:!ℕ](a:!𝔹,b:!uint[n])lifted:!𝔹;
 
-def __eq_t[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](x:∏ σ,y:∏ τ)lifted:∏(σ~τ);
-def __eq_v[n:!ℕ,m:!ℕ,a:*](xs:a^n,ys:a^m)lifted:𝔹;
-def __eq_a[a:*](xs:a[],ys:a[])lifted:𝔹;
+def __lt_Nu[n:!ℕ](a:!ℕ,b:uint[n])lifted:𝔹;
+def __lt_uN[n:!ℕ](a:uint[n],b:!ℕ)lifted:𝔹;
+def __lt_Zu[n:!ℕ](a:!ℤ,b:uint[n])lifted:𝔹;
+def __lt_uZ[n:!ℕ](a:uint[n],b:!ℤ)lifted:𝔹;
+def __lt_Qu[n:!ℕ](a:!ℚ,b:uint[n])lifted:𝔹;
+def __lt_uQ[n:!ℕ](a:uint[n],b:!ℚ)lifted:𝔹;
+def __lt_Ru[n:!ℕ](a:!ℝ,b:uint[n])lifted:𝔹;
+def __lt_uR[n:!ℕ](a:uint[n],b:!ℝ)lifted:𝔹;
 
-def __eq_𝔹(a:𝔹,b:𝔹)lifted:𝔹;
-def __eq_ℕ(a:!ℕ,b:!ℕ)lifted:!𝔹;
-def __eq_ℚ(a:!ℚ,b:!ℚ)lifted:!𝔹;
-def __eq_ℝ(a:!ℝ,b:!ℝ)lifted:!𝔹;
+def __lt_NU[n:!ℕ](a:!ℕ,b:!uint[n])lifted:!𝔹;
+def __lt_UN[n:!ℕ](a:!uint[n],b:!ℕ)lifted:!𝔹;
+def __lt_ZU[n:!ℕ](a:!ℤ,b:!uint[n])lifted:!𝔹;
+def __lt_UZ[n:!ℕ](a:!uint[n],b:!ℤ)lifted:!𝔹;
+def __lt_QU[n:!ℕ](a:!ℚ,b:!uint[n])lifted:!𝔹;
+def __lt_UQ[n:!ℕ](a:!uint[n],b:!ℚ)lifted:!𝔹;
+def __lt_RU[n:!ℕ](a:!ℝ,b:!uint[n])lifted:!𝔹;
+def __lt_UR[n:!ℕ](a:!uint[n],b:!ℝ)lifted:!𝔹;
 
-def __neq_t[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](x:∏ σ,y:∏ τ)lifted:∏(σ~τ);
-def __neq_v[n:!ℕ,m:!ℕ,a:*](xs:a^n,ys:a^m)lifted:𝔹;
-def __neq_a[a:*](xs:a[],ys:a[])lifted:𝔹;
+def __lt_N(a:!ℕ,b:!ℕ)lifted:!𝔹;
+def __lt_Z(a:!ℤ,b:!ℤ)lifted:!𝔹;
+def __lt_Q(a:!ℚ,b:!ℚ)lifted:!𝔹;
+def __lt_R(a:!ℝ,b:!ℝ)lifted:!𝔹;
 
-def __neq_𝔹(a:𝔹,b:𝔹)lifted:𝔹;
-def __neq_ℕ(a:!ℕ,b:!ℕ)lifted:!𝔹;
-def __neq_ℚ(a:!ℚ,b:!ℚ)lifted:!𝔹;
-def __neq_ℝ(a:!ℝ,b:!ℝ)lifted:!𝔹;
+// a ≤ b
+def __le_b(a:𝔹,b:𝔹)lifted:𝔹;
+def __le_bB(a:𝔹,b:!𝔹)lifted:𝔹;
+def __le_Bb(a:!𝔹,b:𝔹)lifted:𝔹;
+def __le_BB(a:!𝔹,b:!𝔹)lifted:!𝔹;
+
+def __le_Nb(a:!ℕ,b:𝔹)lifted:𝔹;
+def __le_bN(a:𝔹,b:!ℕ)lifted:𝔹;
+def __le_Zb(a:!ℤ,b:𝔹)lifted:𝔹;
+def __le_bZ(a:𝔹,b:!ℤ)lifted:𝔹;
+def __le_Qb(a:!ℚ,b:𝔹)lifted:𝔹;
+def __le_bQ(a:𝔹,b:!ℚ)lifted:𝔹;
+def __le_Rb(a:!ℝ,b:𝔹)lifted:𝔹;
+def __le_bR(a:𝔹,b:!ℝ)lifted:𝔹;
+
+def __le_s[n:!ℕ](a:int[n],b:int[n])lifted:𝔹;
+def __le_Ss[n:!ℕ](a:!int[n],b:int[n])lifted:𝔹;
+def __le_sS[n:!ℕ](a:int[n],b:!int[n])lifted:𝔹;
+def __le_S[n:!ℕ](a:!int[n],b:!int[n])lifted:!𝔹;
+
+def __le_sb[n:!ℕ](a:int[n],b:𝔹)lifted:𝔹;
+def __le_bs[n:!ℕ](a:𝔹,b:int[n])lifted:𝔹;
+def __le_Sb[n:!ℕ](a:!int[n],b:𝔹)lifted:𝔹;
+def __le_bS[n:!ℕ](a:𝔹,b:!int[n])lifted:𝔹;
+def __le_sB[n:!ℕ](a:int[n],b:!𝔹)lifted:𝔹;
+def __le_Bs[n:!ℕ](a:!𝔹,b:int[n])lifted:𝔹;
+def __le_SB[n:!ℕ](a:!int[n],b:!𝔹)lifted:!𝔹;
+def __le_BS[n:!ℕ](a:!𝔹,b:!int[n])lifted:!𝔹;
+
+def __le_Ns[n:!ℕ](a:!ℕ,b:int[n])lifted:𝔹;
+def __le_sN[n:!ℕ](a:int[n],b:!ℕ)lifted:𝔹;
+def __le_Zs[n:!ℕ](a:!ℤ,b:int[n])lifted:𝔹;
+def __le_sZ[n:!ℕ](a:int[n],b:!ℤ)lifted:𝔹;
+def __le_Qs[n:!ℕ](a:!ℚ,b:int[n])lifted:𝔹;
+def __le_sQ[n:!ℕ](a:int[n],b:!ℚ)lifted:𝔹;
+def __le_Rs[n:!ℕ](a:!ℝ,b:int[n])lifted:𝔹;
+def __le_sR[n:!ℕ](a:int[n],b:!ℝ)lifted:𝔹;
+
+def __le_NS[n:!ℕ](a:!ℕ,b:!int[n])lifted:!𝔹;
+def __le_SN[n:!ℕ](a:!int[n],b:!ℕ)lifted:!𝔹;
+def __le_ZS[n:!ℕ](a:!ℤ,b:!int[n])lifted:!𝔹;
+def __le_SZ[n:!ℕ](a:!int[n],b:!ℤ)lifted:!𝔹;
+def __le_QS[n:!ℕ](a:!ℚ,b:!int[n])lifted:!𝔹;
+def __le_SQ[n:!ℕ](a:!int[n],b:!ℚ)lifted:!𝔹;
+def __le_RS[n:!ℕ](a:!ℝ,b:!int[n])lifted:!𝔹;
+def __le_SR[n:!ℕ](a:!int[n],b:!ℝ)lifted:!𝔹;
+
+def __le_u[n:!ℕ](a:uint[n],b:uint[n])lifted:𝔹;
+def __le_Uu[n:!ℕ](a:!uint[n],b:uint[n])lifted:𝔹;
+def __le_uU[n:!ℕ](a:uint[n],b:!uint[n])lifted:𝔹;
+def __le_U[n:!ℕ](a:!uint[n],b:!uint[n])lifted:!𝔹;
+
+def __le_ub[n:!ℕ](a:uint[n],b:𝔹)lifted:𝔹;
+def __le_bu[n:!ℕ](a:𝔹,b:uint[n])lifted:𝔹;
+def __le_Ub[n:!ℕ](a:!uint[n],b:𝔹)lifted:𝔹;
+def __le_bU[n:!ℕ](a:𝔹,b:!uint[n])lifted:𝔹;
+def __le_uB[n:!ℕ](a:uint[n],b:!𝔹)lifted:𝔹;
+def __le_Bu[n:!ℕ](a:!𝔹,b:uint[n])lifted:𝔹;
+def __le_UB[n:!ℕ](a:!uint[n],b:!𝔹)lifted:!𝔹;
+def __le_BU[n:!ℕ](a:!𝔹,b:!uint[n])lifted:!𝔹;
+
+def __le_Nu[n:!ℕ](a:!ℕ,b:uint[n])lifted:𝔹;
+def __le_uN[n:!ℕ](a:uint[n],b:!ℕ)lifted:𝔹;
+def __le_Zu[n:!ℕ](a:!ℤ,b:uint[n])lifted:𝔹;
+def __le_uZ[n:!ℕ](a:uint[n],b:!ℤ)lifted:𝔹;
+def __le_Qu[n:!ℕ](a:!ℚ,b:uint[n])lifted:𝔹;
+def __le_uQ[n:!ℕ](a:uint[n],b:!ℚ)lifted:𝔹;
+def __le_Ru[n:!ℕ](a:!ℝ,b:uint[n])lifted:𝔹;
+def __le_uR[n:!ℕ](a:uint[n],b:!ℝ)lifted:𝔹;
+
+def __le_NU[n:!ℕ](a:!ℕ,b:!uint[n])lifted:!𝔹;
+def __le_UN[n:!ℕ](a:!uint[n],b:!ℕ)lifted:!𝔹;
+def __le_ZU[n:!ℕ](a:!ℤ,b:!uint[n])lifted:!𝔹;
+def __le_UZ[n:!ℕ](a:!uint[n],b:!ℤ)lifted:!𝔹;
+def __le_QU[n:!ℕ](a:!ℚ,b:!uint[n])lifted:!𝔹;
+def __le_UQ[n:!ℕ](a:!uint[n],b:!ℚ)lifted:!𝔹;
+def __le_RU[n:!ℕ](a:!ℝ,b:!uint[n])lifted:!𝔹;
+def __le_UR[n:!ℕ](a:!uint[n],b:!ℝ)lifted:!𝔹;
+
+def __le_N(a:!ℕ,b:!ℕ)lifted:!𝔹;
+def __le_Z(a:!ℤ,b:!ℤ)lifted:!𝔹;
+def __le_Q(a:!ℚ,b:!ℚ)lifted:!𝔹;
+def __le_R(a:!ℝ,b:!ℝ)lifted:!𝔹;
+
+// a > b
+def __gt_b(a:𝔹,b:𝔹)lifted:𝔹;
+def __gt_bB(a:𝔹,b:!𝔹)lifted:𝔹;
+def __gt_Bb(a:!𝔹,b:𝔹)lifted:𝔹;
+def __gt_BB(a:!𝔹,b:!𝔹)lifted:!𝔹;
+
+def __gt_Nb(a:!ℕ,b:𝔹)lifted:𝔹;
+def __gt_bN(a:𝔹,b:!ℕ)lifted:𝔹;
+def __gt_Zb(a:!ℤ,b:𝔹)lifted:𝔹;
+def __gt_bZ(a:𝔹,b:!ℤ)lifted:𝔹;
+def __gt_Qb(a:!ℚ,b:𝔹)lifted:𝔹;
+def __gt_bQ(a:𝔹,b:!ℚ)lifted:𝔹;
+def __gt_Rb(a:!ℝ,b:𝔹)lifted:𝔹;
+def __gt_bR(a:𝔹,b:!ℝ)lifted:𝔹;
+
+def __gt_s[n:!ℕ](a:int[n],b:int[n])lifted:𝔹;
+def __gt_Ss[n:!ℕ](a:!int[n],b:int[n])lifted:𝔹;
+def __gt_sS[n:!ℕ](a:int[n],b:!int[n])lifted:𝔹;
+def __gt_S[n:!ℕ](a:!int[n],b:!int[n])lifted:!𝔹;
+
+def __gt_sb[n:!ℕ](a:int[n],b:𝔹)lifted:𝔹;
+def __gt_bs[n:!ℕ](a:𝔹,b:int[n])lifted:𝔹;
+def __gt_Sb[n:!ℕ](a:!int[n],b:𝔹)lifted:𝔹;
+def __gt_bS[n:!ℕ](a:𝔹,b:!int[n])lifted:𝔹;
+def __gt_sB[n:!ℕ](a:int[n],b:!𝔹)lifted:𝔹;
+def __gt_Bs[n:!ℕ](a:!𝔹,b:int[n])lifted:𝔹;
+def __gt_SB[n:!ℕ](a:!int[n],b:!𝔹)lifted:!𝔹;
+def __gt_BS[n:!ℕ](a:!𝔹,b:!int[n])lifted:!𝔹;
+
+def __gt_Ns[n:!ℕ](a:!ℕ,b:int[n])lifted:𝔹;
+def __gt_sN[n:!ℕ](a:int[n],b:!ℕ)lifted:𝔹;
+def __gt_Zs[n:!ℕ](a:!ℤ,b:int[n])lifted:𝔹;
+def __gt_sZ[n:!ℕ](a:int[n],b:!ℤ)lifted:𝔹;
+def __gt_Qs[n:!ℕ](a:!ℚ,b:int[n])lifted:𝔹;
+def __gt_sQ[n:!ℕ](a:int[n],b:!ℚ)lifted:𝔹;
+def __gt_Rs[n:!ℕ](a:!ℝ,b:int[n])lifted:𝔹;
+def __gt_sR[n:!ℕ](a:int[n],b:!ℝ)lifted:𝔹;
+
+def __gt_NS[n:!ℕ](a:!ℕ,b:!int[n])lifted:!𝔹;
+def __gt_SN[n:!ℕ](a:!int[n],b:!ℕ)lifted:!𝔹;
+def __gt_ZS[n:!ℕ](a:!ℤ,b:!int[n])lifted:!𝔹;
+def __gt_SZ[n:!ℕ](a:!int[n],b:!ℤ)lifted:!𝔹;
+def __gt_QS[n:!ℕ](a:!ℚ,b:!int[n])lifted:!𝔹;
+def __gt_SQ[n:!ℕ](a:!int[n],b:!ℚ)lifted:!𝔹;
+def __gt_RS[n:!ℕ](a:!ℝ,b:!int[n])lifted:!𝔹;
+def __gt_SR[n:!ℕ](a:!int[n],b:!ℝ)lifted:!𝔹;
+
+def __gt_u[n:!ℕ](a:uint[n],b:uint[n])lifted:𝔹;
+def __gt_Uu[n:!ℕ](a:!uint[n],b:uint[n])lifted:𝔹;
+def __gt_uU[n:!ℕ](a:uint[n],b:!uint[n])lifted:𝔹;
+def __gt_U[n:!ℕ](a:!uint[n],b:!uint[n])lifted:!𝔹;
+
+def __gt_ub[n:!ℕ](a:uint[n],b:𝔹)lifted:𝔹;
+def __gt_bu[n:!ℕ](a:𝔹,b:uint[n])lifted:𝔹;
+def __gt_Ub[n:!ℕ](a:!uint[n],b:𝔹)lifted:𝔹;
+def __gt_bU[n:!ℕ](a:𝔹,b:!uint[n])lifted:𝔹;
+def __gt_uB[n:!ℕ](a:uint[n],b:!𝔹)lifted:𝔹;
+def __gt_Bu[n:!ℕ](a:!𝔹,b:uint[n])lifted:𝔹;
+def __gt_UB[n:!ℕ](a:!uint[n],b:!𝔹)lifted:!𝔹;
+def __gt_BU[n:!ℕ](a:!𝔹,b:!uint[n])lifted:!𝔹;
+
+def __gt_Nu[n:!ℕ](a:!ℕ,b:uint[n])lifted:𝔹;
+def __gt_uN[n:!ℕ](a:uint[n],b:!ℕ)lifted:𝔹;
+def __gt_Zu[n:!ℕ](a:!ℤ,b:uint[n])lifted:𝔹;
+def __gt_uZ[n:!ℕ](a:uint[n],b:!ℤ)lifted:𝔹;
+def __gt_Qu[n:!ℕ](a:!ℚ,b:uint[n])lifted:𝔹;
+def __gt_uQ[n:!ℕ](a:uint[n],b:!ℚ)lifted:𝔹;
+def __gt_Ru[n:!ℕ](a:!ℝ,b:uint[n])lifted:𝔹;
+def __gt_uR[n:!ℕ](a:uint[n],b:!ℝ)lifted:𝔹;
+
+def __gt_NU[n:!ℕ](a:!ℕ,b:!uint[n])lifted:!𝔹;
+def __gt_UN[n:!ℕ](a:!uint[n],b:!ℕ)lifted:!𝔹;
+def __gt_ZU[n:!ℕ](a:!ℤ,b:!uint[n])lifted:!𝔹;
+def __gt_UZ[n:!ℕ](a:!uint[n],b:!ℤ)lifted:!𝔹;
+def __gt_QU[n:!ℕ](a:!ℚ,b:!uint[n])lifted:!𝔹;
+def __gt_UQ[n:!ℕ](a:!uint[n],b:!ℚ)lifted:!𝔹;
+def __gt_RU[n:!ℕ](a:!ℝ,b:!uint[n])lifted:!𝔹;
+def __gt_UR[n:!ℕ](a:!uint[n],b:!ℝ)lifted:!𝔹;
+
+def __gt_N(a:!ℕ,b:!ℕ)lifted:!𝔹;
+def __gt_Z(a:!ℤ,b:!ℤ)lifted:!𝔹;
+def __gt_Q(a:!ℚ,b:!ℚ)lifted:!𝔹;
+def __gt_R(a:!ℝ,b:!ℝ)lifted:!𝔹;
+
+// a ≥ b
+def __ge_b(a:𝔹,b:𝔹)lifted:𝔹;
+def __ge_bB(a:𝔹,b:!𝔹)lifted:𝔹;
+def __ge_Bb(a:!𝔹,b:𝔹)lifted:𝔹;
+def __ge_BB(a:!𝔹,b:!𝔹)lifted:!𝔹;
+
+def __ge_Nb(a:!ℕ,b:𝔹)lifted:𝔹;
+def __ge_bN(a:𝔹,b:!ℕ)lifted:𝔹;
+def __ge_Zb(a:!ℤ,b:𝔹)lifted:𝔹;
+def __ge_bZ(a:𝔹,b:!ℤ)lifted:𝔹;
+def __ge_Qb(a:!ℚ,b:𝔹)lifted:𝔹;
+def __ge_bQ(a:𝔹,b:!ℚ)lifted:𝔹;
+def __ge_Rb(a:!ℝ,b:𝔹)lifted:𝔹;
+def __ge_bR(a:𝔹,b:!ℝ)lifted:𝔹;
+
+def __ge_s[n:!ℕ](a:int[n],b:int[n])lifted:𝔹;
+def __ge_Ss[n:!ℕ](a:!int[n],b:int[n])lifted:𝔹;
+def __ge_sS[n:!ℕ](a:int[n],b:!int[n])lifted:𝔹;
+def __ge_S[n:!ℕ](a:!int[n],b:!int[n])lifted:!𝔹;
+
+def __ge_sb[n:!ℕ](a:int[n],b:𝔹)lifted:𝔹;
+def __ge_bs[n:!ℕ](a:𝔹,b:int[n])lifted:𝔹;
+def __ge_Sb[n:!ℕ](a:!int[n],b:𝔹)lifted:𝔹;
+def __ge_bS[n:!ℕ](a:𝔹,b:!int[n])lifted:𝔹;
+def __ge_sB[n:!ℕ](a:int[n],b:!𝔹)lifted:𝔹;
+def __ge_Bs[n:!ℕ](a:!𝔹,b:int[n])lifted:𝔹;
+def __ge_SB[n:!ℕ](a:!int[n],b:!𝔹)lifted:!𝔹;
+def __ge_BS[n:!ℕ](a:!𝔹,b:!int[n])lifted:!𝔹;
+
+def __ge_Ns[n:!ℕ](a:!ℕ,b:int[n])lifted:𝔹;
+def __ge_sN[n:!ℕ](a:int[n],b:!ℕ)lifted:𝔹;
+def __ge_Zs[n:!ℕ](a:!ℤ,b:int[n])lifted:𝔹;
+def __ge_sZ[n:!ℕ](a:int[n],b:!ℤ)lifted:𝔹;
+def __ge_Qs[n:!ℕ](a:!ℚ,b:int[n])lifted:𝔹;
+def __ge_sQ[n:!ℕ](a:int[n],b:!ℚ)lifted:𝔹;
+def __ge_Rs[n:!ℕ](a:!ℝ,b:int[n])lifted:𝔹;
+def __ge_sR[n:!ℕ](a:int[n],b:!ℝ)lifted:𝔹;
+
+def __ge_NS[n:!ℕ](a:!ℕ,b:!int[n])lifted:!𝔹;
+def __ge_SN[n:!ℕ](a:!int[n],b:!ℕ)lifted:!𝔹;
+def __ge_ZS[n:!ℕ](a:!ℤ,b:!int[n])lifted:!𝔹;
+def __ge_SZ[n:!ℕ](a:!int[n],b:!ℤ)lifted:!𝔹;
+def __ge_QS[n:!ℕ](a:!ℚ,b:!int[n])lifted:!𝔹;
+def __ge_SQ[n:!ℕ](a:!int[n],b:!ℚ)lifted:!𝔹;
+def __ge_RS[n:!ℕ](a:!ℝ,b:!int[n])lifted:!𝔹;
+def __ge_SR[n:!ℕ](a:!int[n],b:!ℝ)lifted:!𝔹;
+
+def __ge_u[n:!ℕ](a:uint[n],b:uint[n])lifted:𝔹;
+def __ge_Uu[n:!ℕ](a:!uint[n],b:uint[n])lifted:𝔹;
+def __ge_uU[n:!ℕ](a:uint[n],b:!uint[n])lifted:𝔹;
+def __ge_U[n:!ℕ](a:!uint[n],b:!uint[n])lifted:!𝔹;
+
+def __ge_ub[n:!ℕ](a:uint[n],b:𝔹)lifted:𝔹;
+def __ge_bu[n:!ℕ](a:𝔹,b:uint[n])lifted:𝔹;
+def __ge_Ub[n:!ℕ](a:!uint[n],b:𝔹)lifted:𝔹;
+def __ge_bU[n:!ℕ](a:𝔹,b:!uint[n])lifted:𝔹;
+def __ge_uB[n:!ℕ](a:uint[n],b:!𝔹)lifted:𝔹;
+def __ge_Bu[n:!ℕ](a:!𝔹,b:uint[n])lifted:𝔹;
+def __ge_UB[n:!ℕ](a:!uint[n],b:!𝔹)lifted:!𝔹;
+def __ge_BU[n:!ℕ](a:!𝔹,b:!uint[n])lifted:!𝔹;
+
+def __ge_Nu[n:!ℕ](a:!ℕ,b:uint[n])lifted:𝔹;
+def __ge_uN[n:!ℕ](a:uint[n],b:!ℕ)lifted:𝔹;
+def __ge_Zu[n:!ℕ](a:!ℤ,b:uint[n])lifted:𝔹;
+def __ge_uZ[n:!ℕ](a:uint[n],b:!ℤ)lifted:𝔹;
+def __ge_Qu[n:!ℕ](a:!ℚ,b:uint[n])lifted:𝔹;
+def __ge_uQ[n:!ℕ](a:uint[n],b:!ℚ)lifted:𝔹;
+def __ge_Ru[n:!ℕ](a:!ℝ,b:uint[n])lifted:𝔹;
+def __ge_uR[n:!ℕ](a:uint[n],b:!ℝ)lifted:𝔹;
+
+def __ge_NU[n:!ℕ](a:!ℕ,b:!uint[n])lifted:!𝔹;
+def __ge_UN[n:!ℕ](a:!uint[n],b:!ℕ)lifted:!𝔹;
+def __ge_ZU[n:!ℕ](a:!ℤ,b:!uint[n])lifted:!𝔹;
+def __ge_UZ[n:!ℕ](a:!uint[n],b:!ℤ)lifted:!𝔹;
+def __ge_QU[n:!ℕ](a:!ℚ,b:!uint[n])lifted:!𝔹;
+def __ge_UQ[n:!ℕ](a:!uint[n],b:!ℚ)lifted:!𝔹;
+def __ge_RU[n:!ℕ](a:!ℝ,b:!uint[n])lifted:!𝔹;
+def __ge_UR[n:!ℕ](a:!uint[n],b:!ℝ)lifted:!𝔹;
+
+def __ge_N(a:!ℕ,b:!ℕ)lifted:!𝔹;
+def __ge_Z(a:!ℤ,b:!ℤ)lifted:!𝔹;
+def __ge_Q(a:!ℚ,b:!ℚ)lifted:!𝔹;
+def __ge_R(a:!ℝ,b:!ℝ)lifted:!𝔹;
+
+// a = b
+def __eq_b(a:𝔹,b:𝔹)lifted:𝔹;
+def __eq_bB(a:𝔹,b:!𝔹)lifted:𝔹;
+def __eq_Bb(a:!𝔹,b:𝔹)lifted:𝔹;
+def __eq_BB(a:!𝔹,b:!𝔹)lifted:!𝔹;
+
+def __eq_Nb(a:!ℕ,b:𝔹)lifted:𝔹;
+def __eq_bN(a:𝔹,b:!ℕ)lifted:𝔹;
+def __eq_Zb(a:!ℤ,b:𝔹)lifted:𝔹;
+def __eq_bZ(a:𝔹,b:!ℤ)lifted:𝔹;
+def __eq_Qb(a:!ℚ,b:𝔹)lifted:𝔹;
+def __eq_bQ(a:𝔹,b:!ℚ)lifted:𝔹;
+def __eq_Rb(a:!ℝ,b:𝔹)lifted:𝔹;
+def __eq_bR(a:𝔹,b:!ℝ)lifted:𝔹;
+def __eq_Cb(a:!ℂ,b:𝔹)lifted:𝔹;
+def __eq_bC(a:𝔹,b:!ℂ)lifted:𝔹;
+
+def __eq_s[n:!ℕ](a:int[n],b:int[n])lifted:𝔹;
+def __eq_Ss[n:!ℕ](a:!int[n],b:int[n])lifted:𝔹;
+def __eq_sS[n:!ℕ](a:int[n],b:!int[n])lifted:𝔹;
+def __eq_S[n:!ℕ](a:!int[n],b:!int[n])lifted:!𝔹;
+
+def __eq_sb[n:!ℕ](a:int[n],b:𝔹)lifted:𝔹;
+def __eq_bs[n:!ℕ](a:𝔹,b:int[n])lifted:𝔹;
+def __eq_Sb[n:!ℕ](a:!int[n],b:𝔹)lifted:𝔹;
+def __eq_bS[n:!ℕ](a:𝔹,b:!int[n])lifted:𝔹;
+def __eq_sB[n:!ℕ](a:int[n],b:!𝔹)lifted:𝔹;
+def __eq_Bs[n:!ℕ](a:!𝔹,b:int[n])lifted:𝔹;
+def __eq_SB[n:!ℕ](a:!int[n],b:!𝔹)lifted:!𝔹;
+def __eq_BS[n:!ℕ](a:!𝔹,b:!int[n])lifted:!𝔹;
+
+def __eq_Ns[n:!ℕ](a:!ℕ,b:int[n])lifted:𝔹;
+def __eq_sN[n:!ℕ](a:int[n],b:!ℕ)lifted:𝔹;
+def __eq_Zs[n:!ℕ](a:!ℤ,b:int[n])lifted:𝔹;
+def __eq_sZ[n:!ℕ](a:int[n],b:!ℤ)lifted:𝔹;
+def __eq_Qs[n:!ℕ](a:!ℚ,b:int[n])lifted:𝔹;
+def __eq_sQ[n:!ℕ](a:int[n],b:!ℚ)lifted:𝔹;
+def __eq_Rs[n:!ℕ](a:!ℝ,b:int[n])lifted:𝔹;
+def __eq_sR[n:!ℕ](a:int[n],b:!ℝ)lifted:𝔹;
+def __eq_Cs[n:!ℕ](a:!ℂ,b:int[n])lifted:𝔹;
+def __eq_sC[n:!ℕ](a:int[n],b:!ℂ)lifted:𝔹;
+
+def __eq_NS[n:!ℕ](a:!ℕ,b:!int[n])lifted:!𝔹;
+def __eq_SN[n:!ℕ](a:!int[n],b:!ℕ)lifted:!𝔹;
+def __eq_ZS[n:!ℕ](a:!ℤ,b:!int[n])lifted:!𝔹;
+def __eq_SZ[n:!ℕ](a:!int[n],b:!ℤ)lifted:!𝔹;
+def __eq_QS[n:!ℕ](a:!ℚ,b:!int[n])lifted:!𝔹;
+def __eq_SQ[n:!ℕ](a:!int[n],b:!ℚ)lifted:!𝔹;
+def __eq_RS[n:!ℕ](a:!ℝ,b:!int[n])lifted:!𝔹;
+def __eq_SR[n:!ℕ](a:!int[n],b:!ℝ)lifted:!𝔹;
+def __eq_CS[n:!ℕ](a:!ℂ,b:!int[n])lifted:!𝔹;
+def __eq_SC[n:!ℕ](a:!int[n],b:!ℂ)lifted:!𝔹;
+
+def __eq_u[n:!ℕ](a:uint[n],b:uint[n])lifted:𝔹;
+def __eq_Uu[n:!ℕ](a:!uint[n],b:uint[n])lifted:𝔹;
+def __eq_uU[n:!ℕ](a:uint[n],b:!uint[n])lifted:𝔹;
+def __eq_U[n:!ℕ](a:!uint[n],b:!uint[n])lifted:!𝔹;
+
+def __eq_ub[n:!ℕ](a:uint[n],b:𝔹)lifted:𝔹;
+def __eq_bu[n:!ℕ](a:𝔹,b:uint[n])lifted:𝔹;
+def __eq_Ub[n:!ℕ](a:!uint[n],b:𝔹)lifted:𝔹;
+def __eq_bU[n:!ℕ](a:𝔹,b:!uint[n])lifted:𝔹;
+def __eq_uB[n:!ℕ](a:uint[n],b:!𝔹)lifted:𝔹;
+def __eq_Bu[n:!ℕ](a:!𝔹,b:uint[n])lifted:𝔹;
+def __eq_UB[n:!ℕ](a:!uint[n],b:!𝔹)lifted:!𝔹;
+def __eq_BU[n:!ℕ](a:!𝔹,b:!uint[n])lifted:!𝔹;
+
+def __eq_Nu[n:!ℕ](a:!ℕ,b:uint[n])lifted:𝔹;
+def __eq_uN[n:!ℕ](a:uint[n],b:!ℕ)lifted:𝔹;
+def __eq_Zu[n:!ℕ](a:!ℤ,b:uint[n])lifted:𝔹;
+def __eq_uZ[n:!ℕ](a:uint[n],b:!ℤ)lifted:𝔹;
+def __eq_Qu[n:!ℕ](a:!ℚ,b:uint[n])lifted:𝔹;
+def __eq_uQ[n:!ℕ](a:uint[n],b:!ℚ)lifted:𝔹;
+def __eq_Ru[n:!ℕ](a:!ℝ,b:uint[n])lifted:𝔹;
+def __eq_uR[n:!ℕ](a:uint[n],b:!ℝ)lifted:𝔹;
+def __eq_Cu[n:!ℕ](a:!ℂ,b:uint[n])lifted:𝔹;
+def __eq_uC[n:!ℕ](a:uint[n],b:!ℂ)lifted:𝔹;
+
+def __eq_NU[n:!ℕ](a:!ℕ,b:!uint[n])lifted:!𝔹;
+def __eq_UN[n:!ℕ](a:!uint[n],b:!ℕ)lifted:!𝔹;
+def __eq_ZU[n:!ℕ](a:!ℤ,b:!uint[n])lifted:!𝔹;
+def __eq_UZ[n:!ℕ](a:!uint[n],b:!ℤ)lifted:!𝔹;
+def __eq_QU[n:!ℕ](a:!ℚ,b:!uint[n])lifted:!𝔹;
+def __eq_UQ[n:!ℕ](a:!uint[n],b:!ℚ)lifted:!𝔹;
+def __eq_RU[n:!ℕ](a:!ℝ,b:!uint[n])lifted:!𝔹;
+def __eq_UR[n:!ℕ](a:!uint[n],b:!ℝ)lifted:!𝔹;
+def __eq_CU[n:!ℕ](a:!ℂ,b:!uint[n])lifted:!𝔹;
+def __eq_UC[n:!ℕ](a:!uint[n],b:!ℂ)lifted:!𝔹;
+
+def __eq_N(a:!ℕ,b:!ℕ)lifted:!𝔹;
+def __eq_Z(a:!ℤ,b:!ℤ)lifted:!𝔹;
+def __eq_Q(a:!ℚ,b:!ℚ)lifted:!𝔹;
+def __eq_R(a:!ℝ,b:!ℝ)lifted:!𝔹;
+def __eq_C(a:!ℂ,b:!ℂ)lifted:!𝔹;
+
+// a ≠ b
+def __neq_b(a:𝔹,b:𝔹)lifted:𝔹;
+def __neq_bB(a:𝔹,b:!𝔹)lifted:𝔹;
+def __neq_Bb(a:!𝔹,b:𝔹)lifted:𝔹;
+def __neq_BB(a:!𝔹,b:!𝔹)lifted:!𝔹;
+
+def __neq_Nb(a:!ℕ,b:𝔹)lifted:𝔹;
+def __neq_bN(a:𝔹,b:!ℕ)lifted:𝔹;
+def __neq_Zb(a:!ℤ,b:𝔹)lifted:𝔹;
+def __neq_bZ(a:𝔹,b:!ℤ)lifted:𝔹;
+def __neq_Qb(a:!ℚ,b:𝔹)lifted:𝔹;
+def __neq_bQ(a:𝔹,b:!ℚ)lifted:𝔹;
+def __neq_Rb(a:!ℝ,b:𝔹)lifted:𝔹;
+def __neq_bR(a:𝔹,b:!ℝ)lifted:𝔹;
+def __neq_Cb(a:!ℂ,b:𝔹)lifted:𝔹;
+def __neq_bC(a:𝔹,b:!ℂ)lifted:𝔹;
+
+def __neq_s[n:!ℕ](a:int[n],b:int[n])lifted:𝔹;
+def __neq_Ss[n:!ℕ](a:!int[n],b:int[n])lifted:𝔹;
+def __neq_sS[n:!ℕ](a:int[n],b:!int[n])lifted:𝔹;
+def __neq_S[n:!ℕ](a:!int[n],b:!int[n])lifted:!𝔹;
+
+def __neq_sb[n:!ℕ](a:int[n],b:𝔹)lifted:𝔹;
+def __neq_bs[n:!ℕ](a:𝔹,b:int[n])lifted:𝔹;
+def __neq_Sb[n:!ℕ](a:!int[n],b:𝔹)lifted:𝔹;
+def __neq_bS[n:!ℕ](a:𝔹,b:!int[n])lifted:𝔹;
+def __neq_sB[n:!ℕ](a:int[n],b:!𝔹)lifted:𝔹;
+def __neq_Bs[n:!ℕ](a:!𝔹,b:int[n])lifted:𝔹;
+def __neq_SB[n:!ℕ](a:!int[n],b:!𝔹)lifted:!𝔹;
+def __neq_BS[n:!ℕ](a:!𝔹,b:!int[n])lifted:!𝔹;
+
+def __neq_Ns[n:!ℕ](a:!ℕ,b:int[n])lifted:𝔹;
+def __neq_sN[n:!ℕ](a:int[n],b:!ℕ)lifted:𝔹;
+def __neq_Zs[n:!ℕ](a:!ℤ,b:int[n])lifted:𝔹;
+def __neq_sZ[n:!ℕ](a:int[n],b:!ℤ)lifted:𝔹;
+def __neq_Qs[n:!ℕ](a:!ℚ,b:int[n])lifted:𝔹;
+def __neq_sQ[n:!ℕ](a:int[n],b:!ℚ)lifted:𝔹;
+def __neq_Rs[n:!ℕ](a:!ℝ,b:int[n])lifted:𝔹;
+def __neq_sR[n:!ℕ](a:int[n],b:!ℝ)lifted:𝔹;
+def __neq_Cs[n:!ℕ](a:!ℂ,b:int[n])lifted:𝔹;
+def __neq_sC[n:!ℕ](a:int[n],b:!ℂ)lifted:𝔹;
+
+def __neq_NS[n:!ℕ](a:!ℕ,b:!int[n])lifted:!𝔹;
+def __neq_SN[n:!ℕ](a:!int[n],b:!ℕ)lifted:!𝔹;
+def __neq_ZS[n:!ℕ](a:!ℤ,b:!int[n])lifted:!𝔹;
+def __neq_SZ[n:!ℕ](a:!int[n],b:!ℤ)lifted:!𝔹;
+def __neq_QS[n:!ℕ](a:!ℚ,b:!int[n])lifted:!𝔹;
+def __neq_SQ[n:!ℕ](a:!int[n],b:!ℚ)lifted:!𝔹;
+def __neq_RS[n:!ℕ](a:!ℝ,b:!int[n])lifted:!𝔹;
+def __neq_SR[n:!ℕ](a:!int[n],b:!ℝ)lifted:!𝔹;
+def __neq_CS[n:!ℕ](a:!ℂ,b:!int[n])lifted:!𝔹;
+def __neq_SC[n:!ℕ](a:!int[n],b:!ℂ)lifted:!𝔹;
+
+def __neq_u[n:!ℕ](a:uint[n],b:uint[n])lifted:𝔹;
+def __neq_Uu[n:!ℕ](a:!uint[n],b:uint[n])lifted:𝔹;
+def __neq_uU[n:!ℕ](a:uint[n],b:!uint[n])lifted:𝔹;
+def __neq_U[n:!ℕ](a:!uint[n],b:!uint[n])lifted:!𝔹;
+
+def __neq_ub[n:!ℕ](a:uint[n],b:𝔹)lifted:𝔹;
+def __neq_bu[n:!ℕ](a:𝔹,b:uint[n])lifted:𝔹;
+def __neq_Ub[n:!ℕ](a:!uint[n],b:𝔹)lifted:𝔹;
+def __neq_bU[n:!ℕ](a:𝔹,b:!uint[n])lifted:𝔹;
+def __neq_uB[n:!ℕ](a:uint[n],b:!𝔹)lifted:𝔹;
+def __neq_Bu[n:!ℕ](a:!𝔹,b:uint[n])lifted:𝔹;
+def __neq_UB[n:!ℕ](a:!uint[n],b:!𝔹)lifted:!𝔹;
+def __neq_BU[n:!ℕ](a:!𝔹,b:!uint[n])lifted:!𝔹;
+
+def __neq_Nu[n:!ℕ](a:!ℕ,b:uint[n])lifted:𝔹;
+def __neq_uN[n:!ℕ](a:uint[n],b:!ℕ)lifted:𝔹;
+def __neq_Zu[n:!ℕ](a:!ℤ,b:uint[n])lifted:𝔹;
+def __neq_uZ[n:!ℕ](a:uint[n],b:!ℤ)lifted:𝔹;
+def __neq_Qu[n:!ℕ](a:!ℚ,b:uint[n])lifted:𝔹;
+def __neq_uQ[n:!ℕ](a:uint[n],b:!ℚ)lifted:𝔹;
+def __neq_Ru[n:!ℕ](a:!ℝ,b:uint[n])lifted:𝔹;
+def __neq_uR[n:!ℕ](a:uint[n],b:!ℝ)lifted:𝔹;
+def __neq_Cu[n:!ℕ](a:!ℂ,b:uint[n])lifted:𝔹;
+def __neq_uC[n:!ℕ](a:uint[n],b:!ℂ)lifted:𝔹;
+
+def __neq_NU[n:!ℕ](a:!ℕ,b:!uint[n])lifted:!𝔹;
+def __neq_UN[n:!ℕ](a:!uint[n],b:!ℕ)lifted:!𝔹;
+def __neq_ZU[n:!ℕ](a:!ℤ,b:!uint[n])lifted:!𝔹;
+def __neq_UZ[n:!ℕ](a:!uint[n],b:!ℤ)lifted:!𝔹;
+def __neq_QU[n:!ℕ](a:!ℚ,b:!uint[n])lifted:!𝔹;
+def __neq_UQ[n:!ℕ](a:!uint[n],b:!ℚ)lifted:!𝔹;
+def __neq_RU[n:!ℕ](a:!ℝ,b:!uint[n])lifted:!𝔹;
+def __neq_UR[n:!ℕ](a:!uint[n],b:!ℝ)lifted:!𝔹;
+def __neq_CU[n:!ℕ](a:!ℂ,b:!uint[n])lifted:!𝔹;
+def __neq_UC[n:!ℕ](a:!uint[n],b:!ℂ)lifted:!𝔹;
+
+def __neq_N(a:!ℕ,b:!ℕ)lifted:!𝔹;
+def __neq_Z(a:!ℤ,b:!ℤ)lifted:!𝔹;
+def __neq_Q(a:!ℚ,b:!ℚ)lifted:!𝔹;
+def __neq_R(a:!ℝ,b:!ℝ)lifted:!𝔹;
+def __neq_C(a:!ℂ,b:!ℂ)lifted:!𝔹;
+
 
 // binary assignment operators
 
