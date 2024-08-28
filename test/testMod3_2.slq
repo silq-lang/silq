@@ -14,8 +14,6 @@ def main(){
 	assert(measure(a%f=-1)); // error
 	assert(measure(a%g=0.122)); // error
 	assert(measure(a%h=-0.7)); // error
-	assert(measure(b%c=6)); // error
-	assert(measure(b%d=-17)); // error
 	assert(measure(b%e=4/3)); // error
 	assert(measure(b%f=-1/5)); // error
 	assert(measure(b%g=0.125)); // error

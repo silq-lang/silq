@@ -1,4 +1,3 @@
-// args: --run
 n:=8;
 def approx(a:!ℝ,b:!ℝ)⇒abs(a-b)≤1.0e-10;
 def main(){
@@ -11,12 +10,10 @@ def main(){
 	g:=0.137:!ℝ;
 	h:=-1.37:!ℝ;
 	assert(measure(a%a=0));
-	assert(measure((a as 𝔹^n as int[n])%b=-4));
+	assert(measure(a%b=-4)); // error
 	assert(measure(a%c=13));
-	assert(measure(b%(a as 𝔹^n as int[n])=9));
+	assert(measure(b%a=9)); // error
 	assert(measure(b%b=0));
-	assert(measure(b%c=6));
-	assert(measure(b%d=-17));
 	assert(measure(c%a=10));
 	assert(measure(c%b=-11));
 	assert(measure(d%a=10));

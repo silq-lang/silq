@@ -958,8 +958,14 @@ struct QState{
 			else static if(op=="*") return arithmeticType!true(t1,t2);
 			else static if(op=="/") return divisionType(t1,t2);
 			else static if(op=="div") return iDivType(t1,t2);
-			else static if(op=="%") return moduloType(t1,t2);
-			else static if(op=="^^") return powerType(t1,t2);
+			else static if(op=="%"){
+				if(t2==ℤt(true)){
+					if(auto ft=isFixedIntTy(t1))
+						if(!ft.isSigned)
+							t2=ℕt(true); // TODO: this is a hack
+				}
+				return moduloType(t1,t2);
+			}else static if(op=="^^") return powerType(t1,t2);
 			else static if(op=="|") return arithmeticType!true(t1,t2);
 			else static if(op=="^") return arithmeticType!true(t1,t2);
 			else static if(op=="&") return arithmeticType!true(t1,t2);
