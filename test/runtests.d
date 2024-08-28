@@ -102,12 +102,11 @@ int main(string[] args){
 				}
 			}
 			//write(summary);
-		}
+		}else passed++;
 		if((!dashDashBad||summary.isBad)&&(!dashDashTodo||summary.isInteresting)){
 			if(!summary.isInteresting){
 				if(colorize) write(passColor,BOLD,"passed ",RESET);
 				else std.stdio.write("passed");
-				passed++;
 				if(colorize) writef(" % 5.0fms",time.to!("msecs",double));
 				else writef(" in %.0fms",time.to!("msecs",double));
 			}
