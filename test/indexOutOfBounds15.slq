@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	x:=0:uint[2];
+	x[1]:=H(x[1]);
+	return (x[x],x); // error
+}

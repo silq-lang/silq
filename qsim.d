@@ -2386,14 +2386,14 @@ struct Interpreter(QState){
 					else state.assignTo(value,nrhs);
 					return;
 				}
+				noreturn outOfBounds(){
+					auto ex=new Exception("index out of bounds");
+					version(LOCALIZE) ex=new LocalizedException(ex,locations[0]);
+					throw ex;
+				}
 				auto tag=value.tag;
 				switch(tag){
 					case QState.Value.Tag.array_:
-						noreturn outOfBounds(){
-							auto ex=new Exception("index out of bounds");
-							version(LOCALIZE) ex=new LocalizedException(ex,locations[0]);
-							throw ex;
-						}
 						if(indices[0].isClassical()){
 							auto index=indices[0].asℤ;
 							if(index<0||index>=value.array_.length) outOfBounds();
@@ -2412,8 +2412,38 @@ struct Interpreter(QState){
 						return;
 					case QState.Value.Tag.intval,QState.Value.Tag.uintval,QState.Value.Tag.quval:
 						enforce(indices.length==1);
+						size_t nbits=size_t.max;
+						switch(tag){
+							case QState.Value.Tag.intval:
+								nbits=value.intval.nbits;
+								break;
+							case QState.Value.Tag.uintval:
+								nbits=value.uintval.nbits;
+								break;
+							case QState.Value.Tag.quval:
+								// TODO: store number of bits classically?
+								foreach(k,v;state.state){
+									auto cvalue=value.quval.get(k);
+									if(cvalue.tag==QState.Value.Tag.intval)
+										nbits=cvalue.intval.nbits;
+									else if(cvalue.tag==QState.Value.Tag.uintval)
+										nbits=cvalue.uintval.nbits;
+									break;
+								}
+								break;
+							default: break;
+						}
+						if(indices[0].isClassical()){
+							auto index=indices[0].asℤ;
+							if(index<0||index>=nbits) outOfBounds();
+						}else{
+							auto check=indices[0].compare!"<"(qstate.makeInteger(ℤ(0)))|indices[0].compare!">="(qstate.makeInteger(ℤ(nbits)));
+							auto ccheck=condition.isValid?condition&check:check;
+							foreach(k,v;state.state) // TODO: this is very inefficient
+								if(ccheck.classicalValue(k).neqZImpl)
+									outOfBounds();
+						}
 						auto index=indices[0];
-						// TODO: bounds check
 						rhs.consumeOnRead();
 						auto nrhsz=value&~(state.makeInteger(ℤ(1))<<index);
 						auto nrhso=nrhsz|state.makeInteger(ℤ(1))<<index;
