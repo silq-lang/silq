@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	r:=5 div (2/3);
+	assert(r=7);
+	return r;
+}

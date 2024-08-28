@@ -957,8 +957,14 @@ struct QState{
 			else static if(op=="sub") return nSubType(t1,t2);
 			else static if(op=="*") return arithmeticType!true(t1,t2);
 			else static if(op=="/") return divisionType(t1,t2);
-			else static if(op=="div") return iDivType(t1,t2);
-			else static if(op=="%"){
+			else static if(op=="div"){
+				if(t1==ℤt(true)){
+					if(auto ft=isFixedIntTy(t2))
+						if(!ft.isSigned)
+							t1=ℕt(true); // TODO: this is a hack
+				}
+				return iDivType(t1,t2);
+			}else static if(op=="%"){
 				if(t2==ℤt(true)){
 					if(auto ft=isFixedIntTy(t1))
 						if(!ft.isSigned)
@@ -1016,7 +1022,7 @@ struct QState{
 			}else{
 				static if(op=="/"||op=="%") enforce(!r.eqZImpl,"division by zero");
 				if(type!=ntype||r.type!=ntype){
-					static if(op=="%"){
+					static if(op=="%"||op=="div"){
 						size_t nbits=0;
 						if(r.tag==Tag.intval) nbits=r.intval.nbits;
 						else if(r.tag==Tag.uintval) nbits=r.uintval.nbits;
@@ -1024,10 +1030,22 @@ struct QState{
 							if(tag==Tag.intval) nbits=intval.nbits;
 							else if(tag==Tag.uintval) nbits=uintval.nbits;
 						}
-						if(auto intTy=isFixedIntTy(ntype)){
-							if(intTy.isSigned) return makeInt(ntype,BitInt!true(nbits, floormod(asℤ, r.asℤ)));
-							else return makeUint(ntype,BitInt!false(nbits, floormod(asℤ, r.asℤ)));
-						}else if(ntype==Bool(true)) return makeBool(!!floormod(asℤ, r.asℤ));
+						static if(op=="%"){
+							if(auto intTy=isFixedIntTy(ntype)){
+								if(intTy.isSigned) return makeInt(ntype,BitInt!true(nbits, floormod(asℤ, r.asℤ)));
+								else return makeUint(ntype,BitInt!false(nbits, floormod(asℤ, r.asℤ)));
+							}else if(ntype==Bool(true)) return makeBool(!!floormod(asℤ, r.asℤ));
+						}else static if(op=="div"){
+							if(isℚ&&r.isℚ){
+								if(auto intTy=isFixedIntTy(ntype)){
+									if(intTy.isSigned) return makeInt(ntype,BitInt!true(nbits, .floor(asℚ/r.asℚ)));
+									else return makeUint(ntype,BitInt!false(nbits, .floor(asℚ/r.asℚ)));
+								}else if(ntype==Bool(true)) return makeBool(!!.floor(asℚ/r.asℚ));
+								else return makeInteger(.floor(asℚ/r.asℚ));
+							}else if(isℝ&&r.isℝ){
+								return makeReal(.floor(asℝ/r.asℝ));
+							}
+						}
 					}else{
 						if(type==ntype&&util.among(r.type,Bool(true),ℕt(true),ℤt(true))){
 							if(auto intTy=isFixedIntTy(type)){

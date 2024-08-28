@@ -1,4 +1,3 @@
-// args: --run
 
 def main(){
 	b:=0:𝔹;
