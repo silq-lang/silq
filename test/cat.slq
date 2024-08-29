@@ -1,0 +1,25 @@
+
+def foo(n:!ℕ){
+	t:=(1,2/3);
+	v:=(2,3):!ℕ^2;
+	v2:=vector(n,4);
+	a:=v:!ℕ[];
+	tt:=t~t:!ℕ×!ℚ×!ℕ×!ℚ;
+	tv:=t~v:!ℕ×!ℚ×!ℕ×!ℕ;
+	tv2:=t~v2:!ℚ^(n+2);
+	ta:=t~a:!ℚ[];
+	vt:=v~t:!ℕ×!ℕ×!ℕ×!ℚ;
+	vv:=v~v:!ℕ^4;
+	va:=v~a:!ℕ[];
+	v2t:=v2~t:!ℚ^(n+2);
+	v2v:=v2~v:!ℚ^(n+2);
+	v2a:=v2~a:!ℕ[];
+	at:=a~t:!ℚ[];
+	av:=a~v:!ℕ[];
+	av2:=a~v2:!ℕ[];
+	aa:=a~a:!ℕ[];
+
+	return (t,v,v2,a,tt,tv,tv2,ta,vt,vv,va,v2t,v2v,v2a,at,av,av2,aa);
+}
+
+def main()⇒foo(3);
