@@ -972,9 +972,9 @@ struct QState{
 				}
 				return moduloType(t1,t2);
 			}else static if(op=="^^") return powerType(t1,t2);
-			else static if(op=="|") return arithmeticType!true(t1,t2);
-			else static if(op=="^") return arithmeticType!true(t1,t2);
-			else static if(op=="&") return arithmeticType!true(t1,t2);
+			else static if(op=="|") return bitwiseType(t1,t2);
+			else static if(op=="^") return bitwiseType(t1,t2);
+			else static if(op=="&") return bitAndType(t1,t2);
 			else static if(op=="~") return t1; // TODO: add function to semantic instead
 			else static if(op=="<<"||op==">>") return arithmeticType!false(arithmeticType!false(t1,t1),t2); // TODO: add function to semantic instead
 			else{
