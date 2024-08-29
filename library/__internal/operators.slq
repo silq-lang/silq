@@ -217,6 +217,8 @@ def __mul_R(a:!ℝ,b:!ℝ)lifted:!ℝ;
 def __mul_C(a:!ℂ,b:!ℂ)lifted:!ℂ;
 
 // a/b
+
+def __div_B(a:!𝔹,b:!𝔹)lifted:!ℚ;
 def __div_N(a:!ℕ,b:!ℕ)lifted:!ℚ;
 def __div_Z(a:!ℤ,b:!ℤ)lifted:!ℚ;
 def __div_Q(a:!ℚ,b:!ℚ)lifted:!ℚ;
