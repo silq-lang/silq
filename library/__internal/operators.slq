@@ -166,23 +166,62 @@ def __nsub_C(a:!ℂ,b:!ℂ)lifted:!ℂ;
 
 // a·b
 def __mul_s[n:!ℕ](a:int[n],b:int[n])lifted:int[n];
-def __mul_sℤ[n:!ℕ](a:int[n],b:!ℤ)lifted:int[n];
-def __mul_ℤs[n:!ℕ](a:!ℤ,b:int[n])lifted:int[n];
+def __mul_Ss[n:!ℕ](a:!int[n],b:int[n])lifted:int[n];
+def __mul_sS[n:!ℕ](a:int[n],b:!int[n])lifted:int[n];
+def __mul_S[n:!ℕ](a:!int[n],b:!int[n])lifted:!int[n];
+
+def __mul_sb[n:!ℕ](a:int[n],b:𝔹)lifted:int[n];
+def __mul_Sb[n:!ℕ](a:!int[n],b:𝔹)lifted:int[n];
+def __mul_sB[n:!ℕ](a:int[n],b:!𝔹)lifted:int[n];
+def __mul_SB[n:!ℕ](a:!int[n],b:!𝔹)lifted:!int[n];
+
+def __mul_bs[n:!ℕ](b:𝔹,a:int[n])lifted:int[n];
+def __mul_Bs[n:!ℕ](b:!𝔹,a:int[n])lifted:int[n];
+def __mul_bS[n:!ℕ](b:𝔹,a:!int[n])lifted:int[n];
+def __mul_BS[n:!ℕ](b:!𝔹,a:!int[n])lifted:!int[n];
+
+def __mul_sZ[n:!ℕ](a:int[n],b:!ℤ)lifted:int[n];
+def __mul_SZ[n:!ℕ](a:!int[n],b:!ℤ)lifted:!int[n];
+def __mul_Zs[n:!ℕ](b:!ℤ,a:int[n])lifted:int[n];
+def __mul_ZS[n:!ℕ](b:!ℤ,a:!int[n])lifted:!int[n];
 
 def __mul_u[n:!ℕ](a:uint[n],b:uint[n])lifted:uint[n];
-def __mul_uℤ[n:!ℕ](a:uint[n],b:!ℤ)lifted:uint[n];
-def __mul_ℤu[n:!ℕ](a:!ℤ,b:uint[n])lifted:uint[n];
+def __mul_Uu[n:!ℕ](a:!uint[n],b:uint[n])lifted:uint[n];
+def __mul_uU[n:!ℕ](a:uint[n],b:!uint[n])lifted:uint[n];
+def __mul_U[n:!ℕ](a:!uint[n],b:!uint[n])lifted:!uint[n];
 
-def __mul_ℕ(a:!ℕ,b:!ℕ)lifted:!ℕ;
-def __mul_ℤ(a:!ℤ,b:!ℤ)lifted:!ℤ;
-def __mul_ℚ(a:!ℚ,b:!ℚ)lifted:!ℚ;
-def __mul_ℝ(a:!ℝ,b:!ℝ)lifted:!ℝ;
-def __mul_ℂ(a:!ℂ,b:!ℂ)lifted:!ℂ;
+def __mul_ub[n:!ℕ](a:uint[n],b:𝔹)lifted:uint[n];
+def __mul_Ub[n:!ℕ](a:!uint[n],b:𝔹)lifted:uint[n];
+def __mul_uB[n:!ℕ](a:uint[n],b:!𝔹)lifted:uint[n];
+def __mul_UB[n:!ℕ](a:!uint[n],b:!𝔹)lifted:!uint[n];
+
+def __mul_bu[n:!ℕ](b:𝔹,a:uint[n])lifted:uint[n];
+def __mul_Bu[n:!ℕ](b:!𝔹,a:uint[n])lifted:uint[n];
+def __mul_bU[n:!ℕ](b:𝔹,a:!uint[n])lifted:uint[n];
+def __mul_BU[n:!ℕ](b:!𝔹,a:!uint[n])lifted:!uint[n];
+
+def __mul_uZ[n:!ℕ](a:uint[n],b:!ℤ)lifted:uint[n];
+def __mul_UZ[n:!ℕ](a:!uint[n],b:!ℤ)lifted:!uint[n];
+def __mul_Zu[n:!ℕ](b:!ℤ,a:uint[n])lifted:uint[n];
+def __mul_ZU[n:!ℕ](b:!ℤ,a:!uint[n])lifted:!uint[n];
+
+def __mul_b(a:𝔹,b:𝔹)lifted:𝔹;
+def __mul_bB(a:𝔹,b:!𝔹)lifted:𝔹;
+def __mul_Bb(a:!𝔹,b:𝔹)lifted:𝔹;
+def __mul_B(a:!𝔹,b:!𝔹)lifted:!𝔹;
+
+def __mul_N(a:!ℕ,b:!ℕ)lifted:!ℕ;
+def __mul_Z(a:!ℤ,b:!ℤ)lifted:!ℤ;
+def __mul_Q(a:!ℚ,b:!ℚ)lifted:!ℚ;
+def __mul_R(a:!ℝ,b:!ℝ)lifted:!ℝ;
+def __mul_C(a:!ℂ,b:!ℂ)lifted:!ℂ;
 
 // a/b
-def __div_ℚ(a:!ℚ,b:!ℚ)lifted:!ℚ;
-def __div_ℝ(a:!ℝ,b:!ℝ)lifted:!ℝ;
-def __div_ℂ(a:!ℂ,b:!ℂ)lifted:!ℂ;
+def __div_N(a:!ℕ,b:!ℕ)lifted:!ℚ;
+def __div_Z(a:!ℤ,b:!ℤ)lifted:!ℚ;
+def __div_Q(a:!ℚ,b:!ℚ)lifted:!ℚ;
+def __div_R(a:!ℝ,b:!ℝ)lifted:!ℝ;
+def __div_C(a:!ℂ,b:!ℂ)lifted:!ℂ;
 
 // a div b
 def __idiv_s[n:!ℕ](a:int[n],b:int[n])lifted:int[n];
