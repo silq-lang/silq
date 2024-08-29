@@ -1,0 +1,5 @@
+// args: --run
+
+def main(){
+	return true || assert(false);
+}

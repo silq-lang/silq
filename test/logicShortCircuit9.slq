@@ -1,0 +1,7 @@
+
+def main() {
+	x := false;
+	y := H(0:B);
+	z := dup(y);
+	return (x && measure(dup(y)), x || measure(dup(y)), H(z), y); // ok
+}
