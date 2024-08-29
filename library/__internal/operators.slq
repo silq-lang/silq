@@ -287,20 +287,65 @@ def __idiv_Q(a:!ℚ,b:!ℚ)lifted:!ℤ;
 def __idiv_R(a:!ℝ,b:!ℝ)lifted:!ℤ;
 
 // a % b
-def __mod_s[m:!ℕ,n:!ℕ](a:int[m],b:int[n])lifted:int[n];
-def __mod_ℤs[n:!ℕ](a:!ℤ,b:int[n])lifted:int[n];
+def __mod_s[n:!ℕ](a:int[n],b:int[n])lifted:int[n];
+def __mod_Ss[n:!ℕ](a:!int[n],b:int[n])lifted:int[n];
+def __mod_sS[n:!ℕ](a:int[n],b:!int[n])lifted:int[n];
+def __mod_S[n:!ℕ](a:!int[n],b:!int[n])lifted:!int[n];
 
-def __mod_u[m:!ℕ,n:!ℕ](a:uint[m],b:uint[n])lifted:uint[n];
-def __mod_ℤu[n:!ℕ](a:!ℤ,b:uint[n])lifted:uint[n];
-def __mod_uℕ[n:!ℕ](a:uint[n],b:!ℕ)lifted:uint[n];
+def __mod_sb[n:!ℕ](a:int[n],b:𝔹)lifted:int[n];
+def __mod_Sb[n:!ℕ](a:!int[n],b:𝔹)lifted:int[n];
+def __mod_sB[n:!ℕ](a:int[n],b:!𝔹)lifted:int[n];
+def __mod_SB[n:!ℕ](a:!int[n],b:!𝔹)lifted:!int[n];
 
-def __mod_us[m:!ℕ,n:!ℕ](a:uint[m],b:int[n])lifted:int[n];
-def __mod_su[m:!ℕ,n:!ℕ](a:int[m],b:uint[n])lifted:uint[n];
+def __mod_bs[n:!ℕ](b:𝔹,a:int[n])lifted:int[n];
+def __mod_Bs[n:!ℕ](b:!𝔹,a:int[n])lifted:int[n];
+def __mod_bS[n:!ℕ](b:𝔹,a:!int[n])lifted:int[n];
+def __mod_BS[n:!ℕ](b:!𝔹,a:!int[n])lifted:!int[n];
 
-def __mod_ℕ(a:!ℕ,b:!ℕ)lifted:!ℕ;
-def __mod_ℤ(a:!ℤ,b:!ℤ)lifted:!ℤ;
-def __mod_ℚ(a:!ℚ,b:!ℚ)lifted:!ℚ;
-def __mod_ℝ(a:!ℝ,b:!ℝ)lifted:!ℝ;
+def __mod_sN[n:!ℕ](a:int[n],b:!ℕ)lifted:int[n];
+def __mod_SN[n:!ℕ](a:!int[n],b:!ℕ)lifted:!int[n];
+def __mod_Ns[n:!ℕ](b:!ℕ,a:int[n])lifted:int[n];
+def __mod_NS[n:!ℕ](b:!ℕ,a:!int[n])lifted:!int[n];
+
+def __mod_sZ[n:!ℕ](a:int[n],b:!ℤ)lifted:int[n];
+def __mod_SZ[n:!ℕ](a:!int[n],b:!ℤ)lifted:!int[n];
+def __mod_Zs[n:!ℕ](b:!ℤ,a:int[n])lifted:int[n];
+def __mod_ZS[n:!ℕ](b:!ℤ,a:!int[n])lifted:!int[n];
+
+def __mod_u[n:!ℕ](a:uint[n],b:uint[n])lifted:uint[n];
+def __mod_Uu[n:!ℕ](a:!uint[n],b:uint[n])lifted:uint[n];
+def __mod_uU[n:!ℕ](a:uint[n],b:!uint[n])lifted:uint[n];
+def __mod_U[n:!ℕ](a:!uint[n],b:!uint[n])lifted:!uint[n];
+
+def __mod_ub[n:!ℕ](a:uint[n],b:𝔹)lifted:uint[n];
+def __mod_Ub[n:!ℕ](a:!uint[n],b:𝔹)lifted:uint[n];
+def __mod_uB[n:!ℕ](a:uint[n],b:!𝔹)lifted:uint[n];
+def __mod_UB[n:!ℕ](a:!uint[n],b:!𝔹)lifted:!uint[n];
+
+def __mod_bu[n:!ℕ](b:𝔹,a:uint[n])lifted:uint[n];
+def __mod_Bu[n:!ℕ](b:!𝔹,a:uint[n])lifted:uint[n];
+def __mod_bU[n:!ℕ](b:𝔹,a:!uint[n])lifted:uint[n];
+def __mod_BU[n:!ℕ](b:!𝔹,a:!uint[n])lifted:!uint[n];
+
+def __mod_uN[n:!ℕ](a:uint[n],b:!ℕ)lifted:uint[n];
+def __mod_UN[n:!ℕ](a:!uint[n],b:!ℕ)lifted:!uint[n];
+def __mod_Nu[n:!ℕ](b:!ℕ,a:uint[n])lifted:uint[n];
+def __mod_NU[n:!ℕ](b:!ℕ,a:!uint[n])lifted:!uint[n];
+
+//def __mod_uZ[n:!ℕ](a:uint[n],b:!ℤ)lifted:uint[n];
+//def __mod_UZ[n:!ℕ](a:!uint[n],b:!ℤ)lifted:!uint[n];
+def __mod_Zu[n:!ℕ](b:!ℤ,a:uint[n])lifted:uint[n];
+def __mod_ZU[n:!ℕ](b:!ℤ,a:!uint[n])lifted:!uint[n];
+
+def __mod_b(a:𝔹,b:𝔹)lifted:𝔹;
+def __mod_bB(a:𝔹,b:!𝔹)lifted:𝔹;
+def __mod_Bb(a:!𝔹,b:𝔹)lifted:𝔹;
+def __mod_B(a:!𝔹,b:!𝔹)lifted:!𝔹;
+
+def __mod_N(a:!ℕ,b:!ℕ)lifted:!ℕ;
+def __mod_Z(a:!ℤ,b:!ℤ)lifted:!ℤ;
+def __mod_Q(a:!ℚ,b:!ℚ)lifted:!ℚ;
+def __mod_R(a:!ℝ,b:!ℝ)lifted:!ℝ;
 
 // a ^ b
 def __pow_ℕ(a:!ℕ,b:!ℕ)lifted:!ℕ;
