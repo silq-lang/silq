@@ -1,0 +1,6 @@
+// args: --run
+
+def main(){
+	x:=0/2;
+	return 1/2 div x; // error
+}

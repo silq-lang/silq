@@ -133,6 +133,26 @@ def __sub_R(a:!ℝ,b:!ℝ)lifted:!ℝ;
 def __sub_C(a:!ℂ,b:!ℂ)lifted:!ℂ;
 
 // a sub b
+def __nsub_s[n:!ℕ](a:int[n],b:int[n])lifted:uint[n];
+def __nsub_Ss[n:!ℕ](a:!int[n],b:int[n])lifted:uint[n];
+def __nsub_sS[n:!ℕ](a:int[n],b:!int[n])lifted:uint[n];
+def __nsub_S[n:!ℕ](a:!int[n],b:!int[n])lifted:!uint[n];
+
+def __nsub_sb[n:!ℕ](a:int[n],b:𝔹)lifted:uint[n];
+def __nsub_Sb[n:!ℕ](a:!int[n],b:𝔹)lifted:uint[n];
+def __nsub_sB[n:!ℕ](a:int[n],b:!𝔹)lifted:uint[n];
+def __nsub_SB[n:!ℕ](a:!int[n],b:!𝔹)lifted:!uint[n];
+
+def __nsub_bs[n:!ℕ](a:𝔹,b:int[n])lifted:uint[n];
+def __nsub_Bs[n:!ℕ](a:!𝔹,b:int[n])lifted:uint[n];
+def __nsub_bS[n:!ℕ](a:𝔹,b:!int[n])lifted:uint[n];
+def __nsub_BS[n:!ℕ](a:!𝔹,b:!int[n])lifted:!uint[n];
+
+def __nsub_sZ[n:!ℕ](a:int[n],b:!ℤ)lifted:uint[n];
+def __nsub_SZ[n:!ℕ](a:!int[n],b:!ℤ)lifted:!uint[n];
+def __nsub_Zs[n:!ℕ](a:!ℤ,b:int[n])lifted:uint[n];
+def __nsub_ZS[n:!ℕ](a:!ℤ,b:!int[n])lifted:!uint[n];
+
 def __nsub_u[n:!ℕ](a:uint[n],b:uint[n])lifted:uint[n];
 def __nsub_Uu[n:!ℕ](a:!uint[n],b:uint[n])lifted:uint[n];
 def __nsub_uU[n:!ℕ](a:uint[n],b:!uint[n])lifted:uint[n];
@@ -341,6 +361,16 @@ def __mod_b(a:𝔹,b:𝔹)lifted:𝔹;
 def __mod_bB(a:𝔹,b:!𝔹)lifted:𝔹;
 def __mod_Bb(a:!𝔹,b:𝔹)lifted:𝔹;
 def __mod_B(a:!𝔹,b:!𝔹)lifted:!𝔹;
+
+def __mod_bN(a:𝔹,b:!ℕ)lifted:𝔹;
+def __mod_Nb(a:!ℕ,b:𝔹)lifted:𝔹;
+def __mod_BN(a:!𝔹,b:!ℕ)lifted:!𝔹;
+def __mod_NB(a:!ℕ,b:!𝔹)lifted:!𝔹;
+
+def __mod_Zb(a:!ℤ,b:𝔹)lifted:𝔹;
+def __mod_ZB(a:!ℤ,b:!𝔹)lifted:!𝔹;
+
+def __mod_ZN(a:!ℤ,b:!ℕ)lifted:!ℕ;
 
 def __mod_N(a:!ℕ,b:!ℕ)lifted:!ℕ;
 def __mod_Z(a:!ℤ,b:!ℤ)lifted:!ℤ;

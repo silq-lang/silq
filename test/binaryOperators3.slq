@@ -10,7 +10,7 @@ def main(){
 	q:=1/2:!ℚ;
 	r:=4.5:!ℝ;
 	// c:=0:!ℂ;
-	
+
 	abb:=b*b:𝔹;
 	abs:=b*s:int[16];
 	abu:=b*u:uint[16];
@@ -118,8 +118,8 @@ def main(){
 	nsbcs:=bc div s:int[16];
 	nsbcu:=bc div u:uint[16];
 	nsbcbc:=bc div bc:!𝔹;
-	nsmall:=1:!ℕ;
-	nsbcn:=bc div nsmall:!ℕ;
+	nsmall:=0:!ℕ;
+	nsbcn:=bc div n:!ℕ;
 	nsbcz:=bc div z:!ℤ;
 	nsbcq:=bc div q:!ℤ;
 	nsbcr:=bc div r:!ℤ;
@@ -155,6 +155,7 @@ def main(){
 	nmbs:=b%s:int[16];
 	nmbu:=b%u:uint[16];
 	nmbbc:=b%bc:𝔹;
+	nmbn:=b%n:𝔹;
 	nmsb:=s%b:int[16];
 	nmss:=s%s:int[16];
 	nmsbc:=s%bc:int[16];
@@ -173,27 +174,28 @@ def main(){
 	nmbcs:=bc%s:int[16];
 	nmbcu:=bc%u:uint[16];
 	nmbcbc:=bc%bc:!𝔹;
-	nmmall:=0:!ℕ;
-	nmbcn:=bc%nsmall:!ℕ;
+	nmbcn:=bc%n:!𝔹;
 	nmbcz:=bc%z:!ℤ;
 	nmbcq:=bc%q:!ℚ;
 	nmbcr:=bc%r:!ℝ;
+	nmnb:=n%b:𝔹;
 	nmns:=n%s:int[16];
 	nmns₂:=1%s:int[16];
 	nmnu:=n%u:uint[16];
 	nmnu₂:=10%u:uint[16];
-	nmnbc:=n%bc:!ℕ;
+	nmnbc:=n%bc:!𝔹;
 	nmnn:=n%n:!ℕ;
 	nmnz:=n%z:!ℤ;
 	nmnq:=n%q:!ℚ;
 	nmnr:=n%r:!ℝ;
+	nmzb:=z%b:𝔹;
 	nmzs:=z%s:int[16];
 	nmzs₂:=-1%s:int[16];
-	nmzu:=z%u;
-	nmzu₂:=-(-10)%u;
+	nmzu:=z%u:uint[16];
+	nmzu₂:=-(-10)%u:uint[16];
 	zmarge:=-(-10);
-	nmzbc:=zlarge%bc:!ℤ;
-	nmzn:=zlarge%n:!ℤ;
+	nmzbc:=zlarge%bc:!𝔹;
+	nmzn:=zlarge%n:!ℕ;
 	nmzz:=zlarge%z:!ℤ;
 	nmzq:=z%q:!ℚ;
 	nmzr:=z%r:!ℝ;

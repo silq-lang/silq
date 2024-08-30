@@ -1020,7 +1020,7 @@ struct QState{
 					else return makeUint(type,mixin(`uintval `~op~` smallValue(r.asℤ())`));
 				}
 			}else{
-				static if(op=="/"||op=="%") enforce(!r.eqZImpl,"division by zero");
+				static if(op=="/"||op=="div"||op=="%") enforce(!r.eqZImpl,"division by zero");
 				if(type!=ntype||r.type!=ntype){
 					static if(op=="%"||op=="div"){
 						size_t nbits=0;
@@ -1088,7 +1088,6 @@ struct QState{
 						if(isUint(type)) return makeUint(ntype,mixin(`uintval `~op~` r.uintval`));
 				}
 				static if(op=="div"){
-					enforce(!r.eqZImpl,"division by zero");
 					final switch(tag){
 						case Tag.fval: return (this/r).floor();
 						case Tag.qval: return makeInteger(.floor(qval/r.qval));
