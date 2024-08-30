@@ -1,0 +1,4 @@
+
+def main(){
+	!int[16]; // error
+}
