@@ -121,6 +121,7 @@ def main(){
 	usmall:=0:uint[16];
 	nsbu:=b sub usmall:uint[16];
 	nsbbc:=b sub bc:𝔹;
+	nsbn:=b sub n:𝔹;
 	nssb:=s sub b:uint[16];
 	nsss:=s sub s:uint[16];
 	nssbc:=s sub bc:uint[16];
@@ -140,7 +141,7 @@ def main(){
 	nsbcs:=bc sub ssmall:uint[16];
 	nsbcu:=bc sub usmall:uint[16];
 	nsbcbc:=bc sub bc:!ℕ;
-	nsbcn:=bc sub nsmall:!ℕ;
+	nsbcn:=bc sub nsmall:!𝔹;
 	nsbcz:=bc sub z:!ℤ;
 	nsns:=n sub s:uint[16];
 	nsns₂:=1 sub s:uint[16];
