@@ -47,15 +47,15 @@ def __add_Sb[n:!ℕ](a:!int[n],b:𝔹)lifted:int[n];
 def __add_sB[n:!ℕ](a:int[n],b:!𝔹)lifted:int[n];
 def __add_SB[n:!ℕ](a:!int[n],b:!𝔹)lifted:!int[n];
 
-def __add_bs[n:!ℕ](b:𝔹,a:int[n])lifted:int[n];
-def __add_Bs[n:!ℕ](b:!𝔹,a:int[n])lifted:int[n];
-def __add_bS[n:!ℕ](b:𝔹,a:!int[n])lifted:int[n];
-def __add_BS[n:!ℕ](b:!𝔹,a:!int[n])lifted:!int[n];
+def __add_bs[n:!ℕ](a:𝔹,b:int[n])lifted:int[n];
+def __add_Bs[n:!ℕ](a:!𝔹,b:int[n])lifted:int[n];
+def __add_bS[n:!ℕ](a:𝔹,b:!int[n])lifted:int[n];
+def __add_BS[n:!ℕ](a:!𝔹,b:!int[n])lifted:!int[n];
 
 def __add_sZ[n:!ℕ](a:int[n],b:!ℤ)lifted:int[n];
 def __add_SZ[n:!ℕ](a:!int[n],b:!ℤ)lifted:!int[n];
-def __add_Zs[n:!ℕ](b:!ℤ,a:int[n])lifted:int[n];
-def __add_ZS[n:!ℕ](b:!ℤ,a:!int[n])lifted:!int[n];
+def __add_Zs[n:!ℕ](a:!ℤ,b:int[n])lifted:int[n];
+def __add_ZS[n:!ℕ](a:!ℤ,b:!int[n])lifted:!int[n];
 
 def __add_u[n:!ℕ](a:uint[n],b:uint[n])lifted:uint[n];
 def __add_Uu[n:!ℕ](a:!uint[n],b:uint[n])lifted:uint[n];
@@ -67,15 +67,15 @@ def __add_Ub[n:!ℕ](a:!uint[n],b:𝔹)lifted:uint[n];
 def __add_uB[n:!ℕ](a:uint[n],b:!𝔹)lifted:uint[n];
 def __add_UB[n:!ℕ](a:!uint[n],b:!𝔹)lifted:!uint[n];
 
-def __add_bu[n:!ℕ](b:𝔹,a:uint[n])lifted:uint[n];
-def __add_Bu[n:!ℕ](b:!𝔹,a:uint[n])lifted:uint[n];
-def __add_bU[n:!ℕ](b:𝔹,a:!uint[n])lifted:uint[n];
-def __add_BU[n:!ℕ](b:!𝔹,a:!uint[n])lifted:!uint[n];
+def __add_bu[n:!ℕ](a:𝔹,b:uint[n])lifted:uint[n];
+def __add_Bu[n:!ℕ](a:!𝔹,b:uint[n])lifted:uint[n];
+def __add_bU[n:!ℕ](a:𝔹,b:!uint[n])lifted:uint[n];
+def __add_BU[n:!ℕ](a:!𝔹,b:!uint[n])lifted:!uint[n];
 
 def __add_uZ[n:!ℕ](a:uint[n],b:!ℤ)lifted:uint[n];
 def __add_UZ[n:!ℕ](a:!uint[n],b:!ℤ)lifted:!uint[n];
-def __add_Zu[n:!ℕ](b:!ℤ,a:uint[n])lifted:uint[n];
-def __add_ZU[n:!ℕ](b:!ℤ,a:!uint[n])lifted:!uint[n];
+def __add_Zu[n:!ℕ](a:!ℤ,b:uint[n])lifted:uint[n];
+def __add_ZU[n:!ℕ](a:!ℤ,b:!uint[n])lifted:!uint[n];
 
 def __add_B(a:!𝔹,b:!𝔹)lifted:!ℕ;
 def __add_N(a:!ℕ,b:!ℕ)lifted:!ℕ;
@@ -95,15 +95,15 @@ def __sub_Sb[n:!ℕ](a:!int[n],b:𝔹)lifted:int[n];
 def __sub_sB[n:!ℕ](a:int[n],b:!𝔹)lifted:int[n];
 def __sub_SB[n:!ℕ](a:!int[n],b:!𝔹)lifted:!int[n];
 
-def __sub_bs[n:!ℕ](b:𝔹,a:int[n])lifted:int[n];
-def __sub_Bs[n:!ℕ](b:!𝔹,a:int[n])lifted:int[n];
-def __sub_bS[n:!ℕ](b:𝔹,a:!int[n])lifted:int[n];
-def __sub_BS[n:!ℕ](b:!𝔹,a:!int[n])lifted:!int[n];
+def __sub_bs[n:!ℕ](a:𝔹,b:int[n])lifted:int[n];
+def __sub_Bs[n:!ℕ](a:!𝔹,b:int[n])lifted:int[n];
+def __sub_bS[n:!ℕ](a:𝔹,b:!int[n])lifted:int[n];
+def __sub_BS[n:!ℕ](a:!𝔹,b:!int[n])lifted:!int[n];
 
 def __sub_sZ[n:!ℕ](a:int[n],b:!ℤ)lifted:int[n];
 def __sub_SZ[n:!ℕ](a:!int[n],b:!ℤ)lifted:!int[n];
-def __sub_Zs[n:!ℕ](b:!ℤ,a:int[n])lifted:int[n];
-def __sub_ZS[n:!ℕ](b:!ℤ,a:!int[n])lifted:!int[n];
+def __sub_Zs[n:!ℕ](a:!ℤ,b:int[n])lifted:int[n];
+def __sub_ZS[n:!ℕ](a:!ℤ,b:!int[n])lifted:!int[n];
 
 def __sub_u[n:!ℕ](a:uint[n],b:uint[n])lifted:uint[n];
 def __sub_Uu[n:!ℕ](a:!uint[n],b:uint[n])lifted:uint[n];
@@ -115,15 +115,15 @@ def __sub_Ub[n:!ℕ](a:!uint[n],b:𝔹)lifted:uint[n];
 def __sub_uB[n:!ℕ](a:uint[n],b:!𝔹)lifted:uint[n];
 def __sub_UB[n:!ℕ](a:!uint[n],b:!𝔹)lifted:!uint[n];
 
-def __sub_bu[n:!ℕ](b:𝔹,a:uint[n])lifted:uint[n];
-def __sub_Bu[n:!ℕ](b:!𝔹,a:uint[n])lifted:uint[n];
-def __sub_bU[n:!ℕ](b:𝔹,a:!uint[n])lifted:uint[n];
-def __sub_BU[n:!ℕ](b:!𝔹,a:!uint[n])lifted:!uint[n];
+def __sub_bu[n:!ℕ](a:𝔹,b:uint[n])lifted:uint[n];
+def __sub_Bu[n:!ℕ](a:!𝔹,b:uint[n])lifted:uint[n];
+def __sub_bU[n:!ℕ](a:𝔹,b:!uint[n])lifted:uint[n];
+def __sub_BU[n:!ℕ](a:!𝔹,b:!uint[n])lifted:!uint[n];
 
 def __sub_uZ[n:!ℕ](a:uint[n],b:!ℤ)lifted:uint[n];
 def __sub_UZ[n:!ℕ](a:!uint[n],b:!ℤ)lifted:!uint[n];
-def __sub_Zu[n:!ℕ](b:!ℤ,a:uint[n])lifted:uint[n];
-def __sub_ZU[n:!ℕ](b:!ℤ,a:!uint[n])lifted:!uint[n];
+def __sub_Zu[n:!ℕ](a:!ℤ,b:uint[n])lifted:uint[n];
+def __sub_ZU[n:!ℕ](a:!ℤ,b:!uint[n])lifted:!uint[n];
 
 def __sub_B(a:!𝔹,b:!𝔹)lifted:!ℤ;
 def __sub_N(a:!ℕ,b:!ℕ)lifted:!ℤ;
@@ -143,15 +143,15 @@ def __nsub_Ub[n:!ℕ](a:!uint[n],b:𝔹)lifted:uint[n];
 def __nsub_uB[n:!ℕ](a:uint[n],b:!𝔹)lifted:uint[n];
 def __nsub_UB[n:!ℕ](a:!uint[n],b:!𝔹)lifted:!uint[n];
 
-def __nsub_bu[n:!ℕ](b:𝔹,a:uint[n])lifted:uint[n];
-def __nsub_Bu[n:!ℕ](b:!𝔹,a:uint[n])lifted:uint[n];
-def __nsub_bU[n:!ℕ](b:𝔹,a:!uint[n])lifted:uint[n];
-def __nsub_BU[n:!ℕ](b:!𝔹,a:!uint[n])lifted:!uint[n];
+def __nsub_bu[n:!ℕ](a:𝔹,b:uint[n])lifted:uint[n];
+def __nsub_Bu[n:!ℕ](a:!𝔹,b:uint[n])lifted:uint[n];
+def __nsub_bU[n:!ℕ](a:𝔹,b:!uint[n])lifted:uint[n];
+def __nsub_BU[n:!ℕ](a:!𝔹,b:!uint[n])lifted:!uint[n];
 
 def __nsub_uZ[n:!ℕ](a:uint[n],b:!ℤ)lifted:uint[n];
 def __nsub_UZ[n:!ℕ](a:!uint[n],b:!ℤ)lifted:!uint[n];
-def __nsub_Zu[n:!ℕ](b:!ℤ,a:uint[n])lifted:uint[n];
-def __nsub_ZU[n:!ℕ](b:!ℤ,a:!uint[n])lifted:!uint[n];
+def __nsub_Zu[n:!ℕ](a:!ℤ,b:uint[n])lifted:uint[n];
+def __nsub_ZU[n:!ℕ](a:!ℤ,b:!uint[n])lifted:!uint[n];
 
 def __nsub_b(a:𝔹,b:𝔹)lifted:𝔹;
 def __nsub_bB(a:𝔹,b:!𝔹)lifted:𝔹;
@@ -175,15 +175,15 @@ def __mul_Sb[n:!ℕ](a:!int[n],b:𝔹)lifted:int[n];
 def __mul_sB[n:!ℕ](a:int[n],b:!𝔹)lifted:int[n];
 def __mul_SB[n:!ℕ](a:!int[n],b:!𝔹)lifted:!int[n];
 
-def __mul_bs[n:!ℕ](b:𝔹,a:int[n])lifted:int[n];
-def __mul_Bs[n:!ℕ](b:!𝔹,a:int[n])lifted:int[n];
-def __mul_bS[n:!ℕ](b:𝔹,a:!int[n])lifted:int[n];
-def __mul_BS[n:!ℕ](b:!𝔹,a:!int[n])lifted:!int[n];
+def __mul_bs[n:!ℕ](a:𝔹,b:int[n])lifted:int[n];
+def __mul_Bs[n:!ℕ](a:!𝔹,b:int[n])lifted:int[n];
+def __mul_bS[n:!ℕ](a:𝔹,b:!int[n])lifted:int[n];
+def __mul_BS[n:!ℕ](a:!𝔹,b:!int[n])lifted:!int[n];
 
 def __mul_sZ[n:!ℕ](a:int[n],b:!ℤ)lifted:int[n];
 def __mul_SZ[n:!ℕ](a:!int[n],b:!ℤ)lifted:!int[n];
-def __mul_Zs[n:!ℕ](b:!ℤ,a:int[n])lifted:int[n];
-def __mul_ZS[n:!ℕ](b:!ℤ,a:!int[n])lifted:!int[n];
+def __mul_Zs[n:!ℕ](a:!ℤ,b:int[n])lifted:int[n];
+def __mul_ZS[n:!ℕ](a:!ℤ,b:!int[n])lifted:!int[n];
 
 def __mul_u[n:!ℕ](a:uint[n],b:uint[n])lifted:uint[n];
 def __mul_Uu[n:!ℕ](a:!uint[n],b:uint[n])lifted:uint[n];
@@ -195,15 +195,15 @@ def __mul_Ub[n:!ℕ](a:!uint[n],b:𝔹)lifted:uint[n];
 def __mul_uB[n:!ℕ](a:uint[n],b:!𝔹)lifted:uint[n];
 def __mul_UB[n:!ℕ](a:!uint[n],b:!𝔹)lifted:!uint[n];
 
-def __mul_bu[n:!ℕ](b:𝔹,a:uint[n])lifted:uint[n];
-def __mul_Bu[n:!ℕ](b:!𝔹,a:uint[n])lifted:uint[n];
-def __mul_bU[n:!ℕ](b:𝔹,a:!uint[n])lifted:uint[n];
-def __mul_BU[n:!ℕ](b:!𝔹,a:!uint[n])lifted:!uint[n];
+def __mul_bu[n:!ℕ](a:𝔹,b:uint[n])lifted:uint[n];
+def __mul_Bu[n:!ℕ](a:!𝔹,b:uint[n])lifted:uint[n];
+def __mul_bU[n:!ℕ](a:𝔹,b:!uint[n])lifted:uint[n];
+def __mul_BU[n:!ℕ](a:!𝔹,b:!uint[n])lifted:!uint[n];
 
 def __mul_uZ[n:!ℕ](a:uint[n],b:!ℤ)lifted:uint[n];
 def __mul_UZ[n:!ℕ](a:!uint[n],b:!ℤ)lifted:!uint[n];
-def __mul_Zu[n:!ℕ](b:!ℤ,a:uint[n])lifted:uint[n];
-def __mul_ZU[n:!ℕ](b:!ℤ,a:!uint[n])lifted:!uint[n];
+def __mul_Zu[n:!ℕ](a:!ℤ,b:uint[n])lifted:uint[n];
+def __mul_ZU[n:!ℕ](a:!ℤ,b:!uint[n])lifted:!uint[n];
 
 def __mul_b(a:𝔹,b:𝔹)lifted:𝔹;
 def __mul_bB(a:𝔹,b:!𝔹)lifted:𝔹;
@@ -236,20 +236,20 @@ def __idiv_Sb[n:!ℕ](a:!int[n],b:𝔹)lifted:int[n];
 def __idiv_sB[n:!ℕ](a:int[n],b:!𝔹)lifted:int[n];
 def __idiv_SB[n:!ℕ](a:!int[n],b:!𝔹)lifted:!int[n];
 
-def __idiv_bs[n:!ℕ](b:𝔹,a:int[n])lifted:int[n];
-def __idiv_Bs[n:!ℕ](b:!𝔹,a:int[n])lifted:int[n];
-def __idiv_bS[n:!ℕ](b:𝔹,a:!int[n])lifted:int[n];
-def __idiv_BS[n:!ℕ](b:!𝔹,a:!int[n])lifted:!int[n];
+def __idiv_bs[n:!ℕ](a:𝔹,b:int[n])lifted:int[n];
+def __idiv_Bs[n:!ℕ](a:!𝔹,b:int[n])lifted:int[n];
+def __idiv_bS[n:!ℕ](a:𝔹,b:!int[n])lifted:int[n];
+def __idiv_BS[n:!ℕ](a:!𝔹,b:!int[n])lifted:!int[n];
 
 def __idiv_sN[n:!ℕ](a:int[n],b:!ℕ)lifted:int[n];
 def __idiv_SN[n:!ℕ](a:!int[n],b:!ℕ)lifted:!int[n];
-def __idiv_Ns[n:!ℕ](b:!ℕ,a:int[n])lifted:int[n];
-def __idiv_NS[n:!ℕ](b:!ℕ,a:!int[n])lifted:!int[n];
+def __idiv_Ns[n:!ℕ](a:!ℕ,b:int[n])lifted:int[n];
+def __idiv_NS[n:!ℕ](a:!ℕ,b:!int[n])lifted:!int[n];
 
 def __idiv_sZ[n:!ℕ](a:int[n],b:!ℤ)lifted:int[n];
 def __idiv_SZ[n:!ℕ](a:!int[n],b:!ℤ)lifted:!int[n];
-def __idiv_Zs[n:!ℕ](b:!ℤ,a:int[n])lifted:int[n];
-def __idiv_ZS[n:!ℕ](b:!ℤ,a:!int[n])lifted:!int[n];
+def __idiv_Zs[n:!ℕ](a:!ℤ,b:int[n])lifted:int[n];
+def __idiv_ZS[n:!ℕ](a:!ℤ,b:!int[n])lifted:!int[n];
 
 def __idiv_u[n:!ℕ](a:uint[n],b:uint[n])lifted:uint[n];
 def __idiv_Uu[n:!ℕ](a:!uint[n],b:uint[n])lifted:uint[n];
@@ -261,20 +261,20 @@ def __idiv_Ub[n:!ℕ](a:!uint[n],b:𝔹)lifted:uint[n];
 def __idiv_uB[n:!ℕ](a:uint[n],b:!𝔹)lifted:uint[n];
 def __idiv_UB[n:!ℕ](a:!uint[n],b:!𝔹)lifted:!uint[n];
 
-def __idiv_bu[n:!ℕ](b:𝔹,a:uint[n])lifted:uint[n];
-def __idiv_Bu[n:!ℕ](b:!𝔹,a:uint[n])lifted:uint[n];
-def __idiv_bU[n:!ℕ](b:𝔹,a:!uint[n])lifted:uint[n];
-def __idiv_BU[n:!ℕ](b:!𝔹,a:!uint[n])lifted:!uint[n];
+def __idiv_bu[n:!ℕ](a:𝔹,b:uint[n])lifted:uint[n];
+def __idiv_Bu[n:!ℕ](a:!𝔹,b:uint[n])lifted:uint[n];
+def __idiv_bU[n:!ℕ](a:𝔹,b:!uint[n])lifted:uint[n];
+def __idiv_BU[n:!ℕ](a:!𝔹,b:!uint[n])lifted:!uint[n];
 
 def __idiv_uN[n:!ℕ](a:uint[n],b:!ℕ)lifted:uint[n];
 def __idiv_UN[n:!ℕ](a:!uint[n],b:!ℕ)lifted:!uint[n];
-def __idiv_Nu[n:!ℕ](b:!ℕ,a:uint[n])lifted:uint[n];
-def __idiv_NU[n:!ℕ](b:!ℕ,a:!uint[n])lifted:!uint[n];
+def __idiv_Nu[n:!ℕ](a:!ℕ,b:uint[n])lifted:uint[n];
+def __idiv_NU[n:!ℕ](a:!ℕ,b:!uint[n])lifted:!uint[n];
 
 def __idiv_uZ[n:!ℕ](a:uint[n],b:!ℤ)lifted:uint[n];
 def __idiv_UZ[n:!ℕ](a:!uint[n],b:!ℤ)lifted:!uint[n];
-//def __idiv_Zu[n:!ℕ](b:!ℤ,a:uint[n])lifted:uint[n];
-//def __idiv_ZU[n:!ℕ](b:!ℤ,a:!uint[n])lifted:!uint[n];
+//def __idiv_Zu[n:!ℕ](a:!ℤ,b:uint[n])lifted:uint[n];
+//def __idiv_ZU[n:!ℕ](a:!ℤ,b:!uint[n])lifted:!uint[n];
 
 def __idiv_b(a:𝔹,b:𝔹)lifted:𝔹;
 def __idiv_bB(a:𝔹,b:!𝔹)lifted:𝔹;
@@ -297,20 +297,20 @@ def __mod_Sb[n:!ℕ](a:!int[n],b:𝔹)lifted:int[n];
 def __mod_sB[n:!ℕ](a:int[n],b:!𝔹)lifted:int[n];
 def __mod_SB[n:!ℕ](a:!int[n],b:!𝔹)lifted:!int[n];
 
-def __mod_bs[n:!ℕ](b:𝔹,a:int[n])lifted:int[n];
-def __mod_Bs[n:!ℕ](b:!𝔹,a:int[n])lifted:int[n];
-def __mod_bS[n:!ℕ](b:𝔹,a:!int[n])lifted:int[n];
-def __mod_BS[n:!ℕ](b:!𝔹,a:!int[n])lifted:!int[n];
+def __mod_bs[n:!ℕ](a:𝔹,b:int[n])lifted:int[n];
+def __mod_Bs[n:!ℕ](a:!𝔹,b:int[n])lifted:int[n];
+def __mod_bS[n:!ℕ](a:𝔹,b:!int[n])lifted:int[n];
+def __mod_BS[n:!ℕ](a:!𝔹,b:!int[n])lifted:!int[n];
 
 def __mod_sN[n:!ℕ](a:int[n],b:!ℕ)lifted:int[n];
 def __mod_SN[n:!ℕ](a:!int[n],b:!ℕ)lifted:!int[n];
-def __mod_Ns[n:!ℕ](b:!ℕ,a:int[n])lifted:int[n];
-def __mod_NS[n:!ℕ](b:!ℕ,a:!int[n])lifted:!int[n];
+def __mod_Ns[n:!ℕ](a:!ℕ,b:int[n])lifted:int[n];
+def __mod_NS[n:!ℕ](a:!ℕ,b:!int[n])lifted:!int[n];
 
 def __mod_sZ[n:!ℕ](a:int[n],b:!ℤ)lifted:int[n];
 def __mod_SZ[n:!ℕ](a:!int[n],b:!ℤ)lifted:!int[n];
-def __mod_Zs[n:!ℕ](b:!ℤ,a:int[n])lifted:int[n];
-def __mod_ZS[n:!ℕ](b:!ℤ,a:!int[n])lifted:!int[n];
+def __mod_Zs[n:!ℕ](a:!ℤ,b:int[n])lifted:int[n];
+def __mod_ZS[n:!ℕ](a:!ℤ,b:!int[n])lifted:!int[n];
 
 def __mod_u[n:!ℕ](a:uint[n],b:uint[n])lifted:uint[n];
 def __mod_Uu[n:!ℕ](a:!uint[n],b:uint[n])lifted:uint[n];
@@ -322,20 +322,20 @@ def __mod_Ub[n:!ℕ](a:!uint[n],b:𝔹)lifted:uint[n];
 def __mod_uB[n:!ℕ](a:uint[n],b:!𝔹)lifted:uint[n];
 def __mod_UB[n:!ℕ](a:!uint[n],b:!𝔹)lifted:!uint[n];
 
-def __mod_bu[n:!ℕ](b:𝔹,a:uint[n])lifted:uint[n];
-def __mod_Bu[n:!ℕ](b:!𝔹,a:uint[n])lifted:uint[n];
-def __mod_bU[n:!ℕ](b:𝔹,a:!uint[n])lifted:uint[n];
-def __mod_BU[n:!ℕ](b:!𝔹,a:!uint[n])lifted:!uint[n];
+def __mod_bu[n:!ℕ](a:𝔹,b:uint[n])lifted:uint[n];
+def __mod_Bu[n:!ℕ](a:!𝔹,b:uint[n])lifted:uint[n];
+def __mod_bU[n:!ℕ](a:𝔹,b:!uint[n])lifted:uint[n];
+def __mod_BU[n:!ℕ](a:!𝔹,b:!uint[n])lifted:!uint[n];
 
 def __mod_uN[n:!ℕ](a:uint[n],b:!ℕ)lifted:uint[n];
 def __mod_UN[n:!ℕ](a:!uint[n],b:!ℕ)lifted:!uint[n];
-def __mod_Nu[n:!ℕ](b:!ℕ,a:uint[n])lifted:uint[n];
-def __mod_NU[n:!ℕ](b:!ℕ,a:!uint[n])lifted:!uint[n];
+def __mod_Nu[n:!ℕ](a:!ℕ,b:uint[n])lifted:uint[n];
+def __mod_NU[n:!ℕ](a:!ℕ,b:!uint[n])lifted:!uint[n];
 
 //def __mod_uZ[n:!ℕ](a:uint[n],b:!ℤ)lifted:uint[n];
 //def __mod_UZ[n:!ℕ](a:!uint[n],b:!ℤ)lifted:!uint[n];
-def __mod_Zu[n:!ℕ](b:!ℤ,a:uint[n])lifted:uint[n];
-def __mod_ZU[n:!ℕ](b:!ℤ,a:!uint[n])lifted:!uint[n];
+def __mod_Zu[n:!ℕ](a:!ℤ,b:uint[n])lifted:uint[n];
+def __mod_ZU[n:!ℕ](a:!ℤ,b:!uint[n])lifted:!uint[n];
 
 def __mod_b(a:𝔹,b:𝔹)lifted:𝔹;
 def __mod_bB(a:𝔹,b:!𝔹)lifted:𝔹;
@@ -401,15 +401,15 @@ def __orb_Sb[n:!ℕ](a:!int[n],b:𝔹)lifted:int[n];
 def __orb_sB[n:!ℕ](a:int[n],b:!𝔹)lifted:int[n];
 def __orb_SB[n:!ℕ](a:!int[n],b:!𝔹)lifted:!int[n];
 
-def __orb_bs[n:!ℕ](b:𝔹,a:int[n])lifted:int[n];
-def __orb_Bs[n:!ℕ](b:!𝔹,a:int[n])lifted:int[n];
-def __orb_bS[n:!ℕ](b:𝔹,a:!int[n])lifted:int[n];
-def __orb_BS[n:!ℕ](b:!𝔹,a:!int[n])lifted:!int[n];
+def __orb_bs[n:!ℕ](a:𝔹,b:int[n])lifted:int[n];
+def __orb_Bs[n:!ℕ](a:!𝔹,b:int[n])lifted:int[n];
+def __orb_bS[n:!ℕ](a:𝔹,b:!int[n])lifted:int[n];
+def __orb_BS[n:!ℕ](a:!𝔹,b:!int[n])lifted:!int[n];
 
 def __orb_sZ[n:!ℕ](a:int[n],b:!ℤ)lifted:int[n];
 def __orb_SZ[n:!ℕ](a:!int[n],b:!ℤ)lifted:!int[n];
-def __orb_Zs[n:!ℕ](b:!ℤ,a:int[n])lifted:int[n];
-def __orb_ZS[n:!ℕ](b:!ℤ,a:!int[n])lifted:!int[n];
+def __orb_Zs[n:!ℕ](a:!ℤ,b:int[n])lifted:int[n];
+def __orb_ZS[n:!ℕ](a:!ℤ,b:!int[n])lifted:!int[n];
 
 def __orb_u[n:!ℕ](a:uint[n],b:uint[n])lifted:uint[n];
 def __orb_Uu[n:!ℕ](a:!uint[n],b:uint[n])lifted:uint[n];
@@ -421,15 +421,15 @@ def __orb_Ub[n:!ℕ](a:!uint[n],b:𝔹)lifted:uint[n];
 def __orb_uB[n:!ℕ](a:uint[n],b:!𝔹)lifted:uint[n];
 def __orb_UB[n:!ℕ](a:!uint[n],b:!𝔹)lifted:!uint[n];
 
-def __orb_bu[n:!ℕ](b:𝔹,a:uint[n])lifted:uint[n];
-def __orb_Bu[n:!ℕ](b:!𝔹,a:uint[n])lifted:uint[n];
-def __orb_bU[n:!ℕ](b:𝔹,a:!uint[n])lifted:uint[n];
-def __orb_BU[n:!ℕ](b:!𝔹,a:!uint[n])lifted:!uint[n];
+def __orb_bu[n:!ℕ](a:𝔹,b:uint[n])lifted:uint[n];
+def __orb_Bu[n:!ℕ](a:!𝔹,b:uint[n])lifted:uint[n];
+def __orb_bU[n:!ℕ](a:𝔹,b:!uint[n])lifted:uint[n];
+def __orb_BU[n:!ℕ](a:!𝔹,b:!uint[n])lifted:!uint[n];
 
 def __orb_uZ[n:!ℕ](a:uint[n],b:!ℤ)lifted:uint[n];
 def __orb_UZ[n:!ℕ](a:!uint[n],b:!ℤ)lifted:!uint[n];
-def __orb_Zu[n:!ℕ](b:!ℤ,a:uint[n])lifted:uint[n];
-def __orb_ZU[n:!ℕ](b:!ℤ,a:!uint[n])lifted:!uint[n];
+def __orb_Zu[n:!ℕ](a:!ℤ,b:uint[n])lifted:uint[n];
+def __orb_ZU[n:!ℕ](a:!ℤ,b:!uint[n])lifted:!uint[n];
 
 def __orb_b(a:𝔹,b:𝔹)lifted:𝔹;
 def __orb_bB(a:𝔹,b:!𝔹)lifted:𝔹;
@@ -450,15 +450,15 @@ def __xorb_Sb[n:!ℕ](a:!int[n],b:𝔹)lifted:int[n];
 def __xorb_sB[n:!ℕ](a:int[n],b:!𝔹)lifted:int[n];
 def __xorb_SB[n:!ℕ](a:!int[n],b:!𝔹)lifted:!int[n];
 
-def __xorb_bs[n:!ℕ](b:𝔹,a:int[n])lifted:int[n];
-def __xorb_Bs[n:!ℕ](b:!𝔹,a:int[n])lifted:int[n];
-def __xorb_bS[n:!ℕ](b:𝔹,a:!int[n])lifted:int[n];
-def __xorb_BS[n:!ℕ](b:!𝔹,a:!int[n])lifted:!int[n];
+def __xorb_bs[n:!ℕ](a:𝔹,b:int[n])lifted:int[n];
+def __xorb_Bs[n:!ℕ](a:!𝔹,b:int[n])lifted:int[n];
+def __xorb_bS[n:!ℕ](a:𝔹,b:!int[n])lifted:int[n];
+def __xorb_BS[n:!ℕ](a:!𝔹,b:!int[n])lifted:!int[n];
 
 def __xorb_sZ[n:!ℕ](a:int[n],b:!ℤ)lifted:int[n];
 def __xorb_SZ[n:!ℕ](a:!int[n],b:!ℤ)lifted:!int[n];
-def __xorb_Zs[n:!ℕ](b:!ℤ,a:int[n])lifted:int[n];
-def __xorb_ZS[n:!ℕ](b:!ℤ,a:!int[n])lifted:!int[n];
+def __xorb_Zs[n:!ℕ](a:!ℤ,b:int[n])lifted:int[n];
+def __xorb_ZS[n:!ℕ](a:!ℤ,b:!int[n])lifted:!int[n];
 
 def __xorb_u[n:!ℕ](a:uint[n],b:uint[n])lifted:uint[n];
 def __xorb_Uu[n:!ℕ](a:!uint[n],b:uint[n])lifted:uint[n];
@@ -470,15 +470,15 @@ def __xorb_Ub[n:!ℕ](a:!uint[n],b:𝔹)lifted:uint[n];
 def __xorb_uB[n:!ℕ](a:uint[n],b:!𝔹)lifted:uint[n];
 def __xorb_UB[n:!ℕ](a:!uint[n],b:!𝔹)lifted:!uint[n];
 
-def __xorb_bu[n:!ℕ](b:𝔹,a:uint[n])lifted:uint[n];
-def __xorb_Bu[n:!ℕ](b:!𝔹,a:uint[n])lifted:uint[n];
-def __xorb_bU[n:!ℕ](b:𝔹,a:!uint[n])lifted:uint[n];
-def __xorb_BU[n:!ℕ](b:!𝔹,a:!uint[n])lifted:!uint[n];
+def __xorb_bu[n:!ℕ](a:𝔹,b:uint[n])lifted:uint[n];
+def __xorb_Bu[n:!ℕ](a:!𝔹,b:uint[n])lifted:uint[n];
+def __xorb_bU[n:!ℕ](a:𝔹,b:!uint[n])lifted:uint[n];
+def __xorb_BU[n:!ℕ](a:!𝔹,b:!uint[n])lifted:!uint[n];
 
 def __xorb_uZ[n:!ℕ](a:uint[n],b:!ℤ)lifted:uint[n];
 def __xorb_UZ[n:!ℕ](a:!uint[n],b:!ℤ)lifted:!uint[n];
-def __xorb_Zu[n:!ℕ](b:!ℤ,a:uint[n])lifted:uint[n];
-def __xorb_ZU[n:!ℕ](b:!ℤ,a:!uint[n])lifted:!uint[n];
+def __xorb_Zu[n:!ℕ](a:!ℤ,b:uint[n])lifted:uint[n];
+def __xorb_ZU[n:!ℕ](a:!ℤ,b:!uint[n])lifted:!uint[n];
 
 def __xorb_b(a:𝔹,b:𝔹)lifted:𝔹;
 def __xorb_bB(a:𝔹,b:!𝔹)lifted:𝔹;
@@ -499,15 +499,15 @@ def __andb_Sb[n:!ℕ](a:!int[n],b:𝔹)lifted:int[n];
 def __andb_sB[n:!ℕ](a:int[n],b:!𝔹)lifted:int[n];
 def __andb_SB[n:!ℕ](a:!int[n],b:!𝔹)lifted:!int[n];
 
-def __andb_bs[n:!ℕ](b:𝔹,a:int[n])lifted:int[n];
-def __andb_Bs[n:!ℕ](b:!𝔹,a:int[n])lifted:int[n];
-def __andb_bS[n:!ℕ](b:𝔹,a:!int[n])lifted:int[n];
-def __andb_BS[n:!ℕ](b:!𝔹,a:!int[n])lifted:!int[n];
+def __andb_bs[n:!ℕ](a:𝔹,b:int[n])lifted:int[n];
+def __andb_Bs[n:!ℕ](a:!𝔹,b:int[n])lifted:int[n];
+def __andb_bS[n:!ℕ](a:𝔹,b:!int[n])lifted:int[n];
+def __andb_BS[n:!ℕ](a:!𝔹,b:!int[n])lifted:!int[n];
 
 def __andb_sZ[n:!ℕ](a:int[n],b:!ℤ)lifted:int[n];
 def __andb_SZ[n:!ℕ](a:!int[n],b:!ℤ)lifted:!int[n];
-def __andb_Zs[n:!ℕ](b:!ℤ,a:int[n])lifted:int[n];
-def __andb_ZS[n:!ℕ](b:!ℤ,a:!int[n])lifted:!int[n];
+def __andb_Zs[n:!ℕ](a:!ℤ,b:int[n])lifted:int[n];
+def __andb_ZS[n:!ℕ](a:!ℤ,b:!int[n])lifted:!int[n];
 
 def __andb_u[n:!ℕ](a:uint[n],b:uint[n])lifted:uint[n];
 def __andb_Uu[n:!ℕ](a:!uint[n],b:uint[n])lifted:uint[n];
@@ -519,15 +519,15 @@ def __andb_Ub[n:!ℕ](a:!uint[n],b:𝔹)lifted:uint[n];
 def __andb_uB[n:!ℕ](a:uint[n],b:!𝔹)lifted:uint[n];
 def __andb_UB[n:!ℕ](a:!uint[n],b:!𝔹)lifted:!uint[n];
 
-def __andb_bu[n:!ℕ](b:𝔹,a:uint[n])lifted:uint[n];
-def __andb_Bu[n:!ℕ](b:!𝔹,a:uint[n])lifted:uint[n];
-def __andb_bU[n:!ℕ](b:𝔹,a:!uint[n])lifted:uint[n];
-def __andb_BU[n:!ℕ](b:!𝔹,a:!uint[n])lifted:!uint[n];
+def __andb_bu[n:!ℕ](a:𝔹,b:uint[n])lifted:uint[n];
+def __andb_Bu[n:!ℕ](a:!𝔹,b:uint[n])lifted:uint[n];
+def __andb_bU[n:!ℕ](a:𝔹,b:!uint[n])lifted:uint[n];
+def __andb_BU[n:!ℕ](a:!𝔹,b:!uint[n])lifted:!uint[n];
 
 def __andb_uZ[n:!ℕ](a:uint[n],b:!ℤ)lifted:uint[n];
 def __andb_UZ[n:!ℕ](a:!uint[n],b:!ℤ)lifted:!uint[n];
-def __andb_Zu[n:!ℕ](b:!ℤ,a:uint[n])lifted:uint[n];
-def __andb_ZU[n:!ℕ](b:!ℤ,a:!uint[n])lifted:!uint[n];
+def __andb_Zu[n:!ℕ](a:!ℤ,b:uint[n])lifted:uint[n];
+def __andb_ZU[n:!ℕ](a:!ℤ,b:!uint[n])lifted:!uint[n];
 
 def __andb_b(a:𝔹,b:𝔹)lifted:𝔹;
 def __andb_bB(a:𝔹,b:!𝔹)lifted:𝔹;
