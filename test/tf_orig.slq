@@ -197,7 +197,7 @@ def a19_GCQWalk[n:!N, rr:!N](const edgeOracle:((const int[n] x const int[n] x ù
 	for j in [ 0..rrbar ) {
 		for k in [ j+1..rrbar ) {
 			if ee[tau[j]][tau[k]] && eew[j] && eew[k] {
-				cTri += 1; // error
+				cTri += 1;
 	}	}	}
 	for _ in [0..tbarm) {
 		if triTestT == 0 && !(cTri == 0) { phase(œÄ); }

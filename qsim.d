@@ -2641,15 +2641,10 @@ struct Interpreter(QState){
 				if(cast(AndAssignExp)e) return a&b;
 				if(cast(AddAssignExp)e) return a+b;
 				if(cast(SubAssignExp)e) return a-b;
-				if(cast(NSubAssignExp)e){
-					enforce(a.ge(b).bval,"result of sub is negative");
-					return a-b;
-				}
+				if(cast(NSubAssignExp)e) return a.opBinary!"sub"(b);
 				if(cast(MulAssignExp)e) return a*b;
-				if(cast(DivAssignExp)e||cast(IDivAssignExp)e){
-					qstate=qstate.assertTrue(b.neqZ);
-					return cast(IDivAssignExp)e?(a/b).floor():a/b;
-				}
+				if(cast(DivAssignExp)e) return a/b;
+				if(cast(IDivAssignExp)e) return a.opBinary!"div"(b);
 				if(cast(ModAssignExp)e) return a%b;
 				if(cast(PowAssignExp)e){
 					// TODO: enforce constraints on domain
