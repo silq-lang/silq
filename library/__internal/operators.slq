@@ -1121,9 +1121,6 @@ def __add_assign_sS[n:!ℕ](a:int[n],const b:!int[n])qfree:int[n];
 def __add_assign_sb[n:!ℕ](a:int[n],const b:𝔹)qfree:int[n];
 def __add_assign_sB[n:!ℕ](a:int[n],const b:!𝔹)qfree:int[n];
 
-def __add_assign_bs[n:!ℕ](a:𝔹,b:int[n])qfree:int[n];
-def __add_assign_bS[n:!ℕ](a:𝔹,b:!int[n])qfree:int[n];
-
 def __add_assign_sZ[n:!ℕ](a:int[n],const b:!ℤ)qfree:int[n];
 
 def __add_assign_u[n:!ℕ](a:uint[n],const b:uint[n])qfree:uint[n];
@@ -1131,9 +1128,6 @@ def __add_assign_uU[n:!ℕ](a:uint[n],const b:!uint[n])qfree:uint[n];
 
 def __add_assign_ub[n:!ℕ](a:uint[n],const b:𝔹)qfree:uint[n];
 def __add_assign_uB[n:!ℕ](a:uint[n],const b:!𝔹)qfree:uint[n];
-
-def __add_assign_bu[n:!ℕ](a:𝔹,b:uint[n])qfree:uint[n];
-def __add_assign_bU[n:!ℕ](a:𝔹,b:!uint[n])qfree:uint[n];
 
 def __add_assign_uZ[n:!ℕ](a:uint[n],const b:!ℤ)qfree:uint[n];
 
@@ -1144,9 +1138,6 @@ def __sub_assign_sS[n:!ℕ](a:int[n],const b:!int[n])qfree:int[n];
 def __sub_assign_sb[n:!ℕ](a:int[n],const b:𝔹)qfree:int[n];
 def __sub_assign_sB[n:!ℕ](a:int[n],const b:!𝔹)qfree:int[n];
 
-def __sub_assign_bs[n:!ℕ](a:𝔹,b:int[n])qfree:int[n];
-def __sub_assign_bS[n:!ℕ](a:𝔹,b:!int[n])qfree:int[n];
-
 def __sub_assign_sZ[n:!ℕ](a:int[n],const b:!ℤ)qfree:int[n];
 
 def __sub_assign_u[n:!ℕ](a:uint[n],const b:uint[n])qfree:uint[n];
@@ -1154,9 +1145,6 @@ def __sub_assign_uU[n:!ℕ](a:uint[n],const b:!uint[n])qfree:uint[n];
 
 def __sub_assign_ub[n:!ℕ](a:uint[n],const b:𝔹)qfree:uint[n];
 def __sub_assign_uB[n:!ℕ](a:uint[n],const b:!𝔹)qfree:uint[n];
-
-def __sub_assign_bu[n:!ℕ](a:𝔹,b:uint[n])qfree:uint[n];
-def __sub_assign_bU[n:!ℕ](a:𝔹,b:!uint[n])qfree:uint[n];
 
 def __sub_assign_uZ[n:!ℕ](a:uint[n],const b:!ℤ)qfree:uint[n];
 
@@ -1167,9 +1155,6 @@ def __nsub_assign_sS[n:!ℕ](a:int[n],const b:!int[n])qfree:int[n];
 def __nsub_assign_sb[n:!ℕ](a:int[n],const b:𝔹)qfree:int[n];
 def __nsub_assign_sB[n:!ℕ](a:int[n],const b:!𝔹)qfree:int[n];
 
-def __nsub_assign_bs[n:!ℕ](a:𝔹,b:int[n])qfree:int[n];
-def __nsub_assign_bS[n:!ℕ](a:𝔹,b:!int[n])qfree:int[n];
-
 def __nsub_assign_sZ[n:!ℕ](a:int[n],const b:!ℤ)qfree:int[n];
 
 def __nsub_assign_u[n:!ℕ](a:uint[n],const b:uint[n])qfree:uint[n];
@@ -1177,9 +1162,6 @@ def __nsub_assign_uU[n:!ℕ](a:uint[n],const b:!uint[n])qfree:uint[n];
 
 def __nsub_assign_ub[n:!ℕ](a:uint[n],const b:𝔹)qfree:uint[n];
 def __nsub_assign_uB[n:!ℕ](a:uint[n],const b:!𝔹)qfree:uint[n];
-
-def __nsub_assign_bu[n:!ℕ](a:𝔹,b:uint[n])qfree:uint[n];
-def __nsub_assign_bU[n:!ℕ](a:𝔹,b:!uint[n])qfree:uint[n];
 
 def __nsub_assign_uZ[n:!ℕ](a:uint[n],const b:!ℤ)qfree:uint[n];
 
@@ -1217,9 +1199,6 @@ def __xorb_assign_sS[n:!ℕ](a:int[n],const b:!int[n])qfree:int[n];
 def __xorb_assign_sb[n:!ℕ](a:int[n],const b:𝔹)qfree:int[n];
 def __xorb_assign_sB[n:!ℕ](a:int[n],const b:!𝔹)qfree:int[n];
 
-def __xorb_assign_bs[n:!ℕ](a:𝔹,const b:int[n])qfree:int[n];
-def __xorb_assign_bS[n:!ℕ](a:𝔹,const b:!int[n])qfree:int[n];
-
 def __xorb_assign_sZ[n:!ℕ](a:int[n],const b:!ℤ)qfree:int[n];
 
 def __xorb_assign_u[n:!ℕ](a:uint[n],const b:uint[n])qfree:uint[n];
@@ -1227,9 +1206,6 @@ def __xorb_assign_uU[n:!ℕ](a:uint[n],const b:!uint[n])qfree:uint[n];
 
 def __xorb_assign_ub[n:!ℕ](a:uint[n],const b:𝔹)qfree:uint[n];
 def __xorb_assign_uB[n:!ℕ](a:uint[n],const b:!𝔹)qfree:uint[n];
-
-def __xorb_assign_bu[n:!ℕ](a:𝔹,const b:uint[n])qfree:uint[n];
-def __xorb_assign_bU[n:!ℕ](a:𝔹,const b:!uint[n])qfree:uint[n];
 
 def __xorb_assign_uZ[n:!ℕ](a:uint[n],const b:!ℤ)qfree:uint[n];
 
