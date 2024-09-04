@@ -1,0 +1,3 @@
+// args: --run
+
+def main()⇒vector(0:!ℕ,1):!ℚ[];
