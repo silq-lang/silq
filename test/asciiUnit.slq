@@ -1,0 +1,3 @@
+// args: --run
+
+def main(): unit{}
