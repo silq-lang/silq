@@ -1,11 +1,11 @@
 
 def foo(const x:𝔹){
-	y:=H(1:𝔹); // error // TODO?
+	y:=H(1:𝔹);
 	if !x{
 	}else{
 		return y;
 	}
-	return X(y); // error
+	return X(y);
 }
 
 def main(){

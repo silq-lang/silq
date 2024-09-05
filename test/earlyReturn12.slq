@@ -1,0 +1,5 @@
+
+def foo(const x:𝔹){
+	if x { return; }
+	return;
+}

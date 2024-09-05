@@ -1,0 +1,9 @@
+// args: --run
+
+def main() {
+	a:=0:𝔹;
+	if 0:𝔹{
+		return 0:𝔹;
+	}
+	return a;
+}

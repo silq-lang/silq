@@ -2771,7 +2771,7 @@ struct Interpreter(QState){
 			}
 			qstate=intp.qstate;
 		}else if(auto re=cast(ReturnExp)e){
-			auto value = runExp(re.e);
+			auto value = convertTo(re.e,functionDef.ret);
 			if(functionDef.context&&functionDef.contextName.startsWith("this"))
 				value = QState.makeTuple(tupleTy([re.e.type,contextTy(true)]),[value,qstate.readLocal(functionDef.contextName,false)]);
 			qstate.assignTo("`value",value);

@@ -1,0 +1,15 @@
+// args: --run
+
+def foo(const x:𝔹)qfree{
+	if x { return false; }
+	return true;
+}
+
+def main(){
+	assert(foo(false));
+	assert(!foo(true));
+	x:=H(0:𝔹);
+	y:=foo(x);
+	forget(y);
+	return H(x);
+}
