@@ -107,9 +107,9 @@ int main(string[] args){
 			if(!summary.isInteresting){
 				if(colorize) write(passColor,BOLD,"passed ",RESET);
 				else std.stdio.write("passed");
-				if(colorize) writef(" % 5.0fms",time.to!("msecs",double));
-				else writef(" in %.0fms",time.to!("msecs",double));
 			}
+			if(colorize) writef(" % 5.0fms",time.to!("msecs",double));
+			else writef(" in %.0fms",time.to!("msecs",double));
 			if(colorize) writeln(" ",source,CLEAR_LINE);
 			else writeln();
 		}else if(colorize) std.stdio.write("\r",CLEAR_LINE);
