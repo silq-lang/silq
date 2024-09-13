@@ -1,0 +1,10 @@
+bool := 𝔹;
+def foo():!bool⇒true;
+def main(){
+	if foo(){
+		return if foo() then
+		  if foo()&&foo() then foo() else !foo()
+		else if foo()||foo() then foo() else !foo();
+	}
+	return foo()⊕foo();
+}
