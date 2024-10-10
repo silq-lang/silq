@@ -2482,6 +2482,7 @@ struct Interpreter(QState){
 		}else if(auto idx=cast(IndexExp)lhs){
 			getAssignable!isCat(lhs).assign(qstate,rhs);
 		}else if(auto ce=cast(CallExp)lhs){
+			enforce(!isCat);
 			auto f=ce.e,ft=cast(ProductTy)f.type;
 			enforce(!!ft,"reversed function call not supported in simulator");
 			auto fv=runExp(f);
@@ -2565,6 +2566,18 @@ struct Interpreter(QState){
 					assignMoved(result);
 				}else enforce(0,"reversed call not supported");
 			}
+		}else if(auto ce=cast(CatExp)lhs){
+			enforce(!isCat);
+			enforce(rhs.tag==QState.Value.Tag.array_, "split not supported in simulator");
+			ℤ mid;
+			if(auto l1=knownLength(ce.e1,false)){
+				mid=runExp(l1).asℤ;
+			}else if(auto l2=knownLength(ce.e2,false)){
+				mid=rhs.array_.length.ℤ-runExp(l2).asℤ;
+			}else enforce(0, "split not supported in simulator");
+			auto e1=rhs[0.ℤ..mid],e2=rhs[mid.ℤ..rhs.array_.length.ℤ];
+			assignTo(unwrap(ce.e1),e1);
+			assignTo(unwrap(ce.e2),e2);
 		}else enforce(0,text("TODO: assign to ",lhs));
 	}
 	void catAssignTo(Expression lhs,QState.Value rhs){
