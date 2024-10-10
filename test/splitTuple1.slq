@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	(u,v)~(w,):=(1,2/3,3.4);
+	__show(typeof(u,v,w));
+	return (u:!ℕ,v:!ℚ,w:!ℝ);
+}

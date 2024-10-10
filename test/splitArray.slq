@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	xs:=(1,0,1,1,0):𝔹[];
+	(x,)~xs:=xs;
+	assert(measure((x,)~xs=(1,0,1,1,0)));
+	return (x,xs);
+}

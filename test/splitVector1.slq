@@ -1,0 +1,12 @@
+// args: --run
+
+def foo[n:!ℕ](){
+	xs:=vector(n,0:𝔹);
+	xs[3]:=H(xs[3]);
+	(a:𝔹^(n div 2))~(b:𝔹^(n sub n div 2)):=xs;
+	return (a,b);
+}
+
+def main(){
+	return foo[5]();
+}
