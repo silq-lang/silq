@@ -55,8 +55,8 @@ def receive(shared:𝔹,bits:!𝔹^2){
 
 def apply(number:!ℝ,const qbit:𝔹)mfree⇒if qbit then phase(π·number) else ();
 def first(qbits: 𝔹^2,number:!ℝ){
-	(_,next):=qbits;
-	measure(_);
+	(__,next):=qbits;
+	measure(__);
 	qbit:=H(0:𝔹);
 	apply(number,qbit);
 	return send(next,qbit);
@@ -68,8 +68,8 @@ def intermediate(qbits:𝔹^2,bits:!𝔹^2,number:!ℝ){
 	return send(next,qbit);
 }
 def last(qbits:𝔹^2,bits:!𝔹^2,number:!ℝ){
-	(prev,_):=qbits;
-	measure(_);
+	(prev,__):=qbits;
+	measure(__);
 	qbit:=receive(prev,bits);
 	apply(number,qbit);
 	return measure(H(qbit));

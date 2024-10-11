@@ -2569,15 +2569,28 @@ struct Interpreter(QState){
 		}else if(auto ce=cast(CatExp)lhs){
 			enforce(!isCat);
 			enforce(rhs.tag==QState.Value.Tag.array_, "split not supported in simulator");
+			auto len=rhs.array_.length;
 			ℤ mid;
+			import util.maybe:Maybe,just;
+			Maybe!ℤ a,b;
 			if(auto l1=knownLength(ce.e1,false)){
-				mid=runExp(l1).asℤ;
-			}else if(auto l2=knownLength(ce.e2,false)){
-				mid=rhs.array_.length.ℤ-runExp(l2).asℤ;
-			}else enforce(0, "split not supported in simulator");
-			auto e1=rhs[0.ℤ..mid],e2=rhs[mid.ℤ..rhs.array_.length.ℤ];
-			assignTo(unwrap(ce.e1),e1);
-			assignTo(unwrap(ce.e2),e2);
+				auto len1=runExp(l1).asℤ;
+				a=just(len1);
+				mid=len1;
+			}
+			if(auto l2=knownLength(ce.e2,false)){
+				auto len2=runExp(l2).asℤ;
+				b=just(len2);
+				if(!a) mid=len-len2;
+			}
+			if(!a&&!b) enforce(0, "split not supported in simulator");
+			import std.format:format;
+			if(a&&!b) enforce(a.get<=len, format("need at least %s elements to split, only got %s",a.get,len));
+			if(!a&&b) enforce(b.get<=len, format("need at least %s elements to split, only got %s",b.get,len));
+			if(a&&b) enforce(a.get+b.get==len, format("incompatible lengths for split: %s + %s ≠ %s",a.get,b.get,len));
+			auto e1=rhs[0.ℤ..mid],e2=rhs[mid.ℤ..len.ℤ];
+			assignTo(unwrap(ce.e1),convertTo(e1,ce.e1.type,true));
+			assignTo(unwrap(ce.e2),convertTo(e2,ce.e2.type,true));
 		}else enforce(0,text("TODO: assign to ",lhs));
 	}
 	void catAssignTo(Expression lhs,QState.Value rhs){

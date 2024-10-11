@@ -2,8 +2,8 @@
 
 def f[n:!ℕ](x:𝔹^n)mfree{
 	if n=0{ return x; } // TODO
-	(H(a),)~f[n sub 1](b):=x;
-	return (a,)~b; // TODO
+	(H(a),)~f[n sub 1](b):=x; // TODO
+	return (a,)~b;
 }
 def main(){
 	return f(0:𝔹,0:𝔹,0:𝔹);
