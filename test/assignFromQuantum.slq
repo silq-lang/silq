@@ -1,0 +1,7 @@
+// args: --run
+
+def main():!𝔹{
+    coin:=false;
+    coin=H(coin);
+    return measure(coin);
+}

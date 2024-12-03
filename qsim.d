@@ -621,8 +621,10 @@ struct QState{
 					}
 					return;
 				case Tag.quval:
-					if(auto quvar=cast(QVar)quval) // TODO: ok?
+					if(auto quvar=cast(QVar)quval){ // TODO: ok?
+						scope(success) rhs.forget(state);
 						return quvar.assign(state,rhs);
+					}
 			}
 			assert(0,text("can't assign to constant ",this," ",rhs));
 		}
@@ -2648,7 +2650,6 @@ struct Interpreter(QState){
 		if(auto ae=cast(AssignExp)e){
 			auto lhs=ae.e1,rhs=runExp(ae.e2);
 			assignTo(lhs,rhs);
-			forget(rhs);
 		}else if(auto ae=cast(DefineExp)e){
 			if(ae.isSwap){
 				auto tpl=cast(TupleExp)unwrap(ae.e2);
