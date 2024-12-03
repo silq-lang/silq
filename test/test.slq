@@ -1,6 +1,113 @@
 // skipped
 
 /+
+def main(){
+	return classical false;
+}
++/
+
+/+
+def H_n[n:!ℕ](xs:𝔹^n)mfree: 𝔹^n {
+	if n≠0 {
+		with (h,)~t:=xs do {
+			h := H(h);
+			t := H_n(t);
+		}
+	}
+	return xs;
+}
+
+def maj(x:𝔹,y:𝔹,z:𝔹)lifted => if x=y then y else z;
+
+def dj(){
+	xs := (0,0,0): 𝔹^3;
+	with xs := H_n(xs) do {
+		if maj(xs) {
+			phase(π);
+		}
+	}
+	return measure(xs)≠(0,0,0);
+}
+
+def main(){
+	return dj();
+}
++/
+
+/+
+def main(){
+	xs:=vector(2,vector(2,0:𝔹));
+	xs[0][1]=1:𝔹;
+	//ys:=vector(2,0:𝔹);
+	//(xs[0],xs[0][1]):=(xs[0],xs[0][1]); // error
+	//(xs[0][1],xs[0]):=(xs[0][1],xs[0]); // error
+	(xs[0][1],xs[1][0],1:𝔹):=(xs[1][0],xs[0][1],1:𝔹);
+	return xs;
+}
++/
+
+/+
+def main(){
+	xs:=vector(2,0:𝔹);
+	ys:=vector(2,0:𝔹);
+	(xs[0],xs[1],ys[0],ys[1]):=(xs[0],ys[0],xs[1],ys[1]);
+	return (xs,ys);
+}
++/
+
+/+
+def main(){
+	(x:𝔹^3)~(y:𝔹^2):=(0,1,1,0,1):𝔹^5;
+	return (x,y);
+}
++/
+
+/+
+def main(){
+	x:=H(0:𝔹);
+	y:=H(dup(x));
+	measure(y);
+	return x;
+}
++/
+
+/+
+def foo[n:!ℕ](xs:𝔹^n)mfree{
+	xs[0]:=H(xs[0]);
+	return xs;
+}
+
+def main(){
+	foo(x,):=(0:𝔹,);
+	return x;
+}
++/
+
+/+
+def main(){
+	xs:=vector(3,0:𝔹);
+	xs[2]=xs[2]⊕(1:𝔹);
+}
++/
+
+/+
+def sqrtmone(): !R {
+	return (-1)^(1/2);
+}
+
+def main(){
+	return sqrtmone();
+}
++/
+
+/+
+def main(){
+	x:=0:𝔹;
+	_:=x;
+	return _;
+}
++/
+/+
 def foo(a:𝔹^5)mfree{
 	//(u:𝔹^2)~(tmp0,)~(v:𝔹^1)~(tmp1,)~(w:𝔹^0) := a;
 	i:=2,j:=4;
