@@ -11,23 +11,8 @@ enum BackendType{
 	run,
 }
 
-enum OutputForm{
-	default_,
-	raw,
-	rawError,
-}
-
-enum IntegrationLevel{
-	full,
-	deltas,
-	none,
-}
-
 struct Options{
 	BackendType backend;
-	bool plot=false;
-	string plotRange="[-10:10]";
-	string plotFile="";
 	auto errorFormat=ErrorFormat.default_;
 	bool noBoundsCheck=false;
 	bool trace=false;
