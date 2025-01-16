@@ -102,6 +102,7 @@ int main(string[] args){
 			case "--run": opt.backend=BackendType.run; break;
 			case "--unsafe-capture-const": astopt.allowUnsafeCaptureConst=true; break;
 			case "--project-forget": astopt.projectForget=true; break;
+			case "--remove-loops": astopt.removeLoops=true; break;
 			default:
 				if(x.startsWith("--summarize=")){
 					auto rest=x["--summarize=".length..$];

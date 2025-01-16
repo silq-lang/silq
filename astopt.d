@@ -17,3 +17,4 @@ immutable string operatorsPath= "__internal/operators.slq";
 
 bool allowUnsafeCaptureConst=false;
 bool projectForget=false;
+bool removeLoops=false;
