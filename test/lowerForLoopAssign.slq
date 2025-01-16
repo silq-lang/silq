@@ -1,0 +1,11 @@
+// args: --remove-loops --run
+
+def main(){
+	r:=();
+	for i in 0..5{
+		i=2;
+		r~=[i];
+	}
+	assert(r==[2,2,2,2,2]);
+	return r;
+}
