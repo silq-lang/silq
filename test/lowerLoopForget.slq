@@ -1,0 +1,12 @@
+// args: --remove-loops
+
+def main(){
+	x:=0:𝔹;
+	y:=1:𝔹;
+	while measure(H(0:𝔹)){
+		forget(x);
+		x:=1:𝔹; // error // TODO: support
+		y:=H(y);
+	}
+	return (y);
+}

@@ -1,0 +1,9 @@
+// args: --remove-loops
+
+def main(){
+	r:=();
+	repeat 5{
+		r~=(0:𝔹,);
+	}
+	return r;
+}

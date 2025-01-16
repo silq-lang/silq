@@ -1,0 +1,8 @@
+// args: --remove-loops
+
+def main(){
+	for i in [0..3){
+		return 2; // error // TODO: support
+	}
+	return 3;
+}

@@ -1,0 +1,29 @@
+// args: --run
+
+import codeforces.summer18.contest.e1;
+def main(){
+	b:=measure(H(0:𝔹),H(0:𝔹),H(0:𝔹),H(0:𝔹),H(0:𝔹));
+	def makeF[n:!ℕ](b:!𝔹^n)(x:𝔹^n)lifted{
+		r:=0:𝔹;
+		__tmp26 := 0;
+		__tmp27 := 5;
+		def __tmp28(const __tmp29: !ℕ,const __tmp30: 𝔹,const x: 𝔹^n)qfree:𝔹^1{
+			(k,r) := (dup[!ℕ](__tmp29),dup[𝔹](__tmp30));
+			if k < __tmp27 {
+				r ⊕← b[k] ∧ x[k];
+				return __tmp28(k + 1,r,x);
+			} else {
+				return (r,);
+			}
+		}
+		(__tmp30,) := __tmp28(__tmp26,r,x);
+		(r,) ← (dup(__tmp30),);
+		return r;
+	}
+	f:=makeF(b);
+	g:=makeF(solve(f));
+	assert(solve(f)==solve(g));
+	assert(solve(f)==b);
+	return (f,g);
+}
+
