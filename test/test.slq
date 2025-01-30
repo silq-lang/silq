@@ -1,6 +1,65 @@
 // skipped
 
 /+
+def foo(x:𝔹)mfree{
+	def bar(i:!ℕ,x:𝔹)mfree:𝔹{
+		if i=0{ r:=x; }
+		else { r:= bar(i sub 1,X(x)); }
+		return r;
+	}
+	return bar(11,x);
+}
++/
+
+/+
+def rfoo(__tmp12:𝔹)mfree{
+    def bar(moved i: ¬ℕ,moved x: 𝔹)mfree:𝔹{
+        if i = 0 {
+            r := x;
+        } else {
+            r := bar(i sub 1,X(x));
+        }
+        return r;
+    }
+    bar(10,x) := __tmp12;
+    return x coerce 𝔹;
+}
++/
+def main(){
+	foo(x):=0:𝔹;
+	//x:=rfoo(0:𝔹);
+	return x;
+}
+
+
+
+/+
+def foo(p:𝔹)qfree{
+	q:=0:𝔹;
+	q:=if p then X(q) else q;
+	p:=if q then X(p) else p;
+	//forget(q);
+	return (p,q);
+}
++/
+
+/+
+def f(x:𝔹){
+	return rotY(3·π/2,X(x));
+	//return rotY(π/2,rotZ(π,x));
+}
+
+def main(){
+	x := H(0:B);
+	y := dup(x);
+	y := H(f(y));
+	forget(y=x);
+	x := H(x);
+	forget(x=0);
+}
++/
+
+/+
 def foo(a:𝔹^5)mfree{
 	//(u:𝔹^2)~(tmp0,)~(v:𝔹^1)~(tmp1,)~(w:𝔹^0) := a;
 	i:=2,j:=4;
