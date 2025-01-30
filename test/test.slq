@@ -1,6 +1,68 @@
 // skipped
 
 /+
+def foo(a:𝔹^5)mfree{
+	//(u:𝔹^2)~(tmp0,)~(v:𝔹^1)~(tmp1,)~(w:𝔹^0) := a;
+	i:=2,j:=4;
+	with{
+		if true{
+			(u:𝔹^i)~(tmp0,)~(v:𝔹^(j sub (i+1)))~(tmp1,)~(w:𝔹^(5 sub (j+1))) := a;
+		}else{
+			(u:𝔹^i)~(tmp0,)~(v:𝔹^(j sub (i+1)))~(tmp1,)~(w:𝔹^(5 sub (j+1))) := a;
+		}
+	}do{}
+	return (u,tmp0,v,tmp1,w);
+}
+
+def main(){
+	return reverse(foo);
+}
++/
+
+/+
+def main(){
+	a:=(1,0,1,1,0):𝔹^5;
+	i:=2,j:=4;
+	with{
+		if i < j {
+			(u:𝔹^i)~(tmp0,)~(v:𝔹^(j sub (i+1)))~(tmp1,)~(w:𝔹^(5 sub (j+1))) := a;
+		} else {
+			(u:𝔹^j)~(tmp0,)~(v:𝔹^(i sub (j+1)))~(tmp1,)~(w:𝔹^(5 sub (i+1))) := a;
+		}
+	} do {}//(tmp0,tmp1):=(tmp1,tmp0);
+	return a;
+}
++/
+
+/+
+def foo(p:𝔹)qfree{
+	q:=0:𝔹;
+	q:=if p then X(q) else q;
+	p:=if q then X(p) else p;
+	//forget(q);
+	return (p,q);
+}
++/
+
+/+
+def f(x:𝔹){
+	return rotY(3·π/2,X(x));
+	//return rotY(π/2,rotZ(π,x));
+}
++/
+
+/+
+def main(){
+	x := H(0:B);
+	y := dup(x);
+	y := H(f(y));
+	forget(y=x);
+	x := H(x);
+	forget(x=0);
+}
++/
+
+/+
 def main(){
 	return classical false;
 }
@@ -51,8 +113,7 @@ def main(){
 	xs:=vector(2,0:𝔹);
 	ys:=vector(2,0:𝔹);
 	(xs[0],xs[1],ys[0],ys[1]):=(xs[0],ys[0],xs[1],ys[1]);
-	return (xs,ys);
-}
+	return (xs,ys);}
 +/
 
 /+
@@ -105,39 +166,6 @@ def main(){
 	x:=0:𝔹;
 	_:=x;
 	return _;
-}
-+/
-/+
-def foo(a:𝔹^5)mfree{
-	//(u:𝔹^2)~(tmp0,)~(v:𝔹^1)~(tmp1,)~(w:𝔹^0) := a;
-	i:=2,j:=4;
-	with{
-		if true{
-			(u:𝔹^i)~(tmp0,)~(v:𝔹^(j sub (i+1)))~(tmp1,)~(w:𝔹^(5 sub (j+1))) := a;
-		}else{
-			(u:𝔹^i)~(tmp0,)~(v:𝔹^(j sub (i+1)))~(tmp1,)~(w:𝔹^(5 sub (j+1))) := a;
-		}
-	}do{}
-	return (u,tmp0,v,tmp1,w);
-}
-
-def main(){
-	return reverse(foo);
-}
-+/
-
-/+
-def main(){
-	a:=(1,0,1,1,0):𝔹^5;
-	i:=2,j:=4;
-	with{
-		if i < j {
-			(u:𝔹^i)~(tmp0,)~(v:𝔹^(j sub (i+1)))~(tmp1,)~(w:𝔹^(5 sub (j+1))) := a;
-		} else {
-			(u:𝔹^j)~(tmp0,)~(v:𝔹^(i sub (j+1)))~(tmp1,)~(w:𝔹^(5 sub (i+1))) := a;
-		}
-	} do {}//(tmp0,tmp1):=(tmp1,tmp0);
-	return a;
 }
 +/
 
