@@ -4,12 +4,9 @@ def main(){
 	x:=H(0:𝔹);
 	if x{
 		y:=0:!𝔹;
-		z:=1:!𝔹; // TODO
 	}else{
 		y:=1:!𝔹;
-		z:=0:!𝔹;
 	}
-	x:=X(x);
-	dup(y):=x;
-	assert(measure(H(y))=0);
+	assert(measure(x≠y));
+	return (x,y);
 }

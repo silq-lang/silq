@@ -7,5 +7,5 @@ def foo(const q:𝔹)lifted:𝔹{
 def bar(const q:𝔹)lifted:𝔹{
 	p := false;
 	if q { p = true; }
-	return p; // TODO
+	return p;
 }

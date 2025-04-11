@@ -237,9 +237,9 @@ def a11_FetchE[rr:!N,r:!N](const i:int[r], const qs:(𝔹^rr)^rr) lifted : 𝔹^
 	for j in [0..rr) {
 		for k in [0..j) {
 			if qs[j][k] && i == j { ps[k] = !ps[k]; }
-			if qs[j][k] && i == k { ps[j] = !ps[j]; } // TODO
+			if qs[j][k] && i == k { ps[j] = !ps[j]; }
 	}	}
-	return ps; // TODO
+	return ps;
 }
 
 
