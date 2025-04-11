@@ -2045,7 +2045,7 @@ struct Interpreter(QState){
 		}
 		// TODO: get rid of code duplication
 		QState.Value doIt2(Expression e){
-			if(isType(e)) return QState.typeValue(e.type); // TODO: get rid of this
+			if(isType(e)&&!isEmpty(e.type)) return QState.typeValue(e.type); // TODO: get rid of this
 			if(auto id=cast(Identifier)e){
 				if(!id.meaning&&util.among(id.name,"π","pi")) return QState.π;
 				if(auto init=id.getInitializer()){
