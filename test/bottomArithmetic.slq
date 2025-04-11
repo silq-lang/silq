@@ -1,0 +1,16 @@
+
+def main(){
+	x₀:=1+assert(false);
+	__show(__query("type",x₀));
+	x₁:=assert(false)+(2:!uint[2]);
+	__show(__query("type",x₁));
+	x₂:=1 div assert(false);
+	__show(__query("type",x₂));
+	x₃:=assert(false) div 2;
+	__show(__query("type",x₃));
+	x₄:=assert(false) - 2;
+	__show(__query("type",x₄));
+	x₅:=assert(false) sub 2;
+	__show(__query("type",x₅));
+	
+}
