@@ -1,0 +1,4 @@
+// args: --run
+
+def foo():never⇒foo(); // ok
+def main():never⇒assert(false); // error
