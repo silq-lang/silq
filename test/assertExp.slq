@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	x:=assert(true);
+	def f(){ y:=assert(false); }
+	z:=assert(false); // error
+}
