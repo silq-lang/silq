@@ -1,0 +1,14 @@
+// args: --run
+
+def foo(){ while true{} }
+
+def fun():𝔹{ return fun(); }
+
+def bar(){
+	foo();
+	foo():𝟙;
+	(foo():𝟘):𝟙;
+	x:=foo():int[2];
+	y:=foo():!ℚ;
+	return (x,y);
+}
