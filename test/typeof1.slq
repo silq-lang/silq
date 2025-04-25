@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	x:=0:𝔹;
+	__show(typeof(H(x)));
+	return x;
+}
