@@ -1,0 +1,3 @@
+def foo():0{ foo(); } // ok
+def fun():1{ } // ok
+def baz():1337{ return baz(); } // error

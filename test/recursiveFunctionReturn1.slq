@@ -1,0 +1,1 @@
+def foo():invalid{ foo(); } // error
