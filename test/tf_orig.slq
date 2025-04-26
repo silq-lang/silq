@@ -177,22 +177,22 @@ def a18_TriangleEdgeSearch[n:!N, rr:!N](const edgeOracle:((const int[n] x const 
 def a19_GCQWalk[n:!N, rr:!N](const edgeOracle:((const int[n] x const int[n] x 𝔹) !->mfree 𝔹),
 	const tt: int[n]^rr, const ee: (𝔹^rr)^rr, const w: int[n], const triTestT: 𝔹) mfree {
 	r := log_int(2,rr);
-	rbar := floor(max([2 * r / 3, 1])); // error
+	rbar := floor(max([2 * r / 3, 1]));
 	rrbar := floor(2^rbar); // here actually integer
 	tbarm := max([rr / rrbar, 1]);
 	tbarw := floor(sqrt(2^(rrbar)));
-	cTri := 0:int[2^(floor(max([2*log_int(2,rr)/3,1])))]; // error
-	tau := vector(2^(floor(max([2*log_int(2,rr)/3,1]))),0:int[r]); // error
+	cTri := 0:int[2^(floor(max([2*log_int(2,rr)/3,1])))];
+	tau := vector(2^(floor(max([2*log_int(2,rr)/3,1]))),0:int[r]);
 	iota := 0:int[rbar];
 	sigma := 0:int[r];
-	eew := vector(2^(floor(max([2*log_int(2,rr)/3,1]))),false:𝔹); // error
+	eew := vector(2^(floor(max([2*log_int(2,rr)/3,1]))),false:𝔹);
 	for k in [ 0..rrbar ) {
 		tau[k] := a4_HADAMARD_Int(tau[k]); // error
 	}
 	iota := a4_HADAMARD_Int(iota);
 	sigma := a4_HADAMARD_Int(sigma);
 	for j in [ 0..rrbar ) {
-		eew[j] := edgeOracle(tt[tau[j]], w, eew[j]) // error
+		eew[j] := edgeOracle(tt[tau[j]], w, eew[j])
 	}
 	for j in [ 0..rrbar ) {
 		for k in [ j+1..rrbar ) {
@@ -202,13 +202,13 @@ def a19_GCQWalk[n:!N, rr:!N](const edgeOracle:((const int[n] x const int[n] x �
 	for _ in [0..tbarm) {
 		if triTestT == 0 && !(cTri == 0) { phase(π); }
 		for _ in [0..tbarw) {
-			(tau, iota, sigma, eew, cTri) := a20_GCQWStep[n,r,rbar,2^(floor(max([2*log_int(2,rr)/3,1]))),rr](edgeOracle, tt, ee, w, tau, iota, sigma, eew, cTri); // error
+			(tau, iota, sigma, eew, cTri) := a20_GCQWStep[n,r,rbar,2^(floor(max([2*log_int(2,rr)/3,1]))),rr](edgeOracle, tt, ee, w, tau, iota, sigma, eew, cTri);
 		}
 	}
-	forget( tau = vector(2^(floor(max([2*log_int(2,rr)/3,1]))),0:int[r]) ); // error
+	forget( tau = vector(2^(floor(max([2*log_int(2,rr)/3,1]))),0:int[r]) );
 	forget( iota = (0:int[rbar]) );
 	forget( sigma = (0:int[r]) );
-	forget( eew = vector(2^(floor(max([2*log_int(2,rr)/3,1]))),false:𝔹) ); // error
+	forget( eew = vector(2^(floor(max([2*log_int(2,rr)/3,1]))),false:𝔹) );
 	return cTri;
 }
 def a20_GCQWStep[n:!N, r:!N, rbar:!N, rrbar:!N, rr:!N](const edgeOracle:((const int[n] x const int[n] x 𝔹) !->mfree 𝔹), 
@@ -226,7 +226,7 @@ def help_a20_2[n:!N, r:!N, rr:!N, rbar:!N, rrbar:!N](tau:int[r]^rrbar, eew:𝔹^
 	eewd := false:B;
 	taud := tau[iota]; 
 	(eew, eewd) := a10_FetchStoreT(iota, eew, eewd);
-	for k in [ 0..floor(2^max([2*log_int(2,rr)/3,1])) ) { // error
+	for k in [ 0..floor(2^max([2*log_int(2,rr)/3,1])) ) {
 		if ee[taud][tau[k]] && eewd && eew[k] {
 			cTri -= 1;
 	}	}

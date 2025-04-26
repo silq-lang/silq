@@ -1934,7 +1934,7 @@ struct Interpreter(QState){
 		this.hasFrame=hasFrame;
 	}
 	bool consumeConst(Expression e){
-		return !cast(Identifier)e&&!cast(TupleExp)e&&!cast(ArrayExp)e&&!cast(IndexExp)e&&!cast(SliceExp)e&&!cast(CatExp)e&&!cast(TypeAnnotationExp)e&&e.isQfree();
+		return !cast(Identifier)e&&!cast(TupleExp)e&&!cast(VectorExp)e&&!cast(IndexExp)e&&!cast(SliceExp)e&&!cast(CatExp)e&&!cast(TypeAnnotationExp)e&&e.isQfree();
 	}
 	QState.Value convertTo(Expression e,Expression type){
 		auto value=runExp(e);
@@ -2284,10 +2284,10 @@ struct Interpreter(QState){
 			}else if(auto tpl=cast(TupleExp)e){
 				auto values=tpl.e.map!(e=>doIt(e)).array; // DMD bug: map!doIt does not work
 				return QState.makeTuple(e.type,values);
-			}else if(auto arr=cast(ArrayExp)e){
-				auto et=arr.type.elementType;
+			}else if(auto vec=cast(VectorExp)e){
+				auto et=vec.type.elementType;
 				assert(!!et);
-				auto values=arr.e.map!((e){
+				auto values=vec.e.map!((e){
 					auto value=doIt(e);
 					if(e.type!=et) value=convertTo(value,et,!e.constLookup);
 					return value;
