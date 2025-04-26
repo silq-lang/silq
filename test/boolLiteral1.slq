@@ -1,0 +1,6 @@
+// args: --run
+
+def main(){
+	[x,y]:=[H(0),H(1)];
+	return (x,y);
+}

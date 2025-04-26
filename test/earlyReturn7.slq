@@ -2,7 +2,7 @@
 def main(){
 	x:=H(0:𝔹);
 	if x{
-		return 1; // error
+		return 1:!ℕ; // error
 	}
 	measure(x);
 	return 0;

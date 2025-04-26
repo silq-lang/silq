@@ -12,6 +12,7 @@ def __uminus_S[n:!ℕ](x:!int[n])lifted:!int[n];
 def __uminus_u[n:!ℕ](x:uint[n])lifted:uint[n];
 def __uminus_U[n:!ℕ](x:!uint[n])lifted:!uint[n];
 
+def __uminus_B(x:!ℕ)lifted:!ℤ;
 def __uminus_N(x:!ℕ)lifted:!ℤ;
 def __uminus_Z(x:!ℤ)lifted:!ℤ;
 def __uminus_Q(x:!ℚ)lifted:!ℚ;
@@ -179,7 +180,7 @@ def __nsub_Bb(a:!𝔹,b:𝔹)lifted:𝔹;
 def __nsub_B(a:!𝔹,b:!𝔹)lifted:!𝔹;
 
 def __nsub_bN(a:𝔹,b:!ℕ)lifted:𝔹;
-def __nsub_BN(a:!𝔹,b:!ℕ)lifted:𝔹;
+def __nsub_BN(a:!𝔹,b:!ℕ)lifted:!𝔹;
 
 def __nsub_N(a:!ℕ,b:!ℕ)lifted:!ℕ;
 def __nsub_Z(a:!ℤ,b:!ℤ)lifted:!ℕ;

@@ -2,7 +2,7 @@ def fun[n:!𝔹](x:𝔹^n)⇒x;
 
 def main(){
 	x:=fun(0:𝔹,1:𝔹); // error
-	y:=fun(); // TODO?
-	z:=fun(0:𝔹,); // TODO?
+	y:=fun(); // ok
+	z:=fun(0:𝔹,); // ok
 	return (x,y,z);
 }
