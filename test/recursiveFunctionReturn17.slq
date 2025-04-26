@@ -1,0 +1,19 @@
+// args: --run
+
+def foo(n:!ℕ){
+	def bar(n:!ℕ){
+		if n≠0{
+			return foo(n sub 1)+1;
+		}
+		return 0:!𝔹;
+	}
+	def baz(n:!ℕ){
+		if n≠0{
+			return baz(n sub 1)|bar(n);
+		}
+		return 0:!𝔹;		
+	}
+	return bar(n)+baz(n);
+}
+
+def main()⇒foo(3);

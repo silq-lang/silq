@@ -1,0 +1,10 @@
+// args: --run
+
+def foo():typeof(fib(10))⇒2;
+
+def fib(n:!ℕ){
+	if n≥2{ return fib(n sub 2)+fib(n sub 1); }
+	return n;
+}
+
+def main():!ℕ⇒fib(4);

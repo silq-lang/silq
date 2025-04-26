@@ -1,0 +1,3 @@
+
+def foo()⇒foo();
+def bar():𝔹{ foo(); }

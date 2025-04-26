@@ -1,0 +1,15 @@
+// args: --run
+
+def foo(n:!ℕ):never{
+	def baz(n:!ℕ):never{
+		return bar(n)+baz(n sub 1); // error
+	}
+	return baz(n);
+}
+
+def bar(n:!ℕ):!𝔹{
+	if n≠0{ return foo(n sub 1)+1; }
+	return 0:!𝔹;
+}
+
+def main()⇒foo(10);

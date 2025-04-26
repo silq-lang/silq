@@ -3,7 +3,7 @@ def main(){
 	x:=H(0:𝔹);
 	def foo(n:!ℕ):𝔹{
 		if n≠0{ return H(foo(n sub 1)); }
-		return x; // TODO
+		return x;
 	}
 	x:=foo(5);
 	assert(measure(x=0));

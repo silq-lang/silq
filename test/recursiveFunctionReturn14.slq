@@ -1,0 +1,9 @@
+// args: --run
+
+def succ[n:!ℕ](x:uint[n])qfree{ x+=1; return x; }
+def index[n:!ℕ][m:!ℕ](xs:𝔹^m)lifted⇒if m≤1||xs[0] then 0:uint[n] else succ(index[n](xs[1..m]));
+
+def main(){
+	xs:=(H(0:𝔹),H(0:𝔹),1:𝔹,0:𝔹);
+	return (index[3](xs),xs);
+}

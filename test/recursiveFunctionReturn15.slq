@@ -1,0 +1,4 @@
+// args: --run
+
+def fib(n:!ℕ)⇒if n≥2 then fib(n sub 2)+fib(n sub 1) else n;
+def main()⇒fib(5);

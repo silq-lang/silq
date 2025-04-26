@@ -1,0 +1,4 @@
+// args: --run
+
+def xfib(n:!ℕ)⇒if n≥2 then 2·xfib(n sub 2)+xfib(n sub 1)+1 else (n as !int[3]);
+def main()⇒xfib(5);

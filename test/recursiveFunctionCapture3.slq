@@ -1,0 +1,12 @@
+// args: --run
+
+def main(){
+	x:=H(0:𝔹);
+	y:=0:𝔹;
+	def foo(n:!ℕ):𝔹{
+		if n≠0{ return foo(n sub 1); }
+		else if n=0{ return x; }
+		assert(false);
+	}
+	return H(foo(2));
+}

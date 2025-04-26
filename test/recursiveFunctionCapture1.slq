@@ -1,0 +1,12 @@
+
+def main():!𝔹×𝔹[]{
+	x:=0:!𝔹;
+	y:=H(0:𝔹); // error
+	def bar(n:!ℕ,t:𝔹[]){
+		if n=0{ return (x,t); }
+		if n>1 { return bar(n sub 1,t); }
+		t~=[y];
+		return (x,t);
+	}
+	return (bar(20,[]:𝔹[]));
+}

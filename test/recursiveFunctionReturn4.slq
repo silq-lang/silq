@@ -1,0 +1,9 @@
+
+def foo():typeof(bar()){
+	return bar();
+}
+def bar():typeof(foo()){
+	return foo();
+}
+
+def baz():𝔹{ foo(); }

@@ -1,0 +1,7 @@
+
+def foo[n:!ℕ](x:!𝔹^n){
+	return x[1..n]~(foo(x)[0],);
+}
+def bar[n:!ℕ](x:!𝔹^n){
+	return bar(x)[1..n]~(bar(x),);
+}

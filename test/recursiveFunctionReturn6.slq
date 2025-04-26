@@ -1,0 +1,15 @@
+// args: --run
+
+def foo(n:!ℕ){
+	return bar(n sub 1)+1;
+}
+
+def bar(n:!ℕ){
+	if n≠0{ return foo(n sub 1)+1; }
+	return 0:!𝔹;
+}
+
+def main():!ℕ{
+	__show(typeof(bar));
+	return bar(10);
+}
