@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	x:=(2,3,5,1):!int[4]^4;
+	i:=0:int[2];
+	i[0]:=H(i[0]);
+	i[1]:=H(i[1]);
+	return (x[i],i):int[4]×int[2];
+}
