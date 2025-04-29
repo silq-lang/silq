@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	x:=(0,1,2,3/4,[5]);
+	i:=0;
+	for _ in 0..x.length{ i+=measure(H(0)); }
+	return (x[i]); // error
+}
