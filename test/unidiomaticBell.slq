@@ -1,0 +1,11 @@
+// args: --run
+
+def main(){
+	x := H(0);
+	y := 0;
+	if x {
+		y = X(y); // unidiomatic, usually would do y:=X(y)
+	}
+	forget(x=y);
+	assert(!measure(H(y)));
+}
