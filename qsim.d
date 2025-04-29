@@ -1596,7 +1596,7 @@ struct QState{
 	}
 	Value call(FunctionDef fun,Value thisExp,Value arg,Scope sc,Value* context,Expression type,Location loc){
 		Value fix(Value arg){
-			if(type.isClassical()&&!arg.isClassical()) return measure(arg); // TODO: improve simulator so this is not needed
+			if(type.isClassical()&&!arg.isClassical()) return measure(arg,false); // TODO: improve simulator so this is not needed
 			return arg;
 		}
 		enforce(!thisExp.isValid,"TODO: method calls");
@@ -1825,7 +1825,7 @@ struct QState{
 		return makeClosure(type,Closure(reverseFunction(arg.closure.fun),arg.closure.context));
 		//return qstate.makeFunction(reverseFunction(arg.closure.fun));
 	}
-	Value measure(Value arg){
+	Value measure(Value arg,bool renormalize=true){
 		MapX!(Value,R) candidates;
 		R one=0;
 		foreach(k,v;state){
@@ -1860,9 +1860,11 @@ struct QState{
 			total+=sqAbs(v);
 			nstate[k]=v;
 		}
-		total=sqrt(total);
-		foreach(k,ref v;nstate) v/=total;
-		state=nstate;
+		if(renormalize){
+			total=sqrt(total);
+			foreach(k,ref v;nstate) v/=total;
+			state=nstate;
+		}
 		arg.forget(this);
 		return result;
 	}
