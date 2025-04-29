@@ -1,0 +1,4 @@
+def main(){
+	x:=[1,2,3]:!ℕ[];
+	x.length[2]:=x.length; // error
+}
