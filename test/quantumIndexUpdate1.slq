@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	x:=0:!int[2];
+	i:=H(0);
+	x[i]:=X(x[i]); // TODO
+	return (x,i);
+}
