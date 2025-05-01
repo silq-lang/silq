@@ -990,7 +990,20 @@ struct QState{
 			// ^^ needs special handling
 			// ~ needs special handling
 			auto ntype=binaryType!op(type,r.type);
-			if(!ntype) ntype=type; // TODO: this is a hack
+			if(!ntype){
+				// TODO: this is a hack
+				ntype=type;
+				if(!r.type.isClassical){
+					if(ntype.isClassical){
+						if(ntype==ℕt(true)) ntype=ℕt(false);
+						else if(ntype==ℤt(true)) ntype=ℤt(false);
+						else if(ntype==ℚt(true)) ntype=ℚt(false);
+						else if(ntype==ℂ(true)) ntype=ℂ(false);
+						else ntype=ntype.getQuantum();
+						enforce(!!ntype,"unsupported");
+					}
+				}
+			}
 			if(ntype==ℕt(true)) ntype=ℤt(true);
 			if(!ntype.isToplevelClassical()) return makeQuval(ntype,new BinOpQVal!op(this,r));
 			assert(!!ntype);

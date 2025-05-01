@@ -1,0 +1,15 @@
+// args: --run
+
+def foo[n:!ℕ](i:!ℕ,x:(!𝔹 × !𝔹 × !ℚ)^n){
+	x[1][i]=2;
+	return x;
+}
+
+def main():(!ℕ × !ℕ × !ℚ)^2{
+	x:=[(0,1,2/3),(0,1,2/3)];
+	i:=0;
+	__show(typeof(x));
+	x=foo(0,x);
+	__show(typeof(x));
+	return x;
+}

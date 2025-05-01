@@ -1,0 +1,10 @@
+// args: --run
+
+def main():(!ℕ × !𝔹 × !ℚ)^2{
+	x:=[(0,1,2/3),(0,1,2/3)];
+	i:=0;
+	__show(typeof(x));
+	x[i][0]=2;
+	__show(typeof(x));
+	return x;
+}

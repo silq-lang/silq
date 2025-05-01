@@ -1,0 +1,8 @@
+
+def main(){
+	x:=0:!uint[2];
+	i:=H(0);
+	x[i]=1; // error
+	__show(__query("dep",x));
+	forget(i=(x=2));
+}

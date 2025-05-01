@@ -1,0 +1,11 @@
+// args: --run
+
+def main(){
+	x:=(0,0);
+	i:=H(0);
+	x[i]=1;
+	forget(i=(x=(0,1)));
+	(u,v):=x as 𝔹^2;
+	forget(v=!u);
+	assert(measure(H(u))=0);
+}

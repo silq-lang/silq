@@ -1,6 +1,9 @@
+// args: --run
+
 def main(){
 	x:=1;
 	x/=2;
 	y:=vector(3,0);
-	y[0]=x; // error
+	y[0]=x;
+	return y;
 }
