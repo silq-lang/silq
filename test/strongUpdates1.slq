@@ -1,5 +1,5 @@
 
-def main(){
+def main():!ℕ^2{
 	x:=2;
 	x=-x;
 	y:=2;
@@ -11,4 +11,5 @@ def main(){
 	(u,v)=2; // error
 	(i,j):=[1,2];
 	(i,j)=[1,2];
+	return (i,j);
 }
