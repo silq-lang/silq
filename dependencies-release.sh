@@ -6,12 +6,12 @@ LINK=https://github.com/ldc-developers/ldc/releases/download/v$VERSION/
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
     NAME="ldc2-$VERSION-linux-x86_64"
     FILE="$NAME.tar.xz"
-    SUM1="395fb064a9f1b2383ee39d4f988612aa  $FILE"
+    SUM1="efb96c01e629a5680b4d186f8a447ae0  $FILE"
     MD5="md5sum"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
-    NAME="ldc2-$VERSION-osx-x86_64"
+    NAME="ldc2-$VERSION-osx-universal"
     FILE="$NAME.tar.xz"
-    SUM1="MD5 ($FILE) = be54527ffcaefe49eb0aa4ff444e3ed9"
+    SUM1="5a722087bb72d26fb2b17ab56ec18ecc  $FILE"
     MD5="md5sum"
 else
     >&2 echo "This script does not support your platform at this time."

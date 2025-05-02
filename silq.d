@@ -2,6 +2,7 @@
 // License: http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0
 
 import util.path;
+import util.optparse;
 import std.array, std.string, std.algorithm, std.conv;
 import util, util.io;
 import ast.lexer, ast.parser, ast.expression, ast.declaration, ast.error, help;
@@ -24,7 +25,7 @@ int run(string path){
 	scope(exit) err.finalize();
 	auto sc=new TopScope(err);
 	Expression[] exprs;
-	if(auto r=importModule(path,err,exprs,sc))
+	if(auto r=importModule(path,err,exprs,sc,Location.init))
 		return r;
 	if(err.nerrors) return 1;
 	FunctionDef[string] functions;
@@ -78,74 +79,81 @@ int run(string path){
 int main(string[] args){
 	//import core.memory; GC.disable();
 	version(TEST) test();
-	if(args.length) args.popFront();
-	auto idx=args.countUntil("--read-args");
-	if(idx<args.length){
-		args=args[0..idx]~args[idx+1..$];
-		foreach(filename;args){
-			if(filename.startsWith("--")) continue;
-			auto firstLine=File(filename).readln().strip();
-			if(firstLine.startsWith("// args: ")) args=firstLine["// args: ".length..$].split~args;
-			else if(firstLine.startsWith("//args: ")) args=firstLine["//args: ".length..$].split~args;
-			break;
-		}
-	}
-	args.sort!((a,b)=>a.startsWith("--")>b.startsWith("--"));
-	bool hasInputFile=false;
-	foreach(x;args){
-		switch(x){
-			case "--help": writeln(help.help); return 0;
-			case "--noboundscheck": opt.noBoundsCheck=true; break;
-			case "--trace": opt.trace=true; break;
-			case "--dump-reverse": opt.dumpReverse=true; break;
-			case "--error-json": opt.errorFormat=ErrorFormat.json; break;
-			case "--run": opt.backend=BackendType.run; break;
-			case "--unsafe-capture-const": astopt.allowUnsafeCaptureConst=true; break;
-			case "--project-forget": astopt.projectForget=true; break;
-			case "--remove-loops": astopt.removeLoops=true; break;
-			default:
-				if(x.startsWith("--summarize=")){
-					auto rest=x["--summarize=".length..$];
-					import std.regex: regex, match;
-					auto r=regex(r"^\[(([-a-z])*,)*([-a-z])*,?\]$");
-					if(match(rest,r)){
-						rest=rest[1..$-1];
-						if(rest.endsWith(",")) rest=rest[0..$-1];
-						opt.summarize=rest.split(',');
-					}else{
-						stderr.writeln("error: summary specification needs to be of format [key1,key2,...]");
-						return 1;
-					}
-					continue;
-				}
-				if(x.startsWith("--run=")){
-					auto rest=x["--run=".length..$];
-					try{
-						opt.backend=BackendType.run;
-						opt.numRuns=to!ulong(rest);
-					}catch(Exception){
-						stderr.writeln("error: number of samples needs to be 64-bit unsigned integer");
-						return 1;
-					}
-					continue;
-				}
-				if(x.startsWith("--seed=")){
-					import std.random;
-					try{
-						rndGen.seed(to!uint(x["--seed=".length..$]));
-					}catch(Exception){
-						stderr.writeln("error: random seed must be 32-bit unsigned integer");
-						return 1;
-					}
-					continue;
-				}
-				hasInputFile=true;
-				if(auto r=run(x)) return r;
-		}
-	}
-	if(!hasInputFile){
+
+	int r = OptParser()
+		.add!("help")(() {
+			stderr.writeln(help.help);
+			return 1;
+		})
+		.add!("noboundscheck")(() {
+			opt.noBoundsCheck = true;
+			return 0;
+		})
+		.add!("trace")((bool v) {
+			opt.trace = v;
+			return 0;
+		})
+		.add!("dump-reverse")((bool v) {
+			opt.dumpReverse = v;
+			return 0;
+		})
+		.add!("error-json", 'j')(() {
+			opt.errorFormat=ErrorFormat.json;
+			return 0;
+		})
+		.addOptional!("run")((string arg) {
+			opt.backend=BackendType.run;
+			if(arg) {
+				opt.numRuns = to!ulong(arg);
+			}
+			return 0;
+		})
+		.add!("unsafe-capture-const")((bool v) {
+			astopt.allowUnsafeCaptureConst = v;
+			return 0;
+		})
+		.add!("remove-loops")((bool v) {
+			astopt.removeLoops = v;
+			return 0;
+		})
+		.add!("project-forget")((bool v) {
+			astopt.projectForget = v;
+			return 0;
+		})
+		.add!("summarize")((string arg) {
+			import std.regex: regex, match;
+			auto r=regex(r"^\[(([-a-z])*,)*([-a-z])*,?\]$");
+			if(match(arg,r)){
+				arg=arg[1..$-1];
+				if(arg.endsWith(",")) arg=arg[0..$-1];
+				opt.summarize=arg.split(',');
+			}else{
+				stderr.writeln("error: summary specification needs to be of format [key1,key2,...]");
+				return 1;
+			}
+			return 0;
+		})
+		.add!("seed")((string arg) {
+			import std.random;
+			try{
+				rndGen.seed(to!uint(arg));
+			}catch(Exception){
+				stderr.writeln("error: random seed must be 32-bit unsigned integer");
+				return 1;
+			}
+			return 0;
+		})
+		.parse(args);
+	if(r) return r;
+
+	args.popFront();
+	if(args.empty) {
 		stderr.writeln("error: no input files");
 		return 1;
+	}
+	foreach(x; args) {
+		r = run(x);
+		if(r) return r;
 	}
 	return 0;
 }

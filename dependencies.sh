@@ -1,15 +1,15 @@
 #!/bin/bash
 
 if [ ! -d dmd2 ]; then
-    VERSION="2.102.2"
+    VERSION="2.111.0"
 
     if [[ "$OSTYPE" == "linux-gnu" ]]; then
         FILE="dmd.$VERSION.linux.zip"
-        SUM1="5e22d624323e0c17b5e73a1784bbdb67  $FILE"
+        SUM1="95b7c8594d3b74c6050f53072c5d4906  $FILE"
         MD5="md5sum"
     elif [[ "$OSTYPE" == "darwin"* ]]; then
         FILE="dmd.$VERSION.osx.zip"
-        SUM1="MD5 ($FILE) = ac868f5c9d8aa4dfeb52149d34655935"
+        SUM1="MD5 ($FILE) = 18c5de077860585ebbc884543ae0bb88"
         MD5="md5"
     else
         >&2 echo "This script does not support your platform at this time."
