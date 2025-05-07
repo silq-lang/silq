@@ -3,6 +3,7 @@
 
 import util.path;
 import util.optparse;
+import util.terminal;
 import std.array, std.string, std.algorithm, std.conv;
 import util, util.io;
 import ast.lexer, ast.parser, ast.expression, ast.declaration, ast.error, help;
@@ -10,19 +11,59 @@ import astopt;
 import options, ast.scope_, ast.modules, ast.summarize;
 
 static this(){
-	opt.importPath ~= buildPath(dirName(file.thisExePath),"library");
-	static if(language==psi) opt.importPath ~= buildPath(dirName(file.thisExePath),"..","..","..","..","ras","psi","library"); // TODO: remove
+	astopt.importPath ~= buildPath(dirName(file.thisExePath),"library");
+	static if(language==psi) astopt.importPath ~= buildPath(dirName(file.thisExePath),"..","..","..","..","ras","psi","library"); // TODO: remove
 }
 
-int run(string path){
+class Backend {
+	abstract int run(FunctionDef[string] functions, ErrorHandler err);
+}
+
+scope class SummarizeBackend: Backend {
+	string[] entries;
+
+	override int run(FunctionDef[string] functions, ErrorHandler err) {
+		try{
+			foreach(fd;functions)
+				writefln(getSummary(fd,entries).join(","));
+		}catch(Exception e){
+			stderr.writeln("error: ",e.msg);
+			return 1;
+		}
+		return 0;
+	}
+}
+
+scope class QSimBackend: Backend {
+	ulong numRuns = 1;
+
+	override int run(FunctionDef[string] functions, ErrorHandler err) {
+		import qsim;
+		auto pfun = "main" in functions;
+		if(!pfun) return 0;
+		auto fun=*pfun;
+		auto be=new QSim(fun.loc.source.name);
+		foreach(i;0..numRuns){
+			auto qstate=be.run(fun,err);
+			if("`value" in qstate.vars)
+				writeln(qstate.formatQValue(qstate.vars["`value"]));
+			if(opt.projectForget){
+				auto total=qstate.totalProb();
+				if(total>zeroThreshold)
+					writefln("Pr[error] = %f",1.0L-total);
+			}
+		}
+		return !!err.nerrors;
+	}
+}
+
+int run(Backend backend, string path, ErrorHandler err){
 	path = getActualPath(path);
 	auto ext = path.extension;
 	if(ext != (language==astopt.silq?".slq":".psi")){ // TODO: support only language==silq
 		stderr.writeln(path~": unrecognized extension: "~ext);
 		return 1;
 	}
-	auto err=makeErrorHandler(opt.errorFormat);
-	scope(exit) err.finalize();
 	auto sc=new TopScope(err);
 	Expression[] exprs;
 	if(auto r=importModule(path,err,exprs,sc,Location.init))
@@ -35,17 +76,6 @@ int run(string path){
 			functions[fd.name.name]=fd;
 		}else if(!cast(Declaration)expr&&!cast(DefineExp)expr&&!cast(CommaExp)expr) err.error("top level expression must be declaration",expr.loc);
 	}
-	if(opt.summarize.length){
-		try{
-			foreach(expr;exprs)
-				if(auto fd=cast(FunctionDef)expr)
-					writefln(getSummary(fd,opt.summarize).join(","));
-		}catch(Exception e){
-			stderr.writeln("error: ",e.msg);
-			return 1;
-		}
-		return 0;
-	}
 	version(CHECK_AST){
 		foreach(expr;exprs){
 			if(auto fd=cast(FunctionDef)expr){
@@ -56,29 +86,19 @@ int run(string path){
 	}
 	// TODO: add some backends
 	if(err.nerrors) return 1;
-	if(opt.backend==BackendType.run){
-		import qsim;
-		auto be=new QSim(path);
-		if("main" in functions){
-			auto fun=functions["main"];
-			foreach(i;0..opt.numRuns){
-				auto qstate=be.run(fun,err);
-				if("`value" in qstate.vars)
-					writeln(qstate.formatQValue(qstate.vars["`value"]));
-				if(astopt.projectForget){
-					auto total=qstate.totalProb();
-					if(total>zeroThreshold)
-						writefln("Pr[error] = %f",1.0L-total);
-				}
-			}
-		}
-	}
-	return !!err.nerrors;
+	if(!backend) return 0;
+	return backend.run(functions, err);
 }
 
 int main(string[] args){
 	//import core.memory; GC.disable();
 	version(TEST) test();
+
+	Backend backend = null;
+	scope auto qsimBackend = new QSimBackend();
+	scope auto summarizeBackend = new SummarizeBackend();
+
+	string jsonOut = null;
 
 	int r = OptParser()
 		.add!("help")(() {
@@ -86,7 +106,7 @@ int main(string[] args){
 			return 1;
 		})
 		.add!("noboundscheck")(() {
-			opt.noBoundsCheck = true;
+			stderr.writeln("warning: --noboundscheck is deprecated and has no effect");
 			return 0;
 		})
 		.add!("trace")((bool v) {
@@ -94,17 +114,21 @@ int main(string[] args){
 			return 0;
 		})
 		.add!("dump-reverse")((bool v) {
-			opt.dumpReverse = v;
+			astopt.dumpReverse = v;
 			return 0;
 		})
-		.add!("error-json", 'j')(() {
-			opt.errorFormat=ErrorFormat.json;
+		.addOptional!("error-json", 'j')((string path) {
+			if(path is null) {
+				jsonOut = "-";
+			} else {
+				jsonOut = path;
+			}
 			return 0;
 		})
 		.addOptional!("run")((string arg) {
-			opt.backend=BackendType.run;
+			backend = qsimBackend;
 			if(arg) {
-				opt.numRuns = to!ulong(arg);
+				qsimBackend.numRuns = to!ulong(arg);
 			}
 			return 0;
 		})
@@ -117,7 +141,7 @@ int main(string[] args){
 			return 0;
 		})
 		.add!("project-forget")((bool v) {
-			astopt.projectForget = v;
+			opt.projectForget = v;
 			return 0;
 		})
 		.add!("summarize")((string arg) {
@@ -126,7 +150,7 @@ int main(string[] args){
 			if(match(arg,r)){
 				arg=arg[1..$-1];
 				if(arg.endsWith(",")) arg=arg[0..$-1];
-				opt.summarize=arg.split(',');
+				summarizeBackend.entries=arg.split(',');
 			}else{
 				stderr.writeln("error: summary specification needs to be of format [key1,key2,...]");
 				return 1;
@@ -146,13 +170,34 @@ int main(string[] args){
 		.parse(args);
 	if(r) return r;
 
+	// --summarize, if not empty, overrides any other backend choice.
+	if(summarizeBackend.entries) {
+		backend = summarizeBackend;
+	}
+
 	args.popFront();
 	if(args.empty) {
 		stderr.writeln("error: no input files");
 		return 1;
 	}
+
+	ErrorHandler err;
+	File errFile;
+	if(!jsonOut) {
+		if(isATTy(stderr)){
+			err = new FormattingErrorHandler();
+		} else {
+			err = new VerboseErrorHandler();
+		}
+	} else if(jsonOut == "-") {
+		err = new JSONErrorHandler(stdout, false);
+	} else {
+		err = new JSONErrorHandler(File(jsonOut, "w"), true);
+	}
+	scope(exit) err.finalize();
+
 	foreach(x; args) {
-		r = run(x);
+		r = run(backend, x, err);
 		if(r) return r;
 	}
 	return 0;

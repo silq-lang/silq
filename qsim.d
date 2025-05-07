@@ -275,7 +275,7 @@ struct QState{
 	QState map(alias f,bool checkInterference=true,T...)(T args){
 		QState new_;
 		new_.copyNonState(this);
-		if(!astopt.projectForget){
+		if(!opt.projectForget){
 			foreach(k,v;state){
 				auto nk=f(k,args);
 				static if(checkInterference){
@@ -2622,7 +2622,7 @@ struct Interpreter(QState){
 		a2.assign(qstate,tmp);
 	}
 	void forget(QState.Value lhs,QState.Value rhs){
-		if(astopt.projectForget) qstate=qstate.project(lhs.eq(rhs));
+		if(opt.projectForget) qstate=qstate.project(lhs.eq(rhs));
 		lhs.forget(qstate,rhs);
 	}
 	void forget(QState.Value lhs){
