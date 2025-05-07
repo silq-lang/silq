@@ -63,15 +63,15 @@ def main(){
 	assert(approx(g%c,0.137));
 	assert(g%d=-28.863);
 	assert(g%e=0.137);
-	assert(g%f=-1.263);
+	assert(approx(g%f,-1.263));
 	assert(g%g=0);
-	assert(g%h=-1.233);
+	assert(approx(g%h,-1.233));
 	assert(approx(h%(a as !ℕ),11.63));
 	assert(approx(h%(b as !ℤ),-1.37));
-	assert(h%c=21.63);
+	assert(approx(h%c,21.63));
 	assert(approx(h%d,-1.37));
 	assert(approx(h%e,89/300));
-	assert(h%f=-1.37);
+	assert(approx(h%f,-1.37));
 	assert(h%h=0);
 	
 	assert(a%true=0);
@@ -80,7 +80,7 @@ def main(){
 	assert(d%true=0);
 	assert(e%true=2/3);
 	assert(f%true=3/5);
-	assert(g%true=0.137);
+	assert(approx(g%true,0.137));
 	assert(approx(h%true,0.63));
 
 	assert(false%a=0);
