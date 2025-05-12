@@ -3,6 +3,7 @@
 
 struct Options{
 	bool trace=false;
+	bool check=false;
 	bool projectForget=false;
 }
 Options opt; // TODO: get rid of global?

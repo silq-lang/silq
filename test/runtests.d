@@ -36,10 +36,12 @@ auto to(string unit,T)(Duration d)if(unit=="seconds"||unit=="msecs"){
 
 bool dashDashBad=false;
 bool dashDashTodo=false;
+bool dashDashNoCheck=false;
 int parseFlags(string[] flags){
 	foreach(flag;flags){
 		if(flag=="--bad") dashDashBad=true;
 		else if(flag=="--todo") dashDashTodo=true;
+		else if(flag.among("--no-check","--check=0","--check=false")) dashDashNoCheck=true;
 		else{
 			stderr.writeln("unrecognized flag: ",flag);
 			return 1;
@@ -349,6 +351,7 @@ int[] getActual(string source,out string[] output){
 	if(args.startsWith("// args: "))
 		args=args["// args: ".length..$].strip()~" ";
 	else args="";
+	if(!dashDashNoCheck) args~="--check ";
 	output = shell("../silq "~args~source~" 2>&1").splitLines;
 	int[] result;
 	static bool isBad(string x){

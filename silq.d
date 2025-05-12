@@ -76,7 +76,7 @@ int run(Backend backend, string path, ErrorHandler err){
 			functions[fd.name.name]=fd;
 		}else if(!cast(Declaration)expr&&!cast(DefineExp)expr&&!cast(CommaExp)expr) err.error("top level expression must be declaration",expr.loc);
 	}
-	version(CHECK_AST){
+	if(opt.check){
 		foreach(expr;exprs){
 			if(auto fd=cast(FunctionDef)expr){
 				import ast.checker:checkFunction;
@@ -138,6 +138,10 @@ int main(string[] args){
 		})
 		.add!("remove-loops")((bool v) {
 			astopt.removeLoops = v;
+			return 0;
+		})
+		.add!("check")((bool v) {
+			opt.check = v;
 			return 0;
 		})
 		.add!("project-forget")((bool v) {
