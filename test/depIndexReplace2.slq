@@ -6,6 +6,7 @@ def main(){
 	__show(__query("dep",a));
 	(a[0],b):=(a[0],a[1]);
 	__show(__query("dep",a));
-	forget(a,b); // TODO
+	__show(__query("dep",b));
+	forget(a,b);
 	return x;
 }

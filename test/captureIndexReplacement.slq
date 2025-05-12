@@ -4,7 +4,9 @@ def main(){
 	x:=H(0:𝔹);
 	a:=vector(3,x);
 	(a[0],f):=(0:𝔹,() ⇒ a[0]);
-	forget(a); // TODO
+	__show(__query("dep",a));
+	__show(__query("dep",f));
+	forget(a);
 	forget(f);
 	return x;
 }
