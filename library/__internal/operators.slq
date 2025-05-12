@@ -1150,13 +1150,13 @@ def __sub_assign_uB[n:!ℕ](a:uint[n],const b:!𝔹)qfree:uint[n];
 def __sub_assign_uZ[n:!ℕ](a:uint[n],const b:!ℤ)qfree:uint[n];
 
 // a nsub= b
-def __nsub_assign_s[n:!ℕ](a:int[n],const b:int[n])qfree:int[n];
-def __nsub_assign_sS[n:!ℕ](a:int[n],const b:!int[n])qfree:int[n];
+// def __nsub_assign_s[n:!ℕ](a:int[n],const b:int[n])qfree:uint[n];
+// def __nsub_assign_sS[n:!ℕ](a:int[n],const b:!int[n])qfree:uint[n];
 
-def __nsub_assign_sb[n:!ℕ](a:int[n],const b:𝔹)qfree:int[n];
-def __nsub_assign_sB[n:!ℕ](a:int[n],const b:!𝔹)qfree:int[n];
+// def __nsub_assign_sb[n:!ℕ](a:int[n],const b:𝔹)qfree:uint[n];
+// def __nsub_assign_sB[n:!ℕ](a:int[n],const b:!𝔹)qfree:uint[n];
 
-def __nsub_assign_sZ[n:!ℕ](a:int[n],const b:!ℤ)qfree:int[n];
+// def __nsub_assign_sZ[n:!ℕ](a:int[n],const b:!ℤ)qfree:uint[n];
 
 def __nsub_assign_u[n:!ℕ](a:uint[n],const b:uint[n])qfree:uint[n];
 def __nsub_assign_uU[n:!ℕ](a:uint[n],const b:!uint[n])qfree:uint[n];
