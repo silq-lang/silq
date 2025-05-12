@@ -1506,7 +1506,9 @@ struct QState{
 		return r;
 	}
 	static Value π(){ return makeReal(PI); }
-	struct Σ{
+
+	alias Σ=Sigma;
+	struct Sigma{
 		alias Ref=size_t;
 		HashMap!(Ref,Value,(a,b)=>a==b,a=>a) qvars;
 		Σ dup(){ return Σ(qvars.dup); }
