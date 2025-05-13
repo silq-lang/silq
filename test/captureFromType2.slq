@@ -1,0 +1,15 @@
+// args: --run
+
+def foo[n:!ℕ](x:𝔹^n){
+	n:=3;
+	def bar(){
+		x:=x;
+		__show(typeof(x)," ",x.length);
+		assert(x.length=1);
+		return x;
+	}
+	return bar;
+}
+def main(){
+	return foo((0,))();
+}
