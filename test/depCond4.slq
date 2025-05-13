@@ -5,9 +5,9 @@ def foo(a:𝔹,cond:𝔹,const cond2:𝔹){
 		if cond{
 			x:=H(x);
 		}
-		__show(__query("dep",y)); // {cond2, a, cond} // TODO: should be {a}
+		__show(__query("dep",y)); // {a}
 		cond:=H(cond);
-		forget(y); // TODO
+		forget(y);
 		return (a,x,cond);
 	}else{
 		return (a,0:𝔹,cond);
