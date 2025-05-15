@@ -1,0 +1,11 @@
+// args: --run
+def app0(xs:𝔹^2)⇒xs~[0];
+
+def main(){
+	xs:=vector(2,vector(2,0:𝔹));
+	(xs[0],xs[1]):=(app0(xs[1]),app0(xs[0]));
+	xs:=xs:(𝔹^3)^2;
+	(xs[0],xs[1]):=(xs[1]~[0,1],xs[0]~[0,1]);
+	xs:=xs:(𝔹^5)^2;
+	return xs;
+}

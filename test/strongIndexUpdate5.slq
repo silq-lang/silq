@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	xs:=vector(2,vector(2,0:𝔹));
+	xs[0][0]:=H(xs[0][0]);
+	(xs[0],xs[1]):=(measure(xs[1]):!ℕ^2,xs[0]~[0,1]);
+	(xs[0],xs[1]):=(measure(xs[1]):!ℕ^4,xs[0]~[0,1]); // TODO
+	return xs:!ℕ^4×(!ℕ×!ℕ×!𝔹×!𝔹); // TODO
+}
