@@ -1,0 +1,10 @@
+// args: --run
+
+def main(){
+	qs:=vector(4,0:𝔹);
+	(qs[1],qs[3])=(1,1);
+	i:=0;
+	(qs[i],x,qs[i+1]):=(qs[i],qs[i+1],1:𝔹);
+	assert(measure(dup(qs~[x]))=(0,1,0,1,1));
+	return (qs,x);
+}
