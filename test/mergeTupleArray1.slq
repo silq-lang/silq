@@ -1,0 +1,9 @@
+
+def main(){
+	if measure(H(0)){
+		x:=(H(0),2,3); // error
+	}else{
+		x:=[2,3,4]:!ℕ[];
+	}
+	return x; // error
+}
