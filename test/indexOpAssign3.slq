@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	x:=vector(2,vector(2,0:𝔹));
+	x[0]~=[1];
+	return x:𝔹^3×𝔹^2;
+}

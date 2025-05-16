@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	x:=vector(2,vector(2,0:uint[4]));
+	x[0][1][0]:=X(x[0][1][0]);
+	x[0][1]·=3; // ok
+	return x
+}

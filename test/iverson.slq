@@ -1,3 +1,4 @@
+// args: --run
 
 n:=3,m:=4;
 def main(){

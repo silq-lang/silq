@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	x:=vector(1,0:𝔹);
+	x[0]⊕=1:𝔹;
+	return x;
+}
