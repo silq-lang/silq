@@ -1,0 +1,10 @@
+// args: --run
+
+def main() {
+	x := vector(3, 0:!B);
+	b:=false;
+	if b{
+		x[3] := H(x[3]); // TODO: error?
+	}
+	return x:!𝔹^3;
+}
