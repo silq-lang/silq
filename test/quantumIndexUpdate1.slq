@@ -3,6 +3,6 @@
 def main(){
 	x:=0:!int[2];
 	i:=H(0);
-	x[i]:=X(x[i]); // TODO
+	x[i]:=X(x[i]);
 	return (x,i);
 }

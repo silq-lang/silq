@@ -1,0 +1,11 @@
+// args: --run
+
+def main(){
+	x:=vector(2,0:!𝔹);
+	x[0]:=X(x[0]);
+	k:=0:!uint[2];
+	k[1]:=X(k[1]);
+	x[1]:=H(x[1]);
+	k[0]:=H(k[0]);
+	return (x,k);
+}

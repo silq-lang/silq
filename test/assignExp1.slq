@@ -1,0 +1,7 @@
+
+def main(){
+	x:=vector(2,0:𝔹);
+	x[0]=x[0]; // TODO
+	i:=0;
+	x[0]=x[i]; // TODO
+}

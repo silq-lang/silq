@@ -1,0 +1,7 @@
+def main(){
+	x:=vector(2,0:𝔹);
+	i:=0;
+	x[i]=X(x[i]); // TODO
+	assert(measure(x=(1,0)));
+	forget(x);
+}
