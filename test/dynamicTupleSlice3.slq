@@ -1,0 +1,5 @@
+
+def main(){
+	x:=(0,1,2,3/4);
+	return x[assert(0)..assert(0)];
+}

@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	x:=(0,1,2,3/4);
+	i:=measure(H(0));
+	return x[i..i+3]:!ℚ^3;
+}
