@@ -19,4 +19,6 @@ immutable string operatorsPath= "__internal/operators.slq";
 
 bool dumpReverse=false;
 bool allowUnsafeCaptureConst=false;
+
 bool removeLoops=false;
+bool splitComponents=false;

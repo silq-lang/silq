@@ -140,6 +140,10 @@ int main(string[] args){
 			astopt.removeLoops = v;
 			return 0;
 		})
+		.add!("split-components")((bool v) {
+			astopt.splitComponents = v;
+			return 0;
+		})
 		.add!("check")((bool v) {
 			opt.check = v;
 			return 0;
