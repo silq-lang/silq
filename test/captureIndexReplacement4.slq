@@ -4,7 +4,7 @@ def main(){
 	a:=vector(3,x);
 	forget(x=a[0]);
 	f:=(){
-		(a[1],a[2]):=(a[2],a[1]); // TODO
+		(a[1],a[2]):=(a[2],a[1]);
 		return a;
 	};
 	return f;

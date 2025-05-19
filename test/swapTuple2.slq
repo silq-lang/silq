@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	x:=([0,0]:𝔹^2,[0]:!𝔹^1);
+	i:=1;
+	(x[i],x[i-1]):=(x[i-1],x[i]);
+	__show(typeof(x));
+	return x[i];
+}

@@ -1,0 +1,10 @@
+// args: --run
+
+def main(){
+	xs:=[0];
+	def foo(){
+		xs~=[1]; // TODO
+		return xs;
+	}
+	return foo();
+}

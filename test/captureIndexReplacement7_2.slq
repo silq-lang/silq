@@ -4,8 +4,9 @@ def main(){
 	a:=vector(3,x);
 	forget(x=a[0]);
 	(a[0],f):=(0:𝔹,(){ // error
-		(a[1],a[2]):=(a[2],a[1]); // error
-		return a;
+		i:=1,j:=2;
+		(a[i],a[j]):=(a[j],a[i]); // error
+		return a; // error
 	});
 	return f;
 }

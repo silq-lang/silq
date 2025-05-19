@@ -582,10 +582,9 @@ struct QState{
 				return;
 			}
 			if(rhs.isClassical()){
-				Value nrhs;
-				nrhs.type=type;
-				nrhs.quval=new QConst(rhs);
-				return assign(state,nrhs);
+				forget(state);
+				this=rhs.dup(state);
+				return;
 			}
 			assert(tag==rhs.tag);
 			Lswitch: final switch(tag){

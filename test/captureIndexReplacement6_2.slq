@@ -3,7 +3,8 @@ def main(){
 	x:=H(0:𝔹);
 	a:=vector(3,x);
 	f:=(){
-		(a[1],a[2]):=(a[2],a[1]);
+		i:=1,j:=2;
+		(a[i],a[j]):=(a[j],a[i]);
 		return a;
 	};
 	forget(f()=(x,x,x));
