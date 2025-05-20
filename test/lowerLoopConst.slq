@@ -1,0 +1,13 @@
+// args: --remove-loops --run
+
+def main(){
+	x := vector(5,0:𝔹);
+	x[0] := H(x[0]);
+	y := H(0:𝔹);
+	r := 0:𝔹;
+	for i in [0..5){
+		r := CNOT(x[i], r);
+		y := H(y);
+	}
+	return (x, y, r);
+}
