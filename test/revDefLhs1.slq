@@ -1,5 +1,5 @@
-def f(const x:𝔹,y:𝔹)⇒y;
-def g[τ](const x:τ,y:τ)⇒y;
+def f(const x:𝔹,y:𝔹)wild⇒y;
+def g[τ](const x:τ,y:τ)wild⇒y;
 
 def main(){
 	a:=0:𝔹;

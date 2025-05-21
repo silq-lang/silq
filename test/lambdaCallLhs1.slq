@@ -1,6 +1,6 @@
 
 def main(){
 	((k:!ℕ)mfree=>(if true then k else k))(k) := 0; // TODO
-	((x:𝔹)=>(if true then x else x))(x) := 0:𝔹; // error
+	((x:𝔹)wild=>(if true then x else x))(x) := 0:𝔹; // error
 	return x;
 }
