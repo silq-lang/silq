@@ -1,0 +1,3 @@
+
+def meas[τ](x: τ):!τ⇒measure(x);
+def main()mfree⇒meas(H(0)); // error
