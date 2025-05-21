@@ -1,6 +1,6 @@
 // args: --run
 
-def create_bill[n:!N](){
+def create_bill[n:!N]()qfree{
 	bill:=0:uint[n];
 	return (bill);
 }
@@ -8,6 +8,6 @@ def create_bill[n:!N](){
 def main(){
 	n:=5;
 	bill:=create_bill[n]();
-	bill:=measure(bill):uint[n];
+	bill:=measure(bill):uint[n]; // TODO
 	measure(bill);
 }
