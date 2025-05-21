@@ -1,0 +1,12 @@
+// args: --run
+
+def main(){
+	a:=vector(2,0:𝔹);
+	for i in [0..1){
+		with a[0]:=H(a[0]) do {
+			if a[0] { with x:=H(1:𝔹) do x:=X(x); }
+		}
+	}
+	assert(measure(a==[1,0]));
+	return a;
+}
