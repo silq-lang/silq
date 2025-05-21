@@ -162,7 +162,7 @@ struct QState{
 		return r;
 	}
 
-	string toString(){
+	string toString(int skipFrames=0){
 		FormattingOptions opt={type: FormattingType.dump};
 		string r="/────────\nQUANTUM STATE\n";
 		Q!(string,Σ.Sortable)[] vk;
@@ -184,7 +184,15 @@ struct QState{
 		r~="\n\nVARIABLES\n";
 		alias Mapping=Q!(string,Value);
 		Mapping[] mappings;
-		foreach(var,val;vars) mappings~=q(var,val);
+		Record nvars=vars;
+		foreach(i;0..skipFrames){
+			if("`parent" in nvars){
+				auto frame=vars["`parent"];
+				if(frame.tag!=Value.Tag.record) break;
+				nvars=frame.record;
+			}
+		}
+		foreach(var,val;nvars) mappings~=q(var,val);
 		bool special(string name){
 			return name.length&&name[0]=='`';
 		}
@@ -201,8 +209,8 @@ struct QState{
 		return r;
 	}
 
-	void dump(){
-		writeln(toString());
+	void dump(int skipFrames){
+		writeln(toString(skipFrames));
 	}
 
 	QState dup(){
@@ -1577,12 +1585,12 @@ struct QState{
 	QState pushFrame(){
 		Record nvars,nnvars;
 		foreach(k,v;vars) nvars[k]=v.inFrame();
-		nnvars["`frame"]=makeRecord(nvars);
+		nnvars["`parent"]=makeRecord(nvars);
 		return QState(state,nnvars);
 	}
 	QState popFrame(QVar[] previousPopFrameCleanup){
 		foreach(qvar;popFrameCleanup) qvar.forget(this);
-		auto frame=vars["`frame"];
+		auto frame=vars["`parent"];
 		enforce(frame.tag==Value.Tag.record);
 		Record nvars=frame.record.dup;
 		return QState(state,nvars,previousPopFrameCleanup);
@@ -2105,7 +2113,7 @@ struct Interpreter(QState){
 				switch(prim){
 					case "dump":
 					   enforce(args.length==0);
-					   qstate.dump();
+					   qstate.dump(1);
 					   stdout.flush();
 					   return qstate.makeTuple(.unit,[]);
 					case "exit":
@@ -2822,8 +2830,8 @@ struct Interpreter(QState){
 			if(functionDef.isNested) // caller takes care of context
 				qstate.vars.remove(functionDef.contextName);
 			if(hasFrame){
-				assert("`frame" in qstate.vars);
-				//assert(qstate.vars.length==2); // `value and `frame
+				assert("`parent" in qstate.vars);
+				//assert(qstate.vars.length==2); // `value and `parent
 			}//else assert(qstate.vars.length==1); // only `value
 			retState += qstate; // TODO: compute distributions?
 			qstate=QState.empty();
