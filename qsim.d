@@ -2061,7 +2061,6 @@ struct Interpreter(QState){
 		}
 		// TODO: get rid of code duplication
 		QState.Value doIt2(Expression e){
-			if(isType(e)&&!isEmpty(e.type)) return QState.typeValue(e.type); // TODO: get rid of this
 			if(auto id=cast(Identifier)e){
 				if(!id.meaning&&util.among(id.name,"π","pi")) return QState.π;
 				if(auto init=id.getInitializer()){
@@ -2321,9 +2320,7 @@ struct Interpreter(QState){
 				auto r=convertTo(doIt(tae.e),tae.type,consume);
 				if(tae.constLookup) r=r.consumeOnRead();
 				return r;
-			}else if(cast(Type)e)
-				return qstate.makeTuple(unit,[]); // 'erase' types
-			else{
+			}else{
 				enum common=q{
 					auto e1=doIt(b.e1),e2=doIt(b.e2);
 				};
@@ -2357,6 +2354,7 @@ struct Interpreter(QState){
 					return e1.neq(e2);
 				}
 			}
+			if(isType(e)&&!isEmpty(e.type)) return QState.typeValue(e.type); // TODO: get rid of this
 			enforce(0,text("TODO: ",e," ",e.type));
 			assert(0);
 		}

@@ -1,0 +1,14 @@
+// args: --run
+
+def f(const x:𝔹)mfree:utype{
+	if x { phase(π); }
+	return 𝟙;
+}
+
+def main(){
+	x:=H(0:𝔹);
+	ty:=f(x);
+	x:=H(x);
+	assert(measure(x=1));
+	return x;
+}

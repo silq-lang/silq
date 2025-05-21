@@ -1,0 +1,9 @@
+// args: --run
+
+def foo[τ](){
+	return []:τ[];
+}
+
+def main(){
+	return foo[assert(0):*](); // error
+}
