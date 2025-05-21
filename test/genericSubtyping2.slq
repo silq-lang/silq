@@ -1,0 +1,14 @@
+// args: --run
+
+def foo[τ](a:!τ)⇒a:τ;
+def bar[τ](const a:!τ,const b:τ)⇒if measure(H(0)) then a else b;
+def baz[τ,n:!ℕ](a:!τ^(n sub 1),b:τ^1)⇒a~b;
+
+def main(){
+	x:=foo(2);
+	assert(x==2);
+	y:=H(0);
+	z:=bar(0,y);
+	xs:=baz[𝔹,4]((1,0,1),(y,));
+	return (xs,z);
+}
