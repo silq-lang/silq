@@ -1,0 +1,6 @@
+// args: --check --run
+
+n:=3;
+def f()qfree: 𝔹^(1+n sub n)⇒(1:B,);
+def call[n: !ℕ](f: 1 !→ 𝔹^n)wild:𝔹^n⇒f();
+def main() ⇒ f()~call[1](f);
