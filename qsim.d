@@ -2211,6 +2211,7 @@ struct Interpreter(QState){
 							enforce(0,text("TODO: ",id.name));
 							assert(0);
 					}
+					if(id&&cast(DatDecl)id.meaning) return QState.typeValue(ce.type); // TODO: get rid of this
 				}
 				auto fun=doIt(ce.e);
 				auto arg=doIt(ce.arg);
