@@ -1,0 +1,15 @@
+// args: --remove-loops --run
+
+def fetch[r:!N](const q:𝔹):𝔹^r{
+	ps := vector(r,false);
+	for k in [0..1) {
+		ps[0] = !ps[0];
+		if q { ps[0] := X(ps[0]); }
+	}
+	return ps;
+}
+
+def main(){
+	x:=(fetch[2](0),fetch[1](1));
+	assert(x=((1,0),(0,)));
+}
