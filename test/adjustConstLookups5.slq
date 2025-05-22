@@ -1,0 +1,9 @@
+// args: --run
+
+def main() {
+	r := 0:B;
+	if true {
+		t := dup(r);
+		r = 1:B;
+	}
+}
