@@ -1,24 +1,26 @@
+// args: --run
+
 def intLt₁[n:!ℕ](x:𝔹^n,y:𝔹^n)lifted:𝔹{
     if n=0{ return false; }
-	r := intLt₁(x[0..n-1],y[0..n-1]); // TODO
+	r := intLt₁(x[0..n-1],y[0..n-1]);
 	return if x[n-1]=y[n-1] then r else y[n-1];
 }
 
-def intLt₂[n:!ℕ](x:𝔹^n,y:𝔹^n)lifted:𝔹{ // TODO
+def intLt₂[n:!ℕ](x:𝔹^n,y:𝔹^n)lifted:𝔹{
     if n=0{ return false; }
-	with r := intLt₂(x[0..n-1],y[0..n-1]) do // TODO
+	with r := intLt₂(x[0..n-1],y[0..n-1]) do
 		return if x[n-1]=y[n-1] then dup(r) else y[n-1];
 }
 
 def intLt₃[n:!ℕ](x:𝔹^n,y:𝔹^n)lifted:𝔹{
     if n=0{ return false; }
-	r := intLt₃(x[0..n-1],y[0..n-1]); // TODO
+	r := intLt₃(x[0..n-1],y[0..n-1]);
 	res := if x[n-1]=y[n-1] then dup(r) else y[n-1];
 	intLt₃(x[0..n sub 1],y[0..n sub 1]):=r;
 	return res;
 }
 
-def intLt₄[n:!ℕ](x:𝔹^n,y:𝔹^n)lifted:𝔹=>if n=0 then false else if x[n-1]!=y[n-1] then y[n-1] else intLt₄(x[0..n-1],y[0..n-1]); // TODO
+def intLt₄[n:!ℕ](x:𝔹^n,y:𝔹^n)lifted:𝔹=>if n=0 then false else if x[n-1]!=y[n-1] then y[n-1] else intLt₄(x[0..n-1],y[0..n-1]);
 
 def main(){
 	for i in 0..3{
