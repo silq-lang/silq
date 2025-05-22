@@ -1,0 +1,4 @@
+// args: --remove-loops
+
+def foo(){ x:=0:𝔹; while true { x:=H(x); } }
+def bar():𝔹{ foo(); }
