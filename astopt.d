@@ -17,8 +17,11 @@ immutable int preludeIndex=0;
 enum operatorLowering=true;
 immutable string operatorsPath= "__internal/operators.slq";
 
-bool dumpReverse=false;
 bool allowUnsafeCaptureConst=false;
 
+bool dumpReverse=false;
+
 bool removeLoops=false;
+bool dumpLoops=false;
+
 bool splitComponents=false;

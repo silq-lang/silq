@@ -117,6 +117,10 @@ int main(string[] args){
 			astopt.dumpReverse = v;
 			return 0;
 		})
+		.add!("dump-loops")((bool v) {
+			astopt.dumpLoops = v;
+			return 0;
+		})
 		.addOptional!("error-json", 'j')((string path) {
 			if(path is null) {
 				jsonOut = "-";
