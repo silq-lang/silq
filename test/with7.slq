@@ -1,0 +1,7 @@
+
+def main(){
+	with{
+		return 2; // error
+	}do{ }
+	return 0;
+}

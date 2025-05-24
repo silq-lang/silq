@@ -1,0 +1,15 @@
+// args: --run
+
+def foo(const x:𝔹){
+	with{ y:=X(x); }do{
+		return x;
+	}
+}
+
+def main(){
+	x:=H(0);
+	with{
+		y:=foo(x);
+	}do{ y:=Z(y); }
+	forget(H(x)=1);
+}

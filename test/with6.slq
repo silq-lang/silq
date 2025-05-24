@@ -1,0 +1,12 @@
+// args: --run
+
+def main(){
+	y:=0;
+	with{
+		x:=H(y); // TODO
+	}do{
+		if x{ phase(π); }
+	}
+	assert(measure(y=1));
+	return y;
+}
