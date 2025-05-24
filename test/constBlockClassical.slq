@@ -1,0 +1,17 @@
+// args: --run
+
+def foo(xs:𝔹[]){
+	if xs.length≠0{
+		[x]:=xs;
+		forget(H(x)=1);
+	}else{
+		[]:=xs;
+	}
+}
+
+def main(){
+	x:=[];
+	y:=[H(1:𝔹)];
+	foo(x);
+	foo(y);
+}
