@@ -1,0 +1,40 @@
+def mkvec(n:!ℕ)[a](f:!ℕ!→qfree a)qfree:!a^n ⇒ if n=0 then () coerce !a^n else mkvec(n sub 1)(f)~(f(n sub 1),);
+
+def nextCoeffs[n:!ℕ](mcoeffs:!ℕ^(2^n))qfree ⇒ mkvec(2^n)((i:!ℕ)qfree{
+	mask:=i as !uint[n];
+	def sum(j:!ℕ)qfree:!ℕ ⇒ if j<n then (if mask[j] then 2^j·(mcoeffs[i]+mcoeffs[i⊕2^j]) else 0)+sum(j+1) else 0;
+	return sum(0);
+});
+
+def for_(i:!ℕ,n:!ℕ)[a,b](f: !ℕ×a×b!→lifted a×b)(x:a,y:b)lifted:a×b⇒if i<n then for_(i+1,n)(f)(f(i,x,y)) else (x,y);
+
+def polyPauliRot[a:qtype](rot: !ℝ×a!→mfree a)[d:!ℕ](coeffs:!ℝ^(d+1))[n:!ℕ](const state:𝔹^n,target:a)mfree{
+	mcoeffs:=vector(2^n,0);
+	mcoeffs[0]=1;
+	rotation_coeffs:=vector(2^n,0);
+	(rotation_coeffs,mcoeffs)
+	=for_(0,d+1)((i:!ℕ,rotation_coeffs:!ℝ^(2^n),mcoeffs:!ℕ^(2^n))qfree{
+		nrotation_coeffs:=mkvec(2^n)((j:!ℕ)qfree⇒rotation_coeffs[j]+coeffs[i]*mcoeffs[j]);
+		if i<d { ncoeffs:=nextCoeffs(mcoeffs); }
+		else{ ncoeffs:=mcoeffs; }
+		return (nrotation_coeffs,ncoeffs);
+	})(rotation_coeffs,mcoeffs);
+	//print(rotation_coeffs);
+	//__show(__query("type",k));
+	__show(__query("type",rotation_coeffs));
+	for i in 0..2^n{
+		if rotation_coeffs[i]!=0{
+			mask:=i as !uint[n];
+			def rec(const state:𝔹^n,const mask:!uint[n],j:!ℕ,target:a)mfree:a⇒
+				if n≤j then rot(rotation_coeffs[i],target)
+				else if mask[j] then if state[j] then rec(state,mask,j+1,target) else target
+				else rec(state,mask,j+1,target);
+			target:=rec(state,mask,0,target);
+		}
+	}
+	return target;
+}
+
+def main(){
+	return polyPauliRot(rotY)[3](1,2,3,4)(3 as uint[5] as 𝔹^5,1:𝔹);
+}

@@ -1,0 +1,6 @@
+
+def main(){
+	f:=reverse((const x:𝔹[],y:𝔹[])mfree⇒y); // error
+	r:=reverse;
+	return r((const x:𝔹[],y:𝔹[])mfree⇒y); // error
+}

@@ -1,0 +1,8 @@
+
+def f(x:𝔹^2,const y:𝔹)qfree:𝔹^2⇒x;
+def main(){
+	x:=(H(0:B),);
+	y:=H(0:B);
+	f(x,y):=x; // error
+	return (x,y);
+}

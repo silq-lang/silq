@@ -1,0 +1,20 @@
+
+def maj(x:𝔹,y:𝔹,z:𝔹)lifted => if x=y then y else z;
+def H_n[n:ℕ](xs:𝔹^n){ // error
+	if n≠0 {
+		with (x,xs):=xs do {
+			x:=H(x);
+			xs:=H_n(xs);
+		}
+	}
+	return xs;
+}
+def dj(){
+	xs:=vector(3,0:𝔹);
+	with xs:=H_n(xs) do {
+		if maj(xs) {
+			phase(π);
+		}
+	}
+	return measure(xs)≠0; // error
+}

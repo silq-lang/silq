@@ -1,0 +1,17 @@
+
+def arcsin(q:!ℝ) lifted :!ℝ;
+def sqrt(q:!ℝ) lifted :!ℝ;
+
+def WState[n:!N](q0:𝔹,q1s:𝔹^n)mfree:𝔹×𝔹^n {
+    if n+1==1{
+        q0 := X(q0);
+    } else {
+        theta := arcsin(1.0 / sqrt(n));
+        q0 := rotY(2*theta, q0);
+
+        if !q0{
+            (q1s[0], q1s[1..n]) := WState[n-1 coerce !ℕ](q1s[0], q1s[1..n]); // TODO
+        }
+    }
+    return (q0, q1s)
+}

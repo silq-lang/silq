@@ -1,0 +1,22 @@
+
+def polyPauliRotY[d:!ℕ](coeffs:!ℝ^(d+1))[n:!ℕ](const state:𝔹^n,target:a)mfree{ // error
+	rotation_coeffs:=vector(2^n,0:!ℝ);
+	rotation_coeffs=for2_(0,d+1)((i:!ℕ,rotation_coeffs:!ℝ^(2^n),mcoeffs:!ℕ^(2^n))qfree{
+		nrotation_coeffs:=mkvec(2^n)((j:!ℕ)qfree⇒rotation_coeffs[j]+coeffs[i]*mcoeffs[j]);
+		if i<d { ncoeffs:=nextCoeffs(mcoeffs); }
+		else{ ncoeffs:=mcoeffs; }
+		return (nrotation_coeffs,ncoeffs);
+	})(rotation_coeffs,mkvec(2^n)((i:!ℕ)qfree⇒(i=0):!ℕ))[0];
+	target:=for_(0,2^n)((i:!ℕ,const state:𝔹^n,target:𝔹)mfree{
+		if rotation_coeffs[i]!=0{
+			mask:=i as !uint[n] as !𝔹^n;
+			def rec(const state:𝔹^n,const mask:!𝔹^n,j:!ℕ,target:a)mfree:a⇒
+				if n≤j then rotY(rotation_coeffs[i],target)
+				else if mask[j] then if state[j] then rec(state,mask,j+1,target) else target
+				else rec(state,mask,j+1,target);
+			target:=rec(state,mask,0,target);
+		}
+		return target
+	})(state,target);
+	return target;
+}

@@ -1,6 +1,141 @@
 // skipped
 
 /+
+def main(){
+	x:=2;
+	if measure(H(0)){
+		return 0;
+	}else{
+		x=3;
+	}
+	return 1;
+}
++/
+
+/+
+def main(){
+	__show(typeof(if measure(H(0)) then (a:!ℕ,b:!ℕ)⇒(vector(a,0),vector(b,0)) else (b:!ℕ,a:!ℕ)⇒(vector(b,0),vector(a,0))));
+	__show(typeof(if measure(H(0)) then (a:!ℕ,b:!ℕ)wild⇒(vector(a,0),vector(b,0)) else (b:!ℕ,a:!ℕ)⇒(vector(b,0),vector(a,0))));
+}
++/
+
+/+
+def intLt₃[n:!ℕ](x:𝔹^n,y:𝔹^n)lifted:𝔹{
+    if n=0{ return false; }
+	r := intLt₃(x[0..n sub 1],y[0..n sub 1]);
+	res := if x[n-1]=y[n-1] then dup(r) else y[n-1];
+	intLt₃(assert(0),assert(0)):=r; // TODO: better error message
+	return res;
+}
++/
+
+/+
++/
+
+/+
+def f[n:!ℕ](xs:𝔹^n)⇒xs;
+
+def main(){
+	//f(xs):=[1,0,1];
+	//xs:=reverse(f)([1,0,1]);
+	x:=1:𝔹;
+	1:B:=x;
+}
++/
+/+
+def undup[T](const x: T, y: T) {
+	dup(x) := y;
+}
+def main() {
+	undup(0:B, H(x)) := ();                 // x := H(0:B);
+	undup(x, y) := ();                      // y := dup(x)
+	undup(measure(undup(y, x)), ()) := ();  // undup(y, x); // TODO
+	return y;
+}
++/
+
+/+
+def f(x:𝔹):⊥{ assert(0); }
+
+def main(){
+	f(x):=2;
+	(a,)~f(b):=(1,2);
+	return (x,b);
+}
++/
+
+/+
+def foo():⊥{assert(0);}
+def main(){
+	foo():=2;
+	//foo()~(foo():𝔹^2):=2;
+}
++/
+
+/+
+def main(){
+	x:=0:int[assert(0)];
+}
++/
+
+/+
+def main(){
+	x := [0:B,1:B];
+	for i in [0..2) {
+		if true{
+			x[0] := H(x[0]);
+		}
+	}
+	return x;
+}
++/
+/+
+def main(){
+	a:=[1,2,3];
+	x:=vector(3,0);
+	x[a]:=x[a];
+}
++/
+/+
+def main() {
+	x := 42:!uint[6];
+	x[1] := H(x[1]);
+	__show(__query("type", x)); // uint[6]
+	return x;
+}
++/
+/+
+def main(){
+	x := (0:B, 0:!B, 0:!B);
+	x[i] := H(x[i]);
+	__show(__query("type", x)); // B^3
+}
++/
+
+/+
+def main(){
+	x:=vector(10, 0:B)[0..4];
+	__show(typeof(x));
+	y:=array(10, 0:B)[0..4];
+	__show(typeof(y));
+}
++/
+
+/+
+def constUse(const x:𝔹){}
+
+def main(){
+	x:=H(0); // x ↦ ⊤
+	y:=dup(x); // x ↦ ⊤, y ↦ {x}
+	z:=dup(y); // x → ⊤, y ↦ {x}, z ↦ {y}
+	constUse(y); // last use of y
+	x:=H(x); // y ↦ ⊤, z ↦ {y}
+	constUse(z); // last use of z
+	return x;
+}
++/
+
+/+
 def foo(x:𝔹)mfree{
 	def bar(i:!ℕ,x:𝔹)mfree:𝔹{
 		if i=0{ r:=x; }
@@ -24,14 +159,13 @@ def rfoo(__tmp12:𝔹)mfree{
     bar(10,x) := __tmp12;
     return x coerce 𝔹;
 }
-+/
+
 def main(){
 	foo(x):=0:𝔹;
 	//x:=rfoo(0:𝔹);
 	return x;
 }
-
-
++/
 
 /+
 def foo(p:𝔹)qfree{
@@ -249,9 +383,10 @@ def main(){
 	return 1%0;
 }
 +/
+
 /+
 def main(){
-	return 1e-10:!ℤ; // TODO
+	return 1e-10:!ℤ; // TODO: error
 }
 +/
 
@@ -269,15 +404,6 @@ def x[cond:!𝔹,t1:*,t2:*](arg:(()qfree=>if cond { t1 } else { t2 })()) {
 +/
 
 /+
-def main() {
-	x := false;
-	y := H(0:B);
-	z := dup(y);
-	return (x && measure(y), H(z)); // TODO: error
-}
-+/
-
-/+
 def main(){
 	x:=1:uint[2];
 	//y:=true:𝔹 coerce uint[2];
@@ -285,16 +411,6 @@ def main(){
 	//return -2 sub -2;
 	//return x^2;
 	return -3&-5/2;
-}
-+/
-
-/+
-def foo():!𝔹{ assert(false); } // TODO
-
-def main(){
-	x:=true;
-	x||=foo();
-	return x;
 }
 +/
 
@@ -486,6 +602,7 @@ def main(){
 	return H(Z(rotZ(π,H(0:𝔹))));
 }
 +/
+
 /+
 def main(){
 	return 1e-10; // TODO
@@ -583,21 +700,6 @@ def main(){
 }
 +/
 
-/+
-def main(){
-	x:=H(0:𝔹);
-	y:=dup(x);
-	z:=H(0:𝔹);
-	if z{
-		forget(y);
-		x:=H(x); // TODO: error
-	}else{
-		//forget(y);
-		//y:=H(y);
-	}
-	return (x,z);
-}
-+/
 /+
 def f(x: 𝔹) mfree: 𝔹^2 {
 	y := dup(x);
@@ -995,15 +1097,6 @@ def main(){
 }
 +/
 
-
-/+
-def main(){
-	f:=reverse((const x:𝔹[],y:𝔹[])mfree⇒y); // error
-	r:=reverse;
-	return r((const x:𝔹[],y:𝔹[])mfree⇒y); // TODO: error
-}
-+/
-
 /+
 def main(){
 	r:=reverse;
@@ -1033,31 +1126,11 @@ def main(){
 +/
 
 /+
-def main(){
-	i:=0;
-	a:=(0,1):𝔹^2;
-	b:=(0,1):𝔹^2;
-	(a[i],a[i+1]):=(a[i],b[i+1]); // TODO: better error message
-	return a;
-}
-+/
-
-/+
 k:=2;
 def f2(x: int[32], y: int[32]){
 	k := dup(x);
 	forget(k);
 	return (x,y);
-}
-+/
-
-/+
-def main(){
-	n:=3;
-	x:=vector(n,0:𝔹);
-	forget(n); // TODO: error?
-	x:=x:𝔹[];
-	return x;
 }
 +/
 
@@ -1074,19 +1147,6 @@ def main(){
 	}
 	__show(__query("type",x));
 	return (c,x);
-}
-+/
-
-/+
-def main() {
-	if measure(H(0:B)) {
-		T := !(B^2);
-		a := (0:!B,1:!B):T;
-	} else {
-		T := !Q;
-		a := (1/3):T;
-	}
-	measure(a); // TODO
 }
 +/
 
@@ -1329,24 +1389,23 @@ def factored(const cond:𝔹,x:𝔹)mfree{
 	}
 	return (x);
 }
-+/
-/+
+
 def foo(a:𝔹,const cond:𝔹,const cond2:𝔹){
 	if cond2 {
-	x:=!a;
-	y:=!x;
-	if cond{
-		x:=H(x);
-		// forget(y=a);
-	}else{
-		a:=H(a);
-		// forget(y=!x)
-		//z:=x;
-	}
-	//(x):=factored(cond,x);
-	__show(__query("dep",y));
-	forget(y); // TODO: error
-	return (a,x);
+		x:=!a;
+		y:=!x;
+		if cond{
+			x:=H(x);
+			// forget(y=a);
+		}else{
+			a:=H(a);
+			// forget(y=!x)
+			//z:=x;
+		}
+		//(x):=factored(cond,x);
+		__show(__query("dep",y));
+		forget(y); // error
+		return (a,x);
 	}else{
 		return (a,0:𝔹);
 	}
@@ -1641,11 +1700,6 @@ def main(){
 
 /+
 def main(){
-	return (1,2)~(3,4.0); // TODO
-}
-+/
-/+
-def main(){
 	x:=2:int[32];
 	return x^2; // TODO: should work with exponent of type !ℕ
 }
@@ -1753,10 +1807,11 @@ def match[a,b,c](val: Π[c](f: a!→c, g: b!→c). c, f: a!→c, g: b!→c)⇒va
 def main(){
 	k:=H(0:𝔹);
 	if k{
-		x:=inl[𝔹,𝔹^2](H(0:𝔹));
+		x:=inl[𝔹,𝔹^2](H(0:𝔹)); // TODO
 	}else{
 		x:=inr[𝔹,𝔹^2](H(0:𝔹),H(1:𝔹));
 	}
+	//x:=inl[𝔹,𝔹^2](H(0:𝔹));
 	//dump();
 	//y:=inr[𝔹,𝔹^2](H(0:𝔹),H(1:𝔹));
 	//measure(y);
@@ -1769,15 +1824,6 @@ def main(){
 }
 +/
 
-
-/+
-def main(){
-	x:=H(0:𝔹);
-	y:=H(1:𝔹);
-	return x;
-	measure(y);
-}
-+/
 /+
 def main()⇒(3,3)=(2,1);
 +/
@@ -2578,14 +2624,7 @@ def main(){
 	return solve((false,true,true),(false,true,false));
 }
 +/
-/+
-def main(){
-	a:=[[0:𝔹],[1:𝔹,H(0:𝔹)]];
-	x:=H(0:𝔹);
-	r:=a[x]; // error
-	return (r,a,x);
-}
-+/
+
 /+
 def main(){
 	x:=H(false);
@@ -2909,14 +2948,7 @@ def main(){
 	return (x,y);
 }
 +/
-/+
-def main(){
-	a:=array(2,[]:𝔹[]);
-	x:=measure(H(0:𝔹));
-	a[x]~=[0:𝔹];// TODO
-	return a;
-}
-+/
+
 /+
 def main(){
 	x:=[H(0:𝔹)];

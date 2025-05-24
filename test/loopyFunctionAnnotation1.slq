@@ -1,0 +1,11 @@
+
+def meas[n:!ℕ](N:!ℕ){
+	while true {
+		x:=H(0);
+		measure(x);
+	}
+}
+
+def main()mfree{
+	return meas[2](4); // error
+}

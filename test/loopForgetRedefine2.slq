@@ -1,0 +1,13 @@
+
+def main(){
+	x:=H(0:𝔹);
+	y:=dup(x);
+	while measure(H(0)){
+		forget(y); // error (could type check in principle)
+		x:=H(x);
+		y:=dup(x); // error
+	}
+	return x;
+}
+
+

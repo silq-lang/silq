@@ -1,0 +1,10 @@
+
+def main(){
+	x:=H(0:𝔹);
+	y:=dup(x);
+	while(measure(H(0:𝔹))){
+		forget(y);
+		y:=dup(x); // TODO
+	}
+	return H(x);
+}

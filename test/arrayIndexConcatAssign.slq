@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	a:=array(2,[]:𝔹[]);
+	x:=measure(H(0:𝔹));
+	a[x]~=[0:𝔹];
+	return a;
+}

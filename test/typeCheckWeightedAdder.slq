@@ -1,0 +1,5 @@
+
+def sum[n:!ℕ](weights:!ℕ^n)qfree:!ℕ ⇒ if n=0 then 0 else weights[0]+sum(weights[1..n]);
+def log₂(x:!ℝ)qfree⇒log(x)/log(2);
+def num_sum_bits[n:!ℕ](weights:!ℕ^n)qfree: !ℕ ⇒ if sum(weights)>0 then floor(log₂(sum(weights)))+1 coerce !ℕ else 1;
+def weightedAdder[n:!ℕ](weights:!ℕ^n):uint[num_sum_bits(weights)]{ return 0:uint[num_sum_bits(weights)]; }

@@ -1,0 +1,13 @@
+
+def nextCoeffs[n:!ℕ](mcoeffs:!ℕ^(2^n))qfree{
+	nmcoeffs:=vector(2^n,0);
+	for i in 0..2^n{
+		mask:=i as uint[n];
+		for j in 0..n{
+			if mask[j]{ // note: this is quantum control
+				nmcoeffs[i]+=2^j·(mcoeffs[i]+mcoeffs[i⊕2^j]); // error
+			}
+		}
+	}
+	return nmcoeffs; // error
+}

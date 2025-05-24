@@ -1,0 +1,13 @@
+
+def linearRotY[n:!ℕ](slope:!ℝ,offset:!ℝ,const q:𝔹^n,target:𝔹){
+	target:=rotY(offset,target);
+	def rec(const q:𝔹^n,target:𝔹,i:!ℕ){
+		if i<n{
+			if q[i]{ target:=rotY(slope·2^i,target); }
+			return rec(q,target,i+1);
+		}else{
+			return target;
+		}
+	}
+	return rec(q,target,0);
+}

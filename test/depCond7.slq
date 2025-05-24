@@ -1,0 +1,14 @@
+
+def main(){
+	x:=H(0:𝔹);
+	y:=dup(x);
+	z:=H(0:𝔹);
+	if z{
+		forget(y); // TODO: error
+		x:=H(x);
+	}else{
+		forget(y); // error
+		y:=H(y); // error
+	}
+	return (x,z);
+}
