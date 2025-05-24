@@ -36,14 +36,18 @@ auto to(string unit,T)(Duration d)if(unit=="seconds"||unit=="msecs"){
 
 bool dashDashBad=false;
 bool dashDashTodo=false;
+bool dashDashValid=false;
 bool dashDashNoCheck=false;
+bool dashDashNoRun=false;
 bool dashDashRemoveLoops=false;
 bool dashDashSplitComponents=false;
 int parseFlags(string[] flags){
 	foreach(flag;flags){
 		if(flag=="--bad") dashDashBad=true;
 		else if(flag=="--todo") dashDashTodo=true;
+		else if(flag=="--valid") dashDashValid=true;
 		else if(flag.among("--no-check","--check=0","--check=false")) dashDashNoCheck=true;
+		else if(flag.among("--no-run","--run=0","--run=false")) dashDashNoRun=true;
 		else if(flag=="--remove-loops") dashDashRemoveLoops=true;
 		else if(flag=="--split-components") dashDashSplitComponents=true;
 		else{
@@ -68,7 +72,7 @@ int main(string[] args){
 	Duration totalTime;
 	foreach(source;sources){
 		if(source.startsWith("./")) source=source[2..$];
-		if(source.fileStartsWithFlag("skip")){
+		if(source.fileStartsWithFlag("skip")||dashDashValid&&source.getExpected.any!(info=>info.error)){
 			if(!dashDashBad&&!dashDashTodo){
 				if(colorize) writeln(TODOColor,BOLD,"skipped",RESET,"         ",source);
 				else writeln("skipping ",source);
@@ -356,6 +360,7 @@ int[] getActual(string source,out string[] output){
 		args=args["// args: ".length..$].strip()~" ";
 	else args="";
 	if(!dashDashNoCheck) args~="--check ";
+	if(dashDashNoRun) args~="--run=0 ";
 	if(dashDashRemoveLoops) args~="--remove-loops ";
 	if(dashDashSplitComponents) args~="--split-components ";
 	output = shell("../silq "~args~source~" 2>&1").splitLines;
