@@ -1,8 +1,8 @@
 
 def a()qfree⇒(1,2,(3,4));
-b:=a().length;
+b:=a().length; // TODO
 
 def c()qfree⇒(1,2,3);
-d:=c().length;
+d:=c().length; // TODO
 
 def main()⇒(b,d);

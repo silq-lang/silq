@@ -1,0 +1,8 @@
+
+def a()qfree⇒(1,2,(3,b)); // error
+b:=a().length;
+
+def c()qfree⇒(1,2,d); // error
+d:=c().length;
+
+def main()⇒(b,d);
