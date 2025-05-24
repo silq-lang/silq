@@ -1,0 +1,19 @@
+// args: --remove-loops --run
+
+def indexOf[a:ctype](eq:a^2!→lifted !𝔹)[n:!ℕ](haystack: a^n,needle: a){
+	for i in 0..n{
+		if eq(haystack[i],needle){
+			return i;
+		}
+	}
+	return -1;
+}
+
+def main(){
+	indexOf𝔹:=indexOf((x:!𝔹,y:!𝔹)lifted⇒x=y);
+	indexOfℕ:=indexOf((x:!ℕ,y:!ℕ)lifted⇒x=y);
+
+	assert(indexOf𝔹([1,1,0,1],0)=2);
+	assert(indexOfℕ([28,13,11,3],2)=-1);
+	assert(indexOfℕ([28,13,11,3],3)=3);
+}

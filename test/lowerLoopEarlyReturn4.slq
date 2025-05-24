@@ -1,0 +1,18 @@
+// args: --remove-loops --run
+
+def minRep[τ][f:τ!→τ](x:τ,a:!ℕ,b:!ℕ){
+	for i in 0..a{
+		if i=b{ return x; }
+		x:=f(x);
+	}
+	return x;
+}
+
+def main(){
+	x:=minRep[𝔹][H](0,2,3);
+	forget(x=0);
+	x:=minRep[𝔹][H](0,3,2);
+	forget(x=0);
+	assert(minRep[!ℕ][(x:!ℕ)⇒x+1](0,5,13)=5);
+	assert(minRep[!ℕ][(x:!ℕ)⇒x+1](0,5,4)=4);
+}

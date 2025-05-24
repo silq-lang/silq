@@ -1,0 +1,8 @@
+// args: --remove-loops --run
+
+def main(){
+	while measure(H(0)){
+		return 2;
+	}
+	return 1;
+}
