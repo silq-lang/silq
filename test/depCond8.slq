@@ -1,0 +1,12 @@
+
+def foo(){
+	x:=H(0);
+	y:=dup(x);
+	if measure(H(0)){
+		z:=dup(y);
+		forget(y);
+		forget(z); // TODO: error
+		return (x,0);
+	}
+	return (x,y);
+}

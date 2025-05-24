@@ -1,0 +1,18 @@
+
+def len(const x: 𝔹[]) qfree: !ℕ {
+	return x.length;
+}
+
+def main(){
+	x := ((0:𝔹,),);
+	y := vector(2, 0:𝔹);
+
+	with {
+		i := len(x[0]);
+		j := 0; // TODO
+		(yleft: 𝔹^(i+j)) ~ (yi,) ~ (yright) := y;
+	} do {
+		yi := H(yi);
+	}
+	return (x, y);
+}

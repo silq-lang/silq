@@ -1,0 +1,14 @@
+
+def main(){
+	x:=H(0); // error
+	if measure(H(0)){
+		a:=dup(x);
+		b:=dup(a);
+	}else{
+		b:=dup(x);
+		a:=dup(b);
+	}
+	__show(__query("dep",a)); // {x}
+	__show(__query("dep",b)); // {x}
+	return (a,b);
+}

@@ -1,0 +1,9 @@
+
+def main(x:𝔹){
+	y := dup(x); // error
+	if y {
+		x := x;
+		__show(__query("dep",y)); // ⊤
+	}
+	return x;
+}

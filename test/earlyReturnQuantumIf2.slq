@@ -1,0 +1,12 @@
+
+def foo(const x:𝔹){
+	if x{
+		return ([1],[]);
+	}else{
+		return ([],[0]); // error
+	}
+}
+def main(){
+	x:=H(0);
+	return (foo(x),x);
+}

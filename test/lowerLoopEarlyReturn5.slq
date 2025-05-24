@@ -1,0 +1,14 @@
+// args: --remove-loops --run
+
+def main(){
+	d:=0:𝔹;
+	n:=1:int[128];
+	while measure(n≠0){
+		d:=H(d);
+		if d { n-=2; } else { n+=1; }
+		if measure(n<-3||n>3){
+			return (d,n);
+		}
+	}
+	return (d,n);
+}

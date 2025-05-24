@@ -1,0 +1,16 @@
+// args: --run
+
+def all[n:!ℕ](xs:𝔹^n)lifted{
+    r:=true:𝔹;
+    for i in 0..n{
+		if !xs[i] {
+			return false;
+		}
+    }
+    return true;
+}
+def main(){
+	r:=(all(0,1,0),all(1,1,1,1));
+	assert(r=(0,1));
+	return r;
+}
