@@ -1,0 +1,4 @@
+
+def foo[τ:qnumeric](a:!τ)⇒a;
+
+def main()⇒foo[ℕ](2);

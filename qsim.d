@@ -494,7 +494,7 @@ struct QState{
 			if(type==Bool(true)) return Tag.bval;
 			if(auto intTy=isFixedIntTy(type)) return intTy.isSigned ? Tag.intval : Tag.uintval;
 			if(type==typeTy||type==ctypeTy||type==qtypeTy) return Tag.bval; // (optimization)
-			if(isTypeTy(type)) return Tag.bval; // TODO: ok?
+			if(isTypeTy(type)||isQNumericTy(type)) return Tag.bval; // TODO: ok?
 			enforce(0,text("TODO: representation for type ",type," ",typeid(type)));
 			assert(0);
 		}
@@ -1392,7 +1392,7 @@ struct QState{
 		}
 		string toStringImpl(FormattingOptions opt){
 			if(!type) return "Value.init";
-			if(isTypeTy(type)) return "_";
+			if(isTypeTy(type)||isQNumericTy(type)) return "_";
 			final switch(tag){
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval]){
 					case t:
@@ -1506,7 +1506,7 @@ struct QState{
 		return Value.init;
 	}
 	static Value typeValue(Expression type)in{
-		assert(isTypeTy(type));
+		assert(isTypeTy(type)||isQNumericTy(type));
 	}do{
 		Value r;
 		r.type=type;
@@ -2363,7 +2363,7 @@ struct Interpreter(QState){
 					return e1.neq(e2);
 				}
 			}
-			if(isType(e)&&!isEmpty(e.type)) return QState.typeValue(e.type); // TODO: get rid of this
+			if(isType(e)&&!isEmpty(e.type)||isQNumeric(e)) return QState.typeValue(e.type); // TODO: get rid of this
 			enforce(0,text("TODO: ",e," ",e.type));
 			assert(0);
 		}
