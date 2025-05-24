@@ -1,3 +1,4 @@
+// args: --run
 
 def foo[τ:qnumeric](a:!τ)⇒a;
 
