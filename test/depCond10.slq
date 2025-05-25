@@ -1,0 +1,16 @@
+
+def foo(x:𝔹)lifted{
+	r:=x;
+	for i in [1..2){
+		if true{
+			__show(__query("dep",r));
+			r=1;
+		}else{
+			r=0;
+		}
+		__show(__query("dep",r));
+		__show(typeof(r));
+	}
+	return r;
+}
+
