@@ -1,6 +1,6 @@
 
 // (this is a little convoluted, as it is adapted from code that had more capabilities)
-import std.stdio, std.file;
+import std.stdio, file=std.file;
 import std.process, std.string, std.array;
 import std.algorithm, std.conv, std.range;
 import std.datetime.stopwatch;
@@ -15,7 +15,7 @@ enum passColor=GREEN;
 enum failColor=RED;
 
 bool fileStartsWithFlag(string source, string flag){
-	auto code=readText(source);
+	auto code=file.readText(source);
 	code=code.strip();
 	if(code.startsWith("// -*-")||code.startsWith("//-*-")){
 		while(code.length&&code.front!='\n') code.popFront();
@@ -81,7 +81,7 @@ int main(string[] args){
 			continue;
 		}else{
 			if(colorize) write(CLEAR_LINE,BOLD,"running",RESET,"         ",source);
-			else if(!dashDashBad&&!dashDashTodo) std.stdio.write("running ",source);
+			else if(!dashDashBad&&!dashDashTodo) write("running ",source);
 		}
 		stdout.flush();
 		auto resultsTime=source.getResults;
@@ -94,35 +94,35 @@ int main(string[] args){
 		if(summary.isInteresting){
 			if(summary.unexpectedErrors){
 				if(colorize) write(failColor,BOLD,"failed ",RESET);
-				else if(!dashDashBad&&!dashDashTodo) std.stdio.write("failed");
-				else std.stdio.write("running ",source,": failed");
+				else if(!dashDashBad&&!dashDashTodo) write("failed");
+				else write("running ",source,": failed");
 			}else if(summary.missingErrors) {
 				if(colorize) write(failColor,BOLD,"invalid",RESET);
-				else if(!dashDashBad&&!dashDashTodo) std.stdio.write("invalid",);
-				else std.stdio.write("running ",source,": invalid");
-			}else if(!dashDashBad){
+				else if(!dashDashBad&&!dashDashTodo) write("invalid");
+				else write("running ",source,": invalid");
+			}else if(!dashDashBad||dashDashTodo){
 				if(summary.todos&&!summary.obsoleteTodos){
 					if(colorize) write(TODOColor,BOLD," TODO  ",RESET);
-					else if(!dashDashTodo) write("TODO");
-					else std.stdio.write("running ",source,": TODO");
+					else if(!dashDashBad&&!dashDashTodo) write("TODO");
+					else write("running ",source,": TODO");
 				}else{
 					if(colorize) write(passColor,"fixed  ",RESET);
-					else if(!dashDashTodo) write("fixed");
-					else std.stdio.write("running ",source,": fixed");
+					else if(!dashDashBad&&!dashDashTodo) write("fixed");
+					else write("running ",source,": fixed");
 				}
 			}
 			//write(summary);
 		}else passed++;
-		if((!dashDashBad||summary.isBad)&&(!dashDashTodo||summary.isInteresting)){
+		if(!dashDashTodo&&!dashDashBad||dashDashTodo&&summary.isInteresting||dashDashBad&&summary.isBad){
 			if(!summary.isInteresting){
 				if(colorize) write(passColor,BOLD,"passed ",RESET);
-				else std.stdio.write("passed");
+				else write("passed");
 			}
 			if(colorize) writef(" % 5.0fms",time.to!("msecs",double));
 			else writef(" in %.0fms",time.to!("msecs",double));
 			if(colorize) writeln(" ",source,CLEAR_LINE);
 			else writeln();
-		}else if(colorize) std.stdio.write("\r",CLEAR_LINE);
+		}else if(colorize) write("\r",CLEAR_LINE);
 		totalTime+=time;
 	}
 	writeln();
@@ -344,7 +344,7 @@ auto analyze(Comment comment){
 
 auto getExpected(string source){
 	Info[] result;
-	auto code = source.readText;
+	auto code = file.readText(source);
 	foreach(comment;code.comments){
 		auto info = comment.analyze;
 		if(info.error||info.todo)
