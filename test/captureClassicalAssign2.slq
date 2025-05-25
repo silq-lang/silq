@@ -1,0 +1,8 @@
+
+def main(){
+	x:=0;
+	def foo(){
+		x=1; // TODO
+	}
+	return x;  // TODO: error
+}

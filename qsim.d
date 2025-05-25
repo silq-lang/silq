@@ -1,4 +1,5 @@
 import std.conv: text, to;
+import std.format: format;
 import std.string: split;
 import std.algorithm, std.range;
 import std.array: array;
@@ -106,31 +107,31 @@ bool isToplevelClassical(Expression ty)in{
 
 void hadamardUnitary(alias add,QState)(QState.Value x){
 	alias C=QState.C;
-	enforce(x.tag==QState.Value.Tag.bval);
+	enforce(x.tag==QState.Value.Tag.bval,"bad input for H");
 	enum norm=C(sqrt(1.0/2.0));
 	if(!x.bval){ add(x,norm); add(x.eqZ,norm); }
 	else{    add(x.eqZ,norm);    add(x,-norm); }
 }
 void xUnitary(alias add,QState)(QState.Value x){
 	alias C=QState.C;
-	enforce(x.tag==QState.Value.Tag.bval);
+	enforce(x.tag==QState.Value.Tag.bval,"bad input for X");
 	add(x.eqZ,C(1.0));
 }
 void yUnitary(alias add,QState)(QState.Value x){
 	alias C=QState.C;
-	enforce(x.tag==QState.Value.Tag.bval);
+	enforce(x.tag==QState.Value.Tag.bval,"bad input for Y");
 	add(x.eqZ,C(0.0,x.eqZImpl?1.0:-1.0));
 }
 void zUnitary(alias add,QState)(QState.Value x){
 	alias C=QState.C;
-	enforce(x.tag==QState.Value.Tag.bval);
+	enforce(x.tag==QState.Value.Tag.bval,"bad input for Z");
 	add(x,C(x.eqZImpl?1.0:-1.0));
 }
 // (string mixin as workaround for DMD compiler bug)
 enum rotUnitary(string D)=mixin(X!q{
 	void r@(D)Unitary(alias add,QState)(QState.Value x,QState.R φ){
 		alias C=QState.C;
-		enforce(x.tag==QState.Value.Tag.bval);
+		enforce(x.tag==QState.Value.Tag.bval,"bad input for rot@(D)");
 		add(x,C(cos(0.5*φ),0.0));
 		@(lowerf(D))Unitary!((k,v)=>add(k,C(0.0,-sin(0.5*φ))*v))(x);
 	}
@@ -227,10 +228,10 @@ struct QState{
 	void updateRelabeling(ref Σ.Ref[Σ.Ref] relabeling,Value to,Value from){
 		if(!to.type) return;
 		auto tag=to.tag;
-		enforce(tag==from.tag);
+		enforce(tag==from.tag,"value type mismatch on merge");
 		final switch(tag){
 			case Value.Tag.array_:
-				enforce(to.array_.length==from.array_.length);
+				enforce(to.array_.length==from.array_.length,"encountered quantum-dependent tuple length");
 				foreach(i;0..to.array_.length)
 					updateRelabeling(relabeling,to.array_[i],from.array_[i]);
 				break;
@@ -595,6 +596,7 @@ struct QState{
 				return;
 			}
 			assert(tag==rhs.tag);
+			enforce(rhs.tag==rhs.tag,"incompatible values for assignment");
 			Lswitch: final switch(tag){
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval]){
 					case t:
@@ -602,12 +604,13 @@ struct QState{
 						break Lswitch;
 				}
 				case Tag.closure:
+					enforce(rhs.tag==Tag.closure,"incompatible values for closure assignment");
 					closure.fun=rhs.closure.fun;
 					if(closure.context&&rhs.closure.context)
 						(*closure.context).assign(state,*rhs.closure.context);
 					return;
 				case Tag.array_:
-					enforce(rhs.tag==Tag.array_);
+					enforce(rhs.tag==Tag.array_,"incompatible values for array assignment");
 					if(array_.length==rhs.array_.length){
 						foreach(i;0..array_.length)
 							array_[i].assign(state,rhs.array_[i]);
@@ -617,7 +620,7 @@ struct QState{
 					}
 					return;
 				case Tag.record:
-					enforce(rhs.tag==Tag.record);
+					enforce(rhs.tag==Tag.record,"incompatible values for record assignment");
 					bool ok=true;
 					foreach(k,v;rhs.record) if(k !in record) ok=false;
 					foreach(k,v;record) if(k !in rhs.record) ok=false;
@@ -663,17 +666,17 @@ struct QState{
 						return;
 				}
 				case Tag.closure:
-					enforce(rhs.tag==Tag.closure);
+					enforce(rhs.tag==Tag.closure,"incompatible values for closure forget");
 					if(closure.context) return closure.context.forget(state,*rhs.closure.context);
 					return;
 				case Tag.array_:
-					assert(rhs.tag==Tag.array_);
+					assert(rhs.tag==Tag.array_,"incompatible values for array forget");
 					enforce(array_.length==rhs.array_.length,"inconsistent array lengths for forget"); // TODO: good error reporting
 					foreach(i,ref x;array_) x.forget(state,rhs.array_[i]);
 					return;
 				case Tag.record:
-					enforce(rhs.tag==Tag.record);
-					foreach(k,v;rhs.record) enforce(k in record);
+					enforce(rhs.tag==Tag.record,"incompatible values for record forget");
+					foreach(k,v;rhs.record) enforce(k in record,format("missing key '%s' for record forget",k));
 					foreach(k,v;record) v.forget(state,rhs.record[k]);
 					return;
 				case Tag.quval:
@@ -722,7 +725,7 @@ struct QState{
 		}
 		Value applyUnitary(alias unitary,T...)(ref QState qs,Expression type,T controls){
 			if(this.isClassical()) return QVal.applyUnitaryToClassical!unitary(qs,this,type,controls);
-			enforce(tag==Tag.quval);
+			enforce(tag==Tag.quval,"bad value type for unitary application");
 			return quval.applyUnitary!unitary(qs,type,controls);
 		}
 		union{
@@ -855,7 +858,7 @@ struct QState{
 					if(ntag==Tag.fval) return makeReal(to!R(bval));
 			}
 			if(ntag==Tag.bval) return neqZ;
-			enforce(0,text("TODO: convert ",type," to ",ntype));
+			enforce(0,text("converting ",type," to ",ntype," not yet supported"));
 			assert(0);
 		}
 
@@ -876,8 +879,8 @@ struct QState{
 				case Tag.intval:
 					enforce(0<=i&&i<intval.nbits,"index out of bounds");
 					return makeBool((intval.val&(ℤ(1)<<to!size_t(i)))!=0);
-				case Tag.fval,Tag.qval,Tag.zval,Tag.bval: enforce(0,"TODO?"); assert(0);
-				case Tag.record,Tag.closure: assert(0);
+				case Tag.fval,Tag.qval,Tag.zval,Tag.bval: enforce(0,"bad aggregate type for index"); assert(0);
+				case Tag.record,Tag.closure: enforce(0,"bad aggregate type for index"); assert(0);
 			}
 		}
 		Value opIndex(Value i){
@@ -907,8 +910,8 @@ struct QState{
 				case Tag.uintval,Tag.intval,Tag.quval:
 					assert(isFixedIntTy(type));
 					return makeQuval(Bool(false),new IndexQVal(this,i));
-				case Tag.fval,Tag.qval,Tag.zval,Tag.bval: enforce(0,"TODO?"); assert(0);
-				case Tag.record,Tag.closure: assert(0);
+				case Tag.fval,Tag.qval,Tag.zval,Tag.bval: enforce(0,"bad aggregate type for index"); assert(0);
+				case Tag.record,Tag.closure: enforce(0,"bad aggregate type for index"); assert(0);
 			}
 		}
 		Value opSlice(ℤ l,ℤ r)in{
@@ -920,7 +923,7 @@ struct QState{
 		}
 		Value opSlice(Value l,Value r){
 			if(l.isℤ()&&r.isℤ()) return this[l.asℤ()..r.asℤ()];
-			enforce(0,text("TODO: slicing for types ",this.type,", ",l.type," and ",r.type));
+			enforce(0,text("slicing for types ",this.type,", ",l.type," and ",r.type," is not yet supported"));
 			assert(0);
 		}
 		static Expression unaryType(string op)(Expression t){
@@ -928,7 +931,7 @@ struct QState{
 			else static if(op=="~") return bitNotType(t);
 			else static if(op=="!") return handleUnary!notType(t);
 			else{
-				enforce(0,text("TODO: '",op,"' for type ",t));
+				enforce(0,text("'",op,"' for type ",t," is not yet supported"));
 				assert(0);
 			}
 		}
@@ -957,7 +960,7 @@ struct QState{
 				if(type==ℤt(true)) return makeBool(mixin(op~` zval`));
 				if(type==Bool(true)) return makeBool(mixin(op~` bval`));
 			}
-			enforce(0,text("TODO: '",op,"' for type ",this.type));
+			enforce(0,text("'",op,"' for type ",this.type," is not yet supported"));
 			assert(0);
 		}
 		static Expression binaryType(string op)(Expression t1,Expression t2){
@@ -987,7 +990,7 @@ struct QState{
 			else static if(op=="~") return t1; // TODO: add function to semantic instead
 			else static if(op=="<<"||op==">>") return arithmeticType!false(arithmeticType!false(t1,t1),t2); // TODO: add function to semantic instead
 			else{
-				enforce(0,text("TODO: '",op,"' for types ",t1," and ",t2));
+				enforce(0,text("'",op,"' for types ",t1," and ",t2," is not yet supported"));
 				assert(0);
 			}
 		}
@@ -1007,7 +1010,7 @@ struct QState{
 						else if(ntype==ℚt(true)) ntype=ℚt(false);
 						else if(ntype==ℂ(true)) ntype=ℂ(false);
 						else ntype=ntype.getQuantum();
-						enforce(!!ntype,"unsupported");
+						enforce(!!ntype,text("'",op,"' for types ",type," and ",r.type," is not supported"));
 					}
 				}
 			}
@@ -1032,7 +1035,7 @@ struct QState{
 					return convertTo(ℝ(true))^^r.convertTo(ℝ(true));
 				return makeReal(fval^^r.fval);
 			}else static if(op=="~"){
-				enforce(tag==Tag.array_&&r.tag==Tag.array_);
+				enforce(tag==Tag.array_&&r.tag==Tag.array_,"incompatible values for concatentation");
 				return makeArray(ntype,array_~r.array_);
 			}else static if(op=="<<"||op==">>"){
 				if(type==ℤt(true)) return makeInteger(mixin(`zval `~op~` smallValue(r.asℤ())`));
@@ -1123,7 +1126,7 @@ struct QState{
 				static if(is(typeof((bool a,bool b){ bool c=mixin(`a `~op~` b`); })))
 					if(type==Bool(true)&&r.type==Bool(true)) return makeBool(mixin(`bval `~op~` r.bval`));
 			}
-			enforce(0,text("TODO: '",op,"' for types ",this.type," and ",r.type));
+			enforce(0,text("'",op,"' for types ",this.type," and ",r.type," is not yet supported"));
 			assert(0);
 		}
 		Value opBinary(string op)(long b){
@@ -1141,7 +1144,7 @@ struct QState{
 				case Tag.array_,Tag.record,Tag.closure: break;
 				case Tag.quval: break;
 			}
-			enforce(0,text("TODO: 'eqZ'/'neqZ' for type ",this.type));
+			enforce(0,text("'=0'/'≠0' for type ",this.type," is not yet supported"));
 			assert(0);
 		}
 		Value eqZ(){
@@ -1208,7 +1211,7 @@ struct QState{
 					case tag: break Louter;
 				}
 			}
-			enforce(0,text("TODO: '",op,"' for types ",this.type," ",r.type));
+			enforce(0,text("'",op,"' for types ",this.type," ",r.type," is not yet supported"));
 			assert(0);
 		}
 		Value lt(Value r){ return compare!"<"(r); }
@@ -1226,7 +1229,7 @@ struct QState{
 				case Tag.closure,Tag.array_,Tag.record: break;
 				case Tag.quval: return makeQuval(type==ℝ(true)?ℤt(true):type,new MemberFunctionQVal!"floor"(this));
 			}
-			enforce(0,text("TODO: floor for type ",this.type));
+			enforce(0,text("'floor' for type ",this.type," is not yet supported"));
 			assert(0);
 		}
 		Value ceil(){
@@ -1238,7 +1241,7 @@ struct QState{
 				case Tag.closure,Tag.array_,Tag.record: break;
 				case Tag.quval: return makeQuval(type==ℝ(true)?ℤt(true):type,new MemberFunctionQVal!"ceil"(this));
 			}
-			enforce(0,text("TODO: floor for type ",this.type));
+			enforce(0,text("̈'ceil' for type ",this.type," is not yet supported"));
 			assert(0);
 		}
 		Value realFunction(alias f)(){
@@ -1249,7 +1252,7 @@ struct QState{
 				case Tag.closure,Tag.array_,Tag.record: break;
 				case Tag.quval: return makeQuval(type==ℝ(true)?ℤt(true):type,new FunctionQVal!(v=>v.realFunction!f())(this));
 			}
-			enforce(0,text("TODO: real functions for type ",this.type));
+			enforce(0,text("real functions for type ",this.type," are not yet supported"));
 			assert(0);
 		}
 		Value sqrt(){ return realFunction!(.sqrt)(); }
@@ -1271,12 +1274,12 @@ struct QState{
 		Value realFunctionFP(alias f,bool circular1,R a,R b,bool circular2,R c,R d,T...)(ℤ size,Expression type,T args){
 			final switch(tag){
 				case Tag.intval:
-					enforce(circular1,"TODO: signed non-circular fixed-point functions");
+					enforce(circular1,"signed non-circular fixed-point functions are not yet supported");
 					auto m=intval.nbits;
 					enforce(0<=size&&size<=size_t.max,"number of bits is too large");
 					auto n=size.to!size_t;
 					static assert(is(R==double));
-					enforce(circular1&&a==0&&b==2*PI,"TODO");
+					enforce(a==0&&b==2*PI,"input ranges other than [0,2π) are not yet supported for circular signed fixed-point functions");
 					auto x=a+intval.val.toDouble()/(2.0^^m-!circular1)*(b-a);
 					static if(circular1){
 						while(x<a) x+=b-a;
@@ -1285,7 +1288,7 @@ struct QState{
 					if(x<a) x=a;
 					if(x>b) x=b;
 					if(isInt(type)){
-						enforce(circular2&&c==0&&d==2*PI,"TODO");
+						enforce(circular2&&c==0&&d==2*PI,"output ranges other than circular [0,2π) are not yet supported for signed fixed-point functions ");
 						return makeInt(type.getClassical(),BitInt!true(n,.round(toℚ((f(x,args)-c)/(d-c))*ℚ(ℤ(2)^^n-ℤ(cast(int)!circular2)))));
 					}else return makeUint(type.getClassical(),BitInt!false(n,.round(toℚ((f(x,args)-c)/(d-c))*ℚ(ℤ(2)^^n-ℤ(cast(int)!circular2)))));
 				case Tag.uintval:
@@ -1301,7 +1304,7 @@ struct QState{
 					if(x<a) x=a;
 					if(x>b) x=b;
 					if(isInt(type)){
-						enforce(circular2&&c==0&&d==2*PI,"TODO");
+						enforce(circular2&&c==0&&d==2*PI,"output ranges other than circular [0,2π) are not yet supported for signed fixed-point functions ");
 						return makeInt(type.getClassical(),BitInt!true(n,.round(toℚ((f(x,args)-c)/(d-c))*ℚ(ℤ(2)^^n-ℤ(cast(int)!circular2)))));
 					}else return makeUint(type.getClassical(),BitInt!false(n,.round(toℚ((f(x,args)-c)/(d-c))*ℚ(ℤ(2)^^n-ℤ(cast(int)!circular2)))));
 				case Tag.quval:
@@ -1310,7 +1313,7 @@ struct QState{
 				case Tag.qval,Tag.zval,Tag.bval,Tag.fval: break;
 				case Tag.closure,Tag.array_,Tag.record: break;
 			}
-			enforce(0,text("TODO: fixed-point functions for type ",this.type));
+			enforce(0,text("fixed-point functions for type ",this.type," are not yet supported"));
 			assert(0);
 		}
 		enum zeroToOne=Seq!(false,0.0,1.0);
@@ -1361,7 +1364,7 @@ struct QState{
 			if(type==ℤt(true)) return zval;
 			if(auto intTy=isFixedIntTy(type)) return intTy.isSigned ? intval.val : uintval.val;
 			if(type==Bool(true)) return ℤ(cast(int)bval);
-			enforce(0,text("TODO: asℤ for type ",type));
+			enforce(0,text("converting '",type,"' to '!ℤ' not yet supported"));
 			assert(0);
 		}
 		bool isℚ(){
@@ -1544,7 +1547,7 @@ struct QState{
 		struct Sortable{
 			Q!(Ref,Value)[] values;
 			private static int cmp(Value a,Value b){
-				enforce(a.type==b.type);
+				enforce(a.type==b.type,"encountered incomparable values for output sorting");
 				if(util.among(a.tag,Value.Tag.closure,Value.Tag.record)) return 0; // TODO: compare those
 				return a.lt(b).neqZImpl?-1:a.eq(b).neqZImpl?0:1;
 			}
@@ -1552,7 +1555,7 @@ struct QState{
 				if(values.length!=rhs.values.length) return 0;
 				//enforce(values.length==rhs.values.length);
 				foreach(i;0..values.length){
-					enforce(values[i][0]==rhs.values[i][0]);
+					enforce(values[i][0]==rhs.values[i][0],"encountered incompatible locations for output sorting");
 					int current=cmp(values[i][1],rhs.values[i][1]);
 					if(current!=0) return current;
 				}
@@ -1591,7 +1594,7 @@ struct QState{
 	QState popFrame(QVar[] previousPopFrameCleanup){
 		foreach(qvar;popFrameCleanup) qvar.forget(this);
 		auto frame=vars["`parent"];
-		enforce(frame.tag==Value.Tag.record);
+		enforce(frame.tag==Value.Tag.record,"frame is a bad value");
 		Record nvars=frame.record.dup;
 		return QState(state,nvars,previousPopFrameCleanup);
 	}
@@ -1599,20 +1602,19 @@ struct QState{
 		return v.inFrame();
 	}
 	void passParameter(string prm,bool isConst,Value rhs){
-		enforce(prm!in vars);
+		enforce(prm!in vars,"parameter already defined");
 		bool cleanUp=isConst;
 		vars[prm]=rhs.toVar(this,cleanUp); // TODO: this may be inefficient (it iterates over arrays to check whether components are variables)
 	}
 	void passContext(Identifier[][Declaration] captures,string ctx,Value rhs){
-		enforce(ctx!in vars);
+		enforce(ctx!in vars,"context already defined");
 		enforce(rhs.tag==Value.Tag.record);
 		foreach(meaning,_;captures){
 			auto name=meaning.getName;
 			enforce(name in rhs.record,text("missing capture ",name," in ",rhs.record));
-			if(meaning.isLinear()){
-				vars[name]=rhs.record[name];
+			vars[name]=rhs.record[name];
+			if(meaning.isLinear())
 				rhs.record.remove(name);
-			}
 		}
 		vars[ctx]=rhs;
 	}
@@ -1621,10 +1623,10 @@ struct QState{
 			if(type.isClassical()&&!arg.isClassical()) return measure(arg,false); // TODO: improve simulator so this is not needed
 			return arg;
 		}
-		enforce(!thisExp.isValid,"TODO: method calls");
-		enforce(fun.body_,text("error: need function body to simulate function ",fun));
+		enforce(!thisExp.isValid,"method calls not yet supported");
+		enforce(fun.body_,text("need function body to simulate function ",fun));
 		auto ncur=pushFrame();
-		enforce(!fun.isConstructor,"TODO: constructors");
+		enforce(!fun.isConstructor,"constructor calls not yet supported");
 		if(fun.hasAttribute("trace")){
 			string[2] paren = fun.isSquare ? ["[", "]"] : arg.tag==Value.Tag.array_ ? ["", ""] : ["(", ")"];
 			string name = fun.getName;
@@ -1642,12 +1644,12 @@ struct QState{
 			ncur.passContext(fun.captures,fun.contextName,*context);
 		}else assert(!context);
 		if(fun.isTuple){
-			enforce(arg.tag==Value.Tag.array_);
+			enforce(arg.tag==Value.Tag.array_,"argument is not a tuple");
 			auto args=iota(fun.params.length).map!(i=>inFrame(arg.array_[i]));
 			foreach(i,prm;fun.params)
 				ncur.passParameter(prm.getName,prm.isConst,inFrame(arg.array_[i])); // TODO: faster: parallel assignment to parameters
 		}else{
-			assert(fun.params.length==1);
+			assert(fun.params.length==1,"encountered wrong number of parameters");
 			ncur.passParameter(fun.params[0].getName,fun.params[0].isConst,inFrame(arg));
 		}
 		auto intp=Interpreter!QState(fun,fun.body_,ncur,true);
@@ -1663,7 +1665,7 @@ struct QState{
 		return fix(nnstate.vars["`value"]);
 	}
 	Value call(Value fun,Value arg,Expression type,Location loc){
-		enforce(fun.tag==Value.Tag.closure);
+		enforce(fun.tag==Value.Tag.closure,"bad value for function in call");
 		auto context=fun.closure.context;
 		if(context&&fun.isClassical){ // non-linear function
 			auto cvar=fun.closure.fun.context; // can be null if function has no body
@@ -1679,7 +1681,7 @@ struct QState{
 		return this;
 	}
 	Value readLocal(string s,bool constLookup){
-		//enforce(s in vars,text("local variable '",s,"' not found"));
+		enforce(s in vars,text("variable '",s,"' not found"));
 		auto r=vars[s];
 		if(!constLookup&&r.type&&!r.isClassical()) vars.remove(s);
 		return r;
@@ -1726,18 +1728,18 @@ struct QState{
 		auto type=then.type;
 		final switch(Value.getTag(type)){
 			case Value.Tag.array_:
-				enforce(then.tag==Value.Tag.array_&&othw.tag==Value.Tag.array_);
-				enforce(then.array_.length==othw.array_.length);
+				enforce(then.tag==Value.Tag.array_&&othw.tag==Value.Tag.array_,"incompatible values in branches of quantum if-then-else expression");
+				enforce(then.array_.length==othw.array_.length,"encountered quantum-dependent tuples lengths");
 				return makeArray(type,zip(then.array_,othw.array_).map!(x=>ite(cond,x[0],x[1])).array);
-			case Value.Tag.closure: enforce(0,"TODO"); assert(0);
-			case Value.Tag.record: enforce(0,"TODO?"); assert(0);
+			case Value.Tag.closure: enforce(0,"quantum-conditional closures not yet supported"); assert(0);
+			case Value.Tag.record: enforce(0,"quantum-conditional closures not yet supported"); assert(0);
 			case Value.Tag.uintval,Value.Tag.intval,Value.Tag.bval:
 				type=type.getQuantum();
 				enforce(isQuantum(type));
 				goto case;
 			case Value.Tag.quval: return makeQuval(type,new IteQVal(cond,then.convertTo(type),othw.convertTo(type)));
 			case Value.Tag.fval,Value.Tag.qval,Value.Tag.zval:
-				enforce(0,"unsupported");
+				enforce(0,"bad type for quantum if-then-else expression");
 				assert(0);
 		}
 	}
@@ -1747,7 +1749,7 @@ struct QState{
 		v=v.consumeOnRead();
 		auto ref_=Σ.curRef++;
 		static Σ addVariable(Σ s,Σ.Ref ref_,Value v){
-			enforce(ref_ !in s.qvars);
+			enforce(ref_ !in s.qvars,text("tried to redefine variable at location '%s'",ref_));
 			s.assign(ref_,v);
 			return s;
 		}
@@ -1789,7 +1791,7 @@ struct QState{
 		var.assign(this,rhs);
 	}
 	void catAssignTo(ref Value var,Value rhs){
-		enforce(var.tag==QState.Value.Tag.array_&&rhs.tag==QState.Value.Tag.array_);
+		enforce(var.tag==QState.Value.Tag.array_&&rhs.tag==QState.Value.Tag.array_,"bad values for concat assignment");
 		var.array_~=rhs.array_;
 	}
 	void assignTo(string lhs,Value rhs){
@@ -1798,7 +1800,7 @@ struct QState{
 	}
 	void catAssignTo(string lhs,Value rhs){
 		enforce(lhs in vars);
-		enforce(vars[lhs].tag==QState.Value.Tag.array_&&rhs.tag==QState.Value.Tag.array_);
+		enforce(vars[lhs].tag==QState.Value.Tag.array_&&rhs.tag==QState.Value.Tag.array_,"bad values for concat assignment");
 		vars[lhs].array_~=rhs.array_;
 	}
 	Value H(Value x){
@@ -1837,13 +1839,13 @@ struct QState{
 		return rot!rZUnitary(φ, x);
 	}
 	Value array_(Expression type, Value len, Value val){
-		enforce(len.isℤ());
+		enforce(len.isℤ(),"bad array length");
 		return makeArray(type,iota(smallValue(len.asℤ)).map!(_=>val.dup(this)).array);
 	}
 	alias vector=array_;
 	Value reverse(ref QState qstate,Expression type,Value arg){
 		import ast.reverse;
-		enforce(arg.tag==Value.Tag.closure,text(arg));
+		enforce(arg.tag==Value.Tag.closure,text("bad value for reverse: ",arg));
 		return makeClosure(type,Closure(reverseFunction(arg.closure.fun),arg.closure.context));
 		//return qstate.makeFunction(reverseFunction(arg.closure.fun));
 	}
@@ -2028,8 +2030,9 @@ struct Interpreter(QState){
 			if(!intTy.isClassical&&QState.Value.getTag(type)==QState.Value.Tag.array_){
 				assert(!type.isClassical);
 				auto len=runExp(intTy.bits); // TODO: maybe store lengths classically instead
-				enforce(len.isℤ());
+				enforce(len.isℤ(),"fixed-width integer width is not an integer");
 				auto nbits=smallValue(len.asℤ());
+				enforce(nbits>=0,"fixed-with integer width is negative");
 				auto tmp=value.dup(qstate); // TODO: don't do this if value is already a variable
 				auto r=qstate.makeTuple(arrayTy(Bool(false)),iota(nbits).map!(i=>(tmp&qstate.makeInteger(ℤ(1)<<i)).neqZ).array).convertTo(type).toVar(qstate,false);
 				tmp.forget(qstate);
@@ -2049,7 +2052,7 @@ struct Interpreter(QState){
 			assert(!!merged.mergedInto);
 			import ast.semantic_:typeForDecl;
 			auto type=typeForDecl(merged.mergedInto);
-			enforce(name in qstate.vars,text("missing variable ",name," when closing scope"));
+			enforce(name in qstate.vars,text("missing variable '",name,"' when closing scope"));
 			if(qstate.vars[name].type !is type)
 				qstate.vars[name]=convertTo(qstate.vars[name],type,true).toVar(qstate,false);
 		}
@@ -2075,16 +2078,16 @@ struct Interpreter(QState){
 					return doIt2(init);
 				}
 				auto r=lookupMeaning(qstate,id);
-				enforce(r.isValid,"unsupported");
+				enforce(r.isValid,"this identifier lookup is not yet supported");
 				return r;
 			}
 			if(auto fe=cast(FieldExp)e){
-				enforce(fe.type.isClassical||fe.constLookup);
+				enforce(fe.type.isClassical||fe.constLookup,"consuming fields is not yet supported");
 				if(isBuiltIn(fe)){
 					if(cast(ArrayTy)fe.e.type||cast(VectorTy)fe.e.type||cast(TupleTy)fe.e.type){
 						assert(fe.f.name=="length");
 						auto r=doIt(fe.e);
-						enforce(r.tag==QState.Value.Tag.array_);
+						enforce(r.tag==QState.Value.Tag.array_,"bad value for length lookup");
 						return qstate.makeInteger(ℤ(r.array_.length));
 					}
 				}
@@ -2112,86 +2115,86 @@ struct Interpreter(QState){
 				QState.Value[] args = argExpr.map!(arg => doIt(arg)).array;
 				switch(prim){
 					case "dump":
-					   enforce(args.length==0);
-					   qstate.dump(1);
-					   stdout.flush();
-					   return qstate.makeTuple(.unit,[]);
+						enforce(args.length==0,"too many arguments passed to 'dump'");
+						qstate.dump(1);
+						stdout.flush();
+						return qstate.makeTuple(.unit,[]);
 					case "exit":
-					   enforce(args.length==0);
-					   enforce(0, "terminated by exit call");
-					   break;
+						enforce(args.length==0,"too many arguments passed to 'exit'");
+						enforce(0, "terminated by exit call");
+						break;
 					case "dup":
-					   enforce(args.length==1);
-					   return args[0].dup(qstate);
+						enforce(args.length==1,"wrong number of arguments passed to 'dup'");
+						return args[0].dup(qstate);
 					case "array":
-						enforce(args.length==2);
+						enforce(args.length==2,"wrong number of arguments passed to 'array'");
 						return qstate.array_(e.type, args[0], args[1]);
 					case "vector":
-						enforce(args.length==2);
+						enforce(args.length==2,"wrong number of arguments passed to 'vector'");
 						return qstate.vector(e.type, args[0], args[1]);
 					case "M":
-						enforce(args.length==1);
+						enforce(args.length==1,"wrong number of arguments passed to 'M'");
 						return qstate.measure(args[0]);
 					case "H":
-						enforce(args.length==1);
+						enforce(args.length==1,"wrong number of arguments passed to 'H'");
 						return qstate.H(args[0]);
 					case "X":
-						enforce(args.length==1);
+						enforce(args.length==1,"wrong number of arguments passed to 'X'");
 						return qstate.X(args[0]);
 					case "Y":
-						enforce(args.length==1);
+						enforce(args.length==1,"wrong number of arguments passed to 'Y'");
 						return qstate.Y(args[0]);
 					case "Z":
-						enforce(args.length==1);
+						enforce(args.length==1,"wrong number of arguments passed to 'Z'");
 						return qstate.Z(args[0]);
 					case "P":
-						enforce(args.length==1);
+						enforce(args.length==1,"wrong number of arguments passed to 'P'");
 						return qstate.phase(args[0]);
 					case "rX":
-						enforce(args.length==2);
+						enforce(args.length==2,"wrong number of arguments passed to 'rX'");
 						return qstate.rX(args[0], args[1]);
 					case "rY":
-						enforce(args.length==2);
+						enforce(args.length==2,"wrong number of arguments passed to 'rY'");
 						return qstate.rY(args[0], args[1]);
 					case "rZ":
-						enforce(args.length==2);
+						enforce(args.length==2,"wrong number of arguments passed to 'rZ'");
 						qstate.rZ(args[0], args[1].dup(qstate)).forget(qstate);
 					   return qstate.makeTuple(.unit,[]);
 					case "print": {
-						enforce(args.length==1);
+						enforce(args.length==1,"wrong number of arguments passed to 'print'");
 						FormattingOptions opt={type: FormattingType.dump};
 						writeln(args[0].toStringImpl(opt)); stdout.flush();
 						return qstate.makeTuple(.unit,[]);
 					}
 					static foreach(f;["floor","ceil","sqrt","exp","log","sin","asin","cos","acos","tan","atan"]){
 						case "real." ~ f:
-							assert(args.length==1);
+							assert(args.length==1,"wrong number of arguments passed to '"~f~"'");
 							return mixin(`args[0].`~f)();
 					}
 					static foreach(f;["sin","asin","cos","acos"]){
 						case "qfixed."~f:
-							assert(args.length==1);
+							enforce(args.length==1,"wrong number of arguments passed to '"~f~"'");
 							Expression ret = e.type;
 							auto retInt = isFixedIntTy(ret);
-							assert(retInt);
-							assert(!retInt.isClassical);
+							enforce(retInt,"bad return type for '"~f~"'");
+							enforce(!retInt.isClassical,"bad return type for '"~f~"'");
 							QState.Value n = doIt(retInt.bits);
 							return mixin(`args[0].`~f~`Q`)(n.asℤ(),ret);
 					}
 					case "qfixed.inv": {
 						Expression ret = e.type;
 						auto retInt = isFixedIntTy(ret);
-						assert(retInt);
-						assert(!retInt.isSigned);
-						assert(!retInt.isClassical);
+						enforce(retInt,"bad return type for 'invQ'");
+						enforce(!retInt.isSigned,"bad return type for 'invQ'");
+						enforce(!retInt.isClassical,"bad return type for 'invQ'");
 						QState.Value n = doIt(retInt.bits);
-						assert(args.length == 2);
+						enforce(args.length == 2);
 						QState.Value x = args[0];
 						auto c = args[1].asℝ();
-						enforce(0 <= c, "invQ argument negative");
+						enforce(0 <= c, "'invQ' argument negative");
 						return x.invQ(n.asℤ(), ret, c);
 					}
-					default: enforce(0, text("TODO Primitive: ", prim)); assert(0);
+					default: enforce(0, text("primitive '",prim,"' not supported")); assert(0);
 				}
 			}
 			if(auto ce=cast(CallExp)e){
@@ -2202,7 +2205,7 @@ struct Interpreter(QState){
 				if(fe){
 					id=fe.f;
 					thisExp=doIt(fe.e);
-					enforce(0, "TODO: method call");
+					enforce(0, "method calls not yet supported");
 					assert(0);
 				} else {
 					switch(isBuiltIn(id)){
@@ -2216,7 +2219,7 @@ struct Interpreter(QState){
 								return qstate.makeTuple(ast.type.unit,[]);
 						}
 						default:
-							enforce(0,text("TODO: ",id.name));
+							enforce(0,text("built-in '",id.name,"' not yet supported"));
 							assert(0);
 					}
 					if(id&&cast(DatDecl)id.meaning) return QState.typeValue(ce.type); // TODO: get rid of this
@@ -2238,7 +2241,7 @@ struct Interpreter(QState){
 							a.array_[i.asℤ.to!size_t]=QState.Value.init;
 						}else{
 							r=r.dup(qstate).consumeOnRead();
-							getAssignable!false(idx).assign(qstate,QState.makeBool(false)); // TODO: a bit hacky
+							getAssignable!false(idx,[]).assign(qstate,QState.makeBool(false)); // TODO: a bit hacky
 						}
 					}else r=r.dup(qstate);
 				}
@@ -2364,19 +2367,20 @@ struct Interpreter(QState){
 				}
 			}
 			if(isType(e)&&!isEmpty(e.type)||isQNumeric(e)) return QState.typeValue(e.type); // TODO: get rid of this
-			enforce(0,text("TODO: ",e," ",e.type));
+			enforce(0,text("expression '",e,"' of type '",e.type,"' not yet supported"));
 			assert(0);
 		}
 		return doIt(e);
 	}
 	static struct Assignable(bool isCat){
-		string name;
+		string readName;
+		string writeName;
 		QState.Value[] indices;
 		Location[] locations;
 		QState.Value read(ref QState state){
-			enforce(name in state.vars);
-			auto var=state.vars[name];
-			enforce(indices.all!(x=>x.isClassical()),"TODO");
+			enforce(readName in state.vars,format("missing variable '%s'",readName));
+			auto var=state.vars[readName];
+			enforce(indices.all!(x=>x.isClassical()),"assignment to quantum index not yet supported");
 			QState.Value doIt(ref QState.Value value,QState.Value[] indices,Location[] locations){
 				if(!indices.length) return value;
 				switch(value.tag){
@@ -2398,8 +2402,8 @@ struct Interpreter(QState){
 			return doIt(var,indices,locations);
 		}
 		void assign(ref QState state,QState.Value rhs){
-			enforce(name in state.vars);
-			auto var=state.vars[name];
+			enforce(readName in state.vars,format("missing variable '%s' for assignment",readName,));
+			auto var=state.vars[readName];
 			void doIt(ref QState.Value value,QState.Value[] indices,Location[] locations,QState.Value condition){
 				if(!indices.length){
 					if(value.isValid) rhs.consumeOnRead();
@@ -2435,7 +2439,7 @@ struct Interpreter(QState){
 						}
 						return;
 					case QState.Value.Tag.intval,QState.Value.Tag.uintval,QState.Value.Tag.quval:
-						enforce(indices.length==1);
+						enforce(indices.length==1,"wrong number of indices for indexing fixed-width integer");
 						size_t nbits=size_t.max;
 						switch(tag){
 							case QState.Value.Tag.intval:
@@ -2475,41 +2479,64 @@ struct Interpreter(QState){
 						if(condition.isValid) nrhs=state.ite(condition,nrhs,value);
 						value.assign(state,nrhs);
 						return;
-					default: enforce(0,text("TODO: ",value.tag));
+					default: enforce(0,text("bad value for assignment"));
 				}
 			}
 			doIt(var,indices,locations,state.nullValue);
-			state.vars[name]=var;
+			state.vars[writeName]=var;
+			if(readName!=writeName)
+				state.vars.remove(readName);
 		}
 	}
-	Assignable!isCat getAssignable(bool isCat)(Expression lhs){
-		if(auto id=cast(Identifier)lhs) return Assignable!isCat(id.name,[]);
+	Assignable!isCat getAssignable(bool isCat)(Expression lhs,AAssignExp.Replacement[] replacements){
+		if(auto id=cast(Identifier)lhs){
+			auto readName=id.name,writeName=readName;
+			foreach(r;replacements){
+				if(id.meaning is r.previous){
+					writeName=r.new_.getName;
+					break;
+				}
+			}
+			return Assignable!isCat(readName,writeName,[]);
+		}
 		if(auto idx=cast(IndexExp)lhs){
-			auto a=getAssignable!isCat(idx.e);
+			auto a=getAssignable!isCat(idx.e,replacements);
 			auto index=runExp(idx.a);
 			a.indices~=index;
 			a.locations~=idx.loc;
 			return a;
 		}
-		enforce(0,text("TODO: assign to ",lhs));
+		enforce(0,text("assigning to '",lhs,"' not yet supported"));
 		assert(0);
 	}
-	void assignTo(bool isCat=false)(Expression lhs,QState.Value rhs){
+	void assignTo(bool isCat=false)(Expression lhs,QState.Value rhs,AAssignExp.Replacement[] replacements){
 		if(auto id=cast(Identifier)lhs){
-			static if(isCat) qstate.catAssignTo(id.name,rhs);
-			else qstate.assignTo(id.name,rhs);
+			static if(isCat){
+				qstate.catAssignTo(id.name,rhs);
+				foreach(r;replacements){
+					if(id.meaning is r.previous){
+						enforce(id.name in qstate.vars,format("missing variable '%s' for assignment",id.name));
+						auto writeName=r.new_.getName;
+						if(id.name!=writeName){
+							qstate.vars[writeName]=qstate.vars[id.name];
+							qstate.vars.remove(id.name);
+						}
+						break;
+					}
+				}
+			}else qstate.assignTo(id.name,rhs);
 		}else if(auto tpl=cast(TupleExp)lhs){
-			enforce(!isCat);
-			enforce(rhs.tag==QState.Value.Tag.array_);
+			enforce(!isCat,"cannot concat assign to tuple expression");
+			enforce(rhs.tag==QState.Value.Tag.array_,"bad value for assignment");
 			enforce(tpl.e.length==rhs.array_.length,"length mismatch for pattern matching against array");
 			foreach(i;0..tpl.e.length)
-				assignTo!isCat(tpl.e[i],rhs.array_[i]);
+				assignTo!isCat(tpl.e[i],rhs.array_[i],replacements);
 		}else if(auto idx=cast(IndexExp)lhs){
-			getAssignable!isCat(lhs).assign(qstate,rhs);
+			getAssignable!isCat(lhs,replacements).assign(qstate,rhs);
 		}else if(auto ce=cast(CallExp)lhs){
-			enforce(!isCat);
+			enforce(!isCat,"cannot concat assign to function call expression");
 			auto f=ce.e,ft=cast(ProductTy)f.type;
-			enforce(!!ft,"reversed function call not supported in simulator");
+			enforce(!!ft,"reversed function call not yet supported");
 			auto fv=runExp(f);
 			if(fv.tag==QState.Value.Tag.closure){
 				auto rf=reverseFunction(fv.closure.fun), rft=rf.ftype;
@@ -2523,7 +2550,7 @@ struct Interpreter(QState){
 					constArg=runExp(ce.arg);
 				}else if(!ft.isConstForReverse.any){
 					// no const arg
-					enforce(rf.params.length==1&&equal(rft.isConstForReverse,only(false))&&!rft.isTuple,"reversed function call not supported in simulator");
+					enforce(rf.params.length==1&&equal(rft.isConstForReverse,only(false))&&!rft.isTuple,"reversed function call not yet supported");
 				}else{
 					assert(ft.isTuple);
 					auto tpl=cast(TupleExp)ce.arg;
@@ -2547,7 +2574,7 @@ struct Interpreter(QState){
 					if(r.constTuple) constArg=qstate.makeTuple(r.constType,cargs);
 				}
 				void assignMoved(QState.Value result){
-					if(!ft.isConstForReverse.any) return assignTo(ce.arg,result);
+					if(!ft.isConstForReverse.any) return assignTo(ce.arg,result,replacements);
 					if(ft.isConstForReverse.all){
 						assert(rft.cod is unit);
 						return;
@@ -2555,25 +2582,25 @@ struct Interpreter(QState){
 					auto tpl=cast(TupleExp)ce.arg;
 					enforce(!!tpl);
 					if(r.movedTuple){
-						enforce(result.tag==QState.Value.Tag.array_);
+						enforce(result.tag==QState.Value.Tag.array_,"wrong number of moved arguments to reversed call");
 						enforce(ft.isConstForReverse.count!(x=>!x)==result.array_.length);
 						size_t j=0;
 						foreach(i,arg;tpl.e){
 							if(!ft.isConstForReverse[i])
-								assignTo(arg,result.array_[j++]);
+								assignTo(arg,result.array_[j++],replacements);
 						}
 					}else{
-						enforce(ft.isConstForReverse.count!(x=>!x)==1);
+						enforce(ft.isConstForReverse.count!(x=>!x)==1,"wrong number of moved arguments to reversed call");
 						foreach(i,arg;tpl.e){
 							if(!ft.isConstForReverse[i]){
-								assignTo(arg,result);
+								assignTo(arg,result,replacements);
 								break;
 							}
 						}
 					}
 				}
 				if(rft.isConst.all){
-					enforce(rhs.tag==QState.Value.Tag.array_&&rhs.array_.length==0);
+					enforce(rhs.tag==QState.Value.Tag.array_&&rhs.array_.length==0,"bad right-hand side for reversed call");
 					// assignment is on unit. can just drop rhs.
 					auto result=qstate.call(rfv,constArg,rfret,ce.loc);
 					assignMoved(result);
@@ -2582,14 +2609,14 @@ struct Interpreter(QState){
 					auto result=qstate.call(rfv,rhs,rfret,ce.loc);
 					assignMoved(result);
 				}else if(rf.params.length==2){
-					enforce(rft.isConst[0]!=rft.isConst[1]);
+					enforce(rft.isConst[0]!=rft.isConst[1],"reversed call not yet supported");
 					auto constLast=rft.isConst[1];
 					auto args=constLast?[rhs,constArg]:[constArg,rhs];
 					auto aty=tupleTy(constLast?[r.movedType,r.constType]:[r.constType,r.movedType]); // TODO: get rid of this
 					auto arg=qstate.makeTuple(aty,args);
 					auto result=qstate.call(rfv,arg,rfret,ce.loc);
 					assignMoved(result);
-				}else enforce(0,"reversed call not supported");
+				}else enforce(0,"reversed call not yet supported");
 			}
 		}else if(auto ce=cast(CatExp)lhs){
 			enforce(!isCat);
@@ -2608,22 +2635,22 @@ struct Interpreter(QState){
 				b=just(len2);
 				if(!a) mid=len-len2;
 			}
-			if(!a&&!b) enforce(0, "split not supported in simulator");
+			if(!a&&!b) enforce(0, "this split is not yet supported");
 			import std.format:format;
 			if(a&&!b) enforce(a.get<=len, format("need at least %s elements to split, only got %s",a.get,len));
 			if(!a&&b) enforce(b.get<=len, format("need at least %s elements to split, only got %s",b.get,len));
 			if(a&&b) enforce(a.get+b.get==len, format("incompatible lengths for split: %s + %s ≠ %s",a.get,b.get,len));
 			auto e1=rhs[0.ℤ..mid],e2=rhs[mid.ℤ..len.ℤ];
-			assignTo(unwrap(ce.e1),convertTo(e1,ce.e1.type,true));
-			assignTo(unwrap(ce.e2),convertTo(e2,ce.e2.type,true));
-		}else enforce(0,text("TODO: assign to ",lhs));
+			assignTo(unwrap(ce.e1),convertTo(e1,ce.e1.type,true),replacements);
+			assignTo(unwrap(ce.e2),convertTo(e2,ce.e2.type,true),replacements);
+		}else enforce(0,text("assignment to '",lhs,"' is not yet supported"));
 	}
-	void catAssignTo(Expression lhs,QState.Value rhs){
-		return assignTo!true(lhs,rhs);
+	void catAssignTo(Expression lhs,QState.Value rhs,AAssignExp.Replacement[] replacements){
+		return assignTo!true(lhs,rhs,replacements);
 	}
-	void swap(Expression e1,Expression e2){ // TODO: swap Values directly if supported
-		auto a1=getAssignable!false(e1);
-		auto a2=getAssignable!false(e2);
+	void swap(Expression e1,Expression e2,AAssignExp.Replacement[] replacements){ // TODO: swap Values directly if supported
+		auto a1=getAssignable!false(e1,replacements);
+		auto a2=getAssignable!false(e2,replacements);
 		auto tmp=a1.read(qstate).dup(qstate);
 		a1.assign(qstate,a2.read(qstate).dup(qstate));
 		tmp.consumeOnRead();
@@ -2672,19 +2699,19 @@ struct Interpreter(QState){
 		}
 		if(auto ae=cast(AssignExp)e){
 			auto lhs=ae.e1,rhs=runExp(ae.e2);
-			assignTo(lhs,rhs);
+			assignTo(lhs,rhs,ae.replacements);
 		}else if(auto ae=cast(DefineExp)e){
 			if(ae.isSwap){
 				auto tpl=cast(TupleExp)unwrap(ae.e2);
 				enforce(!!tpl);
-				swap(tpl.e[0],tpl.e[1]);
+				swap(tpl.e[0],tpl.e[1],[]);
 			}else{
 				auto lhs=ae.e1,rhs=runExp(ae.e2);
-				assignTo(lhs,rhs);
+				assignTo(lhs,rhs,[]);
 			}
 		}else if(auto ce=cast(CatAssignExp)e){
 			auto lhs=ce.e1,rhs=runExp(ce.e2);
-			catAssignTo(lhs,rhs);
+			catAssignTo(lhs,rhs,ce.replacements);
 		}else if(isOpAssignExp(e)){
 			QState.Value perform(QState.Value a,QState.Value b){
 				if(cast(OrAssignExp)e) return a|b;
@@ -2705,10 +2732,10 @@ struct Interpreter(QState){
 				if(cast(BitAndAssignExp)e) return a&b;
 				assert(0);
 			}
-			auto be=cast(ABinaryExp)e;
-			assert(!!be);
-			auto ass=getAssignable!false(be.e1);
-			auto lhs=ass.read(qstate),rhs=runExp(be.e2);
+			auto ae=cast(AAssignExp)e;
+			assert(!!ae);
+			auto ass=getAssignable!false(ae.e1,ae.replacements);
+			auto lhs=ass.read(qstate),rhs=runExp(ae.e2);
 			ass.assign(qstate,perform(lhs,rhs));
 		}else if(auto call=cast(CallExp)e){
 			runExp(call).forget(qstate);
@@ -2851,7 +2878,7 @@ struct Interpreter(QState){
 		}else if(cast(Declaration)e){
 			// do nothing
 		}else{
-			enforce(0,text("TODO: ",e));
+			enforce(0,text("statement '",e,"' is not yet supported"));
 		}
 	}
 	void run(ref QState retState){

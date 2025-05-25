@@ -1,0 +1,12 @@
+// args: --remove-loops --run
+
+def main(){
+	xs:=[0];
+	def foo(){
+		for i in 0..3{ // TODO
+			xs~=[1];
+		}
+		return xs;
+	}
+	return foo();
+}

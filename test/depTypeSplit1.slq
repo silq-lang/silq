@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	k:=3;
+	while true {
+		x:=0:uint[k];
+		if true{ return; }
+	}
+}

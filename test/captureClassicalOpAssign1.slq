@@ -1,0 +1,10 @@
+// args: --run
+
+def main(){
+	x:=0;
+	def foo(){
+		x⊕=1;
+		return x;
+	}
+	return foo();
+}

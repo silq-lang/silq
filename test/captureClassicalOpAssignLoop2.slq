@@ -1,0 +1,12 @@
+// args: --run
+
+def main(){
+	xs:=[0];
+	def foo(){
+		for i in 0..3{
+			xs~=[1]; // TODO
+		}
+		return xs;
+	}
+	return foo();
+}

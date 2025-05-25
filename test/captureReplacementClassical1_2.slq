@@ -1,0 +1,9 @@
+
+def foo(){
+	x:=1;
+	def foo(){
+		x:=X(x);
+		return x;
+	}
+	return x; // TODO: error
+}

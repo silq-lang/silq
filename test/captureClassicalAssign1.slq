@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	x:=0;
+	def foo(){
+		x=1; // TODO
+	}
+	return foo();
+}

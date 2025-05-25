@@ -1,0 +1,9 @@
+
+def main(){
+	x:=0:𝔹;
+	def foo(){
+		x⊕=1;
+		return x;
+	}
+	return x; // error
+}

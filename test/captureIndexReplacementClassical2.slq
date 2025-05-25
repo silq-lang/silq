@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	x:=0;
+	a:=vector(3,x);
+	(a[0],f):=(H(0),() ⇒ a[0]); // TODO
+	return x;
+}
