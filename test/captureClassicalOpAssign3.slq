@@ -1,0 +1,11 @@
+// args: --run
+
+def main(){
+	n:=2;
+	k:=0:int[n];
+	def foo(){
+		n⊕=1; // error
+		return n;
+	}
+	return foo();
+}
