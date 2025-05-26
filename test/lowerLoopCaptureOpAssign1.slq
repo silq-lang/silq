@@ -4,7 +4,7 @@ def main(){
 	x:=0:𝔹;
 	def foo(){
 		for i in 0..3{
-			x⊕=1; // TODO
+			x⊕=1;
 		}
 		return x;
 	}
