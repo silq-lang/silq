@@ -7,5 +7,5 @@ def main(){
 		n⊕=1; // error
 		return n;
 	}
-	return foo();
+	return (foo(),k as 𝔹^n coerce 𝔹^2);
 }

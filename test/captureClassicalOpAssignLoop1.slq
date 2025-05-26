@@ -4,7 +4,9 @@ def main(){
 	x:=0;
 	def foo(){
 		for i in 0..3{
+			dump();
 			x⊕=1; // TODO
+			dump();
 		}
 		return x;
 	}
