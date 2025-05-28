@@ -228,6 +228,7 @@ struct QState{
 	void updateRelabeling(ref Σ.Ref[Σ.Ref] relabeling,Value to,Value from){
 		if(!to.type) return;
 		auto tag=to.tag;
+		
 		enforce(tag==from.tag,"value type mismatch on merge");
 		final switch(tag){
 			case Value.Tag.array_:
@@ -253,6 +254,8 @@ struct QState{
 		}
 	}
 	void opOpAssign(string op:"+")(QState r){
+		if(!r.state.length) return; // TODO: ideally would not be needed
+		if(!state.length){ this=r; return; } // TODO: ideally would not be needed
 		Σ.Ref[Σ.Ref] relabeling;
 		foreach(k,ref v;r.vars){
 			if(k in vars) updateRelabeling(relabeling,vars[k],v);
@@ -2050,6 +2053,7 @@ struct Interpreter(QState){
 		static if(language==silq) qstate.forgetVars(sc.forgottenVars);
 		foreach(merged;sc.mergedVars){
 			auto name=merged.getName;
+			if(name !in qstate.vars) continue; // TODO: get rid of this
 			assert(!!merged.mergedInto);
 			import ast.semantic_:typeForDecl;
 			auto type=typeForDecl(merged.mergedInto);

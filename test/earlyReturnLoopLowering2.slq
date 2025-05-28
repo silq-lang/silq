@@ -1,0 +1,14 @@
+// args: --remove-loops --run
+
+def foo(){
+	i:=0;
+	repeat 1000{
+		i+=1;
+		if i=10{ return i; }
+	}
+	assert(0);
+}
+
+def main(){
+	assert(foo()==10);
+}

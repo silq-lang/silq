@@ -1,0 +1,9 @@
+// args: --run
+
+def main() {
+	x := 0:B;
+	y := 0;
+	k := 0:B;
+	if k { x = !x; } else { y = !y }
+	return (x, y, k);
+}

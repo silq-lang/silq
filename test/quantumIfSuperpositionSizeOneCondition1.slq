@@ -1,0 +1,11 @@
+// args: --run
+
+def main() {
+    x := 0:B;
+    y := 0;
+	z:=0:B;
+    if z { x = !x; } else if 1 { y = !y }
+	if 1:B { x = !x; } else if 1 { y = !y }
+	if (0:B) || (1:B) { x = !x; } else if 1 { y = !y }
+	if (1:B) && (0:B) { x = !x; } else if 1 { y = !y }
+}
