@@ -1,0 +1,8 @@
+
+def main(){
+	(a,b):=(0,1):𝔹^2;
+	(x,y):=(dup(a),dup(b));
+	__show(__query("dep",x)); // {a}
+	(x,y):=(y,x);
+	__show(__query("dep",x)); // {b}
+}
