@@ -1,25 +1,6 @@
 // skipped
+// args: --run
 
-/+
-def foo(){
-	k:=3;
-	while true {
-		x:=0:uint[k];
-		measure(x);
-		if true{ return; }
-	}
-}
-+/
-
-/+
-def foo(){
-	k:=3;
-	while true {
-		x:=0:uint[k];
-		if true{ return; }
-	}
-}
-+/
 /+
 def main(){
 	x:=2;

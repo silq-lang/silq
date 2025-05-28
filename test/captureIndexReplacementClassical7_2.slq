@@ -6,5 +6,5 @@ def main(){
 		x[0]:=X(x[0]);
 		return x;
 	}
-	return x; // TODO: error
+	return x; // error
 }

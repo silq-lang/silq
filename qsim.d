@@ -742,6 +742,7 @@ struct QState{
 			ubyte[max(array_.sizeof,record.sizeof,quval.sizeof,fval.sizeof,qval.sizeof,zval.sizeof,bval.sizeof)] bits;
 		}
 		bool isClassical(){
+			if(!type) return true; // TODO: can we get rid of this?
 			final switch(tag){
 				static foreach(t;[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval]){
 					case t:

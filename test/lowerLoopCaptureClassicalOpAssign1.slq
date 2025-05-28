@@ -3,7 +3,7 @@
 def main(){
 	x:=0;
 	def foo(){
-		for i in 0..3{ // TODO
+		for i in 0..3{
 			x⊕=1;
 		}
 		return x;

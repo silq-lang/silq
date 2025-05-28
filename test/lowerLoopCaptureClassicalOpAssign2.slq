@@ -3,7 +3,7 @@
 def main(){
 	xs:=[0];
 	def foo(){
-		for i in 0..3{ // TODO
+		for i in 0..3{
 			xs~=[1];
 		}
 		return xs;
