@@ -1,0 +1,6 @@
+
+def main() {
+	x := [0,1,1];
+	x[2] := x[2] + 1; // TODO: point out that the use in the right-hand side is `const` (or make it work)
+}
+
