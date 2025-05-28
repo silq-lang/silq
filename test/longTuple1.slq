@@ -1,0 +1,5 @@
+// skipped
+
+def main(): B[] {
+	return vector(2^100, 0:𝔹) ~ []; // TODO
+}
