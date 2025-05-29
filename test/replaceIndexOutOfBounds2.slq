@@ -1,6 +1,6 @@
 
 def main() {
 	x := vector(3, 0:!B);
-	x[3] := H(x[3]); // TODO: error
+	x[3] := H(x[3]); // error
 	return x:!𝔹^3;
 }

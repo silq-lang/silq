@@ -1,4 +1,3 @@
-// args: --run
 
 def main(){
 	x:=vector(3,0:𝔹);

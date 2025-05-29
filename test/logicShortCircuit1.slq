@@ -1,0 +1,6 @@
+
+def main(){
+	a:=[];
+	if false && a[0]==-1 { } // error
+	if true || a[0]==-1 { } // error
+}
