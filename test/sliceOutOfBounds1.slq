@@ -1,0 +1,49 @@
+
+def main(){
+	x:=(0,1,1);
+	x₁:=x[0..3]; // ok
+	x₂:=x[0..4]; // error
+	x₃:=x[-1..3]; // error
+	x₄:=x[3..2]; // error
+	x₅:=x[4..5]; // error
+	def foo(i:!ℕ){
+		x₆:=x[0..i]; // ok
+		x₇:=x[i..3]; // ok
+		x₂:=x[i..4]; // error
+		x₃:=x[-1..i]; // error
+		x₄:=x[i+1..i]; // error
+		x₅:=x[i+2..i+1]; // error
+		x₆:=x[i..5]; // error
+	}
+	y:=(0,1,1):!𝔹[];
+	y₁:=y[0..3]; // ok
+	y₂:=y[0..4]; // ok
+	y₃:=y[-1..3]; // error
+	y₄:=y[3..2]; // error
+	y₅:=y[4..5]; // ok
+	def bar(i:!ℕ){
+		y₆:=y[0..i]; // ok
+		y₇:=y[i..3]; // ok
+		y₂:=y[i..4]; // ok
+		y₃:=y[-1..i]; // error
+		y₄:=y[i+1..i]; // error
+		y₅:=y[i+2..i+1]; // error
+		y₆:=y[i..5]; // error
+	}
+	z:=(0,1,2);
+	z₁:=z[0..3]; // ok
+	z₂:=z[0..4]; // error
+	z₃:=z[-1..3]; // error
+	z₄:=z[3..2]; // error
+	z₅:=z[4..5]; // error
+	def baz(i:!ℕ){
+		z₆:=z[0..i]; // ok
+		z₇:=z[i..3]; // ok
+		z₂:=z[i..4]; // error
+		z₃:=z[-1..i]; // error
+		z₄:=z[i+1..i]; // error
+		z₅:=z[i+2..i+1]; // error
+		z₆:=z[i..5]; // error
+	}
+
+}

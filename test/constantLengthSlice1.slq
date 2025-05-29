@@ -1,0 +1,6 @@
+
+def foo(i:!ℕ){
+	x:=(0,0,1);
+	return x[i+1..i+2];
+}
+def main()⇒foo(1);
