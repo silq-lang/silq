@@ -1,0 +1,4 @@
+
+def main() {
+	if measure(H(0))||H(0) { } // error
+}

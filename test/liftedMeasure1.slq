@@ -1,7 +1,5 @@
 
 def main() {
     x := H(0);
-    y := H(0);
-    if measure(x):𝔹 { } // TODO
-	return y;
+    if measure(x):𝔹 { }
 }

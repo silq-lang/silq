@@ -1,0 +1,11 @@
+
+def main(){
+	x:=H(0);
+	y:=dup(x);
+	if X(y){ // TODO
+		y:=2:int[3];
+	}else{
+		y:=3:int[3];
+	}
+	return (x,y);
+}

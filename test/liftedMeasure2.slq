@@ -2,7 +2,7 @@
 def main() {
     x := H(0);
     y := H(0);
-    if measure(x)||y { } // TODO
+    if measure(x)||y { }
 	return y;
 }
 
