@@ -1,0 +1,11 @@
+
+def main(){
+	i:=0;
+	k:=H(H(1)); // error
+	if k {
+		return 0;
+	} else {
+		i=2;
+	}
+	assert(0);
+}
