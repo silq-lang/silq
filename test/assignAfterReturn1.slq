@@ -3,10 +3,10 @@
 def main(){
 	i:=0;
 	k:=1;
-    if k{
+	if k{
 		return 0;
-    }else{
+	}else{
 		i=2;
-    }
+	}
 	assert(0);
 }
