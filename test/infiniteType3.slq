@@ -1,0 +1,10 @@
+// skipped
+// args: --inference-limit=100
+// TODO: make fast
+
+def main(){
+	x:=()⇒assert(0);
+	while true{
+		x=()⇒x;
+	}
+}

@@ -136,6 +136,10 @@ int main(string[] args){
 			}
 			return 0;
 		})
+		.add!("inference-limit")((string v) {
+			astopt.inferenceLimit = to!int(v);
+			return 0;
+		})
 		.add!("unsafe-capture-const")((bool v) {
 			astopt.allowUnsafeCaptureConst = v;
 			return 0;

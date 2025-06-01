@@ -1,0 +1,8 @@
+// args: --inference-limit=5
+
+def main(){
+	x:=()⇒assert(0);
+	while true{ // error
+		x=()⇒x;
+	}
+}

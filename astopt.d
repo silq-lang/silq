@@ -17,6 +17,8 @@ immutable int preludeIndex=0;
 enum operatorLowering=true;
 immutable string operatorsPath= "__internal/operators.slq";
 
+int inferenceLimit=30;
+
 bool allowUnsafeCaptureConst=false;
 
 bool dumpReverse=false;
