@@ -2514,6 +2514,26 @@ struct Interpreter(QState){
 		enforce(0,text("assigning to '",lhs,"' not yet supported"));
 		assert(0);
 	}
+	QState.Value canonicalValue(Expression type){
+		if(!isUnit(type)) return QState.Value.init;
+		if(auto tt=cast(TupleTy)type){
+			auto next=tt.types.map!(ty=>canonicalValue(ty)).array;
+			if(next.any!(v=>!v.isValid)) return QState.Value.init;
+			return qstate.makeTuple(tt,next);
+		}
+		if(auto vt=cast(VectorTy)type){
+			auto num=vt.num.asIntegerConstant();
+			if(!num)
+				return QState.Value.init;
+			auto next=iota(to!size_t(num.get())).map!(i=>canonicalValue(vt.next)).array;
+			return qstate.makeTuple(vt,next);
+		}
+		if(auto at=cast(ArrayTy)type){
+			if(!isEmpty(at.next)) return QState.Value.init;
+			return qstate.makeTuple(at,[]);
+		}
+		return QState.Value.init;
+	}
 	void assignTo(bool isCat=false)(Expression lhs,QState.Value rhs,AAssignExp.Replacement[] replacements){
 		if(auto id=cast(Identifier)lhs){
 			static if(isCat){
@@ -2540,10 +2560,11 @@ struct Interpreter(QState){
 			getAssignable!isCat(lhs,replacements).assign(qstate,rhs);
 		}else if(auto ce=cast(CallExp)lhs){
 			enforce(!isCat,"cannot concat assign to function call expression");
-			auto f=ce.e,ft=cast(ProductTy)f.type;
-			enforce(!!ft,"reversed function call not yet supported");
+			auto f=ce.e,oft=cast(ProductTy)f.type;
+			enforce(!!oft,"reversed function call not yet supported");
 			auto fv=runExp(f);
 			if(fv.tag==QState.Value.Tag.closure){
+				auto ft=fv.closure.fun.ftype;
 				auto rf=reverseFunction(fv.closure.fun), rft=rf.ftype;
 				auto context=fv.closure.context;
 				auto rfv=qstate.makeClosure(rft,QState.Closure(rf,context));
@@ -2551,19 +2572,40 @@ struct Interpreter(QState){
 				auto rfret=rft.cod; // TODO: probably semantic analysis has to explicitly compute this
 				auto r=reverseCallRewriter(ft,ce.loc); // TODO: would be nice to not require this
 				QState.Value constArg;
+				void handleUnitArg(Expression arg,Expression type){
+					enforce(isUnit(type),"reversed function call not yet supported");
+					auto val=canonicalValue(type);
+					enforce(val.isValid,"reversed function call not yet supported");
+					assignTo(arg,val,[]);
+				}
 				if(ft.isConstForReverse.all){
+					if(!oft.isConstForReverse.all){
+						auto tpl=cast(TupleExp)ce.arg;
+						if(oft.isConstForReverse.length!=1&&tpl){
+							foreach(i,arg;tpl.e)
+								if(!oft.isConstForReverse[i])
+									handleUnitArg(arg,ft.argTy(i));
+						}else{
+							enforce(!oft.isConstForReverse.any,"reversed function call not yet supported");
+							handleUnitArg(ce.arg,ft.dom);
+						}
+					}
 					constArg=runExp(ce.arg);
 				}else if(!ft.isConstForReverse.any){
 					// no const arg
 					enforce(rf.params.length==1&&equal(rft.isConstForReverse,only(false))&&!rft.isTuple,"reversed function call not yet supported");
 				}else{
 					assert(ft.isTuple);
+					enforce(oft.dom.isTupleTy,"reversed function call not yet supported");
+					oft=oft.setTuple(true);
 					auto tpl=cast(TupleExp)ce.arg;
 					enforce(!!tpl&&tpl.length==ft.isConst.length);
 					QState.Value[] cargs;
 					if(r.constTuple){
 						foreach(i,arg;tpl.e){
 							if(ft.isConstForReverse[i]){
+								if(!oft.isConstForReverse[i])
+									handleUnitArg(arg,ft.argTy(i));
 								cargs~=runExp(arg);
 							}
 						}
@@ -2571,6 +2613,8 @@ struct Interpreter(QState){
 						enforce(ft.isConstForReverse.count!(x=>x)==1);
 						foreach(i,arg;tpl.e){
 							if(ft.isConstForReverse[i]){
+								if(!oft.isConstForReverse[i])
+									handleUnitArg(arg,ft.argTy(i));
 								constArg=runExp(arg);
 								break;
 							}

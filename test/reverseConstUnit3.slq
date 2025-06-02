@@ -3,7 +3,7 @@
 def nop(const x: unit x unit) qfree {}
 
 def fprint[T: qtype](f: T !-> qfree unit) {
-	f(x) := (); // TODO
+	f(x) := ();
 	print(measure(x));
 }
 
