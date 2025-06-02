@@ -1,0 +1,12 @@
+// args: --run
+
+def nop(const x: unit) qfree {}
+
+def fprint[T: qtype](f: T !-> qfree unit) {
+	f(x) := (); // TODO
+	print(measure(x));
+}
+
+def main() {
+	fprint(nop);
+}
