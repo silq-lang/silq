@@ -1923,10 +1923,10 @@ QState.Value buildContextFor(QState)(ref QState qstate,FunctionDef fd,Scope sc)i
 
 QState.Value lookupMeaning(QState)(ref QState qstate,Identifier id,Scope sc=null)in{assert(id && id.scope_,text(id," ",id.loc));}do{
 	auto meaning=id.meaning;
-	auto constLookup=id.constLookup;
+	auto constLookup=id.constLookup||id.implicitDup;
 	if(!sc) sc=id.scope_;
 	if(!meaning||!sc||!meaning.scope_)
-		return qstate.readLocal(id.name,id.constLookup);
+		return qstate.readLocal(id.name,constLookup);
 	if(id.lazyCapture)
 		if(auto fd=cast(FunctionDef)meaning)
 			return qstate.makeFunction(fd,sc);
@@ -2066,8 +2066,9 @@ struct Interpreter(QState){
 		QState.Value doIt()(Expression e){
 			try{
 				auto r=doIt2(e);
-				if(e.constLookup&&consumeConst(e))
+				if((e.constLookup||e.implicitDup)&&consumeConst(e))
 					r=r.consumeOnRead();
+				if(e.implicitDup) r=r.dup(qstate);
 				return r;
 			}catch(Exception ex){
 				version(LOCALIZE) throw localizedException(ex,e.loc);
@@ -2239,7 +2240,7 @@ struct Interpreter(QState){
 			if(auto idx=cast(IndexExp)e){
 				auto a=doIt2(idx.e),i=doIt(idx.a);
 				auto r=a[i];
-				if(!idx.constLookup){
+				if(!idx.constLookup&&!idx.implicitDup){
 					if(idx.byRef){
 						if(a.tag==QState.Value.Tag.array_&&i.isℤ()){
 							a.array_[i.asℤ.to!size_t]=QState.Value.init;
@@ -2716,7 +2717,8 @@ struct Interpreter(QState){
 			void doForget(Expression e){
 				if(auto id=cast(Identifier)e){
 					assert(id.name in qstate.vars);
-					qstate.vars.remove(id.name);
+					if(!id.implicitDup)
+						qstate.vars.remove(id.name);
 				}else if(auto tpl=cast(TupleExp)e){
 					foreach(t;tpl.e)
 						doForget(t);
