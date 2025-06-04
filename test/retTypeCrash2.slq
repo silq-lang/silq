@@ -2,5 +2,5 @@
 
 def crash()qfree:!ℕ{ assert(false); } // TODO: error
 def f(): 𝔹^(1+crash() sub crash())⇒(1:B,);
-def call[n: !ℕ](f: 1 !→ 𝔹^n):𝔹^n⇒f();
+def call[n: !ℕ](f: unit !→ 𝔹^n):𝔹^n⇒f();
 def main() ⇒ f()~call[1](f);

@@ -9,7 +9,7 @@ def main() {
     a := 1: uint[1];
     q := H(0: 𝔹);
     if q {
-        expand(a) := expand(a);
+        expand[1](a) := expand[1](a);
     }
     q := H(q);
     measure(q);

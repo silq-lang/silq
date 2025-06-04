@@ -1,3 +1,10 @@
-def foo():0{ foo(); } // ok
-def fun():1{ } // ok
-def baz():1337{ return baz(); } // error
+def foo0():𝟘{ assert(0); } // ok
+def foo1():0{ assert(0); } // error
+def foo2():𝟙{ assert(0); } // ok
+def foo3():1{ assert(0); } // error
+def foo4():B^𝟘{ assert(0); } // error
+def foo5():B^0{ assert(0); } // ok
+def foo6():B^𝟙{ assert(0); } // error
+def foo7():B^1{ assert(0); } // ok
+def baz8():1337{ assert(0); } // error
+def baz9():B^1337{ assert(0); } // ok
