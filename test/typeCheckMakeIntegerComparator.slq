@@ -5,11 +5,11 @@ def makeIntegerComparator(value:!ℤ,geq:!𝔹)[n:!ℕ](const state:𝔹^n,compa
 	}else if value<2^n{
 		if n>1{
 			twos:=2^n-value as !uint[n];
-			def rec[n:!ℕ](const state:𝔹^n,compare:𝔹,i:!ℕ,const r:𝔹):𝔹{ // shadowing n should work
+			def rec[n:!ℕ](const state:𝔹^n,compare:𝔹,i:!ℕ,const r:𝔹):𝔹{ // shadowing n
 			//def rec(const state:𝔹^n,compare:𝔹,i:!ℕ,const r:𝔹):𝔹{
 				if i<n-1{
 					nr:=if twos[i] then state[i]∨r else state[i]∧r;
-					return rec(state,compare,i+1,nr); // TODO
+					return rec(state,compare,i+1,nr);
 				}else{
 					compare⊕=if twos[i] then state[i]∨r else state[i]∧r;
 					return compare;
