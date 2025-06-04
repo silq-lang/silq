@@ -1,0 +1,8 @@
+// args: --run
+
+def main() {
+    x := 1:𝔹;
+    t := !x;
+    y := !t;
+    forget(t);
+}
