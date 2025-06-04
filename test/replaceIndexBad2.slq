@@ -1,0 +1,7 @@
+
+def main(){
+	xs:=vector(2,0);
+	x:=H(0:𝔹);
+	xs[X(x)]:=X(xs[X(x)]); // error
+	return xs;
+}

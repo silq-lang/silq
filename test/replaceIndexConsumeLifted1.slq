@@ -1,0 +1,8 @@
+
+def main(){
+	xs:=vector(2,0);
+	x:=H(0:𝔹);
+	y:=dup(x);
+	xs[X(y)]:=X(xs[X(y)]); // TODO
+	return (xs,x);
+}
