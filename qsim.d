@@ -1023,7 +1023,7 @@ struct QState{
 			assert(!!ntype);
 			static if(op=="sub"){
 				enforce(this.ge(r).neqZImpl,"result of sub is negative");
-				if(cast(BoolTy)ntype) return this.gt(r);
+				if(isNumericTy(ntype)==NumericType.Bool) return this.gt(r);
 				return this-r;
 			}else static if(op=="^^"){
 				auto t1=type,t2=r.type;
@@ -1717,8 +1717,7 @@ struct QState{
 	}
 	static Value ite(Value cond,Value then,Value othw)in{
 		assert(then.type.getClassical==othw.type.getClassical);
-		assert(!cond.isClassical);
-		assert(cast(BoolTy)cond.type);
+		assert(cond.type is Bool(false));
 	}do{
 		static class IteQVal: QVal{
 			Value cond,then,othw;
