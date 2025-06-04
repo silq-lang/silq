@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	x:=H(1);
+	y:=dup(x);
+	z:=dup(x);
+	forget(X(y)=X(z));
+	return H(x);
+}

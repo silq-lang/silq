@@ -1,0 +1,11 @@
+
+def foo(const x:!𝔹,y:𝔹):!𝔹{
+	return measure(y);
+}
+
+def bar(const x:𝔹):!𝔹 ⇒ measure(x);
+
+def main(){
+	x:=H(0);
+	foo(bar(x),x);
+}
