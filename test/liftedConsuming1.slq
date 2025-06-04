@@ -2,7 +2,7 @@
 def main(){
 	x:=H(0);
 	y:=dup(x);
-	if X(y){ // TODO
+	if X(y){
 		y:=2:int[3];
 	}else{
 		y:=3:int[3];

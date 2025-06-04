@@ -1,0 +1,11 @@
+
+def foo(const x:𝔹){
+	y:=dup(x);
+	if X(y){
+		return x;
+	}else{
+		return X(x);
+	}
+}
+
+def main()⇒foo(1);
