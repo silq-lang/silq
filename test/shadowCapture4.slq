@@ -1,18 +1,19 @@
+// args: --run
 
 def main(){
 	x:=H(0);
 	def foo(){
 		if measure(H(0)){
-			return x;
+			return (x,0);
 		}else{
-			def bar(x:𝔹){ // error
+			def bar(x:𝔹){
 				if measure(H(0)){
-					return x;
+					return foo()~[x];
 				}else{
-					return foo();
+					return [x]~foo();
 				}
 			}
-			return bar(x);
+			return bar(0);
 		}
 	}
 	return foo();
