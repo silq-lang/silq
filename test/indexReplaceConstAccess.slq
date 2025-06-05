@@ -4,5 +4,5 @@ def f(x:𝔹,y:𝔹,const z:𝔹^2)⇒((x,y),z);
 def main(){
 	a:=vector(2,0:𝔹);
 	((a[0],a[1]),b):=f(a[0],a[1],dup(a)); // error
-	return (a,b);
+	return (a,b); // error
 }
