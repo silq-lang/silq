@@ -1512,11 +1512,11 @@ struct QState{
 	static Value nullValue(){
 		return Value.init;
 	}
-	static Value typeValue(Expression type)in{
-		assert(isTypeTy(type)||isQNumericTy(type));
+	static Value typeValue(Expression value)in{
+		assert(isType(value)||isQNumeric(value));
 	}do{
 		Value r;
-		r.type=type;
+		r.type=value.type;
 		return r;
 	}
 	static Value π(){ return makeReal(PI); }
@@ -1971,6 +1971,9 @@ struct Interpreter(QState){
 		return value;
 	}
 	QState.Value convertTo(QState.Value value,Expression type,bool consumeArg){
+		assert(value.type.isSemEvaluated());
+		type=type.eval();
+		assert(type.isSemEvaluated());
 		if(value.type==type||cast(Identifier)type){
 			if(consumeArg) return value;
 			return value.dup(qstate);
@@ -1985,7 +1988,7 @@ struct Interpreter(QState){
 				ntype.type=type.type;
 				ntype.sstate=SemState.completed;
 				ntype.loc=type.loc;
-				type=ntype;
+				type=ntype.eval();
 			}
 		}
 		QState.Value default_(){
@@ -2227,7 +2230,7 @@ struct Interpreter(QState){
 							enforce(0,text("built-in '",id.name,"' not yet supported"));
 							assert(0);
 					}
-					if(id&&cast(DatDecl)id.meaning) return QState.typeValue(ce.type); // TODO: get rid of this
+					if(id&&cast(DatDecl)id.meaning) return QState.typeValue(ce); // TODO: get rid of this
 				}
 				auto fun=doIt(ce.e);
 				auto arg=doIt(ce.arg);
@@ -2337,6 +2340,31 @@ struct Interpreter(QState){
 				auto r=convertTo(doIt(tae.e),tae.type,consume);
 				if(tae.constLookup) r=r.consumeOnRead();
 				return r;
+			} else if(auto te=cast(VectorTy)e){
+				runExp(te.next);
+				runExp(te.num);
+				return qstate.typeValue(te);
+			} else if(auto te=cast(ArrayTy)e){
+				runExp(te.next);
+				return qstate.typeValue(te);
+			} else if(auto te=cast(TupleTy)e){
+				foreach(sub; te.types) {
+					runExp(sub);
+				}
+				return qstate.typeValue(te);
+			} else if(auto te=cast(VariadicTy)e){
+				runExp(te.next);
+				return qstate.typeValue(te);
+			} else if(auto te=cast(ClassicalTy)e){
+				runExp(te.inner);
+				return qstate.typeValue(te);
+			} else if(auto te=cast(ProductTy)e){
+				foreach(p; te.params) {
+					runExp(p.dtype);
+				}
+				return qstate.typeValue(te);
+			} else if(cast(NumericTy)e || cast(TypeTy)e || cast(QNumericTy)e || cast(BottomTy)e){
+				return qstate.typeValue(e);
 			}else{
 				enum common=q{
 					auto e1=doIt(b.e1),e2=doIt(b.e2);
@@ -2371,7 +2399,6 @@ struct Interpreter(QState){
 					return e1.neq(e2);
 				}
 			}
-			if(isType(e)&&!isEmpty(e.type)||isQNumeric(e)) return QState.typeValue(e.type); // TODO: get rid of this
 			enforce(0,text("expression '",e,"' of type '",e.type,"' not yet supported"));
 			assert(0);
 		}
@@ -2938,6 +2965,10 @@ struct Interpreter(QState){
 		}
 	}
 	void runFun(ref QState retState){
+		foreach(p;functionDef.params){
+			runExp(p.dtype);
+		}
+		if(functionDef.rret) runExp(functionDef.rret);
 		run(retState);
 		retState+=qstate;
 		qstate=QState.empty();

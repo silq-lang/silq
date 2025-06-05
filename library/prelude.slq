@@ -39,12 +39,31 @@ dat uint[n: !ℕ] quantum{}
 // float64:=float[11,53];
 // dat rat[n: !ℕ, m: !ℕ] quantum{}
 
+type:=*;
+
+𝟘:=⊥;
+bottom:=⊥;
+never:=⊥;
+
+unit:=𝟙;
+
+B:=𝔹;
 bool:=𝔹;
 Bool:=!𝔹;
+
+N:=ℕ;
 Nat:=!ℕ;
+
+// Z:=ℤ; // HACK: handled as negation on the Z gate.
 Int:=!ℤ;
+
+Q:=ℚ;
 Rat:=!ℚ;
+
+R:=ℝ;
 Real:=!ℝ;
+
+C:=ℂ;
 Complex:=!ℂ;
 
 // deterministic functions

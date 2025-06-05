@@ -7,9 +7,9 @@ def main(){
 	x := ((0:𝔹,),);
 	y := vector(2, 0:𝔹);
 
+	j := 0;
 	with {
 		i := len(x[0]);
-		j := 0; // TODO
 		(yleft: 𝔹^(i+j)) ~ (yi,) ~ (yright) := y; // TODO
 	} do {
 		yi := H(yi);
