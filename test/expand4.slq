@@ -1,0 +1,15 @@
+def expand[n: !ℕ](x: uint[n]) qfree: uint[2*n] {
+    v₀ := 0 as uint[n];
+    return ((x as 𝔹^n) ~ (v₀ as 𝔹^n)) as uint[2*n];
+}
+
+def main() {
+    a := 1: uint[1];
+    q := H(0: 𝔹);
+    if q {
+        expand(a) := expand(a); // TODO
+    }
+    q := H(q);
+    measure(q);
+    return a;
+}

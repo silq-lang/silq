@@ -4,7 +4,7 @@ def baz(){
 	f:=()qfree=>x; // error
 }
 
-def foo(const f: unit→𝔹)qfree: 𝟙 { return; }
+def foo(const f: 𝟙→𝔹)qfree: 𝟙 { return; }
 def bar(x: 𝔹)qfree: 𝟙⇒foo(()⇒x); // error
 def main(){
 	foo(()⇒H(0:𝔹)); // ok

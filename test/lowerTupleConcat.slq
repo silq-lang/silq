@@ -2,5 +2,5 @@
 
 n:=3;
 def f()qfree: 𝔹^(1+n sub n)⇒(1:B,);
-def call[n: !ℕ](f: unit !→ 𝔹^n)wild:𝔹^n⇒f();
+def call[n: !ℕ](f: 𝟙 !→ 𝔹^n)wild:𝔹^n⇒f();
 def main() ⇒ f()~call[1](f);
