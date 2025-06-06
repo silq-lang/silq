@@ -6,8 +6,11 @@ import std.algorithm, std.conv, std.range;
 import std.datetime.stopwatch;
 import std.typecons : Flag, Yes, No, Tuple, tuple;
 
+int exitCode;
 auto shell(string cmd){
-	return executeShell(cmd).output;
+	auto result=executeShell(cmd);
+	exitCode=result.status;
+	return result.output;
 }
 
 enum TODOColor=CYAN;
@@ -225,6 +228,7 @@ Tuple!(Comparison[],Duration) getResults(string source){
 	auto actual = source.getActual(output);
 	sw.stop();
 	auto result=compare(expected, actual);
+	if(exitCode>=128) result~=Comparison(Status.unexpected,Info(-1,true,false));
 	foreach(i,l;output){
 		switch(l.strip){
 		default: break;
@@ -233,7 +237,7 @@ Tuple!(Comparison[],Duration) getResults(string source){
 		case "TODO": result~=Comparison(Status.expected,Info(cast(int)i+1,false,true)); break;
 		case "FAIL": result~=Comparison(Status.unexpected,Info(cast(int)i+1,true,false)); break;
 		}
-		if(l.startsWith("core.exception.AssertError")||l.startsWith("Segmentation fault"))
+		if(l.startsWith("core.exception.AssertError"))
 			result~=Comparison(Status.unexpected,Info(cast(int)i+1,true,false));
 	}
 	if(!result.length)
