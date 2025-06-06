@@ -191,30 +191,35 @@ int main(string[] args){
 		backend = summarizeBackend;
 	}
 
-	args.popFront();
-	if(args.empty) {
-		stderr.writeln("error: no input files");
-		return 1;
-	}
-
-	ErrorHandler err;
-	File errFile;
-	if(!jsonOut) {
-		if(isATTy(stderr)){
-			err = new FormattingErrorHandler();
-		} else {
-			err = new VerboseErrorHandler();
+	try{
+		args.popFront();
+		if(args.empty) {
+			stderr.writeln("error: no input files");
+			return 1;
 		}
-	} else if(jsonOut == "-") {
-		err = new JSONErrorHandler(stdout, false);
-	} else {
-		err = new JSONErrorHandler(File(jsonOut, "w"), true);
-	}
-	scope(exit) err.finalize();
+		ErrorHandler err;
+		File errFile;
+		if(!jsonOut) {
+			if(isATTy(stderr)){
+				err = new FormattingErrorHandler();
+			} else {
+				err = new VerboseErrorHandler();
+			}
+		} else if(jsonOut == "-") {
+			err = new JSONErrorHandler(stdout, false);
+		} else {
+			err = new JSONErrorHandler(File(jsonOut, "w"), true);
+		}
+		scope(exit) err.finalize();
 
-	foreach(x; args) {
-		r = run(backend, x, err);
-		if(r) return r;
+		foreach(x; args) {
+			r = run(backend, x, err);
+			if(r) return r;
+		}
+		return 0;
+	}catch(Throwable e){
+		stderr.writeln(e.toString());
+		import core.stdc.signal:SIGABRT;
+		return 128+SIGABRT;
 	}
-	return 0;
 }

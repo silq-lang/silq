@@ -228,7 +228,8 @@ Tuple!(Comparison[],Duration) getResults(string source){
 	auto actual = source.getActual(output);
 	sw.stop();
 	auto result=compare(expected, actual);
-	if(exitCode>=128) result~=Comparison(Status.unexpected,Info(-1,true,false));
+	if(exitCode>=128||(exitCode!=0&&!actual.length||exitCode!=1&&actual.length)&&!args.canFind("--error-json"))
+		result~=Comparison(Status.unexpected,Info(-1,true,false));
 	foreach(i,l;output){
 		switch(l.strip){
 		default: break;
@@ -357,9 +358,10 @@ auto getExpected(string source){
 	return result;
 }
 
+string args;
 int[] getActual(string source,out string[] output){
 	auto fin=File(source,"r");
-	auto args=fin.readln();
+	args=fin.readln();
 	if(args.startsWith("// args: "))
 		args=args["// args: ".length..$].strip()~" ";
 	else args="";
