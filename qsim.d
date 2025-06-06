@@ -61,7 +61,7 @@ class QSim{
 			Location loc = ex.loc;
 			size_t i=0;
 			// Suppress stack frames in prelude
-			while(i<ex.stackTrace.length && ex.stackTrace[i].fd.hasAttribute("artificial")) {
+			while(i<ex.stackTrace.length && ex.stackTrace[i].fd.boolAttribute(Id.s!"artificial")) {
 				loc=ex.stackTrace[i].loc;
 				i++;
 			}
@@ -1628,10 +1628,13 @@ struct QState{
 			return arg;
 		}
 		enforce(!thisExp.isValid,"method calls not yet supported");
+		if(string prim=isPrimitive(fun)){
+			return callPrimitive(prim, arg, type, loc);
+		}
 		enforce(fun.body_,text("need function body to simulate function ",fun));
 		auto ncur=pushFrame();
 		enforce(!fun.isConstructor,"constructor calls not yet supported");
-		if(fun.hasAttribute("trace")){
+		if(fun.boolAttribute(Id.s!"trace")){
 			string[2] paren = fun.isSquare ? ["[", "]"] : arg.tag==Value.Tag.array_ ? ["", ""] : ["(", ")"];
 			string name = fun.getName;
 			if(name.length==0) {
@@ -1667,6 +1670,69 @@ struct QState{
 		}
 		this=nnstate.popFrame(this.popFrameCleanup);
 		return fix(nnstate.vars["`value"]);
+	}
+	Value callPrimitive(string prim, Value arg, Expression type, Location loc){
+		switch(prim){
+			case "dump":
+				dump(1);
+				stdout.flush();
+				return makeTuple(.unit,[]);
+			case "exit":
+				enforce(0, "terminated by exit call");
+				assert(0);
+			case "dup":
+				return arg.dup(this);
+			case "vector":
+				enforce(arg.tag==Value.Tag.array_ && arg.array_.length==2,"wrong number of arguments passed to 'vector'");
+				return vector(type, arg[ℤ(0)], arg[ℤ(1)]);
+			case "M":
+				return measure(arg);
+			case "H":
+				return H(arg);
+			case "X":
+				return X(arg);
+			case "Y":
+				return Y(arg);
+			case "Z":
+				return Z(arg);
+			case "P":
+				return phase(arg);
+			case "rX":
+				enforce(arg.tag==Value.Tag.array_ && arg.array_.length==2,"wrong number of arguments passed to 'rX'");
+				return rX(arg[ℤ(0)], arg[ℤ(1)]);
+			case "rY":
+				enforce(arg.tag==Value.Tag.array_ && arg.array_.length==2,"wrong number of arguments passed to 'rY'");
+				return rY(arg[ℤ(0)], arg[ℤ(1)]);
+			case "rZ":
+				enforce(arg.tag==Value.Tag.array_ && arg.array_.length==2,"wrong number of arguments passed to 'rZ'");
+				rZ(arg[ℤ(0)], arg[ℤ(1)].dup(this)).forget(this);
+				return makeTuple(.unit,[]);
+			case "print": {
+				FormattingOptions opt={type: FormattingType.dump};
+				writeln(arg.toStringImpl(opt)); stdout.flush();
+				return makeTuple(.unit,[]);
+			}
+			static foreach(f;["floor","ceil","sqrt","exp","log","sin","asin","cos","acos","tan","atan"]){
+				case "real." ~ f:
+					return mixin(`arg.`~f)();
+			}
+			static foreach(f;["sin","asin","cos","acos"]){
+				case "qfixed."~f:
+					enforce(arg.tag==Value.Tag.array_ && arg.array_.length==2,"wrong number of arguments passed to 'rZ'");
+					return mixin(`arg[ℤ(1)].`~f~`Q`)(arg[ℤ(0)].asℤ(), type);
+			}
+			case "qfixed.inv": {
+				enforce(arg.tag==Value.Tag.array_ && arg.array_.length==3,"wrong number of arguments passed to 'qfixed.inv'");
+				QState.Value n = arg[ℤ(0)];
+				QState.Value x = arg[ℤ(1)];
+				auto c = arg[ℤ(2)].asℝ();
+				enforce(0 <= c, "'invQ' argument negative");
+				return x.invQ(n.asℤ(), type, c);
+			}
+			default:
+				enforce(0, text("primitive '",prim,"' not supported"));
+				assert(0);
+		}
 	}
 	Value call(Value fun,Value arg,Expression type,Location loc){
 		enforce(fun.tag==Value.Tag.closure,"bad value for function in call");
@@ -2118,93 +2184,6 @@ struct Interpreter(QState){
 			if(auto ume=cast(UNotExp)e) return doIt(ume.e).eqZ;
 			if(auto ume=cast(UBitNotExp)e) return ~doIt(ume.e);
 			if(auto le=cast(LambdaExp)e) return qstate.makeFunction(le.fd,le.fd.scope_);
-			static if(language==silq) if(string prim=isPrimitiveCall(e)){
-				Expression[] argExpr = (cast(TupleExp)(cast(CallExp)e).arg).e;
-				QState.Value[] args = argExpr.map!(arg => doIt(arg)).array;
-				switch(prim){
-					case "dump":
-						enforce(args.length==0,"too many arguments passed to 'dump'");
-						qstate.dump(1);
-						stdout.flush();
-						return qstate.makeTuple(.unit,[]);
-					case "exit":
-						enforce(args.length==0,"too many arguments passed to 'exit'");
-						enforce(0, "terminated by exit call");
-						break;
-					case "dup":
-						enforce(args.length==1,"wrong number of arguments passed to 'dup'");
-						return args[0].dup(qstate);
-					case "array":
-						enforce(args.length==2,"wrong number of arguments passed to 'array'");
-						return qstate.array_(e.type, args[0], args[1]);
-					case "vector":
-						enforce(args.length==2,"wrong number of arguments passed to 'vector'");
-						return qstate.vector(e.type, args[0], args[1]);
-					case "M":
-						enforce(args.length==1,"wrong number of arguments passed to 'M'");
-						return qstate.measure(args[0]);
-					case "H":
-						enforce(args.length==1,"wrong number of arguments passed to 'H'");
-						return qstate.H(args[0]);
-					case "X":
-						enforce(args.length==1,"wrong number of arguments passed to 'X'");
-						return qstate.X(args[0]);
-					case "Y":
-						enforce(args.length==1,"wrong number of arguments passed to 'Y'");
-						return qstate.Y(args[0]);
-					case "Z":
-						enforce(args.length==1,"wrong number of arguments passed to 'Z'");
-						return qstate.Z(args[0]);
-					case "P":
-						enforce(args.length==1,"wrong number of arguments passed to 'P'");
-						return qstate.phase(args[0]);
-					case "rX":
-						enforce(args.length==2,"wrong number of arguments passed to 'rX'");
-						return qstate.rX(args[0], args[1]);
-					case "rY":
-						enforce(args.length==2,"wrong number of arguments passed to 'rY'");
-						return qstate.rY(args[0], args[1]);
-					case "rZ":
-						enforce(args.length==2,"wrong number of arguments passed to 'rZ'");
-						qstate.rZ(args[0], args[1].dup(qstate)).forget(qstate);
-					   return qstate.makeTuple(.unit,[]);
-					case "print": {
-						enforce(args.length==1,"wrong number of arguments passed to 'print'");
-						FormattingOptions opt={type: FormattingType.dump};
-						writeln(args[0].toStringImpl(opt)); stdout.flush();
-						return qstate.makeTuple(.unit,[]);
-					}
-					static foreach(f;["floor","ceil","sqrt","exp","log","sin","asin","cos","acos","tan","atan"]){
-						case "real." ~ f:
-							assert(args.length==1,"wrong number of arguments passed to '"~f~"'");
-							return mixin(`args[0].`~f)();
-					}
-					static foreach(f;["sin","asin","cos","acos"]){
-						case "qfixed."~f:
-							enforce(args.length==1,"wrong number of arguments passed to '"~f~"'");
-							Expression ret = e.type;
-							auto retInt = isFixedIntTy(ret);
-							enforce(retInt,"bad return type for '"~f~"'");
-							enforce(!retInt.isClassical,"bad return type for '"~f~"'");
-							QState.Value n = doIt(retInt.bits);
-							return mixin(`args[0].`~f~`Q`)(n.asℤ(),ret);
-					}
-					case "qfixed.inv": {
-						Expression ret = e.type;
-						auto retInt = isFixedIntTy(ret);
-						enforce(retInt,"bad return type for 'invQ'");
-						enforce(!retInt.isSigned,"bad return type for 'invQ'");
-						enforce(!retInt.isClassical,"bad return type for 'invQ'");
-						QState.Value n = doIt(retInt.bits);
-						enforce(args.length == 2);
-						QState.Value x = args[0];
-						auto c = args[1].asℝ();
-						enforce(0 <= c, "'invQ' argument negative");
-						return x.invQ(n.asℤ(), ret, c);
-					}
-					default: enforce(0, text("primitive '",prim,"' not supported")); assert(0);
-				}
-			}
 			if(auto ce=cast(CallExp)e){
 				auto target=unwrap(ce.e);
 				auto id=cast(Identifier)target;
@@ -2216,17 +2195,12 @@ struct Interpreter(QState){
 					enforce(0, "method calls not yet supported");
 					assert(0);
 				} else {
-					switch(isBuiltIn(id)){
+					final switch(isBuiltIn(id)){
 						case BuiltIn.none:
 							break;
-						static if(language==silq){
-							case BuiltIn.primitive:
-								enforce(0,"primitive function cannot be used as first-class value");
-								assert(0);
-							case BuiltIn.show,BuiltIn.query:
-								return qstate.makeTuple(ast.type.unit,[]);
-						}
-						default:
+						case BuiltIn.show,BuiltIn.query:
+							return qstate.makeTuple(ast.type.unit,[]);
+						case BuiltIn.pi:
 							enforce(0,text("built-in '",id.name,"' not yet supported"));
 							assert(0);
 					}
@@ -2767,7 +2741,7 @@ struct Interpreter(QState){
 	}
 	void runStm2(Expression e,ref QState retState){
 		if(!qstate.state.length) return;
-		if(opt.trace && !functionDef.hasAttribute("artificial")){
+		if(opt.trace && !functionDef.boolAttribute(Id.s!"artificial")){
 			writeln(qstate);
 			writeln();
 			writeln("STATEMENT");
