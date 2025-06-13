@@ -1,0 +1,8 @@
+// args: --run --remove-loops
+
+def main(){
+	for i in 0..2{
+		a:=vector(3,0:𝔹);
+		(a[0],b):=(a[1],a[0]);
+	}
+}
