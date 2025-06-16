@@ -1,0 +1,7 @@
+// args: --run
+
+def main() {
+	n:=-5;
+	m:=-3;
+	return vector(n·m sub 0,0:𝔹):𝔹[];
+}
