@@ -1465,12 +1465,6 @@ struct QState{
 		r.quval=quval;
 		return r;
 	}
-	static Value makeReal(string value){
-		Value r;
-		r.type=ℝ(true);
-		r.fval=to!R(value);
-		return r;
-	}
 	static Value makeReal(R value){
 		Value r;
 		r.type=ℝ(true);
@@ -2235,20 +2229,26 @@ struct Interpreter(QState){
 				return r;
 			}
 			if(auto le=cast(LiteralExp)e){
-				if(util.among(le.lit.type,Tok!"0",Tok!".0")){
-					if(le.type==ℚt(true)){
-						auto n=le.lit.str.split(".");
-						if(n.length==1) n~="";
-						return QState.makeRational(ℚ((n[0]~n[1]).ℤ,ℤ(10)^^n[1].length));
-					}else if(util.among(le.type,ℤt(true),ℕt(true))){
-						return QState.makeInteger(ℤ(le.lit.str));
-					}else if(le.type==ℝ(true)){
-						return QState.makeReal(le.lit.str);
-					}else if(isFixedIntTy(le.type)){
-						return convertTo(QState.makeInteger(ℤ(le.lit.str)), le.type, false);
-					}else if(le.type==Bool(true)){
-						return QState.makeBool(le.lit.str=="1");
+				QState.Value val;
+				if(auto v = le.asIntegerConstant()) {
+					if(le.type==Bool(true)){
+						val = QState.makeBool(v.get() != 0);
+					} else {
+						val = QState.makeInteger(v.get());
 					}
+				} else if(auto v = le.asRationalConstant()) {
+					auto t = v.get();
+					auto num = t[0];
+					auto den = t[1];
+					if(t[3] < 0) {
+						den *= ℤ(t[2])^^(-t[3]);
+					} else {
+						num *= ℤ(t[2])^^t[3];
+					}
+					val = QState.makeRational(ℚ(num, den));
+				}
+				if(val.isValid()) {
+					return convertTo(val, le.type, false);
 				}
 			}
 			if(auto ite=cast(IteExp)e){

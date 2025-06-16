@@ -1,0 +1,7 @@
+def f[n: !N](const x: B^n) qfree: !N {
+	return n;
+}
+
+def main() {
+	return f[42 as !N](vector(((5:!uint[3]) - (5:!uint[3]) + 42) as !N, 0:B)); // error
+}
