@@ -1,0 +1,15 @@
+// args: --run
+
+def id[τ:*](x:τ)⇒x;
+
+def main(){
+	x:=(H(1),H(0));
+	def foo(){
+		x:=(H(0),H(1));
+		for i in 0..2{
+			(x[0],x[1]):=id(x[1],x[0]);
+		}
+		return x;
+	}
+	return (x,foo());
+}

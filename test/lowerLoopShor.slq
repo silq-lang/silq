@@ -1,0 +1,11 @@
+// args: --remove-loops
+
+import shor;
+
+def main(){
+	n:=21;
+	r:=shor(n);
+	assert(1<r&&r<n);
+	assert(n%r=0);
+	return r;
+}

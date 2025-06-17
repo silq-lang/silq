@@ -1,0 +1,5 @@
+// args: --remove-loops
+
+import dlog;
+
+def main()⇒dlog(3,3^13%p);
