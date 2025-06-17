@@ -1,4 +1,4 @@
-// args: --run
+// args: --run --remove-loops
 
 def foo(const r:!ℕ){
 	tau := vector(r,0:!int[r]);
