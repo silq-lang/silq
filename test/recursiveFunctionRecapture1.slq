@@ -1,0 +1,13 @@
+// args: --run
+
+def foo(n:!N,m:!ℤ)qfree:!ℤ{
+	def rec(i:!ℕ)qfree:!ℤ{
+		if i == 0{ return 1; }
+		k:=n;
+		rest := rec(i sub 1);
+		return rest+k+m;
+	}
+	return rec(n);
+}
+
+def main()⇒foo(2,2);
