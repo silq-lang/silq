@@ -1674,7 +1674,7 @@ struct QState{
 	Value callPrimitive(string prim, Value arg, Expression type, Location loc){
 		switch(prim){
 			case "dump":
-				dump(1);
+				dump(0);
 				stdout.flush();
 				return makeTuple(.unit,[]);
 			case "exit":
