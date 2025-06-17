@@ -2863,10 +2863,14 @@ struct Interpreter(QState){
 					intp.run(retState);
 					intp.closeScope(fe.bdy.blscope_);
 				};
+				ℤ mz=fe.leftExclusive==fe.rightExclusive?(lz+rz)>>1:fe.leftExclusive?rz:lz;
+				auto adj=floormod(mz-lz,sz);
+				if(fe.leftExclusive&&adj==0) adj=sz;
+				lz+=adj;
 				if(sz>=0){
-					for(ℤ j=lz+cast(int)fe.leftExclusive;j+cast(int)fe.rightExclusive<=rz;j+=sz) mixin(body_);
+					for(ℤ j=lz;j+cast(int)fe.rightExclusive<=rz;j+=sz) mixin(body_);
 				}else{
-					for(ℤ j=lz-cast(int)fe.leftExclusive;j-cast(int)fe.rightExclusive>=rz;j+=sz) mixin(body_);
+					for(ℤ j=lz;j-cast(int)fe.rightExclusive>=rz;j+=sz) mixin(body_);
 				}
 				qstate=intp.qstate;
 			}else{

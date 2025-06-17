@@ -1,0 +1,15 @@
+// args: --run
+
+def main(){
+	a:=[];
+	for i in [0..2..5){
+		a~=[i];
+	}
+	assert(a=[0,2,4]);
+	b:=[];
+	for i in (5..-2..0]{
+		b~=[i];
+	}
+	assert(b=[4,2,0]);
+	return (a,b);
+}
