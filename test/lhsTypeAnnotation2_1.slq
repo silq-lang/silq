@@ -1,0 +1,9 @@
+
+def f[n:!ℕ](x:𝔹^n){
+	return x:𝔹[];
+}
+
+def main(){
+	f[3](x):𝔹[]:=[1,0,1]:𝔹[]; // error
+	return x; // TODO
+}

@@ -1,6 +1,7 @@
+// args: --run
 
 def f[n:!ℕ](x:𝔹^n){
-	return x:𝔹[];
+	return x;
 }
 
 def main(){
