@@ -1,0 +1,10 @@
+// args: --remove-loops --run=2
+import communicationGame;
+
+def main(){
+	α₀:=(1/2,1/3+sqrt(3),1/3,1/2-sqrt(3),1/3); // k₀=2
+	α₁:=(1/2,3-sqrt(2),1/3,1/6,1+sqrt(2));     // k₁=5
+	(r₀,r₁):=(solve(α₀),solve(α₁));
+	assert((r₀,r₁)=(0,1));
+	return (r₀,r₁);
+}
