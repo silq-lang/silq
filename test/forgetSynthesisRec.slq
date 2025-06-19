@@ -1,0 +1,17 @@
+
+def f2(x: int[32], y: int[32]){
+	k := dup(x);
+    def rec(const k_: int[32],const x: int[32],const y: int[32]){
+        (k,) := (dup(k_),);
+        if measure[𝔹](H(0)) {
+            k +← y;
+            r := rec(k,x,y);
+        } else {
+            r := (k,);
+        }
+        return r;
+    }
+    (k,) = rec(k,x,y);
+	forget(k); // TODO
+	return (x,y);
+}

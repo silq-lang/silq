@@ -1,0 +1,5 @@
+def main() {
+	a := vector(2, 1:B);
+	if a[1]{a[1]:=X(a[1]);} // error
+	return a;
+}
