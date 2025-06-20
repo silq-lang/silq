@@ -1,0 +1,15 @@
+// args: --run
+
+def foo(x:𝔹)mfree{
+	y:=H(x);
+	z:=dup(y); // error
+	if z{
+		forget(z); // error
+		return y;
+	}else{
+		forget(y=0);
+		return 1;
+	}
+}
+
+def main()⇒foo(0);

@@ -1,0 +1,13 @@
+// args: --run
+
+def main(){
+	x:=H(0);
+	y:=dup(x);
+	if y {
+		forget(y); // TODO: improve diagnostic
+		H(0):=x;
+	}else{
+		forget(y); // error
+		H(0):=x;
+	}
+}

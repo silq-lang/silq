@@ -1,0 +1,6 @@
+
+def main(){
+	a:=0:𝔹;
+	if a{ a:=X(a); }
+	if a {} else { a:=X(a); }
+}

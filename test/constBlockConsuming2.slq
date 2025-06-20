@@ -1,0 +1,12 @@
+// args: --run
+
+def foo(const x:𝔹)mfree{
+	t:=dup(x);
+	if t{
+		return t;
+	}else{
+		return 0;
+	}
+}
+
+def main()⇒foo(0);

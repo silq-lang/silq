@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	x:=H(0);
+	y:=x;
+	y:=CNOT(y,y); // error
+	forget(y);
+}

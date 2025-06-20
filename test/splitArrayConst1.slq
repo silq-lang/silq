@@ -1,5 +1,6 @@
 def main() {
 	a := vector(2, 1:B);
+	a[0]:=H(a[0]);
 	if a[0]{a[1]:=X(a[1]);} // TODO
 	return a;
 }
