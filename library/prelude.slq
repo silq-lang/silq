@@ -1,12 +1,12 @@
 // prelude file implicitly imported into all silq programs
 
-def dup[τ:*](const x: τ) qfree: τ {
-	def impl(const x: τ) @[extern="primitive.dup"] qfree: τ;
-	return impl(x);
+def dup[τ:*](const x: τ) @[artificial] qfree: τ {
+	def impl[τ](const x: τ) @[extern="primitive.dup"] qfree: τ;
+	return impl[τ](x);
 }
-def measure[τ](x: τ) wild {
-	def impl(x: τ) @[extern="primitive.M"] wild: !τ;
-	return impl(x);
+def measure[τ](x: τ) @[artificial] wild {
+	def impl[τ](x: τ) @[extern="primitive.M"] wild: !τ;
+	return impl[τ](x);
 }
 def H(x: 𝔹) @[extern="primitive.H"] mfree: 𝔹;
 def X(x: 𝔹) @[extern="primitive.X"] qfree: 𝔹;
@@ -15,18 +15,18 @@ def Z(x: 𝔹) @[extern="primitive.Z"] mfree: 𝔹;
 def phase(φ: !ℝ) @[extern="primitive.P"] mfree: 𝟙;
 def rotX(φ: !ℝ, x: 𝔹) @[extern="primitive.rX"] mfree: 𝔹;
 def rotY(φ: !ℝ, x: 𝔹) @[extern="primitive.rY"] mfree: 𝔹;
-def rotZ(φ: !ℝ, x: 𝔹) @artificial mfree: 𝔹 {
+def rotZ(φ: !ℝ, x: 𝔹) @[artificial] mfree: 𝔹 {
 	def impl(φ: !ℝ, const x: 𝔹) @[extern="primitive.rZ"] mfree: 𝟙;
 	impl(φ, x);
 	return x;
 }
 
-def I(x:𝔹) @artificial qfree ⇒ x;
-def S(x:𝔹) @artificial mfree{
+def I(x:𝔹) @[artificial] qfree ⇒ x;
+def S(x:𝔹) @[artificial] mfree{
 	if x { phase(π/2); }
 	return x;
 }
-def CNOT(const x:𝔹,y:𝔹) @artificial qfree{
+def CNOT(const x:𝔹,y:𝔹) @[artificial] qfree{
 	y⊕=x;
 	return y;
 }
@@ -76,8 +76,8 @@ Complex:=!ℂ;
 // deterministic functions
 def floor(x:!ℝ) @[extern="primitive.real.floor"] lifted: !ℤ;
 def ceil(x:!ℝ) @[extern="primitive.real.ceil"] lifted: !ℤ;
-def round(x:!ℝ) @artificial lifted:!ℤ ⇒ floor(x+1/2);
-def inℤ(x:!ℝ) @artificial lifted:!𝔹 ⇒ x==floor(x);
+def round(x:!ℝ) @[artificial] lifted:!ℤ ⇒ floor(x+1/2);
+def inℤ(x:!ℝ) @[artificial] lifted:!𝔹 ⇒ x==floor(x);
 def sqrt(x:!ℝ) @[extern="primitive.real.sqrt"] lifted: !ℝ;
 def exp(x:!ℝ) @[extern="primtiive.real.exp"] lifted: !ℝ;
 def log(x:!ℝ) @[extern="primtiive.real.log"] lifted: !ℝ;
@@ -109,10 +109,10 @@ def max[n:!ℕ](x:!ℝ^n)lifted:!ℝ{
 	return r;
 }
 
-def array[τ:*](n: !ℕ,const x:τ) @artificial lifted: τ[]⇒vector[τ](n, x);
-def vector[τ:*](n:!ℕ,const x:τ) lifted: τ^n {
-	def impl(n:!ℕ, const x:τ) @[extern="primitive.vector"] lifted: τ^n;
-	return impl(n, x);
+def array[τ:*](n: !ℕ,const x:τ) @[artificial] lifted: τ[]⇒vector[τ](n, x);
+def vector[τ:*](n:!ℕ,const x:τ) @[artificial] lifted: τ^n {
+	def impl[τ](n: !ℕ, const x: τ) @[extern="primitive.vector"] lifted: τ^n;
+	return impl[τ](n, x);
 }
 
 def print[τ:*](x:!τ) @[extern="primitive.print"] lifted: 𝟙;
