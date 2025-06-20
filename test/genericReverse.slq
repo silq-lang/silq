@@ -1,5 +1,5 @@
 
-def rev[a](f: const a!→mfree a)⇒reverse(f); // error
+def rev[a](f: const a!→mfree a)⇒reverse(f);
 def main(){
 	f:=reverse(dup[𝔹^2]); // (const 𝔹^2)×(𝔹^2) !→qfree 𝟙
 	g:=rev(dup[𝔹^2]);

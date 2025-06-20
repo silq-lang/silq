@@ -30,11 +30,11 @@ def CNOT(const x:𝔹,y:𝔹) @artificial qfree{
 	y⊕=x;
 	return y;
 }
-def reverse[τ:*,χ:qtype,φ:qtype](f: const τ×χ !→mfree φ)(const c: τ, x:φ) @artificial mfree: χ{
+def reverse[τ:*,χ:qtype,φ:*](f: const τ×χ !→mfree φ)(const c: τ, x:φ) @artificial mfree: χ{
 	f(c,y):=x;
 	return y;
 }
-def __reverse_qfree[τ:*,χ:qtype,φ:qtype](f: const τ×χ !→qfree φ)(const c: τ, x:φ) @artificial qfree: χ{ // TODO: use attribute polymorphism instead
+def __reverse_qfree[τ:*,χ:qtype,φ:*](f: const τ×χ !→qfree φ)(const c: τ, x:φ) @artificial qfree: χ{ // TODO: use attribute polymorphism instead
 	f(c,y):=x;
 	return y;
 }
