@@ -1,8 +1,8 @@
-// // TODO: go over this.
+// TODO: go over this.
 def solve[n:!ℕ](x:𝔹^n, y:𝔹)qfree{
-    for half_p in [1..((n-1) div 2)]{
-        for k in [0..(2*half_p)..n-1]{
-            for j in [0..half_p-1]{
+    for half_p in [1..((n-1) div 2)]{ /// warning
+        for k in [0..(2*half_p)..n-1]{ /// warning
+            for j in [0..half_p-1]{ /// warning
                 x[k + j] := X(x[k + j]);
             }
         }
@@ -12,8 +12,8 @@ def solve[n:!ℕ](x:𝔹^n, y:𝔹)qfree{
         if (x == vector(n,0:!𝔹)){
             y := X(y);
         }
-        for k in [0..(2*half_p)..n-1]{
-            for j in [0..half_p-1]{
+        for k in [0..(2*half_p)..n-1]{ /// warning
+            for j in [0..half_p-1]{ /// warning
                 x[k + j] := X(x[k + j]);
             }
         }

@@ -6,7 +6,7 @@ def main(){
 		n+=1;
 		m=1;
 	}
-	n+=1; // error
-	m+=1; // error
-	return (n, m); // error
+	n+=1; /// error
+	m+=1; /// error
+	return (n, m); /// error
 }

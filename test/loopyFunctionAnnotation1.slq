@@ -7,5 +7,5 @@ def meas[n:!ℕ](N:!ℕ){
 }
 
 def main()mfree{
-	return meas[2](4); // error
+	return meas[2](4); /// error
 }

@@ -1,7 +1,7 @@
 
 def main() {
 	x := false;
-	y := H(0:B); // error
+	y := H(0:B); /// error
 	z := dup(y);
 	return (x && measure(y), H(z));
 }

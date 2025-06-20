@@ -4,11 +4,11 @@ def main(){
 	y:=dup(x);
 	z:=H(0:𝔹);
 	if z{
-		forget(y); // TODO: error
+		forget(y); /// TODO error
 		x:=H(x);
 	}else{
-		forget(y); // error
-		y:=H(y); // error
+		forget(y); /// error
+		y:=H(y); /// error
 	}
 	return (x,z);
 }

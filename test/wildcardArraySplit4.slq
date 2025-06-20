@@ -2,6 +2,6 @@
 
 def main(){
 	a:=(1,2,3):!ℕ[];
-	(x:_^2)~(y:_^2):=a; // error
+	(x:_^2)~(y:_^2):=a; /// run_error
 	return (x,y);
 }

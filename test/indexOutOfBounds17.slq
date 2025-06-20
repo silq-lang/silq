@@ -4,6 +4,6 @@ def main(){
 	x:=0:uint[2];
 	x[1]:=H(x[1]);
 	y:=1:uint[2];
-	y[x]:=H(y[x]); // error
+	y[x]:=H(y[x]); /// run_error
 	return (x,y);
 }

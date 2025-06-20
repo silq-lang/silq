@@ -8,6 +8,6 @@ def foo(const x:𝔹){
 }
 def main(){
 	x:=H(0:𝔹);
-	while foo(x){} // error
+	while foo(x){} /// error
 	return x;
 }

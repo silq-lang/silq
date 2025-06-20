@@ -2,7 +2,7 @@
 
 def main(){
 	x:=()⇒assert(0);
-	while true{ // error
+	while true{ /// error
 		x=()⇒x;
 	}
 }

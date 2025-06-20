@@ -9,7 +9,7 @@ def zip[a,b,n:!ℕ](xs:a^n,ys:b^n)qfree:(a×b)^n{
 		(y,)~ys:=ys;
 		r~=[(x,y)];
 	}
-	([],[]):=(xs,ys); // // TODO: make this unnecessary
+	([],[]):=(xs,ys); // TODO: make this unnecessary
 	return r coerce (a×b)^n;
 }
 

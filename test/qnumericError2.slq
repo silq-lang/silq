@@ -2,5 +2,5 @@
 def id[τ:*](x:τ)⇒x;
 
 def main(){
-	x:=id[ℕ](0); // error
+	x:=id[ℕ](0); /// error
 }

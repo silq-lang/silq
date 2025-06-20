@@ -5,5 +5,5 @@ def foo[τ](){
 }
 
 def main(){
-	return foo[assert(0):*](); // error
+	return foo[assert(0):*](); /// run_error
 }

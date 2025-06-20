@@ -2,6 +2,6 @@
 
 def main(){
 	for x in 0..10{
-		assert(x%0==x); // error
+		assert(x%0==x); /// run_error
 	}
 }

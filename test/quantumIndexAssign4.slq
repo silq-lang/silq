@@ -2,7 +2,7 @@
 def main(){
 	x:=(0,0);
 	i:=H(0);
-	x[i]=1; // error
+	x[i]=1; /// error
 	__show(__query("dep",x));
 	forget(i=(x=(0,1)));
 }

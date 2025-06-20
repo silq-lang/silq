@@ -1,0 +1,9 @@
+// args: --run
+
+def slice(a: !N^0, i: !N) {
+	return a[i..i]; /// run_error
+}
+
+def main() {
+	return slice((), 1);
+}

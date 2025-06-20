@@ -1,6 +1,6 @@
 def foo[n:!ℕ][τ:*^n](xs: !∏ τ, ys: ∏ τ)⇒ ys;
 
 def main(){
-	return foo[1]((1:!uint[2],),(2:uint[2],)); // TODO
+	return foo[1]((1:!uint[2],),(2:uint[2],)); /// TODO
 }
 

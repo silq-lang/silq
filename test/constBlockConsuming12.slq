@@ -3,6 +3,6 @@
 def main(){
 	x:=H(0);
 	y:=x;
-	y:=CNOT(y,y); // error
+	y:=CNOT(y,y); /// error
 	forget(y);
 }

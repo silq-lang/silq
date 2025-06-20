@@ -4,6 +4,6 @@ def twice(n:!ℕ)qfree⇒2*n;
 
 def main(){
 	x:=0:int[twice(3)];
-	x:=x coerce int[6]; // TODO
+	x:=x coerce int[6]; /// TODO
 	return x;
 }

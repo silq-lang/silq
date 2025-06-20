@@ -5,11 +5,10 @@ import std.process, std.string, std.array;
 import std.algorithm, std.conv, std.range;
 import std.datetime.stopwatch;
 import std.typecons : Flag, Yes, No, Tuple, tuple;
+import std.json;
 
-int exitCode;
 auto shell(string cmd){
 	auto result=executeShell(cmd);
-	exitCode=result.status;
 	return result.output;
 }
 
@@ -75,7 +74,7 @@ int main(string[] args){
 	Duration totalTime;
 	foreach(source;sources){
 		if(source.startsWith("./")) source=source[2..$];
-		if(source.fileStartsWithFlag("skip")||dashDashValid&&source.getExpected.any!(info=>info.error)){
+		if(source.fileStartsWithFlag("skip")||dashDashValid&&source.getExpected.any!(info=>info.kind)){
 			if(!dashDashBad&&!dashDashTodo){
 				if(colorize) writeln(TODOColor,BOLD,"skipped",RESET,"         ",source);
 				else writeln("skipping ",source);
@@ -178,12 +177,18 @@ struct Summary{
 	}
 }
 
-struct Info{
+struct Info {
 	int line;
-	bool error;
-	bool todo;
-}
+	string kind;
+	string message;
+	bool isTODO;
 
+	int opCmp(ref const Info i) const {
+		if(line != i.line) return line < i.line ? -1 : 1;
+		if(kind != i.kind) return kind < i.kind ? -1 : 1;
+		return 0;
+	}
+}
 
 enum Status{
 	expected,
@@ -191,100 +196,98 @@ enum Status{
 	missing,
 	ok,
 }
+
 struct Comparison{
 	Status status;
 	Info info;
 }
 
-auto compare(Info[] expected, int[] actual){
-	int ai=0;
-	Comparison[] result;
-	foreach(i,x;expected){
-		while(ai<actual.length&&actual[ai]<x.line) ai++;
-		if(ai==actual.length){
-			foreach(xx;expected[i..$])
-				result~=Comparison(Status.missing, xx);
-			break;
+Comparison[] compare(Info[] expected, Info[] actual) {
+	int ai = 0;
+	auto result = appender!(Comparison[]);
+	foreach(exp; expected) {
+		while(ai < actual.length && actual[ai].line < exp.line) {
+			result.put(Comparison(Status.unexpected, actual[ai]));
+			ai++;
 		}
-		result~=Comparison(x.line==actual[ai]?Status.expected:Status.missing,x);
-	}
-	ai=0;
-	foreach(i,a;actual){
-		while(ai<expected.length&&expected[ai].line<a) ai++;
-		if(ai==expected.length){
-			foreach(aa;actual[i..$])
-				result~=Comparison(Status.unexpected, Info(aa,true,false));
-			break;
+		bool match = false;
+		while(ai < actual.length && actual[ai].line == exp.line) {
+			auto act = actual[ai];
+			ai++;
+			if(exp.isTODO) {
+				match = true;
+				act.isTODO = true;
+			}
+			if(act.kind != exp.kind) {
+				result.put(Comparison(Status.unexpected, act));
+				continue;
+			}
+			match = true;
+			result.put(Comparison(Status.expected, act));
 		}
-		if(expected[ai].line!=a) result~=Comparison(Status.unexpected, Info(a, true, false));
+		if(!match) {
+			result.put(Comparison(Status.missing, exp));
+		}
 	}
-	return result;
+	while(ai < actual.length) {
+		result.put(Comparison(Status.unexpected, actual[ai]));
+		ai++;
+	}
+	return result[];
 }
 
-Tuple!(Comparison[],Duration) getResults(string source){
+Tuple!(Comparison[], Duration) getResults(string source){
 	auto expected=source.getExpected;
-	string[] output;
 	auto sw = StopWatch(Yes.autoStart);
-	auto actual = source.getActual(output);
+	bool expectOK = expected.all!(i => !i.kind && !i.isTODO);
+	auto actual = source.getActual(expectOK);
 	sw.stop();
 	auto result=compare(expected, actual);
-	if(exitCode>=128||(exitCode!=0&&!actual.length||exitCode!=1&&actual.length)&&!args.canFind("--error-json"))
-		result~=Comparison(Status.unexpected,Info(-1,true,false));
-	foreach(i,l;output){
-		switch(l.strip){
-		default: break;
-		case "FIXED": result~=Comparison(Status.expected,Info(cast(int)i+1,true,true)); break;
-		case "PASS": result~=Comparison(Status.ok,Info(cast(int)i+1,false,false)); break;
-		case "TODO": result~=Comparison(Status.expected,Info(cast(int)i+1,false,true)); break;
-		case "FAIL": result~=Comparison(Status.unexpected,Info(cast(int)i+1,true,false)); break;
-		}
-		if(l.startsWith("core.exception.AssertError"))
-			result~=Comparison(Status.unexpected,Info(cast(int)i+1,true,false));
-	}
-	if(!result.length)
-		result~=Comparison(Status.ok,Info(0,true,false));
-	return tuple(result,sw.peek());
+	return tuple(result, sw.peek());
 }
 
 auto summarize(Comparison[] comp,bool writeLines){
 	if(writeLines) writeln();
 	Summary result;
-	if(!comp.length) result.unspecified++;
 	foreach(c;comp){
 		final switch(c.status) with(Status){
 			case expected:
-				if(c.info.error){
-					if(c.info.todo){
-						result.obsoleteTodos++;
-						if(writeLines) writeln("FIX AT LINE ",c.info.line);
-					}else result.expectedErrors++;
-				}else{
-					if(c.info.todo){
-						result.todos++;
-						if(writeLines) writeln("TODO AT LINE ",c.info.line);
-					}else{
-						result.missingErrors++;
-						if(writeLines) writeln("REGRESSION AT LINE ",c.info.line);
-					}
+				assert(c.info.kind);
+				if(c.info.isTODO){
+					// Got an error as expected, marked as TODO
+					result.obsoleteTodos++;
+					if(writeLines) writef("FIX AT LINE %d\n", c.info.line);
+				}else {
+					// Got an error as expected, marked as error
+					result.expectedErrors++;
 				}
 				break;
 			case unexpected:
-				assert(c.info.error);
-				result.unexpectedErrors++;
-				if(writeLines) writeln("REGRESSION AT LINE ",c.info.line);
+				assert(c.info.kind);
+				if(c.info.isTODO) {
+					// Unexpected error, marked as TODO <no-error>
+					result.todos++;
+					if(writeLines) writef("TODO UNEXPECTED ERRROR AT LINE %d: [%s] %s\n", c.info.line, c.info.kind, c.info.message);
+				} else if(c.info.kind != "note" && c.info.kind != "message") {
+					// Unexpected error, not marked
+					result.unexpectedErrors++;
+					if(writeLines) writef("UNEXPECTED ERROR AT LINE %d: [%s] %s\n", c.info.line, c.info.kind, c.info.message);
+				}
 				break;
 			case missing:
-				if(c.info.todo){
-					if(c.info.error){
-						result.todos++;
-						if(writeLines) writeln("TODO ERROR AT LINE ",c.info.line);
-					}else{
-						result.obsoleteTodos++;
-						if(writeLines) writeln("FIX AT LINE ",c.info.line);
-					}
-				}else{
+				if(!c.info.kind){
+					// No error, marked as TODO <no-error>
+					assert(c.info.isTODO);
+					result.obsoleteTodos++;
+					if(writeLines) writef("FIX AT LINE %d\n", c.info.line);
+				} else if(c.info.isTODO) {
+					// No error, marked as TODO error
+					result.todos++;
+					if(writeLines) writef("TODO MISSING ERROR AT LINE %d: [%s] %s\n", c.info.line, c.info.kind, c.info.message);
+				} else if(c.info.kind != "note" && c.info.kind != "message") {
+					// No error, not marked
 					result.missingErrors++;
-					if(writeLines) writeln("REGRESSION AT LINE ",c.info.line);
+					if(writeLines) writef("MISSING ERROR AT LINE %d: [%s] %s\n", c.info.line, c.info.kind, c.info.message);
 				}
 				break;
 			case ok:
@@ -299,67 +302,60 @@ struct Comment{
 	string text;
 }
 
-auto comments(string code){
+auto errComments(string code){
 	Comment[] result;
 	int line=1;
 	for(;;){
-		if(code.startsWith("//")){
-			code.popFront(); code.popFront();
+		if(code.startsWith("///")){
+			code.popFront(); code.popFront(); code.popFront();
 			auto start = code.ptr;
 			while(!code.empty&&code.front!='\n')
 				code.popFront();
 			auto text = start[0..code.ptr-start];
 			result~=Comment(line,text);
 		}
-		if(code.startsWith("\n")) line++;
-		if(code.startsWith("/*"))
-			while(!code.startsWith("*/")){
-				if(code.startsWith("\n")) line++;
-				code.popFront();
-			}
-		if(code.startsWith("/+")){
-			int nest=1;
-			code.popFront();
-			while(nest){
-				code.popFront();
-				if(code.startsWith("\n")) line++;
-				else if(code.startsWith("/+")){
-					code.popFront();
-					nest++;
-				}else if(code.startsWith("+/")){
-					code.popFront();
-					nest--;
-				}
-			}
-		}
 		if(code.empty) break;
+		if(code.front=='\n') line++;
 		code.popFront();
 	}
 	return result;
 }
 
-auto analyze(Comment comment){
+auto analyze(Comment comment) {
 	Info result;
-	result.line=comment.line;
-	auto rest=comment.text.find("error");
-	result.error=rest.startsWith("error")&&!rest.startsWith("error-");
-	result.todo=comment.text.canFind("TODO")&&!comment.text.canFind("// TODO");
+	result.line = comment.line;
+
+	string text = comment.text.stripLeft();
+	if(text == "TODO") {
+		result.text = text;
+		result.isTODO = true;
+		return result;
+	}
+	if(text.startsWith("TODO ")) {
+		result.isTODO = true;
+		text = text[5..$];
+	}
+
+	auto i = text.indexOf(' ');
+	if(i < 0) i = text.length;
+	result.kind = text[0..i];
+	result.text = text[i..$].stripLeft();
 	return result;
 }
 
 auto getExpected(string source){
 	Info[] result;
 	auto code = file.readText(source);
-	foreach(comment;code.comments){
+	foreach(comment;code.errComments){
 		auto info = comment.analyze;
-		if(info.error||info.todo)
+		if(info.kind || info.isTODO)
 			result~=info;
 	}
 	return result;
 }
 
 string args;
-int[] getActual(string source,out string[] output){
+Info[] getActual(string source, bool expectOK){
 	auto fin=File(source,"r");
 	args=fin.readln();
 	if(args.startsWith("// args: "))
@@ -369,25 +365,44 @@ int[] getActual(string source,out string[] output){
 	if(dashDashNoRun) args~="--run=0 ";
 	if(dashDashRemoveLoops) args~="--remove-loops ";
 	if(dashDashSplitComponents) args~="--split-components ";
-	output = shell("../silq "~args~source~" 2>&1").splitLines;
-	int[] result;
-	static bool isBad(string x){
-		if(x.canFind(": error:")) return true;
-		if(x.startsWith("core.exception.AssertError"))
-			return true;
-		return false;
+	auto cmd = "../silq --error-json "~args~source;
+
+	auto stdout = File.tmpfile();
+	auto stderr = File.tmpfile();
+	auto pid = spawnShell(cmd, stdout: stdout, stderr: stderr, config: Config.retainStdout | Config.retainStderr);
+	int exitCode = pid.wait();
+
+	stdout.rewind();
+	stderr.rewind();
+
+	auto err = reduce!((a, b) => a ~ b)(cast(ubyte[])null, stderr.byChunk(65536));
+	string[] output = stdout.byLine().map!(s => cast(string)s).array;
+
+	Info[] result;
+
+	if(exitCode > 1 || (expectOK && exitCode != 0)) {
+		result ~= [Info(-1, "crash", format("exit code %s; output: ", exitCode) ~ cast(string)err)];
 	}
-	foreach(err;output.filter!isBad){
-		while(err.startsWith("<mixin@")) err=err["<mixin@".length..$];
-		if(err.startsWith(source~":")){
-			auto tmp = err[(source~":").length..$];
-			auto line = tmp.parse!int;
-			result~=line;
-		}else{
-			result~=-1;
+
+	string line = output[$-1];
+	if(!line.startsWith("[")) {
+		result ~= [Info(-1, "invalid", "unexpected output: " ~ cast(string)line)];
+	} else {
+		auto data = parseJSON(line).array;
+		foreach(diag; data) {
+			int lineno;
+			JSONValue start = diag.object["start"];
+			if(start.type() == JSONType.null_) {
+				lineno = -1;
+			} else {
+				lineno = cast(int) start.object["line"].integer;
+			}
+			string kind = diag.object["severity"].str;
+			string message = diag.object["message"].str;
+			result ~= [Info(lineno, kind, message)];
 		}
 	}
-	result=result.sort.uniq.array;
+	result=result.sort.array;
 	return result;
 }
 

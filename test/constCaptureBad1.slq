@@ -1,7 +1,7 @@
 
 def foo[τ](x:τ){
     def bar(const __tmp8: !ℝ)qfree{
-		x; // error
+		x; /// error
 		__show(typeof(bar));
     }
 	return x;

@@ -1,6 +1,6 @@
-// args: --error-json
+// --run
 
 def main[r:!ℕ](){
-	for i in [0..r] { x:=0; }
-	asdf
+	for i in [0..r] { x:=0; } // warning /// warning
+	asdf /// error
 }

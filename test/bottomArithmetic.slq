@@ -1,6 +1,7 @@
+// args: --run
 
 def main(){
-	x₀:=1+assert(false);
+	x₀:=1+assert(false); /// run_error
 	__show(__query("type",x₀));
 	x₁:=assert(false)+(2:!uint[2]);
 	__show(__query("type",x₁));

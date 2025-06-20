@@ -1,8 +1,8 @@
 // args: --run
 
 def main(){
-	H(x):=2/3; // error
+	H(x):=2/3; /// error
 	forget(H(x)=0);
 	n:=3;
-	x:=(0:int[n]):uint[n]; // error
+	x:=(0:int[n]):uint[n]; /// error
 }

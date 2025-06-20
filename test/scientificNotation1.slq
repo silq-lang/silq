@@ -1,6 +1,6 @@
 // args: --run
 
 def main(){
-	assert((1e100:!ℤ)%10000=0); // TODO
+	assert((1e100:!ℤ)%10000=0); /// TODO
 	assert((1e-100:!ℚ)·(1e100:!ℚ)=1);
 }

@@ -10,21 +10,21 @@ def main(){
 	g:=0.137:!ℝ;
 	h:=-1.37:!ℝ;
 	assert(a%a=0);
-	assert(a%b=-4); // error
+	assert(a%b=-4); /// error
 	assert(a%c=13);
-	assert(a%d=-16); // error
-	assert(a%e=4/3); // error
-	assert(a%f=-1); // error
-	assert(approx(a%g,0.122)); // error
-	assert(approx(a%h,-0.7)); // error
-	assert(b%a=9); // error
+	assert(a%d=-16); /// error
+	assert(a%e=4/3); /// error
+	assert(a%f=-1); /// error
+	assert(approx(a%g,0.122)); /// error
+	assert(approx(a%h,-0.7)); /// error
+	assert(b%a=9); /// error
 	assert(b%b=0);
 	assert(b%c=6);
 	assert(b%d=-17);
-	assert(b%e=4/3); // error
-	assert(b%f=-1/5); // error
-	assert(approx(b%g,0.125)); // error
-	assert(approx(b%h,-0.56)); // error
+	assert(b%e=4/3); /// error
+	assert(b%f=-1/5); /// error
+	assert(approx(b%g,0.125)); /// error
+	assert(approx(b%h,-0.56)); /// error
 	assert(c%a=10);
 	assert(c%b=-11);
 	assert(c%c=0);

@@ -1,5 +1,5 @@
 
 def main(){
 	x:=vector(3,0:𝔹);
-	H(x[-1]):=H(x[-1]); // error
+	H(x[-1]):=H(x[-1]); /// error
 }

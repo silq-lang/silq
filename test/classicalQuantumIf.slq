@@ -2,7 +2,7 @@
 
 def foo(x:𝔹)qfree{
 	if x{
-		assert(false); // TODO: error?
+		assert(false); /// TODO run_error // classical assert in quantum control
 	}
 	return x;
 }

@@ -2,6 +2,6 @@
 
 def main(){
 	x:=[H(0:𝔹),H(1:𝔹)];
-	y:=x coerce int[3]; // error
+	y:=x coerce int[3]; /// run_error
 	return y;
 }

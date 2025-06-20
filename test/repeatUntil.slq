@@ -1,4 +1,4 @@
-// // TODO
+// TODO
 /+
 def solve(){
 	repeat{ (q₀,q₁):=(H(0:𝔹),H(0:𝔹)); }

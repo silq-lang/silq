@@ -8,6 +8,6 @@ def create_bill[n:!N]()qfree{
 def main(){
 	n:=5;
 	bill:=create_bill[n]();
-	bill:=measure(bill):uint[n]; // TODO
+	bill:=measure(bill):uint[n]; /// TODO
 	measure(bill);
 }

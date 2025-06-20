@@ -7,6 +7,6 @@ def main() {
 		forget(x=1:𝔹);
 	}
 	h:=f(g);//: 𝔹 x !ℕ !→ qfree 𝟙;
-	h(x, 42) := (); // TODO
-	return x; // TODO
+	h(x, 42) := (); /// TODO
+	return x; /// TODO
 }

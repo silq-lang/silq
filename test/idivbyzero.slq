@@ -1,0 +1,10 @@
+// args: --run
+
+def f(): !N {
+	return 42;
+}
+
+def main(): !N {
+	x := f();
+	return x div 0; /// run_error
+}

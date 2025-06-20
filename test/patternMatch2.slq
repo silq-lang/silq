@@ -1,8 +1,8 @@
 // args: --run
 
 def f[n:!ℕ](x:𝔹^n)mfree{
-	if n=0{ return x; } // TODO
-	(H(a),)~f[n sub 1](b):=x; // TODO
+	if n=0{ return x; } /// TODO
+	(H(a),)~f[n sub 1](b):=x; /// TODO
 	return (a,)~b;
 }
 def main(){

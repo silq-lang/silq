@@ -1,5 +1,5 @@
 
-def polyPauliRotY[d:!ℕ](coeffs:!ℝ^(d+1))[n:!ℕ](const state:𝔹^n,target:a)mfree{ // error
+def polyPauliRotY[d:!ℕ](coeffs:!ℝ^(d+1))[n:!ℕ](const state:𝔹^n,target:a)mfree{ /// error
 	rotation_coeffs:=vector(2^n,0:!ℝ);
 	rotation_coeffs=for2_(0,d+1)((i:!ℕ,rotation_coeffs:!ℝ^(2^n),mcoeffs:!ℕ^(2^n))qfree{
 		nrotation_coeffs:=mkvec(2^n)((j:!ℕ)qfree⇒rotation_coeffs[j]+coeffs[i]*mcoeffs[j]);

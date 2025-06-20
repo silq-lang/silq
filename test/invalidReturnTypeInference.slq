@@ -1,4 +1,4 @@
-def foo(){ // error
+def foo(){ /// error
 	n := 0;
 	return 0: int[n];
 }

@@ -1,7 +1,7 @@
 // simplified algorithm for evaluating balanced binary nand trees
 // Figure 2 in paper: http://www.ucw.cz/~robert/papers/andor-siamjc.pdf
 
-// (down,left,right):=(0,1,2):!uint[2]^3; // // TODO
+// (down,left,right):=(0,1,2):!uint[2]^3; // TODO
 down:=0:!uint[2];
 left:=1:!uint[2];
 right:=2:!uint[2];
@@ -107,11 +107,11 @@ def evalNand[V:qtype](
 ){
 	τ:=320·floor(sqrt(N)) coerce !ℕ;
 	n:=log₂(N);
-	τ=2^n; // // TODO: QFT on ℤ_N where N is not a power of two
+	τ=2^n; // TODO: QFT on ℤ_N where N is not a power of two
 	//t:=makeUniform(τ);
 	t:=0:uint[n];
 	for i in 0..n{ t[i]:=H(t[i]); }
-	phaseQ((t[0],t[1]) as uint[2]):=(); // // TODO: slicing for integers?
+	phaseQ((t[0],t[1]) as uint[2]):=(); // TODO: slicing for integers?
 	v:=r₂;
 	c:uint[2]:=left;
 	for i in 0..τ{

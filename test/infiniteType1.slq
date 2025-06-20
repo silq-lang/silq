@@ -1,4 +1,4 @@
 // args: --inference-limit=5
 
-def foo()⇒foo; // error
+def foo()⇒foo; /// error
 

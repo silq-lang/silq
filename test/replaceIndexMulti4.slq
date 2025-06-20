@@ -12,7 +12,7 @@ def main(){
 	for i in 1..n{
 		(a[i-1],a[i]):=id(a[i],a[i-1]);
 		(a[i-1],a[i]):=id(a[i],a[-1+i]);
-		(a[i-1],a[i],a[-1+i]):=id(a[i],a[-1+i],a[i-1]); // error
+		(a[i-1],a[i],a[-1+i]):=id(a[i],a[-1+i],a[i-1]); /// error
 		(a[i],a[i-1]):=(a[i-1],a[i]);
 		(a[i],a[i-1]):=id(a[i-1],a[i]);
 		(a[i],a[i-1]):=id(a[-1+i],a[i]);

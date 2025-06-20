@@ -9,7 +9,7 @@ def main(){
 			for k in 0..4{
 				ni:=i+(k=0)-(k=1);
 				nj:=j+(k=2)-(k=3);
-				if 0≤ni∧ni<n∧0≤nj∧nj<m{ // // TODO: chained comparisons
+				if 0≤ni∧ni<n∧0≤nj∧nj<m{ // TODO: chained comparisons
 					y[i][j]+=x[ni][nj];
 				}
 			}

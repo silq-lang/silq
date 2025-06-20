@@ -4,7 +4,7 @@ def main(){
 	x := H(0);
 	y := 0;
 	if x {
-		y := X(y); // TODO
+		y := X(y); /// TODO
 	}
 	forget(x=y);
 	assert(!measure(H(y)));

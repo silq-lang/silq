@@ -3,7 +3,7 @@ def main(){
 	x:=vector(2,vector(2,0:𝔹));
 	i:=H(0);
 	k:=(1,1);
-	(x[0][i],x[1][0])=k; // error
+	(x[0][i],x[1][0])=k; /// error
 	__show(__query("dep",x)); // {i}
 	return i;
 }

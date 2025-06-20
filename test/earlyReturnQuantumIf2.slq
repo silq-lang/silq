@@ -3,7 +3,7 @@ def foo(const x:𝔹){
 	if x{
 		return ([1],[]);
 	}else{
-		return ([],[0]); // error
+		return ([],[0]); /// error
 	}
 }
 def main(){

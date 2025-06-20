@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	qs := (0:!int[3]);
+	x:=1:!𝔹;
+	(x,qs[0]):=(qs[0],x); /// TODO
+	assert(x=0);
+	assert(qs=1);
+}

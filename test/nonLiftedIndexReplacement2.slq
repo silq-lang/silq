@@ -11,7 +11,7 @@ def bad[n:!ℕ](const x:int[n])mfree{
 def main(){
 	xs:=(0,0):𝔹^2;
 	i:=0:int[1];
-	xs[good(i)]:=X(xs[good(i)]); // TODO
-	xs[bad(i)]:=X(xs[bad(i)]); // error
+	xs[good(i)]:=X(xs[good(i)]); /// TODO
+	xs[bad(i)]:=X(xs[bad(i)]); /// error
 }
 

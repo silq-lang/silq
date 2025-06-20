@@ -6,10 +6,10 @@ def main(){
 		d:=H(d);
 		if d { n-=2; } else { n+=1; }
 		if measure(n<-3||n>3){
-			forget(n); // error
+			forget(n); /// error
 			return d;
 		}
 	}
-	forget(n); // error
+	forget(n); /// error
 	return d;
 }

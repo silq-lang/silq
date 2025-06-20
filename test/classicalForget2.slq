@@ -1,10 +1,10 @@
 def main(){
 	x:=1;
 	forget(x);
-	x+=1; // error
+	x+=1; /// error
 	(x,y):=(1,2);
 	x+=1;
 	forget(x,y);
-	x+=1; // error
-	return y; // error
+	x+=1; /// error
+	return y; /// error
 }

@@ -2,7 +2,7 @@
 def main(){
 	a:=vector(1,0:𝔹);
 	a[0]:=H(a[0]);
-	(a[0],b):=(a[0],a); // error
-	__show(__query("dep",__tmp1)); // TODO: error
-	return __tmp1; // TODO: error
+	(a[0],b):=(a[0],a); /// error
+	__show(__query("dep",__tmp1)); /// TODO error
+	return __tmp1; /// TODO error
 }

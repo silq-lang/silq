@@ -3,6 +3,6 @@ def foo(a:!ℕ,b:!ℕ)lifted:!ℕ;
 
 def main() {
 	x := [0,1,1];
-	x[2] := foo(x[2],1); // TODO: point out that the use in the right-hand side is `const`
+	x[2] := foo(x[2],1); /// error /// TODO: point out that the use in the right-hand side is `const`
 }
 

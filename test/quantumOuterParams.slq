@@ -1,0 +1,9 @@
+def func1[outer: B](inner: B) qfree: B {
+	// `outer` is not captured, so OK
+	return inner;
+}
+
+def func2[outer: B](inner: B) qfree: B {
+	if outer {} /// error
+	return inner;
+}

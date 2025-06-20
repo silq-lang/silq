@@ -2,6 +2,6 @@
 
 def main(){
 	x:=1;
-	x sub=2; // error
+	x sub=2; /// run_error
 	assert(x=0);
 }

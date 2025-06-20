@@ -3,7 +3,7 @@
 def main(){
 	def foo(){
 		def bar(){
-			return 1/0; // error
+			return 1/0; /// run_error
 		}
 		return bar();
 	}

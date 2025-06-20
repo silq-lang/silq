@@ -1,1 +1,1 @@
-def foo():invalid{ foo(); } // error
+def foo():invalid{ foo(); } /// error

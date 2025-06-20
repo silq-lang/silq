@@ -29,8 +29,8 @@ def main(){
 	(s≤b):=sleb;
 	sles:=s≤s;
 	(s≤s):=sles;
-	sleu:=s≤u; // error
-	(s≤u):=sleu; // error
+	sleu:=s≤u; /// error
+	(s≤u):=sleu; /// error
 	slebc:=s≤bc;
 	(s≤bc):=slebc;
 	slen:=s≤n;
@@ -43,8 +43,8 @@ def main(){
 	(s≤r):=sler;
 	uleb:=u≤b;
 	(u≤b):=uleb;
-	ules:=u≤s; // error
-	(u≤s):=ules; // error
+	ules:=u≤s; /// error
+	(u≤s):=ules; /// error
 	uleu:=u≤u;
 	(u≤u):=uleu;
 	ulebc:=u≤bc;
@@ -157,8 +157,8 @@ def main(){
 	(s<b):=sltb;
 	slts:=s<s;
 	(s<s):=slts;
-	sltu:=s<u; // error
-	(s<u):=sltu; // error
+	sltu:=s<u; /// error
+	(s<u):=sltu; /// error
 	sltbc:=s<bc;
 	(s<bc):=sltbc;
 	sltn:=s<n;
@@ -171,8 +171,8 @@ def main(){
 	(s<r):=sltr;
 	ultb:=u<b;
 	(u<b):=ultb;
-	ults:=u<s; // error
-	(u<s):=ults; // error
+	ults:=u<s; /// error
+	(u<s):=ults; /// error
 	ultu:=u<u;
 	(u<u):=ultu;
 	ultbc:=u<bc;
@@ -285,8 +285,8 @@ def main(){
 	(s≥b):=sgeb;
 	sges:=s≥s;
 	(s≥s):=sges;
-	sgeu:=s≥u; // error
-	(s≥u):=sgeu; // error
+	sgeu:=s≥u; /// error
+	(s≥u):=sgeu; /// error
 	sgebc:=s≥bc;
 	(s≥bc):=sgebc;
 	sgen:=s≥n;
@@ -299,8 +299,8 @@ def main(){
 	(s≥r):=sger;
 	ugeb:=u≥b;
 	(u≥b):=ugeb;
-	uges:=u≥s; // error
-	(u≥s):=uges; // error
+	uges:=u≥s; /// error
+	(u≥s):=uges; /// error
 	ugeu:=u≥u;
 	(u≥u):=ugeu;
 	ugebc:=u≥bc;
@@ -413,8 +413,8 @@ def main(){
 	(s>b):=sgtb;
 	sgts:=s>s;
 	(s>s):=sgts;
-	sgtu:=s>u; // error
-	(s>u):=sgtu; // error
+	sgtu:=s>u; /// error
+	(s>u):=sgtu; /// error
 	sgtbc:=s>bc;
 	(s>bc):=sgtbc;
 	sgtn:=s>n;
@@ -427,8 +427,8 @@ def main(){
 	(s>r):=sgtr;
 	ugtb:=u>b;
 	(u>b):=ugtb;
-	ugts:=u>s; // error
-	(u>s):=ugts; // error
+	ugts:=u>s; /// error
+	(u>s):=ugts; /// error
 	ugtu:=u>u;
 	(u>u):=ugtu;
 	ugtbc:=u>bc;
@@ -541,8 +541,8 @@ def main(){
 	(s=b):=seqb;
 	seqs:=s=s;
 	(s=s):=seqs;
-	sequ:=s=u; // error
-	(s=u):=sequ; // error
+	sequ:=s=u; /// error
+	(s=u):=sequ; /// error
 	seqbc:=s=bc;
 	(s=bc):=seqbc;
 	seqn:=s=n;
@@ -555,8 +555,8 @@ def main(){
 	(s=r):=seqr;
 	ueqb:=u=b;
 	(u=b):=ueqb;
-	ueqs:=u=s; // error
-	(u=s):=ueqs; // error
+	ueqs:=u=s; /// error
+	(u=s):=ueqs; /// error
 	uequ:=u=u;
 	(u=u):=uequ;
 	ueqbc:=u=bc;
@@ -669,8 +669,8 @@ def main(){
 	(s≠b):=sneqb;
 	sneqs:=s≠s;
 	(s≠s):=sneqs;
-	snequ:=s≠u; // error
-	(s≠u):=snequ; // error
+	snequ:=s≠u; /// error
+	(s≠u):=snequ; /// error
 	sneqbc:=s≠bc;
 	(s≠bc):=sneqbc;
 	sneqn:=s≠n;
@@ -683,8 +683,8 @@ def main(){
 	(s≠r):=sneqr;
 	uneqb:=u≠b;
 	(u≠b):=uneqb;
-	uneqs:=u≠s; // error
-	(u≠s):=uneqs; // error
+	uneqs:=u≠s; /// error
+	(u≠s):=uneqs; /// error
 	unequ:=u≠u;
 	(u≠u):=unequ;
 	uneqbc:=u≠bc;

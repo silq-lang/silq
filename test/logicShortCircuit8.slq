@@ -2,7 +2,7 @@
 def main(){
 	x:=H(0:𝔹);
 	y:=H(0:𝔹);
-	z:=x && measure(dup(y)); // error
-	w:=y || measure(dup(x)); // error
+	z:=x && measure(dup(y)); /// error
+	w:=y || measure(dup(x)); /// error
 	return (x,y,w,z);
 }

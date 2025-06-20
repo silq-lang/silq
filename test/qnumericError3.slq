@@ -1,4 +1,4 @@
 
 def main(){
-	x:=0:ℕ; // error
+	x:=0:ℕ; /// error
 }

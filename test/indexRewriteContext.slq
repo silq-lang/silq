@@ -4,5 +4,5 @@ def g(const x:𝔹){}
 
 def main(){
 	x:=H(0:𝔹);
-	g(f[x]); // error
+	g(f[x]); /// error
 }

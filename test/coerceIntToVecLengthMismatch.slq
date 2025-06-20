@@ -2,5 +2,5 @@
 def main(){
 	n:=2,m:=3;
 	x:=0:int[n];
-	y:=x coerce 𝔹^m; // TODO: crash at runtime
+	y:=x coerce 𝔹^m; /// TODO run_error // should crash at runtime
 }

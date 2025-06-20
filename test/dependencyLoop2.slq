@@ -9,8 +9,8 @@ def f(a: 𝔹) {
 	__show(__query("dep", y)); // ⊤
 	z := !y;
 	__show(__query("dep", z)); // {y}
-	forget(y); // error
+	forget(y); /// error
 	__show(__query("dep", z)); // ⊤
-	forget(z); // error
+	forget(z); /// error
 	return (a, x);
 }

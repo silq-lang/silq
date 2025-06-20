@@ -1,3 +1,3 @@
 // args: --run
 
-def foo(x:ℕ^0){} // error
+def foo(x:ℕ^0){} /// error

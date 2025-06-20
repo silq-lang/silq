@@ -3,5 +3,5 @@
 def main(){
 	x:=H(1);
 	y:=dup(x);
-	forget(X(y)=X(x)); // error
+	forget(X(y)=X(x)); /// error
 }

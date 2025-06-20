@@ -1,2 +1,2 @@
 
-def main()⇒H(0:𝔹):!𝔹; // error
+def main()⇒H(0:𝔹):!𝔹; /// error

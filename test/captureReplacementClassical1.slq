@@ -6,6 +6,6 @@ def foo(){
 		x:=X(x);
 		return x;
 	}
-	x:=foo(); // TODO
+	x:=foo(); /// TODO
 	return x;
 }

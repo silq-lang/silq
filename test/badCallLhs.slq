@@ -2,5 +2,5 @@
 def foo(const a:𝔹,b:𝔹)=>b;
 
 def main(){
-	foo(1,x):=0:𝔹; // error
+	foo(1,x):=0:𝔹; /// error
 }

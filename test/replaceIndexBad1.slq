@@ -1,6 +1,6 @@
 
 def main(){
 	xs:=vector(2,0);
-	xs[measure(H(0))]:=X(xs[measure(H(0))]); // error
+	xs[measure(H(0))]:=X(xs[measure(H(0))]); /// error
 	return xs;
 }

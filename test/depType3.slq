@@ -5,7 +5,7 @@ def compose[f: !ℕ!->qfree !ℕ, g: 𝟙!->qfree !ℕ](): (!ℕ^f(g()))[] {
 }
 
 def foo(x: !ℕ)qfree: !ℕ {
-	assert(false); // error
+	assert(false); /// run_error
 	return x;
 }
 def bar()qfree: !ℕ ⇒ 0;

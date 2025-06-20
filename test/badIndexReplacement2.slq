@@ -2,6 +2,6 @@
 def main(){
 	n:=3;
 	x:=0:int[n];
-	x[0]:=3; // error
+	x[0]:=3; /// error
 	return x;
 }

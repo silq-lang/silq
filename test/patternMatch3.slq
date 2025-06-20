@@ -1,8 +1,8 @@
 // args: --run
 
 def f[n:!ℕ](x:𝔹^n){
-	if n=0{ return x; } // TODO
-	(a,)~f(b):=x; // TODO
+	if n=0{ return x; } /// TODO
+	(a,)~f(b):=x; /// TODO
 	return (H(a),)~f(b);
 }
 def main(){

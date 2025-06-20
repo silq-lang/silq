@@ -2,9 +2,9 @@
 
 def foo(x:𝔹)mfree{
 	y:=H(x);
-	z:=dup(y); // error
+	z:=dup(y); /// error
 	if z{
-		forget(z); // error
+		forget(z); /// error
 		return y;
 	}else{
 		forget(y=0);

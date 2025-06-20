@@ -5,7 +5,7 @@ def main(){
 	k:=0:int[n];
 	def foo(){
 		for i in 0..3{
-			n⊕=1; // error
+			n⊕=1; /// error
 		}
 		return n;
 	}

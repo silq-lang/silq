@@ -1,4 +1,4 @@
 
 def foo[τ:qnumeric](a:!τ)⇒a;
 
-def main()⇒foo(2); // TODO
+def main()⇒foo(2); /// TODO

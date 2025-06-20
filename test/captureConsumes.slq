@@ -1,11 +1,11 @@
 
 def baz(){
 	x:=H(0:𝔹);
-	f:=()qfree=>x; // error
+	f:=()qfree=>x; /// error
 }
 
 def foo(const f: 𝟙→𝔹)qfree: 𝟙 { return; }
-def bar(x: 𝔹)qfree: 𝟙⇒foo(()⇒x); // error
+def bar(x: 𝔹)qfree: 𝟙⇒foo(()⇒x); /// error
 def main(){
 	foo(()⇒H(0:𝔹)); // ok
 	x := H(0:B);

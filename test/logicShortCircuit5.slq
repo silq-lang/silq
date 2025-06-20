@@ -1,5 +1,5 @@
 // args: --run
 
 def main(){
-	return false || assert(false); // error
+	return false || assert(false); /// run_error
 }

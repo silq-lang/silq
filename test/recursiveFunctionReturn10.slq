@@ -2,7 +2,7 @@
 
 def foo(n:!ℕ):never{
 	def baz(n:!ℕ):never{
-		return bar(n)+baz(n sub 1); // error
+		return bar(n)+baz(n sub 1); /// run_error
 	}
 	return baz(n);
 }

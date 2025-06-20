@@ -2,7 +2,7 @@
 def main(){
 	x := 0:𝔹;
 	for i in [0..10){
-		forget(x); // error
+		forget(x); /// error
 		x := H(0:𝔹);
 	}
 	return x;

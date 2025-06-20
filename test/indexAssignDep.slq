@@ -11,6 +11,6 @@ def main(){
 	// __show(__query("dep",x[2])); // {z} // TODO?
 	measure(y);
 	__show(__query("dep",x)); // ⊤
-	forget(x); // error
+	forget(x); /// error
 	return z;
 }

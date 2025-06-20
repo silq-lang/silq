@@ -1,10 +1,10 @@
 def main(){
 	n := 32;
 	x := 0: !int[n];
-	n = 20; // error
+	n = 20; /// error
 }
 
-def foo(){ // error
+def foo(){ /// error
 	n := 32;
 	x := 0: !int[n];
 	return x;

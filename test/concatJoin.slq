@@ -5,7 +5,7 @@ def concat[n:!ℕ,m:!ℕ,τ:*](x: τ^n, y: τ^m)mfree: τ^(n+m){
 }
 
 def foo[n:!ℕ,m:!ℕ](const b: 𝔹, x: int[32]^n, y: int[32]^m): int[32]^(n+m){
-	return if b then concat(x,y) else concat(y,x) coerce int[32]^(n+m); // // TODO: make coerce unnecessary
+	return if b then concat(x,y) else concat(y,x) coerce int[32]^(n+m); // TODO: make coerce unnecessary
 }
 
 def main(){

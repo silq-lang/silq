@@ -1,0 +1,17 @@
+def parity[n:!ℕ](x:𝔹^n)lifted{
+	r:=0:𝔹;
+	for i in 0..n{ r⊕=x[i]; }
+	return r;
+}
+def solve(n:!ℕ,p:!ℕ){
+	x:=vector(n,0:𝔹);
+	if n%2=p{ x[0]:=X(x[0]); }
+	while measure(parity(x)≠p){
+		measure(x);
+		x:=vector(n,0:𝔹);
+		for i in 0..n{ x[i]:=H(x[i]); }
+	}
+	return x;
+}
+
+def main()⇒solve(2,0);

@@ -2,7 +2,7 @@
 def main(){
 	n:=3;
 	x:=vector(n,0:𝔹);
-	forget(n); // TODO
+	forget(n); /// TODO
 	x:=x:𝔹[];
 	return x;
 }

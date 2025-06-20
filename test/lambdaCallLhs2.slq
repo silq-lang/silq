@@ -1,6 +1,6 @@
 // args: --run
 
 def main(){
-	((x:𝔹)=>(if true then x else x))(x) := 0:𝔹; // TODO
+	((x:𝔹)=>(if true then x else x))(x) := 0:𝔹; /// TODO
 	return x;
 }

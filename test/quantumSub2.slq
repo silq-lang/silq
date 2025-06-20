@@ -3,6 +3,6 @@
 def main(){
 	x:=2:!ℕ;
 	y:=1:uint[10];
-	z:=y sub x; // error
+	z:=y sub x; /// run_error
 	return z;
 }

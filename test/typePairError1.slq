@@ -1,1 +1,1 @@
-def foo():(𝔹,𝔹){} // error
+def foo():(𝔹,𝔹){} /// error

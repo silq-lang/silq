@@ -46,7 +46,7 @@ class QSim{
 	}
 	QState run(FunctionDef def,ErrorHandler err){
 		if(def.params.length){
-			err.error("main function with parameters not supported in simulator",def.loc);
+			err.run_error("main function with parameters not supported in simulator",def.loc);
 			return QState.empty();
 		}
 		/+DExpr[string] fields;
@@ -65,7 +65,7 @@ class QSim{
 				loc=ex.stackTrace[i].loc;
 				i++;
 			}
-			err.error(ex.msg,loc);
+			err.run_error(ex.msg,loc);
 			for(;i<ex.stackTrace.length;i++){
 				err.note("called from here",ex.stackTrace[i].loc);
 			}

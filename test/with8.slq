@@ -1,7 +1,7 @@
 
 def main(){
 	with{ }do{
-		return 2; // error
+		return 2; /// error
 		x:=0;
 	}
 	return 0;

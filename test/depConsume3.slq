@@ -1,5 +1,5 @@
 def main(){
 	x:=H(0:𝔹);
-	x:=((x:𝔹)qfree⇒x)(x); // error
+	x:=((x:𝔹)qfree⇒x)(x); /// error
 	__show(__query("dep", x)); // ⊤
 }

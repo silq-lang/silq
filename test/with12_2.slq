@@ -8,11 +8,11 @@ def main(){
 	y := vector(2, 0);
 
 	with {
-		i := len(x[0]); // TODO
-		j := 0; // TODO
-		(yleft: _^(i+j)) ~ (yi,) ~ (yright) := y; // TODO
+		i := len(x[0]); /// TODO
+		j := 0; /// TODO
+		(yleft: _^(i+j)) ~ (yi,) ~ (yright) := y; /// TODO
 	} do {
-		yi := H(yi); // TODO
+		yi := H(yi); /// TODO
 	}
 	return (x, y);
 }

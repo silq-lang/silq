@@ -3,7 +3,7 @@ def rmap[a,b](f: a!→mfree b)[n:!ℕ](y:b^n)mfree{
     y := y coerce b[];
     x := () coerce a[];
     for i in (n..-1..0]{
-		(f(h),)~y:=y; // error
+		(f(h),)~y:=y; /// error
         __tmp1 := (h,) coerce a[];
         __tmp0 := dup[a[]](__tmp1 ~ x);
         forget(x=__tmp0[1..__tmp0.length]);

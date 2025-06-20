@@ -36,21 +36,21 @@ def main(){
 					assert(b₀=rev(b₁));
 
 					c₀:=[];
-					for i in (low..step..high){
+					for i in (low..step..high){ /// warning
 						c₀~=[i]
 					}
 					c₁:=[];
-					for i in (high..-step..low){
+					for i in (high..-step..low){ /// warning
 						c₁~=[i];
 					}
 					assert(c₀=rev(c₁));
 
 					d₀:=[];
-					for i in [low..step..high]{
+					for i in [low..step..high]{ /// warning
 						d₀~=[i]
 					}
 					d₁:=[];
-					for i in [high..-step..low]{
+					for i in [high..-step..low]{ /// warning
 						d₁~=[i];
 					}
 					assert(d₀=rev(d₁));

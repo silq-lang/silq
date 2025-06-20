@@ -9,9 +9,9 @@ def solve[n:!ℕ](qs:𝔹^n)mfree:𝔹^n{
 			}
 		}
 		forget(bit=qs[n-i]);
-		seen|=qs[n-i]; // error
+		seen|=qs[n-i]; /// error
 	}
-	forget(seen); // error
+	forget(seen); /// error
 	return qs;
 }
 

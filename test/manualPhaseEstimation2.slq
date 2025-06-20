@@ -1,4 +1,3 @@
-// skipped
 // args: --run --project-forget
 
 def log₂(k:!ℕ)qfree:!ℕ ⇒ if k=1 then 0 else 1+log₂((k+1) div 2);

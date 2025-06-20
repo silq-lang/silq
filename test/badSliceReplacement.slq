@@ -2,7 +2,7 @@
 def main(){
 	x:=H(0:𝔹);
 	a:=vector(10,x);
-	a[0..2]:=a[0..3]; // TODO
+	a[0..2]:=a[0..3]; /// TODO
 	forget(a);
 	return x;
 }

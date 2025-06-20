@@ -1,5 +1,5 @@
 def wat(x:B)mfree:𝟙{
-	y := x coerce !𝔹; // error
+	y := x coerce !𝔹; /// error
 	if y {
 		print("hi");
 	}

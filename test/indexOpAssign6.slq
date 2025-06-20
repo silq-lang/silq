@@ -3,6 +3,6 @@
 def main(){
 	x:=vector(2,vector(2,0:uint[4]));
 	x[0][1][1]:=X(x[0][1][1]);
-	x[0][1]·=x[0][1]; // TODO
+	x[0][1]·=x[0][1]; /// TODO
 	return x
 }

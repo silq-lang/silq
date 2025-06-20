@@ -7,7 +7,7 @@ def my_id(x:𝔹)lifted:𝔹{
 }
 
 def main()lifted{
-	x := my_id(my_true()); // error
+	x := my_id(my_true()); /// error
 	assert(x);
-	assert(my_id(my_true())); // error
+	assert(my_id(my_true())); /// error
 }

@@ -1,6 +1,6 @@
 // args: --run
 
-def abort(){ assert(false); } // error
+def abort(){ assert(false); } /// run_error
 
 def main():𝔹{
 	abort();

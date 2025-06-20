@@ -4,4 +4,4 @@ def f(n:!ℕ,b:𝔹)mfree:𝔹^n{
 	forget(b=r[0]);
 	return r;
 }
-def main()⇒reverse(f); // error
+def main()⇒reverse(f); /// error

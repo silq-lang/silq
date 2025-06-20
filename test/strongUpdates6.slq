@@ -2,6 +2,6 @@
 def main(){
 	x:=(0,[1,2,3]);
 	i:=0;
-	x[i]=2; // error
-	return x[i]; // error
+	x[i]=2; /// error
+	return x[i]; /// error
 }

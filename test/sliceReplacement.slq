@@ -4,8 +4,8 @@ import mapH;
 def main(){
 	x:=H(0:𝔹);
 	a:=vector(10,x);
-	H_n(a[0..3]):=a[0..3]; // TODO
-	a[0..3]:=H_n(a[0..3]); // TODO
+	H_n(a[0..3]):=a[0..3]; /// TODO
+	a[0..3]:=H_n(a[0..3]); /// TODO
 	forget(a=vector(10,x));
 	return x;
 }

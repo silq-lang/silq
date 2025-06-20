@@ -1,5 +1,5 @@
 def foo(const x:𝔹){
-	with{ y:=X(x); }do{ // error
+	with{ y:=X(x); }do{ /// error
 		return y;
 	}
 }

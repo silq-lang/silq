@@ -2,9 +2,9 @@
 
 def all[n:!ℕ](xs:𝔹^n)lifted{
     r:=true:𝔹;
-    for i in 0..n{ // TODO
+    for i in 0..n{ /// TODO
 		if !xs[i] {
-			return false; // TODO
+			return false; /// TODO
 		}
     }
     return true;

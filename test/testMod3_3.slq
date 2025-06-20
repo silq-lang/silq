@@ -10,9 +10,9 @@ def main(){
 	g:=0.137:!ℝ;
 	h:=-1.37:!ℝ;
 	assert(measure(a%a=0));
-	assert(measure(a%b=-4)); // error
+	assert(measure(a%b=-4)); /// error
 	assert(measure(a%c=13));
-	assert(measure(b%a=9)); // error
+	assert(measure(b%a=9)); /// error
 	assert(measure(b%b=0));
 	assert(measure(c%a=10));
 	assert(measure(c%b=-11));

@@ -9,7 +9,7 @@ def f0(x:𝔹,y:𝔹){
 	}
 
 	__show(__query("dep", z)); // should print ⊤
-	forget(z); // error
+	forget(z); /// error
 
 	return (x);
 }

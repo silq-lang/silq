@@ -1,0 +1,14 @@
+// args: --run
+
+def main() {
+	x := H(0:B);
+	with {
+		x := Y(x);
+		assert(false); /// run_error
+	} do {
+		if x {
+			phase(pi);
+		}
+	}
+	return x;
+}

@@ -1,7 +1,7 @@
 
 def main() {
 	x := int[42];
-	y := x[()]; // error
-	z := x[() ~ ()]; // error
+	y := x[()]; /// error
+	z := x[() ~ ()]; /// error
 	return y;
 }

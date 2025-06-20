@@ -1,4 +1,4 @@
 
 def main(){
-	b[0]:=0; // error
+	b[0]:=0; /// error
 }

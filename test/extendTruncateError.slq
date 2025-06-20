@@ -1,7 +1,7 @@
 
 def extend[a:!ℕ](x:uint[a],b:!ℕ)qfree⇒((x as 𝔹^a)~vector(b,0:𝔹)) as uint[a+b];
 def truncate[a:!ℕ](x:uint[a],b:!ℕ)qfree{
-	(u:𝔹^(a sub b))~(v:𝔹^b):=x; // error
+	(u:𝔹^(a sub b))~(v:𝔹^b):=x; /// error
 	forget(v=vector(b,0:𝔹));
 	return u as uint[a sub b];
 }

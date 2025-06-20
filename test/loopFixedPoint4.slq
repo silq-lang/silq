@@ -1,6 +1,6 @@
 
 def main(){
 	x:=0:int[32];
-	for i in [0..4){ x[i]=H(x[i]); } // error
+	for i in [0..4){ x[i]=H(x[i]); } /// error
 	return x;
 }

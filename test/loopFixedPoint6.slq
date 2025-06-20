@@ -20,7 +20,7 @@ def test2(){
 		z=dup(y);
 	}
 	forget(H(x)=0);
-	forget(z); // error
+	forget(z); /// error
 	forget(H(y)=0);
 }
 
@@ -32,6 +32,6 @@ def test3(){
 		z=dup(y);
 	}
 	forget(H(y)=0);
-	forget(z); // error
+	forget(z); /// error
 	forget(H(x)=0);
 }

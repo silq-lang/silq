@@ -7,7 +7,7 @@ def main(){
 		phase(π);
 	}
 	y:=H(y);
-	assert(measure(y=x)); // error
+	assert(measure(y=x)); /// run_error
 	forget(y=x);
 	return x;
 }

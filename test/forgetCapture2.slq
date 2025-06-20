@@ -2,7 +2,7 @@
 def main(){
 	x:=H(0:𝔹);
 	y:=dup(x);
-	def f(){ y:=y; } // error
+	def f(){ y:=y; } /// error
 	x:=H(x);
 	f();
 	return x;

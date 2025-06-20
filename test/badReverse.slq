@@ -1,7 +1,6 @@
-// skipped
-// TODO: allow regression tester to test this (error is shown in prelude)
+// args: --run
 
 def main(){
 	x:=H(0:𝔹);
-	y:=reverse(dup[𝔹])(0:𝔹,x:𝔹); // error: bad forget
+	y:=reverse(dup[𝔹])(0:𝔹,x:𝔹); /// run_error bad forget
 }

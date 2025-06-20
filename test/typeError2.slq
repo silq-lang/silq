@@ -11,5 +11,5 @@ def main(){
 		}
 		return (c,x);
 	}
-	return H(foo()); // error
+	return H(foo()); /// error
 }

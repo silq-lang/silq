@@ -4,7 +4,7 @@ def foo(x:𝔹)mfree{
 	y:=H(x);
 	z:=dup(y);
 	if z{
-		return (z,y); // error
+		return (z,y); /// error
 	}else{
 		forget((y,z)=(0,0));
 		return (1,1);

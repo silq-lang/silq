@@ -1,6 +1,6 @@
 
 def main(){
-	x:=H(0); // error
+	x:=H(0); /// error
 	if measure(H(0)){
 		a:=dup(x);
 		b:=dup(a);

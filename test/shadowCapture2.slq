@@ -5,7 +5,7 @@ def main(){
 		if measure(H(0)){
 			return x;
 		}else{
-			def bar(x:𝔹){ // error
+			def bar(x:𝔹){ /// error
 				if measure(H(0)){
 					return x;
 				}else{

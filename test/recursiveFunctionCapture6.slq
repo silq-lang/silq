@@ -1,0 +1,16 @@
+def qint_eqc[n:!N](const a: B^n, b: !Z) qfree: B {
+	def rec(const a: B^n, i: !N) qfree: B {
+		if i == n {
+			return 1;
+		}
+		rest := rec(a, i+1);
+		bi := b & (2^i) != 0;
+		return (a[i] == bi) & rest;
+	}
+	return rec(a, 0);
+}
+
+def main() {
+	r := qint_eqc[1]([0:B], 0);
+	assert(measure(r));
+}

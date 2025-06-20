@@ -6,7 +6,7 @@ def main(){
 	def foo(){
 		y:=H(z coerce 𝔹);
 		dump();
-		exit(); // error
+		exit(); /// run_error
 		return y;
 	}
 	z=2;

@@ -7,7 +7,7 @@ def main(){
 		x[i]:=H(x[i]);
 	}
 	for i in [0..n){
-		(a,x[i]):=(x[i],1:𝔹); // error
+		(a,x[i]):=(x[i],1:𝔹); /// error
 		//(x[i],a):=(1:𝔹,x[i]);
 		__show(__query("dep",a)); // ⊤
 	}

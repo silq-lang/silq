@@ -1,6 +1,7 @@
+// args: --run
 
 def main(){
-	x := assert(0);
+	x := assert(0); /// run_error
 	y := 42;
 	return x^y≤5 ∧ 5≤y^x;
 }

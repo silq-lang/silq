@@ -2,7 +2,7 @@
 def main(){
 	x:=(0,0);
 	i:=(H(0),) as uint[1];
-	x[i]=1; // error
+	x[i]=1; /// error
 	__show(__query("dep",x));
 	forget(i=if (x=(0,1)) then 1:uint[1] else 0:uint[1]);
 }

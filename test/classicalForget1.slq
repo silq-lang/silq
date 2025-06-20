@@ -1,4 +1,4 @@
 x:=1;
 def main(){
-	forget(x); // error
+	forget(x); /// error
 }

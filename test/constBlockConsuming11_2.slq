@@ -5,7 +5,7 @@ def rCNOT(y:𝔹,const x:𝔹)⇒CNOT(x,y);
 def main(){
 	x:=H(0);
 	y:=dup(x);
-	y:=rCNOT(y,y); // TODO
+	y:=rCNOT(y,y); /// TODO
 	forget(y);
 	forget(H(x)=0);
 }

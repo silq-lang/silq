@@ -1,7 +1,7 @@
 
 def foo[n:!ℕ](const x:uint[n],b:uint[n])qfree{
 	f:=(b:uint[n]){
-		a:=if x[0] then () else (); // error
+		a:=if x[0] then () else (); /// error
 		return b;
 	};
 	return (f,b);

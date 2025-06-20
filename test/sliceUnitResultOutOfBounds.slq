@@ -1,0 +1,5 @@
+// args: --run
+def main() {
+	i := 4;
+	return ((1,2,3): !N^3)[i..i]; /// run_error
+}

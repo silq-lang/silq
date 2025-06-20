@@ -6,6 +6,6 @@ def main(){
 		x[i]:=H(x[i]);
 	}
 	dump();
-	exit(); // error
+	exit(); /// run_error
 	forget(x=[]);
 }

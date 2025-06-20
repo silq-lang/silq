@@ -3,8 +3,8 @@ def uniform_entangle[n:!ℕ](bits:(!𝔹^n)^4) mfree {
     for j in [0..2){ anc[j]:=H(anc[j]); }
     qs:=vector(n,false:𝔹);
 
-    for i in [0..n-1] {
-        for a in [0..3] {
+    for i in [0..n-1] { /// warning
+        for a in [0..3] { /// warning
             if anc == a && bits[a][i] {
                 qs[i] := X(qs[i]);
             }

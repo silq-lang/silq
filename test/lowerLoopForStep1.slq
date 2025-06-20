@@ -6,7 +6,7 @@ def main(){
 	for i in [0..1..n){
 		a~=[i];
 	}
-	for i in [n..-1..0]{
+	for i in [n..-1..0]{ /// warning
 		a~=[i];
 	}
 	assert(a==[0,1,2,3,4,3,2,1,0]);

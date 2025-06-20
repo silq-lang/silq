@@ -1,7 +1,7 @@
 
 def main(){
 	x:=vector(1,0:𝔹);
-	x[0]⊕=x[0]; // error
+	x[0]⊕=x[0]; /// error
 	return x;
-	// // TODO: improve diagnostics
+	// TODO: improve diagnostics
 }

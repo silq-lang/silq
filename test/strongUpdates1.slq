@@ -5,10 +5,10 @@ def main():!ℕ^2{
 	y:=2;
 	y-=2*y;
 	a:=vector(3,!ℕ);
-	a[0]=x; // error
-	a[1]=y; // error
+	a[0]=x; /// error
+	a[1]=y; /// error
 	(u,v):=(1,2);
-	(u,v)=2; // error
+	(u,v)=2; /// error
 	(i,j):=[1,2];
 	(i,j)=[1,2];
 	return (i,j);

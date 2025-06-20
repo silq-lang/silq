@@ -3,7 +3,7 @@
 def foo(x:𝔹)mfree{
 	y:=H(x);
 	if y{
-		return y; // error
+		return y; /// error
 	}else{
 		return 0;
 	}

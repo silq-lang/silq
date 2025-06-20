@@ -1,4 +1,4 @@
 
 def main(){
-	!int[16]; // error
+	!int[16]; /// error
 }

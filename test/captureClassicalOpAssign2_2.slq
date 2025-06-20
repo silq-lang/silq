@@ -6,5 +6,5 @@ def main(){
 		xs~=[1];
 		return xs;
 	}
-	return xs; // error
+	return xs; /// error
 }

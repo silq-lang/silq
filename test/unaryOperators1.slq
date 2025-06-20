@@ -24,8 +24,8 @@ def main(){
 	-q:=qm;
 	rm:=-r;
 	-r:=rm;
-	// cm:=-c; // TODO
-	// -c:=c; // TODO
+	// cm:=-c; / TODO
+	// -c:=c; / TODO
 
 	sf:=~s;
 	~s:=sf;

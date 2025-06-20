@@ -2,7 +2,7 @@
 
 def f[n:!ℕ](x:𝔹^n){
 	if n≠0{
-		(a,)~f(b):=x; // TODO
+		(a,)~f(b):=x; /// TODO
 		x:=(H(a),)~f(b);
 	}
 	return x;

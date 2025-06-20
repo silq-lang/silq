@@ -28,14 +28,14 @@ def a4_HADAMARD_Array[k:!N](q:𝔹^k) mfree: 𝔹^k {
 	return q;
 }
 def a4_HADAMARD_Int[k:!N](q:int[k]) mfree {
-	return a4_HADAMARD_Array(q:𝔹^k):int[k]; // error
+	return a4_HADAMARD_Array(q:𝔹^k):int[k]; /// error
 }
 def a4_HADAMARD_Array_Array[k:!N,l:!N](q:(𝔹^k)^l) mfree: (𝔹^k)^l {
 	for i in [0..l) { q[i] := a4_HADAMARD_Array(q[i]); }
 	return q;
 }
 def a4_HADAMARD_Array_Int[k:!N,l:!N](q:int[k]^l) mfree {
-	return a4_HADAMARD_Array_Array(q:(B^k)^l):int[k]^l; // error
+	return a4_HADAMARD_Array_Array(q:(B^k)^l):int[k]^l; /// error
 }
 def a5_SETUP[n:!N, rr:!N](edgeOracle:((const int[n] x const int[n] x 𝔹) !->mfree 𝔹), 
 	const tt:int[n]^rr) mfree: (𝔹^rr)^rr {
@@ -69,11 +69,11 @@ def a7_Diffuse_Array[k:!N](q:𝔹^k) mfree: 𝔹^k {
 	return q;
 }
 def a7_Diffuse_Int[k:!N](q:int[k]) mfree: int[k] {
-	return a7_Diffuse_Array(q:𝔹^k):int[k]; // error
+	return a7_Diffuse_Array(q:𝔹^k):int[k]; /// error
 }
 def a7_Diffuse_Pair[k:!N, l:!N](p:int[k], q:int[l]) mfree: int[k] x int[l] {
-	p := a4_HADAMARD_Array(p:B^k):int[k]; // error
-	q := a4_HADAMARD_Array(q:B^l):int[l]; // error
+	p := a4_HADAMARD_Array(p:B^k):int[k]; /// error
+	q := a4_HADAMARD_Array(q:B^l):int[l]; /// error
 	if q == 0 && p==0 { phase(π); }
 	p := a4_HADAMARD_Array(p:B^k):int[k];
 	q := a4_HADAMARD_Array(q:B^l):int[l];
@@ -89,7 +89,7 @@ def a9_StoreT_Array[n:!N, rr:!N, r:!N](const i:int[r], tt: int[n]^rr, const ttd:
 	mfree : int[n]^rr {
 	for j in [0..rr) {
 		if i==j {
-			tt[j] := flipWith_Array(ttd:B^n, tt[j]:B^n):int[n]; // error
+			tt[j] := flipWith_Array(ttd:B^n, tt[j]:B^n):int[n]; /// error
 	}	}
 	return tt;
 }
@@ -135,10 +135,10 @@ def a16_TriangleTestT[rr:!N](const ee:(𝔹^rr)^rr) mfree {
 		}	}	}	}
 		return cTri;
 	};
-	cTri := f(ee); // error
+	cTri := f(ee); /// error
 	triTestT := true:𝔹;
 	if cTri == 0 { triTestT := X(triTestT); }
-	reverse(f)(cTri, ee); // error
+	reverse(f)(cTri, ee); /// error
 	return triTestT;
 }
 def a17_TriangleTestTw[n:!N, rr:!N](edgeOracle:((const int[n] x const int[n] x 𝔹) !->mfree 𝔹),
@@ -156,10 +156,10 @@ def a17_TriangleTestTw[n:!N, rr:!N](edgeOracle:((const int[n] x const int[n] x �
 		}	}	}
 		return (eed, cTri);
 	};
-	(eed, cTri) := f(tt, ee, w); // error
+	(eed, cTri) := f(tt, ee, w); /// error
 	triTestTW := true:B;
 	if cTri == 0 { triTestTW := X(triTestTW); }
-	reverse(f)(eed,cTri,tt,ee,w); // error
+	reverse(f)(eed,cTri,tt,ee,w); /// error
 	return triTestTW;
 }
 def a18_TriangleEdgeSearch[n:!N, rr:!N](const edgeOracle:((const int[n] x const int[n] x 𝔹) !->mfree 𝔹),
@@ -187,7 +187,7 @@ def a19_GCQWalk[n:!N, rr:!N](const edgeOracle:((const int[n] x const int[n] x �
 	sigma := 0:int[r];
 	eew := vector(2^(floor(max([2*log_int(2,rr)/3,1]))),false:𝔹);
 	for k in [ 0..rrbar ) {
-		tau[k] := a4_HADAMARD_Int(tau[k]); // error
+		tau[k] := a4_HADAMARD_Int(tau[k]); /// error
 	}
 	iota := a4_HADAMARD_Int(iota);
 	sigma := a4_HADAMARD_Int(sigma);

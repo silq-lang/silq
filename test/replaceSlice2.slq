@@ -10,7 +10,7 @@ def WState[n:!N](q0:𝔹,q1s:𝔹^n)mfree:𝔹×𝔹^n {
         q0 := rotY(2*theta, q0);
 
         if !q0{
-            (q1s[0], q1s[1..n]) := WState[n sub 1](q1s[0], q1s[1..n]); // TODO
+            (q1s[0], q1s[1..n]) := WState[n sub 1](q1s[0], q1s[1..n]); /// TODO
         }
     }
     return (q0, q1s)

@@ -1,6 +1,6 @@
 // args: --run
 
-def map[τ,σ](f:τ !→mfree σ)[n:!ℕ](tuple:τ^n)mfree:σ^n{ // TODO
+def map[τ,σ](f:τ !→mfree σ)[n:!ℕ](tuple:τ^n)mfree:σ^n{ /// TODO
 	if n==0{
 		forget(tuple=());
 		return () coerce σ^n;
@@ -15,7 +15,7 @@ def map[τ,σ](f:τ !→mfree σ)[n:!ℕ](tuple:τ^n)mfree:σ^n{ // TODO
 def main(){
 	x:=0:uint[3];
 	x:=x as 𝔹^3;
-	mapH:=reverse(map(H)[3]); // TODO
+	mapH:=reverse(map(H)[3]); /// TODO
 	return mapH(x);
 }
 

@@ -2,13 +2,13 @@
 
 def main(){
 	r:=();
-	for i in [0:!𝔹..1:!𝔹]{
-		for j in [0:!𝔹..1:!𝔹]{
+	for i in [0:!𝔹..1:!𝔹]{ /// warning
+		for j in [0:!𝔹..1:!𝔹]{ /// warning
 			for k in [0:!𝔹..1:!𝔹){
 				for l in (0:!𝔹..1:!𝔹]{
 					r~=[(i,j,k,l)];
 				}
-				for l in (0:!𝔹..1:!𝔹){
+				for l in (0:!𝔹..1:!𝔹){ /// warning
 					r~=[(i,j,k,l)];
 				}
 			}

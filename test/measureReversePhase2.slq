@@ -7,8 +7,8 @@ def main(){
 	}
 	x:=H(0:𝔹);
 	k:=reverse(phase);
-	reverse(phase)(π/2,()):=f(x); // error
-	reverse(phase)(π/2,(),()):=f(x); // error
+	reverse(phase)(π/2,()):=f(x); /// error
+	reverse(phase)(π/2,(),()):=f(x); /// error
 	phase(-π/2);
 	return x;
 }

@@ -1,5 +1,5 @@
 def main(){
 	x:=1:uint[10];
-	def f(){ x:=x; } // error
+	def f(){ x:=x; } /// error
 	return f;
 }

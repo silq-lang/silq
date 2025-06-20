@@ -4,7 +4,7 @@ def main(){
     if 1:!𝔹{
         y=1:!𝔹;
     }else{
-        y=[]:!𝔹[0]; // error
+        y=[]:!𝔹[0]; /// error
     }
-    return y; // error
+    return y; /// error
 }

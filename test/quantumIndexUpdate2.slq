@@ -2,7 +2,7 @@
 def main(){
 	x:=0:!int[2];
 	i:=H(0);
-	x[i]:=X(x[i]); // error
+	x[i]:=X(x[i]); /// error
 	__show(__query("dep",x));
 	forget(i=(x=2));
 }

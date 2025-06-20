@@ -1,8 +1,8 @@
-// // TODO: add lifted annotation
+// TODO: add lifted annotation
 
 // Node := Int(bits=n)
 // Node := 𝔹[];
-// // TODO: edgeOracle lifted?
+// TODO: edgeOracle lifted?
 // edgeOracle_spec := !((const Node x const Node x 𝔹) -> 𝔹);
 // QWTFP_spec := !Int x !Int x edgeOracle_spec;
 // GCQWRegs := Int[] x Int x Int x 𝔹[] x Int x 𝔹;
@@ -114,7 +114,7 @@ def a5_SETUP[n:!N, rr:!N](edgeOracle:((const int[n] x const int[n] x 𝔹) !-> m
 	return ee;
 }
 
-// // // TODO: make high level, ttd, eed allocated in f. 
+// // TODO: make high level, ttd, eed allocated in f. 
 // // def a6_QWSH(oracle:!QWTFP_spec, tt: Node[], 
 // // 	i: Int, v: Node, ee: 𝔹[][]) : Node[] x Int x v x 𝔹[][] {
 def a6_QWSH[n:!N, r:!N, rr:!N](edgeOracle:((const int[n] x const int[n] x 𝔹) !-> mfree 𝔹), 

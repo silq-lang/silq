@@ -1,5 +1,5 @@
 
-def compose[f: !ℕ!->qfree !ℕ, g: 1!->qfree !ℕ](): (ℕ^f(g()))[]⇒(); // error
+def compose[f: !ℕ!->qfree !ℕ, g: 1!->qfree !ℕ](): (ℕ^f(g()))[]⇒(); /// error
 def foo(x: !ℕ)qfree: !ℕ ⇒ x;
 def bar()qfree: !ℕ ⇒ 0;
 def main() ⇒ compose[foo,bar]();

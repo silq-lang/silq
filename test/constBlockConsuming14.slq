@@ -4,10 +4,10 @@ def main(){
 	x:=H(0);
 	y:=dup(x);
 	if y {
-		y=2; // TODO: improve diagnostic
+		y=2; /// error // TODO: improve diagnostic
 		H(0):=x;
 	}else{
-		y=2; // error
+		y=2; /// error
 		H(0):=x;
 	}
 }

@@ -1,5 +1,5 @@
 
 def main(){
-	[x,y]:=[H(1),H(2)]; // error
-	return (x,y); // error
+	[x,y]:=[H(1),H(2)]; /// error
+	return (x,y); /// error
 }

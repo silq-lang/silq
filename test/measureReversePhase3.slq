@@ -2,7 +2,7 @@
 
 def main(){
 	def f(const x:𝔹){
-		assert(false); // error
+		assert(false); /// run_error
 		return ();
 	}
 	x:=H(0:𝔹);

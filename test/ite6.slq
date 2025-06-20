@@ -6,8 +6,8 @@ def main(){
 	} else {
 		(b,a):=(1:int[3],2:int[3])
 	}
-	a[0]:=H(H(a[0])); // error
-	b[0]:=H(H(b[0])); // error
+	a[0]:=H(H(a[0])); /// error
+	b[0]:=H(H(b[0])); /// error
 	1:int[3]:= if x { a } else { b };
 	forget(H(x)=0);
 }

@@ -2,5 +2,5 @@
 
 def main(){
 	def foo(x:!𝔹){ return 2; }
-	return (foo coerce !ℚ!→!𝔹)(1/2); // TODO: catch at runtime?
+	return (foo coerce !ℚ!→!𝔹)(1/2); /// error // TODO: catch at runtime?
 }

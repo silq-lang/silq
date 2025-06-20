@@ -1,6 +1,6 @@
 
 def main(){
 	x:=0:int[3];
-	x[-1]=1:𝔹; // error
+	x[-1]=1:𝔹; /// error
 	return x;
 }

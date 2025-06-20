@@ -1,5 +1,5 @@
 def nonConst(y:𝔹){
-	if X(y){ // error
+	if X(y){ /// error
 		phase(π);
 	}
 }

@@ -1,6 +1,6 @@
 // args: --run
 
-def crash()qfree:!ℕ{ assert(false); } // error
+def crash()qfree:!ℕ{ assert(false); } /// run_error
 def f(): 𝔹^(1+crash() sub crash())⇒(1:B,);
 def call[n: !ℕ](f: 𝟙 !→ 𝔹^n):𝔹^n⇒f();
 def main() ⇒ call(f);

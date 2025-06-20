@@ -10,7 +10,7 @@ def main() {
 def nonQfree(const x:B,y:B){
 	t := dup(x);
 	t := H(t);
-	t := I(t); // error
+	t := I(t); /// error
 	if t{
 		y := X(y);
 	}

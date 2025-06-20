@@ -2,5 +2,5 @@
 
 def main(){
 	x:=0:!ℚ;
-	return x/0; // error
+	return x/0; /// run_error
 }

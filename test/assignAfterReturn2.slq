@@ -1,7 +1,7 @@
 
 def main(){
 	i:=0;
-	k:=H(H(1)); // error
+	k:=H(H(1)); /// error
 	if k {
 		return 0;
 	} else {

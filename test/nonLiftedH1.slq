@@ -1,4 +1,4 @@
 
 def main(){
-	if H(0) { } // error
+	if H(0) { } /// error
 }

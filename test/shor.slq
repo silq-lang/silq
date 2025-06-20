@@ -70,7 +70,7 @@ def estimatePhase[n:!ℕ](f:uint[n] !→lifted uint[n]):!ℕ{
 	cand := reverse(QFT[n])(cand);
 	return measure(cand) as !ℕ;
 }
-def candidates(q:!ℚ){ // // TODO: probably this can be improved
+def candidates(q:!ℚ){ // TODO: probably this can be improved
 	res:=[]:!ℤ[];
 	r:=to_cfrac(q);
 	while r.length≠0{

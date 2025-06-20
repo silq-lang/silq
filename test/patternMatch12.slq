@@ -3,6 +3,6 @@
 def main(){
 	(x,)~(1,2,y):=(0,1,2,3);
 	(1,z,3):=(1,2,3);
-	(1,2,3):=(1,2,2); // TODO: runtime error
+	(1,2,3):=(1,2,2); /// TODO run_error
 	return (x,y,z);
 }

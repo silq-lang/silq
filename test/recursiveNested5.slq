@@ -4,7 +4,7 @@ def main(){
 	def foo():𝔹{
 		measure(x);
 		if measure(H(0:𝔹)){ return 0:𝔹; }
-		return foo(); // error
+		return foo(); /// error
 	}
 	return foo();
 }

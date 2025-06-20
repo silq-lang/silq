@@ -1,7 +1,7 @@
 // args: --run
 
 def foo(n:!ℕ){
-	return bar(n)+foo(n sub 1); // error
+	return bar(n)+foo(n sub 1); /// run_error
 }
 
 def bar(n:!ℕ){

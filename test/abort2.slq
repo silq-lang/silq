@@ -1,6 +1,6 @@
 
 def fake_abort(){ assert(true); }
 
-def main():𝔹{ // error
+def main():𝔹{ /// error
 	fake_abort();
 }
