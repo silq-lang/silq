@@ -1,0 +1,6 @@
+
+def main(){
+	x:=vector(2^18,0);
+	y:=(1,2/3);
+	return x≤y;
+}
