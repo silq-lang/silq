@@ -1,0 +1,14 @@
+// args: --run
+import codeforces.summer20.contest.e2; // TODO: support relative imports
+
+def solve(f:𝔹!→mfree 𝔹){
+	(p,()):=estimatePhase[2]((){H(0):=f(H(1));},());
+	return 3-measure(p);
+}
+
+def main(){
+	def mY(x:𝔹){phase(π); return Y(x); }
+	def XZ(x:𝔹){ return X(Z(x)); }
+	def mXZ(x:𝔹){phase(π); return XZ(x); }
+	return (solve(Y),solve(mXZ),solve(mY),solve(XZ));
+}
