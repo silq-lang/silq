@@ -4,7 +4,7 @@ def foo₂(const x:!ℕ)⇒x;
 
 def main(){
 	x:=2;
-	foo₁:=foo₂: moved !ℕ →! ℕ;
+	foo₁:=foo₂: moved !ℕ → !ℕ;
 	y:=foo₁(x);
 	assert(x==y);
 	return (x,y);
