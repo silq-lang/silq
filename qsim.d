@@ -1037,7 +1037,9 @@ struct QState{
 				if(type==Bool(true)) return makeBool(asBoolean||r.asBoolean);
 				if(t1!=ℝ(true)||t2!=ℝ(true))
 					return convertTo(ℝ(true))^^r.convertTo(ℝ(true));
-				return makeReal(fval^^r.fval);
+				auto res=fval^^r.fval;
+				enforce(!isNaN(res),text("cannot take '",fval,"' to the power of '",r.fval,"'"));
+				return makeReal(res);
 			}else static if(op=="~"){
 				enforce(tag==Tag.array_&&r.tag==Tag.array_,"incompatible values for concatentation");
 				return makeArray(ntype,array_~r.array_);

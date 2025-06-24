@@ -47,10 +47,6 @@ def main(){
 	(z^n):=zpn;
 	zpz:=z^z:!ℚ;
 	(z^z):=zpz;
-	zpq:=z^q:!ℝ;
-	(z^q):=zpq;
-	zpr:=z^r:!ℝ;
-	(z^r):=zpr;
 	qpbc:=q^bc:!ℚ;
 	(q^bc):=qpbc;
 	qpn:=q^n:!ℚ;

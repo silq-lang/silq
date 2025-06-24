@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	z:=-3:!ℤ;
+	r:=4.5:!ℝ;
+	zpr:=z^r:!ℝ; /// run_error
+	(z^r):=zpr;
+}
