@@ -1,3 +1,5 @@
+// args: --run
+
 def all[n:!ℕ](x:𝔹^n)lifted{
 	r:=1:𝔹;
 	for i in 0..n{

@@ -1,3 +1,4 @@
+// args: --run
 
 def solveΠ(f:𝔹!→mfree 𝔹)⇒measure(f(H(f(H(0:𝔹)))));
 

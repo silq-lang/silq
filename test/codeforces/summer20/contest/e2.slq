@@ -1,0 +1,58 @@
+// args: --run
+
+def solve[n:!ℕ](p:!ℕ,inputRegister:𝔹^n){
+	x:=inputRegister as uint[n];
+	with (k,x):=estimatePhase[2](QFT[n],x) do {
+		rep(k,()⇒phase(π/(2·p)),());
+	}
+	return x as 𝔹^n;
+}
+
+def sqrtQFT[n:!ℕ](x:uint[n])⇒solve(2, x as 𝔹^n) as uint[n];
+def cbrtQFT[n:!ℕ](x:uint[n])⇒solve(3, x as 𝔹^n) as uint[n];
+
+def main(){
+	a:=reverse(QFT)(sqrtQFT(sqrtQFT(2:uint[2])));
+	b:=reverse(QFT)(cbrtQFT(cbrtQFT(cbrtQFT(3:uint[2]))));
+	assert(measure((a,b)=(2,3)));
+	return (a,b);
+}
+
+
+def estimatePhase[n:!ℕ][a:qtype](f:a!→mfree a,x:a)mfree{
+	p:=mapH(0:uint[n]);
+	x:=rep(p,f,x);
+	p:=reverse(QFT)(p);
+	return (p,x);
+}
+
+def QFT[n:!ℕ](ψ:uint[n])mfree: uint[n]{
+	for k in [0..n div 2){
+		(ψ[k],ψ[n-k-1]) := (ψ[n-k-1],ψ[k]);
+	}
+	for k in [0..n){
+		ψ[k] := H(ψ[k]);
+		for l in [k+1..n){
+			if ψ[k] && ψ[l]{
+				phase(2·π·2^(k-l-1));
+			}
+		}
+	}
+	return ψ;
+}
+
+def mapH[n:!ℕ](x:uint[n])mfree{
+	for i in 0..n{
+		x[i]:=H(x[i]);
+	}
+	return x;
+}
+
+def rep[n:!ℕ,a:qtype](const k:uint[n],f:a!→mfree a,x:a)mfree{
+	for i in 0..2^n{
+		if k<i{
+			x:=f(x);
+		}
+	}
+	return x;
+}
