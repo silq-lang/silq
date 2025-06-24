@@ -380,26 +380,26 @@ Info[] getActual(string source, bool expectOK){
 
 	Info[] result;
 
-	if(exitCode > 1 || (expectOK && exitCode != 0)) {
+	if(exitCode > 1 || (expectOK && exitCode != 0) || exitCode > 128 || output.empty) {
 		result ~= [Info(-1, "crash", format("exit code %s; output: ", exitCode) ~ cast(string)err)];
-	}
-
-	string line = output[$-1];
-	if(!line.startsWith("[")) {
-		result ~= [Info(-1, "invalid", "unexpected output: " ~ cast(string)line)];
 	} else {
-		auto data = parseJSON(line).array;
-		foreach(diag; data) {
-			int lineno;
-			JSONValue start = diag.object["start"];
-			if(start.type() == JSONType.null_) {
-				lineno = -1;
-			} else {
-				lineno = cast(int) start.object["line"].integer;
+		string line = output[$-1];
+		if(!line.startsWith("[")) {
+			result ~= [Info(-1, "invalid", "unexpected output: " ~ cast(string)line)];
+		} else {
+			auto data = parseJSON(line).array;
+			foreach(diag; data) {
+				int lineno;
+				JSONValue start = diag.object["start"];
+				if(start.type() == JSONType.null_) {
+					lineno = -1;
+				} else {
+					lineno = cast(int) start.object["line"].integer;
+				}
+				string kind = diag.object["severity"].str;
+				string message = diag.object["message"].str;
+				result ~= [Info(lineno, kind, message)];
 			}
-			string kind = diag.object["severity"].str;
-			string message = diag.object["message"].str;
-			result ~= [Info(lineno, kind, message)];
 		}
 	}
 	result=result.sort.array;
