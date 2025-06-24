@@ -1,0 +1,18 @@
+def all[n:!ℕ](x:𝔹^n)lifted{
+	r:=1:𝔹;
+	for i in 0..n{
+		r&=x[i];
+	}
+	return r;
+}
+def solve(n:!ℕ){
+	x:=vector(n,1:𝔹);
+	while measure(all(x)){
+		measure(x);
+		x:=vector(n,0:𝔹);
+		for i in 0..n{ x[i]:=H(x[i]); }
+	}
+	return x;
+}
+
+def main()⇒solve(4);

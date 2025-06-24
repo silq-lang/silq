@@ -1,0 +1,18 @@
+
+def solveΠ(f:𝔹!→mfree 𝔹)⇒measure(f(H(f(H(0:𝔹)))));
+
+def solve(θ:!ℝ,f:𝔹!→mfree 𝔹){
+	n:=0;
+	while abs(n·θ%(2·π)-π)>10^-3{ n+=1; }
+	print(n);
+	g:=(x:𝔹)mfree{ for i in 0..n{ x:=f(x); } return x; };
+	return solveΠ(g);
+}
+
+def Rz(θ:!ℝ,x:𝔹)mfree⇒rotZ(θ,x);
+def Ry(θ:!ℝ,x:𝔹)mfree⇒rotY(θ,x);
+
+def main(){
+	θ:=0.71; //θ:=0.32;
+	return (solve(θ,(x:𝔹)mfree⇒Ry(θ,x)),solve(θ,(x:𝔹)mfree⇒Rz(θ,x)));
+}

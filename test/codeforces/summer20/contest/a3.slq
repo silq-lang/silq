@@ -1,0 +1,6 @@
+def solve(f:𝔹!→mfree 𝔹){
+	return measure(f(X(f(0:𝔹))));
+}
+
+def main()⇒(solve(H),solve(X));
+

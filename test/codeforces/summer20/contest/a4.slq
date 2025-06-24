@@ -1,0 +1,14 @@
+
+def solve(f:!ℝ×𝔹!→mfree 𝔹){
+	(x,y):=(H(0:𝔹),H(0:𝔹));
+	if x{ y:=f(2·π,y); }
+	return !measure(H(x),H(y))[0];
+}
+
+def Rz(θ:!ℝ,x:𝔹)mfree⇒rotZ(θ,x);
+def R1(θ:!ℝ,x:𝔹)mfree{
+	if x { phase(θ); }
+	return x;
+}
+
+def main()⇒(solve(Rz),solve(R1));

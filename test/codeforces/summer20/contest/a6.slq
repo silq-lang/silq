@@ -1,0 +1,15 @@
+def solve(f:𝔹!→mfree 𝔹){
+	x:=H(0:𝔹);
+	y:=dup(x);
+	y:=f(y);
+	y⊕=x;
+	x:=H(x);
+	(a,b):=measure(x,y);
+	if (a,b)=(0,0){ return 0; }
+	if (a,b)=(0,1){ return 1; }
+	if (a,b)=(1,1){ return 2; }
+	if (a,b)=(1,0){ return 3; }
+	assert(false);
+}
+
+def main()⇒(solve(I),solve(X),solve(Y),solve(Z));

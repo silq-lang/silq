@@ -1,0 +1,6 @@
+def solve[n:!ℕ](const x:𝔹^n):𝔹{
+	assert(n<=8);
+	r:=0:uint[4];
+	for i in 0..n{ r+=x[i]; }
+	return r%3=0;
+}

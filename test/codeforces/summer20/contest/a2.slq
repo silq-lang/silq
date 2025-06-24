@@ -1,0 +1,16 @@
+def solve(f: 𝔹^2!→mfree 𝔹^2){
+	(a,b):=measure(f(1:𝔹,1:𝔹));
+	(c,d):=measure(f(0:𝔹,1:𝔹));
+	if (a,b)=(1,0){ return 1; }
+	if (a,b)=(0,1){ return 2; }
+	if (c,d)=(0,1){ return 0; }
+	return 3;
+}
+
+def main(){
+	IxI:=(x:𝔹^2)mfree⇒x;
+	CNOT₁₂:=(x:𝔹,y:𝔹)mfree{ y⊕=x; return (x,y); };
+	CNOT₂₁:=(x:𝔹,y:𝔹)mfree{ x⊕=y; return (x,y); };
+	SWAP:=(x:𝔹,y:𝔹)mfree⇒(y,x);
+	return (solve(IxI),solve(CNOT₁₂),solve(CNOT₂₁),solve(SWAP));
+}
