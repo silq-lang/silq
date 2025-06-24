@@ -1,5 +1,5 @@
 def main(): !ℕ × !ℚ × !ℕ {
 	x:=(0,1,2,3/4);
 	i:=3;
-	return x[(0, i, 2)];
+	return x[(0, i, 2)]; /// error
 }

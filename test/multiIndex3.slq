@@ -1,8 +1,8 @@
-// args: --run
+
 def main(){
 	x:=H(0:𝔹);
 	a:=(1,0):𝔹^2;
-	y:=a[x,~x];
+	y:=a[x,~x]; /// error
 	forget(x=~y[0]);
 	(x,y):=y;
 	forget(x=~y);
