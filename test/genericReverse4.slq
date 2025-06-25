@@ -1,13 +1,13 @@
 // args: --run
 
 def f[τ](g: τ !→ qfree 𝟙)(x: τ)qfree: 𝟙{
-	g(x); /// TODO
+	g(x);
 }
 def main() {
 	def g(x: 𝔹, y: !ℕ)qfree{
 		forget(x=1:𝔹);
 	}
 	h:=f(g): 𝔹 x !ℕ !→ qfree 𝟙;
-	h(x, 42) := ();
+	h(x, 42) := (); /// TODO
 	return x;
 }

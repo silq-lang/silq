@@ -2581,28 +2581,25 @@ struct Interpreter(QState){
 					enforce(val.isValid,"reversed function call not yet supported");
 					assignTo(arg,val,[]);
 				}
-				if(ft.nargs&&ft.isConstForReverse.all){
-					if(!oft.nargs||!oft.isConstForReverse.all){
-						auto tpl=cast(TupleExp)ce.arg;
-						if(oft.isConstForReverse.length!=1&&tpl){
-							foreach(i,arg;tpl.e)
-								if(!oft.isConstForReverse[i])
-									handleUnitArg(arg,ft.argTy(i));
-						}else{
-							enforce(!oft.isConstForReverse.any,"reversed function call not yet supported");
-							handleUnitArg(ce.arg,ft.dom);
-						}
-					}
+				if(oft.nargs&&oft.isConstForReverse.all){
 					constArg=runExp(ce.arg);
-				}else if(!ft.isConstForReverse.any){
+				}else if(!oft.isConstForReverse.any&&!ft.isConstForReverse.any){
 					// no const arg
 					enforce(rf.params.length==1&&equal(rft.isConstForReverse,only(false))&&!rft.isTuple,"reversed function call not yet supported");
+				}else if(!ft.isTuple){
+					assert(ft.nargs==1);
+					if(ft.isConstForReverse[0]){
+						assert(!oft.isConstForReverse.any);
+						handleUnitArg(ce.arg,ft.dom);
+						constArg=runExp(ce.arg);
+					}else{
+						enforce(0,"reversed function call not yet supported");
+					}
 				}else{
-					assert(ft.isTuple);
 					enforce(oft.dom.isTupleTy,"reversed function call not yet supported");
 					oft=oft.setTuple(true);
 					auto tpl=cast(TupleExp)ce.arg;
-					enforce(!!tpl&&tpl.length==ft.isConst.length);
+					enforce(!!tpl&&tpl.length==oft.isConst.length,"reversed function call not yet supported");
 					QState.Value[] cargs;
 					if(r.constTuple){
 						foreach(i,arg;tpl.e){
@@ -2626,8 +2623,8 @@ struct Interpreter(QState){
 					if(r.constTuple) constArg=qstate.makeTuple(r.constType,cargs);
 				}
 				void assignMoved(QState.Value result){
-					if(!ft.isConstForReverse.any) return assignTo(ce.arg,result,replacements);
-					if(ft.nargs&&ft.isConstForReverse.all){
+					if(!oft.isConstForReverse.any) return assignTo(ce.arg,result,replacements);
+					if(oft.nargs&&oft.isConstForReverse.all){ // TODO: remove?
 						assert(rft.cod is unit);
 						return;
 					}
