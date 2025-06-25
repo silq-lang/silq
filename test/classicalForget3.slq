@@ -1,5 +1,5 @@
 
 def main(){
 	(x,)~y:=(1,2,3);
-	return __tmp1; /// TODO error
+	return __tmp2; /// TODO error
 }

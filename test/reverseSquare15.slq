@@ -1,0 +1,6 @@
+
+def h[τ,n:!ℕ](x:!τ,b:𝔹^n)mfree⇒b;
+
+def main(){
+	z:=reverse(h); /// error
+}

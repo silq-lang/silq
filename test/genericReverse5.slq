@@ -1,0 +1,23 @@
+
+def applyQuantum[a:qtype](const f: 𝟙!→mfree a,const g: a!→mfree 𝟙){
+	g(f()):=();
+}
+
+def applyClassical[a:ctype](const f: 𝟙!→mfree a,const g: a!→mfree 𝟙){
+	g(f()):=(); /// error
+}
+
+def main(){
+	x:=H(0);
+	if x{
+		phase(π/2);
+		applyQuantum(()⇒phase(π/2),()⇒());
+	}
+	forget(H(x)=0);
+	x:=H(0);
+	if x{
+		phase(π/2);
+		applyClassical((){ phase(π/2); },()⇒());
+	}
+	forget(H(x)=1);
+}

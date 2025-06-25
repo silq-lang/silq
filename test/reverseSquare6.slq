@@ -2,7 +2,7 @@
 
 def f[τ](a:τ)mfree⇒a;
 def g[τ](b:𝔹)mfree⇒b;
-def h[τ,n:!ℕ](x:!τ,b:𝔹^n)mfree⇒b;
+def h[τ,n:!ℕ](const x:!τ,b:𝔹^n)mfree⇒b;
 
 def k[moved b:𝔹]mfree⇒X(b);
 
