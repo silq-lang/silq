@@ -1,0 +1,12 @@
+// args: --run
+
+def f(x:𝔹)mfree{
+	print(3);
+	dump();
+	return H(x);
+}
+
+def main(){
+	f(x):=H(0);
+	forget(x=0);
+}

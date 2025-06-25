@@ -2581,8 +2581,8 @@ struct Interpreter(QState){
 					enforce(val.isValid,"reversed function call not yet supported");
 					assignTo(arg,val,[]);
 				}
-				if(ft.isConstForReverse.all){
-					if(!oft.isConstForReverse.all){
+				if(ft.nargs&&ft.isConstForReverse.all){
+					if(!oft.nargs||!oft.isConstForReverse.all){
 						auto tpl=cast(TupleExp)ce.arg;
 						if(oft.isConstForReverse.length!=1&&tpl){
 							foreach(i,arg;tpl.e)
@@ -2627,7 +2627,7 @@ struct Interpreter(QState){
 				}
 				void assignMoved(QState.Value result){
 					if(!ft.isConstForReverse.any) return assignTo(ce.arg,result,replacements);
-					if(ft.isConstForReverse.all){
+					if(ft.nargs&&ft.isConstForReverse.all){
 						assert(rft.cod is unit);
 						return;
 					}
@@ -2651,7 +2651,7 @@ struct Interpreter(QState){
 						}
 					}
 				}
-				if(rft.isConst.all){
+				if(rft.nargs&&rft.isConst.all){
 					enforce(rhs.tag==QState.Value.Tag.array_&&rhs.array_.length==0,"bad right-hand side for reversed call");
 					// assignment is on unit. can just drop rhs.
 					auto result=qstate.call(rfv,constArg,rfret,ce.loc);
@@ -2717,6 +2717,11 @@ struct Interpreter(QState){
 	}
 	void forget(ForgetExp fe){
 		if(fe.var.type&&fe.var.type.isClassical){
+			if(fe.val){
+				auto var=runExp(fe.var);
+				auto val=runExp(fe.val);
+				enforce(var==val,"bad forget");
+			}
 			void doForget(Expression e){
 				if(auto id=cast(Identifier)e){
 					assert(id.name in qstate.vars);

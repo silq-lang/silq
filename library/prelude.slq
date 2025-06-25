@@ -111,11 +111,14 @@ def max[n:!ℕ](x:!ℝ^n)lifted:!ℝ{
 
 def array[τ:*](n: !ℕ,const x:τ) @[artificial] lifted: τ[]⇒vector[τ](n, x);
 def vector[τ:*](n:!ℕ,const x:τ) @[artificial] lifted: τ^n {
-	def impl[τ](n: !ℕ, const x: τ) @[extern="primitive.vector"] lifted: τ^n;
+	def impl[τ](n: !ℕ, const x: τ) @[extern="primitive.vector"] lifted: τ^n; // TODO: make unnecessary
 	return impl[τ](n, x);
 }
 
-def print[τ:*](x:!τ) @[extern="primitive.print"] lifted: 𝟙;
+def print[τ:*](x:!τ) @[artificial] lifted: 𝟙 {
+	def impl(x: !τ) @[extern="primitive.print"] lifted: 𝟙; // TODO: make unnecessary
+	impl(x);
+}
 def dump() @[extern="primitive.dump"] lifted: 𝟙;
 def exit() @[extern="primitive.exit"] lifted: ⊥;
 
