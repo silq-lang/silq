@@ -1,0 +1,19 @@
+// args: --run
+
+def foo₁(moved arg:𝟙)⇒();
+def foo₂(const arg:𝟙)⇒();
+
+def main(){
+	x:=H(0);
+	if x{
+		phase(π/2);
+		foo₁(phase(π/2)):=();
+	}
+	forget(H(x)=0);
+	x:=H(0);
+	if x{
+		phase(π/2);
+		foo₂(phase(π/2)):=();
+	}
+	forget(H(x)=1);
+}
