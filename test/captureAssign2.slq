@@ -4,5 +4,6 @@ def main(){
 	def foo(){
 		x=1; /// error
 	}
+	__show(__query("dep",foo));
 	return x;  /// error
 }

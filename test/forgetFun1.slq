@@ -1,0 +1,8 @@
+
+def main(){
+	def foo()⇒2;
+	forget(foo);
+	def foo()⇒2;
+	x:=vector(foo(),0);
+	forget(foo); /// error
+}
