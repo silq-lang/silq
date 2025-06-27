@@ -1,0 +1,7 @@
+
+def foo()⇒();
+
+def main(){
+	foo(x):=(); /// TODO
+	return x; /// TODO
+}
