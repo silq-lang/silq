@@ -1,0 +1,10 @@
+// args: --run
+
+def foo(x:𝔹){
+	def bar[n:!ℕ](x:𝔹){
+		if n≠0 { x:=bar[n sub 1](X(x)); } /// TODO
+		return x;
+	}
+	return bar[9](x); /// TODO
+}
+def main()⇒reverse(foo)(0);
