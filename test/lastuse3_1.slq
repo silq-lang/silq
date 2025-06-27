@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	x:=H(0:𝔹);
+	def foo()⇒x;
+	return (foo,foo); /// error
+}
+

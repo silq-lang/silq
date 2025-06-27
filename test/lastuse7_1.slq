@@ -1,0 +1,11 @@
+
+def main(){
+	d:=0;
+	n:=2;
+	k:=(d,n);
+	if measure(H(0)){
+		l:=(d,n);
+	}else{
+		(d,n):=k; /// error
+	}
+}

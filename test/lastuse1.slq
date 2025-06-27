@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	x:=0;
+	y:=x;
+	dump(); // TODO: x should be gone
+	return y;
+}
+

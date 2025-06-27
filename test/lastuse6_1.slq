@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	d:=0;
+	n:=2;
+	k:=(d,n);
+	if measure(H(0)){ (d,n):=k; } /// TODO
+}

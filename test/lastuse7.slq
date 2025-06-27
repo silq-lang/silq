@@ -1,0 +1,11 @@
+
+def main(){
+	d:=0:𝔹;
+	n:=2:int[128];
+	k:=(d,n);
+	if measure(H(0)){
+		l:=(d,n); /// TODO
+	}else{
+		(d,n):=k; /// TODO error
+	}
+}

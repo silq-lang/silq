@@ -1,0 +1,10 @@
+// args: --run
+
+def main(){
+	d:=H(0);
+	n:=2:int[128];
+	n[0]:=H(n[0]);
+	k:=(d,n);
+	if measure(H(0)){ (d,n):=k; measure(d,n); }
+	else { measure(k); }
+}
