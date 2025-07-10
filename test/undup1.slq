@@ -1,0 +1,6 @@
+
+def main(){
+	x:=H(0);
+	dup(x):= /// error
+		x; /// TODO
+}

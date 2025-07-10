@@ -1,0 +1,7 @@
+
+def main(){
+	x:=H(0);
+	y:=dup(x);
+	dup(x):=y;
+	forget(H(x)=0);
+}

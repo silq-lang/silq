@@ -1,0 +1,6 @@
+// args: --run
+
+def main(){
+	x:=0:𝔹;
+	dup[𝔹](measure(x)):=1; // TODO run_error
+}

@@ -1,7 +1,6 @@
 
 def main(){
 	x:=H(0);
-	y:=dup(x);
 	def f()⇒x;
 	measure(f)():= /// TODO error
 		measure(f)(); /// TODO

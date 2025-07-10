@@ -1,0 +1,4 @@
+
+def main(){
+	dup(1:𝔹):=0; /// TODO error
+}
