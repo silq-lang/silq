@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	def f(x:!𝔹)()⇒x:𝔹;
+	x:=H(0);
+	y:=dup(x);
+	f(measure(x))():=y;
+}

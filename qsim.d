@@ -2568,6 +2568,7 @@ struct Interpreter(QState){
 			auto fv=runExp(f);
 			if(fv.tag==QState.Value.Tag.closure){
 				auto ft=fv.closure.fun.ftype;
+				enforce(fv.closure.fun.scope_&&ft&&ft.isClassical()&&ft.annotation>=Annotation.mfree,"reversed function call not yet supported");
 				auto rf=reverseFunction(fv.closure.fun), rft=rf.ftype;
 				auto context=fv.closure.context;
 				auto rfv=qstate.makeClosure(rft,QState.Closure(rf,context));

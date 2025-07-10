@@ -1,0 +1,9 @@
+// args: --run
+
+def foo(const x:𝔹,y:𝔹)⇒y;
+
+def main(){
+	x:=H(0:𝔹);
+	foo(measure(x),y):=1;
+	return y;
+}
