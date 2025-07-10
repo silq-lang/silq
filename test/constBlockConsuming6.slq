@@ -6,7 +6,7 @@ def foo(x:𝔹)mfree{
 	if z{
 		return (z,y); /// error
 	}else{
-		forget((y,z)=(0,0));
+		forget((y,z)=(0,0)); /// TODO error
 		return (1,1);
 	}
 }

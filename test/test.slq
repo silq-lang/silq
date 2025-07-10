@@ -42,17 +42,6 @@ def main(){
 	1:B:=x;
 }
 +/
-/+
-def undup[T](const x: T, y: T) {
-	dup(x) := y;
-}
-def main() {
-	undup(0:B, H(x)) := ();                 // x := H(0:B);
-	undup(x, y) := ();                      // y := dup(x)
-	undup(measure(undup(y, x)), ()) := ();  // undup(y, x); // TODO
-	return y;
-}
-+/
 
 /+
 def f(x:𝔹):⊥{ assert(0); }

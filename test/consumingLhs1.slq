@@ -1,0 +1,11 @@
+
+def undup[T](const x: T, y: T) {
+	dup(x) := y;
+}
+def main() {
+	undup(0:𝔹, H(x)) := ();                 // x := H(0:B);
+	undup(x, y) := ();                      // y := dup(x)
+	undup(measure(undup(y, x)), ()) := ();  // undup(y, x);
+	return y;
+}
+
