@@ -1,0 +1,4 @@
+// args: --run
+
+def foo[a,b](f: a→b)⇒f;
+def main()⇒foo(X);
