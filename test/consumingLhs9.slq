@@ -2,6 +2,6 @@
 def main(){
 	x:=H(0);
 	def f()⇒x;
-	measure(f)():= /// TODO error
-		measure(f)(); /// TODO
+	measure(f)():= /// error
+		measure(f)();
 }

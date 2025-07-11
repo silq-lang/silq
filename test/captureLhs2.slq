@@ -1,0 +1,15 @@
+
+def fake_measure[τ:*](x:τ)mfree:!τ;
+
+def foo[a:qtype,b](f: a→mfree b)(ys:b^1):a^1{
+	if true{
+		(fake_measure(f)(x),):=ys;
+		xs:=(x,);
+	}else{	
+		(fake_measure(f)(x),):=ys;
+		xs:=(x,);	
+	}
+	return xs coerce a^1;
+}
+
+def main()⇒foo(X)(0,);
