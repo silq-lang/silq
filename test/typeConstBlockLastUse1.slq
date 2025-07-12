@@ -1,0 +1,9 @@
+// args: --run
+
+def id[τ:*](moved x:τ)⇒x;
+
+def main(){
+	n:=3;
+	a:=vector(n,0)~[id(n)];
+	return a:!ℕ[];
+}
