@@ -1,0 +1,20 @@
+
+def main(){
+	x:=0:𝔹;
+	y:=H(0:𝔹); /// error
+	if x{ x=y; }
+	if x{ k=y; } /// error
+	if x{ k=y; } /// error
+	if x{ k=y; } /// error
+	if x{ k=y; } /// error
+	if x{ k=y; } /// error
+	if x{ k=y; } /// error
+	if x{ k=y; } /// error
+	if x{ k=y; } /// error
+	if x{ k=y; } /// error
+	if x{ k=y; } /// error
+	if x{ k=y; } /// error
+	if x{ k=y; } /// error
+	if x{ k=y; } /// error
+	return y; /// error
+}
