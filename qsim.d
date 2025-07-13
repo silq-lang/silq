@@ -2791,8 +2791,18 @@ struct Interpreter(QState){
 			auto ae=cast(AAssignExp)e;
 			assert(!!ae);
 			auto ass=getAssignable!false(ae.e1,ae.replacements);
-			auto lhs=ass.read(qstate),rhs=runExp(ae.e2);
-			ass.assign(qstate,perform(lhs,rhs));
+			if(cast(OrAssignExp)e&&ae.e1.type.isClassical()){
+				auto lhs=ass.read(qstate);
+				enforce(lhs.isClassical(),"unexpected quantum condition");
+				if(!lhs.neqZImpl) ass.assign(qstate,runExp(ae.e2));
+			}else if(cast(AndAssignExp)e&&ae.e1.type.isClassical()){
+				auto lhs=ass.read(qstate);
+				enforce(lhs.isClassical(),"unexpected quantum condition");
+				if(lhs.neqZImpl) ass.assign(qstate,runExp(ae.e2));				
+			}else{
+				auto lhs=ass.read(qstate),rhs=runExp(ae.e2);
+				ass.assign(qstate,perform(lhs,rhs));
+			}
 		}else if(auto call=cast(CallExp)e){
 			runExp(call).forget(qstate);
 		}else if(auto ce=cast(CompoundExp)e){

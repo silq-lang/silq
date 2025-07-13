@@ -3,7 +3,7 @@
 def foo():!𝔹{ assert(false); }
 
 def main(){
-	x:=true;
-	x||=foo();
+	x:=false;
+	x&&=foo();
 	return x;
 }

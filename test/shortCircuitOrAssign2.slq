@@ -1,6 +1,6 @@
 // args: --run
 
-def foo():!𝔹{ assert(false); }
+def foo():𝔹{ assert(false); }
 
 def main(){
 	x:=true;
