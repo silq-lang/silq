@@ -4,6 +4,6 @@ def foo():𝔹{ assert(false); }
 
 def main(){
 	x:=false;
-	x&&=foo();
+	x&&=foo():𝔹;
 	return x;
 }

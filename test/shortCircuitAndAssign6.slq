@@ -1,0 +1,10 @@
+// args: --run
+
+def foo():!𝔹⇒false;
+
+def main(){
+	x:=[true];
+	x[0]&&=foo();
+	assert(!x[0]);
+	return x;
+}

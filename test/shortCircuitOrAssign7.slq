@@ -1,0 +1,10 @@
+// args: --run
+
+def foo():𝔹⇒true;
+
+def main(){
+	x:=[false];
+	x[0]||=foo():𝔹;
+	assert(measure(x[0]));
+	return x;
+}
