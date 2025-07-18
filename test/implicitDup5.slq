@@ -1,0 +1,12 @@
+// args: --run
+
+def foo(a:!ℕ){
+	x:=a; // must dup
+	if false{
+		return;
+	}else{
+		a=2;
+	}
+	return;
+}
+def main()⇒foo;

@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	n:=3;
+	def vec(n:!ℕ)⇒vector(n,0:𝔹);
+	x:=vec(n);
+	__show(typeof(x));
+	return x coerce 𝔹^3;
+}
