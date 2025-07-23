@@ -1,0 +1,27 @@
+// args: --run
+
+def foo₀(){
+	x:=1;
+	for i in 0..10{
+		return x;
+	}
+	assert(0);
+}
+
+
+def foo₁(){
+	x:=2;
+	while true{
+		return x;
+	}
+}
+
+def foo₂(){
+	x:=3;
+	repeat 10{
+		return x;
+	}
+	assert(0);
+}
+
+def main()⇒foo₀()+foo₁()+foo₂();
