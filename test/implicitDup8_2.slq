@@ -1,0 +1,12 @@
+
+def foo(a:!ℕ){
+	x:=a;
+	if false{
+		y:=a; // should not dup
+		return y;
+	}else{
+		y:=a; // should dup
+	}
+	return a;
+}
+def main()⇒foo;

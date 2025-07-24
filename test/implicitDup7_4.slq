@@ -1,0 +1,8 @@
+// args: --run
+
+def foo(){
+	x:=H(0);
+	def f()⇒x;
+	measure(f)():=measure(f)(); /// error
+}
+def main()⇒foo;
