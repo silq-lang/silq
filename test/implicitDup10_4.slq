@@ -1,0 +1,10 @@
+// args: --run
+
+def foo(a:!ℕ){
+	while measure(H(0)){
+		def f(b:uint[4])lifted⇒a as uint[4];
+		t:=f; // implicit dup
+		for i in [0..2){ k:=f; } // implicit dup
+	}
+}
+def main()⇒foo;

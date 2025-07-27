@@ -1,0 +1,9 @@
+
+def foo(){
+	x:=0:𝔹;
+	while measure(H(0)){ /// TODO
+		y:=x; // implicit dup
+		measure(y);
+	}
+}
+def main()⇒foo;
