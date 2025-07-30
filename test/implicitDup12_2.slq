@@ -1,0 +1,8 @@
+// args: --run
+
+def foo(){
+	x:=0;
+	y:=x; // should not dup
+	if true{ }
+}
+def main()⇒foo;
