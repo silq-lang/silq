@@ -1,0 +1,13 @@
+// args: --run
+
+def foo(){
+	α:=0:𝔹;
+	measure(α); // should dup
+	if false{ return 0; }
+	if false{ return 0; }
+	measure(α); /// TODO // should not dup
+	if true{ return 0; }
+	α:=3;
+	return 1;
+}
+def main()⇒foo;

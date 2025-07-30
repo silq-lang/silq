@@ -1,0 +1,8 @@
+def foo(a:!ℕ){
+	while measure(H(0)){
+		def f(b:uint[4])lifted⇒a as uint[4];
+		if true{ k:=f; } // should not dup
+		f:=(); /// TODO
+	}
+}
+def main()⇒foo;
