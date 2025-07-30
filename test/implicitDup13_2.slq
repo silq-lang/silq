@@ -1,0 +1,11 @@
+
+def foo(){
+	x:=0;
+	if true{
+		if true{
+			y:=x; // should not dup
+		}
+	}
+	x:=3; /// TODO
+}
+def main()⇒foo;

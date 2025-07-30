@@ -1,0 +1,17 @@
+// args: --run
+
+def foo(){
+	if true{
+		x:=0:𝔹;
+		if true{
+			y:=x; // should not dup
+		}
+	}else{
+		x:=0:𝔹;
+		if true{
+			y:=x; // should not dup
+		}
+	}
+	x:=3;
+}
+def main()⇒foo;
