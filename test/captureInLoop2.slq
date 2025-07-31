@@ -1,0 +1,8 @@
+def foo(){
+	r:=0:𝔹;
+	def bar(const xs:𝔹^2){
+		for i in 0..2{
+			r&=xs[i]; /// error
+		}
+	}
+}

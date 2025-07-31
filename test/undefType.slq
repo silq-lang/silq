@@ -1,0 +1,8 @@
+
+def foo()mfree{
+	x:=0:undef; /// error
+	for i in [0..2) {
+		x+=1;
+	}
+	return x; /// TODO
+}
