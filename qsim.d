@@ -2114,7 +2114,6 @@ struct Interpreter(QState){
 	}
 	void closeScope(Scope sc){
 		if(!qstate.state.length) return;
-		static if(language==silq) qstate.forgetVars(sc.forgottenVars);
 		foreach(merged;sc.mergedVars){
 			auto name=merged.getName;
 			if(name !in qstate.vars) continue; // TODO: get rid of this
@@ -2955,6 +2954,10 @@ struct Interpreter(QState){
 		foreach(s;statements.s){
 			runStm(s,retState);
 			// writeln("cur: ",cur);
+		}
+		static if(language==silq){
+			if(statements.blscope_)
+				qstate.forgetVars(statements.blscope_.forgottenVars);
 		}
 	}
 	void runFun(ref QState retState){
