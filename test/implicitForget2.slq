@@ -1,0 +1,16 @@
+// args: --run
+
+def foo(const x:𝔹){
+	y:=dup(x);
+	for i in 0..2{ /// TODO // forgottenVarsOnEntry=[y]
+		return 0:𝔹;
+	}
+	assert(0);
+}
+
+def main(){
+	x:=H(0);
+	y:=foo(x);
+	forget(y=0);
+	assert(measure(H(x))=0);
+}

@@ -1,0 +1,8 @@
+// args: --run
+
+def foo(bits:!𝔹)wild:𝟙{
+	if true{
+        if true && bits { }
+	}
+	return;
+}
