@@ -3,8 +3,12 @@
 def foo(){
 	x:=0:𝔹;
 	if true{
-		y:=x; // should not dup
+		if true{
+			if true{
+				y:=dup(x);
+			}
+		}
 	}
-	x:=3;
+	x:=3; /// error
 }
 def main()⇒foo;

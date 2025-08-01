@@ -3,7 +3,11 @@
 def foo(){
 	x:=0:𝔹;
 	if true{
-		y:=x; // should not dup
+		if true{
+			if true{
+				y:=x; // should not dup
+			}
+		}
 	}
 	x:=3;
 }
