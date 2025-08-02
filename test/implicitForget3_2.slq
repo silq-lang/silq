@@ -1,0 +1,14 @@
+// args: --run
+
+def foo(){
+	a:=H(0);
+	b:=dup(a);
+	x:=b; /// TODO
+	c:=b; /// TODO
+	for i in 0..2{
+		H(0):=a;
+		a:=H(0);
+	}
+	H(0):=a;
+}
+def main()⇒foo;
