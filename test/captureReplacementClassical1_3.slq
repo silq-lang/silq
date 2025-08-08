@@ -1,0 +1,9 @@
+
+def foo(){
+	x:=0;
+	def foo(){
+		x:=H(x);
+		return x;
+	}
+	return x; /// TODO error
+}

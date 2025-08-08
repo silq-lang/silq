@@ -1,0 +1,13 @@
+// args: --run
+
+def main(){
+	a:=0:𝔹;
+	with{
+		b := H(0);
+		if b { k := a; }
+		else { k := X(a); }
+	} do { }
+	assert(measure(a=0));
+	return a;
+}
+
