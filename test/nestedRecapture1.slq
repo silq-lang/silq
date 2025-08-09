@@ -1,0 +1,21 @@
+// args: --run
+
+def main(){
+	x:=H(0);
+	def foo(){
+		def bar(){
+			if measure(H(0)){
+				return foo();
+			}else{
+				return x;
+			}
+		}
+		if measure(H(0)){
+			return bar();
+		}else{
+			measure(bar);
+			return 0;
+		}
+	}
+	return foo();
+}
