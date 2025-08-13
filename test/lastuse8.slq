@@ -4,6 +4,6 @@ def main(){
 	n:=2:int[128];
 	k:=(d,n);
 	if measure(H(0)){
-		l:=(d,n); /// TODO
+		l:=(d,n);
 	}
 }

@@ -6,7 +6,7 @@ def foo(a:!ℕ){
 	}else{
 		y:=a; // should not dup
 	}
-	a:=2; /// TODO
+	a:=2;
 	return;
 }
 def main()⇒foo;

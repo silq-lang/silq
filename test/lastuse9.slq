@@ -3,18 +3,18 @@ def main(){
 	x:=0:𝔹;
 	y:=0:𝔹;
 	if x{ x=y; }
-	if x{ k=y; } /// TODO
-	if x{ k=y; } /// TODO
-	if x{ k=y; } /// TODO
-	if x{ k=y; } /// TODO
-	if x{ k=y; } /// TODO
-	if x{ k=y; } /// TODO
-	if x{ k=y; } /// TODO
-	if x{ k=y; } /// TODO
-	if x{ k=y; } /// TODO
-	if x{ k=y; } /// TODO
-	if x{ k=y; } /// TODO
-	if x{ k=y; } /// TODO
-	if x{ k=y; } /// TODO
-	return y; /// TODO
+	if x{ k=y; } /// error
+	if x{ k=y; } /// error
+	if x{ k=y; } /// error
+	if x{ k=y; } /// error
+	if x{ k=y; } /// error
+	if x{ k=y; } /// error
+	if x{ k=y; } /// error
+	if x{ k=y; } /// error
+	if x{ k=y; } /// error
+	if x{ k=y; } /// error
+	if x{ k=y; } /// error
+	if x{ k=y; } /// error
+	if x{ k=y; } /// error
+	return y;
 }

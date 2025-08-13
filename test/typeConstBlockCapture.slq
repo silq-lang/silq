@@ -6,5 +6,5 @@ def main(){
 	f:=()=>x; /// error
 	x:=0:int[2]; /// error
 	forget(k);
-	return (f,x); /// TODO
+	return (f,x);
 }

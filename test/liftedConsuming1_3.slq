@@ -3,9 +3,9 @@ def main(){
 	x:=H(0);
 	y:=dup(x);
 	if X(y){
-		forget(y); /// TODO
+		forget(y);
 	}else{
-		y:=2:int[3]; /// TODO error
+		y:=2:int[3]; /// error
 	}
 	return x;
 }

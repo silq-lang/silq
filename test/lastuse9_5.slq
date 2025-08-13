@@ -1,0 +1,22 @@
+// args: --run
+
+def foo(){
+	x:=0:𝔹;
+	y:=0:𝔹;
+	if x{ x=y; }
+	if x{ x=y; }
+	if x{ x=y; }
+	if x{ x=y; }
+	if x{ x=y; }
+	if x{ x=y; }
+	if x{ x=y; }
+	if x{ x=y; }
+	if x{ x=y; }
+	if x{ x=y; }
+	if x{ x=y; }
+	if x{ x=y; }
+	if x{ x=y; }
+	if x{ x=y; }
+}
+
+def main()⇒foo;

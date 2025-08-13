@@ -11,6 +11,6 @@ def foo(){
 			y:=x; // should not dup
 		}
 	}
-	x:=3; /// TODO
+	x:=3;
 }
 def main()⇒foo;

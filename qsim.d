@@ -1749,7 +1749,7 @@ struct QState{
 	Value readLocal(string s,bool constLookup){
 		enforce(s in vars,text("variable '",s,"' not found"));
 		auto r=vars[s];
-		if(!constLookup&&r.type&&!r.isClassical()) vars.remove(s);
+		if(!constLookup) vars.remove(s);
 		return r;
 	}
 	static Value readField(Value r,string s,bool constLookup){
@@ -1975,9 +1975,9 @@ QState.Value getContextFor(QState)(ref QState qstate,Declaration meaning,Scope s
 }
 QState.Value buildContextFor(QState)(ref QState qstate,FunctionDef fd,Scope sc)in{assert(fd&&fd.scope_);}do{
 	QState.Record record;
-	foreach(decl,_;fd.captures){
+	foreach(decl;fd.capturedDecls){
 		auto name=decl.getName;
-		auto constLookup=!decl.isLinear; // TODO: improve?
+		auto constLookup=!fd.isConsumedCapture(decl);
 		record[name]=lookupMeaning(qstate,decl,constLookup,sc);
 	}
 	return QState.makeRecord(record);
@@ -2008,8 +2008,6 @@ QState.Value lookupMeaning(QState)(ref QState qstate,Declaration meaning,bool co
 	if(auto fd=cast(FunctionDef)meaning)
 		if(!fd.isNested()||name !in qstate.vars)
 			return qstate.makeFunction(fd,sc);
-	if(!constLookup&&!meaning.isLinear)
-		return qstate.readLocal(name,true).dup(qstate);
 	return qstate.readLocal(name,constLookup);
 }
 
@@ -2714,16 +2712,17 @@ struct Interpreter(QState){
 	}
 	void forget(ForgetExp fe){
 		if(fe.var.type&&fe.var.type.isClassical){
+			auto var=runExp(fe.var);
 			if(fe.val){
-				auto var=runExp(fe.var);
 				auto val=runExp(fe.val);
 				enforce(var==val,"bad forget");
 			}
 			void doForget(Expression e){
 				if(auto id=cast(Identifier)e){
-					assert(id.name in qstate.vars);
-					if(!id.implicitDup)
-						qstate.vars.remove(id.name);
+					if(!id.implicitDup){
+						assert(id.name !in qstate.vars,text(id));
+						//qstate.vars.remove(id.name);
+					}
 				}else if(auto tpl=cast(TupleExp)e){
 					foreach(t;tpl.e)
 						doForget(t);
@@ -2951,6 +2950,10 @@ struct Interpreter(QState){
 		}
 	}
 	void run(ref QState retState){
+		static if(language==silq){
+			if(statements.blscope_)
+				qstate.forgetVars(statements.blscope_.forgottenVarsOnEntry);
+		}
 		foreach(s;statements.s){
 			runStm(s,retState);
 			// writeln("cur: ",cur);

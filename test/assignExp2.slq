@@ -1,8 +1,8 @@
 def main(){
 	x:=H(0);
 	k:=dup(x);
-	k=k; /// TODO
-	__show(__query("dep",k)); /// TODO
-	forget(k); /// TODO
+	k=k;
+	__show(__query("dep",k));
+	forget(k);
 	return x;
 }

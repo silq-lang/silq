@@ -9,6 +9,6 @@ def foo(){
 			}
 		}
 	}
-	x:=3; /// TODO
+	x:=3;
 }
 def main()⇒foo;

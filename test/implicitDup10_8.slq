@@ -5,7 +5,7 @@ def foo(a:!ℕ){
 		def f(b:uint[4])lifted⇒a as uint[4];
 		k:=f; // should not dup
 		for i in [0..2){ }
-		f:=k; /// TODO
+		f:=k;
 	}
 }
 def main()⇒foo;

@@ -4,5 +4,5 @@ def main(){
 	y:=dup(x);
 	def f()⇒x;
 	measure(f)():=y;
-	return f; /// TODO
+	return f;
 }

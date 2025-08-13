@@ -3,7 +3,7 @@ def foo(){
 	x:=0;
 	while measure(H(0)){
 		y:=x; // should not dup
-		x:=y; /// TODO
+		x:=y;
 	}
 	return x;
 }

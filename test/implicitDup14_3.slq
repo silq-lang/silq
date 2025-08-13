@@ -12,6 +12,6 @@ def foo(){
 			y:=x; // should dup
 		}
 	}
-	return x; /// TODO
+	return x;
 }
 def main()⇒foo;
