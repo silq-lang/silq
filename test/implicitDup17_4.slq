@@ -1,0 +1,17 @@
+// args: --run
+
+def foo(const x: 𝔹)qfree{
+    y := 0;
+    for i in [0..1){
+        if y {
+            y ← 1;
+        }
+        for j in [0..1){
+            if x {
+                y ← 1;
+            }
+        }
+	}
+}
+
+def main()⇒foo;

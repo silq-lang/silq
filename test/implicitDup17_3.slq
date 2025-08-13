@@ -1,0 +1,14 @@
+// args: --run
+
+def foo(const x:𝔹,const y:𝔹)qfree{
+    z := x;
+    if true {
+        z ← y;
+    }
+    if true {
+        for i in [0..2){ }
+	}
+	forget(z);
+}
+
+def main()⇒foo;
