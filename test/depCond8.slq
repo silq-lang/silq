@@ -5,7 +5,7 @@ def foo(){
 	if measure(H(0)){
 		z:=dup(y);
 		forget(y); /// TODO error
-		forget(z);
+		forget(z); /// TODO error
 		return (x,0);
 	}
 	return (x,y);
