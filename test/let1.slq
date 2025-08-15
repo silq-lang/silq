@@ -1,0 +1,8 @@
+
+def main(){
+	x:=let{
+		k:=2;
+		forget(k);
+	} in k; /// error
+	return x;
+}

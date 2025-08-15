@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	x:=let{
+		k:=2;
+		forget(k,k); /// error
+	} in k; /// error
+	return x;
+}

@@ -1,0 +1,12 @@
+// args: --run
+
+def foo(){
+	x:=3;
+	y:=4;
+	return let{
+		k:=2;
+		forget(x,y);
+	} in k;
+}
+
+def main()⇒(foo,foo());

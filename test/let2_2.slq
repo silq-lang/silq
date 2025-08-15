@@ -1,0 +1,6 @@
+// args: --run
+
+def main(){
+	k:=let x:=3 in x;
+	assert(k=3);
+}

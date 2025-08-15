@@ -2176,6 +2176,12 @@ struct Interpreter(QState){
 			if(auto ume=cast(UMinusExp)e) return -doIt(ume.e);
 			if(auto ume=cast(UNotExp)e) return doIt(ume.e).eqZ;
 			if(auto ume=cast(UBitNotExp)e) return ~doIt(ume.e);
+			if(auto let=cast(LetExp)e){
+				auto ret=QState.empty();
+				runStm(let.s,ret);
+				enforce(!ret.state.length,"early returns from 'let' statement not supported yet");
+				return doIt(let.e);
+			}
 			if(auto le=cast(LambdaExp)e) return qstate.makeFunction(le.fd,le.fd.scope_);
 			if(auto ce=cast(CallExp)e){
 				auto target=unwrap(ce.e);
