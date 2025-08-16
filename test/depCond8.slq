@@ -4,8 +4,8 @@ def foo(){
 	y:=dup(x);
 	if measure(H(0)){
 		z:=dup(y);
-		forget(y); /// TODO error
-		forget(z); /// TODO error
+		forget(y); /// error
+		forget(z); /// error
 		return (x,0);
 	}
 	return (x,y);
