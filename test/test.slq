@@ -2,22 +2,6 @@
 
 /+
 def main(){
-	__show("here");
-	x:=H(0);
-	z:=dup(x);
-	if z{
-		k:=z;
-	}else{
-		k:=X(z);
-	}
-	z:=0; /// TODO
-	forget(k=1);
-	return x;
-}
-+/
-
-/+
-def main(){
 	x:=H(0);
 	y:=dup(x);
 	k:=dup(y);

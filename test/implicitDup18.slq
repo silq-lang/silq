@@ -1,0 +1,14 @@
+// args: --run
+
+def main(){
+	x:=H(0);
+	z:=dup(x);
+	if z{
+		k:=z;
+	}else{
+		k:=X(z);
+	}
+	z:=0;
+	forget(k=1);
+	H(0):=x;
+}
