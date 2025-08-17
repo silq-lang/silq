@@ -5,7 +5,7 @@ def foo(){
 	measure(α); // should dup
 	if false{ return 0; }
 	if false{ return 0; }
-	measure(α); /// TODO // should not dup
+	measure(α); // should not dup
 	if true{ return 0; }
 	return 1;
 }

@@ -1,6 +1,6 @@
 def main() {
     x := H(0:𝔹);
     t := X(x);
-    y := !t; /// error
+    y := !t;
     forget(t); /// error
 }

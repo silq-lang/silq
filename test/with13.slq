@@ -4,4 +4,3 @@ def main(){
 	x:=0;
 	with y:=x {} /// TODO
 }
-

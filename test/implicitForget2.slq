@@ -2,7 +2,7 @@
 
 def foo(const x:𝔹){
 	y:=dup(x);
-	for i in 0..2{ /// TODO // forgottenVarsOnEntry=[y]
+	for i in 0..2{ // forgottenVarsOnEntry=[y]
 		return 0:𝔹;
 	}
 	assert(0);

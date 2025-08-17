@@ -2,12 +2,10 @@
 def foo(){
 	x:=0:𝔹;
 	if true{
-		if true{
-			if true{
-				y:=dup(x);
-			}
-		}
+		y:=dup(x);
+	}else{
+		y:=dup(x);
 	}
 	x:=3; /// error
 }
-
+def main()⇒foo;

@@ -8,5 +8,5 @@ def makeF[n:!ℕ](const x:uint[n]){
 
 def main(){
 	x:=1:uint[2];
-	return makeF(x)(2:uint[2]);
+	return (makeF(x)(2:uint[2]),x);
 }
