@@ -1,0 +1,12 @@
+def foo(x:𝔹,const cond:𝔹){
+	y:=dup(x);
+	z:=0;
+	if cond{
+		t:=y;
+		forget(t); /// TODO error
+	}else{
+		x:=H(x);
+		z=y;
+	}
+	return (x,z);
+}
