@@ -1,0 +1,18 @@
+def foo(x:𝔹,const cond:𝔹){
+	y:=dup(x);
+	k:=dup(y);
+	z:=0;
+	if cond{
+		a:=k;
+		b:=k; /// TODO error
+		y:=H(y);
+		c:=k; /// TODO error
+	}else{
+		x:=H(x);
+		a:=k;
+		b:=k; /// error
+		y:=H(y);
+		c:=k; /// error
+	}
+	return (x,y,a,b,c);
+}
