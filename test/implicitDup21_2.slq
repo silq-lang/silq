@@ -1,0 +1,13 @@
+
+def foo(x:𝔹){
+	y:=dup(x);
+	z:=y;
+	r:=z;
+	if X(z){
+		t:=z;
+	}
+	k:=dup(r);
+	forget(k);
+	return x;
+}
+def main()⇒foo;

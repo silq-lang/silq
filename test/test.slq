@@ -27,22 +27,6 @@ def main(){
 
 /+
 def main(){
-	x:=H(0);
-	y:=dup(x);
-	z:=y;
-	if true{
-		k:=y; /// TODO error
-		H(0):=x;
-	}else{
-		k:=y; /// TODO error
-		H(0):=x;
-	}
-	return (z,k);
-}
-+/
-
-/+
-def main(){
 	x:=(0,);
 	x[0]:=H(x[0]);
 	return x;
@@ -87,109 +71,6 @@ def foo(x:𝔹){
 	w:=H(y); /// TODO error?
 	return (x,z,w);
 }
-+/
-
-/+
-def foo(x:𝔹){
-	y:=dup(x);
-	z:=y;
-	t:=dup(y);
-	k:=H(x);
-	r:=y; /// TODO error
-	return (r,k,t,z);
-}
-def main()⇒foo;
-+/
-
-/+
-def foo(x:𝔹){
-	y:=dup(x);
-	z:=y;
-	if X(z){ /// error
-		r:=H(x);
-	}else{
-		r:=x;
-	}
-	return r;
-}
-def main()⇒foo;
-+/
-
-/+
-def foo(x:𝔹){
-	z:=dup(x);
-	if X(z){ /// error
-		t:=z; /// error
-		r:=H(x);
-		forget(z); /// error
-	}else{
-		r:=x;
-	}
-	return r;
-}
-def main()⇒foo;
-+/
-
-/+
-def foo(x:𝔹){
-	z:=dup(x);
-	if X(z){ /// error
-		r:=H(x);
-		forget(z); /// error
-	}else{
-		r:=x;
-	}
-	return r;
-}
-def main()⇒foo;
-+/
-
-/+
-def foo(x:𝔹){
-	y:=dup(x);
-	z:=y;
-	r:=z;
-	if X(z){
-		//forget(y);
-		//return x;
-		//t:=z;
-		forget(z);
-	}else{
-		//forget(y);
-	}
-	return (r,x);
-}
-def main()⇒foo;
-+/
-
-/+
-def foo(x:𝔹){
-	y:=dup(x);
-	z:=y;
-	r:=z; /// TODO: should work consistently
-	if X(z){
-		t:=z;
-	}
-	k:=dup(r);
-	forget(k);
-	return x;
-}
-def main()⇒foo;
-+/
-
-/+
-def foo(x:𝔹){
-	y:=dup(x);
-	z:=y;
-	r:=z;
-	if X(z){
-		t:=z;
-	}
-	k:=r;
-	forget(k);
-	return x;
-}
-def main()⇒foo;
 +/
 
 /+

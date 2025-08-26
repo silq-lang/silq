@@ -1,0 +1,10 @@
+
+def foo(x:𝔹){
+	y:=dup(x);
+	z:=y;
+	t:=y;
+	k:=H(x);
+	r:=y; /// error
+	return (r,k,t,z);
+}
+

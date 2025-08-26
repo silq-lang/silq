@@ -1,0 +1,14 @@
+
+def main(){
+	x:=H(0);
+	y:=dup(x);
+	z:=y;
+	if true{
+		k:=y; /// TODO error
+		H(0):=x;
+	}else{
+		k:=y; /// TODO error
+		H(0):=x;
+	}
+	return (z,k);
+}

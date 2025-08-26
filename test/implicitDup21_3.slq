@@ -1,0 +1,16 @@
+// args: --run
+
+def foo(x:𝔹){
+	y:=dup(x);
+	z:=y;
+	r:=z;
+	if X(z){
+		forget(y);
+		t:=z;
+		forget(z);
+	}else{
+		forget(y);
+	}
+	return (r,x);
+}
+def main()⇒foo;
