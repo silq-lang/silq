@@ -1,0 +1,10 @@
+def foo(x:𝔹){
+	y:=dup(x); /// TODO error
+	if X(dup(y)){
+		r:=X(x);
+	}else{
+		r:=x;
+	}
+	return r;
+}
+
