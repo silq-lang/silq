@@ -3,7 +3,7 @@ def foo(x:𝔹,const cond:𝔹){
 	z:=0;
 	if cond{
 		a:=y;
-		b:=y; /// TODO error
+		b:=y; /// error
 	}else{
 		x:=H(x);
 		a:=y;
