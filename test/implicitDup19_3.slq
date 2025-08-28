@@ -4,10 +4,10 @@ def main(){
 	y:=dup(x);
 	z:=y;
 	if true{
-		k:=y; /// TODO error
+		k:=y; /// error
 		H(0):=x;
 	}else{
-		k:=y; /// TODO error
+		k:=y; /// error
 		H(0):=x;
 	}
 	return (z,k);
