@@ -1,0 +1,17 @@
+// args: --run
+
+def foo[n:!ℕ](const x:uint[n],b:uint[n])qfree{
+	f:=(b:uint[n]){
+		a:=if x[0] then 0 else 1;
+		b+=a;
+		return b;
+	};
+	return (f,b);
+}
+
+def main(){
+	(a,b):=(0,1):uint[5]^2;
+	a[0]:=H(a[0]);
+	(f,b):=foo(a,b);
+	return (f(b),a);
+}

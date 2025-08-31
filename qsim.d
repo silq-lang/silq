@@ -1606,16 +1606,21 @@ struct QState{
 		bool cleanUp=isConst;
 		vars[prm]=rhs.toVar(this,cleanUp); // TODO: this may be inefficient (it iterates over arrays to check whether components are variables)
 	}
-	void passContext(Identifier[][Declaration] captures,string ctx,Value rhs){
-		enforce(ctx!in vars,"context already defined");
+	void passContext(FunctionDef fd,Value rhs){
+		enforce(!!fd.ftype);
+		auto captureAnnotation=fd.ftype.captureAnnotation;
+		bool isMoved=captureAnnotation==CaptureAnnotation.moved||captureAnnotation==CaptureAnnotation.once;
 		enforce(rhs.tag==Value.Tag.record);
-		foreach(meaning,_;captures){
+		foreach(meaning,_;fd.captures){
 			auto name=meaning.getName;
 			enforce(name in rhs.record,text("missing capture ",name," in ",rhs.record));
-			vars[name]=rhs.record[name];
-			if(meaning.isLinear())
+			auto val=rhs.record[name];
+			if(isMoved&&fd.isConsumedCapture(meaning))
 				rhs.record.remove(name);
+			vars[name]=val;
 		}
+		auto ctx=fd.contextName;
+		enforce(ctx!in vars,"context already defined");
 		vars[ctx]=rhs;
 	}
 	Value call(FunctionDef fun,Value thisExp,Value arg,Scope sc,Value* context,Expression type,Location loc){
@@ -1644,7 +1649,7 @@ struct QState{
 		}
 		if(fun.isNested){
 			assert(!!context);
-			ncur.passContext(fun.captures,fun.contextName,*context);
+			ncur.passContext(fun,*context);
 		}else assert(!context);
 		if(fun.isTuple){
 			enforce(arg.tag==Value.Tag.array_,"argument is not a tuple");
@@ -1978,7 +1983,9 @@ QState.Value buildContextFor(QState)(ref QState qstate,FunctionDef fd,Scope sc)i
 	foreach(decl;fd.capturedDecls){
 		auto name=decl.getName;
 		auto constLookup=!fd.isConsumedCapture(decl);
-		record[name]=lookupMeaning(qstate,decl,constLookup,sc);
+		auto val=lookupMeaning(qstate,decl,constLookup,sc);
+		if(constLookup) val=val.dup(qstate);
+		record[name]=val;
 	}
 	return QState.makeRecord(record);
 }
@@ -2571,7 +2578,7 @@ struct Interpreter(QState){
 			auto fv=runExp(f);
 			if(fv.tag==QState.Value.Tag.closure){
 				auto ft=fv.closure.fun.ftype;
-				enforce(fv.closure.fun.scope_&&ft&&ft.isClassical()&&ft.annotation>=Annotation.mfree,"reversed function call not yet supported");
+				enforce(fv.closure.fun.scope_&&ft&&ft.captureAnnotation==CaptureAnnotation.const_&&ft.annotation>=Annotation.mfree,"reversed function call not yet supported");
 				auto rf=reverseFunction(fv.closure.fun), rft=rf.ftype;
 				auto context=fv.closure.context;
 				auto rfv=qstate.makeClosure(rft,QState.Closure(rf,context));

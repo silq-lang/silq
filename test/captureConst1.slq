@@ -1,7 +1,7 @@
 // args: --run
 
 def f(const x:B){
-	return ()=>x; /// error /// TODO?
+	return ()=>x;
 }
 def main(){
 	a:=H(0:𝔹);

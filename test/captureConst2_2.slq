@@ -1,0 +1,10 @@
+// args: --run
+
+def main(){
+	x:=H(0);
+	f:=(y:𝔹)⇒CNOT(x,y);
+	y:=1;
+	y:=f(y);
+	forget(f);
+	return x;
+}

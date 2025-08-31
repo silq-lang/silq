@@ -1,9 +1,15 @@
 def func1[outer: B](inner: B) qfree: B {
-	// `outer` is not captured, so OK
+	// `outer` is not captured
 	return inner;
 }
 
 def func2[outer: B](inner: B) qfree: B {
-	if outer {} /// error
+	if outer {} // `outer` is captured
 	return inner;
+}
+
+def main(){
+	x:=H(0);
+	func:=func2[x]; /// error
+	return func(x);
 }

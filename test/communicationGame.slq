@@ -41,23 +41,23 @@ def prepareState(n:!ℕ){ // prepares n pieces of quantum data, distributed to p
 	}
 	return φ;
 }
-def start(send:𝔹→!𝔹^2,α₀:!ℝ){ // strategy for player 0
+def start(send:𝔹 moved→!𝔹^2,α₀:!ℝ){ // strategy for player 0
 	q:=H(0:𝔹);
 	if q { phase(π·α₀); }
 	return send(q);
 }
-def forward(send:𝔹→!𝔹^2,receive:!𝔹^2→𝔹,bits:!𝔹^2,αᵢ:!ℝ){ // strategy for players 1, …, n-2
+def forward(send:𝔹 moved→!𝔹^2,receive:!𝔹^2 moved→𝔹,bits:!𝔹^2,αᵢ:!ℝ){ // strategy for players 1, …, n-2
 	q:=receive(bits);
 	if q { phase(π·αᵢ); }
 	return send(q);
 }
-def end(receive:!𝔹^2→𝔹,bits:!𝔹^2,αₙ₋₁:!ℝ){ // strategy for player n-1.
+def end(receive:!𝔹^2 moved→𝔹,bits:!𝔹^2,αₙ₋₁:!ℝ){ // strategy for player n-1.
 	q:=receive(bits);
 	if q { phase(π·αₙ₋₁); }
 	return measure(H(q));
 }
 def solve[n:!ℕ](α:!ℝ^n){ // simulates one game
-	φ:=prepareState(n):((𝔹→!𝔹^2)×(!𝔹^2→𝔹))[]; // create ring topology in variable-length array
+	φ:=prepareState(n):((𝔹 moved→!𝔹^2)×(!𝔹^2 moved→𝔹))[]; // create ring topology in variable-length array
 	[(send,receive)]~φ:=φ; // pop off send and receive ends for player 0
 	measure(receive); // player 0's receive end is unused, trace it out
 	bits:=start(send,α[0]);

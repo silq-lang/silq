@@ -1,6 +1,6 @@
 // args: --run
 
-def makeF()mfree: 𝟙→mfree 𝔹{
+def makeF()mfree: 𝟙 moved→mfree 𝔹{
 	x:=H(0:𝔹);
 	return ()mfree⇒x;
 }
