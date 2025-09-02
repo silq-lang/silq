@@ -1,0 +1,7 @@
+
+def main(){ /// error
+	n:=0;
+	def foo(x:𝔹^n)lifted⇒0;
+	n=3; /// error
+	return foo;
+}

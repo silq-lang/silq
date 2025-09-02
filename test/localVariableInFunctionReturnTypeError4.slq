@@ -1,0 +1,7 @@
+// args: --run
+
+def foo(n:!ℕ){
+	φ:=array(n,0);
+	return φ coerce 𝔹^n;
+}
+def main()⇒foo(3);

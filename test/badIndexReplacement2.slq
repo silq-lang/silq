@@ -1,5 +1,5 @@
 
-def main(){
+def main(){ /// error
 	n:=3;
 	x:=0:int[n];
 	x[0]:=3; /// error
