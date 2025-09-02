@@ -1,0 +1,15 @@
+
+def f(const a:𝔹)qfree:𝔹{
+	assert(0)
+}
+
+def g(const a:𝔹)qfree:𝟙{
+	assert(0)
+}
+
+def test(const a:𝔹)qfree{
+	r:=f(a);
+	if true {
+		g(r);
+	}
+}
