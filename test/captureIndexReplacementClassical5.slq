@@ -4,8 +4,8 @@ def main(){
 	x:=0;
 	a:=vector(3,x);
 	(a[0],f):=(0:𝔹,(){ /// TODO
-		x:=a[0]; /// TODO
-		(a[1],a[2]):=(a[2],a[1]); /// TODO
+		x:=a[0];
+		(a[1],a[2]):=(a[2],a[1]);
 		return x;
 	});
 	return f();
