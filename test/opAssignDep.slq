@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+    i := 0;
+    i +← measure(H(0));
+	return i;
+}
