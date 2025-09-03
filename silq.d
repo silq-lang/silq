@@ -118,6 +118,7 @@ int main(string[] args){
 
 	Backend backend = null;
 	Source runExp = null, runOn = null, runOnEach = null;
+	bool useStdin = false;
 	scope auto qsimBackend = new QSimBackend();
 	scope auto summarizeBackend = new SummarizeBackend();
 
@@ -180,6 +181,10 @@ int main(string[] args){
 			arg ~= "\0\0\0\0";
 			runOnEach = new Source("`--run-on=` command line", arg);
 			runExp = runOn = null;
+			return 0;
+		})
+		.add!("stdin")((bool v) {
+			useStdin = true;
 			return 0;
 		})
 		.add!("inference-limit")((string v) {
@@ -291,19 +296,28 @@ int main(string[] args){
 			auto sc = new TopScope(err);
 			sc.import_(getPreludeScope(err, toRun.loc));
 			foreach(path; args) {
-				if(auto r2 = importModuleFromPath(path, sc, toRun.loc))
-					return r2;
+				r = importModuleFromPath(path, sc, toRun.loc);
+				if(r) return r;
 			}
 			import ast.semantic_:semantic;
 			auto exprs = semantic([cast(Expression)toRun], sc);
 			run(backend, exprs, sc, toRun);
 		} else {
-			if(args.empty) {
+			if(args.length+useStdin == 0) {
 				stderr.writeln("error: no input files");
 				return 1;
-			}else if(backend is qsimBackend && args.length > 1) {
+			}else if(backend is qsimBackend && args.length+useStdin > 1) {
 				stderr.writeln("error: can only run one file at a time");
 				return 1;
+			}
+			if(useStdin) {
+				auto source = new Source("stdin", text(stdin.byLine.joiner("\n"),"\0\0\0\0"));
+				auto sc=new TopScope(err);
+				Expression[] exprs;
+				r=importModule(source,err,exprs,sc,Location.init);
+				if(r) return r;
+				r=run(backend, exprs, sc);
+				if(r) return r;
 			}
 			foreach(x; args) {
 				r = run(backend, x, err);
