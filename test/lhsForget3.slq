@@ -1,4 +1,4 @@
 def main(){
-	forget(x=2:int[10]):=2; /// error 
-	return x;
+	forget(x=2:int[10]):=2; /// error
+	return x; /// error
 }

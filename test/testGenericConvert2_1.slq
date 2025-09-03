@@ -1,16 +1,16 @@
 
 def rmap[a,b](f: a!→mfree b)[n:!ℕ](y:b^n)mfree{
-    y := y coerce b[];
+    y := y coerce b[]; /// error
     x := () coerce a[];
     for i in (n..-1..0]{
 		(f(h),)~y:=y; /// error
-        __tmp1 := (h,) coerce a[];
+        __tmp1 := (h,) coerce a[]; /// error
         __tmp0 := dup[a[]](__tmp1 ~ x);
         forget(x=__tmp0[1..__tmp0.length]);
         forget(__tmp1=__tmp0[0..1]);
         x := __tmp0 coerce a[];
     }
-    () := (y coerce b[]) coerce 𝟙;
+    () := (y coerce b[]) coerce 𝟙; /// error
     x := (x coerce a[]) coerce a^n;
     return x;
 }

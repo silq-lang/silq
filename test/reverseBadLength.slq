@@ -1,5 +1,5 @@
 def f(x:𝔹,y:𝔹)mfree⇒(x,y);
 def main(){
 	f(x,y):=(); /// error
-	return (x,y);
+	return (x,y); /// error
 }

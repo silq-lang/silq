@@ -1,0 +1,7 @@
+// args: --run
+
+def foo()⇒(measure(H(0)),H(0));
+def main(){
+    (a,b) := foo();
+    measure[𝔹](b);
+}
