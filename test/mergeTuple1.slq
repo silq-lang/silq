@@ -1,0 +1,9 @@
+
+def main(){
+	args := (1, 2, 1/2);
+	for i in 0..3{
+		(arg,) ~ args := args;
+		print(arg);
+	}
+	return args;
+}

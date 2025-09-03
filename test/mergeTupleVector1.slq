@@ -1,0 +1,10 @@
+
+def main(){
+	n:=3;
+	if measure(H(0)){
+		r := (1, 2);
+	} else {
+		r := vector(n, (1, 2));
+	}
+	return r; /// error
+}
