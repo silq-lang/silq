@@ -1,4 +1,4 @@
-// args: --remove-loops --run=2
+// args: --remove-loops --run --repeat=2
 import communicationGame;
 
 def main(){

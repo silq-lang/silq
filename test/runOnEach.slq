@@ -1,0 +1,2 @@
+// args: --run-on-each="[0,1,2]~(1/2,)~vector(3,3)"
+def main(x:!ℚ)⇒(x,x);

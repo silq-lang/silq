@@ -1,4 +1,4 @@
-// args: --run=10
+// args: --run --repeat=10
 
 def main(){
 	x:=H(0:𝔹);

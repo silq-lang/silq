@@ -1,0 +1,2 @@
+// args: --run-on=20
+def main(x:!ℕ)⇒(x,x);

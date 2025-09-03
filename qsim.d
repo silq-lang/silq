@@ -46,7 +46,7 @@ class QSim{
 	}
 	QState run(FunctionDef def,ErrorHandler err){
 		if(def.params.length){
-			err.run_error("main function with parameters not supported in simulator",def.loc);
+			err.run_error("use `--run-on=args` or `--run-on-each=[args_1,...,args_n]` to run main function with parameters",def.loc);
 			return QState.empty();
 		}
 		/+DExpr[string] fields;

@@ -1,0 +1,4 @@
+// skipped
+// TODO
+// args: --run-on-each="([0],(0,(1, 2)))"
+def main[a:ctype](x:a)⇒(x,x);

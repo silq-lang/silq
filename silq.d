@@ -16,13 +16,13 @@ static this(){
 }
 
 class Backend {
-	abstract int run(FunctionDef[string] functions, ErrorHandler err);
+	abstract int run(FunctionDef fun, FunctionDef[string] functions, ErrorHandler err);
 }
 
 scope class SummarizeBackend: Backend {
 	string[] entries;
 
-	override int run(FunctionDef[string] functions, ErrorHandler err) {
+	override int run(FunctionDef fun, FunctionDef[string] functions, ErrorHandler err) {
 		try{
 			foreach(fd;functions)
 				writefln(getSummary(fd,entries).join(","));
@@ -37,11 +37,13 @@ scope class SummarizeBackend: Backend {
 scope class QSimBackend: Backend {
 	ulong numRuns = 1;
 
-	override int run(FunctionDef[string] functions, ErrorHandler err) {
+	override int run(FunctionDef fun, FunctionDef[string] functions, ErrorHandler err) {
 		import qsim;
-		auto pfun = "main" in functions;
-		if(!pfun) return 0;
-		auto fun=*pfun;
+		if(!fun){
+			auto pfun = "main" in functions;
+			if(!pfun) return 0;
+			fun=*pfun;
+		}
 		auto be=new QSim(fun.loc.source.name);
 		foreach(i;0..numRuns){
 			auto qstate=be.run(fun,err);
@@ -68,13 +70,33 @@ int run(Backend backend, string path, ErrorHandler err){
 	Expression[] exprs;
 	if(auto r=importModule(path,err,exprs,sc,Location.init))
 		return r;
-	if(err.nerrors) return 1;
+	return run(backend, exprs, sc);
+}
+
+int importModuleFromPath(string path, Scope sc, Location loc){
+	auto ctsc=cast(TopScope)sc;
+	if(!ctsc){
+		sc.error("nested imports not supported", loc);
+		return 1;
+	}
+	path = getActualPath(path);
+	Expression[] exprs;
+	TopScope tsc;
+	if(importModule(path,sc.handler,exprs,tsc,loc))
+		return 1;
+	if(tsc) ctsc.import_(tsc);
+	return 0;
+}
+
+int run(Backend backend, Expression[] exprs, Scope sc, FunctionDef fun=null){
+	if(sc.handler.nerrors) return 1;
 	FunctionDef[string] functions;
 	foreach(expr;exprs){
 		if(cast(ErrorExp)expr) continue;
 		if(auto fd=cast(FunctionDef)expr){
 			functions[fd.name.name]=fd;
-		}else if(!cast(Declaration)expr&&!cast(DefineExp)expr&&!cast(CommaExp)expr) err.error("top level expression must be declaration",expr.loc);
+		}else if(!cast(Declaration)expr&&!cast(DefineExp)expr&&!cast(CommaExp)expr)
+			sc.error("top level expression must be declaration",expr.loc);
 	}
 	if(opt.check){
 		foreach(expr;exprs){
@@ -85,9 +107,9 @@ int run(Backend backend, string path, ErrorHandler err){
 		}
 	}
 	// TODO: add some backends
-	if(err.nerrors) return 1;
+	if(sc.handler.nerrors) return 1;
 	if(!backend) return 0;
-	return backend.run(functions, err);
+	return backend.run(fun, functions, sc.handler);
 }
 
 int main(string[] args){
@@ -95,6 +117,7 @@ int main(string[] args){
 	version(TEST) test();
 
 	Backend backend = null;
+	Source runExp = null, runOn = null, runOnEach = null;
 	scope auto qsimBackend = new QSimBackend();
 	scope auto summarizeBackend = new SummarizeBackend();
 
@@ -129,11 +152,34 @@ int main(string[] args){
 			}
 			return 0;
 		})
-		.addOptional!("run")((string arg) {
+		.add!("repeat")((string arg) {
 			backend = qsimBackend;
 			if(arg) {
 				qsimBackend.numRuns = to!ulong(arg);
 			}
+			return 0;
+		})
+		.addOptional!("run")((string arg) {
+			backend = qsimBackend;
+			if(arg) {
+				arg ~= "\0\0\0\0";
+				runExp = new Source("`--run=` command line", arg);
+				runOn = runOnEach = null;
+			}
+			return 0;
+		})
+		.add!("run-on")((string arg) {
+			backend = qsimBackend;
+			arg ~= "\0\0\0\0";
+			runOn = new Source("`--run-on=` command line", arg);
+			runExp = runOnEach = null;
+			return 0;
+		})
+		.add!("run-on-each")((string arg) {
+			backend = qsimBackend;
+			arg ~= "\0\0\0\0";
+			runOnEach = new Source("`--run-on=` command line", arg);
+			runExp = runOn = null;
 			return 0;
 		})
 		.add!("inference-limit")((string v) {
@@ -193,10 +239,6 @@ int main(string[] args){
 
 	try{
 		args.popFront();
-		if(args.empty) {
-			stderr.writeln("error: no input files");
-			return 1;
-		}
 		ErrorHandler err;
 		File errFile;
 		if(!jsonOut) {
@@ -212,9 +254,61 @@ int main(string[] args){
 		}
 		scope(exit) err.finalize();
 
-		foreach(x; args) {
-			r = run(backend, x, err);
-			if(r) return r;
+		FunctionDef toRun = null;
+		void runFromBody(CompoundExp body_, Location loc){
+			auto name = new Identifier(Id.s!"`main");
+			toRun = new FunctionDef(name,[],true,null,body_);
+			toRun.loc = loc;
+		}
+		void runFromExp(Expression exp){
+			import ast.semantic_:makeLambdaBody;
+			auto body_ = makeLambdaBody(exp, exp.loc);
+			runFromBody(body_, exp.loc);
+		}
+		if(runExp) {
+			auto exp = parseExpression(runExp, err);
+			runFromExp(exp);
+		} else if(runOn) {
+			auto arg = parseExpression(runOn, err);
+			auto mn = new Identifier(Id.s!"main");
+			mn.loc = arg.loc;
+			auto ce = new CallExp(mn, arg, false, false);
+			ce.loc = arg.loc;
+			runFromExp(ce);
+		} else if(runOnEach) {
+			auto arg = parseExpression(runOnEach, err);
+			auto id = new Identifier(Id.s!"args");
+			id.loc = arg.loc;
+			auto def = new DefineExp(id, arg);
+			def.loc = arg.loc;
+			Expression[] s;
+			auto scaffolding = new Source("`--run-on-each=` scaffolding", "{\nn := args.length;\nresults := ();\nfor i in 0..n {\n	(arg,) ~ args := args;\n	results ~= (main(arg),);\n}\n() := args;\nreturn results;\n}\0\0\0\0");
+			auto body_ = parseCompoundExp(scaffolding, err);
+			body_.s = def ~ body_.s;
+			runFromBody(body_, arg.loc);
+		}
+		if(toRun) {
+			auto sc = new TopScope(err);
+			sc.import_(getPreludeScope(err, toRun.loc));
+			foreach(path; args) {
+				if(auto r2 = importModuleFromPath(path, sc, toRun.loc))
+					return r2;
+			}
+			import ast.semantic_:semantic;
+			auto exprs = semantic([cast(Expression)toRun], sc);
+			run(backend, exprs, sc, toRun);
+		} else {
+			if(args.empty) {
+				stderr.writeln("error: no input files");
+				return 1;
+			}else if(backend is qsimBackend && args.length > 1) {
+				stderr.writeln("error: can only run one file at a time");
+				return 1;
+			}
+			foreach(x; args) {
+				r = run(backend, x, err);
+				if(r) return r;
+			}
 		}
 		return 0;
 	}catch(Throwable e){

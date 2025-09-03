@@ -1,4 +1,4 @@
-// args: --run=10
+// args: --run --repeat=10
 
 def f[n:!ℕ](x:𝔹^n,const y:𝔹)qfree:𝔹^n⇒x;
 def main() {
