@@ -1,0 +1,7 @@
+
+def main(){
+	x:=H(0); /// error
+	y:=H(0);
+	f:=()⇒CNOT(x,y); /// error
+	return f();
+}

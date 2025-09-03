@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	x:=1:𝔹;
+	y:=dup(x);
+	f:=()⇒CNOT(x,H(y));
+	return f();
+}

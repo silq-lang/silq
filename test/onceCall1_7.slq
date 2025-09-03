@@ -1,0 +1,7 @@
+
+def main(){
+	x:=1:𝔹;
+	y:=H(x);
+	f:=()⇒CNOT(x,y); /// TODO
+	return H(f());
+}

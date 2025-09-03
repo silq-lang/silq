@@ -2214,7 +2214,9 @@ struct Interpreter(QState){
 				}
 				auto fun=doIt(ce.e);
 				auto arg=doIt(ce.arg);
-				return qstate.call(fun,arg,ce.type,ce.loc);
+				auto r=qstate.call(fun,arg,ce.type,ce.loc);
+				if(ce.newFunctionVar) qstate.assignTo(ce.newFunctionVar.getName,fun);
+				return r;
 			}
 			if(auto fe=cast(ForgetExp)e){
 				forget(fe);

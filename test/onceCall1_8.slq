@@ -1,0 +1,7 @@
+
+def main(){
+	x:=1:𝔹;
+	y:=dup(x);
+	f:=()⇒CNOT(x,y);
+	return f();
+}

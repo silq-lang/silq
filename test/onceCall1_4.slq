@@ -1,0 +1,8 @@
+
+def main(){
+	x:=H(0);
+	y:=dup(x);
+	f:=()⇒CNOT(x,y);
+	measure(x);
+	return (f(),f()); /// error
+}
