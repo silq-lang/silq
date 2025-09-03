@@ -267,7 +267,7 @@ auto summarize(Comparison[] comp,bool writeLines){
 				if(c.info.isTODO) {
 					// Unexpected error, marked as TODO <no-error>
 					result.todos++;
-					if(writeLines) writef("TODO UNEXPECTED ERRROR AT LINE %d: [%s] %s\n", c.info.line, c.info.kind, c.info.message);
+					if(writeLines) writef("TODO UNEXPECTED ERROR AT LINE %d: [%s] %s\n", c.info.line, c.info.kind, c.info.message);
 				} else if(c.info.kind != "note" && c.info.kind != "message") {
 					// Unexpected error, not marked
 					result.unexpectedErrors++;
