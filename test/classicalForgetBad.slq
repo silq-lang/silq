@@ -2,5 +2,5 @@
 
 def main(){
 	y:=3:!int[4];
-	(1:!int[4])+(3:!int[4]):=y; /// TODO error
+	(1:!int[4])+(3:!int[4]):=y; /// run_error
 }

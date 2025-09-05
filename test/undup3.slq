@@ -1,4 +1,5 @@
+// args: --run
 
 def main(){
-	dup(1:𝔹):=0; /// TODO error
+	dup(1:𝔹):=0; /// TODO run_error
 }
