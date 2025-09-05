@@ -7,7 +7,7 @@ def main(){
 		if x{
 			y:=X(y);
 		}
-		forget(y); /// TODO
+		forget(y);
 	}
 	f();
 	return x;
