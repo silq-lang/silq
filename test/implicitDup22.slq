@@ -1,0 +1,13 @@
+
+def foo(x:𝔹){
+	y:=dup(x);
+	if x{
+		z:=y;
+	}else{
+		z:=X(y);
+	}
+	x:=H(x);
+	w:=y; /// error
+	return (x,w);
+}
+def main()⇒foo;

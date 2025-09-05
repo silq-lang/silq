@@ -1,0 +1,13 @@
+
+def foo(x:𝔹){
+	y:=dup(x);
+	z:=dup(y);
+	if z{
+		x:=H(x);
+		w:=X(z); /// TODO error
+	}else{
+		w:=z;
+	}
+	return (x,w);
+}
+

@@ -1,0 +1,13 @@
+// args: --run
+
+def foo(x:𝔹){
+	y:=dup(x);
+	z:=dup(y);
+	if z{
+		w:=X(z);
+	}else{
+		w:=z;
+	}
+	return (x,w);
+}
+def main()⇒foo;
