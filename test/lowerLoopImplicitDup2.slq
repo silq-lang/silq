@@ -1,0 +1,14 @@
+// args: --run --remove-loops
+
+def main(){
+	a:=H(0);
+	b:=dup(a);
+	x:=b;
+	c:=b;
+	for i in 0..2{
+		H(0):=a;
+		a:=H(0);
+	}
+	H(0):=a;
+}
+
