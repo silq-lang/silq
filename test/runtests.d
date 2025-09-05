@@ -74,7 +74,7 @@ int main(string[] args){
 	Duration totalTime;
 	foreach(source;sources){
 		if(source.startsWith("./")) source=source[2..$];
-		if(source.fileStartsWithFlag("skip")||dashDashValid&&source.getExpected.any!(info=>info.kind)){
+		if(source.fileStartsWithFlag("skip")||dashDashValid&&source.getExpected.length){
 			if(!dashDashBad&&!dashDashTodo){
 				if(colorize) writeln(TODOColor,BOLD,"skipped",RESET,"         ",source);
 				else writeln("skipping ",source);
