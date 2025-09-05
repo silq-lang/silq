@@ -1,7 +1,7 @@
 def foo(x:𝔹){
 	y:=dup(x);
 	z:=y;
-	r:=z; /// error
+	r:=z;
 	if X(z){ /// error
 		return x;
 	}else{
