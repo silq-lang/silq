@@ -1,5 +1,5 @@
 def foo(x:𝔹){
-	y:=dup(x); /// TODO error
+	y:=dup(x); /// error
 	if X(dup(y)){
 		r:=X(x);
 	}else{

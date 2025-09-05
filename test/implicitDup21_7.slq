@@ -1,6 +1,6 @@
 def foo(x:𝔹){
 	y:=dup(x);
-	z:=y; // TODO error
+	z:=y; /// error
 	if X(dup(z)){
 		r:=X(x);
 	}else{
