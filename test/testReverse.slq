@@ -1,7 +1,7 @@
 // args: --run
 
 def foo(a:𝔹^2)mfree{
-	b:=a[0];
+	b:=dup(a[0]);
 	a[0]:=H(a[0]);
 	H(a[0]):=a[0];
 	return (a,b);

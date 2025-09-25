@@ -3,7 +3,7 @@ def solve(qs:𝔹^3){
 	x:=qs as int[3];
 	x+=2;
 
-	c:=x[2];
+	c:=dup(x[2]);
 	if !c{ x[1]:=H(x[1]); }
 	forget(c=x[2]);
 	

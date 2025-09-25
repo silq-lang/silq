@@ -10,7 +10,7 @@ def main(){
 	a[0]:=H(a[0]);
 	f(b):=a;
 	b[0]:=H(b[0]);
-	x:=b[0];
+	x:=dup(b[0]);
 	forget(b=vector(n,x));
 	assert(measure(H(x))=0);
 }

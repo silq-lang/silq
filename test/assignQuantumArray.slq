@@ -4,6 +4,6 @@ def main(){
 	x:=vector(3,0:𝔹);
 	for i in [0..3){ x[i]:=H(x[i]); }
 	r:=vector(3,0:𝔹);
-	for i in [0..3){ r[i]=x[i]; }
+	for i in [0..3){ r[i]=dup(x[i]); }
 	return (r,x);
 }

@@ -3,9 +3,9 @@
 def f[n:!ℕ](x:𝔹^n)mfree{
 	if n=0{ return x; }
     __tmp0 := x;
-    (__tmp1,) := __tmp0[0..1];
+    (__tmp1,) := dup(__tmp0[0..1]);
     a := reverse(H)(__tmp1);
-    b := reverse(f[n sub 1])(__tmp0[1..__tmp0.length]);
+    b := reverse(f[n sub 1])(dup(__tmp0[1..__tmp0.length]));
     forget(__tmp0=(H(a),) ~ f[n sub 1](b)); /// error
 	return (a,)~b; /// error
 }

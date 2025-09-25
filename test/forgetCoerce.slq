@@ -2,8 +2,8 @@
 
 def main(){
 	qs:=(H(0:𝔹),H(0:𝔹));
-	head:=qs[0];
-	tail:=qs[1..2];
+	head:=dup(qs[0]);
+	tail:=dup(qs[1..2]);
 	forget(qs=([head]~tail) coerce 𝔹^2);
 	qs:=[head]~(tail);
 	(qs₀,qs₁):=qs;

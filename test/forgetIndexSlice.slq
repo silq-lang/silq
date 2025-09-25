@@ -4,7 +4,7 @@ def main(){
 	x:=H(0:𝔹);
 	qs:=array(1,x);
 	forget(x=qs[0]);
-	ws:=qs[0..1];
+	ws:=dup(qs[0..1]);
 	assert(measure(qs==ws));
 	return (qs,ws);
 }

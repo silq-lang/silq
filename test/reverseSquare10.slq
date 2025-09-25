@@ -29,6 +29,6 @@ def main(){
 	h₂(x,y):=(y,x);
 	h₃(x,y,z):=(y,x);
 	i₃(z,x,y):=(x,y);
-	assert(measure((x[0],y[0]),(z[0],w[0]))==((1,0),(1,0)));
+	assert(measure(dup(x[0],y[0]),dup(z[0],w[0]))==((1,0),(1,0)));
 	return ((x,y),(z,w));
 }

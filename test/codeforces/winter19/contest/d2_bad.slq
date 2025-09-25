@@ -2,7 +2,7 @@
 def solve[n:!ℕ](qs:𝔹^n)mfree:𝔹^n{
 	seen:=0:𝔹;
 	for i in [1..n){
-		bit:=qs[n-i];
+		bit:=dup(qs[n-i]);
 		if !seen&&bit{
 			for j in [0..n-i){
 				qs[j]:=H(qs[j]);
