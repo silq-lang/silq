@@ -1,0 +1,3 @@
+
+(if true then x else x) := 2; /// error
+

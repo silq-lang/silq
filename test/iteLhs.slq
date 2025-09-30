@@ -1,7 +1,0 @@
-// args: --run
-
-def main(){
-	x:=H(0:𝔹);
-	(if x { (a,b) } else { (b,a) }) := (1:int[3],2:int[3]); /// TODO
-	return (x,a,b); /// TODO
-}

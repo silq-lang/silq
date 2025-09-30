@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	x:=H(0);
+	(if measure(x) then (a,b) else (b,a)) := (1,2);
+	assert((a,b)=(1,2) || (a,b)=(2,1));
+	return (a,b);
+}
