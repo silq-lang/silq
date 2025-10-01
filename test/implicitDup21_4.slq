@@ -7,6 +7,6 @@ def foo(x:𝔹){
 	}else{
 		forget(y); /// error
 	}
-	return (r,x); /// error
+	return (r,x);
 }
 
