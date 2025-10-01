@@ -1,0 +1,12 @@
+// args: --run
+
+def foo(const f: 𝔹 →mfree 𝔹){
+	x:=rotX(π/3,0);
+	x:=reverse(f)(x);
+	return x;
+}
+def main(){
+	x:=foo((x:𝔹)⇒rotX(π/3,x));
+	assert(!measure(dup(x)));
+	return x;
+}
