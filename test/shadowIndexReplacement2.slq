@@ -1,0 +1,9 @@
+
+def foo(x:𝔹)⇒x;
+
+def main(){
+	def foo(const x:𝔹)⇒x;
+	x:=(H(0),);
+	foo(x[0]):=let{t:=x[0];forget(foo);}in t; /// TODO
+	return x;
+}
