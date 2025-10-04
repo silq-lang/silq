@@ -13,7 +13,7 @@ def main(){
 					return foo();
 				}
 			}
-			return bar(x);
+			return bar(x); /// error
 		}
 	}
 }

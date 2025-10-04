@@ -1,0 +1,10 @@
+// args: --run
+
+def NOTC(x:𝔹,const c:𝔹)⇒CNOT(c,x);
+
+def main(){
+	x:=H(0);
+	y:=H(0);
+	NOTC(x,measure(x)):=y;
+	return H(x);
+}

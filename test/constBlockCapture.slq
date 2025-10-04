@@ -4,7 +4,7 @@ def main(){
 	for i in 0..2{ x[i]:=H(x[i]); }
 	if x=0{
 		f:=()=>x; /// error
-		x:=0:int[2]; /// error
+		x:=0:int[2];
 	}else{
 		f:=()=>0:int[2];
 	}
