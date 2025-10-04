@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	xs:=vector(5,0);
+	(ys:!𝔹^2)~(xs:!!𝔹^3):=xs;
+	return (ys,xs);
+}
