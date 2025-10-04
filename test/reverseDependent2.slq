@@ -1,0 +1,8 @@
+
+def foo(n:!ℕ,xs:𝔹[])⇒xs coerce 𝔹^n;
+
+def main(){
+	n:=5;
+	foo(n,xs):=vector(n,0); /// TODO
+	return xs;
+}
