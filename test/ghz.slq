@@ -1,0 +1,6 @@
+// args: --run
+
+def rep[a:type](n:!ℕ,x:a)⇒vector(n sub 1,x)~[x];
+def ghz(n:!ℕ)⇒rep(n,H(0));
+
+def main()⇒ghz(3);

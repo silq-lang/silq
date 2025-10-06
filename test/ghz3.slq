@@ -1,0 +1,12 @@
+// args: --run
+
+def ghz(n:!ℕ){
+	xs:=vector(n,0);
+	xs[0]:=H(xs[0]);
+	for i in 0..n sub 1{
+		xs[i+1]⊕=xs[i];
+	}
+	return xs;
+}
+
+def main()⇒ghz(3);

@@ -1,0 +1,11 @@
+// args: --run
+
+def ghz(n:!ℕ){
+	xs:=[H(0)];
+	for i in 0..n sub 1{
+		xs~=[dup(xs[i])];
+	}
+	return xs coerce 𝔹^n;
+}
+
+def main()⇒ghz(3);
