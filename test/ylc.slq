@@ -1,0 +1,102 @@
+// Yoder–Low–Chuang
+
+// TODO: add built-ins
+// def acot(x: !ℝ) : !ℝ ⇒ atan2(1.0, x);
+def acot(x: !ℝ)⇒π/2 - atan(x);
+def cosh(x:!ℝ)⇒(exp(x)+exp(-x))/2;
+def acosh(x:!ℝ)⇒log(x+sqrt((x-1)·(x+1)));
+
+// Hadamards on all n qubits
+def H_n[n:!ℕ](xs: uint[n]) {
+	for i in 0..n { xs[i] := H(xs[i]); }
+	return xs;
+}
+
+// Generalized reflection about |s> = H_n|0…0⟩ with phase θ:
+// S_s(θ) = I - (1 - e^{iθ})|s⟩⟨s| = H_n · (phase θ on |0…0⟩) · H_n
+def S_s[n:!ℕ](cand: uint[n], θ: !ℝ) {
+	with cand := H_n(cand) do
+		if cand == 0 { phase(θ); }
+	return cand;
+}
+
+// Generalized reflection about the marked subspace with phase θ:
+// S_t(θ) = I - (1 - e^{iθ}) Π_ω
+def S_t[n:!ℕ](cand: uint[n], const f: const uint[n] → lifted 𝔹, θ: !ℝ) {
+	if f(cand) { phase(θ); }
+	return cand;
+}
+
+// build α,β from L,δ
+def ylc_αβ(L: !ℕ, δ: !ℝ) : !ℝ^(L div 2) x !ℝ^(L div 2) x !ℝ {
+	assert(L % 2 == 1);
+	ℓ := L div 2;
+
+	γinv := cosh((1/L)*acosh(1/δ));
+	γ    := 1/γinv;
+	ρ    := sqrt(max(0,1-γ^2));
+
+	β := vector(ℓ, 0);
+	for j in 0..ℓ {
+		t := tan(π·(j+1)/L);
+		β[j] = 2·acot(t·max(ρ,1e-16) );  // β_j
+	}
+	α := vector(ℓ, 0.0);
+	for j in 0..ℓ {
+		α[j] = β[(ℓ sub 1)-j];           // α_j = β_{ℓ-j}
+	}
+	center := (if ℓ % 2 == 0 then 1 else -1)·π/2;
+	return (α coerce !ℝ^(L div 2), β coerce !ℝ^(L div 2), center);
+}
+
+// fixed-point AA
+def ylc_fixed_point[n:!ℕ](const f: const uint[n] → lifted 𝔹, L: !ℕ, δ: !ℝ) {
+	assert(L % 2 == 1);
+	cand := H_n(0:uint[n]);
+	(α, β, center) := ylc_αβ(L, δ);
+
+	for j in 0..L div 2 {
+		cand := S_s(cand, α[j]);
+		cand := S_t(cand, f, β[j]);
+	}
+	cand := S_s(cand, center);
+	return cand;
+}
+
+// Choose an odd L >= 3 for YLC given exact M, N and target δ in (0,1).
+def ylc_choose_L(M: !ℕ, N: !ℕ, δ: !ℝ) : !ℕ {
+	assert(N > 0 && M > 0 && M <= N);
+	assert(δ > 0 && δ < 1);
+
+	λ_:= M/N;
+	L := ceil(acosh(1/δ)/sqrt(λ_)) coerce !ℕ;
+	if L<3 { L=3; }
+	if L%2=0 { L+=1; }
+	return L;
+}
+
+def ylc_staged_heralded[n:!ℕ](const f: const uint[n] → lifted 𝔹) {
+	j := 0;
+	L := 3;
+
+	while true{
+		j += 1;
+		if j > 1 {
+			if L=3 { L=5; }
+			else   { L=2*L sub 1; }
+		}
+		δ := 1/(j+5);
+		cand := ylc_fixed_point(f, L, δ);
+		if measure(f(cand)) { return cand; }
+		measure(cand);
+	}
+}
+
+n:=6;
+def main(){
+	δ:=0.0005;
+	L:=ylc_choose_L(2,2^n,δ);
+	return ylc_fixed_point((x:uint[n])lifted⇒x=42|x=17,L,δ);
+}
+
+// def main() ⇒ ylc_staged_heralded((x:uint[6])lifted⇒x=42|x=17);

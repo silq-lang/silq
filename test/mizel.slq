@@ -1,0 +1,28 @@
+// skipped
+
+def H_n[n:!ℕ](xs:uint[n]){
+	for i in 0..n{ xs[i]:=H(xs[i]); }
+	return xs;
+}
+
+def schedule(k:!ℕ)⇒acos((1-sin(π/(2*k)))/(1+sin(π/(2*k))));
+
+def mizel[n:!ℕ](const f: const uint[n] → lifted 𝔹){
+	cand:=H_n(0:uint[n]);
+	k:=0;
+	while true{
+		k+=1;
+		ϕ:=schedule(k);
+		print(ϕ);
+		anc:=0;
+		if f(cand){
+			anc:=rotY(2·ϕ,anc);
+			phase(π);
+		}
+		if measure(anc){ return cand; }
+		with cand:=H_n(cand) do
+			if cand=0{ phase(π); }
+	}
+}
+
+def main()=>mizel((const x:uint[6])=>x==42||x==17);
