@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	x:=();
+	def f()⇒();
+	x:=f(x);
+}
