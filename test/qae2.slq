@@ -1,0 +1,35 @@
+// skipped
+
+import qpe;
+
+def makeQ[a:type,g:type](const makeGood: g →mfree a, const makeA: 𝟙→mfree a)(u:a){
+	on v:=makeGood(u) { phase(π); } // TODO (or: where v := ... { ... })
+	on ():=makeA(u) { phase(π); }   // TODO
+	phase(π);
+	return u;
+}
+
+def estimateAmplitude[m:!ℕ][a:qtype](const Q: a →mfree a, u: a){
+	Qp := [p:uint[m]](u:a){
+		p:=dup(p); // TODO: fix and remove
+		for i in 0..m{
+			if p[i]{
+				for k in 0..2^i{
+					u:=Q(u);
+				}
+			}
+		}
+		return u;
+	};
+	return sin(π·(estimatePhase[m](Qp,u) as !ℤ)/2^m)^2;
+}
+
+def makeBernoulliQ[p:!ℝ](x:𝔹)⇒rotY(2·asin(sqrt(p)),x);
+
+def main(){
+	makeA:=()⇒makeBernoulliQ[0.2](0);
+	makeGood:=()⇒1;
+	Q:=makeQ(makeGood,makeA);
+	return estimateAmplitude[8](Q,A(0));
+}
+

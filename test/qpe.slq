@@ -1,0 +1,25 @@
+// skipped
+
+import mapH;
+import semiclassicalInverseQFT;
+
+def estimatePhase[m:!ℕ][a:type](const Up: Π[p:uint[m]]qfree. a →mfree a, u: a){
+	θ := H_n(vector(m,0)) as uint[m];
+	measure(Up[θ](u));
+	return sciQFT(θ as 𝔹^m as int[m]);
+}
+
+def estimatePhaseU[m:!ℕ][a:type](const Up: Π[p:uint[m]]qfree. a →mfree a, u: a){
+	θ := H_n(vector(m,0)) as uint[m];
+	u := Up[θ](u);
+	QFT(θ) := θ as 𝔹^m as int[m];
+	return (u,θ);	
+}
+
+import int_fixed_point_util;
+
+def main(){
+	m:=8;
+	Up:=[p:uint[m]]()⇒phaseQ(42*(p as 𝔹^m as int[m]));
+	return estimatePhase[m](Up,()) as !ℤ;
+}
