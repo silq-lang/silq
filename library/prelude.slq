@@ -79,7 +79,7 @@ def ceil(x:!ℝ) @[extern="primitive.real.ceil"] lifted: !ℤ;
 def round(x:!ℝ) @[artificial] lifted:!ℤ ⇒ floor(x+1/2);
 def inℤ(x:!ℝ) @[artificial] lifted:!𝔹 ⇒ x==floor(x);
 def sqrt(x:!ℝ) @[extern="primitive.real.sqrt"] lifted: !ℝ;
-def exp(x:!ℝ) @[extern="primtiive.real.exp"] lifted: !ℝ;
+def exp(x:!ℝ) @[extern="primitive.real.exp"] lifted: !ℝ;
 def log(x:!ℝ) @[extern="primitive.real.log"] lifted: !ℝ;
 def sin(x:!ℝ) @[extern="primitive.real.sin"] lifted: !ℝ;
 def asin(x:!ℝ) @[extern="primitive.real.asin"] lifted: !ℝ;
