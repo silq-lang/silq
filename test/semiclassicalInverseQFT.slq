@@ -1,0 +1,40 @@
+
+def QFT[n:!ℕ](ψ: int[n])mfree: int[n]{
+	for k in [0..n div 2){
+		(ψ[k],ψ[n-k-1]) := (ψ[n-k-1],ψ[k]);
+	}
+	for k in [0..n){
+		ψ[k] := H(ψ[k]);
+		for l in [k+1..n){
+			if ψ[k] && ψ[l]{
+				phase(2·π·2^(k-l-1));
+			}
+		}
+	}
+	return ψ;
+}
+
+def sciQFT[n:!ℕ](ψ:int[n]){
+	ψ:=ψ as 𝔹^n;
+	r:=();
+    for k in (n..-1..0]{
+        for l in (n..-1..k + 1]{
+            if r[n-1-l] && ψ[k] {
+                phase(-2·π·2^(k-l-1));
+            }
+        }
+		ψ~[t]:=ψ;
+		r~=[measure(H(t))];
+    }
+	():=ψ;
+	return r coerce !𝔹^n as !int[n];
+}	
+
+n:=5;
+def main(){
+	x:=0:int[n];
+	for i in 0..n{ x[i]:=H(x[i]); }
+	x:=measure(x);
+	assert(sciQFT(QFT(x))==x);
+	return x;
+}
