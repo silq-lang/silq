@@ -1,0 +1,14 @@
+// args: --run
+
+def measEquat[α:!𝔹](x:𝔹)⇒measure(H(rotZ(α,x)));
+
+def mH(x:𝔹){
+	anc:=H(0);
+	if x && anc { phase(π); }
+	if measEquat[0](x){
+		anc:=X(anc);
+	}
+	return anc;
+}
+
+def main()⇒(H(mH(0)),mH(H(1)));
