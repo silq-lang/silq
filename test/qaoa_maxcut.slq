@@ -1,0 +1,229 @@
+// skipped
+
+// ======================= Utilities =======================
+
+// e^{-i θ Z⊗Z} via odd-parity phase (up to a global phase).
+def rzz[theta:!ℝ](const qi:𝔹, const qj:𝔹){
+	if qi ≠ qj { phase(2·theta); }   // odd parity gets +2θ relative phase
+}
+
+// Compute (weighted) cut value for classical bitstring 'bits'.
+def cut_value[n:!ℕ, m:!ℕ](edges:(!ℕ×!ℕ)^m, w:!ℝ^m, bits:!𝔹^n):!ℝ{
+	total := 0;
+	for k in 0..m {
+		(u, v) := edges[k];
+		if bits[u] ≠ bits[v] { total += w[k]; }
+	}
+	return total;
+}
+
+// Clamp a real into [lo, hi].
+def clamp(x:!ℝ, lo:!ℝ, hi:!ℝ):!ℝ{
+	if x < lo { return lo; }
+	if x > hi { return hi; }
+	return x;
+}
+
+// Clamp all angles in a vector into [0, π].
+def clamp_angles[p:!ℕ](angles:!ℝ^p):!ℝ^p{
+	// for i in 0..p { angles[i] = clamp(angles[i], 0.0, π); } // TODO
+	for i in 0..p { angles[i] := clamp(angles[i], 0.0, π); }
+	return angles;
+}
+
+// ======================= p-layer QAOA =======================
+
+// One measured sample after applying p layers with betas[0..p), gammas[0..p)
+def qaoa_sample_once_p[n:!ℕ, m:!ℕ, p:!ℕ](
+	edges:(!ℕ×!ℕ)^m,
+	w:!ℝ^m,
+	betas:!ℝ^p,
+	gammas:!ℝ^p
+):!𝔹^n{
+	// 1) Init |+⟩^n
+	q := vector(n, 0);
+	for i in 0..n { q[i] := H(q[i]); }
+
+	// 2) p layers: cost then mixer
+	for ℓ in 0..p {
+		// Cost U_C(γ_ℓ)
+		for k in 0..m {
+			(u, v) := edges[k];
+			θ := gammas[ℓ]·w[k];
+			rzz[θ](q[u], q[v]);
+		}
+		// Mixer U_B(β_ℓ) = ⊗ RX(2β_ℓ)
+		for i in 0..n { q[i] := rotX(2·betas[ℓ], q[i]); }
+	}
+
+	// 3) Measure one bitstring
+	return measure(q);
+}
+
+// Monte-Carlo estimate of E[C] for given angles
+def qaoa_expectation_p[n:!ℕ, m:!ℕ, p:!ℕ](
+	edges:(!ℕ×!ℕ)^m,
+	w:!ℝ^m,
+	betas:!ℝ^p,
+	gammas:!ℝ^p,
+	shots:!ℕ
+):!ℝ{
+	acc := 0.0;
+	for s in [0..shots) {
+		bits := qaoa_sample_once_p[n,m,p](edges, w, betas, gammas);
+		acc += cut_value[n,m](edges, w, bits);
+	}
+	return acc/shots;
+}
+
+// ======================= Trust-region optimizer (n-D; n = 2p) =======================
+// Unconstrained maximization over (betas, gammas), both ∈ [0, π]^p.
+// Two-sided finite-difference gradient; trust-region ascent with adaptive radius.
+def optimize_trust_p[p:!ℕ](
+	// objective to *maximize*
+	f:!ℝ^p x !ℝ^p !->!ℝ,
+	betas0:!ℝ^p,
+	gammas0:!ℝ^p,
+	rho0:!ℝ, rho_min:!ℝ,
+	max_iter:!ℕ
+):!ℝ^p x !ℝ^p x !ℝ{
+	β := clamp_angles[p](betas0);
+	γ := clamp_angles[p](gammas0);
+	ρ := rho0;
+	f_best := f(β, γ);
+	β_best := β; γ_best := γ;
+
+	for it in 0..max_iter {
+		δ := ρ;
+
+		// Finite-difference gradient wrt β
+		gβ := vector(p, 0.0);
+		for i in 0..p {
+			βp := β; βp[i] = clamp(β[i] + δ, 0, π);
+			βm := β; βm[i] = clamp(β[i] - δ, 0, π);
+			gβ[i] = (f(βp, γ) - f(βm, γ)) / (2·δ);
+		}
+
+		// Finite-difference gradient wrt γ
+		gγ := vector(p, 0.0);
+		for i in 0..p {
+			γp := γ; γp[i] = clamp(γ[i] + δ, 0.0, π);
+			γm := γ; γm[i] = clamp(γ[i] - δ, 0.0, π);
+			gγ[i] = (f(β, γp) - f(β, γm)) / (2.0·δ);
+		}
+
+		// Gradient norm
+		gn := 0.0;
+		for i in 0..p { gn += gβ[i]·gβ[i] + gγ[i]·gγ[i]; }
+		gn = sqrt(max(gn, 1e-16));
+
+		if gn < 1e-6 {
+			ρ = ρ/2;
+		} else {
+			// Ascent step: (β,γ) ← (β,γ) + ρ · g / ||g||
+			β_try := β; γ_try := γ;
+			for i in 0..p {
+				β_try[i] = clamp(β[i] + (ρ·gβ[i] / gn), 0, π);
+				γ_try[i] = clamp(γ[i] + (ρ·gγ[i] / gn), 0, π);
+			}
+			f_try := f(β_try, γ_try);
+
+			if f_try > f_best {
+				β = β_try; γ = γ_try; f_best = f_try;
+				β_best = β; γ_best = γ;
+				ρ = min(ρ·1.25, 0.5);
+			} else {
+				ρ = ρ·0.5;
+			}
+		}
+
+		// if (ρ < rho_min) { break; } // TODO
+		if ρ < rho_min { return (β_best, γ_best, f_best); }
+	}
+
+	return (β_best, γ_best, f_best);
+}
+
+def main(){
+	// ======================= Example: C4, p=2 =======================
+	// Graph: 0—1—2—3—0 (unweighted; optimum cut = 4)
+	n := 4:!ℕ;
+	m := 4:!ℕ;
+	edges :(!ℕ×!ℕ)^m := [(0,1), (1,2), (2,3), (3,0)] coerce _^m;
+	w     :!ℝ^m      := [1.0, 1.0, 1.0, 1.0] coerce _^m;
+
+	p := 2:!ℕ;
+	
+	// Heuristic init that often works: β increasing, γ decreasing
+	betas0 :!ℝ^p  := [0.3, 0.5] coerce _^p;
+	gammas0:!ℝ^p  := [0.8, 0.6] coerce _^p;
+	
+	/+// ---------- Example: Petersen graph (n=10, m=15) ----------
+	n:=10;
+	m:=15;
+	// Edges: outer 5-cycle, spokes, inner pentagram
+	edges :(!ℕ×!ℕ)^m := [
+		// outer cycle
+		(0,1), (1,2), (2,3), (3,4), (4,0),
+		// spokes
+		(0,5), (1,6), (2,7), (3,8), (4,9),
+		// inner pentagram: 5-7-9-6-8-5
+		(5,7), (7,9), (9,6), (6,8), (8,5)
+	] coerce _^m;
+
+	// Unweighted MaxCut
+	w :!ℝ^m := [1.0, 1.0, 1.0, 1.0, 1.0,
+				1.0, 1.0, 1.0, 1.0, 1.0,
+				1.0, 1.0, 1.0, 1.0, 1.0] coerce _^m;
+
+	p := 3:!ℕ;
+
+	// Heuristic init: β ramp up, γ ramp down (often transfers well)
+	betas0  :!ℝ^p := [0.25, 0.45, 0.60] coerce _^p;
+	gammas0 :!ℝ^p := [0.90, 0.70, 0.50] coerce _^p;+/
+	
+	shots_eval := 12:!ℕ;
+	def obj(β:!ℝ^p, γ:!ℝ^p):!ℝ{
+		return qaoa_expectation_p[n,m,p](edges, w, β, γ, shots_eval);
+	}
+
+	rho0 := 0.2; rho_min := 1e-3; max_iter := 10:!ℕ;
+	(betas, gammas, f) := optimize_trust_p[p](obj, betas0, gammas0, rho0, rho_min, max_iter);
+
+	/+print("Optimized betas: ");+/  print(betas);
+	/+print("Optimized gammas: ");+/ print(gammas);
+	/+print("Estimated E[C]: ");+/   print(f);
+
+	// Final sampling at optimized angles; keep best sample
+	final_shots := 3:!ℕ;
+	best_bits :!𝔹^n := vector(n, false);
+	best_val := -1e9;
+	for s in [0..final_shots) {
+		bits := qaoa_sample_once_p[n,m,p](edges, w, betas, gammas);
+		val  := cut_value[n,m](edges, w, bits);
+		if val > best_val { best_val = val; best_bits = bits; }
+	}
+
+	/+print("Best sample bits: ");+/ print(best_bits);
+	/+print("Best sample cut value: ");+/ print(best_val);
+
+	// -------- Optional: 1-flip local polish (on classical side) --------
+	improved := true;
+	bits2 := best_bits;
+	val2 := best_val;
+	while improved {
+		improved = false;
+		for i in 0..n {
+			bits_try := bits2;
+			bits_try[i] = !bits_try[i];   // flip classical bit
+			val_try := cut_value[n,m](edges, w, bits_try);
+			if val_try > val2 {
+				bits2 = bits_try;
+				val2 = val_try;
+				improved = true;
+			}
+		}
+	}
+	/+print("Polished bitstring: ");+/ print(bits2);
+	/+print("Polished cut value: ");+/ print(val2);
+}

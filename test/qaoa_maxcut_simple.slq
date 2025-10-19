@@ -1,0 +1,113 @@
+// args: --run
+
+// ---------- Utilities ----------
+
+// e^{-i theta Z⊗Z} via CNOT–RZ–CNOT (up to a global phase).
+def rzz[theta:!ℝ](const qi:𝔹, const qj:𝔹){
+	if qi ≠ qj { phase(2·theta); }
+}
+
+// Compute (weighted) cut value for classical bitstring 'bits'.
+def cut_value[n:!ℕ,m:!ℕ](edges:(!ℕ×!ℕ)^m, w:!ℝ^m, bits:!𝔹^n):!ℝ{
+	total := 0;
+	for k in 0..m {
+		(u, v) := edges[k];
+		if (bits[u] != bits[v]) {
+			total += w[k];
+		}
+	}
+	return total;
+}
+
+// ---------- One QAOA layer (p=1) ----------
+// Applies U_C(gamma) · U_B(beta) to the |+>^n state and returns one measured sample.
+def qaoa_sample_once[m:!ℕ](
+	n:!ℕ,
+	edges:(!ℕ×!ℕ)^m,
+	w:!ℝ^m,
+	beta:!ℝ,
+	gamma:!ℝ
+):!𝔹^n{
+	// 1) Init |+⟩^n
+	q := vector(n, 0);
+	for i in 0..n { q[i] := H(q[i]); }
+
+	// 2) Cost unitary U_C(gamma) = Π_{(u,v)} e^{-i gamma * w_uv Z_u Z_v}
+	for k in 0..m {
+		(u, v) := edges[k];
+		θ := gamma·w[k];
+		rzz[θ](q[u], q[v]);
+	}
+
+	// 3) Mixer U_B(beta) = ⊗_i RX(2 beta)
+	for i in 0..n { q[i] := rotX(2*beta, q[i]); }
+	
+	// 4) Sample one bitstring
+	return measure(q);   // classical vector !^n
+}
+
+// ---------- Driver: run many shots and keep the best ----------
+def run_qaoa_maxcut[m:!ℕ](
+	n:!ℕ,
+	edges:(!ℕ×!ℕ)^m,
+	w:!ℝ^m,
+	beta:!ℝ,
+	gamma:!ℝ,
+	shots:!ℕ
+): !𝔹^n x !ℝ{
+	best_bits := vector(n, false);
+	best_val  := -1e9;
+	for s in [0..shots) {
+		print(s,best_val);
+		bits := qaoa_sample_once(n, edges, w, beta, gamma);
+		val  := cut_value(edges, w, bits);
+		if val > best_val {
+			best_val  = val;
+			best_bits = bits;
+		}
+	}
+	return (best_bits, best_val);
+}
+
+// ---------- Example: 4-node cycle C4 ----------
+def main(){
+	// Graph: 0—1—2—3—0  (unweighted MaxCut optimum = 4)
+	n := 4:!ℕ;
+	edges := [(0,1), (1,2), (2,3), (3,0)];
+	w := [1.0, 1.0, 1.0, 1.0];
+	
+	// Hand-picked (β,γ) that work well on C4 for p=1.
+	beta := 0.5:!ℝ;
+	gamma := 0.7:!ℝ;
+	
+	shots := 10:!ℕ;
+	(best_bits, best_val) := run_qaoa_maxcut(n, edges, w, beta, gamma, shots);
+
+	//print("Best bitstring: ");
+	print(best_bits);
+	//print("Cut value: ");
+	print(best_val);
+
+	// (Optional) simple 1-flip local polish to ensure local optimality
+	// Uncomment if you want a quick classical refinement.
+
+	improved := true;
+	bits2 := best_bits;
+	val2 := best_val;
+	while improved {
+		improved = false;
+		for i in 0..n {
+			// try flipping bit i
+			bits_try := bits2;
+			bits_try[i] = !bits_try[i]; // flip classical bit
+			val_try := cut_value(edges, w, bits_try);
+			if val_try > val2 {
+				bits2 = bits_try;
+				val2 = val_try;
+				improved = true;
+			}
+		}
+	}
+	/+print("Polished bitstring: ");+/ print(bits2);
+	/+print("Polished cut value: ");+/ print(val2);
+}
