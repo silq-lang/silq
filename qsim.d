@@ -589,13 +589,13 @@ struct QState{
 		void assign(ref QState state,Value rhs){
 			if(!type){ this=rhs; return; }
 			if(isClassical()){
-				if(rhs.isClassical) this=rhs.dup(state);
+				if(rhs.isClassical) this=rhs;
 				else this=rhs.toVar(state,false);
 				return;
 			}
 			if(rhs.isClassical()){
 				forget(state);
-				this=rhs.dup(state);
+				this=rhs;
 				return;
 			}
 			assert(tag==rhs.tag);
@@ -609,31 +609,34 @@ struct QState{
 				case Tag.closure:
 					enforce(rhs.tag==Tag.closure,"incompatible values for closure assignment");
 					closure.fun=rhs.closure.fun;
-					if(closure.context&&rhs.closure.context)
+					if(closure.context&&rhs.closure.context&&closure.context!is rhs.closure.context)
 						(*closure.context).assign(state,*rhs.closure.context);
 					return;
 				case Tag.array_:
 					enforce(rhs.tag==Tag.array_,"incompatible values for array assignment");
 					if(array_.length==rhs.array_.length){
-						foreach(i;0..array_.length)
-							array_[i].assign(state,rhs.array_[i]);
+						if(array_ !is rhs.array_)
+							foreach(i;0..array_.length)
+								array_[i].assign(state,rhs.array_[i]);
 					}else{
 						forget(state);
-						this=rhs.dup(state);
+						this=rhs;
 					}
 					return;
 				case Tag.record:
 					enforce(rhs.tag==Tag.record,"incompatible values for record assignment");
+					if(record is rhs.record) return;
 					bool ok=true;
 					foreach(k,v;rhs.record) if(k !in record) ok=false;
 					foreach(k,v;record) if(k !in rhs.record) ok=false;
 					if(ok) foreach(k,v;record) v.assign(state,rhs.record[k]);
 					else{
 						forget(state);
-						this=rhs.dup(state);
+						this=rhs;
 					}
 					return;
 				case Tag.quval:
+					if(rhs.tag==Tag.quval&&quval is rhs.quval) return;
 					if(auto quvar=cast(QVar)quval){ // TODO: ok?
 						scope(success) rhs.forget(state);
 						return quvar.assign(state,rhs);
@@ -1737,12 +1740,17 @@ struct QState{
 	}
 	Value call(Value fun,Value arg,Expression type,Location loc){
 		enforce(fun.tag==Value.Tag.closure,"bad value for function in call");
-		auto context=fun.closure.context;
-		if(context&&fun.isClassical){ // non-linear function
-			auto cvar=fun.closure.fun.context; // can be null if function has no body
-			if(cvar&&!cvar.isLinear)
-				fun=fun.dup(this);
+		bool cleanup=false;
+		if(auto ft=cast(FunTy)fun.type){
+			auto context=fun.closure.context;
+			if(context&&ft.captureAnnotation==CaptureAnnotation.const_){ // non-linear function
+				if(auto cvar=fun.closure.fun.context){ // can be null if function has no body
+					fun=fun.dup(this); // TODO: avoid this
+					cleanup=true;
+				}
+			}
 		}
+		scope(exit) if(cleanup) fun.forget(this); // TODO: avoid this
 		return call(fun.closure.fun,nullValue,arg,null,fun.closure.context,type,loc);
 	}
 	QState assertTrue(Value val)in{

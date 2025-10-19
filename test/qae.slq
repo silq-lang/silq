@@ -20,7 +20,6 @@ def makeMarkA[m:!ℕ,n:!ℕ](const A: 𝔹^m →mfree 𝔹^n)(u:𝔹^n){
 
 def estimateAmplitude[m:!ℕ][a:qtype](const Q: a →mfree a, u: a){
 	Qp := [p:uint[m]](u:a){
-		p:=dup(p); // TODO: fix and remove
 		for i in 0..m{
 			if p[i]{
 				for k in 0..2^i{

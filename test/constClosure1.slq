@@ -1,0 +1,4 @@
+// args: --run
+
+def f[p:uint[2]](){ for i in 0..2{ dup(p[i]) } }
+def main()⇒f[0 as uint[2]]();
