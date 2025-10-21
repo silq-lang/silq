@@ -365,7 +365,7 @@ Info[] getActual(string source, bool expectOK){
 	if(dashDashNoRun) args~="--run=0 ";
 	if(dashDashRemoveLoops) args~="--remove-loops ";
 	if(dashDashSplitComponents) args~="--split-components ";
-	auto cmd = "../silq --error-json "~args~source;
+	auto cmd = "../silq --error-json=- "~args~source;
 
 	auto stdout = File.tmpfile();
 	auto stderr = File.tmpfile();
