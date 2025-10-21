@@ -147,7 +147,7 @@ int main(string[] args){
 		})
 		.addOptional!("error-json", 'j')((string path) {
 			if(path is null) {
-				jsonOut = "-";
+				jsonOut = "/dev/stderr";
 			} else {
 				jsonOut = path;
 			}
@@ -254,6 +254,8 @@ int main(string[] args){
 			}
 		} else if(jsonOut == "-") {
 			err = new JSONErrorHandler(stdout, false);
+		} else if(jsonOut == "/dev/stderr") {
+			err = new JSONErrorHandler();
 		} else {
 			err = new JSONErrorHandler(File(jsonOut, "w"), true);
 		}
