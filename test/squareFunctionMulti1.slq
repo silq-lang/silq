@@ -1,0 +1,8 @@
+
+def foo[n:!ℕ][m:!ℕ](x:𝔹^n,y:𝔹^m){
+	return x~y;
+}
+
+def main(){
+	return foo((1,0,1),(1,1,0,1)); /// TODO
+}

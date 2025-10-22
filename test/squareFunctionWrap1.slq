@@ -1,0 +1,14 @@
+
+def mc[a:qtype](const gate: a →mfree a)[n:!ℕ](const xs:𝔹^n,x:a)mfree{
+	if n==0{
+		x:=gate(x);
+	}else if xs[n-1]{
+		x:=mc(gate)(xs[0..n-1],x);
+	}
+	return x;
+}
+
+def main(){
+	def foo[n:!ℕ](xs:𝔹^n)⇒xs;
+	return mc(foo)((1,1,1),(0,1)); /// TODO
+}
