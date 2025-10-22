@@ -9,7 +9,7 @@ n:=4;       // log₂ N.
 def dlog(g:!ℕ,x:!ℕ){
 	while true{
 		(α,β):=(uniformSuperposition[n](N),uniformSuperposition[n](N));
-		measure(powm(x as uint[n+1],α)·powm(g as uint[n+1],(N as uint[n])-β)%p);
+		measure(powm(x as uint[n+1],α)·powm(g as uint[n+1],N-β)%p);
 		(μ,ν):=measure(QFT(α),QFT(β)) as !ℕ^2;
 		(d,iν):=egcd(ν,N);
 		if d=1{ return -μ*iν%N; }

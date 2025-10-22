@@ -4,7 +4,7 @@ import qftPretty;
 def draper_add_impl[n:!ℕ](a: uint[n],const b: uint[n])mfree: uint[n]{
 	a:=QFT(a);
 	for k in [0..n){
-		if a[k]{ phaseQ((2^k as uint[n])·b); }// ψ''''[k] = 1/√2(|0⟩+expi(2π·2^k·(a+b)/2^n)|1⟩)
+		if a[k]{ phaseQ(2^k·b); }// ψ''''[k] = 1/√2(|0⟩+expi(2π·2^k·(a+b)/2^n)|1⟩)
 	}
 	return reverse(QFT)(a);
 }
