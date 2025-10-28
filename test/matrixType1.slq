@@ -1,0 +1,1 @@
+def foo(x: B^(3 x 3)) ⇒ x; /// TODO
