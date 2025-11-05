@@ -2161,6 +2161,7 @@ struct Interpreter(QState){
 				}
 				auto r=lookupMeaning(qstate,id);
 				enforce(r.isValid,"this identifier lookup is not yet supported");
+				if(id.consumedDuringBorrow){ r=r.dup(qstate).consumeOnRead(); }
 				return r;
 			}
 			if(auto fe=cast(FieldExp)e){

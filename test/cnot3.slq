@@ -1,0 +1,14 @@
+// args: --run
+
+def cnot(const x: 𝔹, y: 𝔹): 𝔹{
+	y := X(y);
+	if !x { y:=X(y) }
+	return y;
+}
+
+def main(){
+	x:=H(0);
+	y:=dup(x);
+	y:=cnot(y,y);
+	return (x,y);
+}
