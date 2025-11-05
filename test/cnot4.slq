@@ -1,0 +1,14 @@
+// args: --run
+
+def ccnot(const x₀: 𝔹, const x₁: 𝔹, y: 𝔹): 𝔹{
+	y := X(y);
+	if !x₀||!x₁ { y:=X(y) }
+	return y;
+}
+
+def main(){
+	x:=H(0);
+	y:=dup(x);
+	y:=ccnot(y,y,y);
+	return (x,y);
+}
