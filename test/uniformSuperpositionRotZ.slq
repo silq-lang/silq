@@ -1,0 +1,23 @@
+// according to: https://quantumcomputing.stackexchange.com/a/11740
+
+def H_n[n:!ℕ](xs:𝔹^n){
+	for i in 0..n{ xs[i]:=H(xs[i]); }
+	return xs;
+}
+
+def uniformSuperposition(N:!ℕ)mfree{
+	(k,L):=(0,N);
+	while (L&1)=0 { L div=2; k+=1; }
+	(t,logL):=(1,0);
+	while t<L { t·=2; logL+=1; }
+	a:=H_n(vector(logL,0));
+	φ:=acos(1-2^(logL-1)/L);
+	def O1(a: 𝔹^logL)lifted⇒(a as uint[logL])<L;
+	def O2(a: 𝔹^logL)lifted⇒(a as uint[logL])=0;
+	O1(a):=rotZ(φ,O1(a));
+	with a:=H_n(a) do O2(a):=rotZ(φ,O2(a));
+	phase(-(π-φ)/2);
+	return H_n(vector(k,0))~a coerce 𝔹^(ceil(log(N)/log(2)) coerce !ℕ) as uint[ceil(log(N)/log(2)) coerce !ℕ];
+}
+
+def main()⇒uniformSuperposition(3);
