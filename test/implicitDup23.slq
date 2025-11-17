@@ -1,0 +1,12 @@
+
+def main(){
+	x := H(0);
+	y := !x;
+	z := y;
+	if true{
+		t := !y; /// error
+		x := H(x);
+		measure(t);
+	}
+	return x;
+}

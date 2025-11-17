@@ -1,0 +1,9 @@
+
+def main() {
+	x := H(0);
+	y := !x;
+	z := y;
+	t := !y; /// TODO
+	x := H(x);
+	return (x, t);
+}

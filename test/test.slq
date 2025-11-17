@@ -1,5 +1,1066 @@
 // skipped
 
+/+
+// implicitDup23_4.slq
+def main(){
+	x := H(0);
+	y := dup(x);
+	z := y;
+	if y {}
+	if y {}
+	x := H(x);
+	t := y; /// TODO error
+	return (x,t);
+}
++/
+
+/+
+// implicitDup23_3.slq
+def main(){
+	x := H(0);
+	y := dup(x);
+	z := y;
+	if y {} /// TODO
+	x := H(x);
+	t := y; /// TODO error
+	return (x,t);
+}
++/
+
+/+
+// implicitDup23_2.slq
+def main(){
+	x := H(0);
+	y := dup(x);
+	z := y;
+	if y {} /// TODO
+	x := H(x);
+	return x;
+}
++/
+
+/+
+// implicitDup23_1.slq
+def main() {
+	x := H(0);
+	y := !x;
+	z := y;
+	t := !y; /// TODO
+	x := H(x);
+	return (x, t);
+}
++/
+
+/+
+def main(){
+	a:=[1,2,3];
+	i:=0,j:=1;
+	a[i]=a[j]; /// TODO
+	a[i]⊕=a[j]; /// TODO
+}
++/
+
+/+
+def map(a:type,b:type)[f:a→b][n:!ℕ](xs:a^n){
+	ys:=();
+	//for x in xs{ ys~=f(x); } // TODO
+	for i in 0..n{
+		[x]~xs:=xs;
+		ys~=[f(x)];
+	}
+	():=xs;
+	// return ys; // TODO: ys: b^n
+	return ys coerce b^n;
+}
+
+// mapH:=map[H]; // TODO
+// def mapH[n:!ℕ](xs:B^n)=>map[H](xs); // TODO
+
+def mapH[n:!ℕ](xs:B^n)=>map(B,B)[H](xs);
+
+def zeros(n:!ℕ)⇒vector(n,0);
+
+def main(){
+	(k,b):=mapH(zeros(2));
+	a:=dup(k);
+	c:=X(dup(a)) xorb b;
+	X(a) xorb b := c;
+	return (k,b);
+}
++/
+
+/+
+// forgetCoerce2.slq variant
+def main(){
+	qs:=(H(0:𝔹),H(0:𝔹)) coerce 𝔹^2;
+	head:=dup(qs[0]);
+	tail:=dup(qs:𝔹[])[1..2] coerce 𝔹^(2 sub 1);
+	forget(qs=[head]~(tail:𝔹[]) coerce 𝔹^2);
+	qs:=[head]~(tail:𝔹[]) coerce 𝔹^2;
+	(qs₀,qs₁):=qs;
+	(qs₀,qs₁):=(H(qs₀),H(qs₁));
+	assert(measure(qs₀=0&qs₁=0)); /// TODO
+	return (qs₀,qs₁);
+}
++/
+
+/+
+// forgetCoerce5.slq variant
+def main(){
+	qs:=(H(0:𝔹),H(0:𝔹)) coerce 𝔹^2;
+	head:=dup(qs[0]);
+	tail:=dup(qs:𝔹[])[1..2] coerce 𝔹^(2 sub 1);
+	ws:=dup([head]~(tail:𝔹[])) coerce B^2;
+	forget(qs=ws);
+	forget([head]~(tail:𝔹[])=ws:𝔹[]);
+	(ws₀,ws₁):=ws;
+	(ws₀,ws₁):=(H(ws₀),H(ws₁));
+	assert(measure(ws₀=0&ws₁=0));
+	return (ws₀,ws₁);
+}
++/
+
+/+
+// forgetCoerce4.slq variant
+def main(){
+	qs:=(H(0:𝔹),H(0:𝔹)) coerce 𝔹^2;
+	head:=dup(qs[0]);
+	tail:=dup(qs:𝔹[])[1..2] coerce 𝔹^(2 sub 1);
+	forget(qs=dup([head]~(tail:𝔹[])) coerce 𝔹^2);
+	(tail,):=tail coerce 𝔹^1;
+	(head,tail):=(H(head),H(tail));
+	assert(measure(head=0&tail=0));
+	return (head,tail);
+}
++/
+
+/+
+// forgetCoerce3.slq variant
+def main(){
+	qs:=(H(0:𝔹),H(0:𝔹)) coerce 𝔹^2;
+	head:=dup(qs[0]);
+	tail:=dup((qs:𝔹[])[1..2]) coerce 𝔹^(2 sub 1);
+	forget(qs=[head]~(tail:𝔹[]) coerce 𝔹^2);
+	(tail,):=tail coerce 𝔹^1;
+	(head,tail):=(H(head),H(tail));
+	assert(measure(head=0&tail=0));
+	return (head,tail);
+}
++/
+
+
+/+
+def foo(x:𝔹){ assert(0); }
+def bar(x:𝔹)⇒assert(0); // TODO
+def baz(x:𝔹)⇒foo(0); // TODO
++/
+
+/+
+def main(){
+	x:=H(0);
+	y:=dup(x);
+	k:=(y,dup(y),dup(y),x);
+	return (k,y); /// TODO error
+}
++/
+
+/+
+// args: --run
+
+def toW[n:!ℕ]lifted:𝔹^n →mfree 𝔹^n⇒lambda(qs:𝔹^n)mfree:𝔹^n{
+	if n==1{ qs[0]:=X(qs[0]); }
+	else if n>1{
+		θ:=asin(1/sqrt(n));
+		(([head] coerce 𝔹^1):𝔹[])~((tail coerce 𝔹^(n sub 1)):𝔹[]):=(qs:𝔹[]);
+		head:=rotY(θ,head);
+		if !head { tail := toW(tail); }
+		qs:=[head]~(tail:𝔹[]) coerce B^n;
+	}
+	return qs;
+};
+
+def fromW[n:!ℕ]lifted:𝔹^n→mfree 𝔹^n⇒lambda(qs:𝔹^n)mfree:𝔹^n{
+    if n = 1 {
+        qs[0] := reverse(X)(qs[0]);
+    } else if n > 1 {
+        θ := asin(1 / sqrt(n));
+        __tmp2 := qs coerce 𝔹[];
+        (head,) := dup(__tmp2[0..1]) coerce 𝔹^1;
+        tail := dup(__tmp2[1..__tmp2.length]) coerce 𝔹^((n sub 1));
+        forget(__tmp2=[head] ~ (tail: 𝔹[])); // crash
+        if ¬head {
+            tail := fromW(tail);
+        }
+        head := reverse(rotY)(θ,head);
+        __tmp0 := dup((([head] coerce 𝔹 ^ 1): 𝔹[]) ~ ((tail coerce 𝔹 ^ (n sub 1)): 𝔹[]));
+        forget(tail=(__tmp0[1..__tmp0.length]: 𝔹[]) coerce 𝔹 ^ (n sub 1));
+        forget((head,)=(__tmp0[0..1]: 𝔹[]) coerce 𝔹 ^ 1);
+        qs := __tmp0 coerce 𝔹^n;
+    }
+    return qs;
+};
+
+def solve(qs:𝔹^3):!𝔹{
+	if qs[1]{ phase(-2·π/3); }
+	if qs[2]{ phase(-4·π/3); }
+	qs:=fromW(qs);
+ 	return measure(qs as int[3])!=0;
+}
+def main(){
+	qs:=toW(vector(3,0:𝔹));
+	if qs[1]{ phase(2·π/3); }
+	if qs[2]{ phase(4·π/3); }
+	assert(!solve(qs));
+}
++/
+
+
+/+
+def main(){
+	x:=H(0);
+	y:=dup(x);
+	z:=y;
+	// __show(__query("dep",y)); // TODO: should not change semantics
+	measure(x);
+	return (y,z); /// error
+}
++/
+
+/+
+def main(){
+	x:=H(0);
+	y:=dup(x);
+	k:=(y,dup(y),dup(y),x);
+	return (k,y); /// TODO error
+}
++/
+
+/+
+def estimatePhase[n:!ℕ][a:qtype](const f: Pi[nrep: !ℕ]qfree. a ->mfree a, arg: a)mfree: uint[n] x a{
+	x_tilde := 0: uint[n];
+	for i in 0..n {
+		bit := H(0);
+		if bit {
+	        nrep := 2^(n sub 1 sub i);
+			arg := f[nrep](arg);
+			phaseU(nrep * -x_tilde);
+		}
+		(x_tilde[i], 0) := (H(bit), x_tilde[i]);
+	}
+	return (x_tilde, arg);
+}
+
+def phaseU[n: !N](const x: uint[n]) {
+	for i in 0..n {
+		if x[i] {
+			phase(2*pi * 2^i/2^n);
+		}
+	}
+}
+
+n := 3;
+def main() {
+	def f[nrep:!N](x: uint[n]){
+		x += nrep;
+		return x;
+	}
+	x := 0 as uint[n];
+	(x_tilde, x) := estimatePhase[n](f, x);
+	return (x_tilde, x);
+}
++/
+
+/+
+n := 16;
+def estimatePhase(const f: unit ->mfree unit): !uint[n] {
+	x_tilde := 0: !uint[n];
+	for i in 0..n {
+		bit := H(0);
+		if bit {
+	        nrep := 2^(n sub 1 sub i);
+			repeat nrep { f(); }
+			phaseU(nrep * -x_tilde);
+		}
+		bit := H(bit);
+		x_tilde[i] = measure(bit);
+	}
+	return x_tilde;
+}
+
+def main() {
+	for i in 0..10 { // run multiple tests
+		x := randomBitvector(n) as !uint[n]; // generate a random phase to estimate
+		def f() { phaseU(x); }
+		x_tilde := estimatePhase(f);
+		print(x_tilde, x);
+		assert(x_tilde == x);
+	}
+}
+
+def randomBitvector(n: !N) {
+    x := ();
+    for i in 0..n {
+	    x ~= [measure(H(0))];
+	}
+	return x coerce _^n; // (convert from !B[] to !B^n)
+}
+
+def phaseU[n: !N](const x: !uint[n]) {
+	phase(2*pi * (x as !ℕ)/2^n);
+}
++/
+
+/+
+def phaseU[n: !N](const x: !uint[n]) {
+	phase(2*pi * (x as !ℕ)/2^n);
+}
+
+def main() {
+	x := (H(0), H(0)) as uint[2];
+	if x[0] { phaseU(2^0 as !uint[2]); }
+	if x[1] { phaseU(2^1 as !uint[2]); }
+	return x;
+}
++/
+
+/+
+def phaseU[n:!N](const x:uint[n]){
+	for i in 0..n{
+		if x[i] {
+		    phase(2*pi*2^i/2^n);
+		}
+	}
+}
+
+def main() {
+	x := (H(0),H(0)) as uint[2];
+	phaseU(x);
+	return x;
+}
++/
+
+/+
+def f(n:!ℕ,y:B)⇒(vector(n,0),y);
+
+def main(){
+	xs:=vector(3,0:!B);
+	(vector(2,0):_^2)~xs:=xs;
+	y:=H(0);
+	//f[3](xs,y):=y;
+	//f(3,y):=(xs,y);
+	return (xs,y);
+}
++/
+/+
+def walk[n:!ℕ](qs:𝔹^n,m:!ℕ,const f:𝔹^n → mfree 𝔹^n) mfree{
+    z := 0:𝔹;
+    for i in [0..m){
+        z |= qs[i]==0;
+    }
+    if z{phase(π);}
+    forget(z);
+    qs := reverse(f)(qs);
+    //f(qs) := qs;
+    z := 0:𝔹;
+    for i in [0..m){
+        z |= qs[i]==0;
+    }
+    if z=0{phase(π);}
+    forget(z);
+    qs := f(qs);
+    return qs;
+}
+def amplitude_amplification[n:!ℕ](qs:𝔹^n,m:!ℕ,const f:𝔹^n → mfree 𝔹^n){
+    nIterations:=floor(π/(4·asin(2^(-n/2)))-1);
+    for k in [0..nIterations){
+        qs := walk(qs,m,f);
+    }
+    return qs;
+}
+def cnot(const x:𝔹,y:𝔹):𝔹{
+  if x{
+    y := X(y);
+  }
+  return y;
+}
+def gate(qs:𝔹^3) mfree{
+    qs[0] := rotY(π/3,qs[0]);
+    qs[2] := rotY(π/3,qs[2]);
+    qs[1] := cnot(qs[0],qs[1]);
+    qs[0] := X(qs[0]);
+    qs[2] := cnot(qs[1],qs[2]);
+    return qs;
+}
+def main(){
+    qs := 0:uint[3] as 𝔹^3;
+    m := 1:!ℕ;
+    qs := gate(qs);
+    qs := amplitude_amplification(qs,m,gate);
+    return qs;
+}
++/
+/+
+def main(){
+	x:=(H(0),H(0));
+}
++/
+
+
+/+
+def main(){
+	x:=H(0);
+	y:=dup(x);
+	(x,y):=(H(x),H(y));
+	return (x,y);
+}
++/
+
+def main(){
+	x:=(0,1);
+	y:=x[1];
+	z:=(0,H(1));
+	w:=z[1]; /// error
+	return (x,y,z,w);
+}
+
+/+
+def foo[a](x:a)=>x;
+
+def main(){
+	//__show(typeof([x:*]⇒1));
+	//__show([*]->2);
+	__show(typeof(foo));
+}
++/
+
+/+
+def main(){
+	x := (1, 2); // !B x !N
+	x[0] += 1; // !N x !N
+	__show(typeof(x));
+}
++/
+
+
+/+
+def main(){
+	x:=H(0);
+	y:=dup(x);
+	return (y,x,y); /// TODO ?
+}
++/
+
+/+
+def foo(n:!ℕ){
+	while true{
+		d:=n;
+		if d≠1{ return; }
+	}
+}
++/
+
+/+
+def bar(n:!ℕ){
+	d:=n;
+	if d≠1{ return; }
+	k:=n;
+}
++/
+
+/+
+def baz(n:!ℕ){
+	d:=n;
+	if d≠1{ return; }
+}
++/
+
+/+
+// liftedConsuming2.slq
+def main(){
+	x:=H(0);
+	y:=dup(x);
+	if X(y){ /// error
+		return x;
+	}
+	return X(x);
+}
++/
+
+/+
+// liftedConsuming8.slq
+def main(){
+	x:=H(0);
+	y:=dup(x);
+	if X(y){ /// error
+		forget(y); /// error
+		return x;
+	}else{
+		forget(y); /// error
+		return x;
+	}
+}
++/
+
+/+
+def h₂[n:!ℕ](x:𝔹^n,y:𝔹^n)mfree⇒(x,y);
+/+
+def revh₂[n:!ℕ](const __tmp1391: 𝟙,moved __tmp1393: (𝔹^n)^2)mfree{
+    __tmp1394 := reverse(dup(h₂)[n])(__tmp1393);
+    (arg_x,arg_y) := __tmp1394;
+    __tmp1392 := (arg_x,arg_y);
+    return __tmp1392 coerce (𝔹^n)^2;
+}
++/
+
+def main(){
+	x:=(0:𝔹,);
+	y:=(1:𝔹,);
+	z:=(0:𝔹,);
+	w:=(1:𝔹,);
+	h₂[1](x,y):=(y,x);
+	//(x,y):=revh₂[1]((),(y,x));
+	return ((x,y),(z,w));
+}
++/
+
+/+
+def main()⇒reverse(rotZ)(π,0);
++/
+
+/+
+def main(){
+	g:=(x:𝔹)⇒x;
+	f:=reverse(g);
+}
++/
+
+/+
+// expand3.slq
+def expand[n: !ℕ](x: uint[n]) qfree: uint[2*n] {
+    v₀ := 0 as uint[n];
+    return ((x as 𝔹^n) ~ (dup(v₀) as 𝔹^n)) as uint[2*n];
+}
+
+
+def main() {
+    a := 1: uint[1];
+    q := H(0: 𝔹);
+    if q {
+        expand[1](a) := expand[1](a);
+    }
+    q := H(q);
+    measure(q);
+    return a;
+}
++/
+
+
+/+
+def cmp(const __tmp2: 𝔹^2,const __tmp3: !𝔹^2)qfree{
+    __tmp4 := 0;
+    __tmp5 := 0;
+    if ¬__tmp4 {
+        if 2 ≠ 2 {
+            __tmp4 ← 1;
+            __tmp5 ← 0;
+        }
+    }
+    if ¬__tmp4 {
+        for __tmp6 in [0..2){
+            if ¬__tmp4 {
+                if __tmp2[__tmp6] ≠ __tmp3[__tmp6] {
+                    __tmp4 ← 1;
+                    __tmp5 ← 0;
+                }
+            }
+        }
+    }
+    if ¬__tmp4 {
+        __tmp4 ← 1;
+        __tmp5 ← 1;
+    }
+    return dup(__tmp5);
+}+/
+
+/+
++/
+
+/+
+def applyMoved[a:qtype,b:qtype](const f:moved a!→mfree b,x:a)mfree⇒f(x);
+def applyConst[a:qtype,b:qtype](const f:const a!→mfree b,const x:a)mfree⇒f(x);
+
+def main(){
+	x:=H(0);
+	if x{
+		phase(π/2);
+		applyMoved(()⇒(),phase(π/2)):=();
+	}
+	forget(H(x)=0);
+	x:=H(0);
+	if x{
+		phase(π/2);
+		applyConst(()⇒(),phase(π/2)):=();
+	}
+	forget(H(x)=1);
+}
++/
+
+/+
+def f() qfree: unit {}
+
+def main() {
+	x := H(0:B);
+	if x {
+		f(phase(pi / 2)) := ();
+	}
+	return x;
+}
++/
+
+/+
+def main(){
+	y:=H(0);
+	k:=dup(y);
+	x:=k;
+	return (x,y);
+}
++/
+/+
+def main(){
+	def foo(){}
+	__show(typeof(foo));
+}
++/
+/+
+def main(){
+	assert(([1],(1,2,3))≠([1],(1,)));
+}
++/
+/+
+def main():!ℕ^2{
+	x:=vector(3,2);
+	return (x[0,1]); // error
+}
++/
+
+/+
+def a4_HADAMARD_Array[k:!N](q:𝔹^k) : 𝔹^k {
+	for j in [0..k) { q[j] := H(q[j]); }
+	return q;
+}
+
+def a7_Diffuse_Array[k:!N](q:𝔹^k) : 𝔹^k {
+	q := a4_HADAMARD_Array(q);
+	if q == array(k,false) { phase(π); }
+	q := a4_HADAMARD_Array(q);
+	return q;
+}
++/
+
+/+
+def main(){
+	n:=0;
+	x:=vector(X(n),2);
+	forget(n); // error
+}
++/
+/+
+def main(){
+	n:=2+measure(H(0));
+	k:=vector(n,2);
+	return k<k;
+}
++/
+
+/+
+def foo(a:𝔹[]×(!𝔹[]×𝔹),b:𝔹[]×(!𝔹[]×𝔹))lifted{
+	return a=b;
+}
++/
+/+
+def foo(){
+	x:=H(0):
+	forget(x); // TODO: better error message
+	x:=3;
+}
++/
+
+/+
+def foo(){
+	x:=H(0);
+	forget(x);
+	x:=3;
+}
++/
+
+/+
+def foo(a:𝔹[]×(!𝔹[]×𝔹),b:𝔹[]×(!𝔹[]×𝔹))lifted{
+	done:=0;
+	r:=0;
+	if !done {
+		for i in 0..if a[0].length<b[0].length then a[0].length else b[0].length{
+			if !done {
+				if a[0][i]≠b[0][i]{
+					done=true;
+					r=a[0][i]<b[0][i];
+				}
+			}
+		}
+		if !done{
+			if a[0].length≠b[0].length{
+				done=true;
+				r=a[0].length<b[0].length;
+			}
+		}
+	}
+	return r;
+}
++/
+
+/+
+def main(){
+	x:=(0,1);
+	y:=(1,3);
+	return x<y;
+}
++/
+/+
+def main() {
+    x := H(0:B);
+    y := 1:B;
+    y = x && y;
+	forget(y);
+    return x;
+}
+
+def main() {
+    x := 0:B;
+    y := H(1:B);
+    y = x && y;
+	forget(y);
+    return x;
+}
++/
+
+/+
+def f2(x: int[32], y: int[32]){
+	k := dup(x);
+	while measure(H(false)){
+		k += y;
+	}
+	__show(__query("dep",k));
+	forget(k);
+	return (x,y);
+}
++/
+
+/+
+def foo[τ](x:τ):τ{
+	foo[τ](y):=x;
+	return y;
+}
++/
+/+
+def bar[τ:qtype](x:τ){
+	y:=reverse(bar[τ])(x); // TODO
+	return y;
+}
++/
+
+/+
+def rev[τ:*](a:τ[])lifted{
+	b:=[];
+	for i in (a.length..-1..0]{
+		b~=[dup(a[i])];
+	}
+	return b;
+}
+
+def main()⇒rev(1,2,3);
++/
+
+/+
+def main(){
+	for i in (-10..-10..-9]{
+		print(i);
+	}
+	print(1111);
+	for i in [-9..10..-10){
+		print(i);
+	}
+	print(2222);
+}
++/
+/+
+def fill[τ](n:!ℕ,f:𝟙!→τ):τ^n⇒if n==0 then ()coerce τ^n else fill(n sub 1,f)~(f(),);
+
+def prepareState(n:!ℕ){ // prepares n pieces of quantum data, distributed to players
+	φ:=fill(n,()⇒(H(0),H(1))); // create a quantum teleportation channel for each player
+	for i in (n-1..-1..0]{ // distribute receive ends to make ring topology
+		(φ[i][1],φ[i+1][1]):=(φ[i+1][1],φ[i][1]);
+	}
+	dump();
+	return φ;
+}
+
+def main()⇒prepareState(2);
++/
+/+
+n:=3;
+
+// generate uniform superposition of |0⟩,…,|N-1⟩
+def uniformSuperposition[n:!ℕ](N:!ℕ){
+	while true {
+		x:=0:uint[n];
+		for i in 0..n{ for j in 0..n { x[i]:=H(x[i]); } }
+		if measure(x<N){ return x; }
+		measure(x);
+	}
+}
++/
+
+/+
+def foo(const r:!ℕ)mfree{
+	tau := vector(r,0:int[r]);
+	for i in [0..r){ for j in [0..r){ } }
+	return tau;
+}
++/
+
+/+
+// args: --remove-loops
+def uniformSuperposition[n:!ℕ](N:!ℕ){
+	while true {
+		x:=0:uint[n];
+		for i in 0..n{ x[i]:=H(x[i]); }
+		if measure(x<N){ return x; }
+		measure(x);
+	}
+}
++/
+
+/+
+def main(){
+	x:=2;
+	def foo()⇒x;
+}
++/
+
+/+
+def foo[n:!ℕ](x:!𝔹^n)lifted:qtype;
+
+def bar[n:!ℕ](x:!𝔹^n)lifted:foo[n](x);
+
+def main(){
+	if measure(H(0)){
+		a:=(0,1,1);
+		x:=bar(a);
+	}else{
+		a:=(1,0);
+		x:=bar(a);
+	}
+	return x;
+}
++/
+
+/+
+def main(){
+	x:=H(0);
+	def foo(){
+		if measure(H(0)){
+			y:=H(x);
+		}else{
+			y:=H(x);
+		}
+		return y;
+	}
+	return x;
+}
++/
+
+/+
+def foo[n:!ℕ](x:𝔹^(n+1)){
+	return x;
+}
+def main(){
+	foo(vector(3,0));
+}
++/
+
+/+
+def main(){
+	if measure(H(0)){
+		x:=never;
+	}else{
+		x:=unit;
+	}
+	//__show(typeof(x));
+	return x;
+}
++/
+
+/+
+def main(){
+	x:=H(0);
+	if x{
+		t:=[0];
+	}else{
+		t:=[0,1];
+	}
+	return (x,t);
+}
++/
+
+/+
+def main(){
+	x:=0:𝔹;
+	y:=H(x);
+	z:=x;
+	return y;
+}
++/
+
+/+
+def main(){
+	n:=10;
+	x:=vector(n,[0]);
+	x[0][0]:=H(x[0][0]);
+	orig:=x[1];
+	x:=x:(𝔹[])^n;
+	//x[1]:=(foo(x[1]);
+	return x:𝔹[][];
+}
++/
+
+/+
+def foo(xs: 𝔹^1){
+	xs~=[1,0]:𝔹[];
+	return xs;
+}
+
+def main(){
+	n:=10;
+	x:=vector(n,[0]);
+	x[0][0]:=H(x[0][0]);
+	x[1]:=foo(x[1]);
+	return x:𝔹[][];
+}
++/
+/+
+def main(){
+	(a,b,c):=vector(3,𝔹);
+	__show(a→moved b→c);
+}
++/
+/+
+def promote[a,b](f:𝟙→ a,g:𝟙→a→b):𝟙→b{
+	return ()=>g()(f());
+}
++/
+
+/+
+def main():!𝔹{
+	//x:=H(0);
+	f:=()=>0:𝔹;
+	return f();
+}
++/
+/+
+def main(){
+	def foo(i:ℕ,const x_prev:𝔹):𝔹{
+		if i=10{ return x_prev; }
+		return foo(i+1,!x_prev);
+	}
+}
++/
+
+/+
+def map[a,b][f: a!→qfree b][n:!ℕ](xs:a^n)qfree:b^n;
+def zip[a,b][n:!ℕ](xs:a^n,ys:b^n)qfree:(a×b)^n;
+def __eq_t[n:!ℕ][σ:*^n,τ:*^n](xs:∏ σ, ys:∏ τ,cmps: ∏ map[*^2,*][(a:*,b:*)qfree⇒a×b→qfree 𝔹](zip[*,*](σ,τ)))lifted:𝔹;
+
+def main(){}
++/
+
+/+
+def foo(x:!𝔹[]){
+	x[0]:=H(x[0]);
+}
+
+def main(){
+	foo(x):=0:𝔹;
+}
++/
+
+/+
+def f(x:B) {
+	tmp := 0:B;
+	(x, tmp) := (tmp, x);
+	return x;
+}
+def main () {
+	x := H(0:B);
+	return f(x);
+}
++/
+
+/+
+def f(const x:𝔹)qfree⇒x;
+def foo(x:𝔹)qfree=>if x { 0:𝔹 } else { 1:𝔹 };
+def bar(const p:𝔹)⇒foo(f(p));
++/
+
+/+
+def assign[a:*,b:*](forgettable[y] x:a,y:b){
+	forget(x);
+	return y;
+}
+
+def inPlaceAdd[a:*,b:*,Add[a,b]](x:a,y:b){
+	x+=y;
+	return x;
+}
+
+def main(){
+	// ...
+	x:=assign(x,y); // x=y
+	x:=inPlaceAdd(x,y); //x+=y
+}
++/
+
+/+
+def main(){
+	x:=0:𝔹;
+	for i in 0..10{
+		//__show(__query("dep",x));
+		x=!x;
+	}
+	def foo(i:!ℕ,const x_prev:𝔹):𝔹{
+		if i=10{ return x_prev; }
+		return foo(i+1,!x_prev);
+	}
+	return foo(0,x);
+}
++/
+
+/+
+def main(){
+	i:=0;
+	def foo(x:!ℕ){
+		i:=dup(x);
+		i+=1;
+		if i=10{ return i; }
+		return foo(x);
+	}
+}
++/
+
+/+
+def main(){
+	x:=H(0);
+	y:=measure(x)||true;
+}
++/
 
 /+
 def main(){
@@ -391,7 +1452,7 @@ def foo(f:!Π(x:𝔹)moved qfree. 𝔹){
 	__show(typeof(f));
 	return f: 𝔹 once!→qfree 𝔹;
 }
-+/	
++/
 
 /+
 def main(n: !ℕ){

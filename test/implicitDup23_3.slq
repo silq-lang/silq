@@ -1,0 +1,10 @@
+
+def main(){
+	x := H(0);
+	y := dup(x);
+	z := y;
+	if y {} /// TODO
+	x := H(x);
+	t := y; /// error
+	return (x,t);
+}

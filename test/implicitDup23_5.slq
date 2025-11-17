@@ -1,0 +1,9 @@
+def main(){
+	x := H(0);
+	y := dup(x);
+	z := y;
+	if y { /// error
+		x := H(x);
+	}
+	return x;
+}
