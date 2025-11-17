@@ -1,5 +1,487 @@
 // skipped
 
+
+/+
+def main(){
+	x:=H(0);
+	def f()lifted=>dup(x);
+	__show(typeof(f()));
+	return x;
+}
++/
+
+/+
+// from qaoa_maxcut.slq
+// Clamp a real into [lo, hi].
+def clamp(x:!ℝ, lo:!ℝ, hi:!ℝ):!ℝ{
+	if x < lo { return lo; }
+	if x > hi { return hi; }
+	return x;
+}
+
+// Clamp all angles in a vector into [0, π].
+def clamp_angles[p:!ℕ](angles:!ℝ^p):!ℝ^p{
+	for i in 0..p { angles[i] = clamp(angles[i], 0.0, π); } // TODO
+	return angles;
+}
++/
+
+/+
+// from qaoa_maxcut*.slq
+def main(){
+	n := 3;
+	y := [0,1,2]:!ℤ^n; // TODO
+}
++/
+
+/+
+def main(){
+	x:=H(0);
+	if x{
+		y:=[0]:𝔹[]; // TODO: improve error message
+	}else{
+		y:=[0,1]:𝔹[];
+	}
+	return (x,y);
+}
++/
+
+/+
+// crash
+def main(){
+	n:=10;
+	cand:=0:uint[n];
+	with{
+		for i in 0..n{
+			cand[i]:=H(cand[i]);
+		}
+	}do{
+		if cand==(0:!uint[n]){ phase(π); }
+	}
+}
++/
+
+/+
+def main(){
+	i:=12;
+	for i in (i-1)..(i+1){} // TODO
+}
++/
+
+/+
+// ghz2.slq
+def ghz(n:!ℕ){
+	xs:=[H(0)];
+	for i in 0..n sub 1{
+		xs~=[dup(xs[i])]; /// TODO
+	}
+	return xs;
+}
+def main()⇒ghz(3);
++/
+
+/+
+def main(){
+	if measure(H(0)){
+		(a,b)
+	}else{
+		(b,a)
+	} := (1,2);
+}
++/
+
+/+
+def main(){
+	if measure(H(0)){
+		(a,b)
+	}else{
+		(b,a)
+	} := (1,2);
+}
++/
+
+/+
+def main(){
+	q:=0.123e-10:!Q;
+	return q;
+}
++/
+
+/+
+def main(){
+	a := vector(2^50, 0); // a: !B^(2^50)
+	a ~= vector(2^50, 2);
+	__show(typeof(a));
+}
++/
+
+/+
+def f(const g: B -> B) {
+    return g(H(0));
+}
+
+def main() {
+    x := H(0);
+    def g(y: B) {
+        if x {
+            y := H(y);
+        }
+		return y;
+    }
+	return (f(g), x);
+}
++/
+
+/+
+def f(const g: const B x B -> B, const x: B) {
+    return g(x, H(0));
+}
+
+def main() {
+    x := H(0);
+    def g(const x: B, y: B) {
+        if x {
+            y := H(y);
+        }
+		return y;
+    }
+	return (f(g, x), x);
+}
++/
+
+/+
+def main(){
+	x:=H(0);
+	y:=dup(x);
+	x:=H(x);
+	return (x,y);
+}
++/
+
+/+
+def main(){
+	a := ();    // a: unit
+	a ~= [2];   // error
+	a ~= (1,2); // error
+	a ~= ([1,2],);
+	__show(typeof(a));
+}
++/
+/+
+def main(){
+	//return 1 : 𝔹 as !ℤ
+	return 1==(2 | 3)==3;
+}
++/
+
+/+
+def main(){
+	x:=1:int[5];
+	y:=2:int[5];
+	return x<2000;
+}
++/
+//import qft,test;
+
+//def foo() ↦ lambda(x:B). x;
+
+/+
+def main(){
+	__show(typeof(N -> N));
+}
++/
+/+
+def main(){
+	x:=0;
+	x++;
+	return x;
+}
++/
+/+
+def foo(){
+	x:=H(0);
+	y:=dup(x);
+	return (dup(y),x);
+}
+def main()⇒foo;
++/
+
+/+
+def main(){
+	x:=H(0);
+	y:=dup(x);
+	y:=CNOT(y,y); // CNOT: const B x B !->qfree B
+	assert(measure(y)==0);
+	return x;
+}
++/
+/+
+def main(){
+	x:=H(0);
+	y:=dup(x);
+	if y {
+		forget(y); // error
+		x:=H(x);
+	}
+	return x;
+}
++/
+
+/+
+def a()=>(0:B): !B;
+def b()=>(0:B) as !B;
+def c()=>(0:B) coerce !B;
+def d()=>(0:B) pun !B;
++/
+
+/+
+def f(const c:B,x:B) {
+    if c {
+        return X(x);
+    } else {
+        return H(x);
+    }
+}
+
+def g(x:B) => (f pun const B x B !->qfree B)(1, x);
+
+def main()⇒g(0);
++/
+/+
+def main(){
+	x:=0:B;
+	return x coerce !B;
+}
++/
+
+
+/+
+def main(){
+	q := H(0);
+	c := q = 0;
+}
++/
+
+/+
+def main(){
+	i:=H(0);
+	a:=(0,1);
+	a[i]:=H(a[i]);
+	return (i,a);
+}
++/
+
+/+
+def foo[x:utype]()⇒();
+
+def main()⇒foo[never]();
++/
+/+
+def foo(){
+	x:=H(0:𝔹);
+	y:=H(1:𝔹);
+	k:=dup(y);
+	for i in 0..10{
+		forget(k);
+		k:=dup(y);
+		if y{
+			x:=H(x);
+		}
+		y:=H(y);
+	}
+	return (x,y,k);
+}
++/
+
+/+
+def foo(x:𝔹){
+	y:=dup(x);
+	z:=dup(y);
+	if z{
+		x:=H(x);
+		w:=X(z);
+	}else{
+		w:=z;
+	}
+	k:=z; /// error // TODO: deterministic error message
+	return (x,w);
+}
+def main()⇒foo;
++/
+
+/+
+// depTest4.slq
+def main(){
+	n:=3;
+	x:=array(n,0:𝔹);
+	y:=H(0:𝔹);
+	x[0]=dup(y); /// TODO
+	return y;
+}
++/
+
+/+
+// implicitDup21_6.slq
+def foo(x:𝔹){
+	y:=dup(x);
+	z:=y;
+	if X(z){ /// TODO show the error only once
+		r:=X(x);
+	}else{
+		r:=x;
+	}
+	return r;
+}
++/
+
+
+//def main(n:!ℕ)⇒(n,n);
+
+//def main(n:!ℕ)⇒H(0);
+
+/+
+def main(){
+	a:=1:𝔹,b:=0:𝔹,ccc:=1:𝔹;
+	a⊕b:=ccc;
+	return ccc;
+}
++/
+
+/+
+def main(){
+	x:=H(1:𝔹);
+	y:=X(x);
+	z:=!y;
+	y := let { t:=!z; forget(y) } in t;
+}
++/
+
+/+
+def foo(){
+	x:=H(0);
+	f:=()⇒dup(x);
+	k:=f();
+	return x;
+}
+def main()⇒foo;
++/
+/+
+def foo(){
+	x:=H(0);
+	def f()⇒dup(x); /// TODO
+	return x;
+}
++/
+/+
+def foo(){
+	x:=H(0);
+	y:=0:𝔹;
+	def foo(){
+		foo:=2;
+		y:=CNOT(x,y);
+		return y;
+	}
+	forget(foo);
+	//__show(__query("dep",foo));
+	return x;
+}
++/
+/+
+def foo(f:!Π(x:𝔹)moved qfree. 𝔹){
+	__show(typeof(f));
+	return f: 𝔹 once!→qfree 𝔹;
+}
++/	
+
+/+
+def main(n: !ℕ){
+	a := array(n, 0:𝔹);
+	a[0]:=H(a[0]);
+	f:=()⇒0;
+	a[f()]:=a[f()];
+	return a;
+}
++/
+
+/+
+def egcd(a:!ℤ,b:!ℤ){
+	(x,y,u,v):=(a,b,1,0):!ℤ^4;
+	while y≠0{
+		(x,y,u,v)=
+			(y,x%y,v,u-(x div y)·v);
+	}
+	return (x,u);
+}
++/
+
+/+
+def main(){
+	x:=(0,);
+	x[0]:=x[0];
+}
++/
+
+/+
+def foo(const x:𝔹)[τ:*](y:τ)⇒y;
+
+def main(){
+	x:=H(0);
+	return foo(x)(x);
+}
++/
+
+/+
+def foo(){
+	x:=H(0);
+	y:=dup(x); // the dup[𝔹] should not be trivially let-bound
+	z:=dup(y);
+	return (x,y,z);
+}
+def main()⇒foo;
++/
+
+
+/+
+def main(){
+	for i in 0..10{
+		print(i);
+	}
+}
++/
+
+/+
+def splitFront[m:!ℕ][a:type,n:!ℕ](xs:a^n)qfree:a^m×a^(n sub m){
+	(anc:a^m)~(xs:a^(n sub m)):=xs;
+	return (anc,xs);
+}
+def dropAncillas[m:!ℕ][n:!ℕ](xs:𝔹^n):!𝔹×𝔹^(n sub m){
+	(anc,xs):=splitFront[m](xs);
+	success:=(measure(anc) as !uint[m]) = 0;
+	return (success,xs);
+}
+def main(){
+	return dropAncillas[2]([H(0)]~vector(4,0));
+}
++/
+/+
+def main(){
+	// Sketchy pseudo-pattern just to illustrate the growth:
+	f := lambda(x:!B){ assert(0) } : !B->never;               // start at bottom
+	while true {
+		// each iteration rebinds f to a closure that *captures* the old f
+		f := lambda(x:!B){ return (x, f); };    // f : !B !-> (!B x type(f_prev))
+	}
+}
++/
+
+/+
+def main(){
+	x := 3;
+	x^=2;
+	return x;
+}
++/
+
 /+
 def main(){ // TODO: this should be fast in frontend simulator
 	x:=array(10000,0);

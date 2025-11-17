@@ -1,0 +1,33 @@
+
+def solve(const O_f: B x B !-> B x B) {
+    x := H(0);
+	y := H(1);
+	(x, y) := O_f(x, y);
+	x := H(x);
+	measure(y); // ignore y
+	return measure(x);
+}
+
+def main() {
+	def O_id(x: B, y: B) {
+		y xorb= x;
+		return (x, y);
+	}
+	def O_not(x: B, y: B) {
+		y xorb= !x;
+		return (x, y);
+	}
+	def O_zero(x: B, y: B) {
+		y xorb= 0;
+		return (x, y);
+	}
+	def O_one(x: B, y: B) {
+		y xorb= 1;
+		return (x, y);
+	}
+	
+	assert(solve(O_id)); // `id` is balanced
+	assert(solve(O_not)); // `not` is balanced
+	assert(!solve(O_zero)); // `zero` is constant
+	assert(!solve(O_one)); // `one` is constant
+}
