@@ -1,3 +1,4 @@
+// args: --run
 
 def solve(const O_f: B x B !-> B x B) {
     x := H(0);
