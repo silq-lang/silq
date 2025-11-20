@@ -1,10 +1,6 @@
 // Yoder–Low–Chuang
 
-// TODO: add built-ins
-// def acot(x: !ℝ) : !ℝ ⇒ atan2(1.0, x);
-def acot(x: !ℝ)⇒π/2 - atan(x);
-def cosh(x:!ℝ)⇒(exp(x)+exp(-x))/2;
-def acosh(x:!ℝ)⇒log(x+sqrt((x-1)·(x+1)));
+def acot(x: !ℝ): !ℝ ⇒ atan2(1, x);
 
 // Hadamards on all n qubits
 def H_n[n:!ℕ](xs: uint[n]) {
@@ -28,57 +24,34 @@ def S_t[n:!ℕ](cand: uint[n], const f: const uint[n] → lifted 𝔹, θ: !ℝ)
 }
 
 // build α,β from L,δ
-def ylc_αβ(L: !ℕ, δ: !ℝ) : !ℝ^(L div 2) x !ℝ^(L div 2) x !ℝ {
+def ylc_αβ(L: !ℕ, δ: !ℝ) : !ℝ^(L div 2) x !ℝ^(L div 2){
 	assert(L % 2 == 1);
 	ℓ := L div 2;
-
-	γinv := cosh((1/L)*acosh(1/δ));
-	γ    := 1/γinv;
-	ρ    := sqrt(max(0,1-γ^2));
-
-	β := vector(ℓ, 0);
+	ρ := tanh(acosh(1/δ)/L);
+	(α,β) := vector(2,vector(ℓ, 0));
 	for j in 0..ℓ {
-		t := tan(π·(j+1)/L);
-		β[j] = 2·acot(t·max(ρ,1e-16) );  // β_j
+		θ := 2·π·(j+1)/L;
+		β[j] = 2·atan2(cos(θ),ρ·sin(θ));
+		α[ℓ-1-j] = β[j];
 	}
-	α := vector(ℓ, 0.0);
-	for j in 0..ℓ {
-		α[j] = β[(ℓ sub 1)-j];           // α_j = β_{ℓ-j}
-	}
-	center := (if ℓ % 2 == 0 then 1 else -1)·π/2;
-	return (α coerce !ℝ^(L div 2), β coerce !ℝ^(L div 2), center);
+	return (α coerce !ℝ^(L div 2), β coerce !ℝ^(L div 2));
 }
 
 // fixed-point AA
 def ylc_fixed_point[n:!ℕ](const f: const uint[n] → lifted 𝔹, L: !ℕ, δ: !ℝ) {
 	assert(L % 2 == 1);
 	cand := H_n(0:uint[n]);
-	(α, β, center) := ylc_αβ(L, δ);
-
+	(α, β) := ylc_αβ(L, δ);
 	for j in 0..L div 2 {
 		cand := S_s(cand, α[j]);
 		cand := S_t(cand, f, β[j]);
 	}
-	cand := S_s(cand, center);
 	return cand;
-}
-
-// Choose an odd L >= 3 for YLC given exact M, N and target δ in (0,1).
-def ylc_choose_L(M: !ℕ, N: !ℕ, δ: !ℝ) : !ℕ {
-	assert(N > 0 && M > 0 && M <= N);
-	assert(δ > 0 && δ < 1);
-
-	λ_:= M/N;
-	L := ceil(acosh(1/δ)/sqrt(λ_)) coerce !ℕ;
-	if L<3 { L=3; }
-	if L%2=0 { L+=1; }
-	return L;
 }
 
 def ylc_staged_heralded[n:!ℕ](const f: const uint[n] → lifted 𝔹) {
 	j := 0;
 	L := 3;
-
 	while true{
 		j += 1;
 		if j > 1 {
@@ -92,10 +65,45 @@ def ylc_staged_heralded[n:!ℕ](const f: const uint[n] → lifted 𝔹) {
 	}
 }
 
+// Choose an odd L >= 3 for YLC given λ⋆≤M/N and target δ in (0,1).
+def ylc_choose_L_asymp(λ_star, δ:!ℝ):!ℕ {
+	assert(0 < λ_star && λ_star ≤ 1);
+	assert(0 < δ && δ < 1);
+	L := ceil(acosh(1/δ)/sqrt(λ_star)) coerce !ℕ;
+	if L<3 { L=3; }
+	if L%2=0 { L+=1; }
+	return L;
+}
+def ylc_choose_L_exact(λ_star:!ℝ,δ:!ℝ):!ℕ{
+    L := 3;
+    while true {
+        z := acosh(1/δ)/L;
+        ρ := tanh(z);
+        w := ρ^2;
+        if w ≤ λ_star { return L; }
+        L += 2;
+    }
+}
+def ylc_choose_L(λ_star:!ℝ,δ:!ℝ):!ℕ{
+	a:=acosh(1/δ);
+	def ok(L: !ℕ)⇒ tanh(a/L)^2 ≤ (1-1e-6)·λ_star;
+    (ℓ_lo,ℓ_hi) := (0,1);
+	while !ok(2·ℓ_hi+1){ ℓ_hi = 2·ℓ_hi; }
+	while ℓ_lo+1 < ℓ_hi{
+		ℓ_mid := (ℓ_lo+ℓ_hi) div 2;
+		if ok(2·ℓ_mid+1){
+			ℓ_hi = ℓ_mid;
+		}else{
+			ℓ_lo = ℓ_mid;
+		}
+	}
+	return 2·ℓ_hi+1;
+}
+
 n:=6;
 def main(){
 	δ:=0.0005;
-	L:=ylc_choose_L(2,2^n,δ);
+	L:=ylc_choose_L(2/2^n,δ);
 	return ylc_fixed_point((x:uint[n])lifted⇒x=42|x=17,L,δ);
 }
 
