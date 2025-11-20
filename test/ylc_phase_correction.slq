@@ -1,0 +1,126 @@
+import ylc;
+
+def sum[n:!ℕ](xs: !ℝ^n){
+	r:=0;
+	for i in 0..n{ r+=xs[i]; }
+	return r;
+}
+
+// TODO: add built-in complex numbers and matrices
+C := !ℝ x !ℝ; // (re, im)
+def c(re:!ℝ, im:!ℝ): C ⇒ (re, im);
+def c_add(a:C, b:C): C {
+    (ar, ai) := a; (br, bi) := b;
+    return (ar + br, ai + bi);
+}
+def c_sub(a:C, b:C): C {
+    (ar, ai) := a; (br, bi) := b;
+    return (ar - br, ai - bi);
+}
+def c_mul(a:C, b:C): C {
+    (ar, ai) := a; (br, bi) := b;
+    return (ar*br - ai*bi, ar*bi + ai*br);
+}
+def c_scale(a:C, k:!ℝ): C {
+    (ar, ai) := a;
+    return (k*ar, k*ai);
+}
+// cis(phi) = e^{i phi}
+def cis(phi:!ℝ): C ⇒ (cos(phi), sin(phi));
+def c_arg(a:C): !ℝ { (ar, ai) := a; return atan2(ai, ar); }
+
+def mat2_mul_vec(M: (C^2)^2, v: C^2): C^2 {
+    res := vector(2, c(0,0));
+    for i in 0..2 {
+        acc := c(0,0);
+        for j in 0..2 {
+            acc = c_add(acc, c_mul(M[i][j], v[j]));
+        }
+        res[i] = acc;
+    }
+    return res coerce C^2;
+}
+
+// In {|g⟩,|b⟩} basis with |s⟩ = sqrt(λ)|g⟩ + sqrt(1-λ)|b⟩.
+// S_t(β) = diag(e^{iβ}, 1).
+def S_t_mat(β: !ℝ): (C^2)^2 {
+    M := vector(2, vector(2, c(0,0)));
+    M[0][0] = cis(β);
+    M[0][1] = c(0,0);
+    M[1][0] = c(0,0);
+    M[1][1] = c(1,0);
+    return M coerce (C^2)^2;
+}
+
+// S_s(α) = I - (1 - e^{iα}) |s⟩⟨s|.
+def S_s_mat(α: !ℝ, λ_: !ℝ): (C^2)^2 {
+    // sinθ = √λ, cosθ = √(1-λ)
+    s := sqrt(λ_);
+    cθ := sqrt(1-λ_);
+
+    eα := cis(α);
+    k := c_sub(c(1,0), eα);       // k = 1 - e^{iα}
+
+    // projector entries (all real)
+    s2 := s*s;
+    c2 := cθ*cθ;
+    sc := s*cθ;
+
+    M := vector(2, vector(2, c(0,0)));
+
+    // M = I - k * proj
+    M[0][0] = c_sub(c(1,0), c_scale(k, s2));
+    M[0][1] = c_scale(k, -sc);
+    M[1][0] = c_scale(k, -sc);
+    M[1][1] = c_sub(c(1,0), c_scale(k, c2));
+
+    return M coerce (C^2)^2;
+}
+
+def wrap_pm_pi(x: !ℝ): !ℝ {
+    y := x;
+    while y <= -π { y += 2·π; }
+    while y >  π  { y -= 2·π; }
+    return y;
+}
+
+def chi_lambda(L: !ℕ, δ: !ℝ, λ_: !ℝ): !ℝ x C x C {
+    assert(0 < λ_ && λ_ < 1);
+    (α, β) := ylc_αβ(L, δ);
+    ℓ := L div 2;
+
+    // initial |s⟩ in {|g⟩,|b⟩}
+    s := sqrt(λ_);
+    cθ := sqrt(1-λ_);
+    v := vector(2, c(0,0));
+    v[0] = c(s, 0);
+    v[1] = c(cθ, 0);
+
+    for j in 0..ℓ {
+        v = mat2_mul_vec(S_s_mat(α[j], λ_), v);
+        v = mat2_mul_vec(S_t_mat(β[j]), v);
+    }
+
+    A := v[0];
+    B := v[1];
+
+    chi := wrap_pm_pi(c_arg(A) - c_arg(B));
+    return (chi, A, B);
+}
+
+// Convenience: marked-only correction angle = -chi
+def good_phase_correction(L: !ℕ, δ: !ℝ, λ_: !ℝ): !ℝ {
+    (chi, _, _) := chi_lambda(L, δ, λ_);
+    return -chi;
+}
+
+def main(){
+	δ:=0.0005;
+	L:=ylc_choose_L(2/2^n,δ);
+	def good(x:uint[n])lifted⇒x=42|x=17;
+	r:=ylc_fixed_point(good,L,δ);
+	(α, β) := ylc_αβ(L, δ);
+	phase(-sum(β));
+	if good(r){ phase(good_phase_correction(L, δ, 2/2^n)); }
+	return r;
+}
