@@ -1,0 +1,10 @@
+
+def main() {
+    x := H(0);
+    y := !x;
+    z := y;
+    a := z;
+    x := H(x);
+    b := !z; /// error
+    return (x, z); /// error
+}

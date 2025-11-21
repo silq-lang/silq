@@ -1,6 +1,20 @@
 // skipped
 
 /+
+// TODO: this fails if we comment out prelude before `def I`
+// implicitDup23_9.slq
+def main() {
+    x := H(0);
+    y := !x;
+    z := y;
+    a := z;
+    x := H(x);
+    b := !z; /// error
+    return (x, z); /// error
+}
++/
+
+/+
 // implicitDup23_4.slq
 def main(){
 	x := H(0);
@@ -415,6 +429,7 @@ def main(){
 }
 +/
 
+/+
 def main(){
 	x:=(0,1);
 	y:=x[1];
@@ -422,6 +437,7 @@ def main(){
 	w:=z[1]; /// error
 	return (x,y,z,w);
 }
++/
 
 /+
 def foo[a](x:a)=>x;
