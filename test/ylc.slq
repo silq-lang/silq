@@ -8,7 +8,7 @@ def H_n[n:!ℕ](xs: uint[n]) {
 	return xs;
 }
 
-// Generalized reflection about |s> = H_n|0…0⟩ with phase θ:
+// Generalized reflection about |s⟩ = H_n|0…0⟩ with phase θ:
 // S_s(θ) = I - (1 - e^{iθ})|s⟩⟨s| = H_n · (phase θ on |0…0⟩) · H_n
 def S_s[n:!ℕ](cand: uint[n], θ: !ℝ) {
 	with cand := H_n(cand) do
