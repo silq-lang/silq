@@ -586,36 +586,112 @@ def primitive.real.sqrt($a) [artificial]
 	$r := float_sqrt($a)
 	return $r
 
+def primitive.real.cbrt($a) [artificial]
+	$r := float_cbrt($a)
+	return $r
+
+def primitive.real.hypot2($a, $b) [artificial]
+	$r := float_hypot2($a, $b)
+	return $r
+
+def primitive.real.hypot3($a, $b, $c) [artificial]
+	$r := float_hypot3($a, $b, $c)
+	return $r
+
 def primitive.real.exp($a) [artificial]
 	$r := float_exp($a)
+	return $r
+
+def primitive.real.exp2($a) [artificial]
+	$r := float_exp2($a)
+	return $r
+
+def primitive.real.expm1($a) [artificial]
+	$r := float_expm1($a)
 	return $r
 
 def primitive.real.log($a) [artificial]
 	$r := float_log($a)
 	return $r
 
+def primitive.real.log1p($a) [artificial]
+	$r := float_log1p($a)
+	return $r
+
+def primitive.real.log10($a) [artificial]
+	$r := float_log10($a)
+	return $r
+
+def primitive.real.log2($a) [artificial]
+	$r := float_log2($a)
+	return $r
+
 def primitive.real.sin($a) [artificial]
 	$r := float_sin($a)
-	return $r
-
-def primitive.real.cos($a) [artificial]
-	$r := float_cos($a)
-	return $r
-
-def primitive.real.tan($a) [artificial]
-	$r := float_tan($a)
 	return $r
 
 def primitive.real.asin($a) [artificial]
 	$r := float_asin($a)
 	return $r
 
+def primitive.real.cos($a) [artificial]
+	$r := float_cos($a)
+	return $r
+
 def primitive.real.acos($a) [artificial]
 	$r := float_acos($a)
 	return $r
 
+def primitive.real.tan($a) [artificial]
+	$r := float_tan($a)
+	return $r
+
 def primitive.real.atan($a) [artificial]
 	$r := float_atan($a)
+	return $r
+
+def primitive.real.atan2($a, $b) [artificial]
+	$r := float_atan2($a, $b)
+	return $r
+
+def primitive.real.sinh($a) [artificial]
+	$r := float_sinh($a)
+	return $r
+
+def primitive.real.asinh($a) [artificial]
+	$r := float_asinh($a)
+	return $r
+
+def primitive.real.cosh($a) [artificial]
+	$r := float_cosh($a)
+	return $r
+
+def primitive.real.acosh($a) [artificial]
+	$r := float_acosh($a)
+	return $r
+
+def primitive.real.tanh($a) [artificial]
+	$r := float_tanh($a)
+	return $r
+
+def primitive.real.atanh($a) [artificial]
+	$r := float_atanh($a)
+	return $r
+
+def primitive.real.erf($a) [artificial]
+	$r := float_erf($a)
+	return $r
+
+def primitive.real.erfc($a) [artificial]
+	$r := float_erfc($a)
+	return $r
+
+def primitive.real.tgamma($a) [artificial]
+	$r := float_tgamma($a)
+	return $r
+
+def primitive.real.lgamma($a) [artificial]
+	$r := float_lgamma($a)
 	return $r
 
 def primitive.real.floor($a) [artificial]
