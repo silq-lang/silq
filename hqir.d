@@ -2364,10 +2364,7 @@ class ScopeWriter {
 
 	Value implIndexSwap(ref Value v, Expression outerTy1, Expression outerTy2, CReg i, Value delegate(ref Expression, CReg) repl) {
 		if(auto tupTy1 = cast(ast_ty.TupleTy) outerTy1) {
-			if(auto ii = ctx.asIndex(i, tupTy1.types.length)) {
-				return implIndexSwapTuple(v, tupTy1.types, outerTy2, ii.get(), repl);
-			}
-			assert(0, "TODO non-lifted non-constant tuple indexing");
+			return implIndexSwapTuple(v, tupTy1.types, outerTy2, i, repl);
 		}
 		if(auto vecTy1 = cast(ast_ty.VectorTy) outerTy1) {
 			if(auto vecTy2 = cast(ast_ty.VectorTy) outerTy2) {
@@ -2377,11 +2374,8 @@ class ScopeWriter {
 			}
 			auto tupTy2 = outerTy2.isTupleTy();
 			assert(tupTy2);
-			if(auto ii = ctx.asIndex(i, tupTy2.length)) {
-				auto types = vecTy1.next.repeat(tupTy2.length).array;
-				return implIndexSwapTuple(v, types, outerTy2, ii.get(), repl);
-			}
-			assert(0, "TODO non-lifted non-constant tuple indexing");
+			auto types = vecTy1.next.repeat(tupTy2.length).array;
+			return implIndexSwapTuple(v, types, outerTy2, i, repl);
 		}
 		if(auto arrTy1 = cast(ast_ty.ArrayTy) outerTy1) {
 			auto arrTy2 = cast(ast_ty.ArrayTy) outerTy2;
@@ -2433,19 +2427,22 @@ class ScopeWriter {
 		assert(false, format("Cannot index %s", outerTy1));
 	}
 
-	Value implIndexSwapTuple(ref Value v, Expression[] types, Expression outerTy2, size_t ix, Value delegate(ref Expression, CReg) repl) {
-		auto vs = valUnpack(types, v);
-		auto types2 = types.dup;
-		auto r = vs[ix];
-		auto p = repl(types2[ix], r.creg);
-		vs[ix] = p;
-		auto v2 = valPack(types2, vs);
-		v = valNewQ(
-			p.creg is r.creg ? v.creg : v2.creg,
-			v2.qreg,
-		);
-		v = genSubtype(v, ast_ty.tupleTy(types2), outerTy2);
-		return r;
+	Value implIndexSwapTuple(ref Value v, Expression[] types, Expression outerTy2, CReg ix, Value delegate(ref Expression, CReg) repl) {
+		if(auto ii = ctx.asIndex(ix, types.length)) {
+			auto vs = valUnpack(types, v);
+			auto types2 = types.dup;
+			auto r = vs[ii.get()];
+			auto p = repl(types2[ii.get()], r.creg);
+			vs[ii.get()] = p;
+			auto v2 = valPack(types2, vs);
+			v = valNewQ(
+				p.creg is r.creg ? v.creg : v2.creg,
+				v2.qreg,
+			);
+			v = genSubtype(v, ast_ty.tupleTy(types2), outerTy2);
+			return r;
+		}
+		assert(0, "TODO non-lifted non-constant tuple indexing");
 	}
 
 	Value implIndexSwapVector(ref Value v, Expression itemTy1, Expression itemTy2, CReg len, CReg i, Value delegate(ref Expression, CReg) repl) {
