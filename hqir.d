@@ -4577,6 +4577,7 @@ class ScopeWriter {
 			ast_conv.NumericConversion,
 			ast_conv.NumericCoercion,
 			ast_conv.TupleConversion,
+			ast_conv.UnmultiplexConversion,
 			ast_conv.VectorConversion,
 			ast_conv.VectorToArrayConversion,
 			ast_conv.ArrayToVectorConversion,
@@ -4702,6 +4703,29 @@ class ScopeWriter {
 			r = valNewQ(v.creg, r.qreg);
 		}
 		return r;
+	}
+
+	Value implConvert(ast_conv.UnmultiplexConversion conv, Value v) {
+		auto i = genExpr(conv.index);
+		assert(i.hasClassical && !i.hasQuantum);
+		Value rec(size_t l, size_t r, Value v, ScopeWriter writer) {
+			if(l + 1 < r) {
+				size_t m = l + (r - l) / 2;
+				auto cond = CondAny(writer.ccg.intCmpLt(i.creg, writer.ctx.literalInt(m)));
+				ScopeWriter w0, w1;
+				writer.genSplit(cond, w0, null, w1, null);
+				Value v0, v1;
+				writer.valSplit(cond, v0, v1, v);
+				auto res1 = rec(l, m, v1, w1);
+				auto res0 = rec(m, r, v0, w0);
+				auto res = writer.valMerge(cond, res0, res1);
+				w0.checkEmpty(false);
+				w1.checkEmpty(false);
+				return res;
+			}
+			return writer.genConvert(conv.conversions[l], v);
+		}
+		return rec(0, conv.conversions.length, v, this);
 	}
 
 	Value implConvert(ast_conv.VectorConversion conv, Value v) {
@@ -5798,7 +5822,7 @@ class Writer {
 
 	ExprInfo exprEval(Expression expr) {
 		expr = expr.eval();
-		assert(expr.isDeterministic(), format("non-deterministic expression under static evaluation: %s", expr)); 
+		assert(expr.isDeterministic(), format("non-deterministic expression under static evaluation: %s", expr));
 		return exprInfoMap.require(cast(void*) expr, exprInfoImpl(expr));
 	}
 

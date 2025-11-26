@@ -1,0 +1,4 @@
+
+def foo[i:!ℕ](x:[!ℕ,uint[10]][i]){
+	return x as uint[10];
+}
