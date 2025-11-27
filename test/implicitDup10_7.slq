@@ -1,4 +1,3 @@
-// args: --run
 
 def foo(a:!ℕ){
 	while measure(H(0)){

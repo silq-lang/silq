@@ -1,4 +1,3 @@
-// args: --run
 
 def f[n:!ℕ](const x:𝔹^n)qfree: !ℕ{
 	return n;

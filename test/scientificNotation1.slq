@@ -1,4 +1,3 @@
-// args: --run
 
 def main(){
 	assert((1e100:!ℤ)%10000=0); /// TODO

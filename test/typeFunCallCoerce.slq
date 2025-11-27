@@ -1,4 +1,3 @@
-// args: --run
 
 def twice(n:!ℕ)qfree⇒2*n;
 

@@ -182,6 +182,7 @@ struct Info {
 	string kind;
 	string message;
 	bool isTODO;
+	bool isRuntime;
 
 	int opCmp(ref const Info i) const {
 		if(line != i.line) return line < i.line ? -1 : 1;
@@ -327,13 +328,16 @@ auto analyze(Comment comment) {
 
 	string text = comment.text.stripLeft();
 	if(text == "TODO") {
+		result.kind = text;
 		result.text = text;
 		result.isTODO = true;
 		return result;
 	}
 	if(text.startsWith("TODO ")) {
 		result.isTODO = true;
-		text = text[5..$];
+	}
+	if(text=="run_error"||text.startsWith("run_error ")) {
+		result.isRuntime = true;
 	}
 
 	auto i = text.indexOf(' ');
@@ -346,8 +350,16 @@ auto analyze(Comment comment) {
 auto getExpected(string source){
 	Info[] result;
 	auto code = file.readText(source);
+	bool running = false;
+	if(code.startsWith("// args: "))
+		if(code.until("\n").text.splitter.any!(flag=>flag.startsWith("--run")))
+			running=true;
 	foreach(comment;code.errComments){
 		auto info = comment.analyze;
+		if(info.isRuntime && (!running||dashDashNoRun))
+			continue;
+		if(info.isTODO && (running&&dashDashNoRun))
+			continue;
 		if(info.kind || info.isTODO)
 			result~=info;
 	}
@@ -362,7 +374,7 @@ Info[] getActual(string source, bool expectOK){
 		args=args["// args: ".length..$].strip()~" ";
 	else args="";
 	if(!dashDashNoCheck) args~="--check ";
-	if(dashDashNoRun) args~="--run=0 ";
+	if(dashDashNoRun) args~="--repeat=0 ";
 	if(dashDashRemoveLoops) args~="--remove-loops ";
 	if(dashDashSplitComponents) args~="--split-components ";
 	auto cmd = "../silq --error-json=- "~args~source;

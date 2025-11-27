@@ -1,4 +1,3 @@
-// args: --run
 
 def main(){
 	x:=vector(2,vector(2,0:uint[4]));

@@ -1,4 +1,3 @@
-// args: --run
 
 def rCNOT(y:𝔹,const x:𝔹)⇒CNOT(x,y);
 

@@ -1,4 +1,4 @@
-// args: --remove-loops --run
+// args: --remove-loops
 
 def all[n:!ℕ](xs:𝔹^n)lifted{
     r:=true:𝔹;
