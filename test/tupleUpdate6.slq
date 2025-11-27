@@ -1,0 +1,7 @@
+
+def main(){
+	xs:=(0,H(0));
+	i:=measure(H(0));
+	(xs[i],xs[i⊕1]):=(H(xs[i]),H(xs[i⊕1])); /// TODO
+	return xs;
+}
