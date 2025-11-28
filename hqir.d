@@ -2343,7 +2343,7 @@ class ScopeWriter {
 			dummy.creg = rc;
 			dummy.qtype = qt;
 			return valNewQ(rc, qcg.allocDummy(qt));
-		}, true);
+		});
 		assert(gotTy);
 		return genSubtype(r, gotTy, wantTy);
 	}
@@ -2354,17 +2354,17 @@ class ScopeWriter {
 			dummyTy = ty;
 			ty = valueTy;
 			return p;
-		}, false);
-		assert(dummyTy);
+		});
+		assert(!!dummyTy);
 		auto tmp = valNewQ(orig.creg, qcg.allocDummy(orig.qtype));
 		tmp = genSubtype(tmp, orig.type, dummyTy);
 		valUndup(r, tmp);
 		valForget(tmp);
 	}
 
-	Value implIndexSwap(ref Value v, Expression outerTy1, Expression outerTy2, CReg i, Value delegate(ref Expression, CReg) repl, bool preciseType) {
+	Value implIndexSwap(ref Value v, Expression outerTy1, Expression outerTy2, CReg i, Value delegate(ref Expression, CReg) repl) {
 		if(auto tupTy1 = cast(ast_ty.TupleTy) outerTy1) {
-			return implIndexSwapTuple(v, tupTy1.types, outerTy2, i, repl, preciseType);
+			return implIndexSwapTuple(v, tupTy1.types, outerTy2, i, repl);
 		}
 		if(auto vecTy1 = cast(ast_ty.VectorTy) outerTy1) {
 			if(auto vecTy2 = cast(ast_ty.VectorTy) outerTy2) {
@@ -2375,7 +2375,7 @@ class ScopeWriter {
 			auto tupTy2 = outerTy2.isTupleTy();
 			assert(tupTy2);
 			auto types = vecTy1.next.repeat(tupTy2.length).array;
-			return implIndexSwapTuple(v, types, outerTy2, i, repl, preciseType);
+			return implIndexSwapTuple(v, types, outerTy2, i, repl);
 		}
 		if(auto arrTy1 = cast(ast_ty.ArrayTy) outerTy1) {
 			auto arrTy2 = cast(ast_ty.ArrayTy) outerTy2;
@@ -2427,16 +2427,21 @@ class ScopeWriter {
 		assert(false, format("Cannot index %s", outerTy1));
 	}
 
-	Value implIndexSwapTuple(ref Value v, Expression[] types, Expression outerTy2, CReg ix, Value delegate(ref Expression, CReg) repl, bool preciseType) {
-		Value v2, p, res;
-		auto types2 = types.dup;
+	Value implIndexSwapTuple(ref Value v, Expression[] types, Expression outerTy2, CReg ix, Value delegate(ref Expression, CReg) repl) {
 		if(auto ii = ctx.asIndex(ix, types.length)) {
 			auto vs = valUnpack(types, v);
-			res = vs[ii.get()];
-			p = repl(types2[ii.get()], res.creg);
+			auto types2 = types.dup;
+			auto r = vs[ii.get()];
+			auto p = repl(types2[ii.get()], r.creg);
 			vs[ii.get()] = p;
-			v2 = valPack(types2, vs);
-		} else if(!preciseType){
+			auto v2 = valPack(types2, vs);
+			v = valNewQ(
+				p.creg is r.creg ? v.creg : v2.creg,
+				v2.qreg,
+			);
+			v = genSubtype(v, ast_ty.tupleTy(types2), outerTy2);
+			return r;
+		} else {
 			Expression cty = ast_ty.bottom;
 			foreach(ty; types) {
 				cty = ast_ty.joinTypes(cty, ty);
@@ -2445,83 +2450,9 @@ class ScopeWriter {
 			auto vecTy1 = ast_ty.vectorTy(cty, types.length);
 			v = genSubtype(v, ast_ty.tupleTy(types), vecTy1);
 			auto vecTy2 = cast(ast_ty.VectorTy) outerTy2;
-			assert(!!vecTy2);
+			assert(!!vecTy2, "dynamic-index tuple swap must result in vector");
 			return implIndexSwapVector(v, vecTy1.next, vecTy2.next, ctx.literalInt(types.length), ix, repl);
-		} else {
-			auto vc = v.creg;
-			auto len = ctx.literalInt(types.length);
-			auto rc = ccg.boxIndex(ctypeSilqTuple, len, vc, ix);
-			auto index = valNewC(ix);
-			auto name = ast_sem.freshName();
-			auto vid = new ast_exp.Identifier(name);
-			auto vd = new ast_decl.VarDecl(vid);
-			vd.scope_ = nscope;
-			vd.type = ast_ty.ℤt(true);
-			vd.setSemCompleted();
-			defineVar(vd, index);
-			auto id = new ast_exp.Identifier(name);
-			id.scope_ = nscope;
-			id.type = ast_ty.ℤt(true);
-			id.setSemCompleted();
-			auto tid = new ast_exp.Identifier(name);
-			tid.scope_ = nscope;
-			tid.type = ast_ty.ℤt(true);
-			tid.setSemCompleted();
-			auto te = new ast_exp.VectorExp(types.dup);
-			te.type = ast_ty.tupleTy(types.map!(ty => cast(Expression)ast_ty.typeTy).array);
-			te.setSemCompleted();
-			Expression ty = new ast_exp.IndexExp(te, tid);
-			ty.type = ast_ty.typeTy;
-			ty.setSemCompleted();
-			ty = ty.eval();
-			auto nty = ty;
-			p = repl(nty, rc);
-			if(nty !is ty) {
-				foreach(ref t; types2) {
-					t = ast_ty.joinTypes(t, nty);
-					assert(!!t);
-				}
-			}
-			void rec(size_t l, size_t r, ref Value v, ref Value p, ScopeWriter writer) {
-				if(l + 1 < r) {
-					size_t m = l + (r - l) / 2;
-					auto cond = CondAny(writer.ccg.intCmpLt(ix, writer.ctx.literalInt(m)));
-					ScopeWriter w0, w1;
-					writer.genSplit(cond, w0, null, w1, null);
-					Value v0, v1, p0, p1;
-					writer.valSplit(cond, v0, v1, v);
-					writer.valSplit(cond, p0, p1, p);
-					rec(m, r, v0, p0, w0);
-					rec(l, m, v1, p1, w1);
-					v = writer.valMerge(cond, v0, v1);
-					p = writer.valMerge(cond, p0, p1);
-					w0.checkEmpty(false);
-					w1.checkEmpty(false);
-				} else {
-					auto vs = writer.valUnpack(types, v);
-					Expression[] types3;
-					if(nty !is ty) {
-						types3 = types.dup;
-						types3[l] = nty;
-					} else {
-						types3 = types2;
-					}
-					swap(vs[l], p);
-					v = writer.valPack(types3, vs);
-					if(types3 !is types2) {
-						v = writer.genSubtype(v, ast_ty.tupleTy(types3), ast_ty.tupleTy(types2));
-					}
-				}
-			}
-			v2 = v, res = p;
-			rec(0, types.length, v2, res, this);
 		}
-		v = valNewQ(
-			p.creg is res.creg ? v.creg : v2.creg,
-			v2.qreg,
-		);
-		v = genSubtype(v, ast_ty.tupleTy(types2), outerTy2);
-		return res;
 	}
 
 	Value implIndexSwapVector(ref Value v, Expression itemTy1, Expression itemTy2, CReg len, CReg i, Value delegate(ref Expression, CReg) repl) {
@@ -3608,39 +3539,114 @@ class ScopeWriter {
 
 		auto chain = IndexChain(ie);
 		auto var = chain.base.meaning.getId in vars;
-		assert(var);
-		assert(var.value);
+		assert(var && var.value);
 		assert(var.decl is chain.base.meaning);
 
-		auto indices = appender!(CReg[]);
-		auto types = appender!(Expression[]);
-		types.put(chain.base.type);
-		foreach(at; chain.ie) {
-			indices.put(genIndex(at.a));
-			types.put(ast_sem.indexType(types[][$-1], at.a));
-			assert(types[][$-1]);
-			assert(types[][$-1] == at.type);
-		}
-
+		auto indices = chain.ie.map!(at => genIndex(at.a)).array;
 		auto b = defineBorrow(lhs, indices[]);
 
-		Value moveOut(ref Value v, size_t dim) {
-			assert(dim < indices[].length);
-			auto i = indices[][dim];
-			auto outerTy = types[][dim];
-			auto innerTy = types[][dim+1];
-			Dummy dummy;
-			Value r = implIndexSwapOut(v, outerTy, innerTy, i, dummy);
-			if(dim == indices[].length - 1) {
-				b.dummy = dummy;
+		Value moveOut(ref Value v, Expression baseTy, CReg[] indices, out Dummy dummy, ScopeWriter w) {
+			if(!indices.length) {
+				auto creg = v.creg;
+				auto qtype = w.getQTypeRaw(baseTy, creg);
+				dummy = Dummy(baseTy, creg, qtype);
+				auto r = w.valNewQ(creg, w.qcg.allocDummy(qtype));
+				swap(v, r);
+				r = w.genSubtype(r, baseTy, ie.type);
 				return r;
 			}
-			Value rr = moveOut(r, dim+1);
-			implIndexSwapIn(v, outerTy, outerTy, innerTy, i, dummy, r);
+			auto ix = indices[0];
+			if(auto tupTy = cast(ast_ty.TupleTy) baseTy) {
+				auto types = tupTy.types;
+				Value moveOutTuple(ref Value v, size_t i, out Dummy dummy, ScopeWriter w) {
+					auto vs = w.valUnpack(types, v);
+					auto prc = vs[i].creg;
+					auto r = moveOut(vs[i], types[i], indices[1..$], dummy, w);
+					auto v2 = w.valPack(types, vs);
+					v = w.valNewQ(
+						prc is r.creg ? v.creg : v2.creg,
+						v2.qreg,
+					);
+					return r;
+				}
+				if(auto ii = ctx.asIndex(ix, types.length)) {
+					return moveOutTuple(v, ii.get(), dummy, w);
+				}
+				auto dummyTypes = new Expression[](types.length);
+				Value rec(size_t l, size_t r, ref Value v, out Dummy dummy, ScopeWriter w) {
+					if(l + 1 < r) {
+						size_t m = l + (r - l) / 2;
+						auto cond = CondAny(w.ccg.intCmpLt(ix, w.ctx.literalInt(m)));
+						ScopeWriter w0, w1;
+						w.genSplit(cond, w0, null, w1, null);
+						Value v0, v1;
+						w.valSplit(cond, v0, v1, v);
+						Dummy dummy0, dummy1;
+						auto r0 = rec(m, r, v0, dummy0, w0);
+						auto r1 = rec(l, m, v1, dummy1, w1);
+						assert(!dummy0.type && !dummy1.type);
+						auto creg = w.ccg.cond(cond.creg, dummy0.creg, dummy1.creg);
+						auto qtype = w.ccg.cond(cond.creg, dummy0.qtype, dummy1.qtype);
+						dummy = Dummy(null, creg, qtype);
+						v = w.valMerge(cond, v0, v1);
+						auto r_ = w.valMerge(cond, r0, r1);
+						w0.checkEmpty(false);
+						w1.checkEmpty(false);
+						return r_;
+					} else {
+						auto r_ = moveOutTuple(v, l, dummy, w);
+						dummyTypes[l] = dummy.type;
+						dummy.type = null;
+						return r_;
+					}
+				}
+				auto r_=rec(0, types.length, v, dummy, w);
+				assert(!dummy.type);
+				auto index = valNewC(ix);
+				auto name = ast_sem.freshName();
+				auto vid = new ast_exp.Identifier(name);
+				auto vd = new ast_decl.VarDecl(vid);
+				vd.scope_ = nscope;
+				vd.type = ast_ty.ℤt(true);
+				vd.setSemCompleted();
+				defineVar(vd, index);
+				auto id = new ast_exp.Identifier(name);
+				id.scope_ = nscope;
+				id.type = ast_ty.ℤt(true);
+				id.setSemCompleted();
+				auto tid = new ast_exp.Identifier(name);
+				tid.scope_ = nscope;
+				tid.type = ast_ty.ℤt(true);
+				tid.setSemCompleted();
+				auto te = new ast_exp.VectorExp(dummyTypes);
+				te.type = ast_ty.vectorTy(ast_ty.typeTy, dummyTypes.length);
+				te.setSemCompleted();
+				Expression ty = new ast_exp.IndexExp(te, tid);
+				ty.type = ast_ty.typeTy;
+				ty.setSemCompleted();
+				ty = ty.eval();
+				dummy.type = ty;
+				return r_;
+			}
+			Expression itemTy = null;
+			if(auto vecTy = cast(ast_ty.VectorTy) baseTy) {
+				itemTy = vecTy.next;
+			}
+			if(auto arrTy = cast(ast_ty.ArrayTy) baseTy) {
+				itemTy = arrTy.next;
+			}
+			if(auto intTy = ast_ty.isFixedIntTy(baseTy)) {
+				itemTy = ast_ty.Bool(intTy.isClassical);
+			}
+			assert(!!itemTy, format("Cannot index %s", baseTy));
+			Dummy tmpDummy;
+			Value r = w.implIndexSwapOut(v, baseTy, itemTy, ix, tmpDummy);
+			Value rr = moveOut(r, itemTy, indices[1..$], dummy, w);
+			w.implIndexSwapIn(v, baseTy, baseTy, itemTy, ix, tmpDummy, r);
 			return rr;
 		}
-
-		Value r = moveOut(var.value, 0);
+		Value r = moveOut(var.value, chain.base.type, indices, b.dummy, this);
+		assert(!!b.dummy.type);
 		defineVar(lhs.meaning, r);
 		return Result.passes();
 	}
