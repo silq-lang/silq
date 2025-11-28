@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	xs:=((0,),(0,1));
+	i:=measure(H(0));
+	xs[i][i]:=H(xs[i][i]);
+	return xs;
+}
+

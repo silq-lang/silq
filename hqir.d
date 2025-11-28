@@ -2429,18 +2429,26 @@ class ScopeWriter {
 
 	Value implIndexSwapTuple(ref Value v, Expression[] types, Expression outerTy2, CReg ix, Value delegate(ref Expression, CReg) repl) {
 		if(auto ii = ctx.asIndex(ix, types.length)) {
-			auto vs = valUnpack(types, v);
-			auto types2 = types.dup;
-			auto r = vs[ii.get()];
-			auto p = repl(types2[ii.get()], r.creg);
-			vs[ii.get()] = p;
-			auto v2 = valPack(types2, vs);
-			v = valNewQ(
-				p.creg is r.creg ? v.creg : v2.creg,
-				v2.qreg,
-			);
-			v = genSubtype(v, ast_ty.tupleTy(types2), outerTy2);
-			return r;
+			if(0<=ii.get() && ii.get() < types.length) {
+				auto vs = valUnpack(types, v);
+				auto types2 = types.dup;
+				auto r = vs[ii.get()];
+				auto p = repl(types2[ii.get()], r.creg);
+				vs[ii.get()] = p;
+				auto v2 = valPack(types2, vs);
+				v = valNewQ(
+					p.creg is r.creg ? v.creg : v2.creg,
+					v2.qreg,
+				);
+				v = genSubtype(v, ast_ty.tupleTy(types2), outerTy2);
+				return r;
+			} else {
+				Expression ty = ast_ty.bottom;
+				auto r = valAbort(ty);
+				auto p = repl(ty, r.creg);
+				valDeallocError(p);
+				return r;
+			}
 		} else {
 			Expression cty = ast_ty.bottom;
 			foreach(ty; types) {
@@ -2449,9 +2457,17 @@ class ScopeWriter {
 			}
 			auto vecTy1 = ast_ty.vectorTy(cty, types.length);
 			v = genSubtype(v, ast_ty.tupleTy(types), vecTy1);
-			auto vecTy2 = cast(ast_ty.VectorTy) outerTy2;
-			assert(!!vecTy2, "dynamic-index tuple swap must result in vector");
-			return implIndexSwapVector(v, vecTy1.next, vecTy2.next, ctx.literalInt(types.length), ix, repl);
+			auto len = ctx.literalInt(types.length);
+			ccg.checkLtInt(true, ix, len);
+			if(auto vecTy2 = cast(ast_ty.VectorTy) outerTy2) {
+				return implIndexSwapVector(v, vecTy1.next, vecTy2.next, len, ix, repl);
+			}
+			if(auto arrTy2 = cast(ast_ty.ArrayTy) outerTy2) {
+				auto r = implIndexSwapVector(v, vecTy1.next, arrTy2.next, len, ix, repl);
+				v = genSubtype(v, ast_ty.vectorTy(arrTy2.next, types.length), arrTy2);
+				return r;
+			}
+			assert(0, "dynamic-index tuple swap must result in vector or array");
 		}
 	}
 
@@ -3661,44 +3677,117 @@ class ScopeWriter {
 
 		auto chain = IndexChain(ie);
 		auto var = chain.base.meaning.getId() in vars;
-		assert(var);
-		assert(var.value);
+		assert(var && var.value);
 
-		auto types1 = appender!(Expression[]);
-		auto types2 = appender!(Expression[]);
-		types1.put(typeForDecl(var.decl));
-		types2.put(chain.base.type);
+		auto baseTy1 = typeForDecl(var.decl);
+		auto baseTy2 = chain.base.type;
 
-		foreach(at; chain.ie) {
-			types1.put(ast_sem.indexType(types1[][$-1], at.a));
-			assert(types1[][$-1]);
-			types2.put(ast_sem.indexType(types2[][$-1], at.a));
-			assert(types2[][$-1]);
-			assert(types2[][$-1] == at.type);
-		}
-		assert(types1[].length == indices.length + 1);
-		assert(types2[].length == indices.length + 1);
-
-		void moveIn(ref Value v, size_t dim) {
-			auto i = indices[dim];
-			auto innerTy1 = types1[][dim+1];
-			auto innerTy2 = types2[][dim+1];
-			auto outerTy1 = types1[][dim];
-			auto outerTy2 = types2[][dim];
+		void moveIn(ref Value v, Value rhsv, Expression baseTy1, Expression baseTy2, CReg[] indices, ScopeWriter w) {
+			if(!indices.length) {
+				auto tmp = w.valNewQ(b.dummy.creg, w.qcg.allocDummy(b.dummy.qtype));
+				tmp = w.genSubtype(tmp, b.dummy.type, baseTy1);
+				w.valUndup(v, tmp);
+				w.valForget(tmp);
+				v = w.genSubtype(rhsv, rhs.type, baseTy2);
+				return;
+			}
+			auto ix = indices[0];
+			if(auto tt2 = baseTy2.isTupleTy()) {
+				if(ast_ty.isSubtype(baseTy1, baseTy2)) {
+					v = w.genSubtype(v, baseTy1, baseTy2);
+					baseTy1 = baseTy2;
+				}
+				auto tt1 = baseTy1.isTupleTy();
+				assert(!!tt1);
+				Expression[] types1, types2;
+				if(auto tupTy1 = cast(ast_ty.TupleTy) baseTy1) {
+					types1 = tupTy1.types;
+				} else {
+					types1 = iota(tt1.length).map!(i => tt1[i]).array;
+				}
+				if(auto tupTy2 = cast(ast_ty.TupleTy) baseTy2) {
+					types2 = tupTy2.types;
+				} else {
+					types2 = iota(tt2.length).map!(i => tt2[i]).array;
+				}
+				assert(types1.length == types2.length);
+				void moveInTuple(ref Value v, Value rhsv, size_t i, ScopeWriter w) {
+					auto vs = w.valUnpack(types1, v);
+					auto prc = vs[i].creg;
+					moveIn(vs[i], rhsv, types1[i], types2[i], indices[1..$], w);
+					Expression[] types3;
+					if(types1[i] == types2[i]) {
+						types3 = types1;
+					} else {
+						types3 = iota(types1.length).map!(k => i!=k ? types1[k] : types2[k]).array;
+					}
+					auto v2 = w.valPack(types3, vs);
+					v = w.valNewQ(
+						prc is rhsv.creg ? v.creg : v2.creg,
+						v2.qreg,
+					);
+					v = genSubtype(v, ast_ty.tupleTy(types3), baseTy2);
+				}
+				if(auto ii = ctx.asIndex(ix, types2.length)) {
+					moveInTuple(v, rhsv, ii.get(), w);
+					return;
+				}
+				void rec(size_t l, size_t r, ref Value v, Value rhsv, ScopeWriter w) {
+					if(l + 1 < r) {
+						size_t m = l + (r - l) / 2;
+						auto cond = CondAny(w.ccg.intCmpLt(ix, w.ctx.literalInt(m)));
+						ScopeWriter w0, w1;
+						w.genSplit(cond, w0, null, w1, null);
+						Value v0, v1;
+						w.valSplit(cond, v0, v1, v);
+						Value rhsv0, rhsv1;
+						w.valSplit(cond, rhsv0, rhsv1, rhsv);
+						rec(m, r, v0, rhsv0, w0);
+						rec(l, m, v1, rhsv1, w1);
+						v = w.valMerge(cond, v0, v1);
+						w0.checkEmpty(false);
+						w1.checkEmpty(false);
+					} else {
+						moveInTuple(v, rhsv, l, w);
+					}
+				}
+				return rec(0, types2.length, v, rhsv, w);
+			}
+			Expression itemTy1 = null;
+			if(auto vecTy1 = cast(ast_ty.VectorTy) baseTy1) {
+				itemTy1 = vecTy1.next;
+			}
+			if(auto arrTy1 = cast(ast_ty.ArrayTy) baseTy1) {
+				itemTy1 = arrTy1.next;
+			}
+			if(auto intTy1 = ast_ty.isFixedIntTy(baseTy1)) {
+				itemTy1 = ast_ty.Bool(intTy1.isClassical);
+			}
+			assert(!!itemTy1, format("Cannot index %s", baseTy1));
+			Expression itemTy2 = null;
+			if(auto vecTy2 = cast(ast_ty.VectorTy) baseTy2) {
+				itemTy2 = vecTy2.next;
+			}
+			if(auto arrTy2 = cast(ast_ty.ArrayTy) baseTy2) {
+				itemTy2 = arrTy2.next;
+			}
+			if(auto intTy2 = ast_ty.isFixedIntTy(baseTy2)) {
+				itemTy2 = ast_ty.Bool(intTy2.isClassical);
+			}
+			assert(!!itemTy2, format("Cannot index %s", baseTy2));
 			Value r;
 			Dummy dummy;
-			if(dim == indices.length - 1) {
-				r = rhsv;
+			if(indices.length == 1) {
+				r = w.genSubtype(rhsv, rhs.type, itemTy2);
 				dummy = b.dummy;
-				innerTy2 = rhs.type;
 			} else {
-				r = implIndexSwapOut(v, outerTy1, innerTy1, i, dummy);
-				moveIn(r, dim+1);
+				r = w.implIndexSwapOut(v, baseTy1, itemTy1, ix, dummy);
+				moveIn(r, rhsv, itemTy1, itemTy2, indices[1..$], w);
 			}
-			implIndexSwapIn(v, outerTy1, outerTy2, innerTy2, i, dummy, r);
+			w.implIndexSwapIn(v, baseTy1, baseTy2, itemTy2, ix, dummy, r);
 		}
 
-		moveIn(var.value, 0);
+		moveIn(var.value, rhsv, baseTy1, baseTy2, indices, this);
 
 		if(chain.base.type == typeForDecl(chain.base.meaning)) {
 			var.decl = chain.base.meaning;
