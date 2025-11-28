@@ -1,0 +1,12 @@
+// args: --run
+
+def foo(x:!𝔹^2,i:!ℕ){
+	x[i]:=H(x[i]);
+	return x;
+}
+
+def main(){
+	x:=vector(2,0);
+	x:=foo(x,0);
+	return x;
+}

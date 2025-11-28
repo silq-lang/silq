@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	xs:=vector(2,vector(2, 0));
+	(xs[0],xs[1][1]):=(xs[0]~[H(1)]:𝔹[],H(xs[1][1]));
+	__show(typeof(xs));
+	return xs;
+}

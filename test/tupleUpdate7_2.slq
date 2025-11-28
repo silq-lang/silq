@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	xs:=(0,1);
+	i:=0;
+	xs[i]:=X(xs[i]);
+	return xs;
+}

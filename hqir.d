@@ -1486,10 +1486,16 @@ struct Dummy {
 	CReg qtype;
 }
 
+struct DummyTypes {
+	Expression type;
+	DummyTypes[] next;
+}
+
 struct Borrow {
 	ast_decl.VarDecl var;
 	CReg[] indices;
 	Dummy dummy;
+	DummyTypes[] dummyTypes;
 }
 
 class BorrowScope {
@@ -3561,23 +3567,24 @@ class ScopeWriter {
 		auto indices = chain.ie.map!(at => genIndex(at.a)).array;
 		auto b = defineBorrow(lhs, indices[]);
 
-		Value moveOut(ref Value v, Expression baseTy, CReg[] indices, out Dummy dummy, ScopeWriter w) {
+		Value moveOut(ref Value v, Expression baseTy, CReg[] indices, out Dummy dummy, out DummyTypes[] dummyTypes, ScopeWriter w) {
 			if(!indices.length) {
 				auto creg = v.creg;
 				auto qtype = w.getQTypeRaw(baseTy, creg);
-				dummy = Dummy(baseTy, creg, qtype);
+				dummy = Dummy(null, creg, qtype);
 				auto r = w.valNewQ(creg, w.qcg.allocDummy(qtype));
 				swap(v, r);
 				r = w.genSubtype(r, baseTy, ie.type);
+				dummyTypes ~= DummyTypes(baseTy);
 				return r;
 			}
 			auto ix = indices[0];
 			if(auto tupTy = cast(ast_ty.TupleTy) baseTy) {
 				auto types = tupTy.types;
-				Value moveOutTuple(ref Value v, size_t i, out Dummy dummy, ScopeWriter w) {
+				Value moveOutTuple(ref Value v, size_t i, out Dummy dummy, out DummyTypes dummyTypes, ScopeWriter w) {
 					auto vs = w.valUnpack(types, v);
 					auto prc = vs[i].creg;
-					auto r = moveOut(vs[i], types[i], indices[1..$], dummy, w);
+					auto r = moveOut(vs[i], types[i], indices[1..$], dummy, dummyTypes.next , w);
 					auto v2 = w.valPack(types, vs);
 					v = w.valNewQ(
 						prc is r.creg ? v.creg : v2.creg,
@@ -3586,9 +3593,10 @@ class ScopeWriter {
 					return r;
 				}
 				if(auto ii = ctx.asIndex(ix, types.length)) {
-					return moveOutTuple(v, ii.get(), dummy, w);
+					dummyTypes ~= DummyTypes(null, []);
+					return moveOutTuple(v, ii.get(), dummy, dummyTypes[0], w);
 				}
-				auto dummyTypes = new Expression[](types.length);
+				dummyTypes = new DummyTypes[](types.length);
 				Value rec(size_t l, size_t r, ref Value v, out Dummy dummy, ScopeWriter w) {
 					if(l + 1 < r) {
 						size_t m = l + (r - l) / 2;
@@ -3610,40 +3618,14 @@ class ScopeWriter {
 						w1.checkEmpty(false);
 						return r_;
 					} else {
-						auto r_ = moveOutTuple(v, l, dummy, w);
-						dummyTypes[l] = dummy.type;
+						auto r_ = moveOutTuple(v, l, dummy, dummyTypes[l], w);
 						dummy.type = null;
 						return r_;
 					}
 				}
-				auto r_=rec(0, types.length, v, dummy, w);
-				assert(!dummy.type);
-				auto index = valNewC(ix);
-				auto name = ast_sem.freshName();
-				auto vid = new ast_exp.Identifier(name);
-				auto vd = new ast_decl.VarDecl(vid);
-				vd.scope_ = nscope;
-				vd.type = ast_ty.ℤt(true);
-				vd.setSemCompleted();
-				defineVar(vd, index);
-				auto id = new ast_exp.Identifier(name);
-				id.scope_ = nscope;
-				id.type = ast_ty.ℤt(true);
-				id.setSemCompleted();
-				auto tid = new ast_exp.Identifier(name);
-				tid.scope_ = nscope;
-				tid.type = ast_ty.ℤt(true);
-				tid.setSemCompleted();
-				auto te = new ast_exp.VectorExp(dummyTypes);
-				te.type = ast_ty.vectorTy(ast_ty.typeTy, dummyTypes.length);
-				te.setSemCompleted();
-				Expression ty = new ast_exp.IndexExp(te, tid);
-				ty.type = ast_ty.typeTy;
-				ty.setSemCompleted();
-				ty = ty.eval();
-				dummy.type = ty;
-				return r_;
+				return rec(0, types.length, v, dummy, w);
 			}
+			dummyTypes = [DummyTypes(null, [])];
 			Expression itemTy = null;
 			if(auto vecTy = cast(ast_ty.VectorTy) baseTy) {
 				itemTy = vecTy.next;
@@ -3657,12 +3639,17 @@ class ScopeWriter {
 			assert(!!itemTy, format("Cannot index %s", baseTy));
 			Dummy tmpDummy;
 			Value r = w.implIndexSwapOut(v, baseTy, itemTy, ix, tmpDummy);
-			Value rr = moveOut(r, itemTy, indices[1..$], dummy, w);
+			Value rr = moveOut(r, itemTy, indices[1..$], dummy, dummyTypes[0].next, w);
 			w.implIndexSwapIn(v, baseTy, baseTy, itemTy, ix, tmpDummy, r);
 			return rr;
 		}
-		Value r = moveOut(var.value, chain.base.type, indices, b.dummy, this);
-		assert(!!b.dummy.type);
+		DummyTypes[] dummyTypes;
+		Value r = moveOut(var.value, chain.base.type, indices, b.dummy, dummyTypes, this);
+		if(!b.dummy.type) {
+			assert(dummyTypes.length);
+			b.dummyTypes = dummyTypes;
+		}
+		assert(b.dummy.type || b.dummyTypes.length);
 		defineVar(lhs.meaning, r);
 		return Result.passes();
 	}
@@ -3682,17 +3669,38 @@ class ScopeWriter {
 		auto baseTy1 = typeForDecl(var.decl);
 		auto baseTy2 = chain.base.type;
 
-		void moveIn(ref Value v, Value rhsv, Expression baseTy1, Expression baseTy2, CReg[] indices, ScopeWriter w) {
+		void moveIn(ref Value v, Value rhsv, Expression baseTy1, Expression baseTy2, CReg[] indices, DummyTypes[] dummyTypes, ScopeWriter w) {
 			if(!indices.length) {
 				auto tmp = w.valNewQ(b.dummy.creg, w.qcg.allocDummy(b.dummy.qtype));
-				tmp = w.genSubtype(tmp, b.dummy.type, baseTy1);
+				assert(b.dummy.type || dummyTypes.length==1 && dummyTypes[0].type);
+				auto dummyType = b.dummy.type ? b.dummy.type : dummyTypes[0].type;
+				tmp = w.genSubtype(tmp, dummyType, baseTy1);
 				w.valUndup(v, tmp);
 				w.valForget(tmp);
 				v = w.genSubtype(rhsv, rhs.type, baseTy2);
 				return;
 			}
 			auto ix = indices[0];
-			if(auto tt2 = baseTy2.isTupleTy()) {
+			Expression arrayTy2 = null;
+			bool makeArray = false;
+			if(dummyTypes.length > 1) {
+				if(auto at1 = cast(ast_ty.ArrayTy) baseTy1) {
+					auto nbaseTy1 = ast_ty.vectorTy(at1.next, dummyTypes.length);
+					// TODO: the length check is redundant
+					auto conv = ast_conv.typeExplicitConversion!true(baseTy1, nbaseTy1, ast_exp.TypeAnnotationType.coercion);
+					baseTy1 = nbaseTy1;
+					v = w.genConvert(conv, v);
+					makeArray = true;
+				}
+				if(auto at2 = cast(ast_ty.ArrayTy) baseTy2){
+					baseTy2 = ast_ty.vectorTy(at2.next, dummyTypes.length);
+					makeArray = true;
+					arrayTy2 = at2;
+				} else {
+					assert(!makeArray);
+				}
+			}
+			if(auto tt2 = baseTy2.isTupleTy()) { // TODO: not always needed for vectors
 				if(ast_ty.isSubtype(baseTy1, baseTy2)) {
 					v = w.genSubtype(v, baseTy1, baseTy2);
 					baseTy1 = baseTy2;
@@ -3711,10 +3719,10 @@ class ScopeWriter {
 					types2 = iota(tt2.length).map!(i => tt2[i]).array;
 				}
 				assert(types1.length == types2.length);
-				void moveInTuple(ref Value v, Value rhsv, size_t i, ScopeWriter w) {
+				void moveInTuple(ref Value v, Value rhsv, size_t i, DummyTypes dummyTypes, ScopeWriter w) {
 					auto vs = w.valUnpack(types1, v);
 					auto prc = vs[i].creg;
-					moveIn(vs[i], rhsv, types1[i], types2[i], indices[1..$], w);
+					moveIn(vs[i], rhsv, types1[i], types2[i], indices[1..$], dummyTypes.next, w);
 					Expression[] types3;
 					if(types1[i] == types2[i]) {
 						types3 = types1;
@@ -3729,9 +3737,14 @@ class ScopeWriter {
 					v = genSubtype(v, ast_ty.tupleTy(types3), baseTy2);
 				}
 				if(auto ii = ctx.asIndex(ix, types2.length)) {
-					moveInTuple(v, rhsv, ii.get(), w);
+					assert(dummyTypes.length == 1);
+					moveInTuple(v, rhsv, ii.get(), dummyTypes[0], w);
 					return;
 				}
+				if(dummyTypes.length == 1 && types2.length != 1) {
+					dummyTypes = repeat(dummyTypes[0], types2.length).array;
+				}
+				assert(dummyTypes.length == types2.length);
 				void rec(size_t l, size_t r, ref Value v, Value rhsv, ScopeWriter w) {
 					if(l + 1 < r) {
 						size_t m = l + (r - l) / 2;
@@ -3748,11 +3761,17 @@ class ScopeWriter {
 						w0.checkEmpty(false);
 						w1.checkEmpty(false);
 					} else {
-						moveInTuple(v, rhsv, l, w);
+						moveInTuple(v, rhsv, l, dummyTypes[l], w);
 					}
 				}
-				return rec(0, types2.length, v, rhsv, w);
+				rec(0, types2.length, v, rhsv, w);
+				if(makeArray) {
+					assert(!!arrayTy2);
+					v = w.genSubtype(v, baseTy2, arrayTy2);
+				}
+				return;
 			}
+			assert(dummyTypes.length == (b.dummy.type ? 0 : 1));
 			Expression itemTy1 = null;
 			if(auto vecTy1 = cast(ast_ty.VectorTy) baseTy1) {
 				itemTy1 = vecTy1.next;
@@ -3780,14 +3799,24 @@ class ScopeWriter {
 			if(indices.length == 1) {
 				r = w.genSubtype(rhsv, rhs.type, itemTy2);
 				dummy = b.dummy;
+				if(!dummy.type) {
+					assert(dummyTypes.length == 1 && dummyTypes[0].next.length == 1);
+					dummy.type = dummyTypes[0].next[0].type;
+					assert(!!dummy.type);
+				}
 			} else {
 				r = w.implIndexSwapOut(v, baseTy1, itemTy1, ix, dummy);
-				moveIn(r, rhsv, itemTy1, itemTy2, indices[1..$], w);
+				DummyTypes[] ndummyTypes;
+				if(dummyTypes.length) {
+					assert(dummyTypes.length == 1);
+					ndummyTypes = dummyTypes[0].next;
+				}
+				moveIn(r, rhsv, itemTy1, itemTy2, indices[1..$], ndummyTypes, w);
 			}
 			w.implIndexSwapIn(v, baseTy1, baseTy2, itemTy2, ix, dummy, r);
 		}
 
-		moveIn(var.value, rhsv, baseTy1, baseTy2, indices, this);
+		moveIn(var.value, rhsv, baseTy1, baseTy2, indices, b.dummyTypes, this);
 
 		if(chain.base.type == typeForDecl(chain.base.meaning)) {
 			var.decl = chain.base.meaning;

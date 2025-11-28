@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	t:=(1,1/2);
+	i:=measure(H(0));
+	t[i] := t[i];
+	return t coerce !ℕ×!ℚ;
+}

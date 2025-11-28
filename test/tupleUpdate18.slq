@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	t:=((1,),(0,1),(1,0,1));
+	i:=measure(H(0))+measure(H(0));
+	t[i][0]:=H(t[i][0]);
+	__show(typeof(t));
+	return t;
+}
