@@ -4,7 +4,7 @@
 
 def main(){
 	x:=()⇒assert(0);
-	while true{
+	while true{ /// error
 		x=()⇒x;
 	}
 }
