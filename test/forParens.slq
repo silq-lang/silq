@@ -1,0 +1,13 @@
+
+def main(){
+	r := 0;
+	for i in 0..(9+1){
+		r+=i;
+	}
+	a:=10;
+	for i in 0..(a:!ℕ){
+		r+=i;
+	}
+	print(r);
+	assert(r=90);
+}
