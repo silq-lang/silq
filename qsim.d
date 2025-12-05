@@ -2304,7 +2304,7 @@ struct Interpreter(QState){
 			}
 			if(auto sl=cast(SliceExp)e){
 				auto r=doIt(sl.e)[doIt(sl.l)..doIt(sl.r)];
-				if(!sl.constLookup) r=r.dup(qstate);
+				if(!sl.constLookup&&!sl.implicitDup) r=r.dup(qstate);
 				return r;
 			}
 			if(auto le=cast(LiteralExp)e){

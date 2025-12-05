@@ -1,0 +1,13 @@
+// args: --run --repeat=10
+
+def foo(qs:𝔹) mfree:𝔹{
+	(nreg:𝔹^0)~(lreg:𝔹^1) := (qs,);
+	(qs,) := nreg~lreg;
+    return qs;
+}
+
+def main(){
+    qs:=H(0);
+	foo(qs):=qs;
+	assert(measure(H(qs))==0);
+}
