@@ -34,34 +34,10 @@ def main(){
 	x := H(0);
 	y := dup(x);
 	z := y;
-	if y {} /// TODO
+	if y {}
 	x := H(x);
 	t := y; /// TODO error
 	return (x,t);
-}
-+/
-
-/+
-// implicitDup23_2.slq
-def main(){
-	x := H(0);
-	y := dup(x);
-	z := y;
-	if y {} /// TODO
-	x := H(x);
-	return x;
-}
-+/
-
-/+
-// implicitDup23_1.slq
-def main() {
-	x := H(0);
-	y := !x;
-	z := y;
-	t := !y; /// TODO
-	x := H(x);
-	return (x, t);
 }
 +/
 

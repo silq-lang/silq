@@ -276,7 +276,7 @@ auto summarize(Comparison[] comp,bool writeLines){
 				}
 				break;
 			case missing:
-				if(!c.info.kind){
+				if(c.info.isTODO && c.info.message==""){
 					// No error, marked as TODO <no-error>
 					assert(c.info.isTODO);
 					result.obsoleteTodos++;
@@ -329,7 +329,6 @@ auto analyze(Comment comment) {
 	string text = comment.text.stripLeft();
 	if(text == "TODO") {
 		result.kind = text;
-		result.text = text;
 		result.isTODO = true;
 		return result;
 	}
@@ -343,7 +342,7 @@ auto analyze(Comment comment) {
 	auto i = text.indexOf(' ');
 	if(i < 0) i = text.length;
 	result.kind = text[0..i];
-	result.text = text[i..$].stripLeft();
+	result.message = text[i..$].stripLeft();
 	return result;
 }
 
