@@ -1,7 +1,7 @@
 // skipped
 
 /+
-// TODO: this fails if we comment out prelude before `def I`
+// TODO: this fails sporadically
 // implicitDup23_9.slq
 def main() {
     x := H(0);
@@ -15,6 +15,32 @@ def main() {
 +/
 
 /+
+// implicitDup23_11.slq
+def main(){
+	x := H(0);
+	y := dup(x);
+	z := y;
+	if y {}
+	x := H(x);
+	k := y; /// TODO better diagnostics
+	return x;
+}
++/
+	
+/+
+// implicitDup23_10.slq
+def main() {
+	x := H(0);
+	y := !x;
+	z := y;
+	t := !y;
+	x := H(x);
+	k := y; /// TODO better diagnostics
+	return (x, t);
+}
++/
+
+/+
 // implicitDup23_4.slq
 def main(){
 	x := H(0);
@@ -23,11 +49,10 @@ def main(){
 	if y {}
 	if y {}
 	x := H(x);
-	t := y; /// TODO error
+	t := y; /// TODO better diagnostics
 	return (x,t);
 }
 +/
-
 /+
 // implicitDup23_3.slq
 def main(){
@@ -36,11 +61,10 @@ def main(){
 	z := y;
 	if y {}
 	x := H(x);
-	t := y; /// TODO error
+	t := y; /// TODO better diagnostics
 	return (x,t);
 }
 +/
-
 /+
 def main(){
 	a:=[1,2,3];

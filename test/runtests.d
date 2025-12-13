@@ -240,7 +240,7 @@ Comparison[] compare(Info[] expected, Info[] actual) {
 Tuple!(Comparison[], Duration) getResults(string source){
 	auto expected=source.getExpected;
 	auto sw = StopWatch(Yes.autoStart);
-	bool expectOK = expected.all!(i => !i.kind && !i.isTODO);
+	bool expectOK = !expected.length;
 	auto actual = source.getActual(expectOK);
 	sw.stop();
 	auto result=compare(expected, actual);
@@ -391,9 +391,7 @@ Info[] getActual(string source, bool expectOK){
 
 	Info[] result;
 
-	if(exitCode > 1 || (expectOK && exitCode != 0) || exitCode > 128 || output.empty) {
-		result ~= [Info(-1, "crash", format("exit code %s; output: ", exitCode) ~ cast(string)err)];
-	} else {
+	if(!output.empty){
 		string line = output[$-1];
 		if(!line.startsWith("[")) {
 			result ~= [Info(-1, "invalid", "unexpected output: " ~ cast(string)line)];
@@ -412,6 +410,9 @@ Info[] getActual(string source, bool expectOK){
 				result ~= [Info(lineno, kind, message)];
 			}
 		}
+	}
+	if(exitCode > 1 || (expectOK && exitCode != 0 && !result.length) || exitCode > 128 || output.empty) {
+		result ~= [Info(-1, "crash", format("exit code %s; output: ", exitCode) ~ cast(string)err)];
 	}
 	result=result.sort.array;
 	return result;

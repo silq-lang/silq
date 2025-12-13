@@ -5,6 +5,6 @@ def main(){
 	z := y;
 	if y {}
 	x := H(x);
-	t := y; /// TODO error
+	t := y; /// error
 	return (x,t);
 }
