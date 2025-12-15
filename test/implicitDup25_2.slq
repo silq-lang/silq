@@ -1,0 +1,9 @@
+
+def main(){
+	x:=H(0);
+	y:=dup(x);
+	z:=y;
+	__show(__query("dep",y));
+	measure(x);
+	return (y,z); /// error
+}

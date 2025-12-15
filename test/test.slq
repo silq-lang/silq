@@ -156,15 +156,6 @@ def baz(x:𝔹)⇒foo(0); // TODO
 +/
 
 /+
-def main(){
-	x:=H(0);
-	y:=dup(x);
-	k:=(y,dup(y),dup(y),x);
-	return (k,y); /// TODO error
-}
-+/
-
-/+
 // args: --run
 
 def toW[n:!ℕ]lifted:𝔹^n →mfree 𝔹^n⇒lambda(qs:𝔹^n)mfree:𝔹^n{
@@ -211,27 +202,6 @@ def main(){
 	if qs[1]{ phase(2·π/3); }
 	if qs[2]{ phase(4·π/3); }
 	assert(!solve(qs));
-}
-+/
-
-
-/+
-def main(){
-	x:=H(0);
-	y:=dup(x);
-	z:=y;
-	// __show(__query("dep",y)); // TODO: should not change semantics
-	measure(x);
-	return (y,z); /// error
-}
-+/
-
-/+
-def main(){
-	x:=H(0);
-	y:=dup(x);
-	k:=(y,dup(y),dup(y),x);
-	return (k,y); /// TODO error
 }
 +/
 
