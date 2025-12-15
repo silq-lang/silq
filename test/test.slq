@@ -1,20 +1,6 @@
 // skipped
 
 /+
-// TODO: this fails sporadically
-// implicitDup23_9.slq
-def main() {
-    x := H(0);
-    y := !x;
-    z := y;
-    a := z;
-    x := H(x);
-    b := !z; /// error
-    return (x, z); /// error
-}
-+/
-
-/+
 // implicitDup23_11.slq
 def main(){
 	x := H(0);
