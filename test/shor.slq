@@ -15,9 +15,8 @@ def shor(n:!ℕ){
 		d:=gcdn(a,n);
 		if d≠1{ return d; }
 		r:=order(a,n);
-		if r%2=0 && a^(r div 2)%n≠n-1{
-			return gcdn(a^(r div 2)+1,n);
-		}
+		k:=gcdn(a^(r div 2)+1,n);
+		if 1<k∧k<n { return k; }
 	}
 }
 
@@ -58,7 +57,7 @@ def order(a:!ℕ,N:!ℕ){
 		def f(b:uint[n])lifted⇒powm(a as uint[n],b,N);
 		c:=candidates(estimatePhase(f)/2^n);
 		for i in [0..c.length){
-			if a^c[i]%N=1{ b=c[i]; }
+			if c[i]≠0∧a^c[i]%N=1{ b=c[i]; }
 		}
 	}
 	return b coerce !ℕ;
