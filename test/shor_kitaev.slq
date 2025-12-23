@@ -1,0 +1,120 @@
+def main(){
+	n:=323;
+	r:=shor(n);
+	assert(1<r∧r<n);
+	assert(n%r=0);
+	return r;
+}
+
+def shor(n:!ℕ){
+	if n%2=0 { return 2; }
+	(x,y):=asPower(n);
+	if y>1{ return x; }
+	while true{
+		a:=2+uniform(n sub 2);
+		d:=gcdn(a,n);
+		if d≠1{ return d; }
+		r:=order(a,n);
+		k:=gcdn(a^(r div 2)+1,n);
+		if 1<k∧k<n { return k; }
+	}
+}
+
+def asPower(n:!ℕ){
+	y:=2;
+	while 3^y≤n{
+		(l,r):=(0,1);
+		while r^y≤n{ r*=2; }
+		while l+1≠r{
+			m:=(l+r) div 2;
+			if m^y≤n { l=m; }
+			else { r=m; }
+		}
+		if l^y=n{ return (l,y); }
+		y+=1;
+	}
+	return (n,1);
+}
+
+def uniform(n:!ℕ){
+	(k,l):=(0,1);
+	while l≤n { k+=1, l*=2; }
+	while true {
+		x:=0:uint[k];
+		for i in 0..k{ x[i]:=H(x[i]); }
+		x:=measure(x) as !ℕ;
+		if x<n{ return x; }
+	}
+}
+
+def order(a:!ℕ,N:!ℕ){
+	(d,a_inv):=egcd(a,N);
+	a_inv%=N;
+	assert(d=1);
+	(n,m):=(0,1);
+	while m<N { n+=2, m*=2; }
+	(aps,ais):=([a],[a_inv]);
+	for i in 1..n{
+		aps~=[aps[i-1]^2%N];
+		ais~=[ais[i-1]^2%N];
+	}
+	b:=1:!ℤ;
+	while a^b%N≠1{
+		def f[pw2:!ℕ](b:uint[n]){
+			nb:=b·aps[pw2]%N;
+			nb·ais[pw2]%N:=b;
+			return nb;
+		}
+		(θ,x):=estimatePhase[n](f,1:uint[n]);
+		measure(x);
+		c:=candidates((θ as !ℕ)/2^n);
+		for i in (c.length..-1..0]{
+			if c[i]≠0∧a^c[i]%N=1{ b=c[i]; }
+		}
+	}
+	return b coerce !ℕ;
+}
+
+def estimatePhase[n:!ℕ][a:qtype](const f:Π[pw2:!N]qfree. a ->mfree a, arg:a): !uint[n]×a{
+	x_tilde:=0:!uint[n];
+	for i in 0..n{
+		bit:=H(0);
+		if bit {
+	        pw2:=n sub 1 sub i;
+			arg:=f[pw2](arg);
+			phaseU(2^pw2·-x_tilde);
+		}
+		bit:=H(bit);
+		x_tilde[i]=measure(bit);
+	}
+	return (x_tilde,arg);
+}
+
+def phaseU[n:!ℕ](const x:!uint[n]) {
+	phase(2·π·(x as !N)/2^n);
+}
+
+def candidates(q:!ℚ){
+	if q=0{ return [0:!ℤ]; }
+	(r,x):=([],1/q);
+	(qm2,qm1):=(1,0);
+	while x≠0{
+		x=1/x;
+		a:=floor(x);
+		(qm2,qm1)=(qm1,a·qm1+qm2);
+		r~=[qm1];
+		x-=a;
+	}
+	return r;
+}
+
+// compute d=gcd(a,b) and k with a·k ≡ d (mod b)
+def egcd(a:!ℤ,b:!ℤ){
+	(x,y,u,v):=(a,b,1,0):!ℤ^4;
+	while y≠0{
+		(x,y,u,v)=(y,x%y,v,u-(x div y)·v);
+	}
+	return (x,u);
+}
+def gcdn(a:!ℕ,b:!ℕ):!ℕ⇒gcd(a,b) coerce !ℕ;
+def gcd(a:!ℤ,b:!ℤ):!ℤ⇒egcd(a,b)[0];
