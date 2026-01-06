@@ -1,0 +1,7 @@
+
+def main(){
+    a:=vector(n,(0,0)); /// error
+    for i in 0..n{ /// error
+        a[i]=x; /// error
+    }
+}
