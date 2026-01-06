@@ -1,0 +1,22 @@
+// args: --run
+
+def map[a,b](const f:a→mfree b)[n:!ℕ](xs:a^n):b^n{
+	ys:=();
+	for i in 0..n{
+		[x]~xs:=xs;
+		ys~=[f(x)];
+	}
+	():=xs;
+	return ys coerce b^n;
+}
+
+def bit_encode[m:!ℕ](x:𝔹):𝔹^m ⇒ vector(m sub 1,x)~[x];
+def phase_encode[n:!ℕ](x:𝔹):𝔹^n ⇒ map(H)(vector(n sub 1,x)~[x]);
+
+def shor_encode(x:𝔹){
+	x:=phase_encode[3](x);
+	return map(bit_encode[3])(x);
+}
+
+
+def main()⇒shor_encode(0);

@@ -140,6 +140,13 @@ mixin(rotUnitary!"X");
 mixin(rotUnitary!"Y");
 mixin(rotUnitary!"Z");
 
+Expression simConcatType(Expression t1,Expression t2){
+	if(auto r=concatType(t1,t2)) return r;
+	// TODO: fix
+	if(auto tpl1=cast(TupleTy)t1) return t2;
+	return t1;
+}
+
 struct QState{
 	MapX!(Σ,C) state;
 	Record vars;
@@ -488,7 +495,7 @@ struct QState{
 			if(cast(ArrayTy)type||cast(VectorTy)type||cast(TupleTy)type) return Tag.array_;
 			if(cast(ContextTy)type) return Tag.record;
 			if(cast(ProductTy)type) return Tag.closure;
-			if(!type.isClassical()){
+			if(!type.isClassical()&&!cast(Identifier)type){
 				assert(!type.isToplevelClassical());
 				return Tag.quval;
 			}
@@ -994,7 +1001,7 @@ struct QState{
 			else static if(op=="|") return bitwiseType(t1,t2);
 			else static if(op=="^") return bitwiseType(t1,t2);
 			else static if(op=="&") return bitAndType(t1,t2);
-			else static if(op=="~") return t1; // TODO: add function to semantic instead
+			else static if(op=="~") return simConcatType(t1,t2);
 			else static if(op=="<<"||op==">>") return arithmeticType!false(arithmeticType!false(t1,t1),t2); // TODO: add function to semantic instead
 			else{
 				enforce(0,text("`",op,"` for types ",t1," and ",t2," is not yet supported"));
@@ -1673,8 +1680,8 @@ struct QState{
 		vars[ctx]=rhs;
 	}
 	Value call(FunctionDef fun,Value thisExp,Value arg,Scope sc,Value* context,Expression type,Location loc){
-		Value fix(Value arg){
-			if(type.isClassical()&&!arg.isClassical()) return measure(arg,false); // TODO: improve simulator so this is not needed
+		Value fix(Value arg){ // TODO: improve simulator so this is not needed
+			if(type.isClassical()&&!arg.isClassical()) arg=measure(arg,false);
 			return arg;
 		}
 		enforce(!thisExp.isValid,"method calls not yet supported");
@@ -1925,7 +1932,10 @@ struct QState{
 		var.assign(this,rhs);
 	}
 	void catAssignTo(ref Value var,Value rhs){
+		rhs=rhs.toVar(this,false);
 		enforce(var.tag==QState.Value.Tag.array_&&rhs.tag==QState.Value.Tag.array_,"bad values for concat assignment");
+		var.type=simConcatType(var.type,rhs.type);
+		enforce(var.type&&var.tag==QState.Value.Tag.array_&&rhs.tag==QState.Value.Tag.array_,"bad values for concat assignment");
 		var.array_~=rhs.array_;
 	}
 	void assignTo(string lhs,Value rhs){
@@ -1934,8 +1944,7 @@ struct QState{
 	}
 	void catAssignTo(string lhs,Value rhs){
 		enforce(lhs in vars);
-		enforce(vars[lhs].tag==QState.Value.Tag.array_&&rhs.tag==QState.Value.Tag.array_,"bad values for concat assignment");
-		vars[lhs].array_~=rhs.array_;
+		catAssignTo(vars[lhs],rhs);
 	}
 	Value H(Value x){
 		return x.applyUnitary!hadamardUnitary(this,Bool(false));
