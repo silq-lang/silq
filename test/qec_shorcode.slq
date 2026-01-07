@@ -1,0 +1,129 @@
+// args: --run
+
+def map[a,b](const f:a→mfree b)[n:!ℕ](xs:a^n):b^n{
+	ys:=();
+	for i in 0..n{
+		[x]~xs:=xs;
+		ys~=[f(x)];
+	}
+	():=xs;
+	return ys coerce b^n;
+}
+
+//def bit_encode[m:!ℕ](x:𝔹):𝔹^m ⇒ vector(m sub 1,x)~[x]; // TODO
+def bit_encode[m:!ℕ](x:𝔹):𝔹^m{
+	r:=();
+	for i in 0..m-1{
+		r~=[dup(x)];
+	}
+	r~=[x];
+	return r coerce 𝔹^m;
+}
+def bit_decode[m:!ℕ](xs:𝔹^m):𝔹⇒reverse(bit_encode)(xs);
+
+def bit_syndrome[m:!ℕ](xs:𝔹^m){
+	s:=();
+	for i in 0..m-1{
+		s~=[measure(xs[i]⊕xs[i+1])];
+	}
+	return (xs,s coerce !𝔹^(m sub 1));
+}
+
+def bit_flips[m:!ℕ](s:!𝔹^(m sub 1)){
+	flips:=vector(m,0);
+	nflips:=0;
+	for i in 0..m-1{
+		flips[i+1]=flips[i]⊕s[i];
+		nflips+=flips[i+1];
+	}
+	if nflips>m/2{
+		for i in 0..m{
+			flips[i]:=X(flips[i]);
+		}
+	}
+	return flips;
+}
+
+def bit_apply_fix[m:!ℕ](xs:𝔹^m,s:!𝔹^(m sub 1)){
+	flips:=bit_flips[m](s);
+	for i in 0..m{
+		if flips[i]{
+			xs[i]:=X(xs[i]);
+		}
+	}
+	return xs;
+}
+
+def bit_fix[m:!ℕ](xs:𝔹^m):𝔹^m ⇒ bit_apply_fix(bit_syndrome(xs));
+
+def phase_encode[n:!ℕ](x:𝔹):𝔹^n ⇒ map(H)(bit_encode[n](x));
+def phase_decode[n:!ℕ](xs:𝔹^n):𝔹 ⇒ reverse(phase_encode)(xs);
+
+def phase_syndrome[n:!ℕ](xs:𝔹^n):𝔹^n×!𝔹^(n sub 1){
+	with xs:=map(H)(xs) do (xs,s):=bit_syndrome(xs);
+	return (xs,s);
+}
+
+def phase_apply_fix[n:!ℕ](xs:𝔹^n,s:!𝔹^(n sub 1)){
+	flips:=bit_flips[n](s);
+	for i in 0..n{
+		if flips[i]{
+			xs[i]:=Z(xs[i]);
+		}
+	}
+	return xs;	
+}
+
+def phase_fix[n:!ℕ](xs:𝔹^n):𝔹^n ⇒ phase_apply_fix(phase_syndrome(xs));
+
+def shor_encode[n:!ℕ,m:!ℕ](x:𝔹):(𝔹^m)^n{
+	xs:=phase_encode[n](x);
+	return map(bit_encode[m])(xs);
+}
+def shor_decode[n:!ℕ,m:!ℕ](xs:(𝔹^m)^n)⇒reverse(shor_encode)(xs);
+
+def shor_syndrome[n:!ℕ,m:!ℕ](xs:(𝔹^m)^n):(𝔹^m)^n×(!𝔹^(m sub 1))^n×!𝔹^(n sub 1){
+	sbs:=();
+	for i in 0..n{
+		(xs[i],sb):=bit_syndrome(xs[i]);
+		sbs~=[sb];
+	}
+	sbs:=sbs coerce _^n;
+	sp:=map(H)(vector(n sub 1,0));
+	for i in 0..n-1{
+		for j in 0..m{
+			xs[i][j]⊕=sp[i];
+			xs[i+1][j]⊕=sp[i];
+		}
+	}
+	sp:=measure(map(H)(sp));
+	return (xs,sbs,sp)
+}
+
+def shor_apply_fix[n:!ℕ,m:!ℕ](xs:(𝔹^m)^n,sbs:(!𝔹^(m sub 1))^n,sp:!𝔹^(n sub 1)){
+	for i in 0..n{
+		xs[i]:=bit_apply_fix(xs[i],sbs[i]);
+	}
+	flips:=bit_flips(sp);
+	for i in 0..n{
+		if flips[i]{
+			xs[i][0]:=Z(xs[i][0]);
+		}
+	}
+	return xs;	
+}
+
+def shor_fix[n:!ℕ,m:!ℕ](xs:(𝔹^m)^n):(𝔹^m)^n ⇒ shor_apply_fix(shor_syndrome(xs));
+
+def main(){
+	x:=H(0);
+	xs:=shor_encode[3,3](x);
+	xs[0][0]:=H(xs[0][0]);
+	xs[1][0]:=X(xs[1][0]);
+	xs[1][1]:=measure(xs[1][1]);
+	xs[2][1]:=Z(xs[2][1]);
+	xs[2][2]:=X(xs[2][2]);
+	xs:=shor_fix(xs);
+	x:=shor_decode(xs);
+	assert(measure(H(x))=0);
+}
