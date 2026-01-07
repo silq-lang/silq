@@ -1,0 +1,4 @@
+
+def foo[n:!ℕ][b:qtype](){
+	ys:=():b^n;
+}
