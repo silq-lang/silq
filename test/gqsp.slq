@@ -1,0 +1,177 @@
+// GQSP (motlag-wiebe)
+// https://arxiv.org/abs/2308.01501
+
+C := ℝ×ℝ; // manual complex number arithmetic (TODO: replace with built-in ℂ)
+def cadd(a:!C,b:!C):!C⇒(a[0]+b[0],a[1]+b[1]);
+def csub(a:!C,b:!C):!C⇒(a[0]-b[0],a[1]-b[1]);
+def cscale(s:!ℝ,a:!C):!C⇒(s·a[0],s·a[1]);
+def conj(a:!C):!C⇒(a[0],-a[1]);
+
+def cmul(a:!C,b:!C):!C⇒(a[0]·b[0]-a[1]·b[1],a[0]·b[1]+a[1]·b[0]);
+
+def cabs_sq(a:!C):!ℝ⇒a[0]^2+a[1]^2;
+def cabs(z: !C):!ℝ⇒sqrt(cabs_sq(z));
+def carg(z: !C):!ℝ⇒atan2(z[1],z[0]);
+
+def cinv(z:!C):!C{
+    denom:=cabs_sq(z);
+    assert(denom>0);
+    return (z[0]/denom, -z[1]/denom);
+}
+
+def cis(θ:!ℝ):!C⇒(cos(θ),sin(θ));
+def cexp(x:!C)⇒cscale(exp(x[0]),cis(x[1]));
+def clog(x:!C)⇒(log(cabs(x)),carg(x));
+
+def fft[N:!ℕ](xs:!C^N):!C^N {
+    if N=1 { return xs; }
+    assert(N%2=0);
+    xs_e:=vector(N div 2,(0,0));
+    xs_o:=vector(N div 2,(0,0));
+    for j in 0..N div 2{
+        xs_e[j]=xs[2·j];
+        xs_o[j]=xs[2·j+1];
+    }
+    ys_e:=fft(xs_e);
+    ys_o:=fft(xs_o);
+    ys:=vector(N,(0,0));
+    for k in 0..N div 2{
+        t:=cmul(cis(-2·π·k/N),ys_o[k]);
+        ys[k]=cadd(ys_e[k],t);
+        ys[k+N div 2]=csub(ys_e[k],t);
+    }
+    return ys;
+}
+def ifft[N:!ℕ](ys:!C^N):!C^N {
+	for i in 0..N{ ys[i]:=conj(ys[i]); }
+	xs:=fft(ys);
+	for i in 0..N{ xs[i]:=cscale(1/N,conj(xs[i])); }
+	return xs;
+}
+
+def poly_eval[d:!ℕ](coeffs:!C^(d+1))(x:!C):!C{
+	r:=coeffs[d];
+	for i in (d..-1..0]{
+		r=cadd(cmul(r,x),coeffs[i]);
+	}
+	return r;
+}
+
+def pad[m:!ℕ][a:type,n:!ℕ](xs:a^n,const x:a):a^m⇒xs~vector(m sub n,x);
+
+// berntson-sünderhauf
+// https://arxiv.org/abs/2406.04246
+def thm3_N₀(ε:!ℝ,δ:!ℝ,d:!ℕ):!ℕ{
+	assert(0<δ∧δ<1∧0<ε∧ε<1);
+	rδ:=(1/(1-δ))^(1/d);
+	N₀:=ceil(2/log(rδ)·log(8·-log(δ)/(rδ-1)/ε)) coerce !ℕ;
+	return ceil(N₀) coerce !ℕ;
+}
+def heuristic_N₀(ε:!ℝ,δ:!ℝ,d:!ℕ):!ℕ{
+	rδm1:=expm1(-log1p(-δ)/d);
+	N₀:=ceil(2·d/-log1p(-δ)·log(8·-log(δ)/(ε·rδm1))) coerce !ℕ;
+	return ceil(N₀·δ) coerce !ℕ; // seems good enough?
+}
+def complement_alg1[d:!ℕ](p:!C^(d+1),N:!ℕ):!C^(d+1){
+	ps:=fft(pad[N](p,(0,0)));
+	ℓ:=vector(N,(0,0));
+    for j in 0..N { ℓ[j]=(log(1-cabs_sq(ps[j])),0); }
+    ℓ:=ifft(ℓ);
+	log_qs:=fft(pad[N]([cscale(1/2,ℓ[0])]~ℓ[1..N div 2+1],(0,0)));
+    qs:=vector(N,(0,0));
+    for j in 0..N { qs[j]=cexp(log_qs[j]); }
+	return ifft(qs)[0..d+1];
+}
+
+def complement_alg2[d:!ℕ](p:!C^(d+1),ε:!ℝ,N:!ℕ):!C^(d+1){
+	for i in 0..d+1{ p[i]:=cscale(1-ε/4,p[i]); }
+	return complement_alg1[d](p,N);
+}
+
+def complement[d:!ℕ](p:!C^(d+1),ε:!ℝ):!C^(d+1){
+	//N₀:=thm3_N₀(ε/4,ε/(5·(d+1)),d);
+	N₀:=heuristic_N₀(ε/4,ε/(5·(d+1)),d);
+	N:=2^(ceil(log₂(max(N₀,d+1))) coerce !ℕ);
+	return complement_alg2[d](p,ε,N);
+}
+
+def is_complement[N:!ℕ][d:!ℕ](p:!C^(d+1),q:!C^(d+1),ε:!ℝ){
+	assert(N≥d+1∧(N&(N-1))=0);
+	ps:=fft(pad[N](p,(0,0)));
+	qs:=fft(pad[N](q,(0,0)));
+	ok:=1;
+	for j in 0..N{
+		ok&=abs(cabs_sq(ps[j])+cabs_sq(qs[j])-1)<ε;
+	}
+	return ok;
+}
+
+def gqsp_apply_Rdag[d:!ℕ](
+    θ: !ℝ,
+    φ: !ℝ,
+	λ_: !ℝ,
+    P: !C^(d+1),
+    Q: !C^(d+1)
+):!C^(d+1)×!C^(d+1){
+	(c,s):=(cos(θ),sin(θ));
+    ac:=conj(cscale(c,cis(λ_+φ)));
+    bc:=conj(cscale(s,cis(φ)));
+    cc:=conj(cscale(s,cis(λ_)));
+    dc:=conj((-c,0));
+
+	Pp:=vector(d+1,(0,0));
+    Qp:=vector(d+1,(0,0));
+    for k in 0..d+1 {
+        Pp[k]=cadd(cmul(ac, P[k]), cmul(cc, Q[k]));
+        Qp[k]=cadd(cmul(bc, P[k]), cmul(dc, Q[k]));
+    }
+    return (Pp,Qp);
+}
+
+def gqsp_compute_angles[d:!ℕ](
+    P:!C^(d+1),
+    Q:!C^(d+1),
+):!ℝ^(d+1)×!ℝ^(d+1)×!ℝ{
+    θd:=atan2(cabs(Q[d]),cabs(P[d]));
+    φd:=carg(P[d])-carg(Q[d]);
+    if d=0 {
+        λ_:=carg(Q[d]);
+        return ([θd],[φd],λ_) coerce !ℝ^(d+1)×!ℝ^(d+1)×!ℝ;
+    }
+    (Pp,Qp):=gqsp_apply_Rdag[d](θd,φd,0,P,Q);
+    (θ_small,φ_small,λ_):=gqsp_compute_angles[d sub 1](Pp[1..d+1],Qp[0..d]);
+	return (θ_small~[θd],φ_small~[φd],λ_);
+}
+
+def R(θ:!ℝ,φ:!ℝ,λ_:!ℝ)(anc:𝔹){
+    phase((π+λ_+φ)/2);
+    anc:=rotZ(π-λ_,anc);
+    anc:=rotY(2·θ,anc);
+    anc:=rotZ(-φ,anc);
+    return anc;
+}
+
+def gqsp[d:!ℕ](
+    θs:!ℝ^(d+1),
+    φs:!ℝ^(d+1),
+    λ_:!ℝ,
+)[a:qtype](const f: a →mfree a)(cand: a):𝔹×a{
+    anc:=R(θs[0],φs[0],λ_)(0:𝔹);
+    for j in 1..d+1 {
+        if anc=0{ cand:=f(cand); }
+        anc:=R(θs[j],φs[j],0)(anc);
+    }
+    return (anc,cand);
+}
+
+def main(){
+	p:=((0.07,0),(0.35,0),(0.35,0),(0.2,0));
+	q:=complement[3](p,1e-8);
+	print(q);
+	assert(is_complement[128][3](p,q,1e-8));
+	angles:=gqsp_compute_angles[3](p,q);
+	z:=cis(-1/4);
+	print(poly_eval[3](p)(z));
+	print(poly_eval[3](q)(z));
+	return gqsp[3](angles)((x:𝔹)⇒rotZ(1/2,x))(0:𝔹);
+}
