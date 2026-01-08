@@ -1031,6 +1031,12 @@ struct QState{
 			if(ntype==ℕt(true)) ntype=ℤt(true);
 			if(!ntype.isToplevelClassical()) return makeQuval(ntype,new BinOpQVal!op(this,r));
 			assert(!!ntype);
+			static if(op=="&"){
+				if(ntype==Bool(true)){
+					if(type!=ntype) return (this&1).neqZ&r;
+					if(r.type!=ntype) return this&(r&1).neqZ;
+				}
+			}
 			static if(op=="sub"){
 				enforce(this.ge(r).neqZImpl,"result of sub is negative");
 				if(isNumericTy(ntype)==NumericType.Bool) return this.gt(r);
