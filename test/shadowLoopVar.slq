@@ -1,0 +1,9 @@
+// args: --run
+
+i:=2;
+def main(){
+	r:=();
+	for i in 0..2{r~=[i]}
+	assert(r=[0,1]);
+	return r;
+}

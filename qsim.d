@@ -2961,7 +2961,7 @@ struct Interpreter(QState){
 				auto intp=Interpreter(functionDef,fe.bdy,qstate,hasFrame);
 				enum body_=q{
 					if(opt.trace) writeln("loop-index: ",j);
-					intp.qstate.assignTo(fe.var.name,qstate.makeInteger(j).convertTo(fe.loopVar.vtype));
+					intp.qstate.assignTo(fe.loopVar.getName,qstate.makeInteger(j).convertTo(fe.loopVar.vtype));
 					intp.run(retState);
 					intp.closeScope(fe.bdy.blscope_);
 				};
