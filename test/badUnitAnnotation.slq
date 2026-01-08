@@ -1,4 +1,4 @@
 
 def foo[n:!ℕ][b:qtype](){
-	ys:=():b^n;
+	ys:=():b^n; /// error
 }
