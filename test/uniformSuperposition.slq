@@ -15,7 +15,7 @@ def uniformSuperposition(N:!ℕ)mfree{
 	if (a as uint[logL])<L { phase(φ); }
 	with a:=H_n(a) do if (a as uint[logL])=0{ phase(φ); }
 	phase(-(φ+π)/2);
-	return H_n(vector(k,0))~a coerce 𝔹^(ceil(log(N)/log(2)) coerce !ℕ) as uint[ceil(log(N)/log(2)) coerce !ℕ];
+	return H_n(vector(k,0))~a coerce 𝔹^(ceil(log₂(N)) coerce !ℕ) as uint[ceil(log₂(N)) coerce !ℕ];
 }
 
 def main()⇒uniformSuperposition(3);
