@@ -53,10 +53,10 @@ def S_t_mat(β: !ℝ): (C^2)^2 {
 }
 
 // S_s(α) = I - (1 - e^{iα}) |s⟩⟨s|.
-def S_s_mat(α: !ℝ, λ_: !ℝ): (C^2)^2 {
+def S_s_mat(α: !ℝ, λ: !ℝ): (C^2)^2 {
     // sinθ = √λ, cosθ = √(1-λ)
-    s := sqrt(λ_);
-    cθ := sqrt(1-λ_);
+    s := sqrt(λ);
+    cθ := sqrt(1-λ);
 
     eα := cis(α);
     k := c_sub(c(1,0), eα);       // k = 1 - e^{iα}
@@ -84,20 +84,20 @@ def wrap_pm_pi(x: !ℝ): !ℝ {
     return y;
 }
 
-def chi_lambda(L: !ℕ, δ: !ℝ, λ_: !ℝ): !ℝ x C x C {
-    assert(0 < λ_ && λ_ < 1);
+def chi_lambda(L: !ℕ, δ: !ℝ, λ: !ℝ): !ℝ x C x C {
+    assert(0 < λ && λ < 1);
     (α, β) := ylc_αβ(L, δ);
     ℓ := L div 2;
 
     // initial |s⟩ in {|g⟩,|b⟩}
-    s := sqrt(λ_);
-    cθ := sqrt(1-λ_);
+    s := sqrt(λ);
+    cθ := sqrt(1-λ);
     v := vector(2, c(0,0));
     v[0] = c(s, 0);
     v[1] = c(cθ, 0);
 
     for j in 0..ℓ {
-        v = mat2_mul_vec(S_s_mat(α[j], λ_), v);
+        v = mat2_mul_vec(S_s_mat(α[j], λ), v);
         v = mat2_mul_vec(S_t_mat(β[j]), v);
     }
 
@@ -109,8 +109,8 @@ def chi_lambda(L: !ℕ, δ: !ℝ, λ_: !ℝ): !ℝ x C x C {
 }
 
 // Convenience: marked-only correction angle = -chi
-def good_phase_correction(L: !ℕ, δ: !ℝ, λ_: !ℝ): !ℝ {
-    (chi, _, _) := chi_lambda(L, δ, λ_);
+def good_phase_correction(L: !ℕ, δ: !ℝ, λ: !ℝ): !ℝ {
+    (chi, _, _) := chi_lambda(L, δ, λ);
     return -chi;
 }
 

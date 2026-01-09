@@ -85,17 +85,17 @@ def is_complement[N:!ℕ][d:!ℕ](p:!ℂ^(d+1),q:!ℂ^(d+1),ε:!ℝ){
 }
 
 def gqsp_apply_Rdag[d:!ℕ](
-	θ: !ℝ,
-	φ: !ℝ,
-	λ_:!ℝ,
+	θ:!ℝ,
+	φ:!ℝ,
+	λ:!ℝ,
 )(
 	P: !ℂ^(d+1),
 	Q: !ℂ^(d+1),
 ):!ℂ^(d+1)×!ℂ^(d+1){
 	(c,s):=(cos(θ),sin(θ));
-	ac:=conj(cis(λ_+φ)·c);
+	ac:=conj(cis(λ+φ)·c);
 	bc:=conj(cis(φ)·s);
-	cc:=conj(cis(λ_)·s);
+	cc:=conj(cis(λ)·s);
 	dc:=conj(-c);
 
 	(Pp,Qp):=vector(2,vector(d+1,0));
@@ -113,17 +113,17 @@ def gqsp_compute_angles[d:!ℕ](
 	θd:=atan2(cabs(Q[d]),cabs(P[d]));
 	φd:=carg(P[d])-carg(Q[d]);
 	if d=0 {
-		λ_:=carg(Q[d]);
-		return ([θd],[φd],λ_) coerce !ℝ^(d+1)×!ℝ^(d+1)×!ℝ;
+		λ:=carg(Q[d]);
+		return ([θd],[φd],λ) coerce !ℝ^(d+1)×!ℝ^(d+1)×!ℝ;
 	}
 	(Pp,Qp):=gqsp_apply_Rdag[d](θd,φd,0)(P,Q);
-	(θs,φs,λ_):=gqsp_compute_angles[d sub 1](Pp[1..d+1],Qp[0..d]);
-	return (θs~[θd],φs~[φd],λ_);
+	(θs,φs,λ):=gqsp_compute_angles[d sub 1](Pp[1..d+1],Qp[0..d]);
+	return (θs~[θd],φs~[φd],λ);
 }
 
-def R(θ:!ℝ,φ:!ℝ,λ_:!ℝ)(anc:𝔹){
-	phase((π+λ_+φ)/2);
-	anc:=rotZ(π-λ_,anc);
+def R(θ:!ℝ,φ:!ℝ,λ:!ℝ)(anc:𝔹){
+	phase((π+λ+φ)/2);
+	anc:=rotZ(π-λ,anc);
 	anc:=rotY(2·θ,anc);
 	anc:=rotZ(-φ,anc);
 	return anc;
@@ -132,9 +132,9 @@ def R(θ:!ℝ,φ:!ℝ,λ_:!ℝ)(anc:𝔹){
 def gqsp[d:!ℕ](
 	θs:!ℝ^(d+1),
 	φs:!ℝ^(d+1),
-	λ_:!ℝ,
+	λ: !ℝ,
 )[a:qtype](const f: a →mfree a)(cand: a):𝔹×a{
-	anc:=R(θs[0],φs[0],λ_)(0:𝔹);
+	anc:=R(θs[0],φs[0],λ)(0:𝔹);
 	for j in 1..d+1 {
 		if anc=0{ cand:=f(cand); }
 		anc:=R(θs[j],φs[j],0)(anc);
