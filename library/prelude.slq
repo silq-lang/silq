@@ -158,11 +158,11 @@ def hypot[n:!ℕ](x:!ℝ^n) lifted: !ℝ {
 }
 
 𝑖:=1i;
-def cfromri(re:!ℝ,im:!ℝ) @[extern="primitive.complex.cfromri"] lifted: !ℂ;
-def ctori(z:!ℂ) @[extern="primitive.complex.ctori"] lifted: !ℝ×!ℝ;
+def cfromri(re:!ℝ,im:!ℝ) @[extern="primitive.complex.cfromri"] qfree: !ℂ;
+def ctori(z:!ℂ) @[extern="primitive.complex.ctori"] qfree: !ℝ×!ℝ;
 def creal(z:!ℂ)lifted: !ℝ ⇒ ctori(z)[0];
 def cimag(z:!ℂ)lifted: !ℝ ⇒ ctori(z)[1];
-def conj(z:!ℂ)lifted: !ℂ{
+def conj(z:!ℂ)qfree: !ℂ{
 	(re,im):=ctori(z);
 	return cfromri(re,-im);
 }
@@ -179,11 +179,11 @@ def cism1(θ:!ℝ)lifted:!ℂ{
 	return cfromri(-2·s^2,2·s·c);
 }
 def expim1(θ:!ℝ)lifted:!ℂ ⇒ cism1(θ);
-def ctort(z:!ℂ)lifted:!ℝ×!ℝ{
+def ctort(z:!ℂ)qfree:!ℝ×!ℝ{
 	(re,im):=ctori(z);
 	return (hypot(re,im),atan2(im,re));
 }
-def cfromrt(r:!ℝ,θ:!ℝ)lifted:!ℂ ⇒ r·cis(θ);
+def cfromrt(r:!ℝ,θ:!ℝ)qfree:!ℂ ⇒ r·cis(θ);
 
 /+def csqrt(z:!ℂ)lifted:!ℂ{
 	(r,θ):=ctort(z);
