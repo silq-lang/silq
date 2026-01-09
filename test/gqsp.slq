@@ -88,6 +88,7 @@ def gqsp_apply_Rdag[d:!ℕ](
 	θ: !ℝ,
 	φ: !ℝ,
 	λ_:!ℝ,
+)(
 	P: !ℂ^(d+1),
 	Q: !ℂ^(d+1),
 ):!ℂ^(d+1)×!ℂ^(d+1){
@@ -115,7 +116,7 @@ def gqsp_compute_angles[d:!ℕ](
 		λ_:=carg(Q[d]);
 		return ([θd],[φd],λ_) coerce !ℝ^(d+1)×!ℝ^(d+1)×!ℝ;
 	}
-	(Pp,Qp):=gqsp_apply_Rdag[d](θd,φd,0,P,Q);
+	(Pp,Qp):=gqsp_apply_Rdag[d](θd,φd,0)(P,Q);
 	(θs,φs,λ_):=gqsp_compute_angles[d sub 1](Pp[1..d+1],Qp[0..d]);
 	return (θs~[θd],φs~[φd],λ_);
 }
