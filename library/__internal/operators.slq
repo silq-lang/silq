@@ -14,26 +14,26 @@ def qubit_to_uint[n:!N](v: B) lifted: uint[n] {
 	}
 	return ([dup(v)] ~ vector(n sub 1, 0)) as uint[n];
 }
-def pow2(n: !N) qfree: !N {
+def pow2(n: !N) lifted: !N {
 	return __pow_N(2, n);
 }
-def pow2m1(n: !N) qfree: !N {
+def pow2m1(n: !N) lifted: !N {
 	return __nsub_Z_unchecked(pow2(n), 1);
 }
 
-def floor_Q(a: !Q) @[extern="primitive.real.floor"] qfree: !Z;
-def floor_R(a: !R) @[extern="primitive.real.floor"] qfree: !Z;
-def ceil_Q(a: !Q) @[extern="primitive.real.ceil"] qfree: !Z;
-def ceil_R(a: !R) @[extern="primitive.real.ceil"] qfree: !Z;
+def floor_Q(a: !Q) @[extern="primitive.real.floor"] lifted: !Z;
+def floor_R(a: !R) @[extern="primitive.real.floor"] lifted: !Z;
+def ceil_Q(a: !Q) @[extern="primitive.real.ceil"] lifted: !Z;
+def ceil_R(a: !R) @[extern="primitive.real.ceil"] lifted: !Z;
 
-def uint_bits(n: !N) qfree: !N {
+def uint_bits(n: !N) lifted: !N {
 	if __le_N(n, 1) {
 		return n;
 	}
 	return 1 + uint_bits(__idiv_N(n, 2));
 }
 
-def sint_bits(n: !Z) qfree: !N {
+def sint_bits(n: !Z) lifted: !N {
 	if __lt_Z(n, 0) {
 		sign := -1;
 	} else {
@@ -42,12 +42,12 @@ def sint_bits(n: !Z) qfree: !N {
 	return 1 + uint_bits((n xorb sign) coerce !N);
 }
 
-def unchecked_nat(n: !Z) qfree: !N {
+def unchecked_nat(n: !Z) lifted: !N {
 	// TODO make unchecked
 	return n coerce !N;
 }
 
-def int_sign_abs(n: !Z) qfree: !B x !N {
+def int_sign_abs(n: !Z) lifted: !B x !N {
 	if __lt_Z(n, 0) {
 		return (1, unchecked_nat(__uminus_Z(n)));
 	} else {
@@ -55,14 +55,14 @@ def int_sign_abs(n: !Z) qfree: !B x !N {
 	}
 }
 
-def int_Q(a: !Q) qfree: !B x !Z { // TOOD use a sum type
+def int_Q(a: !Q) lifted: !B x !Z { // TOOD use a sum type
 	r := floor_Q(a);
 	if __eq_Q(a, r as !Q) {
 		return (1, r);
 	}
 	return (0, 0);
 }
-def int_R(a: !R) qfree: !B x !Z { // TOOD use a sum type
+def int_R(a: !R) lifted: !B x !Z { // TOOD use a sum type
 	r := floor_R(a);
 	if __eq_R(a, r as !Q) {
 		return (1, r);
@@ -89,7 +89,7 @@ def neq_U0[n:!N](a: !uint[n]) lifted: !B {
 	return neq_N0(a as !N);
 }
 
-def __bit_Z(a: !Z, i: !N) qfree: !B {
+def __bit_Z(a: !Z, i: !N) lifted: !B {
 	return neq_Z0(__andb_Z(a, pow2(i)));
 }
 
@@ -110,7 +110,7 @@ def qint_not[n:!N](a: B^n) @[__operator] qfree: B^n {
 	return qint_ixorc(a, -1);
 }
 
-def qint_iaddc[n:!N](a: B^n, b: !Z) @[__operator] @nogarbage qfree: B^n {
+def qint_iaddc[n:!N](a: B^n, const b: !Z) @[__operator] @nogarbage qfree: B^n {
 	def rec[m:!N](a: B^m, const c0: B) qfree: B^m {
 		if m == 0 {
 			return a;
@@ -140,12 +140,12 @@ def qint_iaddq[n:!N](a: B^n, const b: B^n) @[__operator] @nogarbage qfree: B^n {
 	return rec(a, b, 0);
 }
 
-def qint_isubc[n:!N](a: B^n, b: !Z) @[__operator] qfree: B^n {
+def qint_isubc[n:!N](a: B^n, const b: !Z) @[__operator] qfree: B^n {
 	qint_iaddc[n](a, b) := a;
 	return a;
 }
 
-def qint_irsubc[n:!N](a: !Z, b: B^n) @[__operator] @nogarbage qfree: B^n {
+def qint_irsubc[n:!N](const a: !Z, b: B^n) @[__operator] @nogarbage qfree: B^n {
 	def rec[m:!N](b: B^m, const c0: B) qfree: B^m {
 		if m == 0 {
 			return b;
@@ -165,7 +165,7 @@ def qint_isubq[n:!N](a: B^n, const b: B^n) qfree: B^n {
 	return r;
 }
 
-def qint_mulc[n:!N](const a: B^n, b: !Z) qfree: B^n {
+def qint_mulc[n:!N](a: B^n, b: !Z) lifted: B^n {
 	if n == 0 {
 		return vector(n, 0);
 	}
@@ -222,7 +222,7 @@ def qint_udivmod_qq[n:!N,m:!N](const a: B^n, const b: B^m) @nogarbage qfree: B^n
 	return (q, r);
 }
 
-def qint_udivmod_qc[n:!N](const a: B^n, b: !N) @nogarbage qfree: B^n x B^n {
+def qint_udivmod_qc[n:!N](a: B^n, b: !N) @nogarbage lifted: B^n x B^n {
 	if b >= pow2(n) {
 		return (vector(n, 0), a);
 	}
@@ -231,7 +231,7 @@ def qint_udivmod_qc[n:!N](const a: B^n, b: !N) @nogarbage qfree: B^n x B^n {
 	return (q, r ~ vector(n sub m, 0));
 }
 
-def qint_udivmod_qc_rec[n:!N,m:!N](const a: B^n, b: !N) qfree: B^n x B^m {
+def qint_udivmod_qc_rec[n:!N,m:!N](a: B^n, b: !N) lifted: B^n x B^m {
 	if n == 0 || m <= 1 {
 		return (a, vector(m, 0));
 	}
@@ -246,7 +246,7 @@ def qint_udivmod_qc_rec[n:!N,m:!N](const a: B^n, b: !N) qfree: B^n x B^m {
 	return (q, r);
 }
 
-def qint_udivmod_cq[m:!N](const a: !N, const b: B^m) @nogarbage qfree: B^m x B^m {
+def qint_udivmod_cq[m:!N](a: !N, b: B^m) @nogarbage lifted: B^m x B^m {
 	n := uint_bits(a);
 	(q, r) := qint_udivmod_qq[n,m](a as uint[n] as B^n, b);
 	if m < n {
@@ -256,8 +256,8 @@ def qint_udivmod_cq[m:!N](const a: !N, const b: B^m) @nogarbage qfree: B^m x B^m
 	}
 }
 
-def qint_orc[n:!N](const a: B^n, b: !Z) qfree: B^n {
-	def rec[m:!N](const a: B^n) qfree: B^m {
+def qint_orc[n:!N](a: B^n, b: !Z) lifted: B^n {
+	def rec[m:!N](a: B^n) lifted: B^m {
 		if m == 0 {
 			return () coerce B^m;
 		}
@@ -267,8 +267,8 @@ def qint_orc[n:!N](const a: B^n, b: !Z) qfree: B^n {
 	return rec[n](a);
 }
 
-def qint_orq[n:!N](const a: B^n, const b: B^n) qfree: B^n {
-	def rec[m:!N](const a: B^n, const b: B^n) qfree: B^m {
+def qint_orq[n:!N](a: B^n, b: B^n) lifted: B^n {
+	def rec[m:!N](a: B^n, b: B^n) lifted: B^m {
 		if m == 0 {
 			return () coerce B^m;
 		}
@@ -278,7 +278,7 @@ def qint_orq[n:!N](const a: B^n, const b: B^n) qfree: B^n {
 	return rec[n](a, b);
 }
 
-def qint_ixorc[n:!N](a: B^n, b: !Z) qfree: B^n {
+def qint_ixorc[n:!N](a: B^n, const b: !Z) qfree: B^n {
 	def rec[m:!N](a: B^m) qfree: B^m {
 		if m == 0 {
 			return a;
@@ -304,8 +304,8 @@ def qint_ixorq[n:!N](a: B^n, const b: B^n) qfree: B^n {
 	return rec(a, b);
 }
 
-def qint_andc[n:!N](const a: B^n, b: !Z) qfree: B^n {
-	def rec[m:!N](const a: B^n) qfree: B^m {
+def qint_andc[n:!N](a: B^n, b: !Z) lifted: B^n {
+	def rec[m:!N](a: B^n) lifted: B^m {
 		if m == 0 {
 			return () coerce B^m;
 		}
@@ -315,8 +315,8 @@ def qint_andc[n:!N](const a: B^n, b: !Z) qfree: B^n {
 	return rec[n](a);
 }
 
-def qint_andq[n:!N](const a: B^n, const b: B^n) qfree: B^n {
-	def rec[m:!N](const a: B^n, const b: B^n) qfree: B^m {
+def qint_andq[n:!N](a: B^n, b: B^n) lifted: B^n {
+	def rec[m:!N](a: B^n, b: B^n) lifted: B^m {
 		if m == 0 {
 			return () coerce B^m;
 		}
@@ -326,8 +326,8 @@ def qint_andq[n:!N](const a: B^n, const b: B^n) qfree: B^n {
 	return rec[n](a, b);
 }
 
-def qint_eqc[n:!N](const a: B^n, b: !Z) qfree: B {
-	def rec(const a: B^n, i: !N) qfree: B {
+def qint_eqc[n:!N](a: B^n, b: !Z) lifted: B {
+	def rec(a: B^n, i: !N) lifted: B {
 		if i == n {
 			return 1;
 		}
@@ -337,8 +337,8 @@ def qint_eqc[n:!N](const a: B^n, b: !Z) qfree: B {
 	return rec(a, 0);
 }
 
-def qint_eqq[n:!N](const a: B^n, const b: B^n) qfree: B {
-	def rec(const a: B^n, const b: B^n, i: !N) qfree: B {
+def qint_eqq[n:!N](a: B^n, b: B^n) lifted: B {
+	def rec(a: B^n, b: B^n, i: !N) lifted: B {
 		if i == n {
 			return 1;
 		}
@@ -348,7 +348,7 @@ def qint_eqq[n:!N](const a: B^n, const b: B^n) qfree: B {
 	return rec(a, b, 0);
 }
 
-def qint_ltc_step(const a: B, const b: !B, const rest: B) qfree: B {
+def qint_ltc_step(a: B, b: !B, rest: B) lifted: B {
 	if b {
 		if a {
 			return rest;
@@ -364,7 +364,7 @@ def qint_ltc_step(const a: B, const b: !B, const rest: B) qfree: B {
 	}
 }
 
-def qint_ltq_step(const a: B, const b: B, const rest: B) qfree: B {
+def qint_ltq_step(a: B, b: B, rest: B) lifted: B {
 	if b {
 		if a {
 			return rest;
@@ -380,7 +380,7 @@ def qint_ltq_step(const a: B, const b: B, const rest: B) qfree: B {
 	}
 }
 
-def qint_ultc[n:!N](const a: B^n, b: !Z) qfree: B {
+def qint_ultc[n:!N](a: B^n, b: !Z) lifted: B {
 	def rec(const a: B^n, i: !N) qfree: B {
 		if i == 0 {
 			return 0;
@@ -391,7 +391,7 @@ def qint_ultc[n:!N](const a: B^n, b: !Z) qfree: B {
 	return rec(a, n);
 }
 
-def qint_ulec[n:!N](const a: B^n, b: !Z) qfree: B {
+def qint_ulec[n:!N](a: B^n, b: !Z) lifted: B {
 	def rec(const a: B^n, i: !N) qfree: B {
 		if i == 0 {
 			return 1;
@@ -402,7 +402,7 @@ def qint_ulec[n:!N](const a: B^n, b: !Z) qfree: B {
 	return rec(a, n);
 }
 
-def qint_ultq[n:!N](const a: B^n, const b: B^n) qfree: B {
+def qint_ultq[n:!N](a: B^n, b: B^n) lifted: B {
 	def rec(const a: B^n, const b: B^n, i: !N) qfree: B {
 		if i == 0 {
 			return 0;
@@ -414,7 +414,7 @@ def qint_ultq[n:!N](const a: B^n, const b: B^n) qfree: B {
 	return rec(a, b, n);
 }
 
-def qint_sltc[n:!N](const a: B^n, const b: !Z) qfree: B {
+def qint_sltc[n:!N](a: B^n, b: !Z) lifted: B {
 	def rec(const a: B^n, i: !N) qfree: B {
 		if i == 0 {
 			return 0;
@@ -426,7 +426,7 @@ def qint_sltc[n:!N](const a: B^n, const b: !Z) qfree: B {
 	return qint_ltc_step(!a[i], !__bit_Z(b, i), rec(a, i));
 }
 
-def qint_slec[n:!N](const a: B^n, b: !Z) qfree: B {
+def qint_slec[n:!N](a: B^n, b: !Z) lifted: B {
 	def rec(const a: B^n, i: !N) qfree: B {
 		if i == 0 {
 			return 1;
@@ -438,7 +438,7 @@ def qint_slec[n:!N](const a: B^n, b: !Z) qfree: B {
 	return qint_ltc_step(!a[i], !__bit_Z(b, i), rec(a, i));
 }
 
-def qint_sltq[n:!N](const a: B^n, const b: B^n) qfree: B {
+def qint_sltq[n:!N](a: B^n, b: B^n) lifted: B {
 	def rec(const a: B^n, const b: B^n, i: !N) qfree: B {
 		if i == 0 {
 			return 0;

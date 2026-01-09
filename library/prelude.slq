@@ -12,11 +12,11 @@ def H(x: 𝔹) @[extern="primitive.H"] mfree: 𝔹;
 def X(x: 𝔹) @[extern="primitive.X"] qfree: 𝔹;
 def Y(x: 𝔹) @[extern="primitive.Y"] mfree: 𝔹;
 def Z(x: 𝔹) @[extern="primitive.Z"] mfree: 𝔹;
-def phase(φ: !ℝ) @[extern="primitive.P"] mfree: 𝟙;
+def phase(const φ: !ℝ) @[extern="primitive.P"] mfree: 𝟙;
 def rotX(φ: !ℝ, x: 𝔹) @[extern="primitive.rX"] mfree: 𝔹;
 def rotY(φ: !ℝ, x: 𝔹) @[extern="primitive.rY"] mfree: 𝔹;
 def rotZ(φ: !ℝ, x: 𝔹) @[artificial] mfree: 𝔹 {
-	def impl(φ: !ℝ, const x: 𝔹) @[extern="primitive.rZ"] mfree: 𝟙;
+	def impl(const φ: !ℝ, const x: 𝔹) @[extern="primitive.rZ"] mfree: 𝟙;
 	impl(φ, x);
 	return x;
 }
@@ -189,7 +189,7 @@ def cfromrt(r:!ℝ,θ:!ℝ)qfree:!ℂ ⇒ r·cis(θ);
 	(r,θ):=ctort(z);
 	return cfromrt(sqrt(r),θ/2);
 }+/
-def csqrt(z:!ℂ):!ℂ {
+def csqrt(z:!ℂ)lifted:!ℂ {
 	(x,y):=ctori(z);
 	if y=0{
 		if x≥0{ return cfromri(sqrt(x),0); }

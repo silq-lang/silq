@@ -2895,7 +2895,7 @@ struct Interpreter(QState){
 			auto var=runExp(fe.var);
 			if(fe.val){
 				auto val=runExp(fe.val);
-				enforce(var==val,"bad forget");
+				enforce(var.compare!"=="(val).neqZImpl,"bad forget");
 			}
 			void doForget(Expression e){
 				if(auto id=cast(Identifier)e){

@@ -1,0 +1,9 @@
+
+def main(){
+	θ:=π;
+	phase(θ):=();
+	rotX(θ,x):=0; /// TODO
+	rotY(θ,y):=0; /// TODO
+	rotZ(θ,z):=0; /// TODO
+	return (x,y,z);
+}

@@ -1,0 +1,7 @@
+
+def square(moved x:!ℝ)⇒x^2;
+
+def main(){
+	x:=2;
+	square(x):=4; /// error
+}
