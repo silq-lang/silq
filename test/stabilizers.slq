@@ -1,0 +1,186 @@
+// args: --run
+
+i:=0,x:=1,y:=2,z:=3;
+P:=!ℕ;
+
+def applyP(p:P)(x:𝔹)⇒[I,X,Y,Z][p](x);
+def measP(p:P)(x:𝔹){
+	a:=H(0);
+	if a { x:=applyP(p)(x); }
+	return (measure(H(a)),x);
+}
+def applyPs[n:!ℕ](ps:P^n)(xs:𝔹^n){
+	for i in 0..n{
+		xs[i]:=applyP(ps[i])(xs[i]);
+	}
+	return xs;
+}
+def measPs[n:!ℕ](ps:P^n)(xs:𝔹^n){
+	a:=H(0);
+	if a { xs:=applyPs(ps)(xs); }
+	return (measure(H(a)),xs);
+}
+
+ebit2:=[[z,z],
+	   [x,x]];
+
+ghz3:=[[z,z,i],
+	  [i,z,z],
+	  [x,x,x]];
+
+rep3:=[[z,z,i],
+	   [i,z,z]];
+
+five:=[[x,z,z,x,i],
+	   [i,x,z,z,x],
+	   [x,i,x,z,z],
+	   [z,x,i,x,z]];
+
+steane7:=[[z,z,z,z,i,i,i],
+		  [z,z,i,i,z,z,i],
+		  [z,i,z,i,z,i,z],
+		  [x,x,x,x,i,i,i],
+		  [x,x,i,i,x,x,i],
+		  [x,i,x,i,x,i,x]];
+
+shor9:=[[z,z,i,i,i,i,i,i,i],
+		[i,z,z,i,i,i,i,i,i],
+		[i,i,i,z,z,i,i,i,i],
+		[i,i,i,i,z,z,i,i,i],
+		[i,i,i,i,i,i,z,z,i],
+		[i,i,i,i,i,i,i,z,z],
+		[x,x,x,x,x,x,i,i,i],
+		[i,i,i,x,x,x,x,x,x]];
+
+def syndrome[n:!ℕ,r:!ℕ](stab:(P^n)^r)(xs:𝔹^n){
+	s:=();
+	for i in 0..r{
+		(p,xs):=measPs(stab[i])(xs);
+		s~=[p];
+	}
+	return (s coerce !𝔹^r,xs);
+}
+
+def bruteforce_fix[n:!ℕ,r:!ℕ](stab:(P^n)^r)(s:!𝔹^r,xs:𝔹^n){
+	for mask in 0..2^(2·n){
+		mask:=mask as !uint[2·n];
+		cs:=vector(r,0);
+		for i in 0..r{
+			for j in 0..2·n{
+				if mask[j]{
+					if stab[i][j%n]=[z,x][j div n]{
+						cs[i]⊕=1;
+					}
+				}
+			}
+		}
+		if cs=s{
+			for j in 0..2·n{
+				if mask[j]{
+					xs[j%n]:=[X,Z][j div n](xs[j%n]);
+				}
+			}
+			return xs;
+		}
+	}
+	assert(0);
+}
+
+def split_stab_xz[n:!ℕ,r:!ℕ](stab:(P^n)^r){
+	(xss,zss):=([],[]);
+	for i in 0..r{
+		(xs,zs):=([],[]);
+		for j in 0..n{
+			assert([1,1,0,1][stab[i][j]]);
+			xs~=[stab[i][j]=x];
+			zs~=[stab[i][j]=z];
+		}
+		xss~=[xs coerce _^n];
+		zss~=[zs coerce _^n];
+	}
+	return (xss coerce _^r, zss coerce _^r);
+}
+
+def popcnt[n:!ℕ](x:!uint[n])lifted{
+	r:=0;
+	for i in 0..n{ r+=x[i]; }
+	return r;
+}
+
+def encodings[n:!ℕ,r:!ℕ](stab:(P^n)^r){
+	(xs,zs):=split_stab_xz(stab) as (!uint[n]^r)^2;
+	sign:=vector(2^n,2);
+	queue:=vector(2^n,0:!uint[n]);
+	(s,e):=(0,0);
+	result:=[];
+	for i in 0..2^n{
+		if sign[i]=2{
+			ok:=1;
+			sign[i]=1;
+			queue[e]=i as !uint[n];
+			e+=1;
+			component:=[];
+			while s<e{
+				cur:=queue[s];
+				cs:=sign[cur];
+				s+=1;
+				component~=[(cs,cur as !uint[n] as !𝔹^n)];
+				for j in 0..r{
+					ns:=if popcnt(zs[j]&cur)&1 then -cs else cs;
+					next:=xs[j]⊕cur;
+					if sign[next]=2{
+						sign[next]=ns;
+						queue[e]=next;
+						e+=1;
+					}else{
+						ok&=ns=sign[next];
+					}
+				}
+			}
+			if ok{
+				result~=[component];
+			}
+		}
+	}
+	return result;
+}
+
+import uniformSuperposition;
+def bruteforce_encode[n:!ℕ](const xs:(!ℤ×!𝔹^n)[]){
+	size:=xs.length;
+	index:=uniformSuperposition(size);
+	result:=vector(n,0);
+	for i in 0..size{
+		if i=index{
+			if xs[i][0]=-1{ phase(π); }
+			result=xs[i][1];
+		}
+	}
+	forget(index=(){
+		index:=0:uint[ceil(log₂(size)) coerce !ℕ];
+		for i in 0..size{
+			if result=xs[i][1]{
+				index=i as uint[ceil(log₂(size)) coerce !ℕ];
+			}
+		}
+		return index;
+	}());
+	return result;
+}
+
+def main(){
+	stab:=five;
+	encs:=encodings(stab);
+	for i in 0..encs.length{
+		ks:=bruteforce_encode(encs[i]);
+		(s,ks):=syndrome(stab)(ks);
+		assert(s=vector(s.length,0));
+		measure(s,ks);
+	}
+	(s,xs):=syndrome(stab)(vector(stab[0].length,0));
+	print(s);
+	xs:=bruteforce_fix(stab)(s,xs);
+	(s,xs):=syndrome(stab)(xs);
+	print(s);
+	return xs;
+}
