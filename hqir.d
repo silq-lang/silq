@@ -2833,7 +2833,8 @@ class ScopeWriter {
 	Value implExpr(ast_exp.VectorExp e) {
 		auto vecType = cast(ast_ty.VectorTy)e.type;
 		assert(vecType);
-		assert(e.e.all!(ei => ei.constLookup == e.constLookup));
+		// TODO: make second disjunct unnecessary
+		assert(e.e.all!(ei => ei.constLookup == e.constLookup || ast_ty.isClassical(ei.type)));
 		auto sub = e.e.map!(ei => genExprAs(ei, vecType.next)).array;
 		size_t n = e.e.length;
 		auto vec = valPack(vecType.next.repeat(n).array, sub);
