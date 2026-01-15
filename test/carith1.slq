@@ -1,0 +1,12 @@
+// args: --run
+
+def main(){
+	x:=1:!ℂ;
+	x=x+1;
+	x=x+x;
+	x+=x;
+	assert(x=8);
+	assert(x+𝑖=8+𝑖);
+	x/=2i;
+	return x·𝑖^5 coerce !ℝ;
+}

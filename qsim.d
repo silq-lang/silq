@@ -825,6 +825,15 @@ struct QState{
 					break;
 				case Tag.cval:
 					if(ntag==Tag.cval) return this;
+					if(ntag==Tag.bval) return neqZ;
+					enforce(cval.im==0,text("cannot convert `",cval,"` to `",ntype));
+					if(ntag==Tag.zval||ntag==Tag.qval){
+						static assert(R.sizeof*8==64);
+						auto r=cval.re.toℚ;
+						if(ntag==Tag.qval) return makeRational(r);
+						if(ntag==Tag.zval) return makeInteger(.floor(r));
+					}
+					if(ntag==Tag.fval) return makeReal(cval.re);
 					break;
 				case Tag.fval:
 					if(ntag==Tag.bval) return neqZ;
@@ -885,6 +894,7 @@ struct QState{
 					if(ntag==Tag.qval) return makeRational(ℚ(cast(int)bval));
 					if(ntag==Tag.fval) return makeReal(to!R(bval));
 					if(ntag==Tag.cval) return makeComplex(C(to!R(bval)));
+					break;
 			}
 			if(ntag==Tag.bval) return neqZ;
 			enforce(0,text("converting ",type," to ",ntype," not yet supported"));
