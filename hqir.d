@@ -2,6 +2,7 @@ import core.exception: AssertError;
 import std.conv: ConvOverflowException, text, to;
 import std.stdio: File, stderr;
 import std.array: Appender, appender, array, join;
+import std.string: endsWith;
 import std.format: format;
 import std.functional: partial;
 import std.algorithm: map, filter, count, all, any, fold;
@@ -33,11 +34,13 @@ mixin("alias ast_ty_Nt = ast_ty.\u2115t;");
 mixin("alias ast_ty_Zt = ast_ty.\u2124t;");
 mixin("alias ast_ty_Qt = ast_ty.\u211at;");
 mixin("alias ast_ty_R = ast_ty.\u211d;");
+mixin("alias ast_ty_C = ast_ty.\u2102;");
 
 mixin("alias ast_ty_NumericType_Nt = ast_ty.NumericType.\u2115t;");
 mixin("alias ast_ty_NumericType_Zt = ast_ty.NumericType.\u2124t;");
 mixin("alias ast_ty_NumericType_Qt = ast_ty.NumericType.\u211at;");
 mixin("alias ast_ty_NumericType_R = ast_ty.NumericType.\u211d;");
+mixin("alias ast_ty_NumericType_C = ast_ty.NumericType.\u2102;");
 
 mixin("alias ast_conv_ZtoFixedConversion = ast_conv.\u2124toFixedConversion;");
 mixin("alias ast_conv_UintToNConversion = ast_conv.UintTo\u2115Conversion;");
@@ -1086,6 +1089,10 @@ class CCGen {
 		return emitPureOp("float_cmp_eq", [r1, r2]);
 	}
 
+	CReg floatCmpEq0(CReg r1) {
+		return floatCmpEq(r1, ctx.floatZero);
+	}
+
 	CReg floatCmpNe(CReg r1, CReg r2) {
 		return boolNot(floatCmpEq(r1, r2));
 	}
@@ -1103,6 +1110,19 @@ class CCGen {
 		val = intMod(val, intPow2(bits));
 		if(isSigned) val = intMakeSigned(bits, val);
 		return val;
+	}
+
+	CReg complexFromBool(CReg r) {
+		return complexFromFloat(floatFromBool(r));
+	}
+
+	CReg complexFromInt(CReg r) {
+		return complexFromFloat(floatFromInt(r));
+	}
+
+	CReg complexFromFloat(CReg r) {
+		auto tup = boxPack(ctypeSilqTuple, [r, ctx.floatZero]);
+		return emitPureOp("classical_call[primitive.complex.cfromri]", [tup]);
 	}
 
 	CReg qfuncPack(CReg func, CReg qtype) {
@@ -2675,6 +2695,15 @@ class ScopeWriter {
 			case ast_ty_NumericType_R:
 				assert(!typeHasQuantum(ty));
 				return valNewC(ctx.literalFloat(to!double(e.lit.str)));
+			case ast_ty_NumericType_C:
+				assert(!typeHasQuantum(ty));
+				if(!e.lit.str.endsWith("i")) {
+					goto default;
+				}
+				auto val = ctx.literalFloat(to!double(e.lit.str[0..$-1]));
+				auto tup = ccg.boxPack(ctypeSilqTuple, [ctx.floatZero, val]);
+				auto z = ccg.emitPureOp("classical_call[primitive.complex.cfromri]", [tup]);
+				return valNewC(z);
 			default:
 				assert(0, format("unknown numeric literal type: %s", ty));
 		}
@@ -4821,6 +4850,8 @@ class ScopeWriter {
 					case ast_ty_NumericType_Qt:
 					case ast_ty_NumericType_R:
 						return valNewC(ccg.floatFromBool(v.creg));
+					case ast_ty_NumericType_C:
+						return valNewC(ccg.complexFromBool(v.creg));
 					default:
 						assert(0, format("Unsupported numeric conversion: bool -> %s", conv.to));
 				}
@@ -4833,6 +4864,8 @@ class ScopeWriter {
 					case ast_ty_NumericType_Qt:
 					case ast_ty_NumericType_R:
 						return valNewC(ccg.floatFromInt(v.creg));
+					case ast_ty_NumericType_C:
+						return valNewC(ccg.complexFromInt(v.creg));
 					default:
 						assert(0, format("Unsupported numeric conversion: int -> %s", conv.to));
 				}
@@ -4840,6 +4873,15 @@ class ScopeWriter {
 				switch(wt) {
 					case ast_ty_NumericType_R:
 						return v;
+					case ast_ty_NumericType_C:
+						return valNewC(ccg.complexFromFloat(v.creg));
+					default:
+						assert(0, format("Unsupported numeric conversion: float -> %s", conv.to));
+				}
+			case ast_ty_NumericType_R:
+				switch(wt) {
+					case ast_ty_NumericType_C:
+						return valNewC(ccg.complexFromFloat(v.creg));
 					default:
 						assert(0, format("Unsupported numeric conversion: float -> %s", conv.to));
 				}
@@ -4884,6 +4926,12 @@ class ScopeWriter {
 					default:
 						assert(0, format("Unsupported numeric coercion float -> %s", conv.to));
 				}
+			case ast_ty_NumericType_C:
+				auto ri = ccg.boxUnpack(ctypeSilqTuple, 2, ccg.emitPureOp("classical_call[primitive.complex.ctori]", [v.creg]));
+				ccg.checkBool(conv.needsCheck, ccg.floatCmpEq0(ri[1]));
+				auto nconv = ast_conv.numericToNumeric!true(ast_ty_R, conv.to, ast_exp.TypeAnnotationType.coercion);
+				assert(!!nconv);
+				return genConvert(nconv, valNewC(ri[0]));
 			default:
 				assert(0, format("Unsupported numeric coercion %s -> %s", conv.from, conv.to));
 		}

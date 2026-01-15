@@ -703,6 +703,13 @@ def primitive.real.ceil($a) [artificial]
 	return $r
 
 
+def primitive.complex.ctori($a) [artificial]
+	return $a
+
+def primitive.complex.cfromri($a) [artificial]
+	return $a
+
+
 def primitive.X() <- %x [artificial]
 	%y := qfree_call[qbuiltin.X] <- %x
 	return %y

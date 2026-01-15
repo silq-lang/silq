@@ -490,7 +490,10 @@ def __uminus_N(x: !ℕ) @[__operator, extern="primitive.int.neg"] lifted: !ℤ;
 def __uminus_Z(x: !ℤ) @[__operator, extern="primitive.int.neg"] lifted: !ℤ;
 def __uminus_Q(x: !ℚ) @[__operator, extern="primitive.real.neg"] lifted: !ℚ;
 def __uminus_R(x: !ℝ) @[__operator, extern="primitive.real.neg"] lifted: !ℝ;
-def __uminus_C(x: !ℂ) @[__operator] lifted: !ℂ;
+def __uminus_C(x: !ℂ) @[__operator] lifted: !ℂ {
+	(re, im) := ctori(x);
+	return cfromri(-re, -im);
+}
 
 // ~x
 def __bitnot_b(x: 𝔹) @[__operator] lifted: 𝔹 {
@@ -657,7 +660,19 @@ def __add_N(a: !ℕ, b: !ℕ) @[__operator, extern="primitive.int.add"] lifted: 
 def __add_Z(a: !ℤ, b: !ℤ) @[__operator, extern="primitive.int.add"] lifted: !ℤ;
 def __add_Q(a: !ℚ, b: !ℚ) @[__operator, extern="primitive.real.add"] lifted: !ℚ;
 def __add_R(a: !ℝ, b: !ℝ) @[__operator, extern="primitive.real.add"] lifted: !ℝ;
-def __add_C(a: !ℂ, b: !ℂ) @[__operator] lifted: !ℂ;
+def __add_CR(a: !ℂ, b: !ℝ) @[__operator] lifted: !ℂ {
+	(a_re, a_im) := ctori(a);
+	return cfromri(a_re + b, a_im);
+}
+def __add_RC(a: !ℝ, b: !ℂ) @[__operator] lifted: !ℂ {
+	(b_re, b_im) := ctori(b);
+	return cfromri(a + b_re, b_im);
+}
+def __add_C(a: !ℂ, b: !ℂ) @[__operator] lifted: !ℂ {
+	(a_re, a_im) := ctori(a);
+	(b_re, b_im) := ctori(b);
+	return cfromri(a_re + b_re, a_im + b_im);
+}
 
 // a-b
 def __sub_s[n:!ℕ](a: int[n], b: int[n]) @[__operator] lifted: int[n] {
@@ -795,7 +810,19 @@ def __sub_N(a: !ℕ, b: !ℕ) @[__operator, extern="primitive.int.sub"] lifted: 
 def __sub_Z(a: !ℤ, b: !ℤ) @[__operator, extern="primitive.int.sub"] lifted: !ℤ;
 def __sub_Q(a: !ℚ, b: !ℚ) @[__operator, extern="primitive.real.sub"] lifted: !ℚ;
 def __sub_R(a: !ℝ, b: !ℝ) @[__operator, extern="primitive.real.sub"] lifted: !ℝ;
-def __sub_C(a: !ℂ, b: !ℂ) @[__operator] lifted: !ℂ;
+def __sub_CR(a: !ℂ, b: !ℝ) @[__operator] lifted: !ℂ {
+	(a_re, a_im) := ctori(a);
+	return cfromri(a_re - b, a_im);
+}
+def __sub_RC(a: !ℝ, b: !ℂ) @[__operator] lifted: !ℂ {
+	(b_re, b_im) := ctori(b);
+	return cfromri(a - b_re, -b_im);
+}
+def __sub_C(a: !ℂ, b: !ℂ) @[__operator] lifted: !ℂ {
+	(a_re, a_im) := ctori(a);
+	(b_re, b_im) := ctori(b);
+	return cfromri(a_re - b_re, a_im - b_im);
+}
 
 // a sub b
 def __nsub_s[n:!ℕ](a: int[n], b: int[n]) @[__operator] lifted: uint[n] {
@@ -987,9 +1014,9 @@ def __nsub_Z(a: !ℤ, b: !ℤ) @[__operator] lifted: !ℕ {
 }
 def __nsub_Z_unchecked(a: !ℤ, b: !ℤ) @[__operator, extern="primitive.int.sub"] lifted: !ℕ;
 
-def __nsub_Q(a: !ℚ, b: !ℚ) @[__operator] lifted: !ℚ;
-def __nsub_R(a: !ℝ, b: !ℝ) @[__operator] lifted: !ℝ;
-def __nsub_C(a: !ℂ, b: !ℂ) @[__operator] lifted: !ℂ;
+// def __nsub_Q(a: !ℚ, b: !ℚ) @[__operator] lifted: !ℚ;
+// def __nsub_R(a: !ℝ, b: !ℝ) @[__operator] lifted: !ℝ;
+// def __nsub_C(a: !ℂ, b: !ℂ) @[__operator] lifted: !ℂ;
 
 // a·b
 def __mul_s[n:!ℕ](a: int[n], b: int[n]) @[__operator] lifted: int[n] {
@@ -1161,7 +1188,19 @@ def __mul_N(a: !ℕ, b: !ℕ) @[__operator, extern="primitive.int.mul"] lifted: 
 def __mul_Z(a: !ℤ, b: !ℤ) @[__operator, extern="primitive.int.mul"] lifted: !ℤ;
 def __mul_Q(a: !ℚ, b: !ℚ) @[__operator, extern="primitive.real.mul"] lifted: !ℚ;
 def __mul_R(a: !ℝ, b: !ℝ) @[__operator, extern="primitive.real.mul"] lifted: !ℝ;
-def __mul_C(a: !ℂ, b: !ℂ) @[__operator] lifted: !ℂ;
+def __mul_CR(a: !ℂ, b: !ℝ) @[__operator] lifted: !ℂ {
+	(a_re, a_im) := ctori(a);
+	return cfromri(a_re·b, a_im·b);
+}
+def __mul_RC(a: !ℝ, b: !ℂ) @[__operator] lifted: !ℂ {
+	(b_re, b_im) := ctori(b);
+	return cfromri(a·b_re, a·b_im);
+}
+def __mul_C(a: !ℂ, b: !ℂ) @[__operator] lifted: !ℂ {
+	(a_re, a_im) := ctori(a);
+	(b_re, b_im) := ctori(b);
+	return cfromri(a_re·b_re - a_im·b_im, a_re·b_im + a_im·b_re);
+}
 
 // a/b
 
@@ -1176,7 +1215,21 @@ def __div_Z(a: !ℤ, b: !ℤ) @[__operator] lifted: !ℚ {
 }
 def __div_Q(a: !ℚ, b: !ℚ) @[__operator, extern="primitive.real.div"] lifted: !ℚ;
 def __div_R(a: !ℝ, b: !ℝ) @[__operator, extern="primitive.real.div"] lifted: !ℝ;
-def __div_C(a: !ℂ, b: !ℂ) @[__operator] lifted: !ℂ;
+def __div_CR(a: !ℂ, b: !ℝ) @[__operator] lifted: !ℂ {
+	(a_re, a_im) := ctori(a);
+	return cfromri(a_re/b, a_im/b);
+}
+def __div_RC(a: !ℝ, b: !ℂ) @[__operator] lifted: !ℂ {
+	(b_re, b_im) := ctori(b);
+	denom := b_re^2 + b_im^2;
+	return cfromri((a·b_re)/denom, (-a·b_im)/denom);
+}
+def __div_C(a: !ℂ, b: !ℂ) @[__operator] lifted: !ℂ {
+	(a_re, a_im) := ctori(a);
+	(b_re, b_im) := ctori(b);
+	denom := b_re^2 + b_im^2;
+	return cfromri((a_re·b_re + a_im·b_im)/denom, (a_im·b_re - a_re·b_im)/denom);
+}
 
 // a div b
 def __idiv_s[n:!ℕ](a: int[n], b: int[n]) @[__operator] lifted: int[n] {
@@ -1861,9 +1914,23 @@ def __pow_R(a: !ℝ, b: !ℝ) @[__operator] lifted: !ℝ {
 	return __pow_R_unchecked(a, b);
 }
 
-def __pow_CB(a: !ℂ, b: !𝔹) @[__operator] lifted: !ℂ;
-def __pow_CN(a: !ℂ, b: !ℕ) @[__operator] lifted: !ℂ;
-def __pow_CZ(a: !ℂ, b: !ℤ) @[__operator] lifted: !ℂ;
+def __pow_CB(a: !ℂ, b: !𝔹) @[__operator] lifted: !ℂ {
+	return if b then a else 1;
+}
+def __pow_CN(a: !ℂ, b: !ℕ) @[__operator] lifted: !ℂ {
+	(r, x, c) := (1:!ℂ, a, b);
+	while c ≠ 0 {
+		if c&1 {
+			r = __mul_C(r, x);
+		}
+		x = __mul_C(x, x);
+		c = c div 2;
+	}
+	return r;
+}
+def __pow_CZ(a: !ℂ, b: !ℤ) @[__operator] lifted: !ℂ {
+	return if b < 0 then __pow_CN(cinv(a), -b coerce !ℕ) else __pow_CN(a, b coerce !ℕ);
+}
 
 // a ~ b
 // def __cat_t[n:!ℕ,m:!ℕ][σ:*^n,τ:*^m](moved x:∏ σ, moved y:∏ τ) @[__operator] qfree: ∏(σ~τ);
@@ -3393,8 +3460,14 @@ def __eq_bR(a: 𝔹, b: !ℝ) @[__operator] lifted: 𝔹 {
 	}
 	return 0;
 }
-def __eq_Cb(a: !ℂ, b: 𝔹) @[__operator] lifted: 𝔹;
-def __eq_bC(a: 𝔹, b: !ℂ) @[__operator] lifted: 𝔹;
+def __eq_Cb(a: !ℂ, b: 𝔹) @[__operator] lifted: 𝔹 {
+	(a_re, a_im) := ctori(a);
+	return __eq_R(a_im, 0) && __eq_Rb(a_re, b);
+}
+def __eq_bC(a: 𝔹, b: !ℂ) @[__operator] lifted: 𝔹 {
+	(b_re, b_im) := ctori(b);
+	return __eq_R(b_im, 0) && __eq_bR(a, b_re);
+}
 
 def __eq_s[n:!ℕ](a: int[n], b: int[n]) @[__operator] lifted: 𝔹 {
 	return qint_eqq[n](a as B^n, b as B^n);
@@ -3480,8 +3553,14 @@ def __eq_sR[n:!ℕ](a: int[n], b: !ℝ) @[__operator] lifted: 𝔹 {
 	if !r { return 0; }
 	return __eq_sZ[n](a, b');
 }
-def __eq_Cs[n:!ℕ](a: !ℂ, b: int[n]) @[__operator] lifted: 𝔹;
-def __eq_sC[n:!ℕ](a: int[n], b: !ℂ) @[__operator] lifted: 𝔹;
+def __eq_Cs[n:!ℕ](a: !ℂ, b: int[n]) @[__operator] lifted: 𝔹 {
+	(a_re, a_im) := ctori(a);
+	return __eq_R(a_im, 0) && __eq_Rs(a_re, b);
+}
+def __eq_sC[n:!ℕ](a: int[n], b: !ℂ) @[__operator] lifted: 𝔹 {
+	(b_re, b_im) := ctori(b);
+	return __eq_R(b_im, 0) && __eq_sR(a, b_re);
+}
 
 def __eq_NS[n:!ℕ](a: !ℕ, b: !int[n]) @[__operator] lifted: !𝔹 {
 	return __eq_Z(a, b as !Z);
@@ -3507,8 +3586,14 @@ def __eq_RS[n:!ℕ](a: !ℝ, b: !int[n]) @[__operator] lifted: !𝔹 {
 def __eq_SR[n:!ℕ](a: !int[n], b: !ℝ) @[__operator] lifted: !𝔹 {
 	return __eq_R(a as !R, b);
 }
-def __eq_CS[n:!ℕ](a: !ℂ, b: !int[n]) @[__operator] lifted: !𝔹;
-def __eq_SC[n:!ℕ](a: !int[n], b: !ℂ) @[__operator] lifted: !𝔹;
+def __eq_CS[n:!ℕ](a: !ℂ, b: !int[n]) @[__operator] lifted: !𝔹 {
+	(a_re, a_im) := ctori(a);
+	return __eq_R(a_im, 0) && __eq_RS(a_re, b);
+}
+def __eq_SC[n:!ℕ](a: !int[n], b: !ℂ) @[__operator] lifted: !𝔹 {
+	(b_re, b_im) := ctori(b);
+	return __eq_R(b_im, 0) && __eq_SR(a, b_re);
+}
 
 def __eq_u[n:!ℕ](a: uint[n], b: uint[n]) @[__operator] lifted: 𝔹 {
 	return qint_eqq[n](a as B^n, b as B^n);
@@ -3593,8 +3678,14 @@ def __eq_uR[n:!ℕ](a: uint[n], b: !ℝ) @[__operator] lifted: 𝔹 {
 	if !r { return 0; }
 	return __eq_uZ[n](a, b');
 }
-def __eq_Cu[n:!ℕ](a: !ℂ, b: uint[n]) @[__operator] lifted: 𝔹;
-def __eq_uC[n:!ℕ](a: uint[n], b: !ℂ) @[__operator] lifted: 𝔹;
+def __eq_Cu[n:!ℕ](a: !ℂ, b: uint[n]) @[__operator] lifted: 𝔹 {
+	(a_re, a_im) := ctori(a);
+	return __eq_R(a_im, 0) && __eq_Ru(a_re, b);
+}
+def __eq_uC[n:!ℕ](a: uint[n], b: !ℂ) @[__operator] lifted: 𝔹 {
+	(b_re, b_im) := ctori(b);
+	return __eq_R(b_im, 0) && __eq_uR(a, b_re);
+}
 
 def __eq_NU[n:!ℕ](a: !ℕ, b: !uint[n]) @[__operator] lifted: !𝔹 {
 	return __eq_N(a, b as !N);
@@ -3620,14 +3711,32 @@ def __eq_RU[n:!ℕ](a: !ℝ, b: !uint[n]) @[__operator] lifted: !𝔹 {
 def __eq_UR[n:!ℕ](a: !uint[n], b: !ℝ) @[__operator] lifted: !𝔹 {
 	return __eq_R(a as !R, b);
 }
-def __eq_CU[n:!ℕ](a: !ℂ, b: !uint[n]) @[__operator] lifted: !𝔹;
-def __eq_UC[n:!ℕ](a: !uint[n], b: !ℂ) @[__operator] lifted: !𝔹;
+def __eq_CU[n:!ℕ](a: !ℂ, b: !uint[n]) @[__operator] lifted: !𝔹 {
+	(a_re, a_im) := ctori(a);
+	return __eq_R(a_im, 0) && __eq_RU(a_re, b);
+}
+def __eq_UC[n:!ℕ](a: !uint[n], b: !ℂ) @[__operator] lifted: !𝔹 {
+	(b_re, b_im) := ctori(b);
+	return __eq_R(b_im, 0) && __eq_UR(a, b_re);
+}
 
 def __eq_N(a: !ℕ, b: !ℕ) @[__operator, extern="primitive.int.eq"] lifted: !𝔹;
 def __eq_Z(a: !ℤ, b: !ℤ) @[__operator, extern="primitive.int.eq"] lifted: !𝔹;
 def __eq_Q(a: !ℚ, b: !ℚ) @[__operator, extern="primitive.real.eq"] lifted: !𝔹;
 def __eq_R(a: !ℝ, b: !ℝ) @[__operator, extern="primitive.real.eq"] lifted: !𝔹;
-def __eq_C(a: !ℂ, b: !ℂ) @[__operator] lifted: !𝔹;
+def __eq_CR(a: !ℂ, b: !ℝ) @[__operator] lifted: !𝔹 {
+	(a_re, a_im) := ctori(a);
+	return __eq_R(a_im, 0) && __eq_R(a_re, b);
+}
+def __eq_RC(a: !ℝ, b: !ℂ) @[__operator] lifted: !𝔹 {
+	(b_re, b_im) := ctori(b);
+	return __eq_R(b_im, 0) && __eq_R(a, b_re);
+}
+def __eq_C(a: !ℂ, b: !ℂ) @[__operator] lifted: !𝔹 {
+	(a_re, a_im) := ctori(a);
+	(b_re, b_im) := ctori(b);
+	return __eq_R(a_re, b_re) && __eq_R(a_im, b_im);
+}
 
 // a ≠ b
 def __neq_b(a: 𝔹, b: 𝔹) @[__operator] lifted: 𝔹 {
@@ -3901,6 +4010,12 @@ def __neq_Q(a: !ℚ, b: !ℚ) @[__operator] lifted: !𝔹 {
 }
 def __neq_R(a: !ℝ, b: !ℝ) @[__operator] lifted: !𝔹 {
 	return __not_B(__eq_R(a, b));
+}
+def __neq_CR(a: !ℂ, b: !ℝ) @[__operator] lifted: !𝔹 {
+	return __not_B(__eq_CR(a, b));
+}
+def __neq_RC(a: !ℝ, b: !ℂ) @[__operator] lifted: !𝔹 {
+	return __not_B(__eq_RC(a, b));
 }
 def __neq_C(a: !ℂ, b: !ℂ) @[__operator] lifted: !𝔹 {
 	return __not_B(__eq_C(a, b));
