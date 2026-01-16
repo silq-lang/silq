@@ -5255,7 +5255,9 @@ class ScopeWriter {
 		}
 		assert(toInt.isClassical);
 		assert(!v.hasQuantum);
-		return valNewC(ccg.emitPureOp("classical_call[silq_builtin.bits_to_int]", [len, v.creg]));
+		auto cval = ccg.emitPureOp("classical_call[silq_builtin.bits_to_int]", [len, v.creg]);
+		if(toInt.isSigned) cval = ccg.intMakeSigned(len, cval);
+		return valNewC(cval);
 	}
 
 private:

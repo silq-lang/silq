@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	s:=(1,1,1) as !int[3];
+	assert((s as !ℤ) = -1);
+	u:=(1,1,1) as !uint[3];
+	assert((u as !ℤ) = 7);
+	return (s,u);
+}
