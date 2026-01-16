@@ -1,0 +1,26 @@
+// args: --run
+
+def doswap[a:*,m:!ℕ,n:!ℕ](xs:(a^m)^n,const i:!ℕ,const j:!ℕ){
+	(xs[i][i],xs[j][j+1]):=(xs[j][j+1],xs[i][i]);
+	return xs;
+}
+
+def doswap2[a:*,m:!ℕ,n:!ℕ](xs:(a^m)^n,const i:!ℕ,const j:!ℕ){
+	(xs[i][i+1],xs[j][j+1]):=(xs[j][j+1],xs[i][i+1]);
+	return xs;
+}
+
+def main(){
+	x:=H(0);
+	n:=3+measure(H(0));
+	xs:=vector(n,vector(n,x));
+	xs[0][0]:=X(xs[0][0]);
+	xs[1][1]:=X(xs[1][1]);
+	i:=0,j:=0;
+	(xs[i][i],xs[j][j+1]):=(xs[j][j+1],xs[i][i]);
+	xs:=doswap(xs,1,1);
+	xs:=doswap2(xs,0,0);
+	assert(measure(xs[0][1]!=xs[0][2]));
+	assert(measure(xs[1][1]!=xs[1][2]));
+	return (x,xs as 𝔹[][]);
+}

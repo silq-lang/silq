@@ -3942,18 +3942,20 @@ class ScopeWriter {
 
 	Result implSwap(ast_exp.DefineExp orig) {
 		auto origVars = cast(ast_exp.TupleExp)orig.e2;
-		assert(origVars);
-		assert(origVars.e.length == 2);
+		assert(origVars && origVars.e.length == 2);
 
 		auto ie1 = cast(ast_exp.IndexExp)origVars.e[0];
-		assert(ie1);
-		assert(!cast(ast_exp.IndexExp)ie1.e, "TODO multi-dimensional swap");
-		auto arrIn = cast(ast_exp.Identifier)ie1.e;
-		assert(arrIn);
-		auto index1 = ie1.a;
+		assert(!!ie1);
 		auto ie2 = cast(ast_exp.IndexExp)origVars.e[1];
-		assert(ie2);
-		assert(ie2.e == arrIn);
+		assert(!!ie2);
+		if(cast(ast_exp.IndexExp)ie1.e || cast(ast_exp.IndexExp)ie2.e) {
+			auto lowering = ast_low.getSwapLowering(orig, nscope);
+			assert(!!lowering, format("Failed to lower swap: %s", orig));
+			return genStmt(lowering);
+		}
+		auto arrIn = cast(ast_exp.Identifier)ie1.e;
+		assert(arrIn && ie2.e == arrIn);
+		auto index1 = ie1.a;
 		auto index2 = ie2.a;
 
 		auto origVars2 = cast(ast_exp.TupleExp)orig.e1;
