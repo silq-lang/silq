@@ -103,6 +103,8 @@ string formatQValue(QState qs, QState.Value value){
 		auto diff=argNorm(a-b);
 		return abs(diff)<tol||abs(diff-2*PI)<tol;
 	}
+	Q!(QState.Σ,QState.C)[] state=qs.state.byKeyValue.map!(kv=>q(kv.k,kv.v)).array;
+	state.sort!((kv0,kv1)=>value.classicalValue(kv0[0]).compare!"<"(value.classicalValue(kv1[0])).neqZImpl);
 	// TODO: sort the basis vectors
 	if(opt.amplitudeFormat==AmplitudeFormat.polar){
 		static struct Term{
@@ -116,7 +118,7 @@ string formatQValue(QState qs, QState.Value value){
 		bool first=true;
 		QState.R arg0=0.0;
 		QState.R maxAbs=0.0;
-		foreach(k,v;qs.state){
+		foreach(k,v;state.map!(x=>x)){
 			auto a=abs(v);
 			if(a>maxAbs) maxAbs=a;
 			if (first){
@@ -126,7 +128,7 @@ string formatQValue(QState qs, QState.Value value){
 		}
 		QState.R arg1=argNorm(arg0+PI);
 		bool anyArg=false;
-		foreach(k,v;qs.state){
+		foreach(k,v;state.map!(x=>x)){
 			QState.R θ=arg(v);
 			if(!(argClose(arg0,θ)||argClose(arg1,θ))){
 				anyArg=true;
@@ -146,7 +148,7 @@ string formatQValue(QState qs, QState.Value value){
 			}
 		}
 		bool isFirst=true;
-		foreach(k,v;qs.state){
+		foreach(k,v;state.map!(x=>x)){
 			QState.R r=abs(v);
 			QState.R θ=arg(v);
 			QState.R valArg=argNorm(θ-arg0);
@@ -209,7 +211,7 @@ string formatQValue(QState qs, QState.Value value){
 	}
 	if(opt.style==Style.compact){
 		string result;
-		foreach(k,v;qs.state){
+		foreach(k,v;state.map!(x=>x)){
 			if(result.length) result~="+";
 			auto basisStr=value.classicalValue(k).toBasisStringImpl();
 			result~=text("(", v, ")·",basisStr);
@@ -220,7 +222,7 @@ string formatQValue(QState qs, QState.Value value){
 		Row[] rows;
 		rows.reserve(qs.state.length);
 		bool isFirst=true;
-		foreach(k,v;qs.state){
+		foreach(k,v;state.map!(x=>x)){
 			auto lead=isFirst?" ":"+";
 			auto c1=text(lead,"(",v,")");
 			auto basisStr=value.classicalValue(k).toBasisStringImpl();
@@ -385,7 +387,7 @@ struct QState{
 	void updateRelabeling(ref Σ.Ref[Σ.Ref] relabeling,Value to,Value from){
 		if(!to.type) return;
 		auto tag=to.tag;
-		
+
 		enforce(tag==from.tag,"value type mismatch on merge");
 		final switch(tag){
 			case Value.Tag.array_:
@@ -459,7 +461,7 @@ struct QState{
 					if(nk !in new_.state||abs(new_.state[nk])<abs(v))
 						new_.state[nk]=v;
 				}else new_.add(nk,v);
-			}			
+			}
 		}
 		return new_;
 	}
@@ -1370,23 +1372,37 @@ struct QState{
 		}
 		Value compare(string op)(Value r){
 			if(!isClassical()||!r.isClassical()) return makeQuval(Bool(false),new CompareQVal!op(this,r));
-			if(tag==Tag.array_&&r.tag==Tag.array_){
-				static if(op=="==") if(array_.length!=r.array_.length) return makeBool(false);
-				static if(op=="!=") if(array_.length!=r.array_.length) return makeBool(true);
+			static bool compareRanges(R,S)(R a,S b){
+				static if(op=="==") if(a.length!=b.length) return false;
+				static if(op=="!=") if(a.length!=b.length) return true;
 				int equalPrefix=0;
-				for(;equalPrefix<min(array_.length,r.array_.length);equalPrefix++)
-					if(array_[equalPrefix].compare!"!="(r.array_[equalPrefix]).neqZImpl) break;
+				for(;equalPrefix<min(a.length,b.length);equalPrefix++)
+					if(a[equalPrefix].compare!"!="(b[equalPrefix]).neqZImpl) break;
 				static if(op!="=="&&op!="!="){
-					if(util.among(equalPrefix,array_.length,r.array_.length)){
-						if(array_.length==r.array_.length){
+					if(util.among(equalPrefix,a.length,b.length)){
+						if(a.length==b.length){
 							enum equalAllowed=op=="<="||op==">=";
-							return makeBool(equalAllowed);
-						}else return makeBool(mixin(`array_.length `~op~` r.array_.length`));
-					}else return array_[equalPrefix].compare!op(r.array_[equalPrefix]);
+							return equalAllowed;
+						}else return mixin(`a.length `~op~` b.length`);
+					}else return a[equalPrefix].compare!op(b[equalPrefix]).neqZImpl;
 				}else{
-					static if(op=="==") return makeBool(equalPrefix==array_.length);
-					else return makeBool(equalPrefix!=array_.length);
+					static if(op=="==") return equalPrefix==a.length;
+					else return equalPrefix!=a.length;
 				}
+			}
+			if(tag==Tag.array_&&r.tag==Tag.array_)
+				return makeBool(compareRanges(array_,r.array_));
+			if(tag==Tag.record&&r.tag==Tag.record){
+				auto a=record.byKeyValue.map!(kv=>q(kv.k,kv.v)).array;
+				auto b=r.record.byKeyValue.map!(kv=>q(kv.k,kv.v)).array;
+				sort!"a[0]<b[0]"(a);
+				sort!"a[0]<b[0]"(b);
+				return makeBool(compareRanges(a.map!(x=>x[1]),b.map!(x=>x[1])));
+			}
+			if(tag==Tag.closure&&r.tag==Tag.closure){
+				if(mixin(`closure.fun.text `~op~` r.closure.fun.text`))
+					return makeBool(true);
+				return closure.context.compare!op(*r.closure.context);
 			}
 			static if(op=="=="||op=="!="){
 				enum complexSupported=[Tag.cval];
@@ -3153,7 +3169,7 @@ struct Interpreter(QState){
 			}else if(cast(AndAssignExp)e&&ae.e1.type.isClassical()){
 				auto lhs=ass.read(qstate);
 				enforce(lhs.isClassical(),"unexpected quantum condition");
-				if(lhs.neqZImpl) ass.assign(qstate,runExp(ae.e2));				
+				if(lhs.neqZImpl) ass.assign(qstate,runExp(ae.e2));
 			}else{
 				auto lhs=ass.read(qstate),rhs=runExp(ae.e2);
 				ass.assign(qstate,perform(lhs,rhs));
