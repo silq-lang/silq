@@ -18,6 +18,10 @@ The options below may be used.
 --trace              print statements as they run together with the program state
 --seed=n             use a fixed random seed for repeatable experiments
 
+--fmt=MODE           quantum state formatting: MODE = STYLE-COORDS
+--style=STYLE        verbosity: compact | verbose (overrides --qfmt style)
+--coords=COORDS      amplitudes: cartesian | polar (overrides --qfmt coords)
+
 --inference-limit=n  use at most n iterations for inferring fixed points
 
 --summarize=...      summarize function declarations and exit (ex: --summarize=[name,arg-arity,ret-arity])

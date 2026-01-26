@@ -81,15 +81,165 @@ private:
 
 private alias FormattingOptions=QState.Value.FormattingOptions;
 private alias FormattingType=QState.Value.FormattingOptions.FormattingType;
-string formatQValue(QState qs,QState.Value value){ // (only makes sense if value contains the full quantum state)
-	if(value.isClassical()) return value.toStringImpl(FormattingOptions.init);
-	string r;
-	foreach(k,v;qs.state){
-		if(r.length) r~="+";
-		r~=text("(",v,")·",value.classicalValue(k).toBasisStringImpl());
+string formatQValue(QState qs, QState.Value value){
+	if(value.isClassical())
+		return value.toStringImpl(FormattingOptions.init);
+	if(!qs.state.length)
+		return "0";
+	string padLeft(string s, size_t width){
+		if(s.length>=width) return s;
+		return repeat(' ',width-s.length).text~s;
 	}
-	if(!r.length) return "0";
-	return r;
+	string padRight(string s, size_t width){
+		if(s.length>=width) return s;
+		return s~repeat(' ',width-s.length).text;
+	}
+	QState.R argNorm(QState.R a){
+		if(a<=-PI) a+=2*PI;
+		else if(a>PI) a-=2*PI;
+		return a;
+	}
+	bool argClose(QState.R a, QState.R b, QState.R tol = 1e-6){
+		auto diff=argNorm(a-b);
+		return abs(diff)<tol||abs(diff-2*PI)<tol;
+	}
+	// TODO: sort the basis vectors
+	if(opt.amplitudeFormat==AmplitudeFormat.polar){
+		static struct Term{
+			string lead;
+			string magnitude;
+			string angle;
+			string basis;
+		}
+		Term[] terms;
+		terms.reserve(qs.state.length);
+		bool first=true;
+		QState.R arg0=0.0;
+		QState.R maxAbs=0.0;
+		foreach(k,v;qs.state){
+			auto a=abs(v);
+			if(a>maxAbs) maxAbs=a;
+			if (first){
+				arg0=arg(v);
+				first=false;
+			}
+		}
+		QState.R arg1=argNorm(arg0+PI);
+		bool anyArg=false;
+		foreach(k,v;qs.state){
+			QState.R θ=arg(v);
+			if(!(argClose(arg0,θ)||argClose(arg1,θ))){
+				anyArg=true;
+				break;
+			}
+		}
+		if(anyArg) arg0=0.0;
+		QState.R maxAbsSq=maxAbs*maxAbs;
+		int exp=0;
+		QState.R expScale=1.0;
+		auto expSuffix="";
+		if(maxAbsSq>0.0){
+			exp=cast(int)floor(-log10(maxAbsSq));
+			if(exp>0){
+				expScale=pow(10.0,exp);
+				expSuffix=format("e-%s",exp);
+			}
+		}
+		bool isFirst=true;
+		foreach(k,v;qs.state){
+			QState.R r=abs(v);
+			QState.R θ=arg(v);
+			QState.R valArg=argNorm(θ-arg0);
+			bool valSign;
+			if(valArg>PI/2+1e-15){
+				valSign=true;
+				valArg-=PI;
+			}else if(valArg<=-PI/2+1e-15){
+				valSign=true;
+				valArg+=PI;
+			}else{
+				valSign=false;
+			}
+			if(!anyArg&&abs(valArg)<1e-5) valArg=0;
+			auto lead=valSign?"-":(isFirst?" ":"+");
+			QState.R scaledProb=(r*r)*expScale;
+			auto magnitude=format("√%.07f%s",scaledProb,expSuffix);
+			auto angle=anyArg?format("%.7f",valArg):"";
+			auto basisStr=value.classicalValue(k).toBasisStringImpl();
+			terms~=Term(lead,magnitude,angle,basisStr);
+			isFirst=false;
+		}
+		if(opt.style==Style.compact){
+			auto result="";
+			foreach(i,t;terms){
+				result~=t.lead;
+				if(t.angle.length) result~="(";
+				auto m=t.magnitude;
+				if(i==0&&m.length&&m[0]==' ')
+					m=m[1..$];
+				result~=m;
+				if(t.angle.length){
+					result~="∠"~t.angle;
+					result~=")";
+				}
+				result~="·"~t.basis;
+			}
+			return result.length?result:"0";
+		}else{
+			struct Row{string c1;string c2;string c3;}
+			Row[] rows;
+			rows.reserve(terms.length);
+			foreach(t;terms)
+				rows~=Row(t.lead~t.magnitude,t.angle," · "~t.basis);
+			size_t w1=0,w2=0,w3=0;
+			foreach(r;rows){
+				if(r.c1.length>w1) w1=r.c1.length;
+				if(r.c2.length>w2) w2=r.c2.length;
+				if(r.c3.length>w3) w3=r.c3.length;
+			}
+			auto result="";
+			foreach(i,r;rows){
+				result~=padLeft(r.c1,w1);
+				if(w2>0) result~="∠"~padLeft(r.c2,w2);
+				result~=padRight(r.c3,w3);
+				if(i+1<rows.length) result~="\n";
+			}
+			return result;
+		}
+	}
+	if(opt.style==Style.compact){
+		string result;
+		foreach(k,v;qs.state){
+			if(result.length) result~="+";
+			auto basisStr=value.classicalValue(k).toBasisStringImpl();
+			result~=text("(", v, ")·",basisStr);
+		}
+		return result;
+	}else{
+		struct Row{string c1,c3;}
+		Row[] rows;
+		rows.reserve(qs.state.length);
+		bool isFirst=true;
+		foreach(k,v;qs.state){
+			auto lead=isFirst?" ":"+";
+			auto c1=text(lead,"(",v,")");
+			auto basisStr=value.classicalValue(k).toBasisStringImpl();
+			auto c3=" · "~basisStr;
+			rows~=Row(c1, c3);
+			isFirst=false;
+		}
+		size_t w1=0,w3=0;
+		foreach(r;rows){
+			if(r.c1.length>w1) w1=r.c1.length;
+			if(r.c3.length>w3) w3=r.c3.length;
+		}
+		string result;
+		foreach(i,r;rows){
+			result~=padLeft(r.c1, w1)~padRight(r.c3, w3);
+			if(i+1<rows.length) result~="\n";
+		}
+		return result;
+	}
 }
 
 long smallValue(ℤ value){

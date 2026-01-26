@@ -4,7 +4,7 @@
 import util.path;
 import util.optparse;
 import util.terminal;
-import std.array, std.string, std.algorithm, std.conv;
+import std.array, std.string, std.algorithm, std.conv, std.traits;
 import util, util.io;
 import ast.lexer, ast.parser, ast.expression, ast.declaration, ast.error, help;
 import astopt;
@@ -292,7 +292,35 @@ int main(string[] args){
 			}
 			return 0;
 		})
-		.parse(args);
+		.add!("fmt")((string arg) {
+			auto args=arg.split("-");
+			bool success=true;
+			foreach(a;args){
+				bool ok=false;
+				try{ opt.style=to!Style(a); ok=true; }catch(Exception){}
+				try{ opt.amplitudeFormat=to!AmplitudeFormat(a); ok=true; }catch(Exception){}
+				if(!ok){ stderr.writeln("error: unknown formatting option `",a,"`"); }
+				success&=ok;
+			}
+			return !success;
+		})
+		.add!("style")((string arg) {
+			try{
+				opt.style=to!Style(arg);
+				return 0;
+			}catch(Exception){
+				stderr.writeln("error: unknown quantum state style `",arg,"` (valid options are: ",[EnumMembers!Style].map!text.join(" | "),")");
+				return 1;
+			}
+		}).add!("coords")((string arg) {
+			try{
+				opt.amplitudeFormat=to!AmplitudeFormat(arg);
+				return 0;
+			}catch(Exception){
+				stderr.writeln("error: unknown amplitude format `",arg,"` (valid options are: ",[EnumMembers!AmplitudeFormat].map!text.join(" | "),")");
+				return 1;
+			}
+		}).parse(args);
 	if(r) return r;
 
 	// --summarize, if not empty, overrides any other backend choice.
