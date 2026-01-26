@@ -1544,7 +1544,12 @@ struct QState{
 			if(!type) return "Value.init";
 			if(isTypeTy(type)||isQNumericTy(type)) return "_";
 			final switch(tag){
-				static foreach(t;[Tag.cval,Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval]){
+				static foreach(t;[Tag.cval,Tag.fval]){
+					case t:
+						import util.float_:toStringRT;
+						return toStringRT(mixin(text(t)));
+				}
+				static foreach(t;[Tag.qval,Tag.zval,Tag.intval,Tag.uintval]){
 					case t:
 						return text(mixin(text(t)));
 				}
