@@ -105,6 +105,14 @@ string formatQValue(QState qs, QState.Value value){
 	}
 	Q!(QState.Σ,QState.C)[] state=qs.state.byKeyValue.map!(kv=>q(kv.k,kv.v)).array;
 	state.sort!((kv0,kv1)=>value.classicalValue(kv0[0]).compare!"<"(value.classicalValue(kv1[0])).neqZImpl);
+	bool truncated=false;
+	if(opt.top){
+		state.sort!((kv0,kv1)=>abs(kv0[1])<abs(kv1[1]),SwapStrategy.stable);
+		if(opt.topk<state.length){
+			state=state[0..opt.topk];
+			truncated=true;
+		}
+	}
 	// TODO: sort the basis vectors
 	if(opt.amplitudeFormat==AmplitudeFormat.polar){
 		static struct Term{
@@ -174,11 +182,9 @@ string formatQValue(QState qs, QState.Value value){
 		if(opt.style==Style.compact){
 			auto result="";
 			foreach(i,t;terms){
-				result~=t.lead;
+				if(i!=0||t.lead!=" ") result~=t.lead;
 				if(t.angle.length) result~="(";
 				auto m=t.magnitude;
-				if(i==0&&m.length&&m[0]==' ')
-					m=m[1..$];
 				result~=m;
 				if(t.angle.length){
 					result~="∠"~t.angle;
@@ -186,7 +192,7 @@ string formatQValue(QState qs, QState.Value value){
 				}
 				result~="·"~t.basis;
 			}
-			return result.length?result:"0";
+			return result.length?truncated?result~"+⋯":result:truncated?"⋯":"0";
 		}else{
 			struct Row{string c1;string c2;string c3;}
 			Row[] rows;
@@ -206,6 +212,10 @@ string formatQValue(QState qs, QState.Value value){
 				result~=padRight(r.c3,w3);
 				if(i+1<rows.length) result~="\n";
 			}
+			if(truncated){
+				if(result.length) result~="\n+⋯";
+				else result="⋯";
+			}
 			return result;
 		}
 	}
@@ -216,7 +226,7 @@ string formatQValue(QState qs, QState.Value value){
 			auto basisStr=value.classicalValue(k).toBasisStringImpl();
 			result~=text("(", v, ")·",basisStr);
 		}
-		return result;
+		return result.length?truncated?result~"+⋯":result:truncated?"⋯":"";
 	}else{
 		struct Row{string c1,c3;}
 		Row[] rows;
@@ -239,6 +249,10 @@ string formatQValue(QState qs, QState.Value value){
 		foreach(i,r;rows){
 			result~=padLeft(r.c1, w1)~padRight(r.c3, w3);
 			if(i+1<rows.length) result~="\n";
+		}
+		if(truncated){
+			if(result.length) result~="\n+⋯";
+			else result="⋯";
 		}
 		return result;
 	}

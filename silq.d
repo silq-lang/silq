@@ -312,7 +312,8 @@ int main(string[] args){
 				stderr.writeln("error: unknown quantum state style `",arg,"` (valid options are: ",[EnumMembers!Style].map!text.join(" | "),")");
 				return 1;
 			}
-		}).add!("coords")((string arg) {
+		})
+		.add!("coords")((string arg) {
 			try{
 				opt.amplitudeFormat=to!AmplitudeFormat(arg);
 				return 0;
@@ -320,6 +321,17 @@ int main(string[] args){
 				stderr.writeln("error: unknown amplitude format `",arg,"` (valid options are: ",[EnumMembers!AmplitudeFormat].map!text.join(" | "),")");
 				return 1;
 			}
+		})
+		.addOptional!("top")((string arg) {
+			if(arg.length){
+				try opt.topk=to!size_t(arg);
+				catch(Exception){
+					stderr.writeln("error: k for top-k must be integer in range 0..2^",size_t.sizeof*8,);
+					return 1;
+				}
+			}else opt.topk=size_t.max;
+			opt.top=true;
+			return 0;
 		}).parse(args);
 	if(r) return r;
 

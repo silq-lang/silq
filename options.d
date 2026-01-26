@@ -3,7 +3,7 @@
 
 enum Style{
 	compact,
-	verbose,
+	pretty,
 }
 enum AmplitudeFormat{
 	cartesian,
@@ -14,7 +14,9 @@ struct Options{
 	bool trace=false;
 	bool check=false;
 	bool projectForget=false;
-	Style style=Style.verbose;
+	Style style=Style.pretty;
 	AmplitudeFormat amplitudeFormat=AmplitudeFormat.polar;
+	bool top=false;
+	size_t topk=0;
 }
 Options opt; // TODO: get rid of global?

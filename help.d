@@ -21,6 +21,7 @@ The options below may be used.
 --fmt=MODE           quantum state formatting: MODE = STYLE-COORDS
 --style=STYLE        verbosity: compact | verbose (overrides --qfmt style)
 --coords=COORDS      amplitudes: cartesian | polar (overrides --qfmt coords)
+--top[=k]            sort by amplitudes [restrict to top-k]
 
 --inference-limit=n  use at most n iterations for inferring fixed points
 
