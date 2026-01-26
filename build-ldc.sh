@@ -14,5 +14,5 @@ else
     LDMD="ldmd2"
 fi
 
-$LDMD -J. -Jlibrary *.d ast/*.d util/*.d -ofsilq
+$LDMD -J. -Jlibrary *.d ast/*.d util/*.d -ofsilq $@
 

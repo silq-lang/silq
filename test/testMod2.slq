@@ -62,7 +62,7 @@ def main(){
 	assert(g%(b as !ℤ)=(-16.863:!ℝ));
 	assert(approx(g%c,0.137));
 	assert(g%d=(-28.863:!ℝ));
-	assert(g%e=(0.137:!ℝ));
+	assert(approx(g%e,0.137));
 	assert(approx(g%f,-1.263));
 	assert(g%g=0);
 	assert(approx(g%h,-1.233));

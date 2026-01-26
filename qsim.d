@@ -313,8 +313,13 @@ struct QState{
 		}
 		return new_;
 	}
-	alias R=double;
-	alias C=Complex!double;
+	version(EXTENDED_PRECISION){
+		alias R=real;
+		alias C=Complex!real;
+	}else{
+		alias R=double;
+		alias C=Complex!double;
+	}
 	static abstract class QVal{
 		override string toString(){ return text("_ (",typeid(this),")"); }
 		abstract Value get(ref Σ);
@@ -759,7 +764,7 @@ struct QState{
 			BitInt!true intval;
 			BitInt!false uintval;
 			bool bval;
-			ubyte[max(array_.sizeof,record.sizeof,quval.sizeof,cval.sizeof,fval.sizeof,qval.sizeof,zval.sizeof,bval.sizeof)] bits;
+			ubyte[max(array_.sizeof,record.sizeof,quval.sizeof,max(cval.sizeof,cval.alignof),max(fval.sizeof,fval.alignof),qval.sizeof,zval.sizeof,bval.sizeof)] bits;
 		}
 		bool isClassical(){
 			if(!type) return true; // TODO: can we get rid of this?
@@ -828,7 +833,6 @@ struct QState{
 					if(ntag==Tag.bval) return neqZ;
 					enforce(cval.im==0,text("cannot convert `",cval,"` to `",ntype));
 					if(ntag==Tag.zval||ntag==Tag.qval){
-						static assert(R.sizeof*8==64);
 						auto r=cval.re.toℚ;
 						if(ntag==Tag.qval) return makeRational(r);
 						if(ntag==Tag.zval) return makeInteger(.floor(r));
@@ -838,7 +842,6 @@ struct QState{
 				case Tag.fval:
 					if(ntag==Tag.bval) return neqZ;
 					if(ntag==Tag.zval||ntag==Tag.qval){
-						static assert(R.sizeof*8==64);
 						auto r=fval.toℚ;
 						if(ntag==Tag.qval) return makeRational(r);
 						if(ntag==Tag.zval) return makeInteger(.floor(r));
@@ -1263,11 +1266,11 @@ struct QState{
 				          is(S==BitInt!true)||is(S==BitInt!false)||
 				          is(T==BitInt!true)||is(T==BitInt!false))
 					return mixin(text(`a `,op,` b`));
-				else static if(is(S==double)){
+				else static if(is(S==R)){
 					static if(is(T==ℚ)||is(T==ℤ)) return mixin(text(`a `,op,` toReal(b)`)); // TODO: improve
 					else static if(is(T==bool)) return mixin(text(`a `,op,` to!R(b)`));
 					else static assert(0);
-				}else static if(is(T==double)){
+				}else static if(is(T==R)){
 					static if(is(S==ℚ)||is(S==ℤ)) return mixin(text(`toReal(a) `,op,` b`));
 					else static if(is(S==bool)) return mixin(text(`to!R(a) `,op,` b`));
 					else static assert(0);
@@ -1404,9 +1407,12 @@ struct QState{
 					auto m=intval.nbits;
 					enforce(0<=size&&size<=size_t.max,"number of bits is too large");
 					auto n=size.to!size_t;
-					static assert(is(R==double));
 					enforce(a==0&&b==2*PI,"input ranges other than [0,2π) are not yet supported for circular signed fixed-point functions");
-					auto x=a+intval.val.toDouble()/(2.0^^m-!circular1)*(b-a);
+					static if(is(R==double)){
+						auto x=a+intval.val.toDouble()/(2.0^^m-!circular1)*(b-a);
+					}else static if(is(R==real)){
+						auto x=a+intval.val.toReal()/(2.0^^m-!circular1)*(b-a);
+					}
 					static if(circular1){
 						while(x<a) x+=b-a;
 						while(x>b) x-=b-a;
@@ -1421,8 +1427,11 @@ struct QState{
 					auto m=uintval.nbits;
 					enforce(0<=size&&size<=size_t.max,"number of bits is too large");
 					auto n=size.to!size_t;
-					static assert(is(R==double));
-					auto x=a+uintval.val.toDouble()/(2.0^^m-!circular1)*(b-a);
+					static if(is(R==double)){
+						auto x=a+uintval.val.toDouble()/(2.0^^m-!circular1)*(b-a);
+					}else static if(is(R==real)){
+						auto x=a+uintval.val.toReal()/(2.0^^m-!circular1)*(b-a);
+					}else static assert(0);
 					static if(circular1){
 						while(x<a) x+=b-a;
 						while(x>b) x-=b-a;
@@ -1509,8 +1518,11 @@ struct QState{
 			assert(isℝ());
 		}do{
 			if(type==ℝ(true)) return fval;
-			static assert(is(R==double));
-			return toDouble(asℚ());
+			static if(is(R==double)){
+				return toDouble(asℚ());
+			}else static if(is(R==real)){
+				return toReal(asℚ());
+			}else static assert(0);
 		}
 		bool isℂ(){
 			return isℝ()||type==ℂ(true);
@@ -1558,7 +1570,7 @@ struct QState{
 			return text(toStringImpl(FormattingOptions.init),":",type);
 		}
 	}
-	static assert(Value.sizeof==Type.sizeof+Value.bits.sizeof);
+	static assert(Value.sizeof==max(Type.sizeof,Value.cval.alignof,Value.fval.alignof)+Value.bits.sizeof);
 	static Value makeTuple(Expression type,Value[] tuple)in{
 		assert(!!cast(TupleTy)type||cast(ArrayTy)type||cast(VectorTy)type);
 	}do{
