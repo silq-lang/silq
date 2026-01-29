@@ -1,0 +1,25 @@
+// args: --run
+
+def foo(const x:𝔹,const y:𝔹)wild{
+	if measure(H(0)){
+		if x{
+			if y{
+				return 1;
+			}
+		}
+	}
+	if x{
+		if y{
+			return 1;
+		}
+	}
+	return 0;
+}
+
+def main(){
+	for i in 0..2{
+		for j in 0..2{
+			assert(measure(foo(i≠0,j≠0))==(i&j));
+		}
+	}
+}
