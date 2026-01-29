@@ -718,7 +718,7 @@ struct Result {
 
 	@property
 	bool isPass() scope @safe nothrow {
-		return !isReturn && !isAbort;
+		return !retValue && !isAbort;
 	}
 
 	private this() scope @safe nothrow @disable;
@@ -751,6 +751,12 @@ struct Result {
 		if(isAbort) return sc.valError(abortWitness, type);
 		assert(isReturn);
 		return retValue;
+	}
+
+	void forgetCond(ScopeWriter sc) {
+		assert(isConditionalReturn);
+		if(!retCond.isQuantum) return;
+		sc.qcg.forget(retCond.qreg);
 	}
 }
 
@@ -3351,6 +3357,24 @@ class ScopeWriter {
 
 	Result genStmts(Expression[] stmts) {
 		assert(nscope);
+		auto result = Result.passes();
+		Result combineResults(Result ra, Result rb) {
+			if(ra.isReturn || ra.isAbort || rb.isPass) {
+				return ra;
+			}
+			if(ra.isPass) {
+				return rb;
+			}
+			assert(ra.isConditionalReturn);
+			if(rb.isReturn || rb.isAbort) {
+				auto vb = rb.asValue(this, nscope.getFunction().ret);
+				auto vc = valMerge(ra.retCond.invert(), ra.retValue, vb);
+				ra.forgetCond(this);
+				return Result.returns(vc);
+			}
+			assert(rb.isConditionalReturn);
+			assert(0, "TODO multiple subsequent nested conditional returns");
+		}
 		foreach(i, sube; stmts) {
 			if(auto iteExp = cast(ast_exp.IteExp) sube) {
 				auto ite = genIte(iteExp);
@@ -3388,12 +3412,17 @@ class ScopeWriter {
 					scCont.checkEmpty(false);
 
 					auto contRet = scTail.genStmts(stmts[i+1..$]);
-					assert(!contRet.isPass, "TODO nested conditional return");
-					scTail.checkEmpty(!contRet.isReturn);
+					if(!contRet.isPass) {
+						scTail.checkEmpty(!contRet.isReturn);
 
-					auto r = valMerge(rv.cond, contRet.asValue(scTail, nscope.getFunction().ret), rv.value);
-					rv.forgetCond(this);
-					return Result.returns(r);
+						auto r = valMerge(rv.cond, contRet.asValue(scTail, nscope.getFunction().ret), rv.value);
+						rv.forgetCond(this);
+						return Result.returns(r);
+					} else {
+						result = combineResults(result, Result.conditionallyReturns(rv.value, rv.cond));
+						assert(result.isConditionalReturn);
+						continue;
+					}
 				}
 				if(auto rv = cast(ItePartialAbort) ite) {
 					auto scCont = rv.scCont;
@@ -3415,9 +3444,12 @@ class ScopeWriter {
 			}
 
 			auto r = genStmt(sube);
-			if(r.isReturn || r.isAbort) return r;
+			result = combineResults(result, r);
+			if(result.isReturn || result.isAbort) {
+				return result;
+			}
 		}
-		return Result.passes();
+		return result;
 	}
 
 	IteResult genIte(ast_exp.IteExp e) {
@@ -3436,7 +3468,67 @@ class ScopeWriter {
 			return new IteAbort(cond, cr);
 		}
 
-		IteResult r;
+		if(rTrue.isConditionalReturn || rFalse.isConditionalReturn) {
+			bool quantumCondition = cond.isQuantum;
+			if(rTrue.isConditionalReturn && rTrue.retCond.isQuantum) {
+				quantumCondition = true;
+			}
+			if(rFalse.isConditionalReturn && rFalse.retCond.isQuantum) {
+				quantumCondition = true;
+			}
+			// assert(!quantumCondition || !nscope.getFunction().ret.hasClassicalComponent());
+			Value retTrue = null, retFalse = null;
+			CondAny condTrue, condFalse;
+			if(rTrue.isConditionalReturn) {
+				retTrue = rTrue.retValue;
+				condTrue = rTrue.retCond;
+			}else if(rTrue.isAbort || rTrue.isReturn) {
+				retTrue = rTrue.asValue(ifTrue, e.type);
+				condTrue = quantumCondition ? CondAny(ifTrue.qcg.allocQubit(1)) : CondAny(ctx.boolTrue);
+			}else{
+				assert(rTrue.isPass);
+				retTrue = valPack([], []);
+				condTrue = quantumCondition ? CondAny(ifTrue.qcg.allocQubit(1)) : CondAny(ctx.boolFalse);
+			}
+
+			if(rFalse.isConditionalReturn) {
+				retFalse = rFalse.retValue;
+				condFalse = rFalse.retCond;
+			}else if(rFalse.isAbort || rFalse.isReturn) {
+				retFalse = rFalse.asValue(ifFalse, e.type);
+				condFalse = quantumCondition ? CondAny(ifFalse.qcg.allocQubit(1)) : CondAny(ctx.boolTrue);
+			}else{
+				assert(rFalse.isPass);
+				retFalse = valPack([], []);
+				condFalse = quantumCondition ? CondAny(ifFalse.qcg.allocQubit(1)) : CondAny(ctx.boolFalse);
+			}
+
+			Value ret = valMerge(cond, retFalse, retTrue);
+			auto condTrueVal = condTrue.isQuantum ? Value.newReg(null, condTrue.qreg) : Value.newReg(condTrue.creg, null);
+			auto condFalseVal = condFalse.isQuantum ? Value.newReg(null, condFalse.qreg) : Value.newReg(condFalse.creg, null);
+			if(quantumCondition) {
+				if(!condTrue.isQuantum) {
+					condTrueVal = valAllocQubit(condTrue.creg);
+				}
+				if(!condFalse.isQuantum) {
+					condFalseVal = valAllocQubit(condTrue.creg);
+				}
+			}
+			if(condTrue.value != condFalse.value) {
+				assert(0, "TODO: make conditions compatible");
+			}
+			auto condValue = condTrue.value;
+			auto condVal = valMerge(cond, condFalseVal, condTrueVal);
+			CondAny retCond = quantumCondition ? CondAny(condVal.qreg, condValue) : CondAny(condVal.creg, condValue);
+			// TODO: ret must be conditional on condVal instead
+			ScopeWriter ifRetCond, ifNotRetCond;
+			auto deadScope = new ast_scope.NestedScope(nscope);
+			auto liveScope = new ast_scope.NestedScope(nscope);
+			genSplit(cond, ifRetCond, deadScope, ifNotRetCond, liveScope);
+			// TODO: fix
+			return new ItePartialReturn(retCond, ret, ifNotRetCond);
+		}
+
 		if(!rTrue.isPass && !rFalse.isPass) {
 			Value retTrue = rTrue.asValue(ifTrue, e.type);
 			Value retFalse = rFalse.asValue(ifFalse, e.type);
@@ -3463,7 +3555,7 @@ class ScopeWriter {
 			ifFalse.checkEmpty(false);
 			return new ItePartialReturn(cond.invert(), rFalse.retValue, ifTrue);
 		}
-		assert(rTrue.isPass && rFalse.isPass, "TODO conditional return from branch");
+		assert(rTrue.isPass && rFalse.isPass);
 
 		scope loc = PushLocation(ctx, locEnd(e.loc));
 		genMerge(cond, ifFalse, ifTrue);
