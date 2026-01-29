@@ -703,8 +703,18 @@ class RTTI {
 }
 
 struct Result {
-	Value isReturn;
-	CReg isAbort;
+	Value retValue;
+	bool isReturn() scope @safe nothrow {
+		return retValue && retCond is CondAny.init;
+	}
+	CondAny retCond;
+	bool isConditionalReturn() scope @safe nothrow {
+		return retValue && retCond !is CondAny.init;
+	}
+	CReg abortWitness;
+	bool isAbort() scope @safe nothrow {
+		return !!abortWitness;
+	}
 
 	@property
 	bool isPass() scope @safe nothrow {
@@ -713,29 +723,34 @@ struct Result {
 
 	private this() scope @safe nothrow @disable;
 
-	private this(Value isReturn, CReg isAbort) scope @safe nothrow {
-		assert(isReturn is null || isAbort is null);
-		this.isReturn = isReturn;
-		this.isAbort = isAbort;
+	private this(Value retValue, CondAny retCond, CReg abortWitness) scope @safe nothrow {
+		assert((retValue is null && retCond is CondAny.init) || abortWitness is null);
+		this.retValue = retValue;
+		this.retCond = retCond;
+		this.abortWitness = abortWitness;
 	}
 
 	static Result passes() scope @safe nothrow {
-		return Result(null, null);
+		return Result(null, CondAny.init, null);
 	}
 
 	static Result returns(Value value) scope @safe nothrow {
-		return Result(value, null);
+		return Result(value, CondAny.init, null);
+	}
+
+	static Result conditionallyReturns(Value value,CondAny cond) scope @safe nothrow {
+		return Result(value, cond, null);
 	}
 
 	static Result aborts(CReg witness) scope @safe nothrow {
 		assert(witness);
-		return Result(null, witness);
+		return Result(null, CondAny.init, witness);
 	}
 
 	Value asValue(ScopeWriter sc, Expression type) {
-		if(isAbort) return sc.valError(isAbort, type);
+		if(isAbort) return sc.valError(abortWitness, type);
 		assert(isReturn);
-		return isReturn;
+		return retValue;
 	}
 }
 
@@ -2132,8 +2147,8 @@ class ScopeWriter {
 
 		foreach(stmt; stmts) {
 			Result r = genStmt(stmt);
-			if(r.isAbort) return valError(r.isAbort, e.type);
-			assert(!r.isReturn, "early return in compound expression");
+			if(r.isAbort) return valError(r.abortWitness, e.type);
+			assert(!r.isReturn && !r.isConditionalReturn, "early return in compound expression");
 		}
 		auto r = genExprAs(fin, ty);
 		if(e.blscope_) {
@@ -3416,8 +3431,8 @@ class ScopeWriter {
 
 		if(rTrue.isAbort && rFalse.isAbort) {
 			CReg cr;
-			if(cond.isClassical) cr = ccg.cond(cond.creg, rFalse.isAbort, rTrue.isAbort);
-			else cr = rTrue.isAbort;
+			if(cond.isClassical) cr = ccg.cond(cond.creg, rFalse.abortWitness, rTrue.abortWitness);
+			else cr = rTrue.abortWitness;
 			return new IteAbort(cond, cr);
 		}
 
@@ -3431,24 +3446,24 @@ class ScopeWriter {
 		if(rTrue.isAbort) {
 			assert(rFalse.isPass);
 			ifTrue.checkEmpty(true);
-			return new ItePartialAbort(cond, rTrue.isAbort, ifFalse);
+			return new ItePartialAbort(cond, rTrue.abortWitness, ifFalse);
 		}
 		if(rTrue.isReturn) {
 			assert(rFalse.isPass);
 			ifTrue.checkEmpty(false);
-			return new ItePartialReturn(cond, rTrue.isReturn, ifFalse);
+			return new ItePartialReturn(cond, rTrue.retValue, ifFalse);
 		}
 		if(rFalse.isAbort) {
 			assert(rTrue.isPass);
 			ifFalse.checkEmpty(true);
-			return new ItePartialAbort(cond.invert(), rFalse.isAbort, ifTrue);
+			return new ItePartialAbort(cond.invert(), rFalse.abortWitness, ifTrue);
 		}
 		if(rFalse.isReturn) {
 			assert(rTrue.isPass);
 			ifFalse.checkEmpty(false);
-			return new ItePartialReturn(cond.invert(), rFalse.isReturn, ifTrue);
+			return new ItePartialReturn(cond.invert(), rFalse.retValue, ifTrue);
 		}
-		assert(rTrue.isPass && rFalse.isPass);
+		assert(rTrue.isPass && rFalse.isPass, "TODO conditional return from branch");
 
 		scope loc = PushLocation(ctx, locEnd(e.loc));
 		genMerge(cond, ifFalse, ifTrue);
@@ -3520,7 +3535,7 @@ class ScopeWriter {
 
 	Result implStmt(ast_exp.CommaExp e) {
 		auto r = genStmt(e.e1);
-		assert(!r.isReturn, "return in lhs of CommaExp");
+		assert(!r.isReturn && !r.isConditionalReturn, "return in lhs of CommaExp");
 		if(r.isAbort) return r;
 		return genStmt(e.e2);
 	}
@@ -3932,11 +3947,11 @@ class ScopeWriter {
 		bscope = bsc;
 		Result r1 = implStmt(e.trans);
 		bscope = oldBscope;
-		assert(!r1.isReturn, "TODO return in with statement");
+		assert(!r1.isReturn && !r1.isConditionalReturn, "TODO return in with statement");
 		if(r1.isAbort) return r1;
 
 		Result r2 = implStmt(e.bdy);
-		assert(!r2.isReturn, "TODO return in with statement");
+		assert(!r2.isReturn && !r2.isConditionalReturn, "TODO return in with statement");
 		if(r2.isAbort) return r2;
 
 		oldBscope = bscope;
@@ -3944,7 +3959,7 @@ class ScopeWriter {
 		bsc.isItrans = true;
 		Result r3 = implStmt(e.itrans);
 		bscope = oldBscope;
-		assert(!r3.isReturn, "TODO return in with statement");
+		assert(!r3.isReturn && !r3.isConditionalReturn, "TODO return in with statement");
 		if(r3.isAbort) return r3;
 
 		return Result.passes();
