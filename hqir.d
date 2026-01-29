@@ -3520,7 +3520,7 @@ class ScopeWriter {
 			auto condValue = condTrue.value;
 			auto condVal = valMerge(cond, condFalseVal, condTrueVal);
 			CondAny retCond = quantumCondition ? CondAny(condVal.qreg, condValue) : CondAny(condVal.creg, condValue);
-			// TODO: ret must be conditional on condVal instead
+			// TODO: ret and all quantum vars must now be conditional on condVal instead
 			ScopeWriter ifRetCond, ifNotRetCond;
 			auto deadScope = new ast_scope.NestedScope(nscope);
 			auto liveScope = new ast_scope.NestedScope(nscope);
