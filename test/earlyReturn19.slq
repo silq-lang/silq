@@ -1,0 +1,11 @@
+// args: --run
+
+def foo(n:!ℕ){
+	while n≤1{
+		if measure(H(0)) { return 0; }
+		n+=1;
+	}
+	return n;
+}
+
+def main()⇒foo(0);
