@@ -3478,55 +3478,98 @@ class ScopeWriter {
 			}
 			// assert(!quantumCondition || !nscope.getFunction().ret.hasClassicalComponent());
 			Value retTrue = null, retFalse = null;
-			CondAny condTrue, condFalse;
+			Value condTrue, condFalse;
 			if(rTrue.isConditionalReturn) {
 				retTrue = rTrue.retValue;
-				condTrue = rTrue.retCond;
+				auto retCond = rTrue.retCond;
+				auto valT = quantumCondition ? ifTrue.withCond(nscope, retCond).valAllocQubit(1) : ifTrue.valNewC(ctx.boolTrue);
+				auto valF = quantumCondition ? ifTrue.withCond(nscope, retCond.invert()).valAllocQubit(0) : ifTrue.valNewC(ctx.boolFalse);
+				condTrue = valMerge(retCond, valF, valT); // TODO: this is overkill for retCond.value = true or retCond.isClassical
 			}else if(rTrue.isAbort || rTrue.isReturn) {
 				retTrue = rTrue.asValue(ifTrue, e.type);
-				condTrue = quantumCondition ? CondAny(ifTrue.qcg.allocQubit(1)) : CondAny(ctx.boolTrue);
+				condTrue = quantumCondition ? ifTrue.valAllocQubit(1) : ifTrue.valNewC(ctx.boolTrue);
 			}else{
 				assert(rTrue.isPass);
-				retTrue = valPack([], []);
-				condTrue = quantumCondition ? CondAny(ifTrue.qcg.allocQubit(0)) : CondAny(ctx.boolFalse);
+				condTrue = quantumCondition ? ifTrue.valAllocQubit(0) : ifTrue.valNewC(ctx.boolFalse);
 			}
 
 			if(rFalse.isConditionalReturn) {
 				retFalse = rFalse.retValue;
-				condFalse = rFalse.retCond;
+				auto retCond = rFalse.retCond;
+				auto valT = quantumCondition ? ifFalse.withCond(nscope, retCond).valAllocQubit(1) : ifFalse.valNewC(ctx.boolTrue);
+				auto valF = quantumCondition ? ifFalse.withCond(nscope, retCond.invert()).valAllocQubit(0) : ifFalse.valNewC(ctx.boolFalse);
+				condFalse = valMerge(retCond, valF, valT); // TODO: this is overkill for retCond.value = true or retCond.isClassical
 			}else if(rFalse.isAbort || rFalse.isReturn) {
 				retFalse = rFalse.asValue(ifFalse, e.type);
-				condFalse = quantumCondition ? CondAny(ifFalse.qcg.allocQubit(1)) : CondAny(ctx.boolTrue);
+				condFalse = quantumCondition ? ifFalse.valAllocQubit(1) : ifFalse.valNewC(ctx.boolTrue);
 			}else{
 				assert(rFalse.isPass);
-				retFalse = valPack([], []);
-				condFalse = quantumCondition ? CondAny(ifFalse.qcg.allocQubit(0)) : CondAny(ctx.boolFalse);
+				condFalse = quantumCondition ? ifFalse.valAllocQubit(0) : ifFalse.valNewC(ctx.boolFalse);
 			}
 
-			Value ret = valMerge(cond, retFalse, retTrue);
-			auto condTrueVal = condTrue.isQuantum ? Value.newReg(null, condTrue.qreg) : Value.newReg(condTrue.creg, null);
-			auto condFalseVal = condFalse.isQuantum ? Value.newReg(null, condFalse.qreg) : Value.newReg(condFalse.creg, null);
+			assert(condTrue.hasClassical ^ condTrue.hasQuantum);
+			assert(condFalse.hasClassical ^ condFalse.hasQuantum);
+
 			if(quantumCondition) {
-				if(!condTrue.isQuantum) {
-					condTrueVal = valAllocQubit(condTrue.creg);
+				if(condTrue.hasClassical) {
+					condTrue = ifTrue.valAllocQubit(condTrue.creg);
 				}
-				if(!condFalse.isQuantum) {
-					condFalseVal = valAllocQubit(condTrue.creg);
+				if(condFalse.hasClassical) {
+					condFalse = ifFalse.valAllocQubit(condFalse.creg);
 				}
 			}
-			if(condTrue.value != condFalse.value) {
-				assert(0, "TODO: make conditions compatible");
+			assert(condTrue.hasClassical ^ condTrue.hasQuantum);
+			assert(condTrue.hasClassical == condFalse.hasClassical);
+			assert(condTrue.hasQuantum == condFalse.hasQuantum);
+
+			auto retCondVal = valMerge(cond, condFalse, condTrue);
+			assert(retCondVal.hasClassical == !quantumCondition);
+			assert(retCondVal.hasQuantum == quantumCondition);
+			auto retCond = quantumCondition ? CondAny(retCondVal.qreg) : CondAny(retCondVal.creg);
+
+			Value ret;
+			ScopeWriter retScope;
+			if(retFalse && retTrue) {
+				ret = valMerge(cond, retFalse, retTrue);
+				retScope = this;
+			}else if(retTrue) {
+				ret = retTrue;
+				retScope = ifTrue;
+			}else if(retFalse) {
+				ret = retFalse;
+				retScope = ifFalse;
+			}else assert(0);
+
+			Value retUnreachable, retReachable;
+			valSplit(retCond, retUnreachable, retReachable, ret);
+			retScope.withCond(nscope, retCond.invert()).valDeallocError(retUnreachable);
+
+			if(quantumCondition && retScope !is this) {
+				auto retTy = nscope.getFunction().ret;
+				if(retTrue) {
+					auto retFalseUnreachable = Value.newReg(null, quantumCondition ? ifFalse.withCond(nscope, retCond).qcg.allocError() : null);
+					ret = valMerge(cond, retFalseUnreachable, retReachable);
+				}else if(retFalse) {
+					auto retTrueUnreachable = Value.newReg(null, quantumCondition ? ifFalse.withCond(nscope, retCond).qcg.allocError() : null);
+					ret = valMerge(cond, retReachable, retTrueUnreachable);
+				}else assert(0);
+			} else {
+				ret = retReachable;
 			}
-			auto condValue = condTrue.value;
-			auto condVal = valMerge(cond, condFalseVal, condTrueVal);
-			CondAny retCond = quantumCondition ? CondAny(condVal.qreg, condValue) : CondAny(condVal.creg, condValue);
-			// TODO: ret and all quantum vars must now be conditional on condVal instead
-			ScopeWriter ifRetCond, ifNotRetCond;
-			auto deadScope = new ast_scope.NestedScope(nscope);
-			auto liveScope = new ast_scope.NestedScope(nscope);
-			genSplit(cond, ifRetCond, deadScope, ifNotRetCond, liveScope);
-			// TODO: fix
-			return new ItePartialReturn(retCond, ret, ifNotRetCond);
+
+			auto reachable = withCond(nscope, retCond.invert());
+
+			// TODO: all quantum vars must now be conditional on condVal instead
+
+			if(rTrue.isConditionalReturn()) {
+				rTrue.forgetCond(this);
+			}
+			if(rFalse.isConditionalReturn()) {
+				rFalse.forgetCond(this);
+			}
+
+			if(cond.isQuantum) qcg.forget(cond.qreg);
+			return new ItePartialReturn(retCond, ret, reachable);
 		}
 
 		if(!rTrue.isPass && !rFalse.isPass) {
