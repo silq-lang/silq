@@ -1,4 +1,4 @@
-def foo(const x:𝔹,const y:𝔹,const z:𝔹,const w:𝔹)wild{
+def foo(const x:!𝔹,const y:!𝔹,const z:!𝔹,const w:!𝔹)wild{
 	if x{
 		if y{
 			return 1;
