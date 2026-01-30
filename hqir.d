@@ -3478,7 +3478,7 @@ class ScopeWriter {
 			}else{
 				assert(rTrue.isPass);
 				retTrue = valPack([], []);
-				condTrue = quantumCondition ? CondAny(ifTrue.qcg.allocQubit(1)) : CondAny(ctx.boolFalse);
+				condTrue = quantumCondition ? CondAny(ifTrue.qcg.allocQubit(0)) : CondAny(ctx.boolFalse);
 			}
 
 			if(rFalse.isConditionalReturn) {
@@ -3490,7 +3490,7 @@ class ScopeWriter {
 			}else{
 				assert(rFalse.isPass);
 				retFalse = valPack([], []);
-				condFalse = quantumCondition ? CondAny(ifFalse.qcg.allocQubit(1)) : CondAny(ctx.boolFalse);
+				condFalse = quantumCondition ? CondAny(ifFalse.qcg.allocQubit(0)) : CondAny(ctx.boolFalse);
 			}
 
 			Value ret = valMerge(cond, retFalse, retTrue);
