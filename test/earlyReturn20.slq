@@ -1,0 +1,11 @@
+// args: --run
+
+def main(){
+	x:=0;
+	while true{
+		if measure(H(0)) {
+			if measure(H(0)) { return x; }
+		}
+		x+=1;
+	}
+}
