@@ -5,7 +5,7 @@ import std.array: Appender, appender, array, join;
 import std.string: endsWith;
 import std.format: format;
 import std.functional: partial;
-import std.algorithm: map, filter, count, all, any, fold;
+import std.algorithm: map, filter, canFind, count, all, any, fold;
 import std.range: iota, zip, repeat;
 import std.utf: byCodeUnit;
 import std.bigint: BigInt, toDecimalString;
@@ -719,6 +719,11 @@ struct Result {
 	@property
 	bool isPass() scope @safe nothrow {
 		return !retValue && !isAbort;
+	}
+
+	@property
+	bool mayPass() scope @safe nothrow {
+		return !(isReturn || isAbort);
 	}
 
 	private this() scope @safe nothrow @disable;
@@ -3355,9 +3360,8 @@ class ScopeWriter {
 		return r;
 	}
 
-	Result genStmts(Expression[] stmts) {
+	Result genStmts(Expression[] stmts, Result result = Result.passes()) {
 		assert(nscope);
-		auto result = Result.passes();
 		Result combineResults(Result ra, Result rb) {
 			if(ra.isReturn || ra.isAbort || rb.isPass) {
 				return ra;
@@ -3392,36 +3396,45 @@ class ScopeWriter {
 				}
 				if(auto rv = cast(ItePartialReturn) ite) {
 					auto scCont = rv.scCont;
-					auto scTail = new ScopeWriter(nscope, scCont);
+					ScopeWriter scTail;
+					if(scCont.nscope !is nscope) {
+						assert(scCont.nscope.parent is nscope);
+						scTail = new ScopeWriter(nscope, scCont);
 
-					// move classical variables so that they can be consumed
-					foreach(name, ref var; this.vars) {
-						if(!var.value) continue;
-						assert(!var.value.hasQuantum, format("returning if statement did not split variable %s", name));
-						scTail.vars[name] = var;
+						// move classical variables so that they can be consumed
+						foreach(name, ref var; this.vars) {
+							if(!var.value) continue;
+							assert(!var.value.hasQuantum, format("returning if statement did not split variable %s", name));
+							scTail.vars[name] = var;
+						}
+						checkEmpty(false);
+
+						foreach(decl; scCont.nscope.mergedVars) {
+							auto outer = decl.mergedInto;
+							assert(outer.scope_ is nscope);
+							auto ty = typeForDecl(outer);
+							assert(ty == typeForDecl(decl));
+							assert(outer.mergedFrom == [decl]);
+							scTail.defineVar(outer, scCont.getVar(decl, false));
+						}
+						scCont.checkEmpty(false);
+					}else{
+						scTail = rv.scCont;
 					}
-					checkEmpty(false);
 
-					foreach(decl; scCont.nscope.mergedVars) {
-						auto outer = decl.mergedInto;
-						auto ty = typeForDecl(outer);
-						assert(ty == typeForDecl(decl));
-						assert(outer.mergedFrom == [decl]);
-						scTail.defineVar(outer, scCont.getVar(decl, false));
-					}
-					scCont.checkEmpty(false);
-
-					auto contRet = scTail.genStmts(stmts[i+1..$]);
-					if(!contRet.isPass) {
-						scTail.checkEmpty(!contRet.isReturn);
+					auto contRet = scTail.genStmts(stmts[i+1..$], result);
+					if(contRet.isReturn || contRet.isAbort) {
+						scTail.checkEmpty(contRet.isAbort);
 
 						auto r = valMerge(rv.cond, contRet.asValue(scTail, nscope.getFunction().ret), rv.value);
 						rv.forgetCond(this);
 						return Result.returns(r);
 					} else {
 						result = combineResults(result, Result.conditionallyReturns(rv.value, rv.cond));
+						result = combineResults(result, contRet);
 						assert(result.isConditionalReturn);
-						continue;
+						vars = scTail.vars;
+						return result;
 					}
 				}
 				if(auto rv = cast(ItePartialAbort) ite) {
@@ -3541,7 +3554,7 @@ class ScopeWriter {
 			}else assert(0);
 
 			Value retUnreachable, retReachable;
-			valSplit(retCond, retUnreachable, retReachable, ret);
+			retScope.valSplit(retCond, retUnreachable, retReachable, ret);
 			retScope.withCond(nscope, retCond.invert()).valDeallocError(retUnreachable);
 
 			if(quantumCondition && retScope !is this) {
@@ -3557,15 +3570,58 @@ class ScopeWriter {
 				ret = retReachable;
 			}
 
-			auto reachable = withCond(nscope, retCond.invert());
 
-			// TODO: all quantum vars must now be conditional on condVal instead
+			static ScopeWriter addCond(ScopeWriter w, CondAny cond) {
+				auto w0 = w.withCond(w.nscope, cond.invert());
+				auto w1 = w.withCond(w.nscope, cond);
+				foreach(name, ref var; w.vars) {
+					if(!var.value) continue;
+					Value v0, v1;
+					w.valSplit(cond, v0, v1, var.value);
+					w0.valDeallocError(v0);
+					w1.defineVar(var.decl, v1);
+					var.value = null;
+				}
+				return w1;
+			}
+			static ScopeWriter removeCond(ScopeWriter w, CondAny cond) {
+				foreach(name, ref var; w.vars) {
+					if(!var.value) continue;
+					auto valUnreachable = Value.newReg(null, cond.isQuantum ? w.withCond(w.nscope, cond.invert()).qcg.allocError() : null);
+					var.value = w.valMerge(cond, valUnreachable, var.value);
+				}
+				return w;
+			}
+
+			auto ifFalseOrig = ifFalse, ifTrueOrig = ifTrue;
+
+			if(rFalse.mayPass) {
+				ifFalse = addCond(ifFalse, retCond.invert());
+				if(rFalse.isConditionalReturn)
+					ifFalse = removeCond(ifFalse, rFalse.retCond.invert());
+			}
+			if(rTrue.mayPass) {
+				ifTrue = addCond(ifTrue, retCond.invert());
+				if(rTrue.isConditionalReturn) {
+					ifTrue = removeCond(ifTrue, rTrue.retCond.invert());
+				}
+			}
+
+			ScopeWriter reachable;
+			if(rFalse.mayPass && rTrue.mayPass) {
+				reachable = withCond(nscope, retCond.invert());
+				reachable.genMerge(cond, ifFalse, ifTrue);
+			}else if(rFalse.mayPass) {
+				reachable = removeCond(ifFalse, cond);
+			}else if(rTrue.mayPass) {
+				reachable = removeCond(ifTrue, cond);
+			}else assert(0);
 
 			if(rTrue.isConditionalReturn()) {
-				rTrue.forgetCond(this);
+				rTrue.forgetCond(ifTrueOrig);
 			}
 			if(rFalse.isConditionalReturn()) {
-				rFalse.forgetCond(this);
+				rFalse.forgetCond(ifFalseOrig);
 			}
 
 			if(cond.isQuantum) qcg.forget(cond.qreg);
@@ -3650,7 +3706,7 @@ class ScopeWriter {
 			sub.defineVar(decl, getVar(outer, false));
 		}
 		auto r = sub.genCompoundStmt(e);
-		if(r.isPass) {
+		if(r.mayPass) {
 			foreach(decl; sub.nscope.mergedVars) {
 				assert(decl.scope_ is sub.nscope);
 				auto outer = decl.mergedInto;
@@ -6047,7 +6103,7 @@ class Writer {
 		sc.genExpr(fd.rret ? fd.rret : fd.ret);
 
 		auto res = sc.genStmt(fd.body_);
-		assert(!res.isPass, format("function %s did not return", fd.name));
+		assert(!res.mayPass, format("function %s did not return", fd.name));
 
 		// clear const parameters
 		foreach(i, param; fd.params) {
