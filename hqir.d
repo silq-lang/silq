@@ -3497,7 +3497,7 @@ class ScopeWriter {
 				auto retCond = rTrue.retCond;
 				auto valT = quantumCondition ? ifTrue.withCond(nscope, retCond).valAllocQubit(1) : ifTrue.valNewC(ctx.boolTrue);
 				auto valF = quantumCondition ? ifTrue.withCond(nscope, retCond.invert()).valAllocQubit(0) : ifTrue.valNewC(ctx.boolFalse);
-				condTrue = valMerge(retCond, valF, valT); // TODO: this is overkill for retCond.value = true or retCond.isClassical
+				condTrue = ifTrue.valMerge(retCond, valF, valT); // TODO: this is overkill for retCond.value = true or retCond.isClassical
 			}else if(rTrue.isAbort || rTrue.isReturn) {
 				retTrue = rTrue.asValue(ifTrue, e.type);
 				condTrue = quantumCondition ? ifTrue.valAllocQubit(1) : ifTrue.valNewC(ctx.boolTrue);
@@ -3511,7 +3511,7 @@ class ScopeWriter {
 				auto retCond = rFalse.retCond;
 				auto valT = quantumCondition ? ifFalse.withCond(nscope, retCond).valAllocQubit(1) : ifFalse.valNewC(ctx.boolTrue);
 				auto valF = quantumCondition ? ifFalse.withCond(nscope, retCond.invert()).valAllocQubit(0) : ifFalse.valNewC(ctx.boolFalse);
-				condFalse = valMerge(retCond, valF, valT); // TODO: this is overkill for retCond.value = true or retCond.isClassical
+				condFalse = ifFalse.valMerge(retCond, valF, valT); // TODO: this is overkill for retCond.value = true or retCond.isClassical
 			}else if(rFalse.isAbort || rFalse.isReturn) {
 				retFalse = rFalse.asValue(ifFalse, e.type);
 				condFalse = quantumCondition ? ifFalse.valAllocQubit(1) : ifFalse.valNewC(ctx.boolTrue);
@@ -3540,10 +3540,36 @@ class ScopeWriter {
 			assert(retCondVal.hasQuantum == quantumCondition);
 			auto retCond = quantumCondition ? CondAny(retCondVal.qreg) : CondAny(retCondVal.creg);
 
+			Value updateRetCond(ScopeWriter w, Value ret, Result r) {
+				auto wRet = w;
+				if(r.isConditionalReturn) {
+					wRet = wRet.withCond(wRet.nscope, r.retCond);
+				}
+				Value retUnreachable, retReachable;
+				wRet.valSplit(retCond, retUnreachable, retReachable, ret);
+				wRet.withCond(wRet.nscope, retCond.invert()).valDeallocError(retUnreachable);
+				if(r.isConditionalReturn) {
+					auto wRet2 = w.withCond(w.nscope, retCond);
+					retUnreachable = Value.newReg(null, r.retCond.isQuantum ? wRet2.withCond(wRet.nscope, r.retCond.invert()).qcg.allocError() : null);
+					ret = wRet2.valMerge(r.retCond, retUnreachable, retReachable);
+				} else {
+					ret = retReachable;
+				}
+				return ret;
+			}
+
+			if(retTrue) {
+				retTrue = updateRetCond(ifTrue, retTrue, rTrue);
+			}
+
+			if(retFalse) {
+				retFalse = updateRetCond(ifFalse, retFalse, rFalse);
+			}
+
 			Value ret;
 			ScopeWriter retScope;
 			if(retFalse && retTrue) {
-				ret = valMerge(cond, retFalse, retTrue);
+				ret = withCond(nscope, retCond).valMerge(cond, retFalse, retTrue);
 				retScope = this;
 			}else if(retTrue) {
 				ret = retTrue;
@@ -3553,23 +3579,15 @@ class ScopeWriter {
 				retScope = ifFalse;
 			}else assert(0);
 
-			Value retUnreachable, retReachable;
-			retScope.valSplit(retCond, retUnreachable, retReachable, ret);
-			retScope.withCond(nscope, retCond.invert()).valDeallocError(retUnreachable);
-
 			if(quantumCondition && retScope !is this) {
-				auto retTy = nscope.getFunction().ret;
 				if(retTrue) {
-					auto retFalseUnreachable = Value.newReg(null, quantumCondition ? ifFalse.withCond(nscope, retCond).qcg.allocError() : null);
-					ret = valMerge(cond, retFalseUnreachable, retReachable);
+					auto retFalseUnreachable = Value.newReg(null, retTrue.hasQuantum ? ifFalse.withCond(nscope, retCond).qcg.allocError() : null);
+					ret = withCond(nscope, retCond).valMerge(cond, retFalseUnreachable, retTrue);
 				}else if(retFalse) {
-					auto retTrueUnreachable = Value.newReg(null, quantumCondition ? ifFalse.withCond(nscope, retCond).qcg.allocError() : null);
-					ret = valMerge(cond, retReachable, retTrueUnreachable);
+					auto retTrueUnreachable = Value.newReg(null, retFalse.hasQuantum ? ifTrue.withCond(nscope, retCond).qcg.allocError() : null);
+					ret = valMerge(cond, retFalse, retTrueUnreachable);
 				}else assert(0);
-			} else {
-				ret = retReachable;
 			}
-
 
 			static ScopeWriter addCond(ScopeWriter w, CondAny cond) {
 				auto w0 = w.withCond(w.nscope, cond.invert());
