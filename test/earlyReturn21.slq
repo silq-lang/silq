@@ -1,0 +1,11 @@
+
+def main(){
+	x:=1:𝔹;
+	y:=1:𝔹;
+	if x{
+		if y{
+			return (x,y);
+		}
+	}
+	return (y,x);
+}
