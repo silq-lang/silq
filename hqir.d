@@ -3419,7 +3419,7 @@ class ScopeWriter {
 						}
 						scCont.checkEmpty(false);
 					}else{
-						scTail = rv.scCont;
+						scTail = scCont;
 					}
 
 					auto contRet = scTail.genStmts(stmts[i+1..$], result);
@@ -3456,8 +3456,14 @@ class ScopeWriter {
 				assert(false, "Bad if-then-else result");
 			}
 
-			auto r = genStmt(sube);
-			result = combineResults(result, r);
+			if(result.isConditionalReturn) {
+				auto scCondRet = withCond(nscope, result.retCond.invert());
+				scCondRet.vars = vars;
+				result = combineResults(result, scCondRet.genStmt(sube));
+				vars = scCondRet.vars;
+			} else {
+				result = combineResults(result, genStmt(sube));
+			}
 			if(result.isReturn || result.isAbort) {
 				return result;
 			}
@@ -3589,14 +3595,19 @@ class ScopeWriter {
 				}else assert(0);
 			}
 
-			static ScopeWriter addCond(ScopeWriter w, CondAny cond) {
+			static ScopeWriter addCond(ScopeWriter w, CondAny cond, Result r) {
 				auto w0 = w.withCond(w.nscope, cond.invert());
 				auto w1 = w.withCond(w.nscope, cond);
+				auto wg = w, w0g = w0;
+				if(r.isConditionalReturn) {
+					wg = wg.withCond(wg.nscope, r.retCond.invert());
+					w0g = w0g.withCond(w0g.nscope, r.retCond.invert());
+				}
 				foreach(name, ref var; w.vars) {
 					if(!var.value) continue;
 					Value v0, v1;
-					w.valSplit(cond, v0, v1, var.value);
-					w0.valDeallocError(v0);
+					wg.valSplit(cond, v0, v1, var.value);
+					w0g.valDeallocError(v0);
 					w1.defineVar(var.decl, v1);
 					var.value = null;
 				}
@@ -3614,12 +3625,13 @@ class ScopeWriter {
 			auto ifFalseOrig = ifFalse, ifTrueOrig = ifTrue;
 
 			if(rFalse.mayPass) {
-				ifFalse = addCond(ifFalse, retCond.invert());
-				if(rFalse.isConditionalReturn)
+				ifFalse = addCond(ifFalse, retCond.invert(), rFalse);
+				if(rFalse.isConditionalReturn) {
 					ifFalse = removeCond(ifFalse, rFalse.retCond.invert());
+				}
 			}
 			if(rTrue.mayPass) {
-				ifTrue = addCond(ifTrue, retCond.invert());
+				ifTrue = addCond(ifTrue, retCond.invert(), rTrue);
 				if(rTrue.isConditionalReturn) {
 					ifTrue = removeCond(ifTrue, rTrue.retCond.invert());
 				}
