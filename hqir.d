@@ -82,6 +82,16 @@ private string mangleName(ast_exp.Identifier id) {
 	return b[];
 }
 
+private bool isReturnLambda(ast_decl.FunctionDef parent, ast_decl.FunctionDef child) {
+	if(Id.s!"artificial" !in parent.attributes) return false;
+	if(parent.body_.s.length != 1) return false;
+	auto ret = cast(ast_exp.ReturnExp)parent.body_.s[0];
+	if(!ret) return false;
+	auto lam = cast(ast_exp.LambdaExp)ret.e;
+	if(!lam) return false;
+	return lam.fd is child;
+}
+
 static immutable string HEX = "0123456789abcdef";
 private void escapeStr(Appender!string* o, string val) {
 	o.put('"');
@@ -5684,7 +5694,12 @@ class Writer {
 		ast_exp.Identifier name = fd.rename ? fd.rename : fd.name ? fd.name : null;
 		if(ast_decl.FunctionDef parent = fd.fscope_.parent.getFunction()) {
 			auto pi = getFunctionInfo(parent);
-			fi.prettyName = pi.prettyName ~ "." ~ (name ? name.id.str : "<lambda>");
+			fi.prettyName = pi.prettyName;
+			if(name) {
+				fi.prettyName ~= "." ~ name.id.str;
+			} else if(!isReturnLambda(parent, fd)) {
+				fi.prettyName ~= ".<lambda>";
+			};
 			fi.directName = pi.directName;
 		} else {
 			fi.prettyName = name ? name.id.str : "<unnamed>";
@@ -5705,6 +5720,25 @@ class Writer {
 			}
 		}
 		byDirectName[fi.directName] = fi;
+
+		if(fd.isSquare) {
+			fi.prettyName ~= "[";
+		} else {
+			fi.prettyName ~= "(";
+		}
+		if(fd.isTuple) {
+			foreach(p; fd.params) {
+				fi.prettyName ~= p.name.toString();
+				fi.prettyName ~= ",";
+			}
+		} else {
+			fi.prettyName ~= fd.params[0].name.toString();
+		}
+		if(fd.isSquare) {
+			fi.prettyName ~= "]";
+		} else {
+			fi.prettyName ~= ")";
+		}
 
 		fi.indirectName = "silq_indirect." ~ fi.directName[14..$];
 		fi.retHasClassical = typeHasClassical(fd.ret);
