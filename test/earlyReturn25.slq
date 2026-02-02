@@ -1,0 +1,11 @@
+// args: --run
+
+def main(){
+	x:=H(0);
+	for i in 0..5{
+		if i=4{
+			return x;
+		}
+	}
+	assert(0);
+}
