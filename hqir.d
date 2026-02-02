@@ -640,6 +640,11 @@ struct CondAny {
 		return CondQ(qreg, value);
 	}
 
+	@property
+	CondC ccond() pure @safe nothrow {
+		return CondC(creg, value);
+	}
+
 	CondAny invert() @safe nothrow {
 		return isQuantum ? CondAny(qreg, !value) : CondAny(creg, !value);
 	}
@@ -3759,6 +3764,8 @@ class ScopeWriter {
 					auto valUnreachable = Value.newReg(null, cond.isQuantum ? w.withCond(w.nscope, cond.invert()).qcg.allocError() : null);
 					var.value = w.valMerge(cond, valUnreachable, var.value);
 				}
+				if(cond.isQuantum) w.qcg.condQ=w.qcg.condQ.filter!(qc=>qc != cond.qcond).array;
+				else w.ccg.condC=w.ccg.condC.filter!(cc=>cc != cond.ccond).array;
 				return w;
 			}
 
