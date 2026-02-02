@@ -705,12 +705,8 @@ class RTTI {
 struct CondRetValue {
 	Value cond;
 
-	static CondRetValue alloc(bool val, bool underQuantumCondition, ScopeWriter w) {
-		return CondRetValue(underQuantumCondition ? w.valAllocQubit(val) : w.valNewC(val ? w.ctx.boolTrue : w.ctx.boolFalse));
-	}
-
-	static CondRetValue alloc(CReg creg, bool underQuantumCondition, ScopeWriter w) {
-		return CondRetValue(underQuantumCondition ? w.valAllocQubit(creg) : w.valNewC(creg));
+	static CondRetValue makeConst(bool val, ScopeWriter w) {
+		return CondRetValue(w.valNewC(val ? w.ctx.boolTrue : w.ctx.boolFalse));
 	}
 
 	CondRetValue toQuantum(ScopeWriter w) {
@@ -718,7 +714,7 @@ struct CondRetValue {
 		if(cond.hasQuantum) {
 			return this;
 		}
-		return alloc(cond.creg, true, w);
+		return CondRetValue(w.valAllocQubit(cond.creg));
 	}
 
 	bool hasQuantum() {
@@ -787,9 +783,9 @@ struct CondRet {
 		return w.withCond(nscope, cond);
 	}
 
-	CondRetValue asCondRetValue(bool underQuantumCondition, ScopeWriter w) {
-		auto valT = underQuantumCondition ? w.withCond(w.nscope, cond).valAllocQubit(1) : w.valNewC(w.ctx.boolTrue);
-		auto valF = underQuantumCondition ? w.withCond(w.nscope, cond.invert()).valAllocQubit(0) : w.valNewC(w.ctx.boolFalse);
+	CondRetValue asCondRetValue(ScopeWriter w) {
+		auto valT = cond.isQuantum ? w.withCond(w.nscope, cond).valAllocQubit(1) : w.valNewC(w.ctx.boolTrue);
+		auto valF = cond.isQuantum ? w.withCond(w.nscope, cond.invert()).valAllocQubit(0) : w.valNewC(w.ctx.boolFalse);
 		return CondRetValue(valMerge(valF, valT, w)); // TODO: this is overkill for cond.value = true or cond.isClassical
 	}
 
@@ -865,7 +861,6 @@ struct CondRet {
 		return w1;
 	}
 }
-
 
 struct RetValue {
 	Value classicalRet;
@@ -3692,36 +3687,28 @@ class ScopeWriter {
 		}
 
 		if(rTrue.isConditionalReturn || rFalse.isConditionalReturn) {
-			bool quantumCondition = cond.isQuantum;
-			if(rTrue.isConditionalReturn && rTrue.retCond.isQuantum) { // TODO: remove
-				quantumCondition = true;
-			}
-			if(rFalse.isConditionalReturn && rFalse.retCond.isQuantum) { // TODO: remove
-				quantumCondition = true;
-			}
-			// assert(!quantumCondition || !nscope.getFunction().ret.hasClassicalComponent());
 			RetValue retTrue = RetValue.init, retFalse = RetValue.init;
 			CondRetValue condTrue, condFalse;
 			if(rTrue.isConditionalReturn) {
 				retTrue = rTrue.retValue;
-				condTrue = rTrue.retCond.asCondRetValue(quantumCondition, ifTrue);
+				condTrue = rTrue.retCond.asCondRetValue(ifTrue);
 			}else if(rTrue.isAbort || rTrue.isReturn) {
 				retTrue = rTrue.asValue(ifTrue, e.type);
-				condTrue = CondRetValue.alloc(1, quantumCondition, ifTrue);
+				condTrue = CondRetValue.makeConst(1, ifTrue);
 			}else{
 				assert(rTrue.isPass);
-				condTrue = CondRetValue.alloc(0, quantumCondition, ifTrue);
+				condTrue = CondRetValue.makeConst(0, ifTrue);
 			}
 
 			if(rFalse.isConditionalReturn) {
 				retFalse = rFalse.retValue;
-				condFalse = rFalse.retCond.asCondRetValue(quantumCondition, ifFalse);
+				condFalse = rFalse.retCond.asCondRetValue(ifFalse);
 			}else if(rFalse.isAbort || rFalse.isReturn) {
 				retFalse = rFalse.asValue(ifFalse, e.type);
-				condFalse = CondRetValue.alloc(1, quantumCondition, ifFalse);
+				condFalse = CondRetValue.makeConst(1, ifFalse);
 			}else{
 				assert(rFalse.isPass);
-				condFalse = CondRetValue.alloc(0, quantumCondition, ifFalse);
+				condFalse = CondRetValue.makeConst(0, ifFalse);
 			}
 
 			auto retCond = CondRetValue.merge(cond, condFalse, condTrue, ifFalse, ifTrue, this).asCondRet();
@@ -3747,7 +3734,7 @@ class ScopeWriter {
 				retScope = ifFalse;
 			}else assert(0);
 
-			if(quantumCondition && retScope !is this) {
+			if(retScope !is this) {
 				if(retTrue) {
 					auto retFalseUnreachable = retCond.allocUnreachableRet(retTrue, ifFalse);
 					ret = retCond.mergeRet(cond, retFalseUnreachable, retTrue, this);
