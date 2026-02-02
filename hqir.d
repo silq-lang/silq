@@ -772,6 +772,17 @@ struct CondRet {
 		return w.valMerge(cond, v0, v1);
 	}
 
+	RetValue valMerge(RetValue v0, RetValue v1, ScopeWriter w) {
+		if((!!v0.classicalRet ^ !!v0.quantumRet) && (!!v1.classicalRet ^ !!v1.quantumRet)) {
+			if(!!v0.classicalRet == !!v1.classicalRet) {
+				if(!!v0.classicalRet) {
+					return RetValue(valMerge(v0.classicalRet, v1.classicalRet, w));
+				}
+			}
+		}
+		assert(0,text("TODO ",v0," ",v1));
+	}
+
 	ScopeWriter addToScope(ast_scope.NestedScope nscope, ScopeWriter w) {
 		return w.withCond(nscope, cond);
 	}
@@ -786,7 +797,9 @@ struct CondRet {
 		return cond.isQuantum;
 	}
 
-	Value updateRetCond(Value ret, CondRet previous, ScopeWriter w) {
+	RetValue updateRetCond(RetValue retv, CondRet previous, ScopeWriter w) {
+		auto ret = retv.classicalRet;
+		assert(ret && !retv.quantumRet,"TODO");
 		auto wRet = w;
 		if(previous !is CondRet.init) {
 			wRet = wRet.withCond(wRet.nscope, previous.cond);
@@ -801,11 +814,11 @@ struct CondRet {
 		} else {
 			ret = retReachable;
 		}
-		return ret;
+		return RetValue(ret);
 	}
 
-	Value mergeRet(CondAny cond, Value r0, Value r1, ScopeWriter w) {
-		return w.withCond(w.nscope, this.cond).valMerge(cond, r0, r1);
+	RetValue mergeRet(CondAny cond, RetValue r0, RetValue r1, ScopeWriter w) {
+		return RetValue.valMerge(cond, r0, r1, w.withCond(w.nscope, this.cond));
 	}
 
 	ScopeWriter genMerge(CondAny cond, ScopeWriter w0, ScopeWriter w1, ScopeWriter w){
@@ -814,8 +827,11 @@ struct CondRet {
 		return w;
 	}
 
-	Value allocUnreachableRet(bool quantum,ScopeWriter w) {
-		return Value.newReg(null, quantum ? w.withCond(w.nscope, cond).qcg.allocError() : null);
+	RetValue allocUnreachableRet(RetValue reachable, ScopeWriter w) {
+		RetValue r;
+		if(reachable.classicalRet) r.classicalRet = Value.newReg(null, reachable.classicalRet.hasQuantum ? w.withCond(w.nscope, cond).qcg.allocError() : null);
+		if(reachable.quantumRet) r.quantumRet = Value.newReg(null, reachable.classicalRet.hasQuantum ? w.withCond(w.nscope, cond).qcg.allocError() : null);
+		return r;
 	}
 
 	ScopeWriter removeCondRet(ScopeWriter w) {
@@ -850,8 +866,29 @@ struct CondRet {
 	}
 }
 
+
+struct RetValue {
+	Value classicalRet;
+	Value quantumRet;
+
+	this(Value value) {
+		classicalRet = value;
+	}
+
+	bool opCast(T:bool)(){
+		return classicalRet || quantumRet;
+	}
+
+	static RetValue valMerge(CondAny cond, RetValue r0, RetValue r1, ScopeWriter w) {
+		assert(r0.classicalRet && !r0.quantumRet, "TODO");
+		assert(r1.classicalRet && !r1.quantumRet, "TODO");
+		return RetValue(w.valMerge(cond, r0.classicalRet, r1.classicalRet));
+	}
+}
+
+
 struct Result {
-	Value retValue;
+	RetValue retValue;
 	bool isReturn() scope @safe nothrow {
 		return retValue && retCond is CondRet.init;
 	}
@@ -876,32 +913,32 @@ struct Result {
 
 	private this() scope @safe nothrow @disable;
 
-	private this(Value retValue, CondRet retCond, CReg abortWitness) scope @safe nothrow {
-		assert((retValue is null && retCond is CondRet.init) || abortWitness is null);
+	private this(RetValue retValue, CondRet retCond, CReg abortWitness) scope @safe nothrow {
+		assert((retValue is RetValue.init && retCond is CondRet.init) || abortWitness is null);
 		this.retValue = retValue;
 		this.retCond = retCond;
 		this.abortWitness = abortWitness;
 	}
 
 	static Result passes() scope @safe nothrow {
-		return Result(null, CondRet.init, null);
+		return Result(RetValue.init, CondRet.init, null);
 	}
 
-	static Result returns(Value value) scope @safe nothrow {
+	static Result returns(RetValue value) scope @safe nothrow {
 		return Result(value, CondRet.init, null);
 	}
 
-	static Result conditionallyReturns(Value value,CondRet cond) scope @safe nothrow {
+	static Result conditionallyReturns(RetValue value,CondRet cond) scope @safe nothrow {
 		return Result(value, cond, null);
 	}
 
 	static Result aborts(CReg witness) scope @safe nothrow {
 		assert(witness);
-		return Result(null, CondRet.init, witness);
+		return Result(RetValue.init, CondRet.init, witness);
 	}
 
-	Value asValue(ScopeWriter sc, Expression type) {
-		if(isAbort) return sc.valError(abortWitness, type);
+	RetValue asValue(ScopeWriter sc, Expression type) {
+		if(isAbort) return RetValue(sc.valError(abortWitness, type));
 		assert(isReturn);
 		return retValue;
 	}
@@ -922,9 +959,9 @@ abstract class IteResult {
 }
 
 final class IteReturn: IteResult {
-	Value value;
+	RetValue value;
 
-	this(CondAny cond, Value value) scope @safe nothrow {
+	this(CondAny cond, RetValue value) scope @safe nothrow {
 		this.cond = cond;
 		this.value = value;
 	}
@@ -946,17 +983,17 @@ final class IteAbort: IteResult {
 }
 
 final class ItePartialReturn: IteResult {
-	Value value;
+	RetValue value;
 	CondRet retCond_;
 	ScopeWriter scCont;
 
-	this(CondAny cond, Value value, ScopeWriter scCont) scope @safe nothrow {
+	this(CondAny cond, RetValue value, ScopeWriter scCont) scope @safe nothrow {
 		this.cond = cond;
 		this.value = value;
 		this.scCont = scCont;
 	}
 
-	this(CondRet retCond, Value value, ScopeWriter scCont) scope @safe nothrow {
+	this(CondRet retCond, RetValue value, ScopeWriter scCont) scope @safe nothrow {
 		this.retCond_ = retCond;
 		this.value = value;
 		this.scCont = scCont;
@@ -3663,7 +3700,7 @@ class ScopeWriter {
 				quantumCondition = true;
 			}
 			// assert(!quantumCondition || !nscope.getFunction().ret.hasClassicalComponent());
-			Value retTrue = null, retFalse = null;
+			RetValue retTrue = RetValue.init, retFalse = RetValue.init;
 			CondRetValue condTrue, condFalse;
 			if(rTrue.isConditionalReturn) {
 				retTrue = rTrue.retValue;
@@ -3697,7 +3734,7 @@ class ScopeWriter {
 				retFalse = retCond.updateRetCond(retFalse, rFalse.retCond, ifFalse);
 			}
 
-			Value ret;
+			RetValue ret;
 			ScopeWriter retScope;
 			if(retFalse && retTrue) {
 				ret = retCond.mergeRet(cond, retFalse, retTrue, this);
@@ -3712,10 +3749,10 @@ class ScopeWriter {
 
 			if(quantumCondition && retScope !is this) {
 				if(retTrue) {
-					auto retFalseUnreachable = retCond.allocUnreachableRet(retTrue.hasQuantum, ifFalse);
+					auto retFalseUnreachable = retCond.allocUnreachableRet(retTrue, ifFalse);
 					ret = retCond.mergeRet(cond, retFalseUnreachable, retTrue, this);
 				}else if(retFalse) {
-					auto retTrueUnreachable = retCond.allocUnreachableRet(retFalse.hasQuantum, ifTrue);
+					auto retTrueUnreachable = retCond.allocUnreachableRet(retFalse, ifTrue);
 					ret = retCond.mergeRet(cond, retFalse, retTrueUnreachable, this);
 				}else assert(0);
 			}
@@ -3759,9 +3796,9 @@ class ScopeWriter {
 		}
 
 		if(!rTrue.isPass && !rFalse.isPass) {
-			Value retTrue = rTrue.asValue(ifTrue, e.type);
-			Value retFalse = rFalse.asValue(ifFalse, e.type);
-			Value ret = valMerge(cond, retFalse, retTrue);
+			RetValue retTrue = rTrue.asValue(ifTrue, e.type);
+			RetValue retFalse = rFalse.asValue(ifFalse, e.type);
+			RetValue ret = RetValue.valMerge(cond, retFalse, retTrue, this);
 			return new IteReturn(cond, ret);
 		}
 		if(rTrue.isAbort) {
@@ -3868,7 +3905,7 @@ class ScopeWriter {
 			valForget(getVar(decl, false));
 		}
 		checkEmpty(false);
-		return Result.returns(r);
+		return Result.returns(RetValue(r));
 	}
 
 	Result implStmt(ast_exp.IteExp e) {
@@ -6245,7 +6282,9 @@ class Writer {
 		}
 		sc.checkEmpty(!!res.isAbort);
 
-		auto v = res.asValue(sc, fd.ret);
+		auto rv = res.asValue(sc, fd.ret);
+		assert(rv.classicalRet && !rv.quantumRet);
+		auto v = rv.classicalRet;
 
 		CReg[] cRet = null;
 		if(typeHasClassical(fd.ret)) cRet = [v.creg];
