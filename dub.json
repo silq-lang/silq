@@ -14,7 +14,8 @@
 				"util/range.d",
 				"util/terminal.d",
 				"util/tuple.d",
-				"util/optparse.d"
+				"util/optparse.d",
+				"util/float_.d"
 			]
 		},
 		{
