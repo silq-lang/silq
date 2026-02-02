@@ -1,0 +1,15 @@
+// args: --run
+
+def foo(x:𝔹){
+    if measure(H(0)) {
+        if measure(H(0)) {
+			return x;
+		}
+		r:=x;
+    } else {
+		r:=x;
+    }
+	return r;	
+}
+
+def main()⇒foo(H(0));
