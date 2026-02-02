@@ -5012,7 +5012,7 @@ class ScopeWriter {
 	CReg subfuncPack(string prefix, ScopeWriter subsc, CReg[] cRet, QReg[] qRet, CReg[] cArgs, QReg[] qcArgs, QReg[] qiArgs) {
 		string f = ctx.allocName(prefix);
 		CReg[] cap;
-		ctx.output.write(subsc.ccg.code.finish(f, cap, cRet, qRet, cArgs, qcArgs, qiArgs, null));
+		ctx.output.write(subsc.ccg.code.finish(f, null, cap, cRet, qRet, cArgs, qcArgs, qiArgs, null));
 		return ccg.funcPack(f, cap);
 	}
 
@@ -5428,7 +5428,7 @@ class CodeWriter {
 		code.put(IrStatement(condC, condQ, op, cRet, qRet, cArgs, qcArgs, qiArgs, ctx.curLoc.loc));
 	}
 
-	string finish(string defName, ref CReg[] captures, CReg[] cRet, QReg[] qRet, CReg[] cArgs, QReg[] qcArgs, QReg[] qiArgs, Expression[Id] attrs) {
+	string finish(string defName, string prettyName, ref CReg[] captures, CReg[] cRet, QReg[] qRet, CReg[] cArgs, QReg[] qcArgs, QReg[] qiArgs, Expression[Id] attrs) {
 		Appender!(IrStatement[]) literals;
 
 		if(_qregU) {
@@ -5528,6 +5528,12 @@ class CodeWriter {
 		}
 		o.put("\n");
 
+		if(prettyName) {
+			o.put("!func_name ");
+			escapeStr(&o, prettyName);
+			o.put("\n");
+		}
+
 		foreach(s; literals) {
 			s.putTo(o);
 		}
@@ -5569,10 +5575,10 @@ class CodeWriter {
 		return o[];
 	}
 
-	string finish(string defName, CReg[] cRet, QReg[] qRet, CReg[] cArgs, QReg[] qcArgs, QReg[] qiArgs, Expression[Id] attrs) {
+	string finish(string defName, string prettyName, CReg[] cRet, QReg[] qRet, CReg[] cArgs, QReg[] qcArgs, QReg[] qiArgs, Expression[Id] attrs) {
 		assert(!parent);
 		CReg[] cap;
-		auto r = finish(defName, cap, cRet, qRet, cArgs, qcArgs, qiArgs, attrs);
+		auto r = finish(defName, prettyName, cap, cRet, qRet, cArgs, qcArgs, qiArgs, attrs);
 		assert(!cap, format("global captures in function %s: %s\n%s", defName, cap[], r));
 		return r;
 	}
@@ -5910,7 +5916,7 @@ class Writer {
 		QReg[] qRet = null;
 		if(typeHasQuantum(fd.ret)) qRet = [v.qreg];
 
-		return sc.ccg.code.finish(fi.directName, cRet, qRet, cArgs[], qcArgs[], qiArgs[], fd.attributes);
+		return sc.ccg.code.finish(fi.directName, fi.prettyName, cRet, qRet, cArgs[], qcArgs[], qiArgs[], fd.attributes);
 	}
 
 	string dumpIndirect(FunctionInfo fi) {
@@ -6015,7 +6021,7 @@ class Writer {
 
 		Expression[Id] attrs;
 		attrs[Id.s!"artificial"] = ast_exp.LiteralExp.makeBoolean(true);
-		return sc.ccg.code.finish(fi.indirectName, cRet, qRet, cCap[] ~ [cTuple], [qcCap, qcTuple], [qiCap, qiTuple], attrs);
+		return sc.ccg.code.finish(fi.indirectName, null, cRet, qRet, cCap[] ~ [cTuple], [qcCap, qcTuple], [qiCap, qiTuple], attrs);
 	}
 
 	string dumpPrint(FunctionInfo fi) {
@@ -6034,7 +6040,7 @@ class Writer {
 		CReg r = fi.retHasQuantum ? sc.genMeasure(fd.ret, sc.valNewQ(cIn, qIn)) : cIn;
 
 		Expression[Id] attrs;
-		return sc.ccg.code.finish("silq_main_print", [r], [], cArgs, [], qArgs, attrs);
+		return sc.ccg.code.finish("silq_main_print", null, [r], [], cArgs, [], qArgs, attrs);
 	}
 
 	bool isLiteral(CReg r) {
