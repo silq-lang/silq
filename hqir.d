@@ -579,11 +579,15 @@ class ExprInfo {
 struct CondC {
 	CReg reg;
 	bool value;
+
+	bool opCast(T:bool)(){ return !!reg; }
 }
 
 struct CondQ {
 	QReg reg;
 	bool value;
+
+	bool opCast(T:bool)(){ return !!reg; }
 }
 
 struct CondAny {
@@ -617,6 +621,8 @@ struct CondAny {
 		assert(c.reg);
 		this(c.reg, c.value);
 	}
+
+	bool opCast(T:bool)(){ return this !is CondAny.init; }
 
 	@property
 	bool isClassical() const pure @safe nothrow {
@@ -756,6 +762,8 @@ struct CondRetValue {
 struct CondRet {
 	CondAny cond;
 
+	bool opCast(T:bool)(){ return !!cond; }
+
 	this(CondAny cond) {
 		this.cond = cond;
 	}
@@ -802,13 +810,13 @@ struct CondRet {
 		auto ret = retv.classicalRet;
 		assert(ret && !retv.quantumRet,"TODO");
 		auto wRet = w;
-		if(previous !is CondRet.init) {
+		if(previous) {
 			wRet = wRet.withCond(wRet.nscope, previous.cond);
 		}
 		Value retUnreachable, retReachable;
 		wRet.valSplit(cond, retUnreachable, retReachable, ret);
 		wRet.withCond(wRet.nscope, cond.invert()).valDeallocError(retUnreachable);
-		if(previous !is CondRet.init) {
+		if(previous) {
 			auto wRet2 = w.withCond(w.nscope, cond);
 			retUnreachable = Value.newReg(null, previous.isQuantum ? wRet2.withCond(wRet.nscope, previous.cond.invert()).qcg.allocError() : null);
 			ret = previous.valMerge(retUnreachable, retReachable, wRet2);
@@ -848,7 +856,7 @@ struct CondRet {
 		auto w0 = w.withCond(w.nscope, cond);
 		auto w1 = w.withCond(w.nscope, cond.invert());
 		auto wg = w, w0g = w0;
-		if(previous !is CondRet.init) {
+		if(previous) {
 			wg = wg.withCond(wg.nscope, previous.cond.invert());
 			w0g = w0g.withCond(w0g.nscope, previous.cond.invert());
 		}
@@ -860,7 +868,7 @@ struct CondRet {
 			w1.defineVar(var.decl, v1);
 			var.value = null;
 		}
-		if(previous !is CondRet.init) {
+		if(previous) {
 			w1 = previous.removeCondRet(w1);
 		}
 		return w1;
@@ -890,11 +898,11 @@ struct RetValue {
 struct Result {
 	RetValue retValue;
 	bool isReturn() scope @safe nothrow {
-		return retValue && retCond is CondRet.init;
+		return retValue && !retCond;
 	}
 	CondRet retCond;
 	bool isConditionalReturn() scope @safe nothrow {
-		return retValue && retCond !is CondRet.init;
+		return retValue && retCond;
 	}
 	CReg abortWitness;
 	bool isAbort() scope @safe nothrow {
@@ -914,7 +922,7 @@ struct Result {
 	private this() scope @safe nothrow @disable;
 
 	private this(RetValue retValue, CondRet retCond, CReg abortWitness) scope @safe nothrow {
-		assert((retValue is RetValue.init && retCond is CondRet.init) || abortWitness is null);
+		assert((!retValue && !retCond) || !abortWitness);
 		this.retValue = retValue;
 		this.retCond = retCond;
 		this.abortWitness = abortWitness;
@@ -1000,16 +1008,16 @@ final class ItePartialReturn: IteResult {
 	}
 
 	CondRet retCond() {
-		assert(cond is CondAny.init || retCond_ is CondRet.init);
-		if(retCond_ !is CondRet.init) {
+		assert(!cond || !retCond_);
+		if(retCond_) {
 			return retCond_;
 		}
 		return CondRet(cond);
 	}
 
 	override void forgetCond(ScopeWriter sc) {
-		if(retCond_ !is CondRet.init) {
-			assert(cond is CondAny.init);
+		if(retCond_) {
+			assert(!cond);
 			retCond_.forget(sc);
 		}else super.forgetCond(sc);
 	}
