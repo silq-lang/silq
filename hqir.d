@@ -2231,11 +2231,12 @@ class ScopeWriter {
 	}
 
 	void checkEmpty(bool isAbort) {
-		foreach(name, var; vars) {
+		foreach(name, ref var; vars) {
 			if(!var.value) continue;
 			if(!var.value.hasQuantum) continue;
 			assert(isAbort, format("variable %s not consumed", name.str));
 			qcg.deallocError(var.value.qreg);
+			var.value = null;
 		}
 	}
 
@@ -3577,6 +3578,9 @@ class ScopeWriter {
 		Result combineResults(Result ra, Result rb) {
 			if(ra.isReturn || ra.isAbort || rb.isPass) {
 				return ra;
+			}
+			if(rb.isReturn || rb.isAbort) {
+				checkEmpty(rb.isAbort);
 			}
 			if(ra.isPass) {
 				return rb;
