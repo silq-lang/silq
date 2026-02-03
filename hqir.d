@@ -578,14 +578,18 @@ class ExprInfo {
 
 struct CondC {
 	CReg reg;
-	bool value;
+	bool value = true;
+
+	CondC invert(){ return CondC(reg, !value); }
 
 	bool opCast(T:bool)(){ return !!reg; }
 }
 
 struct CondQ {
 	QReg reg;
-	bool value;
+	bool value = true;
+
+	CondQ invert(){ return CondQ(reg, !value); }
 
 	bool opCast(T:bool)(){ return !!reg; }
 }
@@ -770,21 +774,42 @@ struct CondRetValue {
 }
 
 struct CondRet {
-	CondAny cond;
+	CondC condC;
+	CondQ condQ;
+	bool isAnd = false;
 
-	bool opCast(T:bool)(){ return !!cond; }
+	@property
+	CondAny cond(){ // TODO: remove
+		assert(!!condC ^ !!condQ);
+		if(condC) return CondAny(condC);
+		return CondAny(condQ);
+	}
+
+	bool opCast(T:bool)(){ return !!condC||!!condQ; }
 
 	this(CondAny cond) {
-		this.cond = cond;
+		if(cond.isQuantum) condQ=cond.qcond;
+		else condC=cond.ccond;
+	}
+	this(CondC condC) {
+		this.condC = condC;
+	}
+	this(CondQ condQ) {
+		this.condQ = condQ;
+	}
+	this(CondC condC, CondQ condQ, bool isAnd = false) {
+		this.condC = condC;
+		this.condQ = condQ;
+		this.isAnd = isAnd;
 	}
 
 	void forget(ScopeWriter sc) {
-		if(!cond.isQuantum) return;
-		sc.qcg.forget(cond.qreg);
+		if(!condQ) return;
+		sc.qcg.forget(condQ.reg);
 	}
 
 	CondRet invert() {
-		return CondRet(cond.invert());
+		return CondRet(condC.invert(), condQ.invert, !isAnd);
 	}
 
 	Value valMerge(Value v0, Value v1, ScopeWriter w) {
