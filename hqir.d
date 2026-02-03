@@ -654,6 +654,8 @@ struct CondAny {
 	CondAny invert() @safe nothrow {
 		return isQuantum ? CondAny(qreg, !value) : CondAny(creg, !value);
 	}
+
+	string toString(){ return text("CondAny(",isClassical?text(ccond):text(qcond),")"); }
 }
 
 class RTTI {
@@ -3771,13 +3773,13 @@ class ScopeWriter {
 			}
 
 			static ScopeWriter removeCond(CondAny cond, ScopeWriter w) {
+				if(cond.isQuantum) w.qcg.condQ=w.qcg.condQ.filter!(qc=>qc != cond.qcond).array;
+				else w.ccg.condC=w.ccg.condC.filter!(cc=>cc != cond.ccond).array;
 				foreach(name, ref var; w.vars) {
 					if(!var.value) continue;
 					auto valUnreachable = Value.newReg(null, cond.isQuantum ? w.withCond(w.nscope, cond.invert()).qcg.allocError() : null);
 					var.value = w.valMerge(cond, valUnreachable, var.value);
 				}
-				if(cond.isQuantum) w.qcg.condQ=w.qcg.condQ.filter!(qc=>qc != cond.qcond).array;
-				else w.ccg.condC=w.ccg.condC.filter!(cc=>cc != cond.ccond).array;
 				return w;
 			}
 
