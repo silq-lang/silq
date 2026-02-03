@@ -817,7 +817,8 @@ struct CondRet {
 		if((!!v0.classicalRet ^ !!v0.quantumRet) && (!!v1.classicalRet ^ !!v1.quantumRet)) {
 			if(!!v0.classicalRet == !!v1.classicalRet) {
 				if(!!v0.classicalRet) {
-					return RetValue(w.valMerge(cond, v0.classicalRet, v1.classicalRet));
+					assert(!!condC ^ !!condQ);
+					return RetValue(w.valMerge(condQ ? CondAny(condQ) : CondAny(condC), v0.classicalRet, v1.classicalRet));
 				}
 			}
 		}
@@ -825,13 +826,17 @@ struct CondRet {
 	}
 
 	ScopeWriter addToScope(ast_scope.NestedScope nscope, ScopeWriter w) {
-		return w.withCond(nscope, cond);
+		assert(isAnd);
+		if(condC) w = w.withCond(nscope, CondAny(condC));
+		if(condQ) w = w.withCond(nscope, CondAny(condQ));
+		return w;
 	}
 
 	CondRetValue asCondRetValue(ScopeWriter w) {
-		auto valT = cond.isQuantum ? w.withCond(w.nscope, cond).valAllocQubit(1) : w.valNewC(w.ctx.boolTrue);
-		auto valF = cond.isQuantum ? w.withCond(w.nscope, cond.invert()).valAllocQubit(0) : w.valNewC(w.ctx.boolFalse);
-		auto val = w.valMerge(cond, valF, valT); // TODO: this is overkill for cond.value = true or cond.isClassical
+		assert(!!condC ^ !!condQ);
+		auto valT = condQ ? w.withCond(w.nscope, CondAny(condQ)).valAllocQubit(1) : w.valNewC(w.ctx.boolTrue);
+		auto valF = condQ ? w.withCond(w.nscope, CondAny(condQ.invert())).valAllocQubit(0) : w.valNewC(w.ctx.boolFalse);
+		auto val = w.valMerge(condQ ? CondAny(condQ) : CondAny(condC), valF, valT); // TODO: this is overkill for cond.value = true or cond.isClassical
 		assert(!!val.hasClassical ^ !!val.hasQuantum);
 		return CondRetValue(val.creg, val.qreg);
 	}
