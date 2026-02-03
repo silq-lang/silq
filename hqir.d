@@ -779,6 +779,7 @@ struct CondRet {
 	bool isAnd = false;
 
 	@property
+	//deprecated
 	CondAny cond(){ // TODO: remove
 		assert(!!condC ^ !!condQ);
 		if(condC) return CondAny(condC);
@@ -812,15 +813,11 @@ struct CondRet {
 		return CondRet(condC.invert(), condQ.invert, !isAnd);
 	}
 
-	Value valMerge(Value v0, Value v1, ScopeWriter w) {
-		return w.valMerge(cond, v0, v1);
-	}
-
 	RetValue valMerge(RetValue v0, RetValue v1, ScopeWriter w) {
 		if((!!v0.classicalRet ^ !!v0.quantumRet) && (!!v1.classicalRet ^ !!v1.quantumRet)) {
 			if(!!v0.classicalRet == !!v1.classicalRet) {
 				if(!!v0.classicalRet) {
-					return RetValue(valMerge(v0.classicalRet, v1.classicalRet, w));
+					return RetValue(w.valMerge(cond, v0.classicalRet, v1.classicalRet));
 				}
 			}
 		}
@@ -834,7 +831,7 @@ struct CondRet {
 	CondRetValue asCondRetValue(ScopeWriter w) {
 		auto valT = cond.isQuantum ? w.withCond(w.nscope, cond).valAllocQubit(1) : w.valNewC(w.ctx.boolTrue);
 		auto valF = cond.isQuantum ? w.withCond(w.nscope, cond.invert()).valAllocQubit(0) : w.valNewC(w.ctx.boolFalse);
-		auto val = valMerge(valF, valT, w); // TODO: this is overkill for cond.value = true or cond.isClassical
+		auto val = w.valMerge(cond, valF, valT); // TODO: this is overkill for cond.value = true or cond.isClassical
 		assert(!!val.hasClassical ^ !!val.hasQuantum);
 		return CondRetValue(val.creg, val.qreg);
 	}
@@ -856,7 +853,7 @@ struct CondRet {
 		if(previous) {
 			auto wRet2 = w.withCond(w.nscope, cond);
 			retUnreachable = Value.newReg(null, previous.isQuantum ? wRet2.withCond(wRet.nscope, previous.cond.invert()).qcg.allocError() : null);
-			ret = previous.valMerge(retUnreachable, retReachable, wRet2);
+			ret = wRet2.valMerge(previous.cond, retUnreachable, retReachable);
 		} else {
 			ret = retReachable;
 		}
