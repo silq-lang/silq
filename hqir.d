@@ -3577,21 +3577,23 @@ class ScopeWriter {
 
 	Result genStmts(Expression[] stmts, Result result = Result.passes()) {
 		assert(nscope);
-		Result combineResults(Result ra, Result rb) {
+		Result combineResults(Result ra, Result rb, ScopeWriter scB) {
 			if(ra.isReturn || ra.isAbort || rb.isPass) {
 				return ra;
 			}
-			if(rb.isReturn || rb.isAbort) {
-				checkEmpty(rb.isAbort);
-			}
 			if(ra.isPass) {
+				if(rb.isReturn || rb.isAbort) {
+					scB.checkEmpty(rb.isAbort);
+				}
 				return rb;
 			}
 			assert(ra.isConditionalReturn);
 			if(rb.isReturn || rb.isAbort) {
-				auto vb = rb.asValue(this, nscope.getFunction().ret);
+				auto vb = rb.asValue(scB, nscope.getFunction().ret);
+				scB.checkEmpty(rb.isAbort);
 				auto vc = ra.retCond.invert().valMerge(ra.retValue, vb, this);
 				ra.forgetCond(this);
+				checkEmpty(false);
 				return Result.returns(vc);
 			}
 			assert(rb.isConditionalReturn);
@@ -3648,8 +3650,8 @@ class ScopeWriter {
 						rv.forgetCond(this);
 						return Result.returns(r);
 					} else {
-						result = combineResults(result, Result.conditionallyReturns(rv.value, rv.retCond));
-						result = combineResults(result, contRet);
+						result = combineResults(result, Result.conditionallyReturns(rv.value, rv.retCond), this);
+						result = combineResults(result, contRet, scTail);
 						assert(result.isConditionalReturn);
 						vars = scTail.vars;
 						return result;
@@ -3677,10 +3679,10 @@ class ScopeWriter {
 			if(result.isConditionalReturn) {
 				auto scCondRet = result.retCond.invert().addToScope(nscope, this);
 				scCondRet.vars = vars;
-				result = combineResults(result, scCondRet.genStmt(sube));
+				result = combineResults(result, scCondRet.genStmt(sube), scCondRet);
 				vars = scCondRet.vars;
 			} else {
-				result = combineResults(result, genStmt(sube));
+				result = combineResults(result, genStmt(sube), this);
 			}
 			if(result.isReturn || result.isAbort) {
 				return result;
