@@ -716,25 +716,33 @@ class RTTI {
 }
 
 struct CondRetValue {
-	Value cond;
+	CReg condC;
+	QReg condQ;
+
+	bool hasClassical(){ return !!condC; }
+	bool hasQuantum(){ return !!condQ; }
+
+	this(CReg condC) {
+		this.condC = condC;
+	}
+	this(QReg condQ) {
+		this.condQ = condQ;
+	}
+	this(CReg condC, QReg condQ) {
+		this.condC = condC;
+		this.condQ = condQ;
+	}
 
 	static CondRetValue makeConst(bool val, ScopeWriter w) {
-		return CondRetValue(w.valNewC(val ? w.ctx.boolTrue : w.ctx.boolFalse));
+		return CondRetValue(val ? w.ctx.boolTrue : w.ctx.boolFalse);
 	}
 
 	CondRetValue toQuantum(ScopeWriter w) {
-		assert(!cond.hasClassical || !cond.hasQuantum);
-		if(cond.hasQuantum) {
+		assert(hasClassical ^ hasQuantum);
+		if(hasQuantum) {
 			return this;
 		}
-		return CondRetValue(w.valAllocQubit(cond.creg));
-	}
-
-	bool hasQuantum() {
-		return cond.hasQuantum();
-	}
-	bool hasClassical() {
-		return cond.hasClassical();
+		return CondRetValue(w.qcg.allocQubit(condC));
 	}
 
 	static CondRetValue merge(CondAny cond, CondRetValue v0, CondRetValue v1, ScopeWriter w0, ScopeWriter w1, ScopeWriter w) {
@@ -749,15 +757,15 @@ struct CondRetValue {
 		assert(v0.hasClassical == v1.hasClassical);
 		assert(v0.hasQuantum == v1.hasQuantum);
 
-		auto v = w.valMerge(cond, v0.cond, v1.cond);
+		auto v = w.valMerge(cond, Value.newReg(v0.condC, v0.condQ), Value.newReg(v1.condC, v1.condQ));
 		assert(v.hasClassical == !isQuantum);
 		assert(v.hasQuantum == isQuantum);
-		return CondRetValue(v);
+		return CondRetValue(v.creg, v.qreg);
 	}
 
 	CondRet asCondRet() {
-		assert(cond.hasClassical ^ cond.hasQuantum);
-		return CondRet(cond.hasQuantum ? CondAny(cond.qreg) : CondAny(cond.creg));
+		assert(!!condC ^ !!condQ);
+		return CondRet(condQ ? CondAny(condQ) : CondAny(condC));
 	}
 }
 
@@ -801,7 +809,9 @@ struct CondRet {
 	CondRetValue asCondRetValue(ScopeWriter w) {
 		auto valT = cond.isQuantum ? w.withCond(w.nscope, cond).valAllocQubit(1) : w.valNewC(w.ctx.boolTrue);
 		auto valF = cond.isQuantum ? w.withCond(w.nscope, cond.invert()).valAllocQubit(0) : w.valNewC(w.ctx.boolFalse);
-		return CondRetValue(valMerge(valF, valT, w)); // TODO: this is overkill for cond.value = true or cond.isClassical
+		auto val = valMerge(valF, valT, w); // TODO: this is overkill for cond.value = true or cond.isClassical
+		assert(!!val.hasClassical ^ !!val.hasQuantum);
+		return CondRetValue(val.creg, val.qreg);
 	}
 
 	bool isQuantum() { // TODO: remove
