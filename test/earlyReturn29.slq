@@ -1,0 +1,17 @@
+// args: --run
+
+def foo(const b:!𝔹){
+    x := H(0:𝔹);
+    if b {
+        if measure(H(0:𝔹)) {
+            return x;
+        }
+    }
+    return H(x);
+}
+
+def main(){
+    for i in 0..2{
+        measure(foo(i≠0));
+    }
+}

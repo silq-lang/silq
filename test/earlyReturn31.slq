@@ -1,0 +1,14 @@
+// args: --run
+
+def main(){
+    x := H(0:𝔹);
+    i := 0;
+    while i < 20 {
+        if measure(H(0:𝔹)) {
+            return x;
+        }
+        x := H(x);
+        i += 1;
+    }
+    return x;
+}

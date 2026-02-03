@@ -1,0 +1,14 @@
+// args: --run
+
+def main(){
+    x := H(0:𝔹);
+    for i in 0..10{
+        for j in 0..10{
+            if i=3 & j=7 {
+                return x;
+            }
+        }
+        x := H(x);
+    }
+    return x;
+}
