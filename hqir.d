@@ -833,10 +833,7 @@ struct CondRetValue {
 		}
 	}
 
-	CondRet asCondRet() {
-		assert(!!condC ^ !!condQ);
-		return CondRet(condQ ? CondAny(condQ) : CondAny(condC));
-	}
+	CondRet asCondRet() { return CondRet(CondC(condC), CondQ(condQ)); }
 }
 
 struct CondRet {
