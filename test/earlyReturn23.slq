@@ -17,7 +17,7 @@ def main(){
 		for z in 0..2{
 			for k in 0..10{
 				x:=H(0);
-				assert(!measure(foo(x,y≠0,z≠0))||y=0||z=0);
+				assert(measure(foo(x,y≠0,z≠0))||y=0||z=0);
 				measure(x);
 			}
 		}
