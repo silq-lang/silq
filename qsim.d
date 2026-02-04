@@ -106,8 +106,9 @@ string formatQValue(QState qs, QState.Value value){
 	Q!(QState.Σ,QState.C)[] state=qs.state.byKeyValue.map!(kv=>q(kv.k,kv.v)).array;
 	state.sort!((kv0,kv1)=>value.classicalValue(kv0[0]).compare!"<"(value.classicalValue(kv1[0])).neqZImpl);
 	bool truncated=false;
+	auto origState=state;
 	if(opt.top){
-		state.sort!((kv0,kv1)=>abs(kv0[1])<abs(kv1[1]),SwapStrategy.stable);
+		state.sort!((kv0,kv1)=>abs(kv0[1])>abs(kv1[1]),SwapStrategy.stable);
 		if(opt.topk<state.length){
 			state=state[0..opt.topk];
 			truncated=true;
@@ -126,7 +127,7 @@ string formatQValue(QState qs, QState.Value value){
 		bool first=true;
 		QState.R arg0=0.0;
 		QState.R maxAbs=0.0;
-		foreach(k,v;state.map!(x=>x)){
+		foreach(k,v;origState.map!(x=>x)){
 			auto a=abs(v);
 			if(a>maxAbs) maxAbs=a;
 			if (first){
@@ -136,7 +137,7 @@ string formatQValue(QState qs, QState.Value value){
 		}
 		QState.R arg1=argNorm(arg0+PI);
 		bool anyArg=false;
-		foreach(k,v;state.map!(x=>x)){
+		foreach(k,v;origState.map!(x=>x)){
 			QState.R θ=arg(v);
 			if(!(argClose(arg0,θ)||argClose(arg1,θ))){
 				anyArg=true;
