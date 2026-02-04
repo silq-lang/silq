@@ -726,6 +726,8 @@ struct CondRetValue {
 	bool hasClassical(){ return !!condC; }
 	bool hasQuantum(){ return !!condQ; }
 
+	bool hasAny(){ return hasClassical||hasQuantum; }
+
 	this(CReg condC) {
 		this.condC = condC;
 	}
@@ -738,33 +740,75 @@ struct CondRetValue {
 	}
 
 	static CondRetValue makeConst(bool val, ScopeWriter w) {
-		return CondRetValue(val ? w.ctx.boolTrue : w.ctx.boolFalse);
+		return CondRetValue(val ? w.ctx.boolTrue : null);
 	}
 
 	CondRetValue toQuantum(ScopeWriter w) {
-		assert(hasClassical ^ hasQuantum);
+		if(hasClassical && hasQuantum) {
+			return CondRetValue(w.qcg.cmerge(CondC(condC), condQ, w.withCond(w.nscope, CondAny(condC)).qcg.allocQubit(1)));
+		}
 		if(hasQuantum) {
 			return this;
 		}
-		return CondRetValue(w.qcg.allocQubit(condC));
+		if(hasClassical) {
+			return CondRetValue(w.qcg.allocQubit(condC));
+		}
+		return CondRetValue(w.qcg.allocQubit(0));
 	}
 
 	static CondRetValue merge(CondAny cond, CondRetValue v0, CondRetValue v1, ScopeWriter w0, ScopeWriter w1, ScopeWriter w) {
-		assert(v0.hasClassical ^ v0.hasQuantum);
-		assert(v1.hasClassical ^ v1.hasQuantum);
-		bool isQuantum = cond.isQuantum || v0.hasQuantum() || v1.hasQuantum();
-		if(isQuantum) {
-			v0 = v0.toQuantum(w0);
-			v1 = v1.toQuantum(w1);
+		if(!v0.hasAny && !v1.hasAny) {
+			return v0;
 		}
-		assert(v0.hasClassical ^ v0.hasQuantum);
-		assert(v0.hasClassical == v1.hasClassical);
-		assert(v0.hasQuantum == v1.hasQuantum);
-
-		auto v = w.valMerge(cond, Value.newReg(v0.condC, v0.condQ), Value.newReg(v1.condC, v1.condQ));
-		assert(v.hasClassical == !isQuantum);
-		assert(v.hasQuantum == isQuantum);
-		return CondRetValue(v.creg, v.qreg);
+		if(cond.isQuantum) {
+			if(v0.hasClassical() && v1.hasClassical) {
+				auto condC = w.ccg.cond(v0.condC, v1.condC, w.ctx.boolTrue);
+				assert(0, "TODO classically-controlled returns under quantum conditional");
+			}else{
+				v0 = v0.toQuantum(w0);
+				v1 = v1.toQuantum(w1);
+				assert(!v0.hasClassical && !v1.hasClassical);
+				assert(v0.hasQuantum && v1.hasQuantum);
+				return CondRetValue(w.qcg.qmerge(cond.qcond, v0.condQ, v1.condQ));
+			}
+		}else{
+			CReg condC = null;
+			CReg c0 = v0.condC, c1 = v1.condC;
+			QReg q0 = v0.condQ, q1 = v1.condQ;
+			if(c0 && c1){
+				condC = w.ccg.cond(cond.ccond, c0, c1);
+			}else if(c0) {
+				condC = w.ccg.cond(cond.ccond, c0, w.ctx.boolFalse);
+			}else if(c1) {
+				condC = w.ccg.cond(cond.ccond, w.ctx.boolFalse, c1);
+			}
+			if(q0 && condC !is c0) {
+				if(condC) {
+					q0 = w.qcg.addCond(CondAny(condC, false), q0);
+				}
+				if(c0) {
+					q0 = w.qcg.removeCond(CondAny(c0, false), q0);
+				}
+			}
+			if(q1 && condC !is c1) {
+				if(condC) {
+					q1 = w.qcg.addCond(CondAny(condC, false), q1);
+				}
+				if(c1) {
+					q1 = w.qcg.removeCond(CondAny(c1, false), q1);
+				}
+			}
+			auto wq = condC ? w.withCond(w.nscope, CondAny(condC, false)) : w;
+			QReg condQ = null;
+			if(q0 && q1) {
+				condQ = wq.qcg.cmerge(cond.ccond, q0, q1);
+			} else if(q0) {
+				condQ = wq.qcg.cmerge(cond.ccond, q0, w1.qcg.allocQubit(0));
+			} else if(q1) {
+				condQ = wq.qcg.cmerge(cond.ccond, w0.qcg.allocQubit(0), q1);
+			}
+			return CondRetValue(condC, condQ);
+		}
 	}
 
 	CondRet asCondRet() {
@@ -842,7 +886,8 @@ struct CondRet {
 	}
 
 	bool isQuantum() { // TODO: remove
-		return cond.isQuantum;
+		assert(!!condC ^ !!condQ);
+		return !!condQ;
 	}
 
 	RetValue updateRetCond(RetValue retv, CondRet previous, ScopeWriter w) {
@@ -1246,6 +1291,13 @@ class CCGen {
 		if(cond is ctx.boolFalse) return c0;
 		if(cond is ctx.boolTrue) return c1;
 		return emitPureOp(opCond, [cond, c0, c1]);
+	}
+
+	CReg cond(CondC condC, CReg c0, CReg c1) {
+		if(!condC.value) {
+			swap(c0, c1);
+		}
+		return cond(condC.reg, c0, c1);
 	}
 
 	CReg boolNot(CReg a) {
@@ -1761,6 +1813,64 @@ class QCGen {
 			return;
 		}
 		writeQOp(opPack(n), [tup], qtypes, [], qregs);
+	}
+
+	QReg[2] csplit(CondC cond, QReg r) {
+		auto r0 = new QReg(), r1 = new QReg();
+		writeQOp(opCSplit, [r0, r1], [cond.reg], [], [r]);
+		if(!cond.value) {
+			swap(r0, r1);
+		}
+		return [r0, r1];
+	}
+	QReg[2] qsplit(CondQ cond, QReg r) {
+		auto r0 = new QReg(), r1 = new QReg();
+		writeQOp(opQSplit, [r0, r1], [], [cond.reg], [r]);
+		if(!cond.value) {
+			swap(r0, r1);
+		}
+		return [r0, r1];
+	}
+	QReg[2] split(CondAny cond, QReg r) {
+		if(cond.isQuantum) {
+			return qsplit(cond.qcond, r);
+		} else {
+			return csplit(cond.ccond, r);
+		}
+	}
+
+	QReg cmerge(CondC cond, QReg r0, QReg r1) {
+		auto r = new QReg();
+		if(!cond.value) {
+			swap(r0, r1);
+		}
+		writeQOp(opCMerge, [r], [cond.reg], [], [r0, r1]);
+		return r;
+	}
+	QReg qmerge(CondQ cond, QReg r0, QReg r1) {
+		auto r = new QReg();
+		if(!cond.value) {
+			swap(r0, r1);
+		}
+		writeQOp(opQMerge, [r], [], [cond.reg], [r0, r1]);
+		return r;
+	}
+	QReg merge(CondAny cond, QReg r0, QReg r1) {
+		if(cond.isQuantum) {
+			return qmerge(cond.qcond, r0, r1);
+		} else {
+			return cmerge(cond.ccond, r0, r1);
+		}
+	}
+
+	QReg addCond(CondAny cond, QReg r) {
+		auto rs = split(cond, r);
+		withCond(cond.invert).deallocError(rs[0]);
+		return rs[1];
+	}
+	QReg removeCond(CondAny cond, QReg r) {
+		auto rUnreachable = withCond(cond.invert).allocError();
+		return merge(cond, rUnreachable, r);
 	}
 }
 
