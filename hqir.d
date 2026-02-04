@@ -766,29 +766,27 @@ struct CondRetValue {
 			if(c0 && c1) {
 				CReg condC = w.ccg.cond(c0, c1, w.ctx.boolFalse);
 				QReg condQ = null;
-				if(q0 || q1) {
-					// [!condC] condQ = !cond ? (!c0 ? [!c0,!cond,!condC] q0 : [c0∧!cond∧!condC] 1) : (!c1 ? [!c1,cond,!condC] q1 : [c1∧cond∧!condC] 1);
-					auto wc0 = w0.withCond(w0.nscope, CondAny(condC, false));
-					if(q0) {
-						q0 = w0.qcg.addCond(CondAny(condC, false), q0);
-					} else {
-						q0 = wc0.qcg.allocQubit(0);
-					}
-					auto o0 = wc0.qcg.withCond(CondAny(c0, false)).allocQubit(1);
-					q0 = wc0.qcg.cmerge(CondC(c0), q0, o0);
-
-					auto wc1 = w1.withCond(w1.nscope, CondAny(condC, false));
-					if(q1) {
-						q1 = w1.qcg.addCond(CondAny(condC, false), q1);
-					} else {
-						q1 = wc1.qcg.allocQubit(0);
-					}
-					auto o1 = wc1.qcg.withCond(CondAny(c1, false)).allocQubit(1);
-					q1 = wc1.qcg.cmerge(CondC(c1), q1, o1);
-
-					auto wc = w.withCond(w.nscope, CondAny(condC, false));
-					condQ = wc.qcg.qmerge(cond.qcond, q0, q1);
+				// [!condC] condQ = !cond ? (!c0 ? [!c0,!cond,!condC] q0 : [c0∧!cond∧!condC] 1) : (!c1 ? [!c1,cond,!condC] q1 : [c1∧cond∧!condC] 1);
+				auto wc0 = w0.withCond(w0.nscope, CondAny(condC, false));
+				if(q0) {
+					q0 = w0.qcg.addCond(CondAny(condC, false), q0);
+				} else {
+					q0 = wc0.qcg.allocQubit(0);
 				}
+				auto o0 = wc0.qcg.withCond(CondAny(c0, false)).allocQubit(1);
+				q0 = wc0.qcg.cmerge(CondC(c0), q0, o0);
+
+				auto wc1 = w1.withCond(w1.nscope, CondAny(condC, false));
+				if(q1) {
+					q1 = w1.qcg.addCond(CondAny(condC, false), q1);
+				} else {
+					q1 = wc1.qcg.allocQubit(0);
+				}
+				auto o1 = wc1.qcg.withCond(CondAny(c1, false)).allocQubit(1);
+				q1 = wc1.qcg.cmerge(CondC(c1), q1, o1);
+
+				auto wc = w.withCond(w.nscope, CondAny(condC, false));
+				condQ = wc.qcg.qmerge(cond.qcond, q0, q1);
 				return CondRetValue(condC, condQ);
 			}else{
 				v0 = v0.toQuantum(w0);
