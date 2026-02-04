@@ -756,7 +756,36 @@ struct CondRetValue {
 		return CondRetValue(w.qcg.allocQubit(0));
 	}
 
-	static CondRetValue merge(CondAny cond, CondRetValue v0, CondRetValue v1, ScopeWriter w0, ScopeWriter w1, ScopeWriter w) {
+	static CondRetValue merge(
+		CondAny cond,
+		Result r0, Result r1,
+		Expression abortType,
+		ScopeWriter w0, ScopeWriter w1,
+		ScopeWriter w,
+		out RetValue rv0, out RetValue rv1,
+	) {
+		CondRetValue v0, v1;
+		if(r0.isConditionalReturn) {
+			rv0 = r0.retValue;
+			v0 = r0.retCond.asCondRetValue(w0);
+		}else if(r0.isAbort || r0.isReturn) {
+			rv0 = r0.asValue(w0, abortType);
+			v0 = CondRetValue.makeConst(1, w0);
+		}else{
+			assert(r0.isPass);
+			v0 = CondRetValue.makeConst(0, w0);
+		}
+
+		if(r1.isConditionalReturn) {
+			rv1 = r1.retValue;
+			v1 = r1.retCond.asCondRetValue(w1);
+		}else if(r1.isAbort || r1.isReturn) {
+			rv1 = r1.asValue(w1, abortType);
+			v1 = CondRetValue.makeConst(1, w1);
+		}else{
+			assert(r1.isPass);
+			v1 = CondRetValue.makeConst(0, w1);
+		}
 		if(!v0.hasAny && !v1.hasAny) {
 			return CondRetValue(null, null);
 		}
@@ -1039,7 +1068,7 @@ struct Result {
 		return Result(value, CondRet.init, null);
 	}
 
-	static Result conditionallyReturns(RetValue value,CondRet cond) scope @safe nothrow {
+	static Result conditionallyReturns(RetValue value, CondRet cond) scope @safe nothrow {
 		return Result(value, cond, null);
 	}
 
@@ -1048,10 +1077,63 @@ struct Result {
 		return Result(RetValue.init, CondRet.init, witness);
 	}
 
-	RetValue asValue(ScopeWriter sc, Expression type) {
-		if(isAbort) return RetValue(sc.valError(abortWitness, type));
+	RetValue asValue(ScopeWriter sc, Expression abortType) {
+		if(isAbort) return RetValue(sc.valError(abortWitness, abortType));
 		assert(isReturn);
 		return retValue;
+	}
+
+	static Result merge(
+		CondAny cond,
+		Result r0, Result r1,
+		Expression abortType,
+		ScopeWriter w0, ScopeWriter w1,
+		ScopeWriter w,
+	) {
+		assert(r0.isConditionalReturn || r1.isConditionalReturn);
+
+		RetValue rv0, rv1;
+		auto retCond = CondRetValue.merge(
+			cond,
+			r0, r1,
+			abortType,
+			w0, w1,
+			w,
+			rv0, rv1,
+		).asCondRet();
+
+		if(rv0) {
+			rv0 = retCond.updateRetCond(rv0, r0.retCond, w0);
+		}
+
+		if(rv1) {
+			rv1 = retCond.updateRetCond(rv1, r1.retCond, w1);
+		}
+
+		RetValue rv;
+		ScopeWriter rvScope;
+		if(rv0 && rv1) {
+			rv = retCond.mergeRet(cond, rv0, rv1, w);
+			rvScope = w;
+		}else if(rv0) {
+			rv = rv0;
+			rvScope = w0;
+		}else if(rv1) {
+			rv = rv1;
+			rvScope = w1;
+		}else assert(0);
+
+		if(rvScope !is w) {
+			if(rv0) {
+				auto rv1Unreachable = retCond.allocUnreachableRet(rv0, w1);
+				rv = retCond.mergeRet(cond, rv0, rv1Unreachable, w);
+			}else if(rv1) {
+				auto rv0Unreachable = retCond.allocUnreachableRet(rv1, w0);
+				rv = retCond.mergeRet(cond, rv0Unreachable, rv1, w);
+			}else assert(0);
+		}
+
+		return Result.conditionallyReturns(rv, retCond);
 	}
 
 	void forgetCond(ScopeWriter sc) {
@@ -3878,62 +3960,14 @@ class ScopeWriter {
 		}
 
 		if(rTrue.isConditionalReturn || rFalse.isConditionalReturn) {
-			RetValue retTrue = RetValue.init, retFalse = RetValue.init;
-			CondRetValue condTrue, condFalse;
-			if(rTrue.isConditionalReturn) {
-				retTrue = rTrue.retValue;
-				condTrue = rTrue.retCond.asCondRetValue(ifTrue);
-			}else if(rTrue.isAbort || rTrue.isReturn) {
-				retTrue = rTrue.asValue(ifTrue, e.type);
-				condTrue = CondRetValue.makeConst(1, ifTrue);
-			}else{
-				assert(rTrue.isPass);
-				condTrue = CondRetValue.makeConst(0, ifTrue);
-			}
-
-			if(rFalse.isConditionalReturn) {
-				retFalse = rFalse.retValue;
-				condFalse = rFalse.retCond.asCondRetValue(ifFalse);
-			}else if(rFalse.isAbort || rFalse.isReturn) {
-				retFalse = rFalse.asValue(ifFalse, e.type);
-				condFalse = CondRetValue.makeConst(1, ifFalse);
-			}else{
-				assert(rFalse.isPass);
-				condFalse = CondRetValue.makeConst(0, ifFalse);
-			}
-
-			auto retCond = CondRetValue.merge(cond, condFalse, condTrue, ifFalse, ifTrue, this).asCondRet();
-
-			if(retTrue) {
-				retTrue = retCond.updateRetCond(retTrue, rTrue.retCond, ifTrue);
-			}
-
-			if(retFalse) {
-				retFalse = retCond.updateRetCond(retFalse, rFalse.retCond, ifFalse);
-			}
-
-			RetValue ret;
-			ScopeWriter retScope;
-			if(retFalse && retTrue) {
-				ret = retCond.mergeRet(cond, retFalse, retTrue, this);
-				retScope = this;
-			}else if(retTrue) {
-				ret = retTrue;
-				retScope = ifTrue;
-			}else if(retFalse) {
-				ret = retFalse;
-				retScope = ifFalse;
-			}else assert(0);
-
-			if(retScope !is this) {
-				if(retTrue) {
-					auto retFalseUnreachable = retCond.allocUnreachableRet(retTrue, ifFalse);
-					ret = retCond.mergeRet(cond, retFalseUnreachable, retTrue, this);
-				}else if(retFalse) {
-					auto retTrueUnreachable = retCond.allocUnreachableRet(retFalse, ifTrue);
-					ret = retCond.mergeRet(cond, retFalse, retTrueUnreachable, this);
-				}else assert(0);
-			}
+			auto result = Result.merge(
+				cond,
+				rFalse, rTrue,
+				e.type,
+				ifFalse, ifTrue,
+				this,
+			);
+			auto ret = result.retValue, retCond = result.retCond;
 
 			auto ifFalseOrig = ifFalse, ifTrueOrig = ifTrue;
 
