@@ -953,8 +953,8 @@ struct CondRet {
 
 	ScopeWriter removeCondRet(ScopeWriter w) {
 		foreach(name, ref var; w.vars) {
-			if(!var.value) continue;
-			auto valUnreachable = Value.newReg(null, cond.isQuantum ? w.withCond(w.nscope, cond).qcg.allocError() : null);
+			if(!var.value || !var.value.hasQuantum) continue;
+			auto valUnreachable = Value.newReg(null, w.withCond(w.nscope, cond).qcg.allocError());
 			var.value = w.valMerge(cond, var.value, valUnreachable);
 		}
 		return w;
