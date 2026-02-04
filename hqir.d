@@ -764,7 +764,7 @@ struct CondRetValue {
 		QReg q0 = v0.condQ, q1 = v1.condQ;
 		if(cond.isQuantum) {
 			if(c0 && c1) {
-				CReg condC = w.ccg.cond(c0, c1, w.ctx.boolTrue);
+				CReg condC = w.ccg.cond(c0, c1, w.ctx.boolFalse);
 				QReg condQ = null;
 				if(q0 || q1) {
 					// [!condC] condQ = !cond ? (!c0 ? [!c0,!cond,!condC] q0 : [c0∧!cond∧!condC] 1) : (!c1 ? [!c1,cond,!condC] q1 : [c1∧cond∧!condC] 1);
@@ -926,7 +926,7 @@ struct CondRet {
 		wRet.withCond(wRet.nscope, cond.invert()).valDeallocError(retUnreachable);
 		if(previous) {
 			auto wRet2 = w.withCond(w.nscope, cond);
-			retUnreachable = Value.newReg(null, previous.isQuantum ? wRet2.withCond(wRet.nscope, previous.cond.invert()).qcg.allocError() : null);
+			retUnreachable = Value.newReg(null, retReachable.hasQuantum ? wRet2.withCond(wRet.nscope, previous.cond.invert()).qcg.allocError() : null);
 			ret = wRet2.valMerge(previous.cond, retUnreachable, retReachable);
 		} else {
 			ret = retReachable;
@@ -2136,11 +2136,15 @@ class ScopeWriter {
 		assert(cond.isQuantum?!!cond.qreg:!!cond.creg);
 		CReg creg = null;
 		if(v0.creg || v1.creg) {
-			assert(cond.isClassical);
-			CReg c0 = v0.creg;
-			CReg c1 = v1.creg;
-			if(!cond.value) swap(c0, c1);
-			creg = ccg.cond(cond.creg, c0, c1);
+			if(v0.creg !is v1.creg) {
+				assert(cond.isClassical);
+				CReg c0 = v0.creg;
+				CReg c1 = v1.creg;
+				if(!cond.value) swap(c0, c1);
+				creg = ccg.cond(cond.creg, c0, c1);
+			} else {
+				creg = v0.creg;
+			}
 		}
 		QReg qreg;
 		if(!v0.hasQuantum && !v1.hasQuantum || cond.isQuantum && (!v0.hasQuantum || !v1.hasQuantum)) {
