@@ -1,4 +1,4 @@
-// GQSP (motlag-wiebe)
+// GQSP (motlagh-wiebe)
 // https://arxiv.org/abs/2308.01501
 
 def fft[N:!ℕ](xs:!ℂ^N):!ℂ^N {
