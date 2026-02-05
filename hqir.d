@@ -1002,7 +1002,7 @@ struct RetValue {
 		}
 		assert(!!classicalRet == (!!retCond.condC || !retCond));
 		assert(!!quantumRet == !!retCond.condQ);
-		assert(!retCondQ.condC && retCondQ.condQ || !retCond && !retCondQ);
+		assert(!retCondQ.condC && retCondQ.condQ);
 		if(!classicalRet){
 			assert(!!quantumRet);
 			assert(!retCond.condC && retCond.condQ);
@@ -4080,8 +4080,11 @@ class ScopeWriter {
 						scCont.checkEmpty(false);
 						if(rv.retCond.condQ) {
 							assert(!rv.retCond.condC);
-							rv.value = rv.value.toQuantum(CondRet.init, CondRet.init, this);
-							assert(!rv.value.classicalRet && rv.value.quantumRet);
+							if(!rv.value.quantumRet) {
+								rv.value = RetValue(null, rv.value.classicalRet);
+							} else {
+								assert(!rv.value.classicalRet);
+							}
 						}
 					}else{
 						scTail = scCont;
