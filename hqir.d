@@ -883,16 +883,39 @@ struct CondRet {
 	ScopeWriter replaceCondRet(CondRet previous, ScopeWriter w) {
 		assert(condC || condQ);
 		assert(!isAnd && !previous.isAnd);
-		auto w1 = w;
+
 		auto ithis = invert();
 		assert(ithis.isAnd);
+
+		auto w1 = w;
 		if(ithis.condC) {
 			w1 = w1.withCond(w.nscope, CondAny(ithis.condC));
 		}
 		if(ithis.condQ) {
 			w1 = w1.withCond(w.nscope, CondAny(ithis.condQ));
 		}
-		foreach(name, ref var; w.vars) {
+		CondRet iprev;
+		auto wpc = w, wpcq = w;
+		if(previous) {
+			iprev = previous.invert();
+			assert(iprev.isAnd);
+			if(iprev.condC) {
+				wpcq = wpc = wpc.withCond(wpc.nscope, CondAny(iprev.condC));
+			}
+			if(iprev.condQ) {
+				wpcq = wpcq.withCond(wpcq.nscope, CondAny(iprev.condQ));
+			}
+		}
+		auto wg0 = wpcq, wg1 = wg0, wgc = wpc;
+		if(ithis.condC) {
+			wg1 = wg1.withCond(wg1.nscope, CondAny(ithis.condC));
+			wgc = wgc.withCond(wgc.nscope, CondAny(ithis.condC));
+		}
+		if(ithis.condQ) {
+			wgc = wgc.withCond(wgc.nscope, CondAny(ithis.condQ));
+		}
+
+		foreach (name, ref var; w.vars) {
 			if(!var.value) continue;
 			CReg creg = null;
 			if(var.value.hasClassical) {
@@ -901,31 +924,13 @@ struct CondRet {
 			QReg qreg = null;
 			if(var.value.hasQuantum) {
 				qreg = var.value.qreg;
-				auto wg = w, wgc = w;
-				if(previous) {
-					auto iprev = previous.invert();
-					assert(iprev.isAnd);
-					if(iprev.condC) {
-						wgc = wg = wg.withCond(wg.nscope, CondAny(iprev.condC));
-					}
-					if(iprev.condQ) {
-						wg = wg.withCond(wg.nscope, CondAny(iprev.condQ));
-					}
-				}
-				auto ithis = invert();
-				assert(ithis.isAnd);
 				if(ithis.condC) {
-					qreg = wg.qcg.addCond(CondAny(ithis.condC), qreg);
-					wg = wg.withCond(wg.nscope, CondAny(ithis.condC));
-					wgc = wgc.withCond(wgc.nscope, CondAny(ithis.condC));
+					qreg = wg0.qcg.addCond(CondAny(ithis.condC), qreg);
 				}
 				if(ithis.condQ) {
-					qreg = wg.qcg.addCond(CondAny(ithis.condQ), qreg);
-					wgc = wgc.withCond(wgc.nscope, CondAny(ithis.condQ));
+					qreg = wg1.qcg.addCond(CondAny(ithis.condQ), qreg);
 				}
 				if(previous) {
-					auto iprev = previous.invert();
-					assert(iprev.isAnd);
 					if(iprev.condQ) {
 						qreg = wgc.qcg.removeCond(CondAny(iprev.condQ), qreg);
 					}
@@ -934,9 +939,11 @@ struct CondRet {
 					}
 				}
 			}
+
 			w1.defineVar(var.decl, Value.newReg(creg, qreg));
 			var.value = null;
 		}
+
 		return w1;
 	}
 }
