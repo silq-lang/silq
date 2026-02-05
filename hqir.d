@@ -809,6 +809,7 @@ struct CondRet {
 	}
 
 	RetValue valMerge(RetValue v0, RetValue v1, ScopeWriter w) {
+		assert(!isAnd);
 		assert(v0.classicalRet && !v0.quantumRet);
 		assert(v1.classicalRet || v1.quantumRet);
 		assert(!!v1.classicalRet == !!condC);
@@ -852,8 +853,8 @@ struct CondRet {
 	}
 
 	RetValue updateRetCond(RetValue retv, CondRet previous, ScopeWriter w) {
-		auto ret = retv.classicalRet;
-		assert(ret && !retv.quantumRet,"TODO");
+		assert(!!retv.classicalRet ^ !!retv.quantumRet, "TODO");
+		auto ret = retv.classicalRet ? retv.classicalRet : retv.quantumRet;
 		auto wRet = w;
 		if(previous) {
 			wRet = wRet.withCond(wRet.nscope, previous.cond);
@@ -868,7 +869,11 @@ struct CondRet {
 		} else {
 			ret = retReachable;
 		}
-		return RetValue(ret);
+		if(retv.classicalRet) {
+			return RetValue(ret);
+		} else {
+			return RetValue(null, ret);
+		}
 	}
 
 	RetValue mergeRet(CondAny cond, RetValue r0, RetValue r1, ScopeWriter w) {
@@ -4026,7 +4031,7 @@ class ScopeWriter {
 			if(rb.isReturn || rb.isAbort) {
 				auto vb = rb.asValue(scB, nscope.getFunction().ret);
 				scB.checkEmpty(rb.isAbort);
-				auto vc = ra.retCond.invert().valMerge(ra.retValue, vb, this);
+				auto vc = ra.retCond.valMerge(vb, ra.retValue, this);
 				ra.forgetCond(this);
 				checkEmpty(false);
 				return Result.returns(vc);
