@@ -1177,7 +1177,7 @@ struct Result {
 				auto s1 = w1.qcg.csplit(CondC(condC), classicalRetQ1);
 				auto classicalRetQ1nc = s1[0]; // [cond,c1,!condC]
 				classicalRetQ1 = s1[1];
-				classicalRetQ1 = w1.qcg.withCond(CondAny(condC)).removeCond(CondAny(c1), classicalRetQ0);
+				classicalRetQ1 = w1.qcg.withCond(CondAny(condC)).removeCond(CondAny(c1), classicalRetQ1);
 
 				classicalRetQ = w.qcg.withCond(CondAny(condC)).merge(cond, classicalRetQ0, classicalRetQ1);
 				rv.classicalRet = Value.newReg(null, classicalRetQ);
