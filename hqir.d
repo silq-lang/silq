@@ -791,8 +791,13 @@ struct CondRet {
 	}
 
 	void forget(ScopeWriter sc) {
+		assert(!isAnd);
 		if(!condQ) return;
-		sc.qcg.forget(condQ.reg);
+		if(condC) {
+			sc.qcg.withCond(CondAny(condC.invert())).forget(condQ.reg);
+		} else {
+			sc.qcg.forget(condQ.reg);
+		}
 	}
 
 	CondRet invert() {
@@ -856,8 +861,14 @@ struct CondRet {
 		return RetValue.valMerge(cond, r0, r1, w.withCond(w.nscope, this.cond));
 	}
 
-	ScopeWriter genMerge(CondAny cond, ScopeWriter w0, ScopeWriter w1, ScopeWriter w){
-		w = w.withCond(w.nscope, this.cond);
+	ScopeWriter genMerge(CondAny cond, ScopeWriter w0, ScopeWriter w1, ScopeWriter w) {
+		assert(isAnd);
+		if(condC) {
+			w = w.withCond(w.nscope, CondAny(condC));
+		}
+		if(condQ) {
+			w = w.withCond(w.nscope, CondAny(condQ));
+		}
 		w.genMerge(cond, w0, w1);
 		return w;
 	}
@@ -869,33 +880,62 @@ struct CondRet {
 		return r;
 	}
 
-	ScopeWriter removeCondRet(ScopeWriter w) {
-		foreach(name, ref var; w.vars) {
-			if(!var.value || !var.value.hasQuantum) continue;
-			auto valUnreachable = Value.newReg(null, w.withCond(w.nscope, cond).qcg.allocError());
-			var.value = w.valMerge(cond, var.value, valUnreachable);
+	ScopeWriter replaceCondRet(CondRet previous, ScopeWriter w) {
+		assert(condC || condQ);
+		assert(!isAnd && !previous.isAnd);
+		auto w1 = w;
+		auto ithis = invert();
+		assert(ithis.isAnd);
+		if(ithis.condC) {
+			w1 = w1.withCond(w.nscope, CondAny(ithis.condC));
 		}
-		return w;
-	}
-
-	ScopeWriter replaceCondRet(CondRet previous, ScopeWriter w){
-		auto w0 = w.withCond(w.nscope, cond);
-		auto w1 = w.withCond(w.nscope, cond.invert());
-		auto wg = w, w0g = w0;
-		if(previous) {
-			wg = wg.withCond(wg.nscope, previous.cond.invert());
-			w0g = w0g.withCond(w0g.nscope, previous.cond.invert());
+		if(ithis.condQ) {
+			w1 = w1.withCond(w.nscope, CondAny(ithis.condQ));
 		}
 		foreach(name, ref var; w.vars) {
 			if(!var.value) continue;
-			Value v0, v1;
-			wg.valSplit(cond, v1, v0, var.value);
-			w0g.valDeallocError(v0);
-			w1.defineVar(var.decl, v1);
+			CReg creg = null;
+			if(var.value.hasClassical) {
+				creg = var.value.creg;
+			}
+			QReg qreg = null;
+			if(var.value.hasQuantum) {
+				qreg = var.value.qreg;
+				auto wg = w, wgc = w;
+				if(previous) {
+					auto iprev = previous.invert();
+					assert(iprev.isAnd);
+					if(iprev.condC) {
+						wgc = wg = wg.withCond(wg.nscope, CondAny(iprev.condC));
+					}
+					if(iprev.condQ) {
+						wg = wg.withCond(wg.nscope, CondAny(iprev.condQ));
+					}
+				}
+				auto ithis = invert();
+				assert(ithis.isAnd);
+				if(ithis.condC) {
+					qreg = wg.qcg.addCond(CondAny(ithis.condC), qreg);
+					wg = wg.withCond(wg.nscope, CondAny(ithis.condC));
+					wgc = wgc.withCond(wgc.nscope, CondAny(ithis.condC));
+				}
+				if(ithis.condQ) {
+					qreg = wg.qcg.addCond(CondAny(ithis.condQ), qreg);
+					wgc = wgc.withCond(wgc.nscope, CondAny(ithis.condQ));
+				}
+				if(previous) {
+					auto iprev = previous.invert();
+					assert(iprev.isAnd);
+					if(iprev.condQ) {
+						qreg = wgc.qcg.removeCond(CondAny(iprev.condQ), qreg);
+					}
+					if(iprev.condC) {
+						qreg = w1.qcg.removeCond(CondAny(iprev.condC), qreg);
+					}
+				}
+			}
+			w1.defineVar(var.decl, Value.newReg(creg, qreg));
 			var.value = null;
-		}
-		if(previous) {
-			w1 = previous.removeCondRet(w1);
 		}
 		return w1;
 	}
