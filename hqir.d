@@ -745,7 +745,7 @@ struct CondRetValue {
 
 	CondRetValue toQuantum(ScopeWriter w) {
 		if(hasClassical && hasQuantum) {
-			return CondRetValue(w.qcg.cmerge(CondC(condC), condQ, w.withCond(w.nscope, CondAny(condC)).qcg.allocQubit(1)));
+			return CondRetValue(w.qcg.cmerge(CondC(condC), condQ, w.qcg.withCond(CondAny(condC)).allocQubit(1)));
 		}
 		if(hasQuantum) {
 			return this;
@@ -754,6 +754,10 @@ struct CondRetValue {
 			return CondRetValue(w.qcg.allocQubit(condC));
 		}
 		return CondRetValue(w.qcg.allocQubit(0));
+	}
+
+	CondRetValue dup(ScopeWriter w) {
+		return CondRetValue(condC, condQ ? (condC ? w.qcg.withCond(CondAny(condC, false)) : w.qcg).dup(condQ) : null);
 	}
 
 	CondRet asCondRet() { return CondRet(CondC(condC), CondQ(condQ)); }
@@ -805,15 +809,25 @@ struct CondRet {
 	}
 
 	RetValue valMerge(RetValue v0, RetValue v1, ScopeWriter w) {
-		if((!!v0.classicalRet ^ !!v0.quantumRet) && (!!v1.classicalRet ^ !!v1.quantumRet)) {
-			if(!!v0.classicalRet == !!v1.classicalRet) {
-				if(!!v0.classicalRet) {
-					assert(!!condC ^ !!condQ);
-					return RetValue(w.valMerge(condQ ? CondAny(condQ) : CondAny(condC), v0.classicalRet, v1.classicalRet));
-				}
+		assert(v0.classicalRet && !v0.quantumRet);
+		assert(v1.classicalRet || v1.quantumRet);
+		assert(!!v1.classicalRet == !!condC);
+		assert(!!v1.quantumRet == !!condQ);
+
+		auto v = v0.classicalRet;
+		if(condQ) {
+			assert(v1.quantumRet);
+			auto wg = w;
+			if(condC) {
+				wg = w.withCond(w.nscope, CondAny(condC));
 			}
+			v = wg.valMerge(CondAny(condQ), v, v1.quantumRet);
 		}
-		assert(0,text("TODO ",v0," ",v1));
+		if(condC) {
+			assert(v1.classicalRet);
+			v = w.valMerge(CondAny(condC), v, v1.classicalRet);
+		}
+		return RetValue(v);
 	}
 
 	ScopeWriter addToScope(ast_scope.NestedScope nscope, ScopeWriter w) {
@@ -837,7 +851,7 @@ struct CondRet {
 		return !!condQ;
 	}
 
-	RetValue updateRetCond(RetValue retv, CondRet previous, ScopeWriter w) { // TODO: remove
+	RetValue updateRetCond(RetValue retv, CondRet previous, ScopeWriter w) {
 		auto ret = retv.classicalRet;
 		assert(ret && !retv.quantumRet,"TODO");
 		auto wRet = w;
@@ -857,8 +871,22 @@ struct CondRet {
 		return RetValue(ret);
 	}
 
-	RetValue mergeRet(CondAny cond, RetValue r0, RetValue r1, ScopeWriter w) { // TODO: remove
-		return RetValue.valMerge(cond, r0, r1, w.withCond(w.nscope, this.cond));
+	RetValue mergeRet(CondAny cond, RetValue r0, RetValue r1, ScopeWriter w) {
+		Value cret = null;
+		if(condC) {
+			assert(r0.classicalRet && r1.classicalRet);
+			auto wc = w.withCond(w.nscope, CondAny(condC));
+			cret = wc.valMerge(cond, r0.classicalRet, r1.classicalRet);
+		}
+		Value qret = null;
+		if(condQ) {
+			assert(r0.quantumRet && r1.quantumRet);
+			auto wcq = w;
+			if(condC) wcq = wcq.withCond(wcq.nscope, CondAny(condC.invert()));
+			wcq = wcq.withCond(wcq.nscope, CondAny(condQ));
+			qret = wcq.valMerge(cond, r0.quantumRet, r1.quantumRet);
+		}
+		return RetValue(cret, qret);
 	}
 
 	ScopeWriter genMerge(CondAny cond, ScopeWriter w0, ScopeWriter w1, ScopeWriter w) {
@@ -876,7 +904,7 @@ struct CondRet {
 	RetValue allocUnreachableRet(RetValue reachable, ScopeWriter w) {
 		RetValue r;
 		if(reachable.classicalRet) r.classicalRet = Value.newReg(null, reachable.classicalRet.hasQuantum ? w.withCond(w.nscope, cond).qcg.allocError() : null);
-		if(reachable.quantumRet) r.quantumRet = Value.newReg(null, reachable.classicalRet.hasQuantum ? w.withCond(w.nscope, cond).qcg.allocError() : null);
+		if(reachable.quantumRet) r.quantumRet = Value.newReg(null, reachable.quantumRet.hasQuantum ? w.withCond(w.nscope, cond).qcg.allocError() : null);
 		return r;
 	}
 
@@ -939,7 +967,6 @@ struct CondRet {
 					}
 				}
 			}
-
 			w1.defineVar(var.decl, Value.newReg(creg, qreg));
 			var.value = null;
 		}
@@ -964,10 +991,70 @@ struct RetValue {
 		return classicalRet || quantumRet;
 	}
 
+	RetValue toQuantum(CondRet retCond, CondRet retCondQ, ScopeWriter w) {
+		if(!this) {
+			return this;
+		}
+		assert(!!classicalRet == (!!retCond.condC || !retCond));
+		assert(!!quantumRet == !!retCond.condQ);
+		assert(!retCondQ.condC && retCondQ.condQ || !retCond && !retCondQ);
+		if(!classicalRet){
+			assert(!!quantumRet);
+			assert(!retCond.condC && retCond.condQ);
+			CReg creg = quantumRet.creg;
+			QReg qreg = quantumRet.qreg;
+			qreg = w.qcg.withCond(CondAny(retCond.condQ)).addCond(CondAny(retCondQ.condQ), qreg);
+			qreg = w.qcg.withCond(CondAny(retCondQ.condQ)).removeCond(CondAny(retCond.condQ), qreg);
+			return RetValue(null, Value.newReg(creg, qreg));
+		}
+		CReg creg = null;
+		if(quantumRet) {
+			assert(classicalRet.hasClassical == quantumRet.hasClassical);
+		}
+		if(classicalRet.hasClassical) {
+			if(!quantumRet) {
+				creg = classicalRet.creg;
+			} else {
+				creg = w.ccg.cond(retCond.condC, quantumRet.creg, classicalRet.creg);
+			}
+		}
+		QReg qreg = null;
+		if(quantumRet) {
+			assert(classicalRet.hasQuantum == quantumRet.hasQuantum);
+		}
+		if(classicalRet.hasQuantum) {
+			if(!quantumRet) {
+				qreg = classicalRet.qreg; // [retCond.condC]
+				if(retCond.condC) {
+					assert(retCond.condQ);
+					qreg = w.qcg.withCond(CondAny(retCond.condC)).addCond(CondAny(retCondQ.condQ), qreg); // [retCond.condC,retCondQ.condQ]
+					qreg = w.qcg.withCond(CondAny(retCondQ.condQ)).removeCond(CondAny(retCond.condC), qreg); // [retCondQ.condQ]
+				} else {
+					assert(!retCond.condQ);
+				}
+			} else {
+				auto wq = w.withCond(w.nscope, CondAny(retCond.condQ));
+				qreg = wq.qcg.cmerge(retCond.condC, quantumRet.qreg, classicalRet.qreg); // [retCond.condQ]
+				qreg = wq.qcg.addCond(CondAny(retCondQ.condQ), qreg); // [retCond.condQ, retCondQ.condQ]
+				qreg = w.qcg.withCond(CondAny(retCondQ.condQ)).removeCond(CondAny(retCond.condQ), qreg); // [retCondQ.condQ]
+			}
+		}
+		return RetValue(null, Value.newReg(creg, qreg));
+	}
+
 	static RetValue valMerge(CondAny cond, RetValue r0, RetValue r1, ScopeWriter w) {
-		assert(r0.classicalRet && !r0.quantumRet, "TODO");
-		assert(r1.classicalRet && !r1.quantumRet, "TODO");
-		return RetValue(w.valMerge(cond, r0.classicalRet, r1.classicalRet));
+		assert(!!r0.classicalRet == !!r1.classicalRet);
+		assert(!!r0.quantumRet == !!r1.quantumRet);
+		assert(!!r0.classicalRet ^ !!r0.quantumRet);
+		Value cret = null;
+		if(r0.classicalRet) {
+			cret = w.valMerge(cond, r0.classicalRet, r1.classicalRet);
+		}
+		Value qret = null;
+		if(r1.quantumRet) {
+			qret = w.valMerge(cond, r0.quantumRet, r1.quantumRet);
+		}
+		return RetValue(cret, qret);
 	}
 }
 
@@ -1065,7 +1152,7 @@ struct Result {
 		CReg c0 = v0.condC, c1 = v1.condC;
 		QReg q0 = v0.condQ, q1 = v1.condQ;
 		RetValue rv;
-		CondRetValue crv;
+		CondRet retCond;
 		if(cond.isQuantum) {
 			if(c0 && c1) {
 				CReg condC = w.ccg.cond(c0, c1, w.ctx.boolFalse);
@@ -1144,13 +1231,36 @@ struct Result {
 				}
 				QReg quantumRetQ = wc.qcg.withCond(CondAny(condQ)).qmerge(cond.qcond, retQ0, retQ1);
 				rv.quantumRet = Value.newReg(null, quantumRetQ);
-				crv = CondRetValue(condC, condQ);
+				retCond = CondRetValue(condC, condQ).asCondRet();
 			} else {
-				v0 = v0.toQuantum(w0);
-				v1 = v1.toQuantum(w1);
-				assert(!v0.hasClassical && !v1.hasClassical);
-				assert(v0.hasQuantum && v1.hasQuantum);
-				crv = CondRetValue(w.qcg.qmerge(cond.qcond, v0.condQ, v1.condQ));
+				auto v0q = v0.dup(w0).toQuantum(w0);
+				auto v1q = v1.dup(w1).toQuantum(w1);
+				assert(!v0q.hasClassical && !v1q.hasClassical);
+				assert(v0q.hasQuantum && v1q.hasQuantum);
+
+				if(rv0) {
+					rv0 = rv0.toQuantum(r0.retCond, v0q.asCondRet(), w0);
+					assert(!rv0.classicalRet && rv0.quantumRet);
+				}
+				if(rv1) {
+					rv1 = rv1.toQuantum(r1.retCond, v1q.asCondRet(), w1);
+					assert(!rv1.classicalRet && rv1.quantumRet);
+				}
+
+				v0.asCondRet().forget(w0);
+				v1.asCondRet().forget(w1);
+
+				retCond = CondRetValue(null, w.qcg.qmerge(cond.qcond, v0q.dup(w0).condQ, v1q.dup(w1).condQ)).asCondRet();
+
+				if(rv0) {
+					rv0 = retCond.updateRetCond(rv0, v0q.asCondRet(), w0);
+				}
+				if(rv1) {
+					rv1 = retCond.updateRetCond(rv1, v1q.asCondRet(), w1);
+				}
+
+				v0q.asCondRet().forget(w0);
+				v1q.asCondRet().forget(w1);
 			}
 		} else {
 			CReg condC = null;
@@ -1186,28 +1296,25 @@ struct Result {
 			} else if(q1) {
 				condQ = wq.qcg.cmerge(cond.ccond, w0.qcg.allocQubit(0), q1);
 			}
-			crv = CondRetValue(condC, condQ);
-		}
+			retCond = CondRetValue(condC, condQ).asCondRet();
 
-		auto retCond = crv.asCondRet();
-
-		if(!rv) { // TODO: remove
 			if(rv0) {
 				rv0 = retCond.updateRetCond(rv0, r0.retCond, w0);
 			}
 			if(rv1) {
 				rv1 = retCond.updateRetCond(rv1, r1.retCond, w1);
 			}
-			if(rv0 && rv1) {
-				rv = retCond.mergeRet(cond, rv0, rv1, w);
-			}else if(rv0) {
-				auto rv1Unreachable = retCond.allocUnreachableRet(rv0, w1);
-				rv = retCond.mergeRet(cond, rv0, rv1Unreachable, w);
-			}else if(rv1) {
-				auto rv0Unreachable = retCond.allocUnreachableRet(rv1, w0);
-				rv = retCond.mergeRet(cond, rv0Unreachable, rv1, w);
-			}else assert(0);
 		}
+
+		if(rv0 && rv1) {
+			rv = retCond.mergeRet(cond, rv0, rv1, w);
+		}else if(rv0) {
+			auto rv1Unreachable = retCond.allocUnreachableRet(rv0, w1);
+			rv = retCond.mergeRet(cond, rv0, rv1Unreachable, w);
+		}else if(rv1) {
+			auto rv0Unreachable = retCond.allocUnreachableRet(rv1, w0);
+			rv = retCond.mergeRet(cond, rv0Unreachable, rv1, w);
+		}else assert(0);
 
 		return Result.conditionallyReturns(rv, retCond);
 	}
@@ -3966,6 +4073,11 @@ class ScopeWriter {
 							scTail.defineVar(outer, scCont.getVar(decl, false));
 						}
 						scCont.checkEmpty(false);
+						if(rv.retCond.condQ) {
+							assert(!rv.retCond.condC);
+							rv.value = rv.value.toQuantum(CondRet.init, CondRet.init, this);
+							assert(!rv.value.classicalRet && rv.value.quantumRet);
+						}
 					}else{
 						scTail = scCont;
 					}
@@ -4046,7 +4158,6 @@ class ScopeWriter {
 			auto ret = result.retValue, retCond = result.retCond;
 
 			auto ifFalseOrig = ifFalse, ifTrueOrig = ifTrue;
-
 			if(rFalse.mayPass) {
 				ifFalse = retCond.replaceCondRet(rFalse.retCond, ifFalse);
 			}
