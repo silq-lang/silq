@@ -16,7 +16,10 @@ def main(){
 	for i in 0..2{
 		for j in 0..2{
 			for k in 0..2{
-				measure(foo(i≠0,j≠0,k≠0)); // TODO: check with assert
+				r:=measure(foo(i≠0,j≠0,k≠0));
+				if i≠0&&j≠0{ assert(r=[0,1]); }
+				if i=0&&k≠0{ assert(r=[1,0]); }
+				if i=0&&k=0{ assert(r=[j≠0,0]); }
 			}
 		}
 	}
