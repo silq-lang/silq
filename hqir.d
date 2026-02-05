@@ -832,7 +832,7 @@ struct CondRet {
 		return !!condQ;
 	}
 
-	RetValue updateRetCond(RetValue retv, CondRet previous, ScopeWriter w) {
+	RetValue updateRetCond(RetValue retv, CondRet previous, ScopeWriter w) { // TODO: remove
 		auto ret = retv.classicalRet;
 		assert(ret && !retv.quantumRet,"TODO");
 		auto wRet = w;
@@ -852,7 +852,7 @@ struct CondRet {
 		return RetValue(ret);
 	}
 
-	RetValue mergeRet(CondAny cond, RetValue r0, RetValue r1, ScopeWriter w) {
+	RetValue mergeRet(CondAny cond, RetValue r0, RetValue r1, ScopeWriter w) { // TODO: remove
 		return RetValue.valMerge(cond, r0, r1, w.withCond(w.nscope, this.cond));
 	}
 
@@ -905,8 +905,12 @@ struct RetValue {
 	Value classicalRet;
 	Value quantumRet;
 
-	this(Value value) {
-		classicalRet = value;
+	this(Value cret) {
+		this.classicalRet = cret;
+	}
+	this(Value cret, Value qret) {
+		this.classicalRet = cret;
+		this.quantumRet = qret;
 	}
 
 	bool opCast(T:bool)(){
@@ -1017,8 +1021,28 @@ struct Result {
 		CondRetValue crv;
 		if(cond.isQuantum) {
 			if(c0 && c1) {
-				assert(rv0 && rv1);
 				CReg condC = w.ccg.cond(c0, c1, w.ctx.boolFalse);
+
+				assert(rv0.classicalRet && rv1.classicalRet);
+				assert(!rv0.classicalRet.hasClassical && !rv1.classicalRet.hasClassical);
+				QReg classicalRetQ = null;
+				assert(rv0.classicalRet.hasQuantum && rv1.classicalRet.hasQuantum);
+				QReg classicalRetQ0 = rv0.classicalRet.qreg;
+				QReg classicalRetQ1 = rv1.classicalRet.qreg;
+
+				auto s0 = w0.qcg.csplit(CondC(condC), classicalRetQ0);
+				auto classicalRetQ0nc = s0[0]; // [!cond,c0,!condC]
+				classicalRetQ0 = s0[1];
+				classicalRetQ0 = w0.qcg.withCond(CondAny(condC)).removeCond(CondAny(c0), classicalRetQ0);
+
+				auto s1 = w1.qcg.csplit(CondC(condC), classicalRetQ1);
+				auto classicalRetQ1nc = s1[0]; // [cond,c1,!condC]
+				classicalRetQ1 = s1[1];
+				classicalRetQ1 = w1.qcg.withCond(CondAny(condC)).removeCond(CondAny(c1), classicalRetQ0);
+
+				classicalRetQ = w.qcg.withCond(CondAny(condC)).merge(cond, classicalRetQ0, classicalRetQ1);
+				rv.classicalRet = Value.newReg(null, classicalRetQ);
+
 				QReg condQ = null;
 				// [!condC] condQ = !cond ? (!c0 ? [!c0,!cond,!condC] q0 : [c0,!cond,!condC] 1) : (!c1 ? [!c1,cond,!condC] q1 : [c1,cond,!condC] 1);
 				auto wc0 = w0.withCond(w0.nscope, CondAny(condC, false));
@@ -1027,7 +1051,7 @@ struct Result {
 				} else {
 					q0 = wc0.qcg.allocQubit(0);
 				}
-				auto o0 = wc0.qcg.withCond(CondAny(c0, false)).allocQubit(1);
+				auto o0 = wc0.qcg.withCond(CondAny(c0)).allocQubit(1);
 				q0 = wc0.qcg.cmerge(CondC(c0), q0, o0);
 
 				auto wc1 = w1.withCond(w1.nscope, CondAny(condC, false));
@@ -1036,13 +1060,45 @@ struct Result {
 				} else {
 					q1 = wc1.qcg.allocQubit(0);
 				}
-				auto o1 = wc1.qcg.withCond(CondAny(c1, false)).allocQubit(1);
+				auto o1 = wc1.qcg.withCond(CondAny(c1)).allocQubit(1);
 				q1 = wc1.qcg.cmerge(CondC(c1), q1, o1);
 
 				auto wc = w.withCond(w.nscope, CondAny(condC, false));
 				condQ = wc.qcg.qmerge(cond.qcond, q0, q1);
+
+				classicalRetQ0nc = wc0.qcg.addCond(CondAny(condQ), classicalRetQ0nc);
+				classicalRetQ1nc = wc1.qcg.addCond(CondAny(condQ), classicalRetQ1nc);
+
+				QReg retQ0 = null;
+				if(rv0.quantumRet) {
+					assert(!rv0.quantumRet.hasClassical && rv0.quantumRet.hasQuantum);
+					auto quantumRetQ0 = rv0.quantumRet.qreg; // [cond,!c0,q0]
+					quantumRetQ0 = w0.qcg.withCond(CondAny(c0, false)).addCond(CondAny(condC, false), quantumRetQ0); // [cond,!c0,q0,!condC]
+					quantumRetQ0 = wc0.qcg.withCond(CondAny(c0, false)).addCond(CondAny(condQ), quantumRetQ0); // [cond,!c0,q0,!condC,condQ]
+					quantumRetQ0 = wc0.qcg.withCond(CondAny(condQ)).removeCond(CondAny(c0, false), quantumRetQ0); // [cond,!c0,!condC,condQ]
+					classicalRetQ0nc = wc0.qcg.withCond(CondAny(c0, false)).addCond(CondAny(condQ), classicalRetQ0nc); // [cond,c0,!condC,condQ]
+					retQ0 = wc0.qcg.withCond(CondAny(condQ)).cmerge(CondC(c0), quantumRetQ0, classicalRetQ0nc); // [cond,!condC,condQ]
+				} else {
+					retQ0 = wc0.qcg.addCond(CondAny(condQ), classicalRetQ0nc); // [!cond,c0,!condC,condQ]
+					retQ0 = wc0.qcg.withCond(CondAny(condQ)).removeCond(CondAny(c0), retQ0); // [!cond,!condC,condQ]
+				}
+				QReg retQ1 = null;
+				if(rv1.quantumRet) {
+					assert(!rv1.quantumRet.hasClassical && rv1.quantumRet.hasQuantum);
+					auto quantumRetQ1 = rv1.quantumRet.qreg; // [cond,!c1,q1]
+					quantumRetQ1 = w1.qcg.withCond(CondAny(c1, false)).addCond(CondAny(condC, false), quantumRetQ1); // [cond,!c1,q1,!condC]
+					quantumRetQ1 = wc1.qcg.withCond(CondAny(c1, false)).addCond(CondAny(condQ), quantumRetQ1); // [cond,!c1,q1,!condC,condQ]
+					quantumRetQ1 = wc1.qcg.withCond(CondAny(condQ)).removeCond(CondAny(c1, false), quantumRetQ1); // [cond,!c1,!condC,condQ]
+					classicalRetQ1nc = wc1.qcg.withCond(CondAny(c1, false)).addCond(CondAny(condQ), classicalRetQ1nc); // [cond,c1,!condC,condQ]
+					retQ1 = wc1.qcg.withCond(CondAny(condQ)).cmerge(CondC(c1), quantumRetQ1, classicalRetQ1nc); // [cond,!condC,condQ]
+				} else {
+					retQ1 = wc1.qcg.addCond(CondAny(condQ), classicalRetQ1nc); // [!cond,c1,!condC,condQ]
+					retQ1 = wc1.qcg.withCond(CondAny(condQ)).removeCond(CondAny(c1), retQ1); // [!cond,!condC,condQ]
+				}
+				QReg quantumRetQ = wc.qcg.withCond(CondAny(condQ)).qmerge(cond.qcond, retQ0, retQ1);
+				rv.quantumRet = Value.newReg(null, quantumRetQ);
 				crv = CondRetValue(condC, condQ);
-			}else{
+			} else {
 				v0 = v0.toQuantum(w0);
 				v1 = v1.toQuantum(w1);
 				assert(!v0.hasClassical && !v1.hasClassical);
@@ -1088,28 +1144,16 @@ struct Result {
 
 		auto retCond = crv.asCondRet();
 
-		if(rv0) {
-			rv0 = retCond.updateRetCond(rv0, r0.retCond, w0);
-		}
-
-		if(rv1) {
-			rv1 = retCond.updateRetCond(rv1, r1.retCond, w1);
-		}
-
-		ScopeWriter rvScope;
-		if(rv0 && rv1) {
-			rv = retCond.mergeRet(cond, rv0, rv1, w);
-			rvScope = w;
-		}else if(rv0) {
-			rv = rv0;
-			rvScope = w0;
-		}else if(rv1) {
-			rv = rv1;
-			rvScope = w1;
-		}else assert(0);
-
-		if(rvScope !is w) {
+		if(!rv) { // TODO: remove
 			if(rv0) {
+				rv0 = retCond.updateRetCond(rv0, r0.retCond, w0);
+			}
+			if(rv1) {
+				rv1 = retCond.updateRetCond(rv1, r1.retCond, w1);
+			}
+			if(rv0 && rv1) {
+				rv = retCond.mergeRet(cond, rv0, rv1, w);
+			}else if(rv0) {
 				auto rv1Unreachable = retCond.allocUnreachableRet(rv0, w1);
 				rv = retCond.mergeRet(cond, rv0, rv1Unreachable, w);
 			}else if(rv1) {
