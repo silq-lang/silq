@@ -1256,12 +1256,11 @@ struct Result {
 				v1.asCondRet().forget(w1);
 
 				retCond = CondRetValue(null, w.qcg.qmerge(cond.qcond, v0q.dup(w0).condQ, v1q.dup(w1).condQ)).asCondRet();
-
 				if(rv0) {
-					rv0 = retCond.updateRetCond(rv0, v0q.asCondRet(), w0);
+					rv0 = retCond.updateRetCond(rv0, r0.isConditionalReturn ? v0q.asCondRet() : CondRet.init, w0);
 				}
 				if(rv1) {
-					rv1 = retCond.updateRetCond(rv1, v1q.asCondRet(), w1);
+					rv1 = retCond.updateRetCond(rv1, r1.isConditionalReturn ? v1q.asCondRet() : CondRet.init, w1);
 				}
 
 				v0q.asCondRet().forget(w0);
@@ -1311,15 +1310,17 @@ struct Result {
 			}
 		}
 
-		if(rv0 && rv1) {
-			rv = retCond.mergeRet(cond, rv0, rv1, w);
-		}else if(rv0) {
-			auto rv1Unreachable = retCond.allocUnreachableRet(rv0, w1);
-			rv = retCond.mergeRet(cond, rv0, rv1Unreachable, w);
-		}else if(rv1) {
-			auto rv0Unreachable = retCond.allocUnreachableRet(rv1, w0);
-			rv = retCond.mergeRet(cond, rv0Unreachable, rv1, w);
-		}else assert(0);
+		if(!rv) {
+			if(rv0 && rv1) {
+				rv = retCond.mergeRet(cond, rv0, rv1, w);
+			}else if(rv0) {
+				auto rv1Unreachable = retCond.allocUnreachableRet(rv0, w1);
+				rv = retCond.mergeRet(cond, rv0, rv1Unreachable, w);
+			}else if(rv1) {
+				auto rv0Unreachable = retCond.allocUnreachableRet(rv1, w0);
+				rv = retCond.mergeRet(cond, rv0Unreachable, rv1, w);
+			}else assert(0);
+		}
 
 		return Result.conditionallyReturns(rv, retCond);
 	}
