@@ -1164,7 +1164,7 @@ struct Result {
 				rv0 = v0.asCondRet().updateRetCond(rv0, r0.retCond, w0);
 				rv1 = v1.asCondRet().updateRetCond(rv1, r1.retCond, w1);
 
-				CReg condC = w.ccg.cond(c0, c1, w.ctx.boolFalse);
+				CReg condC = w.ccg.cond(c0, w.ctx.boolFalse, c1);
 
 				assert(rv0.classicalRet && rv1.classicalRet);
 				assert(!rv0.classicalRet.hasClassical && !rv1.classicalRet.hasClassical);
