@@ -839,7 +839,7 @@ struct CondRet {
 	}
 
 	CondRetValue asCondRetValue(ScopeWriter w) {
-		assert(!!condC ^ !!condQ);
+		assert(!!condC ^ !!condQ, "TODO");
 		auto valT = condQ ? w.withCond(w.nscope, CondAny(condQ)).valAllocQubit(1) : w.valNewC(w.ctx.boolTrue);
 		auto valF = condQ ? w.withCond(w.nscope, CondAny(condQ.invert())).valAllocQubit(0) : w.valNewC(w.ctx.boolFalse);
 		auto val = w.valMerge(condQ ? CondAny(condQ) : CondAny(condC), valF, valT); // TODO: this is overkill for cond.value = true or cond.isClassical
@@ -864,7 +864,7 @@ struct CondRet {
 		wRet.withCond(wRet.nscope, cond.invert()).valDeallocError(retUnreachable);
 		if(previous) {
 			auto wRet2 = w.withCond(w.nscope, cond);
-			retUnreachable = Value.newReg(null, retReachable.hasQuantum ? wRet2.withCond(wRet.nscope, previous.cond.invert()).qcg.allocError() : null);
+			retUnreachable = Value.newReg(retUnreachable.creg, retReachable.hasQuantum ? wRet2.withCond(wRet.nscope, previous.cond.invert()).qcg.allocError() : null);
 			ret = wRet2.valMerge(previous.cond, retUnreachable, retReachable);
 		} else {
 			ret = retReachable;
@@ -908,8 +908,8 @@ struct CondRet {
 
 	RetValue allocUnreachableRet(RetValue reachable, ScopeWriter w) {
 		RetValue r;
-		if(reachable.classicalRet) r.classicalRet = Value.newReg(null, reachable.classicalRet.hasQuantum ? w.withCond(w.nscope, cond).qcg.allocError() : null);
-		if(reachable.quantumRet) r.quantumRet = Value.newReg(null, reachable.quantumRet.hasQuantum ? w.withCond(w.nscope, cond).qcg.allocError() : null);
+		if(reachable.classicalRet) r.classicalRet = Value.newReg(reachable.classicalRet.creg, reachable.classicalRet.hasQuantum ? w.withCond(w.nscope, cond).qcg.allocError() : null);
+		if(reachable.quantumRet) r.quantumRet = Value.newReg(reachable.quantumRet.creg, reachable.quantumRet.hasQuantum ? w.withCond(w.nscope, cond).qcg.allocError() : null);
 		return r;
 	}
 
@@ -2156,11 +2156,13 @@ class QCGen {
 	}
 
 	QReg addCond(CondAny cond, QReg r) {
+		assert(cond && r);
 		auto rs = split(cond, r);
 		withCond(cond.invert).deallocError(rs[0]);
 		return rs[1];
 	}
 	QReg removeCond(CondAny cond, QReg r) {
+		assert(cond && r);
 		auto rUnreachable = withCond(cond.invert).allocError();
 		return merge(cond, rUnreachable, r);
 	}
@@ -2436,6 +2438,18 @@ class ScopeWriter {
 			}
 		}
 		return valNewQ(creg, qreg);
+	}
+
+	Value valAddCond(CondAny cond, Value v) {
+		auto creg = v.creg;
+		auto qreg = v.qreg ? qcg.addCond(cond, v.qreg) : null;
+		return Value.newReg(creg, qreg);
+	}
+
+	Value valRemoveCond(CondAny cond, Value v) {
+		auto creg = v.creg;
+		auto qreg = v.qreg ? qcg.removeCond(cond, v.qreg) : null;
+		return Value.newReg(creg, qreg);
 	}
 
 	Value valArrayCat(Expression itemTy, Value lhs, Value rhs) {
@@ -4040,7 +4054,69 @@ class ScopeWriter {
 				return Result.returns(vc);
 			}
 			assert(rb.isConditionalReturn);
-			assert(0, "TODO multiple subsequent nested conditional returns");
+			if(!ra.retValue.quantumRet && !rb.retValue.classicalRet) {
+				assert(!ra.retCond.condQ && !rb.retCond.condC);
+				return Result.conditionallyReturns(
+					RetValue(ra.retValue.classicalRet, rb.retValue.quantumRet),
+					CondRet(ra.retCond.condC, rb.retCond.condQ)
+				);
+			}
+			auto cA = ra.retCond, cB = rb.retCond;
+			auto vA = cA.asCondRetValue(this), rvA = ra.retValue;
+			auto vB = cB.asCondRetValue(scB), rvB = rb.retValue;
+			if(!rvA.quantumRet) {
+				assert(!vA.condQ);
+				auto ccA = vA.condC, rcA = rvA.classicalRet; // [ccA]
+				assert(rcA && ccA);
+				auto ccB = vB.condC, rcB = rvB.classicalRet; // [!ccA,ccB]
+				auto cqB = vB.condQ, rqB = rvB.quantumRet;   // [!ccA,!ccB,cqB]
+				assert(rcB && ccB);
+				CReg condC = ccg.cond(ccA, ccB, ctx.boolTrue);
+				rcA = withCond(nscope, CondAny(ccA)).valAddCond(CondAny(condC), rcA); // [ccA,condC]
+
+				Value cretC = rcA;
+				rcB = scB.withCond(scB.nscope, CondAny(ccB)).valAddCond(CondAny(condC), rcB); // [!ccA, ccB, condC]
+				rcB = scB.withCond(scB.nscope, CondAny(ccB)).withCond(scB.nscope, CondAny(condC)).valRemoveCond(CondAny(cB.condC), rcB); // [!ccA,condC]
+				cretC = withCond(nscope, CondAny(condC)).valMerge(CondAny(ccA), rcA, rcB); // [condC]
+
+				Value cretQ = rqB; // [!condC,!ccA,!ccB,cqB]
+				if(cretQ) {
+					cretQ = scB.withCond(scB.nscope, CondAny(ccB, false)).withCond(scB.nscope, CondAny(cqB, false))
+						.valAddCond(CondAny(condC, false), cretQ); // [!condC,!ccA,!ccB,cqB]
+				}
+
+				auto condQ = cqB;
+				if(condQ) {
+					condQ = qcg.withCond(CondAny(ccA, false)).withCond(CondAny(ccB, false)).addCond(CondAny(condC, false), condQ); // [!ccA,!ccB,!condC]
+					condQ = qcg.withCond(CondAny(ccA, false)).withCond(CondAny(condC, false)).removeCond(CondAny(cB.condC.invert()), condQ); // [!ccA,!condC]
+					condQ = qcg.withCond(CondAny(condC, false)).removeCond(CondAny(cA.condC.invert()), condQ); // [!condC]
+				}
+
+				if(cretQ) {
+					cretQ = withCond(scB.nscope, CondAny(ccA, false))
+						.withCond(scB.nscope, CondAny(ccB, false)).withCond(scB.nscope, CondAny(cqB, false))
+						.withCond(scB.nscope, CondAny(condC, false)).valAddCond(CondAny(condQ), cretQ); // [!condC,!ccA,!ccB,cqB,condQ}
+
+					cretQ = withCond(scB.nscope, CondAny(ccA, false))
+						.withCond(scB.nscope, CondAny(ccB, false)).withCond(scB.nscope, CondAny(condQ, false))
+						.withCond(scB.nscope, CondAny(condC, false)).valRemoveCond(CondAny(cB.condQ), cretQ); // [!condC,!ccA,!ccB,condQ}
+
+					cretQ = withCond(scB.nscope, CondAny(ccA, false))
+						.withCond(scB.nscope, CondAny(ccB, false)).withCond(scB.nscope, CondAny(condQ, false))
+						.withCond(scB.nscope, CondAny(condC, false)).valRemoveCond(CondAny(cB.condC.invert()), cretQ); // [!condC,!ccA,condQ]
+					cretQ = withCond(scB.nscope, CondAny(ccB, false)).withCond(scB.nscope, CondAny(condQ, false))
+						.withCond(scB.nscope, CondAny(condC, false)).valRemoveCond(CondAny(cA.condC.invert()), cretQ); // [!condC,condQ]
+				}
+				vA.asCondRet().forget(this);
+				vB.asCondRet().forget(scB);
+		        return Result.conditionallyReturns(RetValue(cretC, cretQ), CondRet(CondC(condC), CondQ(condQ)));
+			} else {
+				auto vBq = vB.dup(scB).toQuantum(scB);
+				rvB = rvB.toQuantum(rb.retCond, vBq.asCondRet(), scB);
+				assert(!rvB.classicalRet && rvB.quantumRet);
+				vB.asCondRet().forget(scB);
+				assert(0, "TODO multiple subsequent nested conditional returns");
+			}
 		}
 		foreach(i, sube; stmts) {
 			if(auto iteExp = cast(ast_exp.IteExp) sube) {
