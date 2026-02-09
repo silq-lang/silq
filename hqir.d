@@ -779,8 +779,11 @@ struct CondRet {
 	bool opCast(T:bool)(){ return !!condC||!!condQ; }
 
 	this(CondAny cond) {
-		if(cond.isQuantum) condQ=cond.qcond;
-		else condC=cond.ccond;
+		if(cond.isQuantum) {
+			condQ = cond.qcond;
+		} else {
+			condC = cond.ccond;
+		}
 	}
 	this(CondC condC) {
 		this.condC = condC;
@@ -858,10 +861,55 @@ struct CondRet {
 	}
 
 	RetValue updateRetCond(RetValue retv, CondRet previous, ScopeWriter w) {
-		assert(!!retv.classicalRet == !!condC);
-		assert(!!retv.quantumRet == !!condQ);
-		assert(!!retv.classicalRet ^ !!retv.quantumRet, "TODO");
-		auto ret = retv.classicalRet ? retv.classicalRet : retv.quantumRet;
+		auto cret = retv.classicalRet, qret = retv.quantumRet;
+		assert(!!cret == !!condC && !!qret == !!condQ);
+
+		if(!previous) {
+			if(cret && condC) {
+				cret = w.valAddCond(CondAny(condC), cret);
+			}
+			if(qret && condQ) {
+				if(condC) {
+					qret = w.valAddCond(CondAny(condC.invert()), qret);
+					qret = w.withCond(w.nscope, CondAny(condC.invert())).valAddCond(CondAny(condQ), qret);
+				} else {
+					qret = w.valAddCond(CondAny(condQ), qret);
+				}
+			}
+			return RetValue(cret, qret);
+		}
+		assert(!!condC == !!previous.condC);
+		assert(!!condQ == !!previous.condQ);
+
+		if(condC && condQ) {
+			assert(cret && qret);
+			cret = w.withCond(w.nscope, CondAny(previous.condC))
+				.valAddCond(CondAny(condC), cret);
+			cret = w.withCond(w.nscope, CondAny(condC))
+				.valRemoveCond(CondAny(previous.condC), cret);
+
+			qret = w.withCond(w.nscope, CondAny(previous.condC.invert()))
+				.withCond(w.nscope, CondAny(previous.condQ))
+				.valAddCond(CondAny(condC.invert()), qret);
+
+			qret = w.withCond(w.nscope, CondAny(previous.condC.invert()))
+				.withCond(w.nscope, CondAny(previous.condQ))
+				.withCond(w.nscope, CondAny(condC.invert()))
+				.valAddCond(CondAny(condQ), qret);
+			qret = w.withCond(w.nscope, CondAny(previous.condC.invert()))
+				.withCond(w.nscope, CondAny(condC.invert()))
+				.withCond(w.nscope, CondAny(condQ))
+				.valRemoveCond(CondAny(previous.condQ), qret);
+
+			qret = w.withCond(w.nscope, CondAny(condC.invert()))
+				.withCond(w.nscope, CondAny(condQ))
+				.valRemoveCond(CondAny(previous.condC), qret);
+
+			return RetValue(cret, qret);
+		}
+
+		assert(!!cret ^ !!qret);
+		auto ret = cret ? cret : qret;
 		auto wRet = w;
 		if(previous) {
 			wRet = wRet.withCond(wRet.nscope, previous.cond);
@@ -876,7 +924,7 @@ struct CondRet {
 		} else {
 			ret = retReachable;
 		}
-		if(retv.classicalRet) {
+		if(cret) {
 			return RetValue(ret);
 		} else {
 			return RetValue(null, ret);
@@ -914,10 +962,16 @@ struct CondRet {
 	}
 
 	RetValue allocUnreachableRet(RetValue reachable, ScopeWriter w) {
-		RetValue r;
-		if(reachable.classicalRet) r.classicalRet = Value.newReg(reachable.classicalRet.creg, reachable.classicalRet.hasQuantum ? w.withCond(w.nscope, cond).qcg.allocError() : null);
-		if(reachable.quantumRet) r.quantumRet = Value.newReg(reachable.quantumRet.creg, reachable.quantumRet.hasQuantum ? w.withCond(w.nscope, cond).qcg.allocError() : null);
-		return r;
+		Value cret = null, qret = null;
+		if(reachable.classicalRet) {
+			assert(!!condC);
+			cret = Value.newReg(reachable.classicalRet.creg, reachable.classicalRet.hasQuantum ? w.qcg.withCond(CondAny(condC)).allocError() : null);
+		}
+		if(reachable.quantumRet) {
+			assert(!!condQ);
+			qret = Value.newReg(reachable.quantumRet.creg, reachable.quantumRet.hasQuantum ? w.qcg.withCond(CondAny(condQ)).allocError() : null);
+		}
+		return RetValue(cret, qret);
 	}
 
 	ScopeWriter replaceCondRet(CondRet previous, ScopeWriter w) {
@@ -1286,18 +1340,20 @@ struct Result {
 			}
 			if(q0 && condC !is c0) {
 				if(condC) {
-					q0 = w.qcg.addCond(CondAny(condC, false), q0);
+					q0 = w0.qcg.addCond(CondAny(condC, false), q0);
 				}
 				if(c0) {
-					q0 = w.qcg.removeCond(CondAny(c0, false), q0);
+					q0 = w0.qcg.withCond(CondAny(condC, false))
+						.removeCond(CondAny(c0, false), q0);
 				}
 			}
 			if(q1 && condC !is c1) {
 				if(condC) {
-					q1 = w.qcg.addCond(CondAny(condC, false), q1);
+					q1 = w1.qcg.addCond(CondAny(condC, false), q1);
 				}
 				if(c1) {
-					q1 = w.qcg.removeCond(CondAny(c1, false), q1);
+					q1 = w1.qcg.withCond(CondAny(condC, false))
+						.removeCond(CondAny(c1, false), q1);
 				}
 			}
 			auto wq = condC ? w.withCond(w.nscope, CondAny(condC, false)) : w;
