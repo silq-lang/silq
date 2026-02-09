@@ -858,6 +858,8 @@ struct CondRet {
 	}
 
 	RetValue updateRetCond(RetValue retv, CondRet previous, ScopeWriter w) {
+		assert(!!retv.classicalRet == !!condC);
+		assert(!!retv.quantumRet == !!condQ);
 		assert(!!retv.classicalRet ^ !!retv.quantumRet, "TODO");
 		auto ret = retv.classicalRet ? retv.classicalRet : retv.quantumRet;
 		auto wRet = w;
@@ -1036,7 +1038,7 @@ struct RetValue {
 			if(!quantumRet) {
 				qreg = classicalRet.qreg; // [retCond.condC]
 				if(retCond.condC) {
-					assert(retCond.condQ);
+					assert(retCondQ.condQ);
 					qreg = w.qcg.withCond(CondAny(retCond.condC)).addCond(CondAny(retCondQ.condQ), qreg); // [retCond.condC,retCondQ.condQ]
 					qreg = w.qcg.withCond(CondAny(retCondQ.condQ)).removeCond(CondAny(retCond.condC), qreg); // [retCondQ.condQ]
 				} else {
