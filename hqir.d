@@ -839,12 +839,17 @@ struct CondRet {
 	}
 
 	CondRetValue asCondRetValue(ScopeWriter w) {
-		assert(!!condC ^ !!condQ, "TODO");
-		auto valT = condQ ? w.withCond(w.nscope, CondAny(condQ)).valAllocQubit(1) : w.valNewC(w.ctx.boolTrue);
-		auto valF = condQ ? w.withCond(w.nscope, CondAny(condQ.invert())).valAllocQubit(0) : w.valNewC(w.ctx.boolFalse);
-		auto val = w.valMerge(condQ ? CondAny(condQ) : CondAny(condC), valF, valT); // TODO: this is overkill for cond.value = true or cond.isClassical
-		assert(!!val.hasClassical ^ !!val.hasQuantum);
-		return CondRetValue(val.creg, val.qreg);
+		CReg creg = null;
+		if(condC) {
+			creg = w.ccg.cond(condC, w.ctx.boolFalse, w.ctx.boolTrue); // TODO: this is overkill
+		}
+		QReg qreg = null;
+		if(condQ) {
+			auto rF = w.qcg.withCond(CondAny(condQ.invert())).allocQubit(0);
+			auto rT = w.qcg.withCond(CondAny(condQ)).allocQubit(1);
+			qreg = w.qcg.qmerge(condQ, rF,rT);
+		}
+		return CondRetValue(creg, qreg);
 	}
 
 	bool isQuantum() { // TODO: remove
