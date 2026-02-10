@@ -9,7 +9,7 @@ def foo(x:𝔹){
     } else {
 		r:=x;
     }
-	return r;	
+	return r;
 }
 
 def main()⇒foo(H(0));

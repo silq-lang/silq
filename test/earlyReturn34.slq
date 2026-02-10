@@ -4,6 +4,6 @@ def main(){
     if measure(H(0:𝔹)) {
         return x;
     } else {
-        assert(false); 
+        assert(false);
     }
 }
