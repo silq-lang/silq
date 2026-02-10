@@ -915,7 +915,7 @@ struct CondRet {
 
 			qret = w.withCond(w.nscope, CondAny(condC.invert()))
 				.withCond(w.nscope, CondAny(condQ))
-				.valRemoveCond(CondAny(previous.condC), qret);
+				.valRemoveCond(CondAny(previous.condC.invert()), qret);
 
 			return RetValue(cret, qret);
 		}
