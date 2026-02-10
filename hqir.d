@@ -4159,9 +4159,9 @@ class ScopeWriter {
 				rcA = withCond(nscope, CondAny(ccA)).valAddCond(CondAny(condC), rcA); // [ccA,condC]
 
 				Value cret = rcA;
-				rcB = scB.withCond(scB.nscope, CondAny(ccB)).valAddCond(CondAny(condC), rcB); // [!ccA, ccB, condC]
-				rcB = scB.withCond(scB.nscope, CondAny(ccB)).withCond(scB.nscope, CondAny(condC)).valRemoveCond(CondAny(cB.condC), rcB); // [!ccA,condC]
-				cret = withCond(nscope, CondAny(condC)).valMerge(CondAny(ccA), rcA, rcB); // [condC]
+				rcB = scB.withCond(scB.nscope, CondAny(cB.condC)).valAddCond(CondAny(condC), rcB); // [!ccA, ccB, condC]
+				rcB = scB.withCond(scB.nscope, CondAny(condC)).valRemoveCond(CondAny(cB.condC), rcB); // [!ccA,condC]
+				cret = withCond(nscope, CondAny(condC)).valMerge(CondAny(ccA), rcB, rcA); // [condC]
 
 				Value qret = rqB; // [!condC,!ccA,!ccB,cqB]
 				if(qret) {
