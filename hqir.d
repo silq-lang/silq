@@ -1375,9 +1375,9 @@ struct Result {
 			if(q0 && q1) {
 				condQ = wq.qcg.cmerge(cond.ccond, q0, q1);
 			} else if(q0) {
-				condQ = wq.qcg.cmerge(cond.ccond, q0, w1.qcg.allocQubit(0));
+				condQ = wq.qcg.cmerge(cond.ccond, q0, (condC ? w1.qcg.withCond(CondAny(condC, false)) : w1.qcg).allocQubit(0));
 			} else if(q1) {
-				condQ = wq.qcg.cmerge(cond.ccond, w0.qcg.allocQubit(0), q1);
+				condQ = wq.qcg.cmerge(cond.ccond, (condC ? w0.qcg.withCond(CondAny(condC, false)) : w0.qcg).allocQubit(0), q1);
 			}
 			retCond = CondRetValue(condC, condQ).asCondRet();
 
