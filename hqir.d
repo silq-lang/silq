@@ -4230,9 +4230,24 @@ class ScopeWriter {
 					condQ = CondQ(cqB);
 					qret = rqB;
 				}
+				auto retCond = CondRet(condC, condQ);
+				if(cB.condC) {
+					foreach(name, ref var; scB.vars) {
+						if(!var.value || !var.value.hasQuantum) continue;
+						auto qreg = var.value.qreg;
+						auto wq = qcg.withCond(CondAny(cA.condQ.invert()));
+						qreg = wq.withCond(CondAny(cB.condC.invert()))
+							.addCond(CondAny(retCond.condQ.invert()), qreg);
+						qreg = wq.withCond(CondAny(retCond.condQ.invert()))
+							.removeCond(CondAny(cB.condC.invert()), qreg);
+						qreg = qcg.withCond(CondAny(retCond.condQ.invert()))
+							.removeCond(CondAny(cA.condQ.invert()), qreg);
+						var.value = Value.newReg(var.value.creg, qreg);
+					}
+				}
 				cB.forget(scB);
 				cA.forget(this);
-				return Result.conditionallyReturns(RetValue(cret, qret), CondRet(condC, condQ));
+				return Result.conditionallyReturns(RetValue(cret, qret), retCond);
 			}
 		}
 		foreach(i, sube; stmts) {
