@@ -848,9 +848,18 @@ struct CondRet {
 		}
 		QReg qreg = null;
 		if(condQ) {
-			auto rF = w.qcg.withCond(CondAny(condQ.invert())).allocQubit(0);
-			auto rT = w.qcg.withCond(CondAny(condQ)).allocQubit(1);
-			qreg = w.qcg.qmerge(condQ, rF,rT);
+			auto wg = w.qcg;
+			if(condC) {
+				wg = wg.withCond(CondAny(condC.invert()));
+			}
+			auto rF = wg.withCond(CondAny(condQ.invert())).allocQubit(0);
+			auto rT = wg.withCond(CondAny(condQ)).allocQubit(1);
+			qreg = wg.qmerge(condQ, rF,rT);
+			if(creg) {
+				qreg = wg.addCond(CondAny(creg, false), qreg);
+				qreg = w.qcg.withCond(CondAny(creg, false))
+					.removeCond(CondAny(condC.invert()), qreg);
+			}
 		}
 		return CondRetValue(creg, qreg);
 	}
@@ -861,6 +870,9 @@ struct CondRet {
 	}
 
 	RetValue updateRetCond(RetValue retv, CondRet previous, ScopeWriter w) {
+		if(this is previous) {
+			return retv;
+		}
 		auto cret = retv.classicalRet, qret = retv.quantumRet;
 		assert(!!cret == !!condC && !!qret == !!condQ);
 
@@ -1340,19 +1352,21 @@ struct Result {
 			}
 			if(q0 && condC !is c0) {
 				if(condC) {
-					q0 = w0.qcg.addCond(CondAny(condC, false), q0);
+					q0 = (r0.isConditionalReturn && c0 ? w0.qcg.withCond(CondAny(c0, false)) : w0.qcg)
+						.addCond(CondAny(condC, false), q0);
 				}
-				if(c0) {
-					q0 = w0.qcg.withCond(CondAny(condC, false))
+				if(r0.isConditionalReturn && c0) {
+					q0 = (condC ? w0.qcg.withCond(CondAny(condC, false)) : w0.qcg)
 						.removeCond(CondAny(c0, false), q0);
 				}
 			}
 			if(q1 && condC !is c1) {
 				if(condC) {
-					q1 = w1.qcg.addCond(CondAny(condC, false), q1);
+					q1 = (r1.isConditionalReturn && c1 ? w1.qcg.withCond(CondAny(c1, false)) : w1.qcg)
+						.addCond(CondAny(condC, false), q1);
 				}
-				if(c1) {
-					q1 = w1.qcg.withCond(CondAny(condC, false))
+				if(r1.isConditionalReturn && c1) {
+					q1 = (condC ? w1.qcg.withCond(CondAny(condC, false)) : w1.qcg)
 						.removeCond(CondAny(c1, false), q1);
 				}
 			}
