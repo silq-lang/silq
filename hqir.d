@@ -977,11 +977,19 @@ struct CondRet {
 		Value cret = null, qret = null;
 		if(reachable.classicalRet) {
 			assert(!!condC);
-			cret = Value.newReg(reachable.classicalRet.creg, reachable.classicalRet.hasQuantum ? w.qcg.withCond(CondAny(condC)).allocError() : null);
+			cret = Value.newReg(
+				reachable.classicalRet.creg,
+				reachable.classicalRet.hasQuantum ? w.qcg.withCond(CondAny(condC)).allocError() : null
+			);
 		}
 		if(reachable.quantumRet) {
 			assert(!!condQ);
-			qret = Value.newReg(reachable.quantumRet.creg, reachable.quantumRet.hasQuantum ? w.qcg.withCond(CondAny(condQ)).allocError() : null);
+			qret = Value.newReg(
+				reachable.quantumRet.creg,
+				reachable.quantumRet.hasQuantum ?
+				(condC ? w.qcg.withCond(CondAny(condC.invert())) : w.qcg)
+				.withCond(CondAny(condQ)).allocError() : null
+			);
 		}
 		return RetValue(cret, qret);
 	}
