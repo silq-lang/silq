@@ -768,14 +768,6 @@ struct CondRet {
 	CondQ condQ;
 	bool isAnd = false;
 
-	@property
-	//deprecated
-	CondAny cond(){ // TODO: remove
-		assert(!!condC ^ !!condQ);
-		if(condC) return CondAny(condC);
-		return CondAny(condQ);
-	}
-
 	bool opCast(T:bool)(){ return !!condC||!!condQ; }
 
 	this(CondAny cond) {
@@ -922,17 +914,19 @@ struct CondRet {
 
 		assert(!!cret ^ !!qret);
 		auto ret = cret ? cret : qret;
+		auto cond = condC ? CondAny(condC) : CondAny(condQ);
+		auto pcond = previous.condC ? CondAny(previous.condC) : CondAny(previous.condQ);
 		auto wRet = w;
 		if(previous) {
-			wRet = wRet.withCond(wRet.nscope, previous.cond);
+			wRet = wRet.withCond(wRet.nscope, pcond);
 		}
 		Value retUnreachable, retReachable;
 		wRet.valSplit(cond, retUnreachable, retReachable, ret);
 		wRet.withCond(wRet.nscope, cond.invert()).valDeallocError(retUnreachable);
 		if(previous) {
 			auto wRet2 = w.withCond(w.nscope, cond);
-			retUnreachable = Value.newReg(retUnreachable.creg, retReachable.hasQuantum ? wRet2.withCond(wRet.nscope, previous.cond.invert()).qcg.allocError() : null);
-			ret = wRet2.valMerge(previous.cond, retUnreachable, retReachable);
+			retUnreachable = Value.newReg(retUnreachable.creg, retReachable.hasQuantum ? wRet2.withCond(wRet.nscope, pcond.invert()).qcg.allocError() : null);
+			ret = wRet2.valMerge(pcond, retUnreachable, retReachable);
 		} else {
 			ret = retReachable;
 		}
