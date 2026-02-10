@@ -4141,16 +4141,16 @@ class ScopeWriter {
 				);
 			}
 			auto cA = ra.retCond, cB = rb.retCond;
-			auto vA = cA.asCondRetValue(this), rvA = ra.retValue;
-			auto vB = cB.asCondRetValue(scB), rvB = rb.retValue;
+			auto rvA = ra.retValue, rvB = rb.retValue;
+			auto vB = cB.asCondRetValue(scB);
 			if(!rvA.quantumRet) {
-				assert(!vA.condQ);
-				auto ccA = vA.condC, rcA = rvA.classicalRet; // [ccA]
+				assert(!cA.condQ);
+				auto ccA = cA.condC, rcA = rvA.classicalRet; // [ccA]
 				assert(rcA && ccA);
-				auto ccB = vB.condC, rcB = rvB.classicalRet; // [!ccA,ccB]
-				auto cqB = vB.condQ, rqB = rvB.quantumRet;   // [!ccA,!ccB,cqB]
+				auto ccB = cB.condC, rcB = rvB.classicalRet; // [!ccA,ccB]
+				auto cqB = cB.condQ, rqB = rvB.quantumRet;   // [!ccA,!ccB,cqB]
 				assert(rcB && ccB);
-				CReg condC = ccg.cond(ccA, ccB, ctx.boolTrue);
+				CReg condC = ccg.cond(ccA, vB.condC, ctx.boolTrue);
 				rcA = withCond(nscope, CondAny(ccA)).valAddCond(CondAny(condC), rcA); // [ccA,condC]
 
 				Value cret = rcA;
@@ -4160,76 +4160,74 @@ class ScopeWriter {
 
 				Value qret = rqB; // [!condC,!ccA,!ccB,cqB]
 				if(qret) {
-					qret = scB.withCond(scB.nscope, CondAny(ccB, false)).withCond(scB.nscope, CondAny(cqB, false))
+					qret = scB.withCond(scB.nscope, CondAny(ccB.invert())).withCond(scB.nscope, CondAny(cqB.invert()))
 						.valAddCond(CondAny(condC, false), qret); // [!condC,!ccA,!ccB,cqB]
 				}
 
 				auto condQ = cqB;
 				if(condQ) {
-					condQ = qcg.withCond(CondAny(ccA, false)).withCond(CondAny(ccB, false)).dup(condQ);
-					condQ = qcg.withCond(CondAny(ccA, false)).withCond(CondAny(ccB, false)).addCond(CondAny(condC, false), condQ); // [!ccA,!ccB,!condC]
-					condQ = qcg.withCond(CondAny(ccA, false)).withCond(CondAny(condC, false)).removeCond(CondAny(cB.condC.invert()), condQ); // [!ccA,!condC]
-					condQ = qcg.withCond(CondAny(condC, false)).removeCond(CondAny(cA.condC.invert()), condQ); // [!condC]
+					condQ = CondQ(qcg.withCond(CondAny(ccA.invert())).withCond(CondAny(ccB.invert())).dup(condQ.reg), condQ.value);
+					condQ.reg = qcg.withCond(CondAny(ccA.invert())).withCond(CondAny(ccB.invert())).addCond(CondAny(condC, false), condQ.reg); // [!ccA,!ccB,!condC]
+					condQ.reg = qcg.withCond(CondAny(ccA.invert())).withCond(CondAny(condC, false)).removeCond(CondAny(cB.condC.invert()), condQ.reg); // [!ccA,!condC]
+					condQ.reg = qcg.withCond(CondAny(condC, false)).removeCond(CondAny(ccA.invert()), condQ.reg); // [!condC]
 				}
 
 				if(qret) {
-					qret = withCond(scB.nscope, CondAny(ccA, false))
-						.withCond(scB.nscope, CondAny(ccB, false)).withCond(scB.nscope, CondAny(cqB, false))
+					qret = withCond(scB.nscope, CondAny(ccA.invert()))
+						.withCond(scB.nscope, CondAny(ccB.invert())).withCond(scB.nscope, CondAny(cqB.invert()))
 						.withCond(scB.nscope, CondAny(condC, false)).valAddCond(CondAny(condQ), qret); // [!condC,!ccA,!ccB,cqB,condQ}
 
-					qret = withCond(scB.nscope, CondAny(ccA, false))
-						.withCond(scB.nscope, CondAny(ccB, false)).withCond(scB.nscope, CondAny(condQ, false))
+					qret = withCond(scB.nscope, CondAny(ccA.invert()))
+						.withCond(scB.nscope, CondAny(ccB.invert())).withCond(scB.nscope, CondAny(condQ.invert()))
 						.withCond(scB.nscope, CondAny(condC, false)).valRemoveCond(CondAny(cB.condQ), qret); // [!condC,!ccA,!ccB,condQ}
 
-					qret = withCond(scB.nscope, CondAny(ccA, false))
-						.withCond(scB.nscope, CondAny(ccB, false)).withCond(scB.nscope, CondAny(condQ, false))
+					qret = withCond(scB.nscope, CondAny(ccA.invert()))
+						.withCond(scB.nscope, CondAny(ccB.invert())).withCond(scB.nscope, CondAny(condQ.invert()))
 						.withCond(scB.nscope, CondAny(condC, false)).valRemoveCond(CondAny(cB.condC.invert()), qret); // [!condC,!ccA,condQ]
-					qret = withCond(scB.nscope, CondAny(ccB, false)).withCond(scB.nscope, CondAny(condQ, false))
+					qret = withCond(scB.nscope, CondAny(ccB.invert())).withCond(scB.nscope, CondAny(condQ.invert()))
 						.withCond(scB.nscope, CondAny(condC, false)).valRemoveCond(CondAny(cA.condC.invert()), qret); // [!condC,condQ]
 				}
 				vB.asCondRet().forget(scB);
-				vA.asCondRet().forget(this);
 				cB.forget(scB);
 				cA.forget(this);
-		        return Result.conditionallyReturns(RetValue(cret, qret), CondRet(CondC(condC), CondQ(condQ)));
+				return Result.conditionallyReturns(RetValue(cret, qret), CondRet(CondC(condC), condQ));
 			} else {
 				auto vBq = vB.dup(scB).toQuantum(scB);
 				rvB = rvB.toQuantum(rb.retCond, vBq.asCondRet(), scB);
 				assert(!rvB.classicalRet && rvB.quantumRet);
 				vB.asCondRet().forget(scB);
-				auto ccA = vA.condC, rcA = rvA.classicalRet; // [ccA]
-				auto cqA = vA.condQ, rqA = rvA.quantumRet; // [!ccA,cqA]
-				auto cqB = vBq.condQ, rqB = rvB.quantumRet; // [!ccA,!cqA,cqB]
+				auto condC = cA.condC, cret = rvA.classicalRet; // [condC]
+				auto cqA = cA.condQ, rqA = rvA.quantumRet; // [!condC,cqA]
+				auto cqB = vBq.condQ, rqB = rvB.quantumRet; // [!condC,!cqA,cqB]
 
-				auto condC = ccA, cret = rvA.classicalRet;
-				QReg condQ = null;
+				CondQ condQ = CondQ.init;
 				Value qret = null;
 				if(cqA && cqB) {
 					assert(rqA && rqB && cA.condQ);
-					auto wq = cA.condC ? withCond(nscope, CondAny(cA.condC.invert())) : this;
-					auto cqF = wq.qcg.withCond(CondAny(cqA, false)).dup(cqB);
+					auto wq = condC ? withCond(nscope, CondAny(condC.invert())) : this;
+					auto cqF = wq.qcg.withCond(CondAny(cqA.invert())).dup(cqB);
 					auto cqT = wq.qcg.withCond(CondAny(cqA)).allocQubit(1);
-					condQ = wq.qcg.merge(CondAny(cqA), cqF, cqT);
-					rqA = wq.withCond(wq.nscope, CondAny(cA.condQ)).valAddCond(CondAny(condQ), rqA); // [!ccA, cqA, condQ]
+					condQ = CondQ(wq.qcg.merge(CondAny(cqA), cqF, cqT));
+					rqA = wq.withCond(wq.nscope, CondAny(cA.condQ)).valAddCond(CondAny(condQ), rqA); // [!condC, cqA, condQ]
 					rqB = wq.withCond(wq.nscope, CondAny(cA.condQ.invert()))
-						.withCond(wq.nscope, CondAny(cB.condQ))
-						.valAddCond(CondAny(condQ), rqB); // [!ccA, !cqA, cqB, condQ]
+						.withCond(wq.nscope, CondAny(cqB))
+						.valAddCond(CondAny(condQ), rqB); // [!condC, !cqA, cqB, condQ]
 					rqB = wq.withCond(wq.nscope, CondAny(cA.condQ.invert()))
 						.withCond(wq.nscope, CondAny(condQ))
-						.valRemoveCond(CondAny(cB.condQ), rqB); // [!ccA, !cqA, condQ]
-					qret = wq.withCond(wq.nscope, CondAny(condQ)).valMerge(CondAny(cA.condQ), rqB, rqA); // [!ccA, condQ]
-					vA.asCondRet().forget(this);
+						.valRemoveCond(CondAny(cqB), rqB); // [!condC, !cqA, condQ]
+					qret = wq.withCond(wq.nscope, CondAny(condQ)).valMerge(CondAny(cA.condQ), rqB, rqA); // [!condC, condQ]
 					vBq.asCondRet().forget(scB);
 				}else if(cqA) {
 					condQ = cqA;
 					qret = rqA;
+					vBq.asCondRet().forget(scB);
 				}else if(cqB) {
-					condQ = cqB;
+					condQ = CondQ(cqB);
 					qret = rqB;
 				}
 				cB.forget(scB);
 				cA.forget(this);
-				return Result.conditionallyReturns(RetValue(cret, qret), CondRet(CondC(condC), CondQ(condQ)));
+				return Result.conditionallyReturns(RetValue(cret, qret), CondRet(condC, condQ));
 			}
 		}
 		foreach(i, sube; stmts) {
