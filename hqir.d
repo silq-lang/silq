@@ -4187,8 +4187,10 @@ class ScopeWriter {
 					qret = withCond(scB.nscope, CondAny(ccB, false)).withCond(scB.nscope, CondAny(condQ, false))
 						.withCond(scB.nscope, CondAny(condC, false)).valRemoveCond(CondAny(cA.condC.invert()), qret); // [!condC,condQ]
 				}
-				vA.asCondRet().forget(this);
 				vB.asCondRet().forget(scB);
+				vA.asCondRet().forget(this);
+				cB.forget(scB);
+				cA.forget(this);
 		        return Result.conditionallyReturns(RetValue(cret, qret), CondRet(CondC(condC), CondQ(condQ)));
 			} else {
 				auto vBq = vB.dup(scB).toQuantum(scB);
@@ -4225,6 +4227,8 @@ class ScopeWriter {
 					condQ = cqB;
 					qret = rqB;
 				}
+				cB.forget(scB);
+				cA.forget(this);
 				return Result.conditionallyReturns(RetValue(cret, qret), CondRet(CondC(condC), CondQ(condQ)));
 			}
 		}
