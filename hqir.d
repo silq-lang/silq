@@ -1103,18 +1103,18 @@ struct RetValue {
 			assert(classicalRet.hasQuantum == quantumRet.hasQuantum);
 		}
 		if(classicalRet.hasQuantum) {
+			qreg = classicalRet.qreg; // [retCond.condC]
+			assert(retCondQ.condQ);
+			qreg = w.qcg.withCond(CondAny(retCond.condC)).addCond(CondAny(retCondQ.condQ), qreg); // [retCond.condC,retCondQ.condQ]
 			if(!quantumRet) {
-				qreg = classicalRet.qreg; // [retCond.condC]
 				if(retCond.condC) {
-					assert(retCondQ.condQ);
-					qreg = w.qcg.withCond(CondAny(retCond.condC)).addCond(CondAny(retCondQ.condQ), qreg); // [retCond.condC,retCondQ.condQ]
 					qreg = w.qcg.withCond(CondAny(retCondQ.condQ)).removeCond(CondAny(retCond.condC), qreg); // [retCondQ.condQ]
 				} else {
 					assert(!retCond.condQ);
 				}
 			} else {
 				auto wq = w.withCond(w.nscope, CondAny(retCond.condQ));
-				qreg = wq.qcg.cmerge(retCond.condC, quantumRet.qreg, classicalRet.qreg); // [retCond.condQ]
+				qreg = wq.qcg.cmerge(retCond.condC, quantumRet.qreg, qreg); // [retCond.condQ]
 				qreg = wq.qcg.addCond(CondAny(retCondQ.condQ), qreg); // [retCond.condQ, retCondQ.condQ]
 				qreg = w.qcg.withCond(CondAny(retCondQ.condQ)).removeCond(CondAny(retCond.condQ), qreg); // [retCondQ.condQ]
 			}
