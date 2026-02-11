@@ -169,6 +169,7 @@ final class QReg {
 
 static immutable string ctypeBitvec = "builtin.bitvec";
 static immutable string ctypeQtArray = "builtin.qtypes";
+static immutable string ctypeSilqComplex = "silq.complex";
 static immutable string ctypeSilqTuple = "silq.tuple";
 static immutable string ctypeSilqArray = "silq.array";
 static immutable string ctypeSilqQFunc = "silq.qfunc";
@@ -1842,8 +1843,7 @@ class CCGen {
 	}
 
 	CReg complexFromFloat(CReg r) {
-		auto tup = boxPack(ctypeSilqTuple, [r, ctx.floatZero]);
-		return emitPureOp("classical_call[primitive.complex.cfromri]", [tup]);
+		return boxPack(ctypeSilqComplex, [r, ctx.floatZero]);
 	}
 
 	CReg qfuncPack(CReg func, CReg qtype) {
@@ -3500,8 +3500,7 @@ class ScopeWriter {
 					goto default;
 				}
 				auto val = ctx.literalFloat(to!double(e.lit.str[0..$-1]));
-				auto tup = ccg.boxPack(ctypeSilqTuple, [ctx.floatZero, val]);
-				auto z = ccg.emitPureOp("classical_call[primitive.complex.cfromri]", [tup]);
+				auto z = ccg.boxPack(ctypeSilqComplex, [ctx.floatZero, val]);
 				return valNewC(z);
 			default:
 				assert(0, format("unknown numeric literal type: %s", ty));
@@ -5978,7 +5977,7 @@ class ScopeWriter {
 						assert(0, format("Unsupported numeric coercion float -> %s", conv.to));
 				}
 			case ast_ty_NumericType_C:
-				auto ri = ccg.boxUnpack(ctypeSilqTuple, 2, ccg.emitPureOp("classical_call[primitive.complex.ctori]", [v.creg]));
+				auto ri = ccg.boxUnpack(ctypeSilqComplex, 2, v.creg);
 				ccg.checkBool(conv.needsCheck, ccg.floatCmpEq0(ri[1]));
 				auto nconv = ast_conv.numericToNumeric!true(ast_ty_R, conv.to, ast_exp.TypeAnnotationType.coercion);
 				assert(!!nconv);

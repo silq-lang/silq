@@ -703,11 +703,18 @@ def primitive.real.ceil($a) [artificial]
 	return $r
 
 
-def primitive.complex.ctori($a) [artificial]
-	return $a
+def primitive.complex.cfromri($re, $im) [artificial]
+	$z := box[silq.complex]($re, $im)
+	return $z
 
-def primitive.complex.cfromri($a) [artificial]
-	return $a
+def primitive.complex.ctori($z) [artificial]
+	$lit0 := literal[0]()
+	$lit1 := literal[1]()
+	$lit2 := literal[2]()
+	$re := box_index[silq.complex]($lit2, $z, $lit0)
+	$im := box_index[silq.complex]($lit2, $z, $lit1)
+	$r := box[silq.tuple]($re, $im)
+	return $r
 
 
 def primitive.X() <- %x [artificial]

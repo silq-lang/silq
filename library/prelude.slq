@@ -158,7 +158,7 @@ def hypot[n:!ℕ](x:!ℝ^n) lifted: !ℝ {
 }
 
 𝑖:=1i;
-def cfromri(z:!ℝ×!ℝ) @[extern="primitive.complex.cfromri"] qfree: !ℂ;
+def cfromri(re:!ℝ,im:!ℝ) @[extern="primitive.complex.cfromri"] qfree: !ℂ;
 def ctori(z:!ℂ) @[extern="primitive.complex.ctori"] qfree: !ℝ×!ℝ;
 def creal(z:!ℂ)lifted: !ℝ ⇒ ctori(z)[0];
 def cimag(z:!ℂ)lifted: !ℝ ⇒ ctori(z)[1];
