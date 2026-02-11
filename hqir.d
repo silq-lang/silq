@@ -4253,23 +4253,34 @@ class ScopeWriter {
 						.valRemoveCond(CondAny(cqB), rqB); // [!condC, !cqA, condQ]
 					qret = wq.withCond(wq.nscope, CondAny(condQ)).valMerge(CondAny(cA.condQ), rqB, rqA); // [!condC, condQ]
 
-					if(cB.condQ){
-						foreach(name, ref var; scB.vars) {
-							if(!var.value || !var.value.hasQuantum) continue;
-							auto qreg = var.value.qreg;
-							auto wqc = condC ? qcg.withCond(CondAny(condC.invert())) : qcg;
-							qreg = wqc.withCond(CondAny(cA.condQ.invert()))
-								.withCond(CondAny(cB.condQ.invert()))
-								.addCond(CondAny(condQ.invert()), qreg);
+					foreach(name, ref var; scB.vars) {
+						if(!var.value || !var.value.hasQuantum) continue;
+						auto qreg = var.value.qreg;
+						auto wqc = condC ? qcg.withCond(CondAny(condC.invert())) : qcg;
+
+						auto w = wqc.withCond(CondAny(cA.condQ.invert()));
+						if(cB.condC) w = w.withCond(CondAny(cB.condC.invert()));
+						if(cB.condQ) w = w.withCond(CondAny(cB.condQ.invert()));
+						qreg = w.addCond(CondAny(condQ.invert()), qreg);
+
+						if(cB.condQ) {
+							auto w2 = wqc.withCond(CondAny(cA.condQ.invert()))
+								.withCond(CondAny(condQ.invert()));
+							if(cB.condC) w2 = w2.withCond(CondAny(cB.condC.invert()));
+							qreg = w2.removeCond(CondAny(cB.condQ.invert()), qreg);
+						}
+
+						if(cB.condC) {
 							qreg = wqc.withCond(CondAny(cA.condQ.invert()))
 								.withCond(CondAny(condQ.invert()))
-								.removeCond(CondAny(cB.condQ.invert()), qreg);
-							qreg = wqc.withCond(CondAny(condQ.invert()))
-								.removeCond(CondAny(cA.condQ.invert()), qreg);
-							var.value = Value.newReg(var.value.creg, qreg);
+								.removeCond(CondAny(cB.condC.invert()), qreg);
 						}
-					}
 
+						qreg = wqc.withCond(CondAny(condQ.invert()))
+							.removeCond(CondAny(cA.condQ.invert()), qreg);
+
+						var.value = Value.newReg(var.value.creg, qreg);
+					}
 					vBq.asCondRet().forget(scB);
 				}else if(cqA) {
 					condQ = cqA;
@@ -4280,20 +4291,6 @@ class ScopeWriter {
 					qret = rqB;
 				}
 				auto retCond = CondRet(condC, condQ);
-				if(cB.condC) {
-					foreach(name, ref var; scB.vars) {
-						if(!var.value || !var.value.hasQuantum) continue;
-						auto qreg = var.value.qreg;
-						auto wq = qcg.withCond(CondAny(cA.condQ.invert()));
-						qreg = wq.withCond(CondAny(cB.condC.invert()))
-							.addCond(CondAny(retCond.condQ.invert()), qreg);
-						qreg = wq.withCond(CondAny(retCond.condQ.invert()))
-							.removeCond(CondAny(cB.condC.invert()), qreg);
-						qreg = qcg.withCond(CondAny(retCond.condQ.invert()))
-							.removeCond(CondAny(cA.condQ.invert()), qreg);
-						var.value = Value.newReg(var.value.creg, qreg);
-					}
-				}
 				cB.forget(scB);
 				cA.forget(this);
 				return Result.conditionallyReturns(RetValue(cret, qret), retCond);
