@@ -4212,6 +4212,14 @@ class ScopeWriter {
 						.removeCond(CondAny(ccB.invert()), qreg);
 					qreg = wqc.withCond(CondAny(condC, false))
 						.removeCond(CondAny(ccA.invert()), qreg);
+					if(cqB) {
+						qreg = qcg.withCond(CondAny(condC, false))
+							.withCond(CondAny(cB.condQ.invert()))
+							.addCond(CondAny(condQ.invert()), qreg);
+						qreg = qcg.withCond(CondAny(condC, false))
+							.withCond(CondAny(condQ.invert()))
+							.removeCond(CondAny(cB.condQ.invert()), qreg);
+					}
 					var.value = Value.newReg(var.value.creg, qreg);
 				}
 
