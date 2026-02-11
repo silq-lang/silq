@@ -4170,9 +4170,9 @@ class ScopeWriter {
 				rcB = scB.withCond(scB.nscope, CondAny(condC)).valRemoveCond(CondAny(cB.condC), rcB); // [!ccA,condC]
 				cret = withCond(nscope, CondAny(condC)).valMerge(CondAny(ccA), rcB, rcA); // [condC]
 
-				Value qret = rqB; // [!condC,!ccA,!ccB,cqB]
+				Value qret = rqB; // [!ccA,!ccB,cqB]
 				if(qret) {
-					qret = scB.withCond(scB.nscope, CondAny(ccB.invert())).withCond(scB.nscope, CondAny(cqB.invert()))
+					qret = scB.withCond(scB.nscope, CondAny(ccB.invert())).withCond(scB.nscope, CondAny(cqB))
 						.valAddCond(CondAny(condC, false), qret); // [!condC,!ccA,!ccB,cqB]
 				}
 
@@ -4186,17 +4186,17 @@ class ScopeWriter {
 
 				if(qret) {
 					qret = withCond(scB.nscope, CondAny(ccA.invert()))
-						.withCond(scB.nscope, CondAny(ccB.invert())).withCond(scB.nscope, CondAny(cqB.invert()))
-						.withCond(scB.nscope, CondAny(condC, false)).valAddCond(CondAny(condQ), qret); // [!condC,!ccA,!ccB,cqB,condQ}
+						.withCond(scB.nscope, CondAny(ccB.invert())).withCond(scB.nscope, CondAny(cqB))
+						.withCond(scB.nscope, CondAny(condC, false)).valAddCond(CondAny(condQ), qret); // [!condC,!ccA,!ccB,cqB,condQ]
 
 					qret = withCond(scB.nscope, CondAny(ccA.invert()))
-						.withCond(scB.nscope, CondAny(ccB.invert())).withCond(scB.nscope, CondAny(condQ.invert()))
-						.withCond(scB.nscope, CondAny(condC, false)).valRemoveCond(CondAny(cB.condQ), qret); // [!condC,!ccA,!ccB,condQ}
+						.withCond(scB.nscope, CondAny(ccB.invert())).withCond(scB.nscope, CondAny(condQ))
+						.withCond(scB.nscope, CondAny(condC, false)).valRemoveCond(CondAny(cB.condQ), qret); // [!condC,!ccA,!ccB,condQ]
 
 					qret = withCond(scB.nscope, CondAny(ccA.invert()))
-						.withCond(scB.nscope, CondAny(ccB.invert())).withCond(scB.nscope, CondAny(condQ.invert()))
+						.withCond(scB.nscope, CondAny(condQ))
 						.withCond(scB.nscope, CondAny(condC, false)).valRemoveCond(CondAny(cB.condC.invert()), qret); // [!condC,!ccA,condQ]
-					qret = withCond(scB.nscope, CondAny(ccB.invert())).withCond(scB.nscope, CondAny(condQ.invert()))
+					qret = withCond(scB.nscope, CondAny(condQ))
 						.withCond(scB.nscope, CondAny(condC, false)).valRemoveCond(CondAny(cA.condC.invert()), qret); // [!condC,condQ]
 				}
 
