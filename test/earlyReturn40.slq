@@ -1,0 +1,374 @@
+
+def test_mega(
+	const c1:𝔹, const c2:𝔹, const c3:𝔹, const c4:𝔹, const c5:𝔹,
+	const c6:𝔹, const c7:𝔹,
+	gc1:!𝔹, gc2:!𝔹, gc3:!𝔹, gc4:!𝔹, gc5:!𝔹, gc6:!𝔹, gc7:!𝔹,
+	const gq1:𝔹, const gq2:𝔹, const gq3:𝔹, const gq4:𝔹, const gq5:𝔹,
+	const gq6:𝔹, const gq7:𝔹,
+	q:𝔹
+) wild {
+	x := H(0:𝔹);
+	if c1 {
+		x := H(x);
+		if gq1 { return (1:uint[5], q, x, 0:𝔹, 0:𝔹); }
+		y := 0:𝔹;
+		if gc1 { return (2:uint[5], q, x, y, 0:𝔹); }
+		y = H(y);
+		if c2 {
+			x := H(x);
+			if gq2 { return (3:uint[5], q, x, y, 0:𝔹); }
+			if gc2 { return (4:uint[5], q, x, y, 0:𝔹); }
+			z := 0:𝔹;
+			if c3 {
+				z := H(z);
+				x := H(x);
+				if gq3 { return (5:uint[5], q, x, y, z); }
+				y := H(y);
+				if gc3 { return (6:uint[5], q, x, y, z); }
+				if c4 {
+					z := H(z);
+					if gq4 { return (7:uint[5], q, x, y, z); }
+					x := H(x);
+					if gc4 { return (8:uint[5], q, x, y, z); }
+					if c5 {
+						y := H(y);
+						if gq5 { return (9:uint[5], q, x, y, z); }
+						z := H(z);
+						if gc5 { return (10:uint[5], q, x, y, z); }
+					}
+				}
+			}
+			return (11:uint[5], q, x, y, z);
+		}
+		return (12:uint[5], q, x, y, 0:𝔹);
+	} else {
+		if c6 {
+			x := H(x);
+			if gq6 { return (13:uint[5], q, x, 0:𝔹, 0:𝔹); }
+			if gc6 { return (14:uint[5], q, x, 0:𝔹, 0:𝔹); }
+			if c7 {
+				x := H(x);
+				if gq7 { return (15:uint[5], q, x, 0:𝔹, 0:𝔹); }
+				if gc7 { return (16:uint[5], q, x, 0:𝔹, 0:𝔹); }
+			}
+		}
+	}
+	return (0:uint[5], q, x, 0:𝔹, 0:𝔹);
+}
+
+def expected(
+	c1:!𝔹, c2:!𝔹, c3:!𝔹, c4:!𝔹, c5:!𝔹, c6:!𝔹, c7:!𝔹,
+	gc1:!𝔹, gc2:!𝔹, gc3:!𝔹, gc4:!𝔹, gc5:!𝔹, gc6:!𝔹, gc7:!𝔹,
+	gq1:!𝔹, gq2:!𝔹, gq3:!𝔹, gq4:!𝔹, gq5:!𝔹, gq6:!𝔹, gq7:!𝔹
+) : !ℕ {
+	if c1 {
+		if gq1 { return 1; }
+		if gc1 { return 2; }
+		if c2 {
+			if gq2 { return 3; }
+			if gc2 { return 4; }
+			if c3 {
+				if gq3 { return 5; }
+				if gc3 { return 6; }
+				if c4 {
+					if gq4 { return 7; }
+					if gc4 { return 8; }
+					if c5 {
+						if gq5 { return 9; }
+						if gc5 { return 10; }
+					}
+				}
+			}
+			return 11;
+		}
+		return 12;
+	} else {
+		if c6 {
+			if gq6 { return 13; }
+			if gc6 { return 14; }
+			if c7 {
+				if gq7 { return 15; }
+				if gc7 { return 16; }
+			}
+		}
+	}
+	return 0;
+}
+
+def main() {
+
+	for g1i in 0..2 {
+		for g2i in 0..2 {
+			for g3i in 0..2 {
+				for g4i in 0..2 {
+					for g5i in 0..2 {
+						for g6i in 0..2 {
+							for g7i in 0..2 {
+								g1 := g1i ≠ 0;
+								g2 := g2i ≠ 0;
+								g3 := g3i ≠ 0;
+								g4 := g4i ≠ 0;
+								g5 := g5i ≠ 0;
+								g6 := g6i ≠ 0;
+								g7 := g7i ≠ 0;
+								r := measure(test_mega(
+									true, true, true, true, true, true, true,
+									g1, g2, g3, g4, g5, g6, g7,
+									g1, g2, g3, g4, g5, g6, g7,
+									H(0:𝔹)
+								));
+								e := expected(
+									true, true, true, true, true, true, true,
+									g1, g2, g3, g4, g5, g6, g7,
+									g1, g2, g3, g4, g5, g6, g7
+								);
+								assert(r[0] = e);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	for gc1i in 0..2 {
+		for gq1i in 0..2 {
+			for gc2i in 0..2 {
+				for gq2i in 0..2 {
+					for gc3i in 0..2 {
+						for gq3i in 0..2 {
+							for gc4i in 0..2 {
+								for gq4i in 0..2 {
+									for g5i in 0..2 {
+										for g6i in 0..2 {
+											for g7i in 0..2 {
+												gc1 := gc1i ≠ 0; gq1 := gq1i ≠ 0;
+												gc2 := gc2i ≠ 0; gq2 := gq2i ≠ 0;
+												gc3 := gc3i ≠ 0; gq3 := gq3i ≠ 0;
+												gc4 := gc4i ≠ 0; gq4 := gq4i ≠ 0;
+												g5 := g5i ≠ 0;
+												g6 := g6i ≠ 0;
+												g7 := g7i ≠ 0;
+												r := measure(test_mega(
+													true, true, true, true, true, true, true,
+													gc1, gc2, gc3, gc4, g5, g6, g7,
+													gq1, gq2, gq3, gq4, g5, g6, g7,
+													H(0:𝔹)
+												));
+												e := expected(
+													true, true, true, true, true, true, true,
+													gc1, gc2, gc3, gc4, g5, g6, g7,
+													gq1, gq2, gq3, gq4, g5, g6, g7
+												);
+												assert(r[0] = e);
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	for c1i in 0..2 {
+		for c2i in 0..2 {
+			for c3i in 0..2 {
+				for c4i in 0..2 {
+					for c5i in 0..2 {
+						c1 := c1i ≠ 0;
+						c2 := c2i ≠ 0;
+						c3 := c3i ≠ 0;
+						c4 := c4i ≠ 0;
+						c5 := c5i ≠ 0;
+						r := measure(test_mega(
+							c1, c2, c3, c4, c5, true, true,
+							true, true, true, true, true, true, true,
+							true, true, true, true, true, true, true,
+							H(0:𝔹)
+						));
+						e := expected(
+							c1, c2, c3, c4, c5, true, true,
+							true, true, true, true, true, true, true,
+							true, true, true, true, true, true, true
+						);
+						assert(r[0] = e);
+					}
+				}
+			}
+		}
+	}
+
+	for c1i in 0..2 {
+		for c2i in 0..2 {
+			for c3i in 0..2 {
+				for c4i in 0..2 {
+					for c5i in 0..2 {
+						c1 := c1i ≠ 0;
+						c2 := c2i ≠ 0;
+						c3 := c3i ≠ 0;
+						c4 := c4i ≠ 0;
+						c5 := c5i ≠ 0;
+						r := measure(test_mega(
+							c1, c2, c3, c4, c5, true, true,
+							false, false, false, false, false, false, false,
+							false, false, false, false, false, false, false,
+							H(0:𝔹)
+						));
+						e := expected(
+							c1, c2, c3, c4, c5, true, true,
+							false, false, false, false, false, false, false,
+							false, false, false, false, false, false, false
+						);
+						assert(r[0] = e);
+					}
+				}
+			}
+		}
+	}
+
+	for c1i in 0..2 {
+		for c2i in 0..2 {
+			for c3i in 0..2 {
+				for c4i in 0..2 {
+					for c5i in 0..2 {
+						for c6i in 0..2 {
+							for c7i in 0..2 {
+								c1 := c1i ≠ 0;
+								c2 := c2i ≠ 0;
+								c3 := c3i ≠ 0;
+								c4 := c4i ≠ 0;
+								c5 := c5i ≠ 0;
+								c6 := c6i ≠ 0;
+								c7 := c7i ≠ 0;
+								r := measure(test_mega(
+									c1, c2, c3, c4, c5, c6, c7,
+									false, false, false, false, false, false, false,
+									true, false, false, false, false, true, true,
+									H(0:𝔹)
+								));
+								e := expected(
+									c1, c2, c3, c4, c5, c6, c7,
+									false, false, false, false, false, false, false,
+									true, false, false, false, false, true, true
+								);
+								assert(r[0] = e);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	for c1i in 0..2 {
+		for c2i in 0..2 {
+			for c3i in 0..2 {
+				for c4i in 0..2 {
+					for c5i in 0..2 {
+						for c6i in 0..2 {
+							for c7i in 0..2 {
+								c1 := c1i ≠ 0;
+								c2 := c2i ≠ 0;
+								c3 := c3i ≠ 0;
+								c4 := c4i ≠ 0;
+								c5 := c5i ≠ 0;
+								c6 := c6i ≠ 0;
+								c7 := c7i ≠ 0;
+								r := measure(test_mega(
+									c1, c2, c3, c4, c5, c6, c7,
+									true, true, true, true, true, true, true,
+									false, false, false, false, false, false, false,
+									H(0:𝔹)
+								));
+								e := expected(
+									c1, c2, c3, c4, c5, c6, c7,
+									true, true, true, true, true, true, true,
+									false, false, false, false, false, false, false
+								);
+								assert(r[0] = e);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	for c1i in 0..2 {
+		for c2i in 0..2 {
+			for c3i in 0..2 {
+				for c4i in 0..2 {
+					for c5i in 0..2 {
+						for c6i in 0..2 {
+							for c7i in 0..2 {
+								c1 := c1i ≠ 0;
+								c2 := c2i ≠ 0;
+								c3 := c3i ≠ 0;
+								c4 := c4i ≠ 0;
+								c5 := c5i ≠ 0;
+								c6 := c6i ≠ 0;
+								c7 := c7i ≠ 0;
+								r := measure(test_mega(
+									c1, c2, c3, c4, c5, c6, c7,
+									false, false, false, false, false, false, false,
+									true, true, true, true, true, true, true,
+									H(0:𝔹)
+								));
+								e := expected(
+									c1, c2, c3, c4, c5, c6, c7,
+									false, false, false, false, false, false, false,
+									true, true, true, true, true, true, true
+								);
+								assert(r[0] = e);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	for c1i in 0..2 {
+		for c2i in 0..2 {
+			for c3i in 0..2 {
+				for c4i in 0..2 {
+					for c5i in 0..2 {
+						c1 := c1i ≠ 0;
+						c2 := c2i ≠ 0;
+						c3 := c3i ≠ 0;
+						c4 := c4i ≠ 0;
+						c5 := c5i ≠ 0;
+						r := measure(test_mega(
+							c1, c2, c3, c4, c5, false, false,
+							false, true, false, true, false, false, false,
+							true, false, true, false, true, false, false,
+							H(0:𝔹)
+						));
+						e := expected(
+							c1, c2, c3, c4, c5, false, false,
+							false, true, false, true, false, false, false,
+							true, false, true, false, true, false, false
+						);
+						assert(r[0] = e);
+
+						r = measure(test_mega(
+							c1, c2, c3, c4, c5, false, false,
+							true, false, true, false, true, false, false,
+							false, true, false, true, false, false, false,
+							H(0:𝔹)
+						));
+						e = expected(
+							c1, c2, c3, c4, c5, false, false,
+							true, false, true, false, true, false, false,
+							false, true, false, true, false, false, false
+						);
+						assert(r[0] = e);
+					}
+				}
+			}
+		}
+	}
+}
