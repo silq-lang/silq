@@ -4199,6 +4199,22 @@ class ScopeWriter {
 					qret = withCond(scB.nscope, CondAny(ccB.invert())).withCond(scB.nscope, CondAny(condQ.invert()))
 						.withCond(scB.nscope, CondAny(condC, false)).valRemoveCond(CondAny(cA.condC.invert()), qret); // [!condC,condQ]
 				}
+
+				foreach(name, ref var; scB.vars) {
+					if(!var.value || !var.value.hasQuantum) continue;
+					auto qreg = var.value.qreg;
+					auto wqc = cqB ? qcg.withCond(CondAny(cB.condQ.invert())) : qcg;
+					qreg = wqc.withCond(CondAny(ccA.invert()))
+						.withCond(CondAny(ccB.invert()))
+						.addCond(CondAny(condC, false), qreg);
+					qreg = wqc.withCond(CondAny(ccA.invert()))
+						.withCond(CondAny(condC, false))
+						.removeCond(CondAny(ccB.invert()), qreg);
+					qreg = wqc.withCond(CondAny(condC, false))
+						.removeCond(CondAny(ccA.invert()), qreg);
+					var.value = Value.newReg(var.value.creg, qreg);
+				}
+
 				vB.asCondRet().forget(scB);
 				cB.forget(scB);
 				cA.forget(this);
