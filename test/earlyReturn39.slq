@@ -1,0 +1,240 @@
+
+def test1(const c:𝔹, gc:!𝔹, const gq:𝔹, q:𝔹) wild {
+    x := 0:𝔹;
+    if c {
+        x := H(x);
+        if gq { return (1:uint[3], q, x); }
+        x := H(x);
+        if gc { return (2:uint[3], q, x); }
+    }
+    return (0:uint[3], q, x);
+}
+
+def test2(const c1:𝔹, const c2:𝔹, gc:!𝔹, const gq1:𝔹, const gq2:𝔹, q:𝔹) wild {
+    x := H(0:𝔹);
+    if c1 {
+        if gq1 { return (1:uint[3], q, x, 0:𝔹); }
+        y := 0:𝔹;
+        if c2 {
+            y := H(y);
+            x := H(x);
+            if gc { return (2:uint[3], q, x, y); }
+            if gq2 { return (3:uint[3], q, x, y); }
+        }
+        return (4:uint[3], q, x, y);
+    }
+    return (0:uint[3], q, x, 0:𝔹);
+}
+
+def test3(const c1:𝔹, gc:!𝔹, const gq1:𝔹, const gq2:𝔹, q:𝔹) wild {
+    x := 0:𝔹;
+    if c1 {
+        x = H(x);
+        if gq1 { return (1:uint[3], q, x); }
+        x := H(x);
+    } else {
+        if gc { return (2:uint[3], q, x); }
+        x := H(x);
+    }
+    if gq2 { return (3:uint[3], q, x); }
+    return (0:uint[3], q, x);
+}
+
+def test4(const c:𝔹, gc1:!𝔹, gc2:!𝔹, const gq1:𝔹, const gq2:𝔹, q:𝔹) wild {
+    x := H(0:𝔹);
+    if c {
+        if gq1 { return (1:uint[3], q, x); }
+        x := H(x);
+        if gc1 { return (2:uint[3], q, x); }
+        x := H(x);
+        if gq2 { return (3:uint[3], q, x); }
+        x := H(x);
+        if gc2 { return (4:uint[3], q, x); }
+    }
+    return (0:uint[3], q, x);
+}
+
+def test5(const c1:𝔹, const c2:𝔹, const c3:𝔹, gc:!𝔹, const gq1:𝔹, const gq2:𝔹, q:𝔹) wild {
+    x := 0:𝔹;
+    if c1 {
+        x = H(x);
+        if gq1 { return (1:uint[3], q, x, 0:𝔹); }
+        y := 0:𝔹;
+        if c2 {
+            y := H(y);
+            x := H(x);
+            if gc { return (2:uint[3], q, x, y); }
+            x := H(x);
+            if c3 {
+                y := H(y);
+                if gq2 { return (3:uint[3], q, x, y); }
+            }
+        }
+        return (4:uint[3], q, x, y);
+    }
+    return (0:uint[3], q, x, 0:𝔹);
+}
+
+def test6(const c1:𝔹, const c2:𝔹, gc1:!𝔹, gc2:!𝔹, const gq1:𝔹, const gq2:𝔹, q:𝔹) wild {
+    x := 0:𝔹;
+    if c1 {
+        x = H(x);
+        if gq1 { return (1:uint[3], q, x); }
+        x := H(x);
+        if gc1 { return (2:uint[3], q, x); }
+    } else {
+        if c2 {
+            x = H(x);
+            if gc2 { return (3:uint[3], q, x); }
+            x := H(x);
+            if gq2 { return (4:uint[3], q, x); }
+        }
+    }
+    return (0:uint[3], q, x);
+}
+
+
+def main() {
+    for ci in 0..2 {
+        for gci in 0..2 {
+            for gqi in 0..2 {
+                c  := ci ≠ 0;
+                gc := gci ≠ 0;
+                gq := gqi ≠ 0;
+                r := measure(test1(c, gc, gq, H(0:𝔹)));
+                e := if c { if gq { 1 } else { if gc { 2 } else { 0 } } } else { 0 };
+                assert(r[0] = e);
+            }
+        }
+    }
+
+    for c1i in 0..2 {
+        for c2i in 0..2 {
+            for gci in 0..2 {
+                for gq1i in 0..2 {
+                    for gq2i in 0..2 {
+                        c1  := c1i ≠ 0;
+                        c2  := c2i ≠ 0;
+                        gc  := gci ≠ 0;
+                        gq1 := gq1i ≠ 0;
+                        gq2 := gq2i ≠ 0;
+                        r := measure(test2(c1, c2, gc, gq1, gq2, H(0:𝔹)));
+                        e := if c1 {
+                            if gq1 { 1 }
+                            else { if c2 {
+                                if gc { 2 }
+                                else { if gq2 { 3 } else { 4 } }
+                            } else { 4 } }
+                        } else { 0 };
+                        assert(r[0] = e);
+                    }
+                }
+            }
+        }
+    }
+
+    for c1i in 0..2 {
+        for gci in 0..2 {
+            for gq1i in 0..2 {
+                for gq2i in 0..2 {
+                    c1  := c1i ≠ 0;
+                    gc  := gci ≠ 0;
+                    gq1 := gq1i ≠ 0;
+                    gq2 := gq2i ≠ 0;
+                    r := measure(test3(c1, gc, gq1, gq2, H(0:𝔹)));
+                    e := if c1 {
+                        if gq1 { 1 } else { if gq2 { 3 } else { 0 } }
+                    } else {
+                        if gc { 2 } else { if gq2 { 3 } else { 0 } }
+                    };
+                    assert(r[0] = e);
+                }
+            }
+        }
+    }
+
+    for ci in 0..2 {
+        for gc1i in 0..2 {
+            for gc2i in 0..2 {
+                for gq1i in 0..2 {
+                    for gq2i in 0..2 {
+                        c   := ci ≠ 0;
+                        gc1 := gc1i ≠ 0;
+                        gc2 := gc2i ≠ 0;
+                        gq1 := gq1i ≠ 0;
+                        gq2 := gq2i ≠ 0;
+                        r := measure(test4(c, gc1, gc2, gq1, gq2, H(0:𝔹)));
+                        e := if c {
+                            if gq1 { 1 }
+                            else { if gc1 { 2 }
+                            else { if gq2 { 3 }
+                            else { if gc2 { 4 }
+                            else { 0 } } } }
+                        } else { 0 };
+                        assert(r[0] = e);
+                    }
+                }
+            }
+        }
+    }
+
+    for c1i in 0..2 {
+        for c2i in 0..2 {
+            for c3i in 0..2 {
+                for gci in 0..2 {
+                    for gq1i in 0..2 {
+                        for gq2i in 0..2 {
+                            c1  := c1i ≠ 0;
+                            c2  := c2i ≠ 0;
+                            c3  := c3i ≠ 0;
+                            gc  := gci ≠ 0;
+                            gq1 := gq1i ≠ 0;
+                            gq2 := gq2i ≠ 0;
+                            r := measure(test5(c1, c2, c3, gc, gq1, gq2, H(0:𝔹)));
+                            e := if c1 {
+                                if gq1 { 1 }
+                                else { if c2 {
+                                    if gc { 2 }
+                                    else { if c3 {
+                                        if gq2 { 3 } else { 4 }
+                                    } else { 4 } }
+                                } else { 4 } }
+                            } else { 0 };
+                            assert(r[0] = e);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    for c1i in 0..2 {
+        for c2i in 0..2 {
+            for gc1i in 0..2 {
+                for gc2i in 0..2 {
+                    for gq1i in 0..2 {
+                        for gq2i in 0..2 {
+                            c1  := c1i ≠ 0;
+                            c2  := c2i ≠ 0;
+                            gc1 := gc1i ≠ 0;
+                            gc2 := gc2i ≠ 0;
+                            gq1 := gq1i ≠ 0;
+                            gq2 := gq2i ≠ 0;
+                            r := measure(test6(c1, c2, gc1, gc2, gq1, gq2, H(0:𝔹)));
+                            e := if c1 {
+                                if gq1 { 1 }
+                                else { if gc1 { 2 } else { 0 } }
+                            } else {
+                                if c2 {
+                                    if gc2 { 3 }
+                                    else { if gq2 { 4 } else { 0 } }
+                                } else { 0 }
+                            };
+                            assert(r[0] = e);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
