@@ -1,0 +1,476 @@
+def test_QQQ(const c:𝔹, const gq1:𝔹, const gq2:𝔹, const gq3:𝔹, q:𝔹) wild {
+	if c {
+		if gq1 { return (1:uint[3], q); }
+		if gq2 { return (2:uint[3], q); }
+		if gq3 { return (3:uint[3], q); }
+	}
+	return (0:uint[3], q);
+}
+
+def test_CQQ(const c:𝔹, gc:!𝔹, const gq1:𝔹, const gq2:𝔹, q:𝔹) wild {
+	if c {
+		if gc  { return (1:uint[3], q); }
+		if gq1 { return (2:uint[3], q); }
+		if gq2 { return (3:uint[3], q); }
+	}
+	return (0:uint[3], q);
+}
+
+def test_QCQ(const c:𝔹, gc:!𝔹, const gq1:𝔹, const gq2:𝔹, q:𝔹) wild {
+	if c {
+		if gq1 { return (1:uint[3], q); }
+		if gc  { return (2:uint[3], q); }
+		if gq2 { return (3:uint[3], q); }
+	}
+	return (0:uint[3], q);
+}
+
+def test_QQC(const c:𝔹, gc:!𝔹, const gq1:𝔹, const gq2:𝔹, q:𝔹) wild {
+	if c {
+		if gq1 { return (1:uint[3], q); }
+		if gq2 { return (2:uint[3], q); }
+		if gc  { return (3:uint[3], q); }
+	}
+	return (0:uint[3], q);
+}
+
+def test_QCC(const c:𝔹, gc1:!𝔹, gc2:!𝔹, const gq:𝔹, q:𝔹) wild {
+	if c {
+		if gq  { return (1:uint[3], q); }
+		if gc1 { return (2:uint[3], q); }
+		if gc2 { return (3:uint[3], q); }
+	}
+	return (0:uint[3], q);
+}
+
+def test_CQC(const c:𝔹, gc1:!𝔹, gc2:!𝔹, const gq:𝔹, q:𝔹) wild {
+	if c {
+		if gc1 { return (1:uint[3], q); }
+		if gq  { return (2:uint[3], q); }
+		if gc2 { return (3:uint[3], q); }
+	}
+	return (0:uint[3], q);
+}
+
+def test_CCQ(const c:𝔹, gc1:!𝔹, gc2:!𝔹, const gq:𝔹, q:𝔹) wild {
+	if c {
+		if gc1 { return (1:uint[3], q); }
+		if gc2 { return (2:uint[3], q); }
+		if gq  { return (3:uint[3], q); }
+	}
+	return (0:uint[3], q);
+}
+
+def test_CQ_Q(const c:𝔹, gc:!𝔹, const gq1:𝔹, const gq2:𝔹, q:𝔹) wild {
+	if c {
+		if gc  { return (1:uint[3], q); }
+		if gq1 { return (2:uint[3], q); }
+	} else {
+		if gq2 { return (3:uint[3], q); }
+	}
+	return (0:uint[3], q);
+}
+
+def test_QC_Q(const c:𝔹, gc:!𝔹, const gq1:𝔹, const gq2:𝔹, q:𝔹) wild {
+	if c {
+		if gq1 { return (1:uint[3], q); }
+		if gc  { return (2:uint[3], q); }
+	} else {
+		if gq2 { return (3:uint[3], q); }
+	}
+	return (0:uint[3], q);
+}
+
+def test_QC_C(const c:𝔹, gc1:!𝔹, gc2:!𝔹, const gq:𝔹, q:𝔹) wild {
+	if c {
+		if gq  { return (1:uint[3], q); }
+		if gc1 { return (2:uint[3], q); }
+	} else {
+		if gc2 { return (3:uint[3], q); }
+	}
+	return (0:uint[3], q);
+}
+
+def test_CQ_C(const c:𝔹, gc1:!𝔹, gc2:!𝔹, const gq:𝔹, q:𝔹) wild {
+	if c {
+		if gc1 { return (1:uint[3], q); }
+		if gq  { return (2:uint[3], q); }
+	} else {
+		if gc2 { return (3:uint[3], q); }
+	}
+	return (0:uint[3], q);
+}
+
+def test_CQ_CQ(const c:𝔹, gc1:!𝔹, gc2:!𝔹, const gq1:𝔹, const gq2:𝔹, q:𝔹) wild {
+	if c {
+		if gc1 { return (1:uint[3], q); }
+		if gq1 { return (2:uint[3], q); }
+	} else {
+		if gc2 { return (3:uint[3], q); }
+		if gq2 { return (4:uint[3], q); }
+	}
+	return (0:uint[3], q);
+}
+
+def test_QC_QC(const c:𝔹, gc1:!𝔹, gc2:!𝔹, const gq1:𝔹, const gq2:𝔹, q:𝔹) wild {
+	if c {
+		if gq1 { return (1:uint[3], q); }
+		if gc1 { return (2:uint[3], q); }
+	} else {
+		if gq2 { return (3:uint[3], q); }
+		if gc2 { return (4:uint[3], q); }
+	}
+	return (0:uint[3], q);
+}
+
+def test_CQ_QC(const c:𝔹, gc1:!𝔹, gc2:!𝔹, const gq1:𝔹, const gq2:𝔹, q:𝔹) wild {
+	if c {
+		if gc1 { return (1:uint[3], q); }
+		if gq1 { return (2:uint[3], q); }
+	} else {
+		if gq2 { return (3:uint[3], q); }
+		if gc2 { return (4:uint[3], q); }
+	}
+	return (0:uint[3], q);
+}
+
+def test_QCQC(const c:𝔹, gc1:!𝔹, gc2:!𝔹, const gq1:𝔹, const gq2:𝔹, q:𝔹) wild {
+	if c {
+		if gq1 { return (1:uint[3], q); }
+		if gc1 { return (2:uint[3], q); }
+		if gq2 { return (3:uint[3], q); }
+		if gc2 { return (4:uint[3], q); }
+	}
+	return (0:uint[3], q);
+}
+
+def test_CQCQ(const c:𝔹, gc1:!𝔹, gc2:!𝔹, const gq1:𝔹, const gq2:𝔹, q:𝔹) wild {
+	if c {
+		if gc1 { return (1:uint[3], q); }
+		if gq1 { return (2:uint[3], q); }
+		if gc2 { return (3:uint[3], q); }
+		if gq2 { return (4:uint[3], q); }
+	}
+	return (0:uint[3], q);
+}
+
+def test_QQCC(const c:𝔹, gc1:!𝔹, gc2:!𝔹, const gq1:𝔹, const gq2:𝔹, q:𝔹) wild {
+	if c {
+		if gq1 { return (1:uint[3], q); }
+		if gq2 { return (2:uint[3], q); }
+		if gc1 { return (3:uint[3], q); }
+		if gc2 { return (4:uint[3], q); }
+	}
+	return (0:uint[3], q);
+}
+
+def test_CCQQ(const c:𝔹, gc1:!𝔹, gc2:!𝔹, const gq1:𝔹, const gq2:𝔹, q:𝔹) wild {
+	if c {
+		if gc1 { return (1:uint[3], q); }
+		if gc2 { return (2:uint[3], q); }
+		if gq1 { return (3:uint[3], q); }
+		if gq2 { return (4:uint[3], q); }
+	}
+	return (0:uint[3], q);
+}
+
+def test_nested_Q_Q(const c1:𝔹, const c2:𝔹, const gq1:𝔹, const gq2:𝔹, q:𝔹) wild {
+	if c1 {
+		if gq1 { return (1:uint[3], q); }
+		if c2 {
+			if gq2 { return (2:uint[3], q); }
+		}
+	}
+	return (0:uint[3], q);
+}
+
+def test_nested_C_Q(const c1:𝔹, const c2:𝔹, gc:!𝔹, const gq:𝔹, q:𝔹) wild {
+	if c1 {
+		if gc { return (1:uint[3], q); }
+		if c2 {
+			if gq { return (2:uint[3], q); }
+		}
+	}
+	return (0:uint[3], q);
+}
+
+def test_nested_Q_C(const c1:𝔹, const c2:𝔹, gc:!𝔹, const gq:𝔹, q:𝔹) wild {
+	if c1 {
+		if gq { return (1:uint[3], q); }
+		if c2 {
+			if gc { return (2:uint[3], q); }
+		}
+	}
+	return (0:uint[3], q);
+}
+
+def test_deep3(const c1:𝔹, const c2:𝔹, const c3:𝔹, gc:!𝔹, const gq:𝔹, q:𝔹) wild {
+	if c1 {
+		if gq { return (1:uint[3], q); }
+		if c2 {
+			if gc { return (2:uint[3], q); }
+			if c3 {
+				if gq { return (3:uint[3], q); }
+			}
+		}
+	}
+	return (0:uint[3], q);
+}
+
+def test_deep_both(const c1:𝔹, const c2:𝔹, gc:!𝔹, const gq1:𝔹, const gq2:𝔹, q:𝔹) wild {
+	if c1 {
+		if gq1 { return (1:uint[3], q); }
+		if gc  { return (2:uint[3], q); }
+	} else {
+		if c2 {
+			if gq2 { return (3:uint[3], q); }
+		}
+	}
+	return (0:uint[3], q);
+}
+
+def test_deep_CQ_CQ(const c1:𝔹, const c2:𝔹, gc1:!𝔹, gc2:!𝔹, const gq1:𝔹, const gq2:𝔹, q:𝔹) wild {
+	if c1 {
+		if gc1 { return (1:uint[3], q); }
+		if gq1 { return (2:uint[3], q); }
+	} else {
+		if c2 {
+			if gc2 { return (3:uint[3], q); }
+			if gq2 { return (4:uint[3], q); }
+		}
+	}
+	return (0:uint[3], q);
+}
+
+def test_seq_QCQ(const gq1:𝔹, gc:!𝔹, const gq2:𝔹, q:𝔹) wild {
+	if gq1 { return (1:uint[3], q); }
+	if gc  { return (2:uint[3], q); }
+	if gq2 { return (3:uint[3], q); }
+	return (0:uint[3], q);
+}
+
+def test_seq_CQC(gc1:!𝔹, const gq:𝔹, gc2:!𝔹, q:𝔹) wild {
+	if gc1 { return (1:uint[3], q); }
+	if gq  { return (2:uint[3], q); }
+	if gc2 { return (3:uint[3], q); }
+	return (0:uint[3], q);
+}
+
+def test_seq_QCQC(const gq1:𝔹, gc1:!𝔹, const gq2:𝔹, gc2:!𝔹, q:𝔹) wild {
+	if gq1 { return (1:uint[3], q); }
+	if gc1 { return (2:uint[3], q); }
+	if gq2 { return (3:uint[3], q); }
+	if gc2 { return (4:uint[3], q); }
+	return (0:uint[3], q);
+}
+
+def exp_seq(g1:!𝔹, g2:!𝔹, g3:!𝔹, g4:!𝔹,
+			t1:!ℕ, t2:!ℕ, t3:!ℕ, t4:!ℕ,
+			id1:!ℕ, id2:!ℕ, id3:!ℕ, id4:!ℕ) : !ℕ {
+	if t1 ≠ 0 { if g1 { return id1; } }
+	if t2 ≠ 0 { if g2 { return id2; } }
+	if t3 ≠ 0 { if g3 { return id3; } }
+	if t4 ≠ 0 { if g4 { return id4; } }
+	return 0;
+}
+
+def main() {
+	for ci in 0..2 {
+		for g1i in 0..2 {
+			for g2i in 0..2 {
+				for g3i in 0..2 {
+					c  := ci ≠ 0;
+					g1 := g1i ≠ 0;
+					g2 := g2i ≠ 0;
+					g3 := g3i ≠ 0;
+
+					r := measure(test_QQQ(c, g1, g2, g3, H(0:𝔹)));
+					e := if c { exp_seq(g1, g2, g3, false, 2, 2, 2, 0, 1, 2, 3, 0) } else { 0 };
+					assert(r[0] = e);
+
+					r = measure(test_CQQ(c, g1, g2, g3, H(0:𝔹)));
+					e = if c { exp_seq(g1, g2, g3, false, 1, 2, 2, 0, 1, 2, 3, 0) } else { 0 };
+					assert(r[0] = e);
+
+					r = measure(test_QCQ(c, g2, g1, g3, H(0:𝔹)));
+					e = if c { exp_seq(g1, g2, g3, false, 2, 1, 2, 0, 1, 2, 3, 0) } else { 0 };
+					assert(r[0] = e);
+
+					r = measure(test_QQC(c, g3, g1, g2, H(0:𝔹)));
+					e = if c { exp_seq(g1, g2, g3, false, 2, 2, 1, 0, 1, 2, 3, 0) } else { 0 };
+					assert(r[0] = e);
+
+					r = measure(test_QCC(c, g2, g3, g1, H(0:𝔹)));
+					e = if c { exp_seq(g1, g2, g3, false, 2, 1, 1, 0, 1, 2, 3, 0) } else { 0 };
+					assert(r[0] = e);
+
+					r = measure(test_CQC(c, g1, g3, g2, H(0:𝔹)));
+					e = if c { exp_seq(g1, g2, g3, false, 1, 2, 1, 0, 1, 2, 3, 0) } else { 0 };
+					assert(r[0] = e);
+
+					r = measure(test_CCQ(c, g1, g2, g3, H(0:𝔹)));
+					e = if c { exp_seq(g1, g2, g3, false, 1, 1, 2, 0, 1, 2, 3, 0) } else { 0 };
+					assert(r[0] = e);
+
+					r = measure(test_seq_QCQ(g1, g2, g3, H(0:𝔹)));
+					e = exp_seq(g1, g2, g3, false, 2, 1, 2, 0, 1, 2, 3, 0);
+					assert(r[0] = e);
+
+					r = measure(test_seq_CQC(g1, g2, g3, H(0:𝔹)));
+					e = exp_seq(g1, g2, g3, false, 1, 2, 1, 0, 1, 2, 3, 0);
+					assert(r[0] = e);
+				}
+			}
+		}
+	}
+
+	for ci in 0..2 {
+		for g1i in 0..2 {
+			for g2i in 0..2 {
+				for g3i in 0..2 {
+					for g4i in 0..2 {
+						c  := ci ≠ 0;
+						g1 := g1i ≠ 0;
+						g2 := g2i ≠ 0;
+						g3 := g3i ≠ 0;
+						g4 := g4i ≠ 0;
+
+						r := measure(test_QCQC(c, g2, g4, g1, g3, H(0:𝔹)));
+						e := if c { exp_seq(g1, g2, g3, g4, 2, 1, 2, 1, 1, 2, 3, 4) } else { 0 };
+						assert(r[0] = e);
+
+						r = measure(test_CQCQ(c, g1, g3, g2, g4, H(0:𝔹)));
+						e = if c { exp_seq(g1, g2, g3, g4, 1, 2, 1, 2, 1, 2, 3, 4) } else { 0 };
+						assert(r[0] = e);
+
+						r = measure(test_QQCC(c, g3, g4, g1, g2, H(0:𝔹)));
+						e = if c { exp_seq(g1, g2, g3, g4, 2, 2, 1, 1, 1, 2, 3, 4) } else { 0 };
+						assert(r[0] = e);
+
+						r = measure(test_CCQQ(c, g1, g2, g3, g4, H(0:𝔹)));
+						e = if c { exp_seq(g1, g2, g3, g4, 1, 1, 2, 2, 1, 2, 3, 4) } else { 0 };
+						assert(r[0] = e);
+
+						r = measure(test_seq_QCQC(g1, g2, g3, g4, H(0:𝔹)));
+						e = exp_seq(g1, g2, g3, g4, 2, 1, 2, 1, 1, 2, 3, 4);
+						assert(r[0] = e);
+
+						r = measure(test_CQ_Q(c, g1, g2, g3, H(0:𝔹)));
+						e = if c { exp_seq(g1, g2, false, false, 1, 2, 0, 0, 1, 2, 0, 0) }
+							else { exp_seq(g3, false, false, false, 2, 0, 0, 0, 3, 0, 0, 0) };
+						assert(r[0] = e);
+
+						r = measure(test_QC_Q(c, g2, g1, g3, H(0:𝔹)));
+						e = if c { exp_seq(g1, g2, false, false, 2, 1, 0, 0, 1, 2, 0, 0) }
+							else { exp_seq(g3, false, false, false, 2, 0, 0, 0, 3, 0, 0, 0) };
+						assert(r[0] = e);
+
+						r = measure(test_QC_C(c, g2, g3, g1, H(0:𝔹)));
+						e = if c { exp_seq(g1, g2, false, false, 2, 1, 0, 0, 1, 2, 0, 0) }
+							else { exp_seq(g3, false, false, false, 1, 0, 0, 0, 3, 0, 0, 0) };
+						assert(r[0] = e);
+
+						r = measure(test_CQ_C(c, g1, g3, g2, H(0:𝔹)));
+						e = if c { exp_seq(g1, g2, false, false, 1, 2, 0, 0, 1, 2, 0, 0) }
+							else { exp_seq(g3, false, false, false, 1, 0, 0, 0, 3, 0, 0, 0) };
+						assert(r[0] = e);
+
+						r = measure(test_CQ_CQ(c, g1, g3, g2, g4, H(0:𝔹)));
+						e = if c { exp_seq(g1, g2, false, false, 1, 2, 0, 0, 1, 2, 0, 0) }
+							else { exp_seq(g3, g4, false, false, 1, 2, 0, 0, 3, 4, 0, 0) };
+						assert(r[0] = e);
+
+						r = measure(test_QC_QC(c, g2, g4, g1, g3, H(0:𝔹)));
+						e = if c { exp_seq(g1, g2, false, false, 2, 1, 0, 0, 1, 2, 0, 0) }
+							else { exp_seq(g3, g4, false, false, 2, 1, 0, 0, 3, 4, 0, 0) };
+						assert(r[0] = e);
+
+						r = measure(test_CQ_QC(c, g1, g4, g2, g3, H(0:𝔹)));
+						e = if c { exp_seq(g1, g2, false, false, 1, 2, 0, 0, 1, 2, 0, 0) }
+							else { exp_seq(g3, g4, false, false, 2, 1, 0, 0, 3, 4, 0, 0) };
+						assert(r[0] = e);
+					}
+				}
+			}
+		}
+	}
+
+	for c1i in 0..2 {
+		for c2i in 0..2 {
+			for g1i in 0..2 {
+				for g2i in 0..2 {
+					c1 := c1i ≠ 0;
+					c2 := c2i ≠ 0;
+					g1 := g1i ≠ 0;
+					g2 := g2i ≠ 0;
+
+					r := measure(test_nested_Q_Q(c1, c2, g1, g2, H(0:𝔹)));
+					e := if c1 { if g1 { 1 } else { if c2 { if g2 { 2 } else { 0 } } else { 0 } } } else { 0 };
+					assert(r[0] = e);
+
+					r = measure(test_nested_C_Q(c1, c2, g1, g2, H(0:𝔹)));
+					e = if c1 { if g1 { 1 } else { if c2 { if g2 { 2 } else { 0 } } else { 0 } } } else { 0 };
+					assert(r[0] = e);
+
+					r = measure(test_nested_Q_C(c1, c2, g2, g1, H(0:𝔹)));
+					e = if c1 { if g1 { 1 } else { if c2 { if g2 { 2 } else { 0 } } else { 0 } } } else { 0 };
+					assert(r[0] = e);
+				}
+			}
+		}
+	}
+
+	for c1i in 0..2 {
+		for c2i in 0..2 {
+			for g1i in 0..2 {
+				for g2i in 0..2 {
+					for g3i in 0..2 {
+						c1 := c1i ≠ 0;
+						c2 := c2i ≠ 0;
+						g1 := g1i ≠ 0;
+						g2 := g2i ≠ 0;
+						g3 := g3i ≠ 0;
+
+						r := measure(test_deep_both(c1, c2, g2, g1, g3, H(0:𝔹)));
+						e := if c1 { if g1 { 1 } else { if g2 { 2 } else { 0 } } }
+							else { if c2 { if g3 { 3 } else { 0 } } else { 0 } };
+						assert(r[0] = e);
+
+						r = measure(test_deep_CQ_CQ(c1, c2, g1, g3, g2, g3, H(0:𝔹)));
+						e = if c1 { if g1 { 1 } else { if g2 { 2 } else { 0 } } }
+							else { if c2 { if g3 { 3 } else { if g3 { 4 } else { 0 } } } else { 0 } };
+						assert(r[0] = e);
+					}
+				}
+			}
+		}
+	}
+
+	for c1i in 0..2 {
+		for c2i in 0..2 {
+			for c3i in 0..2 {
+				for gci in 0..2 {
+					for gqi in 0..2 {
+						c1 := c1i ≠ 0;
+						c2 := c2i ≠ 0;
+						c3 := c3i ≠ 0;
+						gc := gci ≠ 0;
+						gq := gqi ≠ 0;
+
+						r := measure(test_deep3(c1, c2, c3, gc, gq, H(0:𝔹)));
+						e := if c1 {
+							if gq { 1 }
+							else { if c2 {
+								if gc { 2 }
+								else { if c3 {
+									if gq { 3 } else { 0 }
+								} else { 0 } }
+							} else { 0 } }
+						} else { 0 };
+						assert(r[0] = e);
+					}
+				}
+			}
+		}
+	}
+}
