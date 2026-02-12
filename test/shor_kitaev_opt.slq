@@ -75,21 +75,6 @@ def order(a:!ℕ,N:!ℕ){
 	return b coerce !ℕ;
 }
 
-def estimatePhase[n:!ℕ][a:qtype](const f:Π[pw2:!N]qfree. a ->mfree a, arg:a): !uint[n]×a{
-	x_tilde:=0:!uint[n];
-	for i in 0..n{
-		bit:=H(0);
-		if bit {
-	        pw2:=n sub 1 sub i;
-			arg:=f[pw2](arg);
-			phaseU(2^pw2·-x_tilde);
-		}
-		bit:=H(bit);
-		x_tilde[i]=measure(bit);
-	}
-	return (x_tilde,arg);
-}
-
 def add_mod[n:!ℕ](b:uint[n],const a:!ℕ,const N:!ℕ){
 	assert(a<N);
 	x:=b>=N-a;
@@ -110,6 +95,21 @@ def mul_mod[n:!ℕ](const b:uint[n],const a:!ℕ,const N:!ℕ){
 		}
 	}
 	return r;
+}
+
+def estimatePhase[n:!ℕ][a:qtype](const f:Π[pw2:!N]qfree. a ->mfree a, arg:a): !uint[n]×a{
+	x_tilde:=0:!uint[n];
+	for i in 0..n{
+		bit:=H(0);
+		if bit {
+	        pw2:=n sub 1 sub i;
+			arg:=f[pw2](arg);
+			phaseU(2^pw2·-x_tilde);
+		}
+		bit:=H(bit);
+		x_tilde[i]=measure(bit);
+	}
+	return (x_tilde,arg);
 }
 
 def phaseU[n:!ℕ](const x:!uint[n]) {
