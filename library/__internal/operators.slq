@@ -21,9 +21,9 @@ def pow2m1(n: !N) lifted: !N {
 	return __nsub_Z_unchecked(pow2(n), 1);
 }
 
-def floor_Q(a: !Q) @[extern="primitive.real.floor"] lifted: !Z;
+def floor_Q(a: !Q) @[extern="primitive.rational.floor"] lifted: !Z;
 def floor_R(a: !R) @[extern="primitive.real.floor"] lifted: !Z;
-def ceil_Q(a: !Q) @[extern="primitive.real.ceil"] lifted: !Z;
+def ceil_Q(a: !Q) @[extern="primitive.rational.ceil"] lifted: !Z;
 def ceil_R(a: !R) @[extern="primitive.real.ceil"] lifted: !Z;
 
 def uint_bits(n: !N) lifted: !N {
@@ -488,7 +488,7 @@ def __uminus_B(x:!𝔹)lifted:!ℤ {
 }
 def __uminus_N(x: !ℕ) @[__operator, extern="primitive.int.neg"] lifted: !ℤ;
 def __uminus_Z(x: !ℤ) @[__operator, extern="primitive.int.neg"] lifted: !ℤ;
-def __uminus_Q(x: !ℚ) @[__operator, extern="primitive.real.neg"] lifted: !ℚ;
+def __uminus_Q(x: !ℚ) @[__operator, extern="primitive.rational.neg"] lifted: !ℚ;
 def __uminus_R(x: !ℝ) @[__operator, extern="primitive.real.neg"] lifted: !ℝ;
 def __uminus_C(x: !ℂ) @[__operator] lifted: !ℂ {
 	(re, im) := ctori(x);
@@ -658,7 +658,7 @@ def __add_B(a: !𝔹, b: !𝔹) @[__operator] lifted: !ℕ {
 }
 def __add_N(a: !ℕ, b: !ℕ) @[__operator, extern="primitive.int.add"] lifted: !ℕ;
 def __add_Z(a: !ℤ, b: !ℤ) @[__operator, extern="primitive.int.add"] lifted: !ℤ;
-def __add_Q(a: !ℚ, b: !ℚ) @[__operator, extern="primitive.real.add"] lifted: !ℚ;
+def __add_Q(a: !ℚ, b: !ℚ) @[__operator, extern="primitive.rational.add"] lifted: !ℚ;
 def __add_R(a: !ℝ, b: !ℝ) @[__operator, extern="primitive.real.add"] lifted: !ℝ;
 def __add_CR(a: !ℂ, b: !ℝ) @[__operator] lifted: !ℂ {
 	(a_re, a_im) := ctori(a);
@@ -808,7 +808,7 @@ def __sub_B(a: !𝔹, b: !𝔹) @[__operator] lifted: !ℤ {
 }
 def __sub_N(a: !ℕ, b: !ℕ) @[__operator, extern="primitive.int.sub"] lifted: !ℤ;
 def __sub_Z(a: !ℤ, b: !ℤ) @[__operator, extern="primitive.int.sub"] lifted: !ℤ;
-def __sub_Q(a: !ℚ, b: !ℚ) @[__operator, extern="primitive.real.sub"] lifted: !ℚ;
+def __sub_Q(a: !ℚ, b: !ℚ) @[__operator, extern="primitive.rational.sub"] lifted: !ℚ;
 def __sub_R(a: !ℝ, b: !ℝ) @[__operator, extern="primitive.real.sub"] lifted: !ℝ;
 def __sub_CR(a: !ℂ, b: !ℝ) @[__operator] lifted: !ℂ {
 	(a_re, a_im) := ctori(a);
@@ -1186,7 +1186,7 @@ def __mul_B(a: !𝔹, b: !𝔹) @[__operator] lifted: !𝔹 {
 
 def __mul_N(a: !ℕ, b: !ℕ) @[__operator, extern="primitive.int.mul"] lifted: !ℕ;
 def __mul_Z(a: !ℤ, b: !ℤ) @[__operator, extern="primitive.int.mul"] lifted: !ℤ;
-def __mul_Q(a: !ℚ, b: !ℚ) @[__operator, extern="primitive.real.mul"] lifted: !ℚ;
+def __mul_Q(a: !ℚ, b: !ℚ) @[__operator, extern="primitive.rational.mul"] lifted: !ℚ;
 def __mul_R(a: !ℝ, b: !ℝ) @[__operator, extern="primitive.real.mul"] lifted: !ℝ;
 def __mul_CR(a: !ℂ, b: !ℝ) @[__operator] lifted: !ℂ {
 	(a_re, a_im) := ctori(a);
@@ -1213,7 +1213,7 @@ def __div_N(a: !ℕ, b: !ℕ) @[__operator] lifted: !ℚ {
 def __div_Z(a: !ℤ, b: !ℤ) @[__operator] lifted: !ℚ {
 	return __div_Q(a, b);
 }
-def __div_Q(a: !ℚ, b: !ℚ) @[__operator, extern="primitive.real.div"] lifted: !ℚ;
+def __div_Q(a: !ℚ, b: !ℚ) @[__operator, extern="primitive.rational.div"] lifted: !ℚ;
 def __div_R(a: !ℝ, b: !ℝ) @[__operator, extern="primitive.real.div"] lifted: !ℝ;
 def __div_CR(a: !ℂ, b: !ℝ) @[__operator] lifted: !ℂ {
 	(a_re, a_im) := ctori(a);
@@ -1503,7 +1503,7 @@ def __idiv_B(a: !𝔹, b: !𝔹) @[__operator] lifted: !𝔹 {
 def __idiv_N(a: !ℕ, b: !ℕ) @[__operator, extern="primitive.int.div"] lifted: !ℕ;
 def __idiv_Z(a: !ℤ, b: !ℤ) @[__operator, extern="primitive.int.div"] lifted: !ℤ;
 def __idiv_Q(a: !ℚ, b: !ℚ) @[__operator] lifted: !ℤ {
-	return floor(__div_Q(a, b));
+	return floor_Q(__div_Q(a, b));
 }
 def __idiv_R(a: !ℝ, b: !ℝ) @[__operator] lifted: !ℤ {
 	return floor(__div_R(a, b));
@@ -1809,9 +1809,7 @@ def __mod_ZB(a: !ℤ, b: !𝔹) @[__operator] lifted: !𝔹 {
 def __mod_ZN(a: !ℤ, b: !ℕ) @[__operator, extern="primitive.int.mod"] lifted: !ℕ;
 def __mod_N(a: !ℕ, b: !ℕ) @[__operator, extern="primitive.int.mod"] lifted: !ℕ;
 def __mod_Z(a: !ℤ, b: !ℤ) @[__operator, extern="primitive.int.mod"] lifted: !ℤ;
-def __mod_Q(a: !ℚ, b: !ℚ) @[__operator] lifted: !ℚ {
-	return __sub_Q(a, __mul_Q(__idiv_Q(a, b), b));
-}
+def __mod_Q(a: !ℚ, b: !ℚ) @[__operator, extern="primitive.rational.mod"] lifted: !ℚ;
 def __mod_R(a: !ℝ, b: !ℝ) @[__operator] lifted: !ℝ {
 	return __sub_R(a, __mul_R(__idiv_R(a, b), b));
 }
@@ -1883,7 +1881,7 @@ def __pow_NZ(a: !ℕ, b: !ℤ) @[__operator] lifted: !ℚ {
 def __pow_Z(a: !ℤ, b: !ℤ) @[__operator] lifted: !ℚ {
 	return __pow_QZ(a, b);
 }
-def __pow_QZ(a: !ℚ, b: !ℤ) @[__operator, extern="primitive.real.powi"] lifted: !ℚ;
+def __pow_QZ(a: !ℚ, b: !ℤ) @[__operator, extern="primitive.rational.powi"] lifted: !ℚ;
 def __pow_RZ(a: !ℝ, b: !ℤ) @[__operator, extern="primitive.real.powi"] lifted: !ℝ;
 
 def __pow_NQ(a: !ℕ, b: !ℚ) @[__operator] lifted: !ℝ {
@@ -1905,7 +1903,7 @@ def __pow_NR(a: !ℕ, b: !ℝ) @[__operator] lifted: !ℝ {
 def __pow_ZR(a: !ℤ, b: !ℝ) @[__operator] lifted: !ℝ {
 	return __pow_R(a, b);
 }
-def __pow_QR(a: !ℝ, b: !ℝ) @[__operator] lifted: !ℝ {
+def __pow_QR(a: !ℚ, b: !ℝ) @[__operator] lifted: !ℝ {
 	return __pow_R(a, b);
 }
 def __pow_R_unchecked(a: !ℝ, b: !ℝ) @[__operator, extern="primitive.real.powf"] lifted: !ℝ;
@@ -2658,7 +2656,7 @@ def __lt_UR[n:!ℕ](a: !uint[n], b: !ℝ) @[__operator] lifted: !𝔹 {
 
 def __lt_N(a: !ℕ, b: !ℕ) @[__operator, extern="primitive.int.lt"] lifted: !𝔹;
 def __lt_Z(a: !ℤ, b: !ℤ) @[__operator, extern="primitive.int.lt"] lifted: !𝔹;
-def __lt_Q(a: !ℚ, b: !ℚ) @[__operator, extern="primitive.real.lt"] lifted: !𝔹;
+def __lt_Q(a: !ℚ, b: !ℚ) @[__operator, extern="primitive.rational.lt"] lifted: !𝔹;
 def __lt_R(a: !ℝ, b: !ℝ) @[__operator, extern="primitive.real.lt"] lifted: !𝔹;
 
 // a ≤ b
@@ -3722,7 +3720,7 @@ def __eq_UC[n:!ℕ](a: !uint[n], b: !ℂ) @[__operator] lifted: !𝔹 {
 
 def __eq_N(a: !ℕ, b: !ℕ) @[__operator, extern="primitive.int.eq"] lifted: !𝔹;
 def __eq_Z(a: !ℤ, b: !ℤ) @[__operator, extern="primitive.int.eq"] lifted: !𝔹;
-def __eq_Q(a: !ℚ, b: !ℚ) @[__operator, extern="primitive.real.eq"] lifted: !𝔹;
+def __eq_Q(a: !ℚ, b: !ℚ) @[__operator, extern="primitive.rational.eq"] lifted: !𝔹;
 def __eq_R(a: !ℝ, b: !ℝ) @[__operator, extern="primitive.real.eq"] lifted: !𝔹;
 def __eq_CR(a: !ℂ, b: !ℝ) @[__operator] lifted: !𝔹 {
 	(a_re, a_im) := ctori(a);

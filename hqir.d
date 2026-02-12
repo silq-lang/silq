@@ -169,6 +169,7 @@ final class QReg {
 
 static immutable string ctypeBitvec = "builtin.bitvec";
 static immutable string ctypeQtArray = "builtin.qtypes";
+static immutable string ctypeSilqRational = "silq.rational";
 static immutable string ctypeSilqComplex = "silq.complex";
 static immutable string ctypeSilqTuple = "silq.tuple";
 static immutable string ctypeSilqArray = "silq.array";
@@ -501,13 +502,11 @@ private ConvertFlags conversionFlags(ast_conv.Conversion conv) {
 	if(cast(ast_conv.NumericConversion) conv) {
 		auto r = ConvertFlags.classical;
 		if(conv.from == ast_ty_Nt() && conv.to == ast_ty_Zt()) r = ConvertFlags.noop;
-		if(conv.from == ast_ty_Qt() && conv.to == ast_ty_R()) r = ConvertFlags.noop;
 		return r;
 	}
 	if(auto nConv = cast(ast_conv.NumericCoercion) conv) {
 		auto r = ConvertFlags.classical;
 		if(conv.from == ast_ty_Zt() && conv.to == ast_ty_Nt()) r = ConvertFlags.noop;
-		if(conv.from == ast_ty_R() && conv.to == ast_ty_Qt()) r = ConvertFlags.noop;
 		if(nConv.needsCheck) r |= ConvertFlags.check;
 		return r;
 	}
@@ -1832,6 +1831,43 @@ class CCGen {
 		val = intMod(val, intPow2(bits));
 		if(isSigned) val = intMakeSigned(bits, val);
 		return val;
+	}
+
+	CReg rationalFromBool(CReg r) {
+		return rationalFromInt(intFromBool(r));
+	}
+
+	CReg rationalFromInt(CReg r) {
+		return boxPack(ctypeSilqRational, [r, ctx.literalInt(1)]);
+	}
+
+	CReg floatFromRational(CReg r) {
+		auto nd = boxUnpack(ctypeSilqRational, 2, r);
+		auto num = floatFromInt(nd[0]);
+		auto den = floatFromInt(nd[1]);
+		return emitPureOp("float_div", [num, den]);
+	}
+
+	CReg intFromRational(CReg r) {
+		auto nd = boxUnpack(ctypeSilqRational, 2, r);
+		auto num = nd[0], den = nd[1];
+		auto num2 = emitPureOp("int_mul", [ctx.literalInt(2), num]);
+		auto den2 = emitPureOp("int_mul", [ctx.literalInt(2), den]);
+		auto nnum = emitPureOp("int_linear[0,1,1]", [num2, den]);
+		return emitPureOp("int_div", [nnum, den2]);
+	}
+
+	CReg rationalFromFloat(CReg r) {
+		auto n = emitPureOp("float_floor_int", [r]);
+		auto f = emitPureOp("float_sub", [r, floatFromInt(n)]);
+		enum shift = 128;
+		auto s = ctx.literalFloat(mixin(`0x1p` ~ text(shift)));
+		auto fs = emitPureOp("float_mul", [f, s]);
+		auto fsn = emitPureOp("float_floor_int", [fs]);
+		auto den = emitPureOp("int_pow", [ctx.literalInt(2), ctx.literalInt(shift)]);
+		auto ns = emitPureOp("int_mul", [n, den]);
+		auto num = emitPureOp("int_linear[0,1,1]", [fsn, ns]);
+		return funcApply("primitive.rational.qfromnd", [num, den]);
 	}
 
 	CReg complexFromBool(CReg r) {
@@ -3491,6 +3527,14 @@ class ScopeWriter {
 				assert(!typeHasQuantum(ty));
 				return valNewC(ctx.literalInt(e.asIntegerConstant().get()));
 			case ast_ty_NumericType_Qt:
+				auto cbe = e.asRationalConstant().get();
+				auto num = ctx.literalInt(cbe[0]);
+				auto den = ctx.literalInt(cbe[1]);
+				auto c = ccg.funcApply("primitive.rational.qfromnd", [num, den]);
+				auto base = ccg.rationalFromInt(ctx.literalInt(BigInt(cbe[2])));
+				auto exp = ctx.literalInt(BigInt(cbe[3]));
+				auto d = ccg.funcApply("primitive.rational.powi", [base, exp]);
+				return valNewC(ccg.funcApply("primitive.rational.mul", [c, d]));
 			case ast_ty_NumericType_R:
 				assert(!typeHasQuantum(ty));
 				return valNewC(ctx.literalFloat(to!double(e.lit.str)));
@@ -5898,6 +5942,7 @@ class ScopeWriter {
 					case ast_ty_NumericType_Zt:
 						return valNewC(ccg.intFromBool(v.creg));
 					case ast_ty_NumericType_Qt:
+						return valNewC(ccg.rationalFromBool(v.creg));
 					case ast_ty_NumericType_R:
 						return valNewC(ccg.floatFromBool(v.creg));
 					case ast_ty_NumericType_C:
@@ -5912,6 +5957,7 @@ class ScopeWriter {
 						// N -> Z
 						return v;
 					case ast_ty_NumericType_Qt:
+						return valNewC(ccg.rationalFromInt(v.creg));
 					case ast_ty_NumericType_R:
 						return valNewC(ccg.floatFromInt(v.creg));
 					case ast_ty_NumericType_C:
@@ -5922,9 +5968,9 @@ class ScopeWriter {
 			case ast_ty_NumericType_Qt:
 				switch(wt) {
 					case ast_ty_NumericType_R:
-						return v;
+						return valNewC(ccg.floatFromRational(v.creg));
 					case ast_ty_NumericType_C:
-						return valNewC(ccg.complexFromFloat(v.creg));
+						return valNewC(ccg.complexFromFloat(ccg.floatFromRational(v.creg)));
 					default:
 						assert(0, format("Unsupported numeric conversion: float -> %s", conv.to));
 				}
@@ -5959,6 +6005,20 @@ class ScopeWriter {
 						assert(0, format("Unsupported numeric coercion int -> %s", conv.to));
 				}
 			case ast_ty_NumericType_Qt:
+				switch(wt) {
+					case ast_ty.NumericType.Bool:
+						auto nd = ccg.boxUnpack(ctypeSilqRational, 2, v.creg);
+						return valNewC(ccg.intCmpNe0(nd[0]));
+					case ast_ty_NumericType_Nt:
+					case ast_ty_NumericType_Zt:
+						auto creg = ccg.intFromRational(v.creg);
+						if(wf == ast_ty_NumericType_Nt) {
+							ccg.checkUnsigned(conv.needsCheck, creg);
+						}
+						return valNewC(creg);
+					default:
+						assert(0, format("Unsupported numeric coercion rational -> %s", conv.to));
+				}
 			case ast_ty_NumericType_R:
 				switch(wt) {
 					case ast_ty.NumericType.Bool:
@@ -5968,11 +6028,11 @@ class ScopeWriter {
 						ccg.checkUnsigned(conv.needsCheck, r);
 						return valNewC(r);
 					case ast_ty_NumericType_Zt:
-						auto r = ccg.emitPureOp("float_floor_int", [v.creg]);
+						auto shifted = ccg.emitPureOp("float_add", [v.creg, ctx.literalFloat(0.5)]);
+						auto r = ccg.emitPureOp("float_floor_int", [shifted]);
 						return valNewC(r);
 					case ast_ty_NumericType_Qt:
-						// !R -> !Q
-						return v;
+						return valNewC(ccg.rationalFromFloat(v.creg));
 					default:
 						assert(0, format("Unsupported numeric coercion float -> %s", conv.to));
 				}

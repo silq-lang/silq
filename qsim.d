@@ -1002,7 +1002,7 @@ struct QState{
 					if(ntag==Tag.zval||ntag==Tag.qval){
 						auto r=cval.re.toℚ;
 						if(ntag==Tag.qval) return makeRational(r);
-						if(ntag==Tag.zval) return makeInteger(.floor(r));
+						if(ntag==Tag.zval) return makeInteger(.floor(r+ℚ(1,2)));
 					}
 					if(ntag==Tag.fval) return makeReal(cval.re);
 					break;
@@ -1011,14 +1011,14 @@ struct QState{
 					if(ntag==Tag.zval||ntag==Tag.qval){
 						auto r=fval.toℚ;
 						if(ntag==Tag.qval) return makeRational(r);
-						if(ntag==Tag.zval) return makeInteger(.floor(r));
+						if(ntag==Tag.zval) return makeInteger(.floor(r+ℚ(1,2)));
 					}
 					if(ntag==Tag.fval) return this;
 					if(ntag==Tag.cval) return makeComplex(C(fval));
 					break;
 				case Tag.qval:
 					if(ntag==Tag.bval) return neqZ;
-					if(ntag==Tag.zval) return makeInteger(.floor(qval));
+					if(ntag==Tag.zval) return makeInteger(.floor(qval+ℚ(1,2)));
 					if(ntag==Tag.qval) return this;
 					if(ntag==Tag.fval) return makeReal(toReal(qval));
 					if(ntag==Tag.cval) return makeComplex(C(toReal(qval)));
