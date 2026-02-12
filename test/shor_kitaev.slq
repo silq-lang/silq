@@ -58,7 +58,7 @@ def order(a:!ℕ,N:!ℕ){
 		aps~=[aps[i-1]^2%N];
 		ais~=[ais[i-1]^2%N];
 	}
-	b:=1:!ℤ;
+	b:=1;
 	while a^b%N≠1{
 		def f[pw2:!ℕ](b:uint[n]){
 			nb:=b·aps[pw2]%N;
@@ -94,13 +94,14 @@ def phaseU[n:!ℕ](const x:!uint[n]) {
 	phase(2·π·(x as !N)/2^n);
 }
 
-def candidates(q:!ℚ){
-	if q=0{ return [0:!ℤ]; }
+def candidates(q:!ℚ):!ℕ[]{
+	if q=0{ return [0]; }
+	assert(q>0);
 	(r,x):=([],1/q);
 	(qm2,qm1):=(1,0);
 	while x≠0{
 		x=1/x;
-		a:=floor(x);
+		a:=floor(x) coerce !ℕ;
 		(qm2,qm1)=(qm1,a·qm1+qm2);
 		r~=[qm1];
 		x-=a;
