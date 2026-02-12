@@ -544,79 +544,9 @@ def primitive.int.xor($a, $b) [artificial]
 	$r := int_bit_xor($a, $b)
 	return $r
 
-def primitive.int.gcd($a, $b)
-	$lit0 := literal[0]()
-	$lit2 := literal[2]()
-	$litFalse := literal[false]()
-	$litTrue := literal[true]()
-	$litNull := literal[null]()
-
-	$b_lt_0 := int_cmp_lt($b, $lit0)
-	if[$b_lt_0=1] $a_lt_0 := int_cmp_lt($a, $lit0)
-
-	if[$b_lt_0=1, $a_lt_0=1] $neg_a1 := int_linear[0,-1]($a)
-	if[$b_lt_0=1, $a_lt_0=1] $neg_b1 := int_linear[0,-1]($b)
-	if[$b_lt_0=1, $a_lt_0=1] $gcd_pos1 := classical_call[primitive.int.gcd]($neg_a1, $neg_b1)
-	if[$b_lt_0=1, $a_lt_0=1] $gcd_neg_real := int_linear[0,-1]($gcd_pos1)
-
-	if[$b_lt_0=1, $a_lt_0=0] $neg_b2 := int_linear[0,-1]($b)
-	if[$b_lt_0=1, $a_lt_0=0] $gcd_a_negb_real := classical_call[primitive.int.gcd]($a, $neg_b2)
-
-	if[$b_lt_0=1] $gcd_neg := cond($a_lt_0, $litNull, $gcd_neg_real)
-	if[$b_lt_0=1] $gcd_a_negb := cond($a_lt_0, $gcd_a_negb_real, $litNull)
-	if[$b_lt_0=1] $gcd_if_b_neg := cond($a_lt_0, $gcd_a_negb, $gcd_neg)
-
-	if[$b_lt_0=0] $a_eq_b := int_cmp_eq($a, $b)
-
-	if[$b_lt_0=0, $a_eq_b=0] $a_lt_b := int_cmp_lt($a, $b)
-	if[$b_lt_0=0, $a_eq_b=0] $a1 := cond($a_lt_b, $a, $b)
-	if[$b_lt_0=0, $a_eq_b=0] $b1 := cond($a_lt_b, $b, $a)
-
-	if[$b_lt_0=0, $a_eq_b=0] $b1_is_0 := int_cmp_eq($b1, $lit0)
-
-	if[$b_lt_0=0, $a_eq_b=0, $b1_is_0=0] $a1_mod_2 := int_mod($a1, $lit2)
-	if[$b_lt_0=0, $a_eq_b=0, $b1_is_0=0] $a1_even := int_cmp_eq($a1_mod_2, $lit0)
-
-	if[$b_lt_0=0, $a_eq_b=0, $b1_is_0=0] $b1_mod_2 := int_mod($b1, $lit2)
-	if[$b_lt_0=0, $a_eq_b=0, $b1_is_0=0] $b1_even := int_cmp_eq($b1_mod_2, $lit0)
-
-	if[$b_lt_0=0, $a_eq_b=0, $b1_is_0=0] $not_a1_even := cond($a1_even, $litTrue, $litFalse)
-	if[$b_lt_0=0, $a_eq_b=0, $b1_is_0=0] $not_b1_even := cond($b1_even, $litTrue, $litFalse)
-
-	if[$b_lt_0=0, $a_eq_b=0, $b1_is_0=0] $both_even := cond($a1_even, $litFalse, $b1_even)
-	if[$b_lt_0=0, $a_eq_b=0, $b1_is_0=0] $a_even_b_odd := cond($a1_even, $litFalse, $not_b1_even)
-	if[$b_lt_0=0, $a_eq_b=0, $b1_is_0=0] $a_odd_b_even := cond($a1_even, $b1_even, $litFalse)
-	if[$b_lt_0=0, $a_eq_b=0, $b1_is_0=0] $both_odd := cond($not_a1_even, $litFalse, $not_b1_even)
-
-	if[$b_lt_0=0, $a_eq_b=0, $b1_is_0=0, $both_even=1] $a2 := int_div($a1, $lit2)
-	if[$b_lt_0=0, $a_eq_b=0, $b1_is_0=0, $both_even=1] $b2 := int_div($b1, $lit2)
-	if[$b_lt_0=0, $a_eq_b=0, $b1_is_0=0, $both_even=1] $gcd_halved1 := classical_call[primitive.int.gcd]($a2, $b2)
-	if[$b_lt_0=0, $a_eq_b=0, $b1_is_0=0, $both_even=1] $gcd_both_even_real := int_mul($lit2, $gcd_halved1)
-
-	if[$b_lt_0=0, $a_eq_b=0, $b1_is_0=0, $a_even_b_odd=1] $a3 := int_div($a1, $lit2)
-	if[$b_lt_0=0, $a_eq_b=0, $b1_is_0=0, $a_even_b_odd=1] $gcd_a_even_real := classical_call[primitive.int.gcd]($a3, $b1)
-
-	if[$b_lt_0=0, $a_eq_b=0, $b1_is_0=0, $a_odd_b_even=1] $b3 := int_div($b1, $lit2)
-	if[$b_lt_0=0, $a_eq_b=0, $b1_is_0=0, $a_odd_b_even=1] $gcd_b_even_real := classical_call[primitive.int.gcd]($a1, $b3)
-
-	if[$b_lt_0=0, $a_eq_b=0, $b1_is_0=0, $both_odd=1] $a1_minus_b1 := int_linear[0,1,-1]($a1, $b1)
-	if[$b_lt_0=0, $a_eq_b=0, $b1_is_0=0, $both_odd=1] $gcd_both_odd_real := classical_call[primitive.int.gcd]($a1_minus_b1, $b1)
-
-	if[$b_lt_0=0, $a_eq_b=0, $b1_is_0=0] $gcd_both_even := cond($both_even, $litNull, $gcd_both_even_real)
-	if[$b_lt_0=0, $a_eq_b=0, $b1_is_0=0] $gcd_a_even := cond($a_even_b_odd, $litNull, $gcd_a_even_real)
-	if[$b_lt_0=0, $a_eq_b=0, $b1_is_0=0] $gcd_b_even := cond($a_odd_b_even, $litNull, $gcd_b_even_real)
-	if[$b_lt_0=0, $a_eq_b=0, $b1_is_0=0] $gcd_both_odd := cond($both_odd, $litNull, $gcd_both_odd_real)
-
-	if[$b_lt_0=0, $a_eq_b=0, $b1_is_0=0] $gcd_if_a_even := cond($b1_even, $gcd_a_even, $gcd_both_even)
-	if[$b_lt_0=0, $a_eq_b=0, $b1_is_0=0] $gcd_if_a_odd := cond($b1_even, $gcd_both_odd, $gcd_b_even)
-	if[$b_lt_0=0, $a_eq_b=0, $b1_is_0=0] $gcd_nontrivial := cond($a1_even, $gcd_if_a_odd, $gcd_if_a_even)
-
-	if[$b_lt_0=0, $a_eq_b=0] $gcd_or_a := cond($b1_is_0, $gcd_nontrivial, $a1)
-	if[$b_lt_0=0] $gcd_or_a_if_eq := cond($a_eq_b, $gcd_or_a, $a)
-
-	$r := cond($b_lt_0, $gcd_or_a_if_eq, $gcd_if_b_neg)
+def primitive.int.gcd($a, $b) [artificial]
+	$r := int_gcd($a, $b)
 	return $r
-
 
 def primitive.rational.qfromnd($num, $den) [artificial]
 	$d := classical_call[primitive.int.gcd]($num, $den)
