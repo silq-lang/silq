@@ -40,9 +40,9 @@ def uniform(n:!ℕ){
 	(k,l):=(0,1);
 	while l≤n { k+=1, l*=2; }
 	while true {
-		x:=0:uint[k];
-		for i in 0..k{ x[i]:=H(x[i]); }
-		x:=measure(x) as !ℕ;
+		x:=0:!uint[k];
+		for i in 0..k{ x[i]=measure(H(0)); }
+		x:=x as !ℕ;
 		if x<n{ return x; }
 	}
 }

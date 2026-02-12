@@ -52,27 +52,67 @@ def order(a:!ℕ,N:!ℕ){
 	a_inv%=N;
 	assert(d=1);
 	(n,m):=(0,1);
-	while m<N { n+=2, m*=2; }
+	while m<N { n+=1, m*=2; }
 	(aps,ais):=([a],[a_inv]);
-	for i in 1..n{
+	for i in 1..2·n+1{
 		aps~=[aps[i-1]^2%N];
 		ais~=[ais[i-1]^2%N];
 	}
 	b:=1;
 	while powm(a,b,N)≠1{
 		def f[pw2:!ℕ](b:uint[n]){
-			nb:=b·aps[pw2]%N;
-			nb·ais[pw2]%N:=b;
+			nb:=mul_mod(b,aps[pw2],N);
+			mul_mod(nb,ais[pw2],N):=b;
 			return nb;
 		}
-		(θ,x):=estimatePhase[n](f,1:uint[n]);
+		(θ,x):=estimatePhase[2·n+1](f,1:uint[n]);
 		measure(x);
-		c:=candidates((θ as !ℕ)/2^n);
+		c:=candidates((θ as !ℕ)/2^(2·n+1));
 		for i in (c.length..-1..0]{
 			if c[i]≠0∧powm(a,c[i],N)=1{ b=c[i]; }
 		}
 	}
 	return b coerce !ℕ;
+}
+
+
+def add_with_carry[n:!ℕ](i:!ℕ,const c:𝔹,const a:𝔹[],b:𝔹^n)qfree: 𝔹^n{
+	(bh,)~b:=b;
+	if a[i] { bh:=X(bh); }
+	if n≠1{ b:=add_with_carry(i+1,if bh then c else a[i],a,b); }
+	if c { bh := X(bh); }
+	return (bh,)~b;
+}
+def adder[n:!ℕ](const a:𝔹^n,b:𝔹^n)qfree ⇒ add_with_carry(0,0:𝔹,a,b);
+
+def add[n:!ℕ](b:uint[n],const a:uint[n]){
+	return adder(a as 𝔹^n, b as 𝔹^n) as uint[n];
+}
+
+
+def add_mod[n:!ℕ](b:uint[n],const a:!ℕ,const N:!ℕ){
+	assert(a<N);
+	x:=b>=N-a;
+	b:=add(b,if x then a-N as uint[n] else a as uint[n]);
+	forget(x=(b<a));
+	return b;
+}
+
+
+def mul_mod[n:!ℕ](const b:uint[n],const a:!ℕ,const N:!ℕ){
+	r:=0:uint[n];
+	/+for i in 0..n{ // TODO
+		if b[i] {
+			r:=add_mod(r,(a·2^i)%N,N);
+		}
+	}
+	return r;+/
+	def rec(r:uint[n],i:!ℕ)qfree{
+		if i=n{ return r; }
+		if b[i] { r:=add_mod(r,(a·2^i)%N,N); }
+		return rec(r,i+1);
+	}
+	return rec(0:uint[n],0);
 }
 
 def estimatePhase[n:!ℕ][a:qtype](const f:Π[pw2:!N]qfree. a ->mfree a, arg:a): !uint[n]×a{

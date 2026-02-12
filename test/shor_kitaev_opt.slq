@@ -15,7 +15,7 @@ def shor(n:!ℕ){
 		d:=gcdn(a,n);
 		if d≠1{ return d; }
 		r:=order(a,n);
-		k:=gcdn(a^(r div 2)+1,n);
+		k:=gcdn(powm(a,r div 2,n)+1,n);
 		if 1<k∧k<n { return k; }
 	}
 }
@@ -40,9 +40,9 @@ def uniform(n:!ℕ){
 	(k,l):=(0,1);
 	while l≤n { k+=1, l*=2; }
 	while true {
-		x:=0:uint[k];
-		for i in 0..k{ x[i]:=H(x[i]); }
-		x:=measure(x) as !ℕ;
+		x:=0:!uint[k];
+		for i in 0..k{ x[i]=measure(H(0)); }
+		x:=x as !ℕ;
 		if x<n{ return x; }
 	}
 }
@@ -78,23 +78,25 @@ def order(a:!ℕ,N:!ℕ){
 def add_mod[n:!ℕ](b:uint[n],const a:!ℕ,const N:!ℕ){
 	assert(a<N);
 	x:=b>=N-a;
-	if x{
-		b+=a-N;
-	}else{
-		b+=a;
-	}
+	b+=if x then a-N as uint[n] else a as uint[n];
 	forget(x=(b<a));
 	return b;
 }
 
 def mul_mod[n:!ℕ](const b:uint[n],const a:!ℕ,const N:!ℕ){
 	r:=0:uint[n];
-	for i in 0..n{
+	/+for i in 0..n{ // TODO
 		if b[i] {
 			r:=add_mod(r,(a·2^i)%N,N);
 		}
 	}
-	return r;
+	return r;+/
+	def rec(r:uint[n],i:!ℕ)qfree{
+		if i=n{ return r; }
+		if b[i] { r:=add_mod(r,(a·2^i)%N,N); }
+		return rec(r,i+1);
+	}
+	return rec(0:uint[n],0);
 }
 
 def estimatePhase[n:!ℕ][a:qtype](const f:Π[pw2:!N]qfree. a ->mfree a, arg:a): !uint[n]×a{
