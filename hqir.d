@@ -3101,21 +3101,35 @@ class ScopeWriter {
 		if(auto lit = ie.asIntegerConstant(true)) {
 			return valDup(vs[lit.get().to!size_t()]);
 		}
-		assert(false, "TODO non-literal tuple indexing; vector? coerce?");
+		assert(0, "non-literal tuple indexing");
 	}
 
 	CReg genIndex(Expression i) {
-		assert(ast_ty.isClassical(i.type), "TODO quantum indexing");
-		assert(ast_ty.isSubtype(i.type, ast_ty_Zt()), "TODO non-integer indexing");
 		CReg r;
 		bool check;
 		if(ast_ty.isSubtype(i.type, ast_ty_Nt())) {
 			r = genExprAs(i, ast_ty_Nt()).creg;
-			check = true;
-		} else {
-			r = genExprAs(i, ast_ty_Zt()).creg;
 			check = false;
-		}
+		} else if(ast_ty.isSubtype(i.type, ast_ty_Zt())){
+			r = genExprAs(i, ast_ty_Zt()).creg;
+			check = true;
+		} else if(auto intTy = ast_ty.isFixedIntTy(i.type)) {
+			if(intTy.isClassical) {
+				ast_conv.Conversion conv;
+				if(intTy.isSigned){
+					conv = ast_conv.typeExplicitConversion!true(i.type, ast_ty_Zt(), ast_exp.TypeAnnotationType.conversion);
+					assert(!!conv, format("cannot convert: %s -> %s", i.type, ast_ty_Zt()));
+					check = true;
+				} else {
+					conv = ast_conv.typeExplicitConversion!true(i.type, ast_ty_Nt(), ast_exp.TypeAnnotationType.conversion);
+					assert(!!conv, format("cannot convert: %s -> %s", i.type, ast_ty_Nt()));
+					check = false;
+				}
+				r = genConvert(conv, genExpr(i)).creg;
+			} else {
+				assert(0, "TODO quantum indexing");
+			}
+		} else assert(0);
 		if(r !in ctx.intValue) {
 			if(auto lit = i.asIntegerConstant(true)) {
 				r = ctx.literalInt(lit.get());
