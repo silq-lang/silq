@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	x:=vector(8,0);
+	i:=-1:!int[3];
+	return x[i]; /// run_error
+}

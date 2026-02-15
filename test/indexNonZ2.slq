@@ -1,0 +1,10 @@
+// args: --run
+
+def main(){
+	x:=vector(8,0);
+	i:=2:!int[3];
+	j:=5:!uint[3];
+	x[i]:=H(x[i]);
+	x[j]:=H(x[j]);
+	return (dup(x[i],x[j]),x);
+}

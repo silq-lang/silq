@@ -1,0 +1,10 @@
+// args: --run
+
+def main(){
+	x:=vector(8,0);
+	i:=2:!int[3];
+	j:=3:!uint[3];
+	x[i]=3;
+	x[j]=5;
+	return x[i]+x[j];
+}
