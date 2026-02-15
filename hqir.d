@@ -3129,6 +3129,8 @@ class ScopeWriter {
 			} else {
 				assert(0, "TODO quantum indexing");
 			}
+		} else if(i.type == ast_ty.Bool(false)) {
+			assert(0, "TODO quantum indexing");
 		} else assert(0);
 		if(r !in ctx.intValue) {
 			if(auto lit = i.asIntegerConstant(true)) {
