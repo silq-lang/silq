@@ -1136,7 +1136,8 @@ struct QState{
 			assert(0);
 		}
 		static Expression unaryType(string op)(Expression t){
-			static if(op=="-") return minusType(t);
+			static if(op=="+") return plusType(t);
+			else static if(op=="-") return minusType(t);
 			else static if(op=="~") return bitNotType(t);
 			else static if(op=="!") return handleUnary!notType(t);
 			else{
@@ -1147,7 +1148,7 @@ struct QState{
 		Value opUnary(string op)(){
 			auto ntype=unaryType!op(type);
 			if(!ntype.isToplevelClassical()) return makeQuval(ntype,new UnOpQVal!op(this));
-			static if(op=="-"||op=="~"){
+			static if(op=="+"||op=="-"||op=="~"){
 				static if(is(typeof(mixin(op~` cval`))))
 					if(type==ℂ(true)) return makeComplex(mixin(op~` cval`));
 				static if(is(typeof(mixin(op~` fval`))))
@@ -2546,6 +2547,7 @@ struct Interpreter(QState){
 			if(auto ce=cast(BitOrExp)e) return doIt(ce.e1)|doIt(ce.e2);
 			if(auto ce=cast(BitXorExp)e) return doIt(ce.e1)^doIt(ce.e2);
 			if(auto ce=cast(BitAndExp)e) return doIt(ce.e1)&doIt(ce.e2);
+			if(auto ume=cast(UPlusExp)e) return +doIt(ume.e);
 			if(auto ume=cast(UMinusExp)e) return -doIt(ume.e);
 			if(auto ume=cast(UNotExp)e) return doIt(ume.e).eqZ;
 			if(auto ume=cast(UBitNotExp)e) return ~doIt(ume.e);
