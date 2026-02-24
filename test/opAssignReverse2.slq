@@ -1,0 +1,14 @@
+// args: --run
+
+def inc[n:!ℕ](k:int[n]){
+	x:=dup(k);
+	x+=1;
+	forget(k=x-1);
+	return x;
+}
+
+def main(){
+	inc(x):=5:int[8];
+	assert(measure(x=4));
+	return x;
+}
