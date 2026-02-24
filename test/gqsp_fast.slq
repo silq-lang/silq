@@ -1,0 +1,212 @@
+// GQSP (laneve)
+// https://arxiv.org/pdf/2503.03026
+
+def fft[N:!ℕ](xs:!ℂ^N):!ℂ^N {
+	if N=1 { return xs; }
+	assert(N%2=0);
+	xs_e:=vector(N div 2,0);
+	xs_o:=vector(N div 2,0);
+	for j in 0..N div 2{
+		xs_e[j]=xs[2·j];
+		xs_o[j]=xs[2·j+1];
+	}
+	ys_e:=fft(xs_e);
+	ys_o:=fft(xs_o);
+	ys:=vector(N,0);
+	for k in 0..N div 2{
+		t:=cis(-2·π·k/N)·ys_o[k];
+		ys[k]=ys_e[k]+t;
+		ys[k+N div 2]=ys_e[k]-t;
+	}
+	return ys;
+}
+def ifft[N:!ℕ](ys:!ℂ^N):!ℂ^N {
+	for i in 0..N{ ys[i]:=conj(ys[i]); }
+	xs:=fft(ys);
+	for i in 0..N{ xs[i]:=conj(xs[i])/N; }
+	return xs;
+}
+
+def poly_eval[d:!ℕ](coeffs:!ℂ^(d+1))(x:!ℂ):!ℂ{
+	r:=coeffs[d];
+	for i in (d..-1..0]{
+		r=r·x+coeffs[i];
+	}
+	return r;
+}
+
+def pad[m:!ℕ][a:type,n:!ℕ](xs:a^n,const x:a):a^m⇒xs~vector(m sub n,x);
+
+// berntson-sünderhauf
+// https://arxiv.org/abs/2406.04246
+def thm3_N₀(ε:!ℝ,δ:!ℝ,d:!ℕ):!ℕ{
+	assert(0<δ∧δ<1∧0<ε∧ε<1);
+	rδ:=(1/(1-δ))^(1/d);
+	N₀:=ceil(2/log(rδ)·log(8·-log(δ)/(rδ-1)/ε)) coerce !ℕ;
+	return ceil(N₀) coerce !ℕ;
+}
+def heuristic_N₀(ε:!ℝ,δ:!ℝ,d:!ℕ):!ℕ{
+	rδm1:=expm1(-log1p(-δ)/d);
+	N₀:=ceil(2·d/-log1p(-δ)·log(8·-log(δ)/(ε·rδm1))) coerce !ℕ;
+	return ceil(N₀·δ) coerce !ℕ; // seems good enough?
+}
+def complement_alg1[d:!ℕ](p:!ℂ^(d+1),N:!ℕ):!ℂ^(d+1){
+	ps:=fft(pad[N](p,0));
+	ℓ:=vector(N,0);
+	for j in 0..N { ℓ[j]=log(1-cabs(ps[j])^2); }
+	ℓ:=ifft(ℓ);
+	log_qs:=fft(pad[N]([ℓ[0]/2]~ℓ[1..N div 2+1],0));
+	qs:=vector(N,0);
+	for j in 0..N { qs[j]=cexp(log_qs[j]); }
+	return ifft(qs)[0..d+1];
+}
+
+def complement_alg2[d:!ℕ](p:!ℂ^(d+1),ε:!ℝ,N:!ℕ):!ℂ^(d+1){
+	for i in 0..d+1{ p[i]·=1-ε/4; }
+	return complement_alg1[d](p,N);
+}
+
+def complement[d:!ℕ](p:!ℂ^(d+1),ε:!ℝ):!ℂ^(d+1){
+	//N₀:=thm3_N₀(ε/4,ε/(5·(d+1)),d);
+	N₀:=heuristic_N₀(ε/4,ε/(5·(d+1)),d);
+	N:=2^(ceil(log₂(max(N₀,d+1))) coerce !ℕ);
+	return complement_alg2[d](p,ε,N);
+}
+
+def is_complement[N:!ℕ][d:!ℕ](p:!ℂ^(d+1),q:!ℂ^(d+1),ε:!ℝ){
+	assert(N≥d+1∧(N&(N-1))=0);
+	ps:=fft(pad[N](p,0));
+	qs:=fft(pad[N](q,0));
+	ok:=1;
+	for j in 0..N{
+		ok&=abs(cabs(ps[j])^2+cabs(qs[j])^2-1)<ε;
+	}
+	return ok;
+}
+
+// ni-sarkar-ying-lin
+// https://arxiv.org/pdf/2505.12615
+def vadd[n:!ℕ](a:!ℂ^n,b:!ℂ^n):!ℂ^n{
+	r:=vector(n,0);
+	for i in 0..n { r[i]=a[i]+b[i]; }
+	return r;
+}
+def vsub[n:!ℕ](a:!ℂ^n,b:!ℂ^n):!ℂ^n{
+	r:=vector(n,0);
+	for i in 0..n { r[i]=a[i]-b[i]; }
+	return r;
+}
+def vscale[n:!ℕ](c:!ℂ,a:!ℂ^n):!ℂ^n{
+	r:=vector(n,0);
+	for i in 0..n { r[i]=c·a[i]; }
+	return r;
+}
+def rev[n:!ℕ](a:!ℂ^n):!ℂ^n{
+	r:=vector(n,0);
+	for i in 0..n { r[i]=a[n-1-i]; }
+	return r;
+}
+def sharp[n:!ℕ](a:!ℂ^n):!ℂ^n{
+	r:=vector(n,0);
+	for i in 0..n { r[i]=conj(a[n-1-i]); }
+	return r;
+}
+
+// returns coefficients of a*b (polynomial convolution).
+def conv[n:!ℕ](a:!ℂ^n,b:!ℂ^n):!ℂ^(2·n sub 1){
+	if n=1 { return [a[0]·b[0]] coerce !ℂ^(2·n sub 1); }
+	Af:=fft[2·n](pad[2·n](a,0));
+	Bf:=fft[2·n](pad[2·n](b,0));
+	Cf:=vector(2·n,0);
+	for i in 0..2·n { Cf[i]=Af[i]·Bf[i]; }
+	return ifft[2·n](Cf)[0..2·n sub 1];
+}
+
+def inlfft[n:!ℕ](a0s:!ℂ^n,b0:!ℂ^n):(!ℂ^n)^3{ // (alg. 1)
+	assert(n≥1∧(n&(n-1))=0);
+	// step 1: base case
+	if n=1 {
+		γ0:=b0[0]/a0s[0];
+		η0:=1/sqrt(1+cabs(γ0)^2);
+		ξ0:=γ0·η0;
+		return ([γ0],[ξ0],[η0]) coerce (!ℂ^n)^3;
+	}
+	m:=n div 2;
+	// step 2: recurse on first m coefficients of a_0^*, b_0
+	(γ_up,ξm,ηm):=inlfft[m](a0s[0..m],b0[0..m]);
+	// step 3 (eq. 39): form am^*,bm
+	ηm_sh:=pad[n]([0]~sharp[m](ηm),0);
+	ξm_sh:=pad[n]([0]~sharp[m](ξm),0);
+	ηm_n:=pad[n](ηm,0);
+	ξm_n:=pad[n](ξm,0);
+	// am^* = (ηm^♯·a0^* + ξm^♯·b0)/z^m
+	ams:=vadd[m](conv[n](ηm_sh,a0s)[n-m..n],conv[n](ξm_sh,b0)[n-m..n]);
+	// bm = (-ξm·a0^* + ηm·b0)/z^m
+	bm:=vadd[m](vscale[m](-1,conv[n](ξm_n,a0s)[n-m..n]),conv[n](ηm_n,b0)[n-m..n]);
+	// step 4: recurse on second m coefficients of a_m^*,b_m
+	(γ_dn,ξr,ηr):=inlfft[m](ams,bm);
+	γ:=γ_up~γ_dn coerce _^n;
+	// step 5 (eq. 40): calculate ξn and ηn
+	ηr_sh:=pad[n]([0]~sharp[m](ηr),0);
+	ξr_sh:=pad[n]([0]~sharp[m](ξr),0);
+	ηr_n:=pad[n](ηr,0);
+	ξr_n:=pad[n](ξr,0);
+	// ξn = ηm^sharp * ξr + ξm * ηr
+	ξn:=vadd[n](conv[n](ηm_sh,ξr_n)[0..n],conv[n](ξm_n,ηr_n)[0..n]);
+	// ηn = -ξm^sharp * ξr + ηm * ηr
+	ηn:=vadd[n](vscale[n](-1,conv[n](ξm_sh,ξr_n)[0..n]),conv[n](ηm_n,ηr_n)[0..n]);
+	return (γ,ξn,ηn);
+}
+
+// compute (γ,ρ), where ρ is a global phase correction
+// (matches motlagh-wiebe convention [P,*;Q,*]; https://arxiv.org/abs/2308.01501)
+def gqsp_compute_γρ[d:!ℕ](
+	P:!ℂ^(d+1),
+	Q:!ℂ^(d+1),
+):!ℝ^(d+1)×!ℝ^(d+1)×!ℝ{
+	a0s:=sharp[d+1](P);
+	b0:=sharp[d+1](Q);
+	ρ:=a0s[0]/cabs(a0s[0]);
+	a0s:=vscale[d+1](1/ρ,a0s);
+	b0:=vscale[d+1](-1/ρ,b0);
+	n:=2^(ceil(log₂(d+1)) coerce !ℕ);
+	(γn,ξn,ηn):=inlfft[n](pad[n](a0s,0),pad[n](b0,0));
+	γs:=rev[d+1](vscale[d+1](-1,γn[0..d+1]));
+	(θs,φs):=vector(2,vector(d+1,0));
+	for i in 0..d+1{ (θs[i],φs[i])=(2·atan(cabs(γs[i])),carg(γs[i])); }
+	return (θs,φs,-carg(ρ));
+}
+
+def A(θ:!ℝ,φ:!ℝ)(anc:𝔹):𝔹{
+	with anc:=rotZ(φ,anc){
+		anc:=rotY(θ,anc);
+	}
+	return anc;
+}
+def gqsp[d:!ℕ](
+	θs:!ℝ^(d+1),
+	φs:!ℝ^(d+1),
+	ρ:!ℝ, // global phase correction
+)[a:qtype](const f: a →mfree a)(cand: a):𝔹×a{	
+	anc:=A(θs[0],φs[0])(0:𝔹);
+	for k in 1..d+1 {
+		if anc=0 { cand:=f(cand); }
+		anc:=A(θs[k],φs[k])(anc);
+	}
+	phase(ρ);
+	return (anc,cand);
+}
+
+def main(){
+	//p:=(0.07,0.35,0.35,0.2);
+	//p:=(0.04+0.03i,0.25+0.1i,0.35,0.2);
+	p:=(0.03+0.05i,0.25+0.1i,0.35,0.1+0.1i,0.1);
+	q:=complement[p.length sub 1](p,1e-8);
+	print(q);
+	assert(is_complement[128][p.length sub 1](p,q,1e-8));
+	angles:=gqsp_compute_γρ[p.length sub 1](p,q);
+	z:=cis(-1/4);
+	print(poly_eval[p.length sub 1](p)(z));
+	print(poly_eval[q.length sub 1](q)(z));
+	return gqsp[p.length sub 1](angles)((x:𝔹)⇒rotZ(1/2,x))(0:𝔹);
+}
