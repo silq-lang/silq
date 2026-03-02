@@ -2330,7 +2330,7 @@ struct DummyTypes {
 
 struct Borrow {
 	ast_decl.VarDecl var;
-	CReg[] indices;
+	Index[] indices;
 	Dummy dummy;
 	DummyTypes[] dummyTypes;
 }
@@ -2356,6 +2356,36 @@ struct IndexChain {
 		assert(base, format("IndexExp(byRef=true) base not Identifier: %s %s", typeid(at.e).name, at.e));
 		ie = indicesE[];
 		reverse(ie);
+	}
+}
+
+struct Index {
+	CReg _creg;
+	QReg _qreg;
+
+	this(CReg creg) {
+		this._creg = creg;
+	}
+
+	this(QReg qreg, CReg qlen) {
+		this._qreg = qreg;
+		this._creg = qlen;
+	}
+
+	bool isQuantum() {
+		return !!_qreg;
+	}
+	CReg creg() {
+		assert(!isQuantum);
+		return _creg;
+	}
+	CReg qlen() {
+		assert(isQuantum);
+		return _creg;
+	}
+	QReg qreg(){
+		assert(isQuantum);
+		return _qreg;
 	}
 }
 
@@ -2759,7 +2789,7 @@ class ScopeWriter {
 		return v;
 	}
 
-	Borrow *defineBorrow(ast_decl.Identifier id, CReg[] indices) {
+	Borrow *defineBorrow(ast_decl.Identifier id, Index[] indices) {
 		auto vd = cast(ast_decl.VarDecl) id.meaning;
 		assert(vd);
 		assert(bscope);
@@ -3086,8 +3116,13 @@ class ScopeWriter {
 			}
 		}
 
-		CReg i = genIndex(e.a);
-		Value r = implIndexDup(v, e.type, ty, i);
+		Index i = genIndex(e.a);
+		Value r;
+		if(!i.isQuantum) {
+			r = implIndexDup(v, e.type, ty, i.creg);
+		} else {
+			assert(0, "TODO quantum indexing");
+		}
 		valForget(v);
 		return r;
 	}
@@ -3104,14 +3139,14 @@ class ScopeWriter {
 		assert(0, "non-literal tuple indexing");
 	}
 
-	CReg genIndex(Expression i) {
-		CReg r;
+	Index genIndex(Expression i) {
+		Index r;
 		bool check;
 		if(ast_ty.isSubtype(i.type, ast_ty_Nt())) {
-			r = genExprAs(i, ast_ty_Nt()).creg;
+			r = Index(genExprAs(i, ast_ty_Nt()).creg);
 			check = false;
 		} else if(ast_ty.isSubtype(i.type, ast_ty_Zt())){
-			r = genExprAs(i, ast_ty_Zt()).creg;
+			r = Index(genExprAs(i, ast_ty_Zt()).creg);
 			check = true;
 		} else if(auto intTy = ast_ty.isFixedIntTy(i.type)) {
 			if(intTy.isClassical) {
@@ -3125,19 +3160,44 @@ class ScopeWriter {
 					assert(!!conv, format("cannot convert: %s -> %s", i.type, ast_ty_Nt()));
 					check = false;
 				}
-				r = genConvert(conv, genExpr(i)).creg;
+				r = Index(genConvert(conv, genExpr(i)).creg);
 			} else {
-				assert(0, "TODO quantum indexing");
+				check = false;
+				auto qlen = getNumericBits(intTy);
+				auto val = genExpr(i);
+				assert(!val.hasClassical);
+				auto qreg = val.qreg;
+				if(intTy.isSigned) { // 0 := sign
+					auto qlenm1 = ccg.emitPureOp("int_linear[-1,1]", [qlen]);
+					auto one = ctx.literalInt(1);
+					auto nqreg = new QReg();
+					auto vsgn = new QReg();
+					auto qt0 = ccg.qtVector(ctx.qtQubit, qlenm1);
+					auto qt1 = ccg.qtVector(ctx.qtQubit, one);
+					qcg.writeQOp(opUncat, [nqreg, vsgn], [qlenm1, qt0, one, qt1], [], [qreg]);
+					auto qsgn = new QReg();
+					qcg.writeQOp(opUnpack(1), [qsgn], [ctx.qtQubit], [], [vsgn]);
+					qcg.deallocQubit(qsgn, 0);
+					qlen = qlenm1;
+					qreg = nqreg;
+				}
+				r = Index(qreg, qlen);
 			}
 		} else if(i.type == ast_ty.Bool(false)) {
-			assert(0, "TODO quantum indexing");
+			auto val = genExpr(i);
+			assert(!val.hasClassical);
+			auto qreg = val.qreg;
+			auto qlen = ctx.literalInt(1);
+			r = Index(qreg, qlen);
 		} else assert(0);
-		if(r !in ctx.intValue) {
-			if(auto lit = i.asIntegerConstant(true)) {
-				r = ctx.literalInt(lit.get());
+		if(!r.isQuantum) {
+			if(r.creg !in ctx.intValue) {
+				if(auto lit = i.asIntegerConstant(true)) {
+					r = Index(ctx.literalInt(lit.get()));
+				}
 			}
+			ccg.checkLeInt(check, ctx.intZero, r.creg);
 		}
-		ccg.checkLeInt(check, ctx.intZero, r);
 		return r;
 	}
 
@@ -3399,8 +3459,13 @@ class ScopeWriter {
 
 		auto v = genExpr(arg);
 
-		CReg li = genIndex(e.l);
-		CReg ri = genIndex(e.r);
+		Index lidx = genIndex(e.l);
+		Index ridx = genIndex(e.r);
+
+		assert(!lidx.isQuantum && !ridx.isQuantum, "TODO quantum slicing");
+
+		CReg li = lidx.creg;
+		CReg ri = lidx.creg;
 
 		Expression itemTy;
 		CReg len;
@@ -4705,7 +4770,7 @@ class ScopeWriter {
 		auto indices = chain.ie.map!(at => genIndex(at.a)).array;
 		auto b = defineBorrow(lhs, indices[]);
 
-		Value moveOut(ref Value v, Expression baseTy, CReg[] indices, out Dummy dummy, out DummyTypes[] dummyTypes, ScopeWriter w) {
+		Value moveOut(ref Value v, Expression baseTy, Index[] indices, out Dummy dummy, out DummyTypes[] dummyTypes, ScopeWriter w) {
 			if(!indices.length) {
 				auto creg = v.creg;
 				auto qtype = w.getQTypeRaw(baseTy, creg);
@@ -4716,7 +4781,8 @@ class ScopeWriter {
 				dummyTypes ~= DummyTypes(baseTy);
 				return r;
 			}
-			auto ix = indices[0];
+			assert(!indices[0].isQuantum, "TODO quantum index replacement");
+			auto ix = indices[0].creg;
 			if(auto tupTy = cast(ast_ty.TupleTy) baseTy) {
 				auto types = tupTy.types;
 				Value moveOutTuple(ref Value v, size_t i, out Dummy dummy, out DummyTypes dummyTypes, ScopeWriter w) {
@@ -4807,7 +4873,7 @@ class ScopeWriter {
 		auto baseTy1 = typeForDecl(var.decl);
 		auto baseTy2 = chain.base.type;
 
-		void moveIn(ref Value v, Value rhsv, Expression baseTy1, Expression baseTy2, CReg[] indices, DummyTypes[] dummyTypes, ScopeWriter w) {
+		void moveIn(ref Value v, Value rhsv, Expression baseTy1, Expression baseTy2, Index[] indices, DummyTypes[] dummyTypes, ScopeWriter w) {
 			if(!indices.length) {
 				auto tmp = w.valNewQ(b.dummy.creg, w.qcg.allocDummy(b.dummy.qtype));
 				assert(b.dummy.type || dummyTypes.length==1 && dummyTypes[0].type);
@@ -4818,7 +4884,8 @@ class ScopeWriter {
 				v = w.genSubtype(rhsv, rhs.type, baseTy2);
 				return;
 			}
-			auto ix = indices[0];
+			assert(!indices[0].isQuantum, "TODO quantum index replacement");
+			auto ix = indices[0].creg;
 			Expression arrayTy2 = null;
 			bool makeArray = false;
 			if(dummyTypes.length > 1) {
@@ -5106,8 +5173,10 @@ class ScopeWriter {
 			return Result.passes();
 		}
 
-		CReg i1 = genIndex(index1);
-		CReg i2 = genIndex(index2);
+		Index idx1 = genIndex(index1);
+		Index idx2 = genIndex(index2);
+		assert(!idx1.isQuantum && !idx2.isQuantum, "TODO quantum index swap");
+		CReg i1 = idx1.creg, i2 = idx2.creg;
 
 		v = genSubtype(v, arrIn.type, outTy);
 
