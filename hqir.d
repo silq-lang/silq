@@ -3467,7 +3467,7 @@ class ScopeWriter {
 		assert(!lidx.isQuantum && !ridx.isQuantum, "TODO quantum slicing");
 
 		CReg li = lidx.creg;
-		CReg ri = lidx.creg;
+		CReg ri = ridx.creg;
 
 		Expression itemTy;
 		CReg len;
