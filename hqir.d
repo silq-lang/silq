@@ -3187,8 +3187,10 @@ class ScopeWriter {
 			auto val = genExpr(i);
 			assert(!val.hasClassical);
 			auto qreg = val.qreg;
+			auto nqreg = new QReg();
+			qcg.writeQOp(opPack(1), [nqreg], [ctx.qtQubit], [], [qreg]);
 			auto qlen = ctx.literalInt(1);
-			r = Index(qreg, qlen);
+			r = Index(nqreg, qlen);
 		} else assert(0);
 		if(!r.isQuantum) {
 			if(r.creg !in ctx.intValue) {
