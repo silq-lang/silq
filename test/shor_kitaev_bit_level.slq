@@ -1,3 +1,5 @@
+// skipped
+
 def main(){
 	n:=323;
 	r:=shor(n);
