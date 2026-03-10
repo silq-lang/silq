@@ -564,7 +564,7 @@ def primitive.rational.qfromnd($num, $den) [artificial]
 	$r := cond($rden_eqz, $r0, $r1)
 	return $r
 
-def primitive.rational.qtond($q) [artificial]
+def primitive.rational._qtond($q) [artificial]
 	$lit0 := literal[0]()
 	$lit1 := literal[1]()
 	$lit2 := literal[2]()
@@ -572,9 +572,14 @@ def primitive.rational.qtond($q) [artificial]
 	$den := box_index[silq.rational]($lit2, $q, $lit1)
 	return $num, $den
 
+def primitive.rational.qtond($q) [artificial]
+	$num, $den := classical_call[primitive.rational._qtond]($q)
+	$r := box[silq.tuple]($num, $den)
+	return $r
+
 def primitive.rational.cross_mul($x, $y) [artificial]
-	$xn, $xd := classical_call[primitive.rational.qtond]($x)
-	$yn, $yd := classical_call[primitive.rational.qtond]($y)
+	$xn, $xd := classical_call[primitive.rational._qtond]($x)
+	$yn, $yd := classical_call[primitive.rational._qtond]($y)
 	$xnyd := int_mul($xn, $yd)
 	$ynxd := int_mul($yn, $xd)
 	return $xnyd, $ynxd
@@ -590,8 +595,8 @@ def primitive.rational.lt($x, $y) [artificial]
 	return $r
 
 def primitive.rational.add($x, $y) [artificial]
-	$xn, $xd := classical_call[primitive.rational.qtond]($x)
-	$yn, $yd := classical_call[primitive.rational.qtond]($y)
+	$xn, $xd := classical_call[primitive.rational._qtond]($x)
+	$yn, $yd := classical_call[primitive.rational._qtond]($y)
 	$xnyd := int_mul($xn, $yd)
 	$ynxd := int_mul($yn, $xd)
 	$num := int_linear[0,1,1]($xnyd, $ynxd)
@@ -600,8 +605,8 @@ def primitive.rational.add($x, $y) [artificial]
 	return $q
 
 def primitive.rational.sub($x, $y) [artificial]
-	$xn, $xd := classical_call[primitive.rational.qtond]($x)
-	$yn, $yd := classical_call[primitive.rational.qtond]($y)
+	$xn, $xd := classical_call[primitive.rational._qtond]($x)
+	$yn, $yd := classical_call[primitive.rational._qtond]($y)
 	$xnyd := int_mul($xn, $yd)
 	$ynxd := int_mul($yn, $xd)
 	$num := int_linear[0,1,-1]($xnyd, $ynxd)
@@ -610,39 +615,39 @@ def primitive.rational.sub($x, $y) [artificial]
 	return $q
 
 def primitive.rational.neg($q) [artificial]
-	$num, $den := classical_call[primitive.rational.qtond]($q)
+	$num, $den := classical_call[primitive.rational._qtond]($q)
 	$nnum := int_linear[0,-1]($num)
 	$nq := box[silq.rational]($nnum, $den)
 	return $nq
 
 def primitive.rational.mul($a, $b) [artificial]
-	$an, $ad := classical_call[primitive.rational.qtond]($a)
-	$bn, $bd := classical_call[primitive.rational.qtond]($b)
+	$an, $ad := classical_call[primitive.rational._qtond]($a)
+	$bn, $bd := classical_call[primitive.rational._qtond]($b)
 	$num := int_mul($an, $bn)
 	$den := int_mul($ad, $bd)
 	$q := classical_call[primitive.rational.qfromnd]($num, $den)
 	return $q
 
 def primitive.rational.div($a, $b) [artificial]
-	$an, $ad := classical_call[primitive.rational.qtond]($a)
-	$bn, $bd := classical_call[primitive.rational.qtond]($b)
+	$an, $ad := classical_call[primitive.rational._qtond]($a)
+	$bn, $bd := classical_call[primitive.rational._qtond]($b)
 	$num := int_mul($an, $bd)
 	$den := int_mul($ad, $bn)
 	$q := classical_call[primitive.rational.qfromnd]($num, $den)
 	return $q
 
 def primitive.rational.inv($q) [artificial]
-	$qn, $qd := classical_call[primitive.rational.qtond]($q)
+	$qn, $qd := classical_call[primitive.rational._qtond]($q)
 	$iq := classical_call[primitive.rational.qfromnd]($qd, $qn)
 	return $iq
 
 def primitive.rational.floor($q) [artificial]
-	$qn, $qd := classical_call[primitive.rational.qtond]($q)
+	$qn, $qd := classical_call[primitive.rational._qtond]($q)
 	$r := int_div($qn, $qd)
 	return $r
 
 def primitive.rational.ceil($q) [artificial]
-	$qn, $qd := classical_call[primitive.rational.qtond]($q)
+	$qn, $qd := classical_call[primitive.rational._qtond]($q)
 	$qnd := int_linear[-1,1,1]($qn, $qd)
 	$r := int_div($qnd, $qd)
 	return $r
@@ -657,7 +662,7 @@ def primitive.rational.mod($a, $b) [artificial]
 	return $r
 
 def primitive.rational.powi($q, $n) [artificial]
-	$qn, $qd := classical_call[primitive.rational.qtond]($q)
+	$qn, $qd := classical_call[primitive.rational._qtond]($q)
 	$lit0 := literal[0]()
 	$n_ltz := int_cmp_lt($n, $lit0)
 	if[$n_ltz=0] $rqn0 := int_pow($qn, $n)

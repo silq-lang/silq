@@ -2053,7 +2053,16 @@ struct QState{
 				writeln(arg.toStringImpl(opt)); stdout.flush();
 				return makeTuple(.unit,[]);
 			}
-				static foreach(f;["floor","ceil","sqrt","cbrt","exp","exp2","expm1","log","log1p","log10","log2","sin","asin","cos","acos","tan","atan","sinh","asinh","cosh","acosh","tanh","atanh","erf","erfc","tgamma","lgamma"]){
+			case "rational.qtond":
+				switch(arg.tag) with(Value.Tag){
+					case qval: return makeTuple(tupleTy([ℤt(true),ℤt(true)]), [makeInteger(arg.qval.num),makeInteger(arg.qval.den)]);
+					case zval,bval: return makeTuple(tupleTy([arg.type,ℤt(true)]), [arg,makeInteger(1.ℤ)]);
+					default: enforce(0, "bad argument to `qtond`"); assert(0);
+				}
+			case "rational.qfromnd":
+				enforce(arg.tag==Value.Tag.array_ && arg.array_.length==2,"wrong number of arguments passed to `qfromnd`");
+				return arg.array_[0]/arg.array_[1];
+			static foreach(f;["floor","ceil","sqrt","cbrt","exp","exp2","expm1","log","log1p","log10","log2","sin","asin","cos","acos","tan","atan","sinh","asinh","cosh","acosh","tanh","atanh","erf","erfc","tgamma","lgamma"]){
 				case "real." ~ f:
 					return mixin(`arg.`~f)();
 			}

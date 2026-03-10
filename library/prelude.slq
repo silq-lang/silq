@@ -74,6 +74,9 @@ C:=ℂ;
 Complex:=!ℂ;
 
 // deterministic functions
+def qtond(x:!ℚ) @[extern="primitive.rational.qtond"] qfree: !ℤ×!ℤ;
+def qfromnd(n:!ℤ,d:!ℤ) @[extern="primitive.rational.qfromnd"] qfree: !ℚ;
+
 def floor(x:!ℝ) @[extern="primitive.real.floor"] lifted: !ℤ;
 def ceil(x:!ℝ) @[extern="primitive.real.ceil"] lifted: !ℤ;
 def round(x:!ℝ) @[artificial] lifted:!ℤ ⇒ floor(x+1/2);
