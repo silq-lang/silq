@@ -136,8 +136,8 @@ string formatQValue(QState qs, QState.Value value){
 			}
 		}
 		QState.R arg1=argNorm(arg0+PI);
-		/+bool anyArg=false;
-		foreach(k,v;origState.map!(x=>x)){
+		bool anyArg=false;
+		/+foreach(k,v;origState.map!(x=>x)){
 			QState.R θ=arg(v);
 			if(!(argClose(arg0,θ)||argClose(arg1,θ))){
 				anyArg=true;
@@ -145,7 +145,6 @@ string formatQValue(QState qs, QState.Value value){
 			}
 		}
 		if(anyArg) arg0=0.0;+/
-		auto arg0=0.0;
 		QState.R maxAbsSq=maxAbs*maxAbs;
 		int exp=0;
 		QState.R expScale=1.0;
