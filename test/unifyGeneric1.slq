@@ -1,0 +1,19 @@
+// args: --run
+
+def foo[b:qtype](
+	const f: !Pi[_:!N]qfree. b !->qfree b,
+	const x: !b,
+){
+	return bar(f,x);
+}
+def bar[a:qtype](
+	const f: Pi[nrep:!N]qfree. a ->mfree a,
+	arg: a,
+){
+	return arg;
+}
+def main(){
+	n:=3;
+	f:=[k:!N](x:uint[n])=>x;
+	measure(foo(f,0:!uint[n]));
+}
