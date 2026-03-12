@@ -1,0 +1,16 @@
+
+def foo(n:!N){
+	if n>0{
+		r:=foo(n sub 1);
+		assert(r.length==n-1);
+		return r~[0];
+	}
+	if false{ print(assert(0).length); }
+	return [];
+}
+
+def main(){
+	x:=foo(10);
+	assert(x.length==10);
+	return x;
+}
