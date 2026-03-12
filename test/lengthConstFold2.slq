@@ -1,8 +1,8 @@
 
 def a()qfree⇒(1,2,(3,b)); /// error
-b:=a().length;
+b:=a().length; /// error
 
 def c()qfree⇒(1,2,d); /// error
-d:=c().length;
+d:=c().length; /// error
 
 def main()⇒(b,d);
