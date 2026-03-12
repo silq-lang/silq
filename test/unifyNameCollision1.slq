@@ -1,0 +1,10 @@
+
+def foo[a:qtype](f:a!->qfree a){
+	return f;
+}
+
+def main(){
+	n:=4;
+	f:=((x:uint[n])=>x): !Pi(a:uint[n])qfree. uint[n];
+	foo(f);
+}
