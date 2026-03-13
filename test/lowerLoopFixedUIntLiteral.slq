@@ -1,0 +1,8 @@
+// args: --remove-loops --run
+
+def main() {
+	for i in 0..10 { // run multiple tests
+		m := 8;
+		x:=0:!uint[m];
+	}
+}
