@@ -956,7 +956,13 @@ struct QState{
 
 		Value convertTo(Expression ntype){
 			if(ntype==ℕt(true)) ntype=ℤt(true);
-			try{ getTag(ntype); }catch(Exception){ ntype=type; } // TODO: get rid of this
+			try{ getTag(ntype); }catch(Exception){ // TODO: get rid of this
+				Expression nntype=type;
+				if(isQuantum(ntype))
+					if(auto q=nntype.getQuantum)
+						nntype=q;
+				ntype=nntype;
+			}
 			// TODO: do this in-place?
 			auto otag=tag, ntag=getTag(ntype);
 			if(ntag==tag.quval){
@@ -968,13 +974,13 @@ struct QState{
 			final switch(otag){
 				case Tag.array_:
 					if(ntag==Tag.array_){
-						if(auto tpl=ntype.isTupleTy()){
-							assert(array_.length==tpl.length);
-							return makeArray(ntype,iota(array_.length).map!(i=>array_[i].convertTo(tpl[i])).array);
-						}else if(auto arr=cast(ArrayTy)ntype){
+						if(auto arr=cast(ArrayTy)ntype){
 							return makeArray(ntype,array_.map!(v=>v.convertTo(arr.next)).array);
 						}else if(auto vec=cast(VectorTy)ntype){
 							return makeArray(ntype,array_.map!(v=>v.convertTo(vec.next)).array);
+						}else if(auto tpl=ntype.isTupleTy()){
+							assert(array_.length==tpl.length);
+							return makeArray(ntype,iota(array_.length).map!(i=>array_[i].convertTo(tpl[i])).array);
 						}else assert(0);
 					}
 					if(ntag==Tag.intval||ntag==Tag.uintval){
@@ -2416,9 +2422,13 @@ struct Interpreter(QState){
 		assert(value.type.isSemEvaluated());
 		type=type.eval();
 		assert(type.isSemEvaluated());
-		if(value.type==type||cast(Identifier)type){
+		if(value.type==type){
 			if(consumeArg) return value;
 			return value.dup(qstate);
+		}
+		if(cast(Identifier)type){
+			if(consumeArg) value.consumeOnRead(); // TODO: ok?
+			return value.convertTo(type);
 		}
 		if(auto intTy=isFixedIntTy(type)){
 			auto len=runExp(intTy.bits);
@@ -2616,6 +2626,9 @@ struct Interpreter(QState){
 			}
 			if(auto sl=cast(SliceExp)e){
 				auto r=doIt(sl.e)[doIt(sl.l)..doIt(sl.r)];
+				assert(r.tag==QState.Value.Tag.array_);
+				assert(QState.Value.getTag(e.type)==QState.Value.Tag.array_);
+				r.type=e.type;
 				if(!sl.constLookup&&!sl.implicitDup) r=r.dup(qstate);
 				return r;
 			}

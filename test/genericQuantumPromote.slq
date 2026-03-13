@@ -1,0 +1,19 @@
+// args: --run
+
+def foo[a:qtype](
+	const f: a ->mfree a,
+	arg: a,
+){
+	bit := H(0);
+	if bit {
+		arg := f(arg);
+	}
+	bit := H(bit);
+	measure(arg);
+	return bit;
+}
+
+def main() {
+	m:=3;
+	measure(foo((x:uint[m]) => x,0:!uint[m]));
+}
