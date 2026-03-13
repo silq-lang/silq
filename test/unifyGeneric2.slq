@@ -1,0 +1,190 @@
+
+def foo0[a:qtype](
+	const f: a -> a,
+	const g: a -> a,
+){}
+
+def foo1[a:qtype](
+	const f: a -> a,
+	const g: !a -> !a,
+){}
+
+def foo2[a:qtype](
+	const f: !a -> !a,
+	const g: a -> a,
+){}
+
+def foo3[a:qtype](
+	const f: !a -> !a,
+	const g: !a -> !a,
+){}
+
+def bar0[a:ctype](
+	const f: a -> a,
+	const g: a -> a,
+){}
+
+def bar1[a:ctype](
+	const f: a -> a,
+	const g: !a -> !a,
+){}
+
+def bar2[a:ctype](
+	const f: !a -> !a,
+	const g: a -> a,
+){}
+
+def bar3[a:ctype](
+	const f: !a -> !a,
+	const g: !a -> !a,
+){}
+
+def fun0[a:type](
+	const f: a -> a,
+	const g: a -> a,
+){}
+
+def fun1[a:type](
+	const f: a -> a,
+	const g: !a -> !a,
+){}
+
+def fun2[a:type](
+	const f: !a -> !a,
+	const g: a -> a,
+){}
+
+def fun3[a:type](
+	const f: !a -> !a,
+	const g: !a -> !a,
+){}
+
+def baz0[a:qtype](
+	x:a,
+	y:a,
+){
+	measure(x,y);
+}
+
+def baz1[a:qtype](
+	x:a,
+	y:!a,
+){
+	measure(x);
+}
+
+def baz2[a:qtype](
+	x:!a,
+	y:a,
+){
+	measure(y);
+}
+
+def baz3[a:qtype](
+	x:!a,
+	y:!a,
+){}
+
+def qux0[a:ctype](
+	x:a,
+	y:a,
+){}
+
+def qux1[a:ctype](
+	x:!a,
+	y:a
+){}
+
+def qux2[a:ctype](
+	x:a,
+	y:!a
+){}
+
+def qux3[a:ctype](
+	x:!a,
+	y:!a,
+){}
+
+
+def flarp0[a:type](
+	x:a,
+	y:a,
+){
+	measure(x,y);
+}
+
+def flarp1[a:type](
+	x:!a,
+	y:a
+){
+	measure(y);
+}
+
+def flarp2[a:type](
+	x:a,
+	y:!a
+){
+	measure(x);
+}
+
+def flarp3[a:type](
+	x:!a,
+	y:!a,
+){}
+
+
+def main() {
+	m:=8;
+	def f(x:uint[m]) => x;
+	def g(x:!uint[m]) => x;
+	foo0(f,f);
+	foo1(f,g);
+	foo2(g,f);
+	foo3(g,g);
+
+	bar0(g,g);
+	bar1(g,g);
+	bar2(g,g);
+	bar3(g,g);
+
+	fun0(f,f);
+	fun0(g,g);
+	fun1(f,g);
+	fun1(g,g);
+	fun2(g,f);
+	fun2(g,g);
+	fun3(g,g);
+	
+	x:=0:uint[m];
+	y:=0:!uint[m];
+	baz0(x,x);
+	baz0(x,y);
+	baz0(y,x);
+	baz0(y,y);
+
+	baz1(x,y);
+	baz1(y,y);
+
+	baz2(y,x);
+	baz2(y,y);
+
+	baz3(y,y);
+
+	qux0(y,y);
+	qux1(y,y);
+	qux2(y,y);
+	qux3(y,y);
+
+	flarp0(x,x);
+	flarp0(x,y);
+	flarp0(y,x);
+	flarp0(y,y);
+
+	flarp1(y,x);
+	flarp1(y,y);
+
+	flarp2(x,y);
+	flarp2(y,y);
+
+	flarp3(y,y);
+}
