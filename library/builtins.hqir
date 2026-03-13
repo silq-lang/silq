@@ -26,7 +26,7 @@ def silq_builtin.measure_uint($n) <- %val
 	return $val
 
 
-def silq_builtin.alloc_uint($n, $val)
+def silq_builtin.alloc_uint($n, $val) [noinline]
 	$lit0 := literal[0]
 	$lit1 := literal[1]
 	$lit2 := literal[2]
