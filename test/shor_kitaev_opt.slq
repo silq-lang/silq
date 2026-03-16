@@ -62,11 +62,11 @@ def order(a:!ℕ,N:!ℕ){
 	b:=1;
 	while powm(a,b,N)≠1{
 		def f[pw2:!ℕ](b:uint[n]){
-			nb:=mul_mod(b,aps[pw2],N);
-			mul_mod(nb,ais[pw2],N):=b;
+			nb:=mul_mod_uN(b,aps[pw2],N);
+			mul_mod_uN(nb,ais[pw2],N):=b;
 			return nb;
 		}
-		(θ,x):=estimatePhase[2·n+1](f,1:uint[n]);
+		(θ,x):=estimate_phase[2·n+1](f,1:uint[n]);
 		measure(x);
 		c:=candidates((θ as !ℕ)/2^(2·n+1));
 		for i in (c.length..-1..0]{
@@ -76,7 +76,7 @@ def order(a:!ℕ,N:!ℕ){
 	return b coerce !ℕ;
 }
 
-def add_mod[n:!ℕ](b:uint[n],const a:!ℕ,const N:!ℕ){
+def add_mod_uN[n:!ℕ](b:uint[n],const a:!ℕ,const N:!ℕ){
 	assert(a<N);
 	x:=b>=N-a;
 	b+=if x then a-N as uint[n] else a as uint[n];
@@ -84,30 +84,30 @@ def add_mod[n:!ℕ](b:uint[n],const a:!ℕ,const N:!ℕ){
 	return b;
 }
 
-def mul_mod[n:!ℕ](const b:uint[n],const a:!ℕ,const N:!ℕ){
+def mul_mod_uN[n:!ℕ](const b:uint[n],const a:!ℕ,const N:!ℕ){
 	r:=0:uint[n];
 	/+for i in 0..n{ // TODO
 		if b[i] {
-			r:=add_mod(r,(a·2^i)%N,N);
+			r:=add_mod_uN(r,(a·2^i)%N,N);
 		}
 	}
 	return r;+/
 	def rec(r:uint[n],i:!ℕ)qfree{
 		if i=n{ return r; }
-		if b[i] { r:=add_mod(r,(a·2^i)%N,N); }
+		if b[i] { r:=add_mod_uN(r,(a·2^i)%N,N); }
 		return rec(r,i+1);
 	}
 	return rec(0:uint[n],0);
 }
 
-def estimatePhase[n:!ℕ][a:qtype](const f:Π[pw2:!N]qfree. a ->mfree a, arg:a): !uint[n]×a{
+def estimate_phase[n:!ℕ][a:qtype](const f:Π[pw2:!N]qfree. a ->mfree a, arg:a): !uint[n]×a{
 	x_tilde:=0:!uint[n];
 	for i in 0..n{
 		bit:=H(0);
 		if bit {
 	        pw2:=n sub 1 sub i;
 			arg:=f[pw2](arg);
-			phaseU(2^pw2·-x_tilde);
+			phase_u(2^pw2·-x_tilde);
 		}
 		bit:=H(bit);
 		x_tilde[i]=measure(bit);
@@ -115,7 +115,7 @@ def estimatePhase[n:!ℕ][a:qtype](const f:Π[pw2:!N]qfree. a ->mfree a, arg:a):
 	return (x_tilde,arg);
 }
 
-def phaseU[n:!ℕ](const x:!uint[n]) {
+def phase_u[n:!ℕ](const x:!uint[n]) {
 	phase(2·π·(x as !N)/2^n);
 }
 
