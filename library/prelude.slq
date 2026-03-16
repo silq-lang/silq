@@ -74,6 +74,32 @@ C:=ℂ;
 Complex:=!ℂ;
 
 // deterministic functions
+def gcd(a:!ℤ,b:!ℤ) @[extern="primitive.int.gcd"] qfree: !ℕ;
+def pow_mod(a:!ℤ,e:!ℤ,m:!ℕ){
+	if e < 0 {
+		def egcd(a:!ℤ,b:!ℤ){
+			(x,y,u,v):=(a,b,1,0):!ℤ^4;
+			while y≠0{
+				(x,y,u,v)=(y,x%y,v,u-(x div y)·v);
+			}
+			return (x,u);
+		}
+		(d,ia):=egcd(a,m);
+		assert(d=1);
+		(a,e)=(ia,-e);
+	}
+	r:=1;
+	x:=a;
+	while e≠0{
+		if e&1{
+			r=r*x%m;
+		}
+		x=x^2%m;
+		e div=2;
+	}
+	return r;
+
+}
 def qtond(x:!ℚ) @[extern="primitive.rational.qtond"] qfree: !ℤ×!ℤ;
 def qfromnd(n:!ℤ,d:!ℤ) @[extern="primitive.rational.qfromnd"] qfree: !ℚ;
 

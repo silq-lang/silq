@@ -2059,6 +2059,10 @@ struct QState{
 				writeln(arg.toStringImpl(opt)); stdout.flush();
 				return makeTuple(.unit,[]);
 			}
+			case "int.gcd":
+				enforce(arg.tag==Value.Tag.array_ && arg.array_.length==2,"wrong number of arguments passed to `gcd`");
+				enforce(arg.array_[0].isℤ && arg.array_[1].isℤ,"bad arguments to `gcd`");
+				return makeInteger(gcd(arg.array_[0].asℤ,arg.array_[1].asℤ));
 			case "rational.qtond":
 				switch(arg.tag) with(Value.Tag){
 					case qval: return makeTuple(tupleTy([ℤt(true),ℤt(true)]), [makeInteger(arg.qval.num),makeInteger(arg.qval.den)]);

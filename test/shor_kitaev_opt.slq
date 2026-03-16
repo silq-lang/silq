@@ -14,10 +14,10 @@ def shor(n:!ℕ){
 	if y>1{ return x; }
 	while true{
 		a:=2+uniform(n sub 3);
-		d:=gcdn(a,n);
+		d:=gcd(a,n);
 		if d≠1{ return d; }
 		r:=order(a,n);
-		k:=gcdn(powm(a,r div 2,n)+1,n);
+		k:=gcd(pow_mod(a,r div 2,n)+1,n);
 		if 1<k∧k<n { return k; }
 	}
 }
@@ -50,9 +50,8 @@ def uniform(n:!ℕ){
 }
 
 def order(a:!ℕ,N:!ℕ){
-	(d,a_inv):=egcd(a,N);
-	a_inv%=N;
-	assert(d=1);
+	assert(gcd(a,N)=1);
+	a_inv:=pow_mod(a,-1,N);
 	(n,m):=(0,1);
 	while m<N { n+=1, m*=2; }
 	(aps,ais):=([a],[a_inv]);
@@ -145,14 +144,3 @@ def powm(a:!ℕ,b:!ℕ,N:!ℕ){
 	}
 	return r;
 }
-
-// compute d=gcd(a,b) and k with a·k ≡ d (mod b)
-def egcd(a:!ℤ,b:!ℤ){
-	(x,y,u,v):=(a,b,1,0):!ℤ^4;
-	while y≠0{
-		(x,y,u,v)=(y,x%y,v,u-(x div y)·v);
-	}
-	return (x,u);
-}
-def gcdn(a:!ℕ,b:!ℕ):!ℕ⇒gcd(a,b) coerce !ℕ;
-def gcd(a:!ℤ,b:!ℤ):!ℤ⇒egcd(a,b)[0];
