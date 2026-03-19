@@ -6897,6 +6897,15 @@ class Writer {
 			fi.directName = "silq_function";
 		}
 		if (name) {
+			if(!fd.isMain) {
+				if(auto tsc = cast(ast_scope.TopScope)fd.fscope_.parent) {
+					if(tsc.moduleName != ".prelude" &&
+					   tsc.moduleName != ".operators"
+					) {
+						fi.directName ~= "." ~ tsc.moduleName;
+					}
+				}
+			}
 			fi.directName ~= "." ~ mangleName(name);
 		}
 		if (fi.directName in byDirectName) {

@@ -99,10 +99,11 @@ int run(Backend backend, string path, ErrorHandler err){
 		stderr.writeln(path~": unrecognized extension: "~ext);
 		return 1;
 	}
-	auto sc=new TopScope(err);
+	TopScope sc=null;
 	Expression[] exprs;
 	if(auto r=importModule(path,err,exprs,sc,Location.init))
 		return r;
+	assert(!!sc);
 	return run(backend, exprs, sc);
 }
 
@@ -112,7 +113,6 @@ int importModuleFromPath(string path, Scope sc, Location loc){
 		sc.error("nested imports not supported", loc);
 		return 1;
 	}
-	path = getActualPath(path);
 	Expression[] exprs;
 	TopScope tsc;
 	if(importModule(path,sc.handler,exprs,tsc,loc))
@@ -127,6 +127,8 @@ int run(Backend backend, Expression[] exprs, Scope sc, FunctionDef fun=null){
 	foreach(expr;exprs){
 		if(cast(ErrorExp)expr) continue;
 		if(auto fd=cast(FunctionDef)expr){
+			if(fd.name.name=="main")
+				fd.isMain=true;
 			functions[fd.name.name]=fd;
 		}else if(!cast(Declaration)expr&&!cast(DefineExp)expr&&!cast(CommaExp)expr)
 			sc.error("top level expression must be declaration",expr.loc);
@@ -198,7 +200,7 @@ int main(string[] args){
 			backend = qsimBackend;
 			if(arg) {
 				arg ~= "\0\0\0\0";
-				runExp = new Source("`--run=` command line", arg);
+				runExp = new Source(".cli", arg);
 				runOn = runOnEach = null;
 			}
 			return 0;
@@ -206,14 +208,14 @@ int main(string[] args){
 		.add!("run-on")((string arg) {
 			backend = qsimBackend;
 			arg ~= "\0\0\0\0";
-			runOn = new Source("`--run-on=` command line", arg);
+			runOn = new Source(".cli", arg);
 			runExp = runOnEach = null;
 			return 0;
 		})
 		.add!("run-on-each")((string arg) {
 			backend = qsimBackend;
 			arg ~= "\0\0\0\0";
-			runOnEach = new Source("`--run-on=` command line", arg);
+			runOnEach = new Source(".cli", arg);
 			runExp = runOn = null;
 			return 0;
 		})
@@ -393,7 +395,7 @@ int main(string[] args){
 			runFromBody(body_, arg.loc);
 		}
 		if(toRun) {
-			auto sc = new TopScope(err);
+			auto sc = new TopScope(".cli",err);
 			sc.import_(getPreludeScope(err, toRun.loc));
 			foreach(path; args) {
 				r = importModuleFromPath(path, sc, toRun.loc);
@@ -412,7 +414,7 @@ int main(string[] args){
 			}
 			if(useStdin) {
 				auto source = new Source("stdin", text(stdin.byLine.joiner("\n"),"\0\0\0\0"));
-				auto sc=new TopScope(err);
+				auto sc=new TopScope(".stdin",err);
 				Expression[] exprs;
 				r=importModule(source,err,exprs,sc,Location.init);
 				if(r) return r;
