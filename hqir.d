@@ -6905,8 +6905,8 @@ class Writer {
 						fi.directName ~= "." ~ tsc.moduleName;
 					}
 				}
-			}
-			fi.directName ~= "." ~ mangleName(name);
+				fi.directName ~= "." ~ mangleName(name);
+			}else fi.directName ~= ".main";
 		}
 		if (fi.directName in byDirectName) {
 			size_t i = 0;
