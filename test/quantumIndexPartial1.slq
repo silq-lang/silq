@@ -1,0 +1,6 @@
+
+def main(){
+	x:=vector(3,(2,1));
+	i:=(H(0),H(0)) as uint[2];
+	return (x[i][1],i); /// TODO
+}
