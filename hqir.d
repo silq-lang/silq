@@ -6018,28 +6018,19 @@ class ScopeWriter {
 	}
 
 	Value genConvert2(ast_conv.Conversion conv, Value v) {
-		foreach(t; AliasSeq!(
-			ast_conv.TransitiveConversion,
-			ast_conv.QuantumPromotion,
-			ast_conv.NumericConversion,
-			ast_conv.NumericCoercion,
-			ast_conv.TupleConversion,
-			ast_conv.UnmultiplexConversion,
-			ast_conv.VectorConversion,
-			ast_conv.VectorToArrayConversion,
-			ast_conv.ArrayToVectorConversion,
-			ast_conv.ArrayConversion,
-			ast_conv.FunctionConversion,
-			ast_conv_ZtoFixedConversion,
-			ast_conv.FixedToVectorConversion,
-			ast_conv.VectorToFixedConversion,
-		)) {
-			if(auto c = cast(t) conv) {
-				return implConvert(c, v);
-			}
-		}
-		assert(0, format("TODO conversion: %s", conv));
+		return ast_conv.dispatchConversion!(
+			(conv, v, self) => self.implConvert(conv, v)
+		)(conv, v, this);
 	}
+
+	// no-ops
+	Value implConvert(ast_conv.ExplosionConversion conv, Value v) => genNoopConvert(v, conv.from, conv.to);
+	Value implConvert(ast_conv.ImplosionCoercion conv, Value v) => genNoopConvert(v, conv.from, conv.to);
+	Value implConvert(ast_conv.NoOpConversion conv, Value v) => genNoopConvert(v, conv.from, conv.to);
+	Value implConvert(ast_conv.TypeConversion conv, Value v) => genNoopConvert(v, conv.from, conv.to);
+	Value implConvert(ast_conv.AnnotationPun conv, Value v) => genNoopConvert(v, conv.from, conv.to);
+	Value implConvert(ast_conv_UintToNConversion conv, Value v) => genNoopConvert(v, conv.from, conv.to);
+	Value implConvert(ast_conv_IntToZConversion conv, Value v) => genNoopConvert(v, conv.from, conv.to);
 
 	Value implConvert(ast_conv.TransitiveConversion conv, Value v) {
 		return genConvert(conv.b, genConvert(conv.a, v));
