@@ -492,73 +492,106 @@ private ConvertFlags qpromoteFlags(Expression ty) {
 }
 
 private ConvertFlags conversionFlags(ast_conv.Conversion conv) {
-	assert(conv);
-	if(cast(ast_conv.NoOpConversion) conv || cast(ast_conv.AnnotationPun) conv || cast(ast_conv.TypeConversion) conv || cast(ast_conv.ExplosionConversion) conv) {
-		return ConvertFlags.noop;
+	assert(!!conv);
+	static ConvertFlags get(T)(T conv){
+		static if(
+			is(T == ast_conv.NoOpConversion) ||
+			is(T == ast_conv.AnnotationPun) ||
+			is(T == ast_conv.TypeConversion) ||
+			is(T == ast_conv.ExplosionConversion)
+		) {
+			return ConvertFlags.noop;
+		}else static if(
+			is(T == ast_conv_UintToNConversion) ||
+			is(T == ast_conv_IntToZConversion)
+		) {
+			return ConvertFlags.noop;
+		}else static if(
+			is(T == ast_conv.NumericConversion)
+		) {
+			auto r = ConvertFlags.classical;
+			if(conv.from == ast_ty_Nt() && conv.to == ast_ty_Zt()) r = ConvertFlags.noop;
+			return r;
+		}else static if(
+			is(T == ast_conv.NumericCoercion)
+		) {
+			auto r = ConvertFlags.classical;
+			if(conv.from == ast_ty_Zt() && conv.to == ast_ty_Nt()) r = ConvertFlags.noop;
+			if(conv.needsCheck) r |= ConvertFlags.check;
+			return r;
+		}else static if(
+			is(T == ast_conv.QuantumPromotion)
+		) {
+			assert(!typeHasQuantum(conv.from));
+			return qpromoteFlags(conv.to);
+		}else static if(
+			is(T == ast_conv.TransitiveConversion)
+		) {
+			return conversionFlags(conv.a) | conversionFlags(conv.b);
+		}else static if(
+			is(T == ast_conv.TupleConversion)
+		) {
+			return conv.elements.fold!((v, sub) => v | conversionFlags(sub))(ConvertFlags.noop);
+		}else static if(
+			is(T == ast_conv.VectorConversion)
+		) {
+			auto r = conversionFlags(conv.next);
+			if(conv.checkLength) r |= ConvertFlags.check;
+			return r;
+		}else static if(
+			is(T == ast_conv.ArrayConversion)
+		) {
+			return conversionFlags(conv.next);
+		}else static if(
+			is(T == ast_conv.ArrayToVectorConversion)
+		) {
+			auto r = ConvertFlags.classical;
+			if(conv.checkLength) r |= ConvertFlags.check;
+			return r;
+		}else static if(
+			is(T == ast_conv.VectorToArrayConversion)
+		) {
+			return ConvertFlags.classical;
+		}else static if(
+			is(T == ast_conv.FunctionConversion)
+		) {
+			// annotation conversions are no-op
+			auto r = conversionFlags(conv.dom) | conversionFlags(conv.cod);
+			auto ffrom = cast(ast_ty.ProductTy)conv.from, fto = cast(ast_ty.ProductTy)conv.to;
+			assert(ffrom && fto);
+			assert(ffrom.captureAnnotation == fto.captureAnnotation, "TODO CaptureAnnotationConversion");
+			return r != ConvertFlags.noop ? ConvertFlags.classical : ConvertFlags.noop;
+		}else static if(
+			is(T == ast_conv.FixedToVectorConversion)
+		) {
+			auto t = ast_ty.isFixedIntTy(conv.from);
+			assert(t);
+			auto r = t.isClassical ? ConvertFlags.classical : ConvertFlags.noop;
+			if(conv.checkLength) r |= ConvertFlags.check;
+			return r;
+		}else static if(
+			is(T == ast_conv.VectorToFixedConversion)
+		) {
+			auto t = ast_ty.isFixedIntTy(conv.to);
+			assert(t);
+			auto r = t.isClassical ? ConvertFlags.classical : ConvertFlags.noop;
+			if(conv.checkLength) r |= ConvertFlags.check;
+			return r;
+		}else static if(
+			is(T == ast_conv.UnmultiplexConversion)
+		) {
+			return conv.conversions.fold!((v, sub) => v | conversionFlags(sub))(ConvertFlags.noop);
+		}else static if(
+			is(T == ast_conv.ImplosionCoercion) ||
+			is(T == ast_conv_ZtoFixedConversion)
+		) {
+			auto r = ConvertFlags.noop;
+			if(typeHasClassical(conv.to)) r |= ConvertFlags.classical;
+			if(typeHasQuantum(conv.to)) r |= ConvertFlags.quantum;
+			return r;
+		}else static assert(0, "TODO: `conversionFlags` for `" ~ T.stringof ~ "`");
 	}
-	if(cast(ast_conv_UintToNConversion) conv || cast(ast_conv_IntToZConversion) conv) {
-		return ConvertFlags.noop;
-	}
-	if(cast(ast_conv.NumericConversion) conv) {
-		auto r = ConvertFlags.classical;
-		if(conv.from == ast_ty_Nt() && conv.to == ast_ty_Zt()) r = ConvertFlags.noop;
-		return r;
-	}
-	if(auto nConv = cast(ast_conv.NumericCoercion) conv) {
-		auto r = ConvertFlags.classical;
-		if(conv.from == ast_ty_Zt() && conv.to == ast_ty_Nt()) r = ConvertFlags.noop;
-		if(nConv.needsCheck) r |= ConvertFlags.check;
-		return r;
-	}
-	if(cast(ast_conv.QuantumPromotion) conv) {
-		assert(!typeHasQuantum(conv.from));
-		return qpromoteFlags(conv.to);
-	}
-	if(auto tConv = cast(ast_conv.TransitiveConversion) conv) {
-		return conversionFlags(tConv.a) | conversionFlags(tConv.b);
-	}
-	if(auto tupConv = cast(ast_conv.TupleConversion) conv) {
-		return tupConv.elements.fold!((v, sub) => v | conversionFlags(sub))(ConvertFlags.noop);
-	}
-	if(auto vecConv = cast(ast_conv.VectorConversion) conv) {
-		auto r = conversionFlags(vecConv.next);
-		if(vecConv.checkLength) r |= ConvertFlags.check;
-		return r;
-	}
-	if(auto arrConv = cast(ast_conv.ArrayConversion) conv) {
-		return conversionFlags(arrConv.next);
-	}
-	if(auto arrConv = cast(ast_conv.ArrayToVectorConversion) conv) {
-		auto r = ConvertFlags.classical;
-		if(arrConv.checkLength) r |= ConvertFlags.check;
-		return r;
-	}
-	if(auto arrConv = cast(ast_conv.VectorToArrayConversion) conv) {
-		return ConvertFlags.classical;
-	}
-	if(auto funcConv = cast(ast_conv.FunctionConversion) conv) {
-		// annotation conversions are no-op
-		auto r = conversionFlags(funcConv.dom) | conversionFlags(funcConv.cod);
-		return r != ConvertFlags.noop ? ConvertFlags.classical : ConvertFlags.noop;
-	}
-	if(auto fConv = cast(ast_conv.FixedToVectorConversion) conv) {
-		auto t = ast_ty.isFixedIntTy(conv.from);
-		assert(t);
-		auto r = t.isClassical ? ConvertFlags.classical : ConvertFlags.noop;
-		if(fConv.checkLength) r |= ConvertFlags.check;
-		return r;
-	}
-	if(auto fConv = cast(ast_conv.VectorToFixedConversion) conv) {
-		auto t = ast_ty.isFixedIntTy(conv.to);
-		assert(t);
-		auto r = t.isClassical ? ConvertFlags.classical : ConvertFlags.noop;
-		if(fConv.checkLength) r |= ConvertFlags.check;
-		return r;
-	}
-	auto r = ConvertFlags.noop;
-	if(typeHasClassical(conv.to)) r |= ConvertFlags.classical;
-	if(typeHasQuantum(conv.to)) r |= ConvertFlags.quantum;
-	return r;
+	return ast_conv.dispatchConversion!get(conv);
 }
 
 struct PureOpKey {
