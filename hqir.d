@@ -2564,6 +2564,12 @@ class ScopeWriter {
 		}
 	}
 
+	Value valAllocError() {
+		auto qreg = new QReg();
+		qcg.allocError(qreg);
+		return Value.newReg(null, qreg);
+	}
+
 	void valDeallocError(Value v) {
 		if(!v.hasQuantum) return;
 		qcg.deallocError(v.qreg);
@@ -3054,8 +3060,8 @@ class ScopeWriter {
 			throw exc;
 		}
 		if (ast_ty.isEmpty(e.type)) {
-			assert(!r.hasQuantum, "quantum component in diverging expression");
-			assert(r.hasClassical, "missing classical component in diverging expression");
+			assert(!r.hasQuantum || ast_sem.isBuiltInCall(cast(ast_exp.CallExp)e) == ast_sem.BuiltIn.qabort, "quantum component in diverging expression");
+			assert(r.hasClassical || ast_sem.isBuiltInCall(cast(ast_exp.CallExp)e) == ast_sem.BuiltIn.qabort, "missing classical component in diverging expression");
 		} else {
 			assert(!r.hasClassical || typeHasClassical(e.type), format("got a classical component in value of type %s: %s", e.type, e));
 			assert(!r.hasQuantum || typeHasQuantum(e.type), format("got a quantum component in value of type %s: %s", e.type, e));
@@ -3081,6 +3087,7 @@ class ScopeWriter {
 				return valNewC(ctx.floatPi);
 			case ast_sem.BuiltIn.show:
 			case ast_sem.BuiltIn.query:
+			case ast_sem.BuiltIn.qabort:
 				assert(0, "Built-in %s cannot be used as first-class value");
 		}
 
@@ -3133,10 +3140,13 @@ class ScopeWriter {
 		assert(e.e.constLookup, "Indexed value must be const");
 		assert(e.a.constLookup, "Index must be const");
 
-		if (ast_ty.isEmpty(e.type)) {
+		if(ast_ty.isEmpty(e.type)) {
 			// Index out of bounds?
 			return valAbort(e.type);
 		}
+
+		if(auto low = ast_low.getLowering(e, semContext(e.constLookup)))
+			return genValue(low);
 
 		auto v = genExpr(e.e);
 		auto ty = e.e.type;
@@ -3871,6 +3881,8 @@ class ScopeWriter {
 			case ast_sem.BuiltIn.show:
 			case ast_sem.BuiltIn.query:
 				return valNewC(null);
+			case ast_sem.BuiltIn.qabort:
+				return valAllocError();
 			case ast_sem.BuiltIn.pi:
 				assert(false, format("cannot call %s", e));
 		}
@@ -4100,6 +4112,13 @@ class ScopeWriter {
 				default:
 					break;
 			}
+		}
+
+		switch(ast_sem.isBuiltInCall(e)) {
+			case ast_sem.BuiltIn.qabort:
+				return valDeallocError(ret);
+			default:
+				break;
 		}
 
 		CallInfo ci = prepCall(e.e, e.arg, e.type, true);

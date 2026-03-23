@@ -2597,6 +2597,9 @@ struct Interpreter(QState){
 							break;
 						case BuiltIn.show,BuiltIn.query:
 							return qstate.makeTuple(ast.type.unit,[]);
+						case BuiltIn.qabort:
+							enforce(0,"bad forget");
+							assert(0);
 						case BuiltIn.pi:
 							enforce(0,text("built-in `",id.name,"` not yet supported"));
 							assert(0);
@@ -2976,6 +2979,12 @@ struct Interpreter(QState){
 			getAssignable!isCat(lhs,replacements).assign(qstate,rhs);
 		}else if(auto ce=cast(CallExp)lhs){
 			enforce(!isCat,"cannot concat assign to function call expression");
+			switch(isBuiltInCall(ce)){
+				case BuiltIn.qabort:
+					enforce(0,"bad forget");
+					assert(0);
+				default: break;
+			}
 			auto f=ce.e,oft=cast(ProductTy)f.type;
 			enforce(!!oft,"reversed function call not yet supported");
 			auto fv=runExp(f);

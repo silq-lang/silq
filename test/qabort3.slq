@@ -1,0 +1,12 @@
+// args: --run
+
+def main(){
+	x:=0:𝔹;
+	y:=dup(x);
+	if x{
+		__qabort(𝔹) := y;
+	} else {
+		forget(y=0);
+	}
+	return x;
+}

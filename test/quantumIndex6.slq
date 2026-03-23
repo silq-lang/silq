@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	xs:=(0,H(0),1,H(1));
+	i:=(H(0),H(0),0) as int[3];
+	return (dup(xs:𝔹[])[i],dup(xs[i]),xs,i);
+}

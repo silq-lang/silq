@@ -4221,3 +4221,35 @@ def __xorb_assign_bB(a: 𝔹, const b: !𝔹) @[__operator] qfree: 𝔹 {
 
 // a &= b
 // (always rewritten to with x:=a do x=x&b)
+
+
+// quantum indexing
+def __qindex_au[a:qtype,m:!ℕ](const xs: a[], const idx: uint[m]){
+	n := xs.length;
+	return __qindex_vu(xs coerce a^n, idx);
+}
+def __qindex_as[a:qtype,m:!ℕ](const xs: a[], const idx: int[m]){
+	n := xs.length;
+	return __qindex_vs(xs coerce a^n, idx);
+}
+
+def __qindex_vu[a:qtype,n:!ℕ,m:!ℕ](const xs: a^n, const idx: uint[m]){
+	assert(n > 0);
+	def rec(k:!ℕ, cidx:!uint[m]) {
+		if k == m{
+			return xs[cidx];
+		} else if idx[k] {
+			cidx[k] = 1;
+			return if cidx >=n then __qabort(a) else rec(k+1,cidx);
+		} else {
+			return rec(k+1, cidx);
+		}
+	}
+	return rec(0, 0:!uint[m]);
+}
+def __qindex_vs[a:qtype,n:!ℕ,m:!ℕ](const xs: a^n, const idx: int[m]){
+	if m == 0 { return xs[0]; }
+	bits ~ (s,) := idx as 𝔹^m;
+	forget(s = 0);
+	return __qindex_vu(xs, bits as uint[m sub 1]);
+}

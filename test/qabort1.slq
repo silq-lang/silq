@@ -1,0 +1,12 @@
+// args: --run
+
+def main(){
+	x:=0:𝔹;
+	y:=H(0);
+	if x {
+		__qabort(𝔹) := y;
+		return __qabort(𝔹);
+	} else {
+		return y;
+	}
+}

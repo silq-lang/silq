@@ -1,0 +1,10 @@
+
+def main(){ /// TODO error
+	x:=0:𝔹;
+	y:=H(0);
+	if x {
+		__qabort(⊥); /// TODO error
+	} else {
+		return y;
+	}
+}
