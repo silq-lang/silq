@@ -4224,16 +4224,47 @@ def __xorb_assign_bB(a: 𝔹, const b: !𝔹) @[__operator] qfree: 𝔹 {
 
 
 // quantum indexing
-def __qindex_au[a:qtype,m:!ℕ](const xs: a[], const idx: uint[m]){
+def __qindex_ab[a:qtype](const xs: a[], const idx: 𝔹) {
+	if idx {
+		if xs.length < 2 {
+			return __qabort(a);
+		} else {
+			return xs[1];
+		}
+	} else {
+		if xs.length == 0 {
+			return __qabort(a);
+		} else {
+			return xs[0];
+		}
+	}
+}
+def __qindex_vb[a:qtype,n:!ℕ](const xs: a^n, const idx: 𝔹) {
+	if idx {
+		if n < 2 {
+			return __qabort(a);
+		} else {
+			return xs[1];
+		}
+	} else {
+		if n == 0 {
+			return __qabort(a);
+		} else {
+			return xs[0];
+		}
+	}
+}
+
+def __qindex_au[a:qtype,m:!ℕ](const xs: a[], const idx: uint[m]) {
 	n := xs.length;
 	return __qindex_vu(xs coerce a^n, idx);
 }
-def __qindex_as[a:qtype,m:!ℕ](const xs: a[], const idx: int[m]){
+def __qindex_as[a:qtype,m:!ℕ](const xs: a[], const idx: int[m]) {
 	n := xs.length;
 	return __qindex_vs(xs coerce a^n, idx);
 }
 
-def __qindex_vu[a:qtype,n:!ℕ,m:!ℕ](const xs: a^n, const idx: uint[m]){
+def __qindex_vu[a:qtype,n:!ℕ,m:!ℕ](const xs: a^n, const idx: uint[m]) {
 	assert(n > 0);
 	def rec(k:!ℕ, cidx:!uint[m]) {
 		if k == m{

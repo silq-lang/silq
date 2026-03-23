@@ -1,0 +1,6 @@
+// args: --run
+
+def main(){
+	x:=H(0);
+	return (([0,1]:𝔹[])[x],x);
+}
