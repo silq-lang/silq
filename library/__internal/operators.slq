@@ -385,6 +385,7 @@ def qint_ultc[n:!N](a: B^n, b: !Z) @noinline @[extern="silq_builtin.iltc"] lifte
 
 def qint_sltc[n:!N](a: B^n, b: !Z) lifted: B {
 	a' := dup(a);
+	a'[n sub 1] xorb= 1;
 	return qint_ultc[n](a', b + 2^(n sub 1));
 }
 
@@ -1543,7 +1544,11 @@ def __mod_Bs[n:!ℕ](a: !𝔹, b: int[n]) @[__operator] lifted: int[n] {
 	if __eq_sN[n](b, 1) {
 		return 0:int[n];
 	}
-	return 1:int[n];
+	if b < 0 {
+		return b + 1;
+	} else {
+		return 1:int[n];
+	}
 }
 def __mod_bS[n:!ℕ](a: 𝔹, b: !int[n]) @[__operator] lifted: int[n] {
 	assert(neq_S0[n](b));
