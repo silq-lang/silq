@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	x:=(0,1);
+	y:=(H(0),) as int[1];
+	return (x[y],y); /// TODO run_error
+}
