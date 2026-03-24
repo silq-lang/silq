@@ -1,0 +1,8 @@
+
+def foo(x:𝔹){
+	r:=dup(x); /// error
+	if measure(H(0)){
+		return x;
+	}
+	return r;
+}

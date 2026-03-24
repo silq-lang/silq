@@ -1,0 +1,20 @@
+
+def qswap[n:!ℕ,qt:qtype,ilen:!ℕ](const idx:uint[ilen], arr:qt^n,val:qt){
+	def rec(k:!ℕ,cidx:!uint[ilen]){ /// error
+		if k == ilen{
+			(arr[cidx],val):=(val,arr[cidx]);
+			return (arr,val);
+		} else if idx[k] {
+			cidx[k] = 1;
+			if cidx>=n {
+				__qabort(qt^n×qt) := (arr,val);
+				return __qabort(qt^n×qt);
+			} else {
+				rec(k+1,cidx); /// error
+			}
+		} else {
+			return rec(k+1, cidx);
+		}
+	}
+	return rec(0,0:!uint[ilen]);
+}
