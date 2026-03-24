@@ -3281,7 +3281,6 @@ class ScopeWriter {
 		}
 		if(auto intTy = ast_ty.isFixedIntTy(ty)) {
 			auto bits = getNumericBits(intTy);
-			ccg.checkLtInt(true, i, bits);
 			if(intTy.isClassical) {
 				assert(rTy == ast_ty.Bool(true));
 				return implIndexDupCInt(v, bits, i);
@@ -3312,13 +3311,14 @@ class ScopeWriter {
 	}
 
 	Value implIndexDupCInt(Value v, CReg bits, CReg i) {
+		ccg.checkLtInt(true, i, bits);
 		auto mask = ccg.intPow2(i);
 		return valNewC(ccg.intCmpEq(ccg.intBitAnd(v.creg, mask), mask));
 	}
 
-	Value implIndexSwapOut(ref Value v, Expression outerTy, Expression wantTy, CReg i, ref Dummy dummy) {
+	Value implIndexSwapOut(ref Value v, Expression outerTy, Expression wantTy, Index idx, ref Dummy dummy) {
 		Expression gotTy = null;
-		auto r = implIndexSwap(v, outerTy, outerTy, i, (ref Expression ty, CReg rc) {
+		auto r = implIndexSwap(v, outerTy, outerTy, idx, (ref Expression ty, CReg rc) {
 			gotTy = ty;
 			auto qt = getQTypeRaw(ty, rc);
 			dummy.type = ty;
@@ -3330,9 +3330,9 @@ class ScopeWriter {
 		return genSubtype(r, gotTy, wantTy);
 	}
 
-	void implIndexSwapIn(ref Value v, Expression outerTy1, Expression outerTy2, Expression valueTy, CReg i, Dummy orig, Value p) {
+	void implIndexSwapIn(ref Value v, Expression outerTy1, Expression outerTy2, Expression valueTy, Index idx, Dummy orig, Value p) {
 		Expression dummyTy = null;
-		auto r = implIndexSwap(v, outerTy1, outerTy2, i, (ref Expression ty, CReg rc) {
+		auto r = implIndexSwap(v, outerTy1, outerTy2, idx, (ref Expression ty, CReg rc) {
 			dummyTy = ty;
 			ty = valueTy;
 			return p;
@@ -3344,28 +3344,26 @@ class ScopeWriter {
 		valForget(tmp);
 	}
 
-	Value implIndexSwap(ref Value v, Expression outerTy1, Expression outerTy2, CReg i, Value delegate(ref Expression, CReg) repl) {
+	Value implIndexSwap(ref Value v, Expression outerTy1, Expression outerTy2, Index idx, Value delegate(ref Expression, CReg) repl) {
 		if(auto tupTy1 = cast(ast_ty.TupleTy) outerTy1) {
-			return implIndexSwapTuple(v, tupTy1.types, outerTy2, i, repl);
+			return implIndexSwapTuple(v, tupTy1.types, outerTy2, idx, repl);
 		}
 		if(auto vecTy1 = cast(ast_ty.VectorTy) outerTy1) {
 			if(auto vecTy2 = cast(ast_ty.VectorTy) outerTy2) {
 				CReg len = getVectorLength(vecTy1);
-				ccg.checkLtInt(true, i, len);
-				return implIndexSwapVector(v, vecTy1.next, vecTy2.next, len, i, repl);
+				return implIndexSwapVector(v, vecTy1.next, vecTy2.next, len, idx, repl);
 			}
 			auto tupTy2 = outerTy2.isTupleTy();
 			assert(tupTy2);
 			auto types = vecTy1.next.repeat(tupTy2.length).array;
-			return implIndexSwapTuple(v, types, outerTy2, i, repl);
+			return implIndexSwapTuple(v, types, outerTy2, idx, repl);
 		}
 		if(auto arrTy1 = cast(ast_ty.ArrayTy) outerTy1) {
 			auto arrTy2 = cast(ast_ty.ArrayTy) outerTy2;
 			assert(arrTy2);
 			CReg len;
 			auto vec0 = valArrayToVector(arrTy1.next, len, v), vec = vec0;
-			ccg.checkLtInt(true, i, len);
-			auto r = implIndexSwapVector(vec, arrTy1.next, arrTy2.next, len, i, repl);
+			auto r = implIndexSwapVector(vec, arrTy1.next, arrTy2.next, len, idx, repl);
 			if(vec.creg !is vec0.creg) {
 				v = valVectorToArray(len, vec);
 			} else {
@@ -3379,13 +3377,14 @@ class ScopeWriter {
 			assert(intTy1.bits == intTy2.bits);
 			assert(intTy1.isSigned == intTy2.isSigned);
 			auto bits = getNumericBits(intTy1);
-			ccg.checkLtInt(true, i, bits);
 			if(!intTy2.isClassical) {
 				if(intTy1.isClassical) {
 					v = genSubtype(v, outerTy1, outerTy2);
 				}
-				return implIndexSwapVector(v, ast_ty.Bool(false), ast_ty.Bool(false), bits, i, repl);
+				return implIndexSwapVector(v, ast_ty.Bool(false), ast_ty.Bool(false), bits, idx, repl);
 			}
+			assert(!idx.isQuantum, "attempted quantum index replacement on classical aggregate");
+			auto i = idx.creg;
 			auto r = implIndexDupCInt(v, bits, i);
 
 			Expression innerTy = ast_ty.Bool(true);
@@ -3409,7 +3408,9 @@ class ScopeWriter {
 		assert(false, format("Cannot index %s", outerTy1));
 	}
 
-	Value implIndexSwapTuple(ref Value v, Expression[] types, Expression outerTy2, CReg ix, Value delegate(ref Expression, CReg) repl) {
+	Value implIndexSwapTuple(ref Value v, Expression[] types, Expression outerTy2, Index idx, Value delegate(ref Expression, CReg) repl) {
+		assert(!idx.isQuantum, "attempted quantum index replacement on tuple");
+		auto ix = idx.creg;
 		if(auto ii = ctx.asIndex(ix, types.length)) {
 			if(0<=ii.get() && ii.get() < types.length) {
 				auto vs = valUnpack(types, v);
@@ -3440,12 +3441,11 @@ class ScopeWriter {
 			auto vecTy1 = ast_ty.vectorTy(cty, types.length);
 			v = genSubtype(v, ast_ty.tupleTy(types), vecTy1);
 			auto len = ctx.literalInt(types.length);
-			ccg.checkLtInt(true, ix, len);
 			if(auto vecTy2 = cast(ast_ty.VectorTy) outerTy2) {
-				return implIndexSwapVector(v, vecTy1.next, vecTy2.next, len, ix, repl);
+				return implIndexSwapVector(v, vecTy1.next, vecTy2.next, len, idx, repl);
 			}
 			if(auto arrTy2 = cast(ast_ty.ArrayTy) outerTy2) {
-				auto r = implIndexSwapVector(v, vecTy1.next, arrTy2.next, len, ix, repl);
+				auto r = implIndexSwapVector(v, vecTy1.next, arrTy2.next, len, idx, repl);
 				v = genSubtype(v, ast_ty.vectorTy(arrTy2.next, types.length), arrTy2);
 				return r;
 			}
@@ -3453,7 +3453,10 @@ class ScopeWriter {
 		}
 	}
 
-	Value implIndexSwapVector(ref Value v, Expression itemTy1, Expression itemTy2, CReg len, CReg i, Value delegate(ref Expression, CReg) repl) {
+	Value implIndexSwapVector(ref Value v, Expression itemTy1, Expression itemTy2, CReg len, Index idx, Value delegate(ref Expression, CReg) repl) {
+		assert(!idx.isQuantum, "TODO quantum index replacement");
+		auto i = idx.creg;
+		ccg.checkLtInt(true, i, len);
 		if(itemTy1 !is itemTy2) {
 			auto conv = ast_conv.typeExplicitConversion!true(itemTy1, itemTy2, ast_exp.TypeAnnotationType.annotation);
 			assert(conv, format("not a subtype: %s -> %s", itemTy1, itemTy2));
@@ -4835,9 +4838,10 @@ class ScopeWriter {
 				dummyTypes ~= DummyTypes(baseTy);
 				return r;
 			}
-			assert(!indices[0].isQuantum, "TODO quantum index replacement");
-			auto ix = indices[0].creg;
+			auto idx = indices[0];
 			if(auto tupTy = cast(ast_ty.TupleTy) baseTy) {
+				assert(!idx.isQuantum, "attempted quantum index replacement on tuple");
+				auto ix = idx.creg;
 				auto types = tupTy.types;
 				Value moveOutTuple(ref Value v, size_t i, out Dummy dummy, out DummyTypes dummyTypes, ScopeWriter w) {
 					auto vs = w.valUnpack(types, v);
@@ -4896,9 +4900,9 @@ class ScopeWriter {
 			}
 			assert(!!itemTy, format("Cannot index %s", baseTy));
 			Dummy tmpDummy;
-			Value r = w.implIndexSwapOut(v, baseTy, itemTy, ix, tmpDummy);
+			Value r = w.implIndexSwapOut(v, baseTy, itemTy, idx, tmpDummy);
 			Value rr = moveOut(r, itemTy, indices[1..$], dummy, dummyTypes[0].next, w);
-			w.implIndexSwapIn(v, baseTy, baseTy, itemTy, ix, tmpDummy, r);
+			w.implIndexSwapIn(v, baseTy, baseTy, itemTy, idx, tmpDummy, r);
 			return rr;
 		}
 		DummyTypes[] dummyTypes;
@@ -4939,7 +4943,7 @@ class ScopeWriter {
 				return;
 			}
 			assert(!indices[0].isQuantum, "TODO quantum index replacement");
-			auto ix = indices[0].creg;
+			auto idx = indices[0];
 			Expression arrayTy2 = null;
 			bool makeArray = false;
 			if(dummyTypes.length > 1) {
@@ -4960,6 +4964,8 @@ class ScopeWriter {
 				}
 			}
 			if(auto tt2 = baseTy2.isTupleTy()) { // TODO: not always needed for vectors
+				assert(!idx.isQuantum, "attempted quantum index replacement on tuple");
+				auto ix = idx.creg;
 				if(ast_ty.isSubtype(baseTy1, baseTy2)) {
 					v = w.genSubtype(v, baseTy1, baseTy2);
 					baseTy1 = baseTy2;
@@ -5064,7 +5070,7 @@ class ScopeWriter {
 					assert(!!dummy.type);
 				}
 			} else {
-				r = w.implIndexSwapOut(v, baseTy1, itemTy1, ix, dummy);
+				r = w.implIndexSwapOut(v, baseTy1, itemTy1, idx, dummy);
 				DummyTypes[] ndummyTypes;
 				if(dummyTypes.length) {
 					assert(dummyTypes.length == 1);
@@ -5072,7 +5078,7 @@ class ScopeWriter {
 				}
 				moveIn(r, rhsv, itemTy1, itemTy2, indices[1..$], ndummyTypes, w);
 			}
-			w.implIndexSwapIn(v, baseTy1, baseTy2, itemTy2, ix, dummy, r);
+			w.implIndexSwapIn(v, baseTy1, baseTy2, itemTy2, idx, dummy, r);
 		}
 
 		moveIn(var.value, rhsv, baseTy1, baseTy2, indices, b.dummyTypes, this);
