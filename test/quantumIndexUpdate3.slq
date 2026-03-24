@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	x:=(0,0);
+	idx:=(H(0),) as uint[1];
+	x[idx]:=X(x[idx]);
+	assert(measure(dup(x,idx) = ([0,1], 1) || dup(x,idx) = ([1,0], 0)));
+	return (x,idx);
+}

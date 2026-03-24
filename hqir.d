@@ -255,6 +255,7 @@ static immutable string opSliceI = "qfree_call[silq_builtin.cslice_i]";
 static immutable string opSliceD = "qfree_call[silq_builtin.cslice_d]";
 static immutable string opIndexSwapI = "qfree_call[silq_builtin.cswap_i]";
 static immutable string opIndexSwapD = "qfree_call[silq_builtin.cswap_d]";
+static immutable string opQIndexSwap = "qfree_call[silq_builtin.qswap]";
 
 private string opPack(size_t n) {
 	if(n == 0) return opAllocUnit;
@@ -2420,6 +2421,11 @@ struct Index {
 		assert(isQuantum);
 		return _qreg;
 	}
+
+	void forget(ScopeWriter sc) {
+		if(!isQuantum) return;
+		sc.qcg.forget(qreg);
+	}
 }
 
 class ScopeWriter {
@@ -3454,9 +3460,6 @@ class ScopeWriter {
 	}
 
 	Value implIndexSwapVector(ref Value v, Expression itemTy1, Expression itemTy2, CReg len, Index idx, Value delegate(ref Expression, CReg) repl) {
-		assert(!idx.isQuantum, "TODO quantum index replacement");
-		auto i = idx.creg;
-		ccg.checkLtInt(true, i, len);
 		if(itemTy1 !is itemTy2) {
 			auto conv = ast_conv.typeExplicitConversion!true(itemTy1, itemTy2, ast_exp.TypeAnnotationType.annotation);
 			assert(conv, format("not a subtype: %s -> %s", itemTy1, itemTy2));
@@ -3467,11 +3470,23 @@ class ScopeWriter {
 		assert(typeHasQuantum(itemTy2) || !v.hasQuantum);
 
 		auto vc = v.creg;
-		CReg rc = ccg.boxIndex(ctypeSilqTuple, len, vc, i);
+		CReg rc = null;
+		if(!idx.isQuantum) {
+			auto i = idx.creg;
+			ccg.checkLtInt(true, i, len);
+			rc = ccg.boxIndex(ctypeSilqTuple, len, vc, i);
+		}else {
+			assert(!vc);
+		}
 		auto p = repl(itemTy1, rc);
 		p = genSubtype(p, itemTy1, itemTy2);
-		if(p.creg !is rc) {
-			vc = ccg.boxReplace(ctypeSilqTuple, len, vc, i, p.creg);
+		if(!idx.isQuantum) {
+			if(p.creg !is rc) {
+				auto i = idx.creg;
+				vc = ccg.boxReplace(ctypeSilqTuple, len, vc, i, p.creg);
+			}
+		} else {
+			assert(p.creg is null);
 		}
 
 		auto vq = v.qreg;
@@ -3484,8 +3499,16 @@ class ScopeWriter {
 			rq = new QReg();
 			bool qd = typeHasQDep(itemTy2);
 			if(newQt is oldQt && !qd) {
-				qcg.writeQOp(opIndexSwapI, [vq, rq], [len, oldQt, i], [], [v.qreg, p.qreg]);
+				if(!idx.isQuantum) {
+					auto i = idx.creg;
+					qcg.writeQOp(opIndexSwapI, [vq, rq], [len, oldQt, i], [], [v.qreg, p.qreg]);
+				} else {
+					auto ilen = idx.qlen, i = idx.qreg;
+					qcg.writeQOp(opQIndexSwap, [vq, rq], [len, oldQt, ilen], [i], [v.qreg, p.qreg]);
+				}
 			} else {
+				assert(!idx.isQuantum);
+				auto i = idx.creg;
 				auto qts = qd ? getVectorQTypes(itemTy2, len, v.creg) : ccg.boxRepeat(ctypeQtArray, len, oldQt);
 				auto qts2 = newQt is oldQt ? qts : ccg.boxReplace(ctypeQtArray, len, qts, i, newQt);
 				qcg.writeQOp(opIndexSwapD, [vq, rq], [len, qts, qts2, i], [], [v.qreg, p.qreg]);
@@ -4971,7 +4994,8 @@ class ScopeWriter {
 					assert(!makeArray);
 				}
 			}
-			if(auto tt2 = baseTy2.isTupleTy()) { // TODO: not always needed for vectors
+			if(cast(ast_ty.TupleTy)baseTy1 || cast(ast_ty.TupleTy)baseTy2 || dummyTypes.length != (b.dummy.type ? 0 : 1))
+			if(auto tt2 = baseTy2.isTupleTy()) {
 				assert(!idx.isQuantum, "attempted quantum index replacement on tuple");
 				auto ix = idx.creg;
 				if(ast_ty.isSubtype(baseTy1, baseTy2)) {
@@ -5090,6 +5114,10 @@ class ScopeWriter {
 		}
 
 		moveIn(var.value, rhsv, baseTy1, baseTy2, indices, b.dummyTypes, this);
+
+		foreach(ref index; indices) {
+			index.forget(this);
+		}
 
 		if(chain.base.type == typeForDecl(chain.base.meaning)) {
 			var.decl = chain.base.meaning;

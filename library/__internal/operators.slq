@@ -4271,7 +4271,7 @@ def __qindex_vu[a:qtype,n:!ℕ,m:!ℕ](const xs: a^n, const idx: uint[m]) {
 			return xs[cidx];
 		} else if idx[k] {
 			cidx[k] = 1;
-			return if cidx >=n then __qabort(a) else rec(k+1,cidx);
+			return if cidx>=n then __qabort(a) else rec(k+1,cidx);
 		} else {
 			return rec(k+1, cidx);
 		}

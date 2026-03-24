@@ -1,0 +1,36 @@
+// args: --run
+def qswap[n:!ℕ,qt:qtype,ilen:!ℕ](const idx:uint[ilen],arr:qt^n,val:qt){
+	def rec(k:!ℕ,cidx:!uint[ilen],arr:qt^n,val:qt){
+		if k == ilen{
+			(arr[cidx],val):=(val,arr[cidx]);
+			return (arr,val);
+		} else if idx[k] {
+			cidx[k] = 1;
+			if cidx>=n {
+				__qabort(qt^n×qt) := (arr,val);
+				return __qabort(qt^n×qt);
+			} else {
+				return rec(k+1,cidx,arr,val);
+			}
+		} else {
+			return rec(k+1,cidx,arr,val);
+		}
+	}
+	return rec(0,0:!uint[ilen],arr,val);
+}
+
+def main(){
+	for i in 0..20{
+		x:=(0,0);
+		idx:=(H(0),) as uint[1];
+		(x,t):=qswap(idx,x,0);
+		t:=X(t);
+		(x,0):=qswap(idx,x,t);
+		assert(measure((x,idx) = ([0,1], 1) || (x,idx) = ([1,0], 0))); /// TODO
+		(x,t):=qswap(idx,x,0);
+		t:=X(t);
+		(x,0):=qswap(idx,x,t);
+		idx[0]:=H(idx[0]);
+		measure(x,idx);
+	}
+}

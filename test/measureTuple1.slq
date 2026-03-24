@@ -1,0 +1,9 @@
+
+def foo(const idx:uint[1],arr:𝔹^2,val:𝔹)qfree ⇒ (arr,val);
+
+def main(){
+	x:=(0,0);
+	idx:=(H(0),) as uint[1];
+	(x,t):=foo(idx,x,0);
+	measure(x,idx); /// TODO
+}

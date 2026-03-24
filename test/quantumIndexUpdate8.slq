@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	k:=H(0);
+	x:=([0,dup(k)],[1,dup(k)]);
+	x[0][0]:=X(x[0][0]);
+	return k;
+}
