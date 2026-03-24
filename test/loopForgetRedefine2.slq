@@ -5,7 +5,7 @@ def main(){
 	while measure(H(0)){
 		forget(y); /// error (could type check in principle)
 		x:=H(x);
-		y:=dup(x); /// error
+		y:=dup(x);
 	}
 	return x;
 }

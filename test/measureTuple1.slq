@@ -5,5 +5,5 @@ def main(){
 	x:=(0,0);
 	idx:=(H(0),) as uint[1];
 	(x,t):=foo(idx,x,0);
-	measure(x,idx); /// TODO
+	measure(x,idx);
 }

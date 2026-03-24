@@ -1,11 +1,11 @@
 def foo(x:𝔹){
 	y:=dup(x);
 	z:=y;
-	r:=z;
+	r:=z; /// error
 	if X(z){ /// error
 		return x;
 	}else{
 		forget(y); /// error
 	}
-	return (r,x); /// error
+	return (r,x);
 }
