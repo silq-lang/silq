@@ -1,0 +1,10 @@
+// args: --run
+
+def main(){
+	k:=H(0);
+	x:=([0,dup(k)],[1,dup(k)]);
+	(i,j):=(H(0),H(0));
+	(x[i],x[j]):=(x[j],x[i]); /// TODO
+	forget(x);
+	return (k,i,j);
+}

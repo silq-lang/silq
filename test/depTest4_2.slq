@@ -2,8 +2,9 @@
 
 def main(){
 	n:=3;
-	x:=array(n,0:𝔹);
 	y:=H(0:𝔹);
-	x[0]=dup(y);
+	x:=array(n,y);
+	i:=0,j:=1;
+	(x[i],x[j]):=(x[j],x[i]);
 	return y;
 }

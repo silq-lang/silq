@@ -3136,7 +3136,7 @@ class ScopeWriter {
 	}
 
 	Value implExpr(ast_exp.IndexExp e) {
-		assert(!e.byRef, "IndexExp(byRef=true) not in simple DefineExp");
+		assert(!e.byRef && !e.replacements.length, "IndexExp(byRef=true) not in simple DefineExp");
 		assert(e.e.constLookup, "Indexed value must be const");
 		assert(e.a.constLookup, "Index must be const");
 
@@ -4815,6 +4815,15 @@ class ScopeWriter {
 	}
 
 	Result genIndexRead(ast_exp.IndexExp ie, Expression lhse) {
+		foreach(repl; ie.replacements) {
+			auto prev = cast(ast_decl.VarDecl)repl.previous, new_ = cast(ast_decl.VarDecl)repl.new_;
+			assert(prev && new_);
+			assert(prev.vtype && new_.vtype && new_.vtype==prev.vtype.getQuantum);
+			auto conv = ast_conv.typeExplicitConversion!true(prev.vtype, new_.vtype, ast_exp.TypeAnnotationType.annotation);
+			assert(!!conv);
+			defineVar(new_, genConvert(conv, getVar(prev, false)));
+		}
+
 		auto lhs = cast(ast_exp.Identifier) lhse;
 		assert(lhs, "IndexExp(byRef=true) read not into Identifier");
 		assert(lhs.type == ie.type);
@@ -4942,7 +4951,6 @@ class ScopeWriter {
 				v = w.genSubtype(rhsv, rhs.type, baseTy2);
 				return;
 			}
-			assert(!indices[0].isQuantum, "TODO quantum index replacement");
 			auto idx = indices[0];
 			Expression arrayTy2 = null;
 			bool makeArray = false;
