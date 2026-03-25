@@ -4798,6 +4798,13 @@ class ScopeWriter {
 				return genIndexRead(ie, lhs);
 			}
 		}
+		if(auto le = cast(ast_exp.LetExp) rhs) {
+			if(auto ie = cast(ast_exp.IndexExp) le.isForward(false)) {
+				if(ie.byRef) {
+					return genIndexRead(ie, lhs);
+				}
+			}
+		}
 		if(auto ie = cast(ast_exp.IndexExp) lhs) {
 			if(ie.byRef) {
 				return genIndexWrite(ie, rhs, e);
