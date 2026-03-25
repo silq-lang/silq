@@ -124,20 +124,20 @@ string formatQValue(QState qs, QState.Value value){
 		}
 		Term[] terms;
 		terms.reserve(qs.state.length);
-		bool first=true;
+		//bool first=true;
 		QState.R arg0=0.0;
 		QState.R maxAbs=0.0;
 		foreach(k,v;origState.map!(x=>x)){
 			auto a=abs(v);
 			if(a>maxAbs) maxAbs=a;
-			if (first){
+			/+if (first){
 				arg0=arg(v);
 				first=false;
-			}
+			}+/
 		}
 		QState.R arg1=argNorm(arg0+PI);
-		bool anyArg=false;
-		/+foreach(k,v;origState.map!(x=>x)){
+		/+bool anyArg=false;
+		foreach(k,v;origState.map!(x=>x)){
 			QState.R θ=arg(v);
 			if(!(argClose(arg0,θ)||argClose(arg1,θ))){
 				anyArg=true;
@@ -145,6 +145,7 @@ string formatQValue(QState qs, QState.Value value){
 			}
 		}
 		if(anyArg) arg0=0.0;+/
+		bool anyArg=true;
 		QState.R maxAbsSq=maxAbs*maxAbs;
 		int exp=0;
 		QState.R expScale=1.0;
