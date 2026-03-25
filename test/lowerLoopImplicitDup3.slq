@@ -1,0 +1,10 @@
+// args: --remove-loops
+
+def foo(){
+	x:=0:𝔹; /// TODO
+	while measure(H(0)){
+		y:=x; // implicit dup
+		measure(y);
+	}
+}
+def main()⇒foo;

@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	x:=[[0,1],[1,0]];
+	(i,j):=(H(0),H(0));
+	(x[i],x[j]):=(x[j],x[i]); /// TODO
+	assert(measure(x=if i=j then [[0,1],[1,0]] else [[1,0],[0,1]]));
+	return (x,i,j);
+}

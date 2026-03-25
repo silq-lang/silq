@@ -4837,15 +4837,19 @@ class ScopeWriter {
 		ap.put(p);
 	}
 
-	Result genIndexRead(ast_exp.IndexExp ie, Expression lhse) {
-		foreach(repl; ie.replacements) {
+	void performUpcastReplacements(ast_exp.AAssignExp.Replacement[] replacements) {
+		foreach(repl; replacements) {
 			auto prev = cast(ast_decl.VarDecl)repl.previous, new_ = cast(ast_decl.VarDecl)repl.new_;
 			assert(prev && new_);
-			assert(prev.vtype && new_.vtype && new_.vtype==prev.vtype.getQuantum);
+			assert(prev.vtype == new_.vtype || prev.vtype && new_.vtype && new_.vtype==prev.vtype.getQuantum);
 			auto conv = ast_conv.typeExplicitConversion!true(prev.vtype, new_.vtype, ast_exp.TypeAnnotationType.annotation);
 			assert(!!conv);
 			defineVar(new_, genConvert(conv, getVar(prev, false)));
 		}
+	}
+
+	Result genIndexRead(ast_exp.IndexExp ie, Expression lhse) {
+		performUpcastReplacements(ie.replacements);
 
 		auto lhs = cast(ast_exp.Identifier) lhse;
 		assert(lhs, "IndexExp(byRef=true) read not into Identifier");
@@ -5219,8 +5223,19 @@ class ScopeWriter {
 		assert(!!ie1);
 		auto ie2 = cast(ast_exp.IndexExp)origVars.e[1];
 		assert(!!ie2);
-		if(cast(ast_exp.IndexExp)ie1.e || cast(ast_exp.IndexExp)ie2.e) {
-			auto lowering = ast_low.getSwapLowering(orig, nscope);
+		performUpcastReplacements(ie1.replacements);
+		ie1.replacements = [];
+
+		bool hasQuantumIndices(ast_exp.IndexExp idx) {
+			for(; idx; idx = cast(ast_exp.IndexExp)idx.e) {
+				if(idx.a.type && !ast_ty.isClassical(idx.a.type)) {
+					return true;
+				}
+			}
+			return false;
+		}
+		if(cast(ast_exp.IndexExp)ie1.e || cast(ast_exp.IndexExp)ie2.e || hasQuantumIndices(ie1) || hasQuantumIndices(ie2)) {
+			auto lowering = ast_low.getSwapLowering(orig, nscope); // TODO just do this for every swap, not just the hard cases?
 			assert(!!lowering, format("Failed to lower swap: %s", orig));
 			return genStmt(lowering);
 		}

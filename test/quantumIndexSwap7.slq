@@ -1,0 +1,9 @@
+
+def main(){
+	k:=H(0);
+	x:=((0,dup(k)),(1,dup(k)));
+	i:=H(0),j:=H(0);
+	y:=dup(x);
+	(x[i][0],x[j][0]):=(x[j][0],x[i][0]);
+	return (k,i,j);
+}
