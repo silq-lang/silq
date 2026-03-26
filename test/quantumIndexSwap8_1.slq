@@ -1,0 +1,11 @@
+// args: --run
+
+def main(){
+	x:=[0,1]:𝔹^2;
+	y:=H(0);
+	z:=H(0);
+	(i,j):=dup(y,z);
+	(x[i],x[j]):=(x[j],x[i]); /// TODO
+	assert(measure(x=if y==z then (0,1) else (1,0)));
+	return (x,y,z);
+}

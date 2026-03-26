@@ -1,0 +1,8 @@
+// args: --remove-loops
+
+def id(x:𝔹):𝔹⇒x;
+
+def foo(x:𝔹):𝔹{
+	while true{ x := id(x); }
+	return x; /// TODO ? (or make it an error even before lowering)
+}

@@ -1,0 +1,7 @@
+
+def id(x:𝔹):𝔹⇒x;
+
+def foo(x:𝔹):𝔹{
+	while true{ x := id(x); }
+	return x;
+}

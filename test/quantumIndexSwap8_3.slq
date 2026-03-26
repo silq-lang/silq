@@ -1,0 +1,10 @@
+// args: --run
+
+def main(){
+	x:=2:uint[2];
+	i:=H(0);
+	j:=H(0);
+	(x[i],x[j]):=(x[j],x[i]); /// TODO
+	assert(measure(x=if i=j then 2:uint[2] else 1:uint[2]));
+	return (x,i,j);
+}

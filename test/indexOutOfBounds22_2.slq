@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	x:=[]:𝔹[];
+	i:=0:𝔹;
+	j:=1:𝔹;
+	(x[i],x[j]):=(x[j],x[i]); /// TODO run_error
+	return (x,i,j);
+}
