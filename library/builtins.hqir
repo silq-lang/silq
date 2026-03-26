@@ -81,6 +81,47 @@ def silq_builtin.cindex_d($n, $qts, $i, %arr) [noinline]
 	%r := qfree_call_rev[qbuiltin.pack]($qt) <- %rlist
 	return %r
 
+def silq_builtin.qindex.0($n, $qt, $ilen, $k, $ci, %arr, %i)
+	$lit2 := literal[2]
+	$littrue := literal[true]
+	$qt_qubit := literal[qt_qubit]
+
+	$at_leaf := int_cmp_eq($k, $ilen)
+
+	if[$at_leaf=1] $leaf_ok := int_cmp_lt($ci, $n)
+	if[$at_leaf=1, $leaf_ok=0] %x_leaf_bad := qfree_call[qbuiltin.error]()
+	if[$at_leaf=1, $leaf_ok=1] %x_leaf_good := qfree_call[silq_builtin.cindex_i]($n, $qt, $ci, %arr)
+	if[$at_leaf=1] %x_leaf := cmerge($leaf_ok) <- %x_leaf_bad, %x_leaf_good
+
+	if[$at_leaf=0] %idx_bit := qfree_call[silq_builtin.cindex_i]($ilen, $qt_qubit, $k, %i)
+
+	if[$at_leaf=0] $bit_mask := int_pow($lit2, $k)
+	if[$at_leaf=0] $masked_ci := int_bit_and[-1]($ci, $bit_mask)
+	if[$at_leaf=0] $bit_was_set := int_cmp_eq($masked_ci, $bit_mask)
+	if[$at_leaf=0] $ci_toggled := int_bit_xor($ci, $bit_mask)
+	if[$at_leaf=0] $bit_needs_set := bool_xor($bit_was_set, $littrue)
+	if[$at_leaf=0] $ci_if1 := cond($bit_needs_set, $ci, $ci_toggled)
+
+	if[$at_leaf=0] $k1 := int_linear[1, 1]($k)
+	if[$at_leaf=0, %idx_bit=1] %x_if1_out := qfree_call[silq_builtin.qindex.0]($n, $qt, $ilen, $k1, $ci_if1, %arr, %i)
+
+	if[$at_leaf=0] $k2 := int_linear[1, 1]($k)
+	if[$at_leaf=0, %idx_bit=0] %x_if0_out := qfree_call[silq_builtin.qindex.0]($n, $qt, $ilen, $k2, $ci, %arr, %i)
+
+	if[$at_leaf=0] %x_rec := qmerge(%idx_bit) <- %x_if0_out, %x_if1_out
+	if[$at_leaf=0] qfree_call_rev[silq_builtin.cindex_i]($ilen, $qt_qubit, $k, %i) <- %idx_bit
+
+	%x := cmerge($at_leaf) <- %x_rec, %x_leaf
+	return %x
+
+def silq_builtin.qindex($n, $qt, $ilen, %arr, %i) [noinline]
+	$lit0 := literal[0]
+	$n_gz := int_cmp_lt($lit0, $n)
+	if[$n_gz=0] $r := abort()
+	if[$n_gz=0] %x0 := qfree_call[qbuiltin.error]()
+	if[$n_gz=1] %x1 := qfree_call[silq_builtin.qindex.0]($n, $qt, $ilen, $lit0, $lit0, %arr, %i)
+	%x := cmerge($n_gz) <- %x0, %x1
+	return %x
 
 def silq_builtin.cslice_i($n, $qt, $i1, $i2, %arr)
 	%tmp := qfree_call[qbuiltin.dup](%arr)
@@ -163,25 +204,31 @@ def silq_builtin.qswap.0($n, $qt, $ilen, $k, $ci, %i) <- %arr, %val
 	%val_rec, %val_leaf := csplit($at_leaf) <- %val
 
 	if[$at_leaf=1] $leaf_ok := int_cmp_lt($ci, $n)
-	if[$at_leaf=1, $leaf_ok=0] $leaf_abort := abort()
+	if[$at_leaf=1] %arr_leaf_err, %arr_leaf_ok := csplit($leaf_ok) <- %arr_leaf
+	if[$at_leaf=1] %val_leaf_err, %val_leaf_ok := csplit($leaf_ok) <- %val_leaf
 
-	if[$at_leaf=1] $dummy := qt_dummy($qt)
-	if[$at_leaf=1] %tmp1 := qfree_call[qbuiltin.alloc_bitvec]($qt, $dummy)
-	if[$at_leaf=1] %arr_leaf_1, %saved_elem := qfree_call[silq_builtin.cswap_i]($n, $qt, $ci) <- %arr_leaf, %tmp1
+	if[$at_leaf=1, $leaf_ok=0] qfree_call_rev[qbuiltin.error]() <- %arr_leaf_err
+	if[$at_leaf=1, $leaf_ok=0] qfree_call_rev[qbuiltin.error]() <- %val_leaf_err
+	if[$at_leaf=1, $leaf_ok=0] %arr_leaf_bad := qfree_call[qbuiltin.error]()
+	if[$at_leaf=1, $leaf_ok=0] %val_leaf_bad := qfree_call[qbuiltin.error]()
 
-	if[$at_leaf=1] %tmp2 := qfree_call[qbuiltin.alloc_bitvec]($qt, $dummy)
-	if[$at_leaf=1] %arr_leaf_2, %tmp2_out := qfree_call[silq_builtin.cswap_i]($n, $qt, $ci) <- %arr_leaf_1, %tmp2
-	if[$at_leaf=1] qfree_call_rev[qbuiltin.alloc_bitvec]($qt, $dummy) <- %tmp2_out
+	if[$at_leaf=1, $leaf_ok=1] $dummy := qt_dummy($qt)
+	if[$at_leaf=1, $leaf_ok=1] %tmp1 := qfree_call[qbuiltin.alloc_bitvec]($qt, $dummy)
+	if[$at_leaf=1, $leaf_ok=1] %arr_leaf_1, %saved_elem := qfree_call[silq_builtin.cswap_i]($n, $qt, $ci) <- %arr_leaf_ok, %tmp1
 
-	if[$at_leaf=1] %arr_leaf_out, %tmp3_out := qfree_call[silq_builtin.cswap_i]($n, $qt, $ci) <- %arr_leaf_2, %val_leaf
-	if[$at_leaf=1] qfree_call_rev[qbuiltin.alloc_bitvec]($qt, $dummy) <- %tmp3_out
+	if[$at_leaf=1, $leaf_ok=1] %tmp2 := qfree_call[qbuiltin.alloc_bitvec]($qt, $dummy)
+	if[$at_leaf=1, $leaf_ok=1] %arr_leaf_2, %tmp2_out := qfree_call[silq_builtin.cswap_i]($n, $qt, $ci) <- %arr_leaf_1, %tmp2
+	if[$at_leaf=1, $leaf_ok=1] qfree_call_rev[qbuiltin.alloc_bitvec]($qt, $dummy) <- %tmp2_out
+
+	if[$at_leaf=1, $leaf_ok=1] %arr_leaf_good, %tmp3_out := qfree_call[silq_builtin.cswap_i]($n, $qt, $ci) <- %arr_leaf_2, %val_leaf_ok
+	if[$at_leaf=1, $leaf_ok=1] qfree_call_rev[qbuiltin.alloc_bitvec]($qt, $dummy) <- %tmp3_out
+
+	if[$at_leaf=1] %arr_leaf_out := cmerge($leaf_ok) <- %arr_leaf_bad, %arr_leaf_good
+	if[$at_leaf=1] %val_leaf_out := cmerge($leaf_ok) <- %val_leaf_bad, %saved_elem
 
 	if[$at_leaf=0] %idx_bit := qfree_call[silq_builtin.cindex_i]($ilen, $qt_qubit, $k, %i)
 	if[$at_leaf=0] %arr_if0, %arr_if1 := qsplit(%idx_bit) <- %arr_rec
 	if[$at_leaf=0] %val_if0, %val_if1 := qsplit(%idx_bit) <- %val_rec
-
-	if[$at_leaf=0] $k_ok := int_cmp_lt($k, $ilen)
-	if[$at_leaf=0, $k_ok=0] $rec_abort := abort()
 
 	if[$at_leaf=0] $bit_mask := int_pow($lit2, $k)
 	if[$at_leaf=0] $masked_ci := int_bit_and[-1]($ci, $bit_mask)
@@ -190,22 +237,8 @@ def silq_builtin.qswap.0($n, $qt, $ilen, $k, $ci, %i) <- %arr, %val
 	if[$at_leaf=0] $bit_needs_set := bool_xor($bit_was_set, $littrue)
 	if[$at_leaf=0] $ci_if1 := cond($bit_needs_set, $ci, $ci_toggled)
 
-	if[$at_leaf=0] $ci_if1_in_bounds := int_cmp_lt($ci_if1, $n)
-	if[$at_leaf=0] $ci_if1_oob := bool_xor($ci_if1_in_bounds, $littrue)
-
-	if[$at_leaf=0, %idx_bit=1] %arr_if1_ok, %arr_if1_err := csplit($ci_if1_oob) <- %arr_if1
-	if[$at_leaf=0, %idx_bit=1] %val_if1_ok, %val_if1_err := csplit($ci_if1_oob) <- %val_if1
-
-	if[$at_leaf=0, $ci_if1_oob=1, %idx_bit=1] qfree_call_rev[qbuiltin.error]() <- %arr_if1_err
-	if[$at_leaf=0, $ci_if1_oob=1, %idx_bit=1] qfree_call_rev[qbuiltin.error]() <- %val_if1_err
-	if[$at_leaf=0, $ci_if1_oob=1, %idx_bit=1] %arr_if1_abort := qfree_call[qbuiltin.error]()
-	if[$at_leaf=0, $ci_if1_oob=1, %idx_bit=1] %val_if1_abort := qfree_call[qbuiltin.error]()
-
-	if[$at_leaf=0, $ci_if1_oob=0] $k1 := int_linear[1, 1]($k)
-	if[$at_leaf=0, $ci_if1_oob=0, %idx_bit=1] %arr_if1_rec, %val_if1_rec := qfree_call[silq_builtin.qswap.0]($n, $qt, $ilen, $k1, $ci_if1, %i) <- %arr_if1_ok, %val_if1_ok
-
-	if[$at_leaf=0, %idx_bit=1] %arr_if1_out := cmerge($ci_if1_oob) <- %arr_if1_rec, %arr_if1_abort
-	if[$at_leaf=0, %idx_bit=1] %val_if1_out := cmerge($ci_if1_oob) <- %val_if1_rec, %val_if1_abort
+	if[$at_leaf=0] $k1 := int_linear[1, 1]($k)
+	if[$at_leaf=0, %idx_bit=1] %arr_if1_out, %val_if1_out := qfree_call[silq_builtin.qswap.0]($n, $qt, $ilen, $k1, $ci_if1, %i) <- %arr_if1, %val_if1
 
 	if[$at_leaf=0] $k2 := int_linear[1, 1]($k)
 	if[$at_leaf=0, %idx_bit=0] %arr_if0_out, %val_if0_out := qfree_call[silq_builtin.qswap.0]($n, $qt, $ilen, $k2, $ci, %i) <- %arr_if0, %val_if0
@@ -215,10 +248,10 @@ def silq_builtin.qswap.0($n, $qt, $ilen, $k, $ci, %i) <- %arr, %val
 	if[$at_leaf=0] qfree_call_rev[silq_builtin.cindex_i]($ilen, $qt_qubit, $k, %i) <- %idx_bit
 
 	%arr2 := cmerge($at_leaf) <- %arr_rec_out, %arr_leaf_out
-	%val2 := cmerge($at_leaf) <- %val_rec_out, %saved_elem
+	%val2 := cmerge($at_leaf) <- %val_rec_out, %val_leaf_out
 	return %arr2, %val2
 
-def silq_builtin.qswap($n, $qt, $ilen, %i) <- %arr, %val
+def silq_builtin.qswap($n, $qt, $ilen, %i) <- %arr, %val [noinline]
 	$lit0 := literal[0]
 	$n_gz := int_cmp_lt($lit0, $n)
 	if[$n_gz=0] $r := abort()

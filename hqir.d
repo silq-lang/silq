@@ -251,6 +251,7 @@ static immutable string opCat = "qfree_call[qbuiltin.cat]";
 static immutable string opUncat = "qfree_call_rev[qbuiltin.cat]";
 static immutable string opIndexDupI = "qfree_call[silq_builtin.cindex_i]";
 static immutable string opIndexDupD = "qfree_call[silq_builtin.cindex_d]";
+static immutable string opQIndexDup = "qfree_call[silq_builtin.qindex]";
 static immutable string opSliceI = "qfree_call[silq_builtin.cslice_i]";
 static immutable string opSliceD = "qfree_call[silq_builtin.cslice_d]";
 static immutable string opIndexSwapI = "qfree_call[silq_builtin.cswap_i]";
@@ -3070,7 +3071,7 @@ class ScopeWriter {
 			assert(r.hasClassical || ast_sem.isBuiltInCall(cast(ast_exp.CallExp)e) == ast_sem.BuiltIn.qabort, "missing classical component in diverging expression");
 		} else {
 			assert(!r.hasClassical || typeHasClassical(e.type), format("got a classical component in value of type %s: %s", e.type, e));
-			assert(!r.hasQuantum || typeHasQuantum(e.type), format("got a quantum component in value of type %s: %s", e.type, e));
+			assert(!r.hasQuantum || typeHasQuantum(e.type), format("got a quantum component in value of type %s: %s <%s>", e.type, e, r));
 		}
 		return r;
 	}
@@ -3151,9 +3152,6 @@ class ScopeWriter {
 			return valAbort(e.type);
 		}
 
-		if(auto low = ast_low.getLowering(e, semContext(e.constLookup)))
-			return genValue(low);
-
 		auto v = genExpr(e.e);
 		auto ty = e.e.type;
 		if(auto tupTy = cast(ast_ty.TupleTy) ty) {
@@ -3167,12 +3165,9 @@ class ScopeWriter {
 
 		Index i = genIndex(e.a);
 		Value r;
-		if(!i.isQuantum) {
-			r = implIndexDup(v, e.type, ty, i.creg);
-		} else {
-			assert(0, "TODO quantum indexing");
-		}
+		r = implIndexDup(v, e.type, ty, i);
 		valForget(v);
+		i.forget(this);
 		return r;
 	}
 
@@ -3252,65 +3247,94 @@ class ScopeWriter {
 		return r;
 	}
 
-	Value implIndexDup(Value v, Expression rTy, Expression ty, CReg i) {
+	Value implIndexDup(Value v, Expression rTy, Expression ty, Index idx) {
 		if(auto tupTy = cast(ast_ty.TupleTy) ty) {
-			if(auto ii = ctx.asIndex(i, tupTy.types.length)) {
-				size_t ix = ii.get();
-				auto vs = valUnpack(tupTy.types, valDup(v));
-				auto r = vs[ix];
-				vs[ix] = null;
-				valForget(vs);
-				return genSubtype(r, tupTy.types[ix], rTy);
+			if(!idx.isQuantum) {
+				if(auto ii = ctx.asIndex(idx.creg, tupTy.types.length)) {
+					size_t ix = ii.get();
+					auto vs = valUnpack(tupTy.types, valDup(v));
+					auto r = vs[ix];
+					vs[ix] = null;
+					valForget(vs);
+					return genSubtype(r, tupTy.types[ix], rTy);
+				}
 			}
 
 			auto ty2 = ast_ty.vectorTy(rTy, tupTy.length);
 			auto v2 = genSubtype(valDup(v), ty, ty2);
-			auto r = implIndexDupVector(v2, rTy, ctx.literalInt(tupTy.length), i);
+			auto r = implIndexDupVector(v2, rTy, ctx.literalInt(tupTy.length), idx);
 			valForget(v2);
 			return r;
 		}
 		if(auto vecTy = cast(ast_ty.VectorTy) ty) {
 			CReg len = getVectorLength(vecTy);
-			ccg.checkLtInt(true, i, len);
-			return genSubtype(
-				implIndexDupVector(v, vecTy.next, len, i),
-				vecTy.next,
-				rTy,
-			);
+			assert(rTy == (idx.isQuantum() ? vecTy.next.getQuantum : vecTy.next));
+			if(idx.isQuantum() && typeHasClassical(vecTy)) {
+				auto vecTy2 = cast(ast_ty.VectorTy) vecTy.getQuantum();
+				assert(vecTy2 && !typeHasClassical(vecTy2));
+				auto v2 = genSubtype(valDup(v), vecTy, vecTy2);
+				auto r = implIndexDupVector(v2, vecTy2.next, len, idx);
+				valForget(v2);
+				return r;
+			}
+			return implIndexDupVector(v, vecTy.next, len, idx);
 		}
 		if(auto arrTy = cast(ast_ty.ArrayTy) ty) {
 			CReg len;
 			auto v2o = valArrayToVector(arrTy.next, len, v), v2 = v2o;
-			ccg.checkLtInt(true, i, len);
-			Value r = implIndexDupVector(v2, arrTy.next, len, i);
+			Value r = implIndexDupVector(v2, arrTy.next, len, idx);
 			return genSubtype(r, arrTy.next, rTy);
 		}
 		if(auto intTy = ast_ty.isFixedIntTy(ty)) {
 			auto bits = getNumericBits(intTy);
 			if(intTy.isClassical) {
-				assert(rTy == ast_ty.Bool(true));
-				return implIndexDupCInt(v, bits, i);
+				if(!idx.isQuantum) {
+					assert(rTy == ast_ty.Bool(true));
+					return implIndexDupCInt(v, bits, idx.creg);
+				} else {
+					assert(rTy == ast_ty.Bool(false));
+					auto ty2 = ty.getQuantum();
+					assert(!!ty2);
+					auto v2 = genSubtype(valDup(v), ty, ty2);
+					auto r = implIndexDupVector(v, rTy, bits, idx);
+					valForget(v2);
+					return r;
+				}
 			}
 			assert(rTy == ast_ty.Bool(false), format("indexing %s results in %s", ty, rTy));
-			return implIndexDupVector(v, rTy, bits, i);
+			return implIndexDupVector(v, rTy, bits, idx);
 		}
 		assert(false, format("Cannot index %s", ty));
 	}
 
-	Value implIndexDupVector(Value v, Expression itemTy, CReg len, CReg i) {
+	Value implIndexDupVector(Value v, Expression itemTy, CReg len, Index idx, bool check = true) {
 		CReg rc = null;
 		QReg rq = null;
-		if(v.hasClassical && typeHasClassical(itemTy)) {
-			rc = ccg.boxIndex(ctypeSilqTuple, len, v.creg, i);
-		}
-		if(v.hasQuantum && typeHasQuantum(itemTy)) {
-			rq = new QReg();
-			if(typeHasQDep(itemTy)) {
-				auto qts = getVectorQTypes(itemTy, len, v.creg);
-				qcg.writeQOp(opIndexDupD, [rq], [len, qts, i], [v.qreg], []);
-			} else {
+		if(!idx.isQuantum) {
+			auto i = idx.creg;
+			ccg.checkLtInt(check, i, len);
+			if(v.hasClassical && typeHasClassical(itemTy)) {
+				rc = ccg.boxIndex(ctypeSilqTuple, len, v.creg, i);
+			}
+			if(v.hasQuantum && typeHasQuantum(itemTy)) {
+				rq = new QReg();
+				if(typeHasQDep(itemTy)) {
+					auto qts = getVectorQTypes(itemTy, len, v.creg);
+					qcg.writeQOp(opIndexDupD, [rq], [len, qts, i], [v.qreg], []);
+				} else {
+					auto qt = getQTypeRaw(itemTy, null);
+					qcg.writeQOp(opIndexDupI, [rq], [len, qt, i], [v.qreg], []);
+				}
+			}
+		} else {
+			assert(!v.hasClassical && !typeHasClassical(itemTy));
+			if(v.hasQuantum) {
+				rq = new QReg();
 				auto qt = getQTypeRaw(itemTy, null);
-				qcg.writeQOp(opIndexDupI, [rq], [len, qt, i], [v.qreg], []);
+				auto ilen = idx.qlen;
+				qcg.writeQOp(opQIndexDup, [rq], [len, qt, ilen], [v.qreg, idx.qreg], []);
+			} else {
+				ccg.checkLtInt(check, ctx.intZero, len);
 			}
 		}
 		return valNewQ(rc, rq);
@@ -3357,7 +3381,12 @@ class ScopeWriter {
 		if(auto vecTy1 = cast(ast_ty.VectorTy) outerTy1) {
 			if(auto vecTy2 = cast(ast_ty.VectorTy) outerTy2) {
 				CReg len = getVectorLength(vecTy1);
-				return implIndexSwapVector(v, vecTy1.next, vecTy2.next, len, idx, repl);
+				auto r = implIndexSwapVector(v, vecTy1.next, vecTy2.next, len, idx, repl);
+				if(v.hasQuantum() && !typeHasQuantum(outerTy2)) {
+					qcg.deallocUnit(v.qreg);
+					v = Value.newReg(v.creg, null);
+				}
+				return r;
 			}
 			auto tupTy2 = outerTy2.isTupleTy();
 			assert(tupTy2);
@@ -3387,7 +3416,12 @@ class ScopeWriter {
 				if(intTy1.isClassical) {
 					v = genSubtype(v, outerTy1, outerTy2);
 				}
-				return implIndexSwapVector(v, ast_ty.Bool(false), ast_ty.Bool(false), bits, idx, repl);
+				auto r = implIndexSwapVector(v, ast_ty.Bool(false), ast_ty.Bool(false), bits, idx, repl);
+				if(v.hasQuantum && !typeHasQuantum(outerTy2)) {
+					qcg.deallocUnit(v.qreg);
+					v = Value.newReg(v.creg, null);
+				}
+				return r;
 			}
 			assert(!idx.isQuantum, "attempted quantum index replacement on classical aggregate");
 			auto i = idx.creg;
@@ -3498,14 +3532,13 @@ class ScopeWriter {
 			vq = new QReg();
 			rq = new QReg();
 			bool qd = typeHasQDep(itemTy2);
-			if(newQt is oldQt && !qd) {
-				if(!idx.isQuantum) {
-					auto i = idx.creg;
-					qcg.writeQOp(opIndexSwapI, [vq, rq], [len, oldQt, i], [], [v.qreg, p.qreg]);
-				} else {
-					auto ilen = idx.qlen, i = idx.qreg;
-					qcg.writeQOp(opQIndexSwap, [vq, rq], [len, oldQt, ilen], [i], [v.qreg, p.qreg]);
-				}
+			if(idx.isQuantum) {
+				assert(!qd);
+				auto ilen = idx.qlen, i = idx.qreg;
+				qcg.writeQOp(opQIndexSwap, [vq, rq], [len, oldQt, ilen], [i], [v.qreg, p.qreg]);
+			}else if(newQt is oldQt && !qd) {
+				auto i = idx.creg;
+				qcg.writeQOp(opIndexSwapI, [vq, rq], [len, oldQt, i], [], [v.qreg, p.qreg]);
 			} else {
 				assert(!idx.isQuantum);
 				auto i = idx.creg;

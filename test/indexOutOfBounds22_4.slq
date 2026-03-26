@@ -1,0 +1,8 @@
+
+def main(){
+	x:=():unit;
+	i:=0:𝔹;
+	j:=1:𝔹;
+	(x[i],x[j]):=(x[j],x[i]); /// error
+	return (x,i,j);
+}
