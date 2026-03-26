@@ -311,6 +311,13 @@ def silq_builtin.qfunc_const_bitvec($func, $cap_qt, $cap_bv, $arg_classical, %fa
 	autoforget <- %real_cap
 	return $r, %r
 
+def silq_builtin.qfunc_once_bitvec($func, $cap_qt_const, $cap_bv_const, $cap_qt_moved, $cap_bv_moved, $arg_classical, %fake_cap_const, %arg_const) <- %fake_cap_moved, %arg_moved
+	qfree_call_rev[qbuiltin.alloc_unit]() <- %fake_cap_moved
+	%real_cap_const := qfree_call[qbuiltin.alloc_bitvec]($cap_qt_const, $cap_bv_const)
+	%real_cap_moved := qfree_call[qbuiltin.alloc_bitvec]($cap_qt_moved, $cap_bv_moved)
+	$r, %r := call($func, $arg_classical, %real_cap_const, %arg_const) <- %real_cap_moved, %arg_moved
+	autoforget <- %real_cap_const
+	return $r, %r
 
 def silq_builtin.qtype_const($qt, $cc) [artificial]
 	return $qt

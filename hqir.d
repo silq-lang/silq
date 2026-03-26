@@ -6,7 +6,7 @@ import std.string: endsWith;
 import std.format: format;
 import std.functional: partial;
 import std.algorithm: map, filter, canFind, count, all, any, fold;
-import std.range: iota, zip, repeat;
+import std.range: iota, zip, repeat, chain;
 import std.utf: byCodeUnit;
 import std.bigint: BigInt, toDecimalString;
 import std.traits: EnumMembers;
@@ -273,19 +273,58 @@ struct QCapture {
 	QReg qreg;
 }
 
+struct FunctionValue {
+	FunctionInfo info;
+	CReg[] cCapR;
+	CCGen ccg;
+	QCGen qcg;
+	ast_ty.CaptureAnnotation captureKind;
+	CReg[] qCapConstT;
+	QReg[] qCapConstR;
+	CReg[] qCapMovedT;
+	QReg[] qCapMovedR;
+
+	QReg moveToQReg() {
+		assert(ccg && qcg);
+		QReg qregConst = null, qregMoved = null;
+		if(hasConstCapture(captureKind)) {
+			qregConst = qcg.pack(qCapConstT, qCapConstR);
+		}
+		if(hasMovedCapture(captureKind)) {
+			qregMoved = qcg.pack(qCapMovedT, qCapMovedR);
+		}
+
+		QReg qreg = null;
+		if(qregConst && qregMoved) {
+			auto qtypeConst = ccg.qtTuple(qCapConstT);
+			auto qtypeMoved = ccg.qtTuple(qCapMovedT);
+			qreg = qcg.pack([qtypeConst, qtypeMoved], [qregConst, qregMoved]);
+		} else if(qregConst) {
+			qreg = qregConst;
+		} else if(qregMoved) {
+			qreg = qregMoved;
+		}
+
+		this = typeof(this).init;
+
+		if(!qreg) {
+			// quantum component suddenly disappeared?
+			// We cannot change hasQuantum after initialization, so create an empty one.
+			qreg = qcg.allocUnit();
+		}
+		return qreg;
+	}
+}
+
 final class Value {
 	CReg _creg = null;
 	QReg _qreg = null;
 
-	FunctionInfo funcInfo;
-	CReg[] funcCapR;
-	QCGen qfuncQcg;
-	CReg[] qfuncCapT;
-	QReg[] qfuncCapR;
+	FunctionValue func;
 
 	@property
 	bool hasQuantum() {
-		if(qfuncQcg) return true;
+		if(func.qcg) return true;
 		return !!_qreg;
 	}
 
@@ -301,26 +340,15 @@ final class Value {
 
 	@property
 	QReg qreg() {
-		auto qcg = qfuncQcg;
-		if(!qcg) return _qreg;
-		_qreg = qcg.pack(qfuncCapT, qfuncCapR);
-
-		funcInfo = null;
-		funcCapR = null;
-		qfuncQcg = null;
-		qfuncCapT = null;
-		qfuncCapR = null;
-
-		if(!_qreg) {
-			// quantum component suddenly disappeared?
-			// We cannot change hasQuantum after initialization, so create an empty one.
-			_qreg = qcg.allocUnit();
+		if(func.qcg) {
+			assert(!_qreg);
+			_qreg = func.moveToQReg();
 		}
 		return _qreg;
 	}
 
 	override string toString() {
-		if(funcInfo) return format("func[%s]", funcInfo.prettyName);
+		if(func.info) return format("func[%s]", func.info.prettyName);
 		return format("(%s,%s)", _creg, _qreg);
 	}
 
@@ -331,45 +359,59 @@ final class Value {
 		return v;
 	}
 
-	static Value newFunction(ScopeWriter sc, FunctionInfo fi, Value[] captures) {
+	static Value newFunction(ScopeWriter sc, FunctionInfo fi, Value[] constCaptures, Value[] movedCaptures) {
 		auto cCapR = appender!(CReg[]);
-		auto qCapT = appender!(CReg[]);
-		auto qCapR = appender!(QReg[]);
-		foreach(i, cap; fi.captures) {
-			auto val = captures[i];
-			if(cap.hasClassical) {
-				cCapR.put(val.creg);
-			} else if(val.hasClassical) {
-				assert(0, "Capture has no classical component but argument does");
-			}
-			if(val.hasQuantum) {
-				assert(cap.hasQuantum, "Capture has no quantum component but argument does");
-				assert(val.qreg);
-				qCapT.put(sc.getQType(typeForDecl(cap.innerDecl), val));
-				qCapR.put(val.qreg);
-			} else if(cap.hasQuantum) {
-				qCapT.put(sc.ctx.qtUnit);
-				qCapR.put(null);
+		void prepareCaptures(CapInfo[] info, Value[] captures, ref Appender!(CReg[]) qCapT, ref Appender!(QReg[]) qCapR) {
+			foreach(i, cap; info) {
+				auto val = captures[i];
+				if(cap.hasClassical) {
+					cCapR.put(val.creg);
+				} else if(val.hasClassical) {
+					assert(0, "Capture has no classical component but argument does");
+				}
+				if(val.hasQuantum) {
+					assert(cap.hasQuantum, "Capture has no quantum component but argument does");
+					assert(val.qreg);
+					qCapT.put(sc.getQType(typeForDecl(cap.innerDecl), val));
+					qCapR.put(val.qreg);
+				} else if(cap.hasQuantum) {
+					qCapT.put(sc.ctx.qtUnit);
+					qCapR.put(null);
+				}
 			}
 		}
+		auto qCapConstT = appender!(CReg[]);
+		auto qCapConstR = appender!(QReg[]);
+		prepareCaptures(fi.constCaptures, constCaptures, qCapConstT, qCapConstR);
+		auto qCapMovedT = appender!(CReg[]);
+		auto qCapMovedR = appender!(QReg[]);
+		prepareCaptures(fi.movedCaptures, movedCaptures, qCapMovedT, qCapMovedR);
 
 		auto v = new Value();
 		v._creg = sc.ccg.funcPack(fi.indirectName, cCapR[]);
-		v.funcInfo = fi;
-		v.funcCapR = cCapR[];
 
-		auto qtype = sc.ccg.qtTuple(qCapT[]);
-		if(qtype is sc.ctx.qtUnit) {
-			foreach(val; captures) {
+		auto qtypeConst = hasConstCapture(fi.captureKind) ? sc.ccg.qtTuple(qCapConstT[]) : null;
+		auto qtypeMoved = hasMovedCapture(fi.captureKind) ? sc.ccg.qtTuple(qCapMovedT[]) : null;
+
+		CReg qtype = null;
+		if(qtypeConst && qtypeMoved) {
+			qtype = sc.ccg.qtTuple([qtypeConst,qtypeMoved]);
+		} else if(qtypeConst) {
+			qtype = qtypeConst;
+		} else if(qtypeMoved) {
+			qtype = qtypeMoved;
+		}
+
+		if(!qtype || qtype is sc.ctx.qtUnit) {
+			foreach(val; chain(constCaptures, movedCaptures)) {
 				if(val.hasQuantum) sc.qcg.deallocUnit(val.qreg);
 			}
+			v.func = FunctionValue(fi, cCapR[]);
 			return v;
 		}
 
 		v._creg = sc.ccg.qfuncPack(v._creg, qtype);
-		v.qfuncQcg = sc.qcg;
-		v.qfuncCapT = qCapT[];
-		v.qfuncCapR = qCapR[];
+		v.func = FunctionValue(fi, cCapR[], sc.ccg, sc.qcg, fi.captureKind, qCapConstT[], qCapConstR[], qCapMovedT[], qCapMovedR[]);
 		return v;
 	}
 
@@ -440,16 +482,23 @@ private bool typeHasQDep(Expression ty) {
 	return true;
 }
 
-private bool productTyIsMoved(ast_ty.ProductTy ty) {
-	final switch(ty.captureAnnotation) {
-		case ast_ty.CaptureAnnotation.none:
-		case ast_ty.CaptureAnnotation.const_:
-			return false;
-		case ast_ty.CaptureAnnotation.moved:
-			return true;
-		case ast_ty.CaptureAnnotation.once:
-		case ast_ty.CaptureAnnotation.spent:
-			assert(0, "TODO mixed const/moved captures");
+private bool hasMovedCapture(ast_ty.CaptureAnnotation captureKind) {
+	final switch(captureKind) with(ast_ty.CaptureAnnotation) {
+		case none: return false;
+		case const_: return false;
+		case moved: return true;
+		case once: return true;
+		case spent: return false;
+	}
+}
+
+private bool hasConstCapture(ast_ty.CaptureAnnotation captureKind) {
+	final switch(captureKind) with(ast_ty.CaptureAnnotation) {
+		case none: return false;
+		case const_: return true;
+		case moved: return false;
+		case once: return true;
+		case spent: return true;
 	}
 }
 
@@ -1921,14 +1970,23 @@ class CCGen {
 		return boxPack(ctypeSilqQFunc, [func, qtype]);
 	}
 
+	CReg qfuncPack2(CReg func, CReg qtypeConst, CReg qtypeMoved) {
+		return boxPack(ctypeSilqQFunc, [func, qtypeConst, qtypeMoved]);
+	}
+
 	CReg qfuncInner(CReg r) {
-		assert(r);
+		assert(!!r);
 		return boxIndex(ctypeSilqQFunc, 2, r, 0);
 	}
 
 	CReg qfuncQType(CReg r) {
-		assert(r);
+		assert(!!r);
 		return boxIndex(ctypeSilqQFunc, 2, r, 1);
+	}
+
+	CReg[2] qfuncQType2(CReg r) {
+		assert(!!r);
+		return [boxIndex(ctypeSilqQFunc, 3, r, 1), boxIndex(ctypeSilqQFunc, 3, r, 2)];
 	}
 
 	CReg getArrayLength(CReg r) {
@@ -2340,7 +2398,8 @@ struct ArgInfo {
 struct CallInfo {
 	Value target;
 	FunctionInfo targetF;
-	bool isTuple, hasQuantum, captureMoved;
+	bool isTuple, hasQuantum;
+	ast_ty.CaptureAnnotation captureKind;
 	Expression retType;
 	bool makeClassical;
 	ast_exp.Annotation effect;
@@ -2877,19 +2936,24 @@ class ScopeWriter {
 
 	Value getFunc(ast_decl.FunctionDef fd, bool isDup, ast_exp.Identifier[] recaptures) {
 		auto fi = ctx.getFunctionInfo(fd);
-		auto caps = new Value[fi.captures.length];
-		foreach(i, cap; fi.captures) {
-			bool keep = isDup || cap.innerDecl is cap.outerDecl;
-			bool strict = true;
-			ast_decl.Declaration outer = cap.outerDecl;
-			if (recaptures) {
-				strict = false;
+		Value[] makeCaptures(CapInfo[] info) {
+			auto caps = new Value[info.length];
+			foreach(i, cap; info) {
+				bool keep = isDup || cap.innerDecl is cap.outerDecl;
+				bool strict = true;
+				ast_decl.Declaration outer = cap.outerDecl;
+				if (recaptures) {
+					strict = false;
+				}
+				Value v = getVar(cap.outerDecl, keep, strict);
+				v = genSubtype(v, typeForDecl(cap.innerDecl), typeForDecl(cap.innerDecl));
+				caps[i] = v;
 			}
-			Value v = getVar(cap.outerDecl, keep, strict);
-			v = genSubtype(v, typeForDecl(cap.innerDecl), typeForDecl(cap.innerDecl));
-			caps[i] = v;
+			return caps;
 		}
-		return Value.newFunction(this, fi, caps);
+		auto constCaptures = makeCaptures(fi.constCaptures);
+		auto movedCaptures = makeCaptures(fi.movedCaptures);
+		return Value.newFunction(this, fi, constCaptures, movedCaptures);
 	}
 
 	void checkEmpty(bool isAbort) {
@@ -3976,11 +4040,12 @@ class ScopeWriter {
 			auto cAp = appender!(CReg[]);
 			auto qcAp = appender!(QReg[]);
 			auto qiAp = appender!(QReg[]);
-			cAp.put(ci.target.funcCapR);
-			if (ci.captureMoved) {
-				qiAp.put(ci.target.qfuncCapR);
-			} else {
-				qcAp.put(ci.target.qfuncCapR);
+			cAp.put(ci.target.func.cCapR);
+			if(hasConstCapture(ci.captureKind)) {
+				qcAp.put(ci.target.func.qCapConstR);
+			}
+			if(hasMovedCapture(ci.captureKind)) {
+				qiAp.put(ci.target.func.qCapMovedR);
 			}
 
 			assert(ci.args.length == ci.targetF.params.length);
@@ -4192,7 +4257,7 @@ class ScopeWriter {
 			auto cAp = appender!(CReg[]);
 			auto qcAp = appender!(QReg[]);
 			auto qiAp = appender!(QReg[]);
-			cAp.put(ci.target.funcCapR);
+			cAp.put(ci.target.func.cCapR);
 			assert(!ci.target.hasQuantum);
 
 			assert(ci.args.length == ci.targetF.params.length);
@@ -5829,12 +5894,22 @@ class ScopeWriter {
 		if(auto prodTy = cast(ast_ty.ProductTy) ty) {
 			auto cfunc = ccg.qfuncInner(arg.creg);
 			if(!arg.hasQuantum) return cfunc;
-			auto qtype = ccg.qfuncQType(arg.creg);
-			if(qtype is ctx.qtUnit) return cfunc;
-			auto bv = new CReg();
-			qcg.writeMOp(opMeasureBitvec, [bv], [], [qtype], [], [arg.qreg]);
-			string op = productTyIsMoved(prodTy) ? "silq_builtin.qfunc_moved_bitvec" : "silq_builtin.qfunc_const_bitvec";
-			return ccg.funcPack(op, [cfunc, qtype, bv]);
+			auto hasConst = hasConstCapture(prodTy.captureAnnotation);
+			auto hasMoved = hasMovedCapture(prodTy.captureAnnotation);
+			assert(hasConst || hasMoved);
+			if(hasConst ^ hasMoved) {
+				auto qtype = ccg.qfuncQType(arg.creg);
+				if(qtype is ctx.qtUnit) return cfunc;
+				auto bv = new CReg();
+				qcg.writeMOp(opMeasureBitvec, [bv], [], [qtype], [], [arg.qreg]);
+				string op = hasMoved ? "silq_builtin.qfunc_moved_bitvec" : "silq_builtin.qfunc_const_bitvec";
+				return ccg.funcPack(op, [cfunc, qtype, bv]);
+			} else {
+				auto qtypes = ccg.qfuncQType2(arg.creg);
+				auto qtypeConst = qtypes[0], qtypeMoved = qtypes[1];
+				if(qtypeConst is ctx.qtUnit && qtypeMoved is ctx.qtUnit) return cfunc;
+				assert(0, "TODO measure `once` function");
+			}
 		}
 		if(auto tupTy = cast(ast_ty.TupleTy) ty) {
 			size_t n = tupTy.types.length;
@@ -5884,7 +5959,7 @@ class ScopeWriter {
 		}
 
 		auto target = genExpr(targetExpr);
-		auto targetF = target.funcInfo;
+		auto targetF = target.func.info;
 		bool isTuple = false;
 		Expression[] params;
 		Expression[] args;
@@ -5943,11 +6018,13 @@ class ScopeWriter {
 		ci.retType = retType;
 		ci.makeClassical = makeClassical;
 		ci.hasQuantum = typeHasQuantum(callTy);
-		ci.captureMoved = productTyIsMoved(callTy);
+		ci.captureKind = callTy.captureAnnotation;
 		ci.effect = callTy.annotation;
 		ci.args = ai;
 		if (targetF) {
-			assert(targetF.captures.all!(cap => !cap.hasQuantum || cap.isMoved == ci.captureMoved));
+			assert(targetF.captureKind == ci.captureKind);
+			assert(targetF.constCaptures.all!(cap => !cap.hasQuantum) || hasConstCapture(ci.captureKind));
+			assert(targetF.movedCaptures.all!(cap => !cap.hasQuantum) || hasMovedCapture(ci.captureKind));
 		}
 		return ci;
 	}
@@ -6018,11 +6095,22 @@ class ScopeWriter {
 		QReg qcCap = null, qiCap = null;
 		if(ci.hasQuantum) {
 			targetC = ccg.qfuncInner(targetC);
-			if(ci.captureMoved) {
-				assert(!isReversed);
-				qiCap = targetQ;
+			auto hasConst = hasConstCapture(ci.captureKind);
+			auto hasMoved = hasMovedCapture(ci.captureKind);
+			assert(hasConst || hasMoved);
+			if(hasConst ^ hasMoved) {
+				if(hasMoved) {
+					assert(!isReversed);
+					qiCap = targetQ;
+				} else {
+					qcCap = targetQ;
+				}
 			} else {
-				qcCap = targetQ;
+				auto qtypes = ccg.qfuncQType2(targetC);
+				auto qtypeConst = qtypes[0], qtypeMoved = qtypes[1];
+				qcCap = new QReg();
+				qiCap = new QReg();
+				qcg.writeQOp(opUnpack(2), [qcCap, qiCap], [qtypeConst, qtypeMoved], [], [targetQ]);
 			}
 		} else {
 			assert(!targetQ);
@@ -6923,7 +7011,7 @@ private:
 }
 
 struct CapInfo {
-	bool hasClassical, hasQuantum, isMoved;
+	bool hasClassical, hasQuantum;
 	ast_decl.Declaration innerDecl, outerDecl;
 }
 struct ParamInfo {
@@ -6936,7 +7024,9 @@ class FunctionInfo {
 	string prettyName;
 	string directName;
 	string indirectName;
-	CapInfo[] captures;
+	ast_ty.CaptureAnnotation captureKind;
+	CapInfo[] constCaptures;
+	CapInfo[] movedCaptures;
 	ParamInfo[] params;
 	bool retHasClassical, retHasQuantum;
 	bool isExtern;
@@ -7108,7 +7198,8 @@ class Writer {
 				outerParams = parent.params ~ outerParams;
 				at = parent;
 			}
-			fi.captures = outerParams.map!((cap) {
+			fi.captureKind = ast_ty.CaptureAnnotation.const_;
+			fi.constCaptures = outerParams.map!((cap) {
 				auto ty = typeForDecl(cap);
 				assert(cap.isConst, format("Extern function %s: Outer parameters must be const", fi.prettyName));
 				assert(!ast_ty.hasQuantumComponent(ty), format("Extern function %s: Outer parameters must be classical", fi.prettyName));
@@ -7127,11 +7218,13 @@ class Writer {
 				auto p = cap in paramI;
 				if (!p) continue;
 				auto i = *p;
-				fi.captures[i].innerDecl = cap;
-				fi.captures[i].outerDecl = cap;
+				fi.constCaptures[i].innerDecl = cap;
+				fi.constCaptures[i].outerDecl = cap;
 			}
 		} else {
-			fi.captures = fd.capturedDecls.map!((cap) {
+			fi.captureKind = fd.getCaptureAnnotation();
+			Appender!(CapInfo[]) constCaptures, movedCaptures;
+			foreach(cap; fd.capturedDecls) {
 				assert(!cap.scope_.isNestedIn(fd.fscope_));
 				auto ty = typeForDecl(cap);
 				CapInfo c;
@@ -7147,9 +7240,10 @@ class Writer {
 				}
 				c.hasClassical = typeHasClassical(ty);
 				c.hasQuantum = typeHasQuantum(ty);
-				c.isMoved = fd.isConsumedCapture(cap);
-				return c;
-			}).array;
+				(fd.isConsumedCapture(cap) ? movedCaptures : constCaptures) ~= c;
+			}
+			fi.constCaptures = constCaptures[];
+			fi.movedCaptures = movedCaptures[];
 		}
 		return fi;
 	}
@@ -7200,7 +7294,7 @@ class Writer {
 		auto qcArgs = appender!(QReg[]);
 		auto qiArgs = appender!(QReg[]);
 
-		foreach(cap; fi.captures) {
+		foreach(cap, isMoved; chain(zip(fi.constCaptures, repeat(false)), zip(fi.movedCaptures, repeat(true)))) {
 			if(!cap.innerDecl) {
 				assert(fi.isExtern, "only extern functions have fake captures");
 				assert(!cap.hasQuantum, "fake capture with quantum component");
@@ -7211,7 +7305,7 @@ class Writer {
 			if(cap.hasClassical) cArgs.put(v.creg);
 			else assert(!v.hasClassical);
 			if(cap.hasQuantum) {
-				if(cap.isMoved) qiArgs.put(v.qreg);
+				if(isMoved) qiArgs.put(v.qreg);
 				else qcArgs.put(v.qreg);
 			} else assert(!v.hasQuantum);
 		}
@@ -7238,8 +7332,8 @@ class Writer {
 			if(param.isConst) sc.getVar(param, false);
 		}
 		// clear const captures
-		foreach(i, cap; fi.captures) {
-			if(!cap.isMoved && cap.innerDecl) sc.getVar(cap.innerDecl, false);
+		foreach(i, cap; fi.constCaptures) {
+			if(cap.innerDecl) sc.getVar(cap.innerDecl, false);
 		}
 		sc.checkEmpty(!!res.isAbort);
 
@@ -7266,7 +7360,7 @@ class Writer {
 		auto qiCapT = appender!(CReg[]);
 		auto qiCapR = appender!(QReg[]);
 
-		foreach(cap; fi.captures) {
+		foreach(cap, isMoved; chain(zip(fi.constCaptures, repeat(false)), zip(fi.movedCaptures, repeat(true)))) {
 			if(!cap.innerDecl) {
 				assert(!cap.hasQuantum, "fake capture with quantum component");
 				assert(cap.hasClassical, "fake capture without classical component");
@@ -7283,7 +7377,7 @@ class Writer {
 			if(cap.hasQuantum) {
 				assert(val.qreg);
 				auto qt = sc.getQType(typeForDecl(cap.innerDecl), val);
-				if(cap.isMoved) {
+				if(isMoved) {
 					qiCapT.put(qt);
 					qiCapR.put(val.qreg);
 				} else {
