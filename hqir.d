@@ -4095,6 +4095,9 @@ class ScopeWriter {
 		final switch(ci.captureKind) with(ast_ty.CaptureAnnotation) {
 			case none,const_,moved: break;
 			case once:
+				if(!ci.newFunctionVar) {
+					break;
+				}
 				Value fval;
 				auto targetC = ci.target.creg;
 				auto funcC = ccg.qfuncInner(targetC);
@@ -4116,7 +4119,7 @@ class ScopeWriter {
 						fval = ci.target;
 					}
 				}
-				assert(ci.newFunctionVar && fval);
+				assert(ci.newFunctionVar && fval, text(ci," ",fval));
 				defineVar(ci.newFunctionVar, fval);
 				break;
 			case spent:
@@ -5949,7 +5952,14 @@ class ScopeWriter {
 				auto qtypes = ccg.qfuncQType2(arg.creg);
 				auto qtypeConst = qtypes[0], qtypeMoved = qtypes[1];
 				if(qtypeConst is ctx.qtUnit && qtypeMoved is ctx.qtUnit) return cfunc;
-				assert(0, "TODO measure `once` function");
+				auto qcCap = new QReg(), qiCap = new QReg();
+				qcg.writeQOp(opUnpack(2), [qcCap, qiCap], [qtypeConst, qtypeMoved], [], [arg.qreg]);
+				auto bvConst = new CReg();
+				qcg.writeMOp(opMeasureBitvec, [bvConst], [], [qtypeConst], [], [qcCap]);
+				auto bvMoved = new CReg();
+				qcg.writeMOp(opMeasureBitvec, [bvMoved], [], [qtypeMoved], [], [qiCap]);
+				enum op = "silq_builtin.qfunc_once_bitvec";
+				return ccg.funcPack(op, [cfunc, qtypeConst, bvConst, qtypeMoved, bvMoved]);
 			}
 		}
 		if(auto tupTy = cast(ast_ty.TupleTy) ty) {
@@ -5984,6 +5994,7 @@ class ScopeWriter {
 	CallInfo prepCall(Expression targetExpr, Expression argExpr, Expression retType, ast_decl.Declaration newFunctionVar, bool isReversed) {
 		auto callTy = cast(ast_ty.ProductTy) targetExpr.type;
 		assert(!!callTy, format("call to non-ProductTy %s", targetExpr));
+		assert(!newFunctionVar || !isReversed);
 
 		bool makeClassical = false;
 		{
