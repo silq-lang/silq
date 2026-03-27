@@ -1,0 +1,27 @@
+// args: --run
+
+def run(
+	g_const: 𝟙 → 𝔹,
+	g_moved: 𝟙 moved→ 𝔹,
+	g_once₀: 𝟙 once→ 𝔹,
+	g_once₁: 𝟙 once→ 𝔹,
+	g_once₂: 𝟙 once→ 𝔹,
+){
+	return (g_const(), g_moved(), g_once₀(), g_once₁(), g_once₂(), g_const, g_once₀, g_once₁, g_once₂);	
+}
+
+
+def main(){
+	def f_classical()wild⇒0:𝔹;
+	x:=H(0);
+	def f_const()wild⇒dup(x);
+	def f_moved()wild⇒x;
+
+	g_const := f_classical : 𝟙 → 𝔹;
+	g_moved := f_classical : 𝟙 moved→ 𝔹;
+	g_once₀ := f_classical : 𝟙 once→ 𝔹;
+	g_once₁ := f_const : 𝟙 once→ 𝔹;
+	g_once₂ := f_moved : 𝟙 once→ 𝔹;
+
+	return run(g_const, g_moved, g_once₀, g_once₁, g_once₂);
+}
