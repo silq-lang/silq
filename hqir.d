@@ -315,11 +315,11 @@ struct FunctionValue {
 			qreg = qregMoved;
 		}
 
-		this = typeof(this).init;
-
 		if(!qreg) {
 			qreg = qcg.allocUnit();
 		}
+
+		this = typeof(this).init;
 		return qreg;
 	}
 }
