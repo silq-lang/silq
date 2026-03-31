@@ -94,10 +94,12 @@ scope class HQIRBackend: Backend {
 
 int run(Backend backend, string path, ErrorHandler err){
 	path = getActualPath(path);
-	auto ext = path.extension;
-	if(ext != (language==astopt.silq?".slq":".psi")){ // TODO: support only language==silq
-		stderr.writeln(path~": unrecognized extension: "~ext);
-		return 1;
+	if(!path.startsWith("/dev/")){
+		auto ext = path.extension;
+		if(ext != (language==astopt.silq?".slq":".psi")){ // TODO: support only language==silq
+			stderr.writeln(path~": unrecognized extension: "~ext);
+			return 1;
+		}
 	}
 	TopScope sc=null;
 	Expression[] exprs;
@@ -147,10 +149,7 @@ int run(Backend backend, Expression[] exprs, Scope sc, FunctionDef fun=null){
 	return backend.run(fun, functions, sc.handler);
 }
 
-int main(string[] args){
-	//import core.memory; GC.disable();
-	version(TEST) test();
-
+int main_(string[] args){
 	Backend backend = null;
 	Source runExp = null, runOn = null, runOnEach = null;
 	bool useStdin = false;
@@ -433,3 +432,15 @@ int main(string[] args){
 		return 128+SIGABRT;
 	}
 }
+
+version(Emscripten){
+	extern(C) int main(int argc, char** argv){
+		import core.runtime : rt_init, rt_term;
+		if(!rt_init()) return 1;
+		//scope(exit) rt_term(); // crashes
+		import core.memory; GC.disable();
+		import std.range, core.stdc.string;
+		auto args=iota(argc).map!(i=>argv[i][0..strlen(argv[i])].text).array;
+		return main_(args);
+	}
+}else int main(string[] args)=>main_(args);
