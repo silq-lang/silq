@@ -260,8 +260,8 @@ string formatQValue(QState qs, QState.Value value){
 	}
 }
 
-long smallValue(ℤ value){
-	if(long.min<=value&&value<=long.max) return to!long(value);
+ptrdiff_t smallValue(ℤ value){
+	if(ptrdiff_t.min<=value&&value<=ptrdiff_t.max) return to!ptrdiff_t(value);
 	enforce(0,"value too large");
 	assert(0);
 }
