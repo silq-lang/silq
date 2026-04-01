@@ -1,0 +1,5 @@
+
+def main(){
+	f:=0;
+	def f[a:*](b:a)⇒b; /// error
+}
