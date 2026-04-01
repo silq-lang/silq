@@ -1,0 +1,17 @@
+// args: --remove-loops
+
+def foo(a:!ℕ,w:!ℕ){
+	(c,k,b,n,m,u,v):=(0,0,1,0,1,0,0);
+	while m<w { n+=1, m*=2; }
+	for i in 1..2{
+		u+=0;
+		v+=0;
+	}
+	while true{
+		f:=0;
+		(x,y):=(H(0),H(0)); /// error
+		for i in 0..1{
+			if true{ a=0; }
+		}
+	}
+}

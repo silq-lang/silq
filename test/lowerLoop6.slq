@@ -1,0 +1,13 @@
+// args: --run --remove-loops
+
+def main(){
+	r:=();
+	for i in 0..2{
+		for j in 0..2{
+			for k in 0..1{
+				r~=[H(0)];
+			}
+		}
+	}
+	return r;
+}
