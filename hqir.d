@@ -1673,8 +1673,8 @@ class CCGen {
 				if(v.length == 0) return null;
 				if(v.length == 1) return v[0];
 				if(auto ixBig = ix in ctx.intValue) {
+					if(*ixBig >= v.length) break;
 					auto ixInt = ixBig.to!size_t();
-					if(ixInt >= v.length) break;
 					return v[ixInt];
 				} else {
 					break;
@@ -3236,7 +3236,7 @@ class ScopeWriter {
 		if(auto tupTy = cast(ast_ty.TupleTy) ty) {
 			if(e.a.isConstant()) {
 				auto vs = valUnpack(tupTy.types, v);
-				auto r = recIndexTuple(vs, e.a);
+				auto r = recIndexTuple(vs, e.a, e.type);
 				valForget(vs);
 				return r;
 			}
@@ -3250,14 +3250,20 @@ class ScopeWriter {
 		return r;
 	}
 
-	Value recIndexTuple(Value[] vs, Expression ie) {
-		if(auto tup = cast(ast_exp.TupleExp) ie) {
-			Value[] rs = iota(tup.e.length).map!(i => this.recIndexTuple(vs, tup.e[i])).array;
+	Value recIndexTuple(Value[] vs, Expression ie, Expression ty) {
+		/+if(auto tup = cast(ast_exp.TupleExp) ie) {
+			auto tt = ty.isTupleTy();
+			assert(!tt);
+			Value[] rs = iota(tup.e.length).map!(i => this.recIndexTuple(vs, tup.e[i], tt[i])).array;
 			Expression[] types = tup.e.map!(e => e.type).array;
 			return valPack(types, rs);
-		}
+		}+/
 		if(auto lit = ie.asIntegerConstant(true)) {
-			return valDup(vs[lit.get().to!size_t()]);
+			auto idx = lit.get();
+			if(idx < 0 || idx >= vs.length) {
+				return valAbort(ty);
+			}
+			return valDup(vs[idx.to!size_t()]);
 		}
 		assert(0, "non-literal tuple indexing");
 	}
@@ -5412,24 +5418,7 @@ class ScopeWriter {
 
 		Value v = getVar(arrIn.meaning, false);
 
-		if (auto tupTyOut = cast(ast_ty.TupleTy)outTy) {
-			auto i1Lit = index1.asIntegerConstant(true);
-			auto i2Lit = index2.asIntegerConstant(true);
-			assert(i1Lit, format("not a constant: %s", index1));
-			assert(i2Lit, format("not a constant: %s", index2));
-			auto i1 = i1Lit.get().to!size_t();
-			auto i2 = i2Lit.get().to!size_t();
-			auto tupTyIn = cast(ast_exp.TupleTy)arrIn.type;
-			assert(tupTyIn);
-			auto ty1 = tupTyIn.types[i1];
-			auto ty2 = tupTyIn.types[i2];
-			assert(tupTyOut.types[i2] == ty1 && tupTyOut.types[i1] == ty2, format("item type didn't change on swap(%s, %s): %s -> %s", i1, i2, arrIn.type, outTy));
-
-			Value[] vals = valUnpack(tupTyIn.types, v);
-			swap(vals[i1], vals[i2]);
-			defineVar(arrOut.meaning, valPack(tupTyOut.types, vals));
-			return Result.passes();
-		}
+		assert(!cast(ast_ty.TupleTy)outTy);
 
 		Index idx1 = genIndex(index1);
 		Index idx2 = genIndex(index2);
