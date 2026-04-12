@@ -5,10 +5,9 @@
 	for i in 0..n{ p~=[p[i]+cabs(α[i])^2]; }
 	def q(l:!ℕ,u:!ℕ) ⇒ p[u]-p[l]; // (not very stable)
 	def rec[l:!ℕ,u:!ℕ](xs:𝔹^(u sub l)){
-		if l+1=u{ return xs; }
+		if l+1=u||q(l,u)=0{ return xs; }
 		m:=(l+u) div 2;
 		(α₀,α₁):=(q(l,m),q(m,u));
-		if α₀+α₁=0{ return xs; }
 		θ:=2·acos(sqrt(α₀/(α₀+α₁)));
 		([a]~xs₀:_^(m sub l))~([b]~xs₁):=xs;
 		with b⊕=a { if b{ a:=rotY(-θ,a); } }
@@ -20,5 +19,5 @@
 	return xs;
 }
 
-def main() ⇒ unbalancedW([sqrt(1/2),-sqrt(1/4),sqrt(1/4)*cis(1)]);
+def main() ⇒ unbalancedW([sqrt(1/2),-sqrt(1/4),sqrt(1/4)·cis(1)]);
 

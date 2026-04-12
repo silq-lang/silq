@@ -13,10 +13,9 @@ def unbalancedW[n:!ℕ](α:!ℂ^n):𝔹^n{
 	}
 	t:=build[0,0,n](vector(4·n,0));
 	def rec[i:!ℕ][l:!ℕ,u:!ℕ](xs:𝔹^(u sub l)){
-		if l+1=u{ return xs; }
+		if l+1=u||t[i]=0{ return xs; }
 		m:=(l+u) div 2;
 		(α₀,α₁):=t[2·i+1..2·i+3];
-		if α₀+α₁=0{ return xs; }
 		θ:=2·acos(sqrt(α₀/(α₀+α₁)));
 		([a]~xs₀:_^(m sub l))~([b]~xs₁):=xs;
 		with b⊕=a { if b{ a:=rotY(-θ,a); } }
@@ -28,4 +27,4 @@ def unbalancedW[n:!ℕ](α:!ℂ^n):𝔹^n{
 	return xs;
 }
 
-def main() ⇒ unbalancedW([sqrt(1/2),-sqrt(1/4),sqrt(1/4)*cis(1)]);
+def main() ⇒ unbalancedW([sqrt(1/2),-sqrt(1/4),sqrt(1/4)·cis(1)]);
