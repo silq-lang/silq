@@ -1,0 +1,5 @@
+
+def foo[ℓ:!ℕ][n:!ℕ](xs:𝔹^n){
+	(qs0:_^(n sub ℓ sub 1)) ~ [a,b] ~ qs1 ~ [c] := xs;
+	return (qs0,a,b,qs1,c);
+}
