@@ -26,6 +26,10 @@ def S(x:𝔹) @[artificial] mfree{
 	if x { phase(π/2); }
 	return x;
 }
+def T(x:𝔹) @[artificial] mfree{
+	if x { phase(π/4); }
+	return x;
+}
 def CNOT(const x:𝔹,y:𝔹) @[artificial] qfree{
 	y⊕=x;
 	return y;
