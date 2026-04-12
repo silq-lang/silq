@@ -8,6 +8,7 @@
 		if l+1=u{ return xs; }
 		m:=(l+u) div 2;
 		(α₀,α₁):=(q(l,m),q(m,u));
+		if α₀+α₁=0{ return xs; }
 		θ:=2·acos(sqrt(α₀/(α₀+α₁)));
 		([a]~xs₀:_^(m sub l))~([b]~xs₁):=xs;
 		with b⊕=a { if b{ a:=rotY(-θ,a); } }
@@ -19,4 +20,5 @@
 	return xs;
 }
 
-def main()=>unbalancedW([sqrt(1/2),-sqrt(1/4),sqrt(1/4)*cis(1)]);
+def main() ⇒ unbalancedW([sqrt(1/2),-sqrt(1/4),sqrt(1/4)*cis(1)]);
+
