@@ -1,6 +1,8 @@
+// args: --run
+// TODO: detect statically?
 
 def main(){
 	x:=(0,0,0):𝔹^3;
-	x[3]:=H(x[3]); /// error
+	x[3]:=H(x[3]); /// run_error
 	return x;
 }

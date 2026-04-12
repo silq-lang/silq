@@ -1,0 +1,11 @@
+// args: --run
+
+def main(){
+	x:=[];
+	while x.length=0 || x[0]<2{
+		x~=[0];
+		x[0]+=1;
+	}
+	assert(x=[2,0]);
+	return x;
+}

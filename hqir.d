@@ -5003,6 +5003,11 @@ class ScopeWriter {
 
 	Result genIndexRead(ast_exp.IndexExp ie, Expression lhse) {
 		performUpcastReplacements(ie.replacements);
+		if(ast_ty.isEmpty(ie.type)) {
+			auto r = new CReg();
+			ccg.writeCOp(opAbort, [r], []);
+			return Result.aborts(r);
+		}
 
 		auto lhs = cast(ast_exp.Identifier) lhse;
 		assert(lhs, "IndexExp(byRef=true) read not into Identifier");
@@ -5108,6 +5113,11 @@ class ScopeWriter {
 	Result genIndexWrite(ast_exp.IndexExp ie, Expression rhse, ast_exp.DefineExp de) {
 		auto rhs = cast(ast_exp.Identifier) rhse;
 		assert(rhs, "IndexExp(byRef=true) write not from Identifier");
+		if(ast_ty.isEmpty(ie.type)) {
+			auto r = new CReg();
+			ccg.writeCOp(opAbort, [r], []);
+			return Result.aborts(r);
+		}
 
 		Borrow b;
 		auto rhsv = getBorrow(rhs, b);

@@ -1,5 +1,7 @@
+// args: --run
+// TODO: detect statically?
 
 def main(){
 	x := ([0],[1],[1]);
-	x[3] ~= [1]; /// error
+	x[3] ~= [1]; /// run_error
 }
