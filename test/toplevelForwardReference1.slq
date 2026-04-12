@@ -1,0 +1,8 @@
+
+def foo():𝟙{
+	bar();
+}
+x := 0;
+def bar(){
+	return x;
+}
