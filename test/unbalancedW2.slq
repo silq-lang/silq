@@ -1,17 +1,17 @@
 // args: --run
 
 def unbalancedW[n:!ℕ](α:!ℂ^n):𝔹^n{
-	def build[i:!ℕ,l:!ℕ,u:!ℕ](t:!ℝ^(4·n)){
+	def build[i:!ℕ][l:!ℕ,u:!ℕ](t:!ℝ^(4·n)){
 		if l+1=u{
 			t[i]=cabs(α[l])^2;
 		}else{
 			m:=(l+u) div 2;
-			t:=build[2·i+1,l,m](build[2·i+2,m,u](t));
+			t:=build[2·i+1][l,m](build[2·i+2][m,u](t));
 			t[i]=t[2·i+1]+t[2·i+2];
 		}
 		return t;
 	}
-	t:=build[0,0,n](vector(4·n,0));
+	t:=build[0][0,n](vector(4·n,0));
 	def rec[i:!ℕ][l:!ℕ,u:!ℕ](xs:𝔹^(u sub l)){
 		if l+1=u||t[i]=0{ return xs; }
 		m:=(l+u) div 2;
