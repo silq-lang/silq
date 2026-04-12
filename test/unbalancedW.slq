@@ -1,0 +1,22 @@
+// args: --run
+
+ def unbalancedW[n:!ℕ](α:!ℂ^n):𝔹^n{
+	p:=[0];
+	for i in 0..n{ p~=[p[i]+cabs(α[i])^2]; }
+	def q(l:!ℕ,u:!ℕ) ⇒ p[u]-p[l]; // (not very stable)
+	def rec[l:!ℕ,u:!ℕ](xs:𝔹^(u sub l)){
+		if l+1=u{ return xs; }
+		m:=(l+u) div 2;
+		(α₀,α₁):=(q(l,m),q(m,u));
+		θ:=2·acos(sqrt(α₀/(α₀+α₁)));
+		([a]~xs₀:_^(m sub l))~([b]~xs₁):=xs;
+		with b⊕=a { if b{ a:=rotY(-θ,a); } }
+		(xs₀,xs₁):=(rec[l,m]([a]~xs₀),rec[m,u]([b]~xs₁));
+		return xs₀~xs₁;
+	}
+	xs:=rec[0,n]([1]~vector(n sub 1,0));
+	for i in 0..n{ if xs[i]{ phase(carg(α[i])); } }
+	return xs;
+}
+
+def main()=>unbalancedW([sqrt(1/2),-sqrt(1/4),sqrt(1/4)*cis(1)]);
