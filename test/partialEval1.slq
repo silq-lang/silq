@@ -2,14 +2,14 @@
 
 def f[n:!ℕ](const x:uint[2·n]){
 	x₀:=0:uint[n sub 2];
-	// x₁:=x₀:int[-2+n coerce !ℕ]; // TODO
+	x₁:=x₀:uint[-2+n coerce !ℕ];
 	x₂:=x:uint[3·n sub n];
 	x₃:=x:uint[n·2];
 	x₄:=x:uint[n+n];
-	//x₅:=x:uint[2·n+1 sub 1]; // TODO
-	//x₆:=x:uint[2·(n sub 1)+2]; // TODO
+	x₅:=x:uint[2·n+1 sub 1];
+	x₆:=x:uint[2·(n sub 1)+2];
 	x₇:=x:uint[4·n sub (n+n)];
-	//x₈:=x:uint[4·n sub (n+n)+(n sub (n sub 1)) sub 1]; // TODO
+	x₈:=x:uint[4·n sub (n+n)+(n sub (n sub 1)) sub 1];
 	y:=0:uint[n·3];
 	y₀:=dup(y):uint[n·2+n];
 	y₁:=dup(y):uint[n+2·n];

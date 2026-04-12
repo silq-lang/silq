@@ -1,1 +1,9 @@
-def foo[n:!ℕ](x:𝔹^(n+(1+n))):𝔹^(n+n+1)⇒x;
+
+def main(){
+	(l,m,u):=(0,1,2);
+	xs₀:=[0] coerce 𝔹^(m sub l);
+	xs₁:=[1] coerce 𝔹^(u sub m);
+	xs:=[0,1] coerce 𝔹^(u sub l);
+	dup(xs₀~xs₁):=xs;
+	return (xs₀~xs₁) coerce 𝔹^2;
+}
