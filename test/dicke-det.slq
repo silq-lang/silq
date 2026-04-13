@@ -1,0 +1,26 @@
+// bärtschi-eidenbenz (https://arxiv.org/pdf/1904.07358)
+def i[n:!ℕ](xs:𝔹^n){
+	xs~[a,b]:=xs;
+	with b⊕=a {
+		if b{ a:=rotY(2·acos(sqrt(1/n)),a); }
+	}
+	return xs~[a,b];
+}
+def ii[ℓ:!ℕ][n:!ℕ](xs:𝔹^n){
+	qs0~[a,b]~(qs1:_^(ℓ sub 2))~[c]:=xs;
+	with c⊕=a {
+		if b·c{ a:=rotY(2·acos(sqrt(ℓ/n)),a); }
+	}
+	return qs0~[a,b]~qs1~[c] coerce 𝔹^n;
+}
+def u[n:!ℕ,k:!ℕ](xs:𝔹^n){
+	if k=0||n≤1{ return xs; }
+	xs:=i(xs);
+	for ℓ in 2..n{ xs:=ii[ℓ](xs); }
+	xs~[t]:=xs;
+	return u[n sub 1,k](xs)~[t];
+}
+
+def dicke(n:!ℕ,ℓ:!ℕ) ⇒ u[n,ℓ](vector(n sub ℓ,0)~vector(ℓ,1));
+
+def main() ⇒ dicke(5,3);
