@@ -14,9 +14,10 @@ def ii[ℓ:!ℕ][n:!ℕ](xs:𝔹^n){
 	return qs0~[a,b]~qs1~[c] coerce 𝔹^n;
 }
 def u[n:!ℕ,k:!ℕ](xs:𝔹^n){
-	if k=0||n≤1{ return xs; }
+	if k=0{ return xs; }
+	if k≥n{ return u[n,n sub 1](xs); }
 	xs:=i(xs);
-	for ℓ in 2..n{ xs:=ii[ℓ](xs); }
+	for ℓ in 2..k+1{ xs:=ii[ℓ](xs); }
 	xs~[t]:=xs;
 	return u[n sub 1,k](xs)~[t];
 }
