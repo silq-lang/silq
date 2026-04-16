@@ -1,0 +1,9 @@
+
+n:=2;
+def main(){
+	xs:=vector(n,0);
+	H(xs[0])=1; /// TODO
+	xs[0]:=H(xs[0]);
+	assert(measure(xs=(1,0)));
+	return xs;
+}

@@ -1,0 +1,13 @@
+
+def foo[n:!ℕ](x:uint[n]){
+	x+=2;
+	return x;
+}
+
+n:=5;
+def main(){
+	x:=5:uint[n];
+	foo(x)·=3; /// TODO
+	assert(measure(x=19));
+	return x;
+}

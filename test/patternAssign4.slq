@@ -1,0 +1,6 @@
+
+def main(){
+	y:=0;
+	H(y)=1; /// TODO
+	assert(measure(H(y)));
+}
