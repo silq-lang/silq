@@ -1,0 +1,13 @@
+def foo[n:!ℕ](xs:𝔹^n){
+	for i in 0..n{
+		H(xs[i])⊕=1; /// TODO
+	}
+	return xs;
+}
+
+def main(){
+	xs:=(H(0),H(0));
+	(H(xs[0]),H(xs[1])):=foo(xs[0],xs[1]);
+	assert(measure(xs=(1,1)));
+	return xs;
+}

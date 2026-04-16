@@ -1,0 +1,9 @@
+
+def main(){
+	H(x):=0;
+	H(x)⊕=1; /// TODO
+	y:=0;
+	X(y)=1; /// TODO
+	assert(!y);
+	return x; /// TODO
+}

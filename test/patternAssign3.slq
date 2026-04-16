@@ -1,0 +1,14 @@
+
+n:=3;
+def main(){
+	xs:=vector(n,0);
+	for i in 0..n{
+		xs[i]:=H(xs[i])
+	}
+	ys:=dup(xs);
+	for i in 0..n{
+		X(ys[i])=0; /// TODO
+	}
+	assert(measure(ys==(1,1,1)));
+	return (xs,ys);
+}
