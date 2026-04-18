@@ -1,10 +1,10 @@
 // args: --run
 def ghz(n:!ℕ){
 	xs:=[H(0) for i in 0..n];
-	b:=measure([xs[i]⊕xs[i+1] for i in 0..n-1]);
+	bs:=measure([xs[i]⊕xs[i+1] for i in 0..n-1]);
 	p:=0;
 	for i in 0..n-1{
-		p⊕=b[i];
+		p⊕=bs[i];
 		xs[i+1]⊕=p;
 	}
 	return xs;
