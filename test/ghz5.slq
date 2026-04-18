@@ -1,0 +1,12 @@
+// args: --run
+
+def ghz(n:!ℕ){
+	if n=0{ return []; }
+	def rec[n:!ℕ](x:𝔹){
+		if n=1{ return [x]; }
+		y:=dup(x);
+		return rec[(n+1) div 2](x) ~ rec[n div 2](y);
+	}
+	return rec[n](H(0));
+}
+def main() ⇒ ghz(4);
