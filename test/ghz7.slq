@@ -1,0 +1,19 @@
+
+def ghz(n:!ℕ){ // (not particularly useful)
+	xs:=[H(0) for i in 0..n];
+	def rec[l:!ℕ,u:!ℕ](t:(!ℕ^2)[]){
+		if u-l=1{ return t; }
+		m:=(l+u) div 2;
+		return [(l,m)]~rec[l,m](rec[m,u](t));
+	}
+	t:=rec[0,n]();
+	print(t);
+	bs:=measure([xs[a]⊕xs[b] for (a,b) in t]); /// TODO
+	p:=vector(n,0); /// TODO
+	for (a,b) in t{ /// TODO
+		p[b]=p[a]⊕bs[i];
+		xs[b]⊕=p[b]; /// TODO
+	}
+	return xs;
+}
+def main() ⇒ ghz(8);

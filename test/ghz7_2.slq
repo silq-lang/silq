@@ -1,0 +1,19 @@
+// args: --run
+def ghz(n:!ℕ){ // (not particularly useful)
+	def rec[l:!ℕ,u:!ℕ](t:(!ℕ^2)[]){
+		if u-l=1{ return t; }
+		m:=(l+u) div 2;
+		return [(l,m)]~rec[l,m](rec[m,u](t));
+	}
+	t:=rec[0,n]();
+	xs:=[H(0) for i in 0..n];
+	bs:=measure([xs[t[i][0]]⊕xs[t[i][1]] for i in 0..n-1]);
+	p:=vector(n,0);
+	for i in 0..n-1{
+		(a,b):=t[i];
+		p[b]=p[a]⊕bs[i];
+		xs[b]⊕=p[b];
+	}
+	return xs;
+}
+def main() ⇒ ghz(8);
