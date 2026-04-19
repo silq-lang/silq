@@ -131,7 +131,7 @@ string formatQValue(QState qs, QState.Value value){
 			auto a=abs(v);
 			if(a>maxAbs) maxAbs=a;
 			if (first){
-				arg0=arg(v);
+				//arg0=arg(v);
 				first=false;
 			}
 		}
