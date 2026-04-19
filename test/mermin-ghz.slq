@@ -1,0 +1,27 @@
+// Mermin-GHZ game
+def rep[n:!ℕ][a](x:a) ⇒ vector(n sub 1,x)~[x];
+def ghz(n:!ℕ) ⇒ rep[n](H(0));
+
+def measP[P:𝔹→mfree 𝔹](x:𝔹){
+	t:=H(0);
+	if t{ x:=P(x); }
+	return (measure(H(t)),x);
+}
+
+def player(b:!𝔹,q:𝔹) ⇒ measP[[X,Y][b]](q);
+
+def play(bs:!𝔹^3){
+	qs := ghz(3);
+	for i in 0..3{
+		(bs[i],qs[i]) := player(bs[i],qs[i]);
+	}
+	measure(qs);
+	return bs[0]⊕bs[1]⊕bs[2];
+}
+
+def main(){
+	set := [(0,0,0), (1,1,0), (1,0,1), (0,1,1)];
+	for t in 0..4{
+		assert(play(set[t])=(t≠0));
+	}
+}
