@@ -980,7 +980,11 @@ def primitive.rX($a) <- %x [artificial]
 	return %y
 
 def primitive.Y() <- %x [artificial]
-	%y := mfree_call[qbuiltin.Y] <- %x
+	$pi := literal[float(3622009729038561421, -60)]
+	$pi_half := literal[float(3622009729038561421, -61)]
+	if[%x=1] mfree_call[qbuiltin.phase]($pi)
+	mfree_call[qbuiltin.phase]($pi_half)
+	%y := mfree_call[qbuiltin.X]() <- %x
 	return %y
 
 def primitive.rY($a) <- %x [artificial]
