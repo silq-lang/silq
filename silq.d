@@ -412,7 +412,12 @@ int main_(string[] args){
 				return 1;
 			}
 			if(useStdin) {
-				auto source = new Source("stdin", text(stdin.byLine.joiner("\n"),"\0\0\0\0"));
+				ubyte[] data;
+				foreach(ubyte[] chunk;chunks(stdin,4096))
+					data~=chunk;
+				data~=[0,0,0,0];
+				auto source = new Source("stdin", cast(string)data);
+				//auto source = new Source("stdin", text(stdin.byLine.joiner("\n"),"\0\0\0\0")); // TODO: why does this not work?
 				auto sc=new TopScope(".stdin",err);
 				Expression[] exprs;
 				r=importModule(source,err,exprs,sc,Location.init);
