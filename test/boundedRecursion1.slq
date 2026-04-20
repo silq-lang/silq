@@ -1,0 +1,21 @@
+// args: --run
+def main(){
+	limit:=0;
+    def rec(const l:!ℕ){
+		limit := l;
+        if limit < 1 {
+            limit += 1;
+            x := H(0);
+            if measure[𝔹](H(0)){
+                return x
+            }
+            measure[𝔹](x);
+            r := rec(limit);
+        } else {
+            r := 0;
+        }
+        return r;
+    }
+    a := rec(limit);
+	return a;
+}
