@@ -1,0 +1,60 @@
+// args: --run
+
+def simon[n:!ℕ](const f: uint[n] !→lifted uint[n]){
+	(basis, rank) := (empty_basis(n), 0);
+	while rank < n-1{
+		x:=[H(0) for i in 0..n] as uint[n];
+		measure(f(x));
+		for i in 0..n{ x[i]:=H(x[i]); }
+		(basis, independent) := insert_equation(basis, measure(x));
+		if independent { rank += 1; }
+	}
+	s := recover_secret(basis);
+	return if f(0:!uint[n])=f(s) then s else 0:!uint[n];
+}
+
+def empty_basis(n:!ℕ)=>vector(n,[]);
+
+def insert_equation[n:!ℕ](basis: !uint[n][]^n, y: !uint[n]){
+	for i in 0..n{
+		if y[i] && basis[i].length≠0{
+			y⊕=basis[i][0];
+		}
+	}
+	for i in 0..n{
+		if y[i] && basis[i].length=0{
+			for j in 0..i{
+				if basis[j].length≠0 && basis[j][0][i]{
+					basis[j][0]⊕=y;
+				}
+			}
+			basis[i]~=[y];
+			return (basis,1);
+		}
+	}
+	return (basis,0);
+}
+
+def recover_secret[n:!ℕ](basis: !uint[n][]^n){
+	s:=(-1) as !uint[n];
+	for i in 0..n{
+		if basis[i].length≠0{
+			for j in 0..n{
+				s[i]⊕=basis[i][0][j];
+			}
+		}
+	}
+	return s;
+}
+
+n:=5;
+def main(){
+	def g(x:uint[3])lifted ⇒
+		[[1,0,1],[0,1,0],[0,0,0],[1,1,0],
+		 [0,0,0],[1,1,0],[1,0,1],[0,1,0]][x] as uint[3];
+	assert(simon(g) = ([0,1,1] as !uint[3]));
+	s:=[measure(H(0)) for _ in 0..n] as !uint[n];
+	p:=[37*i+13 as !uint[n] for i in 0..2^n];
+	def f(x:uint[n])lifted => if (x⊕s) < x then p[x⊕s] else p[x];
+	assert(simon(f) = s);
+}
