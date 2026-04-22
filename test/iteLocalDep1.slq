@@ -1,0 +1,15 @@
+// args: --run
+
+def main(){
+	n:=5;
+	s:=[measure(H(0)) for _ in 0..n] as !uint[n];
+	p:=[0 as !uint[n] for i in 0..2^n];
+	def f(x:uint[n])lifted{
+		if x[0]{
+			return p[x];
+		}else{
+			return p[x];
+		}
+	}
+	return measure(f(0:uint[n])) as !ℕ;
+}

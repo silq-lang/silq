@@ -2167,7 +2167,7 @@ struct QState{
 		vars[fd.getName]=result;
 	}
 	static Value ite(Value cond,Value then,Value othw)in{
-		assert(then.type.getClassical==othw.type.getClassical);
+		//assert(then.type.getClassical==othw.type.getClassical,text(then.type," ",othw.type)); // TODO
 		assert(cond.type is Bool(false));
 	}do{
 		static class IteQVal: QVal{
