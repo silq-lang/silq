@@ -1,0 +1,2 @@
+def foo[n:!ℕ](xs:uint[n]^n)=>xs;
+def bar[n:!ℕ]()⇒foo(vector(n,assert(0)));
