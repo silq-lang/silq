@@ -1,0 +1,5 @@
+def foo(){
+	x:=1;
+	x:=0; /// error
+	for i in 0..10{ }
+}

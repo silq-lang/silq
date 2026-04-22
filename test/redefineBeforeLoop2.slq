@@ -1,0 +1,6 @@
+def foo(){
+	x:=1;
+	def bar()=>(0,1);
+	(x,y):=bar(); /// error
+	for i in 0..10{ }
+}
