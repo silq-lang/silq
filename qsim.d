@@ -3292,44 +3292,48 @@ struct Interpreter(QState){
 				}+/
 			}
 		}else if(auto fe=cast(ForExp)e){
-			auto l=runExp(fe.left), r=runExp(fe.right), s=fe.step?runExp(fe.step):qstate.makeInteger(ℤ(1));
-			if(l.isℤ()&&r.isℤ()&&s.isℤ()){
-				auto lz=l.asℤ(),rz=r.asℤ(),sz=s.asℤ();
-				auto intp=Interpreter(functionDef,fe.bdy,qstate,hasFrame);
-				enum body_=q{
-					if(opt.trace) writeln("loop-index: ",j);
-					intp.qstate.assignTo(fe.loopVar.getName,qstate.makeInteger(j).convertTo(fe.loopVar.vtype));
-					intp.run(retState);
-					intp.closeScope(fe.bdy.blscope_);
-				};
-				ℤ mz=fe.leftExclusive==fe.rightExclusive?(lz+rz)>>1:fe.leftExclusive?rz:lz;
-				auto adj=floormod(mz-lz,sz);
-				if(fe.leftExclusive&&adj==0) adj=sz;
-				lz+=adj;
-				if(sz>=0){
-					for(ℤ j=lz;j+cast(int)fe.rightExclusive<=rz;j+=sz) mixin(body_);
+			if(auto range=fe.aggr.isRange){
+				auto l=runExp(range.left), s=range.step?runExp(range.step):qstate.makeInteger(ℤ(1)), r=runExp(range.right);
+				if(l.isℤ()&&r.isℤ()&&s.isℤ()){
+					auto lz=l.asℤ(),rz=r.asℤ(),sz=s.asℤ();
+					auto intp=Interpreter(functionDef,fe.bdy,qstate,hasFrame);
+					enum body_=q{
+						if(opt.trace) writeln("loop-index: ",j);
+						intp.qstate.assignTo(fe.loopVar.getName,qstate.makeInteger(j).convertTo(fe.loopVar.vtype));
+						intp.run(retState);
+						intp.closeScope(fe.bdy.blscope_);
+					};
+					ℤ mz=range.leftExclusive==range.rightExclusive?(lz+rz)>>1:range.leftExclusive?rz:lz;
+					auto adj=floormod(mz-lz,sz);
+					if(range.leftExclusive&&adj==0) adj=sz;
+					lz+=adj;
+					if(sz>=0){
+						for(ℤ j=lz;j+cast(int)range.rightExclusive<=rz;j+=sz) mixin(body_);
+					}else{
+						for(ℤ j=lz;j-cast(int)range.rightExclusive>=rz;j+=sz) mixin(body_);
+					}
+					qstate=intp.qstate;
 				}else{
-					for(ℤ j=lz;j-cast(int)fe.rightExclusive>=rz;j+=sz) mixin(body_);
+					enforce(0,"non-integer for ranges not yet supported");
+					/+auto loopIndex=fe.leftExclusive?l.floor()+1:l.ceil();
+					auto bound=fe.rightExclusive?r.ceil()-1:r.floor();
+					auto intp=Interpreter(functionDef,fe.bdy,qstate,hasFrame);
+					qstate.state=typeof(qstate.state).init;
+					for(int x=0;;++x){
+						auto ncond=bound.lt(loopIndex+x);
+						auto othwThen=intp.qstate.split(ncond);
+						qstate += othwThen[0];
+						intp.qstate = othwThen[1];
+						//intp.qstate.error = zero;
+						if(!intp.qstate.state.length) break;
+						intp.qstate.assignTo(fe.var.name,loopIndex+x);
+						if(opt.trace) writeln("repetition: ",x+1);
+						intp.run(retState);
+						intp.closeScope(fe.bdy.blscope_);
+					}+/
 				}
-				qstate=intp.qstate;
 			}else{
-				enforce(0,"TODO?");
-				/+auto loopIndex=fe.leftExclusive?l.floor()+1:l.ceil();
-				auto bound=fe.rightExclusive?r.ceil()-1:r.floor();
-				auto intp=Interpreter(functionDef,fe.bdy,qstate,hasFrame);
-				qstate.state=typeof(qstate.state).init;
-				for(int x=0;;++x){
-					auto ncond=bound.lt(loopIndex+x);
-					auto othwThen=intp.qstate.split(ncond);
-					qstate += othwThen[0];
-					intp.qstate = othwThen[1];
-					//intp.qstate.error = zero;
-					if(!intp.qstate.state.length) break;
-					intp.qstate.assignTo(fe.var.name,loopIndex+x);
-					if(opt.trace) writeln("repetition: ",x+1);
-					intp.run(retState);
-					intp.closeScope(fe.bdy.blscope_);
-				}+/
+				enforce(0,"non-ranged for loops not yet supported");
 			}
 		}else if(auto we=cast(WhileExp)e){
 			auto intp=Interpreter(functionDef,we.bdy,qstate,hasFrame);

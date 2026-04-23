@@ -5595,9 +5595,13 @@ class ScopeWriter {
 	Result implStmt(ast_exp.ForExp e) {
 		assert(ctx.options.compileLoopsAsNoOps, "TODO ForExp");
 		assert(e.fescope_ == e.bdy.blscope_);
-		genExpr(e.left);
-		genExpr(e.right);
-		if(e.step) genExpr(e.step);
+		if(auto range=e.aggr.isRange()) {
+			genExpr(range.left);
+			if(range.step) genExpr(range.step);
+			genExpr(range.right);
+		} else {
+			assert(0, "TODO non-ranged ForExp");
+		}
 		genNoopLoop(e.bdy);
 		return Result.passes();
 	}
