@@ -1,0 +1,12 @@
+// args: --run
+n:=5;
+def main(){
+	xs:=vector(n,0);
+	with{
+		for i in 0..n{
+			xs[i]:=H(xs[i]);
+		}
+	}do{ xs[2]:=H(xs[2]); }
+	xs[2]:=H(xs[2]);
+	return xs;
+}
