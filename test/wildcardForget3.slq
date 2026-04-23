@@ -1,0 +1,3 @@
+
+def foo()=>2:uint[3];
+def main(){ _:=foo(); }
