@@ -9,10 +9,10 @@ def ghz(n:!ℕ){ // (not particularly useful)
 	t:=rec[0,n]();
 	print(t);
 	bs:=measure([xs[a]⊕xs[b] for (a,b) in t]); /// TODO
-	p:=vector(n,0); /// TODO
+	p:=vector(n,0);
 	for (a,b) in t{ /// TODO
 		p[b]=p[a]⊕bs[i];
-		xs[b]⊕=p[b]; /// TODO
+		xs[b]⊕=p[b];
 	}
 	return xs;
 }
