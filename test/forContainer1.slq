@@ -1,0 +1,10 @@
+// args: --run
+
+def main(){
+	xs:=[H(0),H(0)];
+	ys:=[];
+	for x in xs{
+		ys~=[x];
+	}
+	return ys;
+}

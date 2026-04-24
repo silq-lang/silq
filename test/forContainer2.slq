@@ -1,0 +1,6 @@
+
+def main(){
+	xs:=[H(0),H(0)];
+	for x in xs{} /// TODO
+	return xs; /// TODO
+}

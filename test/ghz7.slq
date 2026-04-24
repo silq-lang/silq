@@ -6,14 +6,27 @@ def ghz(n:!ℕ){ // (not particularly useful)
 		m:=(l+u) div 2;
 		return [(l,m)]~rec[l,m](rec[m,u](t));
 	}
-	t:=rec[0,n]();
+	t:=rec[0,n]() coerce _^(2*n sub 1);
 	print(t);
 	bs:=measure([xs[a]⊕xs[b] for (a,b) in t]); /// TODO
 	p:=vector(n,0);
-	for (a,b) in t{ /// TODO
+	for (i,(a,b)) in enumerate(t){
 		p[b]=p[a]⊕bs[i];
 		xs[b]⊕=p[b];
 	}
 	return xs;
 }
 def main() ⇒ ghz(8);
+
+def zip[a:*,b:*,n:!ℕ](xs:a^n,ys:b^n){
+	r:=[];
+	for i in 0..n{
+		[x]~xs:=xs;
+		[y]~ys:=ys;
+		r~=[(x,y)];
+	}
+	([],[]):=(xs,ys);
+	return r coerce _^n;
+}
+
+def enumerate[a:*,n:!ℕ](xs:a^n) => zip([i for i in 0..n],xs);
