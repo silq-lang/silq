@@ -1,3 +1,4 @@
+// args: --run
 
 n:=2;
-def main()=>[x for H(x) in [0 for _ in 0..n]]; /// TODO
+def main()=>[x for H(x) in [0 for _ in 0..n]];

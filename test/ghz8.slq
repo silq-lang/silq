@@ -2,7 +2,7 @@
 def ghz(n:!ℕ){ // (not particularly useful)
 	xs~[p]:=[H(0) for i in 0..n+1];
 	if p{ for i in 0..n{ xs[i]:=Z(xs[i]); } }
-	(xs,p):=([H(x) for x in xs],measure(H(p))); /// TODO
+	(xs,p):=([H(x) for x in xs],measure(H(p)));
 	if p&&xs[0] { phase(π); }
 	return xs;
 }

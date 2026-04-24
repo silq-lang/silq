@@ -6,9 +6,8 @@ def ghz(n:!ℕ){ // (not particularly useful)
 		m:=(l+u) div 2;
 		return [(l,m)]~rec[l,m](rec[m,u](t));
 	}
-	t:=rec[0,n]() coerce _^(2*n sub 1);
-	print(t);
-	bs:=measure([xs[a]⊕xs[b] for (a,b) in t]); /// TODO
+	t:=rec[0,n]() coerce _^(n sub 1);
+	bs:=measure([xs[a]⊕xs[b] for (a,b) in t]);
 	p:=vector(n,0);
 	for (i,(a,b)) in enumerate(t){
 		p[b]=p[a]⊕bs[i];

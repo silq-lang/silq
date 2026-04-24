@@ -1,0 +1,5 @@
+
+def main(){
+	[H(x) for x in xs] := vector(5,0); /// TODO
+	return xs; /// TODO
+}
