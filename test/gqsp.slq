@@ -4,28 +4,11 @@
 def fft[N:!ℕ](xs:!ℂ^N):!ℂ^N {
 	if N=1 { return xs; }
 	assert(N%2=0);
-	xs_e:=vector(N div 2,0);
-	xs_o:=vector(N div 2,0);
-	for j in 0..N div 2{
-		xs_e[j]=xs[2·j];
-		xs_o[j]=xs[2·j+1];
-	}
-	ys_e:=fft(xs_e);
-	ys_o:=fft(xs_o);
-	ys:=vector(N,0);
-	for k in 0..N div 2{
-		t:=cis(-2·π·k/N)·ys_o[k];
-		ys[k]=ys_e[k]+t;
-		ys[k+N div 2]=ys_e[k]-t;
-	}
-	return ys;
+	(xs_e,xs_o):=[[xs[2·j+t] for j in 0..N div 2] for t in (0,1)];
+	(ys_e,ys_o):=(fft(xs_e),fft(xs_o));
+	return [ys_e[k%(N div 2)]+cis(-2·π·k/N)·ys_o[k%(N div 2)] for k in 0..N];
 }
-def ifft[N:!ℕ](ys:!ℂ^N):!ℂ^N {
-	for i in 0..N{ ys[i]:=conj(ys[i]); }
-	xs:=fft(ys);
-	for i in 0..N{ xs[i]:=conj(xs[i])/N; }
-	return xs;
-}
+def ifft[N:!ℕ](ys:!ℂ^N):!ℂ^N ⇒ [conj(x)/N for x in fft([conj(y) for y in ys])];
 
 def poly_eval[d:!ℕ](coeffs:!ℂ^(d+1))(x:!ℂ):!ℂ{
 	r:=coeffs[d];
@@ -52,13 +35,9 @@ def heuristic_N₀(ε:!ℝ,δ:!ℝ,d:!ℕ):!ℕ{
 }
 def complement_alg1[d:!ℕ](p:!ℂ^(d+1),N:!ℕ):!ℂ^(d+1){
 	ps:=fft(pad[N](p,0));
-	ℓ:=vector(N,0);
-	for j in 0..N { ℓ[j]=log(1-cabs(ps[j])^2); }
-	ℓ:=ifft(ℓ);
+	ℓ:=ifft([log(1-cabs(x)^2) for x in ps]);
 	log_qs:=fft(pad[N]([ℓ[0]/2]~ℓ[1..N div 2+1],0));
-	qs:=vector(N,0);
-	for j in 0..N { qs[j]=cexp(log_qs[j]); }
-	return ifft(qs)[0..d+1];
+	return ifft([cexp(x) for x in log_qs])[0..d+1];
 }
 
 def complement_alg2[d:!ℕ](p:!ℂ^(d+1),ε:!ℝ,N:!ℕ):!ℂ^(d+1){
@@ -89,21 +68,13 @@ def gqsp_apply_Rdag[d:!ℕ](
 	φ:!ℝ,
 	λ:!ℝ,
 )(
-	P: !ℂ^(d+1),
-	Q: !ℂ^(d+1),
+	P:!ℂ^(d+1),
+	Q:!ℂ^(d+1),
 ):!ℂ^(d+1)×!ℂ^(d+1){
 	(c,s):=(cos(θ),sin(θ));
-	ac:=conj(cis(λ+φ)·c);
-	bc:=conj(cis(φ)·s);
-	cc:=conj(cis(λ)·s);
-	dc:=conj(-c);
-
-	(Pp,Qp):=vector(2,vector(d+1,0));
-	for k in 0..d+1 {
-		Pp[k]=ac·P[k]+cc·Q[k];
-		Qp[k]=bc·P[k]+dc·Q[k];
-	}
-	return (Pp,Qp);
+	Rdag:=[[conj(cis(λ+φ)·c),conj(cis(λ)·s)],
+		   [conj(cis(φ)·s),conj(-c)]];
+	return [[u·P[k]+v·Q[k] for k in 0..d+1] for [u,v] in Rdag];
 }
 
 def gqsp_compute_angles[d:!ℕ](
