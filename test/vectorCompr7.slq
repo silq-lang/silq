@@ -1,0 +1,2 @@
+
+def main() ⇒ [H(0) for i in 10]; /// error
