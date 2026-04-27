@@ -18,10 +18,6 @@ def makeUniform(k:!ℕ)mfree:uint[log₂(k)]{
 	}*/
 }
 
-def phaseQ[n:!ℕ](const φ:uint[n])mfree{
-	for i in [0..n){ if φ[i]{ phase(2·π·2^i/2^n); } }
-}
-
 def uniformToW[k:!ℕ](x:uint[log₂(k)])qfree:𝔹^k{
 	y:=vector(k,0:𝔹);
 	for i in 0..k{ y[i]=x=i; }
@@ -97,23 +93,24 @@ def QFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
 }
 
 def evalNand[V:qtype](
-	N:!ℕ,
-	r₂:V,
-	isR₁:V!→lifted 𝔹,
-    read:V!→lifted 𝔹,
-	isLeaf: V!→lifted 𝔹,
-	isInternal: V!→lifted 𝔹,
-	walk: V×uint[2]!→mfree V×uint[2],
+	const N:!ℕ,
+	const r₂:V,
+	const isR₁:V!→lifted 𝔹,
+    const read:V→lifted 𝔹,
+	const isLeaf: V!→lifted 𝔹,
+	const isInternal: V!→lifted 𝔹,
+	const walk: V×uint[2]!→qfree V×uint[2],
 ){
-	τ:=320·floor(sqrt(N)) coerce !ℕ;
-	n:=log₂(N);
-	τ=2^n; // TODO: QFT on ℤ_N where N is not a power of two
+	τ₀:=320·floor(sqrt(N)) coerce !ℕ;
+	n:=log₂(τ₀);
+	//n:=6;
+	τ:=2^n; // TODO: QFT on ℤ_N where N is not a power of two
 	//t:=makeUniform(τ);
-	t:=0:uint[n];
-	for i in 0..n{ t[i]:=H(t[i]); }
-	phaseQ((t[0],t[1]) as uint[2]):=(); // TODO: slicing for integers?
+	t:=[H(0) for i in 0..n] as uint[n];
+	if t[0]{ phase(π/2); }
+	if t[1]{ phase(π); }
 	v:=r₂;
-	c:uint[2]:=left;
+	c:=left;
 	for i in 0..τ{
 		if i<t{
 			// diffusion step
@@ -131,18 +128,63 @@ def evalNand[V:qtype](
 	t:=reverse(QFT)(t);
 	measure(v,c);
 	t:=measure(t);
-	return t=0||t=τ div 2;
+	return !(t=0||t=τ div 2);
+	//t:=t as 𝔹^n coerce 𝔹^6 as uint[6];
+	//return (t,v,c);
+}
+
+
+def evalArrayNand[N:!ℕ](const xs:𝔹^N){
+    r₁:=0:!uint[N+1];
+    root:=1:!uint[N+1];
+    r₂:=2·N as !uint[N+1];
+
+    def isR₁(v:uint[N+1])lifted:𝔹 ⇒ v=r₁;
+	def read(v:uint[N+1])lifted:𝔹 ⇒ xs[v-N];
+    def isLeaf(v:uint[N+1])lifted:𝔹 ⇒ N≤v && v<2·N;
+    def isInternal(v:uint[N+1])lifted:𝔹 ⇒ 1≤v && v<N;
+
+    def parentCoin(v:uint[N+1])lifted ⇒ if v%2=0 then left else right;
+    def walkLifted(v:uint[N+1],c:uint[2])lifted{
+		if v=r₂{ return [(r₂,down),(r₁,down),(r₂,right)][c]; }
+		if v=r₁{ return [(r₂,left),(root,down),(r₁,right)][c]; }
+		if v=root{
+			if c=down{ return (r₁,left); }
+			if N≤1{ return (v,c); }
+            if c=left{ return (2*v,down); }
+            if c=right{ return (2*v+1,down); }
+        }
+        if c=down{ return (v div 2,parentCoin(v)); }
+        if isInternal(v){
+            if c=left{ return (2*v,down); }
+            if c=right{ return (2*v+1,down); }
+        }
+        return (v,c);
+    }
+
+	def walk(cur:uint[N+1]×uint[2]){
+		next:=walkLifted(cur);
+		walkLifted(next):=cur;
+		return next;
+	}
+
+    return evalNand(
+        N,
+        r₂,
+        isR₁,
+        read,
+        isLeaf,
+        isInternal,
+        walk
+    );
 }
 
 def main(){
-	//counter:=makeUniform(3);
-	//phaseQ((counter[0],counter[1]) as uint[2]):=(); // TODO: slicing for integers?
-	//return counter;
-	//return reverse(zeroToW)(uniformToW(counter));
-	//return uniformToW(counter);
-	//counter:=1:uint[2];
-	counter:=0:uint[2];
-	θ:=2·asin(sqrt(1-1/sqrt(25)));
-	counter[0]:=rotY(θ,counter[0]);
-	return refl₂[25](counter);
+	//            0
+	//        1       1
+	//       / \     / \
+	//      0   1   1   0
+	//     /\  /\   /\  /\
+    xs := [1,1,1,0,1,0,1,1]:_^8;
+    return evalArrayNand(xs);
 }
