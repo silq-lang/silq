@@ -1,0 +1,48 @@
+// args: --project-forget
+import uniformSuperposition;
+
+def add_mod_uN[n:!ℕ](b:uint[n],const a:!ℕ,const N:!ℕ){
+	assert(a<N);
+	x:=b>=N-a;
+	b+=if x then a-N as uint[n] else a as uint[n];
+	forget(x=(b<a));
+	return b;
+}
+
+t:=2; // (increase for higher fidelity)
+def estimate[N:!ℕ](ys:uint[n[N]]){
+	xs:=0:!uint[t·n[N]];
+	for i in 0..t·n[N]{
+		bit:=H(0);
+		if bit{
+			ys:=add_mod_uN(ys,(-2^(t·n[N]-i sub 1))%N,N);
+			for j in 0..i+1{
+				if xs[j]{ phase(-2·π·2^(j-i-1)); }
+			}
+		}
+		(xs[i],0):=(H(bit),xs[i]);
+	}
+	return (xs,ys);
+}
+
+def pad[n:!ℕ][a:*,m:!ℕ](xs:a^m,x:!a)=>xs~vector(n sub m,x);
+
+def QFT[N:!ℕ](xs:uint[n[N]]){
+	ys:=uniformSuperposition(N) as 𝔹^_ coerce 𝔹^n[N] as uint[n[N]];
+	for i in 0..n[N]{
+		for j in 0..n[N]{
+			if xs[i]&&ys[j]{
+				phase(2·π·2^(i+j)/N);
+			}
+		}
+	}
+	with{
+		(nxs,ys):=estimate[N](ys);
+		nxs:=pad[(t+1)·n[N]](nxs as 𝔹^_,0) as uint[_];
+	}do{
+		forget(xs=((N·nxs+2^(t·n[N] sub 1)) as 𝔹^_)[t·n[N]..(t+1)·n[N]]);
+	}
+	return ys;
+}
+
+def main()⇒QFT[13](2:uint[n[13]]);

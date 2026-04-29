@@ -146,10 +146,10 @@ def encodings[n:!ℕ,r:!ℕ](stab:(P^n)^r){
 }
 
 import uniformSuperposition;
-def bruteforce_encode[n:!ℕ](const xs:(!ℤ×!𝔹^n)[]){
+def bruteforce_encode[k:!ℕ](const xs:(!ℤ×!𝔹^k)[]){
 	size:=xs.length;
 	index:=uniformSuperposition(size);
-	result:=vector(n,0);
+	result:=vector(k,0);
 	for i in 0..size{
 		if i=index{
 			if xs[i][0]=-1{ phase(π); }
@@ -157,10 +157,10 @@ def bruteforce_encode[n:!ℕ](const xs:(!ℤ×!𝔹^n)[]){
 		}
 	}
 	forget(index=(){
-		index:=0:uint[ceil(log₂(size)) coerce !ℕ];
+		index:=0:uint[n[size]];
 		for i in 0..size{
 			if result=xs[i][1]{
-				index=i as uint[ceil(log₂(size)) coerce !ℕ];
+				index=i as uint[n[size]];
 			}
 		}
 		return index;
