@@ -1,0 +1,6 @@
+
+def main(){
+	a:=0:int[2];
+	x:=[];
+	return x[a..a]; /// error
+}
