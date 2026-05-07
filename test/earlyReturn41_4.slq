@@ -1,0 +1,25 @@
+// args: --run
+
+def foo(const x:𝔹,y:!𝔹,const w:𝔹,const p:𝔹)wild{
+	if x{
+		if y{ return 1; }
+		if w{ return 1; }
+	}else{
+		if y{ return 1; }
+		if p{ return 1; }
+	}
+	assert(!y);
+	return 0;
+}
+
+def main(){
+	for i in 0..2{
+		for j in 0..2{
+			for k in 0..2{
+				for l in 0..2{
+					assert(measure(foo(i≠0,j≠0,k≠0,l≠0)) = if i≠0 then j≠0||k≠0 else j≠0||l≠0);
+				}
+			}
+		}
+	}
+}

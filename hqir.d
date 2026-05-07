@@ -1488,12 +1488,106 @@ struct Result {
 			}
 			retCond = CondRetValue(condC, condQ).asCondRet();
 
-			if(rv0) {
-				rv0 = retCond.updateRetCond(rv0, r0.retCond, w0);
+			Value cret = null;
+			if(condC) {
+				Value buildCside(int side) {
+					auto wi = side == 0 ? w0 : w1;
+					auto ri = side == 0 ? r0 : r1;
+					auto rvi = side == 0 ? rv0 : rv1;
+					auto rvOt = side == 0 ? rv1 : rv0;
+
+					if(rvi && rvi.classicalRet) {
+						auto cretV = rvi.classicalRet;
+						auto oldC = ri.isConditionalReturn ? ri.retCond.condC : CondC.init;
+						if(oldC) {
+							cretV = wi.withCond(wi.nscope, CondAny(oldC))
+								.valAddCond(CondAny(condC), cretV);
+							cretV = wi.withCond(wi.nscope, CondAny(condC))
+								.valRemoveCond(CondAny(oldC), cretV);
+						} else {
+							cretV = wi.valAddCond(CondAny(condC), cretV);
+						}
+						return cretV;
+					} else {
+						return Value.newReg(
+							rvOt.classicalRet.creg,
+							rvOt.classicalRet.hasQuantum
+							? wi.qcg.withCond(CondAny(condC)).allocError() : null
+						);
+					}
+				}
+				Value cret0 = buildCside(0);
+				Value cret1 = buildCside(1);
+				cret = w.withCond(w.nscope, CondAny(condC)).valMerge(cond, cret0, cret1);
 			}
-			if(rv1) {
-				rv1 = retCond.updateRetCond(rv1, r1.retCond, w1);
+			Value qret = null;
+			if(condQ) {
+				Value buildQside(int side) {
+					auto wi = side == 0 ? w0 : w1;
+					auto ri = side == 0 ? r0 : r1;
+					auto rvi = side == 0 ? rv0 : rv1;
+					auto rvOt = side == 0 ? rv1 : rv0;
+
+					if(rvi && rvi.quantumRet) {
+						assert(ri.isConditionalReturn);
+						auto oldC = ri.retCond.condC;   // may be null
+						auto oldQ = ri.retCond.condQ;
+						assert(!!oldQ);
+						auto v = rvi.quantumRet;
+
+						// step 1 (only if condC): addCond(!condC) at scope [!oldC?, oldQ].
+						if(condC) {
+							auto sc = wi;
+							if(oldC) sc = sc.withCond(sc.nscope, CondAny(oldC.invert()));
+							sc = sc.withCond(sc.nscope, CondAny(oldQ));
+							v = sc.valAddCond(CondAny(condC, false), v);
+						}
+
+						// step 2: addCond(condQ) at scope [!oldC?, oldQ, !condC?].
+						{
+							auto sc = wi;
+							if(oldC) sc = sc.withCond(sc.nscope, CondAny(oldC.invert()));
+							sc = sc.withCond(sc.nscope, CondAny(oldQ));
+							if(condC) sc = sc.withCond(sc.nscope, CondAny(condC, false));
+							v = sc.valAddCond(CondAny(condQ), v);
+						}
+
+						// step 3: removeCond(oldQ) at scope [oldC?, !condC?, condQ].
+						{
+							auto sc = wi;
+							if(oldC) sc = sc.withCond(sc.nscope, CondAny(oldC.invert()));
+							if(condC) sc = sc.withCond(sc.nscope, CondAny(condC, false));
+							sc = sc.withCond(sc.nscope, CondAny(condQ));
+							v = sc.valRemoveCond(CondAny(oldQ), v);
+						}
+
+						// step 4 (only if oldC): removeCond(!oldC) at scope [!condC?, condQ].
+						if(oldC) {
+							auto sc = wi;
+							if(condC) sc = sc.withCond(sc.nscope, CondAny(condC, false));
+							sc = sc.withCond(sc.nscope, CondAny(condQ));
+							v = sc.valRemoveCond(CondAny(oldC.invert()), v);
+						}
+
+						return v;
+					} else {
+						auto sc = wi.qcg;
+						if(condC) sc = sc.withCond(CondAny(condC, false));
+						sc = sc.withCond(CondAny(condQ));
+						return Value.newReg(
+							rvOt.quantumRet.creg,
+							rvOt.quantumRet.hasQuantum ? sc.allocError() : null
+						);
+					}
+				}
+				Value qret0 = buildQside(0);
+				Value qret1 = buildQside(1);
+				auto wMerge = w;
+				if(condC) wMerge = wMerge.withCond(w.nscope, CondAny(condC, false));
+				wMerge = wMerge.withCond(w.nscope, CondAny(condQ));
+				qret = wMerge.valMerge(cond, qret0, qret1);
 			}
+			rv = RetValue(cret, qret);
 		}
 
 		if(!rv) {
@@ -4686,8 +4780,9 @@ class ScopeWriter {
 						}
 						scCont.checkEmpty(false);
 						if(rv.retCond.condQ) {
-							assert(!rv.retCond.condC);
-							if(!rv.value.quantumRet) {
+							if(rv.retCond.condC) {
+								assert(rv.value.classicalRet && rv.value.quantumRet);
+							} else if(!rv.value.quantumRet) {
 								rv.value = RetValue(null, rv.value.classicalRet);
 							} else {
 								assert(!rv.value.classicalRet);
