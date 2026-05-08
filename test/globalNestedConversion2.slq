@@ -1,0 +1,4 @@
+// args: --run
+
+a:=[1:!ℂ];
+def main()⇒ctori(a[0]);

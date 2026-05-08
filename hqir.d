@@ -4060,8 +4060,10 @@ class ScopeWriter {
 		foreach(i, sube; e.e) {
 			assert(sube.constLookup == e.constLookup || !typeHasQuantum(sube.type), format("tuple constLookup mismatch at %s; inner %s outer %s: %s item %s", sube.loc, sube.constLookup, e.constLookup, e, i));
 		}
-		auto types = e.e.map!(ei => ei.type).array;
-		auto sub = e.e.map!(ei => genExpr(ei)).array;
+		auto tt = e.type.isTupleTy();
+		assert(tt && tt.length == e.e.length);
+		auto types = iota(tt.length).map!(i => tt[i]).array;
+		auto sub = iota(e.e.length).map!(i => genExprAs(e.e[i], types[i])).array;
 		return valPack(types, sub);
 	}
 
