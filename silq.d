@@ -153,6 +153,7 @@ int main_(string[] args){
 	Backend backend = null;
 	Source runExp = null, runOn = null, runOnEach = null;
 	bool useStdin = false;
+	string stdinFilename = "stdin";
 	scope auto qsimBackend = new QSimBackend();
 	scope auto summarizeBackend = new SummarizeBackend();
 	scope auto hqirBackend = new HQIRBackend();
@@ -220,6 +221,11 @@ int main_(string[] args){
 		})
 		.add!("stdin")((bool v) {
 			useStdin = true;
+			return 0;
+		})
+		.add!("stdin-as")((string v) {
+			useStdin = true;
+			stdinFilename = v;
 			return 0;
 		})
 		.add!("inference-limit")((string v) {
@@ -416,9 +422,9 @@ int main_(string[] args){
 				foreach(ubyte[] chunk;chunks(stdin,4096))
 					data~=chunk;
 				data~=[0,0,0,0];
-				auto source = new Source("stdin", cast(string)data);
+				auto source = new Source(stdinFilename, cast(string)data);
 				//auto source = new Source("stdin", text(stdin.byLine.joiner("\n"),"\0\0\0\0")); // TODO: why does this not work?
-				auto sc=new TopScope(".stdin",err);
+				auto sc=new TopScope(stdinFilename==""?".stdin":moduleName(stdinFilename),err);
 				Expression[] exprs;
 				r=importModule(source,err,exprs,sc,Location.init);
 				if(r) return r;
