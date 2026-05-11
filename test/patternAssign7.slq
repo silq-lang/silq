@@ -1,0 +1,7 @@
+
+def Hsq[moved x:B]=>H(x);
+def main(){
+	Hsq[x]:=0;
+	x:=H(x);
+	assert(measure(x)=0);
+}

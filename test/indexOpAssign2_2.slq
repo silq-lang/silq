@@ -1,0 +1,8 @@
+
+def main(){
+	x:=vector(1,0:𝔹);
+	x[0]:=H(x[0]);
+	x[0]⊕=x[0]; /// error
+	return x;
+	// TODO: improve diagnostics
+}

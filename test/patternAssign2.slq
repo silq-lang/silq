@@ -1,6 +1,8 @@
+// args: --run
+
 def foo[n:!ℕ](xs:𝔹^n){
 	for i in 0..n{
-		H(xs[i])⊕=1; /// TODO
+		H(xs[i])⊕=1;
 	}
 	return xs;
 }
