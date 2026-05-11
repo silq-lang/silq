@@ -1,0 +1,11 @@
+// args: --run
+
+def main(){
+	x:=H(0);
+	y:=H(0);
+	def foo(){
+		x⊕=y;
+		return x;
+	}
+	return (foo(),y);
+}

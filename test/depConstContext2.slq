@@ -1,0 +1,12 @@
+
+def main(){
+	x:=H(0);
+	t:=H(0);
+	y:=dup(t);
+	def foo(){ /// TODO
+		x⊕=y;
+		return x;
+	}
+	y:=H(y);
+	return (foo(),t,y);
+}

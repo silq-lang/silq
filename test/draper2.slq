@@ -1,0 +1,27 @@
+// args: --run
+import qft;
+def draper[n:!ℕ](x:int[n],const y:int[n])⇒((){
+	with x:=QFT(x){
+		for i in 0..n{
+			for j in 0..n-i{
+				if x[i]&&y[j]{
+					phase(2·π·2^(i+j-n));
+				}
+			}
+		}
+	}
+	return x;
+} pun 𝟙 once→qfree int[n])();
+
+def main(){
+	x:=draper(2:!int[4],3:!int[4]);
+	assert(x==5);
+	a:=[H(0),H(0),0] as int[3];
+	b:=[H(0),H(0),0] as int[3];
+	if (draper(dup(a),b) & 2)≠0 { phase(π); }
+	for i in 0..2{
+		a[i]:=H(a[i]);
+		b[i]:=H(b[i]);
+	}
+	return (a,b,x);
+}
