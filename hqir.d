@@ -4362,30 +4362,31 @@ class ScopeWriter {
 	}
 
 	void implLhs(ast_exp.CallExp e, Value ret) {
-		assert(!e.isSquare);
 		assert(!e.isClassical_);
 		assert(ret);
 
 		// fast-path `dup` to avoid RTTI
-		if(auto sube = cast(ast_exp.CallExp) e.e) {
-			switch(ast_sem.isPreludeCall(sube)) {
-				case "dup":
-					assert(sube.isSquare, "non-[] call to dup");
-					assert(sube.arg.eval() == e.type, "typeof(dup[t](e)) != t");
-					Value tmp = genExprAs(e.arg, e.type);
-					valUndup(ret, tmp);
-					valForget(tmp);
-					return;
+		if(!e.isSquare) {
+			if(auto sube = cast(ast_exp.CallExp) e.e) {
+				switch(ast_sem.isPreludeCall(sube)) {
+					case "dup":
+						assert(sube.isSquare, "non-[] call to dup");
+						assert(sube.arg.eval() == e.type, "typeof(dup[t](e)) != t");
+						Value tmp = genExprAs(e.arg, e.type);
+						valUndup(ret, tmp);
+						valForget(tmp);
+						return;
+					default:
+						break;
+				}
+			}
+
+			switch(ast_sem.isBuiltInCall(e)) {
+				case ast_sem.BuiltIn.qabort:
+					return valDeallocError(ret);
 				default:
 					break;
 			}
-		}
-
-		switch(ast_sem.isBuiltInCall(e)) {
-			case ast_sem.BuiltIn.qabort:
-				return valDeallocError(ret);
-			default:
-				break;
 		}
 
 		assert(!e.newFunctionVar);
