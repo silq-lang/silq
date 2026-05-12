@@ -11,19 +11,19 @@ def solve(const O_f: B x B !-> B x B) {
 
 def main() {
 	def O_id(x: B, y: B) {
-		y xorb= x;
+		y xor= x;
 		return (x, y);
 	}
 	def O_not(x: B, y: B) {
-		y xorb= !x;
+		y xor= !x;
 		return (x, y);
 	}
 	def O_zero(x: B, y: B) {
-		y xorb= 0;
+		y xor= 0;
 		return (x, y);
 	}
 	def O_one(x: B, y: B) {
-		y xorb= 1;
+		y xor= 1;
 		return (x, y);
 	}
 	

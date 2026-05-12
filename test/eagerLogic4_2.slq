@@ -1,0 +1,13 @@
+// args: --run
+
+def main(){
+	x:=0;
+	y:=H(0);
+	z:=H(0);
+	w:=H(0);
+
+	x or= y;
+	x xor= z;
+	x and= w;
+	return (x,y,z,w);
+}

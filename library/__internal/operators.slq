@@ -2355,6 +2355,23 @@ def __andb_NZ(a: !ℕ, b: !ℤ) @[__operator, extern="primitive.int.and"] lifted
 def __andb_ZN(a: !ℤ, b: !ℕ) @[__operator, extern="primitive.int.and"] lifted: !ℕ;
 def __andb_Z(a: !ℤ, b: !ℤ) @[__operator, extern="primitive.int.and"] lifted: !ℤ;
 
+// a ∨ b
+def __or_b(a: 𝔹, b: 𝔹) @[__operator] lifted: 𝔹 ⇒ __orb_b(a, b);
+def __or_bB(a: 𝔹, b: !𝔹) @[__operator] lifted: 𝔹 ⇒ __orb_bB(a, b);
+def __or_Bb(a: !𝔹, b: 𝔹) @[__operator] lifted: 𝔹 ⇒ __orb_Bb(a, b);
+def __or_B(a: !𝔹, b: !𝔹) @[__operator] lifted: 𝔹 ⇒ __orb_B(a, b);
+
+// a ⊻ b
+def __xor_b(a: 𝔹, b: 𝔹) @[__operator] lifted: 𝔹 ⇒ __xorb_b(a, b);
+def __xor_bB(a: 𝔹, b: !𝔹) @[__operator] lifted: 𝔹 ⇒ __xorb_bB(a, b);
+def __xor_Bb(a: !𝔹, b: 𝔹) @[__operator] lifted: 𝔹 ⇒ __xorb_Bb(a, b);
+def __xor_B(a: !𝔹, b: !𝔹) @[__operator] lifted: 𝔹 ⇒ __xorb_B(a, b);
+
+// a ∧ b
+def __and_b(a: 𝔹, b: 𝔹) @[__operator] lifted: 𝔹 ⇒ __andb_b(a, b);
+def __and_bB(a: 𝔹, b: !𝔹) @[__operator] lifted: 𝔹 ⇒ __andb_bB(a, b);
+def __and_Bb(a: !𝔹, b: 𝔹) @[__operator] lifted: 𝔹 ⇒ __andb_Bb(a, b);
+def __and_B(a: !𝔹, b: !𝔹) @[__operator] lifted: 𝔹 ⇒ __andb_B(a, b);
 
 // comparison operators
 
@@ -4218,6 +4235,16 @@ def __xorb_assign_bB(a: 𝔹, const b: !𝔹) @[__operator] qfree: 𝔹 {
 	}
 	return a;
 }
+
+// a &= b
+// (always rewritten to with x:=a do x=x&b)
+
+// a ∨= b
+// (always rewritten to with x:=a do x=x|b)
+
+// a ⊻= b
+def __xor_assign_b(a: 𝔹, const b: 𝔹) @[__operator] qfree: 𝔹 ⇒ __xorb_assign_b(a, b);
+def __xor_assign_bB(a: 𝔹, const b: !𝔹) @[__operator] qfree: 𝔹 ⇒ __xorb_assign_bB(a, b);
 
 // a &= b
 // (always rewritten to with x:=a do x=x&b)

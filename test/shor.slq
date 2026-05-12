@@ -57,7 +57,7 @@ def order(a:!ℕ,N:!ℕ){
 		def f(b:uint[n])lifted⇒powm(a as uint[n],b,N);
 		c:=candidates(estimatePhase(f)/2^n);
 		for i in [0..c.length){
-			if c[i]≠0∧a^c[i]%N=1{ b=c[i]; }
+			if c[i]≠0 && a^c[i]%N=1{ b=c[i]; }
 		}
 	}
 	return b coerce !ℕ;

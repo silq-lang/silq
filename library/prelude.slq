@@ -287,7 +287,7 @@ def cpow(a:!ℂ,b:!ℂ)lifted:!ℂ{
 		assert(v=0);
 		if u>0{ return 0; }
 	}
-	if v=0∧inℤ(u){
+	if v=0 && inℤ(u){
 		return a^(u coerce !ℤ);
 	}
 	(r,θ):=ctort(a);

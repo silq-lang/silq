@@ -2571,6 +2571,9 @@ struct Interpreter(QState){
 			if(auto ce=cast(BitOrExp)e) return doIt(ce.e1)|doIt(ce.e2);
 			if(auto ce=cast(BitXorExp)e) return doIt(ce.e1)^doIt(ce.e2);
 			if(auto ce=cast(BitAndExp)e) return doIt(ce.e1)&doIt(ce.e2);
+			if(auto ce=cast(OrExp)e) return doIt(ce.e1)|doIt(ce.e2);
+			if(auto ce=cast(XorExp)e) return doIt(ce.e1)^doIt(ce.e2);
+			if(auto ce=cast(AndExp)e) return doIt(ce.e1)&doIt(ce.e2);
 			if(auto ume=cast(UPlusExp)e) return +doIt(ume.e);
 			if(auto ume=cast(UMinusExp)e) return -doIt(ume.e);
 			if(auto ume=cast(UNotExp)e) return doIt(ume.e).eqZ;
@@ -3210,6 +3213,10 @@ struct Interpreter(QState){
 				if(cast(BitOrAssignExp)e) return a|b;
 				if(cast(BitXorAssignExp)e) return a^b;
 				if(cast(BitAndAssignExp)e) return a&b;
+				if(cast(OrAssignExp)e) return a|b;
+				if(cast(XorAssignExp)e) return a^b;
+				if(cast(AndAssignExp)e) return a&b;
+				enforce(0,"unsupported assignment operator");
 				assert(0);
 			}
 			auto ae=cast(AAssignExp)e;

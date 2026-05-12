@@ -1,0 +1,39 @@
+
+def main(){
+	b:=1:𝔹;
+	s:=1:int[16];
+	u:=2:uint[16];
+	sc:=1:!int[16];
+	uc:=2:!uint[16];
+	bc:=1:!𝔹;
+	n:=3:!ℕ;
+	z:=-3:!ℤ;
+	q:=1/2:!ℚ;
+	r:=4.5:!ℝ;
+	// c:=0:!ℂ;
+
+	bandb:=b and b:𝔹;
+	(b and b):=bandb;
+	bandbc:=b and bc:𝔹;
+	(b and bc):=bandbc;
+	bcandb:=bc and b:𝔹;
+	(bc and b):=bcandb;
+	bcandbc:=bc and bc:!𝔹;
+	(bc and bc):=bcandbc;
+	borb:=b or b:𝔹;
+	(b or b):=borb;
+	borbc:=b or bc:𝔹;
+	(b or bc):=borbc;
+	bcorb:=bc or b:𝔹;
+	(bc or b):=bcorb;
+	bcorbc:=bc or bc:!𝔹;
+	(bc or bc):=bcorbc;
+	bxorb:=b xor b:𝔹;
+	(b xor b):=bxorb;
+	bxorbc:=b xor bc:𝔹;
+	(b xor bc):=bxorbc;
+	bcxorb:=bc xor b:𝔹;
+	(bc xor b):=bcxorb;
+	bcxorbc:=bc xor bc:!𝔹;
+	(bc xor bc):=bcxorbc;
+}

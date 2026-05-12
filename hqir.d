@@ -4964,6 +4964,9 @@ class ScopeWriter {
 				ast_exp.BitOrAssignExp,
 				ast_exp.BitXorAssignExp,
 				ast_exp.BitAndAssignExp,
+				ast_exp.OrAssignExp,
+				ast_exp.XorAssignExp,
+				ast_exp.AndAssignExp,
 			)) {
 				if(auto et = cast(t) e) return implStmt(et);
 			}

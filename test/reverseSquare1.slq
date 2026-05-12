@@ -2,7 +2,7 @@
 
 def op[n:!N](q:uint[n], anc:𝔹)mfree{
 	for i in [0..n){
-		anc xorb=q[i];
+		anc xor=q[i];
 	}
 	return (q, anc);
 }

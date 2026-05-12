@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	x:=H(0);
+	y:=H(0);
+	z:=H(0);
+	w:=H(0);
+	return (x and (y or z) xor w, x, y, z, w);
+}

@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	x:=H(1);
+	y:=H(0);
+
+	x ⊻= y;
+	return (x,y);
+}
