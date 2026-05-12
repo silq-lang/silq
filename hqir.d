@@ -4950,8 +4950,8 @@ class ScopeWriter {
 			static foreach(t; AliasSeq!(
 				ast_exp.DefineExp,
 				ast_exp.AssignExp,
-				ast_exp.OrAssignExp,
-				ast_exp.AndAssignExp,
+				ast_exp.OrElseAssignExp,
+				ast_exp.AndThenAssignExp,
 				ast_exp.AddAssignExp,
 				ast_exp.SubAssignExp,
 				ast_exp.NSubAssignExp,

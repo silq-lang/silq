@@ -2762,12 +2762,12 @@ struct Interpreter(QState){
 				enum common=q{
 					auto e1=doIt(b.e1),e2=doIt(b.e2);
 				};
-				if(auto b=cast(AndExp)e){
+				if(auto b=cast(AndThenExp)e){
 					auto e1=doIt(b.e1);
 					if(e1.isClassical()&&e1.eqZImpl) return e1;
 					auto e2=doIt(b.e2);
 					return e1&e2;
-				}else if(auto b=cast(OrExp)e){
+				}else if(auto b=cast(OrElseExp)e){
 					auto e1=doIt(b.e1);
 					if(e1.isClassical()&&e1.neqZImpl) return e1;
 					auto e2=doIt(b.e2);
@@ -3194,8 +3194,8 @@ struct Interpreter(QState){
 			catAssignTo(lhs,rhs,ce.replacements);
 		}else if(isOpAssignExp(e)){
 			QState.Value perform(QState.Value a,QState.Value b){
-				if(cast(OrAssignExp)e) return a|b;
-				if(cast(AndAssignExp)e) return a&b;
+				if(cast(OrElseAssignExp)e) return a|b;
+				if(cast(AndThenAssignExp)e) return a&b;
 				if(cast(AddAssignExp)e) return a+b;
 				if(cast(SubAssignExp)e) return a-b;
 				if(cast(NSubAssignExp)e) return a.opBinary!"sub"(b);
@@ -3215,11 +3215,11 @@ struct Interpreter(QState){
 			auto ae=cast(AAssignExp)e;
 			assert(!!ae);
 			auto ass=getAssignable!false(ae.e1,ae.replacements);
-			if(cast(OrAssignExp)e&&ae.e1.type.isClassical()){
+			if(cast(OrElseAssignExp)e&&ae.e1.type.isClassical()){
 				auto lhs=ass.read(qstate);
 				enforce(lhs.isClassical(),"unexpected quantum condition");
 				if(!lhs.neqZImpl) ass.assign(qstate,runExp(ae.e2));
-			}else if(cast(AndAssignExp)e&&ae.e1.type.isClassical()){
+			}else if(cast(AndThenAssignExp)e&&ae.e1.type.isClassical()){
 				auto lhs=ass.read(qstate);
 				enforce(lhs.isClassical(),"unexpected quantum condition");
 				if(lhs.neqZImpl) ass.assign(qstate,runExp(ae.e2));
