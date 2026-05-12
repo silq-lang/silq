@@ -7450,7 +7450,7 @@ class Writer {
 	string[] dump(ast_decl.FunctionDef[] rootF) {
 		auto r = appender!(string[]);
 
-		output.write(import("builtins.hqir"));
+		output.write(import("__internal/builtins.hqir"));
 
 		foreach(fd; rootF) {
 			r.put(getFunctionInfo(fd).directName);
