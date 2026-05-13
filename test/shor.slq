@@ -112,7 +112,7 @@ def QFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
 	return ψ;
 }
 
-// compute a^b%N
+// compute a^b%N (note: (N-1)^2 must fit into uint[n])
 def powm[n:!ℕ,m:!ℕ](a:uint[n],b:uint[m],N:!ℕ)lifted: uint[n]{
 	(r,x):=(1:uint[n], a);
 	for i in 0..m{
