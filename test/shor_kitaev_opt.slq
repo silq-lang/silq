@@ -60,7 +60,7 @@ def order(a:!ℕ,N:!ℕ){
 		ais~=[ais[i-1]^2%N];
 	}
 	b:=1;
-	while powm(a,b,N)≠1{
+	while pow_mod(a,b,N)≠1{
 		def f[pw2:!ℕ](b:uint[n]){
 			nb:=mul_mod_uN(b,aps[pw2],N);
 			mul_mod_uN(nb,ais[pw2],N):=b;
@@ -70,7 +70,7 @@ def order(a:!ℕ,N:!ℕ){
 		measure(x);
 		c:=candidates((θ as !ℕ)/2^(2·n+1));
 		for i in (c.length..-1..0]{
-			if c[i]≠0∧powm(a,c[i],N)=1{ b=c[i]; }
+			if c[i]≠0 && pow_mod(a,c[i],N)=1{ b=c[i]; }
 		}
 	}
 	return b coerce !ℕ;
@@ -119,7 +119,7 @@ def phase_u[n:!ℕ](const x:!uint[n]) {
 	phase(2·π·(x as !N)/2^n);
 }
 
-def candidates(q:!Q): !N[] {
+def candidates(q:!ℚ): !ℕ[] {
 	r := [];
 	(b, d) := (1, 0);
 	while q!=0 {

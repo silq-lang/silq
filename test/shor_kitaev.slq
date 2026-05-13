@@ -95,7 +95,7 @@ def phase_u[n:!ℕ](const x:!uint[n]) {
 	phase(2·π·(x as !N)/2^n);
 }
 
-def candidates(q:!Q): !N[] {
+def candidates(q:!ℚ): !ℕ[] {
 	r := [];
 	(b, d) := (1, 0);
 	while q!=0 {
