@@ -131,16 +131,3 @@ def candidates(q:!Q): !N[] {
 	}
 	return r;
 }
-
-def powm(a:!ℕ,b:!ℕ,N:!ℕ){
-	r:=1;
-	x:=a;
-	while b≠0{
-		if b&1{
-			r=r*x%N;
-		}
-		x=x^2%N;
-		b div=2;
-	}
-	return r;
-}
