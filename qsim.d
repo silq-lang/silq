@@ -784,8 +784,7 @@ struct QState{
 				this=rhs;
 				return;
 			}
-			assert(tag==rhs.tag);
-			enforce(rhs.tag==rhs.tag,"incompatible values for assignment");
+			enforce(tag==rhs.tag,"incompatible values for assignment");
 			Lswitch: final switch(tag){
 				static foreach(t;[Tag.cval,Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.bval]){
 					case t:
