@@ -1,0 +1,9 @@
+
+unsigned := uint;
+signed := int;
+
+def main(){
+	x:=2:unsigned[2];
+	y:=-3:signed[3];
+	return (x,y);
+}
