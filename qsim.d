@@ -8,6 +8,7 @@ import util.range: zip;
 import std.string: startsWith,join;
 import util.tuple: q=tuple,Q=Tuple;
 import std.exception: enforce;
+import core.lifetime: emplace;
 
 import options;
 import astopt;
@@ -315,6 +316,9 @@ Expression simConcatType(Expression t1,Expression t2){
 	return t1;
 }
 
+
+
+
 struct QState{
 	MapX!(Σ,C) state;
 	Record vars;
@@ -612,6 +616,15 @@ struct QState{
 		this(Value value,Value i){ this.value=value; this.i=i; }
 		override Value get(ref Σ σ){ return value.classicalValue(σ)[i.classicalValue(σ)]; }
 	}
+	static class IteQVal: QVal{
+		Value cond,then,othw;
+		this(Value cond,Value then,Value othw){
+			this.cond=cond, this.then=then, this.othw=othw;
+		}
+		override Value get(ref Σ s){
+			return cond.classicalValue(s).asBoolean?then.classicalValue(s):othw.classicalValue(s);
+		}
+	}
 	static class UnOpQVal(string op):QVal{
 		Value value;
 		this(Value value){ this.value=value; }
@@ -689,15 +702,30 @@ struct QState{
 		}
 		bool isValid(){ return !!type; }
 		void opAssign(Value rhs){
-			// TODO: make safe
+			destroy(this);
 			type=rhs.type;
 			if(!type) return;
 			Lswitch:final switch(tag){
 				import std.traits:EnumMembers;
 				static foreach(t;EnumMembers!Tag){
-					case t: mixin(`this.`~text(t)~`=rhs.`~text(t)~`;`); break Lswitch;
+					case t: mixin(`emplace(&this.`~text(t)~`,rhs.`~text(t)~`);`); break Lswitch;
 				}
 			}
+		}
+		version(DigitalMars){} // TODO: causes segfaults with DMD, why?
+		else ~this(){
+			if(!type) return;
+			Lswitch:final switch(tag){
+				import std.traits:EnumMembers,hasElaborateDestructor;
+				static foreach(t;EnumMembers!Tag){
+					case t:
+						if(hasElaborateDestructor!(typeof(mixin(`this.`~text(t))))){
+							mixin(`destroy(this.`~text(t)~`);`);
+						}
+						break Lswitch;
+				}
+			}
+			emplace(&this,Value.init);
 		}
 		Value dup(ref QState state){
 			final switch(tag){
@@ -759,15 +787,17 @@ struct QState{
 				}
 			}
 		}
-		this(this){
+		this(ref inout(Value) r)inout{
+			this.type=r.type;
 			if(!type) return;
-			auto tt=tag;
+			auto tt=(cast()this).tag;
 			Lswitch:final switch(tt){
 				import std.traits:EnumMembers;
 				static foreach(t;EnumMembers!Tag){
 					case t:
-						static if(__traits(hasMember,mixin(text(t)),"__postblit"))
-							mixin(`this.`~text(t)~`.__postblit();`);
+						static if(is(T==struct))
+							mixin(`emplace(&(cast()this).`~text(t)~`,cast()r.`~text(t)~`);`);
+						else mixin(`(cast()this).`~text(t)~`=(cast()r).`~text(t)~`;`);
 						break Lswitch;
 				}
 			}
@@ -1100,7 +1130,7 @@ struct QState{
 		}
 		Value opIndex(Value i){
 			if(i.isℤ()) return this[i.asℤ()];
-			if(cast(ArrayTy)i.type||cast(VectorTy)i.type||cast(TupleTy)i.type){
+			/+if(cast(ArrayTy)i.type||cast(VectorTy)i.type||cast(TupleTy)i.type){
 				if(cast(TupleTy)type){
 					auto values=i.array_.map!(v=>this[v]).array;
 					auto ntype=tupleTy(values.map!(v=>v.type).array);
@@ -1111,7 +1141,7 @@ struct QState{
 				if(cast(ArrayTy)i.type) ntype=arrayTy(ntype);
 				if(auto vt=cast(VectorTy)i.type) ntype=vectorTy(ntype,vt.num);
 				return makeArray(arrayTy(ntype),values);
-			}
+			}+/
 			final switch(tag){
 				case Tag.array_:
 					// TODO: bounds checking
@@ -1769,6 +1799,7 @@ struct QState{
 	}do{
 		Value r;
 		r.type=type;
+		enforce(r.tag==Value.Tag.array_);
 		r.array_=tuple;
 		return r;
 	}
@@ -1777,21 +1808,22 @@ struct QState{
 		static Value makeRecord(Record record){
 		Value r;
 		r.type=contextTy(false);
-		r.record=record;
+		enforce(r.tag==Value.Tag.record);
+		emplace(&r.record,record);
 		return r;
 	}
 	static Value makeRecord(Expression type,Record record){
 		Value r;
 		r.type=type;
 		enforce(r.tag==Value.Tag.record);
-		r.record=record;
+		emplace(&r.record,record);
 		return r;
 	}
 	static Value makeClosure(Expression type,Closure closure){
 		Value r;
 		r.type=type;
 		enforce(r.tag==Value.Tag.closure);
-		r.closure=closure;
+		emplace(&r.closure,closure);
 		return r;
 	}
 	static Value makeQuval(Expression type,QVal quval){
@@ -1822,27 +1854,27 @@ struct QState{
 	static Value makeRational(ℚ value){
 		Value r;
 		r.type=ℚt(true);
-		r.qval=value;
+		emplace(&r.qval,value);
 		return r;
 	}
 	static Value makeInteger(ℤ value){
 		Value r;
 		r.type=ℤt(true);
-		r.zval=value;
+		emplace(&r.zval,value);
 		return r;
 	}
 	static Value makeInt(Expression type,BitInt!true value){
 		Value r;
 		r.type=type;
 		assert(r.tag==Value.Tag.intval,text(type));
-		r.intval=value;
+		emplace(&r.intval,value);
 		return r;
 	}
 	static Value makeUint(Expression type,BitInt!false value){
 		Value r;
 		r.type=type;
 		assert(r.tag==Value.Tag.uintval);
-		r.uintval=value;
+		emplace(&r.uintval,value);
 		return r;
 	}
 	static Value makeBool(bool value){
@@ -1999,7 +2031,6 @@ struct QState{
 		}else assert(!context);
 		if(fun.isTuple){
 			enforce(arg.tag==Value.Tag.array_,"argument is not a tuple");
-			auto args=iota(fun.params.length).map!(i=>inFrame(arg.array_[i]));
 			foreach(i,prm;fun.params)
 				ncur.passParameter(prm.getName,prm.isConst,inFrame(arg.array_[i])); // TODO: faster: parallel assignment to parameters
 		}else{
@@ -2169,21 +2200,15 @@ struct QState{
 		//assert(then.type.getClassical==othw.type.getClassical,text(then.type," ",othw.type)); // TODO
 		assert(cond.type is Bool(false));
 	}do{
-		static class IteQVal: QVal{
-			Value cond,then,othw;
-			this(Value cond,Value then,Value othw){
-				this.cond=cond, this.then=then, this.othw=othw;
-			}
-			override Value get(ref Σ s){
-				return cond.classicalValue(s).asBoolean?then.classicalValue(s):othw.classicalValue(s);
-			}
-		}
 		auto type=then.type;
 		final switch(Value.getTag(type)){
 			case Value.Tag.array_:
 				enforce(then.tag==Value.Tag.array_&&othw.tag==Value.Tag.array_,"incompatible values in branches of quantum if-then-else expression");
 				enforce(then.array_.length==othw.array_.length,"encountered quantum-dependent tuples lengths");
-				return makeArray(type,zip(then.array_,othw.array_).map!(x=>ite(cond,x[0],x[1])).array);
+				//return makeArray(type,zip(then.array_,othw.array_).map!(x=>ite(cond,x[0],x[1])).array);
+				Value[] values;
+				foreach(i;0..then.array_.length) values~=ite(cond,then.array_[i],othw.array_[i]);
+				return makeArray(type,values);
 			case Value.Tag.closure: enforce(0,"quantum-conditional closures not yet supported"); assert(0);
 			case Value.Tag.record: enforce(0,"quantum-conditional closures not yet supported"); assert(0);
 			case Value.Tag.uintval,Value.Tag.intval,Value.Tag.bval:
@@ -2295,7 +2320,10 @@ struct QState{
 	}
 	Value array_(Expression type, Value len, Value val){
 		enforce(len.isℤ(),"bad array length");
-		return makeArray(type,iota(smallValue(len.asℤ)).map!(_=>val.dup(this)).array);
+		//return makeArray(type,iota(smallValue(len.asℤ)).map!(i=>val.dup(this)).array);
+		Value[] values;
+		foreach(i;0..smallValue(len.asℤ)) values~=val.dup(this);
+		return makeArray(type,values);
 	}
 	alias vector=array_;
 	Value reverse(ref QState qstate,Expression type,Value arg){
@@ -2447,16 +2475,16 @@ struct Interpreter(QState){
 				type=ntype.eval();
 			}
 		}
-		QState.Value default_(){
+		static QState.Value default_(QState.Value value,bool consumeArg,Expression type,ref Interpreter self){
 			if(consumeArg) value.consumeOnRead(); // TODO: ok?
 			if(auto intTy=isFixedIntTy(type)){
 				if(value.tag==QState.Value.Tag.array_)
-					enforce(qstate.makeInteger(ℤ(value.array_.length)).compare!"=="(runExp(intTy.bits)).neqZImpl,"length mismatch for conversion to fixed-size integer");
+					enforce(qstate.makeInteger(ℤ(value.array_.length)).compare!"=="(self.runExp(intTy.bits)).neqZImpl,"length mismatch for conversion to fixed-size integer");
 			}
 			if(type==ℕt(true)) enforce(value.compare!">="(qstate.makeInteger(ℤ(0))).neqZImpl,"negative value not representable as a natural number");
 			return value.convertTo(type);
 		}
-		if(isSubtype(value.type,type)) return default_();
+		if(isSubtype(value.type,type)) return default_(value,consumeArg,type,this);
 		if(isSubtype(value.type,ℤt(true))){
 			if(auto intTy=isFixedIntTy(type)){
 				if(intTy.isSigned)
@@ -2477,7 +2505,10 @@ struct Interpreter(QState){
 		if(auto tpl=cast(TupleTy)type){
 			if(value.tag==QState.Value.Tag.array_){
 				enforce(value.array_.length==tpl.length,"length mismatch for conversion to tuple");
-				return qstate.makeTuple(type,iota(tpl.length).map!(i=>convertTo(value.array_[i],tpl[i],consumeArg)).array);
+				//return qstate.makeTuple(type,iota(tpl.length).map!(i=>convertTo(value.array_[i],tpl[i],consumeArg)).array);
+				QState.Value[] values;
+				foreach(i;0..tpl.length) values~=convertTo(value.array_[i],tpl[i],consumeArg);
+				return qstate.makeTuple(type,values);
 			}
 		}else if(auto arr=cast(ArrayTy)type){
 			if(value.tag==QState.Value.Tag.array_)
@@ -2504,7 +2535,7 @@ struct Interpreter(QState){
 			}
 		}
 		if(consumeArg) value.consumeOnRead(); // TODO: ok?
-		return default_();
+		return default_(value,consumeArg,type,this);
 	}
 	void closeScope(Scope sc){
 		if(!qstate.state.length) return;
