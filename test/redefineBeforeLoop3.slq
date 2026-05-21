@@ -1,0 +1,7 @@
+
+def main(){
+       z:=0;
+       z:=0; /// TODO
+       for i in 0..1{ }
+       return (z,a); /// TODO
+}
