@@ -2554,7 +2554,9 @@ struct Interpreter(QState){
 					return qstate.makeUint(type.getClassical(),BitInt!false(smallValue(runExp(intTy.bits).asℤ()),value.asℤ())).convertTo(type);
 			}
 			if(auto zmodTy=isℤmodTy(type)){
-				return qstate.makeℤmod(type.getClassical(),ℤmod(runExp(zmodTy.N).asℤ(),value.asℤ)).convertTo(type);
+				auto N=runExp(zmodTy.N).asℤ();
+				enforce(N!=0,"cannot convert to ℤmod[0]");
+				return qstate.makeℤmod(type.getClassical(),ℤmod(N,value.asℤ)).convertTo(type);
 			}
 		}
 		if(isUint(value.type)&&isSubtype(ℕt(true),type)){
