@@ -142,6 +142,26 @@ def qint_iaddq[n:!N](a: B^n, const b: B^n) @[__operator] @noinline @nogarbage @[
 	return rec(a, b, 0) coerce B^n;
 }
 
+def qint_maddc[n:!N](a: uint[n], const b: !N, const m: !N) @[__operator] @noinline @nogarbage @[extern="silq_builtin.maddc"] qfree: uint[n] {
+	a := ((a as B^n) ~ [0]) as uint[n+1];
+	a -= m-b;
+	(a: uint[n] as B^n) ~ [x] := a as B^(n+1);
+	if x { a += m; }
+	(a ≥ b) := x;
+	return a;
+}
+
+def qint_maddq[n:!N](a: uint[n], const b: uint[n], const m: !N) @[__operator] @noinline @nogarbage @[extern="silq_builtin.maddc"] qfree: uint[n] {
+	a := ((a as B^n) ~ [0]) as uint[n+1];
+	a += ((b as B^n) ~ [0]) as uint[n+1];
+	x := a >= m;
+	if x { a -= m; }
+	(a: uint[n] as B^n) ~ [0] := a as B^(n+1);
+	(a < b) := x;
+	return a;
+}
+
+
 def qint_isubc[n:!N](a: B^n, const b: !Z) @[__operator] qfree: B^n {
 	qint_iaddc[n](a, b) := a;
 	return a;
@@ -167,6 +187,22 @@ def qint_isubq[n:!N](a: B^n, const b: B^n) qfree: B^n {
 	qint_iaddq[n](r, b) := a;
 	return r;
 }
+
+def qint_msubc[n:!N](a: uint[n], const b: !N, const m: !N) qfree: uint[n] {
+	qint_maddc[n](a, b, m) := a;
+	return a;
+}
+
+def qint_mneg[n:!N](a: uint[n], const m: !N) qfree: uint[n] {
+	a := qint_irsubc[n](m-1, a as B^n) as uint[n];
+	return qint_maddc(a, 1, m);
+}
+
+def qint_msubq[n:!N](a: uint[n], const b: uint[n], const m: !N) qfree: uint[n] {
+	qint_maddq[n](a, b, m) := a;
+	return a;
+}
+
 
 def qint_mulc[n:!N](a: B^n, b: !Z) lifted: B^n {
 	if n == 0 {
@@ -208,6 +244,30 @@ def qint_mulq[n:!N](const a: B^n, const b: B^n) @nogarbage qfree: B^n {
 		rlo := 0;
 	}
 	return [rlo] ~ r;
+}
+
+def qint_mmulc[n:!N](const a: uint[n], const b: !N, const m: !N) qfree: uint[n] {
+	r := 0:uint[n];
+	for i in 0..n {
+		if a[i] {
+			r := qint_maddc(r, (b·2^i)%m, m);
+		}
+	}
+	return r;
+}
+
+def qint_mmulq[n:!N](const a: uint[n], const b: uint[n], const m: !N) qfree: uint[n] {
+	r := 0:uint[n];
+	for i in 0..n {
+		if a[i] {
+			for j in 0..n {
+				if b[j] {
+					r := qint_maddc(r, 2^(i+j)%m, m);
+				}
+			}
+		}
+	}
+	return r;
 }
 
 def qint_udivmod_qq[n:!N,m:!N](const a: B^n, const b: B^m) @nogarbage qfree: B^n x B^m {
@@ -425,6 +485,8 @@ def qint_sltq[n:!N](a: B^n, b: B^n) lifted: B {
 	return qint_ultq[n](a', b');
 }
 
+def ℤmodBits(N:!ℕ):!ℕ ⇒ ceil(log₂(N)) coerce !ℕ;
+
 // unary operators
 
 // !b
@@ -456,6 +518,10 @@ def __uminus_u[n:!ℕ](a: uint[n]) @[__operator] lifted: uint[n] {
 def __uminus_U[n:!ℕ](x: !uint[n]) @[__operator] lifted: !uint[n] {
 	return __uminus_Z(x as !N) as !uint[n];
 }
+
+def __uminus_m[N:!ℕ](a: ℤmod[N]) @[__operator] lifted: ℤmod[N] ⇒ qint_mneg(a pun uint[ℤmodBits(N)], N) pun ℤmod[N];
+def __uminus_M[N:!ℕ](x: !ℤmod[N]) @[__operator] lifted: !ℤmod[N] ⇒ (-(x as !ℕ)) as !ℤmod[N];
+
 
 def __uminus_B(x:!𝔹)lifted:!ℤ {
 	return if x { -(1:!Z) } else { 1:!Z };
@@ -627,6 +693,58 @@ def __add_ZU[n:!ℕ](a: !ℤ, b: !uint[n]) @[__operator] lifted: !uint[n] {
 	return __add_Z(a, b as !Z) as !uint[n];
 }
 
+def __add_m[N:!ℕ](a: ℤmod[N], b: ℤmod[N]) @[__operator] lifted: ℤmod[N] {
+	return qint_maddq(a pun uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)], N) pun ℤmod[N];
+}
+def __add_Mm[N:!ℕ](a: !ℤmod[N], b: ℤmod[N]) @[__operator] lifted: ℤmod[N] {
+	return qint_maddc(b pun uint[ℤmodBits(N)], a as !ℕ, N) pun ℤmod[N];
+}
+def __add_mM[N:!ℕ](a: ℤmod[N], b: !ℤmod[N]) @[__operator] lifted: ℤmod[N] {
+	return qint_maddc(a pun uint[ℤmodBits(N)], b as !ℕ, N) pun ℤmod[N];
+}
+def __add_M[N:!ℕ](a: !ℤmod[N], b: !ℤmod[N]) @[__operator] lifted: !ℤmod[N] {
+	return ((a as !ℕ) + (b as !ℕ)) as !ℤmod[N];
+}
+
+def __add_mb[N:!ℕ](a: ℤmod[N], b: 𝔹) @[__operator] lifted: ℤmod[N] {
+	return if b then qint_maddc(a pun uint[ℤmodBits(N)], 1, N) pun ℤmod[N] else a;
+}
+def __add_Mb[N:!ℕ](a: !ℤmod[N], b: 𝔹) @[__operator] lifted: ℤmod[N] {
+	return if b then ((a as !ℕ)+1) as !ℤmod[N] else a;
+}
+def __add_mB[N:!ℕ](a: ℤmod[N], b: !𝔹) @[__operator] lifted: ℤmod[N] {
+	return if b then qint_maddc(a pun uint[ℤmodBits(N)], 1, N) pun ℤmod[N] else a;
+}
+def __add_MB[N:!ℕ](a: !ℤmod[N], b: !𝔹) @[__operator] lifted: !ℤmod[N] {
+	return if b then ((a as !ℕ)+1) as !ℤmod[N] else a;
+}
+
+def __add_bm[N:!ℕ](a: 𝔹, b: ℤmod[N]) @[__operator] lifted: ℤmod[N] {
+	return if a then qint_maddc(b pun uint[ℤmodBits(N)], 1, N) pun ℤmod[N] else b;
+}
+def __add_bM[N:!ℕ](a: 𝔹, b: !ℤmod[N]) @[__operator] lifted: ℤmod[N] {
+	return if a then ((b as !ℕ)+1) as !ℤmod[N] else b;
+}
+def __add_Bm[N:!ℕ](a: !𝔹, b: ℤmod[N]) @[__operator] lifted: ℤmod[N] {
+	return if a then qint_maddc(b pun uint[ℤmodBits(N)], 1, N) pun ℤmod[N] else b;
+}
+def __add_BM[N:!ℕ](a: !𝔹, b: !ℤmod[N]) @[__operator] lifted: !ℤmod[N] {
+	return if a then ((b as !ℕ)+1) as !ℤmod[N] else b;
+}
+
+def __add_mZ[N:!ℕ](a: ℤmod[N], b: !ℤ) @[__operator] lifted: ℤmod[N] {
+	return qint_maddc(a pun uint[ℤmodBits(N)], b%N, N) pun ℤmod[N];
+}
+def __add_MZ[N:!ℕ](a: !ℤmod[N], b: !ℤ) @[__operator] lifted: !ℤmod[N] {
+	return ((a as !ℕ) + b%N) as !ℤmod[N];
+}
+def __add_Zm[N:!ℕ](a: !ℤ, b: ℤmod[N]) @[__operator] lifted: ℤmod[N] {
+	return qint_maddc(b pun uint[ℤmodBits(N)], a%N, N) pun ℤmod[N];
+}
+def __add_ZM[N:!ℕ](a: !ℤ, b: !ℤmod[N]) @[__operator] lifted: !ℤmod[N] {
+	return (a%N + (b as !ℕ)) as !ℤmod[N];
+}
+
 def __add_B(a: !𝔹, b: !𝔹) @[__operator] lifted: !ℕ {
 	return __add_N(a, b);
 }
@@ -776,6 +894,50 @@ def __sub_Zu[n:!ℕ](a: !ℤ, b: uint[n]) @[__operator] lifted: uint[n] {
 def __sub_ZU[n:!ℕ](a: !ℤ, b: !uint[n]) @[__operator] lifted: !uint[n] {
 	return __sub_Z(a, b as !Z) as !uint[n];
 }
+
+
+def __sub_m[N:!ℕ](a: ℤmod[N], b: ℤmod[N]) @[__operator] lifted: ℤmod[N] {
+	return qint_msubq(a pun uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)], N) pun ℤmod[N];
+}
+def __sub_Mm[N:!ℕ](a: !ℤmod[N], b: ℤmod[N]) @[__operator] lifted: ℤmod[N] {
+	return qint_msubc(b pun uint[ℤmodBits(N)], a as !ℕ, N) pun ℤmod[N];
+}
+def __sub_mM[N:!ℕ](a: ℤmod[N], b: !ℤmod[N]) @[__operator] lifted: ℤmod[N] {
+	return qint_msubc(a pun uint[ℤmodBits(N)], b as !ℕ, N) pun ℤmod[N];
+}
+def __sub_M[N:!ℕ](a: !ℤmod[N], b: !ℤmod[N]) @[__operator] lifted: !ℤmod[N] {
+	return ((a as !ℕ) - (b as !ℕ)) as !ℤmod[N];
+}
+
+def __sub_mb[N:!ℕ](a: ℤmod[N], b: 𝔹) @[__operator] lifted: ℤmod[N] {
+	return if b then qint_msubc(a pun uint[ℤmodBits(N)], 1, N) pun ℤmod[N] else a;
+}
+def __sub_Mb[N:!ℕ](a: !ℤmod[N], b: 𝔹) @[__operator] lifted: ℤmod[N] {
+	return if b then ((a as !ℕ)-1) as !ℤmod[N] else a;
+}
+def __sub_mB[N:!ℕ](a: ℤmod[N], b: !𝔹) @[__operator] lifted: ℤmod[N] {
+	return if b then qint_msubc(a pun uint[ℤmodBits(N)], 1, N) pun ℤmod[N] else a;
+}
+def __sub_MB[N:!ℕ](a: !ℤmod[N], b: !𝔹) @[__operator] lifted: !ℤmod[N] {
+	return if b then ((a as !ℕ)-1) as !ℤmod[N] else a;
+}
+
+def __sub_bm[N:!ℕ](a: 𝔹, b: ℤmod[N]) @[__operator] lifted: ℤmod[N] ⇒ a+-b;
+def __sub_bM[N:!ℕ](a: 𝔹, b: !ℤmod[N]) @[__operator] lifted: ℤmod[N] ⇒ a+-b;
+def __sub_Bm[N:!ℕ](a: !𝔹, b: ℤmod[N]) @[__operator] lifted: ℤmod[N] ⇒ a+-b;
+def __sub_BM[N:!ℕ](a: !𝔹, b: !ℤmod[N]) @[__operator] lifted: !ℤmod[N] ⇒ a+-b;
+
+def __sub_mZ[N:!ℕ](a: ℤmod[N], b: !ℤ) @[__operator] lifted: ℤmod[N] {
+	return qint_msubc(a pun uint[ℤmodBits(N)], b%N, N) pun ℤmod[N];
+}
+def __sub_MZ[N:!ℕ](a: !ℤmod[N], b: !ℤ) @[__operator] lifted: !ℤmod[N] {
+	return ((a as !ℕ) - b%N) as !ℤmod[N];
+}
+def __sub_Zm[N:!ℕ](a: !ℤ, b: ℤmod[N]) @[__operator] lifted: ℤmod[N] ⇒ a+-b;
+def __sub_ZM[N:!ℕ](a: !ℤ, b: !ℤmod[N]) @[__operator] lifted: !ℤmod[N] {
+	return (a%N - (b as !ℕ)) as !ℤmod[N];
+}
+
 
 def __sub_B(a: !𝔹, b: !𝔹) @[__operator] lifted: !ℤ {
 	return __sub_N(a, b);
@@ -1144,6 +1306,60 @@ def __mul_Zu[n:!ℕ](a: !ℤ, b: uint[n]) @[__operator] lifted: uint[n] {
 def __mul_ZU[n:!ℕ](a: !ℤ, b: !uint[n]) @[__operator] lifted: !uint[n] {
 	return __mul_Z(a, b as !Z) as !uint[n];
 }
+
+
+def __mul_m[N:!ℕ](a: ℤmod[N], b: ℤmod[N]) @[__operator] lifted: ℤmod[N] {
+	return qint_mmulq(a pun uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)], N) pun ℤmod[N];
+}
+def __mul_Mm[N:!ℕ](a: !ℤmod[N], b: ℤmod[N]) @[__operator] lifted: ℤmod[N] {
+	return qint_mmulc(b pun uint[ℤmodBits(N)], a as !ℕ, N) pun ℤmod[N];
+}
+def __mul_mM[N:!ℕ](a: ℤmod[N], b: !ℤmod[N]) @[__operator] lifted: ℤmod[N] {
+	return qint_mmulc(a pun uint[ℤmodBits(N)], b as !ℕ, N) pun ℤmod[N];
+}
+def __mul_M[N:!ℕ](a: !ℤmod[N], b: !ℤmod[N]) @[__operator] lifted: !ℤmod[N] {
+	return (a as !ℕ)·(b as !ℕ) as !ℤmod[N];
+}
+
+def __mul_mb[N:!ℕ](a: ℤmod[N], b: 𝔹) @[__operator] lifted: ℤmod[N] {
+	return if b then a else 0: !ℤmod[N];
+}
+def __mul_Mb[N:!ℕ](a: !ℤmod[N], b: 𝔹) @[__operator] lifted: ℤmod[N] {
+	return if b then a else 0: !ℤmod[N];
+}
+def __mul_mB[N:!ℕ](a: ℤmod[N], b: !𝔹) @[__operator] lifted: ℤmod[N] {
+	return if b then a else 0: !ℤmod[N];
+}
+def __mul_MB[N:!ℕ](a: !ℤmod[N], b: !𝔹) @[__operator] lifted: !ℤmod[N] {
+	return if b then a else 0: !ℤmod[N];
+}
+
+def __mul_bm[N:!ℕ](a: 𝔹, b: ℤmod[N]) @[__operator] lifted: ℤmod[N] {
+	return if a then b else 0: !ℤmod[N];
+}
+def __mul_Bm[N:!ℕ](a: !𝔹, b: ℤmod[N]) @[__operator] lifted: ℤmod[N] {
+	return if a then b else 0: !ℤmod[N];
+}
+def __mul_bM[N:!ℕ](a: 𝔹, b: !ℤmod[N]) @[__operator] lifted: ℤmod[N] {
+	return if a then b else 0: !ℤmod[N];
+}
+def __mul_BM[N:!ℕ](a: !𝔹, b: !ℤmod[N]) @[__operator] lifted: !ℤmod[N] {
+	return if a then b else 0: !ℤmod[N];
+}
+
+def __mul_mZ[N:!ℕ](a: ℤmod[N], b: !ℤ) @[__operator] lifted: ℤmod[N] {
+	return qint_mmulc(a pun uint[ℤmodBits(N)], b%N, N) pun ℤmod[N];
+}
+def __mul_Zm[N:!ℕ](a: !ℤ, b: ℤmod[N]) @[__operator] lifted: ℤmod[N] {
+	return qint_mmulc(b pun uint[ℤmodBits(N)], a%N, N) pun ℤmod[N];
+}
+def __mul_MZ[N:!ℕ](a: !ℤmod[N], b: !ℤ) @[__operator] lifted: !ℤmod[N] {
+	return (a as !ℕ)·(b%N) as !ℤmod[N];
+}
+def __mul_ZM[N:!ℕ](a: !ℤ, b: !ℤmod[N]) @[__operator] lifted: !ℤmod[N] {
+	return (a%N)·(b as !ℕ) as !ℤmod[N];
+}
+
 
 def __mul_b(a: 𝔹, b: 𝔹) @[__operator] lifted: 𝔹 {
 	return __andb_b(a, b);
@@ -2649,6 +2865,41 @@ def __lt_UR[n:!ℕ](a: !uint[n], b: !ℝ) @[__operator] lifted: !𝔹 {
 	return __lt_R(a as !N, b);
 }
 
+
+def __lt_m[N:!ℕ](a: ℤmod[N], b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __lt_u(a pun uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)]);
+def __lt_Mm[N:!ℕ](a: !ℤmod[N], b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __lt_Uu(a pun !uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)]);
+def __lt_mM[N:!ℕ](a: ℤmod[N], b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __lt_uU(a pun uint[ℤmodBits(N)], b pun !uint[ℤmodBits(N)]);
+def __lt_M[N:!ℕ](a: !ℤmod[N], b: !ℤmod[N]) @[__operator] lifted: !𝔹 ⇒ __lt_U(a pun !uint[ℤmodBits(N)], b pun !uint[ℤmodBits(N)]);
+
+def __lt_mb[N:!ℕ](a: ℤmod[N], b: 𝔹) @[__operator] lifted: 𝔹 ⇒ __lt_ub(a pun uint[ℤmodBits(N)], b);
+def __lt_bm[N:!ℕ](a: 𝔹, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __lt_bu(a, b pun uint[ℤmodBits(N)]);
+def __lt_Mb[N:!ℕ](a: !ℤmod[N], b: 𝔹) @[__operator] lifted: 𝔹 ⇒ __lt_Ub(a pun !uint[ℤmodBits(N)], b);
+def __lt_bM[N:!ℕ](a: 𝔹, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __lt_bU(a, b pun !uint[ℤmodBits(N)]);
+def __lt_mB[N:!ℕ](a: ℤmod[N], b: !𝔹) @[__operator] lifted: 𝔹 ⇒ __lt_uB(a pun uint[ℤmodBits(N)], b);
+def __lt_Bm[N:!ℕ](a: !𝔹, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __lt_Bu(a, b pun uint[ℤmodBits(N)]);
+def __lt_MB[N:!ℕ](a: !ℤmod[N], b: !𝔹) @[__operator] lifted: !𝔹 ⇒ __lt_UB(a pun !uint[ℤmodBits(N)], b);
+def __lt_BM[N:!ℕ](a: !𝔹, b: !ℤmod[N]) @[__operator] lifted: !𝔹 ⇒ __lt_BU(a, b pun !uint[ℤmodBits(N)]);
+
+def __lt_Nm[N:!ℕ](a: !ℕ, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __lt_Nu(a, b coerce uint[ℤmodBits(N)]);
+def __lt_mN[N:!ℕ](a: ℤmod[N], b: !ℕ) @[__operator] lifted: 𝔹 ⇒ __lt_uN(a coerce uint[ℤmodBits(N)], b);
+def __lt_Zm[N:!ℕ](a: !ℤ, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __lt_Zu(a, b coerce uint[ℤmodBits(N)]);
+def __lt_mZ[N:!ℕ](a: ℤmod[N], b: !ℤ) @[__operator] lifted: 𝔹 ⇒ __lt_uZ(a coerce uint[ℤmodBits(N)], b);
+
+def __lt_Qm[N:!ℕ](a: !ℚ, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __lt_Qu(a, b coerce uint[ℤmodBits(N)]);
+def __lt_mQ[N:!ℕ](a: ℤmod[N], b: !ℚ) @[__operator] lifted: 𝔹 ⇒ __lt_uQ(a coerce uint[ℤmodBits(N)], b);
+def __lt_Rm[N:!ℕ](a: !ℝ, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __lt_Ru(a, b coerce uint[ℤmodBits(N)]);
+def __lt_mR[N:!ℕ](a: ℤmod[N], b: !ℝ) @[__operator] lifted: 𝔹 ⇒ __lt_uR(a coerce uint[ℤmodBits(N)], b);
+
+def __lt_NM[N:!ℕ](a: !ℕ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __lt_NU(a, b coerce !uint[ℤmodBits(N)]);
+def __lt_MN[N:!ℕ](a: !ℤmod[N], b: !ℕ) @[__operator] lifted: 𝔹 ⇒ __lt_UN(a coerce !uint[ℤmodBits(N)], b);
+def __lt_ZM[N:!ℕ](a: !ℤ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __lt_ZU(a, b coerce !uint[ℤmodBits(N)]);
+def __lt_MZ[N:!ℕ](a: !ℤmod[N], b: !ℤ) @[__operator] lifted: 𝔹 ⇒ __lt_UZ(a coerce !uint[ℤmodBits(N)], b);
+def __lt_QM[N:!ℕ](a: !ℚ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __lt_QU(a, b coerce !uint[ℤmodBits(N)]);
+def __lt_MQ[N:!ℕ](a: !ℤmod[N], b: !ℚ) @[__operator] lifted: 𝔹 ⇒ __lt_UQ(a coerce !uint[ℤmodBits(N)], b);
+def __lt_RM[N:!ℕ](a: !ℝ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __lt_RU(a, b coerce !uint[ℤmodBits(N)]);
+def __lt_MR[N:!ℕ](a: !ℤmod[N], b: !ℝ) @[__operator] lifted: 𝔹 ⇒ __lt_UR(a coerce !uint[ℤmodBits(N)], b);
+
+
 def __lt_N(a: !ℕ, b: !ℕ) @[__operator, extern="primitive.int.lt"] lifted: !𝔹;
 def __lt_Z(a: !ℤ, b: !ℤ) @[__operator, extern="primitive.int.lt"] lifted: !𝔹;
 def __lt_Q(a: !ℚ, b: !ℚ) @[__operator, extern="primitive.rational.lt"] lifted: !𝔹;
@@ -2894,6 +3145,41 @@ def __le_UR[n:!ℕ](a: !uint[n], b: !ℝ) @[__operator] lifted: !𝔹 {
 	return __not_B(__lt_RU[n](b, a));
 }
 
+
+def __le_m[N:!ℕ](a: ℤmod[N], b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __le_u(a pun uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)]);
+def __le_Mm[N:!ℕ](a: !ℤmod[N], b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __le_Uu(a pun !uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)]);
+def __le_mM[N:!ℕ](a: ℤmod[N], b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __le_uU(a pun uint[ℤmodBits(N)], b pun !uint[ℤmodBits(N)]);
+def __le_M[N:!ℕ](a: !ℤmod[N], b: !ℤmod[N]) @[__operator] lifted: !𝔹 ⇒ __le_U(a pun !uint[ℤmodBits(N)], b pun !uint[ℤmodBits(N)]);
+
+def __le_mb[N:!ℕ](a: ℤmod[N], b: 𝔹) @[__operator] lifted: 𝔹 ⇒ __le_ub(a pun uint[ℤmodBits(N)], b);
+def __le_bm[N:!ℕ](a: 𝔹, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __le_bu(a, b pun uint[ℤmodBits(N)]);
+def __le_Mb[N:!ℕ](a: !ℤmod[N], b: 𝔹) @[__operator] lifted: 𝔹 ⇒ __le_Ub(a pun !uint[ℤmodBits(N)], b);
+def __le_bM[N:!ℕ](a: 𝔹, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __le_bU(a, b pun !uint[ℤmodBits(N)]);
+def __le_mB[N:!ℕ](a: ℤmod[N], b: !𝔹) @[__operator] lifted: 𝔹 ⇒ __le_uB(a pun uint[ℤmodBits(N)], b);
+def __le_Bm[N:!ℕ](a: !𝔹, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __le_Bu(a, b pun uint[ℤmodBits(N)]);
+def __le_MB[N:!ℕ](a: !ℤmod[N], b: !𝔹) @[__operator] lifted: !𝔹 ⇒ __le_UB(a pun !uint[ℤmodBits(N)], b);
+def __le_BM[N:!ℕ](a: !𝔹, b: !ℤmod[N]) @[__operator] lifted: !𝔹 ⇒ __le_BU(a, b pun !uint[ℤmodBits(N)]);
+
+def __le_Nm[N:!ℕ](a: !ℕ, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __le_Nu(a, b coerce uint[ℤmodBits(N)]);
+def __le_mN[N:!ℕ](a: ℤmod[N], b: !ℕ) @[__operator] lifted: 𝔹 ⇒ __le_uN(a coerce uint[ℤmodBits(N)], b);
+def __le_Zm[N:!ℕ](a: !ℤ, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __le_Zu(a, b coerce uint[ℤmodBits(N)]);
+def __le_mZ[N:!ℕ](a: ℤmod[N], b: !ℤ) @[__operator] lifted: 𝔹 ⇒ __le_uZ(a coerce uint[ℤmodBits(N)], b);
+
+def __le_Qm[N:!ℕ](a: !ℚ, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __le_Qu(a, b coerce uint[ℤmodBits(N)]);
+def __le_mQ[N:!ℕ](a: ℤmod[N], b: !ℚ) @[__operator] lifted: 𝔹 ⇒ __le_uQ(a coerce uint[ℤmodBits(N)], b);
+def __le_Rm[N:!ℕ](a: !ℝ, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __le_Ru(a, b coerce uint[ℤmodBits(N)]);
+def __le_mR[N:!ℕ](a: ℤmod[N], b: !ℝ) @[__operator] lifted: 𝔹 ⇒ __le_uR(a coerce uint[ℤmodBits(N)], b);
+
+def __le_NM[N:!ℕ](a: !ℕ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __le_NU(a, b coerce !uint[ℤmodBits(N)]);
+def __le_MN[N:!ℕ](a: !ℤmod[N], b: !ℕ) @[__operator] lifted: 𝔹 ⇒ __le_UN(a coerce !uint[ℤmodBits(N)], b);
+def __le_ZM[N:!ℕ](a: !ℤ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __le_ZU(a, b coerce !uint[ℤmodBits(N)]);
+def __le_MZ[N:!ℕ](a: !ℤmod[N], b: !ℤ) @[__operator] lifted: 𝔹 ⇒ __le_UZ(a coerce !uint[ℤmodBits(N)], b);
+def __le_QM[N:!ℕ](a: !ℚ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __le_QU(a, b coerce !uint[ℤmodBits(N)]);
+def __le_MQ[N:!ℕ](a: !ℤmod[N], b: !ℚ) @[__operator] lifted: 𝔹 ⇒ __le_UQ(a coerce !uint[ℤmodBits(N)], b);
+def __le_RM[N:!ℕ](a: !ℝ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __le_RU(a, b coerce !uint[ℤmodBits(N)]);
+def __le_MR[N:!ℕ](a: !ℤmod[N], b: !ℝ) @[__operator] lifted: 𝔹 ⇒ __le_UR(a coerce !uint[ℤmodBits(N)], b);
+
+
 def __le_N(a: !ℕ, b: !ℕ) @[__operator] lifted: !𝔹 {
 	return __not_B(__lt_N(b, a));
 }
@@ -3122,6 +3408,41 @@ def __gt_UR[n:!ℕ](a: !uint[n], b: !ℝ) @[__operator] lifted: !𝔹 {
 	return __lt_RU[n](b, a);
 }
 
+
+def __gt_m[N:!ℕ](a: ℤmod[N], b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __gt_u(a pun uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)]);
+def __gt_Mm[N:!ℕ](a: !ℤmod[N], b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __gt_Uu(a pun !uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)]);
+def __gt_mM[N:!ℕ](a: ℤmod[N], b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __gt_uU(a pun uint[ℤmodBits(N)], b pun !uint[ℤmodBits(N)]);
+def __gt_M[N:!ℕ](a: !ℤmod[N], b: !ℤmod[N]) @[__operator] lifted: !𝔹 ⇒ __gt_U(a pun !uint[ℤmodBits(N)], b pun !uint[ℤmodBits(N)]);
+
+def __gt_mb[N:!ℕ](a: ℤmod[N], b: 𝔹) @[__operator] lifted: 𝔹 ⇒ __gt_ub(a pun uint[ℤmodBits(N)], b);
+def __gt_bm[N:!ℕ](a: 𝔹, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __gt_bu(a, b pun uint[ℤmodBits(N)]);
+def __gt_Mb[N:!ℕ](a: !ℤmod[N], b: 𝔹) @[__operator] lifted: 𝔹 ⇒ __gt_Ub(a pun !uint[ℤmodBits(N)], b);
+def __gt_bM[N:!ℕ](a: 𝔹, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __gt_bU(a, b pun !uint[ℤmodBits(N)]);
+def __gt_mB[N:!ℕ](a: ℤmod[N], b: !𝔹) @[__operator] lifted: 𝔹 ⇒ __gt_uB(a pun uint[ℤmodBits(N)], b);
+def __gt_Bm[N:!ℕ](a: !𝔹, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __gt_Bu(a, b pun uint[ℤmodBits(N)]);
+def __gt_MB[N:!ℕ](a: !ℤmod[N], b: !𝔹) @[__operator] lifted: !𝔹 ⇒ __gt_UB(a pun !uint[ℤmodBits(N)], b);
+def __gt_BM[N:!ℕ](a: !𝔹, b: !ℤmod[N]) @[__operator] lifted: !𝔹 ⇒ __gt_BU(a, b pun !uint[ℤmodBits(N)]);
+
+def __gt_Nm[N:!ℕ](a: !ℕ, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __gt_Nu(a, b coerce uint[ℤmodBits(N)]);
+def __gt_mN[N:!ℕ](a: ℤmod[N], b: !ℕ) @[__operator] lifted: 𝔹 ⇒ __gt_uN(a coerce uint[ℤmodBits(N)], b);
+def __gt_Zm[N:!ℕ](a: !ℤ, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __gt_Zu(a, b coerce uint[ℤmodBits(N)]);
+def __gt_mZ[N:!ℕ](a: ℤmod[N], b: !ℤ) @[__operator] lifted: 𝔹 ⇒ __gt_uZ(a coerce uint[ℤmodBits(N)], b);
+
+def __gt_Qm[N:!ℕ](a: !ℚ, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __gt_Qu(a, b coerce uint[ℤmodBits(N)]);
+def __gt_mQ[N:!ℕ](a: ℤmod[N], b: !ℚ) @[__operator] lifted: 𝔹 ⇒ __gt_uQ(a coerce uint[ℤmodBits(N)], b);
+def __gt_Rm[N:!ℕ](a: !ℝ, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __gt_Ru(a, b coerce uint[ℤmodBits(N)]);
+def __gt_mR[N:!ℕ](a: ℤmod[N], b: !ℝ) @[__operator] lifted: 𝔹 ⇒ __gt_uR(a coerce uint[ℤmodBits(N)], b);
+
+def __gt_NM[N:!ℕ](a: !ℕ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __gt_NU(a, b coerce !uint[ℤmodBits(N)]);
+def __gt_MN[N:!ℕ](a: !ℤmod[N], b: !ℕ) @[__operator] lifted: 𝔹 ⇒ __gt_UN(a coerce !uint[ℤmodBits(N)], b);
+def __gt_ZM[N:!ℕ](a: !ℤ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __gt_ZU(a, b coerce !uint[ℤmodBits(N)]);
+def __gt_MZ[N:!ℕ](a: !ℤmod[N], b: !ℤ) @[__operator] lifted: 𝔹 ⇒ __gt_UZ(a coerce !uint[ℤmodBits(N)], b);
+def __gt_QM[N:!ℕ](a: !ℚ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __gt_QU(a, b coerce !uint[ℤmodBits(N)]);
+def __gt_MQ[N:!ℕ](a: !ℤmod[N], b: !ℚ) @[__operator] lifted: 𝔹 ⇒ __gt_UQ(a coerce !uint[ℤmodBits(N)], b);
+def __gt_RM[N:!ℕ](a: !ℝ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __gt_RU(a, b coerce !uint[ℤmodBits(N)]);
+def __gt_MR[N:!ℕ](a: !ℤmod[N], b: !ℝ) @[__operator] lifted: 𝔹 ⇒ __gt_UR(a coerce !uint[ℤmodBits(N)], b);
+
+
 def __gt_N(a: !ℕ, b: !ℕ) @[__operator] lifted: !𝔹 {
 	return __lt_N(b, a);
 }
@@ -3349,6 +3670,41 @@ def __ge_RU[n:!ℕ](a: !ℝ, b: !uint[n]) @[__operator] lifted: !𝔹 {
 def __ge_UR[n:!ℕ](a: !uint[n], b: !ℝ) @[__operator] lifted: !𝔹 {
 	return __le_RU[n](b, a);
 }
+
+
+def __ge_m[N:!ℕ](a: ℤmod[N], b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __ge_u(a pun uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)]);
+def __ge_Mm[N:!ℕ](a: !ℤmod[N], b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __ge_Uu(a pun !uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)]);
+def __ge_mM[N:!ℕ](a: ℤmod[N], b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __ge_uU(a pun uint[ℤmodBits(N)], b pun !uint[ℤmodBits(N)]);
+def __ge_M[N:!ℕ](a: !ℤmod[N], b: !ℤmod[N]) @[__operator] lifted: !𝔹 ⇒ __ge_U(a pun !uint[ℤmodBits(N)], b pun !uint[ℤmodBits(N)]);
+
+def __ge_mb[N:!ℕ](a: ℤmod[N], b: 𝔹) @[__operator] lifted: 𝔹 ⇒ __ge_ub(a pun uint[ℤmodBits(N)], b);
+def __ge_bm[N:!ℕ](a: 𝔹, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __ge_bu(a, b pun uint[ℤmodBits(N)]);
+def __ge_Mb[N:!ℕ](a: !ℤmod[N], b: 𝔹) @[__operator] lifted: 𝔹 ⇒ __ge_Ub(a pun !uint[ℤmodBits(N)], b);
+def __ge_bM[N:!ℕ](a: 𝔹, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __ge_bU(a, b pun !uint[ℤmodBits(N)]);
+def __ge_mB[N:!ℕ](a: ℤmod[N], b: !𝔹) @[__operator] lifted: 𝔹 ⇒ __ge_uB(a pun uint[ℤmodBits(N)], b);
+def __ge_Bm[N:!ℕ](a: !𝔹, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __ge_Bu(a, b pun uint[ℤmodBits(N)]);
+def __ge_MB[N:!ℕ](a: !ℤmod[N], b: !𝔹) @[__operator] lifted: !𝔹 ⇒ __ge_UB(a pun !uint[ℤmodBits(N)], b);
+def __ge_BM[N:!ℕ](a: !𝔹, b: !ℤmod[N]) @[__operator] lifted: !𝔹 ⇒ __ge_BU(a, b pun !uint[ℤmodBits(N)]);
+
+def __ge_Nm[N:!ℕ](a: !ℕ, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __ge_Nu(a, b coerce uint[ℤmodBits(N)]);
+def __ge_mN[N:!ℕ](a: ℤmod[N], b: !ℕ) @[__operator] lifted: 𝔹 ⇒ __ge_uN(a coerce uint[ℤmodBits(N)], b);
+def __ge_Zm[N:!ℕ](a: !ℤ, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __ge_Zu(a, b coerce uint[ℤmodBits(N)]);
+def __ge_mZ[N:!ℕ](a: ℤmod[N], b: !ℤ) @[__operator] lifted: 𝔹 ⇒ __ge_uZ(a coerce uint[ℤmodBits(N)], b);
+
+def __ge_Qm[N:!ℕ](a: !ℚ, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __ge_Qu(a, b coerce uint[ℤmodBits(N)]);
+def __ge_mQ[N:!ℕ](a: ℤmod[N], b: !ℚ) @[__operator] lifted: 𝔹 ⇒ __ge_uQ(a coerce uint[ℤmodBits(N)], b);
+def __ge_Rm[N:!ℕ](a: !ℝ, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __ge_Ru(a, b coerce uint[ℤmodBits(N)]);
+def __ge_mR[N:!ℕ](a: ℤmod[N], b: !ℝ) @[__operator] lifted: 𝔹 ⇒ __ge_uR(a coerce uint[ℤmodBits(N)], b);
+
+def __ge_NM[N:!ℕ](a: !ℕ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __ge_NU(a, b coerce !uint[ℤmodBits(N)]);
+def __ge_MN[N:!ℕ](a: !ℤmod[N], b: !ℕ) @[__operator] lifted: 𝔹 ⇒ __ge_UN(a coerce !uint[ℤmodBits(N)], b);
+def __ge_ZM[N:!ℕ](a: !ℤ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __ge_ZU(a, b coerce !uint[ℤmodBits(N)]);
+def __ge_MZ[N:!ℕ](a: !ℤmod[N], b: !ℤ) @[__operator] lifted: 𝔹 ⇒ __ge_UZ(a coerce !uint[ℤmodBits(N)], b);
+def __ge_QM[N:!ℕ](a: !ℚ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __ge_QU(a, b coerce !uint[ℤmodBits(N)]);
+def __ge_MQ[N:!ℕ](a: !ℤmod[N], b: !ℚ) @[__operator] lifted: 𝔹 ⇒ __ge_UQ(a coerce !uint[ℤmodBits(N)], b);
+def __ge_RM[N:!ℕ](a: !ℝ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __ge_RU(a, b coerce !uint[ℤmodBits(N)]);
+def __ge_MR[N:!ℕ](a: !ℤmod[N], b: !ℝ) @[__operator] lifted: 𝔹 ⇒ __ge_UR(a coerce !uint[ℤmodBits(N)], b);
+
 
 def __ge_N(a: !ℕ, b: !ℕ) @[__operator] lifted: !𝔹 {
 	return __le_N(b, a);
@@ -3713,6 +4069,41 @@ def __eq_UC[n:!ℕ](a: !uint[n], b: !ℂ) @[__operator] lifted: !𝔹 {
 	return __eq_R(b_im, 0) && __eq_UR(a, b_re);
 }
 
+
+def __eq_m[N:!ℕ](a: ℤmod[N], b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __eq_u(a pun uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)]);
+def __eq_Mm[N:!ℕ](a: !ℤmod[N], b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __eq_Uu(a pun !uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)]);
+def __eq_mM[N:!ℕ](a: ℤmod[N], b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __eq_uU(a pun uint[ℤmodBits(N)], b pun !uint[ℤmodBits(N)]);
+def __eq_M[N:!ℕ](a: !ℤmod[N], b: !ℤmod[N]) @[__operator] lifted: !𝔹 ⇒ __eq_U(a pun !uint[ℤmodBits(N)], b pun !uint[ℤmodBits(N)]);
+
+def __eq_mb[N:!ℕ](a: ℤmod[N], b: 𝔹) @[__operator] lifted: 𝔹 ⇒ __eq_ub(a pun uint[ℤmodBits(N)], b);
+def __eq_bm[N:!ℕ](a: 𝔹, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __eq_bu(a, b pun uint[ℤmodBits(N)]);
+def __eq_Mb[N:!ℕ](a: !ℤmod[N], b: 𝔹) @[__operator] lifted: 𝔹 ⇒ __eq_Ub(a pun !uint[ℤmodBits(N)], b);
+def __eq_bM[N:!ℕ](a: 𝔹, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __eq_bU(a, b pun !uint[ℤmodBits(N)]);
+def __eq_mB[N:!ℕ](a: ℤmod[N], b: !𝔹) @[__operator] lifted: 𝔹 ⇒ __eq_uB(a pun uint[ℤmodBits(N)], b);
+def __eq_Bm[N:!ℕ](a: !𝔹, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __eq_Bu(a, b pun uint[ℤmodBits(N)]);
+def __eq_MB[N:!ℕ](a: !ℤmod[N], b: !𝔹) @[__operator] lifted: !𝔹 ⇒ __eq_UB(a pun !uint[ℤmodBits(N)], b);
+def __eq_BM[N:!ℕ](a: !𝔹, b: !ℤmod[N]) @[__operator] lifted: !𝔹 ⇒ __eq_BU(a, b pun !uint[ℤmodBits(N)]);
+
+def __eq_Nm[N:!ℕ](a: !ℕ, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __eq_Nu(a, b coerce uint[ℤmodBits(N)]);
+def __eq_mN[N:!ℕ](a: ℤmod[N], b: !ℕ) @[__operator] lifted: 𝔹 ⇒ __eq_uN(a coerce uint[ℤmodBits(N)], b);
+def __eq_Zm[N:!ℕ](a: !ℤ, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __eq_Zu(a, b coerce uint[ℤmodBits(N)]);
+def __eq_mZ[N:!ℕ](a: ℤmod[N], b: !ℤ) @[__operator] lifted: 𝔹 ⇒ __eq_uZ(a coerce uint[ℤmodBits(N)], b);
+
+def __eq_Qm[N:!ℕ](a: !ℚ, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __eq_Qu(a, b coerce uint[ℤmodBits(N)]);
+def __eq_mQ[N:!ℕ](a: ℤmod[N], b: !ℚ) @[__operator] lifted: 𝔹 ⇒ __eq_uQ(a coerce uint[ℤmodBits(N)], b);
+def __eq_Rm[N:!ℕ](a: !ℝ, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __eq_Ru(a, b coerce uint[ℤmodBits(N)]);
+def __eq_mR[N:!ℕ](a: ℤmod[N], b: !ℝ) @[__operator] lifted: 𝔹 ⇒ __eq_uR(a coerce uint[ℤmodBits(N)], b);
+
+def __eq_NM[N:!ℕ](a: !ℕ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __eq_NU(a, b coerce !uint[ℤmodBits(N)]);
+def __eq_MN[N:!ℕ](a: !ℤmod[N], b: !ℕ) @[__operator] lifted: 𝔹 ⇒ __eq_UN(a coerce !uint[ℤmodBits(N)], b);
+def __eq_ZM[N:!ℕ](a: !ℤ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __eq_ZU(a, b coerce !uint[ℤmodBits(N)]);
+def __eq_MZ[N:!ℕ](a: !ℤmod[N], b: !ℤ) @[__operator] lifted: 𝔹 ⇒ __eq_UZ(a coerce !uint[ℤmodBits(N)], b);
+def __eq_QM[N:!ℕ](a: !ℚ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __eq_QU(a, b coerce !uint[ℤmodBits(N)]);
+def __eq_MQ[N:!ℕ](a: !ℤmod[N], b: !ℚ) @[__operator] lifted: 𝔹 ⇒ __eq_UQ(a coerce !uint[ℤmodBits(N)], b);
+def __eq_RM[N:!ℕ](a: !ℝ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __eq_RU(a, b coerce !uint[ℤmodBits(N)]);
+def __eq_MR[N:!ℕ](a: !ℤmod[N], b: !ℝ) @[__operator] lifted: 𝔹 ⇒ __eq_UR(a coerce !uint[ℤmodBits(N)], b);
+
+
 def __eq_N(a: !ℕ, b: !ℕ) @[__operator, extern="primitive.int.eq"] lifted: !𝔹;
 def __eq_Z(a: !ℤ, b: !ℤ) @[__operator, extern="primitive.int.eq"] lifted: !𝔹;
 def __eq_Q(a: !ℚ, b: !ℚ) @[__operator, extern="primitive.rational.eq"] lifted: !𝔹;
@@ -3991,6 +4382,41 @@ def __neq_CU[n:!ℕ](a: !ℂ, b: !uint[n]) @[__operator] lifted: !𝔹 {
 def __neq_UC[n:!ℕ](a: !uint[n], b: !ℂ) @[__operator] lifted: !𝔹 {
 	return __not_B(__eq_UC[n](a, b));
 }
+
+
+def __neq_m[N:!ℕ](a: ℤmod[N], b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __neq_u(a pun uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)]);
+def __neq_Mm[N:!ℕ](a: !ℤmod[N], b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __neq_Uu(a pun !uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)]);
+def __neq_mM[N:!ℕ](a: ℤmod[N], b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __neq_uU(a pun uint[ℤmodBits(N)], b pun !uint[ℤmodBits(N)]);
+def __neq_M[N:!ℕ](a: !ℤmod[N], b: !ℤmod[N]) @[__operator] lifted: !𝔹 ⇒ __neq_U(a pun !uint[ℤmodBits(N)], b pun !uint[ℤmodBits(N)]);
+
+def __neq_mb[N:!ℕ](a: ℤmod[N], b: 𝔹) @[__operator] lifted: 𝔹 ⇒ __neq_ub(a pun uint[ℤmodBits(N)], b);
+def __neq_bm[N:!ℕ](a: 𝔹, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __neq_bu(a, b pun uint[ℤmodBits(N)]);
+def __neq_Mb[N:!ℕ](a: !ℤmod[N], b: 𝔹) @[__operator] lifted: 𝔹 ⇒ __neq_Ub(a pun !uint[ℤmodBits(N)], b);
+def __neq_bM[N:!ℕ](a: 𝔹, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __neq_bU(a, b pun !uint[ℤmodBits(N)]);
+def __neq_mB[N:!ℕ](a: ℤmod[N], b: !𝔹) @[__operator] lifted: 𝔹 ⇒ __neq_uB(a pun uint[ℤmodBits(N)], b);
+def __neq_Bm[N:!ℕ](a: !𝔹, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __neq_Bu(a, b pun uint[ℤmodBits(N)]);
+def __neq_MB[N:!ℕ](a: !ℤmod[N], b: !𝔹) @[__operator] lifted: !𝔹 ⇒ __neq_UB(a pun !uint[ℤmodBits(N)], b);
+def __neq_BM[N:!ℕ](a: !𝔹, b: !ℤmod[N]) @[__operator] lifted: !𝔹 ⇒ __neq_BU(a, b pun !uint[ℤmodBits(N)]);
+
+def __neq_Nm[N:!ℕ](a: !ℕ, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __neq_Nu(a, b coerce uint[ℤmodBits(N)]);
+def __neq_mN[N:!ℕ](a: ℤmod[N], b: !ℕ) @[__operator] lifted: 𝔹 ⇒ __neq_uN(a coerce uint[ℤmodBits(N)], b);
+def __neq_Zm[N:!ℕ](a: !ℤ, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __neq_Zu(a, b coerce uint[ℤmodBits(N)]);
+def __neq_mZ[N:!ℕ](a: ℤmod[N], b: !ℤ) @[__operator] lifted: 𝔹 ⇒ __neq_uZ(a coerce uint[ℤmodBits(N)], b);
+
+def __neq_Qm[N:!ℕ](a: !ℚ, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __neq_Qu(a, b coerce uint[ℤmodBits(N)]);
+def __neq_mQ[N:!ℕ](a: ℤmod[N], b: !ℚ) @[__operator] lifted: 𝔹 ⇒ __neq_uQ(a coerce uint[ℤmodBits(N)], b);
+def __neq_Rm[N:!ℕ](a: !ℝ, b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __neq_Ru(a, b coerce uint[ℤmodBits(N)]);
+def __neq_mR[N:!ℕ](a: ℤmod[N], b: !ℝ) @[__operator] lifted: 𝔹 ⇒ __neq_uR(a coerce uint[ℤmodBits(N)], b);
+
+def __neq_NM[N:!ℕ](a: !ℕ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __neq_NU(a, b coerce !uint[ℤmodBits(N)]);
+def __neq_MN[N:!ℕ](a: !ℤmod[N], b: !ℕ) @[__operator] lifted: 𝔹 ⇒ __neq_UN(a coerce !uint[ℤmodBits(N)], b);
+def __neq_ZM[N:!ℕ](a: !ℤ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __neq_ZU(a, b coerce !uint[ℤmodBits(N)]);
+def __neq_MZ[N:!ℕ](a: !ℤmod[N], b: !ℤ) @[__operator] lifted: 𝔹 ⇒ __neq_UZ(a coerce !uint[ℤmodBits(N)], b);
+def __neq_QM[N:!ℕ](a: !ℚ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __neq_QU(a, b coerce !uint[ℤmodBits(N)]);
+def __neq_MQ[N:!ℕ](a: !ℤmod[N], b: !ℚ) @[__operator] lifted: 𝔹 ⇒ __neq_UQ(a coerce !uint[ℤmodBits(N)], b);
+def __neq_RM[N:!ℕ](a: !ℝ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __neq_RU(a, b coerce !uint[ℤmodBits(N)]);
+def __neq_MR[N:!ℕ](a: !ℤmod[N], b: !ℝ) @[__operator] lifted: 𝔹 ⇒ __neq_UR(a coerce !uint[ℤmodBits(N)], b);
+
 
 def __neq_N(a: !ℕ, b: !ℕ) @[__operator] lifted: !𝔹 {
 	return __not_B(__eq_N(a, b));

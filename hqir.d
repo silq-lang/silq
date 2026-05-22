@@ -36,6 +36,9 @@ mixin("alias ast_ty_Qt = ast_ty.\u211at;");
 mixin("alias ast_ty_R = ast_ty.\u211d;");
 mixin("alias ast_ty_C = ast_ty.\u2102;");
 
+mixin("alias ast_ty_ZmodTy = ast_ty.\u2124modTy;");
+mixin("alias ast_ty_isZmodTy = ast_ty.is\u2124modTy;");
+
 mixin("alias ast_ty_NumericType_Nt = ast_ty.NumericType.\u2115t;");
 mixin("alias ast_ty_NumericType_Zt = ast_ty.NumericType.\u2124t;");
 mixin("alias ast_ty_NumericType_Qt = ast_ty.NumericType.\u211at;");
@@ -45,6 +48,11 @@ mixin("alias ast_ty_NumericType_C = ast_ty.NumericType.\u2102;");
 mixin("alias ast_conv_ZtoFixedConversion = ast_conv.\u2124toFixedConversion;");
 mixin("alias ast_conv_UintToNConversion = ast_conv.UintTo\u2115Conversion;");
 mixin("alias ast_conv_IntToZConversion = ast_conv.IntTo\u2124Conversion;");
+
+mixin("alias ast_conv_ZtoZmodConversion = ast_conv.\u2124to\u2124modConversion;");
+mixin("alias ast_conv_ZmodToNConversion = ast_conv.\u2124modTo\u2115Conversion;");
+mixin("alias ast_conv_UintToZmodCoercion = ast_conv.UintTo\u2124modCoercion;");
+mixin("alias ast_conv_ZmodToUintCoercion = ast_conv.\u2124modToUintCoercion;");
 
 static immutable string opComma = ",";
 static immutable string opConcat = "~";
@@ -451,6 +459,9 @@ private bool typeHasClassical(Expression ty) {
 	if(auto intTy = ast_ty.isFixedIntTy(ty)) {
 		return intTy.isClassical;
 	}
+	if(auto zmodTy = ast_ty_isZmodTy(ty)) {
+		return zmodTy.isClassical;
+	}
 	return true;
 }
 
@@ -470,6 +481,9 @@ private bool typeHasQuantum(Expression ty) {
 		if(intTy.isClassical) return false;
 		return !valueIsZero(intTy.bits);
 	}
+	if(auto intTy = ast_ty_isZmodTy(ty)) {
+		return !intTy.isClassical;
+	}
 	return true;
 }
 
@@ -487,6 +501,9 @@ private bool typeHasQDep(Expression ty) {
 		return typeHasQuantum(arrTy.next);
 	}
 	if(ast_ty.isFixedIntTy(ty)) {
+		return false;
+	}
+	if(ast_ty_isZmodTy(ty)) {
 		return false;
 	}
 	return true;
@@ -644,6 +661,18 @@ private ConvertFlags conversionFlags(ast_conv.Conversion conv) {
 		}else static if(
 			is(T == ast_conv.ImplosionCoercion) ||
 			is(T == ast_conv_ZtoFixedConversion)
+		) {
+			auto r = ConvertFlags.noop;
+			if(typeHasClassical(conv.to)) r |= ConvertFlags.classical;
+			if(typeHasQuantum(conv.to)) r |= ConvertFlags.quantum;
+			return r;
+		}else static if(is(T == ast_conv_ZtoZmodConversion)) {
+			return ConvertFlags.classical;
+		}else static if(is(T == ast_conv_ZmodToNConversion)) {
+			return ConvertFlags.noop;
+		}else static if(
+			is(T == ast_conv_UintToZmodCoercion) ||
+			is(T == ast_conv_ZmodToUintCoercion)
 		) {
 			auto r = ConvertFlags.noop;
 			if(typeHasClassical(conv.to)) r |= ConvertFlags.classical;
@@ -2014,10 +2043,30 @@ class CCGen {
 		return emitPureOp("float_cmp_lt", [r1, r2]);
 	}
 
+	CReg floatLog2(CReg r1) {
+		return emitPureOp("float_log2", [r1]);
+	}
+
+	CReg floatFloorInt(CReg r1) {
+		return emitPureOp("float_floor_int", [r1]);
+	}
+
+	CReg floatCeilInt(CReg r1) {
+		return emitPureOp("float_ceil_int", [r1]);
+	}
+
 	CReg intWrap(bool isSigned, CReg bits, CReg val) {
 		val = intMod(val, intPow2(bits));
 		if(isSigned) val = intMakeSigned(bits, val);
 		return val;
+	}
+
+	CReg zmodWrap(CReg N, CReg val) {
+		return intMod(val, N);
+	}
+
+	CReg zmodNToBits(CReg N) {
+		return floatCeilInt(floatLog2(floatFromInt(N)));
 	}
 
 	CReg rationalFromBool(CReg r) {
@@ -3406,6 +3455,21 @@ class ScopeWriter {
 				}
 				r = Index(qreg, qlen);
 			}
+		} else if(auto zmodTy = ast_ty_isZmodTy(i.type)){
+			if(zmodTy.isClassical){
+				auto conv = ast_conv.typeExplicitConversion!true(i.type, ast_ty_Nt(), ast_exp.TypeAnnotationType.conversion);
+				assert(!!conv, format("cannot convert: %s -> %s", i.type, ast_ty_Nt));
+				check = false;
+				r = Index(genConvert(conv, genExpr(i)).creg);
+			} else {
+				check = false;
+				auto N = getZmodN(zmodTy);
+				auto qlen = ccg.zmodNToBits(N);
+				auto val = genExpr(i);
+				assert(!val.hasClassical);
+				auto qreg = val.qreg;
+				r = Index(qreg, qlen);
+			}
 		} else if(i.type == ast_ty.Bool(false)) {
 			auto val = genExpr(i);
 			assert(!val.hasClassical);
@@ -3925,6 +3989,19 @@ class ScopeWriter {
 			}
 			return r;
 		}
+		if(auto zmodTy = ast_ty_isZmodTy(ty)) {
+			auto N = getZmodN(zmodTy);
+			auto val = ctx.literalInt(e.asIntegerConstant().get());
+			if(zmodTy.isClassical) {
+				return valNewC(ccg.zmodWrap(N, val));
+			}
+			auto bits = ccg.zmodNToBits(N);
+			auto r = valNewQt(null, ccg.qtVector(ctx.qtQubit, bits));
+			if(r.hasQuantum) {
+				qcg.writeQOp(opAllocUint, [r.qreg], [bits, val], [], []);
+			}
+			return r;
+		}
 
 		assert(false, format("Literal %s", e.type));
 	}
@@ -4089,6 +4166,7 @@ class ScopeWriter {
 			switch(ast_sem.isPreludeCall(e)) {
 				case "int":
 				case "uint":
+				case "\u2124mod":
 					if(!qcg.inType) {
 						genExpr(e.arg);
 					}
@@ -5748,11 +5826,22 @@ class ScopeWriter {
 
 	CReg getNumericBits(ast_ty.FixedIntTy intTy) {
 		auto e = intTy.bits;
-		assert(e);
+		assert(!!e);
 		try {
 			return getExprNat(e);
 		} catch(AssertError exc) {
 			exc.msg = format("%s\nat %s, numeric bits: %s", exc.msg, e.loc, e);
+			throw exc;
+		}
+	}
+
+	CReg getZmodN(ast_ty_ZmodTy zmodTy) {
+		auto e = zmodTy.N;
+		assert(!!e);
+		try {
+			return getExprNat(e);
+		} catch(AssertError exc) {
+			exc.msg = format("%s\nat %s, zmod N: %s", exc.msg, e.loc, e);
 			throw exc;
 		}
 	}
@@ -5802,7 +5891,7 @@ class ScopeWriter {
 
 			auto r = new RTTI(sc, ei);
 			sc.cachedRTTI[ei] = r;
-			if(!cast(ast_ty.Type) ty && !ast_ty.isFixedIntTy(ty)) {
+			if(!cast(ast_ty.Type) ty && !ast_ty.isFixedIntTy(ty) && !ast_ty_isZmodTy(ty)) {
 				auto subsc = sc.typeScope();
 				r._packed = subsc.genValue(ty).creg;
 				subsc.checkEmpty(false);
@@ -5909,6 +5998,12 @@ class ScopeWriter {
 			auto bits = getNumericBits(intTy);
 			return ccg.qtVector(ctx.qtQubit, bits);
 		}
+		if(auto zmodTy = ast_ty_isZmodTy(ty)) {
+			assert(!zmodTy.isClassical);
+			assert(!cc);
+			auto zmodBits = ccg.zmodNToBits(getZmodN(zmodTy));
+			return ccg.qtVector(ctx.qtQubit, zmodBits);
+		}
 		if(auto vecTy = cast(ast_ty.VectorTy) ty) {
 			auto len = getVectorLength(vecTy);
 			return getVectorQType(vecTy.next, len, cc);
@@ -6001,6 +6096,14 @@ class ScopeWriter {
 			}
 			return r;
 		}
+		if(auto zmodTy = ast_ty_isZmodTy(ty)) {
+			auto zmodBits = ccg.zmodNToBits(getZmodN(zmodTy));
+			auto r = valNewQt(null, ccg.qtVector(ctx.qtQubit, zmodBits));
+			if(r.hasQuantum) {
+				qcg.writeQOp(opAllocUint, [r.qreg], [zmodBits, arg], [], []);
+			}
+			return r;
+		}
 		if(auto vecTy = cast(ast_ty.VectorTy) ty) {
 			auto len = getVectorLength(vecTy);
 			return genVectorPromote(vecTy.next, len, arg);
@@ -6087,6 +6190,12 @@ class ScopeWriter {
 			auto r = new CReg();
 			qcg.writeMOp(opMeasureUint, [r], [], [bits], [], [arg.qreg]);
 			if(intTy.isSigned) r = ccg.intMakeSigned(bits, r);
+			return r;
+		}
+		if(auto zmodTy = ast_ty_isZmodTy(ty)) {
+			auto zmodBits = ccg.zmodNToBits(getZmodN(zmodTy));
+			auto r = new CReg();
+			qcg.writeMOp(opMeasureUint, [r], [], [zmodBits], [], [arg.qreg]);
 			return r;
 		}
 		if(auto vecTy = cast(ast_ty.VectorTy) ty) {
@@ -6876,6 +6985,38 @@ class ScopeWriter {
 		auto cval = ccg.emitPureOp("classical_call[silq_builtin.bits_to_int]", [len, v.creg]);
 		if(toInt.isSigned) cval = ccg.intMakeSigned(len, cval);
 		return valNewC(cval);
+	}
+
+	Value implConvert(ast_conv_ZtoZmodConversion conv, Value v) {
+		assert(!v.hasQuantum);
+		auto zmodTy = ast_ty_isZmodTy(conv.to);
+		assert(zmodTy.isClassical);
+		auto N = getZmodN(zmodTy);
+		return valNewC(ccg.zmodWrap(N, v.creg));
+	}
+
+	Value implConvert(ast_conv_ZmodToNConversion conv, Value v) {
+		return v;
+	}
+
+	Value implConvert(ast_conv_UintToZmodCoercion conv, Value v) {
+		auto uintTy = ast_ty.isFixedIntTy(conv.from);
+		auto zmodTy = ast_ty_isZmodTy(conv.to);
+		assert(uintTy && !uintTy.isSigned && zmodTy);
+		auto uintBits = getNumericBits(uintTy);
+		auto zmodBits = ccg.zmodNToBits(getZmodN(zmodTy));
+		ccg.checkBool(conv.checkBits, ccg.intCmpEq(uintBits, zmodBits));
+		return v;
+	}
+
+	Value implConvert(ast_conv_ZmodToUintCoercion conv, Value v) {
+		auto zmodTy = ast_ty_isZmodTy(conv.from);
+		auto uintTy = ast_ty.isFixedIntTy(conv.to);
+		assert(zmodTy && uintTy && !uintTy.isSigned);
+		auto zmodBits = ccg.zmodNToBits(getZmodN(zmodTy));
+		auto uintBits = getNumericBits(uintTy);
+		ccg.checkBool(conv.checkBits, ccg.intCmpEq(zmodBits, uintBits));
+		return v;
 	}
 
 private:

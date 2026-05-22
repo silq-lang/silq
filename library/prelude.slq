@@ -50,6 +50,9 @@ dat uint[n: !ℕ] quantum{}
 // float64:=float[11,53];
 // dat rat[n: !ℕ, m: !ℕ] quantum{}
 
+dat ℤmod[N:!ℕ] quantum{}
+Zmod := ℤmod;
+
 type:=*;
 
 𝟘:=⊥;
