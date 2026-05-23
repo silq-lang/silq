@@ -4,7 +4,7 @@ def main(){
 	if x{
 		return 1:!ℕ; /// error
 	}
-	measure(x);
+	measure(x); /// error
 	return 0;
 	/+x:=measure(x);
 	return x;+/

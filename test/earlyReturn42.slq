@@ -1,9 +1,8 @@
 
-
 def f(const x:𝔹) {
 	y:=H(1);
 	if x{ return y; }
-	return measure(y); /// TODO: error
+	return measure(y); /// error
 }
 
 def g(const x:𝔹) {
@@ -13,6 +12,13 @@ def g(const x:𝔹) {
 	}else{
 		y := X(y);
 	}
-	y:=measure(y); /// TODO: error
+	y:=measure(y); /// error
 	return y;
+}
+
+def h(const x:𝔹){
+	while true{
+		y:=measure(H(0)); /// error
+		if x{ return; }
+	}
 }
