@@ -1,0 +1,18 @@
+
+
+def f(const x:𝔹) {
+	y:=H(1);
+	if x{ return y; }
+	return measure(y); /// TODO: error
+}
+
+def g(const x:𝔹) {
+	y:=H(1);
+	if x{
+		return y;
+	}else{
+		y := X(y);
+	}
+	y:=measure(y); /// TODO: error
+	return y;
+}
