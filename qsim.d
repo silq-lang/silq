@@ -1170,6 +1170,7 @@ struct QState{
 				if(auto vt=cast(VectorTy)i.type) ntype=vectorTy(ntype,vt.num);
 				return makeArray(arrayTy(ntype),values);
 			}+/
+			enforce(i.tag==Value.Tag.quval&&cast(QVar)i.quval,"index operation currently unsupported");
 			final switch(tag){
 				case Tag.array_:
 					// TODO: bounds checking
@@ -2734,7 +2735,11 @@ struct Interpreter(QState){
 			}
 			if(auto idx=cast(IndexExp)e){
 				auto a=doIt2(idx.e),i=doIt(idx.a);
-				auto r=a[i];
+				QState.Value r;
+				if(!i.isClassical()){
+					i=i.dup(qstate); scope(exit) forget(i);
+					r=a[i].toVar(qstate,false).consumeOnRead();
+				}else r=a[i];
 				if(!idx.constLookup&&!idx.implicitDup){
 					if(idx.byRef){
 						if(a.tag==QState.Value.Tag.array_&&i.isℤ()){

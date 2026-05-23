@@ -1,0 +1,9 @@
+// args: --run
+
+n:=2;
+def main(){
+	p:=[0 for i in 0..4];
+	def f(x:uint[n])lifted => p[if x≠0 then x else x];
+	x:=[H(0) for _ in 0..n] as uint[n];
+	return (f(x),x);
+}
