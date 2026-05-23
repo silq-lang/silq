@@ -1170,7 +1170,7 @@ struct QState{
 				if(auto vt=cast(VectorTy)i.type) ntype=vectorTy(ntype,vt.num);
 				return makeArray(arrayTy(ntype),values);
 			}+/
-			enforce(i.tag==Value.Tag.quval&&cast(QVar)i.quval,"index operation currently unsupported");
+			enforce(i.tag==Value.Tag.quval&&cast(QVar)i.quval&&!(cast(QVar)i.quval).consumedOnRead,"index operation currently unsupported");
 			final switch(tag){
 				case Tag.array_:
 					// TODO: bounds checking
