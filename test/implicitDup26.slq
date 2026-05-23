@@ -1,0 +1,9 @@
+
+def main(){
+	x:=H(1);
+    y:=!x;
+	if x{
+		x:=X(x); /// error
+    }
+    return (x,y);
+}
