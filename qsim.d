@@ -1108,6 +1108,23 @@ struct QState{
 						assert(ntag==Tag.uintval);
 						return makeUint(ntype,BitInt!false(nbits,val));
 					}
+					if(ntag==Tag.zmodval){
+						ℤ val=0;
+						if(otag==Tag.intval){
+							val=intval.val;
+						}else{
+							val=uintval.val;
+						}
+						if(auto zmod=isℤmodTy(ntype)){
+							if(auto v=zmod.N.asIntegerConstant()){
+								auto N=v.get();
+								if(zmod.isStar){
+									enforce(gcd(N,val)==1,format("`%s` is not a unit modulo `%s`",val%N,N));
+								}
+								return makeℤmod(ntype,ℤmod(N,val));
+							}
+						}
+					}
 					break;
 				case Tag.zmodval:
 					if(ntag==Tag.bval) return neqZ;
@@ -1118,7 +1135,25 @@ struct QState{
 					if(ntag==tag){
 						auto r=this;
 						r.type=ntype;
+						if(auto zmod1=isℤmodTy(type)){
+							if(auto zmod2=isℤmodTy(ntype)){
+								if(!zmod1.isStar&&zmod2.isStar){
+									if(auto v=zmod2.N.asIntegerConstant()){
+										auto N=v.get();
+										enforce(gcd(N,zmodval.val)==1,format("`%s` is not a unit modulo `%s`",zmodval.val%N,N));
+									}else break;
+								}
+							}else break;
+						}else break;
 						return r;
+					}
+					if(ntag==Tag.intval||ntag==Tag.uintval){
+						if(auto fit=isFixedIntTy(ntype)){
+							if(auto v=fit.bits.asIntegerConstant()){
+								auto nbits=smallValue(v.get());
+								return ntag==Tag.intval?makeInt(ntype,BitInt!true(nbits,zmodval.val)):makeUint(ntype,BitInt!false(nbits,zmodval.val));
+							}
+						}
 					}
 					break;
 				case Tag.bval:
@@ -2517,7 +2552,7 @@ struct Interpreter(QState){
 		assert(type.isSemEvaluated());
 		if(value.type==type){
 			if(consumeArg) return value;
-			return value.dup(qstate);
+			return value.dup(qstate).consumeOnRead();
 		}
 		if(cast(Identifier)type){
 			if(consumeArg) value.consumeOnRead(); // TODO: ok?
@@ -2566,9 +2601,13 @@ struct Interpreter(QState){
 				else
 					return qstate.makeUint(type.getClassical(),BitInt!false(smallValue(runExp(intTy.bits).asℤ()),value.asℤ())).convertTo(type);
 			}
-			if(auto zmodTy=isℤmodTy(type)){
-				auto N=runExp(zmodTy.N).asℤ();
+			if(auto zmod=isℤmodTy(type)){
+				auto N=runExp(zmod.N).asℤ();
 				enforce(N!=0,"cannot convert to ℤmod[0]");
+				if(zmod.isStar){
+					auto num=value.asℤ();
+					enforce(gcd(num,N)==1,format("`%s` is not a unit modulo `%s`",num%N,N));
+				}
 				return qstate.makeℤmod(type.getClassical(),ℤmod(N,value.asℤ)).convertTo(type);
 			}
 		}
@@ -2848,10 +2887,12 @@ struct Interpreter(QState){
 					return qstate.makeTuple(unit,[]);
 				}
 			}else if(auto tae=cast(TypeAnnotationExp)e){
-				if(tae.e.type==tae.type||tae.annotationType==TypeAnnotationType.punning) return doIt(tae.e);
+				if(tae.e.type==tae.type) return doIt(tae.e);
+				//if(tae.annotationType==TypeAnnotationType.punning) return doIt(tae.e);
+				if(cast(FunTy)tae.type) return doIt(tae.e); // TODO: solve properly
 				bool consume=!tae.constLookup;
 				auto r=convertTo(doIt(tae.e),tae.type,consume);
-				if(tae.constLookup) r=r.consumeOnRead();
+				//if(tae.constLookup) r=r.consumeOnRead();
 				return r;
 			} else if(auto te=cast(VectorTy)e){
 				runExp(te.next);

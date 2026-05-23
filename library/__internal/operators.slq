@@ -1308,6 +1308,12 @@ def __mul_ZU[n:!ℕ](a: !ℤ, b: !uint[n]) @[__operator] lifted: !uint[n] {
 }
 
 
+def __mul_x[N:!ℕ](a: ℤstar[N], b: ℤstar[N]) @[__operator] lifted: ℤstar[N] ⇒ __mul_m(a, b) pun ℤstar[N];
+def __mul_Xx[N:!ℕ](a: !ℤstar[N], b: ℤstar[N]) @[__operator] lifted: ℤstar[N] ⇒ __mul_Mm(a, b) pun ℤstar[N];
+def __mul_xX[N:!ℕ](a: ℤstar[N], b: !ℤstar[N]) @[__operator] lifted: ℤstar[N] ⇒ __mul_mM(a, b) pun ℤstar[N];
+def __mul_X[N:!ℕ](a: !ℤstar[N], b: !ℤstar[N]) @[__operator] lifted: !ℤstar[N] ⇒ __mul_M(a, b) pun !ℤstar[N];
+
+
 def __mul_m[N:!ℕ](a: ℤmod[N], b: ℤmod[N]) @[__operator] lifted: ℤmod[N] {
 	return qint_mmulq(a pun uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)], N) pun ℤmod[N];
 }

@@ -51,7 +51,9 @@ dat uint[n: !ℕ] quantum{}
 // dat rat[n: !ℕ, m: !ℕ] quantum{}
 
 dat ℤmod[N:!ℕ] quantum{}
-Zmod := ℤmod;
+dat ℤstar[N:!ℕ] quantum{}
+Zmod:=ℤmod;
+Zstar:=ℤstar;
 
 type:=*;
 

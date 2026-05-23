@@ -54,6 +54,9 @@ mixin("alias ast_conv_ZmodToNConversion = ast_conv.\u2124modTo\u2115Conversion;"
 mixin("alias ast_conv_UintToZmodCoercion = ast_conv.UintTo\u2124modCoercion;");
 mixin("alias ast_conv_ZmodToUintCoercion = ast_conv.\u2124modToUintCoercion;");
 
+mixin("alias ast_conv_ZstarToZmodConversion = ast_conv.\u2124starTo\u2124modConversion;");
+mixin("alias ast_conv_ZmodToZstarCoercion = ast_conv.\u2124modTo\u2124starCoercion;");
+
 static immutable string opComma = ",";
 static immutable string opConcat = "~";
 static immutable string opDefine = ":=";
@@ -672,12 +675,17 @@ private ConvertFlags conversionFlags(ast_conv.Conversion conv) {
 			return ConvertFlags.noop;
 		}else static if(
 			is(T == ast_conv_UintToZmodCoercion) ||
-			is(T == ast_conv_ZmodToUintCoercion)
+			is(T == ast_conv_ZmodToUintCoercion) ||
+			is(T == ast_conv_ZmodToZstarCoercion)
 		) {
 			auto r = ConvertFlags.noop;
 			if(typeHasClassical(conv.to)) r |= ConvertFlags.classical;
 			if(typeHasQuantum(conv.to)) r |= ConvertFlags.quantum;
 			return r;
+		}else static if(
+			is(T == ast_conv_ZstarToZmodConversion)
+		) {
+			return ConvertFlags.noop;
 		}else static assert(0, "TODO: `conversionFlags` for `" ~ T.stringof ~ "`");
 	}
 	return ast_conv.dispatchConversion!get(conv);
@@ -2009,6 +2017,11 @@ class CCGen {
 	CReg intMakeSigned(CReg bits, CReg val) {
 		auto half = intPow2(intSub(bits, ctx.intOne));
 		return intSub(intBitXor(half, val), half);
+	}
+
+	CReg intGcd(CReg r1, CReg r2){
+		if(r1 == r2) return r1;
+		return emitPureOp("int_gcd", [r1, r2]);
 	}
 
 	CReg floatFromBool(CReg r) {
@@ -4167,6 +4180,7 @@ class ScopeWriter {
 				case "int":
 				case "uint":
 				case "\u2124mod":
+				case "\u2124star":
 					if(!qcg.inType) {
 						genExpr(e.arg);
 					}
@@ -7016,6 +7030,27 @@ class ScopeWriter {
 		auto zmodBits = ccg.zmodNToBits(getZmodN(zmodTy));
 		auto uintBits = getNumericBits(uintTy);
 		ccg.checkBool(conv.checkBits, ccg.intCmpEq(zmodBits, uintBits));
+		return v;
+	}
+
+	Value implConvert(ast_conv_ZstarToZmodConversion conv, Value v) {
+		return v;
+	}
+
+	Value implConvert(ast_conv_ZmodToZstarCoercion conv, Value v) {
+		auto zmodTy1 = ast_ty_isZmodTy(conv.from);
+		auto zmodTy2 = ast_ty_isZmodTy(conv.to);
+		assert(zmodTy1 && zmodTy2);
+		assert(!zmodTy1.isStar && zmodTy2.isStar);
+		assert(zmodTy1.N == zmodTy2.N);
+		assert(!conv.checkUnit || zmodTy1.isClassical);
+		assert(zmodTy1.isClassical==zmodTy2.isClassical);
+		if(conv.checkUnit){
+			assert(v.hasClassical && !v.hasQuantum);
+			auto N = getZmodN(zmodTy2);
+			auto gcd = ccg.intGcd(N, v.creg);
+			ccg.checkBool(true, ccg.intCmpEq(gcd, ctx.intOne));
+		}
 		return v;
 	}
 
