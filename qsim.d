@@ -329,6 +329,7 @@ struct QState{
 		auto tt=v.tag;
 		if(tt==QState.Value.Tag.array_) v.array_=dupValue(v.array_);
 		if(tt==QState.Value.Tag.record) v.record=dupValue(v.record);
+		if(tt==QState.Value.Tag.quval) v.quval=dupValue(v.quval);
 		return v;
 	}
 	static Value[] dupValue(QState.Value[] r){
@@ -341,7 +342,9 @@ struct QState{
 		foreach(k,ref v;r) v=dupValue(v);
 		return r;
 	}
-
+	static QVal dupValue(QVal v){
+		return v.dealias();
+	}
 	string toString(int skipFrames=0){
 		FormattingOptions opt={type: FormattingType.dump};
 		string r="/────────\nQUANTUM STATE\n";
@@ -514,6 +517,10 @@ struct QState{
 			}
 			return r;
 		}
+		QVal dealias(){
+			enforce(0,text("QVal not committed before dealias: ",typeid(this)," ",this));
+			assert(0);
+		}
 		void removeVar(ref Σ σ){}
 		final Value applyUnitary(alias unitary,T...)(ref QState qs,Expression type,T controls){
 			// TODO: get rid of code duplication
@@ -577,6 +584,11 @@ struct QState{
 		override QVar dup(ref QState state,Value self){
 			if(consumedOnRead){ consumedOnRead=false; return this; }
 			return super.dup(state,self);
+		}
+		override QVar dealias(){
+			auto nqv=new QState.QVar(ref_);
+			nqv.consumedOnRead=consumedOnRead;
+			return nqv;
 		}
 		override void forget(ref QState state,Value rhs){
 			state.forget(ref_,rhs);

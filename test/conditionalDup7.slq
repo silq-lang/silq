@@ -1,0 +1,17 @@
+// args: --run
+
+def f(const x:𝔹):𝔹×𝔹{
+	y := H(1:𝔹);
+	if x{
+		return (dup(y),y);
+	}else{
+		return (dup(y),y);
+	}
+}
+
+def main(){
+	x := H(0:𝔹);
+	t := f(x);
+	return (x,t);
+}
+
