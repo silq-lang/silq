@@ -55,6 +55,6 @@ def main(){
 	assert(simon(g) = ([0,1,1] as !uint[3]));
 	s:=[measure(H(0)) for _ in 0..n] as !uint[n];
 	p:=[37*i+13 as !uint[n] for i in 0..2^n];
-	def f(x:uint[n])lifted => if (x⊕s) < x then p[x⊕s] else p[x];
+	def f(x:uint[n])lifted => p[if (x⊕s) < x then x⊕s else x];
 	assert(simon(f) = s);
 }
