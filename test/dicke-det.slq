@@ -11,7 +11,7 @@ def ii[ℓ:!ℕ][n:!ℕ](xs:𝔹^n){
 	with c⊕=a {
 		if b·c{ a:=rotY(2·acos(sqrt(ℓ/n)),a); }
 	}
-	return qs0~[a,b]~qs1~[c] coerce 𝔹^n;
+	return qs0~[a,b]~qs1~[c];
 }
 def u[n:!ℕ,k:!ℕ](xs:𝔹^n){
 	if k=0{ return xs; }
