@@ -1,0 +1,10 @@
+
+def main(){
+    x:=H(0);
+    if x {
+       t:=+1;
+    } else {
+       t:=-1;
+    }
+	return (t,x); /// error
+}
