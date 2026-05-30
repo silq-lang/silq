@@ -1,0 +1,12 @@
+
+def main(){
+	(x,y):=(H(0),H(0));
+	def f(x:𝔹)mfree{
+		x⊕=y;
+		return x;
+	}
+	f(z):=dup(x); /// error
+	forget(f);
+	__show(__query("dep",z));
+	return (x,y);
+}

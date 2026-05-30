@@ -1,0 +1,13 @@
+// args: --run
+
+def main(){
+	(x,y):=(H(0),H(0));
+	def f(x:𝔹)qfree{
+		x⊕=y;
+		return x;
+	}
+	f(z):=dup(x);
+	forget(f);
+	__show(__query("dep",z));
+	return (x,y);
+}

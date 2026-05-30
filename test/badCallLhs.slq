@@ -1,5 +1,5 @@
 
-def foo(const a:𝔹,b:𝔹)=>b;
+def foo(const a:𝔹,b:𝔹)wild=>b;
 
 def main(){
 	foo(1,x):=0:𝔹; /// error

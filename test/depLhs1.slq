@@ -1,0 +1,18 @@
+// args: --run
+
+def foo(const x:𝔹,const y:𝔹,w:𝔹,t:𝔹)qfree{
+	w⊕=x·y;
+	t⊕=x·y;
+	return (w,t);
+}
+
+def main(){
+	x:=H(0);
+	y:=H(0);
+	z:=H(0);
+	foo(x,y,w,t):=dup(z,z);
+	if w·t{ phase(π); }
+	__show(__query("dep",w));
+	__show(__query("dep",t));
+	return (x,y,z);
+}

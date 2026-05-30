@@ -8,8 +8,12 @@ def foo[n:!ℕ](x:uint[n]){
 n:=5;
 def main(){
 	x:=5:uint[n];
-	foo(x)·=3;
-	foo(x)·=3;
+	t:=foo[5](x);
+	t·=3;
+	foo[5](x):=t;
+	t:=foo[5](x);
+	t·=3;
+	foo[5](x):=t;
 	assert(measure(x=29));
 	return x;
 }

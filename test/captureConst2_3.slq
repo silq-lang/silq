@@ -3,7 +3,7 @@ def main(){
 	x:=H(0);
 	f:=(y:𝔹)⇒CNOT(x,y);
 	y:=1;
-	f(y):=y; /// TODO
+	f(y):=y;
 	forget(f);
 	return x;
 }
