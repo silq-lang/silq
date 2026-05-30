@@ -8,7 +8,7 @@ def foo[n:!ℕ](x:uint[n]){
 n:=5;
 def main(){
 	x:=5:uint[n];
-	with t:=foo(x){ /// TODO
+	with t:=foo(x){
 		t·=3;
 	}
 	assert(measure(x=19));
