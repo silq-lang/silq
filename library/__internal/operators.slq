@@ -151,7 +151,7 @@ def qint_maddc[n:!N](a: uint[n], const b: !N, const m: !N) @[__operator] @noinli
 	return a;
 }
 
-def qint_maddq[n:!N](a: uint[n], const b: uint[n], const m: !N) @[__operator] @noinline @nogarbage @[extern="silq_builtin.maddc"] qfree: uint[n] {
+def qint_maddq[n:!N](a: uint[n], const b: uint[n], const m: !N) @[__operator] @noinline @nogarbage @[extern="silq_builtin.maddq"] qfree: uint[n] {
 	a := ((a as B^n) ~ [0]) as uint[n+1];
 	a += ((b as B^n) ~ [0]) as uint[n+1];
 	x := a >= m;
@@ -4492,6 +4492,24 @@ def __add_assign_uZ[n:!ℕ](a: uint[n], const b: !ℤ) @[__operator] qfree: uint
 	return qint_iaddc[n](a as B^n, b) as uint[n];
 }
 
+def __add_assign_m[N:!ℕ](a: ℤmod[N], const b: ℤmod[N]) @[__operator] qfree: ℤmod[N] {
+	return qint_maddq(a pun uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)], N) pun ℤmod[N];
+}
+def __add_assign_mM[N:!ℕ](a: ℤmod[N], const b: !ℤmod[N]) @[__operator] qfree: ℤmod[N] {
+	return qint_maddc(a pun uint[ℤmodBits(N)], b as !ℕ, N) pun ℤmod[N];
+}
+
+def __add_assign_mb[N:!ℕ](a: ℤmod[N], const b: 𝔹) @[__operator] qfree: ℤmod[N] {
+	return qint_maddq(a pun uint[ℤmodBits(N)], qubit_to_uint[ℤmodBits(N)](b), N) pun ℤmod[N];
+}
+def __add_assign_mB[N:!ℕ](a: ℤmod[N], const b: !𝔹) @[__operator] qfree: ℤmod[N] {
+	return if b then __add_assign_mZ(a, 1) else a;
+}
+
+def __add_assign_mZ[N:!ℕ](a: ℤmod[N], const b: !ℤ) @[__operator] qfree: ℤmod[N] {
+	return qint_maddc(a pun uint[ℤmodBits(N)], b%N, N) pun ℤmod[N];
+}
+
 // a-=b
 def __sub_assign_s[n:!ℕ](a: int[n], const b: int[n]) @[__operator] qfree: int[n] {
 	return qint_isubq[n](a as B^n, b as B^n) as int[n];
@@ -4533,6 +4551,25 @@ def __sub_assign_uB[n:!ℕ](a: uint[n], const b: !𝔹) @[__operator] qfree: uin
 
 def __sub_assign_uZ[n:!ℕ](a: uint[n], const b: !ℤ) @[__operator] qfree: uint[n] {
 	return qint_isubc[n](a as B^n, b) as uint[n];
+}
+
+
+def __sub_assign_m[N:!ℕ](a: ℤmod[N], const b: ℤmod[N]) @[__operator] qfree: ℤmod[N] {
+	return qint_msubq(a pun uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)], N) pun ℤmod[N];
+}
+def __sub_assign_mM[N:!ℕ](a: ℤmod[N], const b: !ℤmod[N]) @[__operator] qfree: ℤmod[N] {
+	return qint_msubc(a pun uint[ℤmodBits(N)], b as !ℕ, N) pun ℤmod[N];
+}
+
+def __sub_assign_mb[N:!ℕ](a: ℤmod[N], const b: 𝔹) @[__operator] qfree: ℤmod[N] {
+	return qint_msubq(a pun uint[ℤmodBits(N)], qubit_to_uint[ℤmodBits(N)](b), N) pun ℤmod[N];
+}
+def __sub_assign_mB[N:!ℕ](a: ℤmod[N], const b: !𝔹) @[__operator] qfree: ℤmod[N] {
+	return if b then __sub_assign_mZ(a, 1) else a;
+}
+
+def __sub_assign_mZ[N:!ℕ](a: ℤmod[N], const b: !ℤ) @[__operator] qfree: ℤmod[N] {
+	return qint_msubc(a pun uint[ℤmodBits(N)], b%N, N) pun ℤmod[N];
 }
 
 // a nsub= b
@@ -4592,7 +4629,19 @@ def __nsub_assign_bN(a: 𝔹, const b: !ℕ) @[__operator] qfree: 𝔹 {
 }
 
 // a·=b
-// (always rewritten to with x:=a do x=x·b)
+// (usually rewritten to with x:=a do x=x·b)
+
+def __mul_assign_mM[N:!ℕ](a: ℤmod[N], const b: !ℤstar[N]) qfree: ℤmod[N] {
+	a' := a·b;
+	a'·(pow_mod(b as !ℕ, -1, N) pun !ℤstar[N]) := a;
+	return a';
+}
+
+def __mul_assign_xX[N:!ℕ](a: ℤstar[N], const b: !ℤstar[N]) qfree: ℤstar[N] {
+	a' := a·b;
+	a'·(pow_mod(b as !ℕ, -1, N) pun !ℤstar[N]) := a;
+	return a';
+}
 
 // a/=b
 // (always rewritten to with x:=a do x=x/b)

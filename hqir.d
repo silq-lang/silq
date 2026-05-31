@@ -6236,6 +6236,7 @@ class ScopeWriter {
 		bool makeClassical = false;
 		{
 			Expression retExpr = callTy.tryApply(argExpr, callTy.isSquare);
+			assert(!!retExpr);
 			auto retClassical = retExpr.getClassical();
 			if(retType != retExpr && retType != retExpr) {
 				assert(!isReversed, "TODO make-classical reversed call");
@@ -6482,8 +6483,8 @@ class ScopeWriter {
 	}
 
 	Value genCoerce(Value v, Expression fromTy, Expression toTy) {
-		assert(fromTy.isSemEvaluated());
-		assert(toTy.isSemEvaluated());
+		assert(fromTy && fromTy.isSemEvaluated());
+		assert(toTy && toTy.isSemEvaluated());
 		if(fromTy == toTy) return genNoopConvert(v, fromTy, toTy);
 		auto conv = ast_conv.typeExplicitConversion!true(fromTy, toTy, ast_exp.TypeAnnotationType.coercion);
 		assert(conv, format("not a valid coercion: %s -> %s", fromTy, toTy));

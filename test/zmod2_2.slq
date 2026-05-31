@@ -1,0 +1,10 @@
+
+def f(x:ℤmod[5]){
+	x·=2 coerce ℤstar[5]; /// TODO
+	return x;
+}
+
+def main(){
+	f(x) := 1:ℤmod[5];
+	return x;
+}

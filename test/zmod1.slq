@@ -1,0 +1,15 @@
+// args: --run
+
+def main(){
+	x := 1:ℤmod[6];
+	// x += x; // TODO
+	x ·= 2;
+	t := H(0);
+	x += t;
+	y := 5 coerce !ℤstar[6];
+	x ·= y;
+	t := H(t);
+	x ·= y;
+	x -= t;
+	return (x,t);
+}
