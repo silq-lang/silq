@@ -53,51 +53,27 @@ def order(a:!ℕ,N:!ℕ){
 	assert(gcd(a,N)=1);
 	a_inv:=pow_mod(a,-1,N);
 	(n,m):=(0,1);
-	while m<N { n+=1, m*=2; }
+	while m<N { n+=2, m*=2; }
 	(aps,ais):=([a],[a_inv]);
-	for i in 1..2·n+1{
+	for i in 1..n{
 		aps~=[aps[i-1]^2%N];
 		ais~=[ais[i-1]^2%N];
 	}
 	b:=1;
 	while pow_mod(a,b,N)≠1{
 		def f[pw2:!ℕ](b:uint[n]){
-			nb:=mul_mod_uN(b,aps[pw2],N);
-			mul_mod_uN(nb,ais[pw2],N):=b;
+			nb:=b·aps[pw2]%N;
+			nb·ais[pw2]%N:=b;
 			return nb;
 		}
-		(θ,x):=estimate_phase[2·n+1](f,1:uint[n]);
+		(θ,x):=estimate_phase[n](f,1:uint[n]);
 		measure(x);
-		c:=candidates((θ as !ℕ)/2^(2·n+1));
+		c:=candidates((θ as !ℕ)/2^n);
 		for i in (c.length..-1..0]{
-			if c[i]≠0 && pow_mod(a,c[i],N)=1{ b=c[i]; }
+			if c[i]≠0∧pow_mod(a,c[i],N)=1{ b=c[i]; }
 		}
 	}
 	return b coerce !ℕ;
-}
-
-def add_mod_uN[n:!ℕ](b:uint[n],const a:!ℕ,const N:!ℕ){
-	assert(a<N);
-	x:=b>=N-a;
-	b+=if x then a-N as uint[n] else a as uint[n];
-	forget(x=(b<a));
-	return b;
-}
-
-def mul_mod_uN[n:!ℕ](const b:uint[n],const a:!ℕ,const N:!ℕ){
-	r:=0:uint[n];
-	/+for i in 0..n{ // TODO
-		if b[i] {
-			r:=add_mod_uN(r,(a·2^i)%N,N);
-		}
-	}
-	return r;+/
-	def rec(r:uint[n],i:!ℕ)qfree{
-		if i=n{ return r; }
-		if b[i] { r:=add_mod_uN(r,(a·2^i)%N,N); }
-		return rec(r,i+1);
-	}
-	return rec(0:uint[n],0);
 }
 
 def estimate_phase[n:!ℕ][a:qtype](const f:Π[pw2:!N]qfree. a ->mfree a, arg:a): !uint[n]×a{

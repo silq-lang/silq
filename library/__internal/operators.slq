@@ -522,6 +522,8 @@ def __uminus_U[n:!ℕ](x: !uint[n]) @[__operator] lifted: !uint[n] {
 def __uminus_m[N:!ℕ](a: ℤmod[N]) @[__operator] lifted: ℤmod[N] ⇒ qint_mneg(a pun uint[ℤmodBits(N)], N) pun ℤmod[N];
 def __uminus_M[N:!ℕ](x: !ℤmod[N]) @[__operator] lifted: !ℤmod[N] ⇒ (-(x as !ℕ)) as !ℤmod[N];
 
+def __uminus_x[N:!ℕ](a: ℤstar[N]) @[__operator] lifted: ℤstar[N] ⇒ qint_mneg(a pun uint[ℤmodBits(N)], N) pun ℤmod[N] pun ℤstar[N];
+def __uminus_X[N:!ℕ](x: !ℤstar[N]) @[__operator] lifted: !ℤstar[N] ⇒ (-(x as !ℕ)) pun !ℤstar[N];
 
 def __uminus_B(x:!𝔹)lifted:!ℤ {
 	return if x { -(1:!Z) } else { 1:!Z };
