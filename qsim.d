@@ -2549,18 +2549,9 @@ struct Interpreter(QState){
 		if(value.isValid) value=convertTo(value,type,!e.constLookup);
 		return value;
 	}
-	QState.Value convertTo(QState.Value value,Expression type,bool consumeArg){
-		assert(value.type.isSemEvaluated());
+
+	Expression evalType(Expression type){
 		type=type.eval();
-		assert(type.isSemEvaluated());
-		if(value.type==type){
-			if(consumeArg) return value;
-			return value.dup(qstate).consumeOnRead();
-		}
-		if(cast(Identifier)type){
-			if(consumeArg) value.consumeOnRead(); // TODO: ok?
-			return value.convertTo(type);
-		}
 		if(auto intTy=isFixedIntTy(type)){
 			auto len=runExp(intTy.bits);
 			if(!cast(LiteralExp)intTy.bits){ // TODO: this is a hack, store integer bit lengths classically instead
@@ -2571,7 +2562,7 @@ struct Interpreter(QState){
 				ntype.type=type.type;
 				ntype.sstate=SemState.completed;
 				ntype.loc=type.loc;
-				type=ntype.eval();
+				return ntype.eval();
 			}
 		}
 		if(auto zmodTy=isℤmodTy(type)){
@@ -2584,8 +2575,32 @@ struct Interpreter(QState){
 				ntype.type=type.type;
 				ntype.sstate=SemState.completed;
 				ntype.loc=type.loc;
-				type=ntype.eval();
+				return ntype.eval();
 			}
+		}
+		if(auto tpl=cast(TupleTy)type) return tupleTy(zip(tpl.types,repeat(&this)).map!((tyself)=>tyself[1].evalType(tyself[0])).array);
+		if(auto vec=cast(VectorTy)type){
+			auto next=evalType(vec.next);
+			auto num=runExp(vec.num);
+			auto lnum=LiteralExp.makeInteger(num.asℤ);
+			lnum.loc=vec.num.loc;
+			return vectorTy(next,lnum);
+		}
+		if(auto arr=cast(ArrayTy)type) return arrayTy(evalType(arr.next));
+		return type;
+	}
+
+	QState.Value convertTo(QState.Value value,Expression type,bool consumeArg){
+		assert(value.type.isSemEvaluated());
+		type=evalType(type);
+		assert(type.isSemEvaluated());
+		if(value.type==type){
+			if(consumeArg) return value;
+			return value.dup(qstate).consumeOnRead();
+		}
+		if(cast(Identifier)type){
+			if(consumeArg) value.consumeOnRead(); // TODO: ok?
+			return value.convertTo(type);
 		}
 		static QState.Value default_(QState.Value value,bool consumeArg,Expression type,ref Interpreter self){
 			if(consumeArg) value.consumeOnRead(); // TODO: ok?

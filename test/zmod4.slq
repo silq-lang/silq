@@ -1,0 +1,9 @@
+// args: --run
+
+def foo(a:!ℕ,N:!ℕ){
+	xs:=[a] pun !ℤstar[N]^_;
+	for i in 1..2{
+		xs~=[xs[i-1]·xs[i-1]];
+	}
+}
+def main() ⇒ foo(5,12);
