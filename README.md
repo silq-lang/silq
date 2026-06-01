@@ -1,3 +1,4 @@
+![alt text](https://raw.githubusercontent.com/silq-lang/silq/master/logo.svg "Silq")
 # Silq
 
 Silq is a high-level programming language for quantum computing with a strong static type system.
