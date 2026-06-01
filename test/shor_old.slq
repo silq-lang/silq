@@ -1,0 +1,126 @@
+def main(){
+	n:=21;
+	r:=shor(n);
+	assert(1<r&&r<n);
+	assert(n%r=0);
+	return r;
+}
+
+def shor(n:!ℕ){
+	if n%2=0 { return 2; }
+	(x,y):=asPower(n);
+	if y>1{ return x; }
+	while true{
+		a:=2+uniform(n sub 2);
+		d:=gcdn(a,n);
+		if d≠1{ return d; }
+		r:=order(a,n);
+		k:=gcdn(a^(r div 2)+1,n);
+		if 1<k∧k<n { return k; }
+	}
+}
+
+def asPower(n:!ℕ){
+	y:=2;
+	while 3^y≤n{
+		(l,r):=(0,1);
+		while r^y≤n{ r*=2; }
+		while l+1≠r{
+			m:=(l+r) div 2;
+			if m^y≤n { l=m; }
+			else { r=m; }
+		}
+		if l^y=n{ return (l,y); }
+		y+=1;
+	}
+	return (n,1);
+}
+
+def uniform(n:!ℕ){
+	(k,l):=(0,1);
+	while l≤n { k+=1, l*=2; }
+	while true {
+		x:=0:!uint[k];
+		for i in 0..k{ x[i]=measure(H(0)); }
+		x:=x as !ℕ;
+		if x<n{ return x; }
+	}
+}
+
+// order-finding:
+def log₂(x:!ℝ)⇒log(x)/log(2);
+def order(a:!ℕ,N:!ℕ){
+	(n,m):=(0,1);
+	while m<N { n+=2, m*=2; }
+	b:=1:!ℤ;
+	while a^b%N≠1{
+		def f(b:uint[n])lifted⇒powm(a as uint[n],b,N);
+		c:=candidates(estimatePhase(f)/2^n);
+		for i in [0..c.length){
+			if c[i]≠0 && a^c[i]%N=1{ b=c[i]; }
+		}
+	}
+	return b coerce !ℕ;
+}
+def estimatePhase[n:!ℕ](f:uint[n] !→lifted uint[n]):!ℕ{
+	cand := 0:uint[n];
+	for k in [0..n) { cand[k] := H(cand[k]); }
+	measure(f(cand));
+	cand := reverse(QFT[n])(cand);
+	return measure(cand) as !ℕ;
+}
+def candidates(q:!ℚ){ // TODO: probably this can be improved
+	res:=[]:!ℤ[];
+	r:=to_cfrac(q);
+	while r.length≠0{
+		res~=[from_cfrac(r)[1]];
+		r=r[0..r.length-1];
+	}
+	return res;
+}
+def to_cfrac(q:!ℚ){
+	if q=0{ return [0:!ℤ]; }
+	r:=[]:!ℤ[];
+	nq:=1/q;
+	while nq≠0{
+		nq=1/nq;
+		p:=floor(nq);
+		nq-=p;
+		r~=[p];
+	}
+	return r;
+}
+def gcdn(a:!ℕ,b:!ℕ):!ℕ⇒gcd(a,b) coerce !ℕ;
+def gcd(a:!ℤ,b:!ℤ):!ℤ⇒if a=0 then b else gcd(b%a,a);
+def reduce(a:!ℤ,b:!ℤ){ d:=gcd(a,b); return (a div d,b div d); }
+def add(x:!ℤ^2,y:!ℤ^2)⇒reduce(x[0]·y[1]+x[1]·y[0],x[1]·y[1]);
+def inv(a:!ℤ,b:!ℤ)⇒(b,a);
+def from_cfrac(r:!ℤ[]):(!ℤ×!ℤ)⇒if r.length>1 then add((r[0],1),inv(from_cfrac(r[1..r.length]))) else (r[0],1);
+
+def QFT[n:!ℕ](ψ: uint[n])mfree: uint[n]{
+	for k in [0..n div 2){
+		(ψ[k],ψ[n-k-1]) := (ψ[n-k-1],ψ[k]);
+	}
+	for k in [0..n){
+		ψ[k] := H(ψ[k]);
+		for l in [k+1..n){
+			if ψ[l] && ψ[k]{
+				phase(2·π · 2^(k-l-1));
+			}
+		}
+	}
+	return ψ;
+}
+
+// compute a^b%N (note: (N-1)^2 must fit into uint[n])
+def powm[n:!ℕ,m:!ℕ](a:uint[n],b:uint[m],N:!ℕ)lifted: uint[n]{
+	assert((N-1)^2<2^n);
+	(r,x):=(1:uint[n], a);
+	for i in 0..m{
+		if b[i]{
+			r=r·x%N;
+		}
+		x=x·x%N;
+	}
+	return r;
+}

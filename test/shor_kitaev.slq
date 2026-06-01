@@ -1,0 +1,70 @@
+
+def main(){
+	n:=3233;
+	k:=shor(n);
+	assert(1<k&&k<n && n%k=0);
+	return k;
+}
+
+def shor(n:!ℕ){
+	if n%2=0{ return 2; }
+	(u,v) := asPower(n);
+	if v>1{ return u; }
+	m := ceil(log2(n)) coerce !ℕ;
+	while true {
+		a := 2+uniform(n sub 2);
+		d := gcd(a,n);
+		if d≠1{ return d; }
+		(q,x) := (0,1:ℤstar[n]);
+		for i in 0..2·m+1 {
+			(bit,y) := (H(0),2^(2·m sub i));
+			if bit {
+				x ·= pow_mod(a,y,n) pun !ℤstar[n];
+				phase(-2·pi·q·y);
+			}
+			q += measure(H(bit))/(2·y);
+		}
+		measure(x);
+		for r in candidates(q) {
+			k := gcd(pow_mod(a,r div 2,n)+1,n);
+			if 1<k && k<n && n%k == 0 { return k; }
+		}
+	}
+}
+
+def asPower(n:!ℕ){
+	y:=2;
+	while 3^y≤n{
+		(l,r):=(0,1);
+		while r^y≤n{ r*=2; }
+		while l+1≠r{
+			m:=(l+r) div 2;
+			if m^y≤n { l=m; }
+			else { r=m; }
+		}
+		if l^y=n{ return (l,y); }
+		y+=1;
+	}
+	return (n,1);
+}
+
+def candidates(q:!ℚ): !ℕ[] {
+	r := [];
+	(b, d) := (1, 0);
+	while q!=0 {
+		q = 1/q;
+		k := floor(q) coerce !ℕ;
+		(b, d) = (k·b+d, b);
+		if b>1 { r ~= [b]; }
+		q -= k;
+	}
+	return r;
+}
+
+def uniform(n:!ℕ){
+	while true {
+		k := ceil(log₂(n));
+		x := [measure(H(0)) for _ in 0..k] as !uint[_] as !ℕ;
+		if x<n{ return x; }
+	}
+}

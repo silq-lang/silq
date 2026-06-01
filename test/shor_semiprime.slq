@@ -7,9 +7,6 @@ def main(){
 }
 
 def shor(n:!ℕ){
-	if n%2=0 { return 2; }
-	(x,y):=asPower(n);
-	if y>1{ return x; }
 	while true{
 		a:=2+uniform(n sub 2);
 		d:=gcd(a,n);
@@ -18,22 +15,6 @@ def shor(n:!ℕ){
 		k:=gcd(pow_mod(a,r div 2,n)+1,n);
 		if 1<k∧k<n { return k; }
 	}
-}
-
-def asPower(n:!ℕ){
-	y:=2;
-	while 3^y≤n{
-		(l,r):=(0,1);
-		while r^y≤n{ r*=2; }
-		while l+1≠r{
-			m:=(l+r) div 2;
-			if m^y≤n { l=m; }
-			else { r=m; }
-		}
-		if l^y=n{ return (l,y); }
-		y+=1;
-	}
-	return (n,1);
 }
 
 // order-finding:
