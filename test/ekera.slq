@@ -1,0 +1,220 @@
+// ekerå (https://arxiv.org/abs/2007.10044)
+
+def main(){
+	n:=11·11·13·17;
+	fs:=ekera(n);
+	p:=1:!ℕ;
+	for x in fs{ p·=x; }
+	assert(p=n);
+	return fs;
+}
+
+
+def ekera(N:!ℕ): !ℕ[]{
+	(ntwos,N'):=split_twos(N);
+	(fs,N):=(vector(ntwos,2),N');
+	if N=1{ return fs; }
+	while true{ // (usually succeeds on first try)
+		(a,e):=as_power(N);
+		if e>1{
+			fs' := ekera(a);
+			for i in [0..e){ fs ~= fs'; }
+			return fs;
+		}
+		if is_probable_prime(N){ fs~=[N]; return fs; }
+
+		r := order(sample_unit(N),N);
+
+		m := floor(log₂(N))+1 coerce !ℕ;
+		m' := 10·m; // c := 10
+		def η(q:!ℕ,B:!ℕ){
+			q' := 1;
+			while q'·q ≤ B { q' ·= q; }
+			return q';
+		}
+		r' := r;
+		for q in primes_up_to(m'){
+			r' ·= η(q,m');
+		}
+		(t,o) := split_twos(r');
+		S := [N];
+		k := 8+ceil(log₂(N·(N-1)/2));
+		repeat k{
+			x := sample_unit(N);
+			u := pow_mod(x,o,N);
+			repeat t+1{
+				d := gcd(u-1,N);
+				if 1<d && d<N{
+					S := reduce(S~[d]);
+				}
+				u = u^2%N;
+			}
+		}
+		(primes,S) := split_primes(S);
+		for p in primes{
+			while N%p=0{
+				fs ~= [p];
+				N div= p;
+			}
+		}
+		if N=1 { return fs; }
+	}
+}
+
+def split_primes(S:!ℕ[]){
+	(primes,S'):=([],[]);
+	for s in S{
+		is_p:=is_probable_prime(s);
+		//(if is_p then primes else S) ~= [s0]; // TODO
+		if is_p { primes~=[s] } else { S'~=[s] }
+	}
+	return (primes,S');
+}
+
+// write x = 2^t·o with o odd
+def split_twos(x:!ℕ){
+	(t,o):=(0,x);
+	while o%2=0{ t+=1; o div= 2; }
+	return (t,o);
+}
+
+def reduce(S:!ℕ[]) ⇒ reduce_coprime(reduce_perfect_powers(S));
+
+def split_coprime(const S:!ℕ[],x:!ℕ){
+	S':=[];
+	for s in S{
+		d:=gcd(s,x);
+		if d>1{
+			S'=split_coprime(S',d);
+			s div=d;
+			x div=d;
+		}
+		if s>1{ S'=split_coprime(S',s); }
+	}
+	if x>1{ S'~=[x]; }
+	return S';
+}
+def reduce_coprime(const S:!ℕ[]){
+	S':=[];
+	for s in S{ S'=split_coprime(S',s); }
+	return S';
+}
+
+def reduce_perfect_powers(S:!ℕ[]){
+	S' := [];
+	for s in S{
+		(s,_):=as_power(s);
+		S'~=[s];
+	}
+	return S';
+}
+
+def as_power(n:!ℕ){
+	assert(n%2=1);
+	y:=2;
+	while 3^y≤n{
+		(l,r):=(0,1);
+		while r^y≤n{ r·=2; }
+		while l+1≠r{
+			m:=(l+r) div 2;
+			if m^y≤n { l=m; }
+			else { r=m; }
+		}
+		if l^y=n{
+			(l',y'):=as_power(l);
+			return (l',y·y');
+		}
+		y+=1;
+	}
+	return (n,1);
+}
+
+def sample_unit(N:!ℕ){
+	while true{
+		x := 2+uniform(N sub 2);
+		if gcd(x,N)=1 { return x; }
+	}
+}
+
+def primes_up_to(B:!ℕ){
+	ps := [];
+	sf := [i for i in [0..B+1)];
+	for x in [2..B+1){
+		if sf[x]=x{ ps~=[x]; }
+		i:=0;
+		while i<ps.length&&ps[i]≤sf[x]&&x·ps[i]≤B{
+			sf[x·ps[i]]=ps[i];
+			i+=1;
+		}
+	}
+	return ps;
+}
+
+def is_probable_prime(n:!ℕ){
+	if n<2 { return false; }
+	for p in [2,3,5,7,11,13,17,19,23,29,31,37]{
+		if n=p { return true; }
+		if n%p=0 { return false; }
+	}
+	rounds:=12;
+	(s,d):=split_twos(n sub 1);
+	for r in [0..rounds){
+		a := 2+uniform(n sub 3);
+		if !miller_rabin_round(a,n,d,s) { return false; }
+	}
+	return true;
+}
+
+def miller_rabin_round(a:!ℕ, n:!ℕ, d:!ℕ, s:!ℕ){
+	x := pow_mod(a,d,n);
+	if x=1 || x=n sub 1 { return true; }
+	for i in [1..s){
+		x = x^2%n;
+		if x=n sub 1 { return true; }
+		if x=1 { return false; }
+	}
+	return false;
+}
+
+def order(a:!ℕ,N:!ℕ):!ℕ{
+	assert(gcd(a,N)=1);
+	n:=2·ceil(log₂(N))+1 coerce !ℕ;
+	while true{
+		(q,x) := (0,1:ℤstar[N]);
+		for i in [0..n) {
+			(bit,y) := (H(0),2^(n-1 sub i));
+			if bit {
+				x ·= pow_mod(a,y,N) pun !ℤstar[N];
+				phase(-2·π·q·y);
+			}
+			q += measure(H(bit))/(2·y);
+		}
+		measure(x);
+		for r in candidates(q){
+			if r>0 && pow_mod(a,r,N)=1{
+				return r;
+			}
+		}
+	}
+}
+
+def candidates(q:!ℚ): !ℕ[] {
+	r := [];
+	(b, d) := (1, 0);
+	while q!=0 {
+		q = 1/q;
+		k := floor(q) coerce !ℕ;
+		(b, d) = (k·b+d, b);
+		if b>1 { r ~= [b]; }
+		q -= k;
+	}
+	return r;
+}
+
+def uniform(n:!ℕ){
+	while true {
+		k := ceil(log₂(n));
+		x := [measure(H(0)) for _ in [0..k)] as !uint[_] as !ℕ;
+		if x<n{ return x; }
+	}
+}
