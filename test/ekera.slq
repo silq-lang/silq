@@ -3,7 +3,7 @@
 def main(){
 	n:=11·11·13·17;
 	fs:=ekera(n);
-	p:=1:!ℕ;
+	p:=1;
 	for x in fs{ p·=x; }
 	assert(p=n);
 	return fs;
@@ -86,19 +86,19 @@ def reduce(S:!ℕ[]){
 		for j in 0..S'.length{
 			s':=S'[j];
 			d:=gcd(s,s');
-			if d>1{ return reduce(S[i+1..S.length]~S'[j+1..S'.length]~S''~[d,s div d,s' div d]); }
+			if d>1{ return reduce(S[i+1..S.length]~S'[j+1..S'.length]~[d,s div d,s' div d]~S''); }
 			S''~=[s'];
 		}
 		if s>1{ S''~=[s]; }
-		S'=S'';		
+		S'=S'';
 	}
 	return S';
 }
 
 def as_power(n:!ℕ){
-	assert(n%2=1);
+	b:=if n%2=0 then 2 else 3;
 	y:=2;
-	while 3^y≤n{
+	while b^y≤n{
 		(l,r):=(0,1);
 		while r^y≤n{ r·=2; }
 		while l+1≠r{
