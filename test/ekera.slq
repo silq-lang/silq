@@ -78,33 +78,19 @@ def split_twos(x:!ℕ){
 	return (t,o);
 }
 
-def reduce(S:!ℕ[]) ⇒ reduce_coprime(reduce_perfect_powers(S));
-
-def split_coprime(const S:!ℕ[],x:!ℕ){
+def reduce(S:!ℕ[]){
 	S':=[];
-	for s in S{
-		d:=gcd(s,x);
-		if d>1{
-			S'=split_coprime(S',d);
-			s div=d;
-			x div=d;
+	for i in 0..S.length{
+		s:=as_power(S[i])[0];
+		S'':=[];
+		for j in 0..S'.length{
+			s':=S'[j];
+			d:=gcd(s,s');
+			if d>1{ return reduce(S[i+1..S.length]~S'[j+1..S'.length]~S''~[d,s div d,s' div d]); }
+			S''~=[s'];
 		}
-		if s>1{ S'=split_coprime(S',s); }
-	}
-	if x>1{ S'~=[x]; }
-	return S';
-}
-def reduce_coprime(const S:!ℕ[]){
-	S':=[];
-	for s in S{ S'=split_coprime(S',s); }
-	return S';
-}
-
-def reduce_perfect_powers(S:!ℕ[]){
-	S' := [];
-	for s in S{
-		(s,_):=as_power(s);
-		S'~=[s];
+		if s>1{ S''~=[s]; }
+		S'=S'';		
 	}
 	return S';
 }
