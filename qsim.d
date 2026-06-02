@@ -439,7 +439,7 @@ struct QState{
 	void updateRelabeling(ref Σ.Ref[Σ.Ref] relabeling,Value to,Value from){
 		if(!to.type) return;
 		auto tag=to.tag;
-		enforce(tag==from.tag,"value type mismatch on merge");
+		enforce(tag==from.tag,text("value type mismatch on merge: `",to.type,"` vs. `",from.type,"`"));
 		final switch(tag){
 			case Value.Tag.array_:
 				enforce(to.array_.length==from.array_.length,"encountered quantum-dependent tuple length");
