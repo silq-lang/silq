@@ -1,0 +1,9 @@
+
+dat Foo{ /// error
+	x:!𝔹,y:!𝔹;
+	def Foo(x:!ℕ,y:!𝔹){
+		this.x=x;
+		this.y=y;
+	}
+}
+def main() ⇒ Foo(1,2); /// error
