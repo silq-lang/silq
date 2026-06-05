@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	(a,b) := (0,1) as uint[2]^2;
+	repeat 3{
+		(a,b) = (b,a);
+	}
+	return (a,b);
+}
