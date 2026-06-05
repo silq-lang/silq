@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	x:=10:!uint[4];
+	x[0]:=H(x[0]);
+	y:=x pun Zmod[10]; /// TODO error
+	return y;
+}

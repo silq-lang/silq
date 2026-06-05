@@ -1,0 +1,7 @@
+
+def main(){
+	x:=9:!uint[4];
+	x[0]:=H(x[0]);
+	y:=x coerce Zmod[10]; /// error
+	return y;
+}

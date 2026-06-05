@@ -7019,8 +7019,10 @@ class ScopeWriter {
 		auto zmodTy = ast_ty_isZmodTy(conv.to);
 		assert(uintTy && !uintTy.isSigned && zmodTy);
 		auto uintBits = getNumericBits(uintTy);
-		auto zmodBits = ccg.zmodNToBits(getZmodN(zmodTy));
-		ccg.checkBool(conv.checkBits, ccg.intCmpEq(uintBits, zmodBits));
+		auto N = getZmodN(zmodTy);
+		auto zmodBits = ccg.zmodNToBits(N);
+		ccg.checkBool(conv.check, ccg.intCmpEq(uintBits, zmodBits));
+		assert(!conv.check || uintTy.isClassical);
 		return v;
 	}
 
