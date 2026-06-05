@@ -7023,6 +7023,9 @@ class ScopeWriter {
 		auto zmodBits = ccg.zmodNToBits(N);
 		ccg.checkBool(conv.check, ccg.intCmpEq(uintBits, zmodBits));
 		assert(!conv.check || uintTy.isClassical);
+		if(uintTy.isClassical) {
+			ccg.checkBool(conv.check, ccg.intCmpLt(v.creg, N));
+		}
 		return v;
 	}
 

@@ -1119,8 +1119,9 @@ struct QState{
 						if(auto zmod=isℤmodTy(ntype)){
 							if(auto v=zmod.N.asIntegerConstant()){
 								auto N=v.get();
+								enforce(0<=val && val<N,format("`%s` is not a canonical representative modulo `%s`",val,N));
 								if(zmod.isStar){
-									enforce(gcd(N,val)==1,format("`%s` is not a unit modulo `%s`",val%N,N));
+									enforce(gcd(N,val)==1,format("`%s` is not a unit modulo `%s`",val,N));
 								}
 								return makeℤmod(ntype,ℤmod(N,val));
 							}
