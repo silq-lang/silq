@@ -1,0 +1,6 @@
+// args: --run
+
+def main(){
+	x:=1:ℤstar[5];
+	return x pun uint[3];
+}
