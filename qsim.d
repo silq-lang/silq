@@ -408,10 +408,37 @@ struct QState{
 		else state[k]=v;
 		if(abs(state[k]) <= zeroThreshold) state.remove(k);
 	}
+	void prepareMerge(ref Value to,ref Value from,ref QState qstateFrom){
+		if(!to.type) return;
+		if(to.tag!=from.tag){
+			if(auto join=joinTypes(to.type,from.type)){
+				if(to.type!=join) to=to.consumeOnRead().convertTo(join).toVar(this,false);
+				if(from.type!=join) from=from.consumeOnRead().convertTo(join).toVar(qstateFrom,false);
+			}
+		}
+		auto tag=to.tag;
+		enforce(tag==from.tag,"value type mismatch on merge");
+		final switch(tag){
+			case Value.Tag.array_:
+				enforce(to.array_.length==from.array_.length,"encountered quantum-dependent tuple length");
+				foreach(i;0..to.array_.length)
+					prepareMerge(to.array_[i],from.array_[i],qstateFrom);
+				break;
+			case Value.Tag.record:
+				foreach(k,ref v;to.record)
+					prepareMerge(v,from.record[k],qstateFrom);
+				break;
+			case Value.Tag.quval:
+				break;
+			case Value.Tag.closure:
+				break;
+			case Value.Tag.cval,Value.Tag.fval,Value.Tag.qval,Value.Tag.zval,Value.Tag.uintval,Value.Tag.intval,Value.Tag.zmodval,Value.Tag.bval:
+				break;
+		}
+	}
 	void updateRelabeling(ref Σ.Ref[Σ.Ref] relabeling,Value to,Value from){
 		if(!to.type) return;
 		auto tag=to.tag;
-
 		enforce(tag==from.tag,"value type mismatch on merge");
 		final switch(tag){
 			case Value.Tag.array_:
@@ -439,10 +466,13 @@ struct QState{
 	void opOpAssign(string op:"+")(QState r){
 		if(r.unreachable) return;
 		if(state.length==0){ this=r; return; }
+		foreach(k,ref v;r.vars){
+			if(k in vars) prepareMerge(vars[k],v,r);
+			else vars[k]=v;
+		}
 		Σ.Ref[Σ.Ref] relabeling;
 		foreach(k,ref v;r.vars){
-			if(k in vars) updateRelabeling(relabeling,vars[k],v);
-			else vars[k]=v;
+			updateRelabeling(relabeling,vars[k],v);
 		}
 		foreach(k,v;r.state){
 			k.relabel(relabeling);

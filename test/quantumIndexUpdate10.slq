@@ -1,0 +1,12 @@
+// args: --run
+
+def main(){
+	(xs,i):=([H(0),H(0)],H(0));
+	val:=0;
+	if i {
+		(xs[1],val):=(val,xs[1]);
+	} else {
+		(xs[0],val):=(val,xs[0]);
+	}
+	return (i,xs,val);
+}
