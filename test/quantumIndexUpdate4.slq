@@ -1,6 +1,3 @@
-// skipped
-// TODO
-
 // args: --run
 def qswap[n:!ℕ,qt:qtype,ilen:!ℕ](const idx:uint[ilen],arr:qt^n,val:qt){
 	def rec(k:!ℕ,cidx:!uint[ilen],arr:qt^n,val:qt){
@@ -24,13 +21,12 @@ def qswap[n:!ℕ,qt:qtype,ilen:!ℕ](const idx:uint[ilen],arr:qt^n,val:qt){
 
 def main(){
 	for i in 0..20{
-		print(i);
 		x:=(0,0);
 		idx:=(H(0),) as uint[1];
 		(x,t):=qswap(idx,x,0:𝔹);
 		t:=X(t);
 		(x,0):=qswap(idx,x,t);
-		assert(measure((x,idx) = ([0,1], 1) || (x,idx) = ([1,0], 0))); /// TODO
+		assert(measure((x,idx) = ([0,1], 1) || (x,idx) = ([1,0], 0)));
 		(x,t):=qswap(idx,x,0:𝔹);
 		t:=X(t);
 		(x,0):=qswap(idx,x,t);

@@ -493,6 +493,8 @@ struct QState{
 				else othw.add(k,v);
 			}
 		}
+		if(!then.state.length) then.unreachable=true;   // add
+		if(!othw.state.length) othw.unreachable=true;    // add
 		return q(then,othw);
 	}
 	QState project(Value cond){ return split(cond)[0]; }
@@ -2816,6 +2818,8 @@ struct Interpreter(QState){
 				auto arg=doIt(ce.arg);
 				auto r=qstate.call(fun,arg,ce.type,ce.loc);
 				if(ce.newFunctionVar) qstate.assignTo(ce.newFunctionVar.getName,fun);
+				else if(id&&fun.tag==QState.Value.Tag.closure&&fun.closure.context&&id.name !in qstate.vars)
+					fun.forget(qstate);
 				return r;
 			}
 			if(auto fe=cast(ForgetExp)e){

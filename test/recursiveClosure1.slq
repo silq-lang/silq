@@ -1,0 +1,21 @@
+// args: --run
+
+def foo(const idx:𝔹,val:𝔹){
+	def rec(k:!ℕ,val:𝔹){
+		if k == 1{
+			return val;
+		}else if idx{
+			return val;
+		}else{
+			return rec(1,val);
+		}
+	}
+	return rec(0,val);
+}
+
+def main(){
+	for i in 0..20{
+		_:=foo(0:𝔹,0:𝔹);
+	}
+	dump();
+}
