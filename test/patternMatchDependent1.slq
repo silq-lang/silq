@@ -1,0 +1,8 @@
+// args: --run
+
+def Hs(n:!ℕ)⇒[H(0) for i in 0..n]; /// TODO
+
+def main(){
+	x:=Hs(3);
+	Hs(3):=x; /// TODO
+}
