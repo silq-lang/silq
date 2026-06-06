@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	a:=0 as 𝔹;
+	repeat 2{
+		if a&&a{ a=a; }
+	}
+}

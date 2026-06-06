@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	(a,b):=(0,1) as 𝔹^2;
+	repeat 2{
+		if a&&b{ (a,b)=(b,a); }
+	}
+}
