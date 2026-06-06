@@ -1,0 +1,12 @@
+
+def foo[k:!ℕ](x:ℤmod[2^k]){
+	return x as uint[k]; /// TODO
+}
+
+def bar[k:!ℕ](x:ℤstar[2^k]){
+	return x as uint[k]; /// TODO
+}
+
+def baz[k:!ℕ](x:uint[k]){
+	return x as ℤmod[2^k]; /// TODO
+}
