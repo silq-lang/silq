@@ -1,0 +1,8 @@
+// args: --run
+def main(){
+	n:=3,N:=5;
+	x:=5:!uint[n];
+	x:=x coerce !ℤmod[N] pun ℤstar[N]; /// run_error
+	x:=x coerce uint[n];
+	return x as 𝔹^_ coerce 𝔹^3 as uint[_];
+}
