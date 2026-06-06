@@ -1,0 +1,6 @@
+// args: --run
+
+def main(){
+	x:=3 coerce ℤstar[5];
+	return x==3;
+}
