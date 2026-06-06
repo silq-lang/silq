@@ -3212,109 +3212,116 @@ struct Interpreter(QState){
 				}
 			}else{
 				auto f=ce.e,oft=cast(ProductTy)f.type;
-				enforce(!!oft,"reversed function call not yet supported");
-				auto fv=runExp(f);
-				if(fv.tag==QState.Value.Tag.closure){
-					auto ft=fv.closure.fun.ftype;
-					enforce(fv.closure.fun.scope_&&ft&&ft.captureAnnotation==CaptureAnnotation.const_&&ft.annotation>=Annotation.mfree,"reversed function call not yet supported");
-					auto rf=reverseFunction(fv.closure.fun), rft=rf.ftype;
-					auto context=fv.closure.context;
-					auto rfv=qstate.makeClosure(rft,QState.Closure(rf,context));
-					//auto rfv=qstate.makeFunction(rf);
-					auto rfret=rft.cod; // TODO: probably semantic analysis has to explicitly compute this
-					auto r=reverseCallRewriter(ft,ce.loc); // TODO: would be nice to not require this
-					QState.Value constArg;
-					void handleUnitArg(Expression arg,Expression type){
-						enforce(isUnit(type),"reversed function call not yet supported");
-						auto val=canonicalValue(type);
-						enforce(val.isValid,"reversed function call not yet supported");
-						assignTo(arg,val,[]);
-					}
-					if(oft.nargs&&oft.isConstForReverse.all){
-						constArg=runExp(ce.arg);
-					}else if(!oft.isConstForReverse.any&&!ft.isConstForReverse.any){
-						// no const arg
-						enforce(rf.params.length==1&&equal(rft.isConstForReverse,only(false))&&!rft.isTuple,"reversed function call not yet supported");
-					}else if(!ft.isTuple){
-						assert(ft.nargs==1);
-						if(ft.isConstForReverse[0]){
-							assert(!oft.isConstForReverse.any);
-							handleUnitArg(ce.arg,ft.dom);
+				if(oft.annotation>=Annotation.qfree&&oft.nargs&&oft.isConst.all){
+					auto oldConstLookup=ce.constLookup;
+					ce.constLookup=true;
+					scope(exit) ce.constLookup=oldConstLookup;
+					forget(rhs,runExp(ce));
+				}else{
+					enforce(!!oft,"reversed function call not yet supported");
+					auto fv=runExp(f);
+					if(fv.tag==QState.Value.Tag.closure){
+						auto ft=fv.closure.fun.ftype;
+						enforce(fv.closure.fun.scope_&&ft&&ft.captureAnnotation==CaptureAnnotation.const_&&ft.annotation>=Annotation.mfree,"reversed function call not yet supported");
+						auto rf=reverseFunction(fv.closure.fun), rft=rf.ftype;
+						auto context=fv.closure.context;
+						auto rfv=qstate.makeClosure(rft,QState.Closure(rf,context));
+						//auto rfv=qstate.makeFunction(rf);
+						auto rfret=rft.cod; // TODO: probably semantic analysis has to explicitly compute this
+						auto r=reverseCallRewriter(ft,ce.loc); // TODO: would be nice to not require this
+						QState.Value constArg;
+						void handleUnitArg(Expression arg,Expression type){
+							enforce(isUnit(type),"reversed function call not yet supported");
+							auto val=canonicalValue(type);
+							enforce(val.isValid,"reversed function call not yet supported");
+							assignTo(arg,val,[]);
+						}
+						if(oft.nargs&&oft.isConstForReverse.all){
 							constArg=runExp(ce.arg);
-						}else{
-							enforce(0,"reversed function call not yet supported");
-						}
-					}else{
-						enforce(oft.dom.isTupleTy,"reversed function call not yet supported");
-						oft=oft.setTuple(true);
-						auto tpl=cast(TupleExp)ce.arg;
-						enforce(!!tpl&&tpl.length==oft.isConst.length,"reversed function call not yet supported");
-						QState.Value[] cargs;
-						if(r.constTuple){
-							foreach(i,arg;tpl.e){
-								if(ft.isConstForReverse[i]){
-									if(!oft.isConstForReverse[i])
-										handleUnitArg(arg,ft.argTy(i));
-									cargs~=runExp(arg);
-								}
+						}else if(!oft.isConstForReverse.any&&!ft.isConstForReverse.any){
+							// no const arg
+							enforce(rf.params.length==1&&equal(rft.isConstForReverse,only(false))&&!rft.isTuple,"reversed function call not yet supported");
+						}else if(!ft.isTuple){
+							assert(ft.nargs==1);
+							if(ft.isConstForReverse[0]){
+								assert(!oft.isConstForReverse.any);
+								handleUnitArg(ce.arg,ft.dom);
+								constArg=runExp(ce.arg);
+							}else{
+								enforce(0,"reversed function call not yet supported");
 							}
 						}else{
-							enforce(ft.isConstForReverse.count!(x=>x)==1);
-							foreach(i,arg;tpl.e){
-								if(ft.isConstForReverse[i]){
-									if(!oft.isConstForReverse[i])
-										handleUnitArg(arg,ft.argTy(i));
-									constArg=runExp(arg);
-									break;
+							enforce(oft.dom.isTupleTy,"reversed function call not yet supported");
+							oft=oft.setTuple(true);
+							auto tpl=cast(TupleExp)ce.arg;
+							enforce(!!tpl&&tpl.length==oft.isConst.length,"reversed function call not yet supported");
+							QState.Value[] cargs;
+							if(r.constTuple){
+								foreach(i,arg;tpl.e){
+									if(ft.isConstForReverse[i]){
+										if(!oft.isConstForReverse[i])
+											handleUnitArg(arg,ft.argTy(i));
+										cargs~=runExp(arg);
+									}
+								}
+							}else{
+								enforce(ft.isConstForReverse.count!(x=>x)==1);
+								foreach(i,arg;tpl.e){
+									if(ft.isConstForReverse[i]){
+										if(!oft.isConstForReverse[i])
+											handleUnitArg(arg,ft.argTy(i));
+										constArg=runExp(arg);
+										break;
+									}
+								}
+							}
+							if(r.constTuple) constArg=qstate.makeTuple(r.constType,cargs);
+						}
+						void assignMoved(QState.Value result){
+							if(!oft.isConstForReverse.any) return assignTo(ce.arg,result,replacements);
+							if(oft.nargs&&oft.isConstForReverse.all){ // TODO: remove?
+								assert(rft.cod is unit);
+								return;
+							}
+							auto tpl=cast(TupleExp)ce.arg;
+							enforce(!!tpl);
+							if(r.movedTuple){
+								enforce(result.tag==QState.Value.Tag.array_,"wrong number of moved arguments to reversed call");
+								enforce(ft.isConstForReverse.count!(x=>!x)==result.array_.length);
+								size_t j=0;
+								foreach(i,arg;tpl.e){
+									if(!ft.isConstForReverse[i])
+										assignTo(arg,result.array_[j++],replacements);
+								}
+							}else{
+								enforce(ft.isConstForReverse.count!(x=>!x)==1,"wrong number of moved arguments to reversed call");
+								foreach(i,arg;tpl.e){
+									if(!ft.isConstForReverse[i]){
+										assignTo(arg,result,replacements);
+										break;
+									}
 								}
 							}
 						}
-						if(r.constTuple) constArg=qstate.makeTuple(r.constType,cargs);
+						if(rft.nargs&&rft.isConst.all){
+							enforce(rhs.tag==QState.Value.Tag.array_&&rhs.array_.length==0,"bad right-hand side for reversed call");
+							// assignment is on unit. can just drop rhs.
+							auto result=qstate.call(rfv,constArg,rfret,ce.loc);
+							assignMoved(result);
+						}else if(!rft.isConst.any){
+							assert(!rft.isConst.any);
+							auto result=qstate.call(rfv,rhs,rfret,ce.loc);
+							assignMoved(result);
+						}else if(rf.params.length==2){
+							enforce(rft.isConst[0]!=rft.isConst[1],"reversed call not yet supported");
+							auto constLast=rft.isConst[1];
+							auto args=constLast?[rhs,constArg]:[constArg,rhs];
+							auto aty=tupleTy(constLast?[r.movedType,r.constType]:[r.constType,r.movedType]); // TODO: get rid of this
+							auto arg=qstate.makeTuple(aty,args);
+							auto result=qstate.call(rfv,arg,rfret,ce.loc);
+							assignMoved(result);
+						}else enforce(0,"reversed call not yet supported");
 					}
-					void assignMoved(QState.Value result){
-						if(!oft.isConstForReverse.any) return assignTo(ce.arg,result,replacements);
-						if(oft.nargs&&oft.isConstForReverse.all){ // TODO: remove?
-							assert(rft.cod is unit);
-							return;
-						}
-						auto tpl=cast(TupleExp)ce.arg;
-						enforce(!!tpl);
-						if(r.movedTuple){
-							enforce(result.tag==QState.Value.Tag.array_,"wrong number of moved arguments to reversed call");
-							enforce(ft.isConstForReverse.count!(x=>!x)==result.array_.length);
-							size_t j=0;
-							foreach(i,arg;tpl.e){
-								if(!ft.isConstForReverse[i])
-									assignTo(arg,result.array_[j++],replacements);
-							}
-						}else{
-							enforce(ft.isConstForReverse.count!(x=>!x)==1,"wrong number of moved arguments to reversed call");
-							foreach(i,arg;tpl.e){
-								if(!ft.isConstForReverse[i]){
-									assignTo(arg,result,replacements);
-									break;
-								}
-							}
-						}
-					}
-					if(rft.nargs&&rft.isConst.all){
-						enforce(rhs.tag==QState.Value.Tag.array_&&rhs.array_.length==0,"bad right-hand side for reversed call");
-						// assignment is on unit. can just drop rhs.
-						auto result=qstate.call(rfv,constArg,rfret,ce.loc);
-						assignMoved(result);
-					}else if(!rft.isConst.any){
-						assert(!rft.isConst.any);
-						auto result=qstate.call(rfv,rhs,rfret,ce.loc);
-						assignMoved(result);
-					}else if(rf.params.length==2){
-						enforce(rft.isConst[0]!=rft.isConst[1],"reversed call not yet supported");
-						auto constLast=rft.isConst[1];
-						auto args=constLast?[rhs,constArg]:[constArg,rhs];
-						auto aty=tupleTy(constLast?[r.movedType,r.constType]:[r.constType,r.movedType]); // TODO: get rid of this
-						auto arg=qstate.makeTuple(aty,args);
-						auto result=qstate.call(rfv,arg,rfret,ce.loc);
-						assignMoved(result);
-					}else enforce(0,"reversed call not yet supported");
 				}
 			}
 		}else if(auto ce=cast(CatExp)lhs){

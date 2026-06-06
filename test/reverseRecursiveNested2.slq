@@ -17,9 +17,9 @@ def uniformToW[k:!ℕ](x:uint[log₂(k)])qfree:𝔹^k{
 	def getx(const y:𝔹^k,const i:!ℕ)qfree:uint[log₂(k)]{
 		if i==0{ return 0 as uint[log₂(k)]; }
 		if y[i]{ return i as uint[log₂(k)]; }
-		return getx(y,i sub 1); /// TODO
+		return getx(y,i sub 1);
 	}
-	getx(y,k sub 1):=x; /// TODO
+	getx(y,k sub 1):=x;
 	//forget(x=getx(y,k sub 1));
 	return y;
 }
