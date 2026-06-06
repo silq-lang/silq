@@ -49,6 +49,7 @@ mixin("alias ast_conv_ZtoFixedConversion = ast_conv.\u2124toFixedConversion;");
 mixin("alias ast_conv_UintToNConversion = ast_conv.UintTo\u2115Conversion;");
 mixin("alias ast_conv_IntToZConversion = ast_conv.IntTo\u2124Conversion;");
 
+mixin("alias ast_conv_ZmodCoercion = ast_conv.\u2124modCoercion;");
 mixin("alias ast_conv_ZtoZmodConversion = ast_conv.\u2124to\u2124modConversion;");
 mixin("alias ast_conv_ZmodToNConversion = ast_conv.\u2124modTo\u2115Conversion;");
 mixin("alias ast_conv_UintToZmodCoercion = ast_conv.UintTo\u2124modCoercion;");
@@ -674,6 +675,7 @@ private ConvertFlags conversionFlags(ast_conv.Conversion conv) {
 		}else static if(is(T == ast_conv_ZmodToNConversion)) {
 			return ConvertFlags.noop;
 		}else static if(
+			is(T == ast_conv_ZmodCoercion) ||
 			is(T == ast_conv_UintToZmodCoercion) ||
 			is(T == ast_conv_ZmodToUintCoercion) ||
 			is(T == ast_conv_ZmodToZstarCoercion)
@@ -7000,6 +7002,17 @@ class ScopeWriter {
 		auto cval = ccg.emitPureOp("classical_call[silq_builtin.bits_to_int]", [len, v.creg]);
 		if(toInt.isSigned) cval = ccg.intMakeSigned(len, cval);
 		return valNewC(cval);
+	}
+
+	Value implConvert(ast_conv_ZmodCoercion conv, Value v) {
+		auto zmodTy1 = ast_ty_isZmodTy(conv.from);
+		auto zmodTy2 = ast_ty_isZmodTy(conv.to);
+		assert(zmodTy1 && zmodTy2);
+		assert(zmodTy1.isStar == zmodTy2.isStar);
+		auto N1 = getZmodN(zmodTy1);
+		auto N2 = getZmodN(zmodTy2);
+		ccg.checkBool(conv.checkN, ccg.intCmpEq(N1, N2));
+		return v;
 	}
 
 	Value implConvert(ast_conv_ZtoZmodConversion conv, Value v) {

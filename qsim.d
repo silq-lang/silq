@@ -1171,12 +1171,13 @@ struct QState{
 						r.type=ntype;
 						if(auto zmod1=isℤmodTy(type)){
 							if(auto zmod2=isℤmodTy(ntype)){
-								if(!zmod1.isStar&&zmod2.isStar){
-									if(auto v=zmod2.N.asIntegerConstant()){
-										auto N=v.get();
-										enforce(gcd(N,zmodval.val)==1,format("`%s` is not a unit modulo `%s`",zmodval.val%N,N));
-									}else break;
-								}
+								if(auto v2=zmod2.N.asIntegerConstant()){
+									auto N1=zmodval.N,N2=v2.get();
+									enforce(N1==N2,format("inconsistent moduli in conversion: `%s` vs. `%s`",type,ntype));
+									if(!zmod1.isStar&&zmod2.isStar){
+										enforce(gcd(N2,zmodval.val)==1,format("`%s` is not a unit modulo `%s`",zmodval.val,N2));
+									}
+								}else break;
 							}else break;
 						}else break;
 						return r;

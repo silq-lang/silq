@@ -1,0 +1,6 @@
+// args: --run
+
+def main(){
+	m:=3,n:=3;
+	return 2:!ℤmod[m] coerce !ℤmod[n] coerce ℤmod[3];
+}
