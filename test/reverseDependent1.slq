@@ -1,7 +1,8 @@
+// args: --run
 
 def main(){
 	xs:=vector(9,0);
 	vector(2,0)~(xs:_^7):=xs;
-	vector(2,0)~xs:=xs; /// TODO
+	vector(2,0)~xs:=xs;
     vector(xs.length,0):=xs;
 }
