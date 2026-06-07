@@ -1,5 +1,6 @@
+// args: --run
 
 def main(){
 	x:=vector(5,0:𝔹);
-	(x:𝔹^2)~vector(3,0):=x; /// TODO
+	(x:𝔹^2)~vector(3,0):=x;
 }

@@ -1,6 +1,7 @@
+// args: --run
 
 def foo()⇒(0,0:𝔹);
 def main(){
 	x:=vector(2,0:𝔹);
-	foo():=x; /// TODO
+	foo():=x;
 }
