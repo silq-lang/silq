@@ -14,8 +14,9 @@ def shor(n:!ℕ){
 		a:=2+uniform(n sub 2);
 		d:=gcd(a,n);
 		if d≠1{ return d; }
-		r:=order(a,n);
-		k:=gcd(pow_mod(a,r div 2,n)+1,n);
+		a:=a coerce !ℤstar[n];
+		r:=order(a);
+		k:=gcd(a^(r div 2)+1 as !ℕ,n);
 		if 1<k∧k<n { return k; }
 	}
 }
@@ -37,26 +38,16 @@ def asPower(n:!ℕ){
 }
 
 // order-finding:
-def order(a:!ℕ,N:!ℕ){
+def order[N:!ℕ](a:!ℤstar[N]){
 	n:=2·ceil(log₂(N))+1 coerce !ℕ;
 	while true{
-		def f(b:uint[n])lifted ⇒ powm(a coerce !ℤstar[N],b);
+		def f(b:uint[n])lifted ⇒ a^b;
 		for r in candidates(estimate_phase[n](f)/2^n){
-			if r≠0 && pow_mod(a,r,N)=1{
+			if r≠0 && a^r=1{
 				return r;
 			}
 		}
 	}
-}
-
-// compute a^b%N
-def powm[N:!ℕ,m:!ℕ](a:!ℤstar[N],b:uint[m])lifted: ℤstar[N]{
-	(r,x):=(1:ℤstar[N],a);
-	for i in 0..m{
-		if b[i]{ r·=x; }
-		x=x·x;
-	}
-	return r;
 }
 
 def estimate_phase[n:!ℕ][a:*](f:uint[n] !→lifted a):!ℕ{

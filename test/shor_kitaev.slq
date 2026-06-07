@@ -15,19 +15,19 @@ def shor(n:!ℕ){
 		a := 2+uniform(n sub 2);
 		d := gcd(a,n);
 		if d≠1{ return d; }
-		(q,x) := (0,1:ℤstar[n]);
+		(q,x,a) := (0,1,a) coerce _×!ℤstar[n]×!ℤstar[n];
 		for i in 0..2·m+1 {
 			(bit,y) := (H(0),2^(2·m sub i));
 			if bit {
-				x ·= pow_mod(a,y,n) pun !ℤstar[n];
-				phase(-2·pi·q·y);
+				x ·= a^y;
+				phase(-2·π·q·y);
 			}
 			q += measure(H(bit))/(2·y);
 		}
 		measure(x);
 		for r in candidates(q) {
-			k := gcd(pow_mod(a,r div 2,n)+1,n);
-			if 1<k && k<n && n%k == 0 { return k; }
+			k := gcd(a^(r div 2)+1 as !ℕ,n);
+			if 1<k && k<n { return k; }
 		}
 	}
 }

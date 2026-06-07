@@ -11,16 +11,12 @@ def shor(N:!ℕ){
 		a:=2+uniform(N sub 2);
 		d:=gcd(a,N);
 		if d≠1{ return d; }
+		a:=a coerce !ℤstar[N];
 		n:=2·ceil(log₂(N))+1 coerce !ℕ;
 		t:=[H(0) for i in 0..n] as uint[n];
-		(s,x):=(1,a) pun !ℤstar[N]^2;
-		for i in 0..n{
-			if t[i]{ s·=x; }
-			x·=x;
-		}
-		measure(s);
+		measure(a^t);
 		for r in candidates((measure(reverse(QFT)(t)) as !ℕ)/2^n){
-			k:=gcd(pow_mod(a,r div 2,N)+1,N);
+			k:=gcd(a^(r div 2)+1 as !ℕ,N);
 			if 1<k∧k<N { return k; }
 		}
 	}

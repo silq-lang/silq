@@ -16,8 +16,9 @@ def shor(n:!ℕ){
 		a:=2+uniform(n sub 3);
 		d:=gcd(a,n);
 		if d≠1{ return d; }
-		r:=order(a,n);
-		k:=gcd(pow_mod(a,r div 2,n)+1,n);
+		a:=a coerce !ℤstar[n];
+		r:=order(a);
+		k:=gcd(a^(r div 2)+1 as !ℕ,n);
 		if 1<k∧k<n { return k; }
 	}
 }
@@ -49,14 +50,13 @@ def uniform(n:!ℕ){
 	}
 }
 
-def order(a:!ℕ,N:!ℕ){
-	assert(gcd(a,N)=1);
+def order[N:!ℕ](a:!ℤstar[N]){
 	(n,m):=(0,1);
 	while m<N { n+=2, m*=2; }
-	(aps,ais):=([a],[pow_mod(a,-1,N)]) pun (!ℤstar[N]^_)^_;
+	(aps,ais):=([a],[a^-1]);
 	for i in 1..n{
-		aps~=[aps[i-1]·aps[i-1]];
-		ais~=[ais[i-1]·ais[i-1]];
+		aps~=[aps[i-1]^2];
+		ais~=[ais[i-1]^2];
 	}
 	while true{
 		def f[pw2:!ℕ](b:ℤmod[N]){
@@ -67,7 +67,7 @@ def order(a:!ℕ,N:!ℕ){
 		(θ,x):=estimate_phase[n](f,1:Zstar[N]);
 		measure(x);
 		for r in candidates((θ as !ℕ)/2^n){
-			if r≠0∧pow_mod(a,r,N)=1{
+			if r≠0∧a^r=1{
 				return r;
 			}
 		}
