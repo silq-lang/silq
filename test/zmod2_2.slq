@@ -1,3 +1,4 @@
+// args: --run
 
 def f(x:ℤmod[5]){
 	x·=2 coerce ℤstar[5]; /// TODO
@@ -5,6 +6,6 @@ def f(x:ℤmod[5]){
 }
 
 def main(){
-	f(x) := 1:ℤmod[5];
+	f(x) := 1:ℤmod[5]; /// TODO
 	return x;
 }

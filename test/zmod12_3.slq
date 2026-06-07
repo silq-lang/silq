@@ -1,0 +1,23 @@
+
+def main(){
+	x:=2 coerce ℤstar[5];
+	y:=1:ℤmod[5];
+	(b,c,d):=(H(0),H(0),H(0));
+	if b{
+		x=3 coerce ℤstar[5];
+		y=2:ℤmod[5];
+	}
+	if c{
+		z := 3 coerce !ℤstar[5];
+	}else{
+		z := 2 coerce !ℤstar[5];
+	}
+	if d{
+		x*=z;
+		y*=z;
+	}
+	d:=H(d);
+	x*=z;
+	y*=z;
+	return (b,c,d,x,y);
+}

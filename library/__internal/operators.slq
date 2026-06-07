@@ -322,6 +322,70 @@ def qint_udivmod_cq[m:!N](a: !N, b: B^m) @nogarbage lifted: B^m x B^m {
 	}
 }
 
+def qint_modinv_u[n:!ℕ](x: uint[n]) lifted: uint[n] {
+	if n == 0{ return 0: uint[n]; }
+	if n == 1{ return 1: uint[n]; }
+	if n == 2{ return x; }
+	y := [1,0];
+	for k in 0..ceil(log₂(n)){
+		t := 2^(k+1);
+		if t > n{ t = n; }
+		yl := y.length;
+		y ~= vector(t sub yl,0);
+		y := y coerce 𝔹^t as uint[t];
+		x' := (x as 𝔹^n)[0..t] as uint[t];
+		y = y·(2-x'·y) as 𝔹^t;
+	}
+	return y coerce 𝔹^n as uint[n];
+}
+
+def crt_pow2[k:!ℕ,M:!ℕ](x2:ℤstar[2^k],xM:ℤstar[M]) lifted: ℤstar[2^k·M] {
+    c := pow_mod(2^k, -1, M);
+    m := ℤmodBits(M);
+	nr := ℤmodBits(2^k·M);
+	if 2^k>M{
+		x2M := (x2 pun uint[k]) % M;
+		(x2M: 𝔹^m) ~ vector(k sub m, 0: 𝔹) := x2M as 𝔹^k;
+		x2M := x2M as uint[m] pun ℤmod[M];
+	}else{
+		x2M := (x2 pun uint[k] as 𝔹^k) ~ vector(m sub k,0) as uint[m] pun ℤmod[M];
+	}
+	t := (xM - x2M) · c;
+	x2' := (x2 pun uint[k] as 𝔹^k) ~ vector(nr sub k, 0) as uint[nr];
+	t' := (t pun uint[m] as 𝔹^m) ~ vector(nr sub m, 0) as uint[nr];
+	return x2' + t'·2^k pun ℤmod[2^k·M] pun ℤstar[_];
+}
+
+def qint_modinv_x[N:!ℕ](x:ℤstar[N]) lifted: ℤstar[N]{
+	(k,M):=(0,N);
+	while M%2=0{ k+=1; M div=2; }
+	n := ℤmodBits(N);
+	xi1 := qint_modinv_u(((x pun uint[n]) as 𝔹^n)[0..k] as uint[k]) pun ℤmod[2^k] pun ℤstar[_];
+	if M=1{ return xi1 coerce ℤstar[N]; }
+	m := ℤmodBits(M);
+	x' := (x pun uint[n])%M;
+	(x':𝔹^m) ~ vector(n sub m,0:𝔹) := x' as 𝔹^n;
+	x':=x' as uint[m];
+	(a, b, u, v) := (x', M sub x', 1, -1): _×_×!ℤmod[M]×!ℤmod[M];
+	def div2(x:ℤmod[M])lifted{
+		t:=(x pun uint[m] as 𝔹^m)~[0] as uint[m+1];
+		r~[0]:=(if t[0] then (t+M) div 2 else t div 2) as 𝔹^(m+1);
+		return r as uint[m] pun ℤmod[M];
+	}
+	repeat m{ if !a[0]{ a div=2; u=div2(u); } }
+	repeat m{ if !b[0]{ b div=2; v=div2(v); } }
+	for i in 0..m{
+		if a[0] == b[0] {
+			if b < a { (a, b, u, v) = (b, a, v, u); }
+			(a, b, u, v)=((b - a) div 2, a, div2(v - u), u);
+			repeat m-1-i{ if !a[0]{ a div=2; u=div2(u); } }
+		}
+	}
+	xi2 := v pun ℤstar[M];
+	if k=0{ return xi2 coerce ℤstar[N]; }
+	return crt_pow2(xi1, xi2) coerce ℤstar[N];
+}
+
 def qint_orc[n:!N](a: B^n, b: !Z) lifted: B^n {
 	def rec(m: !N, a: B^n) lifted: B^m {
 		if m == 0 {
@@ -4633,9 +4697,21 @@ def __nsub_assign_bN(a: 𝔹, const b: !ℕ) @[__operator] qfree: 𝔹 {
 // a·=b
 // (usually rewritten to with x:=a do x=x·b)
 
+def __mul_assign_m[N:!ℕ](a: ℤmod[N], const b: ℤstar[N]) qfree: ℤmod[N] {
+	a' := a·b;
+	a'·qint_modinv_x(b) := a;
+	return a';
+}
+
 def __mul_assign_mM[N:!ℕ](a: ℤmod[N], const b: !ℤstar[N]) qfree: ℤmod[N] {
 	a' := a·b;
 	a'·(pow_mod(b as !ℕ, -1, N) pun !ℤstar[N]) := a;
+	return a';
+}
+
+def __mul_assign_x[N:!ℕ](a: ℤstar[N], const b: ℤstar[N]) qfree: ℤstar[N] {
+	a' := a·b;
+	a'·qint_modinv_x(b) := a;
 	return a';
 }
 
