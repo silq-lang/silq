@@ -1398,11 +1398,16 @@ struct QState{
 							if(i&1) res*=cur;
 						return makeComplex(res);
 					}
-				}else if(t1!=ℝ(true)||t2!=ℝ(true))
-					return convertTo(ℝ(true))^^r.convertTo(ℝ(true));
-				auto res=fval^^r.fval;
-				enforce(!isNaN(res),text("cannot take `",fval,"` to the power of `",r.fval,"`"));
-				return makeReal(res);
+				}
+				if(tag==Tag.zmodval && (util.among(t2,Bool(true),ℕt(true),ℤt(true))||isInt(t2)||isUint(t2))){
+					return makeℤmod(type,zmodval^^r.asℤ());
+				}
+				if(t1==ℝ(true)&&t2==ℝ(true)){
+					auto res=fval^^r.fval;
+					enforce(!isNaN(res),text("cannot take `",fval,"` to the power of `",r.fval,"`"));
+					return makeReal(res);
+				}
+				return convertTo(ℝ(true))^^r.convertTo(ℝ(true));
 			}else static if(op=="~"){
 				enforce(tag==Tag.array_&&r.tag==Tag.array_,"incompatible values for concatentation");
 				return makeArray(ntype,array_~r.array_);

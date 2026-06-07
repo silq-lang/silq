@@ -1,0 +1,10 @@
+
+def main(){
+	x:=1:!ℤmod[53];
+	b:=3:!ℤmod[53];
+	x·=b^0·b^1; /// error
+	x·=b^2; /// error
+	x·=b^-1; /// error
+	assert(x==9);
+	return x;
+}

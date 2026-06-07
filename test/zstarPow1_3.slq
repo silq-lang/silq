@@ -1,0 +1,13 @@
+// args: --run
+
+def main(){
+	x:=1:!ℤstar[53];
+	t:=H(0);
+	b:=3 coerce !ℤstar[53];
+	if t{ b=2 coerce !ℤstar[53]; }
+	x·=b^0·b^1; /// error
+	x·=b^2; /// error
+	x·=b^-1; /// error
+	assert(measure(if t then x==18 else x==9));
+	return (x,t,b);
+}

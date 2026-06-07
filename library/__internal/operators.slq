@@ -357,8 +357,11 @@ def crt_pow2[k:!ℕ,M:!ℕ](x2:ℤstar[2^k],xM:ℤstar[M]) lifted: ℤstar[2^k·
 }
 
 def qint_modinv_x[N:!ℕ](x:ℤstar[N]) lifted: ℤstar[N]{
-	(k,M):=(0,N);
-	while M%2=0{ k+=1; M div=2; }
+	(k, M):=(0, N);
+	while M%2 == 0 {
+		k+=1;
+		M div=2;
+	}
 	n := ℤmodBits(N);
 	xi1 := qint_modinv_u(((x pun uint[n]) as 𝔹^n)[0..k] as uint[k]) pun ℤmod[2^k] pun ℤstar[_];
 	if M=1{ return xi1 coerce ℤstar[N]; }
@@ -382,7 +385,7 @@ def qint_modinv_x[N:!ℕ](x:ℤstar[N]) lifted: ℤstar[N]{
 		}
 	}
 	xi2 := v pun ℤstar[M];
-	if k=0{ return xi2 coerce ℤstar[N]; }
+	if k == 0{ return xi2 coerce ℤstar[N]; }
 	return crt_pow2(xi1, xi2) coerce ℤstar[N];
 }
 
@@ -2081,6 +2084,54 @@ def __mod_R(a: !ℝ, b: !ℝ) @[__operator] lifted: !ℝ {
 }
 
 // a ^ b
+
+def __pow_Xs[N:!ℕ,n:!ℕ](a: !ℤstar[N], b: int[n]) lifted: ℤstar[N] {
+	(r, x) := (1: ℤstar[N], if b[n-1] then a^-1 else a);
+	for i in 0..n-1{
+		if b[i] {
+			r ·= x;
+		}
+		if i+1 < n-1 {
+			x = x·x;
+		}
+	}
+	return r;
+}
+def __pow_XS[N:!ℕ,n:!ℕ](a: !ℤstar[N], b: !int[n]) lifted: !ℤstar[N] {
+	return pow_mod(a as !ℕ, b as !ℤ, N) pun !ℤstar[N];
+}
+
+def __pow_Xu[N:!ℕ,n:!ℕ](a: !ℤstar[N], b: uint[n]) lifted: ℤstar[N] {
+	(r, x) := (1: ℤstar[N], a);
+	for i in 0..n{
+		if b[i] {
+			r ·= x;
+		}
+		if i+1 < n {
+			x = x·x;
+		}
+	}
+	return r;
+}
+def __pow_XU[N:!ℕ,n:!ℕ](a: !ℤstar[N], b: !uint[n]) lifted: !ℤstar[N] {
+	return pow_mod(a as !ℕ, b as !ℕ, N) pun !ℤstar[N];
+}
+
+def __pow_Xb[N:!ℕ](a: !ℤstar[N], b: 𝔹) lifted: ℤstar[N] {
+	return if b then a else 1:!ℤstar[N];
+}
+def __pow_XB[N:!ℕ](a: !ℤstar[N], b: !𝔹) lifted: !ℤstar[N] {
+	return if b then a else 1:!ℤstar[N];
+}
+
+def __pow_XN[N:!ℕ](a: !ℤstar[N], b: !ℕ) lifted: !ℤstar[N] {
+	return pow_mod(a as !ℕ, b, N) pun !ℤstar[N];
+}
+def __pow_XZ[N:!ℕ](a: !ℤstar[N], b: !ℤ) lifted: !ℤstar[N] {
+	return pow_mod(a as !ℕ, b, N) pun !ℤstar[N];
+}
+
+
 def __pow_b(a: 𝔹, b: 𝔹) @[__operator] lifted: 𝔹 {
 	return __ge_b(a, b);
 }

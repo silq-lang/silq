@@ -1,0 +1,17 @@
+// args: --run
+
+def main(){
+	x:=1:!ℤstar[14];
+	b:=3 coerce !ℤstar[14];
+	y₀:=[H(0) for i in 0..3] as int[_];
+	y₁:=[H(0) for i in 0..3] as uint[_];
+	x·=b^y₀;
+	x·=b^y₁;
+	sign:=y₀<0;
+	y₀:=(y₀ as 𝔹^_)~[dup(sign),sign] as int[5];
+	y₁:=(y₁ as 𝔹^_)~[0,0] as int[5];
+	for i in -2^5..2^5{
+		assert(measure(y₀+y₁≠i||x==b^i))
+	}
+	return (x,y₀,y₁);
+}
