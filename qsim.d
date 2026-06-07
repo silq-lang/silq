@@ -873,6 +873,7 @@ struct QState{
 					closure.fun=rhs.closure.fun;
 					if(closure.context&&rhs.closure.context&&closure.context!is rhs.closure.context)
 						(*closure.context).assign(state,*rhs.closure.context);
+					this.type=rhs.type;
 					return;
 				case Tag.array_:
 					enforce(rhs.tag==Tag.array_,"incompatible values for array assignment");
@@ -880,6 +881,7 @@ struct QState{
 						if(array_ !is rhs.array_)
 							foreach(i;0..array_.length)
 								array_[i].assign(state,rhs.array_[i]);
+						this.type=rhs.type;
 					}else{
 						forget(state);
 						this=rhs;
@@ -891,18 +893,23 @@ struct QState{
 					bool ok=true;
 					foreach(k,v;rhs.record) if(k !in record) ok=false;
 					foreach(k,v;record) if(k !in rhs.record) ok=false;
-					if(ok) foreach(k,v;record) v.assign(state,rhs.record[k]);
-					else{
+					if(ok){
+						foreach(k,v;record) v.assign(state,rhs.record[k]);
+						this.type=rhs.type;
+					}else{
 						forget(state);
 						this=rhs;
 					}
 					return;
 				case Tag.quval:
-					if(rhs.tag==Tag.quval&&quval is rhs.quval) return;
+					if(rhs.tag==Tag.quval&&quval is rhs.quval){
+						this.type=rhs.type;
+						return;
+					}
 					if(auto quvar=cast(QVar)quval){ // TODO: ok?
 						scope(success) rhs.forget(state);
-						auto crhs=rhs.type==type?rhs:rhs.convertTo(type);
-						return quvar.assign(state,crhs);
+						this.type=rhs.type;
+						return quvar.assign(state,rhs);
 					}
 			}
 			assert(0,text("can't assign to constant ",this," ",rhs));
