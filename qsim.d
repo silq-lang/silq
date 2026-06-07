@@ -901,7 +901,8 @@ struct QState{
 					if(rhs.tag==Tag.quval&&quval is rhs.quval) return;
 					if(auto quvar=cast(QVar)quval){ // TODO: ok?
 						scope(success) rhs.forget(state);
-						return quvar.assign(state,rhs);
+						auto crhs=rhs.type==type?rhs:rhs.convertTo(type);
+						return quvar.assign(state,crhs);
 					}
 			}
 			assert(0,text("can't assign to constant ",this," ",rhs));
@@ -1227,7 +1228,7 @@ struct QState{
 					break;
 			}
 			if(ntag==Tag.bval) return neqZ;
-			if(tag!=Tag.zval&&ntag==Tag.zmodval) return convertTo(ℤt(true)).convertTo(ntype);
+			if(ntag==Tag.zmodval&&tag!=Tag.zval&&tag!=Tag.zmodval) return convertTo(ℤt(true)).convertTo(ntype);
 			enforce(0,text("converting ",type," to ",ntype," not yet supported"));
 			assert(0);
 		}
@@ -1328,8 +1329,8 @@ struct QState{
 					if(intTy.isSigned) return makeInt(type,mixin(op~` intval`));
 					else return makeUint(type,mixin(op~` uintval`));
 				}
-				if(isℤmodTy(type)){
-					return makeℤmod(type,mixin(op~` zmodval`));
+				if(isℤmodTy(type)&&isℤmodTy(ntype)){
+					return makeℤmod(ntype,mixin(op~` zmodval`));
 				}
 				if(type==Bool(true)){
 					static if(op=="~") return makeBool(!bval);
@@ -2089,7 +2090,7 @@ struct QState{
 		struct Sortable{
 			Q!(Ref,Value)[] values;
 			private static int cmp(Value a,Value b){
-				enforce(a.type==b.type,"encountered incomparable values for output sorting");
+				enforce(a.type==b.type,format("encountered incomparable values for output sorting: `%s` vs `%s`",a.type,b.type));
 				if(util.among(a.tag,Value.Tag.closure,Value.Tag.record)) return 0; // TODO: compare those
 				return a.lt(b).neqZImpl?-1:a.eq(b).neqZImpl?0:1;
 			}
@@ -2097,7 +2098,7 @@ struct QState{
 				if(values.length!=rhs.values.length) return 0;
 				//enforce(values.length==rhs.values.length);
 				foreach(i;0..values.length){
-					enforce(values[i][0]==rhs.values[i][0],"encountered incompatible locations for output sorting");
+					enforce(values[i][0]==rhs.values[i][0],format("encountered incompatible locations for output sorting: `%s` vs `%s`",values[i][0],rhs.values[i][0]));
 					int current=cmp(values[i][1],rhs.values[i][1]);
 					if(current!=0) return current;
 				}

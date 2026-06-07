@@ -1,0 +1,11 @@
+// args: --run
+
+def main(){
+	b:=2:ℤmod[5];
+	x:=H(0);
+	if x{
+		b=3 coerce ℤstar[5];
+	}
+	dump();
+	return (x,b);
+}

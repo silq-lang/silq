@@ -2,5 +2,5 @@
 
 def main(){
 	x:=2:ℤmod[5];
-	return x pun uint[4]; /// error
+	return x pun uint[4]; /// run_error
 }
