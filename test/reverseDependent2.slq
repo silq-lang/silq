@@ -1,5 +1,5 @@
 
-def foo(n:!ℕ,xs:𝔹[])⇒xs coerce 𝔹^n;
+def foo(const n:!ℕ,xs:𝔹[])⇒xs coerce 𝔹^n;
 
 def main(){
 	n:=5;
