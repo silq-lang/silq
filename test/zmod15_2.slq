@@ -1,0 +1,18 @@
+// args: --run
+
+def foo[a:qtype](const f: a ->mfree a,x:a){
+	bit:=H(0);
+	if bit { x:=f(x); }
+	measure(H(bit));
+	dump();
+	return x;
+}
+def main(){
+	a:=5 coerce !ℤstar[6];
+	def f(b:ℤmod[6]){
+		b':=b·a;
+		b'·a:=b;
+		return b';
+	}
+	return measure(foo(f,1:!ℤstar[6])) as !ℕ;
+}

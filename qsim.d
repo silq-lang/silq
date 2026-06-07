@@ -410,7 +410,7 @@ struct QState{
 	}
 	void prepareMerge(ref Value to,ref Value from,ref QState qstateFrom){
 		if(!to.type) return;
-		if(to.tag!=from.tag){
+		if(to.type!=from.type){
 			if(auto join=joinTypes(to.type,from.type)){
 				if(to.type!=join) to=to.consumeOnRead().convertTo(join).toVar(this,false);
 				if(from.type!=join) from=from.consumeOnRead().convertTo(join).toVar(qstateFrom,false);
