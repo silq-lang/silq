@@ -3171,6 +3171,9 @@ struct Interpreter(QState){
 		return QState.Value.init;
 	}
 	void assignTo(bool isCat=false)(Expression lhs,QState.Value rhs,AAssignExp.Replacement[] replacements){
+		if(auto tae=cast(TypeAnnotationExp)lhs){
+			return assignTo!isCat(tae.e,convertTo(rhs,tae.e.type,true),replacements);
+		}
 		if(auto id=cast(Identifier)lhs){
 			static if(isCat){
 				qstate.catAssignTo(id.name,rhs);

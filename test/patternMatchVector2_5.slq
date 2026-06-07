@@ -2,5 +2,5 @@
 def foo(x:𝔹)⇒(0,x);
 def main(){
 	x:=vector(2,0:𝔹);
-	foo(t):𝔹^2:=x;
+	foo(t):=x;
 }
