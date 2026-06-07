@@ -1113,6 +1113,18 @@ struct QState{
 					if(ntag==Tag.qval) return makeRational(ℚ(zval));
 					if(ntag==Tag.fval) return makeReal(toReal(zval));
 					if(ntag==Tag.cval) return makeComplex(C(toReal(zval)));
+					if(ntag==Tag.zmodval){
+						if(auto zmod=isℤmodTy(ntype)){
+							if(auto v=zmod.N.asIntegerConstant()){
+								auto N=v.get();
+								enforce(0<=zval && zval<N,format("`%s` is not a canonical representative modulo `%s`",zval,N));
+								if(zmod.isStar){
+									enforce(gcd(N,zval)==1,format("`%s` is not a unit modulo `%s`",zval,N));
+								}
+								return makeℤmod(ntype,ℤmod(N,zval));
+							}
+						}
+					}
 					break;
 				case Tag.intval,Tag.uintval:
 					if(ntag==Tag.bval) return neqZ;
@@ -1142,20 +1154,23 @@ struct QState{
 						return makeUint(ntype,BitInt!false(nbits,val));
 					}
 					if(ntag==Tag.zmodval){
-						ℤ val=0;
-						if(otag==Tag.intval){
-							val=intval.val;
-						}else{
-							val=uintval.val;
-						}
 						if(auto zmod=isℤmodTy(ntype)){
+							size_t nbits;
+							if(otag==Tag.intval){
+								nbits=intval.nbits;
+							}else{
+								nbits=uintval.nbits;
+							}
 							if(auto v=zmod.N.asIntegerConstant()){
 								auto N=v.get();
-								enforce(0<=val && val<N,format("`%s` is not a canonical representative modulo `%s`",val,N));
-								if(zmod.isStar){
-									enforce(gcd(N,val)==1,format("`%s` is not a unit modulo `%s`",val,N));
+								size_t gnb=0;
+								ℤ k=1;
+								while(k<N){
+									k*=2;
+									gnb+=1;
 								}
-								return makeℤmod(ntype,ℤmod(N,val));
+								enforce(nbits==gnb,format("incompatible number of bits for `pun`: `%s` vs `%s`",nbits,gnb));
+								break; // use default path via !ℤ
 							}
 						}
 					}
@@ -1173,7 +1188,7 @@ struct QState{
 							if(auto zmod2=isℤmodTy(ntype)){
 								if(auto v2=zmod2.N.asIntegerConstant()){
 									auto N1=zmodval.N,N2=v2.get();
-									enforce(N1==N2,format("inconsistent moduli in conversion: `%s` vs. `%s`",type,ntype));
+									enforce(N1==N2,format("inconsistent moduli in conversion: `%s` vs `%s`",type,ntype));
 									if(!zmod1.isStar&&zmod2.isStar){
 										enforce(gcd(N2,zmodval.val)==1,format("`%s` is not a unit modulo `%s`",zmodval.val,N2));
 									}
@@ -1186,7 +1201,19 @@ struct QState{
 						if(auto fit=isFixedIntTy(ntype)){
 							if(auto v=fit.bits.asIntegerConstant()){
 								auto nbits=smallValue(v.get());
-								return ntag==Tag.intval?makeInt(ntype,BitInt!true(nbits,zmodval.val)):makeUint(ntype,BitInt!false(nbits,zmodval.val));
+								if(auto zmod=isℤmodTy(type)){
+									if(auto Nv=zmod.N.asIntegerConstant()){
+										auto N=Nv.get();
+										size_t gnb=0;
+										ℤ k=1;
+										while(k<N){
+											k*=2;
+											gnb+=1;
+										}
+										enforce(gnb==nbits,format("incompatible number of bits for `pun`: `%s` vs `%s`",gnb,nbits));
+										return ntag==Tag.intval?makeInt(ntype,BitInt!true(nbits,zmodval.val)):makeUint(ntype,BitInt!false(nbits,zmodval.val));
+									}
+								}
 							}
 						}
 					}
@@ -1200,6 +1227,7 @@ struct QState{
 					break;
 			}
 			if(ntag==Tag.bval) return neqZ;
+			if(tag!=Tag.zval&&ntag==Tag.zmodval) return convertTo(ℤt(true)).convertTo(ntype);
 			enforce(0,text("converting ",type," to ",ntype," not yet supported"));
 			assert(0);
 		}
