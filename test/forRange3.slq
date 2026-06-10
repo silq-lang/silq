@@ -1,0 +1,13 @@
+// args: --run
+
+def main():!ℕ{
+	n:=3;
+	r:=0;
+	for i in 0..n-1{
+		r+=i;
+	}
+	for i in (n-1..-1..0]{
+		r+=i;
+	}
+	return r;
+}
