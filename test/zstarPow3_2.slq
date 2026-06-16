@@ -3,7 +3,7 @@ def main(){
 	x:=1:!ℤstar[14];
 	b:=3 coerce !ℤstar[14];
 	t:=H(0);
-	if t{ b=5 coerce !ℤstar[14]; } /// TODO
+	if t{ b=5 coerce !ℤstar[14]; }
 	y₀:=[H(0) for i in 0..3] as int[_];
 	y₁:=[H(0) for i in 0..3] as uint[_];
 	x·=b^y₀; /// error

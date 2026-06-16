@@ -1,0 +1,9 @@
+def main() {
+	x := 0;
+	for i in 0..1{
+		bit := H(0);
+		if bit { x += 1~1; } /// error
+		measure(bit);
+	}
+	for r in 0..1{}
+}
