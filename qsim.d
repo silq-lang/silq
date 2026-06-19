@@ -2873,7 +2873,7 @@ struct Interpreter(QState){
 				QState.Value r;
 				if(!i.isClassical()){
 					i=i.dup(qstate); scope(exit) forget(i);
-					r=a[i].toVar(qstate,false).consumeOnRead();
+					r=a[i].dup(qstate).consumeOnRead();
 				}else r=a[i];
 				if(!idx.constLookup&&!idx.implicitDup){
 					if(idx.byRef){

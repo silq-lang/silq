@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	index := H(0);
+	xss := [[1],[0]];
+	xs := xss[index];
+	result := xs[index%1];
+	return (index, result);
+}
