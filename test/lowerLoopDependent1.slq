@@ -1,0 +1,9 @@
+// args: --remove-loops --run
+def foo(n:!ℕ){
+	for j in [1..n) {   
+		t_next := vector(j+2, 0);
+		t_next[j+1] = 1;
+	}
+}
+
+def main()⇒foo(3);
