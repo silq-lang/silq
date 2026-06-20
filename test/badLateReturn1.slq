@@ -1,0 +1,6 @@
+
+def foo(s:uint[5]^4)lifted{
+	if s == [1,2,3,4,5] { return 180:uint[9]; }
+	else { return 0:uint[9]; }
+	return s; /// error
+}
