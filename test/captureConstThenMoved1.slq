@@ -1,0 +1,7 @@
+// args: --run
+
+def foo(x:𝔹)(){
+	y := dup(x);
+	return (x,y);
+}
+def main() ⇒ foo(H(0))();

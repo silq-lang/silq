@@ -290,7 +290,7 @@ struct FunctionValue {
 	CReg[] cCapR;
 	CCGen ccg;
 	QCGen qcg;
-	ast_ty.CaptureAnnotation captureKind;
+	ast_ty.CaptureAnnotation captureAnnotation;
 	CReg[] qCapConstT;
 	QReg[] qCapConstR;
 	CReg[] qCapMovedT;
@@ -310,10 +310,10 @@ struct FunctionValue {
 	QReg moveToQReg() {
 		assert(ccg && qcg);
 		QReg qregConst = null, qregMoved = null;
-		if(hasConstCapture(captureKind)) {
+		if(hasConstCapture(captureAnnotation)) {
 			qregConst = qcg.pack(qCapConstT, qCapConstR);
 		}
-		if(!spent && hasMovedCapture(captureKind)) {
+		if(!spent && hasMovedCapture(captureAnnotation)) {
 			qregMoved = qcg.pack(qCapMovedT, qCapMovedR);
 		}
 
@@ -411,8 +411,8 @@ final class Value {
 		auto v = new Value();
 		v._creg = sc.ccg.funcPack(fi.indirectName, cCapR[]);
 
-		auto qtypeConst = hasConstCapture(fi.captureKind) ? sc.ccg.qtTuple(qCapConstT[]) : null;
-		auto qtypeMoved = hasMovedCapture(fi.captureKind) ? sc.ccg.qtTuple(qCapMovedT[]) : null;
+		auto qtypeConst = hasConstCapture(fi.captureAnnotation) ? sc.ccg.qtTuple(qCapConstT[]) : null;
+		auto qtypeMoved = hasMovedCapture(fi.captureAnnotation) ? sc.ccg.qtTuple(qCapMovedT[]) : null;
 
 		CReg qtype;
 		if(qtypeConst && qtypeMoved) {
@@ -433,7 +433,7 @@ final class Value {
 
 		assert(!!qtype ^ (qtypeConst && qtypeMoved));
 		v._creg = qtype ? sc.ccg.qfuncPack(v._creg, qtype) : sc.ccg.qfuncPack2(v._creg, qtypeConst, qtypeMoved);
-		v.func = FunctionValue(fi, cCapR[], sc.ccg, sc.qcg, fi.captureKind, qCapConstT[], qCapConstR[], qCapMovedT[], qCapMovedR[]);
+		v.func = FunctionValue(fi, cCapR[], sc.ccg, sc.qcg, fi.captureAnnotation, qCapConstT[], qCapConstR[], qCapMovedT[], qCapMovedR[]);
 		return v;
 	}
 
@@ -513,8 +513,8 @@ private bool typeHasQDep(Expression ty) {
 	return true;
 }
 
-private bool hasMovedCapture(ast_ty.CaptureAnnotation captureKind) {
-	final switch(captureKind) with(ast_ty.CaptureAnnotation) {
+private bool hasMovedCapture(ast_ty.CaptureAnnotation captureAnnotation) {
+	final switch(captureAnnotation) with(ast_ty.CaptureAnnotation) {
 		case none: return false;
 		case const_: return false;
 		case moved: return true;
@@ -523,8 +523,8 @@ private bool hasMovedCapture(ast_ty.CaptureAnnotation captureKind) {
 	}
 }
 
-private bool hasConstCapture(ast_ty.CaptureAnnotation captureKind) {
-	final switch(captureKind) with(ast_ty.CaptureAnnotation) {
+private bool hasConstCapture(ast_ty.CaptureAnnotation captureAnnotation) {
+	final switch(captureAnnotation) with(ast_ty.CaptureAnnotation) {
 		case none: return false;
 		case const_: return true;
 		case moved: return false;
@@ -641,7 +641,7 @@ private ConvertFlags conversionFlags(ast_conv.Conversion conv) {
 			auto r = conversionFlags(conv.dom) | conversionFlags(conv.cod);
 			auto ffrom = cast(ast_ty.ProductTy)conv.from, fto = cast(ast_ty.ProductTy)conv.to;
 			assert(ffrom && fto);
-			return r != ConvertFlags.noop || ffrom.captureKind != fto.captureKind ? ConvertFlags.classical : ConvertFlags.noop;
+			return r != ConvertFlags.noop || ffrom.captureAnnotation != fto.captureAnnotation ? ConvertFlags.classical : ConvertFlags.noop;
 		}else static if(
 			is(T == ast_conv.FixedToVectorConversion)
 		) {
@@ -2571,7 +2571,7 @@ struct CallInfo {
 	Value target;
 	FunctionInfo targetF;
 	bool isTuple, hasQuantum;
-	ast_ty.CaptureAnnotation captureKind;
+	ast_ty.CaptureAnnotation captureAnnotation;
 	Expression retType;
 	bool makeClassical;
 	ast_exp.Annotation effect;
@@ -4252,10 +4252,10 @@ class ScopeWriter {
 			auto qcAp = appender!(QReg[]);
 			auto qiAp = appender!(QReg[]);
 			cAp.put(ci.target.func.cCapR);
-			if(hasConstCapture(ci.captureKind)) {
+			if(hasConstCapture(ci.captureAnnotation)) {
 				qcAp.put(ci.target.func.qCapConstR);
 			}
-			if(hasMovedCapture(ci.captureKind)) {
+			if(hasMovedCapture(ci.captureAnnotation)) {
 				qiAp.put(ci.target.func.qCapMovedR);
 			}
 
@@ -4293,7 +4293,7 @@ class ScopeWriter {
 			string op = ci.effect >= ast_ty.Annotation.qfree ? opCallQfree(nameArg) : opCallMfree(nameArg);
 			qcg.writeQOp(op, qRet, cArgs, qcArgs, qiArgs);
 		}
-		assert(ci.captureKind != ast_ty.CaptureAnnotation.spent, "attempted to call `spent` function");
+		assert(ci.captureAnnotation != ast_ty.CaptureAnnotation.spent, "attempted to call `spent` function");
 		if(ci.newFunctionVar) {
 			Value fval;
 			auto targetC = ci.target.creg;
@@ -5975,7 +5975,7 @@ class ScopeWriter {
 		}
 		if(auto prodTy = cast(ast_ty.ProductTy) ty) {
 			assert(cc);
-			if(hasConstCapture(prodTy.captureKind) && hasMovedCapture(prodTy.captureKind)) {
+			if(hasConstCapture(prodTy.captureAnnotation) && hasMovedCapture(prodTy.captureAnnotation)) {
 				auto qtypes = ccg.qfuncQType2(cc);
 				auto qtypeConst = qtypes[0], qtypeMoved = qtypes[1];
 				return ccg.qtTuple([qtypeConst, qtypeMoved]);
@@ -6093,7 +6093,7 @@ class ScopeWriter {
 			return valAllocQubit(arg);
 		}
 		if(auto prodTy = cast(ast_ty.ProductTy) ty) {
-			if(hasConstCapture(prodTy.captureKind) && hasMovedCapture(prodTy.captureKind)) {
+			if(hasConstCapture(prodTy.captureAnnotation) && hasMovedCapture(prodTy.captureAnnotation)) {
 				return valNewC(ccg.qfuncPack2(arg, ctx.qtUnit, ctx.qtUnit));
 			} else {
 				return valNewC(ccg.qfuncPack(arg, ctx.qtUnit));
@@ -6167,8 +6167,8 @@ class ScopeWriter {
 			return r;
 		}
 		if(auto prodTy = cast(ast_ty.ProductTy) ty) {
-			auto hasConst = hasConstCapture(prodTy.captureKind);
-			auto hasMoved = hasMovedCapture(prodTy.captureKind);
+			auto hasConst = hasConstCapture(prodTy.captureAnnotation);
+			auto hasMoved = hasMovedCapture(prodTy.captureAnnotation);
 			assert(hasConst || hasMoved);
 			if(hasConst ^ hasMoved) {
 				auto cfunc = ccg.qfuncInner(arg.creg);
@@ -6310,14 +6310,14 @@ class ScopeWriter {
 		ci.retType = retType;
 		ci.makeClassical = makeClassical;
 		ci.hasQuantum = typeHasQuantum(callTy);
-		ci.captureKind = callTy.captureKind;
+		ci.captureAnnotation = callTy.captureAnnotation;
 		ci.effect = callTy.annotation;
 		ci.args = ai;
 		ci.newFunctionVar = newFunctionVar;
 		if (targetF) {
-			assert(ast_ty.captureAnnotationSubtype(targetF.captureKind, ci.captureKind));
-			assert(targetF.constCaptures.all!(cap => !cap.hasQuantum) || hasConstCapture(ci.captureKind));
-			assert(targetF.movedCaptures.all!(cap => !cap.hasQuantum) || hasMovedCapture(ci.captureKind));
+			assert(ast_ty.captureAnnotationSubtype(targetF.captureAnnotation, ci.captureAnnotation));
+			assert(targetF.constCaptures.all!(cap => !cap.hasQuantum) || hasConstCapture(ci.captureAnnotation));
+			assert(targetF.movedCaptures.all!(cap => !cap.hasQuantum) || hasMovedCapture(ci.captureAnnotation));
 		}
 		return ci;
 	}
@@ -6387,8 +6387,8 @@ class ScopeWriter {
 		assert(targetC, "failed to evaluate call target");
 		QReg qcCap = null, qiCap = null;
 		if(ci.hasQuantum) {
-			auto hasConst = hasConstCapture(ci.captureKind);
-			auto hasMoved = hasMovedCapture(ci.captureKind);
+			auto hasConst = hasConstCapture(ci.captureAnnotation);
+			auto hasMoved = hasMovedCapture(ci.captureAnnotation);
 			assert(hasConst || hasMoved);
 			if(hasConst ^ hasMoved) {
 				targetC = ccg.qfuncInner(targetC);
@@ -6847,20 +6847,20 @@ class ScopeWriter {
 		CReg targetQType = null, targetQTypeConst = null, targetQTypeMoved = null;
 		QReg targetQ;
 		if(typeHasQuantum(conv.from)) {
-			if(hasConstCapture(fromTy.captureKind) && hasMovedCapture(fromTy.captureKind)) {
+			if(hasConstCapture(fromTy.captureAnnotation) && hasMovedCapture(fromTy.captureAnnotation)) {
 				targetC = ccg.qfuncInner2(v.creg);
-				assert(hasConstCapture(toTy.captureKind) && hasConstCapture(toTy.captureKind));
+				assert(hasConstCapture(toTy.captureAnnotation) && hasConstCapture(toTy.captureAnnotation));
 				auto targetQTypes = ccg.qfuncQType2(v.creg);
 				targetQTypeConst = targetQTypes[0];
 				targetQTypeMoved = targetQTypes[1];
 				targetQ = v.qreg;
-			} else if(hasConstCapture(toTy.captureKind) && hasMovedCapture(toTy.captureKind)) {
+			} else if(hasConstCapture(toTy.captureAnnotation) && hasMovedCapture(toTy.captureAnnotation)) {
 				targetC = ccg.qfuncInner(v.creg);
-				if(hasConstCapture(fromTy.captureKind)) {
+				if(hasConstCapture(fromTy.captureAnnotation)) {
 					targetQTypeConst = ccg.qfuncQType(v.creg);
 					targetQTypeMoved = ctx.qtUnit;
 					targetQ = qcg.pack([targetQTypeConst, targetQTypeMoved], [v.qreg, null]);
-				}else if(hasMovedCapture(fromTy.captureKind)) {
+				}else if(hasMovedCapture(fromTy.captureAnnotation)) {
 					targetQTypeConst = ctx.qtUnit;
 					targetQTypeMoved = ccg.qfuncQType(v.creg);
 					targetQ = qcg.pack([targetQTypeConst, targetQTypeMoved], [null, v.qreg]);
@@ -6874,7 +6874,7 @@ class ScopeWriter {
 			assert(v.creg && !v.qreg);
 			targetC = v.creg;
 			targetQ = null;
-			if(hasConstCapture(toTy.captureKind) && hasMovedCapture(toTy.captureKind)) {
+			if(hasConstCapture(toTy.captureAnnotation) && hasMovedCapture(toTy.captureAnnotation)) {
 				targetQTypeConst = ctx.qtUnit;
 				targetQTypeMoved = ctx.qtUnit;
 			} else {
@@ -7414,7 +7414,7 @@ class FunctionInfo {
 	string prettyName;
 	string directName;
 	string indirectName;
-	ast_ty.CaptureAnnotation captureKind;
+	ast_ty.CaptureAnnotation captureAnnotation;
 	CapInfo[] constCaptures;
 	CapInfo[] movedCaptures;
 	ParamInfo[] params;
@@ -7588,7 +7588,7 @@ class Writer {
 				outerParams = parent.params ~ outerParams;
 				at = parent;
 			}
-			fi.captureKind = ast_ty.CaptureAnnotation.none;
+			fi.captureAnnotation = ast_ty.CaptureAnnotation.none;
 			fi.constCaptures = outerParams.map!((cap) {
 				auto ty = typeForDecl(cap);
 				assert(cap.isConst, format("Extern function %s: Outer parameters must be const", fi.prettyName));
@@ -7613,7 +7613,7 @@ class Writer {
 			}
 		} else {
 			assert(!!fd.ftype);
-			fi.captureKind = fd.ftype.captureKind;
+			fi.captureAnnotation = fd.ftype.captureAnnotation;
 			Appender!(CapInfo[]) constCaptures, movedCaptures;
 			foreach(cap; fd.capturedDecls) {
 				assert(!cap.scope_.isNestedIn(fd.fscope_));
