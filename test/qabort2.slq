@@ -1,9 +1,9 @@
 
-def main(){ /// TODO error
+def main(){
 	x:=0:𝔹;
 	y:=H(0);
 	if x {
-		__qabort(⊥); /// TODO error
+		__qabort(⊥); /// error
 	} else {
 		return y;
 	}
