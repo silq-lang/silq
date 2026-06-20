@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	x:=0:uint[2];
+	g := (x':typeof(x))lifted ⇒ x';
+	return g(x);
+}
