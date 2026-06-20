@@ -1,0 +1,11 @@
+// args: --run
+
+def main(){
+	x:=vector(1,0);
+	y:=H(0);
+	x[0]=dup(y);
+	x[0]=0;
+	y:=H(y);
+	forget(x);
+	return y;
+}
