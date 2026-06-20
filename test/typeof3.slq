@@ -1,6 +1,6 @@
 
 def main(){
-	x:=H(0);
+	x:=H(0); /// TODO
 	def f(x':typeof(H(x)))⇒x';
-	return f(H(x));
+	return f(H(x)); /// TODO
 }
