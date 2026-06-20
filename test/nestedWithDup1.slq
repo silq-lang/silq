@@ -1,0 +1,12 @@
+// args: --run
+
+def foo(a:𝔹,b:𝔹){
+	with b⊕=a {
+		with c:=dup(b){
+			a:=rotY(π/3,a);
+		}
+	}
+	return (a,b);
+}
+
+def main()⇒foo(H(0),H(0));
