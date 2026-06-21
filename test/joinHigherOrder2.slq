@@ -1,5 +1,5 @@
 
-def foo(x: !Π(n:!ℕ,)qfree. 𝔹^n)qfree⇒x(2,);
+def foo(x: !Π(n:!ℕ,)qfree. 𝔹^n)qfree⇒x(3,);
 def bar(x: !Π(const n:!ℕ^1)qfree. 𝔹^n[0])qfree⇒x(3,);
 def zeros₁(m:!ℕ,)qfree⇒vector(m,0:𝔹);
 def zeros₂(k:!ℕ^1)qfree⇒vector(k[0],0:𝔹);
@@ -13,6 +13,5 @@ def main(){
 		a:=bar;
 		b:=zeros₂;
 	}
-	__show(!Π(n:!ℕ,)qfree. 𝔹^n);
 	return a(b);
 }
