@@ -1,6 +1,6 @@
 // args: --run
 
-def foo(x:!𝔹,const y:𝔹)wild{ // crashes `silq --compile`
+def foo(x:!𝔹,const y:𝔹)wild{
 	if x{
 		return 1;
 	}else if y{
