@@ -1,0 +1,14 @@
+// args: --run
+
+n:=5;
+def main(){
+	cand:=0:uint[n];
+	with{
+		for i in 0..n{
+			cand[i]:=H(cand[i]);
+		}
+	}do{
+		if cand==(0:!uint[n]){ phase(π); }
+	}
+	return cand;
+}

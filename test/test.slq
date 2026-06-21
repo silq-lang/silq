@@ -156,56 +156,6 @@ def baz(x:𝔹)⇒foo(0); // TODO
 +/
 
 /+
-// args: --run
-
-def toW[n:!ℕ]lifted:𝔹^n →mfree 𝔹^n⇒lambda(qs:𝔹^n)mfree:𝔹^n{
-	if n==1{ qs[0]:=X(qs[0]); }
-	else if n>1{
-		θ:=asin(1/sqrt(n));
-		(([head] coerce 𝔹^1):𝔹[])~((tail coerce 𝔹^(n sub 1)):𝔹[]):=(qs:𝔹[]);
-		head:=rotY(θ,head);
-		if !head { tail := toW(tail); }
-		qs:=[head]~(tail:𝔹[]) coerce B^n;
-	}
-	return qs;
-};
-
-def fromW[n:!ℕ]lifted:𝔹^n→mfree 𝔹^n⇒lambda(qs:𝔹^n)mfree:𝔹^n{
-    if n = 1 {
-        qs[0] := reverse(X)(qs[0]);
-    } else if n > 1 {
-        θ := asin(1 / sqrt(n));
-        __tmp2 := qs coerce 𝔹[];
-        (head,) := dup(__tmp2[0..1]) coerce 𝔹^1;
-        tail := dup(__tmp2[1..__tmp2.length]) coerce 𝔹^((n sub 1));
-        forget(__tmp2=[head] ~ (tail: 𝔹[])); // crash
-        if ¬head {
-            tail := fromW(tail);
-        }
-        head := reverse(rotY)(θ,head);
-        __tmp0 := dup((([head] coerce 𝔹 ^ 1): 𝔹[]) ~ ((tail coerce 𝔹 ^ (n sub 1)): 𝔹[]));
-        forget(tail=(__tmp0[1..__tmp0.length]: 𝔹[]) coerce 𝔹 ^ (n sub 1));
-        forget((head,)=(__tmp0[0..1]: 𝔹[]) coerce 𝔹 ^ 1);
-        qs := __tmp0 coerce 𝔹^n;
-    }
-    return qs;
-};
-
-def solve(qs:𝔹^3):!𝔹{
-	if qs[1]{ phase(-2·π/3); }
-	if qs[2]{ phase(-4·π/3); }
-	qs:=fromW(qs);
- 	return measure(qs as int[3])!=0;
-}
-def main(){
-	qs:=toW(vector(3,0:𝔹));
-	if qs[1]{ phase(2·π/3); }
-	if qs[2]{ phase(4·π/3); }
-	assert(!solve(qs));
-}
-+/
-
-/+
 def estimatePhase[n:!ℕ][a:qtype](const f: Pi[nrep: !ℕ]qfree. a ->mfree a, arg: a)mfree: uint[n] x a{
 	x_tilde := 0: uint[n];
 	for i in 0..n {
@@ -1044,23 +994,6 @@ def main(){
 +/
 
 /+
-// from qaoa_maxcut.slq
-// Clamp a real into [lo, hi].
-def clamp(x:!ℝ, lo:!ℝ, hi:!ℝ):!ℝ{
-	if x < lo { return lo; }
-	if x > hi { return hi; }
-	return x;
-}
-
-// Clamp all angles in a vector into [0, π].
-def clamp_angles[p:!ℕ](angles:!ℝ^p):!ℝ^p{
-	for i in 0..p { angles[i] = clamp(angles[i], 0.0, π); } // TODO
-	return angles;
-}
-+/
-
-/+
-// from qaoa_maxcut*.slq
 def main(){
 	n := 3;
 	y := [0,1,2]:!ℤ^n; // TODO
@@ -1080,37 +1013,10 @@ def main(){
 +/
 
 /+
-// crash
-def main(){
-	n:=10;
-	cand:=0:uint[n];
-	with{
-		for i in 0..n{
-			cand[i]:=H(cand[i]);
-		}
-	}do{
-		if cand==(0:!uint[n]){ phase(π); }
-	}
-}
-+/
-
-/+
 def main(){
 	i:=12;
 	for i in (i-1)..(i+1){} // TODO
 }
-+/
-
-/+
-// ghz2.slq
-def ghz(n:!ℕ){
-	xs:=[H(0)];
-	for i in 0..n sub 1{
-		xs~=[dup(xs[i])]; /// TODO
-	}
-	return xs;
-}
-def main()⇒ghz(3);
 +/
 
 /+
@@ -1342,32 +1248,6 @@ def foo(x:𝔹){
 def main()⇒foo;
 +/
 
-/+
-// depTest4.slq
-def main(){
-	n:=3;
-	x:=array(n,0:𝔹);
-	y:=H(0:𝔹);
-	x[0]=dup(y); /// TODO
-	return y;
-}
-+/
-
-/+
-// implicitDup21_6.slq
-def foo(x:𝔹){
-	y:=dup(x);
-	z:=y;
-	if X(z){ /// TODO show the error only once
-		r:=X(x);
-	}else{
-		r:=x;
-	}
-	return r;
-}
-+/
-
-
 //def main(n:!ℕ)⇒(n,n);
 
 //def main(n:!ℕ)⇒H(0);
@@ -1397,13 +1277,6 @@ def foo(){
 	return x;
 }
 def main()⇒foo;
-+/
-/+
-def foo(){
-	x:=H(0);
-	def f()⇒dup(x); /// TODO
-	return x;
-}
 +/
 /+
 def foo(){
@@ -1593,7 +1466,7 @@ def main(){
 def foo(x:𝔹){
 	y:=dup(x);
 	z:=H(y);
-	w:=H(y); /// TODO error?
+	w:=H(y);
 	return (x,z,w);
 }
 +/
@@ -2288,9 +2161,6 @@ def intLt₃[n:!ℕ](x:𝔹^n,y:𝔹^n)lifted:𝔹{
 +/
 
 /+
-+/
-
-/+
 def f[n:!ℕ](xs:𝔹^n)⇒xs;
 
 def main(){
@@ -2633,12 +2503,6 @@ def main(){
 
 /+
 def main(){
-	return 1e-10:!ℤ; // TODO: error
-}
-+/
-
-/+
-def main(){
 	//if true then assert(false) else assert(false);
 	x:=assert(false);
 }
@@ -2847,12 +2711,6 @@ def main(){
 /+
 def main(){
 	return H(Z(rotZ(π,H(0:𝔹))));
-}
-+/
-
-/+
-def main(){
-	return 1e-10; // TODO
 }
 +/
 
@@ -3341,13 +3199,6 @@ def main(){
 def main(){
 	x:=((0,2):!int[2]^2) as !ℤ^2;
 	return x;
-}
-+/
-
-/+
-def main(){
-	r:=reverse;
-	return r((const x:𝔹,y:𝔹)mfree⇒y); // TODO
 }
 +/
 
@@ -4866,10 +4717,6 @@ def main(){
 	return x;
 }
 +/
-/+import codeforces.summer18.contest.a3; // TODO: make compile without type annotation
-def main(){
-	return solve((false,true,true),(false,true,false));
-}
 +/
 
 /+

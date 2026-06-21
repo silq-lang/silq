@@ -1,0 +1,6 @@
+
+def main(){
+	x:=H(0);
+	def f()⇒dup(x); /// TODO
+	return x;
+}

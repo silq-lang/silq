@@ -1,0 +1,4 @@
+import codeforces.summer18.contest.a3;
+def main(){
+	return solve((false,true,true),(false,true,false));
+}

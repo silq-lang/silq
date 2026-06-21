@@ -1,0 +1,4 @@
+
+def main(){
+	return 1e-10:!ℤ; /// error
+}

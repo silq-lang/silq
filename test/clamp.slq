@@ -1,0 +1,13 @@
+
+def clamp(x:!ℝ, lo:!ℝ, hi:!ℝ):!ℝ{
+	if x < lo { return lo; }
+	if x > hi { return hi; }
+	return x;
+}
+
+def clamp_angles[p:!ℕ](angles:!ℝ^p):!ℝ^p{
+	for i in 0..p { angles[i] = clamp(angles[i], 0.0, π); }
+	return angles;
+}
+
+def main()⇒clamp_angles(-1,0,1,2,3,4);
