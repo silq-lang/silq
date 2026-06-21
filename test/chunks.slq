@@ -1,0 +1,6 @@
+
+def chunks[λ:!ℕ][n:!ℕ,b:!ℕ](data:!uint[b]^n):(!uint[b]^λ)^(n div λ){
+	blocks := [data[λ·t..λ·(t+1)] for t in 0..n div λ];
+	return blocks; /// TODO
+}
+def main()⇒chunks[3]([1,2,3,4,5,0]:!uint[5]^_);
