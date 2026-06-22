@@ -1,5 +1,6 @@
+// args: --run
 
 def main(){
 	x:=0;
-	with y:=x {} /// TODO
+	with y:=x {}
 }
