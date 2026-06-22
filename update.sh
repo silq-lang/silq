@@ -4,9 +4,10 @@ set -euo pipefail
 SSH_KEY_LIFETIME="${SSH_KEY_LIFETIME:-1h}"
 
 run_update() {
+  git submodule update --init --recursive
   git submodule foreach --recursive "git switch master && git pull --ff-only"
   git pull --recurse-submodules
-  git submodule update --init --recursive --checkout
+  git submodule update --checkout
 }
 
 uses_ssh_remotes() {
