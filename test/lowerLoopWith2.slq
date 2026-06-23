@@ -2,11 +2,12 @@
 n:=5;
 def main(){
 	xs:=vector(n,0);
+	xs[0]:=H(xs[0]);
+	y:=H(0);
 	with{
-		for i in 0..n{ /// TODO
-			xs[i]:=H(xs[i]);
+		for i in 0..n{
+			xs[i]:=CNOT(y,xs[i]);
 		}
 	}do{ xs[2]:=H(xs[2]); }
-	xs[2]:=H(xs[2]);
-	return xs;
+	return (xs,y);
 }

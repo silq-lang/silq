@@ -2500,11 +2500,25 @@ struct QState{
 		return makeArray(type,values);
 	}
 	alias vector=array_;
+	Value* reverseClosureContext(FunctionDef rf,Value fv){
+		auto fwd=fv.closure.fun;
+		auto context=fv.closure.context;
+		foreach(d,_;rf.captures){
+			if(d is fwd){
+				Record nrecord;
+				if(context&&(*context).tag==Value.Tag.record)
+					foreach(k,v;(*context).record) nrecord[k]=v;
+				nrecord[fwd.getName]=fv;
+				return [makeRecord(nrecord)].ptr;
+			}
+		}
+		return context;
+	}
 	Value reverse(ref QState qstate,Expression type,Value arg){
 		import ast.reverse;
 		enforce(arg.tag==Value.Tag.closure,text("bad value for reverse: ",arg));
-		return makeClosure(type,Closure(reverseFunction(arg.closure.fun),arg.closure.context));
-		//return qstate.makeFunction(reverseFunction(arg.closure.fun));
+		auto rf=reverseFunction(arg.closure.fun);
+		return makeClosure(type,Closure(rf,reverseClosureContext(rf,arg)));
 	}
 	Value measure(Value arg,bool renormalize=true){
 		MapX!(Value,R) candidates;
@@ -3268,7 +3282,7 @@ struct Interpreter(QState){
 						auto ft=fv.closure.fun.ftype;
 						enforce(fv.closure.fun.scope_&&ft&&ft.captureAnnotation<=CaptureAnnotation.const_&&ft.annotation>=Annotation.mfree,"reversed function call not yet supported");
 						auto rf=reverseFunction(fv.closure.fun), rft=rf.ftype;
-						auto context=fv.closure.context;
+						auto context=qstate.reverseClosureContext(rf,fv);
 						auto rfv=qstate.makeClosure(rft,QState.Closure(rf,context));
 						//auto rfv=qstate.makeFunction(rf);
 						auto rfret=rft.cod; // TODO: probably semantic analysis has to explicitly compute this

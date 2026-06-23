@@ -1,0 +1,12 @@
+// args: --run
+
+def main(){
+	x:=H(0);
+	with{
+		def g(){ if x{ phase(π); } }
+	}do{
+		g();
+		x:=H(H(x));
+	}
+	return H(x);
+}
