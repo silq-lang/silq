@@ -3231,7 +3231,8 @@ struct Interpreter(QState){
 				if(!from||!to) return false;
 				if(to.isClassical()) return from.isClassical();
 				auto ft=from.isTupleTy(),tt=to.isTupleTy();
-				if(ft&&tt&&ft.length==tt.length){
+				if(ft&&tt){
+					if(ft.length!=tt.length) return false;
 					foreach(i;0..ft.length)
 						if(!check(ft[i],tt[i])) return false;
 					return true;
@@ -3246,7 +3247,7 @@ struct Interpreter(QState){
 			}
 			if(tae.annotationType==TypeAnnotationType.coercion&&cast(CallExp)tae.e
 			   &&!check(tae.t,tae.e.type))
-				enforce(0,"reversing a function with a classical return type component is not yet supported");
+				enforce(0,"reverse-calling a function with classical return type component not yet supported");
 			return assignTo!isCat(tae.e,convertTo(rhs,tae.e.type,true),replacements);
 		}
 		if(auto id=cast(Identifier)lhs){
