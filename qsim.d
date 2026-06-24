@@ -3227,6 +3227,26 @@ struct Interpreter(QState){
 	}
 	void assignTo(bool isCat=false)(Expression lhs,QState.Value rhs,AAssignExp.Replacement[] replacements){
 		if(auto tae=cast(TypeAnnotationExp)lhs){
+			static bool check(Expression from,Expression to){
+				if(!from||!to) return false;
+				if(to.isClassical()) return from.isClassical();
+				auto ft=from.isTupleTy(),tt=to.isTupleTy();
+				if(ft&&tt&&ft.length==tt.length){
+					foreach(i;0..ft.length)
+						if(!check(ft[i],tt[i])) return false;
+					return true;
+				}
+				Expression fe,te;
+				if(auto fa=cast(ArrayTy)from) fe=fa.next;
+				else if(auto fv=cast(VectorTy)from) fe=fv.next;
+				if(auto ta=cast(ArrayTy)to) te=ta.next;
+				else if(auto tv=cast(VectorTy)to) te=tv.next;
+				if(fe&&te) return check(fe,te);
+				return true;
+			}
+			if(tae.annotationType==TypeAnnotationType.coercion&&cast(CallExp)tae.e
+			   &&!check(tae.t,tae.e.type))
+				enforce(0,"reversing a function with a classical return type component is not yet supported");
 			return assignTo!isCat(tae.e,convertTo(rhs,tae.e.type,true),replacements);
 		}
 		if(auto id=cast(Identifier)lhs){
