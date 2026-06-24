@@ -7070,7 +7070,7 @@ class ScopeWriter {
 		auto zmodTy1 = ast_ty_isZmodTy(conv.from);
 		auto zmodTy2 = ast_ty_isZmodTy(conv.to);
 		assert(zmodTy1 && zmodTy2);
-		assert(zmodTy1.isStar == zmodTy2.isStar);
+		assert(zmodTy1.isStar >= zmodTy2.isStar);
 		auto N1 = getZmodN(zmodTy1);
 		auto N2 = getZmodN(zmodTy2);
 		ccg.checkBool(conv.checkN, ccg.intCmpEq(N1, N2));
