@@ -4422,9 +4422,54 @@ class ScopeWriter {
 
 	void genLhs(Expression lhs, Value rhs, Expression rhsType) {
 		while(auto lhsE = cast(ast_exp.TypeAnnotationExp) lhs) lhs = lhsE.e;
+		if(auto ce = cast(ast_exp.CallExp) lhs)
+			return implLhs(ce, rhs, rhsType); // TODO: ok?
 		// TODO: Is coerce the right thing here?
 		rhs = genCoerce(rhs, rhsType, lhs.type);
 		return ast_exp.dispatchExp!((auto ref lhs) => this.implLhs(lhs, rhs))(lhs);
+	}
+
+	static bool requiresClassicalization(Expression from, Expression to) {
+		if(!from || !to) return false;
+		if(!typeHasQuantum(to)) return typeHasQuantum(from);
+		auto ft = from.isTupleTy(), tt = to.isTupleTy();
+		if(ft && tt && ft.length == tt.length) {
+			foreach(i; 0 .. ft.length)
+				if(requiresClassicalization(ft[i], tt[i])) return true;
+			return false;
+		}
+		Expression fe, te;
+		if(auto fa = cast(ast_ty.ArrayTy) from) fe = fa.next;
+		else if(auto fv = cast(ast_ty.VectorTy) from) fe = fv.next;
+		if(auto ta = cast(ast_ty.ArrayTy) to) te = ta.next;
+		else if(auto tv = cast(ast_ty.VectorTy) to) te = tv.next;
+		if(fe && te) return requiresClassicalization(fe, te);
+		return false;
+	}
+
+	Value genReverseCoerceForget(Value v, Expression fromTy, Expression toTy, CReg fwdC) {
+		if(fromTy == toTy) return v;
+		if(!requiresClassicalization(fromTy, toTy)) return genCoerce(v, fromTy, toTy);
+		if(!typeHasQuantum(toTy)) {
+			auto tmp = genPromote(fromTy, fwdC);
+			valUndup(v, tmp);
+			valForget(tmp);
+			return valNewC(fwdC);
+		}
+		auto ft = fromTy.isTupleTy(), tt = toTy.isTupleTy();
+		if(ft && tt && ft.length == tt.length) {
+			size_t n = ft.length;
+			auto fromTypes = iota(n).map!(i => ft[i]).array;
+			auto toTypes = iota(n).map!(i => tt[i]).array;
+			auto items = valUnpack(fromTypes, v);
+			foreach(i; 0 .. n) {
+				CReg subFwd = typeHasClassical(toTypes[i])
+					? ccg.boxIndex(ctypeSilqTuple, n, fwdC, i) : null;
+				items[i] = genReverseCoerceForget(items[i], fromTypes[i], toTypes[i], subFwd);
+			}
+			return valPack(toTypes, items);
+		}
+		return genCoerce(v, fromTy, toTy);
 	}
 
 	void implLhs(ast_exp.Identifier e, Value v) {
@@ -4455,9 +4500,12 @@ class ScopeWriter {
 		}
 	}
 
-	void implLhs(ast_exp.CallExp e, Value ret) {
+	void implLhs(ast_exp.CallExp e, Value rhs, Expression rhsType = null) {
 		assert(!e.isClassical_);
-		assert(ret);
+		assert(!!rhs);
+		bool classicalize = rhsType !is null && requiresClassicalization(rhsType, e.type);
+		Value ret = classicalize ? rhs : (rhsType !is null ? genCoerce(rhs, rhsType, e.type) : rhs);
+		assert(!!ret);
 
 		// fast-path `dup` to avoid RTTI
 		if(!e.isSquare) {
@@ -4523,16 +4571,25 @@ class ScopeWriter {
 
 		CReg[] cRet, cRet2;
 		QReg[] qRet;
-		putRet(ci.targetF, cRet, qRet, ret);
 
 		assert(ci.effect > ast_ty.Annotation.none, "reverse call not mfree");
 
-		if (cRet) {
+		if(classicalize) {
+			assert(typeHasClassical(e.type), "reverse-coerce without classical return component");
 			cRet2 = [new CReg()];
-		}
-		ccg.writeCOp(opCallClassical(nameArg), cRet2, cArgs);
-		if (cRet) {
-			ccg.assumeEqual(cRet[0], cRet2[0]);
+			ccg.writeCOp(opCallClassical(nameArg), cRet2, cArgs);
+			ret = genReverseCoerceForget(rhs, rhsType, e.type, cRet2[0]);
+			putRet(ci.targetF, cRet, qRet, ret);
+		} else {
+			putRet(ci.targetF, cRet, qRet, ret);
+
+			if (cRet) {
+				cRet2 = [new CReg()];
+			}
+			ccg.writeCOp(opCallClassical(nameArg), cRet2, cArgs);
+			if (cRet) {
+				ccg.assumeEqual(cRet[0], cRet2[0]);
+			}
 		}
 		if(ci.effect < ast_ty.Annotation.qfree || qRet.any!(r => !!r) || qiArgs[].any!(r => !!r)) {
 			string op = ci.effect >= ast_ty.Annotation.qfree ? opCallQfreeRev(nameArg) : opCallMfreeRev(nameArg);
