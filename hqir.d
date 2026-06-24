@@ -3754,7 +3754,12 @@ class ScopeWriter {
 	Value implIndexSwapVector(ref Value v, Expression itemTy1, Expression itemTy2, CReg len, Index idx, Value delegate(ref Expression, CReg) repl) {
 		if(itemTy1 !is itemTy2) {
 			auto conv = ast_conv.typeExplicitConversion!true(itemTy1, itemTy2, ast_exp.TypeAnnotationType.annotation);
-			assert(conv, format("not a subtype: %s -> %s", itemTy1, itemTy2));
+			if(!conv) {
+				auto n = ctx.asUnroll(len);
+				assert(n, format("not a subtype: %s -> %s", itemTy1, itemTy2));
+				auto types = itemTy1.repeat(n.get()).array;
+				return implIndexSwapTuple(v, types, ast_ty.vectorTy(itemTy2, n.get()), idx, repl);
+			}
 			itemTy1 = itemTy2;
 			v = implConvertVector(conv, len, v);
 		}
