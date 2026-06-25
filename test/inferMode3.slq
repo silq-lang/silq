@@ -1,0 +1,20 @@
+//args: --run
+
+def bar(n:!ℕ){
+    if n=0 { return []; }
+    ys:=foo(n sub 1);
+    if measure(H(0)) { return ys; }
+    return ys~[0:𝔹];
+}
+
+def foo(n:!ℕ): 𝔹[] {
+    if n=0 { return []; }
+    ys:=bar(n);
+    if ys.length=2 {
+        (a,b):=ys;
+        return [a,b];
+    }
+    return ys;
+}
+
+def main() ⇒ foo(2);

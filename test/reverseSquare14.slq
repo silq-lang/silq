@@ -1,7 +1,7 @@
 def f[n:!ℕ](x:𝔹^n)mfree⇒x;
 def g[n:!ℕ](x:𝔹^n,const y:𝔹)mfree⇒x;
 def main(){
-	f(x,y):=(); /// error
+	f(x,y):=();
 	f[3](w,z):=(); /// error
 	f[2](x):=2; /// error
 	g(x,x,x):=(); /// error

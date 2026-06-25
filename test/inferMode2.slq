@@ -1,0 +1,13 @@
+// args: --run
+
+def main(){
+    xs:=();
+    for i in 0..10{
+        if i==2{
+            (a,b):=xs;
+            return (a,b);
+        }
+        xs~=[i];
+    }
+    return xs;
+}

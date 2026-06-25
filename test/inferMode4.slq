@@ -1,0 +1,11 @@
+// args: --run
+
+def foo(n:!ℕ){
+    while n=1{
+        (a,b):=foo(0);
+        return (n,b);
+    }
+    return (n,1);
+}
+
+def main() ⇒ foo(1);

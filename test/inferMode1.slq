@@ -1,0 +1,17 @@
+// args: --run
+
+def foo[n:!ℕ](const xs:𝔹^n){
+    if n=0{ return []; }
+    ys := foo();
+    if ys.length=2{
+        (a,b):=ys;
+        return (a,b);
+    }else{
+        if measure(H(0)){
+            return ys;
+        }
+    }
+    return foo(xs[0..n sub 1])~ys;
+}
+
+def main()⇒foo(0,1,0,1,1);
