@@ -2162,7 +2162,9 @@ class CCGen {
 	}
 
 	CReg getArrayLength(CReg r) {
-		assert(r);
+		if(!r) {
+			return ctx.intZero; // never[] is a utype
+		}
 		return boxIndex(ctypeSilqArray, 2, r, 0);
 	}
 
