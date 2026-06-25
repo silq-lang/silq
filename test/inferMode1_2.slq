@@ -1,6 +1,6 @@
 // args: --run
 
-def foo[n:!ℕ](const xs:𝔹^n){
+def foo[n:!ℕ](const xs:𝔹^n):⊥[]{
     if n=0{ return []; }
     ys := foo();
     if ys.length=2{
@@ -8,7 +8,7 @@ def foo[n:!ℕ](const xs:𝔹^n){
         return (a,b);
     }else{
         if measure(H(0)){
-			return ys~[0:𝔹,0:𝔹];
+            return ys;
         }
     }
     return foo(xs[0..n sub 1])~ys;
