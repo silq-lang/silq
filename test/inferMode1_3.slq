@@ -3,7 +3,7 @@ def foo[n:!ℕ](const xs:𝔹^n){
     if n=0{ return []; }
     ys := foo();
     if ys.length=2{
-        (a,b):=ys; /// TODO error
+        (a,b):=ys; /// error
         return (a,b);
     }else{
         if measure(H(0)){

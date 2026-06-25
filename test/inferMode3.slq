@@ -11,7 +11,7 @@ def foo(n:!ℕ): 𝔹[] {
     if n=0 { return []; }
     ys:=bar(n);
     if ys.length=2 {
-        (a,b):=ys;
+        (a,b):=ys; /// TODO
         return [a,b];
     }
     return ys;
