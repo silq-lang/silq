@@ -453,10 +453,9 @@ private bool valueIsZero(Expression exp) {
 private bool typeHasClassical(Expression ty) {
 	assert(ty);
 	if(ast_ty.isEmpty(ty)) return true;
-	if(auto arrTy = cast(ast_ty.ArrayTy) ty) {
+	if(cast(ast_ty.ArrayTy) ty) {
 		return true; // `⊥[]` carries classical length `0`
 	}
-	if(!ast_ty.hasClassicalComponent(ty)) return false;
 	if(auto tupTy = cast(ast_ty.TupleTy) ty) {
 		return tupTy.types.any!(typeHasClassical);
 	}
@@ -469,7 +468,7 @@ private bool typeHasClassical(Expression ty) {
 	if(auto zmodTy = ast_ty_isZmodTy(ty)) {
 		return zmodTy.isClassical;
 	}
-	return true;
+	return ast_ty.hasClassicalComponent(ty);
 }
 
 private bool typeHasQuantum(Expression ty) {
