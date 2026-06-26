@@ -2,6 +2,7 @@
 
 def main(){
 	x:=H(0);
-	def f()⇒dup(x);
+	y:=dup(x);
+	def f()⇒y;
 	return x;
 }

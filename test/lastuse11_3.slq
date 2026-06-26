@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	x:=H(0);
+	y:=dup(x);
+	def f()⇒y;
+	return (x,y); /// TODO
+}
