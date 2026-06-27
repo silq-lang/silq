@@ -1,6 +1,7 @@
+// args: --run
 
 def main(){
-	x:=assert(0);
+	x:=assert(0); /// run_error
 	x[0]:=x[0];
 	x[0]=2;
 }
