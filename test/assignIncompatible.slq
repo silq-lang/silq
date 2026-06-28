@@ -1,0 +1,10 @@
+// args: --run
+
+def main(){
+	t:=H(0);
+	x:=if t then 5:uint[5] else 3:uint[5];
+	y:=vector(5,0:𝔹);
+	y[0]:=H(y[0]);
+	x=y;
+	return (t,x);
+}

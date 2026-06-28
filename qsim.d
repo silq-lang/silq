@@ -856,12 +856,12 @@ struct QState{
 				else this=rhs.toVar(state,false);
 				return;
 			}
-			if(rhs.isClassical()){
+			if(rhs.isClassical()||tag!=rhs.tag){
 				forget(state);
 				this=rhs;
 				return;
 			}
-			enforce(tag==rhs.tag,"incompatible values for assignment");
+			assert(tag==rhs.tag);
 			Lswitch: final switch(tag){
 				static foreach(t;[Tag.cval,Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.zmodval,Tag.bval]){
 					case t:
