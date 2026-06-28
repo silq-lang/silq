@@ -1,0 +1,18 @@
+// args: --run
+
+def foo[n:!ℕ](x:𝔹,y:𝔹)lifted{
+	(a,b):=(x,y);
+	for i in 0..n{
+		if a==b{
+			if b {
+				(a, b) := (b, a);
+			}
+		}else{
+			if a {
+				(a, b) := (b, a);
+			}
+		}
+	}
+	return a|b;
+}
+def main() ⇒ foo[2](0,1);
