@@ -1,0 +1,14 @@
+// args: --run
+
+def foo(x:uint[3],y:uint[3])lifted{
+    (a, b) := (x, y);
+    (a', b') := if b < a then (dup(b), dup(a)) else (dup(a), dup(b));
+    if a[0] = b[0] {
+        (a, b) ← let {
+            c := (b' - a', a');
+            forget(b');
+        } in c;
+    }
+    return b;
+}
+def main() ⇒ [[foo((i,j) as uint[3]^2) for i in 0..2^3] for j in 0..2^3];
