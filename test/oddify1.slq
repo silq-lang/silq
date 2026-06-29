@@ -1,0 +1,15 @@
+// args: --run
+// TODO: compile a bit more efficiently (see oddify2.slq)
+
+def oddify[n:!ℕ](x:uint[n])lifted{
+	x':=x;
+	repeat n-1{ if !x'[0]{ x' div=2 } }
+	return x'
+}
+
+n:=5;
+def main(){
+	x:=[H(0) for i in 0..n] as uint[_];
+	a:=oddify(x);
+	return (x,a);
+}

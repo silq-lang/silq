@@ -1,0 +1,18 @@
+// args: --run
+
+def oddify[n:!ℕ](x:uint[n])lifted{
+	def rec(i:!ℕ,const x:uint[n]){
+		if i+1==n{ return x; }
+		x':=x;
+		if !x'[0]{ x' div=2; }
+		return rec(i+1,x');
+	}
+	return rec(0,x);
+}
+
+n:=5;
+def main(){
+	x:=[H(0) for i in 0..n] as uint[_];
+	a:=oddify(x);
+	return (x,a);
+}

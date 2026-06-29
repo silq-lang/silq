@@ -1,0 +1,18 @@
+// args: --run
+
+def odd_gcd_u[n:!ℕ](x:uint[n],y:uint[n])lifted{
+	(a,b):=(x,y);
+	for i in 0..n{ // TODO: make loop efficient to compile (see odd_gcd_u_2.slq)
+		(a', b') := if b < a then (b, a) else (a, b);
+		if a[0]==b[0]{ (a, b) = ((b' - a') div 2, a'); }
+		if !a[0]{ a div=2; }
+	}
+	return b;
+}
+
+def main(){
+	x:=[1]~[H(0) for i in 0..2] as uint[_];
+	y:=[1]~[H(0) for i in 0..2] as uint[_];
+	r:=odd_gcd_u(x,y);
+	return (x,y,r);
+}
