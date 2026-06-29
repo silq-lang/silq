@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	x:=1:uint[5];
+	for i in 1..5{ x[i]:=H(x[i]); }
+	xi:=1/(x pun ℤmod[29] pun ℤstar[_]); /// run_error
+	return (x,xi);
+}
