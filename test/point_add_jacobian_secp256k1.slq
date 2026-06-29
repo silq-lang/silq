@@ -1,0 +1,133 @@
+// skipped
+
+p := 2^256-2^32-977 coerce !ℕ;
+a := 0, b := 7; // y² ≡ x³ + 7 (mod p)
+Field := ℤmod[p];
+Group := ℤstar[p];
+
+APoint := 𝔹×Field×Field; // (infinity, x, y)
+JPoint := Field×Field×Field; // (X,Y,Z; infinity iff Z=0)
+
+def pow_g(x:Group,n:!ℤ)lifted{
+	n':=n%(p-1);
+	(r,x'):=(1,x):Group^2;
+	i:=0;
+	while n'≥2^i{
+		if (n'&2^i)≠0{ r·=x'; }
+		i+=1;
+		if n'≥ 2^i{ x'=x'·x'; }
+	}
+	return r;
+}
+
+def jacobian_to_affine(P: JPoint)lifted: APoint{
+	(X,Y,Z) := P;
+	if Z=0{ return (true,0,0): APoint; }
+	Z_star := Z pun Group;
+
+	Zi := pow_g(Z_star,-1);//Zi := Z_star^-1;
+	Zi2 := Zi·Zi;// Zi2 := Zi^2;
+	Zi3 := Zi2·Zi;
+
+	x := X·Zi2;
+	y := Y·Zi3;
+
+	return (false,x,y): APoint;
+}
+
+def affine_to_jacobian(P: APoint)lifted: JPoint{
+	(infinity,x,y) := P;
+	if infinity{ return (0,1,0): JPoint; }
+	return (x,y,1): JPoint;
+}
+
+def jacobian_infinity()lifted: JPoint ⇒  (0,1,0): JPoint;
+
+def jacobian_double(P: JPoint)lifted: JPoint{
+	(X1,Y1,Z1) := P;
+	if Z1=0{ return jacobian_infinity(); }
+	if Y1=0{ return jacobian_infinity(); }
+
+	YY := Y1·Y1;//YY := Y1^2;
+	YYYY := YY·YY;//YYYY := YY^2;
+
+	S := 4·X1·YY;
+	M := 3·X1·X1;//M := 3·X1^2;
+
+	X3 := M·M-2·S;//X3 := M^2-2·S;
+	Y3 := M·(S-X3)-8·YYYY;
+	Z3 := 2·Y1·Z1;
+
+	return (X3, Y3, Z3): JPoint;
+}
+
+
+def jacobian_add(P: JPoint, Q: JPoint)lifted: JPoint{
+	(X1,Y1,Z1) := P;
+	(X2,Y2,Z2) := Q;
+	if Z1=0{ return Q; }
+	if Z2=0{ return P; }
+
+	Z1_2 := Z1·Z1;//Z1_2 := Z1^2;
+	Z1_3 := Z1_2·Z1;
+
+	Z2_2 := Z2·Z2;//Z2_2 := Z2^2;
+	Z2_3 := Z2_2·Z2;
+
+	U1 := X1·Z2_2;
+	U2 := X2·Z1_2;
+
+	S1 := Y1·Z2_3;
+	S2 := Y2·Z1_3;
+
+	H := U2-U1;
+	R := S2-S1;
+
+	if H=0{
+		if R=0{ return jacobian_double(P); }
+		return jacobian_infinity();
+	}
+
+	H2 := H·H;//H2 := H^2;
+	H3 := H2·H;
+	U1H2 := U1·H2;
+
+	X3 := R·R-H3-2·U1H2;//X3 := R^2 - H3 - 2 · U1H2;
+	Y3 := R·(U1H2-X3)-S1·H3;
+	Z3 := H·Z1·Z2;
+
+	return (X3,Y3,Z3): JPoint;
+}
+
+
+def affine_add(P: APoint, Q: APoint)lifted: APoint{
+	Pj := affine_to_jacobian(P);
+	Qj := affine_to_jacobian(Q);
+	Rj := jacobian_add(Pj,Qj);
+	return jacobian_to_affine(Rj);
+}
+
+
+def main(){
+	G := (false,
+		0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798,
+		0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8
+	): !APoint;
+
+	G2 := (false,
+		0xC6047F9441ED7D6D3045406E95C07CD85C778E4B8CEF3CA7ABAC09B95C709EE5,
+		0x1AE168FEA63DC339A3C58419466CEAEEF7F632653266D0E1236431A950CFE52A
+	): !APoint;
+
+	Gj := affine_to_jacobian(G);
+	R1 := jacobian_to_affine(jacobian_double(Gj));
+	assert(R1 = G2);
+	
+	R2 := jacobian_to_affine(jacobian_add(Gj,Gj));
+	assert(R2 = G2);
+
+	negG := (false,G[1],-G[2]): !APoint;
+	negGj := affine_to_jacobian(negG);	
+	O := jacobian_to_affine(jacobian_add(Gj,negGj));	
+	assert(O=(true,0,0));
+}
