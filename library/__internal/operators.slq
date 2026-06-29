@@ -1482,6 +1482,49 @@ def __mul_C(a: !ℂ, b: !ℂ) @[__operator] lifted: !ℂ {
 
 // a/b
 
+def __div_x[N:!ℕ](a: ℤstar[N], b: ℤstar[N]) @[__operator] lifted: ℤstar[N] ⇒ __div_mx(a, b) pun ℤstar[N];
+def __div_Xx[N:!ℕ](a: !ℤstar[N], b: ℤstar[N]) @[__operator] lifted: ℤstar[N] ⇒ __div_Mx(a, b) pun ℤstar[N];
+def __div_xX[N:!ℕ](a: ℤstar[N], b: !ℤstar[N]) @[__operator] lifted: ℤstar[N] ⇒ __div_mX(a, b) pun ℤstar[N];
+def __div_X[N:!ℕ](a: !ℤstar[N], b: !ℤstar[N]) @[__operator] lifted: !ℤstar[N] ⇒ __div_MX(a, b) pun !ℤstar[N];
+
+
+def __div_mx[N:!ℕ](a: ℤmod[N], b: ℤstar[N]) @[__operator] lifted: ℤmod[N] {
+	return __mul_m(a, qint_modinv_x(b));
+}
+def __div_Mx[N:!ℕ](a: !ℤmod[N], b: ℤstar[N]) @[__operator] lifted: ℤmod[N] {
+	return __mul_Mm(a, qint_modinv_x(b));
+}
+def __div_mX[N:!ℕ](a: ℤmod[N], b: !ℤstar[N]) @[__operator] lifted: ℤmod[N] {
+	return __mul_mM(a, pow_mod(b as !ℕ, -1, N) pun !ℤstar[N]);
+}
+def __div_MX[N:!ℕ](a: !ℤmod[N], b: !ℤstar[N]) @[__operator] lifted: !ℤmod[N] {
+	return __mul_M(a, pow_mod(b as !ℕ, -1, N) pun !ℤstar[N]);
+}
+
+def __div_bx[N:!ℕ](a: 𝔹, b: ℤstar[N]) @[__operator] lifted: ℤmod[N] {
+	return if a then qint_modinv_x(b) else 0: !ℤmod[N];
+}
+def __div_Bx[N:!ℕ](a: !𝔹, b: ℤstar[N]) @[__operator] lifted: ℤmod[N] {
+	return if a then qint_modinv_x(b) else 0: !ℤmod[N];
+}
+def __div_bX[N:!ℕ](a: 𝔹, b: !ℤstar[N]) @[__operator] lifted: ℤmod[N] {
+	return if a then pow_mod(b as !ℕ, -1, N) as !ℤmod[N] else 0: !ℤmod[N];
+}
+def __div_BX[N:!ℕ](a: !𝔹, b: !ℤstar[N]) @[__operator] lifted: !ℤmod[N] {
+	return if a then pow_mod(b as !ℕ, -1, N) as !ℤmod[N] else 0: !ℤmod[N];
+}
+
+def __div_Nx[N:!ℕ](a: !ℕ, b: ℤstar[N]) @[__operator] lifted: ℤmod[N] ⇒ __div_Zx(a, b);
+def __div_NX[N:!ℕ](a: !ℕ, b: !ℤstar[N]) @[__operator] lifted: !ℤmod[N] ⇒ __div_ZX(a, b);
+
+def __div_Zx[N:!ℕ](a: !ℤ, b: ℤstar[N]) @[__operator] lifted: ℤmod[N] {
+	return __mul_Zm(a, qint_modinv_x(b));
+}
+def __div_ZX[N:!ℕ](a: !ℤ, b: !ℤstar[N]) @[__operator] lifted: !ℤmod[N] {
+	return a·pow_mod(b as !ℕ, -1, N) as !ℤmod[N];
+}
+
+
 def __div_B(a: !𝔹, b: !𝔹) @[__operator] lifted: !ℚ {
 	return __idiv_B(a, b);
 }
@@ -4786,7 +4829,28 @@ def __mul_assign_xX[N:!ℕ](a: ℤstar[N], const b: !ℤstar[N]) qfree: ℤstar[
 }
 
 // a/=b
-// (always rewritten to with x:=a do x=x/b)
+// (usually rewritten to with x:=a do x=x/b)
+
+def __div_assign_m[N:!ℕ](a: ℤmod[N], const b: ℤstar[N]) qfree: ℤmod[N] {
+	__mul_assign_m[N](a, b) := a;
+	return a;
+}
+
+def __div_assign_mM[N:!ℕ](a: ℤmod[N], const b: !ℤstar[N]) qfree: ℤmod[N] {
+	__mul_assign_mM[N](a, b) := a;
+	return a;
+}
+
+def __div_assign_x[N:!ℕ](a: ℤstar[N], const b: ℤstar[N]) qfree: ℤstar[N] {
+	__mul_assign_x[N](a, b) := a;
+	return a;
+}
+
+def __div_assign_xX[N:!ℕ](a: ℤstar[N], const b: !ℤstar[N]) qfree: ℤstar[N] {
+	__mul_assign_xX[N](a, b) := a;
+	return a;
+}
+
 
 // a div= b
 // (always rewritten to with x:=a do x=x div b)

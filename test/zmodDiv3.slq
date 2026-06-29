@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	x:=2:ℤmod[5];
+	t:=2 coerce ℤstar[5];
+	y:=3 coerce ℤstar[5];
+	return (x/y,t/y);
+}

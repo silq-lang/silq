@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	x:=H(0);
+	t:=2 coerce ℤstar[5];
+	r:=x/t;
+	return (x,r);
+}

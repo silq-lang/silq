@@ -1125,11 +1125,12 @@ struct QState{
 						if(auto zmod=isℤmodTy(ntype)){
 							if(auto v=zmod.N.asIntegerConstant()){
 								auto N=v.get();
-								enforce(0<=zval && zval<N,format("`%s` is not a canonical representative modulo `%s`",zval,N));
+								auto nval=zval%N;
+								if(nval<0) nval+=N;
 								if(zmod.isStar){
-									enforce(gcd(N,zval)==1,format("`%s` is not a unit modulo `%s`",zval,N));
+									enforce(gcd(N,nval)==1,format("`%s` is not a unit modulo `%s`",nval,N));
 								}
-								return makeℤmod(ntype,ℤmod(N,zval));
+								return makeℤmod(ntype,ℤmod(N,nval));
 							}
 						}
 					}
@@ -1161,16 +1162,20 @@ struct QState{
 						assert(ntag==Tag.uintval);
 						return makeUint(ntype,BitInt!false(nbits,val));
 					}
-					if(ntag==Tag.zmodval){
+					if(tag==Tag.uintval&&ntag==Tag.zmodval){
 						if(auto zmod=isℤmodTy(ntype)){
+							ℤ val;
 							size_t nbits;
 							if(otag==Tag.intval){
+								val=intval.val;
 								nbits=intval.nbits;
 							}else{
+								val=uintval.val;
 								nbits=uintval.nbits;
 							}
 							if(auto v=zmod.N.asIntegerConstant()){
 								auto N=v.get();
+								enforce(0<=val && val<N,format("`%s` is not a canonical representative modulo `%s`",val,N));
 								size_t gnb=0;
 								ℤ k=1;
 								while(k<N){
