@@ -1,0 +1,94 @@
+// skipped
+
+p := 2^256-2^32-977 coerce !ℕ;
+a := 0, b := 7; // y² ≡ x³ + 7 (mod p)
+Field := ℤmod[p];
+Group := ℤstar[p];
+
+APoint := 𝔹×Field×Field; // (infinity, x, y)
+
+def pow_g(x:Group,n:!ℤ)lifted{
+	n':=n%(p-1);
+	(r,x'):=(1,x):Group^2;
+	i:=0;
+	while n'≥2^i{
+		if (n'&2^i)≠0{ r·=x'; }
+		i+=1;
+		if n'≥ 2^i{ x'=x'·x'; }
+	}
+	return r;
+}
+
+def affine_infinity()lifted: APoint ⇒ (true,0,0): APoint;
+
+def affine_neg(P: APoint)lifted: APoint{
+	(infinity,x,y) := P;
+	if infinity{ return P; }
+	return (false,x,-y): APoint;
+}
+
+def affine_double(P: APoint)lifted: APoint{
+	(infinity,x1,y1) := P;
+
+	if infinity{ return affine_infinity(); }
+	if y1=0{ return affine_infinity(); }
+
+	den := 2·y1;
+	den_star := den pun Group;
+	den_inv := pow_g(den_star,-1);
+
+	λ := 3·x1·x1·den_inv;
+
+	x3 := λ·λ-2·x1;
+	y3 := λ·(x1-x3)-y1;
+
+	return (false,x3,y3): APoint;
+}
+
+def affine_add(P: APoint, Q: APoint)lifted: APoint{
+	(infinity1,x1,y1) := P;
+	(infinity2,x2,y2) := Q;
+
+	if infinity1{ return Q; }
+	if infinity2{ return P; }
+
+	if x1=x2{
+		if y1=y2{
+			return affine_double(P);
+		}
+		return affine_infinity();
+	}
+
+	den := x2-x1;
+	den_star := den pun Group;
+	den_inv := pow_g(den_star,-1);
+
+	λ := (y2-y1)·den_inv;
+
+	x3 := λ·λ-x1-x2;
+	y3 := λ·(x1-x3)-y1;
+
+	return (false,x3,y3): APoint;
+}
+
+def main(){
+	G := (false,
+		0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798,
+		0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8
+	): !APoint;
+
+	G2 := (false,
+		0xC6047F9441ED7D6D3045406E95C07CD85C778E4B8CEF3CA7ABAC09B95C709EE5,
+		0x1AE168FEA63DC339A3C58419466CEAEEF7F632653266D0E1236431A950CFE52A
+	): !APoint;
+
+	R1 := affine_double(G);
+	assert(R1=G2);
+	
+	R2 := affine_add(G,G);
+	assert(R2=G2);
+
+	negG := (false,G[1],-G[2]): !APoint;
+	O := affine_add(G,negG);
+	assert(O=(true,0,0));
+}
