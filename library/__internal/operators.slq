@@ -377,14 +377,27 @@ def qint_modinv_x[N:!ℕ](x:ℤstar[N]) lifted: ℤstar[N]{
 	}
 	repeat m{ if !a[0]{ a div=2; u=div2(u); } }
 	repeat m{ if !b[0]{ b div=2; v=div2(v); } }
-	for i in 0..m{
+	/+for i in 0..m{ // TODO
+		(a', b', u', v') := if b < a then (b, a, v, u) else (a, b, u, v);
 		if a[0] == b[0] {
-			if b < a { (a, b, u, v) = (b, a, v, u); }
-			(a, b, u, v)=((b - a) div 2, a, div2(v - u), u);
-			repeat m-1-i{ if !a[0]{ a div=2; u=div2(u); } }
+			(a, b, u, v) = ((b' - a') div 2, a', div2(v' - u'), u');
 		}
+		if !a[0]{ a div=2; u=div2(u); }
 	}
 	xi2 := v pun ℤstar[M];
+	+/
+	def rec(i:!ℕ, const a:uint[m], const b:uint[m], const u:ℤmod[M], const v:ℤmod[M]){
+		if i+1==m{ return v pun ℤstar[M]; }
+		(a', b', u', v') := if b < a then (b, a, v, u) else (a, b, u, v);
+		if a[0] == b[0] {
+			(a'', b'', u'', v'') := ((b' - a') div 2, a', div2(v' - u'), u');
+		}else{
+			(a'', b'', u'', v'') := (a, b, u, v);
+		}
+		if !a''[0]{ a'' div=2; u''=div2(u''); }
+		return rec(i+1, a'', b'', u'', v'');
+	}
+	xi2 := rec(0, a, b, u, v);
 	if k == 0{ return xi2 coerce ℤstar[N]; }
 	return crt_pow2(xi1, xi2) coerce ℤstar[N];
 }
