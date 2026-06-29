@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	r:=(0b101010, 0o77, 0xff);
+	assert(r==(42,63,255));
+	return r;
+}
