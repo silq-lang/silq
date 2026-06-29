@@ -1,4 +1,4 @@
-// skipped
+// args: --run
 
 p := 2^256-2^32-977 coerce !ℕ;
 a := 0, b := 7; // y² ≡ x³ + 7 (mod p)
@@ -8,24 +8,12 @@ Group := ℤstar[p];
 APoint := 𝔹×Field×Field; // (infinity, x, y)
 JPoint := Field×Field×Field; // (X,Y,Z; infinity iff Z=0)
 
-def pow_g(x:Group,n:!ℤ)lifted{
-	n':=n%(p-1);
-	(r,x'):=(1,x):Group^2;
-	i:=0;
-	while n'≥2^i{
-		if (n'&2^i)≠0{ r·=x'; }
-		i+=1;
-		if n'≥ 2^i{ x'=x'·x'; }
-	}
-	return r;
-}
-
 def jacobian_to_affine(P: JPoint)lifted: APoint{
 	(X,Y,Z) := P;
 	if Z=0{ return (true,0,0): APoint; }
 	Z_star := Z pun Group;
 
-	Zi := pow_g(Z_star,-1);//Zi := Z_star^-1;
+	Zi := 1/Z_star;//Zi := Z_star^-1;
 	Zi2 := Zi·Zi;// Zi2 := Zi^2;
 	Zi3 := Zi2·Zi;
 

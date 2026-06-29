@@ -1,4 +1,4 @@
-// skipped
+// args: --run
 
 p := 2^256-2^32-977 coerce !ℕ;
 a := 0, b := 7; // y² ≡ x³ + 7 (mod p)
@@ -6,18 +6,6 @@ Field := ℤmod[p];
 Group := ℤstar[p];
 
 APoint := 𝔹×Field×Field; // (infinity, x, y)
-
-def pow_g(x:Group,n:!ℤ)lifted{
-	n':=n%(p-1);
-	(r,x'):=(1,x):Group^2;
-	i:=0;
-	while n'≥2^i{
-		if (n'&2^i)≠0{ r·=x'; }
-		i+=1;
-		if n'≥ 2^i{ x'=x'·x'; }
-	}
-	return r;
-}
 
 def affine_infinity()lifted: APoint ⇒ (true,0,0): APoint;
 
@@ -33,11 +21,7 @@ def affine_double(P: APoint)lifted: APoint{
 	if infinity{ return affine_infinity(); }
 	if y1=0{ return affine_infinity(); }
 
-	den := 2·y1;
-	den_star := den pun Group;
-	den_inv := pow_g(den_star,-1);
-
-	λ := 3·x1·x1·den_inv;
+	λ := 3·x1·x1/(2·y1 pun Group);
 
 	x3 := λ·λ-2·x1;
 	y3 := λ·(x1-x3)-y1;
@@ -59,11 +43,7 @@ def affine_add(P: APoint, Q: APoint)lifted: APoint{
 		return affine_infinity();
 	}
 
-	den := x2-x1;
-	den_star := den pun Group;
-	den_inv := pow_g(den_star,-1);
-
-	λ := (y2-y1)·den_inv;
+	λ := (y2-y1)/(x2-x1 pun Group);
 
 	x3 := λ·λ-x1-x2;
 	y3 := λ·(x1-x3)-y1;
