@@ -1,0 +1,13 @@
+// args: --run
+
+def foo(a:𝔹,b:𝔹)lifted:𝔹{
+	if a{ return b; }
+	if b{ return a; }
+	r:=b;
+	if a{
+		if r{ return a; }
+		return b;
+	}
+	return a;
+}
+def main()⇒([[foo(a≠0,b≠0) for a in 0..2] for b in 0..2],foo);
