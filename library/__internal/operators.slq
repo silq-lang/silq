@@ -375,26 +375,20 @@ def qint_modinv_x[N:!ℕ](x:ℤstar[N]) lifted: ℤstar[N]{
 		r~[0]:=(if t[0] then (t+M) div 2 else t div 2) as 𝔹^(m+1);
 		return r as uint[m] pun ℤmod[M];
 	}
-	repeat m{ if !a[0]{ a div=2; u=div2(u); } }
 	repeat m{ if !b[0]{ b div=2; v=div2(v); } }
-	/+for i in 0..m{ // TODO
-		(a', b', u', v') := if b < a then (b, a, v, u) else (a, b, u, v);
-		if a[0] == b[0] {
-			(a, b, u, v) = ((b' - a') div 2, a', div2(v' - u'), u');
-		}
-		if !a[0]{ a div=2; u=div2(u); }
-	}
-	xi2 := v pun ℤstar[M];
-	+/
+	/+for i in 0..2·m-3{ // TODO
+		if b < a { (a, b, u, v) := (b, a, v, u); }
+		(a, b, u, v) :=
+			if a[0] then ((b - a) div 2, a, div2(v - u), u);
+			else (a div 2, b, div2(u), v);
+	}+/
 	def rec(i:!ℕ, const a:uint[m], const b:uint[m], const u:ℤmod[M], const v:ℤmod[M]){
-		if i+1==m{ return v pun ℤstar[M]; }
+		if i == 2·m-3{ return v pun ℤstar[M]; }
 		(a', b', u', v') := if b < a then (b, a, v, u) else (a, b, u, v);
-		if a[0] == b[0] {
-			(a'', b'', u'', v'') := ((b' - a') div 2, a', div2(v' - u'), u');
-		}else{
-			(a'', b'', u'', v'') := (a, b, u, v);
-		}
-		if !a''[0]{ a'' div=2; u''=div2(u''); }
+		b' -= a', v' -= u';
+		if a[0]{ (a'', b'', u'', v'') := (b', a', v', u'); }
+		else{ (a'', b'', u'', v'') := (a, b, u, v); }
+		a'' div=2, u'' = div2(u'');
 		return rec(i+1, a'', b'', u'', v'');
 	}
 	xi2 := rec(0, a, b, u, v);
