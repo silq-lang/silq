@@ -374,22 +374,35 @@ def qint_modinv_x[N:!ℕ](x:ℤstar[N]) lifted: ℤstar[N]{
 		[0]~x:=x as 𝔹^_;
 		return x~[0] as uint[m];
 	}
+	def div2uz[m:!ℕ](x:uint[m]){
+		[z]~x:=x as 𝔹^_;
+		return x~[z] as uint[m];
+	}
 	def div2(x:ℤmod[M])lifted{
 		t:=(x pun uint[m] as 𝔹^m)~[0] as uint[m+1];
-		r~[0]:=div2u(if t[0] then t+M else t) as 𝔹^(m+1);
+		r~[0]:=div2u(t+t[0]·(M as uint[m+1])) as 𝔹^(m+1);
 		return r as uint[m] pun ℤmod[M];
 	}
-	repeat m{ if !b[0]{ b=div2u(b); v=div2(v); } }
-	/+for i in 0..2·m-3{ // TODO
+	/+ // TODO
+	repeat m-1{ if !b[0]{ b div=2; v=div2(v); } }
+	for i in 0..2·m-3{
 		if b < a { (a, b, u, v) := (b, a, v, u); }
 		(a, b, u, v) :=
 			if a[0] then ((b - a) div 2, a, div2(v - u), u);
 			else (a div 2, b, div2(u), v);
 	}+/
+	def oddify(i:!ℕ,b:uint[m],v:ℤmod[M])lifted{
+		if i == m{ return (b,v); }
+		b' := div2uz(b), v' := div2(v);
+		(b'', v'') := if b[0] then (b,v) else (b',v');
+		return oddify(i+1, b'', v'');
+	}
+	(b,v) = oddify(0,b,v);
 	def rec(i:!ℕ, const a:uint[m], const b:uint[m], const u:ℤmod[M], const v:ℤmod[M]){
 		if i == 2·m-3{ return v pun ℤstar[M]; }
 		(a', b', u', v') := if b < a then (b, a, v, u) else (a, b, u, v);
 		b' -= a', v' -= u';
+		// (a'', b'', u'', v'') := if a[0] then (b', a', v', u') else (a, b, u, v); // TODO
 		if a[0]{ (a'', b'', u'', v'') := (b', a', v', u'); }
 		else{ (a'', b'', u'', v'') := (a, b, u, v); }
 		a'' := div2u(a''), u'' = div2(u'');
