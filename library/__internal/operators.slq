@@ -370,12 +370,16 @@ def qint_modinv_x[N:!ℕ](x:ℤstar[N]) lifted: ℤstar[N]{
 	(x':𝔹^m) ~ vector(n sub m,0:𝔹) := x' as 𝔹^n;
 	x':=x' as uint[m];
 	(a, b, u, v) := (x', M sub x', 1, -1): _×_×!ℤmod[M]×!ℤmod[M];
+	def div2u[m:!ℕ](x:uint[m]){
+		[0]~x:=x as 𝔹^_;
+		return x~[0] as uint[m];
+	}
 	def div2(x:ℤmod[M])lifted{
 		t:=(x pun uint[m] as 𝔹^m)~[0] as uint[m+1];
-		r~[0]:=(if t[0] then (t+M) div 2 else t div 2) as 𝔹^(m+1);
+		r~[0]:=div2u(if t[0] then t+M else t) as 𝔹^(m+1);
 		return r as uint[m] pun ℤmod[M];
 	}
-	repeat m{ if !b[0]{ b div=2; v=div2(v); } }
+	repeat m{ if !b[0]{ b=div2u(b); v=div2(v); } }
 	/+for i in 0..2·m-3{ // TODO
 		if b < a { (a, b, u, v) := (b, a, v, u); }
 		(a, b, u, v) :=
@@ -388,7 +392,7 @@ def qint_modinv_x[N:!ℕ](x:ℤstar[N]) lifted: ℤstar[N]{
 		b' -= a', v' -= u';
 		if a[0]{ (a'', b'', u'', v'') := (b', a', v', u'); }
 		else{ (a'', b'', u'', v'') := (a, b, u, v); }
-		a'' div=2, u'' = div2(u'');
+		a'' := div2u(a''), u'' = div2(u'');
 		return rec(i+1, a'', b'', u'', v'');
 	}
 	xi2 := rec(0, a, b, u, v);
