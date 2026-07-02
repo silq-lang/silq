@@ -1,4 +1,3 @@
-// args: --run
 
 def main(){
 	H(x):=0;

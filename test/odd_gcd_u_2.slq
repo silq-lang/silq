@@ -2,7 +2,7 @@
 
 def odd_gcd_u[n:!ℕ](x:uint[n],y:uint[n])lifted{
 	def rec(i:!ℕ, const a:uint[n], const b:uint[n]){
-		if i+1 == n{ return b; }
+		if i == n{ return b; }
 		(a', b') := if b < a then (b, a) else (a, b);
 		if a[0]==b[0]{ (a'', b'') := ((b' - a') div 2, a'); }
 		else { (a'', b'') := (a,b); }
