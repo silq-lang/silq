@@ -1,0 +1,17 @@
+// args: --remove-loops --run
+
+def main(){
+	q := H(0:𝔹);
+	v := dup(q);
+	for j in [0..2){
+		f := λ(x:𝔹)qfree{
+			v := x;
+			for i in [0..2){
+				v := X(v);
+			}
+			return v;
+		};
+		v := f(v);
+	}
+	return (q, v);
+}

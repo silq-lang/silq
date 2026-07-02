@@ -1,0 +1,13 @@
+// args: --remove-loops --run
+
+def main(){
+	q := H(0:𝔹);
+	v := dup(q);
+	r := 0:𝔹;
+	for i in [0..3){
+		t := dup(v);
+		r ⊕= t;
+		if measure(H(0:𝔹)) { v := X(v); }
+	}
+	return (q, v, r);
+}

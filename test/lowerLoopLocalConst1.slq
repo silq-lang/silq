@@ -1,0 +1,18 @@
+// args: --remove-loops
+
+def main(){
+	q := H(0:𝔹);
+	w := dup(q);
+	r := 0:𝔹;
+	for j in [0..2){
+		t2 := dup(q);
+		for i in [0..3){
+			s := dup(t2);
+			r ⊕= s;
+			if measure(H(0:𝔹)) { t2 := X(t2); }
+			w := X(w);
+		}
+		forget(t2); /// TODO
+	}
+	return (q, w, r);
+}

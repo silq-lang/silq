@@ -1,0 +1,15 @@
+// args: --remove-loops --run
+
+def main(){
+	q := H(0:𝔹);
+	v := dup(q);
+	w := dup(q);
+	for j in [0..2){
+		for i in [0..3){
+			forget(v);
+			v := dup(q);
+			w := X(w);
+		}
+	}
+	return (q, v, w);
+}
