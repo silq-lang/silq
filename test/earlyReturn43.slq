@@ -1,0 +1,5 @@
+
+def foo(const x:𝔹,y:!𝔹):!𝔹{
+	if x{ if y{ return 0; } } /// error
+	return 1;
+}
