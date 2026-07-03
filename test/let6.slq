@@ -1,0 +1,12 @@
+// args: --run
+
+def f(const x:𝔹)qfree:𝔹{ return dup(x); }
+def main(){
+	q:=H(0:𝔹);
+	r:=f(let{ t:=dup(q); } in t);
+	forget(r=q);
+	s:=f(let{ t:=0:𝔹; t:=X(t); } in t);
+	forget(s=1:𝔹);
+	assert((let x:=3 in x)=3);
+	return measure(q);
+}

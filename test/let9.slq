@@ -1,0 +1,2 @@
+
+def main() ⇒ let return 2 in assert(0); /// error

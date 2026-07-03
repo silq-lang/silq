@@ -2844,9 +2844,25 @@ struct Interpreter(QState){
 			if(auto ume=cast(UBitNotExp)e) return ~doIt(ume.e);
 			if(auto let=cast(LetExp)e){
 				auto ret=QState.empty();
+				static if(language==silq){
+					if(let.s.blscope_)
+						qstate.forgetVars(let.s.blscope_.forgottenVarsOnEntry);
+				}
 				runStm(let.s,ret);
 				enforce(!ret.state.length,"early returns from `let` statement not supported yet");
-				return doIt(let.e);
+				auto result=doIt(let.e);
+				static if(language==silq){
+					if(let.s.blscope_){
+						// the result of a `let` in a `const` context may alias block-locals;
+						// materialize an independent value before those are uncomputed
+						// (it is subsequently released via `consumeOnRead`, cf. `consumeConst`)
+						if(result.isValid&&!result.isClassical()&&let.constLookup&&!let.implicitDup)
+							result=result.dup(qstate);
+						qstate.forgetVars(let.s.blscope_.forgottenVars);
+					}
+				}
+				if(let.s.blscope_) closeScope(let.s.blscope_);
+				return result;
 			}
 			if(auto le=cast(LambdaExp)e) return qstate.makeFunction(le.fd,le.fd.scope_);
 			if(auto ce=cast(CallExp)e){

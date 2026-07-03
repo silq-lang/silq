@@ -1,0 +1,5 @@
+def main(){
+	n:=let{ a:=H(0:𝔹); } in 1; /// error
+	m:=let{ return 3; } in 1; /// error
+	return (n,m);
+}

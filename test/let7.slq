@@ -1,0 +1,6 @@
+def f(const x:𝔹)qfree:𝔹{ return dup(x); }
+def main(){
+	q:=H(0:𝔹);
+	r:=f(let{ y:=measure(q); } in 0:𝔹); /// error
+	return measure(r);
+}

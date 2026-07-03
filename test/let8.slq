@@ -1,0 +1,26 @@
+// args: --run
+
+def main(){
+	let{ y:=H(x) } in y := 0;
+	xr:=measure(H(x));
+	assert(xr=0);
+	let{ a:=X(b); c:=X(a); } in c := 0;
+	assert(measure(b)=0);
+	let{ p:=X(u); } in (p,v) := (1:𝔹,1:𝔹);
+	assert(measure(u)=0);
+	assert(measure(v)=1);
+	nested();
+	return ();
+}
+def g(x:𝔹)mfree:𝔹{ return H(x); }
+def nested(){
+	(a, let{ y:=H(x) } in y) := (1:𝔹, 0:𝔹);
+	assert(measure(a)=1);
+	assert(measure(H(x))=0);
+	X(let{ y:=H(w) } in y) := 1:𝔹;
+	assert(measure(H(w))=0);
+	g(let{ y:=X(z) } in y) := 0:𝔹;
+	assert(measure(H(X(z)))=0);
+	(let{ p:=X(let{ q:=H(v) } in q) } in p) := 1:𝔹;
+	assert(measure(H(v))=0);
+}

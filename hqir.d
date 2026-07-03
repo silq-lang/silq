@@ -3256,9 +3256,9 @@ class ScopeWriter {
 		}
 	}
 
-	Value genCompoundValue(ast_exp.CompoundExp e, ast_exp.Expression fin, Expression ty) {
+	Value genCompoundValue(ast_exp.CompoundExp e, ast_exp.Expression fin, Expression ty, bool* aborted=null) {
 		assert(e.blscope_ is null || e.blscope_ is nscope);
-		assert(e.s.length > 0);
+		assert(fin || e.s.length > 0);
 
 		if(e.blscope_) {
 			foreach(decl; e.blscope_.forgottenVarsOnEntry) {
@@ -3274,7 +3274,10 @@ class ScopeWriter {
 
 		foreach(stmt; stmts) {
 			Result r = genStmt(stmt);
-			if(r.isAbort) return valError(r.abortWitness, e.type);
+			if(r.isAbort) {
+				if(aborted) *aborted = true;
+				return valError(r.abortWitness, e.type);
+			}
 			assert(!r.isReturn && !r.isConditionalReturn, "early return in compound expression");
 		}
 		auto r = genExprAs(fin, ty);
@@ -4154,7 +4157,28 @@ class ScopeWriter {
 	}
 
 	Value implExpr(ast_exp.LetExp e) {
-		return genCompoundValue(e.s, e.e, e.type);
+		if(!e.s.blscope_) return genCompoundValue(e.s, e.e, e.type);
+		auto sub = withBlock(e.s.blscope_);
+		foreach(decl; sub.nscope.splitVars) {
+			assert(decl.scope_ is sub.nscope);
+			auto outer = decl.splitFrom;
+			assert(outer.scope_ is nscope);
+			assert(outer.splitInto == [decl]);
+			sub.defineVar(decl, getVar(outer, false));
+		}
+		bool aborted = false;
+		auto r = sub.genCompoundValue(e.s, e.e, e.type, &aborted);
+		if(!aborted) {
+			foreach(decl; sub.nscope.mergedVars) {
+				assert(decl.scope_ is sub.nscope);
+				auto outer = decl.mergedInto;
+				assert(outer.scope_ is nscope);
+				assert(outer.mergedFrom == [decl]);
+				defineVar(outer, sub.getVar(decl, false));
+			}
+		}
+		sub.checkEmpty(aborted);
+		return r;
 	}
 
 	Value implExpr(ast_exp.TupleExp e) {
