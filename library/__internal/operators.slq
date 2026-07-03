@@ -2765,19 +2765,19 @@ def __andb_Z(a: !ℤ, b: !ℤ) @[__operator, extern="primitive.int.and"] lifted:
 def __or_b(a: 𝔹, b: 𝔹) @[__operator] lifted: 𝔹 ⇒ __orb_b(a, b);
 def __or_bB(a: 𝔹, b: !𝔹) @[__operator] lifted: 𝔹 ⇒ __orb_bB(a, b);
 def __or_Bb(a: !𝔹, b: 𝔹) @[__operator] lifted: 𝔹 ⇒ __orb_Bb(a, b);
-def __or_B(a: !𝔹, b: !𝔹) @[__operator] lifted: 𝔹 ⇒ __orb_B(a, b);
+def __or_B(a: !𝔹, b: !𝔹) @[__operator] lifted: !𝔹 ⇒ __orb_B(a, b);
 
 // a ⊻ b
 def __xor_b(a: 𝔹, b: 𝔹) @[__operator] lifted: 𝔹 ⇒ __xorb_b(a, b);
 def __xor_bB(a: 𝔹, b: !𝔹) @[__operator] lifted: 𝔹 ⇒ __xorb_bB(a, b);
 def __xor_Bb(a: !𝔹, b: 𝔹) @[__operator] lifted: 𝔹 ⇒ __xorb_Bb(a, b);
-def __xor_B(a: !𝔹, b: !𝔹) @[__operator] lifted: 𝔹 ⇒ __xorb_B(a, b);
+def __xor_B(a: !𝔹, b: !𝔹) @[__operator] lifted: !𝔹 ⇒ __xorb_B(a, b);
 
 // a ∧ b
 def __and_b(a: 𝔹, b: 𝔹) @[__operator] lifted: 𝔹 ⇒ __andb_b(a, b);
 def __and_bB(a: 𝔹, b: !𝔹) @[__operator] lifted: 𝔹 ⇒ __andb_bB(a, b);
 def __and_Bb(a: !𝔹, b: 𝔹) @[__operator] lifted: 𝔹 ⇒ __andb_Bb(a, b);
-def __and_B(a: !𝔹, b: !𝔹) @[__operator] lifted: 𝔹 ⇒ __andb_B(a, b);
+def __and_B(a: !𝔹, b: !𝔹) @[__operator] lifted: !𝔹 ⇒ __andb_B(a, b);
 
 // comparison operators
 
