@@ -2,17 +2,18 @@
 
 def main(){
 	x:=H(0);
+	y:=H(0);
 	with{
 		def g(i:!ℕ){
 			if i=0{ return; }
-			if x{ phase(π); }
+			if x{ if y{ phase(π); } }
 			return g(i sub 1);
 		}
 	}do{
 		g(3);
 		x:=H(H(x));
 	}
-	return (H(x),g); /// error
+	if x{ if y{ phase(π); } }
+	assert(measure(H(x))=0);
+	assert(measure(H(y))=0);
 }
-
-

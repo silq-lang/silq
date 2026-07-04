@@ -1,0 +1,18 @@
+// args: --run
+
+// recursive function calling another closure declared in the same `with` transformation
+def main(){
+	x:=H(0);
+	with{
+		def h(){ if x{ phase(π); } }
+		def g(i:!ℕ){
+			if i=0{ return; }
+			h();
+			return g(i sub 1);
+		}
+	}do{
+		g(3);
+		x:=H(H(x));
+	}
+	assert(measure(H(x))=1);
+}

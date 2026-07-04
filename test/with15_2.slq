@@ -1,8 +1,9 @@
+// args: --run
 
 def main(){
 	x:=H(0);
 	with{
-		def g(i:!ℕ){ /// TODO
+		def g(i:!ℕ){
 			if i=0{ return; }
 			if x{ phase(π); }
 			return g(i sub 1);

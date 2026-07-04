@@ -5,7 +5,7 @@ def main(){
 	xs[0]:=H(xs[0]);
 	y:=H(0);
 	with{
-		for i in 0..n{ /// TODO
+		for i in 0..n{
 			xs[i]:=CNOT(y,xs[i]);
 		}
 	}do{

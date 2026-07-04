@@ -1,18 +1,16 @@
-// args: --run
 
 def main(){
 	x:=H(0);
 	with{
 		def g(i:!ℕ){
 			if i=0{ return; }
-			if x{ phase(π); }
+			if x{ phase(π); } /// error
 			return g(i sub 1);
 		}
 	}do{
 		g(3);
-		x:=H(H(x));
+		y:=measure(x);
+		x:=(y,y);
 	}
-	return (H(x),g); /// error
+	return x;
 }
-
-
