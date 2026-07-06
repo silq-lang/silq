@@ -2644,6 +2644,23 @@ struct Interpreter(QState){
 		return value;
 	}
 
+	QState.Value runBranch(CompoundExp branch,Expression type,bool constLookup,bool implicitDup){
+		static if(language==silq){
+			if(branch.blscope_)
+				qstate.forgetVars(branch.blscope_.forgottenVarsOnEntry);
+		}
+		auto result=convertTo(branch.s[0],type);
+		static if(language==silq){
+			if(branch.blscope_){
+				if(result.isValid&&!result.isClassical()&&constLookup&&!implicitDup)
+					result=result.dup(qstate);
+				qstate.forgetVars(branch.blscope_.forgottenVars);
+			}
+		}
+		if(branch.blscope_) closeScope(branch.blscope_);
+		return result;
+	}
+
 	Expression evalType(Expression type){
 		type=type.eval();
 		if(auto intTy=isFixedIntTy(type)){
@@ -2965,14 +2982,12 @@ struct Interpreter(QState){
 				if(cond.isClassical()){
 					if(cond.neqZImpl){
 						auto thenIntp=Interpreter!QState(functionDef,ite.then,qstate,hasFrame);
-						auto then=thenIntp.convertTo(ite.then.s[0],ite.type);
-						thenIntp.closeScope(ite.then.blscope_);
+						auto then=thenIntp.runBranch(ite.then,ite.type,ite.constLookup,ite.implicitDup);
 						qstate=thenIntp.qstate;
 						return then;
 					}else{
 						auto othwIntp=Interpreter!QState(functionDef,ite.othw,qstate,hasFrame);
-						auto othw=othwIntp.convertTo(ite.othw.s[0],ite.type);
-						othwIntp.closeScope(ite.othw.blscope_);
+						auto othw=othwIntp.runBranch(ite.othw,ite.type,ite.constLookup,ite.implicitDup);
 						qstate=othwIntp.qstate;
 						return othw;
 					}
@@ -2980,15 +2995,13 @@ struct Interpreter(QState){
 					auto thenElse=qstate.split(cond);
 					qstate=thenElse[0];
 					auto thenIntp=Interpreter!QState(functionDef,ite.then,qstate,hasFrame);
-					auto then=thenIntp.convertTo(ite.then.s[0],ite.type);
-					thenIntp.closeScope(ite.then.blscope_);
+					auto then=thenIntp.runBranch(ite.then,ite.type,ite.constLookup,ite.implicitDup);
 					auto constLookup=ite.constLookup;
 					assert(!!ite.othw);
 					assert(ite.then.s[0].constLookup==constLookup&&ite.othw.s[0].constLookup==constLookup);
 					auto othwState=thenElse[1];
 					auto othwIntp=Interpreter(functionDef,ite.othw,othwState,hasFrame);
-					auto othw=othwIntp.convertTo(ite.othw.s[0],ite.type);
-					othwIntp.closeScope(ite.othw.blscope_);
+					auto othw=othwIntp.runBranch(ite.othw,ite.type,ite.constLookup,ite.implicitDup);
 					if(!then.isValid){ qstate=othwIntp.qstate; return othw; } // constant conditions
 					if(!othw.isValid){ qstate=thenIntp.qstate; return then; }
 					thenIntp.qstate.assignTo("`result",then);

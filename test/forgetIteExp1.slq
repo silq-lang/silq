@@ -1,0 +1,18 @@
+// args: --run
+
+def foo[n:!ℕ](x:uint[n],y:uint[n]) lifted: uint[n] {
+	if y=0{ return x; }
+	(a,b) := (x,y);
+	forget(dup(b[0])=1);
+	(a', b') := if b < a then (b, a) else (a, b);
+	(a, b) = if a[0] then (b'-a', a') else (a, b);
+	forget(dup(b[0])=1);
+	return b;
+}
+
+n:=1;
+def main(){
+	x:=[H(0) for _ in 0..n] as uint[_];
+	y:=[H(0) for _ in 0..n] as uint[_];
+	return (foo(x,y),x,y);
+}
