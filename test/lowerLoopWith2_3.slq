@@ -5,12 +5,12 @@ def main(){
 	xs[0]:=H(xs[0]);
 	y:=H(0);
 	with{
-		for i in 0..n{
+		for i in 0..n{ /// TODO
 			xs[i]:=CNOT(y,xs[i]);
 		}
 	}do{
 		xs[2]:=H(xs[2]);
-		y:=H(H(y));
+		y:=H(y);
 	}
 	return (xs,y);
 }

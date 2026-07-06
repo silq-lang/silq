@@ -1,4 +1,4 @@
-// args: --remove-loops
+// args: --remove-loops --run
 n:=5;
 def main(){
 	xs:=vector(n,0);

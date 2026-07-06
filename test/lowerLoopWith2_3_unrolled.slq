@@ -1,0 +1,18 @@
+// args: --run
+n:=5;
+def main(){
+	xs:=vector(n,0);
+	xs[0]:=H(xs[0]);
+	y:=H(0);
+	with{
+		xs[0]:=CNOT(y,xs[0]);
+		xs[1]:=CNOT(y,xs[1]);
+		xs[2]:=CNOT(y,xs[2]);
+		xs[3]:=CNOT(y,xs[3]);
+		xs[4]:=CNOT(y,xs[4]);
+	}do{
+		xs[2]:=H(xs[2]);
+		y:=H(y);
+	}
+	return (xs,y);
+}
