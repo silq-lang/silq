@@ -1,0 +1,10 @@
+
+
+def main(){
+	if measure(H(0)){
+		x:=vector(let x:=2 in x,0); /// TODO
+	}else{
+		x:=vector(let y:=2 in y,1); /// TODO
+	}
+	return x:let z:=2 in z; /// TODO
+}

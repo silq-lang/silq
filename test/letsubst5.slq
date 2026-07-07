@@ -1,0 +1,12 @@
+// args: --run
+
+def tup(k:!ℕ) ⇒ vector(let { (a,b):=(k,k+1); } in a·b, false); /// TODO
+def ann(k:!ℕ) ⇒ vector(let { n:!ℕ:=k+1; (x,y):=(n,n·n); } in x+y, true); /// TODO
+def main(){
+	k:=2;
+	x:=tup(k);
+	y:=ann(k);
+	forget(x=vector(6,false));
+	forget(y=vector(12,true));
+	return ();
+}

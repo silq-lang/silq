@@ -1,0 +1,24 @@
+// args: --run
+
+def tri(k:!ℕ) ⇒ vector(let { /// TODO
+	def sum(){
+		s:=0;
+		for i in [0..k){ s+=i+1; }
+		return s;
+	}
+} in sum(), false);
+def dbl(k:!ℕ) ⇒ vector(let { /// TODO
+	def go(){
+		s:=1;
+		while s<k { s·=2; }
+		return s;
+	}
+} in go(), true);
+def main(){
+	k:=3;
+	x:=tri(k);
+	y:=dbl(k+2);
+	forget(x=vector(6,false));
+	forget(y=vector(8,true));
+	return ();
+}

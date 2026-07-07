@@ -1,0 +1,13 @@
+// args: --run
+
+def foo(p:!ℕ,q:!ℕ) ⇒ vector(let { def f() ⇒ q+p·0; } in f(), false); /// TODO
+def apply[f:!(!ℕ !→ lifted !ℕ)](x:!ℕ) ⇒ vector(f(x), true);
+def main(){
+	a:=1; b:=2;
+	x:=foo(a,b);
+	k:=3;
+	y:=apply[(n:!ℕ)lifted⇒n+k](2);
+	forget(x=vector(2,false));
+	forget(y=vector(5,true));
+	return ();
+}

@@ -1,0 +1,18 @@
+// args: --run
+
+def foo(a:!ℕ,b:!ℕ) ⇒ vector(let { /// TODO
+	def outer(){
+		c:=b+1;
+		def inner() ⇒ a+c;
+		return inner();
+	}
+} in outer(), false);
+def bar(n:!ℕ) ⇒ vector(let { f:=()⇒n·2; g:=()⇒f()+1; } in g(), true); /// TODO
+def main(){
+	n:=1;
+	x:=foo(n,n+1);
+	y:=bar(n+2);
+	forget(x=vector(4,false));
+	forget(y=vector(7,true));
+	return ();
+}

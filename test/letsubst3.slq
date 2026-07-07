@@ -1,0 +1,26 @@
+// args: --run
+
+def foo(n:!ℕ) ⇒ vector(let { def foo(){ n:=n+1; return n; } } in foo(), false); /// TODO
+def bar(n:!ℕ) ⇒ vector(let { foo:=(){ n:=n+1; return n; } } in foo(), true); /// TODO
+def chain(a:!ℕ,b:!ℕ) ⇒ vector(let { /// TODO
+	def outer(){
+		c:=b+1;
+		def inner() ⇒ a+c;
+		return inner();
+	}
+} in outer(), false);
+def main(){
+	n:=2;
+	x1:=foo(n);
+	x2:=foo(n);
+	(x1,x2):=(x2,x1);
+	forget(x1=vector(3,false));
+	forget(x2=vector(3,false));
+	x:=foo(n);
+	y:=bar(n+1);
+	z:=chain(n,n·2);
+	forget(x=vector(3,false));
+	forget(y=vector(4,true));
+	forget(z=vector(7,false));
+	return ();
+}

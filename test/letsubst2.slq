@@ -1,0 +1,13 @@
+// args: --run
+
+def nested(k:!ℕ) ⇒ vector(let { a:=let { b:=k; } in b+1; c:=let { b:=a; } in b·2; } in c, false); /// TODO
+def primed(k:!ℕ) ⇒ vector(let { n:=k; n':=n+n; } in n'+n', true); /// TODO
+def main(){
+	n:=1;
+	n':=2;
+	x:=nested(n+n');
+	y:=primed(n');
+	forget(x=vector(8,false));
+	forget(y=vector(8,true));
+	return ();
+}
