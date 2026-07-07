@@ -1,0 +1,4 @@
+// args: --run
+
+def len[a:type](x:a[])lifted⇒x.length;
+def main()⇒len(([]:⊥[])~[])+1;
