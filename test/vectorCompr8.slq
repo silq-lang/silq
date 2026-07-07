@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	t:=H(0);
+	xs:=[CNOT(t,y) for y in vector(5,0)];
+	return (t,xs);
+}
