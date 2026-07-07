@@ -1,0 +1,9 @@
+
+def main(){
+	xs:=vector(5,0:𝔹);
+	with xs:=[H(x) for x in xs] { } /// error
+	__show(__query("dep",xs));
+	t:=[H(x) for x in vector(5,0:𝔹)]; /// error
+	__show(__query("dep",t));
+}
+

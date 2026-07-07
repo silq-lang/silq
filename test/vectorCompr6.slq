@@ -1,5 +1,7 @@
-
+// args: --run
 def main(){
 	xs:=vector(5,0:𝔹);
-	with xs:=[H(x) for x in xs] { } /// TODO
-} /// TODO
+	with xs:=[H(x) for x in xs] { }
+	return xs;
+}
+

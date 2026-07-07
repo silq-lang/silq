@@ -1,0 +1,2 @@
+// args: --run
+def main() ⇒ [i for i in [0..2..10)];

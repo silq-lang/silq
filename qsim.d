@@ -2882,6 +2882,43 @@ struct Interpreter(QState){
 				return result;
 			}
 			if(auto le=cast(LambdaExp)e) return qstate.makeFunction(le.fd,le.fd.scope_);
+			if(auto vfe=cast(VectorForExp)e){
+				enforce(!!vfe.fd,"vector comprehension not analyzed");
+				auto ft=cast(FunTy)vfe.fd.ftype;
+				enforce(!!ft,"vector comprehension element function has no type");
+				auto elemTy=ft.dom, codTy=ft.cod;
+				auto fv=qstate.makeFunction(vfe.fd,vfe.fd.scope_);
+				QState.Value[] values;
+				if(auto range=vfe.fe.aggr.isRange){
+					auto l=runExp(range.left), s=range.step?runExp(range.step):qstate.makeInteger(ℤ(1)), r=runExp(range.right);
+					enforce(l.isℤ()&&r.isℤ()&&s.isℤ(),"non-integer vector comprehension ranges not yet supported");
+					auto lz=l.asℤ(),rz=r.asℤ(),sz=s.asℤ();
+					enforce(s.asℤ==1||!range.leftExclusive,text("("~".."~"])"[range.rightExclusive],"-style ranges with step not yet supported in vector comprehension"));
+					if(range.leftExclusive) lz+=sz>=0?ℤ(1):ℤ(-1); // TODO: adjust by step?
+					enum body_=q{
+						auto arg=convertTo(qstate.makeInteger(j),elemTy,false);
+						values~=qstate.call(fv,arg,codTy,vfe.loc);
+					};
+					if(sz>=0){
+						for(ℤ j=lz;j+cast(int)range.rightExclusive<=rz;j+=sz) mixin(body_);
+					}else{
+						for(ℤ j=lz;j-cast(int)range.rightExclusive>=rz;j+=sz) mixin(body_);
+					}
+				}else{
+					auto cnt=vfe.fe.aggr.isContainer();
+					assert(!!cnt);
+					auto cv=doIt(cnt.e);
+					enforce(cv.tag==QState.Value.Tag.array_,"bad value for vector comprehension aggregate");
+					auto elemTypes=cv.type.isTupleTy();
+					foreach(i,x;cv.array_){
+						auto xt=elemTypes?elemTypes[i]:cv.type.elementType;
+						if(xt&&xt!=elemTy) x=convertTo(x,elemTy,true);
+						values~=qstate.call(fv,x,codTy,vfe.loc);
+					}
+				}
+				fv.forget(qstate);
+				return QState.makeArray(vfe.type,values);
+			}
 			if(auto ce=cast(CallExp)e){
 				auto target=unwrap(ce.e);
 				auto id=cast(Identifier)target;

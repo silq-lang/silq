@@ -3386,6 +3386,12 @@ class ScopeWriter {
 		return getFunc(e.fd, e.constLookup, null);
 	}
 
+	Value implExpr(ast_exp.VectorForExp e) {
+		auto lowered = ast_low.getLowering(e, semContext(e.constLookup));
+		assert(lowered, format("Failed to lower expression: %s", e));
+		return genExprAs(lowered, e.type);
+	}
+
 	Value implExpr(ast_exp.IndexExp e) {
 		assert(!e.byRef && !e.replacements.length, "IndexExp(byRef=true) not in simple DefineExp");
 		assert(e.e.constLookup, "Indexed value must be const");

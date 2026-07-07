@@ -1,7 +1,7 @@
 // args: --run
-def H_n[n:!ℕ](xs:𝔹^n)=>[H(x) for x in xs]; /// TODO
+def H_n[n:!ℕ](xs:𝔹^n)=>[H(x) for x in xs];
 
 def main(){
-	H_n(xs) := vector(5,0); /// TODO
+	H_n(xs) := vector(5,0);
 	return xs;
 }

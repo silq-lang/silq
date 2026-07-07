@@ -1,2 +1,2 @@
-
+// args: --run
 def main() => [(b,a) for (a,b) in [(i,i+1) for i in 0..10]] : (!ℕ^2)^10;
