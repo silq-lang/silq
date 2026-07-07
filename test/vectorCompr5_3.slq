@@ -1,0 +1,6 @@
+// args: --run
+
+def main(){
+	xs:=[let H(x):=y in x for y in vector(5,0)];
+	return xs;
+}
