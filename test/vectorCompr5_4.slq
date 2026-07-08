@@ -1,0 +1,8 @@
+// args: --run
+def f(const i:!ℕ)qfree:𝔹 ⇒ (i%2) coerce 𝔹;
+def main(){
+	xs:=[f(i) for i in 0..4];
+	[f(i) for i in 0..4] := xs;
+	ys:=[H(0) for i in 0..3];
+	[H(0) for i in 0..3] := ys;
+}

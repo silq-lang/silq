@@ -2893,8 +2893,10 @@ struct Interpreter(QState){
 					auto l=runExp(range.left), s=range.step?runExp(range.step):qstate.makeInteger(ℤ(1)), r=runExp(range.right);
 					enforce(l.isℤ()&&r.isℤ()&&s.isℤ(),"non-integer vector comprehension ranges not yet supported");
 					auto lz=l.asℤ(),rz=r.asℤ(),sz=s.asℤ();
-					enforce(s.asℤ==1||!range.leftExclusive,text("("~".."~"])"[range.rightExclusive],"-style ranges with step not yet supported in vector comprehension"));
-					if(range.leftExclusive) lz+=sz>=0?ℤ(1):ℤ(-1); // TODO: adjust by step?
+					ℤ mz=range.leftExclusive==range.rightExclusive?(lz+rz)>>1:range.leftExclusive?rz:lz;
+					auto adj=floormod(mz-lz,sz);
+					if(range.leftExclusive&&adj==0) adj=sz;
+					lz+=adj;
 					enum body_=q{
 						auto arg=convertTo(qstate.makeInteger(j),elemTy,false);
 						values~=qstate.call(fv,arg,codTy,vfe.loc);

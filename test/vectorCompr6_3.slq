@@ -1,0 +1,7 @@
+// args: --run
+def main(){
+	with xs:=[H(0) for i in 0..5] do{
+		phase(π);
+	}
+	return ();
+}

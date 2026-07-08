@@ -1,2 +1,2 @@
-
-def main() ⇒ [i for i in (10..-1..0]]; /// TODO
+// args: --run
+def main() ⇒ [i for i in (10..-1..0]];

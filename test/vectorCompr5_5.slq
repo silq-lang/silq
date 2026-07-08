@@ -1,0 +1,8 @@
+// args: --run
+def mk[n:!ℕ]()mfree ⇒ [H(0) for i in 0..n];
+def main(){
+	xs:=mk[4]();
+	mk[4]() := xs;
+	ys:=[H(0) for i in (3..-1..0]];
+	[H(0) for i in (3..-1..0]] := ys;
+}
