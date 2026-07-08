@@ -1,5 +1,5 @@
 // args: --run
 
 def main(){
-	dup(1:𝔹):=0; /// TODO run_error
+	dup(1:𝔹):=0; /// run_error
 }

@@ -2,5 +2,5 @@
 
 def main(){
 	x:=0:𝔹;
-	dup(measure(x)):=1; /// TODO run_error
+	dup(measure(x)):=1; /// run_error
 }

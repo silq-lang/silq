@@ -4,6 +4,6 @@ def main(){
 	x:=0:uint[0];
 	i:=0:𝔹;
 	j:=1:𝔹;
-	(x[i],x[j]):=(x[j],x[i]); /// TODO run_error
+	(x[i],x[j]):=(x[j],x[i]); /// run_error
 	return (x,i,j);
 }

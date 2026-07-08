@@ -219,12 +219,17 @@ Comparison[] compare(Info[] expected, Info[] actual) {
 				match = true;
 				act.isTODO = true;
 			}
-			if(act.kind != exp.kind) {
-				result.put(Comparison(Status.unexpected, act));
-				continue;
+			if(act.kind == exp.kind) {
+				match = true;
+				result.put(Comparison(Status.expected, act));
+			} else {
+				if(exp.isTODO && exp.message == act.kind) {
+					match = true;
+					result.put(Comparison(Status.expected, act));
+				} else {
+					result.put(Comparison(Status.unexpected, act));
+				}
 			}
-			match = true;
-			result.put(Comparison(Status.expected, act));
 		}
 		if(!match) {
 			result.put(Comparison(Status.missing, exp));
