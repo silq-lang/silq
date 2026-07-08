@@ -1,4 +1,4 @@
-// args: --remove-loops --run
+// args: --run
 
 def fetch(r:!N,const q:𝔹):𝔹^r{
 	ps := vector(r,false);

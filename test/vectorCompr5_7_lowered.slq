@@ -1,0 +1,16 @@
+// args: --run
+
+def main()mfree{
+	xs := [(0,H(0))];
+	def foo(const i: !ℕ,xs: (!ℕ × 𝔹)[])mfree{
+		if i<1{
+			[x]~xs := xs;
+			(a,b) := x;
+			dup(0) := H(b);
+			return foo(i+1,xs);
+		}else{
+			return xs;
+		}
+	}
+	() := foo(0,xs);
+}

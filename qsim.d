@@ -939,6 +939,11 @@ struct QState{
 				static foreach(t;[Tag.cval,Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.zmodval,Tag.bval]){
 					case t:
 						assert(isClassical);
+						static Σ checkImpl(Σ σ,Value lhs,Value rhs){
+							enforce(lhs==rhs.classicalValue(σ).convertTo(lhs.type),"bad forget"); // TODO: better error reporting
+							return σ;
+						}
+						state=state.map!checkImpl(this,rhs);
 						return;
 				}
 				case Tag.closure:
