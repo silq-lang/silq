@@ -1,0 +1,6 @@
+// args: --run
+
+def main(){
+	x:=0:uint[0];
+	return x as 𝔹^0;
+}

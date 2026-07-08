@@ -1,0 +1,4 @@
+// args: --run
+
+def foo(x:int[0]) ⇒ x as 𝔹^0;
+def main() ⇒ foo(0:int[0]);

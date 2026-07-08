@@ -1,3 +1,5 @@
+// args: --run
+
 def makeZero(): !N {
 	return 0;
 }

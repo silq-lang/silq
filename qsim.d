@@ -2772,13 +2772,14 @@ struct Interpreter(QState){
 		}
 		if(auto intTy=isFixedIntTy(value.type)){
 			if(!intTy.isClassical&&QState.Value.getTag(type)==QState.Value.Tag.array_){
-				assert(!type.isClassical);
 				auto len=runExp(intTy.bits); // TODO: maybe store lengths classically instead
 				enforce(len.isℤ(),"fixed-width integer width is not an integer");
 				auto nbits=smallValue(len.asℤ());
 				enforce(nbits>=0,"fixed-with integer width is negative");
 				auto tmp=value.dup(qstate); // TODO: don't do this if value is already a variable
-				auto r=qstate.makeTuple(arrayTy(Bool(false)),iota(nbits).map!(i=>(tmp&qstate.makeInteger(ℤ(1)<<i)).neqZ).array).convertTo(type).toVar(qstate,false);
+				auto llen=LiteralExp.makeInteger(len.asℤ);
+				llen.loc=intTy.bits.loc;
+				auto r=qstate.makeTuple(vectorTy(Bool(false),llen),iota(nbits).map!(i=>(tmp&qstate.makeInteger(ℤ(1)<<i)).neqZ).array).convertTo(type).toVar(qstate,false);
 				tmp.forget(qstate);
 				if(consumeArg) value.forget(qstate);
 				else r.consumeOnRead();
