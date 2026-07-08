@@ -1,0 +1,7 @@
+// args: --run
+
+def id(moved x:!ℕ)⇒x;
+
+def main(){
+	[id(i) for i in 0..5] := [id(i) for i in 0..5]; /// TODO
+}
