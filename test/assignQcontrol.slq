@@ -1,4 +1,3 @@
-// TODO: error
 
 def main(b: 𝔹){
 	f := λ()lifted. 1;
@@ -7,5 +6,5 @@ def main(b: 𝔹){
 	}else{
 		f = λ()lifted. 3;
 	}
-	return b;
+	return (b,f); /// error
 }
