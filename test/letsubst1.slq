@@ -1,7 +1,7 @@
 // args: --run
 
-def foo(k:!ℕ,m:!ℕ) ⇒ vector(let { n:=k+m; t:=n; } in t, false); /// TODO
-def chain(k:!ℕ) ⇒ vector(let { a:=k; b:=a+a; } in b, true); /// TODO
+def foo(k:!ℕ,m:!ℕ) ⇒ vector(let { n:=k+m; t:=n; } in t, false);
+def chain(k:!ℕ) ⇒ vector(let { a:=k; b:=a+a; } in b, true);
 def main(){
 	n:=3;
 	x:=foo(n,n);

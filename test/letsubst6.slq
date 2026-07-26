@@ -1,13 +1,13 @@
 // args: --run
 
-def tri(k:!ℕ) ⇒ vector(let { /// TODO
+def tri(k:!ℕ) ⇒ vector(let {
 	def sum(){
 		s:=0;
 		for i in [0..k){ s+=i+1; }
 		return s;
 	}
 } in sum(), false);
-def dbl(k:!ℕ) ⇒ vector(let { /// TODO
+def dbl(k:!ℕ) ⇒ vector(let {
 	def go(){
 		s:=1;
 		while s<k { s·=2; }

@@ -1,0 +1,32 @@
+// args: --run
+// regression test: `return` statements within functions defined in types may
+// leave local variables unconsumed on the returned path; the variables
+// forgotten on the return path must refer to the declarations of the
+// (substituted) function definition they belong to
+def retForget(b:!𝔹) ⇒ vector(let {
+	def go(n:!ℕ):!ℕ{
+		dead := 100;
+		if n==0 { return 0; }
+		return go(n sub 1)+dead;
+	}
+} in go(3)+(if b then 0 else 10), false);
+def retForgetTwice(b:!𝔹) ⇒ vector(let {
+	def go(n:!ℕ):!ℕ{
+		if n==0 { return 0; }
+		dead1 := 100;
+		dead2 := 200;
+		if n==1 { return dead1; }
+		return go(n sub 1)+dead2;
+	}
+} in go(3)+(if b then 0 else 10), false);
+def main(){
+	x:=retForget(true);
+	forget(x=vector(300,false));
+	y:=retForget(false);
+	forget(y=vector(310,false));
+	z:=retForgetTwice(true);
+	forget(z=vector(500,false));
+	w:=retForgetTwice(false);
+	forget(w=vector(510,false));
+	return ();
+}

@@ -1,6 +1,6 @@
 // args: --run
 
-def foo(p:!ℕ,q:!ℕ) ⇒ vector(let { def f() ⇒ q+p·0; } in f(), false); /// TODO
+def foo(p:!ℕ,q:!ℕ) ⇒ vector(let { def f() ⇒ q+p·0; } in f(), false);
 def apply[f:!(!ℕ !→ lifted !ℕ)](x:!ℕ) ⇒ vector(f(x), true);
 def main(){
 	a:=1; b:=2;

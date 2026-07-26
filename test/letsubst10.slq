@@ -2,9 +2,9 @@
 
 def main(){
 	if measure(H(0)){
-		x:=vector(let x:=2 in x,0); /// TODO
+		x:=vector(let x:=2 in x,0);
 	}else{
-		x:=vector(let y:=2 in y,1); /// TODO
+		x:=vector(let y:=2 in y,1);
 	}
 	return x:𝔹^let z:=2 in z;
 }

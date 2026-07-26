@@ -1,0 +1,9 @@
+def bar(m:!ℕ): let def foo(m:!ℕ)⇒if m=0 then 𝟙 else foo(m sub 1)×!ℕ; in foo(m);
+
+def foo(
+	x: !Π(n:!ℕ). let def go(n:!ℕ)⇒if n=0 then unit else go(n sub 1)×!ℕ; in go(n)
+){
+	return x(3);
+}
+
+def main()⇒foo(bar);

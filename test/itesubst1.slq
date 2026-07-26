@@ -2,6 +2,6 @@
 
 def main(){
 	c:=measure(H(0));
-	def foo()⇒vector(if c then 3 else 2,0); /// TODO
+	def foo()⇒vector(if c then 3 else 2,0);
 	foo();
 }

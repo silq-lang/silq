@@ -1,0 +1,14 @@
+// args: --run
+// regression test: the branches of an `if` expression may each substitute the
+// return type of the same function call, creating distinct declarations for
+// the variables bound within the type; merging the branches requires the
+// branch types to compare up to alpha-equivalence
+def alpha(n:!ℕ) ⇒ vector(let { def f():!ℕ ⇒ n; } in f(), false);
+def main(){
+	q:=H(0);
+	m:=measure(q);
+	c:=m==0;
+	x:=if c then alpha(m) else alpha(m);
+	forget(x=vector(m,false));
+	return ();
+}

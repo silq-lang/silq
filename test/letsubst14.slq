@@ -1,0 +1,18 @@
+// args: --run
+// regression test: types that bind variables within `let` expressions are
+// compared up to alpha-equivalence. here, the type of the second argument
+// (an alpha-variant of the type of the first argument, as each call
+// re-substitutes the return type, creating fresh declarations for `f`) must
+// convert to the inferred type parameter, which requires the comparison
+def alpha(n:!ℕ) ⇒ vector(let { def f():!ℕ ⇒ n; } in f(), false);
+def same2[τ:type](x:τ, const y:τ):τ { return x; }
+def main(){
+	q:=H(0);
+	m:=measure(q);
+	a1:=alpha(m);
+	a2:=alpha(m);
+	z:=same2(a1, a2);
+	forget(z=vector(m,false));
+	forget(a2=vector(m,false));
+	return ();
+}

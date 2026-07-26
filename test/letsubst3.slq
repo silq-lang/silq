@@ -1,8 +1,8 @@
 // args: --run
 
-def foo(n:!ℕ) ⇒ vector(let { def foo(){ n:=n+1; return n; } } in foo(), false); /// TODO
-def bar(n:!ℕ) ⇒ vector(let { foo:=(){ n:=n+1; return n; } } in foo(), true); /// TODO
-def chain(a:!ℕ,b:!ℕ) ⇒ vector(let { /// TODO
+def foo(n:!ℕ) ⇒ vector(let { def foo(){ n:=n+1; return n; } } in foo(), false);
+def bar(n:!ℕ) ⇒ vector(let { foo:=(){ n:=n+1; return n; } } in foo(), true);
+def chain(a:!ℕ,b:!ℕ) ⇒ vector(let {
 	def outer(){
 		c:=b+1;
 		def inner() ⇒ a+c;

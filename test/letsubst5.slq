@@ -1,7 +1,7 @@
 // args: --run
 
-def tup(k:!ℕ) ⇒ vector(let { (a,b):=(k,k+1); } in a·b, false); /// TODO
-def ann(k:!ℕ) ⇒ vector(let { n:!ℕ:=k+1; (x,y):=(n,n·n); } in x+y, true); /// TODO
+def tup(k:!ℕ) ⇒ vector(let { (a,b):=(k,k+1); } in a·b, false);
+def ann(k:!ℕ) ⇒ vector(let { n:!ℕ:=k+1; (x,y):=(n,n·n); } in x+y, true);
 def main(){
 	k:=2;
 	x:=tup(k);

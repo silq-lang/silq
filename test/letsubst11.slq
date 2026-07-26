@@ -1,0 +1,26 @@
+// args: --run
+
+def rec(b:!𝔹) ⇒ vector(let {
+	def go(n:!ℕ):!ℕ{
+		if n==0 { return 0; }
+		return go(n sub 1)+(if b then 1 else 2);
+	}
+} in go(4), false);
+def recForget(b:!𝔹) ⇒ vector(let {
+	def go(n:!ℕ):!ℕ{
+		tmp := 100;
+		if n==0 { return 0; }
+		return go(n sub 1)+tmp;
+	}
+} in go(3)+(if b then 0 else 10), false);
+def main(){
+	x:=rec(true);
+	forget(x=vector(4,false));
+	y:=rec(false);
+	forget(y=vector(8,false));
+	z:=recForget(true);
+	forget(z=vector(300,false));
+	w:=recForget(false);
+	forget(w=vector(310,false));
+	return ();
+}

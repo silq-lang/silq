@@ -2991,10 +2991,16 @@ class ScopeWriter {
 
 	void debugVar(ast_decl.Declaration d, Value v) {
 		ast_decl.FunctionDef varFunc = d.scope_.getFunction();
+		ast_decl.FunctionDef refFunc;
+		for(auto sc = this; sc && !refFunc; sc = sc.parent)
+			if(sc.nscope) refFunc = sc.nscope.getFunction();
 		int capLevel = 0;
-		for(ast_decl.FunctionDef curFunc = nscope.getFunction(); curFunc !is varFunc; curFunc = curFunc.scope_.getFunction()) {
+		bool found = false;
+		for(ast_decl.FunctionDef curFunc = refFunc; curFunc; curFunc = curFunc.scope_ ? curFunc.scope_.getFunction() : null) {
+			if(curFunc is varFunc) { found = true; break; }
 			capLevel += 1;
 		}
+		if(!found) capLevel = 0;
 
 		int param = -1;
 		if(cast(ast_decl.Parameter) d) {
@@ -3004,7 +3010,6 @@ class ScopeWriter {
 			foreach(i, p; varFunc.params) {
 				if(p is d) param = cast(int) i;
 			}
-			assert(param >= 0);
 		}
 		ccg.code.vars.put(IrVariable(d, v, ctx.curLoc.loc, capLevel, param));
 	}
@@ -3012,7 +3017,7 @@ class ScopeWriter {
 	void defineVar(ast_decl.Declaration d, Value v) {
 		v.setName(d.name);
 		auto name = d.getId;
-		assert(d.scope_ is nscope, format("Scope violation for %s", name.str));
+		assert(!nscope || d.scope_ is nscope, format("Scope violation for %s", name.str));
 		auto p = name in vars;
 		assert(!p || p.value is null, format("Duplicate definition: %s", name.str));
 		vars[name] = Variable(d, v);
@@ -3042,6 +3047,14 @@ class ScopeWriter {
 		Value v;
 		auto p = name in vars;
 		if(!isDup) {
+			if(!p && nscope is null) {
+				for(auto sc = parent; sc && !p; sc = sc.parent) {
+					p = name in sc.vars;
+					if(p) {
+						assert(sc.ccg.code is this.ccg.code || !typeHasQuantum(typeForDecl(decl)), format("Variable %s used in subfunction has quantum component", name.str));
+					}
+				}
+			}
 			if(!p) {
 				for(auto sc = parent; sc; sc = sc.parent) {
 					assert(name !in sc.vars, format("Variable %s not split from parent scope", name.str));
@@ -3065,7 +3078,7 @@ class ScopeWriter {
 			p.value = null;
 		}
 		if (p.decl !is decl) {
-			assert(!strictDecl || (isDup && p.decl.isSplitFrom(decl)), format("Variable %s declaration mismatch at %s use; found %s, expected %s\n", name.str, isDup ? "const" : "moved", p.decl.loc, decl.loc));
+			assert(!strictDecl || (isDup && p.decl.isSplitFrom(decl)) || (nscope is null && p.decl.canonicalSource is decl.canonicalSource), format("Variable %s declaration mismatch at %s use; found %s, expected %s\n", name.str, isDup ? "const" : "moved", p.decl.loc, decl.loc));
 			assert(typeForDecl(p.decl) == typeForDecl(decl), "Split const decl changed type");
 		}
 		return v;
@@ -3178,9 +3191,9 @@ class ScopeWriter {
 		}
 
 		assert(sc0);
-		assert(!nscope || sc0.parent is nscope);
+		assert(!nscope || sc0.parent is nscope || cast(ast_scope.TypeScope)sc0);
 		assert(sc1);
-		assert(!nscope || sc1.parent is nscope);
+		assert(!nscope || sc1.parent is nscope || cast(ast_scope.TypeScope)sc1);
 
 		if0 = withCond(sc0, cond.invert());
 		if1 = withCond(sc1, cond);
@@ -3257,10 +3270,10 @@ class ScopeWriter {
 	}
 
 	Value genCompoundValue(ast_exp.CompoundExp e, ast_exp.Expression fin, Expression ty, bool* aborted=null) {
-		assert(e.blscope_ is null || e.blscope_ is nscope);
+		assert(e.blscope_ is null || e.blscope_ is nscope || nscope is null);
 		assert(fin || e.s.length > 0);
 
-		if(e.blscope_) {
+		if(e.blscope_ && e.blscope_ is nscope) {
 			foreach(decl; e.blscope_.forgottenVarsOnEntry) {
 				valForget(getVar(decl, false));
 			}
@@ -3281,7 +3294,7 @@ class ScopeWriter {
 			assert(!r.isReturn && !r.isConditionalReturn, "early return in compound expression");
 		}
 		auto r = genExprAs(fin, ty);
-		if(e.blscope_) {
+		if(e.blscope_ && e.blscope_ is nscope) {
 			scope loc = PushLocation(ctx, locEnd(e.loc));
 			foreach(decl; e.blscope_.forgottenVars) {
 				valForget(getVar(decl, false));
@@ -3372,7 +3385,10 @@ class ScopeWriter {
 				// global function
 				return getFunc(fd, true, null);
 			}
-			if(nscope.isNestedIn(fd.fscope_)) {
+			bool inOwnBody = false;
+			for(auto w = this; w; w = w.parent)
+				if(w.nscope && w.nscope.isNestedIn(fd.fscope_)) { inOwnBody = true; break; }
+			if(inOwnBody) {
 				// recursive closure
 				assert(decl.getId !in vars, format("Recursive closure %s also visible as variable", decl));
 				return getFunc(fd, isDup, e.recaptures);
@@ -4145,8 +4161,12 @@ class ScopeWriter {
 		pinType(e.type);
 
 		auto cond = genCond(e.cond);
+		auto scThen = e.then.blscope_, scOthw = e.othw.blscope_;
+		if(scThen && scThen.parent !is nscope && !cast(ast_scope.TypeScope)scThen) scThen = null;
+		if(scOthw && scOthw.parent !is nscope && !cast(ast_scope.TypeScope)scOthw) scOthw = null;
+		if((scThen is null) != (scOthw is null)) { scThen = null; scOthw = null; }
 		ScopeWriter ifTrue, ifFalse;
-		genSplit(cond, ifFalse, e.othw.blscope_, ifTrue, e.then.blscope_);
+		genSplit(cond, ifFalse, scOthw, ifTrue, scThen);
 
 		auto rTrue = ifTrue.genCompoundValue(e.then, null, e.type);
 		auto rFalse = ifFalse.genCompoundValue(e.othw, null, e.type);
@@ -4163,6 +4183,13 @@ class ScopeWriter {
 	}
 
 	Value implExpr(ast_exp.LetExp e) {
+		if(e.s.blscope_ && e.s.blscope_.parent !is nscope && !cast(ast_scope.TypeScope)e.s.blscope_) {
+			auto sub = withBlock(null);
+			bool aborted = false;
+			auto r = sub.genCompoundValue(e.s, e.e, e.type, &aborted);
+			sub.checkEmpty(aborted);
+			return r;
+		}
 		if(!e.s.blscope_) return genCompoundValue(e.s, e.e, e.type);
 		auto sub = withBlock(e.s.blscope_);
 		foreach(decl; sub.nscope.splitVars) {
@@ -4761,7 +4788,7 @@ class ScopeWriter {
 	}
 
 	Result genStmts(Expression[] stmts, Result result = Result.passes()) {
-		assert(nscope);
+		assert(nscope || parent);
 		Result combineResults(Result ra, Result rb, ScopeWriter scB) {
 			if(ra.isReturn || ra.isAbort || rb.isPass) {
 				return ra;
@@ -5170,6 +5197,13 @@ class ScopeWriter {
 
 	Result implStmt(ast_exp.CompoundExp e) {
 		if(!e.blscope_) return genStmts(e.s);
+
+		if(e.blscope_.parent !is nscope && !cast(ast_scope.TypeScope)e.blscope_) {
+			auto sub = withBlock(null);
+			auto r = sub.genStmts(e.s);
+			sub.checkEmpty(!!r.isAbort);
+			return r;
+		}
 
 		auto sub = withBlock(e.blscope_);
 		foreach(decl; sub.nscope.splitVars) {
@@ -6336,7 +6370,7 @@ class ScopeWriter {
 			Expression retExpr = callTy.tryApply(argExpr, callTy.isSquare);
 			assert(!!retExpr);
 			auto retClassical = retExpr.getClassical();
-			if(retType != retExpr && retType != retExpr) {
+			if(retType != retExpr) {
 				assert(!isReversed, "TODO make-classical reversed call");
 				assert(retType == retClassical, format("function result type mismatch: got %s, want %s or %s", retType, retExpr, retClassical));
 				assert(!ast_ty.hasQuantumComponent(argExpr.type), format("make-classical call with quantum argument, type: %s", argExpr.type));

@@ -1,6 +1,6 @@
 
-def cond[τ:type,σ:type](c:!𝔹,a:τ,b:σ): if c then let σ:=τ in σ else σ; /// TODO
-def leak(){ /// TODO error
+def cond[τ:type,σ:type](c:!𝔹,a:τ,b:σ): if c then let σ:=τ in σ else σ;
+def leak(){ /// error
 	c:=measure(H(0));
 	a:=[4];
 	b:=[1,2,3];
