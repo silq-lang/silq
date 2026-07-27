@@ -1,0 +1,10 @@
+// args: --run
+
+def foo(n:!ℕ) ⇒ vector(let { def f(x: !ℕ):!ℕ ⇒ x+n; x:=f(0); } in x, false);
+
+def main(){
+	q:=H(0);
+	m:=measure(q);
+	y:=foo(m);
+	forget(y=vector(m,false));
+}

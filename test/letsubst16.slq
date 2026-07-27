@@ -1,0 +1,8 @@
+// args: --run
+
+def foo(n:!ℕ) ⇒ vector(let { def f(x: !𝔹^n):!ℕ ⇒ n; y:=f(vector(n,false)); } in y, false);
+
+def main(){
+	x:=foo(2);
+	forget(x=vector(2,false));
+}
