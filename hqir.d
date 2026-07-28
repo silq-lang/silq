@@ -4765,9 +4765,27 @@ class ScopeWriter {
 		assert(false, format("TODO LHS %s: %s; type=%s, etype=%s", typeid(e).name, e, e.type, e.e.type));
 	}
 
-	void implLhs(Expression e, Value v) {
+	// expression kinds that cannot appear in lvalue position (asserted
+	// unreachable); kinds added to expKinds must be classified here (or given
+	// an implLhs overload) for this module to compile
+	alias nonLhsKinds=AliasSeq!(
+		ast_exp.IteExp,ast_exp.AssertExp,ast_exp.LiteralExp,ast_exp.LetExp,ast_exp.LambdaExp,
+		ast_exp.ForgetExp,ast_exp.FieldExp,ast_exp.SliceExp,ast_exp.TypeAnnotationExp,
+		ast_exp.UPlusExp,ast_exp.UMinusExp,ast_exp.UNotExp,ast_exp.UBitNotExp,
+		ast_exp.AddExp,ast_exp.SubExp,ast_exp.NSubExp,ast_exp.MulExp,ast_exp.DivExp,
+		ast_exp.IDivExp,ast_exp.ModExp,ast_exp.PowExp,
+		ast_exp.BitOrExp,ast_exp.BitXorExp,ast_exp.BitAndExp,
+		ast_exp.AndThenExp,ast_exp.OrElseExp,ast_exp.OrExp,ast_exp.XorExp,ast_exp.AndExp,
+		ast_exp.LtExp,ast_exp.LeExp,ast_exp.GtExp,ast_exp.GeExp,ast_exp.EqExp,ast_exp.NeqExp,
+		ast_exp.VectorForExp,
+		ast_exp.ClassicalTy,ast_exp.ProductTy,ast_exp.ArrayTy,ast_exp.TupleTy,ast_exp.VectorTy,
+		ast_exp.VariadicTy,ast_exp.TypeTy,ast_exp.QNumericTy,ast_exp.BottomTy,ast_exp.NumericTy,
+		ast_exp.StringTy
+	);
+	void implLhs(T)(T e, Value v) if(ast_exp.isOneOf!(T,nonLhsKinds)) {
 		assert(false, format("unknown LHS %s: %s; type=%s", typeid(e).name, e, e.type));
 	}
+
 
 	Result genCompoundStmt(ast_exp.CompoundExp e) {
 		assert(nscope);
@@ -5165,29 +5183,6 @@ class ScopeWriter {
 		assert(e, "genStmt(null)");
 		scope loc = PushLocation(ctx, e.loc);
 		try {
-			static foreach(t; AliasSeq!(
-				ast_exp.DefineExp,
-				ast_exp.AssignExp,
-				ast_exp.OrElseAssignExp,
-				ast_exp.AndThenAssignExp,
-				ast_exp.AddAssignExp,
-				ast_exp.SubAssignExp,
-				ast_exp.NSubAssignExp,
-				ast_exp.MulAssignExp,
-				ast_exp.DivAssignExp,
-				ast_exp.IDivAssignExp,
-				ast_exp.ModAssignExp,
-				ast_exp.PowAssignExp,
-				ast_exp.CatAssignExp,
-				ast_exp.BitOrAssignExp,
-				ast_exp.BitXorAssignExp,
-				ast_exp.BitAndAssignExp,
-				ast_exp.OrAssignExp,
-				ast_exp.XorAssignExp,
-				ast_exp.AndAssignExp,
-			)) {
-				if(auto et = cast(t) e) return implStmt(et);
-			}
 			return ast_exp.dispatchStm!((auto ref e)=>this.implStmt(e))(e);
 		} catch(AssertError exc) {
 			exc.msg = format("%s\nat %s, statement: %s", exc.msg, e.loc, e);
@@ -5951,7 +5946,7 @@ class ScopeWriter {
 		return Result.passes();
 	}
 
-	Result implStmt(Expression e) {
+	Result implStmt(T)(T e) if(ast_exp.isOneOf!(T,ast_exp.exprStmKinds)) {
 		assert(e.constLookup);
 		Value v = genExpr(e);
 		if (ast_ty.isEmpty(e.type)) {
