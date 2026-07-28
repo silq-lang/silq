@@ -50,7 +50,7 @@ class QSim{
 			err.run_error("use `--run-on=args` or `--run-on-each=[args_1,...,args_n]` to run main function with parameters",def.loc);
 			return QState.empty();
 		}
-		/+DExpr[string] fields;
+		/+MapX!(string,DExpr) fields;
 		foreach(i,a;def.params) fields[a.getName]=dVar(a.getName);
 		DExpr init=dRecord(fields);+/
 		auto init=QState.unit();
@@ -436,7 +436,7 @@ struct QState{
 				break;
 		}
 	}
-	void updateRelabeling(ref Σ.Ref[Σ.Ref] relabeling,Value to,Value from){
+	void updateRelabeling(ref MapSX!(Σ.Ref,Σ.Ref) relabeling,Value to,Value from){
 		if(!to.type) return;
 		auto tag=to.tag;
 		enforce(tag==from.tag,text("value type mismatch on merge: `",to.type,"` vs. `",from.type,"`"));
@@ -470,7 +470,7 @@ struct QState{
 			if(k in vars) prepareMerge(vars[k],v,r);
 			else vars[k]=v;
 		}
-		Σ.Ref[Σ.Ref] relabeling;
+		MapSX!(Σ.Ref,Σ.Ref) relabeling;
 		foreach(k,ref v;r.vars){
 			updateRelabeling(relabeling,vars[k],v);
 		}
@@ -697,7 +697,7 @@ struct QState{
 		this(Value l,Value r){ this.l=l; this.r=r; }
 		override Value get(ref Σ σ){ return l.classicalValue(σ).compare!op(r.classicalValue(σ)); }
 	}
-	alias Record=HashMap!(string,Value,(a,b)=>a==b,(a)=>typeid(a).getHash(&a));
+	alias Record=HashMap!(string,Value,(a,b)=>a==b,(a)=>typeid(a).getHash(&a),Storage.stable);
 	struct Closure{
 		FunctionDef fun;
 		Value* context;
@@ -2096,10 +2096,10 @@ struct QState{
 			forget(ref_);
 		}
 		hash_t toHash(){ return qvars.toHash(); }
-		void relabel(Ref[Ref] relabeling){
+		void relabel(MapSX!(Ref,Ref) relabeling){
 			typeof(qvars) nqvars; // TODO: apply permutation in place
 			foreach(ref_,qvar;qvars){
-				if(auto to=ref_ in relabeling) nqvars[*to]=qvar;
+				if(auto to = relabeling.getPtr(ref_)) nqvars[*to]=qvar;
 				else nqvars[ref_]=qvar;
 			}
 			qvars=nqvars;

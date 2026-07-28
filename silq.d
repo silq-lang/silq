@@ -17,13 +17,13 @@ static this(){
 }
 
 class Backend {
-	abstract int run(FunctionDef fun, FunctionDef[string] functions, ErrorHandler err);
+	abstract int run(FunctionDef fun, MapSX!(string,FunctionDef) functions, ErrorHandler err);
 }
 
 scope class SummarizeBackend: Backend {
 	string[] entries;
 
-	override int run(FunctionDef fun, FunctionDef[string] functions, ErrorHandler err) {
+	override int run(FunctionDef fun, MapSX!(string,FunctionDef) functions, ErrorHandler err) {
 		try{
 			foreach(fd;functions)
 				writefln(getSummary(fd,entries).join(","));
@@ -38,10 +38,10 @@ scope class SummarizeBackend: Backend {
 scope class QSimBackend: Backend {
 	ulong numRuns = 1;
 
-	override int run(FunctionDef fun, FunctionDef[string] functions, ErrorHandler err) {
+	override int run(FunctionDef fun, MapSX!(string,FunctionDef) functions, ErrorHandler err) {
 		import qsim;
 		if(!fun){
-			auto pfun = "main" in functions;
+			auto pfun = functions.getPtr("main");
 			if(!pfun) return 0;
 			fun=*pfun;
 		}
@@ -71,10 +71,10 @@ scope class HQIRBackend: Backend {
 		this.outClose = false;
 	}
 
-	override int run(FunctionDef fun, FunctionDef[string] functions, ErrorHandler err) {
+	override int run(FunctionDef fun, MapSX!(string,FunctionDef) functions, ErrorHandler err) {
 		auto be = new hqir.Writer(outFile, opt);
 		if(!fun){
-			auto pfun = compileFunc in functions;
+			auto pfun = functions.getPtr(compileFunc);
 			if(pfun) fun = *pfun;
 		}
 		if(fun){
@@ -125,7 +125,7 @@ int importModuleFromPath(string path, Scope sc, Location loc){
 
 int run(Backend backend, Expression[] exprs, Scope sc, FunctionDef fun=null){
 	if(sc.handler.nerrors) return 1;
-	FunctionDef[string] functions;
+	MapSX!(string,FunctionDef) functions;
 	foreach(expr;exprs){
 		if(cast(ErrorExp)expr) continue;
 		if(auto fd=cast(FunctionDef)expr){

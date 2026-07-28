@@ -1,4 +1,5 @@
 import core.exception: AssertError;
+import util: MapX, MapSX;
 import std.conv: ConvOverflowException, text, to;
 import std.stdio: File, stderr;
 import std.array: Appender, appender, array, join;
@@ -67,7 +68,7 @@ static immutable string opConcatAssign = opConcat ~ opAssign;
 alias Unit = void[0];
 enum unit = Unit.init;
 
-alias IdMap(T) = T[Id];
+alias IdMap(T) = MapSX!(Id,T);
 alias IdSet=IdMap!Unit;
 
 static size_t regCtr = 0;
@@ -1766,7 +1767,7 @@ class CCGen {
 	CReg emitPureOp(string op, CReg[] args, scope void delegate(CCGen, CReg) onNew = null) {
 		auto key = PureOpKey(op, args);
 		for(auto cg = this; cg; cg = cg.parent) {
-			if(auto p = key in cg.cachedPureOps) return *p;
+			if(auto p = cg.cachedPureOps.getPtr(key)) return *p;
 		}
 		auto r = new CReg();
 		writeCOp(op, [r], args);
@@ -1803,11 +1804,11 @@ class CCGen {
 	CReg boxIndex(string boxTag, CReg len, CReg box, CReg ix) {
 		if(!box) return null;
 		for(auto cg = this; cg; cg = cg.parent) {
-			if(auto p = box in cg.cachedBoxItems) {
+			if(auto p = cg.cachedBoxItems.getPtr(box)) {
 				auto v = *p;
 				if(v.length == 0) return null;
 				if(v.length == 1) return v[0];
-				if(auto ixBig = ix in ctx.intValue) {
+				if(auto ixBig = ctx.intValue.getPtr(ix)) {
 					if(*ixBig >= v.length) break;
 					auto ixInt = ixBig.to!size_t();
 					return v[ixInt];
@@ -1938,7 +1939,7 @@ class CCGen {
 	}
 
 	CReg intNeg(CReg r1) {
-		if(auto p1 = r1 in ctx.intValue) {
+		if(auto p1 = ctx.intValue.getPtr(r1)) {
 			return ctx.literalInt(-*p1);
 		}
 		return emitPureOp("int_linear[0,-1]", [r1]);
@@ -1947,12 +1948,12 @@ class CCGen {
 	CReg intAdd(CReg r1, CReg r2) {
 		if(r1 is ctx.intZero) return r2;
 		if(r2 is ctx.intZero) return r1;
-		if(auto p1 = r1 in ctx.intValue) {
-			if(auto p2 = r2 in ctx.intValue) {
+		if(auto p1 = ctx.intValue.getPtr(r1)) {
+			if(auto p2 = ctx.intValue.getPtr(r2)) {
 				return ctx.literalInt(*p1 + *p2);
 			}
 			return emitPureOp(format("int_linear[%s,1]", (*p1).toDecimalString()), [r2]);
-		} else if(auto p2 = r2 in ctx.intValue) {
+		} else if(auto p2 = ctx.intValue.getPtr(r2)) {
 			return emitPureOp(format("int_linear[%s,1]", (*p2).toDecimalString()), [r1]);
 		}
 		return emitPureOp("int_linear[0,1,1]", [r1, r2]);
@@ -1962,12 +1963,12 @@ class CCGen {
 		if(r1 is ctx.intZero) return intNeg(r2);
 		if(r2 is ctx.intZero) return r1;
 		if(r1 is r2) return ctx.intZero;
-		if(auto p1 = r1 in ctx.intValue) {
-			if(auto p2 = r2 in ctx.intValue) {
+		if(auto p1 = ctx.intValue.getPtr(r1)) {
+			if(auto p2 = ctx.intValue.getPtr(r2)) {
 				return ctx.literalInt(*p1 - *p2);
 			}
 			return emitPureOp(format("int_linear[%s,-1]", (*p1).toDecimalString()), [r2]);
-		} else if(auto p2 = r2 in ctx.intValue) {
+		} else if(auto p2 = ctx.intValue.getPtr(r2)) {
 			return emitPureOp(format("int_linear[%s,1]", (-*p2).toDecimalString()), [r1]);
 		}
 		return emitPureOp("int_linear[0,1,-1]", [r1, r2]);
@@ -2181,7 +2182,7 @@ class CCGen {
 	}
 
 	void checkUnsigned(bool isAssert, CReg val) {
-		if(auto p = val in ctx.intValue) {
+		if(auto p = ctx.intValue.getPtr(val)) {
 			if(*p >= 0) return;
 		}
 		checkBool(isAssert, intCmpLe(ctx.intZero, val));
@@ -2218,8 +2219,8 @@ private:
 	CCGen parent;
 	CodeWriter code;
 	CondC[] condC;
-	CReg[PureOpKey] cachedPureOps;
-	CReg[][CReg] cachedBoxItems;
+	MapSX!(PureOpKey,CReg) cachedPureOps;
+	MapSX!(CReg,CReg[]) cachedBoxItems;
 }
 
 class QCGen {
@@ -2608,7 +2609,7 @@ struct Borrow {
 
 class BorrowScope {
 	bool isItrans;
-	Borrow[Id] borrows;
+	MapSX!(Id,Borrow) borrows;
 }
 
 struct IndexChain {
@@ -3018,7 +3019,7 @@ class ScopeWriter {
 		v.setName(d.name);
 		auto name = d.getId;
 		assert(!nscope || d.scope_ is nscope, format("Scope violation for %s", name.str));
-		auto p = name in vars;
+		auto p = vars.getPtr(name);
 		assert(!p || p.value is null, format("Duplicate definition: %s", name.str));
 		vars[name] = Variable(d, v);
 		debugVar(d, v);
@@ -3034,7 +3035,7 @@ class ScopeWriter {
 		auto v = valNewQ(typeForDecl(d));
 		v.setName(d.name);
 		auto name = d.getId;
-		auto p = name in vars;
+		auto p = vars.getPtr(name);
 		assert(!p || p.value is null, format("Duplicate definition: %s", name.str));
 		vars[name] = Variable(d, v);
 		debugVar(d, v);
@@ -3045,11 +3046,11 @@ class ScopeWriter {
 		assert(decl);
 		auto name = decl.getId;
 		Value v;
-		auto p = name in vars;
+		auto p = vars.getPtr(name);
 		if(!isDup) {
 			if(!p && nscope is null) {
 				for(auto sc = parent; sc && !p; sc = sc.parent) {
-					p = name in sc.vars;
+					p = sc.vars.getPtr(name);
 					if(p) {
 						assert(sc.ccg.code is this.ccg.code || !typeHasQuantum(typeForDecl(decl)), format("Variable %s used in subfunction has quantum component", name.str));
 					}
@@ -3066,7 +3067,7 @@ class ScopeWriter {
 			while(!p) {
 				assert(cur.parent, format("Variable %s not available at const use", name.str));
 				cur = cur.parent;
-				p = name in cur.vars;
+				p = cur.vars.getPtr(name);
 			}
 			assert(cur.ccg.code is this.ccg.code || !typeHasQuantum(typeForDecl(decl)), format("Variable %s used in subfunction has quantum component", name.str));
 		}
@@ -3092,7 +3093,7 @@ class ScopeWriter {
 
 		assert(id.id !in bscope.borrows);
 		bscope.borrows[id.id] = Borrow(vd, indices);
-		auto b = id.id in bscope.borrows;
+		auto b = bscope.borrows.getPtr(id.id);
 		assert(b);
 		return b;
 	}
@@ -3104,7 +3105,7 @@ class ScopeWriter {
 
 		assert(bscope);
 		assert(bscope.isItrans);
-		auto p = id.id in bscope.borrows;
+		auto p = bscope.borrows.getPtr(id.id);
 		assert(p);
 		b = *p;
 		bscope.borrows.remove(id.id);
@@ -3113,11 +3114,11 @@ class ScopeWriter {
 
 	Value getRawVar(Id name) {
 		auto cur = this;
-		auto p = name in vars;
+		auto p = vars.getPtr(name);
 		while(!p) {
 			cur = cur.parent;
 			assert(cur, format("Variable %s not available at const use", name.str));
-			p = name in cur.vars;
+			p = cur.vars.getPtr(name);
 		}
 		Value v = p.value;
 		assert(v, format("Variable %s used after being consumed", name.str));
@@ -3211,7 +3212,7 @@ class ScopeWriter {
 		foreach(decl; sc0.splitVars) {
 			assert(decl.scope_ is sc0);
 			auto id = decl.splitFrom.getId;
-			Triple* t = id in splitVars;
+			Triple* t = splitVars.getPtr(id);
 			assert(t, format("Split variable %s missing in if-true", id.str));
 			assert(decl.splitFrom is t.outer, format("Split variable %s splitFrom scope mismatch", id));
 			t.d0 = decl;
@@ -3251,7 +3252,7 @@ class ScopeWriter {
 		}
 		foreach(decl; sc0.mergedVars) {
 			auto id = decl.mergedInto.getId;
-			auto t = id in mergedVars;
+			auto t = mergedVars.getPtr(id);
 			assert(t, format("Merged variable %s missing in if-true", id));
 			assert(decl.mergedInto is t.outer, format("Merged variable %s splitFrom mismatch", id));
 			t.d0 = decl;
@@ -5334,7 +5335,7 @@ class ScopeWriter {
 		assert(lhs.type == ie.type);
 
 		auto chain = IndexChain(ie);
-		auto var = chain.base.meaning.getId in vars;
+		auto var = vars.getPtr(chain.base.meaning.getId);
 		assert(var && var.value);
 		assert(var.decl is chain.base.meaning);
 
@@ -5444,7 +5445,7 @@ class ScopeWriter {
 		auto indices = b.indices;
 
 		auto chain = IndexChain(ie);
-		auto var = chain.base.meaning.getId() in vars;
+		auto var = vars.getPtr(chain.base.meaning.getId());
 		assert(var && var.value);
 
 		auto baseTy1 = typeForDecl(var.decl);
@@ -5619,7 +5620,7 @@ class ScopeWriter {
 	}
 
 	Result implStmt(ast_exp.AssignExp e) {
-		ast_decl.Declaration[void*] declMap;
+		MapSX!(void*,ast_decl.Declaration) declMap;
 
 		foreach(repl; e.replacements) {
 			declMap[cast(void*)repl.previous] = repl.new_;
@@ -5634,7 +5635,7 @@ class ScopeWriter {
 		auto lhs2 = e.e1.copy(ast_exp.Expression.CopyArgs(true, true));
 		assert(lhs2);
 		foreach(id; lhs2.freeVars) {
-			if (auto d = cast(void*)id.meaning in declMap) {
+			if (auto d = declMap.getPtr(cast(void*)id.meaning)) {
 				id.meaning = *d;
 			}
 		}
@@ -5990,7 +5991,7 @@ class ScopeWriter {
 	CReg getExprNat(Expression expr) {
 		ExprInfo ei = ctx.exprEval(expr);
 		for(auto par = this; par; par = par.parent) {
-			if(auto p = ei in par.cachedNat) return *p;
+			if(auto p = par.cachedNat.getPtr(ei)) return *p;
 		}
 
 		auto sc = evalScope(ei);
@@ -6025,7 +6026,7 @@ class ScopeWriter {
 				return r;
 			}
 			for(auto par = this; par; par = par.parent) {
-				if(auto p = ei in par.cachedRTTI) return *p;
+				if(auto p = par.cachedRTTI.getPtr(ei)) return *p;
 			}
 			auto sc = evalScope(ei);
 			assert(ei !in sc.cachedRTTI);
@@ -6845,7 +6846,7 @@ class ScopeWriter {
 	CReg subfuncPack(string prefix, ScopeWriter subsc, CReg[] cRet, QReg[] qRet, CReg[] cArgs, QReg[] qcArgs, QReg[] qiArgs) {
 		string f = ctx.allocName(prefix);
 		CReg[] cap;
-		ctx.output.write(subsc.ccg.code.finish(f, null, cap, cRet, qRet, cArgs, qcArgs, qiArgs, null));
+		ctx.output.write(subsc.ccg.code.finish(f, null, cap, cRet, qRet, cArgs, qcArgs, qiArgs, MapSX!(Id,Expression).init));
 		return ccg.funcPack(f, cap);
 	}
 
@@ -7206,8 +7207,8 @@ private:
 	IdMap!Variable vars;
 	bool detPassthrough;
 
-	CReg[ExprInfo] cachedNat;
-	RTTI[ExprInfo] cachedRTTI;
+	MapSX!(ExprInfo,CReg) cachedNat;
+	MapSX!(ExprInfo,RTTI) cachedRTTI;
 }
 
 struct IrStatement {
@@ -7356,7 +7357,7 @@ class CodeWriter {
 		code.put(IrStatement(condC, condQ, op, cRet, qRet, cArgs, qcArgs, qiArgs, ctx.curLoc.loc));
 	}
 
-	string finish(string defName, string prettyName, ref CReg[] captures, CReg[] cRet, QReg[] qRet, CReg[] cArgs, QReg[] qcArgs, QReg[] qiArgs, Expression[Id] attrs) {
+	string finish(string defName, string prettyName, ref CReg[] captures, CReg[] cRet, QReg[] qRet, CReg[] cArgs, QReg[] qcArgs, QReg[] qiArgs, MapSX!(Id,Expression) attrs) {
 		Appender!(IrStatement[]) literals;
 
 		if(_qregU) {
@@ -7366,7 +7367,7 @@ class CodeWriter {
 		{
 			Appender!(CReg[]) cap;
 			Appender!(CReg[]) lit;
-			Unit[CReg] seenCRegs;
+			MapX!(CReg,Unit) seenCRegs;
 			foreach(r; cArgs) {
 				seenCRegs[r] = unit;
 			}
@@ -7503,7 +7504,7 @@ class CodeWriter {
 		return o[];
 	}
 
-	string finish(string defName, string prettyName, CReg[] cRet, QReg[] qRet, CReg[] cArgs, QReg[] qcArgs, QReg[] qiArgs, Expression[Id] attrs) {
+	string finish(string defName, string prettyName, CReg[] cRet, QReg[] qRet, CReg[] cArgs, QReg[] qcArgs, QReg[] qiArgs, MapSX!(Id,Expression) attrs) {
 		assert(!parent);
 		CReg[] cap;
 		auto r = finish(defName, prettyName, cap, cRet, qRet, cArgs, qcArgs, qiArgs, attrs);
@@ -7725,12 +7726,12 @@ class Writer {
 				return c;
 			}).array;
 
-			size_t[ast_decl.Declaration] paramI;
+			MapSX!(ast_decl.Declaration,size_t) paramI;
 			foreach(i, param; outerParams) {
 				paramI[param] = i;
 			}
 			foreach(cap; fd.capturedDecls) {
-				auto p = cap in paramI;
+				auto p = paramI.getPtr(cap);
 				if (!p) continue;
 				auto i = *p;
 				fi.constCaptures[i].innerDecl = cap;
@@ -7965,7 +7966,7 @@ class Writer {
 			qRet = [null];
 		}
 
-		Expression[Id] attrs;
+		MapSX!(Id,Expression) attrs;
 		attrs[Id.s!"artificial"] = ast_exp.LiteralExp.makeBoolean(true);
 		return sc.ccg.code.finish(fi.indirectName, null, cRet, qRet, cCap[] ~ [cTuple], [qcCap, qcTuple], [qiCap, qiTuple], attrs);
 	}
@@ -7985,7 +7986,7 @@ class Writer {
 		assert(fd.ret);
 		CReg r = fi.retHasQuantum ? sc.genMeasure(fd.ret, sc.valNewQ(cIn, qIn)) : cIn;
 
-		Expression[Id] attrs;
+		MapSX!(Id,Expression) attrs;
 		return sc.ccg.code.finish("silq_main_print", null, [r], [], cArgs, [], qArgs, attrs);
 	}
 
@@ -7994,7 +7995,7 @@ class Writer {
 	}
 
 	CReg literalRaw(string val) {
-		if(auto p = val in literals) return *p;
+		if(auto p = literals.getPtr(val)) return *p;
 		auto r = new CReg();
 		literalValue[r] = val;
 		literals[val] = r;
@@ -8043,7 +8044,7 @@ class Writer {
 	}
 
 	Maybe!size_t asIndex(CReg r, size_t bound) {
-		auto p = r in intValue;
+		auto p = intValue.getPtr(r);
 		if(!p) return none!size_t;
 		if(*p < 0 || *p >= bound) return none!size_t;
 		return just(p.to!size_t);
@@ -8076,18 +8077,18 @@ class Writer {
 	RTTI unitRTTI, classicalRTTI, qubitRTTI, qfuncRTTI;
 
 private:
-	CReg[string] literals;
-	string[CReg] literalValue;
-	BigInt[CReg] intValue;
+	MapSX!(string,CReg) literals;
+	MapX!(CReg,string) literalValue;
+	MapSX!(CReg,BigInt) intValue;
 
 	Appender!(ExprInfo[]) exprInfoList;
-	ExprInfo[void*] exprInfoMap;
+	MapSX!(void*,ExprInfo) exprInfoMap;
 
 	PushLocation* curLoc;
 
 private:
-	FunctionInfo[ast_decl.FunctionDef] functions;
-	FunctionInfo[string] byDirectName;
+	MapSX!(ast_decl.FunctionDef,FunctionInfo) functions;
+	MapX!(string,FunctionInfo) byDirectName;
 	Appender!(FunctionInfo[]) pending;
 	File output;
 	Options options;
