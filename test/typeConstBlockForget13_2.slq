@@ -1,0 +1,5 @@
+
+def main(){
+	n:=2;
+	x := vector(n,0) ~ [let forget(n) in 1:𝔹]; /// error
+}

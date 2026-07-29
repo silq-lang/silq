@@ -6027,6 +6027,26 @@ class ScopeWriter {
 		getRTTI(ty);
 	}
 
+	// evaluates all type-level numeric expressions of `ty` (vector lengths,
+	// integer bit widths, zmod moduli) as well as its RTTI, so that later
+	// processing of values of this type does not need to evaluate them (the
+	// variables they mention may have been consumed in the meantime)
+	void pinTypeDeep(Expression ty) {
+		if(auto vecTy = cast(ast_ty.VectorTy) ty) {
+			getVectorLength(vecTy);
+			pinTypeDeep(vecTy.next);
+		} else if(auto tupTy = cast(ast_ty.TupleTy) ty) {
+			foreach(t; tupTy.types) pinTypeDeep(t);
+		} else if(auto intTy = ast_ty.isFixedIntTy(ty)) {
+			getNumericBits(intTy);
+		} else if(auto zmodTy = ast_ty_isZmodTy(ty)) {
+			getZmodN(zmodTy);
+		} else if(auto arrTy = cast(ast_ty.ArrayTy) ty) {
+			pinTypeDeep(arrTy.next);
+		}
+		pinType(ty);
+	}
+
 	RTTI getRTTI(Expression ty) {
 		assert(ast_ty.isType(ty), format("not a type: %s of type %s", ty, ty.type));
 		try {
@@ -6440,6 +6460,15 @@ class ScopeWriter {
 				continue;
 			}
 			ai[i].val = genExprAs(args[i], makeClassical ? paramTy.getClassical() : paramTy);
+			// the parameter type may be needed to process the argument after
+			// later arguments have been generated (e.g. by genPromote in the
+			// makeClassical path); evaluate it now, while all variables it
+			// mentions are still available
+			if(auto at=ai[i].ty){
+				bool dependent=false;
+				foreach(id; ast_ty.freeIdentifiers(at)) { dependent=true; break; }
+				if(dependent) pinTypeDeep(at);
+			}
 		}
 
 		CallInfo ci;

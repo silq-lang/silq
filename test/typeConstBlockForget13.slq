@@ -1,0 +1,6 @@
+// args: --run
+
+def main(){
+	n:=2;
+	x := (vector(n,0):𝔹[]) ~ [let forget(n) in 1:𝔹];
+}
