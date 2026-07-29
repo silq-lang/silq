@@ -3231,12 +3231,6 @@ class ScopeWriter {
 			if1.defineVar(d1, v1);
 			if0.defineVar(d0, v0);
 		}
-
-		// Make sure the merged types are evaluated in the outer scope.
-		foreach(decl; sc1.mergedVars ~ sc0.mergedVars) {
-			auto ty = typeForDecl(decl.mergedInto);
-			pinType(ty);
-		}
 	}
 
 	void genMerge(CondAny cond, ScopeWriter if0, ScopeWriter if1) {
@@ -3258,13 +3252,32 @@ class ScopeWriter {
 			t.d0 = decl;
 		}
 
+		IdMap!Expression mergeTypeSubst;
+		foreach(decl; sc1.mergedVars ~ sc0.mergedVars) {
+			auto outer = decl.mergedInto;
+			if(!outer) continue;
+			if(outer.getId in mergeTypeSubst) continue;
+			auto nid = new ast_exp.Identifier(outer.getId);
+			nid.meaning = outer;
+			nid.scope_ = outer.scope_;
+			nid.loc = outer.loc;
+			nid.type = typeForDecl(outer);
+			nid.constLookup = true;
+			nid.setSemCompleted();
+			mergeTypeSubst[outer.getId] = nid;
+		}
 		foreach(id, t; mergedVars) {
 			assert(t.d0, format("Merged variable %s missing in if-false", id));
 			auto outer = t.outer;
 			// TODO types as part of merge result?
 			auto ty = typeForDecl(outer);
-			auto r1 = if1.genSubtype(if1.getVar(t.d1, false), typeForDecl(t.d1), ty);
-			auto r0 = if0.genSubtype(if0.getVar(t.d0, false), typeForDecl(t.d0), ty);
+			auto ty1 = typeForDecl(t.d1), ty0 = typeForDecl(t.d0);
+			if(mergeTypeSubst.length) {
+				if(ty1) ty1 = ty1.substitute(mergeTypeSubst);
+				if(ty0) ty0 = ty0.substitute(mergeTypeSubst);
+			}
+			auto r1 = if1.genSubtype(if1.getVar(t.d1, false), ty1, ty);
+			auto r0 = if0.genSubtype(if0.getVar(t.d0, false), ty0, ty);
 			auto val = valMerge(cond, r0, r1);
 			defineVar(outer, val);
 		}

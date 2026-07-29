@@ -1,12 +1,12 @@
 // args: --run
 
 def main(){
+	n:=3;
+	m:=4;
 	if measure(H(0)){
-		n:=3;
 		xs:=vector(n,0:𝔹);
 	}else{
-		n:=4;
-		xs:=vector(n,1:𝔹);
+		xs:=vector(m,0:𝔹);
 	}
-	return (xs:𝔹^n):𝔹[];
+	return xs; // xs: 𝔹[]
 }

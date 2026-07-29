@@ -1,0 +1,9 @@
+// args: --run
+
+def main() {
+	n := 3;
+	x := vector(n, 0:𝔹);
+	forget(x);
+	forget(n);
+	return 1;
+}

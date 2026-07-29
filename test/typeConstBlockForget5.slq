@@ -1,0 +1,9 @@
+// args: --run
+
+def main() {
+	n := 3;
+	x := vector(n, 0:int[64]);
+	x := x:int[64][];
+	n = 4;
+	return n;
+}

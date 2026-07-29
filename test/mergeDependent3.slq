@@ -5,8 +5,13 @@ def main(){
 		n:=3;
 		xs:=vector(n,0:𝔹);
 	}else{
-		n:=4;
-		xs:=vector(n,1:𝔹);
+		if measure(H(0)){
+			n:=4;
+			xs:=vector(n,1:𝔹);
+		}else{
+			n:=5;
+			xs:=vector(n,0:𝔹);
+		}
 	}
 	return (xs:𝔹^n):𝔹[];
 }

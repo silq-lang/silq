@@ -9,7 +9,7 @@ def main(){
 
 	with {
 		i := len(x[0]);
-		j := 0;
+		j := 0; /// TODO
 		(yleft: _^(i+j)) ~ (yi,) ~ (yright) := y; /// TODO
 	} do {
 		yi := H(yi);

@@ -1,0 +1,7 @@
+
+def foo[n:!ℕ](xs:𝔹^n,t:!ℕ)⇒xs:𝔹[];
+
+def main(){
+	n:=2;
+	x:=foo(vector(n,0),let forget(n) in 2); /// TODO
+}

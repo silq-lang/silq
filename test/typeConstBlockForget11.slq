@@ -1,0 +1,7 @@
+
+def foo(xs:𝔹[],t:!ℕ)⇒xs;
+
+def main(){
+	n:=2;
+	x:=foo(vector(n,0):𝔹[],let forget(n) in 2); /// TODO
+}

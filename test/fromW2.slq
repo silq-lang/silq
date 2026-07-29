@@ -1,3 +1,4 @@
+// args: --run
 
 def toW[n:!ℕ]lifted:𝔹^n →mfree 𝔹^n⇒lambda(qs:𝔹^n)mfree:𝔹^n{
 	if n==1{ qs[0]:=X(qs[0]); }
@@ -19,7 +20,7 @@ def fromW[n:!ℕ]lifted:𝔹^n→mfree 𝔹^n⇒lambda(qs:𝔹^n)mfree:𝔹^n{
         __tmp2 := qs coerce 𝔹[];
         (head,) := dup(__tmp2[0..1]) coerce 𝔹^1;
         tail := dup(__tmp2[1..__tmp2.length]) coerce 𝔹^((n sub 1));
-        forget(__tmp2=[head] ~ (tail: 𝔹[])); /// error
+        forget(__tmp2=[head] ~ (tail: 𝔹[]));
         if ¬head {
             tail := fromW(tail);
         }
