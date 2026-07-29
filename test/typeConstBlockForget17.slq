@@ -1,0 +1,11 @@
+// args: --run
+
+def main() {
+	n := 3;
+	f1 := lambda()mfree ⇒ vector(n, 0:𝔹);
+	f2 := lambda()mfree ⇒ vector(n, 0:𝔹);
+	forget(f1);
+	forget(f2);
+	forget(n);
+	return 1;
+}

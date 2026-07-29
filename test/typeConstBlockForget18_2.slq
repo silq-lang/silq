@@ -2,6 +2,8 @@
 def main() {
 	n := 3;
 	f := lambda()mfree ⇒ vector(n, 0:𝔹);
-	forget(n); /// error
-	return f():𝔹[];
+	g := f;
+	forget(g);
+	forget(n); /// TODO
+	return 1;
 }

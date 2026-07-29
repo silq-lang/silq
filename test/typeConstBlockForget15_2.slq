@@ -3,5 +3,5 @@ def foo[n:!ℕ](xs:!𝔹^n, t:!ℕ)⇒t;
 
 def main(){
 	n:=2;
-	x := foo(vector(n,0), let forget(n) in 2);
+	x := foo(vector(n,0), let forget(n) in 2); /// error
 }

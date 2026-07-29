@@ -1,0 +1,8 @@
+
+def apply[n:!ℕ](g:𝟙!→mfree 𝔹^n, t:!ℕ)⇒t;
+
+def main() {
+	n := 3;
+	x := apply(lambda()mfree ⇒ vector(n, 0:𝔹), let forget(n) in 2); /// error
+	return x;
+}

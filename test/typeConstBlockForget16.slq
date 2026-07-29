@@ -1,8 +1,9 @@
+// args: --run
 
 def foo[m:!ℕ](xs:𝔹[],ys:𝔹^m)⇒(xs:𝔹[],ys);
 
 def main(){
 	n:=3+measure(H(0));
 	m:=3+measure(H(0));
-	return foo(vector(n,0),let forget(n) in vector(m,0)):𝔹[]^2; /// TODO
+	return foo(vector(n,0),let forget(n) in vector(m,0)):𝔹[]^2;
 }
