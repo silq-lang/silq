@@ -1,9 +1,7 @@
-// args: --run
-
 def main() {
 	n := 3;
 	f := lambda()mfree ⇒ vector(n, 0:𝔹);
 	c := measure(H(0:𝔹));
-	if c { forget(f); } else { forget(n); }
-	return c;
+	if c { forget(n); } /// TODO error
+	return f():𝔹[]; /// TODO
 }

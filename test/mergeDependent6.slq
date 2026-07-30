@@ -7,6 +7,6 @@ def main(){
 		n:=4;
 		xs:=vector(n,1:𝔹);
 	}
-	forget(n); /// error
-	return (xs:𝔹[]):𝔹[];
+	forget(n); /// TODO error
+	return (xs:𝔹[]):𝔹[]; /// TODO
 }

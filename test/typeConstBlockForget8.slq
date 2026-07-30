@@ -4,8 +4,8 @@ def main() {
 	c := measure(H(0:𝔹));
 	if c {
 		x := vector(n, 0:𝔹);
-		forget(n); /// error
-		forget(x);
+		forget(n); /// TODO error
+		forget(x); /// TODO
 	} else {
 		forget(n);
 	}

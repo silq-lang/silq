@@ -1,7 +1,8 @@
+// args: --run
 
 def main() {
 	n := 3;
 	f := lambda()mfree ⇒ vector(n, 0:𝔹);
-	forget(n); /// TODO
+	forget(n);
 	return 1;
 }

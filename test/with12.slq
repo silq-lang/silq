@@ -1,3 +1,4 @@
+// args: --run
 
 def len(const x: 𝔹[]) qfree: !ℕ {
 	return x.length;
@@ -9,7 +10,7 @@ def main(){
 
 	with {
 		i := len(x[0]);
-		j := 0; /// TODO
+		j := 0;
 		(yleft: 𝔹^(i+j)) ~ (yi,) ~ (yright) := y;
 	} do {
 		yi := H(yi);
