@@ -4,7 +4,7 @@ def main() {
 	x := vector(n, 0:𝔹);
 	c := measure(H(0:𝔹));
 	if c {
-		forget(n); /// TODO error
+		forget(n); /// error
 	}
-	return ((x:𝔹[]), c); /// TODO
+	return ((x:𝔹[]), c);
 }

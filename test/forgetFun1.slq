@@ -4,6 +4,6 @@ def main(){
 	forget(foo);
 	def foo()⇒2;
 	x:=vector(foo(),0);
-	forget(foo); /// TODO error
-	return x; /// TODO
+	forget(foo); /// error
+	return x;
 }

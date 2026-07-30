@@ -3,6 +3,6 @@ def main(){
 	a:=[0:𝔹,1:𝔹,0:𝔹]:𝔹[];
 	b:=[0:𝔹,1:𝔹,0:𝔹]:𝔹[];
 	a:=a coerce 𝔹^b.length;
-	b=1; /// TODO error
-	return a; /// TODO
+	b=1; /// error
+	return a;
 }

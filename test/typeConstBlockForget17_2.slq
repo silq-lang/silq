@@ -4,6 +4,6 @@ def main() {
 	f1 := lambda()mfree ⇒ vector(n, 0:𝔹);
 	f2 := lambda()mfree ⇒ vector(n, 0:𝔹);
 	forget(f1);
-	forget(n); /// TODO error
-	return f2():𝔹[]; /// TODO
+	forget(n); /// error
+	return f2():𝔹[];
 }

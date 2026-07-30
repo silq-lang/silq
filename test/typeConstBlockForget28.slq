@@ -3,6 +3,6 @@ def main() {
 	f := lambda()mfree ⇒ vector(n, 0:𝔹);
 	c := measure(H(0:𝔹));
 	d := measure(H(0:𝔹));
-	if c { if d { forget(n); } } /// TODO error
-	return f():𝔹[]; /// TODO
+	if c { if d { forget(n); } } /// error
+	return f():𝔹[];
 }

@@ -1,8 +1,8 @@
 def main(){
 	n := 32;
 	x := 0: !int[n];
-	n = 20; /// TODO error
-	return x as !ℕ; /// TODO
+	n = 20; /// error
+	return x as !ℕ;
 }
 
 def foo(){ /// error
