@@ -3,10 +3,10 @@ def main(){
 	if measure(H(0)){
 		n:=3;
 		xs:=vector(n,0:𝔹);
+		forget(n); /// error
 	}else{
 		n:=4;
 		xs:=vector(n,1:𝔹);
-		forget(n); /// error
 	}
 	return (xs:𝔹^n):𝔹[];
 }
