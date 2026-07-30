@@ -1,0 +1,10 @@
+
+def main(){
+	xs:=vector(2,0);
+	with{
+		(x:_^1)~(y:_^1):=xs; /// TODO
+	}do{
+		(x,y):=[[H(t)] for t in x~y];
+	}
+	return xs;
+}
