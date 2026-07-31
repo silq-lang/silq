@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	let{ y := (X(x),); y ~= (0:𝔹,); } in y := (0:𝔹, 0:𝔹);
+	assert(measure(x)=1);
+	let{ y := (X(w),); y ~= (1:𝔹,) ~ (0:𝔹,); } in y := (0:𝔹, 1:𝔹, 0:𝔹);
+	assert(measure(w)=1);
+	return 0;
+}

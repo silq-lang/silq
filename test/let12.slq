@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	let{ y := x; repeat 3 { y += 1:uint[4]; } } in y := 3:uint[4];
+	assert(measure(x)=(0:!uint[4]));
+	let{ y := w; repeat 3 { y += 1:!uint[4]; } } in y := 3:!uint[4];
+	assert(w=(0:!uint[4]));
+	return 0;
+}

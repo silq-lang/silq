@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	let{ y := X(x); with z := y do z := X(z); } in y := 1;
+	assert(measure(x)=1);
+	return 0;
+}

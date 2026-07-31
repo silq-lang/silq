@@ -1,0 +1,4 @@
+def main(){
+	let{ x:=0; def g(x:𝔹)mfree:𝔹{ return X(x); } y := X(x); } in y := 1; /// error
+	return 0;
+}
