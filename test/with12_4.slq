@@ -1,8 +1,9 @@
+// args: --run
 
 def main(){
 	xs:=vector(2,0);
 	with{
-		(x:_^1)~(y:_^1):=xs; /// TODO
+		(x:_^1)~(y:_^1):=xs;
 	}do{
 		(x,y):=[[H(t)] for t in x~y];
 	}
