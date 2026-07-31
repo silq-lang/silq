@@ -1,0 +1,11 @@
+
+def main(){
+	x := 1e-100:!ℤ; /// error
+	y := 1.5e0:!ℤ; /// error
+	z := 1e-1:!ℕ; /// error
+	w := 2.5e0:!ℕ; /// error
+	assert((1.5e3:!ℤ)=1500); /// error
+	assert((1.50e2:!ℤ)=150); /// error
+	assert((0.5e1:!ℕ)=5); /// error
+	assert((1.e3:!ℕ)=1000); /// error
+}
