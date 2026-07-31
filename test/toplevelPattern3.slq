@@ -1,0 +1,4 @@
+// args: --run
+
+[b,c]:=[2,3];
+def main()⇒(b,c);
