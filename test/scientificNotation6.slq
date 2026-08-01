@@ -1,0 +1,5 @@
+def main(){
+	x := 1e+; /// error
+	y := 1e; /// error
+	z := 1.5e; /// error
+}

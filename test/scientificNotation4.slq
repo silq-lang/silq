@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	assert((1E100:!ℤ)%10000=0);
+	assert((1E-100:!ℚ)·(1E100:!ℚ)=1);
+	assert((2E0:!ℕ)=2);
+	assert((1.5E3:!ℚ)=1500);
+	return 0;
+}
