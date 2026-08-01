@@ -3992,40 +3992,51 @@ class ScopeWriter {
 		assert(false, format("Cannot forget %s %s", typeid(e).name, e));
 	}
 
+	CReg rationalFromConstant(ast_exp.LiteralExp e) {
+		auto cbe = e.asRationalConstant().get();
+		auto num = ctx.literalInt(cbe[0]);
+		auto den = ctx.literalInt(cbe[1]);
+		auto c = ccg.funcApply("primitive.rational.qfromnd", [num, den]);
+		auto base = ccg.rationalFromInt(ctx.literalInt(BigInt(cbe[2])));
+		auto exp = ctx.literalInt(BigInt(cbe[3]));
+		auto d = ccg.funcApply("primitive.rational.powi", [base, exp]);
+		return ccg.funcApply("primitive.rational.mul", [c, d]);
+	}
+
 	Value implExpr(ast_exp.LiteralExp e) {
 		auto ty = e.type;
 		switch(ast_ty.isNumericTy(ty)) {
 			case ast_ty.NumericType.none:
 				break;
 			case ast_ty.NumericType.Bool:
-				string s = e.lit.str;
 				bool val;
-				if(s == "0") {
-					val = false;
-				} else if(s == "1") {
-					val = true;
+				if(e.lit.type == Tok!".0") {
+					auto v = e.asNaturalScientificValue();
+					assert(v == 0 || v == 1, format("Unknown literal %s", e.lit.str));
+					val = v == 1;
 				} else {
-					assert(false, format("Unknown literal %s", s));
+					string s = e.lit.str;
+					if(s == "0") {
+						val = false;
+					} else if(s == "1") {
+						val = true;
+					} else {
+						assert(false, format("Unknown literal %s", s));
+					}
 				}
 				if(typeHasClassical(ty)) {
 					return valNewC(ctx.literalBool(val));
 				}
 				return valAllocQubit(val);
 			case ast_ty_NumericType_Nt:
-				assert(!typeHasQuantum(ty));
-				return valNewC(ctx.literalInt(e.asIntegerConstant().get()));
 			case ast_ty_NumericType_Zt:
 				assert(!typeHasQuantum(ty));
-				return valNewC(ctx.literalInt(e.asIntegerConstant().get()));
+				if(auto v = e.asIntegerConstant())
+					return valNewC(ctx.literalInt(v.get()));
+				// scientific-notation literal with integral value: emit via the factored rational representation
+				return valNewC(ccg.intFromRational(rationalFromConstant(e)));
 			case ast_ty_NumericType_Qt:
-				auto cbe = e.asRationalConstant().get();
-				auto num = ctx.literalInt(cbe[0]);
-				auto den = ctx.literalInt(cbe[1]);
-				auto c = ccg.funcApply("primitive.rational.qfromnd", [num, den]);
-				auto base = ccg.rationalFromInt(ctx.literalInt(BigInt(cbe[2])));
-				auto exp = ctx.literalInt(BigInt(cbe[3]));
-				auto d = ccg.funcApply("primitive.rational.powi", [base, exp]);
-				return valNewC(ccg.funcApply("primitive.rational.mul", [c, d]));
+				return valNewC(rationalFromConstant(e));
 			case ast_ty_NumericType_R:
 				assert(!typeHasQuantum(ty));
 				return valNewC(ctx.literalFloat(to!double(e.lit.str)));
