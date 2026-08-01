@@ -1,0 +1,10 @@
+// args: --run
+
+def rep[a:type](n:!ℕ,x:a)mfree{
+	return (n,x);
+}
+def main(){
+	x:=H(0);
+	(n,y):=rep[typeof(H(x))](2,H(x));
+	return (n,H(y));
+}

@@ -1,0 +1,12 @@
+// args: --run
+
+def main(){
+	x:=H(0);
+	i:=0;
+	while i<2 {
+		def f(y:typeof(H(x)))⇒y;
+		x:=f(H(x));
+		i+=1;
+	}
+	return x;
+}

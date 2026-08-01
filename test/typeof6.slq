@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	x:=2;
+	y:=dup(x);
+	z:=y;
+	return (x:typeof(y),z);
+}

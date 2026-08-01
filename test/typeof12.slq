@@ -1,0 +1,11 @@
+// args: --run
+
+def f(x:𝔹){
+	t:=typeof(H(x));
+	y:=x;
+	return y;
+}
+def main(){
+	x:=H(0);
+	return f(x);
+}

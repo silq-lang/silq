@@ -1,0 +1,12 @@
+// args: --run
+
+def main(){
+	x:=H(0);
+	i:=0;
+	while i<2 {
+		t:=typeof(H(x));
+		x:=H(x);
+		i+=1;
+	}
+	return x;
+}

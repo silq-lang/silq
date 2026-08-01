@@ -2,6 +2,6 @@
 
 def main(){
 	x:=H(0);
-	def f(x':typeof(H(x)))⇒x';
+	def f(y:typeof(x))⇒y;
 	return f(H(x));
 }
