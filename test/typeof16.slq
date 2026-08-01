@@ -1,0 +1,4 @@
+def f(x:typeof(x))⇒x; /// error
+def main(){
+	return 0;
+}

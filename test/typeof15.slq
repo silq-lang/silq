@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	x:=2;
+	def f(x:typeof(x))⇒x;
+	return f(x);
+}
