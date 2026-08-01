@@ -1,0 +1,14 @@
+// args: --run
+
+def id[τ:qnumeric](x:!τ)⇒x;
+def snd[τ:qnumeric](x:!τ,y:!τ)⇒y;
+
+def main(){
+	assert(id(2)=2);
+	assert(id(2.5)=2.5);
+	assert(id(-3)=-3);
+	assert(id((1,2))=(1,2));
+	assert(id([1,2,3])=[1,2,3]);
+	assert(snd(2,3.5)=3.5);
+	assert(id(id(2))=2);
+}
