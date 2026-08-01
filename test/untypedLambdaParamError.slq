@@ -1,0 +1,5 @@
+
+def main(){
+	f:=[u,v]{ return u+v; }; /// error
+	x:=f(1,2);
+}

@@ -1,0 +1,11 @@
+// args: --run
+
+def f(x:!ℕ):!ℕ{ return 2*x; }
+
+def main(){
+	s:=0;
+	for x in [] {
+		s+=f(x);
+	}
+	(y,z):=(1,2);
+}

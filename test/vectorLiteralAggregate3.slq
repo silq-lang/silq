@@ -1,0 +1,14 @@
+// args: --run
+
+def main(){
+	s:=0;
+	for x in [] {
+		s+=1;
+	}
+	(y,z):=(1,2);
+	assert(s=0);
+	for w in [y,z] {
+		s+=w;
+	}
+	assert(s=3);
+}

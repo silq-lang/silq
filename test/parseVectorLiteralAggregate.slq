@@ -1,5 +1,6 @@
+// args: --run
 
 def foo(n:!ℕ){
-	for p in [2,3,4]{} /// TODO
-	():=(); /// TODO
-} /// TODO
+	for p in [2,3,4]{}
+	():=();
+}

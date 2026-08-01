@@ -4707,6 +4707,12 @@ class ScopeWriter {
 		if(auto arrTy = cast(ast_ty.ArrayTy) ty) {
 			return implUncatArray(arrTy, e.e1, e.e2, ret);
 		}
+		if(ast_ty.isEmpty(ty)) { // e.g. splitting a container of uninhabited element type
+			// unreachable: the components carry classical error witnesses
+			genLhs(e.e1, valAbort(e.e1.type), e.e1.type);
+			genLhs(e.e2, valAbort(e.e2.type), e.e2.type);
+			return;
+		}
 		assert(false, format("can't unconcatenate %s", ty));
 	}
 
