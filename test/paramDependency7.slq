@@ -1,0 +1,4 @@
+// args: --run
+
+def f[n:!ℕ](m:!ℕ,x:𝔹^n){return x;}
+def main(){return f(2,vector(3,0));}

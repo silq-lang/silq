@@ -1,0 +1,2 @@
+def foo(n:!ℕ,x:𝔹^n){return x;} /// error
+def main(){return 0;}

@@ -1,0 +1,4 @@
+def main(){
+	f:=(n:!ℕ,x:𝔹^n)⇒x; /// error
+	return f(3,vector(3,0)); /// error
+}

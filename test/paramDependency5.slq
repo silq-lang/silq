@@ -1,0 +1,2 @@
+def f[n:!ℕ,m:!ℕ^n](x:!ℕ)⇒x; /// error
+def main(){return 0;}

@@ -1,0 +1,3 @@
+def foo(n:!ℕ,x:!𝔹^n){} /// error
+def bar[a:type](foo:a!→𝟙)⇒foo;
+def main()⇒bar(foo);

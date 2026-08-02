@@ -1,0 +1,7 @@
+// args: --run
+
+def g(x:!ℕ){
+	def f(y:𝔹^x)⇒y;
+	return f(vector(x,0));
+}
+def main(){return g(3);}

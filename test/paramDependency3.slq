@@ -1,0 +1,3 @@
+def foo(n:!ℕ,x:𝔹^n){return x;} /// error
+def bar(n:!ℕ){x:=vector(n,0);return foo(n,x);} /// error
+def main(){return bar(3);}
