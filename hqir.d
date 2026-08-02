@@ -662,6 +662,14 @@ private ConvertFlags conversionFlags(ast_conv.Conversion conv) {
 			if(conv.checkLength) r |= ConvertFlags.check;
 			return r;
 		}else static if(
+			is(T == ast_conv.BoolToFixedConversion)
+		) {
+			auto r = ConvertFlags.noop;
+			if(typeHasClassical(conv.to)) r |= ConvertFlags.classical;
+			if(!ast_ty.isFixedIntTy(conv.to).isClassical) r |= ConvertFlags.quantum;
+			if(conv.checkNonzero) r |= ConvertFlags.check;
+			return r;
+		}else static if(
 			is(T == ast_conv.UnmultiplexConversion)
 		) {
 			return conv.conversions.fold!((v, sub) => v | conversionFlags(sub))(ConvertFlags.noop);
@@ -6332,9 +6340,23 @@ class ScopeWriter {
 		return r;
 	}
 
+	// classical value of a quantum type without quantum component (all inhabitants coincide)
+	CReg genMeasureUnit(Expression ty) {
+		if(ast_ty.isFixedIntTy(ty))
+			return ctx.intZero; // int[0]/uint[0]
+		if(auto tupTy = cast(ast_ty.TupleTy) ty)
+			return ccg.boxPack(ctypeSilqTuple, tupTy.types.map!(t => genMeasureUnit(t)).array);
+		if(auto vecTy = cast(ast_ty.VectorTy) ty) {
+			auto len = getVectorLength(vecTy);
+			return ccg.boxRepeat(ctypeSilqTuple, len, genMeasureUnit(vecTy.next));
+		}
+		return null; // unit
+	}
+
 	CReg genMeasure(Expression ty, Value arg, bool mayUseRTTI = true) {
 		if(!typeHasQuantum(ty)) {
 			qcg.deallocUnit(arg.qreg);
+			if(!arg.creg || arg.creg is ctx.nullReg) return genMeasureUnit(ty);
 			return arg.creg;
 		}
 		if(ty == ast_ty.Bool(false)) {
@@ -7187,6 +7209,48 @@ class ScopeWriter {
 		auto cval = ccg.emitPureOp("classical_call[silq_builtin.bits_to_int]", [len, v.creg]);
 		if(toInt.isSigned) cval = ccg.intMakeSigned(len, cval);
 		return valNewC(cval);
+	}
+
+	Value implConvert(ast_conv.BoolToFixedConversion conv, Value v) {
+		auto toInt = ast_ty.isFixedIntTy(conv.to);
+		assert(toInt);
+		auto bits = getNumericBits(toInt);
+		if(!conv.allowZero)
+			ccg.checkLtInt(conv.checkNonzero, ctx.intZero, bits);
+		if(typeHasQuantum(conv.to)) {
+			assert(!toInt.isClassical);
+			assert(!v.hasClassical);
+			if(conv.allowZero) {
+				auto cond = CondQ(v.qreg);
+				auto r0 = new QReg();
+				qcg.withCond(CondAny(cond.invert())).writeQOp(opAllocUint, [r0], [bits, ctx.literalInt(0)], [], []);
+				auto r1 = new QReg();
+				qcg.withCond(CondAny(cond)).writeQOp(opAllocUint, [r1], [bits, ctx.literalInt(1)], [], []);
+				auto r = qcg.qmerge(cond, r0, r1);
+				qcg.forget(v.qreg);
+				return valNewQ(null, r);
+			}
+			auto r = valNewQt(null, ccg.qtVector(ctx.qtQubit, bits));
+			if(r.hasQuantum) {
+				auto one = ctx.literalInt(1);
+				auto lo = new QReg();
+				qcg.writeQOp(opPack(1), [lo], [ctx.qtQubit], [], [v.qreg]);
+				auto nm1 = ccg.intSub(bits, one);
+				auto zeros = valNewQt(null, ccg.qtVector(ctx.qtQubit, nm1));
+				if(zeros.hasQuantum)
+					qcg.writeQOp(opAllocUint, [zeros.qreg], [nm1, ctx.literalInt(0)], [], []);
+				r = valNewQ(null, qcg.concat(one, ccg.qtVector(ctx.qtQubit, one), lo, nm1, ccg.qtVector(ctx.qtQubit, nm1), zeros.qreg));
+			}
+			return r;
+		}
+		if(!toInt.isClassical) {
+			valForget(v);
+			auto r = valNewQt(null, ccg.qtVector(ctx.qtQubit, bits));
+			assert(!r.hasQuantum);
+			return r;
+		}
+		assert(!v.hasQuantum);
+		return valNewC(ccg.intWrap(toInt.isSigned, bits, ccg.intFromBool(v.creg)));
 	}
 
 	Value implConvert(ast_conv_ZmodCoercion conv, Value v) {

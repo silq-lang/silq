@@ -1,0 +1,15 @@
+def f(n:!ℕ):!int[n]{
+	x:=1:𝔹;
+	return measure(x as int[n]); /// error
+}
+
+def f0():!int[0]{
+	x:=1:𝔹;
+	return measure(x as int[0]); /// error
+}
+
+def main(n:!ℕ){
+	x:=1:𝔹;
+	y:=x as int[n]; /// error
+	z:=x as uint[n]; /// error
+}

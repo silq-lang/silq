@@ -1,0 +1,7 @@
+// args: --run-on=0
+
+def main(n:!ℕ):!int[n]{
+	x:=1:𝔹;
+	y:=dup(x as int[n]);
+	return measure(y);
+}

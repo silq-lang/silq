@@ -1,7 +1,9 @@
+// args: --run
+
 def main(){
-	x := H(false) as int[32]; /// TODO
+	x := H(false) as int[32];
 	y := H(false);
 	z := (0:int[32]) + y;
-	//z := (0:!int[32]) + y; // TODO
-	return (x,y,z);
+	w := (0:!int[32]) + y;
+	return (x,y,z,w);
 }

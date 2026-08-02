@@ -1,8 +1,9 @@
+// args: --run
 
 def main(){
 	x:=0:𝔹;
 	n:=2;
-	y:=x coerce int[n]; /// TODO
-	z:=x coerce uint[n]; /// TODO
+	y:=x coerce int[n];
+	z:=x coerce uint[n];
 	assert(measure(y,z)=(0,0));
 }

@@ -1,0 +1,15 @@
+// args: --run
+
+def main(){
+	x:=0:uint[0];
+	assert(measure(x)=0);
+	y:=0:int[0];
+	assert(measure(y)=0);
+	z:=measure(x,y);
+	assert(z=(0,0));
+	w:=measure((x,y),x);
+	assert(w=((0,0),0));
+	q:=1:𝔹;
+	r:=measure(q,x);
+	assert(r=(1,0));
+}

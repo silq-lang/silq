@@ -1,0 +1,7 @@
+// args: --run-on=0
+
+def main(n:!ℕ):!int[n]{
+	x:=0:𝔹;
+	y:=x coerce int[n]; /// run_error
+	return measure(y);
+}

@@ -656,6 +656,27 @@ struct QState{
 			value.forget(state);
 		}
 	}
+	static class BoolToFixedQVal: QVal{
+		Value value;
+		Expression ntype;
+		int nbits;
+		this(Value value,Expression ntype,int nbits){ this.value=value; this.ntype=ntype.getClassical(); this.nbits=nbits; }
+		override Value get(ref Σ σ){
+			auto b=value.classicalValue(σ).asℤ();
+			if(isInt(ntype)) return makeInt(ntype,BitInt!true(nbits,b));
+			assert(isUint(ntype));
+			return makeUint(ntype,BitInt!false(nbits,b));
+		}
+		override void removeVar(ref Σ σ){
+			value.removeVar(σ);
+		}
+		override void forget(ref QState state,Value rhs){
+			value.forget(state,rhs);
+		}
+		override void forget(ref QState state){
+			value.forget(state);
+		}
+	}
 	static class IndexQVal: QVal{
 		Value value,i;
 		this(Value value,Value i){ this.value=value; this.i=i; }
@@ -2706,7 +2727,7 @@ struct Interpreter(QState){
 		return type;
 	}
 
-	QState.Value convertTo(QState.Value value,Expression type,bool consumeArg){
+	QState.Value convertTo(QState.Value value,Expression type,bool consumeArg,bool checkPositiveWidth=false){
 		assert(value.type.isSemEvaluated());
 		type=evalType(type);
 		assert(type.isSemEvaluated());
@@ -2743,6 +2764,18 @@ struct Interpreter(QState){
 					enforce(gcd(num,N)==1,format("`%s` is not a unit modulo `%s`",num%N,N));
 				}
 				return qstate.makeℤmod(type.getClassical(),ℤmod(N,value.asℤ)).convertTo(type);
+			}
+		}
+		if(isNumericTy(value.type)==NumericType.Bool&&!value.type.isClassical()){
+			if(auto intTy=isFixedIntTy(type)){
+				auto len=runExp(intTy.bits); // TODO: maybe store lengths classically instead
+				enforce(len.isℤ(),"fixed-width integer width is not an integer");
+				auto nbits=smallValue(len.asℤ());
+				enforce(nbits>=0,"fixed-with integer width is negative");
+				if(checkPositiveWidth)
+					enforce(nbits>0,"conversion from 𝔹 to fixed-width integer requires positive width");
+				if(consumeArg) value=value.consumeOnRead();
+				return QState.makeQuval(type,new QState.BoolToFixedQVal(value,type.getClassical(),cast(int)nbits));
 			}
 		}
 		if(isUint(value.type)&&isSubtype(ℕt(true),type)){
@@ -3080,7 +3113,7 @@ struct Interpreter(QState){
 				//if(tae.annotationType==TypeAnnotationType.punning) return doIt(tae.e);
 				if(cast(FunTy)tae.type) return doIt(tae.e); // TODO: solve properly
 				bool consume=!tae.constLookup;
-				auto r=convertTo(doIt(tae.e),tae.type,consume);
+				auto r=convertTo(doIt(tae.e),tae.type,consume,consume);
 				//if(tae.constLookup) r=r.consumeOnRead();
 				return r;
 			} else if(auto te=cast(VectorTy)e){

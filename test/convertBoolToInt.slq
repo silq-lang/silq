@@ -1,0 +1,22 @@
+// args: --run
+
+def id[τ](const x:τ):τ{ return dup(x); }
+
+def main():!uint[3]{
+	x:=1:𝔹;
+	y:=x as int[2];
+	n:=2;
+	w:=dup(x as int[n]);
+	v:=id(x as int[n]);
+	u:=dup(x as uint[n]);
+	z0:=dup(x as int[0]);
+	u0:=dup(x as uint[0]);
+	z:=x as uint[3];
+	assert(measure(y)=1);
+	assert(measure(w)=1);
+	assert(measure(v)=1);
+	assert(measure(u)=1);
+	assert(measure(z0)=0);
+	assert(measure(u0)=0);
+	return measure(z);
+}
