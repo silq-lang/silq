@@ -1,6 +1,6 @@
 
 def qswap[n:!ℕ,qt:qtype,ilen:!ℕ](const idx:uint[ilen], arr:qt^n,val:qt){
-	def rec(k:!ℕ,cidx:!uint[ilen]){ /// TODO
+	def rec(k:!ℕ,cidx:!uint[ilen]){
 		if k == ilen{
 			(arr[cidx],val):=(val,arr[cidx]);
 			return (arr,val);

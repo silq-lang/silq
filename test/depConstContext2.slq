@@ -1,9 +1,10 @@
+// args: --run
 
 def main(){
 	x:=H(0);
 	t:=H(0);
 	y:=dup(t);
-	def foo(){ /// TODO
+	def foo(){
 		x⊕=y;
 		return x;
 	}
