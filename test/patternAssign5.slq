@@ -1,9 +1,11 @@
+// args: --run
 
 n:=2;
-def main(){
+def main_(){
 	xs:=vector(n,0);
-	H(xs[0])=1; /// TODO
+	H(xs[0])=1;
 	xs[0]:=H(xs[0]);
 	assert(measure(xs=(1,0)));
 	return xs;
 }
+def main()⇒main_;
