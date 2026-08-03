@@ -6353,11 +6353,56 @@ class ScopeWriter {
 		return null; // unit
 	}
 
+	CReg genMeasureExpand(Expression ty, CReg r) {
+		if(!typeHasClassical(ty)) return genMeasureUnit(ty);
+		if(auto arrTy = cast(ast_ty.ArrayTy) ty) {
+			auto len = ccg.getArrayLength(r);
+			auto items = ccg.getArrayItems(r);
+			if(!typeHasClassical(arrTy.next))
+				return ccg.boxPack(ctypeSilqArray, [len, ccg.boxRepeat(ctypeSilqTuple, len, genMeasureUnit(arrTy.next))]);
+			if(auto p = ctx.asUnroll(len)) {
+				auto n = p.get();
+				auto elems = iota(n).map!(i => genMeasureExpand(arrTy.next, ccg.boxIndex(ctypeSilqTuple, n, items, i))).array;
+				return ccg.boxPack(ctypeSilqArray, [len, ccg.boxPack(ctypeSilqTuple, elems)]);
+			}
+			// dynamic length: map the element repair over the items vector
+			auto sub = genMeasureExpandFunc(arrTy.next);
+			auto bound = ccg.funcPack("silq_builtin.convert_vec_c", [sub, len, items]);
+			return ccg.boxPack(ctypeSilqArray, [len, ccg.funcApply("silq_builtin.iter_tuple", [bound, len])]);
+		}
+		if(auto tupTy = cast(ast_ty.TupleTy) ty) {
+			auto n = tupTy.types.length;
+			auto items = iota(n).map!(i => genMeasureExpand(tupTy.types[i], ccg.boxIndex(ctypeSilqTuple, n, r, i))).array;
+			return ccg.boxPack(ctypeSilqTuple, items);
+		}
+		if(auto vecTy = cast(ast_ty.VectorTy) ty) {
+			auto len = getVectorLength(vecTy);
+			if(!typeHasClassical(vecTy.next))
+				return ccg.boxRepeat(ctypeSilqTuple, len, genMeasureUnit(vecTy.next));
+			if(auto p = ctx.asUnroll(len)) {
+				auto n = p.get();
+				auto items = iota(n).map!(i => genMeasureExpand(vecTy.next, ccg.boxIndex(ctypeSilqTuple, len, r, i))).array;
+				return ccg.boxPack(ctypeSilqTuple, items);
+			}
+			// dynamic length: map the element repair over the vector
+			auto sub = genMeasureExpandFunc(vecTy.next);
+			auto bound = ccg.funcPack("silq_builtin.convert_vec_c", [sub, len, r]);
+			return ccg.funcApply("silq_builtin.iter_tuple", [bound, len]);
+		}
+		return r;
+	}
+	CReg genMeasureExpandFunc(Expression ty) {
+		auto subsc = subfuncScope(true);
+		auto arg = new CReg();
+		auto r = subsc.genMeasureExpand(ty, arg);
+		return subfuncPack("silq_measure_expand", subsc, [r], [arg]);
+	}
+
 	CReg genMeasure(Expression ty, Value arg, bool mayUseRTTI = true) {
 		if(!typeHasQuantum(ty)) {
 			qcg.deallocUnit(arg.qreg);
 			if(!arg.creg || arg.creg is ctx.nullReg) return genMeasureUnit(ty);
-			return arg.creg;
+			return genMeasureExpand(ty, arg.creg);
 		}
 		if(ty == ast_ty.Bool(false)) {
 			auto r = new CReg();

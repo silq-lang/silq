@@ -12,4 +12,22 @@ def main(){
 	q:=1:𝔹;
 	r:=measure(q,x);
 	assert(r=(1,0));
+	a:=[0:uint[0],0:uint[0]]:uint[0][];
+	b:=measure(a);
+	assert(b[0]+1=0);
+	assert(b=[0,0]);
+	c:=measure(a,a);
+	assert(c[0]=[0,0]);
+	d:=[[0:uint[0],0:uint[0]]:uint[0][]]:(uint[0][])[];
+	e:=measure(d);
+	assert(e[0][0]+1=0);
+	assert(e[0]=[0,0]);
+	s:=H(0:𝔹);
+	n:=measure(s);
+	f:=measure(array(n+1,a));
+	assert(f[0][0]+1=0);
+	assert(f[n]=b);
+	g:=measure(vector(n+1,a));
+	assert(g[0][0]+1=0);
+	assert(g[n]=b);
 }
