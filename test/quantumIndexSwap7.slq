@@ -1,3 +1,4 @@
+// args: --run
 
 def main(){
 	k:=H(0);

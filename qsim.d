@@ -3188,17 +3188,52 @@ struct Interpreter(QState){
 		QState.Value read(ref QState state){
 			enforce(readName in state.vars,format("missing variable `%s`",readName));
 			auto var=state.vars[readName];
-			enforce(indices.all!(x=>x.isClassical()),"assignment to quantum index not yet supported");
 			QState.Value doIt(ref QState.Value value,QState.Value[] indices,Location[] locations){
 				if(!indices.length) return value;
+				noreturn outOfBounds(){
+					auto ex=new Exception("index out of bounds");
+					version(LOCALIZE) ex=new LocalizedException(ex,locations[0]);
+					throw ex;
+				}
+				if(!indices[0].isClassical()){
+					size_t bound=size_t.max;
+					switch(value.tag){
+						case QState.Value.Tag.array_:
+							bound=value.array_.length;
+							break;
+						case QState.Value.Tag.intval:
+							enforce(indices.length==1,"wrong number of indices for indexing fixed-width integer");
+							bound=value.intval.nbits;
+							break;
+						case QState.Value.Tag.uintval:
+							enforce(indices.length==1,"wrong number of indices for indexing fixed-width integer");
+							bound=value.uintval.nbits;
+							break;
+						case QState.Value.Tag.quval:
+							enforce(indices.length==1,"wrong number of indices for indexing fixed-width integer");
+							// TODO: store number of bits classically?
+							foreach(k,v;state.state){
+								auto cvalue=value.quval.get(k);
+								if(cvalue.tag==QState.Value.Tag.intval)
+									bound=cvalue.intval.nbits;
+								else if(cvalue.tag==QState.Value.Tag.uintval)
+									bound=cvalue.uintval.nbits;
+								break;
+							}
+							break;
+						default: enforce(0,text("TODO: ",value.tag)); assert(0);
+					}
+					auto check=indices[0].compare!"<"(state.makeInteger(ℤ(0)))|indices[0].compare!">="(state.makeInteger(ℤ(bound)));
+					foreach(k,v;state.state) // TODO: this is very inefficient
+						if(check.classicalValue(k).neqZImpl)
+							outOfBounds();
+					auto elem=value[indices[0]];
+					return doIt(elem,indices[1..$],locations[1..$]);
+				}
 				switch(value.tag){
 					case QState.Value.Tag.array_:
 						auto index=indices[0].asℤ;
-						if(!(0<=index&&index<value.array_.length)){
-							auto ex=new Exception("index out of bounds");
-							version(LOCALIZE) ex=new LocalizedException(ex,locations[0]);
-							throw ex;
-						}
+						if(!(0<=index&&index<value.array_.length)) outOfBounds();
 						return doIt(value.array_[to!size_t(index)],indices[1..$],locations[1..$]);
 					case QState.Value.Tag.intval,QState.Value.Tag.uintval,QState.Value.Tag.zmodval,QState.Value.Tag.quval:
 						enforce(indices.length==1);

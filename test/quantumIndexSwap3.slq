@@ -3,6 +3,6 @@
 def main(){
 	x:=([0,H(0)],[1,H(1)]);
 	(i,j):=(H(0),H(0));
-	(x[i],x[j]):=(x[j],x[i]); /// TODO
+	(x[i],x[j]):=(x[j],x[i]);
 	return (x,i,j);
 }

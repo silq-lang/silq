@@ -4,6 +4,6 @@ def main(){
 	x:=(0,1);
 	i:=H(0),j:=H(0);
 	y:=dup(x);
-	(x[i],x[j]):=(x[j],x[i]); /// TODO
+	(x[i],x[j]):=(x[j],x[i]);
 	return (x,i,j);
 }
