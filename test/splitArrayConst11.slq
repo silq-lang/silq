@@ -1,0 +1,9 @@
+def main(){
+	a:=vector(2,1:𝔹);
+	a[0]:=H(a[0]);
+	if a[0]{
+		b:=a; /// error
+		m:=measure(b);
+	}
+	return a;
+}

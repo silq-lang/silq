@@ -1,0 +1,10 @@
+// args: --run
+
+def main(){
+	x:=[[H(0),H(1)],[H(1),H(0)]];
+	if x[0][1]{
+		def foo(x:𝔹^2)⇒[H(t) for t in x];
+		x[1]:=foo(x[1]);
+	}
+	return x;
+}

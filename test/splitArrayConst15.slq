@@ -1,0 +1,10 @@
+// args: --run
+
+def main() {
+	t := vector(2, vector(2, 1:B));
+	t[0][0]:=H(t[0][0]);
+	if t[0]==[1,1] {
+		t[1][0]:=X(t[1][0]);
+	}
+	return t;
+}

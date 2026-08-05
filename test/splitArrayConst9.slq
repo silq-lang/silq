@@ -1,0 +1,8 @@
+def main(){
+	t:=vector(2,vector(2,1:𝔹));
+	t[0][0]:=H(t[0][0]);
+	if t[0]==[1,1] {
+		t[0][0]:=X(t[0][0]); /// error
+	}
+	return t;
+}
