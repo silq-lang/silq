@@ -5353,7 +5353,6 @@ class ScopeWriter {
 		foreach(repl; replacements) {
 			auto prev = cast(ast_decl.VarDecl)repl.previous, new_ = cast(ast_decl.VarDecl)repl.new_;
 			assert(prev && new_);
-			assert(prev.vtype == new_.vtype || prev.vtype && new_.vtype && new_.vtype==prev.vtype.getQuantum);
 			auto conv = ast_conv.typeExplicitConversion!true(prev.vtype, new_.vtype, ast_exp.TypeAnnotationType.annotation);
 			assert(!!conv);
 			defineVar(new_, genConvert(conv, getVar(prev, false)));
