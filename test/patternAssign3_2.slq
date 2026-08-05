@@ -7,7 +7,7 @@ def main(){
 	}
 	ys:=dup(xs);
 	for i in 0..n{
-		with t:=X(ys[i]){ /// TODO
+		with t:=X(ys[i]){
 			t=0;
 		}
 	}

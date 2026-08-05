@@ -1,0 +1,22 @@
+// args: --run
+
+def myH(x:𝔹)mfree{
+	x:=H(x);
+	return x;
+}
+
+def main(){
+	xs:=(H(0),0,H(1));
+	ys:=(0,0,0);
+	with t:=myH(xs[0]){
+		for i in 0..3{
+			ys[i]:=X(ys[i]);
+		}
+		t⊕=1;
+	}
+	xs[0]:=H(xs[0]);
+	xs[2]:=H(xs[2]);
+	assert(measure(xs=(1,0,1)));
+	assert(measure(ys=(1,1,1)));
+	return xs;
+}

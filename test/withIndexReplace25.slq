@@ -1,0 +1,18 @@
+// args: --run
+
+def main(){
+	xs:=(0,1);
+	f:=()qfree{
+		with {
+			t:=X(xs[0]);
+			u:=X(xs[1]);
+		} do {
+			t⊕=1;
+			u⊕=1;
+		}
+		return xs;
+	};
+	ys:=f();
+	assert(measure(ys)==(1,0));
+	return ys;
+}

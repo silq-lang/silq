@@ -1,0 +1,12 @@
+// args: --check
+
+def main(){
+	x:=(H(0),H(0));
+	with{
+		t:=x[0];
+	}do{
+		y:=x; /// error
+		forget(y=x); /// error
+	}
+	return x;
+}

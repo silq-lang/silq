@@ -1,0 +1,18 @@
+// args: --run
+
+def main(){
+	xs:=(0,0,0);
+	for i in 0..3{
+		xs[i]:=H(xs[i]);
+	}
+	for i in 0..3{
+		with t:=H(xs[i]){
+			t⊕=1;
+		}
+	}
+	for i in 0..3{
+		xs[i]:=H(xs[i]);
+	}
+	assert(measure(xs=(1,1,1)));
+	return xs;
+}

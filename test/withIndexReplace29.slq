@@ -1,0 +1,13 @@
+// args: --run
+
+def main(){
+	x:=(H(0),0);
+	with{
+		t:=x[0];
+	}do{
+		x[1]:=CNOT(t,x[1]);
+		t⊕=1;
+	}
+	assert(!measure(x[0]==x[1]));
+	return x;
+}

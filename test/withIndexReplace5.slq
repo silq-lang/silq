@@ -1,0 +1,16 @@
+// args: --run
+
+def foo(x:𝔹)mfree{
+	x:=H(x);
+	return x;
+}
+
+def main(){
+	xs:=(H(0),1);
+	with t:=foo(xs[0]){
+		t⊕=1;
+	}
+	xs[0]:=H(xs[0]);
+	assert(measure(xs=(1,1)));
+	return xs;
+}

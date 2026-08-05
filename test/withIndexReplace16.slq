@@ -1,0 +1,10 @@
+// args: --check
+
+def main(){
+	xs:=(0,0);
+	with t:=measure(xs[0]){ /// error
+		t⊕=1;
+	}
+	assert(measure(xs)==(0,0));
+	return;
+}

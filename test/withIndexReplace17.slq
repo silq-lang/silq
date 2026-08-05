@@ -1,0 +1,12 @@
+// args: --check
+
+def main(){
+	xs:=(H(0),0);
+	with {
+		t:=H(xs[0]);
+		u:=H(xs[0]); /// error
+	} do {
+		assert(!measure(t));
+	}
+	return xs;
+}

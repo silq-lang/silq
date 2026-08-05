@@ -1,0 +1,11 @@
+// args: --check
+
+def main(){
+	i:=0;
+	xs:=(H(0),0);
+	with t:=H(xs[0]){
+		i:=1; /// error
+	}
+	assert(measure(xs)==(0,0));
+	return;
+}

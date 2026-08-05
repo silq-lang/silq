@@ -1,6 +1,6 @@
 def foo[n:!ℕ](xs:𝔹^n){
 	for i in 0..n{
-		with t:=H(xs[i]){ /// TODO
+		with t:=H(xs[i]){
 			t⊕=1;
 		}
 	}

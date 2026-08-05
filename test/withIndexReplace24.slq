@@ -1,0 +1,9 @@
+// args: --run
+
+def foo(xs:𝔹^2)(){
+	with t:=X(xs[0]){
+		t⊕=1;
+	}
+	return xs;
+}
+def main()⇒foo((0,0));

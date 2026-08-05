@@ -1,0 +1,19 @@
+// args: --run
+
+def main(){
+	y:=1;
+	xs:=(0,0);
+	f:=()qfree{
+		with {
+			z:=!y;
+			t:=X(xs[0]);
+		} do {
+			t⊕=1;
+		}
+		return (y,xs);
+	};
+	r:=f();
+	assert(measure(r[0])==1);
+	assert(measure(r[1])==(1,0));
+	return r;
+}
