@@ -1,0 +1,13 @@
+// args: --run
+
+def swapAt(t:!𝔹[][],x:𝔹)mfree{
+	(t[0][x],t[1][x]):=(t[1][x],t[0][x]);
+	return (t,x);
+}
+
+def main(){
+	x:=H(0);
+	t:=[[1,0],[0,1]]:!𝔹[][];
+	(t,x):=swapAt(t,x);
+	return (t,x);
+}
