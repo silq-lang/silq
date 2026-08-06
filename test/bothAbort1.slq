@@ -1,0 +1,12 @@
+// args: --run
+
+def main(){
+	a:=vector(2,1:𝔹);
+	a[0]:=H(a[0]);
+	if a[0]{
+		a[1]:=X(a[1]);
+		assert(0); /// run_error
+	}else{
+		assert(0);
+	}
+}

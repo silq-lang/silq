@@ -1692,6 +1692,11 @@ final class IteAbort: IteResult {
 		this.cond = cond;
 		this.witness = witness;
 	}
+
+	override void forgetCond(ScopeWriter sc) {
+		if(!cond.isQuantum) return;
+		sc.qcg.deallocError(cond.qreg);
+	}
 }
 
 final class ItePartialReturn: IteResult {
