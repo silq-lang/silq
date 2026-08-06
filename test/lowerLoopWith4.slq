@@ -1,0 +1,19 @@
+// args: --remove-loops --run
+n:=4;
+def main(){
+	xs:=vector(n,0:𝔹);
+	xs[0]:=H(xs[0]);
+	y:=H(0:𝔹);
+	z:=H(0:𝔹);
+	with{
+		for i in 0..n{
+			xs[i]:=CNOT(y,xs[i]);
+			xs[i]:=CNOT(z,xs[i]);
+		}
+	}do{
+		xs[1]:=H(xs[1]);
+		y:=H(y);
+		z:=H(z);
+	}
+	return (xs,y,z);
+}

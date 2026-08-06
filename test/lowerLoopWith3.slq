@@ -1,0 +1,13 @@
+// args: --remove-loops --run
+def main(){
+	x:=H(0:𝔹);
+	y:=H(0:𝔹);
+	with{
+		repeat 3{
+			x:=CNOT(y,x);
+		}
+	}do{
+		y:=H(y);
+	}
+	return (x,y);
+}
