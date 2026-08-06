@@ -5021,7 +5021,7 @@ class ScopeWriter {
 			if(auto iteExp = cast(ast_exp.IteExp) sube) {
 				auto ite = genIte(iteExp);
 				if(auto rv = cast(ItePass) ite) {
-					rv.forgetCond(this);
+					forgetCond(iteExp, ite);
 					continue;
 				}
 				if(auto rv = cast(IteAbort) ite) {
@@ -5283,9 +5283,19 @@ class ScopeWriter {
 		return Result.returns(RetValue(r));
 	}
 
+	void forgetCond(ast_exp.IteExp e, IteResult ite) {
+		if(e.condForget && cast(ItePass) ite && ite.cond.isQuantum) {
+			// the condition temporary was derived from a stale version of a
+			// borrowed aggregate; forget it explicitly against the new version
+			auto vf = genExpr(e.condForget);
+			valUndup(Value.newReg(null, ite.cond.qreg), vf);
+			valForget(vf);
+		} else ite.forgetCond(this);
+	}
+
 	Result implStmt(ast_exp.IteExp e) {
 		auto ite = genIte(e);
-		ite.forgetCond(this);
+		forgetCond(e, ite);
 		if(cast(ItePass) ite) return Result.passes();
 		if(auto rv = cast(IteAbort) ite) return Result.aborts(rv.witness);
 		if(auto rv = cast(IteReturn) ite) return Result.returns(rv.value);
