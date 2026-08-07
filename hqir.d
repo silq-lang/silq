@@ -1,5 +1,5 @@
 import core.exception: AssertError;
-import util: MapX, MapSX;
+import util: MapX, MapSX, IdMapSX;
 import std.conv: ConvOverflowException, text, to;
 import std.stdio: File, stderr;
 import std.array: Appender, appender, array, join;
@@ -1680,6 +1680,9 @@ final class IteReturn: IteResult {
 }
 
 final class ItePass: IteResult {
+	IdMapSX!(Expression, Value) condMemo; // TODO: generalize?
+	IdMapSX!(Expression, bool) condShared;
+
 	this(CondAny cond) scope @safe nothrow {
 		this.cond = cond;
 	}
@@ -2694,6 +2697,11 @@ class ScopeWriter {
 		this.parent = parent;
 		this.qcg = parent.qcg;
 		this.detPassthrough = true;
+
+		this.condMemo = parent.condMemo;
+		this.condShared = parent.condShared;
+		this.recordCond = parent.recordCond;
+		this.consultCond = parent.consultCond;
 	}
 
 	ScopeWriter withBlock(ast_scope.NestedScope nscope) {
@@ -3343,6 +3351,14 @@ class ScopeWriter {
 
 	Value genExpr(Expression e) {
 		assert(e, "genExpr(null)");
+		if(consultCond) {
+			if(auto v = condMemo.getPtr(e)) {
+				auto vr = *v;
+				condMemo.remove(e);
+				return vr;
+			}
+			assert(e !in condShared, "shared nondeterministic condition subexpression was not evaluated at entry");
+		}
 		Value r;
 		try {
 			r = genValue(e);
@@ -3357,6 +3373,7 @@ class ScopeWriter {
 			assert(!r.hasClassical || typeHasClassical(e.type), format("got a classical component in value of type %s: %s", e.type, e));
 			assert(!r.hasQuantum || typeHasQuantum(e.type), format("got a quantum component in value of type %s: %s <%s>", e.type, e, r));
 		}
+		if(recordCond && (e in condShared)) condMemo[e] = r;
 		return r;
 	}
 
@@ -5124,7 +5141,33 @@ class ScopeWriter {
 	}
 
 	IteResult genIte(ast_exp.IteExp e) {
+		// if the condition temporary will be forgotten by explicit re-derivation
+		// (`condForget`), record the values of nondeterministic classical
+		// condition subexpressions, so the re-derivation can reuse the entry
+		// outcomes instead of re-evaluating them (which would be unsound)
+		auto savedCondMemo = condMemo;
+		auto savedCondShared = condShared;
+		auto savedRecordCond = recordCond;
+		auto savedConsultCond = consultCond;
+		scope(exit) {
+			condMemo = savedCondMemo;
+			condShared = savedCondShared;
+			recordCond = savedRecordCond;
+			consultCond = savedConsultCond;
+		}
+		condMemo = typeof(condMemo).init;
+		condShared = typeof(condShared).init;
+		consultCond = false;
+		if(e.condForget) {
+			Expression[] nondeterministic;
+			ast_sem.collectNondeterministicSubexpressions(e.cond, nondeterministic);
+			if(nondeterministic.length) {
+				foreach(nd; nondeterministic) condShared[nd] = true;
+				recordCond = true;
+			}
+		}
 		auto cond = genCond(e.cond);
+		recordCond = false;
 
 		ScopeWriter ifTrue, ifFalse;
 		genSplit(cond, ifFalse, e.othw.blscope_, ifTrue, e.then.blscope_);
@@ -5220,7 +5263,10 @@ class ScopeWriter {
 		genMerge(cond, ifFalse, ifTrue);
 		ifTrue.checkEmpty(false);
 		ifFalse.checkEmpty(false);
-		return new ItePass(cond);
+		auto rv = new ItePass(cond);
+		rv.condMemo = condMemo;
+		rv.condShared = condShared;
+		return rv;
 	}
 
 	Result genStmt(Expression e) {
@@ -5292,7 +5338,20 @@ class ScopeWriter {
 		if(e.condForget && cast(ItePass) ite && ite.cond.isQuantum) {
 			// the condition temporary was derived from a stale version of a
 			// borrowed aggregate; forget it explicitly against the new version
+			auto pass = cast(ItePass) ite;
+			auto savedCondMemo = condMemo;
+			auto savedCondShared = condShared;
+			auto savedConsultCond = consultCond;
+			scope(exit) {
+				condMemo = savedCondMemo;
+				condShared = savedCondShared;
+				consultCond = savedConsultCond;
+			}
+			condMemo = pass.condMemo;
+			condShared = pass.condShared;
+			consultCond = true;
 			auto vf = genExpr(e.condForget);
+			assert(!condMemo.length, "nondeterministic condition subexpression not consumed by re-derivation");
 			valUndup(Value.newReg(null, ite.cond.qreg), vf);
 			valForget(vf);
 		} else ite.forgetCond(this);
@@ -7391,6 +7450,10 @@ private:
 
 	MapSX!(ExprInfo,CReg) cachedNat;
 	MapSX!(ExprInfo,RTTI) cachedRTTI;
+
+	IdMapSX!(Expression, Value) condMemo;
+	IdMapSX!(Expression, bool) condShared;
+	bool recordCond = false, consultCond = false;
 }
 
 struct IrStatement {
