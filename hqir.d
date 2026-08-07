@@ -1,5 +1,5 @@
 import core.exception: AssertError;
-import util: MapX, MapSX, IdMapSX;
+import util: MapX, MapSX, IdMapSX, SetX;
 import std.conv: ConvOverflowException, text, to;
 import std.stdio: File, stderr;
 import std.array: Appender, appender, array, join;
@@ -6604,18 +6604,21 @@ class ScopeWriter {
 		assert(args.length == n);
 		auto isConst = callTy.isConstForReverse();
 		auto ai = new ArgInfo[n];
-		foreach(i, paramTy; params) {
+		auto argGenerated=new bool[n];
+		void genArg(size_t i) {
+			auto paramTy=params[i];
 			bool paramConst = isConst[callTy.isTuple ? i : 0];
 			assert(!targetF || paramConst == targetF.params[i].isConst || !ast_ty.hasQuantumComponent(paramTy), format("constness mismatch for call to %s, param #%s/%s of type %s", targetF.prettyName, i, params.length, paramTy));
 			assert(paramConst == args[i].constLookup || !ast_ty.hasQuantumComponent(paramTy), format("constness mismatch for call to %s, param #%s/%s of type %s", targetExpr, i, params.length, paramTy));
 			ai[i].ty = paramTy;
 			ai[i].expr = args[i];
 			ai[i].isConst = paramConst;
+			argGenerated[i]=true;
 			if(isReversed && !paramConst) {
 				// Will be handled by `genLhs` later.
 				assert(!makeClassical);
 				ai[i].val = valNewQ(null, paramTy);
-				continue;
+				return;
 			}
 			ai[i].val = genExprAs(args[i], makeClassical ? paramTy.getClassical() : paramTy);
 			// the parameter type may be needed to process the argument after
@@ -6628,6 +6631,27 @@ class ScopeWriter {
 				if(dependent) pinTypeDeep(at);
 			}
 		}
+		// const arguments may refer to variables consumed by moved arguments;
+		// generate those first, while the variables are still available
+		// TODO: can we simplify this?
+		SetX!(ast_decl.Declaration) moved;
+		foreach(i, paramTy; params) {
+			bool paramConst = isConst[callTy.isTuple ? i : 0];
+			if(paramConst||isReversed) continue;
+			foreach(id; ast_ty.freeIdentifiers(args[i]))
+				if(id.meaning&&!id.constLookup&&!id.implicitDup)
+					moved.insert(id.meaning);
+		}
+		foreach(i, paramTy; params) {
+			bool paramConst = isConst[callTy.isTuple ? i : 0];
+			if(!paramConst) continue;
+			bool aliases=false;
+			foreach(id; ast_ty.freeIdentifiers(args[i]))
+				if(id.meaning&&(id.constLookup||id.implicitDup)&&id.meaning in moved)
+					aliases=true;
+			if(aliases) genArg(i);
+		}
+		foreach(i;0..n) if(!argGenerated[i]) genArg(i);
 
 		CallInfo ci;
 		ci.target = target;

@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	x:=[H(0),H(0)];
+	y:=dup(x);
+	i:=0;
+	y[i+1]⊕=y[1+i];
+	return (x,y);
+}

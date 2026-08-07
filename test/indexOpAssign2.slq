@@ -1,6 +1,7 @@
+// args: --run
 
 def main(){
 	x:=vector(1,0:𝔹);
-	x[0]⊕=x[0]; /// TODO
+	x[0]⊕=x[0];
 	return x;
 }

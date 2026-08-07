@@ -1,0 +1,7 @@
+
+def main(){
+	x:=[H(1),H(1)];
+	i:=H(0),j:=H(0);
+	x[i]⊕=x[j]; /// error
+	return (x,i,j);
+}
