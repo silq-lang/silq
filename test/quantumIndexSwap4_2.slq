@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	k:=H(0);
+	x:=[1:uint[2],2:uint[2]];
+	(i,j):=(H(0),H(0));
+	(x[i],x[j]):=(x[j],x[i]);
+	return (k,i,j,x);
+}
