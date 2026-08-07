@@ -1,0 +1,11 @@
+// args: --compile
+
+def main(){
+	x:=[H(0),H(0),0];
+	with{
+		t:=CNOT(x[0],x[1]);
+	}do{
+		x[2]⊕=t;
+	}
+	return x;
+}

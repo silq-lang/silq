@@ -5795,6 +5795,7 @@ class ScopeWriter {
 		assert(!r1.isReturn && !r1.isConditionalReturn, "TODO return in with statement");
 		if(r1.isAbort) return r1;
 
+		performUpcastReplacements(e.replacements);
 		Result r2 = implStmt(e.bdy);
 		assert(!r2.isReturn && !r2.isConditionalReturn, "TODO return in with statement");
 		if(r2.isAbort) return r2;
