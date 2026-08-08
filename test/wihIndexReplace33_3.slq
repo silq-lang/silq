@@ -1,0 +1,15 @@
+
+def foo(x:𝔹,const y:𝔹){
+	x⊕=y;
+	return x;
+}
+
+def main(){
+	x:=[H(1),H(1)];
+	y:=dup(x);
+	i:=H(0),j:=H(0);
+	with t:=y[i]{
+		t:=foo(t,y[j]); /// TODO
+	}
+	return (x,y,i,j);
+}
