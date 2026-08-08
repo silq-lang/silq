@@ -1,0 +1,12 @@
+
+def foo(x:𝔹,const y:𝔹){
+	x⊕=y;
+	return x;
+}
+
+def main(){
+	x:=[1,1];
+	i:=0,j:=0;
+	x[i]:=foo(x[i],x[j]); /// TODO
+	return (x,i,j);
+}
