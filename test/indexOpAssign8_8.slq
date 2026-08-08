@@ -1,0 +1,15 @@
+// args: --run
+
+def main(){
+	x:=vector(3,0:𝔹);
+	x[0]:=X(x[0]);
+	x[2]:=X(x[2]);
+	for i in 0..3{
+		for j in 0..3{
+			if i!=j{
+				x[i]⊕=x[j]; /// TODO
+			}
+		}
+	}
+	return x;
+}

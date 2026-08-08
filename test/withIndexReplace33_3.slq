@@ -9,7 +9,7 @@ def main(){
 	y:=dup(x);
 	i:=H(0),j:=H(0);
 	with t:=y[i]{
-		y[i]:=foo(y[i],y[j]); /// error
+		y[i]:=foo(y[i],y[j]); /// TODO
 	}
 	return (x,y,i,j);
 }

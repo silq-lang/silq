@@ -9,7 +9,7 @@ def main(){
 	x:=[1,1];
 	i:=H(0),j:=H(0);
 	with t:=x[i]{
-		t:=foo(t,x[j]); /// error
+		t:=foo(t,x[j]); /// TODO
 	}
 	return (x,i,j);
 }

@@ -8,8 +8,11 @@ def foo(x:𝔹,const y:𝔹){
 def main(){
 	x:=[1,1];
 	i:=0,j:=0;
-	with t:=x[i]{
-		t:=foo(t,x[j]); /// TODO
+	for k in 0..2{
+		with t:=x[i]{
+			t:=foo(t,x[j]); /// TODO
+		}
 	}
+	assert(x=[0,1]);
 	return (x,i,j);
 }
