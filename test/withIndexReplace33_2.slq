@@ -1,0 +1,15 @@
+// args: --run
+
+def foo(x:𝔹,const y:𝔹){
+	x⊕=y;
+	return x;
+}
+
+def main(){
+	x:=[1,1];
+	i:=H(0),j:=H(0);
+	with t:=x[i]{
+		t:=foo(t,x[j]); /// error
+	}
+	return (x,i,j);
+}
