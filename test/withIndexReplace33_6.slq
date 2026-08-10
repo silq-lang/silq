@@ -10,7 +10,7 @@ def main(){
 	i:=H(0),j:=H(0);
 	if measure(H(0)){
 		with t:=x[i]{
-			t:=foo(t,x[j]); /// TODO
+			t:=foo(t,x[j]); /// error
 		}
 	}
 	return (x,i,j);

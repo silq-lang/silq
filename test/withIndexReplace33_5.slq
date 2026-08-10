@@ -10,7 +10,7 @@ def main(){
 	i:=0,j:=0;
 	for k in 0..2{
 		with t:=x[i]{
-			t:=foo(t,x[j]); /// TODO
+			t:=foo(t,x[j]); /// error
 		}
 	}
 	assert(x=[0,1]);
