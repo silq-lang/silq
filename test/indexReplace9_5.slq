@@ -8,7 +8,7 @@ def main(){
 	x:=[1,1];
 	i:=0,j:=0;
 	for k in 0..2{
-		x[i]:=foo(x[j],x[i]); /// TODO
+		x[i]:=foo(x[j],x[i]);
 	}
 	assert(x=[0,1]);
 	return (x,i,j);
