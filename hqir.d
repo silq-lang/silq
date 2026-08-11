@@ -5055,18 +5055,34 @@ class ScopeWriter {
 			}
 		}
 		foreach(i, sube; stmts) {
+			auto sc = this;
+			if(result.isConditionalReturn) {
+				sc = result.retCond.invert().addToScope(nscope, this);
+				sc.vars = vars;
+			}
 			if(auto iteExp = cast(ast_exp.IteExp) sube) {
-				auto ite = genIte(iteExp);
+				auto ite = sc.genIte(iteExp);
 				if(auto rv = cast(ItePass) ite) {
-					forgetCond(iteExp, ite);
+					sc.forgetCond(iteExp, ite);
+					if(sc !is this) vars = sc.vars;
 					continue;
 				}
 				if(auto rv = cast(IteAbort) ite) {
-					rv.forgetCond(this);
+					rv.forgetCond(sc);
+					if(result.isConditionalReturn) {
+						result = combineResults(result, Result.aborts(rv.witness), sc);
+						if(sc !is this) vars = sc.vars;
+						return result;
+					}
 					return Result.aborts(rv.witness);
 				}
 				if(auto rv = cast(IteReturn) ite) {
-					rv.forgetCond(this);
+					rv.forgetCond(sc);
+					if(result.isConditionalReturn) {
+						result = combineResults(result, Result.returns(rv.value), sc);
+						if(sc !is this) vars = sc.vars;
+						return result;
+					}
 					return Result.returns(rv.value);
 				}
 				if(auto rv = cast(ItePartialReturn) ite) {
@@ -5077,12 +5093,12 @@ class ScopeWriter {
 						scTail = new ScopeWriter(nscope, scCont);
 
 						// move classical variables so that they can be consumed
-						foreach(name, ref var; this.vars) {
+						foreach(name, ref var; sc.vars) {
 							if(!var.value) continue;
 							assert(!var.value.hasQuantum, format("returning if statement did not split variable %s", name));
 							scTail.vars[name] = var;
 						}
-						checkEmpty(false);
+						sc.checkEmpty(false);
 
 						foreach(decl; scCont.nscope.mergedVars) {
 							auto outer = decl.mergedInto;
@@ -5114,7 +5130,7 @@ class ScopeWriter {
 						rv.forgetCond(this);
 						return Result.returns(r);
 					} else {
-						result = combineResults(result, Result.conditionallyReturns(rv.value, rv.retCond), this);
+						result = combineResults(result, Result.conditionallyReturns(rv.value, rv.retCond), sc);
 						result = combineResults(result, contRet, scTail);
 						assert(result.isConditionalReturn);
 						vars = scTail.vars;
@@ -5123,7 +5139,7 @@ class ScopeWriter {
 				}
 				if(auto rv = cast(ItePartialAbort) ite) {
 					auto scCont = rv.scCont;
-					auto scFail = withCond(null, rv.cond);
+					auto scFail = sc.withCond(null, rv.cond);
 					foreach(decl; scCont.nscope.mergedVars) {
 						auto outer = decl.mergedInto;
 						auto ty = typeForDecl(outer);
@@ -5131,23 +5147,18 @@ class ScopeWriter {
 						assert(outer.mergedFrom == [decl]);
 						auto v0 = scCont.getVar(decl, false);
 						auto v1 = scFail.valError(rv.witness, ty);
-						defineVar(outer, valMerge(rv.cond, v0, v1));
+						sc.defineVar(outer, sc.valMerge(rv.cond, v0, v1));
 					}
 					scCont.checkEmpty(false);
-					rv.forgetCond(this);
+					rv.forgetCond(sc);
+					if(sc !is this) vars = sc.vars;
 					continue;
 				}
 				assert(false, "Bad if-then-else result");
 			}
 
-			if(result.isConditionalReturn) {
-				auto scCondRet = result.retCond.invert().addToScope(nscope, this);
-				scCondRet.vars = vars;
-				result = combineResults(result, scCondRet.genStmt(sube), scCondRet);
-				vars = scCondRet.vars;
-			} else {
-				result = combineResults(result, genStmt(sube), this);
-			}
+			result = combineResults(result, sc.genStmt(sube), sc);
+			if(sc !is this) vars = sc.vars;
 			if(result.isReturn || result.isAbort) {
 				return result;
 			}

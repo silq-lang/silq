@@ -1,0 +1,19 @@
+// args: --run
+
+def main() {
+    S' := 0;
+    for i in 0..1 {
+        S'' := 0;
+        for j in 0..1 {
+            if true {
+                return 0;
+            }
+        }
+        if i >= 0 {
+            S'' = 1;
+        }
+        S' = S'';
+    }
+    return S';
+}
+
