@@ -3,7 +3,7 @@ def main(){
 	x:=[1,1];
 	i:=H(0),j:=H(0);
 	for k in 0..2{
-		x[i]⊕=x[j]; /// TODO
+		x[i]⊕=x[j];
 	}
 	return (x,i,j);
 }

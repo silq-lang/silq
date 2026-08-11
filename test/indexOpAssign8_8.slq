@@ -7,7 +7,7 @@ def main(){
 	for i in 0..3{
 		for j in 0..3{
 			if i!=j{
-				x[i]⊕=x[j]; /// TODO
+				x[i]⊕=x[j];
 			}
 		}
 	}

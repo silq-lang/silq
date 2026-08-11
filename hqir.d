@@ -3094,6 +3094,21 @@ class ScopeWriter {
 		}
 		assert(p.value, format("Variable %s used after being consumed", name.str));
 		v = p.value;
+		if (p.decl !is decl && isDup) {
+			for(auto d = decl.promotedFrom; d; d = d.promotedFrom) { // TODO: is there a better way to do this?
+				if(d is p.decl) {
+					auto prev = cast(ast_decl.VarDecl) p.decl, new_ = cast(ast_decl.VarDecl) decl;
+					assert(prev && new_);
+					auto conv = ast_conv.typeExplicitConversion!true(prev.vtype, new_.vtype, ast_exp.TypeAnnotationType.annotation);
+					assert(!!conv);
+					v = genConvert(conv, v);
+					v.setName(decl.name);
+					*p = Variable(decl, v);
+					debugVar(decl, v);
+					return valDup(v);
+				}
+			}
+		}
 		if(isDup) {
 			v = valDup(v);
 		} else {
@@ -5427,6 +5442,9 @@ class ScopeWriter {
 		foreach(repl; replacements) {
 			auto prev = cast(ast_decl.VarDecl)repl.previous, new_ = cast(ast_decl.VarDecl)repl.new_;
 			assert(prev && new_);
+			auto pp = vars.getPtr(new_.getId);
+			for(auto sc = parent; !pp && sc; sc = sc.parent) pp = sc.vars.getPtr(new_.getId);
+			if(pp && pp.decl is new_ && pp.value) continue; // promotion already performed by an earlier const use (via promotedFrom)
 			auto conv = ast_conv.typeExplicitConversion!true(prev.vtype, new_.vtype, ast_exp.TypeAnnotationType.annotation);
 			assert(!!conv);
 			defineVar(new_, genConvert(conv, getVar(prev, false)));

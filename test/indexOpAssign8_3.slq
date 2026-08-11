@@ -3,6 +3,6 @@ def main(){
 	x:=[H(1),H(1)];
 	y:=dup(x);
 	i:=H(0),j:=H(0);
-	y[i]⊕=y[j]; /// TODO
+	y[i]⊕=y[j];
 	return (x,y,i,j);
 }
