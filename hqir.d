@@ -3462,7 +3462,7 @@ class ScopeWriter {
 	}
 
 	Value implExpr(ast_exp.VectorForExp e) {
-		auto lowered = ast_low.getLowering(e, semContext(e.constLookup));
+		auto lowered = e.lowered ? e.lowered : ast_low.getLowering(e, semContext(e.constLookup));
 		assert(lowered, format("Failed to lower expression: %s", e));
 		return genExprAs(lowered, e.type);
 	}
