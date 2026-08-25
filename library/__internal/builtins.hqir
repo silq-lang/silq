@@ -1010,3 +1010,38 @@ def primitive.H() <- %x [artificial]
 def primitive.P($a) [artificial]
 	mfree_call[qbuiltin.phase]($a)
 	return
+
+def primitive.wrap_circuit($xty, $f)
+	$lit_null := literal[null]
+	$lit0 := literal[0]
+	$lit3 := literal[3]
+	$x_qtypef := box_index[silq.rtti]($lit3, $xty, $lit0)
+	$x_qtype := classical_call($x_qtypef, $lit_null)
+	$r := func[primitive.wrap_circuit.wrapper]($f, $x_qtype)
+	return $r
+
+def primitive.wrap_circuit.wrapper($f, $x_qtype, $c_args, %qc_cap, %qc_args) <- %qi_cap, %x
+	$lit_null := literal[null]
+	$lit0 := literal[0]
+	$lit2 := literal[2]
+	qfree_call_rev[qbuiltin.alloc_unit] <- %qi_cap
+	%y := circuit_call[primitive.wrap_circuit.wrapped]($f, $x_qtype) <- %x
+	return $lit_null, %y
+
+def primitive.wrap_circuit.wrapped($n_ctl, $is_rev, $f, $x_qtype) <- %ctl, %x
+	$lit_null := literal[null]
+	$qt_unit := literal[qt_unit]
+	$qt_qubit := literal[qt_qubit]
+	$arr_ctl := box[silq.array]($n_ctl, $lit_null)
+	$c_args := box[silq.tuple]($arr_ctl, $is_rev, $lit_null)
+	$ctl_qtype := qt_vector($n_ctl, $qt_qubit)
+	%unit3 := qfree_call[qbuiltin.alloc_unit]
+	%qc_cap := qfree_call[qbuiltin.alloc_unit]
+	%qi_cap := qfree_call[qbuiltin.alloc_unit]
+	%qi_args := qfree_call[qbuiltin.pack]($ctl_qtype, $qt_unit, $x_qtype) <- %ctl, %unit3, %x
+	%qc_args := qfree_call[qbuiltin.alloc_unit]
+	$y, %r := call($f, $c_args, %qc_cap, %qc_args) <- %qi_cap, %qi_args
+	qfree_call_rev[qbuiltin.alloc_unit] <- %qc_args
+	qfree_call_rev[qbuiltin.alloc_unit] <- %qc_cap
+	%ctl2, %y := qfree_call_rev[qbuiltin.pack]($ctl_qtype, $x_qtype) <- %r
+	return %ctl2, %y
