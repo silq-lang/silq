@@ -4964,20 +4964,25 @@ class ScopeWriter {
 					auto wqc = cqB ? qcg.withCond(CondAny(cB.condQ.invert())) : qcg;
 					qreg = wqc.withCond(CondAny(ccA.invert()))
 						.withCond(CondAny(ccB.invert()))
-						.addCond(CondAny(condC, false), qreg);
-					qreg = wqc.withCond(CondAny(ccA.invert()))
-						.withCond(CondAny(condC, false))
-						.removeCond(CondAny(ccB.invert()), qreg);
-					qreg = wqc.withCond(CondAny(condC, false))
-						.removeCond(CondAny(ccA.invert()), qreg);
+						.addCond(CondAny(condC, false), qreg); // [!ccA,!ccB,!cqB,!condC]
 					if(cqB) {
-						qreg = qcg.withCond(CondAny(condC, false))
+						qreg = qcg.withCond(CondAny(ccA.invert()))
+							.withCond(CondAny(ccB.invert()))
+							.withCond(CondAny(condC, false))
 							.withCond(CondAny(cB.condQ.invert()))
-							.addCond(CondAny(condQ.invert()), qreg);
-						qreg = qcg.withCond(CondAny(condC, false))
+							.addCond(CondAny(condQ.invert()), qreg); // [!ccA,!ccB,!condC,!cqB,!condQ]
+						qreg = qcg.withCond(CondAny(ccA.invert()))
+							.withCond(CondAny(ccB.invert()))
+							.withCond(CondAny(condC, false))
 							.withCond(CondAny(condQ.invert()))
-							.removeCond(CondAny(cB.condQ.invert()), qreg);
+							.removeCond(CondAny(cB.condQ.invert()), qreg); // [!ccA,!ccB,!condC,!condQ]
 					}
+					auto wq = cqB ? qcg.withCond(CondAny(condQ.invert())) : qcg;
+					qreg = wq.withCond(CondAny(ccA.invert()))
+						.withCond(CondAny(condC, false))
+						.removeCond(CondAny(ccB.invert()), qreg); // [!ccA,!condC,!condQ]
+					qreg = wq.withCond(CondAny(condC, false))
+						.removeCond(CondAny(ccA.invert()), qreg); // [!condC,!condQ]
 					var.value = Value.newReg(var.value.creg, qreg);
 				}
 
