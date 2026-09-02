@@ -1,12 +1,11 @@
 // args: --remove-loops
 
-def foo(const a:𝔹,b:𝔹){
+def foo(const a:𝔹,const b:𝔹){
 	c:=dup(a);
+	d:=dup(b);
 	for _ in 0..10{
 		c⊕=1; /// TODO
-		b⊕=1;
+		d:=H(d);
 	}
-	return b;
+	return d;
 }
-
-def main()⇒foo(0,0);
