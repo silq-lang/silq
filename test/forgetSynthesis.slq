@@ -48,7 +48,15 @@ def f3(x: int[32]){
 
 def f4(x: 𝔹){
 	y := dup(x);
-	y = !y; // TODO: make X lifted
+	y = !y;
+	__show(__query("dep",y));
+	forget(y);
+	return x;
+}
+
+def f4_2(x: 𝔹){
+	y := dup(x);
+	y = X(y);
 	__show(__query("dep",y));
 	forget(y);
 	return x;
