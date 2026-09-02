@@ -7,6 +7,5 @@ def main(){
 	if x{
 		y:=X(y);
 	}
-	forget(y);
 	return x;
 }
