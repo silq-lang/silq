@@ -1,0 +1,11 @@
+// args: --run
+
+def main(){
+	a:=array(3,0);
+	i:=0;
+	with t:=a[i+1]{ /// error
+		t:=H(t);
+		i+=1;
+	}
+	return a;
+}

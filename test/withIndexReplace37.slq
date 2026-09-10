@@ -1,0 +1,13 @@
+// args: --run
+
+// TODO: accept this?
+def main(){
+	a:=array(2,0);
+	i:=0;
+	with t:=a[i]{ /// error
+		t:=H(t);
+		i+=1;
+		i-=1;
+	}
+	return a;
+}

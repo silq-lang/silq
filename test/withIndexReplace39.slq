@@ -1,0 +1,13 @@
+// args: --run
+
+def main(){
+	a:=array(3,0);
+	i:=0;
+	with t:=a[i+1]{
+		t:=H(t);
+	}
+	a:=measure(a);
+	assert(a[0]==0);
+	assert(a[2]==0);
+	return i;
+}
