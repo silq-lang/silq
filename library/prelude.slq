@@ -43,6 +43,9 @@ def __reverse_qfree[τ:*,χ:qtype,φ:*](const f: const τ×χ →qfree φ)(const
 	return y;
 }
 
+def __circuit_mfree[T: qtype](const f: B[] x const !B x T !-> wild B[] x T) @[extern="primitive.wrap_circuit"] qfree: T !-> mfree T;
+def __circuit_qfree[T: qtype](const f: B[] x const !B x T !-> wild B[] x T) @[extern="primitive.wrap_circuit"] qfree: T !-> qfree T;
+
 dat int[n: !ℕ] quantum{}
 dat uint[n: !ℕ] quantum{}
 // dat float[e: !ℕ, m: !ℕ] quantum{}
