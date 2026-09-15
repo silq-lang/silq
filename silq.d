@@ -10,6 +10,7 @@ import ast.lexer, ast.parser, ast.expression, ast.declaration, ast.error, help;
 import astopt;
 import options, ast.scope_, ast.modules, ast.summarize;
 import hqir=hqir;
+import lsp=lsp;
 
 static this(){
 	astopt.importPath ~= buildPath(dirName(file.thisExePath),"library");
@@ -153,6 +154,7 @@ int main_(string[] args){
 	Backend backend = null;
 	Source runExp = null, runOn = null, runOnEach = null;
 	bool useStdin = false;
+	bool languageServer = false;
 	string stdinFilename = "stdin";
 	scope auto qsimBackend = new QSimBackend();
 	scope auto summarizeBackend = new SummarizeBackend();
@@ -221,6 +223,10 @@ int main_(string[] args){
 		})
 		.add!("stdin")((bool v) {
 			useStdin = true;
+			return 0;
+		})
+		.add!("lsp")((bool v) {
+			languageServer = v;
 			return 0;
 		})
 		.add!("stdin-as")((string v) {
@@ -349,6 +355,10 @@ int main_(string[] args){
 
 	try{
 		args.popFront();
+		// The language server owns its own error handling (it collects
+		// diagnostics per document instead of printing them), so it takes over
+		// before the one-shot error handler below is chosen.
+		if(languageServer) return lsp.runLanguageServer();
 		ErrorHandler err;
 		File errFile;
 		if(!jsonOut) {

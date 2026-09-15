@@ -27,6 +27,7 @@ The options below may be used.
 
 --summarize=...      summarize function declarations and exit (ex: --summarize=[name,arg-arity,ret-arity])
 --error-json         print diagnostics in json format
+--lsp                run as a language server (JSON-RPC over stdin/stdout)
 
 --help               display this help and exit
 

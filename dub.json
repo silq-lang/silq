@@ -48,7 +48,7 @@
 		{
 			"name": "executable",
 			"mainSourceFile": "silq.d",
-			"sourceFiles": ["silq.d", "hqir.d"],
+			"sourceFiles": ["silq.d", "hqir.d", "lsp.d"],
 			"targetType": "executable"
 		}
 	]
