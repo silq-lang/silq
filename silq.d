@@ -229,6 +229,15 @@ int main_(string[] args){
 			languageServer = v;
 			return 0;
 		})
+		// Accepted and ignored. It is the conventional flag for "speak LSP over
+		// stdin/stdout", and standard clients append it unprompted: VSCode's
+		// vscode-languageclient adds it whenever its transport is stdio, and then
+		// the server exits with "unknown option --stdio" before saying a word.
+		// Since that is the only transport `--lsp` offers, there is nothing to
+		// select and nothing to reject.
+		.add!("stdio")((bool v) {
+			return 0;
+		})
 		.add!("stdin-as")((string v) {
 			useStdin = true;
 			stdinFilename = v;
