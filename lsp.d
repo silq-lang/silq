@@ -116,6 +116,14 @@ private struct PositionMap {
 		}
 		return JSONValue(["line": JSONValue(cast(int)lo), "character": JSONValue(u16)]);
 	}
+
+	// The offset one whole character past `byteOffset`. Advancing by one byte
+	// would split a multi-byte character and leave a range ending inside it.
+	int nextCharBoundary(int byteOffset) const {
+		size_t i = (byteOffset < 0 ? 0 : cast(size_t)byteOffset) + 1;
+		while(i < text.length && (text[i] & 0xC0) == 0x80) i++;
+		return cast(int)i;
+	}
 }
 
 // LSP severities: 1 Error, 2 Warning, 3 Information, 4 Hint.
@@ -127,8 +135,18 @@ private int lspSeverity(ErrorType ty) {
 	}
 }
 
+// The one range policy, shared with the WASM IDE and the VS Code extension:
+// never invert, and never emit a zero-width range, because an editor draws
+// nothing useful for one.
+//
+// Both halves are guards, not workarounds for something silq is known to do:
+// LocationInfo sets endByte = startByte + rep.length (ast/lexer.d), so the end
+// can never precede the start and equals it only for a zero-length slice -
+// which report() above already turns into an unlocated diagnostic. The `-1` end
+// column is a separate artifact of `displayWidth(...) - 1` on an empty prefix,
+// and has no byte-space equivalent.
 private JSONValue toLspRange(const ref PositionMap map, int startByte, int endByte) {
-	if(endByte < startByte) endByte = startByte;
+	if(endByte <= startByte) endByte = map.nextCharBoundary(startByte);
 	return JSONValue(["start": map.at(startByte), "end": map.at(endByte)]);
 }
 
