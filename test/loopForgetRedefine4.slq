@@ -1,0 +1,43 @@
+// args: --run
+
+def forLoop(){
+	x:=H(0:𝔹);
+	y:=dup(x);
+	z:=dup(x);
+	for i in 0..11{
+		y:=X(y);
+		z:=X(z);
+	}
+	return x;
+}
+def whileLoop(){
+	x:=H(0:𝔹);
+	y:=dup(x);
+	i:=0;
+	while i<10{
+		y:=X(y);
+		i+=1;
+	}
+	return x;
+}
+def repeatLoop(){
+	x:=H(0:𝔹);
+	y:=dup(x);
+	repeat 10{
+		y:=X(y);
+	}
+	return x;
+}
+def nestedLoop(){
+	x:=H(0:𝔹);
+	y:=dup(x);
+	for i in 0..3{
+		for j in 0..3{
+			y:=X(y);
+		}
+	}
+	return x;
+}
+def main(){
+	return (forLoop(),whileLoop(),repeatLoop(),nestedLoop());
+}

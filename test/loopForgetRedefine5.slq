@@ -1,0 +1,9 @@
+
+def main(){
+	x:=H(0:𝔹);
+	y:=dup(x);
+	for i in 0..10{
+		y:=H(y); /// error
+	}
+	return x;
+}
