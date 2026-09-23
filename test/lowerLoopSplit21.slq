@@ -1,0 +1,18 @@
+// args: --remove-loops --run
+
+def foo(const a:𝔹){
+	c:=dup(a);
+	d:=0:𝔹;
+	for i in [0..3){
+		c⊕=1;
+		def gen[τ:qtype](const x:τ)qfree:τ×𝔹⇒(dup(x),dup(c));
+		(u,v):=gen[𝔹](a);
+		if v { d:=H(d); }
+	}
+	return d;
+}
+def main(){
+	a:=H(0:𝔹);
+	r:=foo(a);
+	return (a,r);
+}
