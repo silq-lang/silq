@@ -1,0 +1,21 @@
+// args: --remove-loops --run
+
+def foo(const a:𝔹){
+	c:=dup(a);
+	d:=0:𝔹;
+	for i in [0..3){
+		c⊕=1;
+		def h()qfree⇒dup(c);
+		k:=h: 𝟙 once→qfree 𝔹;
+		d:=H(d);
+		s:=k();
+		if s { d:=H(d); }
+		forget(k);
+	}
+	return d;
+}
+def main(){
+	a:=H(0:𝔹);
+	r:=foo(a);
+	return (a,r);
+}
