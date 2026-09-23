@@ -1,0 +1,22 @@
+// args: --remove-loops --run
+
+def foo[n:!ℕ](const x:uint[n]){
+	acc:=0:uint[n];
+	q:=0:𝔹;
+	for k in [0..n){
+		if k%2==0 {
+			acc[k]⊕=x[k];
+			if acc[k] { q:=H(q); }
+		}else{
+			q:=X(q);
+		}
+	}
+	return q;
+}
+def main(){
+	xs:=0:uint[3];
+	xs[0]:=H(xs[0]);
+	xs[2]:=X(xs[2]);
+	r:=foo(xs);
+	return (xs,r);
+}
