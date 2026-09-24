@@ -5,7 +5,7 @@ def main(){
 	y:=1:𝔹;
 	while measure(H(0:𝔹)){
 		forget(x);
-		x:=1:𝔹; /// TODO
+		x:=1:𝔹;
 		y:=H(y);
 	}
 	return (y);

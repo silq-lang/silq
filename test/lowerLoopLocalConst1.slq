@@ -12,7 +12,7 @@ def main(){
 			if measure(H(0:𝔹)) { t2 := X(t2); }
 			w := X(w);
 		}
-		forget(t2); /// TODO
+		forget(t2);
 	}
 	return (q, w, r);
 }

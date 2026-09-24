@@ -5,7 +5,7 @@ def main(){
 	y:=dup(x);
 	while(measure(H(0:𝔹))){
 		forget(y);
-		y:=dup(x); /// TODO
+		y:=dup(x);
 	}
 	return H(x);
 }
