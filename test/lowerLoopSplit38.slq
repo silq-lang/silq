@@ -1,0 +1,19 @@
+// args: --remove-loops --run
+
+def two(x:𝔹)qfree{ t:=dup(x); return (X(x),t); }
+def absorb(x:𝔹,y:𝔹){ r:=measure(x); if r { y:=X(y); } return y; }
+def foo(const a:𝔹){
+	c:=dup(a);
+	d:=0:𝔹;
+	for i in [0..3){
+		(c,t):=two(c);
+		d:=H(d);
+		d:=absorb(t,d);
+	}
+	return d;
+}
+def main(){
+	a:=H(0:𝔹);
+	r:=foo(a);
+	return (a,r);
+}
