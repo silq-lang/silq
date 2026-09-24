@@ -1,0 +1,9 @@
+// args: --run
+
+def f(c:𝔹){
+	c⊕=measure(H(dup(c)));
+	return c;
+}
+def main(){
+	return f(H(0:𝔹));
+}

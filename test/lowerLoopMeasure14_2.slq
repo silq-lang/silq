@@ -8,7 +8,7 @@ def foo(const a:𝔹){
 	c:=dup(a);
 	d:=0:𝔹;
 	for i in [0..3){
-		c:=flip(measure(H(dup(c))),c); /// TODO
+		c:=flip(measure(H(dup(c))),c);
 		if c { d:=H(d); }
 	}
 	return d;

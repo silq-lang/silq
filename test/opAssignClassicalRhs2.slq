@@ -1,0 +1,12 @@
+
+def f(c:𝔹){
+	c⊕=measure(H(dup(c)));
+	return c;
+}
+def g(c:𝔹){
+	c⊕=(λ()⇒dup(c))(); /// error
+	return c;
+}
+def main(){
+	return f(H(0:𝔹));
+}
