@@ -1,0 +1,24 @@
+// args: --remove-loops --run
+
+def absorb(x:𝔹,y:𝔹){
+	r:=measure(x);
+	if r { y:=X(y); }
+	return y;
+}
+def foo(const a:𝔹){
+	c:=dup(a);
+	d:=0:𝔹;
+	for i in [0..3){
+		c⊕=1;
+		d:=H(d);
+		d:=absorb(c,d);
+		c:=dup(a);
+		c⊕=1;
+	}
+	return d;
+}
+def main(){
+	a:=H(0:𝔹);
+	r:=foo(a);
+	return (a,r);
+}
