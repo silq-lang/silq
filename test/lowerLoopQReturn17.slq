@@ -14,7 +14,7 @@ def foo(const x:𝔹,const a:!𝔹,const b:!𝔹){
 	}
 	if b {
 		for i in [0..k+1){
-			y⊕=1; /// TODO
+			y⊕=1;
 			if y { return (X(0:𝔹),z); }
 		}
 	}

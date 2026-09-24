@@ -1,8 +1,8 @@
 // args: --remove-loops --run
 
 def anyTrue(const xs:𝔹^3)lifted{
-	for x in xs{ /// TODO
-		if x { return true:𝔹; } /// TODO
+	for x in xs{
+		if x { return true:𝔹; }
 	}
 	return false:𝔹;
 }

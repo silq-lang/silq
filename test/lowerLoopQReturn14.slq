@@ -10,7 +10,7 @@ def foo(const x:𝔹){
 			return (y,z);
 		}
 	}
-	forget(y); /// TODO
+	forget(y);
 	return (z,0);
 }
 def main()⇒foo(1);

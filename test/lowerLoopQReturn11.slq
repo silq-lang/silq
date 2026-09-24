@@ -2,8 +2,8 @@
 
 def f[n:!ℕ](const xs:𝔹^n,const a:𝔹)mfree{
 	if a {
-		for i in [0..n){ /// TODO
-			if xs[i] { return X(0:𝔹); } /// TODO
+		for i in [0..n){
+			if xs[i] { return X(0:𝔹); }
 		}
 	}
 	return H(0:𝔹);

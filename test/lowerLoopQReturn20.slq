@@ -1,0 +1,21 @@
+// args: --remove-loops --run
+
+def f(const q:𝔹,const x:𝔹){
+	y:=dup(x);
+	k:=0:!ℕ;
+	if q {
+		while k<3 {
+			y⊕=1;
+			if y { return H(0:𝔹); }
+			k+=1;
+		}
+	}
+	forget(y=dup(x)⊕(if q then 1 else 0));
+	return 0:𝔹;
+}
+def main(){
+	q:=H(0:𝔹);
+	x:=H(0:𝔹);
+	r:=f(q,x);
+	return (q,x,r);
+}

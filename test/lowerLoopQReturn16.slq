@@ -2,38 +2,38 @@
 
 def foo(const xs:𝔹^2,const a0:!𝔹,const a1:!𝔹,const a2:!𝔹,const a3:!𝔹,const a4:!𝔹,const a5:!𝔹,const a6:!𝔹)lifted{
 	if a0 {
-		for i in [0..2){ /// TODO
-			if xs[i] { return 0:uint[3]; } /// TODO
+		for i in [0..2){
+			if xs[i] { return 0:uint[3]; }
 		}
 	}
 	if a1 {
-		for i in [0..2){ /// TODO
-			if xs[i] { return 1:uint[3]; } /// TODO
+		for i in [0..2){
+			if xs[i] { return 1:uint[3]; }
 		}
 	}
 	if a2 {
-		for i in [0..2){ /// TODO
-			if xs[i] { return 2:uint[3]; } /// TODO
+		for i in [0..2){
+			if xs[i] { return 2:uint[3]; }
 		}
 	}
 	if a3 {
-		for i in [0..2){ /// TODO
-			if xs[i] { return 3:uint[3]; } /// TODO
+		for i in [0..2){
+			if xs[i] { return 3:uint[3]; }
 		}
 	}
 	if a4 {
-		for i in [0..2){ /// TODO
-			if xs[i] { return 4:uint[3]; } /// TODO
+		for i in [0..2){
+			if xs[i] { return 4:uint[3]; }
 		}
 	}
 	if a5 {
-		for i in [0..2){ /// TODO
-			if xs[i] { return 5:uint[3]; } /// TODO
+		for i in [0..2){
+			if xs[i] { return 5:uint[3]; }
 		}
 	}
 	if a6 {
-		for i in [0..2){ /// TODO
-			if xs[i] { return 6:uint[3]; } /// TODO
+		for i in [0..2){
+			if xs[i] { return 6:uint[3]; }
 		}
 	}
 	return 7:uint[3];

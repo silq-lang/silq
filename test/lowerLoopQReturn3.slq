@@ -2,8 +2,8 @@
 
 def all[n:!ℕ](const xs:𝔹^n,const flag:!𝔹)lifted{
 	if flag {
-		for i in [0..n){ /// TODO
-			if !xs[i] { return false:𝔹; } /// TODO
+		for i in [0..n){
+			if !xs[i] { return false:𝔹; }
 		}
 	}
 	return true:𝔹;
