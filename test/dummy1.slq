@@ -1,0 +1,15 @@
+// args: --run
+
+def main(){
+	a:=H(0:𝔹);
+	if a {
+		t:=X(0:𝔹);
+		t:=X(t);
+	}else{
+		t:=__dummy(𝔹);
+	}
+	forget(t=0:𝔹);
+	x:=__dummy(uint[3]×𝔹^2);
+	forget(x=__dummy(uint[3]×𝔹^2));
+	return a;
+}

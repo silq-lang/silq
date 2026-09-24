@@ -1,0 +1,4 @@
+def main(){
+	x:=__dummy(𝔹[]); /// error
+	y:=__dummy(!𝔹); /// error
+}

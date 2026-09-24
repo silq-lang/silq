@@ -3411,6 +3411,7 @@ class ScopeWriter {
 			case ast_sem.BuiltIn.show:
 			case ast_sem.BuiltIn.query:
 			case ast_sem.BuiltIn.qabort:
+			case ast_sem.BuiltIn.dummy:
 				assert(0, "Built-in %s cannot be used as first-class value");
 		}
 
@@ -4353,6 +4354,8 @@ class ScopeWriter {
 				return valNewC(null);
 			case ast_sem.BuiltIn.qabort:
 				return valAllocError();
+			case ast_sem.BuiltIn.dummy:
+				return valNewQ(null, qcg.allocDummy(getQTypeRaw(e.type, null)));
 			case ast_sem.BuiltIn.pi:
 				assert(false, format("cannot call %s", e));
 		}
@@ -4662,6 +4665,8 @@ class ScopeWriter {
 			switch(ast_sem.isBuiltInCall(e)) {
 				case ast_sem.BuiltIn.qabort:
 					return valDeallocError(ret);
+				case ast_sem.BuiltIn.dummy:
+					return qcg.deallocDummy(getQTypeRaw(e.type, null), ret.qreg);
 				default:
 					break;
 			}

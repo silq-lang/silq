@@ -10,9 +10,9 @@ def foo(const a:𝔹){
 	d:=0:𝔹;
 	for i in [0..3){
 		if a {
-			(e,t):=two(e); /// TODO
+			(e,t):=two(e);
 			for j in [0..2){
-				c⊕=t; /// TODO
+				c⊕=t;
 				if c { d:=H(d); }
 			}
 			forget(t);
