@@ -1,0 +1,14 @@
+// args: --remove-loops --run
+
+def h[n:!ℕ](const xs:𝔹^n,const a:𝔹)mfree{
+	for i in [0..n){
+		if xs[i] { return; }
+	}
+	b:=dup(a);
+	forget(b=dup(a));
+}
+def main(){
+	xs:=(H(0:𝔹),H(0:𝔹));
+	h(xs,xs[0]);
+	return xs;
+}

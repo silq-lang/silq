@@ -1,0 +1,16 @@
+// args: --remove-loops --run
+
+def any2[n:!ℕ](const xs:𝔹^n,const ys:𝔹^n)lifted{
+	for i in [0..n){
+		for j in [0..n){
+			if xs[i]&&ys[j] { return true:𝔹; }
+		}
+	}
+	return false:𝔹;
+}
+def main(){
+	xs:=(H(0:𝔹),0:𝔹);
+	ys:=(1:𝔹,H(0:𝔹));
+	r:=any2(xs,ys);
+	return (xs,ys,r);
+}

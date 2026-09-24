@@ -1,0 +1,25 @@
+// args: --remove-loops --run
+
+def f[n:!ℕ](const xs:𝔹^n,r:𝔹)mfree{
+	for i in [0..n){
+		if xs[i] { return r; }
+		r:=X(r);
+	}
+	r:=H(r);
+	return r;
+}
+def g[n:!ℕ](const xs:𝔹^n)mfree{
+	r:=0:𝔹;
+	for i in [0..n){
+		if xs[i] { return r; }
+		r:=X(r);
+	}
+	if xs[0] { r:=H(r); }
+	return r;
+}
+def main(){
+	xs:=(H(0:𝔹),H(0:𝔹));
+	r:=f(xs,0:𝔹);
+	s:=g(xs);
+	return (xs,r,s);
+}

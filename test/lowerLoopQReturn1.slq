@@ -1,0 +1,16 @@
+// args: --remove-loops --run
+
+def first[n:!ℕ](const xs:𝔹^n)lifted{
+	q:=0:𝔹;
+	for i in [0..n){
+		if xs[i] {
+			return (X(0:𝔹),i as uint[4]);
+		}
+	}
+	return (q,15:uint[4]);
+}
+def main(){
+	xs:=(H(0:𝔹),H(0:𝔹),0:𝔹);
+	r:=first(xs);
+	return (xs,r);
+}

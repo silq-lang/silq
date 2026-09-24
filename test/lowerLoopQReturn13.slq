@@ -1,0 +1,13 @@
+// args: --remove-loops --run
+
+def f[n:!ℕ](const xs:𝔹^n)mfree{
+	for i in [0..n){
+		if xs[i] { return i as uint[2]; }
+	}
+	assert(false);
+}
+def main(){
+	xs:=(1:𝔹,H(0:𝔹));
+	r:=f(xs);
+	return (xs,r);
+}

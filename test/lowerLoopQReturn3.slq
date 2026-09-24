@@ -1,0 +1,15 @@
+// args: --remove-loops --run
+
+def all[n:!ℕ](const xs:𝔹^n,const flag:!𝔹)lifted{
+	if flag {
+		for i in [0..n){
+			if !xs[i] { return false:𝔹; }
+		}
+	}
+	return true:𝔹;
+}
+def main(){
+	xs:=(H(0:𝔹),1:𝔹);
+	r:=all(xs,true);
+	return (xs,r);
+}
