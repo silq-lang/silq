@@ -1,0 +1,19 @@
+// args: --remove-loops --run
+
+def foo(const x:𝔹){
+	y:=dup(x);
+	z:=0:𝔹;
+	for i in [0..2){
+		y⊕=1;
+		z:=H(z);
+		if measure(H(0:𝔹)) { return (y,z); }
+	}
+	for j in [0..2){
+		y⊕=1;
+		if y { z:=H(z); }
+		if measure(H(0:𝔹)) { return (y,z); }
+	}
+	forget(y=dup(x));
+	return (z,0:𝔹);
+}
+def main()⇒foo(1);

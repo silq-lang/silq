@@ -1,0 +1,13 @@
+// args: --remove-loops --run
+
+def anyTrue(const xs:𝔹^3)lifted{
+	for x in xs{ /// TODO
+		if x { return true:𝔹; } /// TODO
+	}
+	return false:𝔹;
+}
+def main(){
+	xs:=(H(0:𝔹),0:𝔹,H(0:𝔹));
+	r:=anyTrue(xs);
+	return (xs,r);
+}

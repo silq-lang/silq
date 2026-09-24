@@ -1,0 +1,46 @@
+// args: --remove-loops --run
+
+def foo(const a0:!𝔹,const a1:!𝔹,const a2:!𝔹,const a3:!𝔹,const a4:!𝔹,const a5:!𝔹,const a6:!𝔹,const a7:!𝔹){
+	if a0 {
+		for i in [0..2){
+			if i==5 { return 0:!ℕ; }
+		}
+	}
+	if a1 {
+		for i in [0..2){
+			if i==5 { return 1:!ℕ; }
+		}
+	}
+	if a2 {
+		for i in [0..2){
+			if i==5 { return 2:!ℕ; }
+		}
+	}
+	if a3 {
+		for i in [0..2){
+			if i==5 { return 3:!ℕ; }
+		}
+	}
+	if a4 {
+		for i in [0..2){
+			if i==5 { return 4:!ℕ; }
+		}
+	}
+	if a5 {
+		for i in [0..2){
+			if i==5 { return 5:!ℕ; }
+		}
+	}
+	if a6 {
+		for i in [0..2){
+			if i==5 { return 6:!ℕ; }
+		}
+	}
+	if a7 {
+		for i in [0..2){
+			if i==5 { return 7:!ℕ; }
+		}
+	}
+	return 99:!ℕ;
+}
+def main()⇒foo(true,true,true,true,true,true,true,true);
