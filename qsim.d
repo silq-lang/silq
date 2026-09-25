@@ -2042,20 +2042,21 @@ struct QState{
 		return r;
 	}
 	alias makeArray=makeTuple;
-	static Value makeDummy(Expression type){
+	// `size` evaluates sizes that are not known statically (e.g., generic parameters)
+	static Value makeDummy(Expression type,scope Value delegate(Expression) size){
+		size_t sizeOf(Expression e){
+			if(auto v=e.asIntegerConstant()) return smallValue(v.get());
+			return smallValue(size(e).asℤ());
+		}
 		Value zero(Expression ty){
 			if(ty==Bool(false)||ty==Bool(true)) return makeBool(false);
 			if(auto it=isFixedIntTy(ty)){
-				auto v=it.bits.asIntegerConstant();
-				enforce(!!v,"`__dummy` requires a known number of bits");
-				auto nbits=smallValue(v.get());
+				auto nbits=sizeOf(it.bits);
 				if(it.isSigned) return makeInt(ty.getClassical(),BitInt!true(nbits,ℤ(0)));
 				return makeUint(ty.getClassical(),BitInt!false(nbits,ℤ(0)));
 			}
 			if(auto vec=cast(VectorTy)ty){
-				auto v=vec.num.asIntegerConstant();
-				enforce(!!v,"`__dummy` requires a known vector length");
-				auto n=smallValue(v.get());
+				auto n=sizeOf(vec.num);
 				return makeArray(ty.getClassical(),iota(n).map!(i=>zero(vec.next)).array);
 			}
 			if(auto tpl=ty.isTupleTy()){
@@ -2943,7 +2944,7 @@ struct Interpreter(QState){
 						enforce(0,"bad forget");
 						assert(0);
 					case BuiltIn.dummy:
-						return QState.makeDummy(ce.type);
+						return QState.makeDummy(ce.type,(Expression x)=>doIt(x));
 					case BuiltIn.pi:
 						enforce(0,text("built-in `",id.name,"` not yet supported"));
 						assert(0);
@@ -3502,7 +3503,7 @@ struct Interpreter(QState){
 					isAbort=true;
 					break;
 				case BuiltIn.dummy:
-					forget(rhs,QState.makeDummy(ce.type));
+					forget(rhs,QState.makeDummy(ce.type,(Expression x)=>runExp(x)));
 					return;
 				default: break;
 			}
