@@ -1,0 +1,24 @@
+// args: --remove-loops
+
+def find_order_candidate(a:!ℕ,N:!ℕ,t:!ℕ)⇒0;
+
+def is_odd(n:!ℕ)⇒n%2=1;
+
+def shor(N:!ℕ, t:!ℕ){
+	period := 1;
+	while is_odd(period) {
+		a := 3;
+		if gcd(a,N)≠1{
+			p := gcd(a, N);
+			return p;
+		}
+		period := find_order_candidate(a, N, t);
+		x := a^(period div 2)%N;
+		if x≠1 && !is_odd(period){
+			p := gcd(x-1, N);
+			return p;
+		}
+		period = 1;
+	}
+	assert(0);
+}

@@ -1,0 +1,32 @@
+// args: --run
+
+def is_odd(n:!ℕ)⇒n%2=1;
+def id(n:!ℕ)⇒n;
+def g(n:!ℕ)⇒0;
+
+def h(p:!ℕ){
+	if is_odd(p){ p:=5; } else { p:=6; }
+	return p;
+}
+def h2(N:!ℕ,period:!ℕ){
+	if is_odd(period){
+		if N=3{ return 0; }
+		period:=g(N);
+		return period;
+	}
+	return 1;
+}
+def h3(N:!ℕ,period:!ℕ){
+	if is_odd(period){
+		if N=3{ y:=1; }
+		period:=g(N);
+		return period;
+	}
+	return 1;
+}
+def main(){
+	assert(h(3)=5&&h(4)=6);
+	assert(h2(3,1)=0&&h2(4,1)=0&&h2(4,2)=1);
+	assert(h3(3,1)=0&&h3(4,2)=1);
+	return ();
+}

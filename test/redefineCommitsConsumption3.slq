@@ -1,0 +1,9 @@
+def is_odd(n:!ℕ)⇒n%2=1;
+def id(n:!ℕ)⇒n;
+def g(n:!ℕ)⇒0;
+
+def h(p:!ℕ){
+	b:=is_odd(p);
+	if b{ p:=5; }
+	return p; /// error
+}

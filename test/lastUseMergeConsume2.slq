@@ -1,0 +1,8 @@
+def bar(const c:𝔹){
+	x:=H(0);
+	y0:=!x;
+	y1:=y0;
+	if c { y2:=!y0; } else { y2:=0:𝔹; }
+	z:=H(x);
+	return (y0,y1,y2,z); /// error
+}

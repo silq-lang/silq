@@ -1,0 +1,8 @@
+def foo(){
+	x:=H(0);
+	y0:=!x;
+	y1:=y0;
+	y2:=!y0;
+	z:=H(x);
+	return (y0,y1,y2,z); /// error
+}

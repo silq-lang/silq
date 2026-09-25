@@ -1,0 +1,16 @@
+// args: --remove-loops --run
+
+def g(n:!ℕ)⇒0;
+def is_odd(n:!ℕ)⇒n%2=1;
+
+def f(N:!ℕ){
+	period := 1;
+	while is_odd(period) {
+		period := g(N);
+		period = N;
+	}
+	return 0;
+}
+def main(){
+	return f(4);
+}
