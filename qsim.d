@@ -21,6 +21,48 @@ import std.random;
 import std.complex;
 import util.math;
 
+private{
+	size_t stackSegmentBase=0; // address near the start of the current stack segment (0: not yet known)
+	size_t stackSegmentBudget=0; // number of bytes of the current segment calls may use
+	enum fiberStackSize=size_t(64)<<20;
+	size_t currentStackAddress(){
+		int local;
+		return cast(size_t)&local;
+	}
+	size_t mainStackBudget(){
+		version(Posix){
+			import core.sys.posix.sys.resource:rlimit,getrlimit,RLIMIT_STACK,RLIM_INFINITY;
+			rlimit rl;
+			if(getrlimit(RLIMIT_STACK,&rl)==0&&rl.rlim_cur!=RLIM_INFINITY) return cast(size_t)rl.rlim_cur/4;
+		}
+		return size_t(2)<<20;
+	}
+	// runs `dg`, on a new fiber if the current stack segment is filling up
+	void runWithStack(scope void delegate() dg){
+		auto sp=currentStackAddress();
+		if(!stackSegmentBase){
+			stackSegmentBase=sp;
+			stackSegmentBudget=mainStackBudget();
+		}
+		auto used=stackSegmentBase>sp?stackSegmentBase-sp:sp-stackSegmentBase;
+		if(used<stackSegmentBudget) return dg();
+		import core.thread:Fiber;
+		auto oldBase=stackSegmentBase,oldBudget=stackSegmentBudget;
+		stackSegmentBase=0;
+		scope(exit){
+			stackSegmentBase=oldBase;
+			stackSegmentBudget=oldBudget;
+		}
+		auto fiber=new Fiber((){
+			stackSegmentBase=currentStackAddress();
+			stackSegmentBudget=fiberStackSize/4*3;
+			dg();
+		},fiberStackSize);
+		scope(exit) destroy(fiber); // release the fiber's stack
+		fiber.call();
+	}
+}
+
 struct FrameInfo {
 	FunctionDef fd;
 	Location loc; // location within caller, not `fd`
@@ -2271,7 +2313,7 @@ struct QState{
 		auto nnstate=QState.empty();
 		nnstate.popFrameCleanup=ncur.popFrameCleanup;
 		try{
-			intp.runFun(nnstate);
+			runWithStack((){ intp.runFun(nnstate); });
 		}catch(LocalizedException ex){
 			ex.stackTrace~=FrameInfo(fun, loc);
 			throw ex;
@@ -2880,7 +2922,43 @@ struct Interpreter(QState){
 			}
 		}
 		// TODO: get rid of code duplication
-		QState.Value doIt2(Expression e){
+		pragma(inline,false) QState.Value doItCall()(CallExp ce){
+			auto target=unwrap(ce.e);
+			auto id=cast(Identifier)target;
+			auto fe=cast(FieldExp)target;
+			QState.Value thisExp=QState.nullValue;
+			if(fe){
+				id=fe.f;
+				thisExp=doIt(fe.e);
+				enforce(0, "method calls not yet supported");
+				assert(0);
+			} else {
+				final switch(isBuiltIn(id)){
+					case BuiltIn.none:
+						break;
+					case BuiltIn.show,BuiltIn.query:
+						return qstate.makeTuple(ast.type.unit,[]);
+					case BuiltIn.qabort:
+						if(!qstate.state.length) return QState.Value.init;
+						enforce(0,"bad forget");
+						assert(0);
+					case BuiltIn.dummy:
+						return QState.makeDummy(ce.type);
+					case BuiltIn.pi:
+						enforce(0,text("built-in `",id.name,"` not yet supported"));
+						assert(0);
+				}
+				if(id&&cast(DatDecl)id.meaning) return QState.typeValue(ce); // TODO: get rid of this
+			}
+			auto fun=doIt(ce.e);
+			auto arg=doIt(ce.arg);
+			auto r=qstate.call(fun,arg,ce.type,ce.loc);
+			if(ce.newFunctionVar) qstate.assignTo(ce.newFunctionVar.getName,fun);
+			else if(id&&fun.tag==QState.Value.Tag.closure&&fun.closure.context&&id.name !in qstate.vars)
+				fun.forget(qstate);
+			return r;
+		}
+		pragma(inline,false) QState.Value doIt2Other()(Expression e){
 			if(auto id=cast(Identifier)e){
 				if(!id.meaning&&util.among(id.name,"π","pi")) return QState.π;
 				if(auto init=id.getInitializer()){
@@ -2984,42 +3062,6 @@ struct Interpreter(QState){
 				}
 				fv.forget(qstate);
 				return QState.makeArray(vfe.type,values);
-			}
-			if(auto ce=cast(CallExp)e){
-				auto target=unwrap(ce.e);
-				auto id=cast(Identifier)target;
-				auto fe=cast(FieldExp)target;
-				QState.Value thisExp=QState.nullValue;
-				if(fe){
-					id=fe.f;
-					thisExp=doIt(fe.e);
-					enforce(0, "method calls not yet supported");
-					assert(0);
-				} else {
-					final switch(isBuiltIn(id)){
-						case BuiltIn.none:
-							break;
-						case BuiltIn.show,BuiltIn.query:
-							return qstate.makeTuple(ast.type.unit,[]);
-						case BuiltIn.qabort:
-							if(!qstate.state.length) return QState.Value.init;
-							enforce(0,"bad forget");
-							assert(0);
-						case BuiltIn.dummy:
-							return QState.makeDummy(ce.type);
-						case BuiltIn.pi:
-							enforce(0,text("built-in `",id.name,"` not yet supported"));
-							assert(0);
-					}
-					if(id&&cast(DatDecl)id.meaning) return QState.typeValue(ce); // TODO: get rid of this
-				}
-				auto fun=doIt(ce.e);
-				auto arg=doIt(ce.arg);
-				auto r=qstate.call(fun,arg,ce.type,ce.loc);
-				if(ce.newFunctionVar) qstate.assignTo(ce.newFunctionVar.getName,fun);
-				else if(id&&fun.tag==QState.Value.Tag.closure&&fun.closure.context&&id.name !in qstate.vars)
-					fun.forget(qstate);
-				return r;
 			}
 			if(auto fe=cast(ForgetExp)e){
 				forget(fe);
@@ -3204,6 +3246,11 @@ struct Interpreter(QState){
 			}
 			enforce(0,text("expression `",e,"` of type `",e.type,"` not yet supported"));
 			assert(0);
+		}
+		QState.Value doIt2(Expression e){
+			// (dispatch only: keep the frame small, as this is on the path of recursive calls)
+			if(auto ce=cast(CallExp)e) return doItCall(ce);
+			return doIt2Other(e);
 		}
 		return doIt(e);
 	}
@@ -3667,20 +3714,11 @@ struct Interpreter(QState){
 			writeln();
 		}
 		if(auto ae=cast(AssignExp)e){
-			auto lhs=ae.e1,rhs=runExp(ae.e2);
-			assignTo(lhs,rhs,ae.replacements);
+			runStmAssignExp(ae,retState);
 		}else if(auto ae=cast(DefineExp)e){
-			if(ae.isSwap){
-				auto tpl=cast(TupleExp)unwrap(ae.e2);
-				enforce(!!tpl);
-				swap(tpl.e[0],tpl.e[1],[]);
-			}else{
-				auto lhs=ae.e1,rhs=runExp(ae.e2);
-				assignTo(lhs,rhs,[]);
-			}
+			runStmDefineExp(ae,retState);
 		}else if(auto ce=cast(CatAssignExp)e){
-			auto lhs=ce.e1,rhs=runExp(ce.e2);
-			catAssignTo(lhs,rhs,ce.replacements);
+			runStmCatAssignExp(ce,retState);
 		}else if(isOpAssignExp(e)){
 			QState.Value perform(QState.Value a,QState.Value b){
 				if(cast(OrElseAssignExp)e) return a|b;
@@ -3725,6 +3763,54 @@ struct Interpreter(QState){
 		}else if(auto ce=cast(CompoundExp)e){
 			foreach(s;ce.s) runStm(s,retState);
 		}else if(auto ite=cast(IteExp)e){
+			runStmIteExp(ite,retState);
+		}else if(auto with_=cast(WithExp)e){
+			runStmWithExp(with_,retState);
+		}else if(auto re=cast(RepeatExp)e){
+			runStmRepeatExp(re,retState);
+		}else if(auto fe=cast(ForExp)e){
+			runStmForExp(fe,retState);
+		}else if(auto we=cast(WhileExp)e){
+			runStmWhileExp(we,retState);
+		}else if(auto re=cast(ReturnExp)e){
+			runStmReturnExp(re,retState);
+		}else if(auto ae=cast(AssertExp)e){
+			runStmAssertExp(ae,retState);
+		}else if(auto oe=cast(ObserveExp)e){
+			enforce(0,"TODO: observe?");
+			assert(0);
+		}else if(auto fe=cast(ForgetExp)e){
+			forget(fe);
+		}else if(auto ce=cast(CommaExp)e){
+			runStm(ce.e1,retState);
+			runStm(ce.e2,retState);
+		}else if(auto fd=cast(FunctionDef)e){
+			qstate.declareFunction(fd);
+		}else if(cast(Declaration)e){
+			// do nothing
+		}else{
+			enforce(0,text("statement `",e,"` is not yet supported"));
+		}
+	}
+	pragma(inline,false) void runStmAssignExp(AssignExp ae,ref QState retState){
+			auto lhs=ae.e1,rhs=runExp(ae.e2);
+			assignTo(lhs,rhs,ae.replacements);
+		}
+	pragma(inline,false) void runStmDefineExp(DefineExp ae,ref QState retState){
+			if(ae.isSwap){
+				auto tpl=cast(TupleExp)unwrap(ae.e2);
+				enforce(!!tpl);
+				swap(tpl.e[0],tpl.e[1],[]);
+			}else{
+				auto lhs=ae.e1,rhs=runExp(ae.e2);
+				assignTo(lhs,rhs,[]);
+			}
+		}
+	pragma(inline,false) void runStmCatAssignExp(CatAssignExp ce,ref QState retState){
+			auto lhs=ce.e1,rhs=runExp(ce.e2);
+			catAssignTo(lhs,rhs,ce.replacements);
+		}
+	pragma(inline,false) void runStmIteExp(IteExp ite,ref QState retState){
 			auto cond=runExp(ite.cond);
 			if(cond.isClassical()){
 				if(cond.neqZImpl){
@@ -3753,11 +3839,13 @@ struct Interpreter(QState){
 				othw=othwIntp.qstate;
 				qstate+=othw;
 			}
-		}else if(auto with_=cast(WithExp)e){
+		}
+	pragma(inline,false) void runStmWithExp(WithExp with_,ref QState retState){
 			runStm(with_.trans,retState);
 			runStm(with_.bdy,retState);
 			runStm(with_.itrans,retState);
-		}else if(auto re=cast(RepeatExp)e){
+		}
+	pragma(inline,false) void runStmRepeatExp(RepeatExp re,ref QState retState){
 			auto rep=runExp(re.num);
 			if(rep.isℤ()){
 				auto z=rep.asℤ();
@@ -3784,7 +3872,8 @@ struct Interpreter(QState){
 					intp.closeScope(re.bdy.blscope_);
 				}+/
 			}
-		}else if(auto fe=cast(ForExp)e){
+		}
+	pragma(inline,false) void runStmForExp(ForExp fe,ref QState retState){
 			if(auto range=fe.aggr.isRange){
 				auto l=runExp(range.left), s=range.step?runExp(range.step):qstate.makeInteger(ℤ(1)), r=runExp(range.right);
 				if(l.isℤ()&&r.isℤ()&&s.isℤ()){
@@ -3828,7 +3917,8 @@ struct Interpreter(QState){
 			}else{
 				enforce(0,"non-ranged for loops not yet supported");
 			}
-		}else if(auto we=cast(WhileExp)e){
+		}
+	pragma(inline,false) void runStmWhileExp(WhileExp we,ref QState retState){
 			auto intp=Interpreter(functionDef,we.bdy,qstate,hasFrame);
 			for(;;){
 				if(intp.qstate.unreachable) break;
@@ -3838,7 +3928,8 @@ struct Interpreter(QState){
 				intp.closeScope(we.bdy.blscope_);
 			}
 			qstate=intp.qstate;
-		}else if(auto re=cast(ReturnExp)e){
+		}
+	pragma(inline,false) void runStmReturnExp(ReturnExp re,ref QState retState){
 			auto value = convertTo(re.e,functionDef.ret);
 			if(functionDef.context&&functionDef.contextName.startsWith("this"))
 				value = QState.makeTuple(tupleTy([re.e.type,contextTy(true)]),[value,qstate.readLocal(functionDef.contextName,false)]);
@@ -3853,25 +3944,11 @@ struct Interpreter(QState){
 			}//else assert(qstate.vars.length==1); // only `value
 			retState += qstate; // TODO: compute distributions?
 			qstate=QState.empty();
-		}else if(auto ae=cast(AssertExp)e){
+		}
+	pragma(inline,false) void runStmAssertExp(AssertExp ae,ref QState retState){
 			auto cond=runExp(ae.e);
 			qstate=qstate.assertTrue(cond);
-		}else if(auto oe=cast(ObserveExp)e){
-			enforce(0,"TODO: observe?");
-			assert(0);
-		}else if(auto fe=cast(ForgetExp)e){
-			forget(fe);
-		}else if(auto ce=cast(CommaExp)e){
-			runStm(ce.e1,retState);
-			runStm(ce.e2,retState);
-		}else if(auto fd=cast(FunctionDef)e){
-			qstate.declareFunction(fd);
-		}else if(cast(Declaration)e){
-			// do nothing
-		}else{
-			enforce(0,text("statement `",e,"` is not yet supported"));
 		}
-	}
 	void run(ref QState retState){
 		static if(language==silq){
 			if(statements.blscope_)
