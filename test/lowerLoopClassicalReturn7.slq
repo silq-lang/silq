@@ -1,0 +1,14 @@
+// args: --remove-loops --run
+
+def g(c:𝔹,i:!ℕ)qfree:𝔹{ assert(i<1); return X(c); }
+def f(const a:𝔹){
+	c:=dup(a);
+	d:=0:𝔹;
+	for i in [0..3){
+		c:=g(c,i);
+		if c { d:=H(d); }
+		if i==0 { return d; }
+	}
+	return d;
+}
+def main(){ a:=H(0:𝔹); r:=f(a); return (a,r); }
