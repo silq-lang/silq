@@ -1,0 +1,15 @@
+// args: --remove-loops --run
+
+def f(const xs:𝔹^3)mfree{
+	i:=0:!ℕ;
+	while true {
+		if xs[i] { return i as uint[2]; }
+		i+=1;
+		if i==3 { return 3:uint[2]; }
+	}
+}
+def main(){
+	xs:=(H(0:𝔹),0:𝔹,H(0:𝔹));
+	r:=f(xs);
+	return (xs,r);
+}

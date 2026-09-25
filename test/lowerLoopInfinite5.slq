@@ -1,0 +1,16 @@
+// args: --remove-loops --run
+
+def f(const q:𝔹,x:𝔹)mfree{
+	k:=0:!ℕ;
+	while true {
+		if q { return (X(x),k as uint[3]); }
+		x:=H(x);
+		k+=1;
+		if k==2 { return (x,k as uint[3]); }
+	}
+}
+def main(){
+	q:=H(0:𝔹);
+	r:=f(q,0:𝔹);
+	return (q,r);
+}

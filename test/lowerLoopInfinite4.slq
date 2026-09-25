@@ -1,0 +1,12 @@
+// args: --remove-loops --run
+
+def f(const b:!𝔹,x:𝔹){
+	if b {
+		while true { x:=X(x); }
+		x:=H(x);
+	}
+	return x;
+}
+def main(){
+	return f(false,H(0:𝔹));
+}
