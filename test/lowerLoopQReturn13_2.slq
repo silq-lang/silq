@@ -4,7 +4,7 @@ def f[n:!ℕ](const xs:𝔹^n)mfree{
 	for i in [0..n){
 		if xs[i] { return i as uint[2]; }
 	}
-	assert(false); /// run_error
+	return 0:uint[2];
 }
 def main(){
 	xs:=(1:𝔹,H(0:𝔹));

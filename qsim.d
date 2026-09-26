@@ -366,6 +366,7 @@ struct QState{
 	Record vars;
 	QVar[] popFrameCleanup;
 	bool unreachable=false;
+	bool ghost=false; // executes a branch whose control has amplitude zero
 
 	static Value dupValue(Value v){
 		if(!v.type) return Value.init;
@@ -440,7 +441,7 @@ struct QState{
 	}
 
 	QState dup(){
-		return QState(state.dup,dupValue(vars),popFrameCleanup,unreachable);
+		return QState(state.dup,dupValue(vars),popFrameCleanup,unreachable,ghost);
 	}
 	void copyNonState(ref QState rhs){
 		this.tupleof[1..$]=rhs.tupleof[1..$];
@@ -507,7 +508,9 @@ struct QState{
 	}
 	void opOpAssign(string op:"+")(QState r){
 		if(r.unreachable) return;
-		if(state.length==0){ this=r; return; }
+		if(unreachable||state.length==0&&!ghost){ this=r; return; }
+		if(r.ghost) return; // (quantum effects of ghost states are discarded)
+		if(ghost){ this=r; return; }
 		foreach(k,ref v;r.vars){
 			if(k in vars) prepareMerge(vars[k],v,r);
 			else vars[k]=v;
@@ -521,6 +524,12 @@ struct QState{
 			add(k,v);
 		}
 	}
+	// basis states are updated in place, so a ghost state gets its own copies
+	static MapX!(Σ,C) ghostCopy(MapX!(Σ,C) state){
+		MapX!(Σ,C) r;
+		foreach(k,v;state) r[k.dup]=v;
+		return r;
+	}
 	Q!(QState,QState) split(Value cond){
 		QState then,othw;
 		then.copyNonState(this);
@@ -529,14 +538,17 @@ struct QState{
 		if(cond.isClassical()){
 			if(cond.asBoolean) then=this;
 			else othw=this;
+			if(!then.state.length) then.unreachable=true;
+			if(!othw.state.length) othw.unreachable=true;
 		}else{
 			foreach(k,v;state){
 				if(cond.classicalValue(k).asBoolean) then.add(k,v);
 				else othw.add(k,v);
 			}
+			// a branch whose control has amplitude zero is executed in a ghost state
+			if(ghost||!then.state.length){ then.state=ghostCopy(state); then.ghost=true; }
+			if(ghost||!othw.state.length){ othw.state=ghostCopy(state); othw.ghost=true; }
 		}
-		if(!then.state.length) then.unreachable=true;   // add
-		if(!othw.state.length) othw.unreachable=true;    // add
 		return q(then,othw);
 	}
 	QState project(Value cond){ return split(cond)[0]; }
@@ -546,8 +558,13 @@ struct QState{
 		new_.copyNonState(this);
 		if(!opt.projectForget){
 			foreach(k,v;state){
-				auto nk=f(k,args);
+				Σ nk;
+				if(ghost){ // (failures that depend on quantum values of a ghost state do not matter: drop the basis state)
+					try nk=f(k,args);
+					catch(Exception) continue;
+				}else nk=f(k,args);
 				static if(checkInterference){
+					if(ghost){ new_.add(nk,v); continue; }
 					enforce(nk !in new_.state,"bad forget"); // TODO: good error reporting, e.g. for forget
 					new_.state[nk]=v;
 				}else new_.add(nk,v);
@@ -2240,14 +2257,14 @@ struct QState{
 		Record nvars,nnvars;
 		foreach(k,v;vars) nvars[k]=v.inFrame();
 		nnvars["`parent"]=makeRecord(nvars);
-		return QState(state,nnvars,[],unreachable);
+		return QState(state,nnvars,[],unreachable,ghost);
 	}
 	QState popFrame(QVar[] previousPopFrameCleanup){
 		foreach(qvar;popFrameCleanup) qvar.forget(this);
 		auto frame=vars["`parent"];
 		enforce(frame.tag==Value.Tag.record,"frame is a bad value");
 		Record nvars=frame.record.dup;
-		return QState(state,nvars,previousPopFrameCleanup,unreachable);
+		return QState(state,nvars,previousPopFrameCleanup,unreachable,ghost);
 	}
 	static Value inFrame(Value v){
 		return v.inFrame();
@@ -2515,6 +2532,7 @@ struct QState{
 		this=map!(assign,false)(var,rhs);
 	}
 	private void forget(Σ.Ref var,Value rhs){
+		if(ghost) return forget(var); // (the value may differ in a ghost state)
 		static Σ forgetImpl(Σ s,Σ.Ref var,Value rhs){
 			s.forget(var,rhs);
 			return s;
@@ -2940,7 +2958,7 @@ struct Interpreter(QState){
 					case BuiltIn.show,BuiltIn.query:
 						return qstate.makeTuple(ast.type.unit,[]);
 					case BuiltIn.qabort:
-						if(!qstate.state.length) return QState.Value.init;
+						if(!qstate.state.length||qstate.ghost) return QState.Value.init;
 						enforce(0,"bad forget");
 						assert(0);
 					case BuiltIn.dummy:
@@ -3508,7 +3526,7 @@ struct Interpreter(QState){
 				default: break;
 			}
 			if(isAbort){
-				if(qstate.state.length==0){
+				if(qstate.state.length==0||qstate.ghost){
 					forget(rhs);
 				}else{
 					enforce(0,"bad forget");

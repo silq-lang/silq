@@ -1,0 +1,11 @@
+// args: --run
+
+def f(const q:𝔹)mfree{
+	if q { assert(false); } /// run_error
+	return ();
+}
+def main(){
+	q:=0:𝔹;
+	f(q);
+	return q;
+}

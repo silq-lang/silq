@@ -1,0 +1,15 @@
+// args: --run
+// classical code under quantum control counts as reachable even if the control has amplitude zero
+
+// failures that depend on quantum values in branches with amplitude zero do not count
+def f(const x:uint[3],const y:uint[3])qfree{
+	if x=0 { return 0:uint[3]; }
+	return y div x;
+}
+def main(){
+	x:=0:uint[3];
+	y:=5:uint[3];
+	r:=f(x,y);
+	assert(measure(r)=0);
+	return (x,y);
+}

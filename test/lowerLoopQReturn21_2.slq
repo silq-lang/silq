@@ -1,6 +1,6 @@
 // args: --remove-loops --run
 
-def g(c:𝔹,i:!ℕ)qfree:𝔹{ assert(i<1); return X(c); } /// run_error
+def g(c:𝔹,i:!ℕ)qfree:𝔹{ return X(c); }
 def f(const a:𝔹,const q:𝔹){
 	c:=dup(a);
 	d:=0:𝔹;

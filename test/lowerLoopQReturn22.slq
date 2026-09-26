@@ -1,0 +1,23 @@
+// args: --remove-loops --run
+// a quantum-controlled return guards a lifted computation against quantum data it cannot handle:
+// the lifted computation must not be split off into a loop that also runs for returned basis states
+
+def f(const x:uint[2])mfree{
+	y:=0:uint[2];
+	d:=0:𝔹;
+	for i in [0..2){
+		if x=0 {
+			forget(y);
+			return H(d);
+		}
+		y+=3 div x;
+		d:=H(d);
+	}
+	forget(y);
+	return d;
+}
+def main(){
+	x:=0:uint[2];
+	r:=f(x);
+	return (x,r);
+}

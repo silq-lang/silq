@@ -1,0 +1,19 @@
+// args: --run
+
+def g(i:!ℕ)qfree:𝔹{
+	assert(i<1); /// run_error
+	return 0:𝔹;
+}
+def f(const q:𝔹)mfree{
+	for i in [0..3){
+		if q { return 1:𝔹; }
+		t:=g(i);
+		forget(t);
+	}
+	return 0:𝔹;
+}
+def main(){
+	q:=1:𝔹;
+	r:=f(q);
+	return (q,r);
+}

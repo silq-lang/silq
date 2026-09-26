@@ -1,0 +1,20 @@
+// args: --run
+
+def g()qfree:𝔹⇒1:𝔹;
+def h(x:𝔹)qfree:𝔹⇒X(x);
+def f(const q:𝔹)mfree{
+	r:=0:𝔹;
+	if q {
+		x:=g();
+		y:=h(x);
+		r:=X(r);
+		forget(y);
+	}
+	return r;
+}
+def main(){
+	q:=0:𝔹;
+	r:=f(q);
+	assert(measure(r)=0);
+	return q;
+}
