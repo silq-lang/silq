@@ -530,12 +530,12 @@ struct QState{
 		foreach(k,v;state) r[k.dup]=v;
 		return r;
 	}
-	Q!(QState,QState) split(Value cond){
+	Q!(QState,QState) split(Value cond,bool quantumControl=false){
 		QState then,othw;
 		then.copyNonState(this);
 		othw.copyNonState(this);
 		othw.vars=dupValue(othw.vars);
-		if(cond.isClassical()){
+		if(cond.isClassical()&&!quantumControl){
 			if(cond.asBoolean) then=this;
 			else othw=this;
 			if(!then.state.length) then.unreachable=true;
@@ -740,6 +740,16 @@ struct QState{
 		Value value,i;
 		this(Value value,Value i){ this.value=value; this.i=i; }
 		override Value get(ref Σ σ){ return value.classicalValue(σ)[i.classicalValue(σ)]; }
+	}
+	static class BoundsCheckQVal: QVal{
+		Value value,i;
+		size_t length;
+		this(Value value,Value i,size_t length){ this.value=value; this.i=i; this.length=length; }
+		override Value get(ref Σ σ){
+			auto index=i.classicalValue(σ).asℤ();
+			enforce(0<=index&&index<length,"index out of bounds");
+			return value.classicalValue(σ);
+		}
 	}
 	static class IteQVal: QVal{
 		Value cond,then,othw;
@@ -1369,14 +1379,21 @@ struct QState{
 			enforce(i.tag==Value.Tag.quval&&cast(QVar)i.quval&&!(cast(QVar)i.quval).consumedOnRead,"index operation currently unsupported");
 			final switch(tag){
 				case Tag.array_:
-					// TODO: bounds checking
 					Value build(Value[] array_,size_t offset){ // TODO: this is a hack
 						if(array_.length==1) return array_[0];
 						auto cond=i.compare!"<"(makeInteger(ℤ(offset+array_.length/2)));
 						return ite(cond,build(array_[0..$/2],offset),build(array_[$/2..$],offset+array_.length/2));
 					}
 					enforce(array_.length,"array index out of bounds");
-					return build(array_,0);
+					static Value checked(Value r,Value i,size_t length){
+						if(r.tag==Tag.array_){
+							Value[] elements;
+							foreach(e;r.array_) elements~=checked(e,i,length);
+							return makeArray(r.type,elements);
+						}
+						return makeQuval(r.type,new BoundsCheckQVal(r,i,length));
+					}
+					return checked(build(array_,0),i,array_.length);
 				case Tag.uintval,Tag.intval,Tag.quval:
 					assert(isFixedIntTy(type));
 					return makeQuval(Bool(false),new IndexQVal(this,i));
@@ -3145,7 +3162,7 @@ struct Interpreter(QState){
 			}
 			if(auto ite=cast(IteExp)e){
 				auto cond=runExp(ite.cond);
-				if(cond.isClassical()){
+				if(cond.isClassical()&&ite.cond.type.isClassical()){
 					if(cond.neqZImpl){
 						auto thenIntp=Interpreter!QState(functionDef,ite.then,qstate,hasFrame);
 						auto then=thenIntp.runBranch(ite.then,ite.type,ite.constLookup,ite.implicitDup);
@@ -3158,7 +3175,7 @@ struct Interpreter(QState){
 						return othw;
 					}
 				}else{
-					auto thenElse=qstate.split(cond);
+					auto thenElse=qstate.split(cond,true);
 					qstate=thenElse[0];
 					auto thenIntp=Interpreter!QState(functionDef,ite.then,qstate,hasFrame);
 					auto then=thenIntp.runBranch(ite.then,ite.type,ite.constLookup,ite.implicitDup);
@@ -3831,7 +3848,7 @@ struct Interpreter(QState){
 		}
 	pragma(inline,false) void runStmIteExp(IteExp ite,ref QState retState){
 			auto cond=runExp(ite.cond);
-			if(cond.isClassical()){
+			if(cond.isClassical()&&ite.cond.type.isClassical()){
 				if(cond.neqZImpl){
 					auto thenIntp=Interpreter!QState(functionDef,ite.then,qstate,hasFrame);
 					thenIntp.run(retState);
@@ -3844,7 +3861,7 @@ struct Interpreter(QState){
 					qstate=othwIntp.qstate;
 				}
 			}else{
-				auto thenOthw=qstate.split(cond);
+				auto thenOthw=qstate.split(cond,true);
 				qstate=thenOthw[0];
 				auto othw=thenOthw[1];
 				auto thenIntp=Interpreter(functionDef,ite.then,qstate,hasFrame);

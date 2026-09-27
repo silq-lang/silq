@@ -16,7 +16,7 @@ def foo[n:!ℕ, rr:!ℕ](
 	cTri := 0:uint[rrbar];
 	for j in [0..rrbar) {
 		for k in [j+1..rrbar) {
-			if ee[tau[j]][tau[k]] && eew[j] && eew[k] { /// TODO run_error
+			if ee[tau[j]][tau[k]] && eew[j] && eew[k] { /// run_error
 				cTri += 1;
 	}	}	}
     // ---------------------
