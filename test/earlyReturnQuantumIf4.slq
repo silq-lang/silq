@@ -1,9 +1,10 @@
+// args: --run
 
 def foo(const x:𝔹){
 	if x{
 		return ([1],[]);
 	}
-	return ([],[0]); /// error
+	return ([0],[]);
 }
 def main(){
 	x:=H(0);

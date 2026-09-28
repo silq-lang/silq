@@ -5,7 +5,7 @@ def main(){
 		return 1:!ℕ; /// error
 	}
 	measure(x); /// error
-	return 0;
+	return 0; /// error
 	/+x:=measure(x);
 	return x;+/
 }
