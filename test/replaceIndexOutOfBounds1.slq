@@ -3,9 +3,9 @@
 def main() {
 	x := vector(3, 0:!B);
 	i := 3;
-	b:=false;
+	b:=false:𝔹;
 	if b{
-		x[i] := H(x[i]); /// TODO run_error
+		x[i] := H(x[i]); /// run_error
 	}
 	return x:𝔹^3;
 }
