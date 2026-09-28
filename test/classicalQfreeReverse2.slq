@@ -5,5 +5,5 @@ def id[τ:*](x:τ)qfree⇒x;
 def main(){
 	id_B(x):=0;
 	id(y):=1;
-	return (x,y):!𝔹^2; /// TODO
+	return (x,y):!𝔹^2;
 }

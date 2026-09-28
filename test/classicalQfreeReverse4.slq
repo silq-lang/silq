@@ -1,0 +1,11 @@
+// args: --run
+
+def rev(f: 𝔹 !→ qfree 𝔹){
+	f(x):=0:!𝔹;
+	return x:!𝔹;
+}
+def main(){
+	r:=rev((y:𝔹)qfree⇒X(y));
+	assert(r=1);
+	return r;
+}
