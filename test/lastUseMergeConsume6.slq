@@ -1,0 +1,10 @@
+def f(c:!𝔹,d:!𝔹){
+	x:=H(0);
+	y0:=!x;
+	y1:=y0;
+	if c { if d { w:=!y0; } else { w:=!y0; } } else { w:=!y0; }
+	if d { v:=!y0; } else { v:=!y0; }
+	t:=!y0;
+	z:=H(x);
+	return (y0,y1,w,v,z); /// error
+}

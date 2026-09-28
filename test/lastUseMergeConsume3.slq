@@ -1,0 +1,9 @@
+def qux(c:!𝔹){
+	x:=H(0);
+	y0:=!x;
+	y1:=y0;
+	if c { w:=!y0; } else { w:=!y0; }
+	v:=!y0;
+	z:=H(x);
+	return (y0,y1,w,v,z); /// error
+}

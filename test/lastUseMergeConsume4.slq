@@ -1,0 +1,8 @@
+def f(c:!𝔹){
+	x:=H(0);
+	y0:=!x;
+	if c { y1:=y0; } else { y1:=dup(y0); }
+	v:=!y0;
+	z:=H(x);
+	return (y0,y1,v,z); /// error
+}
