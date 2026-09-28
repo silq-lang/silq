@@ -1,7 +1,7 @@
 // args: --run
 
-def foo(n:!ℕ) ⇒ vector(let { def foo(){ n':=n+1; return n'; } } in foo(), false);
-def bar(n:!ℕ) ⇒ vector(let { foo:=(){ n':=n+1; return n'; } } in foo(), true);
+def foo(n:!ℕ) ⇒ vector(let { def foo(){ n:=n+1; return n; } } in foo(), false); /// error
+def bar(n:!ℕ) ⇒ vector(let { foo:=(){ n:=n+1; return n; } } in foo(), true); /// error
 def chain(a:!ℕ,b:!ℕ) ⇒ vector(let {
 	def outer(){
 		c:=b+1;

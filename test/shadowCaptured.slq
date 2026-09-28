@@ -3,7 +3,7 @@
 def main(){
 	x:=2;
 	def foo(){
-		if measure(H(0:𝔹)) { x:=x+1; } /// TODO error // shadows capture
+		if measure(H(0:𝔹)) { x:=x+1; } /// error // shadows capture
 		return x;
 	}
 	assert(foo()==2);
