@@ -1,0 +1,12 @@
+// args: --run
+
+def nop[n:!ℕ](const x: unit^n) qfree {}
+def fprint[T: qtype](f: T !-> qfree unit){
+	f(x) := ();
+	return x;
+}
+def main(){
+	r:=fprint(nop[3]);
+	assert(r=((),(),()));
+	return r;
+}

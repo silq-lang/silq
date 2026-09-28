@@ -2,6 +2,8 @@
 
 def foo(x:𝔹)⇒(0,x);
 def main(){
-	x:=vector(2,0:𝔹);
+	a:=H(0:𝔹);
+	x:=(0:𝔹,dup(a)): 𝔹^2;
 	foo(t):=x;
+	return (a,t);
 }

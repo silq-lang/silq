@@ -475,7 +475,7 @@ struct QState{
 				break;
 			case Value.Tag.closure:
 				break;
-			case Value.Tag.cval,Value.Tag.fval,Value.Tag.qval,Value.Tag.zval,Value.Tag.uintval,Value.Tag.intval,Value.Tag.zmodval,Value.Tag.bval:
+			case Value.Tag.cval,Value.Tag.fval,Value.Tag.qval,Value.Tag.zval,Value.Tag.uintval,Value.Tag.intval,Value.Tag.zmodval,Value.Tag.bval,Value.Tag.tval:
 				break;
 		}
 	}
@@ -502,7 +502,7 @@ struct QState{
 				/+if(to.closure.context&&from.closure.context)
 					updateRelabeling(relabeling,*to.closure.context,*from.closure.context);+/
 				break;
-			case Value.Tag.cval,Value.Tag.fval,Value.Tag.qval,Value.Tag.zval,Value.Tag.uintval,Value.Tag.intval,Value.Tag.zmodval,Value.Tag.bval:
+			case Value.Tag.cval,Value.Tag.fval,Value.Tag.qval,Value.Tag.zval,Value.Tag.uintval,Value.Tag.intval,Value.Tag.zmodval,Value.Tag.bval,Value.Tag.tval:
 				break;
 		}
 	}
@@ -812,6 +812,7 @@ struct QState{
 			uintval,
 			zmodval,
 			bval,
+			tval,
 		}
 		static Tag getTag(Expression type){
 			assert(!!type);
@@ -829,8 +830,8 @@ struct QState{
 			if(type==Bool(true)) return Tag.bval;
 			if(auto intTy=isFixedIntTy(type)) return intTy.isSigned ? Tag.intval : Tag.uintval;
 			if(auto zmodTy=isℤmodTy(type)) return Tag.zmodval;
-			if(type==typeTy||type==ctypeTy||type==qtypeTy) return Tag.bval; // (optimization)
-			if(isTypeTy(type)||isQNumericTy(type)) return Tag.bval; // TODO: ok?
+			if(type==typeTy||type==ctypeTy||type==qtypeTy) return Tag.tval; // (optimization)
+			if(isTypeTy(type)||isQNumericTy(type)) return Tag.tval; // TODO: ok?
 			enforce(0,text("TODO: representation for type ",type," ",typeid(type)));
 			assert(0);
 		}
@@ -866,7 +867,7 @@ struct QState{
 		}
 		Value dup(ref QState state){
 			final switch(tag){
-				static foreach(t;[Tag.cval,Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.zmodval,Tag.bval]){
+				static foreach(t;[Tag.cval,Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.zmodval,Tag.bval,Tag.tval]){
 					case t:
 						return this;
 				}
@@ -883,7 +884,7 @@ struct QState{
 		Value toVar(ref QState state,bool cleanUp){
 			if(isClassical) return this;
 			final switch(tag){
-				static foreach(t;[Tag.cval,Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.zmodval,Tag.bval]){
+				static foreach(t;[Tag.cval,Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.zmodval,Tag.bval,Tag.tval]){
 					case t:
 						assert(0);
 				}
@@ -953,7 +954,7 @@ struct QState{
 			}
 			assert(tag==rhs.tag);
 			Lswitch: final switch(tag){
-				static foreach(t;[Tag.cval,Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.zmodval,Tag.bval]){
+				static foreach(t;[Tag.cval,Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.zmodval,Tag.bval,Tag.tval]){
 					case t:
 						this=rhs;
 						break Lswitch;
@@ -1006,7 +1007,7 @@ struct QState{
 		}
 		void removeVar(ref Σ σ){
 			final switch(tag){
-				static foreach(t;[Tag.cval,Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.zmodval,Tag.bval]){
+				static foreach(t;[Tag.cval,Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.zmodval,Tag.bval,Tag.tval]){
 					case t:
 						assert(isClassical);
 						return;
@@ -1026,7 +1027,7 @@ struct QState{
 		}
 		void forget(ref QState state,Value rhs){
 			final switch(tag){
-				static foreach(t;[Tag.cval,Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.zmodval,Tag.bval]){
+				static foreach(t;[Tag.cval,Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.zmodval,Tag.bval,Tag.tval]){
 					case t:
 						assert(isClassical);
 						static Σ checkImpl(Σ σ,Value lhs,Value rhs){
@@ -1057,7 +1058,7 @@ struct QState{
 		void forget(ref QState state){
 			// TODO: get rid of code duplication
 			final switch(tag){
-				static foreach(t;[Tag.cval,Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.zmodval,Tag.bval]){
+				static foreach(t;[Tag.cval,Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.zmodval,Tag.bval,Tag.tval]){
 					case t:
 						assert(isClassical);
 						return;
@@ -1077,7 +1078,7 @@ struct QState{
 		}
 		Value consumeOnRead(){ // TODO: do this in-place
 			final switch(tag){
-				static foreach(t;[Tag.cval,Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.zmodval,Tag.bval]){
+				static foreach(t;[Tag.cval,Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.zmodval,Tag.bval,Tag.tval]){
 					case t:
 						assert(isClassical);
 						return this;
@@ -1112,12 +1113,13 @@ struct QState{
 			BitInt!false uintval;
 			ℤmod zmodval;
 			bool bval;
-			ubyte[max(array_.sizeof,record.sizeof,quval.sizeof,max(cval.sizeof,cval.alignof),max(fval.sizeof,fval.alignof),qval.sizeof,zval.sizeof,intval.sizeof,uintval.sizeof,zmodval.sizeof,bval.sizeof)] bits;
+			Expression tval;
+			ubyte[max(array_.sizeof,record.sizeof,quval.sizeof,max(cval.sizeof,cval.alignof),max(fval.sizeof,fval.alignof),qval.sizeof,zval.sizeof,intval.sizeof,uintval.sizeof,zmodval.sizeof,bval.sizeof,tval.sizeof)] bits;
 		}
 		bool isClassical(){
 			if(!type) return true; // TODO: can we get rid of this?
 			final switch(tag){
-				static foreach(t;[Tag.cval,Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.zmodval,Tag.bval]){
+				static foreach(t;[Tag.cval,Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.zmodval,Tag.bval,Tag.tval]){
 					case t:
 						return true;
 				}
@@ -1333,6 +1335,13 @@ struct QState{
 					if(ntag==Tag.fval) return makeReal(to!R(bval));
 					if(ntag==Tag.cval) return makeComplex(C(to!R(bval)));
 					break;
+				case Tag.tval:
+					if(ntag==Tag.tval){ // (e.g., a different kind)
+						auto r=this;
+						r.type=ntype;
+						return r;
+					}
+					break;
 			}
 			if(ntag==Tag.bval) return neqZ;
 			if(ntag==Tag.zmodval&&tag!=Tag.zval&&tag!=Tag.zmodval) return convertTo(ℤt(true)).convertTo(ntype);
@@ -1358,7 +1367,7 @@ struct QState{
 					enforce(0<=i&&i<intval.nbits,"index out of bounds");
 					return makeBool((intval.val&(ℤ(1)<<to!size_t(i)))!=0);
 				case Tag.zmodval: enforce(0,"bad aggregate type for index"); assert(0);
-				case Tag.cval,Tag.fval,Tag.qval,Tag.zval,Tag.bval: enforce(0,"bad aggregate type for index"); assert(0);
+				case Tag.cval,Tag.fval,Tag.qval,Tag.zval,Tag.bval,Tag.tval: enforce(0,"bad aggregate type for index"); assert(0);
 				case Tag.record,Tag.closure: enforce(0,"bad aggregate type for index"); assert(0);
 			}
 		}
@@ -1400,7 +1409,7 @@ struct QState{
 				case Tag.zmodval:
 					assert(isℤmodTy(type));
 					return makeQuval(Bool(false),new IndexQVal(this,i));
-				case Tag.cval,Tag.fval,Tag.qval,Tag.zval,Tag.bval: enforce(0,"bad aggregate type for index"); assert(0);
+				case Tag.cval,Tag.fval,Tag.qval,Tag.zval,Tag.bval,Tag.tval: enforce(0,"bad aggregate type for index"); assert(0);
 				case Tag.record,Tag.closure: enforce(0,"bad aggregate type for index"); assert(0);
 			}
 		}
@@ -1648,7 +1657,7 @@ struct QState{
 						case Tag.uintval: return makeUint(ntype,uintval/r.uintval);
 						case Tag.zmodval: break;
 						case Tag.bval: return makeBool(bval/r.bval);
-						case Tag.cval,Tag.closure,Tag.array_,Tag.record,Tag.quval: break;
+						case Tag.cval,Tag.closure,Tag.array_,Tag.record,Tag.quval,Tag.tval: break;
 					}
 				}
 				static if(is(typeof((bool a,bool b){ bool c=mixin(`a `~op~` b`); })))
@@ -1669,7 +1678,7 @@ struct QState{
 					case t:
 						return mixin(text(t,`==0`));
 				}
-				case Tag.array_,Tag.record,Tag.closure: break;
+				case Tag.array_,Tag.record,Tag.closure,Tag.tval: break;
 				case Tag.quval: break;
 			}
 			enforce(0,text("`=0`/`≠0` for type ",this.type," is not yet supported"));
@@ -1686,6 +1695,10 @@ struct QState{
 		}
 		Value compare(string op)(Value r){
 			if(!isClassical()||!r.isClassical()) return makeQuval(Bool(false),new CompareQVal!op(this,r));
+			static if(op=="=="||op=="!=") if(tag==Tag.tval&&r.tag==Tag.tval){ // (types are compared structurally)
+				bool equal=tval is r.tval||tval&&r.tval&&tval==r.tval;
+				return makeBool(op=="=="?equal:!equal);
+			}
 			static bool compareRanges(R,S)(R a,S b){
 				static if(op=="==") if(a.length!=b.length) return false;
 				static if(op=="!=") if(a.length!=b.length) return true;
@@ -1726,7 +1739,7 @@ struct QState{
 				enum complexUnsupported=[Tag.cval];
 			}
 			enum supportedTags=[Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.zmodval,Tag.bval]~complexSupported;
-			enum unsupportedTags=[Tag.closure,Tag.array_,Tag.record,Tag.quval]~complexUnsupported;
+			enum unsupportedTags=[Tag.closure,Tag.array_,Tag.record,Tag.quval,Tag.tval]~complexUnsupported;
 			static bool compareImpl(S,T)(S a,T b){
 				static if(is(S==C)&&is(T==C)){
 					return mixin(`a `,op,` b`); // TODO: improve
@@ -1795,7 +1808,7 @@ struct QState{
 				case Tag.zmodval: break;
 				case Tag.fval: return makeInteger(.floor(fval.toℚ));
 				case Tag.cval: break;
-				case Tag.closure,Tag.array_,Tag.record: break;
+				case Tag.closure,Tag.array_,Tag.record,Tag.tval: break;
 				case Tag.quval: return makeQuval(type==ℝ(true)?ℤt(true):type,new MemberFunctionQVal!"floor"(this));
 			}
 			enforce(0,text("`floor` for type ",this.type," is not yet supported"));
@@ -1809,7 +1822,7 @@ struct QState{
 				case Tag.zmodval: break;
 				case Tag.fval: return makeInteger(.ceil(fval.toℚ)); // TODO: more efficient variant?
 				case Tag.cval: break;
-				case Tag.closure,Tag.array_,Tag.record: break;
+				case Tag.closure,Tag.array_,Tag.record,Tag.tval: break;
 				case Tag.quval: return makeQuval(type==ℝ(true)?ℤt(true):type,new MemberFunctionQVal!"ceil"(this));
 			}
 			enforce(0,text("̈`ceil` for type ",this.type," is not yet supported"));
@@ -1822,7 +1835,7 @@ struct QState{
 				case Tag.cval: break;
 				case Tag.intval,Tag.uintval: break;
 				case Tag.zmodval: break;
-				case Tag.closure,Tag.array_,Tag.record: break;
+				case Tag.closure,Tag.array_,Tag.record,Tag.tval: break;
 				case Tag.quval: return makeQuval(type==ℝ(true)?ℤt(true):type,new FunctionQVal!(v=>v.realFunction!f())(this));
 			}
 			enforce(0,text("real functions for type ",this.type," are not yet supported"));
@@ -1935,7 +1948,7 @@ struct QState{
 					static fun(T...)(Value v,T args){ return v.realFunctionFP!(f,circular1,a,b,circular2,c,d)(args); }
 					return makeQuval(type,new FunctionQVal!(fun,ℤ,Expression,T)(this,size,type.getClassical(),args));
 				case Tag.qval,Tag.zval,Tag.bval,Tag.fval,Tag.cval: break;
-				case Tag.closure,Tag.array_,Tag.record: break;
+				case Tag.closure,Tag.array_,Tag.record,Tag.tval: break;
 			}
 			enforce(0,text("fixed-point functions for type ",this.type," are not yet supported"));
 			assert(0);
@@ -1958,7 +1971,7 @@ struct QState{
 
 		Value classicalValue(Σ state){
 			final switch(tag){
-				static foreach(t;[Tag.cval,Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.zmodval,Tag.bval]){
+				static foreach(t;[Tag.cval,Tag.fval,Tag.qval,Tag.zval,Tag.intval,Tag.uintval,Tag.zmodval,Tag.bval,Tag.tval]){
 					case t:
 						assert(isClassical);
 						return this;
@@ -2044,6 +2057,7 @@ struct QState{
 						return text(mixin(text(t)));
 				}
 				case Tag.bval: return bval?"1":"0";
+				case Tag.tval: return tval?tval.toString():"type";
 				case Tag.closure: return text("⟨",text(closure.fun)[4..$],(closure.context?text(",",closure.context.toStringImpl(opt)):""),"⟩");
 				case Tag.array_:
 					string prn="()";
@@ -2196,6 +2210,7 @@ struct QState{
 	}do{
 		Value r;
 		r.type=value.type;
+		r.tval=value;
 		return r;
 	}
 	static Value π(){ return makeReal(PI); }
@@ -2523,7 +2538,7 @@ struct QState{
 				enforce(isQuantum(type));
 				goto case;
 			case Value.Tag.quval: return makeQuval(type,new IteQVal(cond,then.convertTo(type),othw.convertTo(type)));
-			case Value.Tag.cval,Value.Tag.fval,Value.Tag.qval,Value.Tag.zval:
+			case Value.Tag.cval,Value.Tag.fval,Value.Tag.qval,Value.Tag.zval,Value.Tag.tval:
 				enforce(0,"bad type for quantum if-then-else expression");
 				assert(0);
 		}
@@ -2723,6 +2738,26 @@ QState.Value buildContextFor(QState)(ref QState qstate,FunctionDef fd,Scope sc)i
 		record[name]=val;
 	}
 	return QState.makeRecord(record);
+}
+
+Expression closeType(Expression te,scope QState.Value delegate(Identifier) lookup){
+	import ast.type:freeIdentifiers;
+	if(!te||!te.isSemCompleted()) return te;
+	MapSX!(Id,Expression) subst;
+	foreach(id;te.freeIdentifiers){
+		if(id.id in subst) continue;
+		auto meaning=id.meaning;
+		if(!meaning||cast(DatDecl)meaning||cast(FunctionDef)meaning) continue;
+		QState.Value v;
+		try v=lookup(id);
+		catch(Exception) continue;
+		if(!v.isValid) continue;
+		if(v.tag==QState.Value.Tag.tval){
+			if(v.tval) subst[id.id]=v.tval;
+		}else if(v.isClassical()&&v.isℤ()) subst[id.id]=LiteralExp.makeInteger(v.asℤ());
+	}
+	if(!subst.length) return te;
+	return te.substitute(subst);
 }
 
 QState.Value lookupMeaning(QState)(ref QState qstate,Identifier id,Scope sc=null)in{assert(id && id.scope_,text(id," ",id.loc));}do{
@@ -2943,6 +2978,9 @@ struct Interpreter(QState){
 				qstate.vars[name]=convertTo(qstate.vars[name],type,true).toVar(qstate,false);
 		}
 	}
+	Expression closedType(Expression te){
+		return closeType(te,(Identifier id)=>lookupMeaning(qstate,id.meaning,true,id.scope_));
+	}
 	QState.Value runExp(Expression e){
 		if(qstate.unreachable) return QState.Value.init;
 		QState.Value doIt()(Expression e){
@@ -2986,7 +3024,7 @@ struct Interpreter(QState){
 						enforce(0,text("built-in `",id.name,"` not yet supported"));
 						assert(0);
 				}
-				if(id&&cast(DatDecl)id.meaning) return QState.typeValue(ce); // TODO: get rid of this
+				if(id&&cast(DatDecl)id.meaning) return QState.typeValue(closedType(ce)); // TODO: get rid of this
 			}
 			auto fun=doIt(ce.e);
 			auto arg=doIt(ce.arg);
@@ -3226,26 +3264,26 @@ struct Interpreter(QState){
 			} else if(auto te=cast(VectorTy)e){
 				runExp(te.next);
 				runExp(te.num);
-				return qstate.typeValue(te);
+				return qstate.typeValue(closedType(te));
 			} else if(auto te=cast(ArrayTy)e){
 				runExp(te.next);
-				return qstate.typeValue(te);
+				return qstate.typeValue(closedType(te));
 			} else if(auto te=cast(TupleTy)e){
 				foreach(sub; te.types) {
 					runExp(sub);
 				}
-				return qstate.typeValue(te);
+				return qstate.typeValue(closedType(te));
 			} else if(auto te=cast(VariadicTy)e){
 				runExp(te.next);
-				return qstate.typeValue(te);
+				return qstate.typeValue(closedType(te));
 			} else if(auto te=cast(ClassicalTy)e){
 				runExp(te.inner);
-				return qstate.typeValue(te);
+				return qstate.typeValue(closedType(te));
 			} else if(auto te=cast(ProductTy)e){
 				foreach(p; te.params) {
 					runExp(p.dtype);
 				}
-				return qstate.typeValue(te);
+				return qstate.typeValue(closedType(te));
 			} else if(cast(NumericTy)e || cast(TypeTy)e || cast(QNumericTy)e || cast(BottomTy)e){
 				return qstate.typeValue(e);
 			}else{
@@ -3484,6 +3522,43 @@ struct Interpreter(QState){
 		}
 		return QState.Value.init;
 	}
+	// Components of `value` that are classical in `type` but quantum in `value` must have the same value in all basis
+	// states: they are uncomputed and replaced by that classical value. (Used when reverse-calling a function whose
+	// result has classical components: the reversed function takes them as classical arguments.)
+	QState.Value classicalize(QState.Value value,Expression type){
+		if(!type||value.isClassical()) return value;
+		if(type.isClassical()){
+			QState.Value result;
+			bool first=true;
+			foreach(k,_;qstate.state){
+				auto v=value.classicalValue(k);
+				if(first){
+					result=v;
+					first=false;
+					if(qstate.ghost) break; // (the value may differ in a ghost state)
+				}else enforce(v.compare!"=="(result).neqZImpl,"cannot convert quantum value to classical value when reversing a function call: the value differs between basis states");
+			}
+			if(first){ // no basis states (a ghost state whose quantum data failed)
+				qstate.unreachable=true;
+				return QState.Value.init;
+			}
+			forget(value,result);
+			return result;
+		}
+		if(value.tag==QState.Value.Tag.array_){
+			QState.Value[] elements;
+			if(auto tt=type.isTupleTy()){
+				enforce(tt.length==value.array_.length,"length mismatch in reversed function call");
+				foreach(i,e;value.array_) elements~=classicalize(e,tt[i]);
+			}else if(auto vt=cast(VectorTy)type){
+				foreach(e;value.array_) elements~=classicalize(e,vt.next);
+			}else if(auto at=cast(ArrayTy)type){
+				foreach(e;value.array_) elements~=classicalize(e,at.next);
+			}else return value;
+			return qstate.makeTuple(type,elements);
+		}
+		return value;
+	}
 	void assignTo(bool isCat=false)(Expression lhs,QState.Value rhs,AAssignExp.Replacement[] replacements){
 		if(auto tae=cast(TypeAnnotationExp)lhs){
 			static bool check(Expression from,Expression to){
@@ -3506,7 +3581,7 @@ struct Interpreter(QState){
 			}
 			if(tae.annotationType==TypeAnnotationType.coercion&&cast(CallExp)tae.e
 			   &&!check(tae.t,tae.e.type))
-				enforce(0,"reverse-calling a function with classical return type component not yet supported");
+				rhs=classicalize(rhs,tae.e.type); // (reverse call of a function whose result has classical components)
 			return assignTo!isCat(tae.e,convertTo(rhs,tae.e.type,true),replacements);
 		}
 		if(auto id=cast(Identifier)lhs){
@@ -3571,11 +3646,22 @@ struct Interpreter(QState){
 						auto rfret=rft.cod; // TODO: probably semantic analysis has to explicitly compute this
 						auto r=reverseCallRewriter(ft,ce.loc); // TODO: would be nice to not require this
 						QState.Value constArg;
+						Q!(Expression,QState.Value)[] unitArgs; // (defined by the reverse call, see `assignMoved`)
 						void handleUnitArg(Expression arg,Expression type){
+							// (the parameter type may depend on generic parameters of the function value)
+							type=closeType(type,(Identifier id){
+								if(fv.closure.context){
+									auto ctx=*fv.closure.context;
+									if(ctx.tag==QState.Value.Tag.record&&id.name in ctx.record)
+										return ctx.record[id.name];
+								}
+								return QState.Value.init;
+							});
 							enforce(isUnit(type),"reversed function call not yet supported");
 							auto val=canonicalValue(type);
 							enforce(val.isValid,"reversed function call not yet supported");
 							assignTo(arg,val,[]);
+							unitArgs~=q(arg,val);
 						}
 						if(oft.nargs&&oft.isConstForReverse.all){
 							constArg=runExp(ce.arg);
@@ -3619,8 +3705,11 @@ struct Interpreter(QState){
 							if(r.constTuple) constArg=qstate.makeTuple(r.constType,cargs);
 						}
 						void assignMoved(QState.Value result){
-							if(!oft.isConstForReverse.any) return assignTo(ce.arg,result,replacements);
-							if(oft.nargs&&oft.isConstForReverse.all){ // TODO: remove?
+							// the function value may have `const` parameters that are not `const` in the static type:
+							// the reverse call defines those arguments as their unique values
+							scope(success) foreach(ua;unitArgs) assignTo(ua[0],ua[1],replacements);
+							if(!ft.isConstForReverse.any) return assignTo(ce.arg,result,replacements);
+							if(ft.nargs&&ft.isConstForReverse.all){ // TODO: remove?
 								assert(rft.cod is unit);
 								return;
 							}
