@@ -1,7 +1,7 @@
 
 def main(){
        z:=0;
-       z:=0; /// TODO
+       z:=0; /// error
        for i in 0..1{ }
-       return (z,a); /// TODO
+       return (z,a); /// error
 }
