@@ -3,5 +3,5 @@ def f[n:!ℕ](const x:𝔹^n)qfree: !ℕ{
 	return n;
 }
 def main(){
-	return f[42 as !ℕ](vector(((5:!uint[3])-(5:!uint[3]) + 42) as !ℕ,0:𝔹)); /// TODO
+	return f[42 as !ℕ](vector(((5:!uint[6])-(5:!uint[6]) + 42) as !ℕ,0:𝔹)); /// TODO
 }
