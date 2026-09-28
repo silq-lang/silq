@@ -1,0 +1,1 @@
+def f(const x:𝔹)⇒move(x); /// error

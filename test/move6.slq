@@ -1,0 +1,9 @@
+// args: --run
+
+def move(x:!ℕ)⇒x+1;
+def main(){
+	c:=1;
+	d:=move(c);
+	assert(c=1&&d=2);
+	return (c,d);
+}

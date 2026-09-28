@@ -3412,6 +3412,7 @@ class ScopeWriter {
 			case ast_sem.BuiltIn.query:
 			case ast_sem.BuiltIn.qabort:
 			case ast_sem.BuiltIn.dummy:
+			case ast_sem.BuiltIn.move:
 				assert(0, "Built-in %s cannot be used as first-class value");
 		}
 
@@ -4356,6 +4357,8 @@ class ScopeWriter {
 				return valAllocError();
 			case ast_sem.BuiltIn.dummy:
 				return valNewQ(null, qcg.allocDummy(getQTypeRaw(e.type, null)));
+			case ast_sem.BuiltIn.move:
+				assert(false, "`move` is resolved during semantic analysis");
 			case ast_sem.BuiltIn.pi:
 				assert(false, format("cannot call %s", e));
 		}

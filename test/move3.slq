@@ -1,0 +1,5 @@
+def main(){
+	c:=1;
+	d:=move(c);
+	return c+d; /// error
+}

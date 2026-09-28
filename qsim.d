@@ -2980,6 +2980,8 @@ struct Interpreter(QState){
 						assert(0);
 					case BuiltIn.dummy:
 						return QState.makeDummy(ce.type,(Expression x)=>doIt(x));
+					case BuiltIn.move:
+						assert(0,"`move` is resolved during semantic analysis");
 					case BuiltIn.pi:
 						enforce(0,text("built-in `",id.name,"` not yet supported"));
 						assert(0);
