@@ -1,0 +1,6 @@
+
+def f(c:!𝔹){
+	y:=H(0:𝔹);
+	if c { const x:=dup(y); } else { const x:=dup(y); }
+	return (x,y); /// error
+}

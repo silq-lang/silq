@@ -1,0 +1,13 @@
+// args: --run
+
+def g(a:𝔹)⇒a;
+def main(){
+	y:=H(0:𝔹);
+	const x:=dup(y);
+	r:=g(x);
+	s:=x;
+	c:=H(0:𝔹);
+	if c { const w:=dup(y); t:=w; forget(t=dup(y)); }
+	for i in 0..3 { const v:=dup(y); u:=v; forget(u=dup(y)); }
+	return (r,s,c,y);
+}

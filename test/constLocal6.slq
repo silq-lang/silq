@@ -1,0 +1,8 @@
+
+def main(){
+	y:=H(0:𝔹);
+	const x:=dup(y);
+	a:=x;
+	z:=H(y);
+	return (x,a,z); /// error
+}

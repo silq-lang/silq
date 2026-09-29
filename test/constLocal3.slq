@@ -1,0 +1,5 @@
+
+def main(){
+	const x:=H(0:𝔹); /// error
+	return x;
+}

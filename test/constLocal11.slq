@@ -1,0 +1,7 @@
+
+def main(){
+	y:=H(0);
+	const t:=y;
+	(const x,z):=(y,y); /// error
+	return (x,z);
+}

@@ -1,0 +1,7 @@
+
+def main(){
+	y:=H(0:𝔹);
+	const x:=dup(y);
+	forget(x); /// error
+	return y;
+}

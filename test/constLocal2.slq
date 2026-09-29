@@ -1,0 +1,8 @@
+// `const` local variables go out of scope as soon as their dependency would become top
+
+def main(){
+	y:=H(0:𝔹);
+	const x:=dup(y);
+	z:=H(y);
+	return (x,z); /// error
+}
