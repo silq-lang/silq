@@ -1,0 +1,12 @@
+
+def main(){
+	x:=H(0);
+	y:=dup(x);
+	t:=y;
+	if measure(H(0)){
+		x:=H(x);
+	}else{
+		x:=H(x);
+	}
+	return (x,y); /// error
+}
