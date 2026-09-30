@@ -61,9 +61,18 @@ def syndrome[n:!ℕ,r:!ℕ](stab:(P^n)^r)(xs:𝔹^n){
 	return (s coerce !𝔹^r,xs);
 }
 
+def popcnt_order(n:!ℕ):!uint[n]^(2^n){ // TODO: make faster
+	r:=[];
+	for k in 0..n+1{
+		for mask in 0..2^n{
+			if popcnt(mask as !uint[n])=k { r~=[mask as !uint[n]]; }
+		}
+	}
+	return r coerce _^(2^n);
+}
+
 def bruteforce_fix[n:!ℕ,r:!ℕ](stab:(P^n)^r)(s:!𝔹^r,xs:𝔹^n){
-	for mask in 0..2^(2·n){
-		mask:=mask as !uint[2·n];
+	for mask in popcnt_order(2·n){
 		cs:=vector(r,0);
 		for i in 0..r{
 			for j in 0..2·n{
