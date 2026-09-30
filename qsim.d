@@ -2947,6 +2947,8 @@ struct Interpreter(QState){
 			}
 		}
 		if(auto intTy=isFixedIntTy(value.type)){
+			if(auto vec=cast(VectorTy)type)
+				enforce(runExp(intTy.bits).compare!"=="(runExp(vec.num)).neqZImpl,"length mismatch for conversion to vector");
 			if(!intTy.isClassical&&QState.Value.getTag(type)==QState.Value.Tag.array_){
 				auto len=runExp(intTy.bits); // TODO: maybe store lengths classically instead
 				enforce(len.isℤ(),"fixed-width integer width is not an integer");

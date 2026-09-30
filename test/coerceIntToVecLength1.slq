@@ -1,0 +1,12 @@
+// args: --run
+
+def main(){
+	n:=3,m:=3;
+	x:=5:!uint[n];
+	y:=x coerce 𝔹^m;
+	z:=y coerce int[n];
+	w:=vector(m,1:!𝔹) coerce !uint[n];
+	r:=(measure(z) as !ℤ,w as !ℤ);
+	assert(r=(-3,7));
+	return r;
+}
