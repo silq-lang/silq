@@ -1,7 +1,7 @@
 def f() {
 	return 42;
 }
-g := f; /// TODO
+g := f;
 h := g;
 def main() {
 	__show(__query("type", f));

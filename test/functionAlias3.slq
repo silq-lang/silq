@@ -1,0 +1,12 @@
+// args: --run
+
+def k(){
+	return 1;
+}
+def f(){
+	return k();
+}
+g := f; /// TODO
+def main(){
+	return g();
+}
