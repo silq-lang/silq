@@ -6231,7 +6231,11 @@ class ScopeWriter {
 			return ctx.qubitRTTI;
 		}
 		if(auto prodTy = cast(ast_ty.ProductTy) ty) {
-			return ctx.qfuncRTTI;
+			auto hasConst = hasConstCapture(prodTy.captureAnnotation);
+			auto hasMoved = hasMovedCapture(prodTy.captureAnnotation);
+			assert(hasConst || hasMoved);
+			if(hasConst && hasMoved) return ctx.qfuncOnceRTTI;
+			return hasMoved ? ctx.qfuncMovedRTTI : ctx.qfuncConstRTTI;
 		}
 		return null;
 	}
@@ -7927,11 +7931,23 @@ class Writer {
 			literalFunc("silq_builtin.promote_qubit", []),
 			literalFunc("silq_builtin.measure_qubit", []),
 		);
-		qfuncRTTI = RTTI.builtin(
+		qfuncMovedRTTI = RTTI.builtin(
 			this,
 			literalFunc("silq_builtin.qtype_qfunc", []),
 			literalFunc("silq_builtin.promote_qfunc", []),
-			literalFunc("silq_builtin.measure_qfunc", []),
+			literalFunc("silq_builtin.measure_qfunc_moved", []),
+		);
+		qfuncConstRTTI = RTTI.builtin(
+			this,
+			literalFunc("silq_builtin.qtype_qfunc", []),
+			literalFunc("silq_builtin.promote_qfunc", []),
+			literalFunc("silq_builtin.measure_qfunc_const", []),
+		);
+		qfuncOnceRTTI = RTTI.builtin(
+			this,
+			literalFunc("silq_builtin.qtype_qfunc_once", []),
+			literalFunc("silq_builtin.promote_qfunc_once", []),
+			literalFunc("silq_builtin.measure_qfunc_once", []),
 		);
 	}
 
@@ -8386,7 +8402,7 @@ class Writer {
 	CReg boolFalse, boolTrue;
 	CReg intZero, intOne, intTwo;
 	CReg floatZero, floatOne, floatPi;
-	RTTI unitRTTI, classicalRTTI, qubitRTTI, qfuncRTTI;
+	RTTI unitRTTI, classicalRTTI, qubitRTTI, qfuncMovedRTTI, qfuncConstRTTI, qfuncOnceRTTI;
 
 private:
 	MapSX!(string,CReg) literals;

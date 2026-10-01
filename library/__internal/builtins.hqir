@@ -381,6 +381,35 @@ def silq_builtin.measure_qfunc_const($cc) <- %qc [artificial]
 	$r := func[silq_builtin.qfunc_const_bitvec]($cfunc, $cap_qt, $cap_bv)
 	return $r
 
+def silq_builtin.qtype_qfunc_once($cc) [artificial]
+	$lit1 := literal[1]
+	$lit2 := literal[2]
+	$lit3 := literal[3]
+	$qt_const := box_index[silq.qfunc]($lit3, $cc, $lit1)
+	$qt_moved := box_index[silq.qfunc]($lit3, $cc, $lit2)
+	$qt := qt_tuple($qt_const, $qt_moved)
+	return $qt
+
+def silq_builtin.promote_qfunc_once($cc) [artificial]
+	$qt_unit := literal[qt_unit]
+	$r := box[silq.qfunc]($cc, $qt_unit, $qt_unit)
+	%r := qfree_call[qbuiltin.alloc_unit]()
+	return $r, %r
+
+def silq_builtin.measure_qfunc_once($cc) <- %qc [artificial]
+	$lit0 := literal[0]
+	$lit1 := literal[1]
+	$lit2 := literal[2]
+	$lit3 := literal[3]
+	$cfunc := box_index[silq.qfunc]($lit3, $cc, $lit0)
+	$cap_qt_const := box_index[silq.qfunc]($lit3, $cc, $lit1)
+	$cap_qt_moved := box_index[silq.qfunc]($lit3, $cc, $lit2)
+	%cap_const, %cap_moved := qfree_call_rev[qbuiltin.pack]($cap_qt_const, $cap_qt_moved) <- %qc
+	$cap_bv_const := call[qbuiltin.measure_bitvec]($cap_qt_const) <- %cap_const
+	$cap_bv_moved := call[qbuiltin.measure_bitvec]($cap_qt_moved) <- %cap_moved
+	$r := func[silq_builtin.qfunc_once_bitvec]($cfunc, $cap_qt_const, $cap_bv_const, $cap_qt_moved, $cap_bv_moved)
+	return $r
+
 
 def silq_builtin.iter_tuple($f, $n)
 	$lit0 := literal[0]
