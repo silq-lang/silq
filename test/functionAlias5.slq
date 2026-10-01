@@ -1,0 +1,11 @@
+// args: --run
+
+def f(n:!ℕ){
+	if n==0 { return 0; }
+	return g(n sub 1);
+}
+g:=f;
+def main(){
+	assert(f(3)=0&&g(2)=0);
+	return (f(3),g(2));
+}

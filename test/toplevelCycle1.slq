@@ -1,0 +1,4 @@
+
+x:=f(); /// error
+def f()⇒x;
+def main()⇒x;

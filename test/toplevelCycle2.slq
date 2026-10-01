@@ -1,0 +1,4 @@
+
+x:=y; /// error
+y:=x; /// error
+def main()⇒x;

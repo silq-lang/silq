@@ -6,7 +6,7 @@ def k(){
 def f(){
 	return k();
 }
-g := f; /// TODO
+g := f;
 def main(){
 	return g();
 }

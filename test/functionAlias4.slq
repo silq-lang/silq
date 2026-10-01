@@ -1,7 +1,7 @@
 // args: --run
 
 def f[τ](x:τ)⇒x;
-g := f; /// TODO
+g := f;
 def main(){
 	return g(3);
 }
