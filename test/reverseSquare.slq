@@ -1,6 +1,7 @@
+// args: --run
 
 def main(){
-	def f[x:𝔹]mfree ⇒ x;
-	f[x]:=f[H(0:𝔹)]; /// TODO
-	assert(measure(H(x))==0); /// TODO
+	def f[moved x:𝔹]mfree ⇒ x;
+	f[x]:=f[H(0:𝔹)];
+	assert(measure(H(x))==0);
 }
