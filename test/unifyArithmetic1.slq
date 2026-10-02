@@ -1,0 +1,10 @@
+// args: --run
+
+def g[n:!ℕ](x:uint[2*n]) qfree⇒(x,n);
+def h[n:!ℕ](x:𝔹^(n+1)) qfree⇒(x,n);
+def main(){
+	(a,m):=g(3:uint[4]);
+	(b,k):=h((1,0,1):𝔹^3);
+	assert(m=2&&k=2);
+	return (a,b);
+}

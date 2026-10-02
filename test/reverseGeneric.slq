@@ -1,5 +1,7 @@
+// args: --run
 
 def main(){
 	def f[τ:*](x:τ,y:τ,z:τ)mfree⇒((x,y),z);
-	f(x,y,z):=((0,1),0):(𝔹^2)×𝔹; /// TODO
+	f(x,y,z):=((0,1),0):(𝔹^2)×𝔹;
+	return (x,y,z);
 }

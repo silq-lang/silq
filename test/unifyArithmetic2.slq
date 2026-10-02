@@ -1,0 +1,5 @@
+
+def g[n:!ℕ](x:uint[2*n]) qfree⇒x;
+def main(){
+	return g(3:uint[3]); /// error
+}

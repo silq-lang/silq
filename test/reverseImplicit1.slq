@@ -1,0 +1,12 @@
+// args: --run
+
+def expand[n:!ℕ](x:uint[n]) qfree:uint[2*n]{
+	v:=0 as uint[n];
+	return ((x as 𝔹^n)~(v as 𝔹^n)) as uint[2*n];
+}
+def main(){
+	r:=expand(3:uint[2]);
+	expand(x):=r;
+	assert(measure(x)=3);
+	return x;
+}

@@ -1,0 +1,12 @@
+// args: --run
+
+def add[n:!ℕ](const c:uint[n],x:uint[n]) qfree{
+	x+=c;
+	return x;
+}
+def main(){
+	c:=2:uint[3];
+	add(c,y):=5:uint[3];
+	assert(measure(y)=3);
+	return (c,y);
+}
