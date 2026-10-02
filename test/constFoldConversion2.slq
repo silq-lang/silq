@@ -1,0 +1,7 @@
+
+def main(){
+	x:=(0-1) coerce !ℕ; /// error
+	y:=42 coerce !uint[4];
+	z:=(0-1) coerce !uint[4];
+	return (x,y,z);
+}

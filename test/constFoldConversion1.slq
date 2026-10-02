@@ -1,0 +1,12 @@
+// args: --run
+
+def main(){
+	a:=vector(((3:!uint[2])+(2:!uint[2])) as !ℕ,0:𝔹):𝔹^1;
+	b:=vector((42 as !uint[4]) as !ℕ,0:𝔹):𝔹^10;
+	c:=vector((42 coerce !uint[6]) as !ℕ,0:𝔹):𝔹^42;
+	d:=vector(((13 as !int[4]) as !ℤ)+5 coerce !ℕ,0:𝔹):𝔹^2;
+	e:=vector(((7:!uint[3])·(3:!uint[3])) as !ℕ,0:𝔹):𝔹^5;
+	f:=vector(2 coerce !uint[1] as !ℕ,0:𝔹):𝔹^0;
+	g:=vector((42 coerce !uint[4]) as !ℕ,0:𝔹):𝔹^10;
+	return (a,b,c,d,e,f,g);
+}
