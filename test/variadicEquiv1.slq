@@ -1,0 +1,9 @@
+// args: --run
+
+def f[n:!ℕ][T:*](xs:∏ vector(n,T)):T^n⇒xs;
+def g[n:!ℕ][T:*](xs:T^n):∏ vector(n,T)⇒xs;
+def main(){
+	r:=measure(f[2][𝔹](0:𝔹,1:𝔹),g[2][𝔹](1:𝔹,0:𝔹));
+	assert(r=((0,1),(1,0)));
+	return r;
+}

@@ -1,0 +1,9 @@
+// args: --run
+
+def f[n:!ℕ][τ:*^n](xs:∏ τ)⇒xs;
+def g[n:!ℕ](xs:𝔹^n)⇒f[n](xs); /// TODO
+def main(){
+	r:=measure(g[2](0:𝔹,1:𝔹));
+	assert(r=(0,1));
+	return r;
+}

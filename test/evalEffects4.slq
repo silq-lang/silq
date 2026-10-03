@@ -1,0 +1,9 @@
+
+def crash()lifted:!ℕ{
+	assert(false);
+	return 0;
+}
+def main(){
+	x:=vector(2,0:𝔹):𝔹^([1,crash()].length); /// error
+	return x;
+}

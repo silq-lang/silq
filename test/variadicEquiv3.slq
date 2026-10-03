@@ -1,0 +1,9 @@
+// args: --run
+
+def f[n:!ℕ][T:*](const xs:∏ vector(n,T),const i:!ℕ):T⇒dup(xs[i]);
+def g[n:!ℕ][T:*](const xs:∏ vector(n,T)):T^(n sub 1)⇒dup(xs[1..n]);
+def main(){
+	r:=measure(f[2][𝔹]((0:𝔹,1:𝔹),1),g[3][𝔹](0:𝔹,1:𝔹,1:𝔹));
+	assert(r=(1,(1,1)));
+	return r;
+}

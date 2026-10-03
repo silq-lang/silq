@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	n:=1;
+	x:=vector(2,0:𝔹):𝔹^([1,n].length);
+	y:=vector(2,0:𝔹):𝔹^((2,n)[0]);
+	z:=vector(2,0:𝔹):𝔹^([1,n,3][1..3].length);
+	return (x,y,z);
+}
