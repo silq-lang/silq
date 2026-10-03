@@ -1,0 +1,6 @@
+// args: --run
+
+def f[τ:*[]](xs:∏ τ)⇒xs[0]; /// TODO
+def main(){
+	return f[[!ℕ,!ℕ]](1,2);
+}

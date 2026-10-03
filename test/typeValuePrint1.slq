@@ -1,0 +1,17 @@
+// args: --run
+
+def f[τ:*](x:τ){
+	print(τ);
+	return x;
+}
+def g[τ:*[]](xs:∏ τ){
+	print(τ);
+	return measure(xs);
+}
+def main(){
+	n:=3;
+	print(𝔹^n);
+	a:=f(2:uint[n]);
+	b:=g[[𝔹,!ℕ]](1:𝔹,5);
+	return (measure(a) as !ℕ,b);
+}

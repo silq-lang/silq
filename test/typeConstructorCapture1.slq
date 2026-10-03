@@ -1,0 +1,8 @@
+// args: --run
+
+def f[w:!Pi[_:!ℕ]lifted. *](x:w[1])⇒x;
+def main(){
+	n:=2;
+	def w[m:!ℕ]lifted⇒𝔹^(m+n);
+	return measure(f[w]((0,1,1):𝔹^3)); /// TODO
+}

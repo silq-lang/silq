@@ -1,0 +1,10 @@
+// args: --run
+
+def h[τ:*](const x:τ):∏[τ]⇒(dup(x),);
+def main(){
+	a:=[1:𝔹,0:𝔹,1:𝔹];
+	t:=h(a[1..a.length]);
+	r:=measure(t,a);
+	assert(r=(((0,1),),[1,0,1]));
+	return r;
+}

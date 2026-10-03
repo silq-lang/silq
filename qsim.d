@@ -1695,10 +1695,8 @@ struct QState{
 		}
 		Value compare(string op)(Value r){
 			if(!isClassical()||!r.isClassical()) return makeQuval(Bool(false),new CompareQVal!op(this,r));
-			static if(op=="=="||op=="!=") if(tag==Tag.tval&&r.tag==Tag.tval){ // (types are compared structurally)
-				bool equal=tval is r.tval||tval&&r.tval&&tval==r.tval;
-				return makeBool(op=="=="?equal:!equal);
-			}
+			static if(op=="=="||op=="!=") if(tag==Tag.tval&&r.tag==Tag.tval)
+				return makeBool((op=="!=")^(tval==r.tval));
 			static bool compareRanges(R,S)(R a,S b){
 				static if(op=="==") if(a.length!=b.length) return false;
 				static if(op=="!=") if(a.length!=b.length) return true;
@@ -2045,7 +2043,7 @@ struct QState{
 		}
 		string toStringImpl(FormattingOptions opt){
 			if(!type) return "Value.init";
-			if(isTypeTy(type)||isQNumericTy(type)) return "_";
+			if(isTypeTy(type)||isQNumericTy(type)) return tag==Tag.tval&&tval?tval.toString():"_";
 			final switch(tag){
 				static foreach(t;[Tag.cval,Tag.fval]){
 					case t:
@@ -2748,6 +2746,7 @@ Expression closeType(Expression te,scope QState.Value delegate(Identifier) looku
 		if(id.id in subst) continue;
 		auto meaning=id.meaning;
 		if(!meaning||cast(DatDecl)meaning||cast(FunctionDef)meaning) continue;
+		if(!id.type||!id.type.isClassical()) continue;
 		QState.Value v;
 		try v=lookup(id);
 		catch(Exception) continue;
@@ -2755,6 +2754,22 @@ Expression closeType(Expression te,scope QState.Value delegate(Identifier) looku
 		if(v.tag==QState.Value.Tag.tval){
 			if(v.tval) subst[id.id]=v.tval;
 		}else if(v.isClassical()&&v.isℤ()) subst[id.id]=LiteralExp.makeInteger(v.asℤ());
+		else if(v.tag==QState.Value.Tag.closure&&v.closure.fun&&!v.closure.context&&v.closure.fun.scope_&&(v.closure.fun.dataTypeOf||v.closure.fun.name)){
+			Declaration decl=v.closure.fun.dataTypeOf?v.closure.fun.dataTypeOf:v.closure.fun;
+			auto fid=new Identifier(decl.getId);
+			fid.loc=id.loc;
+			fid.meaning=decl;
+			fid.scope_=decl.scope_;
+			fid.type=id.type?id.type:v.type;
+			fid.setSemCompleted();
+			subst[id.id]=fid;
+		}else if(v.tag==QState.Value.Tag.array_&&v.array_.all!(e=>e.tag==QState.Value.Tag.tval&&e.tval)){
+			auto le=new VectorExp(v.array_.map!(e=>e.tval).array);
+			le.loc=id.loc;
+			le.type=id.type?id.type:v.type;
+			le.setSemCompleted();
+			subst[id.id]=le;
+		}
 	}
 	if(!subst.length) return te;
 	return te.substitute(subst);
@@ -2867,7 +2882,8 @@ struct Interpreter(QState){
 
 	QState.Value convertTo(QState.Value value,Expression type,bool consumeArg,bool checkPositiveWidth=false){
 		assert(value.type.isSemEvaluated());
-		type=evalType(type);
+		//if(type.subexpressions.any!(e=>!!cast(VariadicTy)e)) type=closedType(type);
+		type=evalType(closedType(type));
 		assert(type.isSemEvaluated());
 		if(value.type==type){
 			if(consumeArg) return value;
@@ -2981,7 +2997,35 @@ struct Interpreter(QState){
 		}
 	}
 	Expression closedType(Expression te){
-		return closeType(te,(Identifier id)=>lookupMeaning(qstate,id.meaning,true,id.scope_));
+		te=closeType(te,(Identifier id)=>lookupMeaning(qstate,id.meaning,true,id.scope_));
+		return closeSizes(te);
+	}
+	Expression closeSizes(Expression te){
+		static bool isOpen(Expression e){
+			foreach(id;e.freeIdentifiers) return true;
+			return false;
+		}
+		if(!te||!isOpen(te)) return te;
+		if(te.isSemCompleted()&&!te.isSemEvaluated()) te=te.eval();
+		if(auto vt=cast(VectorTy)te){
+			auto next=closeSizes(vt.next),num=vt.num;
+			if(isOpen(num)){
+				auto v=runExp(num);
+				if(v.isValid&&v.isClassical()&&v.isℤ()) num=LiteralExp.makeInteger(v.asℤ());
+			}
+			if(next is vt.next&&num is vt.num) return te;
+			return vectorTy(next,num);
+		}
+		if(auto at=cast(ArrayTy)te){
+			auto next=closeSizes(at.next);
+			return next is at.next?te:arrayTy(next);
+		}
+		if(auto tt=cast(TupleTy)te){
+			auto types=tt.types.map!(t=>closeSizes(t)).array;
+			return types.equal!((a,b)=>a is b)(tt.types)?te:tupleTy(types);
+		}
+		if(isFixedIntTy(te)) return evalType(te);
+		return te;
 	}
 	QState.Value runExp(Expression e){
 		if(qstate.unreachable) return QState.Value.init;
