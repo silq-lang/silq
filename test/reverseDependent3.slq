@@ -1,0 +1,8 @@
+// args: --run
+
+def bar(const n:!ℕ,b:𝔹)mfree⇒(b,vector(n,0:𝔹)); /// TODO
+def main(){
+	n:=3;
+	bar(n,y):=(1:𝔹,vector(n,0:𝔹)); /// TODO
+	return y;
+}
