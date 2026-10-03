@@ -3478,6 +3478,9 @@ class ScopeWriter {
 			// Index out of bounds?
 			return valAbort(e.type);
 		}
+		if(e.isClassical_ && ast_ty.isType(e)) {
+			return implType(e);
+		}
 
 		auto v = genExpr(e.e);
 		auto ty = e.e.type;
@@ -3651,6 +3654,21 @@ class ScopeWriter {
 			}
 			assert(rTy == ast_ty.Bool(false), format("indexing %s results in %s", ty, rTy));
 			return implIndexDupVector(v, rTy, bits, idx);
+		}
+		if(auto varTy = cast(ast_ty.VariadicTy) ty) {
+			assert(!idx.isQuantum, format("quantum index for %s", ty));
+			CReg len, rttis;
+			variadicRTTIs(varTy, len, rttis);
+			auto i = idx.creg;
+			ccg.checkLtInt(true, i, len);
+			CReg rc = v.hasClassical ? ccg.boxIndex(ctypeSilqTuple, len, v.creg, i) : null;
+			QReg rq = null;
+			if(v.hasQuantum) {
+				rq = new QReg();
+				auto qts = getVariadicQTypes(len, rttis, v.creg);
+				qcg.writeQOp(opIndexDupD, [rq], [len, qts, i], [v.qreg], []);
+			}
+			return valNewQ(rc, rq);
 		}
 		assert(false, format("Cannot index %s", ty));
 	}
@@ -3924,6 +3942,23 @@ class ScopeWriter {
 		CReg li = lidx.creg;
 		CReg ri = ridx.creg;
 
+		if(auto varTy = cast(ast_ty.VariadicTy) arg.type) {
+			CReg len, rttis;
+			variadicRTTIs(varTy, len, rttis);
+			ccg.checkLeInt(true, li, len);
+			ccg.checkLeInt(true, ri, len);
+			ccg.checkLeInt(true, li, ri);
+			CReg rc = v.hasClassical ? ccg.boxSlice(ctypeSilqTuple, len, v.creg, li, ri) : null;
+			QReg rq = null;
+			if(v.hasQuantum) {
+				rq = new QReg();
+				auto qts = getVariadicQTypes(len, rttis, v.creg);
+				qcg.writeQOp(opSliceD, [rq], [len, qts, li, ri], [v.qreg], []);
+			}
+			valForget(v);
+			return valNewQ(rc, rq);
+		}
+
 		Expression itemTy;
 		CReg len;
 
@@ -3976,12 +4011,15 @@ class ScopeWriter {
 
 		CReg rLen;
 		bool rArray;
+		bool sameItems(Expression rItemTy) {
+			return rItemTy == itemTy || ast_ty.isTypeTy(rItemTy) && ast_ty.isSubtype(itemTy, rItemTy);
+		}
 		if(auto vecTy = cast(ast_exp.VectorTy) e.type) {
-			assert(vecTy.next == itemTy);
+			assert(sameItems(vecTy.next), format("slicing %s: %s vs %s", e, vecTy.next, itemTy));
 			rLen = getVectorLength(vecTy);
 			rArray = false;
 		} else if(auto arrTy = cast(ast_exp.ArrayTy) e.type) {
-			assert(arrTy.next == itemTy);
+			assert(sameItems(arrTy.next), format("slicing %s: %s vs %s", e, arrTy.next, itemTy));
 			rLen = ccg.intSub(ri, li);
 			rArray = true;
 		} else {

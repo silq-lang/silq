@@ -1,0 +1,6 @@
+// args: --run
+
+def f[τ:*[]](const xs:∏ τ)⇒dup(xs[1..5]); /// run_error
+def main(){
+	return f[[!ℕ,!ℕ]](3,4);
+}

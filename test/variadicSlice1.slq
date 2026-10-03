@@ -1,0 +1,12 @@
+// args: --run
+
+def f[τ:*[]](const xs:∏ τ)⇒measure(dup(xs[1..3]));
+def g[n:!ℕ][τ:*^n](const xs:∏ τ)⇒measure(dup(xs[0..2]));
+def h[τ:*[]](const xs:∏ τ,const i:!ℕ)⇒measure(dup(xs[i..xs.length]));
+def c[τ:*[]](xs:!∏ τ)⇒xs[1..2];
+def s[τ:*[]](const xs:∏ τ)⇒measure(dup(xs[1..4][1..2]));
+def main(){
+	r:=(f[[!ℕ,𝔹,uint[2],!ℕ]](3,1:𝔹,2:uint[2],7),g[3][(uint[2],𝔹,!ℕ)](3:uint[2],0:𝔹,5),h[[!ℕ,𝔹,!ℕ]]((3,1:𝔹,4),1),c[[𝔹,𝔹,𝔹]](0:!𝔹,1:!𝔹,0:!𝔹),s[[!ℕ,𝔹,uint[2],!ℕ]](3,1:𝔹,2:uint[2],7));
+	assert(r=((1,2),(3,0),(1,4),(1,),(2,)));
+	return r;
+}

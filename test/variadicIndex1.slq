@@ -1,6 +1,6 @@
 // args: --run
 
-def f[τ:*[]](xs:∏ τ)⇒xs[0]; /// TODO
+def f[τ:*[]](const xs:∏ τ)⇒dup(xs[0]);
 def main(){
 	return f[[!ℕ,!ℕ]](1,2);
 }

@@ -1,0 +1,7 @@
+
+def foo[τ:*[]](xs:!∏ τ,ys:∏ τ)⇒ys;
+def main(){
+	a:=foo((1:!uint[2],),(0:𝔹,)); /// error
+	b:=foo((1:!uint[2],),(2:uint[2],0:𝔹)); /// error
+	return (a,b);
+}

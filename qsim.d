@@ -816,7 +816,7 @@ struct QState{
 		}
 		static Tag getTag(Expression type){
 			assert(!!type);
-			if(cast(ArrayTy)type||cast(VectorTy)type||cast(TupleTy)type) return Tag.array_;
+			if(cast(ArrayTy)type||cast(VectorTy)type||cast(TupleTy)type||cast(VariadicTy)type) return Tag.array_;
 			if(cast(ContextTy)type) return Tag.record;
 			if(cast(ProductTy)type) return Tag.closure;
 			if(!type.isClassical()&&!cast(Identifier)type){
@@ -2079,7 +2079,7 @@ struct QState{
 	}
 	static assert(Value.sizeof==max(Type.sizeof,Value.cval.alignof,Value.fval.alignof)+Value.bits.sizeof);
 	static Value makeTuple(Expression type,Value[] tuple)in{
-		assert(!!cast(TupleTy)type||cast(ArrayTy)type||cast(VectorTy)type);
+		assert(!!cast(TupleTy)type||cast(ArrayTy)type||cast(VectorTy)type||cast(VariadicTy)type);
 	}do{
 		Value r;
 		r.type=type;
@@ -3212,7 +3212,7 @@ struct Interpreter(QState){
 				auto r=doIt(sl.e)[doIt(sl.l)..doIt(sl.r)];
 				assert(r.tag==QState.Value.Tag.array_);
 				assert(QState.Value.getTag(e.type)==QState.Value.Tag.array_);
-				r.type=e.type;
+				r.type=evalType(closedType(e.type));
 				if(!sl.constLookup&&!sl.implicitDup) r=r.dup(qstate);
 				return r;
 			}

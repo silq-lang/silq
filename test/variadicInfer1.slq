@@ -1,0 +1,10 @@
+// args: --run
+
+def foo[τ:*[]](xs:!∏ τ,ys:∏ τ)⇒(xs,measure(ys));
+def bar[n:!ℕ][τ:*^n](xs:!∏ τ,ys:∏ τ)⇒measure(ys);
+def main(){
+	(a,b):=foo((1:!uint[2],1:!𝔹,3),(2:uint[2],0:𝔹,4));
+	c:=bar[2]((1:!uint[2],0:!𝔹),(3:uint[2],1:𝔹));
+	assert(a=(1,1,3)&&b=(2,0,4)&&c=(3,1));
+	return (a,b,c);
+}
