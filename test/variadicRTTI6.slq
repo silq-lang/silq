@@ -1,0 +1,12 @@
+// args: --run
+// variadic tuples `∏ τ` as elements of arrays and vectors (the RTTI of `∏ τ` itself)
+
+def a[τ:*[]](xs:∏ τ,ys:∏ τ)⇒measure([xs,ys]:(∏ τ)[]);
+def v[τ:*[]](xs:∏ τ,ys:∏ τ)⇒measure((xs,ys):(∏ τ)^2);
+def main(){
+	r:=a[[𝔹,𝔹[]]]((1:𝔹,[1:𝔹]),(0:𝔹,[0:𝔹,1:𝔹]));
+	s:=v[[𝔹,𝔹[]]]((1:𝔹,[0:𝔹]),(0:𝔹,[1:𝔹,1:𝔹]));
+	assert(r=[(1,[1]),(0,[0,1])]);
+	assert(s=((1,[0]),(0,[1,1])));
+	return (r,s);
+}

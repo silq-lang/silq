@@ -1,0 +1,11 @@
+// args: --run
+// variadic tuples `∏ τ` without classical part (each component's classical part is `null`)
+
+def m[τ:*[]](xs:∏ τ)⇒measure(xs);
+def p[τ:*[]](xs:!∏ τ)⇒measure(xs:∏ τ);
+def main(){
+	r:=m[[𝔹,𝔹,uint[2]]](1:𝔹,0:𝔹,2:uint[2]);
+	s:=p[[𝔹,uint[2]]](1:!𝔹,3:!uint[2]);
+	assert(r=(1,0,2)&&s=(1,3));
+	return (r,s);
+}

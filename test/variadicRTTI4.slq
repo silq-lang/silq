@@ -1,0 +1,9 @@
+// args: --run
+
+def g[n:!ℕ][τ:*^n](xs:∏ τ)⇒measure(xs);
+def main(){
+	r:=g[3][(𝔹,𝔹[],uint[2])](1:𝔹,[0:𝔹,1:𝔹],1:uint[2]);
+	assert(r=(1,[0,1],1));
+	e:=g[0][()]();
+	return (r,e);
+}

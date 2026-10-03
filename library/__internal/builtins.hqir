@@ -446,6 +446,16 @@ def silq_builtin.qtype_vec_d($n, $qtypeF, $cc, $i) [artificial]
 	return $qti
 
 
+def silq_builtin.qtype_variadic_d($n, $rttis, $cc, $i) [artificial]
+	$lit0 := literal[0]
+	$lit3 := literal[3]
+	$rtti := box_index[silq.tuple]($n, $rttis, $i)
+	$qtypeF := box_index[silq.rtti]($lit3, $rtti, $lit0)
+	$cci := box_index[silq.tuple]($n, $cc, $i)
+	$qti := classical_call($qtypeF, $cci)
+	return $qti
+
+
 def silq_builtin.qt_offset($n, $qtypes, $i, $j)
 	$prefix := box_slice[builtin.qtypes]($n, $qtypes, $i, $j)
 	$m := int_linear[0,1,-1]($j, $i)
@@ -547,6 +557,73 @@ def silq_builtin.promote_vec_d($subF, $n, $qtypes_out, $c, $i)
 	if[$done=1] %q_out_empty := qfree_call[qbuiltin.alloc_unit]()
 	%q_out_raw := cmerge($done) <- %q_out, %q_out_empty
 	return %q_out_raw
+
+
+def silq_builtin.promote_variadic_d($n, $rttis, $qtypes_out, $c, $i)
+	$lit0 := literal[0]
+	$lit1 := literal[1]
+	$lit3 := literal[3]
+	$done := int_cmp_eq($i, $lit0)
+
+	if[$done=0] $im1 := int_linear[-1, 1]($i)
+
+	if[$done=0] %qrp_out := qfree_call[silq_builtin.promote_variadic_d]($n, $rttis, $qtypes_out, $c, $im1)
+
+	if[$done=0] $ci := box_index[silq.tuple]($n, $c, $im1)
+	if[$done=0] $rtti := box_index[silq.tuple]($n, $rttis, $im1)
+	if[$done=0] $subF := box_index[silq.rtti]($lit3, $rtti, $lit1)
+	if[$done=0] %qi_out := qfree_call($subF, $ci)
+	if[$done=0] $qti_out := box_index[builtin.qtypes]($n, $qtypes_out, $im1)
+	if[$done=0] %qip_out := qfree_call[qbuiltin.pack]($qti_out) <- %qi_out
+
+	if[$done=0] $qtrp_out := classical_call[silq_builtin.qt_offset]($n, $qtypes_out, $lit0, $im1)
+	if[$done=0] $qtip_out := qt_tuple($qti_out)
+	if[$done=0] %q_out := qfree_call[qbuiltin.cat]($im1, $qtrp_out, $lit1, $qtip_out) <- %qrp_out, %qip_out
+
+	if[$done=1] %q_out_empty := qfree_call[qbuiltin.alloc_unit]()
+	%q_out_raw := cmerge($done) <- %q_out, %q_out_empty
+	return %q_out_raw
+
+
+def silq_builtin.measure_variadic_d($n, $rttis, $qtypes_in, $c, $i) <- %q_in_raw
+	$lit0 := literal[0]
+	$lit1 := literal[1]
+	$lit2 := literal[2]
+	$lit3 := literal[3]
+	$done := int_cmp_eq($i, $lit0)
+	%q_in, %q_in_empty := csplit($done) <- %q_in_raw
+
+	if[$done=1] qfree_call_rev[qbuiltin.alloc_unit]() <- %q_in_empty
+	if[$done=1] $c_out_empty := box[silq.tuple]()
+
+	if[$done=0] $im1 := int_linear[-1, 1]($i)
+
+	if[$done=0] $qtype_in := box_index[builtin.qtypes]($n, $qtypes_in, $im1)
+	if[$done=0] $qtrp_in := classical_call[silq_builtin.qt_offset]($n, $qtypes_in, $lit0, $im1)
+	if[$done=0] $qtip_in := qt_tuple($qtype_in)
+	if[$done=0] %qrp_in, %qip_in := qfree_call_rev[qbuiltin.cat]($im1, $qtrp_in, $lit1, $qtip_in) <- %q_in
+	if[$done=0] %qi_in := qfree_call_rev[qbuiltin.pack]($qtype_in) <- %qip_in
+	if[$done=0] $cr_out := call[silq_builtin.measure_variadic_d]($n, $rttis, $qtypes_in, $c, $im1) <- %qrp_in
+
+	if[$done=0] $ci_in := box_index[silq.tuple]($n, $c, $im1)
+	if[$done=0] $rtti := box_index[silq.tuple]($n, $rttis, $im1)
+	if[$done=0] $subF := box_index[silq.rtti]($lit3, $rtti, $lit2)
+	if[$done=0] $ci_out := call($subF, $ci_in) <- %qi_in
+	if[$done=0] $cip_out := box[silq.tuple]($ci_out)
+	if[$done=0] $c_out := box_cat[silq.tuple]($im1, $cr_out, $lit1, $cip_out)
+
+	$c_out_raw := cond($done, $c_out, $c_out_empty)
+	return $c_out_raw
+
+
+def silq_builtin.convert_variadic_c($n, $rttis, $c, $i) [artificial]
+	$lit1 := literal[1]
+	$lit3 := literal[3]
+	$rtti := box_index[silq.tuple]($n, $rttis, $i)
+	$subF := box_index[silq.rtti]($lit3, $rtti, $lit1)
+	$ci := box_index[silq.tuple]($n, $c, $i)
+	$r := classical_call($subF, $ci)
+	return $r
 
 
 def silq_builtin.convert_vec_c($subF, $n, $c, $i) [artificial]

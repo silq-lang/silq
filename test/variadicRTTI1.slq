@@ -1,0 +1,8 @@
+// args: --run
+
+def m[τ:*[]](xs:∏ τ)⇒measure(xs);
+def main(){
+	r:=m[[𝔹,𝔹[],!ℕ,uint[2]]](1:𝔹,[1:𝔹,0:𝔹,1:𝔹],5,2:uint[2]);
+	assert(r=(1,[1,0,1],5,2));
+	return r;
+}

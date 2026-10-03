@@ -6252,6 +6252,28 @@ class ScopeWriter {
 		return ccg.funcApply("silq_builtin.iter_qtypes", [qtf, len]);
 	}
 
+	void variadicRTTIs(ast_ty.VariadicTy varTy, out CReg len, out CReg rttis) {
+		auto list = genExpr(varTy.next).creg;
+		if(auto vecTy = cast(ast_ty.VectorTy) varTy.next.type) {
+			len = getVectorLength(vecTy);
+			rttis = list;
+			return;
+		}
+		assert(cast(ast_ty.ArrayTy) varTy.next.type, format("unexpected variadic type %s", varTy));
+		len = ccg.getArrayLength(list);
+		rttis = ccg.getArrayItems(list);
+	}
+
+	CReg variadicClassical(CReg len, CReg cc) {
+		if(cc && cc !is ctx.nullReg) return cc;
+		return ccg.boxRepeat(ctypeSilqTuple, len, ctx.nullReg);
+	}
+
+	CReg getVariadicQTypes(CReg len, CReg rttis, CReg cc) {
+		auto qtf = ccg.funcPack("silq_builtin.qtype_variadic_d", [len, rttis, variadicClassical(len, cc)]);
+		return ccg.funcApply("silq_builtin.iter_qtypes", [qtf, len]);
+	}
+
 	CReg getVectorQType(Expression itemTy, CReg len, CReg cc) {
 		if(len is ctx.intZero) {
 			return ctx.qtUnit;
@@ -6338,7 +6360,10 @@ class ScopeWriter {
 			return getVectorQType(arrTy.next, len, cc);
 		}
 		if(auto varTy = cast(ast_ty.VariadicTy) ty) {
-			assert(0, "TODO variadics");
+			CReg len, rttis;
+			variadicRTTIs(varTy, len, rttis);
+			if(len is ctx.intZero) return ctx.qtUnit;
+			return ccg.qtArray(len, getVariadicQTypes(len, rttis, cc));
 		}
 		assert(!cast(ast_ty.Type) ty, format("can't get qtype for %s", ty));
 		assert(mayUseRTTI);
@@ -6433,6 +6458,15 @@ class ScopeWriter {
 			arg = ccg.getArrayItems(arg);
 			auto r = genVectorPromote(arrTy.next, len, arg);
 			return valVectorToArray(len, r);
+		}
+		if(auto varTy = cast(ast_ty.VariadicTy) ty) {
+			CReg len, rttis;
+			variadicRTTIs(varTy, len, rttis);
+			auto cr = ccg.funcApply("silq_builtin.iter_tuple", [ccg.funcPack("silq_builtin.convert_variadic_c", [len, rttis, arg]), len]);
+			auto qt = getVariadicQTypes(len, rttis, cr);
+			auto r = valNewQ(cr, ty);
+			qcg.writeQOp("qfree_call[silq_builtin.promote_variadic_d]", [r.qreg], [len, rttis, qt, arg, len], [], []);
+			return r;
 		}
 		assert(mayUseRTTI);
 		auto promoteF = getRTTI(ty).promoteF;
@@ -6586,6 +6620,14 @@ class ScopeWriter {
 			arg = valArrayToVector(arrTy.next, len, arg);
 			auto r = genVectorMeasure(arrTy.next, len, arg);
 			return ccg.boxPack(ctypeSilqArray, [len, r]);
+		}
+		if(auto varTy = cast(ast_ty.VariadicTy) ty) {
+			CReg len, rttis;
+			variadicRTTIs(varTy, len, rttis);
+			auto r = new CReg();
+			auto qtypes = getVariadicQTypes(len, rttis, arg.creg);
+			qcg.writeMOp("call[silq_builtin.measure_variadic_d]", [r], [], [len, rttis, qtypes, variadicClassical(len, arg.creg), len], [], [arg.qreg]);
+			return r;
 		}
 		assert(mayUseRTTI);
 		auto r = new CReg();

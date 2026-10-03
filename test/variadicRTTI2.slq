@@ -1,0 +1,9 @@
+// args: --run
+
+def p[τ:*[]](xs:!∏ τ):∏ τ⇒xs;
+def q[τ:*[]](xs:!∏ τ)⇒measure(p[τ](xs));
+def main(){
+	r:=q[[𝔹,𝔹[],uint[3]]](1:!𝔹,[0:!𝔹,1:!𝔹],5:!uint[3]);
+	assert(r=(1,[0,1],5));
+	return r;
+}

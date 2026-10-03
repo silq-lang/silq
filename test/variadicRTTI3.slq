@@ -1,0 +1,10 @@
+// args: --run
+
+def f[τ:*[]](xs:∏ τ)⇒xs;
+def g[τ:*[]](xs:∏ τ)⇒f[τ](f[τ](xs));
+def h[τ:*[]](xs:∏ τ)⇒measure(g[τ](xs));
+def main(){
+	r:=h[[𝔹,𝔹[],uint[2]]](1:𝔹,[1:𝔹,1:𝔹],3:uint[2]);
+	assert(r=(1,[1,1],3));
+	return r;
+}

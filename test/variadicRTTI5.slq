@@ -1,0 +1,7 @@
+// args: --run
+
+def f[τ:*[]](xs:∏ τ)⇒measure(xs);
+def main(){
+	r:=f[[]]();
+	return r;
+}
