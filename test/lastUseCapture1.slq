@@ -1,0 +1,11 @@
+// args: --run
+
+def f(){
+	x:=H(0:𝔹);
+	y:=dup(x);
+	def g()⇒dup(y);
+	u:=g();
+	z:=H(x);
+	return (u,z);
+}
+def main()⇒f();
