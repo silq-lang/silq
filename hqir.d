@@ -4695,7 +4695,11 @@ class ScopeWriter {
 						assert(sube.isSquare, "non-[] call to dup");
 						assert(sube.arg.eval() == e.type, "typeof(dup[t](e)) != t");
 						Value tmp = genExprAs(e.arg, e.type);
-						valUndup(ret, tmp);
+						if(classicalize) {
+							genReverseCoerceForget(rhs, rhsType, e.type, tmp.creg);
+						}else{
+							valUndup(ret, tmp);
+						}
 						valForget(tmp);
 						return;
 					default:

@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	x:=H(0);
+	y:=H(1);
+	dup(0,1):=(H(x),H(y));
+}
