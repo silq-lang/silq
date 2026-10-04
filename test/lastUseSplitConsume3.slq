@@ -1,0 +1,13 @@
+
+def bar(c:!𝔹){
+	x:=H(0);
+	y₀:=!x; /// error
+	if c {
+		z:=H(x);
+	}else{
+		z:=H(x);
+	}
+	c₀:=dup(y₀);
+	return (c₀,z);
+}
+def main()⇒bar(true);

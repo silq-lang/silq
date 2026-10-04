@@ -1,0 +1,15 @@
+// args: --run
+
+def bar(c:!𝔹){
+	x:=H(0);
+	y₀:=!x;
+	y₁:=y₀;
+	c₀:=!y₀;
+	if c {
+		z:=H(x);
+	}else{
+		z:=H(x);
+	}
+	return (y₁,c₀,z);
+}
+def main()⇒(bar(true),bar(false));
