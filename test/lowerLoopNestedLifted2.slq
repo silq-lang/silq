@@ -2,7 +2,7 @@
 
 def f(c0:!ℕ){
 	q1:=0:𝔹;
-	a:=0:𝔹; /// TODO
+	a:=0:𝔹;
 	repeat 2 { repeat 2 { repeat 2 {
 		q1:=H(q1);
 		if c0==1 { return (c0,q1,X(a)); }
