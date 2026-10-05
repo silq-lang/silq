@@ -1,0 +1,29 @@
+// args: --run
+
+def g(b:!𝔹,const q:𝔹){
+	x:=H(0:𝔹);
+	y:=dup(q);
+	u:=dup(y);
+	if b {
+		return (u,H(x),0:𝔹);
+	}else{
+		z:=X(x);
+	}
+	return (u,z,0:𝔹);
+}
+def h(b:!𝔹,const q:𝔹){
+	x:=H(0:𝔹);
+	y:=dup(q);
+	u:=dup(y);
+	if b {
+		return (u,H(x),0:𝔹);
+	}else{
+		v:=dup(y);
+		return (u,X(x),v);
+	}
+}
+def main(){
+	q:=0:𝔹;
+	r:=(g(true,q),g(false,q),h(true,q),h(false,q));
+	return (q,r);
+}

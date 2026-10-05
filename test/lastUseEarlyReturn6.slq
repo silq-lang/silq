@@ -1,0 +1,13 @@
+
+def f(b:!𝔹){
+	x:=H(0:𝔹);
+	y:=dup(x); /// error
+	u:=dup(y);
+	if b {
+		z:=H(x);
+		return (u,z,0:𝔹);
+	}
+	v:=dup(y);
+	z:=X(x);
+	return (u,z,v);
+}

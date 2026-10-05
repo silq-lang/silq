@@ -1,0 +1,14 @@
+// args: --run
+
+def f(b:!𝔹){
+	x:=H(0:𝔹);
+	y:=dup(x);
+	u:=dup(y);
+	if b {
+		z:=H(x);
+		return (u,z);
+	}
+	z:=X(x);
+	return (u,z);
+}
+def main()⇒(f(true),f(false));
