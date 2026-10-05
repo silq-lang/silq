@@ -351,6 +351,17 @@ int runLanguageServer() {
 	bool[string][string] publishedFor; // document uri -> uris it last published to
 	bool shuttingDown = false;
 
+	// Once a document is open its content belongs to the client, and the server
+	// must not read it from disk (LSP spec, didOpen). That holds when another
+	// document imports it too: the importer sees the unsaved buffer.
+	moduleSourceOverride = delegate bool(string path, out string code) {
+		if(auto text = nameToUri(absoluteFile(path)) in documents) {
+			code = *text;
+			return true;
+		}
+		return false;
+	};
+
 	// Errors can come from files other than the one being edited (imports, and
 	// the prelude). Attributing those to the current document would point at a
 	// line that may not even exist, so each diagnostic is published against the
@@ -373,10 +384,9 @@ int runLanguageServer() {
 			// Unlocated errors have nowhere better to go than the top of the
 			// document being edited, flagged the way the CLI flags them.
 			auto targetUri = d.located ? nameToUri(d.file) : uri;
-			// An import that is open in the editor is checked from its own
-			// buffer, and that check owns its squiggles. This one read the file
-			// from disk, so publishing here would paint the buffer with errors
-			// from a version the user may already have changed.
+			// An import that is open in the editor is checked on its own too,
+			// and that check owns its squiggles. Publishing them from here as
+			// well would have two checks overwriting each other's results.
 			if(targetUri != uri && targetUri in documents) continue;
 			auto range = d.located
 				? toLspRange(mapFor(d.src), d.startByte, d.endByte)
@@ -421,8 +431,8 @@ int runLanguageServer() {
 		publishedFor[uri] = nowPublished;
 	}
 
-	// Another document may import the one that just changed on disk or closed,
-	// and nothing else would re-check it until it is edited itself.
+	// Another document may import the one that just changed or closed, and
+	// nothing else would re-check it until it is edited itself.
 	void recheckOthers(string uri) {
 		foreach(other; documents.keys) if(other != uri) publishDiagnostics(other);
 	}
@@ -454,13 +464,8 @@ int runLanguageServer() {
 				case "initialize":
 					if(idp) sendResult(*idp, JSONValue([
 						"capabilities": JSONValue([
-							"textDocumentSync": JSONValue([
-								"openClose": JSONValue(true),
-								// 1 = full document sync: silq re-checks whole buffers anyway.
-								"change": JSONValue(1),
-								// Saves are what change an imported file on disk.
-								"save": JSONValue(true),
-							]),
+							// 1 = full document sync: silq re-checks whole buffers anyway.
+							"textDocumentSync": JSONValue(1),
 						]),
 						"serverInfo": JSONValue(["name": JSONValue("silq"), "version": JSONValue("0.1")]),
 					]));
@@ -480,6 +485,9 @@ int runLanguageServer() {
 						if(uri !is null) {
 							documents[uri] = text is null ? "" : text;
 							publishDiagnostics(uri);
+							// Importers now read this buffer rather than the file,
+							// and it may differ from what they last saw on disk.
+							recheckOthers(uri);
 						}
 					}
 					break;
@@ -498,13 +506,8 @@ int runLanguageServer() {
 								}
 							}
 							publishDiagnostics(uri);
+							recheckOthers(uri);
 						}
-					}
-					break;
-				case "textDocument/didSave":
-					if(auto td = "textDocument" in params) {
-						auto uri = strField(*td, "uri");
-						if(uri !is null) recheckOthers(uri);
 					}
 					break;
 				case "textDocument/didClose":
@@ -525,8 +528,10 @@ int runLanguageServer() {
 						uriForName.remove(uriToName(uri));
 						sendNotification("textDocument/publishDiagnostics",
 							JSONValue(["uri": JSONValue(uri), "diagnostics": JSONValue(cast(JSONValue[])[])]));
-						// A document importing this one was kept out of it while
-						// it was open, and must report its errors there again.
+						// An importer saw this document's buffer while it was
+						// open, and now sees the file on disk again, which an
+						// unsaved close can leave different. It also reports
+						// errors in it again, which it was kept from while open.
 						recheckOthers(uri);
 					}
 					break;
