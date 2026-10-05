@@ -1,0 +1,14 @@
+// args: --run --remove-loops
+
+def f(b:!𝔹){
+	x:=H(0:𝔹);
+	y:=dup(x);
+	u:=dup(y);
+	k:=0;
+	while k<2 { /// TODO
+		if b { return (u,H(x)); }
+		k+=1;
+	}
+	return (u,X(x));
+}
+def main()⇒(f(true),f(false));
