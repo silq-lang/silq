@@ -39,6 +39,7 @@ private struct Diag {
 	string message;
 	bool located;        // false when the error carried no usable location
 	Source src;
+	string file;         // src's file, absolute: resolved while the check ran
 	int startByte, endByte;
 	Diag[] related;
 }
@@ -69,13 +70,25 @@ private final class ServerErrorHandler: ErrorHandler {
 			return;
 		}
 		auto li = loc.info(getTabsize());
-		auto d = Diag(ty, msg, true, li.source, li.startByte, li.endByte);
+		auto d = Diag(ty, msg, true, li.source, absoluteFile(li.source.name), li.startByte, li.endByte);
 		if(ty == ErrorType.note && diags.length) diags[$-1].related ~= d;
 		else diags ~= d;
 	}
 }
 
 private __gshared ServerErrorHandler handler;
+
+// Import resolution names a file relative to the working directory when it is
+// found there (getActualPath), and a relative name cannot become a file: URI.
+// Resolve it now, during the check, while the working directory is the one it
+// was found against. A name that is not a file (untitled:, .prelude) is kept.
+private string absoluteFile(string name) {
+	import std.file: exists;
+	import std.path: absolutePath;
+	if(isAbsolute(name)) return name;
+	try { if(exists(name)) return absolutePath(name); } catch(Exception) {}
+	return name;
+}
 
 // The URI each checked document arrived as, keyed by the Source name derived
 // from it. Diagnostics must be published under the URI the client actually
@@ -165,15 +178,18 @@ private Diag[] checkDocument(string name, string text) {
 	// one-shot compile. Here it would mean every check sees an imported file as
 	// it was first read, so a saved change to it, broken or not, never shows.
 	clearModuleCache();
-	// Imports resolve relative to the process CWD first (getActualPath), which
-	// for a server spawned by an editor is arbitrary. Make the document's own
-	// directory searchable for the duration of the check.
-	auto savedPath = astopt.importPath;
-	scope(exit) astopt.importPath = savedPath;
-	// Only absolute entries: getShortPath feeds these to relativePath(), which
-	// throws on a relative base, and a non-file document's dirName is ".".
+	// Imports resolve against the working directory first (getActualPath), and
+	// an editor starts the server in the workspace root. Searching the
+	// document's directory after that is not enough: a same-named file in the
+	// root would win. Check from the document's directory instead, which is
+	// exactly what F5 does (the runner spawns silq there). A non-file
+	// document's dirName is "." and is left alone.
+	import std.file: getcwd, chdir;
+	import std.exception: collectException;
 	auto dir = dirName(name);
-	if(dir.length && isAbsolute(dir)) astopt.importPath ~= dir;
+	auto savedCwd = getcwd();
+	scope(exit) collectException(chdir(savedCwd));
+	if(dir.length && isAbsolute(dir)) collectException(chdir(dir));
 
 	auto src = new Source(name, text ~ "\0\0\0\0"); // four NUL bytes required
 	// The Source registry is a global array with a linear-scan lookup, so an
@@ -356,7 +372,7 @@ int runLanguageServer() {
 		foreach(d; diags) {
 			// Unlocated errors have nowhere better to go than the top of the
 			// document being edited, flagged the way the CLI flags them.
-			auto targetUri = d.located ? nameToUri(d.src.name) : uri;
+			auto targetUri = d.located ? nameToUri(d.file) : uri;
 			// An import that is open in the editor is checked from its own
 			// buffer, and that check owns its squiggles. This one read the file
 			// from disk, so publishing here would paint the buffer with errors
@@ -378,7 +394,7 @@ int runLanguageServer() {
 					if(!r.located) continue;
 					rel ~= JSONValue([
 						"location": JSONValue([
-							"uri": JSONValue(nameToUri(r.src.name)),
+							"uri": JSONValue(nameToUri(r.file)),
 							"range": toLspRange(mapFor(r.src), r.startByte, r.endByte),
 						]),
 						"message": JSONValue(r.message),
