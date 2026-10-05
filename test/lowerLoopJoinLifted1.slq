@@ -1,0 +1,15 @@
+// args: --run
+
+def f(c0:!ℕ,c1:!ℕ){
+	q2:=H(1:𝔹);
+	a:=0:𝔹;
+	if c1%2==0 {
+		repeat 3 {
+			if c1%3==1 { return (c0,q2,a); }
+		}
+	}else{
+		if q2 { a:=X(a); }
+	}
+	return (c0,q2,a);
+}
+def main()⇒(f(0,1),f(2,2));
