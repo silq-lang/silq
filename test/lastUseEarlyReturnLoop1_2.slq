@@ -5,7 +5,7 @@ def f(b:!𝔹){
 	y:=dup(x);
 	u:=dup(y);
 	forget(y);
-	for i in [0..2) { /// TODO
+	for i in [0..2) {
 		if b { return (u,H(x)); }
 	}
 	return (u,X(x));

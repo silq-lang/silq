@@ -6,7 +6,7 @@ def f(b:!𝔹){
 	u:=dup(y);
 	k:=0;
 	forget(y);
-	while k<2 { /// TODO
+	while k<2 {
 		if b { return (u,H(x)); }
 		k+=1;
 	}
