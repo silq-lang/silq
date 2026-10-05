@@ -47,7 +47,7 @@ private struct Diag {
 //
 // This handler is created once and lives as long as the server, because scopes
 // capture their handler permanently: getPreludeScope caches the prelude
-// TopScope with whatever handler first built it, and imported modules are
+// TopScope with whatever handler first built it, and the operator scope is
 // cached the same way. A per-request handler would therefore be captured by the
 // prelude on the first check and every later error routed through a prelude- or
 // import-owned scope would be appended to an object nobody reads. Instead the
@@ -161,6 +161,10 @@ private JSONValue toLspRange(const ref PositionMap map, int startByte, int endBy
 // the alternative is losing every open document over one transient keystroke.
 private Diag[] checkDocument(string name, string text) {
 	handler.diags = null;
+	// Imported modules are cached for the life of the process, which suits a
+	// one-shot compile. Here it would mean every check sees an imported file as
+	// it was first read, so a saved change to it, broken or not, never shows.
+	clearModuleCache();
 	// Imports resolve relative to the process CWD first (getActualPath), which
 	// for a server spawned by an editor is arbitrary. Make the document's own
 	// directory searchable for the duration of the check.
@@ -353,6 +357,11 @@ int runLanguageServer() {
 			// Unlocated errors have nowhere better to go than the top of the
 			// document being edited, flagged the way the CLI flags them.
 			auto targetUri = d.located ? nameToUri(d.src.name) : uri;
+			// An import that is open in the editor is checked from its own
+			// buffer, and that check owns its squiggles. This one read the file
+			// from disk, so publishing here would paint the buffer with errors
+			// from a version the user may already have changed.
+			if(targetUri != uri && targetUri in documents) continue;
 			auto range = d.located
 				? toLspRange(mapFor(d.src), d.startByte, d.endByte)
 				: JSONValue(["start": JSONValue(["line": JSONValue(0), "character": JSONValue(0)]),
@@ -383,7 +392,10 @@ int runLanguageServer() {
 		// Clear files this document put diagnostics in last time but not now.
 		// Tracked per document: a global set would make checking one file clear
 		// the diagnostics of every other open file.
-		foreach(old, _; publishedFor.get(uri, null)) if(old !in byUri) byUri[old] = [];
+		// An open document is skipped for the same reason as above: clearing it
+		// would wipe the squiggles its own check put there.
+		foreach(old, _; publishedFor.get(uri, null))
+			if(old !in byUri && old !in documents) byUri[old] = [];
 		bool[string] nowPublished;
 		foreach(u, ds; byUri) {
 			if(ds.length) nowPublished[u] = true;
@@ -391,6 +403,12 @@ int runLanguageServer() {
 				JSONValue(["uri": JSONValue(u), "diagnostics": JSONValue(ds)]));
 		}
 		publishedFor[uri] = nowPublished;
+	}
+
+	// Another document may import the one that just changed on disk or closed,
+	// and nothing else would re-check it until it is edited itself.
+	void recheckOthers(string uri) {
+		foreach(other; documents.keys) if(other != uri) publishDiagnostics(other);
 	}
 
 	for(;;) {
@@ -420,8 +438,13 @@ int runLanguageServer() {
 				case "initialize":
 					if(idp) sendResult(*idp, JSONValue([
 						"capabilities": JSONValue([
-							// 1 = full document sync: silq re-checks whole buffers anyway.
-							"textDocumentSync": JSONValue(1),
+							"textDocumentSync": JSONValue([
+								"openClose": JSONValue(true),
+								// 1 = full document sync: silq re-checks whole buffers anyway.
+								"change": JSONValue(1),
+								// Saves are what change an imported file on disk.
+								"save": JSONValue(true),
+							]),
 						]),
 						"serverInfo": JSONValue(["name": JSONValue("silq"), "version": JSONValue("0.1")]),
 					]));
@@ -462,6 +485,12 @@ int runLanguageServer() {
 						}
 					}
 					break;
+				case "textDocument/didSave":
+					if(auto td = "textDocument" in params) {
+						auto uri = strField(*td, "uri");
+						if(uri !is null) recheckOthers(uri);
+					}
+					break;
 				case "textDocument/didClose":
 					if(auto td = "textDocument" in params) {
 						auto uri = strField(*td, "uri");
@@ -470,14 +499,19 @@ int runLanguageServer() {
 						// Clear everywhere this document put diagnostics, not
 						// just its own file: errors it reported in an imported
 						// file would otherwise stay there for the whole session
-						// with nothing left able to clear them.
+						// with nothing left able to clear them. Open documents
+						// own their squiggles and are left alone.
 						foreach(other, _; publishedFor.get(uri, null))
-							sendNotification("textDocument/publishDiagnostics",
-								JSONValue(["uri": JSONValue(other), "diagnostics": JSONValue(cast(JSONValue[])[])]));
+							if(other !in documents)
+								sendNotification("textDocument/publishDiagnostics",
+									JSONValue(["uri": JSONValue(other), "diagnostics": JSONValue(cast(JSONValue[])[])]));
 						publishedFor.remove(uri);
 						uriForName.remove(uriToName(uri));
 						sendNotification("textDocument/publishDiagnostics",
 							JSONValue(["uri": JSONValue(uri), "diagnostics": JSONValue(cast(JSONValue[])[])]));
+						// A document importing this one was kept out of it while
+						// it was open, and must report its errors there again.
+						recheckOthers(uri);
 					}
 					break;
 				default:
