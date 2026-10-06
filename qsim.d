@@ -25,22 +25,22 @@ private{
 	size_t stackSegmentBase=0; // address near the start of the current stack segment (0: not yet known)
 	size_t stackSegmentBudget=0; // number of bytes of the current segment calls may use
 	enum fiberStackSize=size_t(64)<<20;
-	size_t currentStackAddress(){
-		int local;
-		return cast(size_t)&local;
-	}
-	size_t mainStackBudget(){
-		version(Posix){
-			import core.sys.posix.sys.resource:rlimit,getrlimit,RLIMIT_STACK,RLIM_INFINITY;
-			rlimit rl;
-			if(getrlimit(RLIMIT_STACK,&rl)==0&&rl.rlim_cur!=RLIM_INFINITY) return cast(size_t)rl.rlim_cur/4;
-		}
-		return size_t(2)<<20;
-	}
 	// runs `dg`, on a new fiber if the current stack segment is filling up
 	void runWithStack(scope void delegate() dg){
 		version(WebAssembly) return dg();
 		else{
+			static size_t currentStackAddress(){
+				int local;
+				return cast(size_t)&local;
+			}
+			static size_t mainStackBudget(){
+				version(Posix){
+					import core.sys.posix.sys.resource:rlimit,getrlimit,RLIMIT_STACK,RLIM_INFINITY;
+					rlimit rl;
+					if(getrlimit(RLIMIT_STACK,&rl)==0&&rl.rlim_cur!=RLIM_INFINITY) return cast(size_t)rl.rlim_cur/4;
+				}
+				return size_t(2)<<20;
+			}
 			auto sp=currentStackAddress();
 			if(!stackSegmentBase){
 				stackSegmentBase=sp;
