@@ -39,27 +39,30 @@ private{
 	}
 	// runs `dg`, on a new fiber if the current stack segment is filling up
 	void runWithStack(scope void delegate() dg){
-		auto sp=currentStackAddress();
-		if(!stackSegmentBase){
-			stackSegmentBase=sp;
-			stackSegmentBudget=mainStackBudget();
+		version(WebAssembly) return dg();
+		else{
+			auto sp=currentStackAddress();
+			if(!stackSegmentBase){
+				stackSegmentBase=sp;
+				stackSegmentBudget=mainStackBudget();
+			}
+			auto used=stackSegmentBase>sp?stackSegmentBase-sp:sp-stackSegmentBase;
+			if(used<stackSegmentBudget) return dg();
+			import core.thread:Fiber;
+			auto oldBase=stackSegmentBase,oldBudget=stackSegmentBudget;
+			stackSegmentBase=0;
+			scope(exit){
+				stackSegmentBase=oldBase;
+				stackSegmentBudget=oldBudget;
+			}
+			auto fiber=new Fiber((){
+					stackSegmentBase=currentStackAddress();
+					stackSegmentBudget=fiberStackSize/4*3;
+					dg();
+				},fiberStackSize);
+			scope(exit) destroy(fiber); // release the fiber's stack
+			fiber.call();
 		}
-		auto used=stackSegmentBase>sp?stackSegmentBase-sp:sp-stackSegmentBase;
-		if(used<stackSegmentBudget) return dg();
-		import core.thread:Fiber;
-		auto oldBase=stackSegmentBase,oldBudget=stackSegmentBudget;
-		stackSegmentBase=0;
-		scope(exit){
-			stackSegmentBase=oldBase;
-			stackSegmentBudget=oldBudget;
-		}
-		auto fiber=new Fiber((){
-			stackSegmentBase=currentStackAddress();
-			stackSegmentBudget=fiberStackSize/4*3;
-			dg();
-		},fiberStackSize);
-		scope(exit) destroy(fiber); // release the fiber's stack
-		fiber.call();
 	}
 }
 
