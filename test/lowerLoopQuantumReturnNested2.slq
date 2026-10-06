@@ -1,0 +1,20 @@
+// args: --run
+
+def f(const qc:𝔹){
+	q:=0:𝔹;
+	repeat 2 {
+		w:=0;
+		while w<2 {
+			repeat 2 {
+				if qc { return q; }
+			}
+			w+=1;
+		}
+	}
+	return q;
+}
+def main(){
+	qc:=H(0:𝔹);
+	r:=f(qc);
+	return (qc,r);
+}
