@@ -1,0 +1,12 @@
+
+def g(q:𝔹,c:!𝔹,d:!𝔹){
+	t:=dup(q);
+	if c {
+		forget(t); /// error
+		if d { q:=X(q); }
+		return q;
+	}else{
+		forget(t); /// error
+		return q;
+	}
+}

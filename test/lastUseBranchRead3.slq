@@ -1,0 +1,15 @@
+// args: --remove-loops --run
+
+def f(c:!ℕ){
+	q:=H(0:𝔹);
+	a:=0:𝔹;
+	w:=0;
+	while w<2 {
+		t:=dup(q);
+		if t { a:=X(a); }
+		if c%3==1 { return (q,a); }
+		w+=1;
+	}
+	return (q,a);
+}
+def main()⇒(f(0),f(1),f(2));

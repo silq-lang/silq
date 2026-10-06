@@ -1,0 +1,13 @@
+// args: --run
+
+def g(q:𝔹,c:!𝔹,d:!𝔹){
+	if c {
+		t:=dup(q);
+		forget(t);
+		if d { q:=X(q); }
+		return q;
+	}else{
+		return q;
+	}
+}
+def main()⇒(g(H(0:𝔹),true,true),g(H(0:𝔹),true,false),g(H(0:𝔹),false,false));
