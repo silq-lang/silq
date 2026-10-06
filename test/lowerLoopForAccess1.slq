@@ -1,0 +1,12 @@
+// args: --run
+
+def f(c:!ℕ){
+	q:=0:𝔹;
+	repeat 2 {
+		for i in [0..2) {
+			if c==1 { return q; }
+		}
+	}
+	return q;
+}
+def main()⇒(f(0),f(1));
