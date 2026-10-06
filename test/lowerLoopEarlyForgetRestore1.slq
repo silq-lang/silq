@@ -1,0 +1,15 @@
+// args: --remove-loops --run
+
+def f(c:!ℕ,const qc:𝔹){
+	q:=H(0:𝔹);
+	t:=dup(q);
+	if c%2==0 {
+		repeat 2 { if qc { return q; } }
+	}
+	return q;
+}
+def main(){
+	qc:=H(0:𝔹);
+	r:=(f(0,qc),f(1,qc));
+	return (qc,r);
+}
