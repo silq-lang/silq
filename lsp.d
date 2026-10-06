@@ -26,10 +26,12 @@ import std.json, std.conv, std.string, std.array, std.algorithm;
 import std.stdio: stdin, stdout;
 import core.stdc.stdio: _IONBF;
 import ast.error, ast.lexer, ast.expression, ast.scope_, ast.modules;
+import ast.type: clearTypeCaches;
+import ast.semantic_: resetFreshNameCount;
 import astopt;
 import util.path: dirName;
 import std.path: isAbsolute;
-import std.uri: decodeComponent, encodeComponent, URIException;
+import std.uri: decodeComponent;
 
 // A diagnostic from one type-check. Positions are kept as byte offsets into the
 // owning Source: they are exact, and unlike silq's display-width columns they
@@ -78,16 +80,54 @@ private final class ServerErrorHandler: ErrorHandler {
 
 private __gshared ServerErrorHandler handler;
 
-// Import resolution names a file relative to the working directory when it is
-// found there (getActualPath), and a relative name cannot become a file: URI.
-// Resolve it now, during the check, while the working directory is the one it
-// was found against. A name that is not a file (untitled:, .prelude) is kept.
+// Every file has one name, and every comparison uses it: a document the client
+// opened, an import the check read, and a diagnostic's file must agree on the
+// spelling or "is this file open?" gets the wrong answer.
+//
+// A document's name comes from its URI (uriToName). A name from import
+// resolution is relative to the working directory when the file was found
+// there (getActualPath), so it is joined with the directory of the check in
+// progress *as the client spells it*: getcwd would report the same directory
+// with symlinks resolved, a name the client never uses. Nothing here asks the
+// disk, because a file can be open in the editor and missing on disk.
+//
+// A document's own name is kept as it is (untitled:Untitled-1 is not a path),
+// and so are the built-in scopes, named like `.prelude`.
+private string checkDir; // the directory of the check in progress, or null
+
+// A directory that is guaranteed to contain nothing, created on first use and
+// removed when the server exits (runLanguageServer).
+private string emptyDir;
+
+private string emptyDirectory() {
+	import std.file: tempDir, mkdirRecurse;
+	import std.path: buildPath;
+	import std.process: thisProcessID;
+	if(!emptyDir.length) {
+		auto d = buildPath(tempDir, "silq-lsp-empty-" ~ to!string(thisProcessID));
+		mkdirRecurse(d);
+		emptyDir = d;
+	}
+	return emptyDir;
+}
+
 private string absoluteFile(string name) {
-	import std.file: exists;
-	import std.path: absolutePath;
-	if(isAbsolute(name)) return name;
-	try { if(exists(name)) return absolutePath(name); } catch(Exception) {}
-	return name;
+	import std.path: absolutePath, buildNormalizedPath;
+	if(name in uriForName) return name;
+	if(isAbsolute(name)) return canonicalPath(buildNormalizedPath(name));
+	if(name.startsWith(".") && !name.canFind('/') && !name.canFind('\\')) return name;
+	return canonicalPath(checkDir.length ? buildNormalizedPath(checkDir, name) : absolutePath(name));
+}
+
+// One spelling per path on Windows, where the client writes c:/x and the file
+// system C:\x. Elsewhere a path is already canonical.
+version(Windows) private enum windowsPaths = true; else private enum windowsPaths = false;
+
+private string canonicalPath(string p, bool windows = windowsPaths) {
+	if(!windows) return p;
+	auto q = p.replace("\\", "/");
+	if(q.length >= 2 && q[1] == ':') q = q[0 .. 1].toLower() ~ q[1 .. $];
+	return q;
 }
 
 // The URI each checked document arrived as, keyed by the Source name derived
@@ -137,6 +177,13 @@ private struct PositionMap {
 		while(i < text.length && (text[i] & 0xC0) == 0x80) i++;
 		return cast(int)i;
 	}
+
+	// The start of the character just before `byteOffset`.
+	int prevCharBoundary(int byteOffset) const {
+		size_t i = byteOffset <= 0 ? 0 : cast(size_t)byteOffset - 1;
+		while(i > 0 && (text[i] & 0xC0) == 0x80) i--;
+		return cast(int)i;
+	}
 }
 
 // LSP severities: 1 Error, 2 Warning, 3 Information, 4 Hint.
@@ -152,53 +199,45 @@ private int lspSeverity(ErrorType ty) {
 // never invert, and never emit a zero-width range, because an editor draws
 // nothing useful for one.
 //
-// Both halves are guards, not workarounds for something silq is known to do:
-// LocationInfo sets endByte = startByte + rep.length (ast/lexer.d), so the end
-// can never precede the start and equals it only for a zero-length slice -
-// which report() above already turns into an unlocated diagnostic. The `-1` end
-// column is a separate artifact of `displayWidth(...) - 1` on an empty prefix,
-// and has no byte-space equivalent.
+// Clamp first, then widen. The end-of-file token sits in the NUL padding past
+// the text (ast/lexer.d), so "expected ';'" on an unfinished last line arrives
+// with both ends beyond the text and clamps to one point. With nothing left to
+// widen into there, the range falls back onto the last visible character. Only
+// a document with no visible character at all still gets a zero-width range.
 private JSONValue toLspRange(const ref PositionMap map, int startByte, int endByte) {
-	if(endByte <= startByte) endByte = map.nextCharBoundary(startByte);
-	return JSONValue(["start": map.at(startByte), "end": map.at(endByte)]);
+	int len = cast(int)map.text.length;
+	int clamp(int b) { return b < 0 ? 0 : b > len ? len : b; }
+	int s = clamp(startByte), e = clamp(endByte);
+	if(e <= s) {
+		e = map.nextCharBoundary(s);
+		if(e > len) {
+			e = s = len;
+			for(int i = len; i > 0;) {
+				auto p = map.prevCharBoundary(i);
+				auto c = map.text[p];
+				if(c != ' ' && c != '\t' && c != '\r' && c != '\n') { s = p; e = i; break; }
+				i = p;
+			}
+		}
+	}
+	return JSONValue(["start": map.at(s), "end": map.at(e)]);
 }
 
 // ---------------------------------------------------------------- checking
 
 // Type-check one in-memory buffer, returning the diagnostics it produced.
 //
-// Anything thrown by the front end is contained here: silq is assert-heavy and
-// neither build script disables asserts, so a half-typed expression that trips
-// an assertion would otherwise unwind out of the message loop and take the
-// whole editor session with it. Recovering from a Throwable is a compromise -
-// the alternative is losing every open document over one transient keystroke.
+// Anything thrown is contained here, the front end's assertions included: silq
+// is assert-heavy and neither build script disables asserts, so a half-typed
+// expression that trips one would otherwise unwind out of the message loop and
+// take the whole editor session with it. Recovering from a Throwable is a
+// compromise - the alternative is losing every open document over one transient
+// keystroke. Everything a check does is inside, not only the type checking:
+// loading the prelude and moving between directories can fail too.
 private Diag[] checkDocument(string name, string text) {
 	handler.diags = null;
-	// Imported modules are cached for the life of the process, which suits a
-	// one-shot compile. Here it would mean every check sees an imported file as
-	// it was first read, so a saved change to it, broken or not, never shows.
-	clearModuleCache();
-	// Imports resolve against the working directory first (getActualPath), and
-	// an editor starts the server in the workspace root. Searching the
-	// document's directory after that is not enough: a same-named file in the
-	// root would win. Check from the document's directory instead, which is
-	// exactly what F5 does (the runner spawns silq there). A non-file
-	// document's dirName is "." and is left alone.
-	import std.file: getcwd, chdir;
-	import std.exception: collectException;
-	auto dir = dirName(name);
-	auto savedCwd = getcwd();
-	scope(exit) collectException(chdir(savedCwd));
-	if(dir.length && isAbsolute(dir)) collectException(chdir(dir));
-
-	auto src = new Source(name, text ~ "\0\0\0\0"); // four NUL bytes required
-	// The Source registry is a global array with a linear-scan lookup, so an
-	// undisposed Source per keystroke both leaks and slows every later lookup.
-	scope(exit) src.dispose();
 	try {
-		Expression[] exprs;
-		TopScope sc;
-		importModule(src, handler, exprs, sc, Location.init);
+		runCheck(name, text);
 	} catch(Throwable e) {
 		// Keep what was already collected: the errors found before the failure
 		// are real and located, and dropping them for one synthetic message
@@ -206,6 +245,58 @@ private Diag[] checkDocument(string name, string text) {
 		return handler.diags ~ Diag(ErrorType.error, "internal error while checking this file: " ~ e.msg, false);
 	}
 	return handler.diags;
+}
+
+private void runCheck(string name, string text) {
+	// Imported modules are cached for the life of the process, which suits a
+	// one-shot compile. Here it would mean every check sees an imported file as
+	// it was first read, so a saved change to it, broken or not, never shows.
+	clearModuleCache();
+	// The type constructors' caches likewise outlive a check, and every check
+	// adds to them (a 𝔹^n for each new n), keeping each check's syntax tree
+	// alive: memory grows with every keystroke until the server is restarted.
+	clearTypeCaches();
+	// The prelude and operator scopes are rebuilt too, and the counter that
+	// names temporaries starts again from zero, so each check is a fresh
+	// compile in everything but the process: its diagnostics, temporaries'
+	// names included, are the ones F5 would give. (A fresh compile parses the
+	// file, then loads the prelude, then analyses the file, all drawing names
+	// from that one counter, so no kept prelude could be numbered around.)
+	clearBuiltinScopes();
+	resetFreshNameCount(0);
+	// Imports resolve against the working directory first (getActualPath), and
+	// an editor starts the server in the workspace root. Searching the
+	// document's directory after that is not enough: a same-named file in the
+	// root would win. Check from the document's directory instead, which is
+	// exactly what F5 does (the runner spawns silq there). A non-file
+	// document's dirName is "." and is left alone. Saving the directory to
+	// return to is best-effort: it may have been deleted since the server
+	// started, and that must not stop documents elsewhere being checked.
+	import std.file: getcwd, chdir;
+	import std.exception: collectException;
+	auto dir = dirName(name);
+	string savedCwd;
+	collectException(savedCwd = getcwd());
+	scope(exit) if(savedCwd.length) collectException(chdir(savedCwd));
+	scope(exit) checkDir = null;
+	if(dir.length && isAbsolute(dir)) {
+		// Names stay right even if the directory is gone (deleted or renamed
+		// while its files are open): they come from checkDir, not the disk.
+		checkDir = dir;
+		// But imports would then resolve against wherever the server happens
+		// to be, and a same-named file there would be read in place of the
+		// missing one. Check from an empty directory instead, so that only an
+		// open buffer can stand in for a file that is no longer on disk.
+		if(collectException(chdir(dir)) !is null) collectException(chdir(emptyDirectory()));
+	}
+
+	auto src = new Source(name, text ~ "\0\0\0\0"); // four NUL bytes required
+	// The Source registry is a global array with a linear-scan lookup, so an
+	// undisposed Source per keystroke both leaks and slows every later lookup.
+	scope(exit) src.dispose();
+	Expression[] exprs;
+	TopScope sc;
+	importModule(src, handler, exprs, sc, Location.init);
 }
 
 // ---------------------------------------------------------------- transport
@@ -245,28 +336,41 @@ private enum Read { message, eof, skip }
 // Read one Content-Length framed message. A malformed frame is skipped rather
 // than treated as end-of-input: dropping the connection over one bad header
 // would end the editor session.
+//
+// A header block with a missing or unparseable length leaves the size of its
+// body unknown. Skipping that frame means scanning ahead for the next
+// "Content-Length:", wherever on a line it starts: a body ends without a
+// newline, so the next frame's first header shares a line with it.
 private Read readMessage(out string result) {
+	enum contentLength = "content-length:";
 	size_t length = 0;
-	bool haveLength = false;
+	bool haveLength = false, resync = false;
 	for(;;) {
 		auto line = stdin.readln();
 		if(line.length == 0) return Read.eof;
 		auto header = line.strip();
-		if(header.length == 0) break; // blank line ends the headers
-		enum contentLength = "content-length:";
+		if(resync) {
+			// The last one: the skipped body may itself contain the text.
+			auto i = header.lastIndexOf(contentLength, CaseSensitive.no);
+			if(i < 0) continue;
+			header = header[i .. $];
+			resync = false;
+		}
+		if(header.length == 0) {
+			if(haveLength) break; // blank line ends the headers
+			resync = true;
+			continue;
+		}
 		if(header.toLower().startsWith(contentLength)) {
 			try {
 				length = header[contentLength.length .. $].strip().to!size_t;
 				haveLength = true;
 			} catch(Exception) {
-				return Read.skip; // unparseable length; resynchronise on the next header block
+				haveLength = false;
+				resync = true;
 			}
 		}
 	}
-	// A header block with no length cannot be resynchronised: the body has no
-	// terminator, so anything we read next is guesswork. Stop instead of
-	// silently misreading every later message as headers.
-	if(!haveLength) return Read.eof;
 	if(length == 0) return Read.skip;
 	// Trust nothing about the size: an absurd but parseable length would abort
 	// the process with OutOfMemoryError, which no catch here can contain.
@@ -293,40 +397,82 @@ private Read readMessage(out string result) {
 	return Read.message;
 }
 
+// Whether another message is already waiting, so work can be put off until the
+// client pauses. stdin is unbuffered, so nothing can sit read but unseen in a
+// stdio buffer while poll reports the pipe empty. Elsewhere the answer is no,
+// which means checking at once, as without this.
+private bool inputPending() {
+	version(Emscripten) return false;
+	else version(Posix) {
+		import core.sys.posix.poll: poll, pollfd, POLLIN;
+		import core.sys.posix.sys.stat: fstat, stat_t, S_IFMT, S_IFREG;
+		import core.stdc.stdio: fileno;
+		auto fd = fileno(stdin.getFP());
+		// A regular file always polls readable, so input redirected from one
+		// (a recorded session) would put every check off until the end.
+		stat_t st;
+		if(fstat(fd, &st) == 0 && (st.st_mode & S_IFMT) == S_IFREG) return false;
+		auto p = pollfd(fd, POLLIN, 0);
+		return poll(&p, 1, 0) > 0 && (p.revents & POLLIN) != 0;
+	}
+	else return false;
+}
+
 // ---------------------------------------------------------------- server
 
 // A file:// URI carries percent escapes, and on Windows an extra leading slash
 // before the drive letter. Both must go, or the name never matches a real path
 // (which import resolution and the diagnostic source name both depend on).
-private string uriToName(string uri) {
+private string uriToName(string uri, bool windows = windowsPaths) {
 	enum scheme = "file://";
 	if(!uri.startsWith(scheme)) return uri; // untitled:, vscode-vfs:, ... - keep verbatim
 	auto p = uri[scheme.length .. $];
+	// What precedes the path is a host. Empty or localhost means this machine;
+	// any other is a network share, file://server/share/x for //server/share/x,
+	// and dropping it would leave a relative name.
+	auto slash = p.indexOf('/');
+	auto host = slash < 0 ? p : p[0 .. slash];
+	p = slash < 0 ? "" : p[slash .. $];
+	if(host.length && host != "localhost") p = "//" ~ host ~ p;
 	// Decode per segment: a literal %2F is part of a name, not a separator.
 	try {
 		string[] segs;
 		foreach(seg; p.split("/")) segs ~= decodeComponent(seg);
 		p = segs.join("/");
-	} catch(URIException) { /* malformed escape: use it as-is */ }
-	// `file:///C:/x` decodes to `/C:/x`; the drive letter must lead.
-	if(p.length >= 3 && p[0] == '/' && p[2] == ':') p = p[1 .. $];
-	return p;
+	} catch(Exception) {
+		// A malformed escape (URIException), or one that decodes to invalid
+		// UTF-8 such as a lone surrogate (UTFException): use it as-is.
+	}
+	// `file:///C:/x` decodes to `/C:/x`; on Windows the drive letter must lead.
+	// Elsewhere /a:b is an ordinary path.
+	if(windows && p.length >= 3 && p[0] == '/' && p[2] == ':') p = p[1 .. $];
+	return canonicalPath(p, windows);
 }
 
 private string nameToUri(string name) {
 	// A document we were given: answer with exactly what the client sent.
 	if(auto known = name in uriForName) return *known;
-	// Otherwise this is a file we reached ourselves (an import, or the
-	// prelude), so build a file: URI and escape each segment.
-	string encodePath(string p) {
-		string[] segs;
-		foreach(seg; p.split("/")) segs ~= encodeComponent(seg);
-		return segs.join("/");
+	// Otherwise this is a file we reached ourselves, an import that is not
+	// open. Escape it the way VS Code does, so the same file does not get a
+	// second spelling: every byte but A-Z a-z 0-9 - . _ ~ and the separator,
+	// including the drive letter's colon. (std.uri.encodeComponent leaves
+	// !*'() alone.)
+	auto app = appender!string;
+	// A drive (c:/x) needs the slash an absolute path has; a network share
+	// (//server/share/x) already carries the host's two.
+	app.put(name.length >= 2 && name[1] == ':' ? "file:///" : name.startsWith("//") ? "file:" : "file://");
+	foreach(char c; name) {
+		if((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')
+		   || c == '-' || c == '.' || c == '_' || c == '~' || c == '/') app.put(c);
+		else app.put(format("%%%02X", cast(ubyte)c));
 	}
-	if(name.startsWith("/")) return "file://" ~ encodePath(name);
-	if(name.length >= 2 && name[1] == ':') return "file:///" ~ encodePath(name); // Windows drive
-	return "file://" ~ encodePath(name);
+	return app.data;
 }
+
+// The C runtime's _setmode, used by runLanguageServer. It has to be declared at
+// module scope: inside a function, extern(C) still gets a nested D mangling
+// (_D3lsp17runLanguageServerFZ8_setmodeUiiZi), and the Windows build fails to link.
+version(Windows) private extern(C) int _setmode(int, int);
 
 int runLanguageServer() {
 	// Unbuffered stdin is required, not an optimisation. A buffered read tries
@@ -340,27 +486,53 @@ int runLanguageServer() {
 		// terminator goes out as "\r\r\n\r\r\n" and no client can find it -
 		// the server just looks hung. The framing is bytes; say so.
 		import core.stdc.stdio: _fileno = fileno;
-		extern(C) int _setmode(int, int);
 		enum _O_BINARY = 0x8000;
 		_setmode(_fileno(stdout.getFP()), _O_BINARY);
 		_setmode(_fileno(stdin.getFP()), _O_BINARY);
 	}
 	handler = new ServerErrorHandler();
+	scope(exit) if(emptyDir.length) {
+		import std.file: rmdir;
+		import std.exception: collectException;
+		collectException(rmdir(emptyDir));
+	}
 
 	string[string] documents;          // uri -> text
 	bool[string][string] publishedFor; // document uri -> uris it last published to
+	bool[string][string] importsOf;    // document uri -> files its last check loaded
+	bool[string] stale;                // documents waiting to be re-checked
+	bool[string] loaded;               // files the check in progress has loaded
 	bool shuttingDown = false;
 
 	// Once a document is open its content belongs to the client, and the server
 	// must not read it from disk (LSP spec, didOpen). That holds when another
 	// document imports it too: the importer sees the unsaved buffer.
+	//
+	// Every import a check reads comes through here, open or not, which is also
+	// how the server learns what each document depends on.
 	moduleSourceOverride = delegate bool(string path, out string code) {
-		if(auto text = nameToUri(absoluteFile(path)) in documents) {
+		auto file = absoluteFile(path);
+		loaded[file] = true;
+		if(auto uri = file in uriForName) if(auto text = *uri in documents) {
 			code = *text;
 			return true;
 		}
 		return false;
 	};
+
+	// A file that is not open can get its diagnostics from several documents
+	// that import it, and each publish replaces the last. When one of them stops
+	// reporting there (it closed, or no longer imports the file), clearing the
+	// file would wipe what the others still report. Re-check the others instead:
+	// each either reports the file's errors again or, if there are none now,
+	// clears them itself.
+	void clearUnlessShared(string file, string except) {
+		bool shared_ = false;
+		foreach(doc, files; publishedFor)
+			if(doc != except && file in files && doc in documents) { stale[doc] = true; shared_ = true; }
+		if(!shared_) sendNotification("textDocument/publishDiagnostics",
+			JSONValue(["uri": JSONValue(file), "diagnostics": JSONValue(cast(JSONValue[])[])]));
+	}
 
 	// Errors can come from files other than the one being edited (imports, and
 	// the prelude). Attributing those to the current document would point at a
@@ -370,7 +542,9 @@ int runLanguageServer() {
 	void publishDiagnostics(string uri) {
 		auto name = uriToName(uri);
 		uriForName[name] = uri;
+		loaded = null;
 		auto diags = checkDocument(name, documents.get(uri, ""));
+		importsOf[uri] = loaded;
 
 		JSONValue[][string] byUri;
 		byUri[uri] = [];               // always publish, to clear stale squiggles
@@ -380,15 +554,25 @@ int runLanguageServer() {
 			if(key !in maps) maps[key] = PositionMap(s is null ? "" : s.code);
 			return maps[key];
 		}
+		// A location is only worth a link if it is a real file or a document the
+		// client gave us. The prelude and operator scopes are built in, and
+		// `.prelude` would become the URI file://.prelude, which opens nothing.
+		bool linkable(const ref Diag x) {
+			return x.located && (isAbsolute(x.file) || x.file in uriForName);
+		}
 		foreach(d; diags) {
 			// Unlocated errors have nowhere better to go than the top of the
-			// document being edited, flagged the way the CLI flags them.
-			auto targetUri = d.located ? nameToUri(d.file) : uri;
+			// document being edited, flagged the way the CLI flags them. So do
+			// errors inside a built-in scope, flagged with where they were.
+			auto targetName = linkable(d) ? d.file : name;
 			// An import that is open in the editor is checked on its own too,
 			// and that check owns its squiggles. Publishing them from here as
 			// well would have two checks overwriting each other's results.
-			if(targetUri != uri && targetUri in documents) continue;
-			auto range = d.located
+			// Compared by name: VS Code and nameToUri may escape one path
+			// differently, and VS Code treats both URIs as the same file.
+			if(targetName != name && targetName in uriForName) continue;
+			auto targetUri = nameToUri(targetName);
+			auto range = linkable(d)
 				? toLspRange(mapFor(d.src), d.startByte, d.endByte)
 				: JSONValue(["start": JSONValue(["line": JSONValue(0), "character": JSONValue(0)]),
 				             "end": JSONValue(["line": JSONValue(0), "character": JSONValue(0)])]);
@@ -396,12 +580,14 @@ int runLanguageServer() {
 				"range": range,
 				"severity": JSONValue(lspSeverity(d.severity)),
 				"source": JSONValue("silq"),
-				"message": JSONValue(d.located ? d.message : "(location missing): " ~ d.message),
+				"message": JSONValue(linkable(d) ? d.message
+					: d.located ? "(in " ~ d.file ~ "): " ~ d.message
+					: "(location missing): " ~ d.message),
 			]);
 			if(d.related.length) {
 				JSONValue[] rel;
 				foreach(r; d.related) {
-					if(!r.located) continue;
+					if(!linkable(r)) continue;
 					rel ~= JSONValue([
 						"location": JSONValue([
 							"uri": JSONValue(nameToUri(r.file)),
@@ -419,9 +605,9 @@ int runLanguageServer() {
 		// Tracked per document: a global set would make checking one file clear
 		// the diagnostics of every other open file.
 		// An open document is skipped for the same reason as above: clearing it
-		// would wipe the squiggles its own check put there.
-		foreach(old, _; publishedFor.get(uri, null))
-			if(old !in byUri && old !in documents) byUri[old] = [];
+		// would wipe the squiggles its own check put there. So is a file other
+		// open documents still report into (clearUnlessShared).
+		auto previously = publishedFor.get(uri, null);
 		bool[string] nowPublished;
 		foreach(u, ds; byUri) {
 			if(ds.length) nowPublished[u] = true;
@@ -429,15 +615,53 @@ int runLanguageServer() {
 				JSONValue(["uri": JSONValue(u), "diagnostics": JSONValue(ds)]));
 		}
 		publishedFor[uri] = nowPublished;
+		foreach(old, _; previously)
+			if(old !in byUri && uriToName(old) !in uriForName) clearUnlessShared(old, uri);
 	}
 
-	// Another document may import the one that just changed or closed, and
-	// nothing else would re-check it until it is edited itself.
-	void recheckOthers(string uri) {
-		foreach(other; documents.keys) if(other != uri) publishDiagnostics(other);
+	// Documents waiting to be re-checked. A change marks the document and every
+	// open document whose last check loaded it, directly or through another
+	// import. Nothing else would re-check an importer until it was edited itself.
+	void markStale(string uri) {
+		if(uri in documents) stale[uri] = true;
+		auto name = uriToName(uri);
+		foreach(other, files; importsOf) if(other != uri && name in files) stale[other] = true;
+	}
+	// The checks run once the client pauses: typing sends a change per keystroke,
+	// and checking each one would answer them all, late, one at a time. A client
+	// that never pauses still gets them every `maxDeferred` messages.
+	enum maxDeferred = 50;
+	int deferred = 0;
+	void flushStale() {
+		auto uris = stale.keys;
+		stale = null;
+		deferred = 0;
+		foreach(u; uris) if(u in documents) {
+			// Each document on its own: this runs outside any one message's
+			// handling, so an exception here would otherwise end the server,
+			// and one document that cannot be published must not keep the
+			// others from being checked.
+			try publishDiagnostics(u);
+			catch(Exception e) {
+				try sendNotification("textDocument/publishDiagnostics", JSONValue([
+					"uri": JSONValue(u),
+					"diagnostics": JSONValue([JSONValue([
+						"range": JSONValue(["start": JSONValue(["line": JSONValue(0), "character": JSONValue(0)]),
+						                    "end": JSONValue(["line": JSONValue(0), "character": JSONValue(0)])]),
+						"severity": JSONValue(1),
+						"source": JSONValue("silq"),
+						"message": JSONValue("internal error while publishing diagnostics: " ~ e.msg),
+					])]),
+				]));
+				catch(Exception) {}
+			}
+		}
 	}
 
 	for(;;) {
+		// Nothing is checked once the client has asked for shutdown: it is about
+		// to send `exit`, and nobody would see the result.
+		if(stale.length && !shuttingDown && (!inputPending() || ++deferred >= maxDeferred)) flushStale();
 		string raw;
 		final switch(readMessage(raw)) {
 			case Read.eof: return shuttingDown ? 0 : 1; // EOF without shutdown is an error per spec
@@ -484,10 +708,13 @@ int runLanguageServer() {
 						auto text = strField(*td, "text");
 						if(uri !is null) {
 							documents[uri] = text is null ? "" : text;
-							publishDiagnostics(uri);
+							// Open from now on, for every check: one that runs before this
+							// document's own must already read its buffer and leave its
+							// squiggles alone.
+							uriForName[uriToName(uri)] = uri;
 							// Importers now read this buffer rather than the file,
 							// and it may differ from what they last saw on disk.
-							recheckOthers(uri);
+							markStale(uri);
 						}
 					}
 					break;
@@ -505,8 +732,7 @@ int runLanguageServer() {
 									}
 								}
 							}
-							publishDiagnostics(uri);
-							recheckOthers(uri);
+							markStale(uri);
 						}
 					}
 					break;
@@ -515,24 +741,24 @@ int runLanguageServer() {
 						auto uri = strField(*td, "uri");
 						if(uri is null) break;
 						documents.remove(uri);
+						uriForName.remove(uriToName(uri));
 						// Clear everywhere this document put diagnostics, not
 						// just its own file: errors it reported in an imported
 						// file would otherwise stay there for the whole session
 						// with nothing left able to clear them. Open documents
 						// own their squiggles and are left alone.
-						foreach(other, _; publishedFor.get(uri, null))
-							if(other !in documents)
-								sendNotification("textDocument/publishDiagnostics",
-									JSONValue(["uri": JSONValue(other), "diagnostics": JSONValue(cast(JSONValue[])[])]));
+						auto previously = publishedFor.get(uri, null);
 						publishedFor.remove(uri);
-						uriForName.remove(uriToName(uri));
+						foreach(other, _; previously)
+							if(uriToName(other) !in uriForName) clearUnlessShared(other, uri);
 						sendNotification("textDocument/publishDiagnostics",
 							JSONValue(["uri": JSONValue(uri), "diagnostics": JSONValue(cast(JSONValue[])[])]));
 						// An importer saw this document's buffer while it was
 						// open, and now sees the file on disk again, which an
 						// unsaved close can leave different. It also reports
 						// errors in it again, which it was kept from while open.
-						recheckOthers(uri);
+						markStale(uri);
+						importsOf.remove(uri);
 					}
 					break;
 				default:
