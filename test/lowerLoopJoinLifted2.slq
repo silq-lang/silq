@@ -1,4 +1,4 @@
-// args: --run
+// args: --remove-loops --run
 
 def f(c0:!ℕ,c1:!ℕ){
 	q0:=H(0:𝔹);

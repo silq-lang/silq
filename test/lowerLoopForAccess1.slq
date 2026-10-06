@@ -1,4 +1,4 @@
-// args: --run
+// args: --remove-loops --run
 
 def f(c:!ℕ){
 	q:=0:𝔹;
