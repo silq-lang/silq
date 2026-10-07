@@ -1,0 +1,7 @@
+
+def main(){
+	x:=1;
+	typeof(x); /// error
+	y:=2;
+	return y+x;
+}
