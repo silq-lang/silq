@@ -1,0 +1,5 @@
+
+def foo(x:𝔹,z:!𝔹){ /// error
+	if x{ return; }
+	(z); /// error
+}
