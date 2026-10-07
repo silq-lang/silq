@@ -1,0 +1,5 @@
+
+def f(){
+	print→dump; /// error
+}
+def main(){ return 0; }
