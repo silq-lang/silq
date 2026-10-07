@@ -1,0 +1,7 @@
+// Defining a component of an undefined variable two indices deep crashed the
+// compiler with a stack overflow: the inner index returned the outer one, which
+// became its own operand, and walking that cycle never ended. (Found by fuzzing.)
+def main(){
+	y[0][1]:=1; /// error
+	z[0][1][2]:=1; /// error
+}
