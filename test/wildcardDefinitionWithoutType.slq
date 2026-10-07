@@ -1,0 +1,10 @@
+// A wildcard in a tuple definition whose right-hand side has the wrong shape
+// crashed the compiler: it was completed without a type. (Found by fuzzing.)
+// Marking it erroneous instead lost the error inside a function whose return
+// type is inferred: the definition was skipped when the error was reported.
+(ℕ,_):=(); /// error
+def f(){
+	(a,_):=(); /// error
+	return a;
+}
+def main(){ return 0; }
