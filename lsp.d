@@ -4,8 +4,9 @@
 // Language Server Protocol front-end for silq (`silq --lsp`).
 //
 // One server, two clients: it speaks JSON-RPC over stdin/stdout, so the VSCode
-// extension can spawn it directly, and the WASM IDE can drive the same build
-// through a stream shim in a worker.
+// extension can spawn it directly, and the browser build exports it one
+// message per call (silq_lsp_message, silq_lsp_idle; see the end of this
+// file), which the WASM IDE's worker drives.
 //
 // Scope for now: document synchronisation and diagnostics. Diagnostics reuse
 // the type checker directly (`importModule`) rather than shelling out, so a
@@ -96,7 +97,8 @@ private __gshared ServerErrorHandler handler;
 private string checkDir; // the directory of the check in progress, or null
 
 // A directory that is guaranteed to contain nothing, created on first use and
-// removed when the server exits (runLanguageServer).
+// removed when the native server exits (runLanguageServer). The browser build's
+// instances are thrown away whole, file system included.
 private string emptyDir;
 
 private string emptyDirectory() {
@@ -863,7 +865,13 @@ version(Emscripten) {
 		// Nothing has run main, which is what normally starts the D runtime
 		// (and with it the module constructors that set the library path).
 		import core.runtime: Runtime;
-		Runtime.initialize();
+		import core.memory: GC;
+		if(!Runtime.initialize()) throw new Error("the D runtime did not start");
+		// The IDE runs one check per instance and then drops it, memory and
+		// all. A collection could only run after the call returns (the
+		// runtime cannot see the wasm stack, so it queues one), on an instance
+		// about to be discarded: measured at about 2.5 ms of a 16 ms check.
+		GC.disable();
 		emit = (string body_) { outbox ~= body_; };
 		embedded = new Server();
 	}
@@ -874,19 +882,28 @@ version(Emscripten) {
 		return embeddedReply.ptr;
 	}
 
-	extern(C) const(char)* silq_lsp_message(const(char)* json) {
+	// Nothing may escape into JavaScript, building the reply included. A
+	// failure answers with an empty list; the IDE treats a check that
+	// publishes nothing for its document as failed, not as clean.
+	private const(char)* answer(scope void delegate() work) {
+		static immutable empty = "[]\0";
 		try {
 			startEmbedded();
-			embedded.handle(fromStringz(json).idup);
-		} catch(Throwable) {}
-		return takeReply();
+			work();
+			return takeReply();
+		} catch(Throwable) {
+			outbox = null;
+			return empty.ptr;
+		}
+	}
+
+	extern(C) const(char)* silq_lsp_message(const(char)* json) {
+		return answer(() { embedded.handle(fromStringz(json).idup); });
 	}
 
 	extern(C) const(char)* silq_lsp_idle() {
-		try {
-			startEmbedded();
+		return answer(() {
 			if(embedded.stale.length && !embedded.shuttingDown) embedded.flushStale();
-		} catch(Throwable) {}
-		return takeReply();
+		});
 	}
 }
