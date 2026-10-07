@@ -1,0 +1,9 @@
+// Consuming a variable inside a function type, as in measure(x)→𝔹, crashed the
+// compiler: the type scope does not track the variable, and recording the
+// consumption asserted. A type is never run, so it is now an error.
+// (Found by fuzzing.)
+def main(){
+	x:=H(0);
+	t:=measure(x)→𝔹; /// error
+	return measure(x);
+}
