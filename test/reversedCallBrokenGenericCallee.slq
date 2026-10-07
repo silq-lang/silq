@@ -1,0 +1,5 @@
+
+def f[n:!ℕ](x:y):𝟙; /// error
+def main(){
+	f(x,)=(); /// error
+}
