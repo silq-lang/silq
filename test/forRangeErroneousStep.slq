@@ -1,0 +1,5 @@
+
+def main(){
+	for i in 10..undefinedStep..0{} /// error
+	return 0;
+}
