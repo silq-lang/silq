@@ -1,0 +1,10 @@
+// typeof used as a statement crashed the compiler on the next use of the
+// variable: rejecting the statement marked what it evaluated to as an error,
+// and that was the variable's type itself, shared by every use of it.
+// (Found by fuzzing.)
+def main(){
+	x:=1;
+	typeof(x); /// error
+	y:=2;
+	return y+x;
+}
