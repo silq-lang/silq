@@ -1,0 +1,8 @@
+// A failed compound assignment to a call over a component replacement crashed
+// the compiler: its error path left the replacement pending, and merging the
+// enclosing scope asserted. (Found by fuzzing.)
+def main(){
+	xs:=vector(2,0:𝔹);
+	if true{ H(xs[])⊕=1; } /// error
+	return measure(xs);
+}
