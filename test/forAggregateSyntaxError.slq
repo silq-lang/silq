@@ -1,0 +1,9 @@
+
+def main(){
+	for i in .{} /// error
+}
+def g(const f:𝟙→!ℕ[])⇒f(());
+def nested(){
+	for i in g(λ(_:𝟙){ for j in [0..2] { } /// warning
+		return [1,2]:!ℕ[]; }) { }
+}
