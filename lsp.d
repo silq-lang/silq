@@ -313,10 +313,13 @@ private void runCheck(string name, string text) {
 
 // ---------------------------------------------------------------- transport
 
+// Where outgoing messages go. Natively they are framed onto stdout
+// (runLanguageServer); the browser build collects them for its caller instead
+// (the exports at the end of this file).
+private void delegate(string) emit;
+
 private void sendMessage(JSONValue msg) {
-	auto body_ = msg.toString();
-	stdout.write("Content-Length: ", body_.length, "\r\n\r\n", body_);
-	stdout.flush();
+	emit(msg.toString());
 }
 
 private void sendNotification(string method, JSONValue params) {
@@ -486,29 +489,10 @@ private string nameToUri(string name) {
 // (_D3lsp17runLanguageServerFZ8_setmodeUiiZi), and the Windows build fails to link.
 version(Windows) private extern(C) int _setmode(int, int);
 
-int runLanguageServer() {
-	// Unbuffered stdin is required, not an optimisation. A buffered read tries
-	// to fill BUFSIZ before returning, but an LSP client keeps the pipe open
-	// and sends one message at a time, so the fill blocks forever and a
-	// complete request sits unread - the server looks hung. (It appears to work
-	// when stdin is a file, because EOF ends the fill.)
-	stdin.setvbuf(0, _IONBF);
-	version(Windows) {
-		// Text mode rewrites every \n as \r\n, so the "\r\n\r\n" header
-		// terminator goes out as "\r\r\n\r\r\n" and no client can find it -
-		// the server just looks hung. The framing is bytes; say so.
-		import core.stdc.stdio: _fileno = fileno;
-		enum _O_BINARY = 0x8000;
-		_setmode(_fileno(stdout.getFP()), _O_BINARY);
-		_setmode(_fileno(stdin.getFP()), _O_BINARY);
-	}
-	handler = new ServerErrorHandler();
-	scope(exit) if(emptyDir.length) {
-		import std.file: rmdir;
-		import std.exception: collectException;
-		collectException(rmdir(emptyDir));
-	}
-
+// The server: its state, and what it does with one message, apart from how
+// messages arrive. Natively they come framed on stdin (runLanguageServer); in
+// the browser, one call per message (the exports at the end of this file).
+private final class Server {
 	string[string] documents;          // uri -> text
 	bool[string][string] publishedFor; // document uri -> uris it last published to
 	bool[string][string] importsOf;    // document uri -> files its last check loaded
@@ -516,21 +500,11 @@ int runLanguageServer() {
 	bool[string] loaded;               // files the check in progress has loaded
 	bool shuttingDown = false;
 
-	// Once a document is open its content belongs to the client, and the server
-	// must not read it from disk (LSP spec, didOpen). That holds when another
-	// document imports it too: the importer sees the unsaved buffer.
-	//
-	// Every import a check reads comes through here, open or not, which is also
-	// how the server learns what each document depends on.
-	moduleSourceOverride = delegate bool(string path, out string code) {
-		auto file = absoluteFile(path);
-		loaded[file] = true;
-		if(auto uri = file in uriForName) if(auto text = *uri in documents) {
-			code = *text;
-			return true;
-		}
-		return false;
-	};
+	this() {
+		handler = new ServerErrorHandler();
+		moduleSourceOverride = &readOpenBuffer;
+	}
+
 
 	// A file that is not open can get its diagnostics from several documents
 	// that import it, and each publish replaces the last. When one of them stops
@@ -670,29 +644,38 @@ int runLanguageServer() {
 		}
 	}
 
-	for(;;) {
-		// Nothing is checked once the client has asked for shutdown: it is about
-		// to send `exit`, and nobody would see the result.
-		if(stale.length && !shuttingDown && (!inputPending() || ++deferred >= maxDeferred)) flushStale();
-		string raw;
-		final switch(readMessage(raw)) {
-			case Read.eof: return shuttingDown ? 0 : 1; // EOF without shutdown is an error per spec
-			case Read.skip: continue;
-			case Read.message: break;
+	// Once a document is open its content belongs to the client, and the server
+	// must not read it from disk (LSP spec, didOpen). That holds when another
+	// document imports it too: the importer sees the unsaved buffer.
+	//
+	// Every import a check reads comes through here, open or not, which is also
+	// how the server learns what each document depends on.
+	bool readOpenBuffer(string path, out string code) {
+		auto file = absoluteFile(path);
+		loaded[file] = true;
+		if(auto uri = file in uriForName) if(auto text = *uri in documents) {
+			code = *text;
+			return true;
 		}
+		return false;
+	}
+
+	// Handle one message. Returns the exit code once the client sends `exit`,
+	// -1 otherwise.
+	int handle(string raw) {
 		JSONValue msg;
 		try msg = parseJSON(raw);
-		catch(Exception) continue; // malformed frame: ignore rather than die
+		catch(Exception) return -1; // malformed frame: ignore rather than die
 		// `in` requires an object; a body of [], 5 or null would throw here,
 		// outside the try below, and take the server down.
-		if(msg.type != JSONType.object) continue;
-		if("method" !in msg) continue; // a response to something we sent; nothing to do yet
+		if(msg.type != JSONType.object) return -1;
+		if("method" !in msg) return -1; // a response to something we sent; nothing to do yet
 
 		// Every field access below can throw on a message that does not match
 		// the shape we expect; a bad message must not end the session.
 		try {
 			auto method = strField(msg, "method");
-			if(method is null) continue;
+			if(method is null) return -1;
 			auto idp = "id" in msg;
 			auto params = "params" in msg ? msg["params"] : JSONValue.emptyObject;
 
@@ -782,5 +765,92 @@ int runLanguageServer() {
 		} catch(Exception e) {
 			if(auto idp = "id" in msg) sendError(*idp, -32603, "internal error: " ~ e.msg);
 		}
+		return -1;
+	}
+}
+
+int runLanguageServer() {
+	// Unbuffered stdin is required, not an optimisation. A buffered read tries
+	// to fill BUFSIZ before returning, but an LSP client keeps the pipe open
+	// and sends one message at a time, so the fill blocks forever and a
+	// complete request sits unread - the server looks hung. (It appears to work
+	// when stdin is a file, because EOF ends the fill.)
+	stdin.setvbuf(0, _IONBF);
+	version(Windows) {
+		// Text mode rewrites every \n as \r\n, so the "\r\n\r\n" header
+		// terminator goes out as "\r\r\n\r\r\n" and no client can find it -
+		// the server just looks hung. The framing is bytes; say so.
+		import core.stdc.stdio: _fileno = fileno;
+		enum _O_BINARY = 0x8000;
+		_setmode(_fileno(stdout.getFP()), _O_BINARY);
+		_setmode(_fileno(stdin.getFP()), _O_BINARY);
+	}
+	emit = (string body_) {
+		stdout.write("Content-Length: ", body_.length, "\r\n\r\n", body_);
+		stdout.flush();
+	};
+	auto server = new Server();
+	scope(exit) if(emptyDir.length) {
+		import std.file: rmdir;
+		import std.exception: collectException;
+		collectException(rmdir(emptyDir));
+	}
+
+	for(;;) {
+		// Nothing is checked once the client has asked for shutdown: it is about
+		// to send `exit`, and nobody would see the result.
+		if(server.stale.length && !server.shuttingDown && (!inputPending() || ++server.deferred >= Server.maxDeferred))
+			server.flushStale();
+		string raw;
+		final switch(readMessage(raw)) {
+			case Read.eof: return server.shuttingDown ? 0 : 1; // EOF without shutdown is an error per spec
+			case Read.skip: continue;
+			case Read.message: break;
+		}
+		auto code = server.handle(raw);
+		if(code >= 0) return code;
+	}
+}
+
+// The browser build has no stream to read: the IDE's worker hands over one
+// message per call, and calls silq_lsp_idle once it has nothing queued, which
+// is when deferred checks run (inputPending is always false there). Both
+// return what the server sent in response, as a JSON array. The returned text
+// stays valid until the next call; the caller copies it.
+version(Emscripten) {
+	private __gshared Server embedded;
+	private __gshared string embeddedReply;
+	private __gshared string[] outbox;
+
+	private void startEmbedded() {
+		if(embedded) return;
+		// Nothing has run main, which is what normally starts the D runtime
+		// (and with it the module constructors that set the library path).
+		import core.runtime: Runtime;
+		Runtime.initialize();
+		emit = (string body_) { outbox ~= body_; };
+		embedded = new Server();
+	}
+
+	private const(char)* takeReply() {
+		embeddedReply = "[" ~ outbox.join(",") ~ "]\0";
+		outbox = null;
+		return embeddedReply.ptr;
+	}
+
+	extern(C) const(char)* silq_lsp_message(const(char)* json) {
+		try {
+			startEmbedded();
+			embedded.handle(fromStringz(json).idup);
+		} catch(Throwable) {}
+		return takeReply();
+	}
+
+	extern(C) const(char)* silq_lsp_idle() {
+		try {
+			startEmbedded();
+			if(embedded.stale.length && !embedded.shuttingDown) embedded.flushStale();
+		} catch(Throwable) {}
+		return takeReply();
 	}
 }
