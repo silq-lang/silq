@@ -1,0 +1,8 @@
+// The "replaced component must be consumed" check looked indices up by the
+// wrong position when one replacement had an empty index, and ran past the end.
+// (Found by fuzzing.)
+def main(){
+	x:=[]:𝔹^0;
+	j:=1;
+	(x[],x[j]):=(); /// error
+}
