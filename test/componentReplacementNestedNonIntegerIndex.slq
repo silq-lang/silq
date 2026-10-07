@@ -1,0 +1,7 @@
+
+def main(){
+	x:=H(0);
+	t:=[[1]];
+	(t[][],t[0][x])=([][]); /// error
+	return measure(x);
+}
