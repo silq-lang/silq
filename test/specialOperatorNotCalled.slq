@@ -1,0 +1,6 @@
+// A special operator used without calling it crashed the compiler after the
+// error: the identifier was already completed when marked. (Found by fuzzing.)
+def main(){
+	x:=__show; /// error
+	return 0;
+}
