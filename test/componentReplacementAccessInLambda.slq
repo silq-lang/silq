@@ -1,0 +1,8 @@
+// Using an aggregate inside a lambda while its components are being replaced
+// crashed the compiler after reporting the error: the rejected access was
+// still recorded, for an aggregate not tracked there. (Found by fuzzing.)
+def main(){
+	x:=(0:𝔹);
+	a:=(3,x);
+	(a[]):=((){return a}); /// error
+}
