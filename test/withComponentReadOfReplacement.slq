@@ -1,0 +1,7 @@
+// In a with block, a component read that resolves to the temporary of a
+// replacement already in progress crashed the compiler, which assumed every
+// read was an index; the errors in the block were lost. (Found by fuzzing.)
+def main(){
+	xs:=(1,2,3);
+	with{ xs[]=([]); xs[2]=(y,xs[2]); }do{} /// error
+}
