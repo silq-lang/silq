@@ -1,0 +1,7 @@
+// A reversed call whose argument tuple holds an element that was not analysed
+// (here, because the callee type is broken) crashed the compiler: fitting the
+// callee type evaluated the element. (Found by fuzzing.)
+def undup[](y:T){} /// error
+def main(){
+	undup(measure(()),())=();
+}
