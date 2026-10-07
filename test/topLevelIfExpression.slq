@@ -1,0 +1,7 @@
+// An if expression at the top level crashed the compiler, a well-formed one
+// included: the top-level scope does not nest blocks, and merging the two
+// branches asserted that it had. (Found by fuzzing.)
+n:=if true then 1 else 2; /// error
+x:if true then 𝟙 else 𝟙; /// error
+y:if () then () else (); /// error
+def main(){ return 0; }
