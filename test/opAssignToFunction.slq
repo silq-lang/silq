@@ -1,0 +1,6 @@
+// A compound assignment to a function, such as the prelude gate H, crashed the
+// compiler with a segfault: it was treated as a variable. (Found by fuzzing.)
+def main(){
+	H+=1; /// error
+	return 0;
+}
