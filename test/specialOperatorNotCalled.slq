@@ -1,0 +1,5 @@
+
+def main(){
+	x:=__show; /// error
+	return 0;
+}
