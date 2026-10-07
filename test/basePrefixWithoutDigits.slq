@@ -1,0 +1,4 @@
+
+def main(){
+	return 0X; /// error
+}
