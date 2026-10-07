@@ -1,0 +1,21 @@
+// Assigning a tuple of the wrong length crashed the compiler instead of
+// reporting the mismatch: the check defers it while a return type is being
+// inferred, and the variable update assumed equal lengths. (Found by fuzzing.)
+def inferred(){
+	x:=1;
+	y:=2;
+	(x,y)=(3,); /// error
+	return x;
+}
+
+def declared():!ℕ{
+	x:=1;
+	y:=2;
+	(x,y)=(3,); /// error
+	return x;
+}
+
+def shorter(){
+	x:=1;
+	(x,)=(); /// error
+}
