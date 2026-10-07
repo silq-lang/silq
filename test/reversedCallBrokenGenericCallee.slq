@@ -1,0 +1,7 @@
+// A reversed call on a generic function whose own type is broken crashed the
+// compiler: fitting the arguments to the type parameter evaluated the variable
+// the call is defining, which has no value yet. (Found by fuzzing.)
+def f[n:!ℕ](x:y):𝟙; /// error
+def main(){
+	f(x,)=(); /// error
+}
