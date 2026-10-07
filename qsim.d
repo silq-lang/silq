@@ -801,8 +801,14 @@ struct QState{
 		bool opEquals(Closure rhs){ return fun==rhs.fun && (context is rhs.context || context&&rhs.context&&*context==*rhs.context); }
 	}
 	struct Value{
-		Expression type;
-		enum Tag{
+		private Expression type_;
+		private Tag tag_;
+		@property inout(Expression) type()inout{ return type_; }
+		@property void type(Expression type){
+			if(type !is type_) tag_=type?getTag(type):Tag.init;
+			type_=type;
+		}
+		enum Tag:ubyte{
 			array_,
 			record,
 			closure,
@@ -838,13 +844,15 @@ struct QState{
 			enforce(0,text("TODO: representation for type ",type," ",typeid(type)));
 			assert(0);
 		}
-		@property Tag tag(){
-			return getTag(type);
+		@property Tag tag()const{
+			assert(!!type_);
+			return tag_;
 		}
 		bool isValid(){ return !!type; }
 		void opAssign(Value rhs){
 			destroy(this);
-			type=rhs.type;
+			type_=rhs.type_;
+			tag_=rhs.tag_;
 			if(!type) return;
 			Lswitch:final switch(tag){
 				import std.traits:EnumMembers;
@@ -929,7 +937,8 @@ struct QState{
 			}
 		}
 		this(ref inout(Value) r)inout{
-			this.type=r.type;
+			this.type_=r.type_;
+			this.tag_=r.tag_;
 			if(!type) return;
 			auto tt=(cast()this).tag;
 			Lswitch:final switch(tt){
@@ -2080,7 +2089,8 @@ struct QState{
 			return text(toStringImpl(FormattingOptions.init),":",type);
 		}
 	}
-	static assert(Value.sizeof==max(Type.sizeof,Value.cval.alignof,Value.fval.alignof)+Value.bits.sizeof);
+	static assert(Value.type_.offsetof==0&&Value.tag_.offsetof==Type.sizeof);
+	static assert(Value.sizeof==Value.bits.offsetof+Value.bits.sizeof);
 	static Value makeTuple(Expression type,Value[] tuple)in{
 		assert(!!cast(TupleTy)type||cast(ArrayTy)type||cast(VectorTy)type||cast(VariadicTy)type);
 	}do{
