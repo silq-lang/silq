@@ -1,0 +1,12 @@
+// A syntax error in a for loop's aggregate was swallowed: the parser kept its
+// muted look-ahead parse, leaving only "not supported as an expression" with
+// no location at all. (Found by fuzzing.) Parsing the aggregate again after
+// every look-ahead then printed warnings inside it twice.
+def main(){
+	for i in .{} /// error
+}
+def g(const f:𝟙→!ℕ[])⇒f(());
+def nested(){
+	for i in g(λ(_:𝟙){ for j in [0..2] { } /// warning
+		return [1,2]:!ℕ[]; }) { }
+}
