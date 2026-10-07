@@ -1,0 +1,8 @@
+// Branches defining n as !ℕ and as !ℤ, with a vector of length n, crashed the
+// compiler when merged: substituting the merged n gave a vector whose length is
+// not a natural number. Its length is unknown, so it becomes an array.
+// (Found by fuzzing.)
+def main(c:!𝔹){
+	if c{ n:=3; xs:=vector(n,0:𝔹); }else{ n:=-1; xs:=vector(2,0:𝔹); }
+	return measure(xs);
+}
