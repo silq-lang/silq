@@ -1,0 +1,7 @@
+// A for loop whose step does not analyse (an undefined name) crashed the
+// compiler: working out the loop variable's type evaluated the step anyway.
+// (Found by fuzzing.)
+def main(){
+	for i in 10..undefinedStep..0{} /// error
+	return 0;
+}
