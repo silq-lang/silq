@@ -1,0 +1,47 @@
+// args: --remove-loops --run
+
+def f(c:!ℕ){
+	q1:=0:𝔹; q2:=H(1:𝔹);
+	repeat 3 {
+		if c==1 { return (q1,q2); }
+		t:=q1;
+		if c==0 { q1:=q2; q2:=t; } else { q1:=q2; q2:=t; }
+		t2:=q1; q1:=q2; q2:=t2;
+	}
+	return (q1,q2);
+}
+def g(){
+	q1:=0:𝔹; q2:=H(1:𝔹);
+	repeat 3 {
+		t:=q1; q1:=t;
+		t:=q2; q2:=t;
+	}
+	return q2;
+}
+def h(c:!ℕ){
+	q1:=0:𝔹; q2:=H(1:𝔹);
+	repeat 3 {
+		if c==1 { return (q1,q2); }
+		t:=q1; s:=q2; q1:=s; q2:=t;
+		t:=q1; s:=q2; q1:=s; q2:=t;
+	}
+	return (q1,q2);
+}
+def k(c:!ℕ){
+	q1:=0:𝔹; q2:=H(1:𝔹);
+	repeat 3 {
+		if c==1 { return (q1,q2); }
+		q1:=(λ(x:𝔹)qfree.x)(q1);
+		t:=q1; q1:=q2; q2:=t;
+		t2:=q1; q1:=q2; q2:=t2;
+	}
+	return (q1,q2);
+}
+def main(){
+	(a0,b0):=f(0); (a1,b1):=f(1); (a2,b2):=f(2);
+	(a3,b3):=h(0); (a4,b4):=h(1);
+	(a5,b5):=k(0); (a6,b6):=k(1);
+	m:=(measure(a0),measure(a1),measure(a2),measure(a3),measure(a4),measure(a5),measure(a6));
+	assert(m==(0,0,0,0,0,0,0));
+	return (b0,b1,b2,g(),b3,b4,b5,b6);
+}

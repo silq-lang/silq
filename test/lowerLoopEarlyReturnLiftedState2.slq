@@ -1,0 +1,26 @@
+// args: --remove-loops --run
+
+def f(c:!ℕ){
+	q1:=0:𝔹; q2:=H(1:𝔹);
+	repeat 3 {
+		(q2,q1):=(q1,q2);
+		if c==1 { return (q1,q2); }
+		(q2,q1):=(q1,q2);
+	}
+	return (q1,q2);
+}
+def g(c:!ℕ){
+	q1:=H(0:𝔹); q2:=1:𝔹;
+	repeat 3 {
+		(q2,q1):=(q1,q2);
+		if c==1 { return (q1,q2); }
+		(q2,q1):=(q1,q2);
+	}
+	return (q1,q2);
+}
+def main(){
+	(a0,b0):=f(0); (a1,b1):=f(1); (a2,b2):=g(0); (a3,b3):=g(1);
+	m:=(measure(a0),measure(b1),measure(b2),measure(a3));
+	assert(m==(0,0,1,1));
+	return (b0,a1,a2,b3);
+}

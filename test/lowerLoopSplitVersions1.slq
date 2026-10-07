@@ -1,0 +1,27 @@
+// args: --remove-loops --run
+
+def f(){
+	q1:=0:𝔹; q2:=H(1:𝔹);
+	repeat 3 {
+		(q2,q1):=(q1,q2);
+		(q2,q1):=(q1,q2);
+	}
+	return q2;
+}
+def g(n:!ℕ){
+	q1:=0:𝔹; q2:=H(1:𝔹);
+	i:=0;
+	while i<n {
+		t:=q1; q1:=q2; q2:=t;
+		if i%2==0 { q1:=H(q1); }
+		t2:=q1; q1:=q2; q2:=t2;
+		i+=1;
+	}
+	u:=dup(q1);
+	return (u,q2);
+}
+def main(){
+	(u,v):=g(3);
+	assert(measure(u)==0);
+	return (f(),v);
+}
