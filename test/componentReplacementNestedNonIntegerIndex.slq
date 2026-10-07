@@ -1,0 +1,9 @@
+// A nested component replacement with a non-integer index crashed the compiler:
+// the index was left without a type and not marked as an error, though the
+// error was reported. (Found by fuzzing.)
+def main(){
+	x:=H(0);
+	t:=[[1]];
+	(t[][],t[0][x])=([][]); /// error
+	return measure(x);
+}
