@@ -100,13 +100,25 @@ private string checkDir; // the directory of the check in progress, or null
 private string emptyDir;
 
 private string emptyDirectory() {
-	import std.file: tempDir, mkdirRecurse;
+	import std.file: tempDir;
 	import std.path: buildPath;
-	import std.process: thisProcessID;
 	if(!emptyDir.length) {
-		auto d = buildPath(tempDir, "silq-lsp-empty-" ~ to!string(thisProcessID));
-		mkdirRecurse(d);
-		emptyDir = d;
+		version(Posix) {
+			// mkdtemp picks a fresh name and creates the directory in one step.
+			// (It also exists in the Emscripten build, which has no
+			// std.process.thisProcessID.)
+			import core.sys.posix.stdlib: mkdtemp;
+			import std.string: fromStringz;
+			auto t = (buildPath(tempDir, "silq-lsp-empty-XXXXXX") ~ "\0").dup;
+			if(mkdtemp(t.ptr) is null) throw new Exception("cannot create an empty directory");
+			emptyDir = fromStringz(t.ptr).idup;
+		} else {
+			import std.file: mkdirRecurse;
+			import std.process: thisProcessID;
+			auto d = buildPath(tempDir, "silq-lsp-empty-" ~ to!string(thisProcessID));
+			mkdirRecurse(d);
+			emptyDir = d;
+		}
 	}
 	return emptyDir;
 }
