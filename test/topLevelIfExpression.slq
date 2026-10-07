@@ -1,0 +1,4 @@
+n:=if true then 1 else 2; /// error
+x:if true then 𝟙 else 𝟙; /// error
+y:if () then () else (); /// error
+def main(){ return 0; }
