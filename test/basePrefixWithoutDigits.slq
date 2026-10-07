@@ -1,0 +1,5 @@
+// A base prefix without digits crashed the compiler: it lexed as an integer
+// literal, which then failed to parse as one. (Found by fuzzing.)
+def main(){
+	return 0X; /// error
+}
