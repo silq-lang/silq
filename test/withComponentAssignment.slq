@@ -1,0 +1,7 @@
+// Assigning to a component inside a with block crashed the compiler after
+// reporting that it is not supported: the definition generated for the
+// right-hand side had no location, which reversing requires. (Found by fuzzing.)
+def main(){
+	xs:=(1,2,3);
+	with{ xs[2]=(1,xs[2]); }do{} /// error
+}
