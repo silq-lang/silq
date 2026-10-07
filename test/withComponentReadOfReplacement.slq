@@ -1,0 +1,5 @@
+
+def main(){
+	xs:=(1,2,3);
+	with{ xs[]=([]); xs[2]=(y,xs[2]); }do{} /// error
+}
