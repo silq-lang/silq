@@ -1,0 +1,7 @@
+
+(ℕ,_):=(); /// error
+def f(){
+	(a,_):=(); /// error
+	return a;
+}
+def main(){ return 0; }
