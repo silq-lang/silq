@@ -1,0 +1,5 @@
+// Calling a built-in that is not a function, such as pi, crashed the compiler
+// on a TODO assertion. (Found by fuzzing.)
+def main(){
+	return π(1); /// error
+}
