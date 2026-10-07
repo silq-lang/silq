@@ -1,0 +1,8 @@
+// A return under quantum control, with a classical variable still alive,
+// crashed the compiler: forgetting the classical variable is always allowed,
+// but the bookkeeping for it asserted that its dependency was known.
+// (Found by fuzzing.)
+def foo(x:𝔹,z:!𝔹){ /// error
+	if x{ return; }
+	(z); /// error
+}
