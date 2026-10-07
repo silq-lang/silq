@@ -554,7 +554,14 @@ struct QState{
 		}
 		return q(then,othw);
 	}
-	QState project(Value cond){ return split(cond)[0]; }
+	QState project(Value cond){
+		if(cond.isClassical()) return split(cond)[0]; // TODO: would be nicer if we can do this for quantum conditions too
+		QState r;
+		r.copyNonState(this);
+		foreach(k,v;state) if(cond.classicalValue(k.dup()).asBoolean) r.add(k,v);
+		if(ghost||!r.state.length){ r.state=ghostCopy(state); r.ghost=true; }
+		return r;
+	}
 	R totalProb(){ return state.values.map!sqAbs.sum; }
 	QState map(alias f,bool checkInterference=true,T...)(T args){
 		QState new_;
