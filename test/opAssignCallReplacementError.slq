@@ -1,0 +1,6 @@
+
+def main(){
+	xs:=vector(2,0:𝔹);
+	if true{ H(xs[])⊕=1; } /// error
+	return measure(xs);
+}
