@@ -1,0 +1,6 @@
+// Replacing a component of something that is neither a variable nor an index,
+// after a non-integer index, crashed the compiler: the check assumed an earlier
+// pass had already rejected it. (Found by fuzzing.)
+def main(){
+	()[]:=3; /// error
+}
