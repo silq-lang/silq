@@ -1,0 +1,6 @@
+// A component replacement with an empty index has no write: the reads of the
+// others were then looked up by the wrong position. (Found by fuzzing.)
+def main(){
+	x:=(2,);
+	(x[],x[0])=(); /// error
+}
