@@ -1,0 +1,7 @@
+// A function type used as a statement, whose domain is not a type, crashed the
+// compiler: completing the erroneous product type checked its missing domain.
+// (Found by fuzzing.)
+def f(){
+	print→dump; /// error
+}
+def main(){ return 0; }
