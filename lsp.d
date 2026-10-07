@@ -433,6 +433,36 @@ private bool inputPending() {
 	else return false;
 }
 
+// \uD800-\uDFFF escapes that are not part of a high-low pair, rewritten as
+// \uFFFD. Only escapes are looked at; an escaped backslash (\\u...) is text.
+private string replaceLoneSurrogateEscapes(string json) {
+	// Nearly every message has none: leave those as they are, uncopied.
+	if(!json.canFind("\\ud", "\\uD")) return json;
+	static int hexAt(string s, size_t i) {
+		if(i + 6 > s.length || s[i] != '\\' || s[i+1] != 'u') return -1;
+		int v = 0;
+		foreach(c; s[i+2 .. i+6]) {
+			int d = c >= '0' && c <= '9' ? c - '0' : c >= 'a' && c <= 'f' ? c - 'a' + 10 : c >= 'A' && c <= 'F' ? c - 'A' + 10 : -1;
+			if(d < 0) return -1;
+			v = v * 16 + d;
+		}
+		return v;
+	}
+	auto app = appender!string;
+	for(size_t i = 0; i < json.length;) {
+		if(json[i] != '\\' || i + 1 >= json.length) { app.put(json[i]); i++; continue; }
+		auto u = hexAt(json, i);
+		if(u >= 0xD800 && u <= 0xDBFF) {
+			auto lo = hexAt(json, i + 6);
+			if(lo >= 0xDC00 && lo <= 0xDFFF) { app.put(json[i .. i + 12]); i += 12; continue; }
+			app.put("\\uFFFD"); i += 6; continue;
+		}
+		if(u >= 0xDC00 && u <= 0xDFFF) { app.put("\\uFFFD"); i += 6; continue; }
+		app.put(json[i .. i + 2]); i += 2; // any other escape, kept whole
+	}
+	return app.data;
+}
+
 // ---------------------------------------------------------------- server
 
 // A file:// URI carries percent escapes, and on Windows an extra leading slash
@@ -624,11 +654,11 @@ private final class Server {
 		deferred = 0;
 		foreach(u; uris) if(u in documents) {
 			// Each document on its own: this runs outside any one message's
-			// handling, so an exception here would otherwise end the server,
-			// and one document that cannot be published must not keep the
-			// others from being checked.
+			// handling, so anything thrown here, an Error included, would
+			// otherwise end the server, and one document that cannot be
+			// published must not keep the others from being checked.
 			try publishDiagnostics(u);
-			catch(Exception e) {
+			catch(Throwable e) {
 				try sendNotification("textDocument/publishDiagnostics", JSONValue([
 					"uri": JSONValue(u),
 					"diagnostics": JSONValue([JSONValue([
@@ -664,7 +694,13 @@ private final class Server {
 	// -1 otherwise.
 	int handle(string raw) {
 		JSONValue msg;
-		try msg = parseJSON(raw);
+		// JSON.stringify writes a lone surrogate in a buffer as an escape
+		// (\ud800 alone), and std.json either rejects the whole message (the
+		// native build: the didOpen or didChange is dropped) or decodes it to
+		// invalid UTF-8 (the browser build's, which the check then cannot
+		// read). Each is replaced by U+FFFD first, one UTF-16 unit like the
+		// surrogate, so no position moves.
+		try msg = parseJSON(replaceLoneSurrogateEscapes(raw));
 		catch(Exception) return -1; // malformed frame: ignore rather than die
 		// `in` requires an object; a body of [], 5 or null would throw here,
 		// outside the try below, and take the server down.
