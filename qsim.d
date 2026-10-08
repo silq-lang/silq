@@ -149,8 +149,11 @@ string formatQValue(QState qs, QState.Value value){
 		auto diff=argNorm(a-b);
 		return abs(diff)<tol||abs(diff-2*PI)<tol;
 	}
-	Q!(QState.Σ,QState.C)[] state=qs.state.byKeyValue.map!(kv=>q(kv.k,kv.v)).array;
-	state.sort!((kv0,kv1)=>value.classicalValue(kv0[0]).compare!"<"(value.classicalValue(kv1[0])).neqZImpl);
+	Q!(QState.Value,Q!(QState.Σ,QState.C))[] keyed;
+	keyed.reserve(qs.state.length);
+	foreach(k,v;qs.state) keyed~=q(value.classicalValue(k),q(k,v));
+	keyed.sort!((a,b)=>a[0].compare!"<"(b[0]).neqZImpl);
+	Q!(QState.Σ,QState.C)[] state=keyed.map!(x=>x[1]).array;
 	bool truncated=false;
 	auto origState=state;
 	if(opt.top){
@@ -450,9 +453,9 @@ struct QState{
 		this.tupleof[1..$]=rhs.tupleof[1..$];
 	}
 	void add(Σ k,C v){
-		if(k in state) state[k]+=v;
-		else state[k]=v;
-		if(abs(state[k]) <= zeroThreshold) state.remove(k);
+		auto nv=state.get(k,C(0))+v;
+		if(abs(nv)<=zeroThreshold) state.remove(k);
+		else state[k]=nv;
 	}
 	void prepareMerge(ref Value to,ref Value from,ref QState qstateFrom){
 		if(!to.type) return;
