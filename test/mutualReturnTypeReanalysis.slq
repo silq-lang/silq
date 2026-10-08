@@ -1,0 +1,14 @@
+
+def foo():(bar()){
+	bar
+}
+def bar():(foo){
+	r1 /// error
+}
+def nested(){
+	def f(x:Foo){ /// error
+		y:=undefinedName; /// error
+		return y;
+	}
+	return 0;
+}
