@@ -1,0 +1,8 @@
+// Assigning an array-typed value to a tuple of variables crashed the compiler:
+// each entry was handed the whole tuple as its left-hand side. (Found by fuzzing.)
+def f(c:!𝔹):!ℕ[]{ if c{ return [5]; } return [6]; }
+def main(){
+	k:=0;
+	(k,)=f(true);
+	return k;
+}
