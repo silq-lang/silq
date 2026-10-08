@@ -1,0 +1,67 @@
+// args: --run
+
+def f(x:𝔹,b:!𝔹)mfree:𝔹{ if b { x:=X(x); } return x; }
+
+def g1(q:𝔹,r:!𝔹^2)mfree{
+	with{ q:=f(q,r[0]); k:=r; }do q:=X(q);
+	return q;
+}
+def g2(q:𝔹,r:!𝔹^2)mfree{
+	with{ k:=dup(r); q:=f(q,r[1]); }do q:=X(q);
+	return q;
+}
+def g3(q:𝔹,r:!ℕ)mfree{
+	with{ q:=f(q,(r as !uint[2])[0]); k:=r; }do q:=X(q);
+	return q;
+}
+def g4(){
+	t:=[1,0,1]:!𝔹^3;
+	with{ x:=t[1]; }do{ x:=X(x); }
+	return t;
+}
+def g5(){
+	t:=4:!uint[8];
+	with{ x:=t[1]; }do{ x:=X(x); }
+	return t;
+}
+
+def cnot_col[n:!ℕ](qs:𝔹^n,const r:!ℕ,const s:!ℕ,const j:!ℕ,const target:!ℕ) qfree:𝔹^n{
+	temp := dup(qs[j]);
+	if (r|s as !uint[n])[j]{
+		qs[target] := CNOT(temp,qs[target]);
+	}
+	forget(temp=qs[j]);
+	return qs;
+}
+def pauli_basis_change(x:𝔹,rj:!𝔹,sj:!𝔹) mfree:𝔹{
+	if rj{
+		if sj&&x{phase(-π/2);}
+		x := H(x);
+	}
+	return x;
+}
+def identity_string(r:!ℕ,s:!ℕ) lifted:!ℕ{
+	x := r | s;
+	if x == 0 {return 0;}
+	return floor(log₂(x)) coerce !ℕ;
+}
+def pauli_exp[n:!ℕ](qs:𝔹^n,θ:!ℝ,r:!ℕ,s:!ℕ) mfree:𝔹^n{
+	if (r=0)&&(s=0){phase(θ);}
+	else{
+		target := identity_string(r,s);
+		with for j in [0..n){
+			qs[j] := pauli_basis_change(qs[j],(r as !uint[n])[j],(s as !uint[n])[j]);
+			if j!=target{qs := cnot_col(qs,r,s,j,target);}
+		}do qs[target] := rotZ(-2*θ,qs[target]);
+	}
+	return qs;
+}
+
+def main(){
+	m:=(measure(g1(0:𝔹,[1,0])),measure(g2(0:𝔹,[0,1])),measure(g3(0:𝔹,1)));
+	assert(m==(1,1,1));
+	assert(g4()==(1,1,1));
+	assert(g5()==6);
+	qs:=pauli_exp[3](vector(3,0:𝔹),0.25,1,2);
+	return qs;
+}

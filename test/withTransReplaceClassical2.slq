@@ -1,0 +1,46 @@
+
+def h1(r:𝔹^2)mfree{
+	with{ x:=r[0]; k:=dup(r); }do x:=X(x); /// error
+	return r;
+}
+def h2(){
+	t:=[1,0,1]:!𝔹^3;
+	with{ x:=t[1]; }do{ x:=X(x); k:=t; } /// error
+	return t;
+}
+def h3(){
+	t:=4;
+	with{
+		x:=(t as !uint[8])[1]; /// TODO
+	}do{
+		x:=X(x);
+	}
+	return t;
+}
+def h4(){
+	t:=4;
+	with{
+		x:=X((t as !uint[8])[1]); /// TODO
+	}do{
+		x:=X(x);
+	}
+	return t;
+}
+def f(x:𝔹,b:!𝔹)mfree:𝔹{ if b { x:=X(x); } return x; }
+def h5(q:𝔹,r:!ℕ)mfree{
+	with{
+		q:=f(q,(r as !uint[2])[0]); /// TODO
+	}do q:=X(q);
+	return q;
+}
+def h6(){
+	q:=vector(3,0:𝔹);
+	with{ x:=(q as uint[3])[1]; }do{ x:=X(x); } /// TODO
+	return q;
+}
+def k(x:𝔹,b:𝔹)qfree:𝔹{ x:=CNOT(b,x); forget(b=0:𝔹); return x; }
+def h7(q:𝔹)mfree{
+	r:=vector(2,0:𝔹);
+	with{ q:=k(q,r[0]); l:=dup(r); }do{ q:=H(q); } /// TODO
+	return (q,r);
+}
