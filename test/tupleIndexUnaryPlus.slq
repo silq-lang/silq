@@ -1,0 +1,10 @@
+// args: --compile
+// A tuple indexed by a unary plus constant, x[+1], type-checked but crashed
+// the HQIR generator: unlike unary minus, unary plus did not evaluate to the
+// integer constant, so the index was not recognised as a literal.
+// (Found by fuzzing.)
+def main(){
+	x:=(2,3/4);
+	y:=x[+1];
+	return (y,x[+(+0)]);
+}
