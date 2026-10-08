@@ -1,0 +1,13 @@
+// args: --compile
+// The reverse of a with block is first analysed as a trial whose errors are
+// suppressed. When that trial was the first use of a function, the function
+// was analysed there, once, and its errors were lost: the program passed
+// type checking, and compiling it then crashed.
+// (Found by fuzzing.)
+def s(x:𝔹){
+	with ()=e[2](Q,x){}
+}
+def e[n:!ℕ][](a){}
+def Q(){
+	1; /// error
+}
