@@ -1,0 +1,9 @@
+// args: --compile
+// The same loop as in forRangeErroneousStep.slq crashed when compiling: the
+// loop was still marked analysed, because an error in its step, unlike one in
+// either bound, did not mark the loop as erroneous, so it was lowered anyway.
+// (Found by fuzzing.)
+def main(){
+	for i in 10..undefinedStep..0{} /// error
+	return 0;
+}
