@@ -1,0 +1,13 @@
+// args: --compile
+// A query used as a statement was replaced by its answer, a string literal,
+// which is not a statement: compiling crashed, and --run and reverse rejected
+// it. As a statement a query does nothing, so the call is kept.
+// (Found by fuzzing.)
+def f(x:𝔹)qfree:𝔹{
+	__query("type",x);
+	return x;
+}
+def main(){
+	__query("type",H);
+	return reverse(f)(0:𝔹);
+}
