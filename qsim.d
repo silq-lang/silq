@@ -2241,7 +2241,7 @@ struct QState{
 	alias Σ=Sigma;
 	struct Sigma{
 		alias Ref=size_t;
-		HashMap!(Ref,Value,(a,b)=>a==b,a=>a) qvars;
+		HashMap!(Ref,Value,(a,b)=>a==b,a=>a,Storage.compact,false) qvars;
 		Σ dup(){ return Σ(qvars.dup); }
 		static Ref curRef=0;
 		Ref assign(Ref ref_,Value v){
