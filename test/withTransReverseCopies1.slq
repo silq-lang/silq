@@ -1,0 +1,50 @@
+// args: --run
+
+def f1(q:𝔹,r:!ℕ)mfree{
+	with{ k:=r; j:=r; }do q:=X(q);
+	return (q,r);
+}
+def f2(q:𝔹,r:!ℕ)mfree{
+	with{ k:=r; t:=r+1; }do q:=X(q);
+	return (q,r);
+}
+def f3(q:𝔹,r:!ℕ)mfree{
+	with{ k:=r; j:=r; }do{ if k==j { q:=X(q); } }
+	return (q,r);
+}
+def f4(q:𝔹,r:!ℕ)mfree{
+	with{ (k,j):=(r,r); }do q:=X(q);
+	return (q,r);
+}
+def f5(q:𝔹)mfree{
+	r:=vector(2,0:𝔹);
+	with{ k:=r; j:=r; }do q:=X(q);
+	return (q,r);
+}
+def f6()mfree{
+	r:=1:!𝔹;
+	with{ k:=r; }do{ k:=X(k); }
+	return r;
+}
+def f7()mfree{
+	r:=0:𝔹;
+	with{ k:=r; }do{ k:=X(k); }
+	return r;
+}
+def f8(q:𝔹,r:!ℕ,c:!𝔹)mfree{
+	with{ if c { k:=r; j:=r; } else { k:=r; j:=r; } }do q:=X(q);
+	return (q,r);
+}
+def f9(q:𝔹,r:!ℕ)mfree{
+	with{ (a,b,c):=(r,r,r); }do q:=X(q);
+	return (q,r);
+}
+def main(){
+	a:=(measure(f1(0:𝔹,3)),measure(f2(0:𝔹,3)),measure(f3(0:𝔹,3)),measure(f4(0:𝔹,3)));
+	assert(a==((1,3),(1,3),(1,3),(1,3)));
+	assert(measure(f5(0:𝔹))==(1,(0,0)));
+	assert(f6()==0);
+	assert(measure(f7())==1);
+	assert(measure(f9(0:𝔹,3))==(1,3));
+	assert(measure((f8(0:𝔹,3,true),f8(0:𝔹,3,false)))==((1,3),(1,3)));
+}
