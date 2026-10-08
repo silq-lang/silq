@@ -1,0 +1,11 @@
+// Joining an array type with a long vector of an incompatible element type hung
+// the compiler: after the element types failed to combine, it tried every
+// component of the vector one by one. (Found by fuzzing.) An empty vector has
+// no components to disagree, so it still joins to an array.
+def main(){
+	x:=vector(5,0:𝔹);
+	x~vector(999999999999,128):=x; /// error
+}
+def empty(c:!𝔹){
+	return if c then ([]:!𝔹[]) else vector(0,());
+}
