@@ -1,0 +1,11 @@
+// args: --compile
+// A type on the left of a definition crashed the compiler: the type was
+// already fully analysed (and may be shared), and reporting it as an
+// unsupported left-hand side marked it as erroneous anyway.
+// (Found by fuzzing.)
+def foo(){
+	(𝔹^1):=(); /// error
+}
+def bar(){
+	!ℕ:=1; /// error
+}
