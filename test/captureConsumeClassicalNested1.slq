@@ -1,0 +1,29 @@
+// args: --run
+
+def f(){
+	v:=[1,2]:!ℝ^2;
+	def g[n:!ℕ](x:!𝔹){ v:=v~[0]; return v; }
+	return g[1](0);
+}
+def h(){
+	v:=[1,2]:!ℝ^2;
+	def k(){
+		def g(x:!𝔹){ v:=v~[0]; return v; }
+		return g(0);
+	}
+	return k();
+}
+def l(){
+	v:=[1,2]:!ℝ^2;
+	def k[m:!ℕ](){
+		def g[n:!ℕ](x:!𝔹){ v:=v~[0]; return v; }
+		return g[m](0);
+	}
+	return k[1]();
+}
+def main(){
+	v:=[1,2]:!ℝ^2;
+	def g[n:!ℕ](x:𝔹){ v:=v~[0]; return x; }
+	r:=(f(),h(),l());
+	assert(r==((1,2,0),(1,2,0),(1,2,0)));
+}

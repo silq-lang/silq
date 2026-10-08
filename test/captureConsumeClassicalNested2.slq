@@ -1,0 +1,14 @@
+
+def f(){
+	v:=[1,2]:!ℝ^2;
+	def g[n:!ℕ](x:!𝔹){ v:=v~[0]; return v; }
+	return (g[1](0),v); /// error
+}
+def h(){
+	v:=[1,2]:!ℝ^2;
+	def k(){
+		def g(x:!𝔹){ v:=v~[0]; return v; }
+		return g(0);
+	}
+	return (k(),v); /// error
+}
