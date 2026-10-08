@@ -1,0 +1,33 @@
+// args: --run
+
+def f1(q:𝔹,r:!𝔹^2)mfree{
+	with{ a:=r[0]; b:=r[0]; }do{ if a&&b { q:=X(q); } }
+	return (q,r);
+}
+def f2(q:𝔹,r:!𝔹^2,i:!ℕ,j:!ℕ)mfree{
+	with{ a:=r[i]; b:=r[j]; }do{ if a&&b { q:=X(q); } }
+	return (q,r);
+}
+def f3(q:𝔹,r:!𝔹^2)mfree{
+	with{ a:=r[0]; if r[0] { q:=X(q); } }do{ q:=CNOT(a,q); }
+	return (q,r);
+}
+def f4(q:𝔹)mfree{
+	r:=vector(2,0:𝔹);
+	with{ a:=r[0]; b:=r[0]; }do{ q:=CNOT(a,q); q:=CNOT(b,q); }
+	return (q,r);
+}
+def k(x:𝔹,b:𝔹)qfree:𝔹{ x:=CNOT(b,x); forget(b=0:𝔹); return x; }
+def f5(q:𝔹)mfree{
+	r:=vector(2,0:𝔹);
+	with{ q:=k(q,r[0]); l:=dup(r); }do{ q:=X(q); }
+	return (q,r);
+}
+def f6(q:𝔹,r:!𝔹^2)mfree{
+	with{ a:=r[0]; b:=r[0]; c:=r[1]; }do{ if a&&b&&!c { q:=X(q); } }
+	return (q,r);
+}
+def main(){
+	m:=measure((f1(0:𝔹,[1,0]),f2(0:𝔹,[1,0],0,0),f2(0:𝔹,[1,1],0,1),f3(0:𝔹,[1,0]),f4(0:𝔹),f5(0:𝔹),f6(0:𝔹,[1,0])));
+	assert(m==((1,(1,0)),(1,(1,0)),(1,(1,1)),(1,(1,0)),(0,(0,0)),(1,(0,0)),(1,(1,0))));
+}

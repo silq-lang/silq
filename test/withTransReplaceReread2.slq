@@ -1,0 +1,17 @@
+
+def g1(r:𝔹^2,q:𝔹)mfree{
+	with{ a:=r[0]; b:=dup(r[0]); }do{ q:=CNOT(a,q); q:=CNOT(b,q); } /// error
+	return (r,q);
+}
+def g2(r:𝔹^2,q:𝔹)mfree{
+	with{ a:=r[0]; if r[0] { q:=X(q); } }do{ q:=CNOT(a,q); } /// error
+	return (r,q);
+}
+def g3(r:𝔹^2,q:𝔹)mfree{
+	with{ a:=r[0]; b:=r[0]; }do{ q:=CNOT(a,q); } /// error
+	return (r,q);
+}
+def g4(r:𝔹^2,q:𝔹,i:!ℕ,j:!ℕ)mfree{
+	with{ a:=r[i]; b:=dup(r[j]); }do{ q:=CNOT(a,q); } /// error
+	return (r,q);
+}
