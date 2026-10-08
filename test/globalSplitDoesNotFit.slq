@@ -1,0 +1,9 @@
+// args: --compile
+// A global split definition that does not fit its initializer always aborts,
+// but each part was given the clamped slice of the initializer as its value,
+// of the wrong length, and compiling a use of it crashed. A global needs a
+// value, so this is now an error.
+// (Found by fuzzing.)
+a~(b:_^2222):=[]; /// error
+c~(d:_^1):=[1,2,3];
+def main()⇒(a,c,d);
