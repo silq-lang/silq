@@ -13,6 +13,7 @@ import core.lifetime: emplace;
 import options;
 import astopt;
 import util.hashtable,util;
+import util.maybe:Maybe,just,none;
 import ast.expression,ast.declaration,ast.type;
 import ast.lexer,ast.semantic_,ast.reverse,ast.scope_,ast.error;
 import util, util.io;
@@ -453,9 +454,10 @@ struct QState{
 		this.tupleof[1..$]=rhs.tupleof[1..$];
 	}
 	void add(Σ k,C v){
-		auto nv=state.get(k,C(0))+v;
-		if(abs(nv)<=zeroThreshold) state.remove(k);
-		else state[k]=nv;
+		state.alter!((old){
+			auto nv=(old?old.get:C(0))+v;
+			return abs(nv)<=zeroThreshold?none!C:just(nv);
+		})(k);
 	}
 	void prepareMerge(ref Value to,ref Value from,ref QState qstateFrom){
 		if(!to.type) return;
@@ -578,16 +580,16 @@ struct QState{
 				}else nk=f(k,args);
 				static if(checkInterference){
 					if(ghost){ new_.add(nk,v); continue; }
-					enforce(nk !in new_.state,"bad forget"); // TODO: good error reporting, e.g. for forget
-					new_.state[nk]=v;
+					bool fresh=true;
+					new_.state.alter!((old){ fresh=!old; return fresh?just(v):old; })(nk);
+					enforce(fresh,"bad forget"); // TODO: good error reporting, e.g. for forget
 				}else new_.add(nk,v);
 			}
 		}else{
 			foreach(k,v;state){
 				auto nk=f(k,args);
 				static if(checkInterference){
-					if(nk !in new_.state||abs(new_.state[nk])<abs(v))
-						new_.state[nk]=v;
+					new_.state.alter!(old=>!old||abs(old.get)<abs(v)?just(v):old)(nk);
 				}else new_.add(nk,v);
 			}
 		}
