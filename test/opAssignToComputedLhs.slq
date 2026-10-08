@@ -1,0 +1,14 @@
+
+def f(){
+	u:=2:uint[16];
+	v:=u;
+	-u+=v;
+	return (u,v);
+}
+def g(){
+	a:=vector(2,0:uint[4]);
+	i:=0;
+	b:=1:uint[4];
+	-a[i]+=b;
+	return (a,b);
+}
