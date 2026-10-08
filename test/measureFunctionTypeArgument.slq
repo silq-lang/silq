@@ -1,0 +1,17 @@
+// args: --compile
+// Measuring a function through a type parameter used the runtime type
+// information for functions, whose measure was silq_builtin.measure_qfunc,
+// which does not exist: the runners rejected or failed such programs. It is
+// measure_qfunc_const or measure_qfunc_moved, by the kind of capture.
+// (Found by comparing the HQIR runners.)
+def gm[τ:*](x:τ):!τ⇒measure(x);
+def f(){
+	q:=1:𝔹;
+	g:=gm(λ(y:𝔹)lifted⇒y⊕q);
+	return g(0:𝔹);
+}
+def h(){
+	q:=1:𝔹;
+	g:=gm(λ(y:𝔹)qfree:𝔹^2{ return (y,q); });
+	return g(0:𝔹);
+}

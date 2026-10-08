@@ -3,15 +3,17 @@ import util: MapX, MapSX, IdMapSX, SetX;
 import std.conv: ConvOverflowException, text, to;
 import std.stdio: File, stderr;
 import std.array: Appender, appender, array, join;
-import std.string: endsWith;
+import std.string: endsWith, indexOf, indexOfAny, lineSplitter, startsWith;
 import std.format: format;
 import std.functional: partial;
 import std.algorithm: map, filter, canFind, count, all, any, fold;
-import std.range: iota, zip, repeat, chain;
+import std.range: assumeSorted, iota, zip, repeat, chain;
 import std.utf: byCodeUnit;
 import std.bigint: BigInt, toDecimalString;
 import std.traits: EnumMembers;
 import std.algorithm.mutation: swap, reverse;
+import std.algorithm.sorting: sort;
+import std.ascii: isAlphaNum;
 import std.math: frexp, isFinite;
 import std.meta: AliasSeq;
 
@@ -6232,7 +6234,11 @@ class ScopeWriter {
 			return ctx.qubitRTTI;
 		}
 		if(auto prodTy = cast(ast_ty.ProductTy) ty) {
-			return ctx.qfuncRTTI;
+			auto hasConst = hasConstCapture(prodTy.captureAnnotation);
+			auto hasMoved = hasMovedCapture(prodTy.captureAnnotation);
+			// The builtins take a function with one kind of capture (qfuncPack).
+			if(hasConst && hasMoved) throw new Unsupported("functions capturing both const and moved quantum values as type arguments", ctx.curLoc ? ctx.curLoc.loc : ty.loc); // TODO
+			return hasMoved ? ctx.qfuncMovedRTTI : ctx.qfuncConstRTTI;
 		}
 		return null;
 	}
@@ -7665,6 +7671,7 @@ class CodeWriter {
 	}
 
 	void writeOp(CondC[] condC, CondQ[] condQ, string op, CReg[] cRet, QReg[] qRet, CReg[] cArgs, QReg[] qcArgs, QReg[] qiArgs) {
+		ctx.checkBuiltinNames(op);
 		cArgs = fixCNull(cArgs, 0);
 		cRet = fixCNull(cRet, -1);
 		code.put(IrStatement(condC, condQ, op, cRet, qRet, cArgs, qcArgs, qiArgs, ctx.curLoc.loc));
@@ -7882,6 +7889,20 @@ class Unsupported: Exception {
 	}
 }
 
+// The silq_builtin functions builtins.hqir defines, sorted; computed when silq
+// itself is compiled.
+private immutable string[] definedBuiltins = () {
+	string[] r;
+	foreach(line; import("__internal/builtins.hqir").lineSplitter) {
+		if(!line.startsWith("def silq_builtin.")) continue;
+		auto name = line["def ".length .. $];
+		auto end = name.indexOfAny("( \t");
+		r ~= end < 0 ? name : name[0 .. end];
+	}
+	r.sort();
+	return r;
+}();
+
 struct PushLocation {
 	Writer ctx;
 	PushLocation* prev;
@@ -7939,11 +7960,18 @@ class Writer {
 			literalFunc("silq_builtin.promote_qubit", []),
 			literalFunc("silq_builtin.measure_qubit", []),
 		);
-		qfuncRTTI = RTTI.builtin(
+		// one per kind of capture, as measuring depends on it
+		qfuncConstRTTI = RTTI.builtin(
 			this,
 			literalFunc("silq_builtin.qtype_qfunc", []),
 			literalFunc("silq_builtin.promote_qfunc", []),
-			literalFunc("silq_builtin.measure_qfunc", []),
+			literalFunc("silq_builtin.measure_qfunc_const", []),
+		);
+		qfuncMovedRTTI = RTTI.builtin(
+			this,
+			literalFunc("silq_builtin.qtype_qfunc", []),
+			literalFunc("silq_builtin.promote_qfunc", []),
+			literalFunc("silq_builtin.measure_qfunc_moved", []),
 		);
 	}
 
@@ -8023,6 +8051,7 @@ class Writer {
 		}).array;
 		if(string externName = fd.stringAttribute(Id.s!"extern")) {
 			fi.directName = externName;
+			externNames[externName] = true;
 			auto at = fd;
 			ast_decl.Parameter[] outerParams;
 			while(!at.name) {
@@ -8320,6 +8349,7 @@ class Writer {
 
 	CReg literalRaw(string val) {
 		if(auto p = literals.getPtr(val)) return *p;
+		checkBuiltinNames(val);
 		auto r = new CReg();
 		literalValue[r] = val;
 		literals[val] = r;
@@ -8398,7 +8428,25 @@ class Writer {
 	CReg boolFalse, boolTrue;
 	CReg intZero, intOne, intTwo;
 	CReg floatZero, floatOne, floatPi;
-	RTTI unitRTTI, classicalRTTI, qubitRTTI, qfuncRTTI;
+	RTTI unitRTTI, classicalRTTI, qubitRTTI, qfuncConstRTTI, qfuncMovedRTTI;
+	bool[string] externNames; // implemented by the runners, e.g. silq_builtin.iaddq
+
+	// Every operation and literal is checked for the silq_builtin functions it
+	// names: a runner rejects a program naming one that is neither defined in
+	// builtins.hqir nor declared extern (and so implemented by the runner).
+	void checkBuiltinNames(string text) {
+		enum prefix = "silq_builtin.";
+		for(auto rest = text; ; ) {
+			auto i = rest.indexOf(prefix);
+			if(i < 0) return;
+			rest = rest[i .. $];
+			size_t n = prefix.length;
+			while(n < rest.length && (isAlphaNum(rest[n]) || rest[n] == '_')) n++;
+			auto name = rest[0 .. n];
+			assert(definedBuiltins.assumeSorted.contains(name) || name in externNames, format("no builtin %s", name));
+			rest = rest[n .. $];
+		}
+	}
 
 private:
 	MapSX!(string,CReg) literals;
