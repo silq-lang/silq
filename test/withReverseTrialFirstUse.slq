@@ -1,0 +1,8 @@
+
+def s(x:𝔹){
+	with ()=e[2](Q,x){}
+}
+def e[n:!ℕ][](a){}
+def Q(){
+	1; /// error
+}
