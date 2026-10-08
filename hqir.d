@@ -4100,14 +4100,9 @@ class ScopeWriter {
 					assert(v == 0 || v == 1, format("Unknown literal %s", e.lit.str));
 					val = v == 1;
 				} else {
-					string s = e.lit.str;
-					if(s == "0") {
-						val = false;
-					} else if(s == "1") {
-						val = true;
-					} else {
-						assert(false, format("Unknown literal %s", s));
-					}
+					auto v = e.asIntegerConstant();
+					assert(v && (v.get() == 0 || v.get() == 1), format("Unknown literal %s", e.lit.str));
+					val = v.get() == 1;
 				}
 				if(typeHasClassical(ty)) {
 					return valNewC(ctx.literalBool(val));
