@@ -1,0 +1,11 @@
+
+def main(){
+	a:=vector(999999999999,0:𝔹);
+	a[1]=1:𝔹;
+	return 0;
+}
+def outOfBounds(){
+	x:=vector(2097152,0:!𝔹);
+	x[4194304]=H(0:𝔹);
+	return x:!𝔹^2097152;
+}
