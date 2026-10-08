@@ -1,0 +1,8 @@
+
+def main(){
+	x:=vector(5,0:𝔹);
+	x~vector(999999999999,128):=x; /// error
+}
+def empty(c:!𝔹){
+	return if c then ([]:!𝔹[]) else vector(0,());
+}
