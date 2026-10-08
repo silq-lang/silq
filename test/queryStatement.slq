@@ -1,0 +1,9 @@
+
+def f(x:𝔹)qfree:𝔹{
+	__query("type",x);
+	return x;
+}
+def main(){
+	__query("type",H);
+	return reverse(f)(0:𝔹);
+}
