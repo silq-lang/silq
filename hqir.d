@@ -4230,6 +4230,12 @@ class ScopeWriter {
 		// Pin evaluation of lengths etc. outside the if statement
 		pinType(e.type);
 
+		if(ast_ty.isEmpty(e.cond.type)) {
+			// The condition always aborts (e.g. an index out of bounds), so
+			// neither branch runs.
+			auto c = genExpr(e.cond);
+			return valError(c.creg, e.type);
+		}
 		auto cond = genCond(e.cond);
 		auto scThen = e.then.blscope_, scOthw = e.othw.blscope_;
 		if(scThen && scThen.parent !is nscope && !cast(ast_scope.TypeScope)scThen) scThen = null;
@@ -5196,6 +5202,13 @@ class ScopeWriter {
 				foreach(nd; nondeterministic) condShared[nd] = true;
 				recordCond = true;
 			}
+		}
+		if(ast_ty.isEmpty(e.cond.type)) {
+			// The condition always aborts (e.g. an index out of bounds), so
+			// neither branch runs.
+			recordCond = false;
+			auto c = genExpr(e.cond);
+			return new IteAbort(CondAny(c.creg), c.creg);
 		}
 		auto cond = genCond(e.cond);
 		recordCond = false;
