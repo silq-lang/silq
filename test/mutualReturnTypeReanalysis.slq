@@ -1,0 +1,19 @@
+// args: --compile
+// Analysing bar's return type analysed foo, whose body analysed bar in full,
+// with an error. The outer analysis of bar then went on to analyse its body a
+// second time, and merging its scope twice crashed the compiler.
+// (Found by fuzzing.)
+def foo():(bar()){
+	bar
+}
+def bar():(foo){
+	r1 /// error
+}
+// A function whose signature has an error has its body analysed all the same.
+def nested(){
+	def f(x:Foo){ /// error
+		y:=undefinedName; /// error
+		return y;
+	}
+	return 0;
+}
