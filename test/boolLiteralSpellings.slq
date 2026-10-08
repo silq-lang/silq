@@ -1,0 +1,9 @@
+// args: --compile
+// A boolean literal spelt other than 0 or 1, such as 01 or 0x1, type-checked
+// but crashed the HQIR generator, which compared the spelling, not the value.
+// (Found by fuzzing.)
+def main(){
+	a:=(0,1):𝔹^2;
+	assert(()=(01,));
+	return (a,01:𝔹,0x1:!𝔹,0b0:𝔹,00:!𝔹);
+}
