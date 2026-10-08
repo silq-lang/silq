@@ -1,0 +1,12 @@
+// The length of a split's other part, built as num sub l, was typed !ℕ by
+// hand, but analysing 0 sub 3 gives !𝔹, and the checker failed comparing it
+// with its lowering. (A split that does not fit aborts when run.)
+// (Found by fuzzing.)
+def f(){
+	a~(b:_^3):=[];
+	return (a,b);
+}
+def g(){
+	a~(b:!ℕ^1):=[1,2,3];
+	return (a,b);
+}
