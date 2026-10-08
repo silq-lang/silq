@@ -1,0 +1,11 @@
+// args: --compile
+// A loop whose body always aborts (it writes x[0] of an empty array) crashed
+// the HQIR generator and the checker: the write is lowered to a with whose
+// transformation reads x[0], of type ⊥, but the with was typed 𝟙 regardless,
+// so the branch was taken to continue and its variables were merged.
+// (Found by fuzzing.)
+def main(){
+	x:=[];
+	while x.length=0|x[0]<2{ x[0]=1 }
+	return x;
+}
