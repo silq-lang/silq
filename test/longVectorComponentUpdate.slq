@@ -1,0 +1,14 @@
+// Updating one component of a very long vector ran the compiler out of memory:
+// the vector type was expanded into a tuple of every component. Above 2^20
+// components it now keeps a vector type. (Found by fuzzing.) A write to an
+// index known to be out of bounds leaves the type alone, as for a short one.
+def main(){
+	a:=vector(999999999999,0:𝔹);
+	a[1]=1:𝔹;
+	return 0;
+}
+def outOfBounds(){
+	x:=vector(2097152,0:!𝔹);
+	x[4194304]=H(0:𝔹);
+	return x:!𝔹^2097152;
+}
