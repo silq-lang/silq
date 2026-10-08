@@ -1,0 +1,19 @@
+// args: --compile
+// An update-assignment to a computed left-hand side, -u+=v, is lowered to
+// with{t:=-u;}do{t+=v;}. The definition reused the left-hand side after it
+// had been analysed in the enclosing scope, so a forget inserted in it was
+// placed in the wrong scope, and compiling crashed.
+// (Found by fuzzing.)
+def f(){
+	u:=2:uint[16];
+	v:=u;
+	-u+=v;
+	return (u,v);
+}
+def g(){
+	a:=vector(2,0:uint[4]);
+	i:=0;
+	b:=1:uint[4];
+	-a[i]+=b;
+	return (a,b);
+}
