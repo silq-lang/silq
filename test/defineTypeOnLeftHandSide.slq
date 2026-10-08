@@ -1,0 +1,7 @@
+
+def foo(){
+	(𝔹^1):=(); /// error
+}
+def bar(){
+	!ℕ:=1; /// error
+}
