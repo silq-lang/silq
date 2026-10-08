@@ -6335,7 +6335,7 @@ class ScopeWriter {
 			return getVectorQType(arrTy.next, len, cc);
 		}
 		if(auto varTy = cast(ast_ty.VariadicTy) ty) {
-			assert(0, "TODO variadics");
+			throw new Unsupported("variadic types", ctx.curLoc ? ctx.curLoc.loc : varTy.loc); // TODO
 		}
 		assert(!cast(ast_ty.Type) ty, format("can't get qtype for %s", ty));
 		assert(mayUseRTTI);
@@ -7869,6 +7869,17 @@ enum FunctionMode {
 
 struct Options {
 	bool compileLoopsAsNoOps;
+}
+
+// A language feature this backend does not implement yet: reported as an
+// error at the construct that needs it, rather than failing an assertion.
+class Unsupported: Exception {
+	ast_lex.Location loc;
+
+	this(string feature, ast_lex.Location loc) {
+		super(format("%s are not yet supported when compiling to HQIR", feature));
+		this.loc = loc;
+	}
 }
 
 struct PushLocation {

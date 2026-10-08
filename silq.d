@@ -73,16 +73,27 @@ scope class HQIRBackend: Backend {
 	}
 
 	override int run(FunctionDef fun, MapSX!(string,FunctionDef) functions, ErrorHandler err) {
-		auto be = new hqir.Writer(outFile, opt);
+		// Generate into a temporary file and copy it out only when complete: an
+		// unsupported construct is reported after part of the program was
+		// written, and that part must not be left behind as if it were HQIR.
+		auto tmp = File.tmpfile();
+		auto be = new hqir.Writer(tmp, opt);
 		if(!fun){
 			auto pfun = functions.getPtr(compileFunc);
 			if(pfun) fun = *pfun;
 		}
-		if(fun){
-			be.dump([fun]);
-		}else{
-			be.dump(functions.byValue().array);
+		try{
+			if(fun){
+				be.dump([fun]);
+			}else{
+				be.dump(functions.byValue().array);
+			}
+		}catch(hqir.Unsupported e){
+			err.error(e.msg,e.loc);
+			return 1;
 		}
+		tmp.rewind();
+		foreach(chunk; tmp.byChunk(65536)) outFile.rawWrite(chunk);
 		return 0;
 	}
 

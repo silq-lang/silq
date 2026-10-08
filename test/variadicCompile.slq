@@ -1,0 +1,5 @@
+// args: --compile
+// Compiling a variadic type to HQIR, which does not support them yet, failed
+// an assertion; it is now reported as an error at the type.
+// (Found by fuzzing.)
+def foo[τ:*[]](xs:∏ τ)⇒xs; /// error
