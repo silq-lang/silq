@@ -1,0 +1,15 @@
+// args: --run
+
+def gm[τ:*](x:τ):!τ⇒measure(x);
+def f(){
+	q:=1:𝔹;
+	g:=gm(λ(y:𝔹)lifted⇒y⊕q);
+	return g(0:𝔹);
+}
+def h(){
+	q:=1:𝔹;
+	g:=gm(λ(y:𝔹)qfree:𝔹^2{ return (y,q); });
+	return g(0:𝔹);
+}
+
+def main() ⇒ (f(),h());
