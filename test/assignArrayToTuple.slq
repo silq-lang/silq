@@ -1,0 +1,7 @@
+
+def f(c:!𝔹):!ℕ[]{ if c{ return [5]; } return [6]; }
+def main(){
+	k:=0;
+	(k,)=f(true);
+	return k;
+}
