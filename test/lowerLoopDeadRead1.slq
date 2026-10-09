@@ -1,0 +1,34 @@
+// args: --remove-loops --run
+
+def f(q2:𝔹){
+	q1:=0:𝔹;
+	repeat 3 { t2:=dup(q2); q1:=X(q1); }
+	m:=measure(q2);
+	r:=dup(q1);
+	return (measure(r),m);
+}
+def g(c1:!ℕ,q2:𝔹){
+	q1:=0:𝔹;
+	repeat 2 {
+		repeat 3 { t2:=dup(q2); q1:=X(q1); }
+		if c1==1 { return (c1,q1,q2); }
+	}
+	return (c1,q1,q2);
+}
+def h(c1:!ℕ,q0:𝔹,q2:𝔹){
+	q1:=0:𝔹;
+	a:=0:𝔹;
+	repeat 2 {
+		repeat 3 {
+			if q0 { t2:=dup(q2); if t2 { a:=X(a); } }
+			q1:=X(q1);
+		}
+		if c1==1 { return (c1,q0,q1,q2,a); }
+	}
+	return (c1,q0,q1,q2,a);
+}
+def main(){
+	assert(f(1:𝔹)==(1,1));
+	assert(measure(g(1,1:𝔹),g(2,0:𝔹))==((1,1,1),(2,0,0)));
+	assert(measure(h(1,1:𝔹,1:𝔹),h(2,1:𝔹,0:𝔹))==((1,1,1,1,1),(2,1,0,0,0)));
+}
