@@ -1,0 +1,15 @@
+// Joining functions taking an array and a tuple meets their parameter types,
+// and the meet of an array with a tuple had its test inverted: it gave a tuple
+// of nulls when no component met, crashing the compiler, and failed when every
+// component did. (Found by code review.)
+def f(x:!ℕ[])⇒0;
+def g(const x:(!ℕ→!ℕ)×(!ℕ→!ℕ))⇒1;
+def h(x:!ℕ×!ℕ)⇒1;
+def crash(c:!𝔹){
+	k:=if c then f else g; /// error
+	return 0;
+}
+def meet(c:!𝔹){
+	k:=if c then f else h;
+	return k(1,2);
+}
