@@ -1,0 +1,22 @@
+// args: --run
+
+def f1(c:!𝔹,q:𝔹){
+	t:=vector(3,0:𝔹);
+	with{ if c { x:=t[1]; } else { x:=t[2]; } }do{ q:=CNOT(x,q); }
+	return (t,q);
+}
+def f2(c:!𝔹){
+	t:=4;
+	with{ if c { x:=(t as !uint[8])[1]; } else { x:=(t as !uint[8])[2]; } }do{ k:=x; }
+	return t;
+}
+def f3(c:!𝔹,q:𝔹){
+	t:=vector(3,0:𝔹);
+	with{ if c { x:=(t as uint[3])[1]; } else { x:=(t as uint[3])[2]; } }do{ q:=CNOT(x,q); }
+	return (t,q);
+}
+def main(){
+	assert(measure(f1(true,0:𝔹),f1(false,0:𝔹))==(((0,0,0),0),((0,0,0),0)));
+	assert((f2(true),f2(false))==(4,4));
+	assert(measure(f3(true,0:𝔹))==((0,0,0),0));
+}

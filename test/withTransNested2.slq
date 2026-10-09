@@ -1,0 +1,18 @@
+def f1(c:!𝔹,q:𝔹){
+	t:=vector(3,0:𝔹);
+	t[0]:=H(t[0]);
+	with{
+		if c { x:=t[1]; } /// error
+		else { x:=t[2]; } /// error
+	}do{ q:=CNOT(x,q); }
+	return (t,q);
+}
+def f2(c:!𝔹,q:𝔹){
+	t:=vector(3,0:𝔹);
+	t[0]:=H(t[0]);
+	with{
+		if c { x:=(t as uint[3])[1]; } /// error
+		else { x:=(t as uint[3])[2]; } /// error
+	}do{ q:=CNOT(x,q); }
+	return (t,q);
+}
