@@ -1,0 +1,62 @@
+// args: --remove-loops --run
+
+def f(c:!ℕ,q0:𝔹,const u:𝔹,const v:𝔹){
+	q1:=dup(v);
+	a:=dup(u);
+	e:=0:!𝔹;
+	k:=0:!ℕ;
+	repeat 2 {
+		while ¬e {
+			if q1 { a:=X(a); }
+			q1:=X(q1);
+			k+=1;
+			e=k==c;
+			if a { q0:=X(q0); }
+		}
+		e=0;
+		k=0;
+	}
+	return (q0,dup(q1),dup(a));
+}
+def g(c1:!ℕ,q0:𝔹,const u:𝔹,const v:𝔹){
+	q1:=dup(v);
+	a:=dup(u);
+	repeat 2 {
+		w:=0;
+		while w<3 {
+			repeat 3 {
+				if q1 { a:=X(a); }
+				q1:=X(q1);
+				if c1%3==1 { return (q0,dup(q1),dup(a)); }
+			}
+			w+=1;
+		}
+	}
+	return (q0,dup(q1),dup(a));
+}
+def h(c1:!ℕ,q0:𝔹,const qc:𝔹){
+	q1:=0:𝔹; a:=0:𝔹;
+	repeat 2 {
+		if qc { return (q0,q1,a); }
+	}
+	repeat 2 {
+		w:=0;
+		while w<3 {
+			repeat 3 {
+				if q1 { a:=X(a); }
+				q1:=X(q1);
+				if c1%3==1 { return (q0,q1,a); }
+			}
+			w+=1;
+		}
+	}
+	return (q0,q1,a);
+}
+def main(){
+	assert(measure(f(1,0:𝔹,1:𝔹,0:𝔹))==(1,0,0));
+	assert(measure(f(2,0:𝔹,0:𝔹,1:𝔹))==(0,1,0));
+	assert(measure(g(1,0:𝔹,0:𝔹,1:𝔹))==(0,0,1));
+	assert(measure(g(2,1:𝔹,1:𝔹,0:𝔹))==(1,0,0));
+	assert(measure(h(1,1:𝔹,0:𝔹))==(1,1,0));
+	assert(measure(h(2,0:𝔹,0:𝔹))==(0,0,1));
+}
