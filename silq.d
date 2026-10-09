@@ -11,6 +11,8 @@ import astopt;
 import options, ast.scope_, ast.modules, ast.summarize;
 import hqir=hqir;
 
+extern(C) __gshared string[] rt_options=["gcopt=cleanup:none"]; // skip gc at program exit
+
 static this(){
 	astopt.importPath ~= buildPath(dirName(file.thisExePath),"library");
 	static if(language==psi) astopt.importPath ~= buildPath(dirName(file.thisExePath),"..","..","..","..","ras","psi","library"); // TODO: remove
