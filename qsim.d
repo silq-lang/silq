@@ -153,8 +153,11 @@ string formatQValue(QState qs, QState.Value value){
 	Q!(QState.Value,Q!(QState.Σ,QState.C))[] keyed;
 	keyed.reserve(qs.state.length);
 	foreach(k,v;qs.state) keyed~=q(value.classicalValue(k),q(k,v));
-	keyed.sort!((a,b)=>a[0].compare!"<"(b[0]).neqZImpl);
-	Q!(QState.Σ,QState.C)[] state=keyed.map!(x=>x[1]).array;
+	typeof(keyed[0])*[] order;
+	order.reserve(keyed.length);
+	foreach(ref k;keyed) order~=&k;
+	order.sort!((a,b)=>(*a)[0].classicalCompare!"<"((*b)[0]));
+	Q!(QState.Σ,QState.C)[] state=order.map!(k=>(*k)[1]).array;
 	bool truncated=false;
 	auto origState=state;
 	if(opt.top){
@@ -1150,7 +1153,9 @@ struct QState{
 				case Tag.closure:
 					if(closure.context) return (*closure.context).isClassical();
 					return true;
-				case Tag.array_: return array_.all!(x=>x.isClassical());
+				case Tag.array_:
+					foreach(ref x;array_) if(!x.isClassical()) return false;
+					return true;
 				case Tag.record:
 					foreach(k,v;record) if(!v.isClassical()) return false;
 					return true;
@@ -1719,39 +1724,42 @@ struct QState{
 		}
 		Value compare(string op)(Value r){
 			if(!isClassical()||!r.isClassical()) return makeQuval(Bool(false),new CompareQVal!op(this,r));
+			return makeBool(classicalCompare!op(r));
+		}
+		private bool classicalCompare(string op)(auto ref Value r){
 			static if(op=="=="||op=="!=") if(tag==Tag.tval&&r.tag==Tag.tval)
-				return makeBool((op=="!=")^(tval==r.tval));
+				return (op=="!=")^(tval==r.tval);
 			static bool compareRanges(R,S)(R a,S b){
 				static if(op=="==") if(a.length!=b.length) return false;
 				static if(op=="!=") if(a.length!=b.length) return true;
 				int equalPrefix=0;
 				for(;equalPrefix<min(a.length,b.length);equalPrefix++)
-					if(a[equalPrefix].compare!"!="(b[equalPrefix]).neqZImpl) break;
+					if(a[equalPrefix].classicalCompare!"!="(b[equalPrefix])) break;
 				static if(op!="=="&&op!="!="){
 					if(util.among(equalPrefix,a.length,b.length)){
 						if(a.length==b.length){
 							enum equalAllowed=op=="<="||op==">=";
 							return equalAllowed;
 						}else return mixin(`a.length `~op~` b.length`);
-					}else return a[equalPrefix].compare!op(b[equalPrefix]).neqZImpl;
+					}else return a[equalPrefix].classicalCompare!op(b[equalPrefix]);
 				}else{
 					static if(op=="==") return equalPrefix==a.length;
 					else return equalPrefix!=a.length;
 				}
 			}
 			if(tag==Tag.array_&&r.tag==Tag.array_)
-				return makeBool(compareRanges(array_,r.array_));
+				return compareRanges(array_,r.array_);
 			if(tag==Tag.record&&r.tag==Tag.record){
 				auto a=record.byKeyValue.map!(kv=>q(kv.k,kv.v)).array;
 				auto b=r.record.byKeyValue.map!(kv=>q(kv.k,kv.v)).array;
 				sort!"a[0]<b[0]"(a);
 				sort!"a[0]<b[0]"(b);
-				return makeBool(compareRanges(a.map!(x=>x[1]),b.map!(x=>x[1])));
+				return compareRanges(a.map!(x=>x[1]),b.map!(x=>x[1]));
 			}
 			if(tag==Tag.closure&&r.tag==Tag.closure){
 				if(mixin(`closure.fun.text `~op~` r.closure.fun.text`))
-					return makeBool(true);
-				return closure.context.compare!op(*r.closure.context);
+					return true;
+				return closure.context.classicalCompare!op(*r.closure.context);
 			}
 			static if(op=="=="||op=="!="){
 				enum complexSupported=[Tag.cval];
@@ -1801,7 +1809,7 @@ struct QState{
 								static if((ltag==Tag.uintval||ltag==tag.intval)&&rtag==tag.zmodval||(rtag==Tag.uintval||rtag==Tag.intval)&&ltag==Tag.zmodval){
 									case rtag: break Louter;
 								}else{
-									case rtag: return makeBool(mixin(text(`compareImpl(`,ltag,`,r.`,rtag,`)`)));
+									case rtag: return mixin(text(`compareImpl(`,ltag,`,r.`,rtag,`)`));
 								}
 							}
 							static foreach(rtag;unsupportedTags){
