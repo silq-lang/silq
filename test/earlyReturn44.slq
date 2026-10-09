@@ -1,0 +1,17 @@
+// args: --run
+
+def f(c0:!ℕ,q0:𝔹,q2:𝔹){
+	a:=0:𝔹;
+	t:=dup(q0); if t { a:=X(a); }
+	if c0==0 {
+		if c0==1 { return (q0,q2,a); }
+	} else {
+		if c0==0 { u:=dup(q2); if u { a:=X(a); } } else { if c0==1 { return (q0,q2,a); } }
+	}
+	return (q0,q2,a);
+}
+def main(){
+	assert(measure(f(0,1:𝔹,1:𝔹))==(1,1,1));
+	assert(measure(f(1,1:𝔹,0:𝔹))==(1,0,1));
+	assert(measure(f(2,0:𝔹,1:𝔹))==(0,1,0));
+}
