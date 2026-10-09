@@ -1,7 +1,7 @@
 
 def f1(){
 	x:=vector(3,0:𝔹);
-	with{ y:=x; t:=y[1]; y[1]:=t; x:=y; }do{ } /// error // TODO: improve diagnostic
+	with{ y:=x; t:=y[1]; y[1]:=t; x:=y; }do{ } /// error
 	return x;
 }
 def f2(){
@@ -13,5 +13,10 @@ def f2(){
 def f3(){
 	x:=vector(3,0:𝔹);
 	with{ y:=x; }do{ with{ t:=y[1]; y[1]:=t; }do{ } } /// error
+	return x;
+}
+def f4(){
+	x:=vector(3,0:𝔹);
+	with{ t:=x[1]; x[1]:=t; }do{ } /// error
 	return x;
 }

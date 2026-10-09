@@ -40,9 +40,15 @@ def f8(){
 	with{ y:=x; r:=y[1]; t:=r[0]; }do{ t:=X(t); }
 	return x;
 }
+def f9(){
+	x:=vector(3,0:𝔹);
+	with{ y:=x; t:=y[1]; x:=y; }do{ }
+	return x;
+}
 def main(){
 	assert(measure(f1(),f2(),f3())==((0,1,0),(0,1,0),(0,1,0)));
 	assert((f4(),f5())==(6,15));
 	assert(measure(f6(),f7())==((0,1,1),(1,1,0)));
 	assert(measure(f8())==((0,0,0),(1,0,0)));
+	assert(measure(f9())==(0,0,0));
 }
