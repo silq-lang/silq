@@ -1,0 +1,46 @@
+// args: --run
+
+def f(q0:𝔹){
+	a:=0:𝔹;
+	t:=a;
+	forget(t=0:𝔹);
+	if q0 { a:=X(a); }
+	b:=dup(a);
+	forget(b=dup(a));
+	return (q0,a);
+}
+def g(c0:!ℕ,q0:𝔹){
+	a:=0:𝔹;
+	if c0==1 {
+		t:=a;
+		forget(t=0:𝔹);
+	}
+	repeat 2 {
+		if q0 { a:=X(a); }
+	}
+	return (q0,a);
+}
+def h(x:𝔹,q0:𝔹){
+	a:=dup(x);
+	t:=a;
+	forget(t=dup(x));
+	if q0 { a:=X(a); }
+	b:=dup(a);
+	forget(b=dup(a));
+	m:=measure(x);
+	return (m,q0,a);
+}
+def k(x:𝔹,q0:𝔹){
+	a:=dup(x);
+	t:=a;
+	forget(t=dup(x));
+	if q0 { a:=X(a); } else { b:=dup(a); forget(b=dup(a)); }
+	m:=measure(x);
+	return (m,q0,a);
+}
+def main(){
+	assert(measure(f(0:𝔹),f(1:𝔹))==((0,0),(1,1)));
+	assert(measure(g(1,1:𝔹),g(2,1:𝔹),g(1,0:𝔹))==((1,0),(1,0),(0,0)));
+	assert(measure(h(1:𝔹,1:𝔹),h(1:𝔹,0:𝔹),h(0:𝔹,1:𝔹))==((1,1,0),(1,0,1),(0,1,1)));
+	assert(measure(k(1:𝔹,1:𝔹),k(1:𝔹,0:𝔹),k(0:𝔹,1:𝔹))==((1,1,0),(1,0,1),(0,1,1)));
+}

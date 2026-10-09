@@ -1,0 +1,17 @@
+
+def f(x:𝔹,q0:𝔹){
+	a:=dup(x);
+	t:=a;
+	forget(t=dup(x));
+	if q0 { b:=dup(a); forget(b=dup(a)); }
+	m:=measure(x);
+	return (m,q0,a); /// error
+}
+def g(x:𝔹){
+	a:=dup(x);
+	t:=a;
+	forget(t=dup(x));
+	repeat 2 { b:=dup(a); forget(b=dup(a)); }
+	m:=measure(x);
+	return (m,a); /// error
+}
