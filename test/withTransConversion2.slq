@@ -1,0 +1,45 @@
+// args: --run
+
+def f1(){
+	t:=4;
+	with{ x:=(t as !uint[8])[1]; }do{ x:=X(x); }
+	return t;
+}
+def f2(){
+	t:=4;
+	with{ x:=X((t as !uint[8])[1]); }do{ x:=X(x); }
+	return t;
+}
+def f3(){
+	t:=1677;
+	with{ x:=(t as !uint[5])[1]; }do{ x:=X(x); }
+	return t;
+}
+def f4(){
+	q:=vector(3,0:𝔹);
+	with{ x:=(q as uint[3])[1]; }do{ x:=X(x); }
+	return q;
+}
+def f5(){
+	q:=vector(3,0:𝔹);
+	q[0]:=H(q[0]);
+	with{ x:=(q as uint[3])[1]; }do{ x:=X(x); }
+	q[0]:=H(q[0]);
+	return q;
+}
+def f6(){
+	q:=vector(3,0:𝔹);
+	with{ x:=((q as uint[3]) as 𝔹^3)[1]; }do{ x:=X(x); }
+	return q;
+}
+def f7(){
+	t:=4;
+	k:=0;
+	with{ x:=(t as !uint[8])[1]; }do{ x:=X(x); k=t; }
+	return (t,k);
+}
+def main(){
+	assert((f1(),f2(),f3())==(6,6,15));
+	assert(measure(f4(),f5(),f6())==((0,1,0),(0,1,0),(0,1,0)));
+	assert(f7()==(6,4));
+}

@@ -1,0 +1,48 @@
+// args: --run
+
+def f1(){
+	x:=vector(3,0:𝔹);
+	with{ y:=x; t:=y[1]; }do{ t:=X(t); }
+	return x;
+}
+def f2(){
+	x:=vector(3,0:𝔹);
+	with{ y:=x as uint[3]; t:=y[1]; }do{ t:=X(t); }
+	return x;
+}
+def f3(){
+	x:=vector(3,0:𝔹);
+	with{ x:=x as uint[3]; t:=x[1]; }do{ t:=X(t); }
+	return x;
+}
+def f4(){
+	x:=4;
+	with{ y:=x as !uint[8]; t:=y[1]; }do{ t:=X(t); }
+	return x;
+}
+def f5():!ℕ{
+	x:=1677;
+	with{ x:=x as !uint[5]; t:=x[1]; }do{ t:=X(t); }
+	return x;
+}
+def f6(){
+	x:=vector(3,0:𝔹);
+	with{ y:=x as uint[3]; t:=y[1]; u:=y[2]; }do{ t:=X(t); u:=X(u); }
+	return x;
+}
+def f7(){
+	x:=vector(3,0:𝔹);
+	with{ y:=x; t:=y[1]; z:=y[0]; }do{ t:=X(t); z:=X(z); }
+	return x;
+}
+def f8(){
+	x:=vector(2,vector(3,0:𝔹));
+	with{ y:=x; r:=y[1]; t:=r[0]; }do{ t:=X(t); }
+	return x;
+}
+def main(){
+	assert(measure(f1(),f2(),f3())==((0,1,0),(0,1,0),(0,1,0)));
+	assert((f4(),f5())==(6,15));
+	assert(measure(f6(),f7())==((0,1,1),(1,1,0)));
+	assert(measure(f8())==((0,0,0),(1,0,0)));
+}

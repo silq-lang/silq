@@ -1,0 +1,12 @@
+// args: --run
+
+def foo(){
+	t:=1677;
+	with{ e:=t as !uint[8]; x:=e[1]; }do{ x:=X(x); k:=t; }
+	return t;
+}
+def main(){
+	r:=foo();
+	assert(r==143);
+	return r;
+}

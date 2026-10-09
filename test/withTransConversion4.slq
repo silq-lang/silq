@@ -1,0 +1,10 @@
+
+def bar(){
+	t:=1677 as !uint[8];
+	with{ x:=t[1]; }do{ x:=X(x); k:=t; } /// error
+}
+def baz(){
+	t:=1677;
+	with{ x:=(t as !uint[8])[1]; }do{ x:=X(x); k:=t; } /// TODO error
+	return t;
+}
