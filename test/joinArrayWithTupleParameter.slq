@@ -1,0 +1,12 @@
+
+def f(x:!ℕ[])⇒0;
+def g(const x:(!ℕ→!ℕ)×(!ℕ→!ℕ))⇒1;
+def h(x:!ℕ×!ℕ)⇒1;
+def crash(c:!𝔹){
+	k:=if c then f else g; /// error
+	return 0;
+}
+def meet(c:!𝔹){
+	k:=if c then f else h;
+	return k(1,2);
+}
