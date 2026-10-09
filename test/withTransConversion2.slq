@@ -32,14 +32,7 @@ def f6(){
 	with{ x:=((q as uint[3]) as 𝔹^3)[1]; }do{ x:=X(x); }
 	return q;
 }
-def f7(){
-	t:=4;
-	k:=0;
-	with{ x:=(t as !uint[8])[1]; }do{ x:=X(x); k=t; }
-	return (t,k);
-}
 def main(){
 	assert((f1(),f2(),f3())==(6,6,15));
 	assert(measure(f4(),f5(),f6())==((0,1,0),(0,1,0),(0,1,0)));
-	assert(f7()==(6,4));
 }

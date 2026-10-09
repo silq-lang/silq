@@ -5,6 +5,73 @@ def bar(){
 }
 def baz(){
 	t:=1677;
-	with{ x:=(t as !uint[8])[1]; }do{ x:=X(x); k:=t; } /// TODO error
+	with{ x:=(t as !uint[8])[1]; }do{ x:=X(x); k:=t; } /// error
+	return t;
+}
+def f1(){
+	t:=1677;
+	k:=0;
+	with{ x:=(t as !uint[8])[1]; }do{ x:=X(x); k=t; } /// error
+	return (t,k);
+}
+def f2(){
+	q:=vector(3,0:𝔹);
+	with{ x:=(q as uint[3])[1]; }do{
+		x:=X(x);
+		q[0]:=X(q[0]); /// error
+	}
+	return q;
+}
+def f3(){
+	q:=vector(3,0:𝔹);
+	q[0]:=H(q[0]);
+	with{ x:=(q as uint[3])[1]; }do{
+		x:=X(x);
+		q[0]:=X(q[0]); /// error
+	}
+	return q;
+}
+def f4(){
+	t:=1677;
+	with{
+		x:=(t as !uint[5])[1];
+		y:=(t as !uint[5])[2]; /// error
+	}do{
+		x:=X(x);
+		y:=X(y);
+	}
+	return t;
+}
+def f5(){
+	t:=1677;
+	with{ x:=(t as !uint[5])[1]; }do{
+		x:=X(x);
+		t:=5; /// error
+	}
+	return t;
+}
+def f6(){
+	q:=vector(3,0:𝔹);
+	q[0]:=H(q[0]);
+	with{ x:=(q as uint[3])[1]; }do{
+		x:=X(x);
+		q:=vector(3,0:𝔹); /// error
+	}
+	return q;
+}
+def f7(){
+	v:=vector(3,0:!𝔹);
+	with{ x:=(v as !uint[3])[1]; }do{
+		x:=X(x);
+		k:=v[0]; /// error
+	}
+	return v;
+}
+def f8(){
+	t:=1677;
+	with{ x:=(t as !uint[5])[1]; }do{
+		x:=X(x);
+		f:=()=>t; /// error
+	}
 	return t;
 }

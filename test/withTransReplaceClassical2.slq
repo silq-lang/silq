@@ -32,7 +32,7 @@ def f(x:𝔹,b:!𝔹)mfree:𝔹{
 }
 def h5(q:𝔹,r:!ℕ)mfree{
 	with{
-		q:=f(q,(r as !uint[2])[0]); /// error // TODO: improve error message
+		q:=f(q,(r as !uint[2])[0]); /// error
 	}do q:=X(q);
 	return q;
 }
