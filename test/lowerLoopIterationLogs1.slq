@@ -1,0 +1,19 @@
+// args: --remove-loops --run
+
+def f(c:!ℕ){
+	q:=0:𝔹; a:=0:𝔹;
+	w:=0;
+	while w<3 {
+		a:=X(a);
+		for i in [0..c%3+1) {
+			repeat c%3 { q:=H(q); q:=Z(q); q:=H(q); }
+			c+=1;
+		}
+		w+=1;
+	}
+	return (c,q,a);
+}
+def main(){
+	assert(measure(f(0))==(4,1,1));
+	assert(measure(f(2))==(11,1,1));
+}
