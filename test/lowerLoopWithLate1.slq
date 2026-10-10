@@ -1,0 +1,21 @@
+// args: --remove-loops --run
+
+def f(c:!ℕ,q:𝔹){
+	a:=0:𝔹; x:=0:uint[2];
+	repeat 2 {
+		x+=1;
+		if c%2==0 {
+			with t:=dup(q) do {
+				if t { a:=X(a); }
+			}
+		} else {
+			c+=1;
+		}
+	}
+	return (c,q,a,x);
+}
+def main(){
+	assert(measure(f(0,1:𝔹))==(0,1,0,2));
+	assert(measure(f(1,1:𝔹))==(2,1,1,2));
+	assert(measure(f(2,0:𝔹))==(2,0,0,2));
+}
