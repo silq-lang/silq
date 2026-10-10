@@ -1,0 +1,16 @@
+// args: --remove-loops --run
+
+def f(c:!ℕ){
+	q:=0:𝔹;
+	for i in [0..c) {
+		m:=measure(q);
+		q:=X(m:𝔹);
+	}
+	return q;
+}
+def main(){
+	assert(measure(f(0))==0);
+	assert(measure(f(1))==1);
+	assert(measure(f(2))==0);
+	assert(measure(f(3))==1);
+}
