@@ -1,0 +1,19 @@
+// args: --remove-loops --run
+
+def f(const qc:𝔹){
+	x:=0:uint[2]; q:=0:𝔹;
+	repeat 2 {
+		if qc {
+			w:=0;
+			while w<1 { x+=1; w+=1; }
+			v:=dup(w);
+			q:=H(q);
+			if v==1 { q:=X(q); }
+		}
+	}
+	return (x,q);
+}
+def main(){
+	assert(measure(f(1:𝔹))==(2,1));
+	assert(measure(f(0:𝔹))==(0,0));
+}
