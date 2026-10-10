@@ -1,0 +1,23 @@
+// args: --remove-loops --run
+
+def f(c:!ℕ,const qc:𝔹){
+	q:=H(0:𝔹); x:=0:uint[2];
+	repeat 2 {
+		if c==1 { return (q,x); }
+		if qc {
+			w:=0;
+			while w<1 { x+=1; w+=1; }
+			v:=0;
+			while v<1 { v+=1; }
+		}
+	}
+	return (q,x);
+}
+def main(){
+	(q1,x1):=f(1,1:𝔹);
+	assert(measure(H(q1),x1)==(0,0));
+	(q2,x2):=f(2,1:𝔹);
+	assert(measure(H(q2),x2)==(0,2));
+	(q3,x3):=f(2,0:𝔹);
+	assert(measure(H(q3),x3)==(0,0));
+}
