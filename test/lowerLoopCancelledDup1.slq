@@ -1,0 +1,15 @@
+// args: --remove-loops --run
+
+def f(const c:𝔹,q:𝔹){
+	t:=dup(q);
+	u:=t;
+	if c {
+		repeat 3 { q:=X(q); }
+	}
+	return (q,u);
+}
+def main(){
+	assert(measure(f(1:𝔹,0:𝔹))==(1,0));
+	assert(measure(f(0:𝔹,1:𝔹))==(1,1));
+	assert(measure(f(1:𝔹,1:𝔹))==(0,1));
+}
