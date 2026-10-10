@@ -1,0 +1,14 @@
+// args: --remove-loops --run
+
+def f[p:uint[2]](){
+	r:=0:𝔹;
+	for i in 0..2{
+		if p[i] { r:=X(r); }
+		if i==5 { return r; }
+	}
+	return r;
+}
+def main(){
+	assert(measure(f[1 as uint[2]]())==1);
+	assert(measure(f[3 as uint[2]]())==0);
+}
