@@ -1,0 +1,21 @@
+// args: --remove-loops --run
+
+def f(c:!ℕ,const q0:𝔹){
+	q1:=0:𝔹; q2:=H(0:𝔹);
+	repeat 2 {
+		repeat c%3 {
+			m:=measure(dup(q2)); forget(q2=m); q2:=1:𝔹;
+			if q2&&q0 { q1:=X(q1); }
+		}
+		c+=1;
+	}
+	forget(q2=1:𝔹);
+	return (c,q1);
+}
+def main(){
+	q0:=1:𝔹;
+	assert(measure(f(0,q0))==(2,1));
+	assert(measure(f(1,q0))==(3,1));
+	assert(measure(f(2,q0))==(4,0));
+	forget(q0=1:𝔹);
+}
