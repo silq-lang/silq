@@ -1,0 +1,19 @@
+// args: --remove-loops --run
+
+def f(){
+	x:=H(0:𝔹);
+	log:=[]:𝔹[];
+	q:=H(0:𝔹);
+	repeat 2 {
+		m:=measure(dup(q)); forget(q=m); q:=m:𝔹;
+		log ~← [dup(q)⊕dup(x)];
+	}
+	t:=0:𝔹;
+	if log[0] { t:=X(t); }
+	x:=H(x);
+	return (x,q,t);
+}
+def main(){
+	(x,q,t):=f();
+	return (x,measure(q),t);
+}

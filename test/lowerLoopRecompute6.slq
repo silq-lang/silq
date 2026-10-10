@@ -1,0 +1,19 @@
+// args: --remove-loops --run
+
+def f(n:!ℕ){
+	a:=vector(3,0:𝔹); x:=0:uint[2]; y:=0:uint[2]; q:=H(0:𝔹); k:=0:!ℕ; w:=0:!ℕ;
+	while w<n {
+		a[k%3]:=X(a[k%3]);
+		v:=0;
+		while v<k%2 { x+=1; v+=1; }
+		with t:=dup(x) do { y+=t; }
+		u:=dup(y);
+		m:=measure(u);
+		r:=measure(q); q:=H(0:𝔹);
+		if r { k+=1; x+=m; }
+		w+=1;
+	}
+	forget(a); forget(x); forget(y);
+	return (q,k);
+}
+def main()⇒f(4);

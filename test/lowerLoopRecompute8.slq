@@ -1,0 +1,19 @@
+// args: --remove-loops --run
+
+def f(c1:!ℕ){
+	q0:=H(0:𝔹); q1:=H(0:𝔹); a:=vector(3,0:𝔹); y:=0:𝔹;
+	t:=dup(q1); if t { a[0]:=X(a[0]); }
+	if c1==0 {
+		repeat 3 {
+			u:=dup(a[0]);
+			y⊕=u;
+			m:=measure(u);
+			a[2]:=X(a[2]);
+			q0:=H(q0);
+		}
+	} else {
+		q1:=H(q1);
+	}
+	return (q0,q1,a,y);
+}
+def main()⇒(f(0),f(1));

@@ -1,0 +1,19 @@
+// args: --remove-loops --run
+
+def f(const a:𝔹,const b:𝔹,n:!ℕ){
+	x:=dup(a); y:=dup(b); q:=H(0:𝔹);
+	repeat n {
+		x⊕=y;
+		y:=X(y);
+		m:=measure(q); q:=H(0:𝔹);
+		if m { x:=X(x); }
+	}
+	forget(x); forget(y);
+	return measure(q);
+}
+def main(){
+	a:=H(0:𝔹); b:=H(0:𝔹);
+	r:=f(a,b,3);
+	assert(measure(H(a),H(b))==(0,0));
+	return r;
+}

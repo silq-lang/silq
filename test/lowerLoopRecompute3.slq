@@ -1,0 +1,21 @@
+// args: --remove-loops --run
+
+def f(n:!ℕ){
+	x:=0:uint[3]; c:=H(0:𝔹); q:=H(0:𝔹); k:=1:!ℕ;
+	for i in [0..n) {
+		if c {
+			j:=2*k+i;
+			x+=j;
+			for l in [0..k%2+1) { x+=l; }
+		}
+		m:=measure(q); q:=H(0:𝔹);
+		if m { k+=1; }
+	}
+	forget(x);
+	return (c,q,k);
+}
+def main(){
+	(c,q,k):=f(3);
+	assert(measure(H(c))==0);
+	return (q,k);
+}

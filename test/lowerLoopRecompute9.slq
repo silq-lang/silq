@@ -1,0 +1,15 @@
+// args: --remove-loops --run
+
+def f(x:!ℕ){
+	q1:=0:𝔹; q2:=1:𝔹; c:=0:!ℕ;
+	for i in [0..3) {
+		if x<2 { q1⊕=q2; } else { q2⊕=q1; }
+		m:=measure(q1); q1:=m:𝔹;
+		if m { c+=1; }
+	}
+	forget(q1); forget(q2);
+	return c;
+}
+def main(){
+	assert(f(0)==2&&f(5)==0);
+}
