@@ -1,0 +1,24 @@
+// args: --run
+
+def f(c0:!ℕ,c1:!ℕ,q:𝔹){
+	if c1==0 {
+		if c0==1 { return q; }
+		t:=dup(q); u:=t;
+	}
+	return q;
+}
+def g(c:!ℕ,const qc:𝔹,q:𝔹){
+	if c==0 {
+		if qc { return q; }
+		t:=dup(q); u:=t;
+	}
+	return q;
+}
+def main(){
+	assert(measure(f(0,0,1:𝔹))==1);
+	assert(measure(f(1,0,0:𝔹))==0);
+	assert(measure(f(0,1,1:𝔹))==1);
+	assert(measure(g(0,1:𝔹,1:𝔹))==1);
+	assert(measure(g(0,0:𝔹,0:𝔹))==0);
+	assert(measure(g(1,0:𝔹,1:𝔹))==1);
+}
