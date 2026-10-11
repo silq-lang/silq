@@ -1,0 +1,28 @@
+// args: --run --remove-loops
+
+def f(n:!ℕ,const a:𝔹){
+	x:=dup(a) as uint[3];
+	w:=0:𝔹;
+	c:=0:!ℕ;
+	repeat n {
+		t0:=dup(x);
+		repeat n {
+			t1:=dup(t0);
+			repeat n {
+				m:=measure(H(0:𝔹));
+				if m { x+=1; t0+=1; t1+=1; c+=1; }
+				w:=H(w);
+			}
+			forget(t1);
+		}
+		forget(t0);
+	}
+	return (x,w,c);
+}
+def main(){
+	a:=H(0:𝔹);
+	(x,w,c):=f(2,a);
+	v:=measure(x) as !ℕ;
+	assert(((measure(a) as !ℕ)+c)%8==v);
+	return (w,v);
+}
