@@ -1012,7 +1012,7 @@ struct QState{
 					foreach(k,v;rhs.record) if(k !in record) ok=false;
 					foreach(k,v;record) if(k !in rhs.record) ok=false;
 					if(ok){
-						foreach(k,v;record) v.assign(state,rhs.record[k]);
+						foreach(k,ref v;record) v.assign(state,rhs.record[k]);
 						this.type=rhs.type;
 					}else{
 						forget(state);
@@ -1066,7 +1066,18 @@ struct QState{
 				}
 				case Tag.closure:
 					enforce(rhs.tag==Tag.closure,"incompatible values for closure forget");
-					if(closure.context) return closure.context.forget(state,*rhs.closure.context);
+					if(!closure.context) return;
+					enforce(!!rhs.closure.context,"incompatible values for closure forget");
+					auto lctx=closure.context.record,rctx=rhs.closure.context.record;
+					if(lctx.length==rctx.length&&rctx.byKey.all!(k=>k in lctx))
+						return closure.context.forget(state,*rhs.closure.context);
+					auto lcap=closure.fun.capturedDecls,rcap=rhs.closure.fun.capturedDecls;
+					enforce(lcap.length==rcap.length&&lctx.length==lcap.length&&rctx.length==rcap.length,"incompatible values for closure forget");
+					foreach(i;0..lcap.length){
+						auto l=lctx.getPtr(lcap[i].getName),r=rctx.getPtr(rcap[i].getName);
+						enforce(l&&r,"incompatible values for closure forget");
+						l.forget(state,*r);
+					}
 					return;
 				case Tag.array_:
 					assert(rhs.tag==Tag.array_,"incompatible values for array forget");

@@ -1,0 +1,13 @@
+// args: --run
+
+def main(){
+	c:=1:𝔹;
+	f:=λ(const x:𝔹)qfree⇒dup(x);
+	f=λ(const x:𝔹)qfree⇒f(x)⊕c;
+	f=λ(const x:𝔹)qfree⇒f(x)⊕1;
+	assert(measure(f(0:𝔹))==0);
+	f=λ(const x:𝔹)qfree⇒f(x)⊕1;
+	assert(measure(f(0:𝔹))==1);
+	forget(f);
+	return c;
+}

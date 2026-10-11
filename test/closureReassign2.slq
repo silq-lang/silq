@@ -1,0 +1,15 @@
+// args: --run
+
+def main(){
+	a:=0:𝔹;
+	c:=dup(a);
+	f:=λ(const x:𝔹)qfree⇒dup(x);
+	for i in [0..3){
+		c⊕=1;
+		f=λ(const x:𝔹)qfree⇒f(x)⊕c;
+		if i%2==0 { f=λ(const x:𝔹)qfree⇒f(x)⊕1; }
+	}
+	assert(measure(f(a))==0);
+	forget(f); forget(c);
+	return a;
+}

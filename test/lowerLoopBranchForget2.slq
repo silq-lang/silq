@@ -1,0 +1,24 @@
+// args: --remove-loops --run
+
+def f(c:!ℕ){
+	a:=H(0:𝔹);
+	x:=dup(a); y:=0:𝔹; w:=0:𝔹; k:=0:!ℕ;
+	if c==0 {
+		repeat 2 {
+			x:=X(x); y⊕=x;
+			w:=H(w);
+			if measure(H(0:𝔹)) { x:=X(x); k+=1; }
+		}
+	} else {
+		a:=H(a);
+	}
+	return (a,x,y,w,k);
+}
+def main(){
+	(a0,x0,y0,w0,k0):=f(0);
+	x0⊕=a0;
+	assert(measure(x0,w0)==(k0%2,0));
+	(a1,x1,y1,w1,k1):=f(1);
+	assert(measure(y1,w1)==(0,0)&&k1==0);
+	return (a0,y0,a1,x1);
+}

@@ -1,0 +1,27 @@
+// args: --run
+// values computed in a nested scope of a branch from the branch's version of a variable can be forgotten even if the
+// other branch consumes it (see lastUseSiblingNested1)
+
+def f(c:!ℕ,y:𝔹,e:𝔹){
+	if c<5 {
+		if c==0 { y:=X(y); } else { t:=dup(y); e⊕=t; forget(t); }
+	} else {
+		y:=X(y);
+	}
+	return (y,e);
+}
+def g(i:!ℕ,n:!ℕ,y:𝔹,e:𝔹)qfree{
+	if i<n {
+		if i%3==0 { y:=X(y); } else { if i%3==1 { t:=dup(y); e⊕=t; } }
+		r:=g(i+1,n,y,e);
+	} else {
+		r:=(y,e);
+	}
+	return r;
+}
+def main(){
+	(y0,e0):=f(1,1:𝔹,0:𝔹);
+	(y1,e1):=g(0,5,0:𝔹,0:𝔹);
+	assert(measure(y0,e0,y1,e1)==(1,1,0,1));
+	return ();
+}

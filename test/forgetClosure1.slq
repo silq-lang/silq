@@ -1,0 +1,14 @@
+// args: --run
+
+def main(){
+	a:=H(0:𝔹);
+	b:=dup(a);
+	f:=λ(const x:𝔹)qfree⇒x⊕a;
+	g:=λ(const x:𝔹)qfree⇒x⊕b;
+	forget(g=f);
+	r:=f(1:𝔹);
+	forget(f);
+	r⊕=a;
+	assert(measure(r)==1);
+	return a;
+}

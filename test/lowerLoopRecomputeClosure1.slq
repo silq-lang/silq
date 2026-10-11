@@ -1,0 +1,21 @@
+// args: --remove-loops --run
+
+def foo(const a:𝔹){
+	d:=0:𝔹;
+	f:=λ(const x:𝔹)qfree⇒dup(x);
+	k:=0:!ℕ;
+	for i in [0..3){
+		f=λ(const x:𝔹)qfree⇒f(x)⊕a;
+		if measure(H(0:𝔹)) { f=λ(const x:𝔹)qfree⇒f(x)⊕1; k+=1; }
+		if f(a) { d:=H(d); }
+	}
+	r:=f(a);
+	forget(f);
+	return (r,d,k);
+}
+def main(){
+	a:=H(0:𝔹);
+	(r,d,k):=foo(a);
+	assert(measure(r)==k%2);
+	return (a,d);
+}
