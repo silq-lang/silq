@@ -1,0 +1,64 @@
+// args: --run
+
+def f(n:!ℕ,const a:𝔹){
+	x:=dup(a) as uint[3];
+	w:=0:𝔹;
+	c:=0:!ℕ;
+	repeat n {
+		t0:=dup(x);
+		repeat n {
+			t1:=dup(t0);
+			repeat n {
+				t2:=dup(t1);
+				repeat n {
+					t3:=dup(t2);
+					repeat n {
+						t4:=dup(t3);
+						repeat n {
+							t5:=dup(t4);
+							repeat n {
+								t6:=dup(t5);
+								repeat n {
+									t7:=dup(t6);
+									repeat n {
+										t8:=dup(t7);
+										repeat n {
+											t9:=dup(t8);
+											repeat n {
+												t10:=dup(t9);
+												repeat n {
+													m:=measure(H(0:𝔹));
+													if m { x+=1; t0+=1; t1+=1; t2+=1; t3+=1; t4+=1; t5+=1; t6+=1; t7+=1; t8+=1; t9+=1; t10+=1; c+=1; }
+													w:=H(w);
+												}
+												forget(t10);
+											}
+											forget(t9);
+										}
+										forget(t8);
+									}
+									forget(t7);
+								}
+								forget(t6);
+							}
+							forget(t5);
+						}
+						forget(t4);
+					}
+					forget(t3);
+				}
+				forget(t2);
+			}
+			forget(t1);
+		}
+		forget(t0);
+	}
+	return (x,w,c);
+}
+def main(){
+	a:=H(0:𝔹);
+	(x,w,c):=f(1,a);
+	v:=measure(x) as !ℕ;
+	assert(((measure(a) as !ℕ)+c)%8==v);
+	return (w,v);
+}
