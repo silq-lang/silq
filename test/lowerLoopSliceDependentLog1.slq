@@ -1,0 +1,62 @@
+// args: --remove-loops --run
+
+def f(n:!ℕ,const a:𝔹){
+	x:=dup(a) as uint[4];
+	w:=0:𝔹;
+	k:=1:!ℕ;
+	repeat n {
+		k+=1;
+		y:=0:uint[k]; y[0]:=X(y[0]);
+		m:=measure(y);
+		x+=m as !ℕ;
+		j:=k-1;
+		v:=vector(k,0:𝔹); v[j]:=X(v[j]);
+		mv:=measure(v);
+		if mv[j] { x+=2; }
+		z:=(0:uint[k],1:𝔹); z[0][1]:=X(z[0][1]);
+		mz:=measure(z);
+		(z0,z1):=mz;
+		if z1 { x+=z0 as !ℕ; }
+		w:=H(w);
+	}
+	forget(x);
+	return (k,w);
+}
+def g(const a:𝔹){
+	x:=dup(a) as uint[4];
+	w:=0:𝔹;
+	for i in [1..4){
+		j:=i-1;
+		y:=0:uint[i]; y[j]:=X(y[j]);
+		m:=measure(y);
+		x+=m as !ℕ;
+		w:=H(w);
+	}
+	forget(x);
+	return w;
+}
+def h(n:!ℕ,const a:𝔹){
+	x:=dup(a) as uint[4];
+	w:=0:𝔹;
+	k:=1:!ℕ;
+	repeat n {
+		repeat 2 {
+			y:=0:uint[k]; y[0]:=X(y[0]);
+			m:=measure(y);
+			x+=m as !ℕ;
+			w:=H(w);
+		}
+		k+=measure(H(H(1:𝔹))) as !ℕ;
+	}
+	forget(x);
+	return (k,w);
+}
+def main(){
+	a:=H(0:𝔹);
+	(k,w):=f(2,a);
+	w2:=g(a);
+	assert(k==3);
+	(k3,w3):=h(2,a);
+	assert(k3==3);
+	assert(measure(H(a),w,H(w2),w3)==(0,0,0,0));
+}

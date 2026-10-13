@@ -1,0 +1,22 @@
+// args: --remove-loops --run
+
+def f(n:!ℕ,const a:𝔹){
+	x:=dup(a) as uint[4];
+	w:=0:𝔹;
+	cs:=[]:!ℕ[];
+	repeat n {
+		cs~=[(measure(H(H(0:𝔹))) as !ℕ)+cs.length+1];
+		l:=cs.length;
+		with { c:=cs[l-1]; } do { x+=c; }
+		for i in [0..cs.length){ x+=cs[i]; }
+		w:=H(w);
+	}
+	forget(x);
+	return (cs,w);
+}
+def main(){
+	a:=H(0:𝔹);
+	(cs,w):=f(2,a);
+	assert(cs==[1,2]);
+	assert(measure(H(a),w)==(0,0));
+}
