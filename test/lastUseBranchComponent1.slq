@@ -1,0 +1,52 @@
+// args: --run
+
+def f(){
+	x:=H(0);
+	k:=if x then 1:uint[2] else 2:uint[2];
+	if measure(H(0)){
+		t:=dup(k);
+		t[0]⊕=x;
+		forget(t);
+	}else{
+		x:=H(x);
+	}
+	return (x,k);
+}
+def g(){
+	x:=H(0);
+	if measure(H(0)){
+		t:=vector(2,vector(2,0:𝔹));
+		t[1][0]⊕=x;
+		j:=0;
+		t[j][1]⊕=t[1][0];
+		forget(t);
+	}else{
+		x:=H(x);
+	}
+	return x;
+}
+def h(){
+	x:=H(0);
+	if measure(H(0)){
+		t:=(0:𝔹,0:uint[2]);
+		t[1][0]:=X(t[1][0]);
+		t[0]⊕=x;
+		forget(t);
+	}else{
+		x:=H(x);
+	}
+	return x;
+}
+def l(){
+	x:=H(0);
+	k:=if x then 1:uint[2] else 2:uint[2];
+	if measure(H(0)){
+		t:=dup(k);
+		with { c:=t[0]; } do { c⊕=x; }
+		forget(t);
+	}else{
+		x:=H(x);
+	}
+	return (x,k);
+}
+def main()⇒(f(),g(),h(),l());
