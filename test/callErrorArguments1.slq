@@ -1,0 +1,35 @@
+
+def f(){
+	x:=H(0);
+	g(x); /// error
+}
+def h(){
+	x:=H(0);
+	z:=(1:𝔹)(x); /// error
+}
+def k(){
+	x:=H(0);
+	y:=dup(x);
+	f:=()⇒CNOT(x,y);
+	reverse(f)(x); /// error
+}
+def l(){
+	x:=H(0);
+	y:=dup(x);
+	f:=()⇒CNOT(x,y);
+	g:=reverse(f); /// error
+	g(x);
+}
+def m(){
+	x:=H(0);
+	if measure(H(0)){
+		z:=g(x); /// error
+	}
+	return x;
+}
+def n(const x:𝔹){
+	if x{
+		y:=g(x); /// error
+	}
+	return dup(x);
+}

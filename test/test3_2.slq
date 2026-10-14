@@ -132,8 +132,8 @@ def a6_QWSH[n:!N, r:!N, rr:!N](edgeOracle:((const int[n] x const int[n] x 𝔹) 
 	};
 
 	(i, v) := a7_Diffuse_Pair(i, v);
-	(ttd,ee,eed,tt) := f(i,tt,ee); /// error
-	(ttd, v) := (v, ttd); /// error
+	(ttd,ee,eed,tt) := f(i,tt,ee);
+	(ttd, v) := (v, ttd);
 	(tt,ee) := reverse(f)(i,ttd,ee,eed,tt); /// error
 
 	return (tt, i, v, ee);

@@ -3,6 +3,6 @@
 def main(){
 	reverse(measure[int[32]]); /// error
 	x:=H(0:𝔹);
-	f:=()mfree=>x; /// error
+	f:=()mfree=>x;
 	reverse(f); /// error
 }
