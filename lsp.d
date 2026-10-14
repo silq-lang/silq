@@ -18,6 +18,7 @@ import core.stdc.stdio: _IONBF;
 import ast.error, ast.lexer, ast.expression, ast.scope_, ast.modules;
 import ast.type: clearTypeCaches;
 import ast.semantic_: resetFreshNameCount;
+import ast.looplowering: clearLoopLoweringState;
 import astopt;
 import util.path: dirName;
 import std.path: isAbsolute;
@@ -254,6 +255,8 @@ private void runCheck(string name, string text) {
 	// from that one counter, so no kept prelude could be numbered around.)
 	clearBuiltinScopes();
 	resetFreshNameCount(0);
+	// So is the early-return elimination state (used with --remove-loops/--compile).
+	clearLoopLoweringState();
 	// Imports resolve against the working directory first (getActualPath), and
 	// an editor starts the server in the workspace root. Searching the
 	// document's directory after that is not enough: a same-named file in the
