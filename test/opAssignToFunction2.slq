@@ -1,0 +1,6 @@
+// args: --run
+
+def main(){
+	def f()⇒1;
+	f=2;
+}
