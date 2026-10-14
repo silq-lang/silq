@@ -2,6 +2,6 @@
 def main(){
 	x:=H(0);
 	y:=dup(x);
-	f:=()⇒CNOT(x,y); /// TODO
+	f:=()⇒CNOT(x,y);
 	f():=x; /// TODO improve diagnostic
 }
