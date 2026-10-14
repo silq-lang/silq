@@ -1,0 +1,12 @@
+
+def main(){
+	x:=H(0);
+	o:=dup(x); /// error
+	if measure(H(0)){
+		y:=0:typeof(measure(o));
+	}else{
+		_:=measure(o);
+		x:=H(x);
+	}
+	return x;
+}
