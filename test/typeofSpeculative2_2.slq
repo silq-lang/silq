@@ -1,0 +1,10 @@
+
+def main(){
+	t:=H(0:𝔹);
+	x:=dup(t);
+	y:=(0,1):typeof(measure(x),dup(x));
+	if measure(H(0:𝔹)){
+		z:=(1,0):typeof(measure(x),measure(x));
+	}
+	return t;
+}
