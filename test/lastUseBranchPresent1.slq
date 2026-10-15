@@ -1,0 +1,19 @@
+// args: --remove-loops --run
+
+def f(c0:!ℕ,c1:!ℕ,const qc:𝔹){
+	q0:=H(0:𝔹); q2:=H(1:𝔹); a:=0:𝔹;
+	w:=0;
+	while w<c0 {
+		if qc { return (q0,q2,a); }
+		w+=1;
+	}
+	v:=0;
+	while v<c1 {
+		if qc { if q0 { q2:=H(q2); } }
+		v+=1;
+	}
+	t:=q2&&q0;
+	if t { a:=X(a); }
+	return (q0,q2,a);
+}
+def main(){ qc:=H(0:𝔹); r:=(f(1,1,qc),f(0,2,qc)); return (qc,r); }
