@@ -1,0 +1,16 @@
+// args: --run
+
+def main(){
+	def f(x:!ℕ)⇒x+1;
+	g:=f;
+	f=(x:!ℕ)⇒x+2;
+	assert((g(1),f(1))=(2,3));
+	def h()⇒1;
+	x:=0;
+	(h,x)=(2,3);
+	assert(h+x=5);
+	def q(x:𝔹)qfree⇒x;
+	y:=0:𝔹;
+	(q,y)=(y,q(1:𝔹));
+	assert(measure(q,y)=(0,1));
+}
