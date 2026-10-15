@@ -1,0 +1,12 @@
+
+def f(){
+	x:=H(0);
+	g(y):=x; /// error
+	return y;
+}
+def h(){
+	x:=H(0);
+	y:=dup(x);
+	k:=()⇒(dup(x),y);
+	k():=(x,y); /// error
+}
