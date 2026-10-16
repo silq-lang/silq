@@ -1,0 +1,13 @@
+
+def f(c:!𝔹){
+	a:=H(0:𝔹);
+	x:=dup(a);
+	if c{
+		repeat 1{
+			g(x); /// error
+		}
+	}else{
+		a:=H(a);
+	}
+	return (a,x);
+}
