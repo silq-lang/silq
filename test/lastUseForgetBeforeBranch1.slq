@@ -1,0 +1,25 @@
+// args: --run
+
+def f(){
+	x:=H(0:𝔹);
+	w:=H(0:𝔹);
+	co:=dup(w);
+	o:=dup(co);
+	cp:=dup(o);
+	p:=dup(cp);
+	m1:=measure(o,p);
+	m2:=measure(dup(p));
+	if measure(H(0:𝔹)) { return (x,w); }
+	return (x,w);
+}
+def g(){
+	x:=H(0:𝔹);
+	w:=H(0:𝔹);
+	o:=dup(w);
+	p:=dup(o);
+	m1:=measure(o,p);
+	m2:=measure(dup(p));
+	if measure(H(0:𝔹)) { return (x,w); }
+	return (x,w);
+}
+def main()⇒(f(),g());
