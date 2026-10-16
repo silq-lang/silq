@@ -1,0 +1,63 @@
+def f(){
+	x:=H(0:𝔹);
+	w:=H(0:𝔹);
+	p:=dup(w);
+	if measure(H(0:𝔹)) {
+		if measure(H(0:𝔹)) { m1:=measure(p); }
+		if p { w:=X(w); } /// error
+	} else {
+		forget(p);
+	}
+	return (x,w);
+}
+def g(){
+	x:=H(0:𝔹);
+	w:=H(0:𝔹);
+	p:=dup(w);
+	if measure(H(0:𝔹)) {
+		if measure(H(0:𝔹)) { m1:=measure(p); }
+		if measure(H(0:𝔹)) {
+			m2:=measure(dup(p)); /// error
+			if p { w:=X(w); } /// error
+		}
+	} else {
+		forget(p);
+		if measure(H(0:𝔹)) { return (x,w); }
+	}
+	return (x,w);
+}
+def h(){
+	x:=H(0:𝔹);
+	w:=H(0:𝔹);
+	cp:=dup(w);
+	p:=dup(cp); /// error
+	if measure(H(0:𝔹)) {
+		if measure(H(0:𝔹)) {
+			if measure(H(0:𝔹)) { m:=measure(p); }
+			if measure(H(0:𝔹)) { return (x,w); }
+		}
+	}
+	return (x,w);
+}
+def k(){
+	x:=H(0:𝔹);
+	w:=H(0:𝔹);
+	co:=dup(w);
+	o:=dup(co); /// error
+	cp:=dup(o);
+	p:=dup(cp);
+	if measure(H(0:𝔹)) {
+		if measure(H(0:𝔹)) {
+			m1:=measure(p);
+			m2:=measure(o,p); /// error
+		} else {
+			if measure(H(0:𝔹)) {
+				m3:=measure(p,x);
+				x:=H(0:𝔹);
+			} else {
+				return (x,w);
+			}
+		}
+	}
+	return (x,w);
+}
