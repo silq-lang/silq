@@ -1,0 +1,16 @@
+
+def f(){
+	x:=H(0:𝔹);
+	o:=dup(x);
+	p:=dup(o); /// error
+	x:=H(x);
+	if measure(H(0:𝔹)) { m:=measure(p); } else { }
+	return x;
+}
+def g(){
+	x:=H(0:𝔹);
+	o:=dup(x);
+	p:=dup(o); /// error
+	if measure(H(0:𝔹)) { if measure(H(0:𝔹)) { x:=X(x); } m:=measure(p); }
+	return x;
+}
