@@ -1,0 +1,27 @@
+// args: --remove-loops --run
+
+def f(c:!ℕ){
+	q0:=H(0:𝔹); q2:=H(1:𝔹); a:=0:𝔹;
+	if c%2==0 {
+		for i in [0..2) {
+			t:=dup(q2); if t { a:=X(a); }
+			if q0 { } else { q2:=H(q2); }
+		}
+	} else {
+		if q0 { q2:=X(q2); }
+	}
+	return (q0,q2,a);
+}
+def g(c:!ℕ){
+	q0:=H(0:𝔹); q2:=H(1:𝔹); a:=0:𝔹;
+	if c%2==0 {
+		for i in [0..2) {
+			t:=dup(q2); if t { a:=X(a); }
+			q2:=H(q2);
+		}
+	} else {
+		q2:=X(q2);
+	}
+	return (q0,q2,a);
+}
+def main()⇒(f(0),f(1),g(0),g(1));
