@@ -1,0 +1,28 @@
+def f(){
+	w:=H(0:𝔹);
+	q:=dup(w);
+	if measure(H(0:𝔹)) {
+	} else {
+		if q {
+			w:=X(w);
+			m:=measure(q); /// error
+			t:=0:typeof(dup(w));
+		}
+	}
+	return w;
+}
+def g(){
+	w:=H(0:𝔹);
+	q:=dup(w);
+	if measure(H(0:𝔹)) {
+	} else {
+		if measure(H(0:𝔹)) {
+			if q {
+				w:=X(w);
+				m:=measure(q); /// error
+				t:=0:typeof(dup(w));
+			}
+		}
+	}
+	return w;
+}
