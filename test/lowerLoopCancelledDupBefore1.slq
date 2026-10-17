@@ -1,0 +1,38 @@
+// args: --remove-loops
+
+def f(){
+	w:=H(0:𝔹);
+	o:=dup(w);
+	p:=dup(o); /// error
+	m:=measure(o);
+	for i in 0..2 {
+		n:=measure(dup(p));
+		w:=Z(w);
+	}
+	return w;
+}
+def g(){
+	w:=H(0:𝔹);
+	o:=dup(w);
+	p:=dup(o); /// error
+	m:=measure(o);
+	while measure(H(0:𝔹)) {
+		if measure(H(0:𝔹)) {
+			n:=measure(dup(p));
+			w:=Z(w);
+		}
+	}
+	return w;
+}
+def h(){
+	w:=H(0:𝔹);
+	o:=dup(w);
+	p:=dup(o);
+	m:=measure(o);
+	for i in 0..2 {
+		n:=measure(dup(p));
+		w:=Z(w);
+	}
+	forget(p); /// error
+	return w;
+}
