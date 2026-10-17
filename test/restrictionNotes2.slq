@@ -1,0 +1,18 @@
+def g(x:𝔹){
+	return measure(x); /// note
+}
+def h(x:𝔹)mfree{ /// note
+	return g(x); /// error
+}
+def g2(x:𝔹){
+	return H(x); /// note
+}
+def h2(x:𝔹)lifted{ /// note
+	return g2(x); /// error
+}
+def h3(const b:𝔹,x:𝔹)qfree{ /// note
+	if b{
+		x:=H(x); /// error
+	}
+	return x;
+}

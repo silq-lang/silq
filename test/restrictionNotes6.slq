@@ -1,0 +1,23 @@
+def g[n:!ℕ](x:uint[n]){
+	return measure(x); /// note
+}
+def h(const b:𝔹,x:uint[3]){
+	if b{ /// note
+		x:=g(x); /// error
+	}
+	return x;
+}
+def k(const b:𝔹,x:𝔹){
+	f:=λ(y:𝔹).
+		measure(y); /// note
+	if b{ /// note
+		x:=f(x); /// error
+	}
+	return x;
+}
+def c(n:!ℕ){
+	return n+measure(H(0:𝔹)); /// note
+}
+def t(x:uint[c(3)]){ /// error
+	return x;
+}

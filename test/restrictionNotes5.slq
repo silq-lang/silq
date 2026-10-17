@@ -1,0 +1,22 @@
+def g(x:𝔹):!𝔹{
+	return measure(x); /// note
+}
+def m(n:!ℕ){
+	return [g(H(0:𝔹)) for i in [0..n)]; /// note
+}
+def h(const b:𝔹){
+	if b{ /// note
+		v:=m(3); /// error
+	}
+}
+def k(const b:𝔹){
+	if b{ /// note
+		v:=[g(H(0:𝔹)) for i in [0..3)]; /// error
+	}
+}
+def r(x:𝔹){
+	return g(H(x)); /// note
+}
+def main(){
+	f:=reverse(r); /// error
+}

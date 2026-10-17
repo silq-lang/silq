@@ -1,0 +1,19 @@
+def g(x:𝔹){
+	return measure(x); /// note
+}
+def h(const b:𝔹,x:𝔹){
+	if b{
+		return x; /// note
+	}
+	x:=g(x); /// error
+	return x;
+}
+def k(const b:𝔹,x:𝔹){
+	for i in [0..2){
+		x:=g(x); /// error
+		if b{
+			return x; /// note
+		}
+	}
+	return x;
+}

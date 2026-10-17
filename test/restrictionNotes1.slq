@@ -1,0 +1,15 @@
+def g(x:𝔹){
+	return measure(x); /// note
+}
+def k(x:𝔹){
+	y:=H(x);
+	return g(y); /// note
+}
+def main(){
+	b:=H(0:𝔹);
+	x:=0:𝔹;
+	if b{ /// note
+		x:=k(x); /// error
+	}
+	return (b,x);
+}

@@ -1,0 +1,17 @@
+def g(x:!𝔹){
+	y:=measure(H(0:𝔹)); /// note
+	return x;
+}
+def h(const a:𝔹,const b:!𝔹){
+	return a /// note
+		&& g(b); /// error
+}
+def k(x:𝔹){
+	with{ /// note
+		x:=H(x);
+		y:=g(true); /// error
+	}do{
+		z:=1;
+	}
+	return x;
+}
