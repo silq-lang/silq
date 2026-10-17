@@ -1,0 +1,14 @@
+// args: --run
+
+def f(c:!𝔹){
+	let{ y:=x; if c { y:=X(y); } } in y := 0:𝔹;
+	return measure(x);
+}
+def main(){
+	assert(f(true)==1);
+	assert(f(false)==0);
+	c:=H(0:𝔹);
+	let{ y:=x; if c { y:=X(y); } } in y := 0:𝔹;
+	assert(measure(x==c));
+	return (x,c);
+}
