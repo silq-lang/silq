@@ -1,0 +1,33 @@
+def f(){
+	x:=H(0:𝔹);
+	w:=H(0:𝔹);
+	p:=dup(w);
+	m1:=measure(p);
+	if measure(H(0:𝔹)) { }
+	k:=measure(dup(p));
+	w:=X(w);
+	m2:=measure(p); /// error
+	return (x,w);
+}
+def g(){
+	x:=H(0:𝔹);
+	w:=H(0:𝔹);
+	p:=dup(w);
+	m1:=measure(p);
+	if x { }
+	k:=measure(dup(p));
+	w:=X(w);
+	m2:=measure(p); /// error
+	return (x,w);
+}
+def h(){
+	x:=H(0:𝔹);
+	w:=H(0:𝔹);
+	cp:=dup(w);
+	p:=dup(cp);
+	w:=X(w);
+	m1:=measure(p);
+	if x { }
+	m2:=measure(p); /// error
+	return (x,w);
+}
