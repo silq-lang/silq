@@ -1,0 +1,44 @@
+// args: --run
+
+def f(){
+	x:=H(0:𝔹);
+	w:=H(0:𝔹);
+	o:=dup(w);
+	m1:=measure(o);
+	m2:=measure(dup(o));
+	if measure(H(0:𝔹)) {
+		if measure(H(0:𝔹)) { w:=X(w); }
+	}
+	return (x,w);
+}
+def g(){
+	x:=H(0:𝔹);
+	w:=H(0:𝔹);
+	o:=dup(w);
+	p:=dup(x);
+	q:=dup(x);
+	m1:=measure(o);
+	m2:=measure(dup(o));
+	if p { if q { w:=X(w); } }
+	forget(p);
+	forget(q);
+	return (x,w);
+}
+def h(){
+	x:=H(0:𝔹);
+	w:=H(0:𝔹);
+	o:=dup(w);
+	q:=dup(x);
+	m1:=measure(o);
+	m2:=measure(dup(o));
+	if measure(H(0:𝔹)) {
+		if measure(H(0:𝔹)) {
+			if measure(H(0:𝔹)) { w:=X(w); }
+		} else {
+			if q { w:=X(w); }
+		}
+	}
+	forget(q);
+	return (x,w);
+}
+def main()⇒(f(),g(),h());
