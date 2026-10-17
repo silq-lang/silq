@@ -1,0 +1,19 @@
+// args: --run
+
+def g(x:B)mfree:B{ return H(x); }
+def m(x:B):B{ return measure(x); }
+def h(const b:B, x:B) {
+	if b { x := g(x); }
+	return x;
+}
+def k(const b:B, x:B) {
+	x := m(x);
+	if b { x := g(x); }
+	return x;
+}
+def main(){
+	b := H(0:B);
+	x := h(b, 0:B);
+	y := k(b, x);
+	return (b, measure(y));
+}

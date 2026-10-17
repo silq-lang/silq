@@ -1,0 +1,16 @@
+def conditionalf(const b:B, x:uint[4], const f:uint[4]->uint[4]) {
+	if b {
+		x := f(x); /// error
+	}
+	return x;
+}
+def f(x:uint[4]) {
+	x += 1;
+	return measure(x);
+}
+def main() {
+	b := H(0:B);
+	x := 2:uint[4];
+	c := conditionalf(b, x, f);
+	return (b, c);
+}

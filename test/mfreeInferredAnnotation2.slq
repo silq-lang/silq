@@ -1,0 +1,9 @@
+def g(x:B):B{ return measure(x); }
+def h(const b:B, x:B) {
+	if b { x := g(x); } /// error
+	return x;
+}
+def g2(x:B):!B{ return measure(x); }
+def k(const b:B) {
+	if b { v := [g2(H(0:B)) for i in [0..3)]; } /// error
+}
