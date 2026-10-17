@@ -1,0 +1,13 @@
+def main(){
+	x:=H(0:𝔹);
+	o:=dup(x);
+	q:=dup(o); /// error
+	if measure(H(0:𝔹)) {
+		o:=X(o);
+		m:=measure(q);
+		x:=X(x);
+	} else {
+		with { t:=dup(q); } do {}
+	}
+	return (x,o);
+}
