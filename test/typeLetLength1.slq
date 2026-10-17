@@ -1,0 +1,16 @@
+// args: --run
+
+def g1(b:!ℕ)⇒vector(let{ def go(n:!ℕ)⇒n; } in go(b),false);
+def g2(b:!ℕ)⇒vector(let{ def go(n:!ℕ):!ℕ{ f:=λ(x:!ℕ)⇒x+n; return f(1); } } in go(b),false);
+def g3(b:!ℕ)⇒vector(let{ def go(n:!ℕ):!ℕ{ r:=0; for i in 0..n { r+=i; } return r; } } in go(b),false);
+def g4(b:!ℕ)⇒vector(let{ def go(n:!ℕ):!ℕ{ def h(m:!ℕ)⇒m+n; return h(1); } } in go(b),false);
+def g5(b:!ℕ)⇒vector(let{ def go(n:!ℕ):!ℕ^n{ return vector(n,1:!ℕ); } } in go(b).length,false);
+def g6(b:!ℕ)⇒vector(let{ def go(n:!ℕ)(x:!ℕ^n):!ℕ⇒n; } in go(b)(vector(b,0)),false);
+def main(){
+	v1:=g1(3); assert(v1.length==3);
+	v2:=g2(3); assert(v2.length==4);
+	v3:=g3(3); assert(v3.length==3);
+	v4:=g4(3); assert(v4.length==4);
+	v5:=g5(3); assert(v5.length==3);
+	v6:=g6(3); assert(v6.length==3);
+}
