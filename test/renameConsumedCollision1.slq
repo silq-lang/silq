@@ -1,0 +1,13 @@
+// args: --run
+
+def o(x:𝔹){
+	def rec(x:𝔹):𝔹{
+		x':=x;
+		return x';
+	}
+	return rec(x);
+}
+def main(){
+	assert(measure(o(1:𝔹)));
+	assert(!measure(o(0:𝔹)));
+}
