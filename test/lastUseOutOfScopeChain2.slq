@@ -1,0 +1,49 @@
+def f(){
+	x:=H(0:𝔹);
+	w:=H(0:𝔹);
+	co:=dup(w);
+	o:=dup(co);
+	cp:=dup(o);
+	p:=dup(cp);
+	m1:=measure(p);
+	w:=Z(w);
+	m2:=measure(o,p); /// error
+	return (x,w);
+}
+def g(){
+	x:=H(0:𝔹);
+	w:=H(0:𝔹);
+	co:=dup(w);
+	o:=dup(co);
+	cp:=dup(o);
+	p:=dup(cp);
+	m1:=measure(p);
+	w:=Z(w);
+	m2:=measure(o);
+	m3:=measure(p); /// error
+	return (x,w);
+}
+def h(){
+	x:=H(0:𝔹);
+	w:=H(0:𝔹);
+	cw:=dup(w);
+	co:=dup(cw);
+	o:=dup(co);
+	cq:=dup(o);
+	cp:=dup(cq);
+	p:=dup(cp);
+	m1:=measure(p);
+	w:=Z(w);
+	m2:=measure(o,p); /// error
+	return (x,w);
+}
+def k(){
+	x:=H(0:𝔹);
+	w:=H(0:𝔹);
+	o:=dup(w);
+	p:=dup(o);
+	m1:=measure(p);
+	w:=Z(w);
+	m2:=measure(o,p); /// error
+	return (x,w);
+}
