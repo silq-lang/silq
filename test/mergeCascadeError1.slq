@@ -1,0 +1,17 @@
+def flip(b:𝔹)qfree⇒X(b);
+def cx(const a:𝔹,b:𝔹)qfree{ if a { b:=X(b); } return b; }
+def main(){
+	x:=H(0:𝔹); /// error
+	o:=dup(x);
+	p:=dup(o); /// error
+	o:=X(o);
+	if x {
+		if measure(H(0:𝔹)) { /// error
+			m6:=measure(o,p); /// error
+			if x { } else { q:=cx(p,q); } /// error
+		} else {
+			x:=flip(x); /// error
+			t1:=0:typeof(measure(p)); /// error
+		}
+	}
+}
