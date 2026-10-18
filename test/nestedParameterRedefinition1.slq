@@ -1,0 +1,6 @@
+def f(){
+	def g(n:!ℕ,
+	      n:!ℕ){ /// error
+		for i in 0..2 { }
+	}
+}

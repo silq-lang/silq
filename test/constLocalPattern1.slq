@@ -1,0 +1,11 @@
+// args: --run
+
+def main(){
+	y:=H(0:𝔹);
+	(const a:𝔹,b):=(dup(y),H(0:𝔹));
+	c:=H(a);
+	t:=(0:𝔹,1:𝔹);
+	(const u:𝔹,v):=t;
+	w:=u;
+	return (y,b,c,v,w);
+}

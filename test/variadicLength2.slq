@@ -1,0 +1,8 @@
+// args: --run
+
+def f[τ:*[]](const xs:∏ τ)⇒measure(xs).length;
+def g[n:!ℕ][τ:*^n](const xs:∏ τ)⇒measure(xs).length;
+def main(){
+	assert(f[[!ℕ,!ℕ,!ℕ]](1,2,3)==3);
+	assert(g[2][(!ℕ,!𝔹):*^2](1,true)==2);
+}

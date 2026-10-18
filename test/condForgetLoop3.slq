@@ -1,5 +1,4 @@
-// args: --compile
-// loops whose bodies replace a component of an aggregate under a condition on another component
+// args: --run
 
 def f(){
 	x:=(H(0:𝔹),0:𝔹);

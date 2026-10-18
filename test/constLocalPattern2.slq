@@ -1,0 +1,10 @@
+def f(){
+	(const a:!𝔹,b):=(0:!𝔹,1:𝔹);
+	a=1; /// error
+	return b;
+}
+def g(){
+	a:=1:!𝔹;
+	(const a:𝔹,b):=(0:𝔹,1:𝔹); /// error
+	return b;
+}

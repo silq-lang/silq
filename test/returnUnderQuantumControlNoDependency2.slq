@@ -1,0 +1,8 @@
+def f(const x:!𝔹){
+	if (x:𝔹){ return 2; } /// error
+	else{ return 3; } /// error
+}
+def g(){
+	if (1:𝔹){ return 2; } /// error
+	return 3; /// error
+}

@@ -4254,6 +4254,9 @@ class ScopeWriter {
 			r = getVectorLength(vecTy);
 		} else if(auto arrTy = cast(ast_ty.ArrayTy) e.e.type) {
 			r = ccg.getArrayLength(v.creg);
+		} else if(auto varTy = cast(ast_ty.VariadicTy) e.e.type) {
+			CReg rttis;
+			variadicRTTIs(varTy, r, rttis);
 		} else {
 			assert(false, format("Length of type %s", e.e.type));
 		}

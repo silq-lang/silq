@@ -1,0 +1,12 @@
+def f(const x:𝔹,y:𝔹)qfree:𝔹⇒y;
+def square(moved x:!ℝ)⇒x^2;
+def id(moved x:!ℕ)⇒x;
+
+def main(){
+	x:=1:𝔹;
+	dup[𝔹](2:!ℕ):=x; /// error
+	z:=1:𝔹;
+	f(2:!ℕ,y):=z; /// error
+	square(dup(2,2)):=4; /// error
+	[id(i as uint[2]) for i in 0..5]:=[id(i) for i in 0..5]; /// error
+}
