@@ -5260,7 +5260,7 @@ class ScopeWriter {
 						auto outer = decl.mergedInto;
 						auto ty = typeForDecl(outer);
 						assert(ty == typeForDecl(decl));
-						assert(outer.mergedFrom == [decl]);
+						assert(outer.mergedFrom.canFind(decl)); // (the aborting branch may merge as well, e.g., if it aborts under quantum control)
 						auto v0 = scCont.getVar(decl, false);
 						auto v1 = scFail.valError(rv.witness, ty);
 						sc.defineVar(outer, sc.valMerge(rv.cond, v0, v1));
@@ -7030,6 +7030,9 @@ class ScopeWriter {
 				qcg.deallocUnit(v.qreg);
 			}
 			v = valNewC(v.creg);
+		}
+		if(!v.hasQuantum && typeHasQuantum(toTy) && fromTy && ast_ty.isEmpty(fromTy)) {
+			v = valNewQ(v.creg, qcg.allocError()); // (placeholder for a diverging value)
 		}
 		if(v.hasClassical && !typeHasClassical(toTy)) {
 			v = valNewQ(null, v.qreg);

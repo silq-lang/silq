@@ -1,0 +1,9 @@
+// args: --run
+
+def g():⊥{ assert(false); } /// run_error
+def main(){
+	x:=H(0:𝔹);
+	b:=g():𝔹;
+	if b{ x:=X(x); }
+	return x;
+}
