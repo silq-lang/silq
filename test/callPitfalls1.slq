@@ -1,0 +1,41 @@
+def nat(n:!ℕ){ /// note
+	return n;
+}
+def u2(x:uint[2]){ /// note
+	return x;
+}
+def vec3(x:𝔹^3){ /// note
+	return x;
+}
+def uns[n:!ℕ](x:uint[n]){ /// note
+	return x;
+}
+def twice[n:!ℕ](x:uint[2·n]){ /// note
+	return x;
+}
+def vec[n:!ℕ](x:𝔹^n){ /// note
+	return x;
+}
+def shorter[m:!ℕ](a:𝔹^(m+1)){
+	return vec[m](a); /// error
+}
+def apply(const g:𝔹!→𝔹, /// note
+          x:𝔹){
+	return g(x);
+}
+def keep(const y:𝔹)qfree{
+	return dup(y);
+}
+def main(n:!ℕ){
+	a:=nat(n/2); /// error
+	b:=nat(n-1); /// error
+	c:=u2(5); /// error
+	d:=vec3(vector(4,0:𝔹)); /// error
+	e:=H(vector(3,0:𝔹)); /// error
+	f:=H(0:uint[3]); /// error
+	g:=vec3(0:𝔹); /// error
+	h:=uns[3](0:int[3]); /// error
+	i:=twice(0:uint[3]); /// error
+	j:=apply(keep, /// error
+		0:𝔹);
+}
