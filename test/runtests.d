@@ -183,6 +183,7 @@ struct Info {
 	string message;
 	bool isTODO;
 	bool isRuntime;
+	bool isRelated;
 
 	int opCmp(ref const Info i) const {
 		if(line != i.line) return line < i.line ? -1 : 1;
@@ -208,13 +209,15 @@ Comparison[] compare(Info[] expected, Info[] actual) {
 	auto result = appender!(Comparison[]);
 	foreach(exp; expected) {
 		while(ai < actual.length && actual[ai].line < exp.line) {
-			result.put(Comparison(Status.unexpected, actual[ai]));
+			if(!actual[ai].isRelated) result.put(Comparison(Status.unexpected, actual[ai]));
 			ai++;
 		}
 		bool match = false;
+		bool matchRelated = exp.kind == "note" || exp.isTODO && exp.message == "note";
 		while(ai < actual.length && actual[ai].line == exp.line) {
 			auto act = actual[ai];
 			ai++;
+			if(act.isRelated && !matchRelated) continue;
 			if(exp.isTODO) {
 				match = true;
 				act.isTODO = true;
@@ -236,7 +239,7 @@ Comparison[] compare(Info[] expected, Info[] actual) {
 		}
 	}
 	while(ai < actual.length) {
-		result.put(Comparison(Status.unexpected, actual[ai]));
+		if(!actual[ai].isRelated) result.put(Comparison(Status.unexpected, actual[ai]));
 		ai++;
 	}
 	return result[];
@@ -290,7 +293,11 @@ auto summarize(Comparison[] comp,bool writeLines){
 					// No error, marked as TODO error
 					result.todos++;
 					if(writeLines) writef("TODO MISSING ERROR AT LINE %d: [%s] %s\n", c.info.line, c.info.kind, c.info.message);
-				} else if(c.info.kind != "note" && c.info.kind != "message") {
+				} else if(c.info.kind == "note") {
+					// No note, marked as note (notes on unmarked lines are fine)
+					result.missingErrors++;
+					if(writeLines) writef("MISSING NOTE AT LINE %d\n", c.info.line);
+				} else if(c.info.kind != "message") {
 					// No error, not marked
 					result.missingErrors++;
 					if(writeLines) writef("MISSING ERROR AT LINE %d: [%s] %s\n", c.info.line, c.info.kind, c.info.message);
@@ -402,17 +409,26 @@ Info[] getActual(string source, bool expectOK){
 			result ~= [Info(-1, "invalid", "unexpected output: " ~ cast(string)line)];
 		} else {
 			auto data = parseJSON(line).array;
-			foreach(diag; data) {
-				int lineno;
+			int getLine(JSONValue diag) {
 				JSONValue start = diag.object["start"];
-				if(start.type() == JSONType.null_) {
-					lineno = -1;
-				} else {
-					lineno = cast(int) start.object["line"].integer;
+				if(start.type() == JSONType.null_) return -1;
+				return cast(int) start.object["line"].integer;
+			}
+			void addNotes(JSONValue diag) {
+				auto related = "relatedInformation" in diag.object;
+				if(!related || related.type() != JSONType.array) return;
+				foreach(note; related.array) {
+					auto noteSource = "source" in note.object;
+					if(noteSource && noteSource.type() == JSONType.string && noteSource.str == source)
+						result ~= [Info(getLine(note), note.object["severity"].str, note.object["message"].str, isRelated: true)];
+					addNotes(note);
 				}
+			}
+			foreach(diag; data) {
 				string kind = diag.object["severity"].str;
 				string message = diag.object["message"].str;
-				result ~= [Info(lineno, kind, message)];
+				result ~= [Info(getLine(diag), kind, message)];
+				addNotes(diag);
 			}
 		}
 	}
