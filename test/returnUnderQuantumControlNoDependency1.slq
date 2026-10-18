@@ -7,6 +7,6 @@ def f(const x:!𝔹,const y:!𝔹){
 }
 def g(const x:!𝔹){
 	if (x:𝔹){ return 1; }
-	assert(0); /// error
+	assert(0); /// run_error
 }
 def main()⇒(f(measure(H(0)),1),g(1));
