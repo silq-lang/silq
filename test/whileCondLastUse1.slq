@@ -1,0 +1,15 @@
+// args: --run
+
+def f(x:!ℕ)⇒x;
+def order(a:!ℕ){
+	b:=0;
+	while f(a)>b { b+=1; }
+	return b;
+}
+def count(a:!ℕ){
+	while f(a)≠1 { }
+}
+def main(){
+	assert(order(3)=3);
+	count(1);
+}

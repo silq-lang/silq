@@ -1,0 +1,5 @@
+def f(n: !(if true then ℕ else ℕ)) ⇒ n;
+def g[b:!𝔹](n: !(if b then ℕ else ℤ)) ⇒ n;
+def mul[n: !(if true then ℕ else ℕ)](x: uint[n]) lifted: uint[n] { /// TODO
+	return x * x;
+}
