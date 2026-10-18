@@ -1,0 +1,25 @@
+def f(x:𝔹,
+      n:!ℕ, /// note
+      y:𝔹){
+	return (x,y);
+}
+def g(x:!𝔹, /// note
+      n:!ℕ){ /// note
+	return x;
+}
+def p(c:!ℕ,
+      b:𝔹){
+	return b;
+}
+def main(){
+	a:=0:𝔹;
+	b:=1:𝔹;
+	r:=f(a,
+		-1, /// error
+		b);
+	q:=H(0:𝔹);
+	s:=g(q, /// error
+		2.5); /// error
+	t:=p(0:𝔹, /// error
+		3); /// error
+}

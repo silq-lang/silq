@@ -1,0 +1,17 @@
+def f(x:!ℕ){ /// note
+	return x;
+}
+def k[n:!ℕ]:!ℕ{
+	return n;
+}
+def g[n:!ℕ](x:uint[n]){ /// note
+	return x;
+}
+def main(){
+	a:=f[3]; /// error
+	b:=k(3); /// error
+	c:=g[𝔹](0:uint[3]); /// error
+	d:=f(𝔹); /// error
+	x:=3; /// note
+	e:=x(2); /// error
+}

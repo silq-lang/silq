@@ -1,0 +1,28 @@
+def g[n:!ℕ](x:uint[n],y:uint[n]){
+	return (x,y);
+}
+def h[τ](x:τ,y:τ){
+	return (x,y);
+}
+def k[n:!ℕ](x:!ℕ){ /// note
+	return x;
+}
+def c[τ:ctype](x:τ){ /// note
+	return x;
+}
+def u[n:!ℕ](x:uint[n]){ /// note
+	return x;
+}
+def main(){
+	a:=0:uint[3];
+	b:=0:uint[4];
+	r:=g( /// error
+		a, /// note
+		b); /// note
+	s:=h( /// error
+		1:!ℕ, /// note
+		0:𝔹); /// note
+	t:=k(3); /// error
+	v:=c(H(0:𝔹)); /// error
+	w:=u(0:𝔹); /// error
+}

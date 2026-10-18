@@ -1,0 +1,29 @@
+def measureIt(x:𝔹){
+	return measure(x); /// note
+}
+def apply(const h:𝔹!→mfree !𝔹, /// note
+          x:𝔹){
+	return h(x);
+}
+def two(a:𝔹,b:𝔹){
+	return (a,b);
+}
+def applyOne(const h:𝔹!→𝔹, /// note
+             x:𝔹){
+	return h(x);
+}
+def flip(x:𝔹)qfree{
+	return X(x);
+}
+def applyNat(const h:!ℕ!→!ℕ, /// note
+             n:!ℕ){
+	return h(n);
+}
+def main(){
+	r:=apply(measureIt, /// error
+		0:𝔹);
+	s:=applyOne(two, /// error
+		0:𝔹);
+	t:=applyNat(flip, /// error
+		3);
+}

@@ -1,0 +1,24 @@
+def f(x:𝔹,
+      n:!ℕ, /// note
+      y:𝔹){ /// note
+	return (x,y);
+}
+def g(x:𝔹,n:!ℕ){
+	return x;
+}
+def h(){
+	return 1;
+}
+def k(x:!ℕ){ /// note
+	return x;
+}
+def main(){
+	r:=f(0:𝔹); /// error
+	s:=g(0:𝔹, /// error
+		2,
+		3); /// note
+	t:=h(3); /// error
+	u:=k(); /// error
+	v:=(0:𝔹,3:!ℕ,2:!ℕ);
+	w:=g(v); /// error
+}

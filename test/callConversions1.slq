@@ -1,0 +1,16 @@
+def f(x:uint[3]){ /// note
+	return x;
+}
+def g(x:!ℕ){ /// note
+	return x;
+}
+def h(x:𝔹^3){ /// note
+	return x;
+}
+def main(n:!ℕ){
+	a:=f(3); /// error
+	b:=f(n); /// error
+	c:=g(3:!ℤ); /// error
+	d:=h(0:uint[3]); /// error
+	e:=H(2); /// error
+}
