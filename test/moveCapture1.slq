@@ -1,0 +1,20 @@
+// args: --run
+
+def f(a:!ℕ){ def g()⇒move(a); return g; }
+def h(a:!ℕ){ def g(){ b:=a+1; c:=move(a); return (b,c); } return g; }
+def k(a:!ℕ){ g:=λ()⇒move(a); return g; }
+def l(a:!ℕ){ def g(){ def m()⇒move(a); return m(); } return (g(),g()); }
+def n(a:!ℕ){ def g[m:!ℕ]()⇒move(a)+m; return g[1]; }
+def p(a:!ℕ){ def g()⇒move(a); def m()⇒move(g)(); return m; }
+def q(a:!ℕ){ g:=λ()⇒move(a); m:=λ()⇒g(); return (m(),m()); }
+
+def main(){
+	g:=f(1);
+	assert(g()==1&&g()==1);
+	assert(h(2)()==(3,2));
+	assert(k(3)()==3);
+	assert(l(4)==(4,4));
+	assert(n(5)()==6);
+	assert(p(6)()==6);
+	assert(q(7)==(7,7));
+}

@@ -1,0 +1,24 @@
+def f(x:!ℕ^2){
+	x[measure(H(0:𝔹))]=2; /// error
+	return x;
+}
+def g(x:(!𝔹×!𝔹×!ℚ)^2,i:!ℕ){
+	x[1][(if measure(H(0:𝔹)) then i else i)]=2; /// error
+	return x;
+}
+def h(x:(!ℕ^2)^2){
+	(x[1][measure(H(0:𝔹))],x[0][0])=(2,3); /// error
+	return x;
+}
+def k(x:!ℕ^2){
+	x[measure(H(0:𝔹))]*=2; /// error
+	return x;
+}
+def l(x:𝔹^2){
+	x[measure(H(0:𝔹))]⊕=1:𝔹; /// error
+	return x;
+}
+def m(x:!ℕ^2){
+	x[0.5]+=2; /// error
+	return x;
+}

@@ -1,0 +1,11 @@
+// args: --run
+
+def f(x:!ℕ)⇒x;
+def count(a:!ℕ){
+	b:=0;
+	while f(let { } in a)>b { b+=1; }
+	return b;
+}
+def main(){
+	assert(count(3)=3);
+}

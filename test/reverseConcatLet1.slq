@@ -1,0 +1,18 @@
+// args: --run
+
+def f(const x:𝔹)qfree:𝔹^2⇒[x,x];
+def g(x:𝔹){ y:=dup(x); r:=0:!𝔹; with { w:=f(y)~[0:𝔹]; } do { r=measure(dup(w[1])); } return (r,x,y); }
+def h(x:𝔹){ y:=dup(x); r:=0:!𝔹; with { w:=[0:𝔹]~f(y); } do { r=measure(dup(w[1])); } forget(y=dup(x)); return (r,x); }
+def k(x:𝔹){ y:=dup(x); r:=0:!𝔹; with { w:=[0:𝔹]~f(y)~f(y); } do { r=measure(dup(w[3])); } forget(y=dup(x)); return (r,x); }
+
+def main(){
+	(r,x,y):=g(1:𝔹);
+	assert(r==1);
+	assert(measure(x,y)==(1,1));
+	(r2,x2):=h(1:𝔹);
+	assert(r2==1);
+	assert(measure(x2)==1);
+	(r3,x3):=k(1:𝔹);
+	assert(r3==1);
+	assert(measure(x3)==1);
+}

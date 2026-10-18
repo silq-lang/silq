@@ -1,0 +1,30 @@
+// args: --run
+
+def f(v:!ℝ^2){ x:=0:!ℝ; with { w:=v~[3]; } do { x=w[1]+w[2]; } return (x,v); }
+def g(v:!ℝ[]){ x:=0:!ℝ; with { w:=[3]~v~[4]; } do { x=w[0]+w[1]+w[3]; } return (x,v); }
+def h(v:!ℝ^2){ with { w:=v~v; } do { x:=dup(w); } return x; }
+def k(v:𝔹^2){ x:=0:!𝔹; with { w:=v~[1:𝔹]; } do { x=measure(dup(w[2])); } return (x,v); }
+def l(const v:!ℝ^2){ x:=0:!ℝ; with { w:=v~[3]; } do { x=w[0]+w[2]; } return x; }
+def m(v:!ℝ^2,c:!𝔹){ x:=0:!ℝ; with { w:=if c then (v~[0])~[3] else [0]~v; } do { x=w[0]+w[2]; } return x; }
+def q(const c:!𝔹^2,v:𝔹^2)mfree{ w:=c~v; return w; }
+def r(const c:!𝔹^2,v:𝔹^2)mfree⇒v~c;
+def s(const c:!𝔹^2){ x:=[1:𝔹]:𝔹[]; y:=0:!𝔹; with { x~=c; } do { y=measure(dup(x[2])); } return (y,x); }
+
+def main(){
+	assert(f((1,2))==(5,(1,2)));
+	assert(g([1,2])==(8,[1,2]));
+	assert(h((1,2))==(1,2,1,2));
+	(x,v):=k((1,0):𝔹^2);
+	assert(x==1);
+	assert(measure(v)==(1,0));
+	assert(l((1,2))==4);
+	assert(m((1,2),true)==1);
+	assert(m((1,2),false)==2);
+	a:=reverse(q)((1,0):!𝔹^2,(1:!𝔹,0:!𝔹,1:𝔹,0:𝔹));
+	assert(measure(a)==(1,0));
+	b:=reverse(r)((1,0):!𝔹^2,(0:𝔹,1:𝔹,1:!𝔹,0:!𝔹));
+	assert(measure(b)==(0,1));
+	(y,z):=s((0,1));
+	assert(y==1);
+	assert(measure(z)==[1]);
+}

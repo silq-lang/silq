@@ -1,0 +1,11 @@
+def f(a:!ℕ){
+	def g()⇒move(a);
+	return (g,a); /// error
+}
+def h(a:!ℕ){
+	def g(){
+		c:=move(a);
+		return (c,a); /// error
+	}
+	return g;
+}

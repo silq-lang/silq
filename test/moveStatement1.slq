@@ -1,0 +1,9 @@
+def f(){
+	x:=1;
+	move(x); /// error
+	return 2;
+}
+def g(y:!ℕ){
+	(move(y)); /// error
+	return 2;
+}
