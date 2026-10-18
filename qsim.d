@@ -3103,7 +3103,8 @@ struct Interpreter(QState){
 					case BuiltIn.show,BuiltIn.query:
 						return qstate.makeTuple(ast.type.unit,[]);
 					case BuiltIn.qabort:
-						if(!qstate.state.length||qstate.ghost) return QState.Value.init;
+						if(!qstate.state.length) return QState.Value.init;
+						if(qstate.ghost) return QState.makeDummy(ce.type,(Expression x)=>doIt(x)); // (quantum values of a ghost state do not matter)
 						enforce(0,"bad forget");
 						assert(0);
 					case BuiltIn.dummy:

@@ -5336,6 +5336,10 @@ class ScopeWriter {
 		if(rTrue.isAbort) {
 			assert(rFalse.isPass);
 			ifTrue.checkEmpty(true);
+			if(cond.isQuantum) { // (classical code under quantum control runs regardless of the condition)
+				ifFalse.checkEmpty(true);
+				return new IteAbort(cond, rTrue.abortWitness);
+			}
 			return new ItePartialAbort(cond, rTrue.abortWitness, ifFalse);
 		}
 		if(rTrue.isReturn) {
@@ -5346,6 +5350,10 @@ class ScopeWriter {
 		if(rFalse.isAbort) {
 			assert(rTrue.isPass);
 			ifFalse.checkEmpty(true);
+			if(cond.isQuantum) { // (classical code under quantum control runs regardless of the condition)
+				ifTrue.checkEmpty(true);
+				return new IteAbort(cond, rFalse.abortWitness);
+			}
 			return new ItePartialAbort(cond.invert(), rFalse.abortWitness, ifTrue);
 		}
 		if(rFalse.isReturn) {

@@ -1,0 +1,12 @@
+// args: --run
+
+def main(){
+	t:=H(H(0));
+	if t{
+		x:=__qabort(𝔹);
+		assert(0); /// run_error
+	}else{
+		x:=1;
+	}
+	return (t,x);
+}

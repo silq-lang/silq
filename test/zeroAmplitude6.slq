@@ -1,0 +1,13 @@
+// args: --run
+
+def main(){
+	xs:=[0,1];
+	index:=[H(0)] as uint[1];
+	r:=xs[index];
+	def get(i:!ℕ) ⇒
+		if i>=2 then __qabort(uint[1])
+		else if xs[i]=r then i as uint[1]
+		else get(i+1);
+	forget(index=get(0));
+	return r;
+}

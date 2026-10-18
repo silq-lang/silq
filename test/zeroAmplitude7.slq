@@ -1,0 +1,23 @@
+// args: --run
+
+def find(const xs:!uint[2]^3,const r:uint[2],i:!ℕ):uint[2]{
+	if i>=3 { return __qabort(uint[2]); }
+	if xs[i]=r { return i as uint[2]; }
+	return find(xs,r,i+1)+0;
+}
+def first(const r:uint[2]):𝔹{
+	if r=0 { return true:𝔹; }
+	y:=__qabort(𝔹);
+	return y;
+}
+def main(){
+	xs:=[0,1,2]:!uint[2]^3;
+	index:=[H(0),false] as uint[2];
+	r:=xs[index];
+	forget(index=find(xs,r,0));
+	z:=0:uint[2];
+	t:=first(z);
+	assert(measure(t));
+	forget(z=0);
+	return r;
+}
