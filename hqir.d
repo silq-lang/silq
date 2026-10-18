@@ -5176,6 +5176,13 @@ class ScopeWriter {
 						}
 					}else{
 						scTail = scCont;
+						// variables the if statement did not split stay available
+						foreach(name, ref var; sc.vars) {
+							if(!var.value) continue;
+							if(auto p = scTail.vars.getPtr(name)) if(p.value) continue;
+							scTail.vars[name] = var;
+							var.value = null;
+						}
 					}
 
 					auto contRet = scTail.genStmts(stmts[i+1..$], result);
