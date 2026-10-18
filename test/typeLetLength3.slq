@@ -1,0 +1,10 @@
+// args: --run
+
+def g1(b:!ℕ)⇒vector(let{ def go(n:!ℕ):!ℕ{ r:=0; a:=vector(b%4,1:!ℕ); return r+a.length; } } in go(b),false);
+def g2(b:!ℕ)⇒vector(let{ def go(n:!ℕ):!ℕ{ r:=0; for i in 0..n { def h(m:!ℕ):!ℕ{ return m+i; } r=h(r); } return r; } } in go(b),false);
+def g3(b:!ℕ)⇒vector(let{ def go(n:!ℕ):!ℕ{ r:=1; for i in 0..b { r+=r; def h(m:!ℕ):!ℕ{ return m+i; } r=h(r); } return r; } } in go(b),false);
+def main(){
+	v1:=g1(2); assert(v1.length==2);
+	v2:=g2(3); assert(v2.length==3);
+	v3:=g3(2); assert(v3.length==5);
+}

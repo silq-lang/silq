@@ -1,0 +1,28 @@
+// args: --run
+
+def foo(n:!ℕ){
+	def baz(n:!ℕ){
+		return bar(n);
+	}
+	return baz(n);
+}
+
+def bar(n:!ℕ){
+	if n≠0{ return foo(n sub 1)+1; }
+	return 0:!𝔹;
+}
+
+def foo2(n:!ℕ){
+	baz:=λ(n:!ℕ)⇒bar2(n);
+	return baz(n);
+}
+
+def bar2(n:!ℕ){
+	if n≠0{ return foo2(n sub 1)+1; }
+	return 0:!𝔹;
+}
+
+def main(){
+	assert(bar(10)==10);
+	assert(bar2(10)==10);
+}
