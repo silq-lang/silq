@@ -1,0 +1,6 @@
+
+def f(a:𝔹^3){
+	i:=1,j:=2;
+	(a[dup(i)],a[j]):=(a[j],a[i]);
+	return a;
+}

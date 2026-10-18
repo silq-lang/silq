@@ -1,0 +1,16 @@
+// args: --run
+
+def main(){
+	x:=1:uint[3];
+	v:=dup(x);
+	w:=dup(x);
+	a:=0:uint[3];
+	a=let { c:=v+1; forget(w); } in c;
+	assert(measure(a)==2);
+	u:=dup(x);
+	y:=dup(x);
+	b:=0:uint[3];
+	b←let { c:=u+2; forget(y); } in c;
+	assert(measure(b)==3);
+	return x;
+}

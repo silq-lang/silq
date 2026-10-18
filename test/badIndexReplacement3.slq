@@ -1,0 +1,19 @@
+def f(a:𝔹,b:𝔹)⇒(a,b);
+def g(){
+	x:=vector(2,0:𝔹);
+	x[1]:=x[0]; /// error
+	repeat 2 { }
+	return x;
+}
+def h(){
+	x:=vector(2,0:𝔹);
+	(x[1],x[0]):=(x[0],dup(x[0])); /// error
+	repeat 2 { }
+	return x;
+}
+def k(){
+	x:=vector(2,0:𝔹);
+	(x[1],x[0]):=f(x[0],dup(x[0])); /// error
+	repeat 2 { }
+	return x;
+}

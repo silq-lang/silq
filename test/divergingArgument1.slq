@@ -1,0 +1,8 @@
+// args: --run
+
+def h[n:!ℕ](const xs:𝔹^n,const a:𝔹){}
+def main(){
+	xs:=(H(0:𝔹),H(0:𝔹));
+	h(xs,xs[2]); /// run_error
+	return xs;
+}

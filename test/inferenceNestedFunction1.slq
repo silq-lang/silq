@@ -1,0 +1,4 @@
+def main(){ /// error
+	def foo()⇒0;
+	return (foo,main);
+}

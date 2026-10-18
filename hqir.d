@@ -4328,7 +4328,22 @@ class ScopeWriter {
 		return r;
 	}
 
+	CReg genDiverging(Expression[] es) {
+		// evaluate `const` components first, as they may borrow variables consumed by others
+		auto vs = new Value[es.length];
+		foreach(i, sube; es) if(sube.constLookup) vs[i] = genExpr(sube);
+		foreach(i, sube; es) if(!sube.constLookup) vs[i] = genExpr(sube);
+		CReg witness = null;
+		foreach(i, v; vs) {
+			if(!witness && ast_ty.isEmpty(es[i].type)) witness = v.creg;
+			else valDeallocError(v);
+		}
+		assert(witness, "no diverging component");
+		return witness;
+	}
+
 	Value implExpr(ast_exp.TupleExp e) {
+		if(ast_ty.isEmpty(e.type)) return valError(genDiverging(e.e), e.type);
 		foreach(i, sube; e.e) {
 			assert(sube.constLookup == e.constLookup || !typeHasQuantum(sube.type), format("tuple constLookup mismatch at %s; inner %s outer %s: %s item %s", sube.loc, sube.constLookup, e.constLookup, e, i));
 		}
@@ -4403,6 +4418,16 @@ class ScopeWriter {
 				assert(false, "`move` is resolved during semantic analysis");
 			case ast_sem.BuiltIn.pi:
 				assert(false, format("cannot call %s", e));
+		}
+
+		if(ast_ty.isEmpty(e.arg.type)) {
+			// the argument diverges, so the function is not called
+			auto args = [e.arg];
+			if(auto tpl = cast(ast_exp.TupleExp) e.arg) args = tpl.e;
+			if(!e.e.constLookup) args = e.e ~ args;
+			auto witness = genDiverging(args);
+			if(e.newFunctionVar) defineVar(e.newFunctionVar, valError(witness, typeForDecl(e.newFunctionVar)));
+			return valError(witness, e.type);
 		}
 
 		CallInfo ci = prepCall(e.e, e.arg, e.type, e.newFunctionVar, false);
@@ -4722,6 +4747,31 @@ class ScopeWriter {
 		}
 
 		assert(!e.newFunctionVar);
+		if(ast_ty.isEmpty(e.arg.type)) {
+			auto callTy = cast(ast_ty.ProductTy) e.e.type;
+			assert(!!callTy);
+			auto isConst = callTy.isConstForReverse();
+			Expression[] args = [e.arg], params = [callTy.dom];
+			bool split = false;
+			if(auto tpl = cast(ast_exp.TupleExp) e.arg) {
+				if(auto tdom = callTy.dom.isTupleTy()) {
+					if(callTy.isTuple && tpl.e.length == tdom.length) {
+						split = true;
+						args = tpl.e;
+						params = iota(tdom.length).map!(i => tdom[i]).array;
+					}
+				}
+			}
+			bool constAt(size_t i) { return split ? isConst[i] : isConst.all; }
+			auto constArgs = iota(args.length).filter!constAt.map!(i => args[i]).array;
+			if(constArgs.any!(a => ast_ty.isEmpty(a.type))) {
+				// a `const` argument diverges, so the function is not called
+				auto witness = genDiverging(constArgs);
+				valDeallocError(ret);
+				foreach(i, arg; args) if(!constAt(i)) genLhs(arg, valError(witness, params[i]), params[i]);
+				return;
+			}
+		}
 		CallInfo ci = prepCall(e.e, e.arg, e.type, null, true);
 		assert(!ci.makeClassical, "TODO reversed make-classical");
 
@@ -5940,7 +5990,13 @@ class ScopeWriter {
 			}
 			return false;
 		}
-		if(cast(ast_exp.IndexExp)ie1.e || cast(ast_exp.IndexExp)ie2.e || hasQuantumIndices(ie1) || hasQuantumIndices(ie2)) {
+		bool swapsIndices() { // (the indices on the left are those on the right, swapped)
+			auto lhs = cast(ast_exp.TupleExp)orig.e1;
+			if(!lhs || lhs.e.length != 2) return false;
+			auto ie3 = cast(ast_exp.IndexExp)lhs.e[0], ie4 = cast(ast_exp.IndexExp)lhs.e[1];
+			return ie3 && ie4 && ie3.a == ie2.a && ie4.a == ie1.a;
+		}
+		if(cast(ast_exp.IndexExp)ie1.e || cast(ast_exp.IndexExp)ie2.e || hasQuantumIndices(ie1) || hasQuantumIndices(ie2) || !swapsIndices()) {
 			auto lowering = ast_low.getSwapLowering(orig, nscope); // TODO just do this for every swap, not just the hard cases?
 			assert(!!lowering, format("Failed to lower swap: %s", orig));
 			return genStmt(lowering);

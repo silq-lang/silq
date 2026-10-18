@@ -1,0 +1,5 @@
+def mk[n:!ℕ](x:!ℕ,
+              x:!ℕ):𝔹^n; /// error
+def g(x:!ℕ){
+	y:=mk[x];
+}

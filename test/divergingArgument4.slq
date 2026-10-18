@@ -1,0 +1,7 @@
+def r(const a:𝔹,const c:𝔹,b:𝔹)qfree⇒b;
+def main(){
+	xs:=(H(0:𝔹),H(0:𝔹));
+	y:=H(0:𝔹);
+	r(xs[2],xs,z):=y; /// error
+	return (xs,z);
+}

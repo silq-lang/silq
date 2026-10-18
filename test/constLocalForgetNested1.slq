@@ -1,0 +1,12 @@
+// args: --run
+
+def f(n:!ℕ){
+	x:=0:!ℕ;
+	if n>0 { const j:=1; x+=j; }
+	if n>1 { } else { const j:=1; x+=j; }
+	for k in [0..n){ const j:=k; x+=j; }
+	return x;
+}
+def main(){
+	assert(f(3)==4);
+}

@@ -1,0 +1,69 @@
+
+def g():⊥{ assert(false); }
+def f(a:𝔹,b:𝔹)⇒(a,b);
+def h(const a:𝔹,const b:𝔹)⇒dup(a);
+def k(const a:𝔹,const b:𝔹){}
+def u(const a:𝔹){}
+def c(const a:!𝔹,const b:𝔹){}
+def r(const a:𝔹,b:𝔹)qfree⇒b;
+
+def tuple1(){
+	x:=H(0:𝔹);
+	y:=(x,g());
+	return y;
+}
+def tuple2(){
+	x:=H(0:𝔹);
+	return (x,g()):𝔹×𝔹;
+}
+def tuple3(){
+	x:=H(0:𝔹);
+	y:=(g(),3)[1];
+	return (x,y);
+}
+def call1(){
+	x:=H(0:𝔹);
+	y:=f(x,g());
+	return y;
+}
+def call2(){
+	xs:=(H(0:𝔹),H(0:𝔹));
+	y:=h(xs[0],xs[2]);
+	return (xs,y);
+}
+def call3(){
+	xs:=(H(0:𝔹),H(0:𝔹));
+	y:=dup(xs[0],xs[2]);
+	return (xs,y);
+}
+def call4(){
+	xs:=(H(0:𝔹),H(0:𝔹));
+	k(xs[5]);
+	return xs;
+}
+def call5(){
+	x:=H(0:𝔹);
+	u(x,g());
+	return x;
+}
+def call6(){
+	x:=H(0:𝔹);
+	c(x,g());
+	return x;
+}
+def call7(){
+	x:=H(0:𝔹);
+	y:=measure(x,g());
+	return y;
+}
+def rev1(){
+	xs:=(H(0:𝔹),H(0:𝔹));
+	y:=H(0:𝔹);
+	r(xs[2],z):=y;
+	return (xs,z);
+}
+def with1(){
+	xs:=(H(0:𝔹),H(0:𝔹));
+	with{ y:=h(xs[0],xs[2]); }do{ z:=dup(y); }
+	return (xs,z);
+}
