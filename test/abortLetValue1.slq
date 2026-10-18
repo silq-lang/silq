@@ -1,0 +1,15 @@
+// args: --run
+
+def f(c:!𝔹){
+	t:=(0:𝔹,);
+	if c { y:=t[2]; forget(y); }
+	return t;
+}
+def g(c:!𝔹,q:𝔹){
+	t:=vector(3,0:𝔹);
+	with{ if c { x:=t[1]; } else { x:=(t,)[2]; } }do{ q:=CNOT(x,q); }
+	return (t,q);
+}
+def main(){
+	return (f(false),g(true,0:𝔹));
+}

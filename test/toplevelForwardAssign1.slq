@@ -1,0 +1,16 @@
+def f(y:!ℕ){
+	a += y; /// error
+}
+def g(y:!ℕ){
+	b[0] = y; /// error
+}
+def h(y:!𝔹){
+	c ⊕= y; /// error
+}
+a:=2;
+b:=[2];
+c:=true;
+d:=e(1);
+def e(y:!ℕ){
+	d += y; /// error
+}

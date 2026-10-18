@@ -3339,7 +3339,7 @@ class ScopeWriter {
 			Result r = genStmt(stmt);
 			if(r.isAbort) {
 				if(aborted) *aborted = true;
-				return valError(r.abortWitness, e.type);
+				return valError(r.abortWitness, ty);
 			}
 			assert(!r.isReturn && !r.isConditionalReturn, "early return in compound expression");
 		}
