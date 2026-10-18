@@ -1,0 +1,4 @@
+// args: --run
+
+def foo(N:!ℕ) ⇒ ℤstar[N]; /// run_error
+def main() ⇒ foo(0);

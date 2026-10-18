@@ -2145,6 +2145,11 @@ struct QState{
 				if(it.isSigned) return makeInt(ty.getClassical(),BitInt!true(nbits,ℤ(0)));
 				return makeUint(ty.getClassical(),BitInt!false(nbits,ℤ(0)));
 			}
+			if(auto zmodTy=isℤmodTy(ty)){
+				auto N=sizeOf(zmodTy.N);
+				if(zmodTy.isStar) enforce(N!=0,"argument of `ℤstar` cannot be `0`");
+				return makeℤmod(ty.getClassical(),ℤmod(N.ℤ,0.ℤ)); // TODO: use 1 for ℤstar?
+			}
 			if(auto vec=cast(VectorTy)ty){
 				auto n=sizeOf(vec.num);
 				return makeArray(ty.getClassical(),iota(n).map!(i=>zero(vec.next)).array);
@@ -2900,9 +2905,12 @@ struct Interpreter(QState){
 			}
 		}
 		if(auto zmodTy=isℤmodTy(type)){
-			auto N=runExp(zmodTy.N);
+			auto vN=runExp(zmodTy.N);
+			enforce(vN.isℤ,"ill-typed argument to ",zmodTy.isStar?"`ℤstar`":"`ℤmod`");
+			auto N=vN.asℤ;
+			if(zmodTy.isStar) enforce(N!=0,"argument of `ℤstar` cannot be `0`");
 			if(!cast(LiteralExp)zmodTy.N){ // TODO: this is a hack, store modulus classically instead
-				auto lN=LiteralExp.makeInteger(N.asℤ);
+				auto lN=LiteralExp.makeInteger(N);
 				lN.loc=zmodTy.N.loc;
 				auto ce=cast(CallExp)type;
 				auto ntype=new CallExp(ce.e,lN,ce.isSquare,ce.isClassical_);
@@ -3115,7 +3123,18 @@ struct Interpreter(QState){
 						enforce(0,text("built-in `",id.name,"` not yet supported"));
 						assert(0);
 				}
-				if(id&&cast(DatDecl)id.meaning) return QState.typeValue(closedType(ce)); // TODO: get rid of this
+				if(id&&cast(DatDecl)id.meaning){
+					auto ty=closedType(ce); // TODO: get rid of this
+					if(auto zmodTy=isℤmodTy(ty)){
+						if(zmodTy.isStar){
+							auto vN=doIt(zmodTy.N);
+							enforce(vN.isℤ,"ill-typed argument to ",zmodTy.isStar?"`ℤstar`":"`ℤmod`");
+							auto N=vN.asℤ;
+							enforce(N!=0,"argument of `ℤstar` cannot be `0`");
+						}
+					}
+					return QState.typeValue(ty);
+				}
 			}
 			auto fun=doIt(ce.e);
 			auto arg=doIt(ce.arg);

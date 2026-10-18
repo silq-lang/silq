@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	a:=__dummy(ℤmod[5]);
+	b:=__dummy(ℤstar[5]);
+	return (a,b);
+}
