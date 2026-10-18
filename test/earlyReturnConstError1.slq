@@ -1,0 +1,16 @@
+def f(p:𝔹){
+	if p { return (1:!ℕ); } /// error
+	repeat 2 {}
+	return 0:!ℕ; /// error
+}
+def g(p:𝔹){ /// error
+	if p { return i; } /// error
+	repeat 2 {}
+}
+def h(){
+	x:=H(0:𝔹);
+	p:=dup(x);
+	if p { return i; } /// error
+	for i in 0..2 {}
+	return x;
+}

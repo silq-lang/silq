@@ -1,0 +1,2 @@
+if true { x:=Π[c](). c; } /// error
+if true { x:=Π[c](f:c). c; } /// error
