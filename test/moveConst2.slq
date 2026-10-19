@@ -1,0 +1,23 @@
+def f(x:𝔹){
+	y:=dup(move(x)); /// error
+	return y;
+}
+def g(x:!ℕ){
+	y:=dup(move(x));
+	return (x,y); /// error
+}
+def h(const a:𝔹,b:𝔹)⇒H(b);
+def k(y:𝔹){
+	z:=dup(y);
+	r:=h(move(z),y); /// error
+	return r;
+}
+def l(){
+	y:=H(0:𝔹);
+	x:=dup(y);
+	r:=(dup(move(x)),x); /// error
+	return (r,y);
+}
+def m(x:𝔹){
+	if move(x) { phase(π); } /// error
+}

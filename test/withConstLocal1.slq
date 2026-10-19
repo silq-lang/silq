@@ -1,0 +1,24 @@
+// args: --run
+
+def f(x:𝔹){
+	with { const c:=dup(x); } do { y:=dup(c); }
+	return (x,y);
+}
+
+def main(){
+	with { const c:=1; } do { x:=c+1; }
+	assert(x==2);
+	with { const d:=1; y:=d+1; } do { z:=y; }
+	assert(z==2);
+	t:=1;
+	with { const h:=t+1; } do { u:=h; }
+	assert(u==2);
+	a:=1:𝔹;
+	with { const e:=dup(a); b:=dup(e); } do { r:=measure(dup(b)); }
+	with { g:=dup(a); const k:=dup(g); } do { s:=measure(dup(k)); }
+	with { const m:=dup(a); n:=X(dup(m)); } do { v:=measure(dup(n)); }
+	assert(r==1&&s==1&&v==0);
+	(p,q):=f(H(0:𝔹));
+	assert(measure(p)==measure(q));
+	return measure(a);
+}

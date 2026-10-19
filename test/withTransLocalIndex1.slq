@@ -1,0 +1,11 @@
+// args: --run
+
+def main(){
+	x:=(0:𝔹,0:𝔹);
+	with { i:=1; y:=x[i]; } do { y:=X(y); }
+	u:=(0:𝔹,0:𝔹);
+	with { const j:=1; v:=u[j]; } do { v:=X(v); }
+	a:=[0:𝔹,0:𝔹,0:𝔹];
+	with { k:=1; b:=a[k+1]; } do { b:=X(b); }
+	assert(measure(x,u,a)==((0,1),(0,1),[0,0,1]));
+}

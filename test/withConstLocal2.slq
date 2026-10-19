@@ -1,0 +1,12 @@
+def f(){
+	with { const c:=1; } do { }
+	return c; /// error
+}
+def g(){
+	with { const c:=1; } do { c:=2; } /// error
+	return 0;
+}
+def h(){
+	with { const c:=H(0:𝔹); } do { } /// error
+	return 0;
+}

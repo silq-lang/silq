@@ -1,0 +1,29 @@
+// args: --run
+
+def g(const a:𝔹)⇒measure(dup(a));
+
+def main(){
+	y:=H(0:𝔹);
+	x:=dup(y);
+	r:=measure(dup(move(x)));
+	z:=dup(y);
+	s:=g(move(z));
+	assert(r==s);
+	c:=1;
+	d:=dup(move(c));
+	e:=2;
+	f:=move(e)+1;
+	assert(d==1&&f==3);
+	b:=dup(y);
+	if move(b) { phase(π); }
+	a:=(dup(y),dup(y));
+	t:=measure(dup(move(a)[1]));
+	i:=dup(y) as uint[1];
+	u:=[0:!𝔹,1:!𝔹];
+	v:=measure(u[move(i)]);
+	assert(t==r&&v==r);
+	k:=1:!ℕ;
+	l:=λ(w:!ℕ)⇒k+w;
+	assert(move(l)(2)==3);
+	return measure(y);
+}

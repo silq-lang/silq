@@ -1,0 +1,16 @@
+def g(const a:𝔹,b:𝔹)⇒H(b);
+def f(x:𝔹,y:𝔹){
+	z:=dup(y);
+	r:=g(let{ t:=z; } in t,y); /// error
+	return (x,r);
+}
+def h(x:𝔹,y:𝔹){
+	z:=dup(y);
+	r:=g(let{ t:=move(z); } in t,y); /// error
+	return (x,r);
+}
+def k(x:𝔹,y:𝔹){
+	z:=dup(x);
+	r:=g(let{ t:=move(z); } in t,y);
+	return (x,r);
+}
