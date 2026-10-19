@@ -23,7 +23,12 @@ def definitions(){
 	int d = 4; /// error
 	mutable e = 5; /// error
 	set e += 1; /// error
-	return (a,b,d,e);
+	var f: int = 6; /// error
+	qubit q = 0; /// error
+	use r = Qubit(); /// error
+	use s = Qubit[3]; /// error
+	int32 t = 7; /// error
+	return (a,b,d,e,f,q,r,s,t);
 }
 
 def loops(n:!ℕ){
