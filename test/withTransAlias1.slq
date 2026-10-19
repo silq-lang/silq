@@ -1,0 +1,19 @@
+def f(i:!ℕ){
+	x:=(0:𝔹,0:𝔹,0:𝔹);
+	with { y:=x[i]; z:=x[0]; } do { y:=X(y); z:=X(z); } /// error
+	return x;
+}
+def g(i:!ℕ,j:!ℕ){
+	x:=vector(3,0:𝔹);
+	with { y:=x[i]; z:=x[j]; } do { y:=X(y); } /// error
+	return x;
+}
+def h(){
+	x:=(0:𝔹,0:𝔹,0:𝔹);
+	with { y:=x[1]; z:=x[0]; } do { y:=X(y); z:=X(z); }
+	return x;
+}
+def k(r:!𝔹^2,i:!ℕ,j:!ℕ,q:𝔹){
+	with { a:=r[i]; b:=r[j]; } do { if a&&b { q:=X(q); } }
+	return q;
+}

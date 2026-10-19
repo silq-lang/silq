@@ -1,0 +1,18 @@
+// args: --run
+
+def foo(const y:𝔹,x:𝔹){ return x; }
+def main(){
+	x:=[1,1];
+	i:=0;
+	j:=0;
+	c:=true;
+	if c {
+		if (1:𝔹) { assert(false); } /// run_error
+		x[i]:=foo(x[j],x[i]);
+	}
+	repeat 2 {
+		if (1:𝔹) { assert(false); }
+		x[i]:=foo(x[j],x[i]);
+	}
+	return x;
+}

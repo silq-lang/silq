@@ -1,0 +1,17 @@
+// args: --run
+
+def f(y:𝔹){
+	z:=let{ a:=dup(y); b:=dup(a); forget(a); } in b;
+	return H(y);
+}
+def g(y:𝔹){
+	z:=let{ a:=dup(y); b:=dup(y); forget(b); } in a;
+	return H(y);
+}
+def h(y:𝔹){
+	z:=let{ a:=dup(y); b:=(a,dup(a)); } in b;
+	return H(y);
+}
+def main(){
+	assert(measure(f(H(0:𝔹)),g(H(0:𝔹)),h(H(0:𝔹)))==(0,0,0));
+}

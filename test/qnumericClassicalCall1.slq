@@ -1,0 +1,8 @@
+def g()⇒ℝ;
+def f(arg: !g()) ⇒ arg;
+def main(){
+	x:=1:!(λ()⇒ℕ)(); /// error
+	y:=f(-3.5); /// error
+	return (x,y);
+}
+def h(arg: (λ()⇒ℝ)()) ⇒ (); /// error

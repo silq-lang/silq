@@ -4996,6 +4996,11 @@ class ScopeWriter {
 		scope loc = PushLocation(ctx, e.loc);
 		foreach(decl; nscope.forgottenVars) {
 			assert(!r.isReturn, format("CompoundExp returns but blscope_ has forgotten var %s", decl));
+			if(r.isAbort) {
+				// (the statements after the abort, which may define the variable, are not generated)
+				auto p = vars.getPtr(decl.getId);
+				if(!p || !p.value) continue;
+			}
 			Value v = getVar(decl, false);
 			if(!v.hasQuantum) continue;
 			if(r.isAbort) qcg.deallocError(v.qreg);
