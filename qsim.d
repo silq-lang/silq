@@ -1435,12 +1435,14 @@ struct QState{
 					}
 					enforce(array_.length,"array index out of bounds");
 					static Value checked(Value r,Value i,size_t length){
+						auto type=r.type.getQuantum(); // (the result depends on the quantum index)
+						enforce(!!type,"index operation currently unsupported");
 						if(r.tag==Tag.array_){
 							Value[] elements;
 							foreach(e;r.array_) elements~=checked(e,i,length);
-							return makeArray(r.type,elements);
+							return makeArray(type,elements);
 						}
-						return makeQuval(r.type,new BoundsCheckQVal(r,i,length));
+						return makeQuval(type,new BoundsCheckQVal(r,i,length));
 					}
 					return checked(build(array_,0),i,array_.length);
 				case Tag.uintval,Tag.intval,Tag.quval:
@@ -3684,6 +3686,7 @@ struct Interpreter(QState){
 				Expression fe,te;
 				if(auto fa=cast(ArrayTy)from) fe=fa.next;
 				else if(auto fv=cast(VectorTy)from) fe=fv.next;
+				if(fe&&!ft&&tt) return iota(tt.length).all!(i=>check(fe,tt[i]));
 				if(auto ta=cast(ArrayTy)to) te=ta.next;
 				else if(auto tv=cast(VectorTy)to) te=tv.next;
 				if(fe&&te) return check(fe,te);

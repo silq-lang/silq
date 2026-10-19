@@ -1,0 +1,13 @@
+def f(xs:𝔹[]){
+	(ys:!𝔹^2)~(zs:!𝔹^3):=xs; /// error
+}
+def g(xs:𝔹^5){
+	(ys:𝔹^2)~(zs:!𝔹^3):=xs; /// error
+}
+def h(){
+	xs:=vector(5,0:!𝔹);
+	(ys:!𝔹^2)~(zs:!𝔹^3):=xs;
+	ws:=vector(5,0:𝔹):𝔹[];
+	(us:𝔹^2)~(vs:𝔹^3):=ws;
+	return (ys,zs,us,vs);
+}

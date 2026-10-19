@@ -1,0 +1,16 @@
+// args: --run
+
+def f[w: !Pi[_:!ℕ]lifted. *](
+	make: !Pi[n: !ℕ]lifted. !ℕ !→lifted w[n],
+	add: !Pi[n: !ℕ]lifted. w[n] x w[n] !→lifted w[n],
+)qfree{
+	const a := make[6](42);
+	(const b,) := (make[6](1),);
+	return add[6](dup(a),dup(b));
+}
+def makeUint[n: !ℕ](const x: !ℕ)qfree: uint[n]⇒x as uint[n];
+def addUint[n: !ℕ](x: uint[n],y: uint[n])lifted: uint[n]⇒x+y;
+
+def main(){
+	assert(f[uint](makeUint,addUint)==43);
+}

@@ -1,0 +1,13 @@
+// args: --run
+
+def app01(xs:𝔹^2)⇒xs~[0,1];
+def pairs(a:𝔹,b:𝔹)mfree⇒[(a,0:!𝔹),(b,1:!𝔹)];
+
+def main(){
+	w:=[1:𝔹,0:𝔹,0:𝔹,1:𝔹]:𝔹[];
+	app01(v):=w;
+	assert(measure(v)==(1,0));
+	u:=[(1:𝔹,0:𝔹),(0:𝔹,1:𝔹)]:(𝔹×𝔹)[];
+	pairs(p):=u;
+	assert(measure(p)==(1,0));
+}

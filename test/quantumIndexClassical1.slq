@@ -1,0 +1,19 @@
+// args: --run
+
+def main(){
+	x:=1:!int[2];
+	i:=0:uint[1];
+	assert(measure(x[i])==1);
+	y:=[0:!𝔹,1:!𝔹]:!𝔹[];
+	j:=1:uint[1];
+	assert(measure(y[j])==1);
+	z:=[(0:!𝔹,1:!𝔹)]:(!𝔹×!𝔹)[];
+	k:=0:uint[1];
+	assert(measure(z[k])==(0,1));
+	w:=[1:!𝔹]:!𝔹^1;
+	l:=0:uint[1];
+	assert(measure(w[l])==1);
+	v:=[(0:𝔹,1:!𝔹)]:(𝔹×!𝔹)[];
+	m:=0:uint[1];
+	assert(measure(v[m])==(0,1));
+}

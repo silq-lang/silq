@@ -1,0 +1,4 @@
+def f(x:!int[2],const i:uint[1])⇒x[i];
+def g(x:!𝔹[],const i:uint[1])⇒x[i];
+def h(x:(!𝔹×!𝔹)[],const i:uint[1])⇒x[i];
+def k(const x:(𝔹×!𝔹)[],const i:uint[1])⇒dup(x[i]);

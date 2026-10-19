@@ -3631,6 +3631,15 @@ class ScopeWriter {
 			return implIndexDupVector(v, vecTy.next, len, idx);
 		}
 		if(auto arrTy = cast(ast_ty.ArrayTy) ty) {
+			if(idx.isQuantum() && typeHasClassical(arrTy.next)) {
+				auto next2 = arrTy.next.getQuantum();
+				assert(next2 && !typeHasClassical(next2));
+				auto arrTy2 = ast_ty.arrayTy(next2);
+				auto v2 = genSubtype(valDup(v), arrTy, arrTy2);
+				auto r = implIndexDup(v2, rTy, arrTy2, idx);
+				valForget(v2);
+				return r;
+			}
 			CReg len;
 			auto v2o = valArrayToVector(arrTy.next, len, v), v2 = v2o;
 			Value r = implIndexDupVector(v2, arrTy.next, len, idx);
@@ -3647,7 +3656,7 @@ class ScopeWriter {
 					auto ty2 = ty.getQuantum();
 					assert(!!ty2);
 					auto v2 = genSubtype(valDup(v), ty, ty2);
-					auto r = implIndexDupVector(v, rTy, bits, idx);
+					auto r = implIndexDupVector(v2, rTy, bits, idx);
 					valForget(v2);
 					return r;
 				}
@@ -4650,6 +4659,7 @@ class ScopeWriter {
 		Expression fe, te;
 		if(auto fa = cast(ast_ty.ArrayTy) from) fe = fa.next;
 		else if(auto fv = cast(ast_ty.VectorTy) from) fe = fv.next;
+		if(fe && !ft && tt) return iota(tt.length).any!(i => requiresClassicalization(fe, tt[i]));
 		if(auto ta = cast(ast_ty.ArrayTy) to) te = ta.next;
 		else if(auto tv = cast(ast_ty.VectorTy) to) te = tv.next;
 		if(fe && te) return requiresClassicalization(fe, te);
@@ -4666,6 +4676,15 @@ class ScopeWriter {
 			return valNewC(fwdC);
 		}
 		auto ft = fromTy.isTupleTy(), tt = toTy.isTupleTy();
+		if(!ft && tt) {
+			// coerce to a vector of the right length first (e.g., `𝔹[]` to `𝔹^2` for `𝔹 × !𝔹`)
+			Expression fe;
+			if(auto fa = cast(ast_ty.ArrayTy) fromTy) fe = fa.next;
+			else if(auto fv = cast(ast_ty.VectorTy) fromTy) fe = fv.next;
+			assert(!!fe);
+			auto vecTy = ast_ty.vectorTy(fe, tt.length);
+			return genReverseCoerceForget(genCoerce(v, fromTy, vecTy), vecTy, toTy, fwdC);
+		}
 		if(ft && tt && ft.length == tt.length) {
 			size_t n = ft.length;
 			auto fromTypes = iota(n).map!(i => ft[i]).array;

@@ -1,0 +1,19 @@
+def f(const xs:𝔹^5){
+	with{ xs[0]:=H(xs[0]); }do{ } /// error
+	return 2;
+}
+def g(){
+	const xs:=vector(5,0:𝔹);
+	with{ for i in 0..5{ xs[i]:=H(xs[i]); } }do{ } /// error
+	return xs;
+}
+def h(){
+	(const xs,):=(vector(5,0:𝔹),);
+	with{ y:=dup(xs); xs[0]:=H(xs[0]); }do{ } /// error
+	return xs;
+}
+def k(){
+	xs:=vector(5,0:𝔹);
+	with{ xs[0]:=H(xs[0]); }do{ }
+	return xs;
+}

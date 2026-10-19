@@ -1,0 +1,15 @@
+// args: --run
+
+def f(){ with { a:=0,b:=1; } do { x:=a+b; } return x; }
+def g(x:𝔹){ r:=0:𝔹; with { y:=dup(x),z:=X(y); } do { r⊕=z; } return (r,x); }
+def h(n:!ℕ){ s:=0; with { a:=n,b:=2*n; c:=a+b; } do { s+=c; } return s; }
+def k(x:𝔹){ r:=0:𝔹; with { y:=dup(x); if true { z:=dup(y),w:=X(z); } else { z:=dup(y),w:=X(z); } } do { r⊕=w; } return (r,x); }
+
+def main(){
+	assert(f()==1);
+	(r,x):=g(0:𝔹);
+	assert(measure(r,x)==(1,0));
+	assert(h(2)==6);
+	(r2,x2):=k(0:𝔹);
+	assert(measure(r2,x2)==(1,0));
+}
