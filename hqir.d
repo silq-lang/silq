@@ -8,7 +8,7 @@ import std.format: format;
 import std.functional: partial;
 import std.algorithm: map, filter, canFind, count, all, any, fold;
 import std.range: iota, zip, repeat, chain;
-import std.utf: byCodeUnit;
+import std.utf: byCodeUnit, byChar;
 import std.bigint: BigInt, toDecimalString;
 import std.traits: EnumMembers;
 import std.algorithm.mutation: swap, reverse;
@@ -108,7 +108,7 @@ private bool isReturnLambda(ast_decl.FunctionDef parent, ast_decl.FunctionDef ch
 static immutable string HEX = "0123456789abcdef";
 private void escapeStr(Appender!string* o, string val) {
 	o.put('"');
-	foreach(c; val) {
+	foreach(c; val.byChar) {
 		if(c == '"' || c == '\\') {
 			o.put('\\');
 		}
