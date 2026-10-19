@@ -1,0 +1,10 @@
+def f(x): /// error
+	return x;
+}
+
+def main(){
+	x := 0;
+	if x == 0: /// error
+		x = 1;
+	return f(x);
+} /// error

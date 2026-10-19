@@ -1,0 +1,20 @@
+def widths(){
+	x:=0:int; /// error
+	y:=0:uint; /// error
+	return (x,y);
+}
+
+def conversions(){
+	x:=3;
+	a:=uint[3](x); /// error
+	b:=int(x); /// error
+	c:=𝔹(x); /// error
+	d:=!ℝ(x); /// error
+	return (a,b,c,d);
+}
+
+def vectors(){
+	x:=0:𝔹^3; /// error
+	y:=[0:𝔹]*3; /// error
+	return (x,y);
+}

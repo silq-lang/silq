@@ -1,0 +1,10 @@
+def slice(){
+	x:=vector(4,0:𝔹);
+	y:=x[1:3]; /// error
+	return (x,y);
+}
+
+def last(){
+	x:=vector(3,0:𝔹);
+	return x[-1]; /// error
+}

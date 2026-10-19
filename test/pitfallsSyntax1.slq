@@ -1,0 +1,58 @@
+def conditionals(x:!ℕ,c:!𝔹){
+	if x==0 {
+		x+=1;
+	} elif x==1 { /// error
+		x+=2;
+	}
+	a := c ? 1 : 2; /// error
+	b := 1 if c else 2; /// error
+	d := not c; /// error
+	return (a,b,d);
+}
+
+def operators(x:!ℕ){
+	a := x**2; /// error
+	++x; /// error
+	b := x // 2; /// error
+	return (a,b);
+}
+
+def definitions(){
+	let a = 1; /// error
+	var b = 2; /// error
+	int d = 4; /// error
+	mutable e = 5; /// error
+	set e += 1; /// error
+	return (a,b,d,e);
+}
+
+def loops(n:!ℕ){
+	s:=0;
+	for(i:=0;i<n;i+=1){ /// error
+		s+=i;
+	}
+	return s;
+}
+
+def comments(){
+	x := 1; # a comment /// error
+	return x;
+}
+
+def literals(){
+	a := 1j; /// error
+	b := 1_000; /// error
+	return (a,b);
+}
+
+def slices(){
+	x:=vector(4,0:𝔹);
+	y:=x[:2]; /// error
+	z:=x[2:]; /// error
+	return (x,y,z);
+}
+
+def assertions(x:!ℕ){
+	assert x == 1; /// error
+	return x;
+}

@@ -1,0 +1,42 @@
+def booleans(){
+	return (True, False); /// error
+}
+
+def cases(){
+	x:=h(0:𝔹); /// error
+	y:=Measure(x); /// error
+	z:=rotx(0.5,0:𝔹); /// error
+	return (y,z);
+}
+
+def gates(){
+	a:=0:𝔹; b:=0:𝔹; c:=0:𝔹;
+	b:=CX(a,b); /// error
+	a:=Rz(0.5,a); /// error
+	(a,b,c):=Toffoli(a,b,c); /// error
+	(a,b):=SWAP(a,b); /// error
+	return (M(a),b,c); /// error
+}
+
+def types(){
+	q:=0:qubit; /// error
+	r:=0.5:float; /// error
+	s:=3:i32; /// error
+	return (q,r,s);
+}
+
+def builtins(){
+	x:=vector(3,0:𝔹);
+	n:=len(x); /// error
+	s:=0;
+	for i in range(n){ /// error
+		s+=i;
+	}
+	return x;
+}
+
+def keywords(a:!𝔹){
+	b:=not (a); /// error
+	if a { } elif(a); /// error
+	return b;
+}

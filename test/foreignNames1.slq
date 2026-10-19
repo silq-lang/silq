@@ -1,0 +1,36 @@
+
+def elif(x:!𝔹)⇒x;
+def not(x:!𝔹)⇒!x;
+def var(x:!ℕ)⇒x;
+def fn(x:!ℕ)⇒x;
+def set(x:!ℕ)⇒x;
+
+def calls(){
+	if true { }
+	elif(true);
+	if true { } elif (true);
+	a:=not (true);
+	b:=not(true);
+	c:=var(3);
+	d:=fn(3);
+	e:=set(3);
+	return (a,b,c,d,e);
+}
+
+def variables(){
+	var:=1;
+	val:=2;
+	int:=3;
+	set:=4;
+	use:=5;
+	x:=var;
+	var=var+1;
+	set+=1;
+	return (x,var,val,int,set,use);
+}
+
+def definitions(){
+	x:=let a:=3 in a;
+	const y:=3;
+	return (x,y);
+}

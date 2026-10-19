@@ -1,0 +1,60 @@
+def branches(){
+	n:=5;
+	if measure(H(0)){
+		x:=n/2; /// note
+	}else{
+		x:=2;
+	}
+	return x:!ℕ; /// error
+}
+
+def bothBranches(c:!𝔹){
+	n:=5;
+	if c { x:=n/2; } else { x:=n-1; } /// note
+	return x:!ℕ; /// error
+}
+
+def assignment(){
+	n:=5;
+	x:=2;
+	x=n/2; /// note
+	return x:!ℕ; /// error
+}
+
+def tupleAssignment(c:!𝔹){
+	n:=5;
+	(x,y):=(1,2);
+	if c { (x,y)=(n/2,3); } /// note
+	return x:!ℕ; /// error
+}
+
+def update(){
+	n:=5;
+	x:=2;
+	x+=n/2; /// note
+	return x:!ℕ; /// error
+}
+
+def halving(n:!ℕ){
+	while n>1 { n=n/2; } /// note
+	return vector(n,0:𝔹); /// error
+}
+
+def decrement(c:!𝔹){
+	x:=1;
+	while c { x-=1; } /// note
+	return x:!ℕ; /// error
+}
+
+def loopUpdate(){
+	x:=0;
+	for i in [0..3){ x+=i/2; } /// note
+	return x:!ℕ; /// error
+}
+
+def power(){
+	x:=2;
+	y:=x**(2); /// error
+	z:=x**-1; /// error
+	return (y,z);
+}

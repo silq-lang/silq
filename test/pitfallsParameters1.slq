@@ -1,0 +1,6 @@
+def f(n:!ℕ=3)⇒n; /// error
+
+def main(){
+	g:=(a:!ℕ=3)=>a; /// error
+	return (f(2),g(1));
+}

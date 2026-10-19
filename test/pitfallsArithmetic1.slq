@@ -1,0 +1,68 @@
+def example(){
+	n:=10;
+	v:=(1,2,3,4,5) coerce !ℕ^(n/2); /// error
+	x:=0:uint[n];
+	for i in 0..10{
+		x+=2^(10-i); /// error
+	}
+}
+
+def index(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	m:=n/2; /// note
+	y:=x[m]; /// error
+	return (x,y);
+}
+
+def loopIndex(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	for i in [0..n/2){ /// note
+		x[i]:=H(x[i]); /// error
+	}
+	return x;
+}
+
+def width(n:!ℕ){
+	x:=0:uint[n-1]; /// error
+	return x;
+}
+
+def repetitions(n:!ℕ){
+	x:=0:𝔹;
+	repeat n/2 { x:=H(x); } /// error
+	return x;
+}
+
+def slice(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	y:=x[0..n/2]; /// error
+	return (x,y);
+}
+
+def ret(n:!ℕ):!ℕ{
+	return n/2; /// error
+}
+
+def annotation(n:!ℕ){
+	m:=n/2:!ℕ; /// error
+	return m;
+}
+
+def conversion(){
+	y:=3.5; /// note
+	x:=y as !ℤ; /// error
+	return x;
+}
+
+def fixedWidth(){
+	x:=5:uint[4];
+	y:=x/2; /// error
+	return y;
+}
+
+def powers(n:!ℕ){
+	x:=0:uint[n];
+	k:=n-1; /// note
+	x+=2^k; /// error
+	return x;
+}

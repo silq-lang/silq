@@ -1,0 +1,30 @@
+def length(){
+	x:=vector(3,0:𝔹);
+	a:=x.size; /// error
+	b:=x.length(); /// error
+	c:=x.len(); /// error
+	return (x,a,b,c);
+}
+
+def gates(){
+	x:=vector(3,0:𝔹);
+	x.h(0); /// error
+	return x;
+}
+
+def concatenation(){
+	x:=vector(3,0:𝔹);
+	y:=x.append(0:𝔹); /// error
+	return y;
+}
+
+def measurement(){
+	x:=H(0:𝔹);
+	return x.measure(); /// error
+}
+
+def indexing(){
+	x:=vector(3,0:𝔹);
+	y:=x(0); /// error
+	return (x,y);
+}

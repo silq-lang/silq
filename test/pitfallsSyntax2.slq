@@ -1,0 +1,31 @@
+fn f(x:𝔹){ /// error
+	return x;
+}
+
+function g(x:𝔹){ /// error
+	return x;
+}
+
+operation h(q:𝔹):𝔹{ /// error
+	return q;
+}
+
+def arrow(x:𝔹) -> 𝔹 { /// error
+	return x;
+}
+
+def generic<T>(x:T):T{ /// error
+	return x;
+}
+
+def cParameters(int x, qubit y){ /// error
+	return (x,y);
+}
+
+def defaults(x:𝔹, n=3){ /// error
+	return x;
+}
+
+def main(){
+	return f(0:𝔹);
+}

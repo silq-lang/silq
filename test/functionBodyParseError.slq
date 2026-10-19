@@ -6,4 +6,4 @@ def main(){
 		x[i]:=id(x[i]);
 	}
 	return x;
-} /// error
+}
