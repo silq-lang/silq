@@ -1,0 +1,17 @@
+// args: --run
+
+def app01(xs:𝔹^2)⇒xs~[0,1];
+
+def main(){
+	w:=(λ()⇒[1,0,0,1]:𝔹[])();
+	app01(v):=w;
+	assert(measure(v)==(1,0));
+	u:=[1,1,0,1]:𝔹[];
+	app01(t):=u;
+	assert(measure(t)==(1,1));
+	xs:=array(2,vector(2,0:𝔹));
+	with { xs[0]:=app01(xs[0]); } do { }
+	r:=measure(xs);
+	assert(r[0]==(0,0)&&r[1]==(0,0));
+	return (v,t,r);
+}

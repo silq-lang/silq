@@ -1,0 +1,32 @@
+def f(){
+	b:=H(0:𝔹);
+	if (let { t:=dup(b); } in t) { b:=X(b); } /// error
+	return b;
+}
+
+def g(){
+	a:=vector(2,0:𝔹);
+	a[1]:=H(a[1]);
+	if (let { t:=dup(a[1]); } in t) { a[1]:=X(a[1]); } /// error
+	return a;
+}
+
+def g2(){
+	a:=vector(2,0:𝔹);
+	a[0]:=H(a[0]);
+	if a[0]||(let { t:=dup(a); } in t==t) { a[1]:=X(a[1]); } /// error
+	return a;
+}
+
+def h(){
+	b:=H(0:𝔹);
+	if (let { t:=dup(b); u:=X(t); } in u) { b:=X(b); } /// error
+	return b;
+}
+
+def k(const x:𝔹,moved y:𝔹)qfree⇒(dup(x),y);
+def l(){
+	b:=H(0:𝔹);
+	r:=k((let { t:=dup(b); } in t),b); /// error
+	return r;
+}

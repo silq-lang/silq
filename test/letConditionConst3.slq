@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	a:=vector(2,1:𝔹);
+	if a[0]||(let { t:=dup(a); } in t==t) { a[1]:=X(a[1]); }
+	assert(measure(a)==(1,0));
+	return a;
+}

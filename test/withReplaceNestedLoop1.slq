@@ -1,0 +1,17 @@
+// args: --run
+
+def f(const r:!ℕ)mfree{
+	tau:=vector(r,vector(r,0:𝔹));
+	for i in [0..r){ for j in [0..r){ with { tau[i][j]:=H(tau[i][j]); } do { tau[i][j]:=Z(tau[i][j]); } } }
+	return tau;
+}
+
+def main(){
+	x:=vector(2,0:𝔹);
+	repeat 2 { repeat 2 { with { x[0]:=X(x[0]); } do { } } }
+	repeat 1 { repeat 3 { with { x[0]:=X(x[0]); } do { x[1]⊕=x[0]; } } }
+	assert(measure(x)==(0,1));
+	y:=measure(f(2));
+	assert(y==((1,1),(1,1)));
+	return (x,y);
+}

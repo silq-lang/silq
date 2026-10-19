@@ -1,0 +1,15 @@
+// args: --run
+
+def main(){
+	a:=vector(2,0:𝔹);
+	a[0]:=H(a[0]);
+	if (let { t:=dup(a[0]); } in t) { a[1]:=X(a[1]); }
+	if a[0]&&(let { t:=dup(a[0]); u:=dup(t); forget(u=t); } in t) { a[1]:=X(a[1]); }
+	if (let { t:=dup(a[0]); } in t)||a[0] { a[1]:=X(a[1]); }
+	b:=H(0:𝔹);
+	c:=0:𝔹;
+	if (let { t:=dup(b); } in t) { c:=X(c); }
+	r:=measure((a,b,c));
+	assert(r[0][1]==r[0][0]&&r[1]==r[2]);
+	return r;
+}

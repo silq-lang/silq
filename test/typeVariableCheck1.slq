@@ -1,0 +1,14 @@
+// args: --run
+
+def f(){
+	t:=𝔹;
+	return t;
+}
+
+def main(){
+	x:=H(0);
+	y:=dup(x);
+	t:=typeof(y);
+	z:=y;
+	return (x,t);
+}

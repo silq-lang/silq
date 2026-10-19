@@ -1,0 +1,17 @@
+// args: --run
+
+def k(const b:𝔹)mfree⇒X(let { a:=b; c:=dup(a); forget(c=a); } in a);
+def f(b:𝔹)mfree{ x:=let { a:=b; c:=dup(a); } in (a,c); (y,z):=x; forget(z=y); return y; }
+def g(b:𝔹)mfree{ x:=let { c:=dup(b); forget(c=b); } in b; return x; }
+def h[const b:𝔹]mfree⇒X(let { a:=b; c:=dup(a); forget(c=a); } in a);
+
+def main(){
+	r:=reverse(k)(0:𝔹,1:𝔹);
+	w:=reverse(h);
+	w[1:𝔹,0:𝔹];
+	y:=reverse(f)(1:𝔹);
+	z:=reverse(g)(H(0:𝔹));
+	m:=measure((y,H(z)));
+	assert(m==(1,0));
+	return (r,m);
+}

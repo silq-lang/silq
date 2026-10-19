@@ -1,0 +1,8 @@
+def f(){
+	(const x,):=(1,);
+	def g(){
+		x:=X(x); /// error
+		return x;
+	}
+	return x;
+}

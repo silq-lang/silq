@@ -1,0 +1,47 @@
+def f(){
+	x:=vector(2,vector(2,0:uint[4]));
+	x[0][1]·=(x~x)[0][1]; /// error
+	return x;
+}
+
+def g(){
+	x:=vector(2,0:uint[4]);
+	x[1]+=(x~x)[1]; /// error
+	return x;
+}
+
+def h(){
+	x:=vector(2,0:uint[4]);
+	x[1]+=(x,)[0][1]; /// error
+	return x;
+}
+
+def k(){
+	x:=vector(2,0:uint[4]);
+	x[1]+=(x~[])[1]; /// error
+	return x;
+}
+
+def l(c:!𝔹){
+	x:=vector(2,0:uint[4]);
+	x[1]+=(if c then x else x)[1]; /// error
+	return x;
+}
+
+def m(){
+	x:=vector(2,0:uint[4]);
+	x[1]+=(let { } in x)[1]; /// error
+	return x;
+}
+
+def n(){
+	x:=vector(2,0:uint[4]);
+	x[1]+=[x,x][0][1]; /// error
+	return x;
+}
+
+def p(){
+	x:=vector(2,0:uint[4]);
+	x[1]+=x[0];
+	return x;
+}

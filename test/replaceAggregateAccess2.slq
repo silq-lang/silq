@@ -1,0 +1,10 @@
+// args: --run
+
+def main(){
+	x:=vector(2,1:uint[4]);
+	x[1]+=x[0];
+	y:=(x~x)[1];
+	z:=dup(x)[1];
+	assert(measure(x)==(1,2)&&measure(y)==2&&measure(z)==2);
+	return (x,y,z);
+}

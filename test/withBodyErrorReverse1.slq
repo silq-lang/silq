@@ -1,0 +1,15 @@
+def main(){
+	xs:=(0,1);
+	f:=()qfree{
+		with {
+			with { w:=xs[0]; } do { t:=X(xs[0]); } /// error
+			u:=X(xs[1]);
+		} do {
+			t⊕=1;
+			u⊕=1;
+		}
+		return xs;
+	};
+	ys:=f();
+	return ys;
+}
