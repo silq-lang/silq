@@ -1,0 +1,18 @@
+// args: --run
+
+def main(){
+	n:=4;
+	f:=λ(x:typeof(vector(n,1:𝔹)))qfree⇒x;
+	def g(x:typeof(vector(n,1:𝔹)))qfree⇒x;
+	xs:=g(f(vector(n,1:𝔹)));
+	if measure(H(0)){
+		m:=3;
+		ys:=(λ(y:typeof(vector(m,0:𝔹)))qfree⇒y)(vector(m,0:𝔹));
+	}else{
+		m:=2;
+		ys:=vector(m,0:𝔹);
+	}
+	r:=measure(xs,ys:𝔹^m);
+	assert(r[0]=(1,1,1,1)&&(r[1]:!𝔹[]).length=m);
+	return (r[0]:!𝔹[],r[1]:!𝔹[]);
+}

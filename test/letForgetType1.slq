@@ -1,0 +1,12 @@
+// args: --run
+
+def main(){
+	k:=3;
+	x:=0:uint[(let { a:=dup(k); forget(a); } in k)];
+	y:=measure(x) as !ℕ;
+	for i in [0..2){
+		z:=0:uint[(let { a:=dup(k); b:=dup(k); forget(b); } in a)];
+		forget(z=0);
+	}
+	return y;
+}

@@ -1,0 +1,11 @@
+// args: --run
+
+def primed(k:!ℕ) ⇒ vector(let { n:=k; n:=n; n':=n+n; } in n'+n', true);
+def again(k:!ℕ) ⇒ vector(let { m:=k; m:=m; m:=m; } in m+1, false);
+def main(){
+	y:=primed(2);
+	z:=again(3);
+	forget(y=vector(8,true));
+	forget(z=vector(4,false));
+	return ();
+}

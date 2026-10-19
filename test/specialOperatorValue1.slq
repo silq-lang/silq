@@ -1,0 +1,8 @@
+def main(){
+	x:=0:𝔹;
+	f:=move; /// error
+	g:=__qabort; /// error
+	h:=(__dummy,dup(x)); /// error
+	y:=(move,x)[1]; /// error
+	return y;
+}

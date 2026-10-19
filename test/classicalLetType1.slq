@@ -1,0 +1,4 @@
+
+def id(x:!(let { a:=𝔹; b:=a; } in b))⇒x;
+def g(y:!(let { a:=𝔹; b:=a; } in b))⇒id(y);
+def h(y:!(let { def f()⇒𝔹; } in f()),z:!(let { a:=𝔹; forget(a); } in 𝔹))⇒(y,z);

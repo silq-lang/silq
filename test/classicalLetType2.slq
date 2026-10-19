@@ -1,0 +1,10 @@
+// args: --run
+
+def g(x:(let { a:=𝔹; } in let { b:=a; } in b)){ return measure[typeof(x)](x); }
+def h(x:(let { a:=𝔹; b:=a; } in b)){ return measure[typeof(x)](x); }
+def mk[τ:qtype]()⇒[]:(!τ)[];
+def main(){
+	x:=mk[let { a:=𝔹; b:=a; } in b]();
+	y:=mk[let { a:=𝔹; } in let { b:=a; } in b]();
+	return (x.length,y.length);
+}
