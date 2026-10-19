@@ -5359,7 +5359,7 @@ class ScopeWriter {
 			auto result = Result.merge(
 				cond,
 				rFalse, rTrue,
-				e.type,
+				nscope.getFunction().ret,
 				ifFalse, ifTrue,
 				this,
 			);
@@ -5405,8 +5405,8 @@ class ScopeWriter {
 		}
 
 		if(!rTrue.isPass && !rFalse.isPass) {
-			RetValue retTrue = rTrue.asValue(ifTrue, e.type);
-			RetValue retFalse = rFalse.asValue(ifFalse, e.type);
+			RetValue retTrue = rTrue.asValue(ifTrue, nscope.getFunction().ret);
+			RetValue retFalse = rFalse.asValue(ifFalse, nscope.getFunction().ret);
 			RetValue ret = RetValue.valMerge(cond, retFalse, retTrue, this);
 			return new IteReturn(cond, ret);
 		}

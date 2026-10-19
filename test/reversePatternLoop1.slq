@@ -1,0 +1,20 @@
+// args: --run
+
+def f(x:uint[4])qfree{
+	for _ in 0..3 { x+=1:uint[4]; }
+	return x;
+}
+def g(x:uint[4])qfree{
+	for i:!ℕ in 0..3 { x+=i as uint[4]; }
+	return x;
+}
+def main(){
+	a:=reverse(f)(3:uint[4]);
+	b:=reverse(g)(3:uint[4]);
+	x:=3:uint[4];
+	r:=0:uint[4];
+	with { y:=x; for i:!ℕ in 0..3 { y+=i as uint[4]; } } do { r+=y; }
+	s:=0:uint[4];
+	with { y:=x; for _ in 0..2 { y+=1:uint[4]; } } do { s+=y; }
+	assert(measure(a,b,x,r,s)==(0,0,3,6,5));
+}

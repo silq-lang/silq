@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	let{ y := x; for i:!ℕ in 0..3 { y += i as uint[4]; } } in y := 3:uint[4];
+	let{ z := w; for _ in 0..3 { z += 1:uint[4]; } } in z := 3:uint[4];
+	assert(measure(x,w)==(0,0));
+}

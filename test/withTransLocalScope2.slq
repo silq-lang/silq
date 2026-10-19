@@ -1,0 +1,15 @@
+def f(){
+	x:=3:uint[4];
+	with { y:=x; } do { }
+	return (x,y); /// error
+}
+def g(){
+	x:=1;
+	with { y:=x; } do { }
+	return y; /// error
+}
+def h(){
+	x:=0:𝔹;
+	with { y:=dup(x); } do { }
+	return (x,y); /// error
+}

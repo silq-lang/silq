@@ -1,0 +1,13 @@
+// args: --run
+
+def main(){
+	x:=3:uint[4];
+	r:=0:uint[4];
+	with { y:=x; for i in 0..3 { v:=i+1; y+=v as uint[4]; } } do { r+=y; }
+	s:=0:uint[4];
+	with { y:=x; repeat 2 { v:=2; y+=v as uint[4]; } } do { s+=y; }
+	c:=true;
+	t:=0:uint[4];
+	with { y:=x; if c { v:=1; y+=v as uint[4]; } else { y+=2:uint[4]; } } do { t+=y; }
+	assert(measure(x,r,s,t)==(3,9,7,4));
+}

@@ -1,0 +1,11 @@
+// args: --run
+
+def f(q:𝔹)qfree{
+	x:=1;
+	y:=move(x);
+	return (y,q);
+}
+def main(){
+	q:=reverse(f)((1,H(0:𝔹)));
+	assert(measure(H(q))==0);
+}
