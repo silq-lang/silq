@@ -3069,7 +3069,7 @@ class ScopeWriter {
 		Value v;
 		auto p = vars.getPtr(name);
 		if(!isDup) {
-			if(!p && nscope is null) {
+			if(!p && (nscope is null || scopeFree)) {
 				for(auto sc = parent; sc && !p; sc = sc.parent) {
 					p = sc.vars.getPtr(name);
 					if(p) {
@@ -3115,7 +3115,7 @@ class ScopeWriter {
 			p.value = null;
 		}
 		if (p.decl !is decl) {
-			assert(!strictDecl || (isDup && p.decl.isSplitFrom(decl)) || (nscope is null && p.decl.canonicalSource is decl.canonicalSource), format("Variable %s declaration mismatch at %s use; found %s, expected %s\n", name.str, isDup ? "const" : "moved", p.decl.loc, decl.loc));
+			assert(!strictDecl || (isDup && p.decl.isSplitFrom(decl)) || ((nscope is null || scopeFree) && p.decl.canonicalSource is decl.canonicalSource), format("Variable %s declaration mismatch at %s use; found %s, expected %s\n", name.str, isDup ? "const" : "moved", p.decl.loc, decl.loc));
 			assert(typeForDecl(p.decl) == typeForDecl(decl), "Split const decl changed type");
 		}
 		return v;
@@ -3323,7 +3323,7 @@ class ScopeWriter {
 		assert(e.blscope_ is null || e.blscope_ is nscope || nscope is null);
 		assert(fin || e.s.length > 0);
 
-		if(e.blscope_ && e.blscope_ is nscope) {
+		if(e.blscope_ && e.blscope_ is nscope && !scopeFree) {
 			foreach(decl; e.blscope_.forgottenVarsOnEntry) {
 				valForget(getVar(decl, false));
 			}
@@ -3344,7 +3344,7 @@ class ScopeWriter {
 			assert(!r.isReturn && !r.isConditionalReturn, "early return in compound expression");
 		}
 		auto r = genExprAs(fin, ty);
-		if(e.blscope_ && e.blscope_ is nscope) {
+		if(e.blscope_ && e.blscope_ is nscope && !scopeFree) {
 			scope loc = PushLocation(ctx, locEnd(e.loc));
 			foreach(decl; e.blscope_.forgottenVars) {
 				valForget(getVar(decl, false));
@@ -4311,7 +4311,8 @@ class ScopeWriter {
 
 	Value implExpr(ast_exp.LetExp e) {
 		if(e.s.blscope_ && e.s.blscope_.parent !is nscope && !cast(ast_scope.TypeScope)e.s.blscope_) {
-			auto sub = withBlock(null);
+			auto sub = withBlock(e.s.blscope_); // (nested statements are generated against the `let`'s own scope)
+			sub.scopeFree = true;
 			bool aborted = false;
 			auto r = sub.genCompoundValue(e.s, e.e, e.type, &aborted);
 			sub.checkEmpty(aborted);
@@ -7710,6 +7711,7 @@ class ScopeWriter {
 
 private:
 	ast_scope.NestedScope nscope;
+	bool scopeFree = false; // (e.g., a `let` expression within a type used in a different scope: variables are shared with the parents)
 	BorrowScope bscope;
 	ScopeWriter parent;
 	QCGen qcg;

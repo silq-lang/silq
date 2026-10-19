@@ -1,0 +1,18 @@
+// args: --run
+
+def f(n:!ℕ){
+	x:=vector(1,0:𝔹);
+	return x coerce 𝔹^(let { if n=3 { b:=1; } else { b:=2; } } in b);
+}
+def g(n:!ℕ)⇒vector(let { if n=3 { b:=1; c:=2; } else { b:=2; c:=1; } } in (b+c-2) coerce !ℕ,0:𝔹);
+def h(n:!ℕ)⇒vector(let { b:=0; if n=3 { b=1; } else { b=2; } } in b,1:𝔹);
+def k(n:!ℕ)⇒vector(let { if n=3 { b:=vector(1,0:!𝔹); } else { b:=vector(2,0:!𝔹); } c:=b; } in c.length,1:𝔹);
+def main(){
+	r:=f(3);
+	m:=2;
+	s:=g(m) coerce !𝔹[];
+	t:=h(m) coerce !𝔹[];
+	u:=k(3);
+	assert(r.length=1&&s.length=1&&t.length=2&&u.length=1);
+	return (measure(r),s,t,measure(u));
+}

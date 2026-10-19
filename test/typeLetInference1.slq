@@ -1,0 +1,13 @@
+// args: --run
+
+def id[τ:qtype](x:τ)⇒x;
+def main(){
+	x:=vector(1,0:𝔹) coerce 𝔹^(let { if true { b:=1; } else { b:=2; } } in b);
+	y:=measure(x);
+	z:=id(x);
+	u:=vector(1,1:𝔹) coerce 𝔹^(let { a:=0; for i in [0..1) { a=a+1; } } in a);
+	v:=measure(u);
+	w:=vector(1,0:𝔹) coerce 𝔹^(let { a:=0; a=a+1; } in a);
+	t:=measure(id(w));
+	return (y,measure(z),v,t);
+}

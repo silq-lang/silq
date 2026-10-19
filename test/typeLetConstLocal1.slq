@@ -1,0 +1,10 @@
+// args: --run
+
+def g(b:!ℕ)⇒vector(let{ def go(n:!ℕ):!ℕ{ r:=1; h:=λ(x:!ℕ)⇒x+(let { const a:=r; } in dup(a)); r=h(r); return r; } } in go(b),false);
+def k(b:!ℕ)⇒vector(let{ def go(n:!ℕ):!ℕ{ r:=n; y:=(let { const a:=r; } in dup(a)); return y; } } in go(b),false);
+def main(){
+	v:=g(2);
+	w:=k(3);
+	assert(v.length==2&&w.length==3);
+	return (v,w);
+}

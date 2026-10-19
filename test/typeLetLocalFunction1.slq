@@ -1,0 +1,11 @@
+// args: --run
+
+def f(n:!ℕ)⇒vector(let { a:=n; def h(x:!ℕ)⇒x+1; a:=h(a); } in a,0:𝔹);
+def g(n:!ℕ)⇒vector(let { def h(x:!ℕ){ if x=3 { y:=1; } else { y:=2; } return y; } } in h(n),0:𝔹);
+def main(){
+	r:=f(3);
+	m:=2;
+	s:=g(m) coerce !𝔹[];
+	assert(r.length=4&&s.length=2);
+	return (measure(r),s);
+}
