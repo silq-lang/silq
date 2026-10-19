@@ -2153,7 +2153,12 @@ def __mod_R(a: !ℝ, b: !ℝ) @[__operator] lifted: !ℝ {
 // a ^ b
 
 def __pow_Xs[N:!ℕ,n:!ℕ](a: !ℤstar[N], b: int[n]) lifted: ℤstar[N] {
-	(r, x) := (1: ℤstar[N], if b[n-1] then a^-1 else a);
+	if b[n-1] {
+		r := a^(-2^(n sub 1)): Zstar[N];
+	} else {
+		r := 1: Zstar[N];
+	}
+	x := a;
 	for i in 0..n-1{
 		if b[i] {
 			r ·= x;
