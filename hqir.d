@@ -4140,9 +4140,13 @@ class ScopeWriter {
 			default:
 				assert(0, format("unknown numeric literal type: %s", ty));
 		}
+		CReg integerValue() { // (a scientific-notation literal with integral value uses the factored rational representation)
+			if(auto v = e.asIntegerConstant()) return ctx.literalInt(v.get());
+			return ccg.intFromRational(rationalFromConstant(e));
+		}
 		if(auto intTy = ast_ty.isFixedIntTy(ty)) {
 			auto bits = getNumericBits(intTy);
-			auto val = ctx.literalInt(e.asIntegerConstant().get());
+			auto val = integerValue();
 			if(intTy.isClassical) {
 				return valNewC(ccg.intWrap(intTy.isSigned, bits, val));
 			}
@@ -4154,7 +4158,7 @@ class ScopeWriter {
 		}
 		if(auto zmodTy = ast_ty_isZmodTy(ty)) {
 			auto N = getZmodN(zmodTy);
-			auto val = ctx.literalInt(e.asIntegerConstant().get());
+			auto val = integerValue();
 			if(zmodTy.isClassical) {
 				return valNewC(ccg.zmodWrap(N, val));
 			}

@@ -3299,7 +3299,8 @@ struct Interpreter(QState){
 					} else {
 						num *= ℤ(t[2])^^t[3];
 					}
-					val = QState.makeRational(ℚ(num, den));
+					if((isFixedIntTy(le.type)||isℤmodTy(le.type))&&num%den==0) val = QState.makeInteger(num/den); // (scientific notation with integral value)
+					else val = QState.makeRational(ℚ(num, den));
 				} else if(auto v = le.asImaginaryRationalConstant()) {
 					auto t = v.get();
 					auto num = t[0];

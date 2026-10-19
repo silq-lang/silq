@@ -1,0 +1,12 @@
+// args: --run
+
+def main(){
+	head:=H(0:𝔹);
+	tail:=H(0:𝔹);
+	c:=0:𝔹;
+	if head&(let { a:=dup(tail); } in dup(a)) { c:=X(c); }
+	x:=measure((head&(let { a:=dup(tail); } in dup(a)))=0);
+	m:=measure((head,tail,c));
+	assert(m[2]==(m[0]&m[1])&&x==!m[2]);
+	return m;
+}

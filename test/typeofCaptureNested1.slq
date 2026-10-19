@@ -1,0 +1,12 @@
+// args: --run
+
+def main(){
+	x:=1:𝔹;
+	y:=dup(x);
+	def g(z:typeof(()⇒X(y)))qfree⇒z;
+	h:=λ(z:typeof(()⇒CNOT(x,y)))qfree⇒z;
+	f:=h(()⇒CNOT(x,y));
+	r:=f();
+	assert(measure((x,r))==(1,0));
+	return ();
+}
