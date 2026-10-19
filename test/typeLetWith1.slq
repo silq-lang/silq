@@ -1,0 +1,15 @@
+// args: --run
+
+def foo(a:!ℕ,b:!ℕ) ⇒ vector(let {
+	def outer(){
+		c:=b+1;
+		with { t:=dup(c); } do { }
+		def inner() ⇒ a+c;
+		return inner();
+	}
+} in outer(), false);
+def main(){
+	x:=foo(1,2);
+	forget(x=vector(4,false));
+	return ();
+}

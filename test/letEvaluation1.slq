@@ -1,0 +1,21 @@
+// args: --run
+
+def f(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	x:=x:𝔹^(let { a:=dup(n); b:=dup(a); forget(a); } in b);
+	x:=x:𝔹^(let { a:=dup(n); b:=dup(n); forget(b); } in a);
+	x:=x:𝔹^(let { a:=dup(n); } in let { b:=a; } in b);
+	x:=x:𝔹^(let { a:=n; b:=dup(a); forget(b=a); } in a);
+	x:=x:𝔹^(let { a:=n; b:=a; } in b);
+	x:=x:𝔹^(let { a:=(n,1); (b,c):=a; } in b);
+	x:=x:𝔹^(let { a:=n; b:=a; a:=b; c:=(a,b); (d,e):=c; } in e);
+	x:=x:𝔹^(let { a:=n; with { t:=dup(a); } do { } } in a);
+	x:=x:𝔹^(let { a:=n; with { b:=move(a); c:=b+1; } do { d:=c-1; } } in a);
+	x:=x:𝔹^(let { a:=n; with { b:=move(a); c:=b+1; } do { d:=c-1; } } in d coerce !ℕ);
+	return x;
+}
+def main(){
+	r:=f(2);
+	assert(r.length=2);
+	return r;
+}

@@ -1,0 +1,8 @@
+// args: --run
+
+def foo(b:!ℕ) ⇒ vector(let { c:=b+1; with { t:=dup(c); } do { } } in c, false);
+def main(){
+	x:=foo(1);
+	forget(x=vector(2,false));
+	return ();
+}

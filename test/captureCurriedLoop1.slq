@@ -1,0 +1,20 @@
+// args: --run
+
+def main(){
+	x:=vector(2,0:𝔹);
+	def foo[m:!ℕ](y:𝔹^m){
+		x:=x;
+		repeat 1 { assert(x.length=2); }
+		return (x,y);
+	}
+	(a,b):=foo(1,0,1);
+	z:=0:𝔹;
+	def bar[m:!ℕ](){
+		y:=z;
+		z:=1:𝔹;
+		for i in [0..2) { y:=X(y); }
+		return (z,y);
+	}
+	(c,d):=bar[1]();
+	return (a,b,c,d);
+}

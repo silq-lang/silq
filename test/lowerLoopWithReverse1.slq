@@ -1,0 +1,18 @@
+// args: --run
+
+def g(φ:(𝔹^2)[],n:!ℕ)mfree{
+	with { for i in [0..n){ φ~=[(0,0):𝔹^2]; } } do { φ:=φ; }
+	return φ;
+}
+def main(){
+	φ:=[]:(𝔹^2)[];
+	n:=2;
+	c:=true;
+	with { for i in [0..n){ φ~=[(0,0):𝔹^2]; } } do { x0:=φ.length; }
+	with { if c { for i in [0..n){ φ~=[(0,0):𝔹^2]; } } } do { x1:=φ.length; }
+	with { repeat 2 { for i in [0..n){ φ~=[(1,0):𝔹^2]; } } } do { x2:=φ.length; }
+	assert(x0=2&&x1=2&&x2=4);
+	r:=g(φ,3);
+	assert(r.length=0);
+	return r;
+}

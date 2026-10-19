@@ -1,0 +1,11 @@
+def g(d:!ℕ){
+	coeffs:=vector(d+1,1:!ℝ);
+	with { w:=coeffs[0]; } do { f:=λ(j:!ℕ)qfree⇒coeffs[j]; } /// error
+	return f(d);
+}
+def h(d:!ℕ){
+	coeffs:=vector(d+1,1:!ℝ);
+	with { w:=coeffs[0]; } do { x:=dup(w); }
+	f:=λ(j:!ℕ)qfree⇒coeffs[j];
+	return f(d)+x;
+}

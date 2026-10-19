@@ -1,0 +1,15 @@
+// args: --run
+
+def foo(x: !Π(n:!ℕ,)qfree. 𝔹^n)qfree⇒x(2,);
+def bar(x: !Π(n:!ℕ,)qfree. 𝔹^n)qfree⇒();
+def zeros(m:!ℕ,)qfree⇒vector(m,0:𝔹);
+
+def main(){
+	if true { y:=(0,1):!𝔹^2; } else { y:=(); }
+	if true { z:=((1,0),(0,1,1)); } else { z:=(); }
+	assert(y.length=2&&z.length=2&&z[1].length=3);
+	if true { a:=foo; } else { a:=bar; }
+	r:=measure(a(zeros));
+	assert(r.length=2);
+	return (y,z,r);
+}

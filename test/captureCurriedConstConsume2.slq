@@ -1,0 +1,10 @@
+def main(){
+	x:=0:𝔹;
+	def foo[m:!ℕ](){
+		k:=dup(x); /// error
+		y:=H(x);
+		z:=dup(k);
+		return (y,z);
+	}
+	return foo[1]();
+}

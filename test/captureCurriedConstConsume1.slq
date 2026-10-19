@@ -1,0 +1,25 @@
+// args: --run
+
+def main(){
+	x:=0:𝔹;
+	def foo[m:!ℕ](){
+		k:=dup(x);
+		return (k,x);
+	}
+	(a,b):=foo[1]();
+	y:=1:𝔹;
+	bar:=λ[m:!ℕ](){
+		k:=dup(y);
+		forget(k);
+		return H(y);
+	};
+	c:=bar[1]();
+	z:=0:𝔹;
+	def baz(m:!ℕ)(){
+		k:=dup(z);
+		z:=H(z);
+		return z;
+	}
+	e:=baz(1)();
+	return (a,b,c,e);
+}

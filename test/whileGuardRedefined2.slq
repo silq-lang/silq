@@ -1,0 +1,33 @@
+// args: --run
+
+def g(n:!ℕ)⇒0;
+def is_odd(n:!ℕ)⇒n%2=1;
+def f(N:!ℕ){
+	period := 1;
+	while is_odd(period) {
+		period := g(N);
+	}
+	return N;
+}
+def h(N:!ℕ){
+	period := 1;
+	while is_odd(period) {
+		period = g(N);
+		period = N+2;
+	}
+	return period;
+}
+def k(x:!ℕ){
+	while is_odd(x) { return 1; }
+	return x;
+}
+def m(x:!ℕ){
+	y:=dup(x);
+	while is_odd(y) { return 1; }
+	return 2;
+}
+def main(){
+	r:=(f(4),h(4),k(3),k(4),m(3),m(4));
+	assert(r=(4,6,1,4,1,2));
+	return r;
+}

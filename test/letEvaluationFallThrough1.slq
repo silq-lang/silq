@@ -1,0 +1,9 @@
+def f(n:!ℕ){
+	m:=n;
+	def g(m:!ℕ){
+		y:=vector(m,0:𝔹);
+		z:=y:𝔹^(let { k:=move(m); } in m); /// error
+		return ();
+	}
+	return g(2);
+}

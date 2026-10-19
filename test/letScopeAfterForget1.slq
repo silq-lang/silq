@@ -1,0 +1,6 @@
+def main(){
+	x:=let { a:=1; forget(a); } in 2;
+	y:=let { a:=3; } in dup(a);
+	z:=a; /// error
+	return (x,y,z);
+}

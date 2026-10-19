@@ -1,0 +1,1 @@
+def foo(b:!ℕ) ⇒ vector(let { c:=b+1; with { t:=H(0:𝔹); } do { } } in c, false); /// error

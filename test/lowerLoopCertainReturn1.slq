@@ -1,0 +1,20 @@
+// args: --run
+
+def foo(const x:𝔹)mfree{
+	if x{
+		repeat 2 { return 1; }
+	}else{
+		return 0;
+	}
+}
+def bar(const x:𝔹)mfree{
+	t:=(λ()⇒dup(x))();
+	if t{
+		repeat 2 { if true { return 1; } else { return 0; } }
+	}else{
+		return 0;
+	}
+}
+def main(){
+	return (foo(0),bar(1:𝔹));
+}
