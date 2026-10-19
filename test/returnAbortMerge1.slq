@@ -1,7 +1,7 @@
 // args: --run
 
 def f(x:𝔹){
-	if (0:𝔹) { return x; } else { if (0:𝔹) { assert(false); } return x; } /// error
+	if (0:𝔹) { return x; } else { if (0:𝔹) { assert(false); } return x; } /// run_error
 }
 def g(x:𝔹){
 	if (1:𝔹) { if (1:𝔹) { assert(false); } return x; } else { return x; }
