@@ -22,6 +22,7 @@ The options below may be used.
 --style=STYLE        verbosity: compact | verbose (overrides --qfmt style)
 --coords=COORDS      amplitudes: cartesian | polar (overrides --qfmt coords)
 --top[=k]            sort by amplitudes [restrict to top-k]
+--print-format=FMT   output of a run: pretty | json-stream (one JSON line per event)
 
 --inference-limit=n  use at most n iterations for inferring fixed points
 

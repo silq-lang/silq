@@ -42,7 +42,7 @@ scope class QSimBackend: Backend {
 	ulong numRuns = 1;
 
 	override int run(FunctionDef fun, MapSX!(string,FunctionDef) functions, ErrorHandler err) {
-		import qsim;
+		import qsim, std.json;
 		if(!fun){
 			auto pfun = functions.getPtr("main");
 			if(!pfun) return 0;
@@ -50,13 +50,22 @@ scope class QSimBackend: Backend {
 		}
 		auto be=new QSim(fun.loc.source.name);
 		foreach(i;0..numRuns){
-			auto qstate=be.run(fun,err);
-			if("`value" in qstate.vars)
-				writeln(qstate.formatQValue(qstate.vars["`value"]));
-			if(opt.projectForget){
-				auto total=qstate.totalProb();
-				if(total>zeroThreshold)
-					writefln("Pr[error] = %f",1.0L-total);
+			QState qstate;
+			auto error=be.run(fun,err,qstate);
+			final switch(opt.printFormat){
+				case PrintFormat.pretty:
+					if("`value" in qstate.vars)
+						writeln(qstate.formatQValue(qstate.vars["`value"]));
+					if(opt.projectForget){
+						auto total=qstate.totalProb();
+						if(total>zeroThreshold)
+							writefln("Pr[error] = %f",1.0L-total);
+					}
+					break;
+				case PrintFormat.jsonStream:
+					auto event=error is null?qstate.toJSON():JSONValue(["event": "error", "message": error]);
+					writeln(event.toString());
+					break;
 			}
 		}
 		return !!err.nerrors;
@@ -344,6 +353,15 @@ int main_(string[] args){
 			}catch(Exception){
 				stderr.writeln("error: unknown amplitude format `",arg,"` (valid options are: ",[EnumMembers!AmplitudeFormat].map!text.join(" | "),")");
 				return 1;
+			}
+		})
+		.add!("print-format")((string arg) {
+			switch(arg){
+				case "pretty": opt.printFormat=PrintFormat.pretty; return 0;
+				case "json-stream": opt.printFormat=PrintFormat.jsonStream; return 0;
+				default:
+					stderr.writeln("error: unknown print format `",arg,"` (valid options are: pretty | json-stream)");
+					return 1;
 			}
 		})
 		.addOptional!("top")((string arg) {

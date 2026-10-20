@@ -20,6 +20,7 @@ import util, util.io;
 
 import std.random;
 import std.complex;
+import std.json;
 import util.math;
 
 private{
@@ -91,17 +92,19 @@ class QSim{
 	this(string sourceFile){
 		this.sourceFile=sourceFile;
 	}
-	QState run(FunctionDef def,ErrorHandler err){
+	/// Returns null or error message, final state in `ret`.
+	string run(FunctionDef def,ErrorHandler err,out QState ret){
+		ret=QState.empty();
 		if(def.params.length){
-			err.run_error("use `--run-on=args` or `--run-on-each=[args_1,...,args_n]` to run main function with parameters",def.loc);
-			return QState.empty();
+			auto error="use `--run-on=args` or `--run-on-each=[args_1,...,args_n]` to run main function with parameters";
+			err.run_error(error,def.loc);
+			return error;
 		}
 		/+MapX!(string,DExpr) fields;
 		foreach(i,a;def.params) fields[a.getName]=dVar(a.getName);
 		DExpr init=dRecord(fields);+/
 		auto init=QState.unit();
 		auto interpreter=Interpreter!QState(def,def.body_,init,false);
-		auto ret=QState.empty();
 		try{
 			interpreter.runFun(ret);
 		}catch(LocalizedException ex){
@@ -116,11 +119,11 @@ class QSim{
 			for(;i<ex.stackTrace.length;i++){
 				err.note("called from here",ex.stackTrace[i].loc);
 			}
-			return QState.empty();
+			ret=QState.empty();
+			return ex.msg;
 		}
 		assert(!!def.ftype);
-		bool isTuple = !!def.ftype.cod.isTupleTy;
-		return ret;
+		return null;
 	}
 private:
 	string sourceFile;
@@ -128,6 +131,18 @@ private:
 
 private alias FormattingOptions=QState.Value.FormattingOptions;
 private alias FormattingType=QState.Value.FormattingOptions.FormattingType;
+
+Q!(QState.Σ,QState.C)[] sortedByValue(QState qs, QState.Value value){
+	Q!(QState.Value,Q!(QState.Σ,QState.C))[] keyed;
+	keyed.reserve(qs.state.length);
+	foreach(k,v;qs.state) keyed~=q(value.classicalValue(k),q(k,v));
+	typeof(keyed[0])*[] order;
+	order.reserve(keyed.length);
+	foreach(ref k;keyed) order~=&k;
+	order.sort!((a,b)=>(*a)[0].classicalCompare!"<"((*b)[0]));
+	return order.map!(k=>(*k)[1]).array;
+}
+
 string formatQValue(QState qs, QState.Value value){
 	if(value.isClassical())
 		return value.toStringImpl(FormattingOptions.init);
@@ -150,14 +165,7 @@ string formatQValue(QState qs, QState.Value value){
 		auto diff=argNorm(a-b);
 		return abs(diff)<tol||abs(diff-2*PI)<tol;
 	}
-	Q!(QState.Value,Q!(QState.Σ,QState.C))[] keyed;
-	keyed.reserve(qs.state.length);
-	foreach(k,v;qs.state) keyed~=q(value.classicalValue(k),q(k,v));
-	typeof(keyed[0])*[] order;
-	order.reserve(keyed.length);
-	foreach(ref k;keyed) order~=&k;
-	order.sort!((a,b)=>(*a)[0].classicalCompare!"<"((*b)[0]));
-	Q!(QState.Σ,QState.C)[] state=order.map!(k=>(*k)[1]).array;
+	auto state=qs.sortedByValue(value);
 	bool truncated=false;
 	auto origState=state;
 	if(opt.top){
@@ -2113,6 +2121,33 @@ struct QState{
 				case Tag.quval: return quval.toString();
 			}
 		}
+		JSONValue toJSON()in{
+			assert(isClassical(),text(this));
+		}do{
+			static JSONValue integer(ℤ x){
+				if(long.min<=x&&x<=long.max) return JSONValue(x.toLong());
+				return JSONValue(text(x));
+			}
+			static JSONValue real_(R x){
+				return isFinite(x)?JSONValue(cast(double)x):JSONValue(null);
+			}
+			if(isTypeTy(type)||isQNumericTy(type)) return JSONValue(["type": "type"]);
+			final switch(tag){
+				case Tag.cval: return JSONValue(["type": JSONValue("complex"), "re": real_(cval.re), "im": real_(cval.im)]);
+				case Tag.fval: return real_(fval);
+				case Tag.qval: return JSONValue(["type": "rational", "n": text(qval.num), "d": text(qval.den)]);
+				case Tag.zval: return integer(zval);
+				case Tag.intval: return integer(intval.val);
+				case Tag.uintval: return integer(uintval.val);
+				case Tag.zmodval: return integer(zmodval.val);
+				case Tag.bval: return JSONValue(bval);
+				case Tag.tval: return JSONValue(["type": "type"]);
+				case Tag.closure: return JSONValue(["type": "function"]);
+				case Tag.array_: return JSONValue(array_.map!(x=>x.toJSON()).array);
+				case Tag.record: return JSONValue(["type": "context"]);
+				case Tag.quval: assert(0);
+			}
+		}
 		string toBasisStringImpl()in{
 			assert(isClassical(),text(this));
 		}do{
@@ -2457,8 +2492,16 @@ struct QState{
 				rZ(arg[ℤ(0)], arg[ℤ(1)].dup(this)).forget(this);
 				return makeTuple(.unit,[]);
 			case "print": {
-				FormattingOptions opt={type: FormattingType.dump};
-				writeln(arg.toStringImpl(opt)); stdout.flush();
+				final switch(.opt.printFormat){
+					case PrintFormat.pretty:
+						FormattingOptions opt={type: FormattingType.dump};
+						writeln(arg.toStringImpl(opt)); stdout.flush();
+						break;
+					case PrintFormat.jsonStream:
+						JSONValue event=["event": JSONValue("print"), "value": arg.toJSON()];
+						writeln(event); stdout.flush();
+						break;
+				}
 				return makeTuple(.unit,[]);
 			}
 			case "int.gcd":
@@ -2760,6 +2803,21 @@ struct QState{
 		}
 		arg.forget(this);
 		return result;
+	}
+	JSONValue toJSON(){
+		JSONValue r=["event": "finished"];
+		JSONValue[] entries;
+		if("`value" in vars){
+			auto value=vars["`value"];
+			foreach(kv;this.sortedByValue(value)){
+				auto basis=value.classicalValue(kv[0]);
+				JSONValue amplitude=[JSONValue(cast(double)kv[1].re),JSONValue(cast(double)kv[1].im)];
+				entries~=JSONValue(["basis_state": basis.toJSON(), "amplitude": amplitude]);
+			}
+		}
+		r["entries"]=entries;
+		r["error_probability"]=opt.projectForget?max(0.0,cast(double)(1.0L-totalProb())):0.0;
+		return r;
 	}
 }
 

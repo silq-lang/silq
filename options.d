@@ -9,6 +9,10 @@ enum AmplitudeFormat{
 	cartesian,
 	polar,
 }
+enum PrintFormat{
+	pretty,
+	jsonStream,
+}
 
 struct Options{
 	bool trace=false;
@@ -18,5 +22,6 @@ struct Options{
 	AmplitudeFormat amplitudeFormat=AmplitudeFormat.polar;
 	bool top=false;
 	size_t topk=0;
+	PrintFormat printFormat=PrintFormat.pretty;
 }
 Options opt; // TODO: get rid of global?
