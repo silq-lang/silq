@@ -16,7 +16,7 @@ def notConsumedReset(){
 	}
 	return c;
 }
-def constAssign(){
+def constAssign():!𝔹[]{
 	n:=1;
 	do{
 		v:=vector(n,0:𝔹);

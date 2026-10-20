@@ -1,0 +1,25 @@
+// args: --run
+
+def redefined(){
+	k:=0;
+	do{ k+=1; v:=0:𝔹; v:=X(v); }while k<2;
+	forget(v=1:𝔹);
+	return k;
+}
+def computedClassically(n:!ℕ){
+	k:=0;
+	do{ k+=1; v:=vector(n,0:𝔹); v[0]:=X(v[0]); }while k<2;
+	forget(v=[1:𝔹]);
+	return k;
+}
+def recomputedClassically(n:!ℕ){
+	k:=0;
+	do{ k+=1; v:=vector(n,0:𝔹); w:=vector(n,0:𝔹); }while k<2{ measure(w); }
+	forget(v=vector(n,0:𝔹));
+	return k;
+}
+def main(){
+	r:=(redefined(),computedClassically(1),recomputedClassically(2));
+	assert(r==(2,2,2));
+	return r;
+}

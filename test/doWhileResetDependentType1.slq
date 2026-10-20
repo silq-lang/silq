@@ -1,0 +1,38 @@
+// args: --run
+
+def measured(){
+	c:=0;
+	do{ c+=1; v:=vector(c,0:𝔹); }while c<2 { measure(v); }
+	return measure(v) coerce !𝔹[];
+}
+def forgotten(){
+	c:=0;
+	do{ c+=1; v:=vector(c,0:𝔹); }while c<3 { forget(v=vector(c,0:𝔹)); }
+	return measure(v) coerce !𝔹[];
+}
+def g[n:!ℕ](x:𝔹^n)⇒measure(x);
+def generic(){
+	c:=0;
+	do{ c+=1; v:=vector(c,1:𝔹); }while c<2 { w:=v; x:=g(w); }
+	return measure(v) coerce !𝔹[];
+}
+def nested(){
+	k:=0;
+	do{
+		k+=1;
+		j:=0;
+		do{ j+=1; v:=vector(k,1:𝔹); }while j<2;
+	}while k<2{ forget(v=vector(k,1:𝔹)); }
+	return measure(v) coerce !𝔹[];
+}
+def branches(n:!ℕ){
+	c:=n+1;
+	k:=0;
+	do{ k+=1; v:=vector(c,0:𝔹); }while k<3{ if c%2==0 { c=dup(c)+1; } else { x:=g(v); } }
+	return (c,measure(v) coerce !𝔹[]);
+}
+def main(){
+	r:=(measured(),forgotten(),generic(),nested(),branches(0),branches(1));
+	assert(r==([0,0],[0,0,0],[1,1],[1,1],(1,[0]),(3,[0,0,0])));
+	return r;
+}

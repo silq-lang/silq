@@ -1,0 +1,33 @@
+// args: --run
+
+def whileLoop(n:!ℕ){
+	c:=n+1;
+	x:=vector(c,0:𝔹);
+	k:=0;
+	while k<2 { x[0]:=X(x[0]); k+=1; }
+	forget(x=vector(c,0:𝔹));
+	c+=1;
+	return c;
+}
+def quantumWhileLoop(n:!ℕ){
+	c:=n+1;
+	x:=vector(c,0:𝔹);
+	k:=0;
+	while k<2 { x[0]:=H(x[0]); k+=1; }
+	measure(x);
+	c+=1;
+	return c;
+}
+def doWhileLoop(n:!ℕ){
+	c:=n+1;
+	k:=0;
+	do{ k+=1; v:=vector(c,1:𝔹); }while k<1{ measure(H(0:𝔹)); }
+	forget(v=vector(c,1:𝔹));
+	c+=1;
+	return c;
+}
+def main(){
+	r:=(whileLoop(1),quantumWhileLoop(1),doWhileLoop(1));
+	assert(r==(3,3,3));
+	return r;
+}

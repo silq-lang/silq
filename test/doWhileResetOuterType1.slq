@@ -1,0 +1,12 @@
+// args: --run
+
+def f(){
+	c:=1;
+	v:=vector(c,0:𝔹);
+	k:=0;
+	do{ k+=1; }while k<2{
+		c+=1; /// TODO
+	}
+	return c;
+}
+def main(){ return f(); }
