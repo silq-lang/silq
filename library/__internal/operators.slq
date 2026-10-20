@@ -276,11 +276,12 @@ def qint_udivmod_qq[n:!N,m:!N](const a: B^n, const b: B^m) @nogarbage qfree: B^n
 	}
 	(q1, r1) := qint_udivmod_qq[n sub 1, m](a[1..n], b);
 	r := [a[0]] ~ r1;
-	lo := X(qint_ultq[m+1](r, b ~ [0]));
-	r = r[0..m];
+	b2 := b ~ [0];
+	lo := X(qint_ultq[m+1](r, b2));
 	if lo {
-		r := qint_isubq[m](r, b);
+		r := qint_isubq[m+1](r, b2);
 	}
+	r ~ [0] := r;
 	q := [lo] ~ q1;
 	return (q, r);
 }
@@ -299,10 +300,10 @@ def qint_udivmod_qc[n:!N](a: B^n, b: !N) @nogarbage lifted: B^n x B^n {
 		(q1, r1) := rec(a', b);
 		r := [a0] ~ r1;
 		lo := X(qint_ultc[m+1](r, b));
-		r = r[0..m];
 		if lo {
-			r := qint_isubc[m](r, b);
+			r := qint_isubc[m+1](r, b);
 		}
+		r ~ [0] := r;
 		q := [lo] ~ q1;
 		return (q, r);
 	}
