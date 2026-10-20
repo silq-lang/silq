@@ -1,0 +1,39 @@
+// args: --run
+
+def whileLoop(b:!𝔹,n:!ℕ){
+	c:=n+1;
+	v:=vector(c,0:𝔹);
+	if b { j:=0; while j<3 { j+=1; c=dup(c)+1; } }
+	return c;
+}
+def forLoop(b:!𝔹,n:!ℕ){
+	c:=n+1;
+	v:=vector(c,0:𝔹);
+	if b { for i in 0..3 { c=dup(c)+1; } }
+	return c;
+}
+def repeatLoop(b:!𝔹,n:!ℕ){
+	c:=n+1;
+	v:=vector(c,0:𝔹);
+	if b { repeat 3 { c=dup(c)+1; } }
+	return c;
+}
+def doWhileLoop(b:!𝔹,n:!ℕ){
+	c:=n+1;
+	v:=vector(c,0:𝔹);
+	if b { j:=0; do{ j+=1; c=dup(c)+1; }while j<3; }
+	return c;
+}
+def nested(b:!𝔹,n:!ℕ){
+	c:=n+1;
+	v:=vector(c,0:𝔹);
+	if b { if c<5 { j:=0; while j<3 { j+=1; c=dup(c)+1; } } }
+	return c;
+}
+def main(){
+	r:=(whileLoop(true,0),whileLoop(false,0),forLoop(true,0),forLoop(false,0),repeatLoop(true,0),repeatLoop(false,0));
+	assert(r==(4,1,4,1,4,1));
+	s:=(doWhileLoop(true,0),doWhileLoop(false,0),nested(true,0),nested(false,0));
+	assert(s==(4,1,4,1));
+	return (r,s);
+}

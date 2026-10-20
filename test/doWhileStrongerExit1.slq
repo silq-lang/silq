@@ -1,0 +1,31 @@
+// args: --run
+
+def classicalValue(){
+	c:=1;
+	v:=vector(c,0:!𝔹);
+	k:=0;
+	do{ k+=1; forget(v); c+=1; v:=vector(c,1:!𝔹); }while k<2;
+	x:=v:!𝔹^c;
+	return (c,x coerce !𝔹[]);
+}
+def quantumValue(){
+	c:=1;
+	v:=vector(c,0:𝔹);
+	v[0]:=H(v[0]);
+	k:=0;
+	do{ k+=1; measure(v); c+=1; v:=vector(c,1:𝔹); v[0]:=H(v[0]); v[0]:=H(v[0]); }while k<2;
+	x:=measure(v):!𝔹^c;
+	return (c,x coerce !𝔹[]);
+}
+def reset(){
+	c:=1;
+	v:=vector(c,0:!𝔹);
+	k:=0;
+	do{ k+=1; forget(v); c+=1; v:=vector(c,1:!𝔹); }while k<2 { forget(v); c+=1; v:=vector(c,0:!𝔹); }
+	return (c,v coerce !𝔹[]);
+}
+def main(){
+	r:=(classicalValue(),quantumValue(),reset());
+	assert(r==((3,[1,1,1]),(3,[1,1,1]),(4,[1,1,1,1])));
+	return r;
+}

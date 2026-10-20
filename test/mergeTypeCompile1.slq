@@ -1,0 +1,37 @@
+// args: --run
+
+def classicalValue(b:!𝔹,n:!ℕ){
+	c:=n+1;
+	v:=vector(c,1:!𝔹);
+	if b { forget(v); c=dup(c)+1; v:=vector(c,0:!𝔹); }
+	return (c,v);
+}
+def quantumValue(b:!𝔹,n:!ℕ){
+	c:=n+1;
+	v:=vector(c,0:𝔹);
+	if b { measure(v); c=c+1; v:=vector(c,1:𝔹); }
+	return (c,measure(v));
+}
+def bothBranches(b:!𝔹,n:!ℕ){
+	c:=n+1;
+	v:=vector(c,1:!𝔹);
+	if b { forget(v); c=c+1; v:=vector(c,0:!𝔹); } else { forget(v); c=c+2; v:=vector(c,1:!𝔹); }
+	return (c,v);
+}
+def namesReversed(b:!𝔹,n:!ℕ){
+	z:=n+1;
+	a:=vector(z,1:!𝔹);
+	if b { forget(a); z=dup(z)+1; a:=vector(z,0:!𝔹); }
+	return (z,a);
+}
+def definedInBranches(b:!𝔹){
+	if b { m:=3; xs:=vector(m,0:𝔹); } else { m:=1; xs:=vector(2,0:𝔹); }
+	return (m,measure(xs));
+}
+def main(){
+	r:=(classicalValue(true,1),classicalValue(false,1),quantumValue(true,1),quantumValue(false,1),bothBranches(true,0),bothBranches(false,0));
+	assert(r==((3,[0,0,0]),(2,[1,1]),(3,[1,1,1]),(2,[0,0]),(2,[0,0]),(3,[1,1,1])));
+	s:=(namesReversed(true,0),namesReversed(false,0),definedInBranches(true),definedInBranches(false));
+	assert(s==((2,[0,0]),(1,[1]),(3,[0,0,0]),(1,[0,0])));
+	return (r,s);
+}

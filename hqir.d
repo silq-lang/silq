@@ -6,7 +6,7 @@ import std.array: Appender, appender, array, join;
 import std.string: endsWith;
 import std.format: format;
 import std.functional: partial;
-import std.algorithm: map, filter, canFind, count, all, any, fold;
+import std.algorithm: map, filter, canFind, count, countUntil, all, any, fold;
 import std.range: iota, zip, repeat, chain;
 import std.utf: byCodeUnit, byChar;
 import std.bigint: BigInt, toDecimalString;
@@ -3287,32 +3287,46 @@ class ScopeWriter {
 			t.d0 = decl;
 		}
 
-		IdMap!Expression mergeTypeSubst;
-		foreach(decl; sc1.mergedVars ~ sc0.mergedVars) {
+		// (the merged types in terms of the versions of the variables in each branch, in which the conversions are generated)
+		IdMap!Expression subst0, subst1;
+		void addVersion(ref IdMap!Expression subst, ast_decl.Declaration decl) {
 			auto outer = decl.mergedInto;
-			if(!outer) continue;
-			if(outer.getId in mergeTypeSubst) continue;
-			auto nid = new ast_exp.Identifier(outer.getId);
-			nid.meaning = outer;
-			nid.scope_ = outer.scope_;
-			nid.loc = outer.loc;
-			nid.type = typeForDecl(outer);
+			if(!outer || outer.getId in subst) return;
+			auto nid = new ast_exp.Identifier(decl.getId);
+			nid.meaning = decl;
+			nid.scope_ = decl.scope_;
+			nid.loc = decl.loc;
+			nid.type = typeForDecl(decl);
 			nid.constLookup = true;
 			nid.setSemCompleted();
-			mergeTypeSubst[outer.getId] = nid;
+			subst[outer.getId] = nid;
 		}
+		foreach(decl; sc1.mergedVars) addVersion(subst1, decl);
+		foreach(decl; sc0.mergedVars) addVersion(subst0, decl);
+		bool mentions(Triple t, Triple u) {
+			foreach(ty; [typeForDecl(t.outer), typeForDecl(t.d1), typeForDecl(t.d0)])
+				if(ty) foreach(fid; ast_ty.freeIdentifiers(ty))
+					if(fid.meaning && fid.meaning.getId == u.outer.getId) return true;
+			return false;
+		}
+		Triple[] order, rest; // (a variable is merged before the variables that its types mention, while their versions are available)
 		foreach(id, t; mergedVars) {
 			assert(t.d0, format("Merged variable %s missing in if-false", id));
+			rest ~= t;
+		}
+		while(rest.length) {
+			auto i = rest.countUntil!(t => !rest.any!(u => u.outer !is t.outer && mentions(u, t)));
+			if(i < 0) i = 0;
+			order ~= rest[i];
+			rest = rest[0 .. i] ~ rest[i + 1 .. $];
+		}
+		foreach(t; order) {
 			auto outer = t.outer;
 			// TODO types as part of merge result?
 			auto ty = typeForDecl(outer);
 			auto ty1 = typeForDecl(t.d1), ty0 = typeForDecl(t.d0);
-			if(mergeTypeSubst.length) {
-				if(ty1) ty1 = ty1.substitute(mergeTypeSubst);
-				if(ty0) ty0 = ty0.substitute(mergeTypeSubst);
-			}
-			auto r1 = if1.genSubtype(if1.getVar(t.d1, false), ty1, ty);
-			auto r0 = if0.genSubtype(if0.getVar(t.d0, false), ty0, ty);
+			auto r1 = if1.genSubtype(if1.getVar(t.d1, false), ty1, subst1.length ? ty.substitute(subst1) : ty);
+			auto r0 = if0.genSubtype(if0.getVar(t.d0, false), ty0, subst0.length ? ty.substitute(subst0) : ty);
 			auto val = valMerge(cond, r0, r1);
 			defineVar(outer, val);
 		}

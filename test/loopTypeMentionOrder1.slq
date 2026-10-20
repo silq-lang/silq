@@ -1,0 +1,26 @@
+// args: --run
+
+def whileLoop(){
+	c:=1;
+	v:=vector(c,0:!𝔹);
+	k:=0;
+	while k<2 { k+=1; forget(v); c+=1; v:=vector(c,0:!𝔹); }
+	return (c,v);
+}
+def forLoop(){
+	c:=1;
+	v:=vector(c,0:!𝔹);
+	for i in 0..2 { forget(v); c+=1; v:=vector(c,1:!𝔹); }
+	return (c,v);
+}
+def repeatLoop(){
+	c:=1;
+	v:=vector(c,0:!𝔹);
+	repeat 2 { forget(v); c+=1; v:=vector(c,1:!𝔹); }
+	return (c,v);
+}
+def main(){
+	r:=(whileLoop(),forLoop(),repeatLoop());
+	assert(r==((3,[0,0,0]),(3,[1,1,1]),(3,[1,1,1])));
+	return r;
+}

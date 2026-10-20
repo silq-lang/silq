@@ -1,0 +1,24 @@
+// args: --run
+
+def g[m:!ℕ](x:𝔹^m)⇒measure(x)[0] as !ℕ;
+def f(b:!𝔹,n:!ℕ){
+	r:=0;
+	c:=n+1;
+	if b {
+		v:=vector(c,1:𝔹);
+		k:=1;
+		while k<3 {
+			j:=0;
+			do{ w:=vector(c,1:𝔹); j+=1; }while j<2{ r+=g(w); }
+			k+=1;
+		}
+	}else{
+		c+=1;
+	}
+	return (r,c);
+}
+def main(){
+	r:=(f(true,0),f(false,0));
+	assert(r==((2,1),(0,2)));
+	return r;
+}

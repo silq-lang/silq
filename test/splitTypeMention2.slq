@@ -1,0 +1,25 @@
+// args: --run
+
+def forgotten(b:!𝔹){
+	c:=1;
+	if b { c=2; v:=vector(c,0:𝔹); } else { v:=vector(c,0:𝔹); }
+	if b { forget(v); c=3; } else { forget(v); }
+	return c;
+}
+def copied(b:!𝔹){
+	c:=1;
+	if b { c=2; v:=vector(c,0:𝔹); } else { v:=vector(c,0:𝔹); }
+	if b { w:=v; measure(w); c=3; } else { measure(v); }
+	return c;
+}
+def copiedForgotten(b:!𝔹){
+	c:=1;
+	if b { c=2; v:=vector(c,0:𝔹); } else { v:=vector(c,0:𝔹); }
+	if b { w:=v; forget(w); c=3; } else { forget(v); }
+	return c;
+}
+def main(){
+	r:=(forgotten(true),forgotten(false),copied(true),copied(false),copiedForgotten(true),copiedForgotten(false));
+	assert(r==(3,1,3,1,3,1));
+	return r;
+}
