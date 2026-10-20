@@ -1,0 +1,19 @@
+// args: --run
+
+def g1(n:!ℕ)⇒vector(let{ r:=0; for i in 0..n { (p,q):=(r,n); (p,q)=(q,p); r=p; } } in r%7,false);
+def h1(n:!ℕ)(v:!𝔹^(let{ r:=0; for i in 0..n { (p,q):=(r,n); (p,q)=(q,p); r=p; } } in r%7))⇒v.length;
+def g2(k:!ℕ)⇒vector(let{ r:=0; repeat 2 { r+=k; } } in r,0:𝔹);
+def h2(k:!ℕ)(v:!𝔹^(let{ r:=0; repeat 2 { r+=k; } } in r))⇒v.length;
+def g3(k:!ℕ)⇒vector(let{ r:=0; while r<k { r+=1; } } in r,0:𝔹);
+def h3(k:!ℕ)(v:!𝔹^(let{ r:=0; while r<k { r+=1; } } in r))⇒v.length;
+def h4(k:!ℕ)(v:!𝔹^(let{ r:=0; for i in 0..2 { r+=k; } } in r))⇒v.length;
+def main(){
+	a:=h1(2)(g1(2));
+	b:=h2(2)(g2(2));
+	c:=h3(2)(g3(2));
+	k:=2;
+	v:=measure(vector(let{ r:=0; for i in 0..2 { r+=k; } } in r,0:𝔹));
+	d:=h4(k)(v);
+	assert(a=2&&b=4&&c=2&&d=4);
+	return (a,b,c,d);
+}

@@ -1,0 +1,16 @@
+// args: --run
+
+def f(n:!ℕ,b:!ℕ)⇒vector(let{ r:=0; repeat b%3 { r+=1; } } in r%7,false);
+def g(n:!ℕ)⇒vector(let{ r:=0; a:=[n for i in [0..2)]; r+=a.length; } in r,false);
+def h(n:!ℕ)⇒vector(let{ r:=0; with { t:=dup(n+2); } do { r+=t; } } in r%7,false);
+def k(n:!ℕ,b:!ℕ)⇒vector(let{ r:=0; for i in [0..n%3) { a:=[r,n]; a[n%2]=n div 2; r=a[0]+a[1]; for j in [0..b%3) { r+=(let{ u:=r%2; u=u+1; } in u); with { t:=dup(1); } do { r+=t; } } } } in r%7,false);
+def kref(n:!ℕ,b:!ℕ):!ℕ{ r:=0; for i in [0..n%3) { a:=[r,n]; a[n%2]=n div 2; r=a[0]+a[1]; for j in [0..b%3) { r+=(let{ u:=r%2; u=u+1; } in u); with { t:=dup(1); } do { r+=t; } } } return r%7; }
+def id[τ](x:τ)⇒x;
+def main(){
+	u:=id(f(0,0));
+	v:=id(g(1));
+	w:=id(h(2));
+	x:=id(k(2,1));
+	assert(u.length=0&&v.length=2&&w.length=4&&x.length=kref(2,1));
+	return (u,v,w,x.length);
+}

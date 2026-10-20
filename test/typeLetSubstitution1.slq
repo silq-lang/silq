@@ -1,0 +1,24 @@
+// args: --run
+
+def f(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	return x coerce 𝔹^(let { a:=1; a=n; } in a);
+}
+def g(n:!ℕ,i:!ℕ){
+	x:=vector(n,0:𝔹);
+	return x coerce 𝔹^(let { v:=[0,0]; v[i]=n; } in v[0]);
+}
+def h(n:!ℕ){
+	x:=vector(n+1,0:𝔹);
+	return x coerce 𝔹^(let { a:=(n,1); a[0]=a[1]+n; } in a[0]);
+}
+def k(n:!ℕ,i:!ℕ)⇒vector(let { def go(m:!ℕ):!ℕ{ v:=[0,0]; v[i]=m; return v[0]; } } in go(n),0:𝔹);
+def main(){
+	a:=(measure(f(0)),measure(f(1)),measure(f(2)));
+	b:=(measure(g(2,0)),measure(g(1,0)));
+	c:=(measure(h(0)),measure(h(1)));
+	y:=g(2,0);
+	d:=(measure(k(2,0)),measure(y));
+	assert(a[0].length=0&&a[1].length=1&&a[2].length=2&&b[0].length=2&&b[1].length=1&&c[0].length=1&&c[1].length=2&&d[0].length=2&&d[1].length=2);
+	return (a,b,c,d);
+}

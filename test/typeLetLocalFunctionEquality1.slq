@@ -1,0 +1,15 @@
+// args: --run
+
+def g1(n:!ℕ,b:!ℕ)⇒vector(let{ r:=0; def h(m:!ℕ):!ℕ{ return m+(r sub 0); } r=h(r); } in r%7,false);
+def h1(n:!ℕ,b:!ℕ)(v:!𝔹^(let{ r:=0; def h(m:!ℕ):!ℕ{ return m+(r sub 0); } r=h(r); } in r%7))⇒v.length;
+def g2(b:!ℕ)⇒vector(let{ def go(n:!ℕ)(x:!ℕ^n):!ℕ⇒n; } in go(b)(vector(b,0)),false);
+def h2(b:!ℕ)(v:!𝔹^(let{ def go(n:!ℕ)(x:!ℕ^n):!ℕ⇒n; } in go(b)(vector(b,0))))⇒v.length;
+def g3(b:!ℕ)⇒vector(let{ r:=b; def h(m:!ℕ):!ℕ{ return m+r; } s:=h(1); } in s,false);
+def h3(b:!ℕ)(v:!𝔹^(let{ r:=b; def h(m:!ℕ):!ℕ{ return m+r; } s:=h(1); } in s))⇒v.length;
+def main(){
+	a:=h1(1,1)(g1(1,1));
+	b:=h2(3)(g2(3));
+	c:=h3(2)(g3(2));
+	assert(a=0&&b=3&&c=3);
+	return (a,b,c);
+}

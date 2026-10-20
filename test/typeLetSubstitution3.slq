@@ -1,0 +1,18 @@
+// args: --run
+
+def f(n:!ℕ,b:!ℕ)⇒vector(let{ r:=0; a:=[i+(n%2) for i in [0..b%3)]; r+=a.length; } in r%7,0:𝔹);
+def g(n:!ℕ)⇒vector(let{ def h(m:!ℕ):!ℕ{ return m+n; } r:=h(1); } in r,0:𝔹);
+def k(n:!ℕ)⇒vector(let{ a:=[n for i in [0..n)]; r:=0; r=a.length; } in r,0:𝔹);
+def id[τ](x:τ)⇒x;
+def idc[τ](x:τ){ y:=x coerce τ; return y; }
+def main(){
+	n:=1; b:=2; m:=3;
+	u:=measure(id(f(n,b)));
+	v:=measure(id(f(m+0,m*1)));
+	w:=measure(g(m));
+	x:=measure(id(g(m)));
+	y:=measure(id(k(b)));
+	z:=measure(idc(g(m)));
+	assert(u.length=2&&v.length=0&&w.length=4&&x.length=4&&y.length=2&&z.length=4);
+	return (u.length,v.length,w.length,x.length,y.length,z.length);
+}

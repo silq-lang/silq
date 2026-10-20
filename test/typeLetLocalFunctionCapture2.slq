@@ -1,0 +1,13 @@
+// args: --run
+
+def f(n:!ℕ)⇒vector(let{ r:=0; repeat n%3 { def h(m:!ℕ):!ℕ{ return m+n; } r=h(r); } } in r,0:𝔹);
+def g(n:!ℕ)⇒vector(let{ r:=0; for i in 0..2 { def h(m:!ℕ):!ℕ{ if m>10 { return m; } return h(m+n+i); } r=h(r); } } in r,0:𝔹);
+def main(){
+	k:=4;
+	u:=vector(let{ r:=0; repeat k%3 { def h(m:!ℕ):!ℕ{ return m+k; } r=h(r); } } in r,0:𝔹);
+	v:=vector(let{ r:=0; while r<5 { def h(m:!ℕ):!ℕ{ def g(j:!ℕ):!ℕ{ return j+k; } return g(m); } r=h(r); } } in r,0:𝔹);
+	w:=measure(f(k));
+	x:=measure(g(k));
+	assert(u.length=4&&v.length=8&&w.length=4&&x.length=12);
+	return (u.length,v.length,w.length,x.length);
+}
