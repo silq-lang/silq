@@ -1,0 +1,2 @@
+def k(n:!ℕ)⇒vector(let{ r:=0; for i in 0..n { r+=measure(H(0:𝔹)) coerce !ℕ; } } in r,false); /// error
+def l(n:!ℕ)⇒vector(let{ r:=0; while r<n { r+=measure(H(0:𝔹)) coerce !ℕ; } } in r,false); /// error

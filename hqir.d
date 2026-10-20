@@ -2697,6 +2697,7 @@ class ScopeWriter {
 		this.parent = parent;
 		this.qcg = parent.qcg;
 		this.detPassthrough = true;
+		this.inStmt = parent.inStmt;
 
 		this.condMemo = parent.condMemo;
 		this.condShared = parent.condShared;
@@ -2721,6 +2722,7 @@ class ScopeWriter {
 		auto subsc = new ScopeWriter(null, this);
 		subsc.qcg = new QCGen(ccg, null);
 		subsc.qcg.inType = true;
+		subsc.inStmt = false;
 		return subsc;
 	}
 
@@ -4556,7 +4558,7 @@ class ScopeWriter {
 		return ast_sem.ExpSemContext(
 			lookupScope,
 			isConst ? ast_sem.ConstResult.yes : ast_sem.ConstResult.no,
-			qcg.inType ? ast_sem.InType.yes : ast_sem.InType.no,
+			qcg.inType && !inStmt ? ast_sem.InType.yes : ast_sem.InType.no,
 		);
 	}
 
@@ -5458,6 +5460,9 @@ class ScopeWriter {
 	Result genStmt(Expression e) {
 		assert(e, "genStmt(null)");
 		scope loc = PushLocation(ctx, e.loc);
+		auto oldInStmt = inStmt;
+		inStmt = true;
+		scope(exit) inStmt = oldInStmt;
 		try {
 			return ast_exp.dispatchStm!((auto ref e)=>this.implStmt(e))(e);
 		} catch(AssertError exc) {
@@ -7717,6 +7722,7 @@ private:
 	QCGen qcg;
 	IdMap!Variable vars;
 	bool detPassthrough;
+	bool inStmt = false; // (statements are analyzed outside of types, also within type-level code)
 
 	MapSX!(ExprInfo,CReg) cachedNat;
 	MapSX!(ExprInfo,RTTI) cachedRTTI;

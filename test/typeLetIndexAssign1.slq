@@ -1,0 +1,45 @@
+// args: --run
+
+def f(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	return x coerce 𝔹^(let { v:=[0,n]; v[0]=v[1]; } in v[0]);
+}
+def g(n:!ℕ,i:!ℕ){
+	x:=vector(n,0:𝔹);
+	return x coerce 𝔹^(let { v:=[0,0]; v[i]=n; } in v[0]);
+}
+def h(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	return x coerce 𝔹^(let { v:=[0,n]; w:=0; w=w+1; } in v[1]);
+}
+def k(n:!ℕ)⇒vector(let { def go(m:!ℕ):!ℕ{ v:=[0,m]; v[0]=v[1]; return v[0]; } } in go(n),0:𝔹);
+def l(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	return x coerce 𝔹^(let { c:=1; with { b:=dup(n); } do { c=b; } } in c);
+}
+def p(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	return x coerce 𝔹^(let { v:=[0,n]; v[0]=v[1]; v~=[1]; } in v[0]);
+}
+def q(n:!ℕ){
+	x:=vector(n+1,0:𝔹);
+	return x coerce 𝔹^(let { v:=vector(n+1,0:!ℕ); for i in [0..n+1) { v[i]=i; } s:=0; for i in [0..n+1) { s+=v[i]; } } in (2*s) div n);
+}
+def s(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	return x coerce 𝔹^(let { v:=[0,n]; (v[0],v[1]):=(v[1],v[0]); } in v[0]);
+}
+def t(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	return x coerce 𝔹^(let { v:=[[0,0],[0,n]]; v[0][1]=v[1][1]; } in v[0][1]);
+}
+def u(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	return x coerce 𝔹^(let { v:=[n]; v~=[1]; w:=v[0]; forget(v); } in w);
+}
+def main(){
+	a:=g(2,0);
+	r:=(measure(f(2)),measure(h(2)),measure(k(2)),measure(l(2)),measure(p(2)),measure(q(2)),measure(s(2)),measure(t(2)),measure(u(2)));
+	assert(a.length=2&&r[0].length=2&&r[1].length=2&&r[2].length=2&&r[3].length=2&&r[4].length=2&&r[5].length=3&&r[6].length=2&&r[7].length=2&&r[8].length=2);
+	return (a,r);
+}

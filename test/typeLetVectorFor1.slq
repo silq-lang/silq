@@ -1,0 +1,13 @@
+// args: --run
+
+def f(n:!ℕ)⇒vector(let{ r:=0; a:=[n for i in [0..2)]; r=a.length; } in r,false);
+def g(n:!ℕ,b:!ℕ)⇒vector(let{ r:=0; a:=[i+(n%2) for i in [0..b%3)]; r+=a.length; } in r%7,false);
+def id[τ](x:τ)⇒x;
+def main(){
+	k:=2;
+	v:=f(1);
+	w:=g(1,1);
+	x:=id(vector(let{ r:=0; a:=[i+k for i in [0..2)]; r+=a.length; } in r,false));
+	assert(v.length=2&&w.length=1&&x.length=2);
+	return (v,w,x.length);
+}

@@ -85,7 +85,7 @@ scope class HQIRBackend: Backend {
 		}else{
 			be.dump(functions.byValue().array);
 		}
-		return 0;
+		return !!err.nerrors;
 	}
 
 	~this() {

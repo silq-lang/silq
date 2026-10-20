@@ -1,0 +1,12 @@
+// args: --run
+
+def f(n:!ℕ)⇒vector(let{ r:=n; r=r+0; def h(m:!ℕ):!ℕ{ return m+r; } s:=h(1); } in s,false);
+def g(n:!ℕ,b:!ℕ)⇒vector(let{ r:=0; a:=[r,n div 2]; a[0]=a[1]; r=a[0]; def h(m:!ℕ):!ℕ{ return m+(r sub 0); } r=h(r); } in r%7,false);
+def main(){
+	n:=2;
+	v:=vector(let{ r:=n; r=r+0; def h(m:!ℕ):!ℕ{ return m+r; } s:=h(1); } in s,false);
+	w:=f(2);
+	x:=g(3,3);
+	assert(v.length=3&&w.length=3&&x.length=2);
+	return (v.length,w,x);
+}

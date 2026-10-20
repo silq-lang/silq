@@ -1,0 +1,30 @@
+// args: --run
+
+def f(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	return x coerce 𝔹^(let { (a,b):=(n,0); (a,b)=(b,a); } in b);
+}
+def g(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	return x coerce 𝔹^(let { a:=0; if n>1 { a=n; } else { a=a+1; a=a*2; } b:=(let { c:=a; c=c+0; } in c); } in b);
+}
+def h(m:!ℕ)qfree:!ℕ{ return m; }
+def k(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	return x coerce 𝔹^(let { a:=h(n); a=h(a); h2:=(m:!ℕ)qfree=>m; a=h2(a); } in a);
+}
+def l(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	y:=x coerce 𝔹^(let { a:=0; a=a+n; } in a);
+	z:=(let { b:=n; b=b+0; } in b);
+	return (y,z);
+}
+def p(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	return x coerce 𝔹^(let { a:=n; if a>5 { a=0; } } in a);
+}
+def main(){
+	r:=(measure(f(2)),measure(g(2)),measure(k(2)),measure(l(2)),measure(p(2)),measure(p(3)));
+	assert(r[0].length=2&&r[1].length=2&&r[2].length=2&&r[3][0].length=2&&r[3][1]=2&&r[4].length=2&&r[5].length=3);
+	return r;
+}

@@ -1,0 +1,10 @@
+// args: --run
+
+def f(n:!ℕ)⇒vector(let{ r:=0; for i in 0..n { r+=1; } } in r,false);
+def g(n:!ℕ)⇒vector(let{ r:=0; while r<n { r+=1; } } in r,false);
+def h(n:!ℕ)⇒vector(let{ r:=0; repeat n { r+=1; } } in r,false);
+def main(){
+	r:=(f(2),g(2),h(2));
+	assert(r[0].length=2&&r[1].length=2&&r[2].length=2);
+	return r;
+}
