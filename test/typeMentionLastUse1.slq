@@ -1,0 +1,21 @@
+// args: --run
+
+def g(x:𝔹[])⇒measure(x).length;
+def elseReturns(c:!𝔹,n:!ℕ){
+	t:=n+1;
+	v:=vector(t,0:𝔹);
+	if c { } else { forget(v); return 0; }
+	return g(v);
+}
+def thenReturns(c:!𝔹,n:!ℕ){
+	t:=n+1;
+	v:=vector(t,0:𝔹);
+	if c { forget(v); return 0; }
+	x:=g(v);
+	return x;
+}
+def main(){
+	r:=(elseReturns(true,1),elseReturns(false,1),thenReturns(true,1),thenReturns(false,1));
+	assert(r==(2,0,0,2));
+	return r;
+}

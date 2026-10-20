@@ -1,0 +1,59 @@
+// args: --run
+
+def ones(x:!𝔹[]):!ℕ{ s:=0; for i in 0..x.length { if x[i] { s+=1; } } return s; }
+def g(x:𝔹[])⇒ones(measure(x));
+def whileForget(n:!ℕ){
+	c:=n+1;
+	v:=vector(c,1:𝔹);
+	k:=0;
+	while k<2 { k+=1; forget(v); c=dup(c)+1; v:=vector(c,1:𝔹); }
+	forget(v);
+	return c;
+}
+def whileUse(n:!ℕ){
+	r:=0;
+	c:=n+1;
+	v:=vector(c,1:𝔹);
+	k:=0;
+	while k<3 { k+=1; r+=g(v); c=dup(c)+1; v:=vector(c,1:𝔹); }
+	r+=g(v);
+	return (r,c);
+}
+def forUse(n:!ℕ){
+	r:=0;
+	c:=n+1;
+	v:=vector(c,1:𝔹);
+	for i in 0..3 { r+=g(v); c=dup(c)+1; v:=vector(c,1:𝔹); }
+	r+=g(v);
+	return (r,c);
+}
+def repeatUse(n:!ℕ){
+	r:=0;
+	c:=n+1;
+	v:=vector(c,1:𝔹);
+	repeat 3 { r+=g(v); c=dup(c)+1; v:=vector(c,1:𝔹); }
+	r+=g(v);
+	return (r,c);
+}
+def doWhileForget(n:!ℕ){
+	c:=n+1;
+	v:=vector(c,1:𝔹);
+	k:=0;
+	do{ k+=1; forget(v); c=dup(c)+1; v:=vector(c,1:𝔹); }while k<3;
+	forget(v);
+	return c;
+}
+def doWhileUse(n:!ℕ){
+	r:=0;
+	c:=n+1;
+	v:=vector(c,1:𝔹);
+	k:=0;
+	do{ k+=1; r+=g(v); c=dup(c)+1; v:=vector(c,1:𝔹); }while k<3;
+	r+=g(v);
+	return (r,c);
+}
+def main(){
+	r:=(whileForget(0),whileUse(0),forUse(0),repeatUse(0),doWhileForget(0),doWhileUse(0));
+	assert(r==(3,(10,4),(10,4),(10,4),4,(10,4)));
+	return r;
+}

@@ -1,0 +1,19 @@
+// args: --run
+
+def f(n:!ℕ){
+	lg:=[n+1,n+2,n+3];
+	v:=array(n,1:𝔹);
+	i:=0; j:=0;
+	do{
+		forget(v);
+		t:=dup(lg[i]);
+		i+=1;
+		v:=vector(t,1:𝔹);
+	}while j<2{ j+=1; }
+	return (t,measure(v): !𝔹[]);
+}
+def main(){
+	r:=f(1);
+	assert(r==(4,[1,1,1,1]));
+	return r;
+}
