@@ -1,0 +1,23 @@
+// args: --run
+
+def spentClosure(n:!ℕ){
+	q:=0:𝔹;
+	h:=λ(x:!ℕ)⇒(x,q);
+	(y,q):=h(1);
+	k:=0;
+	do{ k+=1; q:=X(q); if k==n { return (measure(q),y); } }while k<2;
+	return (measure(q),y+k);
+}
+def nestedBlock(n:!ℕ){
+	q:=0:𝔹; a:=n+1;
+	if n<5 {
+		k:=0;
+		do{ k+=1; q:=X(q); if k==n { return (measure(q),0); } }while k<3;
+	}
+	return (measure(q),a);
+}
+def main(){
+	r:=(spentClosure(0),spentClosure(1),spentClosure(2),nestedBlock(1),nestedBlock(4));
+	assert(r==((0,3),(1,1),(0,1),(1,0),(1,5)));
+	return r;
+}
