@@ -1,0 +1,42 @@
+// args: --run
+
+def elseReturns(const n:!ℕ,m:!ℕ){
+	v:=vector(1,1:𝔹): 𝔹[];
+	forget(v);
+	t:=dup(n);
+	v:=vector(t,0:𝔹);
+	if m<n { } else { return (v:𝔹[],dup(t)); }
+	forget(v);
+	return (vector(1,0:𝔹): 𝔹[],0);
+}
+def thenReturns(const n:!ℕ,m:!ℕ){
+	v:=vector(1,1:𝔹): 𝔹[];
+	forget(v);
+	t:=dup(n);
+	v:=vector(t,0:𝔹);
+	if m<n { return (v:𝔹[],dup(t)); }
+	forget(v);
+	return (vector(1,0:𝔹): 𝔹[],0);
+}
+def nested(const n:!ℕ,m:!ℕ){
+	t:=dup(n);
+	v:=vector(t,0:𝔹);
+	if m<n {
+		if m+1<n { } else { forget(v); return (vector(2,0:𝔹): 𝔹[],dup(t)); }
+	} else { return (v:𝔹[],dup(t)); }
+	forget(v);
+	return (vector(1,0:𝔹): 𝔹[],0);
+}
+def loop(n:!ℕ){
+	lg:=[2,3,4]; lh:=[5,6,7];
+	v:=vector(1,1:𝔹): 𝔹[];
+	i:=0; j:=0; m:=0;
+	do{ forget(v); t:=dup(lg[i]); i+=1; v:=vector(t,0:𝔹); }while m<n{ m+=1; forget(v); s:=dup(lh[j]); j+=1; v:=vector(s,1:𝔹); }
+	return measure(v).length;
+}
+def len(x:𝔹[],k:!ℕ)⇒(measure(x).length,k);
+def main(){
+	r:=(len(elseReturns(3,0)),len(elseReturns(3,3)),len(thenReturns(3,0)),len(thenReturns(3,5)),len(nested(3,0)),len(nested(3,2)),len(nested(3,3)),loop(0),loop(2));
+	assert(r==((1,0),(3,3),(3,3),(1,0),(1,0),(2,3),(3,3),2,4));
+	return r;
+}
