@@ -2850,16 +2850,9 @@ class ScopeWriter {
 		}
 		QReg r0 = null, r1 = null;
 		if(v.hasQuantum) {
-			r0 = new QReg();
-			r1 = new QReg();
-			if(cond.isClassical) {
-				qcg.writeQOp(opCSplit, [r0, r1], [cond.creg], [], [v.qreg]);
-			} else {
-				qcg.writeQOp(opQSplit, [r0, r1], [], [cond.qreg], [v.qreg]);
-			}
-			if(!cond.value) {
-				swap(r0, r1);
-			}
+			auto rs = qcg.split(cond, v.qreg);
+			r0 = rs[0];
+			r1 = rs[1];
 		}
 		v0 = valNewQ(v.creg, r0);
 		v1 = valNewQ(v.creg, r1);
@@ -2885,20 +2878,16 @@ class ScopeWriter {
 			if(v0.hasQuantum) qcg.withCond(cond.invert()).deallocUnit(v0.qreg);
 			if(v1.hasQuantum) qcg.withCond(cond).deallocUnit(v1.qreg);
 		} else {
-			qreg = new QReg();
 			QReg if0 = v0.qreg;
 			QReg if1 = v1.qreg;
 			if(cond.isClassical) {
 				if(!if0) if0 = qcg.withCond(cond.invert()).allocUnit();
 				if(!if1) if1 = qcg.withCond(cond).allocUnit();
-				if(!cond.value) swap(if0, if1);
-				qcg.writeQOp(opCMerge, [qreg], [cond.creg], [], [if0, if1]);
 			} else {
 				assert(if0);
 				assert(if1);
-				if(!cond.value) swap(if0, if1);
-				qcg.writeQOp(opQMerge, [qreg], [], [cond.qreg], [if0, if1]);
 			}
+			qreg = qcg.merge(cond, if0, if1);
 		}
 		return valNewQ(creg, qreg);
 	}
@@ -6128,20 +6117,16 @@ class ScopeWriter {
 			QCGen cgGt = cgNe.withCond(CondAny(isLt, false));
 
 			// First split into lt/gt
-			auto qrNe = new QReg();
-			auto qrEq = new QReg();
-			auto qrLt = new QReg();
-			auto qrGt = new QReg();
-			qcg.writeQOp(opCSplit, [qrNe, qrEq], [isEq], [], [v.qreg]);
-			cgNe.writeQOp(opCSplit, [qrGt, qrLt], [isLt], [], [qrNe]);
+			auto eqSplit = qcg.csplit(CondC(isEq), v.qreg);
+			auto qrNe = eqSplit[0], qrEq = eqSplit[1];
+			auto ltSplit = cgNe.csplit(CondC(isLt), qrNe);
+			auto qrGt = ltSplit[0], qrLt = ltSplit[1];
 
 			qrLt = implSwapQuantum(cgLt, qrLt, len, qtypes, qtypes2, i1, i2);
 			qrGt = implSwapQuantum(cgGt, qrGt, len, qtypes, qtypes2, i2, i1);
 
-			qrNe = new QReg();
-			cgNe.writeQOp(opCMerge, [qrNe], [isLt], [], [qrGt, qrLt]);
-			qr = new QReg();
-			qcg.writeQOp(opCMerge, [qr], [isEq], [], [qrNe, qrEq]);
+			qrNe = cgNe.cmerge(CondC(isLt), qrGt, qrLt);
+			qr = qcg.cmerge(CondC(isEq), qrNe, qrEq);
 		}
 
 		v = valNewQ(cr, qr);
