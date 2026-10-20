@@ -1,0 +1,17 @@
+// args: --run
+
+def g1(n:!ℕ)⇒vector(let{ r:=0; a:=vector(1,0:!ℕ); a[0]+=2; r+=a[0]; } in r%7,false);
+def h1(n:!ℕ)(v:!𝔹^(let{ r:=0; a:=vector(1,0:!ℕ); a[0]+=2; r+=a[0]; } in r%7))⇒v.length;
+def g2(n:!ℕ)⇒vector(let{ a:=vector(1,0:!ℕ); a[0]=3; r:=a[0]; } in r,false);
+def h2(n:!ℕ)(v:!𝔹^(let{ a:=vector(1,0:!ℕ); a[0]=3; r:=a[0]; } in r))⇒v.length;
+def g3(n:!ℕ)⇒vector(let{ a:=vector(2,1:!ℕ); (a[0],a[1]):=(a[1],a[0]); r:=a[0]+a[1]; } in r,false);
+def h3(n:!ℕ)(v:!𝔹^(let{ a:=vector(2,1:!ℕ); (a[0],a[1]):=(a[1],a[0]); r:=a[0]+a[1]; } in r))⇒v.length;
+def g4(n:!ℕ)⇒vector(let{ a:=(0:!ℕ,1:!ℕ); a[1]+=1; r:=a[1]; } in r,false);
+def h4(n:!ℕ)(v:!𝔹^(let{ a:=(0:!ℕ,1:!ℕ); a[1]+=1; r:=a[1]; } in r))⇒v.length;
+def g5(n:!ℕ)⇒vector(let{ r:=0; for i in 0..n { r+=(i:!ℕ); } } in r,false);
+def h5(n:!ℕ)(v:!𝔹^(let{ r:=0; for i in 0..n { r+=(i:!ℕ); } } in r))⇒v.length;
+def main(){
+	r:=(h1(2)(g1(2)),h2(2)(g2(2)),h3(2)(g3(2)),h4(2)(g4(2)),h5(3)(g5(3)));
+	assert(r==(2,3,2,2,3));
+	return r;
+}
