@@ -1769,10 +1769,8 @@ class CCGen {
 	}
 
 	CCGen withCond(CReg reg, bool want) {
-		// We'd also need to const-fold in split/merge.
-		// if(reg is ctx.boolTrue && want) return this;
-		// if(reg is ctx.boolFalse && !want) return this;
-
+		if(ctx.condAlwaysHolds(CondC(reg, want))) return this;
+		// condNeverHolds handled in `CodeWriter.writeOp`.
 		return new CCGen(this, code, condC ~ [CondC(reg, want)]);
 	}
 
@@ -2521,6 +2519,8 @@ class QCGen {
 	}
 
 	QReg[2] csplit(CondC cond, QReg r) {
+		if(ctx.condAlwaysHolds(cond)) return [withCond(CondAny(cond.invert())).allocError(), r];
+		if(ctx.condNeverHolds(cond)) return [r, withCond(CondAny(cond)).allocError()];
 		auto r0 = new QReg(), r1 = new QReg();
 		writeQOp(opCSplit, [r0, r1], [cond.reg], [], [r]);
 		if(!cond.value) {
@@ -2545,6 +2545,14 @@ class QCGen {
 	}
 
 	QReg cmerge(CondC cond, QReg r0, QReg r1) {
+		if(ctx.condAlwaysHolds(cond)) {
+			withCond(CondAny(cond.invert())).deallocError(r0);
+			return r1;
+		}
+		if(ctx.condNeverHolds(cond)) {
+			withCond(CondAny(cond)).deallocError(r1);
+			return r0;
+		}
 		auto r = new QReg();
 		if(!cond.value) {
 			swap(r0, r1);
@@ -7860,6 +7868,7 @@ class CodeWriter {
 	void writeOp(CondC[] condC, CondQ[] condQ, string op, CReg[] cRet, QReg[] qRet, CReg[] cArgs, QReg[] qcArgs, QReg[] qiArgs) {
 		cArgs = fixCNull(cArgs, 0);
 		cRet = fixCNull(cRet, -1);
+		if(condC.any!(c => ctx.condNeverHolds(c))) return;
 		code.put(IrStatement(condC, condQ, op, cRet, qRet, cArgs, qcArgs, qiArgs, ctx.curLoc.loc));
 	}
 
@@ -8510,6 +8519,18 @@ class Writer {
 
 	bool isLiteral(CReg r) {
 		return !!(r in literalValue);
+	}
+
+	bool condAlwaysHolds(CondC c) {
+		if(c.reg is boolTrue) return c.value;
+		if(c.reg is boolFalse) return !c.value;
+		return false;
+	}
+
+	bool condNeverHolds(CondC c) {
+		if(c.reg is boolTrue) return !c.value;
+		if(c.reg is boolFalse) return c.value;
+		return false;
 	}
 
 	CReg literalRaw(string val) {
