@@ -6245,6 +6245,10 @@ class ScopeWriter {
 		return Result.passes();
 	}
 
+	Result implStmt(ast_exp.DoWhileExp e) {
+		assert(0, "TODO DoWhileExp"); // (the body's definitions remain visible after the loop: it is never a no-op)
+	}
+
 	Result implStmt(ast_exp.RepeatExp e) {
 		assert(ctx.options.compileLoopsAsNoOps, "TODO RepeatExp");
 		genExpr(e.num);

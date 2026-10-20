@@ -1,0 +1,52 @@
+def notConsumed(){
+	x:=0;
+	do{
+		y:=H(0:𝔹); /// error
+		x+=1;
+	}while x<3;
+	return measure(y);
+}
+def notConsumedReset(){
+	x:=H(0:𝔹); /// error
+	c:=0;
+	do{
+		c+=1;
+	}while c<3{
+		measure(x);
+	}
+	return c;
+}
+def constAssign(){
+	n:=1;
+	do{
+		v:=vector(n,0:𝔹);
+		n+=1; /// error
+	}while n<3;
+	return measure(v);
+}
+def conditionConsumes(){
+	x:=H(0:𝔹);
+	y:=H(0:𝔹); /// error
+	k:=0;
+	do{
+		k+=1;
+		t:=dup(k);
+	}while measure(x)&&measure(y)&&k<5{
+		(x,y):=(H(0:𝔹),H(0:𝔹));
+	}
+	return (k≤5,t==k);
+}
+def quantumCondition(const x:𝔹){
+	do{
+		y:=1;
+	}while x; /// error
+	return y;
+}
+def undefinedInBody(){
+	k:=0;
+	do{
+		k+=1;
+		w:=undefinedThing+1; /// error
+	}while k<3;
+	return (k,w);
+}

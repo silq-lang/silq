@@ -1,0 +1,9 @@
+// args: --run
+
+def g(k:!ℕ)⇒vector(let{ r:=0; do{ r+=k; }while r<5; } in r,0:𝔹);
+def h(k:!ℕ)(v:!𝔹^(let{ r:=0; do{ r+=k; }while r<5; } in r))⇒v.length;
+def main(){
+	n:=h(2)(measure(g(2)));
+	assert(n==6);
+	return n;
+}

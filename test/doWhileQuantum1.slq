@@ -1,0 +1,121 @@
+// args: --run
+
+def explicitReset(){
+	do{
+		(x,y):=(H(0:𝔹),H(0:𝔹));
+	}while !measure(x=y){
+		measure(x,y);
+	}
+	return measure(x,y);
+}
+def carried(){
+	x:=0:𝔹;
+	c:=0;
+	do{
+		x:=H(x);
+		c+=1;
+	}while c<4;
+	return measure(x);
+}
+def implicitForget(){
+	x:=H(0:𝔹);
+	c:=0;
+	do{
+		y:=dup(x);
+		c+=1;
+	}while c<3;
+	(a,b):=measure(x,y);
+	return a==b;
+}
+def explicitForget(){
+	x:=H(0:𝔹);
+	c:=0;
+	do{
+		y:=dup(x);
+		c+=1;
+	}while c<3{
+		forget(y=dup(x));
+	}
+	forget(y);
+	return measure(x);
+}
+def consumedByCondition(){
+	x:=H(0:𝔹);
+	do{
+		m:=measure(x);
+	}while m{
+		x:=H(0:𝔹);
+	}
+	c:=0;
+	do{
+		q:=H(0:𝔹);
+		c+=1;
+	}while !measure(q);
+	return (m,c>0);
+}
+def resetUpdates(){
+	x:=0:𝔹;
+	c:=0;
+	do{
+		c+=1;
+	}while c<3{
+		x:=X(x);
+	}
+	return measure(x);
+}
+def branches(){
+	x:=H(0:𝔹);
+	c:=0;
+	do{
+		if c%2==0 { x:=H(x); y:=0; } else { x:=X(x); y:=1; }
+		c+=1;
+	}while c<4;
+	return (measure(x),y);
+}
+def constParam(const x:𝔹,n:!ℕ){
+	c:=0;
+	do{
+		y:=dup(x);
+		c+=1;
+		w:=measure(y);
+	}while c<n;
+	return (c,w);
+}
+def withBody(x:𝔹)mfree{
+	c:=0;
+	with{ y:=dup(x); }do{
+		do{
+			c+=1;
+		}while c<3;
+	}
+	return (x,c);
+}
+def diverging(c:!𝔹){
+	if c {
+		do{
+			assert(false);
+		}while true;
+	}
+	return 1;
+}
+def main(){
+	(x,y):=explicitReset();
+	assert(x==y);
+	assert(carried()==0);
+	assert(implicitForget());
+	explicitForget();
+	(m,c):=consumedByCondition();
+	assert(!m&&c);
+	assert(resetUpdates()==0);
+	(b,k):=branches();
+	assert(k==1);
+	q:=H(0:𝔹);
+	(c2,w):=constParam(q,3);
+	assert(c2==3);
+	measure(q);
+	(z,c3):=withBody(H(0:𝔹));
+	assert(c3==3);
+	measure(z);
+	assert(diverging(false)==1);
+	return (x,y,b,c2,c3);
+}

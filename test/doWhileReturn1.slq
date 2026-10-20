@@ -1,0 +1,96 @@
+// args: --run
+
+def inBody(n:!ℕ){
+	i:=0;
+	do{
+		i+=1;
+		if i==n { return (i,true); }
+	}while i<5;
+	return (i,false);
+}
+def inReset(n:!ℕ){
+	i:=0;
+	do{ i+=1; x:=2*i; }while i<5 { if x==n { return x; } }
+	return x+100;
+}
+def bodyReturns(c:!𝔹){
+	x:=1;
+	do{ x+=1; return x; }while c;
+}
+def bodyReturnsBranches(c:!𝔹){
+	do{ if c { return 1; } else { return 2; } }while true;
+}
+def bodyReturnsThenCode(){
+	x:=1;
+	do{ x+=1; return x; }while x<10;
+	y:=x;
+	return y;
+}
+def nestedFor(n:!ℕ){
+	i:=0;
+	do{
+		for j in [0..i) { if j*j==n { return j; } }
+		i+=1;
+	}while i<10;
+	return 100;
+}
+def nestedDoWhile(n:!ℕ){
+	i:=0;
+	do{
+		j:=0;
+		do{ if i*j==n { return (i,j); } j+=1; }while j<3;
+		i+=1;
+	}while i<4;
+	return (100,100);
+}
+def exitLocal(n:!ℕ){
+	i:=0;
+	do{
+		i+=1;
+		y:=i*i;
+		if y==n { return 1000; }
+	}while i<4;
+	return y;
+}
+def withinBranch(n:!ℕ){
+	r:=0;
+	if n>2 {
+		i:=0;
+		do{ i+=1; if i==n { return i*10; } }while i<5;
+		r+=i;
+	}
+	r+=1;
+	return r;
+}
+def withinWhile(n:!ℕ){
+	k:=0;
+	while k<3 {
+		i:=0;
+		do{ i+=1; if i*k==n { return (k,i); } }while i<3;
+		k+=1;
+	}
+	return (99,99);
+}
+def unitResult(n:!ℕ):𝟙{
+	i:=0;
+	do{ i+=1; if i==n { return; } }while i<5;
+}
+def bothReturn(n:!ℕ){
+	i:=0;
+	do{ i+=1; if i==n { return 1; } }while i<5 { if i+1==n { return 2; } }
+	return 3;
+}
+def infiniteReset(n:!ℕ):!ℕ{
+	i:=0;
+	do{ i+=1; }while true { if i==n { return i; } }
+}
+def main(){
+	unitResult(2);
+	unitResult(7);
+	r:=(inBody(3),inBody(7),inReset(4),inReset(5),inReset(10),bodyReturns(true),bodyReturns(false),bodyReturnsBranches(true),bodyReturnsBranches(false),bodyReturnsThenCode(),
+		nestedFor(4),nestedFor(9),nestedFor(5),nestedDoWhile(4),nestedDoWhile(0),nestedDoWhile(100),exitLocal(4),exitLocal(5),
+		withinBranch(1),withinBranch(3),withinBranch(9),withinWhile(0),withinWhile(2),withinWhile(4),withinWhile(100),
+		bothReturn(1),bothReturn(2),bothReturn(3),bothReturn(9),infiniteReset(3));
+	assert(r==((3,true),(5,false),4,110,110,2,2,1,2,2,2,3,100,(2,2),(0,0),(100,100),1000,16,1,30,6,(0,1),(1,2),(2,2),(99,99),1,2,2,3,3));
+	return r;
+}

@@ -1,0 +1,36 @@
+// args: --run
+
+def inRepeat(const a:𝔹,const b:𝔹){
+	x:=dup(a); z:=dup(b); n:=0;
+	repeat 2 {
+		n+=1;
+		k:=0;
+		do{ }while k<1 { k+=1; if n==1 { z⊕=x; } }
+	}
+	return (measure(x),measure(z));
+}
+def inWhile(const a:𝔹,const b:𝔹){
+	x:=dup(a); z:=dup(b); r:=0; c:=0;
+	while c<2 {
+		c+=1;
+		k:=0;
+		do{ k+=1; }while k<2 { j:=0; while j<c { z⊕=x; j+=1; } }
+		r+=measure(z);
+	}
+	return (r,measure(x),measure(z));
+}
+def inDoWhile(const a:𝔹,const b:𝔹){
+	x:=dup(a); z:=dup(b); r:=0; c:=0;
+	do{
+		c+=1;
+		k:=0;
+		do{ k+=1; }while k<2 { repeat c { z⊕=x; } }
+		r+=measure(z);
+	}while c<2;
+	return (r,measure(x),measure(z));
+}
+def main(){
+	r:=(inRepeat(true,false),inRepeat(true,true),inWhile(true,false),inWhile(false,true),inDoWhile(true,false),inDoWhile(true,true));
+	assert(r==((1,1),(1,0),(2,1,1),(2,0,1),(2,1,1),(0,1,0)));
+	return r;
+}

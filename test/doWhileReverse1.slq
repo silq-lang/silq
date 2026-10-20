@@ -1,0 +1,13 @@
+// args: --run
+
+def f(x:𝔹)qfree{
+	y:=x;
+	do{ /// TODO
+		y:=X(y);
+	}while false;
+	return y;
+}
+def main(){
+	g:=reverse(f); /// TODO
+	return measure(g(0:𝔹));
+}

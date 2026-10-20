@@ -4071,6 +4071,8 @@ struct Interpreter(QState){
 			runStmForExp(fe,retState);
 		}else if(auto we=cast(WhileExp)e){
 			runStmWhileExp(we,retState);
+		}else if(auto dw=cast(DoWhileExp)e){
+			runStmDoWhileExp(dw,retState);
 		}else if(auto re=cast(ReturnExp)e){
 			runStmReturnExp(re,retState);
 		}else if(auto ae=cast(AssertExp)e){
@@ -4225,6 +4227,30 @@ struct Interpreter(QState){
 				if(!cond.asBoolean) break;
 				intp.run(retState);
 				intp.closeScope(we.bdy.blscope_);
+			}
+			qstate=intp.qstate;
+		}
+	pragma(inline,false) void runStmDoWhileExp(DoWhileExp dw,ref QState retState){
+			auto intp=Interpreter(functionDef,dw.bdy,qstate,hasFrame);
+			auto lsc=dw.bdy.blscope_;
+			for(;;){
+				if(intp.qstate.unreachable) break;
+				intp.qstate.forgetVars(lsc.forgottenVarsOnEntry);
+				foreach(s;dw.bdy.s) intp.runStm(s,retState);
+				if(intp.qstate.unreachable) break;
+				auto cond=intp.runExp(dw.cond);
+				if(!cond.asBoolean){
+					intp.qstate.forgetVars(dw.exitScope.forgottenVarsOnEntry);
+					intp.qstate.forgetVars(dw.exitScope.forgottenVars);
+					intp.closeScope(dw.exitScope);
+					break;
+				}
+				auto rintp=Interpreter(functionDef,dw.reset,intp.qstate,hasFrame);
+				rintp.run(retState);
+				rintp.closeScope(dw.reset.blscope_);
+				intp.qstate=rintp.qstate;
+				intp.qstate.forgetVars(lsc.forgottenVars);
+				intp.closeScope(lsc);
 			}
 			qstate=intp.qstate;
 		}

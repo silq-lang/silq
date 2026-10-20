@@ -1,0 +1,43 @@
+// args: --run
+
+def classicalControl(n:!ℕ){
+	x:=0:𝔹;
+	c:=0;
+	do{
+		x:=X(x);
+		c+=1;
+		if c==n { return x; }
+	}while c<5;
+	return H(x);
+}
+def quantumControl[n:!ℕ](const xs:𝔹^n,r:𝔹)mfree{
+	i:=0;
+	do{
+		if xs[i] { return r; }
+		r:=X(r);
+		i+=1;
+	}while i<n;
+	r:=H(r);
+	return r;
+}
+def liftedState(const a:𝔹){
+	c:=dup(a);
+	d:=0:𝔹;
+	k:=0:!ℕ;
+	do{
+		c⊕=1;
+		if c&&a { return d; }
+		d:=H(d);
+		k+=1;
+	}while k<3;
+	return X(d);
+}
+def main(){
+	r:=(measure(classicalControl(1)),measure(classicalControl(2)),measure(classicalControl(3)));
+	assert(r==(1,0,1));
+	xs:=(H(0:𝔹),H(0:𝔹));
+	q:=quantumControl(xs,0:𝔹);
+	a:=H(0:𝔹);
+	s:=liftedState(a);
+	return (r,xs,q,a,s);
+}

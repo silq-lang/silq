@@ -1,0 +1,159 @@
+// args: --run
+
+def basic(){
+	n:=10;
+	x:=1;
+	do{
+		x+=2;
+		y:=n/x;
+	}while x<y;
+	return (x,y);
+}
+def nested(){
+	i:=0;
+	s:=0;
+	do{
+		j:=0;
+		do{
+			s+=i*j;
+			j+=1;
+			k:=j;
+		}while j<3;
+		i+=1;
+		t:=k+i;
+	}while i<4;
+	return (i,s,t,j,k);
+}
+def widened(){
+	x:=0:!𝔹;
+	do{
+		x=x+1;
+	}while x<5;
+	return x;
+}
+def reset(){
+	x:=0;
+	do{
+		x+=1;
+	}while x<10{
+		z:=x;
+		x+=z;
+	}
+	return x;
+}
+def lambdas(){
+	x:=0;
+	do{
+		x+=1;
+	}while (y){ return y<3; }(x);
+	a:=x;
+	do{
+		x+=1;
+	}while (y){ return y<6; }(x){
+		x+=0;
+	}
+	b:=x;
+	do{
+		x+=1;
+	}while (x<9){
+		x+=0;
+	}
+	c:=x;
+	do{
+		x+=1;
+	}while (x<12);
+	return (a,b,c,x);
+}
+def loops(){
+	n:=0;
+	r:=0;
+	while n<3{
+		do{
+			r+=n;
+			m:=r;
+		}while r<n;
+		n+=1;
+	}
+	do{
+		k:=0;
+		while k<n{
+			k+=1;
+		}
+		n+=k;
+	}while n<20;
+	s:=0;
+	for i in 0..3{
+		j:=0;
+		do{
+			s+=i;
+			j+=1;
+		}while j<i;
+	}
+	return (n,r,k,s);
+}
+def blocks(){
+	n:=0;
+	do{
+		n+=1;
+		if n%2==0 { a:=n; b:=2*n; } else { a:=n+1; b:=n; }
+		f:=(z:!ℕ)=>a+b+z;
+	}while f(0)<10;
+	c:=true;
+	if c {
+		k:=0;
+		do{
+			k+=1;
+			w:=k*2;
+		}while k<3;
+	}else{
+		w:=0;
+	}
+	return (n,a,b,f(1),w);
+}
+def closure(){
+	a:=3;
+	f:=(n:!ℕ){
+		i:=0;
+		do{
+			i+=a;
+		}while i<n;
+		return i;
+	};
+	i:=0;
+	do{
+		i+=1;
+		def g(){ return i; }
+	}while i<3;
+	return (f(10),f(0),g());
+}
+def letCondition(){
+	i:=0;
+	do{
+		i+=1;
+		if i%2==0 { y:=i; } else { y:=2*i; }
+	}while (let z:=y+1 in z<10);
+	v:=[]:!ℕ[];
+	do{
+		v~=[v.length];
+	}while v.length<3;
+	return (i,y,v);
+}
+def main(){
+	(x,y):=basic();
+	assert(x==5&&y==2);
+	(i,s,t,j,k):=nested();
+	assert(i==4&&s==18&&t==7&&j==3&&k==3);
+	assert(widened()==5);
+	assert(reset()==15);
+	(a,b,c,d):=lambdas();
+	assert(a==3&&b==6&&c==9&&d==12);
+	(n,r,k2,s2):=loops();
+	assert(n==24&&r==3&&k2==12&&s2==5);
+	(n2,a2,b2,f1,w):=blocks();
+	assert(n2==4&&a2==4&&b2==8&&f1==13&&w==6);
+	(f10,f0,g):=closure();
+	assert(f10==12&&f0==3&&g==3);
+	(i2,y2,v):=letCondition();
+	assert(i2==5&&y2==10&&v==[0,1,2]);
+	return (x,y,i,s,d,n,w,g,v);
+}

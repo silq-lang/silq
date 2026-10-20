@@ -1,0 +1,21 @@
+// args: --run
+
+def f(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	return x coerce 𝔹^(let { a:=0; do { a=a+1; } while a<n; } in a);
+}
+def g(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	return x coerce 𝔹^(let { k:=0; do { k+=1; b:=2*k; } while b<n { } } in (b div 2+n-k) coerce !ℕ);
+}
+def h(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	return x coerce 𝔹^(let { do { c:=n; } while false; } in c);
+}
+def k(n:!ℕ)⇒vector(let{ r:=0; do { r+=1; } while r<n; } in r,false);
+def main(){
+	m:=3;
+	r:=(f(m) coerce 𝔹[],g(m) coerce 𝔹[],h(m) coerce 𝔹[]);
+	s:=(f(2),g(2),h(2),k(2));
+	return (measure(r),measure(s));
+}
