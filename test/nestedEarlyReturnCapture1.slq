@@ -1,0 +1,36 @@
+// args: --run
+
+def h(x:!ℕ)⇒x+1;
+def app(f:!ℕ!→qfree !ℕ,x:!ℕ)qfree⇒f(x);
+def captured(n:!ℕ){
+	c:=1;
+	def g(x:!ℕ){
+		s:=0; k:=0;
+		while k<x { s+=h(c); if s>5 { return s; } k+=1; }
+		return s;
+	}
+	return g(n);
+}
+def passed(n:!ℕ){
+	def g1(x:!ℕ)qfree⇒x+1;
+	def g(x:!ℕ)qfree{
+		s:=0;
+		for i in 0..x { s+=app(g1,i); if s>4 { return s; } }
+		return s;
+	}
+	return g(n);
+}
+def doWhile(n:!ℕ){
+	c:=2;
+	def g(x:!ℕ){
+		s:=0; k:=0;
+		do{ s+=h(c); if s>7 { return s; } k+=1; }while k<x;
+		return s;
+	}
+	return g(n);
+}
+def main(){
+	r:=(captured(3),captured(10),passed(2),passed(5),doWhile(1),doWhile(5));
+	assert(r==(6,6,3,6,3,9));
+	return r;
+}

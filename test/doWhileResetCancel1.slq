@@ -1,0 +1,17 @@
+// args: --run
+
+def duplicated(n:!ℕ){
+	q1:=X(0:𝔹); q3:=H(H(1:𝔹)); c1:=n; c2:=0; k:=0;
+	do{ k+=1; t:=dup(q1); c1+=measure(t); }while k<2{ if c2<2 { q1:=X(q1); } else { (q3,q1):=(q1,q3); } }
+	return (c1,measure(q1),measure(q3));
+}
+def controlled(n:!ℕ){
+	q1:=X(0:𝔹); q2:=H(H(0:𝔹)); q3:=H(H(1:𝔹)); c1:=n; c2:=0; k:=0;
+	do{ k+=1; t:=dup(q2); t:=if q1 { X(t) } else { t }; c1+=measure(t); }while k<2{ if c2<2 { q1:=X(q1); } else { (q3,q1):=(q1,q3); } }
+	return (c1,measure(q1),measure(q2),measure(q3));
+}
+def main(){
+	r:=(duplicated(1),controlled(1));
+	assert(r==((2,0,1),(2,0,0,1)));
+	return r;
+}

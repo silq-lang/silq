@@ -1,0 +1,24 @@
+// args: --run
+
+def local(n:!ℕ){
+	q:=X(1:𝔹);
+	c:=0;
+	k:=0;
+	do{ k+=1; t:=let { x:=dup(q); x:=let { x:=if c<1 { X(x) } else { x } } in x; } in x; c+=measure(t); }while k<n;
+	return (c,measure(q));
+}
+def forward(n:!ℕ){
+	q1:=X(0:𝔹); q2:=H(H(0:𝔹)); q3:=X(1:𝔹);
+	if n<2 { } else {
+		t:=let { x:=dup(q3); } in x;
+		k:=0;
+		do{ k+=1; q3:=let { q3:=let { } in q3; } in q3; }while k<3{ q2:=X(q2); (q1,q3):=let { q1:=let { } in q1; } in (q3,q1); }
+		q2:=let { } in q2;
+	}
+	return (measure(q1),measure(q2),measure(q3));
+}
+def main(){
+	r:=(local(2),forward(1),forward(3));
+	assert(r==((1,0),(1,0,0),(1,0,0)));
+	return r;
+}

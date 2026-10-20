@@ -1,0 +1,7 @@
+def f(){
+	q:=H(H(0:𝔹));
+	k:=0;
+	do{ k+=1; t:=dup(q); q:=X(q); }while k<1;
+	x:=measure(t); /// error
+	return (x,measure(q));
+}

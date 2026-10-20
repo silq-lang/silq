@@ -1,0 +1,25 @@
+// args: --run
+
+def redefinedLifted(n:!ℕ){
+	q:=0:𝔹;
+	q:=if n<1 { q } else { X(q) };
+	k:=0;
+	while k<3 { k+=1; q:=X(q); }
+	return measure(q);
+}
+def redefinedQuantum(n:!ℕ){
+	q:=H(0:𝔹);
+	q:=if n<1 { q } else { q };
+	for i in 0..2 { q:=H(q); q:=H(q); }
+	return H(q);
+}
+def forgettable(n:!ℕ){
+	q:=0:𝔹;
+	q:=if n%2==0 { q } else { q };
+	return n;
+}
+def main(){
+	r:=(redefinedLifted(0),redefinedLifted(1),measure(redefinedQuantum(0)),forgettable(3));
+	assert(r==(1,0,0,3));
+	return r;
+}

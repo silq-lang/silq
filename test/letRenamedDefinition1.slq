@@ -1,0 +1,24 @@
+// args: --run
+
+def nested(n:!ℕ){
+	q:=0:𝔹;
+	def g(q:𝔹){ q:=let { q:=X(q); } in q; return q; }
+	r:=g(1:𝔹);
+	return (measure(q),measure(r));
+}
+def loop(n:!ℕ){
+	q:=X(1:𝔹);
+	for i in 0..n { q:=let { q:=X(q); } in q; }
+	return measure(q);
+}
+def nestedLet(n:!ℕ){
+	q:=1:𝔹;
+	k:=0;
+	while k<n { k+=1; q:=let { q:=let { q:=X(q); } in q; } in q; }
+	return measure(q);
+}
+def main(){
+	r:=(nested(0),loop(1),loop(2),nestedLet(3));
+	assert(r==((0,0),1,0,0));
+	return r;
+}
