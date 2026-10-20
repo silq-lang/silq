@@ -1,0 +1,19 @@
+def constForget():!𝔹[]{
+	n:=1;
+	do{
+		v:=vector(n,0:𝔹);
+		forget(n); /// error
+		n:=2;
+	}while n<3;
+	return measure(v);
+}
+def constIndexAssign():!𝔹[]{
+	t:=[1,2];
+	k:=0;
+	do{
+		v:=vector(t[0],0:𝔹);
+		t[0]=5; /// error
+		k+=1;
+	}while k<3;
+	return measure(v);
+}

@@ -5,4 +5,5 @@ def main(){
 	n+=1;
 	a:=vector(n,0:𝔹); // ok
 	n+=1; /// error
+	b:=measure(a);
 }

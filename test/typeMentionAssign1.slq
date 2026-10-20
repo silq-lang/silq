@@ -1,0 +1,71 @@
+// args: --run
+
+def opAssign(n:!ℕ){
+	t:=dup(n);
+	x:=vector(t,0:!𝔹);
+	t+=1;
+	return t;
+}
+def quantumDependent(n:!ℕ){
+	t:=dup(n);
+	x:=vector(t,0:𝔹);
+	t·=2;
+	return t;
+}
+def indexed(n:!ℕ){
+	t:=[n,1];
+	x:=vector(t[0],0:!𝔹);
+	t[0]=5;
+	return t[0]+t[1];
+}
+def inLoop(n:!ℕ){
+	t:=dup(n);
+	k:=0;
+	while k<2 { x:=vector(t,0:𝔹); t+=1; k+=1; }
+	return t;
+}
+def inDoWhile(n:!ℕ){
+	t:=dup(n);
+	k:=0;
+	do{ x:=vector(t,0:!𝔹); t+=2; k+=1; }while k<2;
+	return t;
+}
+def nestedIndexed(n:!ℕ,c:!𝔹){
+	t:=[n,1];
+	if c {
+		x:=vector(t[0],0:𝔹);
+		t[0]=5;
+	}
+	return t[0]+t[1];
+}
+def nestedIndexedOpAssign(n:!ℕ,c:!𝔹){
+	t:=[n,1];
+	if c {
+		x:=vector(t[0],0:!𝔹);
+		t[1]+=2;
+	}
+	return t[0]+t[1];
+}
+def loopIndexed(n:!ℕ){
+	t:=[n,1];
+	k:=0;
+	while k<2 {
+		x:=vector(t[0],0:𝔹);
+		t[0]=t[0]+1;
+		k+=1;
+	}
+	return t[0];
+}
+def nestedArray(n:!ℕ,c:!𝔹){
+	t:=[[n,1],[2,3]];
+	if c {
+		x:=vector(t[0][0],0:𝔹);
+		t[0][1]=7;
+	}
+	return t[0][0]+t[0][1];
+}
+def main(){
+	r:=(opAssign(2),quantumDependent(2),indexed(2),inLoop(2),inDoWhile(1),nestedIndexed(2,true),nestedIndexedOpAssign(2,true),loopIndexed(2),nestedArray(2,true));
+	assert(r==(3,4,6,4,5,6,5,4,9));
+	return r;
+}
