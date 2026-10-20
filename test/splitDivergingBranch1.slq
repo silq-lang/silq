@@ -1,0 +1,20 @@
+// args: --run
+
+def g(n:!ℕ)⇒n+1;
+def otherConsumes(n:!ℕ,c:!𝔹){
+	if c { assert(false); } else { x:=g(n); }
+	return 0;
+}
+def bothConsume(n:!ℕ,c:!𝔹){
+	if c { assert(false); x:=g(n); } else { x:=g(n); }
+	return x;
+}
+def nested(n:!ℕ,m:!ℕ,c:!𝔹){
+	if c { assert(false); } else { if !c { y:=g(m); } x:=g(n); }
+	return 0;
+}
+def main(){
+	r:=(otherConsumes(1,false),bothConsume(1,false),nested(1,2,false));
+	assert(r==(0,2,0));
+	return r;
+}
