@@ -1,0 +1,80 @@
+// args: --run
+
+def seqClassical(n:!ℕ,m:!ℕ,b:!𝔹):!ℕ{
+	r:=0;
+	if n>0 {
+		if b { return 1; }
+		x:=n+1;
+		if m>2 { return 2; }
+		r=x;
+	}
+	return r+1;
+}
+def seqClassicalQubit(n:!ℕ,m:!ℕ,b:!𝔹,q:𝔹):!ℕ×𝔹{
+	r:=0;
+	if n>0 {
+		if b { return (1,q); }
+		x:=n+1;
+		if m>2 { return (2,X(q)); }
+		r=x;
+	}
+	return (r+1,q);
+}
+def quantumThenClassical(n:!ℕ,m:!ℕ,const c:𝔹,q:𝔹):uint[3]×𝔹{
+	r:=0;
+	if n>0 {
+		if c { return (1:uint[3],q); }
+		x:=n+1;
+		if m>2 { return (2:uint[3],q); }
+		r=x+1;
+	}
+	return (r as uint[3],q);
+}
+def quantumThenTwoClassical(n:!ℕ,m:!ℕ,b:!𝔹,const c:𝔹,q:𝔹):uint[3]×𝔹{
+	r:=0;
+	if n>0 {
+		if c { return (1:uint[3],q); }
+		if b { return (3:uint[3],q); }
+		x:=n+1;
+		if m>2 { return (2:uint[3],q); }
+		r=x+1;
+	}
+	return (r as uint[3],q);
+}
+def classicalQuantumClassical(n:!ℕ,const c:𝔹,q:𝔹):uint[3]×𝔹{
+	r:=0;
+	if n>0 {
+		if n>2 { return (4:uint[3],q); }
+		if c { return (5:uint[3],q); }
+		x:=n+1;
+		if x>2 { return (6:uint[3],q); }
+		r=x+1;
+	}
+	if r>3 { return (7:uint[3],q); }
+	return (r as uint[3],q);
+}
+def rebuiltAfterBranch(n:!ℕ,m:!ℕ,b:!𝔹):!ℕ×!ℕ{
+	if b {
+		y:=(n,m);
+		if m>2 { return (y[1],y[0]); }
+	} else {
+		return (0,0);
+	}
+	z:=(n,m);
+	return z;
+}
+def run(n:!ℕ,m:!ℕ,b:!𝔹,c:!𝔹){
+	(r1,q1):=quantumThenClassical(n,m,c:𝔹,0:𝔹);
+	(r2,q2):=quantumThenTwoClassical(n,m,b,c:𝔹,0:𝔹);
+	(r3,q3):=classicalQuantumClassical(n,c:𝔹,0:𝔹);
+	return (measure(r1),measure(r2),measure(r3),measure(q1)||measure(q2)||measure(q3));
+}
+def main(){
+	a:=(seqClassical(1,1,false),seqClassical(1,3,false),seqClassical(1,1,true),seqClassical(0,1,true));
+	(s,q):=seqClassicalQubit(1,3,false,0:𝔹);
+	t:=(rebuiltAfterBranch(1,1,true),rebuiltAfterBranch(1,3,true),rebuiltAfterBranch(1,1,false));
+	r:=(run(1,1,false,false),run(1,3,false,false),run(1,1,true,false),run(1,1,false,true),run(0,1,false,false),run(3,1,false,false));
+	assert(a==(3,2,1,1) && (s,measure(q))==(2,true) && t==((1,1),(3,1),(0,0)));
+	assert(r==((3,3,3,false),(2,2,3,false),(3,3,3,false),(1,1,5,false),(0,0,0,false),(5,5,4,false)));
+	return (a,t,r);
+}

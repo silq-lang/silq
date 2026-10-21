@@ -1171,6 +1171,9 @@ struct CondRet {
 			CReg creg = null;
 			if(var.value.hasClassical) {
 				creg = var.value.creg;
+				if(previous && iprev.condC) {
+					creg = w1.ccg.removeCond(iprev.condC, creg);
+				}
 			}
 			QReg qreg = null;
 			if(var.value.hasQuantum) {
@@ -1560,7 +1563,7 @@ struct Result {
 						return cretV;
 					} else {
 						return Value.newReg(
-							rvOt.classicalRet.creg,
+							null,
 							rvOt.classicalRet.hasQuantum
 							? wi.qcg.withCond(CondAny(condC)).allocError() : null
 						);
@@ -1924,6 +1927,11 @@ class CCGen {
 			swap(c0, c1);
 		}
 		return cond(condC.reg, c0, c1);
+	}
+
+	CReg removeCond(CondC condC, CReg r) {
+		if(!r || !code.definedUnder(r, condC)) return r;
+		return cond(condC, null, r);
 	}
 
 	CReg boolNot(CReg a) {
@@ -2872,12 +2880,19 @@ class ScopeWriter {
 		if(v0.creg || v1.creg) {
 			if(v0.creg !is v1.creg) {
 				assert(cond.isClassical);
-				CReg c0 = v0.creg;
-				CReg c1 = v1.creg;
-				if(!cond.value) swap(c0, c1);
-				creg = ccg.cond(cond.creg, c0, c1);
+				if(!v0.creg) {
+					creg = ccg.removeCond(cond.ccond, v1.creg); // (the other branch is unreachable)
+				} else if(!v1.creg) {
+					creg = ccg.removeCond(cond.ccond.invert(), v0.creg);
+				} else {
+					CReg c0 = v0.creg;
+					CReg c1 = v1.creg;
+					if(!cond.value) swap(c0, c1);
+					creg = ccg.cond(cond.creg, c0, c1);
+				}
 			} else {
 				creg = v0.creg;
+				if(cond.isClassical) creg = ccg.removeCond(cond.ccond.invert(), ccg.removeCond(cond.ccond, creg)); // (a register of one branch may stand in for the unreachable other one)
 			}
 		}
 		QReg qreg;
@@ -2907,7 +2922,7 @@ class ScopeWriter {
 	}
 
 	Value valRemoveCond(CondAny cond, Value v) {
-		auto creg = v.creg;
+		auto creg = cond.isClassical ? ccg.removeCond(cond.ccond, v.creg) : v.creg;
 		auto qreg = v.qreg ? qcg.removeCond(cond, v.qreg) : null;
 		return Value.newReg(creg, qreg);
 	}
@@ -5058,6 +5073,53 @@ class ScopeWriter {
 			}
 			auto cA = ra.retCond, cB = rb.retCond;
 			auto rvA = ra.retValue, rvB = rb.retValue;
+			if(rvA.quantumRet && cB.condC) { // (where `B` returns classically, the combination returns classically)
+				// combine the quantum part of `A` with `B` first, then the classical part of `A` with the result
+				auto ccA = cA.condC;
+				auto w = ccA ? withCond(nscope, CondAny(ccA.invert())) : this;
+				auto cqA = cA.condQ, rqA = rvA.quantumRet;   // [cqA] (relative to `w`)
+				auto ccB = cB.condC, rcB = rvB.classicalRet; // [!cqA,ccB]
+				auto cqB = cB.condQ, rqB = rvB.quantumRet;   // [!cqA,!ccB,cqB]
+				assert(cqA && rcB);
+				auto qA = CondAny(cqA), inC = CondAny(ccB), outC = CondAny(ccB.invert());
+				auto wq = w.withCond(w.nscope, outC), wqB = scB.withCond(scB.nscope, outC);
+
+				Value rqA0, rqA1;
+				w.withCond(w.nscope, qA).valSplit(inC, rqA0, rqA1, rqA); // [cqA,!ccB], [cqA,ccB]
+				auto cret = w.withCond(w.nscope, inC).valMerge(qA, rcB, rqA1); // [ccB]
+
+				bool v = cqB ? cqB.value : true;
+				auto cqF = cqB ? wqB.qcg.dup(cqB.reg) : wqB.qcg.allocQubit(false); // [!cqA,!ccB]
+				auto cqT = wq.qcg.withCond(qA).allocQubit(v); // [cqA,!ccB]
+				auto condQ = CondQ(wq.qcg.merge(qA, cqF, cqT), v); // [!ccB]
+				auto inQ = CondAny(condQ), outQ = CondAny(condQ.invert());
+
+				rqA0 = wq.withCond(wq.nscope, qA).valAddCond(inQ, rqA0); // [!ccB,cqA,condQ]
+				if(rqB) {
+					rqB = wqB.withCond(wqB.nscope, CondAny(cqB)).valAddCond(inQ, rqB); // [!cqA,!ccB,cqB,condQ]
+					rqB = wqB.withCond(wqB.nscope, inQ).valRemoveCond(CondAny(cqB), rqB); // [!cqA,!ccB,condQ]
+				} else rqB = Value.newReg(rqA0.creg, rqA0.hasQuantum ? wqB.qcg.withCond(inQ).allocError() : null); // (unreachable)
+				auto qret = wq.withCond(wq.nscope, inQ).valMerge(qA, rqB, rqA0); // [!ccB,condQ]
+
+				foreach(name, ref var; scB.vars) {
+					if(!var.value || !var.value.hasQuantum) continue;
+					auto qreg = var.value.qreg; // [!cqA,!ccB,!cqB]
+					if(cqB) {
+						qreg = wqB.qcg.withCond(CondAny(cqB.invert())).addCond(outQ, qreg); // [!cqA,!ccB,!cqB,!condQ]
+						qreg = wqB.qcg.withCond(outQ).removeCond(CondAny(cqB.invert()), qreg); // [!cqA,!ccB,!condQ]
+					} else qreg = wqB.qcg.addCond(outQ, qreg);
+					qreg = wq.qcg.withCond(outQ).removeCond(CondAny(cqA.invert()), qreg); // [!ccB,!condQ]
+					var.value = Value.newReg(var.value.creg, qreg);
+				}
+				cB.forget(scB);
+				CondRet(cqA).forget(w);
+				auto r = Result.conditionallyReturns(RetValue(cret, qret), CondRet(ccB, condQ));
+				if(!ccA) return r;
+				w.vars = scB.vars;
+				r = combineResults(Result.conditionallyReturns(RetValue(rvA.classicalRet), CondRet(ccA)), r, w);
+				scB.vars = w.vars;
+				return r;
+			}
 			auto vB = cB.asCondRetValue(scB);
 			if(!rvA.quantumRet) {
 				assert(!cA.condQ);
@@ -5105,7 +5167,18 @@ class ScopeWriter {
 				}
 
 				foreach(name, ref var; scB.vars) {
-					if(!var.value || !var.value.hasQuantum) continue;
+					if(!var.value) continue;
+					auto creg = var.value.creg;
+					if(creg) {
+						creg = qcg.withCond(CondAny(ccA.invert())).withCond(CondAny(condC, false))
+							.ccg.removeCond(ccB.invert(), creg); // [!ccA,!condC]
+						creg = qcg.withCond(CondAny(condC, false))
+							.ccg.removeCond(ccA.invert(), creg); // [!condC]
+					}
+					if(!var.value.hasQuantum) {
+						if(creg !is var.value.creg) var.value = Value.newReg(creg, null);
+						continue;
+					}
 					auto qreg = var.value.qreg;
 					auto wqc = cqB ? qcg.withCond(CondAny(cB.condQ.invert())) : qcg;
 					qreg = wqc.withCond(CondAny(ccA.invert()))
@@ -5129,7 +5202,7 @@ class ScopeWriter {
 						.removeCond(CondAny(ccB.invert()), qreg); // [!ccA,!condC,!condQ]
 					qreg = wq.withCond(CondAny(condC, false))
 						.removeCond(CondAny(ccA.invert()), qreg); // [!condC,!condQ]
-					var.value = Value.newReg(var.value.creg, qreg);
+					var.value = Value.newReg(creg, qreg);
 				}
 
 				vB.asCondRet().forget(scB);
@@ -5137,6 +5210,7 @@ class ScopeWriter {
 				cA.forget(this);
 				return Result.conditionallyReturns(RetValue(cret, qret), CondRet(CondC(condC), condQ));
 			} else {
+				assert(!cB.condC);
 				auto vBq = vB.dup(scB).toQuantum(scB);
 				rvB = rvB.toQuantum(rb.retCond, vBq.asCondRet(), scB);
 				assert(!rvB.classicalRet && rvB.quantumRet);
@@ -5168,21 +5242,13 @@ class ScopeWriter {
 						auto wqc = condC ? qcg.withCond(CondAny(condC.invert())) : qcg;
 
 						auto w = wqc.withCond(CondAny(cA.condQ.invert()));
-						if(cB.condC) w = w.withCond(CondAny(cB.condC.invert()));
 						if(cB.condQ) w = w.withCond(CondAny(cB.condQ.invert()));
 						qreg = w.addCond(CondAny(condQ.invert()), qreg);
 
 						if(cB.condQ) {
 							auto w2 = wqc.withCond(CondAny(cA.condQ.invert()))
 								.withCond(CondAny(condQ.invert()));
-							if(cB.condC) w2 = w2.withCond(CondAny(cB.condC.invert()));
 							qreg = w2.removeCond(CondAny(cB.condQ.invert()), qreg);
-						}
-
-						if(cB.condC) {
-							qreg = wqc.withCond(CondAny(cA.condQ.invert()))
-								.withCond(CondAny(condQ.invert()))
-								.removeCond(CondAny(cB.condC.invert()), qreg);
 						}
 
 						qreg = wqc.withCond(CondAny(condQ.invert()))
@@ -5391,15 +5457,16 @@ class ScopeWriter {
 				ifTrue = retCond.replaceCondRet(rTrue.retCond, ifTrue);
 			}
 
-			static ScopeWriter removeCond(CondAny cond, ScopeWriter w) {
-				if(cond.isQuantum) w.qcg.condQ=w.qcg.condQ.filter!(qc=>qc != cond.qcond).array;
-				else w.ccg.condC=w.ccg.condC.filter!(cc=>cc != cond.ccond).array;
+			ScopeWriter removeCond(CondAny cond, ScopeWriter w) {
+				auto r = retCond.invert().addToScope(w.nscope, this); // (fresh: `w` caches registers that only exist under `cond`)
+				if(!w.detPassthrough) r.detPassthrough = false;
 				foreach(name, ref var; w.vars) {
 					if(!var.value) continue;
-					auto valUnreachable = Value.newReg(null, cond.isQuantum ? w.withCond(w.nscope, cond.invert()).qcg.allocError() : null);
-					var.value = w.valMerge(cond, valUnreachable, var.value);
+					auto valUnreachable = Value.newReg(null, cond.isQuantum ? r.withCond(r.nscope, cond.invert()).qcg.allocError() : null);
+					r.vars[name] = Variable(var.decl, r.valMerge(cond, valUnreachable, var.value));
+					var.value = null;
 				}
-				return w;
+				return r;
 			}
 
 			ScopeWriter reachable;
@@ -7887,7 +7954,13 @@ class CodeWriter {
 		cArgs = fixCNull(cArgs, 0);
 		cRet = fixCNull(cRet, -1);
 		if(condC.any!(c => ctx.condNeverHolds(c))) return;
+		if(condC.length) foreach(r; cRet) cregConds[r] = condC;
 		code.put(IrStatement(condC, condQ, op, cRet, qRet, cArgs, qcArgs, qiArgs, ctx.curLoc.loc));
+	}
+
+	bool definedUnder(CReg r, CondC cond) { // (HQIR only allows uses of a classical register under the conditions of its definition)
+		if(auto p = cregConds.getPtr(r)) return (*p).canFind(cond);
+		return false;
 	}
 
 	string finish(string defName, string prettyName, ref CReg[] captures, CReg[] cRet, QReg[] qRet, CReg[] cArgs, QReg[] qcArgs, QReg[] qiArgs, MapSX!(Id,Expression) attrs) {
@@ -8057,6 +8130,7 @@ class CodeWriter {
 private:
 	CodeWriter parent = null;
 	QReg _qregU = null;
+	MapSX!(CReg,CondC[]) cregConds;
 }
 
 struct CapInfo {

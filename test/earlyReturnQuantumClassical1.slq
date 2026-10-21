@@ -1,0 +1,66 @@
+// args: --run
+
+def quantumThenClassical(n:!ℕ,const c:𝔹,q:𝔹):𝔹{
+	if n>0 {
+		if c { return q; }
+		if n>1 { return X(q); }
+	}
+	assert(n<=1);
+	return q;
+}
+def mixedThenClassical(n:!ℕ,b:!𝔹,const c:𝔹,q:𝔹):uint[2]×𝔹{
+	if n>0 {
+		if b { return (1:uint[2],q); } else { if c { return (2:uint[2],q); } }
+		if n>1 { return (3:uint[2],X(q)); }
+	}
+	assert(n<=1);
+	return (0:uint[2],q);
+}
+def quantumThenMixed(n:!ℕ,const c:𝔹,const d:𝔹,q:𝔹):uint[2]×𝔹{
+	if n>0 {
+		if c { return (1:uint[2],q); }
+		if n>1 { return (2:uint[2],X(q)); } else { if d { return (3:uint[2],q); } }
+	}
+	assert(n<=1);
+	return (0:uint[2],H(H(q)));
+}
+def mixedThenMixed(n:!ℕ,b:!𝔹,const c:𝔹,const d:𝔹,q:𝔹):uint[3]×𝔹{
+	x:=q;
+	if n>0 {
+		if b { return (1:uint[3],x); } else { if c { return (2:uint[3],x); } }
+		y:=X(x);
+		if n>1 { return (3:uint[3],y); } else { if d { return (4:uint[3],y); } }
+		x:=X(y);
+	}
+	assert(n<=1);
+	if n==1 { return (5:uint[3],x); }
+	return (6:uint[3],X(x));
+}
+def nestedQuantum(n:!ℕ,const c:𝔹,const d:𝔹,q:𝔹):𝔹{
+	if d {
+		if c { return q; }
+		if n>1 { return X(q); }
+	}
+	return q;
+}
+def run(n:!ℕ,b:!𝔹,c:!𝔹,d:!𝔹){
+	q1:=quantumThenClassical(n,c:𝔹,0:𝔹);
+	(r2,q2):=mixedThenClassical(n,b,c:𝔹,0:𝔹);
+	(r3,q3):=quantumThenMixed(n,c:𝔹,d:𝔹,0:𝔹);
+	(r4,q4):=mixedThenMixed(n,b,c:𝔹,d:𝔹,0:𝔹);
+	q5:=nestedQuantum(n,c:𝔹,d:𝔹,0:𝔹);
+	return (measure(q1),measure(r2),measure(q2),measure(r3),measure(q3),measure(r4),measure(q4),measure(q5));
+}
+def entangled(n:!ℕ){
+	c:=H(0:𝔹);
+	q:=quantumThenClassical(n,c,0:𝔹);
+	(a,b):=measure(q,c);
+	return a==(n>1&&!b);
+}
+def main(){
+	r:=(run(0,true,true,true),run(1,false,false,false),run(2,false,false,false),run(2,true,false,false),run(2,false,true,false),run(1,false,false,true),run(1,false,true,true),run(2,false,false,true));
+	e:=(entangled(2),entangled(1),entangled(0));
+	assert(r==((0,0,0,0,0,6,1,0),(0,0,0,0,0,5,0,0),(1,3,1,2,1,3,1,0),(1,1,0,2,1,1,0,0),(0,2,0,1,0,2,0,0),(0,0,0,3,0,4,1,0),(0,2,0,1,0,2,0,0),(1,3,1,2,1,3,1,1)));
+	assert(e==(true,true,true));
+	return (r,e);
+}
