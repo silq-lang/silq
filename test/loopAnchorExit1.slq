@@ -1,0 +1,54 @@
+// args: --run
+
+def g(n:!ℕ)⇒0;
+def isOdd(n:!ℕ)⇒n%2=1;
+
+def whileTrueQuantum(n:!ℕ){
+	x:=0:𝔹;
+	y:=dup(x);
+	k:=0;
+	while true{
+		if k==n { return (measure(x),measure(y),k); }
+		x:=X(x);
+		k+=1;
+	}
+}
+def whileTrueClassical(n:!ℕ){
+	k:=0;
+	r:=0;
+	while true{
+		if k==n { return r; }
+		r=k+r;
+		k+=1;
+	}
+}
+def consumingGuardQuantum(n:!ℕ,const c:𝔹):!ℕ{
+	period:=1;
+	x:=dup(c);
+	k:=0;
+	while isOdd(period){
+		if n=3 { return 0; }
+		x:=X(x);
+		k+=1;
+		period:=g(n);
+		period=if k<3 then 1 else 0;
+	}
+	return k;
+}
+def consumingGuardClassical(n:!ℕ):!ℕ{
+	period:=1;
+	k:=0;
+	while isOdd(period){
+		if n=3 { return 0; }
+		period:=g(n);
+		k+=1;
+		period=if k<4 then 1 else 0;
+	}
+	return k;
+}
+def main(){
+	c:=0:𝔹;
+	r:=(whileTrueQuantum(3),whileTrueClassical(4),consumingGuardQuantum(3,c),consumingGuardQuantum(2,c),consumingGuardClassical(3),consumingGuardClassical(2));
+	assert(r==((1,0,3),6,0,3,0,4));
+	return (r,measure(c));
+}

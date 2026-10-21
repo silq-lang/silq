@@ -1,0 +1,24 @@
+def captured(n:!ℕ){
+	t:=dup(n);
+	x:=vector(t,0:!𝔹);
+	g:=λ(). x.length;
+	k:=0;
+	while k<2 {
+		k+=1;
+		forget(t); /// error
+		t:=dup(n);
+	}
+	return (t,g());
+}
+def constUseBefore(n:!ℕ){
+	t:=dup(n);
+	x:=vector(t,0:!𝔹);
+	y:=x.length;
+	k:=0;
+	while k<2 {
+		k+=1;
+		forget(t); /// error
+		t:=dup(n);
+	}
+	return (t,y);
+}

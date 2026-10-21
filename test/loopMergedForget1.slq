@@ -1,0 +1,46 @@
+// args: --run
+
+def afterDoWhile(n:!ℕ){
+	t:=dup(n);
+	k:=0;
+	do{ k+=1; x:=vector(t,0:!𝔹); }while k<2;
+	forget(t);
+	return k;
+}
+def inLoopAfterDoWhile(n:!ℕ){
+	t:=dup(n);
+	k:=0;
+	do{ k+=1; x:=vector(t,0:!𝔹); }while k<2;
+	j:=0;
+	while j<2 { j+=1; forget(t); t:=dup(n)+j; }
+	return t;
+}
+def afterWhile(n:!ℕ){
+	t:=dup(n);
+	x:=vector(t,0:!𝔹);
+	k:=0;
+	while k<2 { k+=1; x=vector(t,1:!𝔹); }
+	forget(t);
+	return k;
+}
+def assignInNestedDoWhile(n:!ℕ){
+	t:=dup(n);
+	r:=0;
+	k:=0;
+	do{ k+=1; x:=vector(t,0:!𝔹); }while k<2;
+	j:=0;
+	do{ j+=1; t·=2; r+=t; }while j<2;
+	return r;
+}
+def indexedAfterDoWhile(n:!ℕ){
+	u:=[n,1];
+	k:=0;
+	do{ k+=1; x:=vector(u[0],0:𝔹); y:=vector(u[0],1:!𝔹); }while k<2;
+	u[0]+=u[1];
+	return u[0];
+}
+def main(){
+	r:=(afterDoWhile(1),inLoopAfterDoWhile(1),afterWhile(1),assignInNestedDoWhile(1),indexedAfterDoWhile(1));
+	assert(r==(2,3,2,6,2));
+	return r;
+}
