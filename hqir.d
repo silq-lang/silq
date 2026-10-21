@@ -2889,9 +2889,8 @@ class ScopeWriter {
 		CReg creg = null;
 		if(v0.creg || v1.creg) {
 			if(v0.creg !is v1.creg) {
-				if(cond.isQuantum) { // (classical values do not depend on quantum conditions)
-					assert(!v0.creg || !v1.creg);
-					creg = v0.creg ? v0.creg : v1.creg; // (the other branch is unreachable)
+				if(cond.isQuantum) { // (classical values do not depend on quantum conditions, e.g., the registers of two values of `⊥[]` hold the same value)
+					creg = v0.creg ? v0.creg : v1.creg; // (if a branch has no register, it is unreachable)
 				} else if(!v0.creg) {
 					creg = ccg.removeCond(cond.ccond, v1.creg); // (the other branch is unreachable)
 				} else if(!v1.creg) {

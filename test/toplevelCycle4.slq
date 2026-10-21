@@ -1,0 +1,6 @@
+
+def f()⇒(y,); /// error
+y:=f;
+def g()⇒z; /// error
+z:=h;
+def h(){ return g; } /// error

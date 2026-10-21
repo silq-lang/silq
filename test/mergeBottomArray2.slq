@@ -1,0 +1,40 @@
+// args: --run
+
+def f(){
+	x:=H(0);
+	if x{
+		t:=(λ()⇒[]:⊥[])();
+	}else{
+		t:=[]:⊥[];
+	}
+	return (x,t);
+}
+def g(){
+	x:=H(0);
+	t:=if x then (λ()⇒[]:⊥[])() else []:⊥[];
+	return (x,t);
+}
+def h(){
+	x:=H(0);
+	t:=[]:⊥[];
+	if x{
+		t=(λ()⇒[]:⊥[])();
+	}
+	return (x,t);
+}
+def k(){
+	x:=H(0);
+	t:=([]:⊥[],[]:⊥[]);
+	if x{
+		t[0]=(λ()⇒[]:⊥[])();
+	}
+	return (x,t);
+}
+def main(){
+	(x,t):=f();
+	(y,u):=g();
+	(z,v):=h();
+	(w,s):=k();
+	assert(t.length==0&&u.length==0&&v.length==0&&s[0].length+s[1].length==0);
+	return measure(H(x),H(y),H(z),H(w));
+}

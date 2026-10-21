@@ -1,0 +1,13 @@
+// args: --run
+
+x:=(f,g);
+def f(n:!ℕ)⇒if n==0 then 0 else x[1](n sub 1)+1;
+def g(n:!ℕ){
+	r:=0:!ℤ;
+	for i in [0..1){ r=f(n)+0; }
+	return r;
+}
+def main(){
+	assert(x[1](3)==3);
+	return x[1](3);
+}

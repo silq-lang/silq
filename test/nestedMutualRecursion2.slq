@@ -1,0 +1,12 @@
+// args: --run
+
+def f(n:!ℕ){
+	def g(m:!ℕ)⇒h(m)+0;
+	if n==0 { return 2; }
+	return g(n sub 1);
+}
+def h(m:!ℕ)⇒f(m);
+def main(){
+	assert(f(3)==2&&h(1)==2);
+	return f(3);
+}

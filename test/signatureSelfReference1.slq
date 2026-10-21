@@ -1,0 +1,12 @@
+
+def a(x:a)⇒x; /// error
+def d(n:!ℕ,x:𝔹^(d(n)))⇒n; /// error
+def e(x:(let { } in e))⇒x; /// error
+def f(x:(let { def g()⇒f; } in 𝔹))⇒x; /// error
+def h(x:(λ()⇒h)())⇒x; /// error
+def i(x:j)⇒x;
+def j(y:i)⇒y; /// error
+def k(){
+	def l(x:l)⇒1; /// error
+	return l;
+}

@@ -1,0 +1,19 @@
+// args: --run
+
+x:=f;
+def f(n:!ℕ){
+	if n==0 { return 0; }
+	return x(n sub 1)+1;
+}
+def h(n:!ℕ)⇒k(n);
+y:=h;
+def k(n:!ℕ)⇒if n==0 then 0 else y(n sub 1)+2;
+z:=(p,1);
+def p(n:!ℕ)⇒if n==0 then z[1] else z[0](n sub 1)+1;
+def main(){
+	assert(x(3)==3);
+	assert(f(2)==2);
+	assert(y(2)==4);
+	assert(p(2)==3);
+	return (x(3),y(2),p(2));
+}
