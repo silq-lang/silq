@@ -1,0 +1,30 @@
+// args: --run
+
+def parameterAfterReturn(const d:𝔹,const e:𝔹,const g:𝔹,n:!ℕ,q:𝔹):𝔹{
+	if d { if e { if g { return q; } } }
+	assert(n+1==3);
+	return q;
+}
+def localAfterReturn(const d:𝔹,const e:𝔹,const g:𝔹,q:𝔹):𝔹{
+	n:=2;
+	if d { if !e { if g { return q; } } }
+	assert(n+1==3);
+	return q;
+}
+def inLoop(const d:𝔹,q:𝔹):uint[2]×𝔹{
+	r:=0:uint[2];
+	repeat 1 { if d { if !d { if d { return (r,q); } } } }
+	return (r,q);
+}
+def main(){
+	d:=H(0:𝔹);
+	e:=H(0:𝔹);
+	g:=H(0:𝔹);
+	x:=parameterAfterReturn(d,e,g,2,0:𝔹);
+	y:=localAfterReturn(d,e,g,0:𝔹);
+	(r,z):=inLoop(d,0:𝔹);
+	measure(d,e,g);
+	s:=measure(x,y,r,z);
+	assert(s==(0,0,0,0));
+	return s;
+}
