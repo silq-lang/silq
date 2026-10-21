@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	(x,y):=(H(0),H(0));
+	def f()⇒CNOT(x,y);
+	g:=measure(f);
+	y:=g();
+	return (x,g);
+}

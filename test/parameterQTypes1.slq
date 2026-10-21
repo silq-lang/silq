@@ -1,0 +1,22 @@
+// args: --run
+
+def circuit(x:uint[3],const c:𝔹,n:!ℕ,p:(𝔹×!𝔹)^2,const ys:𝔹^2)mfree{
+	if c { x+=1; }
+	return (x,p);
+}
+def sized[n:!ℕ](x:uint[n]){ return x; }
+def dynamic(xs:𝔹[]){ return xs; }
+def classicalOnly(n:!ℕ,b:!𝔹){ return (n,b); }
+def withUnit(u:𝟙,q:𝔹){ return q; }
+def main(){
+	c:=0:𝔹;
+	ys:=(0:𝔹,1:𝔹);
+	(x,p):=circuit(0:uint[3],c,3,((0:𝔹,true),(1:𝔹,false)),ys);
+	y:=sized[2](1:uint[2]);
+	z:=dynamic([0:𝔹]);
+	w:=classicalOnly(1,true);
+	v:=withUnit((),1:𝔹);
+	s:=measure(x,p,c,ys,y,z,w,v);
+	assert(s==(0,((0,1),(1,0)),0,(0,1),1,[0],(1,1),1));
+	return s;
+}

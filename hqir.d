@@ -4508,6 +4508,8 @@ class ScopeWriter {
 
 		if(ci.makeClassical) {
 			assert(!ci.hasQuantum, "quantum captures in make-classical call");
+			auto newFunctionVar = ci.newFunctionVar;
+			ci.newFunctionVar = null; // (the `spent` version is defined in this scope, not in the subfunction)
 
 			auto subsc = subfuncScope(true);
 			foreach(ref arg; ci.args) {
@@ -4518,6 +4520,10 @@ class ScopeWriter {
 			auto f = subfuncPack("silq_cfunc", subsc, [r], []);
 
 			ccg.writeCOp(opCallAsClassicalIndirect, [r], [f]);
+			if(newFunctionVar) {
+				QReg[] qcArgs;
+				defineVar(newFunctionVar, spentFunction(ci, qcArgs));
+			}
 			return valNewC(r);
 		}
 
@@ -4578,34 +4584,36 @@ class ScopeWriter {
 		}
 		assert(ci.captureAnnotation != ast_ty.CaptureAnnotation.spent, "attempted to call `spent` function");
 		if(ci.newFunctionVar) {
-			Value fval;
-			auto targetC = ci.target.creg;
-			CReg spentC() { // (the classical part of the spent version of a quantum function value)
-				auto funcC = ccg.qfuncInner2(targetC);
-				auto qtypeConst = ccg.qfuncQType2(targetC)[0];
-				return ccg.qfuncPack(funcC, qtypeConst);
-			}
-			if(ci.targetF) {
-				assert(ci.target.hasClassical);
-				assert(!!ci.target.func.info);
-				fval = Value.newReg(spentC(), null);
-				fval.func = ci.target.func.getSpent(ccg, qcg);
-				qcArgs = qcArgs[fval.func.qCapConstR.length .. $];
-			} else {
-				assert(!ci.target.func.info);
-				if(ci.hasQuantum) {
-					auto qcCap = qcArgs[0];
-					qcArgs = qcArgs[1 .. $];
-					fval = Value.newReg(spentC(), qcCap);
-				} else {
-					fval = ci.target;
-				}
-			}
-			assert(ci.newFunctionVar && fval, text(ci," ",fval));
+			auto fval = spentFunction(ci, qcArgs);
+			assert(fval, text(ci));
 			defineVar(ci.newFunctionVar, fval);
 		}
 		qcg.forget(qcArgs);
 		return ret;
+	}
+
+	// the `spent` version of the `once` function value called by `ci`, which keeps its `const` quantum captures (removed
+	// from `qcArgs`)
+	Value spentFunction(ref CallInfo ci, ref QReg[] qcArgs) {
+		auto targetC = ci.target.creg;
+		CReg spentC() { // (the classical part of the spent version of a quantum function value)
+			auto funcC = ccg.qfuncInner2(targetC);
+			auto qtypeConst = ccg.qfuncQType2(targetC)[0];
+			return ccg.qfuncPack(funcC, qtypeConst);
+		}
+		if(ci.targetF) {
+			assert(ci.target.hasClassical);
+			assert(!!ci.target.func.info);
+			auto fval = Value.newReg(spentC(), null);
+			fval.func = ci.target.func.getSpent(ccg, qcg);
+			qcArgs = qcArgs[fval.func.qCapConstR.length .. $];
+			return fval;
+		}
+		assert(!ci.target.func.info);
+		if(!ci.hasQuantum) return ci.target;
+		auto qcCap = qcArgs[0];
+		qcArgs = qcArgs[1 .. $];
+		return Value.newReg(spentC(), qcCap);
 	}
 
 	ast_sem.ExpSemContext semContext(bool isConst) {
@@ -8460,6 +8468,9 @@ class Writer {
 			if (fi.directName == "silq_function.main") {
 				output.write(dumpPrint(fi));
 			}
+			if (auto qtypes = dumpParameterQTypes(fi)) {
+				output.write(qtypes);
+			}
 		}
 
 		foreach(fi; functions) {
@@ -8636,6 +8647,32 @@ class Writer {
 		MapSX!(Id,Expression) attrs;
 		attrs[Id.s!"artificial"] = ast_exp.LiteralExp.makeBoolean(true);
 		return sc.ccg.code.finish(fi.indirectName, null, cRet, qRet, cCap[] ~ [cTuple], [qcCap, qcTuple], [qiCap, qiTuple], attrs);
+	}
+
+	// `silq_parameter_qtypes.f` returns the qtypes of the quantum parameters of the toplevel function `silq_function.f`, in
+	// the order of its signature (not emitted if one of them depends on the values of parameters)
+	string dumpParameterQTypes(FunctionInfo fi) {
+		enum prefix = "silq_function.";
+		auto fd = fi.fd;
+		if(fd.fscope_.parent.getFunction() || fi.directName.length <= prefix.length || fi.directName[0 .. prefix.length] != prefix) return null;
+		if(chain(fi.constCaptures, fi.movedCaptures).any!(cap => cap.hasQuantum)) return null;
+		Expression[] types;
+		foreach(isConst; [true, false]) {
+			foreach(i, param; fi.params) {
+				if(param.hasQuantum && param.isConst == isConst) types ~= typeForDecl(fd.params[i]);
+			}
+		}
+		foreach(ty; types) {
+			if(!ty.isSemEvaluated() || typeHasQDep(ty)) return null;
+			foreach(id; ty.freeVars) {
+				if(id.meaning && id.meaning.scope_ && id.meaning.scope_.isNestedIn(fd.fscope_)) return null;
+			}
+		}
+		auto sc = new ScopeWriter(fd, this);
+		scope loc = PushLocation(this, fd.loc);
+		auto qtypes = types.map!(ty => sc.getQTypeRaw(ty, null)).array;
+		MapSX!(Id,Expression) attrs;
+		return sc.ccg.code.finish("silq_parameter_qtypes." ~ fi.directName[prefix.length .. $], null, qtypes, [], [], [], [], attrs);
 	}
 
 	string dumpPrint(FunctionInfo fi) {
