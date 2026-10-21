@@ -1,0 +1,21 @@
+// args: --run
+
+def swapTypeAndValue(){
+	x:=true;
+	(x,y):=(𝔹,x);
+	(x,y):=(y,x);
+	return x;
+}
+def moveType(){
+	y:=𝔹;
+	x:=y;
+	y:=true;
+	z:=0:x;
+	return (y,measure(z));
+}
+def main(){
+	a:=swapTypeAndValue();
+	(b,c):=moveType();
+	assert(a&&b&&!c);
+	return (a,b,c);
+}

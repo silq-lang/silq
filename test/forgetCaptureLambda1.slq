@@ -1,0 +1,5 @@
+def main(){
+	n:=2;
+	x:=(λ()⇒ (n, let forget(n) in 2))(); /// error
+	return x;
+}

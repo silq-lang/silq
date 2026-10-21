@@ -3477,6 +3477,9 @@ class ScopeWriter {
 		}
 
 		if(auto init=e.getInitializer()) {
+			if(!e.constLookup && !e.implicitDup && e.meaning)
+				if(auto p = vars.getPtr(e.meaning.getId))
+					if(p.decl is e.meaning) p.value = null; // (moved, e.g., a type assigned to another variable)
 			return genExprAs(init, e.type);
 		}
 		if(e.classical) {
@@ -4032,8 +4035,8 @@ class ScopeWriter {
 		CReg len;
 
 		if(auto tupTy = cast(ast_ty.TupleTy) arg.type) {
-			auto lLit = ctx.asIndex(li, tupTy.types.length);
-			auto rLit = ctx.asIndex(ri, tupTy.types.length);
+			auto lLit = ctx.asIndex(li, tupTy.types.length + 1); // (slice bounds may be the length)
+			auto rLit = ctx.asIndex(ri, tupTy.types.length + 1);
 			if(lLit && rLit) {
 				auto l = lLit.get();
 				auto r = rLit.get();
@@ -4072,7 +4075,7 @@ class ScopeWriter {
 
 		ccg.checkLeInt(true, li, len);
 
-		if(li is ri) {
+		if(li is ri && ast_ty.isSubtype(ast_ty.unit, e.type)) {
 			return genSubtype(valNewC(null), ast_ty.unit, e.type);
 		}
 		ccg.checkLeInt(true, ri, len);
