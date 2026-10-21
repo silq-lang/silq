@@ -5420,12 +5420,17 @@ class ScopeWriter {
 				if(auto rv = cast(ItePartialAbort) ite) {
 					auto scCont = rv.scCont;
 					auto scFail = sc.withCond(null, rv.cond);
+					bool contUnreachable = rv.cond.isClassical && ctx.condAlwaysHolds(rv.cond.ccond); // (e.g., `if true { assert(false); } else { ... }`: the code of the continuation is not generated)
 					foreach(decl; scCont.nscope.mergedVars) {
 						auto outer = decl.mergedInto;
 						auto ty = typeForDecl(outer);
 						assert(ty == typeForDecl(decl));
 						assert(outer.mergedFrom.canFind(decl)); // (the aborting branch may merge as well, e.g., if it aborts under quantum control)
 						auto v0 = scCont.getVar(decl, false);
+						if(contUnreachable) {
+							sc.defineVar(outer, scFail.valError(rv.witness, ty));
+							continue;
+						}
 						auto v1 = scFail.valError(null, ty); // (unreachable: classical values stay those of the continuation)
 						sc.defineVar(outer, sc.valMerge(rv.cond, v0, v1));
 					}

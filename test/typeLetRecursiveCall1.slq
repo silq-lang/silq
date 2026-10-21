@@ -1,0 +1,8 @@
+// args: --run
+
+def g(b:!ℕ)⇒vector(let{ def go(n:!ℕ):!ℕ{ x:=0; if n>5 { x=g(3).length+g(4).length; } return n; } } in go(b),false);
+def main(){
+	v:=g(7);
+	assert(v.length==7);
+	return v;
+}

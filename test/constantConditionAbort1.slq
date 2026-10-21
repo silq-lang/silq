@@ -1,0 +1,23 @@
+// args: --run
+
+def inBranch(b:!𝔹){
+	k:=1;
+	q:=0:𝔹;
+	if b {
+		if true { k+=1; assert(false); } else { k+=2; q:=X(q); }
+	}
+	return (k,measure(q));
+}
+def inLoop(b:!𝔹){
+	k:=1;
+	while b&&k<3 {
+		if false { k+=2; } else { k+=1; assert(false); }
+	}
+	return k;
+}
+def main(){
+	(k,m):=inBranch(false);
+	n:=inLoop(false);
+	assert(k==1&&!m&&n==1);
+	return (k,m,n);
+}
