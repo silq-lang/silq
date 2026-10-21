@@ -1,0 +1,30 @@
+// args: --run
+
+def g(t:!ℕ)⇒t%2;
+def swapFirst(i:!ℕ,x:𝔹^2){
+	(x[g(i)],x[1]):=(x[1],x[g(i)]);
+	return x;
+}
+def swapSecond(i:!ℕ,x:𝔹^2){
+	(x[1],x[g(i)]):=(x[g(i)],x[1]);
+	return x;
+}
+def swapBoth(i:!ℕ,j:!ℕ,x:𝔹^3){
+	(x[g(i)],x[g(j)+1]):=(x[g(j)+1],x[g(i)]);
+	return x;
+}
+def swapInBranch(i:!ℕ,b:!𝔹,x:𝔹^2){
+	(x[g(if b then i else 0)],x[1]):=(x[1],x[g(if b then i else 0)]);
+	return x;
+}
+def main(){
+	a:=measure(swapFirst(0,[1,0]:𝔹^2));
+	b:=measure(swapSecond(0,[1,0]:𝔹^2));
+	c:=measure(swapBoth(0,1,[1,0,0]:𝔹^3));
+	d:=measure(swapInBranch(0,true,[1,0]:𝔹^2));
+	assert(!a[0]&&a[1]);
+	assert(!b[0]&&b[1]);
+	assert(!c[0]&&!c[1]&&c[2]);
+	assert(!d[0]&&d[1]);
+	return (a,b,c,d);
+}
