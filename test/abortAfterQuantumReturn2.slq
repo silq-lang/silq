@@ -1,0 +1,48 @@
+// args: --run
+
+def returnThenAbort(m:!ℕ,n:!ℕ,const c:𝔹,q:𝔹):𝔹{
+	if m>0 {
+		if n>0 {
+			if c { return q; }
+		}
+		assert(0);
+	}
+	return X(q);
+}
+def mixedReturnThenAbort(n:!ℕ,const c:𝔹,q:𝔹):𝔹{
+	if n>0 {
+		if c { return q; }
+	} else {
+		return X(q);
+	}
+	assert(0);
+}
+def classicalQuantumThenAbort(n:!ℕ,const c:𝔹,q:𝔹):𝔹{
+	if n>1 { return X(q); }
+	if c { return q; }
+	assert(0);
+}
+def abortOrReturn(m:!ℕ,const c:𝔹,q:𝔹):𝔹{
+	if m>0 {
+		if c { assert(0); } else { return q; }
+	}
+	return X(q);
+}
+def abortOrConditionalReturn(m:!ℕ,n:!ℕ,const c:𝔹,const d:𝔹,q:𝔹):𝔹{
+	if m>0 {
+		if c { assert(0); } else {
+			if n>0 { return q; }
+			if d { return H(q); }
+		}
+	}
+	return X(q);
+}
+def main(){
+	c:=H(0:𝔹);
+	d:=H(0:𝔹);
+	r:=(returnThenAbort(0,1,c,0:𝔹),mixedReturnThenAbort(0,c,0:𝔹),classicalQuantumThenAbort(2,c,0:𝔹),abortOrReturn(0,c,0:𝔹),abortOrConditionalReturn(0,1,c,d,0:𝔹));
+	measure(c,d);
+	s:=measure(r);
+	assert(s==(1,1,1,1,1));
+	return s;
+}

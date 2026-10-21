@@ -1,0 +1,55 @@
+// args: --run
+
+def returnOrConditionalReturn(n:!ℕ,const c:𝔹,q:𝔹):uint[2]×𝔹{
+	if c { return (1:uint[2],X(q)); } else { if n>0 { return (2:uint[2],q); } }
+	return (3:uint[2],q);
+}
+def conditionalReturnOrReturn(n:!ℕ,const c:𝔹,q:𝔹):uint[2]×𝔹{
+	if c { if n>0 { return (1:uint[2],q); } } else { return (2:uint[2],X(q)); }
+	return (3:uint[2],q);
+}
+def returnOrMixedReturn(n:!ℕ,const c:𝔹,const d:𝔹,q:𝔹):uint[2]×𝔹{
+	if c { return (1:uint[2],X(q)); } else {
+		if n>0 { return (2:uint[2],q); }
+		if d { return (3:uint[2],X(q)); }
+	}
+	return (0:uint[2],q);
+}
+def quantumReturnOrReturnThenClassical(n:!ℕ,const c:𝔹,const d:𝔹,q:𝔹):uint[2]×𝔹{
+	if c { if d { return (1:uint[2],X(q)); } } else { return (2:uint[2],q); }
+	if n>1 { return (3:uint[2],q); }
+	return (0:uint[2],X(q));
+}
+def unitReturns(n:!ℕ,const c:𝔹,const d:𝔹):𝟙{
+	if c { if n>1 { return (); } } else {
+		if n>0 { return (); }
+		if d { return (); }
+	}
+	return ();
+}
+def unitQuantumReturn(const c:𝔹,const d:𝔹):𝟙{
+	if d { if c { } else { return (); } }
+	return ();
+}
+def run(n:!ℕ,c:!𝔹,d:!𝔹){
+	(r1,q1):=returnOrConditionalReturn(n,c:𝔹,0:𝔹);
+	(r2,q2):=conditionalReturnOrReturn(n,c:𝔹,0:𝔹);
+	(r3,q3):=returnOrMixedReturn(n,c:𝔹,d:𝔹,0:𝔹);
+	(r4,q4):=quantumReturnOrReturnThenClassical(n,c:𝔹,d:𝔹,0:𝔹);
+	unitReturns(n,c:𝔹,d:𝔹);
+	unitQuantumReturn(c:𝔹,d:𝔹);
+	return (measure(r1),measure(q1),measure(r2),measure(q2),measure(r3),measure(q3),measure(r4),measure(q4));
+}
+def entangled(n:!ℕ){
+	c:=H(0:𝔹);
+	(r,q):=returnOrConditionalReturn(n,c,0:𝔹);
+	(a,b,e):=measure(r,q,c);
+	return if e then a==1&&b else if n>0 then a==2&&!b else a==3&&!b;
+}
+def main(){
+	r:=(run(0,false,false),run(1,false,true),run(0,true,false),run(1,true,true),run(0,false,true),run(2,true,false));
+	e:=(entangled(0),entangled(1));
+	assert(r==((3,0,2,1,0,0,2,0),(2,0,2,1,2,0,2,0),(1,1,3,0,1,1,0,1),(1,1,1,0,1,1,1,1),(3,0,2,1,3,1,2,0),(1,1,1,0,1,1,3,0)));
+	assert(e==(true,true));
+	return (r,e);
+}

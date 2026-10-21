@@ -1229,8 +1229,10 @@ struct RetValue {
 			assert(!retCond.condC && retCond.condQ);
 			CReg creg = quantumRet.creg;
 			QReg qreg = quantumRet.qreg;
-			qreg = w.qcg.withCond(CondAny(retCond.condQ)).addCond(CondAny(retCondQ.condQ), qreg);
-			qreg = w.qcg.withCond(CondAny(retCondQ.condQ)).removeCond(CondAny(retCond.condQ), qreg);
+			if(qreg) {
+				qreg = w.qcg.withCond(CondAny(retCond.condQ)).addCond(CondAny(retCondQ.condQ), qreg);
+				qreg = w.qcg.withCond(CondAny(retCondQ.condQ)).removeCond(CondAny(retCond.condQ), qreg);
+			}
 			return RetValue(null, Value.newReg(creg, qreg));
 		}
 		CReg creg = null;
@@ -1389,25 +1391,30 @@ struct Result {
 				assert(rv0 && rv1);
 
 				CReg condC = w.ccg.cond(c0, w.ctx.boolFalse, c1);
+				auto oc0 = r0.isConditionalReturn ? r0.retCond.condC : CondC(c0); // (`c0` holds if `r0` returns)
+				auto oc1 = r1.isConditionalReturn ? r1.retCond.condC : CondC(c1);
 
 				assert(rv0.classicalRet && rv1.classicalRet);
 				assert(!rv0.classicalRet.hasClassical && !rv1.classicalRet.hasClassical);
-				QReg classicalRetQ = null;
-				assert(rv0.classicalRet.hasQuantum && rv1.classicalRet.hasQuantum);
-				QReg classicalRetQ0 = rv0.classicalRet.qreg; // [!cond, r0.condC]
-				QReg classicalRetQ1 = rv1.classicalRet.qreg; // [cond, r1.condC]
+				assert(rv0.classicalRet.hasQuantum == rv1.classicalRet.hasQuantum);
+				bool hasQ = rv0.classicalRet.hasQuantum; // (e.g., not for `𝟙`)
+				QReg classicalRetQ = null, classicalRetQ0nc = null, classicalRetQ1nc = null;
+				if(hasQ) {
+					QReg classicalRetQ0 = rv0.classicalRet.qreg; // [!cond, r0.condC]
+					QReg classicalRetQ1 = rv1.classicalRet.qreg; // [cond, r1.condC]
 
-				auto s0 = w0.qcg.withCond(CondAny(r0.retCond.condC)).csplit(CondC(condC), classicalRetQ0);
-				auto classicalRetQ0nc = s0[0]; // [!cond, r0.condC, !condC]
-				classicalRetQ0 = s0[1];
-				classicalRetQ0 = w0.qcg.withCond(CondAny(condC)).removeCond(CondAny(r0.retCond.condC), classicalRetQ0);
+					auto s0 = w0.qcg.withCond(CondAny(oc0)).csplit(CondC(condC), classicalRetQ0);
+					classicalRetQ0nc = s0[0]; // [!cond, r0.condC, !condC]
+					classicalRetQ0 = s0[1];
+					classicalRetQ0 = w0.qcg.withCond(CondAny(condC)).removeCond(CondAny(oc0), classicalRetQ0);
 
-				auto s1 = w1.qcg.withCond(CondAny(r1.retCond.condC)).csplit(CondC(condC), classicalRetQ1);
-				auto classicalRetQ1nc = s1[0]; // [cond, r1.condC, !condC]
-				classicalRetQ1 = s1[1];
-				classicalRetQ1 = w1.qcg.withCond(CondAny(condC)).removeCond(CondAny(r1.retCond.condC), classicalRetQ1);
+					auto s1 = w1.qcg.withCond(CondAny(oc1)).csplit(CondC(condC), classicalRetQ1);
+					classicalRetQ1nc = s1[0]; // [cond, r1.condC, !condC]
+					classicalRetQ1 = s1[1];
+					classicalRetQ1 = w1.qcg.withCond(CondAny(condC)).removeCond(CondAny(oc1), classicalRetQ1);
 
-				classicalRetQ = w.qcg.withCond(CondAny(condC)).merge(cond, classicalRetQ0, classicalRetQ1);
+					classicalRetQ = w.qcg.withCond(CondAny(condC)).merge(cond, classicalRetQ0, classicalRetQ1);
+				}
 				rv.classicalRet = Value.newReg(null, classicalRetQ);
 
 				QReg condQ = null;
@@ -1432,44 +1439,47 @@ struct Result {
 				auto wc = w.withCond(w.nscope, CondAny(condC, false));
 				condQ = wc.qcg.qmerge(cond.qcond, q0, q1);
 
-				classicalRetQ0nc = w0.qcg.withCond(CondAny(r0.retCond.condC)).withCond(CondAny(condC, false))
-					.addCond(CondAny(condQ), classicalRetQ0nc); // [!cond, r0.condC, !condC, condQ]
-				classicalRetQ1nc = w1.qcg.withCond(CondAny(r1.retCond.condC)).withCond(CondAny(condC, false))
-					.addCond(CondAny(condQ), classicalRetQ1nc); // [cond, r1.condC, !condC, condQ]
+				QReg quantumRetQ = null;
+				if(hasQ) {
+					classicalRetQ0nc = w0.qcg.withCond(CondAny(oc0)).withCond(CondAny(condC, false))
+						.addCond(CondAny(condQ), classicalRetQ0nc); // [!cond, r0.condC, !condC, condQ]
+					classicalRetQ1nc = w1.qcg.withCond(CondAny(oc1)).withCond(CondAny(condC, false))
+						.addCond(CondAny(condQ), classicalRetQ1nc); // [cond, r1.condC, !condC, condQ]
 
-				QReg retQ0 = null;
-				if(rv0.quantumRet) {
-					assert(!rv0.quantumRet.hasClassical && rv0.quantumRet.hasQuantum);
-					auto quantumRetQ0 = rv0.quantumRet.qreg; // [!cond, !r0.condC, r0.condQ]
-					quantumRetQ0 = w0.qcg.withCond(CondAny(r0.retCond.condC.invert())).withCond(CondAny(r0.retCond.condQ))
-						.addCond(CondAny(condC, false), quantumRetQ0);
-					quantumRetQ0 = w0.qcg.withCond(CondAny(r0.retCond.condC.invert())).withCond(CondAny(r0.retCond.condQ)).withCond(CondAny(condC, false))
-						.addCond(CondAny(condQ), quantumRetQ0);
-					quantumRetQ0 = w0.qcg.withCond(CondAny(r0.retCond.condC.invert())).withCond(CondAny(condC, false)).withCond(CondAny(condQ))
-						.removeCond(CondAny(r0.retCond.condQ), quantumRetQ0);
-					retQ0 = w0.qcg.withCond(CondAny(condC, false)).withCond(CondAny(condQ))
-						.cmerge(r0.retCond.condC, quantumRetQ0, classicalRetQ0nc);
-				} else {
-					retQ0 = w0.qcg.withCond(CondAny(condC, false)).withCond(CondAny(condQ))
-						.removeCond(CondAny(r0.retCond.condC), classicalRetQ0nc);
+					QReg retQ0 = null;
+					if(rv0.quantumRet) {
+						assert(!rv0.quantumRet.hasClassical && rv0.quantumRet.hasQuantum);
+						auto quantumRetQ0 = rv0.quantumRet.qreg; // [!cond, !r0.condC, r0.condQ]
+						quantumRetQ0 = w0.qcg.withCond(CondAny(oc0.invert())).withCond(CondAny(r0.retCond.condQ))
+							.addCond(CondAny(condC, false), quantumRetQ0);
+						quantumRetQ0 = w0.qcg.withCond(CondAny(oc0.invert())).withCond(CondAny(r0.retCond.condQ)).withCond(CondAny(condC, false))
+							.addCond(CondAny(condQ), quantumRetQ0);
+						quantumRetQ0 = w0.qcg.withCond(CondAny(oc0.invert())).withCond(CondAny(condC, false)).withCond(CondAny(condQ))
+							.removeCond(CondAny(r0.retCond.condQ), quantumRetQ0);
+						retQ0 = w0.qcg.withCond(CondAny(condC, false)).withCond(CondAny(condQ))
+							.cmerge(oc0, quantumRetQ0, classicalRetQ0nc);
+					} else {
+						retQ0 = w0.qcg.withCond(CondAny(condC, false)).withCond(CondAny(condQ))
+							.removeCond(CondAny(oc0), classicalRetQ0nc);
+					}
+					QReg retQ1 = null;
+					if(rv1.quantumRet) {
+						assert(!rv1.quantumRet.hasClassical && rv1.quantumRet.hasQuantum);
+						auto quantumRetQ1 = rv1.quantumRet.qreg; // [cond, !r1.condC, r1.condQ]
+						quantumRetQ1 = w1.qcg.withCond(CondAny(oc1.invert())).withCond(CondAny(r1.retCond.condQ))
+							.addCond(CondAny(condC, false), quantumRetQ1);
+						quantumRetQ1 = w1.qcg.withCond(CondAny(oc1.invert())).withCond(CondAny(r1.retCond.condQ)).withCond(CondAny(condC, false))
+							.addCond(CondAny(condQ), quantumRetQ1);
+						quantumRetQ1 = w1.qcg.withCond(CondAny(oc1.invert())).withCond(CondAny(condC, false)).withCond(CondAny(condQ))
+							.removeCond(CondAny(r1.retCond.condQ), quantumRetQ1);
+						retQ1 = w1.qcg.withCond(CondAny(condC, false)).withCond(CondAny(condQ))
+							.cmerge(oc1, quantumRetQ1, classicalRetQ1nc);
+					} else {
+						retQ1 = w1.qcg.withCond(CondAny(condC, false)).withCond(CondAny(condQ))
+							.removeCond(CondAny(oc1), classicalRetQ1nc);
+					}
+					quantumRetQ = wc.qcg.withCond(CondAny(condQ)).qmerge(cond.qcond, retQ0, retQ1);
 				}
-				QReg retQ1 = null;
-				if(rv1.quantumRet) {
-					assert(!rv1.quantumRet.hasClassical && rv1.quantumRet.hasQuantum);
-					auto quantumRetQ1 = rv1.quantumRet.qreg; // [cond, !r1.condC, r1.condQ]
-					quantumRetQ1 = w1.qcg.withCond(CondAny(r1.retCond.condC.invert())).withCond(CondAny(r1.retCond.condQ))
-						.addCond(CondAny(condC, false), quantumRetQ1);
-					quantumRetQ1 = w1.qcg.withCond(CondAny(r1.retCond.condC.invert())).withCond(CondAny(r1.retCond.condQ)).withCond(CondAny(condC, false))
-						.addCond(CondAny(condQ), quantumRetQ1);
-					quantumRetQ1 = w1.qcg.withCond(CondAny(r1.retCond.condC.invert())).withCond(CondAny(condC, false)).withCond(CondAny(condQ))
-						.removeCond(CondAny(r1.retCond.condQ), quantumRetQ1);
-					retQ1 = w1.qcg.withCond(CondAny(condC, false)).withCond(CondAny(condQ))
-						.cmerge(r1.retCond.condC, quantumRetQ1, classicalRetQ1nc);
-				} else {
-					retQ1 = w1.qcg.withCond(CondAny(condC, false)).withCond(CondAny(condQ))
-						.removeCond(CondAny(r1.retCond.condC), classicalRetQ1nc);
-				}
-				QReg quantumRetQ = wc.qcg.withCond(CondAny(condQ)).qmerge(cond.qcond, retQ0, retQ1);
 				rv.quantumRet = Value.newReg(null, quantumRetQ);
 				retCond = CondRetValue(condC, condQ).asCondRet();
 			} else {
@@ -2879,8 +2889,10 @@ class ScopeWriter {
 		CReg creg = null;
 		if(v0.creg || v1.creg) {
 			if(v0.creg !is v1.creg) {
-				assert(cond.isClassical);
-				if(!v0.creg) {
+				if(cond.isQuantum) { // (classical values do not depend on quantum conditions)
+					assert(!v0.creg || !v1.creg);
+					creg = v0.creg ? v0.creg : v1.creg; // (the other branch is unreachable)
+				} else if(!v0.creg) {
 					creg = ccg.removeCond(cond.ccond, v1.creg); // (the other branch is unreachable)
 				} else if(!v1.creg) {
 					creg = ccg.removeCond(cond.ccond.invert(), v0.creg);
@@ -3205,6 +3217,26 @@ class ScopeWriter {
 			qcg.deallocError(var.value.qreg);
 			var.value = null;
 		}
+	}
+
+	void deallocErrorQuantumRet(CondRet retCond, RetValue retValue) {
+		if(!retCond.condQ) return;
+		auto w = retCond.condC ? withCond(nscope, CondAny(retCond.condC.invert())) : this;
+		w.withCond(w.nscope, CondAny(retCond.condQ)).valDeallocError(retValue.quantumRet);
+		w.qcg.deallocError(retCond.condQ.reg);
+	}
+
+	void deallocErrorResult(Result r) {
+		if(r.isConditionalReturn) {
+			auto sc = r.retCond.invert().addToScope(nscope, this);
+			sc.vars = vars;
+			sc.checkEmpty(true);
+			if(r.retCond.condC) withCond(nscope, CondAny(r.retCond.condC)).valDeallocError(r.retValue.classicalRet);
+			deallocErrorQuantumRet(r.retCond, r.retValue);
+			return;
+		}
+		checkEmpty(true);
+		if(r.isReturn) valDeallocError(r.retValue.classicalRet);
 	}
 
 	Value valError(CReg cr, Expression ty) {
@@ -5028,15 +5060,14 @@ class ScopeWriter {
 		auto r = genStmts(e.s);
 		scope loc = PushLocation(ctx, e.loc);
 		foreach(decl; nscope.forgottenVars) {
-			assert(!r.isReturn, format("CompoundExp returns but blscope_ has forgotten var %s", decl));
-			if(r.isAbort) {
-				// (the statements after the abort, which may define the variable, are not generated)
+			if(!r.mayPass) {
+				// (the statements after the return or abort, which may define the variable, are not generated)
 				auto p = vars.getPtr(decl.getId);
-				if(!p || !p.value) continue;
+				if(!p || !p.value || p.decl !is decl) continue;
 			}
 			Value v = getVar(decl, false);
 			if(!v.hasQuantum) continue;
-			if(r.isAbort) qcg.deallocError(v.qreg);
+			if(!r.mayPass) qcg.deallocError(v.qreg);
 			else valForget(v);
 		}
 		return r;
@@ -5055,6 +5086,15 @@ class ScopeWriter {
 				return rb;
 			}
 			assert(ra.isConditionalReturn);
+			if(rb.isAbort && ra.retCond.condQ) { // (classical code under quantum control runs regardless of the condition)
+				scB.checkEmpty(true);
+				deallocErrorQuantumRet(ra.retCond, ra.retValue);
+				checkEmpty(false);
+				auto ccA = ra.retCond.condC;
+				if(!ccA) return Result.aborts(rb.abortWitness);
+				auto vb = withCond(nscope, CondAny(ccA.invert())).valError(rb.abortWitness, nscope.getFunction().ret);
+				return Result.returns(CondRet(ccA).valMerge(RetValue(vb), RetValue(ra.retValue.classicalRet), this));
+			}
 			if(rb.isReturn || rb.isAbort) {
 				auto vb = rb.asValue(scB, nscope.getFunction().ret);
 				scB.checkEmpty(rb.isAbort);
@@ -5322,7 +5362,7 @@ class ScopeWriter {
 							assert(outer.scope_ is nscope);
 							auto ty = typeForDecl(outer);
 							assert(ty == typeForDecl(decl));
-							assert(outer.mergedFrom == [decl]);
+							assert(outer.mergedFrom.canFind(decl)); // (the returning branch may merge as well, e.g., if it aborts under quantum control)
 							scTail.defineVar(outer, scCont.getVar(decl, false));
 						}
 						scCont.checkEmpty(false);
@@ -5347,6 +5387,9 @@ class ScopeWriter {
 					}
 
 					auto contRet = scTail.genStmts(stmts[i+1..$], result);
+					if(contRet.isAbort && rv.retCond.condQ) {
+						return combineResults(Result.conditionallyReturns(rv.value, rv.retCond), contRet, scTail);
+					}
 					if(contRet.isReturn || contRet.isAbort) {
 						scTail.checkEmpty(contRet.isAbort);
 
@@ -5370,7 +5413,7 @@ class ScopeWriter {
 						assert(ty == typeForDecl(decl));
 						assert(outer.mergedFrom.canFind(decl)); // (the aborting branch may merge as well, e.g., if it aborts under quantum control)
 						auto v0 = scCont.getVar(decl, false);
-						auto v1 = scFail.valError(rv.witness, ty);
+						auto v1 = scFail.valError(null, ty); // (unreachable: classical values stay those of the continuation)
 						sc.defineVar(outer, sc.valMerge(rv.cond, v0, v1));
 					}
 					scCont.checkEmpty(false);
@@ -5439,6 +5482,17 @@ class ScopeWriter {
 			return new IteAbort(cond, cr);
 		}
 
+		if(cond.isQuantum && (rTrue.isAbort || rFalse.isAbort)) { // (classical code under quantum control runs regardless of the condition)
+			if(rTrue.isAbort) {
+				ifTrue.checkEmpty(true);
+				ifFalse.deallocErrorResult(rFalse);
+				return new IteAbort(cond, rTrue.abortWitness);
+			}
+			ifFalse.checkEmpty(true);
+			ifTrue.deallocErrorResult(rTrue);
+			return new IteAbort(cond, rFalse.abortWitness);
+		}
+
 		if(rTrue.isConditionalReturn || rFalse.isConditionalReturn) {
 			auto result = Result.merge(
 				cond,
@@ -5498,10 +5552,6 @@ class ScopeWriter {
 		if(rTrue.isAbort) {
 			assert(rFalse.isPass);
 			ifTrue.checkEmpty(true);
-			if(cond.isQuantum) { // (classical code under quantum control runs regardless of the condition)
-				ifFalse.checkEmpty(true);
-				return new IteAbort(cond, rTrue.abortWitness);
-			}
 			return new ItePartialAbort(cond, rTrue.abortWitness, ifFalse);
 		}
 		if(rTrue.isReturn) {
@@ -5512,10 +5562,6 @@ class ScopeWriter {
 		if(rFalse.isAbort) {
 			assert(rTrue.isPass);
 			ifFalse.checkEmpty(true);
-			if(cond.isQuantum) { // (classical code under quantum control runs regardless of the condition)
-				ifTrue.checkEmpty(true);
-				return new IteAbort(cond, rFalse.abortWitness);
-			}
 			return new ItePartialAbort(cond.invert(), rFalse.abortWitness, ifTrue);
 		}
 		if(rFalse.isReturn) {

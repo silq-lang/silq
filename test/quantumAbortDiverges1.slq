@@ -1,0 +1,59 @@
+// args: --run
+
+def returnThenAbortingBranch(m:!ℕ,const c:𝔹,const d:𝔹,q:𝔹):𝔹{
+	if m>0 {
+		if c { return q; }
+		if d { assert(0); }
+	}
+	return X(q);
+}
+def classicalReturnThenAbortingBranch(m:!ℕ,n:!ℕ,const d:𝔹,q:𝔹):𝔹{
+	if m>0 {
+		if n>0 { return q; }
+		if d { assert(0); }
+	}
+	return X(q);
+}
+def returnOrAbortInBranch(m:!ℕ,n:!ℕ,const c:𝔹,const d:𝔹,q:𝔹):𝔹{
+	if c {
+		if n>0 { return q; }
+		if d { assert(0); }
+	} else {
+		if m>0 { return X(q); }
+	}
+	return H(q);
+}
+def returnThenAbortingBlock(n:!ℕ,m:!ℕ,const c:𝔹,q:𝔹):𝔹{
+	if c {
+		if n<5 { return q; }
+		if c { assert(m>1); if c { assert(0); } } else { if n%2==0 { return q; } }
+	}
+	return X(q);
+}
+def abortingBlockForget(m:!ℕ,n:!ℕ,const c:𝔹,const d:𝔹,q:𝔹):𝔹{
+	if m>0 {
+		if d { if n%2==0 { return q; } }
+		else {
+			if !c { assert(0); }
+			if !c { } else { if c { return q; } else { assert(n==2); } }
+		}
+	}
+	return X(q);
+}
+def abortOrReturnInClassicalBranch(m:!ℕ,n:!ℕ,const c:𝔹,q:𝔹):𝔹{
+	if c {
+		if m>0 { if !c { assert(0); } else { return q; } } else { assert(n>0); }
+	}
+	return X(q);
+}
+def main(){
+	c:=H(0:𝔹);
+	d:=H(0:𝔹);
+	r:=(returnThenAbortingBranch(0,c,d,0:𝔹),classicalReturnThenAbortingBranch(0,0,d,0:𝔹),abortingBlockForget(0,2,c,d,0:𝔹),abortOrReturnInClassicalBranch(0,1,c,0:𝔹));
+	x:=returnOrAbortInBranch(1,1,c,d,0:𝔹);
+	y:=returnThenAbortingBlock(2,2,c,0:𝔹);
+	(s,a,e,b):=measure(r,x,y,c);
+	measure(d);
+	assert(s==(1,1,1,1) && a==!b && e==!b);
+	return s;
+}

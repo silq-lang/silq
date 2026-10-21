@@ -1,0 +1,9 @@
+// args: --run
+
+def f(n:!ℕ,const c:𝔹,q:𝔹):𝔹{
+	if n>0 {
+		if c { return q; }
+	}
+	assert(0); /// run_error
+}
+def main()⇒f(2,0,0);
