@@ -1,0 +1,25 @@
+// args: --remove-loops --run
+
+def repeatAborts(const b:!𝔹,n:!ℕ){
+	r:=0:!ℕ;
+	for k in 0..n {
+		if b {
+			repeat 2 { assert(false); }
+			r+=k;
+		}
+	}
+	return r;
+}
+def loopsForever(const b:!𝔹,x:𝔹,y:𝔹){
+	if b {
+		while true { x:=X(x); }
+	}
+	return (x,y);
+}
+def main(){
+	r:=repeatAborts(false,3);
+	(x,y):=loopsForever(false,H(0:𝔹),0:𝔹);
+	s:=(r,measure(H(x),y));
+	assert(s==(0,(0,0)));
+	return s;
+}

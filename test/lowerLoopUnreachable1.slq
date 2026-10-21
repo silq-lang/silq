@@ -1,0 +1,23 @@
+// args: --remove-loops --run
+
+def afterReturn(const c:𝔹,const d:𝔹){
+	if c {
+		return ();
+		for k in 0..2 { if d { return (); } }
+	}
+}
+def afterReturnNested(const c:𝔹,const d:𝔹){
+	if c {
+		return ();
+		if d { for k in 0..2 { return (); } }
+	}
+}
+def main(){
+	c:=H(0:𝔹);
+	d:=H(0:𝔹);
+	afterReturn(c,d);
+	afterReturnNested(c,d);
+	s:=measure(H(c),H(d));
+	assert(s==(0,0));
+	return s;
+}
