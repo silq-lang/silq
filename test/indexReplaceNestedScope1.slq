@@ -1,0 +1,35 @@
+// args: --run
+
+def replaceInBranch(x:𝔹^2,i:!ℕ,b:!𝔹){
+	x[if b then i else 1]:=X(x[if b then i else 1]);
+	return x;
+}
+def replaceInLambda(x:𝔹^2,i:!ℕ){
+	x[(λ(). i+0)()]:=X(x[(λ(). i+0)()]);
+	return x;
+}
+def swapInBranch(x:𝔹^2,i:!ℕ,j:!ℕ,b:!𝔹){
+	(x[if b then i else j],x[if b then j else i]):=(x[if b then j else i],x[if b then i else j]);
+	return x;
+}
+def replaceNested(x:(𝔹^2)^2,i:!ℕ,j:!ℕ,b:!𝔹){
+	x[if b then i else j][if b then j else i]:=X(x[if b then i else j][if b then j else i]);
+	return x;
+}
+def replaceInLoop(x:𝔹^2,b:!𝔹){
+	for k in 0..2 { x[if b then k else 0]:=X(x[if b then k else 0]); }
+	return x;
+}
+def main(){
+	a:=measure(replaceInBranch([0,0]:𝔹^2,0,true));
+	b:=measure(replaceInLambda([0,0]:𝔹^2,1));
+	c:=measure(swapInBranch([1,0]:𝔹^2,0,1,false));
+	d:=measure(replaceNested([[0,0],[0,0]]:(𝔹^2)^2,0,1,true));
+	e:=measure(replaceInLoop([0,0]:𝔹^2,true));
+	assert(a[0]&&!a[1]);
+	assert(!b[0]&&b[1]);
+	assert(!c[0]&&c[1]);
+	assert(!d[0][0]&&d[0][1]&&!d[1][0]&&!d[1][1]);
+	assert(e[0]&&e[1]);
+	return (a,b,c,d,e);
+}

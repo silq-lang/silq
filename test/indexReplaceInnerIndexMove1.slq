@@ -1,0 +1,30 @@
+// args: --run
+
+def g(t:!ℕ)⇒t;
+def replaceInner(j:!ℕ,y:(𝔹^2)^2){
+	y[g(j)][0]:=X(y[g(j)][0]);
+	return y;
+}
+def swapInner(j:!ℕ,y:(𝔹^2)^2){
+	(y[g(j)][0],y[g(j)][1]):=(y[g(j)][1],y[g(j)][0]);
+	return y;
+}
+def xorInner(j:!ℕ,y:(𝔹^2)^2){
+	y[g(j)][0]⊕=true;
+	return y;
+}
+def replaceInnerTwice(j:!ℕ,k:!ℕ,y:((𝔹^2)^2)^2){
+	y[g(k)][g(j)][0]:=X(y[g(k)][g(j)][0]);
+	return y;
+}
+def main(){
+	a:=measure(replaceInner(1,[[0,1],[1,0]]:(𝔹^2)^2));
+	b:=measure(swapInner(1,[[0,1],[1,0]]:(𝔹^2)^2));
+	c:=measure(xorInner(0,[[0,1],[1,0]]:(𝔹^2)^2));
+	d:=measure(replaceInnerTwice(1,0,[[[0,1],[1,0]],[[0,1],[1,0]]]:((𝔹^2)^2)^2));
+	assert(!a[0][0]&&a[0][1]&&!a[1][0]&&!a[1][1]);
+	assert(!b[0][0]&&b[0][1]&&!b[1][0]&&b[1][1]);
+	assert(c[0][0]&&c[0][1]&&c[1][0]&&!c[1][1]);
+	assert(!d[0][0][0]&&d[0][0][1]&&!d[0][1][0]&&!d[0][1][1]&&!d[1][0][0]&&d[1][0][1]&&d[1][1][0]&&!d[1][1][1]);
+	return (a,b,c,d);
+}
