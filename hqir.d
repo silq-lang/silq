@@ -4580,13 +4580,15 @@ class ScopeWriter {
 		if(ci.newFunctionVar) {
 			Value fval;
 			auto targetC = ci.target.creg;
-			auto funcC = ccg.qfuncInner2(targetC);
-			auto qtypeConst = ccg.qfuncQType2(targetC)[0];
-			auto nfuncC = ccg.qfuncPack(funcC, qtypeConst);
+			CReg spentC() { // (the classical part of the spent version of a quantum function value)
+				auto funcC = ccg.qfuncInner2(targetC);
+				auto qtypeConst = ccg.qfuncQType2(targetC)[0];
+				return ccg.qfuncPack(funcC, qtypeConst);
+			}
 			if(ci.targetF) {
 				assert(ci.target.hasClassical);
 				assert(!!ci.target.func.info);
-				fval = Value.newReg(nfuncC, null);
+				fval = Value.newReg(spentC(), null);
 				fval.func = ci.target.func.getSpent(ccg, qcg);
 				qcArgs = qcArgs[fval.func.qCapConstR.length .. $];
 			} else {
@@ -4594,7 +4596,7 @@ class ScopeWriter {
 				if(ci.hasQuantum) {
 					auto qcCap = qcArgs[0];
 					qcArgs = qcArgs[1 .. $];
-					fval = Value.newReg(nfuncC, qcCap);
+					fval = Value.newReg(spentC(), qcCap);
 				} else {
 					fval = ci.target;
 				}

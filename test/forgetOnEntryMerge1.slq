@@ -1,0 +1,30 @@
+// args: --run
+
+def returnInNestedElse(m:!ℕ,const c:𝔹,const d:𝔹,q:𝔹):𝔹{
+	if d { } else { if c { if c { return q; } } }
+	return q;
+}
+def returnInNestedElseNegated(n:!ℕ,m:!ℕ,const c:𝔹,const d:𝔹,q:𝔹):uint[2]×𝔹{
+	r:=0:uint[2];
+	if d { } else { if !c { if !c { return (r,q); } else { } } }
+	return (r,q);
+}
+def returnInSecondIf(n:!ℕ,m:!ℕ,const c:𝔹,const d:𝔹,q:𝔹):uint[2]×𝔹{
+	r:=0:uint[2];
+	if d {
+		if m==2 { } else { if c { return (r,q); } else { assert(false); } }
+		if c { } else { if false { if m>2 { return (r,q); } } }
+	}
+	return (r,q);
+}
+def main(){
+	c:=H(0:𝔹);
+	d:=H(0:𝔹);
+	x:=returnInNestedElse(1,c,d,0:𝔹);
+	(r,y):=returnInNestedElseNegated(1,1,c,d,0:𝔹);
+	(s,z):=returnInSecondIf(1,2,c,d,0:𝔹);
+	measure(c,d);
+	t:=measure(x,r,y,s,z);
+	assert(t==(0,0,0,0,0));
+	return t;
+}
