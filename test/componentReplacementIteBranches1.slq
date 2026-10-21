@@ -1,0 +1,22 @@
+// args: --run
+
+def f(c:!𝔹){
+	x:=vector(3,0:𝔹);
+	x[1]:=if c then X(x[1]) else x[1];
+	return measure(x);
+}
+def g(c:𝔹){
+	x:=vector(3,0:𝔹);
+	x[1]:=if c then X(x[1]) else x[1];
+	return (x,c);
+}
+def h(c:!𝔹){
+	x:=vector(3,0:𝔹);
+	x[2]:=if c{ X(x[2]) }else{ x[2] };
+	return measure(x);
+}
+def main(){
+	assert(f(true)==(0,1,0)&&f(false)==(0,0,0));
+	assert(measure(g(1:𝔹))==((0,1,0),1));
+	assert(h(true)==(0,0,1));
+}

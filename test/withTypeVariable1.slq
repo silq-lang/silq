@@ -1,0 +1,14 @@
+// args: --run
+
+def f(t:𝔹^3){
+	with{ w:=uint[3]; }do{ x:=t as w; }
+	return x;
+}
+def g(t:𝔹^3){
+	with{ w:=uint[3]; }do{ x:=(t as uint[3]):w; }
+	return x;
+}
+def main(){
+	assert(measure(f((0:𝔹,1:𝔹,0:𝔹)))==2);
+	assert(measure(g((1:𝔹,1:𝔹,0:𝔹)))==3);
+}

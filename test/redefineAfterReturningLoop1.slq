@@ -1,0 +1,34 @@
+// args: --run
+
+def f(a:!ℕ,c:!𝔹){
+	k:=a;
+	if c{
+		for i in [0..2){ return 0; }
+	}
+	a:=k;
+	return a;
+}
+def g(a:!ℕ,c:!𝔹){
+	k:=a;
+	if c{
+		for i in [0..2){ return 0; }
+	}else{
+		y:=a;
+	}
+	a:=k;
+	return a;
+}
+def h(a:!ℕ,c:!𝔹){
+	if c{
+		while c{ return 0; }
+	}else{
+		y:=a;
+	}
+	a:=2;
+	return a;
+}
+def main(){
+	assert(f(1,true)==0&&f(1,false)==1);
+	assert(g(1,true)==0&&g(1,false)==1);
+	assert(h(1,true)==0&&h(1,false)==2);
+}

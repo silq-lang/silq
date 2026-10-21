@@ -1,0 +1,28 @@
+// args: --run
+
+def f(c:!𝔹){
+	x:=[0,1];
+	i:=0;
+	if c{
+		x[i]=2;
+		assert(false);
+	}else{
+		x[i]=2;
+	}
+	return x;
+}
+def g(c:!𝔹){
+	x:=[(0,1,2/3),(0,1,2/3)];
+	i:=0;
+	if c{
+		x[1][i]=2;
+		assert(false);
+	}else{
+		x[1][i]=2;
+	}
+	return x;
+}
+def main(){
+	assert(f(false)==(2,1));
+	assert(g(false)==((0,1,2/3),(2,1,2/3)));
+}

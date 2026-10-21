@@ -1,0 +1,8 @@
+// args: --run
+
+def g(n:!ℕ)⇒vector(let{ a:=0; if (n>1)&&(n>0) { a=n; } } in a,0:𝔹);
+def h(n:!ℕ)⇒vector(let{ b:=(n>1)||(n>3); a:=if b then n else 0; } in a,0:𝔹);
+def main(){
+	assert(measure(g(2)).length==2&&measure(g(1)).length==0);
+	assert(measure(h(2)).length==2&&measure(h(1)).length==0);
+}

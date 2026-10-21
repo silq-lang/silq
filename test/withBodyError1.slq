@@ -1,0 +1,5 @@
+def f(c:!𝔹,q:𝔹){
+	t:=vector(3,0:𝔹);
+	with{ if c{ x:=t[1]; }else{ with{ w:=1; }do{ x:=(t as uint[4])[2]; } } }do{ q:=CNOT(x,q); } /// error
+	return (t,q);
+}

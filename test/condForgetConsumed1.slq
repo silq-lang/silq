@@ -1,0 +1,9 @@
+def main(){
+	x:=vector(2,1:𝔹);
+	i:=0;
+	if x[i]{ /// error
+		x[i+1]:=X(x[i+1]);
+		forget(i);
+	}
+	return x;
+}

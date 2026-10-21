@@ -1,0 +1,20 @@
+// args: --run
+
+def f(){
+	x:=vector(2,1:𝔹);
+	if x[0]&&(λ(k:!ℕ)lifted⇒k==0)(0){
+		x[1]:=X(x[1]);
+	}
+	return measure(x);
+}
+def g(){
+	x:=vector(2,1:𝔹);
+	if x[0]&&[k for k in 0..2][1]==1{
+		x[1]:=X(x[1]);
+	}
+	return measure(x);
+}
+def main(){
+	assert(f()==(1,0));
+	assert(g()==(1,0));
+}

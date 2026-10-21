@@ -1,0 +1,10 @@
+// args: --run
+
+def main(){
+	x:=vector(2,1:𝔹);
+	i:=0;
+	if x[let { k:=i; } in k]{
+		x[i+1]:=X(x[i+1]);
+	}
+	assert(measure(x)==(1,0));
+}

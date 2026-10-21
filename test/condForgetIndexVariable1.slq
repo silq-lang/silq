@@ -1,0 +1,44 @@
+// args: --run
+
+def f(){
+	x:=vector(2,1:𝔹);
+	i:=0;
+	if x[i]{
+		x[i+1]:=X(x[i+1]);
+	}
+	return measure(x);
+}
+def g(){
+	x:=vector(2,1:𝔹);
+	i:=0;
+	if x[i]{
+		x[i+1]:=X(x[i+1]);
+		j:=i;
+	}
+	return measure(x);
+}
+def h(c:!𝔹){
+	x:=vector(2,1:𝔹);
+	i:=0;
+	if c{
+		if x[i]{
+			x[i+1]:=X(x[i+1]);
+		}
+	}
+	return measure(x);
+}
+def k(){
+	def id(n:!ℕ)⇒n;
+	x:=vector(2,1:𝔹);
+	i:=0;
+	if x[0]&&id(i)==0{
+		x[1]:=X(x[1]);
+	}
+	return measure(x);
+}
+def main(){
+	assert(f()==(1,0));
+	assert(g()==(1,0));
+	assert(h(true)==(1,0));
+	assert(k()==(1,0));
+}
