@@ -1,0 +1,26 @@
+def f1(n:!ℕ){
+	def g(m:!ℕ){
+		(a,b):=h1(m); /// error
+		return a;
+	}
+	return n;
+}
+def h1(n:!ℕ){
+	if n==0 { return (1,2,3); }
+	return (f1(n sub 1),1,1);
+}
+
+def main(){
+	def f2(n:!ℕ){
+		def g(m:!ℕ){
+			(a,b):=h2(m); /// error
+			return a;
+		}
+		return n;
+	}
+	return f2(2);
+}
+def h2(n:!ℕ){
+	if n==0 { return (1,2,3); }
+	return (main(),1,1);
+}

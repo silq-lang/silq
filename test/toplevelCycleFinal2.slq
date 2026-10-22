@@ -1,0 +1,22 @@
+// args: --run
+
+def log₂(k:!ℕ)qfree:!ℕ ⇒ if k=1 then 0 else 1+__alog₂(k div 2);
+__alog₂:=log₂;
+def majority(n:!ℕ){
+	count:=0:uint[__alog₂(n)];
+	count+=1;
+	return count+count;
+}
+
+def log₃(k:!ℕ)qfree:!ℕ ⇒ if k<3 then 0 else 1+h(k div 3);
+def h(k:!ℕ)qfree:!ℕ ⇒ __alog₃(k);
+__alog₃:=log₃;
+def minority(n:!ℕ){
+	count:=0:uint[__alog₃(n)];
+	count+=1;
+	return count+count;
+}
+
+def main(){
+	return (majority(4),minority(9));
+}

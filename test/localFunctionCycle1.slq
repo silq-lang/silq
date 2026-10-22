@@ -1,0 +1,16 @@
+// args: --run
+
+def f(n:!ℕ){
+	def g(m:!ℕ){
+		x:=h(m);
+		return x[0]+x[1];
+	}
+	return n;
+}
+def h(n:!ℕ){
+	if n==0 { return (1,2,3); }
+	return (f(n sub 1),-1,1);
+}
+def main(){
+	return h(2);
+}

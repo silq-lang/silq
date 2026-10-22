@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	f:=λ(x:!ℕ)⇒x+1;
+	g:=f coerce ⊥; /// run_error
+	return g;
+}

@@ -1,0 +1,10 @@
+def foo():typeof(bar()){
+	return 2;
+}
+
+def bar():typeof(foo()){
+	return (foo(),)[1];
+}
+
+def baz():!ℕ⇒foo();
+def qux():!ℕ⇒bar();

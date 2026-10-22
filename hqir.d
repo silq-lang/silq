@@ -3398,6 +3398,7 @@ class ScopeWriter {
 			Result r = genStmt(stmt);
 			if(r.isAbort) {
 				if(aborted) *aborted = true;
+				pendingAbort = r.abortWitness; // (the remaining statements are not generated, e.g., the forgets after a last use)
 				return valError(r.abortWitness, ty);
 			}
 			assert(!r.isReturn && !r.isConditionalReturn, "early return in compound expression");
@@ -4350,6 +4351,10 @@ class ScopeWriter {
 			return valError(c.creg, e.type);
 		}
 		auto cond = genCond(e.cond);
+		if(pendingAbort) { // (the condition aborts)
+			if(cond.isQuantum) qcg.deallocError(cond.qreg);
+			return valError(pendingAbort, e.type);
+		}
 		auto scThen = e.then.blscope_, scOthw = e.othw.blscope_;
 		if(scThen && scThen.parent !is nscope && !cast(ast_scope.TypeScope)scThen) scThen = null;
 		if(scOthw && scOthw.parent !is nscope && !cast(ast_scope.TypeScope)scOthw) scOthw = null;
@@ -4378,6 +4383,7 @@ class ScopeWriter {
 			bool aborted = false;
 			auto r = sub.genCompoundValue(e.s, e.e, e.type, &aborted);
 			sub.checkEmpty(aborted);
+			if(aborted) pendingAbort = sub.pendingAbort;
 			return r;
 		}
 		if(!e.s.blscope_) return genCompoundValue(e.s, e.e, e.type);
@@ -4391,6 +4397,7 @@ class ScopeWriter {
 		}
 		bool aborted = false;
 		auto r = sub.genCompoundValue(e.s, e.e, e.type, &aborted);
+		if(aborted) pendingAbort = sub.pendingAbort;
 		if(!aborted) {
 			foreach(decl; sub.nscope.mergedVars) {
 				assert(decl.scope_ is sub.nscope);
@@ -5497,6 +5504,7 @@ class ScopeWriter {
 		}
 		auto cond = genCond(e.cond);
 		recordCond = false;
+		if(pendingAbort) return new IteAbort(cond, pendingAbort); // (the condition aborts)
 
 		ScopeWriter ifTrue, ifFalse;
 		genSplit(cond, ifFalse, e.othw.blscope_, ifTrue, e.then.blscope_);
@@ -5616,8 +5624,16 @@ class ScopeWriter {
 		auto oldInStmt = inStmt;
 		inStmt = true;
 		scope(exit) inStmt = oldInStmt;
+		auto outerAbort = pendingAbort; // (e.g., of the statement with a `let` whose statements these are)
+		pendingAbort = null;
+		scope(exit) pendingAbort = outerAbort;
 		try {
-			return ast_exp.dispatchStm!((auto ref e)=>this.implStmt(e))(e);
+			auto r = ast_exp.dispatchStm!((auto ref e)=>this.implStmt(e))(e);
+			if(pendingAbort && !r.isAbort) {
+				if(!r.isPass) deallocErrorResult(r);
+				return Result.aborts(pendingAbort);
+			}
+			return r;
 		} catch(AssertError exc) {
 			exc.msg = format("%s\nat %s, statement: %s", exc.msg, e.loc, e);
 			throw exc;
@@ -5671,7 +5687,11 @@ class ScopeWriter {
 	Result implStmt(ast_exp.ReturnExp e) {
 		assert(!e.e.constLookup || !ast_ty.hasQuantumComponent(e.e.type));
 		auto v = genExpr(e.e);
-		if(ast_ty.isEmpty(e.e.type) && v.hasClassical) return Result.aborts(v.creg); // (e.g., after a call of a function that does not return, the remaining statements of a `let` are not generated)
+		if(pendingAbort) { // (the remaining statements of a `let` are not generated, e.g., after a call of a function that does not return)
+			valDeallocError(v);
+			return Result.aborts(pendingAbort);
+		}
+		if(ast_ty.isEmpty(e.e.type) && v.hasClassical) return Result.aborts(v.creg);
 		auto r = genSubtype(v, e.e.type, nscope.getFunction().ret);
 		foreach(decl; e.forgottenVars) {
 			valForget(getVar(decl, false));
@@ -7883,6 +7903,7 @@ private:
 	IdMap!Variable vars;
 	bool detPassthrough;
 	bool inStmt = false; // (statements are analyzed outside of types, also within type-level code)
+	CReg pendingAbort; // (a `let` within the current statement aborts, so the statement aborts as well)
 
 	MapSX!(ExprInfo,CReg) cachedNat;
 	MapSX!(ExprInfo,RTTI) cachedRTTI;

@@ -1186,6 +1186,7 @@ struct QState{
 		}
 
 		Value convertTo(Expression ntype){
+			enforce(!isEmpty(ntype),text("cannot convert `",type,"` to `",ntype,"`")); // (there is no value of an empty type, e.g., for `x coerce ⊥`)
 			if(ntype==ℕt(true)) ntype=ℤt(true);
 			try{ getTag(ntype); }catch(Exception){ // TODO: get rid of this
 				Expression nntype=type;

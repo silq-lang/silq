@@ -1,0 +1,18 @@
+def h1(n:!ℕ){
+	if n==0 { return (1,2,3); }
+	return (f1(n sub 1),2,3);
+}
+def f1(n:!ℕ){
+	(a,b):=h1(n); /// error
+	return a;
+}
+
+def f2(n:!ℕ){
+	if n==0 { return 0; }
+	(a,b):=h2(n); /// error
+	return f2(n sub 1);
+}
+def h2(n:!ℕ){
+	if n==0 { return (1,2,3); }
+	return h2(n sub 1);
+}
