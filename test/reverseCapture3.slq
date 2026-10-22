@@ -1,0 +1,14 @@
+// args: --run
+
+def main(){
+	(x,y):=(H(0:𝔹),H(0:𝔹));
+	n:=2:!ℕ;
+	def f(a:𝔹)qfree{ a⊕=y; return a; }
+	def g(a:uint[3])qfree{ if y { a+=n; } return a; }
+	reverse(f)(z):=dup(x);
+	reverse(reverse(f))(w):=dup(x);
+	reverse(g)(v):=dup(x) as uint[3];
+	r:=measure(x,y,z,w,v);
+	assert(r[2]==(r[0]≠r[1])&&r[3]==r[2]&&r[4]==(r[0] as !ℕ)+2·(r[1] as !ℕ));
+	return r;
+}

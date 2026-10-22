@@ -1,0 +1,13 @@
+
+x:=g;
+def f(n:!ℕ,q:𝔹)lifted{
+	r:=h(n sub 1,q);
+	return r;
+}
+def g(n:!ℕ,q:𝔹){
+	return f(n sub 1,H(q)); /// error
+}
+def h(n:!ℕ,q:𝔹)lifted{
+	def k(m:!ℕ,p:𝔹)⇒x(m,H(H(p)));
+	return k(n sub 1,q); /// error
+}

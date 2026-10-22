@@ -1,0 +1,16 @@
+// args: --run
+
+def f(c:!𝔹){
+	if c{ n:=3; xs:=vector(n,0:𝔹); }else{ xs:=vector(2,0:𝔹); }
+	return measure(xs);
+}
+def g(c:!𝔹){
+	xs:=vector(1,1:𝔹);
+	if c{ n:=2; ys:=vector(n,1:𝔹); xs:=xs~ys; }
+	return measure(xs);
+}
+def main(){
+	assert(f(true).length==3&&f(false).length==2);
+	assert(g(true).length==3&&g(false).length==1);
+	return (f(true),f(false),g(true),g(false));
+}

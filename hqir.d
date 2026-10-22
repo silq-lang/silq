@@ -3522,7 +3522,7 @@ class ScopeWriter {
 	}
 
 	Value implExpr(ast_exp.LambdaExp e) {
-		return getFunc(e.fd, e.constLookup, null);
+		return getFunc(e.fd, false, null); // (consumed captures are consumed also if the closure is borrowed, e.g., `(λ()⇒move(x))()`)
 	}
 
 	Value implExpr(ast_exp.VectorForExp e) {
@@ -4881,7 +4881,10 @@ class ScopeWriter {
 			auto qcAp = appender!(QReg[]);
 			auto qiAp = appender!(QReg[]);
 			cAp.put(ci.target.func.cCapR);
-			assert(!ci.target.hasQuantum);
+			if(hasConstCapture(ci.captureAnnotation)) {
+				qcAp.put(ci.target.func.qCapConstR); // (e.g., `reverse(f)(z):=…` for `f` with `const` quantum captures)
+			}
+			assert(!ci.target.func.qCapMovedR.length, "reverse call with moved captures");
 
 			assert(ci.args.length == ci.targetF.params.length);
 			assert(ci.args.length == ci.targetF.fd.params.length);
@@ -5071,6 +5074,15 @@ class ScopeWriter {
 		}
 		auto r = genStmts(e.s);
 		scope loc = PushLocation(ctx, e.loc);
+		if(r.mayPass) foreach(decl; nscope.mergedVars) { // (the merge converts them after the forgets, e.g., from `𝔹^n` for a local `n`)
+			auto ty = typeForDecl(decl);
+			if(ty) foreach(id; ast_ty.freeIdentifiers(ty)) {
+				if(id.meaning && nscope.forgottenVars.canFind!(d => d is id.meaning)) {
+					pinTypeDeep(ty);
+					break;
+				}
+			}
+		}
 		foreach(decl; nscope.forgottenVars) {
 			if(!r.mayPass) {
 				// (the statements after the return or abort, which may define the variable, are not generated)

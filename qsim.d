@@ -2594,9 +2594,9 @@ struct QState{
 	Value makeFunction(FunctionDef fd,Value* context){
 		return makeClosure(fd.ftype,Closure(fd,context));
 	}
-	Value makeFunction(FunctionDef fd,Scope sc){
+	Value makeFunction(FunctionDef fd,Scope sc,bool constLookup=false){
 		Value* context=null;
-		if(fd.isNested) context=[buildContextFor(this,fd,sc)].ptr;
+		if(fd.isNested) context=[buildContextFor(this,fd,sc,constLookup)].ptr;
 		return makeFunction(fd,context);
 	}
 	void declareFunction(FunctionDef fd){
@@ -2835,13 +2835,13 @@ QState.Value getContextFor(QState)(ref QState qstate,Declaration meaning,Scope s
 			return qstate.readLocal(fd.contextName,true);
 	return QState.nullValue;
 }
-QState.Value buildContextFor(QState)(ref QState qstate,FunctionDef fd,Scope sc)in{assert(fd&&fd.scope_);}do{
+QState.Value buildContextFor(QState)(ref QState qstate,FunctionDef fd,Scope sc,bool constLookup=false)in{assert(fd&&fd.scope_);}do{
 	QState.Record record;
 	foreach(decl;fd.capturedDecls){
 		auto name=decl.getName;
-		auto constLookup=!fd.isConsumedCapture(decl);
-		auto val=lookupMeaning(qstate,decl,constLookup,sc);
-		if(constLookup) val=val.dup(qstate);
+		auto constCapture=constLookup||!fd.isConsumedCapture(decl); // (e.g., a recursive call borrows the captures)
+		auto val=lookupMeaning(qstate,decl,constCapture,sc);
+		if(constCapture) val=val.dup(qstate);
 		record[name]=val;
 	}
 	return QState.makeRecord(record);
@@ -2892,7 +2892,7 @@ QState.Value lookupMeaning(QState)(ref QState qstate,Identifier id,Scope sc=null
 		return qstate.readLocal(id.name,constLookup);
 	if(id.lazyCapture)
 		if(auto fd=cast(FunctionDef)meaning)
-			return qstate.makeFunction(fd,sc);
+			return qstate.makeFunction(fd,sc,constLookup);
 	return lookupMeaning(qstate,meaning,constLookup,sc);
 }
 
@@ -2908,7 +2908,7 @@ QState.Value lookupMeaning(QState)(ref QState qstate,Declaration meaning,bool co
 	}
 	if(auto fd=cast(FunctionDef)meaning)
 		if(!fd.isNested()||name !in qstate.vars)
-			return qstate.makeFunction(fd,sc);
+			return qstate.makeFunction(fd,sc,constLookup);
 	return qstate.readLocal(name,constLookup);
 }
 

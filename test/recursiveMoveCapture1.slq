@@ -1,0 +1,13 @@
+// args: --run
+
+def main(){
+	x:=8:!ℕ;
+	def f(n:!ℕ):!ℕ⇒if n==0 then move(x) else f(n sub 1)+1;
+	y:=8:!ℕ;
+	def g(n:!ℕ):!ℕ{ if n==0 { return move(y); } h:=g; return h(n sub 1)+1; }
+	r:=(f(2),f(0),g(3));
+	x:=1:!ℕ;
+	y:=2:!ℕ;
+	assert(r==(10,8,11)&&(x,y)==(1,2));
+	return r;
+}

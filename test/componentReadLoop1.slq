@@ -1,0 +1,11 @@
+// args: --run
+
+def main(){
+	x:=vector(2,1:𝔹);
+	repeat 3 { with { t:=x[1]; } do { t⊕=x[0]; } }
+	y:=[1,0,0]:𝔹^3;
+	for i in [0..3) { (let { } in y[2])⊕=y[0]; }
+	r:=measure(x,y);
+	assert(r==((1,0),(1,0,1)));
+	return r;
+}

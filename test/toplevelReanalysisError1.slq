@@ -1,0 +1,7 @@
+
+def g(n:!ℕ,q:𝔹){
+	if n==0 { return H(q); }
+	return x[1](n sub 1,q);
+}
+x:=(f,g);
+def f(n:!ℕ,q:𝔹)lifted⇒x[1](n sub 1,q); /// error

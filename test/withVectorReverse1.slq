@@ -1,0 +1,10 @@
+// args: --run
+
+def main(){
+	r:=2;
+	with { w:=[r,1]; } do { a:=dup(w); }
+	s:=3:!ℕ;
+	with { v:=[1,s,r]; } do { b:=dup(v); }
+	assert((a,b)==((2,1),(1,3,2))&&(r,s)==(2,3));
+	return (a,b);
+}
