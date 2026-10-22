@@ -1,0 +1,23 @@
+// args: --run
+
+def f(c:!𝔹,q:𝔹){
+	if c { r:=q coerce ⊥; } else { r:=q; }
+	return r;
+}
+def g(c:!𝔹,q:𝔹){
+	with{ if c { x:=0:𝔹; } else { x:=(1,)[2]; } }do{ q:=CNOT(x,q); }
+	return q;
+}
+def h(c:!𝔹,q:𝔹^2){
+	if c { r:=q coerce 𝔹×⊥; } else { r:=q; }
+	return r;
+}
+def k(c:!𝔹,q:𝔹[]){
+	if c { r:=q coerce ⊥[]; } else { r:=q; }
+	return r;
+}
+def main(){
+	r:=measure(f(false,1:𝔹),g(true,1:𝔹),h(false,vector(2,1:𝔹)),k(false,[1:𝔹]));
+	assert(r==(1,1,(1,1),[1]));
+	return r;
+}

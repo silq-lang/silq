@@ -1,0 +1,10 @@
+n:=5;
+def main(){
+	y:=H(0:𝔹);
+	with{
+		n[4]:=CNOT(y,0:𝔹); /// error
+	}do{
+		y:=H(y);
+	}
+	return y;
+}

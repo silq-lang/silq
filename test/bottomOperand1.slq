@@ -1,0 +1,57 @@
+// args: --run
+
+def f(c:!𝔹,x:!𝔹^2){
+	if c { return (1,)[2]==x; }
+	return x==(1,0);
+}
+def g(c:!𝔹,x:!𝔹[]){
+	if c { return x<(1,)[2]; }
+	return x==[1,0];
+}
+def h(c:!𝔹,q:𝔹^2){
+	if c { r:=measure(q==(1,)[2]); }
+	else { r:=measure(q==(1,1)); }
+	return (r,q);
+}
+def k(c:!𝔹,q:𝔹){
+	if c { r:=measure(q)==(1,)[2]; } else { r:=measure(q); }
+	return r;
+}
+def l(c:!𝔹,q:𝔹){
+	if c { r:=(1,)[2]≠measure(q); } else { r:=measure(q); }
+	return r;
+}
+def m(c:!𝔹,q:𝔹){
+	if c { r:=(measure(q) as !ℝ)+(1,)[2]; } else { r:=measure(q) as !ℝ; }
+	return r;
+}
+def n(c:!𝔹,q:𝔹){
+	if c { r:=(1,)[2]*(measure(q) as !uint[2]); } else { r:=measure(q) as !uint[2]; }
+	return r;
+}
+def o(c:!𝔹,q:𝔹){
+	if c { r:=(measure(q) as !ℕ)^(1,)[2]; } else { r:=(measure(q) as !ℕ) as !ℝ; }
+	return r;
+}
+def p(c:!𝔹,x:uint[2]){
+	if c { x+=(1,)[2]; }
+	return x;
+}
+def s(c:!𝔹,x:𝔹){
+	if c { x⊕=(1,)[2]; }
+	return x;
+}
+def main(){
+	assert(!f(false,(0,1)));
+	assert(g(false,[1,0]));
+	(r,q):=h(false,vector(2,1:𝔹));
+	assert(r);
+	assert(measure(q)==(1,1));
+	assert(k(false,1:𝔹));
+	assert(l(false,1:𝔹));
+	assert(m(false,1:𝔹)==1);
+	assert(n(false,1:𝔹)==1);
+	assert(o(false,1:𝔹)==1);
+	assert(measure(p(false,1:uint[2]))==1);
+	assert(measure(s(false,1:𝔹)));
+}

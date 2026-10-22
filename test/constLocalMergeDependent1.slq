@@ -1,0 +1,28 @@
+// args: --run
+
+def f(c:!𝔹){
+	if c {
+		const n:=3;
+		xs:=vector(n,0:𝔹);
+	}else{
+		n:=4;
+		xs:=vector(n,1:𝔹);
+	}
+	return xs:𝔹[];
+}
+def g(c:!𝔹){
+	if c {
+		const n:=3;
+		xs:=vector(n,0:𝔹);
+	}else{
+		const n:=2;
+		xs:=vector(n,1:𝔹);
+	}
+	return xs:𝔹[];
+}
+def main(){
+	assert(measure(f(true))==[0,0,0]);
+	assert(measure(f(false))==[1,1,1,1]);
+	assert(measure(g(true))==[0,0,0]);
+	assert(measure(g(false))==[1,1]);
+}

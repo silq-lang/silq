@@ -5670,7 +5670,9 @@ class ScopeWriter {
 
 	Result implStmt(ast_exp.ReturnExp e) {
 		assert(!e.e.constLookup || !ast_ty.hasQuantumComponent(e.e.type));
-		auto r = genExprAs(e.e, nscope.getFunction().ret);
+		auto v = genExpr(e.e);
+		if(ast_ty.isEmpty(e.e.type) && v.hasClassical) return Result.aborts(v.creg); // (e.g., after a call of a function that does not return, the remaining statements of a `let` are not generated)
+		auto r = genSubtype(v, e.e.type, nscope.getFunction().ret);
 		foreach(decl; e.forgottenVars) {
 			valForget(getVar(decl, false));
 		}
@@ -7276,12 +7278,17 @@ class ScopeWriter {
 
 	// no-ops
 	Value implConvert(ast_conv.ExplosionConversion conv, Value v) => genNoopConvert(v, conv.from, conv.to);
-	Value implConvert(ast_conv.ImplosionCoercion conv, Value v) => genNoopConvert(v, conv.from, conv.to);
 	Value implConvert(ast_conv.NoOpConversion conv, Value v) => genNoopConvert(v, conv.from, conv.to);
 	Value implConvert(ast_conv.TypeConversion conv, Value v) => genNoopConvert(v, conv.from, conv.to);
 	Value implConvert(ast_conv.AnnotationPun conv, Value v) => genNoopConvert(v, conv.from, conv.to);
 	Value implConvert(ast_conv_UintToNConversion conv, Value v) => genNoopConvert(v, conv.from, conv.to);
 	Value implConvert(ast_conv_IntToZConversion conv, Value v) => genNoopConvert(v, conv.from, conv.to);
+
+	Value implConvert(ast_conv.ImplosionCoercion conv, Value v) { // (there is no value of the empty type: the coercion aborts)
+		auto r = valAbort(conv.to);
+		valDeallocError(v);
+		return r;
+	}
 
 	Value implConvert(ast_conv.TransitiveConversion conv, Value v) {
 		return genConvert(conv.b, genConvert(conv.a, v));

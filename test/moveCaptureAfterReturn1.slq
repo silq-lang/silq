@@ -1,0 +1,36 @@
+// args: --run
+
+def f(v:!ℤ){
+	def g(i:!ℕ):!ℤ{
+		if i<2 { return 0; } else { return move(v); }
+	}
+	return g(3);
+}
+def h(v:!ℤ,c:!𝔹){
+	def g(i:!ℕ):!ℤ{
+		if i<2 { if c { return 0; } return 2; } else { w:=move(v); return w; }
+	}
+	return g(3);
+}
+def k(c:!𝔹){
+	v:=1:!ℤ;
+	def g(d:!𝔹):!ℤ{
+		if d { return 0; }
+		def m()⇒move(v);
+		return m();
+	}
+	return g(c);
+}
+def l(v:!ℤ){
+	def g(n:!ℕ):!ℤ{
+		for i in [0..n) { if i==2 { return 0; } }
+		return move(v);
+	}
+	return (g(3),g(2));
+}
+def main(){
+	assert(f(1)==1);
+	assert(h(1,true)==1);
+	assert(k(false)==1&&k(true)==0);
+	assert(l(1)==(0,1));
+}

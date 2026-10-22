@@ -1,0 +1,12 @@
+// args: --run
+
+def rec(i:!ℕ,const a:𝔹){ b:=dup(a); return rec(i+1,b); }
+def main(){
+	x:=H(0:𝔹);
+	def g(const c:𝔹){ d:=dup(c); return g(d); }
+	n:=0;
+	if n>0 { r:=rec(0,x); s:=g(x); } else { r:=0:𝔹; s:=1:𝔹; }
+	m:=measure(H(x),r,s);
+	assert(m==(0,0,1));
+	return m;
+}

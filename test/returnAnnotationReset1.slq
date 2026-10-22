@@ -1,0 +1,23 @@
+// args: --run
+
+def f(v:!ℤ){
+	def g(n:!ℕ):!ℤ{
+		for i in [0..n) { if i==2 { return 0; } }
+		w:=v; v:=2;
+		return v+w;
+	}
+	return (g(3),g(2));
+}
+def h(n:!ℕ):!ℤ{
+	x:=1:!ℤ;
+	def k(m:!ℕ):!ℤ{
+		for i in [0..m) { if i==2 { return 1; } }
+		y:=x; x:=2;
+		return x+y;
+	}
+	return k(n);
+}
+def main(){
+	assert(f(1)==(0,3));
+	assert(h(3)==1&&h(2)==3);
+}
