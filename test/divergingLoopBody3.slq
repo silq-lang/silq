@@ -1,0 +1,23 @@
+// args: --run
+
+def d(){
+	c:=1;
+	v:=vector(c,0:𝔹);
+	k:=0;
+	do{ k+=1; measure(v); c+=1; v:=vector(c,1:𝔹); assert(false); }while k<2;
+}
+def s(){
+	c:=1;
+	v:=vector(c,0:𝔹);
+	for i in (5..-2..0] {
+		measure(v);
+		c+=i;
+		v:=vector(c,1:𝔹);
+		if i==4 { assert(false); } /// run_error
+		assert(false);
+	}
+	return (c,measure(v):!𝔹[]);
+}
+def main(){
+	return s();
+}
