@@ -1,0 +1,11 @@
+// args: --run
+
+def main(){
+	n:=5;
+	x:=3 coerce !ℤstar[(let { a:=n; } in a)] coerce !ℤ;
+	m:=5;
+	y:=2 coerce !ℤmod[(let { a:=m; b:=a; } in b)] coerce !ℤmod[5];
+	k:=7;
+	z:=3 coerce !ℤstar[(let { a:=k; } in (a,a)[0])] coerce !ℤ;
+	return (x,y,z);
+}

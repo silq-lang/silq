@@ -2620,6 +2620,7 @@ struct CallInfo {
 	bool isTuple, hasQuantum;
 	ast_ty.CaptureAnnotation captureAnnotation;
 	Expression retType;
+	Expression convertTo; // (the type of the call, if it is weaker than the result type of the function)
 	bool makeClassical;
 	ast_exp.Annotation effect;
 	ArgInfo[] args;
@@ -4557,7 +4558,9 @@ class ScopeWriter {
 			return valNewC(r);
 		}
 
-		return implCall(ci);
+		auto r = implCall(ci);
+		if(ci.convertTo) r = genSubtype(r, ci.retType, ci.convertTo);
+		return r;
 	}
 
 	Value implCall(CallInfo ci) {
@@ -7000,10 +7003,15 @@ class ScopeWriter {
 		assert(!newFunctionVar || !isReversed);
 
 		bool makeClassical = false;
+		Expression convertTo = null;
 		{
 			Expression retExpr = callTy.tryApply(argExpr, callTy.isSquare);
 			assert(!!retExpr);
 			auto retClassical = retExpr.getClassical();
+			if(retType != retExpr && retType != retClassical && !isReversed && ast_ty.isSubtype(retExpr, retType)) {
+				convertTo = retType; // (e.g., a function substituted for a parameter of a more general type)
+				retType = retExpr;
+			}
 			if(retType != retExpr) {
 				assert(!isReversed, "TODO make-classical reversed call");
 				assert(retType == retClassical, format("function result type mismatch: got %s, want %s or %s", retType, retExpr, retClassical));
@@ -7105,6 +7113,7 @@ class ScopeWriter {
 		ci.targetF = targetF;
 		ci.isTuple = isTuple;
 		ci.retType = retType;
+		ci.convertTo = convertTo;
 		ci.makeClassical = makeClassical;
 		ci.hasQuantum = typeHasQuantum(callTy);
 		ci.captureAnnotation = callTy.captureAnnotation;

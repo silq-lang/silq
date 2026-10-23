@@ -1,0 +1,28 @@
+// args: --run
+
+def f(){
+	q:=X(0:𝔹);
+	for i in 0..2 { q⊕=q; }
+	return measure(q);
+}
+def g(){
+	p:=H(0:𝔹);
+	q:=dup(p);
+	k:=0;
+	while k<2 { k+=1; q⊕=q; }
+	return (measure(q),measure(H(p)));
+}
+def h(){
+	x:=vector(3,0:𝔹);
+	x[0]:=X(x[0]);
+	x[2]:=X(x[2]);
+	for i in 0..3 {
+		for j in 0..3 {
+			if i!=j { x[i]⊕=x[i]; }
+		}
+	}
+	return measure(x);
+}
+def main(){
+	return (f(),g(),h());
+}
