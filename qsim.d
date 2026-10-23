@@ -3840,7 +3840,7 @@ struct Interpreter(QState){
 							constArg=runExp(ce.arg);
 						}else if(!oft.isConstForReverse.any&&!ft.isConstForReverse.any){
 							// no const arg
-							enforce(rf.params.length==1&&equal(rft.isConstForReverse,only(false))&&!rft.isTuple,"reversed function call not yet supported");
+							enforce(rf.params.length==1&&equal(rft.isConst,only(false))&&!rft.isTuple,"reversed function call not yet supported"); // (the parameter is classical for a classical result)
 						}else if(!ft.isTuple){
 							assert(ft.nargs==1);
 							if(ft.isConstForReverse[0]){

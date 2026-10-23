@@ -1,0 +1,27 @@
+// args: --run
+
+def h()qfree⇒2;
+def p()qfree⇒(1,2);
+def u(q:𝔹)mfree:!ℕ{ forget(q=0:𝔹); return 1; }
+def f(xs:𝔹^2,const c:!𝔹,j:!ℕ)mfree{
+	if c { xs[0]:=X(xs[0]); k:=2; } else { k:=(λ()⇒j)(); }
+	xs[1]:=X(xs[1]);
+	return (k,xs);
+}
+def main(){
+	a:=2;
+	h():=a;
+	(b,c):=(1,2);
+	p():=(b,c);
+	c:=2;
+	g:=λ()qfree⇒(c,c+1);
+	d:=g();
+	g():=d;
+	k:=1;
+	u(x):=k;
+	ys:=vector(2,0:𝔹);
+	ys[0]:=X(ys[0]);
+	(l,zs):=f(ys,false,1);
+	ws:=reverse(f)((l,zs),false,1);
+	return (measure(x),l,measure(ws));
+}
