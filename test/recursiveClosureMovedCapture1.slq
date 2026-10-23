@@ -1,0 +1,7 @@
+def main(){
+	x:=1;
+	def g(){
+		def h(){ w:=move(g); return 1; }
+		x:=X(x); /// error
+	}
+}

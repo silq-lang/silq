@@ -1,0 +1,13 @@
+// args: --run
+
+def f(c:!𝔹){
+	s:=0;
+	if c {
+		if (0:𝔹) { assert(false); } else { s=3; }
+	}
+	return s;
+}
+def main(){
+	assert(f(false)==0);
+	return f(false);
+}

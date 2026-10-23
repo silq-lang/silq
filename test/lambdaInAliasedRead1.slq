@@ -1,0 +1,14 @@
+// args: --run
+
+def main(){
+	x:=vector(3,0:𝔹);
+	x[2]:=X(x[2]);
+	j:=2;
+	x[0]⊕=x[(λ(c:!𝔹){ if c { return dup(j); } return move(j); })(false)];
+	for i in 0..2{
+		x[i+1]⊕=x[(λ(c:!𝔹)⇒i)(false)];
+	}
+	r:=measure(x);
+	assert(r==(1,1,0));
+	return r;
+}

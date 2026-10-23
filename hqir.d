@@ -1693,7 +1693,7 @@ final class IteReturn: IteResult {
 }
 
 final class ItePass: IteResult {
-	IdMapSX!(Expression, Value) condMemo; // TODO: generalize?
+	IdMapSX!(Expression, Value)* condMemo; // TODO: generalize?
 	IdMapSX!(Expression, bool) condShared;
 
 	this(CondAny cond) scope @safe nothrow {
@@ -3314,6 +3314,36 @@ class ScopeWriter {
 		}
 	}
 
+	static void addMergedVersion(ref IdMap!Expression subst, ast_decl.Declaration decl) { // (the merged types in terms of the versions of the variables in a branch, in which the conversions are generated)
+		auto outer = decl.mergedInto;
+		if(!outer || outer.getId in subst) return;
+		auto nid = new ast_exp.Identifier(decl.getId);
+		nid.meaning = decl;
+		nid.scope_ = decl.scope_;
+		nid.loc = decl.loc;
+		nid.type = typeForDecl(decl);
+		nid.constLookup = true;
+		nid.setSemCompleted();
+		subst[outer.getId] = nid;
+	}
+
+	static size_t[] mergeOrder(ast_decl.Declaration[] outers, Expression[][] types) { // (a variable is merged before the variables that its types mention, while their versions are available)
+		bool mentions(size_t t, size_t u) {
+			foreach(ty; types[t])
+				if(ty) foreach(fid; ast_ty.freeIdentifiers(ty))
+					if(fid.meaning && fid.meaning.getId == outers[u].getId) return true;
+			return false;
+		}
+		size_t[] order, rest = iota(outers.length).array;
+		while(rest.length) {
+			auto i = rest.countUntil!(t => !rest.any!(u => outers[u] !is outers[t] && mentions(u, t)));
+			if(i < 0) i = 0;
+			order ~= rest[i];
+			rest = rest[0 .. i] ~ rest[i + 1 .. $];
+		}
+		return order;
+	}
+
 	void genMerge(CondAny cond, ScopeWriter if0, ScopeWriter if1) {
 		auto sc0 = if0.nscope;
 		auto sc1 = if1.nscope;
@@ -3333,39 +3363,15 @@ class ScopeWriter {
 			t.d0 = decl;
 		}
 
-		// (the merged types in terms of the versions of the variables in each branch, in which the conversions are generated)
 		IdMap!Expression subst0, subst1;
-		void addVersion(ref IdMap!Expression subst, ast_decl.Declaration decl) {
-			auto outer = decl.mergedInto;
-			if(!outer || outer.getId in subst) return;
-			auto nid = new ast_exp.Identifier(decl.getId);
-			nid.meaning = decl;
-			nid.scope_ = decl.scope_;
-			nid.loc = decl.loc;
-			nid.type = typeForDecl(decl);
-			nid.constLookup = true;
-			nid.setSemCompleted();
-			subst[outer.getId] = nid;
-		}
-		foreach(decl; sc1.mergedVars) addVersion(subst1, decl);
-		foreach(decl; sc0.mergedVars) addVersion(subst0, decl);
-		bool mentions(Triple t, Triple u) {
-			foreach(ty; [typeForDecl(t.outer), typeForDecl(t.d1), typeForDecl(t.d0)])
-				if(ty) foreach(fid; ast_ty.freeIdentifiers(ty))
-					if(fid.meaning && fid.meaning.getId == u.outer.getId) return true;
-			return false;
-		}
-		Triple[] order, rest; // (a variable is merged before the variables that its types mention, while their versions are available)
+		foreach(decl; sc1.mergedVars) addMergedVersion(subst1, decl);
+		foreach(decl; sc0.mergedVars) addMergedVersion(subst0, decl);
+		Triple[] triples;
 		foreach(id, t; mergedVars) {
 			assert(t.d0, format("Merged variable %s missing in if-false", id));
-			rest ~= t;
+			triples ~= t;
 		}
-		while(rest.length) {
-			auto i = rest.countUntil!(t => !rest.any!(u => u.outer !is t.outer && mentions(u, t)));
-			if(i < 0) i = 0;
-			order ~= rest[i];
-			rest = rest[0 .. i] ~ rest[i + 1 .. $];
-		}
+		auto order = mergeOrder(triples.map!(t => t.outer).array, triples.map!(t => [typeForDecl(t.outer), typeForDecl(t.d1), typeForDecl(t.d0)]).array).map!(i => triples[i]);
 		foreach(t; order) {
 			auto outer = t.outer;
 			// TODO types as part of merge result?
@@ -3427,7 +3433,7 @@ class ScopeWriter {
 	Value genExpr(Expression e) {
 		assert(e, "genExpr(null)");
 		if(consultCond) {
-			if(auto v = condMemo.getPtr(e)) {
+			if(auto v = condMemo ? condMemo.getPtr(e) : null) {
 				auto vr = *v;
 				condMemo.remove(e);
 				return vr;
@@ -3448,7 +3454,7 @@ class ScopeWriter {
 			assert(!r.hasClassical || typeHasClassical(e.type), format("got a classical component in value of type %s: %s", e.type, e));
 			assert(!r.hasQuantum || typeHasQuantum(e.type), format("got a quantum component in value of type %s: %s <%s>", e.type, e, r));
 		}
-		if(recordCond && (e in condShared)) condMemo[e] = r;
+		if(recordCond && (e in condShared)) (*condMemo)[e] = r;
 		return r;
 	}
 
@@ -4364,13 +4370,28 @@ class ScopeWriter {
 
 		auto rTrue = ifTrue.genCompoundValue(e.then, null, e.type);
 		auto rFalse = ifFalse.genCompoundValue(e.othw, null, e.type);
+		auto abortTrue = ifTrue.pendingAbort, abortFalse = ifFalse.pendingAbort; // (a `let` within a branch aborts)
+		if(abortTrue && abortFalse || cond.isQuantum && (abortTrue || abortFalse)) { // (classical code under quantum control runs regardless of the condition)
+			ifTrue.valDeallocError(rTrue);
+			ifFalse.valDeallocError(rFalse);
+			ifTrue.checkEmpty(true);
+			ifFalse.checkEmpty(true);
+			if(cond.isQuantum) {
+				qcg.deallocError(cond.qreg);
+				pendingAbort = abortTrue ? abortTrue : abortFalse;
+			} else {
+				if(!cond.value) swap(abortFalse, abortTrue);
+				pendingAbort = ccg.cond(cond.creg, abortFalse, abortTrue);
+			}
+			return valError(pendingAbort, e.type);
+		}
 		auto r = valMerge(cond, rFalse, rTrue);
 
 		assert(!ifTrue.nscope || ifTrue.nscope.mergedVars.length == 0);
-		ifTrue.checkEmpty(false);
+		ifTrue.checkEmpty(!!abortTrue);
 
 		assert(!ifFalse.nscope || ifFalse.nscope.mergedVars.length == 0);
-		ifFalse.checkEmpty(false);
+		ifFalse.checkEmpty(!!abortFalse);
 
 		if(cond.isQuantum) qcg.forget(cond.qreg);
 		return r;
@@ -5439,16 +5460,20 @@ class ScopeWriter {
 					auto scCont = rv.scCont;
 					auto scFail = sc.withCond(null, rv.cond);
 					bool contUnreachable = rv.cond.isClassical && ctx.condAlwaysHolds(rv.cond.ccond); // (e.g., `if true { assert(false); } else { ... }`: the code of the continuation is not generated)
-					foreach(decl; scCont.nscope.mergedVars) {
+					auto merged = scCont.nscope.mergedVars;
+					IdMap!Expression subst;
+					foreach(decl; merged) addMergedVersion(subst, decl);
+					foreach(j; mergeOrder(merged.map!(d => d.mergedInto).array, merged.map!(d => [typeForDecl(d.mergedInto), typeForDecl(d)]).array)) {
+						auto decl = merged[j];
 						auto outer = decl.mergedInto;
 						auto ty = typeForDecl(outer);
-						assert(ty == typeForDecl(decl));
 						assert(outer.mergedFrom.canFind(decl)); // (the aborting branch may merge as well, e.g., if it aborts under quantum control)
 						auto v0 = scCont.getVar(decl, false);
 						if(contUnreachable) {
 							sc.defineVar(outer, scFail.valError(rv.witness, ty));
 							continue;
 						}
+						v0 = scCont.genSubtype(v0, typeForDecl(decl), subst.length ? ty.substitute(subst) : ty); // (the merged type can be wider, e.g., if the frontend does not know that the other branch aborts)
 						auto v1 = scFail.valError(null, ty); // (unreachable: classical values stay those of the continuation)
 						sc.defineVar(outer, sc.valMerge(rv.cond, v0, v1));
 					}
@@ -5484,7 +5509,7 @@ class ScopeWriter {
 			recordCond = savedRecordCond;
 			consultCond = savedConsultCond;
 		}
-		condMemo = typeof(condMemo).init;
+		condMemo = null;
 		condShared = typeof(condShared).init;
 		consultCond = false;
 		if(e.condForget) {
@@ -5492,6 +5517,7 @@ class ScopeWriter {
 			ast_sem.collectNondeterministicSubexpressions(e.cond, nondeterministic);
 			if(nondeterministic.length) {
 				foreach(nd; nondeterministic) condShared[nd] = true;
+				condMemo = new IdMapSX!(Expression, Value); // (shared by the writers of the condition, e.g., of the branches of an `if` expression within it)
 				recordCond = true;
 			}
 		}
@@ -5717,7 +5743,7 @@ class ScopeWriter {
 			condShared = pass.condShared;
 			consultCond = true;
 			auto vf = genExpr(e.condForget);
-			assert(!condMemo.length, "nondeterministic condition subexpression not consumed by re-derivation");
+			assert(!condMemo || !condMemo.length, "nondeterministic condition subexpression not consumed by re-derivation");
 			valUndup(Value.newReg(null, ite.cond.qreg), vf);
 			valForget(vf);
 		} else ite.forgetCond(this);
@@ -7908,7 +7934,7 @@ private:
 	MapSX!(ExprInfo,CReg) cachedNat;
 	MapSX!(ExprInfo,RTTI) cachedRTTI;
 
-	IdMapSX!(Expression, Value) condMemo;
+	IdMapSX!(Expression, Value)* condMemo;
 	IdMapSX!(Expression, bool) condShared;
 	bool recordCond = false, consultCond = false;
 }

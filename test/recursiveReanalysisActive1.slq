@@ -1,0 +1,10 @@
+// args: --run
+
+def main(){
+	assert(f0(2)==0);
+	assert(f2(0)==1);
+	return (f0(2),f2(0));
+}
+def f0(n:!ℕ)⇒if n==0 then 1 else (f1(n sub 1)·f1(n sub 1))-1;
+def f2(n:!ℕ)⇒if n==0 then 1 else (f1(n sub 1)·f0(n sub 1))-2;
+def f1(n:!ℕ)⇒if n==0 then 2 else (f2(n sub 1)-f1(n sub 1))·1;

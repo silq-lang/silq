@@ -1,0 +1,4 @@
+def f[u:!ℕ](xs:𝔹^u){
+	m:=(u coerce ⊥);
+	([a]~xs₀:_^m)~xs₁:=xs; /// error
+}

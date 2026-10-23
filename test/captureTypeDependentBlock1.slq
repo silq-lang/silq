@@ -1,0 +1,24 @@
+def f1(){
+	n:=3;
+	a:=vector(n,0:𝔹);
+	for i in 0..n-1{
+		(a[i],a[i+1]):=(a[1+i],a[i]);
+		def g(c:!𝔹){ if c { return 0; } w:=move(n); return 1; } /// error
+	}
+	return measure(a)[0];
+}
+def f2(){
+	n:=3;
+	a:=vector(n,0:𝔹);
+	if true {
+		a[0]:=X(a[0]);
+		def g(c:!𝔹){ if c { return 0; } w:=move(n); return 1; } /// error
+	}
+	return measure(a)[0];
+}
+def f3(d:!ℕ){
+	coeffs:=vector(d+1,1:!ℝ);
+	coeffs[0]=2;
+	def g(c:!𝔹){ if c { return 0; } w:=move(d); return 1; } /// error
+	return coeffs;
+}

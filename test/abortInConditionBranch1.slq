@@ -1,0 +1,19 @@
+// args: --run
+
+def f1(c:!𝔹){
+	a:=vector(2,0:𝔹);
+	if c {
+		if a[0]&&(let { t:=dup(a[0]); u:=dup(t); forget((u,)[2]=t); } in t) { a[1]:=X(a[1]); }
+	}
+	return measure(a);
+}
+def f2(c:!𝔹){
+	a:=vector(2,0:𝔹);
+	if c&&(let { t:=dup(a[0]); u:=dup(t); forget((u,)[2]=t); } in t) { a[1]:=X(a[1]); }
+	return measure(a);
+}
+def main(){
+	r:=(f1(false),f2(false));
+	assert(r[0]==(0,0)&&r[1]==(0,0));
+	return r;
+}
