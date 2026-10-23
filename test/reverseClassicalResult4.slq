@@ -1,0 +1,52 @@
+// args: --run
+
+def f(x:𝔹)qfree{
+	m:=1;
+	return (m,x);
+}
+def g(xs:𝔹^3)qfree{
+	m:=1;
+	k:=m+1;
+	xs[k]:=X(xs[k]);
+	return (m,xs);
+}
+def h(x:𝔹,const c:!𝔹)qfree{
+	if c { m:=1; x:=X(x); } else { m:=2; }
+	return (m,x);
+}
+def p(x:𝔹,const c:!𝔹)qfree{
+	if c { m:=1; } else { m:=2; }
+	return (m,x);
+}
+def q(x:𝔹)qfree{
+	k:=1;
+	m:=k;
+	return (m,x);
+}
+def r(x:𝔹)qfree{
+	with { k:=1; } do { m:=k; x:=X(x); }
+	return (m,x);
+}
+def s(x:𝔹)qfree{
+	k:=1;
+	forget(k=1);
+	return x;
+}
+def main(){
+	(a,x):=f(X(0:𝔹));
+	x:=reverse(f)(a,x);
+	(b,ys):=g(vector(3,0:𝔹));
+	ys:=reverse(g)(b,ys);
+	(c,y):=h(0:𝔹,true);
+	y:=reverse(h)((c,y),true);
+	(d,z):=h(y,false);
+	z:=reverse(h)((d,z),false);
+	(e,w):=p(z,true);
+	w:=reverse(p)((e,w),true);
+	(u,v):=q(w);
+	v:=reverse(q)(u,v);
+	(t,o):=r(v);
+	o:=reverse(r)(t,o);
+	o:=reverse(s)(s(o));
+	return (a,b,c,d,e,u,t,measure(x),measure(ys),measure(o));
+}

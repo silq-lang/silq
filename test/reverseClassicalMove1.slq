@@ -1,0 +1,52 @@
+// args: --run
+
+def f(xs:𝔹^3)qfree{
+	j:=1;
+	k:=j;
+	xs[k]:=X(xs[k]);
+	return xs;
+}
+def g(xs:𝔹^3,j:!ℕ)qfree{
+	k:=j;
+	xs[k]:=X(xs[k]);
+	return xs;
+}
+def h(xs:𝔹^3)qfree{
+	for i in 0..3 { j:=i; if j!=1 { xs[j]:=X(xs[j]); } }
+	return xs;
+}
+def p(xs:𝔹^3,const j:!ℕ)qfree{
+	if j==1 { l:=dup(j); m:=l; xs[m]:=X(xs[m]); }
+	return xs;
+}
+def q(xs:𝔹^3)qfree{
+	for i in 0..3 { j:=move(i); xs[j]:=X(xs[j]); }
+	return xs;
+}
+def r(xs:𝔹^2,j:!ℕ)qfree{
+	k:=j;
+	xs[k]:=X(xs[k]);
+	forget(k=1);
+	return xs;
+}
+def s(xs:𝔹^3)qfree{
+	for i in 0..3 { if i==1 { j:=i; } else { j:=i; } xs[j]:=X(xs[j]); }
+	return xs;
+}
+def t(xs:𝔹^3)qfree{
+	for i in 0..3 { i:=i; j:=i; xs[j]:=X(xs[j]); }
+	return xs;
+}
+def main(){
+	a:=reverse(f)(vector(3,0:𝔹));
+	b:=reverse(g)(vector(3,0:𝔹),2);
+	c:=reverse(h)(vector(3,0:𝔹));
+	d:=reverse(p)(vector(3,0:𝔹),1);
+	e:=reverse(q)(vector(3,0:𝔹));
+	u:=reverse(r)(vector(2,0:𝔹),1);
+	v:=reverse(s)(vector(3,0:𝔹));
+	w:=reverse(t)(vector(3,0:𝔹));
+	xs:=vector(3,0:𝔹);
+	with { for i in 0..3 { j:=i; xs[j]:=H(xs[j]); } } do { xs[1]:=Z(xs[1]); }
+	return (measure(a),measure(b),measure(c),measure(d),measure(e),measure(u),measure(v),measure(w),measure(xs));
+}

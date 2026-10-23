@@ -1,0 +1,27 @@
+// args: --run
+
+def f(){
+	xs:=vector(3,0:𝔹);
+	with { with { for i in 0..1 { xs[0]:=H(xs[0]); } } do { } } do { }
+	return measure(xs);
+}
+def g(){
+	xs:=vector(3,0:𝔹);
+	with { with { for i in 0..2 { xs[i]:=H(xs[i]); } } do { xs[1]:=X(xs[1]); } } do { xs[1]:=H(xs[1]); }
+	xs[1]:=H(xs[1]);
+	return measure(xs);
+}
+def h(){
+	xs:=vector(3,0:𝔹);
+	with { with { for j in 0..2 { l:=j+0; } xs[0]:=H(xs[0]); } do { } } do { xs[0]:=X(xs[0]); }
+	return measure(xs);
+}
+def k(){
+	xs:=vector(3,0:𝔹);
+	with { with { with { for i in 0..2 { xs[i]:=H(xs[i]); } } do { xs[1]:=X(xs[1]); } } do { } } do { xs[1]:=H(xs[1]); }
+	xs[1]:=H(xs[1]);
+	return measure(xs);
+}
+def main(){
+	return (f(),g(),h(),k());
+}
