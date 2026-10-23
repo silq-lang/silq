@@ -1,0 +1,29 @@
+// args: --run
+
+def f(xs:𝔹^3,j:!ℕ)mfree{
+	xs[j]:=Z(xs[j]);
+	with { k:=j; } do { xs[0]:=H(xs[0]); }
+	return xs;
+}
+def g(xs:𝔹^3)mfree{
+	j:=1;
+	xs[j]:=Z(xs[j]);
+	with { k:=j; } do { xs[0]:=H(xs[0]); }
+	return xs;
+}
+def h(xs:𝔹^3,j:!ℕ)mfree{
+	xs[j]:=X(xs[j]);
+	with { k:=j; } do { }
+	return xs;
+}
+def init(){
+	xs:=vector(3,0:𝔹);
+	xs[2]:=X(xs[2]);
+	return xs;
+}
+def main(){
+	a:=reverse(f)(f(init(),1),1);
+	b:=reverse(g)(g(init()));
+	c:=reverse(h)(h(init(),2),2);
+	return (measure(a),measure(b),measure(c));
+}

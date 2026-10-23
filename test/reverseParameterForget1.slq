@@ -1,0 +1,22 @@
+// args: --run
+
+def f(xs:𝔹^3,j:!ℕ)qfree{
+	xs[j]:=X(xs[j]);
+	forget(j=2);
+	return xs;
+}
+def g(xs:𝔹^3,const c:!𝔹,j:!ℕ)qfree{
+	if c { xs[j]:=X(xs[j]); forget(j=1); } else { forget(j=1); }
+	return xs;
+}
+def init(){
+	xs:=vector(3,0:𝔹);
+	xs[0]:=X(xs[0]);
+	return xs;
+}
+def main(){
+	a:=reverse(f)(f(init(),2),2);
+	b:=reverse(g)(g(init(),true,1),true,1);
+	c:=reverse(g)(g(init(),false,1),false,1);
+	return (measure(a),measure(b),measure(c));
+}

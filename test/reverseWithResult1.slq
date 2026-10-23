@@ -1,0 +1,19 @@
+// args: --run
+
+def f(x:𝔹)qfree{
+	m:=1;
+	with { k:=m; } do { x:=X(x); }
+	return (m,x);
+}
+def g(x:𝔹,const c:!𝔹)mfree{
+	m:=1;
+	if c { x:=X(x); } else { with { k:=m; } do { x:=H(x); } l:=dup(m); }
+	return (m,x);
+}
+def main(){
+	(a,x):=f(0:𝔹);
+	x:=reverse(f)(a,x);
+	(b,y):=g(1:𝔹,false);
+	y:=reverse(g)((b,y),false);
+	return (a,b,measure(x),measure(y));
+}

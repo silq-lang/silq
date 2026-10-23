@@ -1,0 +1,32 @@
+// args: --run
+
+def f(xs:𝔹^3,const c:!𝔹)mfree{
+	if c { k:=1; xs[0]:=X(xs[0]); } else { k:=2; }
+	xs[k]:=H(xs[k]);
+	return xs;
+}
+def g(xs:𝔹^3)mfree{
+	for i in 0..3 {
+		if i==1 { k:=0; xs[2]:=X(xs[2]); } else { k:=i; }
+		xs[k]:=H(xs[k]);
+	}
+	return xs;
+}
+def h(xs:𝔹^3,const c:!𝔹,const d:!𝔹)mfree{
+	if c { if d { k:=1; xs[0]:=X(xs[0]); } else { k:=2; } xs[1]:=H(xs[1]); } else { k:=0; }
+	l:=k;
+	xs[l]:=H(xs[l]);
+	return (l,xs);
+}
+def main(){
+	xs:=vector(3,0:𝔹);
+	xs[2]:=X(xs[2]);
+	a:=reverse(f)(f(xs,true),true);
+	b:=reverse(f)(f(a,false),false);
+	c:=reverse(g)(g(b));
+	(l,ys):=h(c,true,false);
+	d:=reverse(h)((l,ys),true,false);
+	(m,zs):=h(d,true,true);
+	e:=reverse(h)((m,zs),true,true);
+	return (l,m,measure(e));
+}
