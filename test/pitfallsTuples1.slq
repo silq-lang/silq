@@ -1,0 +1,11 @@
+def f(x:𝔹,)⇒x; /// note
+def g(x:𝔹)⇒x;
+def h[n:!ℕ,]⇒n; /// note
+
+def main(){
+	a:=((x:𝔹,)⇒x)(0); /// error
+	b:=f(0:𝔹); /// error
+	c:=g(0:𝔹,); /// error
+	d:=h[3]; /// error
+	return (a,b,c,d);
+}
