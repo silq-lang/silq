@@ -1,0 +1,9 @@
+def main(){
+	x := 1;
+í € /// error
+À€ /// error
+Â x := 2; /// error
+ô€€ /// error
+€€€ /// error
+	return x;
+}

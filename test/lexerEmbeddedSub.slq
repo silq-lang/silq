@@ -1,0 +1,4 @@
+def main(){
+	x := 1; /// error
+	y := ; /// error
+}

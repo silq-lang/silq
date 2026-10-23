@@ -1,0 +1,15 @@
+def main(){
+	x := \( /// error
+		1
+	);
+	y := #( /// error
+		2
+	);
+	z := ( /// error
+		3
+	);
+	w := ( /// error
+		4
+	);
+	return x+y+z+w;
+}

@@ -1,0 +1,6 @@
+def main(){
+	s := q"END
+hello
+END";
+	return y; /// error
+}

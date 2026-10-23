@@ -1,0 +1,10 @@
+def main(){
+	x := 1;
+	b := true;
+	c := !ÿ b; /// error
+	y := x -ÿ x; /// error
+	z := x *ÿ x; /// error
+	w := x %ÿ x; /// error
+	v := x <ÿ x; /// error
+	return (c,y,z,w,v);
+}

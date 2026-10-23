@@ -1,0 +1,8 @@
+def main(){
+	s := q"(αβ)";
+	t := q"αfooα";
+	u := q"END
+αβγ
+END";
+	return 1;
+}

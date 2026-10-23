@@ -1,0 +1,8 @@
+def main(){
+	a := x"41 42";
+	b := x"4G42"; /// error
+	c := x"4ÿ1"; /// error
+	d := x"41
+	42";
+	return 1;
+}

@@ -1,0 +1,3 @@
+ÿdef main(){ /// error
+	return 1;
+}

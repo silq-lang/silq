@@ -16,12 +16,19 @@ enum TODOColor=CYAN;
 enum passColor=GREEN;
 enum failColor=RED;
 
+string readSource(string source){ // (accepts invalid UTF-8, never decoded)
+	return cast(string)file.read(source);
+}
+string firstLine(string code){
+	auto i=code.representation.countUntil('\n');
+	return i<0?code:code[0..i];
+}
 bool fileStartsWithFlag(string source, string flag){
-	auto code=file.readText(source);
-	code=code.strip();
+	auto code=readSource(source);
+	while(code.length&&code[0].among(' ','\t','\r','\n')) code=code[1..$];
 	if(code.startsWith("// -*-")||code.startsWith("//-*-")){
-		while(code.length&&code.front!='\n') code.popFront();
-		if(code.length) code.popFront();
+		while(code.length&&code[0]!='\n') code=code[1..$];
+		if(code.length) code=code[1..$];
 	}
 	immutable f1="//"~flag, f2="// "~flag;
 	return code.startsWith(f1)||code.startsWith(f2);
@@ -52,6 +59,7 @@ int parseFlags(string[] flags){
 		else if(flag.among("--no-run","--run=0","--run=false")) dashDashNoRun=true;
 		else if(flag=="--remove-loops") dashDashRemoveLoops=true;
 		else if(flag=="--split-components") dashDashSplitComponents=true;
+		else if(flag.startsWith("--timeout=")) testTimeout=flag["--timeout=".length..$].to!int.seconds;
 		else{
 			stderr.writeln("unrecognized flag: ",flag);
 			return 1;
@@ -315,21 +323,19 @@ struct Comment{
 	string text;
 }
 
-auto errComments(string code){
+auto errComments(string code){ // (byte-wise, see readSource)
 	Comment[] result;
 	int line=1;
-	for(;;){
-		if(code.startsWith("///")){
-			code.popFront(); code.popFront(); code.popFront();
-			auto start = code.ptr;
-			while(!code.empty&&code.front!='\n')
-				code.popFront();
-			auto text = start[0..code.ptr-start];
-			result~=Comment(line,text);
+	for(size_t i=0;i<code.length;i++){
+		if(code[i..$].startsWith("///")){
+			auto start=i+3, end=start;
+			while(end<code.length&&code[end]!='\n') end++;
+			i=end;
+			if(end>start&&code[end-1]=='\r') end--; // (CRLF line endings)
+			result~=Comment(line,code[start..end]);
+			if(i>=code.length) break;
 		}
-		if(code.empty) break;
-		if(code.front=='\n') line++;
-		code.popFront();
+		if(code[i]=='\n') line++;
 	}
 	return result;
 }
@@ -360,10 +366,10 @@ auto analyze(Comment comment) {
 
 auto getExpected(string source){
 	Info[] result;
-	auto code = file.readText(source);
+	auto code = readSource(source);
 	bool running = false;
 	if(code.startsWith("// args: "))
-		if(code.until("\n").text.splitter.any!(flag=>flag.startsWith("--run")))
+		if(code.firstLine.splitter.any!(flag=>flag.startsWith("--run")))
 			running=true;
 	foreach(comment;code.errComments){
 		auto info = comment.analyze;
@@ -378,6 +384,8 @@ auto getExpected(string source){
 }
 
 string args;
+import core.time: Duration, seconds;
+Duration testTimeout=300.seconds;
 Info[] getActual(string source, bool expectOK){
 	auto fin=File(source,"r");
 	args=fin.readln();
@@ -393,7 +401,24 @@ Info[] getActual(string source, bool expectOK){
 	auto stdout = File.tmpfile();
 	auto stderr = File.tmpfile();
 	auto pid = spawnShell(cmd, stdout: stdout, stderr: stderr, config: Config.retainStdout | Config.retainStderr);
-	int exitCode = pid.wait();
+	int exitCode;
+	bool timedOut=false;
+	auto timer=StopWatch(Yes.autoStart);
+	for(;;){
+		auto status=pid.tryWait();
+		if(status.terminated){ exitCode=status.status; break; }
+		if(timer.peek>testTimeout){
+			version(Posix){ import core.sys.posix.signal: SIGKILL; kill(pid,SIGKILL); }
+			else kill(pid);
+			pid.wait();
+			timedOut=true;
+			exitCode=-1;
+			break;
+		}
+		import core.thread: Thread;
+		import core.time: msecs;
+		Thread.sleep(10.msecs);
+	}
 
 	stdout.rewind();
 	stderr.rewind();
@@ -432,7 +457,9 @@ Info[] getActual(string source, bool expectOK){
 			}
 		}
 	}
-	if(exitCode > 1 || (expectOK && exitCode != 0 && !result.length) || exitCode > 128 || output.empty) {
+	if(timedOut) {
+		result ~= [Info(-1, "crash", format("timeout after %s", testTimeout))];
+	}else if(exitCode > 1 || (expectOK && exitCode != 0 && !result.length) || exitCode > 128 || output.empty) {
 		result ~= [Info(-1, "crash", format("exit code %s; output: ", exitCode) ~ cast(string)err)];
 	}
 	result=result.sort.array;
