@@ -1,0 +1,11 @@
+def main(){
+	a​b := 1; /// error
+	c‍d := 2; /// error
+	e⁠f := 3; /// error
+	g­h := 4; /// error
+	i️j := 5; /// error
+	k󠀁l := 6; /// error
+	m﻿n := 7; /// error
+	s := "family: 👨‍👩"; // (ok 👨‍👩️)
+	return ab+cd+ef+gh+ij+kl+mn;
+}

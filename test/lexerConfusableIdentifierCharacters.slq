@@ -1,0 +1,9 @@
+def main(){
+	a := true; b := false;
+	c := aǃ=b; /// error
+	xˋ := 1; /// error
+	yʼ := 2; /// error
+	zː := 3; /// error
+	wꓽ := 4; /// error
+	return x+y+z+w;
+}

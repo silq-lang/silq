@@ -1,0 +1,10 @@
+def main(){
+	Ω := 1; /// error
+	Ω := 2;
+	K := 3; /// error
+	Å := 4; /// error
+	xά := 5; /// error
+	xά := 6;
+	é := 7; // ok
+	return Ω+xά+é;
+}

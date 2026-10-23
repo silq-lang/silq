@@ -1,0 +1,7 @@
+def main(){
+	aㅤ := 1; /// error
+	bᅟ := 2; /// error
+	cᅠ := 3; /// error
+	dﾠ := 4; /// error
+	return a+b+c+d;
+}

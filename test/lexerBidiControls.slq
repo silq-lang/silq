@@ -1,0 +1,11 @@
+def main(){
+	x := 1; // ‮ /// error
+	s := "a‮b"; /// error
+	t := /* ⁦ */ 2; /// error
+	c := '‪'; /// error
+	y := x ‎+ 1; /// error
+	z := x ؜+ 1; /// error
+	u := "\u202E"; // ok
+	v := `a⁩b`; /// error
+	return x+y+z+t;
+}

@@ -1,0 +1,9 @@
+def main(){
+	x := 1; // comment  x := 2; /// error
+	y := 2; z := 3; /// error
+	s := "a b"; /// error
+	t := "ab"; /// error
+	u := "a\u2028b"; // ok
+	w := "ab"; /// error
+	return x+y+z;
+}
