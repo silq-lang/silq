@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	xs:=vector(3,0:𝔹);
+	j:=1;
+	with { with { } do { (a,b):=(j,2); } xs[a]:=H(xs[a]); } do { xs[1]:=Z(xs[1]); }
+	with { with { xs[0]:=X(xs[0]); } do { (c,d):=(1,2); } xs[d]:=H(xs[d]); } do { xs[2]:=Z(xs[2]); }
+	return (measure(xs),j);
+}

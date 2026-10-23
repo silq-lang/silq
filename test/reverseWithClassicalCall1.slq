@@ -1,0 +1,18 @@
+// args: --run
+
+def h(a:!ℕ)qfree⇒a;
+def f(){
+	xs:=vector(3,0:𝔹);
+	j:=1;
+	with { k:=h(j); } do { xs[k]:=X(xs[k]); }
+	return (measure(xs),j);
+}
+def g(){
+	xs:=vector(3,0:𝔹);
+	j:=2;
+	with { k:=h(j); } do { xs[k]:=X(xs[k]); }
+	return measure(xs);
+}
+def main(){
+	return (f(),g());
+}

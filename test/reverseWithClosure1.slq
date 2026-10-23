@@ -1,0 +1,36 @@
+// args: --run
+
+def f(){
+	xs:=vector(3,0:𝔹);
+	j:=1;
+	with { g:=λ(a:!ℕ)qfree⇒a; k:=g(j); } do { xs[k]:=X(xs[k]); }
+	return (measure(xs),j);
+}
+def g(){
+	xs:=vector(3,0:𝔹);
+	j:=1;
+	with { k:=λ(a:!ℕ)qfree⇒a; xs[dup(j)]:=H(xs[dup(j)]); } do { xs[j]:=Z(xs[j]); }
+	return (measure(xs),j);
+}
+def h(){
+	xs:=vector(3,0:𝔹);
+	j:=1;
+	with { with { g:=λ(a:!ℕ)qfree⇒a; k:=g(j); xs[k]:=H(xs[k]); } do { xs[k]:=Z(xs[k]); } } do { xs[0]:=X(xs[0]); }
+	return (measure(xs),j);
+}
+def m(){
+	xs:=vector(3,0:𝔹);
+	j:=1;
+	with { g:=λ(a:!ℕ)qfree⇒a+1; n:=g; k:=n(j); } do { xs[k]:=X(xs[k]); }
+	return (measure(xs),j);
+}
+def r(xs:𝔹^3,j:!ℕ)mfree{
+	with { with { g:=λ(a:!ℕ)qfree⇒a+1; k:=g(j); xs[k]:=H(xs[k]); } do { xs[k]:=Z(xs[k]); } } do { xs[0]:=X(xs[0]); }
+	return xs;
+}
+def main(){
+	xs:=vector(3,0:𝔹);
+	xs[1]:=X(xs[1]);
+	ys:=reverse(r)(r(xs,1),1);
+	return (f(),g(),h(),m(),measure(ys));
+}
