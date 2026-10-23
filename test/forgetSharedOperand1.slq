@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	x:=H(1);
+	z:=dup(x);
+	forget(X(z)=X(z));
+	return measure(H(x));
+}

@@ -1,0 +1,21 @@
+// args: --run
+
+def f(n:!ℕ){
+	x:=1:!ℕ;
+	if n>5 {
+		repeat 2 { x+=1; y:=(x,)[1]; }
+		x+=1;
+	}
+	return x;
+}
+def g(n:!ℕ){
+	x:=1:!ℕ;
+	if n>5 {
+		do{ x+=1; y:=(x,)[1]; }while x<n;
+		x+=1;
+	}
+	return x;
+}
+def main(){
+	return (f(2),g(2));
+}

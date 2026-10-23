@@ -1,0 +1,12 @@
+// args: --run
+
+def g(n:!ℕ)⇒vector(let{ r:=0; while (r<n&&true) { r+=1; } } in r,0:𝔹);
+def h(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	return x coerce 𝔹^(let{ a:=0; while (a<n||false) { a=a+1; } } in a);
+}
+def main(){
+	v:=measure(g(3));
+	w:=measure(h(2));
+	return (v.length,w);
+}

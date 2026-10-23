@@ -1,0 +1,18 @@
+// args: --run
+
+def f(xs:⊥,c:!𝔹,n:!ℕ){
+	i:=1:𝔹;
+	for _j in 0..n { xs[i]:=X(xs[i]); }
+	k:=0;
+	while k<n { k+=1; if c { xs:=xs; } }
+	repeat n { xs:=xs; }
+	return (xs,i);
+}
+def g(xs:⊥){
+	q:=H(0:𝔹);
+	while measure(q) { q:=H(0:𝔹); xs:=xs; }
+	return xs;
+}
+def main(){
+	return 1;
+}

@@ -1,0 +1,29 @@
+// args: --run
+
+def f(d:!𝔹){
+	a:=0:𝔹;
+	b:=1:𝔹;
+	c:=H(0:𝔹);
+	if d {
+		x:=if c then a else (b coerce ⊥);
+		return measure((c,x));
+	}
+	forget(a=0:𝔹);
+	forget(b=1:𝔹);
+	return (measure(c),true);
+}
+def g(d:!𝔹){
+	a:=0:𝔹;
+	b:=1:𝔹;
+	c:=H(0:𝔹);
+	if d {
+		x:=if c then (a,)[2] else b;
+		return measure((c,x));
+	}
+	forget(a=0:𝔹);
+	forget(b=1:𝔹);
+	return (measure(c),true);
+}
+def main(){
+	return (f(false)[1],g(false)[1]);
+}

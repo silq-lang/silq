@@ -1,0 +1,10 @@
+// args: --run
+
+def g(n:!ℕ)⇒(n,)[1];
+def f(n:!ℕ,c:!𝔹){
+	if c { return g(n)+g(n); }
+	return n;
+}
+def main(){
+	return (f(2,false),f(3,false));
+}

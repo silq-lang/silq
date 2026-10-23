@@ -1,0 +1,5 @@
+def f()⇒1;
+def main(){
+	n:=3;
+	return f(vector(n,0:𝔹),n); /// error
+}

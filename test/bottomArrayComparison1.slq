@@ -1,0 +1,8 @@
+// args: --run
+
+def f(ys:!⊥[]){ return ys==ys; }
+def g(const ys:⊥[]){ return ys!=ys; }
+def h(v:!⊥^2){ return v==v; }
+def main(){
+	return (f([]),g([]));
+}
