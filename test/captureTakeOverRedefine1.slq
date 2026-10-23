@@ -1,0 +1,53 @@
+// args: --run
+
+def nested(){
+	q:=0:𝔹;
+	def f(m:!ℕ){
+		k:=measure(dup(q));
+		g:=λ(){
+			h:=λ(){
+				q:=(λ(){ j:=measure(dup(q)); return q; })();
+				q:=X(q);
+				repeat m { t:=dup(q); forget(t); }
+				return (measure(q),k);
+			};
+			return h();
+		};
+		return g();
+	}
+	return f(1);
+}
+def single(){
+	q:=X(0:𝔹);
+	def f(){
+		k:=measure(dup(q));
+		h:=λ(){
+			q:=(λ(){ j:=measure(dup(q)); return q; })();
+			return (measure(q),k);
+		};
+		return h();
+	}
+	return f();
+}
+def measured(){
+	q:=0:𝔹;
+	v:=vector(2,0:𝔹);
+	def f(){
+		g:=λ(){
+			k:=dup(v);
+			forget(k);
+			h:=λ(){
+				j:=dup(v);
+				forget(j);
+				if v[1] { q:=X(q); }
+				return (measure(q),measure(v));
+			};
+			return h();
+		};
+		return g();
+	}
+	return f();
+}
+def main(){
+	return (nested(),single(),measured());
+}

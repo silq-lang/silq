@@ -1,0 +1,55 @@
+// args: --run
+
+def incremented(){
+	z:=0:!ℕ;
+	def f(){
+		k:=z+0;
+		repeat 1 { z+=1; }
+		return (k,z);
+	}
+	return f();
+}
+def flipped(){
+	z:=0:𝔹;
+	def f(){
+		k:=dup(z);
+		forget(k);
+		repeat 1 { z:=X(z); }
+		return measure(z);
+	}
+	return f();
+}
+def twoLoops(){
+	z:=0:!ℕ;
+	def f(){
+		k:=z+0;
+		for i in 0..2 { z+=1; }
+		while k<1 { z+=1; k+=1; }
+		return (k,z);
+	}
+	return f();
+}
+def reads(){
+	z:=0:𝔹;
+	def f(){
+		repeat 2 { k:=dup(z); forget(k); }
+		repeat 1 { z:=X(z); }
+		return measure(z);
+	}
+	return f();
+}
+def block(){
+	z:=0:!ℕ;
+	if true {
+		def f(){
+			k:=z+0;
+			repeat 1 { z+=1; }
+			return (k,z);
+		}
+		r:=f();
+	}else{ r:=(0,0); }
+	return r;
+}
+def main(){
+	return (incremented(),flipped(),twoLoops(),reads(),block());
+}

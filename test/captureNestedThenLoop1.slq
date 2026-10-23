@@ -1,0 +1,36 @@
+// args: --run
+
+def curried(){
+	z:=0:𝔹;
+	def f(m:!ℕ)(){
+		k:=dup(z);
+		repeat m { z:=X(z); }
+		return (measure(k),measure(z));
+	}
+	return f(1)();
+}
+def closure(){
+	z:=0:𝔹;
+	def f(){
+		g:=λ(){
+			k:=dup(z);
+			forget(k);
+			repeat 1 { z:=X(z); }
+			return measure(z);
+		};
+		return g();
+	}
+	return f();
+}
+def counted(){
+	z:=0:!ℕ;
+	def f(m:!ℕ)(){
+		k:=z+0;
+		repeat m { z+=1; }
+		return (k,z);
+	}
+	return f(2)();
+}
+def main(){
+	return (curried(),closure(),counted());
+}

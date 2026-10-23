@@ -1,0 +1,48 @@
+// args: --run
+
+def twice(){
+	z:=3:!ℕ;
+	def f(){
+		repeat 1 { z+=1; }
+		repeat 1 { z+=1; }
+		return z;
+	}
+	return f();
+}
+def copied(){
+	z:=3:!ℕ;
+	def f(){
+		repeat 1 { z+=1; }
+		y:=z;
+		repeat 1 { y+=1; }
+		return y;
+	}
+	return f();
+}
+def mixed(){
+	c:=0:!ℕ;
+	z:=3:!ℕ;
+	def f(m:!ℕ){
+		while z<3 { z+=1; }
+		z+=1;
+		while z<6 { z+=1; }
+		return (c,z);
+	}
+	return f(1);
+}
+def curried(){
+	c:=2:!ℕ;
+	q:=0:𝔹;
+	def f(m:!ℕ)(){
+		repeat 2 { c+=1; }
+		k:=dup(q);
+		forget(k);
+		repeat 0 { j:=dup(q); forget(j); }
+		c+=1;
+		return (c,measure(q));
+	}
+	return f(1)();
+}
+def main(){
+	return (twice(),copied(),mixed(),curried());
+}
