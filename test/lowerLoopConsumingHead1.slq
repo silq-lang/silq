@@ -1,0 +1,48 @@
+// args: --run
+def repeated(m:!ℕ){
+	q:=0:𝔹;
+	repeat (λ(){ return move(m); })() { q:=X(q); }
+	return q;
+}
+def ranged(m:!ℕ){
+	q:=0:𝔹;
+	for i in 0..(λ(){ return move(m); })() { q:=X(q); }
+	return q;
+}
+def stepped(m:!ℕ){
+	q:=0:𝔹;
+	for i in [(λ(){ return move(m); })()..10) { q:=X(q); }
+	return q;
+}
+def guarded(m:!ℕ){
+	q:=0:𝔹;
+	repeat (λ(c:!𝔹){ if c { return dup(m); } return move(m); })(false) { t:=dup(q); forget(t); q:=X(q); }
+	return q;
+}
+def sliced(m:!ℕ,const a:𝔹){
+	x:=dup(a) as uint[4];
+	c:=0:!ℕ;
+	for i in 0..(λ(){ return move(m); })(){
+		r:=measure(H(0:𝔹));
+		if i%2==0 { x+=1; c+=1; }
+	}
+	return (x,c);
+}
+def splitted(m:!ℕ){
+	c:=X(0:𝔹);
+	repeat (λ(){ return move(m); })() {
+		a:=H(0:𝔹);
+		r:=measure(a);
+		with c:=X(c) do { }
+	}
+	return c;
+}
+def main(){
+	assert(measure(repeated(3))==1);
+	assert(measure(ranged(2))==0);
+	assert(measure(stepped(7))==1);
+	assert(measure(guarded(5))==1);
+	assert(measure(sliced(3,false))==(2,2));
+	assert(measure(splitted(4))==1);
+	return (repeated(3),ranged(2),stepped(7),guarded(5),sliced(3,false),splitted(4));
+}

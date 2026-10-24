@@ -3096,7 +3096,7 @@ struct Interpreter(QState){
 		if(consumeArg) value.consumeOnRead(); // TODO: ok?
 		return default_(value,consumeArg,type,this);
 	}
-	void closeScope(Scope sc){
+	void closeScope(Scope sc,bool onlyWider=false){
 		if(qstate.unreachable) return;
 		foreach(merged;sc.mergedVars){
 			auto name=merged.getName;
@@ -3104,6 +3104,7 @@ struct Interpreter(QState){
 			assert(!!merged.mergedInto);
 			import ast.semantic_:typeForDecl;
 			auto type=typeForDecl(merged.mergedInto);
+			if(onlyWider&&type==typeForDecl(merged)) continue;
 			enforce(name in qstate.vars,text("missing variable `",name,"` when closing scope"));
 			if(qstate.vars[name].type !is type)
 				qstate.vars[name]=convertTo(qstate.vars[name],type,true).toVar(qstate,false);
@@ -4062,6 +4063,7 @@ struct Interpreter(QState){
 			runExp(call).forget(qstate);
 		}else if(auto ce=cast(CompoundExp)e){
 			foreach(s;ce.s) runStm(s,retState);
+			if(ce.blscope_) closeScope(ce.blscope_,true); // (the merged types can be wider, e.g., if they mention a `const` local of the block)
 		}else if(auto ite=cast(IteExp)e){
 			runStmIteExp(ite,retState);
 		}else if(auto with_=cast(WithExp)e){

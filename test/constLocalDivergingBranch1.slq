@@ -1,0 +1,66 @@
+// args: --run
+def vectors(c:!𝔹){
+	if c {
+		const n:=3;
+		xs:=vector(n,0:𝔹);
+	}else{
+		return vector(1,1:𝔹):𝔹[];
+	}
+	return xs;
+}
+def asserted(c:!𝔹){
+	if c {
+		const n:=2;
+		xs:=vector(n,1:𝔹);
+	}else{
+		xs:=vector(1,1:𝔹);
+		assert(false);
+	}
+	return xs;
+}
+def nested(c:!𝔹){
+	if !c {
+		assert(false);
+	}else{
+		const n:=2;
+		xss:=vector(3,vector(n,1:𝔹));
+	}
+	return xss:(𝔹[])^3;
+}
+def redefined(c:!𝔹){
+	xs:=vector(0,0:𝔹);
+	if c {
+		const n:=3;
+		forget(xs);
+		xs:=vector(n,0:𝔹);
+	}else{
+		assert(false);
+	}
+	n:=4;
+	return (xs:𝔹[],n);
+}
+def tuples(c:!𝔹,d:!𝔹){
+	if c {
+		const n:=2;
+		if d {
+			const m:=1;
+			t:=(vector(n,0:𝔹),vector(m,1:𝔹),n+m);
+		}else{
+			return ([]:𝔹[],[]:𝔹[],0);
+		}
+	}else{
+		return ([]:𝔹[],[]:𝔹[],1);
+	}
+	(a,b,k):=t;
+	return (a:𝔹[],b:𝔹[],k);
+}
+def main(){
+	assert(measure(vectors(true))==[0,0,0]);
+	assert(measure(asserted(true))==[1,1]);
+	assert(measure(nested(true))==([1,1],[1,1],[1,1]));
+	(xs,n):=redefined(true);
+	assert(measure(xs)==[0,0,0]&&n==4);
+	(a,b,k):=tuples(true,true);
+	assert(measure(a,b)==([0,0],[1])&&k==3);
+	return (vectors(true),asserted(true),nested(true),tuples(true,false));
+}

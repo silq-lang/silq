@@ -1,0 +1,60 @@
+// args: --run
+
+def random(){
+	c:=X(0:𝔹);
+	while true{
+		a:=H(0:𝔹);
+		if measure(a){ return c; }
+		with c:=X(c) do { }
+	}
+}
+def counted(){
+	c:=0:𝔹;
+	k:=0;
+	while true{
+		k+=1;
+		a:=H(0:𝔹);
+		if measure(a){ return c; }
+		with c:=X(c) do if c { phase(π); }
+	}
+}
+def combined(){
+	c:=0:𝔹;
+	k:=0;
+	while true{
+		k+=1;
+		a:=H(0:𝔹);
+		if measure(a)||k==4 { return c; }
+		with c:=X(c) do { }
+	}
+}
+def repeated(){
+	c:=X(0:𝔹);
+	r:=0:𝔹;
+	repeat 4 {
+		a:=H(0:𝔹);
+		if measure(a) { r:=X(r); }
+		with c:=X(c) do { }
+	}
+	measure(r);
+	return c;
+}
+def ranged(){
+	c:=X(0:𝔹);
+	r:=0:𝔹;
+	for i in 0..4 {
+		a:=H(0:𝔹);
+		if measure(a) { r:=X(r); }
+		with c:=X(c) do { }
+	}
+	measure(r);
+	return c;
+}
+def main(){
+	assert(measure(random())==1);
+	assert(measure(counted())==0);
+	assert(measure(combined())==0);
+	assert(measure(repeated())==1);
+	assert(measure(ranged())==1);
+	return (random(),counted(),combined(),repeated(),ranged());
+}

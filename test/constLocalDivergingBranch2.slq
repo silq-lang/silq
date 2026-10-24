@@ -1,0 +1,28 @@
+def f(c:!𝔹){
+	if c {
+		const n:=3;
+		x:=0:uint[n];
+	}else{
+		assert(false);
+	}
+	return measure(x) as !ℕ; /// error
+}
+def g(c:!𝔹){
+	if c {
+		const n:=3;
+		x:=0:uint[n];
+		x[0]:=H(x[0]); /// error
+	}else{
+		assert(false);
+	}
+	return 0;
+}
+def h(c:!𝔹){
+	if !c {
+		assert(false);
+	}else{
+		const n:=3;
+		x:=5:!uint[n];
+	}
+	return x as !ℕ; /// error
+}

@@ -1,0 +1,88 @@
+// args: --run
+
+def vectors(x:𝔹){
+	with x:=H(x) do {
+		const n:=3;
+		ys:=vector(n,0:𝔹);
+	}
+	return (x,ys);
+}
+def nested(x:𝔹){
+	with x:=X(x) do {
+		const n:=2;
+		xss:=vector(3,vector(n,1:𝔹));
+	}
+	n:=4;
+	return (x,xss:(𝔹[])^3,n);
+}
+def tuples(x:𝔹){
+	with x:=H(x) do {
+		const n:=2;
+		t:=(vector(n,1:𝔹),n);
+	}
+	(a,k):=t;
+	return (x,a:𝔹[],k);
+}
+def branches(c:!𝔹,x:𝔹){
+	if c {
+		with x:=H(x) do {
+			const n:=2;
+			ys:=vector(n,1:𝔹);
+		}
+	}else{
+		return (x,[]:𝔹[]);
+	}
+	return (x,ys:𝔹[]);
+}
+def repeated(x:𝔹){
+	s:=0:!ℕ;
+	repeat 2 {
+		with x:=H(x) do {
+			const n:=s+1;
+			ys:=vector(n,0:!𝔹);
+		}
+		s+=ys.length;
+	}
+	return (x,s);
+}
+def quantumReturn(c:!𝔹,const q:𝔹,r:𝔹){
+	if c {
+		if q { return r; }
+		const n:=3;
+		ys:=vector(n,0:𝔹);
+	}else{
+		ys:=vector(2,0:𝔹);
+	}
+	m:=ys.length;
+	forget(ys=vector(m,0:𝔹));
+	return r;
+}
+def quantumReturnDiverging(c:!𝔹,const q:𝔹,r:𝔹){
+	if c {
+		if q { return r; }
+		const n:=3;
+		ys:=vector(n,0:𝔹);
+	}else{
+		assert(false);
+	}
+	m:=ys.length;
+	forget(ys=vector(m,0:𝔹));
+	return r;
+}
+def main(){
+	(x,ys):=vectors(0:𝔹);
+	assert(measure(x,ys)==(0,[0,0,0]));
+	(y,xss,n):=nested(0:𝔹);
+	assert(measure(y,xss)==(0,([1,1],[1,1],[1,1]))&&n==4);
+	(z,a,m):=tuples(1:𝔹);
+	assert(measure(z,a)==(1,[1,1])&&m==2);
+	(u,bs):=branches(true,0:𝔹);
+	assert(measure(u,bs)==(0,[1,1]));
+	(v,s):=repeated(1:𝔹);
+	assert(measure(v)==1&&s==3);
+	q:=H(0:𝔹);
+	r:=quantumReturn(true,q,1:𝔹);
+	w:=quantumReturnDiverging(true,q,0:𝔹);
+	assert(measure(r,w)==(1,0));
+	return (vectors(1:𝔹),nested(1:𝔹),tuples(0:𝔹),branches(true,1:𝔹),repeated(0:𝔹),measure(H(q)));
+}

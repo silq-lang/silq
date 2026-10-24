@@ -1,0 +1,48 @@
+// args: --run
+
+def hadamard(){
+	c:=0:𝔹;
+	while true{
+		a:=0;
+		if !c { a:=H(a); }
+		if measure(a){ return c; }
+		with c:=X(c) do { }
+	}
+}
+def rotated(){
+	c:=0:𝔹;
+	while true{
+		a:=0;
+		if !c { a:=rotY(π/2,a); phase(π); }
+		if measure(a){ return c; }
+		with c:=X(c) do if c { phase(π); }
+	}
+}
+def consumed(){
+	c:=0:𝔹;
+	while true{
+		a:=0:!ℕ;
+		a:=(λ(moved x:!ℕ)qfree⇒x+1)(a);
+		b:=H(0:𝔹);
+		if measure(b)&&a==1 { return c; }
+		with c:=X(c) do { }
+	}
+}
+def nested(){
+	c:=0:𝔹;
+	k:=0:!ℕ;
+	while true{
+		a:=k:!ℕ;
+		if a==0 { a:=(λ(moved x:!ℕ)qfree⇒x+2)(a); }
+		b:=H(0:𝔹);
+		if measure(b)&&a==2 { return c; }
+		with c:=X(c) do { }
+	}
+}
+def main(){
+	assert(measure(hadamard())==0);
+	assert(measure(rotated())==0);
+	assert(measure(consumed())==0);
+	assert(measure(nested())==0);
+	return (hadamard(),rotated(),consumed(),nested());
+}

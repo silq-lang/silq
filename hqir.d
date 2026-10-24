@@ -5412,13 +5412,16 @@ class ScopeWriter {
 						}
 						sc.checkEmpty(false);
 
-						foreach(decl; scCont.nscope.mergedVars) {
+						auto merged = scCont.nscope.mergedVars;
+						IdMap!Expression subst;
+						foreach(decl; merged) addMergedVersion(subst, decl);
+						foreach(j; mergeOrder(merged.map!(d => d.mergedInto).array, merged.map!(d => [typeForDecl(d.mergedInto), typeForDecl(d)]).array)) {
+							auto decl = merged[j];
 							auto outer = decl.mergedInto;
 							assert(outer.scope_ is nscope);
 							auto ty = typeForDecl(outer);
-							assert(ty == typeForDecl(decl));
 							assert(outer.mergedFrom.canFind(decl)); // (the returning branch may merge as well, e.g., if it aborts under quantum control)
-							scTail.defineVar(outer, scCont.getVar(decl, false));
+							scTail.defineVar(outer, scCont.genSubtype(scCont.getVar(decl, false), typeForDecl(decl), subst.length ? ty.substitute(subst) : ty)); // (the merged type can be wider, e.g., if it mentions a `const` local of the branch)
 						}
 						scCont.checkEmpty(false);
 						if(rv.retCond.condQ) {
@@ -5586,6 +5589,7 @@ class ScopeWriter {
 					r.vars[name] = Variable(var.decl, r.valMerge(cond, valUnreachable, var.value));
 					var.value = null;
 				}
+				r.carryPinned(w, cond);
 				return r;
 			}
 
@@ -5689,12 +5693,17 @@ class ScopeWriter {
 		}
 		auto r = sub.genCompoundStmt(e);
 		if(r.mayPass) {
-			foreach(decl; sub.nscope.mergedVars) {
+			auto merged = sub.nscope.mergedVars;
+			IdMap!Expression subst;
+			foreach(decl; merged) addMergedVersion(subst, decl);
+			foreach(j; mergeOrder(merged.map!(d => d.mergedInto).array, merged.map!(d => [typeForDecl(d.mergedInto), typeForDecl(d)]).array)) {
+				auto decl = merged[j];
 				assert(decl.scope_ is sub.nscope);
 				auto outer = decl.mergedInto;
 				assert(outer.scope_ is nscope);
 				assert(outer.mergedFrom == [decl]);
-				defineVar(outer, sub.getVar(decl, false));
+				auto ty = typeForDecl(outer);
+				defineVar(outer, sub.genSubtype(sub.getVar(decl, false), typeForDecl(decl), subst.length ? ty.substitute(subst) : ty)); // (the merged type can be wider, e.g., if it mentions a `const` local of the block)
 			}
 		}
 		sub.checkEmpty(!!r.isAbort);
@@ -6548,6 +6557,43 @@ class ScopeWriter {
 			pinTypeDeep(arrTy.next);
 		}
 		pinType(ty);
+	}
+
+	// makes the values that `w` pinned for the types of its merged variables
+	// (see `genCompoundStmt`) available in this writer, which continues after
+	// `w` under `cond` without seeing its registers
+	void carryPinned(ScopeWriter w, CondAny cond) {
+		bool mentionsForgotten(Expression e) {
+			foreach(id; ast_ty.freeIdentifiers(e))
+				if(id.meaning && w.nscope.forgottenVars.canFind!(d => d is id.meaning)) return true;
+			return false;
+		}
+		void carry(Expression e) {
+			if(!mentionsForgotten(e)) return;
+			auto ei = ctx.exprEval(e);
+			if(ei in cachedNat) return;
+			auto creg = w.getExprNat(e);
+			cachedNat[ei] = cond.isQuantum ? creg : ccg.removeCond(cond.ccond, creg); // (classical values do not depend on quantum conditions)
+		}
+		void rec(Expression ty) {
+			if(!mentionsForgotten(ty)) return;
+			if(auto vecTy = cast(ast_ty.VectorTy) ty) {
+				carry(vecTy.num);
+				rec(vecTy.next);
+			} else if(auto tupTy = cast(ast_ty.TupleTy) ty) {
+				foreach(t; tupTy.types) rec(t);
+			} else if(auto intTy = ast_ty.isFixedIntTy(ty)) {
+				carry(intTy.bits);
+			} else if(auto zmodTy = ast_ty_isZmodTy(ty)) {
+				carry(zmodTy.N);
+			} else if(auto arrTy = cast(ast_ty.ArrayTy) ty) {
+				rec(arrTy.next);
+			}
+			auto ei = ctx.exprEval(ty);
+			auto structural = cast(ast_ty.Type) ei.expr || ast_ty.isFixedIntTy(ei.expr) || ast_ty_isZmodTy(ei.expr);
+			if(structural && !getSimpleRTTI(ei.expr) && ei !in cachedRTTI) cachedRTTI[ei] = new RTTI(this, ei); // (as `pinType`, evaluated in this writer)
+		}
+		foreach(decl; w.nscope.mergedVars) if(auto ty = typeForDecl(decl)) rec(ty);
 	}
 
 	RTTI getRTTI(Expression ty) {

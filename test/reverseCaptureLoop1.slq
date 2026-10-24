@@ -1,0 +1,23 @@
+// args: --run
+
+def main(){
+	xs:=0;
+	def foo(){
+		repeat 3 { xs+=1; }
+		return xs;
+	}
+	reverse(foo)(foo());
+	reverse(reverse(foo))(foo());
+	ys:=[0];
+	def bar(){
+		for i in 0..3 { ys~=[1]; }
+		return ys;
+	}
+	reverse(bar)(bar());
+	zs:=0;
+	baz:=λ(){ k:=0; while k<2 { zs+=2; k+=1; } return zs; };
+	reverse(baz)(baz());
+	r:=(foo(),bar(),baz());
+	assert(r==(3,[0,1,1,1],4));
+	return r;
+}

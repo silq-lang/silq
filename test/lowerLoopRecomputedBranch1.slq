@@ -1,0 +1,34 @@
+// args: --run
+def ranged(){
+	w:=H(0:𝔹);
+	o:=dup(w);
+	m:=measure(o);
+	n:=measure(dup(o));
+	if true { for i in 0..1 { w:=X(w); } }
+	return (measure(w),m,n);
+}
+def repeated(){
+	w:=H(0:𝔹);
+	o:=dup(w);
+	m:=measure(o);
+	n:=measure(dup(o));
+	if m { repeat 2 { w:=X(w); } } else { repeat 3 { w:=X(w); } }
+	return (measure(w),m,n);
+}
+def counted(){
+	w:=H(0:𝔹);
+	o:=dup(w);
+	m:=measure(o);
+	n:=measure(dup(o));
+	if measure(H(0:𝔹)) { if true { k:=0; while k<1 { w:=X(w); k+=1; } } } else { w:=X(w); }
+	return (measure(w),m,n);
+}
+def main(){
+	(a,b,c):=ranged();
+	assert(a!=b&&b==c);
+	(d,e,f):=repeated();
+	assert(d==1&&e==f);
+	(g,h,i):=counted();
+	assert(g!=h&&h==i);
+	return (a!=b,d,g!=h);
+}

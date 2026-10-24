@@ -1,0 +1,22 @@
+def f(x:𝔹){
+	with x:=H(x) do {
+		const n:=3;
+		y:=0:uint[n];
+	}
+	return (x,measure(y)); /// error
+}
+def g(x:𝔹){
+	with x:=X(x) do {
+		const n:=3;
+		k:=5:!uint[n];
+	}
+	return (x,k as !ℕ); /// error
+}
+def h(x:𝔹){
+	with x:=H(x) do {
+		const n:=3;
+		ys:=vector(2,0:uint[n]);
+		ys[0][0]:=H(ys[0][0]); /// error
+	}
+	return x;
+}
