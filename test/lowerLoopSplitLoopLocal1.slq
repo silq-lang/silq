@@ -1,0 +1,54 @@
+// args: --run
+
+def f[n:!ℕ](const x:𝔹,const z:𝔹){
+	(a,c):=(dup(x),dup(z));
+	for i in 0..n{
+		t:=dup(c);
+		if t { } else { }
+		forget(t);
+		if !c {
+			repeat 2 {
+				d:=3+1;
+				assert(d>3);
+			}
+			(a,c):=(c,a);
+		}
+	}
+	return (a,c);
+}
+def g[n:!ℕ](const x:𝔹,const z:𝔹){
+	(a,c):=(dup(x),dup(z));
+	for i in 0..n{
+		if c {
+			for j in 0..3 {
+				d:=2+1;
+				assert(d>j);
+			}
+			c:=X(c);
+		}
+	}
+	return (a,c);
+}
+def h[n:!ℕ](const x:𝔹,const z:𝔹){
+	(a,c):=(dup(x),dup(z));
+	k:=0:!ℕ;
+	while k<n{
+		if c {
+			m:=0:!ℕ;
+			while m<2 {
+				m+=1;
+				d:=5;
+				assert(d>m);
+			}
+			(a,c):=(c,a);
+		}
+		k+=1;
+	}
+	return (a,c);
+}
+def main(){
+	assert(measure(f[2](0:𝔹,0:𝔹))==(0,0));
+	assert(measure(f[3](1:𝔹,0:𝔹))==(0,1));
+	assert(measure(g[2](0:𝔹,1:𝔹))==(0,0));
+	assert(measure(h[3](0:𝔹,1:𝔹))==(1,0));
+}

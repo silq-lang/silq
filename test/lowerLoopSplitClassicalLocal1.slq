@@ -1,0 +1,112 @@
+// args: --run
+
+def constant[n:!ℕ](x:𝔹,y:𝔹)lifted{
+	(a,b):=(x,y);
+	for i in 0..n{
+		if b {
+			d:=[1,2];
+			if false { } else { forget(d); }
+			a:=X(a);
+		}
+		(a,b):=(b,a);
+	}
+	return (a,b);
+}
+def nested[n:!ℕ](x:𝔹,y:𝔹,z:𝔹)lifted{
+	(a,b,c):=(x,y,z);
+	for i in 0..n{
+		if b {
+			if c {
+				d:=1:!ℕ;
+				assert(d==1);
+				a:=X(a);
+			}
+		}
+		(a,b,c):=(c,a,b);
+	}
+	return (a,b,c);
+}
+def computed[n:!ℕ](x:𝔹,y:𝔹)lifted{
+	(a,b):=(x,y);
+	for i in 0..n{
+		u:=2*i;
+		if b {
+			k:=u+1;
+			if k%2==1 { } else { }
+			a:=X(a);
+		}
+		(a,b):=(b,a);
+	}
+	return (a,b);
+}
+def redefined[n:!ℕ](x:𝔹,y:𝔹)lifted{
+	(a,b):=(x,y);
+	for i in 0..n{
+		u:=1:!ℕ;
+		if b {
+			forget(u);
+			u:=2:!ℕ;
+			if u==2 { } else { }
+			a:=X(a);
+		}
+		(a,b):=(b,a);
+	}
+	return (a,b);
+}
+def swapped[n:!ℕ](x:𝔹,y:𝔹)lifted{
+	(a,b):=(x,y);
+	for i in 0..n{
+		if a==b{
+			if b {
+				d:=[1,2];
+				if false { } else { forget(d); }
+				(a,b):=(b,a);
+			}
+		}else{
+			if a {
+				(a,b):=(b,a);
+			}
+		}
+	}
+	return (a,b);
+}
+def middle[n:!ℕ](x:𝔹,y:𝔹,z:𝔹)lifted{
+	(a,b,c):=(x,y,z);
+	for i in 0..n{
+		if !a {
+			c:=X(c);
+			d:=1+1;
+			assert(d>1);
+			(c,b):=(b,c);
+			if b&&a { }
+		}
+		(b,a):=(a,b);
+	}
+	return (a,b,c);
+}
+def inner[n:!ℕ](x:𝔹,y:𝔹,z:𝔹)lifted{
+	(a,b,c):=(x,y,z);
+	repeat n{
+		repeat 2 {
+			if c {
+				(b,a):=(a,b);
+				d:=2+1;
+				assert(d>2);
+				a:=X(a);
+			}
+			(c,a):=(a,c);
+		}
+	}
+	return (a,b,c);
+}
+def main(){
+	x:=0:𝔹; y:=1:𝔹;
+	r1:=constant[3](x,y);
+	r2:=nested[2](x,y,1:𝔹);
+	r3:=computed[1](x,y);
+	r4:=redefined[2](x,y);
+	r5:=swapped[2](y,x);
+	r6:=middle[3](x,y,0:𝔹);
+	r7:=inner[1](x,y,1:𝔹);
+	return (measure(r1),measure(r2),measure(r3),measure(r4),measure(r5),measure(r6),measure(r7));
+}

@@ -1,0 +1,16 @@
+// args: --run
+
+def g(n:!ℕ)⇒0;
+def isOdd(n:!ℕ)⇒n%2=1;
+
+def f(N:!ℕ){
+	period:=1;
+	while isOdd(period){
+		period:=g(N);
+		(period coerce ⊥)=N; /// run_error
+	}
+	return 0;
+}
+def main(){
+	return f(4);
+}

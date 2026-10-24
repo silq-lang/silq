@@ -1,0 +1,43 @@
+// args: --run
+
+def nested(x:𝔹,y:𝔹)lifted{
+	(b,c):=(x,y);
+	if c {
+		if b { t:=X(c); } else { t:=X(c); }
+		c:=X(X(t));
+	}
+	return (b,c);
+}
+def classicalBranch(x:𝔹,y:𝔹)lifted{
+	(b,c):=(x,y);
+	if c {
+		if true { t:=X(c); } else { t:=X(c); }
+		c:=t;
+	}
+	return (b,c);
+}
+def conjunction(x:𝔹,y:𝔹)lifted{
+	(b,c):=(x,y);
+	if b&&c {
+		if b { t:=X(c); } else { t:=X(c); }
+		c:=X(t);
+	}
+	return (b,c);
+}
+def looped[n:!ℕ](x:𝔹,y:𝔹)lifted{
+	(a,b,c):=(x,y,x);
+	repeat n{
+		if b&&c {
+			if !b { }
+			if b==a { c:=X(c); } else { c:=X(c); }
+			c:=X(c);
+		}
+		if !c {
+			if !b { }
+		}
+	}
+	return (a,b,c);
+}
+def main(){
+	return (measure(nested(1:𝔹,1:𝔹)),measure(classicalBranch(0:𝔹,1:𝔹)),measure(conjunction(1:𝔹,1:𝔹)),measure(looped[2](1:𝔹,1:𝔹)));
+}

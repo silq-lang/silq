@@ -1,0 +1,15 @@
+def f(){
+	xs:=vector(3,0:𝔹);
+	with { with { } do { k:=1; } xs[k]:=H(xs[k]); } do { xs[k]:=Z(xs[k]); }
+	return (measure(xs),k); /// error
+}
+def g(){
+	xs:=vector(3,0:𝔹);
+	with { xs[0]:=H(xs[0]); with { } do { k:=2; xs[k]:=X(xs[k]); } } do { xs[0]:=Z(xs[0]); }
+	return (measure(xs),k); /// error
+}
+def h(){
+	xs:=vector(3,0:𝔹);
+	with { with { } do { k:=1; } xs[k]:=H(xs[k]); } do { m:=k; xs[m]:=Z(xs[m]); }
+	return (measure(xs),m,k); /// error
+}

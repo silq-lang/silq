@@ -1,0 +1,76 @@
+// args: --run
+
+def flipped(q:𝔹){
+	def f(){
+		g:=λ(){
+			h:=λ(){
+				q:=(λ(){ k:=dup(q); forget(k); q:=X(q); return q; })();
+				return measure(q);
+			};
+			return h();
+		};
+		return g();
+	}
+	return f();
+}
+def looped(q:𝔹){
+	def f(){
+		g:=λ(){
+			h:=λ(){
+				c:=λ(){ k:=dup(q); forget(k); repeat 3 { q:=X(q); } return q; };
+				return measure(c());
+			};
+			return h();
+		};
+		return g();
+	}
+	return f();
+}
+def deeper(q:𝔹){
+	def f(){
+		g:=λ(){
+			h:=λ(){
+				c:=λ(){
+					d:=λ(){ k:=dup(q); forget(k); q:=X(q); return q; };
+					return d();
+				};
+				return measure(c());
+			};
+			return h();
+		};
+		return g();
+	}
+	return f();
+}
+def counted(){
+	z:=1:!ℕ;
+	def f(){
+		g:=λ(){
+			h:=λ(){
+				c:=λ(){ k:=z+0; z+=2; return (k,z); };
+				return c();
+			};
+			return h();
+		};
+		return g();
+	}
+	return f();
+}
+def twice(q:𝔹,m:!ℕ){
+	def f(){
+		g:=λ(){
+			h:=λ(){
+				q:=(λ(){ k:=dup(q); forget(k); repeat m { q:=X(q); } return q; })();
+				r:=measure(dup(q));
+				q:=(λ(){ k:=dup(q); forget(k); q:=X(q); return q; })();
+				return (measure(q),r);
+			};
+			return h();
+		};
+		return g();
+	}
+	return f();
+}
+def main(){
+	return (flipped(0:𝔹),looped(0:𝔹),deeper(1:𝔹),counted(),twice(1:𝔹,2));
+}

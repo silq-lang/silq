@@ -1,0 +1,42 @@
+// args: --run
+
+def f(){
+	xs:=vector(3,0:𝔹);
+	with { xs[0]:=H(xs[0]); with { } do { def p(a:!ℕ)qfree⇒a; k:=p(2); xs[k]:=X(xs[k]); } } do { xs[0]:=Z(xs[0]); }
+	return measure(xs);
+}
+def g(){
+	xs:=vector(3,0:𝔹);
+	with { with { } do { def p(a:!ℕ):!ℕ⇒if a==0 { 0 } else { p((a-1) coerce !ℕ)+1 }; k:=p(2); } xs[k]:=H(xs[k]); } do { xs[k]:=Z(xs[k]); }
+	with { with { } do { def q(a:!ℕ):!ℕ⇒if a==0 { 0 } else { (λ(b:!ℕ)⇒q(b))((a-1) coerce !ℕ)+1 }; k:=q(1); } xs[k]:=H(xs[k]); } do { xs[k]:=Z(xs[k]); }
+	return measure(xs);
+}
+def h(){
+	xs:=vector(3,0:𝔹);
+	with { with { } do { def p[n:!ℕ](a:!ℕ)qfree⇒a+n; k:=p[1](1); } xs[k]:=H(xs[k]); } do { xs[k]:=Z(xs[k]); }
+	with { with { } do { def q[n:!ℕ](a:!ℕ):!ℕ⇒if a==0 { n } else { q[n]((a-1) coerce !ℕ)+1 }; k:=q[0](1); } xs[k]:=H(xs[k]); } do { xs[k]:=Z(xs[k]); }
+	with { with { } do { def r(r:!ℕ)⇒r; k:=r(0); } xs[k]:=H(xs[k]); } do { xs[k]:=Z(xs[k]); }
+	return measure(xs);
+}
+def s(){
+	xs:=vector(3,0:𝔹);
+	for i in 0..2 { with { with { } do { def p(a:!ℕ)qfree⇒a+i; k:=p(0); } xs[k]:=H(xs[k]); } do { xs[k]:=Z(xs[k]); } }
+	j:=2;
+	with { with { with { } do { def p(a:!ℕ)qfree⇒a+j; } k:=p(0); } do { m:=p(0); xs[k]:=H(xs[k]); } } do { xs[m]:=Z(xs[m]); }
+	return measure(xs);
+}
+def t(q:𝔹,xs:𝔹^3,j:!ℕ)mfree{
+	with { with { } do { def p()⇒dup(q); r:=p(); } xs[1]:=X(xs[1]); } do { xs[2]:=X(xs[2]); }
+	with { xs[0]:=H(xs[0]); with { } do { def p(a:!ℕ)qfree⇒a+j; k:=p(1); xs[k]:=X(xs[k]); } } do { xs[0]:=Z(xs[0]); }
+	return (q,xs);
+}
+def main(){
+	assert(f()==(1,0,0));
+	assert(g()==(0,1,1));
+	assert(h()==(1,1,1));
+	assert(s()==(1,1,1));
+	(q,xs):=t(H(0:𝔹),vector(3,0:𝔹),1);
+	assert(measure(H(q),xs)==(0,(1,0,1)));
+	(q2,ys):=reverse(t)(t(H(0:𝔹),vector(3,0:𝔹),1),1);
+	assert(measure(H(q2),ys)==(0,(0,0,0)));
+}

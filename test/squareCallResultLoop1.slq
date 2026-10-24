@@ -1,0 +1,30 @@
+// args: --run
+
+def bar(x:𝔹)[const y:𝔹]{
+	H(0):=H(0);
+	return x;
+}
+def baz(x:𝔹)[const y:!𝔹]{
+	H(0):=H(0);
+	if y { x:=X(x); }
+	return x;
+}
+def main(){
+	x:=0:𝔹;
+	repeat 1{
+		x:=bar(x)[0];
+	}
+	y:=1:𝔹;
+	for i in 0..3{
+		y:=baz(y)[i==1];
+	}
+	z:=0:𝔹;
+	k:=0;
+	while k<2{
+		z:=baz(z)[true];
+		k+=1;
+	}
+	w:=1:𝔹;
+	w:=bar(w)[0];
+	assert(measure(x,y,z,w)==(0,0,0,1));
+}

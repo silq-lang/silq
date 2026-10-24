@@ -1,0 +1,15 @@
+def f(){
+	xs:=vector(3,0:𝔹);
+	with { def g(a:!ℕ)qfree⇒a+1; k:=g(0); xs[k]:=H(xs[k]); } do { xs[k]:=Z(xs[k]); }
+	return (measure(xs),g(2)); /// error
+}
+def h(){
+	xs:=vector(3,0:𝔹);
+	with { def g(a:!ℕ)qfree⇒a+1; } do { xs[0]:=X(xs[0]); }
+	return (measure(xs),g(2)); /// error
+}
+def r(){
+	xs:=vector(3,0:𝔹);
+	with { xs[0]:=H(xs[0]); with { } do { def p(a:!ℕ)qfree⇒a; k:=p(2); xs[k]:=X(xs[k]); } } do { xs[0]:=Z(xs[0]); }
+	return (measure(xs),p(1)); /// error
+}

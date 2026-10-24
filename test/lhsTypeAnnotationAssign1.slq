@@ -1,0 +1,54 @@
+// args: --run
+
+def pair()⇒(3,2);
+def swapped(x:𝔹,y:𝔹)⇒(y,x);
+def converted(){
+	x:=0;
+	(x:!ℕ)=3;
+	return x+1;
+}
+def coerced(){
+	x:=0;
+	(x coerce !ℕ)=3;
+	return x+1;
+}
+def negative(){
+	x:=1:!ℕ;
+	(x:!ℤ)=-2;
+	return x;
+}
+def components(){
+	x:=0; y:=0;
+	((x:!ℕ),y)=(3,2);
+	return (x+1,y);
+}
+def unpacked(){
+	x:=0; y:=0;
+	((x:!ℕ),y)=pair();
+	return (x+1,y);
+}
+def nested(){
+	x:=0; y:=0; z:=0;
+	(((x:!ℕ),y),(z coerce !ℕ))=(pair(),2);
+	return (x+1,y,z+1);
+}
+def ordered(){
+	x:=0; y:=0; z:=0;
+	(z,((x:!ℕ),y))=(1,pair());
+	return (x+1,y,z);
+}
+def retyped(){
+	x:=0; y:=0; z:=0;
+	(((x:!ℕ),y):!ℕ×!ℕ,z)=((3,2),1);
+	return (x+1,y,z);
+}
+def qubits(){
+	x:=0:𝔹; y:=1:𝔹;
+	((x:𝔹),y)=(y,x);
+	((x:𝔹),(y coerce 𝔹))=swapped(x,y);
+	(x,(y:𝔹))=swapped(x,y);
+	return measure(x,y);
+}
+def main(){
+	return (converted(),coerced(),negative(),components(),unpacked(),nested(),ordered(),retyped(),qubits());
+}

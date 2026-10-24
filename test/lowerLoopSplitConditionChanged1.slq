@@ -1,0 +1,90 @@
+// args: --run
+
+def hoisted[n:!ℕ](x:𝔹,y:𝔹)lifted{
+	(a,b,c):=(x,y,x);
+	for i in 0..n{
+		if b {
+			(a,b):=(b,a);
+			t:=dup(b);
+			if t { } else { }
+			forget(t);
+			c:=X(c);
+		}
+	}
+	return (a,b,c);
+}
+def nested[n:!ℕ](x:𝔹,y:𝔹)lifted{
+	(a,b):=(x,y);
+	for i in 0..n{
+		if b {
+			for j in 0..2{
+				(a,b):=(b,a);
+			}
+			if a { } else { }
+		}
+	}
+	return (a,b);
+}
+def repeated[n:!ℕ](x:𝔹,y:𝔹)lifted{
+	(a,b):=(x,y);
+	repeat n{
+		if b {
+			repeat 2{
+				(a,b):=(b,a);
+			}
+			if a { } else { }
+		}
+	}
+	return (a,b);
+}
+def counter[n:!ℕ](x:𝔹,y:𝔹)lifted{
+	(a,b):=(x,y);
+	i:=0;
+	while i<n{
+		if b {
+			k:=0:!ℕ;
+			while k<2{
+				(a,b):=(b,a);
+				k+=1;
+			}
+			if a { } else { }
+		}
+		i+=1;
+	}
+	return (a,b);
+}
+def flipped[n:!ℕ](x:𝔹,y:𝔹)lifted{
+	(a,b):=(x,y);
+	for i in 0..n{
+		if b {
+			(a,b):=(b,a);
+			t:=dup(b);
+			if t { } else { }
+			forget(t);
+			a:=X(a);
+		}
+	}
+	return (a,b);
+}
+def counted[n:!ℕ](x:𝔹,y:𝔹)lifted{
+	(a,b):=(x,y);
+	for i in 0..n{
+		if b {
+			(a,b):=(b,a);
+			d:=i+1;
+			assert(d>i);
+			a:=X(a);
+		}
+	}
+	return (a,b);
+}
+def main(){
+	x:=0:𝔹; y:=1:𝔹;
+	r1:=hoisted[1](x,y);
+	r2:=nested[1](x,y);
+	r3:=repeated[1](x,y);
+	r4:=counter[1](x,y);
+	r5:=flipped[2](x,y);
+	r6:=counted[2](x,y);
+	return (measure(r1),measure(r2),measure(r3),measure(r4),measure(r5),measure(r6));
+}

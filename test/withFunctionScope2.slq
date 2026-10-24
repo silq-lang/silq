@@ -1,0 +1,18 @@
+// args: --run
+
+def f(){
+	xs:=vector(3,0:𝔹);
+	with { def g(a:!ℕ)qfree⇒a+1; k:=g(0); xs[k]:=H(xs[k]); } do { xs[k]:=Z(xs[k]); }
+	with { def g(a:!ℕ)qfree⇒a+2; k:=g(0); xs[k]:=H(xs[k]); } do { xs[k]:=Z(xs[k]); }
+	def g(a:!ℕ)qfree⇒a;
+	return (measure(xs),g(3));
+}
+def h(){
+	xs:=vector(3,0:𝔹);
+	with { def g(a:!ℕ)qfree⇒a; } do { k:=g(1); xs[k]:=X(xs[k]); }
+	return (measure(xs),k);
+}
+def main(){
+	assert(f()==((0,1,1),3));
+	assert(h()==((0,1,0),1));
+}
