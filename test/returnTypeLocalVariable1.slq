@@ -1,0 +1,40 @@
+// args: --run
+
+def constLocal(){
+	const n:=3;
+	xs:=vector(n,0:𝔹);
+	return xs;
+}
+def redefined(m:!ℕ){
+	n:=m+1;
+	return vector(n,1:!𝔹);
+}
+def mixed(m:!ℕ){
+	const n:=m+1;
+	return (vector(n,0:!𝔹),m,vector(m,1:!𝔹));
+}
+def nested(){
+	const n:=2;
+	return vector(3,vector(n,1:!𝔹));
+}
+def branches(c:!𝔹){
+	if c { return vector(2,0:!𝔹); }
+	const n:=3;
+	return vector(n,1:!𝔹);
+}
+def looped(k:!ℕ){
+	for i in 0..k {
+		const n:=i+1;
+		if i==1 { return vector(n,1:!𝔹); }
+	}
+	return vector(k,0:!𝔹);
+}
+def closure(){
+	f:=λ(){ const n:=2; return vector(n,1:!𝔹); };
+	return f();
+}
+def main(){
+	r:=(measure(constLocal()),redefined(1),mixed(1),nested(),branches(true),branches(false),looped(3),looped(1),closure());
+	assert(r==([0,0,0],[1,1],([0,0],1,[1]),[[1,1],[1,1],[1,1]],[0,0],[1,1,1],[1,1],[0],[1,1]));
+	return r;
+}

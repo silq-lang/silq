@@ -1,0 +1,16 @@
+// args: --run
+
+def equal(n:!ℕ){
+	return vector(n,0:!𝔹)==vector(n,0:!𝔹);
+}
+def ordered(n:!ℕ,m:!ℕ){
+	return vector(n,0:!𝔹)<vector(m,0:!𝔹);
+}
+def pairs(n:!ℕ){
+	return (vector(n,1:!𝔹),1)==(vector(n,1:!𝔹),1);
+}
+def main(){
+	r:=(equal(2),ordered(2,3),pairs(2));
+	assert(r==(1,1,1));
+	return r;
+}

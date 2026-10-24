@@ -907,7 +907,7 @@ struct QState{
 				}
 				case Tag.closure:
 					return state.makeClosure(type,Closure(closure.fun,closure.context?[closure.context.dup(state)].ptr:null));
-				case Tag.array_: return state.makeArray(type,array_.map!(x=>x.dup(state)).array);
+				case Tag.array_: return state.makeArray(type,array_.map!(x=>x.isValid?x.dup(state):x).array); // (as for `convertTo`)
 				case Tag.record:
 					Record nrecord;
 					foreach(k,v;record) nrecord[k]=v.dup(state);
@@ -1090,7 +1090,7 @@ struct QState{
 				case Tag.array_:
 					assert(rhs.tag==Tag.array_,"incompatible values for array forget");
 					enforce(array_.length==rhs.array_.length,"inconsistent array lengths for forget"); // TODO: good error reporting
-					foreach(i,ref x;array_) x.forget(state,rhs.array_[i]);
+					foreach(i,ref x;array_) if(x.isValid||rhs.array_[i].isValid) x.forget(state,rhs.array_[i]); // (as for `convertTo`)
 					return;
 				case Tag.record:
 					enforce(rhs.tag==Tag.record,"incompatible values for record forget");
@@ -1113,7 +1113,7 @@ struct QState{
 					if(closure.context) return closure.context.forget(state);
 					return;
 				case Tag.array_:
-					foreach(i,ref x;array_) x.forget(state);
+					foreach(i,ref x;array_) if(x.isValid) x.forget(state); // (as for `convertTo`)
 					return;
 				case Tag.record:
 					foreach(k,v;record) v.forget(state);
@@ -1133,7 +1133,7 @@ struct QState{
 					Closure nclosure=this.closure;
 					if(nclosure.context) *nclosure.context=(*closure.context).consumeOnRead();
 					return makeClosure(type,nclosure);
-				case Tag.array_: return makeArray(type,array_.map!(x=>x.consumeOnRead()).array);
+				case Tag.array_: return makeArray(type,array_.map!(x=>x.isValid?x.consumeOnRead():x).array); // (as for `convertTo`)
 				case Tag.record:
 					Record nrecord;
 					foreach(k,v;record) nrecord[k]=v.consumeOnRead();
@@ -1206,13 +1206,14 @@ struct QState{
 			final switch(otag){
 				case Tag.array_:
 					if(ntag==Tag.array_){
+						static Value convertElement(Value v,Expression ntype)=>v.isValid?v.convertTo(ntype):v; // (an invalid element is a component that is being replaced, e.g., by `t:=x[0]` in the transformation of a `with` statement)
 						if(auto arr=cast(ArrayTy)ntype){
-							return makeArray(ntype,array_.map!(v=>v.convertTo(arr.next)).array);
+							return makeArray(ntype,array_.map!(v=>convertElement(v,arr.next)).array);
 						}else if(auto vec=cast(VectorTy)ntype){
-							return makeArray(ntype,array_.map!(v=>v.convertTo(vec.next)).array);
+							return makeArray(ntype,array_.map!(v=>convertElement(v,vec.next)).array);
 						}else if(auto tpl=ntype.isTupleTy()){
 							assert(array_.length==tpl.length);
-							return makeArray(ntype,iota(array_.length).map!(i=>array_[i].convertTo(tpl[i])).array);
+							return makeArray(ntype,iota(array_.length).map!(i=>convertElement(array_[i],tpl[i])).array);
 						}else assert(0);
 					}
 					if(ntag==Tag.intval||ntag==Tag.uintval){

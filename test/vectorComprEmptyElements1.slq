@@ -1,0 +1,25 @@
+// args: --run
+
+def f(xs:(⊥×!𝔹)^2)⇒[(b,a) for (a,b) in xs];
+def g[n:!ℕ](xs:(⊥×!𝔹)^n)⇒[(b,a) for (a,b) in xs];
+def h(xs:(⊥×!𝔹)[])⇒[(b,a) for (a,b) in xs];
+def nested(c:!𝔹){
+	if c { r:=[(b,a) for (a,b) in [(i coerce ⊥,1) for i in 0..10]]; }
+	return ();
+}
+def ranged(c:!𝔹){
+	if c { r:=[i coerce ⊥ for i in 0..10]; }
+	return ();
+}
+def converted(c:!𝔹){
+	xs:=[]:(⊥×!𝔹)[];
+	if c { r:=xs coerce (⊥×!𝔹)^2; }
+	return xs;
+}
+def main(){
+	r:=g[0](())~h([]);
+	nested(false);
+	ranged(false);
+	xs:=converted(false);
+	return (r.length,xs.length);
+}

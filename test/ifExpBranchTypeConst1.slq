@@ -1,0 +1,38 @@
+// args: --run
+
+def measured(c:!𝔹,n:!ℕ){
+	q:=if c then vector(n,0:𝔹) else vector(n,1:𝔹);
+	r:=measure(q):!𝔹[];
+	return (r,[move(n)]);
+}
+def forgotten(n:!ℕ){
+	q:=(if true then vector(n,0:𝔹) else vector(n,0:𝔹));
+	forget(q=vector(n,0:𝔹));
+	return [move(n)];
+}
+def branched(k:!ℕ){
+	n:=k+1;
+	q:=(if true then vector(n,0:𝔹) else vector(n,0:𝔹));
+	if k<2 {
+		measure(q);
+		r:=[]:!ℕ[];
+	} else {
+		forget(q=vector(n,0:𝔹));
+		r:=[move(n)];
+	}
+	return r;
+}
+def recomputed(){
+	k:=0;
+	do{ k+=1; n:=k+1; q:=(if true then vector(n,0:𝔹) else vector(n,0:𝔹)); }while k<2 { measure(q); }
+	return (n,measure(q):!𝔹[]);
+}
+def main(){
+	(r,m):=measured(false,2);
+	assert(r==[1,1]&&m==[2]);
+	assert(forgotten(3)==[3]);
+	assert(branched(1).length==0&&branched(3)==[4]);
+	(n,s):=recomputed();
+	assert(n==3&&s==[0,0,0]);
+	return (r,m,n,s);
+}

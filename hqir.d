@@ -4349,7 +4349,7 @@ class ScopeWriter {
 
 	Value implExpr(ast_exp.IteExp e) {
 		// Pin evaluation of lengths etc. outside the if statement
-		pinType(e.type);
+		pinTypeDeep(e.type); // (the RTTI is completed lazily in this writer, possibly after a branch of a later `if` statement consumed a variable that the type mentions)
 
 		if(ast_ty.isEmpty(e.cond.type)) {
 			// The condition always aborts (e.g. an index out of bounds), so
@@ -7353,6 +7353,12 @@ class ScopeWriter {
 		// equal types may differ in `typeHasClassical` / `typeHasQuantum`, for
 		// example when `Expression.eval()` on a vector length makes it zero.
 		v = genNoopConvert(v, null, conv.from);
+
+		if(ast_ty.isEmpty(conv.to) && !ast_ty.isEmpty(conv.from)) { // (there is no value of the empty type: the conversion aborts, e.g., from `⊥[]` to `⊥^2`)
+			auto r = valAbort(conv.to);
+			valDeallocError(v);
+			return r;
+		}
 
 		auto flags = conversionFlags(conv);
 		if(flags == ConvertFlags.noop) return genNoopConvert(v, conv.from, conv.to);

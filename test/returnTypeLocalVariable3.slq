@@ -1,4 +1,4 @@
-def f(){ /// error
+def f(){
 	n:=2;
 	x:=vector(n,0:𝔹);
 	y:=x coerce 𝔹^(let { v:=[0,0]; v[0]=n; } in v[0]);

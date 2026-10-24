@@ -1,10 +1,10 @@
 
-def f(moved n:!ℕ){ /// error
+def f(moved n:!ℕ){
 	n=5;
 	return vector(n,0:𝔹);
 }
 
 def main(){
 	x := f(42);
-	return measure[B^42](x);
+	return measure[B^42](x); /// error
 }

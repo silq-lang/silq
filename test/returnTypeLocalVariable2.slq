@@ -1,0 +1,11 @@
+def fixed(){ /// TODO
+	const n:=3;
+	return 0:uint[n];
+}
+def function(){ /// TODO
+	const n:=2;
+	return λ(x:!𝔹^n)⇒x;
+}
+def main(){
+	return ();
+}
