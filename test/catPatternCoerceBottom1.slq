@@ -1,0 +1,11 @@
+def f(){
+	(x coerce ⊥)~(y:_^2):=(1,2,3):!ℕ[];
+	return (x,y);
+}
+def g(){
+	(a:_^1)~(b coerce ⊥):=(1,2,3):!ℕ[];
+	return (a,b);
+}
+def main(){
+	return (f(),g());
+}

@@ -1,0 +1,47 @@
+// args: --run
+
+def swapped(const x:𝔹,const z:𝔹,w:𝔹){
+	(a,c):=(dup(x),dup(z));
+	for i in 0..3{
+		if measure(dup(a)) {
+			with c:=X(c) do { w:=X(w); }
+		}
+		(a,c):=(c,a);
+	}
+	return (a,c,w);
+}
+def emptied(const x:𝔹,const z:𝔹,w:𝔹){
+	(a,c):=(dup(x),dup(z));
+	for i in 0..2{
+		if measure(dup(a)) {
+			with c:=X(c) do { }
+		}
+		(a,c):=(c,a);
+	}
+	return (a,c,w);
+}
+def nested(const x:𝔹,const z:𝔹,w:𝔹){
+	(a,b,c):=(dup(x),dup(x),dup(z));
+	repeat 2 {
+		repeat 2 {
+			with b:=X(b) do {
+				w:=X(w);
+			}
+			if a==c {
+				a:=X(a);
+				d:=3;
+				assert(d==3);
+			}
+		}
+	}
+	return (a,b,c,w);
+}
+def main(){
+	(x,z):=(1:𝔹,0:𝔹);
+	r:=swapped(x,z,0:𝔹);
+	s:=emptied(x,z,0:𝔹);
+	t:=nested(x,z,0:𝔹);
+	(mr,ms,mt):=measure(r,s,t);
+	assert(mr==(0,1,0)&&ms==(1,0,0)&&mt==(1,1,0,0));
+	return measure(x,z);
+}

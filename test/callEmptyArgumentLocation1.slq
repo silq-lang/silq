@@ -1,0 +1,16 @@
+def f(x:!𝔹^2)⇒x;
+def g[n:!ℕ](x:!𝔹^n)⇒x;
+def h(){
+	return f(); /// error
+}
+def k(){
+	return g[2](); /// error
+}
+def main(){
+	xs:=[0];
+	def foo(){
+		xs~=[1];
+		return xs;
+	}
+	return reverse(reverse(foo))(); /// error
+}

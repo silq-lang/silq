@@ -1,0 +1,40 @@
+// args: --run
+
+def repeated(const x:𝔹,const y:𝔹){
+	(a,b):=(dup(x),dup(y));
+	repeat 3 {
+		d:=1:!ℕ;
+		d:=(λ(moved x:!ℕ)qfree⇒x+1)(d);
+		assert(d==2);
+		(a,b):=(b,a);
+	}
+	return (a,b);
+}
+def ranged(const x:𝔹,const y:𝔹){
+	(a,b):=(dup(x),dup(y));
+	for i in 0..2 {
+		d:=i:!ℕ;
+		d:=(λ(moved x:!ℕ)qfree⇒x+1)(d);
+		assert(d==i+1);
+		(a,b):=(b,a);
+	}
+	return (a,b);
+}
+def counted(const x:𝔹,const y:𝔹){
+	(a,b):=(dup(x),dup(y));
+	k:=0:!ℕ;
+	while k<3 {
+		d:=k;
+		if k%2==0 { d:=(λ(moved x:!ℕ)qfree⇒x+2)(d); }
+		assert(d>=k);
+		(a,b):=(b,a);
+		k+=1;
+	}
+	return (a,b);
+}
+def main(){
+	(x,y):=(1:𝔹,0:𝔹);
+	(r,s,t):=(repeated(x,y),ranged(x,y),counted(x,y));
+	assert(measure(r,s,t)==((0,1),(1,0),(0,1)));
+	return measure(x,y);
+}
