@@ -1,0 +1,36 @@
+// args: --run
+
+def f(n:!ℕ){
+	x:=vector(2,0:𝔹);
+	y:=x coerce 𝔹^(let { m:=n; } in let { k:=move(m); } in k);
+	return (measure(y),n);
+}
+def g(n:!ℕ){
+	x:=vector(2,0:𝔹);
+	y:=x coerce 𝔹^(let { m:=n; } in if m==2 then (let { k:=move(m); } in k) else 2);
+	return (measure(y),n);
+}
+def h(n:!ℕ){
+	x:=vector(2,0:𝔹);
+	y:=x coerce 𝔹^(let { m:=n; } in if (let { k:=move(m); } in k==2) then 2 else 3);
+	return (measure(y),n);
+}
+def k(n:!ℕ){
+	x:=vector(2,0:𝔹);
+	y:=x coerce 𝔹^(let { m:=n; g:=λ()⇒move(m); } in g());
+	return (measure(y),n);
+}
+def l(n:!ℕ){
+	x:=vector(2,0:𝔹);
+	y:=x coerce 𝔹^(let { m:=n; forget(m); a:=dup(n); for i in 0..1 { a+=0; } } in a);
+	return (measure(y),n);
+}
+def main(){
+	(a,b):=f(2);
+	(c,d):=g(2);
+	(e,p):=h(2);
+	(r,s):=k(2);
+	(t,u):=l(2);
+	assert(a.length==2&&c.length==2&&e.length==2&&r.length==2&&t.length==2);
+	assert(b==2&&d==2&&p==2&&s==2&&u==2);
+}

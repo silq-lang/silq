@@ -1,0 +1,46 @@
+def f1(n:!ℕ){
+	x:=vector(2,0:𝔹);
+	return x coerce 𝔹^(let { m:=move(n); } in m); /// error
+}
+def f2(n:!ℕ){
+	x:=vector(2,0:𝔹);
+	return x coerce 𝔹^(let { forget(n); } in 2); /// error
+}
+def f3(n:!ℕ){
+	x:=vector(2,0:𝔹);
+	return x coerce 𝔹^(let { n=3; } in n); /// error
+}
+def f4(n:!ℕ){
+	x:=vector(2,0:𝔹);
+	return x coerce 𝔹^(let { n+=0; } in n); /// error
+}
+def f5(n:!ℕ,k:!ℕ){
+	x:=vector(2,0:𝔹);
+	return x coerce 𝔹^(let { (n,k):=(k,n); } in n); /// error
+}
+def f6(n:!ℕ){
+	x:=vector(2,0:𝔹);
+	return x coerce 𝔹^(let { g:=λ()⇒move(n); } in 2); /// error
+}
+def f7(n:!ℕ){
+	x:=vector(2,0:𝔹);
+	return x coerce 𝔹^(let { for i in 0..2 { n+=1; } } in 2); /// error
+}
+def f8(n:!ℕ[]){
+	x:=vector(2,0:𝔹);
+	return x coerce 𝔹^(let { n[0]+=1; } in 2); /// error
+}
+def f9(q:𝔹){
+	x:=vector(2,0:𝔹);
+	y:=x coerce 𝔹^(let { forget(q=0:𝔹); } in 2); /// error
+	return (y,q);
+}
+def f10(n:!ℕ){
+	x:=vector(2,0:𝔹);
+	return x coerce 𝔹^(let { m:=n; k:=0:uint[let { j:=move(m); } in j]; } in 2); /// error
+}
+def f11(n:!ℕ){
+	x:=vector(2,0:𝔹);
+	t:=typeof(x coerce 𝔹^(let { m:=move(n); } in m)); /// error
+	return (x,n);
+}

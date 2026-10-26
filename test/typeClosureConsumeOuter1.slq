@@ -1,0 +1,9 @@
+def f(n:!ℕ){
+	x:=vector(2,0:𝔹);
+	return x coerce 𝔹^(λ()⇒move(n))(); /// error
+}
+def g(n:!ℕ){
+	x:=vector(2,0:𝔹);
+	t:=typeof(x coerce 𝔹^(λ()⇒move(n))()); /// error
+	return (x,n);
+}

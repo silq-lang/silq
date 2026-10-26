@@ -1,0 +1,24 @@
+// args: --run
+
+def f(n:!ℕ){
+	x:=vector(2,0:𝔹);
+	y:=x coerce 𝔹^(let { m:=n; } in (λ()⇒move(m))());
+	return measure(y);
+}
+def g(n:!ℕ){
+	x:=vector(2,1:𝔹);
+	return x coerce 𝔹^(let { m:=n; } in (λ()⇒move(m))());
+}
+def h(n:!ℕ){
+	x:=vector(2,0:𝔹);
+	y:=x coerce 𝔹^(let { m:=n; } in (λ()⇒move(m))());
+	return (measure(y),n);
+}
+def main(){
+	a:=f(2);
+	b:=measure(g(2));
+	(c,k):=h(2);
+	assert(a.length==2&&!a[0]&&!a[1]);
+	assert(b.length==2&&b[0]&&b[1]);
+	assert(c.length==2&&k==2);
+}

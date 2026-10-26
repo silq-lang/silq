@@ -1,0 +1,32 @@
+// args: --run
+
+def f(n:!ℕ){
+	t:=typeof(vector(n,0:!𝔹));
+	return 0;
+}
+def g(n:!ℕ){
+	t:=typeof(vector(2,0:!𝔹) coerce !𝔹^n);
+	return n;
+}
+def h(n:!ℕ)(x:𝔹^n){
+	t:=typeof(x);
+	return (measure(x),n);
+}
+def k(n:!ℕ){
+	t:=typeof(vector(n,0:!𝔹));
+	if n==2 { m:=n; return m; }
+	for i in 0..n { u:=typeof(vector(i+n,0:!𝔹)); }
+	return 0;
+}
+def l(n:!ℕ){
+	y:=vector(n,0:!𝔹):typeof(vector(n,1:!𝔹));
+	return y;
+}
+def main(){
+	assert(f(2)==0);
+	assert(g(2)==2);
+	(v,s):=h(2)(vector(2,1:𝔹));
+	assert(v.length==2&&v[0]&&s==2);
+	assert(k(2)==2&&k(3)==0);
+	assert(l(2).length==2);
+}
