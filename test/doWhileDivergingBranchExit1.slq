@@ -1,0 +1,22 @@
+// args: --run
+
+def f(n:!ℕ){
+	m:=dup(n);
+	do{ if m==6 { assert(false); } else { q:=X(0:𝔹); x:=measure(q); } m+=1; }while m<4;
+	return (m,x);
+}
+def g(n:!ℕ){
+	m:=dup(n);
+	do{ if m!=6 { q:=X(0:𝔹); for i in 0..1 { q:=X(q); } y:=measure(q); m+=1; } else { assert(false); } }while m<4;
+	return (m,y);
+}
+def h(n:!ℕ){
+	m:=dup(n);
+	do{ if m==6 { assert(false); } else { q:=X(0:𝔹); if measure(q) { m+=1; } } }while m!=4{ assert(false); }
+	return m;
+}
+def main(){
+	assert(f(1)==(4,1));
+	assert(g(1)==(4,0));
+	assert(h(3)==4);
+}
