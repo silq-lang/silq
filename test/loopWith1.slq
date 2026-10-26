@@ -1,0 +1,16 @@
+// args: --run
+
+n:=3;
+def main(){
+	xs:=vector(n,0:𝔹);
+	for i in 0..n{
+		xs[i]:=H(xs[i]);
+	}
+	ys:=dup(xs);
+	for i in 0..n{
+		with t:=X(ys[i]){
+			if (1:𝔹) { t=0; assert(false); } else { t=0; } /// run_error
+		}
+	}
+	return (xs,ys);
+}

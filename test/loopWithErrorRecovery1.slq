@@ -4,11 +4,10 @@ def main(){
 	for i in 0..n{
 		xs[i]:=H(xs[i]);
 	}
-	ys:=dup(xs);
 	for i in 0..n{
-		with t:=X(ys[i]){
+		with t:=X(xs[i]){
 			if (1:𝔹) { t=0; assert(false); } else { t=0; } /// error
 		}
 	}
-	return (xs,ys);
+	return xs;
 }

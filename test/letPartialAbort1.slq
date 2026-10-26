@@ -1,0 +1,24 @@
+// args: --run
+
+def f(n:!ℕ){
+	return let { m:=dup(n); if m==7 { assert(false); } m+=1; } in m;
+}
+def g(n:!ℕ){
+	return let { m:=dup(n); if m==7 { assert(false); } else { m+=1; } } in m;
+}
+def h(n:!ℕ){
+	return let { q:=0:𝔹; if n==7 { assert(false); } else { q:=X(q); } } in measure(q);
+}
+def k(n:!ℕ){
+	return let { v:=vector(n,0:𝔹); if n==7 { forget(v); assert(false); } } in measure(v);
+}
+def l(n:!ℕ){
+	return vector(n,0:𝔹) coerce 𝔹^(let { m:=dup(n); if m!=7 { m+=0; } else { assert(false); } } in m);
+}
+def main(){
+	assert(f(2)==3);
+	assert(g(2)==3);
+	assert(h(2)==1);
+	assert(k(2)==vector(2,0:!𝔹));
+	assert(measure(l(2))==vector(2,0:!𝔹));
+}

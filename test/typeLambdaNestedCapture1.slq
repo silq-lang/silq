@@ -1,0 +1,18 @@
+// args: --run
+
+def f(k:!ℕ) ⇒ vector((λ(){ z:=k; t:=(λ()⇒z+1)(); return t; })(), true);
+def g(k:!ℕ) ⇒ vector((λ(){ return (λ(x:!ℕ)⇒x+k)(1); })(), true);
+def h(k:!ℕ) ⇒ vector(let { y:=k; } in (λ(){ z:=y; return (λ()⇒z)(); })(), true);
+def main(){
+	u:=1;
+	b:=f(u);
+	forget(b=vector(2,true));
+	c:=g(u);
+	forget(c=vector(2,true));
+	d:=h(u);
+	forget(d=vector(1,true));
+	q:=H(0);
+	m:=measure(q);
+	e:=f(m);
+	forget(e=vector((λ(){ z:=m; t:=(λ()⇒z+1)(); return t; })(),true));
+}

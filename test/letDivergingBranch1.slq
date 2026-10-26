@@ -1,0 +1,41 @@
+// args: --run
+
+def f(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	y:=let { v:=vector(n,0:!ℕ); if n==7 { assert(false); } } in v.length;
+	forget(x=vector(n,0:𝔹));
+	return y;
+}
+def g(n:!ℕ){
+	x:=0:𝔹;
+	y:=let { m:=dup(n); for i in 0..m { if i==7 { assert(false); } } } in m;
+	return (y,measure(x));
+}
+def h(n:!ℕ){
+	x:=0:𝔹;
+	y:=let { m:=dup(n); while m>7 { assert(false); } } in m;
+	return (y,measure(x));
+}
+def k(n:!ℕ){
+	x:=0:𝔹;
+	y:=let { m:=dup(n); do{ m+=1; }while m<3{ assert(false); } } in m;
+	return (y,measure(x));
+}
+def l(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	return x coerce 𝔹^(let { m:=dup(n); if m==7 { assert(false); } } in m);
+}
+def p(n:!ℕ){
+	x:=0:𝔹;
+	y:=vector(let { m:=dup(n); if m==3 { if m!=2 { assert(false); } assert(false); } } in m,0:𝔹);
+	forget(y=vector(n,0:𝔹));
+	return measure(x);
+}
+def main(){
+	assert(f(2)==2);
+	assert(g(2)==(2,0));
+	assert(h(2)==(2,0));
+	assert(k(5)==(6,0));
+	assert(measure(l(2))==vector(2,0:!𝔹));
+	assert(p(2)==0);
+}

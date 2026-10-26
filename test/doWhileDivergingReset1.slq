@@ -1,0 +1,33 @@
+// args: --run
+
+def f(n:!ℕ){
+	z:=X(0:𝔹);
+	m:=dup(n);
+	do{ m+=1; }while m<2{ assert(false); }
+	return (m,measure(z));
+}
+def g(n:!ℕ){
+	z:=X(0:𝔹);
+	m:=dup(n);
+	if m<9 {
+		y:=0:𝔹;
+		do{ m+=1; y:=X(y); }while m<2{ assert(false); }
+		if measure(y) { m+=1; }
+	}
+	return (m,measure(z));
+}
+def h(n:!ℕ){
+	return let { m:=dup(n); z:=X(0:𝔹); do{ m+=1; }while m<2{ assert(false); } repeat 2 { m+=1; } } in (m,measure(z));
+}
+def k(n:!ℕ){
+	z:=X(0:𝔹);
+	m:=dup(n);
+	repeat 2 { do{ m+=1; z:=X(z); }while m>99{ assert(false); } }
+	return (m,measure(z));
+}
+def main(){
+	assert(f(1)==(2,1));
+	assert(g(1)==(3,1));
+	assert(h(1)==(4,1));
+	assert(k(1)==(3,1));
+}

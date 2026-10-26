@@ -5463,28 +5463,7 @@ class ScopeWriter {
 					}
 				}
 				if(auto rv = cast(ItePartialAbort) ite) {
-					auto scCont = rv.scCont;
-					auto scFail = sc.withCond(null, rv.cond);
-					bool contUnreachable = rv.cond.isClassical && ctx.condAlwaysHolds(rv.cond.ccond); // (e.g., `if true { assert(false); } else { ... }`: the code of the continuation is not generated)
-					auto merged = scCont.nscope.mergedVars;
-					IdMap!Expression subst;
-					foreach(decl; merged) addMergedVersion(subst, decl);
-					foreach(j; mergeOrder(merged.map!(d => d.mergedInto).array, merged.map!(d => [typeForDecl(d.mergedInto), typeForDecl(d)]).array)) {
-						auto decl = merged[j];
-						auto outer = decl.mergedInto;
-						auto ty = typeForDecl(outer);
-						assert(outer.mergedFrom.canFind(decl)); // (the aborting branch may merge as well, e.g., if it aborts under quantum control)
-						auto v0 = scCont.getVar(decl, false);
-						if(contUnreachable) {
-							sc.defineVar(outer, scFail.valError(rv.witness, ty));
-							continue;
-						}
-						v0 = scCont.genSubtype(v0, typeForDecl(decl), subst.length ? ty.substitute(subst) : ty); // (the merged type can be wider, e.g., if the frontend does not know that the other branch aborts)
-						auto v1 = scFail.valError(null, ty); // (unreachable: classical values stay those of the continuation)
-						sc.defineVar(outer, sc.valMerge(rv.cond, v0, v1));
-					}
-					scCont.checkEmpty(false);
-					rv.forgetCond(sc);
+					sc.mergePartialAbort(rv);
 					if(sc !is this) vars = sc.vars;
 					continue;
 				}
@@ -5761,8 +5740,37 @@ class ScopeWriter {
 		} else ite.forgetCond(this);
 	}
 
+	void mergePartialAbort(ItePartialAbort rv) {
+		auto scCont = rv.scCont;
+		auto scFail = withCond(null, rv.cond);
+		bool contUnreachable = rv.cond.isClassical && ctx.condAlwaysHolds(rv.cond.ccond); // (e.g., `if true { assert(false); } else { ... }`: the code of the continuation is not generated)
+		auto merged = scCont.nscope.mergedVars;
+		IdMap!Expression subst;
+		foreach(decl; merged) addMergedVersion(subst, decl);
+		foreach(j; mergeOrder(merged.map!(d => d.mergedInto).array, merged.map!(d => [typeForDecl(d.mergedInto), typeForDecl(d)]).array)) {
+			auto decl = merged[j];
+			auto outer = decl.mergedInto;
+			auto ty = typeForDecl(outer);
+			assert(outer.mergedFrom.canFind(decl)); // (the aborting branch may merge as well, e.g., if it aborts under quantum control)
+			auto v0 = scCont.getVar(decl, false);
+			if(contUnreachable) {
+				defineVar(outer, scFail.valError(rv.witness, ty));
+				continue;
+			}
+			v0 = scCont.genSubtype(v0, typeForDecl(decl), subst.length ? ty.substitute(subst) : ty); // (the merged type can be wider, e.g., if the frontend does not know that the other branch aborts)
+			auto v1 = scFail.valError(null, ty); // (unreachable: classical values stay those of the continuation)
+			defineVar(outer, valMerge(rv.cond, v0, v1));
+		}
+		scCont.checkEmpty(false);
+		rv.forgetCond(this);
+	}
+
 	Result implStmt(ast_exp.IteExp e) {
 		auto ite = genIte(e);
+		if(auto rv = cast(ItePartialAbort) ite) { // (e.g., in the statements of a `let` expression)
+			mergePartialAbort(rv);
+			return Result.passes();
+		}
 		forgetCond(e, ite);
 		if(cast(ItePass) ite) return Result.passes();
 		if(auto rv = cast(IteAbort) ite) return Result.aborts(rv.witness);
