@@ -1,0 +1,38 @@
+// args: --run
+
+def f(const c:!𝔹,const d:!𝔹){
+	i:=0;
+	while i<2 { i+=1; if c { if d { return 0; } x:=1; } else { x:=2; } forget(x); }
+	return 1;
+}
+
+def g(const c:!𝔹,const d:!𝔹){
+	i:=0;
+	while i<2 { i+=1; if c { x:=vector(2,1:!𝔹); if d { forget(x); return 0; } } else { x:=vector(2,1:!𝔹); } forget(x); }
+	return 1;
+}
+
+def h(const c:!𝔹,const d:!𝔹){
+	for i in 0..1 { if c { n:=2; x:=vector(n,1:𝔹); if d { y:=measure(x:𝔹[]); forget(n); return y; } } else { n:=0; x:=vector(n,1:𝔹); } measure(x); }
+	return []:!𝔹[];
+}
+
+def p(const c:!𝔹,const d:!𝔹){
+	s:=0;
+	repeat 2 { if c { if d { return s; } t:=3; } else { t:=4; } s+=t; }
+	return s;
+}
+
+def q(const c:!𝔹,const d:!𝔹){
+	s:=0;
+	for i in 0..3 { if c { if d { if i==1 { return s+10; } } y:=i; } else { y:=1; } s+=y; }
+	return s;
+}
+
+def main(){
+	assert(f(true,true)==0&&f(true,false)==1&&f(false,false)==1);
+	assert(g(true,true)==0&&g(true,false)==1&&g(false,false)==1);
+	assert(h(true,true)==[1,1]&&h(true,false)==[]&&h(false,false)==[]);
+	assert(p(true,true)==0&&p(true,false)==6&&p(false,true)==8);
+	assert(q(true,true)==10&&q(true,false)==3&&q(false,false)==3);
+}
