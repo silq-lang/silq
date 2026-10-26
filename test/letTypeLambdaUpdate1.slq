@@ -1,0 +1,19 @@
+// args: --run
+
+def updated(k:!ℕ) ⇒ vector(let { y:=k; } in (λ(){ y+=1; return y; })(), true);
+def branch(k:!ℕ) ⇒ vector(let { y:=k; } in (λ(){ if k==2 { y+=1; } return y; })(), false);
+def defined(k:!ℕ) ⇒ vector(let { y:=k; def f(){ y+=1; return y; } } in f(), true);
+def renamed(k:!ℕ) ⇒ vector(let { y:=k+1; def f(){ y+=1; return y; } } in f(), false);
+
+def main(){
+	a:=updated(2);
+	forget(a=vector(3,true));
+	b:=branch(2);
+	forget(b=vector(3,false));
+	c:=defined(2);
+	forget(c=vector(3,true));
+	y:=2;
+	d:=renamed(y);
+	forget(d=vector(4,false));
+	return y;
+}

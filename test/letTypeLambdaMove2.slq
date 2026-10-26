@@ -1,0 +1,21 @@
+// args: --run
+
+def early(k:!ℕ) ⇒ vector(let { y:=k; } in (λ(){ if false { return move(y); } return move(y); })(), true);
+def consumed(k:!ℕ) ⇒ vector(let { y:=k; } in (λ(){ return move(y); })(), false);
+def pair(k:!ℕ) ⇒ vector(let { n:!ℕ:=k+1; (x,y):=(n,n·n); } in x+(λ(){ if k==0 { return move(y); } return move(y); })(), true);
+def nested(k:!ℕ) ⇒ vector(let { y:=k; } in (λ(){ return (λ(){ return move(y); })(); })(), false);
+
+def main(){
+	q:=H(0);
+	m:=measure(q);
+	a:=early(m);
+	forget(a=vector(m,true));
+	b:=early(2);
+	forget(b=vector(2,true));
+	c:=consumed(m+1);
+	forget(c=vector(m+1,false));
+	d:=pair(2);
+	forget(d=vector(12,true));
+	e:=nested(m);
+	forget(e=vector(m,false));
+}

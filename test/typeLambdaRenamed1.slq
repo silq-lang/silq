@@ -1,0 +1,22 @@
+// args: --run
+
+def updated(k:!ℕ) ⇒ vector((λ(){ z:=0; z+=k; return z; })(), true);
+def branch(k:!ℕ) ⇒ vector((λ(){ z:=0; if k==2 { z+=k; } return z; })(), false);
+def loop(k:!ℕ) ⇒ vector((λ(){ z:=0; for i in 0..k { z+=1; } return z; })(), true);
+def returned(k:!ℕ) ⇒ vector((λ(){ z:=k+1; return z; })(), false);
+def parameter(k:!ℕ) ⇒ vector((λ(z:!ℕ){ z+=k; return z; })(k), true);
+
+def main(){
+	z:=2;
+	a:=updated(z);
+	forget(a=vector(2,true));
+	b:=branch(z);
+	forget(b=vector(2,false));
+	c:=loop(z);
+	forget(c=vector(2,true));
+	d:=returned(z);
+	forget(d=vector(3,false));
+	e:=parameter(z);
+	forget(e=vector(4,true));
+	return z;
+}

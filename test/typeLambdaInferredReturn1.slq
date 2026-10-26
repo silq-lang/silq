@@ -1,0 +1,29 @@
+// args: --run
+
+def closure(k:!ℕ) ⇒ vector((λ(){ return k; })(), true);
+def expression(k:!ℕ) ⇒ vector((λ()⇒k)(), false);
+def branch(k:!ℕ) ⇒ vector((λ(){ if k==0 { return 0; } return k; })(), true);
+def bound(k:!ℕ) ⇒ vector(let { y:=k; } in (λ()⇒y)(), false);
+def comprehension(k:!ℕ) ⇒ vector([k for i in 0..1][0], true);
+def local(k:!ℕ) ⇒ vector((λ(){ z:=k; z+=1; return z; })(), false);
+
+def main(){
+	q:=H(0);
+	m:=measure(q);
+	a:=closure(m);
+	forget(a=vector(m,true));
+	b:=expression(m);
+	forget(b=vector(m,false));
+	c:=branch(m);
+	forget(c=vector(m,true));
+	d:=bound(m);
+	forget(d=vector(m,false));
+	e:=comprehension(m);
+	forget(e=vector(m,true));
+	f:=comprehension(2);
+	forget(f=vector(2,true));
+	g:=local(m);
+	forget(g=vector(m+1,false));
+	h:=local(0);
+	forget(h=vector(1,false));
+}

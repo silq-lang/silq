@@ -1,0 +1,16 @@
+// args: --run
+
+def read(k:!ℕ) ⇒ vector(let { y:=k; for i in 0..1 { y+=1; } } in (λ(){ return y+1; })(), true);
+def consumed(k:!ℕ) ⇒ vector(let { y:=k; for i in 0..1 { y+=1; } } in (λ(){ return move(y); })(), false);
+def copied(k:!ℕ) ⇒ vector(let { y:=k; for i in 0..1 { y+=1; } } in (λ(){ z:=y; z+=1; return z; })(), true);
+
+def main(){
+	q:=H(0);
+	m:=measure(q);
+	a:=read(m);
+	forget(a=vector(m+2,true));
+	b:=consumed(m);
+	forget(b=vector(m+1,false));
+	c:=copied(2);
+	forget(c=vector(4,true));
+}

@@ -2433,10 +2433,10 @@ struct QState{
 			writeln(name ~ paren[0] ~ arg.toStringImpl(opt) ~ paren[1]);
 			stdout.flush();
 		}
-		if(fun.isNested){
+		if(fun.isNested||context){
 			assert(!!context);
 			ncur.passContext(fun,*context);
-		}else assert(!context);
+		}
 		if(fun.isTuple){
 			enforce(arg.tag==Value.Tag.array_,"argument is not a tuple");
 			foreach(i,prm;fun.params)
@@ -3112,7 +3112,7 @@ struct Interpreter(QState){
 		}
 	}
 	Expression closedType(Expression te){
-		te=closeType(te,(Identifier id)=>lookupMeaning(qstate,id.meaning,true,id.scope_));
+		te=closeType(te,(Identifier id)=>id.scope_?lookupMeaning(qstate,id.meaning,true,id.scope_):qstate.readLocal(id.meaning.getName,true)); // (an identifier analyzed in a type may have no scope, e.g., in the body of a vector comprehension)
 		return closeSizes(te);
 	}
 	Expression closeSizes(Expression te){
@@ -3272,7 +3272,20 @@ struct Interpreter(QState){
 				if(let.s.blscope_) closeScope(let.s.blscope_);
 				return result;
 			}
-			if(auto le=cast(LambdaExp)e) return qstate.makeFunction(le.fd,le.fd.scope_);
+			if(auto le=cast(LambdaExp)e){
+				if(!le.fd.scope_&&le.fd.context&&le.fd.capturedDecls.length){ // (a function analyzed in a type has no scope, e.g., in the result of a `let` expression)
+					QState.Record record;
+					foreach(decl;le.fd.capturedDecls){
+						auto name=decl.getName;
+						auto constCapture=!le.fd.isConsumedCapture(decl);
+						auto val=qstate.readLocal(name,constCapture);
+						if(constCapture) val=val.dup(qstate);
+						record[name]=val;
+					}
+					return qstate.makeFunction(le.fd,[QState.makeRecord(record)].ptr);
+				}
+				return qstate.makeFunction(le.fd,le.fd.scope_);
+			}
 			if(auto vfe=cast(VectorForExp)e){
 				enforce(!!vfe.fd,"vector comprehension not analyzed");
 				auto ft=cast(FunTy)vfe.fd.ftype;

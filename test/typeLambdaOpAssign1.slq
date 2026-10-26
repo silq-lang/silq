@@ -1,0 +1,22 @@
+// args: --run
+
+def local(k:!ℕ) ⇒ vector((λ(){ z:=0; z+=k; return z; })(), true);
+def branch(k:!ℕ) ⇒ vector((λ(){ z:=0; if k==2 { z+=k; } return z; })(), false);
+def loop(k:!ℕ) ⇒ vector((λ(){ z:=0; for i in 0..k { z+=1; } return z; })(), true);
+def captured(k:!ℕ) ⇒ vector(let { y:=k; } in (λ(){ z:=0; if false { z+=y; } return z+y; })(), false);
+def parameter(k:!ℕ) ⇒ vector(let { def f(x:!ℕ){ x+=k; return x; } } in f(k), true);
+
+def main(){
+	w:=2;
+	a:=local(w);
+	forget(a=vector(2,true));
+	b:=branch(w);
+	forget(b=vector(2,false));
+	c:=loop(w);
+	forget(c=vector(2,true));
+	d:=captured(w);
+	forget(d=vector(2,false));
+	e:=parameter(w);
+	forget(e=vector(4,true));
+	return w;
+}
