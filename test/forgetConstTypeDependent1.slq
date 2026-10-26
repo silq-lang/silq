@@ -1,0 +1,24 @@
+def f(const m:!ℕ){
+	x:=vector(m,1:𝔹);
+	forget(m); /// error
+	return 0;
+}
+def g(const m:!ℕ,const c:!𝔹){
+	x:=vector(m,1:!𝔹);
+	if c {
+		forget(m); /// error
+		return 0;
+	}
+	forget(x);
+	return 1;
+}
+def h(const m:!ℕ){
+	x:=(vector(m,1:𝔹),2);
+	n:=move(m); /// error
+	return n;
+}
+def k(const m:!ℕ){
+	x:=vector(m,1:𝔹);
+	m+=1; /// error
+	return 0;
+}

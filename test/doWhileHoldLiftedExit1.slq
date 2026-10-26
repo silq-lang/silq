@@ -1,0 +1,32 @@
+// args: --run
+
+def f(const c:!𝔹){
+	s:=0;
+	k:=0;
+	do{
+		k+=1;
+		if c { x:=vector(1,1:𝔹); } else { x:=vector(2,1:𝔹); }
+	}while k<2 {
+		s+=x.length;
+	}
+	return (s,measure(x:𝔹[]));
+}
+
+def g(const c:!𝔹,m:!ℕ){
+	s:=0;
+	k:=0;
+	do{
+		k+=1;
+		forget(m);
+		if c { x:=vector(k,0:𝔹); } else { x:=vector(0,0:𝔹); }
+		m:=3;
+	}while k<3 {
+		s+=x.length;
+	}
+	return (s+m,x.length);
+}
+
+def main(){
+	assert(f(true)==(1,[1])&&f(false)==(2,[1,1]));
+	assert(g(true,2)==(6,3)&&g(false,2)==(3,0));
+}

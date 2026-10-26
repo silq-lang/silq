@@ -1,0 +1,28 @@
+// args: --run
+
+def f(const c:!𝔹){
+	x:=vector(1,0:𝔹);
+	measure(x);
+	repeat 1 {
+		if c { return (0,0:𝔹); }
+		x:=vector(3,0:𝔹);
+		return (1,0:𝔹);
+	}
+	return (2,0:𝔹);
+}
+
+def g(const c:!𝔹){
+	x:=vector(1,0:𝔹);
+	measure(x);
+	repeat 1 {
+		if c { return 0; }
+		x:=vector(3,0:𝔹);
+		return 1;
+	}
+	return 2;
+}
+
+def main(){
+	assert(measure(f(true))==(0,0)&&measure(f(false))==(1,0));
+	assert(g(true)==0&&g(false)==1);
+}

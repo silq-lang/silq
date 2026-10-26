@@ -1,0 +1,42 @@
+// args: --run
+
+def f(const c:!𝔹){
+	n:=1;
+	for i in 0..2 { if c&&i==1 { return n; } else { forget(n); } n:=i+3; }
+	return n;
+}
+
+def g(const c:!𝔹,const d:!𝔹){
+	n:=1;
+	repeat 3 { if c { if d { return n; } else { forget(n); } } else { n+=1; forget(n); } if d { n:=2; } else { n:=3; } }
+	return n;
+}
+
+def h(const c:!𝔹){
+	x:=vector(2,1:𝔹);
+	i:=0;
+	while i<3 { i+=1; if c&&i==2 { return measure(x); } else { y:=measure(x); } x:=vector(2,0:𝔹); }
+	return measure(x);
+}
+
+def p(const c:!𝔹){
+	s:=0;
+	k:=0;
+	while k<2 { k+=1; if c { t:=k; } else { return s; } s+=t; }
+	return s;
+}
+
+def q(const c:!𝔹){
+	n:=2;
+	i:=0;
+	while i<1 { i+=1; if c { return 0; } return 1; n:=1; }
+	return n;
+}
+
+def main(){
+	assert(f(true)==3&&f(false)==4);
+	assert(g(true,true)==1&&g(true,false)==3&&g(false,true)==2&&g(false,false)==3);
+	assert(h(true)==[0,0]&&h(false)==[0,0]);
+	assert(p(true)==3&&p(false)==0);
+	assert(q(true)==0&&q(false)==1);
+}

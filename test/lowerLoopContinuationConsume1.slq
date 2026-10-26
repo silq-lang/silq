@@ -1,0 +1,75 @@
+// args: --run
+
+def f(const c:!𝔹){
+	n:=2;
+	x:=vector(n,1:!𝔹);
+	i:=0;
+	while i<2 { i+=1; if c { return (0,0:𝔹); } }
+	forget(x);
+	forget(n);
+	return (1,0:𝔹);
+}
+
+def g(const c:!𝔹){
+	n:=2;
+	x:=vector(n,1:!𝔹);
+	for i in 0..3 { if c&&i==1 { return (x.length,0:𝔹); } }
+	forget(x);
+	n+=1;
+	return (n,0:𝔹);
+}
+
+def h(const c:!𝔹){
+	n:=2;
+	x:=vector(n,1:𝔹);
+	i:=0;
+	while i<2 { i+=1; if c { return (x.length,0:𝔹); } }
+	y:=measure(x:𝔹[]);
+	forget(n);
+	return (y.length,0:𝔹);
+}
+
+def p(const c:!𝔹){
+	k:=0;
+	do{
+		k+=1;
+		x:=vector(k,1:!𝔹);
+	}while k<2 {
+		j:=0;
+		while j<1 { j+=1; if c { return (x.length,0:𝔹); } }
+		forget(x);
+		k+=1;
+		return (k,0:𝔹);
+	}
+	return (x.length,0:𝔹);
+}
+
+def q(const c:!𝔹){
+	k:=0;
+	do{
+		k+=1;
+		x:=vector(k,1:!𝔹);
+	}while k<1 {
+		j:=0;
+		while j<1 { j+=1; if c { return 1; } }
+		return 0;
+	}
+	return x.length+2;
+}
+
+def r(const c:!𝔹,m:!ℕ){
+	x:=vector(m,0:!𝔹);
+	i:=0;
+	while i<2 { i+=1; if c { forget(x); forget(m); return (1,0:𝔹); } }
+	forget(x);
+	return (m,0:𝔹);
+}
+
+def main(){
+	assert(measure(f(true))==(0,0)&&measure(f(false))==(1,0));
+	assert(measure(g(true))==(2,0)&&measure(g(false))==(3,0));
+	assert(measure(h(true))==(2,0)&&measure(h(false))==(2,0));
+	assert(measure(p(true))==(1,0)&&measure(p(false))==(2,0));
+	assert(q(true)==3&&q(false)==3);
+	assert(measure(r(true,2))==(1,0)&&measure(r(false,2))==(2,0));
+}

@@ -1,0 +1,21 @@
+// args: --run
+
+def f(m:!ℕ){
+	x:=vector(m,0:!𝔹);
+	k:=0;
+	do{
+		k+=1;
+		y:=vector(3,1:𝔹);
+		n:=x.length;
+		x:=x coerce !𝔹^n;
+	}while k<2 {
+		forget(x);
+		measure(y);
+		x:=vector(m,1:!𝔹);
+	}
+	return (x:!𝔹[],measure(y));
+}
+
+def main(){
+	assert(f(2)==([1,1],[1,1,1]));
+}

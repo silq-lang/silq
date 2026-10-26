@@ -1,0 +1,30 @@
+// args: --run
+
+def f(const c:!𝔹,m:!ℕ){
+	k:=0;
+	do{
+		k+=1;
+		x:=vector(m,1:𝔹);
+	}while k<2 {
+		if c { forget(m); return 0; }
+	}
+	return measure(x:𝔹[]).length+k;
+}
+
+def g(const c:!𝔹,m:!ℕ){
+	k:=0;
+	do{
+		k+=1;
+		x:=vector(m,1:!𝔹);
+	}while k<2 {
+		forget(x);
+		forget(m);
+		return k;
+	}
+	return 0;
+}
+
+def main(){
+	assert(f(true,2)==0&&f(false,2)==4);
+	assert(g(true,2)==1&&g(false,2)==1);
+}

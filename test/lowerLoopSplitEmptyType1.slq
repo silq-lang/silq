@@ -1,0 +1,38 @@
+// args: --run
+
+def f(){
+	x:=vector(1,0:𝔹);
+	s:=0;
+	repeat 2 {
+		y:=measure(x);
+		s+=y.length;
+		x:=vector(0,1:𝔹);
+	}
+	return s;
+}
+
+def g(){
+	x:=vector(1,0:𝔹);
+	repeat 2 {
+		measure(x);
+		x:=vector(0,1:𝔹);
+	}
+	return 0;
+}
+
+def h(const c:!𝔹){
+	x:=vector(2,1:𝔹);
+	s:=0;
+	for i in 0..3 {
+		y:=measure(x);
+		s+=y.length;
+		if c { x:=vector(0,1:𝔹); } else { x:=vector(1,1:𝔹); }
+	}
+	return s;
+}
+
+def main(){
+	assert(f()==1);
+	assert(g()==0);
+	assert(h(true)==2&&h(false)==4);
+}

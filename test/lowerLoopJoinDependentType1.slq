@@ -1,0 +1,78 @@
+// args: --run
+
+def f(const c:!𝔹,m:!ℕ){
+	if c {
+		i:=0;
+		while i<2 { i+=1; if i==2 { return (0,0:𝔹); } }
+		x:=vector(m,1:!𝔹);
+	} else {
+		x:=vector(m,0:!𝔹);
+	}
+	y:=vector(m,1:!𝔹);
+	return (x.length+y.length,0:𝔹);
+}
+
+def g(const c:!𝔹,m:!ℕ){
+	if c {
+		i:=0;
+		while i<2 { i+=1; if i==3 { return (0,0:𝔹); } }
+		x:=vector(m,1:!𝔹);
+	} else {
+		x:=vector(m,0:!𝔹);
+	}
+	forget(x);
+	m+=1;
+	return (m,0:𝔹);
+}
+
+def h(const c:!𝔹,m:!ℕ){
+	n:=m+1;
+	if c {
+		i:=0;
+		while i<2 { i+=1; if i==3 { return (0,0:𝔹); } }
+		x:=vector(m,1:𝔹);
+		y:=(vector(n,1:!𝔹),vector(m,0:!𝔹));
+	} else {
+		x:=vector(m,0:𝔹);
+		y:=(vector(n,0:!𝔹),vector(m,1:!𝔹));
+	}
+	r:=measure(x:𝔹[]);
+	forget(y);
+	n+=m;
+	return (n+r.length,0:𝔹);
+}
+
+def p(const c:!𝔹){
+	if c {
+		return 0;
+	} else {
+		k:=0;
+		do{
+			k+=1;
+			if c { return 2; } else { x:=vector(k,1:!𝔹); }
+		}while k<1;
+	}
+	return x.length;
+}
+
+def q(const c:!𝔹){
+	if c {
+		return (0,[]:!𝔹[]);
+	} else {
+		k:=0;
+		do{
+			k+=1;
+			if c { return (1,[]:!𝔹[]); }
+			x:=vector(k+1,1:𝔹);
+		}while k<2;
+	}
+	return (2,measure(x:𝔹[]));
+}
+
+def main(){
+	assert(measure(f(true,2))==(0,0)&&measure(f(false,2))==(4,0));
+	assert(measure(g(true,2))==(3,0)&&measure(g(false,2))==(3,0));
+	assert(measure(h(true,2))==(7,0)&&measure(h(false,2))==(7,0));
+	assert(p(true)==0&&p(false)==1);
+	assert(q(true)==(0,[])&&q(false)==(2,[1,1,1]));
+}
