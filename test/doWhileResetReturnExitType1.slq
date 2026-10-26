@@ -1,0 +1,42 @@
+// args: --run
+
+def f(){
+	x:=vector(3,0:𝔹);
+	k:=0;
+	do{ n:=3; w:=x coerce 𝔹^n; x:=dup(w); k+=1; }while k<2 { forget(w); return measure(x); }
+	return measure(x);
+}
+
+def g(const m:!ℕ){
+	x:=vector(m,1:𝔹);
+	k:=0;
+	do{ n:=m; w:=x coerce 𝔹^n; x:=dup(w); k+=1; }while k<3 { forget(w); return (k,measure(x)); }
+	return (k,measure(x));
+}
+
+def h(const c:!ℕ){
+	x:=vector(3,0:𝔹);
+	k:=0;
+	do{ n:=3; w:=x coerce 𝔹^n; x:=dup(w); k+=1; }while k<c { forget(w); return measure(x):!𝔹[]; }
+	forget(w);
+	y:=x:𝔹^n;
+	return measure(y):!𝔹[];
+}
+
+def p(const c:!ℕ){
+	x:=vector(2,1:𝔹);
+	k:=0;
+	do{ n:=2; w:=x coerce 𝔹^n; x:=dup(w); k+=1; }while k<c { forget(w); return (n,measure(x):!𝔹[]); }
+	forget(w);
+	return (n+k,measure(x):!𝔹[]);
+}
+
+def main(){
+	assert(f()==[0,0,0]);
+	(a,b):=g(2);
+	assert(a==1&&b==[1,1]);
+	assert(h(0)==[0,0,0]&&h(5)==[0,0,0]);
+	(c,d):=p(0);
+	(e,u):=p(3);
+	assert(c==3&&d==[1,1]&&e==2&&u==[1,1]);
+}

@@ -1,0 +1,36 @@
+// args: --run
+
+def f(){
+	x:=vector(2,1:𝔹);
+	k:=0;
+	do{ n:=2; g:=λ(y:𝔹^n)qfree⇒y; x:=g(x coerce 𝔹^n); k+=1; }while k<2;
+	return measure(x);
+}
+def g(){
+	x:=vector(2,1:𝔹);
+	k:=0;
+	do{ n:=2; def h(y:𝔹^n)qfree⇒y; x:=h(x coerce 𝔹^n); k+=1; }while k<2;
+	return measure(x);
+}
+def h(){
+	k:=0;
+	do{ k+=1; n:=k+1; c:=λ(y:𝔹^n)qfree⇒y; }while k<2;
+	return measure(c(vector(n,0:𝔹)));
+}
+def p(){
+	k:=0;
+	do{ k+=1; n:=k+1; c:=λ()⇒vector(n,1:!𝔹); s:=c(); }while k<3 { forget(s); }
+	return (c(),s);
+}
+def q(){
+	k:=0;
+	do{ k+=1; n:=k; def r(i:!ℕ):!𝔹^n{ if i=0 { return vector(n,0:!𝔹); } return r((i-1) coerce !ℕ); } }while k<2;
+	return r(3);
+}
+def main(){
+	assert(f()==[1,1]);
+	assert(g()==[1,1]);
+	assert(h()==(0,0,0));
+	assert(p()==((1,1,1,1),(1,1,1,1)));
+	assert(q()==(0,0));
+}

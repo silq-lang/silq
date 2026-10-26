@@ -1,0 +1,46 @@
+// args: --run
+
+def f(const k:!ℕ){
+	n:=3;
+	y:=vector(n,0:!𝔹);
+	if k<2 { return 1; } else { y:=y:!𝔹[]; forget(n); }
+	return 2+y.length;
+}
+
+def g(const k:!ℕ){
+	n:=3;
+	y:=vector(n,1:𝔹);
+	if k<2 { return measure(y:𝔹[]); } else { y:=y:𝔹[]; forget(n); }
+	return measure(y);
+}
+
+def h(const k:!ℕ){
+	n:=3;
+	c:=λ(x:!𝔹^n)⇒x;
+	if k<2 { return 1; } else { forget(c); forget(n); }
+	return 2;
+}
+
+def p(const k:!ℕ){
+	n:=3;
+	y:=vector(n,0:!𝔹);
+	z:=array(2,y);
+	if k<2 { if k<1 { return 0; } else { return 1; } } else { z:=z:(!𝔹[])[]; y:=y:!𝔹[]; forget(n); }
+	return 2+z.length+y.length;
+}
+
+def q(const k:!ℕ){
+	n:=3;
+	x:=vector(n,1:𝔹);
+	if k<2 { return measure(x); } else { x:=x:𝔹[]; forget(n); }
+	return measure(x);
+}
+
+def main(){
+	assert(f(1)==1&&f(2)==5);
+	assert(g(1)==[1,1,1]&&g(2)==[1,1,1]);
+	assert(h(1)==1&&h(2)==2);
+	assert(p(0)==0&&p(1)==1&&p(2)==7);
+	assert(q(1)==[1,1,1]&&q(2)==[1,1,1]);
+	return (f(1),f(2),h(1),p(2));
+}

@@ -1,0 +1,65 @@
+// args: --run
+
+def f(const c:!𝔹,const m:!ℕ){
+	x:=vector(m,0:𝔹);
+	k:=0;
+	do{ n:=m; x:=x coerce 𝔹^n; k+=1; }while k<2 { if !c { y:=measure(x:𝔹[]); forget(n); return y; } }
+	return measure(x:𝔹[]);
+}
+
+def g(const c:!𝔹,const m:!ℕ){
+	x:=vector(m,1:!𝔹);
+	k:=0;
+	do{ n:=m; x:=x coerce !𝔹^n; k+=1; }while k<2 { if !c { y:=x:!𝔹[]; forget(x); forget(n); return y; } }
+	return x:!𝔹[];
+}
+
+def h(const c:!𝔹,const m:!ℕ){
+	x:=vector(m,0:𝔹);
+	k:=0;
+	while k<2 { n:=m; x:=x coerce 𝔹^n; k+=1; if !c { y:=measure(x:𝔹[]); forget(n); return y; } }
+	return measure(x:𝔹[]);
+}
+
+def p(const c:!𝔹,const m:!ℕ){
+	x:=vector(m,1:𝔹);
+	for i in 0..2 { n:=m; x:=x coerce 𝔹^n; if !c { y:=measure(x:𝔹[]); forget(n); return y; } }
+	return measure(x:𝔹[]);
+}
+
+def q(const c:!𝔹,const m:!ℕ){
+	x:=vector(m,0:𝔹);
+	k:=0;
+	do{ n:=m; x:=x coerce 𝔹^n; k+=1; }while k<3 { if k==2&&!c { y:=measure(x:𝔹[]); forget(n); return y; } }
+	return measure(x:𝔹[]);
+}
+
+def r(const c:!𝔹,const d:!𝔹){
+	if c {
+		n:=3; x:=vector(n,0:𝔹);
+		if d { y:=measure(x:𝔹[]); forget(n); return y; }
+	} else {
+		x:=vector(2,0:𝔹);
+	}
+	return measure(x:𝔹[]);
+}
+
+def s(const c:!𝔹,const d:!𝔹){
+	if c {
+		n:=3; x:=vector(n,1:!𝔹);
+		if d { y:=x:!𝔹[]; forget(x); forget(n); return y; }
+	} else {
+		x:=vector(2,1:!𝔹);
+	}
+	return x:!𝔹[];
+}
+
+def main(){
+	assert(f(true,3)==[0,0,0]&&f(false,3)==[0,0,0]);
+	assert(g(true,2)==[1,1]&&g(false,2)==[1,1]);
+	assert(h(true,3)==[0,0,0]&&h(false,3)==[0,0,0]);
+	assert(p(true,2)==[1,1]&&p(false,2)==[1,1]);
+	assert(q(true,3)==[0,0,0]&&q(false,3)==[0,0,0]);
+	assert(r(true,true)==[0,0,0]&&r(true,false)==[0,0,0]&&r(false,false)==[0,0]);
+	assert(s(true,true)==[1,1,1]&&s(true,false)==[1,1,1]&&s(false,false)==[1,1]);
+}
