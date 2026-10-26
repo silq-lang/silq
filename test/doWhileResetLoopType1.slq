@@ -1,0 +1,29 @@
+// args: --run
+
+def f(){
+	k:=0;
+	do{ k+=1; n:=k+1; v:=vector(n,0:𝔹); }while k<2 { repeat 1 { measure(v); } }
+	return (n,measure(v): !𝔹[]);
+}
+def g(){
+	k:=0;
+	do{ k+=1; n:=k+1; v:=vector(n,1:𝔹); }while k<2 { for i in 0..2 { measure(v); } }
+	return (n,measure(v): !𝔹[]);
+}
+def h(){
+	k:=0;
+	j:=0;
+	do{ k+=1; n:=k+1; v:=vector(n,0:𝔹); }while k<3 { while j<k { j+=1; measure(v); } }
+	return (n,j,measure(v): !𝔹[]);
+}
+def p(){
+	k:=0;
+	do{ k+=1; n:=k+1; v:=vector(n,0:𝔹); }while k<2 { repeat 1 { measure(v); } r:=n; }
+	return (n,measure(v): !𝔹[]);
+}
+def main(){
+	assert(f()==(3,[0,0,0]));
+	assert(g()==(3,[1,1,1]));
+	assert(h()==(4,2,[0,0,0,0]));
+	assert(p()==(3,[0,0,0]));
+}

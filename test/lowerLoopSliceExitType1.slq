@@ -1,0 +1,34 @@
+// args: --run
+
+def f(){
+	x:=vector(3,0:𝔹);
+	k:=0;
+	do{ n:=3; w:=x coerce 𝔹^n; x:=w; k+=1; }while k<1;
+	return measure(x);
+}
+def g(){
+	x:=vector(3,1:𝔹);
+	k:=0;
+	do{ n:=x.length; w:=x coerce 𝔹^n; x:=dup(w); k+=1; }while k<3;
+	return (measure(x),measure(w));
+}
+def h(){
+	c:=1:𝔹;
+	x:=vector(3,0:𝔹);
+	k:=0;
+	do{ n:=3; a:=𝔹^n; z:=x coerce a; x:=z; x[2]:=CNOT(c,x[2]); measure(0:𝔹); k+=1; }while k<3;
+	return (measure(x),measure(c));
+}
+def p(){
+	x:=vector(2,0:𝔹);
+	k:=0;
+	s:=0;
+	do{ n:=2; w:=x coerce 𝔹^n; x:=dup(w); x[0]:=X(x[0]); k+=1; }while k<2 { s+=measure(dup(w[0])) as !ℕ; }
+	return (measure(x),measure(w),s);
+}
+def main(){
+	assert(f()==[0,0,0]);
+	assert(g()==([1,1,1],[1,1,1]));
+	assert(h()==([0,0,1],1));
+	assert(p()==([0,0],[1,0],0));
+}

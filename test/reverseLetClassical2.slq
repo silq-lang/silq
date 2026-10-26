@@ -1,0 +1,41 @@
+// args: --run
+
+def f(x:𝔹)qfree{
+	y:=let { n:=2; z:=x; } in z;
+	w:=let { n:=3; v:=y; } in v;
+	return w;
+}
+def g(x:𝔹)qfree{
+	y:=let { n:=2; z:=x; } in z;
+	n:=3;
+	return (y,n);
+}
+def h(x:𝔹)qfree{
+	y:=let { n:=1; z:=x; for i in 0..n { z:=X(z); } } in z;
+	w:=let { n:=2; v:=y; for i in 0..n { v:=X(v); } } in v;
+	return w;
+}
+def k(x:𝔹)qfree{
+	y:=let { n:=1; c:=λ(m:!ℕ)⇒m+n; z:=if c(1)==2 then X(x) else x; } in z;
+	w:=let { n:=2; c:=λ(m:!ℕ)⇒m+n; v:=if c(1)==3 then X(y) else y; } in v;
+	return w;
+}
+def l(x:𝔹)qfree{
+	y:=let { n:=1; x:=X(x); } in x;
+	w:=let { n:=2; y:=X(y); } in y;
+	return w;
+}
+def p(x:𝔹^2)qfree{
+	y:=let { n:=2; a:=𝔹^n; z:=x coerce a; } in z;
+	w:=let { n:=2; a:=𝔹^n; v:=y coerce a; } in v;
+	return w;
+}
+def main(){
+	a:=reverse(f)(f(H(0:𝔹)));
+	b:=reverse(g)(g(0:𝔹));
+	c:=reverse(h)(h(1:𝔹));
+	d:=reverse(k)(k(1:𝔹));
+	e:=reverse(l)(l(0:𝔹));
+	q:=reverse(p)(p(vector(2,1:𝔹)));
+	assert(measure(H(a),b,c,d,e,q)==(0,0,1,1,0,(1,1)));
+}

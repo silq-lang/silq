@@ -1,0 +1,54 @@
+// args: --run
+
+def f(){
+	a:=vector(3,1:!ℕ);
+	s:=0:!ℕ;
+	for i in 0..2 { (a[0],g):=(i+2,() ⇒ a[0]); s+=g(); }
+	return (a,s);
+}
+def g(){
+	a:=vector(3,1:!ℕ);
+	s:=0:!ℕ;
+	for i in 0..2 { (a[0],a[1],h):=(i,i+5,() ⇒ (a[0],a[1])); (x,y):=h(); s+=x+y; }
+	return (a,s);
+}
+def h(){
+	a:=vector(2,0:𝔹);
+	r:=0:!ℕ;
+	for i in 0..2 { (a[i],g):=(X(0:𝔹),() ⇒ a[i]); r+=measure(g()) as !ℕ; }
+	return (measure(a),r);
+}
+def k(){
+	a:=vector(3,1:!ℕ);
+	s:=0:!ℕ;
+	repeat 2 { (a[0],g):=(a[1]+1,() ⇒ (λ() ⇒ a[0])()); s+=g(); }
+	return (a,s);
+}
+def l(){
+	a:=vector(3,1:!ℕ);
+	s:=0:!ℕ;
+	j:=0:!ℕ;
+	do{ (a[0],g):=(j,() ⇒ a[0]); s+=g(); j+=1; }while j<3;
+	return (a,s);
+}
+def m(){
+	a:=vector(2,0:𝔹);
+	b:=0:𝔹;
+	for i in 0..2 { with { b:=X(b); } do { (a[i],g):=(dup(b),() ⇒ a[i]); x:=g(); measure(x); } }
+	return (measure(a),measure(b));
+}
+def p(){
+	a:=vector(3,1:!ℕ);
+	s:=0:!ℕ;
+	for i in 0..2 { for j in 0..2 { (a[j],g):=(i+j,() ⇒ a[j]); s+=g(); } }
+	return (a,s);
+}
+def main(){
+	assert(f()==((3,1,1),3));
+	assert(g()==((1,6,1),7));
+	assert(h()==((1,1),0));
+	assert(k()==((2,1,1),3));
+	assert(l()==((2,1,1),2));
+	assert(m()==((1,1),0));
+	assert(p()==((1,2,1),3));
+}

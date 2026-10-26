@@ -1,0 +1,30 @@
+// args: --run
+
+def f(){
+	c:=1:𝔹;
+	x:=vector(2,0:𝔹);
+	for i in 0..3 { n:=2; a:=𝔹^n; x:=x coerce a; x[0]:=CNOT(c,x[0]); measure(0:𝔹); }
+	return (measure(x),measure(c));
+}
+def g(){
+	x:=vector(2,0:𝔹);
+	k:=0;
+	while k<3 { n:=2; a:=𝔹^n; y:=dup(x) coerce a; forget(y); x[1]:=X(x[1]); k+=1; measure(0:𝔹); }
+	return measure(x);
+}
+def h(){
+	x:=vector(2,0:𝔹);
+	repeat 3 { n:=2; a:=𝔹^n; x:=x coerce a; x[1]:=X(x[1]); r:=measure(0:𝔹); }
+	return measure(x);
+}
+def p(m:!ℕ){
+	x:=vector(m,0:𝔹);
+	for i in 0..m { a:=𝔹^m; x:=x coerce a; x[i]:=X(x[i]); measure(0:𝔹); }
+	return measure(x);
+}
+def main(){
+	assert(f()==((1,0),1));
+	assert(g()==(0,1));
+	assert(h()==(0,1));
+	assert(p(3)==(1,1,1));
+}
