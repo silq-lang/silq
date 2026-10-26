@@ -1,0 +1,55 @@
+// args: --run
+
+def mk(n:!ℕ)⇒vector(n,1:!𝔹);
+
+def f(){
+	n:=2;
+	y:=vector(n,1:!𝔹) coerce !𝔹^(let { r:=dup(n); r+=0; } in r);
+	r:=y.length;
+	k:=y.length;
+	if y.length==2 { r+=1; }
+	return r+k;
+}
+def g(){
+	n:=2;
+	x:=vector(n,0:𝔹) coerce 𝔹^(let { r:=dup(n); r+=0; } in r);
+	r:=1;
+	forget(x=vector(2,0:𝔹));
+	return r;
+}
+def h(){
+	n:=2;
+	y:=vector(n,1:!𝔹) coerce !𝔹^(let { r:=dup(n); r+=0; } in r);
+	r:=0;
+	for i in 0..2 { y[i]=0; r+=1; }
+	return (y,r);
+}
+def p(){
+	n:=2;
+	y:=vector(n,1:!𝔹) coerce !𝔹^(let { r:=dup(n); r+=0; } in r);
+	r:=0;
+	for i in 0..2 { r+=y[i]; }
+	return r;
+}
+def q(){
+	n:=2;
+	y:=mk(let { r:=0:𝔹; forget(r=0:𝔹); } in n);
+	r:=y.length;
+	for i in 0..y.length { if y[i] { r+=1; } }
+	return r;
+}
+def s(){
+	n:=2;
+	y:=vector(n,1:!𝔹) coerce !𝔹^(let { r:=dup(n); r+=0; h:=λ()⇒dup(r); } in h());
+	r:=y.length;
+	k:=y.length;
+	return r+k;
+}
+def main(){
+	assert(f()==5);
+	assert(g()==1);
+	assert(h()==(vector(2,0:!𝔹),2));
+	assert(p()==2);
+	assert(q()==4);
+	assert(s()==4);
+}

@@ -1,0 +1,20 @@
+// args: --run
+
+def h(n:!ℕ)⇒vector(n,1:!𝔹);
+def f(){
+	n:=2;
+	y:=h(let { a:=dup(n); } in a);
+	for i in 0..2 { y[i]=0; }
+	return y;
+}
+def g(){
+	n:=2;
+	y:=h(let { a:=dup(n); } in a);
+	r:=1;
+	for i in 0..y.length { y[i]=0; r+=1; }
+	return r;
+}
+def main(){
+	assert(f()==vector(2,0:!𝔹));
+	assert(g()==3);
+}

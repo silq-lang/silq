@@ -3256,6 +3256,12 @@ struct Interpreter(QState){
 					if(let.s.blscope_)
 						qstate.forgetVars(let.s.blscope_.forgottenVarsOnEntry);
 				}
+				import ast.substitute: collectBoundNamesImpl;
+				SetX!Id declared,free; // (a `let` expression of a type can declare variables of the names of variables where the type is evaluated)
+				foreach(stmt;let.s.s) collectBoundNamesImpl(stmt,declared);
+				let.freeVarsImpl((Identifier id){ free.insert(id.id); return 0; }); // (as opposed to a variable that it redefines)
+				QState.Value[string] shadowed;
+				foreach(name;declared) if(name !in free&&name.str in qstate.vars){ shadowed[name.str]=qstate.vars[name.str]; qstate.vars.remove(name.str); }
 				runStm(let.s,ret);
 				enforce(!ret.state.length,"early returns from `let` statement not supported yet");
 				auto result=doIt(let.e);
@@ -3270,6 +3276,7 @@ struct Interpreter(QState){
 					}
 				}
 				if(let.s.blscope_) closeScope(let.s.blscope_);
+				foreach(name,v;shadowed) qstate.vars[name]=v;
 				return result;
 			}
 			if(auto le=cast(LambdaExp)e){

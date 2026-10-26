@@ -1,0 +1,36 @@
+// args: --run
+
+def mk(n:!ℕ)⇒vector(n,0:!𝔹);
+
+def f(){
+	x:=vector(2,0:𝔹);
+	y:=x coerce 𝔹^(let { r:=0:𝔹; forget(r=0:𝔹); } in 2);
+	return measure(y);
+}
+def g(){
+	x:=vector(2,0:𝔹);
+	y:=x coerce 𝔹^(let { r:=0:𝔹; s:=dup(r); forget(s); forget(r=0:𝔹); } in 2);
+	return measure(y);
+}
+def h(){
+	x:=vector(2,0:𝔹);
+	y:=x coerce 𝔹^(let { r:=0:𝔹; r:=X(r); s:=0:𝔹; if r { s:=X(s); } forget(s=1:𝔹); forget(r=1:𝔹); } in 2);
+	return measure(y);
+}
+def k(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	y:=x coerce 𝔹^(let { (r,s):=(0:𝔹,1:𝔹); forget((r,s)=(0:𝔹,1:𝔹)); } in n);
+	return measure(y);
+}
+def l(){
+	y:=mk(let { r:=0:𝔹; forget(r=0:𝔹); } in 2);
+	z:=mk(let { r:=1:𝔹; s:=0:𝔹; s:=CNOT(r,s); forget(s=1:𝔹); forget(r=1:𝔹); } in 3);
+	return y.length+z.length;
+}
+def main(){
+	assert(f()==vector(2,0:!𝔹));
+	assert(g()==vector(2,0:!𝔹));
+	assert(h()==vector(2,0:!𝔹));
+	assert(k(3)==vector(3,0:!𝔹));
+	assert(l()==5);
+}

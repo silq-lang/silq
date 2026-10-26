@@ -1,0 +1,29 @@
+// args: --run
+
+def f(n:!ℕ){
+	x:=vector(1,1:𝔹);
+	y:=x coerce 𝔹^(let { m:=n; } in let { k:=move(m); } in let { l:=move(k); } in l);
+	return measure(y);
+}
+def g(){
+	n:=3;
+	x:=vector(1,1:𝔹);
+	y:=x coerce 𝔹^(let { m:=n; } in if (if 0==m then true else (let { k:=move(m); } in let { l:=move(k); } in l==1)) then 3 else 1);
+	return measure(y);
+}
+def h(n:!ℕ){
+	x:=vector(1,1:𝔹);
+	y:=x coerce 𝔹^(let { m:=n; } in if 0==m then 1 else (let { k:=move(m); } in let { l:=move(k); } in l));
+	return measure(y);
+}
+def p(n:!ℕ){
+	x:=vector(1,1:𝔹);
+	y:=x coerce 𝔹^(let { m:=n; } in if 0==m || (let { k:=move(m); } in let { l:=move(k); } in l==1) then 3 else 1);
+	return measure(y);
+}
+def main(){
+	assert(f(1)==vector(1,1:!𝔹));
+	assert(g()==vector(1,1:!𝔹));
+	assert(h(1)==vector(1,1:!𝔹));
+	assert(p(3)==vector(1,1:!𝔹));
+}
