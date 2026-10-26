@@ -1,0 +1,18 @@
+// args: --run
+
+def f(x:𝔹[])⇒measure(x).length;
+def g(const x:𝔹[])⇒x.length;
+def h(){
+	n:=0;
+	x:=vector(0,0:𝔹);
+	j:=0;
+	while j<2 { x:=x coerce 𝔹^n; j+=1; }
+	return (measure(x).length,j);
+}
+def main(){
+	assert(f(vector(0,0:𝔹))==0);
+	x:=vector(0,0:𝔹);
+	assert(g(x)==0);
+	forget(x);
+	assert(h()==(0,2));
+}

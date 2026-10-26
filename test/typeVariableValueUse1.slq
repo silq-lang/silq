@@ -1,0 +1,25 @@
+// args: --run
+
+def mk[τ:qtype]()⇒[]:(!τ)[];
+def f(){
+	y:=mk[let { n:=2; a:=𝔹^n; m:=n; } in let { b:=a; } in b]();
+	return y.length;
+}
+def g(){
+	n:=2;
+	a:=𝔹^n;
+	h:=λ()⇒vector(2,1:𝔹) coerce a;
+	return measure(h());
+}
+def k(n:!ℕ){
+	a:=𝔹^n;
+	return λ()⇒vector(2,1:𝔹) coerce a;
+}
+def main(){
+	assert(f()==0);
+	x:=g();
+	assert(x.length==2&&x[0]&&x[1]);
+	l:=k(2);
+	y:=measure(l());
+	assert(y[0]&&y[1]);
+}

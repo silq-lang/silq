@@ -1,0 +1,22 @@
+// args: --run
+
+def f(n:!ℕ){
+	a:=𝔹^n;
+	def g(x:a)⇒measure(x);
+	return g;
+}
+def h(n:!ℕ){
+	a:=𝔹^n;
+	return λ(x:a)⇒measure(x);
+}
+def main(){
+	g:=f(2);
+	k:=h(2);
+	n:=2;
+	a:=𝔹^n;
+	l:=λ(x:a)⇒measure(x);
+	u:=g(vector(2,1:𝔹));
+	v:=k(vector(2,0:𝔹));
+	w:=l(vector(2,1:𝔹) coerce a);
+	assert(u[0]&&u[1]&&!v[0]&&!v[1]&&w[0]&&w[1]);
+}

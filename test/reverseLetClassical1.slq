@@ -1,0 +1,25 @@
+// args: --run
+
+def f(x:𝔹)qfree{
+	y:=let { n:=2; z:=x; } in z;
+	return y;
+}
+def g(x:𝔹)qfree{
+	y:=let { n:=1; z:=x; for i in 0..n { z:=X(z); } } in z;
+	return y;
+}
+def h(x:𝔹^2)qfree{
+	y:=let { n:=2; a:=𝔹^n; z:=x coerce a; } in z;
+	return y;
+}
+def k(x:𝔹)qfree{
+	y:=let { n:=1; m:=n+1; z:=if m==2 then X(x) else x; } in z;
+	return y;
+}
+def main(){
+	a:=reverse(f)(f(H(0:𝔹)));
+	b:=reverse(g)(g(0:𝔹));
+	c:=reverse(h)(h(vector(2,1:𝔹)));
+	d:=reverse(k)(k(1:𝔹));
+	assert(measure(H(a),b,c,d)==(0,0,(1,1),1));
+}

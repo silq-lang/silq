@@ -1,0 +1,18 @@
+// args: --run
+
+def f(){
+	v:=vector(0,0:!𝔹);
+	r:=0;
+	for i in 0..v.length { if v[i] { r+=1; } }
+	return r;
+}
+def g(){
+	v:=vector(0,(0:!𝔹,0:𝔹));
+	r:=0;
+	for i in 0..v.length { (a,b):=dup(v[i]); forget(b); if a { r+=1; } }
+	forget(v);
+	return r;
+}
+def main(){
+	assert(f()==0&&g()==0);
+}

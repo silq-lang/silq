@@ -1,0 +1,4 @@
+def f(){
+	y:=let { n:=3; x:=0:int[n]; } in x; /// error
+	return measure(y);
+}

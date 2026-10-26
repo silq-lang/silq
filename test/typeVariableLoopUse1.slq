@@ -1,0 +1,30 @@
+// args: --run
+
+def f(){
+	n:=2;
+	a:=𝔹^n;
+	x:=vector(2,0:𝔹);
+	for i in 0..1 { x:=x coerce a; }
+	return measure(x);
+}
+def g(){
+	n:=2;
+	a:=𝔹^n;
+	x:=vector(2,0:𝔹);
+	k:=0;
+	while k<2 { x:=x coerce a; k+=1; }
+	return (measure(x),k);
+}
+def h(){
+	n:=2;
+	a:=𝔹^n;
+	x:=vector(2,0:𝔹);
+	k:=0;
+	do{ y:=x coerce a; x:=y; k+=1; }while k<2;
+	return (measure(x),k);
+}
+def main(){
+	assert(f()==[0,0]);
+	assert(g()==([0,0],2));
+	assert(h()==([0,0],2));
+}

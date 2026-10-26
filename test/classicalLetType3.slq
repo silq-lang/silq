@@ -1,0 +1,9 @@
+// args: --run
+
+def mk[τ:qtype]()⇒[]:(!τ)[];
+def main(){
+	x:=mk[let { a:=𝔹; if true { } } in let { b:=a; } in b]();
+	y:=mk[let { if true { a:=𝔹; } else { assert(false); } } in let { b:=a; } in b]();
+	z:=mk[let { n:=2; if true { } } in let { m:=n; } in (let { k:=m; if true { } } in 𝔹^k)]();
+	assert(x.length==0&&y.length==0&&z.length==0);
+}

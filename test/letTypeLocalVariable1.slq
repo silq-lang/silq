@@ -1,0 +1,27 @@
+// args: --run
+
+def f(){
+	y:=let { n:=2; x:=vector(n,0:𝔹); } in x;
+	return (measure(y),y.length);
+}
+def g(){
+	y:=let { n:=2; a:=𝔹^n; m:=n; x:=vector(2,1:𝔹); } in x coerce a;
+	return measure(y);
+}
+def h(){
+	y:=let { n:=2; x:=vector(n,0:𝔹); } in (x,n);
+	return measure(y);
+}
+def k(){
+	y:=let { def l()⇒2; x:=vector(l(),0:!ℕ); } in x;
+	return y.length;
+}
+def main(){
+	(a,b):=f();
+	assert(a.length==2&&b==2);
+	c:=g();
+	assert(c.length==2&&c[0]&&c[1]);
+	(d,e):=h();
+	assert(d.length==2&&e==2);
+	assert(k()==2);
+}

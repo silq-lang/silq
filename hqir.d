@@ -3782,6 +3782,9 @@ class ScopeWriter {
 				ccg.checkLtInt(check, ctx.intZero, len);
 			}
 		}
+		if(typeHasClassical(itemTy) && !v.hasClassical || typeHasQuantum(itemTy) && !v.hasQuantum) {
+			return valAbort(itemTy); // (a vector of length zero: the check fails)
+		}
 		return valNewQ(rc, rq);
 	}
 
