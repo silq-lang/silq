@@ -1,0 +1,28 @@
+// args: --run
+
+def lastUseInLoop(x:𝔹^2,j:!ℕ)mfree{
+	x[j]:=X(x[j]);
+	with { for i in 0..2 { x[1]:=Z(x[1]); u:=j; } } do { if x[0] { x[1]:=X(x[1]); } }
+	return x;
+}
+def lastUseAfterWith(x:𝔹^3,j:!ℕ)mfree{
+	v:=j;
+	with { w:=v; } do { u:=w; }
+	if x[2] { x[0]:=X(x[0]); }
+	with { for i in 0..1 { t:=dup(v); } } do { if x[1] { x[0]:=X(x[0]); } }
+	return x;
+}
+def main(){
+	x:=vector(2,0:𝔹);
+	x[1]:=X(x[1]);
+	y:=lastUseInLoop(x,0);
+	z:=reverse(lastUseInLoop)(y,0);
+	a:=vector(3,0:𝔹);
+	a[1]:=X(a[1]);
+	a[2]:=X(a[2]);
+	b:=lastUseAfterWith(a,1);
+	c:=reverse(lastUseAfterWith)(b,1);
+	r:=(measure(z),measure(c));
+	assert(r==((0,1),(0,1,1)));
+	return r;
+}

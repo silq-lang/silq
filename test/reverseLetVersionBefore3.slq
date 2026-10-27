@@ -1,0 +1,33 @@
+// args: --run
+
+def conditionConsumed(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(c); m:=dup(n);
+	(y,m):=let { if k>1 { k+=m; z:=X(x); } else { m*=2; z:=x; } } in (z,m);
+	w:=if m==4 { X(y) } else { y };
+	return w;
+}
+def nestedConditionUpdate(x:𝔹,const n:!ℕ,const c:!𝔹)qfree{
+	k:=dup(n); m:=n+1;
+	(y,k,m):=let { if k>0 { if m>3 { k+=1; x:=X(x); } } if c { m+=n; k+=n; } } in (x,k,m);
+	w:=if k==4 { X(y) } else { y };
+	return w;
+}
+def unusedDefinition(x:𝔹,const n:!ℕ,const c:!𝔹)qfree{
+	k:=dup(n); m:=dup(n);
+	(y,m):=let { if c { u:=m*2; } else { k*=2; m+=1; } if k>2 { x:=X(x); k+=1; } } in (x,m);
+	w:=if m==3 { X(y) } else { y };
+	return w;
+}
+def consumedUpdate(x:𝔹,const n:!ℕ,const c:!𝔹)qfree{
+	k:=dup(n); m:=n+1;
+	(y,k):=let { if c { m+=k; } else { k+=1; } z:=if m==3 { X(x) } else { x }; } in (z,k);
+	w:=if k==2 { X(y) } else { y };
+	return w;
+}
+def main(){
+	r:=(measure(reverse(conditionConsumed)(1:𝔹,2,2)),measure(reverse(conditionConsumed)(1:𝔹,2,1)),measure(reverse(conditionConsumed)(1:𝔹,1,1)),measure(reverse(conditionConsumed)(1:𝔹,4,2)),measure(reverse(nestedConditionUpdate)(1:𝔹,3,false)),measure(reverse(nestedConditionUpdate)(1:𝔹,2,true)),measure(reverse(nestedConditionUpdate)(1:𝔹,3,true)),measure(reverse(nestedConditionUpdate)(1:𝔹,1,false)));
+	assert(r==(0,0,1,1,1,0,0,1));
+	s:=(measure(reverse(unusedDefinition)(1:𝔹,2,false)),measure(reverse(unusedDefinition)(1:𝔹,3,true)),measure(reverse(unusedDefinition)(1:𝔹,4,true)),measure(reverse(consumedUpdate)(1:𝔹,1,true)),measure(reverse(consumedUpdate)(1:𝔹,1,false)),measure(reverse(consumedUpdate)(1:𝔹,3,true)));
+	assert(s==(1,1,0,0,0,1));
+	return (r,s);
+}

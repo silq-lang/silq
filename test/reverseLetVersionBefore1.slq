@@ -1,0 +1,29 @@
+// args: --run
+
+def updateFromDefinition(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	(y,k):=let { u:=dup(k); k+=u; z:=if u==2 { X(x) } else { x }; } in (z,k);
+	w:=if k==2 { X(y) } else { y };
+	return w;
+}
+def readAfterUpdate(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	(y,k):=let { u:=k*2; k+=1; z:=if u==2 { X(x) } else { x }; w:=if k==2 { X(z) } else { z }; } in (w,k);
+	v:=if k==3 { X(y) } else { y };
+	return v;
+}
+def inBranch(x:𝔹,const n:!ℕ,const c:!𝔹)qfree{
+	y:=let { t:=dup(n); if c { u:=t*2; t+=1; z:=if u==4 { X(x) } else { x }; w:=if t==3 { X(z) } else { z }; } else { w:=x; } } in w;
+	return y;
+}
+def updateFromDefinitionInBranch(x:𝔹,const n:!ℕ,const c:!𝔹)qfree{
+	y:=let { t:=dup(n); if c { u:=dup(t); t+=u; z:=if u==2 { X(x) } else { x }; } else { z:=x; } w:=if t==4 { X(z) } else { z }; } in w;
+	return y;
+}
+def main(){
+	r:=(measure(reverse(updateFromDefinition)(1:𝔹,2)),measure(reverse(updateFromDefinition)(1:𝔹,1)),measure(reverse(updateFromDefinition)(1:𝔹,3)),measure(reverse(readAfterUpdate)(1:𝔹,1)),measure(reverse(readAfterUpdate)(1:𝔹,2)),measure(reverse(readAfterUpdate)(1:𝔹,3)));
+	assert(r==(0,0,1,1,0,1));
+	s:=(measure(reverse(inBranch)(1:𝔹,2,true)),measure(reverse(inBranch)(1:𝔹,1,true)),measure(reverse(inBranch)(1:𝔹,2,false)),measure(reverse(updateFromDefinitionInBranch)(1:𝔹,2,true)),measure(reverse(updateFromDefinitionInBranch)(1:𝔹,4,false)),measure(reverse(updateFromDefinitionInBranch)(1:𝔹,1,true)));
+	assert(s==(1,1,1,1,0,1));
+	return (r,s);
+}

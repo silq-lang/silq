@@ -1,0 +1,35 @@
+// args: --run
+
+def conditionUpdate(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(n);
+	(y,k):=let { if k>1 { k+=c; } z:=if k==3 { X(x) } else { x }; } in (z,k);
+	w:=if k==2 { X(y) } else { y };
+	return w;
+}
+def nestedCondition(x:𝔹,const n:!ℕ,const c:!𝔹)qfree{
+	y:=let { u:=dup(n); if c { if u>2 { u+=1; } x:=if u==4 { X(x) } else { x }; } } in x;
+	return y;
+}
+def nestedBranches(x:𝔹,const n:!ℕ,const c:!𝔹,const d:!𝔹)qfree{
+	y:=let { t:=dup(n); if c { if d { u:=t*2; t+=1; x:=if u==4 { X(x) } else { x }; x:=if t==3 { X(x) } else { x }; } } } in x;
+	return y;
+}
+def letInBranch(x:𝔹,const n:!ℕ,const c:!𝔹)qfree{
+	t:=dup(n);
+	y:=let { if c { (x,t):=let { u:=dup(t); t+=u; z:=if u==2 { X(x) } else { x }; } in (z,t); } w:=if t==4 { X(x) } else { x }; } in w;
+	return y;
+}
+def conditionBeforeLoop(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(n); m:=n+c;
+	(y,k):=let { u:=m*2; if k>1 { v:=dup(u); u+=c; x:=if v==4 { X(x) } else { x }; } repeat 2 { k+=n; m*=2; } } in (x,k);
+	return (y,k);
+}
+def main(){
+	r:=(measure(reverse(conditionUpdate)(1:𝔹,2,1)),measure(reverse(conditionUpdate)(1:𝔹,1,2)),measure(reverse(conditionUpdate)(1:𝔹,2,2)),measure(reverse(nestedCondition)(1:𝔹,3,true)),measure(reverse(nestedCondition)(1:𝔹,4,true)),measure(reverse(nestedCondition)(1:𝔹,3,false)));
+	assert(r==(0,1,1,0,1,1));
+	s:=(measure(reverse(nestedBranches)(1:𝔹,2,true,true)),measure(reverse(nestedBranches)(1:𝔹,2,true,false)),measure(reverse(nestedBranches)(1:𝔹,1,true,true)),measure(reverse(letInBranch)(1:𝔹,2,true)),measure(reverse(letInBranch)(1:𝔹,2,false)),measure(reverse(letInBranch)(1:𝔹,4,false)));
+	assert(s==(1,1,1,1,1,0));
+	t:=(measure(reverse(conditionBeforeLoop)((1:𝔹,6),2,0)),measure(reverse(conditionBeforeLoop)((1:𝔹,3),1,1)),measure(reverse(conditionBeforeLoop)((1:𝔹,6),2,2)));
+	assert(t==(0,1,1));
+	return (r,s,t);
+}
