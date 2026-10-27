@@ -1,0 +1,47 @@
+// args: --run
+
+def f(n:!ℕ){
+	x:=vector(1,1:𝔹);
+	y:=x coerce 𝔹^(if 0==n then 1 else (let { d:=0:!ℕ; if d==1 { assert(false); } l:=n; } in l));
+	return measure(y);
+}
+def g(n:!ℕ){
+	x:=vector(1,1:𝔹);
+	y:=x coerce 𝔹^(if n!=0 then (let { d:=0:!ℕ; if d==n { d+=1; } l:=n; } in l) else 1);
+	return measure(y);
+}
+def h(n:!ℕ){
+	x:=vector(1,1:𝔹);
+	y:=x coerce 𝔹^(if n==1 then (let { a:=vector(n,0:!𝔹); if n==2 { a:=a~a; } } in a.length) else (let { b:=1:!ℕ; if b==n { b*=1; } } in b));
+	return measure(y);
+}
+def k(n:!ℕ){
+	x:=vector(1,1:𝔹);
+	y:=x coerce 𝔹^(let { m:=n; } in if 0==m then 1 else (let { j:=move(m); } in let { d:=0:!ℕ; if d==1 { assert(false); } l:=move(j); } in l));
+	return measure(y);
+}
+def p(n:!ℕ){
+	x:=vector(1,1:𝔹);
+	y:=x coerce 𝔹^(if 0==n then 1 else (let { d:=0:!ℕ; if d==1 { assert(false); } l:=n; } in l)+0);
+	return measure(y);
+}
+def q(n:!ℕ){
+	x:=vector(1,1:𝔹);
+	y:=x coerce 𝔹^(if 0==n then 1 else if 1==n then (let { d:=0:!ℕ; if d==1 { assert(false); } l:=n; } in l) else 1);
+	return measure(y);
+}
+def same(n:!ℕ)⇒n;
+def r(n:!ℕ){
+	x:=vector(1,1:𝔹);
+	y:=x coerce 𝔹^(if 0==n then 1 else same(let { d:=0:!ℕ; if d==1 { assert(false); } l:=n; } in l));
+	return measure(y);
+}
+def main(){
+	assert(f(1)==vector(1,1:!𝔹));
+	assert(g(1)==vector(1,1:!𝔹));
+	assert(h(1)==vector(1,1:!𝔹)&&h(2)==vector(1,1:!𝔹));
+	assert(k(1)==vector(1,1:!𝔹));
+	assert(p(1)==vector(1,1:!𝔹));
+	assert(q(1)==vector(1,1:!𝔹)&&q(2)==vector(1,1:!𝔹));
+	assert(r(1)==vector(1,1:!𝔹));
+}

@@ -1,0 +1,59 @@
+// args: --run
+
+def f(d:!𝔹,m:!ℕ){
+	k:=0;
+	do{
+		k+=1;
+		j:=0;
+		do{ j+=1; if d&&m==5 { return 5; } }while j<1;
+		if m==0 { return 2; }
+		m+=1;
+	}while k<1 { repeat 1 { return 1; } }
+	return m;
+}
+
+def g(d:!𝔹,m:!ℕ){
+	k:=0;
+	do{
+		k+=1;
+		j:=0;
+		do{ j+=1; }while j<1 { return 0; }
+		if m==0 { return 2; }
+		if d { m+=1; } else { return 3; }
+	}while k<1 { repeat 1 { return 1; } }
+	return m;
+}
+
+def h(d:!𝔹,m:!ℕ){
+	k:=0;
+	do{
+		k+=1;
+		j:=0;
+		do{ j+=1; if d&&m==5 { return 5; } }while j<1;
+		if m==0 { m+=1; } else { return 2; }
+		if m==1 { return 3; }
+		m+=1;
+	}while k<1 { repeat 1 { return 1; } }
+	return m;
+}
+
+def q(d:!𝔹,m:!ℕ){
+	x:=vector(2,1:𝔹);
+	k:=0;
+	do{
+		k+=1;
+		j:=0;
+		do{ j+=1; if d&&m==5 { return (5,measure(x)); } }while j<1;
+		if m==0 { return (2,measure(x)); }
+		if m==1 { x[0]:=X(x[0]); } else { return (3,measure(x)); }
+		m+=1;
+	}while k<1 { repeat 1 { return (1,measure(x)); } }
+	return (m,measure(x));
+}
+
+def main(){
+	assert(f(true,0)==2&&f(true,3)==4&&f(true,5)==5&&f(false,5)==6);
+	assert(g(true,0)==2&&g(true,3)==4&&g(false,3)==3);
+	assert(h(true,0)==3&&h(true,3)==2&&h(true,5)==5&&h(false,0)==3);
+	assert(q(true,0)==(2,(1,1))&&q(true,1)==(2,(0,1))&&q(true,3)==(3,(1,1))&&q(true,5)==(5,(1,1))&&q(false,1)==(2,(0,1)));
+}

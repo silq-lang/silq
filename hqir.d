@@ -5131,7 +5131,7 @@ class ScopeWriter {
 		return r;
 	}
 
-	Result genStmts(Expression[] stmts, Result result = Result.passes()) {
+	Result genStmts(Expression[] stmts, Result result = Result.passes(), ItePartialReturn first = null) {
 		assert(nscope || parent);
 		Result combineResults(Result ra, Result rb, ScopeWriter scB) {
 			if(ra.isReturn || ra.isAbort || rb.isPass) {
@@ -5376,7 +5376,7 @@ class ScopeWriter {
 				sc.vars = vars;
 			}
 			if(auto iteExp = cast(ast_exp.IteExp) sube) {
-				auto ite = sc.genIte(iteExp);
+				auto ite = first && i == 0 ? first : sc.genIte(iteExp);
 				if(auto rv = cast(ItePass) ite) {
 					sc.forgetCond(iteExp, ite);
 					if(sc !is this) vars = sc.vars;
@@ -5401,6 +5401,11 @@ class ScopeWriter {
 					return Result.returns(rv.value);
 				}
 				if(auto rv = cast(ItePartialReturn) ite) {
+					if(sc !is this) { // (its return and the code after it are combined where the earlier statements do not return)
+						result = combineResults(result, sc.genStmts(stmts[i..$], Result.passes(), rv), sc);
+						vars = sc.vars;
+						return result;
+					}
 					auto scCont = rv.scCont;
 					ScopeWriter scTail;
 					if(scCont.nscope !is nscope) {

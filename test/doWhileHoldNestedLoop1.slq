@@ -1,0 +1,80 @@
+// args: --run
+
+def f(const c:!𝔹){
+	k:=0;
+	do{
+		k+=1;
+		x:=vector(1,0:𝔹);
+	}while k<1 {
+		j:=0;
+		do{
+			j+=1;
+			x:=x:𝔹[];
+		}while j<1 {
+			return measure(x:𝔹[]).length;
+		}
+	}
+	return 0;
+}
+def g(const c:!𝔹){
+	x:=vector(3,1:𝔹);
+	k:=0;
+	do{
+		k+=1;
+		y:=vector(1,1:𝔹);
+	}while k<2 {
+		j:=0;
+		do{
+			j+=1;
+		}while j<1 {
+			if c {
+				return 0;
+			} else {
+				x:=x~vector(1,1:𝔹);
+				z:=vector(1,0:𝔹);
+			}
+			measure(z);
+		}
+	}
+	return measure(x:𝔹[]).length;
+}
+def h(const c:!𝔹){
+	x:=vector(3,1:𝔹);
+	k:=0;
+	do{
+		k+=1;
+		y:=vector(1,1:𝔹);
+	}while k<2 {
+		j:=0;
+		while j<1 {
+			j+=1;
+			if c { return 0; }
+			x:=x~vector(1,1:𝔹);
+			z:=vector(1,0:𝔹);
+			measure(z);
+		}
+	}
+	return measure(x:𝔹[]).length;
+}
+def p(const c:!𝔹){
+	x:=vector(3,1:𝔹);
+	k:=0;
+	do{
+		k+=1;
+		y:=vector(k,1:𝔹);
+	}while k<2 {
+		for i in 0..1 {
+			if c { return 0; }
+			x:=x~vector(1,1:𝔹);
+			z:=H(0:𝔹);
+			measure(z);
+		}
+	}
+	return measure(x:𝔹[]).length+measure(y:𝔹[]).length;
+}
+def main(){
+	assert(f(true)==0&&f(false)==0);
+	assert(g(true)==3&&g(false)==3);
+	assert(h(true)==0&&h(false)==4);
+	assert(p(true)==0&&p(false)==6);
+}
