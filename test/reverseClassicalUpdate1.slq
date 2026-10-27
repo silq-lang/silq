@@ -1,0 +1,35 @@
+// args: --run
+
+def inLoop(x:𝔹,const n:!ℕ)qfree{
+	t:=dup(n);
+	repeat 3 { t+=1; x:=if t==3 { X(x) } else { x }; }
+	return x;
+}
+def returned(x:𝔹,const n:!ℕ)qfree{
+	t:=dup(n);
+	repeat 3 { t+=1; x:=X(x); }
+	return (x,t);
+}
+def multiplied(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	t:=dup(n);
+	for j in 0..2 { if t>1 { t*=c+1; } x:=if t==4 { X(x) } else { x }; }
+	return x;
+}
+def inBranch(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	t:=dup(n);
+	if t>0 { a:=(dup(n),t+c):!ℕ^2; if a[1]==2 { x:=X(x); } }
+	if c==1 { t+=1; x:=X(x); }
+	return x;
+}
+def integer(x:𝔹,const n:!ℤ)qfree{
+	t:=n-1;
+	for j in 0..3 { t-=j; x:=if t==-2 { X(x) } else { x }; }
+	return x;
+}
+def main(){
+	r:=(measure(reverse(inLoop)(0:𝔹,1)),measure(reverse(inLoop)(0:𝔹,3)),measure(reverse(returned)((0:𝔹,4),1)),measure(reverse(multiplied)(0:𝔹,2,1)),measure(reverse(multiplied)(0:𝔹,1,3)));
+	assert(r==(1,0,1,1,0));
+	s:=(measure(reverse(inBranch)(0:𝔹,1,1)),measure(reverse(inBranch)(0:𝔹,1,0)),measure(reverse(integer)(0:𝔹,1)),measure(reverse(integer)(0:𝔹,2)));
+	assert(s==(0,0,0,1));
+	return (r,s);
+}

@@ -1,0 +1,39 @@
+// args: --run
+
+def unusedProduct(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	y:=let { t:=dup(n); repeat 2 { t*=c; x:=X(x); } } in x;
+	return y;
+}
+def returnedProduct(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	t:=dup(n);
+	(y,t):=let { t*=c; x:=X(x); } in (x,t);
+	return (y,t);
+}
+def productInLoop(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	t:=dup(n);
+	(y,t):=let { repeat 2 { t*=c; x:=if t==0 { X(x) } else { x }; } } in (x,t);
+	w:=if t==1 { X(y) } else { y };
+	return w;
+}
+def productInFunction(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	t:=dup(n);
+	repeat 2 { t*=c; x:=if t==0 { X(x) } else { x }; }
+	return x;
+}
+def floatingPoint(x:𝔹,const r:!ℝ)qfree{
+	t:=r+0.0;
+	repeat 2 { t+=0.1; x:=if t>0.3 { X(x) } else { x }; }
+	return x;
+}
+def wrapping(x:𝔹,const n:!uint[4])qfree{
+	t:=n+(0:!uint[4]);
+	repeat 2 { t*=2; x:=if t==0 { X(x) } else { x }; }
+	return x;
+}
+def main(){
+	r:=(measure(reverse(unusedProduct)(0:𝔹,1,0)),measure(reverse(returnedProduct)((0:𝔹,0),1,0)),measure(reverse(productInLoop)(0:𝔹,1,0)),measure(reverse(productInLoop)(0:𝔹,1,1)),measure(reverse(productInFunction)(0:𝔹,1,0)),measure(reverse(productInFunction)(0:𝔹,1,1)));
+	assert(r==(0,1,0,1,0,0));
+	s:=(measure(reverse(floatingPoint)(0:𝔹,0.15)),measure(reverse(floatingPoint)(0:𝔹,0.05)),measure(reverse(wrapping)(0:𝔹,8:!uint[4])),measure(reverse(wrapping)(0:𝔹,4:!uint[4])));
+	assert(s==(1,0,0,1));
+	return (r,s);
+}

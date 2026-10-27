@@ -1,0 +1,17 @@
+// args: --run
+
+def update(x:𝔹,const n:!ℕ,const c:!ℕ){
+	q:=0:𝔹;
+	with { t:=dup(n); repeat 2 { t+=c; x:=X(x); } } do { if x { q:=X(q); } }
+	return (measure(x),measure(q));
+}
+def updateAfterRead(x:𝔹,const n:!ℕ,const c:!ℕ){
+	q:=0:𝔹;
+	with { t:=dup(n); a:=(dup(n),t+c):!ℕ^2; repeat 2 { t+=c; x:=X(x); } if a[1]==1 { x:=X(x); } } do { if x { q:=X(q); } }
+	return (measure(x),measure(q));
+}
+def main(){
+	r:=(update(0:𝔹,1,0),update(1:𝔹,1,2),updateAfterRead(0:𝔹,1,0),updateAfterRead(0:𝔹,0,1),updateAfterRead(0:𝔹,2,1));
+	assert(r==((0,0),(1,1),(0,1),(0,1),(0,0)));
+	return r;
+}

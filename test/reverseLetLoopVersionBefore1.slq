@@ -1,0 +1,41 @@
+// args: --run
+
+def conditionInLoop(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(n);
+	(y,k):=let { repeat 2 { if k>0 { k+=c; } } } in (x,k);
+	w:=if k==3 { X(y) } else { y };
+	return w;
+}
+def quantumLoop(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(n);
+	y:=let { for j in 0..3 { if k>1 { k+=c; } if k==3 { x:=X(x); } } } in x;
+	return y;
+}
+def repeatLoop(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(n);
+	(y,k):=let { repeat 3 { if k>0 { k*=2; } if k==4 { x:=X(x); } k+=c; } } in (x,k);
+	w:=if k==9 { X(y) } else { y };
+	return w;
+}
+def loopVariable(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	y:=let { for j in 1..4 { if k>j { k+=j; } if k==5 { x:=X(x); } } } in x;
+	return y;
+}
+def nestedLoops(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(n);
+	y:=let { repeat 2 { for j in 0..2 { if k>1 { k+=c; } } if k==4 { x:=X(x); } } } in x;
+	return y;
+}
+def step(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(n);
+	y:=let { for j in [5..-2..0) { if k<j { k+=c; } if k==3 { x:=X(x); } } } in x;
+	return y;
+}
+def main(){
+	r:=(measure(reverse(conditionInLoop)(0:𝔹,1,1)),measure(reverse(conditionInLoop)(0:𝔹,0,1)),measure(reverse(quantumLoop)(0:𝔹,2,1)),measure(reverse(quantumLoop)(0:𝔹,1,2)),measure(reverse(repeatLoop)(0:𝔹,1,1)),measure(reverse(repeatLoop)(0:𝔹,0,2)));
+	assert(r==(1,0,1,0,0,1));
+	s:=(measure(reverse(loopVariable)(0:𝔹,2)),measure(reverse(loopVariable)(0:𝔹,3)),measure(reverse(nestedLoops)(0:𝔹,2,1)),measure(reverse(nestedLoops)(0:𝔹,1,1)),measure(reverse(step)(0:𝔹,1,2)),measure(reverse(step)(0:𝔹,2,1)));
+	assert(s==(1,0,1,0,1,1));
+	return (r,s);
+}

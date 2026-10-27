@@ -1,0 +1,42 @@
+// args: --run
+
+def definitionInLoop(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(n);
+	y:=let { for j in 0..2 { u:=k*2; k+=c; if u==2 { x:=X(x); } v:=n+c; if v>2 { k+=c; } } } in x;
+	return y;
+}
+def definitionChain(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(n);
+	y:=let { repeat 2 { u:=k+c; k*=2; if u==3 { x:=X(x); } v:=n+c; w:=v*2; if w>4 { k+=1; } } } in x;
+	return y;
+}
+def definitionFromLoopVariable(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(n);
+	y:=let { for j in 0..3 { u:=k+j; k+=1; if u==2 { x:=X(x); } v:=j+c; if v>1 { k+=v; } } } in x;
+	return y;
+}
+def readAfter(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(n);
+	y:=let { for j in 0..2 { u:=k*2; k+=c; if u==2 { x:=X(x); } v:=n+c; if v>2 { k+=c; } if v==3 { x:=X(x); } } } in x;
+	return y;
+}
+def inBranch(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(n);
+	(y,k):=let { if c>0 { u:=k*2; k+=c; if u==2 { x:=X(x); } v:=n+c; if v>2 { k+=c; } } } in (x,k);
+	w:=if k==2 { X(y) } else { y };
+	return w;
+}
+def reversedLoop(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(n);
+	m:=dup(c);
+	(y,k):=let { if k==1 { x:=X(x); } if m==1 { x:=X(x); } k*=2; for j in 0..2 { if k>1 { m+=1; k+=c; } } } in (x,k);
+	w:=if k==3 { X(y) } else { y };
+	return w;
+}
+def main(){
+	r:=(measure(reverse(definitionInLoop)(0:𝔹,1,1)),measure(reverse(definitionInLoop)(0:𝔹,1,2)),measure(reverse(definitionChain)(0:𝔹,1,2)),measure(reverse(definitionChain)(0:𝔹,0,1)),measure(reverse(definitionFromLoopVariable)(0:𝔹,1,1)),measure(reverse(definitionFromLoopVariable)(0:𝔹,0,0)));
+	assert(r==(1,1,1,0,0,1));
+	s:=(measure(reverse(readAfter)(0:𝔹,1,2)),measure(reverse(readAfter)(0:𝔹,2,1)),measure(reverse(inBranch)(0:𝔹,1,1)),measure(reverse(inBranch)(0:𝔹,1,2)),measure(reverse(reversedLoop)(0:𝔹,1,1)),measure(reverse(reversedLoop)(0:𝔹,1,2)));
+	assert(s==(1,0,0,1,0,1));
+	return (r,s);
+}
