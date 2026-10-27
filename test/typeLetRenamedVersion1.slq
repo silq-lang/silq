@@ -1,0 +1,56 @@
+// args: --run
+
+def g(n:!ℕ,c:!ℕ){
+	x:=vector(n+c,0:!ℕ);
+	y:=x coerce !ℕ^(let { t:=dup(n); t+=c; } in t);
+	return y;
+}
+def forgetBoth(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	if n==9 { forget(a); return 0; }
+	if n==8 { forget(a); return 0; }
+	forget(a);
+	return 1;
+}
+def readLength(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	if n==9 { forget(a); return 0; }
+	if c==8 { forget(a); return 0; }
+	return a.length;
+}
+def twoReturns(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	if n==9 { return 0; }
+	if n==8 { forget(a); return 0; }
+	forget(a);
+	return 1;
+}
+def repeatReturn(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	s:=0;
+	repeat 2 { if n==9 { return 0; } s+=a.length; }
+	if n==8 { forget(a); return 0; }
+	s+=a.length;
+	return s;
+}
+def doWhileReturn(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	s:=0;
+	w:=0;
+	do{ w+=1; if n==9 { return 0; } s+=a.length; }while w<2;
+	if n==8 { forget(a); forget(c); return 0; }
+	b:=a~a;
+	s+=b.length;
+	return s;
+}
+def forgotten(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	repeat 2 { if n==9 { return 0; } }
+	forget(a);
+	return 2;
+}
+def main(){
+	r:=(forgetBoth(1,2),forgetBoth(8,1),readLength(1,2),readLength(2,8),twoReturns(1,2),twoReturns(8,1),repeatReturn(1,2),repeatReturn(8,0),doWhileReturn(1,2),forgotten(1,2));
+	assert(r==(1,0,3,0,1,0,9,0,12,2));
+	return r;
+}

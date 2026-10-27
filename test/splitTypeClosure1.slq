@@ -1,0 +1,90 @@
+// args: --run
+
+def id[k:!ℕ](v:!ℕ^k)⇒v;
+def g(n:!ℕ,c:!ℕ){
+	x:=vector(n+c,0:𝔹);
+	y:=x coerce 𝔹^((λ(m:!ℕ)⇒m+c)(n));
+	return measure(y);
+}
+def h(n:!ℕ,c:!ℕ){
+	x:=vector(n+c,0:!ℕ);
+	y:=x coerce !ℕ^((λ(m:!ℕ)⇒let { u:=m; } in u+c)(n));
+	return y;
+}
+def gNested(n:!ℕ,c:!ℕ){
+	x:=vector(n+c,0:𝔹);
+	y:=x coerce 𝔹^((λ(m:!ℕ)⇒(λ()⇒m+c)())(n));
+	return measure(y);
+}
+def gLocal(n:!ℕ,c:!ℕ){
+	x:=vector(n+c,0:𝔹);
+	y:=x coerce 𝔹^(let { def p(m:!ℕ)⇒m+c; } in p(n));
+	return measure(y);
+}
+def closure(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	k:=λ()⇒a.length;
+	s:=k();
+	return s+id(a).length;
+}
+def local(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	def k()⇒a.length;
+	s:=k();
+	return s+id(a).length;
+}
+def repeated(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	k:=λ()⇒a.length;
+	s:=0;
+	repeat 2 { s+=k(); }
+	return s+id(a).length;
+}
+def nested(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	k:=λ()⇒a.length;
+	q:=λ()⇒k()+a.length;
+	s:=q();
+	return s+id(a).length;
+}
+def letType(n:!ℕ,c:!ℕ){
+	a:=h(n,c);
+	k:=λ()⇒a.length;
+	s:=k();
+	return s+id(a).length;
+}
+def nestedType(n:!ℕ,c:!ℕ){
+	a:=gNested(n,c);
+	k:=λ()⇒a.length;
+	s:=k();
+	return s+id(a).length;
+}
+def localInType(n:!ℕ,c:!ℕ){
+	a:=gLocal(n,c);
+	k:=λ()⇒a.length;
+	s:=k();
+	return s+id(a).length;
+}
+def typeofCoerce(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	b:=a coerce typeof(a);
+	return b.length;
+}
+def typeofInClosure(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	k:=λ()⇒(a coerce typeof(a)).length;
+	s:=k();
+	return s+id(a).length;
+}
+def typeofCaptured(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	b:=a coerce typeof(a);
+	k:=λ()⇒b.length;
+	s:=k();
+	return s+id(b).length;
+}
+def main(){
+	r:=(closure(2,1),local(2,1),repeated(2,1),nested(2,1),letType(1,2),nestedType(2,1),localInType(2,1),typeofCoerce(2,1),typeofInClosure(2,1),typeofCaptured(2,1));
+	assert(r==(6,6,9,9,6,6,6,3,6,6));
+	return r;
+}

@@ -1,0 +1,29 @@
+// args: --run
+
+def f(k:!ℕ){
+	x:=vector(4,0:!ℕ);
+	x[0]=1;
+	(x[3],x[k]):=(x[k],x[3]);
+	return x;
+}
+
+def g(k:!ℕ){
+	x:=vector(3,2:!ℕ);
+	x[1]=0;
+	(x[2],x[k]):=(x[k],x[2]);
+	return x;
+}
+
+def h(const c:!𝔹,k:!ℕ){
+	x:=vector(4,3:!ℕ);
+	x[0]=1;
+	if c { (x[3],x[k]):=(x[k],x[3]); }
+	y:=x[k]+x[3];
+	return (x,y);
+}
+
+def main(){
+	assert(f(0)==(0,0,0,1)&&f(1)==(1,0,0,0));
+	assert(g(0)==(2,0,2)&&g(1)==(2,2,0));
+	assert(h(true,0)==((3,3,3,1),4)&&h(false,1)==((1,3,3,3),6));
+}

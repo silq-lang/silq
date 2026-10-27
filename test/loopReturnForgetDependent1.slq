@@ -1,0 +1,77 @@
+// args: --run
+
+def f(const d:!𝔹,s:!ℕ){
+	y:=vector(s,1:𝔹);
+	repeat 3 {
+		if d { s+=1; return (s,0); }
+		y:=y:𝔹[];
+	}
+	return (s,measure(y).length);
+}
+
+def g(const d:!𝔹,s:!ℕ){
+	y:=vector(s,1:𝔹);
+	for i in 0..3 {
+		if d&&i==1 { s+=1; return (s,i); } else { y:=y~vector(1,0:𝔹); }
+	}
+	return (s,measure(y).length);
+}
+
+def h(const d:!𝔹,s:!ℕ){
+	y:=vector(s,1:!𝔹);
+	k:=0;
+	while k<2 {
+		k+=1;
+		if d { s+=2; return (s,k); }
+		y:=y:!𝔹[];
+	}
+	return (s,y.length);
+}
+
+def p(const d:!𝔹,s:!ℕ){
+	if s<2 {
+		return (s,0);
+	} else {
+		y:=vector(s,1:𝔹);
+	}
+	for i in 0..3 {
+		if d {
+			s+=1;
+			return (s,i);
+		} else {
+			y:=y:𝔹[];
+		}
+	}
+	return (s,measure(y).length);
+}
+
+def q(const c:!𝔹,const d:!𝔹,m:!ℕ){
+	s:=0;
+	x:=vector(3,1:𝔹);
+	if c {
+		s=x.length;
+		if s<2 {
+			return (s+2,measure(x:𝔹[]));
+		} else {
+			s=x.length;
+			z:=vector(s,1:𝔹);
+		}
+		for i in 0..3 {
+			if d||i<3 {
+				s+=m;
+				return (s+i,measure(x:𝔹[]));
+			} else {
+				n:=z.length; z:=z coerce 𝔹^n;
+			}
+		}
+	}
+	return (s+m,measure(x:𝔹[]));
+}
+
+def main(){
+	assert(f(true,2)==(3,0)&&f(false,2)==(2,2));
+	assert(g(true,2)==(3,1)&&g(false,2)==(2,5));
+	assert(h(true,2)==(4,1)&&h(false,2)==(2,2));
+	assert(p(true,2)==(3,0)&&p(false,2)==(2,2)&&p(true,1)==(1,0));
+	assert(q(true,true,3)==(6,[1,1,1])&&q(true,false,0)==(3,[1,1,1])&&q(false,true,1)==(1,[1,1,1]));
+}

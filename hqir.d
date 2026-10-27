@@ -3141,7 +3141,8 @@ class ScopeWriter {
 			p.value = null;
 		}
 		if (p.decl !is decl) {
-			assert(!strictDecl || (isDup && p.decl.isSplitFrom(decl)) || ((nscope is null || scopeFree) && p.decl.canonicalSource is decl.canonicalSource), format("Variable %s declaration mismatch at %s use; found %s, expected %s\n", name.str, isDup ? "const" : "moved", p.decl.loc, decl.loc));
+			// (a const use may find a split of the declaration, or a merge of such splits, e.g., in a type that mentions the version from before an `if` statement)
+			assert(!strictDecl || (isDup && (p.decl.isSplitFrom(decl) || p.decl.isDerivedFrom(decl))) || ((nscope is null || scopeFree) && p.decl.canonicalSource is decl.canonicalSource), format("Variable %s declaration mismatch at %s use; found %s, expected %s\n", name.str, isDup ? "const" : "moved", p.decl.loc, decl.loc));
 			assert(typeForDecl(p.decl) == typeForDecl(decl), "Split const decl changed type");
 		}
 		return v;
@@ -6259,7 +6260,12 @@ class ScopeWriter {
 			auto ie3 = cast(ast_exp.IndexExp)lhs.e[0], ie4 = cast(ast_exp.IndexExp)lhs.e[1];
 			return ie3 && ie4 && ie3.a == ie2.a && ie4.a == ie1.a;
 		}
-		if(cast(ast_exp.IndexExp)ie1.e || cast(ast_exp.IndexExp)ie2.e || hasQuantumIndices(ie1) || hasQuantumIndices(ie2) || !swapsIndices()) {
+		bool tupleResult() { // (the components keep different types, e.g., `x:!𝔹×!ℕ×!𝔹` with an index that is not known statically)
+			auto lhs = cast(ast_exp.TupleExp)orig.e1;
+			auto ie3 = lhs ? cast(ast_exp.IndexExp)lhs.e[0] : null;
+			return ie3 && !!cast(ast_ty.TupleTy)ie3.e.type;
+		}
+		if(cast(ast_exp.IndexExp)ie1.e || cast(ast_exp.IndexExp)ie2.e || hasQuantumIndices(ie1) || hasQuantumIndices(ie2) || !swapsIndices() || tupleResult()) {
 			auto lowering = ast_low.getSwapLowering(orig, nscope); // TODO just do this for every swap, not just the hard cases?
 			assert(!!lowering, format("Failed to lower swap: %s", orig));
 			return genStmt(lowering);

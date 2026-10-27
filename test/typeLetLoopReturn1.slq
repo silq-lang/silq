@@ -1,0 +1,44 @@
+// args: --run
+
+def g(n:!ℕ,c:!ℕ){
+	x:=vector(n+c,0:!ℕ);
+	y:=x coerce !ℕ^(let { t:=dup(n); t+=c; } in t);
+	return y;
+}
+def repeated(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	s:=0;
+	repeat 2 { if n==9 { return 0; } s+=a.length; }
+	return s;
+}
+def whileLoop(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	s:=0;
+	k:=0;
+	while k<2 { k+=1; if n==9 { return 0; } s+=a.length; }
+	return s;
+}
+def forLoop(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	s:=0;
+	for i in 0..2 { if i==n+5 { return 0; } s+=a.length; }
+	return s;
+}
+def doWhile(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	s:=0;
+	k:=0;
+	do{ k+=1; if n==9 { return 0; } s+=a.length; }while k<2;
+	return s;
+}
+def nested(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	s:=0;
+	repeat 2 { repeat 1 { if n==9 { return 0; } } s+=a.length; }
+	return s;
+}
+def main(){
+	r:=(repeated(1,2),whileLoop(2,0),forLoop(1,1),doWhile(0,2),nested(1,2),repeated(9,1));
+	assert(r==(6,4,4,4,6,0));
+	return r;
+}

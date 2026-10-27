@@ -1,0 +1,48 @@
+// args: --run
+
+def f(j:!ℕ){
+	x:=vector(3,0:𝔹);
+	x[j]:=X(x[j]);
+	x[0]⊕=x[j];
+	return measure(x);
+}
+
+def g(j:!ℕ,k:!ℕ){
+	x:=vector(3,0:!ℕ);
+	x[j]=5;
+	x[k]+=x[j];
+	if j==1 { x[0]+=x[j]; }
+	return x;
+}
+
+def h(j:!ℕ){
+	x:=vector(3,0:𝔹);
+	x[2]:=X(x[2]);
+	for i in 0..2 { x[i]⊕=x[j]; }
+	return measure(x);
+}
+
+def p(j:!ℕ){
+	x:=vector(3,0:𝔹);
+	x[1]:=X(x[1]);
+	x[0]⊕=x[let { t:=dup(j); } in t];
+	x[2]⊕=x[(λ()⇒j)()];
+	return measure(x);
+}
+
+def q(){
+	j:=1;
+	x:=vector(3,0:𝔹);
+	x[1]:=X(x[1]);
+	x[0]⊕=x[let { t:=dup(j); if t==5 { t=1; } } in t];
+	x[2]⊕=x[let { t:=dup(j); t+=0; } in t];
+	return measure(x);
+}
+
+def main(){
+	assert(f(1)==(1,1,0)&&f(2)==(1,0,1));
+	assert(g(1,2)==(5,5,5)&&g(2,0)==(5,0,5));
+	assert(h(2)==(1,1,1));
+	assert(p(1)==(1,1,1));
+	assert(q()==(1,1,1));
+}

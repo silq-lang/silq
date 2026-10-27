@@ -1,0 +1,81 @@
+// args: --run
+
+def classicalLocal(n:!ℕ,const a:𝔹){
+	b:=0:𝔹;
+	for i in 0..n{
+		if a { x:=dup(i); if x<5 { y:=x%2; } else { assert(false); } if y==0 { b:=X(b); } }
+	}
+	return measure(b);
+}
+def thenDiverges(n:!ℕ,const a:𝔹){
+	b:=0:𝔹;
+	for i in 0..n{
+		if a { x:=dup(i); if x>=5 { assert(false); } else { y:=x%2; } if y==0 { b:=X(b); } }
+	}
+	return measure(b);
+}
+def divergingUpdate(n:!ℕ,const a:𝔹){
+	b:=0:𝔹;
+	c:=0:𝔹;
+	for i in 0..n{
+		if a { x:=dup(i); if x<5 { y:=x%2; } else { c:=X(c); assert(false); } if y==0 { b:=X(b); } }
+	}
+	return measure(b,c);
+}
+def quantumLocal(n:!ℕ,const a:𝔹){
+	b:=0:𝔹;
+	for i in 0..n{
+		if a { x:=dup(i); if x<5 { y:=dup(a); } else { assert(false); } if y { b:=X(b); } forget(y=a); }
+	}
+	return measure(b);
+}
+def tupleLocal(n:!ℕ,const a:𝔹){
+	b:=0:𝔹;
+	for i in 0..n{
+		if a { x:=dup(i); if x<5 { y:=(x%2,vector(2,1:!ℕ)); } else { assert(false); } if y[1][0]==y[0] { b:=X(b); } }
+	}
+	return measure(b);
+}
+def topLevel(n:!ℕ,const a:𝔹){
+	b:=dup(a);
+	for i in 0..n{
+		x:=dup(i); if x<5 { y:=x%2; } else { assert(false); }
+		if y==0 { b:=X(b); }
+	}
+	return measure(b);
+}
+def twoBranches(n:!ℕ,const a:𝔹){
+	b:=0:𝔹;
+	for i in 0..n{
+		if a { x:=dup(i); if x<5 { y:=0:!ℕ; } else { assert(false); } if y==0 { b:=X(b); } else { assert(false); } }
+	}
+	return measure(b);
+}
+def classicalUpdate(n:!ℕ,const a:𝔹){
+	b:=0:𝔹;
+	s:=0;
+	k:=0;
+	while k<n {
+		k+=1;
+		if a { if k>=5 { s+=1; assert(false); } b:=X(b); }
+	}
+	return (s,measure(b));
+}
+def classicalUpdateLocal(n:!ℕ,const a:𝔹){
+	b:=0:𝔹;
+	s:=0;
+	k:=0;
+	while k<n {
+		k+=1;
+		if a { if k>=5 { s+=1; assert(false); } else { y:=k%2; } if y==0 { b:=X(b); } }
+	}
+	return (s,measure(b));
+}
+def main(){
+	a:=1:𝔹;
+	r:=(classicalLocal(3,a),thenDiverges(3,a),divergingUpdate(3,a),quantumLocal(3,a),tupleLocal(3,a),topLevel(3,a),twoBranches(3,a));
+	assert(r==(0,0,(0,0),1,1,1,1));
+	t:=(classicalUpdate(3,a),classicalUpdateLocal(3,a));
+	assert(t==((0,1),(0,1)));
+	return (r,t,measure(a));
+}

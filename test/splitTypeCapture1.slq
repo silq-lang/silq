@@ -1,0 +1,51 @@
+// args: --run
+
+def g(n:!ℕ,c:!ℕ){
+	x:=vector(n+c,0:!ℕ);
+	y:=x coerce !ℕ^((λ(m:!ℕ)⇒m+c)(n));
+	return y;
+}
+def compared(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	return (a,1)==(a,1);
+}
+def ordered(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	return a<a;
+}
+def forgotten(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	forget(a);
+	forget(c);
+	return n;
+}
+def returned(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	if n==0 { forget(a); forget(c); return 2; }
+	return a.length;
+}
+def closure(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	h:=λ()⇒a.length;
+	return h();
+}
+def local(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	def k()⇒a.length;
+	return k();
+}
+def comprehension(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	r:=[a[i] for i in 0..a.length];
+	return r.length;
+}
+def concatenated(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	b:=a~a;
+	return b.length;
+}
+def main(){
+	r:=(compared(1,2),ordered(1,2),forgotten(1,2),returned(0,1),returned(1,2),closure(1,2),local(1,2),comprehension(1,2),concatenated(1,2));
+	assert(r==(true,false,1,2,3,3,3,3,6));
+	return r;
+}

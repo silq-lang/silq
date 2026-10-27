@@ -1,0 +1,43 @@
+// args: --run
+
+def g(n:!ℕ,c:!ℕ){
+	x:=vector(n+c,0:!ℕ);
+	y:=x coerce !ℕ^(let { t:=dup(n); t+=c; } in t);
+	return y;
+}
+def h(n:!ℕ,c:!ℕ){
+	x:=vector(n+c,0:𝔹);
+	y:=x coerce 𝔹^(let { t:=dup(n); t+=c; } in t);
+	return measure(y);
+}
+def returned(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	if n==0 { forget(a); return 7; }
+	return a.length;
+}
+def forgotten(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	if n==0 { forget(a); forget(c); return 7; }
+	return a.length;
+}
+def measured(n:!ℕ,c:!ℕ){
+	a:=h(n,c);
+	if n==0 { forget(a); forget(c); return 7; }
+	return a.length;
+}
+def compared(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	if c==0 { forget(a); return 7; }
+	return if a==a then a.length else 0;
+}
+def concatenated(n:!ℕ,c:!ℕ){
+	a:=g(n,c);
+	if n==0 { forget(a); return 7; }
+	b:=a~a;
+	return b.length;
+}
+def main(){
+	r:=(returned(2,2),returned(0,1),forgotten(1,2),measured(2,0),compared(1,2),compared(1,0),concatenated(1,1));
+	assert(r==(4,7,3,2,3,7,4));
+	return r;
+}

@@ -1,0 +1,27 @@
+// args: --run
+
+def f(){
+	x:=vector(4,0:𝔹);
+	w:=0;
+	while w<2 { w+=1; x[(λ()⇒w)()]:=X(x[(λ()⇒w)()]); }
+	return measure(x);
+}
+
+def g(k:!ℕ){
+	x:=vector(4,0:𝔹);
+	x[k]:=X(x[k]);
+	repeat 1 { w:=0; while w<2 { w+=1; x[(λ()⇒w)()]⊕=x[k]; } }
+	return measure(x);
+}
+
+def h(){
+	x:=vector(3,0:𝔹);
+	for i in 0..3 { w:=0; while w<1 { w+=1; x[(λ()⇒w)()]:=X(x[(λ()⇒w)()]); } }
+	return measure(x);
+}
+
+def main(){
+	assert(f()==(0,1,1,0));
+	assert(g(3)==(0,1,1,1));
+	assert(h()==(0,1,0));
+}
