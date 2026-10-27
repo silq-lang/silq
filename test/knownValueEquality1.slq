@@ -1,0 +1,134 @@
+// args: --run
+
+def initializer(){
+	n:=3;
+	xs:=vector(n,0):_^3;
+	ys:=vector(3,1:!𝔹):!𝔹^n;
+	return (xs,ys);
+}
+def chain(){
+	m:=3;
+	n:=m;
+	k:=dup(n);
+	xs:=vector(k,0:!𝔹):!𝔹^3;
+	return xs;
+}
+def conversion(){
+	n:=3;
+	xs:=vector(n,0):!ℕ^3;
+	t:=vector(n,1:!𝔹):!𝔹×!𝔹×!𝔹;
+	ys:=t:!𝔹^n;
+	return (xs,ys);
+}
+def arithmetic(){
+	n:=3;
+	m:=n*2+1;
+	xs:=vector(m,0:!𝔹):!𝔹^7;
+	ys:=vector(n*n,0:!𝔹):!𝔹^(m+2);
+	return (xs,ys);
+}
+def parameter(const k:!ℕ,j:!ℕ){
+	n:=k+1;
+	m:=dup(j);
+	xs:=vector(n,0:!𝔹):!𝔹^(k+1);
+	ys:=vector(m,0:!𝔹):!𝔹^j;
+	return (xs,ys);
+}
+def update(){
+	n:=3;
+	n+=1;
+	m:=2;
+	m=n*2;
+	xs:=vector(n,0:!𝔹):!𝔹^4;
+	ys:=vector(m,0:!𝔹):!𝔹^8;
+	return (xs,ys);
+}
+def updateAfter(){
+	n:=3;
+	xs:=vector(n,0:!𝔹):!𝔹^3;
+	n+=1;
+	return (xs,n);
+}
+def swap(){
+	a:=1;
+	b:=2;
+	(a,b)=(b,a);
+	xs:=vector(a,0:!𝔹):!𝔹^2;
+	return (xs,b);
+}
+def branches(const c:!𝔹){
+	if c { n:=3; } else { n:=1+2; }
+	m:=1;
+	if c { m+=1; } else { m=2; }
+	xs:=vector(n,0:!𝔹):!𝔹^3;
+	ys:=vector(m,0:!𝔹):!𝔹^2;
+	return (xs,ys);
+}
+def afterLoop(){
+	n:=3;
+	r:=0;
+	for i in 0..2 { r+=n; }
+	xs:=vector(n,0:!𝔹):!𝔹^3;
+	return (xs,r);
+}
+def inLoop(){
+	r:=0;
+	for i in 0..2 {
+		n:=3;
+		m:=n+i;
+		xs:=vector(n,0:!𝔹):!𝔹^3;
+		ys:=vector(m,0:!𝔹):!𝔹^(n+i);
+		r+=xs.length+ys.length;
+	}
+	return r;
+}
+def withBody(){
+	x:=vector(3,0:𝔹);
+	with { m:=3; } do { y:=x:𝔹^m; x:=y:𝔹^3; }
+	return measure(x);
+}
+def closure(){
+	n:=3;
+	h:=λ(x:!𝔹^n)⇒x;
+	g:=λ()⇒vector(n,1:!𝔹):!𝔹^3;
+	return (h(vector(3,0:!𝔹)),g());
+}
+def letExp(){
+	y:=let { n:=2; x:=vector(n,0:!𝔹):!𝔹^2; } in x;
+	return y;
+}
+def generic[k:!ℕ](x:!𝔹^k)⇒x;
+def apply(const f:!𝔹^3→!𝔹^3,x:!𝔹^3)⇒f(x);
+def tupleArg(t:!𝔹×!𝔹×!𝔹)⇒t;
+def calls(){
+	n:=3;
+	h:=λ(x:!𝔹^n)⇒x;
+	return (generic[3](vector(n,0:!𝔹)),apply(h,vector(3,1:!𝔹)),tupleArg(vector(n,1:!𝔹)));
+}
+def returnedClosure(){
+	n:=3;
+	return λ()⇒vector(n,0:!𝔹):!𝔹^3;
+}
+def letInType(const k:!ℕ){
+	x:=vector(k+1,0:!ℕ);
+	return x coerce !ℕ^((λ(j:!ℕ)⇒let { m:=j+1; z:=vector(m,0:!𝔹):!𝔹^(j+1); } in z.length)(k));
+}
+def bits(){
+	n:=3;
+	x:=5:!uint[n];
+	y:=x:!uint[3];
+	return y;
+}
+def reversible(x:𝔹^3)qfree{
+	n:=3;
+	y:=x:𝔹^n;
+	z:=y:𝔹^3;
+	return z;
+}
+def main(){
+	x:=vector(3,0:𝔹);
+	x[0]:=X(x[0]);
+	r:=(initializer(),chain(),conversion(),arithmetic(),parameter(1,2),update(),updateAfter(),swap(),branches(true),branches(false),afterLoop(),inLoop(),withBody(),closure(),letExp(),calls(),returnedClosure()(),letInType(2),bits(),measure(reverse(reversible)(reversible(x))));
+	assert(r==(((0,0,0),[1,1,1]),(0,0,0),((0,0,0),[1,1,1]),((0,0,0,0,0,0,0),[0,0,0,0,0,0,0,0,0]),((0,0),(0,0)),((0,0,0,0),(0,0,0,0,0,0,0,0)),((0,0,0),4),((0,0),1),((0,0,0),(0,0)),((0,0,0),(0,0)),((0,0,0),6),13,(0,0,0),([0,0,0],(1,1,1)),(0,0),((0,0,0),(1,1,1),(1,1,1)),(0,0,0),(0,0,0),5,(1,0,0)));
+	return r;
+}

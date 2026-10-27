@@ -1,0 +1,66 @@
+def update(){
+	n:=3;
+	n+=1;
+	xs:=vector(n,0:!𝔹):!𝔹^3; /// error
+	return xs;
+}
+def updateOther(){
+	m:=3;
+	n:=dup(m);
+	m+=1;
+	xs:=vector(m,0:!𝔹):!𝔹^n; /// error
+	return xs;
+}
+def parameter(k:!ℕ){
+	n:=dup(k);
+	k+=1;
+	xs:=vector(n,0:!𝔹):!𝔹^k; /// error
+	return xs;
+}
+def branch(const c:!𝔹){
+	n:=3;
+	if c { n+=1; }
+	xs:=vector(n,0:!𝔹):!𝔹^3; /// error
+	return xs;
+}
+def afterLoop(){
+	n:=3;
+	for i in 0..2 { n+=1; }
+	xs:=vector(n,0:!𝔹):!𝔹^3; /// error
+	return xs;
+}
+def afterLoopSame(){
+	n:=5;
+	for i in 0..2 { n=5; }
+	xs:=vector(n,0:!𝔹):!𝔹^5; /// error
+	return xs;
+}
+def inLoopUpdate(){
+	n:=3;
+	for i in 0..2 { xs:=vector(n,0:!𝔹):!𝔹^3; /// error
+		forget(xs); n+=1; }
+	return n;
+}
+def inLoop(){
+	n:=3;
+	r:=0;
+	for i in 0..2 { xs:=vector(n,0:!𝔹):!𝔹^3; /// error
+		r+=xs.length; }
+	k:=0;
+	while k<2 { xs:=vector(n,0:!𝔹):!𝔹^3; /// error
+		r+=xs.length; k+=1; }
+	repeat 2 { xs:=vector(n,0:!𝔹):!𝔹^3; /// error
+		r+=xs.length; }
+	return r;
+}
+def measured(){
+	n:=measure(H(0:𝔹));
+	m:=measure(H(0:𝔹));
+	xs:=vector(n,0:!𝔹):!𝔹^m; /// error
+	return xs;
+}
+def arithmetic(){
+	n:=3;
+	xs:=vector(n+1,0:!𝔹):!𝔹^5; /// error
+	return xs;
+}
