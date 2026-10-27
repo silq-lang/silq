@@ -1,0 +1,29 @@
+// args: --run
+
+def directLambda(const c:𝔹,val:𝔹){
+	return (λ()⇒if c { val } else { val })();
+}
+def nestedFunction(const c:𝔹,val:𝔹){
+	def g(v:𝔹){ if c { return v; } else { return v; } }
+	return (λ()⇒g(val))();
+}
+def recursion(const c:𝔹,val:𝔹){
+	def rec(k:!ℕ,val:𝔹){
+		if k==1 { return val; }
+		if c { return rec(k+1,val); } else { return (λ()⇒rec(k+1,val))(); }
+	}
+	return rec(0,val);
+}
+def conditional(const c:𝔹,const b:!𝔹){
+	val:=0:𝔹;
+	return (if b { λ()⇒if c { val } else { val } } else { λ()⇒if c { X(val) } else { X(val) } })();
+}
+def main(){
+	c:=H(0:𝔹);
+	t:=(directLambda(c,0:𝔹),nestedFunction(c,1:𝔹),recursion(c,0:𝔹),conditional(c,false));
+	c:=H(c);
+	forget(c=0:𝔹);
+	r:=measure(t);
+	assert(r==(0,1,0,1));
+	return r;
+}

@@ -1,0 +1,37 @@
+// args: --run
+
+def enclosingVector(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	a:=(dup(n),1):!ℕ^2;
+	y:=let { a[0]+=c; z:=if a[0]==3 { X(x) } else { x }; } in z;
+	return y;
+}
+def returnedVector(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	a:=(dup(n),1):!ℕ^2;
+	(y,a):=let { z:=if a[0]==2 { X(x) } else { x }; a[0]+=c; } in (z,a);
+	w:=if a[0]==3 { X(y) } else { y };
+	return w;
+}
+def unusedSwap(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	(y,k):=let { a:=(dup(n),1):!ℕ^2; (a[0],a[1]):=(a[1],a[0]); } in (x,k);
+	return y;
+}
+def unusedUpdate(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=n+c;
+	(y,k):=let { a:=(dup(n),1):!ℕ^2; a[0]+=c; } in (x,k);
+	w:=if k==2 { X(y) } else { y };
+	return w;
+}
+def unchangedResult(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	(y,k):=let { a:=(dup(n),1):!ℕ^2; (a[0],a[1]):=(a[1],a[0]); z:=if a[1]==2 { X(x) } else { x }; } in (z,k);
+	w:=if k==1 { X(y) } else { y };
+	return w;
+}
+def main(){
+	r:=(measure(reverse(enclosingVector)(1:𝔹,2,1)),measure(reverse(enclosingVector)(1:𝔹,1,1)),measure(reverse(returnedVector)(1:𝔹,2,1)),measure(reverse(returnedVector)(1:𝔹,1,2)),measure(reverse(returnedVector)(1:𝔹,2,2)),measure(reverse(returnedVector)(1:𝔹,1,1)));
+	assert(r==(0,1,1,0,0,1));
+	s:=(measure(reverse(unusedSwap)(1:𝔹,2)),measure(reverse(unusedUpdate)(1:𝔹,1,1)),measure(reverse(unusedUpdate)(1:𝔹,2,1)),measure(reverse(unchangedResult)(1:𝔹,2)),measure(reverse(unchangedResult)(1:𝔹,1)),measure(reverse(unchangedResult)(1:𝔹,3)));
+	assert(s==(1,0,1,0,0,1));
+	return (r,s);
+}

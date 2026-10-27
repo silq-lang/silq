@@ -3203,7 +3203,7 @@ struct Interpreter(QState){
 			auto arg=doIt(ce.arg);
 			auto r=qstate.call(fun,arg,ce.type,ce.loc);
 			if(ce.newFunctionVar) qstate.assignTo(ce.newFunctionVar.getName,fun);
-			else if(id&&fun.tag==QState.Value.Tag.closure&&fun.closure.context&&id.name !in qstate.vars)
+			else if(fun.tag==QState.Value.Tag.closure&&fun.closure.context&&(id?id.name !in qstate.vars:!ce.e.constLookup)) // (the call consumed the function value, e.g., a `once` lambda: its `const` captures are copies)
 				fun.forget(qstate);
 			return r;
 		}
