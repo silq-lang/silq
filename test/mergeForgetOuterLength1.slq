@@ -1,0 +1,24 @@
+// args: --run
+
+def f(const c:!𝔹,m:!ℕ){
+	x:=vector(m,0:!𝔹);
+	if c {
+		n:=x.length; x:=x coerce !𝔹^n;
+		forget(m);
+	}
+	return x:!𝔹[];
+}
+
+def g(const c:!𝔹,m:!ℕ){
+	x:=vector(m,0:𝔹);
+	if c {
+		n:=x.length; x:=x coerce 𝔹^n;
+		forget(m);
+	}
+	return measure(x:𝔹[]);
+}
+
+def main(){
+	assert(f(true,2)==[0,0]&&f(false,3)==[0,0,0]);
+	assert(g(true,2)==[0,0]&&g(false,3)==[0,0,0]);
+}

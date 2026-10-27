@@ -1,0 +1,64 @@
+// args: --run
+
+def f(m:!ℕ){
+	do{
+		j:=0;
+		while j<1 { j+=1; }
+		forget(m);
+	}while false {
+		return 0;
+	}
+	return 0;
+}
+def g(m:!ℕ){
+	do{
+		j:=0;
+		for i in 0..2 { j+=i; }
+		forget(m);
+	}while false {
+		return 0;
+	}
+	return 0;
+}
+def h(m:!ℕ){
+	k:=0;
+	do{
+		k+=1;
+		j:=0;
+		while j<1 { j+=1; }
+		forget(m);
+	}while k<2 {
+		return k;
+	}
+	return 0;
+}
+def p(m:!ℕ,n:!ℕ){
+	do{
+		j:=0;
+		while j<1 { j+=1; }
+		forget(m);
+		do{ j+=1; }while j<3 { forget(n); return 1; }
+	}while true {
+		return 0;
+	}
+	return n;
+}
+def q(m:!ℕ){
+	k:=0;
+	do{
+		k+=1;
+		j:=0;
+		repeat 1 { j+=1; }
+		forget(m);
+	}while k<1 {
+		return 1;
+	}
+	return 0;
+}
+def main(){
+	assert(f(1)==0);
+	assert(g(1)==0);
+	assert(h(1)==1);
+	assert(p(1,2)==1);
+	assert(q(1)==0);
+}

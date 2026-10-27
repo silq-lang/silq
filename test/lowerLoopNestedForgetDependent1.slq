@@ -1,0 +1,41 @@
+// args: --run
+
+def f(m:!ℕ){
+	x:=vector(m,1:!𝔹);
+	k:=0;
+	do{
+		k+=1;
+		j:=0;
+		do{ j+=1; forget(x); m+=1; }while j<1 { return 0; }
+	}while k<1 { return 1; }
+	return m;
+}
+
+def g(m:!ℕ){
+	x:=vector(m,1:!𝔹);
+	k:=0;
+	while k<1 {
+		k+=1;
+		j:=0;
+		do{ j+=1; forget(x); m+=1; }while j<1 { return 0; }
+		return 1;
+	}
+	return m;
+}
+
+def h(m:!ℕ){
+	x:=vector(m,1:!𝔹);
+	k:=0;
+	do{
+		k+=1;
+		j:=0;
+		do{ j+=1; m+=1; x:=vector(1,1:!𝔹); }while j<1 { return 0; }
+	}while k<1 { return 1; }
+	return m+x.length;
+}
+
+def main(){
+	assert(f(2)==3);
+	assert(g(2)==1);
+	assert(h(2)==4);
+}

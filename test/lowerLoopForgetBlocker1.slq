@@ -1,0 +1,56 @@
+// args: --run
+
+def f(const c:!𝔹){
+	x:=vector(1,0:𝔹);
+	n:=x.length; x:=x coerce 𝔹^n;
+	k:=0;
+	while k<2 {
+		k+=1;
+		if c {
+			j:=0;
+			do{ j+=1; }while j<1 { return 0; }
+		}else{
+			n+=1;
+		}
+	}
+	return n;
+}
+
+def g(const c:!𝔹){
+	x:=vector(1,0:𝔹);
+	n:=x.length; x:=x coerce 𝔹^n;
+	k:=0;
+	while k<2 {
+		k+=1;
+		if c {
+			j:=0;
+			do{ j+=1; }while j<1 { if j>5 { return 0; } }
+		}else{
+			n+=1;
+		}
+	}
+	return n;
+}
+
+def h(const c:!𝔹){
+	x:=vector(1,0:𝔹);
+	n:=x.length; x:=x coerce 𝔹^n;
+	k:=0;
+	do{
+		k+=1;
+	}while k<2 {
+		if c {
+			j:=0;
+			do{ j+=1; }while j<2 { return 0; }
+		}else{
+			n+=1;
+		}
+	}
+	return n;
+}
+
+def main(){
+	assert(f(true)==1&&f(false)==3);
+	assert(g(true)==1&&g(false)==3);
+	assert(h(true)==0&&h(false)==2);
+}

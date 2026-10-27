@@ -1,0 +1,20 @@
+// args: --run
+
+def f(k:!ℕ){
+	x:=vector(k,1:!𝔹);
+	j:=0;
+	do{
+		j+=1;
+		x:=x:!𝔹[];
+		y:=vector(1,0:𝔹);
+	}while j<2 {
+		forget(x);
+		measure(y);
+		x:=vector(k,0:!𝔹);
+	}
+	return (x,measure(y));
+}
+
+def main(){
+	assert(f(2)==([0,0],[0]));
+}

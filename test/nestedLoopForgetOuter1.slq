@@ -1,0 +1,51 @@
+// args: --run
+
+def f(n:!ℕ){
+	x:=vector(n,false);
+	k:=0;
+	while k<2 {
+		k+=1;
+		while k<1 { if k>5 { return 0; } }
+		n+=1;
+	}
+	return n;
+}
+
+def g(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	k:=0;
+	while k<2 {
+		k+=1;
+		j:=0;
+		while j<2 { j+=1; if j>5 { return 0; } }
+		n+=1;
+	}
+	return n;
+}
+
+def h(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	for i in 0..2 {
+		repeat 2 { if i>5 { return 0; } }
+		n+=1;
+	}
+	return n;
+}
+
+def d(n:!ℕ){
+	x:=vector(n,false);
+	k:=0;
+	do{
+		k+=1;
+		for i in 0..k { if i>5 { return 0; } }
+		n+=1;
+	}while k<2;
+	return n;
+}
+
+def main(){
+	assert(f(1)==3);
+	assert(g(1)==3);
+	assert(h(1)==3);
+	assert(d(1)==3);
+}

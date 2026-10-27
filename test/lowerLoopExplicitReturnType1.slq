@@ -1,0 +1,32 @@
+// args: --run
+
+def f(const c:!𝔹){
+	s:=0;
+	if c {
+		j:=0;
+		do{ j+=1; return 1; }while j<1;
+	}else{
+		k:=0;
+		while k<0 { k+=1; return 2; }
+		x:=vector(k,1:!𝔹);
+	}
+	s+=x.length;
+	return s;
+}
+
+def g(const c:!𝔹,n:!ℕ){
+	if c {
+		j:=0;
+		do{ j+=1; return j; }while j<2;
+	}else{
+		k:=0;
+		while k<n { k+=1; return k+1; }
+		x:=vector(k,1:!𝔹);
+	}
+	return x.length;
+}
+
+def main(){
+	assert(f(true)==1&&f(false)==0);
+	assert(g(true,0)==1&&g(false,0)==0&&g(false,2)==2);
+}

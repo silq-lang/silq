@@ -1,0 +1,43 @@
+// args: --run
+
+def f(const c:!𝔹,z:!ℕ){
+	x:=vector(z,0:𝔹);
+	if c {
+		return 0;
+	}else{
+		n:=x.length;
+		k:=0;
+		while k<2 { k+=1; y:=vector(z,0:𝔹); }
+	}
+	return 1;
+}
+
+def g(const c:!𝔹,m:!ℕ){
+	n:=1;
+	x:=vector(m,0:𝔹);
+	if !c {
+		return 0;
+	}else{
+		n=x.length;
+		k:=0;
+		while k<1 { k+=1; y:=vector(m,0:𝔹); }
+	}
+	return n;
+}
+
+def h(const c:!𝔹,z:!ℕ){
+	x:=vector(z,1:!𝔹);
+	if c {
+		return 0;
+	}else{
+		n:=x.length;
+		for i in 0..2 { y:=vector(z,0:!𝔹); }
+	}
+	return 1;
+}
+
+def main(){
+	assert(f(true,3)==0&&f(false,3)==1);
+	assert(g(false,2)==0&&g(true,2)==2);
+	assert(h(true,3)==0&&h(false,3)==1);
+}

@@ -1,0 +1,29 @@
+// args: --run
+
+def f(){
+	k:=0;
+	do{
+		k+=1;
+		x:=vector(0,1:𝔹);
+		y:=vector(1,0:𝔹);
+		x:=x~vector(1,0:𝔹);
+	}while k<2 {
+		measure(y);
+	}
+	return measure(x);
+}
+
+def g(){
+	s:=0;
+	x:=vector(1,0:𝔹);
+	repeat 2 {
+		if s==0 { measure(x); s+=1; }
+		x:=vector(0,1:𝔹);
+	}
+	return s;
+}
+
+def main(){
+	assert(f()==[0]);
+	assert(g()==1);
+}

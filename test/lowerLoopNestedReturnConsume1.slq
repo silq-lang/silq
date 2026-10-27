@@ -1,0 +1,24 @@
+// args: --run
+
+def f(){
+	for i in 0..2 {
+		n:=1;
+		repeat 1 { forget(n); return 0; }
+	}
+	return 1;
+}
+
+def g(const c:!𝔹){
+	k:=0;
+	while k<2 {
+		k+=1;
+		n:=k;
+		while c&&k>1 { forget(n); n:=2; forget(n); return 0; }
+	}
+	return 1;
+}
+
+def main(){
+	assert(f()==0);
+	assert(g(true)==0&&g(false)==1);
+}

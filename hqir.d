@@ -5111,7 +5111,7 @@ class ScopeWriter {
 		if(r.mayPass) foreach(decl; nscope.mergedVars) { // (the merge converts them after the forgets, e.g., from `𝔹^n` for a local `n`)
 			auto ty = typeForDecl(decl);
 			if(ty) foreach(id; ast_ty.freeIdentifiers(ty)) {
-				if(id.meaning && nscope.forgottenVars.canFind!(d => d is id.meaning)) {
+				if(id.meaning && nscope.forgottenVars.canFind!(d => d is id.meaning || d.isSplitFrom(id.meaning))) { // (or for a version of a variable from outside of the block, e.g., `n` in `x:𝔹^n` if the other branch consumes `n`)
 					pinTypeDeep(ty);
 					break;
 				}
@@ -6576,7 +6576,7 @@ class ScopeWriter {
 	void carryPinned(ScopeWriter w, CondAny cond) {
 		bool mentionsForgotten(Expression e) {
 			foreach(id; ast_ty.freeIdentifiers(e))
-				if(id.meaning && w.nscope.forgottenVars.canFind!(d => d is id.meaning)) return true;
+				if(id.meaning && w.nscope.forgottenVars.canFind!(d => d is id.meaning || d.isSplitFrom(id.meaning))) return true;
 			return false;
 		}
 		void carry(Expression e) {
