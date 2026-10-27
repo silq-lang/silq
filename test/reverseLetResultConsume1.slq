@@ -1,0 +1,30 @@
+// args: --run
+
+def readBefore(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(n); m:=dup(c);
+	(y,m):=let { z:=if m==2 { X(x) } else { x }; m+=k; for j in 0..2 { k+=1; } } in (z,m);
+	return (y,m);
+}
+def readAfter(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(n); m:=dup(c);
+	(y,m):=let { k+=1; m+=k; z:=if m==3 { X(x) } else { x }; } in (z,m);
+	return (y,m);
+}
+def localResult(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(n);
+	(y,t):=let { k*=2; z:=if k==2 { X(x) } else { x }; t:=k+c; } in (z,t);
+	return (y,t);
+}
+def readLater(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(n); m:=dup(c);
+	(y,m):=let { k+=1; z:=X(x); m+=k; } in (z,m);
+	w:=if m==3 { X(y) } else { y };
+	return w;
+}
+def main(){
+	r:=(measure(reverse(readBefore)((1:𝔹,3),1,2)),measure(reverse(readBefore)((1:𝔹,2),1,1)),measure(reverse(readAfter)((1:𝔹,3),1,1)),measure(reverse(readAfter)((1:𝔹,4),2,1)),measure(reverse(localResult)((1:𝔹,3),1,1)),measure(reverse(localResult)((1:𝔹,5),2,1)));
+	assert(r==(0,1,0,1,0,1));
+	s:=(measure(reverse(readLater)(1:𝔹,1,1)),measure(reverse(readLater)(1:𝔹,2,1)));
+	assert(s==(1,0));
+	return (r,s);
+}

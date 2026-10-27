@@ -1,0 +1,43 @@
+// args: --run
+
+def nestedQuantum(x:𝔹,const n:!ℕ,const c:!𝔹)qfree{
+	k:=dup(n);
+	y:=let { if c { u:=k*2; if n==1 { k+=1; x:=X(x); } } } in x;
+	return y;
+}
+def nestedClassical(x:𝔹,const n:!ℕ,const c:!𝔹)qfree{
+	k:=dup(n);
+	y:=let { if c { u:=k*2; if n==1 { k+=1; } x:=X(x); } } in x;
+	return y;
+}
+def afterBranch(x:𝔹,const n:!ℕ,const c:!𝔹)qfree{
+	k:=dup(n);
+	y:=let { if c { u:=k*2; if n==1 { k+=1; } } x:=X(x); } in x;
+	return y;
+}
+def readAfterNested(x:𝔹,const n:!ℕ,const c:!𝔹)qfree{
+	k:=dup(n);
+	y:=let { if c { u:=k*2; if n==1 { k+=1; } z:=if u==2 { X(x) } else { x }; } else { z:=x; } } in z;
+	return y;
+}
+def deadChain(x:𝔹,const n:!ℕ,const c:!𝔹)qfree{
+	k:=dup(n);
+	y:=let { if c { u:=k*2; if n==1 { k+=1; x:=X(x); } w:=u+1; } } in x;
+	return y;
+}
+def localVariable(x:𝔹,const n:!ℕ,const c:!𝔹)qfree{
+	y:=let { k:=dup(n); if c { u:=k*2; if n==1 { k+=1; x:=X(x); } } } in x;
+	return y;
+}
+def inLoop(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	y:=let { for j in 0..3 { u:=k+j; if n==1 { k+=1; x:=X(x); } } } in x;
+	return y;
+}
+def main(){
+	r:=(measure(reverse(nestedQuantum)(1:𝔹,1,true)),measure(reverse(nestedQuantum)(1:𝔹,2,true)),measure(reverse(nestedQuantum)(1:𝔹,1,false)),measure(reverse(nestedClassical)(1:𝔹,1,true)),measure(reverse(nestedClassical)(1:𝔹,2,true)),measure(reverse(nestedClassical)(1:𝔹,1,false)),measure(reverse(afterBranch)(1:𝔹,1,true)),measure(reverse(afterBranch)(1:𝔹,2,false)));
+	assert(r==(0,1,1,0,0,1,0,0));
+	s:=(measure(reverse(readAfterNested)(1:𝔹,1,true)),measure(reverse(readAfterNested)(1:𝔹,2,true)),measure(reverse(readAfterNested)(1:𝔹,1,false)),measure(reverse(deadChain)(1:𝔹,1,true)),measure(reverse(deadChain)(1:𝔹,2,true)),measure(reverse(localVariable)(1:𝔹,1,true)),measure(reverse(localVariable)(1:𝔹,2,true)),measure(reverse(inLoop)(1:𝔹,1)),measure(reverse(inLoop)(1:𝔹,2)));
+	assert(s==(0,1,1,0,1,0,1,0,1));
+	return (r,s);
+}

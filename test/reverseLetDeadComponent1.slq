@@ -1,0 +1,30 @@
+// args: --run
+
+def swapAtEnd(x:𝔹,const n:!ℕ)qfree{
+	y:=let { a:=(1,dup(n)):!ℕ^2; z:=if a[1]==2 { X(x) } else { x }; (a[0],a[1]):=(a[1],a[0]); } in z;
+	return y;
+}
+def updateAtEnd(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	y:=let { a:=(dup(n),1):!ℕ^2; z:=if a[0]==2 { X(x) } else { x }; a[0]+=c; } in z;
+	return y;
+}
+def updateThenSwap(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	y:=let { a:=(dup(n),1):!ℕ^2; z:=if a[0]==2 { X(x) } else { x }; a[0]+=c; (a[0],a[1]):=(a[1],a[0]); } in z;
+	return y;
+}
+def updateInBranch(x:𝔹,const n:!ℕ,const c:!𝔹)qfree{
+	y:=let { a:=(dup(n),1):!ℕ^2; z:=if a[0]==2 { X(x) } else { x }; if c { a[1]+=1; } } in z;
+	return y;
+}
+def transformation(n:!ℕ,c:!ℕ){
+	q:=0:𝔹;
+	with { s:=let { a:=(dup(n),1):!ℕ^2; t:=a[0]+c; (a[0],a[1]):=(a[1],a[0]); } in t; } do { if s==3 { q:=X(q); } }
+	return measure(q);
+}
+def main(){
+	r:=(measure(reverse(swapAtEnd)(1:𝔹,2)),measure(reverse(swapAtEnd)(1:𝔹,1)),measure(reverse(updateAtEnd)(1:𝔹,2,1)),measure(reverse(updateAtEnd)(1:𝔹,1,1)),measure(reverse(updateThenSwap)(1:𝔹,2,1)),measure(reverse(updateThenSwap)(1:𝔹,1,1)),measure(reverse(updateInBranch)(1:𝔹,2,true)),measure(reverse(updateInBranch)(1:𝔹,1,true)));
+	assert(r==(0,1,0,1,0,1,0,1));
+	s:=(transformation(2,1),transformation(1,1));
+	assert(s==(1,0));
+	return (r,s);
+}

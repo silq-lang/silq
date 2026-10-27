@@ -1,0 +1,30 @@
+// args: --run
+
+def loopBoth(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(n); m:=dup(c);
+	(y,k):=let { repeat 2 { k+=1; m*=2; } u:=dup(m); z:=if u==4 { X(x) } else { x }; } in (z,k);
+	return (y,k);
+}
+def branchBoth(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(n); m:=c+1;
+	(y,m):=let { if c==0 { m*=2; k+=1; } else { k*=2; } z:=if k==2 { X(x) } else { x }; } in (z,m);
+	return (y,m);
+}
+def quantumLoop(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(n); m:=dup(c);
+	(y,k):=let { for j in 0..2 { k+=j; m+=1; x:=X(x); } z:=if m==3 { X(x) } else { x }; } in (z,k);
+	return (y,k);
+}
+def readAfter(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(n); m:=dup(c);
+	(y,k):=let { repeat 2 { k+=1; m*=2; } u:=dup(m); z:=if u==4 { X(x) } else { x }; } in (z,k);
+	w:=if k==3 { X(y) } else { y };
+	return w;
+}
+def main(){
+	r:=(measure(reverse(loopBoth)((1:𝔹,3),1,1)),measure(reverse(loopBoth)((1:𝔹,4),2,2)),measure(reverse(branchBoth)((1:𝔹,2),1,0)),measure(reverse(branchBoth)((1:𝔹,2),1,1)),measure(reverse(branchBoth)((1:𝔹,3),2,2)));
+	assert(r==(0,1,0,0,1));
+	s:=(measure(reverse(quantumLoop)((1:𝔹,2),1,1)),measure(reverse(quantumLoop)((1:𝔹,3),2,2)),measure(reverse(readAfter)(1:𝔹,1,1)),measure(reverse(readAfter)(1:𝔹,2,1)),measure(reverse(readAfter)(1:𝔹,1,2)));
+	assert(s==(0,1,1,0,0));
+	return (r,s);
+}
