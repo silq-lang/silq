@@ -1,0 +1,18 @@
+// args: --run
+
+def id[k:!ℕ](v:!ℕ^k)⇒v;
+def single(a:!ℕ^3){
+	q:=0:𝔹;
+	with { t:=id(a).length; } do { if t==3 { q:=X(q); } }
+	return measure(q);
+}
+def two(a:!ℕ^3){
+	q:=0:𝔹;
+	with { t:=id(a).length; u:=(id(a)~a).length; } do { if t+u==9 { q:=X(q); } }
+	return measure(q);
+}
+def main(){
+	r:=(single((1,2,3)),two((1,2,3)),single((0,0,0)));
+	assert(r==(1,1,1));
+	return r;
+}

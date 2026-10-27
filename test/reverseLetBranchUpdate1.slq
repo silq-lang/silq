@@ -1,0 +1,57 @@
+// args: --run
+
+def before(x:𝔹,const n:!ℕ,const c:!𝔹)qfree{
+	y:=let { t:=dup(n); if c { u:=t*2; t+=1; z:=if u==4 { X(x) } else { x }; } else { z:=x; } } in z;
+	return y;
+}
+def beforeResult(x:𝔹,const n:!ℕ,const c:!𝔹)qfree{
+	(y,k):=let { t:=dup(n); if c { u:=t*2; t+=1; z:=if u==4 { X(x) } else { x }; } else { z:=x; } } in (z,t);
+	return (y,k);
+}
+def beforeTwice(x:𝔹,const n:!ℕ,const c:!𝔹)qfree{
+	y:=let { t:=dup(n); if c { u:=t*2; t+=1; t*=3; z:=if u==4 { X(x) } else { x }; } else { z:=x; } w:=if t==9 { X(z) } else { z }; } in w;
+	return y;
+}
+def beforeNested(x:𝔹,const n:!ℕ,const c:!𝔹,const d:!𝔹)qfree{
+	y:=let { t:=dup(n); if c { if d { u:=t*2; t+=1; z:=if u==4 { X(x) } else { x }; } else { z:=x; } } else { z:=x; } } in z;
+	return y;
+}
+def beforeLoop(x:𝔹^2,const n:!ℕ)qfree{
+	y:=let { t:=dup(n); for j in 0..2 { u:=t*2; t+=1; x[j]:=if u==4 { X(x[j]) } else { x[j] }; } } in x;
+	return y;
+}
+def bothBranches(x:𝔹^2,const n:!ℕ,const c:!𝔹)qfree{
+	y:=let { t:=dup(n); if c { t+=1; x[0]:=X(x[0]); } else { t+=2; } if t==3 { x[1]:=X(x[1]); } } in x;
+	return y;
+}
+def nestedBranches(x:𝔹^2,const n:!ℕ,const c:!𝔹,const d:!𝔹)qfree{
+	y:=let { t:=dup(n); if c { if d { t+=1; x[0]:=X(x[0]); } } if t==3 { x[1]:=X(x[1]); } } in x;
+	return y;
+}
+def branchInLoop(x:𝔹^2,const n:!ℕ)qfree{
+	y:=let { t:=dup(n); for j in 0..2 { if j==1 { t+=1; } if t==3 { x[j]:=X(x[j]); } } if t==3 { x[0]:=X(x[0]); } } in x;
+	return y;
+}
+def typed(x:𝔹,const n:!ℕ,const c:!𝔹)qfree{
+	y:=let { t:=dup(n); if c { u:=dup(t); t+=1; z:=if u==2 { X(x) } else { x }; } else { z:=x; } } in z;
+	return y;
+}
+def typedLoop(x:𝔹^2,const n:!ℕ)qfree{
+	y:=let { t:=dup(n); for j in 0..2 { u:=dup(t); t+=1; x[j]:=if u==2 { X(x[j]) } else { x[j] }; } } in x;
+	return y;
+}
+def typedMul(x:𝔹,const n:!ℕ,const c:!𝔹)qfree{
+	y:=let { t:=dup(n); if c { u:=dup(t); t*=2; z:=if u==2 { X(x) } else { x }; } else { z:=x; } } in z;
+	return y;
+}
+def main(){
+	r:=(measure(reverse(before)(1:𝔹,2,true)),measure(reverse(before)(1:𝔹,1,true)),measure(reverse(before)(1:𝔹,2,false)),measure(reverse(beforeResult)((1:𝔹,3),2,true)),measure(reverse(beforeResult)((1:𝔹,2),1,true)),measure(reverse(beforeResult)((1:𝔹,2),2,false)));
+	assert(r==(0,1,1,0,1,1));
+	s:=(measure(reverse(beforeTwice)(1:𝔹,2,true)),measure(reverse(beforeTwice)(1:𝔹,1,true)),measure(reverse(beforeNested)(1:𝔹,2,true,true)),measure(reverse(beforeNested)(1:𝔹,2,true,false)),measure(reverse(beforeLoop)(vector(2,1:𝔹),2)),measure(reverse(beforeLoop)(vector(2,1:𝔹),1)));
+	assert(s==(1,1,0,1,(0,1),(1,0)));
+	t:=(measure(reverse(bothBranches)(vector(2,1:𝔹),2,true)),measure(reverse(bothBranches)(vector(2,1:𝔹),1,false)),measure(reverse(nestedBranches)(vector(2,1:𝔹),2,true,true)),measure(reverse(branchInLoop)(vector(2,1:𝔹),2)));
+	assert(t==((0,0),(1,0),(0,0),(0,0)));
+	u:=(measure(reverse(typed)(1:𝔹,2,true)),measure(reverse(typed)(1:𝔹,1,true)),measure(reverse(typedLoop)(vector(2,1:𝔹),2)),measure(reverse(typedLoop)(vector(2,1:𝔹),1)),measure(reverse(typedMul)(1:𝔹,2,true)),measure(reverse(typedMul)(1:𝔹,1,true)));
+	assert(u==(0,1,(0,1),(1,0),0,1));
+	return (r,s,t,u);
+}

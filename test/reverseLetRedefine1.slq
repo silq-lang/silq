@@ -1,0 +1,52 @@
+// args: --run
+
+def deadAfter(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	(y,k):=let { k+=1; z:=if k==1 { X(x) } else { x }; } in (z,k);
+	return y;
+}
+def readAfter(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	(y,k):=let { k+=1; z:=X(x); } in (z,k);
+	w:=if k==1 { X(y) } else { y };
+	return w;
+}
+def readBefore(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	(y,k):=let { u:=k*2; k+=1; z:=if u==4 { X(x) } else { x }; } in (z,k);
+	w:=if k==3 { X(y) } else { y };
+	return w;
+}
+def returned(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	(y,k):=let { u:=k*2; k+=1; k*=2; z:=if u==4 { X(x) } else { x }; } in (z,k);
+	return (y,k);
+}
+def inBranch(x:𝔹,const n:!ℕ,const c:!𝔹)qfree{
+	k:=dup(n);
+	if c { (y,k):=let { k+=1; z:=X(x); } in (z,k); } else { y:=x; }
+	w:=if k==1 { X(y) } else { y };
+	return w;
+}
+def inLoop(x:𝔹^2,const n:!ℕ)qfree{
+	k:=dup(n);
+	for j in 0..2 { (x,k):=let { k+=1; if k==3 { x[j]:=X(x[j]); } } in (x,k); }
+	return x;
+}
+def inLoopReadBefore(x:𝔹^2,const n:!ℕ)qfree{
+	k:=dup(n);
+	for j in 0..2 { (x,k):=let { u:=k*2; k+=1; if u==4 { x[j]:=X(x[j]); } } in (x,k); }
+	if k==4 { x[0]:=X(x[0]); }
+	return x;
+}
+def main(){
+	r:=(measure(deadAfter(0:𝔹,0)),measure(reverse(deadAfter)(1:𝔹,0)),measure(reverse(deadAfter)(1:𝔹,1)),measure(reverse(readAfter)(0:𝔹,0)),measure(reverse(readAfter)(0:𝔹,1)));
+	assert(r==(1,0,1,0,1));
+	s:=(measure(reverse(readBefore)(1:𝔹,2)),measure(reverse(readBefore)(1:𝔹,1)),measure(reverse(returned)((1:𝔹,6),2)),measure(reverse(returned)((1:𝔹,4),1)));
+	assert(s==(1,1,0,1));
+	t:=(measure(reverse(inBranch)(0:𝔹,0,true)),measure(reverse(inBranch)(0:𝔹,0,false)),measure(reverse(inBranch)(1:𝔹,1,false)));
+	assert(t==(0,0,0));
+	u:=(measure(reverse(inLoop)(vector(2,1:𝔹),2)),measure(reverse(inLoop)(vector(2,1:𝔹),1)),measure(reverse(inLoopReadBefore)(vector(2,1:𝔹),2)),measure(reverse(inLoopReadBefore)(vector(2,1:𝔹),1)));
+	assert(u==((0,1),(1,0),(1,1),(1,0)));
+	return (r,s,t,u);
+}

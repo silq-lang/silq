@@ -1,0 +1,29 @@
+// args: --run
+
+def condition(x:𝔹,const n:!ℕ)qfree{
+	y:=let { t:=dup(n); if t==2 { t+=1; z:=X(x); } else { z:=x; } } in z;
+	return y;
+}
+def conditionRead(x:𝔹,const n:!ℕ)qfree{
+	y:=let { t:=dup(n); if t==2 { t+=1; z:=X(x); } else { z:=x; } w:=if t==3 { X(z) } else { z }; } in w;
+	return y;
+}
+def conditionClassical(x:𝔹,const n:!ℕ)qfree{
+	y:=let { t:=dup(n); z:=if t==2 { X(x) } else { x }; if t==2 { t+=1; } w:=if t==3 { X(z) } else { z }; } in w;
+	return y;
+}
+def range(x:𝔹^2,const n:!ℕ)qfree{
+	y:=let { t:=dup(n); for j in 0..t { t+=1; x[0]:=X(x[0]); } } in x;
+	return y;
+}
+def count(x:𝔹,const n:!ℕ)qfree{
+	y:=let { t:=dup(n); repeat t { t+=1; x:=X(x); } } in x;
+	return y;
+}
+def main(){
+	r:=(measure(reverse(condition)(1:𝔹,2)),measure(reverse(condition)(1:𝔹,1)),measure(reverse(conditionRead)(1:𝔹,2)),measure(reverse(conditionRead)(1:𝔹,3)),measure(reverse(conditionClassical)(1:𝔹,2)),measure(reverse(conditionClassical)(1:𝔹,3)),measure(reverse(conditionClassical)(1:𝔹,1)));
+	assert(r==(0,1,1,0,1,0,1));
+	s:=(measure(reverse(range)(vector(2,1:𝔹),1)),measure(reverse(range)(vector(2,1:𝔹),2)),measure(reverse(count)(1:𝔹,1)),measure(reverse(count)(1:𝔹,2)));
+	assert(s==((0,1),(1,1),0,1));
+	return (r,s);
+}

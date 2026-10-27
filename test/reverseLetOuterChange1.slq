@@ -1,0 +1,46 @@
+// args: --run
+
+def readAfter(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	y:=let { k+=1; z:=if k==3 { X(x) } else { x }; } in z;
+	return y;
+}
+def readAfterBranch(x:𝔹,const n:!ℕ,const c:!𝔹)qfree{
+	k:=dup(n);
+	y:=let { if c { k+=1; z:=if k==3 { X(x) } else { x }; } else { z:=x; } } in z;
+	return y;
+}
+def readLocal(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	y:=let { u:=k*2; k+=u; z:=if k==6 { X(x) } else { x }; } in z;
+	return y;
+}
+def readBefore(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	y:=let { u:=k*2; k+=1; z:=if u==4 { X(x) } else { x }; } in z;
+	return y;
+}
+def readBeforeBranch(x:𝔹,const n:!ℕ,const c:!𝔹)qfree{
+	k:=dup(n);
+	y:=let { if c { u:=k*2; k+=1; z:=if u==4 { X(x) } else { x }; } else { z:=x; } } in z;
+	return y;
+}
+def readBeforeTwice(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	y:=let { u:=k*2; k+=1; k*=2; z:=if u==4 { X(x) } else { x }; } in z;
+	return y;
+}
+def nested(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	y:=let { w:=let { k+=1; z:=if k==3 { X(x) } else { x }; } in z; } in w;
+	return y;
+}
+def main(){
+	r:=(measure(reverse(readAfter)(1:𝔹,2)),measure(reverse(readAfter)(1:𝔹,1)),measure(reverse(readAfterBranch)(1:𝔹,2,true)),measure(reverse(readAfterBranch)(1:𝔹,1,true)),measure(reverse(readAfterBranch)(1:𝔹,2,false)),measure(reverse(readLocal)(1:𝔹,2)),measure(reverse(readLocal)(1:𝔹,1)));
+	assert(r==(0,1,0,1,1,0,1));
+	s:=(measure(reverse(readBefore)(1:𝔹,2)),measure(reverse(readBefore)(1:𝔹,1)),measure(reverse(readBeforeBranch)(1:𝔹,2,true)),measure(reverse(readBeforeBranch)(1:𝔹,1,true)),measure(reverse(readBeforeBranch)(1:𝔹,2,false)),measure(reverse(readBeforeTwice)(1:𝔹,2)),measure(reverse(readBeforeTwice)(1:𝔹,1)));
+	assert(s==(0,1,0,1,1,0,1));
+	t:=(measure(reverse(nested)(1:𝔹,2)),measure(reverse(nested)(1:𝔹,1)));
+	assert(t==(0,1));
+	return (r,s,t);
+}

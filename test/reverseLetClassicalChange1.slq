@@ -1,0 +1,87 @@
+// args: --run
+
+def lengthType(n:!ℕ,c:!ℕ){
+	x:=vector(n+c,0:!ℕ);
+	return x coerce !ℕ^(let { t:=dup(n); t+=c; } in t);
+}
+def withLength(n:!ℕ,c:!ℕ){
+	q:=0:𝔹;
+	a:=lengthType(n,c);
+	with { s:=a.length; } do { if s==3 { q:=X(q); } }
+	forget(a);
+	return measure(q);
+}
+def withLet(n:!ℕ,c:!ℕ){
+	q:=vector(6,0:𝔹);
+	with { s:=let { t:=dup(n); t+=c; } in t; } do { if s==3 { q[0]:=X(q[0]); } }
+	with { s:=let { t:=dup(n); t*=c+1; t-=1; } in t; } do { if s==3 { q[1]:=X(q[1]); } }
+	with { s:=let { t:=dup(n); for i in 0..2 { t+=c; } } in t; } do { if s==4 { q[2]:=X(q[2]); } }
+	with { s:=let { t:=dup(n); repeat 2 { t+=c; } } in t; } do { if s==4 { q[3]:=X(q[3]); } }
+	with { s:=let { a:=vector(2,0:!ℕ); a[0]+=c; } in a; } do { if s[0]==1 { q[4]:=X(q[4]); } }
+	with { (s,u):=let { t:=dup(n); if c==1 { t+=c; } } in (t,t); } do { if s==3 { q[5]:=X(q[5]); } }
+	return measure(q);
+}
+def unusedChange(n:!ℕ,c:!ℕ){
+	q:=0:𝔹;
+	with { s:=let { t:=dup(n); if t>1 { t+=1; } u:=c+1; } in u; } do { if s==2 { q:=X(q); } }
+	return measure(q);
+}
+def readAfter(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	y:=let { t:=dup(n); t+=c; z:=if t==3 { X(x) } else { x }; } in z;
+	return y;
+}
+def readBefore(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	y:=let { t:=dup(n); z:=if t==2 { X(x) } else { x }; t+=c; } in z;
+	return y;
+}
+def readBeforeUnused(x:𝔹,const n:!ℕ)qfree{
+	y:=let { t:=dup(n); z:=if t==2 { X(x) } else { x }; if t>1 { t+=1; } } in z;
+	return y;
+}
+def changeInBranch(x:𝔹,const n:!ℕ,const c:!𝔹)qfree{
+	(y,k):=let { t:=dup(n); if c { t+=1; z:=X(x); } else { z:=x; } } in (z,t);
+	return (y,k);
+}
+def changeInBranchRead(x:𝔹,const n:!ℕ,const c:!𝔹)qfree{
+	y:=let { t:=dup(n); if c { t+=1; z:=X(x); } else { z:=x; } w:=if t==3 { X(z) } else { z }; } in w;
+	return y;
+}
+def changeInLoop(x:𝔹,const n:!ℕ)qfree{
+	(y,k):=let { t:=dup(n); for i in 0..3 { t+=1; x:=X(x); } } in (x,t);
+	return (y,k);
+}
+def changeInLoopRead(x:𝔹,const n:!ℕ)qfree{
+	y:=let { t:=dup(n); repeat 3 { t+=1; x:=X(x); } z:=if t==5 { X(x) } else { x }; } in z;
+	return y;
+}
+def changeInProjection(x:𝔹,const c:!𝔹)qfree{
+	y:=let { if c { u:=0; u+=2; z:=X(x); } else { u:=3; z:=X(x); } v:=u*2; w:=if v==4 { X(z) } else { z }; } in w;
+	return y;
+}
+def loopInProjection(x:𝔹,const c:!𝔹)qfree{
+	y:=let { if c { u:=0; for j in 0..2 { u+=1; x:=X(x); } z:=x; } else { u:=3; z:=x; } v:=u*2; w:=if v==4 { X(z) } else { z }; } in w;
+	return y;
+}
+def updateBeforeLoop(x:𝔹,const n:!ℕ,const c:!𝔹)qfree{
+	(y,k):=let { t:=dup(n); if c { u:=1; z:=X(x); } else { u:=2; z:=x; } if t>2 { u+=1; } for j in 0..3 { t+=j; } } in (z,u);
+	return (y,k);
+}
+def changeBefore(q:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	k+=1;
+	for i in 0..2 { k+=i; }
+	return if k==4 { X(q) } else { q };
+}
+def main(){
+	r:=(withLength(2,1),withLength(1,1),withLet(2,1),withLet(1,1),unusedChange(2,1),unusedChange(2,2));
+	assert(r==(1,0,(1,1,1,1,1,1),(0,0,0,0,1,0),1,0));
+	s:=(measure(reverse(readAfter)(1:𝔹,2,1)),measure(reverse(readAfter)(1:𝔹,1,1)),measure(reverse(readBefore)(1:𝔹,2,1)),measure(reverse(readBefore)(1:𝔹,1,1)),measure(reverse(readBeforeUnused)(1:𝔹,2)),measure(reverse(readBeforeUnused)(1:𝔹,1)));
+	assert(s==(0,1,0,1,0,1));
+	t:=(measure(reverse(changeInBranch)((1:𝔹,4),3,true)),measure(reverse(changeInBranch)((1:𝔹,2),2,false)),measure(reverse(changeInBranchRead)(1:𝔹,2,true)),measure(reverse(changeInBranchRead)(1:𝔹,3,false)),measure(reverse(changeInBranchRead)(1:𝔹,1,true)));
+	assert(t==(0,1,1,0,0));
+	u:=(measure(reverse(changeInLoop)((1:𝔹,8),5)),measure(reverse(changeInLoopRead)(1:𝔹,2)),measure(reverse(changeInLoopRead)(1:𝔹,1)),measure(reverse(changeInProjection)(1:𝔹,true)),measure(reverse(changeInProjection)(1:𝔹,false)),measure(reverse(loopInProjection)(1:𝔹,true)),measure(reverse(loopInProjection)(1:𝔹,false)));
+	assert(u==(0,1,0,1,0,0,1));
+	v:=(measure(reverse(updateBeforeLoop)((1:𝔹,2),3,true)),measure(reverse(updateBeforeLoop)((1:𝔹,1),1,true)),measure(reverse(updateBeforeLoop)((1:𝔹,3),3,false)),measure(reverse(changeBefore)(1:𝔹,2)),measure(reverse(changeBefore)(1:𝔹,1)));
+	assert(v==(0,0,1,0,1));
+	return (r,s,t,u,v);
+}

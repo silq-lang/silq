@@ -1,0 +1,23 @@
+// args: --run
+
+def id[k:!ℕ](v:!ℕ^k)⇒v;
+def localFunction(n:!ℕ,c:!ℕ){
+	x:=vector(n+c,0:!ℕ);
+	y:=x coerce !ℕ^((λ(m:!ℕ)⇒let { def q()⇒m+c; } in q())(n));
+	return y;
+}
+def localVariable(n:!ℕ,c:!ℕ){
+	x:=vector(n+c,0:!ℕ);
+	y:=x coerce !ℕ^((λ(m:!ℕ)⇒let { t:=m+c; def q()⇒t; } in q())(n));
+	return y;
+}
+def twoFunctions(n:!ℕ,c:!ℕ){
+	x:=vector(n+c,0:𝔹);
+	y:=x coerce 𝔹^((λ(m:!ℕ)⇒let { def q(j:!ℕ)⇒j+c; def p()⇒q(m); } in p())(n));
+	return measure(y);
+}
+def main(){
+	r:=(localFunction(1,2).length,localVariable(1,2).length,twoFunctions(1,2).length,id(localFunction(2,2)).length,id(twoFunctions(2,1)).length);
+	assert(r==(3,3,3,4,3));
+	return r;
+}
