@@ -1,0 +1,29 @@
+// args: --run
+
+def sw(p:𝔹×𝔹)qfree{
+	(u,w):=p;
+	return (w,u);
+}
+def classicalVector(v:!𝔹^4,a:uint[2]){
+	with { t:=v[a]; } do { t:=X(t); }
+	repeat 2 { v[0]:=X(v[0]); }
+	return (v,a);
+}
+def classicalComponents(v:(!𝔹×𝔹)^4,a:uint[2]){
+	with { t:=v[a]; } do { t:=sw(t); }
+	for k in 0..2 {
+		with { u:=v[a]; } do { u:=sw(u); }
+	}
+	return (v,a);
+}
+def nested(v:!𝔹^4,a:uint[2],w:𝔹){
+	with { t:=v[a]; } do { if t { w:=X(w); } }
+	k:=0;
+	while k<3 { w:=X(w); k+=1; }
+	return (v,a,w);
+}
+def main(){
+	r:=measure(classicalVector((1,0,1,1):!𝔹^4,2:uint[2]),classicalComponents(((1,0),(1,1),(0,1),(1,0)):(!𝔹×𝔹)^4,2:uint[2]),nested((1,0,1,1):!𝔹^4,0:uint[2],0:𝔹));
+	assert(r==(((1,0,0,1),2),(((1,0),(1,1),(1,0),(1,0)),2),((1,0,1,1),0,0)));
+	return r;
+}

@@ -1,0 +1,39 @@
+// args: --run
+
+def guarded(n:!ℕ,const a:𝔹){
+	b:=0:𝔹;
+	for i in 0..n{
+		if a {
+			b:=X(b);
+			if i>=5 { x:=dup(i); if x<7 { b:=X(b); } assert(false); }
+		}
+	}
+	return measure(b);
+}
+def beforeAssert(n:!ℕ,const a:𝔹){
+	b:=0:𝔹;
+	for i in 0..n{
+		if a { x:=dup(i); if x<5 { b:=X(b); } assert(false); }
+	}
+	return measure(b);
+}
+def branchAfterAssert(n:!ℕ,const a:𝔹){
+	b:=0:𝔹;
+	for i in 0..n{
+		if a { x:=dup(i); assert(false); if x<5 { b:=X(b); } else { assert(false); } }
+	}
+	return measure(b);
+}
+def bottomLocal(n:!ℕ,const a:𝔹){
+	b:=0:𝔹;
+	for i in 0..n{
+		if a { x:=(i coerce ⊥); if x<5 { b:=X(b); } else { assert(false); } }
+	}
+	return measure(b);
+}
+def main(){
+	a:=1:𝔹;
+	r:=(guarded(3,a),guarded(4,a),beforeAssert(0,a),branchAfterAssert(0,a),bottomLocal(0,a));
+	assert(r==(1,0,0,0,0));
+	return (r,measure(a));
+}

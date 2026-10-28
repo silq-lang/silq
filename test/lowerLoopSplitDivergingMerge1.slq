@@ -1,0 +1,47 @@
+// args: --run
+
+def quantumBranches(n:!ℕ,const a:𝔹){
+	w:=0:𝔹;
+	for i in 0..n {
+		if a { w:=X(w); } else { w:=X(w); w:=X(w); }
+		if a { if i<4 { w:=X(w); } else { assert(false); } }
+		w:=X(w);
+	}
+	return measure(w);
+}
+def classicalBranches(n:!ℕ,const a:𝔹){
+	w:=0:𝔹;
+	for i in 0..n {
+		if i%2==0 { w:=X(w); } else { w:=X(w); w:=X(w); }
+		if a { if i<4 { w:=X(w); } else { assert(false); } }
+		w:=X(w);
+	}
+	return measure(w);
+}
+def whileLoop(n:!ℕ,const a:𝔹){
+	w:=0:𝔹;
+	k:=0;
+	while k<n {
+		if a { w:=X(w); } else { w:=X(w); w:=X(w); }
+		if a { if k<4 { w:=X(w); } else { assert(false); } }
+		w:=X(w);
+		k+=1;
+	}
+	return measure(w);
+}
+def thenDiverges(n:!ℕ,const a:𝔹){
+	w:=0:𝔹;
+	for i in 0..n {
+		if a { w:=X(w); } else { w:=X(w); w:=X(w); }
+		if a { if i>=4 { assert(false); } else { w:=X(w); } }
+		w:=X(w);
+	}
+	return measure(w);
+}
+def main(){
+	a:=1:𝔹;
+	b:=0:𝔹;
+	r:=(quantumBranches(3,a),quantumBranches(3,b),classicalBranches(3,a),whileLoop(2,a),thenDiverges(3,a));
+	assert(r==(1,1,0,0,1));
+	return (r,measure(a,b));
+}
