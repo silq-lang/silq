@@ -1,0 +1,32 @@
+// args: --run
+
+def classicalLocal(const x:𝔹)mfree{
+	t:=dup(x);
+	if t { repeat 2 { d:=1; return 1; } } else { return 0; }
+}
+def quantumUpdate(const x:𝔹,q:𝔹)mfree{
+	t:=dup(x);
+	if t { repeat 2 { q:=X(q); d:=1; return (t,q); } } else { return (t,q); }
+}
+def deadBranch(const x:𝔹)mfree{
+	t:=(λ()⇒dup(x))();
+	if t { repeat 2 { if true { return 1; } else { d:=[1,2]; forget(d); return 0; } } } else { return 0; }
+}
+def repeatCondition(const x:𝔹,q:𝔹)mfree{
+	t:=dup(x);
+	if t { r:=0:𝔹; k:=1; repeat 2 { k+=1; if k==5 { forget(r); return (t,q); } forget(r); return (t,q); } } else { q:=X(q); return (t,q); }
+}
+def forCondition(const x:𝔹,q:𝔹)mfree{
+	t:=dup(x);
+	if t { r:=0:𝔹; k:=1; for i in 0..2 { k+=1; if k==5 { forget(r); return (t,q); } forget(r); return (t,q); } forget(r); return (t,q); } else { q:=X(q); return (t,q); }
+}
+def main(){
+	(t,q):=quantumUpdate(1:𝔹,0:𝔹);
+	(t2,q2):=quantumUpdate(0:𝔹,0:𝔹);
+	(t3,q3):=repeatCondition(1:𝔹,0:𝔹);
+	(t4,q4):=forCondition(1:𝔹,0:𝔹);
+	(t5,q5):=forCondition(0:𝔹,0:𝔹);
+	r:=(measure(classicalLocal(1:𝔹)),measure(classicalLocal(0:𝔹)),measure(t),measure(q),measure(t2),measure(q2),measure(deadBranch(1:𝔹)),measure(t3),measure(q3),measure(t4),measure(q4),measure(t5),measure(q5));
+	assert(r==(1,0,1,1,0,0,1,1,0,1,0,0,1));
+	return r;
+}

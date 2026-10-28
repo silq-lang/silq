@@ -1,0 +1,33 @@
+// args: --run
+
+def whileTrue(const x:𝔹,q:𝔹)mfree{
+	t:=dup(x);
+	if t { while true { q:=X(q); d:=1; return (t,q); } } else { return (t,q); }
+}
+def whileCondition(const x:𝔹,q:𝔹)mfree{
+	t:=dup(x);
+	if t { k:=0; while k<2 { q:=X(q); d:=1; return (t,q); } return (t,q); } else { return (t,q); }
+}
+def whileConditionalReturn(const x:𝔹,q:𝔹)mfree{
+	t:=dup(x);
+	if t { k:=2; while k!=1 { q:=X(q); k+=1; if k==3 { return (t,q); } } return (t,q); } else { return (t,q); }
+}
+def whileLiftedForget(const x:𝔹,q:𝔹):𝔹{
+	t:=dup(x);
+	if t { r:=0:𝔹; k:=2; while k!=1 { r:=X(r); q:=X(q); k+=1; if k==3 { forget(r); return q; } } forget(r); return q; } else { return q; }
+}
+def nestedWhile(const x:𝔹,q:𝔹)mfree{
+	t:=dup(x);
+	if t { r:=0:𝔹; for i in 0..2 { r:=X(r); q:=X(q); k:=2; while k!=1 { k+=1; if k==3 { forget(r); return (t,q); } } } forget(r); return (t,q); } else { return (t,q); }
+}
+def main(){
+	(t,q):=whileTrue(1:𝔹,0:𝔹);
+	(t2,q2):=whileCondition(1:𝔹,0:𝔹);
+	(t3,q3):=whileConditionalReturn(1:𝔹,0:𝔹);
+	q4:=whileLiftedForget(1:𝔹,0:𝔹);
+	(t5,q5):=nestedWhile(1:𝔹,0:𝔹);
+	(t6,q6):=nestedWhile(0:𝔹,0:𝔹);
+	r:=(measure(t),measure(q),measure(t2),measure(q2),measure(t3),measure(q3),measure(q4),measure(t5),measure(q5),measure(t6),measure(q6));
+	assert(r==(1,1,1,1,1,1,1,1,1,0,0));
+	return r;
+}
