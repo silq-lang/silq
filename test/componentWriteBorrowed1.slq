@@ -1,0 +1,36 @@
+// args: --run
+
+def update(x:𝔹^2)qfree{
+	with { t:=x[1]; } do { x[0]:=X(x[0]); }
+	return x;
+}
+def nested(x:𝔹^2)qfree{
+	with { t:=x[1]; } do { with { w:=x[0]; } do { t⊕=w; } }
+	return x;
+}
+def branch(x:𝔹^2,const c:𝔹)qfree{
+	with { t:=x[1]; } do { if c { x[0]:=X(x[0]); } }
+	return x;
+}
+def deeper(x:𝔹^3)qfree{
+	with { t:=x[2]; } do { with { u:=x[1]; } do { x[0]:=X(x[0]); u⊕=t; } }
+	return x;
+}
+def nestedVector(a:(𝔹^2)^2)qfree{
+	with { t:=a[0][1]; } do { a[1][0]:=X(a[1][0]); t⊕=a[1][0]; }
+	return a;
+}
+def loop(x:𝔹^3)qfree{
+	repeat 2 { with { t:=x[2]; } do { with { u:=x[1]; } do { x[0]:=X(x[0]); u⊕=t; } } }
+	return x;
+}
+def main(){
+	x:=vector(2,1:𝔹);
+	repeat 3 { with { t:=x[1]; } do { x[0]:=X(x[0]); } }
+	y:=vector(2,1:𝔹);
+	repeat 3 { with { t:=y[1]; } do { with { w:=y[0]; } do { t⊕=w; } } }
+	c:=1:𝔹;
+	r:=measure(x,y,reverse(update)(vector(2,0:𝔹)),reverse(nested)((1,1):𝔹^2),reverse(branch)(vector(2,0:𝔹),c),reverse(deeper)((0,0,1):𝔹^3),reverse(nestedVector)(((0,0),(0,0)):(𝔹^2)^2),reverse(loop)(loop((0,1,1):𝔹^3)),c);
+	assert(r==((0,1),(1,0),(1,0),(1,0),(1,0),(1,1,1),((0,0),(1,0)),(0,1,1),1));
+	return r;
+}

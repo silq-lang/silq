@@ -1,0 +1,18 @@
+// args: --run
+
+def consumed(){
+	u:=1:uint[3];
+	y:=2:uint[3];
+	c:=let { d:=(u coerce ⊥); forget(y); } in d;
+}
+def duplicated(){
+	u:=1:uint[3];
+	y:=2:uint[3];
+	c:=let { d:=(dup(u) coerce ⊥); forget(y); } in d;
+}
+def main(){
+	u:=1:uint[3];
+	y:=2:uint[3];
+	b:=0:uint[3];
+	b←let { c:=(u+2 coerce ⊥); forget(y); } in c; /// run_error
+}
