@@ -1,0 +1,31 @@
+// args: --run
+
+def sibling(a:(𝔹^2)^2)qfree{
+	with { t:=a[1][0]; } do { repeat 3 { t⊕=a[1][1]; } }
+	return a;
+}
+def otherRow(a:(𝔹^2)^2)qfree{
+	with { t:=a[1][0]; } do { repeat 3 { t⊕=a[0][1]; a[0][0]:=X(a[0][0]); } }
+	return a;
+}
+def row(a:(𝔹^2)^2)qfree{
+	with { t:=a[1]; } do { repeat 3 { t[0]⊕=a[0][1]; } }
+	return a;
+}
+def changingIndex(a:(𝔹^2)^2)qfree{
+	with { t:=a[1][0]; } do { for i in 0..2 { t⊕=a[0][i]; } }
+	return a;
+}
+def enclosing(a:(𝔹^2)^2)qfree{
+	with { t:=a[1][0]; } do { repeat 3 { t⊕=a[0][1]; y:=dup(a[0]); forget(y); } }
+	return a;
+}
+def writes(a:(𝔹^2)^2)qfree{
+	with { t:=a[1][0]; } do { repeat 3 { t⊕=a[0][0]; a[0][1]:=X(a[0][1]); a[1][1]:=X(a[1][1]); } }
+	return a;
+}
+def main(){
+	r:=measure(sibling(((1,0),(1,1)):(𝔹^2)^2),otherRow(((1,1),(1,1)):(𝔹^2)^2),row(((1,1),(1,1)):(𝔹^2)^2),changingIndex(((1,0),(1,1)):(𝔹^2)^2),enclosing(((1,1),(1,1)):(𝔹^2)^2),writes(((1,0),(1,1)):(𝔹^2)^2),reverse(otherRow)(((0,1),(0,1)):(𝔹^2)^2),reverse(writes)(((1,1),(0,0)):(𝔹^2)^2));
+	assert(r==(((1,0),(0,1)),((0,1),(0,1)),((1,1),(0,1)),((1,0),(0,1)),((1,1),(0,1)),((1,1),(0,0)),((1,1),(1,1)),((1,0),(1,1))));
+	return r;
+}

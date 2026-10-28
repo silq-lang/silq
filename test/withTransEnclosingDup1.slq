@@ -1,0 +1,25 @@
+// args: --run
+
+def before(){
+	a:=((1,0),(1,1)):(𝔹^2)^2;
+	z:=0:𝔹;
+	with { y:=dup(a[1]); t:=a[1][0]; } do { z⊕=t; }
+	return (a,z);
+}
+def after(){
+	a:=((1,0),(1,1)):(𝔹^2)^2;
+	z:=0:𝔹;
+	with { t:=a[1][0]; y:=dup(a[1]); } do { z⊕=t; }
+	return (a,z);
+}
+def borrowed(){
+	a:=((1,0),(1,1)):(𝔹^2)^2;
+	z:=0:𝔹;
+	with { t:=a[1][0]; u:=a[1]; } do { z⊕=u[1]; }
+	return (a,z);
+}
+def main(){
+	r:=measure(before(),after(),borrowed());
+	assert(r==((((1,0),(1,1)),1),(((1,0),(1,1)),1),(((1,0),(1,1)),1)));
+	return r;
+}
