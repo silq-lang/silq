@@ -1,0 +1,44 @@
+// args: --run
+
+def id(y:𝔹×𝔹)qfree⇒y;
+def tuple(x:𝔹×𝔹,b:𝔹)qfree{
+	repeat 3 {
+		x:=id(x);
+		x[b]:=X(x[b]);
+	}
+	return (x,b);
+}
+def borrowed(x:𝔹×𝔹,b:𝔹,w:𝔹)qfree{
+	for i in 0..2 {
+		x:=id(x);
+		with { t:=x[b]; } do { if t { w:=X(w); } }
+	}
+	return (x,b,w);
+}
+def fromClassical(b:𝔹){
+	y:=(0,0):𝔹^2;
+	repeat 2 {
+		forget(y);
+		y:=(1,0):!𝔹^2;
+		y[b]:=X(y[b]);
+	}
+	return (y,b);
+}
+def idv(v:(𝔹×𝔹)^2)qfree⇒v;
+def nested(v:(𝔹×𝔹)^2,b:𝔹)qfree{
+	n:=0;
+	while n<3 {
+		v:=idv(v);
+		v[1][b]:=X(v[1][b]);
+		n+=1;
+	}
+	return (v,b);
+}
+def main(){
+	r:=measure(tuple((1,0):𝔹×𝔹,1:𝔹),borrowed((1,0):𝔹×𝔹,0:𝔹,0:𝔹),fromClassical(1:𝔹),nested(((0,1),(1,0)):(𝔹×𝔹)^2,1:𝔹),reverse(tuple)((1,1):𝔹^2,1:𝔹));
+	assert(r==(((1,1),1),((1,0),0,0),((1,1),1),(((0,1),(1,1)),1),((1,0),1)));
+	(x,b):=tuple((1,0):𝔹×𝔹,H(0:𝔹));
+	(y,c):=reverse(tuple)(x,b);
+	assert(measure(y)==(1,0));
+	return (r,measure(H(c)));
+}

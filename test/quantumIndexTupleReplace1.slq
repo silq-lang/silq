@@ -1,0 +1,28 @@
+// args: --run
+
+def sw(p:𝔹×𝔹)qfree{
+	(u,w):=p;
+	return (w,u);
+}
+def tuple(x:𝔹×𝔹×𝔹×𝔹,a:uint[2])qfree{
+	x[a]:=X(x[a]);
+	return (x,a);
+}
+def borrowed(x:𝔹×𝔹×𝔹×𝔹,a:uint[2])qfree{
+	with { t:=x[a]; } do { t:=X(t); }
+	return (x,a);
+}
+def written(v:(𝔹×𝔹)^4,a:uint[2])qfree{
+	v[3]:=sw(v[3]);
+	v[a]:=sw(v[a]);
+	return (v,a);
+}
+def inner(v:(𝔹×𝔹)^2,b:𝔹)qfree{
+	v[1][b]:=X(v[1][b]);
+	return (v,b);
+}
+def main(){
+	r:=measure(tuple((0,1,1,0):𝔹×𝔹×𝔹×𝔹,2:uint[2]),borrowed((0,1,1,0):𝔹×𝔹×𝔹×𝔹,0:uint[2]),written(((0,1),(1,0),(1,1),(0,0)):(𝔹×𝔹)^4,1:uint[2]),inner(((0,1),(1,0)):(𝔹×𝔹)^2,1:𝔹),reverse(tuple)((0,1,0,0):𝔹×𝔹×𝔹×𝔹,2:uint[2]));
+	assert(r==(((0,1,0,0),2),((1,1,1,0),0),(((0,1),(0,1),(1,1),(0,0)),1),(((0,1),(1,1)),1),((0,1,1,0),2)));
+	return r;
+}

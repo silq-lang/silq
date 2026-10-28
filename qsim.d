@@ -2202,6 +2202,10 @@ struct QState{
 		}
 		return zero(type).convertTo(type);
 	}
+	static Value zeroLike(Value v,scope Value delegate(Expression) size){ // (of the shape of `v`, e.g., in place of a component that a quantum index selects)
+		if(v.tag==Value.Tag.array_) return makeArray(v.type,v.array_.map!(e=>zeroLike(e,size)).array);
+		return makeDummy(v.type,size);
+	}
 	alias makeVector=makeTuple;
 		static Value makeRecord(Record record){
 		Value r;
@@ -3349,7 +3353,7 @@ struct Interpreter(QState){
 							a.array_[i.asℤ.to!size_t]=QState.Value.init;
 						}else{
 							r=r.dup(qstate).consumeOnRead();
-							getAssignable!false(idx,[]).assign(qstate,QState.makeBool(false)); // TODO: a bit hacky
+							getAssignable!false(idx,[]).assign(qstate,QState.zeroLike(r,(Expression x)=>doIt(x))); // TODO: a bit hacky
 						}
 					}else r=r.dup(qstate);
 				}

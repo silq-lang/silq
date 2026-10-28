@@ -1,0 +1,64 @@
+// args: --run
+
+def twoBorrows(const t:𝔹){
+	x:=(1:𝔹,1:!𝔹,0:𝔹);
+	with { c1:=x[1]; c0:=x[0]; } do {
+		c1:=CNOT(t,c1);
+		c0:=CNOT(t,c0);
+	}
+	return x;
+}
+def bothClassical(const t:𝔹){
+	x:=(1:!𝔹,1:!𝔹,0:𝔹);
+	with { c0:=x[0]; c1:=x[1]; } do {
+		c1:=CNOT(t,c1);
+		c0:=CNOT(t,c0);
+	}
+	return x;
+}
+def classicalVector(const t:𝔹){
+	x:=(1,1,0):!𝔹^3;
+	with { c0:=x[0]; c1:=x[1]; } do {
+		c1:=CNOT(t,c1);
+		c0:=CNOT(t,c0);
+	}
+	return x;
+}
+def bodyReads(const t:𝔹){
+	x:=(1:𝔹,1:!𝔹,1:!𝔹);
+	w:=0:𝔹;
+	with { c1:=x[1]; } do {
+		c1:=CNOT(t,c1);
+		if x[2] { w:=X(w); }
+		w:=CNOT(x[0],w);
+	}
+	return (x,w);
+}
+def bodyReadsVector(const t:𝔹){
+	x:=(1,0,1):!𝔹^3;
+	w:=0:𝔹;
+	with { c0:=x[0]; } do {
+		c0:=CNOT(t,c0);
+		w:=CNOT(x[1],w);
+		if x[2] { w:=X(w); }
+	}
+	return (x,w);
+}
+def loop(const t:𝔹){
+	x:=(1:𝔹,1:!𝔹,0:𝔹);
+	with { u:=x[2]; } do {
+		k:=0;
+		while k<3 {
+			x[1]:=CNOT(t,x[1]);
+			x[0]:=CNOT(u,x[0]);
+			k+=1;
+		}
+	}
+	return x;
+}
+def main(){
+	t:=1:𝔹;
+	r:=measure(twoBorrows(t),bothClassical(t),classicalVector(t),bodyReads(t),bodyReadsVector(t),loop(t),t);
+	assert(r==((0,0,0),(0,0,0),(0,0,0),((1,0,1),0),((0,0,1),1),(1,0,0),1));
+	return r;
+}
