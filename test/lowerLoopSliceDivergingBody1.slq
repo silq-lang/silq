@@ -1,0 +1,68 @@
+// args: --run
+
+def forBody(const c:𝔹,n:!ℕ){
+	b:=0:𝔹;
+	w:=0:𝔹;
+	for j in 0..3 {
+		for i in 0..n {
+			if c { w:=X(w); }
+			forget(b);
+			assert(false);
+		}
+		b:=X(b);
+	}
+	return measure(b,w);
+}
+
+def whileBody(const c:𝔹,n:!ℕ){
+	b:=0:𝔹;
+	w:=0:𝔹;
+	for j in 0..3 {
+		k:=0;
+		while k<n {
+			if c { w:=X(w); }
+			forget(b);
+			assert(false);
+		}
+		b:=X(b);
+	}
+	return measure(b,w);
+}
+
+def repeatBody(const c:𝔹,n:!ℕ){
+	b:=0:𝔹;
+	w:=0:𝔹;
+	for j in 0..3 {
+		repeat n {
+			if c { w:=X(w); }
+			forget(b);
+			t:=(n coerce ⊥);
+		}
+		b:=X(b);
+	}
+	return measure(b,w);
+}
+
+def inRegion(const a:𝔹,const c:𝔹,n:!ℕ){
+	b:=0:𝔹;
+	w:=0:𝔹;
+	for j in 0..3 {
+		if a {
+			for i in 0..n {
+				if c { w:=X(w); }
+				forget(b);
+				assert(false);
+			}
+			b:=X(b);
+		}
+	}
+	return measure(b,w);
+}
+
+def main(){
+	a:=1:𝔹;
+	c:=1:𝔹;
+	r:=(forBody(c,0),whileBody(c,0),repeatBody(c,0),inRegion(a,c,0));
+	assert(r==((1,0),(1,0),(1,0),(1,0)));
+	return (r,measure(a,c));
+}

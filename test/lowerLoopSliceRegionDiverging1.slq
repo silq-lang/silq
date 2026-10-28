@@ -1,0 +1,51 @@
+// args: --run
+
+def thenDiverges(const a:𝔹,const c:𝔹){
+	b:=0:𝔹;
+	w:=0:𝔹;
+	for i in 0..3 {
+		if a {
+			k:=0;
+			if k>=10 { forget(b); assert(false); }
+			if c { w:=X(w); }
+			b:=X(b);
+		}
+	}
+	return measure(b,w);
+}
+
+def elseDiverges(const a:𝔹,const c:𝔹){
+	b:=0:𝔹;
+	w:=0:𝔹;
+	for i in 0..3 {
+		if a {
+			if i<10 { w:=X(w); } else { forget(b); t:=(i coerce ⊥); }
+			if c { w:=X(w); }
+			b:=X(b);
+		}
+	}
+	return measure(b,w);
+}
+
+def whileLoop(const a:𝔹,const c:𝔹){
+	b:=0:𝔹;
+	w:=0:𝔹;
+	i:=0;
+	while i<3 {
+		if a {
+			if i>=10 { b:=X(b); forget(b); assert(false); }
+			if c { w:=X(w); }
+			b:=X(b);
+		}
+		i+=1;
+	}
+	return measure(b,w);
+}
+
+def main(){
+	a:=1:𝔹;
+	c:=1:𝔹;
+	r:=(thenDiverges(a,c),elseDiverges(a,c),whileLoop(a,c));
+	assert(r==((1,1),(1,0),(1,1)));
+	return (r,measure(a,c));
+}

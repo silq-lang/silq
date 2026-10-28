@@ -1,0 +1,89 @@
+// args: --run
+
+def forLoop(const a:𝔹){
+	b:=0:𝔹;
+	s:=1;
+	if a {
+		for j in 0..2 {
+			if j>=10 { s+=1; assert(false); }
+			b:=X(b);
+		}
+	}
+	s+=1;
+	return (measure(b),s);
+}
+
+def repeatLoop(const a:𝔹){
+	b:=0:𝔹;
+	s:=1;
+	if a {
+		repeat 3 {
+			if s>=10 { s=2; t:=(s coerce ⊥); }
+			b:=X(b);
+		}
+	}
+	s+=1;
+	return (measure(b),s);
+}
+
+def nested(const a:𝔹,const c:𝔹){
+	b:=0:𝔹;
+	s:=0;
+	for i in 0..3 {
+		if a {
+			x:=dup(i);
+			for j in 0..2 {
+				if j>=10 { s+=1; assert(false); }
+				if c { b:=X(b); }
+			}
+			if x<2 { b:=X(b); }
+		}
+		s+=i;
+	}
+	return (measure(b),s);
+}
+
+def doWhile(const a:𝔹){
+	s:=0;
+	b:=0:𝔹;
+	if a {
+		j:=0;
+		do{ j+=1; if j>=10 { s+=1; assert(false); } b:=X(b); }while j<3 { if j>=10 { s+=2; assert(false); } }
+	}
+	return (measure(b),s);
+}
+
+def bottomDef(const a:𝔹){
+	b:=0:𝔹;
+	w:=0:𝔹;
+	s:=1;
+	if a {
+		k:=0;
+		j:=0;
+		while j<3 {
+			if j>=10 { k+=1; s+=j; t:=(j coerce ⊥); }
+			b:=X(b);
+			k+=1;
+			j+=1;
+		}
+		if k==3 { w:=X(w); }
+	}
+	return (measure(b,w),s);
+}
+
+def classicalLoop(){
+	s:=1;
+	for j in 0..3 {
+		if j>=10 { s+=j; assert(false); }
+		s+=1;
+	}
+	return s;
+}
+
+def main(){
+	a:=1:𝔹;
+	c:=1:𝔹;
+	r:=(forLoop(a),repeatLoop(a),nested(a,c),doWhile(a),bottomDef(a),classicalLoop());
+	assert(r==((0,2),(1,2),(0,3),(1,0),((1,1),1),4));
+	return (r,measure(a,c));
+}

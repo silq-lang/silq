@@ -1,0 +1,44 @@
+// args: --run
+
+def thenDiverges(const c:𝔹){
+	b:=0:𝔹;
+	w:=0:𝔹;
+	for i in 0..2 {
+		j:=0;
+		if j>=10 { b:=X(b); assert(false); }
+		if c { w:=X(w); }
+		b:=X(b);
+	}
+	return measure(b,w);
+}
+
+def elseDiverges(const c:𝔹){
+	b:=0:𝔹;
+	w:=0:𝔹;
+	for i in 0..3 {
+		if i<10 { w:=X(w); } else { b:=X(b); t:=(i coerce ⊥); }
+		if c { w:=X(w); }
+		b:=X(b);
+	}
+	return measure(b,w);
+}
+
+def nestedDiverges(const c:𝔹){
+	b:=0:𝔹;
+	w:=0:𝔹;
+	i:=0;
+	while i<3 {
+		if i>=1 { if i>=10 { forget(b); assert(false); } }
+		if c { w:=X(w); }
+		b:=X(b);
+		i+=1;
+	}
+	return measure(b,w);
+}
+
+def main(){
+	c:=1:𝔹;
+	r:=(thenDiverges(c),elseDiverges(c),nestedDiverges(c));
+	assert(r==((0,0),(1,0),(1,1)));
+	return (r,measure(c));
+}

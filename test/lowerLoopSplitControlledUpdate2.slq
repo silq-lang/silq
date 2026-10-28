@@ -1,0 +1,24 @@
+// args: --run
+
+def f(const a:𝔹){
+	b:=0:𝔹;
+	s:=1;
+	if a {
+		j:=0;
+		while j<3 {
+			if j>=1 {
+				s+=j;
+				assert(s!=2); /// run_error
+				assert(false);
+			}
+			b:=X(b);
+			j+=1;
+		}
+	}
+	return (measure(b),s);
+}
+
+def main(){
+	a:=1:𝔹;
+	return (f(a),measure(a));
+}

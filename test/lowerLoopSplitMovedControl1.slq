@@ -1,0 +1,58 @@
+// args: --run
+
+def beforeAndAfter(const a:𝔹){
+	b:=0:𝔹;
+	for i in 0..3 {
+		if a {
+			b:=X(b);
+			for j in 0..i {
+				if j>=10 { assert(false); }
+				b:=X(b);
+			}
+			b:=X(b);
+		}
+	}
+	return measure(b);
+}
+
+def forgetBefore(const a:𝔹){
+	b:=0:𝔹;
+	w:=0:𝔹;
+	i:=0;
+	while i<3 {
+		if a {
+			forget(b);
+			for j in 0..2 {
+				if j>=10 { assert(false); }
+				w:=X(w);
+			}
+			b:=0:𝔹;
+		}
+		i+=1;
+	}
+	return measure(b,w);
+}
+
+def nestedLoops(const a:𝔹){
+	b:=0:𝔹;
+	for i in 0..2 {
+		if a {
+			repeat 2 {
+				b:=X(b);
+				for j in 0..1 {
+					if j>=10 { assert(false); }
+					b:=X(b);
+				}
+				b:=X(b);
+			}
+		}
+	}
+	return measure(b);
+}
+
+def main(){
+	a:=1:𝔹;
+	r:=(beforeAndAfter(a),forgetBefore(a),nestedLoops(a));
+	assert(r==(1,(0,0),0));
+	return (r,measure(a));
+}

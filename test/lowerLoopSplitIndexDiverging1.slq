@@ -1,0 +1,49 @@
+// args: --run
+
+def arrayUpdate(const c:𝔹){
+	b:=0:𝔹;
+	w:=0:𝔹;
+	arr:=[1,2,3]:!ℕ[];
+	i:=0;
+	while i<2 {
+		if c { if i>=10 { arr[2]=6; u:=(i coerce ⊥); } }
+		with { w:=H(w); } do { b:=X(b); }
+		i+=1;
+	}
+	return (measure(b,w),arr);
+}
+
+def alsoContinuing(const c:𝔹){
+	b:=0:𝔹;
+	w:=0:𝔹;
+	arr:=[1,2,3]:!ℕ[];
+	i:=0;
+	while i<3 {
+		if c { if i>=10 { arr[2]=6; arr[1]+=arr[2]; assert(false); } }
+		with { w:=H(w); } do { b:=X(b); }
+		arr[0]+=1;
+		i+=1;
+	}
+	return (measure(b,w),arr);
+}
+
+def tupleUpdate(const c:𝔹){
+	b:=0:𝔹;
+	w:=0:𝔹;
+	t:=(1,2):!ℕ×!ℕ;
+	i:=0;
+	while i<3 {
+		if c { if i>=10 { t[1]+=i; assert(false); } }
+		with { w:=H(w); } do { b:=X(b); }
+		t[0]+=1;
+		i+=1;
+	}
+	return (measure(b,w),t);
+}
+
+def main(){
+	c:=1:𝔹;
+	r:=(arrayUpdate(c),alsoContinuing(c),tupleUpdate(c));
+	assert(r==(((0,0),[1,2,3]),((1,0),[4,2,3]),((1,0),(4,2))));
+	return (r,measure(c));
+}

@@ -1,0 +1,46 @@
+// args: --run
+
+def nested(const c:𝔹){
+	b:=0:𝔹;
+	t:=1;
+	i:=0;
+	while i<3 {
+		j:=0;
+		repeat 1 {
+			if j<10 { } else { t=j+2; assert(false); }
+			if c { b:=X(b); }
+			j+=1;
+		}
+		i+=1;
+	}
+	x:=t:!𝔹;
+	return (measure(b),x);
+}
+
+def underControl(const a:𝔹){
+	b:=0:𝔹;
+	s:=0;
+	t:=1;
+	if a {
+		i:=0;
+		while i<3 {
+			if i>=10 { s+=1; assert(s!=7); assert(false); }
+			j:=0;
+			repeat 1 {
+				if j<10 { } else { t=j+2; assert(false); }
+				if j>=10 { b:=X(b); u:=(j coerce ⊥); }
+				j+=1;
+			}
+			i+=1;
+		}
+	}
+	return measure(b);
+}
+
+def main(){
+	a:=1:𝔹;
+	c:=1:𝔹;
+	r:=(nested(c),underControl(a));
+	assert(r==((1,1),0));
+	return (r,measure(a,c));
+}
