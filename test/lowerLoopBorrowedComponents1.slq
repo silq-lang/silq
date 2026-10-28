@@ -1,0 +1,55 @@
+// args: --run
+
+def read(x:𝔹^4)qfree{
+	with { t:=x[1]; } do { repeat 2 { t⊕=x[2]; } }
+	return x;
+}
+def forLoop(x:𝔹^4)qfree{
+	with { t:=x[1]; } do { for i in 0..3 { t⊕=x[2]; } }
+	return x;
+}
+def whileLoop(x:𝔹^4)qfree{
+	k:=0;
+	with { t:=x[1]; } do { while k<3 { t⊕=x[2]; k+=1; } }
+	return (x,k);
+}
+def doWhileLoop(x:𝔹^4)qfree{
+	k:=0;
+	with { t:=x[1]; } do { do { t⊕=x[2]; k+=1; } while k<3; }
+	return (x,k);
+}
+def twoComponents(x:𝔹^4)qfree{
+	with { t:=x[1]; } do { repeat 3 { t⊕=x[2]; t⊕=x[3]; } }
+	return x;
+}
+def write(x:𝔹^4)qfree{
+	with { t:=x[1]; } do { repeat 3 { t⊕=x[2]; x[3]:=X(x[3]); } }
+	return x;
+}
+def nestedWith(x:𝔹^4)qfree{
+	with { t:=x[1]; } do { with { u:=x[0]; } do { repeat 3 { t⊕=x[2]; u⊕=x[3]; } } }
+	return x;
+}
+def condition(x:𝔹^4)qfree{
+	with { t:=x[1]; } do { repeat 3 { if x[2] { t:=X(t); } } }
+	return x;
+}
+def copy(x:𝔹^4)qfree{
+	with { t:=x[1]; } do { repeat 3 { y:=dup(x[2]); t⊕=y; forget(y); } }
+	return x;
+}
+def index(x:𝔹^4,const k:!ℕ)qfree{
+	with { t:=x[k]; } do { repeat 3 { t⊕=x[k+1]; } }
+	return x;
+}
+def classicalAggregate(x:!ℕ^3)qfree{
+	with { t:=x[0]; } do { for i in 0..x[1] { t+=x[2]; } }
+	return x;
+}
+def main(){
+	r:=measure(read((1,0,1,1):𝔹^4),forLoop((1,0,1,1):𝔹^4),whileLoop((1,0,1,1):𝔹^4),doWhileLoop((1,0,1,1):𝔹^4),twoComponents((1,0,1,0):𝔹^4),write((1,0,1,1):𝔹^4),nestedWith((0,0,1,1):𝔹^4),condition((0,0,1,0):𝔹^4),copy((0,0,1,0):𝔹^4),index((0,0,0,1):𝔹^4,2),reverse(write)((1,1,1,0):𝔹^4),reverse(nestedWith)((1,1,1,1):𝔹^4));
+	assert(r==((1,0,1,1),(1,1,1,1),((1,1,1,1),3),((1,1,1,1),3),(1,1,1,0),(1,1,1,0),(1,1,1,1),(0,1,1,0),(0,1,1,0),(0,0,1,1),(1,0,1,1),(0,0,1,1)));
+	c:=classicalAggregate((1,2,3):!ℕ^3);
+	assert(c==(7,2,3));
+	return (r,c);
+}

@@ -1,0 +1,19 @@
+// args: --run
+
+def afterBorrow(x:𝔹^4)qfree{
+	with { t:=x[1]; x[3]:=X(x[3]); } do { t:=X(t); }
+	return x;
+}
+def beforeBorrow(x:𝔹^4)qfree{
+	with { x[3]:=X(x[3]); t:=x[1]; } do { t⊕=x[3]; }
+	return x;
+}
+def writeInBody(x:𝔹^4)qfree{
+	with { t:=x[1]; x[3]:=X(x[3]); } do { x[0]⊕=x[3]; t:=X(t); }
+	return x;
+}
+def main(){
+	r:=measure(afterBorrow((1,1,1,1):𝔹^4),beforeBorrow((1,0,1,0):𝔹^4),writeInBody((0,1,0,0):𝔹^4),reverse(afterBorrow)((1,0,1,1):𝔹^4),reverse(writeInBody)((1,0,0,0):𝔹^4));
+	assert(r==((1,0,1,1),(1,1,1,0),(1,0,0,0),(1,1,1,1),(0,1,0,0)));
+	return r;
+}

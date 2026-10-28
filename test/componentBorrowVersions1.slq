@@ -1,0 +1,90 @@
+
+def afterWrite(x:𝔹^4){
+	with { t:=x[1]; } do {
+		x[3]:=X(x[3]);
+		y:=dup(x); /// error
+		forget(y);
+	}
+	return x;
+}
+def writeAfterWrite(x:𝔹^4){
+	with { t:=x[1]; } do {
+		x[3]:=X(x[3]);
+		x[1]:=X(x[1]); /// error
+	}
+	return x;
+}
+def readAfterWrite(x:𝔹^4){
+	with { t:=x[1]; } do {
+		x[3]:=X(x[3]);
+		y:=dup(x[1]); /// error
+		forget(y);
+	}
+	return x;
+}
+def afterBranch(x:𝔹^4,const c:𝔹){
+	with { t:=x[1]; } do {
+		if c { x[3]:=X(x[3]); }
+		y:=dup(x); /// error
+		forget(y);
+	}
+	return x;
+}
+def otherBranch(x:𝔹^4,const c:𝔹){
+	with { t:=x[1]; } do {
+		if c { x[3]:=X(x[3]); }
+		else { y:=dup(x); forget(y); } /// error
+	}
+	return x;
+}
+def afterLoop(x:𝔹^4){
+	with { t:=x[1]; } do {
+		repeat 2 { x[3]:=X(x[3]); }
+		x[1]:=X(x[1]); /// error
+	}
+	return x;
+}
+def nestedWith(x:𝔹^4){
+	with { t:=x[1]; } do {
+		with { u:=x[2]; } do { x[1]:=X(x[1]); } /// error
+	}
+	return x;
+}
+def nestedWithRead(x:𝔹^4){
+	with { t:=x[1]; } do {
+		with { u:=x[2]; } do { y:=dup(x[1]); forget(y); } /// error
+	}
+	return x;
+}
+def closure(x:𝔹^4){
+	with { t:=x[1]; } do {
+		x[3]:=X(x[3]);
+		f:=()=>dup(x[2]); /// error
+		y:=f();
+		t⊕=y;
+		forget(y);
+		forget(f);
+	}
+	return x;
+}
+def classicalAssign(x:!𝔹^4){
+	with { t:=x[1]; } do {
+		x[3]=0;
+		y:=x; /// error
+	}
+	return x;
+}
+def transformation(){
+	x:=(1,1,1,1):𝔹^4;
+	with { t:=x[1]; x[3]:=X(x[3]); u:=x[1]; } do { t:=X(t); } /// error
+	return x;
+}
+def transformationBody(){
+	x:=(1,1,1,1):𝔹^4;
+	with { t:=x[1]; x[3]:=X(x[3]); } do { y:=dup(x); forget(y); } /// error
+	return x;
+}
+def rightHandSide(){
+	x:=(1,1,1,1):𝔹^4;
+	x[3]:=let { y:=X(x[3]); x[2]:=X(x[2]); z:=dup(x[3]); forget(z); } in y; return x; /// error
+}
