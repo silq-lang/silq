@@ -1,0 +1,91 @@
+// args: --run
+
+def f1(const x:𝔹,const u:𝔹,q:𝔹)mfree{
+	t:=dup(x);
+	if t {
+		repeat 2 {
+			k:=0;
+			repeat 2 { if u { return (t,q); } if k==0 { return (t,X(q)); } }
+			while true { q:=X(q); }
+		}
+	}
+	return (t,q);
+}
+def f2(const x:𝔹,const u:𝔹,q:𝔹)mfree{
+	t:=dup(x);
+	if t {
+		for i in 0..2 {
+			for j in 0..2 { if u { return (t,q); } if j==i { return (t,X(q)); } }
+			while true { }
+		}
+	}
+	return (t,q);
+}
+def f3(const x:𝔹,const u:𝔹,q:𝔹)mfree{
+	t:=dup(x);
+	if t {
+		repeat 2 {
+			repeat 2 { if u { return (t,q); } }
+			repeat 1 { return (t,X(q)); }
+		}
+	}
+	return (t,q);
+}
+def f4(const x:𝔹,const u:𝔹,q:𝔹)mfree{
+	t:=dup(x);
+	if t {
+		repeat 2 {
+			k:=0;
+			repeat 2 { if u { return (t,q); } if k==0 { return (t,X(q)); } }
+			do { q:=X(q); } while true;
+		}
+	}
+	return (t,q);
+}
+def f5(const x:𝔹,const u:𝔹,q:𝔹)mfree{
+	t:=dup(x);
+	if t {
+		repeat 2 {
+			repeat 2 { if u { return (t,q); } }
+			while true { if u { return (t,q); } return (t,X(q)); }
+		}
+	}
+	return (t,q);
+}
+def f6(const x:𝔹,const u:𝔹,q:𝔹)mfree{
+	t:=dup(x);
+	if t {
+		for i in 0..2 {
+			k:=0;
+			repeat 2 { if u { return (t,q); } if k==i { return (t,X(q)); } }
+			if k==0 { while true { } } else { assert(false); }
+		}
+	}
+	return (t,q);
+}
+def f7(const x:𝔹,const u:𝔹,q:𝔹)mfree{
+	t:=dup(x);
+	if t {
+		for i in 0..2 {
+			k:=0;
+			repeat 2 { if u { return (t,q); } if k==i { return (t,X(q)); } }
+			k+=1;
+			while true { q:=X(q); }
+			q:=X(q);
+		}
+	}
+	return (t,q);
+}
+def run(f:!(const 𝔹×const 𝔹×𝔹→mfree 𝔹×𝔹)){
+	(t0,q0):=f(0:𝔹,0:𝔹,0:𝔹);
+	(t1,q1):=f(0:𝔹,1:𝔹,0:𝔹);
+	(t2,q2):=f(1:𝔹,0:𝔹,0:𝔹);
+	(t3,q3):=f(1:𝔹,1:𝔹,0:𝔹);
+	return measure(t0,q0,t1,q1,t2,q2,t3,q3);
+}
+def main(){
+	r:=(run(f1),run(f2),run(f3),run(f4),run(f5),run(f6),run(f7));
+	e:=(0,0,0,0,1,1,1,0):!𝔹^8;
+	assert(r==(e,e,e,e,e,e,e));
+	return r;
+}
