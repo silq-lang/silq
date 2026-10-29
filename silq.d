@@ -55,7 +55,7 @@ scope class QSimBackend: Backend {
 			final switch(opt.printFormat){
 				case PrintFormat.pretty:
 					if("`value" in qstate.vars)
-						writeln(qstate.formatQValue(qstate.vars["`value"]));
+						writeln(qstate.formatQValue(qstate.vars["`value"],fun.ftype?fun.ftype.cod:null));
 					if(opt.projectForget){
 						auto total=qstate.totalProb();
 						if(total>zeroThreshold)

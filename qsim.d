@@ -143,9 +143,9 @@ Q!(QState.Σ,QState.C)[] sortedByValue(QState qs, QState.Value value){
 	return order.map!(k=>(*k)[1]).array;
 }
 
-string formatQValue(QState qs, QState.Value value){
+string formatQValue(QState qs, QState.Value value, Expression view=null){ // (`view`: the static type of the value, see `toStringImpl`)
 	if(value.isClassical())
-		return value.toStringImpl(FormattingOptions.init);
+		return value.toStringImpl(FormattingOptions.init,view);
 	if(!qs.state.length)
 		return "0";
 	string padLeft(string s, size_t width){
@@ -238,7 +238,7 @@ string formatQValue(QState qs, QState.Value value){
 			QState.R scaledProb=(r*r)*expScale;
 			auto magnitude=format("√%.07f%s",scaledProb,expSuffix);
 			auto angle=anyArg?format("%.7f",valArg):"";
-			auto basisStr=value.classicalValue(k).toBasisStringImpl();
+			auto basisStr=value.classicalValue(k).toBasisStringImpl(view);
 			terms~=Term(lead,magnitude,angle,basisStr);
 			isFirst=false;
 		}
@@ -286,7 +286,7 @@ string formatQValue(QState qs, QState.Value value){
 		string result;
 		foreach(k,v;state.map!(x=>x)){
 			if(result.length) result~="+";
-			auto basisStr=value.classicalValue(k).toBasisStringImpl();
+			auto basisStr=value.classicalValue(k).toBasisStringImpl(view);
 			result~=text("(", v, ")·",basisStr);
 		}
 		return result.length?truncated?result~"+⋯":result:truncated?"⋯":"";
@@ -298,7 +298,7 @@ string formatQValue(QState qs, QState.Value value){
 		foreach(k,v;state.map!(x=>x)){
 			auto lead=isFirst?" ":"+";
 			auto c1=text(lead,"(",v,")");
-			auto basisStr=value.classicalValue(k).toBasisStringImpl();
+			auto basisStr=value.classicalValue(k).toBasisStringImpl(view);
 			auto c3=" · "~basisStr;
 			rows~=Row(c1, c3);
 			isFirst=false;
@@ -2096,7 +2096,7 @@ struct QState{
 			}
 			FormattingType type;
 		}
-		string toStringImpl(FormattingOptions opt){
+		string toStringImpl(FormattingOptions opt,Expression view=null){ // (`view`: the static type of the value, which can differ from `type`, e.g., `!ℕ^2` for a value of type `!𝔹×!ℕ`)
 			if(!type) return "Value.init";
 			if(isTypeTy(type)||isQNumericTy(type)) return tag==Tag.tval&&tval?tval.toString():"_";
 			final switch(tag){
@@ -2113,9 +2113,20 @@ struct QState{
 				case Tag.tval: return tval?tval.toString():"type";
 				case Tag.closure: return text("⟨",text(closure.fun)[4..$],(closure.context?text(",",closure.context.toStringImpl(opt)):""),"⟩");
 				case Tag.array_:
-					string prn="()";
-					if(cast(ArrayTy)type) prn="[]";
-					return text(prn[0],array_.map!(x=>x.toStringImpl(opt)).join(","),(array_.length==1&&prn=="()"?",":""),prn[1]);
+					while(cast(ClassicalTy)view) view=(cast(ClassicalTy)view).inner;
+					if(!(cast(ArrayTy)view||cast(VectorTy)view||cast(TupleTy)view&&(cast(TupleTy)view).types.length==array_.length)) view=null;
+					auto ty=view?view:type;
+					Expression elementView(size_t i){
+						if(auto at=cast(ArrayTy)view) return at.next;
+						if(auto vt=cast(VectorTy)view) return vt.next;
+						if(auto tt=cast(TupleTy)view) return tt.types[i];
+						return null;
+					}
+					auto elements=iota(array_.length).map!(i=>array_[i].toStringImpl(opt,elementView(i))).join(",");
+					bool uniform=cast(ArrayTy)ty||cast(VectorTy)ty; // (`[…]` if the elements have the same type, `(…)` for other tuples)
+					if(auto tt=cast(TupleTy)ty) uniform=tt.types.length&&tt.types.all!(t=>t==tt.types[0]);
+					if(uniform) return text("[",elements,"]");
+					return text("(",elements,array_.length==1?",":"",")");
 				case Tag.record:
 					auto r="{";
 					foreach(k,v;record) r~=text(k," ↦ ",v.toStringImpl(opt),",");
@@ -2150,10 +2161,10 @@ struct QState{
 				case Tag.quval: assert(0);
 			}
 		}
-		string toBasisStringImpl()in{
+		string toBasisStringImpl(Expression view=null)in{
 			assert(isClassical(),text(this));
 		}do{
-			return text("|",toStringImpl(FormattingOptions.init),"⟩");
+			return text("|",toStringImpl(FormattingOptions.init,view),"⟩");
 		}
 		string toString(){
 			return text(toStringImpl(FormattingOptions.init),":",type);
@@ -2420,7 +2431,12 @@ struct QState{
 		}
 		enforce(!thisExp.isValid,"method calls not yet supported");
 		if(string prim=isPrimitive(fun)){
-			return callPrimitive(prim, arg, type, loc);
+			Expression argType=null; // (the static type of the argument of `print`, e.g., `!ℕ^2` for a value of type `!𝔹×!ℕ`)
+			if(prim=="print"&&fun.params.length==1) argType=closeType(fun.params[0].vtype,(Identifier id){
+				if(context&&context.tag==Value.Tag.record&&id.name in context.record) return context.record[id.name];
+				return Value.init;
+			});
+			return callPrimitive(prim, arg, type, loc, argType);
 		}
 		enforce(fun.body_,text("need function body to simulate function ",fun));
 		auto ncur=pushFrame();
@@ -2461,7 +2477,7 @@ struct QState{
 		this=nnstate.popFrame(this.popFrameCleanup);
 		return fix(nnstate.vars["`value"]);
 	}
-	Value callPrimitive(string prim, Value arg, Expression type, Location loc){
+	Value callPrimitive(string prim, Value arg, Expression type, Location loc, Expression argType=null){
 		switch(prim){
 			case "dump":
 				dump(0);
@@ -2501,7 +2517,7 @@ struct QState{
 				final switch(.opt.printFormat){
 					case PrintFormat.pretty:
 						FormattingOptions opt={type: FormattingType.dump};
-						writeln(arg.toStringImpl(opt)); stdout.flush();
+						writeln(arg.toStringImpl(opt,argType)); stdout.flush();
 						break;
 					case PrintFormat.jsonStream:
 						JSONValue event=["event": JSONValue("print"), "value": arg.toJSON()];
