@@ -1,0 +1,17 @@
+// args: --run
+
+def cmp(n:!ℕ)(x:!𝔹^(if n<3 then 2 else 3)){ return x; }
+def range(n:!ℕ)(x:!𝔹^(if n≤3 && n≥2 then 2 else 3)){ return x; }
+def other(n:!ℕ)(x:!𝔹^(if n>3 || ¬(n=2) then 3 else 2)){ return x; }
+def arith(n:!ℕ)(x:!𝔹^((n+3) div 2+n%2)){ return x; }
+def bits(n:!ℕ)(x:!𝔹^((n&6)|(n⊕1))){ return x; }
+def logic(n:!ℕ)(x:!𝔹^(if (n=2)∧(n≠3)∨(n=4) then 2 else 3)){ return x; }
+def generic[n:!ℕ](x:!𝔹^(if n<2 then n else 2)){ return x; }
+
+def main(){
+	r:=(cmp(2)(vector(2,0:!𝔹)),cmp(3)(vector(3,1:!𝔹)),range(2)(vector(2,0:!𝔹)),range(5)(vector(3,1:!𝔹)),other(2)(vector(2,0:!𝔹)),other(4)(vector(3,1:!𝔹)));
+	s:=(arith(2)(vector(2,0:!𝔹)),arith(3)(vector(4,1:!𝔹)),bits(2)(vector(3,0:!𝔹)),bits(4)(vector(5,1:!𝔹)),logic(2)(vector(2,0:!𝔹)),logic(3)(vector(3,1:!𝔹)),generic[3](vector(2,1:!𝔹)));
+	assert(r==([0,0],[1,1,1],[0,0],[1,1,1],[0,0],[1,1,1]));
+	assert(s==([0,0],[1,1,1,1],[0,0,0],[1,1,1,1,1],[0,0],[1,1,1],[1,1]));
+	return (r,s);
+}

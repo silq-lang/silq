@@ -1,0 +1,34 @@
+// args: --run
+
+def forLoop(n:!ℕ){
+	x:=H(0:𝔹);
+	o:=dup(x);
+	q:=x&o;
+	for i in 0..2 { if n>0 { y:=dup(q); forget(y); forget(q); assert(false); } }
+	forget(o);
+	x:=H(x);
+	return measure(x);
+}
+
+def whileLoop(n:!ℕ){
+	x:=H(0:𝔹);
+	q:=dup(x);
+	k:=0;
+	while k<2 { if n>0 { y:=dup(q); forget(y); forget(q); assert(false); } k+=1; }
+	x:=H(x);
+	return measure(x);
+}
+
+def repeatLoop(n:!ℕ){
+	x:=H(0:𝔹);
+	q:=dup(x);
+	repeat 2 { if n>0 { y:=dup(q); forget(y); forget(q); t:=(n coerce ⊥); } }
+	x:=H(x);
+	return measure(x);
+}
+
+def main(){
+	r:=(forLoop(0),whileLoop(0),repeatLoop(0));
+	assert(r==(0,0,0));
+	return r;
+}

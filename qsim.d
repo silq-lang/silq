@@ -3459,29 +3459,27 @@ struct Interpreter(QState){
 				auto r=convertTo(doIt(tae.e),tae.type,consume,consume);
 				//if(tae.constLookup) r=r.consumeOnRead();
 				return r;
-			} else if(auto te=cast(VectorTy)e){
-				runExp(te.next);
-				runExp(te.num);
-				return qstate.typeValue(closedType(te));
-			} else if(auto te=cast(ArrayTy)e){
-				runExp(te.next);
-				return qstate.typeValue(closedType(te));
-			} else if(auto te=cast(TupleTy)e){
-				foreach(sub; te.types) {
-					runExp(sub);
+			} else if(cast(VectorTy)e||cast(ArrayTy)e||cast(TupleTy)e||cast(VariadicTy)e||cast(ClassicalTy)e||cast(ProductTy)e){
+				auto r=qstate.typeValue(closedType(e)); // (before its components run, as they can consume variables that it mentions, e.g., `𝔹^move(n)`)
+				if(auto te=cast(VectorTy)e){
+					runExp(te.next);
+					runExp(te.num);
+				}else if(auto te=cast(ArrayTy)e){
+					runExp(te.next);
+				}else if(auto te=cast(TupleTy)e){
+					foreach(sub; te.types) {
+						runExp(sub);
+					}
+				}else if(auto te=cast(VariadicTy)e){
+					runExp(te.next);
+				}else if(auto te=cast(ClassicalTy)e){
+					runExp(te.inner);
+				}else if(auto te=cast(ProductTy)e){
+					foreach(p; te.params) {
+						runExp(p.dtype);
+					}
 				}
-				return qstate.typeValue(closedType(te));
-			} else if(auto te=cast(VariadicTy)e){
-				runExp(te.next);
-				return qstate.typeValue(closedType(te));
-			} else if(auto te=cast(ClassicalTy)e){
-				runExp(te.inner);
-				return qstate.typeValue(closedType(te));
-			} else if(auto te=cast(ProductTy)e){
-				foreach(p; te.params) {
-					runExp(p.dtype);
-				}
-				return qstate.typeValue(closedType(te));
+				return r;
 			} else if(cast(NumericTy)e || cast(TypeTy)e || cast(QNumericTy)e || cast(BottomTy)e){
 				return qstate.typeValue(e);
 			}else{

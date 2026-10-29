@@ -1,0 +1,11 @@
+// args: --run
+
+def vec(n:!ℕ)⇒𝔹^move(n);
+def pair(n:!ℕ)⇒(𝔹^move(n))×!ℕ;
+def nested(n:!ℕ,m:!ℕ)⇒(!𝔹^move(m))^move(n);
+def arr(n:!ℕ)⇒(𝔹^move(n))[];
+def cls(n:!ℕ)⇒!(𝔹^move(n));
+
+def main(){
+	return (vec(3),pair(2),nested(2,1),arr(4),cls(2));
+}

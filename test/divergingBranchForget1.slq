@@ -1,0 +1,43 @@
+// args: --run
+
+def thenAsserts(n:!ℕ){
+	x:=H(0:𝔹);
+	o:=dup(x);
+	if n>0 { assert(false); }
+	forget(o);
+	x:=H(x);
+	return measure(x);
+}
+
+def forgetsBefore(n:!ℕ){
+	x:=H(0:𝔹);
+	o:=dup(x);
+	if n>0 { forget(o); assert(false); }
+	forget(o);
+	x:=H(x);
+	return measure(x);
+}
+
+def usesFirst(n:!ℕ){
+	x:=H(0:𝔹);
+	o:=dup(x);
+	if n>0 { y:=dup(o); forget(y); t:=(n coerce ⊥); }
+	forget(o);
+	x:=H(x);
+	return measure(x);
+}
+
+def afterLoop(n:!ℕ){
+	x:=H(0:𝔹);
+	o:=dup(x);
+	for j in 0..n { assert(false); }
+	forget(o);
+	x:=H(x);
+	return measure(x);
+}
+
+def main(){
+	r:=(thenAsserts(0),forgetsBefore(0),usesFirst(0),afterLoop(0));
+	assert(r==(0,0,0,0));
+	return r;
+}

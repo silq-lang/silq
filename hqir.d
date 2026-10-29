@@ -4253,50 +4253,56 @@ class ScopeWriter {
 	}
 
 	Value implExpr(ast_exp.ClassicalTy e) {
+		auto r = implType(e); // (before its components consume variables that it mentions, e.g., `𝔹^move(n)`)
 		if(!qcg.inType) {
 			genExpr(e.inner);
 		}
-		return implType(e);
+		return r;
 	}
 
 	Value implExpr(ast_exp.ArrayTy e) {
+		auto r = implType(e);
 		if(!qcg.inType) {
 			genExpr(e.next);
 		}
-		return implType(e);
+		return r;
 	}
 
 	Value implExpr(ast_exp.VectorTy e) {
+		auto r = implType(e);
 		if(!qcg.inType) {
 			genExpr(e.next);
 			genExpr(e.num);
 		}
-		return implType(e);
+		return r;
 	}
 
 	Value implExpr(ast_exp.TupleTy e) {
+		auto r = implType(e);
 		if(!qcg.inType) {
 			foreach(sube; e.types) {
 				genExpr(sube);
 			}
 		}
-		return implType(e);
+		return r;
 	}
 
 	Value implExpr(ast_exp.ProductTy e) {
+		auto r = implType(e);
 		if(!qcg.inType) {
 			foreach(p; e.params) {
 				genExpr(p.dtype);
 			}
 		}
-		return implType(e);
+		return r;
 	}
 
 	Value implExpr(ast_exp.VariadicTy e) {
+		auto r = implType(e);
 		if(!qcg.inType) {
 			genExpr(e.next);
 		}
-		return implType(e);
+		return r;
 	}
 
 	Value implExpr(ast_exp.TypeTy e) {

@@ -1,0 +1,10 @@
+// args: --run
+
+def param(n:!ℕ)⇒(𝔹^n)→!𝔹;
+def result(n:!ℕ)⇒!𝔹→𝔹^n;
+def generic(n:!ℕ)⇒Π[τ:qtype]. τ^n→τ;
+def consuming(n:!ℕ)⇒(𝔹^move(n))→!𝔹;
+
+def main(){
+	return (param(1),result(2),generic(2),consuming(3));
+}
