@@ -1,0 +1,11 @@
+// args: --run
+
+def id[τ:qtype](x:τ)qfree:τ{ return x; }
+
+def main(){
+	f:=(0 coerce ⊥); /// run_error
+	g:=reverse(id[f]);
+	h:=reverse(dup[f]);
+	k:=([a:qtype]⇒reverse(dup[f]))[𝔹^2];
+	return ();
+}

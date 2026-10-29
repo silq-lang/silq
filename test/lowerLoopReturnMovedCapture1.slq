@@ -1,0 +1,25 @@
+// args: --run
+
+def f(n:!ℕ){
+	x:=0:!ℕ;
+	for i in 0..n {
+		g:=λ(c:!𝔹){ return move(x); };
+		return g(false)+1;
+	}
+	return x;
+}
+
+def w(b:!𝔹){
+	x:=2:!ℕ;
+	while b {
+		y:=(λ(c:!𝔹){ if c { return dup(x); } return move(x); })(false);
+		return y+1;
+	}
+	return x;
+}
+
+def main(){
+	r:=(f(0),f(2),w(false),w(true));
+	assert(r==(0,1,2,3));
+	return r;
+}

@@ -1,0 +1,8 @@
+def id[τ:qtype](x:τ)qfree:τ{ return x; }
+
+def main(){
+	f:=(0 coerce ⊥);
+	g:=id[f×f]; /// error
+	h:=reverse(id[f^2]);
+	return ();
+}
