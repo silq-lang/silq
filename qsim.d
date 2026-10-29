@@ -3241,7 +3241,8 @@ struct Interpreter(QState){
 			if(auto fe=cast(FieldExp)e){
 				enforce(fe.type.isClassical||fe.constLookup,"consuming fields is not yet supported");
 				if(isBuiltIn(fe)){
-					if(cast(ArrayTy)fe.e.type||cast(VectorTy)fe.e.type||cast(TupleTy)fe.e.type||cast(VariadicTy)fe.e.type){
+					auto ety=unfoldTypeVariable(fe.e.type); // (the structure of the value of a type variable)
+					if(cast(ArrayTy)ety||cast(VectorTy)ety||cast(TupleTy)ety||cast(VariadicTy)ety){
 						assert(fe.f.name=="length");
 						auto r=doIt(fe.e);
 						enforce(r.tag==QState.Value.Tag.array_,"bad value for length lookup");

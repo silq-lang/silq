@@ -1,0 +1,59 @@
+// args: --run
+
+def carried(){
+	x:=vector(3,0:𝔹);
+	k:=0;
+	do{ a:=𝔹^3; x:=x coerce a; x[k]:=X(x[k]); k+=1; }while k<3;
+	return measure(x);
+}
+def sliced(){
+	x:=vector(3,0:𝔹);
+	k:=0;
+	do{ n:=3; a:=𝔹^n; z:=x coerce a; x:=z; measure(0:𝔹); k+=1; }while k<3;
+	return (measure(x),measure(z));
+}
+def nestedFunction(){
+	n:=3;
+	t:=𝔹^n;
+	x:=(0:𝔹,0:𝔹,1:𝔹) coerce t;
+	i:=0;
+	do{
+		a:=𝔹^n;
+		x:=x coerce a;
+		j:=0;
+		do{ def g(y:t)qfree:t{ y[0]:=X(y[0]); return y; } x:=g(x); j+=1; }while j<2;
+		x[1]:=X(x[1]);
+		i+=1;
+	}while i<2;
+	return measure(x);
+}
+def nestedLoops(){
+	t:=𝔹×𝔹;
+	x:=(1:𝔹,1:𝔹) coerce t;
+	i:=0;
+	do{
+		v:=x coerce 𝔹[];
+		v[0]:=X(v[0]);
+		x:=v coerce t;
+		j:=0;
+		do{ a:=t; w:=x coerce 𝔹[]; b:=t; x:=x coerce b; x[1]:=X(x[1]); j+=1; }while j<2;
+		k:=0;
+		do{ c:=t; x:=x coerce c; k+=1; }while k<2;
+		i+=1;
+	}while i<2;
+	return measure(x);
+}
+def forInLoop(){
+	t:=𝔹^4;
+	x:=(1:𝔹,1:𝔹,0:𝔹,1:𝔹) coerce t;
+	i:=0;
+	do{ a:=t; x:=x coerce a; for j in 0..x.length { x[j]:=X(x[j]); } i+=1; }while i<3;
+	return measure(x);
+}
+def main(){
+	assert(carried()==[1,1,1]);
+	assert(sliced()==([0,0,0],[0,0,0]));
+	assert(nestedFunction()==[0,0,1]);
+	assert(nestedLoops()==[1,1]);
+	assert(forInLoop()==[0,0,1,0]);
+}

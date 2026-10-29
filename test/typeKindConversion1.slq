@@ -1,0 +1,22 @@
+// args: --run
+
+def id[τ:qtype](x:τ)qfree:τ{ return x; }
+def generic[τ:qtype](x:τ)qfree{ T:=τ as *; y:=id[τ](x):T; return y; }
+def parameter(x:(𝔹 as *))qfree:(𝔹 coerce *)⇒X(x);
+def main(){
+	a:=1:(𝔹 as *);
+	T:=𝔹 as *;
+	b:=0:T;
+	U:=!ℕ coerce *;
+	c:=3:U;
+	k:=c coerce !ℕ;
+	V:=𝔹^2 as *;
+	d:=vector(2,1:𝔹):V;
+	W:=(𝔹 as *)×(!𝔹 as *);
+	(e,f):=(H(H(0:𝔹)),1):W;
+	g:=generic[𝔹](1:𝔹);
+	h:=parameter(b);
+	r:=(measure(a),k,measure(d),measure(e),f,measure(g),measure(h));
+	assert(r==(1,3,(1,1),0,1,1,1));
+	return r;
+}

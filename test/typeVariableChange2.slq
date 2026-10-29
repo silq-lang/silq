@@ -1,0 +1,29 @@
+// args: --run
+
+def afterMeasure(n:!ℕ){
+	a:=𝔹^n;
+	x:=vector(n,1:𝔹) coerce a;
+	r:=measure(x):!𝔹[];
+	n+=1;
+	return (r,n);
+}
+def afterForget(k:!ℕ){
+	n:=k+2;
+	a:=𝔹^n;
+	v:=vector(n,0:𝔹) coerce a;
+	forget(v);
+	x:=[move(n)];
+	return x;
+}
+def stored(n:!ℕ){
+	a:=𝔹^n;
+	n+=1;
+	b:=a;
+	return (b,n);
+}
+def main(){
+	assert(afterMeasure(2)==([1,1],3));
+	assert(afterForget(1)==[3]);
+	(t,n):=stored(2);
+	assert(n==3);
+}

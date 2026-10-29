@@ -1,0 +1,32 @@
+// args: --run
+
+def main(){
+	M:=!ℤmod[5];
+	a:=(3:!ℤmod[5]):M;
+	b:=(4:!ℤmod[5]):M;
+	m:=(a+b,a·b,-a);
+	U:=uint[3];
+	c:=(5:uint[3]):U;
+	d:=(6:uint[3]):U;
+	u:=(measure(c+d),measure(c⊕d),measure(c&d),measure(~c));
+	Z:=!ℤ;
+	e:=(-2:!ℤ):Z;
+	z:=(-e,e+3,e·e);
+	A:=!ℕ[];
+	f:=([1,2]:!ℕ[]):A;
+	g:=([3]:!ℕ[]):A;
+	h:=f~g;
+	s:=0:!ℕ;
+	for x in h { s+=x; }
+	W:=!ℕ^3;
+	k:=((1,2,3):!ℕ^3):W;
+	t:=0:!ℕ;
+	for x in k { t+=x; }
+	(p,)~q:=k;
+	V:=𝔹^2;
+	v:=((1:𝔹,0:𝔹):𝔹^2):V;
+	w:=v~v;
+	r:=(m,u,z,h,s,t,p,q,measure(w));
+	assert(r==((2,2,2),(3,3,4,2),(2,1,4),(1,2,3),6,6,1,(2,3),(1,0,1,0)));
+	return r;
+}

@@ -1,0 +1,27 @@
+// args: --run
+
+def classicalBranch(c:!𝔹){
+	t:=𝔹^3;
+	x:=vector(3,0:𝔹) coerce t;
+	if c { w:=t; x:=x coerce w; x[0]:=X(x[0]); }
+	return measure(x);
+}
+def bothBranches(c:!𝔹){
+	x:=vector(3,0:𝔹);
+	if c { w:=𝔹^3; x:=x coerce w; } else { n:=3; w:=𝔹^n; x:=x coerce w; x[1]:=X(x[1]); }
+	return measure(x);
+}
+def quantumBranch(){
+	u:=1:𝔹;
+	t:=𝔹^3;
+	x:=(0:𝔹,0:𝔹,1:𝔹) coerce t;
+	if u { w:=t; x:=x coerce w; x[2]:=X(x[2]); }
+	return (measure(x),measure(u));
+}
+def main(){
+	assert(classicalBranch(true)==[1,0,0]);
+	assert(classicalBranch(false)==[0,0,0]);
+	assert(bothBranches(true)==[0,0,0]);
+	assert(bothBranches(false)==[0,1,0]);
+	assert(quantumBranch()==([0,0,0],1));
+}

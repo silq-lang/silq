@@ -1,0 +1,109 @@
+// args: --run
+
+def index(k:!ℕ){
+	n:=3;
+	t:=𝔹^n;
+	x:=vector(n,0:𝔹) coerce t;
+	x[k]:=X(x[k]);
+	y:=dup(x[2]);
+	return (measure(x),measure(y));
+}
+def slice(){
+	n:=3;
+	t:=𝔹^n;
+	x:=(1:𝔹,0:𝔹,1:𝔹) coerce t;
+	y:=dup(x[1..3]);
+	return (measure(x),measure(y));
+}
+def unpack(){
+	n:=2;
+	t:=𝔹^n;
+	x:=(0:𝔹,1:𝔹) coerce t;
+	(a,b):=x;
+	s:=𝔹×𝔹;
+	y:=(1:𝔹,0:𝔹) coerce s;
+	(c,d):=y;
+	return measure((a,b,c,d));
+}
+def concat(){
+	n:=2;
+	t:=𝔹^n;
+	x:=vector(n,0:𝔹) coerce t;
+	z:=x~vector(1,1:𝔹);
+	return measure(z);
+}
+def length(){
+	s:=𝔹;
+	n:=2;
+	t:=s^n;
+	x:=vector(n,0:𝔹) coerce t;
+	l:=x.length;
+	return (measure(x),l);
+}
+def array(){
+	n:=2;
+	t:=𝔹^n;
+	x:=vector(n,0:𝔹) coerce t;
+	y:=x coerce 𝔹[];
+	y[1]:=X(y[1]);
+	x:=y coerce t;
+	return measure(x);
+}
+def nested(){
+	n:=2;
+	t:=𝔹^n;
+	s:=t^2;
+	x:=vector(2,vector(n,0:𝔹)) coerce s;
+	x[1][0]:=X(x[1][0]);
+	return measure(x);
+}
+def swap(){
+	t:=𝔹^2;
+	x:=(0:𝔹,1:𝔹) coerce t;
+	(x[0],x[1]):=(x[1],x[0]);
+	return measure(x);
+}
+def quantumIndex(){
+	n:=3;
+	t:=𝔹^n;
+	x:=(0:𝔹,1:𝔹,0:𝔹) coerce t;
+	i:=1:uint[2];
+	y:=dup(x[i]);
+	return (measure(x),measure(y),measure(i));
+}
+def function(){
+	n:=2;
+	t:=𝔹^n;
+	def g(y:t)qfree:t{ y[0]:=X(y[0]); return y; }
+	x:=vector(n,0:𝔹) coerce t;
+	x:=g(x);
+	x:=reverse(g)(x);
+	x:=g(x);
+	return measure(x);
+}
+def closure(){
+	n:=2;
+	t:=𝔹^n;
+	h:=λ()⇒vector(2,1:𝔹) coerce t;
+	return measure(h());
+}
+def lengthOfCall(){
+	n:=2;
+	t:=𝔹^n;
+	g:=λ()⇒measure(vector(2,1:𝔹) coerce t);
+	return g().length;
+}
+def main(){
+	assert(index(2)==([0,0,1],1));
+	assert(slice()==([1,0,1],[0,1]));
+	assert(unpack()==[0,1,1,0]);
+	assert(concat()==[0,0,1]);
+	assert(length()==([0,0],2));
+	assert(array()==[0,1]);
+	assert(nested()==[[0,0],[1,0]]);
+	assert(swap()==[1,0]);
+	assert(quantumIndex()==([0,1,0],1,1));
+	assert(function()==[1,0]);
+	assert(closure()==[1,1]);
+	assert(lengthOfCall()==2);
+}

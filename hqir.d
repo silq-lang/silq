@@ -3554,7 +3554,7 @@ class ScopeWriter {
 		}
 
 		auto v = genExpr(e.e);
-		auto ty = e.e.type;
+		auto ty = ast_exp.unfoldTypeVariable(e.e.type); // (the structure of the value of a type variable)
 		if(auto tupTy = cast(ast_ty.TupleTy) ty) {
 			if(e.a.isConstant()) {
 				auto vs = valUnpack(tupTy.types, v);
@@ -3670,6 +3670,7 @@ class ScopeWriter {
 	}
 
 	Value implIndexDup(Value v, Expression rTy, Expression ty, Index idx) {
+		ty = ast_exp.unfoldTypeVariable(ty);
 		if(auto tupTy = cast(ast_ty.TupleTy) ty) {
 			if(!idx.isQuantum) {
 				if(auto ii = ctx.asIndex(idx.creg, tupTy.types.length)) {
@@ -3824,6 +3825,8 @@ class ScopeWriter {
 	}
 
 	Value implIndexSwap(ref Value v, Expression outerTy1, Expression outerTy2, Index idx, Value delegate(ref Expression, CReg) repl) {
+		outerTy1 = ast_exp.unfoldTypeVariable(outerTy1);
+		outerTy2 = ast_exp.unfoldTypeVariable(outerTy2);
 		if(auto tupTy1 = cast(ast_ty.TupleTy) outerTy1) {
 			return implIndexSwapTuple(v, tupTy1.types, outerTy2, idx, repl);
 		}
@@ -4024,8 +4027,9 @@ class ScopeWriter {
 
 		CReg li = lidx.creg;
 		CReg ri = ridx.creg;
+		auto argTy = ast_exp.unfoldTypeVariable(arg.type); // (the structure of the value of a type variable)
 
-		if(auto varTy = cast(ast_ty.VariadicTy) arg.type) {
+		if(auto varTy = cast(ast_ty.VariadicTy) argTy) {
 			CReg len, rttis;
 			variadicRTTIs(varTy, len, rttis);
 			ccg.checkLeInt(true, li, len);
@@ -4045,7 +4049,7 @@ class ScopeWriter {
 		Expression itemTy;
 		CReg len;
 
-		if(auto tupTy = cast(ast_ty.TupleTy) arg.type) {
+		if(auto tupTy = cast(ast_ty.TupleTy) argTy) {
 			auto lLit = ctx.asIndex(li, tupTy.types.length + 1); // (slice bounds may be the length)
 			auto rLit = ctx.asIndex(ri, tupTy.types.length + 1);
 			if(lLit && rLit) {
@@ -4073,11 +4077,11 @@ class ScopeWriter {
 			len = ctx.literalInt(tupTy.types.length);
 			assert(itemTy, format("not a vector/array: %s", e.type));
 			auto vecTy = ast_ty.vectorTy(itemTy, tupTy.types.length);
-			v = genSubtype(v, arg.type, vecTy);
-		} else if(auto vecTy = cast(ast_exp.VectorTy) arg.type) {
+			v = genSubtype(v, argTy, vecTy);
+		} else if(auto vecTy = cast(ast_exp.VectorTy) argTy) {
 			itemTy = vecTy.next;
 			len = getVectorLength(vecTy);
-		} else if(auto arrTy = cast(ast_exp.ArrayTy) arg.type) {
+		} else if(auto arrTy = cast(ast_exp.ArrayTy) argTy) {
 			itemTy = arrTy.next;
 			v = valArrayToVector(itemTy, len, v);
 		} else {
@@ -4341,13 +4345,14 @@ class ScopeWriter {
 		assert(e.e.constLookup);
 		auto v = genExpr(e.e);
 		CReg r;
-		if(auto tupTy = cast(ast_ty.TupleTy) e.e.type) {
+		auto ety = ast_exp.unfoldTypeVariable(e.e.type); // (the structure of the value of a type variable)
+		if(auto tupTy = cast(ast_ty.TupleTy) ety) {
 			r = ctx.literalInt(tupTy.types.length);
-		} else if(auto vecTy = cast(ast_ty.VectorTy) e.e.type) {
+		} else if(auto vecTy = cast(ast_ty.VectorTy) ety) {
 			r = getVectorLength(vecTy);
-		} else if(auto arrTy = cast(ast_ty.ArrayTy) e.e.type) {
+		} else if(auto arrTy = cast(ast_ty.ArrayTy) ety) {
 			r = ccg.getArrayLength(v.creg);
-		} else if(auto varTy = cast(ast_ty.VariadicTy) e.e.type) {
+		} else if(auto varTy = cast(ast_ty.VariadicTy) ety) {
 			CReg rttis;
 			variadicRTTIs(varTy, r, rttis);
 		} else {
@@ -4465,8 +4470,17 @@ class ScopeWriter {
 		auto tt = e.type.isTupleTy();
 		assert(tt && tt.length == e.e.length);
 		auto types = iota(tt.length).map!(i => tt[i]).array;
+		foreach(t; types) if(mentionsTypeVariable(t)) pinType(t); // (before the components consume the type variables, e.g., `(x,a)` with `x:a`)
 		auto sub = iota(e.e.length).map!(i => genExprAs(e.e[i], types[i])).array;
 		return valPack(types, sub);
+	}
+
+	static bool mentionsTypeVariable(Expression ty) { // (a variable whose value is a type, which the RTTI of `ty` reads, see `pinType`)
+		foreach(id; ast_ty.freeIdentifiers(ty)) {
+			auto vd = cast(ast_decl.VarDecl) id.meaning;
+			if(vd && !vd.isToplevelDeclaration() && vd.vtype && ast_ty.isTypeTy(vd.vtype)) return true;
+		}
+		return false;
 	}
 
 	Value implExpr(ast_exp.VectorExp e) {
@@ -4474,6 +4488,7 @@ class ScopeWriter {
 		assert(vecType);
 		// TODO: make second disjunct unnecessary
 		assert(e.e.all!(ei => ei.constLookup == e.constLookup || ast_ty.isClassical(ei.type)));
+		if(mentionsTypeVariable(vecType.next)) pinType(vecType.next); // (as for tuples)
 		auto sub = e.e.map!(ei => genExprAs(ei, vecType.next)).array;
 		size_t n = e.e.length;
 		auto vec = valPack(vecType.next.repeat(n).array, sub);
@@ -4680,6 +4695,9 @@ class ScopeWriter {
 	}
 
 	Value genConcat(Expression ty, Value lhsV, Expression lhsTy, Value rhsV, Expression rhsTy) {
+		ty = ast_exp.unfoldTypeVariable(ty);
+		lhsTy = ast_exp.unfoldTypeVariable(lhsTy);
+		rhsTy = ast_exp.unfoldTypeVariable(rhsTy);
 		if(ast_ty.isEmpty(ty)) {
 			if(ast_ty.isEmpty(lhsTy)) return lhsV;
 			if(ast_ty.isEmpty(rhsTy)) return rhsV;
@@ -4986,7 +5004,7 @@ class ScopeWriter {
 	}
 
 	void implLhs(ast_exp.CatExp e, Value ret) {
-		auto ty = e.type;
+		auto ty = ast_exp.unfoldTypeVariable(e.type);
 		if(auto tupTy = cast(ast_ty.TupleTy) ty) {
 			return implUncatTuple(tupTy, e.e1, e.e2, ret);
 		}
@@ -5895,6 +5913,7 @@ class ScopeWriter {
 				return r;
 			}
 			auto idx = indices[0];
+			baseTy = ast_exp.unfoldTypeVariable(baseTy);
 			if(auto tupTy = cast(ast_ty.TupleTy) baseTy) {
 				assert(!idx.isQuantum, "attempted quantum index replacement on tuple");
 				auto ix = idx.creg;
@@ -6004,6 +6023,8 @@ class ScopeWriter {
 				return;
 			}
 			auto idx = indices[0];
+			baseTy1 = ast_exp.unfoldTypeVariable(baseTy1);
+			baseTy2 = ast_exp.unfoldTypeVariable(baseTy2);
 			Expression arrayTy2 = null;
 			bool makeArray = false;
 			if(dummyTypes.length > 1) {

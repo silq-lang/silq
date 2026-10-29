@@ -1,0 +1,25 @@
+def f(n:!ℕ){
+	a:=𝔹^n;
+	n+=1;
+	v:=vector(n sub 1,1:𝔹) coerce a; /// error
+	return measure(v);
+}
+def g(n:!ℕ){
+	a:=𝔹^n;
+	m:=move(n);
+	def h(x:a)qfree:a{ return x; }
+	v:=h(vector(m,1:𝔹)); /// error
+	return measure(v);
+}
+def k(n:!ℕ){
+	a:=𝔹^n;
+	v:=vector(n,1:𝔹) coerce a;
+	n+=1; /// error
+	return measure(v);
+}
+def l(n:!ℕ){
+	a:=𝔹^n;
+	v:=vector(n,1:𝔹) coerce a;
+	m:=move(n); /// error
+	return (m,measure(v));
+}
