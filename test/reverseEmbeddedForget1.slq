@@ -1,0 +1,28 @@
+// args: --run
+
+def g(const a:𝔹)qfree:𝔹⇒a⊕1;
+def update(const c0:𝔹,const c1:𝔹,x:𝔹)qfree:𝔹{ t:=g(c1); x⊕=let{ s:=let{ u:=c1&c0; } in u⊕t; } in s; return x; }
+def condition(const c0:𝔹,const c1:𝔹,x:𝔹)qfree:𝔹{ t:=g(c1); if let{ s:=let{ u:=c1&c0; } in u⊕t; } in s { x:=X(x); } return x; }
+def forgetValue(const c0:𝔹,const c1:𝔹,x:𝔹)qfree:𝔹{ t:=g(c1); y:=dup(x); forget(y=let{ s:=let{ u:=c1&c0; } in u⊕t; } in x⊕s⊕s); return x; }
+def hr(const a:𝔹,b:𝔹)qfree:𝔹{ b⊕=a; return b; }
+def argument(const c0:𝔹,const c1:𝔹,x:𝔹)qfree:𝔹{ t:=g(c1); x:=hr(let{ s:=let{ u:=c1&c0; } in u⊕t; } in s,x); return x; }
+def value(const c0:𝔹,const c1:𝔹,x:𝔹)qfree:𝔹{ t:=g(c1); (v,w):=(g(let{ s:=let{ u:=c1&c0; } in u⊕t; } in s),dup(c0)); x⊕=v⊕w; return x; }
+def branch(const c0:𝔹,const c1:𝔹,x:𝔹)qfree:𝔹{ t:=g(c1); v:=(if let{ s:=let{ u:=c1&c0; } in u⊕t; } in s then c0 else c1); x⊕=v; return x; }
+def swapped(const c0:𝔹,const c1:𝔹,x0:𝔹,x1:𝔹)qfree:𝔹×𝔹{ (x0,x1):=(x1,x0); t:=g(c1⊕x1); x0⊕=let{ s:=let{ u:=c1&x1; } in u⊕t; } in s⊕c0; (x0,x1):=(x1,x0); return (x0,x1); }
+def main(){
+	f:=(update(1:𝔹,0:𝔹,0:𝔹),update(0:𝔹,1:𝔹,0:𝔹),condition(1:𝔹,0:𝔹,0:𝔹),condition(0:𝔹,1:𝔹,0:𝔹),forgetValue(1:𝔹,1:𝔹,1:𝔹),swapped(1:𝔹,1:𝔹,0:𝔹,0:𝔹),argument(1:𝔹,0:𝔹,0:𝔹),value(1:𝔹,0:𝔹,0:𝔹),branch(0:𝔹,1:𝔹,0:𝔹));
+	m:=measure(f);
+	assert(m==(1,0,1,0,1,(0,1),1,1,1));
+	c0:=H(1:𝔹); c1:=H(0:𝔹); x0:=H(0:𝔹); x1:=H(1:𝔹);
+	x0:=update(c0,c1,x0); x0:=reverse(update)(c0,c1,x0);
+	x0:=condition(c0,c1,x0); x0:=reverse(condition)(c0,c1,x0);
+	x0:=forgetValue(c0,c1,x0); x0:=reverse(forgetValue)(c0,c1,x0);
+	x0:=argument(c0,c1,x0); x0:=reverse(argument)(c0,c1,x0);
+	x0:=value(c0,c1,x0); x0:=reverse(value)(c0,c1,x0);
+	x0:=branch(c0,c1,x0); x0:=reverse(branch)(c0,c1,x0);
+	(x0,x1):=swapped(c0,c1,x0,x1); (x0,x1):=reverse(swapped)(c0,c1,(x0,x1));
+	(x0,x1):=reverse(reverse(swapped))(c0,c1,(x0,x1)); (x0,x1):=reverse(swapped)(c0,c1,(x0,x1));
+	r:=(measure(H(c0)),measure(H(c1)),measure(H(x0)),measure(H(x1)),m);
+	assert(r==(1,0,0,1,m));
+	return r;
+}

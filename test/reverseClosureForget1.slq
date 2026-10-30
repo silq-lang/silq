@@ -1,0 +1,19 @@
+// args: --run
+
+def lambdaParam(const x:𝔹,const c:𝔹,y:𝔹)qfree:𝔹{ g:=λ(const z:𝔹)qfree⇒z&x; y⊕=g(c); return y; }
+def lambdaTemp(const x:𝔹,const c:𝔹,y:𝔹)qfree:𝔹{ t:=dup(x); g:=λ(const z:𝔹)qfree⇒z&t; y⊕=g(c); return y; }
+def localFunction(const x:𝔹,const c:𝔹,y:𝔹)qfree:𝔹{ t:=dup(x); def g(const z:𝔹)qfree⇒z&t; y⊕=g(c); return y; }
+def withLambda(const x:𝔹,const c:𝔹,y:𝔹)qfree:𝔹{ with { g:=λ(const z:𝔹)qfree⇒z&x; } do { y⊕=g(c); } return y; }
+def main(){
+	f:=(lambdaParam(1:𝔹,1:𝔹,0:𝔹),lambdaTemp(1:𝔹,1:𝔹,0:𝔹),localFunction(1:𝔹,0:𝔹,0:𝔹),withLambda(1:𝔹,1:𝔹,1:𝔹));
+	m:=measure(f);
+	assert(m==(1,1,0,0));
+	x:=H(0:𝔹); c:=H(0:𝔹); y:=H(1:𝔹);
+	y:=lambdaParam(x,c,y); y:=reverse(lambdaParam)(x,c,y);
+	y:=lambdaTemp(x,c,y); y:=reverse(lambdaTemp)(x,c,y);
+	y:=localFunction(x,c,y); y:=reverse(localFunction)(x,c,y);
+	y:=withLambda(x,c,y); y:=reverse(withLambda)(x,c,y);
+	r:=(measure(H(x)),measure(H(c)),measure(H(y)),m);
+	assert(r==(0,0,1,m));
+	return r;
+}

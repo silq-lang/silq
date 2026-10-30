@@ -1,0 +1,17 @@
+// args: --run
+
+def copies(const c:𝔹,const a:𝔹,const b:𝔹,y:𝔹)qfree{ (if c then dup(a) else dup(b)):=y; }
+def value(const c:𝔹,const a:𝔹,const b:𝔹,y:𝔹)qfree{ (if c then dup(a) else a&b):=y; }
+def pair(const c:𝔹,const a:𝔹,const b:𝔹,y:𝔹,z:𝔹)qfree{ (if c then (dup(a),dup(b)) else (dup(b),dup(a))):=(y,z); }
+def main(){
+	c:=H(1:𝔹); a:=H(1:𝔹); b:=H(0:𝔹);
+	y:=if c then dup(a) else dup(b);
+	copies(c,a,b,y);
+	y:=if c then dup(a) else a&b;
+	value(c,a,b,y);
+	(y,z):=if c then (dup(a),dup(b)) else (dup(b),dup(a));
+	pair(c,a,b,y,z);
+	r:=(measure(H(c)),measure(H(a)),measure(H(b)));
+	assert(r==(1,1,0));
+	return r;
+}

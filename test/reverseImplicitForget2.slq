@@ -1,0 +1,42 @@
+// args: --run
+
+def g(const a:𝔹)qfree:𝔹⇒a⊕1;
+def h(a:𝔹)qfree:𝔹⇒X(a);
+def copy(const x:𝔹,y:𝔹)qfree:𝔹{ t:=dup(x); y⊕=t; return y; }
+def chain(const x:𝔹,y:𝔹)qfree:𝔹{ t:=dup(x); s:=t⊕x; s⊕=1; y⊕=s; return y; }
+def consumed(x:𝔹)qfree:𝔹×𝔹{ t:=dup(x); u:=t⊕1; y:=dup(u); return (x,y); }
+def changedLater(const x:𝔹,y:𝔹)qfree:𝔹{ a:=dup(x); t:=dup(a); a:=X(a); y⊕=t; y⊕=a; return y; }
+def classicalIndex(const x:𝔹^3,y:𝔹)qfree:𝔹{ i:=0; t:=dup(x[i]); i+=1; u:=t⊕x[i]; y⊕=u; return y; }
+def tuple(const x:𝔹,y:𝔹)qfree:𝔹{ t:=dup(x); (a,b):=(dup(t),t⊕1); y⊕=a; y⊕=b; return y; }
+def move1(const x:𝔹,y:𝔹)qfree:𝔹{ t:=dup(x); s:=t; u:=h(s); y⊕=u; return y; }
+def call(const x:𝔹,y:𝔹)qfree:𝔹{ t:=dup(x); z:=h(g(t)); y⊕=z; return y; }
+def returned(const x:𝔹,y:𝔹)qfree:𝔹×𝔹{ t:=dup(x); return (y,t⊕1); }
+def explicit(const x:𝔹,y:𝔹)qfree:𝔹{ t:=dup(x); u:=t⊕1; forget(t); y⊕=u; return y; }
+def userLet(const x:𝔹,y:𝔹)qfree:𝔹{ z:=let{ t:=dup(x); u:=t⊕1; } in u; y⊕=z; return y; }
+def letResult(const x:𝔹,y:𝔹)qfree:𝔹{ z:=let{ s:=x&x; } in s⊕1; y⊕=z; return y; }
+def measured(const x:𝔹,y:𝔹)mfree:𝔹{ t:=dup(x); y⊕=t; y:=H(y); return y; }
+def main(){
+	f:=(copy(1:𝔹,0:𝔹),chain(1:𝔹,0:𝔹),consumed(0:𝔹),changedLater(1:𝔹,1:𝔹),classicalIndex((1:𝔹,0:𝔹,1:𝔹),0:𝔹),tuple(1:𝔹,0:𝔹),move1(1:𝔹,0:𝔹),call(0:𝔹,0:𝔹),returned(0:𝔹,0:𝔹),explicit(0:𝔹,0:𝔹),userLet(0:𝔹,0:𝔹),letResult(0:𝔹,0:𝔹));
+	m:=measure(f);
+	assert(m==(1,1,(0,1),0,1,1,0,0,(0,1),1,1,1));
+	x:=H(0:𝔹); y:=H(0:𝔹); v:=(H(0:𝔹),H(1:𝔹),H(0:𝔹));
+	y:=copy(x,y); y:=reverse(copy)(x,y);
+	y:=reverse(copy)(x,y); y:=copy(x,y);
+	y:=reverse(reverse(copy))(x,y); y:=reverse(copy)(x,y);
+	y:=chain(x,y); y:=reverse(chain)(x,y);
+	(x,z):=consumed(x); x:=reverse(consumed)(x,z);
+	y:=changedLater(x,y); y:=reverse(changedLater)(x,y);
+	y:=classicalIndex(v,y); y:=reverse(classicalIndex)(v,y);
+	y:=tuple(x,y); y:=reverse(tuple)(x,y);
+	y:=move1(x,y); y:=reverse(move1)(x,y);
+	y:=call(x,y); y:=reverse(call)(x,y);
+	(y,z):=returned(x,y); y:=reverse(returned)(x,(y,z));
+	y:=explicit(x,y); y:=reverse(explicit)(x,y);
+	y:=userLet(x,y); y:=reverse(userLet)(x,y);
+	y:=letResult(x,y); y:=reverse(letResult)(x,y);
+	y:=measured(x,y); y:=reverse(measured)(x,y);
+	(a,b,c):=v;
+	r:=(measure(H(x)),measure(H(y)),measure(H(a)),measure(H(b)),measure(H(c)),m);
+	assert(r==(0,0,0,1,0,m));
+	return r;
+}

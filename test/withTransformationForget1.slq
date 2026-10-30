@@ -1,0 +1,17 @@
+// args: --run
+
+def letInTransformation(const x:𝔹,y:𝔹)qfree:𝔹{ with { a:=let{ t:=dup(x); u:=t⊕1; } in u; } do { y⊕=a; } return y; }
+def forgetInTransformation(const x:𝔹,y:𝔹)qfree:𝔹{ with { t:=dup(x); a:=t⊕1; forget(t); } do { y⊕=a; } return y; }
+def chainInTransformation(const x:𝔹,y:𝔹)qfree:𝔹{ with { t:=dup(x); s:=t⊕1; forget(t); a:=s&x; forget(s); } do { y⊕=a; } return y; }
+def main(){
+	f:=(letInTransformation(0:𝔹,0:𝔹),forgetInTransformation(0:𝔹,1:𝔹),chainInTransformation(1:𝔹,0:𝔹));
+	m:=measure(f);
+	assert(m==(1,0,0));
+	x:=H(0:𝔹); y:=H(1:𝔹);
+	y:=letInTransformation(x,y); y:=reverse(letInTransformation)(x,y);
+	y:=forgetInTransformation(x,y); y:=reverse(forgetInTransformation)(x,y);
+	y:=chainInTransformation(x,y); y:=reverse(chainInTransformation)(x,y);
+	r:=(measure(H(x)),measure(H(y)),m);
+	assert(r==(0,1,m));
+	return r;
+}

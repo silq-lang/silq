@@ -1,0 +1,59 @@
+// args: --run
+
+def g(const v:𝔹^2)qfree:𝔹⇒dup(v[0]);
+def tuple(){
+	c:=H(1:𝔹); x:=H(0:𝔹);
+	w:=(dup(c),dup(x));
+	u:=let{ r:=c⊕w[0]; forget(w); } in r;
+	forget(u=0:𝔹);
+	return (measure(H(c)),measure(H(x)));
+}
+def nested(){
+	c:=H(1:𝔹); x:=H(0:𝔹);
+	w:=vector(2,vector(2,0:𝔹)); w[0][0]⊕=c; w[0][1]⊕=x; w[1][0]⊕=x;
+	u:=let{ r:=c⊕w[0][0]; forget(w); } in r;
+	forget(u=0:𝔹);
+	return (measure(H(c)),measure(H(x)));
+}
+def nestedTuple(){
+	c:=H(1:𝔹); x:=H(0:𝔹);
+	w:=((dup(c),dup(x)),dup(x));
+	u:=let{ r:=c⊕w[0][0]; forget(w); } in r;
+	forget(u=0:𝔹);
+	return (measure(H(c)),measure(H(x)));
+}
+def quantumIndex(){
+	c:=H(1:𝔹); x:=H(0:𝔹);
+	w:=vector(2,0:𝔹); w[0]⊕=c; w[1]⊕=c;
+	u:=let{ r:=c⊕w[x]; forget(w); } in r;
+	forget(u=0:𝔹);
+	return (measure(H(c)),measure(H(x)));
+}
+def quantumIndexChain(){
+	c:=H(1:𝔹); x:=H(0:𝔹);
+	w:=vector(2,vector(2,0:𝔹)); w[0][1]⊕=c; w[1][1]⊕=c; w[0][0]⊕=x;
+	u:=let{ r:=c⊕w[x][1]; forget(w); } in r;
+	forget(u=0:𝔹);
+	return (measure(H(c)),measure(H(x)));
+}
+def slice(){
+	c:=H(1:𝔹); x:=H(0:𝔹);
+	w:=vector(3,0:𝔹); w[0]⊕=c; w[1]⊕=x; w[2]⊕=x;
+	u:=let{ r:=c⊕w[0..2][0]; forget(w); } in r;
+	forget(u=0:𝔹);
+	return (measure(H(c)),measure(H(x)));
+}
+def sliceArgument(){
+	c:=H(1:𝔹); x:=H(0:𝔹);
+	w:=vector(3,0:𝔹); w[0]⊕=c; w[1]⊕=x; w[2]⊕=x;
+	u:=let{ r:=c⊕g(w[0..2]); forget(w); } in r;
+	forget(u=0:𝔹);
+	return (measure(H(c)),measure(H(x)));
+}
+def run()⇒(tuple(),nested(),nestedTuple(),quantumIndex(),quantumIndexChain(),slice(),sliceArgument());
+def main(){
+	for i in 0..8 { assert(run()==((1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0))); }
+	r:=run();
+	assert(r==((1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0)));
+	return r;
+}

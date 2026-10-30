@@ -1,0 +1,35 @@
+// args: --run
+
+def g(const a:𝔹)qfree:𝔹⇒a⊕1;
+def withInverse(const x:𝔹,y:𝔹)qfree:𝔹{ t:=g(x); with { u:=g(t); } do { y⊕=u; } return y; }
+def withChain(const x:𝔹,const c:𝔹,y:𝔹)qfree:𝔹{ t:=x&c; s:=t⊕x; with { u:=s⊕t; } do { y⊕=u; } return y; }
+def withFunction(const x:𝔹,y:𝔹)qfree:𝔹{ def h(const z:𝔹)qfree⇒z&x; with { u:=h(1:𝔹); } do { y⊕=u; } return y; }
+def withConditional(const c:𝔹,const d:𝔹,y:𝔹)qfree:𝔹{ t:=c⊕d; with { u:=let{ s:=(if c then t else d); } in s⊕1; } do { y⊕=u; } return y; }
+def conditionalValue(const q:𝔹,const x:𝔹,const y:𝔹,z:𝔹)qfree:𝔹{ t:=x⊕1; u:=g(y); v:=(if q then t else u); z⊕=v; return z; }
+def tupleComponents(const c:𝔹,const k:!ℕ,x:𝔹,y:𝔹)qfree:𝔹×𝔹{ (t,u):=(y⊕1,c⊕x); if k==1 { y:=X(y); } y⊕=u; return (x,y); }
+def closureInBranch(const q:𝔹,const x:𝔹,y:𝔹)qfree:𝔹{ t:=dup(x); h:=λ(const z:𝔹)qfree⇒z&t; if q { y⊕=h(1:𝔹); } return y; }
+def closureBothBranches(const q:𝔹,const x:𝔹,y:𝔹)qfree:𝔹{ t:=dup(x); h:=λ(const z:𝔹)qfree⇒z&t; if q { y⊕=h(1:𝔹); } else { y⊕=h(1:𝔹)⊕1; } return y; }
+def conditionalClosure(const q:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{ def h(const z:𝔹)qfree⇒z&x; t:=(if q then h(1:𝔹) else h(0:𝔹)); y⊕=t; return (x,y); }
+def conditionalLet(const q:𝔹,const a:𝔹,y:𝔹)qfree:𝔹×𝔹{ t:=let{ s:=(if q then a else q); } in s⊕y; return (y,t); }
+def main(){
+	f:=(withInverse(1:𝔹,0:𝔹),withChain(1:𝔹,0:𝔹,0:𝔹),withFunction(1:𝔹,0:𝔹),withConditional(0:𝔹,0:𝔹,0:𝔹),conditionalValue(1:𝔹,0:𝔹,1:𝔹,0:𝔹),conditionalValue(0:𝔹,0:𝔹,1:𝔹,0:𝔹),tupleComponents(1:𝔹,1,0:𝔹,0:𝔹),tupleComponents(1:𝔹,0,0:𝔹,0:𝔹),closureInBranch(1:𝔹,1:𝔹,0:𝔹),closureBothBranches(0:𝔹,0:𝔹,0:𝔹),conditionalClosure(1:𝔹,1:𝔹,0:𝔹),conditionalLet(1:𝔹,1:𝔹,0:𝔹));
+	m:=measure(f);
+	assert(m==(1,1,1,1,1,0,(0,0),(0,1),1,1,(1,1),(0,1)));
+	x:=H(0:𝔹); y:=H(1:𝔹); q:=H(0:𝔹); z:=H(0:𝔹);
+	y:=withInverse(x,y); y:=reverse(withInverse)(x,y);
+	y:=withChain(x,q,y); y:=reverse(withChain)(x,q,y);
+	y:=withFunction(x,y); y:=reverse(withFunction)(x,y);
+	y:=withConditional(q,x,y); y:=reverse(withConditional)(q,x,y);
+	z:=conditionalValue(q,x,y,z); z:=reverse(conditionalValue)(q,x,y,z);
+	(x,y):=tupleComponents(q,1,x,y); (x,y):=reverse(tupleComponents)(q,1,(x,y));
+	(x,y):=tupleComponents(q,0,x,y); (x,y):=reverse(tupleComponents)(q,0,(x,y));
+	y:=closureInBranch(q,x,y); y:=reverse(closureInBranch)(q,x,y);
+	y:=closureBothBranches(q,x,y); y:=reverse(closureBothBranches)(q,x,y);
+	y:=reverse(reverse(closureBothBranches))(q,x,y); y:=reverse(closureBothBranches)(q,x,y);
+	y:=reverse(reverse(withFunction))(x,y); y:=reverse(withFunction)(x,y);
+	(x,y):=conditionalClosure(q,x,y); (x,y):=reverse(conditionalClosure)(q,(x,y));
+	(y,w):=conditionalLet(q,x,y); y:=reverse(conditionalLet)(q,x,(y,w));
+	r:=(measure(H(x)),measure(H(y)),measure(H(q)),measure(H(z)),m);
+	assert(r==(0,1,0,0,m));
+	return r;
+}

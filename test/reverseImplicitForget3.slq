@@ -1,0 +1,37 @@
+// args: --run
+
+def loopBody(const x:𝔹^2,y:𝔹^2)qfree:𝔹^2{ for i in 0..2 { t:=x[i]&x[1-i]; y[i]⊕=t; } return y; }
+def nestedLoops(const x:𝔹^3,y:𝔹^3)qfree:𝔹^3{ for i in 0..3 { t:=dup(x[i]); for j in 0..2 { u:=t⊕x[j]; y[j]⊕=u; } } return y; }
+def outerInLoop(const x:𝔹^3,y:𝔹)qfree:𝔹{ t:=dup(x[0]); for i in 0..3 { u:=t⊕x[i]; y⊕=u; } return y; }
+def classicalBranch(const x:𝔹,const c:!𝔹,y:𝔹)qfree:𝔹{ t:=dup(x); if c { y⊕=t; } return y; }
+def quantumBranch(const x:𝔹,const q:𝔹,y:𝔹)qfree:𝔹{ if q { t:=dup(x); y⊕=t; } return y; }
+def branchUpdate(const x:𝔹,const q:𝔹,y:𝔹,z:𝔹)qfree:𝔹×𝔹{ t:=dup(x); if q { t:=X(t); y:=X(y); } else { t⊕=x; } z⊕=t; return (y,z); }
+def loopUpdate(const x:𝔹^2,y:𝔹^2,z:𝔹)qfree:𝔹^2×𝔹{ t:=0:𝔹; for i in 0..2 { t⊕=x[i]; y[i]:=X(y[i]); } z⊕=t; return (y,z); }
+def carried(const x:𝔹^2,y:𝔹^2,z:𝔹)qfree:𝔹^2×𝔹{ t:=0:𝔹; u:=0:𝔹; for i in 0..2 { u⊕=t; t⊕=x[i]; y[i]:=X(y[i]); } z⊕=u; return (y,z); }
+def repeated(const x:𝔹,y:𝔹,z:𝔹)qfree:𝔹×𝔹{ t:=dup(x); repeat 3 { t:=X(t); y:=X(y); } z⊕=t; return (y,z); }
+def generic[n:!ℕ](const x:𝔹^n,y:𝔹^n)qfree:𝔹^n{ for i in 0..n { t:=dup(x[i]); y[i]⊕=t; } return y; }
+def withBody(const x:𝔹,y:𝔹)qfree:𝔹{ with { t:=dup(x); } do { u:=t⊕1; y⊕=u; } return y; }
+def main(){
+	f:=(loopBody((1:𝔹,1:𝔹),(0:𝔹,1:𝔹)),nestedLoops((1:𝔹,0:𝔹,1:𝔹),vector(3,0:𝔹)),outerInLoop((1:𝔹,0:𝔹,1:𝔹),0:𝔹),classicalBranch(1:𝔹,true,0:𝔹),quantumBranch(1:𝔹,1:𝔹,0:𝔹),branchUpdate(1:𝔹,1:𝔹,0:𝔹,0:𝔹),loopUpdate((1:𝔹,0:𝔹),(0:𝔹,0:𝔹),0:𝔹),carried((1:𝔹,1:𝔹),(0:𝔹,0:𝔹),0:𝔹),repeated(1:𝔹,0:𝔹,0:𝔹),generic((1:𝔹,0:𝔹),(0:𝔹,0:𝔹)),withBody(0:𝔹,0:𝔹));
+	m:=measure(f);
+	assert(m==((1,0),(1,0,0),1,1,1,(1,0),((1,1),1),((1,1),1),(1,0),(1,0),1));
+	x:=(H(0:𝔹),H(0:𝔹),H(1:𝔹)); y:=(H(0:𝔹),H(1:𝔹),H(0:𝔹)); q:=H(0:𝔹); z:=H(0:𝔹);
+	(x0,x1,x2):=x; (y0,y1,y2):=y;
+	(y0,y1):=loopBody((x0,x1),(y0,y1)); (y0,y1):=reverse(loopBody)((x0,x1),(y0,y1));
+	x:=(x0,x1,x2); y:=(y0,y1,y2);
+	y:=nestedLoops(x,y); y:=reverse(nestedLoops)(x,y);
+	z:=outerInLoop(x,z); z:=reverse(outerInLoop)(x,z);
+	(x0,x1,x2):=x; (y0,y1,y2):=y;
+	y0:=classicalBranch(x0,true,y0); y0:=reverse(classicalBranch)(x0,true,y0);
+	y0:=classicalBranch(x0,false,y0); y0:=reverse(classicalBranch)(x0,false,y0);
+	y1:=quantumBranch(x1,q,y1); y1:=reverse(quantumBranch)(x1,q,y1);
+	(y2,z):=branchUpdate(x2,q,y2,z); (y2,z):=reverse(branchUpdate)(x2,q,(y2,z));
+	((y0,y1),z):=loopUpdate((x0,x1),(y0,y1),z); ((y0,y1),z):=reverse(loopUpdate)((x0,x1),((y0,y1),z));
+	((y1,y2),z):=carried((x1,x2),(y1,y2),z); ((y1,y2),z):=reverse(carried)((x1,x2),((y1,y2),z));
+	(y0,z):=repeated(x0,y0,z); (y0,z):=reverse(repeated)(x0,(y0,z));
+	(y0,y1):=generic((x0,x1),(y0,y1)); (y0,y1):=reverse(generic[2])((x0,x1),(y0,y1));
+	y2:=withBody(x2,y2); y2:=reverse(withBody)(x2,y2);
+	r:=(measure((H(x0),H(x1),H(x2))),measure((H(y0),H(y1),H(y2))),measure(H(q)),measure(H(z)),m);
+	assert(r==((0,0,1),(0,1,0),0,0,m));
+	return r;
+}

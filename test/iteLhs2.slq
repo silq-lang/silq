@@ -3,7 +3,7 @@ def main(){
 	x:=H(0:𝔹);
 	y:=H(0:𝔹);
 	a:=vector(3,0:𝔹);
-	(if x then /// TODO
+	(if x then
 		if y then (a[0],a[1]) else (H(a[1]),a[0]) /// TODO
 	else
 		if y then (a[1],a[0]) else (H(a[0]),a[1]) /// TODO

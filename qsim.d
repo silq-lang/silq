@@ -3227,6 +3227,41 @@ struct Interpreter(QState){
 				fun.forget(qstate);
 			return r;
 		}
+		static bool rootInBounds(Expression e){ // (whether an index or a bound of the lookups consumes the variable that they select from, e.g., `x[0..move(x).length]`, before the component is selected)
+			Expression[] bounds;
+			for(;;){
+				if(auto idx=cast(IndexExp)e){ bounds~=idx.a; e=idx.e; continue; }
+				if(auto sl=cast(SliceExp)e){ bounds~=[sl.l,sl.r]; e=sl.e; continue; }
+				break;
+			}
+			auto root=cast(Identifier)e;
+			if(root) foreach(b;bounds) foreach(x;b.subexpressions) if(auto id=cast(Identifier)x) if(id.name==root.name&&!id.constLookup&&!id.implicitDup) return true;
+			return false;
+		}
+		QState.Value component(bool slice)(Expression e,ref QState.Value[] indices,ref bool copy,bool copyRoot){ // (the value of a `const` lookup of an aggregate whose component a lookup selects, without copies of the other components, e.g., for `w[q]` in `w[q][1]` or `w` in `w[0]` if `w` is consumed during the borrow, unless `copyRoot`; it refers to the copies of its quantum indices `indices`; `copy`: the component has to be copied)
+			try{
+				if(auto id=cast(Identifier)e) if(id.consumedDuringBorrow&&!id.getInitializer()&&!copyRoot){
+					auto r=lookupMeaning(qstate,id);
+					enforce(r.isValid,"this identifier lookup is not yet supported");
+					copy=true;
+					return r;
+				}
+				if(auto idx=cast(IndexExp)e) if(idx.constLookup){
+					auto a=component!false(idx.e,indices,copy,copyRoot),i=doIt(idx.a);
+					if(!i.isClassical()){ i=i.dup(qstate); indices~=i; copy=true; }
+					return a[i];
+				}
+				if(auto sl=cast(SliceExp)e) if(sl.constLookup){
+					auto r=component!true(sl.e,indices,copy,copyRoot)[doIt(sl.l)..doIt(sl.r)];
+					r.type=evalType(closedType(sl.type));
+					return r;
+				}
+				return slice?doIt(e):doIt2(e);
+			}catch(Exception ex){
+				version(LOCALIZE) static if(slice) throw localizedException(ex,e.loc); // (as for `doIt`)
+				throw ex;
+			}
+		}
 		pragma(inline,false) QState.Value doIt2Other()(Expression e){
 			if(auto id=cast(Identifier)e){
 				if(!id.meaning&&util.among(id.name,"π","pi")) return QState.π;
@@ -3358,12 +3393,15 @@ struct Interpreter(QState){
 				return qstate.makeTuple(unit,[]);
 			}
 			if(auto idx=cast(IndexExp)e){
-				auto a=doIt2(idx.e),i=doIt(idx.a);
-				QState.Value r;
-				if(!i.isClassical()){
-					i=i.dup(qstate); scope(exit) forget(i);
-					r=a[i].dup(qstate).consumeOnRead();
-				}else r=a[i];
+				QState.Value[] indices;
+				bool copy=false;
+				auto a=idx.constLookup||idx.implicitDup?component!false(idx.e,indices,copy,rootInBounds(idx)):doIt2(idx.e),i=doIt(idx.a);
+				if(!i.isClassical()){ i=i.dup(qstate); indices~=i; copy=true; }
+				auto r=a[i];
+				if(copy){
+					r=r.dup(qstate).consumeOnRead();
+					foreach(j;indices) forget(j);
+				}
 				if(!idx.constLookup&&!idx.implicitDup){
 					if(idx.byRef){
 						if(a.tag==QState.Value.Tag.array_&&i.isℤ()){
@@ -3377,10 +3415,16 @@ struct Interpreter(QState){
 				return r;
 			}
 			if(auto sl=cast(SliceExp)e){
-				auto r=doIt(sl.e)[doIt(sl.l)..doIt(sl.r)];
+				QState.Value[] indices;
+				bool copy=false;
+				auto r=(sl.constLookup||sl.implicitDup?component!true(sl.e,indices,copy,rootInBounds(sl)):doIt(sl.e))[doIt(sl.l)..doIt(sl.r)];
 				assert(r.tag==QState.Value.Tag.array_);
 				assert(QState.Value.getTag(e.type)==QState.Value.Tag.array_);
 				r.type=evalType(closedType(e.type));
+				if(copy){
+					r=r.dup(qstate).consumeOnRead();
+					foreach(j;indices) forget(j);
+				}
 				if(!sl.constLookup&&!sl.implicitDup) r=r.dup(qstate);
 				return r;
 			}
