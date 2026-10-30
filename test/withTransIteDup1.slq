@@ -1,0 +1,73 @@
+// args: --run
+
+def component(const c0:𝔹,const c1:𝔹,x0:𝔹)qfree:𝔹{
+	v:=vector(2,0:𝔹); v[0]⊕=x0;
+	with { t:=(if c1 then v[0] else c0); } do { }
+	return x0;
+}
+def componentUsed(const c0:𝔹,const c1:𝔹,x0:𝔹)qfree:𝔹{
+	v:=vector(2,0:𝔹); v[0]⊕=x0;
+	with { t:=(if c1 then v[0] else c0); } do { }
+	forget(v=(dup(x0),0:𝔹));
+	return x0;
+}
+def componentBody(const c0:𝔹,const c1:𝔹,x0:𝔹)qfree:𝔹{
+	v:=vector(2,0:𝔹); v[1]⊕=x0;
+	o:=0:𝔹;
+	with { t:=(if c1 then v[1] else c0); } do { o⊕=t; }
+	forget(o=(if c1 then dup(x0) else dup(c0)));
+	forget(v=(0:𝔹,dup(x0)));
+	return x0;
+}
+def variable(const c0:𝔹,const c1:𝔹,x0:𝔹)qfree:𝔹{
+	w:=dup(x0);
+	with { t:=(if c1 then w else c0); } do { }
+	forget(w=x0);
+	return x0;
+}
+def variableBody(const c0:𝔹,const c1:𝔹,x0:𝔹)qfree:𝔹{
+	w:=dup(x0);
+	o:=0:𝔹;
+	with { t:=(if c1 then c0 else w); } do { o⊕=t; }
+	forget(o=(if c1 then dup(c0) else dup(x0)));
+	forget(w=x0);
+	return x0;
+}
+def bothBranches(const c0:𝔹,const c1:𝔹,x0:𝔹)qfree:𝔹{
+	w:=dup(x0); u:=dup(c0);
+	with { t:=(if c1 then (w,u) else (u,w)); } do { }
+	forget(w=x0); forget(u=c0);
+	return x0;
+}
+def classicalCondition(const c0:𝔹,c:!𝔹,x0:𝔹)qfree:𝔹{
+	w:=dup(x0);
+	with { t:=(if c then w else c0); } do { }
+	forget(w=x0);
+	return x0;
+}
+def classicalVariable(c:!𝔹,k:!ℕ)qfree:!ℕ{
+	with { t:=(if c then k else 2:!ℕ); } do { }
+	return k;
+}
+def reversed(const c0:𝔹,const c1:𝔹,x0:𝔹)qfree:𝔹{
+	x0⊕=c1;
+	with { t:=(if c0 then c1 else c0); } do { x0⊕=t; }
+	return x0;
+}
+def main(){
+	c0:=H(1:𝔹); c1:=H(0:𝔹); x0:=H(1:𝔹);
+	x0:=component(c0,c1,x0);
+	x0:=componentUsed(c0,c1,x0);
+	x0:=componentBody(c0,c1,x0);
+	x0:=variable(c0,c1,x0);
+	x0:=variableBody(c0,c1,x0);
+	x0:=bothBranches(c0,c1,x0);
+	x0:=classicalCondition(c0,true,x0);
+	x0:=classicalCondition(c0,false,x0);
+	x0:=reversed(c0,c1,x0);
+	x0:=reverse(reversed)(c0,c1,x0);
+	k:=classicalVariable(true,3)+classicalVariable(false,4);
+	r:=(measure(H(c0)),measure(H(c1)),measure(H(x0)),k);
+	assert(r==(1,0,1,7));
+	return r;
+}
