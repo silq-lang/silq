@@ -1,0 +1,21 @@
+// args: --run
+
+def h(a:!ℕ)qfree⇒a;
+def inBranch(xs:𝔹^4,j:!ℕ,k:!ℕ)mfree{ xs[h(j)]:=X(xs[h(j)]); if k==0 { j-=1; xs[0]:=H(xs[0]); } else { xs[1]:=H(xs[1]); } xs[j]:=X(xs[j]); return xs; }
+def withoutElse(xs:𝔹^4,j:!ℕ)mfree{ xs[h(j)]:=X(xs[h(j)]); if j==2 { j-=1; xs[0]:=H(xs[0]); } xs[j]:=X(xs[j]); return xs; }
+def inRepeat(xs:𝔹^4,j:!ℕ)mfree{ xs[h(j)]:=X(xs[h(j)]); repeat 2 { j-=1; xs[0]:=H(xs[0]); } xs[j]:=X(xs[j]); return xs; }
+def inFor(xs:𝔹^4,j:!ℕ)mfree{ xs[h(j)]:=X(xs[h(j)]); for i in 0..2 { j-=1; xs[1]:=H(xs[1]); } xs[j]:=X(xs[j]); return xs; }
+def readInBranch(xs:𝔹^4,j:!ℕ,k:!ℕ)mfree{ j-=1; if k==2 { k+=j; } else { xs[h(k)]:=X(xs[h(k)]); } xs[0]:=H(xs[0]); return xs; }
+def returned(xs:𝔹^4,j:!ℕ)mfree{ xs[h(j)]:=X(xs[h(j)]); repeat 2 { j-=1; xs[0]:=H(xs[0]); } return (j,xs); }
+def main(){
+	xs:=vector(4,0:𝔹);
+	xs:=inBranch(xs,2,0); xs:=reverse(inBranch)(xs,2,0);
+	xs:=withoutElse(xs,2); xs:=reverse(withoutElse)(xs,2);
+	xs:=inRepeat(xs,3); xs:=reverse(inRepeat)(xs,3);
+	xs:=inFor(xs,3); xs:=reverse(inFor)(xs,3);
+	xs:=readInBranch(xs,1,1); xs:=reverse(readInBranch)(xs,1,1);
+	(j,xs):=returned(xs,3); xs:=reverse(returned)((j,xs),3);
+	r:=(measure(xs),j);
+	assert(r==((0,0,0,0),1));
+	return r;
+}

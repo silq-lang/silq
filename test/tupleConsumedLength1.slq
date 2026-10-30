@@ -1,0 +1,15 @@
+// args: --run
+
+def returned(n:!ℕ){ x:=vector(n,1:𝔹); return (x,move(n)); }
+def nested(n:!ℕ){ x:=vector(n,0:𝔹); return ((x,1),move(n)); }
+def stored(n:!ℕ){ x:=vector(n,0:𝔹); y:=(x,move(n)); return y; }
+def twice(n:!ℕ){ x:=vector(n,0:𝔹); y:=vector(n,1:𝔹); return (x,y,move(n)); }
+def main(){
+	(a,b):=returned(2);
+	((c,d),e):=nested(3);
+	(f,g):=stored(1);
+	(h,i,j):=twice(2);
+	r:=(measure(a),b,measure(c),d,e,measure(f),g,measure(h),measure(i),j);
+	assert(r==((1,1),2,(0,0,0),1,3,(0,),1,(0,0),(1,1),2));
+	return r;
+}

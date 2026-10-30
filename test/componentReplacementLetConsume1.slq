@@ -1,0 +1,20 @@
+def explicitForget(){
+	x:=vector(4,0:𝔹);
+	x[3]:=let { y:=X(x[3]); forget(x); } in y; /// error
+	return x;
+}
+def updateInLet(){
+	x:=vector(4,0:𝔹);
+	x[3]:=let { y:=X(x[3]); x[2]:=X(x[2]); } in y; /// error
+	return x;
+}
+def updateInOpAssign(){
+	x:=vector(4,0:𝔹);
+	x[3]⊕=let { x[2]:=X(x[2]); } in 1:𝔹; /// error
+	return x;
+}
+def updateInNestedLet(){
+	x:=vector(4,0:𝔹);
+	x[0]:=let { y:=let { z:=H(x[0]); x[1]:=X(x[1]); } in z; } in y; /// error
+	return x;
+}

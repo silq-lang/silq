@@ -1,0 +1,9 @@
+def integer(n:!ℕ){ x:=3:uint[n]; return (x,move(n)); } /// error
+def signed(n:!ℕ){ x:=-1:int[n+1]; return (x,move(n)); } /// error
+def modular(n:!ℕ){ x:=1:!ℤmod[n+2]; return (x,move(n)); } /// error
+def nested(n:!ℕ){ x:=3:uint[n]; return ((x,0),move(n)); } /// error
+def vector_(n:!ℕ){ x:=vector(n,0:𝔹); return (x,move(n)); }
+def main(){
+	(x,n):=vector_(2);
+	return (measure(x),n);
+}

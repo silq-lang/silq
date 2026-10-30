@@ -1,0 +1,10 @@
+def f(n:!ℕ){
+	a:=𝔹^n;
+	def g(x:(λ(){ if false { return move(a); } return move(a); })())⇒measure(x); /// error
+	return g;
+}
+def h(n:!ℕ){
+	a:=𝔹^n;
+	def k(x:(λ(){ if n==0 { forget(a); return 𝔹; } b:=move(a); return b; })())⇒measure(x); /// error
+	return k;
+}

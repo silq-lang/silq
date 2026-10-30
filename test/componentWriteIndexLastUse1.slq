@@ -1,0 +1,33 @@
+// args: --run
+
+def h(a:!ℕ)qfree⇒a;
+def write(xs:𝔹^3,j:!ℕ)mfree{
+	xs[h(j)]:=X(xs[h(j)]);
+	j:=2;
+	xs[j]:=X(xs[j]);
+	return (j,xs);
+}
+def withWrite(xs:𝔹^3,j:!ℕ)mfree{
+	with { a:=xs[h(j)]; } do { a:=X(a); }
+	j:=0;
+	return (j,xs);
+}
+def update(xs:𝔹^3,j:!ℕ)mfree{
+	xs[h(j)]⊕=1:𝔹;
+	j:=1;
+	return (j,xs);
+}
+def nested(xs:(𝔹^2)^2,j:!ℕ,k:!ℕ)mfree{
+	xs[h(j)][h(k)]:=X(xs[h(j)][h(k)]);
+	(j,k):=(0,0);
+	return (j,k,xs);
+}
+def main(){
+	(j1,xs):=write(vector(3,0:𝔹),1);
+	(j2,ys):=withWrite(vector(3,0:𝔹),2);
+	(j3,zs):=update(vector(3,0:𝔹),0);
+	(j4,k4,ws):=nested(vector(2,vector(2,0:𝔹)),1,0);
+	r:=(j1,measure(xs),j2,measure(ys),j3,measure(zs),j4,k4,measure(ws));
+	assert(r==(2,(0,1,1),0,(0,0,1),1,(1,0,0),0,0,((0,0),(1,0))));
+	return r;
+}

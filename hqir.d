@@ -4470,9 +4470,22 @@ class ScopeWriter {
 		auto tt = e.type.isTupleTy();
 		assert(tt && tt.length == e.e.length);
 		auto types = iota(tt.length).map!(i => tt[i]).array;
-		foreach(t; types) if(mentionsTypeVariable(t)) pinType(t); // (before the components consume the type variables, e.g., `(x,a)` with `x:a`)
+		foreach(t; types) {
+			if(mentionsTypeVariable(t)) pinType(t); // (before the components consume the type variables, e.g., `(x,a)` with `x:a`)
+			else if(mentionsConsumed(t, e.e)) pinTypeDeep(t); // (also the other variables, e.g., `(x,move(n))` with `x:𝔹^n`)
+		}
 		auto sub = iota(e.e.length).map!(i => genExprAs(e.e[i], types[i])).array;
 		return valPack(types, sub);
+	}
+
+	static bool mentionsConsumed(Expression ty, Expression[] es) { // (whether `es` consume a variable that `ty` mentions)
+		ast_decl.Declaration[] mentioned;
+		foreach(id; ast_ty.freeIdentifiers(ty)) if(id.meaning) mentioned ~= id.meaning;
+		foreach(e; es) foreach(x; e.subexpressions) {
+			auto id = cast(ast_exp.Identifier) x;
+			if(id && id.meaning && !id.constLookup && !id.implicitDup && mentioned.canFind!(d => d is id.meaning)) return true;
+		}
+		return false;
 	}
 
 	static bool mentionsTypeVariable(Expression ty) { // (a variable whose value is a type, which the RTTI of `ty` reads, see `pinType`)
@@ -6168,6 +6181,17 @@ class ScopeWriter {
 		foreach(ref index; indices) {
 			index.forget(this);
 		}
+		void consumeMoved(Expression e) { // (the write-back reuses the indices of the borrow, but its index consumes the variables that it moves, e.g., `j` in `xs[h(j)]` at the last use of `j`)
+			if(cast(ast_exp.LambdaExp)e || cast(ast_decl.FunctionDef)e) return;
+			if(auto tae = cast(ast_exp.TypeAnnotationExp)e) return consumeMoved(tae.e);
+			if(auto id = cast(ast_exp.Identifier)e) {
+				if(id.meaning && cast(ast_decl.VarDecl)id.meaning && !id.meaning.isToplevelDeclaration() && !id.constLookup && !id.implicitDup)
+					valForget(genExpr(id));
+				return;
+			}
+			foreach(c; e.components) consumeMoved(c);
+		}
+		foreach(at; chain.ie) consumeMoved(at.a);
 
 		if(chain.base.type == typeForDecl(chain.base.meaning)) {
 			var.decl = chain.base.meaning;

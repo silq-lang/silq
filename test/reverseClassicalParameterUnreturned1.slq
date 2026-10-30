@@ -1,0 +1,15 @@
+// args: --run
+
+def g(xs:𝔹^4,const k:!ℕ)mfree{ xs[k]:=H(xs[k]); return (xs,k+1); }
+def f(xs:𝔹^4,j:!ℕ,k:!ℕ)mfree{
+	(xs,c):=g(xs,j);
+	with { a:=xs[0]; } do { c+=1; k+=c; a:=H(a); } /// TODO
+	xs[k]:=X(xs[k]);
+	return (c,xs);
+}
+def main(){
+	xs:=vector(4,0:𝔹);
+	(c,xs):=f(xs,0,0);
+	xs:=reverse(f)((c,xs),0,0); /// TODO
+	return (measure(xs),c);
+}

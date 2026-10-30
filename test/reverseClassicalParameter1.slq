@@ -1,0 +1,42 @@
+// args: --run
+
+def h(a:!ℕ)qfree⇒a;
+def returned(xs:𝔹^3,j:!ℕ)mfree{ xs[j]:=H(xs[j]); return (j,xs); }
+def returnedLast(xs:𝔹^3,j:!ℕ)mfree{ xs[j]:=H(xs[j]); return (xs,j); }
+def changed(xs:𝔹^3,j:!ℕ)mfree{ xs[j]:=H(xs[j]); j+=1; xs[j]:=X(xs[j]); return (j,xs); }
+def changedFirst(j:!ℕ,x:𝔹)mfree{ j+=1; x:=H(x); return (x,j); }
+def changedCopy(xs:𝔹^3,j:!ℕ)mfree{ xs[j]:=H(xs[j]); j+=1; k:=j; xs[k]:=H(xs[k]); return (k,xs); }
+def changedNotReturned(xs:𝔹^3,j:!ℕ)mfree{ xs[j]:=H(xs[j]); j+=1; xs[j]:=X(xs[j]); return xs; }
+def changedTwo(xs:𝔹^3,j:!ℕ,k:!ℕ)mfree{ xs[j]:=H(xs[j]); j+=k; xs[j]:=X(xs[j]); return (j,xs); }
+def decremented(xs:𝔹^3,j:!ℕ)mfree{ xs[j]:=H(xs[j]); j-=1; xs[j]:=H(xs[j]); return (j,xs); }
+def doubled(xs:𝔹^3,j:!ℕ)mfree{ xs[j]:=H(xs[j]); j*=2; xs[j]:=H(xs[j]); return (j,xs); }
+def changedInBranch(xs:𝔹^3,j:!ℕ)mfree{ if j==1 { j+=1; } xs[j]:=H(xs[j]); return (j,xs); }
+def changedInLoop(xs:𝔹^3,j:!ℕ)mfree{ for i in 0..2 { xs[j]:=H(xs[j]); j+=1; } return (j,xs); }
+def changedInRepeat(xs:𝔹^3,j:!ℕ)mfree{ repeat 2 { xs[j]:=H(xs[j]); j+=1; } return (j,xs); }
+def changedInLet(xs:𝔹^3,j:!ℕ)mfree{ (ys,j):=let{ j+=1; xs[j]:=H(xs[j]); } in (xs,j); return (j,ys); }
+def changedInWithBody(xs:𝔹^3,j:!ℕ)mfree{ with { y:=xs[0]; } do { j+=1; y:=H(y); } xs[j]:=H(xs[j]); return (j,xs); }
+def withCopy(xs:𝔹^3,j:!ℕ)mfree{ with { v:=j; xs[h(j)]:=X(xs[h(j)]); } do { xs[v]:=H(xs[v]); } return (j,xs); }
+def main(){
+	xs:=vector(3,0:𝔹);
+	for i in 0..3 { xs[i]:=H(xs[i]); }
+	(j1,xs):=returned(xs,1); xs:=reverse(returned)((j1,xs),1);
+	(xs,j2):=returnedLast(xs,2); xs:=reverse(returnedLast)((xs,j2),2);
+	(j3,xs):=changed(xs,0); xs:=reverse(changed)((j3,xs),0);
+	y:=H(1:𝔹);
+	(y,j4):=changedFirst(1,y); y:=reverse(changedFirst)(1,(y,j4));
+	(j5,xs):=changedCopy(xs,1); xs:=reverse(changedCopy)((j5,xs),1);
+	xs:=changedNotReturned(xs,1); xs:=reverse(changedNotReturned)(xs,1);
+	(j6,xs):=changedTwo(xs,0,2); xs:=reverse(changedTwo)((j6,xs),0,2);
+	(j7,xs):=decremented(xs,2); xs:=reverse(decremented)((j7,xs),2);
+	(j8,xs):=doubled(xs,1); xs:=reverse(doubled)((j8,xs),1);
+	(j9,xs):=changedInBranch(xs,1); xs:=reverse(changedInBranch)((j9,xs),1);
+	(j10,xs):=changedInLoop(xs,0); xs:=reverse(changedInLoop)((j10,xs),0);
+	(j11,xs):=changedInRepeat(xs,0); xs:=reverse(changedInRepeat)((j11,xs),0);
+	(j12,xs):=changedInLet(xs,1); xs:=reverse(changedInLet)((j12,xs),1);
+	(j13,xs):=changedInWithBody(xs,1); xs:=reverse(changedInWithBody)((j13,xs),1);
+	(j14,xs):=withCopy(xs,2); xs:=reverse(withCopy)((j14,xs),2);
+	for i in 0..3 { xs[i]:=H(xs[i]); }
+	r:=(measure(xs),measure(H(y)),j1,j2,j3,j4,j5,j6,j7,j8,j9,j10,j11,j12,j13,j14);
+	assert(r==((0,0,0),1,1,2,1,2,2,2,1,2,2,2,2,2,2,2));
+	return r;
+}

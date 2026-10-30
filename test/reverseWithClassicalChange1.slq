@@ -1,0 +1,24 @@
+// args: --run
+
+def notReturned(xs:𝔹^4,j:!ℕ,k:!ℕ)mfree{ with { a:=xs[j]; } do { k*=2; a:=H(a); } xs[k]:=X(xs[k]); return xs; }
+def readBefore(xs:𝔹^4,j:!ℕ,k:!ℕ)mfree{ xs[k]:=X(xs[k]); with { a:=xs[j]; } do { k-=1; a:=H(a); } return xs; }
+def inBranch(xs:𝔹^4,j:!ℕ,k:!ℕ)mfree{ if j==1 { with { a:=xs[j]; } do { k+=1; a:=H(a); } } xs[k]:=X(xs[k]); return xs; }
+def twoWiths(xs:𝔹^4,j:!ℕ,k:!ℕ)mfree{ with { a:=xs[j]; } do { k+=1; a:=H(a); } with { b:=xs[0]; } do { j+=k; b:=H(b); } xs[j]:=X(xs[j]); return xs; }
+def local(xs:𝔹^4,j:!ℕ)mfree{ c:=dup(j); xs[c]:=X(xs[c]); with { a:=xs[0]; } do { c+=1; a:=H(a); } xs[c]:=X(xs[c]); return xs; }
+def transLocal(xs:𝔹^4,j:!ℕ,k:!ℕ)mfree{ with { n:=dup(j); a:=xs[0]; } do { k+=n; a:=H(a); } xs[k]:=X(xs[k]); return xs; }
+def writeBack(xs:𝔹^4,j:!ℕ)mfree{ v:=vector(2,0:!ℕ); with { a:=v[0]; b:=xs[0]; } do { a+=j; b:=H(b); } xs[v[0]]:=X(xs[v[0]]); return xs; }
+def returned(xs:𝔹^4,j:!ℕ,k:!ℕ)mfree{ with { a:=xs[j]; } do { k*=2; a:=H(a); } xs[k]:=X(xs[k]); return (k,xs); }
+def main(){
+	xs:=vector(4,0:𝔹);
+	xs:=notReturned(xs,1,1); xs:=reverse(notReturned)(xs,1,1);
+	xs:=readBefore(xs,2,1); xs:=reverse(readBefore)(xs,2,1);
+	xs:=inBranch(xs,1,1); xs:=reverse(inBranch)(xs,1,1);
+	xs:=twoWiths(xs,1,1); xs:=reverse(twoWiths)(xs,1,1);
+	xs:=local(xs,1); xs:=reverse(local)(xs,1);
+	xs:=transLocal(xs,2,1); xs:=reverse(transLocal)(xs,2,1);
+	xs:=writeBack(xs,2); xs:=reverse(writeBack)(xs,2);
+	(k,xs):=returned(xs,1,1); xs:=reverse(returned)((k,xs),1,1);
+	r:=(measure(xs),k);
+	assert(r==((0,0,0,0),2));
+	return r;
+}

@@ -1,0 +1,19 @@
+// args: --run
+
+def g(const a:𝔹,const b:𝔹)qfree:𝔹⇒a⊕b;
+def same(x:𝔹)qfree:𝔹{ t:=dup(x); u:=t⊕t; return x; }
+def nested(x:𝔹)qfree:𝔹{ t:=dup(x); u:=(x⊕t)⊕t; return x; }
+def andXor(x:𝔹)qfree:𝔹{ t:=dup(x); u:=(x&t)⊕t; return x; }
+def chain(x:𝔹)qfree:𝔹{ t:=dup(x); s:=dup(t); u:=(s⊕t)⊕t; return x; }
+def call(x:𝔹)qfree:𝔹{ t:=dup(x); u:=g(x⊕t,t); return x; }
+def explicitDup(x:𝔹)qfree:𝔹{ t:=dup(x); u:=(t⊕x)⊕dup(t); forget(u); y:=1:𝔹; forget(y); return x; }
+def changed(x:𝔹)qfree:𝔹{ t:=dup(x); u:=t⊕t; x:=X(x); return x; }
+def returned(x:𝔹)qfree:𝔹×𝔹{ t:=x⊕1; u:=(t⊕t)⊕(t⊕x); return (x,u); }
+def main(){
+	x:=H(0:𝔹);
+	x:=same(x); x:=nested(x); x:=andXor(x); x:=chain(x); x:=call(x); x:=explicitDup(x); x:=changed(x);
+	(x,u):=returned(x);
+	r:=(measure(H(x)),measure(u));
+	assert(r==(0,1));
+	return r;
+}
