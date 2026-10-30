@@ -1,0 +1,41 @@
+// args: --run
+
+def f(c:!ℕ){
+	a:=H(0:𝔹);
+	x:=dup(a); y:=0:𝔹;
+	if c==0 {
+		if true { t:=dup(x); x⊕=1:𝔹; y⊕=t; }
+	}
+	return (a,x,y);
+}
+def g(c:!ℕ){
+	a:=H(0:𝔹);
+	x:=dup(a); y:=0:𝔹;
+	if c==0 {
+		t:=dup(x); x⊕=1:𝔹; y⊕=t;
+	} else {
+		x⊕=1:𝔹;
+	}
+	return (a,x,y);
+}
+def h(c:!ℕ){
+	a:=0:uint[2]; a[0]:=H(a[0]);
+	x:=dup(a); y:=0:uint[2];
+	if c==0 {
+		if true { t:=dup(x); x+=1; y+=t; }
+	}
+	return (a,x,y);
+}
+def main(){
+	(a0,x0,y0):=f(0);
+	x0⊕=a0; y0⊕=a0;
+	(a1,x1,y1):=g(0);
+	x1⊕=a1; y1⊕=a1;
+	(a2,x2,y2):=g(1);
+	x2⊕=a2;
+	(a3,x3,y3):=h(0);
+	x3-=a3; y3-=a3; a3[0]:=H(a3[0]);
+	r:=(measure(x0,y0,H(a0)),measure(x1,y1,H(a1)),measure(x2,y2,H(a2)),measure(x3,y3,a3));
+	assert(r==((1,0,0),(1,0,0),(1,0,0),(1,0,0)));
+	return r;
+}
