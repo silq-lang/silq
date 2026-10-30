@@ -1,0 +1,17 @@
+def bothUsed(n:!ℕ){
+	x:=H(0:𝔹);
+	o:=dup(x);
+	if n>0 { y:=x&o; forget(y); assert(false); }
+	forget(o); /// error
+	x:=H(x);
+	return measure(x);
+}
+
+def bothUsedInLoop(n:!ℕ){
+	x:=H(0:𝔹);
+	o:=dup(x);
+	for j in 0..n { y:=x&o; forget(y); assert(false); }
+	forget(o); /// error
+	x:=H(x);
+	return measure(x);
+}

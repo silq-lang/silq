@@ -1,0 +1,51 @@
+// args: --run
+
+def bothUsedImplicit(n:!ℕ){
+	x:=H(0:𝔹);
+	o:=dup(x);
+	if n>0 { y:=x&o; forget(y); assert(false); }
+	x:=H(x);
+	return measure(x);
+}
+
+def xUsed(n:!ℕ){
+	x:=H(0:𝔹);
+	o:=dup(x);
+	if n>0 { y:=dup(x); forget(y); assert(false); }
+	forget(o);
+	x:=H(x);
+	return measure(x);
+}
+
+def elseDiverges(n:!ℕ){
+	x:=H(0:𝔹);
+	o:=dup(x);
+	if n==0 { } else { y:=dup(o); forget(y); assert(false); }
+	forget(o);
+	x:=H(x);
+	return measure(x);
+}
+
+def nested(n:!ℕ){
+	x:=H(0:𝔹);
+	o:=dup(x);
+	if n>0 { if n>1 { assert(false); } else { y:=dup(o); forget(y); assert(false); } }
+	forget(o);
+	x:=H(x);
+	return measure(x);
+}
+
+def loopUsesO(n:!ℕ){
+	x:=H(0:𝔹);
+	o:=dup(x);
+	for j in 0..n { y:=dup(o); forget(y); assert(false); }
+	forget(o);
+	x:=H(x);
+	return measure(x);
+}
+
+def main(){
+	r:=(bothUsedImplicit(0),xUsed(0),elseDiverges(0),nested(0),loopUsesO(0));
+	assert(r==(0,0,0,0,0));
+	return r;
+}
