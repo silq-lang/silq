@@ -1,0 +1,45 @@
+def take[k:!ℕ](a:𝔹^k,b:!ℕ)⇒a;
+def count[k:!ℕ](a:𝔹^k,b:!ℕ){ measure(a); return k+b; }
+def fixedWidth(n:!ℕ){
+	x:=3:uint[n];
+	y:=(x,move(n)); /// error
+	return measure(y[0]) as !ℕ;
+}
+def inferred(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	y:=take(x,move(n)); /// error
+	return y.length;
+}
+def inferredResult(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	return count(x,move(n)); /// error
+}
+def operand(n:!ℕ){
+	y:=(3:!uint[n])+(λ(k:!ℕ)⇒1)(move(n)); /// error
+	return y as !ℕ;
+}
+def dependent(m:!ℕ){
+	y:=vector(m,(λ(k:!ℕ)⇒0:𝔹)(move(m))); /// error
+	return y.length;
+}
+def borrowed(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	y:=(x,move(n))[0]; /// error
+	return measure(y);
+}
+def borrowedSlice(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	y:=(x,move(n))[0..1]; /// error
+	return measure(y);
+}
+def borrowedConditional(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	y:=(if n==3 then (x,move(n)) else (x,0))[0]; /// error
+	return measure(y);
+}
+def classicalWidth(n:!ℕ){
+	c:=1:!uint[n];
+	y:=(c,move(n))[0]; /// error
+	z:=y+1;
+	return z as !ℕ;
+}

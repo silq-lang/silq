@@ -1,0 +1,60 @@
+// args: --run
+
+def take(a:𝔹[],b:!ℕ)⇒a;
+def pairUp[k:!ℕ](a:𝔹^k,b:𝔹[],c:!ℕ)⇒(a,b,c);
+def stored(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	y:=(x,move(n));
+	return y[0].length;
+}
+def destructured(n:!ℕ){
+	x:=vector(n,1:𝔹);
+	(a,b):=(x,move(n));
+	return (measure(a),b);
+}
+def nested(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	y:=((x,1),(λ(k:!ℕ)⇒k)(move(n)));
+	return (y[0][0].length,y[1]);
+}
+def conditional(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	y:=if n==3 then (x,move(n)) else (x,0);
+	return y[0].length;
+}
+def literal(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	y:=[(x,move(n))];
+	return y[0][0].length;
+}
+def concatenation(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	y:=x~(λ(k:!ℕ)⇒vector(2,0:𝔹))(move(n));
+	return y.length;
+}
+def argument(n:!ℕ){
+	x:=vector(n,1:𝔹);
+	y:=take(x,move(n));
+	return measure(y);
+}
+def genericArgument(n:!ℕ){
+	x:=vector(n,1:𝔹);
+	z:=vector(2,0:𝔹);
+	(a,b,c):=pairUp(z,x,move(n));
+	return (measure(a),b.length,c);
+}
+def forgotten(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	y:=(x,let { forget(n); } in 2);
+	return y[0].length;
+}
+def indexedClassical(n:!ℕ){
+	c:=vector(n,1:!𝔹);
+	y:=(c,move(n))[0];
+	return y.length;
+}
+def main(){
+	r:=(stored(5),destructured(2),nested(3),conditional(3),literal(4),concatenation(3),argument(2),genericArgument(3),forgotten(3),indexedClassical(3));
+	assert(r==(5,((1,1),2),(3,3),3,4,5,(1,1),((0,0),3,3),3,3));
+	return r;
+}
