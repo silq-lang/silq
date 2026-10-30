@@ -1,0 +1,53 @@
+// args: --run
+
+def f(c:!𝔹,x:𝔹){
+	if c { return x; }
+	k:=0;
+	while true { k+=1; }
+	y:=H(x);
+	return y;
+}
+def g(c:!𝔹,x:𝔹){
+	if c { return (x,0); }
+	k:=0;
+	do{ k+=1; x:=H(x); assert(false); }while k<1;
+	s:=0;
+	for i in 0..3 { s+=i; }
+	return (H(x),s+1/2);
+}
+def h(c:!𝔹,x:𝔹){
+	if c { return x; }
+	repeat 2 { x:=H(x); assert(false); }
+	t:=λ(y:𝔹). H(y);
+	return t(x);
+}
+def i(c:!𝔹,d:!𝔹,x:𝔹){
+	if c {
+		if d { return x; }
+		while true { x:=H(x); }
+		return X(x);
+	}
+	return H(x);
+}
+def j(const u:𝔹,q:𝔹){
+	k:=0;
+	while k!=5 {
+		k+=1;
+		repeat 3 { return q; }
+		l:=3;
+		while l<6 { if u { return q; } l+=1; }
+	}
+	return q;
+}
+def main(){
+	a:=f(true,H(0:𝔹));
+	(b,s):=g(true,H(1:𝔹));
+	c:=h(true,H(0:𝔹));
+	d:=i(true,true,H(1:𝔹));
+	e:=i(false,true,H(0:𝔹));
+	u:=H(0:𝔹);
+	x:=j(u,1:𝔹);
+	r:=(measure(H(a)),measure(H(b)),s,measure(H(c)),measure(H(d)),measure(e),measure(H(u)),measure(x));
+	assert(r==(0,1,0,0,1,0,0,1));
+	return r;
+}

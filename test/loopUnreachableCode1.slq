@@ -1,0 +1,85 @@
+def f(){
+	q:=H(0:𝔹);
+	k:=0;
+	do{ k+=1; t:=dup(q); assert(false); }while k<1;
+	x:=measure(t); /// error
+	return (x,measure(q));
+}
+def g(){
+	k:=0;
+	repeat 1 { k+=1; assert(false); }
+	return measure(undefinedVariable); /// error
+}
+def h(){
+	x:=H(0:𝔹);
+	while true { x:=H(x); }
+	y:=H(x); /// error
+	return 2;
+}
+def i(){
+	x:=H(0:𝔹);
+	k:=0;
+	do{ x:=H(x); k+=1; }while true;
+	forget(x); /// error
+	return 2;
+}
+def j(c:!𝔹){
+	x:=H(0:𝔹);
+	o:=dup(x);
+	if c {
+		k:=0;
+		do{ k+=1; assert(false); }while k<1;
+		y:=measure(x);
+	}
+	forget(o); /// error
+	return measure(x);
+}
+def k(){
+	x:=H(0:𝔹); /// error
+	f:=λ(c:!𝔹). {
+		if c { return 0; }
+		while true { }
+		return measure(x);
+	};
+	return (f(true),measure(x)); /// error
+}
+def l(c:!𝔹){
+	x:=H(0:𝔹);
+	if c {
+		while true { }
+		return (x,);
+	}
+	return x; /// error
+}
+def n(const c:𝔹,x:𝔹){
+	if c { return x; }
+	k:=0;
+	while true { k+=1; }
+	m:=measure(x); /// error
+	return H(0:𝔹);
+}
+def o(const c:𝔹,x:𝔹){
+	if c { k:=0; while true { k+=1; } y:=measure(x); } /// error
+	return x;
+}
+def p(c:!𝔹,x:𝔹){
+	g:=λ(d:!𝔹). { if d { return 1; } while true { } return 2.5; };
+	r:=g(c):!ℕ; /// error
+	return (x,r);
+}
+def q(const b:!𝔹,x:𝔹){
+	if b {
+		while true { x:=X(x); }
+		x:=H(x);
+	}
+	return x;
+}
+def r(const b:!𝔹,x:𝔹)qfree ⇒ q(b,x); /// error
+def m(){
+	while true { }
+	return 2;
+}
+def main(){
+	x:=m():!𝔹; /// error
+	return x;
+}
