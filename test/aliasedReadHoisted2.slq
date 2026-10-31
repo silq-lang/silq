@@ -1,0 +1,56 @@
+// args: --run
+
+def direct(const d:!𝔹,j:!ℕ){
+	x:=vector(3,0:𝔹);
+	x[0]:=X(x[0]);
+	w:=0;
+	do{ if d&&w==3 { return measure(x); } w+=1; }while w<2;
+	x[1]⊕=x[j];
+	return measure(x);
+}
+def looping(const d:!𝔹,j:!ℕ){
+	x:=vector(3,0:𝔹);
+	x[0]:=X(x[0]);
+	w:=0;
+	do{ if d&&(λ()⇒w)()==3 { return measure(x); } w+=1; }while w<2;
+	k:=0;
+	do{ repeat 2 { x[2]⊕=x[(λ()⇒dup(j)%3)()]; } x[1]⊕=x[j]; k+=1; }while k<1;
+	return measure(x);
+}
+def branch(const d:!𝔹,j:!ℕ){
+	x:=vector(3,0:𝔹);
+	x[0]:=X(x[0]);
+	w:=0;
+	do{ if d&&w==3 { return measure(x); } w+=1; }while w<2;
+	if j<2 { x[1]⊕=x[j]; }
+	return measure(x);
+}
+def natural(const d:!𝔹,j:!ℕ){
+	v:=vector(3,1:!ℕ);
+	w:=0;
+	do{ if d&&w==3 { return v; } w+=1; }while w<2;
+	v[1]+=v[j];
+	return v;
+}
+def nested(const d:!𝔹,j:!ℕ){
+	a:=((0,0),(1,1)):(𝔹^2)^2;
+	w:=0;
+	do{ if d&&w==3 { return measure(a); } w+=1; }while w<2;
+	a[0][0]⊕=a[j]==((0,0):𝔹^2);
+	return measure(a);
+}
+def shadowed(j:!ℕ){
+	x:=vector(3,0:𝔹);
+	def g(k:!ℕ){ x:=vector(3,0:𝔹); x[0]:=X(x[0]); x[1]⊕=x[k]; return measure(x); }
+	return (measure(x),g(j));
+}
+def shadowedLambda(j:!ℕ){
+	x:=vector(3,0:𝔹);
+	g:=λ(k:!ℕ){ x:=vector(3,0:𝔹); x[0]:=X(x[0]); x[1]⊕=x[k]; return measure(x); };
+	return (measure(x),g(j));
+}
+def main(){
+	r:=(direct(true,0),direct(false,1),looping(true,0),looping(false,1),branch(true,0),branch(false,1),natural(true,0),natural(false,1),nested(true,0),nested(false,1),shadowed(0),shadowed(1),shadowedLambda(0));
+	assert(r==((1,1,0),(1,0,0),(1,1,0),(1,0,0),(1,1,0),(1,0,0),(1,2,1),(1,2,1),((1,0),(1,1)),((0,0),(1,1)),((0,0,0),(1,1,0)),((0,0,0),(1,0,0)),((0,0,0),(1,1,0))));
+	return r;
+}
