@@ -1,0 +1,44 @@
+// args: --run
+
+def f1(const a:𝔹){
+	b:=0:𝔹; w:=0:𝔹;
+	i:=0;
+	repeat 3 { if a { x1:=2*i; if x1<1 { x3:=i+1; if x3>=10 { assert(false); } } if x1<3 { b:=X(b); } } i+=1; }
+	return measure(b,w);
+}
+def f2(const a:𝔹){
+	b:=0:𝔹; w:=0:𝔹;
+	k:=0;
+	while k<3 { if a { x1:=2*k; if x1<1 { x3:=k+1; if x3>=10 { assert(false); } } if x1<3 { b:=X(b); } } k+=1; }
+	return measure(b,w);
+}
+def f3(const a:𝔹){
+	b:=0:𝔹; w:=0:𝔹;
+	i:=0;
+	repeat 3 { if a { x1:=2*i; if x1>=1 { } else { x3:=i+1; if x3>=10 { assert(false); } } if x1<3 { b:=X(b); } } i+=1; }
+	return measure(b,w);
+}
+def f4(const a:𝔹){
+	b:=0:𝔹; w:=0:𝔹;
+	i:=0;
+	repeat 3 { if a { x1:=2*i; if x1<5 { if x1<1 { x3:=i+1; if x3>=10 { assert(false); } } } if x1<3 { b:=X(b); } } i+=1; }
+	return measure(b,w);
+}
+def f5(const a:𝔹){
+	b:=0:𝔹; w:=0:𝔹;
+	i:=0;
+	repeat 3 { if a { x1:=2*i; if x1<1 { x3:=i+1; if x3>=10 { assert(false); } } if x1<3 { b:=X(b); } } if a { w:=X(w); } i+=1; }
+	return measure(b,w);
+}
+def f6(const a:𝔹){
+	b:=0:𝔹; w:=0:𝔹;
+	i:=0;
+	repeat 3 { i+=1; if a { x1:=2*i; if x1<3 { x3:=i+1; if x3>=10 { assert(false); } } if x1<5 { b:=X(b); } } }
+	return measure(b,w);
+}
+def main(){
+	a:=1:𝔹;
+	r:=(f1(a),f2(a),f3(a),f4(a),f5(a),f6(a));
+	assert(r==((0,0),(0,0),(0,0),(0,0),(0,1),(0,0)));
+	return (r,measure(a));
+}

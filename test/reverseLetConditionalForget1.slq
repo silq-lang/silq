@@ -1,0 +1,77 @@
+// args: --run
+
+def f1(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	t:=let{ s:=dup(d); } in (if c then x else dup(s));
+	y⊕=t;
+	return y;
+}
+def f2(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	t:=let{ s:=dup(d); } in (if c then dup(s) else x);
+	y⊕=t;
+	forget(t);
+	return y;
+}
+def f3(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	repeat k { t:=let{ s:=dup(d); } in (if c then x else dup(s)); y⊕=t; }
+	return y;
+}
+def f4(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	t:=let{ s:=dup(d); } in (if c then x else s);
+	y⊕=t;
+	return y;
+}
+def f5(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	t:=let{ s:=dup(d); } in (if c then x else if x then d else dup(s));
+	y⊕=t;
+	return y;
+}
+def f6(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	t:=let{ s:=dup(d); } in let{ u:=dup(x); } in s;
+	y⊕=t;
+	return y;
+}
+def f7(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	t:=let{ s:=dup(d); } in (if k==1 then dup(s) else x);
+	y⊕=t;
+	return y;
+}
+def f8(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	t:=let{ s:=dup(d); } in (if c then x else dup(s));
+	y⊕=t;
+	forget(t=let{ s:=dup(d); } in (if c then x else dup(s)));
+	return y;
+}
+def f9(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	t:=let{ s:=dup(d); } in (if c then dup(s) else s⊕x);
+	y⊕=t;
+	return y;
+}
+def f10(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	t:=let{ n:=k+1; s:=dup(d); } in (if n==2 then dup(s) else x);
+	y⊕=t;
+	return y;
+}
+def f11(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	if k==1 { t:=let{ s:=dup(d); } in (if c then x else dup(s)); y⊕=t; }
+	return y;
+}
+def f12(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	t:=let{ s:=dup(d); } in (if c then (if x then dup(s) else d) else x);
+	y⊕=t;
+	return y;
+}
+def run(f:!(const 𝔹×const 𝔹×const !ℕ×const 𝔹×𝔹→qfree 𝔹),const k:!ℕ){
+	c:=H(0:𝔹); d:=H(1:𝔹); x:=H(0:𝔹); y:=H(1:𝔹);
+	y:=f(c,d,k,x,y);
+	y:=reverse(f)(c,d,k,x,y);
+	y:=reverse(f)(c,d,k,x,y);
+	y:=f(c,d,k,x,y);
+	y:=reverse(reverse(f))(c,d,k,x,y);
+	y:=reverse(f)(c,d,k,x,y);
+	return (measure(H(c)),measure(H(d)),measure(H(x)),measure(H(y)));
+}
+def main(){
+	r:=(run(f1,1),run(f2,1),run(f3,1),run(f3,2),run(f4,1),run(f5,1),run(f6,1),run(f7,1),run(f7,2),run(f8,1),run(f9,1),run(f10,1),run(f10,2),run(f11,1),run(f11,2),run(f12,1));
+	assert(r==((0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1)));
+	return r;
+}
