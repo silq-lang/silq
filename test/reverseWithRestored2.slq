@@ -1,0 +1,38 @@
+// args: --run
+
+def repeated(xs:𝔹^3,j:!ℕ)mfree{
+	m:=j;
+	repeat 2 { with { k:=m; } do { l:=m; xs[l]:=X(xs[l]); } }
+	return (m,xs);
+}
+def indexed(xs:𝔹^3,j:!ℕ)mfree{
+	m:=j;
+	for i in 0..3 { with { k:=m; } do { xs[i]:=H(xs[i]); } }
+	return (m,xs);
+}
+def branch(xs:𝔹^3,const c:!𝔹,j:!ℕ)mfree{
+	m:=j;
+	repeat 3 { if c { with { k:=m; } do { xs[k]:=X(xs[k]); } } }
+	return (m,xs);
+}
+def nested(xs:𝔹^3,j:!ℕ)mfree{
+	m:=j+1;
+	repeat 2 { repeat 1 { with { k:=m; } do { } } xs[m]:=H(xs[m]); }
+	return (m,xs);
+}
+def borrowed(xs:𝔹^3,j:!ℕ)mfree{
+	m:=j;
+	repeat 2 { with { k:=m; a:=xs[0]; } do { a:=H(a); } }
+	return (m,xs);
+}
+def main(){
+	xs:=vector(3,0:𝔹);
+	(a,xs):=repeated(xs,1); xs:=reverse(repeated)((a,xs),1);
+	(b,xs):=indexed(xs,2); xs:=reverse(indexed)((b,xs),2);
+	(c,xs):=branch(xs,true,2); xs:=reverse(branch)((c,xs),true,2);
+	(d,xs):=nested(xs,0); xs:=reverse(nested)((d,xs),0);
+	(e,xs):=borrowed(xs,1); xs:=reverse(borrowed)((e,xs),1);
+	r:=(a,b,c,d,e,measure(xs));
+	assert(r==(1,2,2,1,1,(0,0,0)));
+	return r;
+}

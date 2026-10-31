@@ -1,0 +1,63 @@
+// args: --run
+
+def returned(xs:𝔹^3,j:!ℕ)mfree{
+	m:=j;
+	with { k:=m; } do { k+=1; }
+	xs[m]:=X(xs[m]);
+	return (m,xs);
+}
+def local(xs:𝔹^3,j:!ℕ)mfree{
+	m:=j;
+	with { k:=m; } do { k+=1; }
+	xs[m]:=X(xs[m]);
+	return xs;
+}
+def looping(xs:𝔹^3,j:!ℕ)mfree{
+	m:=j;
+	repeat 2 { with { k:=m; } do { k+=1; } }
+	xs[m]:=X(xs[m]);
+	return (m,xs);
+}
+def branch(xs:𝔹^3,j:!ℕ)mfree{
+	m:=j;
+	if j==0 { with { k:=m; } do { k+=2; } }
+	xs[m]:=X(xs[m]);
+	return xs;
+}
+def component(xs:𝔹^3,j:!ℕ)mfree{
+	v:=vector(2,0:!ℕ);
+	with { a:=v[1]; } do { a+=j; }
+	xs[v[1]]:=X(xs[v[1]]);
+	return (v,xs);
+}
+def nested(xs:𝔹^3,j:!ℕ)mfree{
+	m:=j;
+	with { k:=m; } do { with { l:=k; } do { l+=1; } k+=1; }
+	xs[m]:=X(xs[m]);
+	return xs;
+}
+def mixed(xs:𝔹^3,j:!ℕ)mfree{
+	m:=j;
+	with { k:=m; a:=xs[0]; } do { k+=1; a:=H(a); }
+	xs[m]:=X(xs[m]);
+	return (m,xs);
+}
+def parameter(xs:𝔹^3,j:!ℕ)mfree{
+	with { k:=j; } do { k+=1; }
+	xs[j]:=X(xs[j]);
+	return (j,xs);
+}
+def main(){
+	xs:=vector(3,0:𝔹);
+	(a,xs):=returned(xs,0); xs:=reverse(returned)((a,xs),0);
+	xs:=local(xs,1); xs:=reverse(local)(xs,1);
+	(b,xs):=looping(xs,0); xs:=reverse(looping)((b,xs),0);
+	xs:=branch(xs,0); xs:=reverse(branch)(xs,0);
+	(c,xs):=component(xs,2); xs:=reverse(component)((c,xs),2);
+	xs:=nested(xs,0); xs:=reverse(nested)(xs,0);
+	(d,xs):=mixed(xs,1); xs:=reverse(mixed)((d,xs),1);
+	(e,xs):=parameter(xs,1); xs:=reverse(parameter)((e,xs),1);
+	r:=(a,b,c,d,e,measure(xs));
+	assert(r==(1,2,(0,2),2,2,(0,0,0)));
+	return r;
+}
