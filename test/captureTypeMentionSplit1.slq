@@ -1,0 +1,111 @@
+// args: --run
+
+def called(m:!ℕ){
+	n:=m+1;
+	x:=vector(n,1:𝔹);
+	if m>2 {
+		g:=λ()qfree⇒dup(x);
+		return (measure(g()),measure(x));
+	}
+	return (measure(x),measure(x));
+}
+def calledRightAway(m:!ℕ){
+	n:=m+1;
+	x:=vector(n,1:𝔹);
+	if m>2 {
+		y:=(λ()qfree⇒dup(x))();
+		return (measure(y),measure(x));
+	}
+	return (measure(x),measure(x));
+}
+def local(m:!ℕ){
+	n:=m+1;
+	x:=vector(n,1:𝔹);
+	if m>2 {
+		def g()qfree⇒dup(x);
+		return (measure(g()),measure(x));
+	}
+	return (measure(x),measure(x));
+}
+def consumed(m:!ℕ){
+	n:=m+1;
+	x:=vector(n,1:𝔹);
+	if m>2 {
+		g:=λ()⇒measure(x);
+		return g();
+	}
+	return measure(x);
+}
+def nested(m:!ℕ){
+	n:=m+1;
+	x:=vector(n,1:𝔹);
+	if m>2 {
+		g:=λ()qfree⇒(λ()qfree⇒dup(x))();
+		return (measure(g()),measure(x));
+	}
+	return (measure(x),measure(x));
+}
+def concatenated(m:!ℕ){
+	n:=m+1;
+	x:=vector(n,1:𝔹);
+	if m>2 {
+		g:=λ()qfree⇒dup(x);
+		y:=g()~x;
+		return measure(y);
+	}
+	return measure(x~x);
+}
+def merged(c:!𝔹,m:!ℕ){
+	n:=m+1;
+	if c { w:=𝔹^n; x:=vector(n,0:𝔹) coerce w; } else { w:=𝔹^n; x:=vector(n,1:𝔹) coerce w; }
+	if m>2 {
+		g:=λ()qfree⇒dup(x);
+		return (measure(g()),measure(x));
+	}
+	return (measure(x),measure(x));
+}
+def typeVariable(m:!ℕ){
+	n:=m+1;
+	a:=𝔹^n;
+	x:=vector(n,1:𝔹) coerce a;
+	if m>2 {
+		g:=λ()qfree⇒dup(x);
+		return (measure(g()),measure(x));
+	}
+	return (measure(x),measure(x));
+}
+def typeVariableValue(m:!ℕ){
+	n:=m+1;
+	a:=𝔹^n;
+	if m>2 {
+		g:=λ()⇒vector(n,1:𝔹) coerce a;
+		return measure(g());
+	}
+	return measure(vector(n,0:𝔹) coerce a);
+}
+def numericType(m:!ℕ){
+	n:=m+1;
+	t:=uint[n];
+	x:=1:t;
+	if m>2 {
+		y:=(λ()qfree⇒dup(x))();
+		z:=(λ()qfree⇒2:t)();
+		return (measure(y) as !ℕ,measure(z) as !ℕ);
+	}
+	return (measure(x) as !ℕ,measure(x) as !ℕ);
+}
+def doWhileReset(m:!ℕ){
+	k:=0;
+	do{ k+=1; n:=k+m; x:=vector(n,1:𝔹); }while k<2 { y:=(λ()qfree⇒dup(x))(); forget(y); measure(x); }
+	return (n,measure(x));
+}
+def doWhileResetLoop(m:!ℕ){
+	k:=0;
+	do{ k+=1; n:=k+m; a:=𝔹^n; x:=vector(n,1:𝔹) coerce a; }while k<2 { for i in 0..2 { measure(x); } }
+	return (n,measure(x));
+}
+def main(){
+	r:=(called(1),called(3),calledRightAway(3),local(3),consumed(1),consumed(3),nested(3),concatenated(1),concatenated(3),merged(true,3),merged(false,3),typeVariable(3),typeVariableValue(1),typeVariableValue(3),numericType(1),numericType(3),doWhileReset(1),doWhileResetLoop(1));
+	assert(r==(((1,1),(1,1)),((1,1,1,1),(1,1,1,1)),((1,1,1,1),(1,1,1,1)),((1,1,1,1),(1,1,1,1)),(1,1),(1,1,1,1),((1,1,1,1),(1,1,1,1)),(1,1,1,1),(1,1,1,1,1,1,1,1),((0,0,0,0),(0,0,0,0)),((1,1,1,1),(1,1,1,1)),((1,1,1,1),(1,1,1,1)),(0,0),(1,1,1,1),(1,1),(1,2),(3,(1,1,1)),(3,(1,1,1))));
+	return r;
+}

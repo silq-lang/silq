@@ -641,14 +641,14 @@ def __bitnot_s[n:!ℕ](x: int[n]) @[__operator] lifted: int[n] {
 	return qint_not[n](x as B^n) as int[n];
 }
 def __bitnot_S[n:!ℕ](x: !int[n]) @[__operator] lifted: !int[n] {
-	def impl(x: !Z, y: !int[n]) @[extern="primitive.int.neg"] qfree: !int[n];
+	def impl(x: !Z, y: !int[n]) @[extern="primitive.int.sub"] qfree: !int[n];
 	return impl(-1, x);
 }
 def __bitnot_u[n:!ℕ](x: uint[n]) @[__operator] lifted: uint[n] {
 	return qint_not[n](x as B^n) as uint[n];
 }
 def __bitnot_U[n:!ℕ](x: !uint[n]) @[__operator] lifted: !uint[n] {
-	def impl(x: !N, y: !uint[n]) @[extern="primitive.int.neg"] qfree: !uint[n];
+	def impl(x: !N, y: !uint[n]) @[extern="primitive.int.sub"] qfree: !uint[n];
 	return impl(pow2m1(n), x);
 }
 

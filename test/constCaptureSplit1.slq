@@ -1,0 +1,72 @@
+// args: --run
+
+def branch(c:!𝔹){
+	x:=0:𝔹;
+	if c {
+		y:=let{ t:=(λ()qfree⇒dup(x))(); forget(x); } in t;
+		return measure(y);
+	}
+	return measure(x);
+}
+def bothBranches(c:!𝔹){
+	x:=1:𝔹;
+	if c {
+		y:=let{ t:=(λ()qfree⇒dup(x))(); forget(x); } in t;
+		return measure(y);
+	} else {
+		y:=let{ t:=(λ()qfree⇒X(dup(x)))(); forget(x); } in t;
+		return measure(y);
+	}
+}
+def parameter(c:!𝔹,const a:𝔹){
+	x:=dup(a);
+	if c {
+		y:=let{ t:=(λ()qfree⇒dup(x))(); forget(x); } in t;
+		return measure(y);
+	}
+	return measure(x);
+}
+def used(c:!𝔹){
+	x:=0:𝔹;
+	if c {
+		y:=let{ t:=(λ()qfree⇒dup(x))(); forget(x); } in t;
+		z:=dup(y);
+		return measure(y,z);
+	}
+	return measure(x,x);
+}
+def redefined(c:!𝔹){
+	x:=0:𝔹;
+	if c {
+		y:=let{ t:=(λ()qfree⇒dup(x))(); forget(x); } in t;
+		x:=X(y);
+	}
+	return measure(x);
+}
+def loop(n:!ℕ){
+	x:=0:𝔹;
+	for i in 0..n {
+		if i==1 {
+			y:=let{ t:=(λ()qfree⇒dup(x))(); forget(x); } in t;
+			x:=X(y);
+		}
+	}
+	return measure(x);
+}
+def doWhile(m:!ℕ){
+	k:=0;
+	do{ k+=1; x:=vector(m,0:𝔹); }while k<4 { y:=(λ()qfree⇒dup(x))(); measure(y); }
+	return (k,measure(x));
+}
+def doWhileNamed(m:!ℕ){
+	k:=0;
+	do{ k+=1; n:=k+m; x:=vector(n,1:𝔹); }while k<3 { g:=λ()qfree⇒dup(x); y:=g(); measure(y); }
+	return (n,measure(x));
+}
+def main(){
+	a:=1:𝔹;
+	r:=(branch(true),branch(false),bothBranches(true),bothBranches(false),parameter(true,a),parameter(false,a),used(true),used(false),redefined(true),redefined(false),loop(1),loop(3),doWhile(2),doWhileNamed(1));
+	forget(a);
+	assert(r==(0,0,1,0,1,1,(0,0),(0,0),1,0,0,1,(4,(0,0)),(4,(1,1,1,1))));
+	return r;
+}

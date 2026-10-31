@@ -1,0 +1,50 @@
+// args: --run
+
+def inc[n:!ℕ](const x:uint[n])qfree⇒x+1;
+def first[τ:qtype,n:!ℕ](const v:τ^n)qfree⇒dup(v[0]);
+def generic(m:!ℕ){
+	n:=m+1;
+	t:=uint[n];
+	x:=1:t;
+	y:=inc(x);
+	a:=𝔹^n;
+	v:=vector(n,1:𝔹) coerce a;
+	b:=first(v);
+	return (measure(y) as !ℕ,measure(b));
+}
+def operators(m:!ℕ){
+	n:=m+1;
+	t:=uint[n];
+	x:=3:t;
+	y:=2:t;
+	return (measure(x+y) as !ℕ,measure(x·y) as !ℕ,measure(x-y) as !ℕ,measure(x⊕y) as !ℕ,measure(x&y) as !ℕ,measure(x|y) as !ℕ,measure(~x) as !ℕ,measure(-x) as !ℕ,measure(x<y),measure(x==y),measure(x≠y),measure(x+1) as !ℕ,measure(1+x) as !ℕ);
+}
+def signed(m:!ℕ){
+	n:=m+1;
+	t:=int[n];
+	x:=-1:t;
+	y:=1:t;
+	return (measure(x+y) as !ℤ,measure(x·y) as !ℤ,measure(x<y));
+}
+def updates(m:!ℕ){
+	n:=m+1;
+	t:=uint[n];
+	x:=3:t;
+	x+=1;
+	x·=2;
+	y:=dup(x);
+	y-=1;
+	return (measure(x) as !ℕ,measure(y) as !ℕ);
+}
+def classicalOperators(m:!ℕ){
+	n:=m+1;
+	t:=!uint[n];
+	x:=3:t;
+	y:=2:t;
+	return ((x+y) as !ℕ,(x·y) as !ℕ,(x div y) as !ℕ,(x%y) as !ℕ,(x-y) as !ℕ,x<y);
+}
+def main(){
+	r:=(generic(1),generic(3),operators(1),operators(3),signed(1),signed(3),updates(1),updates(3),classicalOperators(1),classicalOperators(3));
+	assert(r==((2,1),(2,1),(1,2,1,1,2,3,0,1,false,false,true,0,0),(5,6,1,1,2,3,12,13,false,false,true,4,4),(0,-1,true),(0,-1,true),(0,3),(8,7),(1,2,1,1,1,false),(5,6,1,1,1,false)));
+	return r;
+}

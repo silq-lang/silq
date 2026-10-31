@@ -1,0 +1,23 @@
+// args: --run
+
+def unsigned(m:!ℕ){
+	n:=m+1;
+	x:=3:!uint[n];
+	return (~x) as !ℕ;
+}
+def signed(m:!ℕ){
+	n:=m+1;
+	x:=-2:!int[n];
+	return (~x) as !ℤ;
+}
+def fixed(){
+	a:=5:!uint[3];
+	b:=-3:!int[4];
+	c:=0:!uint[1];
+	return ((~a) as !ℕ,(~b) as !ℤ,(~c) as !ℕ,(~~a) as !ℕ);
+}
+def main(){
+	r:=(unsigned(1),unsigned(3),signed(1),signed(3),fixed());
+	assert(r==(0,12,1,1,(2,2,1,5)));
+	return r;
+}
