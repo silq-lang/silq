@@ -1,0 +1,28 @@
+// args: --run
+
+def f(const k:!ℕ,x:𝔹)qfree:𝔹{
+	if k==0 { x:=X(x); } else if k==1 { x:=X(x); } else if k==2 { x:=X(x); } else if k==3 { x:=X(x); } else if k==4 { x:=X(x); } else if k==5 { x:=X(x); } else if k==6 { x:=X(x); } else if k==7 { x:=X(x); } else if k==8 { x:=X(x); } else if k==9 { x:=X(x); } else if k==10 { x:=X(x); } else if k==11 { x:=X(x); } else if k==12 { x:=X(x); } else if k==13 { x:=X(x); } else if k==14 { x:=X(x); } else if k==15 { x:=X(x); } else { x:=X(x); }
+	return x;
+}
+def g(const q:𝔹^16,x:𝔹)qfree:𝔹{
+	if q[0] { x:=X(x); } else if q[1] { x:=X(x); } else if q[2] { x:=X(x); } else if q[3] { x:=X(x); } else if q[4] { x:=X(x); } else if q[5] { x:=X(x); } else if q[6] { x:=X(x); } else if q[7] { x:=X(x); } else if q[8] { x:=X(x); } else if q[9] { x:=X(x); } else if q[10] { x:=X(x); } else if q[11] { x:=X(x); } else if q[12] { x:=X(x); } else if q[13] { x:=X(x); } else if q[14] { x:=X(x); } else if q[15] { x:=X(x); } else { }
+	return x;
+}
+def h(const k:!ℕ,x:𝔹)qfree:𝔹{
+	repeat 2 {
+		if k==0 { x:=X(x); } else if k==1 { x:=X(x); } else if k==2 { x:=X(x); } else if k==3 { x:=X(x); } else if k==4 { x:=X(x); } else if k==5 { x:=X(x); } else if k==6 { x:=X(x); } else if k==7 { x:=X(x); } else if k==8 { x:=X(x); } else if k==9 { x:=X(x); } else if k==10 { x:=X(x); } else if k==11 { x:=X(x); } else if k==12 { x:=X(x); } else if k==13 { x:=X(x); } else if k==14 { x:=X(x); } else if k==15 { x:=X(x); } else { x:=X(X(x)); }
+	}
+	return x;
+}
+def main(){
+	x:=f(3,0:𝔹);
+	y:=reverse(f)(3,dup(x));
+	q:=vector(16,0:𝔹);
+	q[5]:=X(q[5]);
+	z:=g(q,0:𝔹);
+	w:=reverse(g)(q,dup(z));
+	v:=h(20,1:𝔹);
+	r:=(measure(x),measure(y),measure(z),measure(w),measure(q),measure(v));
+	assert(r==(1,0,1,0,(0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0),1));
+	return r;
+}

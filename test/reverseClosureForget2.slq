@@ -1,0 +1,112 @@
+// args: --run
+
+def f1(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	def g(const z:𝔹)qfree⇒z&x;
+	if c { if k==1 { y⊕=g(c); } }
+	return y;
+}
+def f2(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	h:=λ(const z:𝔹)qfree⇒z&x;
+	if c { t:=let{ s:=dup(d); } in s⊕h(c); y⊕=t; }
+	return y;
+}
+def f3(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	h:=λ(const z:𝔹)qfree⇒z&x;
+	if c { with { u:=h(c); } do { y⊕=u; } }
+	return y;
+}
+def f4(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	h:=λ(const z:𝔹)qfree⇒z&x;
+	if c { if d { y⊕=h(c); } }
+	return y;
+}
+def f5(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	h:=λ(const z:𝔹)qfree⇒z&x;
+	if c { if k==1 { y⊕=h(c); } else { y⊕=h(d); } }
+	return y;
+}
+def f6(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	h:=λ(const z:𝔹)qfree⇒z&x;
+	if c { if k==1 { if d { y⊕=h(c); } } }
+	return y;
+}
+def f7(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	h:=λ(const z:𝔹)qfree⇒z&x;
+	if c { if k==1 { y⊕=h(c); } else { assert(k!=3); } }
+	return y;
+}
+def f8(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	h:=λ(const z:𝔹)qfree⇒z&x;
+	if c { y⊕=h(c); } else { if k==1 { y⊕=h(d); } }
+	return y;
+}
+def f9(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	h:=λ(const z:𝔹)qfree⇒z&x;
+	if c { y⊕=let{ s:=let{ u:=dup(d); } in u⊕h(c); } in s; }
+	return y;
+}
+def f10(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	h:=λ(const z:𝔹)qfree⇒z&x;
+	if c { if k==1 { y⊕=let{ s:=let{ u:=dup(d); } in u⊕h(c); } in s; } }
+	return y;
+}
+def f11(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	h:=λ(const z:𝔹)qfree⇒z&x;
+	if c { if k==1 { with { u:=h(c); } do { y⊕=u; } } }
+	return y;
+}
+def f12(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	def g(const z:𝔹)qfree⇒z&x;
+	if c { if d { y⊕=g(c); } else { y⊕=g(x); } }
+	return y;
+}
+def f13(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	repeat 2 { h:=λ(const z:𝔹)qfree⇒z&x; if c { t:=let{ s:=dup(d); } in s⊕h(c); y⊕=t; } }
+	return y;
+}
+def f14(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	h:=λ(const z:𝔹)qfree⇒z&x;
+	if c { t:=(if d then h(c) else h(x)); y⊕=t; }
+	return y;
+}
+def f15(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	h:=λ(const z:𝔹)qfree⇒z&x;
+	if c { t:=(if k==1 then h(c) else h(x)); y⊕=t; }
+	return y;
+}
+def f16(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	t:=dup(x);
+	h:=λ(const z:𝔹)qfree⇒z&t;
+	if c { if k==1 { y⊕=h(c); } }
+	return y;
+}
+def f17(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	h:=λ(const z:𝔹)qfree⇒z&x;
+	if c { if k==1 { y⊕=h(c); } else { y⊕=h(d); } if k==2 { y⊕=d; } }
+	return y;
+}
+def f18(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	t:=dup(x)⊕d;
+	if c { if k==1 { y⊕=t; } }
+	return y;
+}
+def f19(const c:𝔹,const d:𝔹,const k:!ℕ,const x:𝔹,y:𝔹)qfree:𝔹{
+	def g(const z:𝔹)qfree⇒z&x;
+	if c { if k==1 { v:=vector(2,0:𝔹); v[0]⊕=g(c); v[1]⊕=d; y⊕=v[0]; } }
+	return y;
+}
+def run(f:!(const 𝔹×const 𝔹×const !ℕ×const 𝔹×𝔹→qfree 𝔹),const k:!ℕ){
+	c:=H(0:𝔹); d:=H(1:𝔹); x:=H(0:𝔹); y:=H(1:𝔹);
+	y:=f(c,d,k,x,y);
+	y:=reverse(f)(c,d,k,x,y);
+	y:=reverse(f)(c,d,k,x,y);
+	y:=f(c,d,k,x,y);
+	y:=reverse(reverse(f))(c,d,k,x,y);
+	y:=reverse(f)(c,d,k,x,y);
+	return (measure(H(c)),measure(H(d)),measure(H(x)),measure(H(y)));
+}
+def main(){
+	r:=(run(f1,1),run(f1,2),run(f2,1),run(f2,2),run(f3,1),run(f3,2),run(f4,1),run(f4,2),run(f5,1),run(f5,2),run(f6,1),run(f6,2),run(f7,1),run(f7,2),run(f8,1),run(f8,2),run(f9,1),run(f9,2),run(f10,1),run(f10,2),run(f11,1),run(f11,2),run(f12,1),run(f12,2),run(f13,1),run(f13,2),run(f14,1),run(f14,2),run(f15,1),run(f15,2),run(f16,1),run(f16,2),run(f17,1),run(f17,2),run(f18,1),run(f18,2),run(f19,1),run(f19,2));
+	assert(r==((0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1),(0,1,0,1)));
+	return r;
+}
