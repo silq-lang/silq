@@ -1,0 +1,32 @@
+// args: --run
+
+def loopUpdate(x:𝔹^3,const n:!ℕ,const c:!ℕ)qfree{
+	k1:=n+c; k2:=n+c;
+	(y,k1):=let { repeat 2 { k2+=1; u:=dup(k1); k1+=1; if u==2 { x[2]:=X(x[2]); } } } in (x,k1);
+	return (y,k1);
+}
+def localUpdate(x:𝔹^3,const n:!ℕ,const c:!ℕ)qfree{
+	k:=c+1;
+	(y,k):=let { u:=n+c; if c==2 { if c==1 { v:=u*2; u+=c; } w:=k*2; k+=1; if w==2 { } } } in (x,k);
+	return (y,k);
+}
+def branchRead(x:𝔹^3,const n:!ℕ,const c:!ℕ)qfree{
+	k:=c+1; m:=dup(n);
+	(y,k):=let { if c==2 { w:=dup(k); k+=1; m+=1; if w==3 { x[0]:=X(x[0]); } } } in (x,k);
+	return (y,k);
+}
+def forLoop(x:𝔹^3,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(c); m:=dup(n);
+	(y,k):=let { for i in 0..2 { w:=dup(k); k+=1; m+=i; if w==2 { x[1]:=X(x[1]); } } } in (x,k);
+	return (y,k);
+}
+def main(){
+	x:=vector(3,0:𝔹);
+	(x,a):=loopUpdate(x,1,0); x:=reverse(loopUpdate)((x,a),1,0);
+	(x,b):=localUpdate(x,0,2); x:=reverse(localUpdate)((x,b),0,2);
+	(x,c):=branchRead(x,0,2); x:=reverse(branchRead)((x,c),0,2);
+	(x,d):=forLoop(x,0,1); x:=reverse(forLoop)((x,d),0,1);
+	r:=(a,b,c,d,measure(x));
+	assert(r==(3,4,4,3,(0,0,0)));
+	return r;
+}
