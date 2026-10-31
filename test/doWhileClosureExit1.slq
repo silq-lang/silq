@@ -1,0 +1,38 @@
+// args: --run
+
+def body(m:!ℕ){
+	k:=0;
+	do{ k+=1; n:=k+m; x:=vector(n,0:𝔹); def g()qfree⇒dup(x); y:=g(); r:=measure(y); }while k<2;
+	return (n,r,measure(x));
+}
+def after(m:!ℕ){
+	k:=0;
+	do{ k+=1; n:=k+m; x:=vector(n,1:𝔹); def g()qfree⇒dup(x); }while k<2;
+	y:=g();
+	return (n,measure(y),measure(x));
+}
+def reset(m:!ℕ){
+	k:=0;
+	do{ k+=1; n:=k+m; x:=vector(n,0:𝔹); def g()qfree⇒dup(x); y:=g(); r:=measure(y); }while k<2 { measure(x); }
+	return (n,r,measure(x));
+}
+def typeVariable(m:!ℕ){
+	k:=0;
+	do{ k+=1; n:=k+m; a:=𝔹^n; x:=vector(n,1:𝔹) coerce a; def g()qfree⇒dup(x); y:=g(); r:=measure(y); }while k<1 { measure(x); }
+	return (n,r,measure(x));
+}
+def fixedWidth(m:!ℕ){
+	k:=0;
+	do{ k+=1; n:=k+m; t:=uint[n]; x:=6:t; def g()qfree⇒dup(x); y:=g(); r:=measure(y) as !ℕ; }while k<3 { measure(x); }
+	return (n,r,measure(x) as !ℕ);
+}
+def branch(m:!ℕ){
+	k:=0;
+	do{ k+=1; n:=k+m; if m%2==0 { w:=𝔹^n; x:=vector(n,0:𝔹) coerce w; } else { w:=𝔹^n; x:=vector(n,1:𝔹) coerce w; } def g()qfree⇒dup(x); y:=g(); r:=measure(y); }while k<2 { measure(x); }
+	return (n,r,measure(x));
+}
+def main(){
+	r:=(body(1),after(1),reset(1),typeVariable(2),fixedWidth(3),branch(1),branch(2));
+	assert(r==((3,(0,0,0),(0,0,0)),(3,(1,1,1),(1,1,1)),(3,(0,0,0),(0,0,0)),(3,(1,1,1),(1,1,1)),(6,6,6),(3,(1,1,1),(1,1,1)),(4,(0,0,0,0),(0,0,0,0))));
+	return r;
+}

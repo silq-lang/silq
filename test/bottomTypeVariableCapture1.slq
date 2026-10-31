@@ -1,0 +1,40 @@
+def closure(){
+	a:=H(0:𝔹);
+	q:=dup(a) coerce ⊥;
+	g:=()⇒q;
+	a:=H(a);
+	forget(g);
+	return a;
+}
+def localFunction(){
+	a:=H(0:𝔹);
+	q:=dup(a) coerce ⊥;
+	def g()⇒q;
+	a:=H(a);
+	forget(g);
+	return a;
+}
+def takeClassical(f:𝟙 !→qfree ⊥){
+	return 0;
+}
+def classicalClosure(){
+	a:=H(0:𝔹);
+	q:=dup(a) coerce ⊥;
+	g:=()⇒q;
+	r:=takeClassical(g);
+	return (a,r);
+}
+def loop(b:!𝔹^4){
+	a:=H(0:𝔹);
+	q:=dup(a) coerce ⊥;
+	for j in 0..4 { if q==b[j] { a:=X(a); } }
+	return a;
+}
+def loopIndex[n:!ℕ](b:(!𝔹^n)^4){
+	c:=0:uint[2];
+	c[0]:=H(c[0]);
+	q:=(b:(𝔹^n)^4)[c] coerce ⊥;
+	for j in 0..4 { if q==b[j] { c⊕=j; } }
+	forget(c=0:uint[2]);
+	return q;
+}

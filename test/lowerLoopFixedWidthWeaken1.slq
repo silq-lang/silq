@@ -1,0 +1,125 @@
+// args: --run
+
+def exit(m:!ℕ){
+	k:=0;
+	do{ k+=1; n:=k+m; y:=5:!uint[n]; }while k<2;
+	return (n,y as !ℕ);
+}
+def signed(m:!ℕ){
+	k:=0;
+	do{ k+=1; n:=k+m; y:=-3:!int[n]; }while k<2;
+	return (n,y as !ℤ);
+}
+def typeVariable(m:!ℕ){
+	k:=0;
+	do{ k+=1; n:=k+m; t:=uint[n]; y:=4:!t; }while k<2;
+	return (n,y as !ℕ);
+}
+def tuple(m:!ℕ){
+	k:=0;
+	do{ k+=1; n:=k+m; y:=(5:!uint[n],vector(n,1:!𝔹)); }while k<2;
+	return (n,y[0] as !ℕ,y[1]);
+}
+def vectorOf(m:!ℕ){
+	k:=0;
+	do{ k+=1; n:=k+m; y:=vector(2,5:!uint[n]); }while k<2;
+	return (n,y[0] as !ℕ,y[1] as !ℕ);
+}
+def reset(m:!ℕ){
+	k:=0;
+	do{ k+=1; n:=k+m; x:=vector(n,1:𝔹); y:=3:!uint[n]; }while k<2 { measure(x); }
+	return (n,y as !ℕ,measure(x));
+}
+def carried(m:!ℕ){
+	x:=0:!ℕ; s:=0:!ℕ; k:=0;
+	do{ k+=1; n:=k+m; s+=x; forget(x); x:=7:!uint[n]; }while k<3;
+	return (s,x as !ℕ);
+}
+def carriedSigned(m:!ℕ){
+	x:=0:!ℤ; s:=0:!ℤ; k:=0;
+	do{ k+=1; n:=k+m; s+=x; forget(x); x:=-1:!int[n]; }while k<3;
+	return (s,x as !ℤ);
+}
+def carriedTypeVariable(m:!ℕ){
+	x:=0:!ℕ; s:=0:!ℕ; k:=0;
+	do{ k+=1; n:=k+m; s+=x; forget(x); t:=uint[n]; x:=7:!t; }while k<3;
+	return (s,x as !ℕ);
+}
+def carriedReset(m:!ℕ){
+	x:=0:!ℕ; s:=0:!ℕ; k:=0;
+	do{ k+=1; n:=k+m; s+=x; forget(x); x:=7:!uint[n]; q:=vector(n,1:𝔹); }while k<3 { measure(q); s+=1; }
+	return (s,x as !ℕ,measure(q));
+}
+def continuation(const c:!𝔹){
+	n:=2;
+	x:=5:!uint[n];
+	for i in 0..3 { if c&&i==1 { return (x as !ℕ,0:𝔹); } }
+	forget(x);
+	n+=1;
+	return (n,0:𝔹);
+}
+def continuationTuple(const c:!𝔹){
+	n:=2;
+	x:=(5:!uint[n],vector(n,1:!𝔹));
+	for i in 0..3 { if c&&i==1 { return (x[0] as !ℕ,0:𝔹); } }
+	forget(x);
+	n+=1;
+	return (n,0:𝔹);
+}
+def join(const c:!𝔹,m:!ℕ){
+	if c {
+		i:=0;
+		while i<2 { i+=1; if i==2 { return (0,0:𝔹); } }
+		x:=5:!uint[m];
+	} else {
+		x:=3:!uint[m];
+	}
+	y:=1:!uint[m];
+	return ((x+y) as !ℕ,0:𝔹);
+}
+def joinConsumed(const c:!𝔹,m:!ℕ){
+	if c {
+		i:=0;
+		while i<2 { i+=1; if i==3 { return (0,0:𝔹); } }
+		x:=5:!uint[m];
+	} else {
+		x:=3:!uint[m];
+	}
+	forget(x);
+	m+=1;
+	return (m,0:𝔹);
+}
+def joinTuple(const c:!𝔹,m:!ℕ){
+	n:=m+1;
+	if c {
+		i:=0;
+		while i<2 { i+=1; if i==3 { return (0,0:𝔹); } }
+		x:=vector(m,1:𝔹);
+		y:=(5:!uint[n],vector(m,0:!𝔹));
+	} else {
+		x:=vector(m,0:𝔹);
+		y:=(3:!uint[n],vector(m,1:!𝔹));
+	}
+	r:=measure(x:𝔹[]);
+	z:=y[0] as !ℕ;
+	forget(y);
+	n+=m;
+	return (n+r.length+z,0:𝔹);
+}
+def joinDoWhile(const c:!𝔹){
+	if c {
+		return 0;
+	} else {
+		k:=0;
+		do{
+			k+=1;
+			if c { return 2; } else { x:=1:!uint[k+1]; }
+		}while k<1;
+	}
+	return x as !ℕ;
+}
+def main(){
+	r:=(exit(1),signed(2),typeVariable(1),tuple(1),vectorOf(2),reset(1),carried(0),carriedSigned(1),carriedTypeVariable(1),carriedReset(0),measure(continuation(true)),measure(continuation(false)),measure(continuationTuple(true)),measure(continuationTuple(false)),measure(join(true,3)),measure(join(false,3)),measure(joinConsumed(true,2)),measure(joinConsumed(false,2)),measure(joinTuple(true,2)),measure(joinTuple(false,2)),joinDoWhile(true),joinDoWhile(false));
+	assert(r==((3,5),(4,-3),(3,4),(3,5,(1,1,1)),(4,5,5),(3,3,(1,1,1)),(4,7),(-2,-1),(10,7),(6,7,(1,1,1)),(1,0),(3,0),(1,0),(3,0),(0,0),(4,0),(3,0),(3,0),(12,0),(10,0),0,1));
+	return r;
+}
