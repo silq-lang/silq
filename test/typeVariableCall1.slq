@@ -1,0 +1,55 @@
+// args: --run
+
+def inc(x:!ℕ)⇒x+1;
+def alias(n:!ℕ){
+	t:=!ℕ→!ℕ;
+	f:=inc:t;
+	return f(n);
+}
+def ofClosure(n:!ℕ){
+	h:=λ()⇒vector(n,1:!𝔹);
+	t:=typeof(h);
+	f:=h:t;
+	if n==5 { assert(false); }
+	return f();
+}
+def chained(n:!ℕ){
+	t:=!ℕ→!ℕ;
+	s:=t;
+	f:=(λ(x:!ℕ)⇒2*x):s;
+	return f(n);
+}
+def qubit(b:!𝔹){
+	t:=𝔹→qfree 𝔹;
+	f:=X:t;
+	x:=b:𝔹;
+	if b { x:=f(x); }
+	return measure(f(x));
+}
+def closure(b:!𝔹){
+	q:=b:𝔹;
+	h:=λ()qfree⇒dup(q);
+	t:=typeof(h);
+	f:=h:t;
+	r:=f();
+	forget(f);
+	return (measure(r),measure(q));
+}
+def reversed(b:!𝔹){
+	t:=𝔹→qfree 𝔹;
+	f:=X:t;
+	g:=reverse(f);
+	return measure(g(b:𝔹));
+}
+def defined(b:!𝔹){
+	t:=𝔹→qfree 𝔹;
+	f:=X:t;
+	x:=b:𝔹;
+	f(y):=x;
+	return measure(y);
+}
+def main(){
+	r:=(alias(2),ofClosure(3),chained(4),qubit(false),qubit(true),closure(true),reversed(false),defined(true));
+	assert(r==(3,(1,1,1),8,1,1,(1,1),1,0));
+	return r;
+}
