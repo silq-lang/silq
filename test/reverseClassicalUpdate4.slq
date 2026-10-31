@@ -1,0 +1,37 @@
+// args: --run
+
+def h(a:!ℕ)qfree⇒a+1;
+def doubled(x:𝔹,const n:!ℕ)qfree{
+	t:=dup(n);
+	for j in 0..2 { t+=t; x:=if t==4 { X(x) } else { x }; }
+	return x;
+}
+def helper(x:𝔹,const n:!ℕ)qfree{
+	t:=dup(n);
+	for j in 0..2 { t+=h(t); x:=if t==7 { X(x) } else { x }; }
+	return x;
+}
+def inBranch(x:𝔹,const n:!ℕ)qfree{
+	t:=dup(n);
+	for j in 0..3 { if j==1 { t+=2*t; } x:=if t==3 { X(x) } else { x }; }
+	return x;
+}
+def readBefore(x:𝔹,const n:!ℕ)qfree{
+	t:=dup(n);
+	x:=if t==1 { X(x) } else { x };
+	t+=t+1;
+	return (x,t);
+}
+def integer(x:𝔹,const n:!ℤ)qfree{
+	t:=dup(n);
+	x:=if t==1 { X(x) } else { x };
+	t-=2*t;
+	return (x,t);
+}
+def main(){
+	r:=(measure(reverse(doubled)(0:𝔹,1)),measure(reverse(doubled)(0:𝔹,2)),measure(reverse(doubled)(0:𝔹,3)),measure(reverse(helper)(0:𝔹,1)),measure(reverse(helper)(0:𝔹,0)));
+	assert(r==(1,1,0,1,0));
+	s:=(measure(reverse(inBranch)(0:𝔹,1)),measure(reverse(inBranch)(0:𝔹,3)),measure(reverse(readBefore)((0:𝔹,3),1)),measure(reverse(integer)((0:𝔹,-1),1)),measure(reverse(integer)((0:𝔹,-2),2)));
+	assert(s==(0,1,1,1,0));
+	return (r,s);
+}

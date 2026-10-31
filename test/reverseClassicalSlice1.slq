@@ -1,0 +1,93 @@
+// args: --run
+
+def g(xs:𝔹^4,const k:!ℕ)mfree{ xs[k]:=H(xs[k]); return (xs,k+1); }
+def h(xs:𝔹^4,const k:!ℕ)mfree{ (xs,c):=g(xs,k); xs[c]:=H(xs[c]); return (xs,c+1); }
+def loop(xs:𝔹^4,const k:!ℕ)mfree{
+	c:=0;
+	for i in 0..k { c+=2; xs[i]:=H(xs[i]); }
+	if c>2 { c-=1; }
+	return (xs,c);
+}
+def recursive(xs:𝔹^4,const k:!ℕ)mfree:𝔹^4×!ℕ{
+	d:=0;
+	if k>0 { (xs,c):=recursive(xs,k sub 1); xs[k]:=H(xs[k]); d+=c; }
+	return (xs,d+k);
+}
+def flip(xs:𝔹^4,const k:!ℕ)qfree{ xs[k]:=X(xs[k]); return (xs,k+1); }
+def double(const k:!ℕ)⇒k*2;
+def withPair(xs:𝔹^4,const k:!ℕ)mfree{ c:=double(k) sub 1; with { a:=xs[k]; } do { a:=H(a); } return (xs,(c,k)); }
+def letResult(xs:𝔹^4,const k:!ℕ)mfree{ c:=let { t:=dup(k); t+=1; } in t; xs[c]:=H(xs[c]); return (xs,c); }
+def controlled(xs:𝔹^4,const k:!ℕ,q:𝔹)mfree{ if q { xs[k]:=X(xs[k]); } return (xs,k+1,q); }
+def unused(xs:𝔹^4,j:!ℕ)mfree{
+	(xs,c):=g(xs,j);
+	return xs;
+}
+def discarded(xs:𝔹^4,j:!ℕ)mfree{
+	(xs,_):=g(xs,j);
+	return xs;
+}
+def used(xs:𝔹^4,j:!ℕ)mfree{
+	(xs,c):=g(xs,j); d:=c+1; xs[d]:=X(xs[d]);
+	return xs;
+}
+def nested(xs:𝔹^4,j:!ℕ)mfree{
+	(xs,c):=h(xs,j); xs[c]:=X(xs[c]);
+	return xs;
+}
+def looping(xs:𝔹^4,j:!ℕ)mfree{
+	(xs,c):=loop(xs,j); xs[c]:=X(xs[c]);
+	return xs;
+}
+def blocks(xs:𝔹^4,j:!ℕ)mfree{
+	if j==1 { (xs,c):=g(xs,j); xs[c]:=X(xs[c]); }
+	for i in 0..2 { (xs,d):=g(xs,i); xs[d]:=X(xs[d]); }
+	return xs;
+}
+def chained(xs:𝔹^4,j:!ℕ)mfree{
+	(xs,c):=g(xs,j); (xs,d):=g(xs,c); xs[d]:=X(xs[d]);
+	return xs;
+}
+def recursion(xs:𝔹^4,j:!ℕ)mfree{
+	(xs,c):=recursive(xs,j); xs[c]:=X(xs[c]);
+	return xs;
+}
+def flipped(xs:𝔹^4,j:!ℕ)qfree{
+	(xs,c):=flip(xs,j); xs[c]:=X(xs[c]);
+	return xs;
+}
+def pair(xs:𝔹^4,j:!ℕ)mfree{
+	(xs,(c,d)):=withPair(xs,j); xs[c]:=X(xs[c]); xs[d]:=X(xs[d]);
+	return xs;
+}
+def let_(xs:𝔹^4,j:!ℕ)mfree{
+	(xs,c):=letResult(xs,j); xs[c]:=X(xs[c]);
+	return xs;
+}
+def qubit(xs:𝔹^4,const j:!ℕ,q:𝔹)mfree{
+	(xs,c,q):=controlled(xs,j,q); xs[c]:=X(xs[c]);
+	return (xs,q);
+}
+def hadamard(xs:𝔹^4)mfree{
+	for i in 0..4 { xs[i]:=H(xs[i]); }
+	return xs;
+}
+def main(){
+	x:=vector(4,0:𝔹);
+	x:=hadamard(reverse(unused)(unused(hadamard(x),1),1));
+	x:=hadamard(reverse(discarded)(discarded(hadamard(x),2),2));
+	x:=hadamard(reverse(used)(used(hadamard(x),0),0));
+	x:=hadamard(reverse(nested)(nested(hadamard(x),0),0));
+	x:=hadamard(reverse(looping)(looping(hadamard(x),2),2));
+	x:=hadamard(reverse(blocks)(blocks(hadamard(x),1),1));
+	x:=hadamard(reverse(chained)(chained(hadamard(x),0),0));
+	x:=hadamard(reverse(recursion)(recursion(hadamard(x),2),2));
+	x:=hadamard(reverse(pair)(pair(hadamard(x),2),2));
+	x:=hadamard(reverse(let_)(let_(hadamard(x),1),1));
+	x:=reverse(flipped)(flipped(x,1),1);
+	q:=H(0:𝔹);
+	(x,q):=qubit(hadamard(x),1,q);
+	(x,q):=reverse(qubit)(1,(x,q));
+	r:=(measure(hadamard(x)),measure(H(q)));
+	assert(r==((0,0,0,0),0));
+	return r;
+}
