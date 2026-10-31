@@ -1,0 +1,39 @@
+// args: --run
+
+def split(const a:𝔹,n:!ℕ){
+	w:=0:𝔹;
+	for i in 0..n { w:=X(w); w:=X(w); if a { if i<4 { w:=X(w); } else { assert(false); } } w:=(λ()⇒(λ()⇒X(w))())(); }
+	return measure(w);
+}
+def splitLocal(const a:𝔹,n:!ℕ){
+	w:=0:𝔹;
+	for i in 0..n { w:=X(w); w:=X(w); if a { if i<4 { w:=X(w); } else { assert(false); } } def g()⇒(λ()⇒X(w))(); w:=g(); }
+	return measure(w);
+}
+def reset(m:!ℕ){
+	k:=0;
+	do{ k+=1; x:=vector(m,1:𝔹); }while k<4 { y:=(λ()qfree⇒(λ()qfree⇒dup(x))())(); measure(y); }
+	return (k,measure(x));
+}
+def resetLocal(m:!ℕ){
+	k:=0;
+	do{ k+=1; x:=vector(m,1:𝔹); }while k<4 { def g()qfree⇒(λ()qfree⇒dup(x))(); y:=g(); measure(y); }
+	return (k,measure(x));
+}
+def resetDeep(m:!ℕ){
+	k:=0;
+	do{ k+=1; x:=vector(m,1:𝔹); }while k<4 { y:=(λ()qfree⇒(λ()qfree⇒(λ()qfree⇒dup(x))())())(); measure(y); }
+	return (k,measure(x));
+}
+def resetLoop(m:!ℕ){
+	k:=0;
+	do{ k+=1; n:=k+m; x:=vector(n,0:𝔹); }while k<4 { y:=(λ()qfree⇒(λ()qfree⇒dup(x))())(); measure(y); for i in 0..2 { measure(x); } }
+	return (n,measure(x));
+}
+def main(){
+	a:=1:𝔹;
+	r:=(split(a,1),split(a,3),splitLocal(a,1),splitLocal(a,3),reset(2),resetLocal(2),resetDeep(2),resetLoop(1));
+	forget(a);
+	assert(r==(0,0,0,0,(4,(1,1)),(4,(1,1)),(4,(1,1)),(5,(0,0,0,0,0))));
+	return r;
+}

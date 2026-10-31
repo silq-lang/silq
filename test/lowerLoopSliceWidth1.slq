@@ -1,0 +1,43 @@
+// args: --run
+
+def typeVariable(m:!ℕ){
+	k:=0;
+	do{ k+=1; n:=k+m; t:=uint[n]; x:=5:t; }while k<3 { y:=dup(x); measure(y); }
+	return (n,measure(x) as !ℕ);
+}
+def unsigned(m:!ℕ){
+	k:=0;
+	do{ k+=1; n:=k+m; x:=5:uint[n]; }while k<3 { y:=dup(x); measure(y); }
+	return (n,measure(x) as !ℕ);
+}
+def signed(m:!ℕ){
+	k:=0;
+	do{ k+=1; n:=k+m; t:=int[n]; x:=-1:t; }while k<3 { y:=dup(x); measure(y); }
+	return (n,measure(x) as !ℤ);
+}
+def tuple(m:!ℕ){
+	k:=0;
+	do{ k+=1; n:=k+m; x:=(vector(n,1:𝔹),3:uint[n]); }while k<3 { y:=dup(x); measure(y); }
+	return (n,measure(x[0]),measure(x[1]) as !ℕ);
+}
+def vectorOf(m:!ℕ){
+	k:=0;
+	do{ k+=1; n:=k+m; x:=vector(n,2:uint[n]); }while k<3 { y:=dup(x); measure(y); }
+	return (n,measure(x[0]) as !ℕ);
+}
+def resetClosure(m:!ℕ){
+	k:=0;
+	do{ k+=1; n:=k+m; t:=uint[n]; x:=5:t; }while k<2 { y:=(λ()qfree⇒4:t)(); measure(y); repeat 2 { measure(x); } }
+	return (n,measure(x) as !ℕ);
+}
+def vectorTypeVariable(m:!ℕ){
+	x:=vector(m,0:𝔹);
+	k:=0;
+	do{ k+=1; b:=𝔹^m; a:=b; z:=x coerce a; x:=z; x[0]:=X(x[0]); q:=measure(1:𝔹); }while k<3;
+	return (k,measure(x));
+}
+def main(){
+	r:=(typeVariable(1),typeVariable(2),unsigned(1),signed(1),tuple(1),vectorOf(1),resetClosure(2),vectorTypeVariable(2));
+	assert(r==((4,5),(5,5),(4,5),(4,-1),(4,(1,1,1,1),3),(4,2),(4,5),(3,(1,0))));
+	return r;
+}

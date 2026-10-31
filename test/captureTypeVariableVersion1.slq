@@ -1,0 +1,27 @@
+// args: --run
+
+def closure(m:!ℕ){
+	k:=0;
+	do{ k+=1; n:=k+m; a:=𝔹^n; }while k<3 { g:=λ()⇒vector(n,1:𝔹) coerce a; y:=g(); measure(y); }
+	return n;
+}
+def annotated(m:!ℕ){
+	k:=0;
+	do{ k+=1; n:=k+m; a:=𝔹^n; }while k<3 { g:=λ()⇒vector(n,1:𝔹):a; y:=g(); measure(y); }
+	return n;
+}
+def local(m:!ℕ){
+	k:=0;
+	do{ k+=1; n:=k+m; a:=𝔹^n; }while k<3 { def g()⇒vector(n,1:𝔹) coerce a; y:=g(); measure(y); }
+	return n;
+}
+def result(m:!ℕ){
+	k:=0;
+	do{ k+=1; n:=k+m; a:=𝔹^n; }while k<2 { y:=(λ()⇒vector(n,1:𝔹) coerce a)(); s:=measure(y); }
+	return (n,measure(vector(n,1:𝔹) coerce a));
+}
+def main(){
+	r:=(closure(0),closure(3),annotated(1),local(2),result(1));
+	assert(r==(3,6,4,5,(3,(1,1,1))));
+	return r;
+}

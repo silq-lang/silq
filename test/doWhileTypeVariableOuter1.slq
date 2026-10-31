@@ -1,0 +1,34 @@
+// args: --run
+
+def after(m:!ℕ){
+	x:=vector(m,1:𝔹);
+	k:=0;
+	do{ k+=1; b:=𝔹^m; }while k<3;
+	y:=x coerce b;
+	return (k,measure(y));
+}
+def alias(m:!ℕ){
+	x:=vector(m,1:𝔹);
+	k:=0;
+	do{ k+=1; b:=𝔹^m; a:=b; }while k<3;
+	y:=x coerce a;
+	return (k,measure(y));
+}
+def body(m:!ℕ){
+	x:=vector(m,0:𝔹);
+	k:=0;
+	do{ k+=1; b:=𝔹^m; a:=b; z:=x coerce a; x:=z; x[0]:=X(x[0]); }while k<3;
+	return (k,measure(x));
+}
+def reset(m:!ℕ){
+	x:=vector(m,0:𝔹);
+	k:=0;
+	do{ k+=1; b:=𝔹^m; }while k<3 { x[1]:=X(x[1]); }
+	y:=x coerce b;
+	return (k,measure(y));
+}
+def main(){
+	r:=(after(2),alias(1),body(2),reset(3));
+	assert(r==((3,(1,1)),(3,(1,)),(3,(1,0)),(3,(0,0,0))));
+	return r;
+}
