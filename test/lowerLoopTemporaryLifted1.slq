@@ -1,0 +1,54 @@
+// args: --run
+
+def update(const a:𝔹){
+	b:=0:𝔹;
+	repeat 3 { b:=X(b); if a { b:=(X(b),)[0]; } }
+	return measure(b);
+}
+def pair(const a:𝔹){
+	b:=1:𝔹;
+	repeat 3 { b:=X(b); if a { b:=(X(b),1:𝔹)[0]; } }
+	return measure(b);
+}
+def consumed(const a:𝔹){
+	b:=0:𝔹;
+	for i in 0..3 { b:=X(b); if a { b:=(X(move(b)),)[0]; } }
+	return measure(b);
+}
+def condition(const a:𝔹){
+	b:=0:𝔹;
+	k:=0;
+	while k<3 { k+=1; b:=X(b); if a { b:=(X(b),)[0]; } }
+	return (measure(b),k);
+}
+def before(const a:𝔹){
+	b:=0:𝔹;
+	repeat 3 { if a { b:=(X(b),)[0]; } b:=X(b); }
+	return measure(b);
+}
+def tuple(const a:𝔹){
+	b:=0:𝔹;
+	repeat 3 { b:=X(b); if a { (b,c):=((X(b),)[0],1:𝔹); forget(c=1:𝔹); } }
+	return measure(b);
+}
+def split(const a:𝔹){
+	b:=0:𝔹;
+	s:=0;
+	repeat 3 { if a { b:=X(b); b:=(X(move(b)),)[0]; } s+=1; }
+	return (measure(b),s);
+}
+def nested(const a:𝔹){
+	b:=0:𝔹;
+	for i in 0..2 {
+		b:=X(b);
+		b:=X(b);
+		if a { repeat 2 { b:=(X(b),)[0]; } for j in 0..1 { if j>=10 { assert(false); } b:=X(b); } }
+		else { b:=X(b); b:=X(b); for j in 0..3 { b:=(X(b),)[0]; } }
+	}
+	return measure(b);
+}
+def main(){
+	r:=(update(1:𝔹),update(0:𝔹),pair(1:𝔹),pair(0:𝔹),consumed(1:𝔹),consumed(0:𝔹),condition(1:𝔹),before(1:𝔹),before(0:𝔹),tuple(1:𝔹),tuple(0:𝔹),split(1:𝔹),split(0:𝔹),nested(1:𝔹),nested(0:𝔹));
+	assert(r==(0,1,1,0,0,1,(0,3),0,1,0,1,(0,3),(0,3),0,0));
+	return r;
+}

@@ -1,0 +1,18 @@
+// args: --run
+
+def fail(b:𝔹):⊥{ assert(false); } /// run_error
+def f(const a:𝔹){
+	b:=0:𝔹;
+	s:=0;
+	for i in 0..2 {
+		s+=i;
+		if a {
+			b:=X(b);
+			b:=fail(b);
+		}
+	}
+	return (measure(b),s);
+}
+def main(){
+	return f(1:𝔹);
+}

@@ -1,0 +1,17 @@
+// args: --run
+
+def f(const a:𝔹){
+	b:=0:𝔹;
+	s:=0;
+	repeat 2 {
+		if a {
+			b:=X(b);
+			b:=(X(b),)[1]; /// run_error
+		}
+		s+=1;
+	}
+	return (measure(b),s);
+}
+def main(){
+	return f(1:𝔹);
+}

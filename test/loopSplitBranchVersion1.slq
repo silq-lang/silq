@@ -1,0 +1,38 @@
+// args: --run
+
+def update(const a:𝔹){
+	b:=0:𝔹;
+	for i in 0..3 {
+		b:=X(b);
+		if a { for j in 0..1 { if j>=10 { assert(false); } b:=X(b); } b:=X(b); }
+		else { b:=X(b); }
+	}
+	return measure(b);
+}
+def condition(const a:𝔹){
+	b:=0:𝔹;
+	s:=0;
+	i:=0;
+	while i<3 {
+		s+=1;
+		b:=X(b);
+		if a { for j in 0..1 { if j>=10 { assert(false); } b:=X(b); } b:=X(b); }
+		else { (b,c):=((X(b),)[0],1:𝔹); forget(c=1:𝔹); }
+		i+=1;
+	}
+	return (measure(b),s);
+}
+def nested(const a:𝔹){
+	b:=0:𝔹;
+	repeat 3 {
+		b:=X(b);
+		if a { for j in 0..2 { if j>=10 { assert(false); } b:=X(b); } b:=(X(move(b)),)[0]; b:=(X(move(b)),)[0]; }
+		else { b:=X(b); }
+	}
+	return measure(b);
+}
+def main(){
+	r:=(update(1:𝔹),update(0:𝔹),condition(1:𝔹),condition(0:𝔹),nested(1:𝔹),nested(0:𝔹));
+	assert(r==(1,0,(1,3),(0,3),1,0));
+	return r;
+}
