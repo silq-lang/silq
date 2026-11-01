@@ -1,0 +1,12 @@
+def upper(x:!ℕ){
+	y:=vector(2,0);
+	return y[0..typeof(x)]; /// error
+}
+def lower(x:!ℕ){
+	y:=vector(2,0);
+	return y[typeof(x)..1]; /// error
+}
+def called(x:𝔹){
+	return measure[0..typeof(x)](x); /// error
+}
+def later(n:!ℕ)⇒n+1;

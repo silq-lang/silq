@@ -1,0 +1,27 @@
+// args: --run
+
+def repeated(x:𝔹,const n:!ℕ)qfree{
+	t:=dup(n);
+	repeat 3 { if t>1 { } t+=1; x:=if t==3 { X(x) } else { x }; }
+	return x;
+}
+def bothBranches(x:𝔹,const n:!ℕ)qfree{
+	t:=dup(n);
+	for j in 0..2 { if t>j { } else { } x:=if t==j { X(x) } else { x }; }
+	return x;
+}
+def nested(x:𝔹,const n:!ℕ)qfree{
+	t:=dup(n);
+	repeat 2 { if t>1 { if t>2 { } } t+=1; x:=if t==4 { X(x) } else { x }; }
+	return x;
+}
+def inBranch(x:𝔹,const n:!ℕ)qfree{
+	t:=dup(n);
+	if t>0 { repeat 2 { if t==1 { } x:=X(x); } }
+	return x;
+}
+def main(){
+	r:=(measure(reverse(repeated)(0:𝔹,1)),measure(reverse(repeated)(0:𝔹,3)),measure(reverse(bothBranches)(0:𝔹,1)),measure(reverse(nested)(0:𝔹,2)),measure(reverse(nested)(0:𝔹,1)),measure(reverse(inBranch)(0:𝔹,1)));
+	assert(r==(1,0,1,1,0,0));
+	return r;
+}
