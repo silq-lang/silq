@@ -1,0 +1,47 @@
+// args: --run
+
+def movedInQuantumBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	u:=v+1;
+	xs[(u+v)%4]:=X(xs[(u+v)%4]);
+	if u%4==3 {
+		w:=move(v);
+		if u%4==1 { v:=(w+j)%4; }
+		xs[w%4]:=X(xs[w%4]);
+	} else { w:=dup(v); }
+	t:=w*2;
+	xs[t%4]:=X(xs[t%4]);
+	return xs;
+}
+
+def forgottenInQuantumBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	xs[v%4]:=X(xs[v%4]);
+	if j%2==1 {
+		w:=dup(v);
+		forget(v);
+		if w%4==0 { v:=w+j; }
+		xs[w%4]:=X(xs[w%4]);
+	} else { w:=v+1; }
+	xs[(w+1)%4]:=X(xs[(w+1)%4]);
+	return xs;
+}
+
+def movedInQuantumWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	u:=v+1;
+	xs[(u+v)%4]:=X(xs[(u+v)%4]);
+	with { t:=(u+j)%4; } do {
+		w:=move(v);
+		if u%4==1 { v:=(w+j)%4; }
+		xs[t]:=X(xs[t]);
+	}
+	s:=w*2;
+	return xs;
+}
+
+def main(){
+	r:=(measure(reverse(movedInQuantumBranch)(movedInQuantumBranch((1,0,1,0):𝔹^4,3),3)),measure(reverse(movedInQuantumBranch)(movedInQuantumBranch((1,0,1,0):𝔹^4,2),2)),measure(reverse(forgottenInQuantumBranch)(forgottenInQuantumBranch((0,1,1,0):𝔹^4,1),1)),measure(reverse(forgottenInQuantumBranch)(forgottenInQuantumBranch((0,1,1,0):𝔹^4,2),2)),measure(reverse(movedInQuantumWith)(movedInQuantumWith((1,0,0,1):𝔹^4,3),3)),measure(movedInQuantumBranch((1,0,1,0):𝔹^4,3)),measure(forgottenInQuantumBranch((0,1,1,0):𝔹^4,1)),measure(movedInQuantumWith((1,0,0,1):𝔹^4,3)));
+	assert(r==((1,0,1,0),(1,0,1,0),(0,1,1,0),(0,1,1,0),(1,0,0,1),(0,1,0,0),(0,1,1,1),(1,1,1,1)));
+	return r;
+}

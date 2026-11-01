@@ -1,0 +1,112 @@
+// args: --run
+
+def redefinedAfterForget(xs:𝔹^3,j:!ℕ)mfree{
+	v:=dup(j);
+	xs[v]:=X(xs[v]);
+	w:=v+1;
+	forget(v);
+	v:=2;
+	xs[v]:=X(xs[v]);
+	xs[w]:=X(xs[w]);
+	return xs;
+}
+
+def redefinedAfterNestedForget(xs:𝔹^3,j:!ℕ)mfree{
+	v:=dup(j);
+	xs[v]:=X(xs[v]);
+	with { w:=2; } do { for i in 0..2 { u:=dup(v); } t:=v+1; forget(v); }
+	v:=2;
+	xs[v]:=X(xs[v]);
+	xs[t]:=X(xs[t]);
+	return xs;
+}
+
+def redefinedInWith(xs:𝔹^3,j:!ℕ)mfree{
+	v:=dup(j);
+	xs[v]:=X(xs[v]);
+	with { w:=1; } do { forget(v); v:=w+1; }
+	xs[v]:=X(xs[v]);
+	return xs;
+}
+
+def redefinedInBranch(xs:𝔹^3,const c:!𝔹,j:!ℕ)mfree{
+	v:=dup(j);
+	xs[v]:=X(xs[v]);
+	if c { forget(v); v:=2; }
+	xs[v]:=X(xs[v]);
+	return xs;
+}
+
+def redefinedInQuantumBranch(xs:𝔹^3,const c:!𝔹,j:!ℕ)mfree{
+	v:=dup(j);
+	xs[v]:=X(xs[v]);
+	if c { xs[1]:=X(xs[1]); with { w:=1; } do { forget(v); v:=w+1; } xs[v]:=X(xs[v]); } else { xs[v]:=X(xs[v]); }
+	return xs;
+}
+
+def redefinedAfterMove(xs:𝔹^3,j:!ℕ)mfree{
+	v:=dup(j);
+	xs[v]:=X(xs[v]);
+	w:=move(v);
+	v:=2;
+	xs[v]:=X(xs[v]);
+	xs[w+1]:=X(xs[w+1]);
+	return xs;
+}
+
+def redefinedInWithAfterMove(xs:𝔹^3,j:!ℕ)mfree{
+	v:=dup(j);
+	xs[v]:=X(xs[v]);
+	with { u:=1; } do { w:=move(v); v:=u+1; }
+	xs[v]:=X(xs[v]);
+	xs[w+1]:=X(xs[w+1]);
+	return xs;
+}
+
+def definedAfterLocalForget(xs:𝔹^3,j:!ℕ)mfree{
+	with { u:=dup(j); } do { v:=u+1; w:=dup(v); forget(v); }
+	v:=w+1;
+	xs[v]:=X(xs[v]);
+	xs[w]:=X(xs[w]);
+	return xs;
+}
+
+def definedAfterLocalMove(xs:𝔹^3,j:!ℕ)mfree{
+	with { u:=dup(j); } do { v:=u+1; w:=move(v); }
+	v:=w+1;
+	xs[v]:=X(xs[v]);
+	xs[w]:=X(xs[w]);
+	return xs;
+}
+
+def redefinedInBranchValue(xs:𝔹^3,const c:!𝔹,j:!ℕ)mfree{
+	v:=dup(j);
+	xs[v]:=X(xs[v]);
+	if c { forget(v=j); v:=2; }
+	xs[v]:=X(xs[v]);
+	return xs;
+}
+
+def redefinedAfterNestedForgetValue(xs:𝔹^3,j:!ℕ)mfree{
+	v:=dup(j);
+	xs[v]:=X(xs[v]);
+	with { w:=2; } do { for i in 0..2 { u:=dup(v); } t:=v+1; forget(v=j); }
+	v:=2;
+	xs[v]:=X(xs[v]);
+	xs[t]:=X(xs[t]);
+	return xs;
+}
+
+def redefinedInWithValue(xs:𝔹^3,j:!ℕ)mfree{
+	v:=dup(j);
+	xs[v]:=X(xs[v]);
+	with { w:=1; } do { forget(v=j); v:=w+1; }
+	xs[v]:=X(xs[v]);
+	return xs;
+}
+
+def main(){
+	r:=(measure(redefinedAfterForget((0,0,0):𝔹^3,0)),measure(reverse(redefinedAfterForget)((1,1,1):𝔹^3,0)),measure(redefinedAfterNestedForget((0,0,0):𝔹^3,0)),measure(reverse(redefinedAfterNestedForget)((1,1,1):𝔹^3,0)),measure(redefinedInWith((0,1,0):𝔹^3,0)),measure(reverse(redefinedInWith)((1,1,1):𝔹^3,0)),measure(redefinedInBranch((0,1,0):𝔹^3,true,0)),measure(reverse(redefinedInBranch)((1,1,1):𝔹^3,true,0)),measure(redefinedInQuantumBranch((0,0,0):𝔹^3,true,0)),measure(reverse(redefinedInQuantumBranch)((1,1,1):𝔹^3,true,0)),measure(redefinedAfterMove((0,0,0):𝔹^3,0)),measure(reverse(redefinedAfterMove)((1,1,1):𝔹^3,0)),measure(redefinedInWithAfterMove((0,0,0):𝔹^3,0)),measure(reverse(redefinedInWithAfterMove)((1,1,1):𝔹^3,0)),measure(definedAfterLocalForget((0,0,0):𝔹^3,0)),measure(reverse(definedAfterLocalForget)((1,1,1):𝔹^3,0)),measure(definedAfterLocalMove((1,0,0):𝔹^3,0)),measure(reverse(definedAfterLocalMove)((0,1,1):𝔹^3,0)),measure(redefinedInBranchValue((0,1,0):𝔹^3,true,0)),measure(reverse(redefinedInBranchValue)((1,1,1):𝔹^3,true,0)),measure(redefinedAfterNestedForgetValue((0,0,0):𝔹^3,0)),measure(reverse(redefinedAfterNestedForgetValue)((1,1,1):𝔹^3,0)),measure(redefinedInWithValue((0,1,0):𝔹^3,0)),measure(reverse(redefinedInWithValue)((1,1,1):𝔹^3,0)));
+	assert(r==((1,1,1),(0,0,0),(1,1,1),(0,0,0),(1,1,1),(0,1,0),(1,1,1),(0,1,0),(1,1,1),(0,0,0),(1,1,1),(0,0,0),(1,1,1),(0,0,0),(0,1,1),(1,0,0),(1,1,1),(0,0,0),(1,1,1),(0,1,0),(1,1,1),(0,0,0),(1,1,1),(0,1,0)));
+	return r;
+}

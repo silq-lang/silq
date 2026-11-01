@@ -1,0 +1,45 @@
+// args: --run
+
+def selfMove(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	k:=k;
+	if k==1 { x:=X(x); }
+	return x;
+}
+def annotated(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	k:=(k:!ℕ);
+	(k,):=(k,);
+	if k==1 { x:=X(x); }
+	return x;
+}
+def coerced(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	k:=k coerce !ℤ;
+	k:=move(k) coerce !ℕ;
+	if k==1 { x:=X(x); }
+	return x;
+}
+def inLoop(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	for i in 0..2 { k:=k; if k==i { x:=X(x); } }
+	return x;
+}
+def inWith(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	with { u:=dup(n); } do { k:=k; if u==1 { x:=X(x); } }
+	with { u:=1; } do { k:=k; x:=X(x); }
+	if k==1 { x:=X(x); }
+	return x;
+}
+def inLet(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(n);
+	k:=k;
+	y:=let { if k>0 { a:=(dup(n),k+c):!ℕ^2; if a[1]==2 { x:=X(x); } } if c==1 { if n==1 { k+=1; } x:=X(x); } } in x;
+	return y;
+}
+def main(){
+	r:=(measure(selfMove(0:𝔹,1)),measure(reverse(selfMove)(selfMove(1:𝔹,1),1)),measure(annotated(0:𝔹,1)),measure(reverse(annotated)(annotated(0:𝔹,2),2)),measure(coerced(0:𝔹,1)),measure(reverse(coerced)(coerced(1:𝔹,0),0)),measure(inLoop(0:𝔹,1)),measure(reverse(inLoop)(inLoop(0:𝔹,0),0)),measure(inWith(0:𝔹,1)),measure(reverse(inWith)(inWith(1:𝔹,0),0)),measure(inLet(0:𝔹,2,0)),measure(reverse(inLet)(inLet(1:𝔹,1,1),1,1)));
+	assert(r==(1,1,1,0,1,1,1,0,1,1,1,1));
+	return r;
+}

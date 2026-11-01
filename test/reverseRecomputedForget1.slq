@@ -1,0 +1,25 @@
+// args: --run
+
+def forgetInWith(xs:𝔹^3,const c:!𝔹,j:!ℕ)mfree{
+	if c { xs[j]:=X(xs[j]); v:=dup(j); } else { v:=dup(j); }
+	with { w:=2; } do { for i in 0..2 { u:=dup(v); } }
+	return xs;
+}
+
+def forgetInWithRepeat(xs:𝔹^3,const c:!𝔹,j:!ℕ)mfree{
+	if c { xs[j]:=X(xs[j]); v:=dup(j); } else { v:=dup(j); }
+	with { w:=1; } do { repeat 2 { u:=dup(v); } }
+	return xs;
+}
+
+def forgetInWithExplicit(xs:𝔹^3,const c:!𝔹,j:!ℕ)mfree{
+	if c { xs[j]:=X(xs[j]); v:=dup(j); } else { v:=dup(j); }
+	with { w:=2; } do { for i in 0..2 { u:=dup(v); } forget(v); }
+	return xs;
+}
+
+def main(){
+	r:=(measure(forgetInWith((0,0,1):𝔹^3,true,1)),measure(reverse(forgetInWith)((0,1,1):𝔹^3,true,1)),measure(forgetInWithRepeat((1,0,1):𝔹^3,true,2)),measure(reverse(forgetInWithRepeat)((1,0,0):𝔹^3,true,2)),measure(forgetInWithExplicit((0,0,1):𝔹^3,true,0)),measure(reverse(forgetInWithExplicit)((1,0,1):𝔹^3,true,0)));
+	assert(r==((0,1,1),(0,0,1),(1,0,0),(1,0,1),(1,0,1),(0,0,1)));
+	return r;
+}
