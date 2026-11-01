@@ -1,0 +1,59 @@
+// args: --run
+
+def slice(){
+	x:=vector(1,0:𝔹);
+	y:=x[1..1];
+	forget(x);
+	return measure(y).length;
+}
+def index(k:!ℕ){
+	x:=vector(2,1:𝔹);
+	y:=x[k..k];
+	return (measure(y).length,measure(x));
+}
+def borrowed(const x:𝔹^2){
+	y:=x[0..0];
+	return measure(y).length;
+}
+def concat(){
+	k:=0:!ℕ;
+	x:=vector(0,0:𝔹)~vector(k,1:𝔹);
+	return measure(x).length;
+}
+def sliced(){
+	k:=0:!ℕ;
+	x:=vector(k,0:𝔹)~vector(k,1:𝔹);
+	y:=x[0..0];
+	forget(x);
+	return measure(y).length;
+}
+def pairs(){
+	k:=0:!ℕ;
+	x:=vector(k,(0:𝔹,1:!ℕ))~vector(k,(1:𝔹,2:!ℕ));
+	return measure(x).length;
+}
+def loop(n:!ℕ){
+	x:=vector(1,1:𝔹);
+	s:=0;
+	for i in 0..n {
+		y:=x[i..i];
+		s+=measure(y).length;
+	}
+	return (s,measure(x));
+}
+def repeated(n:!ℕ){
+	s:=0;
+	repeat n {
+		k:=0:!ℕ;
+		z:=vector(k,0:𝔹)~vector(k,1:𝔹);
+		s+=measure(z).length;
+	}
+	return s;
+}
+def main(){
+	x:=vector(2,0:𝔹);
+	r:=(slice(),index(1),borrowed(x),concat(),sliced(),pairs(),loop(2),repeated(2));
+	forget(x);
+	assert(r==(0,(0,(1,1)),0,0,0,0,(0,(1,)),0));
+	return r;
+}

@@ -1,0 +1,49 @@
+// args: --run
+
+def boolean(c:!ℕ){
+	t:=!𝔹;
+	k:=(c>1):t;
+	s:=0;
+	if k { s+=1; } else { s+=2; }
+	s+=if !k then 3 else 4;
+	w:=dup(k):t;
+	while w { w=false; s+=5; }
+	assert(k||!k);
+	return s;
+}
+def qubit(c:!ℕ){
+	t:=𝔹;
+	k:=(c>1):t;
+	z:=0:𝔹;
+	if k { z:=X(z); }
+	z:=if !k { X(z) } else { z };
+	return (measure(z),measure(k));
+}
+def shadowed(c:!ℕ){
+	B:=dup(B);
+	k:=(c>1):B;
+	j:=1:B;
+	z:=0:𝔹;
+	if k&&j { z:=X(z); }
+	if k||j { z:=X(z); }
+	return (measure(z),measure(k),measure(j));
+}
+def wider(c:!ℕ){
+	V:=𝔹 as *;
+	k:=(c>1):V;
+	def g(const a:V,z:𝔹){ if a { z:=X(z); } return z; }
+	z:=g(k,0:𝔹);
+	return (measure(z),measure(k));
+}
+def loop(c:!ℕ){
+	t:=𝔹;
+	k:=(c>1):t;
+	z:=0:𝔹;
+	repeat 3 { if k { z:=X(z); } }
+	return (measure(z),measure(k));
+}
+def main(){
+	r:=(boolean(1),boolean(2),qubit(1),qubit(2),shadowed(1),shadowed(2),wider(1),wider(2),loop(1),loop(2));
+	assert(r==(5,10,(1,0),(1,1),(1,0,1),(0,1,1),(0,0),(1,1),(0,0),(1,1)));
+	return r;
+}

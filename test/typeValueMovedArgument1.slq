@@ -1,0 +1,38 @@
+// args: --run
+
+def id[τ:*](x:!ℕ)⇒x;
+def argument(N:!ℕ){
+	t:=uint[move(N)];
+	return id[t](1);
+}
+def closure(N:!ℕ){
+	t:=ℤstar[(λ(c:!𝔹){ if c { return dup(N); } return move(N); })(false)];
+	return id[t](2);
+}
+def make(N:!ℕ)⇒int[(λ(){ return move(N); })()];
+def returned(){
+	t:=make(3);
+	return id[t](3);
+}
+def vec(N:!ℕ){
+	t:=𝔹^((λ(){ return move(N); })());
+	return id[t](4);
+}
+def local(N:!ℕ){
+	t:=ℤmod[(λ(){ m:=move(N); return m+1; })()];
+	return id[t](5);
+}
+def loop(N:!ℕ){
+	s:=0;
+	for i in 0..2 {
+		k:=i+N;
+		t:=uint[(λ(){ return move(k); })()];
+		s+=id[t](i);
+	}
+	return s;
+}
+def main(){
+	r:=(argument(2),closure(3),returned(),vec(2),local(4),loop(1));
+	assert(r==(1,2,3,4,5,1));
+	return r;
+}

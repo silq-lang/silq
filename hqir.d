@@ -2960,6 +2960,8 @@ class ScopeWriter {
 			assert(typeHasQuantum(itemTy));
 			qr = qcg.concat(lhsLen, lhsQt, lhs.qreg, rhsLen, rhsQt, rhs.qreg);
 		} else {
+			if(lhs.hasQuantum) qcg.deallocUnit(lhs.qreg); // (their types may not show that they are empty, e.g., `vector(k,0:𝔹)` for `k:=0:!ℕ`)
+			if(rhs.hasQuantum) qcg.deallocUnit(rhs.qreg);
 			qr = null;
 		}
 		return valNewQ(rArray, qr);
@@ -3094,12 +3096,14 @@ class ScopeWriter {
 		auto name = decl.getId;
 		Value v;
 		auto p = vars.getPtr(name);
+		bool copy = false;
 		if(!isDup) {
 			if(!p && (nscope is null || scopeFree)) {
 				for(auto sc = parent; sc && !p; sc = sc.parent) {
 					p = sc.vars.getPtr(name);
 					if(p) {
 						assert(sc.ccg.code is this.ccg.code || !typeHasQuantum(typeForDecl(decl)), format("Variable %s used in subfunction has quantum component", name.str));
+						copy = qcg.inType && !sc.qcg.inType; // (the code of a type recomputes values that the code outside of types consumes, e.g., the moved capture `N` of the closure in `uint[(λ(){ return move(N); })()]`)
 					}
 				}
 			}
@@ -3135,7 +3139,7 @@ class ScopeWriter {
 				}
 			}
 		}
-		if(isDup) {
+		if(isDup || copy) {
 			v = valDup(v);
 		} else {
 			p.value = null;
@@ -3255,11 +3259,12 @@ class ScopeWriter {
 
 	CondAny genCond(Expression e) {
 		CondAny cond;
-		auto c = genExpr(e);
-		if(e.type is ast_ty.Bool(true)) {
+		auto ty = ast_exp.unfoldTypeVariable(e.type); // (the value of a type variable, e.g., `B` after `B:=dup(B)`)
+		auto c = genNoopConvert(genExpr(e), e.type, ty); // (a type variable of a wider kind has both parts, e.g., `V` after `V:=𝔹 as *`)
+		if(ty is ast_ty.Bool(true)) {
 			assert(c.creg);
 			return CondAny(c.creg);
-		} else if(e.type is ast_ty.Bool(false)) {
+		} else if(ty is ast_ty.Bool(false)) {
 			assert(!c.creg);
 			return CondAny(c.qreg);
 		} else {
@@ -4091,6 +4096,7 @@ class ScopeWriter {
 		ccg.checkLeInt(true, li, len);
 
 		if(li is ri && ast_ty.isSubtype(ast_ty.unit, e.type)) {
+			valForget(v);
 			return genSubtype(valNewC(null), ast_ty.unit, e.type);
 		}
 		ccg.checkLeInt(true, ri, len);
@@ -4520,11 +4526,13 @@ class ScopeWriter {
 				case "int":
 				case "uint":
 				case "\u2124mod":
-				case "\u2124star":
+				case "\u2124star": {
+					auto r = getRTTI(e).packed; // (before its argument consumes variables that it mentions, as for `ast_exp.VectorTy`, e.g., `uint[move(n)]`)
 					if(!qcg.inType) {
 						genExpr(e.arg);
 					}
-					return valNewC(getRTTI(e).packed);
+					return valNewC(r);
+				}
 				default:
 					break;
 			}
