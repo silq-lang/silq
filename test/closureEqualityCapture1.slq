@@ -1,0 +1,22 @@
+// args: --run
+
+def id[τ:*](x:!ℕ)⇒x;
+def make(M:!ℕ)⇒ℤstar[(λ(c:!𝔹){ if c { return dup(M); } return move(M); })(false)];
+def direct(N:!ℕ){
+	t:=!uint[(λ(c:!𝔹){ if c { return dup(N); } return move(N); })(false)];
+	return id[t](1);
+}
+def returned(N:!ℕ){
+	t:=make(N);
+	return id[t](2);
+}
+def both(P:!ℕ,M:!ℕ){
+	t:=uint[(λ(c:!𝔹){ if c { return dup(P); } return move(P); })(false)];
+	s:=uint[(λ(c:!𝔹){ if c { return dup(M); } return move(M); })(false)];
+	return id[t](3)+id[s](4);
+}
+def main(){
+	r:=(direct(1),returned(2),both(2,3));
+	assert(r==(1,2,7));
+	return r;
+}
