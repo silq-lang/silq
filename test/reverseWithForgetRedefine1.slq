@@ -1,0 +1,100 @@
+// args: --run
+
+def forgottenInNestedWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	with { u:=1; } do {
+		with { t:=(j+j)%4; } do { forget(v); }
+		v:=dup(j);
+		xs[(u+2)%4]:=X(xs[(u+2)%4]);
+	}
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+
+def forgottenInBody(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	with { u:=1; } do {
+		forget(v);
+		v:=dup(j);
+		xs[(u+2)%4]:=X(xs[(u+2)%4]);
+	}
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+
+def forgottenInBranches(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	v:=j*2;
+	with { u:=1; } do {
+		if c { forget(v); v:=dup(j); } else { forget(v); v:=j+1; }
+		xs[(u+v)%4]:=X(xs[(u+v)%4]);
+	}
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+
+def forgottenUnread(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	with { u:=1; } do {
+		with { t:=(j+j)%4; } do { forget(v); }
+		v:=dup(j);
+		xs[(u+2)%4]:=X(xs[(u+2)%4]);
+	}
+	w:=dup(v);
+	xs[((j+j)%4)%4]:=X(xs[((j+j)%4)%4]);
+	forget(w);
+	return xs;
+}
+
+def forgottenAfterRead(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	w:=v+1;
+	with { u:=1; } do {
+		forget(v);
+		v:=w+j;
+		xs[(u+2)%4]:=X(xs[(u+2)%4]);
+	}
+	w+=v;
+	xs[w%4]:=X(xs[w%4]);
+	return xs;
+}
+
+def movedForInnerBlock(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	u:=v+1;
+	xs[(u+v)%4]:=X(xs[(u+v)%4]);
+	with { t:=(u+j)%4; } do {
+		w:=move(v);
+		if u%4==1 { v:=(w+j)%4; }
+		xs[t]:=X(xs[t]);
+	}
+	s:=w*2;
+	xs[s%4]:=X(xs[s%4]);
+	return xs;
+}
+
+def forgottenInBodyValue(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	with { u:=1; } do {
+		forget(v=j*2);
+		v:=dup(j);
+		xs[(u+2)%4]:=X(xs[(u+2)%4]);
+	}
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+
+def forgottenInBranchesValue(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	v:=j*2;
+	with { u:=1; } do {
+		if c { forget(v=j*2); v:=dup(j); } else { forget(v=j*2); v:=j+1; }
+		xs[(u+v)%4]:=X(xs[(u+v)%4]);
+	}
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+
+def main(){
+	r:=(measure(reverse(forgottenInNestedWith)(forgottenInNestedWith((1,0,0,0):𝔹^4,1),1)),measure(reverse(forgottenInNestedWith)(forgottenInNestedWith((0,1,1,0):𝔹^4,2),2)),measure(reverse(forgottenInBody)(forgottenInBody((1,0,0,0):𝔹^4,1),1)),measure(reverse(forgottenInBranches)(forgottenInBranches((1,0,0,0):𝔹^4,true,1),true,1)),measure(reverse(forgottenInBranches)(forgottenInBranches((0,1,1,0):𝔹^4,false,2),false,2)),measure(reverse(forgottenUnread)(forgottenUnread((1,0,0,0):𝔹^4,1),1)),measure(reverse(forgottenAfterRead)(forgottenAfterRead((1,0,0,0):𝔹^4,1),1)),measure(reverse(forgottenAfterRead)(forgottenAfterRead((0,1,1,0):𝔹^4,3),3)),measure(reverse(movedForInnerBlock)(movedForInnerBlock((1,0,1,0):𝔹^4,3),3)),measure(reverse(movedForInnerBlock)(movedForInnerBlock((1,0,1,0):𝔹^4,2),2)),measure(forgottenInNestedWith((1,0,0,0):𝔹^4,1)),measure(forgottenInBranches((0,1,1,0):𝔹^4,false,2)),measure(movedForInnerBlock((1,0,1,0):𝔹^4,3)),measure(reverse(forgottenInBodyValue)(forgottenInBodyValue((1,0,0,0):𝔹^4,1),1)),measure(reverse(forgottenInBranchesValue)(forgottenInBranchesValue((1,0,0,0):𝔹^4,true,1),true,1)),measure(reverse(forgottenInBranchesValue)(forgottenInBranchesValue((0,1,1,0):𝔹^4,false,2),false,2)),measure(forgottenInBranchesValue((0,1,1,0):𝔹^4,false,2)));
+	assert(r==((1,0,0,0),(0,1,1,0),(1,0,0,0),(1,0,0,0),(0,1,1,0),(1,0,0,0),(1,0,0,0),(0,1,1,0),(1,0,1,0),(1,0,1,0),(1,1,0,1),(1,1,1,1),(0,1,0,0),(1,0,0,0),(1,0,0,0),(0,1,1,0),(1,1,1,1)));
+	return r;
+}

@@ -1,0 +1,145 @@
+// args: --run
+
+def forgottenWithValue(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+j;
+	(v,xs):=(v,xs);
+	xs[v%4]:=X(xs[v%4]);
+	forget(v=j+j);
+	return xs;
+}
+def definedAgain(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+j;
+	(v,xs):=(v,xs);
+	xs[v%4]:=X(xs[v%4]);
+	forget(v);
+	v:=j*3;
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+def readInWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+j;
+	(v,xs):=(v,xs);
+	forget(v);
+	with { u:=j*2; } do { v:=(j+u)%4; }
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+def definedAgainInWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+j;
+	v:=v;
+	xs[v%4]:=X(xs[v%4]);
+	forget(v);
+	with { u:=j*2; } do { v:=(j+j)%4; w:=u*2; }
+	forget(v);
+	t:=w+1;
+	forget(t);
+	return xs;
+}
+def redefinedInLoopWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+j;
+	for i in 0..2 {
+		with { u:=(j+1)%4; } do {
+			(w,v):=((i+j)%4,v);
+			forget(v); v:=dup(u);
+		}
+		xs[(j+j)%4]:=X(xs[(j+j)%4]);
+	}
+	return xs;
+}
+def readInLoopWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+1;
+	for i in 0..2 {
+		with { u:=j*2+i; } do { v:=v; forget(v); v:=dup(u); }
+		xs[v%4]:=X(xs[v%4]);
+	}
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+def redefinedInLoop(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+1;
+	for i in 0..2 {
+		xs[v%4]:=X(xs[v%4]);
+		v:=v;
+		forget(v);
+		v:=j*2+i;
+	}
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+def forgottenInWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+2;
+	t:=3;
+	forget(t);
+	with { u:=dup(j); } do {
+		t:=dup(u);
+		v+=1;
+		(w,v):=(j*2,v);
+	}
+	xs[t%4]:=X(xs[t%4]);
+	return xs;
+}
+def forgottenInBranchWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+2;
+	t:=3;
+	forget(t);
+	with { u:=dup(j); } do {
+		t:=dup(u);
+		if j%2==0 {
+			v+=1;
+			(w,v):=(j*2,v);
+		}
+	}
+	xs[t%4]:=X(xs[t%4]);
+	return xs;
+}
+def readBeforeForgottenInWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+2;
+	t:=3;
+	forget(t);
+	xs[v%4]:=X(xs[v%4]);
+	with { u:=dup(j); } do {
+		t:=dup(u);
+		v+=1;
+		(w,v):=(j*2,v);
+	}
+	xs[t%4]:=X(xs[t%4]);
+	return xs;
+}
+def movedInBranches(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+1;
+	if j%4==3 {
+		v+=j+j;
+		v:=v;
+		xs[j%4]:=X(xs[j%4]);
+	} else {
+		with { u:=1; } do { v:=v; }
+	}
+	return xs;
+}
+def movedWithOther(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+1;
+	if j%4==3 {
+		xs[j%4]:=X(xs[j%4]);
+		v+=j+j;
+		(v,w):=(v,1);
+	} else {
+		with { u:=1; } do { (v,w):=(v,0); }
+	}
+	return xs;
+}
+def updatedInOtherBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+1;
+	xs[(j+j)%4]:=X(xs[(j+j)%4]);
+	if j%4==3 {
+		v+=j+j;
+		xs[j%4]:=X(xs[j%4]);
+	} else {
+		with { u:=1; } do { (v,w):=(v,0); forget(w); }
+	}
+	return xs;
+}
+def main(){
+	r:=(measure(forgottenWithValue((1,0,0,0):𝔹^4,1)),measure(reverse(forgottenWithValue)(forgottenWithValue((1,0,0,0):𝔹^4,1),1)),measure(definedAgain((1,0,0,0):𝔹^4,1)),measure(reverse(definedAgain)(definedAgain((0,1,0,0):𝔹^4,1),1)),measure(readInWith((1,0,0,0):𝔹^4,1)),measure(reverse(readInWith)(readInWith((0,1,1,0):𝔹^4,1),1)),measure(definedAgainInWith((1,0,0,0):𝔹^4,1)),measure(reverse(definedAgainInWith)(definedAgainInWith((0,0,0,1):𝔹^4,1),1)),measure(redefinedInLoopWith((1,0,0,0):𝔹^4,1)),measure(reverse(redefinedInLoopWith)(redefinedInLoopWith((0,1,0,0):𝔹^4,1),1)),measure(readInLoopWith((1,0,0,0):𝔹^4,1)),measure(reverse(readInLoopWith)(readInLoopWith((0,0,1,1):𝔹^4,1),1)),measure(redefinedInLoop((1,0,0,0):𝔹^4,1)),measure(reverse(redefinedInLoop)(redefinedInLoop((0,1,1,0):𝔹^4,1),1)),measure(forgottenInWith((1,0,0,0):𝔹^4,1)),measure(reverse(forgottenInWith)(forgottenInWith((0,1,1,0):𝔹^4,1),1)),measure(forgottenInBranchWith((1,0,0,0):𝔹^4,2)),measure(reverse(forgottenInBranchWith)(forgottenInBranchWith((0,1,1,0):𝔹^4,2),2)),measure(readBeforeForgottenInWith((1,0,0,0):𝔹^4,1)),measure(reverse(readBeforeForgottenInWith)(readBeforeForgottenInWith((0,1,0,1):𝔹^4,1),1)),measure(movedInBranches((1,0,0,0):𝔹^4,3)),measure(reverse(movedInBranches)(movedInBranches((0,1,1,0):𝔹^4,3),3)),measure(reverse(movedInBranches)(movedInBranches((0,1,1,0):𝔹^4,1),1)),measure(movedWithOther((1,0,0,0):𝔹^4,3)),measure(reverse(movedWithOther)(movedWithOther((0,1,1,0):𝔹^4,3),3)),measure(reverse(movedWithOther)(movedWithOther((0,1,1,0):𝔹^4,1),1)),measure(updatedInOtherBranch((1,0,0,0):𝔹^4,3)),measure(reverse(updatedInOtherBranch)(updatedInOtherBranch((0,1,1,0):𝔹^4,3),3)),measure(reverse(updatedInOtherBranch)(updatedInOtherBranch((0,1,1,0):𝔹^4,1),1)));
+	assert(r==((1,0,1,0),(1,0,0,0),(1,0,1,1),(0,1,0,0),(1,0,0,1),(0,1,1,0),(1,0,1,0),(0,0,0,1),(1,0,0,0),(0,1,0,0),(1,0,1,0),(0,0,1,1),(1,0,0,1),(0,1,1,0),(1,1,0,0),(0,1,1,0),(1,0,1,0),(0,1,1,0),(1,1,0,1),(0,1,0,1),(1,0,0,1),(0,1,1,0),(0,1,1,0),(1,0,0,1),(0,1,1,0),(0,1,1,0),(1,0,1,1),(0,1,1,0),(0,1,1,0)));
+	return r;
+}

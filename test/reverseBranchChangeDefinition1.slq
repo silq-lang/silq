@@ -1,0 +1,41 @@
+// args: --run
+
+def withInBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+1;
+	if v%4==0 {
+	} else {
+		with { u:=3; } do { w:=v*2; v+=3; }
+		xs[w%4]:=X(xs[w%4]);
+	}
+	return xs;
+}
+
+def conditionalInBranch(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	v:=j+1;
+	if v%4==0 {
+	} else {
+		if c { w:=v*2; v+=3; } else { w:=v+1; }
+		xs[w%4]:=X(xs[w%4]);
+	}
+	return xs;
+}
+
+def withInElse(xs:𝔹^4,const j:!ℕ)mfree{
+	u:=j*2;
+	v:=u+3;
+	if v%4==0 {
+	} else {
+		with { t:=3; } do {
+			w:=v*2;
+			v+=3;
+		}
+		xs[(dup(w))%4]:=X(xs[(dup(w))%4]);
+	}
+	return xs;
+}
+
+def main(){
+	r:=(measure(reverse(withInBranch)(withInBranch((0,0,1,1):𝔹^4,2),2)),measure(reverse(withInBranch)(withInBranch((0,1,1,0):𝔹^4,3),3)),measure(reverse(conditionalInBranch)(conditionalInBranch((0,0,1,1):𝔹^4,true,2),true,2)),measure(reverse(conditionalInBranch)(conditionalInBranch((0,1,1,0):𝔹^4,false,2),false,2)),measure(reverse(withInElse)(withInElse((1,0,0,0):𝔹^4,1),1)),measure(withInBranch((0,0,1,1):𝔹^4,2)),measure(conditionalInBranch((0,1,1,0):𝔹^4,false,2)),measure(withInElse((1,0,0,0):𝔹^4,1)));
+	assert(r==((0,0,1,1),(0,1,1,0),(0,0,1,1),(0,1,1,0),(1,0,0,0),(0,0,0,1),(1,1,1,0),(1,0,1,0)));
+	return r;
+}

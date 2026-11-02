@@ -1,0 +1,17 @@
+// args: --run
+
+def f(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=3;
+	xs[v%4]:=X(xs[v%4]); /// TODO
+	with { u:=dup(j); } do {
+		v+=dup(j);
+		(w,v):=(j*2,v); /// TODO
+	}
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+
+def main(){
+	r:=measure(reverse(f)((0,0,0,1):𝔹^4,1)); /// TODO
+	return r;
+}
