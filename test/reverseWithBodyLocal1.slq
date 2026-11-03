@@ -1,0 +1,111 @@
+// args: --run
+
+def movedInTwoWiths(xs:𝔹^4,const j:!ℕ)mfree{
+	with { u:=j+2; } do {
+		v:=(u+j)%4;
+		w:=move(v);
+		xs[(u+j)%4]:=X(xs[(u+j)%4]);
+	}
+	with { t:=j+j; } do {
+		v:=w+w;
+		xs[t%4]:=X(xs[t%4]);
+		z:=move(v);
+	}
+	xs[(w+z)%4]:=X(xs[(w+z)%4]);
+	return xs;
+}
+
+def forgottenInTwoWiths(xs:𝔹^4,const j:!ℕ)mfree{
+	with { u:=j+1; } do {
+		v:=u*2;
+		xs[v%4]:=X(xs[v%4]);
+		forget(v);
+	}
+	with { t:=dup(j); } do {
+		v:=t+3;
+		xs[v%4]:=X(xs[v%4]);
+		forget(v);
+	}
+	return xs;
+}
+
+def nestedTwoWiths(xs:𝔹^4,const j:!ℕ)mfree{
+	with { u:=j+2; } do {
+		with { s:=u+1; } do {
+			v:=s%4;
+			xs[v]:=X(xs[v]);
+			w:=move(v);
+		}
+	}
+	with { t:=j+j; } do {
+		v:=w+1;
+		xs[t%4]:=X(xs[t%4]);
+		z:=move(v);
+	}
+	xs[z%4]:=X(xs[z%4]);
+	return xs;
+}
+
+def definedAfterWiths(xs:𝔹^4,const j:!ℕ)mfree{
+	with { u:=j+2; } do {
+		v:=(u+j)%4;
+		w:=move(v);
+		xs[(u+j)%4]:=X(xs[(u+j)%4]);
+	}
+	with { t:=j+j; } do {
+		v:=w+w;
+		xs[t%4]:=X(xs[t%4]);
+		z:=move(v);
+	}
+	v:=w+z;
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+
+def forgottenInTwoWithsValue(xs:𝔹^4,const j:!ℕ)mfree{
+	with { u:=j+1; } do {
+		v:=u*2;
+		xs[v%4]:=X(xs[v%4]);
+		forget(v=u*2);
+	}
+	with { t:=dup(j); } do {
+		v:=t+3;
+		xs[v%4]:=X(xs[v%4]);
+		forget(v=t+3);
+	}
+	return xs;
+}
+
+def movedBeforeWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+1;
+	xs[v%4]:=X(xs[v%4]);
+	w:=move(v);
+	with { u:=j+1; } do {
+		v:=u+1;
+		xs[v%4]:=X(xs[v%4]);
+		forget(v);
+	}
+	v:=w*2;
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+
+def loopInWith(xs:𝔹^4,const j:!ℕ)mfree{
+	with { u:=j+1; } do {
+		for i in 0..2 { v:=(u+i)%4; xs[v]:=X(xs[v]); }
+		xs[(u+3)%4]:=X(xs[(u+3)%4]);
+	}
+	return xs;
+}
+def loopBeforeBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	with { u:=j+1; } do {
+		for i in 0..2 { v:=(u+i)%4; xs[v]:=X(xs[v]); }
+		if u%2==0 { v:=dup(j); } else { xs[(u+3)%4]:=X(xs[(u+3)%4]); }
+	}
+	return xs;
+}
+def main(){
+	r:=(measure(reverse(movedInTwoWiths)(movedInTwoWiths((1,0,1,0):𝔹^4,1),1)),measure(reverse(movedInTwoWiths)(movedInTwoWiths((1,0,1,0):𝔹^4,2),2)),measure(reverse(forgottenInTwoWiths)(forgottenInTwoWiths((1,0,1,0):𝔹^4,1),1)),measure(reverse(nestedTwoWiths)(nestedTwoWiths((1,0,1,0):𝔹^4,1),1)),measure(reverse(definedAfterWiths)(definedAfterWiths((1,0,1,0):𝔹^4,3),3)),measure(reverse(forgottenInTwoWithsValue)(forgottenInTwoWithsValue((1,0,1,0):𝔹^4,1),1)),measure(reverse(movedBeforeWith)(movedBeforeWith((1,0,1,0):𝔹^4,1),1)),measure(movedInTwoWiths((1,0,1,0):𝔹^4,1)),measure(forgottenInTwoWiths((1,0,1,0):𝔹^4,1)),measure(definedAfterWiths((1,0,1,0):𝔹^4,3)),measure(forgottenInTwoWithsValue((1,0,1,0):𝔹^4,1)),measure(movedBeforeWith((1,0,1,0):𝔹^4,1)),measure(loopInWith((1,0,1,0):𝔹^4,1)),measure(reverse(loopInWith)(loopInWith((1,0,1,0):𝔹^4,1),1)),measure(loopBeforeBranch((1,0,1,0):𝔹^4,1)),measure(reverse(loopBeforeBranch)(loopBeforeBranch((1,0,1,0):𝔹^4,1),1)),measure(reverse(loopBeforeBranch)(loopBeforeBranch((0,1,1,0):𝔹^4,2),2)));
+	assert(r==((1,0,1,0),(1,0,1,0),(1,0,1,0),(1,0,1,0),(1,0,1,0),(1,0,1,0),(1,0,1,0),(1,0,0,0),(1,0,1,0),(1,0,0,0),(1,0,1,0),(0,0,0,1),(1,1,0,1),(1,0,1,0),(1,0,0,1),(1,0,1,0),(0,1,1,0)));
+	return r;
+}
