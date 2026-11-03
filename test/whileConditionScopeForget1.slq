@@ -1,0 +1,43 @@
+// args: --run
+
+def orCondition(n:!ℕ){
+	x:=H(0:𝔹);
+	q:=dup(x);
+	k:=0;
+	while false||k<2 { if n>0 { forget(q); assert(false); } k+=1; }
+	x:=H(x);
+	return measure(x);
+}
+
+def andCondition(n:!ℕ){
+	x:=H(0:𝔹);
+	q:=dup(x);
+	k:=0;
+	while k<2&&true { if n>0 { y:=dup(q); forget(y); forget(q); assert(false); } k+=1; }
+	x:=H(x);
+	return measure(x);
+}
+
+def ifCondition(n:!ℕ){
+	x:=H(0:𝔹);
+	q:=dup(x);
+	k:=0;
+	while if k<2 then true else false { if n>0 { forget(q); assert(false); } else { } k+=1; }
+	x:=H(x);
+	return measure(x);
+}
+
+def letCondition(n:!ℕ){
+	x:=H(0:𝔹);
+	q:=dup(x);
+	k:=0;
+	while let { b:=k<2; } in b { if n>0 { forget(q); assert(false); } k+=1; }
+	x:=H(x);
+	return measure(x);
+}
+
+def main(){
+	r:=(orCondition(0),andCondition(0),ifCondition(0),letCondition(0));
+	assert(r==(0,0,0,0));
+	return r;
+}
