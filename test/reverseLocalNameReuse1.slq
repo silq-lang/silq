@@ -1,0 +1,59 @@
+// args: --run
+
+def movedInWith(xs:𝔹^4,const j:!ℕ)mfree{
+	with { u:=dup(j); } do { v:=j+3; w:=move(v); }
+	v:=w+2;
+	v+=1;
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+def changedInLoop(xs:𝔹^4,const j:!ℕ)mfree{
+	with { u:=dup(j); } do { v:=j+3; w:=move(v); }
+	v:=w+2;
+	for i in 0..2 { v+=i; }
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+def redefinedInLoop(xs:𝔹^4,const j:!ℕ)mfree{
+	with { u:=dup(j); } do { v:=j+3; w:=move(v); }
+	v:=w+2;
+	for i in 0..1 { forget(v); v:=j+i; }
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+def forgottenInBody(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	w:=(v+j)%4;
+	with { u:=dup(v); } do { xs[(w+2)%4]:=X(xs[(w+2)%4]); y:=dup(w); }
+	with { s:=w+1; } do {
+		forget(v);
+		y+=j+1;
+		with { t:=(j+j)%4; } do { v:=j+3; forget(v); forget(y); }
+	}
+	return xs;
+}
+def redefinedInLoopValue(xs:𝔹^4,const j:!ℕ)mfree{
+	with { u:=dup(j); } do { v:=j+3; w:=move(v); }
+	v:=w+2;
+	for i in 0..1 { forget(v=w+2); v:=j+i; }
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+
+def forgottenInBodyValue(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	w:=(v+j)%4;
+	with { u:=dup(v); } do { xs[(w+2)%4]:=X(xs[(w+2)%4]); y:=dup(w); }
+	with { s:=w+1; } do {
+		forget(v=j*2);
+		y+=j+1;
+		with { t:=(j+j)%4; } do { v:=j+3; forget(v=j+3); forget(y=(j*3)%4+j+1); }
+	}
+	return xs;
+}
+
+def main(){
+	r:=(measure(reverse(movedInWith)(movedInWith((0,1,0,1):𝔹^4,1),1)),measure(reverse(changedInLoop)(changedInLoop((0,1,0,1):𝔹^4,2),2)),measure(reverse(redefinedInLoop)(redefinedInLoop((0,1,0,1):𝔹^4,1),1)),measure(reverse(forgottenInBody)(forgottenInBody((1,0,0,1):𝔹^4,3),3)),measure(reverse(redefinedInLoopValue)(redefinedInLoopValue((0,1,0,1):𝔹^4,1),1)),measure(reverse(forgottenInBodyValue)(forgottenInBodyValue((1,0,0,1):𝔹^4,3),3)));
+	assert(r==((0,1,0,1),(0,1,0,1),(0,1,0,1),(1,0,0,1),(0,1,0,1),(1,0,0,1)));
+	return r;
+}

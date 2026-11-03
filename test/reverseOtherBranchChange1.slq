@@ -1,0 +1,19 @@
+// args: --run
+
+def localChanged(x:𝔹^3,const c:!ℕ)qfree{
+	k:=c+1;
+	if c==2 { u:=c*2; if u==3 { x[1]:=X(x[1]); } if c==2 { k+=1; } else { u+=k; } }
+	x[k%3]:=X(x[k%3]);
+	return x;
+}
+def quantumBranch(x:𝔹^3,const c:!ℕ)qfree{
+	k:=c+1;
+	if c<3 { u:=c*2; if u%3==1 { x[1]:=X(x[1]); } if c==1 { k+=1; } else { u+=k; x[u%3]:=X(x[u%3]); } }
+	x[k%3]:=X(x[k%3]);
+	return x;
+}
+def main(){
+	r:=(measure(reverse(localChanged)(localChanged((1,0,0):𝔹^3,2),2)),measure(reverse(localChanged)(localChanged((1,1,0):𝔹^3,3),3)),measure(reverse(quantumBranch)(quantumBranch((1,0,1):𝔹^3,1),1)),measure(reverse(quantumBranch)(quantumBranch((0,1,1):𝔹^3,2),2)));
+	assert(r==((1,0,0),(1,1,0),(1,0,1),(0,1,1)));
+	return r;
+}
