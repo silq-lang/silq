@@ -1,0 +1,83 @@
+// args: --run
+
+def withBody(xs:𝔹^4,const j:!ℕ)mfree{
+	with { u:=j+1; } do { v:=u+1; xs[v%4]:=X(xs[v%4]); forget(v); }
+	v:=j*2;
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+
+def nestedWith(xs:𝔹^4,const j:!ℕ)mfree{
+	with { u:=1; } do {
+		with { t:=(u+j)%4; } do { xs[t]:=X(xs[t]); v:=t+1; }
+		forget(v);
+	}
+	v:=j*3;
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+
+def branches(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	if c { v:=j+1; xs[v%4]:=X(xs[v%4]); forget(v); } else { v:=j+2; forget(v); }
+	v:=j*2;
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+
+def checkedBranches(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	if c { v:=j+1; w:=v+1; forget(v); } else { v:=j+2; w:=dup(v); forget(v); }
+	v:=w+1;
+	xs[v%4]:=X(xs[v%4]);
+	w+=2;
+	xs[w%4]:=X(xs[w%4]);
+	return xs;
+}
+
+def loopBody(xs:𝔹^4,const j:!ℕ)mfree{
+	for i in 0..2 { v:=i+j; xs[v%4]:=X(xs[v%4]); }
+	v:=j*2;
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+
+def repeatBody(xs:𝔹^4,const j:!ℕ)mfree{
+	repeat 2 { v:=j+1; xs[v%4]:=X(xs[v%4]); xs[j%4]:=X(xs[j%4]); }
+	v:=j*2;
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+
+def movedInBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	if j%2==0 { v:=j+1; xs[v%4]:=X(xs[v%4]); w:=move(v); t:=w+1; } else { t:=j+1; }
+	v:=t+1;
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+
+def keptBeforeLoop(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+1;
+	xs[v%4]:=X(xs[v%4]);
+	forget(v);
+	for i in 0..2 { v:=i+j; xs[v%4]:=X(xs[v%4]); }
+	return xs;
+}
+
+def withBodyValue(xs:𝔹^4,const j:!ℕ)mfree{
+	with { u:=j+1; } do { v:=u+1; xs[v%4]:=X(xs[v%4]); forget(v=u+1); }
+	v:=j*2;
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+
+def branchesValue(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	if c { v:=j+1; xs[v%4]:=X(xs[v%4]); forget(v=j+1); } else { v:=j+2; forget(v=j+2); }
+	v:=j*2;
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+
+def main(){
+	r:=(measure(withBody((0,0,0,0):𝔹^4,1)),measure(reverse(withBody)((1,1,1,1):𝔹^4,1)),measure(nestedWith((1,0,0,0):𝔹^4,2)),measure(reverse(nestedWith)((0,0,1,1):𝔹^4,2)),measure(branches((1,0,0,0):𝔹^4,true,0)),measure(reverse(branches)((0,1,0,0):𝔹^4,true,0)),measure(reverse(branches)((1,1,1,1):𝔹^4,false,1)),measure(checkedBranches((0,0,0,0):𝔹^4,true,0)),measure(reverse(checkedBranches)((1,1,0,0):𝔹^4,false,1)),measure(loopBody((0,0,0,0):𝔹^4,1)),measure(reverse(loopBody)((0,1,0,0):𝔹^4,1)),measure(repeatBody((0,0,0,0):𝔹^4,1)),measure(reverse(repeatBody)((1,0,1,0):𝔹^4,1)),measure(movedInBranch((0,0,0,0):𝔹^4,1)),measure(reverse(movedInBranch)((1,1,1,1):𝔹^4,2)),measure(keptBeforeLoop((0,0,0,0):𝔹^4,1)),measure(reverse(keptBeforeLoop)((1,1,1,1):𝔹^4,1)),measure(withBodyValue((0,0,0,0):𝔹^4,1)),measure(reverse(withBodyValue)((1,1,1,1):𝔹^4,1)),measure(branchesValue((1,0,0,0):𝔹^4,true,0)),measure(reverse(branchesValue)((0,1,0,0):𝔹^4,true,0)),measure(reverse(branchesValue)((1,1,1,1):𝔹^4,false,1)));
+	assert(r==((0,0,1,1),(1,1,0,0),(1,0,1,1),(0,0,0,0),(0,1,0,0),(1,0,0,0),(1,1,0,1),(1,0,0,1),(0,0,0,0),(0,1,0,0),(0,0,0,0),(0,0,1,0),(1,0,0,0),(0,0,0,1),(1,0,1,0),(0,1,0,0),(1,0,1,1),(0,0,1,1),(1,1,0,0),(0,1,0,0),(1,0,0,0),(1,1,0,1)));
+	return r;
+}
