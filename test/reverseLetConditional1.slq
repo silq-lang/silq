@@ -1,0 +1,44 @@
+// args: --run
+
+def movedInBranch(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	t:=x&c;
+	u:=(let{ s:=(if c then c else t); } in s⊕x);
+	y⊕=u;
+	return (x,y);
+}
+
+def localFunctionInBranch(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	def g(const z:𝔹)qfree⇒z&c;
+	t:=x⊕c;
+	u:=(let{ s:=(if c then g(x) else t); } in s⊕x);
+	y⊕=u;
+	return (x,y);
+}
+
+def readInBranch(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	t:=x&c;
+	(u,w):=(let{ s:=(if c then c else t); } in s⊕x,t⊕c);
+	y⊕=u⊕w;
+	return (x,y);
+}
+
+def movedInBothBranches(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	t:=x&c;
+	w:=x⊕c;
+	u:=(let{ s:=(if c then t else w); } in s⊕x);
+	y⊕=u;
+	return (x,y);
+}
+
+def nestedLet(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	t:=x⊕c;
+	u:=(let{ s:=(let{ a:=(if c then c else t); } in a); } in s⊕x);
+	y⊕=u;
+	return (x,y);
+}
+
+def main(){
+	r:=(measure(reverse(movedInBranch)(1:𝔹,movedInBranch(1:𝔹,0:𝔹,1:𝔹))),measure(reverse(movedInBranch)(0:𝔹,movedInBranch(0:𝔹,1:𝔹,0:𝔹))),measure(reverse(localFunctionInBranch)(1:𝔹,localFunctionInBranch(1:𝔹,1:𝔹,0:𝔹))),measure(reverse(localFunctionInBranch)(0:𝔹,localFunctionInBranch(0:𝔹,1:𝔹,1:𝔹))),measure(reverse(readInBranch)(1:𝔹,readInBranch(1:𝔹,0:𝔹,0:𝔹))),measure(reverse(readInBranch)(0:𝔹,readInBranch(0:𝔹,1:𝔹,1:𝔹))),measure(reverse(movedInBothBranches)(1:𝔹,movedInBothBranches(1:𝔹,1:𝔹,0:𝔹))),measure(reverse(movedInBothBranches)(0:𝔹,movedInBothBranches(0:𝔹,1:𝔹,0:𝔹))),measure(reverse(nestedLet)(1:𝔹,nestedLet(1:𝔹,0:𝔹,1:𝔹))),measure(reverse(nestedLet)(0:𝔹,nestedLet(0:𝔹,1:𝔹,0:𝔹))),measure(movedInBranch(1:𝔹,0:𝔹,1:𝔹)),measure(movedInBranch(0:𝔹,1:𝔹,0:𝔹)),measure(localFunctionInBranch(1:𝔹,1:𝔹,0:𝔹)),measure(readInBranch(1:𝔹,0:𝔹,0:𝔹)),measure(movedInBothBranches(1:𝔹,1:𝔹,0:𝔹)),measure(movedInBothBranches(0:𝔹,1:𝔹,0:𝔹)),measure(nestedLet(0:𝔹,1:𝔹,0:𝔹)));
+	assert(r==((0,1),(1,0),(1,0),(1,1),(0,0),(1,1),(1,0),(1,0),(0,1),(1,0),(0,0),(1,1),(1,0),(0,0),(1,0),(1,0),(1,0)));
+	return r;
+}

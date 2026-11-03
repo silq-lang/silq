@@ -3328,6 +3328,8 @@ struct Interpreter(QState){
 						// (it is subsequently released via `consumeOnRead`, cf. `consumeConst`)
 						if(result.isValid&&!result.isClassical()&&let.constLookup&&!let.implicitDup)
 							result=result.dup(qstate);
+						else if(result.isValid&&!result.isClassical()&&let.s.blscope_.forgottenVars.length)
+							result=result.toVar(qstate,false); // (also a value computed from block-locals, e.g., `a&x` in `let{ a:=t; } in a&x`)
 						qstate.forgetVars(let.s.blscope_.forgottenVars);
 					}
 				}

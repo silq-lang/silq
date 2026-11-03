@@ -1,0 +1,35 @@
+// args: --run
+
+def xorResult(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	t:=x⊕c;
+	u:=(let{ s:=(let{ a:=t; } in a⊕x); } in s);
+	y⊕=u;
+	return (x,y);
+}
+
+def andResult(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	t:=x⊕c;
+	u:=(let{ s:=(let{ a:=t; } in a&x); } in s);
+	y⊕=u;
+	return (x,y);
+}
+
+def tupleResult(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	t:=x⊕c;
+	(u,v):=(let{ s:=(let{ a:=t; } in (a⊕x,a&c)); } in s);
+	y⊕=u⊕v;
+	return (x,y);
+}
+
+def conditionalResult(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	t:=x⊕c;
+	u:=(let{ s:=(let{ a:=(if c then c else t); } in a⊕x); } in s);
+	y⊕=u;
+	return (x,y);
+}
+
+def main(){
+	r:=(measure(xorResult(0:𝔹,1:𝔹,0:𝔹)),measure(xorResult(1:𝔹,1:𝔹,1:𝔹)),measure(xorResult(1:𝔹,0:𝔹,0:𝔹)),measure(andResult(0:𝔹,1:𝔹,0:𝔹)),measure(andResult(1:𝔹,1:𝔹,1:𝔹)),measure(andResult(0:𝔹,0:𝔹,1:𝔹)),measure(tupleResult(1:𝔹,1:𝔹,0:𝔹)),measure(tupleResult(1:𝔹,0:𝔹,0:𝔹)),measure(tupleResult(0:𝔹,1:𝔹,1:𝔹)),measure(conditionalResult(1:𝔹,0:𝔹,0:𝔹)),measure(conditionalResult(0:𝔹,1:𝔹,1:𝔹)),measure(conditionalResult(1:𝔹,1:𝔹,0:𝔹)),measure(reverse(xorResult)(1:𝔹,xorResult(1:𝔹,0:𝔹,1:𝔹))),measure(reverse(tupleResult)(1:𝔹,tupleResult(1:𝔹,1:𝔹,0:𝔹))));
+	assert(r==((1,0),(1,0),(0,1),(1,1),(1,1),(0,1),(1,1),(0,0),(1,1),(0,1),(1,1),(1,0),(0,1),(1,0)));
+	return r;
+}
