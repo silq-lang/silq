@@ -5,10 +5,10 @@ def main(){
 	return x as !ℕ;
 }
 
-def foo(){ /// error
+def foo(){
 	n := 32;
 	x := 0: !int[n];
-	return x;
+	return x; /// error
 }
 
 def main2(n:!ℕ){

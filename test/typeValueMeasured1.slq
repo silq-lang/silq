@@ -1,0 +1,90 @@
+// args: --run
+
+def userExample(){
+	t:=uint[1+measure(H(0)) as !ℕ];
+	x:=1:t;
+	x[0]:=H(x[0]);
+	y:=dup(x);
+	y+=x;
+	(a,b):=measure(x,y) as !ℕ^2;
+	return b==0||a==1&&b==2;
+}
+def inLoop(){
+	r:=0;
+	repeat 3 {
+		t:=uint[1+measure(H(0)) as !ℕ];
+		x:=3:t;
+		r+=(measure(x) as !ℕ)%2;
+	}
+	return r;
+}
+def doWhile(){
+	k:=0;
+	do{
+		t:=uint[1+measure(H(0)) as !ℕ];
+		x:=3:t;
+		v:=measure(x) as !ℕ;
+		k+=1;
+	}while v==1&&k<5;
+	return v%2;
+}
+def closure(){
+	t:=uint[1+measure(H(0)) as !ℕ];
+	f:=λ(const x:t)⇒x+x;
+	x:=1:t;
+	y:=f(x);
+	(a,b):=measure(x,y) as !ℕ^2;
+	return (a,b%2);
+}
+def copied(){
+	t:=uint[1+measure(H(0)) as !ℕ];
+	s:=t;
+	x:=1:t;
+	y:=1:s;
+	z:=x+y;
+	return (measure(z) as !ℕ)%2;
+}
+def withBody(){
+	t:=uint[1+measure(H(0)) as !ℕ];
+	x:=1:t;
+	with{ y:=dup(x); }do{ z:=y+y; w:=(measure(z) as !ℕ)%2; }
+	return (w,measure(x) as !ℕ);
+}
+def converted(){
+	r:=0;
+	for i in 0..3 {
+		t:=uint[i+measure(H(0)) as !ℕ];
+		x:=i as t;
+		r+=measure(x) as !ℕ;
+	}
+	return r;
+}
+def earlyReturn(n:!ℕ){
+	t:=uint[1+measure(H(0)) as !ℕ];
+	x:=n as t;
+	if measure(H(0)) { return 1; }
+	return (measure(x) as !ℕ)%2;
+}
+def measuredType(q:𝔹){
+	return uint[1+measure(q) as !ℕ];
+}
+def zero[τ:qtype]()qfree⇒0;
+def typeResult(){
+	t:=measuredType(H(0));
+	(s,n):=(uint[1+measure(H(0)) as !ℕ],2);
+	return zero[t]()+zero[s]()+n;
+}
+def increment[n:!ℕ](x:uint[n]){
+	x+=1;
+	return x;
+}
+def inferredLength(){
+	t:=uint[1+measure(H(0)) as !ℕ];
+	y:=increment(0:t);
+	return measure(y) as !ℕ;
+}
+def main(){
+	r:=(userExample(),inLoop(),doWhile(),closure(),copied(),withBody(),converted(),earlyReturn(3),typeResult(),inferredLength());
+	assert(r==(true,3,1,(1,0),0,(0,1),3,1,2,1));
+	return r;
+}

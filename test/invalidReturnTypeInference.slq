@@ -1,6 +1,6 @@
-def foo(){ /// error
+def foo(){
 	n := 0;
-	return 0: int[n];
+	return 0: int[n]; /// error
 }
 
 def main[n:!ℕ]():int[n]{

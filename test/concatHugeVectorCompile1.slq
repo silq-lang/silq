@@ -1,0 +1,18 @@
+
+def classicalVector(){
+	x:=vector(5,0:!𝔹);
+	y:=x~vector(999999999999,0:!𝔹);
+	return y:!𝔹^1000000000004;
+}
+def quantumVector(){
+	x:=vector(5,0:𝔹);
+	y:=x~vector(999999999999,0:𝔹);
+	return y:𝔹^1000000000004;
+}
+def toArray(x:!𝔹^999999999999):!𝔹[]{
+	return x;
+}
+def promote(x:!𝔹^999999999999):𝔹^999999999999{
+	return x;
+}
+def main(){ }

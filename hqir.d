@@ -4257,6 +4257,20 @@ class ScopeWriter {
 		assert(false, format("Literal %s", e.type));
 	}
 
+	Value implNondetType(ast_exp.CallExp e) { // (`uint[e]` for an argument that is not deterministic, e.g., `uint[measure(x) as !ℕ]`: the type of this evaluation of it, see `ast_sem.lowerNondeterministicType`)
+		auto name = Id.intern(ctx.allocName("__arg"));
+		vars[name] = Variable(null, genExpr(e.arg));
+		auto arg = new ast_exp.Identifier(name);
+		arg.loc = e.arg.loc;
+		arg.type = e.arg.type;
+		arg.setSemCompleted();
+		auto ty = new ast_exp.CallExp(e.e, arg, true, e.isClassical_);
+		ty.loc = e.loc;
+		ty.type = e.type;
+		ty.setSemCompleted();
+		return implType(ty);
+	}
+
 	Value implType(ast_exp.Expression e) {
 		if(ast_ty.isQNumeric(e)) return valNewC(null);
 		return valNewC(getRTTI(e).packed);
@@ -4527,6 +4541,7 @@ class ScopeWriter {
 				case "uint":
 				case "\u2124mod":
 				case "\u2124star": {
+					if(!e.arg.isDeterministic()) return implNondetType(e);
 					auto r = getRTTI(e).packed; // (before its argument consumes variables that it mentions, as for `ast_exp.VectorTy`, e.g., `uint[move(n)]`)
 					if(!qcg.inType) {
 						genExpr(e.arg);

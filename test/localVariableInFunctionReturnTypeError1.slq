@@ -1,6 +1,6 @@
-def main(){ /// error
+def main(){
 	n:=2;
-	return 0:int[n];
+	return 0:int[n]; /// error
 }
 
 f:=(){ m:=2; return 0:int[m]; }; /// error
