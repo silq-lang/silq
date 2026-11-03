@@ -1,0 +1,62 @@
+// args: --run
+
+def indexed(t:!ℕ^2,i:!ℕ){ return vector(t[i],0:𝔹); }
+def element(a:!ℕ[],i:!ℕ){ return vector(a[i],0:𝔹); }
+def suffix(t:!ℕ^3,i:!ℕ){ return vector(t[i..3].length,0:𝔹); }
+def size(a:!ℕ[]){ return vector(a.length,0:𝔹); }
+__lengths:=(1,2);
+__factor:=1;
+
+def tupleArgument(n:!ℕ,i:!ℕ){
+	x:=indexed((n,n+1),i);
+	return measure(x);
+}
+
+def variableArgument(n:!ℕ,i:!ℕ){
+	t:=(n,n+1);
+	x:=indexed(t,i);
+	return measure(x);
+}
+
+def indexArgument(t:!ℕ^2,i:!ℕ){
+	x:=indexed(t,i);
+	return measure(x);
+}
+
+def arrayArgument(n:!ℕ,i:!ℕ){
+	a:=[n,n+1,n+2];
+	x:=element(a,i);
+	return measure(x);
+}
+
+def slicedArgument(n:!ℕ,i:!ℕ){
+	x:=suffix((n,n+1,n+2),i);
+	return measure(x);
+}
+
+def lengthArgument(n:!ℕ){
+	a:=array(n,0:!ℕ);
+	x:=size(a);
+	return measure(x);
+}
+
+def constantIndexed(i:!ℕ){
+	x:=vector(__lengths[i],0:𝔹);
+	return measure(x);
+}
+
+def constantInLet(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	return x coerce 𝔹^(let { a:=dup(n); a=__lengths[0]*a; } in a);
+}
+
+def measuredInLet(n:!ℕ){
+	x:=vector(n,0:𝔹) coerce 𝔹^(let { a:=dup(n); a=__factor*a; } in a);
+	return measure(x);
+}
+
+def main(){
+	r:=(tupleArgument(1,0),tupleArgument(1,1),variableArgument(2,1),indexArgument((2,3),1),arrayArgument(1,2),slicedArgument(4,1),lengthArgument(2),constantIndexed(1),measure(constantInLet(2)),measuredInLet(2));
+	assert(r==((0,),(0,0),(0,0,0),(0,0,0),(0,0,0),(0,0),(0,0),(0,0),(0,0),(0,0)));
+	return r;
+}

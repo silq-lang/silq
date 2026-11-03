@@ -3547,8 +3547,8 @@ class ScopeWriter {
 
 	Value implExpr(ast_exp.IndexExp e) {
 		assert(!e.byRef && !e.replacements.length, "IndexExp(byRef=true) not in simple DefineExp");
-		assert(e.e.constLookup, "Indexed value must be const");
-		assert(e.a.constLookup, "Index must be const");
+		assert(e.e.constLookup || !typeHasQuantum(e.e.type), "Indexed value must be const"); // (a classical value can be consumed by each use, e.g., an argument that is substituted into a return type, see `Identifier.substituteImpl`)
+		assert(e.a.constLookup || !typeHasQuantum(e.a.type), "Index must be const");
 
 		if(ast_ty.isEmpty(e.type)) {
 			// Index out of bounds?
@@ -4019,9 +4019,9 @@ class ScopeWriter {
 
 	Value implExpr(ast_exp.SliceExp e) {
 		Expression arg = e.e;
-		assert(arg.constLookup, "TODO non-lifted slicing");
-		assert(e.l.constLookup, "slice left index must be const");
-		assert(e.r.constLookup, "slice right index must be const");
+		assert(arg.constLookup || !typeHasQuantum(arg.type), "TODO non-lifted slicing"); // (as for indexing)
+		assert(e.l.constLookup || !typeHasQuantum(e.l.type), "slice left index must be const");
+		assert(e.r.constLookup || !typeHasQuantum(e.r.type), "slice right index must be const");
 
 		auto v = genExpr(arg);
 
@@ -4362,7 +4362,7 @@ class ScopeWriter {
 	Value implExpr(ast_exp.FieldExp e) {
 		assert(e.f.name == "length", format("Unsupported field: %s", e.f.name));
 		assert(e.type == ast_ty_Nt());
-		assert(e.e.constLookup);
+		assert(e.e.constLookup || !typeHasQuantum(e.e.type)); // (as for indexing)
 		auto v = genExpr(e.e);
 		CReg r;
 		auto ety = ast_exp.unfoldTypeVariable(e.e.type); // (the structure of the value of a type variable)
