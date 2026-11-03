@@ -1,0 +1,37 @@
+// args: --run
+
+def h(){
+	a:=(vector(2,0:𝔹),)[1];
+	return (measure(a),2);
+}
+
+def equal(c:!𝔹){
+	r:=false;
+	if c { r=h()==((1,1),0); }
+	return r;
+}
+
+def notEqual(c:!𝔹){
+	r:=false;
+	if c { r=((1,1),0)!=h(); }
+	return r;
+}
+
+def less(c:!𝔹){
+	r:=false;
+	if c { r=h()<((1,1),0); }
+	return r;
+}
+
+def component(c:!𝔹,y:!ℕ){
+	t:=(1,2);
+	r:=false;
+	if c { r=(y,t[2])==(1,2); }
+	return r;
+}
+
+def main(){
+	r:=(equal(false),notEqual(false),less(false),component(false,1));
+	assert(r==(false,false,false,false));
+	return r;
+}
