@@ -1,0 +1,39 @@
+// args: --run
+
+def receivedMoved(xs:𝔹^4,const j:!ℕ)mfree{
+	with { u:=j+2; } do {
+		with { t:=dup(u); } do { xs[(j*2)%4]:=X(xs[(j*2)%4]); v:=dup(u); w:=u*2; }
+		y:=move(v);
+	}
+	w+=y;
+	xs[w%4]:=X(xs[w%4]);
+	return xs;
+}
+
+def receivedMovedInWith(xs:𝔹^4,const j:!ℕ)mfree{
+	with { u:=j+2; } do {
+		with { t:=dup(u); } do { xs[(j*2)%4]:=X(xs[(j*2)%4]); v:=dup(u); w:=u*2; }
+		with { s:=1; } do { y:=move(v); }
+	}
+	w+=y;
+	xs[w%4]:=X(xs[w%4]);
+	return xs;
+}
+
+def receivedInBranch(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	if c {
+		with { t:=j+1; } do { xs[t%4]:=X(xs[t%4]); v:=dup(t); w:=t*2; }
+		y:=move(v);
+	} else {
+		w:=dup(j); y:=j+1;
+	}
+	w+=y;
+	xs[w%4]:=X(xs[w%4]);
+	return xs;
+}
+
+def main(){
+	r:=(measure(receivedMoved((0,0,0,0):𝔹^4,1)),measure(reverse(receivedMoved)((1,1,1,1):𝔹^4,3)),measure(receivedMovedInWith((0,0,0,0):𝔹^4,1)),measure(reverse(receivedMovedInWith)((1,1,1,1):𝔹^4,3)),measure(receivedInBranch((0,0,0,0):𝔹^4,true,0)),measure(reverse(receivedInBranch)((1,1,1,1):𝔹^4,true,2)),measure(reverse(receivedInBranch)((1,1,1,1):𝔹^4,false,2)));
+	assert(r==((0,1,1,0),(1,1,0,0),(0,1,1,0),(1,1,0,0),(0,1,0,1),(1,0,1,0),(1,0,1,1)));
+	return r;
+}
