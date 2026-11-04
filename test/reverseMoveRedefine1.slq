@@ -2,7 +2,7 @@
 
 def f(xs:𝔹^4,const j:!ℕ)mfree{
 	v:=j*2;
-	if j%2==0 { /// TODO
+	if j%2==0 {
 		w:=move(v);
 		v:=w+1;
 	} else { w:=move(v); }
@@ -11,6 +11,6 @@ def f(xs:𝔹^4,const j:!ℕ)mfree{
 }
 
 def main(){
-	r:=measure(reverse(f)((1,0,1,0):𝔹^4,0)); /// TODO
+	r:=measure(reverse(f)((1,0,1,0):𝔹^4,0));
 	return r;
 }

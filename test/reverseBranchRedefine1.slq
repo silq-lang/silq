@@ -1,0 +1,69 @@
+// args: --run
+
+def movedInBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	if j%2==0 { w:=move(v); v:=w+1; } else { w:=move(v); }
+	xs[w%4]:=X(xs[w%4]);
+	return xs;
+}
+def forgottenInBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+1;
+	if j%2==0 { w:=v*2; forget(v); v:=w+j; } else { w:=move(v); }
+	xs[w%4]:=X(xs[w%4]);
+	return xs;
+}
+def bothBranches(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*3;
+	if j%2==0 { w:=move(v); v:=w+1; } else { w:=v+2; forget(v); v:=w*2; }
+	xs[w%4]:=X(xs[w%4]);
+	return xs;
+}
+def nestedBranches(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	if j%3==0 {
+		if j%2==0 { w:=move(v); v:=w+1; } else { w:=move(v); }
+	} else { w:=move(v); }
+	xs[(w+1)%4]:=X(xs[(w+1)%4]);
+	return xs;
+}
+def readBefore(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	xs[(v+3)%4]:=X(xs[(v+3)%4]);
+	if j%2==0 { w:=move(v); v:=w+1; } else { w:=move(v); }
+	xs[w%4]:=X(xs[w%4]);
+	return xs;
+}
+def inWithBody(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	with { u:=dup(j); } do {
+		if u%2==0 { w:=move(v); v:=w+u; } else { w:=move(v); }
+		xs[w%4]:=X(xs[w%4]);
+		forget(w);
+	}
+	return xs;
+}
+def inLoop(xs:𝔹^4,const j:!ℕ)mfree{
+	for i in 0..2 {
+		v:=i+j;
+		if (i+j)%2==0 { w:=move(v); v:=w+1; } else { w:=move(v); }
+		xs[w%4]:=X(xs[w%4]);
+		forget(w);
+	}
+	return xs;
+}
+def movedInNestedBranch(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	v:=(j+j)%4;
+	w:=dup(j);
+	if j%2==1 {
+		if c { (t,v):=(1,v); }
+		v+=(w+j)%4;
+		(s,v):=(dup(w),v);
+	} else { s:=dup(w); forget(v); }
+	xs[(w+s)%4]:=X(xs[(w+s)%4]);
+	return xs;
+}
+def main(){
+	r:=(measure(movedInBranch((1,0,1,0):𝔹^4,0)),measure(reverse(movedInBranch)(movedInBranch((1,0,1,0):𝔹^4,2),2)),measure(reverse(movedInBranch)(movedInBranch((0,1,1,0):𝔹^4,1),1)),measure(forgottenInBranch((1,0,1,0):𝔹^4,2)),measure(reverse(forgottenInBranch)(forgottenInBranch((1,0,1,0):𝔹^4,2),2)),measure(reverse(forgottenInBranch)(forgottenInBranch((0,1,1,0):𝔹^4,3),3)),measure(bothBranches((1,0,1,0):𝔹^4,2)),measure(reverse(bothBranches)(bothBranches((1,0,1,0):𝔹^4,2),2)),measure(reverse(bothBranches)(bothBranches((0,1,1,0):𝔹^4,1),1)),measure(nestedBranches((1,0,1,0):𝔹^4,6)),measure(reverse(nestedBranches)(nestedBranches((1,0,1,0):𝔹^4,6),6)),measure(reverse(nestedBranches)(nestedBranches((0,1,1,0):𝔹^4,3),3)),measure(reverse(nestedBranches)(nestedBranches((1,1,0,0):𝔹^4,4),4)),measure(readBefore((1,0,1,0):𝔹^4,2)),measure(reverse(readBefore)(readBefore((1,0,1,0):𝔹^4,2),2)),measure(reverse(readBefore)(readBefore((0,1,1,0):𝔹^4,1),1)),measure(inWithBody((1,0,1,0):𝔹^4,2)),measure(reverse(inWithBody)(inWithBody((1,0,1,0):𝔹^4,2),2)),measure(reverse(inWithBody)(inWithBody((0,1,1,0):𝔹^4,1),1)),measure(inLoop((1,0,1,0):𝔹^4,1)),measure(reverse(inLoop)(inLoop((1,0,1,0):𝔹^4,1),1)),measure(reverse(inLoop)(inLoop((0,1,1,0):𝔹^4,2),2)),measure(movedInNestedBranch((1,0,0,0):𝔹^4,true,3)),measure(reverse(movedInNestedBranch)(movedInNestedBranch((0,1,1,0):𝔹^4,false,1),false,1)),measure(reverse(movedInNestedBranch)(movedInNestedBranch((1,1,0,0):𝔹^4,true,2),true,2)));
+	assert(r==((0,0,1,0),(1,0,1,0),(0,1,1,0),(1,0,0,0),(1,0,1,0),(0,1,1,0),(1,0,0,0),(1,0,1,0),(0,1,1,0),(1,1,1,0),(1,0,1,0),(0,1,1,0),(1,1,0,0),(0,0,1,1),(1,0,1,0),(0,1,1,0),(0,0,1,0),(1,0,1,0),(0,1,1,0),(1,1,0,0),(1,0,1,0),(0,1,1,0),(1,0,1,0),(0,1,1,0),(1,1,0,0)));
+	return r;
+}
