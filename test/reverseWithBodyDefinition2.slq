@@ -1,0 +1,83 @@
+// args: --run
+
+def deadUse(xs:𝔹^4,const j:!ℕ)mfree{
+	if j%4==1 {
+		v:=dup(j);
+		xs[(v+2)%4]:=X(xs[(v+2)%4]);
+	}
+	with { u:=j*2; } do {
+		xs[2]:=X(xs[2]);
+		v:=u*2;
+	}
+	t:=v+j;
+	return xs;
+}
+def forgotten(xs:𝔹^4,const j:!ℕ)mfree{
+	if j%4==1 {
+		v:=dup(j);
+		xs[(v+2)%4]:=X(xs[(v+2)%4]);
+	}
+	with { u:=j*2; } do {
+		xs[2]:=X(xs[2]);
+		v:=u*2;
+	}
+	forget(v);
+	return xs;
+}
+def deadTuple(xs:𝔹^4,const j:!ℕ)mfree{
+	if j%4==1 {
+		v:=dup(j);
+		xs[(v+2)%4]:=X(xs[(v+2)%4]);
+	}
+	with { u:=j*2; } do {
+		xs[2]:=X(xs[2]);
+		v:=u*2;
+	}
+	(t,s):=(v+j,v*2);
+	t+=1;
+	return xs;
+}
+def nested(xs:𝔹^4,const j:!ℕ)mfree{
+	if j%4==1 {
+		v:=dup(j);
+		xs[(v+2)%4]:=X(xs[(v+2)%4]);
+	}
+	with { u:=j*2; } do {
+		with { s:=u+1; } do {
+			xs[2]:=X(xs[2]);
+			v:=s*2;
+		}
+	}
+	t:=v+j;
+	return xs;
+}
+def twoDefinitions(xs:𝔹^4,const j:!ℕ)mfree{
+	if j%4==1 {
+		v:=dup(j);
+		xs[(v+2)%4]:=X(xs[(v+2)%4]);
+	}
+	with { u:=j*2; } do {
+		xs[2]:=X(xs[2]);
+		v:=u*2;
+		w:=v+1;
+	}
+	t:=v+w;
+	return xs;
+}
+def loopBefore(xs:𝔹^4,const j:!ℕ)mfree{
+	for i in 0..2 {
+		v:=dup(i);
+		xs[(v+j)%4]:=X(xs[(v+j)%4]);
+	}
+	with { u:=j*2; } do {
+		xs[(u+1)%4]:=X(xs[(u+1)%4]);
+		v:=u*2;
+	}
+	t:=v+j;
+	return xs;
+}
+def main(){
+	r:=(measure(deadUse((1,1,0,1):𝔹^4,1)),measure(reverse(deadUse)(deadUse((1,1,0,1):𝔹^4,1),1)),measure(reverse(deadUse)(deadUse((1,1,0,1):𝔹^4,2),2)),measure(forgotten((1,1,0,1):𝔹^4,1)),measure(reverse(forgotten)(forgotten((1,1,0,1):𝔹^4,1),1)),measure(reverse(forgotten)(forgotten((1,1,0,1):𝔹^4,2),2)),measure(deadTuple((1,1,0,1):𝔹^4,1)),measure(reverse(deadTuple)(deadTuple((1,1,0,1):𝔹^4,1),1)),measure(reverse(deadTuple)(deadTuple((1,1,0,1):𝔹^4,2),2)),measure(nested((1,1,0,1):𝔹^4,1)),measure(reverse(nested)(nested((1,1,0,1):𝔹^4,1),1)),measure(reverse(nested)(nested((1,1,0,1):𝔹^4,2),2)),measure(twoDefinitions((1,1,0,1):𝔹^4,1)),measure(reverse(twoDefinitions)(twoDefinitions((1,1,0,1):𝔹^4,1),1)),measure(reverse(twoDefinitions)(twoDefinitions((1,1,0,1):𝔹^4,2),2)),measure(loopBefore((1,1,0,1):𝔹^4,1)),measure(reverse(loopBefore)(loopBefore((1,1,0,1):𝔹^4,1),1)),measure(reverse(loopBefore)(loopBefore((1,1,0,1):𝔹^4,2),2)));
+	assert(r==((1,1,1,0),(1,1,0,1),(1,1,0,1),(1,1,1,0),(1,1,0,1),(1,1,0,1),(1,1,1,0),(1,1,0,1),(1,1,0,1),(1,1,1,0),(1,1,0,1),(1,1,0,1),(1,1,1,0),(1,1,0,1),(1,1,0,1),(1,0,1,0),(1,1,0,1),(1,1,0,1)));
+	return r;
+}

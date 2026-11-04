@@ -1,0 +1,23 @@
+// args: --run
+
+def direct(i:!ℤ){
+	x:=vector((i+1) sub 0,false);
+	return x.length;
+}
+def sliceConcat(xs:!ℕ[],i:!ℕ){
+	return (xs[0..i-1]~xs[i-1..xs.length])[i];
+}
+def shifted(xs:!ℕ^2,i:!ℕ){
+	j:=i-1;
+	return (xs[0..j]~xs[j..xs.length]).length;
+}
+def loop(a:!ℕ){
+	xs:=[a];
+	for i in 1..3{ xs~=[(xs[0..i-1]~xs[i-1..xs.length])[i-1]+1]; }
+	return xs;
+}
+def main(){
+	r:=(direct(2),sliceConcat([1,2,3],2),shifted((1,2),1),loop(5));
+	assert(r==(3,3,2,[5,6,7]));
+	return r;
+}
