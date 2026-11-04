@@ -1,0 +1,91 @@
+// args: --run
+
+def movedAfterWith(xs:𝔹^4,const j:!ℕ)mfree{
+	with { u:=dup(j); } do {
+		with { t:=u+j; } do {
+			v:=t+1;
+		}
+		w:=move(v);
+		v:=2;
+	}
+	xs[v%4]:=X(xs[v%4]);
+	xs[(v+w)%4]:=X(xs[(v+w)%4]);
+	return xs;
+}
+
+def forgottenAfterWith(xs:𝔹^4,const j:!ℕ)mfree{
+	with { u:=dup(j); } do {
+		with { t:=u+j; } do {
+			v:=t+1;
+		}
+		w:=dup(v);
+		forget(v);
+		v:=2;
+	}
+	xs[v%4]:=X(xs[v%4]);
+	xs[(v+w)%4]:=X(xs[(v+w)%4]);
+	return xs;
+}
+
+def forgottenWithValue(xs:𝔹^4,const j:!ℕ)mfree{
+	with { u:=dup(j); } do {
+		with { t:=u+j; } do {
+			v:=t+1;
+		}
+		w:=dup(v);
+		forget(v=w);
+		v:=2;
+	}
+	xs[v%4]:=X(xs[v%4]);
+	xs[(v+w)%4]:=X(xs[(v+w)%4]);
+	return xs;
+}
+
+def movedInBranch(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	if c {
+		with { t:=dup(j); } do {
+			v:=t+1;
+		}
+		w:=move(v);
+		v:=2;
+	} else {
+		v:=1;
+		w:=2;
+	}
+	xs[v%4]:=X(xs[v%4]);
+	xs[(v+w)%4]:=X(xs[(v+w)%4]);
+	return xs;
+}
+
+def nestedTwice(xs:𝔹^4,const j:!ℕ)mfree{
+	with { u:=dup(j); } do {
+		with { s:=u+1; } do {
+			with { t:=s+j; } do {
+				v:=t+2;
+			}
+		}
+		w:=move(v);
+		v:=2;
+	}
+	xs[v%4]:=X(xs[v%4]);
+	xs[(v+w)%4]:=X(xs[(v+w)%4]);
+	return xs;
+}
+
+def movedInLoop(xs:𝔹^4,const j:!ℕ)mfree{
+	for i in 0..2 {
+		with { t:=i+j; } do {
+			v:=t+1;
+		}
+		w:=move(v);
+		v:=2;
+		xs[(v+w)%4]:=X(xs[(v+w)%4]);
+	}
+	return xs;
+}
+
+def main(){
+	r:=(measure(movedAfterWith((1,0,0,0):𝔹^4,1)),measure(reverse(movedAfterWith)((0,0,1,0):𝔹^4,1)),measure(forgottenAfterWith((1,0,0,0):𝔹^4,1)),measure(reverse(forgottenAfterWith)((0,0,1,0):𝔹^4,1)),measure(forgottenWithValue((1,0,0,0):𝔹^4,1)),measure(reverse(forgottenWithValue)((0,0,1,0):𝔹^4,1)),measure(movedInBranch((1,0,0,0):𝔹^4,true,1)),measure(reverse(movedInBranch)((0,0,1,0):𝔹^4,true,1)),measure(nestedTwice((1,0,0,0):𝔹^4,1)),measure(reverse(nestedTwice)((0,0,1,0):𝔹^4,1)),measure(movedInLoop((1,0,0,0):𝔹^4,1)),measure(reverse(movedInLoop)((0,0,1,0):𝔹^4,1)));
+	assert(r==((1,1,1,0),(0,1,0,0),(1,1,1,0),(0,1,0,0),(1,1,1,0),(0,1,0,0),(0,0,1,0),(1,0,0,0),(1,0,1,1),(0,0,0,1),(0,1,0,0),(1,1,1,0)));
+	return r;
+}
