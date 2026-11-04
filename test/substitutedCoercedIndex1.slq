@@ -1,0 +1,35 @@
+// args: --run
+
+def integers(t:!ℤ^2,i:!ℕ){ return vector(t[i] coerce !ℕ,0:𝔹); }
+def fromArray(a:!ℤ[],i:!ℕ){ return vector(a[i] coerce !ℕ,0:𝔹); }
+__d:=(2,1);
+def measured(i:!ℕ){
+	x:=integers((2,1),i);
+	return measure(x);
+}
+def annotated(i:!ℕ){
+	x:=integers((2,1),i);
+	return x:!𝔹^((2,1)[i] coerce !ℕ);
+}
+def duplicated(i:!ℕ){
+	x:=integers((2,1),i);
+	return dup(x);
+}
+def variable(i:!ℕ){
+	t:=(2,1);
+	x:=integers(t,i);
+	return measure(x);
+}
+def topLevel(i:!ℕ){
+	x:=integers(__d,i);
+	return measure(x);
+}
+def array(i:!ℕ){
+	x:=fromArray([2,1],i);
+	return measure(x);
+}
+def main(){
+	r:=(measured(0),measured(1),annotated(1),duplicated(0),variable(1),topLevel(1),array(0));
+	assert(r==([0,0],[0],[0],[0,0],[0],[0],[0,0]));
+	return r;
+}
