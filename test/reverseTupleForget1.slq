@@ -1,0 +1,45 @@
+// args: --run
+
+def g(const a:𝔹)qfree:𝔹⇒a⊕1;
+def localFunction(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	f:=λ(const z:𝔹)qfree⇒z⊕c;
+	def k(const z:𝔹)qfree⇒z&f(c);
+	(t,u):=(f(x),g(k(x)));
+	y⊕=t&u;
+	return (x,y);
+}
+def conditional(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	f:=λ(const z:𝔹)qfree⇒z⊕c;
+	def k(const z:𝔹)qfree⇒z&f(c);
+	(t,u):=((if c then f(x) else dup(x)),g(k(x)));
+	y⊕=t&u;
+	return (x,y);
+}
+def chained(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	a:=x⊕c;
+	b:=a⊕c;
+	(t,u):=((if c then a⊕x else dup(x)),g(b));
+	y⊕=t&u;
+	return (x,y);
+}
+def threeComponents(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	f:=λ(const z:𝔹)qfree⇒z⊕c;
+	def k(const z:𝔹)qfree⇒z&f(c);
+	(t,u,w):=(f(x),dup(c),g(k(x)));
+	y⊕=t&w;
+	y⊕=u;
+	return (x,y);
+}
+def nested(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	a:=x⊕c;
+	b:=a⊕c;
+	(t,(u,w)):=((if c then a⊕x else dup(x)),(dup(c),g(b)));
+	y⊕=t&w;
+	y⊕=u;
+	return (x,y);
+}
+def main(){
+	r:=(measure(localFunction(1:𝔹,0:𝔹,0:𝔹)),measure(reverse(localFunction)(1:𝔹,localFunction(1:𝔹,1:𝔹,0:𝔹))),measure(conditional(1:𝔹,0:𝔹,0:𝔹)),measure(reverse(conditional)(0:𝔹,conditional(0:𝔹,1:𝔹,1:𝔹))),measure(chained(1:𝔹,0:𝔹,0:𝔹)),measure(reverse(chained)(1:𝔹,chained(1:𝔹,1:𝔹,0:𝔹))),measure(threeComponents(0:𝔹,1:𝔹,0:𝔹)),measure(reverse(threeComponents)(1:𝔹,threeComponents(1:𝔹,0:𝔹,1:𝔹))),measure(nested(0:𝔹,1:𝔹,1:𝔹)),measure(reverse(nested)(1:𝔹,nested(1:𝔹,1:𝔹,0:𝔹))));
+	assert(r==((0,1),(1,0),(0,1),(1,1),(0,1),(1,0),(1,1),(0,1),(1,1),(1,0)));
+	return r;
+}
