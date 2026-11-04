@@ -1,0 +1,50 @@
+// args: --run
+
+def coerced(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+5;
+	xs[v%3]:=X(xs[v%3]);
+	v:=v coerce !uint[2];
+	xs[(v as !ℕ)%3]:=X(xs[(v as !ℕ)%3]);
+	return xs;
+}
+def converted(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+5;
+	xs[v%3]:=X(xs[v%3]);
+	v:=v as !uint[2];
+	xs[(v as !ℕ)%3]:=X(xs[(v as !ℕ)%3]);
+	return xs;
+}
+def explicitMove(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+5;
+	xs[v%3]:=X(xs[v%3]);
+	v:=move(v) coerce !uint[2];
+	xs[(v as !ℕ)%3]:=X(xs[(v as !ℕ)%3]);
+	return xs;
+}
+def inTuple(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+5;
+	xs[v%3]:=X(xs[v%3]);
+	(w,v):=(1,v coerce !uint[2]);
+	xs[((v as !ℕ)+2*w)%3]:=X(xs[((v as !ℕ)+2*w)%3]);
+	return xs;
+}
+def annotated(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=1;
+	xs[(dup(v))%4]:=X(xs[(dup(v))%4]);
+	v:=(v:!ℕ);
+	v+=j;
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+def widened(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+5;
+	xs[v%3]:=X(xs[v%3]);
+	v:=v as !ℤ;
+	xs[(v+1)%3]:=X(xs[(v+1)%3]);
+	return xs;
+}
+def main(){
+	r:=(measure(coerced((0,0,0,0):𝔹^4,1)),measure(reverse(coerced)((0,0,0,0):𝔹^4,1)),measure(converted((0,0,0,0):𝔹^4,1)),measure(reverse(converted)((0,0,0,0):𝔹^4,1)),measure(explicitMove((0,0,0,0):𝔹^4,1)),measure(reverse(explicitMove)((0,0,0,0):𝔹^4,1)),measure(inTuple((0,0,0,0):𝔹^4,1)),measure(reverse(inTuple)((0,0,0,0):𝔹^4,1)),measure(annotated((0,0,0,0):𝔹^4,1)),measure(reverse(annotated)((0,0,0,0):𝔹^4,1)),measure(widened((0,0,0,0):𝔹^4,1)),measure(reverse(widened)((0,0,0,0):𝔹^4,1)));
+	assert(r==((1,0,1,0),(1,0,1,0),(1,0,1,0),(1,0,1,0),(1,0,1,0),(1,0,1,0),(1,1,0,0),(1,1,0,0),(0,1,1,0),(0,1,1,0),(1,1,0,0),(1,1,0,0)));
+	return r;
+}
