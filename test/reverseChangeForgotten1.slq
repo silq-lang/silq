@@ -1,0 +1,56 @@
+// args: --run
+
+def changedInBranch(xs:𝔹^4,k:!ℕ)mfree{
+	xs[k]:=X(xs[k]);
+	if k==2 { xs[0]:=X(xs[0]); } else { (xs,k):=let{ k-=1; xs[0]:=X(xs[0]); } in (xs,k); k+=2; }
+	return xs;
+}
+def withoutElse(xs:𝔹^4,k:!ℕ)mfree{
+	xs[k]:=X(xs[k]);
+	if k!=2 { (xs,k):=let{ k-=1; xs[0]:=X(xs[0]); } in (xs,k); k+=2; }
+	return xs;
+}
+def readInLet(xs:𝔹^4,k:!ℕ)mfree{
+	c:=dup(k);
+	if k==2 { (xs,k):=let{ k-=1; xs[k]:=X(xs[k]); } in (xs,k); k-=1; }
+	xs[c]:=X(xs[c]);
+	return xs;
+}
+def loopAfter(xs:𝔹^4,k:!ℕ)mfree{
+	xs[k]:=X(xs[k]);
+	if k==2 { xs[0]:=X(xs[0]); } else { (xs,k):=let{ k-=1; xs[0]:=X(xs[0]); } in (xs,k); for i in 0..2 { k+=1; } }
+	return xs;
+}
+def withBody(xs:𝔹^4,j:!ℕ,k:!ℕ)mfree{
+	xs[k]:=X(xs[k]);
+	with { u:=dup(j); } do { (xs,k):=let{ k-=1; xs[u]:=X(xs[u]); } in (xs,k); k+=2; }
+	return xs;
+}
+def withInBranch(xs:𝔹^4,j:!ℕ,k:!ℕ)mfree{
+	xs[k]:=X(xs[k]);
+	if j==0 { with { u:=dup(j); } do { (xs,k):=let{ k-=1; xs[u]:=X(xs[u]); } in (xs,k); k+=2; } } else { xs[3]:=X(xs[3]); }
+	return xs;
+}
+def branchInWith(xs:𝔹^4,j:!ℕ,k:!ℕ)mfree{
+	xs[k]:=X(xs[k]);
+	with { u:=dup(j); } do { if u==0 { (xs,k):=let{ k-=1; xs[u]:=X(xs[u]); } in (xs,k); k+=2; } else { xs[3]:=X(xs[3]); } }
+	return xs;
+}
+def forgetWithValue(xs:𝔹^4,k:!ℕ)mfree{
+	xs[k]:=X(xs[k]);
+	if k==2 { xs[0]:=X(xs[0]); forget(k=2); } else { (xs,k):=let{ k-=1; xs[0]:=X(xs[0]); } in (xs,k); k+=2; forget(k=2); }
+	return xs;
+}
+def typeInBranch(xs:𝔹^4,j:!ℕ)mfree{
+	if j==0 { j+=1; xs[dup(j)]:=X(xs[dup(j)]); } else { j-=2; }
+	return xs;
+}
+def typeInBranchLoop(xs:𝔹^4,j:!ℕ)mfree{
+	if j==0 { repeat 1 { xs[j]:=X(xs[j]); j+=1; } xs[dup(j)]:=X(xs[dup(j)]); } else { j-=2; }
+	return xs;
+}
+def main(){
+	r:=(measure(changedInBranch((1,1,0,0):𝔹^4,1)),measure(reverse(changedInBranch)((0,0,0,0):𝔹^4,1)),measure(withoutElse((0,1,1,0):𝔹^4,1)),measure(reverse(withoutElse)((1,0,1,0):𝔹^4,1)),measure(readInLet((1,1,0,0):𝔹^4,2)),measure(reverse(readInLet)((1,0,1,0):𝔹^4,2)),measure(loopAfter((1,1,0,1):𝔹^4,1)),measure(reverse(loopAfter)((0,0,0,1):𝔹^4,1)),measure(withBody((1,1,0,0):𝔹^4,0,1)),measure(reverse(withBody)((0,0,0,0):𝔹^4,0,1)),measure(withInBranch((0,1,0,0):𝔹^4,0,1)),measure(reverse(withInBranch)((1,0,0,0):𝔹^4,0,1)),measure(branchInWith((1,1,1,0):𝔹^4,0,1)),measure(reverse(branchInWith)((0,0,1,0):𝔹^4,0,1)),measure(forgetWithValue((1,1,1,0):𝔹^4,1)),measure(reverse(forgetWithValue)((0,0,1,0):𝔹^4,1)),measure(typeInBranch((1,0,0,0):𝔹^4,0)),measure(reverse(typeInBranch)((1,1,0,0):𝔹^4,0)),measure(reverse(typeInBranch)((1,1,0,0):𝔹^4,3)),measure(typeInBranchLoop((0,0,1,0):𝔹^4,0)),measure(reverse(typeInBranchLoop)((1,1,1,0):𝔹^4,0)));
+	assert(r==((0,0,0,0),(1,1,0,0),(1,0,1,0),(0,1,1,0),(1,0,1,0),(1,1,0,0),(0,0,0,1),(1,1,0,1),(0,0,0,0),(1,1,0,0),(1,0,0,0),(0,1,0,0),(0,0,1,0),(1,1,1,0),(0,0,1,0),(1,1,1,0),(1,1,0,0),(1,0,0,0),(1,1,0,0),(1,1,1,0),(0,0,1,0)));
+	return r;
+}
