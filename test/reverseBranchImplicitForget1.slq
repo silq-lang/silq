@@ -1,0 +1,43 @@
+// args: --run
+
+def movedInBranch(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	v:=(j+j)%4;
+	with { u:=j*2; } do { if c { w:=move(v); } with { t:=(j+1)%4; } do { v:=dup(t); } }
+	xs[v]:=X(xs[v]);
+	return xs;
+}
+def forgottenInBranch(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	v:=(j+j)%4;
+	with { u:=j*2; } do { if c { forget(v); } with { t:=(j+1)%4; } do { v:=dup(t); } }
+	xs[v]:=X(xs[v]);
+	return xs;
+}
+def movedInElse(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	v:=(j+j)%4;
+	with { u:=j*2; } do { if c { s:=j+1; } else { w:=move(v); } with { t:=(j+1)%4; } do { v:=dup(t); } }
+	xs[v]:=X(xs[v]);
+	return xs;
+}
+def readInElse(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	v:=(j+j)%4;
+	with { u:=j*2; } do { if c { w:=move(v); } else { s:=v+u; } with { t:=(j+1)%4; } do { v:=dup(t); } }
+	xs[v]:=X(xs[v]);
+	return xs;
+}
+def nestedBranches(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	v:=(j+j)%4;
+	with { u:=j*2; } do { if c { if j==1 { w:=move(v); } else { forget(v); } } with { t:=(j+1)%4; } do { v:=dup(t); } }
+	xs[v]:=X(xs[v]);
+	return xs;
+}
+def quantumForgotten(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	v:=(j+j)%4;
+	with { u:=j*2; } do { if c { forget(v); } xs[j%4]:=X(xs[j%4]); with { t:=(j+1)%4; } do { v:=dup(t); } }
+	xs[v]:=X(xs[v]);
+	return xs;
+}
+def main(){
+	r:=(measure(movedInBranch((1,0,1,1):𝔹^4,false,2)),measure(reverse(movedInBranch)((1,0,0,1):𝔹^4,false,2)),measure(reverse(movedInBranch)((1,0,0,1):𝔹^4,true,1)),measure(forgottenInBranch((1,0,1,1):𝔹^4,false,2)),measure(reverse(forgottenInBranch)((1,0,0,1):𝔹^4,false,2)),measure(reverse(forgottenInBranch)((1,0,0,1):𝔹^4,true,1)),measure(movedInElse((1,0,1,1):𝔹^4,false,2)),measure(reverse(movedInElse)((1,0,0,1):𝔹^4,false,2)),measure(reverse(movedInElse)((1,0,0,1):𝔹^4,true,1)),measure(readInElse((1,0,1,1):𝔹^4,false,2)),measure(reverse(readInElse)((1,0,0,1):𝔹^4,false,2)),measure(reverse(readInElse)((1,0,0,1):𝔹^4,true,1)),measure(nestedBranches((1,0,1,1):𝔹^4,false,2)),measure(reverse(nestedBranches)((1,0,0,1):𝔹^4,false,2)),measure(reverse(nestedBranches)((1,0,0,1):𝔹^4,true,1)),measure(quantumForgotten((1,0,1,1):𝔹^4,false,2)),measure(reverse(quantumForgotten)((1,0,0,1):𝔹^4,false,2)),measure(reverse(quantumForgotten)((1,0,0,1):𝔹^4,true,1)));
+	assert(r==((1,0,1,0),(1,0,0,0),(1,0,1,1),(1,0,1,0),(1,0,0,0),(1,0,1,1),(1,0,1,0),(1,0,0,0),(1,0,1,1),(1,0,1,0),(1,0,0,0),(1,0,1,1),(1,0,1,0),(1,0,0,0),(1,0,1,1),(1,0,0,0),(1,0,1,0),(1,1,1,1)));
+	return r;
+}
