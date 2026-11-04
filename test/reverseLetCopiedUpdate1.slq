@@ -1,0 +1,33 @@
+// args: --run
+
+def loopUpdate(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(n); j:=c+1;
+	(y,j):=let { repeat 2 { k+=j; j*=2; } } in (x,j);
+	return y;
+}
+def readAfter(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(n); j:=c+1;
+	(y,j):=let { repeat 2 { k+=j; j*=2; } } in (x,j);
+	if j==8 { y:=X(y); }
+	return y;
+}
+def nestedLoops(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(n); j:=c+1;
+	(y,j):=let { repeat 2 { repeat 2 { k+=j; j*=2; } } k+=j; } in (x,j);
+	return y;
+}
+def inBranch(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(n); j:=c+1;
+	(y,j):=let { repeat 2 { if c==1 { k+=j; } j*=2; } } in (x,j);
+	return y;
+}
+def forLoop(x:𝔹,const n:!ℕ,const c:!ℕ)qfree{
+	k:=dup(n); j:=c+1;
+	(y,j):=let { for i in 0..3 { k+=i*j; j*=2; } } in (x,j);
+	return y;
+}
+def main(){
+	r:=(measure(loopUpdate(1:𝔹,2,1)),measure(reverse(loopUpdate)(loopUpdate(1:𝔹,2,1),2,1)),measure(readAfter(1:𝔹,2,1)),measure(reverse(readAfter)(readAfter(1:𝔹,2,1),2,1)),measure(reverse(nestedLoops)(nestedLoops(0:𝔹,2,1),2,1)),measure(reverse(inBranch)(inBranch(1:𝔹,0,1),0,1)),measure(reverse(forLoop)(forLoop(1:𝔹,1,0),1,0)));
+	assert(r==(1,1,0,1,0,1,1));
+	return r;
+}
