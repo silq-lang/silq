@@ -1,0 +1,59 @@
+// args: --run
+
+def annotatedIf(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	t:=x⊕c;
+	u:=(let{ a:=t; } in (if c then a⊕x else dup(c)):𝔹);
+	y⊕=u;
+	forget(u=dup(c));
+	return (x,y);
+}
+def nestedIf(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	t:=x⊕c;
+	u:=(let{ s:=(let{ a:=t; } in (if c then a⊕x else dup(c)):𝔹); } in s);
+	y⊕=u;
+	forget(u=dup(c));
+	return (x,y);
+}
+def nestedLet(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	t:=x⊕c;
+	u:=(let{ s:=(let{ a:=t; } in (let{ b:=x⊕a; } in dup(c)):𝔹); } in s);
+	y⊕=u;
+	forget(u=dup(c));
+	return (x,y);
+}
+def lastUse(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	t:=x⊕c;
+	u:=(let{ s:=(let{ a:=t; } in (let{ b:=(dup(a)&1):𝔹; } in dup(c))); } in s⊕x);
+	y⊕=u;
+	forget(u=c⊕x);
+	return (x,y);
+}
+def updateIf(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	t:=x⊕c;
+	y⊕=(let{ s:=(let{ a:=t; a:=X(a); } in (if c then a⊕x else dup(x)):𝔹); } in s);
+	return (x,y);
+}
+def readBefore(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	(y,k):=(let { u:=k*2; k+=1; z:=if u==4 { X(x) } else { x }; } in (z,k)):𝔹×!ℕ;
+	w:=if k==3 { X(y) } else { y };
+	return w;
+}
+def returned(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	(y,k):=(let { u:=k*2; k+=1; k*=2; z:=if u==4 { X(x) } else { x }; } in (z,k)):𝔹×!ℕ;
+	return (y,k);
+}
+def inLoop(x:𝔹^2,const n:!ℕ)qfree{
+	k:=dup(n);
+	for j in 0..2 { (x,k):=(let { u:=k*2; k+=1; if u==4 { x[j]:=X(x[j]); } } in (x,k)):𝔹^2×!ℕ; }
+	if k==4 { x[0]:=X(x[0]); }
+	return x;
+}
+def main(){
+	r:=(measure(annotatedIf(1:𝔹,0:𝔹,0:𝔹)),measure(reverse(annotatedIf)(1:𝔹,annotatedIf(1:𝔹,1:𝔹,0:𝔹))),measure(nestedIf(1:𝔹,0:𝔹,0:𝔹)),measure(reverse(nestedIf)(0:𝔹,nestedIf(0:𝔹,1:𝔹,1:𝔹))),measure(nestedLet(1:𝔹,1:𝔹,1:𝔹)),measure(reverse(nestedLet)(1:𝔹,nestedLet(1:𝔹,0:𝔹,1:𝔹))),measure(lastUse(1:𝔹,0:𝔹,0:𝔹)),measure(reverse(lastUse)(0:𝔹,lastUse(0:𝔹,1:𝔹,0:𝔹))),measure(updateIf(0:𝔹,1:𝔹,0:𝔹)),measure(reverse(updateIf)(0:𝔹,updateIf(0:𝔹,1:𝔹,1:𝔹))));
+	assert(r==((0,1),(1,0),(0,1),(1,1),(1,0),(0,1),(0,1),(1,0),(1,1),(1,1)));
+	s:=(measure(readBefore(1:𝔹,2)),measure(reverse(readBefore)(readBefore(0:𝔹,2),2)),measure(reverse(readBefore)(readBefore(1:𝔹,1),1)),measure(returned(1:𝔹,2)),measure(reverse(returned)(returned(0:𝔹,1),1)),measure(inLoop(vector(2,0:𝔹),1)),measure(reverse(inLoop)(inLoop(vector(2,1:𝔹),2),2)));
+	assert(s==(1,0,1,(0,6),0,(0,1),(1,1)));
+	return (r,s);
+}

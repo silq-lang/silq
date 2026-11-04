@@ -1,0 +1,40 @@
+// args: --run
+
+def xorLiteral(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	t:=x⊕c;
+	u:=(let{ s:=t; } in s⊕0:𝔹);
+	y⊕=u;
+	forget(u=x⊕c);
+	return (x,y);
+}
+def andLiteral(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	t:=x⊕c;
+	u:=(let{ s:=t; } in s&1:𝔹);
+	y⊕=u;
+	forget(u=x⊕c);
+	return (x,y);
+}
+def annotatedXor(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	t:=x⊕c;
+	u:=(let{ s:=t; } in (s⊕x):𝔹);
+	y⊕=u;
+	forget(u=dup(c));
+	return (x,y);
+}
+def nestedLet(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	t:=x⊕c;
+	u:=(let{ s:=(let{ a:=t; } in a⊕x); } in s⊕0:𝔹);
+	y⊕=u;
+	forget(u=dup(c));
+	return (x,y);
+}
+def update(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	t:=x⊕c;
+	y⊕=(let{ s:=t; } in s⊕0:𝔹);
+	return (x,y);
+}
+def main(){
+	r:=(measure(xorLiteral(1:𝔹,0:𝔹,0:𝔹)),measure(reverse(xorLiteral)(1:𝔹,xorLiteral(1:𝔹,1:𝔹,0:𝔹))),measure(andLiteral(1:𝔹,0:𝔹,0:𝔹)),measure(reverse(andLiteral)(0:𝔹,andLiteral(0:𝔹,1:𝔹,1:𝔹))),measure(annotatedXor(1:𝔹,0:𝔹,0:𝔹)),measure(reverse(annotatedXor)(1:𝔹,annotatedXor(1:𝔹,1:𝔹,0:𝔹))),measure(nestedLet(1:𝔹,0:𝔹,0:𝔹)),measure(reverse(nestedLet)(0:𝔹,nestedLet(0:𝔹,1:𝔹,1:𝔹))),measure(update(1:𝔹,0:𝔹,0:𝔹)),measure(reverse(update)(1:𝔹,update(1:𝔹,1:𝔹,0:𝔹))));
+	assert(r==((0,1),(1,0),(0,1),(1,1),(0,1),(1,0),(0,1),(1,1),(0,1),(1,0)));
+	return r;
+}

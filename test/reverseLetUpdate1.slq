@@ -1,0 +1,37 @@
+// args: --run
+
+def xorResult(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	t:=x⊕c;
+	y⊕=(let{ a:=t; } in a⊕x);
+	return (x,y);
+}
+def nestedLet(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	t:=x⊕c;
+	y⊕=(let{ s:=(let{ a:=t; } in a⊕x); } in s);
+	return (x,y);
+}
+def changedLocal(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	t:=x⊕c;
+	y⊕=(let{ a:=t; a:=X(a); } in a⊕x);
+	return (x,y);
+}
+def localResult(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	t:=x⊕c;
+	y⊕=(let{ a:=t; } in a);
+	return (x,y);
+}
+def conditionalResult(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	t:=x⊕c;
+	y⊕=(let{ a:=t; } in (if c then a⊕x else x));
+	return (x,y);
+}
+def lambdaInBlock(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	f:=λ(const z:𝔹)qfree⇒z&x;
+	y⊕=(let{ s:=(if c then f(c) else c); } in s⊕x);
+	return (x,y);
+}
+def main(){
+	r:=(measure(xorResult(1:𝔹,0:𝔹,0:𝔹)),measure(reverse(xorResult)(1:𝔹,xorResult(1:𝔹,1:𝔹,0:𝔹))),measure(nestedLet(1:𝔹,0:𝔹,0:𝔹)),measure(reverse(nestedLet)(1:𝔹,nestedLet(1:𝔹,1:𝔹,0:𝔹))),measure(changedLocal(1:𝔹,0:𝔹,0:𝔹)),measure(reverse(changedLocal)(0:𝔹,changedLocal(0:𝔹,1:𝔹,1:𝔹))),measure(localResult(1:𝔹,0:𝔹,0:𝔹)),measure(reverse(localResult)(1:𝔹,localResult(1:𝔹,1:𝔹,1:𝔹))),measure(conditionalResult(1:𝔹,1:𝔹,0:𝔹)),measure(reverse(conditionalResult)(0:𝔹,conditionalResult(0:𝔹,1:𝔹,0:𝔹))),measure(lambdaInBlock(0:𝔹,1:𝔹,0:𝔹)),measure(reverse(lambdaInBlock)(0:𝔹,lambdaInBlock(0:𝔹,1:𝔹,0:𝔹))),measure(reverse(lambdaInBlock)(1:𝔹,lambdaInBlock(1:𝔹,1:𝔹,1:𝔹))));
+	assert(r==((0,1),(1,0),(0,1),(1,0),(0,0),(1,1),(0,1),(1,1),(1,1),(1,0),(1,1),(1,0),(1,1)));
+	return r;
+}
