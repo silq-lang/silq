@@ -1,0 +1,62 @@
+// args: --run
+
+def whileLoop(n:!ℕ){
+	q:=H(0:𝔹);
+	p:=1:𝔹;
+	k:=0;
+	while k<n {
+		p:=X(p);
+		p:=let { x:=p; x:=let { } in x; } in x;
+		q:=let { } in q;
+		k+=1;
+	}
+	return (measure(H(q)),measure(p));
+}
+def doWhileLoop(n:!ℕ){
+	q:=H(0:𝔹);
+	p:=1:𝔹;
+	k:=0;
+	do { k+=1; } while k<n {
+		p:=X(p);
+		p:=let { x:=p; x:=let { } in x; } in x;
+		q:=let { } in q;
+	}
+	return (measure(H(q)),measure(p));
+}
+def forLoop(n:!ℕ){
+	q:=H(0:𝔹);
+	p:=1:𝔹;
+	for i in 0..n {
+		p:=X(p);
+		p:=let { x:=p; x:=let { } in x; } in x;
+		q:=let { } in q;
+	}
+	return (measure(H(q)),measure(p));
+}
+def repeatLoop(n:!ℕ){
+	q:=H(0:𝔹);
+	p:=1:𝔹;
+	repeat n {
+		p:=X(p);
+		p:=let { x:=p; x:=let { } in x; } in x;
+		q:=let { } in q;
+	}
+	return (measure(H(q)),measure(p));
+}
+def branchInLet(n:!ℕ){
+	q:=H(0:𝔹);
+	p:=1:𝔹;
+	k:=0;
+	while k<n {
+		p:=X(p);
+		p:=let { x:=p; if k==0 { x:=X(x); } } in x;
+		q:=let { } in q;
+		k+=1;
+	}
+	return (measure(H(q)),measure(p));
+}
+def main(){
+	r:=(whileLoop(1),whileLoop(2),doWhileLoop(1),doWhileLoop(2),forLoop(1),forLoop(2),repeatLoop(1),repeatLoop(2),branchInLet(1),branchInLet(2));
+	assert(r==((0,0),(0,1),(0,1),(0,0),(0,0),(0,1),(0,0),(0,1),(0,1),(0,0)));
+	return r;
+}
