@@ -1,0 +1,83 @@
+// args: --run
+
+def forgottenInWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+2;
+	if j%4==2 {
+		with { u:=j+1; } do { forget(v); }
+		v:=j%4;
+	} else {
+		xs[0]:=X(xs[0]);
+	}
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+def forgottenWithValue(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+2;
+	if j%4==2 {
+		with { u:=j+1; } do { forget(v=j+2); }
+		v:=j%4;
+	} else {
+		xs[0]:=X(xs[0]);
+	}
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+def movedInWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+2;
+	if j%4==2 {
+		with { u:=j+1; } do { w:=move(v); }
+		v:=(w+j)%4;
+	} else {
+		xs[0]:=X(xs[0]);
+	}
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+def nestedWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+2;
+	if j%4==2 {
+		with { u:=j+1; } do {
+			with { t:=u*2; } do { forget(v); }
+		}
+		v:=j%4;
+	} else {
+		xs[0]:=X(xs[0]);
+	}
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+def quantumWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+2;
+	if j%4==2 {
+		with { u:=j+1; } do { forget(v); xs[u%4]:=X(xs[u%4]); }
+		v:=j%4;
+	} else {
+		xs[0]:=X(xs[0]);
+	}
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+def movedThenRead(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+2;
+	if j%4==2 {
+		with { u:=j+1; } do { w:=move(v); }
+		v:=(w+j)%4;
+		xs[(v+1)%4]:=X(xs[(v+1)%4]);
+	}
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+def movedInBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+2;
+	if j%4==2 {
+		w:=move(v);
+		v:=(w+j)%4;
+		xs[v%4]:=X(xs[v%4]);
+	}
+	return xs;
+}
+def main(){
+	r:=(measure(forgottenInWith((1,1,1,1):𝔹^4,2)),measure(reverse(forgottenInWith)(forgottenInWith((1,1,1,1):𝔹^4,2),2)),measure(reverse(forgottenInWith)(forgottenInWith((1,1,1,1):𝔹^4,1),1)),measure(forgottenWithValue((1,1,1,1):𝔹^4,2)),measure(reverse(forgottenWithValue)(forgottenWithValue((1,1,1,1):𝔹^4,2),2)),measure(reverse(forgottenWithValue)(forgottenWithValue((1,1,1,1):𝔹^4,1),1)),measure(movedInWith((1,1,1,1):𝔹^4,2)),measure(reverse(movedInWith)(movedInWith((1,1,1,1):𝔹^4,2),2)),measure(reverse(movedInWith)(movedInWith((1,1,1,1):𝔹^4,1),1)),measure(nestedWith((1,1,1,1):𝔹^4,2)),measure(reverse(nestedWith)(nestedWith((1,1,1,1):𝔹^4,2),2)),measure(reverse(nestedWith)(nestedWith((1,1,1,1):𝔹^4,1),1)),measure(quantumWith((1,1,1,1):𝔹^4,2)),measure(reverse(quantumWith)(quantumWith((1,1,1,1):𝔹^4,2),2)),measure(reverse(quantumWith)(quantumWith((1,1,1,1):𝔹^4,1),1)),measure(movedThenRead((1,1,1,1):𝔹^4,2)),measure(reverse(movedThenRead)(movedThenRead((1,1,1,1):𝔹^4,2),2)),measure(reverse(movedThenRead)(movedThenRead((1,1,1,1):𝔹^4,1),1)),measure(movedInBranch((1,1,1,1):𝔹^4,2)),measure(reverse(movedInBranch)(movedInBranch((1,1,1,1):𝔹^4,2),2)),measure(reverse(movedInBranch)(movedInBranch((1,1,1,1):𝔹^4,1),1)));
+	assert(r==((1,1,0,1),(1,1,1,1),(1,1,1,1),(1,1,0,1),(1,1,1,1),(1,1,1,1),(1,1,0,1),(1,1,1,1),(1,1,1,1),(1,1,0,1),(1,1,1,1),(1,1,1,1),(1,1,0,0),(1,1,1,1),(1,1,1,1),(1,1,0,0),(1,1,1,1),(1,1,1,1),(1,1,0,1),(1,1,1,1),(1,1,1,1)));
+	return r;
+}
