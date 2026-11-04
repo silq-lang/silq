@@ -1,0 +1,25 @@
+def nested(){
+	def f[moved x:𝔹]mfree ⇒ x;
+	f[x]:=move(f)[H(0:𝔹)]; /// error
+	return measure(H(x));
+}
+def lambdaVariable(){
+	f:=λ[moved x:𝔹]mfree ⇒ x;
+	f[x]:=move(f)[H(0:𝔹)]; /// error
+	return measure(H(x));
+}
+def inLet(){
+	f:=λ[moved x:𝔹]mfree ⇒ x;
+	f[x]:=(let { g:=move(f); } in g[H(0:𝔹)]); /// error
+	return measure(H(x));
+}
+def annotated(){
+	def f[moved x:𝔹]mfree ⇒ x;
+	f[x]:𝔹:=move(f)[H(0:𝔹)]; /// error
+	return measure(H(x));
+}
+def parameter(f:!Π[moved x:𝔹]mfree. 𝔹){
+	f[x]:=move(f)[H(0:𝔹)]; /// error
+	return measure(H(x));
+}
+def main(){ }
