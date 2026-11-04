@@ -1,0 +1,32 @@
+// args: --run
+
+def conditional(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	t1:=x&x;
+	y⊕=(let{ a2:=t1; } in (let{ b3:=(if c then dup(a2) else c⊕x); } in b3));
+	return (x,y);
+}
+def nested(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	t1:=x&x;
+	y⊕=(let{ a2:=t1; } in (let{ b3:=(if c then dup(a2) else c⊕x); } in (let{ b4:=dup(b3); } in b4)));
+	return (x,y);
+}
+def classicalCondition(const c:𝔹,const k:!ℕ,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	t1:=x&x;
+	y⊕=(let{ a2:=t1; } in (let{ b3:=(if k==1 then dup(a2) else c⊕x); } in b3));
+	return (x,y);
+}
+def twoLocals(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	t1:=x&x;
+	y⊕=(let{ a2:=t1; a3:=dup(x); } in (let{ b3:=(if c then a2&a3 else dup(a3)); } in b3));
+	return (x,y);
+}
+def readAfter(const c:𝔹,x:𝔹,y:𝔹)qfree:𝔹×𝔹{
+	t1:=x&x;
+	y⊕=(let{ a2:=t1; } in (let{ b3:=(if c then dup(a2) else dup(x)); } in b3⊕a2));
+	return (x,y);
+}
+def main(){
+	r:=(measure(conditional(1:𝔹,1:𝔹,0:𝔹)),measure(reverse(conditional)(1:𝔹,conditional(1:𝔹,1:𝔹,0:𝔹))),measure(reverse(conditional)(0:𝔹,conditional(0:𝔹,1:𝔹,1:𝔹))),measure(nested(1:𝔹,1:𝔹,0:𝔹)),measure(reverse(nested)(1:𝔹,nested(1:𝔹,1:𝔹,0:𝔹))),measure(reverse(nested)(0:𝔹,nested(0:𝔹,1:𝔹,1:𝔹))),measure(classicalCondition(0:𝔹,1,1:𝔹,0:𝔹)),measure(reverse(classicalCondition)(0:𝔹,1,classicalCondition(0:𝔹,1,1:𝔹,0:𝔹))),measure(reverse(classicalCondition)(1:𝔹,2,classicalCondition(1:𝔹,2,1:𝔹,1:𝔹))),measure(twoLocals(1:𝔹,1:𝔹,0:𝔹)),measure(reverse(twoLocals)(1:𝔹,twoLocals(1:𝔹,1:𝔹,0:𝔹))),measure(reverse(twoLocals)(0:𝔹,twoLocals(0:𝔹,1:𝔹,1:𝔹))),measure(readAfter(1:𝔹,1:𝔹,0:𝔹)),measure(reverse(readAfter)(1:𝔹,readAfter(1:𝔹,1:𝔹,0:𝔹))),measure(reverse(readAfter)(0:𝔹,readAfter(0:𝔹,1:𝔹,1:𝔹))));
+	assert(r==((1,1),(1,0),(1,1),(1,1),(1,0),(1,1),(1,1),(1,0),(1,1),(1,1),(1,0),(1,1),(1,0),(1,0),(1,1)));
+	return r;
+}
