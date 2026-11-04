@@ -1,0 +1,170 @@
+// args: --run
+
+def tuple(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	(k,w):=(k,1);
+	if k==w { x:=X(x); }
+	return x;
+}
+def swapped(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	(w,k):=(1,k);
+	if k==w { x:=X(x); }
+	return x;
+}
+def annotated(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	(k,w):=(k:!ℕ,dup(n));
+	if k==w { x:=X(x); }
+	return x;
+}
+def inWith(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	with { u:=1; } do { (k,w):=(k,u); x:=X(x); }
+	if k==w { x:=X(x); }
+	return x;
+}
+def nestedWith(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	with { u:=1; } do {
+		v:=k+u;
+		with { t:=0; } do { (w,k):=(dup(v),k); x:=X(x); }
+		if w==3 { x:=X(x); }
+	}
+	if k==1 { x:=X(x); }
+	return x;
+}
+def updated(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	(k,w):=(k,1);
+	k+=w;
+	if k==w { x:=X(x); }
+	return x;
+}
+def redefined(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	(k,w):=(k,1);
+	forget(w);
+	w:=2;
+	if k==w { x:=X(x); }
+	return x;
+}
+def updatedInWith(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	if k==1 { x:=X(x); }
+	with { u:=1; } do {
+		k+=u;
+		(k,w):=(k,u);
+	}
+	if k==3 { x:=X(x); }
+	return x;
+}
+def updatedInBranch(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	if k==1 { x:=X(x); }
+	if n%2==1 {
+		k+=1;
+		(k,w):=(k,1);
+	} else {
+		k+=2;
+	}
+	if k==3 { x:=X(x); }
+	return x;
+}
+def updatedInLoop(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	if k==1 { x:=X(x); }
+	for i in 0..2 {
+		with { u:=dup(i); } do {
+			k+=1;
+			(k,w):=(k,u);
+		}
+	}
+	if k==3 { x:=X(x); }
+	return x;
+}
+def forgottenInWith(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	with { u:=1; } do {
+		x:=X(x);
+		k+=u;
+		(k,w):=(k,u);
+	}
+	return x;
+}
+def readInWith(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	with { u:=1; } do {
+		x:=X(x);
+		k+=u;
+		(k,w):=(k,u);
+		if k==2 { x:=X(x); }
+	}
+	return x;
+}
+def changedInBranch(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	if n%2==1 {
+		if k==1 { x:=X(x); }
+		(w,k):=(1,k);
+		k+=w;
+	}
+	if k==3 { x:=X(x); }
+	return x;
+}
+def changedInLoop(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	for i in 0..2 {
+		if k==1 { x:=X(x); }
+		(w,k):=(dup(i),k);
+		k+=w+1;
+	}
+	return x;
+}
+def changedInWith(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	with { u:=1; } do {
+		if k==1 { x:=X(x); }
+		(w,k):=(u,k);
+		k+=u;
+	}
+	if k==3 { x:=X(x); }
+	return x;
+}
+def readBeforeChange(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	if n%2==1 {
+		(w,k):=(k+1,k);
+		if w==2 { x:=X(x); }
+		k+=1;
+	}
+	if k==3 { x:=X(x); }
+	return x;
+}
+def readBeforeLocalChange(x:𝔹,const n:!ℕ)qfree{
+	k:=dup(n);
+	if n%2==1 {
+		(w,k):=(k+1,k);
+		if w==2 { x:=X(x); }
+		u:=k+1;
+		k+=u;
+	}
+	if k==4 { x:=X(x); }
+	return x;
+}
+def updatedAtLastUse(x:𝔹,const n:!ℕ)qfree{
+	with { u:=dup(n); } do {
+		if u==1 { x:=X(x); }
+		w:=u+2;
+	}
+	with { t:=n*2; } do {
+		(s,w):=(dup(n),w);
+		w+=t+s;
+	}
+	return x;
+}
+def main(){
+	r:=(measure(tuple(0:𝔹,1)),measure(reverse(tuple)(tuple(1:𝔹,1),1)),measure(swapped(0:𝔹,0)),measure(reverse(swapped)(swapped(0:𝔹,1),1)),measure(annotated(0:𝔹,3)),measure(reverse(annotated)(annotated(1:𝔹,2),2)),measure(inWith(0:𝔹,1)),measure(reverse(inWith)(inWith(0:𝔹,0),0)),measure(nestedWith(0:𝔹,2)),measure(reverse(nestedWith)(nestedWith(1:𝔹,0),0)),measure(updated(0:𝔹,0)),measure(reverse(updated)(updated(1:𝔹,0),0)),measure(redefined(0:𝔹,2)),measure(reverse(redefined)(redefined(0:𝔹,1),1)),measure(updatedInWith(0:𝔹,1)),measure(reverse(updatedInWith)(updatedInWith(1:𝔹,1),1)),measure(updatedInBranch(0:𝔹,1)),measure(reverse(updatedInBranch)(updatedInBranch(1:𝔹,1),1)),measure(updatedInLoop(0:𝔹,1)),measure(reverse(updatedInLoop)(updatedInLoop(1:𝔹,1),1)),measure(forgottenInWith(0:𝔹,1)),measure(reverse(forgottenInWith)(forgottenInWith(1:𝔹,1),1)),measure(readInWith(0:𝔹,1)),measure(reverse(readInWith)(readInWith(1:𝔹,1),1)),measure(changedInBranch(0:𝔹,1)),measure(reverse(changedInBranch)(changedInBranch(1:𝔹,1),1)),measure(changedInLoop(0:𝔹,0)),measure(reverse(changedInLoop)(changedInLoop(1:𝔹,0),0)),measure(changedInWith(0:𝔹,1)),measure(reverse(changedInWith)(changedInWith(1:𝔹,1),1)),measure(readBeforeChange(0:𝔹,1)),measure(reverse(readBeforeChange)(readBeforeChange(1:𝔹,1),1)),measure(readBeforeLocalChange(0:𝔹,1)),measure(reverse(readBeforeLocalChange)(readBeforeLocalChange(1:𝔹,1),1)),measure(updatedAtLastUse(0:𝔹,1)),measure(reverse(updatedAtLastUse)(updatedAtLastUse(1:𝔹,1),1)));
+	assert(r==(1,1,0,0,1,1,0,0,0,1,1,1,1,0,1,1,1,1,0,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1));
+	return r;
+}
