@@ -1,0 +1,83 @@
+// args: --run
+
+def forgottenByInverse(const c0:𝔹,const c1:𝔹,const k:!ℕ,x:𝔹)qfree:𝔹{
+	t:=c1&c0;
+	with { s:=t; } do { x⊕=s; }
+	return x;
+}
+
+def computedFromMoved(const c0:𝔹,const c1:𝔹,const k:!ℕ,x:𝔹)qfree:𝔹{
+	t:=c1&c0;
+	with { s:=t; w:=s⊕1; } do { x⊕=w; }
+	return x;
+}
+
+def explicitMove(const c0:𝔹,const c1:𝔹,const k:!ℕ,x:𝔹)qfree:𝔹{
+	t:=c1&c0;
+	with { s:=move(t); } do { x⊕=s; }
+	return x;
+}
+
+def inLetExpression(const c0:𝔹,const c1:𝔹,const k:!ℕ,x:𝔹)qfree:𝔹{
+	t:=c1&c0;
+	with { w:=let{ s:=t; } in s⊕1; } do { x⊕=w; }
+	return x;
+}
+
+def conditionalInLet(const c0:𝔹,const c1:𝔹,const k:!ℕ,x:𝔹)qfree:𝔹{
+	t:=c1&c0;
+	with { w:=let{ s:=(if c1 then t else t); } in s⊕1; } do { x⊕=w; }
+	return x;
+}
+
+def twoVariables(const c0:𝔹,const c1:𝔹,const k:!ℕ,x:𝔹)qfree:𝔹{
+	t:=c1&c0;
+	u:=c0⊕c1;
+	with { s:=t; r:=u; } do { x⊕=s&r; }
+	return x;
+}
+
+def nestedWith(const c0:𝔹,const c1:𝔹,const k:!ℕ,x:𝔹)qfree:𝔹{
+	t:=c1&c0;
+	with { s:=t; } do { with { r:=s; } do { x⊕=r; } }
+	return x;
+}
+
+def inBranch(const c0:𝔹,const c1:𝔹,const k:!ℕ,x:𝔹)qfree:𝔹{
+	t:=c1&c0;
+	if k==1 { with { s:=t; } do { x⊕=s; } }
+	return x;
+}
+
+def usedAfter(const c0:𝔹,const c1:𝔹,const k:!ℕ,x:𝔹)qfree:𝔹{
+	t:=c1&c0;
+	with { s:=t; } do { x⊕=s; }
+	x⊕=t⊕c1;
+	return x;
+}
+
+def forgottenAfter(const c0:𝔹,const c1:𝔹,const k:!ℕ,x:𝔹)qfree:𝔹{
+	t:=c1&c0;
+	with { s:=t; } do { x⊕=s; }
+	forget(t);
+	return x;
+}
+
+def twoWithStatements(const c0:𝔹,const c1:𝔹,const k:!ℕ,x:𝔹)qfree:𝔹{
+	t:=c1&c0;
+	with { s:=t; } do { x⊕=s; }
+	with { r:=t; } do { x⊕=r⊕c0; }
+	return x;
+}
+
+def inLoop(const c0:𝔹,const c1:𝔹,const k:!ℕ,x:𝔹)qfree:𝔹{
+	t:=c1&c0;
+	for i in 0..k+2 { with { s:=t; } do { x⊕=s; } }
+	return x;
+}
+
+def main(){
+	r:=(measure(forgottenByInverse(1:𝔹,1:𝔹,1,0:𝔹)),measure(reverse(forgottenByInverse)(1:𝔹,1:𝔹,1,forgottenByInverse(1:𝔹,1:𝔹,1,0:𝔹))),measure(forgottenByInverse(0:𝔹,1:𝔹,0,0:𝔹)),measure(reverse(forgottenByInverse)(0:𝔹,1:𝔹,0,forgottenByInverse(0:𝔹,1:𝔹,0,0:𝔹))),measure(forgottenByInverse(1:𝔹,1:𝔹,0,0:𝔹)),measure(reverse(forgottenByInverse)(1:𝔹,1:𝔹,0,forgottenByInverse(1:𝔹,1:𝔹,0,0:𝔹))),measure(computedFromMoved(1:𝔹,1:𝔹,1,0:𝔹)),measure(reverse(computedFromMoved)(1:𝔹,1:𝔹,1,computedFromMoved(1:𝔹,1:𝔹,1,0:𝔹))),measure(computedFromMoved(0:𝔹,1:𝔹,0,0:𝔹)),measure(reverse(computedFromMoved)(0:𝔹,1:𝔹,0,computedFromMoved(0:𝔹,1:𝔹,0,0:𝔹))),measure(computedFromMoved(1:𝔹,1:𝔹,0,0:𝔹)),measure(reverse(computedFromMoved)(1:𝔹,1:𝔹,0,computedFromMoved(1:𝔹,1:𝔹,0,0:𝔹))),measure(explicitMove(1:𝔹,1:𝔹,1,0:𝔹)),measure(reverse(explicitMove)(1:𝔹,1:𝔹,1,explicitMove(1:𝔹,1:𝔹,1,0:𝔹))),measure(explicitMove(0:𝔹,1:𝔹,0,0:𝔹)),measure(reverse(explicitMove)(0:𝔹,1:𝔹,0,explicitMove(0:𝔹,1:𝔹,0,0:𝔹))),measure(explicitMove(1:𝔹,1:𝔹,0,0:𝔹)),measure(reverse(explicitMove)(1:𝔹,1:𝔹,0,explicitMove(1:𝔹,1:𝔹,0,0:𝔹))),measure(inLetExpression(1:𝔹,1:𝔹,1,0:𝔹)),measure(reverse(inLetExpression)(1:𝔹,1:𝔹,1,inLetExpression(1:𝔹,1:𝔹,1,0:𝔹))),measure(inLetExpression(0:𝔹,1:𝔹,0,0:𝔹)),measure(reverse(inLetExpression)(0:𝔹,1:𝔹,0,inLetExpression(0:𝔹,1:𝔹,0,0:𝔹))),measure(inLetExpression(1:𝔹,1:𝔹,0,0:𝔹)),measure(reverse(inLetExpression)(1:𝔹,1:𝔹,0,inLetExpression(1:𝔹,1:𝔹,0,0:𝔹))),measure(conditionalInLet(1:𝔹,1:𝔹,1,0:𝔹)),measure(reverse(conditionalInLet)(1:𝔹,1:𝔹,1,conditionalInLet(1:𝔹,1:𝔹,1,0:𝔹))),measure(conditionalInLet(0:𝔹,1:𝔹,0,0:𝔹)),measure(reverse(conditionalInLet)(0:𝔹,1:𝔹,0,conditionalInLet(0:𝔹,1:𝔹,0,0:𝔹))),measure(conditionalInLet(1:𝔹,1:𝔹,0,0:𝔹)),measure(reverse(conditionalInLet)(1:𝔹,1:𝔹,0,conditionalInLet(1:𝔹,1:𝔹,0,0:𝔹))),measure(twoVariables(1:𝔹,1:𝔹,1,0:𝔹)),measure(reverse(twoVariables)(1:𝔹,1:𝔹,1,twoVariables(1:𝔹,1:𝔹,1,0:𝔹))),measure(twoVariables(0:𝔹,1:𝔹,0,0:𝔹)),measure(reverse(twoVariables)(0:𝔹,1:𝔹,0,twoVariables(0:𝔹,1:𝔹,0,0:𝔹))),measure(twoVariables(1:𝔹,1:𝔹,0,0:𝔹)),measure(reverse(twoVariables)(1:𝔹,1:𝔹,0,twoVariables(1:𝔹,1:𝔹,0,0:𝔹))),measure(nestedWith(1:𝔹,1:𝔹,1,0:𝔹)),measure(reverse(nestedWith)(1:𝔹,1:𝔹,1,nestedWith(1:𝔹,1:𝔹,1,0:𝔹))),measure(nestedWith(0:𝔹,1:𝔹,0,0:𝔹)),measure(reverse(nestedWith)(0:𝔹,1:𝔹,0,nestedWith(0:𝔹,1:𝔹,0,0:𝔹))),measure(nestedWith(1:𝔹,1:𝔹,0,0:𝔹)),measure(reverse(nestedWith)(1:𝔹,1:𝔹,0,nestedWith(1:𝔹,1:𝔹,0,0:𝔹))),measure(inBranch(1:𝔹,1:𝔹,1,0:𝔹)),measure(reverse(inBranch)(1:𝔹,1:𝔹,1,inBranch(1:𝔹,1:𝔹,1,0:𝔹))),measure(inBranch(0:𝔹,1:𝔹,0,0:𝔹)),measure(reverse(inBranch)(0:𝔹,1:𝔹,0,inBranch(0:𝔹,1:𝔹,0,0:𝔹))),measure(inBranch(1:𝔹,1:𝔹,0,0:𝔹)),measure(reverse(inBranch)(1:𝔹,1:𝔹,0,inBranch(1:𝔹,1:𝔹,0,0:𝔹))),measure(usedAfter(1:𝔹,1:𝔹,1,0:𝔹)),measure(reverse(usedAfter)(1:𝔹,1:𝔹,1,usedAfter(1:𝔹,1:𝔹,1,0:𝔹))),measure(usedAfter(0:𝔹,1:𝔹,0,0:𝔹)),measure(reverse(usedAfter)(0:𝔹,1:𝔹,0,usedAfter(0:𝔹,1:𝔹,0,0:𝔹))),measure(usedAfter(1:𝔹,1:𝔹,0,0:𝔹)),measure(reverse(usedAfter)(1:𝔹,1:𝔹,0,usedAfter(1:𝔹,1:𝔹,0,0:𝔹))),measure(forgottenAfter(1:𝔹,1:𝔹,1,0:𝔹)),measure(reverse(forgottenAfter)(1:𝔹,1:𝔹,1,forgottenAfter(1:𝔹,1:𝔹,1,0:𝔹))),measure(forgottenAfter(0:𝔹,1:𝔹,0,0:𝔹)),measure(reverse(forgottenAfter)(0:𝔹,1:𝔹,0,forgottenAfter(0:𝔹,1:𝔹,0,0:𝔹))),measure(forgottenAfter(1:𝔹,1:𝔹,0,0:𝔹)),measure(reverse(forgottenAfter)(1:𝔹,1:𝔹,0,forgottenAfter(1:𝔹,1:𝔹,0,0:𝔹))),measure(twoWithStatements(1:𝔹,1:𝔹,1,0:𝔹)),measure(reverse(twoWithStatements)(1:𝔹,1:𝔹,1,twoWithStatements(1:𝔹,1:𝔹,1,0:𝔹))),measure(twoWithStatements(0:𝔹,1:𝔹,0,0:𝔹)),measure(reverse(twoWithStatements)(0:𝔹,1:𝔹,0,twoWithStatements(0:𝔹,1:𝔹,0,0:𝔹))),measure(twoWithStatements(1:𝔹,1:𝔹,0,0:𝔹)),measure(reverse(twoWithStatements)(1:𝔹,1:𝔹,0,twoWithStatements(1:𝔹,1:𝔹,0,0:𝔹))),measure(inLoop(1:𝔹,1:𝔹,1,0:𝔹)),measure(reverse(inLoop)(1:𝔹,1:𝔹,1,inLoop(1:𝔹,1:𝔹,1,0:𝔹))),measure(inLoop(0:𝔹,1:𝔹,0,0:𝔹)),measure(reverse(inLoop)(0:𝔹,1:𝔹,0,inLoop(0:𝔹,1:𝔹,0,0:𝔹))),measure(inLoop(1:𝔹,1:𝔹,0,0:𝔹)),measure(reverse(inLoop)(1:𝔹,1:𝔹,0,inLoop(1:𝔹,1:𝔹,0,0:𝔹))));
+	assert(r==(1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,1,0,0,0,0,0,1,0,1,0,1,0,1,0,0,0,1,0,1,0,0,0,1,0,1,0,0,0,0,0));
+	return r;
+}
