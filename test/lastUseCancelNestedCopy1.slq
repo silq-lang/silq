@@ -1,6 +1,6 @@
 def f(){
 	w:=H(0:𝔹);
-	q:=dup(w); /// error
+	q:=dup(w);
 	if measure(H(0:𝔹)) {
 		m1:=measure(q);
 		if measure(H(0:𝔹)) {
@@ -12,7 +12,7 @@ def f(){
 }
 def g(){
 	w:=H(0:𝔹);
-	q:=dup(w); /// error
+	q:=dup(w);
 	if measure(H(0:𝔹)) {
 		m1:=measure(dup(q),q);
 		if measure(H(0:𝔹)) {

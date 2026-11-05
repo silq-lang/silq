@@ -1,0 +1,50 @@
+// args: --run
+
+def returnsInThen(const c:𝔹,x:𝔹)mfree{
+	t:=dup(x);
+	if c { return X(x); }
+	forget(t);
+	return x;
+}
+def forgetBeforeReturn(const c:𝔹,x:𝔹)mfree{
+	t:=dup(x);
+	if c { forget(t); return X(x); }
+	forget(t);
+	return x;
+}
+def classicalCondition(const k:!ℕ,x:𝔹)mfree{
+	t:=dup(x);
+	if k==1 { return X(x); }
+	forget(t);
+	return x;
+}
+def returnsInElse(const c:𝔹,x:𝔹)mfree{
+	t:=dup(x);
+	if c { } else { forget(t); return X(x); }
+	forget(t);
+	return x;
+}
+def implicitForget(const c:𝔹,x:𝔹,y:𝔹)mfree{
+	t:=dup(x);
+	if c { return (X(x),y); }
+	y:=X(y);
+	return (x,y);
+}
+def measured(n:!ℕ,x:𝔹){
+	q:=dup(x);
+	if n>0 { forget(q); x:=X(x); return measure(x); }
+	x:=X(x);
+	x:=X(x);
+	return measure(x);
+}
+def measuredBeforeReturn(n:!ℕ,x:𝔹){
+	q:=dup(x);
+	if n>0 { forget(q); return measure(x); }
+	x:=X(x);
+	return measure(x);
+}
+def main(){
+	r:=(measure(returnsInThen(0:𝔹,1:𝔹)),measure(returnsInThen(1:𝔹,1:𝔹)),measure(forgetBeforeReturn(0:𝔹,1:𝔹)),measure(forgetBeforeReturn(1:𝔹,1:𝔹)),measure(classicalCondition(0,1:𝔹)),measure(classicalCondition(1,1:𝔹)),measure(returnsInElse(0:𝔹,1:𝔹)),measure(returnsInElse(1:𝔹,1:𝔹)),measure(implicitForget(0:𝔹,1:𝔹,0:𝔹)),measure(implicitForget(1:𝔹,1:𝔹,0:𝔹)),measured(0,1:𝔹),measured(1,1:𝔹),measuredBeforeReturn(0,1:𝔹),measuredBeforeReturn(1,1:𝔹));
+	assert(r==(1,0,1,0,1,0,0,1,(1,1),(0,0),1,0,0,1));
+	return r;
+}

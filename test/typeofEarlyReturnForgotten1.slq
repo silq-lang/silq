@@ -1,13 +1,13 @@
 def f(){
 	x:=H(0:𝔹);
-	o:=dup(x); /// error
+	o:=dup(x);
 	if measure(H(0:𝔹)) { return x; }
 	t:=0:typeof(measure(o));
 	return x;
 }
 def g(){
 	x:=H(0:𝔹);
-	o:=dup(x); /// error
+	o:=dup(x);
 	if measure(H(0:𝔹)) { return x; }
 	t:=0:typeof(o);
 	return x;
@@ -21,9 +21,9 @@ def h(){
 }
 def k(){
 	x:=H(0:𝔹);
-	o:=dup(x); /// error
+	o:=dup(x);
 	if measure(H(0:𝔹)) { return x; }
-	t:=(0,0):typeof(measure(o),measure(o));
+	t:=(0,0):typeof(measure(o),measure(o)); /// TODO
 	return x;
 }
 def main()⇒(f(),g(),h());

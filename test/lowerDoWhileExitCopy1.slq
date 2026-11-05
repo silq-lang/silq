@@ -1,0 +1,35 @@
+// args: --run
+
+def copyAfterUpdate(const n:!ℕ,p:𝔹){
+	k:=0;
+	do { k+=1; p:=X(p); t:=dup(p); } while k<n;
+	return (measure(t),measure(p));
+}
+def copyInBranch(const n:!ℕ,b:!𝔹){
+	p:=1:𝔹;
+	c:=0;
+	k:=0;
+	do { k+=1; p:=X(p); t:=dup(p); if b { t:=X(t); } c+=measure(dup(t)); } while k<n;
+	return (c,measure(t),measure(p));
+}
+def copyWithBody(const n:!ℕ,b:!𝔹){
+	p:=1:𝔹;
+	c:=0;
+	k:=0;
+	r:=0;
+	do { k+=1; p:=X(p); t:=dup(p); if b { t:=X(t); } c+=measure(dup(t)); } while k<n { r+=1; }
+	return (c,r,measure(t),measure(p));
+}
+def recursiveCopy(k:!ℕ,p:𝔹):!ℕ×𝔹{
+	k+=1;
+	p:=X(p);
+	t:=dup(p);
+	if k<2 { forget(t); return recursiveCopy(k,p); }
+	forget(t);
+	return (k,p);
+}
+def main(){
+	r:=(copyAfterUpdate(1,0:𝔹),copyAfterUpdate(2,0:𝔹),copyInBranch(2,false),copyInBranch(2,true),copyWithBody(2,false),copyWithBody(2,true),measure(recursiveCopy(0,0:𝔹)));
+	assert(r==((1,1),(0,0),(1,1,1),(1,0,1),(1,1,1,1),(1,1,0,1),(2,0)));
+	return r;
+}

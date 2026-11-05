@@ -2,11 +2,11 @@
 def g(q:𝔹,c:!𝔹,d:!𝔹){
 	t:=dup(q);
 	if c {
-		forget(t); /// error
+		forget(t);
 		if d { q:=X(q); }
 		return q;
 	}else{
-		forget(t); /// error
+		forget(t);
 		return q;
 	}
 }

@@ -4,10 +4,10 @@ def main(){
 	y:=dup(x);
 	z:=H(0:𝔹);
 	if z{
-		forget(y); /// error
+		forget(y);
 		x:=H(x);
 	}else{
-		forget(y); /// error
+		forget(y);
 		y:=H(y); /// error
 	}
 	return (x,z);

@@ -1,7 +1,7 @@
 
 def f(){
 	x:=H(0:𝔹);
-	q:=dup(x); /// error
+	q:=dup(x);
 	if measure(H(0:𝔹)) { } else { if measure(H(0:𝔹)) { } else { x:=H(x); } m:=measure(q); }
 	return x;
 }

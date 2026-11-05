@@ -1,0 +1,62 @@
+// args: --run
+
+def explicitForget(const c:𝔹,const d:𝔹,const k:!ℕ,x:𝔹)qfree:𝔹{
+	f:=dup(d);
+	if c { t:=dup(x)&f; forget(f); forget(t); x:=X(x); } else { forget(f); }
+	return x;
+}
+def classicalCondition(const c:𝔹,const d:𝔹,const k:!ℕ,x:𝔹)qfree:𝔹{
+	f:=dup(d);
+	if k==1 { t:=dup(x)&f; forget(f); forget(t); x:=X(x); } else { forget(f); }
+	return x;
+}
+def bothConsume(const c:𝔹,const d:𝔹,const k:!ℕ,x:𝔹)qfree:𝔹{
+	f:=dup(d);
+	if c { t:=dup(x)&f; forget(f); forget(t); x:=X(x); } else { forget(f); x:=X(x); }
+	return x;
+}
+def movedOuter(const c:𝔹,const d:𝔹,const k:!ℕ,x:𝔹)qfree:𝔹{
+	f:=dup(d);
+	if c { t:=dup(x)&f; g:=move(f); forget(g); forget(t); x:=X(x); } else { forget(f); }
+	return x;
+}
+def nestedForget(const c:𝔹,const d:𝔹,const k:!ℕ,x:𝔹)qfree:𝔹{
+	f:=dup(d);
+	if c { t:=dup(x)&f; if k==1 { forget(f); } else { forget(f); } forget(t); x:=X(x); } else { forget(f); }
+	return x;
+}
+def forgetWithValue(const c:𝔹,const d:𝔹,const k:!ℕ,x:𝔹)qfree:𝔹{
+	f:=dup(d);
+	if c { t:=dup(x)&f; forget(f=dup(d)); forget(t); x:=X(x); } else { forget(f); }
+	return x;
+}
+def twoLevels(const c:𝔹,const d:𝔹,const k:!ℕ,x:𝔹)qfree:𝔹{
+	f:=dup(d);
+	g:=dup(f);
+	if c { t:=dup(x)&g; forget(g); forget(t); x:=X(x); } else { forget(g); }
+	forget(f);
+	return x;
+}
+def dependentLocal(const c:𝔹,const d:𝔹,const k:!ℕ,x:𝔹)qfree:𝔹{
+	f:=dup(d);
+	if c { t:=dup(x)&f; s:=dup(t); forget(f); forget(s); forget(t); x:=X(x); } else { forget(f); }
+	return x;
+}
+def repeatLoop(const c:𝔹,const d:𝔹,const k:!ℕ,x:𝔹)qfree:𝔹{
+	repeat k { f:=dup(d); if c { t:=dup(x)&f; x:=X(x); } }
+	return x;
+}
+def forLoop(const c:𝔹,const d:𝔹,const k:!ℕ,x:𝔹)qfree:𝔹{
+	for i in 0..k { def g(const z:𝔹)qfree⇒z&d; if c { t:=dup(x)&g(c); x:=X(x); } }
+	return x;
+}
+def whileLoop(const c:𝔹,const d:𝔹,const k:!ℕ,x:𝔹)qfree:𝔹{
+	i:=0;
+	while i<k { f:=dup(d); if c { t:=dup(x)&f; x:=X(x); } i+=1; }
+	return x;
+}
+def main(){
+	r:=(measure(explicitForget(1:𝔹,1:𝔹,0,1:𝔹)),measure(explicitForget(0:𝔹,1:𝔹,0,1:𝔹)),measure(classicalCondition(0:𝔹,1:𝔹,1,1:𝔹)),measure(classicalCondition(0:𝔹,1:𝔹,0,1:𝔹)),measure(bothConsume(1:𝔹,0:𝔹,0,1:𝔹)),measure(bothConsume(0:𝔹,1:𝔹,0,1:𝔹)),measure(movedOuter(1:𝔹,1:𝔹,0,0:𝔹)),measure(nestedForget(1:𝔹,1:𝔹,1,0:𝔹)),measure(nestedForget(1:𝔹,0:𝔹,0,0:𝔹)),measure(forgetWithValue(1:𝔹,1:𝔹,0,1:𝔹)),measure(twoLevels(1:𝔹,1:𝔹,0,1:𝔹)),measure(twoLevels(0:𝔹,1:𝔹,0,1:𝔹)),measure(dependentLocal(1:𝔹,1:𝔹,0,1:𝔹)),measure(repeatLoop(1:𝔹,1:𝔹,2,1:𝔹)),measure(repeatLoop(1:𝔹,1:𝔹,3,1:𝔹)),measure(forLoop(1:𝔹,1:𝔹,2,0:𝔹)),measure(forLoop(1:𝔹,0:𝔹,1,0:𝔹)),measure(whileLoop(1:𝔹,1:𝔹,1,1:𝔹)),measure(whileLoop(0:𝔹,1:𝔹,2,1:𝔹)),measure(reverse(explicitForget)(1:𝔹,1:𝔹,0,0:𝔹)),measure(reverse(dependentLocal)(1:𝔹,1:𝔹,0,0:𝔹)),measure(reverse(repeatLoop)(1:𝔹,1:𝔹,3,0:𝔹)));
+	assert(r==(0,1,0,1,0,0,1,1,1,0,0,1,0,1,0,0,1,0,1,1,1,1));
+	return r;
+}

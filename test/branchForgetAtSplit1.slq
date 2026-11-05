@@ -1,0 +1,57 @@
+// args: --run
+
+def thenConsumes(const c:𝔹,x:𝔹)mfree{
+	t:=dup(x);
+	if c { x:=X(x); } else { forget(t); }
+	return x;
+}
+def elseConsumes(const c:𝔹,x:𝔹)mfree{
+	t:=dup(x);
+	if c { forget(t); } else { x:=X(x); }
+	return x;
+}
+def forgetBefore(const c:𝔹,x:𝔹)mfree{
+	t:=dup(x);
+	if c { forget(t); x:=X(x); } else { forget(t); }
+	return x;
+}
+def classicalCondition(const k:!ℕ,x:𝔹)mfree{
+	t:=dup(x);
+	if k==1 { x:=X(x); } else { forget(t); }
+	return x;
+}
+def bothForget(const c:𝔹,x:𝔹)mfree{
+	t:=dup(x);
+	if c { forget(t); } else { forget(t); x:=X(x); }
+	return x;
+}
+def twoValues(const c:𝔹,x:𝔹)mfree{
+	t:=dup(x);
+	s:=dup(t);
+	if c { x:=X(x); } else { forget(s); forget(t); }
+	return x;
+}
+def twoValuesReversed(const c:𝔹,x:𝔹)mfree{
+	t:=dup(x);
+	s:=dup(t);
+	if c { x:=X(x); } else { forget(t); forget(s); }
+	return x;
+}
+def otherStatement(const c:𝔹,x:𝔹,y:𝔹)mfree{
+	t:=dup(x);
+	if c { x:=X(x); } else { y:=X(y); forget(t); }
+	return (x,y);
+}
+def nested(const c:𝔹,const d:𝔹,x:𝔹)mfree{
+	if c { t:=dup(x); if d { x:=X(x); } else { forget(t); } }
+	return x;
+}
+def inLoop(const c:𝔹,const k:!ℕ,x:𝔹)mfree{
+	repeat k { t:=dup(x); if c { x:=X(x); } else { forget(t); } }
+	return x;
+}
+def main(){
+	r:=(measure(thenConsumes(0:𝔹,1:𝔹)),measure(thenConsumes(1:𝔹,1:𝔹)),measure(elseConsumes(0:𝔹,1:𝔹)),measure(elseConsumes(1:𝔹,1:𝔹)),measure(forgetBefore(0:𝔹,1:𝔹)),measure(forgetBefore(1:𝔹,1:𝔹)),measure(classicalCondition(0,1:𝔹)),measure(classicalCondition(1,1:𝔹)),measure(bothForget(0:𝔹,1:𝔹)),measure(bothForget(1:𝔹,1:𝔹)),measure(twoValues(0:𝔹,1:𝔹)),measure(twoValues(1:𝔹,1:𝔹)),measure(twoValuesReversed(0:𝔹,1:𝔹)),measure(twoValuesReversed(1:𝔹,1:𝔹)),measure(otherStatement(0:𝔹,1:𝔹,0:𝔹)),measure(otherStatement(1:𝔹,1:𝔹,0:𝔹)),measure(nested(1:𝔹,0:𝔹,1:𝔹)),measure(nested(1:𝔹,1:𝔹,1:𝔹)),measure(inLoop(0:𝔹,2,1:𝔹)),measure(inLoop(1:𝔹,3,1:𝔹)),measure(reverse(thenConsumes)(1:𝔹,0:𝔹)),measure(reverse(elseConsumes)(0:𝔹,0:𝔹)),measure(reverse(twoValues)(0:𝔹,1:𝔹)),measure(reverse(otherStatement)(0:𝔹,(1:𝔹,1:𝔹))));
+	assert(r==(1,0,0,1,1,0,1,0,0,1,1,0,1,0,(1,1),(0,0),1,0,1,0,1,1,1,(1,0)));
+	return r;
+}

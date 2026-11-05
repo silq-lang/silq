@@ -1,6 +1,6 @@
 
-def foo(x:𝔹){
-	r:=dup(x); /// error
+def foo(x:𝔹){ /// error
+	r:=dup(x);
 	if measure(H(0)){
 		return x;
 	}

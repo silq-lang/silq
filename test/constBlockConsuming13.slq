@@ -7,7 +7,7 @@ def main(){
 		forget(y); /// error // TODO: improve diagnostic
 		H(0):=x;
 	}else{
-		forget(y); /// error
+		forget(y);
 		H(0):=x;
 	}
 }

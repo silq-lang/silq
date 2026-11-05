@@ -1,0 +1,15 @@
+def nestedReturn(const c:𝔹,x:𝔹,y:𝔹,const k:!ℕ)mfree:𝔹×𝔹{
+	u:=x&y; /// error
+	if c { if k==1 { return (x,X(y)); } else { forget(u); } } else { forget(u); x:=X(x); }
+	return (x,y);
+}
+def classicalConditions(x:𝔹,y:𝔹,const j:!ℕ,const k:!ℕ)mfree:𝔹×𝔹{
+	u:=x&y; /// error
+	if j==0 { if k==1 { return (x,y); } else { forget(u); } } else { forget(u); }
+	return (x,y);
+}
+def useAfterNestedConditional(x:𝔹,const j:!ℕ,const k:!ℕ)mfree:𝔹{
+	t:=dup(x); /// error
+	if j==0 { if k==1 { return X(x); } forget(t); } else { forget(t); }
+	return x;
+}

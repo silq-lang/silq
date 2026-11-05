@@ -3306,8 +3306,13 @@ class ScopeWriter {
 			t.d0 = decl;
 		}
 
+		Triple[] triples;
 		foreach(id, t; splitVars) {
 			assert(t.d0, format("Split variable %s missing in if-false", id));
+			triples ~= t;
+		}
+		foreach(t; splitOrder(triples.map!(t => t.outer).array, sc0, sc1).map!(i => triples[i])) {
+			auto id = t.outer.getId;
 			auto d1 = t.d1;
 			auto d0 = t.d0;
 			auto vtype = typeForDecl(t.outer);
@@ -3319,6 +3324,30 @@ class ScopeWriter {
 			if1.defineVar(d1, v1);
 			if0.defineVar(d0, v0);
 		}
+	}
+
+	static size_t[] splitOrder(ast_decl.Declaration[] outers, ast_scope.NestedScope[] scopes...) { // (a variable whose version in a branch is uncomputed at the split is split before the variables that its dependency there mentions, which its recomputation reads)
+		auto before = new size_t[][](outers.length);
+		foreach(sc; scopes) foreach(f; sc.dependenciesAtSplit()) {
+			if(f[1].isTop) continue;
+			ptrdiff_t index(ast_decl.Declaration d) { return outers.countUntil!(u => u is d || u.isSplitFrom(d) || d.isSplitFrom(u)); } // (also an earlier version, from before the variable was split into the enclosing blocks)
+			auto i = index(f[0]);
+			if(i < 0) continue;
+			foreach(d; f[1].dependencies) {
+				auto j = index(d);
+				if(j >= 0 && j != i) before[j] ~= i;
+			}
+		}
+		size_t[] order;
+		auto visited = new bool[](outers.length);
+		void visit(size_t i) {
+			if(visited[i]) return;
+			visited[i] = true;
+			foreach(j; before[i]) visit(j);
+			order ~= i;
+		}
+		foreach(i; 0 .. outers.length) visit(i);
+		return order;
 	}
 
 	static void addMergedVersion(ref IdMap!Expression subst, ast_decl.Declaration decl) { // (the merged types in terms of the versions of the variables in a branch, in which the conversions are generated)

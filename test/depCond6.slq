@@ -2,10 +2,12 @@ def foo(x:𝔹,const cond:𝔹){
 	y:=dup(x);
 	z:=0;
 	if cond{
-		forget(y); /// error
+		forget(y);
 	}else{
 		x:=H(x);
 		z=y;
 	}
 	return (x,z);
 }
+
+def main()⇒foo(H(0),measure(H(0)));
