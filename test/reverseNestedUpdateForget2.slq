@@ -1,0 +1,18 @@
+// args: --run
+
+def readAfterUpdateAtLastUse(xs:𝔹^4,const c:!ℕ,const n:!ℕ)mfree{
+	k:=n*2;
+	with { t:=3; } do {
+		u:=30; /// TODO
+		w:=2;
+		if c==0 { w+=k+1; u+=w; xs[(u+1)%4]:=X(xs[(u+1)%4]); } /// TODO
+	}
+	xs[(w+n)%4]:=X(xs[(w+n)%4]);
+	return xs;
+}
+
+def main(){
+	r:=(measure(readAfterUpdateAtLastUse((1,1,1,0):𝔹^4,0,1)),measure(reverse(readAfterUpdateAtLastUse)(readAfterUpdateAtLastUse((1,1,1,0):𝔹^4,0,1),0,1)),measure(readAfterUpdateAtLastUse((1,1,1,0):𝔹^4,0,2)),measure(reverse(readAfterUpdateAtLastUse)(readAfterUpdateAtLastUse((1,1,1,0):𝔹^4,0,2),0,2)),measure(readAfterUpdateAtLastUse((1,1,1,0):𝔹^4,1,2)),measure(reverse(readAfterUpdateAtLastUse)(readAfterUpdateAtLastUse((1,1,1,0):𝔹^4,1,2),1,2))); /// TODO
+	assert(r==((0,1,0,0),(1,1,1,0),(1,0,0,0),(1,1,1,0),(0,1,1,0),(1,1,1,0)));
+	return r;
+}

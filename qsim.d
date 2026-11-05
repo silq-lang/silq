@@ -1470,6 +1470,7 @@ struct QState{
 		}do{
 			enforce(r<=array_.length,"slice upper bound exceeds array length");
 			enforce(l<=r,"slice lower bound exceeds slice upper bound");
+			enforce(0<=l,"slice lower bound is negative");
 			return makeArray(type,array_[to!size_t(l)..to!size_t(r)]);
 		}
 		Value opSlice(Value l,Value r){

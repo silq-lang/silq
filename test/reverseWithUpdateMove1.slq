@@ -1,0 +1,49 @@
+// args: --run
+
+def updatedAndMoved(xs:𝔹^4,const j:!ℕ)mfree{
+	with { u:=j+j; } do { v:=3; v+=u; w:=move(v); }
+	v:=w+w;
+	v+=1;
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+
+def updatedTwiceAndMoved(xs:𝔹^4,const j:!ℕ)mfree{
+	with { u:=j+j; } do { v:=3; v+=u; v*=2; w:=move(v); }
+	v:=w+1;
+	v+=j;
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+
+def updatedAndMovedIntoItself(xs:𝔹^4,const j:!ℕ)mfree{
+	with { u:=j+j; } do { v:=3; v+=u; (v,t):=(v,1); w:=move(v); }
+	v:=w+w;
+	v+=t;
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+
+def updatedFromCopyAndMoved(xs:𝔹^4,const j:!ℕ)mfree{
+	with { u:=j+j; } do { v:=3; v+=dup(u); (v,t):=(v,(j+j)%4); w:=move(v); }
+	v:=w+w;
+	v+=(t+j)%4;
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+
+def updatedAndMovedInBranch(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	if c {
+		with { u:=j+j; } do { v:=3; v+=u; w:=move(v); }
+		v:=w+w;
+		v+=1;
+		xs[v%4]:=X(xs[v%4]);
+	}
+	return xs;
+}
+
+def main(){
+	r:=(measure(updatedAndMoved((1,1,1,0):𝔹^4,1)),measure(reverse(updatedAndMoved)(updatedAndMoved((1,1,1,0):𝔹^4,1),1)),measure(updatedAndMoved((1,1,1,0):𝔹^4,2)),measure(reverse(updatedAndMoved)(updatedAndMoved((1,1,1,0):𝔹^4,2),2)),measure(updatedTwiceAndMoved((1,1,1,0):𝔹^4,1)),measure(reverse(updatedTwiceAndMoved)(updatedTwiceAndMoved((1,1,1,0):𝔹^4,1),1)),measure(updatedTwiceAndMoved((1,1,1,0):𝔹^4,2)),measure(reverse(updatedTwiceAndMoved)(updatedTwiceAndMoved((1,1,1,0):𝔹^4,2),2)),measure(updatedAndMovedIntoItself((1,1,1,0):𝔹^4,1)),measure(reverse(updatedAndMovedIntoItself)(updatedAndMovedIntoItself((1,1,1,0):𝔹^4,1),1)),measure(updatedAndMovedIntoItself((1,1,1,0):𝔹^4,2)),measure(reverse(updatedAndMovedIntoItself)(updatedAndMovedIntoItself((1,1,1,0):𝔹^4,2),2)),measure(updatedFromCopyAndMoved((1,1,1,0):𝔹^4,1)),measure(reverse(updatedFromCopyAndMoved)(updatedFromCopyAndMoved((1,1,1,0):𝔹^4,1),1)),measure(updatedFromCopyAndMoved((1,1,1,0):𝔹^4,2)),measure(reverse(updatedFromCopyAndMoved)(updatedFromCopyAndMoved((1,1,1,0):𝔹^4,2),2)),measure(updatedAndMovedInBranch((1,1,1,0):𝔹^4,true,1)),measure(reverse(updatedAndMovedInBranch)(updatedAndMovedInBranch((1,1,1,0):𝔹^4,true,1),true,1)),measure(updatedAndMovedInBranch((1,1,1,0):𝔹^4,false,2)),measure(reverse(updatedAndMovedInBranch)(updatedAndMovedInBranch((1,1,1,0):𝔹^4,false,2),false,2)));
+	assert(r==((1,1,1,1),(1,1,1,0),(1,1,1,1),(1,1,1,0),(0,1,1,0),(1,1,1,0),(1,0,1,0),(1,1,1,0),(1,1,1,1),(1,1,1,0),(1,1,1,1),(1,1,1,0),(1,0,1,0),(1,1,1,0),(0,1,1,0),(1,1,1,0),(1,1,1,1),(1,1,1,0),(1,1,1,0),(1,1,1,0)));
+	return r;
+}

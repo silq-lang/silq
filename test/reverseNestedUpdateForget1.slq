@@ -1,0 +1,100 @@
+// args: --run
+
+def updatedAtLastUse(xs:𝔹^4,const c:!ℕ,const n:!ℕ)mfree{
+	k1:=c+1;
+	k2:=dup(n);
+	if c==0 { u:=dup(k1); if u==1 { xs[2]:=X(xs[2]); } if c==0 { u+=k2; k2+=c; } }
+	xs[k2%4]:=X(xs[k2%4]);
+	return xs;
+}
+
+def updatedAtLastUseWithElse(xs:𝔹^4,const c:!ℕ,const n:!ℕ)mfree{
+	k1:=c+1;
+	k2:=dup(n);
+	if c==0 { u:=dup(k1); k1*=2; if u==1 { xs[2]:=X(xs[2]); } if c==0 { u+=k2; k2+=c; } } else { if c==1 { k1+=c; } }
+	xs[(k1+k2)%4]:=X(xs[(k1+k2)%4]);
+	return xs;
+}
+
+def updatedAtLastUseTwice(xs:𝔹^4,const c:!ℕ,const n:!ℕ)mfree{
+	k1:=c+1;
+	k2:=dup(n);
+	if c==0 { u:=dup(k1); if u==1 { xs[2]:=X(xs[2]); } if c==0 { u+=k2; k2+=c; u*=2; k2+=1; } }
+	xs[k2%4]:=X(xs[k2%4]);
+	return xs;
+}
+
+def readBeforeUpdateAtLastUse(xs:𝔹^4,const c:!ℕ,const n:!ℕ)mfree{
+	k:=n*2;
+	with { t:=3; } do {
+		u:=30;
+		w:=2;
+		if c==0 { w+=k+1; xs[(u+1)%4]:=X(xs[(u+1)%4]); u+=w; }
+	}
+	xs[(w+n)%4]:=X(xs[(w+n)%4]);
+	return xs;
+}
+
+def updatedInLoopAtLastUse(xs:𝔹^4,const c:!ℕ,const n:!ℕ)mfree{
+	k:=n*2;
+	with { t:=3; } do {
+		u:=1;
+		w:=2;
+		if c==0 { w+=k+1; for i in 0..2 { xs[i]:=X(xs[i]); u+=w; } }
+	}
+	xs[(w+n)%4]:=X(xs[(w+n)%4]);
+	return xs;
+}
+
+def forgottenInBranchOfCondition(xs:𝔹^4,const c:!ℕ,const n:!ℕ)mfree{
+	v:=(n*2,n*2+1):!ℕ^2;
+	if c==0 {
+		if v[0]%4==2 { forget(v); } else { v[0]+=1; xs[(n+3)%4]:=X(xs[(n+3)%4]); v[0]+=2; }
+		v:=(4,5):!ℕ^2;
+		xs[(n*2)%4]:=X(xs[(n*2)%4]);
+	}
+	xs[2]:=X(xs[2]);
+	return xs;
+}
+
+def forgottenInBranchOfConditionLoop(xs:𝔹^4,const c:!ℕ,const n:!ℕ)mfree{
+	v:=n*2;
+	xs[0]:=X(xs[0]);
+	if c==1 {
+		if v%4==0 { forget(v); } else { for i in 0..2 { v+=1; xs[3]:=X(xs[3]); } }
+		v:=5;
+	} else {
+		xs[(n+2)%4]:=X(xs[(n+2)%4]);
+	}
+	return xs;
+}
+
+def forgottenInBranchOfConditionWith(xs:𝔹^4,const c:!ℕ,const n:!ℕ)mfree{
+	v:=n+n;
+	if c==0 {
+		if v%4==2 { with { t:=2; } do { v+=t; xs[n%4]:=X(xs[n%4]); } } else { forget(v); }
+		v:=n+2;
+		xs[(v*2)%4]:=X(xs[(v*2)%4]);
+	} else {
+		xs[(n*2)%4]:=X(xs[(n*2)%4]);
+	}
+	return xs;
+}
+
+def forgottenInBranchOfConditionInLoop(xs:𝔹^4,const c:!ℕ,const n:!ℕ)mfree{
+	v:=n+3;
+	xs[(n+v)%4]:=X(xs[(n+v)%4]);
+	for l in 0..c+2 {
+		if v%4==3 { xs[(v*2)%4]:=X(xs[(v*2)%4]); v+=2; } else { forget(v); }
+		v:=n+2;
+		xs[1]:=X(xs[1]);
+	}
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+
+def main(){
+	r:=(measure(updatedAtLastUse((1,1,1,0):𝔹^4,0,0)),measure(reverse(updatedAtLastUse)(updatedAtLastUse((1,1,1,0):𝔹^4,0,0),0,0)),measure(updatedAtLastUse((1,1,1,0):𝔹^4,0,1)),measure(reverse(updatedAtLastUse)(updatedAtLastUse((1,1,1,0):𝔹^4,0,1),0,1)),measure(updatedAtLastUse((1,1,1,0):𝔹^4,1,2)),measure(reverse(updatedAtLastUse)(updatedAtLastUse((1,1,1,0):𝔹^4,1,2),1,2)),measure(updatedAtLastUseWithElse((1,1,1,0):𝔹^4,0,0)),measure(reverse(updatedAtLastUseWithElse)(updatedAtLastUseWithElse((1,1,1,0):𝔹^4,0,0),0,0)),measure(updatedAtLastUseWithElse((1,1,1,0):𝔹^4,1,2)),measure(reverse(updatedAtLastUseWithElse)(updatedAtLastUseWithElse((1,1,1,0):𝔹^4,1,2),1,2)),measure(updatedAtLastUseTwice((1,1,1,0):𝔹^4,0,1)),measure(reverse(updatedAtLastUseTwice)(updatedAtLastUseTwice((1,1,1,0):𝔹^4,0,1),0,1)),measure(updatedAtLastUseTwice((1,1,1,0):𝔹^4,1,1)),measure(reverse(updatedAtLastUseTwice)(updatedAtLastUseTwice((1,1,1,0):𝔹^4,1,1),1,1)),measure(readBeforeUpdateAtLastUse((1,1,1,0):𝔹^4,0,1)),measure(reverse(readBeforeUpdateAtLastUse)(readBeforeUpdateAtLastUse((1,1,1,0):𝔹^4,0,1),0,1)),measure(readBeforeUpdateAtLastUse((1,1,1,0):𝔹^4,0,2)),measure(reverse(readBeforeUpdateAtLastUse)(readBeforeUpdateAtLastUse((1,1,1,0):𝔹^4,0,2),0,2)),measure(readBeforeUpdateAtLastUse((1,1,1,0):𝔹^4,1,2)),measure(reverse(readBeforeUpdateAtLastUse)(readBeforeUpdateAtLastUse((1,1,1,0):𝔹^4,1,2),1,2)),measure(updatedInLoopAtLastUse((1,1,1,0):𝔹^4,0,1)),measure(reverse(updatedInLoopAtLastUse)(updatedInLoopAtLastUse((1,1,1,0):𝔹^4,0,1),0,1)),measure(updatedInLoopAtLastUse((1,1,1,0):𝔹^4,0,2)),measure(reverse(updatedInLoopAtLastUse)(updatedInLoopAtLastUse((1,1,1,0):𝔹^4,0,2),0,2)),measure(updatedInLoopAtLastUse((1,1,1,0):𝔹^4,1,2)),measure(reverse(updatedInLoopAtLastUse)(updatedInLoopAtLastUse((1,1,1,0):𝔹^4,1,2),1,2)),measure(forgottenInBranchOfCondition((1,1,1,0):𝔹^4,0,1)),measure(reverse(forgottenInBranchOfCondition)(forgottenInBranchOfCondition((1,1,1,0):𝔹^4,0,1),0,1)),measure(forgottenInBranchOfCondition((1,1,1,0):𝔹^4,0,2)),measure(reverse(forgottenInBranchOfCondition)(forgottenInBranchOfCondition((1,1,1,0):𝔹^4,0,2),0,2)),measure(forgottenInBranchOfCondition((1,1,1,0):𝔹^4,1,0)),measure(reverse(forgottenInBranchOfCondition)(forgottenInBranchOfCondition((1,1,1,0):𝔹^4,1,0),1,0)),measure(forgottenInBranchOfConditionLoop((1,1,1,0):𝔹^4,1,0)),measure(reverse(forgottenInBranchOfConditionLoop)(forgottenInBranchOfConditionLoop((1,1,1,0):𝔹^4,1,0),1,0)),measure(forgottenInBranchOfConditionLoop((1,1,1,0):𝔹^4,1,1)),measure(reverse(forgottenInBranchOfConditionLoop)(forgottenInBranchOfConditionLoop((1,1,1,0):𝔹^4,1,1),1,1)),measure(forgottenInBranchOfConditionLoop((1,1,1,0):𝔹^4,0,2)),measure(reverse(forgottenInBranchOfConditionLoop)(forgottenInBranchOfConditionLoop((1,1,1,0):𝔹^4,0,2),0,2)),measure(forgottenInBranchOfConditionWith((1,1,1,0):𝔹^4,0,1)),measure(reverse(forgottenInBranchOfConditionWith)(forgottenInBranchOfConditionWith((1,1,1,0):𝔹^4,0,1),0,1)),measure(forgottenInBranchOfConditionWith((1,1,1,0):𝔹^4,0,2)),measure(reverse(forgottenInBranchOfConditionWith)(forgottenInBranchOfConditionWith((1,1,1,0):𝔹^4,0,2),0,2)),measure(forgottenInBranchOfConditionWith((1,1,1,0):𝔹^4,1,0)),measure(reverse(forgottenInBranchOfConditionWith)(forgottenInBranchOfConditionWith((1,1,1,0):𝔹^4,1,0),1,0)),measure(forgottenInBranchOfConditionInLoop((1,1,1,0):𝔹^4,0,0)),measure(reverse(forgottenInBranchOfConditionInLoop)(forgottenInBranchOfConditionInLoop((1,1,1,0):𝔹^4,0,0),0,0)),measure(forgottenInBranchOfConditionInLoop((1,1,1,0):𝔹^4,1,1)),measure(reverse(forgottenInBranchOfConditionInLoop)(forgottenInBranchOfConditionInLoop((1,1,1,0):𝔹^4,1,1),1,1)),measure(forgottenInBranchOfConditionInLoop((1,1,1,0):𝔹^4,0,2)),measure(reverse(forgottenInBranchOfConditionInLoop)(forgottenInBranchOfConditionInLoop((1,1,1,0):𝔹^4,0,2),0,2)));
+	assert(r==((0,1,0,0),(1,1,1,0),(1,0,0,0),(1,1,1,0),(1,1,0,0),(1,1,1,0),(1,1,1,0),(1,1,1,0),(1,0,1,0),(1,1,1,0),(1,1,1,0),(1,1,1,0),(1,0,1,0),(1,1,1,0),(1,1,0,1),(1,1,1,0),(1,0,1,1),(1,1,1,0),(0,1,1,0),(1,1,1,0),(0,0,0,0),(1,1,1,0),(0,1,1,0),(1,1,1,0),(0,1,1,0),(1,1,1,0),(1,1,1,0),(1,1,1,0),(0,0,0,0),(1,1,1,0),(1,1,0,0),(1,1,1,0),(0,1,1,0),(1,1,1,0),(0,1,1,0),(1,1,1,0),(1,1,1,0),(1,1,1,0),(1,0,0,0),(1,1,1,0),(0,1,1,0),(1,1,1,0),(0,1,1,0),(1,1,1,0),(1,1,1,1),(1,1,1,0),(1,1,1,1),(1,1,1,0),(0,1,1,1),(1,1,1,0)));
+	return r;
+}
