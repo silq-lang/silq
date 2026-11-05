@@ -1,0 +1,36 @@
+// args: --run
+
+__N:=!ℕ;
+__V:=!𝔹^2;
+
+def annotated(n:!ℕ){
+	x:=vector(n*2,0:𝔹);
+	return x coerce 𝔹^(let { a:=dup(n):__N; a=a*2; } in a);
+}
+
+def shadowed(n:!ℕ){
+	__N:=3;
+	x:=annotated(n);
+	return (measure(x),__N);
+}
+
+def measured(n:!ℕ){
+	x:=vector(n,0:𝔹) coerce 𝔹^(let { a:=dup(n):__N; } in a);
+	return measure(x);
+}
+
+def vectorType(n:!ℕ){
+	x:=vector(n+2,0:𝔹) coerce 𝔹^(let { v:=(true,false):__V; a:=n+v.length; } in a);
+	return measure(x);
+}
+
+def coerced(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	return x coerce 𝔹^(let { a:=n coerce __N; } in a);
+}
+
+def main(){
+	r:=(measure(annotated(1)),shadowed(2),measured(2),vectorType(1),measure(coerced(3)));
+	assert(r==((0,0),((0,0,0,0),3),(0,0),(0,0,0),(0,0,0)));
+	return r;
+}
