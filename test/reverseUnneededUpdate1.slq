@@ -1,0 +1,58 @@
+// args: --run
+
+def forgottenInBody(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	with { u:=3; } do { v0:=(u+j)%4; xs[1]:=X(xs[1]); v1:=(j+j)%4; if c { v1+=dup(v0); v0+=5; } forget(v1); }
+	xs[(v0+3)%4]:=X(xs[(v0+3)%4]);
+	return xs;
+}
+
+def outerChange(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	k:=(j+j)%4;
+	with { u:=3; } do { v0:=(u+j)%4; xs[1]:=X(xs[1]); v1:=(j+j)%4; if c { v1+=dup(v0); k+=j+1; v0+=dup(k); } forget(v1); }
+	xs[(v0+3)%4]:=X(xs[(v0+3)%4]);
+	return xs;
+}
+
+def quantumInBranch(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	with { u:=3; } do { v0:=(u+j)%4; v1:=(j+j)%4; if c { v1+=dup(v0); v0+=5; xs[2]:=X(xs[2]); } forget(v1); }
+	xs[(v0+3)%4]:=X(xs[(v0+3)%4]);
+	return xs;
+}
+
+def twoUpdates(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	with { u:=3; } do { v0:=(u+j)%4; xs[1]:=X(xs[1]); v1:=(j+j)%4; if c { v1+=dup(v0); v0+=5; v1+=v0; } forget(v1); }
+	xs[(v0+3)%4]:=X(xs[(v0+3)%4]);
+	return xs;
+}
+
+def inLoop(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	with { u:=3; } do { v0:=(u+j)%4; xs[1]:=X(xs[1]); v1:=(j+j)%4; for i in 0..2 { v1+=dup(v0); v0+=5; } forget(v1); }
+	xs[(v0+3)%4]:=X(xs[(v0+3)%4]);
+	return xs;
+}
+
+def bothBranches(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	with { u:=3; } do { v0:=(u+j)%4; xs[1]:=X(xs[1]); v1:=(j+j)%4; if c { v1+=dup(v0); v0+=5; } else { v1+=v0+1; v0+=2; } forget(v1); }
+	xs[(v0+3)%4]:=X(xs[(v0+3)%4]);
+	return xs;
+}
+
+def notForgotten(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	with { u:=3; } do { v0:=(u+j)%4; xs[1]:=X(xs[1]); v1:=(j+j)%4; if c { v1+=dup(v0); v0+=5; } }
+	xs[(v0+3)%4]:=X(xs[(v0+3)%4]);
+	return xs;
+}
+
+def inOuterBranch(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	if c {
+		with { u:=3; } do { v0:=(u+j)%4; xs[1]:=X(xs[1]); v1:=(j+j)%4; if c { v1+=dup(v0); v0+=5; } forget(v1); }
+		xs[(v0+3)%4]:=X(xs[(v0+3)%4]);
+	}
+	return xs;
+}
+
+def main(){
+	r:=(measure(forgottenInBody((1,1,1,0):𝔹^4,true,2)),measure(reverse(forgottenInBody)(forgottenInBody((1,1,1,0):𝔹^4,true,2),true,2)),measure(forgottenInBody((0,1,1,0):𝔹^4,false,2)),measure(reverse(forgottenInBody)(forgottenInBody((0,1,1,0):𝔹^4,false,2),false,2)),measure(forgottenInBody((1,0,0,1):𝔹^4,true,3)),measure(reverse(forgottenInBody)(forgottenInBody((1,0,0,1):𝔹^4,true,3),true,3)),measure(outerChange((1,1,1,0):𝔹^4,true,2)),measure(reverse(outerChange)(outerChange((1,1,1,0):𝔹^4,true,2),true,2)),measure(outerChange((0,1,1,0):𝔹^4,false,2)),measure(reverse(outerChange)(outerChange((0,1,1,0):𝔹^4,false,2),false,2)),measure(outerChange((1,0,0,1):𝔹^4,true,3)),measure(reverse(outerChange)(outerChange((1,0,0,1):𝔹^4,true,3),true,3)),measure(quantumInBranch((1,1,1,0):𝔹^4,true,2)),measure(reverse(quantumInBranch)(quantumInBranch((1,1,1,0):𝔹^4,true,2),true,2)),measure(quantumInBranch((0,1,1,0):𝔹^4,false,2)),measure(reverse(quantumInBranch)(quantumInBranch((0,1,1,0):𝔹^4,false,2),false,2)),measure(quantumInBranch((1,0,0,1):𝔹^4,true,3)),measure(reverse(quantumInBranch)(quantumInBranch((1,0,0,1):𝔹^4,true,3),true,3)),measure(twoUpdates((1,1,1,0):𝔹^4,true,2)),measure(reverse(twoUpdates)(twoUpdates((1,1,1,0):𝔹^4,true,2),true,2)),measure(twoUpdates((0,1,1,0):𝔹^4,false,2)),measure(reverse(twoUpdates)(twoUpdates((0,1,1,0):𝔹^4,false,2),false,2)),measure(twoUpdates((1,0,0,1):𝔹^4,true,3)),measure(reverse(twoUpdates)(twoUpdates((1,0,0,1):𝔹^4,true,3),true,3)),measure(inLoop((1,1,1,0):𝔹^4,true,2)),measure(reverse(inLoop)(inLoop((1,1,1,0):𝔹^4,true,2),true,2)),measure(inLoop((0,1,1,0):𝔹^4,false,2)),measure(reverse(inLoop)(inLoop((0,1,1,0):𝔹^4,false,2),false,2)),measure(inLoop((1,0,0,1):𝔹^4,true,3)),measure(reverse(inLoop)(inLoop((1,0,0,1):𝔹^4,true,3),true,3)),measure(bothBranches((1,1,1,0):𝔹^4,true,2)),measure(reverse(bothBranches)(bothBranches((1,1,1,0):𝔹^4,true,2),true,2)),measure(bothBranches((0,1,1,0):𝔹^4,false,2)),measure(reverse(bothBranches)(bothBranches((0,1,1,0):𝔹^4,false,2),false,2)),measure(bothBranches((1,0,0,1):𝔹^4,true,3)),measure(reverse(bothBranches)(bothBranches((1,0,0,1):𝔹^4,true,3),true,3)),measure(notForgotten((1,1,1,0):𝔹^4,true,2)),measure(reverse(notForgotten)(notForgotten((1,1,1,0):𝔹^4,true,2),true,2)),measure(notForgotten((0,1,1,0):𝔹^4,false,2)),measure(reverse(notForgotten)(notForgotten((0,1,1,0):𝔹^4,false,2),false,2)),measure(notForgotten((1,0,0,1):𝔹^4,true,3)),measure(reverse(notForgotten)(notForgotten((1,0,0,1):𝔹^4,true,3),true,3)),measure(inOuterBranch((1,1,1,0):𝔹^4,true,2)),measure(reverse(inOuterBranch)(inOuterBranch((1,1,1,0):𝔹^4,true,2),true,2)),measure(inOuterBranch((0,1,1,0):𝔹^4,false,2)),measure(reverse(inOuterBranch)(inOuterBranch((0,1,1,0):𝔹^4,false,2),false,2)),measure(inOuterBranch((1,0,0,1):𝔹^4,true,3)),measure(reverse(inOuterBranch)(inOuterBranch((1,0,0,1):𝔹^4,true,3),true,3)));
+	assert(r==((1,1,1,0),(1,1,1,0),(1,0,1,0),(0,1,1,0),(1,1,1,1),(1,0,0,1),(1,0,1,1),(1,1,1,0),(1,0,1,0),(0,1,1,0),(1,1,0,0),(1,0,0,1),(1,0,0,0),(1,1,1,0),(1,1,1,0),(0,1,1,0),(1,0,0,1),(1,0,0,1),(1,1,1,0),(1,1,1,0),(1,0,1,0),(0,1,1,0),(1,1,1,1),(1,0,0,1),(1,0,0,0),(1,1,1,0),(0,0,0,0),(0,1,1,0),(1,1,0,0),(1,0,0,1),(1,1,1,0),(1,1,1,0),(0,0,0,0),(0,1,1,0),(1,1,1,1),(1,0,0,1),(1,1,1,0),(1,1,1,0),(1,0,1,0),(0,1,1,0),(1,1,1,1),(1,0,0,1),(1,1,1,0),(1,1,1,0),(0,1,1,0),(0,1,1,0),(1,1,1,1),(1,0,0,1)));
+	return r;
+}

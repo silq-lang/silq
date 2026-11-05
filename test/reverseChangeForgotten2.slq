@@ -1,0 +1,48 @@
+// args: --run
+
+def h(a:!ℕ)qfree⇒a;
+def beforeOperation(xs:𝔹^4,const c:!𝔹,k:!ℕ)mfree{
+	xs[h(k)%4]:=X(xs[h(k)%4]);
+	if c { for i in 0..2 { xs[k%4]:=X(xs[k%4]); k+=1; } } else { k-=1; xs[0]:=X(xs[0]); }
+	return xs;
+}
+def beforeWith(xs:𝔹^4,const c:!𝔹,k:!ℕ)mfree{
+	xs[h(k)%4]:=X(xs[h(k)%4]);
+	if c { for i in 0..2 { xs[k%4]:=X(xs[k%4]); k+=1; } } else { k-=1; with { a:=xs[0]; } do { a:=X(a); } }
+	return xs;
+}
+def inLet(xs:𝔹^4,const c:!𝔹,k:!ℕ)mfree{
+	xs[h(k)%4]:=X(xs[h(k)%4]);
+	if c { for i in 0..2 { xs[k%4]:=X(xs[k%4]); k+=1; } } else { (xs,k):=let{ k-=1; xs[0]:=X(xs[0]); } in (xs,k); xs[1]:=X(xs[1]); }
+	return xs;
+}
+def inWith(xs:𝔹^4,const c:!𝔹,k:!ℕ)mfree{
+	xs[h(k)%4]:=X(xs[h(k)%4]);
+	if c { for i in 0..2 { xs[k%4]:=X(xs[k%4]); k+=1; } } else { with { a:=xs[0]; } do { k-=1; a:=X(a); } }
+	return xs;
+}
+def atEndOfWith(xs:𝔹^4,const c:!𝔹,k:!ℕ)mfree{
+	xs[h(k)%4]:=X(xs[h(k)%4]);
+	if c { for i in 0..2 { xs[k%4]:=X(xs[k%4]); k+=1; } } else { with { u:=1; } do { xs[0]:=X(xs[0]); k-=u; } }
+	return xs;
+}
+def inThenWith(xs:𝔹^4,const c:!𝔹,k:!ℕ)mfree{
+	xs[h(k)%4]:=X(xs[h(k)%4]);
+	if c { with { a:=xs[0]; } do { k-=1; a:=X(a); } } else { for i in 0..2 { xs[k%4]:=X(xs[k%4]); k+=1; } }
+	return xs;
+}
+def nestedWith(xs:𝔹^4,const c:!𝔹,k:!ℕ)mfree{
+	xs[h(k)%4]:=X(xs[h(k)%4]);
+	if c { for i in 0..2 { xs[k%4]:=X(xs[k%4]); k+=1; } } else { with { a:=xs[0]; } do { with { u:=1; } do { k-=u; a:=X(a); } } }
+	return xs;
+}
+def afterLet(xs:𝔹^4,j:!ℕ,k:!ℕ)mfree{
+	(xs,j):=let{ j*=2; xs[h(k)%4]:=X(xs[h(k)%4]); } in (xs,j);
+	if j==2 { for i in 0..2 { xs[k%4]:=X(xs[k%4]); k+=1; } } else { with { a:=xs[0]; } do { k-=1; a:=X(a); } }
+	return (xs,j);
+}
+def main(){
+	r:=(measure(beforeOperation((0,1,1,0):𝔹^4,true,1)),measure(reverse(beforeOperation)((0,1,0,0):𝔹^4,true,1)),measure(beforeOperation((0,1,1,0):𝔹^4,false,2)),measure(reverse(beforeOperation)((1,1,0,0):𝔹^4,false,2)),measure(beforeWith((0,1,1,0):𝔹^4,true,1)),measure(reverse(beforeWith)((0,1,0,0):𝔹^4,true,1)),measure(beforeWith((0,1,1,0):𝔹^4,false,2)),measure(reverse(beforeWith)((1,1,0,0):𝔹^4,false,2)),measure(inLet((0,1,1,0):𝔹^4,true,1)),measure(reverse(inLet)((0,1,0,0):𝔹^4,true,1)),measure(inLet((0,1,1,0):𝔹^4,false,2)),measure(reverse(inLet)((1,0,0,0):𝔹^4,false,2)),measure(inWith((0,1,1,0):𝔹^4,true,1)),measure(reverse(inWith)((0,1,0,0):𝔹^4,true,1)),measure(inWith((0,1,1,0):𝔹^4,false,2)),measure(reverse(inWith)((1,1,0,0):𝔹^4,false,2)),measure(atEndOfWith((0,1,1,0):𝔹^4,true,1)),measure(reverse(atEndOfWith)((0,1,0,0):𝔹^4,true,1)),measure(atEndOfWith((0,1,1,0):𝔹^4,false,2)),measure(reverse(atEndOfWith)((1,1,0,0):𝔹^4,false,2)),measure(inThenWith((0,1,1,0):𝔹^4,false,1)),measure(reverse(inThenWith)((0,1,0,0):𝔹^4,false,1)),measure(inThenWith((0,1,1,0):𝔹^4,true,2)),measure(reverse(inThenWith)((1,1,0,0):𝔹^4,true,2)),measure(nestedWith((0,1,1,0):𝔹^4,true,1)),measure(reverse(nestedWith)((0,1,0,0):𝔹^4,true,1)),measure(nestedWith((0,1,1,0):𝔹^4,false,2)),measure(reverse(nestedWith)((1,1,0,0):𝔹^4,false,2)),measure(afterLet((0,1,1,0):𝔹^4,1,1)),measure(reverse(afterLet)(((0,1,0,0):𝔹^4,2),1,1)),measure(afterLet((0,1,1,0):𝔹^4,2,2)),measure(reverse(afterLet)(((1,1,0,0):𝔹^4,4),2,2)));
+	assert(r==((0,1,0,0),(0,1,1,0),(1,1,0,0),(0,1,1,0),(0,1,0,0),(0,1,1,0),(1,1,0,0),(0,1,1,0),(0,1,0,0),(0,1,1,0),(1,0,0,0),(0,1,1,0),(0,1,0,0),(0,1,1,0),(1,1,0,0),(0,1,1,0),(0,1,0,0),(0,1,1,0),(1,1,0,0),(0,1,1,0),(0,1,0,0),(0,1,1,0),(1,1,0,0),(0,1,1,0),(0,1,0,0),(0,1,1,0),(1,1,0,0),(0,1,1,0),((0,1,0,0),2),(0,1,1,0),((1,1,0,0),4),(0,1,1,0)));
+	return r;
+}

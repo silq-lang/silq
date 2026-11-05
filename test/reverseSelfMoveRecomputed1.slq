@@ -1,0 +1,66 @@
+// args: --run
+
+def inWith(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	with { u1:=(j+j)%4; } do { xs[1]:=X(xs[1]); v2:=2; }
+	with { u4:=1; } do { v2:=v2; w6:=move(v2); }
+	xs[w6%4]:=X(xs[w6%4]);
+	return xs;
+}
+
+def tupleSelfMove(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	with { u1:=(j+j)%4; } do { xs[1]:=X(xs[1]); v2:=j+2; }
+	with { u4:=1; } do { (v2,):=(v2,); w6:=move(v2); }
+	xs[w6%4]:=X(xs[w6%4]);
+	return xs;
+}
+
+def inBranch(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	with { u1:=(j+j)%4; } do { xs[1]:=X(xs[1]); v2:=2; }
+	if c { v2:=v2; w6:=move(v2); } else { w6:=move(v2); w6+=1; }
+	xs[w6%4]:=X(xs[w6%4]);
+	return xs;
+}
+
+def definedAgain(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	with { u1:=(j+j)%4; } do { xs[1]:=X(xs[1]); v2:=2; }
+	with { u4:=1; } do { v2:=v2; w6:=move(v2); }
+	v2:=j;
+	xs[(w6+v2)%4]:=X(xs[(w6+v2)%4]);
+	return xs;
+}
+
+def movedTwice(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	with { u1:=(j+j)%4; } do { xs[1]:=X(xs[1]); v2:=2; }
+	v3:=0;
+	with { u4:=v3+1; } do { v2:=v2; w5:=move(v2); w6:=move(w5); }
+	xs[(v3+w6)%4]:=X(xs[(v3+w6)%4]);
+	return xs;
+}
+
+def withOtherValue(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	with { u1:=3; } do { v2:=(j+j)%4; xs[(j+1)%4]:=X(xs[(j+1)%4]); }
+	with { u4:=j+1; } do { (v2,w5):=(v2,u4+u4); w6:=move(v2); }
+	xs[(w5+w6+1)%4]:=X(xs[(w5+w6+1)%4]);
+	return xs;
+}
+
+def nestedWith(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	with { u1:=(j+j)%4; } do { xs[1]:=X(xs[1]); v2:=2; }
+	with { u4:=1; } do { with { t:=2; } do { v2:=v2; } w6:=move(v2); }
+	xs[w6%4]:=X(xs[w6%4]);
+	return xs;
+}
+
+def readAfterMove(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	with { u1:=(j+j)%4; } do { xs[1]:=X(xs[1]); v2:=j; }
+	with { u4:=1; } do { v2:=v2; w6:=move(v2); w7:=w6+u4; }
+	xs[w7%4]:=X(xs[w7%4]);
+	xs[w6%4]:=X(xs[w6%4]);
+	return xs;
+}
+
+def main(){
+	r:=(measure(inWith((1,0,0,0):𝔹^4,true,1)),measure(reverse(inWith)((1,1,1,0):𝔹^4,true,1)),measure(tupleSelfMove((1,0,0,0):𝔹^4,true,1)),measure(reverse(tupleSelfMove)((1,1,0,1):𝔹^4,true,1)),measure(inBranch((1,0,0,0):𝔹^4,true,1)),measure(reverse(inBranch)((1,1,1,0):𝔹^4,true,1)),measure(inBranch((1,0,0,0):𝔹^4,false,1)),measure(reverse(inBranch)((1,1,0,1):𝔹^4,false,1)),measure(definedAgain((1,0,0,0):𝔹^4,true,1)),measure(reverse(definedAgain)((1,1,0,1):𝔹^4,true,1)),measure(movedTwice((1,0,0,0):𝔹^4,true,1)),measure(reverse(movedTwice)((1,1,1,0):𝔹^4,true,1)),measure(withOtherValue((0,0,1,1):𝔹^4,true,1)),measure(reverse(withOtherValue)((0,0,0,0):𝔹^4,true,1)),measure(nestedWith((1,0,0,0):𝔹^4,true,1)),measure(reverse(nestedWith)((1,1,1,0):𝔹^4,true,1)),measure(readAfterMove((1,0,0,0):𝔹^4,true,2)),measure(reverse(readAfterMove)((1,1,1,1):𝔹^4,true,2)));
+	assert(r==((1,1,1,0),(1,0,0,0),(1,1,0,1),(1,0,0,0),(1,1,1,0),(1,0,0,0),(1,1,0,1),(1,0,0,0),(1,1,0,1),(1,0,0,0),(1,1,1,0),(1,0,0,0),(0,0,0,0),(0,0,1,1),(1,1,1,0),(1,0,0,0),(1,1,1,1),(1,0,0,0)));
+	return r;
+}
