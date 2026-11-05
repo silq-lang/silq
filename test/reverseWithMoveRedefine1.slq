@@ -1,0 +1,72 @@
+// args: --run
+
+def movedInWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	forget(v);
+	with { u:=(j+j)%4; } do { v:=1; w:=move(v); }
+	with { t:=j*2; } do { v:=3; }
+	xs[(v+w+j)%4]:=X(xs[(v+w+j)%4]);
+	return xs;
+}
+
+def readBefore(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	xs[v%4]:=X(xs[v%4]);
+	forget(v);
+	with { u:=(j+j)%4; } do { v:=1; w:=move(v); }
+	with { t:=j*2; } do { v:=3; }
+	xs[(v+w+j)%4]:=X(xs[(v+w+j)%4]);
+	return xs;
+}
+
+def definedAgainAfter(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	forget(v);
+	with { u:=(j+j)%4; } do { v:=1; w:=move(v); }
+	v:=3;
+	xs[(v+w+j)%4]:=X(xs[(v+w+j)%4]);
+	return xs;
+}
+
+def readBetween(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	forget(v);
+	with { u:=(j+j)%4; } do { v:=1; w:=move(v); }
+	xs[w%4]:=X(xs[w%4]);
+	with { t:=j*2; } do { v:=3; }
+	xs[(v+w+j)%4]:=X(xs[(v+w+j)%4]);
+	return xs;
+}
+
+def quantumOperationInWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	forget(v);
+	with { u:=(j+j)%4; } do { v:=1; w:=move(v); }
+	with { t:=j*2; } do { v:=3; xs[0]:=X(xs[0]); }
+	xs[(v+w+j)%4]:=X(xs[(v+w+j)%4]);
+	return xs;
+}
+
+def computedValues(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	forget(v);
+	with { u:=(j+j)%4; } do { v:=u+1; w:=move(v); }
+	with { t:=j*2; } do { v:=t+3; }
+	xs[(v+w+j)%4]:=X(xs[(v+w+j)%4]);
+	return xs;
+}
+
+def definedAgainInBranches(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	forget(v);
+	with { u:=(j+j)%4; } do { v:=1; w:=move(v); }
+	if j%2==0 { v:=3; } else { v:=2; }
+	xs[(v+w+j)%4]:=X(xs[(v+w+j)%4]);
+	return xs;
+}
+
+def main(){
+	r:=(measure(movedInWith((1,1,1,0):𝔹^4,1)),measure(reverse(movedInWith)(movedInWith((1,1,1,0):𝔹^4,1),1)),measure(movedInWith((1,1,1,0):𝔹^4,2)),measure(reverse(movedInWith)(movedInWith((1,1,1,0):𝔹^4,2),2)),measure(readBefore((1,1,1,0):𝔹^4,1)),measure(reverse(readBefore)(readBefore((1,1,1,0):𝔹^4,1),1)),measure(readBefore((1,1,1,0):𝔹^4,2)),measure(reverse(readBefore)(readBefore((1,1,1,0):𝔹^4,2),2)),measure(definedAgainAfter((1,1,1,0):𝔹^4,1)),measure(reverse(definedAgainAfter)(definedAgainAfter((1,1,1,0):𝔹^4,1),1)),measure(definedAgainAfter((1,1,1,0):𝔹^4,2)),measure(reverse(definedAgainAfter)(definedAgainAfter((1,1,1,0):𝔹^4,2),2)),measure(readBetween((1,1,1,0):𝔹^4,1)),measure(reverse(readBetween)(readBetween((1,1,1,0):𝔹^4,1),1)),measure(readBetween((1,1,1,0):𝔹^4,2)),measure(reverse(readBetween)(readBetween((1,1,1,0):𝔹^4,2),2)),measure(quantumOperationInWith((1,1,1,0):𝔹^4,1)),measure(reverse(quantumOperationInWith)(quantumOperationInWith((1,1,1,0):𝔹^4,1),1)),measure(quantumOperationInWith((1,1,1,0):𝔹^4,2)),measure(reverse(quantumOperationInWith)(quantumOperationInWith((1,1,1,0):𝔹^4,2),2)),measure(computedValues((1,1,1,0):𝔹^4,1)),measure(reverse(computedValues)(computedValues((1,1,1,0):𝔹^4,1),1)),measure(computedValues((1,1,1,0):𝔹^4,2)),measure(reverse(computedValues)(computedValues((1,1,1,0):𝔹^4,2),2)),measure(definedAgainInBranches((1,1,1,0):𝔹^4,1)),measure(reverse(definedAgainInBranches)(definedAgainInBranches((1,1,1,0):𝔹^4,1),1)),measure(definedAgainInBranches((1,1,1,0):𝔹^4,2)),measure(reverse(definedAgainInBranches)(definedAgainInBranches((1,1,1,0):𝔹^4,2),2)));
+	assert(r==((1,0,1,0),(1,1,1,0),(1,1,0,0),(1,1,1,0),(1,0,0,0),(1,1,1,0),(0,1,0,0),(1,1,1,0),(1,0,1,0),(1,1,1,0),(1,1,0,0),(1,1,1,0),(1,1,1,0),(1,1,1,0),(1,0,0,0),(1,1,1,0),(0,0,1,0),(1,1,1,0),(0,1,0,0),(1,1,1,0),(1,0,1,0),(1,1,1,0),(1,1,0,0),(1,1,1,0),(0,1,1,0),(1,1,1,0),(1,1,0,0),(1,1,1,0)));
+	return r;
+}

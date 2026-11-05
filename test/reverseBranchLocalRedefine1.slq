@@ -1,0 +1,179 @@
+// args: --run
+
+def updatedInOtherBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	k:=1;
+	xs[(v+1)%4]:=X(xs[(v+1)%4]);
+	if j%2==0 { xs[0]:=X(xs[0]); k+=1; } else { forget(v); v:=j+1; }
+	return xs;
+}
+
+def updatedInSameBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	k:=1;
+	xs[(v+1)%4]:=X(xs[(v+1)%4]);
+	if j%2==0 { xs[0]:=X(xs[0]); } else { forget(v); k+=j+1; v:=j+1; }
+	return xs;
+}
+
+def updatedAfterDefinition(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	k:=1;
+	xs[(v+1)%4]:=X(xs[(v+1)%4]);
+	if j%2==0 { xs[0]:=X(xs[0]); } else { forget(v); v:=j+1; k+=1; }
+	return xs;
+}
+
+def readInBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	k:=1;
+	xs[(v+1)%4]:=X(xs[(v+1)%4]);
+	if j%2==0 { xs[0]:=X(xs[0]); k+=1; } else { forget(v); v:=j+1; xs[v%4]:=X(xs[v%4]); }
+	return xs;
+}
+
+def readAfter(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	k:=1;
+	xs[(v+1)%4]:=X(xs[(v+1)%4]);
+	if j%2==0 { xs[0]:=X(xs[0]); k+=1; } else { forget(v); v:=j+1; }
+	xs[k%4]:=X(xs[k%4]);
+	return xs;
+}
+
+def nestedConditional(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	k:=1;
+	xs[(v+1)%4]:=X(xs[(v+1)%4]);
+	if j<4 { if j%2==0 { xs[0]:=X(xs[0]); k+=1; } else { forget(v); v:=j+1; } }
+	return xs;
+}
+
+def twoVariables(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	k:=1;
+	w:=j+1;
+	xs[(v+w)%4]:=X(xs[(v+w)%4]);
+	if j%2==0 { xs[0]:=X(xs[0]); k+=1; } else { forget(v); forget(w); v:=j+1; w:=v; }
+	return xs;
+}
+
+def twoConditionals(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	k:=1;
+	xs[(v+1)%4]:=X(xs[(v+1)%4]);
+	if j%2==0 { xs[0]:=X(xs[0]); k+=1; } else { forget(v); v:=j+1; }
+	if j<2 { xs[1]:=X(xs[1]); k+=2; } else { forget(k); k:=3; }
+	return xs;
+}
+
+def withInBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	k:=1;
+	xs[(v+1)%4]:=X(xs[(v+1)%4]);
+	if j%2==0 { xs[0]:=X(xs[0]); } else { with { u:=j+3; } do { forget(v); k+=u; } v:=j+1; }
+	return xs;
+}
+
+def conditionalInWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	k:=1;
+	xs[(v+1)%4]:=X(xs[(v+1)%4]);
+	with { u:=1; } do { if j%2==0 { xs[0]:=X(xs[0]); k+=u; } else { forget(v); v:=j+1; } }
+	return xs;
+}
+
+def inWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	k:=1;
+	xs[(v+1)%4]:=X(xs[(v+1)%4]);
+	with { u:=1; } do { xs[0]:=X(xs[0]); k+=u; forget(v); v:=j+1; }
+	return xs;
+}
+
+def loopInClassicalWithReadBefore(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	k:=v+1;
+	xs[(k+v)%4]:=X(xs[(k+v)%4]);
+	with { u:=1; } do { k+=u; for i in 0..1 { forget(v); v:=j; } }
+	xs[k%4]:=X(xs[k%4]);
+	return xs;
+}
+
+def loopReadingInClassicalWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	k:=v+1;
+	xs[k%4]:=X(xs[k%4]);
+	with { u:=1; } do { for i in 0..2 { k+=v; forget(v); v:=j+i; } }
+	xs[k%4]:=X(xs[k%4]);
+	return xs;
+}
+
+def ownVersionInLoop(xs:𝔹^4,const j:!ℕ)mfree{
+	k:=j+2;
+	v:=j+1;
+	xs[v%4]:=X(xs[v%4]);
+	with { u:=3; } do { for i in 0..2 { forget(v); v:=1; } xs[u%4]:=X(xs[u%4]); k+=1; forget(v); }
+	xs[(j+k)%4]:=X(xs[(j+k)%4]);
+	return xs;
+}
+
+def ownVersionInBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	k:=j+2;
+	v:=j+1;
+	xs[v%4]:=X(xs[v%4]);
+	if j%2==1 { for i in 0..2 { forget(v); v:=1; } xs[3]:=X(xs[3]); k+=1; forget(v); }
+	xs[(j+k)%4]:=X(xs[(j+k)%4]);
+	return xs;
+}
+
+def ownVersionInWithBody(xs:𝔹^4,const j:!ℕ)mfree{
+	k:=j+2;
+	v:=j+1;
+	with { t:=1; } do {
+		xs[(k+v)%4]:=X(xs[(k+v)%4]);
+		with { u:=3; } do { for i in 0..2 { xs[(i+t)%4]:=X(xs[(i+t)%4]); forget(v); v:=1; } k+=1; forget(v); }
+		xs[(j+k)%4]:=X(xs[(j+k)%4]);
+	}
+	return xs;
+}
+
+def ownVersionDefinedAgain(xs:𝔹^4,const j:!ℕ)mfree{
+	k:=j+2;
+	v:=j+1;
+	xs[v%4]:=X(xs[v%4]);
+	with { u:=3; } do { for i in 0..2 { forget(v); v:=1; } xs[u%4]:=X(xs[u%4]); k+=1; forget(v); }
+	v:=5;
+	xs[(j+k+v)%4]:=X(xs[(j+k+v)%4]);
+	return xs;
+}
+
+def ownVersionInLoopBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=1;
+	k:=v+v;
+	xs[(k+v)%4]:=X(xs[(k+v)%4]);
+	with { u:=2; } do { for i in 0..1 { if j%2==1 { forget(v); v:=u+2; } v+=3; } k+=u+1; xs[j%4]:=X(xs[j%4]); }
+	xs[(k+j)%4]:=X(xs[(k+j)%4]);
+	return xs;
+}
+
+def loopInNestedWithReadBefore(xs:𝔹^4,const j:!ℕ)mfree{
+	k:=j*2;
+	v:=2;
+	xs[(v+j)%4]:=X(xs[(v+j)%4]);
+	with { t:=1; } do { with { u:=3; } do { for i in 0..2 { k+=u; forget(v); v:=1; } } xs[t]:=X(xs[t]); }
+	return xs;
+}
+
+def loopInNestedWithInBody(xs:𝔹^4,const j:!ℕ)mfree{
+	k:=j*2;
+	v:=2;
+	xs[(v+j)%4]:=X(xs[(v+j)%4]);
+	with { s:=2; } do { xs[s]:=X(xs[s]); with { t:=1; } do { with { u:=3; } do { for i in 0..2 { k+=u; forget(v); v:=1; } } xs[t]:=X(xs[t]); } }
+	return xs;
+}
+def main(){
+	r:=(measure(updatedInOtherBranch((0,1,0,1):𝔹^4,1)),measure(reverse(updatedInOtherBranch)(updatedInOtherBranch((0,1,0,1):𝔹^4,1),1)),measure(updatedInOtherBranch((0,1,0,1):𝔹^4,2)),measure(reverse(updatedInOtherBranch)(updatedInOtherBranch((0,1,0,1):𝔹^4,2),2)),measure(updatedInOtherBranch((0,1,0,1):𝔹^4,3)),measure(reverse(updatedInOtherBranch)(updatedInOtherBranch((0,1,0,1):𝔹^4,3),3)),measure(updatedInSameBranch((0,1,0,1):𝔹^4,1)),measure(reverse(updatedInSameBranch)(updatedInSameBranch((0,1,0,1):𝔹^4,1),1)),measure(updatedInSameBranch((0,1,0,1):𝔹^4,2)),measure(reverse(updatedInSameBranch)(updatedInSameBranch((0,1,0,1):𝔹^4,2),2)),measure(updatedInSameBranch((0,1,0,1):𝔹^4,3)),measure(reverse(updatedInSameBranch)(updatedInSameBranch((0,1,0,1):𝔹^4,3),3)),measure(updatedAfterDefinition((0,1,0,1):𝔹^4,1)),measure(reverse(updatedAfterDefinition)(updatedAfterDefinition((0,1,0,1):𝔹^4,1),1)),measure(updatedAfterDefinition((0,1,0,1):𝔹^4,2)),measure(reverse(updatedAfterDefinition)(updatedAfterDefinition((0,1,0,1):𝔹^4,2),2)),measure(updatedAfterDefinition((0,1,0,1):𝔹^4,3)),measure(reverse(updatedAfterDefinition)(updatedAfterDefinition((0,1,0,1):𝔹^4,3),3)),measure(readInBranch((0,1,0,1):𝔹^4,1)),measure(reverse(readInBranch)(readInBranch((0,1,0,1):𝔹^4,1),1)),measure(readInBranch((0,1,0,1):𝔹^4,2)),measure(reverse(readInBranch)(readInBranch((0,1,0,1):𝔹^4,2),2)),measure(readInBranch((0,1,0,1):𝔹^4,3)),measure(reverse(readInBranch)(readInBranch((0,1,0,1):𝔹^4,3),3)),measure(readAfter((0,1,0,1):𝔹^4,1)),measure(reverse(readAfter)(readAfter((0,1,0,1):𝔹^4,1),1)),measure(readAfter((0,1,0,1):𝔹^4,2)),measure(reverse(readAfter)(readAfter((0,1,0,1):𝔹^4,2),2)),measure(readAfter((0,1,0,1):𝔹^4,3)),measure(reverse(readAfter)(readAfter((0,1,0,1):𝔹^4,3),3)),measure(nestedConditional((0,1,0,1):𝔹^4,1)),measure(reverse(nestedConditional)(nestedConditional((0,1,0,1):𝔹^4,1),1)),measure(nestedConditional((0,1,0,1):𝔹^4,2)),measure(reverse(nestedConditional)(nestedConditional((0,1,0,1):𝔹^4,2),2)),measure(nestedConditional((0,1,0,1):𝔹^4,3)),measure(reverse(nestedConditional)(nestedConditional((0,1,0,1):𝔹^4,3),3)),measure(twoVariables((0,1,0,1):𝔹^4,1)),measure(reverse(twoVariables)(twoVariables((0,1,0,1):𝔹^4,1),1)),measure(twoVariables((0,1,0,1):𝔹^4,2)),measure(reverse(twoVariables)(twoVariables((0,1,0,1):𝔹^4,2),2)),measure(twoVariables((0,1,0,1):𝔹^4,3)),measure(reverse(twoVariables)(twoVariables((0,1,0,1):𝔹^4,3),3)),measure(twoConditionals((0,1,0,1):𝔹^4,1)),measure(reverse(twoConditionals)(twoConditionals((0,1,0,1):𝔹^4,1),1)),measure(twoConditionals((0,1,0,1):𝔹^4,2)),measure(reverse(twoConditionals)(twoConditionals((0,1,0,1):𝔹^4,2),2)),measure(twoConditionals((0,1,0,1):𝔹^4,3)),measure(reverse(twoConditionals)(twoConditionals((0,1,0,1):𝔹^4,3),3)),measure(withInBranch((0,1,0,1):𝔹^4,1)),measure(reverse(withInBranch)(withInBranch((0,1,0,1):𝔹^4,1),1)),measure(withInBranch((0,1,0,1):𝔹^4,2)),measure(reverse(withInBranch)(withInBranch((0,1,0,1):𝔹^4,2),2)),measure(withInBranch((0,1,0,1):𝔹^4,3)),measure(reverse(withInBranch)(withInBranch((0,1,0,1):𝔹^4,3),3)),measure(conditionalInWith((0,1,0,1):𝔹^4,1)),measure(reverse(conditionalInWith)(conditionalInWith((0,1,0,1):𝔹^4,1),1)),measure(conditionalInWith((0,1,0,1):𝔹^4,2)),measure(reverse(conditionalInWith)(conditionalInWith((0,1,0,1):𝔹^4,2),2)),measure(conditionalInWith((0,1,0,1):𝔹^4,3)),measure(reverse(conditionalInWith)(conditionalInWith((0,1,0,1):𝔹^4,3),3)),measure(inWith((0,1,0,1):𝔹^4,1)),measure(reverse(inWith)(inWith((0,1,0,1):𝔹^4,1),1)),measure(inWith((0,1,0,1):𝔹^4,2)),measure(reverse(inWith)(inWith((0,1,0,1):𝔹^4,2),2)),measure(inWith((0,1,0,1):𝔹^4,3)),measure(reverse(inWith)(inWith((0,1,0,1):𝔹^4,3),3)),measure(loopInClassicalWithReadBefore((0,1,0,1):𝔹^4,1)),measure(reverse(loopInClassicalWithReadBefore)(loopInClassicalWithReadBefore((0,1,0,1):𝔹^4,1),1)),measure(loopInClassicalWithReadBefore((0,1,0,1):𝔹^4,2)),measure(reverse(loopInClassicalWithReadBefore)(loopInClassicalWithReadBefore((0,1,0,1):𝔹^4,2),2)),measure(loopReadingInClassicalWith((0,1,0,1):𝔹^4,1)),measure(reverse(loopReadingInClassicalWith)(loopReadingInClassicalWith((0,1,0,1):𝔹^4,1),1)),measure(loopReadingInClassicalWith((0,1,0,1):𝔹^4,2)),measure(reverse(loopReadingInClassicalWith)(loopReadingInClassicalWith((0,1,0,1):𝔹^4,2),2)),measure(ownVersionInLoop((0,1,0,1):𝔹^4,1)),measure(reverse(ownVersionInLoop)(ownVersionInLoop((0,1,0,1):𝔹^4,1),1)),measure(ownVersionInLoop((0,1,0,1):𝔹^4,2)),measure(reverse(ownVersionInLoop)(ownVersionInLoop((0,1,0,1):𝔹^4,2),2)),measure(ownVersionInBranch((0,1,0,1):𝔹^4,1)),measure(reverse(ownVersionInBranch)(ownVersionInBranch((0,1,0,1):𝔹^4,1),1)),measure(ownVersionInBranch((0,1,0,1):𝔹^4,2)),measure(reverse(ownVersionInBranch)(ownVersionInBranch((0,1,0,1):𝔹^4,2),2)),measure(ownVersionInWithBody((0,1,0,1):𝔹^4,1)),measure(reverse(ownVersionInWithBody)(ownVersionInWithBody((0,1,0,1):𝔹^4,1),1)),measure(ownVersionInWithBody((0,1,0,1):𝔹^4,2)),measure(reverse(ownVersionInWithBody)(ownVersionInWithBody((0,1,0,1):𝔹^4,2),2)),measure(ownVersionDefinedAgain((0,1,0,1):𝔹^4,1)),measure(reverse(ownVersionDefinedAgain)(ownVersionDefinedAgain((0,1,0,1):𝔹^4,1),1)),measure(ownVersionDefinedAgain((0,1,0,1):𝔹^4,2)),measure(reverse(ownVersionDefinedAgain)(ownVersionDefinedAgain((0,1,0,1):𝔹^4,2),2)),measure(ownVersionInLoopBranch((0,1,0,1):𝔹^4,1)),measure(reverse(ownVersionInLoopBranch)(ownVersionInLoopBranch((0,1,0,1):𝔹^4,1),1)),measure(ownVersionInLoopBranch((0,1,0,1):𝔹^4,2)),measure(reverse(ownVersionInLoopBranch)(ownVersionInLoopBranch((0,1,0,1):𝔹^4,2),2)),measure(loopInNestedWithReadBefore((0,1,0,1):𝔹^4,1)),measure(reverse(loopInNestedWithReadBefore)(loopInNestedWithReadBefore((0,1,0,1):𝔹^4,1),1)),measure(loopInNestedWithReadBefore((0,1,0,1):𝔹^4,2)),measure(reverse(loopInNestedWithReadBefore)(loopInNestedWithReadBefore((0,1,0,1):𝔹^4,2),2)),measure(loopInNestedWithInBody((0,1,0,1):𝔹^4,1)),measure(reverse(loopInNestedWithInBody)(loopInNestedWithInBody((0,1,0,1):𝔹^4,1),1)),measure(loopInNestedWithInBody((0,1,0,1):𝔹^4,2)),measure(reverse(loopInNestedWithInBody)(loopInNestedWithInBody((0,1,0,1):𝔹^4,2),2)));
+	assert(r==((0,1,0,0),(0,1,0,1),(1,0,0,1),(0,1,0,1),(0,1,0,0),(0,1,0,1),(0,1,0,0),(0,1,0,1),(1,0,0,1),(0,1,0,1),(0,1,0,0),(0,1,0,1),(0,1,0,0),(0,1,0,1),(1,0,0,1),(0,1,0,1),(0,1,0,0),(0,1,0,1),(0,1,1,0),(0,1,0,1),(1,0,0,1),(0,1,0,1),(1,1,0,0),(0,1,0,1),(0,0,0,0),(0,1,0,1),(1,0,1,1),(0,1,0,1),(0,0,0,0),(0,1,0,1),(0,1,0,0),(0,1,0,1),(1,0,0,1),(0,1,0,1),(0,1,0,0),(0,1,0,1),(1,1,0,1),(0,1,0,1),(1,1,0,0),(0,1,0,1),(0,1,1,1),(0,1,0,1),(0,0,0,0),(0,1,0,1),(1,0,0,1),(0,1,0,1),(0,1,0,0),(0,1,0,1),(0,1,0,0),(0,1,0,1),(1,0,0,1),(0,1,0,1),(0,1,0,0),(0,1,0,1),(0,1,0,0),(0,1,0,1),(1,0,0,1),(0,1,0,1),(0,1,0,0),(0,1,0,1),(1,1,0,0),(0,1,0,1),(1,0,0,1),(0,1,0,1),(1,1,0,0),(0,1,0,1),(1,0,0,1),(0,1,0,1),(0,0,1,1),(0,1,0,1),(0,1,1,0),(0,1,0,1),(0,0,0,0),(0,1,0,1),(0,0,1,0),(0,1,0,1),(0,1,0,0),(0,1,0,1),(0,0,1,0),(0,1,0,1),(0,1,1,0),(0,1,0,1),(0,0,1,1),(0,1,0,1),(0,0,1,1),(0,1,0,1),(0,1,0,0),(0,1,0,1),(1,1,0,1),(0,1,0,1),(0,0,1,0),(0,1,0,1),(0,1,1,1),(0,1,0,1),(0,0,0,0),(0,1,0,1),(1,0,0,1),(0,1,0,1),(0,0,1,0),(0,1,0,1),(1,0,1,1),(0,1,0,1)));
+	return r;
+}
