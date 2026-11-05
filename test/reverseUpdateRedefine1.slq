@@ -1,0 +1,125 @@
+// args: --run
+
+def updatedInBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	if v%4==2 { forget(v); v:=3; } else { v+=2; xs[v%4]:=X(xs[v%4]); }
+	return xs;
+}
+
+def updatedInQuantumBranches(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	if v%4==2 { forget(v); v:=3; xs[v%4]:=X(xs[v%4]); } else { v+=2; xs[v%4]:=X(xs[v%4]); }
+	return xs;
+}
+
+def updatedTwiceInBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	if v%4==2 { forget(v); v:=3; } else { v+=2; xs[v%4]:=X(xs[v%4]); v+=1; xs[v%4]:=X(xs[v%4]); }
+	return xs;
+}
+
+def updatedInThenBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	if j%2==0 { v+=1; xs[v%4]:=X(xs[v%4]); } else { forget(v); v:=j; }
+	return xs;
+}
+
+def readBefore(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	xs[(v+1)%4]:=X(xs[(v+1)%4]);
+	if v%4==2 { forget(v); v:=3; } else { v+=2; xs[v%4]:=X(xs[v%4]); }
+	return xs;
+}
+
+def movedInOtherBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	if v%4==2 { w:=move(v); v:=w+1; } else { v+=2; xs[v%4]:=X(xs[v%4]); }
+	return xs;
+}
+
+def typeChanged(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	if v%4==2 { forget(v); v:=-1; } else { v+=2; xs[v%4]:=X(xs[v%4]); }
+	return xs;
+}
+
+def updatedInLoop(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	if v%4==2 { forget(v); v:=3; } else { for i in 0..2 { v+=1; xs[v%4]:=X(xs[v%4]); } }
+	return xs;
+}
+
+def updatedInRepeat(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	if v%4==2 { forget(v); v:=3; } else { repeat 2 { v+=1; xs[v%4]:=X(xs[v%4]); } }
+	return xs;
+}
+
+def updatedInWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	if v%4==2 { forget(v); v:=3; } else { with { t:=1; } do { v+=t; xs[v%4]:=X(xs[v%4]); } }
+	return xs;
+}
+
+def updatedInNestedBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	if v%4==2 { forget(v); v:=3; } else { if j%3==2 { v+=2; xs[v%4]:=X(xs[v%4]); } }
+	return xs;
+}
+
+def widenedInNestedBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=0;
+	if j%3!=0 { if j%3==1 { v+=2; xs[(v*2)%4]:=X(xs[(v*2)%4]); v+=1; } else { forget(v); v:=j+3; } }
+	return xs;
+}
+
+def updatedInNestedBranchInLoop(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=0;
+	for i in 0..2 { if v%4==1 { if j%2==1 { v+=1; xs[j%4]:=X(xs[j%4]); forget(v); v:=3+j; xs[2]:=X(xs[2]); } } else { forget(v); } v:=dup(j); xs[(v*2)%4]:=X(xs[(v*2)%4]); }
+	return xs;
+}
+
+def updatedInLoopCondition(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	for i in 0..2 { if v%4==2 { v+=1; xs[v%4]:=X(xs[v%4]); forget(v); } else { forget(v); } v:=j+i; xs[(v+1)%4]:=X(xs[(v+1)%4]); }
+	return xs;
+}
+
+def updatedInLoopOtherBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j;
+	for i in 0..2 { if v%4==3 { forget(v); } else { v+=1; xs[j%4]:=X(xs[j%4]); forget(v); v:=2; xs[(j+1)%4]:=X(xs[(j+1)%4]); } v:=i; xs[v%4]:=X(xs[v%4]); }
+	return xs;
+}
+
+def updatedBeforeRedefinition(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	if v%4==2 { forget(v); } else { v+=2; xs[v%4]:=X(xs[v%4]); forget(v); v:=1; xs[v]:=X(xs[v]); }
+	return xs;
+}
+
+def componentUpdated(xs:𝔹^4,const j:!ℕ)mfree{
+	a:=(j,j+1):!ℕ^2;
+	if a[0]%2==1 { forget(a); a:=(0,0):!ℕ^2; } else { a[0]+=1; xs[a[0]%4]:=X(xs[a[0]%4]); }
+	return xs;
+}
+
+def otherVariableChanged(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	w:=dup(j);
+	xs[(v+1)%4]:=X(xs[(v+1)%4]);
+	if v%4==2 { forget(v); v:=3; w+=1; } else { v+=2; xs[v%4]:=X(xs[v%4]); }
+	xs[w%4]:=X(xs[w%4]);
+	return xs;
+}
+
+def updatedAfterRedefinition(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	if v%4==2 { forget(v); v:=3; v+=1; xs[v%4]:=X(xs[v%4]); } else { forget(v); }
+	return xs;
+}
+
+def main(){
+	r:=(measure(updatedInBranch((1,1,1,0):𝔹^4,1)),measure(reverse(updatedInBranch)(updatedInBranch((1,1,1,0):𝔹^4,1),1)),measure(updatedInBranch((1,1,1,0):𝔹^4,2)),measure(reverse(updatedInBranch)(updatedInBranch((1,1,1,0):𝔹^4,2),2)),measure(updatedInQuantumBranches((1,1,1,0):𝔹^4,1)),measure(reverse(updatedInQuantumBranches)(updatedInQuantumBranches((1,1,1,0):𝔹^4,1),1)),measure(updatedInQuantumBranches((1,1,1,0):𝔹^4,2)),measure(reverse(updatedInQuantumBranches)(updatedInQuantumBranches((1,1,1,0):𝔹^4,2),2)),measure(updatedTwiceInBranch((1,1,1,0):𝔹^4,1)),measure(reverse(updatedTwiceInBranch)(updatedTwiceInBranch((1,1,1,0):𝔹^4,1),1)),measure(updatedTwiceInBranch((1,1,1,0):𝔹^4,2)),measure(reverse(updatedTwiceInBranch)(updatedTwiceInBranch((1,1,1,0):𝔹^4,2),2)),measure(updatedInThenBranch((1,1,1,0):𝔹^4,1)),measure(reverse(updatedInThenBranch)(updatedInThenBranch((1,1,1,0):𝔹^4,1),1)),measure(updatedInThenBranch((1,1,1,0):𝔹^4,2)),measure(reverse(updatedInThenBranch)(updatedInThenBranch((1,1,1,0):𝔹^4,2),2)),measure(readBefore((1,1,1,0):𝔹^4,1)),measure(reverse(readBefore)(readBefore((1,1,1,0):𝔹^4,1),1)),measure(readBefore((1,1,1,0):𝔹^4,2)),measure(reverse(readBefore)(readBefore((1,1,1,0):𝔹^4,2),2)),measure(movedInOtherBranch((1,1,1,0):𝔹^4,1)),measure(reverse(movedInOtherBranch)(movedInOtherBranch((1,1,1,0):𝔹^4,1),1)),measure(movedInOtherBranch((1,1,1,0):𝔹^4,2)),measure(reverse(movedInOtherBranch)(movedInOtherBranch((1,1,1,0):𝔹^4,2),2)),measure(typeChanged((1,1,1,0):𝔹^4,1)),measure(reverse(typeChanged)(typeChanged((1,1,1,0):𝔹^4,1),1)),measure(typeChanged((1,1,1,0):𝔹^4,2)),measure(reverse(typeChanged)(typeChanged((1,1,1,0):𝔹^4,2),2)),measure(updatedInLoop((1,1,1,0):𝔹^4,1)),measure(reverse(updatedInLoop)(updatedInLoop((1,1,1,0):𝔹^4,1),1)),measure(updatedInLoop((1,1,1,0):𝔹^4,2)),measure(reverse(updatedInLoop)(updatedInLoop((1,1,1,0):𝔹^4,2),2)),measure(updatedInRepeat((1,1,1,0):𝔹^4,1)),measure(reverse(updatedInRepeat)(updatedInRepeat((1,1,1,0):𝔹^4,1),1)),measure(updatedInRepeat((1,1,1,0):𝔹^4,2)),measure(reverse(updatedInRepeat)(updatedInRepeat((1,1,1,0):𝔹^4,2),2)),measure(updatedInWith((1,1,1,0):𝔹^4,1)),measure(reverse(updatedInWith)(updatedInWith((1,1,1,0):𝔹^4,1),1)),measure(updatedInWith((1,1,1,0):𝔹^4,2)),measure(reverse(updatedInWith)(updatedInWith((1,1,1,0):𝔹^4,2),2)),measure(updatedInNestedBranch((1,1,1,0):𝔹^4,1)),measure(reverse(updatedInNestedBranch)(updatedInNestedBranch((1,1,1,0):𝔹^4,1),1)),measure(updatedInNestedBranch((1,1,1,0):𝔹^4,2)),measure(reverse(updatedInNestedBranch)(updatedInNestedBranch((1,1,1,0):𝔹^4,2),2)),measure(widenedInNestedBranch((1,1,1,0):𝔹^4,1)),measure(reverse(widenedInNestedBranch)(widenedInNestedBranch((1,1,1,0):𝔹^4,1),1)),measure(widenedInNestedBranch((1,1,1,0):𝔹^4,2)),measure(reverse(widenedInNestedBranch)(widenedInNestedBranch((1,1,1,0):𝔹^4,2),2)),measure(updatedInNestedBranchInLoop((1,1,1,0):𝔹^4,1)),measure(reverse(updatedInNestedBranchInLoop)(updatedInNestedBranchInLoop((1,1,1,0):𝔹^4,1),1)),measure(updatedInNestedBranchInLoop((1,1,1,0):𝔹^4,2)),measure(reverse(updatedInNestedBranchInLoop)(updatedInNestedBranchInLoop((1,1,1,0):𝔹^4,2),2)),measure(updatedInLoopCondition((1,1,1,0):𝔹^4,1)),measure(reverse(updatedInLoopCondition)(updatedInLoopCondition((1,1,1,0):𝔹^4,1),1)),measure(updatedInLoopCondition((1,1,1,0):𝔹^4,2)),measure(reverse(updatedInLoopCondition)(updatedInLoopCondition((1,1,1,0):𝔹^4,2),2)),measure(updatedInLoopOtherBranch((1,1,1,0):𝔹^4,1)),measure(reverse(updatedInLoopOtherBranch)(updatedInLoopOtherBranch((1,1,1,0):𝔹^4,1),1)),measure(updatedInLoopOtherBranch((1,1,1,0):𝔹^4,2)),measure(reverse(updatedInLoopOtherBranch)(updatedInLoopOtherBranch((1,1,1,0):𝔹^4,2),2)),measure(updatedBeforeRedefinition((1,1,1,0):𝔹^4,1)),measure(reverse(updatedBeforeRedefinition)(updatedBeforeRedefinition((1,1,1,0):𝔹^4,1),1)),measure(updatedBeforeRedefinition((1,1,1,0):𝔹^4,2)),measure(reverse(updatedBeforeRedefinition)(updatedBeforeRedefinition((1,1,1,0):𝔹^4,2),2)),measure(componentUpdated((1,1,1,0):𝔹^4,1)),measure(reverse(componentUpdated)(componentUpdated((1,1,1,0):𝔹^4,1),1)),measure(componentUpdated((1,1,1,0):𝔹^4,2)),measure(reverse(componentUpdated)(componentUpdated((1,1,1,0):𝔹^4,2),2)),measure(otherVariableChanged((1,1,1,0):𝔹^4,1)),measure(reverse(otherVariableChanged)(otherVariableChanged((1,1,1,0):𝔹^4,1),1)),measure(otherVariableChanged((1,1,1,0):𝔹^4,2)),measure(reverse(otherVariableChanged)(otherVariableChanged((1,1,1,0):𝔹^4,2),2)),measure(updatedAfterRedefinition((1,1,1,0):𝔹^4,1)),measure(reverse(updatedAfterRedefinition)(updatedAfterRedefinition((1,1,1,0):𝔹^4,1),1)),measure(updatedAfterRedefinition((1,1,1,0):𝔹^4,2)),measure(reverse(updatedAfterRedefinition)(updatedAfterRedefinition((1,1,1,0):𝔹^4,2),2)));
+	assert(r==((1,1,1,0),(1,1,1,0),(1,1,0,0),(1,1,1,0),(1,1,1,1),(1,1,1,0),(1,1,0,0),(1,1,1,0),(1,1,1,0),(1,1,1,0),(1,1,0,1),(1,1,1,0),(1,1,1,0),(1,1,1,0),(1,0,1,0),(1,1,1,0),(1,1,1,1),(1,1,1,0),(1,0,0,0),(1,1,1,0),(1,1,1,0),(1,1,1,0),(1,1,0,0),(1,1,1,0),(1,1,1,0),(1,1,1,0),(1,1,0,0),(1,1,1,0),(1,1,1,0),(1,1,1,0),(1,0,0,0),(1,1,1,0),(1,1,1,0),(1,1,1,0),(1,0,0,0),(1,1,1,0),(1,1,1,0),(1,1,1,0),(1,0,1,0),(1,1,1,0),(1,1,1,0),(1,1,1,0),(1,1,0,0),(1,1,1,0),(0,1,1,0),(1,1,1,0),(1,1,1,0),(1,1,1,0),(1,0,0,0),(1,1,1,0),(1,1,1,0),(1,1,1,0),(1,1,0,0),(1,1,1,0),(0,1,1,0),(1,1,1,0),(0,0,1,0),(1,1,1,0),(0,0,1,0),(1,1,1,0),(1,1,1,0),(1,1,1,0),(1,0,0,0),(1,1,1,0),(1,1,1,0),(1,1,1,0),(1,1,1,1),(1,1,1,0),(1,1,0,1),(1,1,1,0),(1,0,1,0),(1,1,1,0),(0,1,1,0),(1,1,1,0),(1,1,1,0),(1,1,1,0)));
+	return r;
+}

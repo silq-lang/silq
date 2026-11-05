@@ -1,0 +1,145 @@
+// args: --run
+
+def updatedInWithBody(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	with { t:=1; } do { v+=t; xs[v%4]:=X(xs[v%4]); forget(v); v:=3; }
+	return xs;
+}
+
+def conditionalInWithBody(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	with { t:=j%4; } do { if v%4==2 { forget(v); v:=3; } else { v+=t; xs[v%4]:=X(xs[v%4]); } }
+	return xs;
+}
+
+def conditionalOnParameterInWithBody(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	with { t:=j%4; } do { if j%2==0 { forget(v); v:=3; } else { v+=t; xs[v%4]:=X(xs[v%4]); } }
+	return xs;
+}
+
+def loopInWithBody(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j;
+	xs[(j+1)%4]:=X(xs[(j+1)%4]);
+	with { u:=1; } do { if j%2==1 { for i in 0..1 { v+=1; xs[(v+u)%4]:=X(xs[(v+u)%4]); } } else { w:=move(v); v:=w+2; xs[(v+3)%4]:=X(xs[(v+3)%4]); } }
+	return xs;
+}
+
+def updatedInBranchOfBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	if j%3!=0 { xs[0]:=X(xs[0]); if v%4==2 { forget(v); v:=3; } else { v+=2; xs[v%4]:=X(xs[v%4]); } } else { forget(v); }
+	return xs;
+}
+
+def definedAgainInBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=2;
+	if j%2==1 { forget(v); with { u:=(j+j)%4; } do { v:=(j+j)%4; v+=u+2; } } else { xs[1]:=X(xs[1]); }
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+
+def movedAfterDefinedAgain(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=2;
+	if j%2==1 { forget(v); with { u:=(j+j)%4; } do { v:=(j+j)%4; v+=u+2; } } else { xs[1]:=X(xs[1]); }
+	w:=move(v);
+	xs[w%4]:=X(xs[w%4]);
+	return xs;
+}
+
+def conditionOnDefinedAgain(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+1;
+	if v%4==2 { forget(v); with { u:=(j+j)%4; } do { v:=(j+j)%4; v+=u+2; } } else { xs[(v+3)%4]:=X(xs[(v+3)%4]); }
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+
+def selfMovedAfterDefinedAgain(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=2;
+	if j%2==1 { forget(v); with { u:=(j+j)%4; } do { v:=(j+j)%4; v+=u+2; (w,v):=((u+j)%4,v); } } else { xs[1]:=X(xs[1]); }
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+
+def forgottenAfterDefinedAgain(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=2;
+	if j%2==1 { forget(v); with { u:=(j+j)%4; } do { v:=(j+j)%4; v+=u+2; } } else { xs[1]:=X(xs[1]); }
+	forget(v);
+	xs[0]:=X(xs[0]);
+	return xs;
+}
+
+def loopInClassicalWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	k:=v+1;
+	xs[k%4]:=X(xs[k%4]);
+	with { u:=1; } do { k+=u; for i in 0..1 { forget(v); v:=j; } }
+	xs[k%4]:=X(xs[k%4]);
+	return xs;
+}
+
+def loopInClassicalWithWidened(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=1;
+	k:=v+1;
+	xs[k%4]:=X(xs[k%4]);
+	with { u:=1; } do { k+=u; for i in 0..1 { forget(v); v:=j; } }
+	xs[k%4]:=X(xs[k%4]);
+	return xs;
+}
+
+def loopInClassicalWithForgotten(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	k:=v+1;
+	xs[k%4]:=X(xs[k%4]);
+	with { u:=1; } do { k+=u; for i in 0..1 { forget(v); v:=j; } forget(v); }
+	xs[k%4]:=X(xs[k%4]);
+	return xs;
+}
+
+def loopUpdateInClassicalWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	k:=v+1;
+	xs[k%4]:=X(xs[k%4]);
+	with { u:=1; } do { k+=u; for i in 0..2 { forget(v); v:=j+i; k+=v; } }
+	xs[k%4]:=X(xs[k%4]);
+	return xs;
+}
+
+def conditionalLoopInClassicalWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=1;
+	k:=j*2;
+	xs[k%4]:=X(xs[k%4]);
+	with { u:=2; } do { for i in 0..1 { if j%4==2 { forget(v); v:=2; } } k+=u; }
+	xs[k%4]:=X(xs[k%4]);
+	return xs;
+}
+
+def updatedAndForgottenInBody(xs:𝔹^4,const j:!ℕ)mfree{
+	k:=j+j;
+	v:=(k+j)%4;
+	w:=k+1;
+	xs[(w+v)%4]:=X(xs[(w+v)%4]);
+	with { u:=3; } do { if j%2==1 { v+=1; } else { for i in 0..1 { v+=(j+j)%4; forget(v); v:=(i+j)%4; forget(w); w:=(u+j)%4; } } }
+	xs[(j+k)%4]:=X(xs[(j+k)%4]);
+	return xs;
+}
+
+def loopUpdateInNestedWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	w:=2;
+	xs[(w+j)%4]:=X(xs[(w+j)%4]);
+	with { t:=1; } do { with { u:=3; } do { for i in 0..2 { v+=u; forget(v); v:=1; forget(w); w:=1; } } xs[t]:=X(xs[t]); }
+	return xs;
+}
+
+def loopInNestedWith(xs:𝔹^4,const j:!ℕ)mfree{
+	k:=j*2;
+	v:=2;
+	with { t:=1; } do { with { u:=3; } do { for i in 0..2 { k+=u; forget(v); v:=1; } } xs[t]:=X(xs[t]); }
+	return xs;
+}
+
+def main(){
+	r:=(measure(updatedInWithBody((1,1,1,0):𝔹^4,1)),measure(reverse(updatedInWithBody)(updatedInWithBody((1,1,1,0):𝔹^4,1),1)),measure(updatedInWithBody((1,1,1,0):𝔹^4,2)),measure(reverse(updatedInWithBody)(updatedInWithBody((1,1,1,0):𝔹^4,2),2)),measure(conditionalInWithBody((1,1,1,0):𝔹^4,1)),measure(reverse(conditionalInWithBody)(conditionalInWithBody((1,1,1,0):𝔹^4,1),1)),measure(conditionalInWithBody((1,1,1,0):𝔹^4,2)),measure(reverse(conditionalInWithBody)(conditionalInWithBody((1,1,1,0):𝔹^4,2),2)),measure(conditionalOnParameterInWithBody((1,1,1,0):𝔹^4,1)),measure(reverse(conditionalOnParameterInWithBody)(conditionalOnParameterInWithBody((1,1,1,0):𝔹^4,1),1)),measure(conditionalOnParameterInWithBody((1,1,1,0):𝔹^4,2)),measure(reverse(conditionalOnParameterInWithBody)(conditionalOnParameterInWithBody((1,1,1,0):𝔹^4,2),2)),measure(loopInWithBody((1,1,1,0):𝔹^4,1)),measure(reverse(loopInWithBody)(loopInWithBody((1,1,1,0):𝔹^4,1),1)),measure(loopInWithBody((1,1,1,0):𝔹^4,2)),measure(reverse(loopInWithBody)(loopInWithBody((1,1,1,0):𝔹^4,2),2)),measure(updatedInBranchOfBranch((1,1,1,0):𝔹^4,1)),measure(reverse(updatedInBranchOfBranch)(updatedInBranchOfBranch((1,1,1,0):𝔹^4,1),1)),measure(updatedInBranchOfBranch((1,1,1,0):𝔹^4,2)),measure(reverse(updatedInBranchOfBranch)(updatedInBranchOfBranch((1,1,1,0):𝔹^4,2),2)),measure(definedAgainInBranch((1,1,1,0):𝔹^4,1)),measure(reverse(definedAgainInBranch)(definedAgainInBranch((1,1,1,0):𝔹^4,1),1)),measure(definedAgainInBranch((1,1,1,0):𝔹^4,2)),measure(reverse(definedAgainInBranch)(definedAgainInBranch((1,1,1,0):𝔹^4,2),2)),measure(movedAfterDefinedAgain((1,1,1,0):𝔹^4,1)),measure(reverse(movedAfterDefinedAgain)(movedAfterDefinedAgain((1,1,1,0):𝔹^4,1),1)),measure(movedAfterDefinedAgain((1,1,1,0):𝔹^4,2)),measure(reverse(movedAfterDefinedAgain)(movedAfterDefinedAgain((1,1,1,0):𝔹^4,2),2)),measure(conditionOnDefinedAgain((1,1,1,0):𝔹^4,1)),measure(reverse(conditionOnDefinedAgain)(conditionOnDefinedAgain((1,1,1,0):𝔹^4,1),1)),measure(conditionOnDefinedAgain((1,1,1,0):𝔹^4,2)),measure(reverse(conditionOnDefinedAgain)(conditionOnDefinedAgain((1,1,1,0):𝔹^4,2),2)),measure(selfMovedAfterDefinedAgain((1,1,1,0):𝔹^4,1)),measure(reverse(selfMovedAfterDefinedAgain)(selfMovedAfterDefinedAgain((1,1,1,0):𝔹^4,1),1)),measure(selfMovedAfterDefinedAgain((1,1,1,0):𝔹^4,2)),measure(reverse(selfMovedAfterDefinedAgain)(selfMovedAfterDefinedAgain((1,1,1,0):𝔹^4,2),2)),measure(forgottenAfterDefinedAgain((1,1,1,0):𝔹^4,1)),measure(reverse(forgottenAfterDefinedAgain)(forgottenAfterDefinedAgain((1,1,1,0):𝔹^4,1),1)),measure(forgottenAfterDefinedAgain((1,1,1,0):𝔹^4,2)),measure(reverse(forgottenAfterDefinedAgain)(forgottenAfterDefinedAgain((1,1,1,0):𝔹^4,2),2)),measure(loopInClassicalWith((1,1,1,0):𝔹^4,1)),measure(reverse(loopInClassicalWith)(loopInClassicalWith((1,1,1,0):𝔹^4,1),1)),measure(loopInClassicalWith((1,1,1,0):𝔹^4,2)),measure(reverse(loopInClassicalWith)(loopInClassicalWith((1,1,1,0):𝔹^4,2),2)),measure(loopInClassicalWithWidened((1,1,1,0):𝔹^4,1)),measure(reverse(loopInClassicalWithWidened)(loopInClassicalWithWidened((1,1,1,0):𝔹^4,1),1)),measure(loopInClassicalWithWidened((1,1,1,0):𝔹^4,2)),measure(reverse(loopInClassicalWithWidened)(loopInClassicalWithWidened((1,1,1,0):𝔹^4,2),2)),measure(loopInClassicalWithForgotten((1,1,1,0):𝔹^4,1)),measure(reverse(loopInClassicalWithForgotten)(loopInClassicalWithForgotten((1,1,1,0):𝔹^4,1),1)),measure(loopInClassicalWithForgotten((1,1,1,0):𝔹^4,2)),measure(reverse(loopInClassicalWithForgotten)(loopInClassicalWithForgotten((1,1,1,0):𝔹^4,2),2)),measure(loopUpdateInClassicalWith((1,1,1,0):𝔹^4,1)),measure(reverse(loopUpdateInClassicalWith)(loopUpdateInClassicalWith((1,1,1,0):𝔹^4,1),1)),measure(loopUpdateInClassicalWith((1,1,1,0):𝔹^4,2)),measure(reverse(loopUpdateInClassicalWith)(loopUpdateInClassicalWith((1,1,1,0):𝔹^4,2),2)),measure(conditionalLoopInClassicalWith((1,1,1,0):𝔹^4,1)),measure(reverse(conditionalLoopInClassicalWith)(conditionalLoopInClassicalWith((1,1,1,0):𝔹^4,1),1)),measure(conditionalLoopInClassicalWith((1,1,1,0):𝔹^4,2)),measure(reverse(conditionalLoopInClassicalWith)(conditionalLoopInClassicalWith((1,1,1,0):𝔹^4,2),2)),measure(updatedAndForgottenInBody((1,1,1,0):𝔹^4,1)),measure(reverse(updatedAndForgottenInBody)(updatedAndForgottenInBody((1,1,1,0):𝔹^4,1),1)),measure(updatedAndForgottenInBody((1,1,1,0):𝔹^4,2)),measure(reverse(updatedAndForgottenInBody)(updatedAndForgottenInBody((1,1,1,0):𝔹^4,2),2)),measure(loopUpdateInNestedWith((1,1,1,0):𝔹^4,1)),measure(reverse(loopUpdateInNestedWith)(loopUpdateInNestedWith((1,1,1,0):𝔹^4,1),1)),measure(loopUpdateInNestedWith((1,1,1,0):𝔹^4,2)),measure(reverse(loopUpdateInNestedWith)(loopUpdateInNestedWith((1,1,1,0):𝔹^4,2),2)),measure(loopInNestedWith((1,1,1,0):𝔹^4,1)),measure(reverse(loopInNestedWith)(loopInNestedWith((1,1,1,0):𝔹^4,1),1)),measure(loopInNestedWith((1,1,1,0):𝔹^4,2)),measure(reverse(loopInNestedWith)(loopInNestedWith((1,1,1,0):𝔹^4,2),2)));
+	assert(r==((1,1,1,1),(1,1,1,0),(1,0,1,0),(1,1,1,0),(1,1,1,0),(1,1,1,0),(1,1,0,0),(1,1,1,0),(1,1,1,1),(1,1,1,0),(1,1,1,0),(1,1,1,0),(1,1,0,1),(1,1,1,0),(1,1,1,0),(1,1,1,0),(0,1,1,0),(1,1,1,0),(0,1,0,0),(1,1,1,0),(1,1,0,0),(1,1,1,0),(1,0,0,0),(1,1,1,0),(1,1,0,0),(1,1,1,0),(1,0,0,0),(1,1,1,0),(1,1,0,0),(1,1,1,0),(1,1,0,1),(1,1,1,0),(1,1,0,0),(1,1,1,0),(1,0,0,0),(1,1,1,0),(0,1,1,0),(1,1,1,0),(0,0,1,0),(1,1,1,0),(0,1,1,1),(1,1,1,0),(1,0,0,0),(1,1,1,0),(1,1,0,1),(1,1,1,0),(1,1,0,1),(1,1,1,0),(0,1,1,1),(1,1,1,0),(1,0,0,0),(1,1,1,0),(1,1,1,0),(1,1,1,0),(1,0,1,1),(1,1,1,0),(0,1,0,0),(1,1,1,0),(0,1,0,0),(1,1,1,0),(1,1,0,1),(1,1,1,0),(1,1,0,1),(1,1,1,0),(1,0,1,1),(1,1,1,0),(0,0,1,0),(1,1,1,0),(1,0,1,0),(1,1,1,0),(1,0,1,0),(1,1,1,0)));
+	return r;
+}
