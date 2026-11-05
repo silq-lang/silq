@@ -1,0 +1,84 @@
+// args: --run
+
+def classicalMoved(n:!ℕ){
+	y:=0:!𝔹;
+	k:=0;
+	while true{
+		if k==n { return (move(y),k); }
+		k+=1;
+	}
+}
+
+def quantumMoved(n:!ℕ){
+	y:=1:𝔹;
+	k:=0;
+	while true{
+		if k==n { return (measure(move(y)),k); }
+		k+=1;
+	}
+}
+
+def quantumReturned(n:!ℕ){
+	y:=1:𝔹;
+	k:=0;
+	while true{
+		if k==n { return move(y); }
+		k+=1;
+	}
+}
+
+def changedInLoop(n:!ℕ){
+	y:=0:𝔹;
+	k:=0;
+	while true{
+		if k==n { return (measure(move(y)),k); }
+		y:=X(y);
+		k+=1;
+	}
+}
+
+def notForgettable(n:!ℕ){
+	y:=H(0:𝔹);
+	k:=0;
+	while true{
+		if k==n { return (measure(H(move(y))),k); }
+		k+=1;
+	}
+}
+
+def forLoop(n:!ℕ){
+	y:=1:!𝔹;
+	k:=0;
+	for i in 0..10{
+		if k==n { return (move(y),k); }
+		k+=1;
+	}
+	return (y,k);
+}
+
+def repeatLoop(n:!ℕ){
+	y:=1:!𝔹;
+	k:=0;
+	repeat 10{
+		if k==n { return (move(y),k); }
+		k+=1;
+	}
+	return (y,k);
+}
+
+def twoReturns(n:!ℕ){
+	y:=0:!𝔹;
+	z:=1:!𝔹;
+	k:=0;
+	while true{
+		if k==n { return (move(y),k); }
+		if k==n+1 { return (move(z),k); }
+		k+=1;
+	}
+}
+
+def main(){
+	r:=(classicalMoved(3),quantumMoved(2),measure(quantumReturned(1)),changedInLoop(3),notForgettable(2),forLoop(4),repeatLoop(5),twoReturns(2));
+	assert(r==((0,3),(1,2),1,(1,3),(0,2),(1,4),(1,5),(0,2)));
+	return r;
+}
