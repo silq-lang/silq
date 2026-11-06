@@ -1,0 +1,40 @@
+// args: --run
+
+def swapInBranch(xs:𝔹^4,const n:!ℕ,const c:!ℕ)mfree{
+	k:=c+1;
+	if c==1 { k+=1; } else { a:=(dup(n),n+1):!ℕ^2; (a[0],a[1]):=(a[1],a[0]); }
+	xs[k%4]:=X(xs[k%4]);
+	return xs;
+}
+
+def updateInBranch(xs:𝔹^4,const n:!ℕ,const c:!ℕ)mfree{
+	k:=c+1;
+	if c==1 { k+=1; } else { a:=(dup(n),n+1):!ℕ^2; a[0]+=2; }
+	xs[k%4]:=X(xs[k%4]);
+	return xs;
+}
+
+def swapInRepeat(xs:𝔹^4,const n:!ℕ,const c:!ℕ)mfree{
+	k:=c+1;
+	repeat 2 { if c==1 { k+=1; } else { a:=(dup(n),n+1):!ℕ^2; (a[0],a[1]):=(a[1],a[0]); } xs[k%4]:=X(xs[k%4]); k+=2; }
+	return xs;
+}
+
+def swapInLoop(xs:𝔹^4,const n:!ℕ,const c:!ℕ)mfree{
+	k:=c+1;
+	for i in 0..2 { if c==1 { k+=i; } else { a:=(dup(n),n+i):!ℕ^2; (a[0],a[1]):=(a[1],a[0]); } xs[(k+i)%4]:=X(xs[(k+i)%4]); }
+	return xs;
+}
+
+def swapReadAfter(xs:𝔹^4,const n:!ℕ,const c:!ℕ)mfree{
+	k:=c+1;
+	if c==1 { k+=1; } else { a:=(dup(n),n+1):!ℕ^2; (a[0],a[1]):=(a[1],a[0]); k+=a[0]; }
+	xs[k%4]:=X(xs[k%4]);
+	return xs;
+}
+
+def main(){
+	r:=(measure(swapInBranch((1,0,0,0):𝔹^4,2,0)),measure(reverse(swapInBranch)((1,1,0,0):𝔹^4,2,0)),measure(reverse(swapInBranch)((0,1,1,0):𝔹^4,2,1)),measure(updateInBranch((1,1,0,0):𝔹^4,1,0)),measure(reverse(updateInBranch)((1,0,0,0):𝔹^4,1,0)),measure(reverse(updateInBranch)((0,0,1,0):𝔹^4,1,1)),measure(swapInRepeat((0,1,0,0):𝔹^4,3,0)),measure(reverse(swapInRepeat)((0,0,0,1):𝔹^4,3,0)),measure(reverse(swapInRepeat)((1,0,0,1):𝔹^4,3,1)),measure(swapInLoop((0,0,1,0):𝔹^4,1,0)),measure(reverse(swapInLoop)((0,1,0,0):𝔹^4,1,0)),measure(reverse(swapInLoop)((1,1,0,1):𝔹^4,1,1)),measure(swapReadAfter((1,0,1,0):𝔹^4,2,0)),measure(reverse(swapReadAfter)((0,0,1,0):𝔹^4,2,0)),measure(reverse(swapReadAfter)((0,1,0,0):𝔹^4,2,1)));
+	assert(r==((1,1,0,0),(1,0,0,0),(0,1,1,1),(1,0,0,0),(1,1,0,0),(0,0,1,1),(0,0,0,1),(0,1,0,0),(1,0,1,0),(0,1,0,0),(0,0,1,0),(0,1,1,1),(0,0,1,0),(1,0,1,0),(0,1,0,1)));
+	return r;
+}

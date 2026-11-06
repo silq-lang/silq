@@ -1,0 +1,39 @@
+// args: --run
+
+def updateFromCopyInBranch(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	v:=dup(j);
+	if c { xs[v%4]:=X(xs[v%4]); } else { w:=dup(v); v+=w*2; }
+	xs[(v+1)%4]:=X(xs[(v+1)%4]);
+	return xs;
+}
+
+def redefinedInLoopAfterRecomputed(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	v1:=j*2; v2:=1; v3:=2;
+	xs[(j+v3)%4]:=X(xs[(j+v3)%4]);
+	xs[(v3+v2)%4]:=X(xs[(v3+v2)%4]);
+	with { u4:=3; } do {
+		forget(v1); v1:=(v2+j)%4;
+		if c { for i6 in 0..3 { v3+=1; forget(v1); v1:=2; } }
+	}
+	xs[(v3+j)%4]:=X(xs[(v3+j)%4]);
+	return xs;
+}
+
+def readBeforeLoopThenForgotten(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	v2:=1; v3:=2;
+	xs[(j+v3)%4]:=X(xs[(j+v3)%4]);
+	with { u4:=3; } do {
+		w:=(v2+j)%4;
+		v3+=w;
+		for i6 in 0..3 { v3+=1; v2+=u4+3; }
+		forget(w);
+	}
+	xs[(v3+j)%4]:=X(xs[(v3+j)%4]);
+	return xs;
+}
+
+def main(){
+	r:=(measure(updateFromCopyInBranch((1,0,0,0):𝔹^4,true,1)),measure(reverse(updateFromCopyInBranch)((1,1,1,0):𝔹^4,true,1)),measure(reverse(updateFromCopyInBranch)((0,1,1,0):𝔹^4,false,2)),measure(redefinedInLoopAfterRecomputed((0,1,0,0):𝔹^4,true,1)),measure(reverse(redefinedInLoopAfterRecomputed)((0,1,1,0):𝔹^4,true,1)),measure(reverse(redefinedInLoopAfterRecomputed)((1,0,1,1):𝔹^4,false,2)),measure(readBeforeLoopThenForgotten((1,1,0,0):𝔹^4,true,1)),measure(reverse(readBeforeLoopThenForgotten)((0,1,0,1):𝔹^4,true,1)),measure(reverse(readBeforeLoopThenForgotten)((0,0,1,0):𝔹^4,false,3)));
+	assert(r==((1,1,1,0),(1,0,0,0),(0,1,1,1),(0,1,1,0),(0,1,0,0),(1,0,1,0),(0,1,0,1),(1,1,0,0),(1,1,1,0)));
+	return r;
+}

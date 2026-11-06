@@ -1,0 +1,48 @@
+// args: --run
+
+def redefinedInLoop(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	k:=j+1;
+	w:=(j*3+1)%4;
+	xs[(v+k)%4]:=X(xs[(v+k)%4]);
+	if w%4==2 { with { u:=v+3; } do { for i in 0..3 { forget(w); w:=u*2; } k+=u; } } else { v+=1; }
+	xs[(v+k)%4]:=X(xs[(v+k)%4]);
+	return xs;
+}
+
+def inConjunction(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	v:=j*2;
+	k:=j+1;
+	w:=(j*3+1)%4;
+	xs[(v+k)%4]:=X(xs[(v+k)%4]);
+	if c&&w%4==2 { with { u:=v+3; } do { for i in 0..3 { forget(w); w:=u*2; } k+=u; } } else { v+=1; }
+	xs[(v+k)%4]:=X(xs[(v+k)%4]);
+	return xs;
+}
+
+def forgottenInOtherBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	k:=j+1;
+	w:=(j*3+1)%4;
+	xs[(v+k)%4]:=X(xs[(v+k)%4]);
+	if w%4==2 { with { u:=v+3; } do { for i in 0..3 { forget(w); w:=u*2; } k+=u; } } else { v+=1; forget(w); }
+	xs[(v+k)%4]:=X(xs[(v+k)%4]);
+	return xs;
+}
+
+def redefinedWithOther(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	k:=v+1;
+	s:=dup(j);
+	w:=(k+j)%4;
+	xs[(v+s)%4]:=X(xs[(v+s)%4]);
+	if w%4==2 { with { u:=v+3; } do { for i in 0..3 { forget(w); w:=v*2; forget(k); k:=dup(w); } k+=u+j; forget(k); s+=u+1; } } else { v+=2; }
+	xs[(j+v+s)%4]:=X(xs[(j+v+s)%4]);
+	return xs;
+}
+
+def main(){
+	r:=(measure(redefinedInLoop((1,0,0,0):𝔹^4,3)),measure(reverse(redefinedInLoop)((1,0,1,1):𝔹^4,3)),measure(reverse(redefinedInLoop)((0,0,1,1):𝔹^4,1)),measure(inConjunction((1,1,0,0):𝔹^4,true,3)),measure(reverse(inConjunction)((1,1,1,1):𝔹^4,true,3)),measure(reverse(inConjunction)((0,1,0,0):𝔹^4,false,3)),measure(forgottenInOtherBranch((0,0,1,0):𝔹^4,7)),measure(reverse(forgottenInOtherBranch)((0,0,0,1):𝔹^4,7)),measure(reverse(forgottenInOtherBranch)((1,0,1,1):𝔹^4,2)),measure(redefinedWithOther((0,1,0,1):𝔹^4,3)),measure(reverse(redefinedWithOther)((0,0,1,1):𝔹^4,3)),measure(reverse(redefinedWithOther)((1,1,1,0):𝔹^4,0)));
+	assert(r==((1,0,1,1),(1,0,0,0),(1,1,1,1),(1,1,1,1),(1,1,0,0),(0,1,1,1),(0,0,0,1),(0,0,1,0),(0,0,1,0),(0,0,1,1),(0,1,0,1),(0,1,0,0)));
+	return r;
+}
