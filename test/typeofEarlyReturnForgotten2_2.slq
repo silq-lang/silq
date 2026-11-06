@@ -1,7 +1,7 @@
 
 def main(){
 	x:=H(0:𝔹);
-	o:=dup(x);
+	o:=dup(x); /// TODO
 	if measure(H(0:𝔹)){
 		if measure(H(0:𝔹)) {
 			forget(o); /// TODO
