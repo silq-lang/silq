@@ -1,0 +1,25 @@
+// args: --run
+
+def literal(){
+	for 0 in 0..3 { return 1; }
+	return 0;
+}
+def tuplePattern(){
+	s:=0;
+	for (0,b) in [(0,2),(1,4),(0,6)] { s+=b; if s>1 { return s; } }
+	return s;
+}
+def literalBool(){
+	for false in 0..3 { return 1; }
+	return 0;
+}
+def freshNames(){
+	s:=0;
+	for (a,b) in [(1,2),(3,4)] { s+=a+b; if s>2 { return s; } }
+	return 0;
+}
+def main(){
+	r:=(literal(),tuplePattern(),literalBool(),freshNames());
+	assert(r==(1,2,1,3));
+	return r;
+}

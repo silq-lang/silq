@@ -1,0 +1,32 @@
+// args: --run
+
+def movedResult(m:!ℕ){
+	x:=vector(m,0:𝔹);
+	k:=0;
+	do{ n:=dup(m); b:=𝔹^n; a:=b; x:=x coerce a; k+=1; }while k<3;
+	return measure(move(x));
+}
+def fromCounter(m:!ℕ){
+	x:=vector(1,0:𝔹);
+	k:=0;
+	do{ n:=k+2; b:=𝔹^n; a:=b; x:=x~(0:𝔹,) coerce a; k+=1; }while k<m;
+	return measure(move(x));
+}
+def tupleResult(m:!ℕ){
+	x:=vector(m,1:𝔹);
+	k:=0;
+	do{ n:=dup(m); b:=𝔹^n; a:=b; x:=x coerce a; k+=1; }while k<2;
+	return (measure(move(x)),k);
+}
+def afterUse(m:!ℕ){
+	x:=vector(m,0:𝔹);
+	k:=0;
+	do{ n:=dup(m); b:=𝔹^n; a:=b; x:=x coerce a; k+=1; }while k<3;
+	x[0]:=X(x[0]);
+	return measure(move(x));
+}
+def main(){
+	r:=(movedResult(2),fromCounter(2),tupleResult(2),afterUse(2));
+	assert(r==((0,0),(0,0,0),((1,1),2),(1,0)));
+	return r;
+}

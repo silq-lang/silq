@@ -1,0 +1,56 @@
+// args: --run
+
+def tail(c:!𝔹):!ℤ{
+	s:=0:!ℤ;
+	repeat 3 {
+		s+=1;
+		if c { with { k:=1; } do { return s+k; } s+=100; }
+		s+=10;
+	}
+	return s;
+}
+def last(n:!ℕ):!ℤ{
+	s:=0:!ℤ;
+	for i in 0..3 {
+		s+=1;
+		if i==n { with { k:=dup(i); } do { s+=k; return s; } }
+		s+=10;
+	}
+	return s;
+}
+def always():!ℤ{
+	s:=1:!ℤ;
+	repeat 2 {
+		with { k:=1; } do { return s+k; }
+		x:=2;
+	}
+	return s;
+}
+def whileLoop(n:!ℕ):!ℤ{
+	s:=0:!ℤ;
+	i:=0;
+	while i<4 {
+		s+=1;
+		if i==n { with { k:=2*i; } do { return s+k; } s+=100; }
+		i+=1;
+	}
+	return s;
+}
+def unitReturn(n:!ℕ){
+	for i in 0..3 {
+		if i==n { with { k:=1; } do { return; } j:=2; }
+	}
+}
+def quantumResult(x:𝔹,n:!ℕ):𝔹{
+	for i in 0..3 {
+		if i==n { with { k:=dup(i); } do { return X(x); } }
+		x:=X(x);
+	}
+	return x;
+}
+def main(){
+	unitReturn(1);
+	r:=(tail(true),tail(false),last(1),last(5),always(),whileLoop(2),whileLoop(5),measure(quantumResult(0:𝔹,1)),measure(quantumResult(0:𝔹,5)));
+	assert(r==(2,33,13,33,2,7,4,0,1));
+	return r;
+}

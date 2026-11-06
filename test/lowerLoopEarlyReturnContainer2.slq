@@ -1,0 +1,29 @@
+// args: --run
+
+def typeMentionsChanged(m:!ℕ,k:!ℕ){
+	n:=dup(m);
+	ys:=vector(2,vector(n,1:!ℕ));
+	s:=0;
+	for x in ys { s+=x[0]; if s>k { n+=1; return s+n; } }
+	return s;
+}
+def changedAfterLoop(m:!ℕ,k:!ℕ){
+	n:=dup(m);
+	ys:=vector(3,vector(n,2:!ℕ));
+	s:=0;
+	for x in ys { s+=x[0]; if s>k { n+=s; return n; } }
+	s+=n;
+	return s;
+}
+def lengthOnly(m:!ℕ,k:!ℕ){
+	n:=dup(m);
+	ys:=vector(n,1:!ℕ);
+	s:=0;
+	for x in ys { s+=x; if s>k { n+=1; return s+n; } }
+	return s;
+}
+def main(){
+	r:=(typeMentionsChanged(1,1),typeMentionsChanged(1,5),changedAfterLoop(1,3),changedAfterLoop(2,7),lengthOnly(3,1),lengthOnly(3,5));
+	assert(r==(4,2,5,8,6,3));
+	return r;
+}

@@ -1,0 +1,26 @@
+// args: --run
+
+def chain(m:!ℕ){
+	x:=vector(m,0:𝔹);
+	k:=0;
+	do{ n:=dup(m); b:=𝔹^n; a:=b; c:=a; x:=x coerce c; k+=1; }while k<2;
+	return measure(move(x));
+}
+def longChain(m:!ℕ){
+	x:=vector(m,1:𝔹);
+	k:=0;
+	do{ n:=dup(m); b:=𝔹^n; a:=b; c:=a; d:=c; x:=x coerce d; k+=1; }while k<3;
+	return measure(move(x));
+}
+def chainTwoValues(m:!ℕ){
+	x:=vector(m,0:𝔹);
+	y:=vector(m,1:𝔹);
+	k:=0;
+	do{ n:=dup(m); b:=𝔹^n; a:=b; c:=a; x:=x coerce a; y:=y coerce c; k+=1; }while k<2;
+	return (measure(move(x)),measure(move(y)));
+}
+def main(){
+	r:=(chain(2),longChain(1),chainTwoValues(2));
+	assert(r==((0,0),(1,),((0,0),(1,1))));
+	return r;
+}

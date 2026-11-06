@@ -1,0 +1,32 @@
+// args: --run
+
+def afterCode(xs:!ℕ^3){
+	s:=0;
+	for x in xs { s+=x; if s>2 { return s; } }
+	s+=10;
+	return s;
+}
+def returnAfter(xs:!ℕ^3){
+	s:=0;
+	for x in xs { s+=x; if s>2 { return s; } }
+	return s;
+}
+def nestedInWhile(xs:!ℕ^3){
+	s:=0;
+	k:=0;
+	while k<2 {
+		for x in xs { s+=x; if s>5 { return s; } }
+		k+=1;
+	}
+	return s+100;
+}
+def pairsPattern(ps:(!ℕ×!ℕ)^3){
+	s:=0;
+	for (a,b) in ps { s+=a·b; if s>3 { return s; } }
+	return s;
+}
+def main(){
+	r:=(afterCode((1,2,3)),afterCode((0,0,1)),returnAfter((1,2,3)),returnAfter((0,0,1)),nestedInWhile((1,1,1)),nestedInWhile((0,1,0)),pairsPattern(((1,1),(2,2),(3,3))),pairsPattern(((0,1),(0,2),(1,1))));
+	assert(r==(3,11,3,1,6,102,5,1));
+	return r;
+}
