@@ -1,0 +1,47 @@
+// args: --run
+
+def forgottenInBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	xs[v%4]:=X(xs[v%4]);
+	if j==3 { with { u:=1; } do { for i in 0..1 { forget(v); v:=i; } xs[0]:=X(xs[0]); v+=j; } } else { v+=2; }
+	return xs;
+}
+def quantumInLoop(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	xs[v%4]:=X(xs[v%4]);
+	if j==3 { with { u:=1; } do { for i in 0..1 { xs[0]:=X(xs[0]); forget(v); v:=i; } v+=j; } } else { v+=2; }
+	return xs;
+}
+def updateInLoop(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	xs[v%4]:=X(xs[v%4]);
+	if j==3 { with { u:=1; } do { for i in 0..1 { xs[0]:=X(xs[0]); forget(v); v:=i; } for i in 0..1 { v+=j; } } } else { v+=2; }
+	return xs;
+}
+def otherVariable(xs:𝔹^4,const j:!ℕ)mfree{
+	w:=j+3;
+	v:=(j+j)%4;
+	xs[(v+w)%4]:=X(xs[(v+w)%4]);
+	if w%4==2 { with { u:=w+1; } do { for i in 0..1 { forget(v); v:=i+i; } xs[0]:=X(xs[0]); v+=dup(w); } } else { v+=2; }
+	return xs;
+}
+def inOuterWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	with { t:=1; } do {
+		xs[(j+v)%4]:=X(xs[(j+v)%4]);
+		if j==3 { with { u:=1; } do { for i in 0..1 { forget(v); v:=i; } xs[0]:=X(xs[0]); v+=j; } } else { v+=2; }
+		xs[(t+j)%4]:=X(xs[(t+j)%4]);
+	}
+	return xs;
+}
+def definedAgain(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	xs[v%4]:=X(xs[v%4]);
+	if j==3 { with { u:=1; } do { for i in 0..1 { forget(v); v:=i; } xs[0]:=X(xs[0]); v+=j; forget(v); v:=j+1; } } else { v+=2; }
+	return xs;
+}
+def main(){
+	r:=(measure(reverse(forgottenInBranch)((1,1,0,0):𝔹^4,3)),measure(reverse(forgottenInBranch)((1,1,0,0):𝔹^4,2)),measure(reverse(quantumInLoop)((1,1,0,0):𝔹^4,3)),measure(reverse(quantumInLoop)((1,1,0,0):𝔹^4,2)),measure(reverse(updateInLoop)((1,1,0,0):𝔹^4,3)),measure(reverse(updateInLoop)((1,1,0,0):𝔹^4,2)),measure(reverse(otherVariable)((1,1,0,0):𝔹^4,3)),measure(reverse(otherVariable)((1,1,0,0):𝔹^4,2)),measure(reverse(inOuterWith)((1,1,0,0):𝔹^4,3)),measure(reverse(inOuterWith)((1,1,0,0):𝔹^4,2)),measure(reverse(definedAgain)((1,1,0,0):𝔹^4,3)),measure(reverse(definedAgain)((1,1,0,0):𝔹^4,2)));
+	assert(r==((0,1,1,0),(0,1,0,0),(0,1,1,0),(0,1,0,0),(0,1,1,0),(0,1,0,0),(1,1,0,0),(1,0,0,0),(1,0,0,0),(1,1,1,1),(0,1,1,0),(0,1,0,0)));
+	return r;
+}

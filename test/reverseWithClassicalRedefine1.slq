@@ -1,0 +1,40 @@
+// args: --run
+
+def nestedWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+1;
+	with { u:=dup(j); } do { v+=u*2; xs[v%4]:=X(xs[v%4]); forget(v); with { t:=1; } do { v:=j; } }
+	return xs;
+}
+def inBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+1;
+	if j%2==1 { with { u:=dup(j); } do { v+=u*2; xs[v%4]:=X(xs[v%4]); forget(v); with { t:=1; } do { v:=j; } } } else { forget(v); }
+	return xs;
+}
+def inOuterWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+1;
+	with { s:=2; } do { with { u:=dup(j); } do { v+=j+u; xs[v%4]:=X(xs[v%4]); forget(v); with { t:=1; } do { v:=j; } } }
+	return xs;
+}
+def readBefore(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j*2;
+	xs[v%4]:=X(xs[v%4]);
+	with { u:=dup(j); } do { v+=u; xs[(v+u)%4]:=X(xs[(v+u)%4]); forget(v); with { t:=1; } do { v:=j; } }
+	return xs;
+}
+def readBeforeInBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+1;
+	xs[(v+j)%4]:=X(xs[(v+j)%4]);
+	if j%2==1 { with { u:=dup(j); } do { v+=u*2; xs[(v+u)%4]:=X(xs[(v+u)%4]); forget(v); with { t:=1; } do { v:=j; } } } else { forget(v); }
+	return xs;
+}
+def laterStatement(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+2;
+	with { s:=2; } do { with { u:=dup(j); } do { v+=j+u; xs[v%4]:=X(xs[v%4]); forget(v); with { t:=1; } do { v:=j; } } }
+	xs[1]:=X(xs[1]);
+	return xs;
+}
+def main(){
+	r:=(measure(reverse(nestedWith)((1,1,0,0):𝔹^4,1)),measure(reverse(nestedWith)((1,1,0,0):𝔹^4,2)),measure(reverse(inBranch)((1,1,0,0):𝔹^4,1)),measure(reverse(inBranch)((1,1,0,0):𝔹^4,2)),measure(reverse(inOuterWith)((1,1,0,0):𝔹^4,1)),measure(reverse(inOuterWith)((1,1,0,0):𝔹^4,2)),measure(reverse(readBefore)((1,1,0,0):𝔹^4,1)),measure(reverse(readBefore)((1,1,0,0):𝔹^4,2)),measure(reverse(readBeforeInBranch)((1,1,0,0):𝔹^4,1)),measure(reverse(readBeforeInBranch)((1,1,0,0):𝔹^4,2)),measure(reverse(laterStatement)((1,1,0,0):𝔹^4,1)),measure(reverse(laterStatement)((1,1,0,0):𝔹^4,2)));
+	assert(r==((0,1,0,0),(1,1,0,1),(0,1,0,0),(1,1,0,0),(0,1,0,0),(1,1,0,1),(0,1,1,0),(1,1,0,0),(1,0,0,1),(1,0,0,0),(1,1,0,0),(0,0,0,0)));
+	return r;
+}

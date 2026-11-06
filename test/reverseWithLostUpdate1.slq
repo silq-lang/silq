@@ -1,0 +1,48 @@
+// args: --run
+
+def updateInBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v1:=j;
+	v2:=j;
+	xs[v2%4]:=X(xs[v2%4]);
+	with { u:=1; } do { for i in 0..3 { forget(v1); v1:=j*2; v2+=j; } if j==2 { v1+=1; } }
+	xs[v2%4]:=X(xs[v2%4]);
+	return xs;
+}
+def updateAfterLoop(xs:𝔹^4,const j:!ℕ)mfree{
+	v1:=j+3;
+	v2:=2;
+	v3:=dup(v1);
+	xs[(v1+v2)%4]:=X(xs[(v1+v2)%4]);
+	with { u:=1; } do { for i in 0..3 { forget(v3); v3:=j+2; v2+=v3+1; } v3+=3; v1+=dup(v2); }
+	xs[(v1+j)%4]:=X(xs[(v1+j)%4]);
+	return xs;
+}
+def conditionalDefinition(xs:𝔹^4,const j:!ℕ)mfree{
+	v1:=j+j;
+	v2:=v1+j;
+	xs[(v2+j)%4]:=X(xs[(v2+j)%4]);
+	with { u:=3; } do { for i in 0..2 { v2+=2; if i==0 { forget(v1); v1:=v2+1; } } v1+=v2+j; }
+	xs[(v2+j)%4]:=X(xs[(v2+j)%4]);
+	return xs;
+}
+def definedInBranches(xs:𝔹^4,const j:!ℕ)mfree{
+	v1:=j*2;
+	v2:=j*2;
+	xs[(v1+j)%4]:=X(xs[(v1+j)%4]);
+	with { u:=3; } do { for i in 0..2 { forget(v2); v2:=(v1+j)%4; if j%2==1 { forget(v2); v2:=j+1; } else { v2+=3; } v1+=1; } v2+=j+u; }
+	xs[(v1+j)%4]:=X(xs[(v1+j)%4]);
+	return xs;
+}
+def inBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v1:=j+j;
+	v2:=v1+j;
+	xs[(v2+j)%4]:=X(xs[(v2+j)%4]);
+	if v2%4==3 { with { u:=3; } do { for i in 0..2 { v2+=2; if i==0 { forget(v1); v1:=v2+1; } } v1+=v2+j; } } else { v2+=2; }
+	xs[(v2+j)%4]:=X(xs[(v2+j)%4]);
+	return xs;
+}
+def main(){
+	r:=(measure(reverse(updateInBranch)((1,1,0,0):𝔹^4,2)),measure(reverse(updateInBranch)((1,1,0,0):𝔹^4,1)),measure(reverse(updateAfterLoop)((1,1,0,0):𝔹^4,1)),measure(reverse(updateAfterLoop)((1,1,0,0):𝔹^4,2)),measure(reverse(conditionalDefinition)((1,1,0,0):𝔹^4,1)),measure(reverse(conditionalDefinition)((1,1,0,0):𝔹^4,2)),measure(reverse(definedInBranches)((1,1,0,0):𝔹^4,1)),measure(reverse(definedInBranches)((1,1,0,0):𝔹^4,2)),measure(reverse(inBranch)((1,1,0,0):𝔹^4,1)),measure(reverse(inBranch)((1,1,0,0):𝔹^4,2)));
+	assert(r==((0,1,1,0),(0,0,0,0),(1,1,1,1),(0,1,0,1),(1,1,0,0),(1,1,0,0),(1,0,0,1),(0,1,1,0),(1,1,0,0),(0,1,1,0)));
+	return r;
+}
