@@ -1,0 +1,41 @@
+// args: --run
+
+def loopBefore(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	v2:=j*2;
+	v3:=v2*2;
+	xs[v3%4]:=X(xs[v3%4]);
+	with { t:=1; } do {
+		with { u:=1; } do {
+			for i in 0..1 { forget(v2); v2:=dup(j); }
+			if c { for k in 0..1 { v3+=v2*2; } }
+		}
+		xs[j%4]:=X(xs[j%4]);
+	}
+	return xs;
+}
+def nestedLoops(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	v1:=2;
+	v2:=j*2;
+	v3:=v2*2;
+	xs[v3%4]:=X(xs[v3%4]);
+	with { t:=1; } do {
+		xs[(t+v2)%4]:=X(xs[(t+v2)%4]);
+		with { u:=1; } do {
+			for i in 0..1 {
+				xs[(t+v1)%4]:=X(xs[(t+v1)%4]);
+				v1+=j+1;
+				forget(v2); v2:=dup(j);
+			}
+			if c { for k in 0..1 { v3+=v2*2; } } else { for k in 0..2 { v3+=2; } }
+			forget(v1);
+		}
+		xs[j%4]:=X(xs[j%4]);
+	}
+	xs[(v3+j)%4]:=X(xs[(v3+j)%4]);
+	return xs;
+}
+def main(){
+	r:=(measure(reverse(loopBefore)(loopBefore((0,0,1,1):𝔹^4,true,1),true,1)),measure(reverse(loopBefore)(loopBefore((1,0,1,0):𝔹^4,false,2),false,2)),measure(reverse(nestedLoops)(nestedLoops((0,0,1,1):𝔹^4,true,1),true,1)),measure(reverse(nestedLoops)(nestedLoops((1,0,1,0):𝔹^4,false,3),false,3)),measure(loopBefore((0,0,1,1):𝔹^4,true,1)),measure(nestedLoops((0,0,1,1):𝔹^4,true,1)));
+	assert(r==((0,0,1,1),(1,0,1,0),(0,0,1,1),(1,0,1,0),(1,1,1,1),(1,1,1,0)));
+	return r;
+}

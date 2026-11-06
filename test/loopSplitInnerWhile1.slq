@@ -1,0 +1,19 @@
+// args: --run
+
+def infiniteLoop(const x:𝔹,q:𝔹)mfree{
+	if x { r:=0:𝔹; k:=2; repeat 2 { if k==2 { forget(r); return q; } k+=1; r:=X(r); j:=0; while true { j+=1; } } } else { return X(q); }
+}
+def infiniteLoopInBranches(const x:𝔹,q:𝔹)mfree{
+	if x { r:=0:𝔹; k:=2; repeat 2 { if k==2 { forget(r); return q; } k+=1; r:=X(r); t:=0; if t==0 { j:=0; while true { j+=1; } } else { j:=1; while true { j+=2; } } } } else { return X(q); }
+}
+def infiniteLoopNested(const x:𝔹,q:𝔹)mfree{
+	if x { r:=0:𝔹; k:=2; repeat 2 { if k==2 { forget(r); return q; } k+=1; r:=X(r); j:=0; while true { i:=0; while i<2 { i+=1; } j+=i; } } } else { return X(q); }
+}
+def infiniteLoopOnCarried(const x:𝔹,q:𝔹)mfree{
+	if x { r:=0:𝔹; k:=2; repeat 2 { if k==2 { forget(r); return q; } k+=1; r:=X(r); if k>5 { j:=0; while true { j+=1; } } else { j:=1; while true { j+=2; } } } } else { return X(q); }
+}
+def main(){
+	r:=(measure(infiniteLoop(1:𝔹,0:𝔹)),measure(infiniteLoop(0:𝔹,0:𝔹)),measure(infiniteLoopInBranches(1:𝔹,1:𝔹)),measure(infiniteLoopInBranches(0:𝔹,1:𝔹)),measure(infiniteLoopNested(1:𝔹,0:𝔹)),measure(infiniteLoopNested(0:𝔹,1:𝔹)),measure(infiniteLoopOnCarried(1:𝔹,1:𝔹)),measure(infiniteLoopOnCarried(0:𝔹,0:𝔹)));
+	assert(r==(0,1,1,0,0,0,1,1));
+	return r;
+}

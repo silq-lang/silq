@@ -3,7 +3,7 @@
 def readAfterUpdateAtLastUse(xs:𝔹^4,const c:!ℕ,const n:!ℕ)mfree{
 	k:=n*2;
 	with { t:=3; } do {
-		u:=30; /// TODO
+		u:=30;
 		w:=2;
 		if c==0 { w+=k+1; u+=w; xs[(u+1)%4]:=X(xs[(u+1)%4]); } /// TODO
 	}
