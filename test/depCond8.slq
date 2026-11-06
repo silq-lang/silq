@@ -1,11 +1,12 @@
+// args: --run
 
-def foo(){
+def main(){
 	x:=H(0);
 	y:=dup(x);
 	if measure(H(0)){
 		z:=dup(y);
-		forget(y); /// error
-		forget(z); /// error
+		forget(y);
+		forget(z);
 		return (x,0);
 	}
 	return (x,y);

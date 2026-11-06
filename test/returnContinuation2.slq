@@ -1,0 +1,34 @@
+// args: --run
+
+def quantumReturnConsumes(x:𝔹,y:𝔹,const c:𝔹)mfree{
+	b:=dup(y);
+	if c{
+		y⊕=1;
+		return (x,y);
+	}
+	b⊕=x;
+	forget(b);
+	return (x,y);
+}
+def quantumReturnUncomputes(x:𝔹,y:𝔹,const c:𝔹)mfree{
+	b:=dup(y);
+	if c{
+		b⊕=x;
+		forget(b);
+		return (x,y);
+	}
+	y⊕=1;
+	return (x,y);
+}
+def check(x:𝔹,y:𝔹)⇒measure(H(x),H(y));
+def main(){
+	c:=H(0:𝔹);
+	(x,y):=quantumReturnConsumes(H(0),H(0),c);
+	r0:=check(x,y);
+	(u,v):=quantumReturnUncomputes(H(0),H(0),c);
+	r1:=check(u,v);
+	_:=measure(c);
+	r:=(r0,r1);
+	assert(r==((0,0),(0,0)));
+	return r;
+}

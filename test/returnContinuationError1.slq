@@ -1,0 +1,6 @@
+def nestedReturn(x:𝔹,y:𝔹,const c:!𝔹,const d:!𝔹){
+	b:=dup(x); /// error
+	if c { x:=X(x); if d { return (x,y); } b⊕=y; return (x,y); }
+	forget(b);
+	return (x,y);
+}

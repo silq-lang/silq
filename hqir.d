@@ -1719,6 +1719,8 @@ final class ItePartialReturn: IteResult {
 	RetValue value;
 	CondRet retCond_;
 	ScopeWriter scCont;
+	size_t[] interleave; // (the bounds of the splits and the branches, if the code generator interleaves the code after the conditional with them, as part of the branch `continued`, see `interleaveBranches`)
+	int continued;
 
 	this(CondAny cond, RetValue value, ScopeWriter scCont) scope @safe nothrow {
 		this.cond = cond;
@@ -5547,6 +5549,7 @@ class ScopeWriter {
 					}
 
 					auto contRet = scTail.genStmts(stmts[i+1..$], result);
+					if(rv.interleave.length) interleaveBranches(ccg.code.code[], rv.interleave[0], rv.interleave[1], rv.interleave[2], rv.interleave[3], ccg.code.code[].length, rv.continued);
 					if(contRet.isAbort && rv.retCond.condQ) {
 						return combineResults(Result.conditionallyReturns(rv.value, rv.retCond), contRet, scTail);
 					}
@@ -5627,7 +5630,16 @@ class ScopeWriter {
 		Result rTrue = ifTrue.genCompoundStmt(e.then);
 		auto i2 = cw.code[].length;
 		Result rFalse = ifFalse.genCompoundStmt(e.othw);
-		if(e.then.blscope_.interleave) interleaveBranches(cw.code[], i0, i1, i2, cw.code[].length);
+		auto i3 = cw.code[].length;
+		bool continues = rTrue.isReturn && rFalse.isPass || rFalse.isReturn && rTrue.isPass; // (with the code after the conditional, see `ItePartialReturn`)
+		if(e.then.blscope_.interleave && !continues) interleaveBranches(cw.code[], i0, i1, i2, i3);
+		ItePartialReturn continuedBy(ItePartialReturn rv, int branch) {
+			if(e.then.blscope_.interleave) {
+				rv.interleave = [i0, i1, i2, i3];
+				rv.continued = branch;
+			}
+			return rv;
+		}
 
 		if(rTrue.isAbort && rFalse.isAbort) {
 			CReg cr;
@@ -5712,7 +5724,7 @@ class ScopeWriter {
 		if(rTrue.isReturn) {
 			assert(rFalse.isPass);
 			ifTrue.checkEmpty(false);
-			return new ItePartialReturn(cond, rTrue.retValue, ifFalse);
+			return continuedBy(new ItePartialReturn(cond, rTrue.retValue, ifFalse), 2);
 		}
 		if(rFalse.isAbort) {
 			assert(rTrue.isPass);
@@ -5722,7 +5734,7 @@ class ScopeWriter {
 		if(rFalse.isReturn) {
 			assert(rTrue.isPass);
 			ifFalse.checkEmpty(false);
-			return new ItePartialReturn(cond.invert(), rFalse.retValue, ifTrue);
+			return continuedBy(new ItePartialReturn(cond.invert(), rFalse.retValue, ifTrue), 1);
 		}
 		assert(rTrue.isPass && rFalse.isPass);
 
@@ -8216,22 +8228,23 @@ struct IrStatement {
 	}
 }
 
-void interleaveBranches(IrStatement[] code, size_t i0, size_t i1, size_t i2, size_t i3) { // (of a conditional whose branches recompute values from versions of variables from before their splits, see `checkBranchOrder`: such a split comes after those uncomputations, and statements before it read the register that it splits)
+void interleaveBranches(IrStatement[] code, size_t i0, size_t i1, size_t i2, size_t i3, size_t i4 = size_t.max, int continued = 0) { // (of a conditional whose branches recompute values from versions of variables from before their splits, see `checkBranchOrder`: such a split comes after those uncomputations, and statements before it read the register that it splits; the code after the conditional up to `i4` belongs to the branch `continued`, as the other one returns, see `ItePartialReturn`)
 	import std.algorithm: max;
 	import std.string: indexOf;
 	import std.container.rbtree: redBlackTree;
 	import util.tuple: Q = Tuple, q = tuple;
 	enum none = size_t.max;
-	auto items = code[i0 .. i3].dup;
+	if(i4 == none) i4 = i3;
+	auto items = code[i0 .. i4].dup;
 	auto n = items.length;
 	static string base(string op) { auto i = op.indexOf('['); return i < 0 ? op : op[0 .. i]; }
 	static bool qfree(string op) { return [opQSplit, opQMerge, opCSplit, opCMerge, "qfree_call", "qfree_call_rev"].canFind(base(op)); } // (the backend recomputes their results from their arguments)
-	size_t branchOf(size_t k) { return k < i1 - i0 ? 0 : k < i2 - i0 ? 1 : 2; }
+	size_t branchOf(size_t k) { return k < i1 - i0 ? 0 : k < i2 - i0 ? 1 : k < i3 - i0 ? 2 : continued; }
 	bool isSplit(size_t k) { return k != none && branchOf(k) == 0 && [opCSplit, opQSplit].canFind(base(items[k].op)); }
-	size_t item(size_t k) { return k != none && k >= i0 && k < i3 ? k - i0 : none; }
+	size_t item(size_t k) { return k != none && k >= i0 && k < i4 ? k - i0 : none; }
 	MapX!(QReg, size_t) prod, cons; // (in `code`)
 	MapX!(CReg, size_t) cprod;
-	foreach(k, ref s; code[0 .. i3]) {
+	foreach(k, ref s; code[0 .. i4]) {
 		foreach(r; s.qRet) if(r) prod[r] = k;
 		foreach(r; s.qiArgs) if(r) cons[r] = k;
 		foreach(r; s.cRet) if(r) cprod[r] = k;

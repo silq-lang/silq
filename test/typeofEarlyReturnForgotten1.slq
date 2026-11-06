@@ -23,7 +23,7 @@ def k(){
 	x:=H(0:𝔹);
 	o:=dup(x);
 	if measure(H(0:𝔹)) { return x; }
-	t:=(0,0):typeof(measure(o),measure(o)); /// TODO
+	t:=(0,0):typeof(measure(o),measure(o));
 	return x;
 }
 def main()⇒(f(),g(),h());

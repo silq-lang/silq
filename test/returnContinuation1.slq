@@ -1,0 +1,66 @@
+// args: --run
+
+def returnUncomputes(x:𝔹,y:𝔹,const c:!𝔹){
+	b:=dup(y);
+	if c{
+		b⊕=x;
+		forget(b);
+		return (x,y);
+	}
+	y⊕=1;
+	return (x,y);
+}
+def returnConsumes(x:𝔹,y:𝔹,const c:!𝔹){
+	b:=dup(y);
+	if c{
+		y⊕=1;
+		return (x,y);
+	}
+	b⊕=x;
+	forget(b);
+	return (x,y);
+}
+def elseReturns(x:𝔹,y:𝔹,const c:!𝔹){
+	b:=dup(y);
+	if c{
+	}else{
+		y⊕=1;
+		return (x,y);
+	}
+	b⊕=x;
+	forget(b);
+	return (x,y);
+}
+def nestedAfter(x:𝔹,y:𝔹,const c:!𝔹,const d:!𝔹){
+	b:=dup(y);
+	if c{
+		y⊕=1;
+		return (x,y);
+	}
+	if d{
+		b⊕=x;
+		forget(b);
+	}else{
+		forget(b);
+	}
+	return (x,y);
+}
+def example(const c:!𝔹){
+	x:=H(0);
+	y:=H(0);
+	a:=dup(x);
+	b:=dup(y);
+	if c{
+		y⊕=1;
+		return (x,y);
+	}
+	b⊕=x;
+	forget(b);
+	return (x,y);
+}
+def check(x:𝔹,y:𝔹)⇒measure(H(x),H(y));
+def main(){
+	r:=(check(returnUncomputes(H(0),H(0),true)),check(returnUncomputes(H(0),H(0),false)),check(returnConsumes(H(0),H(0),true)),check(returnConsumes(H(0),H(0),false)),check(elseReturns(H(0),H(0),true)),check(elseReturns(H(0),H(0),false)),check(nestedAfter(H(0),H(0),false,true)),check(nestedAfter(H(0),H(0),false,false)),check(nestedAfter(H(0),H(0),true,true)),check(example(true)),check(example(false)));
+	assert(r==((0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0)));
+	return r;
+}

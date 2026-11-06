@@ -1,0 +1,34 @@
+// args: --run
+
+def nestedReturn(x:𝔹,y:𝔹,const c:!𝔹,const d:!𝔹){
+	b:=dup(x);
+	if c{
+		x:=X(x);
+		if d{
+			return (x,y);
+		}
+		y:=Z(y);
+		return (x,y);
+	}
+	forget(b);
+	return (x,y);
+}
+def nestedReturnRedefined(x:𝔹,y:𝔹,const c:!𝔹,const d:!𝔹){
+	b:=dup(x);
+	if c{
+		x:=X(x);
+		if d{
+			return (x,y);
+		}
+		b:=Z(y);
+		return (x,b);
+	}
+	forget(b);
+	return (x,y);
+}
+def check(x:𝔹,y:𝔹)⇒measure(H(x),H(y));
+def main(){
+	r:=(check(nestedReturn(H(0),H(0),true,true)),check(nestedReturn(H(0),H(0),true,false)),check(nestedReturn(H(0),H(0),false,false)),check(nestedReturnRedefined(H(0),H(0),true,true)),check(nestedReturnRedefined(H(0),H(0),true,false)),check(nestedReturnRedefined(H(0),H(0),false,true)));
+	assert(r==((0,0),(0,1),(0,0),(0,0),(0,1),(0,0)));
+	return r;
+}
