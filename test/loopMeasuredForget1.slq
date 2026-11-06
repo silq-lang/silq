@@ -1,0 +1,56 @@
+// args: --run
+
+def measuredFor(n:!ℕ){
+	x:=0:𝔹;
+	y:=H(0:𝔹);
+	for i in 0..n{
+		x:=H(x);
+		x:=measure(x);
+	}
+	forget(x);
+	return measure(H(y));
+}
+def measuredRotations(n:!ℕ){
+	x:=0:𝔹;
+	for i in 0..n{
+		x:=rotY(π/100,x);
+		x:=measure(x);
+	}
+	forget(x);
+	return n;
+}
+def measuredWhile(){
+	x:=0:𝔹;
+	k:=0;
+	while k<3{
+		x:=H(x);
+		x:=measure(x);
+		k+=1;
+	}
+	forget(x);
+	return k;
+}
+def measuredDoWhile(){
+	x:=0:𝔹;
+	k:=0;
+	do{
+		x:=H(x);
+		x:=measure(x);
+		k+=1;
+	}while k<3;
+	forget(x);
+	return k;
+}
+def measuredCoerced(n:!ℕ){
+	x:=1:𝔹;
+	for i in 0..n{
+		x:=measure(x):𝔹;
+	}
+	forget(x);
+	return n;
+}
+def main(){
+	r:=(measuredFor(0),measuredFor(3),measuredRotations(5),measuredWhile(),measuredDoWhile(),measuredCoerced(2));
+	assert(r==(0,0,5,3,3,2));
+	return r;
+}
