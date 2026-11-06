@@ -1,0 +1,43 @@
+// args: --run
+
+pair:=(viaDefinition,0);
+def viaDefinition():typeof(viaDefinitionHelper()){
+	return 2;
+}
+def viaDefinitionHelper():typeof(pair[0]()){
+	return 3;
+}
+def wider():typeof(widerHelper(true)){
+	return 2;
+}
+def widerHelper(b:!𝔹){
+	if b { return wider(); }
+	return 3:!ℤ;
+}
+def count(n:!ℕ){
+	if n==0 { return 1; }
+	return count(n sub 1)+step();
+}
+def step():typeof(count(0)){
+	return 2;
+}
+def forward(){
+	return backward();
+}
+def backward():typeof(forward()){
+	return 3;
+}
+def self(n:!ℕ):typeof(self(n)){
+	return n+1;
+}
+def generic[n:!ℕ]():typeof(genericHelper()){
+	return n;
+}
+def genericHelper(){
+	return generic[2]();
+}
+def main(){
+	r:=(viaDefinition(),viaDefinitionHelper(),pair[0](),wider(),widerHelper(false),count(2),step(),forward(),backward(),self(3),generic[4](),genericHelper());
+	assert(r==(2,3,2,2,3,5,2,3,3,4,4,2));
+	return r;
+}

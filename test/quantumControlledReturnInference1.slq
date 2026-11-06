@@ -1,0 +1,23 @@
+// args: --run
+
+def depth(n:!ℕ,const x:𝔹)mfree{
+	if x { if n>0 { return depth(n sub 1,x); } }
+	return dup(x);
+}
+def mutualDepth(n:!ℕ,const x:𝔹)mfree{
+	if x { if n>0 { return mutualDepthHelper(n sub 1,x); } }
+	return X(dup(x));
+}
+def mutualDepthHelper(n:!ℕ,const x:𝔹)mfree⇒mutualDepth(n,x);
+def annotated(const x:𝔹)mfree:typeof(annotatedHelper(x)){
+	return dup(x);
+}
+def annotatedHelper(const x:𝔹)mfree{
+	if x { return annotated(x); }
+	return 0:𝔹;
+}
+def main(){
+	r:=(measure(depth(2,0:𝔹)),measure(depth(2,1:𝔹)),measure(mutualDepth(3,0:𝔹)),measure(mutualDepth(3,1:𝔹)),measure(annotated(1:𝔹)),measure(annotatedHelper(0:𝔹)),measure(annotatedHelper(1:𝔹)));
+	assert(r==(0,1,1,0,1,0,1));
+	return r;
+}

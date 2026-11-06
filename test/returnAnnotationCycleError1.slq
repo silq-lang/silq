@@ -1,0 +1,22 @@
+def foo():typeof(bar()){
+	return 2; /// error
+}
+def bar():typeof(baz()){
+	return baz();
+}
+def baz(){
+	x:=foo();
+	assert(false);
+}
+def noReturn():typeof(noReturnHelper()){ /// error
+}
+def noReturnHelper(){
+	x:=noReturn();
+	assert(false);
+}
+def tuple():typeof(tupleHelper()){
+	return 2; /// error
+}
+def tupleHelper(){
+	return (tuple(),tuple());
+}

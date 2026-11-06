@@ -2,7 +2,7 @@
 def foo():(bar()){
 	bar
 }
-def bar():(foo){
+def bar():(foo){ /// error
 	r1 /// error
 }
 def nested(){
