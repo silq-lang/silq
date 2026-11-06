@@ -1,0 +1,18 @@
+
+def main(){
+	x:=H(0:𝔹);
+	o:=dup(x);
+	if measure(H(0:𝔹)){
+		if measure(H(0:𝔹)) {
+			forget(o); /// TODO
+			return x;
+		}
+	}else{
+		if measure(H(0:𝔹)) {
+			forget(o); /// TODO
+			return x;
+		}
+	}
+	t:=0:typeof(measure(o));
+	return x;
+}
