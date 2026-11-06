@@ -31,7 +31,7 @@ def j(c:!𝔹){
 		do{ k+=1; assert(false); }while k<1;
 		y:=measure(x);
 	}
-	forget(o); /// error
+	forget(o);
 	return measure(x);
 }
 def k(){

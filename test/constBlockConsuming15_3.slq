@@ -2,10 +2,10 @@
 def foo(x:𝔹){
 	y:=dup(x);
 	if y{
-		z:=X(y); /// error
+		z:=X(y);
 	}else{
 		x:=H(x);
-		z:=y;
+		z:=y; /// error
 	}
 	return (x,z);
 }

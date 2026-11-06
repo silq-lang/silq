@@ -1,0 +1,187 @@
+// args: --run
+
+def example(){
+	x:=H(0);
+	y:=H(0);
+	a:=dup(x);
+	b:=dup(y);
+	c:=measure(H(0));
+	if c{
+		b⊕=x;
+		forget(b);
+	}else{
+		y⊕=1;
+	}
+	return (x,y);
+}
+def mirrored(){
+	x:=H(0);
+	y:=H(0);
+	a:=dup(x);
+	b:=dup(y);
+	c:=measure(H(0));
+	if c{
+		y⊕=1;
+	}else{
+		b⊕=x;
+		forget(b);
+	}
+	return (x,y);
+}
+def quantumCondition(){
+	x:=H(0);
+	y:=H(0);
+	b:=dup(y);
+	c:=H(0);
+	if c{
+		b⊕=x;
+		forget(b);
+	}else{
+		y⊕=1;
+	}
+	return (x,y,c);
+}
+def readInBranch(){
+	x:=H(0);
+	y:=H(0);
+	b:=dup(y);
+	c:=measure(H(0));
+	if c{
+		t:=dup(y);
+		b⊕=t;
+		forget(t);
+		forget(b);
+	}else{
+		y⊕=1;
+	}
+	return (x,y);
+}
+def crossed(){
+	x:=H(0);
+	y:=H(0);
+	a:=dup(x);
+	b:=dup(y);
+	c:=measure(H(0));
+	if c{
+		t:=dup(b);
+		forget(t);
+		forget(b);
+		x⊕=1;
+	}else{
+		t:=dup(a);
+		forget(t);
+		forget(a);
+		y⊕=1;
+	}
+	return (x,y);
+}
+def sameBranch(){
+	x:=H(0);
+	a:=dup(x);
+	c:=measure(H(0));
+	if c{
+		t:=dup(a);
+		forget(t);
+		forget(a);
+		x⊕=1;
+	}else{
+		forget(a);
+	}
+	return (x,H(0));
+}
+def nested(){
+	x:=H(0);
+	y:=H(0);
+	b:=dup(y);
+	c:=measure(H(0));
+	if c{
+		if measure(H(0)){
+			b⊕=x;
+			forget(b);
+		}else{
+			t:=dup(b);
+			forget(t);
+			forget(b);
+		}
+		y⊕=1;
+	}else{
+		forget(b);
+		y⊕=1;
+	}
+	return (x,y);
+}
+def loopInBranch(){
+	x:=H(0);
+	y:=H(0);
+	b:=dup(y);
+	c:=measure(H(0));
+	if c{
+		for i in 0..2{ x⊕=1; }
+		t:=dup(b);
+		forget(t);
+		forget(b);
+	}else{
+		y⊕=1;
+	}
+	return (x,y);
+}
+def nestedSplit(){
+	x:=H(0);
+	t:=dup(x);
+	c:=measure(H(0));
+	if c{
+		if measure(H(0)){
+			forget(t);
+		}else{
+			s:=dup(t);
+			forget(s);
+			forget(t);
+			x:=X(x);
+		}
+	}else{
+		forget(t);
+	}
+	return (x,H(0));
+}
+def constantCondition(){
+	x:=H(0);
+	t:=dup(x);
+	c:=measure(H(0));
+	if c{
+		if true{
+			s:=dup(t);
+			x:=X(x);
+		}
+	}
+	return (x,H(0));
+}
+def constantConditionElse(){
+	x:=H(0);
+	t:=dup(x);
+	c:=measure(H(0));
+	if c{
+		if false{
+		}else{
+			s:=dup(t);
+			x:=X(x);
+		}
+	}
+	return (x,H(0));
+}
+def flip(x:𝔹,y:𝔹,const k:!𝔹)mfree{
+	b:=dup(y);
+	if k{
+		b⊕=x;
+		forget(b);
+	}else{
+		y:=X(y);
+	}
+	return (x,y);
+}
+def check(x:𝔹,y:𝔹)⇒measure(H(x),H(y));
+def check3(x:𝔹,y:𝔹,c:𝔹)⇒measure(H(x),H(y),H(c));
+def main(){
+	r:=(check(example()),check(mirrored()),check3(quantumCondition()),check(readInBranch()),check(crossed()),check(sameBranch()),check(nested()),check(loopInBranch()),check(nestedSplit()),check(constantCondition()),check(constantConditionElse()),measure(reverse(flip)(flip(1:𝔹,0:𝔹,true),true)),measure(reverse(flip)(flip(1:𝔹,0:𝔹,false),false)));
+	assert(r==((0,0),(0,0),(0,0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(1,0),(1,0)));
+	return r;
+}

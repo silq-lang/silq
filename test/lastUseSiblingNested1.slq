@@ -1,12 +1,10 @@
 // args: --run
-// a forget in a nested scope of a branch is checked like a forget in the branch: `t` depends on `a`, which the other
-// branch (or the same branch, later) consumes
 
 def f(c:!ℕ){
 	a:=H(0:𝔹);
 	x:=dup(a); y:=0:𝔹;
 	if c==0 {
-		if true { t:=dup(x); x:=X(x); y⊕=t; } /// error
+		if true { t:=dup(x); x:=X(x); y⊕=t; }
 	} else {
 		a:=H(a);
 	}
@@ -16,7 +14,7 @@ def g(c:!ℕ){
 	a:=H(0:𝔹);
 	x:=dup(a); y:=0:𝔹;
 	if c<2 {
-		if c==0 { t:=dup(x); x:=X(x); y⊕=t; } /// error
+		if c==0 { t:=dup(x); x:=X(x); y⊕=t; }
 	} else {
 		a:=H(a);
 	}
@@ -26,8 +24,10 @@ def h(c:!ℕ){
 	a:=H(0:𝔹);
 	x:=dup(a); y:=0:𝔹;
 	if c==0 {
-		if true { t:=dup(x); x:=X(x); y⊕=t; } /// error
+		if true { t:=dup(x); x:=X(x); y⊕=t; }
 		a:=H(a);
 	}
 	return (a,x,y);
 }
+
+def main()⇒[measure(f(i),g(i),h(i)) for i in 0..5];

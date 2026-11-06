@@ -4431,11 +4431,15 @@ class ScopeWriter {
 		if(scOthw && scOthw.parent !is nscope && !cast(ast_scope.TypeScope)scOthw) scOthw = null;
 		if((scThen is null) != (scOthw is null)) { scThen = null; scOthw = null; }
 		ScopeWriter ifTrue, ifFalse;
+		auto cw = ccg.code, i0 = cw.code[].length;
 		genSplit(cond, ifFalse, scOthw, ifTrue, scThen);
+		auto i1 = cw.code[].length;
 
 		auto rTrue = ifTrue.genCompoundValue(e.then, null, e.type);
+		auto i2 = cw.code[].length;
 		auto rFalse = ifFalse.genCompoundValue(e.othw, null, e.type);
 		auto abortTrue = ifTrue.pendingAbort, abortFalse = ifFalse.pendingAbort; // (a `let` within a branch aborts)
+		if(scThen && scThen.interleave) interleaveBranches(cw.code[], i0, i1, i2, cw.code[].length);
 		if(abortTrue && abortFalse || cond.isQuantum && (abortTrue || abortFalse)) { // (classical code under quantum control runs regardless of the condition)
 			ifTrue.valDeallocError(rTrue);
 			ifFalse.valDeallocError(rFalse);
@@ -5616,10 +5620,14 @@ class ScopeWriter {
 		if(pendingAbort) return new IteAbort(cond, pendingAbort); // (the condition aborts)
 
 		ScopeWriter ifTrue, ifFalse;
+		auto cw = ccg.code, i0 = cw.code[].length;
 		genSplit(cond, ifFalse, e.othw.blscope_, ifTrue, e.then.blscope_);
+		auto i1 = cw.code[].length;
 
 		Result rTrue = ifTrue.genCompoundStmt(e.then);
+		auto i2 = cw.code[].length;
 		Result rFalse = ifFalse.genCompoundStmt(e.othw);
+		if(e.then.blscope_.interleave) interleaveBranches(cw.code[], i0, i1, i2, cw.code[].length);
 
 		if(rTrue.isAbort && rFalse.isAbort) {
 			CReg cr;
@@ -8206,6 +8214,189 @@ struct IrStatement {
 		o.put(loc.line.text());
 		o.put("\n");
 	}
+}
+
+void interleaveBranches(IrStatement[] code, size_t i0, size_t i1, size_t i2, size_t i3) { // (of a conditional whose branches recompute values from versions of variables from before their splits, see `checkBranchOrder`: such a split comes after those uncomputations, and statements before it read the register that it splits)
+	import std.algorithm: max;
+	import std.string: indexOf;
+	import std.container.rbtree: redBlackTree;
+	import util.tuple: Q = Tuple, q = tuple;
+	enum none = size_t.max;
+	auto items = code[i0 .. i3].dup;
+	auto n = items.length;
+	static string base(string op) { auto i = op.indexOf('['); return i < 0 ? op : op[0 .. i]; }
+	static bool qfree(string op) { return [opQSplit, opQMerge, opCSplit, opCMerge, "qfree_call", "qfree_call_rev"].canFind(base(op)); } // (the backend recomputes their results from their arguments)
+	size_t branchOf(size_t k) { return k < i1 - i0 ? 0 : k < i2 - i0 ? 1 : 2; }
+	bool isSplit(size_t k) { return k != none && branchOf(k) == 0 && [opCSplit, opQSplit].canFind(base(items[k].op)); }
+	size_t item(size_t k) { return k != none && k >= i0 && k < i3 ? k - i0 : none; }
+	MapX!(QReg, size_t) prod, cons; // (in `code`)
+	MapX!(CReg, size_t) cprod;
+	foreach(k, ref s; code[0 .. i3]) {
+		foreach(r; s.qRet) if(r) prod[r] = k;
+		foreach(r; s.qiArgs) if(r) cons[r] = k;
+		foreach(r; s.cRet) if(r) cprod[r] = k;
+	}
+	auto edges = new size_t[][](n);
+	void edge(size_t a, size_t b) { if(a != none && b != none && a != b) edges[a] ~= b; }
+	MapX!(QReg, size_t[]) readers;
+	MapX!(QReg, size_t) forgetItem;
+	Q!(size_t, size_t, QReg)[] partReads; // (statement, split, part)
+	foreach(k, ref s; items) {
+		foreach(r; s.qiArgs) if(r) edge(item(prod.get(r, none)), k);
+		void read(QReg r) {
+			if(!r) return;
+			auto p = item(prod.get(r, none));
+			if(isSplit(p)) partReads ~= q(k, p, r);
+			else edge(p, k);
+			readers[r] = readers.get(r, null) ~ k;
+		}
+		foreach(r; s.qcArgs) read(r);
+		foreach(c; s.condQ) read(c.reg);
+		foreach(r; s.cArgs) if(r) edge(item(cprod.get(r, none)), k);
+		foreach(c; s.condC) if(c.reg) edge(item(cprod.get(c.reg, none)), k);
+		if(s.op == opForget && branchOf(k) != 0) foreach(r; s.qiArgs) if(r) forgetItem[r] = k;
+	}
+	foreach(k, ref s; items) foreach(r; s.qiArgs) if(r) foreach(j; readers.get(r, null)) edge(j, k); // (reads come before the consumption)
+	foreach(b; 1 .. 3) { // (each branch in program order, except for the uncomputations, which the backend places after the last uses)
+		auto prev = none;
+		foreach(k; 0 .. n) {
+			if(branchOf(k) != b || items[k].op == opForget) continue;
+			edge(prev, k);
+			prev = k;
+		}
+	}
+	bool reaches(size_t a, scope bool delegate(size_t) target) {
+		auto visited = new bool[](n);
+		bool visit(size_t k) {
+			if(target(k)) return true;
+			if(visited[k]) return false;
+			visited[k] = true;
+			foreach(l; edges[k]) if(visit(l)) return true;
+			return false;
+		}
+		return visit(a);
+	}
+	enum outer = none - 1;
+	size_t splitOfPart(size_t k, int depth = 0) { // (the split of this conditional of a part of what the split `k` of an enclosing conditional splits: the enclosing conditional orders its split after the uncomputations that come before this one, see `needs`; `outer` if this conditional does not split such a part, e.g., as its condition is constant)
+		if(k == none || k >= i0 || depth > 300 || ![opCSplit, opQSplit].canFind(base(code[k].op))) return none;
+		auto result = none;
+		foreach(r; code[k].qRet) {
+			if(!r) continue;
+			auto c = cons.get(r, none);
+			if(isSplit(item(c))) return item(c);
+			auto s = c == none || c >= i0 ? outer : splitOfPart(c, depth + 1);
+			if(s != none && s != outer) return s;
+			if(s == outer) result = outer;
+		}
+		return result;
+	}
+	MapX!(QReg, size_t[]) placeMemo;
+	size_t[] places(QReg r, int depth) { // (the statements after which the backend uncomputes `r`: its definition, its uses, and the uncomputations of the forgotten values computed from it)
+		if(r in placeMemo) return placeMemo.get(r, null);
+		size_t[] result;
+		auto p = item(prod.get(r, none));
+		if(p != none) result ~= p;
+		placeMemo[r] = result;
+		foreach(j; readers.get(r, null)) {
+			result ~= j;
+			if(depth < 300) foreach(w; items[j].qRet) if(w && w in forgetItem) result ~= places(w, depth + 1);
+		}
+		placeMemo[r] = result;
+		return result;
+	}
+	Q!(size_t[], size_t)[] needs; // (statements that come before a split)
+	Q!(size_t, size_t, size_t[])[] through; // (if the statement reads the register that the split splits, also these statements)
+	foreach(f; 0 .. n) {
+		if(items[f].op != opForget || branchOf(f) == 0) continue;
+		foreach(r; items[f].qiArgs) {
+			if(!r) continue;
+			auto P = places(r, 0);
+			auto maxP = none;
+			foreach(k; P) if(branchOf(k) == branchOf(f)) maxP = maxP == none ? k : max(maxP, k);
+			if(maxP != none) P ~= f;
+			size_t steps = 0;
+			bool need(QReg x, size_t via, int depth, ref Q!(size_t[], size_t)[] ns, ref Q!(size_t, size_t, size_t[])[] ts) { // (as the backend recomputes `r`, from `x` if it is still available there or else from what its computation read; `via`: the statement that reads `x`)
+				if(!x) return true;
+				if(depth > 300 || ++steps > 100_000) return false;
+				auto pk = prod.get(x, none), ck = cons.get(x, none);
+				auto p = item(pk), c = item(ck);
+				bool unavailable, split = false, deferred = false; // (`split`: available if the split of the conditional comes after the uncomputation; `deferred`: if the split of an enclosing conditional does, which orders it so)
+				if(ck != none && ck < i0) {
+					unavailable = true;
+					auto s = splitOfPart(ck);
+					if(s == outer) deferred = true;
+					else if(s != none) {
+						c = s;
+						split = !reaches(c, k => P.canFind(k));
+					}
+				}
+				else if(c == none || c == f) unavailable = c == f;
+				else if(isSplit(c)) {
+					unavailable = true;
+					split = !reaches(c, k => P.canFind(k));
+				} else unavailable = branchOf(c) == branchOf(f) && maxP != none && c <= maxP && items[c].op != opForget;
+				if(!unavailable) {
+					if(isSplit(p) && via != none) ts ~= q(via, p, P);
+					return true;
+				}
+				Q!(size_t[], size_t)[] subNs;
+				Q!(size_t, size_t, size_t[])[] subTs;
+				bool ok = pk != none && qfree(code[pk].op);
+				if(ok) foreach(y; code[pk].qiArgs) ok = ok && need(y, none, depth + 1, subNs, subTs);
+				if(ok) foreach(y; code[pk].qcArgs) ok = ok && need(y, item(pk), depth + 1, subNs, subTs);
+				if(ok) foreach(cq; code[pk].condQ) ok = ok && need(cq.reg, item(pk), depth + 1, subNs, subTs);
+				if(ok) { // (recomputed, as the dependency in the frontend)
+					ns ~= subNs;
+					ts ~= subTs;
+					return true;
+				}
+				if(deferred) return true;
+				if(!split) return false;
+				ns ~= q(P, c); // (kept until the uncomputation)
+				return true;
+			}
+			auto ok = need(r, none, 0, needs, through);
+			assert(ok, "no order of the branches of the conditional for an uncomputation");
+		}
+	}
+	foreach(nd; needs) foreach(k; nd[0]) edge(k, nd[1]);
+	auto rewrite = new bool[](partReads.length), decided = new bool[](partReads.length);
+	void decide(size_t i, bool rw) {
+		decided[i] = true;
+		rewrite[i] = rw;
+		auto pr = partReads[i];
+		if(!rw) return edge(pr[1], pr[0]);
+		foreach(t; through) if(t[0] == pr[0] && t[1] == pr[1]) foreach(k; t[2]) edge(k, pr[1]);
+	}
+	for(bool changed = true; changed;) { // (statements that come before the split anyway read the register that it splits)
+		changed = false;
+		foreach(i, pr; partReads) {
+			if(decided[i] || !reaches(pr[0], k => k == pr[1])) continue;
+			decide(i, true);
+			changed = true;
+		}
+	}
+	foreach(i, pr; partReads) if(!decided[i]) decide(i, reaches(pr[0], k => k == pr[1]));
+	auto indegree = new size_t[](n);
+	foreach(k; 0 .. n) foreach(l; edges[k]) indegree[l]++;
+	auto ready = redBlackTree!size_t(iota(n).filter!(k => !indegree[k]).array);
+	size_t[] order;
+	while(!ready.empty) { // (in the original order where the constraints allow it)
+		auto k = ready.front;
+		ready.removeFront();
+		order ~= k;
+		foreach(l; edges[k]) if(!--indegree[l]) ready.insert(l);
+	}
+	assert(order.length == n, "no order of the branches of the conditional");
+	foreach(i, pr; partReads) {
+		if(!rewrite[i]) continue;
+		auto s = &items[pr[0]], whole = items[pr[1]].qiArgs[0];
+		s.qcArgs = s.qcArgs.dup;
+		foreach(ref r; s.qcArgs) if(r is pr[2]) r = whole;
+		s.condQ = s.condQ.dup;
+		foreach(ref c; s.condQ) if(c.reg is pr[2]) c.reg = whole;
+	}
+	foreach(j, k; order) code[i0 + j] = items[k];
 }
 
 struct IrVariable {

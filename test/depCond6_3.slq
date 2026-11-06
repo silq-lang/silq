@@ -3,10 +3,11 @@ def foo(x:𝔹,const cond:𝔹){
 	z:=0;
 	if cond{
 		t:=y;
-		forget(t); /// error
+		forget(t);
 	}else{
 		x:=H(x);
 		z=y;
 	}
 	return (x,z);
 }
+def main() ⇒ foo(H(0),measure(H(0)));

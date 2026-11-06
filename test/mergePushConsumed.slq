@@ -1,7 +1,9 @@
+// args: --run
+
 def main(){
 	x:=H(0:𝔹);
 	o:=dup(x);
-	q:=dup(o); /// error
+	q:=dup(o);
 	if measure(H(0:𝔹)) {
 		o:=X(o);
 		m:=measure(q);

@@ -1,0 +1,32 @@
+def implicitForgets(const c:𝔹,x:𝔹,y:𝔹)mfree{
+	t:=dup(x); /// error
+	s:=dup(y); /// error
+	if c{ y⊕=t; }else{ x⊕=s; }
+	return (x,y);
+}
+def explicitForgets(const c:𝔹,x:𝔹,y:𝔹)mfree{
+	a:=dup(x);
+	b:=dup(y);
+	if c{
+		t:=dup(b);
+		x:=H(x);
+		forget(t);
+		forget(b); /// error
+	}else{
+		t:=dup(a);
+		y:=H(y);
+		forget(t);
+		forget(a); /// error
+	}
+	return (x,y);
+}
+def nestedCycle(const c:𝔹,x:𝔹,y:𝔹,const d:!𝔹)mfree{
+	t:=dup(x); /// error
+	s:=dup(y); /// error
+	if c{
+		if d{ y⊕=t; }else{ y:=X(y); y⊕=t; }
+	}else{
+		x⊕=s;
+	}
+	return (x,y);
+}

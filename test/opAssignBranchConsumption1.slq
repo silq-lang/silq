@@ -1,8 +1,10 @@
+// args: --run
+
 def f(c:!ℕ){
 	a:=H(0:𝔹);
 	x:=dup(a); y:=0:𝔹;
 	if c==0 {
-		if true { t:=dup(x); x⊕=1:𝔹; y⊕=t; } /// error
+		if true { t:=dup(x); x⊕=1:𝔹; y⊕=t; }
 	} else {
 		a⊕=1:𝔹;
 	}
@@ -12,7 +14,7 @@ def g(c:!ℕ){
 	a:=H(0:𝔹);
 	x:=dup(a); y:=0:𝔹;
 	if c<2 {
-		if c==0 { t:=dup(x); x⊕=1:𝔹; y⊕=t; } /// error
+		if c==0 { t:=dup(x); x⊕=1:𝔹; y⊕=t; }
 	} else {
 		a⊕=1:𝔹;
 	}
@@ -22,7 +24,7 @@ def h(c:!ℕ){
 	a:=H(0:𝔹);
 	x:=dup(a); y:=0:𝔹;
 	if c==0 {
-		if true { t:=dup(x); x⊕=1:𝔹; y⊕=t; } /// error
+		if true { t:=dup(x); x⊕=1:𝔹; y⊕=t; }
 		a⊕=1:𝔹;
 	}
 	return (a,x,y);
@@ -31,9 +33,11 @@ def k(c:!ℕ){
 	a:=0:uint[2]; a[0]:=H(a[0]);
 	x:=dup(a); y:=0:uint[2];
 	if c==0 {
-		if true { t:=dup(x); x+=1; y+=t; } /// error
+		if true { t:=dup(x); x+=1; y+=t; }
 	} else {
 		a-=1;
 	}
 	return (a,x,y);
 }
+
+def main() ⇒ [measure(f(i),g(i),h(i),k(i)) for i in 0..5];

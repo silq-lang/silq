@@ -4,9 +4,9 @@ def foo(x:𝔹,const cond:𝔹){
 	z:=0;
 	if cond{
 		a:=k;
-		b:=k; /// error
+		b:=k;
 		y:=H(y);
-		c:=k; /// error
+		c:=k;
 	}else{
 		x:=H(x);
 		a:=k;
