@@ -1,0 +1,65 @@
+// args: --run
+
+def nestedWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v1:=j+j;
+	for i3 in 0..2 { forget(v1); v1:=dup(i3); }
+	with { u4:=j; } do {
+		with { u5:=0; } do {
+			v1+=2;
+			v7:=v1+1;
+		}
+		v7+=1;
+	}
+	xs[v7%4]:=X(xs[v7%4]);
+	return xs;
+}
+def twoUpdates(xs:𝔹^4,const j:!ℕ)mfree{
+	v1:=j+j;
+	for i3 in 0..2 { forget(v1); v1:=dup(i3); }
+	with { u4:=j; } do {
+		with { u5:=0; } do {
+			v1+=2;
+			v7:=v1+1;
+		}
+		v7+=1;
+		v7*=2;
+	}
+	xs[v7%4]:=X(xs[v7%4]);
+	return xs;
+}
+def selfMove(xs:𝔹^4,const j:!ℕ)mfree{
+	v1:=j+j;
+	for i3 in 0..2 { forget(v1); v1:=dup(i3); }
+	with { u4:=j; } do {
+		with { u5:=0; } do {
+			v1+=2;
+			v7:=v1+1;
+		}
+		v7+=1;
+		(v7,w8):=(v7,j*2);
+	}
+	xs[(v7+w8)%4]:=X(xs[(v7+w8)%4]);
+	return xs;
+}
+def selfMoves(xs:𝔹^4,const j:!ℕ)mfree{
+	v1:=j+j;
+	(w2,v1):=(j+j,v1);
+	for i3 in 0..2 { forget(v1); v1:=dup(i3); }
+	with { u4:=w2+j; } do {
+		with { u5:=0; } do {
+			v1+=w2*2;
+			(v1,w6):=(v1,(j+j)%4);
+			v7:=v1+w6;
+		}
+		v7+=w2+1;
+		(v7,w8):=(v7,w2*2);
+	}
+	v9:=v7+1;
+	xs[(v9+w8)%4]:=X(xs[(v9+w8)%4]);
+	return xs;
+}
+def main(){
+	r:=(measure(nestedWith((0,1,0,1):𝔹^4,3)),measure(reverse(nestedWith)((1,1,1,0):𝔹^4,3)),measure(twoUpdates((0,1,0,1):𝔹^4,3)),measure(reverse(twoUpdates)((1,1,1,0):𝔹^4,3)),measure(selfMove((0,1,0,1):𝔹^4,3)),measure(reverse(selfMove)((1,1,1,0):𝔹^4,3)),measure(selfMoves((0,1,0,1):𝔹^4,3)),measure(reverse(selfMoves)((1,1,1,0):𝔹^4,3)));
+	assert(r==((0,0,0,1),(1,0,1,0),(0,1,1,1),(1,1,0,0),(0,1,0,0),(1,1,1,1),(0,1,0,0),(1,1,1,1)));
+	return r;
+}

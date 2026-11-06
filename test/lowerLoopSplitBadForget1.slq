@@ -1,0 +1,11 @@
+// args: --run
+
+def g(const a:!𝔹){
+	b:=0:𝔹;
+	repeat 1 { if a { b:=X(b); } else { c:=1:𝔹; forget(c=0:𝔹); } } /// run_error
+	return measure(b);
+}
+def main(){
+	r:=(g(true),g(false));
+	return r;
+}

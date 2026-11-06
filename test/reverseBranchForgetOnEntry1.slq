@@ -1,0 +1,45 @@
+// args: --run
+
+def classicalCondition(const k:!ℕ,x:𝔹)mfree:𝔹{
+	t:=dup(x);
+	s:=dup(t);
+	if k==1 { forget(t); forget(s); } else { forget(s); }
+	return x;
+}
+def quantumCondition(const c:𝔹,x:𝔹)mfree:𝔹{
+	t:=dup(x);
+	s:=dup(t);
+	if c { forget(t); forget(s); } else { forget(s); }
+	return x;
+}
+def otherBranch(const k:!ℕ,x:𝔹)mfree:𝔹{
+	t:=dup(x);
+	s:=dup(t);
+	if k==1 { forget(s); } else { forget(t); forget(s); }
+	return x;
+}
+def consumedInBranches(const k:!ℕ,x:𝔹,y:𝔹)mfree:𝔹×𝔹{
+	t:=dup(x);
+	s:=dup(t);
+	v:=dup(y);
+	if k==1 { forget(t); forget(s); x:=X(x); } else { forget(s); forget(v); x:=X(x); }
+	return (x,y);
+}
+def nested(const k:!ℕ,const j:!ℕ,x:𝔹)mfree:𝔹{
+	t:=dup(x);
+	s:=dup(t);
+	if k==1 { forget(t); forget(s); } else { if j==1 { forget(s); } else { forget(s); } }
+	return x;
+}
+def twoValues(const k:!ℕ,x:𝔹,y:𝔹)mfree:𝔹×𝔹{
+	t:=dup(x);
+	s:=dup(t);
+	u:=x&y;
+	if k==1 { forget(s); forget(u); y:=X(y); } else { forget(t); forget(s); forget(u); x:=X(x); x:=X(x); }
+	return (x,y);
+}
+def main(){
+	r:=(measure(classicalCondition(1,1:𝔹)),measure(reverse(classicalCondition)(1,1:𝔹)),measure(classicalCondition(0,1:𝔹)),measure(reverse(classicalCondition)(0,1:𝔹)),measure(quantumCondition(1:𝔹,1:𝔹)),measure(reverse(quantumCondition)(1:𝔹,1:𝔹)),measure(quantumCondition(0:𝔹,1:𝔹)),measure(reverse(quantumCondition)(0:𝔹,1:𝔹)),measure(otherBranch(1,1:𝔹)),measure(reverse(otherBranch)(1,1:𝔹)),measure(otherBranch(0,0:𝔹)),measure(reverse(otherBranch)(0,0:𝔹)),measure(consumedInBranches(1,1:𝔹,0:𝔹)),measure(reverse(consumedInBranches)(1,(0:𝔹,0:𝔹))),measure(consumedInBranches(0,0:𝔹,1:𝔹)),measure(reverse(consumedInBranches)(0,(1:𝔹,1:𝔹))),measure(nested(0,1,1:𝔹)),measure(reverse(nested)(0,1,1:𝔹)),measure(nested(0,0,0:𝔹)),measure(reverse(nested)(0,0,0:𝔹)),measure(twoValues(1,1:𝔹,1:𝔹)),measure(reverse(twoValues)(1,(1:𝔹,0:𝔹))),measure(twoValues(0,0:𝔹,1:𝔹)),measure(reverse(twoValues)(0,(0:𝔹,1:𝔹))));
+	assert(r==(1,1,1,1,1,1,1,1,1,1,0,0,(0,0),(1,0),(1,1),(0,1),1,1,0,0,(1,0),(1,1),(0,1),(0,1)));
+	return r;
+}

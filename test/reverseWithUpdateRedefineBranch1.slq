@@ -1,0 +1,104 @@
+// args: --run
+
+def updateBeforeBranch(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	v:=30;
+	with { u:=2; } do {
+		v+=j+2;
+		xs[v%4]:=X(xs[v%4]);
+		if c { forget(v); v:=1; }
+	}
+	return xs;
+}
+
+def quantumInBranch(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	v:=30;
+	with { u:=2; } do {
+		v+=j+2;
+		xs[v%4]:=X(xs[v%4]);
+		if c { forget(v); v:=1; xs[1]:=X(xs[1]); }
+	}
+	return xs;
+}
+
+def updateInBranch(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	v:=30;
+	with { u:=2; } do {
+		if c { v+=j+2; }
+		xs[v%4]:=X(xs[v%4]);
+		if c { forget(v); v:=1; }
+	}
+	return xs;
+}
+
+def updateInLoop(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	v:=30;
+	with { u:=2; } do {
+		for i in 0..3 {
+			v+=j+2;
+			xs[v%4]:=X(xs[v%4]);
+		}
+		if c { forget(v); v:=1; }
+	}
+	return xs;
+}
+
+def updateInBranchInLoop(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	v:=30;
+	with { u:=2; } do {
+		for i in 0..3 {
+			if c { v+=j+2; }
+			xs[v%4]:=X(xs[v%4]);
+		}
+		if c { forget(v); v:=1; }
+	}
+	return xs;
+}
+
+def updateAfterReadInLoop(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	v:=1;
+	with { u:=3; } do {
+		for i in 0..2 {
+			xs[v%4]:=X(xs[v%4]);
+			v+=j;
+		}
+		if c { forget(v); v:=2; }
+	}
+	return xs;
+}
+
+def readInNestedWith(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	v:=1;
+	with { u:=3; } do {
+		v+=j;
+		with { s:=dup(v); } do { xs[s%4]:=X(xs[s%4]); }
+		if c { forget(v); v:=2; }
+	}
+	return xs;
+}
+
+def redefinedInLoop(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	v:=30;
+	w:=dup(v);
+	if c {
+		with { u:=2; } do {
+			for i in 0..3 {
+				if c { v+=j+2; }
+				forget(w); w:=(j+j)%4;
+				xs[v%4]:=X(xs[v%4]);
+			}
+			if c {
+				for k in 0..1 {
+					forget(v); v:=1;
+					v+=w+w;
+				}
+			}
+		}
+	}
+	return xs;
+}
+
+def main(){
+	r:=(measure(updateBeforeBranch((1,0,1,0):𝔹^4,true,0)),measure(reverse(updateBeforeBranch)(updateBeforeBranch((1,0,1,0):𝔹^4,true,0),true,0)),measure(updateBeforeBranch((1,0,1,0):𝔹^4,false,1)),measure(reverse(updateBeforeBranch)(updateBeforeBranch((1,0,1,0):𝔹^4,false,1),false,1)),measure(quantumInBranch((1,0,1,0):𝔹^4,true,0)),measure(reverse(quantumInBranch)(quantumInBranch((1,0,1,0):𝔹^4,true,0),true,0)),measure(quantumInBranch((1,0,1,0):𝔹^4,false,1)),measure(reverse(quantumInBranch)(quantumInBranch((1,0,1,0):𝔹^4,false,1),false,1)),measure(updateInBranch((1,0,1,0):𝔹^4,true,0)),measure(reverse(updateInBranch)(updateInBranch((1,0,1,0):𝔹^4,true,0),true,0)),measure(updateInBranch((1,0,1,0):𝔹^4,false,1)),measure(reverse(updateInBranch)(updateInBranch((1,0,1,0):𝔹^4,false,1),false,1)),measure(updateInLoop((1,0,1,0):𝔹^4,true,1)),measure(reverse(updateInLoop)(updateInLoop((1,0,1,0):𝔹^4,true,1),true,1)),measure(updateInLoop((1,0,1,0):𝔹^4,false,0)),measure(reverse(updateInLoop)(updateInLoop((1,0,1,0):𝔹^4,false,0),false,0)),measure(updateInBranchInLoop((1,0,1,0):𝔹^4,true,1)),measure(reverse(updateInBranchInLoop)(updateInBranchInLoop((1,0,1,0):𝔹^4,true,1),true,1)),measure(updateInBranchInLoop((1,0,1,0):𝔹^4,false,0)),measure(reverse(updateInBranchInLoop)(updateInBranchInLoop((1,0,1,0):𝔹^4,false,0),false,0)),measure(updateAfterReadInLoop((1,0,1,0):𝔹^4,true,1)),measure(reverse(updateAfterReadInLoop)(updateAfterReadInLoop((1,0,1,0):𝔹^4,true,1),true,1)),measure(updateAfterReadInLoop((1,0,1,0):𝔹^4,false,2)),measure(reverse(updateAfterReadInLoop)(updateAfterReadInLoop((1,0,1,0):𝔹^4,false,2),false,2)),measure(readInNestedWith((1,0,1,0):𝔹^4,true,1)),measure(reverse(readInNestedWith)(readInNestedWith((1,0,1,0):𝔹^4,true,1),true,1)),measure(readInNestedWith((1,0,1,0):𝔹^4,false,2)),measure(reverse(readInNestedWith)(readInNestedWith((1,0,1,0):𝔹^4,false,2),false,2)),measure(redefinedInLoop((1,0,1,0):𝔹^4,true,0)),measure(reverse(redefinedInLoop)(redefinedInLoop((1,0,1,0):𝔹^4,true,0),true,0)),measure(redefinedInLoop((1,0,1,0):𝔹^4,true,3)),measure(reverse(redefinedInLoop)(redefinedInLoop((1,0,1,0):𝔹^4,true,3),true,3)));
+	assert(r==((0,0,1,0),(1,0,1,0),(1,1,1,0),(1,0,1,0),(0,1,1,0),(1,0,1,0),(1,1,1,0),(1,0,1,0),(0,0,1,0),(1,0,1,0),(1,0,0,0),(1,0,1,0),(0,1,1,1),(1,0,1,0),(1,0,0,0),(1,0,1,0),(0,1,1,1),(1,0,1,0),(1,0,0,0),(1,0,1,0),(1,1,0,0),(1,0,1,0),(1,1,1,1),(1,0,1,0),(1,0,0,0),(1,0,1,0),(1,0,1,1),(1,0,1,0),(1,0,0,0),(1,0,1,0),(0,1,1,1),(1,0,1,0)));
+	return r;
+}

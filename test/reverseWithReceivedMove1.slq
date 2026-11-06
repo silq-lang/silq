@@ -1,0 +1,56 @@
+// args: --run
+
+def nestedWithMove(xs:𝔹^4,const j:!ℕ)mfree{
+	with { u2:=1; } do {
+		with { u3:=1; } do {
+			v4:=1;
+			w5:=move(v4);
+			xs[0]:=X(xs[0]);
+		}
+		with { u6:=2; } do {
+			xs[1]:=X(xs[1]);
+			v4:=dup(j);
+		}
+	}
+	xs[w5%4]:=X(xs[w5%4]);
+	return xs;
+}
+def readsOuter(xs:𝔹^4,const j:!ℕ)mfree{
+	v1:=j*2;
+	with { u2:=(v1+j)%4; } do {
+		with { u3:=u2*2; } do {
+			v4:=1;
+			w5:=move(v4);
+			xs[(j*2)%4]:=X(xs[(j*2)%4]);
+		}
+		with { u6:=2; } do {
+			xs[(u2*2)%4]:=X(xs[(u2*2)%4]);
+			v4:=dup(v1);
+			v7:=dup(w5);
+		}
+	}
+	xs[2]:=X(xs[2]);
+	v7+=dup(j);
+	xs[(v1+w5)%4]:=X(xs[(v1+w5)%4]);
+	return xs;
+}
+def moveInTuple(xs:𝔹^4,const j:!ℕ)mfree{
+	with { u2:=1; } do {
+		with { u3:=1; } do {
+			v4:=j+1;
+			(w5,w6):=(move(v4),j);
+			xs[0]:=X(xs[0]);
+		}
+		with { u6:=2; } do {
+			xs[1]:=X(xs[1]);
+			v4:=dup(j);
+		}
+	}
+	xs[(w5+w6)%4]:=X(xs[(w5+w6)%4]);
+	return xs;
+}
+def main(){
+	r:=(measure(nestedWithMove((1,1,0,0):𝔹^4,3)),measure(reverse(nestedWithMove)((1,1,1,1):𝔹^4,3)),measure(readsOuter((1,1,0,0):𝔹^4,3)),measure(reverse(readsOuter)((1,1,1,1):𝔹^4,3)),measure(moveInTuple((1,0,0,0):𝔹^4,2)),measure(reverse(moveInTuple)((1,0,0,0):𝔹^4,2)));
+	assert(r==((0,1,0,0),(0,1,1,1),(1,1,1,1),(1,1,0,0),(0,0,0,0),(0,0,0,0)));
+	return r;
+}
