@@ -1,0 +1,55 @@
+// args: --run
+
+def coerced(n:!ℕ){
+	x:=H(0:𝔹);
+	y:=H(0:𝔹);
+	j:=0;
+	do{
+		x:=measure(x):𝔹;
+		j+=1;
+	}while j<n;
+	forget(x);
+	return (measure(H(y)),j);
+}
+def temporary(n:!ℕ){
+	x:=H(0:𝔹);
+	j:=0;
+	do{
+		c:=measure(x);
+		x:=c:𝔹;
+		j+=1;
+	}while j<n;
+	forget(x);
+	return j;
+}
+def flipped(n:!ℕ){
+	x:=H(0:𝔹);
+	j:=0;
+	do{
+		c:=measure(x);
+		x:=c:𝔹;
+		if measure(H(0:𝔹)){
+			x:=X(x);
+		}
+		j+=1;
+	}while j<n;
+	forget(x);
+	return j;
+}
+def reset(n:!ℕ){
+	x:=H(0:𝔹);
+	j:=0;
+	do{
+		x:=H(x);
+		x:=measure(x):𝔹;
+	}while j<n{
+		j+=1;
+	}
+	forget(x);
+	return j;
+}
+def main(){
+	r:=(coerced(1),coerced(3),temporary(2),flipped(3),reset(0),reset(2));
+	assert(r==((0,1),(0,3),2,3,0,2));
+	return r;
+}

@@ -1,3 +1,5 @@
+// args: --run
+
 def foo(x:𝔹,const cond:𝔹){
 	y:=dup(x);
 	z:=0;
@@ -6,8 +8,9 @@ def foo(x:𝔹,const cond:𝔹){
 		b:=y;
 	}else{
 		a:=y;
-		b:=y; /// error
+		b:=y;
 		x:=H(x);
 	}
 	return (x,a,b);
 }
+def main()⇒foo(H(0),measure(H(0)));

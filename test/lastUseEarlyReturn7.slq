@@ -1,7 +1,7 @@
 
 def f(b:!𝔹){
 	x:=H(0:𝔹);
-	y:=dup(x); /// error
+	y:=dup(x);
 	u:=dup(y);
 	if b {
 		z:=H(x);
@@ -12,3 +12,4 @@ def f(b:!𝔹){
 		return (u,z,v);
 	}
 }
+def main()⇒[f(x) for x in [0,1]];

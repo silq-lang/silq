@@ -1,0 +1,26 @@
+// args: --run
+
+def thenBranch(x:𝔹,c:!𝔹){
+	o:=dup(x);
+	if c { t:=(measure(o),measure(o)); y:=X(x); } else { y:=X(x); }
+	return measure(y);
+}
+def elseBranch(x:𝔹,c:!𝔹){
+	o:=dup(x);
+	if c { y:=X(x); } else { t:=(measure(o),measure(o)); y:=X(x); }
+	return measure(y);
+}
+def returning(x:𝔹,c:!𝔹){
+	o:=dup(x);
+	if c { t:=(measure(o),measure(o)); return measure(x); } else { return measure(X(x)); }
+}
+def continued(x:𝔹,c:!𝔹){
+	o:=dup(x);
+	if c { t:=(measure(o),measure(o)); return measure(x); }
+	return measure(X(x));
+}
+def main(){
+	r:=(thenBranch(0:𝔹,true),thenBranch(1:𝔹,false),elseBranch(1:𝔹,false),elseBranch(0:𝔹,true),returning(1:𝔹,true),returning(1:𝔹,false),continued(0:𝔹,true),continued(0:𝔹,false));
+	assert(r==(1,0,0,1,1,0,0,1));
+	return r;
+}

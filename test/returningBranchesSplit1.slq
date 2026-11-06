@@ -1,0 +1,62 @@
+// args: --run
+
+def elseSecond(x:𝔹,c:!𝔹){
+	o:=dup(x);
+	if c { return measure(x); } else { t:=(measure(o),measure(o)); return measure(x); }
+}
+def elseSecondTypeof(x:𝔹,c:!𝔹){
+	o:=dup(x);
+	if c { return measure(x); } else { t:=(0,0):typeof(measure(o),measure(o)); return measure(x); }
+}
+def forgetFirst(x:𝔹,c:!𝔹){
+	o:=dup(x);
+	if c { forget(o); return measure(x); } else { t:=(measure(o),measure(o)); return measure(x); }
+}
+def nested(x:𝔹,c:!𝔹,d:!𝔹){
+	o:=dup(x);
+	if c { if d { return measure(x); } else { return measure(X(x)); } } else { t:=(measure(o),measure(o)); return measure(x); }
+}
+def forgetSecond(x:𝔹,c:!𝔹){
+	o:=dup(x);
+	if c { return measure(X(x)); } else { forget(o); return measure(x); }
+}
+def updateSecond(x:𝔹,c:!𝔹){
+	o:=dup(x);
+	if c { y:=X(x); return measure(y); } else { o:=X(o); forget(o=X(dup(x))); return measure(x); }
+}
+def readSecond(x:𝔹,y:𝔹,c:!𝔹){
+	o:=dup(x);
+	if c { y:=X(y); return measure(x,y); } else { y⊕=o; forget(o); return measure(X(x),y); }
+}
+def forLoop(c:!𝔹){
+	for i in 0..2 {
+		x:=H(0:𝔹);
+		x:=H(x);
+		o:=dup(x);
+		if c { return measure(x); } else { t:=(measure(o),measure(o)); return measure(X(x)); }
+	}
+	return 2;
+}
+def whileLoop(y:𝔹,c:!𝔹){
+	k:=0;
+	while k<3 {
+		k+=1;
+		o:=dup(y);
+		if c { return measure(X(y)); } else { forget(o); return measure(y); }
+	}
+	return measure(y);
+}
+def doWhileLoop(y:𝔹,c:!𝔹){
+	k:=0;
+	do{
+		k+=1;
+		o:=dup(y);
+		if c { z:=X(y); return measure(z); } else { o:=X(o); forget(o=X(dup(y))); return measure(y); }
+	}while k<3;
+	return measure(y);
+}
+def main(){
+	r:=(elseSecond(1:𝔹,true),elseSecond(1:𝔹,false),elseSecondTypeof(0:𝔹,false),forgetFirst(1:𝔹,true),forgetFirst(0:𝔹,false),nested(1:𝔹,true,false),nested(0:𝔹,false,true),forgetSecond(1:𝔹,false),updateSecond(1:𝔹,false),readSecond(1:𝔹,0:𝔹,true),readSecond(1:𝔹,0:𝔹,false),forLoop(true),forLoop(false),whileLoop(1:𝔹,true),whileLoop(1:𝔹,false),doWhileLoop(0:𝔹,true),doWhileLoop(1:𝔹,false));
+	assert(r==(1,1,0,1,0,0,0,1,1,(1,1),(0,1),0,1,0,1,1,1));
+	return r;
+}
