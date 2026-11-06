@@ -1,0 +1,45 @@
+// args: --run
+
+def loopInWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+2;
+	w:=v+2;
+	xs[(v+j)%4]:=X(xs[(v+j)%4]);
+	if v%4==0 { with { u:=2; } do { for i in 0..2 { forget(v); v:=dup(i); } w+=dup(j); xs[0]:=X(xs[0]); } } else { v+=2; }
+	return xs;
+}
+def quantumInLoop(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+2;
+	w:=v+2;
+	xs[(v+j)%4]:=X(xs[(v+j)%4]);
+	if v%4==0 { with { u:=2; } do { for i in 0..2 { forget(v); v:=dup(j); xs[0]:=X(xs[0]); forget(v); v:=dup(i); } w+=dup(j); } } else { v+=2; }
+	return xs;
+}
+def readAfter(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+2;
+	w:=v+2;
+	xs[(v+j)%4]:=X(xs[(v+j)%4]);
+	if v%4==0 { with { u:=2; } do { for i in 0..2 { forget(v); v:=dup(i); } w+=dup(j); xs[0]:=X(xs[0]); } } else { v+=2; }
+	xs[(w+j)%4]:=X(xs[(w+j)%4]);
+	return xs;
+}
+def twoReads(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+2;
+	w:=v+2;
+	xs[(v+j)%4]:=X(xs[(v+j)%4]);
+	xs[w%4]:=X(xs[w%4]);
+	if v%4==0 { with { u:=2; } do { for i in 0..2 { forget(v); v:=dup(j); xs[0]:=X(xs[0]); forget(v); v:=dup(i); } w+=dup(j); for k in 0..2 { w+=j+2; } } } else { v+=2; }
+	xs[(w+j)%4]:=X(xs[(w+j)%4]);
+	return xs;
+}
+def changeInBoth(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+2;
+	w:=v+2;
+	xs[(v+j)%4]:=X(xs[(v+j)%4]);
+	if v%4==0 { v+=1; with { u:=2; } do { for i in 0..2 { forget(v); v:=dup(i); } w+=dup(j); xs[0]:=X(xs[0]); } } else { v+=2; }
+	return xs;
+}
+def main(){
+	r:=(measure(reverse(loopInWith)((1,1,0,0):𝔹^4,2)),measure(reverse(loopInWith)((1,1,0,0):𝔹^4,1)),measure(reverse(quantumInLoop)((1,1,0,0):𝔹^4,2)),measure(reverse(quantumInLoop)((1,1,0,0):𝔹^4,1)),measure(reverse(readAfter)((1,1,0,0):𝔹^4,2)),measure(reverse(readAfter)((1,1,0,0):𝔹^4,1)),measure(reverse(twoReads)((1,1,0,0):𝔹^4,2)),measure(reverse(twoReads)((1,1,0,0):𝔹^4,1)),measure(reverse(changeInBoth)((1,1,0,0):𝔹^4,2)),measure(reverse(changeInBoth)((1,1,0,0):𝔹^4,1)));
+	assert(r==((0,1,1,0),(0,1,0,0),(1,1,1,0),(0,1,0,0),(0,1,0,0),(0,1,1,0),(1,1,1,0),(0,0,1,0),(0,1,1,0),(0,1,0,0)));
+	return r;
+}

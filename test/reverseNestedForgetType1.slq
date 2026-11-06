@@ -1,0 +1,32 @@
+// args: --run
+
+def updatedInOtherBranch(xs:𝔹^4,j:!ℕ,k:!ℕ)mfree{
+	if k==1 { j-=1; if j==0 { k+=j; } } else { k+=1; with { a:=xs[dup(k)]; } do { a:=Y(a); } }
+	return (j,xs);
+}
+
+def letInOtherBranch(xs:𝔹^4,j:!ℕ,k:!ℕ)mfree{
+	if k==1 { j-=1; if j==0 { k+=j; } } else { (xs,k):=let{ k+=1; with { a:=xs[dup(k)]; } do { a:=Y(a); } } in (xs,k); }
+	return (j,xs);
+}
+
+def updatedBefore(xs:𝔹^4,j:!ℕ,k:!ℕ)mfree{
+	j-=1; if k==1 { if j==0 { k+=j; } } else { (xs,k):=let{ k+=1; with { a:=xs[dup(k)]; } do { a:=Y(a); } } in (xs,k); }
+	return (j,xs);
+}
+
+def letWithoutUpdate(xs:𝔹^4,j:!ℕ,k:!ℕ)mfree{
+	if k==1 { j-=1; if j==0 { k+=j; } } else { (xs,k):=let{ with { a:=xs[dup(k)]; } do { a:=Y(a); } } in (xs,k); }
+	return (j,xs);
+}
+
+def withInBranch(xs:𝔹^4,j:!ℕ,k:!ℕ)mfree{
+	if k==1 { with { a:=xs[k]; } do { j-=1; a:=X(a); } if j==0 { k+=j; } } else { repeat 2 { xs[j%4]:=X(xs[j%4]); j+=1; } (xs,k):=let{ k+=1; with { a:=xs[dup(k)]; } do { a:=Y(a); } } in (xs,k); }
+	return (j,xs);
+}
+
+def main(){
+	r:=(measure(updatedInOtherBranch((1,0,0,0):𝔹^4,2,0)),measure(reverse(updatedInOtherBranch)(updatedInOtherBranch((1,0,0,0):𝔹^4,2,0),2,0)),measure(updatedInOtherBranch((1,0,0,0):𝔹^4,1,1)),measure(reverse(updatedInOtherBranch)(updatedInOtherBranch((1,0,0,0):𝔹^4,1,1),1,1)),measure(updatedInOtherBranch((1,0,0,0):𝔹^4,2,1)),measure(reverse(updatedInOtherBranch)(updatedInOtherBranch((1,0,0,0):𝔹^4,2,1),2,1)),measure(letInOtherBranch((1,0,0,0):𝔹^4,2,0)),measure(reverse(letInOtherBranch)(letInOtherBranch((1,0,0,0):𝔹^4,2,0),2,0)),measure(letInOtherBranch((1,0,0,0):𝔹^4,1,1)),measure(reverse(letInOtherBranch)(letInOtherBranch((1,0,0,0):𝔹^4,1,1),1,1)),measure(letInOtherBranch((1,0,0,0):𝔹^4,2,1)),measure(reverse(letInOtherBranch)(letInOtherBranch((1,0,0,0):𝔹^4,2,1),2,1)),measure(updatedBefore((1,0,0,0):𝔹^4,2,0)),measure(reverse(updatedBefore)(updatedBefore((1,0,0,0):𝔹^4,2,0),2,0)),measure(updatedBefore((1,0,0,0):𝔹^4,1,1)),measure(reverse(updatedBefore)(updatedBefore((1,0,0,0):𝔹^4,1,1),1,1)),measure(updatedBefore((1,0,0,0):𝔹^4,2,1)),measure(reverse(updatedBefore)(updatedBefore((1,0,0,0):𝔹^4,2,1),2,1)),measure(letWithoutUpdate((1,0,0,0):𝔹^4,2,0)),measure(reverse(letWithoutUpdate)(letWithoutUpdate((1,0,0,0):𝔹^4,2,0),2,0)),measure(letWithoutUpdate((1,0,0,0):𝔹^4,1,1)),measure(reverse(letWithoutUpdate)(letWithoutUpdate((1,0,0,0):𝔹^4,1,1),1,1)),measure(letWithoutUpdate((1,0,0,0):𝔹^4,2,1)),measure(reverse(letWithoutUpdate)(letWithoutUpdate((1,0,0,0):𝔹^4,2,1),2,1)),measure(withInBranch((1,0,0,0):𝔹^4,2,0)),measure(reverse(withInBranch)(withInBranch((1,0,0,0):𝔹^4,2,0),2,0)),measure(withInBranch((1,0,0,0):𝔹^4,1,1)),measure(reverse(withInBranch)(withInBranch((1,0,0,0):𝔹^4,1,1),1,1)),measure(withInBranch((1,0,0,0):𝔹^4,2,1)),measure(reverse(withInBranch)(withInBranch((1,0,0,0):𝔹^4,2,1),2,1)));
+	assert(r==((2,(1,1,0,0)),(1,0,0,0),(0,(1,0,0,0)),(1,0,0,0),(1,(1,0,0,0)),(1,0,0,0),(2,(1,1,0,0)),(1,0,0,0),(0,(1,0,0,0)),(1,0,0,0),(1,(1,0,0,0)),(1,0,0,0),(1,(1,1,0,0)),(1,0,0,0),(0,(1,0,0,0)),(1,0,0,0),(1,(1,0,0,0)),(1,0,0,0),(2,(0,0,0,0)),(1,0,0,0),(0,(1,0,0,0)),(1,0,0,0),(1,(1,0,0,0)),(1,0,0,0),(4,(1,1,1,1)),(1,0,0,0),(0,(1,1,0,0)),(1,0,0,0),(1,(1,1,0,0)),(1,0,0,0)));
+	return r;
+}

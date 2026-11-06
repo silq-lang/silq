@@ -1,0 +1,48 @@
+// args: --run
+
+def forgetInBranches(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+1;
+	w:=1;
+	if v%4==0 { forget(v); xs[0]:=X(xs[0]); } else { with { u:=3; } do { w+=3; forget(v); v:=j; xs[v%4]:=X(xs[v%4]); } }
+	return xs;
+}
+def readInBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+1;
+	w:=1;
+	if v%4==0 { xs[v%4]:=X(xs[v%4]); forget(v); } else { with { u:=3; } do { w+=3; forget(v); v:=j; xs[v%4]:=X(xs[v%4]); } }
+	return xs;
+}
+def readBeforeForget(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+1;
+	w:=1;
+	if v%4==0 { xs[0]:=X(xs[0]); forget(v); } else { with { u:=3; } do { xs[v%4]:=X(xs[v%4]); w+=3; forget(v); v:=j; xs[v%4]:=X(xs[v%4]); } }
+	return xs;
+}
+def quantumBefore(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+1;
+	w:=1;
+	xs[(w+j)%4]:=X(xs[(w+j)%4]);
+	if v%4==0 { with { u:=2; } do { xs[0]:=X(xs[0]); forget(v); forget(w); } } else { with { u:=3; } do { w+=3; forget(v); v:=j; xs[v%4]:=X(xs[v%4]); } }
+	return xs;
+}
+def inWithBody(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+1;
+	w:=1;
+	xs[(w+j)%4]:=X(xs[(w+j)%4]);
+	with { t:=1; } do { if v%4==0 { with { u:=2; } do { xs[0]:=X(xs[0]); forget(v); forget(w); } } else { with { u:=3; } do { w+=3; forget(v); v:=j; xs[v%4]:=X(xs[v%4]); } } }
+	return xs;
+}
+def readAfter(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+1;
+	w:=1;
+	s:=v+1;
+	xs[(w+j)%4]:=X(xs[(w+j)%4]);
+	with { t:=1; } do { if v%4==0 { with { u:=2; } do { xs[(u+s)%4]:=X(xs[(u+s)%4]); forget(v); forget(w); } } else { with { u:=3; } do { w+=s*2; forget(v); v:=(u+j)%4; xs[(s+v)%4]:=X(xs[(s+v)%4]); } } }
+	xs[(j+s)%4]:=X(xs[(j+s)%4]);
+	return xs;
+}
+def main(){
+	r:=(measure(reverse(forgetInBranches)((1,0,1,0):𝔹^4,1)),measure(reverse(forgetInBranches)((1,0,1,0):𝔹^4,3)),measure(reverse(readInBranch)((1,0,1,0):𝔹^4,1)),measure(reverse(readInBranch)((1,0,1,0):𝔹^4,3)),measure(reverse(readBeforeForget)((1,0,1,0):𝔹^4,1)),measure(reverse(readBeforeForget)((1,0,1,0):𝔹^4,3)),measure(reverse(quantumBefore)((1,0,1,0):𝔹^4,1)),measure(reverse(quantumBefore)((1,0,1,0):𝔹^4,3)),measure(reverse(inWithBody)((1,0,1,0):𝔹^4,1)),measure(reverse(inWithBody)((1,0,1,0):𝔹^4,3)),measure(reverse(readAfter)((1,0,1,0):𝔹^4,1)),measure(reverse(readAfter)((1,0,1,0):𝔹^4,3)),measure(reverse(readAfter)((0,1,0,0):𝔹^4,0)),measure(reverse(inWithBody)((0,0,1,1):𝔹^4,7)));
+	assert(r==((1,1,1,0),(0,0,1,0),(1,1,1,0),(0,0,1,0),(1,1,0,0),(0,0,1,0),(1,1,0,0),(1,0,1,0),(1,1,0,0),(1,0,1,0),(0,0,0,1),(1,0,1,1),(0,1,1,0),(0,0,1,1)));
+	return r;
+}

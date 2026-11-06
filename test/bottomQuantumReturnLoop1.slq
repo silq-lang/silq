@@ -1,0 +1,65 @@
+// args: --run
+
+def inRepeat(const d:𝔹,const c:!𝔹,q:𝔹):uint[2]×𝔹{
+	if c {
+		r:=(0:uint[2],)[1];
+		repeat 1 { if d { return (r,q); } }
+		return (r,q);
+	}
+	return (1:uint[2],q);
+}
+def inWhile(const d:𝔹,const c:!𝔹,q:𝔹):uint[2]×𝔹{
+	if c {
+		r:=(0:uint[2],)[1];
+		k:=0;
+		while k<2 { k+=1; if d { return (r,q); } }
+		forget(k);
+		return (r,q);
+	}
+	return (2:uint[2],q);
+}
+def inDoWhile(const d:𝔹,const c:!𝔹,const n:!ℕ,q:𝔹):uint[n]×𝔹{
+	if c {
+		r:=(0:uint[n],)[1];
+		k:=0;
+		do { k+=1; if d { return (r,q); } } while k<n;
+		return (r,q);
+	}
+	return (3:uint[n],q);
+}
+def inInfinite(const d:𝔹,const c:!𝔹,q:𝔹):uint[2]×𝔹{
+	if c {
+		r:=(0:uint[2],)[1];
+		while true { if d { return (r,q); } q:=X(q); return (r,q); }
+	}
+	return (1:uint[2],X(q));
+}
+def inNestedLoop(const d:𝔹,const c:!𝔹,q:𝔹):uint[2]×𝔹{
+	if c {
+		r:=(0:uint[2],)[1];
+		for i in 0..2 {
+			repeat 1 { if d { return (r,q); } }
+			q:=X(q);
+		}
+		return (r,q);
+	}
+	return (2:uint[2],X(q));
+}
+def inNestedFunction(const d:𝔹,const c:!𝔹,q:𝔹):uint[2]×𝔹{
+	def g(const e:𝔹,p:𝔹):uint[2]×𝔹{
+		if c {
+			r:=(0:uint[2],)[1];
+			for i in 0..2 { if e { return (r,p); } }
+			return (r,p);
+		}
+		return (3:uint[2],p);
+	}
+	return g(d,q);
+}
+def main(){
+	d:=H(0:𝔹);
+	r:=(measure(inRepeat(d,false,0:𝔹)),measure(inWhile(d,false,1:𝔹)),measure(inDoWhile(d,false,2,0:𝔹)),measure(inInfinite(d,false,0:𝔹)),measure(inNestedLoop(d,false,1:𝔹)),measure(inNestedFunction(d,false,1:𝔹)));
+	measure(d);
+	assert(r==((1,0),(2,1),(3,0),(1,1),(2,0),(3,1)));
+	return r;
+}

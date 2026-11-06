@@ -1,0 +1,28 @@
+// args: --run
+
+def inQuantumBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+1;
+	with { u:=dup(j); } do { v+=u; xs[v%4]:=X(xs[v%4]); forget(v); if j==1 { v:=j; xs[0]:=X(xs[0]); } else { v:=2; } }
+	xs[1]:=X(xs[1]);
+	return xs;
+}
+def inQuantumLoop(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+1;
+	with { u:=dup(j); } do { v+=u; xs[v%4]:=X(xs[v%4]); forget(v); for i in 0..2 { v:=i; xs[v]:=X(xs[v]); } }
+	return xs;
+}
+def inRepeat(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+1;
+	with { u:=dup(j); } do { v+=u; xs[v%4]:=X(xs[v%4]); forget(v); repeat 2 { v:=j; xs[v%4]:=X(xs[v%4]); } }
+	return xs;
+}
+def branchesWithQuantum(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+1;
+	with { u:=dup(j); } do { v+=u*2; xs[v%4]:=X(xs[v%4]); forget(v); if j==1 { v:=j; xs[v]:=X(xs[v]); } else { v:=3; xs[v]:=X(xs[v]); } }
+	return xs;
+}
+def main(){
+	r:=(measure(reverse(inQuantumBranch)((1,0,1,0):𝔹^4,1)),measure(reverse(inQuantumBranch)((1,0,1,0):𝔹^4,2)),measure(reverse(inQuantumLoop)((1,0,1,0):𝔹^4,1)),measure(reverse(inQuantumLoop)((1,0,1,0):𝔹^4,2)),measure(reverse(inRepeat)((1,0,1,0):𝔹^4,1)),measure(reverse(inRepeat)((1,0,1,0):𝔹^4,2)),measure(reverse(branchesWithQuantum)((1,0,1,0):𝔹^4,1)),measure(reverse(branchesWithQuantum)((1,0,1,0):𝔹^4,2)));
+	assert(r==((0,1,1,1),(1,0,1,0),(0,1,1,1),(0,0,1,0),(1,0,1,1),(1,1,1,0),(0,1,1,0),(1,0,1,0)));
+	return r;
+}

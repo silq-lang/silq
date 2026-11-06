@@ -1,0 +1,67 @@
+// args: --run
+
+def updateThen(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+2;
+	if j%2==1 { v+=j; forget(v); v:=2; } else { forget(v); }
+	v:=3;
+	xs[v]:=X(xs[v]);
+	return xs;
+}
+def updateBoth(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+2;
+	if j%2==1 { v+=j; forget(v); v:=2; } else { v+=1; forget(v); }
+	v:=3;
+	xs[v]:=X(xs[v]);
+	return xs;
+}
+def inWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+2;
+	if j%2==1 { with { u:=dup(j); } do { v+=u; forget(v); v:=2; } } else { forget(v); }
+	v:=3;
+	xs[v]:=X(xs[v]);
+	return xs;
+}
+def nestedIf(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+2;
+	if j%2==1 { v+=j; forget(v); if j==1 { v:=j; } else { v:=2; } } else { forget(v); }
+	v:=3;
+	xs[v]:=X(xs[v]);
+	return xs;
+}
+def inLoop(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+2;
+	if j%2==1 { with { u:=dup(j); } do { v+=u; forget(v); for i in 0..1 { v:=2; } } } else { forget(v); }
+	v:=3;
+	xs[v]:=X(xs[v]);
+	return xs;
+}
+def readBefore(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+2;
+	xs[v%4]:=X(xs[v%4]);
+	if j%2==1 { v+=j; forget(v); v:=2; } else { forget(v); }
+	v:=3;
+	xs[v]:=X(xs[v]);
+	return xs;
+}
+def otherVariable(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+2;
+	w:=v+1;
+	if j%2==1 { v+=w; forget(v); v:=2; } else { forget(v); }
+	v:=w;
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+def laterUpdate(xs:𝔹^4,const j:!ℕ)mfree{
+	v:=j+2;
+	if j%2==1 { v+=j; forget(v); v:=2; } else { forget(v); }
+	v:=3;
+	xs[v]:=X(xs[v]);
+	v+=j;
+	xs[v%4]:=X(xs[v%4]);
+	return xs;
+}
+def main(){
+	r:=(measure(reverse(updateThen)((1,0,1,0):𝔹^4,1)),measure(reverse(updateThen)((1,0,1,0):𝔹^4,2)),measure(reverse(updateBoth)((1,0,1,0):𝔹^4,1)),measure(reverse(updateBoth)((1,0,1,0):𝔹^4,2)),measure(reverse(inWith)((1,0,1,0):𝔹^4,1)),measure(reverse(inWith)((1,0,1,0):𝔹^4,2)),measure(reverse(nestedIf)((1,0,1,0):𝔹^4,1)),measure(reverse(nestedIf)((1,0,1,0):𝔹^4,2)),measure(reverse(inLoop)((1,0,1,0):𝔹^4,1)),measure(reverse(inLoop)((1,0,1,0):𝔹^4,2)),measure(reverse(readBefore)((1,0,1,0):𝔹^4,1)),measure(reverse(readBefore)((1,0,1,0):𝔹^4,2)),measure(reverse(otherVariable)((1,0,1,0):𝔹^4,1)),measure(reverse(otherVariable)((1,0,1,0):𝔹^4,2)),measure(reverse(laterUpdate)((1,0,1,0):𝔹^4,1)),measure(reverse(laterUpdate)((1,0,1,0):𝔹^4,2)));
+	assert(r==((1,0,1,1),(1,0,1,1),(1,0,1,1),(1,0,1,1),(1,0,1,1),(1,0,1,1),(1,0,1,1),(1,0,1,1),(1,0,1,1),(1,0,1,1),(1,0,1,0),(0,0,1,1),(0,0,1,0),(1,1,1,0),(0,0,1,1),(1,1,1,1)));
+	return r;
+}
