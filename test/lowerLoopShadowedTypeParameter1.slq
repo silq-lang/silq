@@ -1,0 +1,23 @@
+// args: --run
+
+def forLoop[n:!ℕ](x:𝔹^n){
+	n:=3;
+	for i in 0..1 { x:=x; }
+	return x;
+}
+def whileLoop[n:!ℕ](x:𝔹^n){
+	n:=3;
+	k:=0;
+	while k<2 { x[0]:=X(x[0]); k+=1; }
+	return x;
+}
+def repeatLoop[n:!ℕ](x:𝔹^n){
+	n:=1;
+	repeat 3 { x[n]:=X(x[n]); }
+	return x;
+}
+def main(){
+	r:=(measure(forLoop((1,0):𝔹^2)),measure(whileLoop((0,1):𝔹^2)),measure(repeatLoop((0,0,1):𝔹^3)));
+	assert(r==((1,0),(0,1),(0,1,1)));
+	return r;
+}
