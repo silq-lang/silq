@@ -1,0 +1,97 @@
+// args: --run
+
+def classicalBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v2:=dup(j);
+	v3:=dup(j);
+	xs[v2%4]:=X(xs[v2%4]);
+	if j==3 {
+		if v2%4==2 { v2+=1; } else { forget(v3); v3:=4; }
+		forget(v3); v3:=2;
+	} else {
+		v2+=1;
+	}
+	xs[v2%4]:=X(xs[v2%4]);
+	return xs;
+}
+def classicalWith(xs:𝔹^4,const j:!ℕ)mfree{
+	v2:=dup(j);
+	v3:=dup(j);
+	xs[v2%4]:=X(xs[v2%4]);
+	if j==3 {
+		with { u:=1; } do {
+			if v2%4==2 { v2+=1; } else { forget(v3); v3:=u+3; }
+			forget(v3); v3:=2;
+		}
+	} else {
+		v2+=1;
+	}
+	xs[v2%4]:=X(xs[v2%4]);
+	return xs;
+}
+def withLoop(xs:𝔹^4,const j:!ℕ)mfree{
+	v1:=dup(j);
+	v2:=dup(j);
+	xs[v2%4]:=X(xs[v2%4]);
+	with { u:=1; } do {
+		for i in 0..2 {
+			forget(v1); v1:=(v2+u)%4;
+			v2+=v1;
+		}
+		forget(v1);
+	}
+	xs[v2%4]:=X(xs[v2%4]);
+	return xs;
+}
+def branchWithLoop(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	v1:=dup(j);
+	v2:=dup(j);
+	xs[v2%4]:=X(xs[v2%4]);
+	if c {
+		with { u:=2; } do {
+			for i in 0..2 { forget(v1); v1:=u+i; }
+			for i in 0..1 { v2+=v1; }
+		}
+	} else {
+		v2+=2;
+	}
+	xs[v2%4]:=X(xs[v2%4]);
+	return xs;
+}
+def quantumBranch(xs:𝔹^4,const j:!ℕ)mfree{
+	v2:=dup(j);
+	v3:=dup(j);
+	xs[v2%4]:=X(xs[v2%4]);
+	if j==3 {
+		if v2%4==2 { v2+=1; } else { forget(v3); v3:=4; }
+		xs[v2%4]:=X(xs[v2%4]);
+		forget(v3); v3:=2;
+	} else {
+		v2+=1;
+	}
+	xs[v2%4]:=X(xs[v2%4]);
+	return xs;
+}
+def projectionLost(xs:𝔹^4,const c:!𝔹,const j:!ℕ)mfree{
+	v1:=dup(j);
+	v2:=dup(j);
+	xs[v1%4]:=X(xs[v1%4]);
+	if c {
+		with { u:=2; } do {
+			v1+=u;
+			for i in 0..2 { forget(v2); v2:=v1+i; }
+			forget(v2);
+		}
+	} else {
+		with { w:=dup(v1); } do {
+			for i in 0..2 { forget(v2); v2:=dup(w); }
+			xs[v2%4]:=X(xs[v2%4]);
+		}
+	}
+	xs[v1%4]:=X(xs[v1%4]);
+	return xs;
+}
+def main(){
+	r:=(measure(classicalBranch((1,0,1,1):𝔹^4,3)),measure(reverse(classicalBranch)(classicalBranch((1,0,1,1):𝔹^4,3),3)),measure(classicalBranch((0,1,1,0):𝔹^4,2)),measure(reverse(classicalBranch)(classicalBranch((0,1,1,0):𝔹^4,2),2)),measure(classicalWith((1,0,1,1):𝔹^4,3)),measure(reverse(classicalWith)(classicalWith((1,0,1,1):𝔹^4,3),3)),measure(classicalWith((0,1,1,0):𝔹^4,2)),measure(reverse(classicalWith)(classicalWith((0,1,1,0):𝔹^4,2),2)),measure(withLoop((1,0,1,1):𝔹^4,3)),measure(reverse(withLoop)(withLoop((1,0,1,1):𝔹^4,3),3)),measure(withLoop((0,1,1,0):𝔹^4,2)),measure(reverse(withLoop)(withLoop((0,1,1,0):𝔹^4,2),2)),measure(branchWithLoop((1,0,1,1):𝔹^4,true,1)),measure(reverse(branchWithLoop)(branchWithLoop((1,0,1,1):𝔹^4,true,1),true,1)),measure(branchWithLoop((0,1,1,0):𝔹^4,false,1)),measure(reverse(branchWithLoop)(branchWithLoop((0,1,1,0):𝔹^4,false,1),false,1)),measure(quantumBranch((1,0,1,1):𝔹^4,3)),measure(reverse(quantumBranch)(quantumBranch((1,0,1,1):𝔹^4,3),3)),measure(quantumBranch((0,1,1,0):𝔹^4,2)),measure(reverse(quantumBranch)(quantumBranch((0,1,1,0):𝔹^4,2),2)),measure(projectionLost((1,0,1,1):𝔹^4,true,1)),measure(reverse(projectionLost)(projectionLost((1,0,1,1):𝔹^4,true,1),true,1)),measure(projectionLost((0,1,1,0):𝔹^4,false,2)),measure(reverse(projectionLost)(projectionLost((0,1,1,0):𝔹^4,false,2),false,2)));
+	assert(r==((1,0,1,1),(1,0,1,1),(0,1,0,1),(0,1,1,0),(1,0,1,1),(1,0,1,1),(0,1,0,1),(0,1,1,0),(1,0,1,1),(1,0,1,1),(0,1,0,1),(0,1,1,0),(0,1,1,1),(1,0,1,1),(0,0,1,1),(0,1,1,0),(1,0,1,0),(1,0,1,1),(0,1,0,1),(0,1,1,0),(1,1,1,0),(1,0,1,1),(0,1,0,0),(0,1,1,0)));
+	return r;
+}

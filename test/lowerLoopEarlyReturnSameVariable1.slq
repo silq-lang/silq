@@ -1,0 +1,42 @@
+// args: --run
+
+def sameInBranches(const c:!𝔹,x:𝔹){
+	repeat 2{
+		if c{
+			return if c then x else x;
+		}
+	}
+	return x;
+}
+def sameInTuple(const c:!𝔹,x:𝔹,y:𝔹){
+	repeat 2{
+		if c{
+			return (if c then x else x,y);
+		}
+	}
+	return (x,y);
+}
+def sameInFor(const n:!ℕ,x:𝔹){
+	for i in 0..n{
+		if i==1{
+			return if i==1 then x else x;
+		}
+	}
+	return x;
+}
+def inWhile(x:𝔹){
+	k:=0;
+	while true{
+		k+=1;
+		if k==2{
+			return (if true then x else x);
+		}
+	}
+}
+def check(x:𝔹)⇒measure(H(x));
+def check2(x:𝔹,y:𝔹)⇒measure(H(x),H(y));
+def main(){
+	r:=(check(sameInBranches(true,H(0:𝔹))),check(sameInBranches(false,H(1:𝔹))),check2(sameInTuple(true,H(0:𝔹),H(1:𝔹))),check2(sameInTuple(false,H(1:𝔹),H(0:𝔹))),check(sameInFor(3,H(1:𝔹))),check(sameInFor(1,H(0:𝔹))),check(inWhile(H(1:𝔹))));
+	assert(r==(0,1,(0,1),(1,0),1,0,1));
+	return r;
+}
