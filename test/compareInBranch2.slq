@@ -1,0 +1,30 @@
+// args: --run
+
+def tupleOfVectors(n:!ℕ,c:!𝔹){
+	if c { r:=(vector(n,0:!𝔹),1)==(vector(n,0:!𝔹),1); } else { r:=false; }
+	return r;
+}
+def quantumVectors(n:!ℕ,c:!𝔹){
+	x:=vector(n,1:𝔹);
+	y:=vector(n,1:𝔹);
+	if c { r:=measure(x==y); } else { r:=false; }
+	return (r,measure(x),measure(y));
+}
+def inLoop(n:!ℕ,c:!𝔹){
+	s:=0;
+	for i in 0..2 { if c { s+=(vector(n,0:!𝔹)==vector(n,0:!𝔹)) as !ℕ; } }
+	return s;
+}
+def twoLengths(n:!ℕ,m:!ℕ,c:!𝔹){
+	if c { r:=vector(n,0:!𝔹)==vector(m,0:!𝔹); } else { r:=false; }
+	return r;
+}
+def lengthExpression(n:!ℕ,c:!𝔹){
+	if c { r:=vector(n+1,0:!𝔹)==vector(n+1,0:!𝔹); } else { r:=false; }
+	return r;
+}
+def main(){
+	r:=(tupleOfVectors(2,true),quantumVectors(2,true),inLoop(2,true),twoLengths(2,3,true),twoLengths(2,2,true),lengthExpression(1,true));
+	assert(r==(1,(1,(1,1),(1,1)),2,0,1,1));
+	return r;
+}
