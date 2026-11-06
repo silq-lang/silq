@@ -1,0 +1,20 @@
+// args: --run
+
+def f(n:!ℕ){
+	x:=H(0:𝔹);
+	q:=dup(x);
+	k:=0;
+	while k<2 {
+		if n>0 {
+			y:=dup(q);
+			forget(y);
+			forget(q);
+			assert(false); /// run_error
+		}
+	}
+	x:=H(x);
+	return measure(x);
+}
+def main(){
+	return f(1);
+}

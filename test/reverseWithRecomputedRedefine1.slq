@@ -1,0 +1,37 @@
+// args: --run
+
+def forLoop(xs:𝔹^4,const j:!ℕ)mfree{
+	a:=j;
+	b:=j;
+	xs[b%4]:=X(xs[b%4]);
+	with { t:=1; } do {
+		with { u:=1; } do { for i in 0..3 { forget(a); a:=i+1; forget(b); b:=i*2; } }
+		xs[a%4]:=X(xs[a%4]);
+	}
+	return xs;
+}
+def repeatLoop(xs:𝔹^4,const j:!ℕ)mfree{
+	a:=j;
+	b:=j;
+	xs[b%4]:=X(xs[b%4]);
+	with { t:=1; } do {
+		with { u:=1; } do { repeat 2 { forget(a); a:=u+1; forget(b); b:=u*2; } }
+		xs[a%4]:=X(xs[a%4]);
+	}
+	return xs;
+}
+def afterLoop(xs:𝔹^4,const j:!ℕ)mfree{
+	a:=j;
+	b:=j;
+	xs[b%4]:=X(xs[b%4]);
+	with { t:=1; } do {
+		with { u:=1; } do { for i in 0..3 { forget(b); b:=i*2; } forget(a); a:=u; }
+		xs[a%4]:=X(xs[a%4]);
+	}
+	return xs;
+}
+def main(){
+	r:=(measure(reverse(forLoop)((1,0,0,0):𝔹^4,0)),measure(reverse(forLoop)((1,0,0,0):𝔹^4,2)),measure(reverse(repeatLoop)((1,0,0,0):𝔹^4,0)),measure(reverse(repeatLoop)((1,0,0,0):𝔹^4,2)),measure(reverse(afterLoop)((1,0,0,0):𝔹^4,0)),measure(reverse(afterLoop)((1,0,0,0):𝔹^4,2)));
+	assert(r==((0,0,0,1),(1,0,1,1),(0,0,1,0),(1,0,0,0),(0,1,0,0),(1,1,1,0)));
+	return r;
+}
