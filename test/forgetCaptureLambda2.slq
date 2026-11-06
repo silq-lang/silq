@@ -1,0 +1,44 @@
+// args: --run
+
+def implicitForget(k:!ℕ){
+	n:=k+1;
+	f:=λ(c:!𝔹){ forget(n); return 0; };
+	return f(true);
+}
+def branchForget(k:!ℕ){
+	n:=k+1;
+	y:=(λ(c:!𝔹){ if c { forget(n); return 0; } return move(n); })(k==1);
+	return y;
+}
+def readThenForget(k:!ℕ){
+	n:=k+1;
+	f:=λ(){ a:=n+1; forget(n); return a; };
+	return f();
+}
+def nestedLambda(k:!ℕ){
+	n:=k+1;
+	f:=λ(){ g:=λ(){ forget(n); return 1; }; return g(); };
+	return f();
+}
+def tupleForget(k:!ℕ){
+	n:=k+1;
+	m:=k+2;
+	f:=λ(){ forget((n,m)); return 3; };
+	return f();
+}
+def typeMention(k:!ℕ){
+	n:=k+1;
+	v:=vector(n,0:!𝔹);
+	f:=λ(){ forget(v); return n; };
+	return (f(),n);
+}
+def calledTwice(k:!ℕ){
+	n:=k+1;
+	f:=λ(){ forget(n); return 4; };
+	return (f(),f());
+}
+def main(){
+	r:=(implicitForget(1),branchForget(1),branchForget(2),readThenForget(1),nestedLambda(1),tupleForget(1),typeMention(2),calledTwice(1));
+	assert(r==(0,0,3,3,1,3,(3,3),(4,4)));
+	return r;
+}

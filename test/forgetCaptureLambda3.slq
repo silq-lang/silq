@@ -1,0 +1,29 @@
+def useAfter(k:!ℕ){
+	n:=k+1;
+	f:=λ(){ forget(n); return 0; };
+	return (f(),n); /// error
+}
+def constParameter(const n:!ℕ){
+	f:=λ(){ forget(n); return 0; }; /// error
+	return f();
+}
+def inLoop(k:!ℕ){
+	n:=k+1;
+	r:=0;
+	for i in 0..2 {
+		f:=λ(){ forget(n); return 1; }; /// error
+		r+=f();
+	}
+	return r;
+}
+def typeMentioned(k:!ℕ){
+	n:=k+1;
+	v:=vector(n,0:!𝔹);
+	f:=λ(){ forget(n); return 0; }; /// error
+	return (f(),v);
+}
+def quantumCapture(k:!ℕ){
+	x:=H(0:𝔹);
+	f:=λ(){ forget(x); return 0; }; /// error
+	return f();
+}
