@@ -1,0 +1,12 @@
+// args: --run
+
+def dupMove(k:!ℕ) ⇒ vector(let { n:=k+1; y:=(λ(c:!𝔹){ if c { return dup(n); } return move(n); })(false); } in y, true);
+def dupMoveTaken(k:!ℕ) ⇒ vector(let { n:=k+1; y:=(λ(c:!𝔹){ if c { return dup(n); } return move(n); })(true); } in y, false);
+def readMove(k:!ℕ) ⇒ vector(let { n:=k; y:=(λ(c:!𝔹){ if c { return n+1; } return move(n); })(k==1); } in y, true);
+def nestedLambda(k:!ℕ) ⇒ vector(let { n:=k+1; y:=(λ(c:!𝔹){ g:=λ(d:!𝔹){ if d { return dup(n); } return move(n); }; return g(c); })(false); } in y, false);
+
+def main(){
+	r:=(dupMove(2),dupMoveTaken(1),readMove(1),readMove(3),nestedLambda(0));
+	assert(r==(vector(3,true),vector(2,false),vector(2,true),vector(3,true),vector(1,false)));
+	return r;
+}

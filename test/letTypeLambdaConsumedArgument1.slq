@@ -1,0 +1,12 @@
+// args: --run
+
+def annotated(k:!ℕ) ⇒ vector(let { y:=(λ(c:!𝔹){ q:=X(0:𝔹); forget(q); return k; })(k==1); } in y, true);
+def nestedCall(k:!ℕ) ⇒ vector(let { y:=(λ(c:!𝔹){ q:=X(X(0:𝔹)); forget(q); return k+1; })(k==1); } in y, false);
+def pair(k:!ℕ) ⇒ vector(let { y:=(λ(c:!𝔹){ (a,b):=(X(0:𝔹),0:𝔹); forget(a); forget(b); return k; })(k==1); } in y, true);
+def capturedLocal(k:!ℕ) ⇒ vector(let { n:=k+1; y:=(λ(c:!𝔹){ q:=X(0:𝔹); if c { forget(q); return dup(n); } forget(q); return move(n); })(k==1); } in y, true);
+
+def main(){
+	r:=(annotated(2),nestedCall(1),pair(2),capturedLocal(1),capturedLocal(2));
+	assert(r==(vector(2,true),vector(2,false),vector(2,true),vector(2,true),vector(3,true)));
+	return r;
+}
