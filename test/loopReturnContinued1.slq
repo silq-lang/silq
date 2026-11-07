@@ -1,0 +1,80 @@
+// args: --run
+
+def measuredBeforeReturn(x:𝔹,c:!ℕ){
+	for i in 0..3 {
+		o:=dup(x);
+		if i==c { a:=measure(o); return (measure(x),a); }
+		b:=measure(o);
+		x:=X(x);
+	}
+	return (measure(x),0:!𝔹);
+}
+def measuredTwice(x:𝔹,c:!ℕ){
+	for i in 0..3 {
+		o:=dup(x);
+		if i==c { a:=measure(o); a2:=measure(o); return (measure(x),a&&a2); }
+		b:=measure(o);
+		x:=X(x);
+	}
+	return (measure(x),0:!𝔹);
+}
+def elseBranch(x:𝔹,c:!ℕ){
+	for i in 0..3 {
+		o:=dup(x);
+		if i!=c { x:=X(x); } else { a:=measure(o); return (measure(x),a); }
+		b:=measure(o);
+	}
+	return (measure(x),0:!𝔹);
+}
+def whileLoop(x:𝔹,c:!ℕ){
+	i:=0;
+	while i<3 {
+		o:=dup(x);
+		if i==c { a:=measure(o); return (measure(x),a); }
+		b:=measure(o);
+		x:=X(x);
+		i+=1;
+	}
+	return (measure(x),0:!𝔹);
+}
+def usedInConditional(x:𝔹,c:!ℕ){
+	for i in 0..3 {
+		o:=dup(x);
+		if i==c { a:=measure(o); return (measure(x),a); }
+		if i==1 { b:=measure(o); } else { b:=measure(H(o)); }
+		x:=X(x);
+	}
+	return (measure(x),0:!𝔹);
+}
+def pairValue(x:𝔹,c:!ℕ){
+	for i in 0..3 {
+		o:=(dup(x),dup(x));
+		if i==c { a:=measure(o); return (measure(x),a[0]); }
+		(o0,o1):=o;
+		b:=measure(o0,o1);
+		x:=X(x);
+	}
+	return (measure(x),0:!𝔹);
+}
+def returnConsumesDependency(x:𝔹,c:!ℕ){
+	for i in 0..3 {
+		o:=dup(x);
+		if i==c { return (measure(x),1:!𝔹); }
+		b:=measure(o);
+		x:=X(x);
+	}
+	return (measure(x),0:!𝔹);
+}
+def measuredAfterConditional(x:𝔹,c:!ℕ){
+	for i in 0..3 {
+		o:=dup(x);
+		if i==c { return (measure(x),1:!𝔹); }
+		b:=measure(o);
+	}
+	return (measure(x),0:!𝔹);
+}
+def main(){
+	r:=(measuredBeforeReturn(0:𝔹,1),measuredBeforeReturn(1:𝔹,5),measuredTwice(1:𝔹,2),measuredTwice(0:𝔹,0),elseBranch(0:𝔹,1),elseBranch(1:𝔹,4),whileLoop(0:𝔹,2),whileLoop(1:𝔹,4),usedInConditional(1:𝔹,2),usedInConditional(0:𝔹,7),pairValue(1:𝔹,1),pairValue(0:𝔹,9),returnConsumesDependency(0:𝔹,1),returnConsumesDependency(1:𝔹,3),measuredAfterConditional(1:𝔹,1),measuredAfterConditional(0:𝔹,5));
+	assert(r==((1,1),(0,0),(1,1),(0,0),(1,1),(0,0),(0,0),(0,0),(1,1),(1,0),(0,0),(1,0),(1,1),(0,0),(1,1),(0,0)));
+	return r;
+}

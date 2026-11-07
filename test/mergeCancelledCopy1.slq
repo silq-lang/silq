@@ -1,0 +1,53 @@
+// args: --run
+
+def thenRedefines(x:𝔹,c:!𝔹){
+	o:=dup(x);
+	if c { x:=H(x); } else { a:=measure(o); }
+	return x;
+}
+def elseRedefines(x:𝔹,c:!𝔹){
+	o:=dup(x);
+	if c { a:=measure(o); } else { x:=H(x); }
+	return x;
+}
+def copyOfCopy(x:𝔹,c:!𝔹){
+	o:=dup(x);
+	p:=dup(o);
+	if c { x:=X(x); b:=measure(p); } else { a:=measure(o); }
+	return x;
+}
+def copyOfCopyElse(x:𝔹,c:!𝔹){
+	w:=dup(x);
+	o:=dup(w);
+	if c { a:=measure(w); } else { x:=X(x); b:=measure(o); }
+	return x;
+}
+def measuredCopyThenRedefined(x:𝔹,c:!𝔹){
+	o:=X(dup(x));
+	p:=dup(o);
+	if c { a:=measure(p); x:=X(x); } else { b:=measure(o); }
+	return x;
+}
+def updatedThenMeasured(x:𝔹,c:!𝔹){
+	v0:=dup(x);
+	v1:=dup(x);
+	v2:=X(dup(v1));
+	if c { v2:=X(v2); x:=X(x); m1:=measure(v2); } else { m2:=measure(v1); m3:=measure(v0); }
+	return x;
+}
+def nestedConditional(x:𝔹,c:!𝔹,d:!𝔹){
+	o:=dup(x);
+	if c { } else { if d { x:=X(x); } else { a:=measure(o); } }
+	return x;
+}
+def nestedElseForgets(x:𝔹,c:!𝔹,d:!𝔹){
+	o:=dup(x);
+	p:=dup(o);
+	if c { x:=X(x); a:=measure(p); } else { if d { x:=X(x); b:=measure(p); } else { e:=measure(o); } }
+	return x;
+}
+def main(){
+	r:=(measure(thenRedefines(H(0:𝔹),true)),measure(thenRedefines(1:𝔹,false)),measure(elseRedefines(H(0:𝔹),false)),measure(elseRedefines(1:𝔹,true)),measure(copyOfCopy(1:𝔹,true)),measure(copyOfCopy(1:𝔹,false)),measure(copyOfCopyElse(1:𝔹,true)),measure(copyOfCopyElse(1:𝔹,false)),measure(measuredCopyThenRedefined(1:𝔹,true)),measure(measuredCopyThenRedefined(1:𝔹,false)),measure(updatedThenMeasured(1:𝔹,true)),measure(updatedThenMeasured(1:𝔹,false)),measure(H(nestedConditional(H(0:𝔹),true,false))),measure(H(nestedConditional(H(0:𝔹),false,true))),measure(nestedConditional(1:𝔹,false,false)),measure(nestedElseForgets(1:𝔹,true,false)),measure(nestedElseForgets(0:𝔹,false,true)),measure(nestedElseForgets(1:𝔹,false,false)));
+	assert(r==(0,1,0,1,0,1,1,0,0,1,0,1,0,0,1,0,1,1));
+	return r;
+}
