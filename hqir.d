@@ -8320,10 +8320,10 @@ void interleaveBranches(IrStatement[] code, size_t i0, size_t i1, size_t i2, siz
 		if(s.op == opForget && branchOf(k) != 0) foreach(r; s.qiArgs) if(r) forgetItem[r] = k;
 	}
 	foreach(k, ref s; items) foreach(r; s.qiArgs) if(r) foreach(j; readers.get(r, null)) edge(j, k); // (reads come before the consumption)
-	foreach(b; 1 .. 3) { // (each branch in program order, except for the uncomputations, which the backend places after the last uses)
+	foreach(b; 1 .. 3) { // (each branch in program order, except for the uncomputations, which the backend places after the last uses, and the splits and merges of nested conditionals, which only route the values that their branches use)
 		auto prev = none;
 		foreach(k; 0 .. n) {
-			if(branchOf(k) != b || items[k].op == opForget) continue;
+			if(branchOf(k) != b || items[k].op == opForget || [opCSplit, opQSplit, opCMerge, opQMerge].canFind(base(items[k].op))) continue;
 			edge(prev, k);
 			prev = k;
 		}
@@ -8377,6 +8377,17 @@ void interleaveBranches(IrStatement[] code, size_t i0, size_t i1, size_t i2, siz
 			auto maxP = none;
 			foreach(k; P) if(branchOf(k) == branchOf(f)) maxP = maxP == none ? k : max(maxP, k);
 			if(maxP != none) P ~= f;
+			MapX!(QReg, Unit) uncomputedAfter; // (the registers that the backend uncomputes after `r`, as `r` is a forgotten value computed from them, see `places`)
+			for(auto todo = [r]; todo.length; ) {
+				auto y = todo[$ - 1];
+				todo = todo[0 .. $ - 1];
+				if(y in uncomputedAfter) continue;
+				uncomputedAfter[y] = unit;
+				auto p = item(prod.get(y, none));
+				if(p == none || y !in forgetItem) continue;
+				foreach(x; items[p].qcArgs) if(x) todo ~= x;
+				foreach(cq; items[p].condQ) if(cq.reg) todo ~= cq.reg;
+			}
 			size_t steps = 0;
 			bool need(QReg x, size_t via, int depth, ref Q!(size_t[], size_t)[] ns, ref Q!(size_t, size_t, size_t[])[] ts) { // (as the backend recomputes `r`, from `x` if it is still available there or else from what its computation read; `via`: the statement that reads `x`)
 				if(!x) return true;
@@ -8397,7 +8408,8 @@ void interleaveBranches(IrStatement[] code, size_t i0, size_t i1, size_t i2, siz
 				else if(isSplit(c)) {
 					unavailable = true;
 					split = !reaches(c, k => P.canFind(k));
-				} else unavailable = branchOf(c) == branchOf(f) && maxP != none && c <= maxP && items[c].op != opForget;
+				} else if(items[c].op == opForget) unavailable = branchOf(c) == branchOf(f) && x !in uncomputedAfter; // (otherwise, the backend may uncompute `x` before `r`, after its own last use)
+				else unavailable = branchOf(c) == branchOf(f) && maxP != none && c <= maxP;
 				if(!unavailable) {
 					if(isSplit(p) && via != none) ts ~= q(via, p, P);
 					return true;

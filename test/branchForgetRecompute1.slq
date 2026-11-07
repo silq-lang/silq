@@ -1,0 +1,39 @@
+// args: --run
+
+def updated(x:𝔹,y:𝔹,const c:𝔹){
+	b:=dup(y);
+	if c { t:=dup(b); t⊕=y; } else { y:=X(y); }
+	return (x,y);
+}
+def classicalCondition(x:𝔹,y:𝔹,c:!𝔹){
+	b:=dup(y);
+	if c { t:=dup(b); t⊕=y; } else { y:=X(y); }
+	return (x,y);
+}
+def twoUpdates(x:𝔹,y:𝔹,const c:𝔹){
+	b:=dup(y);
+	if c { t:=dup(b); t⊕=y; t⊕=y; } else { y:=X(y); }
+	return (x,y);
+}
+def elseBranch(x:𝔹,y:𝔹,const c:𝔹){
+	b:=dup(y);
+	if c { y:=X(y); } else { t:=dup(b); t⊕=y; }
+	return (x,y);
+}
+def explicitForget(x:𝔹,y:𝔹,const c:𝔹){
+	b:=dup(y);
+	if c { t:=dup(b); t⊕=y; forget(t); forget(b); } else { forget(b); y:=X(y); }
+	return (x,y);
+}
+def consumedAfter(x:𝔹,y:𝔹,const c:𝔹){
+	b:=dup(y);
+	if c { t:=dup(b); t⊕=y; y:=X(y); } else { y:=X(y); }
+	return (x,y);
+}
+def check(x:𝔹,y:𝔹)⇒measure(H(x),H(y));
+def main(){
+	c:=H(0:𝔹);
+	r:=(check(updated(H(0:𝔹),H(0:𝔹),c)),check(classicalCondition(H(0:𝔹),H(0:𝔹),true)),check(classicalCondition(H(0:𝔹),H(0:𝔹),false)),check(twoUpdates(H(0:𝔹),H(0:𝔹),c)),check(elseBranch(H(0:𝔹),H(0:𝔹),c)),check(explicitForget(H(0:𝔹),H(0:𝔹),c)),check(consumedAfter(H(0:𝔹),H(0:𝔹),c)),measure(H(c)));
+	assert(r==((0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),0));
+	return r;
+}
