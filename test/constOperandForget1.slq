@@ -1,0 +1,45 @@
+// args: --run
+
+def addAssign(p:𝔹){
+	c:=0;
+	t:=dup(p);
+	c+=measure(dup(t));
+	return (c,measure(X(p)));
+}
+def operand(p:𝔹){
+	t:=dup(p);
+	x:=1+measure(dup(t));
+	return (x,measure(X(p)));
+}
+def condition(p:𝔹){
+	t:=dup(p);
+	if measure(dup(t))==1 { x:=2; } else { x:=3; }
+	return (x,measure(X(p)));
+}
+def index(p:𝔹){
+	t:=dup(p);
+	x:=[4,5][measure(dup(t))];
+	return (x,measure(X(p)));
+}
+def negation(p:𝔹){
+	t:=dup(p);
+	x:=!measure(dup(t));
+	return (x,measure(X(p)));
+}
+def closureCall(x:𝔹){
+	q:=dup(x);
+	h:=λ(d:!ℕ){ a:=if measure(dup(q)) then 5 else 0; return a+d; };
+	s:=h(3)+h(1);
+	b:=if measure(q) then 7 else 0;
+	return (s+b,measure(x));
+}
+def doWhileTrue(p:𝔹){
+	c:=0;
+	do { p:=X(p); t:=dup(p); c+=measure(dup(t)); } while true;
+	return (c,measure(t),measure(p));
+}
+def main(){
+	r:=(addAssign(0:𝔹),addAssign(1:𝔹),operand(1:𝔹),condition(1:𝔹),condition(0:𝔹),index(1:𝔹),negation(0:𝔹),closureCall(1:𝔹),closureCall(0:𝔹));
+	assert(r==((0,1),(1,0),(2,0),(2,0),(3,1),(5,0),(1,1),(21,1),(4,0)));
+	return r;
+}
