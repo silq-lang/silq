@@ -1,0 +1,37 @@
+// args: --run
+
+def elsePartial(x:𝔹,c:!𝔹,d:!𝔹){
+	o:=dup(x);
+	if c { a:=measure(o); y:=X(x); } else { if d { return (measure(x),2); } y:=X(x); }
+	return (measure(y),1);
+}
+def thenPartial(x:𝔹,c:!𝔹,d:!𝔹){
+	o:=dup(x);
+	if c { if d { return (measure(x),2); } y:=X(x); } else { a:=measure(o); y:=X(x); }
+	return (measure(y),1);
+}
+def bothPartial(x:𝔹,c:!𝔹,d:!𝔹){
+	o:=dup(x);
+	if c { if d { return (measure(x),2); } a:=measure(o); y:=X(x); } else { if !d { return (measure(x),3); } y:=X(x); }
+	return (measure(y),1);
+}
+def nestedPartial(x:𝔹,c:!𝔹,d:!𝔹,e:!𝔹){
+	o:=dup(x);
+	if c { a:=measure(o); y:=X(x); } else { if d { if e { return (measure(x),2); } } y:=X(x); }
+	return (measure(y),1);
+}
+def forgetOnReturn(x:𝔹,c:!𝔹,d:!𝔹){
+	o:=dup(x);
+	if c { y:=X(x); } else { if d { forget(o); return (measure(x),2); } a:=measure(o); y:=X(x); }
+	return (measure(y),1);
+}
+def twoUses(x:𝔹,c:!𝔹,d:!𝔹){
+	o:=dup(x);
+	if c { t:=(measure(o),measure(o)); y:=X(x); } else { if d { return (measure(x),2); } y:=X(x); }
+	return (measure(y),1);
+}
+def main(){
+	r:=(elsePartial(1:𝔹,true,true),elsePartial(1:𝔹,false,true),elsePartial(0:𝔹,false,false),thenPartial(1:𝔹,true,true),thenPartial(1:𝔹,true,false),thenPartial(0:𝔹,false,true),bothPartial(1:𝔹,true,true),bothPartial(1:𝔹,true,false),bothPartial(0:𝔹,false,false),bothPartial(0:𝔹,false,true),nestedPartial(1:𝔹,false,true,true),nestedPartial(1:𝔹,false,true,false),nestedPartial(0:𝔹,true,false,false),forgetOnReturn(1:𝔹,false,true),forgetOnReturn(1:𝔹,false,false),forgetOnReturn(0:𝔹,true,true),twoUses(1:𝔹,true,false),twoUses(0:𝔹,false,true));
+	assert(r==((0,1),(1,2),(1,1),(1,2),(0,1),(1,1),(1,2),(0,1),(0,3),(1,1),(1,2),(0,1),(1,1),(1,2),(0,1),(1,1),(0,1),(0,2)));
+	return r;
+}

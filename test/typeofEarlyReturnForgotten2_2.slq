@@ -1,15 +1,16 @@
+// args: --run
 
 def main(){
 	x:=H(0:𝔹);
-	o:=dup(x); /// TODO
+	o:=dup(x);
 	if measure(H(0:𝔹)){
 		if measure(H(0:𝔹)) {
-			forget(o); /// TODO
+			forget(o);
 			return x;
 		}
 	}else{
 		if measure(H(0:𝔹)) {
-			forget(o); /// TODO
+			forget(o);
 			return x;
 		}
 	}

@@ -1,15 +1,33 @@
+// args: --run
+
 def nestedReturn(const c:𝔹,x:𝔹,y:𝔹,const k:!ℕ)mfree:𝔹×𝔹{
-	u:=x&y; /// TODO
+	u:=x&y;
 	if c { if k==1 { return (x,X(y)); } else { forget(u); } } else { forget(u); x:=X(x); }
 	return (x,y);
 }
 def classicalConditions(x:𝔹,y:𝔹,const j:!ℕ,const k:!ℕ)mfree:𝔹×𝔹{
-	u:=x&y; /// TODO
+	u:=x&y;
 	if j==0 { if k==1 { return (x,y); } else { forget(u); } } else { forget(u); }
 	return (x,y);
 }
 def useAfterNestedConditional(x:𝔹,const j:!ℕ,const k:!ℕ)mfree:𝔹{
-	t:=dup(x); /// TODO
+	t:=dup(x);
 	if j==0 { if k==1 { return X(x); } forget(t); } else { forget(t); }
 	return x;
+}
+
+def main(){
+	r:=[];
+	for c in [0,1] { for x in [0,] { for y in [0,1] { for k in 0..3{
+		r~=[measure(nestedReturn(c,x,y,k))];
+	} } } }
+	for c in [0,1] { for x in [0,1] { for y in [0,1] { for j in 0..2 { for k in 0..2{
+		r~=[measure(classicalConditions(c,x,y,k))];
+	} } } } }
+	s:=[];
+	for x in [0,1] { for j in 0..2 { for k in 0..2{
+		s~=[measure(useAfterNestedConditional(x,j,k))];
+	} } }
+	assert((r,s)=([[1,0],[1,0],[1,0],[1,1],[1,1],[1,1],[0,0],[0,1],[0,0],[0,1],[0,0],[0,1],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,0],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[0,1],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,0],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1],[1,1]],[0,1,0,0,1,0,1,1]));
+	return (r,s);
 }
