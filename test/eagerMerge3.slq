@@ -1,0 +1,27 @@
+// args: --run
+
+def updated(x:𝔹,const c:𝔹)mfree{
+	b:=dup(x);
+	if c { b⊕=x; } else { x:=X(x); }
+	return x;
+}
+def classicalCondition(x:𝔹,c:!𝔹)mfree{
+	b:=dup(x);
+	if c { b⊕=x; } else { x:=X(x); }
+	return x;
+}
+def changedThenUpdated(x:𝔹,const c:𝔹)mfree{
+	b:=dup(x);
+	if c { b:=X(b); b⊕=x; } else { x:=X(x); }
+	return x;
+}
+def readInOtherValue(x:𝔹,c:!𝔹){
+	b:=dup(x);
+	if c { y:=dup(x); y⊕=b; forget(y); } else { x:=X(x); }
+	return x;
+}
+def main(){
+	r:=(measure(updated(0:𝔹,0:𝔹)),measure(updated(0:𝔹,1:𝔹)),measure(updated(1:𝔹,0:𝔹)),measure(updated(1:𝔹,1:𝔹)),measure(classicalCondition(0:𝔹,false)),measure(classicalCondition(1:𝔹,true)),measure(changedThenUpdated(0:𝔹,0:𝔹)),measure(changedThenUpdated(1:𝔹,1:𝔹)),measure(readInOtherValue(0:𝔹,true)),measure(readInOtherValue(1:𝔹,false)));
+	assert(r==(1,0,0,1,1,1,1,1,0,0));
+	return r;
+}

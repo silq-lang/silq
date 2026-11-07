@@ -1,0 +1,29 @@
+def cycle(c:!𝔹){
+	if c { x:=H(H(1:𝔹)); y:=dup(x); w:=H(H(0:𝔹)); v:=!w; } else { w:=H(H(1:𝔹)); v:=dup(w); x:=H(H(0:𝔹)); y:=!x; } /// error
+	a:=dup(y);
+	b:=dup(v);
+	return (measure(x),measure(w),measure(a),measure(b));
+}
+def consumedBefore(c:!𝔹){
+	if c { x:=H(H(1:𝔹)); y:=dup(x); } else { x:=H(H(0:𝔹)); y:=!x; } /// error
+	x:=X(x);
+	z:=dup(y);
+	return (measure(x),measure(z));
+}
+def differentTypes(c:!𝔹){
+	if c { x:=H(H(1:𝔹)); y:=dup(x); } else { x:=measure(H(0:𝔹)); y:=!x; } /// error
+	z:=dup(y);
+	return (measure(x),measure(z));
+}
+def updatedNotMerged(x:𝔹,c:!𝔹){
+	b:=dup(x);
+	if c { y:=dup(x); b⊕=x; } else { forget(b); x:=X(x); y:=dup(x); } /// error
+	z:=dup(y);
+	return (measure(x),measure(z));
+}
+def readOuterValue(x:𝔹,c:!𝔹){
+	b:=dup(x);
+	if c { y:=dup(x); y⊕=b; } else { forget(b); x:=X(x); y:=dup(x); } /// error
+	z:=dup(y);
+	return (measure(x),measure(z));
+}

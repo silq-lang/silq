@@ -3382,7 +3382,50 @@ class ScopeWriter {
 		return order;
 	}
 
-	void genMerge(CondAny cond, ScopeWriter if0, ScopeWriter if1) {
+	ast_decl.Declaration[] genEagerMerges(CondAny cond, ScopeWriter if0, ScopeWriter if1, size_t i1, size_t i2, size_t i3) { // (of the variables whose values merged after them depend on them instead of their versions in the branches, see `eagerIds` in `Scope.merge`: they are merged first, and the reads of those versions read the merged versions instead, see `interleaveBranches`)
+		auto bs0 = cast(ast_scope.BlockScope) if0.nscope, bs1 = cast(ast_scope.BlockScope) if1.nscope;
+		if(!bs0 || !bs1 || !bs0.eagerMerges.length && !bs1.eagerMerges.length) return null;
+		ast_decl.Declaration[] outers;
+		foreach(d; chain(bs1.eagerMerges, bs0.eagerMerges)) if(!outers.canFind(d)) outers ~= d;
+		static ast_decl.Declaration versionIn(ast_scope.NestedScope sc, ast_decl.Declaration outer) {
+			foreach(d; sc.mergedVars) if(d.mergedInto is outer) return d;
+			return null;
+		}
+		static QReg part(ScopeWriter w, ast_decl.Declaration d) {
+			auto p = d ? w.vars.getPtr(d.getId) : null;
+			return p && p.value ? p.value._qreg : null;
+		}
+		QReg[2][] parts;
+		QReg[] merged;
+		foreach(outer; outers) {
+			auto d0 = versionIn(bs0, outer), d1 = versionIn(bs1, outer);
+			assert(d0 && d1, format("Merged variable %s missing in a branch", outer.getId));
+			QReg[2] ps = [part(if0, d0), part(if1, d1)];
+			parts ~= ps;
+			auto ty = typeForDecl(outer);
+			auto r1 = if1.genSubtype(if1.getVar(d1, false), typeForDecl(d1), ty);
+			auto r0 = if0.genSubtype(if0.getVar(d0, false), typeForDecl(d0), ty);
+			auto val = valMerge(cond, r0, r1);
+			defineVar(outer, val);
+			merged ~= val._qreg;
+		}
+		auto code = ccg.code.code[];
+		foreach(b, rg; [[i2, i3], [i1, i2]]) foreach(k; rg[0] .. rg[1]) foreach(j, ps; parts) { // (reads of the versions of the branches after their last changes)
+			auto pr = ps[b];
+			if(!pr) continue;
+			if(code[k].qcArgs.canFind(pr)) {
+				code[k].qcArgs = code[k].qcArgs.dup;
+				foreach(ref a; code[k].qcArgs) if(a is pr) a = merged[j];
+			}
+			if(code[k].condQ.any!(c => c.reg is pr)) {
+				code[k].condQ = code[k].condQ.dup;
+				foreach(ref c; code[k].condQ) if(c.reg is pr) c.reg = merged[j];
+			}
+		}
+		return outers;
+	}
+
+	void genMerge(CondAny cond, ScopeWriter if0, ScopeWriter if1, ast_decl.Declaration[] merged = null) {
 		auto sc0 = if0.nscope;
 		auto sc1 = if1.nscope;
 
@@ -3407,6 +3450,7 @@ class ScopeWriter {
 		Triple[] triples;
 		foreach(id, t; mergedVars) {
 			assert(t.d0, format("Merged variable %s missing in if-false", id));
+			if(merged.canFind(t.outer)) continue; // (see `genEagerMerges`)
 			triples ~= t;
 		}
 		auto order = mergeOrder(triples.map!(t => t.outer).array, triples.map!(t => [typeForDecl(t.outer), typeForDecl(t.d1), typeForDecl(t.d0)]).array).map!(i => triples[i]);
@@ -5632,7 +5676,13 @@ class ScopeWriter {
 		Result rFalse = ifFalse.genCompoundStmt(e.othw);
 		auto i3 = cw.code[].length;
 		bool continues = rTrue.isReturn && rFalse.isPass || rFalse.isReturn && rTrue.isPass; // (with the code after the conditional, see `ItePartialReturn`)
-		if(e.then.blscope_.interleave && !continues) interleaveBranches(cw.code[], i0, i1, i2, i3);
+		ast_decl.Declaration[] eager;
+		if(rTrue.isPass && rFalse.isPass) {
+			scope loc = PushLocation(ctx, locEnd(e.loc));
+			eager = genEagerMerges(cond, ifFalse, ifTrue, i1, i2, i3);
+		}
+		if(eager.length) interleaveBranches(cw.code[], i0, i1, i2, i3, cw.code[].length);
+		else if(e.then.blscope_.interleave && !continues) interleaveBranches(cw.code[], i0, i1, i2, i3);
 		ItePartialReturn continuedBy(ItePartialReturn rv, int branch) {
 			if(e.then.blscope_.interleave) {
 				rv.interleave = [i0, i1, i2, i3];
@@ -5739,7 +5789,7 @@ class ScopeWriter {
 		assert(rTrue.isPass && rFalse.isPass);
 
 		scope loc = PushLocation(ctx, locEnd(e.loc));
-		genMerge(cond, ifFalse, ifTrue);
+		genMerge(cond, ifFalse, ifTrue, eager);
 		ifTrue.checkEmpty(false);
 		ifFalse.checkEmpty(false);
 		auto rv = new ItePass(cond);

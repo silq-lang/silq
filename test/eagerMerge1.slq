@@ -1,0 +1,85 @@
+// args: --run
+
+def classicalCondition(c:!𝔹){
+	if c { x:=H(H(1:𝔹)); y:=dup(x); } else { x:=H(H(0:𝔹)); y:=!x; }
+	z:=dup(y);
+	return (measure(x),measure(z));
+}
+def quantumCondition(const c:𝔹){
+	if c { x:=H(H(1:𝔹)); y:=dup(x); } else { x:=H(H(0:𝔹)); y:=!x; }
+	z:=dup(y);
+	return (measure(x),measure(z));
+}
+def update(c:!𝔹){
+	if c { x:=H(H(1:𝔹)); y:=0:𝔹; y⊕=x; } else { x:=H(H(0:𝔹)); y:=1:𝔹; y⊕=x; }
+	z:=dup(y);
+	return (measure(x),measure(z));
+}
+def explicitForget(c:!𝔹){
+	if c { x:=H(H(1:𝔹)); y:=dup(x); } else { x:=H(H(0:𝔹)); y:=!x; }
+	z:=dup(y);
+	forget(y);
+	return (measure(x),measure(z));
+}
+def knownInOther(c:!𝔹,const a:𝔹){
+	if c { x:=H(H(1:𝔹)); y:=dup(x); } else { x:=dup(a); y:=!x; }
+	z:=dup(y);
+	return (measure(x),measure(z));
+}
+def oneBranch(c:!𝔹){
+	x:=H(H(1:𝔹));
+	if c { x:=H(H(x)); y:=dup(x); } else { y:=!x; }
+	z:=dup(y);
+	return (measure(x),measure(z));
+}
+def nested(c:!𝔹,d:!𝔹){
+	if c { if d { x:=H(H(1:𝔹)); } else { x:=H(H(0:𝔹)); } y:=dup(x); } else { x:=H(H(0:𝔹)); y:=!x; }
+	z:=dup(y);
+	return (measure(x),measure(z));
+}
+def loopBody(n:!ℕ){
+	r:=0:!ℕ;
+	for i in 0..n {
+		if i%2==0 { x:=H(H(1:𝔹)); y:=dup(x); } else { x:=H(H(0:𝔹)); y:=!x; }
+		z:=dup(y);
+		r+=(measure(x) as !ℕ)*2+(measure(z) as !ℕ);
+	}
+	return r;
+}
+def consumedAfter(c:!𝔹){
+	if c { x:=H(H(1:𝔹)); y:=dup(x); } else { x:=H(H(0:𝔹)); y:=!x; }
+	z:=dup(y);
+	x:=X(x);
+	return (measure(x),measure(z));
+}
+def twoVariables(c:!𝔹){
+	if c { x:=H(H(1:𝔹)); w:=H(H(0:𝔹)); y:=dup(x); v:=!w; } else { w:=H(H(1:𝔹)); x:=H(H(0:𝔹)); v:=dup(w); y:=!x; }
+	a:=dup(y);
+	b:=dup(v);
+	return (measure(x),measure(w),measure(a),measure(b));
+}
+def tupleComponent(c:!𝔹){
+	if c { x:=(H(H(1:𝔹)),H(H(0:𝔹))); y:=dup(x[0]); } else { x:=(H(H(0:𝔹)),H(H(1:𝔹))); y:=!x[1]; }
+	z:=dup(y);
+	(a,b):=x;
+	return (measure(a),measure(b),measure(z));
+}
+def vectorComponent(c:!𝔹){
+	if c { x:=(H(H(1:𝔹)),H(H(1:𝔹))):𝔹^2; y:=dup(x[1]); } else { x:=(H(H(0:𝔹)),H(H(0:𝔹))):𝔹^2; y:=!x[0]; }
+	z:=dup(y);
+	return (measure(x),measure(z));
+}
+def g(c:!𝔹,x0:𝔹)mfree{
+	if c { x:=H(x0); y:=dup(x); } else { x:=X(H(x0)); y:=!x; }
+	z:=dup(y);
+	return (x,z);
+}
+def reversed(c:!𝔹,b:!𝔹){
+	x:=reverse(g)(c,g(c,b:𝔹));
+	return measure(x);
+}
+def main(){
+	r:=(classicalCondition(true),classicalCondition(false),quantumCondition(1:𝔹),quantumCondition(0:𝔹),update(true),update(false),explicitForget(true),explicitForget(false),knownInOther(true,0:𝔹),knownInOther(false,1:𝔹),oneBranch(true),oneBranch(false),nested(true,true),nested(true,false),nested(false,true),loopBody(3),consumedAfter(true),consumedAfter(false),twoVariables(true),twoVariables(false),tupleComponent(true),tupleComponent(false),vectorComponent(true),vectorComponent(false),reversed(true,false),reversed(false,true));
+	assert(r==((1,1),(0,1),(1,1),(0,1),(1,1),(0,1),(1,1),(0,1),(1,1),(1,0),(1,1),(1,0),(1,1),(0,0),(0,1),7,(0,1),(1,1),(1,0,1,1),(0,1,1,1),(1,0,1),(0,1,0),((1,1),1),((0,0),1),0,1));
+	return r;
+}
