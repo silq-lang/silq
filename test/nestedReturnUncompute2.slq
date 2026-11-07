@@ -1,0 +1,37 @@
+// args: --run
+
+def continuedOuter(a:𝔹,k:!𝔹,j:!𝔹){
+	b:=dup(a);
+	if k { if j { return (a,b); } c:=measure(dup(b)); a:=X(a); return (a,0:𝔹); } else { a:=X(a); }
+	return (a,0:𝔹);
+}
+def continuedOuterForget(x:𝔹,y:𝔹,c:!𝔹,d:!𝔹){
+	b:=dup(y);
+	x⊕=y;
+	if c { } else { x:=X(x); if d { return (x,y); } forget(b); return (x,y); }
+	if d { } else { x:=X(x); b⊕=x; }
+	return (x,y);
+}
+def returned(a:𝔹,k:!𝔹,j:!𝔹){
+	b:=dup(a);
+	if k { if j { return (a,b); } c:=measure(dup(b)); a:=X(a); }
+	return (a,b);
+}
+def constDependency(a:𝔹,const q:𝔹,k:!𝔹,j:!𝔹){
+	b:=dup(q);
+	if k { if j { return (a,b); } c:=measure(dup(b)); a:=X(a); }
+	return (a,0:𝔹);
+}
+def explicitForgetReturned(a:𝔹,q:𝔹,k:!𝔹,j:!𝔹){
+	b:=dup(q);
+	if k { if j { forget(b=dup(q)); return (a,dup(q),q); } c:=measure(dup(b)); a:=X(a); }
+	return (a,b,q);
+}
+def hadamardMeasure(x:𝔹,y:𝔹)⇒measure(H(x),H(y));
+def main(){
+	q:=1:𝔹;
+	r:=(measure(continuedOuter(0:𝔹,true,true)),measure(continuedOuter(0:𝔹,true,false)),measure(continuedOuter(0:𝔹,false,true)),hadamardMeasure(continuedOuterForget(H(0:𝔹),H(0:𝔹),false,false)),hadamardMeasure(continuedOuterForget(H(0:𝔹),H(0:𝔹),false,true)),hadamardMeasure(continuedOuterForget(H(0:𝔹),H(0:𝔹),true,false)),hadamardMeasure(continuedOuterForget(H(0:𝔹),H(0:𝔹),true,true)),measure(returned(0:𝔹,true,true)),measure(returned(0:𝔹,true,false)),measure(returned(1:𝔹,false,true)),measure(constDependency(0:𝔹,q,true,true)),measure(constDependency(0:𝔹,q,true,false)),measure(constDependency(1:𝔹,q,false,true)),measure(explicitForgetReturned(0:𝔹,1:𝔹,true,true)),measure(explicitForgetReturned(0:𝔹,1:𝔹,true,false)),measure(explicitForgetReturned(1:𝔹,0:𝔹,false,true)));
+	forget(q=1:𝔹);
+	assert(r==((0,0),(1,0),(1,0),(0,0),(0,0),(0,0),(0,0),(0,0),(1,0),(1,1),(0,1),(1,0),(1,0),(0,1,1),(1,1,1),(1,0,0)));
+	return r;
+}

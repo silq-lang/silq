@@ -1,0 +1,21 @@
+def returningOuter(a:𝔹,k:!𝔹,j:!𝔹){
+	b:=dup(a); /// TODO
+	if k { if j { return (a,b); } c:=measure(dup(b)); }
+	a:=X(a);
+	return (a,0:𝔹);
+}
+def elseConsumes(a:𝔹,k:!𝔹,j:!𝔹){
+	b:=dup(a); /// TODO
+	if k { if j { return (a,b); } c:=measure(dup(b)); a:=X(a); } else { a:=X(a); }
+	return (a,0:𝔹);
+}
+def elseReturns(a:𝔹,k:!𝔹,j:!𝔹){
+	b:=dup(a); /// TODO
+	if k { if j { return (a,b); } c:=measure(dup(b)); a:=X(a); } else { a:=X(a); return (a,0:𝔹); }
+	return (a,0:𝔹);
+}
+def explicitForget(a:𝔹,k:!𝔹,j:!𝔹){
+	b:=dup(a); /// TODO
+	if k { if j { forget(a=dup(b)); return (dup(b),b); } c:=measure(dup(b)); }
+	return (a,0:𝔹);
+}
