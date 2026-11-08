@@ -1,0 +1,50 @@
+// args: --run
+
+def g(q0:𝔹,q1:𝔹,q2:𝔹)mfree{
+	with { t:=dup(q0); } do { q1:=X(q1); }
+	with { t:=dup(q0); } do { if t { q2:=X(q2); } }
+	with { t:=dup(q0); } do { q1:=X(q1); }
+	with { t:=dup(q0); } do { if t { q2:=X(q2); } }
+	with { t:=dup(q0); } do { q1:=X(q1); }
+	with { t:=dup(q0); } do { if t { q2:=X(q2); } }
+	with { t:=dup(q0); } do { q1:=X(q1); }
+	with { t:=dup(q0); } do { if t { q2:=X(q2); } }
+	with { t:=dup(q0); } do { q1:=X(q1); }
+	with { t:=dup(q0); } do { if t { q2:=X(q2); } }
+	with { t:=dup(q0); } do { q1:=X(q1); }
+	with { t:=dup(q0); } do { if t { q2:=X(q2); } }
+	with { t:=dup(q0); } do { q1:=X(q1); }
+	with { t:=dup(q0); } do { if t { q2:=X(q2); } }
+	with { t:=dup(q0); } do { q1:=X(q1); }
+	with { t:=dup(q0); } do { if t { q2:=X(q2); } }
+	with { t:=dup(q0); } do { q1:=X(q1); }
+	with { t:=dup(q0); } do { if t { q2:=X(q2); } }
+	with { t:=dup(q0); } do { q1:=X(q1); }
+	with { t:=dup(q0); } do { if t { q2:=X(q2); } }
+	with { t:=dup(q0); } do { q1:=X(q1); }
+	with { t:=dup(q0); } do { if t { q2:=X(q2); } }
+	with { t:=dup(q0); } do { q1:=X(q1); }
+	with { t:=dup(q0); } do { if t { q2:=X(q2); } }
+	with { t:=dup(q0); } do { q1:=X(q1); }
+	with { t:=dup(q0); } do { if t { q2:=X(q2); } }
+	with { t:=dup(q0); } do { q1:=X(q1); }
+	with { t:=dup(q0); } do { if t { q2:=X(q2); } }
+	with { t:=dup(q0); } do { q1:=X(q1); }
+	with { t:=dup(q0); } do { if t { q2:=X(q2); } }
+	with { t:=dup(q0); } do { q1:=X(q1); }
+	with { t:=dup(q0); } do { if t { q2:=X(q2); } }
+	with { t:=dup(q0); } do { q1:=X(q1); }
+	with { t:=dup(q0); } do { if t { q2:=X(q2); } }
+	with { t:=dup(q0); } do { q1:=X(q1); }
+	with { t:=dup(q0); } do { if t { q2:=X(q2); } }
+	with { t:=dup(q0); } do { q1:=X(q1); }
+	with { t:=dup(q0); } do { if t { q2:=X(q2); } }
+	with { t:=dup(q0); } do { q1:=X(q1); }
+	with { t:=dup(q0); } do { if t { q2:=X(q2); } }
+	return (q0,q1,q2);
+}
+def main(){
+	r:=(measure(g(0:𝔹,0:𝔹,0:𝔹)),measure(g(1:𝔹,0:𝔹,0:𝔹)),measure(g(1:𝔹,1:𝔹,1:𝔹)),measure(g(0:𝔹,1:𝔹,0:𝔹)));
+	assert(r==((0,0,0),(1,0,0),(1,1,1),(0,1,0)));
+	return r;
+}
