@@ -1,0 +1,74 @@
+// args: --run
+
+def nestedThenUsed(x:𝔹,c:!𝔹,d:!𝔹){
+	o:=dup(x);
+	if c { if d { t:=dup(o); forget(t); x:=H(x); } else { t2:=dup(o); forget(t2); } } else { a:=measure(o); }
+	return x;
+}
+def nestedTwice(x:𝔹,c:!𝔹,d:!𝔹){
+	o:=dup(x);
+	if c { if d { if c { x:=H(x); } } else { t:=dup(o); forget(t); } } else { a:=measure(o); }
+	return x;
+}
+def bothNested(x:𝔹,c:!𝔹,d:!𝔹){
+	o:=dup(x);
+	if c { if d { x:=H(x); } else { t:=dup(o); forget(t); } } else { if d { a:=measure(o); } else { t2:=dup(o); forget(t2); } }
+	return x;
+}
+def copyUsedAfterMeasure(x:𝔹,c:!𝔹,d:!𝔹){
+	o:=dup(x);
+	p:=dup(o);
+	if c { a:=measure(p); x:=X(x); } else { if d { x:=X(x); } else { b:=measure(o); t:=dup(p); forget(t); } }
+	return x;
+}
+def copyForgotten(x:𝔹,c:!𝔹,d:!𝔹){
+	o:=dup(x);
+	p:=dup(o);
+	if c { a:=measure(p); x:=X(x); } else { if d { forget(p); x:=X(x); } else { b:=measure(o); t:=dup(p); forget(t); } }
+	return x;
+}
+def copyOfParameter(x:𝔹,c:!𝔹,d:!𝔹){
+	p:=dup(x);
+	if c { a:=measure(p); x:=X(x); } else { if d { x:=X(x); } else { t:=dup(p); forget(t); } }
+	return x;
+}
+def measuredAfterUpdate(x:𝔹,c:!𝔹,d:!𝔹){
+	o:=dup(x);
+	p:=X(dup(o));
+	if c { x:=X(x); a:=measure(p); x:=X(x); } else { if d { x:=X(x); b:=measure(p); } else { e:=measure(o); t:=dup(p); f:=measure(t); } }
+	return x;
+}
+def quantumInner(x:𝔹,c:!𝔹,const d:𝔹){
+	o:=dup(x);
+	if c { if d { t:=dup(o); forget(t); x:=H(x); } else { t2:=dup(o); forget(t2); } } else { a:=measure(o); }
+	return x;
+}
+def quantumInnerCopy(x:𝔹,c:!𝔹,const d:𝔹){
+	p:=dup(x);
+	if c { a:=measure(p); x:=X(x); } else { if d { x:=X(x); } else { t:=dup(p); forget(t); } }
+	return x;
+}
+def siblingReturn(x:𝔹,w:𝔹,c1:!𝔹,c2:!𝔹,c3:!𝔹,c4:!𝔹){
+	cp:=dup(w);
+	p:=dup(cp);
+	if c1 { if c2 { if c3 { m:=measure(p); } if c4 { return (x,w); } } }
+	return (x,w);
+}
+def siblingReturnMeasured(x:𝔹,w:𝔹,c1:!𝔹,c2:!𝔹,c3:!𝔹){
+	co:=dup(w);
+	o:=dup(co);
+	cp:=dup(o);
+	p:=dup(cp);
+	if c1 { if c2 { m1:=measure(p); m2:=measure(o,p); } else { if c3 { m3:=measure(p,x); x:=0:𝔹; } else { return (x,w); } } }
+	return (x,w);
+}
+def measuredPair(q:𝔹×𝔹,h:!𝔹){
+	(a,b):=q;
+	if h { a:=H(a); b:=H(b); }
+	return (measure(a),measure(b));
+}
+def main(){
+	r:=(measure(nestedThenUsed(H(0:𝔹),true,true)),measure(H(nestedThenUsed(H(0:𝔹),true,false))),measure(nestedThenUsed(1:𝔹,false,true)),measure(nestedThenUsed(0:𝔹,false,false)),measure(nestedTwice(H(0:𝔹),true,true)),measure(H(nestedTwice(H(0:𝔹),true,false))),measure(nestedTwice(1:𝔹,false,false)),measure(bothNested(H(0:𝔹),true,true)),measure(H(bothNested(H(0:𝔹),true,false))),measure(bothNested(1:𝔹,false,true)),measure(H(bothNested(H(0:𝔹),false,false))),measure(copyUsedAfterMeasure(1:𝔹,true,false)),measure(H(copyUsedAfterMeasure(H(0:𝔹),false,true))),measure(copyUsedAfterMeasure(1:𝔹,false,false)),measure(copyForgotten(0:𝔹,true,true)),measure(H(copyForgotten(H(0:𝔹),false,true))),measure(copyForgotten(0:𝔹,false,false)),measure(copyOfParameter(0:𝔹,true,false)),measure(H(copyOfParameter(H(0:𝔹),false,true))),measure(H(copyOfParameter(H(0:𝔹),false,false))),measure(measuredAfterUpdate(1:𝔹,true,true)),measure(measuredAfterUpdate(0:𝔹,false,true)),measure(measuredAfterUpdate(1:𝔹,false,false)),measure(quantumInner(H(0:𝔹),true,1:𝔹)),measure(H(quantumInner(H(0:𝔹),true,0:𝔹))),measure(quantumInner(1:𝔹,false,1:𝔹)),measure(quantumInnerCopy(0:𝔹,true,0:𝔹)),measure(H(quantumInnerCopy(H(0:𝔹),false,1:𝔹))),measure(H(quantumInnerCopy(H(0:𝔹),false,0:𝔹))),measuredPair(siblingReturn(H(0:𝔹),H(0:𝔹),false,false,false,false),true),measuredPair(siblingReturn(H(0:𝔹),H(0:𝔹),true,true,false,true),true),measuredPair(siblingReturn(H(0:𝔹),H(0:𝔹),true,false,false,false),true),measuredPair(siblingReturn(0:𝔹,1:𝔹,true,true,true,false),false),measuredPair(siblingReturnMeasured(H(0:𝔹),H(0:𝔹),false,false,false),true),measuredPair(siblingReturnMeasured(0:𝔹,1:𝔹,true,true,false),false),measuredPair(siblingReturnMeasured(1:𝔹,1:𝔹,true,false,true),false),measuredPair(siblingReturnMeasured(H(0:𝔹),H(0:𝔹),true,false,false),true));
+	assert(r==(0,0,1,0,0,0,1,0,0,1,0,0,0,1,1,0,0,1,0,0,1,1,1,0,0,1,1,0,0,(0,0),(0,0),(0,0),(0,1),(0,0),(0,1),(0,1),(0,0)));
+	return r;
+}

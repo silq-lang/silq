@@ -1,0 +1,24 @@
+// args: --run
+
+def main(){
+	x:=H(0:𝔹);
+	w:=H(0:𝔹);
+	co:=dup(w);
+	o:=dup(co);
+	cp:=dup(o);
+	p:=dup(cp);
+	if measure(H(0:𝔹)) {
+		if measure(H(0:𝔹)) {
+			m1:=measure(p);
+			m2:=measure(o,p);
+		} else {
+			if measure(H(0:𝔹)) {
+				m3:=measure(p,x);
+				x:=H(0:𝔹);
+			} else {
+				return (x,w);
+			}
+		}
+	}
+	return (x,w);
+}
