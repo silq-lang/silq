@@ -1,0 +1,26 @@
+// args: --run
+
+def width(n:!ℕ)qfree:*⇒uint[n];
+def coin(x:𝔹):*{
+	if measure(x) { return !ℕ; }
+	return !𝔹;
+}
+def main(){
+	a:=0:𝔹;
+	a:=H(a);
+	t:=uint[1+measure(H(0:𝔹)) as !ℕ];
+	x:=1:t;
+	a:=H(a);
+	(b,c):=(a,x);
+	u:=dup(t);
+	v:=width(2+measure(H(0:𝔹)) as !ℕ);
+	w:=coin(H(0:𝔹));
+	p:=measure(H(0:𝔹));
+	d:=X(b);
+	y:=0:u;
+	e:=measure(d);
+	k:=measure(c+y) as !ℕ;
+	r:=(e,k);
+	assert(r==(1,1));
+	return r;
+}

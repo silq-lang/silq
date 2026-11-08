@@ -1,0 +1,24 @@
+// args: --run
+
+def idt[τ:*](x:τ)qfree:τ⇒x;
+def main(){
+	k:=2;
+	q:=H(0:𝔹);
+	n:=k+1;
+	m:=measure(H(0:𝔹));
+	g:=measure(H(0:𝔹)) as !ℕ;
+	c:=dup(q);
+	t:=uint[n+measure(H(0:𝔹)) as !ℕ];
+	e:=n=3;
+	w:=-k;
+	y:=idt(q);
+	u:=idt(uint[1+measure(H(0:𝔹)) as !ℕ]);
+	s:=t;
+	x:=0:s;
+	b:=¬m∨e;
+	forget(c=y);
+	d:=(measure(x) as !ℕ)+n;
+	r:=(measure(H(y)),d,w,b);
+	assert(r==(false,3,-2,true));
+	return r;
+}

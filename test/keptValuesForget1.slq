@@ -1,0 +1,27 @@
+// args: --run
+
+def f(q0:𝔹,q1:𝔹,c:!𝔹){
+	m0:=0;
+	q0:=H(q0);
+	t0:=dup(q0);
+	m1:=measure(H(0:𝔹));
+	q1:=X(q1);
+	t1:=dup(q1);
+	q0:=H(q0);
+	if c { q1:=X(q1); }
+	m2:=2;
+	t2:=dup(q0);
+	q1:=H(q1);
+	m3:=measure(t2);
+	q1:=H(q1);
+	t3:=dup(q1);
+	if c { m4:=3; q0:=X(q0); } else { t4:=dup(q1); }
+	m5:=5;
+	q0:=X(q0);
+	return (q0,q1);
+}
+def main(){
+	r:=(measure(f(0:𝔹,0:𝔹,false)),measure(f(0:𝔹,1:𝔹,false)),measure(f(1:𝔹,0:𝔹,true)),measure(f(1:𝔹,1:𝔹,true)));
+	assert(r==((1,1),(1,0),(1,0),(1,1)));
+	return r;
+}
