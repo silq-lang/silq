@@ -1,0 +1,20 @@
+// args: --run
+
+def withLoop(k:!ℕ){
+	a0:=dup(k); a1:=dup(k); a2:=dup(k); a3:=dup(k); a4:=dup(k); a5:=dup(k); a6:=dup(k); a7:=dup(k);
+	a8:=dup(k); a9:=dup(k); a10:=dup(k); a11:=dup(k); a12:=dup(k); a13:=dup(k); a14:=dup(k); a15:=dup(k);
+	a16:=dup(k); a17:=dup(k); a18:=dup(k); a19:=dup(k); a20:=dup(k); a21:=dup(k); a22:=dup(k); a23:=dup(k);
+	a24:=dup(k); a25:=dup(k); a26:=dup(k); a27:=dup(k); a28:=dup(k); a29:=dup(k); a30:=dup(k); a31:=dup(k);
+	a32:=dup(k); a33:=dup(k); a34:=dup(k); a35:=dup(k); a36:=dup(k); a37:=dup(k); a38:=dup(k); a39:=dup(k);
+	a40:=dup(k); a41:=dup(k); a42:=dup(k); a43:=dup(k); a44:=dup(k); a45:=dup(k); a46:=dup(k); a47:=dup(k);
+	a48:=dup(k); a49:=dup(k); a50:=dup(k); a51:=dup(k); a52:=dup(k); a53:=dup(k); a54:=dup(k); a55:=dup(k);
+	a56:=dup(k); a57:=dup(k); a58:=dup(k); a59:=dup(k); a60:=dup(k); a61:=dup(k); a62:=dup(k); a63:=dup(k);
+	q:=0:𝔹; x:=(0:!𝔹,0:𝔹);
+	with { c1:=x[1]; } do { repeat 1 { c1:=X(c1); with { c2:=x[0]; } do { c2:=X(c2); } } }
+	return (measure(q),measure(x),a0+a63);
+}
+def main(){
+	r:=withLoop(1);
+	assert(r==(0,(1,1),2));
+	return r;
+}

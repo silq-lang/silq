@@ -1,0 +1,22 @@
+// args: --run
+
+def afterDoWhile(n:!ℕ){
+	a0:=dup(n); a1:=dup(n); a2:=dup(n); a3:=dup(n); a4:=dup(n); a5:=dup(n); a6:=dup(n); a7:=dup(n);
+	a8:=dup(n); a9:=dup(n); a10:=dup(n); a11:=dup(n); a12:=dup(n); a13:=dup(n); a14:=dup(n); a15:=dup(n);
+	a16:=dup(n); a17:=dup(n); a18:=dup(n); a19:=dup(n); a20:=dup(n); a21:=dup(n); a22:=dup(n); a23:=dup(n);
+	a24:=dup(n); a25:=dup(n); a26:=dup(n); a27:=dup(n); a28:=dup(n); a29:=dup(n); a30:=dup(n); a31:=dup(n);
+	a32:=dup(n); a33:=dup(n); a34:=dup(n); a35:=dup(n); a36:=dup(n); a37:=dup(n); a38:=dup(n); a39:=dup(n);
+	a40:=dup(n); a41:=dup(n); a42:=dup(n); a43:=dup(n); a44:=dup(n); a45:=dup(n); a46:=dup(n); a47:=dup(n);
+	a48:=dup(n); a49:=dup(n); a50:=dup(n); a51:=dup(n); a52:=dup(n); a53:=dup(n); a54:=dup(n); a55:=dup(n);
+	a56:=dup(n); a57:=dup(n); a58:=dup(n); a59:=dup(n); a60:=dup(n); a61:=dup(n); a62:=dup(n); a63:=dup(n);
+	t:=dup(n);
+	k:=0;
+	do{ k+=1; x:=vector(t,0:!𝔹); }while k<2;
+	forget(t);
+	return k+a0+a63;
+}
+def main(){
+	r:=afterDoWhile(1);
+	assert(r==4);
+	return r;
+}
