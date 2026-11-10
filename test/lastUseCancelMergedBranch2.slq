@@ -1,0 +1,6 @@
+def f(x:𝔹,c:!𝔹,d:!𝔹,e:!𝔹){
+	v0:=dup(x);
+	v1:=dup(v0); /// TODO
+	if c { if d { if e { m1:=measure(v1); } else { } } else { x:=X(x); } } else { m2:=measure(v0); }
+	return x;
+}
