@@ -1,0 +1,16 @@
+// args: --run
+
+def f(n:!ℕ){
+	x:=[0:𝔹];
+	for i in 0..n{
+		x=[0:𝔹,0:𝔹];
+		x=[X(0:𝔹),0:𝔹];
+		x[1]:=X(x[1]);
+	}
+	return measure(x);
+}
+def main(){
+	r:=(f(0),f(1),f(3));
+	assert(r==([0],[1,1],[1,1]));
+	return r;
+}

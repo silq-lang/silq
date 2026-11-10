@@ -976,13 +976,14 @@ struct QState{
 			}
 		}
 		void assign(ref QState state,Value rhs){
-			if(!type){ this=rhs; return; }
+			if(!type){ this=rhs.toVar(state,false); return; }
 			if(isClassical()){
 				if(rhs.isClassical) this=rhs;
 				else this=rhs.toVar(state,false);
 				return;
 			}
 			if(rhs.isClassical()||tag!=rhs.tag){
+				rhs=rhs.toVar(state,false);
 				forget(state);
 				this=rhs;
 				return;
@@ -1009,6 +1010,7 @@ struct QState{
 								array_[i].assign(state,rhs.array_[i]);
 						this.type=rhs.type;
 					}else{
+						rhs=rhs.toVar(state,false);
 						forget(state);
 						this=rhs;
 					}
@@ -1023,6 +1025,7 @@ struct QState{
 						foreach(k,ref v;record) v.assign(state,rhs.record[k]);
 						this.type=rhs.type;
 					}else{
+						rhs=rhs.toVar(state,false);
 						forget(state);
 						this=rhs;
 					}
