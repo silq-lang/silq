@@ -146,6 +146,7 @@ private static ast_lex.Location locEnd(ast_lex.Location loc) {
 final class CReg {
 	string name;
 	immutable size_t index;
+	bool unreachable; // (defined under a condition that never holds, see `CodeWriter.writeOp`: a merge ignores it, see `ScopeWriter.valMerge`)
 
 	this() scope @safe {
 		this.index = regCtr++;
@@ -2890,22 +2891,24 @@ class ScopeWriter {
 	Value valMerge(CondAny cond, Value v0, Value v1) {
 		assert(cond.isQuantum?!!cond.qreg:!!cond.creg);
 		CReg creg = null;
-		if(v0.creg || v1.creg) {
-			if(v0.creg !is v1.creg) {
+		CReg r0 = v0.creg && !v0.creg.unreachable ? v0.creg : null; // (the code that defines it is unreachable, e.g., after `if true { return 0; }`)
+		CReg r1 = v1.creg && !v1.creg.unreachable ? v1.creg : null;
+		if(r0 || r1) {
+			if(r0 !is r1) {
 				if(cond.isQuantum) { // (classical values do not depend on quantum conditions, e.g., the registers of two values of `⊥[]` hold the same value)
-					creg = v0.creg ? v0.creg : v1.creg; // (if a branch has no register, it is unreachable)
-				} else if(!v0.creg) {
-					creg = ccg.removeCond(cond.ccond, v1.creg); // (the other branch is unreachable)
-				} else if(!v1.creg) {
-					creg = ccg.removeCond(cond.ccond.invert(), v0.creg);
+					creg = r0 ? r0 : r1; // (if a branch has no register, it is unreachable)
+				} else if(!r0) {
+					creg = ccg.removeCond(cond.ccond, r1); // (the other branch is unreachable)
+				} else if(!r1) {
+					creg = ccg.removeCond(cond.ccond.invert(), r0);
 				} else {
-					CReg c0 = v0.creg;
-					CReg c1 = v1.creg;
+					CReg c0 = r0;
+					CReg c1 = r1;
 					if(!cond.value) swap(c0, c1);
 					creg = ccg.cond(cond.creg, c0, c1);
 				}
 			} else {
-				creg = v0.creg;
+				creg = r0;
 				if(cond.isClassical) creg = ccg.removeCond(cond.ccond.invert(), ccg.removeCond(cond.ccond, creg)); // (a register of one branch may stand in for the unreachable other one)
 			}
 		}
@@ -8534,7 +8537,10 @@ class CodeWriter {
 	void writeOp(CondC[] condC, CondQ[] condQ, string op, CReg[] cRet, QReg[] qRet, CReg[] cArgs, QReg[] qcArgs, QReg[] qiArgs) {
 		cArgs = fixCNull(cArgs, 0);
 		cRet = fixCNull(cRet, -1);
-		if(condC.any!(c => ctx.condNeverHolds(c))) return;
+		if(condC.any!(c => ctx.condNeverHolds(c))) {
+			foreach(r; cRet) if(r !is ctx.nullReg) r.unreachable = true;
+			return;
+		}
 		if(condC.length) foreach(r; cRet) cregConds[r] = condC;
 		code.put(IrStatement(condC, condQ, op, cRet, qRet, cArgs, qcArgs, qiArgs, ctx.curLoc.loc));
 	}

@@ -1,0 +1,23 @@
+// args: --run
+
+def f(c:!ℕ){
+	b:=c+1;
+	if c==0 { if true { return 0; } b+=1; }
+	return b;
+}
+def g(c:!ℕ,x:𝔹){
+	b:=c+1;
+	if c==0 { if false { } else { return (x,0); } x:=H(x); b+=1; } else { b+=2; }
+	return (x,b);
+}
+def h(c:!ℕ,k:!𝔹){
+	b:=c;
+	t:=k||true;
+	if c<2 { if t { return b+10; } b*=2; }
+	return b;
+}
+def main(){
+	r:=(f(0),f(1),measure(g(0,1:𝔹)),measure(g(1,1:𝔹)),h(0,false),h(1,true),h(5,false));
+	assert(r==(0,2,(1,0),(1,4),10,11,5));
+	return r;
+}
