@@ -1,0 +1,19 @@
+// args: --run
+
+def f(c:!ℕ,k:!𝔹,x:𝔹){
+	a:=c+1;
+	b:=a*a;
+	if c==0 {
+		if k { return (x,b); }
+		b+=1;
+	}
+	if c==1 { x:=X(x); return (x,a); a:=2; b:=a; }
+	s:=a+b;
+	if c==2 { return (x,s); }
+	return (x,s+b);
+}
+def main(){
+	r:=(measure(f(0,true,1:𝔹)),measure(f(0,false,1:𝔹)),measure(f(1,true,0:𝔹)),measure(f(2,true,1:𝔹)),measure(f(3,false,0:𝔹)));
+	assert(r==((1,1),(1,5),(1,2),(1,12),(0,36)));
+	return r;
+}
