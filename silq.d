@@ -12,7 +12,7 @@ import options, ast.scope_, ast.modules, ast.summarize;
 import hqir=hqir;
 import lsp=lsp;
 
-extern(C) __gshared string[] rt_options=["gcopt=cleanup:none"]; // skip gc at program exit
+extern(C) __gshared string[] rt_options=["gcopt=cleanup:none minPoolSize:64"]; // skip gc at program exit; large pools: fewer collections
 
 static this(){
 	astopt.importPath ~= buildPath(dirName(file.thisExePath),"library");
