@@ -1,0 +1,31 @@
+// args: --run
+
+def unmerged(x:𝔹,y:𝔹,const c:𝔹)mfree{
+	b:=dup(y);
+	if c { b⊕=x; } else { y:=X(y); x:=X(x); }
+	return (x,y);
+}
+def measured(x:𝔹,y:𝔹,const c:𝔹){
+	b:=dup(y);
+	z:=dup(y);
+	if c { b⊕=x; z⊕=x; } else { y:=X(y); x:=X(x); }
+	m:=measure(b);
+	return (x,y,m);
+}
+def measuredRead(x:𝔹,y:𝔹,const c:𝔹){
+	b:=dup(y);
+	z:=dup(y);
+	if c { b⊕=x; z⊕=x; } else { y:=X(y); x⊕=y; }
+	m:=measure(b);
+	return (x,y,m);
+}
+def unmergedRead(x:𝔹,y:𝔹,const c:𝔹)mfree{
+	b:=dup(y);
+	if c { b⊕=x; } else { y:=X(y); x⊕=y; }
+	return (x,y);
+}
+def main(){
+	r:=(measure(unmerged(1:𝔹,0:𝔹,1:𝔹)),measure(unmerged(1:𝔹,0:𝔹,0:𝔹)),measure(measured(1:𝔹,0:𝔹,1:𝔹)),measure(measured(1:𝔹,0:𝔹,0:𝔹)),measure(measuredRead(1:𝔹,0:𝔹,0:𝔹)),measure(measuredRead(0:𝔹,1:𝔹,0:𝔹)),measure(unmergedRead(1:𝔹,0:𝔹,0:𝔹)),measure(unmergedRead(0:𝔹,0:𝔹,0:𝔹)),measure(unmergedRead(1:𝔹,1:𝔹,1:𝔹)));
+	assert(r==((1,0),(0,1),(1,0,1),(0,1,0),(0,1,0),(0,0,1),(0,1),(1,1),(1,1)));
+	return r;
+}

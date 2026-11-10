@@ -1,0 +1,12 @@
+// args: --run
+
+def f(x:𝔹,y:𝔹,const c:𝔹,const d:𝔹)mfree{
+	b:=dup(x);
+	if c { if d { b:=X(b); } else {  } y:=X(y); b⊕=y; if d { b:=X(b); } else { y:=X(y); } } else { b:=X(b); }
+	return (x,y);
+}
+def main(){
+	r:=(measure(f(0:𝔹,0:𝔹,1:𝔹,1:𝔹)),measure(f(0:𝔹,0:𝔹,1:𝔹,0:𝔹)),measure(f(1:𝔹,1:𝔹,0:𝔹,1:𝔹)),measure(f(1:𝔹,0:𝔹,1:𝔹,1:𝔹)));
+	assert(r==((0,1),(0,0),(1,1),(1,1)));
+	return r;
+}

@@ -3413,16 +3413,25 @@ class ScopeWriter {
 			merged ~= val._qreg;
 		}
 		auto code = ccg.code.code[];
-		foreach(b, rg; [[i2, i3], [i1, i2]]) foreach(k; rg[0] .. rg[1]) foreach(j, ps; parts) { // (reads of the versions of the branches after their last changes)
-			auto pr = ps[b];
-			if(!pr) continue;
-			if(code[k].qcArgs.canFind(pr)) {
-				code[k].qcArgs = code[k].qcArgs.dup;
-				foreach(ref a; code[k].qcArgs) if(a is pr) a = merged[j];
-			}
-			if(code[k].condQ.any!(c => c.reg is pr)) {
-				code[k].condQ = code[k].condQ.dup;
-				foreach(ref c; code[k].condQ) if(c.reg is pr) c.reg = merged[j];
+		foreach(b, rg; [[i2, i3], [i1, i2]]) {
+			MapX!(QReg, Unit) feeds; // (the registers that the merged versions of the branch are computed from: only those computations read the merged versions, the others read the versions of the branch, e.g., the values that the branch forgets)
+			foreach(d; (b ? bs1 : bs0).mergedVars) if(auto r = part(b ? if1 : if0, d)) feeds[r] = unit;
+			foreach_reverse(k; rg[0] .. rg[1]) {
+				if(!code[k].qRet.any!(r => r && r in feeds)) continue;
+				foreach(r; chain(code[k].qcArgs, code[k].qiArgs)) if(r) feeds[r] = unit;
+				foreach(c; code[k].condQ) if(c.reg) feeds[c.reg] = unit;
+				foreach(j, ps; parts) { // (reads of the versions of the branches after their last changes)
+					auto pr = ps[b];
+					if(!pr) continue;
+					if(code[k].qcArgs.canFind(pr)) {
+						code[k].qcArgs = code[k].qcArgs.dup;
+						foreach(ref a; code[k].qcArgs) if(a is pr) a = merged[j];
+					}
+					if(code[k].condQ.any!(c => c.reg is pr)) {
+						code[k].condQ = code[k].condQ.dup;
+						foreach(ref c; code[k].condQ) if(c.reg is pr) c.reg = merged[j];
+					}
+				}
 			}
 		}
 		return outers;
@@ -4488,7 +4497,7 @@ class ScopeWriter {
 		auto i2 = cw.code[].length;
 		auto rFalse = ifFalse.genCompoundValue(e.othw, null, e.type);
 		auto abortTrue = ifTrue.pendingAbort, abortFalse = ifFalse.pendingAbort; // (a `let` within a branch aborts)
-		if(scThen && scThen.interleave) interleaveBranches(cw.code[], i0, i1, i2, cw.code[].length);
+		if(scThen && scThen.interleave) interleaveBranches(cw, i0, i1, i2, cw.code[].length);
 		if(abortTrue && abortFalse || cond.isQuantum && (abortTrue || abortFalse)) { // (classical code under quantum control runs regardless of the condition)
 			ifTrue.valDeallocError(rTrue);
 			ifFalse.valDeallocError(rFalse);
@@ -5596,7 +5605,7 @@ class ScopeWriter {
 					}
 
 					auto contRet = scTail.genStmts(stmts[i+1..$], result);
-					if(rv.interleave.length) interleaveBranches(ccg.code.code[], rv.interleave[0], rv.interleave[1], rv.interleave[2], rv.interleave[3], ccg.code.code[].length, rv.continued);
+					if(rv.interleave.length) interleaveBranches(ccg.code, rv.interleave[0], rv.interleave[1], rv.interleave[2], rv.interleave[3], ccg.code.code[].length, rv.continued);
 					if(contRet.isAbort && rv.retCond.condQ) {
 						return combineResults(Result.conditionallyReturns(rv.value, rv.retCond), contRet, scTail);
 					}
@@ -5684,8 +5693,8 @@ class ScopeWriter {
 			scope loc = PushLocation(ctx, locEnd(e.loc));
 			eager = genEagerMerges(cond, ifFalse, ifTrue, i1, i2, i3);
 		}
-		if(eager.length) interleaveBranches(cw.code[], i0, i1, i2, i3, cw.code[].length);
-		else if(e.then.blscope_.interleave && !continues) interleaveBranches(cw.code[], i0, i1, i2, i3);
+		if(eager.length) interleaveBranches(cw, i0, i1, i2, i3, cw.code[].length);
+		else if(e.then.blscope_.interleave && !continues) interleaveBranches(cw, i0, i1, i2, i3);
 		ItePartialReturn continuedBy(ItePartialReturn rv, int branch) {
 			if(e.then.blscope_.interleave) {
 				rv.interleave = [i0, i1, i2, i3];
@@ -8281,13 +8290,18 @@ struct IrStatement {
 	}
 }
 
-void interleaveBranches(IrStatement[] code, size_t i0, size_t i1, size_t i2, size_t i3, size_t i4 = size_t.max, int continued = 0) { // (of a conditional whose branches recompute values from versions of variables from before their splits, see `checkBranchOrder`: such a split comes after those uncomputations, and statements before it read the register that it splits; the code after the conditional up to `i4` belongs to the branch `continued`, as the other one returns, see `ItePartialReturn`)
+void interleaveBranches(CodeWriter cw, size_t i0, size_t i1, size_t i2, size_t i3, size_t i4 = size_t.max, int continued = 0) { // (of a conditional whose branches recompute values from versions of variables from before their splits, see `checkBranchOrder`: such a split comes after those uncomputations, and statements before it read the register that it splits; the code after the conditional up to `i4` belongs to the branch `continued`, as the other one returns, see `ItePartialReturn`)
 	import std.algorithm: max;
 	import std.string: indexOf;
 	import std.container.rbtree: redBlackTree;
 	import util.tuple: Q = Tuple, q = tuple;
 	enum none = size_t.max;
 	if(i4 == none) i4 = i3;
+	auto code = cw.code[];
+	if(cw.numIndexed < i4) {
+		cw.index(cw.numIndexed, i4);
+		cw.numIndexed = i4;
+	}
 	auto items = code[i0 .. i4].dup;
 	auto n = items.length;
 	static string base(string op) { auto i = op.indexOf('['); return i < 0 ? op : op[0 .. i]; }
@@ -8295,23 +8309,20 @@ void interleaveBranches(IrStatement[] code, size_t i0, size_t i1, size_t i2, siz
 	size_t branchOf(size_t k) { return k < i1 - i0 ? 0 : k < i2 - i0 ? 1 : k < i3 - i0 ? 2 : continued; }
 	bool isSplit(size_t k) { return k != none && branchOf(k) == 0 && [opCSplit, opQSplit].canFind(base(items[k].op)); }
 	size_t item(size_t k) { return k != none && k >= i0 && k < i4 ? k - i0 : none; }
-	MapX!(QReg, size_t) prod, cons; // (in `code`)
+	size_t prodAt(QReg r) { auto k = cw.producedAt.get(r, uint.max); return k == uint.max ? none : k; } // (in `code`)
+	size_t consAt(QReg r) { auto k = cw.consumedAt.get(r, uint.max); return k == uint.max ? none : k; }
 	MapX!(CReg, size_t) cprod;
-	foreach(k, ref s; code[0 .. i4]) {
-		foreach(r; s.qRet) if(r) prod[r] = k;
-		foreach(r; s.qiArgs) if(r) cons[r] = k;
-		foreach(r; s.cRet) if(r) cprod[r] = k;
-	}
+	foreach(k, ref s; items) foreach(r; s.cRet) if(r) cprod[r] = i0 + k;
 	auto edges = new size_t[][](n);
 	void edge(size_t a, size_t b) { if(a != none && b != none && a != b) edges[a] ~= b; }
 	MapX!(QReg, size_t[]) readers;
 	MapX!(QReg, size_t) forgetItem;
 	Q!(size_t, size_t, QReg)[] partReads; // (statement, split, part)
 	foreach(k, ref s; items) {
-		foreach(r; s.qiArgs) if(r) edge(item(prod.get(r, none)), k);
+		foreach(r; s.qiArgs) if(r) edge(item(prodAt(r)), k);
 		void read(QReg r) {
 			if(!r) return;
-			auto p = item(prod.get(r, none));
+			auto p = item(prodAt(r));
 			if(isSplit(p)) partReads ~= q(k, p, r);
 			else edge(p, k);
 			readers[r] = readers.get(r, null) ~ k;
@@ -8323,10 +8334,10 @@ void interleaveBranches(IrStatement[] code, size_t i0, size_t i1, size_t i2, siz
 		if(s.op == opForget && branchOf(k) != 0) foreach(r; s.qiArgs) if(r) forgetItem[r] = k;
 	}
 	foreach(k, ref s; items) foreach(r; s.qiArgs) if(r) foreach(j; readers.get(r, null)) edge(j, k); // (reads come before the consumption)
-	foreach(b; 1 .. 3) { // (each branch in program order, except for the uncomputations, which the backend places after the last uses, and the splits and merges of nested conditionals, which only route the values that their branches use)
+	foreach(b; 1 .. 3) { // (each branch in program order, except for the computations of quantum values, which only depend on their arguments, the uncomputations, which the backend places after the last uses, and the splits and merges of nested conditionals, which only route the values that their branches use)
 		auto prev = none;
 		foreach(k; 0 .. n) {
-			if(branchOf(k) != b || items[k].op == opForget || [opCSplit, opQSplit, opCMerge, opQMerge].canFind(base(items[k].op))) continue;
+			if(branchOf(k) != b || items[k].op == opForget || [opCSplit, opQSplit, opCMerge, opQMerge, "qfree_call", "qfree_call_rev", "mfree_call", "mfree_call_rev"].canFind(base(items[k].op))) continue;
 			edge(prev, k);
 			prev = k;
 		}
@@ -8348,7 +8359,7 @@ void interleaveBranches(IrStatement[] code, size_t i0, size_t i1, size_t i2, siz
 		auto result = none;
 		foreach(r; code[k].qRet) {
 			if(!r) continue;
-			auto c = cons.get(r, none);
+			auto c = consAt(r);
 			if(isSplit(item(c))) return item(c);
 			auto s = c == none || c >= i0 ? outer : splitOfPart(c, depth + 1);
 			if(s != none && s != outer) return s;
@@ -8360,7 +8371,7 @@ void interleaveBranches(IrStatement[] code, size_t i0, size_t i1, size_t i2, siz
 	size_t[] places(QReg r, int depth) { // (the statements after which the backend uncomputes `r`: its definition, its uses, and the uncomputations of the forgotten values computed from it)
 		if(r in placeMemo) return placeMemo.get(r, null);
 		size_t[] result;
-		auto p = item(prod.get(r, none));
+		auto p = item(prodAt(r));
 		if(p != none) result ~= p;
 		placeMemo[r] = result;
 		foreach(j; readers.get(r, null)) {
@@ -8370,13 +8381,13 @@ void interleaveBranches(IrStatement[] code, size_t i0, size_t i1, size_t i2, siz
 		placeMemo[r] = result;
 		return result;
 	}
-	Q!(size_t[], size_t)[] needs; // (statements that come before a split)
+	Q!(size_t[], size_t)[] needs; // (statements that come before a split or another consumption)
 	Q!(size_t, size_t, size_t[])[] through; // (if the statement reads the register that the split splits, also these statements)
 	foreach(f; 0 .. n) {
 		if(items[f].op != opForget || branchOf(f) == 0) continue;
 		foreach(r; items[f].qiArgs) {
 			if(!r) continue;
-			auto P = places(r, 0);
+			auto uses = places(r, 0), P = uses;
 			auto maxP = none;
 			foreach(k; P) if(branchOf(k) == branchOf(f)) maxP = maxP == none ? k : max(maxP, k);
 			if(maxP != none) P ~= f;
@@ -8386,16 +8397,18 @@ void interleaveBranches(IrStatement[] code, size_t i0, size_t i1, size_t i2, siz
 				todo = todo[0 .. $ - 1];
 				if(y in uncomputedAfter) continue;
 				uncomputedAfter[y] = unit;
-				auto p = item(prod.get(y, none));
+				auto p = item(prodAt(y));
 				if(p == none || y !in forgetItem) continue;
 				foreach(x; items[p].qcArgs) if(x) todo ~= x;
 				foreach(cq; items[p].condQ) if(cq.reg) todo ~= cq.reg;
 			}
 			size_t steps = 0;
-			bool need(QReg x, size_t via, int depth, ref Q!(size_t[], size_t)[] ns, ref Q!(size_t, size_t, size_t[])[] ts) { // (as the backend recomputes `r`, from `x` if it is still available there or else from what its computation read; `via`: the statement that reads `x`)
-				if(!x) return true;
-				if(depth > 300 || ++steps > 100_000) return false;
-				auto pk = prod.get(x, none), ck = cons.get(x, none);
+			enum Need { no, yes, deferred } // (`deferred`: if the split of an enclosing conditional comes after the uncomputation, which only orders it so if it interleaves its branches, see `splitOfPart`)
+			static Need both(Need a, Need b) { return a == Need.no || b == Need.no ? Need.no : a == Need.deferred || b == Need.deferred ? Need.deferred : Need.yes; }
+			Need need(QReg x, size_t via, int depth, ref Q!(size_t[], size_t)[] ns, ref Q!(size_t, size_t, size_t[])[] ts) { // (as the backend recomputes `r`, from `x` if it is still available there or else from what its computation read; `via`: the statement that reads `x`)
+				if(!x) return Need.yes;
+				if(depth > 300 || ++steps > 100_000) return Need.no;
+				auto pk = prodAt(x), ck = consAt(x);
 				auto p = item(pk), c = item(ck);
 				bool unavailable, split = false, deferred = false; // (`split`: available if the split of the conditional comes after the uncomputation; `deferred`: if the split of an enclosing conditional does, which orders it so)
 				if(ck != none && ck < i0) {
@@ -8412,32 +8425,41 @@ void interleaveBranches(IrStatement[] code, size_t i0, size_t i1, size_t i2, siz
 					unavailable = true;
 					split = !reaches(c, k => P.canFind(k));
 				} else if(items[c].op == opForget) unavailable = branchOf(c) == branchOf(f) && x !in uncomputedAfter; // (otherwise, the backend may uncompute `x` before `r`, after its own last use)
-				else unavailable = branchOf(c) == branchOf(f) && maxP != none && c <= maxP;
+				else if(branchOf(c) == branchOf(f) && maxP != none || c >= i3 - i0 && branchOf(c) == 0) { // (in the branch, or by an eager merge, see `genEagerMerges`)
+					if(branchOf(c) != 0 && c <= maxP || reaches(c, k => uses.canFind(k))) unavailable = true;
+					else ns ~= q(uses, c); // (consumed after the uncomputation)
+				}
 				if(!unavailable) {
 					if(isSplit(p) && via != none) ts ~= q(via, p, P);
-					return true;
+					return Need.yes;
 				}
 				Q!(size_t[], size_t)[] subNs;
 				Q!(size_t, size_t, size_t[])[] subTs;
-				bool ok = pk != none && qfree(code[pk].op);
-				if(ok) foreach(y; code[pk].qiArgs) ok = ok && need(y, none, depth + 1, subNs, subTs);
-				if(ok) foreach(y; code[pk].qcArgs) ok = ok && need(y, item(pk), depth + 1, subNs, subTs);
-				if(ok) foreach(cq; code[pk].condQ) ok = ok && need(cq.reg, item(pk), depth + 1, subNs, subTs);
-				if(ok) { // (recomputed, as the dependency in the frontend)
+				auto rec = pk != none && qfree(code[pk].op) ? Need.yes : Need.no;
+				if(rec != Need.no) foreach(y; code[pk].qiArgs) if(rec != Need.no) rec = both(rec, need(y, none, depth + 1, subNs, subTs));
+				if(rec != Need.no) foreach(y; code[pk].qcArgs) if(rec != Need.no) rec = both(rec, need(y, item(pk), depth + 1, subNs, subTs));
+				if(rec != Need.no) foreach(cq; code[pk].condQ) if(rec != Need.no) rec = both(rec, need(cq.reg, item(pk), depth + 1, subNs, subTs));
+				if(rec == Need.yes) { // (recomputed, as the dependency in the frontend)
 					ns ~= subNs;
 					ts ~= subTs;
-					return true;
+					return Need.yes;
 				}
-				if(deferred) return true;
-				if(!split) return false;
-				ns ~= q(P, c); // (kept until the uncomputation)
-				return true;
+				if(split) { // (kept until the uncomputation, rather than recomputed from what an enclosing conditional has to keep)
+					ns ~= q(P, c);
+					return Need.yes;
+				}
+				if(rec == Need.deferred) {
+					ns ~= subNs;
+					ts ~= subTs;
+				}
+				return deferred || rec == Need.deferred ? Need.deferred : Need.no;
 			}
-			auto ok = need(r, none, 0, needs, through);
+			auto numNeeds = needs.length;
+			auto ok = need(r, none, 0, needs, through) != Need.no;
 			assert(ok, "no order of the branches of the conditional for an uncomputation");
+			foreach(nd; needs[numNeeds .. $]) foreach(k; nd[0]) edge(k, nd[1]); // (the later uncomputations take this order into account)
 		}
 	}
-	foreach(nd; needs) foreach(k; nd[0]) edge(k, nd[1]);
 	auto rewrite = new bool[](partReads.length), decided = new bool[](partReads.length);
 	void decide(size_t i, bool rw) {
 		decided[i] = true;
@@ -8475,6 +8497,7 @@ void interleaveBranches(IrStatement[] code, size_t i0, size_t i1, size_t i2, siz
 		foreach(ref c; s.condQ) if(c.reg is pr[2]) c.reg = whole;
 	}
 	foreach(j, k; order) code[i0 + j] = items[k];
+	cw.index(i0, i4);
 }
 
 struct IrVariable {
@@ -8514,6 +8537,15 @@ class CodeWriter {
 	Writer ctx;
 	Appender!(IrStatement[]) code;
 	Appender!(IrVariable[]) vars;
+	MapX!(QReg, uint) producedAt, consumedAt; // (the statements of `code` up to `numIndexed` that produce and consume the quantum registers, see `interleaveBranches`)
+	size_t numIndexed;
+
+	void index(size_t from, size_t to) {
+		foreach(k; from .. to) {
+			foreach(r; code[][k].qRet) if(r) producedAt[r] = cast(uint) k;
+			foreach(r; code[][k].qiArgs) if(r) consumedAt[r] = cast(uint) k;
+		}
+	}
 
 	this(Writer ctx, CodeWriter parent = null) {
 		this.ctx = ctx;

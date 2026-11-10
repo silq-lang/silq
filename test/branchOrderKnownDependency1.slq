@@ -1,0 +1,13 @@
+// args: --run
+
+def f(y:𝔹,c:!𝔹){
+	v0:=dup(y);
+	v1:=dup(v0);
+	if c { y:=X(y); v1:=X(v1); } else { v0:=X(v0); forget(v1); }
+	return (y,v0);
+}
+def main(){
+	r:=(measure(f(0:𝔹,1)),measure(f(0:𝔹,0)),measure(f(1:𝔹,1)),measure(f(1:𝔹,0)));
+	assert(r==((1,0),(0,1),(0,1),(1,0)));
+	return r;
+}
