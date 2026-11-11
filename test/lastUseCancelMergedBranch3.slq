@@ -1,0 +1,31 @@
+// args: --run
+
+def threeLevels(x:𝔹,c:!𝔹,d:!𝔹,e:!𝔹){
+	v0:=dup(x);
+	v1:=dup(v0);
+	if c { if d { if e { m1:=measure(v1); } else { } } else { x:=X(x); } } else { m2:=measure(v0); }
+	return x;
+}
+def fourLevels(x:𝔹,c:!𝔹,d:!𝔹,e:!𝔹,g:!𝔹){
+	v0:=dup(x);
+	v1:=dup(v0);
+	if c { if d { if e { if g { m1:=measure(v1); } else { } } else { } } else { x:=X(x); } } else { m2:=measure(v0); }
+	return x;
+}
+def explicitForget(x:𝔹,c:!𝔹,d:!𝔹,e:!𝔹){
+	v0:=dup(x);
+	v1:=dup(v0);
+	if c { if d { if e { m1:=measure(v1); } else { } } else { x:=X(x); } } else { forget(v0); }
+	return x;
+}
+def updateInThen(x:𝔹,y:𝔹,c:!𝔹,d:!𝔹,e:!𝔹){
+	v0:=dup(x);
+	v1:=dup(v0);
+	if c { if d { if e { m1:=measure(v1); } else { y:=X(y); } } else { x:=X(x); } } else { m2:=measure(v0); }
+	return (x,y);
+}
+def main(){
+	r:=(measure(threeLevels(0:𝔹,true,true,true)),measure(threeLevels(1:𝔹,true,true,false)),measure(threeLevels(0:𝔹,true,false,true)),measure(threeLevels(1:𝔹,false,true,true)),measure(fourLevels(1:𝔹,true,true,true,false)),measure(fourLevels(0:𝔹,true,true,false,true)),measure(fourLevels(0:𝔹,true,false,true,true)),measure(explicitForget(1:𝔹,true,true,false)),measure(explicitForget(0:𝔹,true,false,false)),measure(updateInThen(0:𝔹,0:𝔹,true,true,false)),measure(updateInThen(1:𝔹,0:𝔹,true,false,true)));
+	assert(r==(0,1,1,1,1,0,1,1,1,(0,1),(0,0)));
+	return r;
+}

@@ -1,6 +1,21 @@
+// args: --ruun
+
 def f(x:𝔹,c:!𝔹,d:!𝔹,e:!𝔹){
 	v0:=dup(x);
-	v1:=dup(v0); /// TODO
+	v1:=dup(v0);
 	if c { if d { if e { m1:=measure(v1); } else { } } else { x:=X(x); } } else { m2:=measure(v0); }
 	return x;
+}
+
+def main(){
+	r:=(measure(H(f(H(0:𝔹),false,false,false))),
+		measure(H(f(H(1:𝔹),true,false,false))),
+		measure(H(f(H(0:𝔹),false,true,false))),
+		measure(H(f(H(0:𝔹),true,true,false))),
+		measure(H(f(H(0:𝔹),false,false,true))),
+		measure(H(f(H(1:𝔹),true,false,true))),
+		measure(H(f(H(0:𝔹),false,true,true))),
+		measure(H(f(H(0:𝔹),true,true,true))));
+	assert(r[1]=1&&r[3]=0&r[5]=1);
+	return r;
 }
