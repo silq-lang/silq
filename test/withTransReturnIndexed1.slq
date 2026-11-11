@@ -1,0 +1,12 @@
+def f(const x:𝔹)mfree{
+	k:=0:!ℕ;
+	for i in [0..2){
+		if x { if false { return 1 as uint[4]; } else { with { return 0 as uint[4]; } do { } } } /// error
+	}
+	return k as uint[4];
+}
+def main(){
+	x:=H(0:𝔹);
+	r:=f(x);
+	return (x,r);
+}

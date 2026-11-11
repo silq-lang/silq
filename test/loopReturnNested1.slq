@@ -1,0 +1,65 @@
+// args: --run
+
+def nestedThen(x:𝔹,c:!ℕ,d:!𝔹){
+	for i in 0..3 {
+		o:=dup(x);
+		if i==c { if d { a:=measure(o); return (measure(x),a); } }
+		b:=measure(o);
+		x:=X(x);
+	}
+	return (measure(x),false);
+}
+def nestedElse(x:𝔹,c:!ℕ,d:!𝔹){
+	for i in 0..3 {
+		o:=dup(x);
+		if i!=c { } else { if d { a:=measure(o); return (measure(x),a); } else { } }
+		b:=measure(o);
+		x:=X(x);
+	}
+	return (measure(x),false);
+}
+def threeLevels(x:𝔹,c:!ℕ,d:!𝔹,e:!𝔹){
+	for i in 0..3 {
+		o:=dup(x);
+		if i==c { if d { if e { a:=measure(o); return (measure(x),a); } } }
+		b:=measure(o);
+		x:=X(x);
+	}
+	return (measure(x),false);
+}
+def updateAfterInner(x:𝔹,c:!ℕ,d:!𝔹){
+	k:=0;
+	for i in 0..3 {
+		o:=dup(x);
+		if i==c { if d { a:=measure(o); return (measure(x),a,k); } k+=1; }
+		b:=measure(o);
+		x:=X(x);
+	}
+	return (measure(x),false,k);
+}
+def whileLoop(x:𝔹,c:!ℕ,d:!𝔹){
+	i:=0;
+	while i<3 {
+		o:=dup(x);
+		if i==c { if d { a:=measure(o); return (measure(x),a); } }
+		b:=measure(o);
+		x:=X(x);
+		i+=1;
+	}
+	return (measure(x),false);
+}
+def explicitForget(x:𝔹,y:𝔹,c:!ℕ,d:!𝔹){
+	for i in 0..3 {
+		o:=dup(x);
+		if i==c { if d { a:=measure(o); return (measure(x),measure(y),a); } }
+		y⊕=o;
+		forget(o=dup(x));
+		x:=X(x);
+	}
+	return (measure(x),measure(y),false);
+}
+def main(){
+	r:=(nestedThen(0:𝔹,1,true),nestedThen(0:𝔹,1,false),nestedThen(1:𝔹,4,true),nestedElse(0:𝔹,2,true),nestedElse(1:𝔹,0,false),threeLevels(0:𝔹,1,true,true),threeLevels(0:𝔹,1,true,false),threeLevels(1:𝔹,0,false,true),updateAfterInner(0:𝔹,1,true),updateAfterInner(1:𝔹,1,false),whileLoop(1:𝔹,2,true),whileLoop(0:𝔹,1,false),explicitForget(0:𝔹,0:𝔹,1,true),explicitForget(0:𝔹,0:𝔹,5,true),explicitForget(1:𝔹,0:𝔹,2,false));
+	assert(r==((1,1),(1,0),(0,0),(0,0),(0,0),(1,1),(1,0),(0,0),(1,1,0),(0,0,1),(1,1),(1,0),(1,0,1),(1,1,0),(0,0,0)));
+	return r;
+}
