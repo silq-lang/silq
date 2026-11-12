@@ -1,0 +1,590 @@
+// Map: |x,y,z> -> |x,y,z xor xy>.
+def toffoli(const x:𝔹, const y:𝔹, z:𝔹) qfree{
+    if x&y{z := X(z);}
+    return z;
+}
+
+// Exact four-T temporary AND and measured cleanup, including arbitrary-target use.
+def cq_mbu_and_zero(const a:𝔹,const b:𝔹) mfree:𝔹{
+    prod := 0:𝔹;prod := H(S(prod));
+    prod := T(CNOT(a,prod));T(prod) := CNOT(b,prod);
+    prod := T(CNOT(a,prod));T(prod) := CNOT(b,prod);
+    prod := H(prod);S(prod) := prod;
+    return prod;
+}
+
+// Semantically qfree: the exact Toffoli is its own inverse; its implementation measures.
+def cq_toffoli(const a:𝔹,const b:𝔹,target:𝔹) qfree:𝔹{
+    def cq_apply[k:!ℕ](const c:𝔹^k,t:𝔹){
+        if k=1{return CNOT(c[0],t);}
+        enable := cq_mbu_and_zero(c[0],c[1]);
+        t := cq_apply[k sub 1]((enable,)~c[2..k],t);
+        if measure(H(enable)) && c[0] && c[1]{phase(π);}
+        return t;
+    }
+    def cq_toffoli_impl(ctrl:𝔹[],const rev:!𝔹,state:𝔹^2×𝔹){
+        (bits,t) := state;
+        m := ctrl.length;
+        t := cq_apply[m+2]((ctrl~bits) coerce 𝔹^(m+2),t);
+        return (ctrl,(bits,t));
+    }
+    bits := (dup(a),dup(b));
+    (bits,target) := __circuit_qfree[𝔹^2×𝔹](cq_toffoli_impl)(bits,target);
+    forget(bits=(a,b));
+    return target;
+}
+
+// Fresh carry targets use the AND output itself, with no arbitrary-target scratch.
+def cq_bit_inverted_and(b:!𝔹,const x:𝔹,const y:𝔹) mfree:𝔹{
+    return cq_mbu_and_zero(if b then !x else x,y);
+}
+def cq_ZZ_and(const x:𝔹,const y:𝔹,const z:𝔹) mfree:𝔹{
+    parity := dup(x);parity := CNOT(y,parity);
+    prod := cq_mbu_and_zero(parity,z);
+    parity := CNOT(y,parity);forget(parity=x);
+    return prod;
+}
+
+// Map: |x,y,z> -> |x,y,z xor y(x xor b)>.
+def bit_inverted_contr(b:!𝔹,const x:𝔹,const y:𝔹,z:𝔹) qfree{
+    return cq_toffoli(if b then !x else x,y,z);
+}
+
+// Map: |x,y,z> -> |x,y,z xor (x xor b)(y xor b)>.
+def double_bit_inverted_contr(b:!𝔹,const x:𝔹,const y:𝔹,z:𝔹) qfree{
+    return cq_toffoli(if b then !x else x,if b then !y else y,z);
+}
+
+// Map: |x,y,z,q> -> |x,y,z,q xor z(x xor y)>.
+def ZZ_contr(const x:𝔹, const y:𝔹, const z:𝔹, q:𝔹) qfree{
+    parity := dup(x); parity := CNOT(y,parity);
+    q := cq_toffoli(parity,z,q);
+    parity := CNOT(y,parity); forget(parity=x);
+    return q;
+}
+
+// Map: |x,y,z,q> -> |x,y,z,q xor (x xor y)(z xor y)>.
+def double_ZZ_contr(const x:𝔹, const y:𝔹, const z:𝔹, q:𝔹) qfree{
+    left := dup(x); right := dup(z);
+    left := CNOT(y,left); right := CNOT(y,right);
+    q := cq_toffoli(left,right,q);
+    left := CNOT(y,left); right := CNOT(y,right);
+    forget(left=x); forget(right=z);
+    return q;
+}
+
+// Map: |cin,t> -> |cin,t+d+cin> and returns measurement record M.
+def venter_adder[n:!ℕ](const cin:𝔹,target:𝔹^n,d:!ℕ){
+    d := d as !uint[n]; M := [];
+    if n=1{
+        if d[0]{target[0] := X(target[0]);}
+        target[0] := CNOT(cin,target[0]);
+        return (M,target);
+    }
+    if n=2{
+        for j in [0..2){if d[j]{target[j] := X(target[j]);}}
+        target[1] := bit_inverted_contr(d[0],cin,target[0],target[1]);
+        target[0] := CNOT(cin,target[0]);
+        if d[0]{target[1] := X(target[1]);}
+        return (M,target);
+    }
+    for j in [0..n){if d[j]{target[j] := X(target[j]);}}
+    anc1 := cq_bit_inverted_and(d[0],cin,target[0]);
+    if d[0]{anc1 := X(anc1);}
+    target[0] := CNOT(cin,target[0]);
+    for j in [1..n sub 2){
+        anc0 := cq_bit_inverted_and(d[j],anc1,target[j]);
+        target[j] := CNOT(anc1,target[j]); if d[j]{anc0 := X(anc0);}
+        anc1 := H(anc1); M ~= [measure(anc1)]; anc1 := anc0;
+    }
+    target[n sub 1] := bit_inverted_contr(d[n sub 2],anc1,target[n sub 2],target[n sub 1]);
+    target[n sub 2] := CNOT(anc1,target[n sub 2]);
+    anc1 := H(anc1); M ~= [measure(anc1)]; if d[n sub 2]{target[n sub 1] := X(target[n sub 1]);}
+    return (M,target);
+}
+
+// Map: |D,cin,t> -> |D xor prefix_carries(cin,t,d),cin,t>.
+def carry_xor[m:!ℕ,n:!ℕ](dirty:𝔹^m,const cin:𝔹,const target:𝔹^n,d:!ℕ) qfree{
+    assert(m>=n);
+    d := d as !uint[n];
+    for j in [0..n sub 1){
+        dirty[n sub j sub 1] := bit_inverted_contr(d[n sub j sub 1],target[n sub j sub 1],dirty[n sub j sub 2],dirty[n sub j sub 1]);
+        if d[n sub j sub 1]{dirty[n sub j sub 1] := X(dirty[n sub j sub 1]);}
+    }
+    if d[0]{dirty[0] := X(dirty[0]);}
+    dirty[0] := double_bit_inverted_contr(d[0],target[0],cin,dirty[0]);
+    for j in [1..n){dirty[j] := double_bit_inverted_contr(d[j],dirty[j sub 1],target[j],dirty[j]);}
+    return dirty;
+}
+
+// Map: |cin,D,t> -> |cin,D xor prefix_carries,t+d+cin> and M.
+def dirty_venter_adder[m:!ℕ,n:!ℕ](const cin:𝔹,dirty:𝔹^m,target:𝔹^n,d:!ℕ){
+    assert(m>=n sub 2);
+    d := d as !uint[n]; M := [];
+    if n=1{
+        if d[0]{target[0] := X(target[0]);}
+        target[0] := CNOT(cin,target[0]);
+        return (M,dirty,target);
+    }
+    if n=2{
+        for j in [0..n){if d[j]{target[j] := X(target[j]);}}
+        target[1] := bit_inverted_contr(d[0],cin,target[0],target[1]);
+        target[0] := CNOT(cin,target[0]);
+        if d[0]{target[1] := X(target[1]);}
+        return (M,dirty,target);
+    }
+    for j in [0..n){if d[j]{target[j] := X(target[j]);}}
+    anc1 := cq_bit_inverted_and(d[0],cin,target[0]);
+    if d[0]{anc1 := X(anc1);}
+    target[0] := CNOT(cin,target[0]);
+    for j in [1..n sub 2){
+        anc0 := cq_bit_inverted_and(d[j],anc1,target[j]);
+        target[j] := CNOT(anc1,target[j]); dirty[j sub 1] := CNOT(anc1,dirty[j sub 1]);
+        if d[j]{anc0 := X(anc0);}
+        anc1 := H(anc1); M ~= [measure(anc1)]; anc1 := anc0;
+    }
+    target[n sub 1] := bit_inverted_contr(d[n sub 2],anc1,target[n sub 2],target[n sub 1]);
+    target[n sub 2] := CNOT(anc1,target[n sub 2]); dirty[n sub 3] := CNOT(anc1,dirty[n sub 3]);
+    anc1 := H(anc1); M ~= [measure(anc1)]; if d[n sub 2]{target[n sub 1] := X(target[n sub 1]);}
+    return (M,dirty,target);
+}
+
+// Map: |cin,D,t> -> |cin,D,t+d+cin>.
+def dirty_adder[m:!ℕ,n:!ℕ](const cin:𝔹,dirty:𝔹^m,target:𝔹^n,d:!ℕ){
+    assert(m>=n sub 2);
+    if n<=2{
+        (M,dirty,target) := dirty_venter_adder(cin,dirty,target,d);
+        return (dirty,target);
+    }
+    (M,dirty,target) := dirty_venter_adder(cin,dirty,target,d);
+    for j in [0..n sub 2){
+        if M[j]{dirty[j] := Z(dirty[j]);}
+        target[j] := X(target[j]);
+    }
+    dirty := carry_xor(dirty,cin,target[0..n sub 2],d);
+    for j in [0..n sub 2){
+        if M[j]{dirty[j] := Z(dirty[j]);}
+        target[j] := X(target[j]);
+    }
+    return (dirty,target);
+}
+
+// Map: |cin,t> -> |cin,t+d+cin>.
+def QC_adder[n:!ℕ](const cin:𝔹,target:𝔹^n,d:!ℕ){
+    if n<=2{(M,target) := venter_adder(cin,target,d); return target;}
+    m := floor((n-1)/2) coerce !ℕ;
+    d1 := d as !uint[m] as !ℕ; d2 := (d div (2^m)) as !uint[n sub m] as !ℕ;
+    (target1:𝔹^m)~(target2:𝔹^(n sub m)) := target;
+    target1 := target1 coerce 𝔹^(floor((n-1)/2) coerce !ℕ);
+    target2 := target2 coerce 𝔹^(n - (floor((n-1)/2)) coerce !ℕ);
+    (M,target1) := venter_adder(cin,target1~(0,),d1);
+    (target1:𝔹^(floor((n-1)/2) coerce !ℕ))~(cinn:𝔹^1) := target1; (cinn,) := cinn;
+    (target1,target2) := dirty_adder(cinn,target1,target2,d2);
+    cinn := H(cinn); M ~= [measure(cinn)];
+    for j in [0..m){target1[j] := X(target1[j]);if M[j]{target2[j] := Z(target2[j]);}}
+    target1 := target1 coerce 𝔹^m;
+    target2 := target2 coerce 𝔹^(n sub m);
+    (target2:𝔹^m)~(target3:𝔹^(n sub m sub m)) := target2;
+    target2 := carry_xor(target2,cin,target1,d);
+    for j in [0..m){if M[j]{target2[j] := Z(target2[j]);}}
+    target2 := carry_xor(target2,cin,target1,d);
+    for j in [0..m){target1[j] := X(target1[j]);}
+    target2 := target2~target3;
+    target1 := target1 coerce 𝔹^(floor((n-1)/2) coerce !ℕ);
+    target2 := target2 coerce 𝔹^(n - (floor((n-1)/2)) coerce !ℕ);
+    return (target1~target2) coerce 𝔹^n;
+}
+
+// Map: |cin,t> -> |cin,t-d-cin>.
+def QC_sub[n:!ℕ](const cin:𝔹,target:𝔹^n,d:!ℕ){
+    with {for j in [0..n){target[j] := X(target[j]);}}
+    do{target := QC_adder[n](cin,target,d);}
+    return target;
+}
+
+// Map: |c,cin,t> -> |c,cin,t+cin+c*d> and returns M.
+def c_venter_adder[n:!ℕ](const cont:𝔹,const cin:𝔹,target:𝔹^n,d:!ℕ){
+    d := d as !uint[n]; M := [];
+    if n=1{
+        if d[0]{target[0] := CNOT(cont,target[0]);}
+        target[0] := CNOT(cin,target[0]);
+        return (M,target);
+    }
+    if n=2{
+        for j in [0..2){if d[j]{target[j] := CNOT(cont,target[j]);}}
+        if d[0]{
+            target[1] := ZZ_contr(cont,cin,target[0],target[1]);
+            target[1] := CNOT(cont,target[1]);
+        }else{target[1] := cq_toffoli(cin,target[0],target[1]);}
+        target[0] := CNOT(cin,target[0]);
+        return (M,target);
+    }
+    for j in [0..n){if d[j]{target[j] := CNOT(cont,target[j]);}}
+    if d[0]{anc1 := cq_ZZ_and(cont,cin,target[0]);anc1 := CNOT(cont,anc1);}
+    else{anc1 := cq_mbu_and_zero(cin,target[0]);}
+    target[0] := CNOT(cin,target[0]);
+    for j in [1..n sub 2){
+        if d[j]{anc0 := cq_ZZ_and(cont,anc1,target[j]);anc0 := CNOT(cont,anc0);}
+        else{anc0 := cq_mbu_and_zero(anc1,target[j]);}
+        target[j] := CNOT(anc1,target[j]);
+        anc1 := H(anc1); M ~= [measure(anc1)]; anc1 := anc0;
+    }
+    if d[n sub 2]{target[n sub 1] :=ZZ_contr(cont,anc1,target[n sub 2],target[n sub 1]);}
+    else{target[n sub 1] := cq_toffoli(anc1,target[n sub 2],target[n sub 1]);}
+    target[n sub 2] := CNOT(anc1,target[n sub 2]);
+    anc1 := H(anc1); M ~= [measure(anc1)]; if d[n sub 2]{target[n sub 1] := CNOT(cont,target[n sub 1]);}
+    return (M,target);
+}
+
+// Map: XORs the controlled addition prefix carries into dirty.
+def c_carry_xor[m:!ℕ,n:!ℕ](dirty:𝔹^m,const cont:𝔹,const cin:𝔹,const target:𝔹^n,d:!ℕ) qfree{
+    assert(m>=n);
+    d := d as !uint[n];
+    for j in [0..n sub 1){
+        if d[n sub j sub 1]{dirty[n sub j sub 1] :=ZZ_contr(cont,target[n sub j sub 1],dirty[n sub j sub 2],dirty[n sub j sub 1]);}
+        else{dirty[n sub j sub 1] := cq_toffoli(target[n sub j sub 1],dirty[n sub j sub 2],dirty[n sub j sub 1]);}
+    }
+    for j in [0..n){if d[j]{dirty[j] := CNOT(cont,dirty[j]);}}
+    if d[0]{dirty[0] := double_ZZ_contr(target[0],cont,cin,dirty[0]);}
+    else{dirty[0] := cq_toffoli(target[0],cin,dirty[0]);}
+    for j in [1..n){
+        if d[j]{dirty[j] := double_ZZ_contr(target[j],cont,dirty[j sub 1],dirty[j]);}
+        else{dirty[j] :=cq_toffoli(target[j],dirty[j sub 1],dirty[j]);}
+    }
+    return dirty;
+}
+
+// Map: Controlled Venter addition using dirty workspace; returns M,dirty,target.
+def c_dirty_venter_adder[m:!ℕ,n:!ℕ](const cont:𝔹,const cin:𝔹,dirty:𝔹^m,target:𝔹^n,d:!ℕ){
+    assert(m>=n sub 2);
+    d := d as !uint[n]; M := [];
+    if n=1{
+        if d[0]{target[0] := CNOT(cont,target[0]);}
+        target[0] := CNOT(cin,target[0]);
+        return (M,dirty,target);
+    }
+    if n=2{
+        for j in [0..n){if d[j]{target[j] := CNOT(cont,target[j]);}}
+        if d[0]{
+            target[1] := ZZ_contr(cont,cin,target[0],target[1]);
+            target[1] := CNOT(cont,target[1]);
+        }else{target[1] := cq_toffoli(cin,target[0],target[1]);}
+        target[0] := CNOT(cin,target[0]);
+        return (M,dirty,target);
+    }
+    for j in [0..n){if d[j]{target[j] := CNOT(cont,target[j]);}}
+    if d[0]{anc1 := cq_ZZ_and(cont,cin,target[0]);anc1 := CNOT(cont,anc1);}
+    else{anc1 := cq_mbu_and_zero(cin,target[0]);}
+    target[0] := CNOT(cin,target[0]);
+    for j in [1..n sub 2){
+        if d[j]{anc0 := cq_ZZ_and(cont,anc1,target[j]);}
+        else{anc0 := cq_mbu_and_zero(anc1,target[j]);}
+        target[j] := CNOT(anc1,target[j]);
+        dirty[j sub 1] :=CNOT(anc1,dirty[j sub 1]);
+        if d[j]{anc0 := CNOT(cont,anc0);}
+        anc1 := H(anc1);M ~= [measure(anc1)];anc1 := anc0;
+    }
+    if d[n sub 2]{target[n sub 1] := ZZ_contr(cont,anc1,target[n sub 2],target[n sub 1]);}
+    else{target[n sub 1] := cq_toffoli(anc1,target[n sub 2],target[n sub 1]);}
+    target[n sub 2] := CNOT(anc1,target[n sub 2]);
+    dirty[n sub 3] := CNOT(anc1,dirty[n sub 3]);
+    anc1 := H(anc1); M ~= [measure(anc1)]; if d[n sub 2]{target[n sub 1] := CNOT(cont,target[n sub 1]);}
+    return (M,dirty,target);
+}
+
+// Map: |c,cin,D,t> -> |c,cin,D,t+cin+c*d>.
+def c_dirty_adder[m:!ℕ,n:!ℕ](const cont:𝔹,const cin:𝔹,dirty:𝔹^m,target:𝔹^n,d:!ℕ){
+    assert(m>=n sub 2);
+    if n<=2{
+        (M,dirty,target) := c_dirty_venter_adder(cont,cin,dirty,target,d);
+        return (dirty,target);
+    }
+    (M,dirty,target) := c_dirty_venter_adder(cont,cin,dirty,target,d);
+    for j in [0..n sub 2){
+        if M[j]{dirty[j] := Z(dirty[j]);}
+        target[j] := X(target[j]);
+    }
+    dirty := c_carry_xor(dirty,cont,cin,target[0..n sub 2],d);
+    for j in [0..n sub 2){
+        if M[j]{dirty[j] := Z(dirty[j]);}
+        target[j] := X(target[j]);
+    }
+    return (dirty,target);
+}
+
+// Map: |c,cin,t> -> |c,cin,t+cin+c*d>.
+def c_QC_adder[n:!ℕ](const cont:𝔹,const cin:𝔹,target:𝔹^n,d:!ℕ){
+    if n<=2{(M,target) := c_venter_adder(cont,cin,target,d); return target;}
+    m := floor((n-1)/2) coerce !ℕ;
+    d1 := d as !uint[m] as !ℕ; d2 := (d div (2^m)) as !uint[n sub m] as !ℕ;
+    (target1:𝔹^m)~(target2:𝔹^(n sub m)) := target;
+    target1 := target1 coerce 𝔹^(floor((n-1)/2) coerce !ℕ);
+    target2 := target2 coerce 𝔹^(n - (floor((n-1)/2)) coerce !ℕ);
+    (M,target1) := c_venter_adder(cont,cin,target1~(0,),d1);
+    (target1:𝔹^(floor((n-1)/2) coerce !ℕ))~(cinn:𝔹^1) := target1; (cinn,) := cinn;
+    (target1,target2) := c_dirty_adder(cont,cinn,target1,target2,d2);
+    cinn := H(cinn); M ~= [measure(cinn)];
+    for j in [0..m){target1[j] := X(target1[j]);if M[j]{target2[j] := Z(target2[j]);}}
+    target1 := target1 coerce 𝔹^m;
+    target2 := target2 coerce 𝔹^(n sub m);
+    (target2:𝔹^m)~(target3:𝔹^(n sub m sub m)) := target2;
+    target2 := c_carry_xor(target2,cont,cin,target1,d);
+    for j in [0..m){if M[j]{target2[j] := Z(target2[j]);}}
+    target2 := c_carry_xor(target2,cont,cin,target1,d);
+    for j in [0..m){target1[j] := X(target1[j]);}
+    target2 := target2~target3;
+    target1 := target1 coerce 𝔹^(floor((n-1)/2) coerce !ℕ);
+    target2 := target2 coerce 𝔹^(n - (floor((n-1)/2)) coerce !ℕ);
+    return (target1~target2) coerce 𝔹^n;
+}
+
+// Map: |c,cin,t> -> |c,cin,t-cin-c*d>.
+def c_QC_sub[n:!ℕ](const cont:𝔹,const cin:𝔹,target:𝔹^n,d:!ℕ){
+    with{for j in [0..n){target[j] := X(target[j]);}}do{
+    target := c_QC_adder[n](cont,cin,target,d);}
+    return target;
+}
+
+
+
+// Zero-carry specializations of the same Venter/dirty-workspace decomposition.
+def cq_venter_zero[n:!ℕ](target:𝔹^n,d:!ℕ){
+    d := d as !uint[n]; M := [];
+    if n=1{
+        if d[0]{target[0] := X(target[0]);}
+
+        return (M,target);
+    }
+    if n=2{
+        for j in [0..2){if d[j]{target[j] := X(target[j]);}}
+        if d[0]{target[1] := CNOT(target[0],target[1]);}
+
+        if d[0]{target[1] := X(target[1]);}
+        return (M,target);
+    }
+    for j in [0..n){if d[j]{target[j] := X(target[j]);}}
+    anc1 := if d[0] then dup(target[0]) else 0:𝔹;
+    if d[0]{anc1 := X(anc1);}
+
+    for j in [1..n sub 2){
+        anc0 := cq_bit_inverted_and(d[j],anc1,target[j]);
+        target[j] := CNOT(anc1,target[j]); if d[j]{anc0 := X(anc0);}
+        anc1 := H(anc1); M ~= [measure(anc1)]; anc1 := anc0;
+    }
+    target[n sub 1] := bit_inverted_contr(d[n sub 2],anc1,target[n sub 2],target[n sub 1]);
+    target[n sub 2] := CNOT(anc1,target[n sub 2]);
+    anc1 := H(anc1); M ~= [measure(anc1)]; if d[n sub 2]{target[n sub 1] := X(target[n sub 1]);}
+    return (M,target);
+}
+
+def cq_c_venter_zero[n:!ℕ](const cont:𝔹,target:𝔹^n,d:!ℕ){
+    d := d as !uint[n]; M := [];
+    if n=1{
+        if d[0]{target[0] := CNOT(cont,target[0]);}
+
+        return (M,target);
+    }
+    if n=2{
+        for j in [0..2){if d[j]{target[j] := CNOT(cont,target[j]);}}
+        if d[0]{
+            target[1] := cq_toffoli(cont,target[0],target[1]);
+            target[1] := CNOT(cont,target[1]);
+        }
+
+        return (M,target);
+    }
+    for j in [0..n){if d[j]{target[j] := CNOT(cont,target[j]);}}
+    if d[0]{anc1 := cq_mbu_and_zero(cont,target[0]);anc1 := CNOT(cont,anc1);}
+    else{anc1 := 0:𝔹;}
+
+    for j in [1..n sub 2){
+        if d[j]{anc0 := cq_ZZ_and(cont,anc1,target[j]);anc0 := CNOT(cont,anc0);}
+        else{anc0 := cq_mbu_and_zero(anc1,target[j]);}
+        target[j] := CNOT(anc1,target[j]);
+        anc1 := H(anc1); M ~= [measure(anc1)]; anc1 := anc0;
+    }
+    if d[n sub 2]{target[n sub 1] :=ZZ_contr(cont,anc1,target[n sub 2],target[n sub 1]);}
+    else{target[n sub 1] := cq_toffoli(anc1,target[n sub 2],target[n sub 1]);}
+    target[n sub 2] := CNOT(anc1,target[n sub 2]);
+    anc1 := H(anc1); M ~= [measure(anc1)]; if d[n sub 2]{target[n sub 1] := CNOT(cont,target[n sub 1]);}
+    return (M,target);
+}
+
+def cq_carry_xor_zero[m:!ℕ,n:!ℕ](dirty:𝔹^m,const target:𝔹^n,d:!ℕ) qfree{
+    assert(m>=n);
+    d := d as !uint[n];
+    for j in [0..n sub 1){
+        dirty[n sub j sub 1] := bit_inverted_contr(d[n sub j sub 1],target[n sub j sub 1],dirty[n sub j sub 2],dirty[n sub j sub 1]);
+        if d[n sub j sub 1]{dirty[n sub j sub 1] := X(dirty[n sub j sub 1]);}
+    }
+    if d[0]{dirty[0] := X(dirty[0]);}
+    if d[0]{dirty[0] := CNOT(!target[0],dirty[0]);}
+    for j in [1..n){dirty[j] := double_bit_inverted_contr(d[j],dirty[j sub 1],target[j],dirty[j]);}
+    return dirty;
+}
+
+def cq_c_carry_xor_zero[m:!ℕ,n:!ℕ](dirty:𝔹^m,const cont:𝔹,const target:𝔹^n,d:!ℕ) qfree{
+    assert(m>=n);
+    d := d as !uint[n];
+    for j in [0..n sub 1){
+        if d[n sub j sub 1]{dirty[n sub j sub 1] :=ZZ_contr(cont,target[n sub j sub 1],dirty[n sub j sub 2],dirty[n sub j sub 1]);}
+        else{dirty[n sub j sub 1] := cq_toffoli(target[n sub j sub 1],dirty[n sub j sub 2],dirty[n sub j sub 1]);}
+    }
+    for j in [0..n){if d[j]{dirty[j] := CNOT(cont,dirty[j]);}}
+    if d[0]{dirty[0] := cq_toffoli(!target[0],cont,dirty[0]);}
+
+    for j in [1..n){
+        if d[j]{dirty[j] := double_ZZ_contr(target[j],cont,dirty[j sub 1],dirty[j]);}
+        else{dirty[j] :=cq_toffoli(target[j],dirty[j sub 1],dirty[j]);}
+    }
+    return dirty;
+}
+
+def cq_adder_zero[n:!ℕ](target:𝔹^n,d:!ℕ){
+    if d%(2^n)=0{return target;}
+    if d%2=0{
+        (low,)~(high:𝔹^(n sub 1)) := target;
+        high := cq_adder_zero[n sub 1](high,d div 2);return (low,)~high;
+    }
+
+    if n<=2{(M,target) := cq_venter_zero(target,d); return target;}
+    m := floor((n-1)/2) coerce !ℕ;
+    d1 := d as !uint[m] as !ℕ; d2 := (d div (2^m)) as !uint[n sub m] as !ℕ;
+    (target1:𝔹^m)~(target2:𝔹^(n sub m)) := target;
+    target1 := target1 coerce 𝔹^(floor((n-1)/2) coerce !ℕ);
+    target2 := target2 coerce 𝔹^(n - (floor((n-1)/2)) coerce !ℕ);
+    (M,target1) := cq_venter_zero(target1~(0,),d1);
+    (target1:𝔹^(floor((n-1)/2) coerce !ℕ))~(cinn:𝔹^1) := target1; (cinn,) := cinn;
+    (target1,target2) := dirty_adder(cinn,target1,target2,d2);
+    cinn := H(cinn); M ~= [measure(cinn)];
+    for j in [0..m){target1[j] := X(target1[j]);if M[j]{target2[j] := Z(target2[j]);}}
+    target1 := target1 coerce 𝔹^m;
+    target2 := target2 coerce 𝔹^(n sub m);
+    (target2:𝔹^m)~(target3:𝔹^(n sub m sub m)) := target2;
+    target2 := cq_carry_xor_zero(target2,target1,d);
+    for j in [0..m){if M[j]{target2[j] := Z(target2[j]);}}
+    target2 := cq_carry_xor_zero(target2,target1,d);
+    for j in [0..m){target1[j] := X(target1[j]);}
+    target2 := target2~target3;
+    target1 := target1 coerce 𝔹^(floor((n-1)/2) coerce !ℕ);
+    target2 := target2 coerce 𝔹^(n - (floor((n-1)/2)) coerce !ℕ);
+    return (target1~target2) coerce 𝔹^n;
+}
+
+def cq_c_adder_zero[n:!ℕ](const cont:𝔹,target:𝔹^n,d:!ℕ){
+    if d%(2^n)=0{return target;}
+    if d%2=0{
+        (low,)~(high:𝔹^(n sub 1)) := target;
+        high := cq_c_adder_zero[n sub 1](cont,high,d div 2);return (low,)~high;
+    }
+
+    if n<=2{(M,target) := cq_c_venter_zero(cont,target,d); return target;}
+    m := floor((n-1)/2) coerce !ℕ;
+    d1 := d as !uint[m] as !ℕ; d2 := (d div (2^m)) as !uint[n sub m] as !ℕ;
+    (target1:𝔹^m)~(target2:𝔹^(n sub m)) := target;
+    target1 := target1 coerce 𝔹^(floor((n-1)/2) coerce !ℕ);
+    target2 := target2 coerce 𝔹^(n - (floor((n-1)/2)) coerce !ℕ);
+    (M,target1) := cq_c_venter_zero(cont,target1~(0,),d1);
+    (target1:𝔹^(floor((n-1)/2) coerce !ℕ))~(cinn:𝔹^1) := target1; (cinn,) := cinn;
+    (target1,target2) := c_dirty_adder(cont,cinn,target1,target2,d2);
+    cinn := H(cinn); M ~= [measure(cinn)];
+    for j in [0..m){target1[j] := X(target1[j]);if M[j]{target2[j] := Z(target2[j]);}}
+    target1 := target1 coerce 𝔹^m;
+    target2 := target2 coerce 𝔹^(n sub m);
+    (target2:𝔹^m)~(target3:𝔹^(n sub m sub m)) := target2;
+    target2 := cq_c_carry_xor_zero(target2,cont,target1,d);
+    for j in [0..m){if M[j]{target2[j] := Z(target2[j]);}}
+    target2 := cq_c_carry_xor_zero(target2,cont,target1,d);
+    for j in [0..m){target1[j] := X(target1[j]);}
+    target2 := target2~target3;
+    target1 := target1 coerce 𝔹^(floor((n-1)/2) coerce !ℕ);
+    target2 := target2 coerce 𝔹^(n - (floor((n-1)/2)) coerce !ℕ);
+    return (target1~target2) coerce 𝔹^n;
+}
+
+def cq_sub_zero[n:!ℕ](target:𝔹^n,d:!ℕ){
+    with{for j in [0..n){target[j] := X(target[j]);}}do{target := cq_adder_zero[n](target,d);}
+    return target;
+}
+def cq_c_sub_zero[n:!ℕ](const cont:𝔹,target:𝔹^n,d:!ℕ){
+    with{for j in [0..n){target[j] := X(target[j]);}}do{target := cq_c_adder_zero[n](cont,target,d);}
+    return target;
+}
+
+
+// Map: |t> -> |t+a mod p>, for canonical target residues and classical a.
+def QC_add_modp[p:!ℕ][n:!ℕ](target:𝔹^n,a:!ℕ){
+    assert(p>=1);assert(p<=2^n);k := a%p;
+    if k=0{return target;}
+    if p=2^n{return cq_adder_zero[n](target,k);}
+    target := cq_adder_zero[n+1](target~(0,),k);
+    target := cq_sub_zero[n+1](target,p);
+    temp := dup(target[n]);
+    target := cq_c_adder_zero[n+1](temp,target,p);
+    target := cq_sub_zero[n+1](target,k);
+    forget(temp=X(dup(target[n])));
+    (x:𝔹^n)~(0,) := cq_adder_zero[n+1](target,k);
+    return x;
+}
+
+// Control the addend operations; reduction is also the identity when control=0.
+def c_QC_add_modp[p:!ℕ][n:!ℕ](const ctrl:𝔹,target:𝔹^n,a:!ℕ){
+    assert(p>=1);assert(p<=2^n);k := a%p;
+    if k=0{return target;}
+    if p=2^n{return cq_c_adder_zero[n](ctrl,target,k);}
+    target := cq_c_adder_zero[n+1](ctrl,target~(0,),k);
+    target := cq_sub_zero[n+1](target,p);
+    temp := dup(target[n]);
+    target := cq_c_adder_zero[n+1](temp,target,p);
+    target := cq_c_sub_zero[n+1](ctrl,target,k);
+    forget(temp=X(dup(target[n])));
+    (x:𝔹^n)~(0,) := cq_c_adder_zero[n+1](ctrl,target,k);
+    return x;
+}
+
+// Reverse the five-adder construction using unitary inverse adders, not reversed measurements.
+def QC_sub_modp[p:!ℕ][n:!ℕ](target:𝔹^n,a:!ℕ){
+    assert(p>=1);assert(p<=2^n);k := a%p;
+    if k=0{return target;}
+    if p=2^n{return cq_sub_zero[n](target,k);}
+    target := cq_sub_zero[n+1](target~(0,),k);
+    temp := X(dup(target[n]));
+    target := cq_adder_zero[n+1](target,k);
+    target := cq_c_sub_zero[n+1](temp,target,p);
+    forget(temp=target[n]);
+    target := cq_adder_zero[n+1](target,p);
+    (x:𝔹^n)~(0,) := cq_sub_zero[n+1](target,k);
+    return x;
+}
+def c_QC_sub_modp[p:!ℕ][n:!ℕ](const ctrl:𝔹,target:𝔹^n,a:!ℕ){
+    assert(p>=1);assert(p<=2^n);k := a%p;
+    if k=0{return target;}
+    if p=2^n{return cq_c_sub_zero[n](ctrl,target,k);}
+    target := cq_c_sub_zero[n+1](ctrl,target~(0,),k);
+    temp := X(dup(target[n]));
+    target := cq_c_adder_zero[n+1](ctrl,target,k);
+    target := cq_c_sub_zero[n+1](temp,target,p);
+    forget(temp=target[n]);
+    target := cq_adder_zero[n+1](target,p);
+    (x:𝔹^n)~(0,) := cq_c_sub_zero[n+1](ctrl,target,k);
+    return x;
+}
+
+def mc_QC_add_modp[p:!ℕ][n:!ℕ,k:!ℕ](const controls:𝔹^k,target:𝔹^n,a:!ℕ){
+    if a%p=0{return target;}
+    if k=0{return QC_add_modp[p][n](target,a);}
+    if k=1{return c_QC_add_modp[p][n](controls[0],target,a);}
+    enable := cq_mbu_and_zero(controls[0],controls[1]);
+    target := mc_QC_add_modp[p][n,k sub 1]((enable,)~controls[2..k],target,a);
+    if measure(H(enable)) && controls[0] && controls[1]{phase(π);}
+    return target;
+}
+def mc_QC_sub_modp[p:!ℕ][n:!ℕ,k:!ℕ](const controls:𝔹^k,target:𝔹^n,a:!ℕ){
+    if a%p=0{return target;}
+    if k=0{return QC_sub_modp[p][n](target,a);}
+    if k=1{return c_QC_sub_modp[p][n](controls[0],target,a);}
+    enable := cq_mbu_and_zero(controls[0],controls[1]);
+    target := mc_QC_sub_modp[p][n,k sub 1]((enable,)~controls[2..k],target,a);
+    if measure(H(enable)) && controls[0] && controls[1]{phase(π);}
+    return target;
+}

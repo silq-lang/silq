@@ -1,0 +1,348 @@
+import arithmetic.QQ_adder;
+import arithmetic.CQ_adder;
+
+// Map: |xw,y,z> -> |xw,y,MAC_w(xw,y,z)> for one Montgomery window.
+def modmult_addsub_block[n:!ℕ,w:!ℕ](xw:𝔹^w,y:𝔹^n,z:𝔹^n){
+    r := (0,)~z~(0:uint[w] as 𝔹^w);
+    for j in [0..w){
+        (r1:𝔹^(n+1))~(r2:𝔹^w) := r;
+        (y,r1) := c_add_sub_carry[n](xw[j],y,r1);
+        r := r1~r2 coerce 𝔹^(1+(n+w));
+        (r1:𝔹^1)~(r2:𝔹^(n+w)) := r; r := r2~r1;
+    }
+    (r1:𝔹^(n+1))~(r2:𝔹^w) := r;
+    (r1:𝔹^n)~(r2:𝔹^(w+1)) := r2~r1 coerce 𝔹^(n+(w+1));
+    (xw,r2) := adder_nocarry[w+1](1,xw~(0,),r2);
+    (xw:𝔹^w)~(0,) := xw; r := r1~r2;
+    yc := 0:uint[n+w+1] as 𝔹^(n+w+1);
+    for k in [0..n){yc[k] := CNOT(y[k],yc[k]);}
+    with yc[n+w] := X(yc[n+w]){(yc,r) := subst_nocarry[n+w+1](0,yc,r);}
+    for k in [0..n){yc[k] := CNOT(y[k],yc[k]); yc[w+k] := CNOT(y[k],yc[w+k]);}
+    (yc,r) := adder_nocarry[n+w+1](0,yc,r);
+    for k in [0..n){yc[w+k] := CNOT(y[k],yc[w+k]);}
+    forget(yc=0:uint[n+w+1]);
+    (0,)~(result:𝔹^(n+w)) := r;
+    return (xw,y,result);
+}
+
+// Montgomery correction by controlled constant additions: q=-c*p^(-1) mod 2^w.
+// Apply q*p and reverse the q computation to clear its workspace.
+// Map: |c,r> -> |c,r +/- q*p>, q=-c*p^(-1) mod 2^w.
+def montgomery_correction[subt:!𝔹][p:!ℕ,pinv:!ℕ][n:!ℕ,w:!ℕ](qs:𝔹^w×𝔹^(n+w)) @noinline{
+    (c,result) := qs;
+    m := 2^w; factor := (m-(pinv%m))%m;
+    q := 0:uint[w] as 𝔹^w;
+    for j in [0..w){q := c_const_addsub[0:!𝔹][w](c[j],q,(factor*2^j)%m);}
+    for j in [0..w){
+        result := c_const_addsub[subt][n+w](q[j],result,p*2^j);
+    }
+    for k in [0..w){j := w sub k sub 1; q := c_const_addsub[1:!𝔹][w](c[j],q,(factor*2^j)%m);}
+    forget(q=0:uint[w]);
+    return (c,result);
+}
+
+// The incoming garbage window must be zero; it stores the discarded low bits.
+// Map: |xw,y,0,z> -> |xw,y,garbage,(z+xw*y+q*p)/2^w>.
+def modmult_addsub[p:!ℕ,pinv:!ℕ][n:!ℕ,w:!ℕ](state:𝔹^w×𝔹^n×𝔹^w×𝔹^n) @noinline{
+    (xw,y,garb,z) := state;
+    (xw,y,result) := modmult_addsub_block[n,w](xw,y,z);
+    for j in [0..w){garb[j] := CNOT(result[j],garb[j]);}
+    (garb,result) := montgomery_correction[0:!𝔹][p,pinv][n,w]((garb,result));
+    (0:uint[w] as 𝔹^w)~(z_next:𝔹^n) := result coerce 𝔹^(w+n);
+    return (xw,y,garb,z_next);
+}
+
+// Classical Montgomery setup: invert the fixed modulus modulo the window radix.
+// Map: Classically maps a to a^(-1) mod 2^w.
+def inv_mod2w[w:!ℕ](a:!ℕ) lifted:!ℕ{
+    assert(w>0);assert(a%2=1);m := 2^w;x := 1:!ℕ;
+    for j in [0..ceil(log₂(w))){x = (x*(2+m-(a*x)%m))%m;}
+    return x;
+}
+
+// Map: |x,y> -> |x,y,garbage,underflow,x*y*R^(-1) mod p>.
+def mult_modp[n:!ℕ,w:!ℕ](const p:!ℕ,x:𝔹^n,y:𝔹^n){
+    assert(w>=1);assert(w<=n);assert(n%w=0);assert(2^floor(log₂(w))=w);assert(p>2);assert(p%2=1);assert(4*p<2^n);
+    pinv := inv_mod2w[w](p);
+    z := 0:uint[n] as 𝔹^n; garbage := dup(z);
+    for step in [0..n div w){
+        (xw:𝔹^w)~(xr:𝔹^(n sub w)) := x;
+        (garbw:𝔹^w)~(garbage:𝔹^(n sub w)) := garbage;
+        (xw,y,garbw,z) := modmult_addsub[p,pinv][n,w]((xw,y,garbw,z));
+        garbage := garbage~garbw; x := xr~xw;
+    }
+    pb := p as uint[n] as 𝔹^n;
+    (pb,z) := subst_nocarry[n+1](0,pb~(0,),z~(0,));
+    (z:𝔹^n)~(underflow:𝔹^1) := z;
+    (pb:𝔹^n)~(0,) := pb;
+    (pb,z) := c_adder_nocarry[n](underflow[0],pb,z);
+    forget(pb=p as uint[n]);
+    return (x,y,garbage,underflow,z);
+}
+
+// Map: |a> -> |2a mod 2^N>.
+def shift_left[N:!ℕ](a:𝔹^N){
+    (body:𝔹^(N sub 1))~(zero:𝔹^1) := a coerce 𝔹^((N sub 1)+1);
+    return zero~body coerce 𝔹^N;
+}
+
+// Map: |xw,y,r> -> |xw,y,r-xw*y>.
+def sub_window_product[n:!ℕ,w:!ℕ](const xw:𝔹^w,y:𝔹^n,r:𝔹^(n+w)){
+    y := y~(0:uint[w] as 𝔹^w);
+    for j in [0..w){
+        (y,r) := c_sub_nocarry[n+w](xw[j],y,r);
+        y := shift_left[n+w](y);
+    }
+    (0:uint[w] as 𝔹^w)~(y:𝔹^n) := y coerce 𝔹^(w+n);
+    return (y,r);
+}
+
+// Map: Reverses one modmult_addsub Montgomery window.
+def undo_modmult_addsub[p:!ℕ,pinv:!ℕ][n:!ℕ,w:!ℕ](state:𝔹^w×𝔹^n×𝔹^w×𝔹^n) @noinline{
+    (xw,y,garbw,z) := state;
+    corrected :=((0:uint[w] as 𝔹^w)~z) coerce 𝔹^(n+w);
+    (garbw,corrected) := montgomery_correction[1:!𝔹][p,pinv][n,w]((garbw,corrected));
+    (corrected_low:𝔹^w)~(corrected_high:𝔹^n) := corrected coerce 𝔹^(w+n);
+    for j in [0..w){garbw[j] := CNOT(corrected_low[j],garbw[j]);}
+    corrected := (corrected_low~corrected_high) coerce 𝔹^(n+w);
+    (y,corrected) := sub_window_product[n,w](xw,y,corrected);
+    (zold:𝔹^n)~(0:uint[2*w] as 𝔹^(2*w)) := (corrected~garbw) coerce 𝔹^(n+(2*w));
+    return (xw,y,0:uint[w] as 𝔹^w,zold);
+}
+
+// Map: Reverses mult_modp and erases its garbage, underflow, and product.
+def unmult_modp[n:!ℕ,w:!ℕ](const p:!ℕ,x:𝔹^n,y:𝔹^n,garbage:𝔹^n,underflow:𝔹^1,z:𝔹^n){
+    pinv := inv_mod2w[w](p);pb := p as uint[n] as 𝔹^n;
+    (pb,z) := c_sub_nocarry[n](underflow[0],pb,z);z := z~underflow;pb := pb~(0,);
+    (pb,z) := adder_nocarry[n+1](0:𝔹,pb,z);(pb:𝔹^n)~(0,) := pb;(z:𝔹^n)~(0,) := z;forget(pb=p as uint[n]);
+    for step in [0..n div w){
+        (xr:𝔹^(n sub w))~(xw:𝔹^w) := x;(garbage:𝔹^(n sub w))~(garbw:𝔹^w) := garbage;
+        (xw,y,garbw,z) := undo_modmult_addsub[p,pinv][n,w]((xw,y,garbw,z));
+        x := xw~xr;garbage := garbw~garbage;
+    }
+    forget(garbage=0:uint[n]);forget(z=0:uint[n]);
+    return (x,y);
+}
+
+// Map: |x> -> |2x mod p>.
+def double_modp[p:!ℕ][n:!ℕ](x:𝔹^n) @noinline{
+    h := (p+1) div 2; f := 0:𝔹;
+    bound := (2^n-h) as uint[n] as 𝔹^n;
+    (x,bound,f) := QQ_carry[n](x,bound,f);
+    forget(bound=(2^n-h) as uint[n]);
+    (body:𝔹^(n sub 1))~(0,) := c_const_addsub[1:!𝔹][n](f,x,h);
+    return (f,)~body;
+}
+
+// Map: |x> -> |x*2^(-1) mod p>.
+def half_modp[p:!ℕ][n:!ℕ](x:𝔹^n) @noinline{
+    (flag,)~(body:𝔹^(n sub 1)) := x;
+    x := body~(0,);
+    x := c_const_addsub[0:!𝔹][n](flag,x,(p+1) div 2);
+    d := (2^n-(p+1) div 2) coerce !ℕ;
+    bound := d as uint[n] as 𝔹^n;
+    (x,bound) := erase_carry[n](1:𝔹,x,bound,flag);
+    forget(bound=d as uint[n]);return x;
+}
+
+// Map: Classically selects the multiplication window w for n.
+def mult_window[n:!ℕ]() lifted:!ℕ{
+    // Small fields use radix 2: less padding and a smaller live workspace.
+    if n<8{return 1;}
+    q := floor(log₂(n)) coerce !ℕ;t := q sub (floor(log₂(q)) coerce !ℕ)+2; w := 2:!ℕ;
+    while 2*w<=t{w *= 2;} if t*t>=2*w*w{w *= 2;}
+    return w;
+}
+
+// Map: Classically maps (w,n) to the padded Montgomery width N.
+def montgomery_bits[w:!ℕ][n:!ℕ]()lifted:!ℕ{assert(w>=1);assert(2^floor(log₂(w))=w);return ((n+1) div w+1)*w;}
+// Map: Classically maps p to its required bit width.
+def field_bits(p:!ℕ) lifted:!ℕ{
+    if p=0{return 0:!ℕ;}
+    n := (floor(log₂(p))+1) coerce !ℕ;
+    if p<2^(n sub 1){n = n sub 1;}
+    if p>=2^n{n += 1;}
+    return n;
+}
+
+// Map: Classically maps a to a*R mod p.
+def montgomery_const[p:!ℕ](a:!ℕ)lifted:!ℕ{n := field_bits(p);return ((a%p)*(2^n%p))%p;}
+
+// XOR x*y/(2^n) mod p into result, preserving x and y and clearing workspace.
+// Map: |x,y,r> -> |x,y,r xor (x*y*R^(-1) mod p)>.
+def mult_modp_into[p:!ℕ][n:!ℕ](x:𝔹^n,y:𝔹^n,result:𝔹^n) @noinline{
+    assert(p>2);assert(p%2=1);assert(p>=(2^(n sub 1)));assert(p<(2^n));
+    w := mult_window[n](); N := montgomery_bits[w][n](); d := N sub n;
+    (x,y,garbage,underflow,z) := mult_modp[N,w](p,x~vector(d,0) coerce 𝔹^N,y~vector(d,0) coerce 𝔹^N);  
+    (z:𝔹^n)~(0:uint[d] as 𝔹^d) := z coerce 𝔹^(n+d); for j in [0..d){z := double_modp[p][n](z);}
+    for j in [0..n){result[j] := CNOT(z[j],result[j]);}
+    for j in [0..d){z := half_modp[p][n](z);} 
+    (x,y) := unmult_modp[N,w](p,x,y,garbage,underflow,z~vector(d,0) coerce 𝔹^N);
+    x := x coerce 𝔹^(n+d); y := y coerce 𝔹^(n+d);
+    (x:𝔹^n)~(0:uint[d] as 𝔹^d) := x; (y:𝔹^n)~(0:uint[d] as 𝔹^d) := y;
+    return (x,y,result);
+}
+
+// Map: |x,y> -> |x,y,x*y*R^(-1) mod p>.
+def mult_modp_clean[p:!ℕ][n:!ℕ](x:𝔹^n,y:𝔹^n){return mult_modp_into[p][n](x,y,0:uint[n] as 𝔹^n);}
+
+// Controlled canonical product: |c,x,y,r> -> |c,x,y,r xor c*(x*y mod p)>.
+def c_mult_modp_into[p:!ℕ][n:!ℕ](const ctrl:𝔹,x:𝔹^n,y:𝔹^n,result:𝔹^n) @noinline{
+    (x,y,z) := mult_modp_clean[p][n](x,y);
+    for j in [0..n){z := double_modp[p][n](z);}
+    for j in [0..n){
+        prod := mbu_AND_zero(ctrl,z[j]);
+        result[j] := CNOT(prod,result[j]);
+        if measure(H(prod)){if ctrl{z[j] := Z(z[j]);}}
+    }
+    for j in [0..n){z := half_modp[p][n](z);}
+    (x,y,z) := mult_modp_into[p][n](x,y,z);
+    forget(z=0:uint[n]);
+    return (x,y,result);
+}
+
+// Map: |x,r> -> |x,r xor (x^2*R^(-1) mod p)>.
+def square_modp_into[p:!ℕ][n:!ℕ](x:𝔹^n,result:𝔹^n){
+    y := dup(x);(x,y,result) := mult_modp_into[p][n](x,y,result);
+    for j in [0..n){y[j] := CNOT(x[j],y[j]);}
+    forget(y=0:uint[n]);
+    return (x,result);
+}
+
+// Map: |x> -> |x,x^2*R^(-1) mod p>.
+def square_modp[p:!ℕ][n:!ℕ](x:𝔹^n){return square_modp_into[p][n](x,0:uint[n] as 𝔹^n);}
+
+// Multiplication example: Montgomery encodings of 9, 7, and 9*7 mod 13.
+// Signed triangular rows adapted from the challenge square.rs; no truncated carries.
+// Map: Applies or reverses one exact triangular row of the integer square.
+def square_row[subt:!𝔹][n:!ℕ,i:!ℕ](state:𝔹^n×𝔹^(2*n)) @noinline{
+    (y,z) := state; k := n sub i sub 1;
+    (yl:𝔹^(i+1))~(yh:𝔹^k) := y coerce 𝔹^((i+1)+k);
+    (zl:𝔹^(2*i+1))~(row:𝔹^(k+1))~(zh:𝔹^(n sub i sub 1)) := z coerce 𝔹^((2*i+1)+(k+1)+(n sub i sub 1));
+    if subt{row[k] := X(row[k]); row[k] := CNOT(yl[i],row[k]);}
+    for j in [0..k){row[j] := X(row[j]);row[j] := CNOT(yl[i],row[j]);}
+    if subt{for j in [0..k+1){row[j] := X(row[j]);}}
+    (yh,row) := adder_carry[k](yl[i],yh,row);
+    if subt{for j in [0..k+1){row[j] := X(row[j]);}}
+    for j in [0..k){row[j] := X(row[j]);row[j] := CNOT(yl[i],row[j]);}
+    if !subt{row[k] := X(row[k]); row[k] := CNOT(yl[i],row[k]);}
+    return (yl~yh coerce 𝔹^n,zl~row~zh coerce 𝔹^(2*n));
+}
+
+// Map: Applies or reverses the exact final square correction.
+def square_correction[subt:!𝔹][n:!ℕ](y:𝔹^n,z:𝔹^(2*n)){
+    (low:𝔹^n)~(high:𝔹^n) := z;
+    if subt{for j in [0..n){low[j] := X(low[j]);}}
+    (y,low) := adder_carry[n](0:𝔹,y,low~(0,));
+    (low:𝔹^n)~(carry,) := low;
+    if subt{for j in [0..n){low[j] := X(low[j]);}}
+    (yl:𝔹^(n sub 1))~(yt,) := y;
+    for j in [0..n sub 1){yl[j] := X(yl[j]);}
+    if subt{for j in [0..n){high[j] := X(high[j]);}}
+    (operand,high) := adder_nocarry[n](carry,yl~(0,),high);
+    (yl:𝔹^(n sub 1))~(0,) := operand;
+    if subt{for j in [0..n){high[j] := X(high[j]);}}
+    for j in [0..n sub 1){yl[j] := X(yl[j]);}
+    y := yl~(yt,);
+    if !subt{for j in [0..n){low[j] := X(low[j]);}}
+    (y,low,carry) := QQ_carry[n](y,low,carry);
+    if !subt{for j in [0..n){low[j] := X(low[j]);}}
+    forget(carry=0);return (y,low~high);
+}
+
+// Map: undo=0 computes |y,0> -> |y,y^2>; undo=1 reverses it.
+def integer_square[undo:!𝔹][n:!ℕ](y:𝔹^n,z:𝔹^(2*n)){
+    if undo{
+        (y,z) := square_correction[0:!𝔹][n](y,z);
+        z[2*n sub 1] := CNOT(y[n sub 1],z[2*n sub 1]);
+    }
+    for step in [0..n sub 1){
+        i := step; if undo{i = n sub step sub 2;}
+        (y,z) := square_row[undo][n,i]((y,z));
+    }
+    if !undo{
+        z[2*n sub 1] := CNOT(y[n sub 1],z[2*n sub 1]);
+        (y,z) := square_correction[1:!𝔹][n](y,z);
+    }
+    return (y,z);
+}
+
+// Add a carry through a zero-padded tail without materializing operand bits.
+// The saved carry is cin & old bit = cin & !new bit, giving the HMR repair.
+def increment_zero_tail[n:!ℕ](const cin:𝔹,b:𝔹^n){
+    if n=0{return b;}
+    if n=1{b[0] := CNOT(cin,b[0]); return b;}
+    (b0,)~(bt:𝔹^(n sub 1)) := b;
+    carry := AND(cin,b0,0:𝔹);
+    b0 := CNOT(cin,b0);
+    bt := increment_zero_tail[n sub 1](carry,bt);
+    carry := H(carry); outcome := measure(carry);
+    if outcome && cin{b0 := X(b0); b0 := Z(b0); b0 := X(b0);}
+    return ((b0,)~bt) coerce 𝔹^n;
+}
+
+// Map: |cin,a,b> -> |cin,a,b+a+cin>, with n-k implicit high zero bits.
+def adder_zero_padded[k:!ℕ,n:!ℕ](const cin:𝔹,a:𝔹^k,b:𝔹^n){
+    assert(k<=n);
+    if k=0{b := increment_zero_tail[n](cin,b); return (a,b);}
+    if k=n{
+        (a,t) := adder_nocarry[k](cin,a,b coerce 𝔹^k);
+        return (a,t coerce 𝔹^n);
+    }
+    (a0,)~(at:𝔹^(k sub 1)) := a;
+    (b0,)~(bt:𝔹^(n sub 1)) := b;
+    (a0,b0,carry) := add_unit(cin,a0,b0);
+    (at,bt) := adder_zero_padded[k sub 1,n sub 1](carry,at,bt);
+    (a0,b0) := add_unit_uncomp(cin,a0,b0,carry);
+    return (((a0,)~at) coerce 𝔹^k,((b0,)~bt) coerce 𝔹^n);
+}
+
+// Map: |a,b> -> |a,b+a> with n-k implicit high zero bits, like
+// adder_zero_padded with no carry-in. The low half keeps only its carry-out,
+// so the high half and the tail need half the carry scratch. That carry is
+// erased exactly: carry(a+b) equals carry(a+~(a+b)) on the low half.
+def adder_zero_padded_split[k:!ℕ,n:!ℕ](a:𝔹^k,b:𝔹^n){
+    assert(k>=2); assert(k<=n);
+    h := k div 2;
+    (al:𝔹^h)~(ah:𝔹^(k sub h)) := a coerce 𝔹^(h+(k sub h));
+    (bl:𝔹^h)~(bh:𝔹^(n sub h)) := b coerce 𝔹^(h+(n sub h));
+    (al,wide) := adder_carry[h](0:𝔹,al,bl~(0:𝔹,));
+    (bl:𝔹^h)~(c,) := wide;
+    (ah,bh) := adder_zero_padded[k sub h,n sub h](c,ah,bh);
+    for j in [0..h){bl[j] := X(bl[j]);}
+    (al,bl,c) := QQ_carry[h](al,bl,c);
+    for j in [0..h){bl[j] := X(bl[j]);}
+    forget(c=0);
+    return ((al~ah) coerce 𝔹^k,(bl~bh) coerce 𝔹^n);
+}
+
+// Map: |x,y> -> |x,y +/- factor*x>.
+def add_multiple[subt:!𝔹][factor:!ℕ][k:!ℕ,m:!ℕ](x:𝔹^k,y:𝔹^m){
+    // Canonical signed digits replace long runs of ones by one subtraction.
+    // For 2^32+977 this uses five shifted additions instead of seven.
+    remain := factor; positive := 0:!ℕ; negative := 0:!ℕ; place := 1:!ℕ;
+    while remain>0{
+        if remain%2=1{
+            if remain%4=3{negative += place; remain += 1;}
+            else{positive += place; remain = remain sub 1;}
+        }
+        remain = remain div 2; place *= 2;
+    }
+    length := field_bits(positive+negative);
+    if k+length>m+1{positive = factor; negative = 0; length = field_bits(factor);}
+    plus := positive as !uint[length]; minus := negative as !uint[length];
+    for step in [0..length){
+        j := step; if subt{j = length sub step sub 1;}
+        if plus[j] || minus[j]{
+            subtract := subt; if minus[j]{subtract = !subtract;}
+            assert(k+j<=m);
+            (low:𝔹^j)~(tail:𝔹^(m sub j)) := y;
+            if subtract{for z in [0..m sub j){tail[z] := X(tail[z]);}}
+            if k>=128{(x,tail) := adder_zero_padded_split[k,m sub j](x,tail);}
+            else{(x,tail) := adder_zero_padded[k,m sub j](0:𝔹,x,tail);}
+            if subtract{for z in [0..m sub j){tail[z] := X(tail[z]);}}
+            y := (low~tail) coerce 𝔹^m;
+        }
+    }
+    return (x,y);
+}
