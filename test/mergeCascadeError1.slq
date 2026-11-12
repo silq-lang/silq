@@ -1,7 +1,7 @@
 def flip(b:𝔹)qfree⇒X(b);
 def cx(const a:𝔹,b:𝔹)qfree{ if a { b:=X(b); } return b; }
 def main(){
-	x:=H(0:𝔹); /// error
+	x:=H(0:𝔹);
 	o:=dup(x);
 	p:=dup(o);
 	o:=X(o);

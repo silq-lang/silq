@@ -1,0 +1,10 @@
+// args: --run
+
+def whileAfterReturn(n:!ℕ){ x:=vector(n,0:𝔹); return 0; k:=0; while k<2 { k+=1; n+=1; } return n; }
+def forAfterReturn(n:!ℕ){ x:=vector(n,0:𝔹); return 1; s:=0; for i in 0..n { s+=i; } return s+n; }
+def unusedAfterReturn(n:!ℕ){ x:=vector(n,0:𝔹); return 2; k:=0; while k<2 { k+=1; } return n; }
+def main(){
+	r:=(whileAfterReturn(3),forAfterReturn(2),unusedAfterReturn(1));
+	assert(r==(0,1,2));
+	return r;
+}

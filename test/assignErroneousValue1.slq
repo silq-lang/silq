@@ -1,0 +1,16 @@
+def measuredValue(){
+	v:=false;
+	v=measure(t); /// error
+	return v;
+}
+def quantumValue(x:𝔹){
+	v:=0:𝔹;
+	v=H(t); /// error
+	return (v,x);
+}
+def usedLater(n:!ℕ){
+	k:=0;
+	k=n+u; /// error
+	for i in 0..k { n+=1; }
+	return (k,n);
+}

@@ -1,0 +1,43 @@
+// args: --run
+
+def capturedThen(){
+	s:=0;
+	for i in 0..2 {
+		s+=1;
+		if s>1 { return (λ()⇒move(s))(); }
+	}
+	return s;
+}
+def capturedWhile(n:!ℕ){
+	s:=0;
+	i:=0;
+	while i<n {
+		s+=2;
+		if s>3 { return (λ()⇒move(s))(); }
+		i+=1;
+	}
+	return s;
+}
+def capturedQuantum(x:𝔹,n:!ℕ){
+	for i in 0..n {
+		x:=X(x);
+		if i==1 { return (λ()⇒measure(move(x)))(); }
+	}
+	return measure(x);
+}
+def capturedBefore(n:!ℕ){
+	s:=0;
+	for i in 0..n {
+		s+=1;
+		if s>1 {
+			t:=(λ()⇒move(s))();
+			return t;
+		}
+	}
+	return s;
+}
+def main(){
+	r:=(capturedThen(),capturedWhile(5),capturedWhile(1),capturedQuantum(0:𝔹,3),capturedQuantum(0:𝔹,1),capturedBefore(3),capturedBefore(1));
+	assert(r==(2,4,2,0,1,2,1));
+	return r;
+}

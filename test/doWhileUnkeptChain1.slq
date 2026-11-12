@@ -1,0 +1,41 @@
+// args: --run
+
+def copyOfCopy(q:𝔹,n:!ℕ){
+	k:=0;
+	do{ k+=1; t:=dup(q); u:=dup(t); q:=X(q); }while k<n;
+	return measure(q);
+}
+def resetConsumes(q:𝔹,n:!ℕ){
+	k:=0;
+	do{ k+=1; t:=dup(q); u:=X(dup(t)); }while k<n{ q:=X(q); }
+	return measure(q);
+}
+def closureCall(q:𝔹,n:!ℕ){
+	k:=0;
+	v:=false;
+	do{ k+=1; t:=dup(q); h:=λ()⇒measure(dup(t)); v=h(); q:=X(q); }while k<n;
+	return (v,measure(q));
+}
+def threeLevels(q:𝔹,n:!ℕ){
+	k:=0;
+	r:=0;
+	do{ k+=1; t:=dup(q); u:=dup(t); w:=X(dup(u)); r+=measure(dup(w)) as !ℕ; q:=X(q); }while k<n;
+	return (r,measure(q));
+}
+def bothDependencies(q:𝔹,n:!ℕ){
+	k:=0;
+	r:=0;
+	do{ k+=1; t:=dup(q); u:=X(dup(t)); w:=u⊕t; r+=measure(dup(w)) as !ℕ; q:=X(q); }while k<n;
+	return (r,measure(q));
+}
+def closureOfClosure(q:𝔹,n:!ℕ){
+	k:=0;
+	v:=false;
+	do{ k+=1; t:=dup(q); h:=λ()⇒measure(dup(t)); g:=λ()⇒!h(); v=g(); q:=X(q); }while k<n;
+	return (v,measure(q));
+}
+def main(){
+	r:=(copyOfCopy(0:𝔹,1),copyOfCopy(0:𝔹,2),resetConsumes(1:𝔹,2),closureCall(0:𝔹,1),closureCall(0:𝔹,2),threeLevels(0:𝔹,3),bothDependencies(1:𝔹,3),closureOfClosure(1:𝔹,2));
+	assert(r==(1,0,0,(0,1),(1,0),(2,1),(3,0),(1,1)));
+	return r;
+}

@@ -6,5 +6,5 @@ def main(){
     }else{
         y=[]:!𝔹[0]; /// error
     }
-    return y; /// error
+    return y;
 }
