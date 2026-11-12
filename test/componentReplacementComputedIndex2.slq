@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	x:=[H(0) for i in 0..4];
+	i:=[H(0),H(0)] as uint[2];
+	y:=0;
+	(x[i&3],y):=(y,x[i&3]);
+	return (x,y,i);
+}

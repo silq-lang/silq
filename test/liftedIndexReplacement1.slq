@@ -1,0 +1,12 @@
+// args: --run
+
+def good[n:!ℕ](const x:uint[n])qfree{
+	return x;
+}
+
+def main(){
+	xs:=(0,0):𝔹^2;
+	i:=[H(0)] as uint[1];
+	xs[good(i)]:=X(xs[good(i)]);
+	return (i,xs);
+}

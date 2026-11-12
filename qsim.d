@@ -3414,7 +3414,9 @@ struct Interpreter(QState){
 							a.array_[i.asℤ.to!size_t]=QState.Value.init;
 						}else{
 							r=r.dup(qstate).consumeOnRead();
-							getAssignable!false(idx,[]).assign(qstate,QState.zeroLike(r,(Expression x)=>doIt(x))); // TODO: a bit hacky
+							auto ass=getAssignable!false(idx,[]);
+							ass.assign(qstate,QState.zeroLike(r,(Expression x)=>doIt(x))); // TODO: a bit hacky
+							ass.release(qstate);
 						}
 					}else r=r.dup(qstate);
 				}
@@ -3598,6 +3600,11 @@ struct Interpreter(QState){
 		string writeName;
 		QState.Value[] indices;
 		Location[] locations;
+		QState.Value[] temps; // (the computed quantum indices, which `read` and `assign` read several times, e.g., `i&3` and `f(i)`)
+		void release(ref QState state){
+			foreach(t;temps) t.forget(state);
+			temps=[];
+		}
 		QState.Value read(ref QState state){
 			enforce(readName in state.vars,format("missing variable `%s`",readName));
 			auto var=state.vars[readName];
@@ -3758,6 +3765,10 @@ struct Interpreter(QState){
 		if(auto idx=cast(IndexExp)lhs){
 			auto a=getAssignable!isCat(idx.e,replacements);
 			auto index=runExp(idx.a);
+			if(!index.isClassical()&&!(index.tag==QState.Value.Tag.quval&&cast(QState.QVar)index.quval&&!(cast(QState.QVar)index.quval).consumedOnRead)){
+				index=index.dup(qstate);
+				a.temps~=index;
+			}
 			a.indices~=index;
 			a.locations~=idx.loc;
 			return a;
@@ -3870,7 +3881,9 @@ struct Interpreter(QState){
 			foreach(i;0..tpl.e.length)
 				assignTo!isCat(tpl.e[i],rhs.array_[i],replacements);
 		}else if(auto idx=cast(IndexExp)lhs){
-			getAssignable!isCat(lhs,replacements).assign(qstate,rhs);
+			auto ass=getAssignable!isCat(lhs,replacements);
+			ass.assign(qstate,rhs);
+			ass.release(qstate);
 		}else if(auto ce=cast(CallExp)lhs){
 			enforce(!isCat,"cannot concat assign to function call expression");
 			bool isAbort=false;
@@ -4055,6 +4068,8 @@ struct Interpreter(QState){
 		a1.assign(qstate,a2.read(qstate).dup(qstate));
 		tmp.consumeOnRead();
 		a2.assign(qstate,tmp);
+		a1.release(qstate);
+		a2.release(qstate);
 	}
 	void forget(QState.Value lhs,QState.Value rhs){
 		if(opt.projectForget) qstate=qstate.project(lhs.eq(rhs));
@@ -4149,6 +4164,7 @@ struct Interpreter(QState){
 				auto lhs=ass.read(qstate),rhs=runExp(ae.e2);
 				ass.assign(qstate,perform(lhs,rhs));
 			}
+			ass.release(qstate);
 		}else if(auto call=cast(CallExp)e){
 			runExp(call).forget(qstate);
 		}else if(auto ce=cast(CompoundExp)e){
