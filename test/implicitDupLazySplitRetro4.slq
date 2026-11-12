@@ -1,0 +1,39 @@
+// args: --run
+
+def keptAfterConditional(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v2:=!v0;
+	ms+=measure(v2);
+	if k { a:=X(a); } else { u:=!v0; forget(u); }
+	ms+=2*measure(v2);
+	ms+=4*measure(v0);
+	return (a,ms);
+}
+def nestedSiblingUseBefore(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	ms+=measure(v0);
+	if k {
+		if l { u:=!v0; forget(u); a:=X(a); }
+		else { t:=measure(v0); ms+=2*t; a:=X(a); }
+	} else { a:=X(a); }
+	return (a,ms);
+}
+def pinnedMergeBefore(a:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	e:=v0;
+	if k { u:=!v0; forget(u); }
+	if j { u:=!v0; forget(u); a:=X(a); }
+	else { t:=measure(v0); ms+=2*t; a:=X(a); }
+	return (a,ms,e);
+}
+def main(){
+	(a0,m0):=keptAfterConditional(1:𝔹,true); (a1,m1):=keptAfterConditional(0:𝔹,false);
+	(a2,m2):=nestedSiblingUseBefore(0:𝔹,true,true); (a3,m3):=nestedSiblingUseBefore(0:𝔹,true,false); (a4,m4):=nestedSiblingUseBefore(1:𝔹,false,false);
+	(a5,m5,e5):=pinnedMergeBefore(0:𝔹,true,true); (a6,m6,e6):=pinnedMergeBefore(0:𝔹,false,false);
+	r:=((measure(a0),m0),(measure(a1),m1),(measure(a2),m2),(measure(a3),m3),(measure(a4),m4),(measure(a5),m5,measure(e5)),(measure(a6),m6,measure(e6)));
+	assert(r==((0,3),(0,4),(1,1),(1,3),(0,0),(1,0,1),(1,2,1)));
+	return r;
+}

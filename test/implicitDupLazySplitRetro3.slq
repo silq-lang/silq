@@ -1,0 +1,49 @@
+def afterConditional(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v2:=!v0;
+	ms+=measure(v2);
+	if k { a:=X(a); } else { u:=!v0; forget(u); }
+	ms+=measure(v2); /// error
+	return (a,ms);
+}
+def usedInConsumingBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	ms+=measure(v1);
+	if k { u:=!v0; forget(u); a:=X(a); } else { a:=X(a); }
+	ms+=measure(v1); /// error
+	return (a,ms);
+}
+def nestedAfterConditional(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v2:=!v0;
+	ms+=measure(v2);
+	if l {
+		if k { a:=X(a); } else { u:=!v0; forget(u); }
+		t:=measure(v2); /// error
+		ms+=t;
+	}
+	return (a,ms);
+}
+def pinnedMerge(a:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	e:=v0;
+	if k { u:=!v0; forget(u); }
+	if j { u:=!v0; forget(u); a:=X(a); }
+	else { a:=X(a); t:=measure(v0); ms+=t; } /// error
+	return (a,ms,e);
+}
+def nestedSiblingUse(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	ms+=measure(v0);
+	if k {
+		if l { u:=!v0; forget(u); a:=X(a); }
+		else { a:=X(a); t:=measure(v0); ms+=t; } /// error
+	} else { a:=X(a); }
+	return (a,ms);
+}
