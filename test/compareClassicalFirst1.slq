@@ -1,0 +1,44 @@
+// args: --run
+
+def tupleOrder(const a:𝔹×!ℕ×𝔹,const b:𝔹×!ℕ×𝔹)qfree⇒a<b;
+def tupleEqual(const a:𝔹×!ℕ×𝔹,const b:𝔹×!ℕ×𝔹)qfree⇒a==b;
+def mixedLeaves(const a:!𝔹×𝔹,const b:𝔹×!𝔹)qfree⇒a≥b;
+def lengths(const a:𝔹×!ℕ,const b:𝔹×!ℕ×𝔹)qfree⇒a<b;
+def vectorParam[n:!ℕ](const a:(𝔹×!ℕ)^n,const b:(𝔹×!ℕ)^n)qfree⇒a≤b;
+def nestedArrays(const a:𝔹[][],const b:𝔹[][])qfree⇒a>b;
+def nestedArraysUnequal(const a:(!ℕ×𝔹)[][],const b:(!ℕ×𝔹)[][])qfree⇒a≠b;
+def tupleVector[n:!ℕ](const a:𝔹×𝔹×𝔹,const b:𝔹^n)qfree⇒a<b;
+def tupleVectorEqual[n:!ℕ](const a:𝔹×!ℕ,const b:!ℕ^n)qfree⇒a==b;
+def closure(n:!ℕ)⇒λ(const a:(𝔹×!ℕ)^n,const b:(𝔹×!ℕ)^n)qfree⇒a≥b;
+def superposedTuple(){
+	a:=(H(0:𝔹),2,H(0:𝔹));
+	b:=(0:𝔹,2,1:𝔹);
+	r:=a<b;
+	(a<b):=r;
+	(x,y,z):=a;
+	forget(b=(0:𝔹,2,1:𝔹));
+	return measure(H(x),y,H(z));
+}
+def superposedVector(){
+	v:=[H(0:𝔹),H(0:𝔹),H(0:𝔹)];
+	w:=[0:𝔹,1:𝔹,0:𝔹];
+	r:=v≤w;
+	(v≤w):=r;
+	forget(w=[0:𝔹,1:𝔹,0:𝔹]);
+	for i in 0..3 { v[i]:=H(v[i]); }
+	return measure(v);
+}
+def superposedArray(){
+	p:=[(H(0:𝔹),1),(H(0:𝔹),2),(H(0:𝔹),0)] coerce (𝔹×!ℕ)[];
+	q:=[(1:𝔹,1),(0:𝔹,1)] coerce (𝔹×!ℕ)[];
+	r:=p>q;
+	(p>q):=r;
+	forget(q=[(1:𝔹,1),(0:𝔹,1)] coerce (𝔹×!ℕ)[]);
+	for i in 0..3 { p[i][0]:=H(p[i][0]); }
+	return measure(p);
+}
+def main(){
+	r:=(measure(tupleOrder((1:𝔹,2,0:𝔹),(0:𝔹,3,1:𝔹))),measure(tupleOrder((0:𝔹,2,0:𝔹),(0:𝔹,3,1:𝔹))),measure(tupleOrder((0:𝔹,2,1:𝔹),(0:𝔹,2,0:𝔹))),measure(tupleEqual((1:𝔹,2,0:𝔹),(1:𝔹,2,0:𝔹))),measure(tupleEqual((1:𝔹,2,0:𝔹),(1:𝔹,3,0:𝔹))),measure(mixedLeaves((true,0:𝔹),(1:𝔹,true))),measure(lengths((0:𝔹,2),(0:𝔹,2,0:𝔹))),measure(vectorParam[2]([(1:𝔹,1),(0:𝔹,5)],[(1:𝔹,1),(1:𝔹,3)])),measure(vectorParam[2]([(1:𝔹,1),(0:𝔹,5)],[(1:𝔹,2),(0:𝔹,0)])),measure(nestedArrays([[0:𝔹,1:𝔹],[1:𝔹]],[[0:𝔹,1:𝔹],[0:𝔹,1:𝔹]])),measure(nestedArrays([[0:𝔹]],[[0:𝔹],[]])),measure(nestedArraysUnequal([[(1,0:𝔹)],[(2,1:𝔹),(3,0:𝔹)]],[[(1,0:𝔹)],[(2,1:𝔹)]])),measure(nestedArraysUnequal([[(1,0:𝔹)],[(2,1:𝔹)]],[[(1,0:𝔹)],[(2,1:𝔹)]])),measure(tupleVector[2]((0:𝔹,1:𝔹,1:𝔹),vector(2,1:𝔹))),measure(tupleVector[3]((1:𝔹,1:𝔹,0:𝔹),vector(3,1:𝔹))),measure(tupleVectorEqual[2]((0:𝔹,1),vector(2,0))),measure(tupleVectorEqual[2]((1:𝔹,1),vector(2,1))),measure(closure(2)([(0:𝔹,1),(1:𝔹,1)],[(0:𝔹,1),(0:𝔹,2)])),superposedTuple(),superposedVector(),superposedArray());
+	assert(r==(0,1,0,1,0,0,1,1,1,1,0,1,0,1,1,0,1,1,(0,2,0),(0,0,0),((0,1),(0,2),(0,0))));
+	return r;
+}
