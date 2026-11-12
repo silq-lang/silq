@@ -1,0 +1,35 @@
+// args: --run
+
+def withoutImplicitDup(w:𝔹){
+	ms:=0:!ℕ;
+	p:=dup(w);
+	u:=!p; forget(u);
+	if p { w:=X(w); }
+	ms+=measure(p);
+	return (w,ms);
+}
+def withoutConsumption(w:𝔹){
+	ms:=0:!ℕ;
+	p:=dup(w);
+	ms+=measure(p);
+	u:=!p; forget(u);
+	if p { }
+	ms+=2*measure(p);
+	return (w,ms);
+}
+def implicitDupInBranch(w:𝔹,c:!𝔹){
+	ms:=0:!ℕ;
+	p:=dup(w);
+	if c { ms+=measure(p); }
+	u:=!p; forget(u);
+	if p { w:=X(w); }
+	ms+=2*measure(p);
+	return (w,ms);
+}
+def main(){
+	(w0,m0):=withoutImplicitDup(1:𝔹); (w1,m1):=withoutConsumption(1:𝔹);
+	(w2,m2):=implicitDupInBranch(1:𝔹,true); (w3,m3):=implicitDupInBranch(1:𝔹,false);
+	r:=((measure(w0),m0),(measure(w1),m1),(measure(w2),m2),(measure(w3),m3));
+	assert(r==((0,1),(1,3),(0,3),(0,2)));
+	return r;
+}
