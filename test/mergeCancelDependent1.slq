@@ -1,0 +1,71 @@
+// args: --run
+
+def unusedDependent(a:𝔹,k:!𝔹){
+	b:=!a;
+	d:=dup(b);
+	ms:=measure(d);
+	if k { a:=X(a); } else { t:=measure(b); ms+=t; }
+	return (a,ms);
+}
+def usedDependent(a:𝔹,k:!𝔹){
+	b:=!a;
+	d:=dup(b);
+	ms:=measure(d);
+	if k { a:=X(a); } else { u:=!d; forget(u); t:=measure(b); ms+=t; }
+	return (a,ms);
+}
+def unusedDependentThen(a:𝔹,k:!𝔹){
+	b:=!a;
+	d:=dup(b);
+	ms:=measure(d);
+	if k { t:=measure(b); ms+=t; } else { a:=X(a); }
+	return (a,ms);
+}
+def usedDependentThen(a:𝔹,k:!𝔹){
+	b:=!a;
+	d:=dup(b);
+	ms:=measure(d);
+	if k { u:=!d; forget(u); t:=measure(b); ms+=t; } else { a:=X(a); }
+	return (a,ms);
+}
+def implicitDupDependent(a:𝔹,k:!𝔹){
+	b:=!a;
+	d:=dup(b);
+	ms:=measure(d);
+	e:=b;
+	if k { a:=X(a); } else { t:=measure(b); ms+=t; }
+	return (a,e,ms);
+}
+def quantumCondition(a:𝔹,const c:𝔹){
+	b:=!a;
+	d:=dup(b);
+	ms:=measure(d);
+	if c { a:=X(a); } else { t:=X(b); forget(t=dup(a)); }
+	return (a,ms);
+}
+def quantumConditionUsed(a:𝔹,const c:𝔹){
+	b:=!a;
+	d:=dup(b);
+	ms:=measure(d);
+	if c { a:=X(a); } else { u:=!d; forget(u); t:=X(b); forget(t=dup(a)); }
+	return (a,ms);
+}
+def usedDirectly(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	ms+=measure(v);
+	if k { u:=!v; forget(u); } else { a:=X(a); }
+	return (a,ms);
+}
+def measuredDirectly(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	ms+=measure(v);
+	if k { t:=measure(v); ms+=t; } else { a:=X(a); }
+	return (a,ms);
+}
+def main(){
+	r:=(measure(unusedDependent(0:𝔹,true)),measure(unusedDependent(0:𝔹,false)),measure(unusedDependent(1:𝔹,true)),measure(unusedDependent(1:𝔹,false)),measure(usedDependent(0:𝔹,true)),measure(usedDependent(0:𝔹,false)),measure(usedDependent(1:𝔹,true)),measure(usedDependent(1:𝔹,false)),measure(unusedDependentThen(0:𝔹,true)),measure(unusedDependentThen(0:𝔹,false)),measure(unusedDependentThen(1:𝔹,true)),measure(unusedDependentThen(1:𝔹,false)),measure(usedDependentThen(0:𝔹,true)),measure(usedDependentThen(0:𝔹,false)),measure(usedDependentThen(1:𝔹,true)),measure(usedDependentThen(1:𝔹,false)),measure(implicitDupDependent(0:𝔹,true)),measure(implicitDupDependent(0:𝔹,false)),measure(implicitDupDependent(1:𝔹,true)),measure(implicitDupDependent(1:𝔹,false)),measure(quantumCondition(0:𝔹,0:𝔹)),measure(quantumCondition(0:𝔹,1:𝔹)),measure(quantumCondition(1:𝔹,0:𝔹)),measure(quantumCondition(1:𝔹,1:𝔹)),measure(quantumConditionUsed(0:𝔹,0:𝔹)),measure(quantumConditionUsed(0:𝔹,1:𝔹)),measure(quantumConditionUsed(1:𝔹,0:𝔹)),measure(quantumConditionUsed(1:𝔹,1:𝔹)),measure(usedDirectly(0:𝔹,true)),measure(usedDirectly(0:𝔹,false)),measure(usedDirectly(1:𝔹,true)),measure(usedDirectly(1:𝔹,false)),measure(measuredDirectly(0:𝔹,true)),measure(measuredDirectly(0:𝔹,false)),measure(measuredDirectly(1:𝔹,true)),measure(measuredDirectly(1:𝔹,false)));
+	assert(r==((1,1),(0,2),(0,0),(1,0),(1,1),(0,2),(0,0),(1,0),(0,2),(1,1),(1,0),(0,0),(0,2),(1,1),(1,0),(0,0),(1,1,1),(0,1,2),(0,0,0),(1,0,0),(0,1),(1,1),(1,0),(0,0),(0,1),(1,1),(1,0),(0,0),(0,0),(1,0),(1,1),(0,1),(0,0),(1,0),(1,2),(0,1)));
+	return r;
+}
