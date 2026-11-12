@@ -1,0 +1,38 @@
+def mergedConsumption(w:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	if k { w:=X(w); } else { t:=measure(p); ms+=t; }
+	w:=X(w);
+	ms+=measure(p); /// error
+	return (w,ms);
+}
+def afterNestedBranch(w:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	if k {
+		if l { t:=measure(p); ms+=t; w:=X(w); } else { u:=!p; forget(u); }
+		u2:=!p; forget(u2); /// error
+	}
+	ms+=measure(p);
+	return (w,ms);
+}
+def forgetAfterControl(w:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp); /// error
+	if p { w:=X(w); }
+	if k { } else { ms+=measure(p); }
+	return (w,ms);
+}
+def consumedImplicitDup(w:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp); /// error
+	if k { } else { if k { w:=X(w); t:=measure(p); ms+=t; } }
+	if k { } else { if j { t:=measure(p); ms+=t; } } /// error
+	t:=measure(p); /// error
+	ms+=t;
+	return (w,ms);
+}
