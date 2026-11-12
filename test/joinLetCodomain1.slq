@@ -1,0 +1,28 @@
+// args: --run
+
+def f(b:!ℕ)⇒vector(let{ r:=0; repeat b%3 { r+=1; } } in r,false);
+def unitDomain(c:!𝔹){
+	if c { return ()⇒f(4); }
+	return ()⇒f(4);
+}
+def namedDomain(c:!𝔹){
+	if c { return (k:!ℕ)⇒(f(4),k); }
+	return (m:!ℕ)⇒(f(4),m);
+}
+def mentioned(c:!𝔹){
+	if c { return (k:!ℕ)⇒f(k); }
+	return (m:!ℕ)⇒f(m);
+}
+def nested(c:!𝔹){
+	if c { return ()⇒()⇒f(5); }
+	return ()⇒()⇒f(5);
+}
+def main(){
+	a:=unitDomain(true)();
+	b:=namedDomain(false)(3);
+	d:=mentioned(true)(2);
+	e:=nested(false)()();
+	r:=(a.length,b[0].length,b[1],d.length,e.length);
+	assert(r==(1,1,3,2,2));
+	return r;
+}

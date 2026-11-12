@@ -1,0 +1,5 @@
+def f(b:!ℕ)⇒vector(let{ r:=0; repeat b%3 { r+=1; } } in r,false);
+def main(){ /// error
+	u:=f(0);
+	return (u,main);
+}

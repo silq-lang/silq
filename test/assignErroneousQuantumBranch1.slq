@@ -1,0 +1,28 @@
+def classicalInThen(const c:𝔹){
+	z:=0;
+	if c { } else {
+		z=undefinedName; /// error
+	}
+	return z;
+}
+def quantumInElse(const c:𝔹,y:𝔹){
+	z:=y;
+	if c {
+		z=undefinedName; /// error
+	} else { }
+	return z;
+}
+def tupleInThen(const c:𝔹){
+	z:=(0,1);
+	if c { } else {
+		z=(undefinedName,2); /// error
+	}
+	return z;
+}
+def realInThen(const c:𝔹){
+	z:=1.5;
+	if c { } else {
+		z=undefinedName; /// error
+	}
+	return z; /// error
+}
