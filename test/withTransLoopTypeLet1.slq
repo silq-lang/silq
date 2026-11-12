@@ -1,0 +1,13 @@
+// args: --run
+
+def inverted(b:!ℕ)⇒vector(let{ def go(n:!ℕ):!ℕ{ r:=0; with { for i in 0..n { r+=i; } } do { } return r; } } in go(b),false);
+def usedInBody(b:!ℕ)⇒vector(let{ def go(n:!ℕ):!ℕ{ r:=0; s:=0; with { for i in 0..n { r+=i; } } do { s+=r; } return s+r; } } in go(b),false);
+def nestedLoops(b:!ℕ)⇒vector(let{ def go(n:!ℕ):!ℕ{ r:=0; s:=0; with { for i in 0..n { for j in 0..i { r+=1; } } } do { s+=r; } return s; } } in go(b),false);
+def main(){
+	v:=inverted(3);
+	w:=usedInBody(3);
+	u:=nestedLoops(4);
+	r:=(v.length,w.length,u.length);
+	assert(r==(0,3,6));
+	return r;
+}
