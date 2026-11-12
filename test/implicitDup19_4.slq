@@ -1,3 +1,4 @@
+// args: --run
 
 def main(){
 	x:=H(0);
@@ -5,10 +6,10 @@ def main(){
 	z:=y;
 	w:=y;
 	if true{
-		k:=y; /// error
-		H(0):=x;
+		k:=y;
+		H(0):=x; /// run_error
 	}else{
-		k:=y; /// error
+		k:=y;
 		H(0):=x;
 	}
 	return (z,w,k);

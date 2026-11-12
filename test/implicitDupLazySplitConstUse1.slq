@@ -1,0 +1,36 @@
+// args: --run
+
+def constUse(x:𝔹,c:!𝔹,d:!𝔹){
+	v0:=X(dup(x));
+	if c { m1:=measure(v0); } else { m3:=measure(v0); t:=dup(v0); forget(t); if d { } else { x:=X(x); } }
+	return x;
+}
+def dependentUsed(x:𝔹,c:!𝔹,d:!𝔹){
+	v0:=X(dup(x));
+	v1:=dup(v0);
+	if c { m1:=measure(v0); } else { m3:=measure(v0); t:=dup(v0); forget(t); if d { } else { m4:=measure(v1); x:=X(x); } }
+	return x;
+}
+def thenEmpty(x:𝔹,c:!𝔹,d:!𝔹){
+	v0:=X(dup(x));
+	v1:=dup(v0);
+	if c { } else { m3:=measure(v0); t:=dup(v0); forget(t); if d { } else { m4:=measure(v1); x:=X(x); } }
+	return x;
+}
+def dependentForgotten(x:𝔹,c:!𝔹,d:!𝔹){
+	v0:=X(dup(x));
+	v1:=dup(v0);
+	if c { m1:=measure(v0); } else { m3:=measure(v0); t:=dup(v0); forget(t); if d { } else { forget(v1); x:=X(x); } }
+	return x;
+}
+def twoMeasures(x:𝔹,y:𝔹,c:!𝔹,d:!𝔹){
+	v0:=X(dup(x));
+	v1:=dup(v0);
+	if c { m1:=measure(v0); m2:=measure(v0); } else { m3:=measure(v0); t:=dup(v0); forget(t); if d { } else { m4:=measure(v1); x:=X(x); x:=X(x); } }
+	return (x,y);
+}
+def main(){
+	r:=(measure(constUse(0:𝔹,true,false)),measure(constUse(0:𝔹,false,true)),measure(constUse(0:𝔹,false,false)),measure(dependentUsed(1:𝔹,false,false)),measure(dependentUsed(1:𝔹,true,false)),measure(thenEmpty(0:𝔹,false,false)),measure(thenEmpty(1:𝔹,true,true)),measure(dependentForgotten(1:𝔹,false,false)),measure(dependentForgotten(0:𝔹,false,true)),measure(twoMeasures(1:𝔹,0:𝔹,false,false)),measure(twoMeasures(0:𝔹,1:𝔹,true,true)));
+	assert(r==(0,0,1,0,1,1,1,0,0,(1,0),(0,1)));
+	return r;
+}

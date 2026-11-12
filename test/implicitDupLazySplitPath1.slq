@@ -1,0 +1,76 @@
+def sameBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	ms+=measure(v);
+	if k { u:=!v; forget(u); } else { a:=X(a); t:=measure(v); ms+=t; } /// error
+	return (a,ms);
+}
+def thenBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	ms+=measure(v);
+	if k { a:=X(a); t:=measure(v); ms+=t; } else { u:=!v; forget(u); } /// error
+	return (a,ms);
+}
+def dependent(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	ms+=measure(v);
+	w:=!v;
+	ms+=measure(w);
+	if k { } else { a:=X(a); t:=measure(w); ms+=t; } /// error
+	return (a,ms);
+}
+def nestedBranch(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	ms+=measure(v);
+	if k { u:=!v; forget(u); } else { if l { a:=X(a); t:=measure(v); ms+=t; } } /// error
+	return (a,ms);
+}
+def afterNested(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	ms+=measure(v);
+	if k { u:=!v; forget(u); } else { if l { a:=X(a); } t:=measure(v); ms+=t; } /// error
+	return (a,ms);
+}
+def quantumCondition(a:𝔹,const c:𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	ms+=measure(v);
+	if c { } else { a:=X(a); t:=X(v); forget(t=dup(a)); } /// error
+	return (a,ms);
+}
+def constUseAfter(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	ms+=measure(v);
+	u0:=!v;
+	forget(u0);
+	if k { u:=!v; forget(u); } else { a:=X(a); t:=measure(v); ms+=t; } /// error
+	return (a,ms);
+}
+def secondBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	ms+=measure(v);
+	if k { a:=X(a); } else { a:=X(a); t:=measure(v); ms+=t; } /// error
+	return (a,ms);
+}
+def secondBranchDependent(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	ms+=measure(v);
+	w:=!v;
+	ms+=measure(w);
+	if k { a:=X(a); } else { a:=X(a); t:=measure(w); ms+=t; } /// error
+	return (a,ms);
+}
+def secondBranchNested(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	ms+=measure(v);
+	if k { a:=X(a); } else { if l { a:=X(a); t:=measure(v); ms+=t; } else { a:=X(a); } } /// error
+	return (a,ms);
+}

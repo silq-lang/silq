@@ -1,0 +1,92 @@
+// args: --run
+
+def returnOnly(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	ms+=measure(v);
+	if k { ms+=1; } else { return (a,ms); }
+	a:=X(a);
+	return (a,ms);
+}
+def returnUses(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	ms+=measure(v);
+	if k { ms+=1; } else { u:=!v; forget(u); return (a,ms); }
+	a:=X(a);
+	return (a,ms);
+}
+def laterUseFirst(a:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	ms+=measure(v);
+	if k { ms+=1; } else { return (a,ms); }
+	if j { u:=!v; forget(u); a:=X(a); } else { a:=X(a); }
+	return (a,ms);
+}
+def laterMeasure(a:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	ms+=measure(v);
+	if k { ms+=1; } else { return (a,ms); }
+	if j { t:=measure(v); ms+=t; a:=X(a); } else { a:=X(a); }
+	return (a,ms);
+}
+def laterUse(a:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	ms+=measure(v);
+	if k { ms+=1; } else { return (a,ms); }
+	if j { u:=!v; forget(u); } else { }
+	a:=X(a);
+	return (a,ms);
+}
+def copyAfter(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	ms+=measure(v);
+	if k { ms+=1; } else { return (a,ms,0:𝔹); }
+	c:=dup(v);
+	a:=X(a);
+	return (a,ms,c);
+}
+def measureAfter(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	e:=v;
+	if k { } else { t:=measure(v); ms+=t; return (a,ms,e); }
+	t:=measure(v);
+	ms+=t+2;
+	return (a,ms,e);
+}
+def laterReturn(a:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	ms+=measure(v);
+	if k { t:=measure(v); ms+=t; } else { t:=measure(v); ms+=2*t; }
+	if j { a:=X(a); } else { t2:=measure(v); ms+=4*t2; return (a,ms); }
+	return (a,ms);
+}
+def laterReturnDependent(a:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	w:=X(dup(v));
+	ms+=measure(v);
+	if k { t:=measure(w); ms+=t; } else { t:=measure(w); ms+=2*t; }
+	if j { u:=!v; forget(u); a:=X(a); } else { t2:=measure(w); ms+=4*t2; return (a,ms); }
+	return (a,ms);
+}
+def main(){
+	(a0,m0):=returnOnly(0:𝔹,true); (a1,m1):=returnOnly(1:𝔹,false);
+	(a2,m2):=returnUses(1:𝔹,true); (a3,m3):=returnUses(0:𝔹,false);
+	(a4,m4):=laterUseFirst(1:𝔹,true,true); (a5,m5):=laterUseFirst(1:𝔹,true,false);
+	(a6,m6):=laterMeasure(1:𝔹,true,true); (a7,m7):=laterMeasure(0:𝔹,true,false);
+	(a8,m8):=laterUse(1:𝔹,true,true); (a9,m9):=laterUse(1:𝔹,false,true);
+	(b0,n0,c0):=copyAfter(1:𝔹,true); (b1,n1,c1):=copyAfter(1:𝔹,false);
+	(b2,n2,e2):=measureAfter(1:𝔹,true); (b3,n3,e3):=measureAfter(1:𝔹,false);
+	(b4,n4):=laterReturn(1:𝔹,true,true); (b5,n5):=laterReturn(1:𝔹,false,false);
+	(b6,n6):=laterReturnDependent(0:𝔹,true,true); (b7,n7):=laterReturnDependent(0:𝔹,false,false);
+	r:=((measure(a0),m0),(measure(a1),m1),(measure(a2),m2),(measure(a3),m3),(measure(a4),m4),(measure(a5),m5),(measure(a6),m6),(measure(a7),m7),(measure(a8),m8),(measure(a9),m9),(measure(b0),n0,measure(c0)),(measure(b1),n1,measure(c1)),(measure(b2),n2,measure(e2)),(measure(b3),n3,measure(e3)),(measure(b4),n4),(measure(b5),n5),(measure(b6),n6),(measure(b7),n7));
+	assert(r==((1,1),(1,1),(0,2),(0,0),(0,2),(0,2),(0,3),(1,1),(0,2),(1,1),(0,2,1),(1,1,0),(1,3,1),(1,1,1),(0,2),(1,7),(1,1),(0,6)));
+	return r;
+}

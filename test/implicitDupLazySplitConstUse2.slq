@@ -1,0 +1,16 @@
+def classicalCondition(a:𝔹,k:!𝔹){
+	b:=!a;
+	ms:=measure(b);
+	d:=dup(b);
+	ms+=measure(d);
+	if k { a:=X(a); } else { t:=measure(b); ms+=t; } /// TODO
+	return (a,ms);
+}
+def quantumCondition(a:𝔹,const c:𝔹){
+	b:=!a;
+	ms:=measure(b);
+	d:=dup(b);
+	ms+=measure(d);
+	if c { a:=X(a); } else { u:=!b; forget(u); a:=H(a); } /// TODO
+	return (a,ms);
+}

@@ -1,0 +1,59 @@
+def afterMerge(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	ms+=measure(v);
+	if k { ms+=1; } else { return (a,ms,0:𝔹); }
+	a:=X(a);
+	return (a,ms,v); /// error
+}
+def afterMergeUsed(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	ms+=measure(v);
+	if k { ms+=1; } else { u:=!v; forget(u); return (a,ms,0:𝔹); }
+	a:=X(a);
+	return (a,ms,v); /// error
+}
+def laterBranch(a:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	ms+=measure(v);
+	if k { ms+=1; } else { return (a,ms,0:𝔹); }
+	if j { a:=X(a); }
+	return (a,ms,v); /// error
+}
+def laterBranchUse(a:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	ms+=measure(v);
+	if k { ms+=1; } else { return (a,ms); }
+	if j { a:=X(a); u:=!v; forget(u); } else { a:=X(a); } /// error
+	return (a,ms);
+}
+def continuedBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	e:=v;
+	if k { a:=X(a); } else { a:=X(a); return (a,ms,e); }
+	t:=measure(v); /// error
+	ms+=t;
+	return (a,ms,e);
+}
+def continuedBranchUsed(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	e:=v;
+	if k { a:=X(a); } else { u:=!v; forget(u); a:=X(a); return (a,ms,e); }
+	t:=measure(v); /// error
+	ms+=t;
+	return (a,ms,e);
+}
+def continuedNested(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	ms+=measure(v);
+	if k { a:=X(a); if l { a:=X(a); } } else { a:=X(a); return (a,ms); }
+	t:=measure(v); /// error
+	ms+=t;
+	return (a,ms);
+}

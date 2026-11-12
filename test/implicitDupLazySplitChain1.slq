@@ -1,0 +1,9 @@
+def usedCopy(const c:𝔹){
+	x:=H(H(0:𝔹));
+	y0:=!x;
+	y1:=y0;
+	y2:=y1;
+	if c { z:=X(x); } else { u:=!y1; /// TODO
+		forget(u); z:=H(H(x)); }
+	return (y2,z);
+}

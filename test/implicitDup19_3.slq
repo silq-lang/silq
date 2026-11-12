@@ -1,13 +1,14 @@
+// args: --run
 
 def main(){
 	x:=H(0);
 	y:=dup(x);
 	z:=y;
 	if true{
-		k:=y; /// error
-		H(0):=x;
+		k:=y;
+		H(0):=x; /// run_error
 	}else{
-		k:=y; /// error
+		k:=y;
 		H(0):=x;
 	}
 	return (z,k);

@@ -1,0 +1,87 @@
+// args: --run
+
+def bothBranches(const c:𝔹){
+	x:=H(H(0:𝔹));
+	y0:=!x;
+	y1:=y0;
+	if c {
+		w:=!y0;
+		forget(w);
+		z:=X(x);
+	} else {
+		u:=!y0;
+		forget(u);
+		z:=H(H(x));
+	}
+	return (y1,z);
+}
+def elseOnly(const c:𝔹){
+	x:=H(H(0:𝔹));
+	y0:=!x;
+	y1:=y0;
+	if c {
+		z:=X(x);
+	} else {
+		u:=!y0;
+		forget(u);
+		z:=H(H(x));
+	}
+	return (y1,z);
+}
+def thenOnly(const c:𝔹){
+	x:=H(H(0:𝔹));
+	y0:=!x;
+	y1:=y0;
+	if c {
+		u:=!y0;
+		forget(u);
+		z:=H(H(x));
+	} else {
+		z:=X(x);
+	}
+	return (y1,z);
+}
+def neitherBranch(const c:𝔹){
+	x:=H(H(1:𝔹));
+	y0:=!x;
+	y1:=y0;
+	y2:=y1;
+	if c { z:=X(x); } else { z:=H(H(x)); }
+	return (y2,z);
+}
+def classicalCondition(c:!𝔹){
+	x:=H(H(1:𝔹));
+	y0:=!x;
+	y1:=y0;
+	if c {
+		w:=measure(y0);
+		z:=X(x);
+		return (y1,z,w);
+	}
+	z:=H(H(x));
+	return (y1,z,false);
+}
+def nested(c:!𝔹,d:!𝔹){
+	x:=H(H(0:𝔹));
+	y0:=!x;
+	y1:=y0;
+	if c {
+		if d {
+			w:=!y0;
+			forget(w);
+			z:=X(x);
+		} else {
+			z:=X(x);
+		}
+	} else {
+		u:=!y0;
+		forget(u);
+		z:=H(H(x));
+	}
+	return (y1,z);
+}
+def main(){
+	r:=(measure(bothBranches(0:𝔹)),measure(bothBranches(1:𝔹)),measure(elseOnly(0:𝔹)),measure(elseOnly(1:𝔹)),measure(thenOnly(0:𝔹)),measure(thenOnly(1:𝔹)),measure(neitherBranch(0:𝔹)),measure(neitherBranch(1:𝔹)),measure(classicalCondition(true)),measure(classicalCondition(false)),measure(nested(true,true)),measure(nested(true,false)),measure(nested(false,true)));
+	assert(r==((1,0),(1,1),(1,0),(1,1),(1,1),(1,0),(0,1),(0,0),(0,0,false),(0,1,false),(1,1),(1,1),(1,0)));
+	return r;
+}

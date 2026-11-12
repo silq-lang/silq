@@ -1,9 +1,9 @@
 def main(){
 	x := H(0);
-	y := dup(x);
+	y := dup(x); /// error
 	z := y;
 	forget(z);
-	if y { /// error
+	if y {
 		if y {
 			x := H(x);
 		}

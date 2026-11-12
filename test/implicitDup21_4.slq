@@ -5,7 +5,7 @@ def foo(x:𝔹){
 	if X(z){ /// error
 		return x;
 	}else{
-		forget(y); /// error
+		forget(y);
 	}
 	return (r,x); /// error
 }
