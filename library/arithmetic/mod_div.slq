@@ -1,0 +1,431 @@
+import arithmetic.QQ_mult;
+import arithmetic.QQ_adder;
+import arithmetic.CQ_adder;
+
+// Map: |c,x> -> |c,-x mod p> if c=1, otherwise unchanged.
+def c_neg_modp[p:!ℕ][n:!ℕ](const ctrl:𝔹,x:𝔹^n){
+    assert(p>2); assert(p>=(2^(n sub 1))); assert(p<(2^n));
+    ext := 0:𝔹; if ctrl{if (x as uint[n])!=0{ext := X(ext);}}
+    for j in [0..n){x[j] := CNOT(ext,x[j]);}
+    x := c_QC_adder[n](ext,0:𝔹,x,p+1);
+    if ctrl{if (x as uint[n])!=0{ext := X(ext);}}
+    forget(ext=0);
+    return x;
+}
+
+// Map: |u,v,s> -> |u,v,s xor ([v odd] and [u>v])>.
+def binary_gcd_choice[n:!ℕ](u:𝔹^n,v:𝔹^n,swap:𝔹){
+    assert(n>=1);
+    if n=1{return (u,v,swap);}
+    // When v is odd, bit 0 cannot make u greater: compare only bits 1..n.
+    carry := 0:uint[n] as 𝔹^n;
+    for j in [1..n){
+        v[j] := X(v[j]);
+        u[j] := CNOT(carry[j sub 1],u[j]);
+        v[j] := CNOT(carry[j sub 1],v[j]);
+        carry[j] := AND(u[j],v[j],carry[j]);
+        carry[j] := CNOT(carry[j sub 1],carry[j]);
+    }
+    swap := toffoli(v[0],carry[n sub 1],swap);
+    for k in [1..n){
+        j := n sub k;
+        carry[j] := CNOT(carry[j sub 1],carry[j]);
+        anc := 0:𝔹; (anc,carry[j]) := (carry[j],anc);
+        (u[j],v[j]) := AND_uncomp(u[j],v[j],anc);
+        u[j] := CNOT(carry[j sub 1],u[j]);
+        v[j] := CNOT(carry[j sub 1],v[j]);
+        v[j] := X(v[j]);
+    }
+    forget(carry=0:uint[n]);
+    return (u,v,swap);
+}
+
+// Map: Erases the computed binary-GCD swap flag by measurement.
+def erase_gcd_choice[n:!ℕ](u:𝔹^n,v:𝔹^n,swap:𝔹){
+    if n=1{forget(swap=0);return (u,v);}
+    (ul,)~(uh:𝔹^(n sub 1)) := u;
+    (vl,)~(vh:𝔹^(n sub 1)) := v;
+    for j in [0..n sub 1){vh[j] := X(vh[j]);}
+    (uh,vh) := erase_carry[n sub 1](vl,uh,vh,swap);
+    for j in [0..n sub 1){vh[j] := X(vh[j]);}
+    return ((ul,)~uh,(vl,)~vh);
+}
+
+// Map: |u,v,0,0> -> |u', (v'-odd*u')/2,swap,odd>.
+def binary_gcd_step[n:!ℕ](state:𝔹^n×𝔹^n×𝔹×𝔹) @noinline{
+    (u,v,swap,odd) := state;
+    odd := CNOT(v[0],odd);
+    (u,v,swap) := binary_gcd_choice[n](u,v,swap);
+    (u,v) := swap_registers[n](swap,u,v);
+    // u is odd; subtracting it when v is odd creates no low-bit borrow.
+    (1,)~(uh:𝔹^(n sub 1)) := u;
+    (vl,)~(vh:𝔹^(n sub 1)) := v;
+    vl := CNOT(odd,vl); forget(vl=0);
+    (uh,vh) := c_sub_nocarry[n sub 1](odd,uh,vh);
+    u := (1:𝔹,)~uh; v := vh~(0,);
+    return (u,v,swap,odd);
+}
+
+// Map: Reverses one binary_gcd_step.
+def binary_gcd_unstep[n:!ℕ](state:𝔹^n×𝔹^n×𝔹×𝔹) @noinline{
+    (u,v,swap,odd) := state;
+    (body:𝔹^(n sub 1))~(0,) := v;
+    (1,)~(uh:𝔹^(n sub 1)) := u;
+    (uh,body) := c_adder_nocarry[n sub 1](odd,uh,body);
+    u := (1:𝔹,)~uh;
+    vl := CNOT(odd,0:𝔹); v := (vl,)~body;
+    (u,v) := swap_registers[n](swap,u,v);
+    (u,v) := erase_gcd_choice[n](u,v,swap); swap := 0:𝔹;
+    odd := CNOT(v[0],odd);
+    return (u,v,swap,odd);
+}
+
+// Map: Adapts controlled subtraction to E(t)=t+(2^n-p-1)/2.
+def offset_sub_modp[p:!ℕ][n:!ℕ](const ctrl:𝔹,a:𝔹^n,b:𝔹^n){
+    offset := (2^n sub p sub 1) div 2;
+    (a,b) := c_sub_nocarry[n+1](ctrl,a~(0,),b~(0,));
+    (a:𝔹^n)~(0,) := a;
+    (body:𝔹^n)~(borrow,) := b;
+    b := add_masked_constants[0:!𝔹][n](ctrl,borrow,body,offset,2^n sub 1);
+    (aa,bb) := erase_carry[n+1](ctrl,(1:𝔹,)~a,(1:𝔹,)~b,borrow);
+    (1,)~(a:𝔹^n) := aa; (1,)~(b:𝔹^n) := bb;
+    return (a,b);
+}
+
+// Map: undo=0 halves the decoded value mod p; undo=1 doubles it.
+def offset_scale[undo:!𝔹][p:!ℕ][n:!ℕ](x:𝔹^n){
+    s := (2^n sub p sub 1) div 2;
+    d0 := (s+1) div 2; d1 := s div 2 + (p+1) div 2;
+    b0 := d0 as !uint[n]; b1 := d1 as !uint[n]; mask := 0:!ℕ;
+    for j in [0..n){if b0[j]!=b1[j]{mask += 2^j;}}
+    if !undo{
+        (flag,)~(body:𝔹^(n sub 1)) := x;
+        if s%2=1{flag := X(flag);}
+        x := add_masked_constants[0:!𝔹][n](1:𝔹,flag,body~(0,),d0,mask);
+        flag := CNOT(x[n sub 1],flag); forget(flag=0);
+    }else{
+        flag := dup(x[n sub 1]);
+        (body:𝔹^(n sub 1))~(0,) := add_masked_constants[1:!𝔹][n](1:𝔹,flag,x,d0,mask);
+        if s%2=1{flag := X(flag);}
+        x := (flag,)~body;
+    }
+    return x;
+}
+
+// Coefficients encode a as a+(2^n-p-1)/2, in a symmetric n-bit interval.
+// Map: Applies or reverses the coefficient update for one GCD step.
+def binary_payload_step[inverse:!𝔹][p:!ℕ][n:!ℕ](state:𝔹^n×𝔹^n×𝔹×𝔹) @noinline{
+    (a,b,swap,odd) := state;
+    if !inverse{(a,b) := swap_registers[n](swap,a,b);}
+    if inverse{b := offset_scale[1:!𝔹][p][n](b);}
+    (a,b) := offset_sub_modp[p][n](odd,a,b);
+    if !inverse{b := offset_scale[0:!𝔹][p][n](b);}
+    if inverse{(a,b) := swap_registers[n](swap,a,b);}
+    return (a,b,swap,odd);
+}
+
+// uv halves each step; after j steps, uv<2^(2*n-j).
+// Map: Classically maps round j to its active GCD register width.
+def gcd_width[n:!ℕ](j:!ℕ) lifted:!ℕ{
+    if j<=n{return n;}
+    return 2*n sub j;
+}
+
+// Three-branch transcript codec adapted from the challenge's codec_synth.rs.
+// Each (swap,odd) pair obeys swap => odd; three pairs occupy five qubits.
+// Map: Applies one reversible six-bit transcript codec layer.
+def transcript_layer[layer:!ℕ](q:𝔹^6) qfree{
+    if layer=0{
+        q[4] := CNOT(q[5],q[4]);
+        q[5] := CNOT(q[4],q[5]);
+        q[3] := CNOT(q[4],q[3]);
+        q[4] := CNOT(q[3],q[4]);
+        (q[4],q[2]) := (q[2],q[4]);
+        (q[4],q[1]) := (q[1],q[4]);
+        (q[3],q[0]) := (q[0],q[3]);
+        q[0] := X(q[0]);
+        q[1] := X(q[1]);
+        q[2] := toffoli(q[0],q[1],q[2]);
+        q[1] := X(q[1]);
+        q[0] := X(q[0]);
+        (q[3],q[0]) := (q[0],q[3]);
+        (q[4],q[1]) := (q[1],q[4]);
+        (q[4],q[2]) := (q[2],q[4]);
+        q[4] := CNOT(q[3],q[4]);
+        q[3] := CNOT(q[4],q[3]);
+        q[5] := CNOT(q[4],q[5]);
+        q[4] := CNOT(q[5],q[4]);
+    }
+    if layer=1{
+        q[5] := CNOT(q[4],q[5]);
+        q[2] := CNOT(q[4],q[2]);
+        q[0] := CNOT(q[4],q[0]);
+        q[5] := CNOT(q[3],q[5]);
+        q[4] := CNOT(q[3],q[4]);
+        q[2] := CNOT(q[3],q[2]);
+        q[0] := CNOT(q[3],q[0]);
+        (q[4],q[2]) := (q[2],q[4]);
+        (q[3],q[1]) := (q[1],q[3]);
+        q[5] := CNOT(q[0],q[5]);
+        q[4] := CNOT(q[0],q[4]);
+        q[2] := CNOT(q[0],q[2]);
+        (q[1],q[0]) := (q[0],q[1]);
+        q[2] := toffoli(q[0],q[1],q[2]);
+        (q[1],q[0]) := (q[0],q[1]);
+        q[2] := CNOT(q[0],q[2]);
+        q[4] := CNOT(q[0],q[4]);
+        q[5] := CNOT(q[0],q[5]);
+        (q[3],q[1]) := (q[1],q[3]);
+        (q[4],q[2]) := (q[2],q[4]);
+        q[0] := CNOT(q[3],q[0]);
+        q[2] := CNOT(q[3],q[2]);
+        q[4] := CNOT(q[3],q[4]);
+        q[5] := CNOT(q[3],q[5]);
+        q[0] := CNOT(q[4],q[0]);
+        q[2] := CNOT(q[4],q[2]);
+        q[5] := CNOT(q[4],q[5]);
+    }
+    if layer=2{
+        q[2] := CNOT(q[4],q[2]);
+        q[4] := CNOT(q[3],q[4]);
+        q[2] := CNOT(q[3],q[2]);
+        q[0] := CNOT(q[3],q[0]);
+        q[1] := CNOT(q[2],q[1]);
+        q[4] := CNOT(q[1],q[4]);
+        q[2] := CNOT(q[1],q[2]);
+        q[3] := CNOT(q[0],q[3]);
+        q[1] := CNOT(q[0],q[1]);
+        q[0] := X(q[0]);
+        q[1] := X(q[1]);
+        q[2] := toffoli(q[0],q[1],q[2]);
+        q[1] := X(q[1]);
+        q[0] := X(q[0]);
+        q[1] := CNOT(q[0],q[1]);
+        q[3] := CNOT(q[0],q[3]);
+        q[2] := CNOT(q[1],q[2]);
+        q[4] := CNOT(q[1],q[4]);
+        q[1] := CNOT(q[2],q[1]);
+        q[0] := CNOT(q[3],q[0]);
+        q[2] := CNOT(q[3],q[2]);
+        q[4] := CNOT(q[3],q[4]);
+        q[2] := CNOT(q[4],q[2]);
+    }
+    return q;
+}
+
+// Map: Applies or reverses all three transcript codec layers.
+def transcript_transform[inverse:!𝔹](q:𝔹^6) qfree{
+    for j in [0..3){
+        layer := j; if inverse{layer = 2 sub j;}
+        q := transcript_layer[layer](q);
+    }
+    return q;
+}
+
+// Map: |three valid (swap,odd) pairs>_6 -> |code>_5.
+def pack_transcript(q:𝔹^6){
+    for j in [0..3){q[2*j+1] := X(q[2*j+1]);}
+    q := transcript_transform[0:!𝔹](q);
+    q[1] := CNOT(q[3],q[1]); q[2] := CNOT(q[3],q[2]);
+    (a,b,c,anc,d,e) := q;
+    (b,a) := AND_uncomp(b,a,anc);
+    return (a,b,c,d,e);
+}
+
+// Map: |code>_5 -> |three valid (swap,odd) pairs>_6.
+def unpack_transcript(p:𝔹^5){
+    (a,b,c,d,e) := p;
+    anc := AND(b,a,0:𝔹);
+    q := (a,b,c,anc,d,e);
+    q[2] := CNOT(q[3],q[2]); q[1] := CNOT(q[3],q[1]);
+    q := transcript_transform[1:!𝔹](q);
+    for j in [0..3){q[2*j+1] := X(q[2*j+1]);}
+    return q;
+}
+
+// Exact five-letter outer codec adapted from challenge heo_carry.rs.
+// Map: Applies the reversible four-bit outer codec.
+def pack_transcript_pair(q:𝔹^4){
+    (a,b,c,d) := q;
+    c := CNOT(a,c); anc := AND(a,c,0:𝔹);
+    (bb,dd) := swap_registers[1](anc,(b,),(d,)); (b,) := bb; (d,) := dd;
+    d := CNOT(anc,d); a := CNOT(anc,a);
+    (c,d) := AND_uncomp(c,d,anc);
+    return (a,b,c,d);
+}
+// Map: Reverses the four-bit outer codec.
+def unpack_transcript_pair(q:𝔹^4){
+    (a,b,c,d) := q;
+    anc := AND(c,d,0:𝔹);
+    a := CNOT(anc,a); d := CNOT(anc,d);
+    (bb,dd) := swap_registers[1](anc,(b,),(d,)); (b,) := bb; (d,) := dd;
+    (a,c) := AND_uncomp(a,c,anc);
+    c := CNOT(a,c);
+    return (a,b,c,d);
+}
+// Map: |five valid (swap,odd) pairs>_10 -> |code>_8.
+def pack_transcript_five(q:𝔹^10){
+    (head:𝔹^6)~(tail:𝔹^4) := q;
+    p := pack_transcript(head);
+    p[3] := CNOT(p[1],p[3]); p[1] := toffoli(p[0],p[2],p[1]); p[3] := CNOT(p[1],p[3]); p[3] := CNOT(p[0],p[3]);
+    (a1,a2,a0,h3,l3) := p;
+    tail[1] := X(tail[1]);tail[3] := X(tail[3]);
+    (g,b2,b1,b0) := pack_transcript_pair(tail);
+    (aa,bb) := swap_registers[3](g,(a2,h3,l3),(b2,b1,b0));
+    (a2,h3,l3) := aa; (b2,b1,b0) := bb;
+    a2 := CNOT(g,a2); h3 := CNOT(g,h3); l3 := CNOT(g,l3);
+    anc := AND(a2,h3,0:𝔹);
+    (anc,l3) := AND_uncomp(anc,l3,g);
+    (a2,h3) := AND_uncomp(a2,h3,anc);
+    return (a2,a1,a0,h3,l3,b2,b1,b0);
+}
+// Map: |code>_8 -> |five valid (swap,odd) pairs>_10.
+def unpack_transcript_five(q:𝔹^8){
+    (a2,a1,a0,h3,l3,b2,b1,b0) := q;
+    anc := AND(a2,h3,0:𝔹); g := AND(anc,l3,0:𝔹);
+    (a2,h3) := AND_uncomp(a2,h3,anc);
+    a2 := CNOT(g,a2); h3 := CNOT(g,h3); l3 := CNOT(g,l3);
+    (aa,bb) := swap_registers[3](g,(a2,h3,l3),(b2,b1,b0));
+    (a2,h3,l3) := aa; (b2,b1,b0) := bb;
+    tail := unpack_transcript_pair((g,b2,b1,b0));
+    tail[1] := X(tail[1]);tail[3] := X(tail[3]);
+    p := (a1,a2,a0,h3,l3);
+    p[3] := CNOT(p[0],p[3]); p[3] := CNOT(p[1],p[3]); p[1] := toffoli(p[0],p[2],p[1]); p[3] := CNOT(p[1],p[3]);
+    return unpack_transcript(p)~tail;
+}
+
+// Odd prime p, 0<x<p, 0<=y<p. inverse selects multiplication over division.
+// Map: inverse=0: |x,y> -> |x,y/x mod p>; inverse=1 reverses it.
+def binary_modular_map[inverse:!𝔹][p:!ℕ][n:!ℕ](state:𝔹^n×𝔹^n) @noinline{
+    (x,y) := state;
+    assert(n>=2); assert(p>2); assert(p%2=1); assert(field_bits(p)=n);
+    rounds := 2*n sub 2;
+    u := p as uint[n] as 𝔹^n; v := x;
+    groups := (rounds+4) div 5;
+    history := 0:uint[8*groups] as 𝔹^(8*groups);
+    for group in [0..groups){
+        raw := 0:uint[10] as 𝔹^10;
+        for slot in [0..5){
+            j := 5*group+slot;
+            if j<rounds{
+                width := gcd_width[n](j);
+                (ul:𝔹^width)~(0:uint[n sub width] as 𝔹^(n sub width)) := u;
+                (vl:𝔹^width)~(0:uint[n sub width] as 𝔹^(n sub width)) := v;
+                (ul,vl,raw[2*slot],raw[2*slot+1]) := binary_gcd_step[width]((ul,vl,raw[2*slot],raw[2*slot+1]));
+                u := ul~(0:uint[n sub width] as 𝔹^(n sub width));
+                v := vl~(0:uint[n sub width] as 𝔹^(n sub width));
+            }
+        }
+        (0:uint[8] as 𝔹^8)~(rest:𝔹^(8*groups sub 8)) := history;
+        history := rest~pack_transcript_five(raw);
+    }
+    // History encodes x; after 2*n-2 rounds, u=1 and v is 0 or 1.
+    forget(u=1:uint[n]);
+    (tail:𝔹,)~(0:uint[n sub 1] as 𝔹^(n sub 1)) := v;
+    offset := (2^n sub p sub 1) div 2;
+    a := 0:uint[n] as 𝔹^n; b := y;
+    // Inverse replay uses opposite coefficient signs; the offset is applied below.
+    frame := 0:𝔹;
+    if inverse{
+        (a,b) := (b,a);
+        for k in [0..n){b[k] := AND(tail,a[k],b[k]);}
+        b := c_neg_modp[p][n](1:𝔹,b);
+    }
+    a := c_const_addsub[0:!𝔹][n](1:𝔹,a,offset);
+    b := c_const_addsub[0:!𝔹][n](1:𝔹,b,offset);
+    for group in [0..groups){
+        if inverse{
+            (rest:𝔹^(8*groups sub 8))~(packed:𝔹^8) := history;
+            raw := unpack_transcript_five(packed);
+            for back in [0..5){
+                slot := 4 sub back;
+                if 5*(groups sub group sub 1)+slot<rounds{
+                    (a,b,raw[2*slot],raw[2*slot+1]) := binary_payload_step[1:!𝔹][p][n]((a,b,raw[2*slot],raw[2*slot+1]));
+                    frame := CNOT(raw[2*slot],frame);
+                }
+            }
+            history := pack_transcript_five(raw)~rest;
+        }else{
+            (packed:𝔹^8)~(rest:𝔹^(8*groups sub 8)) := history;
+            raw := unpack_transcript_five(packed);
+            for slot in [0..5){
+                if 5*group+slot<rounds{
+                    (a,b,raw[2*slot],raw[2*slot+1]) := binary_payload_step[0:!𝔹][p][n]((a,b,raw[2*slot],raw[2*slot+1]));
+                }
+            }
+            history := rest~pack_transcript_five(raw);
+        }
+    }
+    if inverse{
+        forget(a=offset as uint[n]);
+        b := c_const_addsub[1:!𝔹][n](1:𝔹,b,offset);
+        frame := X(frame); b := c_neg_modp[p][n](frame,b); frame := X(frame);
+        result := b;
+    }
+    else{
+        // b XOR offset = tail AND (a XOR offset), bit by bit.
+        bits := offset as !uint[n];
+        for k in [0..n){
+            if bits[k]{a[k] := X(a[k]);b[k] := X(b[k]);}
+            anc := 0:𝔹; (anc,b[k]) := (b[k],anc);
+            (tail,a[k]) := AND_uncomp(tail,a[k],anc);
+            if bits[k]{a[k] := X(a[k]);}
+        }
+        forget(b=0:uint[n]);
+        result := c_const_addsub[1:!𝔹][n](1:𝔹,a,offset);
+    }
+    u := 1:uint[n] as 𝔹^n; v := (tail,)~(0:uint[n sub 1] as 𝔹^(n sub 1));
+    for group in [0..groups){
+        (rest:𝔹^(8*groups sub 8))~(packed:𝔹^8) := history;
+        raw := unpack_transcript_five(packed);
+        for back in [0..5){
+            slot := 4 sub back;
+            j := 5*(groups sub group sub 1)+slot;
+            if j<rounds{
+                width := gcd_width[n](j);
+                (ul:𝔹^width)~(0:uint[n sub width] as 𝔹^(n sub width)) := u;
+                (vl:𝔹^width)~(0:uint[n sub width] as 𝔹^(n sub width)) := v;
+                if inverse{frame := CNOT(raw[2*slot],frame);}
+                (ul,vl,raw[2*slot],raw[2*slot+1]) := binary_gcd_unstep[width]((ul,vl,raw[2*slot],raw[2*slot+1]));
+                u := ul~(0:uint[n sub width] as 𝔹^(n sub width));
+                v := vl~(0:uint[n sub width] as 𝔹^(n sub width));
+            }
+        }
+        forget(raw=0:uint[10]);
+        history := (0:uint[8] as 𝔹^8)~rest;
+    }
+    forget(history=0:uint[8*groups]); forget(u=p as uint[n]); forget(frame=0);
+    return (v,result);
+}
+
+// Controlled map: apply binary_modular_map to y when ctrl=1, and identity otherwise.
+def c_binary_modular_map[inverse:!𝔹][p:!ℕ][n:!ℕ](const ctrl:𝔹,state:𝔹^n×𝔹^n) @noinline{
+    (source,target) := state;
+    selected := 0:uint[n] as 𝔹^n;
+    source[0] := X(source[0]);
+    prod := mbu_AND_zero(ctrl,source[0]);
+    (selected[0],prod) := (prod,selected[0]); forget(prod=0);
+    source[0] := X(source[0]); selected[0] := X(selected[0]);
+    for j in [1..n){
+        prod := mbu_AND_zero(ctrl,source[j]);
+        (selected[j],prod) := (prod,selected[j]); forget(prod=0);
+    }
+    (selected,target) := binary_modular_map[inverse][p][n]((selected,target));
+    selected[0] := X(selected[0]); source[0] := X(source[0]);
+    prod := 0:𝔹; (prod,selected[0]) := (selected[0],prod);
+    if measure(H(prod)){if ctrl{source[0] := Z(source[0]);}}
+    source[0] := X(source[0]);
+    for j in [1..n){
+        prod := 0:𝔹; (prod,selected[j]) := (selected[j],prod);
+        if measure(H(prod)){if ctrl{source[j] := Z(source[j]);}}
+    }
+    forget(selected=0:uint[n]);
+    return (source,target);
+}
+
+// Map: |x,y> -> |x,R*y*x^(-1) mod p>.
+def binary_div_modp_inplace[p:!ℕ][n:!ℕ](x:𝔹^n,y:𝔹^n){
+    (x,y) := binary_modular_map[0:!𝔹][p][n]((x,y));
+    for j in [0..n){y := double_modp[p][n](y);}
+    return (x,y);
+}

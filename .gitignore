@@ -21,3 +21,5 @@ dmd*
 ldc2-*
 docker-ldc-darwin
 **#*#
+.DS_Store
+**/.backup_*/
