@@ -1,0 +1,49 @@
+def thenBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	ms+=measure(v1);
+	if k { a:=X(a); t:=measure(v1); ms+=t; } /// error
+	else { a:=X(a); t:=measure(v1); ms+=t; t2:=measure(v0); ms+=t2; }
+	return (a,ms);
+}
+def elseBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	ms+=measure(v1);
+	if k { a:=X(a); t:=measure(v1); ms+=t; t2:=measure(v0); ms+=t2; }
+	else { a:=X(a); t:=measure(v1); ms+=t; } /// error
+	return (a,ms);
+}
+def usedBefore(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=!v0;
+	ms+=measure(v1);
+	if k { u:=!v1; forget(u); }
+	else { u:=!v0; forget(u); a:=X(a); t:=measure(v1); ms+=t; } /// error
+	return (a,ms);
+}
+def afterConditional(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=!v0;
+	e:=v1;
+	if k { t:=measure(v0); ms+=t; }
+	else { a:=X(a); u:=!v1; forget(u); } /// error
+	ms+=measure(v1);
+	return (a,ms,e);
+}
+def nested(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	ms+=measure(v1);
+	if k {
+		if l { u:=!v0; forget(u); } else { a:=X(a); }
+		t:=measure(v1); /// error
+		ms+=t;
+	} else { t:=measure(v0); ms+=t; }
+	return (a,ms);
+}
