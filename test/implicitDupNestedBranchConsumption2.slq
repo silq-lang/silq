@@ -1,0 +1,92 @@
+def useAfterConsumption(w:𝔹,j:!𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	p:=dup(w);
+	if k {
+		t1:=measure(p);
+		ms+=t1;
+		if j {
+			t2:=measure(p);
+			ms+=t2;
+		} else {
+			w:=X(w);
+			u:=!p; /// error
+			forget(u);
+		}
+	}
+	return (w,ms);
+}
+def useAfterConditional(w:𝔹,j:!𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	p:=dup(w);
+	if k {
+		t1:=measure(p);
+		ms+=t1;
+		if j {
+			u:=!p;
+			forget(u);
+		} else {
+			w:=X(w);
+		}
+		t3:=measure(p); /// error
+		ms+=t3;
+	}
+	return (w,ms);
+}
+def useAfterOuterConditional(w:𝔹,j:!𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	p:=dup(w);
+	if k {
+		t1:=measure(p);
+		ms+=t1;
+		if j {
+			u:=!p;
+			forget(u);
+		} else {
+			w:=X(w);
+		}
+	}
+	t3:=measure(p); /// error
+	ms+=t3;
+	return (w,ms);
+}
+def useInLaterConditional(w:𝔹,j:!𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	p:=dup(w);
+	if k {
+		t1:=measure(p);
+		ms+=t1;
+		if j {
+			u:=!p;
+			forget(u);
+		} else {
+			w:=X(w);
+		}
+		if j {
+			t3:=measure(p); /// error
+			ms+=t3;
+		}
+	}
+	return (w,ms);
+}
+def useAfterSecondConditional(w:𝔹,j:!𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	p:=dup(w);
+	if k {
+		if j {
+			u:=!p;
+			forget(u);
+		} else {
+			t1:=measure(p);
+			ms+=t1;
+		}
+		if j {
+			v:=!p;
+			forget(v);
+		} else {
+			w:=X(w);
+		}
+		t2:=measure(p); /// error
+		ms+=t2;
+	}
+	return (w,ms);
+}

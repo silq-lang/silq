@@ -1,0 +1,60 @@
+def nestedConditional(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	e:=v0;
+	if k {
+		return (a,ms,e);
+	} else {
+		if l { }
+	}
+	a:=X(a);
+	t:=measure(v0); /// error
+	ms+=t;
+	return (a,ms,e);
+}
+def twoNestedConditionals(a:𝔹,k:!𝔹,l:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	e:=v0;
+	if k {
+		return (a,ms,e);
+	} else {
+		if l {
+			if j { }
+		}
+	}
+	a:=X(a);
+	t:=measure(v0); /// error
+	ms+=t;
+	return (a,ms,e);
+}
+def continuedThenBranch(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	e:=v0;
+	if k {
+		if l { }
+	} else {
+		return (a,ms,e);
+	}
+	a:=X(a);
+	t:=measure(v0); /// error
+	ms+=t;
+	return (a,ms,e);
+}
+def consumptionInLaterConditional(a:𝔹,k:!𝔹,l:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	e:=v0;
+	if k {
+		return (a,ms,e);
+	} else {
+		if l { }
+	}
+	if j {
+		a:=X(a);
+	}
+	t:=measure(v0); /// error
+	ms+=t;
+	return (a,ms,e);
+}

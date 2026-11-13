@@ -1,0 +1,19 @@
+// args: --run
+
+def returnsInBothBranches(a:𝔹,k:!𝔹,j:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	e:=v0;
+	if k {
+		if j { } else { if l { return (a,ms,e); } }
+	} else {
+		if j { } else { if l { ms+=1; return (a,ms,e); } }
+	}
+	ms+=2;
+	return (a,ms,e);
+}
+def main(){
+	r:=(measure(returnsInBothBranches(0:𝔹,true,false,true)),measure(returnsInBothBranches(0:𝔹,false,false,true)),measure(returnsInBothBranches(1:𝔹,false,true,true)),measure(returnsInBothBranches(1:𝔹,true,false,false)));
+	assert(r==((0,0,1),(0,1,1),(1,2,0),(1,2,0)));
+	return r;
+}

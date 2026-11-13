@@ -1,0 +1,125 @@
+// args: --run
+
+def measureInOtherBranch(w:𝔹,j:!𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	p:=dup(w);
+	if k {
+		t1:=measure(p);
+		ms+=t1;
+		if j {
+			t2:=measure(p);
+			ms+=t2;
+		} else {
+			w:=X(w);
+		}
+	}
+	return (w,ms);
+}
+def constUseInOtherBranch(w:𝔹,j:!𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	p:=dup(w);
+	if k {
+		t1:=measure(p);
+		ms+=t1;
+		if j {
+			u:=!p;
+			forget(u);
+		} else {
+			w:=X(w);
+		}
+	}
+	return (w,ms);
+}
+def consumptionInNestedConditional(w:𝔹,j:!𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	p:=dup(w);
+	if k {
+		t1:=measure(p);
+		ms+=t1;
+		if j {
+			t2:=measure(p);
+			ms+=t2;
+		} else {
+			if l {
+				w:=X(w);
+			}
+		}
+	}
+	return (w,ms);
+}
+def measureInOuterBranches(w:𝔹,j:!𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	p:=dup(w);
+	if k {
+		t1:=measure(p);
+		ms+=t1;
+		if j {
+			t2:=measure(p);
+			ms+=t2;
+		} else {
+			w:=X(w);
+		}
+	} else {
+		t3:=measure(p);
+		ms+=t3;
+	}
+	return (w,ms);
+}
+def constUseBeforeConditional(w:𝔹,j:!𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	p:=dup(w);
+	if k {
+		t1:=measure(p);
+		ms+=t1;
+		u:=!p;
+		forget(u);
+		if j {
+			t2:=measure(p);
+			ms+=t2;
+		} else {
+			w:=X(w);
+		}
+	}
+	return (w,ms);
+}
+def consumptionAfterConditional(w:𝔹,j:!𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	p:=dup(w);
+	if k {
+		t1:=measure(p);
+		ms+=t1;
+		if j {
+			t2:=measure(p);
+			ms+=t2;
+		} else {
+			w:=X(w);
+		}
+		w:=X(w);
+	}
+	return (w,ms);
+}
+def implicitDupInEarlierConditional(w:𝔹,j:!𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	p:=dup(w);
+	if k {
+		if j {
+			u:=!p;
+			forget(u);
+		} else {
+			t1:=measure(p);
+			ms+=t1;
+		}
+		if j {
+			t2:=measure(p);
+			ms+=t2;
+		} else {
+			w:=X(w);
+		}
+	}
+	return (w,ms);
+}
+def main(){
+	r:=(measure(measureInOtherBranch(1:𝔹,true,true)),measure(measureInOtherBranch(1:𝔹,false,true)),measure(measureInOtherBranch(1:𝔹,false,false)),measure(constUseInOtherBranch(1:𝔹,true,true)),measure(constUseInOtherBranch(1:𝔹,false,true)),measure(consumptionInNestedConditional(1:𝔹,true,true,true)),measure(consumptionInNestedConditional(1:𝔹,false,true,true)),measure(consumptionInNestedConditional(1:𝔹,false,true,false)),measure(measureInOuterBranches(1:𝔹,false,true)),measure(measureInOuterBranches(1:𝔹,false,false)),measure(constUseBeforeConditional(1:𝔹,true,true)),measure(constUseBeforeConditional(1:𝔹,false,true)),measure(consumptionAfterConditional(1:𝔹,true,true)),measure(consumptionAfterConditional(1:𝔹,false,true)),measure(implicitDupInEarlierConditional(1:𝔹,true,true)),measure(implicitDupInEarlierConditional(1:𝔹,false,true)));
+	assert(r==((1,2),(0,1),(1,0),(1,1),(0,1),(1,2),(0,1),(1,1),(0,1),(1,1),(1,2),(0,1),(0,2),(1,1),(1,1),(0,1)));
+	return r;
+}

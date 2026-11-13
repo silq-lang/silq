@@ -1,0 +1,49 @@
+// args: --run
+
+def measureBeforeConsumption(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	e:=v0;
+	if k {
+		return (a,ms,e);
+	} else {
+		if l { }
+	}
+	t:=measure(v0);
+	ms+=t;
+	a:=X(a);
+	return (a,ms,e);
+}
+def constUseBeforeConsumption(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	e:=v0;
+	if k {
+		return (a,ms,e);
+	} else {
+		if l { }
+	}
+	u:=!v0;
+	forget(u);
+	a:=X(a);
+	return (a,ms,e);
+}
+def consumptionInReturningBranch(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	e:=v0;
+	if k {
+		a:=X(a);
+		return (a,ms,e);
+	} else {
+		if l { }
+	}
+	t:=measure(v0);
+	ms+=t;
+	return (a,ms,e);
+}
+def main(){
+	r:=(measure(measureBeforeConsumption(0:𝔹,true,true)),measure(measureBeforeConsumption(0:𝔹,false,true)),measure(constUseBeforeConsumption(0:𝔹,false,false)),measure(consumptionInReturningBranch(0:𝔹,true,false)),measure(consumptionInReturningBranch(0:𝔹,false,true)));
+	assert(r==((0,0,1),(1,1,1),(1,0,1),(1,0,1),(0,1,1)));
+	return r;
+}
