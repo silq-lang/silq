@@ -3644,24 +3644,118 @@ class ScopeWriter {
 		if(e.isClassical_ && ast_ty.isType(e)) {
 			return implType(e);
 		}
+		if(!typeHasQuantum(e.type)) {
+			if(auto r = genIndexClassical(e)) return r;
+		}
 
-		auto v = genExpr(e.e);
+		Value v = null;
+		if(auto id = cast(ast_exp.Identifier) e.e) v = borrowVar(id);
+		bool borrowed = !!v;
+		if(!borrowed) v = genExpr(e.e);
 		auto ty = ast_exp.unfoldTypeVariable(e.e.type); // (the structure of the value of a type variable)
 		if(auto tupTy = cast(ast_ty.TupleTy) ty) {
 			if(e.a.isConstant()) {
-				auto vs = valUnpack(tupTy.types, v);
-				auto r = recIndexTuple(vs, e.a, e.type);
-				valForget(vs);
-				return r;
+				if(borrowed) return indexTupleConst(v, tupTy.types, e.a, e.type);
+				return recIndexTuple(valUnpack(tupTy.types, v), e.a, e.type);
 			}
 		}
 
 		Index i = genIndex(e.a);
 		Value r;
 		r = implIndexDup(v, e.type, ty, i);
-		valForget(v);
+		if(!borrowed) valForget(v);
 		i.forget(this);
 		return r;
+	}
+
+	Value borrowVar(ast_exp.Identifier e) { // (the value of the variable of a `const` use that only reads it, without a copy, e.g., `a` in `a[i]`; `null` for other identifiers)
+		if(!e.constLookup && !e.implicitDup || ast_sem.isBuiltIn(e) != ast_sem.BuiltIn.none || e.getInitializer() || e.classical) return null;
+		auto decl = e.meaning;
+		if(!decl || cast(ast_decl.DatDecl) decl || cast(ast_decl.FunctionDef) decl) return null;
+		auto cur = this;
+		auto p = vars.getPtr(decl.getId);
+		while(!p && cur.parent) {
+			cur = cur.parent;
+			p = cur.vars.getPtr(decl.getId);
+		}
+		if(!p || !p.value || p.decl !is decl) return null; // (e.g., a promoted version, see `getVar`)
+		if(cur.ccg.code !is ccg.code && typeHasQuantum(typeForDecl(decl))) return null;
+		return p.value;
+	}
+
+	Value genClassicalPart(Expression e) { // (the classical part of the value of `e`, without copies of the quantum parts of variables and of their components, e.g., for `a.length` or `a[i][1]` with `a:(𝔹×!ℕ)[]`)
+		if(auto id = cast(ast_exp.Identifier) e) {
+			if(auto v = borrowVar(id)) return valNewC(v.creg);
+		}
+		if(auto ie = cast(ast_exp.IndexExp) e) {
+			if(auto r = genIndexClassical(ie)) return r;
+		}
+		auto v = genExpr(e);
+		valForget(v);
+		return valNewC(v.creg);
+	}
+
+	Value genIndexClassical(ast_exp.IndexExp e) { // (the classical part of the value of `e`, see `genClassicalPart`; `null` if `e` has a quantum index or indexes another kind of value)
+		if(e.byRef || e.replacements.length || ast_ty.isEmpty(e.type) || e.isClassical_ && ast_ty.isType(e) || e in condShared || typeHasQuantum(e.a.type)) return null;
+		auto ty = ast_exp.unfoldTypeVariable(e.e.type);
+		auto tupTy = cast(ast_ty.TupleTy) ty;
+		auto vecTy = cast(ast_ty.VectorTy) ty;
+		auto arrTy = cast(ast_ty.ArrayTy) ty;
+		auto intTy = ast_ty.isFixedIntTy(ty);
+		size_t k;
+		if(tupTy) {
+			if(!e.a.isConstant()) return null;
+			auto lit = e.a.asIntegerConstant(true);
+			if(!lit || lit.get() < 0 || lit.get() >= tupTy.types.length) return null;
+			k = lit.get().to!size_t();
+		} else if(vecTy) {
+			if(e.type != vecTy.next) return null;
+		} else if(arrTy) {
+			if(e.type != arrTy.next) return null;
+		} else if(!intTy || !intTy.isClassical) {
+			return null;
+		}
+		scope loc = PushLocation(ctx, e.loc);
+		auto c = genClassicalPart(e.e).creg;
+		if(tupTy) return valNewC(typeHasClassical(tupTy.types[k]) ? ccg.boxIndex(ctypeSilqTuple, tupTy.types.length, c, k) : null);
+		auto i = genIndex(e.a).creg;
+		if(intTy) return implIndexDupCInt(valNewC(c), getNumericBits(intTy), i);
+		auto itemTy = vecTy ? vecTy.next : arrTy.next;
+		CReg len;
+		if(vecTy) {
+			len = getVectorLength(vecTy);
+		} else {
+			len = ccg.getArrayLength(c);
+			c = typeHasClassical(itemTy) ? ccg.getArrayItems(c) : null;
+		}
+		ccg.checkLtInt(true, i, len);
+		if(!typeHasClassical(itemTy)) return valNewC(null);
+		if(c) return valNewC(ccg.boxIndex(ctypeSilqTuple, len, c, i));
+		auto r = new CReg(); // (a vector of length zero: the check fails)
+		ccg.writeCOp(opAbort, [r], []);
+		return valNewC(r);
+	}
+
+	Value indexTupleConst(Value v, Expression[] types, Expression ie, Expression ty) {
+		auto lit = ie.asIntegerConstant(true);
+		assert(lit, "non-literal tuple indexing");
+		auto idx = lit.get();
+		if(idx < 0 || idx >= types.length) return valAbort(ty);
+		return indexTupleDup(v, types, idx.to!size_t());
+	}
+
+	Value indexTupleDup(Value v, Expression[] types, size_t k) { // (a copy of component `k` of the tuple `v`, which this only reads)
+		auto n = types.length;
+		CReg rc = typeHasClassical(types[k]) ? ccg.boxIndex(ctypeSilqTuple, n, v.creg, k) : null;
+		if(!v.hasQuantum || !typeHasQuantum(types[k])) return valNewC(rc);
+		auto qts = iota(n).map!(i => getQTypeRaw(types[i], typeHasQDep(types[i]) ? ccg.boxIndex(ctypeSilqTuple, n, v.creg, i) : null)).array;
+		auto rq = new QReg();
+		if(qts.all!(qt => qt is qts[0])) {
+			qcg.writeQOp(opIndexDupI, [rq], [ctx.literalInt(n), qts[0], ctx.literalInt(k)], [v.qreg], []);
+		} else {
+			qcg.writeQOp(opIndexDupD, [rq], [ctx.literalInt(n), ccg.boxPack(ctypeQtArray, qts), ctx.literalInt(k)], [v.qreg], []);
+		}
+		return valNewQ(rc, rq);
 	}
 
 	Value recIndexTuple(Value[] vs, Expression ie, Expression ty) {
@@ -3674,10 +3768,15 @@ class ScopeWriter {
 		}+/
 		if(auto lit = ie.asIntegerConstant(true)) {
 			auto idx = lit.get();
+			Value r;
 			if(idx < 0 || idx >= vs.length) {
-				return valAbort(ty);
+				r = valAbort(ty);
+			} else {
+				r = vs[idx.to!size_t()];
+				vs[idx.to!size_t()] = null;
 			}
-			return valDup(vs[idx.to!size_t()]);
+			valForget(vs);
+			return r;
 		}
 		assert(0, "non-literal tuple indexing");
 	}
@@ -3767,11 +3866,7 @@ class ScopeWriter {
 			if(!idx.isQuantum) {
 				if(auto ii = ctx.asIndex(idx.creg, tupTy.types.length)) {
 					size_t ix = ii.get();
-					auto vs = valUnpack(tupTy.types, valDup(v));
-					auto r = vs[ix];
-					vs[ix] = null;
-					valForget(vs);
-					return genSubtype(r, tupTy.types[ix], rTy);
+					return genSubtype(indexTupleDup(v, tupTy.types, ix), tupTy.types[ix], rTy);
 				}
 			}
 
@@ -4450,7 +4545,7 @@ class ScopeWriter {
 		assert(e.f.name == "length", format("Unsupported field: %s", e.f.name));
 		assert(e.type == ast_ty_Nt());
 		assert(e.e.constLookup || !typeHasQuantum(e.e.type)); // (as for indexing)
-		auto v = genExpr(e.e);
+		auto v = genClassicalPart(e.e);
 		CReg r;
 		auto ety = ast_exp.unfoldTypeVariable(e.e.type); // (the structure of the value of a type variable)
 		if(auto tupTy = cast(ast_ty.TupleTy) ety) {
@@ -4465,7 +4560,6 @@ class ScopeWriter {
 		} else {
 			assert(false, format("Length of type %s", e.e.type));
 		}
-		valForget(v);
 		return valNewC(r);
 	}
 

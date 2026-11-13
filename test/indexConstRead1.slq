@@ -1,0 +1,41 @@
+// args: --run
+
+def classicalComponent(const a:(𝔹×!ℕ)[],i:!ℕ){
+	return a[i][1]+a[0][1];
+}
+def nestedElement(const a:(𝔹^3)^2,i:!ℕ,j:!ℕ){
+	return dup(a[i][j]);
+}
+def tupleComponents(const t:𝔹×!ℕ×𝔹^2){
+	return (dup(t[0]),t[1],dup(t[2]));
+}
+def sameComponents(const t:𝔹×𝔹){
+	return dup(t[1]);
+}
+def lengths(const a:(𝔹×𝔹[])[],const b:𝔹[],i:!ℕ){
+	return a[i][1].length+b.length;
+}
+def bitsOf(const x:!uint[3],const y:uint[3],i:!ℕ){
+	return (x[i],dup(y[i]));
+}
+def inBranch(const a:𝔹^3,c:!𝔹){
+	if c { r:=dup(a[2]); } else { r:=dup(a[0]); }
+	return r;
+}
+def quantumIndex(const v:𝔹^4,const q:uint[2]){
+	return dup(v[q]);
+}
+def main(){
+	a:=[(1:𝔹,3:!ℕ),(0:𝔹,5:!ℕ)];
+	m:=((1:𝔹,0:𝔹,0:𝔹),(0:𝔹,1:𝔹,1:𝔹));
+	t:=(1:𝔹,7:!ℕ,(0:𝔹,1:𝔹));
+	s:=(0:𝔹,1:𝔹);
+	b:=[(0:𝔹,[1:𝔹,0:𝔹]),(1:𝔹,[1:𝔹])];
+	c:=[0:𝔹,1:𝔹,1:𝔹];
+	y:=5:uint[3];
+	v:=(0:𝔹,0:𝔹,1:𝔹,0:𝔹);
+	q:=2:uint[2];
+	r:=(classicalComponent(a,1),measure(nestedElement(m,1,2)),measure(tupleComponents(t)),measure(sameComponents(s)),lengths(b,c,0)+lengths(b,c,1),measure(bitsOf(6:!uint[3],y,2)),measure(inBranch(v[0..3],true)),measure(quantumIndex(v,q)));
+	assert(r==(8,1,(1,7,(0,1)),1,9,(1,1),1,1));
+	return r;
+}
