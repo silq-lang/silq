@@ -1,0 +1,78 @@
+def lastUseBeforeConsumption(w:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	if k { w:=X(w); } else { t:=measure(p); ms+=t; }
+	ms+=2*measure(p); /// error
+	w:=X(w);
+	return (w,ms);
+}
+def constUseInBranch(w:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	if k { w:=X(w); } else { t:=measure(p); ms+=t; u:=!p; forget(u); }
+	ms+=2*measure(p); /// error
+	return (w,ms);
+}
+def consumedInNestedBranch(w:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	if k { if j { w:=X(w); } } else { t:=measure(p); ms+=t; }
+	ms+=2*measure(p); /// error
+	return (w,ms);
+}
+def implicitDupInThen(w:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	if k { t:=measure(p); ms+=t; } else { w:=H(w); }
+	ms+=2*measure(p); /// error
+	return (w,ms);
+}
+def implicitDupInNestedBranch(w:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	if k { w:=X(w); } else { if j { t:=measure(p); ms+=t; } }
+	ms+=2*measure(p); /// error
+	return (w,ms);
+}
+def lostInNestedMerge(w:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	if k { } else { if j { w:=X(w); } else { t:=measure(p); ms+=t; } }
+	ms+=2*measure(p); /// error
+	return (w,ms);
+}
+def conditionalBetween(w:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	if k { w:=X(w); } else { t:=measure(p); ms+=t; }
+	if j { ms+=1; } else { }
+	ms+=2*measure(p); /// error
+	return (w,ms);
+}
+def usesInLaterBranches(w:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	if k { w:=X(w); } else { t:=measure(p); ms+=t; }
+	if j {
+		ms+=2*measure(p); /// error
+	} else {
+		ms+=4*measure(p); /// error
+	}
+	return (w,ms);
+}
+def controlAfterMerge(w:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	if k { w:=X(w); } else { t:=measure(p); ms+=t; }
+	if p { } /// error
+	return (w,ms);
+}

@@ -1,13 +1,20 @@
 // args: --run
 
-def lastUseBeforeConsumption(w:𝔹,k:!𝔹){
+def lastUseInBranch(w:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	if k { w:=X(w); } else { t:=measure(p); ms+=t; u:=!p; forget(u); }
+	return (w,ms);
+}
+def sourceKept(w:𝔹,k:!𝔹){
 	ms:=0:!ℕ;
 	cp:=dup(w);
 	p:=dup(cp);
 	if k { w:=X(w); } else { t:=measure(p); ms+=t; }
 	ms+=2*measure(p);
 	w:=X(w);
-	return (w,ms);
+	return (w,ms,cp);
 }
 def consumedAfterControl(w:𝔹,k:!𝔹){
 	ms:=0:!ℕ;
@@ -19,9 +26,10 @@ def consumedAfterControl(w:𝔹,k:!𝔹){
 	return (w,ms);
 }
 def main(){
-	(w0,m0):=lastUseBeforeConsumption(1:𝔹,true); (w1,m1):=lastUseBeforeConsumption(1:𝔹,false);
-	(w2,m2):=consumedAfterControl(1:𝔹,true); (w3,m3):=consumedAfterControl(0:𝔹,false);
-	r:=((measure(w0),m0),(measure(w1),m1),(measure(w2),m2),(measure(w3),m3));
-	assert(r==((1,2),(0,3),(0,5),(0,2)));
+	(w0,m0):=lastUseInBranch(1:𝔹,true); (w1,m1):=lastUseInBranch(1:𝔹,false);
+	(w2,m2,c2):=sourceKept(1:𝔹,true); (w3,m3,c3):=sourceKept(1:𝔹,false);
+	(w4,m4):=consumedAfterControl(1:𝔹,true); (w5,m5):=consumedAfterControl(0:𝔹,false);
+	r:=((measure(w0),m0),(measure(w1),m1),(measure(w2),m2,measure(c2)),(measure(w3),m3,measure(c3)),(measure(w4),m4),(measure(w5),m5));
+	assert(r==((0,0),(1,1),(1,2,1),(0,3,1),(0,5),(0,2)));
 	return r;
 }
