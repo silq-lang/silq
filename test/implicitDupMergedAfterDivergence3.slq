@@ -1,0 +1,48 @@
+// args: --run
+
+def continuedBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	t0:=measure(v0);
+	ms+=t0;
+	if k {
+		u:=!v0;
+		forget(u);
+		return (a,ms);
+	}
+	t1:=measure(v0);
+	ms+=t1;
+	a:=X(a);
+	return (a,ms);
+}
+def withoutImplicitDup(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	if k {
+		if l { u:=!v0; forget(u); return (a,ms); }
+	} else {
+		return (a,ms);
+	}
+	t1:=measure(v0);
+	ms+=t1;
+	a:=X(a);
+	return (a,ms);
+}
+def consumedAfterLastUse(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	if k {
+		if l { u:=!v0; forget(u); return (a,ms); }
+		t0:=measure(v0);
+		ms+=t0;
+	} else {
+		return (a,ms);
+	}
+	a:=X(a);
+	return (a,ms);
+}
+def main(){
+	r:=(measure(continuedBranch(1:𝔹,false)),measure(withoutImplicitDup(1:𝔹,true,false)),measure(consumedAfterLastUse(0:𝔹,true,false)));
+	assert(r==((0,2),(0,1),(1,0)));
+	return r;
+}

@@ -1,0 +1,30 @@
+def consumedInBranch(a:𝔹,k:!𝔹){
+	v0:=!a;
+	v1:=X(dup(v0));
+	if k {
+		a:=X(a);
+		forget(v1); /// error
+	} else {
+		forget(v1);
+	}
+	return a;
+}
+def otherBranchReturns(a:𝔹,k:!𝔹){
+	v0:=!a;
+	v1:=X(dup(v0));
+	if k { return a; }
+	a:=X(a);
+	forget(v1); /// error
+	return a;
+}
+def consumedInNestedBranch(a:𝔹,k:!𝔹,j:!𝔹){
+	v0:=!a;
+	v1:=X(dup(v0));
+	if k {
+		if j { a:=X(a); }
+		forget(v1); /// error
+	} else {
+		forget(v1);
+	}
+	return a;
+}

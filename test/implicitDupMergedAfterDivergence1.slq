@@ -1,0 +1,59 @@
+def nestedReturn(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	t0:=measure(v0);
+	ms+=t0;
+	if k {
+		if l { u:=!v0; forget(u); return (a,ms); }
+	} else {
+		return (a,ms);
+	}
+	a:=X(a);
+	t1:=measure(v0); /// error
+	ms+=t1;
+	return (a,ms);
+}
+def movedBefore(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	e:=v0;
+	if k {
+		if l { t:=measure(v0); ms+=t; return (a,ms,e); }
+	} else {
+		return (a,ms,e);
+	}
+	a:=X(a);
+	t1:=measure(v0); /// error
+	ms+=t1;
+	return (a,ms,e);
+}
+def abortInBranch(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	t0:=measure(v0);
+	ms+=t0;
+	if k {
+		if l { u:=!v0; forget(u); return (a,ms); }
+	} else {
+		assert(false);
+	}
+	a:=X(a);
+	t1:=measure(v0); /// error
+	ms+=t1;
+	return (a,ms);
+}
+def consumedInLaterBranch(a:𝔹,k:!𝔹,l:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	t0:=measure(v0);
+	ms+=t0;
+	if k {
+		if l { u:=!v0; forget(u); return (a,ms); }
+	} else {
+		return (a,ms);
+	}
+	if j { a:=X(a); }
+	t1:=measure(v0); /// error
+	ms+=t1;
+	return (a,ms);
+}

@@ -1,0 +1,14 @@
+def noConsumption(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	t0:=measure(v0);
+	ms+=t0;
+	if k {
+		if l { u:=!v0; forget(u); return (a,ms); }
+	} else {
+		return (a,ms);
+	}
+	t1:=measure(v0); /// TODO
+	ms+=t1;
+	return (a,ms);
+}

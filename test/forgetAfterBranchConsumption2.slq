@@ -1,0 +1,37 @@
+// args: --run
+
+def forgetBeforeConsumption(a:𝔹,k:!𝔹){
+	v0:=!a;
+	v1:=X(dup(v0));
+	if k {
+		forget(v1);
+		a:=X(a);
+	} else {
+		forget(v1);
+	}
+	return a;
+}
+def otherBranchReturns(a:𝔹,k:!𝔹){
+	v0:=!a;
+	v1:=X(dup(v0));
+	if k { return a; }
+	forget(v1);
+	a:=X(a);
+	return a;
+}
+def otherVariableConsumed(a:𝔹,b:𝔹,k:!𝔹){
+	v0:=!a;
+	v1:=X(dup(v0));
+	if k {
+		b:=X(b);
+		forget(v1);
+	} else {
+		forget(v1);
+	}
+	return (a,b);
+}
+def main(){
+	r:=(measure(forgetBeforeConsumption(0:𝔹,true)),measure(otherBranchReturns(0:𝔹,false)),measure(otherVariableConsumed(0:𝔹,0:𝔹,true)));
+	assert(r==(1,1,(0,1)));
+	return r;
+}
