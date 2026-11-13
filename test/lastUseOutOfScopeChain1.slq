@@ -47,8 +47,8 @@ def f5(){
 	cp:=dup(w);
 	p:=dup(cp);
 	m1:=measure(p);
-	if p { w:=X(w); }
-	m2:=measure(p); /// error
+	if p { w:=X(w); } /// error
+	m2:=measure(p);
 	return (x,w);
 }
 def f6(){

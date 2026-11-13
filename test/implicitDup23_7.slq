@@ -1,10 +1,10 @@
 
 def main(){
 	x := H(0);
-	y := dup(x); /// error
+	y := dup(x);
 	z := y;
 	if y {
-		if y {
+		if y { /// error
 			x := H(x);
 		}
 	}

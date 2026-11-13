@@ -1,0 +1,49 @@
+def constUseBeforeMeasure(w:𝔹,k:!𝔹,j:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	p:=dup(w);
+	if k {
+		if j { u1:=!p; forget(u1); t2:=measure(p); ms+=t2; } else { }
+		if l { w:=H(w); }
+	}
+	ms+=measure(p); /// error
+	return (w,ms);
+}
+def constUseInOtherBranch(w:𝔹,k:!𝔹,j:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	p:=dup(w);
+	if k {
+		if j { t2:=measure(p); ms+=t2; } else { u3:=!p; forget(u3); }
+		if l { w:=H(w); }
+	}
+	u4:=!p; forget(u4); /// error
+	return (w,ms);
+}
+def controlInOtherBranch(w:𝔹,k:!𝔹,j:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	p:=dup(w);
+	if k {
+		if j {
+			u1:=!p; forget(u1);
+			t2:=measure(p); ms+=t2;
+		} else {
+			if p { }
+		}
+		if l {
+			w:=H(w);
+		}
+	} else {
+		w:=X(w);
+	}
+	u4:=!p; forget(u4); /// error
+	return (w,ms);
+}
+def measuredInBothBranches(w:𝔹,k:!𝔹,j:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	p:=dup(w);
+	if k {
+		if j { u1:=!p; forget(u1); t2:=measure(p); ms+=t2; } else { t3:=measure(p); ms+=t3; }
+		if l { } else { w:=H(w); }
+	}
+	ms+=measure(p); /// error
+	return (w,ms);
+}

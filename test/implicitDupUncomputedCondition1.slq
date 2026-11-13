@@ -1,0 +1,61 @@
+def constUseBeforeControl(w:𝔹){
+	ms:=0:!ℕ;
+	p:=dup(w);
+	ms+=measure(p);
+	u:=!p; forget(u);
+	if p { /// error
+		w:=X(w); /// note
+	}
+	return (w,ms,p);
+}
+def constUseBeforeForgottenControl(w:𝔹){
+	ms:=0:!ℕ;
+	p:=dup(w);
+	ms+=measure(p);
+	u:=!p; forget(u);
+	if p { /// error
+		w:=X(w); /// note
+	}
+	return (w,ms);
+}
+def measuredBeforeControl(w:𝔹){
+	ms:=0:!ℕ;
+	p:=dup(w);
+	ms+=measure(p); /// note
+	if p { /// error
+		w:=X(w); /// note
+	}
+	ms+=measure(p);
+	return (w,ms);
+}
+def copiedBeforeControl(w:𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	ms+=measure(p); /// note
+	if p { /// error
+		w:=X(w); /// note
+	}
+	ms+=measure(p);
+	return (w,ms);
+}
+def controlExpression(w:𝔹,q:𝔹){
+	ms:=0:!ℕ;
+	p:=dup(w);
+	ms+=measure(p);
+	u:=!p; forget(u);
+	if p&q { /// error
+		w:=X(w); /// note
+	}
+	return (w,q,ms);
+}
+def consumedInNestedBranch(w:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	p:=dup(w);
+	ms+=measure(p);
+	u:=!p; forget(u);
+	if p { /// error
+		if k { w:=X(w); } /// note
+	}
+	return (w,ms);
+}

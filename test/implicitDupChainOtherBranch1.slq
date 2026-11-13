@@ -1,0 +1,110 @@
+// args: --run
+
+def consumedInOtherBranch(w:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	t1:=measure(p);
+	ms+=t1;
+	if k {
+		w:=X(w);
+	} else {
+		t2:=measure(p);
+		ms+=t2;
+	}
+	return (w,ms);
+}
+def constUseBeforeConsumption(w:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	t1:=measure(p);
+	ms+=t1;
+	if k {
+		u:=!p;
+		forget(u);
+		w:=X(w);
+	} else {
+		t2:=measure(p);
+		ms+=t2;
+	}
+	return (w,ms);
+}
+def controlBeforeConsumption(w:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	t1:=measure(p);
+	ms+=t1;
+	if k {
+		if p { }
+		w:=X(w);
+	}
+	return (w,ms);
+}
+def implicitDupInEarlierBranch(w:𝔹,j:!𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	if j {
+		t1:=measure(p);
+		ms+=t1;
+	}
+	if k {
+		u:=!p;
+		forget(u);
+	} else {
+		w:=X(w);
+	}
+	return (w,ms);
+}
+def measureBeforeConsumption(w:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	t1:=measure(p);
+	ms+=t1;
+	if k {
+		t2:=measure(p);
+		ms+=t2;
+		w:=X(w);
+	}
+	return (w,ms);
+}
+def measureBeforeNestedConsumption(w:𝔹,j:!𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	t1:=measure(p);
+	ms+=t1;
+	if k {
+		if j {
+			t2:=measure(p);
+			ms+=t2;
+			w:=X(w);
+		}
+	}
+	return (w,ms);
+}
+def implicitDupInEarlierBranchNested(w:𝔹,j:!𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	if j {
+		t1:=measure(p);
+		ms+=t1;
+	}
+	if k {
+		if j {
+			t2:=measure(p);
+			ms+=t2;
+			w:=X(w);
+		}
+	}
+	return (w,ms);
+}
+def main(){
+	r:=(measure(consumedInOtherBranch(1:𝔹,true)),measure(consumedInOtherBranch(1:𝔹,false)),measure(constUseBeforeConsumption(1:𝔹,true)),measure(constUseBeforeConsumption(1:𝔹,false)),measure(controlBeforeConsumption(1:𝔹,true)),measure(implicitDupInEarlierBranch(1:𝔹,true,true)),measure(implicitDupInEarlierBranch(1:𝔹,true,false)),measure(measureBeforeConsumption(1:𝔹,true)),measure(measureBeforeNestedConsumption(1:𝔹,true,true)),measure(measureBeforeNestedConsumption(1:𝔹,false,true)),measure(implicitDupInEarlierBranchNested(1:𝔹,true,true)),measure(implicitDupInEarlierBranchNested(1:𝔹,false,true)));
+	assert(r==((0,1),(1,2),(0,1),(1,2),(0,1),(1,1),(0,1),(0,2),(0,2),(1,1),(0,2),(1,0)));
+	return r;
+}

@@ -1,0 +1,39 @@
+def constUseAfterMerge(w:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	if j { } else { t:=measure(p); ms+=t; }
+	u:=!p; forget(u);
+	if k { w:=H(w); } else { }
+	ms+=measure(p); /// error
+	return (w,ms);
+}
+def controlAfterMerge(w:𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	if j { t:=measure(p); ms+=t; if p { } } else { }
+	if j { if p { w:=X(w); } } else { } /// error
+	ms+=measure(p);
+	return (w,ms);
+}
+def constUseBeforeControl(w:𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	if j { t:=measure(p); ms+=t; } else { }
+	u:=!p; forget(u);
+	if p { w:=X(w); } /// error
+	ms+=measure(p);
+	return (w,ms);
+}
+def constUseBeforeNestedControl(w:𝔹,j:!𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	if j { } else { if k { t:=measure(p); ms+=t; } else { } }
+	u:=!p; forget(u);
+	if k { if p { w:=X(w); } } else { t:=measure(p); ms+=t; } /// error
+	ms+=measure(p);
+	return (w,ms);
+}

@@ -3,8 +3,8 @@ def constUseBeforeControl(w:𝔹){
 	p:=dup(w);
 	ms+=measure(p);
 	u:=!p; forget(u);
-	if p { w:=X(w); }
-	ms+=measure(p); /// error
+	if p { w:=X(w); } /// error
+	ms+=measure(p);
 	return (w,ms);
 }
 def returned(w:𝔹){
@@ -12,16 +12,16 @@ def returned(w:𝔹){
 	p:=!w;
 	ms+=measure(p);
 	u:=!p; forget(u);
-	if p { w:=X(w); }
-	return (w,ms,p); /// error
+	if p { w:=X(w); } /// error
+	return (w,ms,p);
 }
 def constUseInBranch(w:𝔹,c:!𝔹){
 	ms:=0:!ℕ;
 	p:=dup(w);
 	ms+=measure(p);
 	if c { u:=!p; forget(u); }
-	if p { w:=X(w); }
-	ms+=measure(p); /// error
+	if p { w:=X(w); } /// error
+	ms+=measure(p);
 	return (w,ms);
 }
 def implicitDupAfterBranches(w:𝔹,j:!𝔹){
@@ -30,7 +30,16 @@ def implicitDupAfterBranches(w:𝔹,j:!𝔹){
 	if j { ms+=measure(p); } else { ms+=measure(p); u:=!p; forget(u); }
 	ms+=measure(p);
 	u:=!p; forget(u);
-	if j { if p { w:=X(w); } }
-	ms+=measure(p); /// error
+	if j { if p { w:=X(w); } } /// error
+	ms+=measure(p);
+	return (w,ms);
+}
+def implicitDupInBranch(w:𝔹,c:!𝔹){
+	ms:=0:!ℕ;
+	p:=dup(w);
+	if c { ms+=measure(p); }
+	u:=!p; forget(u);
+	if p { w:=X(w); } /// error
+	ms+=2*measure(p);
 	return (w,ms);
 }
