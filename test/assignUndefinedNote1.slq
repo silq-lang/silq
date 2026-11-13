@@ -1,0 +1,22 @@
+def atFunctionScope(){
+	( /// note
+		a, /// error
+		b /// error
+	)=(1,2);
+	return (a,b);
+}
+def inBranch(c:!𝔹){
+	if c {
+		( /// note
+			a, /// error
+			b /// error
+		)=(1,2);
+	}
+}
+def consumedOnTheRight(){
+	y:=H(0:𝔹);
+	( /// note
+		y, /// error
+		x /// error
+	)=(X(y),1);
+}

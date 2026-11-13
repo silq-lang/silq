@@ -1,0 +1,26 @@
+def classicalVariable(){
+	y:=0;
+	(x,y)=(1,2); /// error
+	return y;
+}
+def annotatedComponent(){
+	y:=0:!ℕ;
+	(x:!ℕ,y)=(1,2); /// error
+	return y;
+}
+def inBranch(c:!𝔹){
+	y:=0;
+	if c { (x,y)=(1,2); } /// error
+	return y;
+}
+def quantumVariable(){
+	y:=0:𝔹;
+	(x,y)=(1,H(1:𝔹)); /// error
+	return y;
+}
+def laterComponent(){
+	y:=(0,1);
+	(y,x)=((1,2),3); /// error
+	z:=y[0];
+	return z;
+}
