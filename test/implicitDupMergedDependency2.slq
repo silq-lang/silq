@@ -1,0 +1,19 @@
+def returnInNestedBranch(a:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v:=dup(a);
+	ms+=measure(v);
+	if k { if j { a:=X(a); return (a,ms); } } else { }
+	t:=measure(v); /// error
+	ms+=t;
+	return (a,ms);
+}
+def returnInBothBranches(a:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v:=!a;
+	t1:=measure(v);
+	ms+=t1;
+	if k { if j { } else { a:=X(a); return (a,ms); } } else { if j { u:=!v; forget(u); a:=X(a); return (a,ms); } }
+	t2:=measure(v); /// error
+	ms+=t2;
+	return (a,ms);
+}
