@@ -1,0 +1,50 @@
+// args: --run
+
+def quantumCondition(w:𝔹,j:!𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	t1:=measure(p);
+	ms+=t1;
+	if j {
+		if p { }
+		if k { } else { w:=X(w); }
+	} else {
+		t2:=measure(p);
+		ms+=t2;
+	}
+	return (w,ms);
+}
+def constUse(w:𝔹,j:!𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	t1:=measure(p);
+	ms+=t1;
+	if j {
+		u:=!p;
+		forget(u);
+		if k { } else { w:=X(w); }
+	} else {
+		t2:=measure(p);
+		ms+=t2;
+	}
+	return (w,ms);
+}
+def withoutElse(w:𝔹,j:!𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	t1:=measure(p);
+	ms+=t1;
+	if j {
+		if p { }
+		if k { } else { w:=X(w); }
+	}
+	return (w,ms);
+}
+def main(){
+	r:=(measure(quantumCondition(1:𝔹,true,true)),measure(quantumCondition(1:𝔹,true,false)),measure(quantumCondition(1:𝔹,false,true)),measure(constUse(1:𝔹,true,false)),measure(constUse(1:𝔹,false,true)),measure(withoutElse(1:𝔹,true,false)),measure(withoutElse(0:𝔹,false,false)));
+	assert(r==((1,1),(0,1),(1,2),(0,1),(1,2),(0,1),(0,0)));
+	return r;
+}

@@ -1,0 +1,37 @@
+// args: --run
+
+def usedInBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a)); t1:=measure(v0); ms+=t1; v1:=!v0; e:=v1;
+	if k { a:=X(a); } else { u:=!v1; forget(u); }
+	return (a,ms,e);
+}
+def usedBeforeConsumption(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a)); t1:=measure(v0); ms+=t1; v1:=!v0; e:=v1;
+	if k { u:=!v1; forget(u); a:=X(a); } else { u:=!v1; forget(u); }
+	return (a,ms,e);
+}
+def usedInOtherBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a)); t1:=measure(v0); ms+=t1; v1:=!v0; e:=v1;
+	if k { u:=!v1; forget(u); } else { a:=X(a); }
+	return (a,ms,e);
+}
+def usedBeforeConsumptionInBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a)); t1:=measure(v0); ms+=t1; v1:=!v0; e:=v1;
+	if k { a:=X(a); } else { u:=!v1; forget(u); a:=X(a); }
+	return (a,ms,e);
+}
+def dependentChain(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a)); t1:=measure(v0); ms+=t1; u2:=!v0; forget(u2); v1:=!v0; t3:=measure(v1); ms+=t3; v2:=X(dup(v0)); e:=v1;
+	if k { a:=X(a); t4:=measure(v2); ms+=t4; } else { u5:=!v1; forget(u5); a:=X(a); }
+	return (a,ms,e);
+}
+def main(){
+	r:=(measure(usedInBranch(0:𝔹,true)),measure(usedInBranch(1:𝔹,false)),measure(usedBeforeConsumption(0:𝔹,true)),measure(usedBeforeConsumption(1:𝔹,false)),measure(usedInOtherBranch(0:𝔹,true)),measure(usedInOtherBranch(1:𝔹,false)),measure(usedBeforeConsumptionInBranch(0:𝔹,true)),measure(usedBeforeConsumptionInBranch(1:𝔹,false)),measure(dependentChain(0:𝔹,true)),measure(dependentChain(1:𝔹,false)));
+	assert(r==((1,1,0),(1,0,1),(1,1,0),(1,0,1),(0,1,0),(0,0,1),(1,1,0),(0,0,1),(1,1,0),(0,1,1)));
+	return r;
+}

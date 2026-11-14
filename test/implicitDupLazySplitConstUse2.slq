@@ -3,7 +3,7 @@ def classicalCondition(a:𝔹,k:!𝔹){
 	ms:=measure(b);
 	d:=dup(b);
 	ms+=measure(d);
-	if k { a:=X(a); } else { t:=measure(b); ms+=t; } /// TODO
+	if k { a:=X(a); } else { t:=measure(b); ms+=t; }
 	return (a,ms);
 }
 def quantumCondition(a:𝔹,const c:𝔹){
@@ -11,6 +11,6 @@ def quantumCondition(a:𝔹,const c:𝔹){
 	ms:=measure(b);
 	d:=dup(b);
 	ms+=measure(d);
-	if c { a:=X(a); } else { u:=!b; forget(u); a:=H(a); } /// TODO
+	if c { a:=X(a); } else { u:=!b; forget(u); a:=H(a); }
 	return (a,ms);
 }

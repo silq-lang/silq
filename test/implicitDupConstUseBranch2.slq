@@ -1,0 +1,85 @@
+def useAfterConsumption(a:𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	t1:=measure(v0);
+	ms+=t1;
+	u1:=!v0;
+	forget(u1);
+	if j {
+		a:=X(a);
+		u2:=!v0; /// error
+		forget(u2);
+	}
+	return (a,ms);
+}
+def useAfterConditional(a:𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	t1:=measure(v0);
+	ms+=t1;
+	u1:=!v0;
+	forget(u1);
+	if j {
+		a:=X(a);
+	} else {
+		u2:=!v0;
+		forget(u2);
+	}
+	t2:=measure(v0); /// error
+	ms+=t2;
+	return (a,ms);
+}
+def useAfterNestedConditional(a:𝔹,j:!𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	t1:=measure(v0);
+	ms+=t1;
+	u1:=!v0;
+	forget(u1);
+	if k {
+		if j {
+			a:=X(a);
+		} else {
+			u2:=!v0;
+			forget(u2);
+		}
+		t2:=measure(v0); /// error
+		ms+=t2;
+	}
+	return (a,ms);
+}
+def useAfterConsumptionInOtherBranch(a:𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	t1:=measure(v0);
+	ms+=t1;
+	u1:=!v0;
+	forget(u1);
+	if j {
+		a:=X(a);
+	} else {
+		a:=X(a);
+		u2:=!v0; /// error
+		forget(u2);
+	}
+	return (a,ms);
+}
+def useInLaterConditional(a:𝔹,j:!𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	t1:=measure(v0);
+	ms+=t1;
+	u1:=!v0;
+	forget(u1);
+	if j {
+		a:=X(a);
+	} else {
+		u2:=!v0;
+		forget(u2);
+	}
+	if k {
+		t2:=measure(v0); /// error
+		ms+=t2;
+	}
+	return (a,ms);
+}

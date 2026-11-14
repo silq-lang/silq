@@ -1,0 +1,87 @@
+// args: --run
+
+def constUseInOtherBranch(a:𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	t1:=measure(v0);
+	ms+=t1;
+	u1:=!v0;
+	forget(u1);
+	if j {
+		a:=X(a);
+	} else {
+		u2:=!v0;
+		forget(u2);
+	}
+	return (a,ms);
+}
+def measureInOtherBranch(a:𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	t1:=measure(v0);
+	ms+=t1;
+	u1:=!v0;
+	forget(u1);
+	if j {
+		a:=X(a);
+	} else {
+		t2:=measure(v0);
+		ms+=t2;
+	}
+	return (a,ms);
+}
+def useBeforeConsumptionInOtherBranch(a:𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	t1:=measure(v0);
+	ms+=t1;
+	u1:=!v0;
+	forget(u1);
+	if j {
+		a:=X(a);
+	} else {
+		u2:=!v0;
+		forget(u2);
+		a:=X(a);
+	}
+	return (a,ms);
+}
+def nestedConditional(a:𝔹,j:!𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	t1:=measure(v0);
+	ms+=t1;
+	u1:=!v0;
+	forget(u1);
+	if k {
+		if j {
+			a:=X(a);
+		} else {
+			u2:=!v0;
+			forget(u2);
+		}
+	}
+	return (a,ms);
+}
+def consumptionInNestedConditional(a:𝔹,j:!𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	t1:=measure(v0);
+	ms+=t1;
+	u1:=!v0;
+	forget(u1);
+	if j {
+		if k {
+			a:=X(a);
+		}
+	} else {
+		u2:=!v0;
+		forget(u2);
+	}
+	return (a,ms);
+}
+def main(){
+	r:=(measure(constUseInOtherBranch(0:𝔹,true)),measure(constUseInOtherBranch(0:𝔹,false)),measure(measureInOtherBranch(0:𝔹,true)),measure(measureInOtherBranch(0:𝔹,false)),measure(useBeforeConsumptionInOtherBranch(0:𝔹,false)),measure(nestedConditional(0:𝔹,true,true)),measure(nestedConditional(0:𝔹,false,true)),measure(consumptionInNestedConditional(0:𝔹,true,true)),measure(consumptionInNestedConditional(0:𝔹,false,false)));
+	assert(r==((1,1),(0,1),(1,1),(0,2),(1,1),(1,1),(0,1),(1,1),(0,1)));
+	return r;
+}

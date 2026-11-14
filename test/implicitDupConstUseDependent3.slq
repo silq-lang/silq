@@ -1,0 +1,35 @@
+// args: --run
+
+def usedInOtherBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	t1:=measure(v0);
+	ms+=t1;
+	v1:=!v0;
+	e:=v1;
+	if k { a:=X(a); } else {
+		u:=!v0;
+		forget(u);
+	}
+	return (a,ms,e);
+}
+def nestedReturnAfterConstUse(a:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	u0:=!v0;
+	forget(u0);
+	v1:=X(dup(v0));
+	e:=v1;
+	if k {
+		u:=!v1;
+		forget(u);
+		a:=X(a);
+		if j { } else { return (a,ms,e); }
+	} else { a:=X(a); }
+	return (a,ms,e);
+}
+def main(){
+	r:=(measure(usedInOtherBranch(0:𝔹,true)),measure(usedInOtherBranch(1:𝔹,false)),measure(nestedReturnAfterConstUse(0:𝔹,true,true)),measure(nestedReturnAfterConstUse(1:𝔹,true,false)),measure(nestedReturnAfterConstUse(1:𝔹,false,true)));
+	assert(r==((1,1,0),(1,0,1),(1,0,0),(0,0,1),(0,0,1)));
+	return r;
+}

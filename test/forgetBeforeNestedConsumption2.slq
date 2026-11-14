@@ -1,0 +1,45 @@
+def usedAfterNestedConditional(w:𝔹,j:!𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	t1:=measure(p);
+	ms+=t1;
+	if j {
+		if k { } else { w:=X(w); }
+		if p { } /// error
+	} else {
+		t2:=measure(p);
+		ms+=t2;
+	}
+	return (w,ms);
+}
+def usedAfterConsumption(w:𝔹,j:!𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	t1:=measure(p);
+	ms+=t1;
+	if j {
+		if p { }
+		if k { } else {
+			w:=X(w);
+			t2:=measure(p); /// error
+			ms+=t2;
+		}
+	}
+	return (w,ms);
+}
+def usedAfterConditional(w:𝔹,j:!𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	cp:=dup(w);
+	p:=dup(cp);
+	t1:=measure(p);
+	ms+=t1;
+	if j {
+		if p { }
+		if k { } else { w:=X(w); }
+	}
+	t2:=measure(p); /// error
+	ms+=t2;
+	return (w,ms);
+}
