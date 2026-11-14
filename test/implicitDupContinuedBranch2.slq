@@ -1,0 +1,44 @@
+def consumedBeforeUse(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	if k { return (a,ms); } else { t1:=measure(v0); ms+=t1; }
+	a:=X(a); /// note
+	t2:=measure(v0); /// error
+	ms+=t2;
+	return (a,ms);
+}
+def chained(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	if k { return (a,ms); } else { t1:=measure(v1); ms+=t1; }
+	a:=X(a);
+	t2:=measure(v1); /// error
+	ms+=t2;
+	return (a,ms);
+}
+def thenContinued(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	if k { t1:=measure(v0); ms+=t1; } else { return (a,ms); }
+	a:=X(a);
+	t2:=measure(v0); /// error
+	ms+=t2;
+	return (a,ms);
+}
+def laterConditional(a:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	if k { return (a,ms); } else { t1:=measure(v0); ms+=t1; }
+	if j { a:=X(a); }
+	t2:=measure(v0); /// error
+	ms+=t2;
+	return (a,ms);
+}
+def laterBranch(a:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	if k { return (a,ms); } else { t1:=measure(v0); ms+=t1; }
+	if j { a:=X(a); t2:=measure(v0); ms+=t2; } else { t3:=measure(v0); ms+=t3; } /// error
+	return (a,ms);
+}

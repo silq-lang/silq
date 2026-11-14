@@ -1,0 +1,55 @@
+// args: --run
+
+def measuredInBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	if k { return (a,ms); } else { t1:=measure(v0); ms+=t1; }
+	t2:=measure(v0);
+	ms+=2*t2;
+	return (a,ms);
+}
+def forgottenAfter(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	if k { return (a,ms); } else { t1:=measure(v0); ms+=t1; }
+	forget(v0);
+	return (a,ms);
+}
+def chained(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	if k { return (a,ms); } else { t1:=measure(v1); ms+=t1; }
+	forget(v1);
+	return (a,ms);
+}
+def thenContinued(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	if k { t1:=measure(v0); ms+=t1; } else { return (a,ms); }
+	u:=!v0;
+	forget(u);
+	return (a,ms);
+}
+def nestedConditional(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	if k { return (a,ms); } else { t1:=measure(v0); ms+=t1; if l { ms+=2; } else { } }
+	u:=!v0;
+	forget(u);
+	return (a,ms);
+}
+def consumedAfterLastUse(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	if k { return (a,ms); } else { t1:=measure(v0); ms+=t1; }
+	t2:=measure(v0);
+	ms+=2*t2;
+	a:=X(a);
+	return (a,ms);
+}
+def main(){
+	r:=(measure(measuredInBranch(1:𝔹,false)),measure(forgottenAfter(0:𝔹,false)),measure(chained(1:𝔹,false)),measure(thenContinued(1:𝔹,true)),measure(nestedConditional(1:𝔹,false,true)),measure(consumedAfterLastUse(1:𝔹,false)));
+	assert(r==((1,3),(0,1),(1,1),(1,1),(1,2),(0,3)));
+	return r;
+}
