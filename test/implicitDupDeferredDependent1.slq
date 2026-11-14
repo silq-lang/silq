@@ -1,0 +1,72 @@
+// args: --run
+
+def constUseInElse(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	t1:=measure(v1); ms+=t1;
+	t2:=measure(v0); ms+=t2;
+	if k { a:=X(a); } else { u:=!v1; forget(u); }
+	return (a,ms);
+}
+def constUseInThen(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	t1:=measure(v1); ms+=t1;
+	t2:=measure(v0); ms+=t2;
+	if k { u:=!v1; forget(u); } else { a:=X(a); }
+	return (a,ms);
+}
+def measuredBeforeDependent(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	t2:=measure(v0); ms+=t2;
+	t1:=measure(v1); ms+=t1;
+	if k { a:=X(a); } else { u:=!v1; forget(u); }
+	return (a,ms);
+}
+def consumedAfterConditional(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	v2:=!v1;
+	t1:=measure(v1); ms+=t1;
+	t2:=measure(v0); ms+=t2;
+	if k { a:=X(a); t3:=measure(v2); ms+=t3; } else { u:=!v1; forget(u); }
+	a:=X(a);
+	return (a,ms);
+}
+def nestedConsumption(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	t1:=measure(v1); ms+=t1;
+	t2:=measure(v0); ms+=t2;
+	if k { if l { a:=X(a); } } else { u:=!v1; forget(u); }
+	return (a,ms);
+}
+def nestedConstUse(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	t1:=measure(v1); ms+=t1;
+	t2:=measure(v0); ms+=t2;
+	if k { a:=X(a); } else { if l { u:=!v1; forget(u); } }
+	return (a,ms);
+}
+def quantumCondition(a:𝔹,const c:𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	t1:=measure(v1); ms+=t1;
+	t2:=measure(v0); ms+=t2;
+	if c { a:=X(a); } else { u:=!v1; forget(u); }
+	return (a,ms);
+}
+def main(){
+	r:=(measure(constUseInElse(0:𝔹,true)),measure(constUseInElse(1:𝔹,false)),measure(constUseInThen(0:𝔹,true)),measure(constUseInThen(1:𝔹,false)),measure(measuredBeforeDependent(0:𝔹,false)),measure(consumedAfterConditional(0:𝔹,true)),measure(consumedAfterConditional(1:𝔹,false)),measure(nestedConsumption(0:𝔹,true,true)),measure(nestedConsumption(1:𝔹,false,true)),measure(nestedConstUse(0:𝔹,false,true)),measure(quantumCondition(0:𝔹,1:𝔹)),measure(quantumCondition(1:𝔹,0:𝔹)));
+	assert(r==((1,1),(1,1),(0,1),(0,1),(0,1),(0,2),(0,1),(1,1),(1,1),(0,1),(1,1),(1,1)));
+	return r;
+}

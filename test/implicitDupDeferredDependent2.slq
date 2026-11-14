@@ -1,0 +1,53 @@
+def useAfterConditional(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	t1:=measure(v1); /// note
+	ms+=t1;
+	t2:=measure(v0);
+	ms+=t2;
+	if k { /// note
+		a:=X(a); /// note
+	} else {
+		u:=!v1; /// note
+		forget(u);
+	}
+	t3:=measure(v1); /// error
+	ms+=t3;
+	return (a,ms);
+}
+def useAfterConsumptionInBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	t1:=measure(v1); /// note
+	ms+=t1;
+	t2:=measure(v0);
+	ms+=t2;
+	if k {
+		a:=X(a);
+	} else {
+		a:=X(a); /// note
+		u:=!v1; /// error
+		forget(u);
+	}
+	return (a,ms);
+}
+def useInBothBranches(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	t1:=measure(v1); /// note
+	ms+=t1;
+	t2:=measure(v0);
+	ms+=t2;
+	if k {
+		a:=X(a); /// note
+		w:=!v1; /// error
+		forget(w);
+	} else {
+		u:=!v1;
+		forget(u);
+	}
+	return (a,ms);
+}
