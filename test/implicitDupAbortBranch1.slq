@@ -1,0 +1,51 @@
+// args: --run
+
+def nestedAbort(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	e:=v0;
+	if k { if l { x:=(a,e); assert(false); } }
+	return (a,e);
+}
+def otherBranch(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	e:=v0;
+	if k { ms+=1; } else { if l { x:=(a,e); assert(false); } }
+	return (a,ms,e);
+}
+def chainedDup(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	v1:=dup(v0);
+	e:=v1;
+	if k { if l { x:=(a,e); assert(false); } }
+	return (a,e);
+}
+def deeperNesting(a:𝔹,k:!𝔹,j:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	e:=v0;
+	if k { if l { if j { x:=(a,e); assert(false); } } }
+	return (a,e);
+}
+def consumedBefore(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	e:=v0;
+	if k { if l { a:=X(a); x:=H(e); assert(false); } }
+	return (a,e);
+}
+def bothBranches(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	e:=v0;
+	if k { if l { x:=(a,e); assert(false); } } else { if l { y:=(a,e); assert(false); } }
+	return (a,e);
+}
+def constUseInSibling(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=X(dup(a));
+	e:=v0;
+	if k { if l { x:=(a,e); assert(false); } else { u:=!v0; forget(u); } } else { if l { y:=(a,e); assert(false); } else { a:=X(a); } }
+	return (a,e);
+}
+def main(){
+	r:=(measure(nestedAbort(1:𝔹,true,false)),measure(nestedAbort(0:𝔹,false,true)),measure(otherBranch(1:𝔹,false,false)),measure(otherBranch(1:𝔹,true,true)),measure(chainedDup(1:𝔹,true,false)),measure(deeperNesting(1:𝔹,true,false,true)),measure(consumedBefore(1:𝔹,true,false)),measure(bothBranches(1:𝔹,false,false)),measure(constUseInSibling(0:𝔹,true,false)),measure(constUseInSibling(0:𝔹,false,false)));
+	assert(r==((1,1),(0,0),(1,0,1),(1,1,1),(1,1),(1,1),(1,1),(1,1),(0,1),(1,1)));
+	return r;
+}

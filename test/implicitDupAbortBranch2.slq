@@ -1,0 +1,65 @@
+def crossBranches(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	e:=v0;
+	if k {
+		if l { return (a,t,e); } /// error
+		else { u:=!v0; }
+	} else {
+		if l { return (a,t,e); } /// error
+		else { a:=X(a); }
+	}
+	return (a,ms,e);
+}
+def updateBeforeReturn(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	e:=v0;
+	if k {
+		if l { ms+=t; return (a,ms,e); } /// error
+		else { u:=!v0; }
+	} else {
+		if l { ms+=t; return (a,ms,e); } /// error
+		else { a:=X(a); }
+	}
+	return (a,ms,e);
+}
+def otherBranchUpdates(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	e:=v0;
+	if k {
+		if l { return (a,t,e); } /// error
+	} else { ms+=1; }
+	return (a,ms,e);
+}
+def measuredAfterSplit(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	e:=v0;
+	if k {
+		ms+=t; /// error
+		return (a,ms,e);
+	} else {
+		t1:=measure(v0);
+		if l { } else {
+			ms+=t; /// error
+			return (a,ms,e);
+		}
+	}
+	return (a,ms,e);
+}
+def measuredInBranch(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=!v0;
+	if k {
+		a:=X(a);
+		if l {
+			t1:=measure(v1);
+			ms+=t; /// error
+			return (a,ms);
+		} else { t2:=measure(v1); }
+	} else { t3:=measure(v0); }
+	return (a,ms);
+}
