@@ -1,0 +1,47 @@
+def afterConsumption(a:𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0); /// error
+	a:=X(a);
+	if l { t2:=measure(v1); ms+=t2; } else { return (a,ms); }
+	return (a,ms);
+}
+def inBranch(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0); /// error
+	if k {
+		a:=X(a);
+		if l { t2:=measure(v1); ms+=t2; } else { return (a,ms); }
+		return (a,ms);
+	} else {
+		t3:=measure(v0);
+		ms+=t3;
+	}
+	return (a,ms);
+}
+def constUseBefore(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	u1:=!v0;
+	forget(u1);
+	v1:=dup(v0); /// error
+	if k {
+		a:=X(a);
+		if l { t2:=measure(v1); ms+=t2; } else { a:=X(a); return (a,ms); }
+		return (a,ms);
+	} else {
+		if l { return (a,ms); }
+		t3:=measure(v0);
+		ms+=t3;
+	}
+	return (a,ms);
+}
+def returnInThen(a:𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0); /// error
+	a:=X(a);
+	if l { return (a,ms); } else { t2:=measure(v1); ms+=t2; }
+	return (a,ms);
+}

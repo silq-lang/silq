@@ -1,0 +1,31 @@
+// args: --run
+
+def consumingBranchReturns(a:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	if k { t2:=measure(v1); ms+=t2; a:=X(a); return (a,ms); }
+	if j { t3:=measure(v1); ms+=t3; } else { t4:=measure(v1); ms+=t4; }
+	return (a,ms);
+}
+def useBeforeConsumption(a:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	if k { t2:=measure(v1); ms+=t2; }
+	if j { t3:=measure(v1); ms+=t3; a:=X(a); } else { t4:=measure(v1); ms+=t4; }
+	return (a,ms);
+}
+def withoutImplicitDup(a:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	if k { a:=X(a); }
+	if j { t3:=measure(v1); ms+=t3; } else { t4:=measure(v1); ms+=t4; }
+	return (a,ms);
+}
+def main(){
+	r:=(measure(consumingBranchReturns(1:𝔹,true,false)),measure(consumingBranchReturns(1:𝔹,false,true)),measure(useBeforeConsumption(1:𝔹,true,true)),measure(useBeforeConsumption(1:𝔹,true,false)),measure(withoutImplicitDup(1:𝔹,true,true)),measure(withoutImplicitDup(0:𝔹,false,false)));
+	assert(r==((0,1),(1,1),(0,2),(1,2),(0,1),(0,0)));
+	return r;
+}

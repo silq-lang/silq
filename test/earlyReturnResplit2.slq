@@ -1,0 +1,40 @@
+// args: --run
+
+def measuredInBranches(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=X(dup(v0));
+	if k {
+		a:=X(a);
+		t1:=measure(v1);
+		ms+=t1;
+	} else {
+		t2:=measure(v1);
+		ms+=t2;
+		if l {
+			u3:=!v0;
+			forget(u3);
+			t4:=measure(v1);
+			ms+=t4;
+		} else { return (a,ms); }
+	}
+	return (a,ms);
+}
+def consumedInOtherBranch(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	if k {
+		t1:=measure(v1);
+		ms+=t1;
+		a:=X(a);
+	} else {
+		if l { t2:=measure(v1); ms+=t2; } else { return (a,ms); }
+	}
+	return (a,ms);
+}
+def main(){
+	r:=(measure(measuredInBranches(0:𝔹,true,true)),measure(measuredInBranches(1:𝔹,false,true)),measure(measuredInBranches(1:𝔹,false,false)),measure(consumedInOtherBranch(1:𝔹,true,false)),measure(consumedInOtherBranch(1:𝔹,false,true)),measure(consumedInOtherBranch(1:𝔹,false,false)));
+	assert(r==((1,0),(1,2),(1,1),(0,1),(1,1),(1,0)));
+	return r;
+}

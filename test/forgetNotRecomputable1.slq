@@ -1,0 +1,23 @@
+def chain(x:𝔹){
+	v0:=X(dup(x));
+	v1:=X(dup(v0));
+	v2:=dup(v1);
+	x:=X(x); /// note
+	m1:=measure(v2);
+	m2:=measure(v2); /// error
+	return (x,m1,m2);
+}
+def nestedBranch(x:𝔹,c:!𝔹,d:!𝔹){
+	v0:=X(dup(x));
+	v1:=X(dup(v0));
+	v2:=dup(v1);
+	if c { t:=dup(v2); forget(t); } else {
+		if d { } else {
+			x:=X(x); /// note
+			x:=X(x);
+			m1:=measure(v2);
+		}
+		m2:=measure(v2); /// error
+	}
+	return x;
+}

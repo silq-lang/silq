@@ -1,0 +1,62 @@
+def bothBranchesConsume(a:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	if k { t2:=measure(v1); ms+=t2; a:=X(a); } else { a:=X(a); }
+	if j {
+		t3:=measure(v1); /// error
+		ms+=t3;
+	} else { t4:=measure(v1); ms+=t4; }
+	return (a,ms);
+}
+def withoutElse(a:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	if k { t2:=measure(v1); ms+=t2; a:=X(a); }
+	if j {
+		t3:=measure(v1); /// error
+		ms+=t3;
+	} else { t4:=measure(v1); ms+=t4; }
+	return (a,ms);
+}
+def withReturn(a:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	u1:=!v0;
+	forget(u1);
+	v1:=dup(v0);
+	if k { t2:=measure(v1); ms+=t2; a:=X(a); } else { a:=X(a); }
+	if j {
+		a:=X(a);
+		t3:=measure(v1); /// error
+		ms+=t3;
+	} else { a:=X(a); t4:=measure(v1); ms+=t4; return (a,ms); }
+	return (a,ms);
+}
+def nestedLater(a:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	if k { t2:=measure(v1); ms+=t2; a:=X(a); }
+	if j {
+		if k {
+			t3:=measure(v1); /// error
+			ms+=t3;
+		} else { t4:=measure(v1); ms+=t4; }
+	} else { t5:=measure(v1); ms+=t5; }
+	return (a,ms);
+}
+def laterInBranch(a:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	if k {
+		if j { t2:=measure(v1); ms+=t2; a:=X(a); }
+		if j {
+			t3:=measure(v1); /// error
+			ms+=t3;
+		} else { t4:=measure(v1); ms+=t4; }
+	} else { t5:=measure(v1); ms+=t5; }
+	return (a,ms);
+}
