@@ -1,0 +1,43 @@
+def nestedReturn(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v1:=!a;
+	t1:=measure(v1);
+	ms+=t1;
+	if k { } else { if l { return (a,ms); } else { } } /// note
+	forget(v1); /// error
+	return (a,ms);
+}
+def consumedBeforeReturn(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	if k { if l { a:=X(a); return (a,ms); } else { t1:=measure(v0); ms+=t1; } } else { } /// note
+	forget(v0); /// error
+	return (a,ms);
+}
+def chained(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=dup(v0);
+	t1:=measure(v1);
+	ms+=t1;
+	if k { } else { if l { return (a,ms); } else { } } /// note
+	forget(v1); /// error
+	return (a,ms);
+}
+def chainedDupInBranch(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=dup(v0);
+	if k { t1:=measure(v1); ms+=t1; } else { if l { return (a,ms); } else { } } /// note
+	t2:=measure(v1); /// error
+	ms+=t2;
+	return (a,ms);
+}
+def redefinedOnPath(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v1:=dup(a);
+	if k { t1:=measure(v1); ms+=t1; } else { if l { return (a,ms); } else { a:=X(a); } } /// note
+	t2:=measure(v1); /// error
+	ms+=t2;
+	return (a,ms);
+}
