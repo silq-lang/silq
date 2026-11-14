@@ -1,0 +1,26 @@
+// args: --run
+
+def returningBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	if k { t1:=measure(v1); ms+=t1; } else { u2:=!v0; forget(u2); a:=X(a); return (a,ms); }
+	t3:=measure(v1);
+	ms+=2*t3;
+	return (a,ms);
+}
+def sameValue(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	if k { t1:=measure(v1); ms+=t1; } else { u2:=!v0; forget(u2); }
+	t3:=measure(v1);
+	ms+=2*t3;
+	a:=X(a);
+	return (a,ms);
+}
+def main(){
+	r:=(measure(returningBranch(1:𝔹,true)),measure(returningBranch(1:𝔹,false)),measure(sameValue(1:𝔹,true)),measure(sameValue(0:𝔹,false)));
+	assert(r==((1,3),(0,0),(0,3),(1,0)));
+	return r;
+}

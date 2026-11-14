@@ -1,0 +1,39 @@
+def consumedAfterMerge(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	if k { t1:=measure(v1); ms+=t1; } else { u2:=!v0; forget(u2); a:=X(a); } /// note
+	a:=X(a);
+	t3:=measure(v1); /// error
+	ms+=t3;
+	return (a,ms);
+}
+def withoutConsumption(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	if k { t1:=measure(v1); ms+=t1; } else { u2:=!v0; forget(u2); a:=X(a); } /// note
+	t3:=measure(v1); /// error
+	ms+=t3;
+	return (a,ms);
+}
+def implicitDupInElse(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	if k { u2:=!v0; forget(u2); a:=X(a); } else { t1:=measure(v1); ms+=t1; } /// note
+	a:=X(a);
+	t3:=measure(v1); /// error
+	ms+=t3;
+	return (a,ms);
+}
+def nestedConditional(a:𝔹,k:!𝔹,j:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	if k { if j { t1:=measure(v1); ms+=t1; } } else { u2:=!v0; forget(u2); a:=X(a); } /// note
+	a:=X(a);
+	t3:=measure(v1); /// error
+	ms+=t3;
+	return (a,ms);
+}
