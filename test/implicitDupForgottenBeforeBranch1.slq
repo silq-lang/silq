@@ -1,0 +1,155 @@
+def consumedInBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=dup(v0);
+	v2:=!v1;
+	if k {
+		u:=!v1;
+		a:=X(a); /// note
+		t1:=measure(v2); /// note
+		ms+=t1;
+		t2:=measure(v2); /// error
+		ms+=t2;
+	}
+	return (a,ms);
+}
+def usedAfterConditional(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=dup(v0);
+	v2:=!v1;
+	if k {
+		u:=!v1;
+		a:=X(a); /// note
+		t1:=measure(v2); /// note
+		ms+=t1;
+	}
+	t2:=measure(v2); /// error
+	ms+=t2;
+	return (a,ms);
+}
+def elseBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=dup(v0);
+	v2:=!v1;
+	if k {
+	} else {
+		u:=!v1;
+		a:=X(a); /// note
+		t1:=measure(v2); /// note
+		ms+=t1;
+		t2:=measure(v2); /// error
+		ms+=t2;
+	}
+	return (a,ms);
+}
+def nestedBranch(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=dup(v0);
+	v2:=!v1;
+	if k {
+		if l {
+			u:=!v1;
+			a:=X(a); /// note
+			t1:=measure(v2); /// note
+			ms+=t1;
+			t2:=measure(v2); /// error
+			ms+=t2;
+		}
+	}
+	return (a,ms);
+}
+def consumedInOtherBranch(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=!v0;
+	t1:=measure(v1); /// note
+	ms+=t1;
+	if k {
+		a:=X(a);
+		u:=!v0;
+		t3:=measure(v1);
+		ms+=t3;
+	} else {
+		if l {
+			a:=X(a);
+			t5:=measure(v0); /// note
+			ms+=t5;
+			t6:=measure(v1); /// error
+			ms+=t6;
+		}
+		return (a,ms);
+	}
+	t9:=measure(v0);
+	ms+=t9;
+	return (a,ms);
+}
+def constUseBeforeNested(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=!v0;
+	t1:=measure(v1); /// note
+	ms+=t1;
+	if k {
+		a:=X(a);
+		u2:=!v0;
+		forget(u2);
+		t3:=measure(v1);
+		ms+=t3;
+	} else {
+		u4:=!v1; /// note
+		forget(u4);
+		if l {
+			a:=X(a);
+			t5:=measure(v0); /// note
+			ms+=t5;
+			t6:=measure(v1); /// error
+			ms+=t6;
+		} else {
+			t7:=measure(v0);
+			ms+=t7;
+			t8:=measure(v1);
+			ms+=t8;
+			a:=X(a);
+			return (a,ms);
+		}
+		return (a,ms);
+	}
+	t9:=measure(v0);
+	ms+=t9;
+	return (a,ms);
+}
+def implicitDupBeforeBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=!v0;
+	v2:=!v1;
+	ms+=measure(v2); /// note
+	if k {
+		t1:=measure(v0);
+		ms+=t1;
+	} else {
+		a:=X(a); /// note
+		t2:=measure(v2); /// error
+		ms+=t2;
+	}
+	return (a,ms);
+}
+def constUseInOtherBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=!v0;
+	v2:=!v1;
+	ms+=measure(v2); /// note
+	if k {
+		u:=!v0;
+		forget(u);
+	} else {
+		a:=X(a); /// note
+		t2:=measure(v2); /// error
+		ms+=t2;
+	}
+	return (a,ms);
+}
