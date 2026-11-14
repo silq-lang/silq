@@ -3,7 +3,18 @@ def usedCopy(const c:𝔹){
 	y0:=!x;
 	y1:=y0;
 	y2:=y1;
-	if c { z:=X(x); } else { u:=!y1; /// TODO
-		forget(u); z:=H(H(x)); }
+	if c {
+		z:=X(x);
+	}else{
+		u:=!y1;
+		forget(u);
+		z:=H(H(x));
+	}
 	return (y2,z);
+}
+
+def main(){
+	x:=H(0);
+	y:=usedCopy(x);
+	return (x,y);
 }

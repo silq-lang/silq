@@ -1,0 +1,60 @@
+// args: --run
+
+def measuredBeforeDependency(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	v2:=dup(v1);
+	t3:=measure(v0);
+	ms+=t3;
+	e:=v2;
+	if k { t4:=measure(v0); ms+=t4; } else { a:=X(a); t6:=measure(v2); ms+=2*t6; t5:=measure(v1); ms+=4*t5; }
+	return (a,ms,e);
+}
+def measuredBeforeConsumption(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	v2:=dup(v1);
+	t3:=measure(v0);
+	ms+=t3;
+	e:=v2;
+	if k { t4:=measure(v0); ms+=t4; } else { t6:=measure(v2); ms+=2*t6; a:=X(a); t5:=measure(v1); ms+=4*t5; }
+	return (a,ms,e);
+}
+def measuredInBothBranches(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	v2:=dup(v1);
+	t3:=measure(v0);
+	ms+=t3;
+	e:=v2;
+	if k { t4:=measure(v0); ms+=t4; t7:=measure(v2); ms+=8*t7; } else { a:=X(a); t6:=measure(v2); ms+=2*t6; t5:=measure(v1); ms+=4*t5; }
+	return (a,ms,e);
+}
+def withoutConsumption(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=!v0;
+	v2:=!v1;
+	t3:=measure(v0);
+	ms+=t3;
+	e:=v2;
+	if k { u4:=!v0; forget(u4); } else { t5:=measure(v1); ms+=2*t5; t6:=measure(v2); ms+=4*t6; }
+	return (a,ms,e);
+}
+def keptWithoutImplicitDup(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	v2:=dup(v1);
+	e:=v2;
+	if k { t4:=measure(v0); ms+=t4; } else { a:=X(a); t5:=measure(v1); ms+=2*t5; t6:=measure(v2); ms+=4*t6; }
+	return (a,ms,e);
+}
+def main(){
+	r:=(measure(measuredBeforeDependency(1:𝔹,true)),measure(measuredBeforeDependency(1:𝔹,false)),measure(measuredBeforeConsumption(1:𝔹,false)),measure(measuredInBothBranches(1:𝔹,true)),measure(measuredInBothBranches(1:𝔹,false)),measure(withoutConsumption(1:𝔹,false)),measure(keptWithoutImplicitDup(1:𝔹,true)),measure(keptWithoutImplicitDup(1:𝔹,false)));
+	assert(r==((1,2,1),(0,7,1),(0,7,1),(1,10,1),(0,7,1),(1,2,0),(1,1,1),(0,6,1)));
+	return r;
+}

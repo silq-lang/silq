@@ -1,0 +1,46 @@
+// args: --run
+
+def consumedInThen(w:𝔹,c:!𝔹){
+	p:=dup(w);
+	m:=measure(p);
+	if c { p:=X(p); } else { w:=X(w); }
+	return (w,m);
+}
+def consumedInElse(w:𝔹,c:!𝔹){
+	p:=dup(w);
+	m:=measure(p);
+	if c { w:=X(w); } else { p:=X(p); }
+	return (w,m);
+}
+def nestedInThen(w:𝔹,c:!𝔹,d:!𝔹){
+	p:=dup(w);
+	m:=measure(p);
+	if c { if d { p:=X(p); } n:=measure(p); m+=2*n; } else { w:=X(w); }
+	return (w,m);
+}
+def nestedInElse(w:𝔹,c:!𝔹,d:!𝔹){
+	p:=dup(w);
+	m:=measure(p);
+	if c { w:=X(w); } else { if d { p:=X(p); } n:=measure(p); m+=2*n; }
+	return (w,m);
+}
+def forgottenInElse(x:𝔹,c:!𝔹){
+	y0:=!x;
+	y1:=y0;
+	y2:=y1;
+	if c { z:=X(x); } else { u:=!y1; forget(u); z:=H(H(x)); }
+	return (y2,z);
+}
+def quantumCondition(const c:𝔹){
+	x:=H(H(0:𝔹));
+	y0:=!x;
+	y1:=y0;
+	y2:=y1;
+	if c { z:=X(x); } else { u:=!y1; forget(u); z:=H(H(x)); }
+	return (y2,z);
+}
+def main(){
+	r:=(measure(consumedInThen(1:𝔹,true)),measure(consumedInThen(1:𝔹,false)),measure(consumedInElse(1:𝔹,true)),measure(consumedInElse(1:𝔹,false)),measure(nestedInThen(1:𝔹,true,true)),measure(nestedInThen(1:𝔹,true,false)),measure(nestedInElse(0:𝔹,false,true)),measure(nestedInElse(1:𝔹,true,true)),measure(forgottenInElse(0:𝔹,true)),measure(forgottenInElse(1:𝔹,false)),measure(quantumCondition(1:𝔹)),measure(quantumCondition(0:𝔹)));
+	assert(r==((1,1),(0,1),(0,1),(1,1),(1,1),(1,3),(0,2),(0,1),(1,1),(0,1),(1,1),(1,0)));
+	return r;
+}

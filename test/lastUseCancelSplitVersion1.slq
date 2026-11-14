@@ -5,7 +5,7 @@ def f(){
 	p:=dup(w);
 	m1:=measure(p);
 	if measure(H(0:𝔹)) {
-		if o { p:=X(p); } /// error
+		if o { p:=X(p); }
 	} else {
 		w:=X(w);
 	}
@@ -17,10 +17,12 @@ def g(){
 	p:=dup(w);
 	m1:=measure(p);
 	if measure(H(0:𝔹)) {
-		if measure(H(0:𝔹)) { p:=X(p); } /// error
+		if measure(H(0:𝔹)) { p:=X(p); }
 		m2:=measure(p);
 	} else {
 		w:=X(w);
 	}
 	return (x,w);
 }
+
+def main()⇒(f(),g());

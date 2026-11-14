@@ -1,0 +1,73 @@
+def chainAfterSplit(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	v2:=dup(v1);
+	t3:=measure(v0);
+	ms+=t3;
+	e:=v2; /// note
+	if k {
+		t4:=measure(v0);
+		ms+=t4;
+	} else {
+		a:=X(a);
+		t5:=measure(v1); /// note
+		ms+=t5;
+		t6:=measure(v2); /// error
+		ms+=t6;
+	}
+	return (a,ms,e);
+}
+def thenBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	v2:=dup(v1);
+	t3:=measure(v0);
+	ms+=t3;
+	e:=v2; /// note
+	if k {
+		a:=X(a);
+		t5:=measure(v1); /// note
+		ms+=t5;
+		t6:=measure(v2); /// error
+		ms+=t6;
+	} else {
+		t4:=measure(v0);
+		ms+=t4;
+	}
+	return (a,ms,e);
+}
+def negations(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=!v0;
+	v2:=!v1;
+	t3:=measure(v0);
+	ms+=t3;
+	e:=v2; /// note
+	if k {
+		u4:=!v0;
+		forget(u4);
+	} else {
+		a:=X(a);
+		t5:=measure(v1); /// note
+		ms+=t5;
+		t6:=measure(v2); /// error
+		ms+=t6;
+	}
+	return (a,ms,e);
+}
+def measuredInNestedBranch(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=dup(v0); /// error
+	v2:=X(dup(v1)); /// error
+	if k {
+		a:=X(a); /// note
+		if l { } else { u:=!v2; t:=measure(v1); }
+	} else {
+		if l { s:=measure(v2); return (a,ms); }
+	}
+	return (a,ms); /// note
+}
