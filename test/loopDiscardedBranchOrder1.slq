@@ -1,0 +1,44 @@
+// args: --run
+
+def definedInBranch(c:!𝔹,const n:!ℕ,x:𝔹,y:𝔹){
+	if c { return (x,y); }
+	for i in 0..3 { if i==n { t:=dup(x); return (x,y); } }
+	return (y,x);
+}
+def definedBeforeBranch(c:!𝔹,const n:!ℕ,x:𝔹,y:𝔹){
+	if c { return (x,y); }
+	for i in 0..3 { t:=dup(x); if i==n { return (x,y); } }
+	return (y,x);
+}
+def otherVariable(c:!𝔹,const n:!ℕ,x:𝔹,y:𝔹){
+	if c { return (x,y); }
+	for i in 0..3 { t:=dup(y); if i==n { return (x,y); } }
+	return (y,x);
+}
+def secondCopy(c:!𝔹,const n:!ℕ,x:𝔹,y:𝔹){
+	if c { return (x,y); }
+	for i in 0..3 { t:=dup(x); if i==n { return (x,y); } u:=dup(x); }
+	return (y,x);
+}
+def whileTrue(c:!𝔹,const n:!ℕ,x:𝔹,y:𝔹){
+	if c { return (x,y); }
+	k:=0:!ℕ;
+	while true { t:=dup(x); if k==n { return (x,y); } k+=1; }
+}
+def doWhileLoop(c:!𝔹,const n:!ℕ,x:𝔹,y:𝔹){
+	if c { return (x,y); }
+	k:=0:!ℕ;
+	do { t:=dup(x); if k==n { return (x,y); } k+=1; } while k<3;
+	return (y,x);
+}
+def repeatLoop(c:!𝔹,const n:!ℕ,x:𝔹,y:𝔹){
+	if c { return (x,y); }
+	k:=0:!ℕ;
+	repeat 3 { t:=dup(x); if k==n { return (x,y); } k+=1; }
+	return (y,x);
+}
+def main(){
+	r:=(measure(definedInBranch(true,0,1:𝔹,0:𝔹)),measure(definedInBranch(false,1,1:𝔹,0:𝔹)),measure(definedInBranch(false,5,1:𝔹,0:𝔹)),measure(definedBeforeBranch(false,2,1:𝔹,0:𝔹)),measure(definedBeforeBranch(false,5,1:𝔹,0:𝔹)),measure(otherVariable(false,0,1:𝔹,0:𝔹)),measure(otherVariable(false,5,1:𝔹,0:𝔹)),measure(secondCopy(false,1,1:𝔹,0:𝔹)),measure(secondCopy(false,5,1:𝔹,0:𝔹)),measure(whileTrue(true,0,1:𝔹,0:𝔹)),measure(whileTrue(false,4,1:𝔹,0:𝔹)),measure(doWhileLoop(false,1,1:𝔹,0:𝔹)),measure(doWhileLoop(false,5,1:𝔹,0:𝔹)),measure(repeatLoop(false,2,1:𝔹,0:𝔹)),measure(repeatLoop(false,5,1:𝔹,0:𝔹)));
+	assert(r==((1,0),(1,0),(0,1),(1,0),(0,1),(1,0),(0,1),(1,0),(0,1),(1,0),(1,0),(1,0),(0,1),(1,0),(0,1)));
+	return r;
+}

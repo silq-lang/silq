@@ -1,0 +1,26 @@
+def unreadVariable(const n:!ℕ):!ℤ{
+	s:=1:!ℤ;
+	t:=2:!ℤ;
+	if n==0 { return s+2; x:=t; } /// error
+	return s+t;
+}
+def redefinedAfterReturn(const n:!ℕ):!ℤ{
+	s:=1:!ℤ; /// note
+	if n==0 { return s+2; s:=5:!ℤ; } /// error
+	return s;
+}
+def movedByReturn(const n:!ℕ):!ℤ{
+	s:=1:!ℤ;
+	if n==0 { return s; x:=s; } /// error
+	return s;
+}
+def readOutsideBranch(const n:!ℕ,const c:!𝔹):!ℤ{
+	s:=1:!ℤ;
+	if n==0 { y:=s+1; if c { return 7; x:=s; } } /// error
+	return s;
+}
+def parameter(n:!ℕ):!ℤ{
+	s:=1:!ℤ;
+	if n==0 { return 7; x:=n; } /// error
+	return s;
+}

@@ -1,0 +1,56 @@
+// args: --run
+
+def readByReturn(const n:!ℕ):!ℤ{
+	s:=1:!ℤ;
+	if n==0 { return s+2; x:=s; }
+	return s;
+}
+def constParameter(const n:!ℕ,const c:!𝔹):!ℤ{
+	s:=1:!ℤ;
+	if n==0 { return 7; if c { x:=n; } }
+	return s;
+}
+def updatedAfterReturn(const n:!ℕ):!ℤ{
+	s:=1:!ℤ;
+	if n==0 { return s+2; s+=1; }
+	return s;
+}
+def readBeforeReturn(const n:!ℕ):!ℤ{
+	s:=1:!ℤ;
+	t:=2:!ℤ;
+	if n==0 { y:=t+1; return y; x:=t; }
+	return s+t;
+}
+def readInNestedConditional(const n:!ℕ,const c:!𝔹):!ℤ{
+	s:=1:!ℤ;
+	if n==0 { if c { y:=s+1; } return 7; x:=s; }
+	return s;
+}
+def nestedBranch(const n:!ℕ,const c:!𝔹):!ℤ{
+	s:=1:!ℤ;
+	if c { if n==0 { return s+2; x:=s; } }
+	return s;
+}
+def withBody(const n:!ℕ):!ℤ{
+	s:=1:!ℤ;
+	if n==0 { with { k:=2; } do { return s+k; } s+=2; }
+	return s+1;
+}
+def quantumVariable(const n:!ℕ):!ℤ{
+	s:=1:!ℤ;
+	q:=0:𝔹;
+	if n==0 { return s+2; x:=s; }
+	forget(q);
+	return s;
+}
+def unreadRedefined(const n:!ℕ):!ℤ{
+	s:=1:!ℤ;
+	t:=2:!ℤ;
+	if n==0 { return s+2; t:=5:!ℤ; }
+	return s+t;
+}
+def main(){
+	r:=(readByReturn(0),readByReturn(1),constParameter(0,true),constParameter(1,true),updatedAfterReturn(0),updatedAfterReturn(1),readBeforeReturn(0),readBeforeReturn(1),readInNestedConditional(0,true),readInNestedConditional(1,false),nestedBranch(0,true),nestedBranch(0,false),withBody(0),withBody(1),quantumVariable(0),quantumVariable(1),unreadRedefined(0),unreadRedefined(1));
+	assert(r==(3,1,7,1,3,1,3,3,7,1,3,1,3,2,3,1,3,3));
+	return r;
+}
