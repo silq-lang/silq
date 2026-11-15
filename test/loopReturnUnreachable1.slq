@@ -1,0 +1,73 @@
+// args: --run
+
+def withReturnInBranch(const n:!ℕ):!ℤ{
+	s:=1:!ℤ;
+	for i in 0..2 {
+		if i==n { with { k:=2; } do { return s+k; } s+=2; }
+		with { k:=3; } do { s+=k; return s+2; }
+	}
+	return s+1;
+}
+def continuationAbsorbed(const n:!ℕ):!ℤ{
+	s:=1:!ℤ;
+	q:=0:𝔹;
+	for i in 0..2 { if i==n { forget(q); return s+2; x:=s; } }
+	forget(q);
+	return s+1;
+}
+def redefinedAfterReturn(const n:!ℕ):!ℤ{
+	s:=1:!ℤ;
+	q:=0:𝔹;
+	for i in 0..2 { if i==n { forget(q); return s+2; s+=2; } s+=1; }
+	forget(q);
+	return s+1;
+}
+def returnInLoopBody(const n:!ℕ):!ℤ{
+	s:=1:!ℤ;
+	q:=0:𝔹;
+	for i in 0..n { forget(q); return s+2; x:=s; }
+	forget(q);
+	return s+1;
+}
+def conditionalAfterReturn(const n:!ℕ,const c:!𝔹):!ℤ{
+	s:=1:!ℤ;
+	q:=0:𝔹;
+	for i in 0..2 { if i==n { forget(q); return s+2; if c { x:=s; } } }
+	forget(q);
+	return s+1;
+}
+def nestedLoop(const n:!ℕ):!ℤ{
+	s:=1:!ℤ;
+	q:=0:𝔹;
+	for i in 0..2 { for j in 0..2 { if j==n { forget(q); return s+2; x:=s; } } }
+	forget(q);
+	return s+1;
+}
+def whileBody(const n:!ℕ):!ℤ{
+	s:=1:!ℤ;
+	q:=0:𝔹;
+	i:=0:!ℕ;
+	while i<2 { if i==n { forget(q); return s+i+2; x:=s; } i+=1; }
+	forget(q);
+	return s+1;
+}
+def doWhileBody(const n:!ℕ):!ℤ{
+	s:=1:!ℤ;
+	q:=0:𝔹;
+	i:=0:!ℕ;
+	do { if i==n { forget(q); return s+i+2; x:=s; } i+=1; } while i<2;
+	forget(q);
+	return s+1;
+}
+def repeatBody(const n:!ℕ):!ℤ{
+	s:=1:!ℤ;
+	q:=0:𝔹;
+	repeat 2 { if s==n { forget(q); return s+2; x:=s; } s+=1; }
+	forget(q);
+	return s+1;
+}
+def main(){
+	r:=(withReturnInBranch(0),withReturnInBranch(1),continuationAbsorbed(1),continuationAbsorbed(2),redefinedAfterReturn(0),redefinedAfterReturn(2),returnInLoopBody(0),returnInLoopBody(1),conditionalAfterReturn(0,true),conditionalAfterReturn(3,false),nestedLoop(1),nestedLoop(2),whileBody(1),whileBody(2),doWhileBody(1),doWhileBody(2),repeatBody(1),repeatBody(5));
+	assert(r==(3,6,3,2,3,4,2,3,3,2,3,2,4,2,4,2,3,4));
+	return r;
+}
