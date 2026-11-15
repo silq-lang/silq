@@ -1,0 +1,63 @@
+def chained(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	t2:=measure(v1); /// note
+	ms+=t2;
+	if k { x5:=(a,ms); assert(false); }
+	a:=X(a); /// note
+	t8:=measure(v1); /// error
+	ms+=t8;
+	return (a,ms);
+}
+def usedInAbortingBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	t2:=measure(v1); /// note
+	ms+=t2;
+	if k { u3:=!v1; forget(u3); x5:=(a,ms); assert(false); }
+	a:=X(a); /// note
+	t8:=measure(v1); /// error
+	ms+=t8;
+	return (a,ms);
+}
+def longerChain(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	v2:=dup(v1);
+	t2:=measure(v2); /// note
+	ms+=t2;
+	if k { x5:=(a,ms); assert(false); }
+	a:=X(a); /// note
+	t8:=measure(v2); /// error
+	ms+=t8;
+	return (a,ms);
+}
+def consumedInLaterConditional(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	t2:=measure(v1); /// note
+	ms+=t2;
+	if k { x5:=(a,ms); assert(false); }
+	if l {
+		a:=X(a); /// note
+	}
+	t8:=measure(v1); /// error
+	ms+=t8;
+	return (a,ms);
+}
+def nestedAbortingBranch(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=dup(v0);
+	t2:=measure(v1); /// note
+	ms+=t2;
+	if k { if l { x5:=(a,ms); assert(false); } }
+	a:=X(a); /// note
+	t8:=measure(v1); /// error
+	ms+=t8;
+	return (a,ms);
+}

@@ -1,0 +1,32 @@
+def measuredBeforeConsumption(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	t2:=measure(v0);
+	ms+=t2;
+	if k {
+		u3:=!v0; forget(u3);
+		x5:=(a,ms);
+		assert(false);
+	}
+	t8:=measure(v0); /// TODO
+	ms+=t8;
+	a:=X(a);
+	return (a,ms);
+}
+def nestedAbortingBranch(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	t2:=measure(v0);
+	ms+=t2;
+	if k {
+		if l {
+			u3:=!v0; forget(u3);
+			x5:=(a,ms);
+			assert(false);
+		}
+	}
+	t8:=measure(v0); /// TODO
+	ms+=t8;
+	a:=X(a);
+	return (a,ms);
+}

@@ -1,0 +1,44 @@
+// args: --run
+
+def measuredInRemainingBranch(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=!v0;
+	e:=v1;
+	if k {
+		if l { u7:=!v1; forget(u7); x:=(a,ms,e); assert(false); }
+		else { t11:=measure(v0); ms+=t11; }
+	}
+	return (a,ms,e);
+}
+def deeperNesting(a:𝔹,k:!𝔹,j:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=!v0;
+	e:=v1;
+	if k {
+		if j {
+			if l { u7:=!v1; forget(u7); x:=(a,ms,e); assert(false); }
+			else { t11:=measure(v0); ms+=t11; }
+		}
+	}
+	return (a,ms,e);
+}
+def usedInOuterElse(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=!v0;
+	e:=v1;
+	if k {
+		if l { u7:=!v1; forget(u7); x:=(a,ms,e); assert(false); }
+		else { t11:=measure(v0); ms+=t11; }
+	} else {
+		u8:=!v1; forget(u8);
+	}
+	return (a,ms,e);
+}
+def main(){
+	r:=(measure(measuredInRemainingBranch(0:𝔹,true,false)),measure(measuredInRemainingBranch(1:𝔹,false,true)),measure(deeperNesting(0:𝔹,true,true,false)),measure(deeperNesting(1:𝔹,true,false,true)),measure(usedInOuterElse(1:𝔹,true,false)),measure(usedInOuterElse(0:𝔹,false,true)));
+	assert(r==((0,1,0),(1,0,1),(0,1,0),(1,0,1),(1,0,1),(0,0,0)));
+	return r;
+}

@@ -1,0 +1,63 @@
+def forgottenInBranch(a:𝔹,k:!𝔹){
+	v0:=dup(a);
+	v1:=!v0;
+	v2:=X(dup(v1));
+	t1:=measure(v2);
+	if k {
+		t3:=measure(v1);
+		u4:=!v2; /// TODO
+		forget(u4);
+	} else {
+		a:=X(a);
+		u5:=!v0;
+		forget(u5);
+		u6:=!v1;
+		forget(u6);
+		assert(false);
+	}
+	return (a,t1);
+}
+def chainedDups(a:𝔹,k:!𝔹){
+	v0:=dup(a);
+	v1:=dup(v0);
+	v2:=dup(v1);
+	t1:=measure(v2);
+	if k {
+		t3:=measure(v1);
+		u4:=!v2; /// TODO
+		forget(u4);
+	} else {
+		a:=X(a);
+		u5:=!v0;
+		forget(u5);
+		u6:=!v1;
+		forget(u6);
+		assert(false);
+	}
+	return (a,t1);
+}
+def usedBeforeConditional(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	v1:=!v0;
+	v2:=X(dup(v1));
+	t1:=measure(v2);
+	ms+=t1;
+	u2:=!v1;
+	forget(u2);
+	if k {
+		t3:=measure(v1);
+		ms+=t3;
+		u4:=!v2; /// TODO
+		forget(u4);
+	} else {
+		a:=X(a);
+		u5:=!v0;
+		forget(u5);
+		u6:=!v1;
+		forget(u6);
+		x7:=(a,ms);
+		assert(false);
+	}
+	return (a,ms);
+}

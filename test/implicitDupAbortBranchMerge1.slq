@@ -1,0 +1,61 @@
+def usedInAbortingBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	t2:=measure(v0); /// note
+	ms+=t2;
+	if k { /// note
+		u3:=!v0; forget(u3);
+		x5:=(a,ms);
+		assert(false);
+	}
+	a:=X(a);
+	t8:=measure(v0); /// error
+	ms+=t8;
+	return (a,ms);
+}
+def measuredInAbortingBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	t2:=measure(v0); /// note
+	ms+=t2;
+	if k { /// note
+		t3:=measure(v0); ms+=t3;
+		a:=X(a);
+		assert(false);
+	}
+	a:=X(a);
+	t8:=measure(v0); /// error
+	ms+=t8;
+	return (a,ms);
+}
+def keptByDefinition(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	e:=v0; /// note
+	if k { /// note
+		u3:=!v0; forget(u3);
+		a:=X(a);
+		assert(false);
+	}
+	a:=X(a);
+	t8:=measure(v0); /// error
+	ms+=t8;
+	return (a,ms,e);
+}
+def nestedAbortingBranch(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	t2:=measure(v0); /// note
+	ms+=t2;
+	if k {
+		if l { /// note
+			u3:=!v0; forget(u3);
+			x5:=(a,ms);
+			assert(false);
+		}
+	}
+	a:=X(a);
+	t8:=measure(v0); /// error
+	ms+=t8;
+	return (a,ms);
+}
