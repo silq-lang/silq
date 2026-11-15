@@ -1,0 +1,107 @@
+// args: --run
+
+def measuredBeforeConsumption(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	v2:=!v1;
+	e:=v2;
+	if k { t1:=measure(v2); ms+=t1; a:=X(a); } else { t2:=measure(v1); ms+=t2; }
+	return (a,ms,e);
+}
+def forgottenAndMeasuredBeforeConsumption(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	v2:=!v1;
+	e:=v2;
+	if k { u:=!v0; forget(u); t1:=measure(v2); ms+=t1; a:=X(a); } else { t2:=measure(v1); ms+=t2; }
+	return (a,ms,e);
+}
+def notUsedAfterConsumption(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	v2:=!v1;
+	e:=v2;
+	if k { u:=!v0; forget(u); a:=X(a); } else { t2:=measure(v1); ms+=t2; }
+	return (a,ms,e);
+}
+def notUsedInBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	v2:=!v1;
+	e:=v2;
+	if k { a:=X(a); } else { t2:=measure(v1); ms+=t2; }
+	return (a,ms,e);
+}
+def consumedInOtherBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	v2:=!v1;
+	e:=v2;
+	if k { t1:=measure(v2); ms+=t1; } else { a:=X(a); t2:=measure(v1); ms+=t2; }
+	return (a,ms,e);
+}
+def keptInBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	v2:=!v1;
+	e:=v2;
+	if k { a:=X(a); t1:=measure(v2); ms+=t1; t2:=measure(v1); ms+=t2; } else { t3:=measure(v1); ms+=t3; }
+	return (a,ms,e);
+}
+def keptInElseBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	v2:=!v1;
+	e:=v2;
+	if k { t3:=measure(v1); ms+=t3; } else { a:=X(a); t1:=measure(v2); ms+=t1; t2:=measure(v1); ms+=t2; }
+	return (a,ms,e);
+}
+def measuredBeforeConditional(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	v2:=!v1;
+	e:=v2;
+	t0:=measure(v1); ms+=t0;
+	if k { a:=X(a); t1:=measure(v2); ms+=t1; } else { t2:=measure(v2); ms+=t2; }
+	return (a,ms,e);
+}
+def keptInBothBranches(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	v2:=!v1;
+	e:=v2;
+	if k { a:=X(a); t1:=measure(v2); ms+=t1; t2:=measure(v1); ms+=t2; } else { t3:=measure(v0); ms+=t3; t4:=measure(v1); ms+=t4; }
+	return (a,ms,e);
+}
+def consumedAfterMeasureInOtherBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	v2:=!v1;
+	e:=v2;
+	if k { a:=X(a); t1:=measure(v2); ms+=t1; t2:=measure(v1); ms+=t2; } else { t3:=measure(v1); ms+=t3; a:=X(a); }
+	return (a,ms,e);
+}
+def measuredBeforeConsumptionAndKept(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	v2:=!v1;
+	e:=v2;
+	if k { t1:=measure(v2); ms+=t1; a:=X(a); t2:=measure(v1); ms+=t2; } else { t3:=measure(v1); ms+=t3; }
+	return (a,ms,e);
+}
+def main(){
+	r:=(measure(measuredBeforeConsumption(0:𝔹,true)),measure(measuredBeforeConsumption(0:𝔹,false)),measure(measuredBeforeConsumption(1:𝔹,true)),measure(measuredBeforeConsumption(1:𝔹,false)),measure(forgottenAndMeasuredBeforeConsumption(0:𝔹,true)),measure(forgottenAndMeasuredBeforeConsumption(0:𝔹,false)),measure(forgottenAndMeasuredBeforeConsumption(1:𝔹,true)),measure(forgottenAndMeasuredBeforeConsumption(1:𝔹,false)),measure(notUsedAfterConsumption(0:𝔹,true)),measure(notUsedAfterConsumption(0:𝔹,false)),measure(notUsedAfterConsumption(1:𝔹,true)),measure(notUsedAfterConsumption(1:𝔹,false)),measure(notUsedInBranch(0:𝔹,true)),measure(notUsedInBranch(0:𝔹,false)),measure(notUsedInBranch(1:𝔹,true)),measure(notUsedInBranch(1:𝔹,false)),measure(consumedInOtherBranch(0:𝔹,true)),measure(consumedInOtherBranch(0:𝔹,false)),measure(consumedInOtherBranch(1:𝔹,true)),measure(consumedInOtherBranch(1:𝔹,false)),measure(keptInBranch(0:𝔹,true)),measure(keptInBranch(0:𝔹,false)),measure(keptInBranch(1:𝔹,true)),measure(keptInBranch(1:𝔹,false)),measure(keptInElseBranch(0:𝔹,true)),measure(keptInElseBranch(0:𝔹,false)),measure(keptInElseBranch(1:𝔹,true)),measure(keptInElseBranch(1:𝔹,false)),measure(measuredBeforeConditional(0:𝔹,true)),measure(measuredBeforeConditional(0:𝔹,false)),measure(measuredBeforeConditional(1:𝔹,true)),measure(measuredBeforeConditional(1:𝔹,false)),measure(keptInBothBranches(0:𝔹,true)),measure(keptInBothBranches(0:𝔹,false)),measure(keptInBothBranches(1:𝔹,true)),measure(keptInBothBranches(1:𝔹,false)),measure(consumedAfterMeasureInOtherBranch(0:𝔹,true)),measure(consumedAfterMeasureInOtherBranch(0:𝔹,false)),measure(consumedAfterMeasureInOtherBranch(1:𝔹,true)),measure(consumedAfterMeasureInOtherBranch(1:𝔹,false)),measure(measuredBeforeConsumptionAndKept(0:𝔹,true)),measure(measuredBeforeConsumptionAndKept(0:𝔹,false)),measure(measuredBeforeConsumptionAndKept(1:𝔹,true)),measure(measuredBeforeConsumptionAndKept(1:𝔹,false)));
+	assert(r==((1,1,1),(0,0,1),(0,0,0),(1,1,0),(1,1,1),(0,0,1),(0,0,0),(1,1,0),(1,0,1),(0,0,1),(0,0,0),(1,1,0),(1,0,1),(0,0,1),(0,0,0),(1,1,0),(0,1,1),(1,0,1),(1,0,0),(0,1,0),(1,1,1),(0,0,1),(0,1,0),(1,1,0),(0,0,1),(1,1,1),(1,1,0),(0,1,0),(1,1,1),(0,1,1),(0,1,0),(1,1,0),(1,1,1),(0,1,1),(0,1,0),(1,1,0),(1,1,1),(1,0,1),(0,1,0),(0,1,0),(1,1,1),(0,0,1),(0,1,0),(1,1,0)));
+	return r;
+}

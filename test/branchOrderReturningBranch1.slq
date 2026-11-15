@@ -1,0 +1,52 @@
+// args: --run
+
+def forgottenBeforeMeasure(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=dup(v0);
+	if k {
+		if l { return (a,ms); } else { u:=!v1; forget(u); e:=!v1; forget(e); t:=measure(v0); ms+=t; }
+		w:=!v0;
+		return (a,ms);
+	} else {
+		a:=X(a);
+		t2:=measure(v1);
+		ms+=t2;
+	}
+	return (a,ms);
+}
+def forgottenAfterMeasure(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=dup(v0);
+	if k {
+		if l { return (a,ms); } else { u:=!v1; forget(u); t:=measure(v0); ms+=t; e:=!v1; forget(e); }
+		w:=!v0;
+		return (a,ms);
+	} else {
+		a:=X(a);
+		t2:=measure(v1);
+		ms+=t2;
+	}
+	return (a,ms);
+}
+def implicitlyForgotten(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=dup(v0);
+	if k {
+		if l { return (a,ms); } else { u:=!v1; forget(u); e:=!v1; t:=measure(v0); ms+=t; }
+		w:=!v0;
+		return (a,ms);
+	} else {
+		a:=X(a);
+		t2:=measure(v1);
+		ms+=t2;
+	}
+	return (a,ms);
+}
+def main(){
+	r:=(measure(forgottenBeforeMeasure(0:𝔹,true,true)),measure(forgottenBeforeMeasure(0:𝔹,true,false)),measure(forgottenBeforeMeasure(0:𝔹,false,false)),measure(forgottenAfterMeasure(0:𝔹,true,false)),measure(forgottenAfterMeasure(1:𝔹,false,true)),measure(implicitlyForgotten(0:𝔹,true,false)),measure(implicitlyForgotten(1:𝔹,true,false)),measure(implicitlyForgotten(0:𝔹,false,true)));
+	assert(r==((0,0),(0,1),(1,1),(0,1),(0,0),(0,1),(1,0),(1,1)));
+	return r;
+}

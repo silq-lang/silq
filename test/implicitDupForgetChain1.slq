@@ -1,0 +1,134 @@
+def consumedInBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	v2:=!v1;
+	e:=v2; /// note
+	if k {
+		a:=X(a); /// note
+		t1:=measure(v2); /// error
+		ms+=t1;
+	} else {
+		t2:=measure(v1);
+		ms+=t2;
+	}
+	return (a,ms,e);
+}
+def consumedInBothBranches(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	v2:=!v1;
+	e:=v2; /// note
+	if k {
+		a:=X(a); /// note
+		t1:=measure(v2); /// error
+		ms+=t1;
+	} else {
+		a:=X(a);
+		t2:=measure(v1);
+		ms+=t2;
+	}
+	return (a,ms,e);
+}
+def consumedInNestedConditional(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	v2:=!v1;
+	e:=v2; /// note
+	if k {
+		if l {
+			a:=X(a); /// note
+		}
+		t1:=measure(v2); /// error
+		ms+=t1;
+	} else {
+		t2:=measure(v1);
+		ms+=t2;
+	}
+	return (a,ms,e);
+}
+def usedAfterConditional(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	v2:=!v1;
+	e:=v2; /// note
+	if k {
+		a:=X(a); /// note
+	} else {
+		t2:=measure(v1);
+		ms+=t2;
+	}
+	t1:=measure(v2); /// error
+	ms+=t1;
+	return (a,ms,e);
+}
+def forgottenInBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	v2:=!v1;
+	e:=v2; /// note
+	if k {
+		u:=!v0;
+		forget(u);
+		a:=X(a); /// note
+		t1:=measure(v2); /// error
+		ms+=t1;
+	} else {
+		t2:=measure(v1);
+		ms+=t2;
+	}
+	return (a,ms,e);
+}
+def forgottenInBranch2(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	v2:=!v1;
+	e:=v2; /// note
+	if k {
+		u:=!v1;
+		forget(u);
+		a:=X(a); /// note
+		t1:=measure(v2); /// error
+		ms+=t1;
+	} else {
+		t2:=measure(v1);
+		ms+=t2;
+	}
+	return (a,ms,e);
+}
+def withoutElse(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	v2:=!v1;
+	e:=v2; /// note
+	if k {
+		u:=!v0;
+		forget(u);
+		a:=X(a); /// note
+		t1:=measure(v2); /// error
+		ms+=t1;
+	}
+	return (a,ms,e);
+}
+def longerChain(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a; u1:=!v0; forget(u1); v1:=X(dup(v0)); u2:=!v1; forget(u2); u3:=!v1; forget(u3); v2:=!v1; u4:=!v0; forget(u4);
+	e:=v2; /// note
+	if k {
+		u5:=!v0; forget(u5); u6:=!v1; forget(u6);
+		a:=X(a); /// note
+		t7:=measure(v2); /// error
+		ms+=t7;
+	} else {
+		a:=X(a);
+		t8:=measure(v1);
+		ms+=t8;
+	}
+	return (a,ms,e);
+}

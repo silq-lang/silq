@@ -1,0 +1,89 @@
+// args: --run
+
+def consumedInOtherBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=!v0;
+	v2:=!v1;
+	ms+=measure(v2);
+	if k { t1:=measure(v0); ms+=t1; t2:=measure(v2); ms+=t2; } else { a:=X(a); }
+	return (a,ms);
+}
+def consumedInThenBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=!v0;
+	v2:=!v1;
+	ms+=measure(v2);
+	if k { a:=X(a); } else { t1:=measure(v0); ms+=t1; t2:=measure(v2); ms+=t2; }
+	return (a,ms);
+}
+def constUseAfterConsumption(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=!v0;
+	v2:=!v1;
+	ms+=measure(v2);
+	if k { t1:=measure(v0); ms+=t1; u:=!v2; t2:=measure(u); ms+=t2; } else { a:=X(a); }
+	return (a,ms);
+}
+def consumedInLaterConditional(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=!v0;
+	v2:=!v1;
+	ms+=measure(v2);
+	if k { t1:=measure(v0); ms+=t1; t2:=measure(v2); ms+=t2; } else { a:=X(a); }
+	if l { a:=X(a); }
+	return (a,ms);
+}
+def nestedConditionalAfterConsumption(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=!v0;
+	v2:=!v1;
+	ms+=measure(v2);
+	if k { t1:=measure(v0); ms+=t1; if l { t2:=measure(v2); ms+=t2; } } else { a:=X(a); }
+	return (a,ms);
+}
+def consumptionInNestedConditional(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=!v0;
+	v2:=!v1;
+	ms+=measure(v2);
+	if k { if l { t1:=measure(v0); ms+=t1; } t2:=measure(v2); ms+=t2; } else { a:=X(a); }
+	return (a,ms);
+}
+def consumedAfterUses(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=!v0;
+	v2:=!v1;
+	ms+=measure(v2);
+	if k { t1:=measure(v0); ms+=t1; t2:=measure(v2); ms+=t2; a:=X(a); }
+	return (a,ms);
+}
+def consumedAfterUsesInBothBranches(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=!v0;
+	v2:=!v1;
+	ms+=measure(v2);
+	if k { t1:=measure(v0); ms+=t1; t2:=measure(v2); ms+=t2; a:=X(a); } else { a:=X(a); }
+	return (a,ms);
+}
+def measuredInOtherBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=!v0;
+	v2:=!v1;
+	ms+=measure(v2);
+	if k { t1:=measure(v0); ms+=t1; t2:=measure(v2); ms+=t2; a:=X(a); } else { t3:=measure(v0); ms+=t3; }
+	return (a,ms);
+}
+def main(){
+	r:=(measure(consumedInOtherBranch(0:𝔹,true)),measure(consumedInOtherBranch(0:𝔹,false)),measure(consumedInOtherBranch(1:𝔹,true)),measure(consumedInThenBranch(0:𝔹,true)),measure(consumedInThenBranch(0:𝔹,false)),measure(constUseAfterConsumption(0:𝔹,true)),measure(constUseAfterConsumption(1:𝔹,true)),measure(constUseAfterConsumption(0:𝔹,false)),measure(consumedInLaterConditional(0:𝔹,true,true)),measure(consumedInLaterConditional(0:𝔹,false,true)),measure(consumedInLaterConditional(0:𝔹,true,false)),measure(nestedConditionalAfterConsumption(0:𝔹,true,true)),measure(nestedConditionalAfterConsumption(0:𝔹,true,false)),measure(nestedConditionalAfterConsumption(0:𝔹,false,true)),measure(consumptionInNestedConditional(0:𝔹,true,true)),measure(consumptionInNestedConditional(0:𝔹,true,false)),measure(consumptionInNestedConditional(1:𝔹,false,true)),measure(consumedAfterUses(0:𝔹,true)),measure(consumedAfterUses(0:𝔹,false)),measure(consumedAfterUses(1:𝔹,true)),measure(consumedAfterUsesInBothBranches(0:𝔹,true)),measure(consumedAfterUsesInBothBranches(0:𝔹,false)),measure(measuredInOtherBranch(0:𝔹,true)),measure(measuredInOtherBranch(0:𝔹,false)),measure(measuredInOtherBranch(1:𝔹,false)));
+	assert(r==((0,3),(1,1),(1,0),(1,1),(0,3),(0,2),(1,1),(1,1),(1,3),(0,1),(0,3),(0,3),(0,2),(1,1),(0,3),(0,2),(0,0),(1,3),(0,1),(0,0),(1,3),(1,1),(1,3),(0,2),(1,0)));
+	return r;
+}

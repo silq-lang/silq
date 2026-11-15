@@ -1,0 +1,87 @@
+def consumedBeforeUse(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=!v0;
+	v2:=!v1;
+	ms+=measure(v2); /// note
+	if k {
+		t1:=measure(v0);
+		ms+=t1;
+		a:=X(a); /// note
+		t2:=measure(v2); /// error
+		ms+=t2;
+	} else {
+		a:=X(a);
+	}
+	return (a,ms);
+}
+def usedAfterConditional(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=!v0;
+	v2:=!v1;
+	ms+=measure(v2); /// note
+	if k {
+		t1:=measure(v0);
+		ms+=t1;
+	} else {
+		a:=X(a); /// note
+	}
+	t2:=measure(v2); /// error
+	ms+=t2;
+	return (a,ms);
+}
+def usedInOtherBranch(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=!v0;
+	v2:=!v1;
+	ms+=measure(v2); /// note
+	if k {
+		t1:=measure(v0);
+		ms+=t1;
+		t2:=measure(v2);
+		ms+=t2;
+	} else {
+		a:=X(a); /// note
+		t3:=measure(v2); /// error
+		ms+=t3;
+	}
+	return (a,ms);
+}
+def consumedInNestedConditional(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=!v0;
+	v2:=!v1;
+	ms+=measure(v2); /// note
+	if k {
+		t1:=measure(v0);
+		ms+=t1;
+		if l {
+			a:=X(a); /// note
+		}
+		t2:=measure(v2); /// error
+		ms+=t2;
+	}
+	return (a,ms);
+}
+def measuredInNestedConditional(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=!v0;
+	v2:=!v1;
+	ms+=measure(v2); /// note
+	if k {
+		if l {
+			t1:=measure(v0);
+			ms+=t1;
+			a:=X(a); /// note
+		}
+		t2:=measure(v2); /// error
+		ms+=t2;
+	} else {
+		a:=X(a);
+	}
+	return (a,ms);
+}

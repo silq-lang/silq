@@ -1,0 +1,37 @@
+// args: --run
+
+def capturedInElse(const c:𝔹){
+	x:=H(H(0:𝔹));
+	y0:=!x;
+	y1:=y0;
+	y2:=y1;
+	if c { z:=X(x); } else { u:=!y1; forget(u); z:=(λ()⇒H(H(x)))(); }
+	return (y2,z);
+}
+def capturedInThen(const c:𝔹){
+	x:=H(H(0:𝔹));
+	y0:=!x;
+	y1:=y0;
+	y2:=y1;
+	if c { u:=!y1; forget(u); z:=(λ()⇒X(x))(); } else { z:=H(H(x)); }
+	return (y2,z);
+}
+def classicalCondition(x:𝔹,c:!𝔹){
+	y0:=!x;
+	y1:=y0;
+	y2:=y1;
+	if c { z:=X(x); } else { u:=!y1; forget(u); z:=(λ()⇒H(H(x)))(); }
+	return (y2,z);
+}
+def main(){
+	c:=0:𝔹;
+	r0:=measure(capturedInElse(c));
+	r1:=measure(capturedInThen(c));
+	c:=X(c);
+	r2:=measure(capturedInElse(c));
+	r3:=measure(capturedInThen(c));
+	forget(c=1:𝔹);
+	r:=(r0,r1,r2,r3,measure(classicalCondition(0:𝔹,true)),measure(classicalCondition(1:𝔹,false)));
+	assert(r==((1,0),(1,0),(1,1),(1,1),(1,1),(0,1)));
+	return r;
+}
