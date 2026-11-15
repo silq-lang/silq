@@ -1,0 +1,49 @@
+// args: --run
+
+def forgottenAfterConditional(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	if k { if l { u1:=!v0; forget(u1); } else { t2:=measure(v0); ms+=t2; } u3:=!v0; forget(u3); a:=X(a); } else { a:=X(a); }
+	return (a,ms);
+}
+def forgottenAfterNestedConditionals(a:𝔹,k:!𝔹,l:!𝔹,m:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	if k { if l { if m { t2:=measure(v0); ms+=t2; } else { u1:=!v0; forget(u1); } } u3:=!v0; forget(u3); a:=X(a); } else { a:=X(a); }
+	return (a,ms);
+}
+def forgottenInLaterConditional(a:𝔹,k:!𝔹,l:!𝔹,m:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	if k { if l { t2:=measure(v0); ms+=t2; } if m { u3:=!v0; forget(u3); } else { u4:=!v0; forget(u4); } a:=X(a); } else { a:=X(a); }
+	return (a,ms);
+}
+def measuredInBothBranches(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	if k { if l { t2:=measure(v0); ms+=t2; } else { t5:=measure(v0); ms+=t5; } u3:=!v0; forget(u3); a:=X(a); } else { a:=X(a); }
+	return (a,ms);
+}
+def measuredAfterConditional(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	if k { if l { t2:=measure(v0); ms+=t2; } t3:=measure(v0); ms+=t3; a:=X(a); } else { a:=X(a); }
+	return (a,ms);
+}
+def usedAfterMeasureInBranch(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	if k { if l { t2:=measure(v0); ms+=t2; u5:=!v0; forget(u5); } u3:=!v0; forget(u3); a:=X(a); } else { a:=X(a); }
+	return (a,ms);
+}
+def measuredInElseBranch(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	if k { if l { t2:=measure(v0); ms+=t2; } u3:=!v0; forget(u3); a:=X(a); } else { if l { t5:=measure(v0); ms+=t5; } a:=X(a); }
+	return (a,ms);
+}
+def main(){
+	r:=(measure(forgottenAfterConditional(0:𝔹,true,true)),measure(forgottenAfterConditional(0:𝔹,true,false)),measure(forgottenAfterConditional(0:𝔹,false,true)),measure(forgottenAfterConditional(0:𝔹,false,false)),measure(forgottenAfterConditional(1:𝔹,true,true)),measure(forgottenAfterConditional(1:𝔹,true,false)),measure(forgottenAfterConditional(1:𝔹,false,true)),measure(forgottenAfterConditional(1:𝔹,false,false)),measure(forgottenAfterNestedConditionals(0:𝔹,true,true,true)),measure(forgottenAfterNestedConditionals(0:𝔹,true,true,false)),measure(forgottenAfterNestedConditionals(0:𝔹,true,false,true)),measure(forgottenAfterNestedConditionals(0:𝔹,true,false,false)),measure(forgottenAfterNestedConditionals(0:𝔹,false,true,true)),measure(forgottenAfterNestedConditionals(0:𝔹,false,true,false)),measure(forgottenAfterNestedConditionals(0:𝔹,false,false,true)),measure(forgottenAfterNestedConditionals(0:𝔹,false,false,false)),measure(forgottenAfterNestedConditionals(1:𝔹,true,true,true)),measure(forgottenAfterNestedConditionals(1:𝔹,true,true,false)),measure(forgottenAfterNestedConditionals(1:𝔹,true,false,true)),measure(forgottenAfterNestedConditionals(1:𝔹,true,false,false)),measure(forgottenAfterNestedConditionals(1:𝔹,false,true,true)),measure(forgottenAfterNestedConditionals(1:𝔹,false,true,false)),measure(forgottenAfterNestedConditionals(1:𝔹,false,false,true)),measure(forgottenAfterNestedConditionals(1:𝔹,false,false,false)),measure(forgottenInLaterConditional(0:𝔹,true,true,true)),measure(forgottenInLaterConditional(0:𝔹,true,true,false)),measure(forgottenInLaterConditional(0:𝔹,true,false,true)),measure(forgottenInLaterConditional(0:𝔹,true,false,false)),measure(forgottenInLaterConditional(0:𝔹,false,true,true)),measure(forgottenInLaterConditional(0:𝔹,false,true,false)),measure(forgottenInLaterConditional(0:𝔹,false,false,true)),measure(forgottenInLaterConditional(0:𝔹,false,false,false)),measure(forgottenInLaterConditional(1:𝔹,true,true,true)),measure(forgottenInLaterConditional(1:𝔹,true,true,false)),measure(forgottenInLaterConditional(1:𝔹,true,false,true)),measure(forgottenInLaterConditional(1:𝔹,true,false,false)),measure(forgottenInLaterConditional(1:𝔹,false,true,true)),measure(forgottenInLaterConditional(1:𝔹,false,true,false)),measure(forgottenInLaterConditional(1:𝔹,false,false,true)),measure(forgottenInLaterConditional(1:𝔹,false,false,false)),measure(measuredInBothBranches(0:𝔹,true,true)),measure(measuredInBothBranches(0:𝔹,true,false)),measure(measuredInBothBranches(0:𝔹,false,true)),measure(measuredInBothBranches(0:𝔹,false,false)),measure(measuredInBothBranches(1:𝔹,true,true)),measure(measuredInBothBranches(1:𝔹,true,false)),measure(measuredInBothBranches(1:𝔹,false,true)),measure(measuredInBothBranches(1:𝔹,false,false)),measure(measuredAfterConditional(0:𝔹,true,true)),measure(measuredAfterConditional(0:𝔹,true,false)),measure(measuredAfterConditional(0:𝔹,false,true)),measure(measuredAfterConditional(0:𝔹,false,false)),measure(measuredAfterConditional(1:𝔹,true,true)),measure(measuredAfterConditional(1:𝔹,true,false)),measure(measuredAfterConditional(1:𝔹,false,true)),measure(measuredAfterConditional(1:𝔹,false,false)),measure(usedAfterMeasureInBranch(0:𝔹,true,true)),measure(usedAfterMeasureInBranch(0:𝔹,true,false)),measure(usedAfterMeasureInBranch(0:𝔹,false,true)),measure(usedAfterMeasureInBranch(0:𝔹,false,false)),measure(usedAfterMeasureInBranch(1:𝔹,true,true)),measure(usedAfterMeasureInBranch(1:𝔹,true,false)),measure(usedAfterMeasureInBranch(1:𝔹,false,true)),measure(usedAfterMeasureInBranch(1:𝔹,false,false)),measure(measuredInElseBranch(0:𝔹,true,true)),measure(measuredInElseBranch(0:𝔹,true,false)),measure(measuredInElseBranch(0:𝔹,false,true)),measure(measuredInElseBranch(0:𝔹,false,false)),measure(measuredInElseBranch(1:𝔹,true,true)),measure(measuredInElseBranch(1:𝔹,true,false)),measure(measuredInElseBranch(1:𝔹,false,true)),measure(measuredInElseBranch(1:𝔹,false,false)));
+	assert(r==((1,0),(1,1),(1,0),(1,0),(0,0),(0,0),(0,0),(0,0),(1,1),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(1,1),(1,1),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(1,1),(1,1),(1,0),(1,0),(0,0),(0,0),(0,0),(0,0),(1,2),(1,1),(1,0),(1,0),(0,0),(0,0),(0,0),(0,0),(1,1),(1,0),(1,0),(1,0),(0,0),(0,0),(0,0),(0,0),(1,1),(1,0),(1,1),(1,0),(0,0),(0,0),(0,0),(0,0)));
+	return r;
+}

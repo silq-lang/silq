@@ -1,0 +1,66 @@
+def measuredBeforeConsumption(a:𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	v2:=!v1;
+	e:=v2; /// note
+	m:=measure(v1);
+	ms+=m;
+	a:=X(a); /// note
+	t:=measure(v2); /// error
+	ms+=t;
+	return (a,ms,e);
+}
+def measuredBeforeConditional(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	v2:=!v1;
+	e:=v2; /// note
+	m:=measure(v1);
+	ms+=m;
+	if k {
+		a:=X(a); /// note
+		t1:=measure(v2); /// error
+		ms+=t1;
+	} else {
+		t2:=measure(v2);
+		ms+=t2;
+	}
+	return (a,ms,e);
+}
+def measuredInNestedConditional(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	v2:=!v1;
+	e:=v2; /// note
+	if k {
+		if l {
+			m:=measure(v1);
+			ms+=m;
+		}
+		a:=X(a); /// note
+		t:=measure(v2); /// error
+		ms+=t;
+	}
+	return (a,ms,e);
+}
+def measuredInBothBranches(a:𝔹,k:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=X(dup(v0));
+	v2:=!v1;
+	e:=v2; /// note
+	if k {
+		m1:=measure(v1);
+		ms+=m1;
+	} else {
+		m2:=measure(v1);
+		ms+=m2;
+	}
+	a:=X(a); /// note
+	t:=measure(v2); /// error
+	ms+=t;
+	return (a,ms,e);
+}

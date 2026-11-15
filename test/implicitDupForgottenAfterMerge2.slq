@@ -1,0 +1,58 @@
+def consumedBeforeUse(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	if k {
+		if l { u1:=!v0; forget(u1); } else {
+			t2:=measure(v0); /// note
+			ms+=t2;
+		}
+		a:=X(a); /// note
+		t3:=measure(v0); /// error
+		ms+=t3;
+	} else { a:=X(a); }
+	return (a,ms);
+}
+def consumedInConditionalBeforeUse(a:𝔹,k:!𝔹,l:!𝔹,m:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	if k {
+		if l {
+			t2:=measure(v0); /// note
+			ms+=t2;
+		}
+		if m {
+			a:=X(a); /// note
+		}
+		t3:=measure(v0); /// error
+		ms+=t3;
+	} else { a:=X(a); }
+	return (a,ms);
+}
+def usedAfterConsumption(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	if k {
+		if l { u1:=!v0; forget(u1); } else { t2:=measure(v0); ms+=t2; }
+		u3:=!v0; /// note
+		forget(u3);
+		a:=X(a);
+		t4:=measure(v0); /// error
+		ms+=t4;
+	} else { a:=X(a); }
+	return (a,ms);
+}
+def usedInLaterConditional(a:𝔹,k:!𝔹,l:!𝔹,m:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	if k {
+		if l { t2:=measure(v0); ms+=t2; }
+		u3:=!v0; /// note
+		forget(u3);
+		a:=X(a);
+		if m {
+			t6:=measure(v0); /// error
+			ms+=t6;
+		}
+	} else { a:=X(a); }
+	return (a,ms);
+}
