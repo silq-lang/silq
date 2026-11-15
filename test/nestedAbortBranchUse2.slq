@@ -1,0 +1,71 @@
+def usedAfterConsumption(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a); /// error
+	if k {
+		if l { u8:=!v0; forget(u8); assert(false); }
+		else { a:=X(a); } /// note
+	}
+	u9:=!v0;
+	forget(u9);
+	return a; /// note
+}
+def implicitDupBeforeConsumption(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	t:=measure(v0); /// note
+	ms+=t;
+	if k {
+		if l { u8:=!v0; forget(u8); assert(false); }
+		else { a:=X(a); } /// note
+	}
+	t9:=measure(v0); /// error
+	ms+=t9;
+	return (a,ms);
+}
+def consumedAfterConditional(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	t:=measure(v0); /// note
+	ms+=t;
+	if k {
+		if l { u8:=!v0; forget(u8); assert(false); }
+	}
+	a:=X(a); /// note
+	t9:=measure(v0); /// error
+	ms+=t9;
+	return (a,ms);
+}
+def measuredInAbortingBranch(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a); /// error
+	if k {
+		if l { t8:=measure(v0); ms+=t8; assert(false); }
+		else { a:=X(a); } /// note
+	}
+	u9:=!v0;
+	forget(u9);
+	return (a,ms); /// note
+}
+def chained(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	v1:=dup(v0); /// error
+	if k {
+		if l { u8:=!v1; forget(u8); assert(false); }
+		else { a:=X(a); } /// note
+	}
+	u9:=!v1;
+	forget(u9);
+	return a; /// note
+}
+def withoutAbort(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=dup(a);
+	t:=measure(v0); /// note
+	ms+=t;
+	if k {
+		if l { u8:=!v0; forget(u8); }
+	}
+	a:=X(a); /// note
+	t9:=measure(v0); /// error
+	ms+=t9;
+	return (a,ms);
+}

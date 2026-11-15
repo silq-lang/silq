@@ -1,0 +1,71 @@
+// args: --run
+
+def consumedByReturn(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	if k {
+		if l { u8:=!v0; forget(u8); assert(false); }
+	}
+	return a;
+}
+def consumedInRemainingBranch(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	if k {
+		if l { u8:=!v0; forget(u8); assert(false); }
+		else { a:=X(a); }
+	}
+	return a;
+}
+def consumedAfterInnerConditional(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	if k {
+		if l { u8:=!v0; forget(u8); assert(false); }
+		a:=X(a);
+	}
+	return a;
+}
+def consumedInBothBranches(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	if k {
+		if l { u8:=!v0; forget(u8); assert(false); }
+		else { a:=X(a); }
+	} else {
+		a:=X(a);
+	}
+	return a;
+}
+def deeperNesting(a:𝔹,k:!𝔹,j:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	if k {
+		if j {
+			if l { u8:=!v0; forget(u8); assert(false); }
+		}
+	}
+	return a;
+}
+def keptByImplicitDup(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=!v0;
+	e:=v1;
+	if k {
+		if l { u7:=!v1; forget(u7); assert(false); }
+		else { t:=measure(v0); ms+=t; }
+	}
+	return (a,ms,e);
+}
+def measuredAfterInnerConditional(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=X(dup(a));
+	v1:=!v0;
+	e:=v1;
+	if k {
+		if l { u7:=!v1; forget(u7); x:=(a,ms,e); assert(false); }
+		t:=measure(v0); ms+=t;
+	}
+	return (a,ms,e);
+}
+def main(){
+	r:=(measure(consumedByReturn(1:𝔹,true,false)),measure(consumedByReturn(0:𝔹,false,true)),measure(consumedInRemainingBranch(0:𝔹,true,false)),measure(consumedInRemainingBranch(1:𝔹,false,true)),measure(consumedAfterInnerConditional(0:𝔹,true,false)),measure(consumedAfterInnerConditional(1:𝔹,false,true)),measure(consumedInBothBranches(1:𝔹,true,false)),measure(consumedInBothBranches(1:𝔹,false,true)),measure(deeperNesting(1:𝔹,true,false,true)),measure(deeperNesting(0:𝔹,true,true,false)),measure(keptByImplicitDup(0:𝔹,true,false)),measure(keptByImplicitDup(1:𝔹,false,true)),measure(measuredAfterInnerConditional(1:𝔹,true,false)),measure(measuredAfterInnerConditional(0:𝔹,false,true)));
+	assert(r==(1,0,1,1,1,1,0,0,1,0,(0,1,0),(1,0,1),(1,0,1),(0,0,0)));
+	return r;
+}
