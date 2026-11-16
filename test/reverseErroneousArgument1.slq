@@ -1,0 +1,28 @@
+def expand[n:!ℕ](x:uint[n])qfree:uint[2*n]{
+	v:=0 as uint[n];
+	return ((x as 𝔹^n)~(v as 𝔹^n)) as uint[2*n];
+}
+def erroneousRhs(){
+	r:=expand(3:uint[2]);
+	expand(x):=tqx(r); /// error
+	return x;
+}
+def erroneousCallee(){
+	r:=0:uint[4];
+	shrink(x):=r;
+	return x;
+}
+def shrink[n:!ℕ](x:uint[n])qfree:uint[2*n]{
+	return tqx(x); /// error
+}
+def scale[k:!ℕ](const x:uint[k],const n:!ℕ){
+	return tqx(x); /// error
+}
+def capturedArgument(n:!ℕ){
+	def g(r:uint[4]){
+		s:=scale(r,n);
+		scale(s,n):=r;
+		return s;
+	}
+	return measure(g(0:uint[4]));
+}

@@ -1,0 +1,14 @@
+def single(){
+	u:=(let{
+		s:=tqx(1); /// error
+	} in s);
+	return u;
+}
+def nested(x:!ℕ){
+	u:=(let{
+		s:=(let{
+			a:=tqx(x); /// error
+		} in a+x);
+	} in s);
+	return u;
+}

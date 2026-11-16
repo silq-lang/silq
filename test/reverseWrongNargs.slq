@@ -2,5 +2,5 @@
 def foo(x:𝔹,y:𝔹)mfree⇒(x,y);
 def main(){
 	foo(x,y,z):=(0,1):𝔹^2; /// error
-	return (x,y); /// error
+	return (x,y);
 }

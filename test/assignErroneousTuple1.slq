@@ -1,0 +1,12 @@
+def erroneousRhs(){
+	a:=1;
+	b:=2;
+	(a,b)=tqx(a,b); /// error
+	return a+b;
+}
+def erroneousCall(){
+	a:=1;
+	b:=2;
+	(a,b)=(λ(x:!ℕ,y:!ℕ)qfree{ return tqx(x,y); })(a,b); /// error
+	return a+b;
+}

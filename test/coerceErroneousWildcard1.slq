@@ -1,0 +1,13 @@
+def f(n:!ℕ){
+	(q,x):=(0,tqx) coerce _×!ℤstar[n]; /// error
+	return q;
+}
+def g(n:!ℕ){
+	a:=tqx(n); /// error
+	(q,x,b):=(0,1,a) coerce _×!ℤstar[n]×!ℤstar[n];
+	return (q,x,b);
+}
+def h(n:!ℕ){
+	x:=tqx coerce _; /// error
+	return x;
+}

@@ -1,0 +1,9 @@
+def f(n:!ℕ){
+	if n==0 { return 0; }
+	return g(n sub 1);
+}
+g:=tqx(f); /// error
+def h(n:!ℕ){
+	return k(n)+1;
+}
+k:=(tqx,h)[1]; /// error

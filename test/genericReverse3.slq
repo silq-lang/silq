@@ -8,5 +8,5 @@ def main() {
 	}
 	h:=f(g);//: 𝔹 x !ℕ !→ qfree 𝟙;
 	h(x, 42) := (); /// TODO
-	return x; /// TODO
+	return x;
 }

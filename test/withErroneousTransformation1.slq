@@ -1,0 +1,36 @@
+def closures(){
+	x:=H(0:𝔹);
+	with{
+		def h(){ if x { phase(π); } }
+		def g(i:!ℕ){
+			h();
+			return tqx; /// error
+		}
+	}do{
+		g(3);
+	}
+	return x;
+}
+def quantumLocal(){
+	x:=H(0:𝔹);
+	with{
+		y:=H(0:𝔹);
+		def g(){
+			if x { if y { phase(π); } }
+			return tqx; /// error
+		}
+	}do{
+		g();
+	}
+	return x;
+}
+def erroneousDefinition(){
+	x:=H(0:𝔹);
+	with{
+		y:=dup(x);
+		z:=tqx(y); /// error
+	}do{
+		x:=H(x);
+	}
+	return x;
+}

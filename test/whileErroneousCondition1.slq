@@ -1,0 +1,7 @@
+def bounded(n:!ℕ){
+	k:=0;
+	while k<tqx(n) { /// error
+		k+=1;
+	}
+	return k;
+}

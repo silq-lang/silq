@@ -1,0 +1,46 @@
+// args: --run
+
+def stop()⇒(1,)[1];
+
+def vectorPattern(c:!𝔹){
+	if c {
+		[x,y]:=stop();
+		return x+y;
+	}
+	return 0;
+}
+def catPattern(c:!𝔹){
+	if c {
+		(x,)~ys:=stop();
+		return x;
+	}
+	return 1;
+}
+def catVariables(c:!𝔹){
+	if c {
+		xs~(y,z):=stop();
+		return y+z;
+	}
+	return 2;
+}
+def coercedWildcard(c:!𝔹){
+	if c {
+		zs:=stop() coerce _[];
+		return zs.length;
+	}
+	return 3;
+}
+def quantumPattern(c:!𝔹,x:𝔹){
+	if c {
+		[a,b]:=stop();
+		measure(x);
+		return (a,b);
+	}
+	return (x,0:𝔹);
+}
+
+def main(){
+	r:=(vectorPattern(false),catPattern(false),catVariables(false),coercedWildcard(false),measure(quantumPattern(false,1:𝔹)));
+	assert(r==(0,1,2,3,(1,0)));
+	return r;
+}
