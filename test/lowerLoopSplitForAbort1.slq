@@ -1,0 +1,15 @@
+// args: --run
+
+def f(n:!ℕ){
+	b:=0:𝔹;
+	a:=vector(2,0:!ℕ);
+	for j in 0..3 {
+		if j>=n { assert(false); } /// run_error
+		k:=a[j];
+		b:=X(b);
+	}
+	return measure(b);
+}
+def main(){
+	return f(2);
+}

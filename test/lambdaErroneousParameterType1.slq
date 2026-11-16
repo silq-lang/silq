@@ -1,0 +1,16 @@
+def inferredLambda(){
+	n:=tqx(4); /// error
+	f:=λ(x:uint[n])=>x;
+	return f;
+}
+def parenthesized(){
+	n:=tqx(4); /// error
+	f:=((x:uint[n])=>x): !Pi(a:uint[n])qfree. uint[n];
+	return f;
+}
+def undefinedType(){
+	f:=λ(
+		x:tqx /// error
+	)=>x;
+	return f;
+}

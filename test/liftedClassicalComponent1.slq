@@ -1,0 +1,62 @@
+// args: --run
+
+def classicalValue(k:!ℕ,x:𝔹){
+	y:=vector(k,0:𝔹);
+	c:=0:𝔹;
+	for i in 0..k{
+		y[i]=i%2==0;
+		c⊕=x;
+	}
+	return (x,y,c);
+}
+
+def nestedComponent(k:!ℕ,x:𝔹){
+	y:=vector(k,vector(2,0:𝔹));
+	c:=0:𝔹;
+	for i in 0..k{
+		c⊕=x;
+		y[i][1]=true;
+	}
+	return (x,y,c);
+}
+
+def tupleComponents(k:!ℕ,x:𝔹){
+	y:=vector(k,vector(2,0:𝔹));
+	c:=0:𝔹;
+	for i in 0..k{
+		(y[i][0],y[i][1])=(i==1,true);
+		c⊕=x;
+	}
+	return (x,y,c);
+}
+
+def readInLoop(k:!ℕ,x:uint[2]){
+	y:=vector(k,0:𝔹);
+	for i in 0..k{
+		z:=dup(x);
+		forget(z);
+		y[i]=i==1;
+	}
+	return (x,y);
+}
+
+def underControl(k:!ℕ,x:uint[2],const q:𝔹){
+	y:=vector(k,0:𝔹);
+	for i in 0..k{
+		z:=dup(x);
+		forget(z);
+		if q { y[i]=true; }
+	}
+	return (x,y);
+}
+
+def main(){
+	(x0,y0,c0):=classicalValue(3,true);
+	(x1,y1,c1):=nestedComponent(2,true);
+	(x2,y2,c2):=tupleComponents(2,false);
+	(x3,y3):=readInLoop(3,2:uint[2]);
+	(x4,y4):=underControl(2,1:uint[2],1:𝔹);
+	r:=(measure(x0,y0,c0),measure(x1,y1,c1),measure(x2,y2,c2),measure(x3,y3),measure(x4,y4));
+	assert(r==((true,(true,false,true),true),(true,((false,true),(false,true)),false),(false,((false,true),(true,true)),false),(2,(false,true,false)),(1,(true,true))));
+	return r;
+}

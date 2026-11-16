@@ -1,0 +1,54 @@
+// args: --run
+
+def whileLoop(const a:𝔹){
+	b:=0:𝔹;
+	s:=1;
+	if a {
+		j:=0;
+		while j<3 {
+			if j>=10 {
+				repeat 2 { s+=1; }
+				assert(false);
+			}
+			b:=X(b);
+			j+=1;
+		}
+	}
+	return (measure(b),s);
+}
+
+def forLoop(const a:𝔹){
+	b:=0:𝔹;
+	s:=1;
+	if a {
+		for i in 0..3 {
+			if i>=10 {
+				repeat 2 { s+=1; }
+				assert(false);
+			}
+			if s==1 { b:=X(b); }
+		}
+	}
+	return (measure(b),s);
+}
+
+def nestedFor(const a:𝔹){
+	b:=0:𝔹;
+	s:=1;
+	if a {
+		for i in 0..3 {
+			if i>=10 {
+				for k in 0..2 { s+=k; }
+				assert(false);
+			}
+			if s==1 { b:=X(b); }
+		}
+	}
+	return (measure(b),s);
+}
+
+def main(){
+	r:=(whileLoop(true),forLoop(true),nestedFor(true),whileLoop(false));
+	assert(r==((1,1),(1,1),(1,1),(0,1)));
+	return r;
+}

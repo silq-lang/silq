@@ -1,0 +1,20 @@
+def vectorPattern(xs:𝔹^2){
+	[x,y]:=tqx(xs); /// error
+	return (x,y);
+}
+def catPattern(xs:𝔹[]){
+	(x,)~ys:=tqx(xs); /// error
+	return (x,ys);
+}
+def catVariables(xs:𝔹[]){
+	ys~zs:=tqx(xs); /// error
+	return (ys,zs);
+}
+def annotatedCat(xs:𝔹^2){
+	(x:𝔹^1)~(y:𝔹^1):=tqx(xs); /// error
+	return (x,y);
+}
+def typedRhs(){
+	[x,y]:=[H(0:𝔹),H(2)]; /// error
+	return (x,y);
+}

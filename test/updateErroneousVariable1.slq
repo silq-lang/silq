@@ -1,0 +1,28 @@
+def opAssign(){
+	x:=tqx(0); /// error
+	x+=1;
+	return x;
+}
+def xorAssign(){
+	x:=tqx(0:𝔹); /// error
+	x⊕=1:𝔹;
+	return x;
+}
+def assign(){
+	x:=tqx(0); /// error
+	x=2;
+	return x+1;
+}
+def updateInLoop(){
+	k:=tqx(0); /// error
+	do{ k+=1; }while k<1;
+	return k;
+}
+def updateInBranch(c:!𝔹){
+	y:=tqx(0:𝔹); /// error
+	if c { y⊕=1:𝔹; }
+	return y;
+}
+def updateInLambda(k:!ℕ){
+	return (λ(){ z:=tqx(k); z+=1; return z; })(); /// error
+}
