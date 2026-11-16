@@ -1,0 +1,55 @@
+// args: --run
+
+def copyBeforeBranch(c:!𝔹,const n:!ℕ,x:𝔹,y:𝔹){
+	k:=0;
+	if c { return (x,y); }
+	while k<3 { t:=dup(x); if k==n { return (x,y); } k+=1; }
+	return (y,x);
+}
+def copyInBranch(c:!𝔹,const n:!ℕ,x:𝔹,y:𝔹){
+	k:=0;
+	if c { return (x,y); }
+	while k<3 { if k==n { t:=dup(x); return (x,y); } k+=1; }
+	return (y,x);
+}
+def otherVariable(c:!𝔹,const n:!ℕ,x:𝔹,y:𝔹){
+	k:=0;
+	if c { return (x,y); }
+	while k<3 { t:=dup(y); if k==n { return (x,y); } k+=1; }
+	return (y,x);
+}
+def secondCopy(c:!𝔹,const n:!ℕ,x:𝔹,y:𝔹){
+	k:=0;
+	if c { return (x,y); }
+	while k<3 { t:=dup(x); if k==n { return (x,y); } k+=1; u:=dup(x); }
+	return (y,x);
+}
+def doWhileLoop(c:!𝔹,const n:!ℕ,x:𝔹,y:𝔹){
+	k:=0;
+	if c { return (x,y); }
+	do { t:=dup(x); if k==n { return (x,y); } k+=1; } while k<3;
+	return (y,x);
+}
+def repeatLoop(c:!𝔹,const n:!ℕ,x:𝔹,y:𝔹){
+	k:=0;
+	if c { return (x,y); }
+	repeat 3 { t:=dup(x); if k==n { return (x,y); } k+=1; }
+	return (y,x);
+}
+def forLoop(c:!𝔹,const n:!ℕ,x:𝔹,y:𝔹){
+	s:=0;
+	if c { return (x,y); }
+	for i in 0..3 { s+=i; t:=dup(x); if i==n { return (x,y); } }
+	return (y,x);
+}
+def updatedAfterCopy(c:!𝔹,const n:!ℕ,x:𝔹,y:𝔹){
+	k:=0;
+	if c { return (x,y); }
+	while k<3 { k+=1; t:=dup(x); x:=X(x); }
+	return (y,x);
+}
+def main(){
+	r:=(measure(copyBeforeBranch(true,0,1:𝔹,0:𝔹)),measure(copyBeforeBranch(false,1,1:𝔹,0:𝔹)),measure(copyBeforeBranch(false,5,1:𝔹,0:𝔹)),measure(copyInBranch(false,2,1:𝔹,0:𝔹)),measure(copyInBranch(false,5,1:𝔹,0:𝔹)),measure(otherVariable(false,0,1:𝔹,0:𝔹)),measure(otherVariable(false,5,1:𝔹,0:𝔹)),measure(secondCopy(false,1,1:𝔹,0:𝔹)),measure(secondCopy(false,5,1:𝔹,0:𝔹)),measure(doWhileLoop(false,2,1:𝔹,0:𝔹)),measure(doWhileLoop(false,5,1:𝔹,0:𝔹)),measure(repeatLoop(false,1,1:𝔹,0:𝔹)),measure(repeatLoop(false,5,1:𝔹,0:𝔹)),measure(forLoop(false,2,1:𝔹,0:𝔹)),measure(forLoop(false,5,1:𝔹,0:𝔹)),measure(updatedAfterCopy(true,0,1:𝔹,0:𝔹)),measure(updatedAfterCopy(false,0,1:𝔹,0:𝔹)));
+	assert(r==((1,0),(1,0),(0,1),(1,0),(0,1),(1,0),(0,1),(1,0),(0,1),(1,0),(0,1),(1,0),(0,1),(1,0),(0,1),(1,0),(0,0)));
+	return r;
+}
