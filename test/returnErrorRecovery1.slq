@@ -1,0 +1,85 @@
+def readAfterBranch(a:𝔹,c:!𝔹){
+	v:=dup(a);
+	t:=measure(v);
+	if c {
+		a:=X(a);
+		return (a,tq); /// error
+	}
+	u:=!v;
+	forget(u);
+	return (a,t);
+}
+def erroneousVariable(a:𝔹,c:!𝔹){
+	s:=false;
+	v:=dup(a);
+	t:=measure(v);
+	if c {
+		a:=X(a);
+		s^=tq; /// error
+		return (a,s);
+	}
+	u:=!v;
+	forget(u);
+	return (a,t);
+}
+def nestedBranch(a:𝔹,c:!𝔹,d:!𝔹){
+	v:=dup(a);
+	t:=measure(v);
+	if c {
+		if d {
+			a:=X(a);
+			return (a,tq); /// error
+		}
+		w:=!v;
+		forget(w);
+	}
+	return (a,t);
+}
+def otherBranch(a:𝔹,c:!𝔹){
+	v:=dup(a);
+	t:=measure(v);
+	if c {
+		u:=!v;
+		forget(u);
+	} else {
+		a:=X(a);
+		return (a,tq); /// error
+	}
+	w:=!v;
+	forget(w);
+	return (a,t);
+}
+def chain(a:𝔹,c:!𝔹){
+	v:=!a;
+	w:=X(dup(v));
+	if c {
+		u:=!w;
+		forget(u);
+		a:=X(a);
+		return (a,tq); /// error
+	}
+	m:=measure(w);
+	return (a,m);
+}
+def mergeAfterReturn(a:𝔹,k:!𝔹,l:!𝔹){
+	s:=0:!ℕ;
+	v0:=!a;
+	v1:=dup(v0);
+	v2:=X(dup(v1));
+	if k {
+		if l {
+			s+=tq; /// error
+			return (a,s);
+		}
+		t:=measure(v2);
+		s+=t;
+	} else {
+		if l {
+			return (a,s);
+		} else {
+			u:=!v2;
+			forget(u);
+		}
+	}
+	return (a,s);
+}

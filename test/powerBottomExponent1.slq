@@ -1,0 +1,21 @@
+// args: --run
+
+def never(n:!ℕ){
+	while true { n+=1; }
+}
+def power(a:!ℤstar[5],c:!𝔹){
+	if c { return a^never(1); }
+	return a^2;
+}
+def powerOfVariable(a:!ℤstar[7],c:!𝔹){
+	if c {
+		e:=never(2);
+		return a^e;
+	}
+	return a^3;
+}
+def main(){
+	r:=(power(3 coerce !ℤstar[5],false),powerOfVariable(2 coerce !ℤstar[7],false));
+	assert(r==(4 coerce !ℤstar[5],1 coerce !ℤstar[7]));
+	return r;
+}
