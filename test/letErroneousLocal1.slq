@@ -1,0 +1,18 @@
+def typeLet(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	x:=x:𝔹^(let{ a:=tqx(n); } in a); /// error
+	x:=x:𝔹^(let{ a:=n; b:=move(a); } in b);
+	return x;
+}
+def twoStatements(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	x:=x:𝔹^(let{ a:=tqx(n); b:=a; } in b); /// error
+	x:=x:𝔹^(let{ a:=n; with{ b:=move(a); c:=b+1; } do { d:=c-1; } } in a);
+	return x;
+}
+def expression(n:!ℕ){
+	y:=(let{ a:=tqx(n); b:=a; } in b); /// error
+	a:=n;
+	z:=(let{ b:=move(a); } in b);
+	return (y,z);
+}

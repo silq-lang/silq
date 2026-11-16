@@ -1,0 +1,28 @@
+def condition(x:⊥[]){
+	(a,b):=x;
+	if tqx(!a) { return x; } /// error
+}
+def nested(x:⊥[],c:!𝔹){
+	(a,b):=x;
+	if c { if tqx(!a) { return x; } } else { return x; } /// error
+}
+def earlier(c:!𝔹){ /// error
+	y:=tqx; /// error
+	if c { return 1; }
+}
+def loop(const x:𝔹){
+	while tqx(true) { /// error
+		y:=dup(x);
+		return y;
+	}
+}
+def middle(x:⊥[]){
+	(a,b):=x;
+	if tqx(!a) { return x; } /// error
+	y:=1;
+}
+def unknown()⇒tqx(unknown()); /// error
+def called():𝔹{ unknown(); }
+def defined():𝔹{ x:=unknown(); }
+def calledEarlier():𝔹{ unknown(); x:=1; }
+def calledInBranch(c:!𝔹):𝔹{ if c { unknown(); } else { return true; } }

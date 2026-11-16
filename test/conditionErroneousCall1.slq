@@ -1,0 +1,24 @@
+def recursive(){
+	x:=H(0:𝔹);
+	y:=H(0:𝔹);
+	def g(i:!ℕ){
+		if i==0 { return; }
+		if tqx(x) { if y { phase(π); } } /// error
+		return g(i sub 1);
+	}
+	g(2);
+	return (x,y);
+}
+def reversed(){
+	x:=H(0:𝔹);
+	y:=H(0:𝔹);
+	n:=2:!ℕ;
+	def g(a:uint[3])qfree{ if tqx(y) { a+=n; } return a; } /// error
+	reverse(g)(v):=dup(x) as uint[3];
+	return (x,y,v);
+}
+def looped(x:𝔹){
+	k:=0;
+	while tqx(x) && k<2 { k+=1; } /// error
+	return (x,k);
+}

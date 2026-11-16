@@ -1,0 +1,23 @@
+def pair(f:const 𝔹 × const 𝔹 × 𝔹 !→mfree 𝔹){
+	return (reverse(f),tqx); /// error
+}
+def bar(const x:𝔹,const y:𝔹,z:𝔹)mfree{
+	if x { z:=X(z); }
+	if y { z:=X(z); }
+	return z;
+}
+def reversed(){
+	x:=H(1:𝔹);
+	y:=H(1:𝔹);
+	z:=H(1:𝔹);
+	z:=pair(bar)(x,y,z);
+	x:=H(x);
+	y:=H(y);
+	return (x,y,z);
+}
+def f()⇒tqx; /// error
+def called(){
+	x:=H(0:𝔹);
+	f()(x);
+	return x;
+}

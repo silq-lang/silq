@@ -1,0 +1,17 @@
+def nestedCall(){
+	tqx(X(u)) := 1:𝔹; /// error
+	return measure(u);
+}
+def reversedLet(){
+	let{ p:=tqx(X(u)); } in (p,v) := (1:𝔹,1:𝔹); /// error
+	return (measure(u),measure(v));
+}
+def letPattern(){
+	let{ a:=X(b); c:=X(a); } in c := tqx(0:𝔹); /// error
+	return measure(b);
+}
+def definedArgument(){
+	b:=0:𝔹;
+	let{ a:=X(b); c:=X(a); } in c := tqx(0:𝔹); /// error
+	return measure(b);
+}

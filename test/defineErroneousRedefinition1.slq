@@ -1,0 +1,33 @@
+def identity(x:𝔹^3)⇒x;
+def unit[N:!ℕ](a:!ℤstar[N])⇒a;
+def extended(xs:𝔹^2){
+	return (xs,tqx); /// error
+}
+
+def converted(){
+	x:=0:uint[3];
+	x:=tqx(x as 𝔹^3); /// error
+	return identity(x);
+}
+
+def coercedClassical(a:!ℕ,n:!ℕ){
+	a:=tqx(a coerce !ℤstar[n]); /// error
+	return unit[n](a);
+}
+
+def typeDependent(){
+	x:=vector(3,1:𝔹);
+	n:=x.length; x:=x coerce 𝔹^n;
+	m:=tqx(x.length); /// error
+	x:=x coerce 𝔹^m;
+	n+=2;
+	return (n,measure(x:𝔹[]));
+}
+
+def called(){
+	x:=H(0:𝔹);
+	xs:=vector(2,x);
+	xs:=extended(xs);
+	r:=measure(xs[0]);
+	return (x,xs,r);
+}

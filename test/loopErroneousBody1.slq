@@ -1,0 +1,60 @@
+def condition(n:!ℕ){
+	x:=H(0:𝔹);
+	q:=dup(x);
+	k:=0;
+	while k<2 { if tqx(n>0) { forget(q); assert(false); } k+=1; } /// error
+	x:=H(x);
+	return measure(x);
+}
+def update(n:!ℕ){
+	x:=H(0:𝔹);
+	q:=dup(x);
+	k:=0;
+	while k<2 { if n>0 { forget(q); assert(false); } k+=tqx(1); } /// error
+	x:=H(x);
+	return measure(x);
+}
+def redefined(){
+	x:=H(0:𝔹);
+	y:=dup(x);
+	repeat 3 { tqx(y); y:=dup(x); } /// error
+	return x;
+}
+def ranged(){
+	x:=H(0:𝔹);
+	y:=dup(x);
+	for i in 0..10 { y:=tqx(X(y)); } /// error
+	return x;
+}
+def repeated(){
+	x:=H(0:𝔹);
+	t:=dup(x);
+	k:=0;
+	do{ k+=tqx(1); u:=dup(t); forget(u); }while k<2; /// error
+	x:=H(x);
+	return measure(x);
+}
+def borrowed(){
+	a:=H(0:𝔹);
+	x:=(dup(a),0:𝔹);
+	d:=0:𝔹;
+	for i in [0..3){
+		if tqx(x[0]) { /// error
+			x[1]:=X(x[1]);
+			d:=H(d);
+		}
+	}
+	return (a,d);
+}
+def guarded(n:!ℕ){
+	x:=vector(n,false);
+	while tqx(n<1) { if n>5 { return 0; } } /// error
+	n+=1;
+	return n;
+}
+def carried(){
+	a:=H(0:𝔹);
+	x:=dup(a);
+	repeat 3 { x:=tqx(x); } /// error
+	return (a,x);
+}

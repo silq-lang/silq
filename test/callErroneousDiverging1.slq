@@ -1,0 +1,25 @@
+def declared():⊥{
+	x:=tqx; /// error
+	assert(false);
+}
+def diverging(){
+	x:=tqx; /// error
+	assert(false);
+}
+def consumedDeclared(x:𝔹,c:!𝔹){
+	if c { y:=H(x); declared(); }
+	return x;
+}
+def consumedDiverging(x:𝔹,c:!𝔹){
+	if c { y:=H(x); diverging(); }
+	return x;
+}
+def endDeclared():𝔹{ declared(); }
+def endDiverging():!ℕ{ x:=diverging(); }
+def annotatedA():typeof(annotatedB()){
+	return annotatedB();
+}
+def annotatedB():typeof(annotatedA()){
+	return tqx(annotatedA()); /// error
+}
+def endAnnotated():𝔹{ annotatedA(); }

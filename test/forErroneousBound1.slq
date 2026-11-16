@@ -1,0 +1,23 @@
+def upper(n:!ℕ):!ℕ{
+	m:=tqx(n); /// error
+	r:=0;
+	for i in 0..m { r+=i; }
+	return r;
+}
+def lower(n:!ℕ):!ℕ{
+	m:=tqx(n); /// error
+	r:=0;
+	for i in (m-1..-1..0] { r+=i; }
+	return r;
+}
+def step(n:!ℕ):!ℕ{
+	r:=0;
+	for i in [0..tqx(n)..n) { r+=i; } /// error
+	return r;
+}
+def vectorLength(n:!ℕ){
+	m:=tqx(n); /// error
+	x:=vector(n,0:𝔹);
+	for i in 0..m { x[i]:=X(x[i]); }
+	return x;
+}

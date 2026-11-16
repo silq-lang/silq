@@ -1,0 +1,36 @@
+def branch(c:!𝔹,a:!ℕ){
+	b:=a*a;
+	if c {
+		return (a,tqx); /// error
+		a:=2;
+		b:=a;
+	}
+	return (a,b);
+}
+def toplevel(a:!ℕ){
+	b:=2;
+	c:=3;
+	return (b+c,tqx); /// error
+	c:=4;
+	return (c,1);
+}
+def unconsumed(c:!𝔹,x:𝔹){
+	if c {
+		return (1,tqx); /// error
+		y:=dup(x);
+		measure(y);
+		x:=H(0:𝔹);
+	}
+	return (measure(x),1);
+}
+def looped(const c:!𝔹){
+	n:=2;
+	i:=0;
+	while i<1 {
+		i+=1;
+		if c { return 0; }
+		return tqx(1); /// error
+		n:=1;
+	}
+	return n;
+}

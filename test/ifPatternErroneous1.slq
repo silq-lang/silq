@@ -1,0 +1,10 @@
+def swapped(){
+	x:=tqx(H(0)); /// error
+	(if measure(x) then (a,b) else (b,a)) := (1,2);
+	return (a,b);
+}
+def nested(){
+	c:=tqx(true); /// error
+	(if c then (a,(b,d)) else (b,(a,d))) := (1,(2,3));
+	return (a,b,d);
+}

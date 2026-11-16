@@ -1,0 +1,19 @@
+def stop()⇒(1,)[1];
+def diverging(c:!𝔹,x:𝔹){
+	a:=dup(x);
+	b:=tqx(0:𝔹); /// error
+	if c { (a,b)=stop(); }
+	return (a,b,x);
+}
+def numbers(){
+	a:=1;
+	b:=tqx(0); /// error
+	(a,b)=(2,3);
+	return a+b;
+}
+def recomputed(x:𝔹){
+	a:=dup(x);
+	b:=tqx(0:𝔹); /// error
+	(a,b)=(dup(x),1:𝔹);
+	return (a,b,x);
+}

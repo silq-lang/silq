@@ -1,0 +1,24 @@
+def len(const x:𝔹[])qfree:!ℕ{
+	return tqx(x.length); /// error
+}
+def split(){
+	x:=((0,),);
+	y:=vector(2,0:𝔹);
+	i:=len(x[0]);
+	(yl:_^i)~yr:=y;
+	return (x,yl,yr);
+}
+def middle(){
+	x:=((0,),);
+	y:=vector(2,0:𝔹);
+	i:=len(x[0]);
+	j:=0;
+	(yl:_^(i+j))~(yi,)~yr:=y;
+	yi:=H(yi);
+	return (x,yl,yi,yr);
+}
+def erroneousLength(n:!ℕ){
+	y:=vector(n,0:𝔹);
+	(yl:_^tqx(n))~yr:=y; /// error
+	return (yl,yr);
+}

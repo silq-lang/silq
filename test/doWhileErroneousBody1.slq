@@ -1,0 +1,35 @@
+def f()⇒tqx; /// error
+def gen[n:!ℕ](x:𝔹^n)⇒tqx(x); /// error
+def called(m:!ℕ){
+	k:=0;
+	do{ k+=1; y:=f(); }while k<2;
+	return y;
+}
+def captured(m:!ℕ){
+	x:=tqx(m); /// error
+	def g()qfree⇒dup(x);
+	k:=0;
+	do{ k+=1; n:=k+m; y:=g(); r:=measure(y); }while k<2;
+	return (n,r);
+}
+def reset(m:!ℕ){
+	k:=tqx(0); /// error
+	do{ k+=1; n:=k+m; x:=vector(n,0:𝔹); def g()qfree⇒dup(x); y:=g(); r:=measure(y); }while k<2 { measure(x); }
+	return (n,r,measure(x));
+}
+def generic(m:!ℕ){
+	k:=0;
+	do{ k+=1; y:=gen((H(0:𝔹),H(0:𝔹))); }while k<2;
+	return y;
+}
+def variable(m:!ℕ){
+	k:=0;
+	g:=f;
+	do{ k+=1; y:=g(); }while k<2;
+	return y;
+}
+def anonymous(m:!ℕ){
+	k:=0;
+	do{ k+=1; y:=(λ(x:𝔹)⇒tqx(x))(H(0:𝔹)); }while k<2; /// error
+	return y;
+}

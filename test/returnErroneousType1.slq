@@ -1,0 +1,24 @@
+def converted(n:!ℕ){
+	k:=n+1;
+	x:=0:!uint[k];
+	x:=tqx(x as !ℕ); /// error
+	return x;
+}
+
+def branched(n:!ℕ){
+	k:=n+1;
+	x:=0:!uint[k];
+	x:=tqx(x as !ℕ); /// error
+	if x<n { return x; }
+	return 0;
+}
+
+def looped(n:!ℕ){
+	(k,l):=(0,1);
+	while l≤n { k+=1; l*=2; }
+	while true {
+		x:=0:!uint[k];
+		x:=tqx(x as !ℕ); /// error
+		if x<n { return x; }
+	}
+}

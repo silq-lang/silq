@@ -1,0 +1,40 @@
+def callCondition(){
+	x:=H(0);
+	w:=dup(x);
+	if tqx(w) { phase(π); } /// error
+	return x;
+}
+
+def operatorCondition(){
+	x:=H(0);
+	w:=dup(x);
+	t:=dup(x);
+	if w&&t&&tqx { } /// error
+	return x;
+}
+
+def indexCondition(){
+	x:=H(0);
+	w:=dup(x);
+	if (w,tqx)[0] { } /// error
+	x:=H(x);
+	return x;
+}
+
+def loopCondition(){
+	x:=H(0);
+	w:=dup(x);
+	while tqx(w) { phase(π); } /// error
+	return x;
+}
+
+def erroneousVariable(n:!ℕ,m:!ℕ,const c:𝔹,q:𝔹):uint[3]×𝔹{
+	r:=0;
+	if n>0 {
+		if c { return (1:uint[3],q); }
+		x:=tqx(n+1); /// error
+		if m>2 { return (2:uint[3],q); }
+		r=x+1;
+	}
+	return (r as uint[3],q);
+}

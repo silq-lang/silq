@@ -1,0 +1,29 @@
+def myH(x:𝔹)mfree{
+	x:=H(x);
+	return tqx(x); /// error
+}
+def restored(){
+	x:=H(0:𝔹);
+	with t:=myH(x){
+		t:=X(t);
+	}
+	return x;
+}
+def components(){
+	xs:=(H(0:𝔹),H(0:𝔹));
+	with t:=myH(xs[0]){
+		t⊕=1;
+	}
+	with t:=myH(xs[1]){
+		t⊕=1;
+	}
+	return xs;
+}
+def redefined(){
+	x:=H(0:𝔹);
+	with t:=myH(x){
+		t⊕=1;
+	}
+	t:=2;
+	return (x,t);
+}

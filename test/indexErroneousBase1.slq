@@ -1,0 +1,21 @@
+def squareCall(){
+	f:=λ[moved x:𝔹]mfree ⇒ x;
+	g:=tqx(f); /// error
+	f[x]:=move(g)[H(0:𝔹)];
+	return measure(H(x));
+}
+def quantumIndex(){
+	x:=H(0:𝔹);
+	y:=tqx[x]; /// error
+	return (x,y);
+}
+def undefinedParts(){
+	y:=undefinedArray[undefinedIndex]; /// error
+	return y;
+}
+def swappedEntries(){
+	x:=H(0);
+	t:=tqx([[1,0],[0,1]]); /// error
+	(t[0][x],t[1][x]):=(t[1][x],t[0][x]);
+	return (t,x);
+}
