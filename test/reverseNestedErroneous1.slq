@@ -1,0 +1,13 @@
+def id[τ:*](x:τ)qfree⇒x;
+def nested(){
+	id(tqx(y)):=1; /// error
+	return y;
+}
+def deeper(){
+	X(id(tqx(z))):=H(0:𝔹); /// error
+	return z;
+}
+def inTuple(){
+	(id(tqx(a)),b):=(1,2); /// error
+	return (a,b);
+}

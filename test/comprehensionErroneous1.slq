@@ -1,0 +1,8 @@
+def defined(){
+	[H(x) for x in xs]:=vector(5,tqx(0)); /// error
+	return xs;
+}
+def inTuple(){
+	([H(x) for x in xs],y):=(vector(2,tqx(0)),H(0:𝔹)); /// error
+	return (xs,y);
+}

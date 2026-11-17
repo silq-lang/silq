@@ -1,0 +1,17 @@
+def swapped[n:!ℕ,ilen:!ℕ](const idx:tqx(uint[ilen]),arr:𝔹^n,val:𝔹){ /// error
+	return (arr,val);
+}
+def single[ilen:!ℕ](const idx:tqx(uint[ilen]),arr:𝔹^2,val:𝔹){ /// error
+	return (arr,val);
+}
+def typed[n:!ℕ,qt:qtype](const idx:tqx,arr:qt^n,val:qt){ /// error
+	return (arr,val);
+}
+def main(){
+	x:=(0:𝔹,0:𝔹);
+	idx:=(H(0),) as uint[1];
+	(x,t):=swapped(idx,x,0:𝔹);
+	(x,u):=single(idx,x,t);
+	(x,v):=typed(idx,x,u);
+	return (x,idx,v);
+}

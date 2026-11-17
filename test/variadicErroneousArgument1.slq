@@ -1,0 +1,7 @@
+def concatenated[n:!ℕ,m:!ℕ][T:*](xs:∏(
+	vector(tqx(n),T)~vector(m,T))):T^(n+m)⇒xs; /// error
+def erroneousVariable(){
+	t:=tqx; /// error
+	u:=(1:𝔹,2:!ℕ):∏(t);
+	return u;
+}

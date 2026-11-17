@@ -1,0 +1,18 @@
+def isOdd(n:tqx(!ℕ))⇒n%2=1; /// error
+def measured[n:!ℕ](x:𝔹^n):!𝔹{
+	m:=measure(x);
+	return m[0];
+}
+def candidate(a:!ℕ)⇒a+1;
+def loopCondition(){
+	period:=1;
+	while isOdd(period) {
+		period:=candidate(3);
+	}
+	return period;
+}
+def branchCondition(x:𝔹^2){
+	if measured[tqx(2)](x) { /// error
+		phase(π);
+	}
+}

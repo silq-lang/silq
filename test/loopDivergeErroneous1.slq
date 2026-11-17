@@ -1,0 +1,29 @@
+def repeatCount():!ℕ{
+	repeat tqx(2) { /// error
+		return 1;
+	}
+}
+def repeatBody(c:!𝔹):!ℕ{
+	repeat 2 {
+		if c { return 1; }
+		while tqx(true) { } /// error
+	}
+}
+def forRange(n:!ℕ):!ℕ{
+	for i in [0..tqx(n)) { /// error
+		return i;
+	}
+}
+def doWhile():!ℕ{
+	k:=0;
+	do {
+		k+=1;
+	} while tqx(k<2); /// error
+}
+def inBranch(c:!𝔹):!ℕ{
+	if c {
+		repeat tqx(2) { return 1; } /// error
+	} else {
+		return 0;
+	}
+}

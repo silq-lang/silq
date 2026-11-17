@@ -1,0 +1,54 @@
+def lhsIndex(a:𝔹^3){
+	i:=1;
+	a[tqx(i)]:= /// error
+		X(a[i]);
+	return a;
+}
+def rhsIndex(a:𝔹^3){
+	i:=1;
+	a[i]:=
+		X(a[j]); /// error
+	return a;
+}
+def inLoop(a:𝔹^3){
+	for i in [0..3){
+		a[k]:= /// error
+			X(a[i]);
+	}
+	return a;
+}
+def nested(y:(𝔹^2)^2,j:!ℕ){
+	y[tqx(j)][0]:= /// error
+		X(y[j][0]);
+	return y;
+}
+def swapped(x:𝔹^3,i:!ℕ){
+	(x[i],x[tqx(i+1)]):= /// error
+		(x[i+1],x[i]);
+	return x;
+}
+def reversedErroneous(b:𝔹^2){
+	X(tqx(b[0])):= /// error
+		b[0];
+	return b;
+}
+def constBlocked(a:𝔹^3){
+	j:=tqx(1); /// error
+	if a[0] {
+		a[j]:=X(a[1]);
+	}
+	return a;
+}
+def otherComponent(a:𝔹^3){
+	(a[0],
+		a[tqx(1)]):= /// error
+		(a[1],a[0]);
+	return a;
+}
+def inClosure(){
+	x:=vector(1,0:𝔹);
+	x[0]:=H(x[0]);
+	(x[0],f):=(0:𝔹,()⇒
+		x[tqx(0)]); /// error
+	return f;
+}

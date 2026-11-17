@@ -1,0 +1,33 @@
+def inBranch(c:!ℕ){
+	q:=H(0:𝔹);
+	if c==0 {
+		repeat 2 {
+			t:=tqx(q); /// error
+		}
+	}
+	return q;
+}
+def nestedLoops(c:!ℕ,const qc:𝔹){
+	q:=H(0:𝔹); a:=0:𝔹;
+	repeat 2 {
+		if c==0 {
+			repeat 2 {
+				t:=dup(tqx(q)); /// error
+				if t { a:=X(a); }
+				if qc { return (q,a); }
+			}
+		}
+	}
+	return (q,a);
+}
+def whileLoop(c:!𝔹,n:!ℕ){
+	q:=H(0:𝔹);
+	if c {
+		k:=0;
+		while k<n {
+			measure(tqx(q)); /// error
+			k+=1;
+		}
+	}
+	return q;
+}
