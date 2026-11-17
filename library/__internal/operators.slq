@@ -1,3 +1,8 @@
+import arithmetic.QQ_adder;
+import arithmetic.CQ_adder;
+import arithmetic.QQ_mult;
+import arithmetic.mod_div;
+
 // prototypes and implementations of Silq operators
 
 // helpers
@@ -110,77 +115,100 @@ def qint_not[n:!N](a: B^n) @[__operator] qfree: B^n {
 	return qint_ixorc(a, -1);
 }
 
-def qint_iaddc[n:!N](a: B^n, const b: !Z) @[__operator] @noinline @nogarbage @[extern="silq_builtin.iaddc"] qfree: B^n {
-	def rec(a: B[], const c0: B) qfree: B[] {
-		m := a.length;
-		if m == 0 {
-			return a;
-		}
-		[a0] ~ a := a;
-		b0 := __bit_Z(b, n sub m);
-		a0 xorb= b0;
-		a := rec(a, if a0 then c0 else b0);
-		a0 xorb= c0;
-		return [a0] ~ a;
-	}
-	return rec(a, 0) coerce B^n;
+def qint_iaddc[n:!N](a: B^n, const b: !Z) @[__operator] @noinline @nogarbage qfree: B^n {
+    return qint_maddc[n](a as uint[n],b%(2^n),2^n) as B^n;
 }
 
-def qint_iaddq[n:!N](a: B^n, const b: B^n) @[__operator] @noinline @nogarbage @[extern="silq_builtin.iaddq"] qfree: B^n {
-	def rec(a: B[], const b: B^n, const c0: B) qfree: B[] {
-		m := a.length;
-		if m == 0 {
-			return a;
-		}
-		[a0] ~  a := a;
-		b0 := b[n sub m];
-		a0 xorb= b0;
-		a := rec(a, b, if a0 then c0 else b0);
-		a0 xorb= c0;
-		return [a0] ~ a;
-	}
-	return rec(a, b, 0) coerce B^n;
+def qint_iaddq[n:!N](a:B^n,const b:B^n) @[__operator] @noinline @nogarbage qfree:B^n{
+    if n=0{return a;}
+    def impl(ctrl:B[],const rev:!B,state:B^n×B^n){
+        (a,b) := state;
+        if ctrl.length=0{
+            if rev{(b,a) := subst_nocarry[n](0:B,b,a);}
+            else{(b,a) := adder_nocarry[n](0:B,b,a);}
+        }else{
+            enable := qint_controls_enabled(ctrl);
+            if rev{(b,a) := c_sub_nocarry[n](enable,b,a);}
+            else{(b,a) := c_adder_nocarry[n](enable,b,a);}
+        }
+        return (ctrl,(a,b));
+    }
+    (a,source) := __circuit_qfree[B^n×B^n](impl)(a,dup(b));
+    forget(source=b);return a;
 }
 
-def qint_maddc[n:!N](a: uint[n], const b: !N, const m: !N) @[__operator] @noinline @nogarbage @[extern="silq_builtin.maddc"] qfree: uint[n] {
-	a := ((a as B^n) ~ [0]) as uint[n+1];
-	a -= m-b;
-	(a: uint[n] as B^n) ~ [x] := a as B^(n+1);
-	if x { a += m; }
-	(a ≥ b) := x;
-	return a;
+def qint_maddc[n:!N](a:uint[n],const b:!N,const m:!N) @[__operator] @noinline @nogarbage qfree:uint[n]{
+    assert(m>=1);assert(m<=2^n);
+    if b%m=0{return a;}
+    k := uint_bits(m sub 1);d := n sub k;
+    def impl(ctrl:B[],const rev:!B,state:B^n){
+        (state:B^k)~(0:uint[d] as B^d) := state coerce B^(k+d);
+        if m=2^k{
+            if ctrl.length=0{
+                if rev{state := QC_sub[k](0:B,state,b%m);}
+                else{state := QC_adder[k](0:B,state,b%m);}
+            }else{
+                enable := qint_controls_enabled(ctrl);
+                if rev{state := c_QC_sub[k](enable,0:B,state,b%m);}
+                else{state := c_QC_adder[k](enable,0:B,state,b%m);}
+            }
+        }else{
+            if ctrl.length=0{
+                if rev{state := QC_sub_modp[m][k](state,b%m);}
+                else{state := QC_add_modp[m][k](state,b%m);}
+            }else{
+                enable := qint_controls_enabled(ctrl);
+                if rev{state := c_QC_sub_modp[m][k](enable,state,b%m);}
+                else{state := c_QC_add_modp[m][k](enable,state,b%m);}
+            }
+        }
+        return (ctrl,state~vector(d,0) coerce B^n);
+    }
+    return __circuit_qfree[B^n](impl)(a as B^n) as uint[n];
 }
 
-def qint_maddq[n:!N](a: uint[n], const b: uint[n], const m: !N) @[__operator] @noinline @nogarbage @[extern="silq_builtin.maddq"] qfree: uint[n] {
-	a := ((a as B^n) ~ [0]) as uint[n+1];
-	a += ((b as B^n) ~ [0]) as uint[n+1];
-	x := a >= m;
-	if x { a -= m; }
-	(a: uint[n] as B^n) ~ [0] := a as B^(n+1);
-	(a < b) := x;
-	return a;
+def qint_maddq[n:!N](a:uint[n],const b:uint[n],const m:!N) @[__operator] @noinline @nogarbage qfree:uint[n]{
+    assert(m>=1);assert(m<=2^n);
+    if m=1{return a;}
+    if m=2^n{return qint_iaddq[n](a as B^n,b as B^n) as uint[n];}
+    k := uint_bits(m sub 1);d := n sub k;
+    def impl(ctrl:B[],const rev:!B,state:B^n×B^n){
+        (a,b) := state;
+        (a:B^k)~(0:uint[d] as B^d) := a coerce B^(k+d);
+        (b:B^k)~(0:uint[d] as B^d) := b coerce B^(k+d);
+        if m=2^k{
+            if ctrl.length=0{
+                if rev{(b,a) := subst_nocarry[k](0:B,b,a);}
+                else{(b,a) := adder_nocarry[k](0:B,b,a);}
+            }else{
+                enable := qint_controls_enabled(ctrl);
+                if rev{(b,a) := c_sub_nocarry[k](enable,b,a);}
+                else{(b,a) := c_adder_nocarry[k](enable,b,a);}
+            }
+        }else{
+            if ctrl.length=0{
+                if rev{(b,a) := QQ_sub_modp[m][k](b,a);}
+                else{(b,a) := QQ_add_modp[m][k](b,a);}
+            }else{
+                enable := qint_controls_enabled(ctrl);
+                if rev{(b,a) := c_QQ_sub_modp[m][k](enable,b,a);}
+                else{(b,a) := c_QQ_add_modp[m][k](enable,b,a);}
+            }
+        }
+        return (ctrl,(a~vector(d,0) coerce B^n,b~vector(d,0) coerce B^n));
+    }
+    (a,source) := __circuit_qfree[B^n×B^n](impl)(a as B^n,dup(b) as B^n);
+    forget(source=b as B^n);return a as uint[n];
 }
-
 
 def qint_isubc[n:!N](a: B^n, const b: !Z) @[__operator] qfree: B^n {
 	qint_iaddc[n](a, b) := a;
 	return a;
 }
 
-def qint_irsubc[n:!N](const a: !Z, b: B^n) @[__operator] @nogarbage qfree: B^n {
-	def rec(b: B[], const c0: B) qfree: B[] {
-		m := b.length;
-		if m == 0 {
-			return b;
-		}
-		[b0] ~ b := b;
-		a0 := __bit_Z(a, n sub m);
-		b0 xorb= a0;
-		b := rec(b, if b0 then !a0 else c0);
-		b0 xorb= c0;
-		return [b0] ~ b;
-	}
-	return rec(b, 0) coerce B^n;
+def qint_irsubc[n:!N](const a:!Z,b:B^n) @[__operator] @nogarbage qfree:B^n{
+    for j in [0..n){b[j] := X(b[j]);}
+    return qint_iaddc[n](b,a+1);
 }
 
 def qint_isubq[n:!N](a: B^n, const b: B^n) qfree: B^n {
@@ -193,16 +221,28 @@ def qint_msubc[n:!N](a: uint[n], const b: !N, const m: !N) qfree: uint[n] {
 	return a;
 }
 
-def qint_mneg[n:!N](a: uint[n], const m: !N) qfree: uint[n] {
-	a := qint_irsubc[n](m-1, a as B^n) as uint[n];
-	return qint_maddc(a, 1, m);
+def qint_mneg[n:!N](a:uint[n],const m:!N) qfree:uint[n]{
+    if m<=2{return a;}
+    k := uint_bits(m sub 1);d := n sub k;
+    if m=2^k{return qint_neg[n](a as B^n) as uint[n];}
+    def impl(ctrl:B[],const rev:!B,state:B^n){
+        (state:B^k)~(0:uint[d] as B^d) := state coerce B^(k+d);
+        enable := qint_controls_enabled(ctrl);
+        ext := 0:B;
+        if enable{if (state as uint[k])!=0{ext := X(ext);}}
+        for j in [0..k){state[j] := CNOT(ext,state[j]);}
+        state := c_QC_adder[k](ext,0:B,state,m+1);
+        if enable{if (state as uint[k])!=0{ext := X(ext);}}
+        forget(ext=0);
+        return (ctrl,state~vector(d,0) coerce B^n);
+    }
+    return __circuit_qfree[B^n](impl)(a as B^n) as uint[n];
 }
 
 def qint_msubq[n:!N](a: uint[n], const b: uint[n], const m: !N) qfree: uint[n] {
 	qint_maddq[n](a, b, m) := a;
 	return a;
 }
-
 
 def qint_mulc[n:!N](a: B^n, b: !Z) lifted: B^n {
 	if n == 0 {
@@ -246,17 +286,171 @@ def qint_mulq[n:!N](const a: B^n, const b: B^n) @nogarbage qfree: B^n {
 	return [rlo] ~ r;
 }
 
-def qint_mmulc[n:!N](const a: uint[n], const b: !N, const m: !N) qfree: uint[n] {
-	r := 0:uint[n];
-	for i in 0..n {
-		if a[i] {
-			r := qint_maddc(r, (b·2^i)%m, m);
-		}
+def qint_mmulc[n:!N](const a:uint[n],const b:!N,const m:!N) qfree:uint[n]{
+    if m%2=0 || gcd(b,m)!=1{return qint_mmulq_generic[n](a,(b%m) as uint[n],m);}
+
+    if b%m=0{return 0:uint[n];}
+    r := dup(a);
+    return qint_immulc[n](r,b%m,m);
+}
+
+def qint_mmulq[n:!N](const a:uint[n],const b:uint[n],const m:!N) @noinline qfree:uint[n]{
+    if m%2=0 || m=1{return qint_mmulq_generic[n](a,b,m);}
+    // Out-of-place multiplication accepts zero and nonunits. Compute a clean
+    // Montgomery product, convert to ordinary residues, and XOR it into output.
+    k := field_bits(m); d := n sub k;
+    def impl(ctrl:B[],const rev:!B,state:B^n×B^n×B^n){
+        (x,y,out) := state;
+        (x:B^k)~(0:uint[d] as B^d) := x coerce B^(k+d);
+        (y:B^k)~(0:uint[d] as B^d) := y coerce B^(k+d);
+        (out:B^k)~(high:B^d) := out coerce B^(k+d);
+        if ctrl.length=0 && !rev{
+            forget(out=0:uint[k]);
+            (x,y,out) := mult_modp_clean[m][k](x,y);
+            for j in [0..k){out := double_modp[m][k](out);}
+            return (ctrl,(x~vector(d,0) coerce B^n,y~vector(d,0) coerce B^n,out~high coerce B^n));
+        }
+        if ctrl.length=0 && rev{
+            for j in [0..k){out := half_modp[m][k](out);}
+            (x,y,out) := mult_modp_into[m][k](x,y,out);
+            return (ctrl,(x~vector(d,0) coerce B^n,y~vector(d,0) coerce B^n,out~high coerce B^n));
+        }
+        enable := qint_controls_enabled(ctrl);
+        (x,y,out) := c_mult_modp_into[m][k](enable,x,y,out);
+        return (ctrl,(x~vector(d,0) coerce B^n,y~vector(d,0) coerce B^n,out~high coerce B^n));
+    }
+    (x,y,out) := __circuit_qfree[B^n×B^n×B^n](impl)(dup(a) as B^n,dup(b) as B^n,0:uint[n] as B^n);
+    forget(x=a as B^n);forget(y=b as B^n);
+    return out as uint[n];
+}
+
+// Syntax adapters for the shared arithmetic circuits imported above.
+def qint_mbu_and(const x: B^2) qfree: B {
+	def mcz(c: B^2) mfree: B^2 {
+		(a,b) := c;
+		if a { b := Z(b); }
+		return (a,b);
 	}
+	def impl(ctrl: B[], const rev: !B, target: B) {
+		ctrl := ctrl coerce B^2;
+		if !rev {
+			target := H(S(target));
+			target := T(CNOT(ctrl[0], target));
+			T(target) := CNOT(ctrl[1], target);
+			target := T(CNOT(ctrl[0], target));
+			T(target) := CNOT(ctrl[1], target);
+			target := H(target);
+			S(target) := target;
+		} else {
+			if measure(H(target)) {
+				ctrl := mcz(ctrl);
+			}
+			target := 0:B;
+		}
+		return (ctrl, target):_[] x _;
+	}
+	r := 0:B;
+	if x[0] { if x[1] { r := __circuit_qfree[B](impl)(r); } }
 	return r;
 }
 
-def qint_mmulq[n:!N](const a: uint[n], const b: uint[n], const m: !N) qfree: uint[n] {
+def qint_field_circuit[n:!N,m:!N,factor:!N,division:!B](ctrl:B[],const rev:!B,state:B^n×B^n){
+    k := field_bits(m); d := n sub k;
+    (source,target) := state;
+    (source:B^k)~(0:uint[d] as B^d) := source coerce B^(k+d);
+    (target:B^k)~(0:uint[d] as B^d) := target coerce B^(k+d);
+    divide := rev != division;
+    if factor%m=2%m && ctrl.length=0{
+        if divide{target := half_modp[m][k](target);}
+        else{target := double_modp[m][k](target);}
+    }else{
+        def update(x:B^k,y:B^k){
+            if divide{return binary_modular_map[0:!B][m][k]((x,y));}
+            return binary_modular_map[1:!B][m][k]((x,y));
+        }
+        if ctrl.length=0{(source,target) := update(source,target);}
+        else{
+            enable := qint_controls_enabled(ctrl);
+            if divide{(source,target) := c_binary_modular_map[0:!B][m][k](enable,(source,target));}
+            else{(source,target) := c_binary_modular_map[1:!B][m][k](enable,(source,target));}
+        }
+    }
+    return (ctrl,(source~vector(d,0) coerce B^n,target~vector(d,0) coerce B^n));
+}
+
+def qint_immulq[n:!N](a:uint[n],const b:uint[n],const m:!N) @[__operator] @noinline @nogarbage qfree:uint[n]{
+    if m%2=0 || m=1{return qint_immulq_generic[n](a,b,m);}
+    def impl(ctrl:B[],const rev:!B,state:B^n×B^n){
+        return qint_field_circuit[n,m,0,0:!B](ctrl,rev,state);
+    }
+    (source,a) := __circuit_qfree[B^n×B^n](impl)(dup(b) as B^n,a as B^n);
+    forget(source=b as B^n);
+    return a as uint[n];
+}
+
+def qint_immulc_raw[n:!N](a:uint[n],const b:!N,const m:!N) qfree:uint[n]{
+    source := (b%m) as uint[n];
+    def impl(ctrl:B[],const rev:!B,state:B^n×B^n){return qint_field_circuit[n,m,b%m,0:!B](ctrl,rev,state);}
+    (source,a) := __circuit_qfree[B^n×B^n](impl)(source as B^n,a as B^n);
+    forget(source=(b%m) as uint[n]);
+    return a as uint[n];
+}
+
+def qint_immulc[n:!N](a:uint[n],const b:!N,const m:!N) @noinline qfree:uint[n]{
+    if m%2=0 || m=1{return qint_immulq_generic[n](a,(b%m) as uint[n],m);}
+
+    assert(m>=2);assert(m<=2^n);assert(b%m!=0);
+    factor := b%m;
+    if factor=1{return a;}
+    if factor=m-1{return qint_mneg[n](a,m);}
+
+    // k, -k, k^-1, and -k^-1 all reduce to the same raw kernel plus at
+    // most reversal and modular negation.  Choose the smallest compile-time
+    // factor, which dramatically reduces small-field and sparse-constant
+    // multiplication (for example, 3 mod 5 uses reverse(mul 2)).
+    inverse := pow_mod(factor,-1,m);
+    best := factor; mode := 0:!N;
+    if inverse<best{best=inverse;mode=1;}
+    if m sub factor<best{best=m sub factor;mode=2;}
+    if m sub inverse<best{best=m sub inverse;mode=3;}
+    if mode=0{return qint_immulc_raw[n](a,best,m);}
+    if mode=1{qint_immulc_raw[n](r,best,m) := a;return r;}
+    if mode=2{return qint_mneg[n](qint_immulc_raw[n](a,best,m),m);}
+    qint_immulc_raw[n](r,best,m) := a;
+    return qint_mneg[n](r,m);
+}
+
+def qint_idivq[n:!N](a:uint[n],const b:uint[n],const m:!N) @[__operator] @noinline @nogarbage qfree:uint[n]{
+    if m%2=0 || m=1{qint_immulq_generic[n](result,b,m) := a;return result;}
+    def impl(ctrl:B[],const rev:!B,state:B^n×B^n){
+        return qint_field_circuit[n,m,0,1:!B](ctrl,rev,state);
+    }
+    (source,a) := __circuit_qfree[B^n×B^n](impl)(dup(b) as B^n,a as B^n);
+    forget(source=b as B^n);
+    return a as uint[n];
+}
+
+def qint_idivc[n:!N](a:uint[n],const b:!N,const m:!N) @[__operator] @noinline @nogarbage qfree:uint[n]{
+    assert(m>=2);assert(m<=2^n);assert(b%m!=0);
+    return qint_immulc[n](a,pow_mod(b%m,-1,m),m);
+}
+
+def qint_mdivq[n:!N](const a:uint[n],const b:uint[n],const m:!N) qfree:uint[n]{
+    r := dup(a);
+    return qint_idivq[n](r,b,m);
+}
+
+def qint_mdivc[n:!N](const a:uint[n],const b:!N,const m:!N) qfree:uint[n]{
+    r := dup(a);
+    return qint_idivc[n](r,b,m);
+}
+
+def qint_cmdivq[n:!N](const a:!N,const b:uint[n],const m:!N) qfree:uint[n]{
+    r := (a%m) as uint[n];
+    return qint_idivq[n](r,b,m);
+}
+
+def qint_mmulq_generic[n:!N](const a: uint[n], const b: uint[n], const m: !N) qfree: uint[n] {
 	r := 0:uint[n];
 	for i in 0..n {
 		if a[i] {
@@ -268,6 +462,20 @@ def qint_mmulq[n:!N](const a: uint[n], const b: uint[n], const m: !N) qfree: uin
 		}
 	}
 	return r;
+}
+
+def qint_immulq_generic[n:!N](a:uint[n],const b:uint[n],const m:!N) qfree:uint[n]{
+    inverse_low := (qint_modinv_x((b as B^n)[0..ℤmodBits(m)] as uint[ℤmodBits(m)] pun ℤmod[m] pun ℤstar[m]) pun uint[ℤmodBits(m)]) as B^ℤmodBits(m);
+    inverse := (inverse_low~vector(n sub ℤmodBits(m),0)) coerce B^n as uint[n];
+    result := qint_mmulq_generic[n](a,b,m);
+    qint_mmulq_generic[n](result,inverse,m) := a;
+    return result;
+}
+
+def qint_controls_enabled(const controls:B[]) qfree:B{
+    if controls.length=0{return 1:B;}
+    if controls.length=1{return dup(controls[0]);}
+    return qint_mbu_and((controls[0],qint_controls_enabled(controls[1..controls.length])));
 }
 
 def qint_udivmod_qq[n:!N,m:!N](const a: B^n, const b: B^m) @nogarbage qfree: B^n x B^m {
@@ -662,7 +870,6 @@ def __bitnot_Z(x: !ℤ) @[__operator] lifted: !ℤ {
 // def __bitnot_R(x:!ℝ)lifted:!ℝ; // TODO?
 // def __bitnot_C(x:!ℂ)lifted:!ℂ; // TODO?
 
-
 // binary operators
 // a+b
 def __add_s[n:!ℕ](a: int[n], b: int[n]) @[__operator] lifted: int[n] {
@@ -989,7 +1196,6 @@ def __sub_ZU[n:!ℕ](a: !ℤ, b: !uint[n]) @[__operator] lifted: !uint[n] {
 	return __sub_Z(a, b as !Z) as !uint[n];
 }
 
-
 def __sub_m[N:!ℕ](a: ℤmod[N], b: ℤmod[N]) @[__operator] lifted: ℤmod[N] {
 	return qint_msubq(a pun uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)], N) pun ℤmod[N];
 }
@@ -1031,7 +1237,6 @@ def __sub_Zm[N:!ℕ](a: !ℤ, b: ℤmod[N]) @[__operator] lifted: ℤmod[N] ⇒ 
 def __sub_ZM[N:!ℕ](a: !ℤ, b: !ℤmod[N]) @[__operator] lifted: !ℤmod[N] {
 	return (a%N - (b as !ℕ)) as !ℤmod[N];
 }
-
 
 def __sub_B(a: !𝔹, b: !𝔹) @[__operator] lifted: !ℤ {
 	return __sub_N(a, b);
@@ -1401,12 +1606,10 @@ def __mul_ZU[n:!ℕ](a: !ℤ, b: !uint[n]) @[__operator] lifted: !uint[n] {
 	return __mul_Z(a, b as !Z) as !uint[n];
 }
 
-
 def __mul_x[N:!ℕ](a: ℤstar[N], b: ℤstar[N]) @[__operator] lifted: ℤstar[N] ⇒ __mul_m(a, b) pun ℤstar[N];
 def __mul_Xx[N:!ℕ](a: !ℤstar[N], b: ℤstar[N]) @[__operator] lifted: ℤstar[N] ⇒ __mul_Mm(a, b) pun ℤstar[N];
 def __mul_xX[N:!ℕ](a: ℤstar[N], b: !ℤstar[N]) @[__operator] lifted: ℤstar[N] ⇒ __mul_mM(a, b) pun ℤstar[N];
 def __mul_X[N:!ℕ](a: !ℤstar[N], b: !ℤstar[N]) @[__operator] lifted: !ℤstar[N] ⇒ __mul_M(a, b) pun !ℤstar[N];
-
 
 def __mul_m[N:!ℕ](a: ℤmod[N], b: ℤmod[N]) @[__operator] lifted: ℤmod[N] {
 	return qint_mmulq(a pun uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)], N) pun ℤmod[N];
@@ -1460,7 +1663,6 @@ def __mul_ZM[N:!ℕ](a: !ℤ, b: !ℤmod[N]) @[__operator] lifted: !ℤmod[N] {
 	return (a%N)·(b as !ℕ) as !ℤmod[N];
 }
 
-
 def __mul_b(a: 𝔹, b: 𝔹) @[__operator] lifted: 𝔹 {
 	return __andb_b(a, b);
 }
@@ -1499,25 +1701,24 @@ def __div_Xx[N:!ℕ](a: !ℤstar[N], b: ℤstar[N]) @[__operator] lifted: ℤsta
 def __div_xX[N:!ℕ](a: ℤstar[N], b: !ℤstar[N]) @[__operator] lifted: ℤstar[N] ⇒ __div_mX(a, b) pun ℤstar[N];
 def __div_X[N:!ℕ](a: !ℤstar[N], b: !ℤstar[N]) @[__operator] lifted: !ℤstar[N] ⇒ __div_MX(a, b) pun !ℤstar[N];
 
-
 def __div_mx[N:!ℕ](a: ℤmod[N], b: ℤstar[N]) @[__operator] lifted: ℤmod[N] {
-	return __mul_m(a, qint_modinv_x(b));
+	return qint_mdivq(a pun uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)], N) pun ℤmod[N];
 }
 def __div_Mx[N:!ℕ](a: !ℤmod[N], b: ℤstar[N]) @[__operator] lifted: ℤmod[N] {
-	return __mul_Mm(a, qint_modinv_x(b));
+	return qint_cmdivq[ℤmodBits(N)](a as !ℕ, b pun uint[ℤmodBits(N)], N) pun ℤmod[N];
 }
 def __div_mX[N:!ℕ](a: ℤmod[N], b: !ℤstar[N]) @[__operator] lifted: ℤmod[N] {
-	return __mul_mM(a, pow_mod(b as !ℕ, -1, N) pun !ℤstar[N]);
+	return qint_mdivc(a pun uint[ℤmodBits(N)], b as !ℕ, N) pun ℤmod[N];
 }
 def __div_MX[N:!ℕ](a: !ℤmod[N], b: !ℤstar[N]) @[__operator] lifted: !ℤmod[N] {
 	return __mul_M(a, pow_mod(b as !ℕ, -1, N) pun !ℤstar[N]);
 }
 
 def __div_bx[N:!ℕ](a: 𝔹, b: ℤstar[N]) @[__operator] lifted: ℤmod[N] {
-	return if a then qint_modinv_x(b) else 0: !ℤmod[N];
+	return if a then qint_cmdivq[ℤmodBits(N)](1, b pun uint[ℤmodBits(N)], N) pun ℤmod[N] else 0: !ℤmod[N];
 }
 def __div_Bx[N:!ℕ](a: !𝔹, b: ℤstar[N]) @[__operator] lifted: ℤmod[N] {
-	return if a then qint_modinv_x(b) else 0: !ℤmod[N];
+	return if a then qint_cmdivq[ℤmodBits(N)](1, b pun uint[ℤmodBits(N)], N) pun ℤmod[N] else 0: !ℤmod[N];
 }
 def __div_bX[N:!ℕ](a: 𝔹, b: !ℤstar[N]) @[__operator] lifted: ℤmod[N] {
 	return if a then pow_mod(b as !ℕ, -1, N) as !ℤmod[N] else 0: !ℤmod[N];
@@ -1530,12 +1731,11 @@ def __div_Nx[N:!ℕ](a: !ℕ, b: ℤstar[N]) @[__operator] lifted: ℤmod[N] ⇒
 def __div_NX[N:!ℕ](a: !ℕ, b: !ℤstar[N]) @[__operator] lifted: !ℤmod[N] ⇒ __div_ZX(a, b);
 
 def __div_Zx[N:!ℕ](a: !ℤ, b: ℤstar[N]) @[__operator] lifted: ℤmod[N] {
-	return __mul_Zm(a, qint_modinv_x(b));
+	return qint_cmdivq[ℤmodBits(N)](a%N, b pun uint[ℤmodBits(N)], N) pun ℤmod[N];
 }
 def __div_ZX[N:!ℕ](a: !ℤ, b: !ℤstar[N]) @[__operator] lifted: !ℤmod[N] {
 	return a·pow_mod(b as !ℕ, -1, N) as !ℤmod[N];
 }
-
 
 def __div_B(a: !𝔹, b: !𝔹) @[__operator] lifted: !ℚ {
 	return __idiv_B(a, b);
@@ -2203,7 +2403,6 @@ def __pow_XN[N:!ℕ](a: !ℤstar[N], b: !ℕ) lifted: !ℤstar[N] {
 def __pow_XZ[N:!ℕ](a: !ℤstar[N], b: !ℤ) lifted: !ℤstar[N] {
 	return pow_mod(a as !ℕ, b, N) pun !ℤstar[N];
 }
-
 
 def __pow_b(a: 𝔹, b: 𝔹) @[__operator] lifted: 𝔹 {
 	return __ge_b(a, b);
@@ -3061,7 +3260,6 @@ def __lt_UR[n:!ℕ](a: !uint[n], b: !ℝ) @[__operator] lifted: !𝔹 {
 	return __lt_R(a as !N, b);
 }
 
-
 def __lt_m[N:!ℕ](a: ℤmod[N], b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __lt_u(a pun uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)]);
 def __lt_Mm[N:!ℕ](a: !ℤmod[N], b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __lt_Uu(a pun !uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)]);
 def __lt_mM[N:!ℕ](a: ℤmod[N], b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __lt_uU(a pun uint[ℤmodBits(N)], b pun !uint[ℤmodBits(N)]);
@@ -3094,7 +3292,6 @@ def __lt_QM[N:!ℕ](a: !ℚ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __lt_
 def __lt_MQ[N:!ℕ](a: !ℤmod[N], b: !ℚ) @[__operator] lifted: 𝔹 ⇒ __lt_UQ(a coerce !uint[ℤmodBits(N)], b);
 def __lt_RM[N:!ℕ](a: !ℝ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __lt_RU(a, b coerce !uint[ℤmodBits(N)]);
 def __lt_MR[N:!ℕ](a: !ℤmod[N], b: !ℝ) @[__operator] lifted: 𝔹 ⇒ __lt_UR(a coerce !uint[ℤmodBits(N)], b);
-
 
 def __lt_N(a: !ℕ, b: !ℕ) @[__operator, extern="primitive.int.lt"] lifted: !𝔹;
 def __lt_Z(a: !ℤ, b: !ℤ) @[__operator, extern="primitive.int.lt"] lifted: !𝔹;
@@ -3341,7 +3538,6 @@ def __le_UR[n:!ℕ](a: !uint[n], b: !ℝ) @[__operator] lifted: !𝔹 {
 	return __not_B(__lt_RU[n](b, a));
 }
 
-
 def __le_m[N:!ℕ](a: ℤmod[N], b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __le_u(a pun uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)]);
 def __le_Mm[N:!ℕ](a: !ℤmod[N], b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __le_Uu(a pun !uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)]);
 def __le_mM[N:!ℕ](a: ℤmod[N], b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __le_uU(a pun uint[ℤmodBits(N)], b pun !uint[ℤmodBits(N)]);
@@ -3374,7 +3570,6 @@ def __le_QM[N:!ℕ](a: !ℚ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __le_
 def __le_MQ[N:!ℕ](a: !ℤmod[N], b: !ℚ) @[__operator] lifted: 𝔹 ⇒ __le_UQ(a coerce !uint[ℤmodBits(N)], b);
 def __le_RM[N:!ℕ](a: !ℝ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __le_RU(a, b coerce !uint[ℤmodBits(N)]);
 def __le_MR[N:!ℕ](a: !ℤmod[N], b: !ℝ) @[__operator] lifted: 𝔹 ⇒ __le_UR(a coerce !uint[ℤmodBits(N)], b);
-
 
 def __le_N(a: !ℕ, b: !ℕ) @[__operator] lifted: !𝔹 {
 	return __not_B(__lt_N(b, a));
@@ -3604,7 +3799,6 @@ def __gt_UR[n:!ℕ](a: !uint[n], b: !ℝ) @[__operator] lifted: !𝔹 {
 	return __lt_RU[n](b, a);
 }
 
-
 def __gt_m[N:!ℕ](a: ℤmod[N], b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __gt_u(a pun uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)]);
 def __gt_Mm[N:!ℕ](a: !ℤmod[N], b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __gt_Uu(a pun !uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)]);
 def __gt_mM[N:!ℕ](a: ℤmod[N], b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __gt_uU(a pun uint[ℤmodBits(N)], b pun !uint[ℤmodBits(N)]);
@@ -3637,7 +3831,6 @@ def __gt_QM[N:!ℕ](a: !ℚ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __gt_
 def __gt_MQ[N:!ℕ](a: !ℤmod[N], b: !ℚ) @[__operator] lifted: 𝔹 ⇒ __gt_UQ(a coerce !uint[ℤmodBits(N)], b);
 def __gt_RM[N:!ℕ](a: !ℝ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __gt_RU(a, b coerce !uint[ℤmodBits(N)]);
 def __gt_MR[N:!ℕ](a: !ℤmod[N], b: !ℝ) @[__operator] lifted: 𝔹 ⇒ __gt_UR(a coerce !uint[ℤmodBits(N)], b);
-
 
 def __gt_N(a: !ℕ, b: !ℕ) @[__operator] lifted: !𝔹 {
 	return __lt_N(b, a);
@@ -3867,7 +4060,6 @@ def __ge_UR[n:!ℕ](a: !uint[n], b: !ℝ) @[__operator] lifted: !𝔹 {
 	return __le_RU[n](b, a);
 }
 
-
 def __ge_m[N:!ℕ](a: ℤmod[N], b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __ge_u(a pun uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)]);
 def __ge_Mm[N:!ℕ](a: !ℤmod[N], b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __ge_Uu(a pun !uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)]);
 def __ge_mM[N:!ℕ](a: ℤmod[N], b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __ge_uU(a pun uint[ℤmodBits(N)], b pun !uint[ℤmodBits(N)]);
@@ -3900,7 +4092,6 @@ def __ge_QM[N:!ℕ](a: !ℚ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __ge_
 def __ge_MQ[N:!ℕ](a: !ℤmod[N], b: !ℚ) @[__operator] lifted: 𝔹 ⇒ __ge_UQ(a coerce !uint[ℤmodBits(N)], b);
 def __ge_RM[N:!ℕ](a: !ℝ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __ge_RU(a, b coerce !uint[ℤmodBits(N)]);
 def __ge_MR[N:!ℕ](a: !ℤmod[N], b: !ℝ) @[__operator] lifted: 𝔹 ⇒ __ge_UR(a coerce !uint[ℤmodBits(N)], b);
-
 
 def __ge_N(a: !ℕ, b: !ℕ) @[__operator] lifted: !𝔹 {
 	return __le_N(b, a);
@@ -4265,7 +4456,6 @@ def __eq_UC[n:!ℕ](a: !uint[n], b: !ℂ) @[__operator] lifted: !𝔹 {
 	return __eq_R(b_im, 0) && __eq_UR(a, b_re);
 }
 
-
 def __eq_m[N:!ℕ](a: ℤmod[N], b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __eq_u(a pun uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)]);
 def __eq_Mm[N:!ℕ](a: !ℤmod[N], b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __eq_Uu(a pun !uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)]);
 def __eq_mM[N:!ℕ](a: ℤmod[N], b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __eq_uU(a pun uint[ℤmodBits(N)], b pun !uint[ℤmodBits(N)]);
@@ -4298,7 +4488,6 @@ def __eq_QM[N:!ℕ](a: !ℚ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __eq_
 def __eq_MQ[N:!ℕ](a: !ℤmod[N], b: !ℚ) @[__operator] lifted: 𝔹 ⇒ __eq_UQ(a coerce !uint[ℤmodBits(N)], b);
 def __eq_RM[N:!ℕ](a: !ℝ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __eq_RU(a, b coerce !uint[ℤmodBits(N)]);
 def __eq_MR[N:!ℕ](a: !ℤmod[N], b: !ℝ) @[__operator] lifted: 𝔹 ⇒ __eq_UR(a coerce !uint[ℤmodBits(N)], b);
-
 
 def __eq_N(a: !ℕ, b: !ℕ) @[__operator, extern="primitive.int.eq"] lifted: !𝔹;
 def __eq_Z(a: !ℤ, b: !ℤ) @[__operator, extern="primitive.int.eq"] lifted: !𝔹;
@@ -4579,7 +4768,6 @@ def __neq_UC[n:!ℕ](a: !uint[n], b: !ℂ) @[__operator] lifted: !𝔹 {
 	return __not_B(__eq_UC[n](a, b));
 }
 
-
 def __neq_m[N:!ℕ](a: ℤmod[N], b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __neq_u(a pun uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)]);
 def __neq_Mm[N:!ℕ](a: !ℤmod[N], b: ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __neq_Uu(a pun !uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)]);
 def __neq_mM[N:!ℕ](a: ℤmod[N], b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __neq_uU(a pun uint[ℤmodBits(N)], b pun !uint[ℤmodBits(N)]);
@@ -4613,7 +4801,6 @@ def __neq_MQ[N:!ℕ](a: !ℤmod[N], b: !ℚ) @[__operator] lifted: 𝔹 ⇒ __ne
 def __neq_RM[N:!ℕ](a: !ℝ, b: !ℤmod[N]) @[__operator] lifted: 𝔹 ⇒ __neq_RU(a, b coerce !uint[ℤmodBits(N)]);
 def __neq_MR[N:!ℕ](a: !ℤmod[N], b: !ℝ) @[__operator] lifted: 𝔹 ⇒ __neq_UR(a coerce !uint[ℤmodBits(N)], b);
 
-
 def __neq_N(a: !ℕ, b: !ℕ) @[__operator] lifted: !𝔹 {
 	return __not_B(__eq_N(a, b));
 }
@@ -4635,7 +4822,6 @@ def __neq_RC(a: !ℝ, b: !ℂ) @[__operator] lifted: !𝔹 {
 def __neq_C(a: !ℂ, b: !ℂ) @[__operator] lifted: !𝔹 {
 	return __not_B(__eq_C(a, b));
 }
-
 
 // binary assignment operators
 
@@ -4743,7 +4929,6 @@ def __sub_assign_uZ[n:!ℕ](a: uint[n], const b: !ℤ) @[__operator] qfree: uint
 	return qint_isubc[n](a as B^n, b) as uint[n];
 }
 
-
 def __sub_assign_m[N:!ℕ](a: ℤmod[N], const b: ℤmod[N]) @[__operator] qfree: ℤmod[N] {
 	return qint_msubq(a pun uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)], N) pun ℤmod[N];
 }
@@ -4822,52 +5007,39 @@ def __nsub_assign_bN(a: 𝔹, const b: !ℕ) @[__operator] qfree: 𝔹 {
 // (usually rewritten to with x:=a do x=x·b)
 
 def __mul_assign_m[N:!ℕ](a: ℤmod[N], const b: ℤstar[N]) qfree: ℤmod[N] {
-	a' := a·b;
-	a'·qint_modinv_x(b) := a;
-	return a';
+	return qint_immulq(a pun uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)], N) pun ℤmod[N];
 }
 
 def __mul_assign_mM[N:!ℕ](a: ℤmod[N], const b: !ℤstar[N]) qfree: ℤmod[N] {
-	a' := a·b;
-	a'·(pow_mod(b as !ℕ, -1, N) pun !ℤstar[N]) := a;
-	return a';
+	return qint_immulc(a pun uint[ℤmodBits(N)], b as !ℕ, N) pun ℤmod[N];
 }
 
 def __mul_assign_x[N:!ℕ](a: ℤstar[N], const b: ℤstar[N]) qfree: ℤstar[N] {
-	a' := a·b;
-	a'·qint_modinv_x(b) := a;
-	return a';
+	return qint_immulq(a pun uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)], N) pun ℤmod[N] pun ℤstar[N];
 }
 
 def __mul_assign_xX[N:!ℕ](a: ℤstar[N], const b: !ℤstar[N]) qfree: ℤstar[N] {
-	a' := a·b;
-	a'·(pow_mod(b as !ℕ, -1, N) pun !ℤstar[N]) := a;
-	return a';
+	return qint_immulc(a pun uint[ℤmodBits(N)], b as !ℕ, N) pun ℤmod[N] pun ℤstar[N];
 }
 
 // a/=b
 // (usually rewritten to with x:=a do x=x/b)
 
 def __div_assign_m[N:!ℕ](a: ℤmod[N], const b: ℤstar[N]) qfree: ℤmod[N] {
-	__mul_assign_m[N](a, b) := a;
-	return a;
+	return qint_idivq(a pun uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)], N) pun ℤmod[N];
 }
 
 def __div_assign_mM[N:!ℕ](a: ℤmod[N], const b: !ℤstar[N]) qfree: ℤmod[N] {
-	__mul_assign_mM[N](a, b) := a;
-	return a;
+	return qint_idivc(a pun uint[ℤmodBits(N)], b as !ℕ, N) pun ℤmod[N];
 }
 
 def __div_assign_x[N:!ℕ](a: ℤstar[N], const b: ℤstar[N]) qfree: ℤstar[N] {
-	__mul_assign_x[N](a, b) := a;
-	return a;
+	return qint_idivq(a pun uint[ℤmodBits(N)], b pun uint[ℤmodBits(N)], N) pun ℤmod[N] pun ℤstar[N];
 }
 
 def __div_assign_xX[N:!ℕ](a: ℤstar[N], const b: !ℤstar[N]) qfree: ℤstar[N] {
-	__mul_assign_xX[N](a, b) := a;
-	return a;
+	return qint_idivc(a pun uint[ℤmodBits(N)], b as !ℕ, N) pun ℤmod[N] pun ℤstar[N];
 }
-
 
 // a div= b
 // (always rewritten to with x:=a do x=x div b)
