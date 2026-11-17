@@ -1,0 +1,13 @@
+def movedValue(){
+	a:=5:!int[4];
+	u:=[(move(a) as !ℤ)+i for i in [tqx(0)..2)]; /// error
+	a:=6:!ℕ;
+	return (u,a);
+}
+
+def movedContainer(){
+	b:=3:!ℕ;
+	v:=[move(b)+i for i in tqx([0,1])]; /// error
+	b:=4:!ℕ;
+	return (v,b);
+}

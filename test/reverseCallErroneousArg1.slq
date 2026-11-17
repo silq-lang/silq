@@ -1,0 +1,27 @@
+def closure(){
+	x:=H(0);
+	f:=(y:𝔹)⇒CNOT(x,y);
+	y:=1;
+	f(tqx(y)):=y; /// error
+	return (x,y);
+}
+
+def closureInBranch(c:!𝔹){
+	x:=H(0);
+	f:=(y:𝔹)⇒CNOT(x,y);
+	y:=1:𝔹;
+	if c {
+		f(tqx(y)):=y; /// error
+	}else{
+		f(y):=y;
+	}
+	return (x,y);
+}
+
+def twoArguments(){
+	x:=H(0);
+	f:=(y:𝔹,z:𝔹)⇒(CNOT(x,y),z);
+	(y,z):=(1:𝔹,0:𝔹);
+	f(tqx(y),z):=(y,z); /// error
+	return (x,y,z);
+}

@@ -1,0 +1,38 @@
+def forLoop(n:!ℕ){
+	x:=H(0:𝔹);
+	o:=dup(x);
+	for k in 0..n {
+		y:=dup(tqx(o)); /// error
+		forget(y);
+	}
+	x:=H(x);
+	return measure(x);
+}
+
+def repeatDiverging(n:!ℕ){
+	x:=H(0:𝔹);
+	o:=dup(x);
+	repeat n {
+		for k in 0..2 {
+			y:=dup(tqx(o)); /// error
+			forget(y);
+		}
+		t:=(n coerce ⊥);
+	}
+	x:=H(x);
+	return measure(x);
+}
+
+def whileUsedAfter(n:!ℕ){
+	x:=H(0:𝔹);
+	o:=dup(x);
+	k:=0;
+	while k<n {
+		y:=dup(tqx(o)); /// error
+		forget(y);
+		k+=1;
+	}
+	z:=dup(o);
+	x:=H(x);
+	return (measure(x),z);
+}

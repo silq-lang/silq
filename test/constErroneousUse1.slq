@@ -1,0 +1,38 @@
+def lostDependency(x:𝔹){
+	y:=dup(x);
+	z:=dup(y);
+	if z {
+		w:=X(tqx /// error
+			(z));
+	}else{
+		x:=H(x);
+		w:=z;
+	}
+	return x;
+}
+
+def lostDependencyReturned(x:𝔹){
+	y:=dup(x);
+	z:=dup(y);
+	if z {
+		w:=X(tqx /// error
+			(z));
+	}else{
+		x:=H(x);
+		w:=z;
+	}
+	return (x,w);
+}
+
+def bothBranches(x:𝔹){
+	y:=dup(x);
+	z:=dup(y); /// error
+	if z {
+		w:=X(tqx /// error
+			(z));
+	}else{
+		x:=H(x);
+		w:=dup(z);
+	}
+	return (x,w);
+}

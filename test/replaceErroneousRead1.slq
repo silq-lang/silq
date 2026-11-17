@@ -1,0 +1,34 @@
+def thenBranch(x:𝔹^2,const u:!ℕ,const j:!ℕ){
+	x[j]:=
+		if u==2 { X(x[tqx(j)]) } /// error
+		else { x[j] };
+	return x;
+}
+
+def elseBranch(x:𝔹^2,const u:!ℕ,const j:!ℕ){
+	x[j]:=
+		if u==2 { X(x[j]) }
+		else { x[tqx(j)] }; /// error
+	return x;
+}
+
+def inLoop(x:𝔹^2,const n:!ℕ)qfree{
+	y:=let {
+		t:=dup(n);
+		for j in 0..2 {
+			u:=dup(t);
+			t+=1;
+			x[j]:=
+				if u==2 { X(x[tqx(j)]) } /// error
+				else { x[j] };
+		}
+	} in x;
+	return y;
+}
+
+def twoComponents(x:𝔹^2,const c:!𝔹){
+	(x[0],x[1]):=
+		if c { (x[tqx(1)],H(x[0])) } /// error
+		else { (x[1],x[0]) };
+	return x;
+}

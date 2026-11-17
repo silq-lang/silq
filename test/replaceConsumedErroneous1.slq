@@ -1,0 +1,19 @@
+def duplicated(){
+	x:=vector(2,0:𝔹);
+	(x[1],x[0],z):=(
+		dup(tqx(x[0])), /// error
+		H(x[0]),
+		x[1]);
+	return (x,z);
+}
+
+def inLoop(){
+	x:=vector(3,0:𝔹);
+	for i in 0..2{
+		(x[i],y):=(
+			dup(tqx(x[i])), /// error
+			X(x[i]));
+		measure(y);
+	}
+	return x;
+}
