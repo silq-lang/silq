@@ -1,0 +1,41 @@
+def forgetConsumed(x:𝔹){
+	y:=dup(x);
+	t:=X(dup(y));
+	if t {
+		r:=X(x);
+	}else{
+		r:=x;
+	}
+	forget(t); /// error
+	return (r,tqx); /// error
+}
+
+def recomputeConsumed(y:𝔹,z:𝔹,c:!𝔹){
+	v0:=dup(y);
+	v1:=dup(v0);
+	v2:=X(dup(z));
+	if c { m1:=measure(v2); w2:=dup(v2); m2:=measure(w2); m3:=measure(v1); }
+	return (y,z,
+		v1, /// error
+		v2,tqx); /// error
+}
+
+def typed(c:!𝔹){
+	x:=H(0:𝔹); /// error
+	if c {
+		y:=tqx:!𝔹; /// error
+		return y;
+	}
+}
+
+def failing(x:𝔹){
+	y:=H(0:𝔹); /// error
+	return x;
+}
+
+def callFailing(c:!𝔹){
+	x:=H(0:𝔹); /// error
+	if c {
+		return failing(x);
+	}
+}

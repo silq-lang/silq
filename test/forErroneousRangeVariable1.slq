@@ -1,0 +1,27 @@
+def phaseQ[n:!ℕ](const φ:uint[n])mfree{
+	for i in [tqx(0)..n){ /// error
+		if (φ&2^i)!=0{
+			phase(2·π·2^(i-n));
+		}
+	}
+}
+
+def powered(xs:!ℕ^8){
+	for k in [0..tqx(3)){ /// error
+		y:=xs[2^k];
+	}
+}
+
+def adjacent[n:!ℕ](a:𝔹^n){
+	for i in (tqx(n)..-1..1]{ /// error
+		(a[i],a[i-1]):=(X(a[i]),X(a[i-1]));
+	}
+	return a;
+}
+
+def adjacentReversed[n:!ℕ](a:𝔹^n){
+	for i in [1..tqx(n)){ /// error
+		(a[i],a[i-1]):=(a[i],a[i-1]);
+	}
+	return a;
+}

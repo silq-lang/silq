@@ -1,0 +1,35 @@
+def converted(n:!ℕ){
+	k:=3;
+	x:=0:!uint[k];
+	x[tqx(0)]=1; /// error
+	x:=x as !ℕ;
+	return x;
+}
+
+def convertedLoop(n:!ℕ){
+	k:=3;
+	x:=0:!uint[k];
+	for i in 0..k{
+		x[i]=measure(tqx(H(0))); /// error
+	}
+	x:=x as !ℕ;
+	return x;
+}
+
+def convertedRepeated(n:!ℕ){
+	k:=n+1;
+	while true {
+		x:=0:!uint[k];
+		for i in 0..k{
+			x[i]=measure(tqx(H(0))); /// error
+		}
+		x:=x as !ℕ;
+		if x<n{ return x; }
+	}
+}
+
+def caller(n:!ℕ){
+	y:=converted(n);
+	z:=y+1;
+	return z;
+}

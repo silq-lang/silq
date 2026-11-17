@@ -1,0 +1,30 @@
+def doWhileOuter(const c:!𝔹){
+	x:=vector(1,0:𝔹);
+	n:=x.length; x:=x coerce 𝔹^n;
+	k:=0;
+	do{ k+=1; }while k<2 {
+		if c {
+			do{ }while true { return tqx; } /// error
+		}else{
+			n+=1;
+		}
+	}
+	return n;
+}
+
+def doWhileInner(const c:!𝔹){
+	x:=vector(1,0:𝔹);
+	n:=x.length; x:=x coerce 𝔹^n;
+	k:=0;
+	do{
+		k+=1;
+	}while k<2 {
+		if c {
+			j:=0;
+			do{ j+=1; }while j<2 { return (0,tqx); } /// error
+		}else{
+			n+=1;
+		}
+	}
+	return n;
+}

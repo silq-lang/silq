@@ -1,0 +1,28 @@
+def flag():tqx(!𝔹){ /// error
+	return true;
+}
+
+def branches(c:!𝔹){
+	if c { r:=flag(); } else { r:=flag(); }
+	return r;
+}
+
+def expression(c:!𝔹){
+	r:=if c then flag() else flag();
+	return r;
+}
+
+def nested(c:!𝔹,d:!𝔹){
+	if c {
+		if d { r:=flag(); } else { r:=flag(); }
+	} else {
+		r:=false;
+	}
+	return r;
+}
+
+def closure(c:!𝔹){
+	f:=λ(x:!𝔹)qfree:tqx(!𝔹){ return x; }; /// error
+	if c { r:=f(c); } else { r:=f(c); }
+	return r;
+}

@@ -1,0 +1,41 @@
+def loopTransformation(){
+	xs:=vector(5,0:𝔹);
+	y:=H(0:𝔹);
+	with{
+		repeat 2 { xs[0]:=CNOT(y,xs[0]); }
+	}do{
+		xs:=tqx(xs); /// error
+		y:=X(y);
+	}
+	return (xs,y);
+}
+
+def forTransformation(){
+	xs:=vector(5,0:𝔹);
+	y:=H(0:𝔹);
+	with{
+		for i in 0..5{ xs[i]:=CNOT(y,xs[i]); }
+	}do{
+		xs[tqx(2)]:=H(xs[2]); /// error
+		y:=H(H(y));
+	}
+	return (xs,y);
+}
+
+def reversedCall(){
+	y:=H(0:𝔹);
+	t:=0:𝔹;
+	repeat 2 {
+		CNOT(y,t):=tqx(t); /// error
+	}
+	return (t,y);
+}
+
+def reversedCallBranch(c:!𝔹){
+	y:=H(0:𝔹);
+	t:=0:𝔹;
+	if c {
+		CNOT(y,t):=tqx(t); /// error
+	}
+	return (t,y);
+}
