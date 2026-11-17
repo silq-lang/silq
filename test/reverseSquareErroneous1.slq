@@ -1,0 +1,42 @@
+def inBranch(c:!𝔹){
+	f:=tqx(λ[moved x:𝔹]mfree ⇒ x); /// error
+	if c { f[x]:=f[H(1:𝔹)]; } else { x:=H(0:𝔹); }
+	return measure(H(x));
+}
+def twice(){
+	f:=tqx(λ[moved x:𝔹]mfree ⇒ x); /// error
+	f[x]:=f[H(0:𝔹)];
+	f[y]:=f[H(x)];
+	return measure(y);
+}
+def inTuple(){
+	f:=tqx(λ[moved x:𝔹]mfree ⇒ x); /// error
+	(f[x],y):=(f[H(0:𝔹)],H(1:𝔹));
+	return (measure(H(x)),measure(H(y)));
+}
+def annotated(){
+	f:=tqx(λ[moved x:𝔹]mfree ⇒ x); /// error
+	f[x]:𝔹:=f[H(0:𝔹)];
+	return measure(H(x));
+}
+def replaced(){
+	a:=tqx(vector(3,0:𝔹)); /// error
+	i:=2;
+	a[i]:=H(0:𝔹);
+	return (a,i:𝔹^2); /// error
+}
+def nested(){
+	a:=tqx(vector(3,vector(2,0:𝔹))); /// error
+	a[k][0]:=H(0:𝔹); /// error
+	return a;
+}
+def assigned(){
+	f:=tqx(λ[moved x:𝔹]mfree ⇒ x); /// error
+	f[x]=f[H(0:𝔹)]; /// error
+	return f;
+}
+def opAssigned(){
+	a:=tqx(vector(3,0:!ℕ)); /// error
+	a[k]+=1; /// error
+	return a;
+}

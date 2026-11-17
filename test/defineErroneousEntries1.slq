@@ -1,0 +1,36 @@
+def listed(n:!ℕ){
+	if n==0 { return []; }
+	ys:=tqx(split(n sub 1)); /// error
+	return ys~[0:𝔹];
+}
+def split(n:!ℕ):𝔹[]{
+	if n==0 { return []; }
+	ys:=listed(n);
+	if ys.length==2 {
+		(a,b):=ys;
+		return [a,b];
+	}
+	return ys;
+}
+
+def paired(n:!ℕ){
+	if n==0 { return ((),()); }
+	t:=tqx(unpacked(n sub 1)); /// error
+	return t;
+}
+def unpacked(n:!ℕ):!ℕ{
+	t:=paired(n);
+	(a,b,c):=t;
+	return 0;
+}
+
+def vectored(n:!ℕ){
+	if n==0 { return []; }
+	ys:=tqx(unpackedVector(n sub 1)); /// error
+	return ys;
+}
+def unpackedVector(n:!ℕ):𝔹[]{
+	ys:=vectored(n);
+	[a,b]:=ys;
+	return [a,b];
+}

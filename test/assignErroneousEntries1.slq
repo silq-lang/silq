@@ -1,0 +1,19 @@
+def emptied(x:!ℕ){
+	if x==0 { return []; }
+	return tqx; /// error
+}
+def assigned(){
+	(a,b):=(0,0);
+	(a,b)=emptied(3);
+	return a+b;
+}
+
+def paired(x:!ℕ){
+	if x==0 { return (1,2); }
+	return tqx; /// error
+}
+def assignedPartially(){
+	(a,b,c):=(0,0,0);
+	(a,b,c)=paired(3);
+	return a+b+c;
+}

@@ -4590,8 +4590,16 @@ class ScopeWriter {
 		auto rTrue = ifTrue.genCompoundValue(e.then, null, e.type);
 		auto i2 = cw.code[].length;
 		auto rFalse = ifFalse.genCompoundValue(e.othw, null, e.type);
+		auto i3 = cw.code[].length;
 		auto abortTrue = ifTrue.pendingAbort, abortFalse = ifFalse.pendingAbort; // (a `let` within a branch aborts)
-		if(scThen && scThen.interleave) interleaveBranches(cw, i0, i1, i2, cw.code[].length);
+		ast_decl.Declaration[] eager;
+		bool merges = scThen && !abortTrue && !abortFalse; // (as for `if` statements, e.g., the versions of a `once` function that the branches call, which is spent after them)
+		if(merges) {
+			scope loc = PushLocation(ctx, locEnd(e.loc));
+			eager = genEagerMerges(cond, ifFalse, ifTrue, i1, i2, i3);
+		}
+		if(eager.length) interleaveBranches(cw, i0, i1, i2, i3, cw.code[].length);
+		else if(scThen && scThen.interleave) interleaveBranches(cw, i0, i1, i2, i3);
 		if(abortTrue && abortFalse || cond.isQuantum && (abortTrue || abortFalse)) { // (classical code under quantum control runs regardless of the condition)
 			ifTrue.valDeallocError(rTrue);
 			ifFalse.valDeallocError(rFalse);
@@ -4607,11 +4615,16 @@ class ScopeWriter {
 			return valError(pendingAbort, e.type);
 		}
 		auto r = valMerge(cond, rFalse, rTrue);
-
-		assert(!ifTrue.nscope || ifTrue.nscope.mergedVars.length == 0);
+		if(scThen) {
+			scope loc = PushLocation(ctx, locEnd(e.loc));
+			if(abortTrue) mergePartialAbort(new ItePartialAbort(cond, abortTrue, ifFalse)); // (as for `if` statements, the versions of the branch that does not abort, under a classical condition)
+			else if(abortFalse) mergePartialAbort(new ItePartialAbort(cond.invert(), abortFalse, ifTrue));
+			else genMerge(cond, ifFalse, ifTrue, eager);
+		} else {
+			assert(!ifTrue.nscope || ifTrue.nscope.mergedVars.length == 0);
+			assert(!ifFalse.nscope || ifFalse.nscope.mergedVars.length == 0);
+		}
 		ifTrue.checkEmpty(!!abortTrue);
-
-		assert(!ifFalse.nscope || ifFalse.nscope.mergedVars.length == 0);
 		ifFalse.checkEmpty(!!abortFalse);
 
 		if(cond.isQuantum) qcg.forget(cond.qreg);

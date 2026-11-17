@@ -1,0 +1,46 @@
+// args: --run
+
+def forgotten(c:!𝔹){
+	(x,y):=(1:𝔹,0:𝔹);
+	def f()⇒CNOT(x,y);
+	g:=measure(f);
+	z:=(if c then g() else g());
+	forget(g);
+	return (measure(x),measure(z));
+}
+
+def returned(c:!𝔹){
+	(x,y):=(1:𝔹,0:𝔹);
+	def f()⇒CNOT(x,y);
+	g:=measure(f);
+	y:=(if c then g() else g());
+	return (measure(x),measure(y),g);
+}
+
+def abortingElse(c:!𝔹){
+	(x,y):=(1:𝔹,0:𝔹);
+	def f()⇒CNOT(x,y);
+	g:=measure(f);
+	t:=(1,2);
+	z:=(if c then g() else (let { a:=t[5]; } in 0:𝔹, g())[1]);
+	return (measure(x),measure(z),g);
+}
+
+def abortingThen(c:!𝔹){
+	(x,y):=(1:𝔹,0:𝔹);
+	def f()⇒CNOT(x,y);
+	g:=measure(f);
+	t:=(1,2);
+	z:=(if c then (let { a:=t[5]; } in 0:𝔹, g())[1] else g());
+	forget(g);
+	return (measure(x),measure(z));
+}
+
+def main(){
+	(a,b,g):=returned(false);
+	(d,e,h):=returned(true);
+	(k,l,m):=abortingElse(true);
+	r:=(forgotten(true),forgotten(false),(a,b),(d,e),(k,l),abortingThen(false));
+	assert(r==((1,1),(1,1),(1,1),(1,1),(1,1),(1,1)));
+	return r;
+}

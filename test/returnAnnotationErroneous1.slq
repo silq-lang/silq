@@ -1,0 +1,23 @@
+def forward(){
+	return tqx(backward()); /// error
+}
+def backward():typeof(forward()){
+	return 3;
+}
+
+def first(){
+	return tqx(second()); /// error
+}
+def second():typeof(third()){
+	return 3;
+}
+def third():typeof(first()){
+	return second();
+}
+
+def tupled(){
+	return (tqx(0),pair()); /// error
+}
+def pair():typeof(tupled()){
+	return (1,2);
+}
