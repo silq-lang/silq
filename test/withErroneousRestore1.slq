@@ -1,0 +1,17 @@
+def consumed(n:!ℕ){
+	a:=tqx(n); /// error
+	with { b:=move(a); c:=b+1; } do { d:=c-1; }
+	return a;
+}
+
+def movedAndError(){
+	x:=H(0:𝔹);
+	with { y:=X(x); z:=tqx; } do { w:=dup(y); forget(w); } /// error
+	return x;
+}
+
+def typeLet(n:!ℕ){
+	x:=vector(n,0:𝔹);
+	x:=x:𝔹^(let { a:=tqx(n); with { b:=move(a); c:=b+1; } do { d:=c-1; } } in a); /// error
+	return x;
+}

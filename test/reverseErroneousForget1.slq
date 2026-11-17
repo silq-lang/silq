@@ -1,0 +1,17 @@
+def forgotten(){
+	x:=tqx(1:int[10]); /// error
+	forget(x=2:int[10]):=forget(x=1:int[10]);
+	return measure(x=2);
+}
+
+def nested(){
+	x:=tqx(1:int[10]); /// error
+	(forget(x=2:int[10]),y):=(forget(x=1:int[10]),3);
+	return (measure(x=2),y);
+}
+
+def value(){
+	x:=1:int[10];
+	forget(x=tqx):=forget(x=1:int[10]); /// error
+	return measure(x=2);
+}

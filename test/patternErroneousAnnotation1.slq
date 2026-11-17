@@ -1,0 +1,21 @@
+def nestedCat(xs:𝔹^5){
+	m:=tqx(2); /// error
+	([a]~ys:_^m)~zs:=xs;
+	return (a,ys,zs);
+}
+
+def unbalancedCat[l:!ℕ,u:!ℕ](xs:𝔹^(u sub l)){
+	m:=tqx((l+u) div 2); /// error
+	([a]~xs₀:_^(m sub l))~([b]~xs₁):=xs;
+	return (a,xs₀,b,xs₁);
+}
+
+def tupleAnnotation(x:𝔹×𝔹){
+	(a,b):tqx:=x; /// error
+	return (b,a);
+}
+
+def vectorAnnotation(x:𝔹^3){
+	([a]~b):𝔹^tqx:=x; /// error
+	return (b,a);
+}

@@ -1,0 +1,28 @@
+def coerced(){
+	a:=H(0:𝔹); b:=tqx(dup(a)); /// error
+	c:=H(0:𝔹); d:=dup(c);
+	f0:=λ(const x:𝔹)qfree⇒x⊕c;
+	g0:=λ(const x:𝔹)qfree⇒x⊕d;
+	f:=λ(const x:𝔹)qfree⇒f0(x)⊕a;
+	g:=λ(const x:𝔹)qfree⇒g0(x)⊕b;
+	forget(g=f);
+	r:=f(0:𝔹);
+	forget(f);
+	r⊕=a; r⊕=c;
+	assert(measure(r)==0);
+	return (a,c);
+}
+
+def captured(){
+	c:=H(0:𝔹); d:=dup(c);
+	g:=λ(const x:𝔹)qfree⇒(x⊕d,tqx)[0]; /// error
+	return c;
+}
+
+def capturedClosure(){
+	c:=H(0:𝔹); d:=dup(c);
+	g0:=λ(const x:𝔹)qfree⇒x⊕d;
+	g:=λ(const x:𝔹)qfree⇒g0(x)⊕tqx; /// error
+	forget(g);
+	return c;
+}

@@ -1,0 +1,24 @@
+def redefined(q:𝔹){
+	with { def p()⇒dup(q); r:=tqx(p()); } do { } /// error
+	def p(a:!ℕ)qfree⇒a;
+	k:=p(1);
+	return (q,k);
+}
+
+def nested(q:𝔹,xs:𝔹^3){
+	with { with { } do { def p()⇒dup(q); r:=tqx(p()); } xs[1]:=X(xs[1]); } do { xs[2]:=X(xs[2]); } /// error
+	with { xs[0]:=H(xs[0]); with { } do { def p(a:!ℕ)qfree⇒a+1; k:=p(0); xs[k]:=X(xs[k]); } } do { xs[0]:=Z(xs[0]); }
+	return (q,xs);
+}
+
+def erroneousLocal(q:𝔹){
+	with { def p(){ return (dup(q),tqx); } r:=p(); } do { } /// error
+	def p(a:!ℕ)qfree⇒a;
+	k:=p(1);
+	return (q,k);
+}
+
+def used(){
+	with { y:=1; z:=tqx; } do { } /// error
+	return y; /// error
+}

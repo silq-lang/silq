@@ -1,0 +1,85 @@
+// args: --run
+
+def cnot(const x:𝔹,y:𝔹):𝔹{
+	y:=X(y);
+	if !x { y:=X(y); }
+	return y;
+}
+
+def atReturn(){
+	x:=H(0);
+	y:=dup(x);
+	z:=cnot(y,y);
+	return (x,z);
+}
+
+def beforeUpdate(){
+	x:=H(0);
+	y:=dup(x);
+	z:=cnot(y,y);
+	x:=H(x);
+	return (x,z);
+}
+
+def sameStatement(){
+	x:=H(0);
+	y:=dup(x);
+	(z,w):=(cnot(y,y),H(x));
+	return (w,z);
+}
+
+def throughForget(){
+	x:=H(0);
+	w:=dup(x);
+	y:=dup(w);
+	z:=cnot(y,y);
+	forget(w=dup(x));
+	return (x,z);
+}
+
+def inBranch(c:!𝔹){
+	x:=H(0);
+	y:=dup(x);
+	z:=cnot(y,y);
+	if c { x:=H(x); x:=H(x); }
+	return (x,z);
+}
+
+def underControl(){
+	x:=H(0);
+	q:=H(0);
+	y:=dup(x);
+	z:=cnot(y,y);
+	if q { x:=X(x); }
+	return (x,z,q);
+}
+
+def inLoop(){
+	x:=H(0);
+	y:=dup(x);
+	z:=cnot(y,y);
+	for i in 0..2 { x:=H(x); }
+	return (x,z);
+}
+
+def twice(){
+	x:=H(0);
+	y:=dup(x);
+	z:=cnot(y,y);
+	u:=cnot(y,y);
+	return (x,z,u);
+}
+
+def main(){
+	(a,b):=atReturn();
+	(c,d):=beforeUpdate();
+	(e,f):=sameStatement();
+	(g,h):=throughForget();
+	(i,j):=inBranch(true);
+	(k,l,m):=underControl();
+	(n,o):=inLoop();
+	(p,s,t):=twice();
+	r:=(measure(H(a)),measure(b),measure(c),measure(d),measure(e),measure(f),measure(H(g)),measure(h),measure(H(i)),measure(j),measure(H(k)),measure(l),measure(H(m)),measure(H(n)),measure(o),measure(H(p)),measure(s),measure(t));
+	assert(r==(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0));
+	return r;
+}

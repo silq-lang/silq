@@ -1,0 +1,24 @@
+def cnot(const x:𝔹,y:𝔹):𝔹{
+	y:=X(y);
+	if !x { y:=X(y); }
+	return y;
+}
+
+def cnotWith(const x:𝔹,y:𝔹,z:𝔹):𝔹×𝔹{
+	if x { y:=X(y); }
+	return (y,z);
+}
+
+def sameCall(){
+	x:=H(0);
+	y:=dup(x);
+	(z,w):=cnotWith(y,y,x); /// error
+	return (w,z);
+}
+
+def consumedBefore(){
+	x:=H(0);
+	y:=dup(x);
+	(w,z):=(H(x),cnot(y,y)); /// error
+	return (w,z);
+}
