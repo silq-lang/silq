@@ -1,0 +1,17 @@
+
+def pair()⇒(3,2);
+def nested(){
+	x:=0; y:=tqx(0); z:=0; /// error
+	((x,y),z)=(pair(),2);
+	return (x+1,y,z+1);
+}
+def annotated(){
+	x:=0; y:=tqx(0); z:=0; /// error
+	(((x:!ℕ),y),(z coerce !ℕ))=(pair(),2);
+	return (x+1,y,z+1);
+}
+def deeper(){
+	x:=0; y:=0; z:=tqx(0); /// error
+	(x,(y,z))=(1,(2,3));
+	return (x+1,y);
+}

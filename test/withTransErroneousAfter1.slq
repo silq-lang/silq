@@ -1,0 +1,11 @@
+
+def redefined():!ℕ{
+	x:=1677;
+	with{ x:=x as !uint[5]; t:=x[tqx(1)]; }do{ t:=X(t); } /// error
+	return x;
+}
+def converted(){
+	x:=vector(3,0:𝔹);
+	with{ x:=x as uint[3]; t:=x[tqx(1)]; }do{ t:=X(t); } /// error
+	return x:𝔹^3;
+}

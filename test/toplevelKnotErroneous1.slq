@@ -1,0 +1,9 @@
+
+us:=(0,vs[0]);
+vs:=(us[
+	tqx(0)]+1,2); /// error
+ws:=(ws[
+	tqx(1)],1); /// error
+def main(){
+	return (us,vs,ws);
+}

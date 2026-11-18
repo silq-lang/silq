@@ -1,0 +1,30 @@
+def inBody(){
+	x:=5:!ℕ;
+	with{
+		x:=tqx(x); /// error
+	}do{
+		t:=x[1];
+	}
+	return x;
+}
+
+def inTransformation(){
+	x:=5:!ℕ;
+	with{
+		x:=x+tqx; /// error
+		t:=x[1];
+	}do{
+		t:=X(t);
+	}
+	return x;
+}
+
+def quantumAggregate(x:𝔹^2){
+	with{
+		x:=tqx(x); /// error
+		y:=x[0];
+	}do{
+		y:=H(y);
+	}
+	return x;
+}
