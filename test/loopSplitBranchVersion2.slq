@@ -1,0 +1,30 @@
+// args: --run
+
+def twice(const a:𝔹){
+	b:=0:𝔹;
+	i:=0;
+	while i<3 {
+		if a { for j in 0..1 { } b:=X(b); } else { b:=X(b); }
+		if a { b:=X(b); b:=X(b); for k in 0..1 { b:=X(b); } }
+		b:=X(b);
+		i+=1;
+	}
+	return measure(b);
+}
+def tuples(const a:𝔹){
+	b:=0:𝔹;
+	i:=0;
+	while i<3 {
+		if a { for j in 0..1 { if j>=10 { assert(false); } b:=X(b); } b:=(X(b),1:𝔹)[0]; }
+		else { b:=(X(b),)[0]; b:=(X(b),)[0]; for j in 0..2 { b:=(X(b),)[0]; } }
+		if a { (b,c):=((X(b),)[0],1:𝔹); forget(c=1:𝔹); (b,d):=((X(b),)[0],1:𝔹); forget(d=1:𝔹); for k in 0..1 { b:=(X(b),)[0]; } }
+		b:=X(b);
+		i+=1;
+	}
+	return measure(b);
+}
+def main(){
+	r:=(twice(1:𝔹),twice(0:𝔹),tuples(1:𝔹),tuples(0:𝔹));
+	assert(r==(1,0,0,1));
+	return r;
+}

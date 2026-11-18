@@ -1,0 +1,36 @@
+def whileLoop(n:!ℕ){
+	while tqx(true) { n+=1; } /// error
+}
+def doWhileLoop(n:!ℕ){
+	do{ n+=1; }while tqx(true); /// error
+}
+def repeatLoop(n:!ℕ){
+	repeat tqx(n) { assert(false); } /// error
+}
+def calling(n:!ℕ){
+	whileLoop(n);
+}
+def power(a:!ℤstar[5]){
+	return a^whileLoop(1);
+}
+def sum(a:!ℕ){
+	x:=doWhileLoop(1);
+	return a+x;
+}
+def callingSum(a:!ℕ){
+	return a+calling(1);
+}
+def repeatSum(a:!ℕ){
+	return a+repeatLoop(1);
+}
+def lambdaSum(a:!ℕ){
+	f:=λ(n:!ℕ){ while tqx(true) { n+=1; } }; /// error
+	return a+f(1);
+}
+def returning(a:!ℕ){
+	if a==0 { return; }
+	while tqx(true) { a+=1; } /// error
+}
+def returningSum(a:!ℕ){
+	return a+returning(1); /// error
+}

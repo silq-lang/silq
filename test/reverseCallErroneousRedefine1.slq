@@ -1,0 +1,26 @@
+def erroneousBody(x:𝔹,const c:𝔹)⇒CNOT(tqx(c),x); /// error
+def declaredReturnType(x:𝔹,const c:𝔹):𝔹{ return CNOT(tqx(c),x); } /// error
+def redefine(){
+	x:=H(0);
+	y:=H(0);
+	erroneousBody(x,measure(x)):=y;
+	return H(x);
+}
+def redefineDeclared(){
+	x:=H(0);
+	y:=H(0);
+	declaredReturnType(x,measure(x)):=y;
+	return H(x);
+}
+def redefineTransformation(){
+	x:=H(0);
+	y:=H(0);
+	with{ erroneousBody(x,measure(x)):=y; }do{ x:=H(x); }
+	return x;
+}
+def redefineLive(){
+	x:=H(0);
+	y:=H(0);
+	erroneousBody(x,true):=y; /// error
+	return x;
+}

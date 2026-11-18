@@ -1,0 +1,23 @@
+def consumed(){
+	a:=H(0:𝔹);
+	b:=tqx(a); /// error
+	with a:=H(a) do { }
+	return a;
+}
+def reversedCall(){
+	a:=H(0:𝔹);
+	def O(a:tqx(𝔹))lifted⇒a; /// error
+	O(a):=H(O(a));
+	with a:=H(a) do { }
+	return a;
+}
+def branch(c:!𝔹){
+	a:=H(0:𝔹);
+	if c { b:=tqx(a); } else { b:=measure(a); } /// error
+	with a:=H(a) do { }
+	return a;
+}
+def local(){
+	with c:=tqx(0:𝔹) do { } /// error
+	return c; /// error
+}

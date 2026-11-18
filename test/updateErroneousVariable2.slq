@@ -1,0 +1,34 @@
+def extGcd(a:!ℤ,b:!ℤ){
+	(x,y,u,v):=(a,b,1,0):!ℤ^4;
+	while tqx(y≠0){ /// error
+		(x,y,u,v)=(y,x%y,v,u-(x div y)·v);
+	}
+	return (x,u);
+}
+def mulMod(a:!ℕ,b:!ℕ,n:!ℕ)⇒a·b%n;
+
+def modInverse(a:!ℕ,n:!ℕ){
+	(d,i):=extGcd(a,n);
+	i%=n;
+	return mulMod(a,i,n);
+}
+def annotated(n:!ℕ){
+	x:=tqx(n):!ℤ; /// error
+	x%=n;
+	return mulMod(x,x,n);
+}
+def captured(a:!ℕ,n:!ℕ){
+	(d,i):=extGcd(a,n);
+	i%=n;
+	f:=(b:!ℕ)⇒mulMod(b,i,n);
+	return f(a);
+}
+def kept(n:!ℕ){
+	x:=n;
+	x+=(1,2); /// error
+	return x:!𝔹; /// error
+}
+def builtin(){ /// error
+	H+=1; /// error
+	if measure(H(0:𝔹)) { return 1; }
+}

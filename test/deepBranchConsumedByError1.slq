@@ -1,0 +1,20 @@
+def deep(const c:!𝔹,x:𝔹){
+	if c { if c { if c { if c { if c { if c { if c { if c { if c { if c { if c { if c {
+		y:=dup(tqx(x)); /// error
+		measure(y);
+	} } } } } } } } } } } }
+	return measure(x);
+}
+def deepWith(const c:!𝔹,a:𝔹){
+	if c { if c { if c { if c { if c { if c { if c { if c { if c { if c { if c { if c {
+		b:=tqx(a); /// error
+	} } } } } } } } } } } }
+	with a:=H(a) do { }
+	return a;
+}
+def deepLoop(const c:!𝔹,q:𝔹){
+	if c { if c { if c { if c { if c { if c { if c { if c { if c { if c { if c {
+		repeat 2 { t:=tqx(q); } /// error
+	} } } } } } } } } } }
+	return q;
+}

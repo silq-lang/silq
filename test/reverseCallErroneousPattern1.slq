@@ -1,0 +1,23 @@
+def app01(xs:tqx(𝔹^2))⇒xs~[0,1]; /// error
+def same(xs:tqx(𝔹^4))⇒xs; /// error
+
+def pair(){
+	z:=(1:𝔹,1:𝔹,0:𝔹,1:𝔹);
+	app01([s,t]):=z;
+	return measure(s,t);
+}
+def annotated(){
+	z:=(1:𝔹,1:𝔹,0:𝔹,1:𝔹);
+	app01([s,t]:𝔹^2):=z;
+	return measure(s,t);
+}
+def nested(){
+	z:=(1:𝔹,1:𝔹,0:𝔹,1:𝔹);
+	app01([s,H(t)]):=z;
+	return measure(s,t);
+}
+def concatenated(){
+	z:=[1:𝔹,1:𝔹,0:𝔹,1:𝔹];
+	same((a:𝔹^2)~b):=z;
+	return measure(a,b);
+}

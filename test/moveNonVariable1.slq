@@ -1,0 +1,21 @@
+def g(const h:𝟙→!ℕ)⇒h();
+
+def captured(){
+	a:=1:!ℕ;
+	s:=g(λ()⇒move(tqx(a))+1); /// error
+	a:=[3,4]:!ℕ^2;
+	t:=[λ()⇒move(a)[1]][0]();
+	return (s,t);
+}
+def direct(){
+	a:=1:!ℕ;
+	b:=move(a+1); /// error
+	a:=(2,3):!ℕ×!ℕ;
+	return (a[0],b);
+}
+def indexed(){
+	xs:=[1,2,3]:!ℕ[];
+	y:=move(xs[0]); /// error
+	xs:=4:!ℕ;
+	return xs+y;
+}
