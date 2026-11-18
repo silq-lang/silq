@@ -5,7 +5,7 @@ def f(){
 	v:=vector(c,0:𝔹);
 	k:=0;
 	do{ k+=1; }while k<2{
-		c+=1; /// TODO
+		c+=1;
 	}
 	return c;
 }

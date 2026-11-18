@@ -1,0 +1,52 @@
+// args: --run
+
+def fail():⊥{ assert(false); }
+def quantumOuter(k0:!ℕ){
+	c:=1;
+	v:=vector(c,0:𝔹);
+	k:=k0;
+	do{ k+=1; }while k<2 {
+		c+=1; /// TODO
+		return (c,0);
+	}
+	w:=v.length;
+	return (c,w);
+}
+def classicalOuter(k0:!ℕ){
+	c:=1;
+	v:=vector(c,0:!𝔹);
+	k:=k0;
+	do{ k+=1; }while k<2 {
+		c+=1; /// TODO
+		return (c,0);
+	}
+	return (c,v.length);
+}
+def nestedReset(k0:!ℕ){
+	c:=1;
+	v:=vector(c,0:𝔹);
+	k:=k0;
+	do{ k+=1; }while k<2 {
+		j:=0;
+		do{ j+=1; }while j<2 { c+=1; } /// TODO
+		return (c,0);
+	}
+	w:=v.length;
+	return (c,w);
+}
+def abortingCall(k0:!ℕ){
+	c:=1;
+	v:=vector(c,0:𝔹);
+	k:=k0;
+	do{ k+=1; }while k<2 {
+		c+=1; /// TODO
+		fail();
+	}
+	w:=v.length;
+	return (c,w);
+}
+def main(){
+	r:=(quantumOuter(0),quantumOuter(5),classicalOuter(0),classicalOuter(5),nestedReset(0),nestedReset(5),abortingCall(5));
+	assert(r==((2,0),(1,1),(2,0),(1,1),(2,0),(1,1),(1,1)));
+	return r;
+}

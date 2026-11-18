@@ -1,0 +1,27 @@
+// args: --run
+
+def update(c:!𝔹,j:!ℕ){
+	x:=vector(2,0);
+	if c { x[0]+=2^(j,)[2]; }
+	return x;
+}
+def assign(c:!𝔹,j:!ℕ){
+	x:=vector(2,0);
+	if c { x[1]=(j,)[2]; } else { x[1]=j; }
+	return x;
+}
+def nested(c:!𝔹,j:!ℕ){
+	x:=vector(2,vector(2,0));
+	if c { x[1][0]+=(j,)[2]; }
+	return x;
+}
+def quantumUpdate(q:𝔹,j:!ℕ):𝔹×!ℕ^2{
+	x:=vector(2,0);
+	if q { x[0]+=2^(j,)[2]; }
+	return (q,x);
+}
+def main(){
+	r:=(update(false,1),assign(false,3),nested(false,1));
+	assert(r==([0,0],[0,3],[[0,0],[0,0]]));
+	return r;
+}

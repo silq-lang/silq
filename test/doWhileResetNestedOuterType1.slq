@@ -1,0 +1,37 @@
+// args: --run
+
+def nestedReset(){
+	c:=1;
+	v:=vector(c,0:𝔹);
+	k:=0;
+	do{ k+=1; }while k<3 {
+		j:=0;
+		do{ j+=1; }while j<2 { c+=1; } /// TODO
+	}
+	return c;
+}
+def inWhileBody(){
+	c:=1;
+	v:=vector(c,0:!𝔹);
+	k:=0;
+	while k<2 {
+		k+=1;
+		j:=0;
+		do{ j+=1; }while j<2 { c+=1; } /// TODO
+	}
+	return c;
+}
+def inForBody(){
+	c:=1;
+	v:=vector(c,0:𝔹);
+	for k in 0..2 {
+		j:=0;
+		do{ j+=1; }while j<3 { c+=k; } /// TODO
+	}
+	return c;
+}
+def main(){
+	r:=(nestedReset(),inWhileBody(),inForBody());
+	assert(r==(3,3,3));
+	return r;
+}

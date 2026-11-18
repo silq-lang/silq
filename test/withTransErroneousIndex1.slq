@@ -1,0 +1,36 @@
+def myH(x:𝔹)mfree{
+	x:=H(x);
+	return x;
+}
+def borrowed(){
+	xs:=(H(0:𝔹),H(0:𝔹));
+	with{
+		t:=myH(xs[tqx(0)]); /// error
+		u:=myH(xs[1]);
+		(t,u):=(u,t);
+	}do{
+		u⊕=1;
+	}
+	return xs;
+}
+def inBody(){
+	xs:=(H(0:𝔹),H(0:𝔹));
+	with{
+		t:=myH(xs[0]);
+	}do{
+		y:=dup(xs[tqx(1)]); /// error
+		t⊕=1;
+		forget(y);
+	}
+	return xs;
+}
+def ownBorrow(){
+	i:=measure(H(0:𝔹));
+	xs:=(H(0:𝔹),H(0:𝔹));
+	with t:=myH(xs[
+		(λ(c:!𝔹){ if c { return dup(i); } return move(i); })(false) /// error
+	]){
+		t⊕=1;
+	}
+	return xs;
+}

@@ -1,0 +1,59 @@
+def usedInBody(){
+	c:=1;
+	v:=vector(c,0:𝔹);
+	k:=0;
+	do{ k+=1; w:=v.length; }while k<2 { c+=1; } /// error
+	return c;
+}
+def usedInReset(){
+	c:=1;
+	v:=vector(c,0:𝔹);
+	k:=0;
+	do{ k+=1; }while k<2 { w:=v.length; c+=1; } /// error
+	return c;
+}
+def usedAfter(){
+	c:=1;
+	v:=vector(c,0:𝔹);
+	k:=0;
+	do{ k+=1; }while k<2 { c+=1; } w:=v.length; /// error
+	return (c,w);
+}
+def forgottenAfter(){
+	c:=1;
+	v:=vector(c,0:𝔹);
+	k:=0;
+	do{ k+=1; }while k<2 { c+=1; } forget(v); /// error
+	return c;
+}
+def usedInBranchAfter(b:!𝔹){
+	c:=1;
+	v:=vector(c,0:!𝔹);
+	k:=0;
+	do{ k+=1; }while k<2 { c+=1; } if b { w:=v.length; } /// error
+	return c;
+}
+def usedInOuterLoop(){
+	c:=1;
+	v:=vector(c,0:𝔹);
+	k:=0;
+	s:=0;
+	while k<2 { k+=1; s+=v.length; j:=0; do{ j+=1; }while j<2 { c+=1; } } /// error
+	return (c,s);
+}
+def usedInOuterBody(){
+	c:=1;
+	v:=vector(c,0:!𝔹);
+	k:=0;
+	s:=0;
+	do{ k+=1; s+=v.length; j:=0; do{ j+=1; }while j<2 { c+=1; } }while k<2; /// error
+	return (c,s);
+}
+def usedInOuterReset(){
+	c:=1;
+	v:=vector(c,0:!𝔹);
+	k:=0;
+	s:=0;
+	do{ k+=1; }while k<3 { s+=v.length; j:=0; do{ j+=1; }while j<2 { c+=1; } } /// error
+	return (c,s);
+}
