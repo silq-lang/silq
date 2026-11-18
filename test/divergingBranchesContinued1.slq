@@ -1,0 +1,69 @@
+def fail(b:𝔹):⊥{ assert(false); }
+
+def both(c:!𝔹){
+	b:=H(0:𝔹);
+	if c { b:=fail(b); } else { b:=fail(b); }
+	return measure(b);
+}
+
+def unmentioned(c:!𝔹){
+	b:=H(0:𝔹);
+	if c { b:=fail(b); } else { assert(false); }
+	return measure(b);
+}
+
+def updated(c:!𝔹){
+	b:=H(0:𝔹);
+	d:=0;
+	if c { d+=1; assert(false); } else { d+=2; assert(false); }
+	return (measure(b),d);
+}
+
+def controlled(const a:𝔹){
+	b:=0:𝔹;
+	if a { b:=fail(b); } else { b:=(X(b),)[1]; }
+	return measure(b);
+}
+
+def nested(a:!𝔹,c:!𝔹){
+	b:=H(0:𝔹);
+	if a { if c { b:=fail(b); } else { b:=fail(b); } } else { b:=fail(b); }
+	return measure(b);
+}
+
+def returning(c:!𝔹){
+	b:=H(0:𝔹);
+	if c { return measure(b); } else { b:=fail(b); }
+	return measure(b);
+}
+
+def looped(c:!𝔹,n:!ℕ){
+	b:=H(0:𝔹);
+	for i in 0..n { if c { b:=fail(b); } else { b:=fail(b); } b:=X(b); }
+	return measure(b);
+}
+
+def consumed(c:!𝔹){
+	b:=H(0:𝔹);
+	if c { x:=measure(b); assert(false); } else { b:=fail(b); }
+	return measure(b); /// error
+}
+
+def unconsumed(c:!𝔹){
+	b:=H(0:𝔹);
+	if c { b:=X(b); assert(false); } else { b:=Y(b); assert(false); } /// error
+	return 0;
+}
+
+def partial(c:!𝔹){
+	b:=H(0:𝔹);
+	if c { b:=X(b); assert(false); } else { x:=measure(b); assert(false); } /// error
+	return 0;
+}
+
+def partialAtEnd(c:!𝔹){
+	b:=H(0:𝔹);
+	if c { b:=X(b); assert(false); } else { x:=measure(b); assert(false); }
+}
+
+def main(){ }

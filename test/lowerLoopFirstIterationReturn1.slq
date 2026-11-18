@@ -1,0 +1,56 @@
+// args: --run
+
+def viaWhile(m:!ℕ){
+	x:=vector(m,0:𝔹);
+	k:=0;
+	while k<1 {
+		k+=1;
+		j:=0;
+		do{ j+=1; m+=2; x:=vector(m,0:𝔹); }while j<1 { return (0,[]:!𝔹[]); }
+		return (m,measure(x:𝔹[]));
+	}
+	return (1,[]:!𝔹[]);
+}
+
+def viaRepeat(m:!ℕ){
+	x:=vector(m,0:𝔹);
+	repeat 2 {
+		do{ m+=1; x:=vector(m,1:𝔹); }while m<2 { return (0,[]:!𝔹[]); }
+		return (m,measure(x:𝔹[]));
+	}
+	return (1,[]:!𝔹[]);
+}
+
+def viaFor(m:!ℕ){
+	x:=vector(m,0:𝔹);
+	for i in 1..3 {
+		do{ m+=i; x:=vector(m,0:𝔹); }while m<2 { return (0,[]:!𝔹[]); }
+		if i==1 { return (m,measure(x:𝔹[])); }
+		assert(false);
+	}
+	return (1,[]:!𝔹[]);
+}
+
+def notEntered(m:!ℕ){
+	x:=vector(m,0:𝔹);
+	k:=1;
+	while k<1 {
+		do{ m+=2; x:=vector(m,0:𝔹); }while k<1 { return (0,[]:!𝔹[]); }
+		return (m,measure(x:𝔹[]));
+	}
+	return (m+10,measure(x:𝔹[]));
+}
+
+def viaDoWhile(m:!ℕ){
+	x:=vector(m,0:𝔹);
+	do{
+		do{ m+=1; x:=vector(m,0:𝔹); }while m<2 { return (0,[]:!𝔹[]); }
+		return (m,measure(x:𝔹[]));
+	}while m<5;
+}
+
+def main(){
+	r:=(viaWhile(1),viaRepeat(1),viaFor(1),notEntered(1),viaDoWhile(1));
+	assert(r==((3,[0,0,0]),(2,[1,1]),(2,[0,0]),(11,[0]),(2,[0,0])));
+	return r;
+}

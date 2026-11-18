@@ -1,0 +1,8 @@
+// skipped
+// TODO: stop the inference early: each candidate return type contains the type of `main` itself (through `vector(3,main)`), so that its size doubles with each iteration, up to `--inference-limit`
+
+def main(){ /// error
+	a:=vector(3,main);
+	(a[0],f):=(H(0),() ⇒ a[0]);
+	return a;
+}
