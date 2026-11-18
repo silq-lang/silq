@@ -1,0 +1,18 @@
+// args: --run
+
+xs:=(0,xs[0]+1);
+ys:=((1,2),ys[0][1]+ys[0][0]);
+zs:=(0,zs[0]-1):!ℤ×!ℤ;
+ws:=[0,1,2,3,4]:!uint[ws.length]^_;
+ts:=(1,2,ts.length);
+us:=(0,vs[0]);
+vs:=(us[0]+1,2);
+ps:=(xs[1],xs[0]);
+bs:=[0,1,2,3,4]:!uint[ceil(log₂(bs.length)) coerce !ℕ]^_;
+ms:=(ms[1],ns[0],5);
+ns:=(ms[2],ms[0]);
+def main(){
+	r:=(xs,ys,zs,ws,ts,us,vs,ps,bs:!uint[3]^5,ms,ns);
+	assert(r==((0,1),((1,2),3),(0,-1),[0,1,2,3,4],(1,2,3),(0,1),(1,2),(1,0),[0,1,2,3,4],(5,5,5),(5,5)));
+	return r;
+}

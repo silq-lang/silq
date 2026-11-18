@@ -1,0 +1,11 @@
+
+a:=floor(log₂(0)); /// error
+b:=floor(sqrt(-1)); /// error
+c:=floor(1/0); /// error
+d:=log₂(8); /// TODO
+e:=floor((3/2):!ℝ); /// TODO
+f:=floor(log(5)); /// TODO
+g:=floor(exp2(1/2)); /// TODO
+h:=ceil(log₂(2^53+1)); /// TODO
+k:=floor(log₂(2^50-1)); /// TODO
+l:=floor(log10(10^7)); /// TODO

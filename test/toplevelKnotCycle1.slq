@@ -1,0 +1,7 @@
+xs:=(xs[1],xs[0]); /// error
+ys:=(0,ys); /// error
+zs:=[0,1]:!ℕ^(zs.length); /// error
+ps:=(ps[1],qs);
+qs:=(1,ps[0]); /// error
+us:=(us[1],vs[0]); /// error
+vs:=(gcd(us[0],1),1):!ℤ×!ℤ; /// error
