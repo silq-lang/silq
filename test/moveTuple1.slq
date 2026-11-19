@@ -1,0 +1,43 @@
+// args: --run
+
+def pair(){
+	(x,y):=(1,2);
+	(z,w):=move(x,y);
+	return move(z,w);
+}
+def nested(){
+	(x,y,z):=(H(0:𝔹),1:𝔹,3);
+	((a,b),c):=move((x,y),z);
+	return (measure(H(a)),measure(b),c);
+}
+def vectorMoved(){
+	(x,y):=(1:!ℕ,2:!ℕ);
+	v:=move([x,y]);
+	return v[0]+v[1];
+}
+def sum(const p:!ℕ×!ℕ)⇒p[0]+p[1];
+def borrowed(){
+	(x,y):=(1:!ℕ,2:!ℕ);
+	return sum(move(x,y));
+}
+def captured(){
+	(x,y):=(1:!ℕ,2:!ℕ);
+	f:=λ()⇒move(x,y);
+	return f();
+}
+def replaced(){
+	a:=(0:𝔹,1:𝔹);
+	a[0]:=X(move(a[0]));
+	return measure(a);
+}
+def temporary(){
+	a:=1:!ℕ;
+	b:=move(a+1);
+	c:=move(1);
+	return (a,b,c);
+}
+def main(){
+	r:=(pair(),nested(),vectorMoved(),borrowed(),captured(),replaced(),temporary());
+	assert(r==((1,2),(0,1,3),3,3,(1,2),(1,1),(1,2,1)));
+	return r;
+}

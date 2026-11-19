@@ -1,0 +1,29 @@
+def unreplaced(){
+	xs:=[1,2,3]:!ℕ[];
+	y:=move(xs[0]); /// error
+	xs:=4:!ℕ;
+	return xs+y;
+}
+def slice(){
+	xs:=[1,2,3]:!ℕ[];
+	ys:=move(xs[0..2]); /// error
+	return ys;
+}
+def qubits(qs:𝔹^2){
+	q:=move(qs[0]); /// error
+	return q;
+}
+def twice(){
+	x:=H(0:𝔹);
+	y:=move(x,x); /// error
+	return y;
+}
+def usedAfter(){
+	(x,y):=(1,2);
+	(z,w):=move(x,y);
+	t:=x; /// error
+	return (z,w);
+}
+def constant(const x:𝔹){
+	return move(x,0:𝔹); /// error
+}

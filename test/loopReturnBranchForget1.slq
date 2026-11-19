@@ -1,0 +1,45 @@
+// args: --run
+
+def forLoop(x:𝔹,k:!ℕ){
+	for i in 0..3 { t:=dup(x); if k>5 { forget(t); return x; } }
+	return x;
+}
+def whileLoop(x:𝔹,k:!ℕ){
+	while k<3 { t:=dup(x); if k>1 { forget(t); return (x,k); } k+=1; }
+	return (x,k);
+}
+def measured(x:𝔹,k:!ℕ){
+	for i in 0..3 { t:=dup(x); if i==k { forget(t); m:=measure(x); return m; } }
+	return measure(x);
+}
+def nested(x:𝔹,k:!ℕ){
+	repeat 2 { t:=dup(x); if k>0 { forget(t); if k>1 { return (x,2); } return (x,1); } }
+	return (x,0);
+}
+def afterReturn(c:!𝔹,x:𝔹,y:𝔹,k:!ℕ){
+	if c { return (x,y); }
+	for i in 0..3 { t:=dup(x); if k>5 { forget(t); return (x,y); } forget(t); }
+	return (x,y);
+}
+def controlled(x:𝔹,const q:𝔹){
+	for i in 0..2 { t:=dup(x); if q { forget(t); return x; } else { forget(t); } }
+	return x;
+}
+def otherBranch(x:𝔹,k:!ℕ){
+	for i in 0..3 { t:=dup(x); if k>5 { forget(t); return x; } else { x:=X(x); } }
+	return x;
+}
+def implicitForget(x:𝔹,y:𝔹,k:!ℕ){
+	for i in 0..2 { t:=dup(x); if k==2 { return (x,y); } else { x:=X(x); } }
+	return (x,y);
+}
+def controlledOther(x:𝔹,const q:𝔹){
+	for i in 0..2 { t:=dup(x); if q { forget(t); return x; } else { forget(t); x:=X(x); } }
+	return x;
+}
+def main(){
+	r:=(measure(forLoop(1:𝔹,7)),measure(whileLoop(0:𝔹,0)),measured(1:𝔹,1),measure(nested(1:𝔹,2)),measure(afterReturn(false,1:𝔹,0:𝔹,7)),measure(controlled(1:𝔹,0:𝔹)));
+	s:=(measure(otherBranch(1:𝔹,0)),measure(implicitForget(1:𝔹,0:𝔹,0)),measure(controlledOther(1:𝔹,0:𝔹)),measure(controlledOther(1:𝔹,1:𝔹)));
+	assert(r==(1,(0,2),1,(1,2),(1,0),1)&&s==(0,(1,0),1,1));
+	return (r,s);
+}

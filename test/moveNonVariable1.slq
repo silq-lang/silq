@@ -9,9 +9,9 @@ def captured(){
 }
 def direct(){
 	a:=1:!ℕ;
-	b:=move(a+1); /// error
-	a:=(2,3):!ℕ×!ℕ;
-	return (a[0],b);
+	b:=move(a+1);
+	c:=move(a);
+	return (b,c);
 }
 def indexed(){
 	xs:=[1,2,3]:!ℕ[];
