@@ -1,3 +1,5 @@
+// args: --run
+
 def main(){
 	return move(1);
 }

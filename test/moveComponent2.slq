@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	x:=vector(2,0);
+	x[0]:=move(x[0])+1;
+	(x[1],x[0]):=dup(move(x[0],x[1]));
+	assert(x=(0,1));
+	return x;
+}
