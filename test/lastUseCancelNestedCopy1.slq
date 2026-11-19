@@ -1,4 +1,4 @@
-// args --run
+// args: --run
 
 def f(){
 	w:=H(0:𝔹);

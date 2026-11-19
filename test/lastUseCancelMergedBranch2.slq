@@ -1,4 +1,4 @@
-// args: --ruun
+// args: --run
 
 def f(x:𝔹,c:!𝔹,d:!𝔹,e:!𝔹){
 	v0:=dup(x);
