@@ -1,0 +1,58 @@
+// args: --run
+
+def make(const k:!ℕ)qfree:⋃[n:!ℕ]. 𝔹^(n+1)⇒vector(k+1,0:𝔹);
+def qsize[n:!ℕ](const v:𝔹^n):!ℕ⇒n;
+def undo(){
+	x:=make(2);
+	reverse(make)(2,x);
+	return 1:!ℕ;
+}
+def within(){
+	with { x:=make(1); } do { r:=qsize(x); }
+	return r;
+}
+def inner(const k:!ℕ)qfree{
+	x:=make(k);
+	y:=x;
+	return y;
+}
+def outer(){
+	y:=inner(2);
+	reverse(inner)(2,y);
+	return 3:!ℕ;
+}
+def lengths(k:!ℕ):⋃[n:!ℕ]. !ℕ^(n+1)⇒vector(k+1,k);
+def size[n:!ℕ](v:!ℕ^n):!ℕ⇒n;
+def captured(){
+	x:=lengths(2);
+	def g():!ℕ⇒x[0]+size(x);
+	return g();
+}
+def returned(){
+	x:=lengths(2);
+	def g()⇒x;
+	return g;
+}
+def called(){
+	f:=returned();
+	y:=f();
+	return y[0]+size(y);
+}
+def merged(c:!𝔹){
+	if c {
+		x:=lengths(1);
+		def g()⇒x;
+		h:=g;
+	} else {
+		def g2()⇒vector(3,5:!ℕ);
+		h:=g2;
+	}
+	f:=h;
+	y:=f();
+	return y[0]+size(y);
+}
+def main(){
+	r:=(undo(),within(),outer(),captured(),called(),merged(true),merged(false));
+	assert(r==(1,2,3,5,5,3,8));
+	return r;
+}

@@ -1,0 +1,15 @@
+// args: --run
+
+def qubits(a:!ℕ,b:!ℕ):⋃[n:!ℕ][m:!ℕ]. 𝔹^(n+m)⇒vector(a+b,1:𝔹);
+def size[k:!ℕ](const v:𝔹^k):!ℕ⇒k;
+def opened(a:!ℕ,b:!ℕ){
+	y:=qubits(a,b);
+	s:=size(y);
+	r:=measure(y);
+	return (s,r:!𝔹[]);
+}
+def main(){
+	r:=(opened(0,1),opened(0,0),opened(2,1),opened(1,0));
+	assert(r==((1,[1]),(0,[]:!𝔹[]),(3,[1,1,1]),(1,[1])));
+	return r;
+}

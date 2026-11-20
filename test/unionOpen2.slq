@@ -1,0 +1,18 @@
+def lengths(k:!ℕ):⋃[n:!ℕ]. !ℕ^(n+1)⇒vector(k+1,k);
+def pairs(k:!ℕ):⋃[n:!ℕ]. !ℕ^n×!ℕ^n⇒(vector(k,1:!ℕ),vector(k,2:!ℕ));
+def add[n:!ℕ](v:!ℕ^n,w:!ℕ^n):!ℕ^n⇒v;
+def separate(){
+	(p,_):=pairs(2);
+	(_,q):=pairs(2);
+	return add(p,q); /// error
+}
+def different(){
+	x:=lengths(1);
+	y:=lengths(1);
+	return add(x,y); /// error
+}
+def member(){
+	x:=lengths(2);
+	y:=x:!ℕ^3; /// error
+	return y;
+}

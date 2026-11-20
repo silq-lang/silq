@@ -1,0 +1,52 @@
+// args: --run
+
+def lengths(k:!ℕ):⋃[n:!ℕ]. !ℕ^(n+1)⇒vector(k+1,k);
+def pairs(k:!ℕ):⋃[n:!ℕ]. !ℕ^n×!ℕ^n⇒(vector(k,1:!ℕ),vector(k,2:!ℕ));
+def add[n:!ℕ](v:!ℕ^n,w:!ℕ^n):!ℕ^n{
+	r:=vector(n,0:!ℕ);
+	for i in 0..n { r[i]=v[i]+w[i]; }
+	return r;
+}
+def first[n:!ℕ](v:!ℕ^(n+1)):!ℕ⇒v[0];
+def size[n:!ℕ](v:!ℕ^n):!ℕ⇒n;
+def opened(){
+	x:=lengths(3);
+	return (x[0],size(x),first(x));
+}
+def same(){
+	(p,q):=pairs(2);
+	return add(p,q):!ℕ[];
+}
+def twice(k:!ℕ){
+	x:=lengths(k);
+	return (x,x);
+}
+def kept(){
+	(a,b):=twice(2);
+	return add(a,b):!ℕ[];
+}
+def nested():⋃[m:!ℕ][n:!ℕ]. !ℕ^m×!ℕ^n⇒(vector(2,1:!ℕ),vector(3,2:!ℕ));
+def components(){
+	(u,v):=nested();
+	return (size(u),size(v));
+}
+def counter():Un[a:type]. a×(a→a)×(a→!ℕ)⇒(0:!ℕ,λ(x:!ℕ). x+1,λ(x:!ℕ). x);
+def package(){
+	(v,inc,get):=counter();
+	return get(inc(inc(v)));
+}
+def rows(k:!ℕ):⋃[n:!ℕ]. (!ℕ^n)^2⇒vector(2,vector(k,k));
+def vectors(){
+	[r,s]:=rows(2);
+	return add(r,s):!ℕ[];
+}
+def qubits(k:!ℕ):⋃[n:!ℕ]. 𝔹^(n+1)⇒vector(k+1,1:𝔹);
+def measured(){
+	x:=qubits(2);
+	return measure(x):!𝔹[];
+}
+def main(){
+	r:=(opened(),same(),kept(),components(),package(),vectors(),measured());
+	assert(r==((3,4,3),[3,3],[4,4,4],(2,3),2,[4,4],[1,1,1]));
+	return r;
+}

@@ -2715,9 +2715,10 @@ struct QState{
 		this=map!forgetImpl(var);
 	}
 	static if(language==silq){
-		void forgetVars(Declaration[] forgottenVars){
+		void forgetVars(Declaration[] forgottenVars,bool keepWitnesses=false){ // (`keepWitnesses`: the witnesses of unions, which `closeScope` forgets after the conversions of the merged variables, which read them, see `isUnionWitness`)
 			if(unreachable) return;
 			foreach(var;forgottenVars){
+				static if(language==silq) if(isUnionWitness(var)&&(keepWitnesses||var.getName !in vars)) continue; // (or forgotten by `closeScope`)
 				auto name=var.getName;
 				vars[name].forget(this);
 				vars.remove(name);
@@ -2986,7 +2987,7 @@ struct Interpreter(QState){
 			if(branch.blscope_){
 				if(result.isValid&&!result.isClassical()&&constLookup&&!implicitDup)
 					result=result.dup(qstate);
-				qstate.forgetVars(branch.blscope_.forgottenVars);
+				qstate.forgetVars(branch.blscope_.forgottenVars,true);
 			}
 		}
 		if(branch.blscope_) closeScope(branch.blscope_);
@@ -3307,6 +3308,10 @@ struct Interpreter(QState){
 			enforce(name in qstate.vars,text("missing variable `",name,"` when closing scope"));
 			if(qstate.vars[name].type !is type)
 				qstate.vars[name]=convertTo(qstate.vars[name],type,true,false,typeForDecl(merged)).toVar(qstate,false);
+		}
+		static if(language==silq) foreach(var;sc.forgottenVars) if(isUnionWitness(var)&&var.getName in qstate.vars){
+			qstate.vars[var.getName].forget(qstate);
+			qstate.vars.remove(var.getName);
 		}
 	}
 	Expression closedType(Expression te){
@@ -4386,7 +4391,30 @@ struct Interpreter(QState){
 	}
 	pragma(inline,false) void runStmAssignExp(AssignExp ae,ref QState retState){
 			auto lhs=ae.e1,rhs=runExp(ae.e2);
+			openUnions(ae.witnesses,ae.opened,rhs);
 			assignTo(lhs,rhs,ae.replacements);
+		}
+	void openUnions(VarDecl[] witnesses,Expression[] opened,ref QState.Value rhs){ // (the witnesses of the unions of the value, from its pairs, see `ast.semantic_.openUnions` and `convertUnion`)
+			foreach(i,w;witnesses){
+				auto type=evalType(closedType(opened[i]));
+				if(cast(UnionTy)type){
+					rhs=unionView(rhs,type);
+					enforce(cast(UnionTy)rhs.type&&isPair(rhs),"bad value of a union type");
+					qstate.assignTo(w.getName,rhs.array_[0]);
+					rhs=rhs.array_[1];
+					continue;
+				}
+				// (a union that the values of the earlier witnesses normalize, e.g., `⋃[m:!ℕ]. 𝔹^(n₍1₎+m)` to `𝔹[]` for `n₍1₎=0` (see `unionOf`), whose value is the member: the witness of its type)
+				UnionTy u;
+				Expression witness=null;
+				if(auto su=cast(UnionTy)opened[i]){
+					auto cod=closeType(su.cod,(Identifier id)=>id.scope_?lookupMeaning(qstate,id.meaning,true,id.scope_):qstate.readLocal(id.meaning.getName,true));
+					if(cod.isSemCompleted()&&!cod.isSemEvaluated()) cod=cod.eval();
+					witness=runtimeWitness(rhs,unionTy(su.name,su.dom,cod),u);
+				}
+				enforce(!!witness,text("cannot determine the value of `",w.getName,"` for a value of type `",rhs.type,"` in `",opened[i],"`"));
+				qstate.assignTo(w.getName,runExp(witness));
+			}
 		}
 	pragma(inline,false) void runStmDefineExp(DefineExp ae,ref QState retState){
 			if(ae.isSwap){
@@ -4395,6 +4423,7 @@ struct Interpreter(QState){
 				swap(tpl.e[0],tpl.e[1],[]);
 			}else{
 				auto lhs=ae.e1,rhs=runExp(ae.e2);
+				openUnions(ae.witnesses,ae.opened,rhs);
 				assignTo(lhs,rhs,[]);
 			}
 		}
@@ -4576,7 +4605,7 @@ struct Interpreter(QState){
 		}
 		static if(language==silq){
 			if(statements.blscope_)
-				qstate.forgetVars(statements.blscope_.forgottenVars);
+				qstate.forgetVars(statements.blscope_.forgottenVars,true);
 		}
 	}
 	void runFun(ref QState retState){

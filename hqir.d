@@ -2811,6 +2811,14 @@ class ScopeWriter {
 		return typeHasClassical(u.cod) ? ccg.boxIndex(ctypeSilqTuple, 2, cc, 1) : null;
 	}
 
+	Value openUnions(ast_decl.VarDecl[] witnesses, Expression[] opened, Value v) { // (the witnesses of the unions that the value is in define their `const` locals, see `ast.semantic_.openUnions`: the member)
+		foreach(i, w; witnesses) {
+			defineVar(w, valNewC(ccg.boxIndex(ctypeSilqTuple, 2, v.creg, 0)));
+			v = valNewQ(typeHasClassical(opened[i + 1]) ? ccg.boxIndex(ctypeSilqTuple, 2, v.creg, 1) : null, v.qreg);
+		}
+		return v;
+	}
+
 	CReg unionPack(CReg witness, CReg member) {
 		return ccg.boxPack(ctypeSilqTuple, [witness ? witness : ctx.nullReg, member ? member : ctx.nullReg]);
 	}
@@ -3523,6 +3531,7 @@ class ScopeWriter {
 		if(e.blscope_ && e.blscope_ is nscope && !scopeFree) {
 			scope loc = PushLocation(ctx, locEnd(e.loc));
 			foreach(decl; e.blscope_.forgottenVars) {
+				if(ast_ty.isUnionWitness(decl)) continue; // (see `genCompoundStmt`)
 				valForget(getVar(decl, false));
 			}
 		}
@@ -5403,6 +5412,7 @@ class ScopeWriter {
 			}
 		}
 		foreach(decl; nscope.forgottenVars) {
+			if(ast_ty.isUnionWitness(decl)) continue; // (classical: the merge reads it to convert the merged variables whose types mention it into unions, see `ast.type.eliminateVariables`)
 			if(!r.mayPass) {
 				// (the statements after the return or abort, which may define the variable, are not generated)
 				auto p = vars.getPtr(decl.getId);
@@ -6115,6 +6125,10 @@ class ScopeWriter {
 			}
 		}
 
+		if(e.witnesses.length) {
+			genLhs(lhs, openUnions(e.witnesses, e.opened, genExpr(rhs)), e.opened[$ - 1]);
+			return Result.passes();
+		}
 		auto pairs = appender!(Expression[2][]);
 		flattenDefine(lhs, rhs, pairs);
 		auto values = pairs[].map!(p => genExpr(p[1])).array;
@@ -6480,6 +6494,11 @@ class ScopeWriter {
 		}
 
 		auto v = genExpr(e.e2);
+		auto vTy = e.e2.type;
+		if(e.witnesses.length) {
+			v = openUnions(e.witnesses, e.opened, v);
+			vTy = e.opened[$ - 1];
+		}
 
 		// TODO
 		valForget(genExpr(e.e1));
@@ -6494,7 +6513,7 @@ class ScopeWriter {
 		}
 		lhs2 = lhs2.copy(ast_exp.Expression.CopyArgs(false, true));
 		ast_sem.expressionSemantic(lhs2, semContext(false));
-		genLhs(lhs2, v, e.e2.type);
+		genLhs(lhs2, v, vTy);
 
 		return Result.passes();
 	}

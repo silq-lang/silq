@@ -1,0 +1,43 @@
+// args: --run
+
+def lengths(k:!ℕ):⋃[n:!ℕ]. !ℕ^(n+1)⇒vector(k+1,k);
+def pairs(k:!ℕ):⋃[n:!ℕ]. !ℕ^n×!ℕ^n⇒(vector(k,1:!ℕ),vector(k,2:!ℕ));
+def add[n:!ℕ](v:!ℕ^n,w:!ℕ^n):!ℕ^n{
+	r:=vector(n,0:!ℕ);
+	for i in 0..n { r[i]=v[i]+w[i]; }
+	return r;
+}
+def size[n:!ℕ](v:!ℕ^n):!ℕ⇒n;
+def branches(c:!𝔹){
+	if c { x:=lengths(1); y:=(x,x); } else { y:=(vector(2,5:!ℕ),vector(2,6:!ℕ)); }
+	(a,b):=y;
+	return add(a,b):!ℕ[];
+}
+def loop(k:!ℕ){
+	s:=0:!ℕ;
+	for i in 0..k { x:=lengths(i); s+=size(x); }
+	return s;
+}
+def updated(){
+	x:=lengths(1);
+	x=lengths(3);
+	(p,q):=pairs(1);
+	(p,q)=pairs(2);
+	return (x[0],p[1]+q[1]);
+}
+def annotated(){
+	x:⋃[n:!ℕ]. !ℕ^(n+1):=lengths(1);
+	x=lengths(2);
+	return x:!ℕ[];
+}
+def shifted(a:!ℕ):⋃[n:!ℕ]. !ℕ^(n+2)⇒vector(a+2,a);
+def generalized(c:!𝔹){
+	if c { v:=shifted(0); w:=(v,v); } else { w:=(vector(1,1:!ℕ),vector(1,2:!ℕ)); }
+	(x,y):=w;
+	return add(x,y):!ℕ[];
+}
+def main(){
+	r:=(branches(true),branches(false),loop(3),updated(),annotated(),generalized(true),generalized(false));
+	assert(r==([2,2],[11,11],6,(3,3),[2,2,2],[0,0],[3]));
+	return r;
+}
