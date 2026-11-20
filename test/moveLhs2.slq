@@ -1,0 +1,13 @@
+def measured(){
+	def f(y:𝔹)⇒measure(y);
+	move(f(x)):=0; /// error
+	return ();
+}
+def constant(const x:𝔹){
+	move(x):=H(x); /// error
+	return ();
+}
+def twice(){
+	move(x,x):=(1,2); /// error
+	return x;
+}

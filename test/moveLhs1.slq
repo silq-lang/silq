@@ -1,0 +1,37 @@
+// args: --run
+
+def swapped(a:𝔹,b:𝔹){
+	(move(a),move(b)):=(b,a);
+	return (a,b);
+}
+def updated(x:!ℕ){
+	move(x)+=1;
+	move(x):=move(x)·2;
+	return x;
+}
+def nested(q:𝔹){
+	move(move(q)):=H(q);
+	return H(q);
+}
+def components(){
+	a:=vector(3,0:!ℕ);
+	for i in 0..3 { move(a[i]):=move(a[i])+i+1; }
+	move(a[0],a[2]):=(move(a[2]),move(a[0]));
+	move(a[1])-=1;
+	return a;
+}
+def quantumComponents(c:!𝔹){
+	q:=vector(2,0:𝔹);
+	if c { move(q[0])⊕=1; }
+	(move(q[1]),move(q[0])):=move(q[0],q[1]);
+	return q;
+}
+def shadowed(y:𝔹){
+	def move(z:𝔹)mfree⇒X(z);
+	move(w):=y;
+	return w;
+}
+def main(){
+	r:=(measure(swapped(0:𝔹,1:𝔹)),updated(3),measure(nested(1:𝔹)),components(),measure(quantumComponents(true)),measure(quantumComponents(false)),measure(shadowed(0:𝔹)));
+	return r;
+}

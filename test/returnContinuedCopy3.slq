@@ -1,0 +1,46 @@
+// args: --run
+
+def laterConditional(x:𝔹,c:!𝔹,d:!𝔹){
+	o:=X(dup(x));
+	if c { x:=X(x); } else { forget(o); return (measure(x),0:!𝔹); }
+	if d { t:=dup(o); forget(t); }
+	b:=measure(o);
+	return (measure(x),b);
+}
+def bothBranches(x:𝔹,c:!𝔹,d:!𝔹){
+	o:=dup(x);
+	if c { x:=X(x); return (measure(x),0:!𝔹); } else { x:=X(x); }
+	t:=dup(o);
+	if d { forget(t); } else { forget(t); }
+	b:=measure(o);
+	return (measure(x),b);
+}
+def sunk(x:𝔹,c:!𝔹,d:!𝔹){
+	o:=X(dup(x));
+	if c { } else { return (measure(x),0:!𝔹); }
+	x:=X(x);
+	if d { t:=dup(o); forget(t); b:=measure(o); } else { t:=dup(o); forget(t); b:=measure(o); }
+	return (measure(x),b);
+}
+def nested(x:𝔹,c:!𝔹,d:!𝔹){
+	o:=X(dup(x));
+	if c { x:=X(x); } else { forget(o); return (measure(x),0:!𝔹); }
+	if d { if c { t:=dup(o); forget(t); } }
+	b:=measure(o);
+	return (measure(x),b);
+}
+def loop(x:𝔹,c:!ℕ,d:!𝔹){
+	for i in 0..2 {
+		o:=dup(x);
+		if i==c { forget(o); return (measure(x),1:!𝔹); } else { x:=X(x); }
+		if d { t:=dup(o); forget(t); }
+		b:=measure(o);
+		x:=X(x);
+	}
+	return (measure(x),0:!𝔹);
+}
+def main(){
+	r:=(laterConditional(0:𝔹,true,true),laterConditional(1:𝔹,true,false),laterConditional(0:𝔹,false,true),bothBranches(0:𝔹,true,true),bothBranches(1:𝔹,false,true),bothBranches(0:𝔹,false,false),sunk(0:𝔹,true,true),sunk(1:𝔹,true,false),sunk(0:𝔹,false,true),nested(1:𝔹,true,true),nested(0:𝔹,false,true),loop(0:𝔹,0,true),loop(1:𝔹,1,true),loop(0:𝔹,5,false));
+	assert(r==((1,1),(0,0),(0,0),(1,0),(0,1),(1,0),(1,1),(0,0),(0,0),(0,0),(0,0),(0,1),(1,1),(0,0)));
+	return r;
+}

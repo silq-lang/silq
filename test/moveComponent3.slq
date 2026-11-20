@@ -2,12 +2,12 @@
 
 def main(){
 	x:=vector(2,0);
-	move(x):=x; /// TODO
-	move(x[0]):=move(x[0])+1; /// TODO
-	move(x[1],x[0]):=dup(move(x[0],x[1])); /// TODO
-	(move(x[1]),x[0]):=dup(move(x[0],x[1])); /// TODO
-	move(x[1],move(x[0])):=dup(move(x[0],x[1])); /// TODO
-	move(x[0])+=2; /// TODO
+	move(x):=x;
+	move(x[0]):=move(x[0])+1;
+	move(x[1],x[0]):=dup(move(x[0],x[1]));
+	(move(x[1]),x[0]):=dup(move(x[0],x[1]));
+	move(x[1],move(x[0])):=dup(move(x[0],x[1]));
+	move(x[0])+=2;
 	assert(x=(2,1));
 	return x;
 }
