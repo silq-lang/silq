@@ -1,0 +1,32 @@
+// args: --run
+
+def indirect(x:𝔹,k:!ℕ){
+	repeat 3 { t:=dup(x); u:=dup(t); if k==0 { return (x,0); } forget(u); }
+	return (x,1);
+}
+def elseReturns(x:𝔹,y:𝔹,k:!ℕ){
+	for i in 0..3 { t:=dup(x); u:=dup(t); if i!=k { y:=X(y); } else { return (x,y); } forget(u); }
+	return (x,y);
+}
+def whileLoop(x:𝔹,k:!ℕ){
+	c:=0;
+	while c<3 { t:=dup(x); u:=dup(t); if c==k { return (x,c); } forget(u); c+=1; }
+	return (x,c);
+}
+def measured(x:𝔹,k:!ℕ){
+	for i in 0..3 { t:=dup(x); u:=dup(t); if i==k { m:=measure(x); return m; } forget(u); }
+	return measure(x);
+}
+def implicitForget(x:𝔹,k:!ℕ){
+	for i in 0..3 { t:=dup(x); u:=dup(t); if i==k { return (x,i); } }
+	return (x,3);
+}
+def controlled(x:𝔹,const q:𝔹){
+	for i in 0..2 { t:=dup(x); u:=dup(t); if q { return x; } forget(u); }
+	return x;
+}
+def main(){
+	r:=(measure(indirect(1:𝔹,0)),measure(indirect(1:𝔹,2)),measure(elseReturns(1:𝔹,0:𝔹,1)),measure(whileLoop(1:𝔹,1)),measured(1:𝔹,2),measure(implicitForget(0:𝔹,1)),measure(controlled(1:𝔹,0:𝔹)),measure(controlled(1:𝔹,1:𝔹)));
+	assert(r==((1,0),(1,1),(1,1),(1,1),1,(0,1),1,1));
+	return r;
+}

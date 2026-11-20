@@ -1,0 +1,10 @@
+// args: --run
+
+def power(z:!ℂ,k:!ℤ){
+	return z^k;
+}
+def main(){
+	r:=(power(𝑖,-1),power(2·𝑖,-2),power(1+𝑖,-1),cpow(1+𝑖,-2),power(2:!ℂ,-3),(-𝑖)^(-3));
+	assert(r==(-𝑖,-1/4,(1-𝑖)/2,-𝑖/2,1/8,-𝑖));
+	return r;
+}

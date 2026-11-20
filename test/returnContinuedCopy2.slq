@@ -1,0 +1,17 @@
+def copyBefore(x:𝔹,c:!𝔹){
+	o:=X(dup(x));
+	t:=dup(o);
+	if c { o:=H(o); x:=X(x); } else { forget(t); forget(o); return (measure(x),0:!𝔹); }
+	forget(t); /// error
+	b:=measure(o);
+	return (measure(x),b);
+}
+def updatedAfterCopy(x:𝔹,c:!𝔹){
+	o:=X(dup(x));
+	if c { x:=X(x); } else { forget(o); return (measure(x),0:!𝔹); }
+	t:=dup(o);
+	o:=H(o);
+	forget(t); /// error
+	b:=measure(o);
+	return (measure(x),b);
+}

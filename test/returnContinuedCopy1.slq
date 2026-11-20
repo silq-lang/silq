@@ -1,0 +1,40 @@
+// args: --run
+
+def forgetInReturning(x:𝔹,c:!𝔹){
+	o:=X(dup(x));
+	if c { x:=X(x); } else { forget(o); return (measure(x),0:!𝔹); }
+	t:=dup(o); forget(t); b:=measure(o);
+	return (measure(x),b);
+}
+def forgetAtReturn(x:𝔹,c:!𝔹){
+	o:=X(dup(x));
+	if c { x:=X(x); } else { return (measure(x),0:!𝔹); }
+	t:=dup(o); forget(t); b:=measure(o);
+	return (measure(x),b);
+}
+def updatedInBranch(x:𝔹,c:!𝔹){
+	o:=X(dup(x));
+	if c { x:=X(x); o:=X(o); } else { forget(o); return (measure(x),0:!𝔹); }
+	t:=dup(o); forget(t); b:=measure(o);
+	return (measure(x),b);
+}
+def copyOfCopy(x:𝔹,c:!𝔹){
+	o:=X(dup(x));
+	if c { x:=X(x); } else { forget(o); return (measure(x),0:!𝔹); }
+	t:=dup(o); u:=dup(t); forget(u); forget(t); b:=measure(o);
+	return (measure(x),b);
+}
+def forLoop(x:𝔹,c:!ℕ){
+	for i in 0..3 { o:=dup(x); if i==c { forget(o); return (measure(x),0:!𝔹); } else { x:=X(x); } t:=dup(o); forget(t); b:=measure(o); }
+	return (measure(x),1:!𝔹);
+}
+def whileLoop(x:𝔹,c:!ℕ){
+	i:=0;
+	while i<3 { o:=X(dup(x)); if i!=c { x:=X(x); } else { forget(o); return (measure(x),0:!𝔹); } t:=dup(o); forget(t); b:=measure(o); i+=1; }
+	return (measure(x),1:!𝔹);
+}
+def main(){
+	r:=(forgetInReturning(0:𝔹,true),forgetInReturning(0:𝔹,false),forgetAtReturn(1:𝔹,true),updatedInBranch(0:𝔹,true),copyOfCopy(1:𝔹,true),forLoop(0:𝔹,1),forLoop(0:𝔹,5),whileLoop(1:𝔹,2),whileLoop(1:𝔹,5));
+	assert(r==((1,1),(0,0),(0,0),(1,0),(0,0),(1,0),(1,1),(1,0),(0,1)));
+	return r;
+}

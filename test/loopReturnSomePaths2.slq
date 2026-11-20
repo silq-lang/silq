@@ -1,0 +1,10 @@
+def nestedReturn(x:𝔹,y:𝔹,k:!ℕ){
+	c:=0;
+	repeat 2 { t:=dup(x); if c>0 { if k==0 { return (x,y); } } forget(t); c+=1; } /// TODO
+	return (x,y);
+}
+def otherReturns(x:𝔹,y:𝔹,k:!ℕ){
+	c:=0;
+	repeat 2 { t:=dup(x); u:=dup(t); if c>0 { forget(t); if k==0 { return (x,y); } } else { return (x,y); } forget(u); c+=1; } /// TODO
+	return (x,y);
+}

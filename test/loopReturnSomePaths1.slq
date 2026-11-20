@@ -1,0 +1,41 @@
+// args: --run
+
+def emptyNested(x:𝔹,y:𝔹,k:!ℕ){
+	c:=0;
+	repeat 2 { t:=dup(x); if c>0 { if c>1 { } forget(t); y:=X(y); } else { if k==0 { return (x,y); } } c+=1; }
+	return (x,y);
+}
+def explicitForget(x:𝔹,y:𝔹,k:!ℕ){
+	c:=0;
+	repeat 2 { t:=dup(x); if c>0 { forget(t); y:=X(y); } else { if k==0 { return (x,y); } } c+=1; }
+	return (x,y);
+}
+def swapped(x:𝔹,y:𝔹,k:!ℕ){
+	c:=0;
+	repeat 2 { t:=dup(x); if c==0 { if k==0 { return (x,y); } } else { forget(t); y:=X(y); } c+=1; }
+	return (x,y);
+}
+def forgetAfterNested(x:𝔹,y:𝔹,k:!ℕ){
+	c:=0;
+	repeat 2 { t:=dup(x); if c>0 { forget(t); y:=X(y); } else { if k==0 { return (x,y); } forget(t); } c+=1; }
+	return (x,y);
+}
+def forgetBeforeReturn(x:𝔹,y:𝔹,k:!ℕ){
+	c:=0;
+	repeat 2 { t:=dup(x); if c>0 { forget(t); y:=X(y); } else { if k==0 { forget(t); return (x,y); } else { forget(t); } } c+=1; }
+	return (x,y);
+}
+def updatedElse(x:𝔹,y:𝔹,k:!ℕ){
+	c:=0;
+	repeat 2 { t:=dup(x); if c>0 { forget(t); } else { if k==0 { return (x,y); } else { y:=X(y); } } c+=1; }
+	return (x,y);
+}
+def forLoop(x:𝔹,y:𝔹,k:!ℕ){
+	for i in 0..3 { t:=dup(x); if i<k { forget(t); y:=X(y); } else { if i==k { return (x,y); } } }
+	return (x,y);
+}
+def main(){
+	r:=(measure(emptyNested(1:𝔹,0:𝔹,0)),measure(emptyNested(1:𝔹,0:𝔹,1)),measure(explicitForget(1:𝔹,0:𝔹,1)),measure(swapped(1:𝔹,0:𝔹,1)),measure(forgetAfterNested(1:𝔹,0:𝔹,1)),measure(forgetBeforeReturn(1:𝔹,0:𝔹,0)),measure(updatedElse(1:𝔹,0:𝔹,1)),measure(forLoop(1:𝔹,0:𝔹,2)));
+	assert(r==((1,0),(1,1),(1,1),(1,1),(1,1),(1,0),(1,1),(1,0)));
+	return r;
+}

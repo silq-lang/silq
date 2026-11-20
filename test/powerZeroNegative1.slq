@@ -1,0 +1,9 @@
+// args: --run
+
+def inverse(x:!ℤ){
+	return x^(-2); /// run_error
+}
+def main(){
+	r:=floor(inverse(0));
+	return r;
+}

@@ -1,0 +1,46 @@
+// args: --run
+
+def consumedParameter(q:𝔹,c:!ℕ){
+	a:=0:𝔹;
+	t:=dup(q); repeat 3 { if c%2==0 { q:=Z(q); a:=X(a); } else { if c==1 { return (q,a); } } }
+	return (q,a);
+}
+def forLoop(q:𝔹,c:!ℕ){
+	a:=0:𝔹;
+	t:=dup(q); for i in 0..3 { if c%2==0 { q:=Z(q); a:=X(a); } else { if c==i { return (q,a); } } }
+	return (q,a);
+}
+def nestedLoops(q:𝔹,c:!ℕ){
+	a:=0:𝔹;
+	repeat 2 { t:=dup(q); repeat 3 { if c%2==0 { q:=Z(q); a:=X(a); } else { if c==1 { return (q,a); } } } }
+	return (q,a);
+}
+def forgetAfterLoop(c:!ℕ){
+	q:=1:𝔹;
+	a:=0:𝔹;
+	t:=dup(q); repeat 3 { if c%2==0 { q:=Z(q); a:=X(a); } else { if c==1 { return (q,a); } } } forget(t);
+	return (q,a);
+}
+def constDependency(q:𝔹,const z:𝔹,c:!ℕ){
+	a:=0:𝔹;
+	t:=dup(z); repeat 3 { if c%2==0 { q:=Z(q); a:=X(a); } else { if c==1 { return (q,a); } } } forget(t);
+	return (q,a);
+}
+def measureAfterLoop(q:𝔹,const z:𝔹,c:!ℕ){
+	a:=0:𝔹;
+	t:=dup(z); repeat 3 { if c%2==0 { q:=Z(q); a:=X(a); } else { if c==1 { return (q,a); } } } m:=measure(t);
+	if m { a:=X(a); }
+	return (q,a);
+}
+def copyAfterLoop(q:𝔹,const z:𝔹,c:!ℕ){
+	a:=0:𝔹;
+	t:=dup(z); for i in 0..3 { if c%2==0 { q:=Z(q); a:=X(a); } else { if c==i { return (q,a); } } } u:=dup(t); forget(u); forget(t);
+	return (q,a);
+}
+def main(){
+	z:=1:𝔹;
+	r:=(measure(consumedParameter(1:𝔹,0)),measure(consumedParameter(1:𝔹,1)),measure(forLoop(1:𝔹,1)),measure(nestedLoops(1:𝔹,0)),measure(nestedLoops(1:𝔹,1)),measure(forgetAfterLoop(0)),measure(forgetAfterLoop(1)),measure(constDependency(1:𝔹,z,1)),measure(measureAfterLoop(1:𝔹,z,0)),measure(copyAfterLoop(1:𝔹,z,2)));
+	forget(z=1);
+	assert(r==((1,1),(1,0),(1,0),(1,0),(1,0),(1,1),(1,0),(1,0),(1,0),(1,1)));
+	return r;
+}

@@ -1,0 +1,9 @@
+def main(){
+	x:=2:!ℝ;
+	a:=x^𝑖; /// error
+	b:=2^(1+𝑖); /// error
+	c:=(1/2)^(𝑖·𝑖); /// error
+	d:=true^𝑖; /// error
+	e:=cpow(x,𝑖);
+	return e;
+}

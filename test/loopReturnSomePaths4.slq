@@ -1,0 +1,38 @@
+// args: --run
+
+def forLoop(x:𝔹,c:!ℕ,d:!𝔹){
+	for i in 0..3 { o:=dup(x); if i==c { if d { return (measure(x),1:!𝔹); } } b:=measure(o); }
+	return (measure(x),0:!𝔹);
+}
+def whileLoop(x:𝔹,c:!ℕ,d:!𝔹){
+	i:=0;
+	while i<3 { o:=X(dup(x)); if i==c { t:=dup(o); forget(t); if d { return (measure(x),1:!𝔹); } } b:=measure(o); i+=1; }
+	return (measure(x),0:!𝔹);
+}
+def updatedAfter(x:𝔹,c:!ℕ,d:!𝔹){
+	for i in 0..3 { o:=X(dup(x)); if i==c { if d { return (measure(x),1:!𝔹); } } o:=H(o); b:=measure(o); x:=X(x); }
+	return (measure(x),0:!𝔹);
+}
+def copiedAfter(x:𝔹,c:!ℕ,d:!𝔹){
+	for i in 0..3 { o:=dup(x); if i==c { if d { return (measure(x),1:!𝔹); } } t:=dup(o); forget(t); b:=measure(o); x:=X(x); x:=X(x); }
+	return (measure(x),0:!𝔹);
+}
+def inBranch(x:𝔹,c:!ℕ,d:!𝔹,e:!𝔹){
+	if e {
+		for i in 0..3 { o:=dup(x); if i==c { if d { return (measure(x),1:!𝔹); } } b:=measure(o); }
+		x:=X(x);
+	}
+	return (measure(x),0:!𝔹);
+}
+def nestedLoops(x:𝔹,c:!ℕ,d:!𝔹){
+	for j in 0..2 {
+		for i in 0..3 { o:=dup(x); if i==c { if d { return (measure(x),1:!𝔹); } } b:=measure(o); }
+		x:=X(x);
+	}
+	return (measure(x),0:!𝔹);
+}
+def main(){
+	r:=(forLoop(1:𝔹,1,true),forLoop(1:𝔹,1,false),whileLoop(0:𝔹,2,true),whileLoop(0:𝔹,5,true),updatedAfter(0:𝔹,1,true),updatedAfter(0:𝔹,1,false),copiedAfter(1:𝔹,2,true),inBranch(0:𝔹,0,true,true),inBranch(0:𝔹,0,false,true),inBranch(0:𝔹,0,true,false),nestedLoops(0:𝔹,2,true),nestedLoops(0:𝔹,2,false));
+	assert(r==((1,1),(1,0),(0,1),(0,0),(1,1),(1,0),(1,1),(0,1),(1,0),(0,0),(0,1),(0,0)));
+	return r;
+}

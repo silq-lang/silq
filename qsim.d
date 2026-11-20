@@ -1240,7 +1240,7 @@ struct QState{
 				case Tag.cval:
 					if(ntag==Tag.cval) return this;
 					if(ntag==Tag.bval) return neqZ;
-					enforce(cval.im==0,text("cannot convert `",cval,"` to `",ntype));
+					enforce(cval.im==0,text("cannot convert `",cval,"` to `",ntype,"`"));
 					if(ntag==Tag.zval||ntag==Tag.qval){
 						auto r=cval.re.toℚ;
 						if(ntag==Tag.qval) return makeRational(r);
@@ -1596,12 +1596,18 @@ struct QState{
 				if(util.among(t1,Bool(true),ℕt(true),ℤt(true),ℚt(true))&&isSubtype(t2,ℤt(false))){
 					auto p=r.asℤ();
 					if(t1!=ℚt(true)&&p>=0) return makeInteger(pow(asℤ(),p)); // TODO: this is a hack
+					enforce(p>=0||neqZImpl,"division by zero");
 					return makeRational(pow(asℚ(),p));
 				}
 				if(t1==Bool(true)) return makeBool(asBoolean||r.asBoolean);
 				if(t1==ℂ(true)){
 					if(r.isℤ){
 						auto res=C(1),cur=cval,exp=r.asℤ();
+						if(exp<0){ // (as `__pow_CZ`)
+							enforce(neqZImpl,"division by zero");
+							cur=C(1)/cur;
+							exp=-exp;
+						}
 						for(ℤ i=exp;i;i>>=1,cur*=cur)
 							if(i&1) res*=cur;
 						return makeComplex(res);
