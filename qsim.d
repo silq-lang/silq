@@ -1768,6 +1768,10 @@ struct QState{
 		private bool classicalCompare(string op)(auto ref Value r){
 			static if(op=="=="||op=="!=") if(tag==Tag.tval&&r.tag==Tag.tval)
 				return (op=="!=")^(tval==r.tval);
+			static if(language==silq){ // (a value of a union type compares as its member, see `Interpreter.convertUnion`)
+				if(tag==Tag.array_&&cast(UnionTy)type&&array_.length==2) return array_[1].classicalCompare!op(r);
+				if(r.tag==Tag.array_&&cast(UnionTy)r.type&&r.array_.length==2) return classicalCompare!op(r.array_[1]);
+			}
 			static bool compareRanges(R,S)(R a,S b){
 				static if(op=="==") if(a.length!=b.length) return false;
 				static if(op=="!=") if(a.length!=b.length) return true;
@@ -2969,7 +2973,7 @@ struct Interpreter(QState){
 		this.hasFrame=hasFrame;
 	}
 	bool consumeConst(Expression e){
-		return !cast(Identifier)e&&!cast(TupleExp)e&&!cast(VectorExp)e&&!cast(IndexExp)e&&!cast(SliceExp)e&&!cast(CatExp)e&&!cast(TypeAnnotationExp)e&&e.isQfree();
+		return !cast(Identifier)e&&!cast(TupleExp)e&&!cast(VectorExp)e&&!cast(IndexExp)e&&!cast(SliceExp)e&&!cast(CatExp)e&&!cast(TypeAnnotationExp)e&&!cast(OpenExp)e&&e.isQfree();
 	}
 	QState.Value convertTo(Expression e,Expression type){
 		auto value=runExp(e);
@@ -3403,8 +3407,12 @@ struct Interpreter(QState){
 					return QState.typeValue(ty);
 				}
 			}
-			auto fun=doIt(ce.e);
-			auto arg=doIt(ce.arg);
+			QState.Value fun,arg;
+			static if(language==silq) auto argumentsFirst=ce.argumentsFirst; // (see `ast.semantic_.readsOpenedWitnesses`)
+			else enum argumentsFirst=false;
+			if(argumentsFirst) arg=doIt(ce.arg);
+			fun=doIt(ce.e);
+			if(!argumentsFirst) arg=doIt(ce.arg);
 			static if(language==silq) arg=unionArgs(ce,arg);
 			auto r=qstate.call(fun,arg,ce.type,ce.loc);
 			if(ce.newFunctionVar) qstate.assignTo(ce.newFunctionVar.getName,fun);
@@ -3503,9 +3511,10 @@ struct Interpreter(QState){
 				let.freeVarsImpl((Identifier id){ free.insert(id.id); return 0; }); // (as opposed to a variable that it redefines)
 				QState.Value[string] shadowed;
 				foreach(name;declared) if(name !in free&&name.str in qstate.vars){ shadowed[name.str]=qstate.vars[name.str]; qstate.vars.remove(name.str); }
-				runStm(let.s,ret);
+				foreach(s;let.s.s) runStm(s,ret); // (its scope is closed after the result, which can read its witnesses)
 				enforce(!ret.state.length,"early returns from `let` statement not supported yet");
 				auto result=doIt(let.e);
+				static if(language==silq) if(result.isValid&&let.type!=let.e.type&&mentionsUnion(let.type)) result=convertTo(result,let.type,!let.e.constLookup,false,let.e.type); // (a union that keeps the values of variables of the `let` expression, see `eliminateVariables`)
 				static if(language==silq){
 					if(let.s.blscope_){
 						// the result of a `let` in a `const` context may alias block-locals;
@@ -3701,6 +3710,16 @@ struct Interpreter(QState){
 					qstate=qstate.assertTrue(c);
 					return qstate.makeTuple(unit,[]);
 				}
+			}else if(auto oe=cast(OpenExp)e){
+				auto v=doIt(oe.e);
+				if(!v.isValid) return v;
+				if(cast(ArrayTy)oe.opened[0]){ // (its length is the witness)
+					enforce(v.tag==QState.Value.Tag.array_,"bad value of an array type");
+					if(oe.declares) qstate.assignTo(oe.witnesses[0].getName,qstate.makeInteger(ℤ(v.array_.length)));
+					return convertTo(v,evalType(closedType(oe.type)),!oe.constLookup,false,oe.e.type);
+				}
+				openUnions(oe.witnesses,oe.opened,v,oe.declares);
+				return v;
 			}else if(auto tae=cast(TypeAnnotationExp)e){
 				if(tae.e.type==tae.type) return doIt(tae.e);
 				//if(tae.annotationType==TypeAnnotationType.punning) return doIt(tae.e);
@@ -4394,16 +4413,17 @@ struct Interpreter(QState){
 			openUnions(ae.witnesses,ae.opened,rhs);
 			assignTo(lhs,rhs,ae.replacements);
 		}
-	void openUnions(VarDecl[] witnesses,Expression[] opened,ref QState.Value rhs){ // (the witnesses of the unions of the value, from its pairs, see `ast.semantic_.openUnions` and `convertUnion`)
+	void openUnions(VarDecl[] witnesses,Expression[] opened,ref QState.Value rhs,bool define=true){ // (the witnesses of the unions of the value, from its pairs, see `ast.semantic_.openUnions` and `convertUnion`; without `define`, they are defined already, see `OpenExp`)
 			foreach(i,w;witnesses){
 				auto type=evalType(closedType(opened[i]));
 				if(cast(UnionTy)type){
 					rhs=unionView(rhs,type);
 					enforce(cast(UnionTy)rhs.type&&isPair(rhs),"bad value of a union type");
-					qstate.assignTo(w.getName,rhs.array_[0]);
+					if(define) qstate.assignTo(w.getName,rhs.array_[0]);
 					rhs=rhs.array_[1];
 					continue;
 				}
+				if(!define) continue;
 				// (a union that the values of the earlier witnesses normalize, e.g., `⋃[m:!ℕ]. 𝔹^(n₍1₎+m)` to `𝔹[]` for `n₍1₎=0` (see `unionOf`), whose value is the member: the witness of its type)
 				UnionTy u;
 				Expression witness=null;
@@ -4561,7 +4581,7 @@ struct Interpreter(QState){
 				auto cond=intp.runExp(dw.cond);
 				if(!cond.asBoolean){
 					intp.qstate.forgetVars(dw.exitScope.forgottenVarsOnEntry);
-					intp.qstate.forgetVars(dw.exitScope.forgottenVars);
+					intp.qstate.forgetVars(dw.exitScope.forgottenVars,true);
 					intp.closeScope(dw.exitScope);
 					break;
 				}
@@ -4569,7 +4589,7 @@ struct Interpreter(QState){
 				rintp.run(retState);
 				rintp.closeScope(dw.reset.blscope_);
 				intp.qstate=rintp.qstate;
-				intp.qstate.forgetVars(lsc.forgottenVars);
+				intp.qstate.forgetVars(lsc.forgottenVars,true);
 				intp.closeScope(lsc);
 			}
 			qstate=intp.qstate;
@@ -4616,6 +4636,10 @@ struct Interpreter(QState){
 			if(!p.vtype) continue;
 			auto v=qstate.vars.getPtr(p.getName);
 			if(v&&(mentionsUnion(p.vtype)||mentionsUnion(v.type))) qstate.vars[p.getName]=unionView(*v,evalType(closedType(p.vtype)));
+			if(v&&p.witnesses.length){ // (of a `const` parameter, see `ast.semantic_.openParameters`)
+				auto pv=qstate.vars[p.getName];
+				openUnions(p.witnesses,p.opened,pv);
+			}
 		}
 		if(functionDef.rret) runExp(functionDef.rret);
 		run(retState);

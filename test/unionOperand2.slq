@@ -1,0 +1,17 @@
+def lengths(k:!ℕ):⋃[n:!ℕ]. !ℕ^(n+1)⇒vector(k+1,k);
+def add[n:!ℕ](v:!ℕ^n,w:!ℕ^n):!ℕ^n⇒v;
+def three(v:!ℕ^3):!ℕ⇒v[0];
+def separate(){
+	return add(lengths(1),lengths(1)); /// error
+}
+def notThree(){
+	return three(lengths(2)); /// error
+}
+def arrayNotThree(){
+	arr:=[1,2,3]:!ℕ[];
+	return three(arr); /// error
+}
+def updateConst(const x:⋃[n:!ℕ]. !ℕ^(n+1)){
+	x[0]=1; /// error
+	return x[0];
+}

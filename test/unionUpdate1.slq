@@ -1,0 +1,26 @@
+// args: --run
+
+def lengths(k:!ℕ):⋃[n:!ℕ]. !ℕ^(n+1)⇒vector(k+1,k);
+def qubits(k:!ℕ):⋃[n:!ℕ]. 𝔹^(n+1)⇒vector(k+1,0:𝔹);
+def merged(c:!𝔹){
+	if c { x:=lengths(1); } else { x:=lengths(2); }
+	x[0]=9;
+	x[1]+=1;
+	return x[0]+x[1]+x.length;
+}
+def looped(k:!ℕ){
+	x:=lengths(0);
+	for i in 0..k { x=lengths(i); }
+	for i in 0..x.length { x[i]=i; }
+	return x[k-1];
+}
+def flippedQubit(c:!𝔹){
+	if c { q:=qubits(1); } else { q:=qubits(2); }
+	q[0]:=X(q[0]);
+	return measure(q[0]);
+}
+def main(){
+	r:=(merged(true),merged(false),looped(3),flippedQubit(false));
+	assert(r==(13,15,2,1));
+	return r;
+}

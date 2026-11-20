@@ -1,0 +1,9 @@
+// args: --run
+
+def lengths(k:!ℕ):⋃[n:!ℕ]. !ℕ^(n+1)⇒vector(k+1,k:!ℕ);
+def sized(k:!ℕ)⇒let { x:=lengths(k); } in (x.length,x~vector(x.length,0:!ℕ));
+def main(){
+	r:=(let { x:=lengths(1); } in (x.length,vector(x.length,0:!ℕ)),sized(2));
+	assert(r==((2,[0,0]),(3,[2,2,2,0,0,0])));
+	return r;
+}

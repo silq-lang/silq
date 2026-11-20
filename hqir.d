@@ -3675,6 +3675,9 @@ class ScopeWriter {
 
 		Value v = null;
 		if(auto id = cast(ast_exp.Identifier) e.e) v = borrowVar(id);
+		if(auto oe = cast(ast_exp.OpenExp) e.e) // (the member of a variable, without a copy)
+			if(auto id = cast(ast_exp.Identifier) oe.e)
+				if(auto bv = borrowVar(id)) v = openValue(oe, bv);
 		bool borrowed = !!v;
 		if(!borrowed) v = genExpr(e.e);
 		auto ty = ast_exp.unfoldTypeVariable(e.e.type); // (the structure of the value of a type variable)
@@ -3711,6 +3714,10 @@ class ScopeWriter {
 	Value genClassicalPart(Expression e) { // (the classical part of the value of `e`, without copies of the quantum parts of variables and of their components, e.g., for `a.length` or `a[i][1]` with `a:(𝔹×!ℕ)[]`)
 		if(auto id = cast(ast_exp.Identifier) e) {
 			if(auto v = borrowVar(id)) return valNewC(v.creg);
+		}
+		if(auto oe = cast(ast_exp.OpenExp) e) {
+			if(auto id = cast(ast_exp.Identifier) oe.e)
+				if(auto v = borrowVar(id)) return valNewC(openValue(oe, valNewC(v.creg)).creg);
 		}
 		if(auto ie = cast(ast_exp.IndexExp) e) {
 			if(auto r = genIndexClassical(ie)) return r;
@@ -4566,14 +4573,35 @@ class ScopeWriter {
 		return implType(e);
 	}
 
+	Value implExpr(ast_exp.OpenExp e) {
+		return openValue(e, genExpr(e.e));
+	}
+
+	Value openValue(ast_exp.OpenExp e, Value v) { // (the value of the member, whose witnesses `e` defines, see `ast.semantic_.openOperand`)
+		if(auto arrTy = cast(ast_ty.ArrayTy) e.opened[0]) {
+			CReg len;
+			auto r = valArrayToVector(arrTy.next, len, v);
+			if(e.declares && !qcg.inType) defineVar(e.witnesses[0], valNewC(len));
+			return r;
+		}
+		if(e.declares && !qcg.inType) return openUnions(e.witnesses, e.opened, v);
+		foreach(i, w; e.witnesses) v = valNewQ(typeHasClassical(e.opened[i + 1]) ? ccg.boxIndex(ctypeSilqTuple, 2, v.creg, 1) : null, v.qreg);
+		return v;
+	}
+
 	Value implExpr(ast_exp.TypeAnnotationExp e) {
 		// assert(e.e.constLookup == e.constLookup);
 		auto conv = ast_conv.typeExplicitConversion!true(e.e.type, e.type, e.annotationType);
 		assert(conv, format("bad conversion %s -> %s", e.e.type, e.type));
-		if(!qcg.inType) {
+		auto late = ast_sem.readsOpenedWitnesses(e.t, e.e); // (the type mentions the witnesses of values that the expression opens, see `ast_exp.OpenExp`)
+		if(!qcg.inType && !late) {
 			genExpr(e.t);
 		}
-		return genConvert(conv, genExpr(e.e));
+		auto v = genExpr(e.e);
+		if(!qcg.inType && late) {
+			genExpr(e.t);
+		}
+		return genConvert(conv, v);
 	}
 
 	Value implExpr(ast_exp.FieldExp e) {
@@ -4829,7 +4857,7 @@ class ScopeWriter {
 			return valError(witness, e.type);
 		}
 
-		CallInfo ci = prepCall(e.e, e.arg, e.type, e.newFunctionVar, false);
+		CallInfo ci = prepCall(e.e, e.arg, e.type, e.newFunctionVar, false, e.argumentsFirst);
 
 		if(ci.makeClassical) {
 			assert(!ci.hasQuantum, "quantum captures in make-classical call");
@@ -5377,7 +5405,7 @@ class ScopeWriter {
 	// an implLhs overload) for this module to compile
 	alias nonLhsKinds=AliasSeq!(
 		ast_exp.IteExp,ast_exp.AssertExp,ast_exp.LiteralExp,ast_exp.LetExp,ast_exp.LambdaExp,
-		ast_exp.ForgetExp,ast_exp.FieldExp,ast_exp.SliceExp,ast_exp.TypeAnnotationExp,
+		ast_exp.ForgetExp,ast_exp.FieldExp,ast_exp.SliceExp,ast_exp.TypeAnnotationExp,ast_exp.OpenExp,
 		ast_exp.UPlusExp,ast_exp.UMinusExp,ast_exp.UNotExp,ast_exp.UBitNotExp,
 		ast_exp.AddExp,ast_exp.SubExp,ast_exp.NSubExp,ast_exp.MulExp,ast_exp.DivExp,
 		ast_exp.IDivExp,ast_exp.ModExp,ast_exp.PowExp,
@@ -5992,6 +6020,13 @@ class ScopeWriter {
 			assert(outer.scope_ is nscope);
 			assert(outer.splitInto == [decl]);
 			sub.defineVar(decl, getVar(outer, false));
+		}
+		if(auto fd = cast(ast_scope.FunctionScope) e.blscope_.parent ? e.blscope_.parent.getFunction() : null) {
+			if(fd.body_ is e) foreach(p; fd.params) if(p.witnesses.length) { // (of a `const` parameter, see `ast.semantic_.openParameters`)
+				auto pv = vars.getPtr(p.getId);
+				assert(pv && pv.value, format("parameter %s not available", p.getName));
+				sub.openUnions(p.witnesses, p.opened, valNewC(pv.value.creg));
+			}
 		}
 		auto r = sub.genCompoundStmt(e);
 		if(r.mayPass) {
@@ -7429,7 +7464,7 @@ class ScopeWriter {
 		return r;
 	}
 
-	CallInfo prepCall(Expression targetExpr, Expression argExpr, Expression retType, ast_decl.Declaration newFunctionVar, bool isReversed) {
+	CallInfo prepCall(Expression targetExpr, Expression argExpr, Expression retType, ast_decl.Declaration newFunctionVar, bool isReversed, bool argumentsFirst = false) { // (`argumentsFirst`: see `ast.semantic_.readsOpenedWitnesses`)
 		auto callTy = cast(ast_ty.ProductTy) targetExpr.type;
 		assert(!!callTy, format("call to non-ProductTy %s", targetExpr));
 		assert(!newFunctionVar || !isReversed);
@@ -7454,8 +7489,8 @@ class ScopeWriter {
 			}
 		}
 
-		auto target = genExpr(targetExpr);
-		auto targetF = target.func.info;
+		Value target = argumentsFirst ? null : genExpr(targetExpr);
+		auto targetF = target ? target.func.info : null;
 		bool isTuple = false;
 		Expression[] params;
 		Expression[] args;
@@ -7539,6 +7574,11 @@ class ScopeWriter {
 			if(aliases) genArg(i);
 		}
 		foreach(i;0..n) if(!argGenerated[i]) genArg(i);
+		if(argumentsFirst) {
+			target = genExpr(targetExpr);
+			targetF = target.func.info;
+			if(targetF && targetF.fd.isTuple != isTuple) targetF = null;
+		}
 
 		CallInfo ci;
 		ci.target = target;

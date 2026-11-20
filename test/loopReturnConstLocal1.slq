@@ -1,0 +1,28 @@
+// args: --run
+
+def lengths(k:!ℕ):⋃[n:!ℕ]. !ℕ^(n+1)⇒vector(k+1,k);
+def size[n:!ℕ](v:!ℕ^n):!ℕ⇒n;
+def constLocal(k:!ℕ){
+	const n:=k+1;
+	x:=vector(n,0:!ℕ);
+	s:=0:!ℕ;
+	for i in 0..3 { if i=5 { return s; } s+=size(x); }
+	return s;
+}
+def opened(k:!ℕ){
+	x:=lengths(k);
+	s:=0:!ℕ;
+	for i in 0..3 { if i=5 { return s; } s+=size(x)+x[0]; }
+	return s;
+}
+def openedUnused(k:!ℕ){
+	x:=lengths(k);
+	s:=0:!ℕ;
+	while s<4 { if s=7 { return s; } s+=1; }
+	return s+x.length;
+}
+def main(){
+	r:=(constLocal(2),opened(2),openedUnused(2));
+	assert(r==(9,15,7));
+	return r;
+}

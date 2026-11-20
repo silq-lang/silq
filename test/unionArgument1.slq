@@ -1,0 +1,25 @@
+// args: --run
+
+def len[a:type,n:!ℕ](const xs:a^n)⇒n;
+def lengths(k:!ℕ):⋃[n:!ℕ]. !ℕ^(n+1)⇒vector(k+1,k);
+def sum[n:!ℕ](const xs:!ℕ^n):!ℕ{
+	s:=0:!ℕ;
+	for i in 0..n { s+=xs[i]; }
+	return s;
+}
+def cons[n:!ℕ](x:!ℕ,xs:!ℕ^n):!ℕ^(n+1)⇒(x,)~xs;
+def add[n:!ℕ](v:!ℕ^n,w:!ℕ^n):!ℕ^n{
+	for i in 0..n { v[i]+=w[i]; }
+	return v;
+}
+def main(){
+	arr:=[1,2,3]:!ℕ[];
+	u:=vector(2,5:!ℕ):⋃[m:!ℕ]. !ℕ^m;
+	v:=vector(3,4:!ℕ):⋃[m:!ℕ]. !ℕ^(m+1);
+	q:=vector(3,0:𝔹):𝔹[];
+	w:=cons(7,arr);
+	r:=(len(arr),len(u),len(v),len(lengths(2)),len(q),sum(arr),sum(v),w,len(w),len(cons(1,cons(2,arr))),sum(add(arr,arr)),sum(add(v,v)));
+	forget(q);
+	assert(r==(3,2,3,3,3,6,12,[7,1,2,3],4,5,12,24));
+	return r;
+}

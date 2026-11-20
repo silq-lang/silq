@@ -1,0 +1,42 @@
+// args: --run
+
+def lengths(k:!ℕ):⋃[n:!ℕ]. !ℕ^(n+1)⇒vector(k+1,k);
+def qubits(k:!ℕ):⋃[n:!ℕ]. 𝔹^(n+1){
+	q:=vector(k+1,0:𝔹);
+	q[0]:=X(q[0]);
+	return q;
+}
+def size[n:!ℕ](v:!ℕ^n):!ℕ⇒n;
+def count[n:!ℕ](const q:𝔹^n):!ℕ⇒n;
+def add[n:!ℕ](v:!ℕ^n,w:!ℕ^n):!ℕ^n{
+	for i in 0..n { v[i]+=w[i]; }
+	return v;
+}
+def first(x:⋃[n:!ℕ]. !ℕ^(n+1)):!ℕ⇒x[0];
+def doubled(x:⋃[n:!ℕ]. !ℕ^(n+1))⇒add(x,x)[0];
+def doubledConst(const x:⋃[n:!ℕ]. !ℕ^(n+1))⇒add(x,x)[x.length-1];
+def sizes(const x:⋃[n:!ℕ]. !ℕ^(n+1)):!ℕ⇒size(x)+x.length;
+def updated(x:⋃[n:!ℕ]. !ℕ^(n+1)){ x[0]=9; return x[0]+x.length; }
+def captured(const x:⋃[n:!ℕ]. !ℕ^(n+1)){
+	g:=λ()⇒add(x,x)[0]+size(x);
+	return g();
+}
+def counted(const q:⋃[n:!ℕ]. 𝔹^(n+1)):!ℕ⇒count(q)+q.length;
+def firstQubit(const q:⋃[n:!ℕ]. 𝔹^(n+1)):!𝔹⇒measure(dup(q[0]));
+def flipped(q:⋃[n:!ℕ]. 𝔹^(n+1)){
+	q[0]:=X(q[0]);
+	return measure(q)[0..1];
+}
+def flipConst[n:!ℕ](const c:⋃[m:!ℕ]. !𝔹^(m+1),x:𝔹^n)mfree:𝔹^n{
+	if c[0]&&c.length>1 { for i in 0..n { x[i]:=X(x[i]); } }
+	return x;
+}
+def applied(f:⋃[n:!ℕ]. 𝟙 !→qfree !ℕ^(n+1)):!ℕ⇒f()[0]+f().length;
+def main(){
+	q:=qubits(2);
+	a:=counted(q);
+	b:=firstQubit(q);
+	r:=(first(lengths(2)),doubled(lengths(1)),doubledConst(lengths(2)),sizes(lengths(3)),updated(lengths(1)),captured(lengths(2)),a,b,flipped(q),measure(reverse(flipConst[2])(vector(2,true),vector(2,1:𝔹))),applied(λ()qfree⇒vector(3,4:!ℕ)),(λ(x:⋃[n:!ℕ]. !ℕ^(n+1))⇒x[0]+x.length)(lengths(4)));
+	assert(r==(2,2,4,8,11,7,6,1,[0],[0,0],7,9));
+	return r;
+}

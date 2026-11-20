@@ -1,0 +1,17 @@
+// args: --run
+
+def consuming(b:!𝔹){
+	x:=2:!ℕ;
+	while move(b) { return x+1; }
+	return x;
+}
+def measuring(b:𝔹){
+	k:=0:!ℕ;
+	while measure(b) { return k+1; }
+	return k;
+}
+def main(){
+	r:=(consuming(true),consuming(false),measuring(1:𝔹),measuring(0:𝔹));
+	assert(r==(3,2,1,0));
+	return r;
+}

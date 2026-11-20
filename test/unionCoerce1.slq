@@ -1,0 +1,16 @@
+// args: --run
+
+def lengths(k:!ℕ):⋃[n:!ℕ]. !ℕ^(n+1)⇒vector(k+1,k:!ℕ);
+def trimmed(b:!ℕ,x:⋃[n:!ℕ]. !ℕ^(n+1))⇒x coerce !ℕ^(b+1);
+def dropped(x:⋃[n:!ℕ]. !ℕ^(n+1)){ forget(x=lengths(1)); }
+def sizes(k:!ℕ,q:𝔹){
+	with { y:=lengths(k); } do { z:=y.length; q:=H(q); }
+	return (z,q);
+}
+def main(){
+	(z,q):=sizes(2,0:𝔹);
+	dropped(lengths(1));
+	r:=(lengths(2) coerce !ℕ^3,trimmed(1,lengths(1)),z,measure(H(q)));
+	assert(r==([2,2,2],[1,1],3,0));
+	return r;
+}
