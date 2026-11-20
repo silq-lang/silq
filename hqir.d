@@ -700,6 +700,8 @@ private ConvertFlags conversionFlags(ast_conv.Conversion conv) {
 			is(T == ast_conv_ZstarToZmodConversion)
 		) {
 			return ConvertFlags.noop;
+		}else static if(is(T == ast_conv.UnionPackConversion) || is(T == ast_conv.UnionUnpackConversion)) {
+			return ConvertFlags.classical | ConvertFlags.quantum;
 		}else static assert(0, "TODO: `conversionFlags` for `" ~ T.stringof ~ "`");
 	}
 	return ast_conv.dispatchConversion!get(conv);
@@ -2799,6 +2801,20 @@ class ScopeWriter {
 		return Value.newReg(creg, null);
 	}
 
+	// a value of a union type is the pair of the value of its bound variable (the witness) and the value of the member
+	// for it: binds a fresh name for the bound variable to the witness in a sub-scope, and gives the classical part of
+	// the value of the member
+	CReg unionOpen(ast_ty.UnionTy ut, CReg cc, out ScopeWriter sub, out ast_ty.UnionTy u) {
+		u = ut.relabel(Id.intern(format("%s⁽%d⁾", ut.freshName().str, ctx.unionBinders++)));
+		sub = withBlock(null);
+		sub.vars[u.name] = Variable(u.params[0], valNewC(ccg.boxIndex(ctypeSilqTuple, 2, cc, 0)));
+		return typeHasClassical(u.cod) ? ccg.boxIndex(ctypeSilqTuple, 2, cc, 1) : null;
+	}
+
+	CReg unionPack(CReg witness, CReg member) {
+		return ccg.boxPack(ctypeSilqTuple, [witness ? witness : ctx.nullReg, member ? member : ctx.nullReg]);
+	}
+
 	Value valNewQ(CReg creg, QReg qreg) {
 		return Value.newReg(creg, qreg);
 	}
@@ -4503,6 +4519,16 @@ class ScopeWriter {
 		return r;
 	}
 
+	Value implExpr(ast_exp.UnionTy e) {
+		auto r = implType(e);
+		if(!qcg.inType) {
+			foreach(p; e.params) {
+				genExpr(p.dtype);
+			}
+		}
+		return r;
+	}
+
 	Value implExpr(ast_exp.VariadicTy e) {
 		auto r = implType(e);
 		if(!qcg.inType) {
@@ -5352,7 +5378,7 @@ class ScopeWriter {
 		ast_exp.VectorForExp,
 		ast_exp.ClassicalTy,ast_exp.ProductTy,ast_exp.ArrayTy,ast_exp.TupleTy,ast_exp.VectorTy,
 		ast_exp.VariadicTy,ast_exp.TypeTy,ast_exp.QNumericTy,ast_exp.BottomTy,ast_exp.NumericTy,
-		ast_exp.StringTy
+		ast_exp.StringTy,ast_exp.UnionTy
 	);
 	void implLhs(T)(T e, Value v) if(ast_exp.isOneOf!(T,nonLhsKinds)) {
 		assert(false, format("unknown LHS %s: %s; type=%s", typeid(e).name, e, e.type));
@@ -7087,6 +7113,12 @@ class ScopeWriter {
 			if(len is ctx.intZero) return ctx.qtUnit;
 			return ccg.qtArray(len, getVariadicQTypes(len, rttis, cc));
 		}
+		if(auto unionTy = cast(ast_ty.UnionTy) ty) {
+			ScopeWriter sub;
+			ast_ty.UnionTy u;
+			auto pc = unionOpen(unionTy, cc, sub, u);
+			return sub.getQTypeRaw(u.cod, pc, true); // (the member can mention the bound type variable, whose run-time type information is the witness)
+		}
 		assert(!cast(ast_ty.Type) ty, format("can't get qtype for %s", ty));
 		assert(mayUseRTTI);
 		return ccg.funcApply(getRTTI(ty).qtypeF, [cc]);
@@ -7190,6 +7222,14 @@ class ScopeWriter {
 			qcg.writeQOp("qfree_call[silq_builtin.promote_variadic_d]", [r.qreg], [len, rttis, qt, arg, len], [], []);
 			return r;
 		}
+		if(auto unionTy = cast(ast_ty.UnionTy) ty) {
+			ScopeWriter sub;
+			ast_ty.UnionTy u;
+			unionOpen(unionTy, arg, sub, u);
+			auto pc = typeHasClassical(u.cod.getClassical()) ? ccg.boxIndex(ctypeSilqTuple, 2, arg, 1) : null; // (the value is classical: the member of the classical version)
+			auto r = sub.genPromote(u.cod, pc, true); // (see `getQTypeImpl`)
+			return valNewQ(unionPack(ccg.boxIndex(ctypeSilqTuple, 2, arg, 0), r.creg), r.qreg);
+		}
 		assert(mayUseRTTI);
 		auto promoteF = getRTTI(ty).promoteF;
 		auto cr = ccg.funcApply(promoteF, [arg]);
@@ -7231,6 +7271,12 @@ class ScopeWriter {
 
 	CReg genMeasureExpand(Expression ty, CReg r) {
 		if(!typeHasClassical(ty)) return genMeasureUnit(ty);
+		if(auto unionTy = cast(ast_ty.UnionTy) ty) {
+			ScopeWriter sub;
+			ast_ty.UnionTy u;
+			auto pc = unionOpen(unionTy, r, sub, u);
+			return unionPack(ccg.boxIndex(ctypeSilqTuple, 2, r, 0), sub.genMeasureExpand(u.cod, pc));
+		}
 		if(auto arrTy = cast(ast_ty.ArrayTy) ty) {
 			auto len = ccg.getArrayLength(r);
 			auto items = ccg.getArrayItems(r);
@@ -7284,6 +7330,13 @@ class ScopeWriter {
 			auto r = new CReg();
 			qcg.writeMOp(opMeasureQubit, [r], [], [], [], [arg.qreg]);
 			return r;
+		}
+		if(auto unionTy = cast(ast_ty.UnionTy) ty) {
+			ScopeWriter sub;
+			ast_ty.UnionTy u;
+			auto pc = unionOpen(unionTy, arg.creg, sub, u);
+			auto r = sub.genMeasure(u.cod, valNewQ(pc, arg.qreg), true); // (see `getQTypeImpl`)
+			return unionPack(ccg.boxIndex(ctypeSilqTuple, 2, arg.creg, 0), r);
 		}
 		if(auto prodTy = cast(ast_ty.ProductTy) ty) {
 			auto hasConst = hasConstCapture(prodTy.captureAnnotation);
@@ -7704,6 +7757,21 @@ class ScopeWriter {
 	Value implConvert(ast_conv.AnnotationPun conv, Value v) => genNoopConvert(v, conv.from, conv.to);
 	Value implConvert(ast_conv_UintToNConversion conv, Value v) => genNoopConvert(v, conv.from, conv.to);
 	Value implConvert(ast_conv_IntToZConversion conv, Value v) => genNoopConvert(v, conv.from, conv.to);
+
+	Value implConvert(ast_conv.UnionPackConversion conv, Value v) {
+		auto w = genExpr(conv.witness);
+		auto r = genConvert(conv.payload, v);
+		return valNewQ(unionPack(w.creg, r.creg), r.qreg);
+	}
+
+	Value implConvert(ast_conv.UnionUnpackConversion conv, Value v) {
+		ScopeWriter sub;
+		ast_ty.UnionTy u;
+		auto pc = unionOpen(cast(ast_ty.UnionTy) conv.from, v.creg, sub, u);
+		auto payload = ast_conv.typeExplicitConversion!true(u.cod, conv.to, conv.annotationType); // (with the fresh name)
+		assert(payload, format("bad conversion %s -> %s", u.cod, conv.to));
+		return sub.genConvert(payload, valNewQ(pc, v.qreg));
+	}
 
 	Value implConvert(ast_conv.ImplosionCoercion conv, Value v) { // (there is no value of the empty type: the coercion aborts)
 		auto r = valAbort(conv.to);
@@ -9461,6 +9529,7 @@ class Writer {
 	CReg intZero, intOne, intTwo;
 	CReg floatZero, floatOne, floatPi;
 	RTTI unitRTTI, classicalRTTI, qubitRTTI, qfuncMovedRTTI, qfuncConstRTTI, qfuncOnceRTTI;
+	size_t unionBinders; // (for the names of the bound variables of unions, see `ScopeWriter.unionOpen`)
 
 private:
 	MapSX!(string,CReg) literals;

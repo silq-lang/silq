@@ -1,0 +1,28 @@
+// args: --run
+
+def lengths(k:!ℕ):⋃[n:!ℕ]. !ℕ^(n+1)⇒vector(k+1,k);
+def kept(x:⋃[n:!ℕ]. !ℕ^(n+1)):⋃[m:!ℕ]. !ℕ^(m+1)⇒x;
+def products(x:⋃[n:!ℕ][m:!ℕ]. !ℕ^(n·m+1)):⋃[k:!ℕ]. !ℕ^(k+1)⇒x;
+def second(x:(⋃[n:!ℕ][m:!ℕ]. !ℕ^(n·m+1))×!ℕ):(⋃[k:!ℕ]. !ℕ^(k+1))×!ℕ⇒x;
+def nest(a:!ℕ,b:!ℕ):⋃[m:!ℕ][n:!ℕ]. !ℕ^m×!ℕ^n⇒(vector(a,1:!ℕ),vector(b,2:!ℕ));
+def swapped(x:⋃[m:!ℕ][n:!ℕ]. !ℕ^m×!ℕ^n):⋃[n:!ℕ][m:!ℕ]. !ℕ^n×!ℕ^m⇒x;
+def apply(f:!ℕ!→⋃[n:!ℕ]. !ℕ^(n+1))⇒f(2):!ℕ[];
+def arrays(f:!ℕ!→!ℕ[])⇒(f(3).length,f(1));
+def qubits(a:!ℕ,b:!ℕ):⋃[n:!ℕ][m:!ℕ]. 𝔹^(n+m)⇒vector(a+b,1:𝔹);
+def passed(x:⋃[n:!ℕ][m:!ℕ]. 𝔹^(n+m)):⋃[n:!ℕ][m:!ℕ]. 𝔹^(n+m)⇒x;
+def main(){
+	a:=vector(2,lengths(1));
+	i:=1:!ℕ;
+	a[i]=vector(3,7:!ℕ);
+	t:=(lengths(2),vector(3,5:!ℕ));
+	u:=(lengths(2),vector(0,5:!ℕ));
+	j:=0:!ℕ;
+	b:=2:!ℕ;
+	c:=3:!ℕ;
+	(p,q):=second((vector(b·c+1,c),4));
+	y:=qubits(1,2);
+	z:=passed(y);
+	r:=(kept(a[i]):!ℕ[],kept(a[0]):!ℕ[],kept(t[i]):!ℕ[],u[j].length,products(vector(b·c+1,b)):!ℕ[],p:!ℕ[],q,swapped(nest(2,3)):!ℕ[]×!ℕ[],apply(λ(k:!ℕ). vector(3,k)),arrays(lengths),measure(z:𝔹[]));
+	assert(r==([7,7,7],[1,1],[5,5,5],3,[2,2,2,2,2,2,2],[3,3,3,3,3,3,3],4,([1,1],[2,2,2]),[2,2,2],(4,[1,1]),[1,1,1]));
+	return r;
+}

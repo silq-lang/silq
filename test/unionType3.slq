@@ -1,0 +1,28 @@
+// args: --run
+
+def lengths(k:!ℕ):⋃[n:!ℕ]. !ℕ^(n+1)⇒vector(k+1,k);
+def joined(c:!𝔹){
+	if c { x:=lengths(1); } else { x:=lengths(2); }
+	return x:!ℕ[];
+}
+def conditional(c:!𝔹):⋃[n:!ℕ]. !ℕ^(n+1)⇒if c then lengths(1) else vector(1,5:!ℕ);
+def widened(c:!𝔹)⇒if c then lengths(1) else vector(0,5:!ℕ);
+def typeValue(){
+	t:=⋃[n:!ℕ]. !ℕ^(n+1);
+	x:=vector(2,1:!ℕ):t;
+	def f(y:t):!ℕ[]⇒y;
+	return f(x);
+}
+def quantumPayload(k:!ℕ){
+	x:=vector(k+1,1:𝔹):⋃[n:!ℕ]. 𝔹^(n+1);
+	return measure(x):!𝔹[];
+}
+def superposed():⋃[a:*]. a⇒H(H(0:𝔹));
+def quantumType()⇒(superposed(),1:!ℕ);
+def main(){
+	(x,k):=quantumType();
+	q:=measure(x);
+	r:=(joined(true),joined(false),conditional(true):!ℕ[],conditional(false):!ℕ[],widened(true),widened(false),typeValue(),quantumPayload(2),k);
+	assert(r==([1,1],[2,2,2],[1,1],[5],[1,1],[]:!ℕ[],[1,1],[1,1,1],1));
+	return r;
+}

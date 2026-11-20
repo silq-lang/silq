@@ -1,0 +1,5 @@
+def notWitnessed(x:!ℕ^3):⋃[n:!ℕ]. !ℕ^(n·n)⇒x; /// error
+def notMember(x:⋃[n:!ℕ]. !ℕ^(n+1)):!ℕ^3⇒x; /// error
+def quantumDomain(x:⋃[q:𝔹]. !ℕ)⇒x; /// error
+def bound(x:⋃[n:!ℕ]. !ℕ^(n+1)):!ℕ^(n+1)⇒x; /// error
+def elements(x:!ℤ^2):⋃[n:!ℕ]. !ℕ^n⇒x; /// error

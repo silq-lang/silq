@@ -1,0 +1,31 @@
+// args: --run
+
+def lengths(k:!ℕ):⋃[n:!ℕ]. !ℕ^(n+1)⇒vector(k+1,k);
+def literal():⋃[n:!ℕ]. !ℕ^(n+1)⇒vector(3,7:!ℕ);
+def products(x:⋃[n:!ℕ][m:!ℕ]. !ℕ^(n·m+1)):⋃[k:!ℕ]. !ℕ^(k+1)⇒x;
+def made(a:!ℕ,b:!ℕ)⇒products(vector(a·b+1,a));
+def merged(x:⋃[n:!ℕ,m:!ℕ]. !𝔹^(n·m)):Un[nm:!ℕ]. !𝔹^nm⇒x;
+def renamed(x:Un[n:!ℕ]. !ℕ^(n+1)):⋃[m:!ℕ]. !ℕ^(m+1)⇒x;
+def shifted(n:!ℕ):⋃[m:!ℕ]. !ℕ^(n+m)⇒vector(n+2,n);
+def pair(k:!ℕ):(⋃[n:!ℕ]. !ℕ^(n+1))×!ℕ⇒(vector(k+1,0:!ℕ),k);
+def apply(f:!ℕ!→⋃[n:!ℕ]. !ℕ^(n+1)):!ℕ[]⇒f(2);
+def discarded(x:⋃[n:!ℕ]. !𝔹):!𝔹⇒x;
+def qlengths(k:!ℕ):⋃[n:!ℕ]. 𝔹^(n+1)⇒vector(k+1,1:𝔹);
+def counter():Un[a:type]. a×(a→a)×(a→!ℕ)⇒(0:!ℕ,λ(x:!ℕ). x+1,λ(x:!ℕ). x);
+def classicalCounter():Un[a:type]. !a×(a!→a)⇒(0:!𝔹,λ(x:𝔹). x);
+def id[t:type](x:t)⇒x;
+def main(){
+	m:=3;
+	a:=renamed(made(2,m));
+	b:=pair(1);
+	c:=apply(lengths);
+	d:=discarded(true);
+	e:=measure(qlengths(2));
+	f:=merged(vector(2·m,0:!𝔹));
+	g:=id(shifted(m));
+	h:=id(counter());
+	i:=classicalCounter();
+	r:=(a:!ℕ[],b[0]:!ℕ[],c,d,e:!𝔹[],f,g:!ℕ[],literal():!ℕ[]);
+	assert(r==([2,2,2,2,2,2,2],[0,0],[2,2,2],1,[1,1,1],[0,0,0,0,0,0],[3,3,3,3,3],[7,7,7]));
+	return r;
+}
