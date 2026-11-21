@@ -1,0 +1,19 @@
+def add[n:!ℕ](v:!ℕ^n,w:!ℕ^n):!ℕ^n{
+	r:=vector(n,0:!ℕ);
+	for i in 0..n { r[i]=v[i]+w[i]; }
+	return r;
+}
+def looped(k:!ℕ){
+	x:=vector(1,0:!ℕ);
+	y:=vector(1,1:!ℕ);
+	for i in 0..k {
+		n:=x.length;
+		x=vector(n+1,i:!ℕ);
+		y=vector(n+1,1:!ℕ);
+	}
+	return add(x,y); /// TODO
+}
+def different(k:!ℕ,c:!𝔹){
+	if c { n:=k+1; x:=vector(n,1:!ℕ); y:=vector(n,2:!ℕ); } else { x:=vector(1,1:!ℕ); y:=vector(2,2:!ℕ); }
+	return add(x,y); /// error
+}

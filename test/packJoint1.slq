@@ -1,0 +1,52 @@
+// args: --run
+
+def add[n:!ℕ](v:!ℕ^n,w:!ℕ^n):!ℕ^n{
+	r:=vector(n,0:!ℕ);
+	for i in 0..n { r[i]=v[i]+w[i]; }
+	return r;
+}
+def total[n:!ℕ](const v:!ℕ^n):!ℕ{
+	s:=0:!ℕ;
+	for i in 0..n { s+=v[i]; }
+	return s;
+}
+def lengths(k:!ℕ):⋃[n:!ℕ]. !ℕ^(n+1)⇒vector(k+1,k:!ℕ);
+def separate(k:!ℕ,c:!𝔹){
+	if c { n:=k+1; x:=vector(n,1:!ℕ); y:=vector(n,2:!ℕ); } else { x:=vector(1,1:!ℕ); y:=vector(1,2:!ℕ); }
+	return add(x,y);
+}
+def offsets(k:!ℕ,c:!𝔹){
+	if c { const n:=k; x:=vector(n+2,1:!ℕ); y:=vector(n+2,3:!ℕ); } else { x:=vector(k+2,2:!ℕ); y:=vector(k+2,2:!ℕ); }
+	return add(x,y);
+}
+def pairs(k:!ℕ,c:!𝔹){
+	if c { n:=k; m:=k+1; x:=vector(n,1:!ℕ); y:=vector(m,2:!ℕ); z:=vector(n,3:!ℕ); w:=vector(m,4:!ℕ); }
+	else { x:=vector(2,1:!ℕ); y:=vector(3,2:!ℕ); z:=vector(2,3:!ℕ); w:=vector(3,4:!ℕ); }
+	return (add(x,z),add(y,w));
+}
+def returning(k:!ℕ,c:!𝔹){
+	if c { return vector(1,0:!ℕ); } else { const n:=k+1; x:=vector(n,1:!ℕ); y:=vector(n,2:!ℕ); }
+	return add(x,y);
+}
+def opened(k:!ℕ,c:!𝔹){
+	if c { x:=lengths(k); y:=vector(x.length,5:!ℕ); } else { x:=vector(2,1:!ℕ); y:=vector(2,2:!ℕ); }
+	return add(x,y);
+}
+def kept(k:!ℕ,c:!𝔹){
+	if c { n:=k+1; x:=vector(n,1:!ℕ); y:=vector(n,2:!ℕ); } else { x:=vector(1,1:!ℕ); y:=vector(1,2:!ℕ); }
+	return (x,y);
+}
+def summed(k:!ℕ){
+	s:=0:!ℕ;
+	for i in 0..k {
+		if i%2=0 { n:=i+1; x:=vector(n,1:!ℕ); y:=vector(n,2:!ℕ); } else { x:=vector(2,1:!ℕ); y:=vector(2,3:!ℕ); }
+		s+=total(add(x,y));
+	}
+	return s;
+}
+def main(){
+	(a,b):=kept(2,true);
+	r:=(separate(1,true),separate(1,false),offsets(1,true),offsets(1,false),pairs(1,true),pairs(1,false),returning(2,false),opened(1,true),opened(1,false),add(a,b),summed(3));
+	assert(r==([3,3],[3],[4,4,4],[4,4,4],([4],[6,6]),([4,4],[6,6,6]),[3,3,3],[6,6],[3,3],[3,3,3],20));
+	return r;
+}

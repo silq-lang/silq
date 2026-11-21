@@ -3302,6 +3302,11 @@ struct Interpreter(QState){
 	}
 	void closeScope(Scope sc,bool onlyWider=false){
 		if(qstate.unreachable) return;
+		static if(language==silq) if(auto bs=cast(BlockScope)sc) foreach(w;bs.mergeWitnesses){ // (see `ast.scope_.Scope.mergeWitnesses`)
+			auto v=runExp(w[1]);
+			if(!isOpen(w[0].vtype)) v=v.convertTo(w[0].vtype); // (with the type of the witness, e.g., `!ℕ` for the static witness `1:!𝔹`)
+			qstate.assignTo(w[0].getName,v);
+		}
 		foreach(merged;sc.mergedVars){
 			auto name=merged.getName;
 			if(name !in qstate.vars) continue; // TODO: get rid of this

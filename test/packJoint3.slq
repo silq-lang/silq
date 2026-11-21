@@ -1,0 +1,15 @@
+// args: --run
+
+def literalLength(c:!𝔹,k:!ℕ){
+	if c { n:=k+1; x:=vector(n,1:!ℕ); y:=vector(n,2:!ℕ); } else { x:=vector(1,1:!ℕ); y:=vector(1,2:!ℕ); }
+	return x.length+y.length;
+}
+def booleanLocal(c:!𝔹,k:!ℕ){
+	if c { const n:=1; x:=vector(n,1:!ℕ); y:=vector(n,2:!ℕ); } else { const m:=k; x:=vector(m,1:!ℕ); y:=vector(m,2:!ℕ); }
+	return x.length+2*y.length;
+}
+def main(){
+	r:=(literalLength(true,2),literalLength(false,2),booleanLocal(true,3),booleanLocal(false,3));
+	assert(r==(6,2,3,9));
+	return r;
+}

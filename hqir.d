@@ -3461,6 +3461,10 @@ class ScopeWriter {
 		return outers;
 	}
 
+	Value genWitness(ast_decl.VarDecl witness, Expression value) { // (the value of a witness of a merge in this branch, with the type of the witness, e.g., `!ℕ` for the static witness `1:!𝔹`, see `ast.scope_.Scope.mergeWitnesses`)
+		return genSubtype(genExpr(value), value.type, witness.vtype);
+	}
+
 	void genMerge(CondAny cond, ScopeWriter if0, ScopeWriter if1, ast_decl.Declaration[] merged = null) {
 		auto sc0 = if0.nscope;
 		auto sc1 = if1.nscope;
@@ -3483,6 +3487,13 @@ class ScopeWriter {
 		IdMap!Expression subst0, subst1;
 		foreach(decl; sc1.mergedVars) addMergedVersion(subst1, decl);
 		foreach(decl; sc0.mergedVars) addMergedVersion(subst0, decl);
+		if(auto bs1 = cast(ast_scope.BlockScope) sc1) if(auto bs0 = cast(ast_scope.BlockScope) sc0) foreach(i, w; bs1.mergeWitnesses) { // (see `ast.scope_.Scope.mergeWitnesses`)
+			auto w0 = bs0.mergeWitnesses[i];
+			assert(w0[0] is w[0], "merge witnesses differ");
+			subst1[w[0].getId] = w[1];
+			subst0[w[0].getId] = w0[1];
+			defineVar(w[0], valMerge(cond, if0.genWitness(w[0], w0[1]), if1.genWitness(w[0], w[1])));
+		}
 		Triple[] triples;
 		foreach(id, t; mergedVars) {
 			assert(t.d0, format("Merged variable %s missing in if-false", id));
@@ -5746,6 +5757,10 @@ class ScopeWriter {
 						auto merged = scCont.nscope.mergedVars;
 						IdMap!Expression subst;
 						foreach(decl; merged) addMergedVersion(subst, decl);
+						if(auto bs = cast(ast_scope.BlockScope) scCont.nscope) foreach(w; bs.mergeWitnesses) { // (see `ast.scope_.Scope.mergeWitnesses`)
+							subst[w[0].getId] = w[1];
+							scTail.defineVar(w[0], scCont.genWitness(w[0], w[1]));
+						}
 						foreach(j; mergeOrder(merged.map!(d => d.mergedInto).array, merged.map!(d => [typeForDecl(d.mergedInto), typeForDecl(d)]).array)) {
 							auto decl = merged[j];
 							auto outer = decl.mergedInto;
@@ -6105,6 +6120,11 @@ class ScopeWriter {
 		auto merged = scCont.nscope.mergedVars;
 		IdMap!Expression subst;
 		foreach(decl; merged) addMergedVersion(subst, decl);
+		if(auto bs = cast(ast_scope.BlockScope) scCont.nscope) foreach(w; bs.mergeWitnesses) { // (see `ast.scope_.Scope.mergeWitnesses`)
+			subst[w[0].getId] = w[1];
+			if(contUnreachable) defineVar(w[0], scFail.valError(rv.witness, w[0].vtype));
+			else defineVar(w[0], valMerge(rv.cond, scCont.genWitness(w[0], w[1]), scFail.valError(null, w[0].vtype)));
+		}
 		foreach(j; mergeOrder(merged.map!(d => d.mergedInto).array, merged.map!(d => [typeForDecl(d.mergedInto), typeForDecl(d)]).array)) {
 			auto decl = merged[j];
 			auto outer = decl.mergedInto;

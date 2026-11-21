@@ -1,12 +1,3 @@
-def add[n:!ℕ](v:!ℕ^n,w:!ℕ^n):!ℕ^n{
-	r:=vector(n,0:!ℕ);
-	for i in 0..n { r[i]=v[i]+w[i]; }
-	return r;
-}
-def separate(k:!ℕ,c:!𝔹){
-	if c { n:=k+1; x:=vector(n,1:!ℕ); y:=vector(n,2:!ℕ); } else { x:=vector(1,1:!ℕ); y:=vector(1,2:!ℕ); }
-	return add(x,y); /// TODO
-}
 def notMember(k:!ℕ,c:!𝔹){
 	if c { n:=k; x:=5:!uint[n+3]; } else { x:=2:!uint[2]; }
 	return x as !ℕ; /// error

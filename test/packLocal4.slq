@@ -1,0 +1,12 @@
+
+def add[n:!ℕ](v:!ℕ^n,w:!ℕ^n):!ℕ^n{
+	r:=vector(n,0:!ℕ);
+	for i in 0..n { r[i]=v[i]+w[i]; }
+	return r;
+}
+def separate(k:!ℕ,c:!𝔹){
+	if c { x:=vector(2,1:!ℕ); y:=vector(2,2:!ℕ); } else { x:=vector(1,1:!ℕ); y:=vector(1,2:!ℕ); }
+	return add(x,y); /// TODO
+}
+
+def main() ⇒ (separate(2,0), separate(3,1));
