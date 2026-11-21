@@ -5,7 +5,7 @@ def f(c:!𝔹){
 	}else{
 		assert(false);
 	}
-	return measure(x) as !ℕ; /// error
+	return measure(x) as !ℕ;
 }
 def g(c:!𝔹){
 	if c {
@@ -24,5 +24,5 @@ def h(c:!𝔹){
 		const n:=3;
 		x:=5:!uint[n];
 	}
-	return x as !ℕ; /// error
+	return x as !ℕ;
 }

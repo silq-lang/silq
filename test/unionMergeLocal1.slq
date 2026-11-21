@@ -1,0 +1,23 @@
+// args: --run
+
+def lengths(k:!ℕ):⋃[n:!ℕ]. !ℕ^(n+1)⇒vector(k+1,k:!ℕ);
+def widened(k:!ℕ,c:!𝔹,d:!𝔹){
+	x:=vector(1,0:!ℕ);
+	if c { y:=lengths(k); x=y; }
+	if d { m:=k+2; x=vector(m+1,1:!ℕ); }
+	return x;
+}
+def looped(k:!ℕ){
+	x:=vector(1,0:!ℕ);
+	for i in 0..k {
+		if i=5 { return x; }
+		const n:=x.length;
+		x=vector(n+1,i:!ℕ);
+	}
+	return x;
+}
+def main(){
+	r:=(widened(1,true,true),widened(1,true,false),widened(1,false,false),looped(2));
+	assert(r==([1,1,1,1],[1,1],[0],[1,1,1]));
+	return r;
+}

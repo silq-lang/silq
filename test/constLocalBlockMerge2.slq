@@ -3,14 +3,14 @@ def f(x:𝔹){
 		const n:=3;
 		y:=0:uint[n];
 	}
-	return (x,measure(y)); /// error
+	return (x,measure(y));
 }
 def g(x:𝔹){
 	with x:=X(x) do {
 		const n:=3;
 		k:=5:!uint[n];
 	}
-	return (x,k as !ℕ); /// error
+	return (x,k as !ℕ);
 }
 def h(x:𝔹){
 	with x:=H(x) do {

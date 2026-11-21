@@ -8,11 +8,10 @@ def main(){
 def foo(){
 	n := 32;
 	x := 0: !int[n];
-	return x; /// error
+	return x;
 }
 
 def main2(n:!ℕ){
 	x := foo();
-	y := x : !int[n];
+	y := x : !int[n]; /// error
 }
-

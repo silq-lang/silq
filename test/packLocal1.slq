@@ -1,0 +1,58 @@
+// args: --run
+
+def add[n:!ℕ](v:!ℕ^n,w:!ℕ^n):!ℕ^n{
+	r:=vector(n,0:!ℕ);
+	for i in 0..n { r[i]=v[i]+w[i]; }
+	return r;
+}
+def merged(k:!ℕ,c:!𝔹){
+	if c {
+		const n:=k+1;
+		x:=(vector(n+1,1:!ℕ),vector(n+1,2:!ℕ));
+	}else{
+		m:=k+2;
+		x:=(vector(m,3:!ℕ),vector(m,4:!ℕ));
+	}
+	(p,q):=x;
+	return add(p,q);
+}
+def widths(k:!ℕ,c:!𝔹){
+	if c { n:=k; x:=5:!uint[n+3]; } else { x:=2:!uint[4]; }
+	return x as !ℕ;
+}
+def looped(k:!ℕ){
+	x:=(vector(1,0:!ℕ),vector(1,0:!ℕ));
+	for i in 0..k {
+		n:=x[0].length;
+		x=(vector(n+1,i:!ℕ),vector(n+1,1:!ℕ));
+	}
+	(p,q):=x;
+	return add(p,q);
+}
+def counted(k:!ℕ){
+	x:=vector(1,0:!ℕ);
+	i:=0:!ℕ;
+	do {
+		const n:=x.length;
+		x=vector(2·n,i:!ℕ);
+		i+=1;
+	} while i<k;
+	return x;
+}
+def pairs(k:!ℕ){
+	const n:=k+1;
+	return (vector(n,1:!ℕ),vector(n,2:!ℕ));
+}
+def scoped(k:!ℕ)⇒let { n:=k+2; } in (vector(n,1:!ℕ),vector(n,3:!ℕ));
+def captured(k:!ℕ){
+	const n:=k+1;
+	h:=λ(j:!ℕ)⇒vector(n+j,j:!ℕ);
+	return h(2);
+}
+def main(){
+	(a,b):=pairs(2);
+	(c,d):=scoped(1);
+	r:=(merged(1,true),merged(1,false),widths(1,true),widths(1,false),looped(2),counted(2),add(a,b),add(c,d),captured(1));
+	assert(r==([3,3,3],[7,7,7],5,2,[2,2,2],[1,1,1,1],[3,3,3],[4,4,4],[2,2,2,2]));
+	return r;
+}

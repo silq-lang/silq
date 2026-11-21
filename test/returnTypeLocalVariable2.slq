@@ -1,11 +1,13 @@
+// args: --run
+
 def fixed(){
 	const n:=3;
-	return 0:uint[n]; /// TODO
+	return 0:uint[n];
 }
 def function(){
 	const n:=2;
-	return λ(x:!𝔹^n)⇒x; /// TODO
+	return λ(x:!𝔹^n)⇒x;
 }
 def main(){
-	return ();
+	return (fixed(),function());
 }

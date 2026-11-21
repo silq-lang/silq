@@ -1,12 +1,12 @@
 def localInReturnType(){
 	t:=uint[measure(H(0)) as !ℕ];
 	x:=1:t;
-	return x; /// error
+	return x;
 }
 def valueInReturnType(){
 	t:=uint[1+measure(H(0)) as !ℕ];
 	x:=1:t;
-	return x+x; /// error
+	return x+x;
 }
 def twoEvaluations(){
 	t:=uint[1+measure(H(0)) as !ℕ];
@@ -30,6 +30,6 @@ def increment[n:!ℕ](x:uint[n]){
 }
 def inferredLength(){
 	t:=uint[measure(H(0))+1];
-	return increment(0:t); /// error
+	return increment(0:t);
 }
 def main(){ }

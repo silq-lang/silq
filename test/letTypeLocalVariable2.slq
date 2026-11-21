@@ -1,4 +1,6 @@
-def f(){
-	y:=let { n:=3; x:=0:int[n]; } in x; /// error
+// args: --run
+
+def main(){
+	y:=let { n:=3; x:=0:int[n]; } in x;
 	return measure(y);
 }

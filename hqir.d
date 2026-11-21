@@ -3531,7 +3531,7 @@ class ScopeWriter {
 		if(e.blscope_ && e.blscope_ is nscope && !scopeFree) {
 			scope loc = PushLocation(ctx, locEnd(e.loc));
 			foreach(decl; e.blscope_.forgottenVars) {
-				if(ast_ty.isUnionWitness(decl)) continue; // (see `genCompoundStmt`)
+				if(ast_ty.readByMerge(decl)) continue; // (see `genCompoundStmt`)
 				valForget(getVar(decl, false));
 			}
 		}
@@ -5440,7 +5440,7 @@ class ScopeWriter {
 			}
 		}
 		foreach(decl; nscope.forgottenVars) {
-			if(ast_ty.isUnionWitness(decl)) continue; // (classical: the merge reads it to convert the merged variables whose types mention it into unions, see `ast.type.eliminateVariables`)
+			if(ast_ty.readByMerge(decl)) continue; // (classical: the merge reads it to convert the merged variables whose types mention it into unions, see `ast.type.eliminateVariables`)
 			if(!r.mayPass) {
 				// (the statements after the return or abort, which may define the variable, are not generated)
 				auto p = vars.getPtr(decl.getId);

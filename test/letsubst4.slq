@@ -1,10 +1,12 @@
 
-def cond[τ:type,σ:type](c:!𝔹,a:τ,b:σ): if c then let σ:=τ in σ else σ;
+def cond[τ:type,σ:type](c:!𝔹,a:τ,b:σ)lifted: if c then let σ:=τ in σ else σ{
+	if c { return a; } else { return b; } /// TODO
+}
 def leak(){
 	c:=measure(H(0));
 	a:=[4];
 	b:=[1,2,3];
-	return cond(c,a,b); /// error
+	return cond(c,a,b);
 }
 def main(){
 	a:=[4];

@@ -2719,10 +2719,10 @@ struct QState{
 		this=map!forgetImpl(var);
 	}
 	static if(language==silq){
-		void forgetVars(Declaration[] forgottenVars,bool keepWitnesses=false){ // (`keepWitnesses`: the witnesses of unions, which `closeScope` forgets after the conversions of the merged variables, which read them, see `isUnionWitness`)
+		void forgetVars(Declaration[] forgottenVars,bool keepWitnesses=false){ // (`keepWitnesses`: the classical locals, which `closeScope` forgets after the conversions of the merged variables, which read them for the witnesses of unions, see `readByMerge`)
 			if(unreachable) return;
 			foreach(var;forgottenVars){
-				static if(language==silq) if(isUnionWitness(var)&&(keepWitnesses||var.getName !in vars)) continue; // (or forgotten by `closeScope`)
+				static if(language==silq) if(readByMerge(var)&&(keepWitnesses||var.getName !in vars)) continue; // (or forgotten by `closeScope`)
 				auto name=var.getName;
 				vars[name].forget(this);
 				vars.remove(name);
@@ -3240,7 +3240,7 @@ struct Interpreter(QState){
 		QState.Value witness;
 		if(from) if(auto su=cast(UnionTy)stype) if(auto w=unionWitness(from,su,u)){ // (the witness of the static types, as `UnionPackConversion`, e.g., `2` and `3` for `!ℕ^(a·b+1)` in `⋃[n:!ℕ][m:!ℕ]. !ℕ^(n·m+1)` with `a=2` and `b=3`, which `!ℕ^7` does not determine)
 			auto cw=closedType(bind(w,bindings));
-			if(!isOpen(cw)){
+			if(!isOpen(cw)||cw.freeIdentifiers.all!(id=>id.meaning&&id.meaning.getName in qstate.vars)){ // (also a variable whose value `closedType` does not substitute, e.g., of a tuple type)
 				witness=runExp(cw);
 				member=u.cod.substitute(u.name,w);
 			}
@@ -3313,7 +3313,7 @@ struct Interpreter(QState){
 			if(qstate.vars[name].type !is type)
 				qstate.vars[name]=convertTo(qstate.vars[name],type,true,false,typeForDecl(merged)).toVar(qstate,false);
 		}
-		static if(language==silq) foreach(var;sc.forgottenVars) if(isUnionWitness(var)&&var.getName in qstate.vars){
+		static if(language==silq) foreach(var;sc.forgottenVars) if(readByMerge(var)&&var.getName in qstate.vars){
 			qstate.vars[var.getName].forget(qstate);
 			qstate.vars.remove(var.getName);
 		}
