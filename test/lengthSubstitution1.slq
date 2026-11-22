@@ -1,0 +1,12 @@
+// args: --run
+
+def size(a:!ℕ[])⇒vector(a.length,0:𝔹);
+def sized[m:!ℕ](a:!ℕ^m){
+	x:=size(a);
+	return measure(x);
+}
+def main(){
+	r:=sized(1,2,3);
+	assert(r==(0,0,0));
+	return r;
+}

@@ -1,0 +1,7 @@
+// args: --run
+
+def main(){
+	v:=vector(3,0:!𝔹):⋃[n:!ℕ]. !𝔹^(n+1);
+	(a:!𝔹^2)~(b:!𝔹^2):=v; /// run_error
+	return (a,b);
+}

@@ -1,0 +1,21 @@
+// args: --remove-loops --run
+
+def sliced(){
+	t:=𝔹×𝔹;
+	x:=(1:𝔹,0:𝔹) coerce t;
+	j:=0;
+	do{ w:=x coerce 𝔹[]; x:=x coerce t; j+=1; }while j<2;
+	return (measure(x),measure(w));
+}
+def nonEmpty(){
+	t:=𝔹×𝔹;
+	x:=(1:𝔹,0:𝔹) coerce t;
+	j:=0;
+	do{ w:=x coerce ⋃[n:!ℕ]. 𝔹^(n+1); v:=w~w; x:=x coerce t; j+=1; }while j<3;
+	return (measure(x),measure(v),measure(w));
+}
+def main(){
+	r:=(sliced(),nonEmpty());
+	assert(r==(((1,0),(1,0)),((1,0),(1,0,1,0),(1,0))));
+	return r;
+}

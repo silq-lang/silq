@@ -1,0 +1,56 @@
+// args: --remove-loops --run
+
+def repeated(s:!ℕ){
+	y:=vector(s,1:𝔹);
+	repeat 2 { y:=y~vector(1,0:𝔹); z:=measure(dup(y)); }
+	return measure(y).length;
+}
+def counted(s:!ℕ){
+	y:=vector(s,1:𝔹);
+	for i in 0..2 { y:=y~vector(1,0:𝔹); z:=measure(dup(y)); }
+	return measure(y).length;
+}
+def doWhile(s:!ℕ){
+	y:=vector(s,1:𝔹);
+	k:=0;
+	do{ y:=y~vector(1,0:𝔹); z:=measure(dup(y)); k+=1; }while k<2;
+	return measure(y).length;
+}
+def classicalToo(s:!ℕ){
+	a:=vector(s,1:!ℕ);
+	y:=vector(s,1:𝔹);
+	repeat 2 { a:=a~vector(1,0:!ℕ); y:=y~vector(1,0:𝔹); z:=measure(dup(y)); w:=dup(a); }
+	return (measure(y).length,a.length);
+}
+def assigned(s:!ℕ){
+	y:=vector(s,1:𝔹);
+	repeat 2 { y←y~vector(1,0:𝔹); z:=measure(dup(y)); }
+	return measure(y).length;
+}
+def earlyReturn(const d:!𝔹,s:!ℕ){
+	y:=vector(s,1:𝔹);
+	repeat 1 { y:=y~vector(1,0:𝔹); if d { measure(y); return (s+1,s); } }
+	return (s,measure(y).length);
+}
+def whileReturn(const d:!𝔹,s:!ℕ){
+	y:=vector(s,1:𝔹);
+	k:=0; while k<2 { k+=1; y:=y~vector(1,0:𝔹); if d { measure(y); return (s+1,s); } }
+	return (s,measure(y).length);
+}
+def len[n:!ℕ](const x:𝔹^n)⇒n;
+def operand(s:!ℕ){
+	y:=vector(s,1:𝔹);
+	repeat 2 { y:=y~vector(1,0:𝔹); m:=len(y~vector(1,1:𝔹)); z:=measure(dup(y)); }
+	return measure(y).length;
+}
+def merged(const c:!ℕ,s:!ℕ){
+	y:=vector(s,1:𝔹);
+	k:=0;
+	do{ k+=1; if c==0 { y←y~vector(1,1:𝔹); } else { y:=y~vector(1,0:𝔹); z:=measure(dup(y~vector(1,1:𝔹))); } }while k<2;
+	return measure(y).length;
+}
+def main(){
+	r:=(repeated(0),repeated(2),counted(1),doWhile(1),classicalToo(1),assigned(1),earlyReturn(true,1),earlyReturn(false,1),whileReturn(true,1),whileReturn(false,1),operand(1),merged(0,1),merged(1,1));
+	assert(r==(2,4,3,3,(3,3),3,(2,1),(1,2),(2,1),(1,3),3,3,3));
+	return r;
+}

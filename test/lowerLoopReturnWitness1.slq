@@ -1,0 +1,49 @@
+// args: --remove-loops --run
+
+def before(const k:!ℕ){
+	x:=[1,2]:!ℕ[];
+	if k<5 { j:=0; while j<k { j+=1; return 0; } }
+	return x.length;
+}
+def inBranches(const k:!ℕ){
+	if k<5 { j:=0; while j<k { j+=1; return 0; } x:=[1,2,3]:!ℕ[]; } else { x:=[1,2]:!ℕ[]; }
+	return x.length;
+}
+def assignedInBranch(const k:!ℕ){
+	x:=[1,2]:!ℕ[];
+	if k<5 { j:=0; while j<k { j+=1; return 0; } x=[1,2,3,4]:!ℕ[]; }
+	return x.length;
+}
+def common[n:!ℕ](const a:!ℕ^n,const b:!ℕ^n)⇒n;
+def sameLength(const k:!ℕ){
+	if k<5 { j:=0; while j<k { j+=1; return 0; } x:=[1,2,3]:!ℕ[]; y:=x; } else { x:=[1,2]:!ℕ[]; y:=x; }
+	return common(x,y);
+}
+def nestedJoins(const k:!ℕ,const l:!ℕ){
+	x:=[1,2]:!ℕ[];
+	if k<5 { j:=0; while j<k { j+=1; return 0; } }
+	y:=x~[3];
+	if l<5 { j:=0; while j<l { j+=1; return 1; } }
+	return x.length+y.length;
+}
+def quantumArray(const k:!ℕ){
+	x:=[0:𝔹,1:𝔹]:𝔹[];
+	y:=dup(x);
+	if k<5 { j:=0; while j<k { j+=1; return (measure(x)[0],measure(y).length); } }
+	return (measure(y)[1],measure(x).length);
+}
+def unionValue(const k:!ℕ){
+	x:=vector(3,0):⋃[n:!ℕ]. !ℕ^(n+1);
+	if k<5 { j:=0; while j<k { j+=1; return 0; } }
+	return x.length;
+}
+def placeholder(const k:!ℕ):!𝔹{
+	x:=[H(H(0:𝔹)),H(H(1:𝔹))]:𝔹[];
+	for i in 0..2 { if i<k { return measure(x)[1]; } }
+	return measure(x)[0];
+}
+def main(){
+	r:=(before(0),before(1),before(5),inBranches(0),inBranches(1),inBranches(5),assignedInBranch(0),assignedInBranch(5),sameLength(0),sameLength(5),nestedJoins(0,0),nestedJoins(0,1),nestedJoins(5,5),quantumArray(0),quantumArray(1),unionValue(0),unionValue(5),placeholder(0),placeholder(1));
+	assert(r==(2,0,2,3,0,2,4,2,3,2,5,1,5,(1,2),(0,2),3,3,0,1));
+	return r;
+}

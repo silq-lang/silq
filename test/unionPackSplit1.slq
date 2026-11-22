@@ -1,0 +1,19 @@
+// args: --run
+
+def packed(c:!𝔹){
+	n:=2;
+	x:=vector(n,1:!ℕ);
+	if c {
+		y:=vector(n,0:!ℕ);
+		z:=(x,y):⋃[k:!ℕ]. (!ℕ^k)^2;
+		forget(x); forget(y);
+		n=4;
+		return (z,n);
+	}
+	return ((x,x):⋃[k:!ℕ]. (!ℕ^k)^2,n);
+}
+def main(){
+	r:=(packed(true),packed(false));
+	assert(r==((((1,1),(0,0)),4),(((1,1),(1,1)),2)));
+	return r;
+}

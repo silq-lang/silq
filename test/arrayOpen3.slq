@@ -1,0 +1,11 @@
+// args: --run
+
+def main():⋃[n:!ℕ]. !ℕ^(n+1){
+	a:=array(2,0);
+	if measure(H(0)){
+		x:=a~[1];
+	}else{
+		x:=a~[1];
+	}
+	return x;
+}

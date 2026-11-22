@@ -1,0 +1,46 @@
+// args: --remove-loops --run
+
+def lenc[n:!ℕ](const x:!ℕ^n)⇒n;
+def diverging(const c:!ℕ,s:!ℕ){
+	y:=vector(s,1:𝔹);
+	repeat 2 {
+		if c==2 { while true { return 7; } } else { y←y~vector(1,1:𝔹); }
+		if c==0 { return measure(y).length; }
+	}
+	return measure(y).length;
+}
+def bothBranches(const c:!ℕ,s:!ℕ){
+	y:=vector(s,1:𝔹);
+	for i in 0..2 {
+		if c==2 { j:=0; while j<2 { j+=1; if j==i { return 7; } } y:=y~vector(2,0:𝔹); } else { y←y~vector(1,1:𝔹); }
+		if c==0 { return measure(y).length; }
+	}
+	return measure(y).length;
+}
+def nested(const c:!ℕ,s:!ℕ){
+	a:=vector(s,2:!ℕ);
+	for i in 0..2 {
+		k:=0;
+		while k<2 {
+			k+=1;
+			if c==1 { do { return lenc(a); } while true; } else { a:=a~[k]; }
+			if c==0 { return lenc(a)+10; }
+		}
+	}
+	return lenc(a);
+}
+def captured(const c:!ℕ,s:!ℕ){
+	a:=vector(s,2:!ℕ);
+	for i in 0..2 {
+		a:=a~a;
+		if c==1 { repeat 0 { return 7; } a:=a~a; }
+		w:=0;
+		do { w+=1; if c==2 { return a.length; } } while w<1;
+	}
+	return a.length;
+}
+def main(){
+	r:=(diverging(0,1),diverging(1,1),diverging(2,1),bothBranches(0,1),bothBranches(1,1),bothBranches(2,1),nested(0,1),nested(1,1),nested(2,1),captured(0,1),captured(1,1),captured(2,1));
+	assert(r==(2,3,7,2,3,7,12,1,5,4,16,2));
+	return r;
+}

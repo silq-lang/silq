@@ -4420,6 +4420,12 @@ struct Interpreter(QState){
 		}
 	void openUnions(VarDecl[] witnesses,Expression[] opened,ref QState.Value rhs,bool define=true){ // (the witnesses of the unions of the value, from its pairs, see `ast.semantic_.openUnions` and `convertUnion`; without `define`, they are defined already, see `OpenExp`)
 			foreach(i,w;witnesses){
+				if(cast(ArrayTy)opened[i]){ // (its length is the witness, see `ast.semantic_.declareWitnesses`)
+					enforce(rhs.tag==QState.Value.Tag.array_,"bad value of an array type");
+					if(define) qstate.assignTo(w.getName,qstate.makeInteger(ℤ(rhs.array_.length)));
+					rhs=convertTo(rhs,evalType(closedType(opened[i+1])),true,false,opened[i]);
+					continue;
+				}
 				auto type=evalType(closedType(opened[i]));
 				if(cast(UnionTy)type){
 					rhs=unionView(rhs,type);

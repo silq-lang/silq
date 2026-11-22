@@ -1,0 +1,9 @@
+def main():⋃[n:!ℕ]. !ℕ^(n+1){
+	a:=vector(2,0):!ℕ[];
+	if measure(H(0)){
+		x:=a~[1];
+	}else{
+		x:=a~[1];
+	}
+	return a; /// error
+}

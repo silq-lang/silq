@@ -1,0 +1,23 @@
+// args: --run
+
+def halves(){
+	v:=vector(4,0:𝔹):𝔹[];
+	(a:𝔹^2)~(b:𝔹^2):=v;
+	return (a,b);
+}
+def app01(x:𝔹,y:𝔹)⇒(x,y,0:!𝔹,1:!𝔹);
+def unapplied(){
+	w:=(1:𝔹,0:𝔹,0:𝔹,1:𝔹):⋃[n:!ℕ]. 𝔹^(n+2);
+	app01(x,y):=w;
+	return (x,y);
+}
+def nonEmpty(){
+	xs:=vector(4,1:𝔹):⋃[n:!ℕ]. 𝔹^(n+1);
+	(a:𝔹^1)~(b:𝔹^3):=xs;
+	return (a,b);
+}
+def main(){
+	r:=measure(halves(),unapplied(),nonEmpty());
+	assert(r==(((0,0),(0,0)),(1,0),((1,),(1,1,1))));
+	return r;
+}

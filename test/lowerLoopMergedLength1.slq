@@ -1,0 +1,40 @@
+// args: --remove-loops --run
+
+def measured(const c:!𝔹){
+	x:=vector(1,0:𝔹);
+	s:=0;
+	repeat 2 {
+		if c { y:=measure(x); } else { y:=measure(x); }
+		s+=y.length;
+		x:=vector(0,1:𝔹);
+	}
+	return s;
+}
+def counted(const c:!𝔹){
+	x:=vector(1,0:𝔹);
+	s:=0;
+	for i in 0..3 { if c { y:=measure(x); } else { y:=measure(x); } s+=y.length; x:=vector(i+2,0:𝔹); }
+	return (s,measure(x).length);
+}
+def doWhile(const c:!𝔹){
+	x:=vector(1,0:𝔹);
+	s:=0;
+	k:=0;
+	do{ k+=1; if c { y:=measure(x); } else { y:=measure(x); } s+=y.length; x:=vector(k,0:𝔹); }while k<3;
+	return (s,measure(x).length);
+}
+def concatenated(const c:!𝔹){
+	a:=vector(2,1:!ℕ);
+	s:=0;
+	for i in 0..2 {
+		if c { y:=a~a; } else { y:=a~[i]; }
+		s+=(y~a).length;
+		a:=a~[1];
+	}
+	return s;
+}
+def main(){
+	r:=(measured(true),measured(false),counted(true),counted(false),doWhile(true),doWhile(false),concatenated(true),concatenated(false));
+	assert(r==(1,1,(6,4),(6,4),(4,3),(4,3),15,12));
+	return r;
+}

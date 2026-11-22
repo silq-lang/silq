@@ -2813,6 +2813,12 @@ class ScopeWriter {
 
 	Value openUnions(ast_decl.VarDecl[] witnesses, Expression[] opened, Value v) { // (the witnesses of the unions that the value is in define their `const` locals, see `ast.semantic_.openUnions`: the member)
 		foreach(i, w; witnesses) {
+			if(auto arrTy = cast(ast_ty.ArrayTy) opened[i]) { // (its length is the witness, see `ast.semantic_.declareWitnesses`)
+				CReg len;
+				v = valArrayToVector(arrTy.next, len, v);
+				defineVar(w, valNewC(len));
+				continue;
+			}
 			defineVar(w, valNewC(ccg.boxIndex(ctypeSilqTuple, 2, v.creg, 0)));
 			v = valNewQ(typeHasClassical(opened[i + 1]) ? ccg.boxIndex(ctypeSilqTuple, 2, v.creg, 1) : null, v.qreg);
 		}
