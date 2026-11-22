@@ -1,0 +1,33 @@
+// args: --run
+
+def lambdaForgotten(b:!𝔹){
+	c:=1;
+	v:=vector(c,0:𝔹);
+	if b { g:=λ()⇒move(v); forget(g); x:=c; } else { forget(v); x:=c; }
+	return x;
+}
+def nestedForgotten(b:!𝔹){
+	c:=1;
+	v:=vector(c,0:𝔹);
+	if b { def h()⇒move(v); forget(h); x:=c; } else { forget(v); x:=c; }
+	return x;
+}
+def constParameter(b:!𝔹){
+	c:=1;
+	v:=vector(c,0:𝔹);
+	if b { g:=λ(const w:!ℕ^c)⇒move(v); forget(g); x:=c+1; } else { forget(v); x:=c; }
+	return x;
+}
+def called(b:!𝔹){
+	c:=0;
+	c+=1;
+	v:=vector(c,0:𝔹);
+	if b { forget((λ()⇒move(v))()=vector(c,0:𝔹)); x:=[c]; } else { forget(v); x:=[c]; }
+	c:=2;
+	return (x[0],c);
+}
+def main(){
+	r:=(lambdaForgotten(true),lambdaForgotten(false),nestedForgotten(true),nestedForgotten(false),constParameter(true),constParameter(false),called(true),called(false));
+	assert(r==(1,1,1,1,2,1,(1,2),(1,2)));
+	return r;
+}
