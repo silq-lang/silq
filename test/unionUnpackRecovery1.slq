@@ -1,0 +1,15 @@
+def rows(k:!ℕ):⋃[n:!ℕ]. (!ℕ^n)^2⇒vector(2,missing(vector(k,k))); /// error
+def vectors(){
+	[r,s]:=rows(2);
+	return (r,s);
+}
+def pairs(k:!ℕ):⋃[n:!ℕ]. !ℕ^n×!ℕ^n{ return missing(k); } /// error
+def tuples(){
+	(p,q):=pairs(2);
+	return (p,q);
+}
+def scalar(k:!ℕ):!ℕ⇒missing(k); /// error
+def unpacked(){
+	[r,s]:=scalar(2); /// error
+	return (r,s);
+}
