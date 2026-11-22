@@ -4429,7 +4429,7 @@ struct Interpreter(QState){
 					continue;
 				}
 				if(!define) continue;
-				// (a union that the values of the earlier witnesses normalize, e.g., `⋃[m:!ℕ]. 𝔹^(n₍1₎+m)` to `𝔹[]` for `n₍1₎=0` (see `unionOf`), whose value is the member: the witness of its type)
+				// (a union that the values of the earlier witnesses normalize, e.g., `⋃[m:!ℕ]. 𝔹^(n₍₁₎+m)` to `𝔹[]` for `n₍₁₎=0` (see `unionOf`), whose value is the member: the witness of its type)
 				UnionTy u;
 				Expression witness=null;
 				if(auto su=cast(UnionTy)opened[i]){

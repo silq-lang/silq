@@ -7838,7 +7838,8 @@ class ScopeWriter {
 	Value implConvert(ast_conv_IntToZConversion conv, Value v) => genNoopConvert(v, conv.from, conv.to);
 
 	Value implConvert(ast_conv.UnionPackConversion conv, Value v) {
-		auto w = genExpr(conv.witness);
+		auto dom = (cast(ast_ty.UnionTy) conv.to).dom, w = genExpr(conv.witness);
+		if(conv.witness.type != dom) w = genSubtype(w, conv.witness.type, dom); // (the witness can have a subtype of the domain, e.g., `1:!𝔹` for `!ℕ^2` in `⋃[n:!ℕ]. !ℕ^(n+1)`)
 		auto r = genConvert(conv.payload, v);
 		return valNewQ(unionPack(w.creg, r.creg), r.qreg);
 	}
