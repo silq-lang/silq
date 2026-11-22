@@ -32,7 +32,7 @@ def afterConditional(a:𝔹,k:!𝔹){
 	e:=v1;
 	if k { t:=measure(v0); ms+=t; }
 	else { a:=X(a); u:=!v1; forget(u); } /// error
-	ms+=measure(v1);
+	ms+=measure(v1); /// error
 	return (a,ms,e);
 }
 def nested(a:𝔹,k:!𝔹,l:!𝔹){

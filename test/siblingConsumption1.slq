@@ -1,0 +1,14 @@
+// args: --run
+
+def consumedInElse(a:𝔹,l:!𝔹){
+	v0:=!a;
+	v1:=dup(v0);
+	if l { a:=X(a); u:=!v1; forget(u); } else { m:=measure(v0); v0:=m:𝔹; }
+	t:=measure(v0);
+	return (a,t);
+}
+def main(){
+	r:=(measure(consumedInElse(0:𝔹,true)),measure(consumedInElse(1:𝔹,false)));
+	assert(r==((1,1),(1,0)));
+	return r;
+}

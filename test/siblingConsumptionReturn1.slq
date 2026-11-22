@@ -1,0 +1,29 @@
+// args: --run
+
+def nestedReturns(x:𝔹,y:𝔹,const c:!𝔹,const d:!𝔹){
+	t:=dup(x); u:=dup(t); w:=dup(u);
+	if c { forget(t); } else { x:=X(x); if d { return (x,y); } else { y:=X(y); return (x,y); } }
+	forget(w);
+	return (x,y);
+}
+def continued(x:𝔹,y:𝔹,const c:!𝔹,const d:!𝔹){
+	t:=dup(x); u:=dup(t); w:=dup(u);
+	if c { forget(t); } else { x:=X(x); if d { return (x,y); } y:=X(y); return (x,y); }
+	forget(w);
+	return (x,y);
+}
+def quantumControl(x:𝔹,y:𝔹,const q:𝔹){
+	t:=dup(x); u:=dup(t); v:=dup(u); w:=dup(v);
+	if q { forget(t); } else { x:=X(x); if q { } else { return (x,y); } y:=X(y); return (x,y); }
+	forget(w);
+	return (x,y);
+}
+def main(){
+	a:=measure(nestedReturns(1:𝔹,0:𝔹,true,false),nestedReturns(1:𝔹,0:𝔹,false,true),nestedReturns(1:𝔹,0:𝔹,false,false));
+	b:=measure(continued(0:𝔹,0:𝔹,true,true),continued(0:𝔹,0:𝔹,false,true),continued(0:𝔹,0:𝔹,false,false));
+	q:=0:𝔹;
+	e:=measure(quantumControl(0:𝔹,1:𝔹,q),q);
+	r:=(a,b,e);
+	assert(r==(((1,0),(0,0),(0,1)),((0,0),(1,0),(1,1)),((1,1),0)));
+	return r;
+}

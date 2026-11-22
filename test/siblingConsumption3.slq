@@ -1,0 +1,7 @@
+def consumedInThen(a:𝔹,l:!𝔹){
+	v0:=!a;
+	v1:=dup(v0); /// TODO
+	if l { m:=measure(v0); v0:=m:𝔹; } else { a:=X(a); u:=!v1; forget(u); }
+	t:=measure(v0);
+	return (a,t);
+}

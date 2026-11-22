@@ -1,0 +1,56 @@
+// args: --run
+
+def continued(x:𝔹,y:𝔹,const q:𝔹){
+	t:=dup(x);
+	u:=dup(t);
+	if q { forget(t); return (x,y); }
+	forget(u);
+	return (x,y);
+}
+def forgottenInBranch(x:𝔹,y:𝔹,const q:𝔹){
+	t:=dup(x);
+	u:=dup(t);
+	if q { forget(u); return (x,y); }
+	forget(u);
+	return (x,y);
+}
+def consumedAfter(x:𝔹,y:𝔹,const q:𝔹){
+	t:=dup(x);
+	u:=dup(t);
+	if q { forget(t); return (x,y); }
+	forget(u);
+	x:=X(x);
+	return (x,y);
+}
+def copied(x:𝔹,y:𝔹,const q:𝔹){
+	t:=dup(x);
+	u:=dup(t);
+	if q { forget(t); return (x,y); }
+	w:=u;
+	forget(w);
+	return (x,y);
+}
+def twoReturns(x:𝔹,y:𝔹,const q:𝔹,const p:𝔹){
+	t:=dup(x);
+	u:=dup(t);
+	if q { return (x,y); }
+	if p { forget(u); return (x,y); }
+	forget(u);
+	return (x,y);
+}
+def loopBody(x:𝔹,y:𝔹,const q:𝔹){
+	c:=0;
+	repeat 2 { t:=dup(x); u:=dup(t); if q { forget(t); return (x,y); } forget(u); y:=X(y); c+=1; }
+	return (x,y);
+}
+def nestedLoop(x:𝔹,y:𝔹,const q:𝔹,k:!ℕ){
+	c:=0;
+	for i in 0..2 { t:=dup(x); u:=dup(t); if k>2 { forget(t); if q { return (x,y); } else { return (x,y); } } else { y:=X(y); } forget(u); c+=1; }
+	return (x,y);
+}
+def main(){
+	q:=H(0:𝔹);
+	r:=(measure(continued(1:𝔹,0:𝔹,q)),measure(forgottenInBranch(0:𝔹,1:𝔹,q)),measure(consumedAfter(1:𝔹,0:𝔹,0:𝔹)),measure(consumedAfter(1:𝔹,0:𝔹,1:𝔹)),measure(copied(0:𝔹,1:𝔹,q)),measure(twoReturns(1:𝔹,1:𝔹,q,0:𝔹)),measure(twoReturns(0:𝔹,1:𝔹,q,1:𝔹)),measure(loopBody(1:𝔹,1:𝔹,q)),measure(nestedLoop(1:𝔹,0:𝔹,q,0)),measure(nestedLoop(0:𝔹,1:𝔹,q,3)),measure(H(q)));
+	assert(r==((1,0),(0,1),(0,0),(1,0),(0,1),(1,1),(0,1),(1,1),(1,0),(0,1),0));
+	return r;
+}
