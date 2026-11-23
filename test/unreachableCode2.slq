@@ -1,0 +1,21 @@
+def typeError(const c:!𝔹):!ℕ{
+	if c { assert(false); return (1,2); } /// error
+	return 0;
+}
+def undefined(const c:!𝔹){
+	if c { assert(false); return z; } /// error
+	return 0;
+}
+def consumedBefore(x:𝔹,const c:!𝔹){
+	forget(x=0:𝔹);
+	assert(false);
+	return x; /// error
+}
+def nestedFunction(const c:!𝔹){
+	assert(false);
+	def g(){
+		q:=H(0:𝔹); /// error
+		return 0;
+	}
+	return g();
+}

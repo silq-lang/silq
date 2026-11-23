@@ -1,0 +1,58 @@
+// args: --run
+
+def afterAbort(const c:!𝔹){
+	if c { q:=H(0:𝔹); assert(false); return 2; }
+	if c { r:=H(0:𝔹); assert(false); y:=measure(r); return y+1; }
+	return 0;
+}
+def abortingPath(x:𝔹,const c:!𝔹){
+	if c { y:=H(x); assert(false); }
+	return measure(x);
+}
+def straightLine(x:𝔹,const c:!𝔹){
+	if c {
+		y:=H(x);
+		assert(false);
+		z:=H(0:𝔹);
+		if c { w:=H(z); } else { forget(z); }
+		for i in 0..2 { v:=H(0:𝔹); }
+		k:=0; while k<2 { u:=H(0:𝔹); k+=1; }
+		forget(y);
+		return 0;
+	}
+	return measure(x);
+}
+def afterReturn(x:𝔹,const c:!𝔹){
+	if c {
+		return measure(x);
+		y:=H(0:𝔹);
+		return 2;
+	}
+	return measure(H(x));
+}
+def afterInfiniteLoop(x:𝔹,const c:!𝔹){
+	if c {
+		while true { x:=H(x); }
+		y:=H(x);
+		return 2;
+	}
+	return measure(x);
+}
+def neverTaken(x:𝔹){
+	if false { x:=H(x); y:=H(0:𝔹); }
+	return measure(x);
+}
+def alwaysTaken(x:𝔹){
+	if true { return measure(x); } else { y:=H(0:𝔹); }
+	z:=H(0:𝔹);
+	return 2;
+}
+def bothAbort(x:𝔹,const c:!𝔹){
+	if c { q:=H(0:𝔹); assert(false); } else { assert(false); }
+	return 0;
+}
+def main(){
+	r:=(afterAbort(false),abortingPath(0:𝔹,false),straightLine(1:𝔹,false),afterReturn(0:𝔹,true),afterInfiniteLoop(1:𝔹,false),neverTaken(1:𝔹),alwaysTaken(0:𝔹));
+	assert(r==(0,0,1,0,1,1,0));
+	return r;
+}

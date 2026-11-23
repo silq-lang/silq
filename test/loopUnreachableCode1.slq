@@ -13,14 +13,14 @@ def g(){
 def h(){
 	x:=H(0:𝔹);
 	while true { x:=H(x); }
-	y:=H(x); /// error
+	y:=H(x);
 	return 2;
 }
 def i(){
 	x:=H(0:𝔹);
 	k:=0;
 	do{ x:=H(x); k+=1; }while true;
-	forget(x); /// error
+	forget(x);
 	return 2;
 }
 def j(c:!𝔹){

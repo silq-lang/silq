@@ -68,12 +68,12 @@ def oneBranch(c:!𝔹){
 }
 
 def unconsumed(c:!𝔹){
-	if c { q:=H(0:𝔹); assert(false); } else { q:=H(1:𝔹); assert(false); } /// error
+	if c { q:=H(0:𝔹); assert(false); } else { q:=H(1:𝔹); assert(false); }
 	return 0;
 }
 
 def unconsumedOneBranch(c:!𝔹){
-	if c { q:=H(0:𝔹); assert(false); } else { assert(false); } /// error
+	if c { q:=H(0:𝔹); assert(false); } else { assert(false); }
 	return 0;
 }
 

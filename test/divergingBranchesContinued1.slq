@@ -51,13 +51,13 @@ def consumed(c:!𝔹){
 
 def unconsumed(c:!𝔹){
 	b:=H(0:𝔹);
-	if c { b:=X(b); assert(false); } else { b:=Y(b); assert(false); } /// error
+	if c { b:=X(b); assert(false); } else { b:=Y(b); assert(false); }
 	return 0;
 }
 
 def partial(c:!𝔹){
 	b:=H(0:𝔹);
-	if c { b:=X(b); assert(false); } else { x:=measure(b); assert(false); } /// error
+	if c { b:=X(b); assert(false); } else { x:=measure(b); assert(false); }
 	return 0;
 }
 
