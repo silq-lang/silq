@@ -39,7 +39,7 @@ def abortingCall(k0:!ℕ){
 	v:=vector(c,0:𝔹);
 	k:=k0;
 	do{ k+=1; }while k<2 {
-		c+=1; /// TODO
+		c+=1;
 		fail();
 	}
 	w:=v.length;

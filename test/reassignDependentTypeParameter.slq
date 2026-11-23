@@ -1,6 +1,9 @@
+// args: --run
+
 def main(){
 	n := 4;
 	x := 0: int[n];
-	n += 2; /// error
+	n += 2;
 	y := measure(x);
+	return (y,n);
 }

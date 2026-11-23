@@ -1,8 +1,10 @@
+// args: --run
+
 def oneBranch(){
 	n:=3;
 	q:=vector(n,0:𝔹);
 	c:=measure(H(0:𝔹));
-	if c { forget(n); } /// error
+	if c { forget(n); }
 	with { w:=dup(q):𝔹[]; } do { }
 	return q;
 }
@@ -10,7 +12,12 @@ def bothBranches(){
 	n:=3;
 	q:=vector(n,0:𝔹);
 	c:=measure(H(0:𝔹));
-	if c { forget(n); } else { forget(n); } /// error
+	if c { forget(n); } else { forget(n); }
 	with { w:=dup(q):𝔹[]; } do { }
 	return q;
+}
+def main(){
+	r:=(measure(oneBranch()),measure(bothBranches()));
+	assert(r==((0,0,0),(0,0,0)));
+	return r;
 }

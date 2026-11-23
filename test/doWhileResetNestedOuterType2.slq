@@ -1,0 +1,43 @@
+// args: --run
+
+def bodyAfterNested(){
+	n:=2;
+	z:=vector(n,0:𝔹);
+	c1:=0;
+	do{
+		c1+=1;
+		c2:=0;
+		do{ c2+=1; }while c2<2 { n+=1; } /// TODO
+		n+=1;
+	}while c1<2;
+	return n;
+}
+def forBody(){
+	n:=2;
+	z:=vector(n,0:𝔹);
+	for i in 0..2 {
+		c2:=0;
+		do{ c2+=1; }while c2<2 { n+=1; } /// TODO
+		n+=1;
+	}
+	return n;
+}
+def resetAfterNested(){
+	n:=2;
+	z:=vector(n,0:𝔹);
+	c1:=0;
+	do{
+		c1+=1;
+		c2:=0;
+		do{ c2+=1; }while c2<2 { n+=1; } /// TODO
+	}while c1<2 {
+		forget(n);
+		n:=3;
+	}
+	return n;
+}
+def main(){
+	r:=(bodyAfterNested(),forBody(),resetAfterNested());
+	assert(r==(6,6,4));
+	return r;
+}

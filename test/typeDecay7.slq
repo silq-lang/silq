@@ -1,0 +1,43 @@
+// args: --run
+
+def letBlock(n:!ℕ){
+	x:=vector(n,1:𝔹);
+	y:=(x,let { forget(n); } in 2);
+	return measure(y);
+}
+def returned(n:!ℕ,b:!𝔹){
+	x:=vector(n,1:𝔹);
+	if b { y:=measure(x:𝔹[]); forget(n); return y; }
+	return measure(x:𝔹[]);
+}
+def withInverse(q:𝔹^3,k:!ℕ){
+	with { i:=k; j:=0; (l:𝔹^(i+j))~(m,)~(r):=q; } do { m:=X(m); }
+	return q;
+}
+def otherBranch(n:!ℕ){
+	x:=vector(n,1:𝔹);
+	k:=0;
+	while k<2 { k+=1; if k==2 { n+=1; } else { r:=measure(x:𝔹[]); forget(r); x:=vector(n,0:𝔹); } }
+	return (n,measure(x:𝔹[]));
+}
+def laterIteration(n:!ℕ){
+	x:=vector(n,1:𝔹);
+	(k,s):=(0,0);
+	while k<3 { k+=1; if k==2 { n+=1; } else { r:=measure(x:𝔹[]); s+=r.length; x:=vector(n,0:𝔹); } }
+	return (n,s);
+}
+def redefinedNextIteration(a:𝔹){
+	n:=2;
+	x:=H(a);
+	q:=vector(n,dup(x));
+	for j in 0..2 {
+		forget(q); q:=vector(n,dup(x));
+		n+=1;
+	}
+	return (n,measure(H(x)));
+}
+def main(){
+	r:=(letBlock(2),returned(2,true),returned(2,false),measure(withInverse(vector(3,0:𝔹),1)),otherBranch(2),laterIteration(2),redefinedNextIteration(0:𝔹));
+	assert(r==(([1,1],2),[1,1],[1,1],[0,1,0],(3,[0,0]),(3,4),(4,0)));
+	return r;
+}

@@ -1,10 +1,11 @@
+// args: --run
 
 def main() {
 	n := 3;
 	x := vector(n, 0:𝔹);
 	c := measure(H(0:𝔹));
 	if c {
-		forget(n); /// error
+		forget(n);
 	}
 	return ((x:𝔹[]), c);
 }

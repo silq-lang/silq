@@ -1,0 +1,27 @@
+// args: --remove-loops --run
+
+def slicedWitness(){
+	n:=2;
+	q:=vector(n,0:𝔹);
+	z:=vector(n,0:𝔹);
+	c:=0;
+	while c<2 {
+		c+=1;
+		k:=0;
+		do {
+			k+=1;
+			n+=1;
+			t:=dup(q);
+			forget(t);
+		} while k<2 {
+			forget(z);
+			z:=vector(n,0:𝔹);
+		}
+	}
+	return (n,measure(q):!𝔹[],measure(z):!𝔹[]);
+}
+def main(){
+	r:=slicedWitness();
+	assert(r==(6,(0,0),(0,0,0,0,0)));
+	return r;
+}

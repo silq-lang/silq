@@ -10,9 +10,3 @@ def captured(){
 	f:=λ(){ n=3; return n; }; /// error
 	return (x,f);
 }
-def qubits(){
-	n:=2;
-	q:=vector(n,0:𝔹);
-	n=3; /// error
-	return (n,q);
-}

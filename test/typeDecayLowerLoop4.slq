@@ -1,0 +1,15 @@
+// args: --remove-loops --run
+
+def sliced(a:𝔹,const d:!𝔹){
+	n:=2;
+	x:=H(a);
+	q:=vector(n,dup(x));
+	z:=vector(n,0:𝔹);
+	for j in 0..2 { if !d { n+=1; } c:=0; while c<2 { c+=1; forget(z); z:=vector(n,0:𝔹); } t:=dup(q); }
+	return (n,measure(H(x)),measure(z):!𝔹[]);
+}
+def main(){
+	r:=(sliced(0:𝔹,true),sliced(0:𝔹,false));
+	assert(r==((2,0,[0,0]),(4,0,[0,0,0,0])));
+	return r;
+}

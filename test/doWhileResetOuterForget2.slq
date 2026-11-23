@@ -1,29 +1,31 @@
+// args: --run
+
 def usedInBody(){
 	c:=1;
 	v:=vector(c,0:𝔹);
 	k:=0;
-	do{ k+=1; w:=v.length; }while k<2 { c+=1; } /// error
+	do{ k+=1; w:=v.length; }while k<2 { c+=1; }
 	return c;
 }
 def usedInReset(){
 	c:=1;
 	v:=vector(c,0:𝔹);
 	k:=0;
-	do{ k+=1; }while k<2 { w:=v.length; c+=1; } /// error
+	do{ k+=1; }while k<2 { w:=v.length; c+=1; }
 	return c;
 }
 def usedAfter(){
 	c:=1;
 	v:=vector(c,0:𝔹);
 	k:=0;
-	do{ k+=1; }while k<2 { c+=1; } w:=v.length; /// error
+	do{ k+=1; }while k<2 { c+=1; } w:=v.length;
 	return (c,w);
 }
 def forgottenAfter(){
 	c:=1;
 	v:=vector(c,0:𝔹);
 	k:=0;
-	do{ k+=1; }while k<2 { c+=1; } forget(v); /// error
+	do{ k+=1; }while k<2 { c+=1; } forget(v);
 	return c;
 }
 def usedInBranchAfter(b:!𝔹){
@@ -38,7 +40,7 @@ def usedInOuterLoop(){
 	v:=vector(c,0:𝔹);
 	k:=0;
 	s:=0;
-	while k<2 { k+=1; s+=v.length; j:=0; do{ j+=1; }while j<2 { c+=1; } } /// error
+	while k<2 { k+=1; s+=v.length; j:=0; do{ j+=1; }while j<2 { c+=1; } }
 	return (c,s);
 }
 def usedInOuterBody(){
@@ -56,4 +58,9 @@ def usedInOuterReset(){
 	s:=0;
 	do{ k+=1; }while k<3 { s+=v.length; j:=0; do{ j+=1; }while j<2 { c+=1; } }
 	return (c,s);
+}
+def main(){
+	r:=(usedInBody(),usedInReset(),usedAfter(),forgottenAfter(),usedInBranchAfter(true),usedInBranchAfter(false),usedInOuterLoop(),usedInOuterBody(),usedInOuterReset());
+	assert(r==(2,2,(2,1),2,2,2,(3,2),(3,2),(3,2)));
+	return r;
 }

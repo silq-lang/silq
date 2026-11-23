@@ -1,0 +1,69 @@
+// args: --remove-loops --run
+
+def resetRedefined(const d:!𝔹){
+	n:=2;
+	v:=vector(n,1:!𝔹);
+	k:=0;
+	do {
+		k+=1;
+		if d { n=3; }
+	} while k<2 {
+		forget(v);
+		v:=vector(n,1:!𝔹);
+		repeat 2 { n=3; }
+	}
+	return (n,v.length);
+}
+def updatedInReset(){
+	n:=2;
+	v:=vector(n,1:!𝔹);
+	k:=0;
+	do {
+		k+=1;
+		forget(v);
+		v:=vector(n,1:!𝔹);
+	} while k<2 {
+		for j in 0..2 { n+=1; }
+	}
+	return (n,v.length);
+}
+def nestedRepeat(){
+	n:=2;
+	x:=H(0:𝔹);
+	q:=vector(n,dup(x));
+	repeat 2 {
+		forget(q);
+		q:=vector(n,dup(x));
+		repeat 2 {
+			n+=1;
+			forget(q);
+			q:=vector(n,dup(x));
+		}
+	}
+	forget(q);
+	return (n,measure(H(x)));
+}
+def nestedDoWhile(){
+	n:=2;
+	x:=H(0:𝔹);
+	q:=vector(n,dup(x));
+	k:=0;
+	do {
+		k+=1;
+		forget(q);
+		q:=vector(n,dup(x));
+	} while k<2 {
+		j:=0;
+		do { j+=1; } while j<2 { n+=1; }
+		forget(q);
+		q:=vector(n,dup(x));
+	}
+	r:=q.length;
+	forget(q);
+	return (n,r,measure(H(x)));
+}
+def main(){
+	r:=(resetRedefined(true),resetRedefined(false),updatedInReset(),nestedRepeat(),nestedDoWhile());
+	assert(r==((3,3),(3,2),(4,4),(6,0),(3,3,0)));
+	return r;
+}

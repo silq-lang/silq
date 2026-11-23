@@ -2,7 +2,7 @@ def constForget():!𝔹[]{
 	n:=1;
 	do{
 		v:=vector(n,0:𝔹);
-		forget(n); /// error
+		forget(n);
 		n:=2;
 	}while n<3;
 	return measure(v);
