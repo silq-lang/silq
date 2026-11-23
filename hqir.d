@@ -3524,6 +3524,7 @@ class ScopeWriter {
 		assert(fin || e.s.length > 0);
 
 		if(e.blscope_ && e.blscope_ is nscope && !scopeFree) {
+			forgetUncomputedAtSplit();
 			foreach(decl; e.blscope_.forgottenVarsOnEntry) {
 				valForget(getVar(decl, false));
 			}
@@ -5439,9 +5440,25 @@ class ScopeWriter {
 	}
 
 
+	void forgetUncomputedAtSplit() { // (the versions that a `forget` after the merges of the branch uncomputes, before the branch consumes what they depend on; their empty placeholders reach the `forget`)
+		if(!nscope) return;
+		foreach(outer; nscope.uncomputedAtSplitByForget) {
+			auto p = vars.getPtr(outer.getId);
+			if(!p || !p.value) continue;
+			auto d = p.decl;
+			auto v = getVar(d, false);
+			if(v.hasQuantum) {
+				valForget(valNewQ(null, v.qreg));
+				v = valNewQ(v.creg, qcg.allocUnit());
+			}
+			defineVar(d, v);
+		}
+	}
+
 	Result genCompoundStmt(ast_exp.CompoundExp e) {
 		assert(nscope);
 		assert(nscope == e.blscope_);
+		forgetUncomputedAtSplit();
 		foreach(decl; nscope.forgottenVarsOnEntry) {
 			valForget(getVar(decl, false));
 		}

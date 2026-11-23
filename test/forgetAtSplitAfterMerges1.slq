@@ -1,0 +1,34 @@
+// args: --run
+
+def nestedReturn(x:𝔹,y:𝔹,const q:𝔹,k:!ℕ){
+	t:=dup(x); u:=dup(t); v:=dup(u); w:=dup(v);
+	if k==0 { forget(w); return (x,y); }
+	else { if q { forget(w); return (x,y); } forget(v); }
+	forget(w);
+	return (x,y);
+}
+def nestedClassical(x:𝔹,y:𝔹,k:!ℕ){
+	t:=dup(x); u:=dup(t); w:=dup(u);
+	if k==0 { return (x,y); } else { if k==1 { return (X(x),y); } forget(u); }
+	forget(w);
+	return (x,y);
+}
+def quantumReturn(x:𝔹,y:𝔹,const q:𝔹,k:!ℕ){
+	t:=dup(x); u:=dup(t); w:=dup(u);
+	if k==0 { return (x,y); } else { if q { return (x,X(y)); } forget(u); }
+	forget(w);
+	return (x,y);
+}
+def continuation(x:𝔹,y:𝔹,const q:𝔹){
+	t:=dup(x); u:=dup(t); w:=dup(u);
+	if q { return (x,y); }
+	forget(u);
+	forget(w);
+	return (x,y);
+}
+def main(){
+	q:=0:𝔹;
+	r:=(measure(nestedReturn(1:𝔹,0:𝔹,q,0)),measure(nestedReturn(0:𝔹,1:𝔹,q,1)),measure(nestedClassical(1:𝔹,0:𝔹,0)),measure(nestedClassical(1:𝔹,0:𝔹,1)),measure(nestedClassical(1:𝔹,0:𝔹,2)),measure(quantumReturn(1:𝔹,1:𝔹,q,0)),measure(quantumReturn(1:𝔹,1:𝔹,q,1)),measure(continuation(0:𝔹,1:𝔹,q)),measure(q));
+	assert(r==((1,0),(0,1),(1,0),(0,0),(1,0),(1,1),(1,1),(0,1),0));
+	return r;
+}
