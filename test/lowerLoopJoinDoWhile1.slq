@@ -1,0 +1,31 @@
+// args: --remove-loops --run
+
+def nested(const c:!ℕ,s:!ℕ){
+	y:=vector(s,1:𝔹);
+	k:=0;
+	do{
+		k+=1;
+		if c==0 {} else {
+			w:=0; while w<2 { w+=1; if c==2 { return measure(y).length; } y:=y~vector(1,1:𝔹); }
+		}
+	}while k<1;
+	w:=0; while w<2 { w+=1; if c==2 { return measure(y).length; } }
+	return measure(y).length;
+}
+def twice(const c:!ℕ,s:!ℕ){
+	y:=vector(s,1:𝔹);
+	k:=0;
+	do{
+		k+=1;
+		if c==1 { y:=y~vector(1,0:𝔹); } else {
+			repeat 2 { if c==2 { return (measure(y).length,k); } y:=y~vector(2,0:𝔹); }
+		}
+	}while k<2;
+	for i in 0..3 { if c==3 { return (measure(y).length,i); } }
+	return (measure(y).length,k);
+}
+def main(){
+	r:=(nested(0,1),nested(1,1),nested(2,1),twice(0,1),twice(1,1),twice(2,1),twice(3,1));
+	assert(r==(1,3,1,(9,2),(3,2),(1,1),(9,0)));
+	return r;
+}

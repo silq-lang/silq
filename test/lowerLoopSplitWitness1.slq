@@ -1,0 +1,52 @@
+// args: --remove-loops --run
+
+def lengths(const c:!ℕ,s:!ℕ){
+	y:=vector(s,1:𝔹);
+	a:=vector(s,2:!ℕ);
+	for i in 0..1 {
+		repeat 2 {
+			for j in 0..1 { y:=y~vector(2,0:𝔹); }
+			repeat 2 { a:=a~[2]; l:=y.length+a.length; }
+		}
+		if c==1 { return (measure(y).length,a.length+2); }
+	}
+	return (measure(y).length,a.length);
+}
+def both(const c:!ℕ,s:!ℕ){
+	y:=vector(s,1:𝔹);
+	a:=vector(s,2:!ℕ);
+	for i in 0..1 {
+		repeat 2 { for j in 0..2 { a:=a~[0]; l:=a.length+y.length; y:=y~vector(1,0:𝔹); } }
+		if c==1 { return (measure(y).length,a.length); }
+	}
+	return (measure(y).length,a.length);
+}
+def counted(const c:!ℕ,s:!ℕ){
+	y:=vector(s,1:𝔹);
+	a:=vector(s,2:!ℕ);
+	for i in 0..1 {
+		k:=0;
+		repeat 2 {
+			for j in 0..1 { y:=y~vector(2,0:𝔹); }
+			repeat 2 { a:=a~[2]; l:=y.length+a.length; k+=l; }
+		}
+		if c==1 { return (measure(y).length,a.length,k); }
+	}
+	return (measure(y).length,a.length,0);
+}
+def doubled(const c:!ℕ,s:!ℕ){
+	y:=vector(s,1:𝔹);
+	a:=vector(s,2:!ℕ);
+	w:=0;
+	do{
+		w+=1;
+		repeat 1 { for j in 0..2 { a:=a~a; a:=a~[0]; l:=a.length+y.length; y:=y~vector(1,0:𝔹); } }
+		if c==0 { return (measure(y).length,a.length+1); }
+	}while w<2;
+	return (measure(y).length,a.length);
+}
+def main(){
+	r:=(lengths(0,1),lengths(1,1),both(0,1),both(1,0),counted(0,1),counted(1,1),doubled(0,1),doubled(1,1));
+	assert(r==((5,5),(5,7),(5,5),(4,4),(5,5,0),(5,5,30),(3,8),(5,31)));
+	return r;
+}
