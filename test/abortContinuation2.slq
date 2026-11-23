@@ -1,0 +1,12 @@
+def consumedFirst(a:𝔹,const l:!𝔹){
+	v0:=!a; v1:=dup(v0); e:=v1;
+	if l { a:=X(a); u2:=!v1; forget(u2); u3:=!v0; forget(u3); } else { t4:=measure(v0); a:=X(a); assert(false); }
+	t7:=measure(v0); t8:=measure(v1); /// error
+	return (measure(a),measure(e),t8,t7);
+}
+def consumedInBranch(a:𝔹,const l:!𝔹){
+	v0:=!a; v1:=dup(v0);
+	if l { a:=X(a); t:=measure(v0); } else { assert(false); }
+	forget(v1); /// error
+	return measure(a);
+}

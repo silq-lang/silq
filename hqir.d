@@ -1171,6 +1171,7 @@ struct CondRet {
 
 		foreach (name, ref var; w.vars) {
 			if(!var.value) continue;
+			if(var.carried.length) ScopeWriter.splitCarried(var);
 			CReg creg = null;
 			if(var.value.hasClassical) {
 				creg = var.value.creg;
@@ -2635,6 +2636,15 @@ struct CallInfo {
 struct Variable {
 	ast_decl.Declaration decl;
 	Value value;
+	Carried[] carried; // (the splits of the conditionals whose branches abort without consuming it, see `ScopeWriter.carry`)
+}
+
+struct Carried {
+	CondAny cond; // (of the paths that abort)
+	ScopeWriter at; // (the writer of the conditional, which splits the value there)
+	ScopeWriter aborts; // (a writer under `cond`, which deallocates the part of those paths)
+
+	bool splits(CondC c) { return cond.isClassical && cond.creg is c.reg && cond.value == c.value; }
 }
 
 struct Dummy {
@@ -2902,6 +2912,26 @@ class ScopeWriter {
 		qcg.deallocError(v.qreg);
 	}
 
+	void carry(CondAny cond, ScopeWriter aborts) { // (where the code after a conditional continues one branch, as the paths under `cond` abort, see `ast.semantic_.statementSemanticImpl(IteExp)`: the quantum variables that the analysis does not split, as those paths do not consume them, are split where they are first consumed, so that the values that the branches or the code after the conditional uncompute from them can read them until then, see `splitCarried`)
+		foreach(name, ref var; vars) if(var.value && var.value.hasQuantum) var.carried ~= Carried(cond, this, aborts);
+	}
+
+	static void splitCarried(ref Variable var) { // (the splits that `carry` defers: the parts of the paths that abort are deallocated there)
+		foreach(c; var.carried) {
+			Value vContinues, vAborts;
+			c.at.valSplit(c.cond, vContinues, vAborts, var.value);
+			c.aborts.valDeallocError(vAborts);
+			var.value = vContinues;
+		}
+		var.carried = null;
+	}
+
+	void splitAllCarried() { // (before the values are transformed or merged)
+		foreach(name, ref var; vars) if(var.value && var.carried.length) splitCarried(var);
+	}
+
+	bool sameGuard(ScopeWriter w) { return ccg.condC == w.ccg.condC && qcg.condQ == w.qcg.condQ; }
+
 	void valSplit(CondAny cond, ref Value v0, ref Value v1, Value v) {
 		if(!v.hasQuantum) {
 			v0 = v;
@@ -3099,6 +3129,12 @@ class ScopeWriter {
 		ccg.code.vars.put(IrVariable(d, v, ctx.curLoc.loc, capLevel, param));
 	}
 
+	void defineOuter(ast_decl.Declaration d, Value v) { // (the part of a version from outside, see `genSplit`)
+		v.setName(d.name);
+		vars[d.getId] = Variable(d, v);
+		debugVar(d, v);
+	}
+
 	void defineVar(ast_decl.Declaration d, Value v) {
 		v.setName(d.name);
 		auto name = d.getId;
@@ -3158,6 +3194,7 @@ class ScopeWriter {
 			assert(cur.ccg.code is this.ccg.code || !typeHasQuantum(typeForDecl(decl)), format("Variable %s used in subfunction has quantum component", name.str));
 		}
 		assert(p.value, format("Variable %s used after being consumed", name.str));
+		if(!isDup && p.carried.length) splitCarried(*p);
 		v = p.value;
 		if (p.decl !is decl && isDup) {
 			for(auto d = decl.promotedFrom; d; d = d.promotedFrom) { // TODO: is there a better way to do this?
@@ -3254,6 +3291,7 @@ class ScopeWriter {
 			if(!var.value) continue;
 			if(!var.value.hasQuantum) continue;
 			assert(isAbort, format("variable %s not consumed", name.str));
+			if(var.carried.length) splitCarried(var);
 			qcg.deallocError(var.value.qreg);
 			var.value = null;
 		}
@@ -3332,10 +3370,12 @@ class ScopeWriter {
 			assert(outer.scope_ is nscope);
 			splitVars[outer.getId] = Triple(outer, null, decl);
 		}
+		static bool continuesOther(ast_scope.NestedScope sc) { auto bs = cast(ast_scope.BlockScope) sc; return bs && bs.returningBeforeContinuation; } // (a branch that aborts, where the code after the conditional continues the other one, which may split variables that it only reads, e.g., to forget them there, see `ast.scope_.Scope.closeUnreachable`: it gets their parts as the outer versions, and deallocates them where it aborts)
 		foreach(decl; sc0.splitVars) {
 			assert(decl.scope_ is sc0);
 			auto id = decl.splitFrom.getId;
 			Triple* t = splitVars.getPtr(id);
+			if(!t && continuesOther(sc1)) { splitVars[id] = Triple(decl.splitFrom, decl, null); continue; }
 			assert(t, format("Split variable %s missing in if-true", id.str));
 			assert(decl.splitFrom is t.outer, format("Split variable %s splitFrom scope mismatch", id));
 			t.d0 = decl;
@@ -3343,7 +3383,7 @@ class ScopeWriter {
 
 		Triple[] triples;
 		foreach(id, t; splitVars) {
-			assert(t.d0, format("Split variable %s missing in if-false", id));
+			assert(t.d0 || continuesOther(sc0), format("Split variable %s missing in if-false", id));
 			triples ~= t;
 		}
 		foreach(t; splitOrder(triples.map!(t => t.outer).array, sc0, sc1).map!(i => triples[i])) {
@@ -3351,13 +3391,15 @@ class ScopeWriter {
 			auto d1 = t.d1;
 			auto d0 = t.d0;
 			auto vtype = typeForDecl(t.outer);
-			assert(typeForDecl(d1) == vtype, format("Split variable %s changed type in if-true", id));
-			assert(typeForDecl(d0) == vtype, format("Split variable %s changed type in if-false", id));
+			assert(!d1 || typeForDecl(d1) == vtype, format("Split variable %s changed type in if-true", id));
+			assert(!d0 || typeForDecl(d0) == vtype, format("Split variable %s changed type in if-false", id));
 			auto v = getVar(t.outer, false);
 			Value v0, v1;
 			valSplit(cond, v0, v1, v);
-			if1.defineVar(d1, v1);
-			if0.defineVar(d0, v0);
+			if(d1) if1.defineVar(d1, v1);
+			else if1.defineOuter(t.outer, v1);
+			if(d0) if0.defineVar(d0, v0);
+			else if0.defineOuter(t.outer, v0);
 		}
 	}
 
@@ -3474,6 +3516,8 @@ class ScopeWriter {
 	void genMerge(CondAny cond, ScopeWriter if0, ScopeWriter if1, ast_decl.Declaration[] merged = null) {
 		auto sc0 = if0.nscope;
 		auto sc1 = if1.nscope;
+		if0.splitAllCarried();
+		if1.splitAllCarried();
 
 		struct Triple {
 			ast_decl.Declaration outer, d0, d1;
@@ -5539,6 +5583,7 @@ class ScopeWriter {
 			auto cA = ra.retCond, cB = rb.retCond;
 			auto rvA = ra.retValue, rvB = rb.retValue;
 			if(rvA.quantumRet && cB.condC) { // (where `B` returns classically, the combination returns classically)
+				scB.splitAllCarried(); // (before the conditions of the values change)
 				// combine the quantum part of `A` with `B` first, then the classical part of `A` with the result
 				auto ccA = cA.condC;
 				auto w = ccA ? withCond(nscope, CondAny(ccA.invert())) : this;
@@ -5594,6 +5639,15 @@ class ScopeWriter {
 				auto cqB = cB.condQ, rqB = rvB.quantumRet;   // [!ccA,!ccB,cqB]
 				assert(rcB && ccB);
 				CReg condC = ccg.cond(ccA, vB.condC, ctx.boolTrue);
+				Id[] splitNow; // (the variables that only the paths of `B` carry, from after `A`, see `carry`)
+				if(cqB) scB.splitAllCarried();
+				else foreach(name, ref var; scB.vars) {
+					if(!var.value || !var.carried.length) continue;
+					auto n = var.carried.length;
+					if(var.carried[n-1].splits(ccB)) n--;
+					if(n && var.carried[n-1].splits(ccA) && var.carried[n-1].at.sameGuard(this)) var.carried = var.carried[0 .. n-1] ~ Carried(CondAny(condC), this, withCond(nscope, CondAny(condC))); // (split once, for the paths of both, which the combination returns under `condC`: the code after it reads the value, which is not split yet)
+					else splitNow ~= name;
+				}
 				rcA = withCond(nscope, CondAny(ccA)).valAddCond(CondAny(condC), rcA); // [ccA,condC]
 
 				Value cret = rcA;
@@ -5631,8 +5685,7 @@ class ScopeWriter {
 						.withCond(scB.nscope, CondAny(condC, false)).valRemoveCond(CondAny(cA.condC.invert()), qret); // [!condC,condQ]
 				}
 
-				foreach(name, ref var; scB.vars) {
-					if(!var.value) continue;
+				void convert(ref Variable var) {
 					auto creg = var.value.creg;
 					if(creg) {
 						creg = qcg.withCond(CondAny(ccA.invert())).withCond(CondAny(condC, false))
@@ -5642,7 +5695,7 @@ class ScopeWriter {
 					}
 					if(!var.value.hasQuantum) {
 						if(creg !is var.value.creg) var.value = Value.newReg(creg, null);
-						continue;
+						return;
 					}
 					auto qreg = var.value.qreg;
 					auto wqc = cqB ? qcg.withCond(CondAny(cB.condQ.invert())) : qcg;
@@ -5668,6 +5721,12 @@ class ScopeWriter {
 					qreg = wq.withCond(CondAny(condC, false))
 						.removeCond(CondAny(ccA.invert()), qreg); // [!condC,!condQ]
 					var.value = Value.newReg(creg, qreg);
+				}
+				foreach(name, ref var; scB.vars) if(var.value && !var.carried.length) convert(var);
+				foreach_reverse(name; splitNow) { // (after the variables from after `B`, and the dependent ones first, so that the uncomputations of their values, after their conversions, read the values that they depend on)
+					auto p = scB.vars.getPtr(name);
+					ScopeWriter.splitCarried(*p);
+					convert(*p);
 				}
 
 				vB.asCondRet().forget(scB);
@@ -5701,6 +5760,7 @@ class ScopeWriter {
 						.valRemoveCond(CondAny(cqB), rqB); // [!condC, !cqA, condQ]
 					qret = wq.withCond(wq.nscope, CondAny(condQ)).valMerge(CondAny(cA.condQ), rqB, rqA); // [!condC, condQ]
 
+					scB.splitAllCarried();
 					foreach(name, ref var; scB.vars) {
 						if(!var.value || !var.value.hasQuantum) continue;
 						auto qreg = var.value.qreg;
@@ -5736,6 +5796,7 @@ class ScopeWriter {
 				return Result.conditionallyReturns(RetValue(cret, qret), retCond);
 			}
 		}
+		if(stmts.any!(s => isFlatBlock(s))) stmts = flatStatements(stmts);
 		foreach(i, sube; stmts) {
 			auto sc = this;
 			if(result.isConditionalReturn) {
@@ -5782,8 +5843,9 @@ class ScopeWriter {
 						// move classical variables so that they can be consumed
 						foreach(name, ref var; sc.vars) {
 							if(!var.value) continue;
-							assert(!var.value.hasQuantum, format("returning if statement did not split variable %s", name));
+							assert(!var.value.hasQuantum || var.carried.length, format("returning if statement did not split variable %s", name));
 							scTail.vars[name] = var;
+							if(var.value.hasQuantum) var.value = null;
 						}
 						sc.checkEmpty(false);
 
@@ -5906,7 +5968,7 @@ class ScopeWriter {
 		auto i2 = cw.code[].length;
 		Result rFalse = ifFalse.genCompoundStmt(e.othw);
 		auto i3 = cw.code[].length;
-		bool continues = rTrue.isReturn && rFalse.isPass || rFalse.isReturn && rTrue.isPass; // (with the code after the conditional, see `ItePartialReturn`)
+		bool continues = (rTrue.isReturn || rTrue.isAbort && e.then.blscope_.returningBeforeContinuation) && rFalse.isPass || (rFalse.isReturn || rFalse.isAbort && e.othw.blscope_.returningBeforeContinuation) && rTrue.isPass; // (with the code after the conditional, see `ItePartialReturn`)
 		ast_decl.Declaration[] eager;
 		if(rTrue.isPass && rFalse.isPass) {
 			scope loc = PushLocation(ctx, locEnd(e.loc));
@@ -5949,6 +6011,7 @@ class ScopeWriter {
 				this,
 			);
 			auto ret = result.retValue, retCond = result.retCond;
+			if(!retCond.condQ) carry(CondAny(retCond.condC), withCond(nscope, CondAny(retCond.condC))); // (the paths that return or abort, where a branch, or a nested conditional that the code after it continues, aborts, see `carry`; where they return, the branches split all variables)
 
 			auto ifFalseOrig = ifFalse, ifTrueOrig = ifTrue;
 			if(rFalse.mayPass) {
@@ -5963,6 +6026,7 @@ class ScopeWriter {
 				if(!w.detPassthrough) r.detPassthrough = false;
 				foreach(name, ref var; w.vars) {
 					if(!var.value) continue;
+					if(var.carried.length) splitCarried(var);
 					auto valUnreachable = Value.newReg(null, cond.isQuantum ? r.withCond(r.nscope, cond.invert()).qcg.allocError() : null);
 					r.vars[name] = Variable(var.decl, r.valMerge(cond, valUnreachable, var.value));
 					var.value = null;
@@ -6000,6 +6064,10 @@ class ScopeWriter {
 		if(rTrue.isAbort) {
 			assert(rFalse.isPass);
 			ifTrue.checkEmpty(true);
+			if(e.then.blscope_.returningBeforeContinuation) { // (the code after the conditional continues the other branch, as after a `return`, see `ast.semantic_.statementSemanticImpl(IteExp)`)
+				carry(cond, ifTrue);
+				return continuedBy(new ItePartialReturn(cond, rTrue.asValue(ifTrue, nscope.getFunction().ret), ifFalse), 2);
+			}
 			return new ItePartialAbort(cond, rTrue.abortWitness, ifFalse);
 		}
 		if(rTrue.isReturn) {
@@ -6010,6 +6078,10 @@ class ScopeWriter {
 		if(rFalse.isAbort) {
 			assert(rTrue.isPass);
 			ifFalse.checkEmpty(true);
+			if(e.othw.blscope_.returningBeforeContinuation) { // (as above)
+				carry(cond.invert(), ifFalse);
+				return continuedBy(new ItePartialReturn(cond.invert(), rFalse.asValue(ifFalse, nscope.getFunction().ret), ifTrue), 1);
+			}
 			return new ItePartialAbort(cond.invert(), rFalse.abortWitness, ifTrue);
 		}
 		if(rFalse.isReturn) {
@@ -6049,6 +6121,20 @@ class ScopeWriter {
 			exc.msg = format("%s\nat %s, statement: %s", exc.msg, e.loc, e);
 			throw exc;
 		}
+	}
+
+	static bool isFlatBlock(Expression s) {
+		auto ce = cast(ast_exp.CompoundExp) s;
+		return ce && !ce.blscope_;
+	}
+
+	static Expression[] flatStatements(Expression[] stmts) { // (of blocks without scopes, e.g., of lowered loops, whose statements the analysis analyzes as statements of the enclosing scope: so does the code generator, where the code after a conditional whose other branch returns or aborts continues the branch, also after the block, see `ItePartialReturn`)
+		Expression[] r;
+		foreach(s; stmts) {
+			if(isFlatBlock(s)) r ~= flatStatements((cast(ast_exp.CompoundExp) s).s);
+			else r ~= s;
+		}
+		return r;
 	}
 
 	Result implStmt(ast_exp.CompoundExp e) {
@@ -6279,6 +6365,7 @@ class ScopeWriter {
 		auto var = vars.getPtr(chain.base.meaning.getId);
 		assert(var && var.value);
 		assert(var.decl is chain.base.meaning);
+		if(var.carried.length) splitCarried(*var);
 
 		auto indices = chain.ie.map!(at => genIndex(at.a)).array;
 		auto b = defineBorrow(lhs, indices[]);
@@ -6389,6 +6476,7 @@ class ScopeWriter {
 		auto chain = IndexChain(ie);
 		auto var = vars.getPtr(chain.base.meaning.getId());
 		assert(var && var.value);
+		if(var.carried.length) splitCarried(*var);
 
 		auto baseTy1 = typeForDecl(var.decl);
 		auto baseTy2 = chain.base.type;

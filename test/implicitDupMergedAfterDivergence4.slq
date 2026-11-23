@@ -1,3 +1,5 @@
+// args: --run
+
 def forgottenInBranch(a:𝔹,k:!𝔹){
 	v0:=dup(a);
 	v1:=!v0;
@@ -5,7 +7,7 @@ def forgottenInBranch(a:𝔹,k:!𝔹){
 	t1:=measure(v2);
 	if k {
 		t3:=measure(v1);
-		u4:=!v2; /// TODO
+		u4:=!v2;
 		forget(u4);
 	} else {
 		a:=X(a);
@@ -24,7 +26,7 @@ def chainedDups(a:𝔹,k:!𝔹){
 	t1:=measure(v2);
 	if k {
 		t3:=measure(v1);
-		u4:=!v2; /// TODO
+		u4:=!v2;
 		forget(u4);
 	} else {
 		a:=X(a);
@@ -48,7 +50,7 @@ def usedBeforeConditional(a:𝔹,k:!𝔹){
 	if k {
 		t3:=measure(v1);
 		ms+=t3;
-		u4:=!v2; /// TODO
+		u4:=!v2;
 		forget(u4);
 	} else {
 		a:=X(a);
@@ -60,4 +62,12 @@ def usedBeforeConditional(a:𝔹,k:!𝔹){
 		assert(false);
 	}
 	return (a,ms);
+}
+
+def main(){
+	x:=H(0);
+	(x,_):=forgottenInBranch(x,1);
+	(x,_):=chainedDups(x,1);
+	(x,_):=usedBeforeConditional(x,1);
+	return x;
 }

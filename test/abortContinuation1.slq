@@ -1,0 +1,67 @@
+// args: --run
+
+def deferred(a:𝔹,const l:!𝔹){
+	v0:=!a; v1:=dup(v0); e:=v1;
+	if l { a:=X(a); u2:=!v1; forget(u2); u3:=!v0; forget(u3); } else { t4:=measure(v0); a:=X(a); assert(false); }
+	t8:=measure(v1); t7:=measure(v0);
+	return (measure(a),measure(e),t8,t7);
+}
+def literal(a:𝔹){
+	v0:=!a; v1:=dup(v0); e:=v1;
+	if true { a:=X(a); u2:=!v1; forget(u2); u3:=!v0; forget(u3); } else { t4:=measure(v0); a:=X(a); }
+	t8:=measure(v1); t7:=measure(v0);
+	return (measure(a),measure(e),t8,t7);
+}
+def inLoop(a:𝔹,const n:!ℕ){
+	k:=0;
+	s:=0;
+	while k<n {
+		v0:=!a; v1:=dup(v0); e:=v1;
+		if k<5 { a:=X(a); u2:=!v1; forget(u2); u3:=!v0; forget(u3); } else { t4:=measure(v0); a:=X(a); assert(false); }
+		t8:=measure(v1); t7:=measure(v0); t9:=measure(e);
+		s+=t8+t7+t9;
+		k+=1;
+	}
+	return (measure(a),s);
+}
+def recursive(a:𝔹,const k:!ℕ):!ℕ{
+	v0:=!a; v1:=dup(v0); e:=v1;
+	if k<5 { a:=X(a); u2:=!v1; forget(u2); u3:=!v0; forget(u3); } else { t4:=measure(v0); a:=X(a); assert(false); }
+	t8:=measure(v1); t7:=measure(v0); t9:=measure(e);
+	if k==0 { return measure(a)+t8+t7+t9; }
+	return recursive(a,k sub 1)+t8;
+}
+def unmentioned(a:𝔹,const k:!ℕ){
+	v0:=!a; v1:=dup(v0); e:=v1;
+	if k==5 { t:=measure(v0); assert(false); }
+	t8:=measure(v1); t7:=measure(v0); t9:=measure(e);
+	return (measure(a),t8,t7,t9);
+}
+def consumedInContinued(a:𝔹,const k:!ℕ){
+	v0:=!a; v1:=dup(v0); e:=v1;
+	if k!=5 { a:=X(a); } else { t:=measure(v0); assert(false); }
+	t8:=measure(v1); t7:=measure(v0); t9:=measure(e);
+	return (measure(a),t8,t7,t9);
+}
+def nested(a:𝔹,const l:!𝔹,const m:!𝔹){
+	v0:=!a; v1:=dup(v0); e:=v1;
+	if l { if m { t:=measure(v0); assert(false); } u:=!v0; forget(u); } else { t:=measure(v0); assert(false); }
+	t8:=measure(v1); t7:=measure(v0);
+	return (measure(a),measure(e),t8,t7);
+}
+def loopBodyAborts(a:𝔹,const n:!ℕ){
+	x:=H(a);
+	o:=dup(x);
+	for j in 0..n { y:=x&o; forget(y); assert(false); }
+	k:=0;
+	while k<n { y:=x&o; forget(y); assert(false); }
+	repeat n { y:=x&o; forget(y); assert(false); }
+	forget(o);
+	x:=H(x);
+	return measure(x);
+}
+def main(){
+	r:=(deferred(1:𝔹,true),deferred(0:𝔹,true),literal(0:𝔹),inLoop(1:𝔹,3),recursive(1:𝔹,2),unmentioned(1:𝔹,3),consumedInContinued(0:𝔹,4),nested(1:𝔹,true,false),loopBodyAborts(1:𝔹,0));
+	assert(r==((0,0,0,0),(1,1,1,1),(1,1,1,1),(0,3),1,(1,0,0,0),(1,1,1,1),(1,0,0,0),1));
+	return r;
+}

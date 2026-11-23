@@ -1,0 +1,52 @@
+// args: --run
+
+def loopsThenReads(a:𝔹,const n:!ℕ){
+	x:=H(a);
+	o:=dup(x);
+	for j in 0..n { y:=x&o; forget(y); assert(false); }
+	k:=0;
+	while k<n { y:=x&o; forget(y); assert(false); }
+	y:=x&o;
+	forget(y);
+	forget(o);
+	x:=H(x);
+	return measure(x);
+}
+def definedBetweenLoops(a:𝔹,const n:!ℕ){
+	for j in 0..n { assert(false); }
+	x:=H(a);
+	o:=dup(x);
+	k:=0;
+	while k<n { y:=x&o; forget(y); assert(false); }
+	y:=x&o;
+	forget(y);
+	forget(o);
+	x:=H(x);
+	return measure(x);
+}
+def forgottenInContinuedBranch(a:𝔹,b:𝔹,const n:!ℕ,const d:!𝔹){
+	if d {
+		x:=dup(b);
+		o:=dup(x);
+		if n>3 { y:=x&o; forget(y); assert(false); }
+	}
+	return (measure(a),measure(b));
+}
+def redefinedInBranch(a:𝔹,const k:!ℕ,const d:!𝔹){
+	x:=H(a);
+	o:=dup(x);
+	if d {
+		o:=X(o);
+		if k==3 { y:=x&o; forget(y); assert(false); }
+		if k==4 { y:=x&o; forget(y); assert(false); }
+		o:=X(o);
+	}
+	forget(o);
+	x:=H(x);
+	return measure(x);
+}
+def main(){
+	r:=(loopsThenReads(1:𝔹,0),definedBetweenLoops(1:𝔹,0),forgottenInContinuedBranch(1:𝔹,0:𝔹,0,true),forgottenInContinuedBranch(1:𝔹,1:𝔹,0,false),redefinedInBranch(1:𝔹,0,true),redefinedInBranch(0:𝔹,0,false));
+	assert(r==(1,1,(1,0),(1,1),1,0));
+	return r;
+}
