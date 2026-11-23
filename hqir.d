@@ -3638,7 +3638,8 @@ class ScopeWriter {
 		}
 
 		auto dty = typeForDecl(decl);
-		assert(e.type == dty, format("Different types: %s != %s", e.type, dty));
+		bool view = ast_sem.isArrayLengthView(e); // (a vector, see `valArrayToVector`)
+		assert(e.type == dty || view, format("Different types: %s != %s", e.type, dty));
 
 		bool isDup = e.constLookup || e.implicitDup;
 
@@ -3662,7 +3663,12 @@ class ScopeWriter {
 			}
 		}
 
-		return getVar(decl, isDup);
+		auto v = getVar(decl, isDup);
+		if(view) {
+			CReg len;
+			return valArrayToVector((cast(ast_ty.ArrayTy) dty).next, len, v);
+		}
+		return v;
 	}
 
 	Value implExpr(ast_exp.LambdaExp e) {
@@ -3726,6 +3732,10 @@ class ScopeWriter {
 		}
 		if(!p || !p.value || p.decl !is decl) return null; // (e.g., a promoted version, see `getVar`)
 		if(cur.ccg.code !is ccg.code && typeHasQuantum(typeForDecl(decl))) return null;
+		if(ast_sem.isArrayLengthView(e)) {
+			CReg len;
+			return valArrayToVector((cast(ast_ty.ArrayTy) typeForDecl(decl)).next, len, p.value);
+		}
 		return p.value;
 	}
 

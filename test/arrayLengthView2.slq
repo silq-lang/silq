@@ -1,0 +1,7 @@
+def differentLengths(const a:!ℕ[],const b:!ℕ[]):⋃[n:!ℕ]. (!ℕ^n)^2⇒(a,b); /// error
+def longer(const a:!ℕ[]):!ℕ^(a.length+1)⇒a; /// error
+def consumed(const a:!ℕ[]){
+	forget(a); /// error
+	return 1;
+}
+def quantumArray(const q:𝔹[]):⋃[n:!ℕ]. (𝔹^n)^2⇒(dup(q),dup(q)); /// TODO

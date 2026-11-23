@@ -1,0 +1,46 @@
+// args: --run
+
+def size[n:!ℕ](const v:!ℕ^n):!ℕ⇒n;
+def add[n:!ℕ](v:!ℕ^n,w:!ℕ^n):!ℕ^n{
+	for i in 0..n { v[i]+=w[i]; }
+	return v;
+}
+def same(x:!𝔹[]):!𝔹^x.length⇒x;
+def indexedType(x:!ℕ[]):!𝔹^x[0]⇒vector(x[0],false);
+def pairedMoved(a:!ℕ[]):⋃[n:!ℕ]. (!ℕ^n)^2⇒(a,a);
+def appendedMoved(a:!ℕ[]):⋃[n:!ℕ]. !ℕ^(n+1)⇒a~[1];
+def zeros(x:!𝔹[]):!𝔹^x.length⇒vector(x.length,false);
+def appended(const a:!ℕ[]):⋃[n:!ℕ]. !ℕ^(n+1)⇒a~[1];
+def paired(const a:!ℕ[]):⋃[n:!ℕ]. (!ℕ^n)^2⇒(a,a);
+def doubled(const a:!ℕ[]):!ℕ^a.length⇒add(a,a);
+def sized(const a:!ℕ[]):!ℕ⇒size(a)+a.length;
+def copied(const a:!ℕ[]):⋃[n:!ℕ]. (!ℕ^n)^2{
+	b:=a;
+	return (a,b);
+}
+def captured(const a:!ℕ[]):⋃[n:!ℕ]. (!ℕ^n)^2{
+	f:=λ()⇒(a,a);
+	return f();
+}
+def looped(const a:!ℕ[]):⋃[n:!ℕ]. (!ℕ^n)^2{
+	r:=(a,a);
+	for i in 0..a.length { r[0][i]+=i; }
+	return r;
+}
+def returnedInLoop(const a:!ℕ[],k:!ℕ):⋃[n:!ℕ]. (!ℕ^n)^2{
+	for i in 0..k { if i==1 { return (a,a); } }
+	return (vector(1,k),vector(1,k));
+}
+def inferred(const a:!𝔹[])⇒(a,a);
+def meas(k:!ℕ):!𝔹[]{
+	q:=vector(k,1:𝔹);
+	return measure(q):!𝔹[];
+}
+def zerosLike(const q:𝔹[])⇒vector(q.length,0:𝔹);
+def main(){
+	q:=vector(2,1:𝔹);
+	z:=zerosLike(q);
+	r:=(same([true,false]),indexedType([2]),pairedMoved([3]),appendedMoved([4,5]),zeros([true]),appended([2]),paired([3,4]),doubled([5]),sized([6,7]),copied([8]),captured([9]),looped([1,1]),returnedInLoop([2],3),returnedInLoop([2],1),inferred(measure(q)),inferred(meas(3)),measure(z));
+	assert(r==([1,0],[0,0],([3],[3]),[4,5,1],[0],[2,1],([3,4],[3,4]),[10],4,([8],[8]),([9],[9]),([1,2],[1,1]),([2],[2]),([1],[1]),([1,1],[1,1]),([1,1,1],[1,1,1]),[0,0]));
+	return r;
+}
