@@ -5977,6 +5977,7 @@ class ScopeWriter {
 		}
 		if(eager.length) interleaveBranches(cw, i0, i1, i2, i3, cw.code[].length);
 		else if(e.then.blscope_.interleave && !continues && !continuesPartially) interleaveBranches(cw, i0, i1, i2, i3);
+		static bool abortsBeforeContinuation(ast_exp.CompoundExp b) { return b.blscope_.returningBeforeContinuation && !ast_sem.containsReturn(b); } // (on every path, and the code after the conditional continues the other branch: the analysis splits only the variables that it consumes into it, see `ast.scope_.Scope.closeUnreachable`; its result is a return of the error values where it aborts in a nested conditional, see `combineResults`)
 		ItePartialReturn continuedBy(ItePartialReturn rv, int branch) {
 			if(e.then.blscope_.interleave) {
 				rv.interleave = [i0, i1, i2, i3];
@@ -6075,6 +6076,7 @@ class ScopeWriter {
 		if(rTrue.isReturn) {
 			assert(rFalse.isPass);
 			ifTrue.checkEmpty(false);
+			if(abortsBeforeContinuation(e.then)) carry(cond, ifTrue);
 			return continuedBy(new ItePartialReturn(cond, rTrue.retValue, ifFalse), 2);
 		}
 		if(rFalse.isAbort) {
@@ -6089,6 +6091,7 @@ class ScopeWriter {
 		if(rFalse.isReturn) {
 			assert(rTrue.isPass);
 			ifFalse.checkEmpty(false);
+			if(abortsBeforeContinuation(e.othw)) carry(cond.invert(), ifFalse);
 			return continuedBy(new ItePartialReturn(cond.invert(), rFalse.retValue, ifTrue), 1);
 		}
 		assert(rTrue.isPass && rFalse.isPass);

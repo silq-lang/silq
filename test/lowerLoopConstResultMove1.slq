@@ -1,0 +1,40 @@
+// args: --remove-loops --run
+
+def forgetInBranch(a:𝔹,const e:!𝔹){
+	n:=2;
+	x:=H(a);
+	q:=vector(n,dup(x));
+	c:=0;
+	while c<2 {
+		c+=1;
+		forget(q);
+		n+=1;
+		q:=vector(n,dup(x));
+	}
+	if e {
+		forget(q);
+		for j in 0..2 { x:=X(x); }
+	}
+	return (n,measure(H(x)));
+}
+def nestedBranch(a:𝔹,const d:!𝔹,const e:!𝔹){
+	n:=2;
+	x:=H(a);
+	q:=vector(n,dup(x));
+	c:=0;
+	while c<2 {
+		c+=1;
+		n+=1;
+		forget(q); q:=vector(n,dup(x));
+	}
+	if e {
+		if d { forget(q); }
+		for j in 0..2 { x:=X(x); }
+	}
+	return (n,measure(H(x)));
+}
+def main(){
+	r:=(forgetInBranch(0:𝔹,true),forgetInBranch(0:𝔹,false),nestedBranch(0:𝔹,true,true),nestedBranch(0:𝔹,false,true));
+	assert(r==((4,0),(4,0),(4,0),(4,0)));
+	return r;
+}

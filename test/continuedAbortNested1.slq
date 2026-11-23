@@ -1,0 +1,43 @@
+// args: --run
+
+def elseAborts(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	v1:=!v0;
+	if k {
+		y:=0;
+	} else {
+		if l { x:=(a,true); assert(false); }
+		a:=X(a); x:=(a,true); assert(false);
+	}
+	u:=!v1;
+	forget(u);
+	forget(v1);
+	forget(v0);
+	return a;
+}
+def thenAborts(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	if k {
+		if l { x:=(a,true); assert(false); }
+		a:=X(a); x:=(a,true); assert(false);
+	}
+	forget(v0);
+	return a;
+}
+def nestedTwice(a:𝔹,k:!𝔹,l:!𝔹,m:!𝔹){
+	v0:=dup(a);
+	if k {
+		if l {
+			if m { x:=(a,true); assert(false); }
+			x:=(a,false); assert(false);
+		}
+		x:=(a,true); assert(false);
+	}
+	forget(v0);
+	return a;
+}
+def main(){
+	r:=(measure(elseAborts(1:𝔹,true,false)),measure(thenAborts(0:𝔹,false,true)),measure(nestedTwice(1:𝔹,false,true,true)));
+	assert(r==(1,0,1));
+	return r;
+}

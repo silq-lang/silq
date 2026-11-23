@@ -1,0 +1,28 @@
+// args: --remove-loops --run
+
+def redefinedAfter(n:!ℕ){
+	v:=vector(n,1:!𝔹);
+	c:=0;
+	do {
+		forget(v); v:=vector(n,1:!𝔹);
+		n+=1;
+		c+=1;
+	} while c<2;
+	v:=vector(n,0:!𝔹);
+	return (n,v:!𝔹[]);
+}
+def definedInBody(n:!ℕ){
+	c:=0;
+	do {
+		w:=vector(n,1:!𝔹);
+		n+=1;
+		c+=1;
+	} while c<2;
+	w:=vector(n,0:!𝔹);
+	return (n,w:!𝔹[]);
+}
+def main(){
+	r:=(redefinedAfter(2),definedInBody(1));
+	assert(r==((4,[0,0,0,0]),(3,[0,0,0])));
+	return r;
+}
