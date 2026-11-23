@@ -1,0 +1,51 @@
+// args: --run
+
+def usedInBranchAfter(b:!𝔹){
+	c:=1;
+	v:=vector(c,0:!𝔹);
+	k:=0;
+	do{ k+=1; }while k<2 { c+=1; } if b { w:=v.length; c+=w; }
+	return (c,v);
+}
+def usedInOuterBody(){
+	c:=1;
+	v:=vector(c,0:!𝔹);
+	k:=0;
+	s:=0;
+	do{ k+=1; s+=v.length; j:=0; do{ j+=1; }while j<2 { c+=1; } }while k<2;
+	return (c,s,v);
+}
+def usedInOuterReset(){
+	c:=1;
+	v:=vector(c,0:!𝔹);
+	k:=0;
+	s:=0;
+	do{ k+=1; }while k<3 { s+=v.length; j:=0; do{ j+=1; }while j<2 { c+=1; } }
+	return (c,s,v);
+}
+def inWhileBody(){
+	c:=1;
+	v:=vector(c,0:!𝔹);
+	k:=0;
+	while k<2 {
+		k+=1;
+		j:=0;
+		do{ j+=1; }while j<2 { c+=1; }
+	}
+	return (c,v);
+}
+def returnInReset(k0:!ℕ){
+	c:=1;
+	v:=vector(c,0:!𝔹);
+	k:=k0;
+	do{ k+=1; }while k<2 {
+		c+=1;
+		return (c,0);
+	}
+	return (c,v.length);
+}
+def main(){
+	r:=(usedInBranchAfter(true),usedInOuterBody(),usedInOuterReset(),inWhileBody(),returnInReset(0),returnInReset(5));
+	assert(r==((3,(0,)),(3,2,(0,)),(3,2,(0,)),(3,(0,)),(2,0),(1,1)));
+	return r;
+}

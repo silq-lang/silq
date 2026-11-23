@@ -1,0 +1,27 @@
+// args: --remove-loops --run
+
+def forgottenInLoop(m:!ℕ){
+	x:=vector(m,1:!𝔹);
+	k:=0;
+	do{ k+=1; y:=x.length; forget(m); }while k<2 { return (k,y); }
+	return (k+10,0);
+}
+def updatedInLoop(const c:!𝔹,m:!ℕ){
+	x:=(vector(m,1:!𝔹),m);
+	k:=0;
+	do{ k+=1; m+=1; }while k<2 { if c { return (m,0); } forget(m); m:=0; }
+	return (m,0);
+}
+def returnInLoop(m:!ℕ,k:!ℕ){
+	n:=dup(m);
+	ys:=vector(2,vector(n,1:!ℕ));
+	s:=0;
+	i:=0;
+	while i<2 { x:=dup(ys[i]); s+=x[0]; if s>k { n+=1; return s+n+x.length+ys.length; } i+=1; }
+	return s;
+}
+def main(){
+	r:=(forgottenInLoop(3),updatedInLoop(true,3),updatedInLoop(false,3),returnInLoop(1,1),returnInLoop(1,5));
+	assert(r==((1,3),(4,0),(1,0),7,2));
+	return r;
+}

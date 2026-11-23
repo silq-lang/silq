@@ -1,0 +1,8 @@
+// args: --run
+
+def main(){
+	n := 32;
+	x := 0: !int[n];
+	n = 20;
+	return x as !ℤ;
+}

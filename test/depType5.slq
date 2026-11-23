@@ -1,0 +1,11 @@
+
+def foo(){
+	n := 32;
+	x := 0: !int[n];
+	return x;
+}
+
+def main(n:!ℕ){
+	x := foo();
+	y := x : !int[n]; /// error
+}

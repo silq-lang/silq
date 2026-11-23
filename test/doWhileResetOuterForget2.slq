@@ -30,7 +30,7 @@ def usedInBranchAfter(b:!𝔹){
 	c:=1;
 	v:=vector(c,0:!𝔹);
 	k:=0;
-	do{ k+=1; }while k<2 { c+=1; } if b { w:=v.length; } /// error
+	do{ k+=1; }while k<2 { c+=1; } if b { w:=v.length; }
 	return c;
 }
 def usedInOuterLoop(){
@@ -46,7 +46,7 @@ def usedInOuterBody(){
 	v:=vector(c,0:!𝔹);
 	k:=0;
 	s:=0;
-	do{ k+=1; s+=v.length; j:=0; do{ j+=1; }while j<2 { c+=1; } }while k<2; /// error
+	do{ k+=1; s+=v.length; j:=0; do{ j+=1; }while j<2 { c+=1; } }while k<2;
 	return (c,s);
 }
 def usedInOuterReset(){
@@ -54,6 +54,6 @@ def usedInOuterReset(){
 	v:=vector(c,0:!𝔹);
 	k:=0;
 	s:=0;
-	do{ k+=1; }while k<3 { s+=v.length; j:=0; do{ j+=1; }while j<2 { c+=1; } } /// error
+	do{ k+=1; }while k<3 { s+=v.length; j:=0; do{ j+=1; }while j<2 { c+=1; } }
 	return (c,s);
 }

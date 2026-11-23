@@ -1,0 +1,25 @@
+// args: --remove-loops --run
+
+def joined(const k:!ℕ){
+	m:=2;
+	y:=vector(m,0:!𝔹);
+	if k<5 { j:=0; while j<k { j+=1; return 0; } m+=1; }
+	return y.length+m;
+}
+def lastStatement(const k:!ℕ){
+	m:=2;
+	y:=vector(m,0:!𝔹);
+	if k<5 { j:=0; while j<k { j+=1; return 0; } m+=1; return y.length+m; } else { return y.length+m; }
+}
+def opened(const k:!ℕ){
+	x:=[1,2]:!ℕ[];
+	m:=x.length;
+	y:=x~vector(m,0);
+	if k<5 { j:=0; while j<k { j+=1; return 0; } m+=1; }
+	return y.length+m;
+}
+def main(){
+	r:=(joined(0),joined(1),joined(5),lastStatement(0),lastStatement(1),lastStatement(5),opened(0),opened(1),opened(5));
+	assert(r==(5,0,4,5,0,4,7,0,6));
+	return r;
+}

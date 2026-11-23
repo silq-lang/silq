@@ -17,7 +17,7 @@ def inWhileBody(){
 	while k<2 {
 		k+=1;
 		j:=0;
-		do{ j+=1; }while j<2 { c+=1; } /// TODO
+		do{ j+=1; }while j<2 { c+=1; }
 	}
 	return c;
 }

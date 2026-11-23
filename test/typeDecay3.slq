@@ -1,0 +1,18 @@
+def constLocal(){
+	n:=2;
+	const x:=vector(n,0:!ℕ);
+	n=3; /// error
+	return dup(x);
+}
+def captured(){
+	n:=2;
+	x:=vector(n,0:𝔹);
+	f:=λ(){ n=3; return n; }; /// error
+	return (x,f);
+}
+def qubits(){
+	n:=2;
+	q:=vector(n,0:𝔹);
+	n=3; /// error
+	return (n,q);
+}

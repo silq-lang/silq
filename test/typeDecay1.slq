@@ -1,0 +1,53 @@
+// args: --run
+
+def updated(){
+	n:=2+measure(H(0));
+	x:=vector(n,0);
+	n=3;
+	return x;
+}
+def several(){
+	n:=2;
+	x:=vector(n,1:!ℕ);
+	y:=vector(n+1,0:!ℕ);
+	n+=5;
+	return (x,y,n);
+}
+def forgotten(){
+	n:=3;
+	x:=vector(n,0:!𝔹);
+	forget(n=3);
+	return x;
+}
+def closure(){
+	n:=2;
+	f:=λ()⇒vector(n,3:!ℕ);
+	n=0;
+	return (f(),n);
+}
+def chained(){
+	n:=2;
+	x:=vector(n,1:!ℕ);
+	y:=vector(x.length,0:!ℕ);
+	n=7;
+	return (x,y,n);
+}
+def nested(){
+	n:=2;
+	x:=vector(n,vector(n,0:!ℕ));
+	n=1;
+	return x;
+}
+def known(){
+	n:=2;
+	x:=vector(n,5:!ℕ);
+	n=3;
+	y:=x:!ℕ^2;
+	return (y,n);
+}
+def main(){
+	x:=updated();
+	r:=(x.length>=2,several(),forgotten(),closure(),chained(),nested(),known());
+	assert(r==(true,((1,1),(0,0,0),7),(0,0,0),((3,3),0),((1,1),(0,0),7),((0,0),(0,0)),((5,5),3)));
+	return r;
+}
