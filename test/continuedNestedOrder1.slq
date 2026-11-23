@@ -1,0 +1,29 @@
+// args: --run
+
+def nested(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	v1:=!v0;
+	if k {
+		if l { x:=(a,true); assert(false); }
+	} else { a:=X(a); x:=(a,true); assert(false); }
+	u:=!v1;
+	forget(u);
+	forget(v1);
+	forget(v0);
+	return a;
+}
+def nestedNoRead(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	v1:=!v0;
+	if k {
+		if l { x:=(a,true); assert(false); }
+	} else { a:=X(a); x:=(a,true); assert(false); }
+	forget(v1);
+	forget(v0);
+	return a;
+}
+def main(){
+	r:=(measure(nested(1:𝔹,true,false)),measure(nestedNoRead(0:𝔹,true,false)));
+	assert(r==(1,0));
+	return r;
+}

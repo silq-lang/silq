@@ -5969,13 +5969,14 @@ class ScopeWriter {
 		Result rFalse = ifFalse.genCompoundStmt(e.othw);
 		auto i3 = cw.code[].length;
 		bool continues = (rTrue.isReturn || rTrue.isAbort && e.then.blscope_.returningBeforeContinuation) && rFalse.isPass || (rFalse.isReturn || rFalse.isAbort && e.othw.blscope_.returningBeforeContinuation) && rTrue.isPass; // (with the code after the conditional, see `ItePartialReturn`)
+		bool continuesPartially = (rTrue.isConditionalReturn || rFalse.isConditionalReturn) && rTrue.mayPass != rFalse.mayPass && !cond.isQuantum; // (with the code after the conditional on the paths of the branch that may pass, e.g., after a nested conditional whose branch aborts)
 		ast_decl.Declaration[] eager;
 		if(rTrue.isPass && rFalse.isPass) {
 			scope loc = PushLocation(ctx, locEnd(e.loc));
 			eager = genEagerMerges(cond, ifFalse, ifTrue, i1, i2, i3);
 		}
 		if(eager.length) interleaveBranches(cw, i0, i1, i2, i3, cw.code[].length);
-		else if(e.then.blscope_.interleave && !continues) interleaveBranches(cw, i0, i1, i2, i3);
+		else if(e.then.blscope_.interleave && !continues && !continuesPartially) interleaveBranches(cw, i0, i1, i2, i3);
 		ItePartialReturn continuedBy(ItePartialReturn rv, int branch) {
 			if(e.then.blscope_.interleave) {
 				rv.interleave = [i0, i1, i2, i3];
@@ -6052,6 +6053,7 @@ class ScopeWriter {
 			}
 
 			if(cond.isQuantum) qcg.forget(cond.qreg);
+			if(continuesPartially) return continuedBy(new ItePartialReturn(retCond, ret, reachable), rTrue.mayPass ? 1 : 2);
 			return new ItePartialReturn(retCond, ret, reachable);
 		}
 
