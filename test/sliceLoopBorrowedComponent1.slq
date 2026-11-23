@@ -1,0 +1,32 @@
+// args: --run
+
+def flipped(){
+	b:=vector(3,0:𝔹);
+	w:=0;
+	while w<2 { w+=1; b[w]:=X(b[w]); if b[2] { b[2]:=X(b[2]); } }
+	return measure(b);
+}
+def indexed(){
+	b:=vector(3,0:𝔹);
+	w:=0;
+	while w<2 { w+=1; b[w]:=X(b[w]); if b[2] { b[w]:=X(b[w]); } }
+	return measure(b);
+}
+def controlled(const a:𝔹){
+	b:=vector(3,0:𝔹);
+	w:=0;
+	while w<2 { w+=1; if a { b[w]:=X(b[w]); if b[2] { y:=w; b[y]:=X(b[y]); } } }
+	return measure(b);
+}
+def nested(const a:𝔹){
+	b:=vector(3,0:𝔹); b[0]:=X(b[0]);
+	k:=0;
+	do{ k+=1; w:=0; while w<2 { w+=1; if a { b[w%3]:=X(b[w%3]); if b[2] { y:=(k%3,1:!ℕ); b[y[0]]:=X(b[y[0]]); } } } }while k<2;
+	return measure(b);
+}
+def main(){
+	a:=1:𝔹;
+	r:=(flipped(),indexed(),controlled(a),nested(a),measure(a));
+	assert(r==([0,1,0],[0,1,0],[0,1,0],[1,1,0],1));
+	return r;
+}

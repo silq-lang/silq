@@ -1,0 +1,84 @@
+def fail(b:𝔹):⊥{ assert(false); }
+
+def defined(c:!𝔹){
+	if c { r:=1; assert(false); } else { r:=2; assert(false); }
+	return r;
+}
+
+def joined(c:!𝔹){
+	if c { r:=1:!𝔹; assert(false); } else { r:=2:!ℕ; assert(false); }
+	return r+1;
+}
+
+def qubits(c:!𝔹){
+	if c { q:=H(0:𝔹); assert(false); } else { q:=H(1:𝔹); assert(false); }
+	return measure(q);
+}
+
+def empty(c:!𝔹,x:!ℕ){
+	if c { r:=x coerce ⊥; } else { r:=x coerce ⊥; }
+	return r;
+}
+
+def emptyParameter(c:!𝔹,y:⊥^1){
+	if c { r:=(dup(y),); } else { r:=(dup(y),); }
+	return r;
+}
+
+def returning(c:!𝔹){
+	if c { r:=1; assert(false); } else { return 2; }
+	return r;
+}
+
+def nested(a:!𝔹,c:!𝔹){
+	if a { if c { r:=1; assert(false); } else { r:=2; assert(false); } } else { r:=3; assert(false); }
+	return r;
+}
+
+def constant(c:!𝔹){
+	if c { q:=0:𝔹; assert(false); } else { q:=1:𝔹; assert(false); }
+	return 0;
+}
+
+def constantUsed(c:!𝔹){
+	if c { q:=0:𝔹; assert(false); } else { q:=1:𝔹; assert(false); }
+	return measure(q);
+}
+
+def copied(c:!𝔹){
+	b:=H(0:𝔹);
+	if c { q:=dup(b); b:=fail(b); } else { q:=dup(b); b:=fail(b); }
+	return 0;
+}
+
+def copiedUsed(c:!𝔹){
+	b:=H(0:𝔹);
+	if c { q:=dup(b); b:=fail(b); } else { q:=dup(b); b:=fail(b); }
+	return measure(q); /// TODO
+}
+
+def copiedConst(c:!𝔹,const a:𝔹){
+	if c { q:=dup(a); assert(false); } else { q:=dup(a); assert(false); }
+	return 0;
+}
+
+def oneBranch(c:!𝔹){
+	if c { r:=1; assert(false); } else { assert(false); }
+	return r; /// error
+}
+
+def unconsumed(c:!𝔹){
+	if c { q:=H(0:𝔹); assert(false); } else { q:=H(1:𝔹); assert(false); } /// error
+	return 0;
+}
+
+def unconsumedOneBranch(c:!𝔹){
+	if c { q:=H(0:𝔹); assert(false); } else { assert(false); } /// error
+	return 0;
+}
+
+def unconsumedAtEnd(c:!𝔹){
+	if c { q:=H(0:𝔹); assert(false); } else { assert(false); }
+}
+
+def main(){ }

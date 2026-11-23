@@ -1,0 +1,30 @@
+// args: --remove-loops --run
+
+def forLoop(a:!ℕ,N:!ℕ,c:!𝔹){
+	if c { return 0; }
+	a_inv:=(N coerce ⊥);
+	(aps,ais):=([a],[a_inv]);
+	for i in 1..3 { aps~=[aps[i-1]^2%N]; ais~=[ais[i-1]^2%N]; }
+	return aps.length;
+}
+def whileLoop(N:!ℕ,c:!𝔹){
+	if c { return 0; }
+	x:=(N coerce ⊥);
+	ys:=[x];
+	k:=0;
+	while k<2 { ys~=[ys[k]]; k+=1; }
+	return k;
+}
+def doWhileLoop(N:!ℕ,c:!𝔹){
+	if c { return 0; }
+	x:=(N coerce ⊥);
+	ys:=[x];
+	k:=0;
+	do { ys~=[ys[k]]; k+=1; } while k<2;
+	return k;
+}
+def main(){
+	r:=(forLoop(2,3,true),whileLoop(3,true),doWhileLoop(3,true));
+	assert(r==(0,0,0));
+	return r;
+}
