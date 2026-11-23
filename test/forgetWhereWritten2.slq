@@ -1,0 +1,25 @@
+// args: --run
+
+def before(x:𝔹,y:𝔹,k:!ℕ){
+	t:=dup(x); u:=dup(t); v:=dup(u); w:=dup(v);
+	if k==0 { y:=X(y); forget(u); } else { forget(w); x:=X(x); return (x,y); }
+	forget(v);
+	return (x,y);
+}
+def usedLater(x:𝔹,y:𝔹,k:!ℕ){
+	t:=dup(x); u:=dup(t); v:=dup(u); w:=dup(v);
+	if k==0 { y:=X(y); forget(u); } else { x:=X(x); forget(w); z:=measure(v); return (x,y); }
+	forget(v);
+	return (x,y);
+}
+def afterMerge(x:𝔹,y:𝔹,k:!ℕ){
+	t:=dup(x); u:=dup(t); w:=dup(u);
+	if k==0 { return (x,y); } else { if k==1 { return (x,y); } forget(u); }
+	forget(w);
+	return (x,y);
+}
+def main(){
+	r:=(measure(before(1:𝔹,0:𝔹,0)),measure(before(1:𝔹,0:𝔹,1)),measure(usedLater(1:𝔹,0:𝔹,0)),measure(usedLater(1:𝔹,0:𝔹,1)),measure(afterMerge(1:𝔹,0:𝔹,0)),measure(afterMerge(1:𝔹,0:𝔹,2)));
+	assert(r==((1,1),(0,0),(1,1),(0,0),(1,0),(1,0)));
+	return r;
+}

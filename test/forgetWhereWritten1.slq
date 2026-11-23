@@ -1,0 +1,11 @@
+def quantumControl(x:𝔹,y:𝔹,const p:𝔹){
+	t:=dup(x); u:=dup(t); v:=dup(u);
+	if p { x:=X(x); forget(v); } else { y:=X(y); forget(u); return (x,y); } /// error
+	return (x,y);
+}
+def classicalControl(x:𝔹,y:𝔹,const p:𝔹,k:!ℕ){
+	t:=dup(x); u:=dup(t); v:=dup(u); w:=dup(v);
+	if k==0 { y:=X(y); forget(u); } else { x:=X(x); forget(w); return (x,y); } /// error
+	if p { } else { forget(v); }
+	return (x,y);
+}
