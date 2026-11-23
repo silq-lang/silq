@@ -1,0 +1,16 @@
+def oneBranch(){
+	n:=3;
+	q:=vector(n,0:𝔹);
+	c:=measure(H(0:𝔹));
+	if c { forget(n); } /// error
+	with { w:=dup(q):𝔹[]; } do { }
+	return q;
+}
+def bothBranches(){
+	n:=3;
+	q:=vector(n,0:𝔹);
+	c:=measure(H(0:𝔹));
+	if c { forget(n); } else { forget(n); } /// error
+	with { w:=dup(q):𝔹[]; } do { }
+	return q;
+}
