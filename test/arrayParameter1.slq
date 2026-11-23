@@ -1,0 +1,54 @@
+// args: --run
+
+def updated(a:!ℕ[]):⋃[n:!ℕ]. (!ℕ^n)^2{
+	a[0]+=1;
+	return (a,a);
+}
+def appendedTwice(a:!ℕ[]):⋃[n:!ℕ]. !ℕ^(n+2){
+	a=a~[1];
+	return a~[2];
+}
+def counted(a:!ℕ[]):⋃[n:!ℕ]. !ℕ^(n+1){
+	for i in 0..a.length { a[i]+=i; }
+	return a~[a.length];
+}
+def updatedCaptured(a:!ℕ[]):⋃[n:!ℕ]. (!ℕ^n)^2{
+	a[0]+=1;
+	f:=λ()⇒(a,a);
+	return f();
+}
+def measured(q:𝔹[]):⋃[n:!ℕ]. (!𝔹^n)^2{
+	r:=dup(q);
+	return (measure(r),measure(q));
+}
+def flipped(q:𝔹[]):⋃[n:!ℕ]. !𝔹^(n+1){
+	for i in 0..q.length { q[i]:=X(q[i]); }
+	return measure(q)~[false];
+}
+def unchanged(a:!ℕ[])⇒vector(a.length,0:𝔹);
+def indexedType(x:!ℕ[]):!𝔹^x[0]⇒vector(x[0],false);
+def nested(a:!ℕ){
+	def g(a:𝔹[]):⋃[n:!ℕ]. (!𝔹^n)^2{
+		r:=dup(a);
+		return (measure(r),measure(a));
+	}
+	def h(a:⋃[n:!ℕ]. !ℕ^(n+1))⇒a[0];
+	return (g(vector(a,1:𝔹)),h(vector(2,a):⋃[n:!ℕ]. !ℕ^(n+1)));
+}
+def inLoop(n:!ℕ){
+	r:=0:!ℕ;
+	for j in 0..n {
+		def g(q:𝔹[]){
+			q[0]:=X(q[0]);
+			return measure(q);
+		}
+		r+=g(vector(2,0:𝔹))[0];
+	}
+	return r;
+}
+def main(){
+	z:=unchanged([1,2]);
+	r:=(updated([5,6]),appendedTwice([3]),counted([1,1]),updatedCaptured([3]),measured(vector(2,1:𝔹)),flipped(vector(2,0:𝔹)),measure(z),indexedType([2]),nested(2),inLoop(2));
+	assert(r==(([6,6],[6,6]),[3,1,2],[1,2,2],([4],[4]),([1,1],[1,1]),[1,1,0],[0,0],[0,0],(([1,1],[1,1]),2),2));
+	return r;
+}

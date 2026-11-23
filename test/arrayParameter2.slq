@@ -1,0 +1,19 @@
+def notConsumed(q:𝔹[]){ /// error
+	return 1;
+}
+def notConsumedInBranch(q:𝔹[],c:!𝔹){ /// error
+	if c { return 1; }
+	return 2;
+}
+def notConsumedUnion(q:⋃[n:!ℕ]. 𝔹^(n+1)){ /// error
+	return 1;
+}
+def updatedNotConsumed(q:𝔹[]){
+	q[0]:=H(q[0]); /// error
+	return 1;
+}
+def differentLengths(a:!ℕ[],b:!ℕ[]):⋃[n:!ℕ]. (!ℕ^n)^2{
+	a[0]+=1;
+	b[0]+=1;
+	return (a,b); /// error
+}
