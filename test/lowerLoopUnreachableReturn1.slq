@@ -1,0 +1,61 @@
+// args: --remove-loops --run
+
+def singleIteration(const c:!𝔹,const d:!ℕ){
+	if c {
+		do{ if d==2 { return 1; } else { return 0; } }while false;
+		return 3;
+	}
+	return 2;
+}
+def certainReturn(const c:!𝔹,const d:!ℕ){
+	if c {
+		do{ if d==2 { assert(false); } return 0; }while false;
+		return 3;
+	}
+	return 2;
+}
+def nestedReturn(const c:!𝔹,const d:!ℕ){
+	if c {
+		do{ if d==2 { return 1; } else { return 0; } }while false;
+		if d==1 { return 4; }
+		return 3;
+	}
+	return 2;
+}
+def returnBefore(const c:!𝔹,const d:!ℕ){
+	if c {
+		if d==3 { return 5; }
+		do{ if d==2 { return 1; } else { return 0; } }while true;
+		return 3;
+	}
+	return 2;
+}
+def bothBranches(c:!𝔹,const d:!ℕ){
+	if c {
+		do{ if d==2 { return 1; } else { return 0; } }while false;
+		return 3;
+	} else {
+		do{ if d==2 { return 4; } else { return 5; } }while false;
+		return 6;
+	}
+}
+def quantumValue(const c:!𝔹,const d:!ℕ,x:𝔹){
+	if c {
+		do{ if d==2 { return (1,x); } else { return (0,x); } }while false;
+		return (3,x);
+	}
+	return (2,x);
+}
+def updated(const c:!𝔹,const d:!ℕ){
+	a:=[1,2];
+	if c {
+		do{ a[0]+=1; if d==2 { return a[0]; } else { return a[1]; } }while false;
+		return 3;
+	}
+	return 2;
+}
+def main(){
+	r:=(singleIteration(true,2),singleIteration(true,0),singleIteration(false,2),certainReturn(true,0),certainReturn(false,2),nestedReturn(true,2),nestedReturn(true,1),returnBefore(true,3),returnBefore(true,2),returnBefore(false,2),bothBranches(true,2),bothBranches(false,2),bothBranches(false,0),measure(quantumValue(true,0,1:𝔹)),updated(true,2),updated(true,0),updated(false,2));
+	assert(r==(1,0,2,0,2,1,0,5,1,2,1,4,5,(0,1),2,2,2));
+	return r;
+}
