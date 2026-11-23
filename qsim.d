@@ -4442,6 +4442,10 @@ struct Interpreter(QState){
 					auto cod=closeType(su.cod,(Identifier id)=>id.scope_?lookupMeaning(qstate,id.meaning,true,id.scope_):qstate.readLocal(id.meaning.getName,true));
 					if(cod.isSemCompleted()&&!cod.isSemEvaluated()) cod=cod.eval();
 					witness=runtimeWitness(rhs,unionTy(su.name,su.dom,cod),u);
+					if(!witness&&su.name&&!cod.freeIdentifiers.any!(id=>id.id==su.name)&&isSubtype(su.dom,ℤt(true))){ // (one that they eliminate, e.g., `m` in `⋃[m:!ℕ]. !ℕ^(n₍₁₎·m+1)` for `n₍₁₎=0`: any value is a witness)
+						qstate.assignTo(w.getName,qstate.makeInteger(ℤ(0)).convertTo(su.dom));
+						continue;
+					}
 				}
 				enforce(!!witness,text("cannot determine the value of `",w.getName,"` for a value of type `",rhs.type,"` in `",opened[i],"`"));
 				qstate.assignTo(w.getName,runExp(witness));
