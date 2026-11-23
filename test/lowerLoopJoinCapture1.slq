@@ -1,0 +1,63 @@
+// args: --remove-loops --run
+
+def inFor(const c:!ℕ,s:!ℕ){
+	y:=vector(s,1:𝔹);
+	for i in 0..2 {
+		if c==1 { repeat 0 { return measure(y).length; } }
+		w:=0;
+		do { w+=1; if c==2 { return measure(y).length; } } while w<1;
+	}
+	return measure(y).length;
+}
+def changedToo(const c:!ℕ,s:!ℕ){
+	y:=vector(s,1:𝔹);
+	a:=vector(s,2:!ℕ);
+	for i in 0..2 {
+		a:=a~a;
+		if c==1 { } else { repeat 0 { if c==0 { return (measure(y).length,a.length+2); } a:=a~a; } }
+		w:=0;
+		do { w+=1; if c==2 { return (measure(y).length,a.length+2); } } while w<1;
+	}
+	return (measure(y).length,a.length+2);
+}
+def inWhile(const c:!ℕ,s:!ℕ){
+	y:=vector(s,1:𝔹);
+	k:=0;
+	while k<2 {
+		k+=1;
+		if c==1 { j:=0; while j<1 { j+=1; return measure(y).length; } }
+		w:=0;
+		do { w+=1; if c==2 { return measure(y).length+k; } } while w<1;
+	}
+	return measure(y).length;
+}
+def nested(const c:!ℕ,s:!ℕ){
+	y:=vector(s,1:𝔹);
+	for i in 0..2 {
+		for j in 0..2 {
+			if c==1 { repeat 0 { return measure(y).length; } }
+			w:=0;
+			do { w+=1; if c==i+j { return measure(y).length+10*i+j; } } while w<1;
+		}
+	}
+	return measure(y).length;
+}
+def capturedWitness(const c:!ℕ,s:!ℕ){
+	y:=vector(s,1:𝔹);
+	for i in 0..2 {
+		y:=y~vector(1,0:𝔹);
+		z:=measure(dup(y));
+		for j in 0..2 {
+			if c==1 { repeat 0 { return z.length; } }
+			w:=0;
+			do { w+=1; if c==2 { return z.length+10; } } while w<1;
+		}
+		forget(z);
+	}
+	return measure(y).length;
+}
+def main(){
+	r:=(inFor(0,1),inFor(1,1),inFor(2,1),changedToo(0,1),changedToo(1,1),changedToo(2,1),inWhile(0,1),inWhile(1,1),inWhile(2,1),nested(0,2),nested(1,2),nested(2,2),nested(3,2),capturedWitness(0,1),capturedWitness(1,1),capturedWitness(2,1));
+	assert(r==(1,1,1,(1,6),(1,6),(1,4),1,1,2,2,3,13,2,3,3,12));
+	return r;
+}
