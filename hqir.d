@@ -5891,7 +5891,7 @@ class ScopeWriter {
 						return combineResults(Result.conditionallyReturns(rv.value, rv.retCond), contRet, scTail);
 					}
 					if(contRet.isReturn || contRet.isAbort) {
-						scTail.checkEmpty(contRet.isAbort);
+						scTail.checkEmpty(abortsOnly(contRet, stmts[i+1..$]));
 
 						auto r = rv.retCond.valMerge(contRet.asValue(scTail, nscope.getFunction().ret), rv.value, this);
 						rv.forgetCond(this);
@@ -6182,8 +6182,15 @@ class ScopeWriter {
 				defineVar(outer, sub.genSubtype(sub.getVar(decl, false), typeForDecl(decl), subst.length ? ty.substitute(subst) : ty)); // (the merged type can be wider, e.g., if it mentions a `const` local of the block)
 			}
 		}
-		sub.checkEmpty(!!r.isAbort);
+		sub.checkEmpty(abortsOnly(r, e));
 		return r;
+	}
+
+	static bool abortsOnly(Result r, Expression[] stmts...) { // (code without `return` whose result does not pass aborts on all of its paths, also where the results of its nested conditionals combine to a return of their error values, see `combineResults`)
+		if(r.isAbort) return true;
+		if(r.mayPass) return false;
+		foreach(s; stmts) foreach(x; s.subexpressions) if(cast(ast_exp.ReturnExp) x) return false;
+		return true;
 	}
 
 	Result implStmt(ast_exp.FunctionDef e) {
@@ -9474,7 +9481,7 @@ class Writer {
 		foreach(i, cap; fi.constCaptures) {
 			if(cap.innerDecl) sc.getVar(cap.innerDecl, false);
 		}
-		sc.checkEmpty(!!res.isAbort);
+		sc.checkEmpty(ScopeWriter.abortsOnly(res, fd.body_));
 
 		auto rv = res.asValue(sc, fd.ret);
 		assert(rv.classicalRet && !rv.quantumRet);

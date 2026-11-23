@@ -1,0 +1,57 @@
+// args: --run
+
+def elseReturns(a:𝔹,k:!𝔹){
+	v0:=dup(a);
+	v1:=!v0;
+	if k {
+		x:=(a,true); assert(false);
+	} else {
+		u:=!v1; forget(u); forget(v1); forget(v0);
+		return a;
+	}
+}
+def elseReturnsNested(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	v1:=!v0;
+	if k {
+		if l { x:=(a,true); assert(false); }
+		a:=X(a); x:=(a,true); assert(false);
+	} else {
+		u:=!v1; forget(u); forget(v1); forget(v0);
+		return a;
+	}
+}
+def consecutive(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	if k { x:=(a,true); assert(false); }
+	if l { x:=(a,false); assert(false); }
+	forget(v0);
+	return a;
+}
+def consecutiveNested(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	if k {
+		if l { x:=(a,true); assert(false); }
+		a:=X(a); x:=(a,true); assert(false);
+	}
+	if l { x:=(a,false); assert(false); }
+	forget(v0);
+	return a;
+}
+def bothAbort(a:𝔹,k:!𝔹,m:!𝔹):𝔹{
+	v0:=dup(a);
+	if k { x:=(a,true); assert(false); } else { if m { x:=(a,false); assert(false); } x:=(a,true); assert(false); }
+}
+def afterContinued(a:𝔹,k:!𝔹,l:!𝔹,m:!𝔹):𝔹{
+	v0:=dup(a);
+	if k { } else { x:=(a,true); assert(false); }
+	if l { x:=(a,false); assert(false); } else { if m { x:=(a,true); assert(false); } x:=(a,false); assert(false); }
+}
+def main(){
+	r:=(measure(elseReturns(1:𝔹,false)),measure(elseReturnsNested(0:𝔹,false,true)),measure(consecutive(1:𝔹,false,false)),measure(consecutiveNested(1:𝔹,false,false)));
+	if measure(0:𝔹) {
+		t:=measure(bothAbort(0:𝔹,true,true),afterContinued(0:𝔹,true,true,true));
+	}
+	assert(r==(1,0,1,1));
+	return r;
+}
