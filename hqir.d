@@ -9063,6 +9063,17 @@ void interleaveBranches(CodeWriter cw, size_t i0, size_t i1, size_t i2, size_t i
 		foreach(ref r; s.qcArgs) if(r is whole) r = cr[2];
 		s.condQ = s.condQ.dup;
 		foreach(ref c; s.condQ) if(c.reg is whole) c.reg = cr[2];
+		auto split = &items[cr[1]];
+		auto conds = split.condC ~ CondC(split.cArgs[0], split.qRet[1] is cr[2]); // (where the part exists, which holds on all paths of the branch, see `carriedPart`: the read and the statements of the branch that use what it computes run under them, as the backend only lets a statement use a register under the conditions of its definition)
+		MapX!(QReg, Unit) qs;
+		MapX!(CReg, Unit) cs;
+		foreach(k; order) {
+			auto t = &items[k];
+			if(k != cr[0] && (branchOf(k) != branchOf(cr[0]) || !t.qiArgs.any!(r => r && r in qs) && !t.qcArgs.any!(r => r && r in qs) && !t.condQ.any!(c => c.reg && c.reg in qs) && !t.cArgs.any!(r => r && r in cs) && !t.condC.any!(c => c.reg && c.reg in cs))) continue;
+			foreach(c; conds) if(!t.condC.canFind!(d => d.reg is c.reg)) t.condC = t.condC ~ c;
+			foreach(r; t.qRet) if(r) qs[r] = unit;
+			foreach(r; t.cRet) if(r) cs[r] = unit;
+		}
 	}
 	foreach(i, pr; partReads) {
 		if(!rewrite[i]) continue;

@@ -1,0 +1,34 @@
+// args: --run
+
+def g(const x:𝔹){ return measure(dup(x)); }
+def h(x:𝔹){ return measure(x); }
+def readsAround(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	v1:=dup(v0);
+	t1:=h(v0);
+	if !l { if k { a:=X(a); x2:=(a,true); y3:=measure(x2); assert(false); } } else { t4:=g(v1); x5:=(a,true); y6:=measure(x5); t7:=g(v1); assert(false); }
+	t8:=measure(v0);
+	forget(v1);
+	return (a,t1,t8);
+}
+def resultUsed(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	v1:=dup(v0);
+	if !l { if k { x2:=(a,true); assert(false); } } else { x5:=(a,true); y6:=measure(x5); t7:=g(v1); u:=t7&&y6[0]; assert(u); assert(false); }
+	t8:=measure(v0);
+	forget(v1);
+	return (a,t8);
+}
+def nestedRead(a:𝔹,k:!𝔹,l:!𝔹,m:!𝔹){
+	v0:=dup(a);
+	v1:=dup(v0);
+	if !l { if k { x2:=(a,true); assert(false); } } else { x5:=(a,true); y6:=measure(x5); if m { t7:=g(v1); } assert(false); }
+	t8:=measure(v0);
+	forget(v1);
+	return (a,t8);
+}
+def main(){
+	r:=(measure(readsAround(0:𝔹,false,false)),measure(resultUsed(1:𝔹,false,false)),measure(nestedRead(1:𝔹,false,false,true)));
+	assert(r==((0,0,0),(1,1),(1,1)));
+	return r;
+}
