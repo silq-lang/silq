@@ -1,0 +1,38 @@
+// args: --run
+
+def g(const x:𝔹){ return measure(dup(x)); }
+def measureThenCall(a:𝔹,l:!𝔹){
+	v0:=dup(a);
+	if l { y:=measure(a); t:=g(v0); assert(false); }
+	forget(v0);
+	return a;
+}
+def chain(a:𝔹,l:!𝔹){
+	v0:=dup(a);
+	v1:=dup(v0);
+	if l { x:=(a,true); y:=measure(x); t:=g(v1); assert(false); }
+	forget(v1);
+	forget(v0);
+	return a;
+}
+def measuredAfter(a:𝔹,l:!𝔹){
+	v0:=dup(a);
+	v1:=dup(v0);
+	if l { x:=(a,true); y:=measure(x); t:=g(v1); assert(false); }
+	t1:=measure(v0);
+	forget(v1);
+	return (a,t1);
+}
+def nested(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	v1:=dup(v0);
+	if !l { if k { x:=(a,true); y:=measure(x); assert(false); } } else { x:=(a,true); y:=measure(x); t:=g(v1); assert(false); }
+	t1:=measure(v0);
+	forget(v1);
+	return (a,t1);
+}
+def main(){
+	r:=(measure(measureThenCall(1:𝔹,false)),measure(chain(0:𝔹,false)),measure(measuredAfter(1:𝔹,false)),measure(nested(0:𝔹,false,false)));
+	assert(r==(1,0,(1,1),(0,0)));
+	return r;
+}
