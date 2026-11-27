@@ -1,0 +1,30 @@
+// args: --run
+
+def forgetBefore(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	v1:=!v0;
+	if l { if k { x1:=(a,true); assert(false); } } else { assert(false); }
+	forget(v1);
+	a:=X(a);
+	return a;
+}
+def measureAfter(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	v1:=!v0;
+	if l { if k { x1:=(a,true); assert(false); } } else { t:=measure(v1); assert(false); }
+	a:=X(a);
+	t1:=measure(v1);
+	return (a,t1);
+}
+def chainBefore(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	v1:=dup(v0);
+	if l { if k { x1:=(a,true); assert(false); } } else { x2:=(a,true); assert(false); }
+	forget(v1);
+	return a;
+}
+def main(){
+	r:=(measure(forgetBefore(1:𝔹,false,true)),measure(measureAfter(1:𝔹,false,true)),measure(chainBefore(0:𝔹,false,true)));
+	assert(r==(0,(0,0),0));
+	return r;
+}

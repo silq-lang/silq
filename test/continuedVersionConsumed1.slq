@@ -1,0 +1,37 @@
+def elseAborts(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	v1:=!v0;
+	if l { if k { x1:=(a,true); assert(false); } } else { assert(false); }
+	a:=X(a); /// note
+	forget(v1); /// error
+	return a;
+}
+def elseMeasures(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	v1:=!v0;
+	if l { if k { x1:=(a,true); assert(false); } } else { t:=measure(v1); assert(false); }
+	a:=X(a); /// note
+	forget(v1); /// error
+	return a;
+}
+def chain(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	v1:=dup(v0);
+	if l { if k { x1:=(a,true); assert(false); } } else { x2:=(a,true); assert(false); }
+	a:=X(a); /// note
+	forget(v1); /// error
+	return a;
+}
+def nested(a:𝔹,k:!𝔹,l:!𝔹,m:!𝔹){
+	v0:=dup(a);
+	v1:=!v0;
+	if l {
+		if k { if m { x1:=(a,true); assert(false); } x2:=(a,true); assert(false); }
+	} else {
+		x3:=(a,true);
+		assert(false);
+	}
+	a:=X(a); /// note
+	forget(v1); /// error
+	return a;
+}
