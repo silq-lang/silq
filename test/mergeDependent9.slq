@@ -6,7 +6,7 @@ def main(){
 	}else{
 		n:=4;
 		xs:=vector(n,1:𝔹);
-		forget(n); /// error
+		forget(n);
 	}
-	return n;
+	return n; /// error
 }

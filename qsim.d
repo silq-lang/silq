@@ -3241,7 +3241,7 @@ struct Interpreter(QState){
 		if(from) if(auto su=cast(UnionTy)stype) if(auto w=unionWitness(from,su,u)){ // (the witness of the static types, as `UnionPackConversion`, e.g., `2` and `3` for `!ℕ^(a·b+1)` in `⋃[n:!ℕ][m:!ℕ]. !ℕ^(n·m+1)` with `a=2` and `b=3`, which `!ℕ^7` does not determine)
 			auto cw=closedType(bind(w,bindings));
 			if(!isOpen(cw)||cw.freeIdentifiers.all!(id=>id.meaning&&id.meaning.getName in qstate.vars)){ // (also a variable whose value `closedType` does not substitute, e.g., of a tuple type)
-				witness=runExp(cw);
+				witness=runExp(cw).dup(qstate); // (a copy: the variables that it reads can change in place, e.g., `t` for `t[0]=5` after `x:=v:⋃[s:!ℕ[]]. 𝔹^s[0]`)
 				member=u.cod.substitute(u.name,w);
 			}
 		}

@@ -1,11 +1,10 @@
-// args: --run
 
 def main(){
 	n:=2;
 	k:=0:int[n];
 	def foo(){
-		n⊕=1; /// error
+		n⊕=1;
 		return n;
 	}
-	return (foo(),k as 𝔹^n coerce 𝔹^2);
+	return (foo(),k as 𝔹^n coerce 𝔹^2); /// error
 }

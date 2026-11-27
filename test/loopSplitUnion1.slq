@@ -1,0 +1,41 @@
+// args: --run
+
+def decayed(const x:𝔹){
+	t:=[2,3];
+	q:=vector(t[0],dup(x));
+	z:=vector(t[0],0:𝔹);
+	g:=λ(){ t[0]+=1; return (t,q); }; (t,q):=g();
+	repeat 2 {
+		forget(z); z:=vector(t[0],0:𝔹); /// TODO
+		h:=λ(){ t[0]+=1; return (t,q); }; (t,q):=h();
+	}
+	return (t[0],measure(z):!𝔹[],measure(q):!𝔹[]);
+}
+def annotated(const x:𝔹){
+	t:=[2,3];
+	q:=vector(2,dup(x));
+	z:=vector(t[0],0:𝔹):⋃[s:!ℕ^2]. 𝔹^s[0];
+	repeat 2 {
+		forget(z); z:=vector(t[0],0:𝔹):⋃[s:!ℕ^2]. 𝔹^s[0];
+		g:=λ(){ t[0]+=1; return (t,q); }; (t,q):=g();
+	}
+	return (t[0],measure(z):!𝔹[],measure(q));
+}
+def slicedDoWhile(const x:𝔹,const d:!𝔹){
+	t:=[2,3];
+	q:=vector(t[0],dup(x));
+	z:=vector(t[0],0:𝔹);
+	c:=0;
+	do{
+		c+=1;
+		if d { forget(q); q:=vector(t[0],dup(x)); }
+		t[0]+=1;
+	}while c<2 {
+		forget(z); z:=vector(t[0],0:𝔹);
+		repeat 2 { t[0]+=1; }
+	}
+	forget(c);
+	return (t[0],measure(q):!𝔹[],measure(z):!𝔹[]);
+}
+
+def main()⇒(decayed(1),annotated(1),slicedDoWhile(1,1));

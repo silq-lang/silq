@@ -1,0 +1,43 @@
+// args: --run
+
+def decayed(const x:𝔹){
+	n:=2; q:=vector(n,dup(x)); c:=0;
+	do{
+		c+=1;
+		forget(q); q:=vector(n,dup(x));
+		g:=λ(){ n+=1; return (n,q); }; (n,q):=dup(g)();
+	}while c<2 { t:=dup(q); forget(t); }
+	forget(c);
+	return (n,measure(q));
+}
+def decayedAfter(const x:𝔹){
+	n:=2; q:=vector(n,dup(x)); c:=0;
+	do{
+		c+=1;
+		forget(q); q:=vector(n,dup(x));
+		g:=λ(){ n+=1; return (n,q); }; (n,q):=dup(g)();
+	}while c<2;
+	forget(c);
+	(m,r):=g();
+	return (n,m,measure(q),measure(r));
+}
+def carried(const x:𝔹){
+	n:=2; c:=0;
+	do{
+		c+=1;
+		n+=1;
+		q:=vector(n,dup(x));
+		g:=λ(){ return dup(q); };
+		t:=g(); forget(t);
+		forget(q);
+	}while c<2;
+	forget(c);
+	return (n,measure(g()));
+}
+def main(){
+	x:=1:𝔹;
+	r:=(decayed(x),decayedAfter(x),carried(x));
+	forget(x=1:𝔹);
+	assert(r==((4,(1,1,1)),(4,4,(1,1,1),(1,1,1)),(4,(1,1,1,1))));
+	return r;
+}

@@ -382,9 +382,9 @@ final class Value {
 		return v;
 	}
 
-	static Value newFunction(ScopeWriter sc, FunctionInfo fi, Value[] constCaptures, Value[] movedCaptures) {
+	static Value newFunction(ScopeWriter sc, FunctionInfo fi, Value[] constCaptures, Value[] movedCaptures, CReg[] constQTypes, CReg[] movedQTypes) { // (`constQTypes`, `movedQTypes`: the quantum types of the captures, as their values were taken, see `getFunc`)
 		auto cCapR = appender!(CReg[]);
-		void prepareCaptures(CapInfo[] info, Value[] captures, ref Appender!(CReg[]) qCapT, ref Appender!(QReg[]) qCapR) {
+		void prepareCaptures(CapInfo[] info, Value[] captures, CReg[] qtypes, ref Appender!(CReg[]) qCapT, ref Appender!(QReg[]) qCapR) {
 			foreach(i, cap; info) {
 				auto val = captures[i];
 				if(cap.hasClassical) {
@@ -395,7 +395,7 @@ final class Value {
 				if(val.hasQuantum) {
 					assert(cap.hasQuantum, "Capture has no quantum component but argument does");
 					assert(val.qreg);
-					qCapT.put(sc.getQType(typeForDecl(cap.innerDecl), val));
+					qCapT.put(qtypes[i] ? qtypes[i] : sc.getQType(typeForDecl(cap.innerDecl), val));
 					qCapR.put(val.qreg);
 				} else if(cap.hasQuantum) {
 					qCapT.put(sc.ctx.qtUnit);
@@ -405,10 +405,10 @@ final class Value {
 		}
 		auto qCapConstT = appender!(CReg[]);
 		auto qCapConstR = appender!(QReg[]);
-		prepareCaptures(fi.constCaptures, constCaptures, qCapConstT, qCapConstR);
+		prepareCaptures(fi.constCaptures, constCaptures, constQTypes, qCapConstT, qCapConstR);
 		auto qCapMovedT = appender!(CReg[]);
 		auto qCapMovedR = appender!(QReg[]);
-		prepareCaptures(fi.movedCaptures, movedCaptures, qCapMovedT, qCapMovedR);
+		prepareCaptures(fi.movedCaptures, movedCaptures, movedQTypes, qCapMovedT, qCapMovedR);
 
 		auto v = new Value();
 		v._creg = sc.ccg.funcPack(fi.indirectName, cCapR[]);
@@ -3266,9 +3266,24 @@ class ScopeWriter {
 
 	Value getFunc(ast_decl.FunctionDef fd, bool isDup, ast_exp.Identifier[] recaptures) {
 		auto fi = ctx.getFunctionInfo(fd);
-		Value[] makeCaptures(CapInfo[] info) {
+		Value[] makeCaptures(CapInfo[] info, out CReg[] qtypes) {
 			auto caps = new Value[info.length];
-			foreach(i, cap; info) {
+			qtypes = new CReg[info.length];
+			auto made = new bool[info.length];
+			bool reads(size_t j, size_t i) { // (whether the type of capture `j` reads capture `i`)
+				foreach(id; ast_ty.freeIdentifiers(typeForDecl(info[j].innerDecl))) if(id.meaning && (id.meaning is info[i].outerDecl || id.meaning is info[i].innerDecl)) return true;
+				return false;
+			}
+			bool readsCapture(size_t j) {
+				foreach(i; 0 .. info.length) if(i != j && reads(j, i)) return true;
+				return false;
+			}
+			bool readLater(size_t i) { // (by the type of a capture that is not made yet, e.g., `n` for `x:𝔹^n` where the closure consumes both: that one comes first)
+				foreach(j; 0 .. info.length) if(j != i && !made[j] && reads(j, i)) return true;
+				return false;
+			}
+			void make(size_t i) {
+				auto cap = info[i];
 				bool keep = isDup || cap.innerDecl is cap.outerDecl;
 				bool strict = true;
 				ast_decl.Declaration outer = cap.outerDecl;
@@ -3278,12 +3293,20 @@ class ScopeWriter {
 				Value v = getVar(cap.outerDecl, keep, strict);
 				v = genSubtype(v, typeForDecl(cap.innerDecl), typeForDecl(cap.innerDecl));
 				caps[i] = v;
+				if(v.hasQuantum && readsCapture(i)) qtypes[i] = getQType(typeForDecl(cap.innerDecl), v); // (while the captures that it reads are available)
+				made[i] = true;
 			}
+			for(bool progress = true; progress; ) {
+				progress = false;
+				foreach(i; 0 .. info.length) if(!made[i] && !readLater(i)) { make(i); progress = true; }
+			}
+			foreach(i; 0 .. info.length) if(!made[i]) make(i);
 			return caps;
 		}
-		auto constCaptures = makeCaptures(fi.constCaptures);
-		auto movedCaptures = makeCaptures(fi.movedCaptures);
-		return Value.newFunction(this, fi, constCaptures, movedCaptures);
+		CReg[] constQTypes, movedQTypes;
+		auto constCaptures = makeCaptures(fi.constCaptures, constQTypes);
+		auto movedCaptures = makeCaptures(fi.movedCaptures, movedQTypes);
+		return Value.newFunction(this, fi, constCaptures, movedCaptures, constQTypes, movedQTypes);
 	}
 
 	void checkEmpty(bool isAbort) {

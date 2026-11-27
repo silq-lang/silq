@@ -1,0 +1,33 @@
+// args: --run
+
+def lengthAfterConsumption(){
+	n:=2;
+	x:=H(0:𝔹);
+	q:=vector(n,dup(x));
+	x:=H(x);
+	r:=q.length;
+	return (n,measure(x),r);
+}
+def lengthInLoop(){
+	n:=2;
+	x:=H(0:𝔹);
+	q:=vector(n,dup(x));
+	s:=0;
+	for i in 0..3 {
+		s+=q.length;
+		x:=H(x);
+	}
+	return (s,measure(x));
+}
+def lengthInClosure(){
+	n:=3;
+	q:=vector(n,0:𝔹);
+	f:=λ(){ return q.length; };
+	m:=measure(q);
+	return (m[0],f());
+}
+def main(){
+	r:=(lengthAfterConsumption(),lengthInLoop(),lengthInClosure());
+	assert(r==((2,0,2),(6,0),(0,3)));
+	return r;
+}

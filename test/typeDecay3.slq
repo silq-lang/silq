@@ -4,9 +4,3 @@ def constLocal(){
 	n=3; /// error
 	return dup(x);
 }
-def captured(){
-	n:=2;
-	x:=vector(n,0:𝔹);
-	f:=λ(){ n=3; return n; }; /// error
-	return (x,f);
-}

@@ -1,0 +1,9 @@
+// args: --run
+
+def main(){
+	n:=2;
+	x:=vector(n,0:𝔹);
+	f:=λ(){ n=3; return n; };
+	__show(typeof(f));
+	return (x,f);
+}

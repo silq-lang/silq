@@ -1,3 +1,5 @@
+// args: --run
+
 def constForget():!𝔹[]{
 	n:=1;
 	do{
@@ -12,8 +14,13 @@ def constIndexAssign():!𝔹[]{
 	k:=0;
 	do{
 		v:=vector(t[0],0:𝔹);
-		t[0]=5; /// error
+		t[0]=5;
 		k+=1;
 	}while k<3;
 	return measure(v);
+}
+def main(){
+	r:=constIndexAssign();
+	assert(r==[0,0,0,0,0]);
+	return r;
 }

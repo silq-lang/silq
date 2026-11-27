@@ -1,0 +1,71 @@
+// args: --run
+
+def captured(){
+	n:=2;
+	x:=vector(n,0:𝔹);
+	f:=λ(){ n=3; return n; };
+	return (measure(x):!𝔹[],f());
+}
+def capturedBoth(){
+	n:=2;
+	x:=vector(n,0:𝔹);
+	f:=λ(){ n=3; return (n,x); };
+	return f;
+}
+def capturedBothForget(){
+	n:=2;
+	x:=vector(n,1:!𝔹);
+	f:=λ(){ n+=1; forget(x); return n; };
+	return f;
+}
+def capturedFirst(){
+	n:=2;
+	x:=vector(n,1:𝔹);
+	f:=λ(){ y:=x; n=3; return (n,y); };
+	return f;
+}
+def capturedLocal(){
+	n:=2;
+	f:=λ(){ x:=vector(n,0:𝔹); n=3; return (n,x); };
+	return f;
+}
+def nestedFunction(){
+	n:=2;
+	x:=vector(n,1:!𝔹);
+	def g(){ n=4; return n; }
+	return (x:!𝔹[],g());
+}
+def inBranch(c:!𝔹){
+	n:=2;
+	x:=vector(n,0:!𝔹);
+	if c {
+		f:=λ(){ n=5; return n; };
+		return (x:!𝔹[],f());
+	}
+	return (x:!𝔹[],n);
+}
+def readInStatement(){
+	n:=2;
+	x:=vector(n,1:!𝔹);
+	(y,f):=(dup(x),λ(){ n=3; return n; });
+	return (f(),y:!𝔹[],x:!𝔹[]);
+}
+def inLoop(){
+	n:=2;
+	x:=vector(n,1:𝔹);
+	s:=0;
+	for i in 0..3 {
+		f:=λ(){ n+=1; return n; };
+		n:=f();
+		s+=x.length+n;
+	}
+	return (s,n,measure(x):!𝔹[]);
+}
+def main(){
+	(m,y):=capturedBoth()();
+	(k,z):=capturedFirst()();
+	(l,w):=capturedLocal()();
+	r:=(captured(),(m,measure(y):!𝔹[]),capturedBothForget()(),(k,measure(z):!𝔹[]),(l,measure(w):!𝔹[]),nestedFunction(),inBranch(true),inBranch(false),readInStatement(),inLoop());
+	assert(r==(([0,0],3),(3,[0,0]),3,(3,[1,1]),(3,[0,0]),([1,1],4),([0,0],5),([0,0],2),(3,[1,1],[1,1]),(18,5,[1,1])));
+	return r;
+}
