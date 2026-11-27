@@ -1,0 +1,31 @@
+def consumedAfter(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	t0:=measure(v0); /// note
+	if l { if k { return (a,false,false); } assert(false); }
+	a:=X(a); /// note
+	t1:=measure(v0); /// error
+	a:=X(a);
+	return (a,t0,t1);
+}
+def consumedAfterTyped(a:𝔹,k:!𝔹,l:!𝔹):𝔹×!𝔹×!𝔹{
+	v0:=dup(a);
+	t0:=measure(v0); /// note
+	if l { if k { return (a,false,false); } assert(0); }
+	a:=X(a); /// note
+	t1:=measure(v0); /// error
+	a:=X(a);
+	return (a,t0,t1);
+}
+def inLoop(x:𝔹,k:!ℕ){
+	c:=0;
+	repeat 2 {
+		t:=dup(x);
+		m:=measure(t); /// note
+		if c>0 { if k==0 { return x; } assert(false); }
+		x:=X(x); /// note
+		n:=measure(t); /// error
+		x:=X(x);
+		c+=1;
+	}
+	return x;
+}

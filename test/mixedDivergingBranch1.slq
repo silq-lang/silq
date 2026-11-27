@@ -1,0 +1,54 @@
+// args: --run
+
+def returnOrAbort(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	t0:=measure(v0);
+	if l { if k { return (a,false,false); } assert(false); }
+	t1:=measure(v0);
+	return (a,t0,t1);
+}
+def returnOrAbortTyped(a:𝔹,k:!𝔹,l:!𝔹):𝔹×!𝔹×!𝔹{
+	v0:=dup(a);
+	t0:=measure(v0);
+	if !l { t2:=measure(v0); } else { if k { return (a,false,false); } x:=(a,true); assert(false); }
+	t1:=measure(v0);
+	return (a,t0,t1);
+}
+def forgetAfter(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	if l { if k { return a; } assert(false); }
+	forget(v0);
+	return a;
+}
+def forgetAfterZero(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	if l { if k { return a; } assert(0); }
+	forget(v0);
+	return a;
+}
+def inLoop(x:𝔹,k:!ℕ){
+	c:=0;
+	while c<3 {
+		t:=dup(x);
+		if c>1 { if k==0 { return x; } assert(false); }
+		forget(t);
+		c+=1;
+	}
+	return x;
+}
+def inLoopMeasured(a:𝔹,k:!𝔹){
+	t:=measure(dup(a));
+	c:=0;
+	while c<3 {
+		v:=dup(a);
+		if c>1 { if k { return (a,t); } assert(false); }
+		forget(v);
+		c+=1;
+	}
+	return (a,t);
+}
+def main(){
+	r:=(measure(returnOrAbort(1:𝔹,false,false)),measure(returnOrAbort(0:𝔹,true,true)),measure(returnOrAbortTyped(1:𝔹,true,false)),measure(returnOrAbortTyped(0:𝔹,true,true)),measure(forgetAfter(1:𝔹,true,false)),measure(forgetAfterZero(0:𝔹,true,true)),measure(inLoop(1:𝔹,0)),measure(inLoopMeasured(1:𝔹,true)));
+	assert(r==((1,1,1),(0,0,0),(1,1,1),(0,0,0),1,0,1,(1,1)));
+	return r;
+}
