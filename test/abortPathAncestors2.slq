@@ -1,0 +1,25 @@
+def h(x:𝔹){ return measure(x); }
+
+def consumedOnContinuingPath(a:𝔹,l:!𝔹,m:!𝔹){
+	v0:=dup(a);
+	v1:=!v0;
+	t1:=h(v0);
+	t2:=measure(v1);
+	if l {
+		if m {
+			if l { t3:=measure(v0); assert(false); }
+			a:=X(a);
+		}
+	}
+	t5:=measure(v1); /// error
+	return (a,t1,t2,t5);
+}
+
+def forgottenAfterConsumption(a:𝔹,l:!𝔹,m:!𝔹){
+	v0:=dup(a);
+	v1:=dup(v0);
+	t1:=measure(v0);
+	if l { if m { a:=X(a); } } else { x4:=(a,true); assert(false); }
+	forget(v1); /// error
+	return (a,t1);
+}

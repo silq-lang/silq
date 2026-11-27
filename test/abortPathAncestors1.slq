@@ -1,0 +1,35 @@
+// args: --run
+
+def h(x:𝔹){ return measure(x); }
+
+def consumedInNestedAbort(a:𝔹,l:!𝔹,m:!𝔹){
+	v0:=dup(a);
+	v1:=!v0;
+	t1:=h(v0);
+	t2:=measure(v1);
+	if l {
+		if m {
+			if l { t3:=measure(v0); assert(false); }
+			a:=X(a);
+			x4:=(a,true);
+			assert(false);
+		}
+	}
+	t5:=measure(v1);
+	return (a,t1,t2,t5);
+}
+
+def elseAborts(a:𝔹,l:!𝔹,m:!𝔹){
+	v0:=dup(a);
+	v1:=dup(v0);
+	t1:=measure(v0);
+	if l { if m { a:=X(a); assert(false); } } else { x4:=(a,true); assert(false); }
+	forget(v1);
+	return (a,t1);
+}
+
+def main(){
+	r:=(measure(consumedInNestedAbort(1:𝔹,true,false)),measure(consumedInNestedAbort(0:𝔹,false,true)),measure(elseAborts(1:𝔹,true,false)),measure(elseAborts(0:𝔹,true,false)));
+	assert(r==((1,1,0,0),(0,0,1,1),(1,1),(0,0)));
+	return r;
+}
