@@ -1,0 +1,20 @@
+def g(const x:𝔹){ return measure(dup(x)); }
+def measuredBefore(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	v1:=dup(v0); /// error
+	t1:=measure(v1);
+	if l {
+		x:=(a,true); /// note
+		y:=measure(x);
+		t:=g(v1); /// note
+		assert(false);
+	}
+	if k {
+		z:=(a,true);
+		u:=measure(v0);
+		assert(false);
+	}
+	t2:=measure(v0); /// note
+	forget(v1); /// error
+	return (a,t1,t2);
+}

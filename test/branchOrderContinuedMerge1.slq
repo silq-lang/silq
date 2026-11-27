@@ -1,0 +1,42 @@
+// args: --run
+
+def nestedMerge(a:𝔹,k:!𝔹,l:!𝔹,m:!𝔹){
+	v0:=dup(a);
+	t1:=measure(v0);
+	if k { x3:=(a,true); assert(false); }
+	if l { if m { x7:=(a,true); assert(false); } w8:=dup(v0); assert(false); }
+	t12:=measure(v0);
+	return (a,t1,t12);
+}
+def nestedMergeOther(a:𝔹,k:!𝔹,l:!𝔹,m:!𝔹,n:!𝔹){
+	v0:=dup(a);
+	if k { x3:=(a,true); assert(false); }
+	t5:=measure(v0);
+	if l {
+	} else {
+		if m { x8:=(a,true); assert(false); }
+		if n { t10:=measure(v0); assert(false); }
+		assert(false);
+	}
+	t15:=measure(v0);
+	return (a,t5,t15);
+}
+def laterMerge(a:𝔹,k:!𝔹,l:!𝔹,m:!𝔹,n:!𝔹){
+	v0:=dup(a);
+	v1:=!v0;
+	t1:=measure(v0);
+	if m { x3:=(a,true); assert(false); }
+	if k { t7:=measure(v0); x8:=(a,true); assert(false); }
+	if l {
+		if n { t11:=measure(v1); x12:=(a,true); assert(false); }
+	} else {
+		assert(false);
+	}
+	t18:=measure(v0);
+	return (a,t1,t18);
+}
+def main(){
+	r:=(measure(nestedMerge(1:𝔹,false,false,false)),measure(nestedMergeOther(1:𝔹,false,true,false,false)),measure(laterMerge(0:𝔹,false,true,false,false)));
+	assert(r==((1,1,1),(1,1,1),(0,0,0)));
+	return r;
+}

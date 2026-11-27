@@ -1,0 +1,121 @@
+// args: --run
+
+def g(const x:𝔹){ return measure(dup(x)); }
+def nestedBranches(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=!a;
+	v1:=!v0;
+	v2:=X(dup(v1));
+	if k {
+		if l {
+			u4:=!v1;
+			forget(u4);
+		} else {
+			return a;
+		}
+		u7:=!v2;
+		forget(u7);
+	} else {
+		a:=X(a);
+		if l {
+			t9:=measure(v1);
+			return a;
+		}
+		t13:=measure(v1);
+		return a;
+	}
+	return a;
+}
+def laterUse(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=!a;
+	v1:=!v0;
+	v2:=X(dup(v1));
+	if k {
+		if l {
+			u4:=!v1;
+			forget(u4);
+		} else {
+			return (a,false);
+		}
+		u7:=!v2;
+		forget(u7);
+	} else {
+		a:=X(a);
+		b:=X(a);
+		if l {
+			t9:=measure(v1);
+			return (b,true);
+		}
+		c:=(b,v2);
+		t13:=measure(v1);
+		m:=measure(c);
+		return (H(0:𝔹),m[0]);
+	}
+	return (a,false);
+}
+def measuredResult(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=!a;
+	v1:=!v0;
+	v2:=X(dup(v1));
+	if k {
+		if l {
+			u4:=!v1;
+			m:=measure(u4);
+		} else {
+			return (a,false);
+		}
+		u7:=!v2;
+		forget(u7);
+	} else {
+		a:=X(a);
+		if l {
+			t9:=measure(v1);
+			return (a,true);
+		}
+		t13:=measure(v1);
+		return (a,false);
+	}
+	return (a,m);
+}
+def measuredLater(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	v1:=dup(v0);
+	t1:=measure(v1);
+	if l {
+		x6:=(a,true);
+		t7:=g(v1);
+		y6:=measure(x6);
+		assert(false);
+	}
+	if k {
+		x9:=(a,true);
+		t10:=measure(v0);
+		assert(false);
+	}
+	t14:=measure(v0);
+	forget(v1);
+	return (a,t1,t14);
+}
+def chain(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	v1:=dup(v0);
+	t1:=measure(v1);
+	if l {
+		x6:=(a,true);
+		x7:=(x6,true);
+		t7:=g(v1);
+		assert(false);
+	}
+	if k {
+		x9:=(a,true);
+		t10:=measure(v0);
+		assert(false);
+	}
+	t14:=measure(v0);
+	forget(v1);
+	return (a,t1,t14);
+}
+def main(){
+	r:=(measure(nestedBranches(1:𝔹,true,true)),measure(nestedBranches(1:𝔹,false,true)),measure(nestedBranches(0:𝔹,false,false)),measure(laterUse(1:𝔹,true,true)),measure(laterUse(0:𝔹,false,true)),measure(measuredResult(0:𝔹,true,true)),measure(measuredResult(1:𝔹,false,false)),measure(measuredLater(1:𝔹,false,false)),measure(chain(0:𝔹,false,false)));
+	assert(r==(1,0,1,(1,0),(0,1),(0,1),(0,0),(1,1,1),(0,0,0)));
+	return r;
+}

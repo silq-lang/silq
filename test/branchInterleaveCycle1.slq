@@ -11,12 +11,12 @@ def explicitForgets(const c:𝔹,x:𝔹,y:𝔹)mfree{
 		t:=dup(b);
 		x:=H(x);
 		forget(t);
-		forget(b); /// error
+		forget(b);
 	}else{
 		t:=dup(a);
 		y:=H(y);
 		forget(t);
-		forget(a); /// error
+		forget(a);
 	}
 	return (x,y);
 }
