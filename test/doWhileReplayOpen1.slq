@@ -1,0 +1,23 @@
+// args: --run
+
+def g(n:!ℕ,const q:𝔹)qfree:⋃[m:!ℕ]. 𝔹^m×!ℕ ⇒ (vector(n,dup(q)),n);
+def opened(){
+	q:=X(0:𝔹);
+	w:=0;
+	do{ w+=1; x:=g(w,q)[0]; }while w<2;
+	forget(x=vector(2,dup(q)));
+	return (measure(q),w);
+}
+def h[n:!ℕ](const v:!ℕ^n,const q:𝔹)qfree:𝔹^n ⇒ vector(n,dup(q));
+def openedArray(){
+	q:=X(0:𝔹);
+	w:=0;
+	do{ w+=1; a:=vector(w,1):!ℕ[]; x:=h(a,q); }while w<2;
+	forget(x=vector(2,dup(q)));
+	return (measure(q),w);
+}
+def main(){
+	r:=(opened(),openedArray());
+	assert(r==((1,2),(1,2)));
+	return r;
+}

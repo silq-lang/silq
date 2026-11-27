@@ -3720,6 +3720,10 @@ struct Interpreter(QState){
 			}else if(auto oe=cast(OpenExp)e){
 				auto v=doIt(oe.e);
 				if(!v.isValid) return v;
+				if(oe.scalar){ // (its witness is the value)
+					if(oe.declares) qstate.assignTo(oe.witnesses[0].getName,v.dup(qstate));
+					return v;
+				}
 				if(cast(ArrayTy)oe.opened[0]){ // (its length is the witness)
 					enforce(v.tag==QState.Value.Tag.array_,"bad value of an array type");
 					if(oe.declares) qstate.assignTo(oe.witnesses[0].getName,qstate.makeInteger(ℤ(v.array_.length)));

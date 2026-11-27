@@ -1,0 +1,63 @@
+// args: --run
+
+def measured():⋃[n:!ℕ]. !ℕ^(n+1){
+	x:=vector(1+measure(H(0)),2);
+	return x;
+}
+def movedArgument():⋃[n:!ℕ]. !ℕ^(n+1){
+	n:=measure(H(0));
+	x:=vector(1+move(n),2);
+	return x;
+}
+def deterministic(){
+	x:=vector(1+measure(X(0:𝔹)),2);
+	y:=vector(measure(X(0:𝔹))+measure(0:𝔹),3);
+	return (x,y);
+}
+def inLoops(){
+	s:=0;
+	repeat 3 { x:=vector(1+measure(X(0:𝔹)),2); s+=x.length; }
+	c:=0;
+	do{ c+=1; y:=vector(c+measure(0:𝔹),1); s+=y.length; }while c<2;
+	forget(c);
+	return (s,y);
+}
+def inClosure(){
+	f:=λ(){ return vector(1+measure(X(0:𝔹)),2); };
+	x:=f();
+	return (x,x.length);
+}
+def nested(){
+	x:=vector(vector(1+measure(X(0:𝔹)),2).length,3);
+	q:=vector(1+measure(X(0:𝔹)),0:𝔹);
+	return (x,measure(q));
+}
+def nonQfreeCall()⇒measure(X(0:𝔹));
+def twoParts(){
+	x:=vector(nonQfreeCall()+1,2);
+	y:=vector(measure(X(0:𝔹))+measure(X(0:𝔹)),5);
+	return (x,y);
+}
+def conditional(c:!𝔹){
+	x:=vector(if c then 1 else measure(X(0:𝔹)),2);
+	z:=vector(1+measure(X(0:𝔹)),2):!ℕ[];
+	return (x,z);
+}
+def replayed(){
+	s:=0; c:=0;
+	do{ c+=1; x:=vector(measure(X(0:𝔹))+2,0:𝔹); s+=measure(x).length; }while c<2;
+	d:=0;
+	do{ d+=1; y:=vector(1+measure(X(0:𝔹)),0:𝔹); }while d<2;
+	return (s,measure(y),c,d);
+}
+def main(){
+	a:=measured();
+	b:=movedArgument();
+	r:=(a.length==1||a.length==2,b.length==1||b.length==2,deterministic());
+	assert(r==(true,true,([2,2],[3])));
+	s:=(inLoops(),inClosure(),nested(),twoParts(),conditional(true),conditional(false));
+	assert(s==((9,[1,1]),([2,2],2),([3,3],[0,0]),([2,2],[5,5]),([2],[2,2]),([2],[2,2])));
+	t:=replayed();
+	assert(t==(6,[0,0],2,2));
+	return (r,s,t);
+}

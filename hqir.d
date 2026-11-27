@@ -4673,6 +4673,10 @@ class ScopeWriter {
 	}
 
 	Value openValue(ast_exp.OpenExp e, Value v) { // (the value of the member, whose witnesses `e` defines, see `ast.semantic_.openOperand`)
+		if(e.scalar) { // (its witness is the value, see `ast.semantic_.witnessParts`)
+			if(e.declares && !qcg.inType) defineVar(e.witnesses[0], valNewC(v.creg));
+			return v;
+		}
 		if(auto arrTy = cast(ast_ty.ArrayTy) e.opened[0]) {
 			CReg len;
 			auto r = valArrayToVector(arrTy.next, len, v);

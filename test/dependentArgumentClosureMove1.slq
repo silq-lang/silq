@@ -1,2 +1,9 @@
-def nested(k:!ℕ)⇒vector(let { y:=(λ(c:!𝔹){ if c { return dup(k); } return move(k); })(false); } in y,false); /// error
-def looped(k:!ℕ)⇒vector(let { y:=(λ(){ return move(k); })(); for i in 0..1 { y+=1; } } in y,false); /// error
+// args: --run
+
+def nested(k:!ℕ)⇒vector(let { y:=(λ(c:!𝔹){ if c { return dup(k); } return move(k); })(false); } in y,false);
+def looped(k:!ℕ)⇒vector(let { y:=(λ(){ return move(k); })(); for i in 0..1 { y+=1; } } in y,false);
+def main(){
+	r:=(nested(2).length,looped(2).length);
+	assert(r==(2,3));
+	return r;
+}

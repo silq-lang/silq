@@ -1,19 +1,14 @@
 
-def bad[f: 𝔹!->!ℕ,g: 1->𝔹](): (!𝔹^f(g()))[]{ /// error
-    return ();
-}
-
 def zerovec(n:!ℕ){
 	return vector(n,0:𝔹);
 }
 
-
 def main(){
 	x:=0:𝔹;
-	v:=vector(measure(x),0:𝔹); /// error
+	v:=vector(measure(x),0:𝔹);
 	y:=0:𝔹;
-	w:=zerovec(measure(y)); /// error
+	w:=zerovec(measure(y));
 	def weird(x:𝔹)qfree:!ℕ;
-	t:=vector(weird(0:𝔹),0:𝔹); /// TODO error // disallow?
+	t:=vector(weird(0:𝔹),0:𝔹):𝔹^weird(0); /// TODO error // disallow?
 	return w;
 }

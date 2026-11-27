@@ -1,0 +1,8 @@
+
+def bad1[f: 𝔹!->!ℕ,g: 1->𝔹](): (!𝔹^f(g()))[]{ /// error
+    return ();
+}
+
+def bad2[f: 𝔹!->!ℕ,g: 𝟙->𝔹](): (!𝔹^f(g()))[]{ /// error
+    return ();
+}
