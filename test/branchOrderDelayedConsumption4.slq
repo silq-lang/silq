@@ -1,0 +1,62 @@
+// args: --run
+
+def g(const x:𝔹){ return measure(dup(x)); }
+def dupOperand(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	v1:=dup(v0);
+	t1:=measure(v1);
+	if l {
+		x:=(a,dup(v1));
+		t:=g(v1);
+		assert(false);
+	}
+	if k {
+		y:=(a,true);
+		u:=measure(v0);
+		assert(false);
+	}
+	t2:=measure(v0);
+	forget(v1);
+	return (a,t1,t2);
+}
+def implicitDupOperand(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	v1:=dup(v0);
+	t1:=measure(v1);
+	if l {
+		x:=(a,v1);
+		t:=g(v1);
+		assert(false);
+	}
+	if k {
+		y:=(a,true);
+		u:=measure(v0);
+		assert(false);
+	}
+	t2:=measure(v0);
+	forget(v1);
+	return (a,t1,t2);
+}
+def negatedOperand(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	v1:=dup(v0);
+	t1:=measure(v1);
+	if l {
+		x:=(a,!v1);
+		t:=g(v1);
+		assert(false);
+	}
+	if k {
+		y:=(a,true);
+		u:=measure(v0);
+		assert(false);
+	}
+	t2:=measure(v0);
+	forget(v1);
+	return (a,t1,t2);
+}
+def main(){
+	r:=(measure(dupOperand(1:𝔹,false,false)),measure(implicitDupOperand(0:𝔹,false,false)),measure(negatedOperand(1:𝔹,false,false)));
+	assert(r==((1,1,1),(0,0,0),(1,1,1)));
+	return r;
+}
