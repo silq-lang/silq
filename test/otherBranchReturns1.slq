@@ -1,0 +1,28 @@
+// args: --run
+
+def partialReturnInOther(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	t1:=measure(v0);
+	if l { if k { return (a,t1,t1); } } else { x:=X(a); return (x,t1,t1); }
+	t3:=measure(v0);
+	return (a,t1,t3);
+}
+def forgottenAfter(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	t1:=measure(v0);
+	if l { if k { return (a,t1); } } else { x:=X(a); return (x,t1); }
+	forget(v0);
+	return (a,t1);
+}
+def swapped(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	t1:=measure(v0);
+	if l { x:=X(a); return (x,t1,t1); } else { if k { return (a,t1,t1); } }
+	t3:=measure(v0);
+	return (a,t1,t3);
+}
+def main(){
+	r:=(measure(partialReturnInOther(1:𝔹,false,true)),measure(partialReturnInOther(0:𝔹,true,true)),measure(partialReturnInOther(1:𝔹,false,false)),measure(forgottenAfter(1:𝔹,false,true)),measure(forgottenAfter(0:𝔹,false,false)),measure(swapped(0:𝔹,false,false)),measure(swapped(1:𝔹,true,false)),measure(swapped(1:𝔹,false,true)));
+	assert(r==((1,1,1),(0,0,0),(0,1,1),(1,1),(1,0),(0,0,0),(1,1,1),(0,1,1)));
+	return r;
+}

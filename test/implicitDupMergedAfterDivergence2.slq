@@ -1,3 +1,5 @@
+// args: --run
+
 def noConsumption(a:𝔹,k:!𝔹,l:!𝔹){
 	ms:=0:!ℕ;
 	v0:=dup(a);
@@ -8,7 +10,9 @@ def noConsumption(a:𝔹,k:!𝔹,l:!𝔹){
 	} else {
 		return (a,ms);
 	}
-	t1:=measure(v0); /// TODO
+	t1:=measure(v0);
 	ms+=t1;
 	return (a,ms);
 }
+
+def main()⇒[noConsumption(1,1,1),noConsumption(1,0,1),noConsumption(1,1,0),noConsumption(1,0,0)];
