@@ -2896,6 +2896,19 @@ QState.Value buildContextFor(QState)(ref QState qstate,FunctionDef fd,Scope sc,b
 	return QState.makeRecord(record);
 }
 
+Expression classicalArrayExp(QState.Value v){ // (a classical array or tuple of integers as an expression, e.g., `[2,3]` for `t` in `𝔹^t[0]`, see `closeType`)
+	if(v.tag!=QState.Value.Tag.array_||!v.type||!v.isClassical()) return null;
+	Expression[] es;
+	foreach(ref e;v.array_){
+		Expression x=e.tag==QState.Value.Tag.array_?classicalArrayExp(e):e.isℤ()?LiteralExp.makeInteger(e.asℤ()):null;
+		if(!x) return null;
+		es~=x;
+	}
+	Expression r=cast(TupleTy)v.type?new TupleExp(es):new VectorExp(es);
+	r.type=v.type;
+	r.setSemCompleted();
+	return r;
+}
 Expression closeType(Expression te,scope QState.Value delegate(Identifier) lookup){
 	import ast.type:freeIdentifiers;
 	if(!te||!te.isSemCompleted()) return te;
@@ -2926,6 +2939,9 @@ Expression closeType(Expression te,scope QState.Value delegate(Identifier) looku
 			le.loc=id.loc;
 			le.type=id.type?id.type:v.type;
 			le.setSemCompleted();
+			subst[id.id]=le;
+		}else if(auto le=classicalArrayExp(v)){
+			le.loc=id.loc;
 			subst[id.id]=le;
 		}
 	}
@@ -3179,7 +3195,7 @@ struct Interpreter(QState){
 	static Expression witnessExp(QState.Value w){ // (the witness of a pair as an expression, see `convertUnion`)
 		if(w.tag==QState.Value.Tag.tval) return w.tval;
 		if(w.isClassical()&&w.isℤ()) return LiteralExp.makeInteger(w.asℤ());
-		return null;
+		return classicalArrayExp(w);
 	}
 	static struct Binding{ Id name; Expression witness; } // (a fresh name for the bound variable of an unpacked union, see `convertUnion`)
 	static Expression bind(Expression type,Binding[] bindings){
@@ -3254,6 +3270,7 @@ struct Interpreter(QState){
 			member=u.cod.substitute(u.name,w);
 		}
 		auto mvalue=convert?convertTo(value,member,consumeArg,checkPositiveWidth,from,bindings):unionView(value,evalType(closedType(bind(member,bindings))),false,member,from,bindings);
+		if(isOpen(ut)) if(auto cut=cast(UnionTy)evalType(closedType(bind(ut,bindings)))) ut=cut; // (the type of the pair mentions values, not the variables of this scope, e.g., `⋃[t:!ℕ^2]. 𝔹^4 × 𝔹^t[0]` for `⋃[t:!ℕ^2]. 𝔹^t'[0] × 𝔹^t[0]` in the result of a function, which its caller compares with its own type)
 		return QState.makeTuple(ut,[witness,mvalue]);
 	}
 	QState.Value unionView(QState.Value v,Expression type,bool deep=false,Expression stype=null,Expression from=null,Binding[] bindings=null,Expression stated=null){ // (the representation of `v` at the static type `type`: pairs exactly at its components of union types, see `convertUnion`; `deep`: also where the type of `v` is `type`, e.g., after the update of a component; `stype` and `from`: `type` and the type of `v` before closing, for the witnesses)

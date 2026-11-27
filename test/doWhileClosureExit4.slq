@@ -1,0 +1,76 @@
+// args: --run
+
+def resetUpdate(const a:𝔹){
+	n:=2; m:=1; c:=0;
+	do{
+		c+=1;
+		q:=vector(n+m,dup(a));
+		g:=λ(){ n+=1; return (n,q); }; (n,q):=dup(g)();
+	}while c<3 { m+=1; }
+	forget(c);
+	(k,r):=g();
+	return (n,m,k,measure(r):!𝔹[],measure(q):!𝔹[]);
+}
+def resetUpdateCopy(const a:𝔹){
+	n:=2; m:=1; c:=0;
+	do{
+		c+=1;
+		q:=vector(n+m,dup(a));
+		g:=λ(){ n+=1; return (n,dup(q)); }; (n,p):=dup(g)(); forget(p);
+	}while c<3 { m+=1; }
+	forget(c);
+	(k,r):=g();
+	return (n,m,k,measure(r):!𝔹[],measure(q):!𝔹[]);
+}
+def carriedArray(const a:𝔹){
+	t:=[2,3]; c:=0;
+	do{
+		c+=1;
+		q:=vector(t[0],dup(a));
+		g:=λ(){ t[0]+=1; return (t,q); }; (t,q):=dup(g)();
+		w:=vector(t[0],dup(a)); h:=λ(){ return dup(w); }; forget(w);
+	}while c<2;
+	forget(c);
+	(s,r):=g();
+	v:=h();
+	return (t,s,measure(r):!𝔹[],measure(v):!𝔹[],measure(q):!𝔹[]);
+}
+def inOuterLoop(const a:𝔹){
+	n:=2; m:=1; s:=0;
+	for j in 0..2 {
+		c:=0;
+		do{
+			c+=1;
+			q:=vector(n+m,dup(a));
+			g:=λ(){ n+=1; return (n,q); }; (n,q):=dup(g)();
+		}while c<3 { m+=1; }
+		forget(c);
+		(k,r):=g();
+		s+=k+(measure(r):!𝔹[]).length+(measure(q):!𝔹[]).length;
+	}
+	return (n,m,s);
+}
+def resetAssign(const a:𝔹){
+	n:=2; m:=1; c:=0;
+	do{
+		c+=1;
+		q:=vector(n+m,dup(a));
+		m+=1;
+		n=3;
+		g:=λ(){ n+=1; return (n,q); }; (n,q):=dup(g)();
+	}while c<2 { n=n+2; }
+	forget(c);
+	(k,r):=g();
+	return (n,m,k,measure(r):!𝔹[],measure(q):!𝔹[]);
+}
+def main(){
+	a:=1:𝔹;
+	r:=(resetUpdate(a),resetUpdateCopy(a),inOuterLoop(a),resetAssign(a));
+	forget(a=1:𝔹);
+	b:=0:𝔹;
+	s:=carriedArray(b);
+	forget(b=0:𝔹);
+	assert(r==((5,3,5,[1,1,1,1,1,1,1],[1,1,1,1,1,1,1]),(5,3,5,[1,1,1,1,1,1,1],[1,1,1,1,1,1,1]),(8,5,51),(4,3,4,[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1])));
+	assert(s==([4,3],[4,3],[0,0,0],[0,0,0,0],[0,0,0]));
+	return (r,s);
+}
