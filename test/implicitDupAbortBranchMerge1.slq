@@ -47,14 +47,14 @@ def nestedAbortingBranch(a:𝔹,k:!𝔹,l:!𝔹){
 	v0:=dup(a);
 	t2:=measure(v0); /// note
 	ms+=t2;
-	if k { /// note
+	if k {
 		if l {
 			u3:=!v0; forget(u3);
 			x5:=(a,ms);
 			assert(false);
 		}
 	}
-	a:=X(a);
+	a:=X(a); /// note
 	t8:=measure(v0); /// error
 	ms+=t8;
 	return (a,ms);

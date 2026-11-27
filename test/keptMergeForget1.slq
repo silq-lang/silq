@@ -1,0 +1,49 @@
+// args: --run
+
+def nested(a:𝔹,k:!𝔹,l:!𝔹):𝔹{
+	v0:=dup(a);
+	if k { if l { x:=(a,true); assert(false); } }
+	forget(v0);
+	return a;
+}
+def nestedElse(a:𝔹,k:!𝔹,l:!𝔹):𝔹{
+	v0:=dup(a);
+	v1:=!v0;
+	if k { if l { x:=(a,true); assert(false); } else { } } else { y:=0; }
+	u:=!v1; forget(u);
+	forget(v1);
+	forget(v0);
+	return a;
+}
+def consecutive(a:𝔹,k:!𝔹,l:!𝔹,m:!𝔹):𝔹{
+	v0:=dup(a);
+	if k { if m { x:=(a,true); assert(false); } }
+	if l { x:=(a,false); assert(false); }
+	forget(v0);
+	return a;
+}
+def afterContinued(a:𝔹,l:!𝔹,m:!𝔹):𝔹{
+	v0:=dup(a);
+	if !l { x:=(a,true); assert(false); }
+	if m { if m { if m { a:=X(a); x:=(a,true); assert(false); } assert(false); } }
+	forget(v0);
+	return a;
+}
+def readMerged(a:𝔹,k:!𝔹,l:!𝔹):𝔹{
+	v0:=dup(a);
+	if k { if l { x:=(a,true); assert(false); } }
+	w:=v0&&a;
+	forget(w);
+	forget(v0);
+	return a;
+}
+def inLoop(x:𝔹,y:𝔹,k:!ℕ){
+	c:=0;
+	repeat 2 { t:=dup(x); if c>0 { if k==0 { return (x,y); } } forget(t); c+=1; }
+	return (x,y);
+}
+def main(){
+	r:=(measure(nested(1:𝔹,true,false)),measure(nestedElse(0:𝔹,true,false)),measure(consecutive(1:𝔹,true,false,false)),measure(afterContinued(1:𝔹,true,false)),measure(readMerged(1:𝔹,false,true)),measure(inLoop(1:𝔹,0:𝔹,0)),measure(inLoop(0:𝔹,1:𝔹,1)));
+	assert(r==(1,0,1,1,1,(1,0),(0,1)));
+	return r;
+}

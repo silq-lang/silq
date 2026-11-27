@@ -1,6 +1,6 @@
 def nestedReturn(x:𝔹,y:𝔹,k:!ℕ){
 	c:=0;
-	repeat 2 { t:=dup(x); if c>0 { if k==0 { return (x,y); } } forget(t); c+=1; } /// TODO
+	repeat 2 { t:=dup(x); if c>0 { if k==0 { return (x,y); } } forget(t); c+=1; }
 	return (x,y);
 }
 def otherReturns(x:𝔹,y:𝔹,k:!ℕ){

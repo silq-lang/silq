@@ -1,9 +1,11 @@
+// args: --run
+
 def returnInNestedBranch(a:𝔹,k:!𝔹,j:!𝔹){
 	ms:=0:!ℕ;
 	v:=dup(a);
 	ms+=measure(v);
 	if k { if j { a:=X(a); return (a,ms); } } else { }
-	t:=measure(v); /// error
+	t:=measure(v);
 	ms+=t;
 	return (a,ms);
 }
@@ -13,7 +15,12 @@ def returnInBothBranches(a:𝔹,k:!𝔹,j:!𝔹){
 	t1:=measure(v);
 	ms+=t1;
 	if k { if j { } else { a:=X(a); return (a,ms); } } else { if j { u:=!v; forget(u); a:=X(a); return (a,ms); } }
-	t2:=measure(v); /// error
+	t2:=measure(v);
 	ms+=t2;
 	return (a,ms);
+}
+def main(){
+	r:=(measure(returnInNestedBranch(1:𝔹,true,false)),measure(returnInNestedBranch(0:𝔹,true,true)),measure(returnInBothBranches(1:𝔹,true,true)),measure(returnInBothBranches(0:𝔹,false,true)),measure(returnInBothBranches(0:𝔹,false,false)));
+	assert(r==((1,2),(1,0),(1,0),(1,1),(0,2)));
+	return r;
 }

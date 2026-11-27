@@ -1,0 +1,39 @@
+// args: --run
+
+def g(const x:𝔹){
+	return measure(dup(x));
+}
+def measuredInNestedBranch(a:𝔹,k:!𝔹,l:!𝔹):𝔹{
+	v0:=dup(a);
+	if k { if l { x:=(a,true); y:=measure(x); assert(false); } } else { assert(false); }
+	forget(v0);
+	return a;
+}
+def measuredInOtherBranch(a:𝔹,k:!𝔹,l:!𝔹):𝔹{
+	v0:=dup(a);
+	if k { if l { x:=(a,true); y:=measure(x); assert(false); } } else { z:=measure(H(0:𝔹)); assert(false); }
+	forget(v0);
+	return a;
+}
+def measuredAfterNested(a:𝔹,k:!𝔹,l:!𝔹):𝔹{
+	v0:=dup(a);
+	if k {
+		if l { x:=(a,true); y:=measure(x); assert(false); }
+		c:=measure(0:𝔹);
+		if c { assert(false); }
+	} else { assert(false); }
+	forget(v0);
+	return a;
+}
+def readAfterNested(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	if k { if l { x:=(a,true); y:=measure(x); assert(false); } } else { assert(false); }
+	t:=g(v0);
+	forget(v0);
+	return (a,t);
+}
+def main(){
+	r:=(measure(measuredInNestedBranch(1:𝔹,true,false)),measure(measuredInOtherBranch(0:𝔹,true,false)),measure(measuredAfterNested(1:𝔹,true,false)),measure(readAfterNested(1:𝔹,true,false)));
+	assert(r==(1,0,1,(1,1)));
+	return r;
+}

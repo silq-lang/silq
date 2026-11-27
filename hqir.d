@@ -1699,6 +1699,7 @@ final class IteReturn: IteResult {
 final class ItePass: IteResult {
 	IdMapSX!(Expression, Value)* condMemo; // TODO: generalize?
 	IdMapSX!(Expression, bool) condShared;
+	size_t[] interleave; // (as for `ItePartialReturn`, with the code after the conditional as part of both branches)
 
 	this(CondAny cond) scope @safe nothrow {
 		this.cond = cond;
@@ -1793,8 +1794,8 @@ class CCGen {
 		return new CCGen(this, code, condC ~ [CondC(reg, want)]);
 	}
 
-	void writeCOp(string op, CReg[] cRet, CReg[] cArgs) {
-		return code.writeOp(condC, null, op, cRet, [], cArgs, [], []);
+	void writeCOp(string op, CReg[] cRet, CReg[] cArgs, bool isPure = false) {
+		return code.writeOp(condC, null, op, cRet, [], cArgs, [], [], isPure);
 	}
 
 	CReg emitPureOp(string op, CReg[] args, scope void delegate(CCGen, CReg) onNew = null) {
@@ -1803,7 +1804,7 @@ class CCGen {
 			if(auto p = cg.cachedPureOps.getPtr(key)) return *p;
 		}
 		auto r = new CReg();
-		writeCOp(op, [r], args);
+		writeCOp(op, [r], args, true);
 		cachedPureOps[key] = r;
 		if(onNew) onNew(this, r);
 		return r;
@@ -4754,6 +4755,10 @@ class ScopeWriter {
 		auto rFalse = ifFalse.genCompoundValue(e.othw, null, e.type);
 		auto i3 = cw.code[].length;
 		auto abortTrue = ifTrue.pendingAbort, abortFalse = ifFalse.pendingAbort; // (a `let` within a branch aborts)
+		if(!cond.isQuantum) {
+			if(abortTrue || scThen && scThen.diverges) cw.markDiverging(i1, i2);
+			if(abortFalse || scOthw && scOthw.diverges) cw.markDiverging(i2, i3);
+		}
 		ast_decl.Declaration[] eager;
 		bool merges = scThen && !abortTrue && !abortFalse; // (as for `if` statements, e.g., the versions of a `once` function that the branches call, which is spent after them)
 		if(merges) {
@@ -5835,6 +5840,13 @@ class ScopeWriter {
 				if(auto rv = cast(ItePass) ite) {
 					sc.forgetCond(iteExp, ite);
 					if(sc !is this) vars = sc.vars;
+					if(rv.interleave.length) { // (with the code after the conditional, see `interleaveBranches`)
+						ccg.code.pendingSplits ~= [rv.interleave[0], rv.interleave[1]];
+						auto r = genStmts(stmts[i + 1 .. $], result);
+						ccg.code.pendingSplits = ccg.code.pendingSplits[0 .. $ - 1];
+						interleaveBranches(ccg.code, rv.interleave[0], rv.interleave[1], rv.interleave[2], rv.interleave[3], ccg.code.code[].length, 3);
+						return r;
+					}
 					continue;
 				}
 				if(auto rv = cast(IteAbort) ite) {
@@ -5997,6 +6009,10 @@ class ScopeWriter {
 		auto i2 = cw.code[].length;
 		Result rFalse = ifFalse.genCompoundStmt(e.othw);
 		auto i3 = cw.code[].length;
+		if(!cond.isQuantum) { // (also where the analysis finds that it diverges, see `ast.lastuse.checkBranchOrder`)
+			if(rTrue.isAbort || rTrue.isReturn || e.then.blscope_.diverges) cw.markDiverging(i1, i2);
+			if(rFalse.isAbort || rFalse.isReturn || e.othw.blscope_.diverges) cw.markDiverging(i2, i3);
+		}
 		bool continues = (rTrue.isReturn || rTrue.isAbort && e.then.blscope_.returningBeforeContinuation) && rFalse.isPass || (rFalse.isReturn || rFalse.isAbort && e.othw.blscope_.returningBeforeContinuation) && rTrue.isPass; // (with the code after the conditional, see `ItePartialReturn`)
 		bool continuesPartially = (rTrue.isConditionalReturn || rFalse.isConditionalReturn) && rTrue.mayPass != rFalse.mayPass && !cond.isQuantum; // (with the code after the conditional on the paths of the branch that may pass, e.g., after a nested conditional whose branch aborts)
 		ast_decl.Declaration[] eager;
@@ -6004,8 +6020,9 @@ class ScopeWriter {
 			scope loc = PushLocation(ctx, locEnd(e.loc));
 			eager = genEagerMerges(cond, ifFalse, ifTrue, i1, i2, i3);
 		}
+		bool continuesBoth = e.then.blscope_.keptContinued && !cond.isQuantum && rTrue.mayPass && rFalse.mayPass && !eager.length; // (with the code after the conditional on the paths of both branches: its uncomputations recompute values from versions from before the split that the analysis continued, see `ast.scope_.BlockScope.keptContinued`)
 		if(eager.length) interleaveBranches(cw, i0, i1, i2, i3, cw.code[].length);
-		else if(e.then.blscope_.interleave && !continues && !continuesPartially) interleaveBranches(cw, i0, i1, i2, i3);
+		else if(e.then.blscope_.interleave && !continues && !continuesPartially && !continuesBoth) interleaveBranches(cw, i0, i1, i2, i3);
 		static bool abortsBeforeContinuation(ast_exp.CompoundExp b) { return b.blscope_.returningBeforeContinuation && !ast_sem.containsReturn(b); } // (on every path, and the code after the conditional continues the other branch: the analysis splits only the variables that it consumes into it, see `ast.scope_.Scope.closeUnreachable`; its result is a return of the error values where it aborts in a nested conditional, see `combineResults`)
 		ItePartialReturn continuedBy(ItePartialReturn rv, int branch) {
 			if(e.then.blscope_.interleave) {
@@ -6084,7 +6101,12 @@ class ScopeWriter {
 
 			if(cond.isQuantum) qcg.forget(cond.qreg);
 			if(continuesPartially) return continuedBy(new ItePartialReturn(retCond, ret, reachable), rTrue.mayPass ? 1 : 2);
-			return new ItePartialReturn(retCond, ret, reachable);
+			auto rv = new ItePartialReturn(retCond, ret, reachable);
+			if(continuesBoth) {
+				rv.interleave = [i0, i1, i2, i3];
+				rv.continued = 3;
+			}
+			return rv;
 		}
 
 		if(!rTrue.isPass && !rFalse.isPass) {
@@ -6132,6 +6154,7 @@ class ScopeWriter {
 		auto rv = new ItePass(cond);
 		rv.condMemo = condMemo;
 		rv.condShared = condShared;
+		if(continuesBoth) rv.interleave = [i0, i1, i2, i3];
 		return rv;
 	}
 
@@ -8634,6 +8657,8 @@ struct IrStatement {
 	QReg[] qcArgs;
 	QReg[] qiArgs;
 	ast_lex.Location loc;
+	bool isPure; // (a classical value computed from its arguments only, see `CCGen.emitPureOp`)
+	uint region; // (the innermost branch that returns or aborts on all of its paths that contains it, see `CodeWriter.markDiverging`)
 
 	void putTo(Appender!string o) {
 		o.put("\t");
@@ -8707,7 +8732,7 @@ struct IrStatement {
 	}
 }
 
-void interleaveBranches(CodeWriter cw, size_t i0, size_t i1, size_t i2, size_t i3, size_t i4 = size_t.max, int continued = 0) { // (of a conditional whose branches recompute values from versions of variables from before their splits, see `checkBranchOrder`: such a split comes after those uncomputations, and statements before it read the register that it splits; the code after the conditional up to `i4` belongs to the branch `continued`, as the other one returns, see `ItePartialReturn`)
+void interleaveBranches(CodeWriter cw, size_t i0, size_t i1, size_t i2, size_t i3, size_t i4 = size_t.max, int continued = 0) { // (of a conditional whose branches recompute values from versions of variables from before their splits, see `checkBranchOrder`: such a split comes after those uncomputations, and statements before it read the register that it splits; the code after the conditional up to `i4` belongs to the branch `continued`, as the other one returns, see `ItePartialReturn`, or to both branches if `continued` is 3, see `ast.scope_.BlockScope.keptContinued`)
 	import std.algorithm: max;
 	import std.string: indexOf;
 	import std.container.rbtree: redBlackTree;
@@ -8735,13 +8760,42 @@ void interleaveBranches(CodeWriter cw, size_t i0, size_t i1, size_t i2, size_t i
 	MapX!(QReg, size_t[]) readers;
 	MapX!(QReg, size_t) forgetItem;
 	Q!(size_t, size_t, QReg)[] partReads; // (statement, split, part)
+	size_t[] partSources; // (of `partReads`: the statements that produce the parts that do not come from the splits, see `routed`)
+	MapX!(QReg, QReg) routed; // (the registers that only route the value of a register from before the conditional: its parts and the merges of its parts and of values of paths that do not reach them, e.g., the version of a variable that the code after the conditional continues, or the merged version of a variable that all branches keep, which the reads can read before the split instead)
+	foreach(k, ref s; items) {
+		auto op = base(s.op);
+		QReg source = null;
+		if((op == opCSplit || op == opQSplit) && s.qiArgs.length == 1 && s.qiArgs[0]) source = routed.get(s.qiArgs[0], s.qiArgs[0]);
+		else if(op == opCMerge || op == opQMerge) {
+			foreach(x; s.qiArgs) {
+				if(!x) continue;
+				auto p = item(prodAt(x));
+				if(p != none && ["qfree_call[qbuiltin.error]", "qfree_call[qbuiltin.alloc_unit]"].canFind(items[p].op) && !items[p].qiArgs.length && !items[p].qcArgs.length) continue; // (of a path that does not reach the merge, or a unit, whose value is the one of `source` as well)
+				auto y = routed.get(x, x);
+				if(source && source !is y) {
+					source = null;
+					break;
+				}
+				source = y;
+			}
+		}
+		if(source) foreach(r; s.qRet) if(r) routed[r] = source;
+	}
 	foreach(k, ref s; items) {
 		foreach(r; s.qiArgs) if(r) edge(item(prodAt(r)), k);
 		void read(QReg r) {
 			if(!r) return;
 			auto p = item(prodAt(r));
-			if(isSplit(p)) partReads ~= q(k, p, r);
-			else edge(p, k);
+			if(isSplit(p)) {
+				partReads ~= q(k, p, r);
+				partSources ~= none;
+			} else if(auto x = routed.get(r, null)) {
+				auto c = item(consAt(x));
+				if(isSplit(c) && items[c].qiArgs[0] is x) {
+					partReads ~= q(k, c, r);
+					partSources ~= p;
+				} else edge(p, k);
+			} else edge(p, k);
 			readers[r] = readers.get(r, null) ~ k;
 		}
 		foreach(r; s.qcArgs) read(r);
@@ -8751,12 +8805,29 @@ void interleaveBranches(CodeWriter cw, size_t i0, size_t i1, size_t i2, size_t i
 		if(s.op == opForget && branchOf(k) != 0) foreach(r; s.qiArgs) if(r) forgetItem[r] = k;
 	}
 	foreach(k, ref s; items) foreach(r; s.qiArgs) if(r) foreach(j; readers.get(r, null)) edge(j, k); // (reads come before the consumption)
-	foreach(b; 1 .. 3) { // (each branch in program order, except for the computations of quantum values, which only depend on their arguments, the uncomputations, which the backend places after the last uses, and the splits and merges of nested conditionals, which only route the values that their branches use)
-		auto prev = none;
+	bool within(uint r, uint s) { // (the region `r` contains the region `s`, see `CodeWriter.markDiverging`)
+		for(; s; s = cw.regionParent[s]) if(s == r) return true;
+		return false;
+	}
+	bool samePath(size_t j, size_t k) { // (`k` can run after `j` on the same path: not in another branch of a conditional, and not after a branch that diverges that contains `j`, e.g., the code after `if l { … assert(false); }`)
+		if(items[j].region && !within(items[j].region, items[k].region)) return false;
+		foreach(c; items[j].condC) foreach(d; items[k].condC) if(c.reg is d.reg && c.value != d.value) return false;
+		return true;
+	}
+	foreach(b; 1 .. 3) { // (each branch in program order, except for the computations of quantum values and the pure classical ones, which only depend on their arguments, the uncomputations, which the backend places after the last uses, and the splits and merges of nested conditionals, which only route the values that their branches use; only the statements that can run on the same path)
+		size_t[] last; // (the statements so far without a later one that runs on all of their paths)
 		foreach(k; 0 .. n) {
-			if(branchOf(k) != b || items[k].op == opForget || [opCSplit, opQSplit, opCMerge, opQMerge, "qfree_call", "qfree_call_rev", "mfree_call", "mfree_call_rev"].canFind(base(items[k].op))) continue;
-			edge(prev, k);
-			prev = k;
+			if(branchOf(k) != b && branchOf(k) != 3 || items[k].isPure || items[k].op == opForget || [opCSplit, opQSplit, opCMerge, opQMerge, "qfree_call", "qfree_call_rev", "mfree_call", "mfree_call_rev"].canFind(base(items[k].op))) continue;
+			size_t[] next;
+			foreach(j; last) {
+				if(!samePath(j, k)) {
+					next ~= j;
+					continue;
+				}
+				edge(j, k);
+				if(items[j].region != items[k].region || !items[k].condC.all!(c => items[j].condC.canFind!(d => d.reg is c.reg && d.value == c.value))) next ~= j;
+			}
+			last = next ~ k;
 		}
 	}
 	bool reaches(size_t a, scope bool delegate(size_t) target) {
@@ -8771,25 +8842,33 @@ void interleaveBranches(CodeWriter cw, size_t i0, size_t i1, size_t i2, size_t i
 		return visit(a);
 	}
 	enum outer = none - 1, outerMerged = none - 2; // (`outerMerged`: a part that merges with others before it reaches this conditional)
+	size_t[size_t][2] splitOfPartMemo; // (by `merged`: the paths through the splits and merges of consecutive conditionals double with each of them)
 	size_t splitOfPart(size_t k, int depth = 0, bool merged = false) { // (the split of this conditional of a part of what the split `k` of an enclosing conditional splits: the enclosing conditional orders its split after the uncomputations that come before this one, see `needs`; `outer` if this conditional does not split such a part, e.g., as its condition is constant)
 		if(k == none || k >= i0 || depth > 300) return none;
 		auto isMerge = [opCMerge, opQMerge].canFind(base(code[k].op));
 		if(!isMerge && ![opCSplit, opQSplit].canFind(base(code[k].op))) return none;
 		merged |= isMerge;
+		if(auto p = k in splitOfPartMemo[merged]) return *p;
 		auto result = none;
 		foreach(r; code[k].qRet) {
 			if(!r) continue;
 			auto c = consAt(r);
 			if(isSplit(item(c))) {
-				if(!merged) return item(c);
+				if(!merged) {
+					result = item(c);
+					break;
+				}
 				result = outerMerged; // (this conditional splits the merged version, not the part, which the uncomputation reads)
 				continue;
 			}
 			auto s = c == none || c >= i0 ? merged ? outerMerged : outer : splitOfPart(c, depth + 1, merged);
-			if(s != none && s != outer && s != outerMerged) return s;
+			if(s != none && s != outer && s != outerMerged) {
+				result = s;
+				break;
+			}
 			if(s == outer || s == outerMerged && result == none) result = s;
 		}
-		return result;
+		return splitOfPartMemo[merged][k] = result;
 	}
 	bool pending(size_t k) { // (in the split of an enclosing conditional whose interleaving follows, see `ItePartialReturn`)
 		foreach(p; cw.pendingSplits) if(p[0] <= k && k < p[1]) return true;
@@ -8859,6 +8938,10 @@ void interleaveBranches(CodeWriter cw, size_t i0, size_t i1, size_t i2, size_t i
 				}
 				if(!unavailable) {
 					if(isSplit(p) && via != none) ts ~= q(via, p, P);
+					else if(auto rx = routed.get(x, null)) if(via != none) { // (as for a part, if `via` reads the register instead, see `partReads`)
+						auto rc = item(consAt(rx));
+						if(isSplit(rc) && items[rc].qiArgs[0] is rx) ts ~= q(via, rc, P);
+					}
 					return Need.yes;
 				}
 				Q!(size_t[], size_t)[] subNs;
@@ -8889,12 +8972,24 @@ void interleaveBranches(CodeWriter cw, size_t i0, size_t i1, size_t i2, size_t i
 		}
 	}
 	auto rewrite = new bool[](partReads.length), decided = new bool[](partReads.length);
+	auto wholes = new QReg[](partReads.length); // (the registers that the rewritten reads read)
 	void decide(size_t i, bool rw) {
 		decided[i] = true;
 		rewrite[i] = rw;
 		auto pr = partReads[i];
-		if(!rw) return edge(pr[1], pr[0]);
+		if(!rw) return edge(partSources[i] != none ? partSources[i] : pr[1], pr[0]);
 		foreach(t; through) if(t[0] == pr[0] && t[1] == pr[1]) foreach(k; t[2]) edge(k, pr[1]);
+		auto w = items[pr[1]].qiArgs[0];
+		for(;;) { // (a part of another split of the conditional, e.g., one that `ScopeWriter.carry` deferred)
+			auto p = item(prodAt(w));
+			if(!isSplit(p)) break;
+			if(!reaches(pr[0], k => k == p)) {
+				edge(p, pr[0]);
+				break;
+			}
+			w = items[p].qiArgs[0];
+		}
+		wholes[i] = w;
 	}
 	for(bool changed = true; changed;) { // (statements that come before the split anyway read the register that it splits)
 		changed = false;
@@ -8918,7 +9013,7 @@ void interleaveBranches(CodeWriter cw, size_t i0, size_t i1, size_t i2, size_t i
 	assert(order.length == n, "no order of the branches of the conditional");
 	foreach(i, pr; partReads) {
 		if(!rewrite[i]) continue;
-		auto s = &items[pr[0]], whole = items[pr[1]].qiArgs[0];
+		auto s = &items[pr[0]], whole = wholes[i];
 		s.qcArgs = s.qcArgs.dup;
 		foreach(ref r; s.qcArgs) if(r is pr[2]) r = whole;
 		s.condQ = s.condQ.dup;
@@ -8968,6 +9063,21 @@ class CodeWriter {
 	MapX!(QReg, uint) producedAt, consumedAt; // (the statements of `code` up to `numIndexed` that produce and consume the quantum registers, see `interleaveBranches`)
 	size_t numIndexed;
 	size_t[2][] pendingSplits; // (the splits of the conditionals whose interleaving with the code after them is pending, see `ItePartialReturn` and `interleaveBranches`)
+	uint[] regionParent = [0]; // (of the branches of `markDiverging`: the innermost one that contains them)
+
+	void markDiverging(size_t from, size_t to) { // (the statements of a branch that returns or aborts on all of its paths: the statements after it that it does not contain run on other paths, see `interleaveBranches`)
+		auto r = cast(uint) regionParent.length;
+		regionParent ~= 0;
+		foreach(ref s; code[][from .. to]) {
+			if(!s.region) {
+				s.region = r;
+				continue;
+			}
+			auto t = s.region;
+			while(regionParent[t] && regionParent[t] != r) t = regionParent[t];
+			if(t != r) regionParent[t] = r;
+		}
+	}
 
 	void index(size_t from, size_t to) {
 		foreach(k; from .. to) {
@@ -8995,7 +9105,7 @@ class CodeWriter {
 		return regs;
 	}
 
-	void writeOp(CondC[] condC, CondQ[] condQ, string op, CReg[] cRet, QReg[] qRet, CReg[] cArgs, QReg[] qcArgs, QReg[] qiArgs) {
+	void writeOp(CondC[] condC, CondQ[] condQ, string op, CReg[] cRet, QReg[] qRet, CReg[] cArgs, QReg[] qcArgs, QReg[] qiArgs, bool isPure = false) {
 		cArgs = fixCNull(cArgs, 0);
 		cRet = fixCNull(cRet, -1);
 		if(condC.any!(c => ctx.condNeverHolds(c))) {
@@ -9003,7 +9113,7 @@ class CodeWriter {
 			return;
 		}
 		if(condC.length) foreach(r; cRet) cregConds[r] = condC;
-		code.put(IrStatement(condC, condQ, op, cRet, qRet, cArgs, qcArgs, qiArgs, ctx.curLoc.loc));
+		code.put(IrStatement(condC, condQ, op, cRet, qRet, cArgs, qcArgs, qiArgs, ctx.curLoc.loc, isPure));
 	}
 
 	bool definedUnder(CReg r, CondC cond) { // (HQIR only allows uses of a classical register under the conditions of its definition)

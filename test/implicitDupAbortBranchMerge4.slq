@@ -1,3 +1,5 @@
+// args: --run
+
 def measuredBeforeConsumption(a:𝔹,k:!𝔹){
 	ms:=0:!ℕ;
 	v0:=dup(a);
@@ -25,8 +27,13 @@ def nestedAbortingBranch(a:𝔹,k:!𝔹,l:!𝔹){
 			assert(false);
 		}
 	}
-	t8:=measure(v0); /// TODO
+	t8:=measure(v0);
 	ms+=t8;
 	a:=X(a);
 	return (a,ms);
+}
+def main(){
+	r:=(measure(measuredBeforeConsumption(1:𝔹,false)),measure(nestedAbortingBranch(1:𝔹,true,false)),measure(nestedAbortingBranch(0:𝔹,false,true)));
+	assert(r==((0,2),(0,2),(1,0)));
+	return r;
 }

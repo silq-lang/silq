@@ -1,0 +1,51 @@
+// args: --run
+
+def readCopy(a:𝔹,k:!𝔹,l:!𝔹):𝔹{
+	v0:=dup(a);
+	if k { if l { x:=(a,true); assert(false); } } else { assert(false); }
+	w:=dup(a);
+	forget(w);
+	forget(v0);
+	return a;
+}
+def readBoth(a:𝔹,k:!𝔹,l:!𝔹):𝔹{
+	v0:=dup(a);
+	if k { if l { x:=(a,true); assert(false); } } else { assert(false); }
+	w:=v0&&a;
+	forget(w);
+	forget(v0);
+	return a;
+}
+def readBothConsecutive(a:𝔹,k:!𝔹,l:!𝔹,m:!𝔹):𝔹{
+	v0:=dup(a);
+	v1:=!v0;
+	if l { x:=(a,true); y:=measure(x); assert(false); }
+	if l { } else {
+		if m { x:=(a,true); assert(false); }
+		a:=X(a);
+		x:=(a,true);
+		assert(false);
+	}
+	w:=v0&&a;
+	forget(w);
+	forget(v1);
+	forget(v0);
+	return a;
+}
+def carriedRead(a:𝔹,k:!𝔹,m:!𝔹):𝔹{
+	v0:=dup(a);
+	if k { z:=measure(H(0:𝔹)); assert(false); }
+	if m { x:=(a,true); assert(false); }
+	w:=v0&&a;
+	forget(w);
+	forget(v0);
+	return a;
+}
+def main(){
+	r:=(measure(readCopy(1:𝔹,true,false)),measure(readBoth(0:𝔹,true,false)),measure(readBoth(1:𝔹,true,false)),measure(carriedRead(1:𝔹,false,false)),measure(carriedRead(0:𝔹,false,false)));
+	if measure(0:𝔹) {
+		t:=measure(readBothConsecutive(0:𝔹,true,true,true));
+	}
+	assert(r==(1,0,1,1,0));
+	return r;
+}

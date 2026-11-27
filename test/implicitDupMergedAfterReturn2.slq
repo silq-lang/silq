@@ -1,0 +1,32 @@
+// args: --run
+
+def nestedReturn(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v1:=!a;
+	t1:=measure(v1);
+	ms+=t1;
+	if k { } else { if l { return (a,ms); } else { } }
+	forget(v1);
+	return (a,ms);
+}
+def consumedBeforeReturn(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	if k { if l { a:=X(a); return (a,ms); } else { t1:=measure(v0); ms+=t1; } } else { }
+	forget(v0);
+	return (a,ms);
+}
+def chainedDupInBranch(a:𝔹,k:!𝔹,l:!𝔹){
+	ms:=0:!ℕ;
+	v0:=!a;
+	v1:=dup(v0);
+	if k { t1:=measure(v1); ms+=t1; } else { if l { return (a,ms); } else { } }
+	t2:=measure(v1);
+	ms+=t2;
+	return (a,ms);
+}
+def main(){
+	r:=(measure(nestedReturn(1:𝔹,true,false)),measure(nestedReturn(0:𝔹,false,true)),measure(consumedBeforeReturn(1:𝔹,true,false)),measure(consumedBeforeReturn(0:𝔹,true,true)),measure(chainedDupInBranch(1:𝔹,true,false)),measure(chainedDupInBranch(0:𝔹,false,false)));
+	assert(r==((1,0),(0,1),(1,0),(1,0),(1,0),(0,1)));
+	return r;
+}
