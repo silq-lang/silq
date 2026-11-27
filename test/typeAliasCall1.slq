@@ -1,0 +1,27 @@
+// args: --run
+
+def sum[types:*[]]⇒⋃[tag:!ℕ]. types[tag];
+def inj[types:*[]][tag:!ℕ](x:types[tag]) ⇒ x:sum[types];
+def tagOf[types:*[]][tag:!ℕ](const x:types[tag]) ⇒ tag;
+def injected(k:!𝔹){
+	if k { x:=inj[!ℕ,!ℚ[]][1]([2,2/3]); }
+	else{ x:=inj[!ℕ,!ℚ[]][0](2); }
+	return tagOf[[!ℕ,!ℚ[]]](x);
+}
+def vec[n:!ℕ] ⇒ !𝔹^n;
+def first(x:vec[3]) ⇒ x[0];
+def widen[n:!ℕ](x:!𝔹^n) ⇒ x:vec[n];
+def pair[a:*,b:*] ⇒ a×b;
+def square[t:*] ⇒ pair[t,t];
+def swap[t:*](x:square[t]){
+	(a,b):=x;
+	return (b,a):square[t];
+}
+def main(){
+	y:=(1,0,1):vec[3];
+	z:=widen(y);
+	s:=measure(swap((0:𝔹,1:𝔹)));
+	r:=(injected(true),injected(false),first(y),z,s);
+	assert(r==(1,0,1,(1,0,1),(1,0)));
+	return r;
+}

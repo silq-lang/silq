@@ -3627,7 +3627,7 @@ class ScopeWriter {
 		assert(ty, "genExprAs(_, null)");
 		auto v = genExpr(e);
 		try {
-			return genSubtype(v, e.type, ty);
+			return genSubtype(v, e.type, ty, e.type == ty ? null : ast_ty.statedType(e)); // (the witnesses of unions also from the type that the program states for `e`, as in the analysis)
 		} catch(AssertError exc) {
 			exc.msg = format("%s\nin conversion: %s -> %s", exc.msg, e.type, ty);
 			throw exc;
@@ -4686,7 +4686,7 @@ class ScopeWriter {
 
 	Value implExpr(ast_exp.TypeAnnotationExp e) {
 		// assert(e.e.constLookup == e.constLookup);
-		auto conv = ast_conv.typeExplicitConversion!true(e.e.type, e.type, e.annotationType);
+		auto conv = ast_conv.typeExplicitConversion!true(e.e.type, e.type, e.annotationType, ast_ty.statedType(e.e)); // (the witnesses of unions also from the type that the program states for the operand, as in the analysis)
 		assert(conv, format("bad conversion %s -> %s", e.e.type, e.type));
 		auto late = ast_sem.readsOpenedWitnesses(e.t, e.e); // (the type mentions the witnesses of values that the expression opens, see `ast_exp.OpenExp`)
 		if(!qcg.inType && !late) {
@@ -6236,7 +6236,7 @@ class ScopeWriter {
 			return Result.aborts(pendingAbort);
 		}
 		if(ast_ty.isEmpty(e.e.type) && v.hasClassical) return Result.aborts(v.creg);
-		auto r = genSubtype(v, e.e.type, nscope.getFunction().ret);
+		auto r = genSubtype(v, e.e.type, nscope.getFunction().ret, ast_ty.statedType(e.e));
 		foreach(decl; e.forgottenVars) {
 			valForget(getVar(decl, false));
 		}
@@ -7932,11 +7932,11 @@ class ScopeWriter {
 		return v;
 	}
 
-	Value genSubtype(Value v, Expression fromTy, Expression toTy) {
+	Value genSubtype(Value v, Expression fromTy, Expression toTy, Expression stated = null) { // (`stated`: see `ast.type.statedType`)
 		assert(fromTy.isSemEvaluated());
 		assert(toTy.isSemEvaluated());
 		if(fromTy == toTy) return genNoopConvert(v, fromTy, toTy);
-		auto conv = ast_conv.typeExplicitConversion!true(fromTy, toTy, ast_exp.TypeAnnotationType.annotation);
+		auto conv = ast_conv.typeExplicitConversion!true(fromTy, toTy, ast_exp.TypeAnnotationType.annotation, stated);
 		assert(conv, format("not a subtype: %s -> %s", fromTy, toTy));
 		return genConvert(conv, v);
 	}

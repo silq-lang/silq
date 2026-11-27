@@ -1,0 +1,40 @@
+// args: --run
+
+either:=⋃[tag:!𝔹]. [!ℕ,!ℚ[]][tag];
+def tagOf[t:!𝔹](const x:[!ℕ,!ℚ[]][t]) ⇒ t;
+def inj[t:!𝔹](x:[!ℕ,!ℚ[]][t]) ⇒ x:either;
+def branches(k:!𝔹){ // (the evaluation of the annotation `[!ℕ,!ℚ[]][1]` is `!ℚ[]`, which does not determine the tag)
+	if k{ x:=([2,2/3]:[!ℕ,!ℚ[]][1]):either; }
+	else{ x:=(2:[!ℕ,!ℚ[]][0]):either; }
+	return tagOf(x);
+}
+def variable(){
+	v:=[1,2/3]:[!ℕ,!ℚ[]][1];
+	x:=v:either;
+	return tagOf(x);
+}
+def parameter(x:[!ℕ,!ℚ[]][1]) ⇒ tagOf(x:either);
+def inferred() ⇒ tagOf(inj(3:[!ℕ,!ℚ[]][0]));
+def argument(x:either) ⇒ tagOf(x);
+def returned():either ⇒ [4]:[!ℕ,!ℚ[]][1];
+def same(){ // (both members are `!ℕ`: only the annotation determines the tag)
+	x:=(5:[!ℕ,!ℕ][1]):⋃[t:!𝔹]. [!ℕ,!ℕ][t];
+	return x;
+}
+def sameTag[t:!𝔹](const x:[!ℕ,!ℕ][t]) ⇒ t;
+def local(){ // (a union that a local type variable holds)
+	either:=⋃[tag:!𝔹]. [!ℕ,!ℚ[]][tag];
+	x:=([2,2/3]:[!ℕ,!ℚ[]][1]):either;
+	y:=x:⋃[tag:!𝔹]. [!ℕ,!ℚ[]][tag];
+	return tagOf(y);
+}
+def lengths[a:!ℕ,b:!ℕ](x:!ℕ^(a·b+1)){ // (also without a stated type: only the type determines the witnesses, not the value)
+	U:=⋃[n:!ℕ][m:!ℕ]. !ℕ^(n·m+1);
+	y:=x:U;
+	return y:!ℕ[];
+}
+def main(){
+	r:=(branches(true),branches(false),variable(),parameter([1,1/2]),inferred(),argument(6:[!ℕ,!ℚ[]][0]),tagOf(returned()),sameTag(same()),local(),lengths[2,1](vector(3,0:!ℕ)));
+	assert(r==(1,0,1,1,0,0,1,1,1,[0,0,0]));
+	return r;
+}

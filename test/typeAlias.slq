@@ -1,8 +1,17 @@
+// args: --run
+
 Node := 𝔹[];
 edgeOracle_spec := (const Node x const Node x 𝔹) !-> 𝔹;
 def QWTFP_spec[k:!ℕ]qfree ⇒ !int[k] x !int[k] x edgeOracle_spec;
 
 def foo[k:!ℕ](spec: QWTFP_spec[k] ):QWTFP_spec[k]{
-	(a,b,c) := spec; /// TODO
+	(a,b,c) := spec;
 	return (a,b,c);
+}
+
+def main(){
+	(a,b,c):=foo[2]((1:!int[2],-1:!int[2],λ(const x:Node,const y:Node,z:𝔹)⇒z));
+	r:=(a as !ℤ,b as !ℤ,measure(c(vector(1,0:𝔹),vector(2,1:𝔹),1:𝔹)));
+	assert(r==(1,-1,1));
+	return r;
 }

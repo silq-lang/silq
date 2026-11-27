@@ -2977,7 +2977,7 @@ struct Interpreter(QState){
 	}
 	QState.Value convertTo(Expression e,Expression type){
 		auto value=runExp(e);
-		if(value.isValid) value=convertTo(value,type,!e.constLookup,false,e.type);
+		if(value.isValid) value=convertTo(value,type,!e.constLookup,false,e.type,null,statedType(e));
 		return value;
 	}
 
@@ -3041,7 +3041,7 @@ struct Interpreter(QState){
 		return type;
 	}
 
-	QState.Value convertTo(QState.Value value,Expression type,bool consumeArg,bool checkPositiveWidth=false,Expression from=null,Binding[] bindings=null){ // (`from`: the static type of `value`, for the witnesses of unions, see `convertUnion`)
+	QState.Value convertTo(QState.Value value,Expression type,bool consumeArg,bool checkPositiveWidth=false,Expression from=null,Binding[] bindings=null,Expression stated=null){ // (`from`: the static type of `value`, for the witnesses of unions, see `convertUnion`; `stated`: its type as the program states it, see `statedType`)
 		assert(value.type.isSemEvaluated());
 		//if(type.subexpressions.any!(e=>!!cast(VariadicTy)e)) type=closedType(type);
 		auto stype=type;
@@ -3051,7 +3051,7 @@ struct Interpreter(QState){
 			if(consumeArg) return value;
 			return value.dup(qstate).consumeOnRead();
 		}
-		if(cast(UnionTy)value.type||cast(UnionTy)type) return convertUnion(value,type,stype,from,bindings,consumeArg,checkPositiveWidth,true);
+		if(cast(UnionTy)value.type||cast(UnionTy)type) return convertUnion(value,type,stype,from,bindings,consumeArg,checkPositiveWidth,true,stated);
 		if(cast(Identifier)type){
 			if(consumeArg) value.consumeOnRead(); // TODO: ok?
 			return value.convertTo(type);
@@ -3210,7 +3210,7 @@ struct Interpreter(QState){
 		if(ut.isClassical()) if(auto c=type.getClassical()) return unionWitness(c,ut,u);
 		return null;
 	}
-	QState.Value convertUnion(QState.Value value,Expression type,Expression stype,Expression from,Binding[] bindings,bool consumeArg,bool checkPositiveWidth,bool convert){ // (a value of a union type is the pair of the witness and the value of the member, converted as by `typeExplicitConversion` in conversion.d and `implConvert` in hqir.d: `stype` and `from` are the static types of the result and of `value`, which can mention the fresh names of `bindings`; `convert`: the member is converted, otherwise only its components of union types, see `unionView`)
+	QState.Value convertUnion(QState.Value value,Expression type,Expression stype,Expression from,Binding[] bindings,bool consumeArg,bool checkPositiveWidth,bool convert,Expression stated=null){ // (a value of a union type is the pair of the witness and the value of the member, converted as by `typeExplicitConversion` in conversion.d and `implConvert` in hqir.d: `stype` and `from` are the static types of the result and of `value`, which can mention the fresh names of `bindings`; `convert`: the member is converted, otherwise only its components of union types, see `unionView`)
 		auto ut=cast(UnionTy)type;
 		if(auto vut=cast(UnionTy)value.type){ // (unpacked, with a fresh name for the bound variable, as `UnionUnpackConversion`)
 			enforce(isPair(value),"bad value of a union type");
@@ -3238,7 +3238,9 @@ struct Interpreter(QState){
 		UnionTy u;
 		Expression member=null;
 		QState.Value witness;
-		if(from) if(auto su=cast(UnionTy)stype) if(auto w=unionWitness(from,su,u)){ // (the witness of the static types, as `UnionPackConversion`, e.g., `2` and `3` for `!ℕ^(a·b+1)` in `⋃[n:!ℕ][m:!ℕ]. !ℕ^(n·m+1)` with `a=2` and `b=3`, which `!ℕ^7` does not determine)
+		auto su=cast(UnionTy)stype;
+		if(!su&&stype) su=cast(UnionTy)unfoldTypeVariable(stype); // (also a union that a local type variable holds, e.g., `x:U` after `U:=⋃[n:!ℕ][m:!ℕ]. !ℕ^(n·m+1);`)
+		if(from&&su) if(auto w=unionWitness(from,su,u,null,stated)){ // (the witness of the static types, as `UnionPackConversion`, e.g., `2` and `3` for `!ℕ^(a·b+1)` in `⋃[n:!ℕ][m:!ℕ]. !ℕ^(n·m+1)` with `a=2` and `b=3`, which `!ℕ^7` does not determine)
 			auto cw=closedType(bind(w,bindings));
 			if(!isOpen(cw)||cw.freeIdentifiers.all!(id=>id.meaning&&id.meaning.getName in qstate.vars)){ // (also a variable whose value `closedType` does not substitute, e.g., of a tuple type)
 				witness=runExp(cw).dup(qstate); // (a copy: the variables that it reads can change in place, e.g., `t` for `t[0]=5` after `x:=v:⋃[s:!ℕ[]]. 𝔹^s[0]`)
@@ -3254,11 +3256,11 @@ struct Interpreter(QState){
 		auto mvalue=convert?convertTo(value,member,consumeArg,checkPositiveWidth,from,bindings):unionView(value,evalType(closedType(bind(member,bindings))),false,member,from,bindings);
 		return QState.makeTuple(ut,[witness,mvalue]);
 	}
-	QState.Value unionView(QState.Value v,Expression type,bool deep=false,Expression stype=null,Expression from=null,Binding[] bindings=null){ // (the representation of `v` at the static type `type`: pairs exactly at its components of union types, see `convertUnion`; `deep`: also where the type of `v` is `type`, e.g., after the update of a component; `stype` and `from`: `type` and the type of `v` before closing, for the witnesses)
+	QState.Value unionView(QState.Value v,Expression type,bool deep=false,Expression stype=null,Expression from=null,Binding[] bindings=null,Expression stated=null){ // (the representation of `v` at the static type `type`: pairs exactly at its components of union types, see `convertUnion`; `deep`: also where the type of `v` is `type`, e.g., after the update of a component; `stype` and `from`: `type` and the type of `v` before closing, for the witnesses)
 		if(!v.isValid||!type||!deep&&v.type==type) return v;
 		auto ut=cast(UnionTy)type,vut=cast(UnionTy)v.type;
 		if(ut&&vut&&vut==ut) return v;
-		if(ut||vut) return convertUnion(v,type,stype,from,bindings,true,false,false);
+		if(ut||vut) return convertUnion(v,type,stype,from,bindings,true,false,false,stated);
 		if(v.tag!=QState.Value.Tag.array_||!mentionsUnion(type)&&!mentionsUnion(v.type)) return v;
 		auto tt=cast(TupleTy)type,vt=cast(VectorTy)type,at=cast(ArrayTy)type;
 		if(tt?tt.length!=v.array_.length:!vt&&!at) return v;
@@ -3273,16 +3275,16 @@ struct Interpreter(QState){
 	QState.Value unionArgs(CallExp ce,QState.Value arg){ // (the arguments at the types of the parameters at the call, with the witnesses of the static types, as in hqir.d, see `convertUnion`; otherwise the function converts them, see `runFun`)
 		auto ft=cast(ProductTy)ce.e.type;
 		if(!ft||ce.isSquare||!arg.isValid||!ft.dom||!mentionsUnion(ft.dom)&&!mentionsUnion(arg.type)||ft.dom.hasAnyFreeVar(ft.names)) return arg;
-		QState.Value convert(QState.Value v,Expression type,Expression from){
+		QState.Value convert(QState.Value v,Expression type,Expression from,Expression stated){
 			if(!mentionsUnion(type)&&!mentionsUnion(v.type)) return v;
-			return unionView(v,evalType(closedType(type)),false,type,from);
+			return unionView(v,evalType(closedType(type)),false,type,from,null,stated);
 		}
 		auto tpl=cast(TupleExp)ce.arg,dom=ft.dom.isTupleTy();
-		if(!ft.isTuple||!tpl||!dom||dom.length!=tpl.e.length||arg.tag!=QState.Value.Tag.array_||arg.array_.length!=tpl.e.length) return convert(arg,ft.dom,ce.arg.type);
+		if(!ft.isTuple||!tpl||!dom||dom.length!=tpl.e.length||arg.tag!=QState.Value.Tag.array_||arg.array_.length!=tpl.e.length) return convert(arg,ft.dom,ce.arg.type,statedType(ce.arg));
 		QState.Value[] values;
 		bool changed=false;
 		foreach(i,a;tpl.e){
-			values~=convert(arg.array_[i],dom[i],a.type);
+			values~=convert(arg.array_[i],dom[i],a.type,statedType(a));
 			changed|=values[$-1]!is arg.array_[i];
 		}
 		return changed?QState.makeTuple(tupleTy(values.map!(v=>v.type).array),values):arg;
@@ -3730,7 +3732,7 @@ struct Interpreter(QState){
 				//if(tae.annotationType==TypeAnnotationType.punning) return doIt(tae.e);
 				if(cast(FunTy)tae.type) return doIt(tae.e); // TODO: solve properly
 				bool consume=!tae.constLookup;
-				auto r=convertTo(doIt(tae.e),tae.type,consume,consume,tae.e.type);
+				auto r=convertTo(doIt(tae.e),tae.type,consume,consume,tae.e.type,null,statedType(tae.e)); // (the witnesses of unions also from the type that the program states for the operand, see `convertUnion`)
 				//if(tae.constLookup) r=r.consumeOnRead();
 				return r;
 			} else if(cast(VectorTy)e||cast(ArrayTy)e||cast(TupleTy)e||cast(VariadicTy)e||cast(ClassicalTy)e||cast(ProductTy)e||cast(UnionTy)e){
