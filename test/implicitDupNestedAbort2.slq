@@ -1,0 +1,54 @@
+def consumedAfterNested(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	t0:=measure(v0); /// note
+	if k {
+		if l { x:=(a,true); assert(false); }
+		a:=X(a); /// note
+	}
+	t1:=measure(v0); /// error
+	return (a,t0,t1);
+}
+def consumedInElse(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	t0:=measure(v0); /// note
+	if k {
+		if l { x:=(a,true); assert(false); }
+	} else {
+		a:=X(a); /// note
+	}
+	t1:=measure(v0); /// error
+	return (a,t0,t1);
+}
+def consumedInNestedElse(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	t0:=measure(v0); /// note
+	if k {
+		if l { x:=(a,true); assert(false); }
+		else { a:=X(a); } /// note
+	}
+	t1:=measure(v0); /// error
+	return (a,t0,t1);
+}
+def otherDependency(a:𝔹,b:𝔹,k:!𝔹,l:!𝔹){
+	v0:=a&&b;
+	t0:=measure(v0); /// note
+	if k {
+		if l { x:=(a,true); assert(false); }
+		b:=X(b); /// note
+	}
+	t1:=measure(v0); /// error
+	return (a,b,t0,t1);
+}
+def usedAfterConsumptionInBranch(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	t0:=measure(v0); /// note
+	if k {
+		if l {
+			x:=(a,true); /// note
+			t2:=measure(v0); /// error
+			assert(false);
+		}
+	}
+	t1:=measure(v0);
+	return (a,t0,t1);
+}

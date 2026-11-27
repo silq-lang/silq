@@ -1,0 +1,60 @@
+// args: --run
+
+def g(const x:𝔹){ return measure(dup(x)); }
+def h(x:𝔹){ return measure(x); }
+def nested(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	t0:=measure(v0);
+	if k { if l { x:=(a,true); assert(false); } }
+	t1:=measure(v0);
+	return (a,t0,t1);
+}
+def nestedElse(a:𝔹,k:!𝔹,l:!𝔹,m:!𝔹){
+	v0:=dup(a);
+	t0:=measure(v0);
+	if k { if l { x:=(a,true); assert(false); } } else { if m { x:=(a,false); assert(false); } }
+	t1:=measure(v0);
+	return (a,t0,t1);
+}
+def threeLevels(a:𝔹,k:!𝔹,l:!𝔹,m:!𝔹){
+	v0:=dup(a);
+	t0:=measure(v0);
+	if k { if l { if m { x:=(a,true); assert(false); } } }
+	t1:=measure(v0);
+	return (a,t0,t1);
+}
+def usedInBranch(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	t0:=measure(v0);
+	if k { if l { x:=(a,true); assert(false); } t2:=measure(v0); }
+	t1:=measure(v0);
+	return (a,t0,t1);
+}
+def chain(a:𝔹,k:!𝔹,l:!𝔹,m:!𝔹){
+	v0:=dup(a);
+	v1:=dup(v0);
+	t0:=h(v0);
+	t1:=measure(v1);
+	if l { if m { if k { t2:=measure(v1); a:=X(a); x1:=(a,true); assert(false); } x2:=(a,true); y:=measure(x2); assert(false); } }
+	t3:=measure(v1);
+	forget(v1);
+	return (a,t0,t1,t3);
+}
+def readAfterConsumption(a:𝔹,k:!𝔹,m:!𝔹){
+	v0:=dup(a);
+	v1:=!v0;
+	t0:=h(v1);
+	if m { if k { x:=(a,true); t2:=g(v1); assert(false); } t3:=measure(v0); assert(false); }
+	t1:=measure(v0);
+	return (a,t0,t1);
+}
+def inLoop(x:𝔹,k:!ℕ){
+	c:=0;
+	repeat 2 { t:=dup(x); m:=measure(t); if c>0 { if k==0 { y:=(x,m); assert(false); } } n:=measure(t); c+=1; }
+	return x;
+}
+def main(){
+	r:=(measure(nested(1:𝔹,true,false)),measure(nestedElse(0:𝔹,true,false,true)),measure(threeLevels(1:𝔹,true,true,false)),measure(usedInBranch(1:𝔹,true,false)),measure(chain(1:𝔹,true,false,false)),measure(readAfterConsumption(0:𝔹,false,false)),measure(inLoop(1:𝔹,1)));
+	assert(r==((1,1,1),(0,0,0),(1,1,1),(1,1,1),(1,1,1,1),(0,1,0),1));
+	return r;
+}

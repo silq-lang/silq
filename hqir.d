@@ -8809,6 +8809,10 @@ void interleaveBranches(CodeWriter cw, size_t i0, size_t i1, size_t i2, size_t i
 		for(; s; s = cw.regionParent[s]) if(s == r) return true;
 		return false;
 	}
+	bool samePaths(size_t c, size_t f) { // (`c` and `f` run on common paths: in the same branch, or one in the code after the conditional, which continues both branches, see `continued`)
+		auto b = branchOf(c), g = branchOf(f);
+		return b == g || continued == 3 && b != 0 && g != 0 && (b == 3 || g == 3);
+	}
 	bool samePath(size_t j, size_t k) { // (`k` can run after `j` on the same path: not in another branch of a conditional, and not after a branch that diverges that contains `j`, e.g., the code after `if l { … assert(false); }`)
 		if(items[j].region && !within(items[j].region, items[k].region)) return false;
 		foreach(c; items[j].condC) foreach(d; items[k].condC) if(c.reg is d.reg && c.value != d.value) return false;
@@ -8931,8 +8935,8 @@ void interleaveBranches(CodeWriter cw, size_t i0, size_t i1, size_t i2, size_t i
 				else if(isSplit(c)) {
 					unavailable = true;
 					split = !reaches(c, k => P.canFind(k));
-				} else if(items[c].op == opForget) unavailable = branchOf(c) == branchOf(f) && x !in uncomputedAfter; // (otherwise, the backend may uncompute `x` before `r`, after its own last use)
-				else if(branchOf(c) == branchOf(f) && maxP != none || c >= i3 - i0 && branchOf(c) == 0) { // (in the branch, or by an eager merge, see `genEagerMerges`)
+				} else if(items[c].op == opForget) unavailable = samePaths(c, f) && x !in uncomputedAfter; // (otherwise, the backend may uncompute `x` before `r`, after its own last use)
+				else if(samePaths(c, f) && maxP != none || c >= i3 - i0 && branchOf(c) == 0) { // (in the branch, or by an eager merge, see `genEagerMerges`)
 					if(branchOf(c) != 0 && c <= maxP || reaches(c, k => uses.canFind(k))) unavailable = true;
 					else ns ~= q(uses, c); // (consumed after the uncomputation)
 				}

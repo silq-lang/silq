@@ -1,0 +1,28 @@
+// args: --run
+
+def returnsInBoth(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	if k { if l { return a; } } else { if l { return a; } }
+	forget(v0);
+	return a;
+}
+def returnAndAbort(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=!a;
+	if k { if l { t:=measure(v0); x:=(a,true); assert(false); } } else { if l { return a; } }
+	forget(v0);
+	return a;
+}
+def chained(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=!a;
+	v1:=X(dup(v0));
+	v2:=dup(v1);
+	e:=v2;
+	if k { if l { t:=measure(v0); x:=(a,e); assert(false); } } else { if l { return (a,e); } }
+	forget(v0);
+	return (a,e);
+}
+def main(){
+	r:=(measure(returnsInBoth(1:𝔹,true,false)),measure(returnsInBoth(0:𝔹,false,true)),measure(returnAndAbort(1:𝔹,false,true)),measure(returnAndAbort(0:𝔹,true,false)),measure(chained(1:𝔹,false,false)),measure(chained(0:𝔹,false,true)));
+	assert(r==(1,0,1,0,(1,1),(0,0)));
+	return r;
+}
