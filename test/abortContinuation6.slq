@@ -1,0 +1,10 @@
+def inLoop(x:𝔹,k:!𝔹){
+	c:=0;
+	while c<2 {
+		t:=dup(x);
+		if c==0 { if k { return x; } } else { y:=(x,true); assert(false); }
+		forget(t); /// TODO
+		c+=1;
+	}
+	return x;
+}

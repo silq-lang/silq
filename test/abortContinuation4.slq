@@ -1,0 +1,34 @@
+// args: --run
+
+def measuredAfter(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	t1:=measure(v0);
+	if l { if k { return (a,t1,t1); } } else { x:=(a,true); assert(false); }
+	t3:=measure(v0);
+	return (a,t1,t3);
+}
+def forgottenAfter(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	if l { if k { return a; } } else { x:=(a,true); assert(false); }
+	forget(v0);
+	return a;
+}
+def nestedAbort(a:𝔹,k:!𝔹,l:!𝔹,m:!𝔹){
+	v0:=dup(a);
+	t1:=measure(v0);
+	if l { if k { return (a,t1,t1); } if m { x:=(a,false); assert(false); } } else { x:=(a,true); assert(false); }
+	t3:=measure(v0);
+	return (a,t1,t3);
+}
+def thenAborts(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	t1:=measure(v0);
+	if l { x:=(a,true); assert(false); } else { if k { return (a,t1,t1); } }
+	t3:=measure(v0);
+	return (a,t1,t3);
+}
+def main(){
+	r:=(measure(measuredAfter(1:𝔹,false,true)),measure(measuredAfter(0:𝔹,true,true)),measure(forgottenAfter(1:𝔹,false,true)),measure(nestedAbort(1:𝔹,false,true,false)),measure(thenAborts(0:𝔹,false,false)),measure(thenAborts(1:𝔹,true,false)));
+	assert(r==((1,1,1),(0,0,0),1,(1,1,1),(0,0,0),(1,1,1)));
+	return r;
+}

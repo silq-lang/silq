@@ -1,0 +1,9 @@
+def consumedAfter(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	t1:=measure(v0); /// note
+	if l { if k { return (a,t1,t1); } } else { x:=(a,true); assert(false); }
+	a:=X(a); /// note
+	t3:=measure(v0); /// error
+	a:=X(a);
+	return (a,t1,t3);
+}
