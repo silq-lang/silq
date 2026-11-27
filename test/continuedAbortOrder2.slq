@@ -1,0 +1,39 @@
+// args: --run
+
+def nested(a:𝔹,k:!𝔹,l:!𝔹,m:!𝔹):𝔹{ // (the code after the first conditional continues its `then` branch, whose inner conditional aborts after consuming `a`; the second conditional aborts after consuming `a`)
+	v0:=dup(a);
+	if k { if m { x:=(a,true); assert(false); } } else { assert(false); }
+	if l { x:=(a,false); assert(false); }
+	forget(v0);
+	return a;
+}
+def consumed(a:𝔹,k:!𝔹,l:!𝔹,m:!𝔹):𝔹{ // (also the other branch of the first conditional consumes `a`)
+	v0:=dup(a);
+	if k { if m { x:=(a,true); assert(false); } } else { x:=(a,true); assert(false); }
+	if l { x:=(a,false); assert(false); }
+	forget(v0);
+	return a;
+}
+def updated(a:𝔹,k:!𝔹,l:!𝔹,m:!𝔹):𝔹{
+	v0:=dup(a);
+	if k {
+		if l {
+			if !m { a:=X(a); assert(false); }
+			a:=X(a);
+			x:=(a,true);
+			assert(false);
+		}
+	} else {
+		if l { x:=(a,true); assert(false); }
+		a:=X(a);
+		assert(false);
+	}
+	if !l { } else { a:=X(a); x:=(a,true); assert(false); }
+	forget(v0);
+	return a;
+}
+def main(){
+	r:=(measure(nested(1:𝔹,true,false,false)),measure(consumed(0:𝔹,true,false,false)),measure(updated(1:𝔹,true,false,true)));
+	assert(r==(1,0,1));
+	return r;
+}

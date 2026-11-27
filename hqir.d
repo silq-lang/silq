@@ -5908,7 +5908,9 @@ class ScopeWriter {
 						}
 					}
 
+					if(rv.interleave.length) ccg.code.pendingSplits ~= [rv.interleave[0], rv.interleave[1]];
 					auto contRet = scTail.genStmts(stmts[i+1..$], result);
+					if(rv.interleave.length) ccg.code.pendingSplits = ccg.code.pendingSplits[0 .. $-1];
 					if(rv.interleave.length) interleaveBranches(ccg.code, rv.interleave[0], rv.interleave[1], rv.interleave[2], rv.interleave[3], ccg.code.code[].length, rv.continued);
 					if(contRet.isAbort && rv.retCond.condQ) {
 						return combineResults(Result.conditionallyReturns(rv.value, rv.retCond), contRet, scTail);
@@ -8764,19 +8766,30 @@ void interleaveBranches(CodeWriter cw, size_t i0, size_t i1, size_t i2, size_t i
 		}
 		return visit(a);
 	}
-	enum outer = none - 1;
-	size_t splitOfPart(size_t k, int depth = 0) { // (the split of this conditional of a part of what the split `k` of an enclosing conditional splits: the enclosing conditional orders its split after the uncomputations that come before this one, see `needs`; `outer` if this conditional does not split such a part, e.g., as its condition is constant)
-		if(k == none || k >= i0 || depth > 300 || ![opCSplit, opQSplit].canFind(base(code[k].op))) return none;
+	enum outer = none - 1, outerMerged = none - 2; // (`outerMerged`: a part that merges with others before it reaches this conditional)
+	size_t splitOfPart(size_t k, int depth = 0, bool merged = false) { // (the split of this conditional of a part of what the split `k` of an enclosing conditional splits: the enclosing conditional orders its split after the uncomputations that come before this one, see `needs`; `outer` if this conditional does not split such a part, e.g., as its condition is constant)
+		if(k == none || k >= i0 || depth > 300) return none;
+		auto isMerge = [opCMerge, opQMerge].canFind(base(code[k].op));
+		if(!isMerge && ![opCSplit, opQSplit].canFind(base(code[k].op))) return none;
+		merged |= isMerge;
 		auto result = none;
 		foreach(r; code[k].qRet) {
 			if(!r) continue;
 			auto c = consAt(r);
-			if(isSplit(item(c))) return item(c);
-			auto s = c == none || c >= i0 ? outer : splitOfPart(c, depth + 1);
-			if(s != none && s != outer) return s;
-			if(s == outer) result = outer;
+			if(isSplit(item(c))) {
+				if(!merged) return item(c);
+				result = outerMerged; // (this conditional splits the merged version, not the part, which the uncomputation reads)
+				continue;
+			}
+			auto s = c == none || c >= i0 ? merged ? outerMerged : outer : splitOfPart(c, depth + 1, merged);
+			if(s != none && s != outer && s != outerMerged) return s;
+			if(s == outer || s == outerMerged && result == none) result = s;
 		}
 		return result;
+	}
+	bool pending(size_t k) { // (in the split of an enclosing conditional whose interleaving follows, see `ItePartialReturn`)
+		foreach(p; cw.pendingSplits) if(p[0] <= k && k < p[1]) return true;
+		return false;
 	}
 	MapX!(QReg, size_t[]) placeMemo;
 	size_t[] places(QReg r, int depth) { // (the statements after which the backend uncomputes `r`: its definition, its uses, and the uncomputations of the forgotten values computed from it)
@@ -8825,8 +8838,8 @@ void interleaveBranches(CodeWriter cw, size_t i0, size_t i1, size_t i2, size_t i
 				if(ck != none && ck < i0) {
 					unavailable = true;
 					auto s = splitOfPart(ck);
-					if(s == outer) deferred = true;
-					else if(s != none) {
+					if(s == outer || s == outerMerged && pending(ck)) deferred = true;
+					else if(s != none && s != outerMerged) {
 						c = s;
 						split = !reaches(c, k => P.canFind(k));
 					}
@@ -8950,6 +8963,7 @@ class CodeWriter {
 	Appender!(IrVariable[]) vars;
 	MapX!(QReg, uint) producedAt, consumedAt; // (the statements of `code` up to `numIndexed` that produce and consume the quantum registers, see `interleaveBranches`)
 	size_t numIndexed;
+	size_t[2][] pendingSplits; // (the splits of the conditionals whose interleaving with the code after them is pending, see `ItePartialReturn` and `interleaveBranches`)
 
 	void index(size_t from, size_t to) {
 		foreach(k; from .. to) {
