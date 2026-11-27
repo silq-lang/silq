@@ -1,0 +1,18 @@
+def h(x:𝔹){ return measure(x); }
+def usedAfterConsumption(a:𝔹,k:!𝔹,l:!𝔹,m:!𝔹){
+	v0:=dup(a); /// error
+	v1:=dup(v0);
+	if m {
+		if l { }
+		a:=X(a);
+	}
+	if k {
+		t5:=measure(v1);
+		t6:=h(v1); /// error
+		if k { return a; } /// note
+		while true { }
+	}
+	forget(v1);
+	forget(v0); /// note
+	return a;
+}
