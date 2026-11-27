@@ -2,6 +2,6 @@
 def main(){
 	a:=(0:𝔹,0:𝔹);
 	(H(a[1]),a[0]):=a; /// TODO
-	a:=(H(a[1]),a[0]); /// TODO
+	a:=(H(a[1]),a[0]);
 	assert(measure(a)=(0,0));
 }

@@ -6,7 +6,7 @@ def add[n:!ℕ](v:!ℕ^n,w:!ℕ^n):!ℕ^n{
 }
 def separate(k:!ℕ,c:!𝔹){
 	if c { x:=vector(2,1:!ℕ); y:=vector(2,2:!ℕ); } else { x:=vector(1,1:!ℕ); y:=vector(1,2:!ℕ); }
-	return add(x,y); /// TODO
+	return add(x,y);
 }
 
 def main() ⇒ (separate(2,0), separate(3,1));
