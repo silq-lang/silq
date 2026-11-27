@@ -1,0 +1,61 @@
+// args: --run
+
+def add[n:!ℕ](v:!ℕ^n,w:!ℕ^n):!ℕ^n ⇒ [v[i]+w[i] for i in 0..n];
+
+def literal(c:!𝔹){
+	if c { x:=vector(2,1:!ℕ); y:=vector(2,2:!ℕ); } else { x:=vector(3,1:!ℕ); y:=vector(3,2:!ℕ); }
+	return add(x,y);
+}
+def knownEqual(c:!𝔹){
+	if c { n:=2; m:=2; x:=vector(n,1:!ℕ); y:=vector(m,2:!ℕ); } else { x:=vector(3,1:!ℕ); y:=vector(3,2:!ℕ); }
+	return add(x,y);
+}
+def withLocal(c:!𝔹){
+	if c { n:=2; x:=vector(n,1:!ℕ); y:=vector(n,2:!ℕ); z:=vector(2,3:!ℕ); } else { x:=vector(3,1:!ℕ); y:=vector(3,2:!ℕ); z:=vector(3,3:!ℕ); }
+	return add(add(x,y),z);
+}
+def inTuple(c:!𝔹){
+	if c { t:=(vector(2,1:!ℕ),vector(2,2:!ℕ)); } else { t:=(vector(3,1:!ℕ),vector(3,2:!ℕ)); }
+	(x,y):=t;
+	return add(x,y);
+}
+def inMixedTuple(c:!𝔹){
+	if c { t:=(vector(2,1:!ℕ),vector(4,2:!ℕ)); x:=vector(2,3:!ℕ); } else { t:=(vector(3,1:!ℕ),vector(5,2:!ℕ)); x:=vector(3,3:!ℕ); }
+	(y,z):=t;
+	return add(x,y);
+}
+def nested(c:!𝔹){
+	if c { u:=vector(2,vector(2,1:!ℕ)); } else { u:=vector(3,vector(3,1:!ℕ)); }
+	return add(u[0],u[u.length-1]);
+}
+def pairOf(c:!𝔹){
+	if c { x:=vector(2,1:!ℕ); y:=vector(2,2:!ℕ); } else { x:=vector(3,1:!ℕ); y:=vector(3,2:!ℕ); }
+	return (x,y);
+}
+def returned(c:!𝔹){
+	(x,y):=pairOf(c);
+	return add(x,y);
+}
+def inLoop(k:!ℕ){
+	s:=0:!ℕ;
+	for i in 0..k {
+		if i==0 { x:=vector(2,1:!ℕ); y:=vector(2,2:!ℕ); } else { x:=vector(3,1:!ℕ); y:=vector(3,2:!ℕ); }
+		z:=add(dup(x),y);
+		s+=z[0]+x.length;
+	}
+	return s;
+}
+def inLoopLocal(k:!ℕ){
+	s:=0:!ℕ;
+	for i in 0..k {
+		if i==0 { n:=2; x:=vector(n,1:!ℕ); y:=vector(n,2:!ℕ); } else { x:=vector(3,1:!ℕ); y:=vector(3,2:!ℕ); }
+		z:=add(dup(x),y);
+		s+=z[0]+x.length;
+	}
+	return s;
+}
+def main(){
+	r:=(literal(true),literal(false),knownEqual(true),knownEqual(false),withLocal(true),inTuple(false),inMixedTuple(false),nested(true),returned(false),inLoop(3),inLoopLocal(3));
+	assert(r==((3,3),(3,3,3),(3,3),(3,3,3),(6,6),(3,3,3),(4,4,4),(2,2),(3,3,3),17,17));
+	return r;
+}

@@ -1,0 +1,21 @@
+def add[n:!ℕ](v:!ℕ^n,w:!ℕ^n):!ℕ^n{
+	r:=vector(n,0:!ℕ);
+	for i in 0..n { r[i]=v[i]+w[i]; }
+	return r;
+}
+def differentInOne(c:!𝔹){
+	if c { x:=vector(2,1:!ℕ); y:=vector(2,2:!ℕ); } else { x:=vector(3,1:!ℕ); y:=vector(4,2:!ℕ); }
+	return add(x,y); /// error
+}
+def knownDifferent(c:!𝔹){
+	if c { n:=2; m:=3; x:=vector(n,1:!ℕ); y:=vector(m,2:!ℕ); } else { x:=vector(3,1:!ℕ); y:=vector(3,2:!ℕ); }
+	return add(x,y); /// error
+}
+def localDifferent(c:!𝔹){
+	if c { n:=2; x:=vector(n,1:!ℕ); y:=vector(4,2:!ℕ); } else { x:=vector(3,1:!ℕ); y:=vector(3,2:!ℕ); }
+	return add(x,y); /// error
+}
+def unknownEqual(c:!𝔹,n:!ℕ,m:!ℕ){
+	if c { x:=vector(n,1:!ℕ); y:=vector(m,2:!ℕ); } else { x:=vector(3,1:!ℕ); y:=vector(3,2:!ℕ); }
+	return add(x,y); /// error
+}
