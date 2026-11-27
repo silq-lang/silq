@@ -1,0 +1,77 @@
+// args: --run
+
+def afterLoop(){
+	t:=[2,3];
+	z:=vector(t[0],0:𝔹);
+	repeat 2 { t=[3,1]; }
+	y:=dup(z);
+	return (measure(y),measure(z),t);
+}
+def inLoop(){
+	t:=[2,3];
+	z:=vector(t[0],1:𝔹);
+	repeat 2 { y:=dup(z); forget(y); t=[3,1]; }
+	return (measure(z),t);
+}
+def inBranch(const c:!𝔹){
+	t:=[2,3];
+	z:=vector(t[0],0:𝔹);
+	if c { repeat 2 { t=[3,1]; } }
+	y:=dup(z);
+	return (measure(y),measure(z),t);
+}
+def nested(){
+	t:=[2,3];
+	z:=vector(t[0],1:𝔹);
+	repeat 2 { repeat 2 { t[1]+=1; } }
+	y:=dup(z);
+	return (measure(y),measure(z),t);
+}
+def whileLoop(){
+	t:=[2,3];
+	z:=vector(t[0],0:𝔹);
+	k:=0;
+	while k<2 { k+=1; t[1]=5; }
+	forget(k);
+	y:=dup(z);
+	return (measure(y),measure(z),t);
+}
+def inClosure(){
+	t:=[2,3];
+	g:=λ(){
+		z:=vector(t[0],0:𝔹);
+		repeat 2 { t=[3,1]; }
+		y:=dup(z);
+		return (measure(y),measure(z),t);
+	};
+	return g();
+}
+def lengthCondition(){
+	t:=[2,3];
+	z:=vector(t[0],0:𝔹);
+	k:=0;
+	while k<z.length { t=[3,k]; k+=1; }
+	y:=dup(z);
+	return (measure(y),measure(z),t,k);
+}
+def forLoop(const n:!ℕ){
+	t:=[2,3];
+	z:=(vector(t[0],0:𝔹),3:int[t[1]]);
+	for i in 0..n { t[1]=i+4; }
+	y:=dup(z);
+	return (measure(y),measure(z),t);
+}
+def vectorLength[n:!ℕ](const x:𝔹^n)⇒n;
+def genericCall(){
+	t:=[2,3];
+	z:=vector(t[0],0:𝔹);
+	repeat 2 { t=[3,1]; }
+	return (vectorLength(z),measure(z),t);
+}
+def main(){
+	r:=(afterLoop(),inLoop(),inBranch(true),inBranch(false),nested(),whileLoop());
+	assert(r==(([0,0],[0,0],[3,1]),([1,1],[3,1]),([0,0],[0,0],[3,1]),([0,0],[0,0],[2,3]),([1,1],[1,1],[2,7]),([0,0],[0,0],[2,5])));
+	s:=(inClosure(),lengthCondition(),forLoop(0),forLoop(2),genericCall());
+	assert(s==(([0,0],[0,0],[3,1]),([0,0],[0,0],[3,1],2),(([0,0],3),([0,0],3),[2,3]),(([0,0],3),([0,0],3),[2,5]),(2,[0,0],[3,1])));
+	return (r,s);
+}

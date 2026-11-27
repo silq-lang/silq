@@ -3305,7 +3305,7 @@ struct Interpreter(QState){
 	void closeScope(Scope sc,bool onlyWider=false){
 		if(qstate.unreachable) return;
 		static if(language==silq) if(auto bs=cast(BlockScope)sc) foreach(w;bs.mergeWitnesses){ // (see `ast.scope_.Scope.mergeWitnesses`)
-			auto v=runExp(w[1]);
+			auto v=runExp(w[1]).dup(qstate); // (a copy, as for the witnesses of unions, see `convertUnion`)
 			if(!isOpen(w[0].vtype)) v=v.convertTo(w[0].vtype); // (with the type of the witness, e.g., `!ℕ` for the static witness `1:!𝔹`)
 			qstate.assignTo(w[0].getName,v);
 		}
@@ -4503,10 +4503,18 @@ struct Interpreter(QState){
 			runStm(with_.bdy,retState);
 			runStm(with_.itrans,retState);
 		}
+	void convertOnLoopEntry(CompoundExp bdy){ // (the variables from outside whose types the loop weakens at its start, with their static types before the loop for the witnesses of unions, see `ast.semantic_.recordLoopEntryConversions`)
+			static if(language==silq) if(auto bs=cast(BlockScope)bdy.blscope_) foreach(c;bs.entryConversions){
+				auto name=c[0].getName;
+				if(name !in qstate.vars||!mentionsUnion(c[2])) continue; // (other weakenings keep the representation, as the call of the lowered loop, e.g., of `-1e9:!ℤ` for `!ℝ`)
+				qstate.vars[name]=convertTo(qstate.vars[name],c[2],true,false,c[1]).toVar(qstate,false);
+			}
+		}
 	pragma(inline,false) void runStmRepeatExp(RepeatExp re,ref QState retState){
 			auto rep=runExp(re.num);
 			if(rep.isℤ()){
 				auto z=rep.asℤ();
+				convertOnLoopEntry(re.bdy);
 				auto intp=Interpreter(functionDef,re.bdy,qstate,hasFrame);
 				foreach(x;0.ℤ..z){
 					if(opt.trace) writeln("repetition: ",x+1);
@@ -4536,6 +4544,7 @@ struct Interpreter(QState){
 				auto l=runExp(range.left), s=range.step?runExp(range.step):qstate.makeInteger(ℤ(1)), r=runExp(range.right);
 				if(l.isℤ()&&r.isℤ()&&s.isℤ()){
 					auto lz=l.asℤ(),rz=r.asℤ(),sz=s.asℤ();
+					convertOnLoopEntry(fe.bdy);
 					auto intp=Interpreter(functionDef,fe.bdy,qstate,hasFrame);
 					enum body_=q{
 						if(opt.trace) writeln("loop-index: ",j);
@@ -4577,6 +4586,7 @@ struct Interpreter(QState){
 			}
 		}
 	pragma(inline,false) void runStmWhileExp(WhileExp we,ref QState retState){
+			convertOnLoopEntry(we.bdy);
 			auto intp=Interpreter(functionDef,we.bdy,qstate,hasFrame);
 			for(;;){
 				if(intp.qstate.unreachable) break;
@@ -4588,6 +4598,7 @@ struct Interpreter(QState){
 			qstate=intp.qstate;
 		}
 	pragma(inline,false) void runStmDoWhileExp(DoWhileExp dw,ref QState retState){
+			convertOnLoopEntry(dw.bdy);
 			auto intp=Interpreter(functionDef,dw.bdy,qstate,hasFrame);
 			auto lsc=dw.bdy.blscope_;
 			for(;;){

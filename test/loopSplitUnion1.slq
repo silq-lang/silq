@@ -6,7 +6,7 @@ def decayed(const x:𝔹){
 	z:=vector(t[0],0:𝔹);
 	g:=λ(){ t[0]+=1; return (t,q); }; (t,q):=g();
 	repeat 2 {
-		forget(z); z:=vector(t[0],0:𝔹); /// TODO
+		forget(z); z:=vector(t[0],0:𝔹);
 		h:=λ(){ t[0]+=1; return (t,q); }; (t,q):=h();
 	}
 	return (t[0],measure(z):!𝔹[],measure(q):!𝔹[]);
@@ -37,5 +37,10 @@ def slicedDoWhile(const x:𝔹,const d:!𝔹){
 	forget(c);
 	return (t[0],measure(q):!𝔹[],measure(z):!𝔹[]);
 }
-
-def main()⇒(decayed(1),annotated(1),slicedDoWhile(1,1));
+def main(){
+	x:=1:𝔹;
+	r:=(decayed(x),annotated(x),slicedDoWhile(x,true),slicedDoWhile(x,false));
+	forget(x=1:𝔹);
+	assert(r==((5,[0,0,0,0],[1,1]),(4,[0,0,0],[1,1]),(6,[1,1,1,1,1],[0,0,0]),(6,[1,1],[0,0,0])));
+	return r;
+}

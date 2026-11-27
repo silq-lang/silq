@@ -1,0 +1,102 @@
+// args: --run
+
+def exactType(const x:𝔹){
+	n:=2; q:=vector(n,dup(x)); c:=0;
+	do{
+		c+=1;
+		forget(q); q:=vector(n,dup(x));
+		g:=λ(){ n+=1; return (n,q); }; (n,q):=dup(g)();
+	}while c<2;
+	forget(c);
+	(m,r):=g();
+	s:=r:𝔹^q.length;
+	return (n,m,measure(q),measure(s));
+}
+def carried(const x:𝔹){
+	n:=2; c:=0;
+	do{
+		c+=1;
+		n+=1;
+		q:=vector(n,dup(x));
+		g:=λ(){ return dup(q); };
+		forget(q);
+	}while c<2;
+	forget(c);
+	t:=g();
+	u:=t:𝔹^n;
+	n+=1;
+	return (n,measure(u));
+}
+def twoCarried(const x:𝔹){
+	n:=2; m:=1; c:=0;
+	do{
+		c+=1;
+		n+=1; m+=2;
+		q:=vector(n+m,dup(x));
+		g:=λ(){ return dup(q); };
+		forget(q);
+	}while c<2;
+	forget(c);
+	t:=g();
+	u:=t:𝔹^(n+m);
+	return (n,m,measure(u));
+}
+def component(const x:𝔹){
+	t:=[2,3]; c:=0;
+	do{
+		c+=1;
+		t[0]+=1;
+		w:=vector(t[0],dup(x)); g:=λ(){ return dup(w); }; forget(w);
+	}while c<2;
+	forget(c);
+	r:=g();
+	u:=r:𝔹^t[0];
+	t[1]=5;
+	return (t,measure(u));
+}
+def witnessAndCarried(const x:𝔹){
+	n:=2; c:=0;
+	do{
+		c+=1;
+		q:=vector(n,dup(x));
+		g:=λ(){ n+=1; return (n,q); }; (n,q):=dup(g)();
+		w:=vector(n,dup(x)); h:=λ(){ return dup(w); }; forget(w);
+	}while c<2;
+	forget(c);
+	(m,r):=g();
+	s:=r:𝔹^q.length;
+	t:=h();
+	u:=t:𝔹^n;
+	return (n,m,measure(q),measure(s),measure(u));
+}
+def classicalInLoop(){
+	n:=2; k:=0;
+	for j in 0..2 {
+		c:=0;
+		do{ c+=1; n=3; g:=λ(){ return vector(n,0:𝔹); }; n=4; }while c<2;
+		forget(c);
+		r:=g();
+		k+=measure(r).length;
+	}
+	return (n,k);
+}
+def resetUpdate(){
+	n:=2; m:=1; c:=0;
+	do{
+		c+=1;
+		g:=λ(){ return vector(n+m,0:𝔹); };
+		n=3;
+	}while c<3 {
+		m+=1;
+	}
+	forget(c);
+	r:=g();
+	return (n,m,measure(r));
+}
+def main(){
+	x:=1:𝔹;
+	r:=(exactType(x),carried(x),twoCarried(x),component(x),witnessAndCarried(x),classicalInLoop(),resetUpdate());
+	forget(x=1:𝔹);
+	assert(r==((4,4,(1,1,1),(1,1,1)),(5,(1,1,1,1)),(4,5,(1,1,1,1,1,1,1,1,1)),([4,5],(1,1,1,1)),(4,4,(1,1,1),(1,1,1),(1,1,1,1)),(4,6),(3,3,(0,0,0,0,0,0))));
+	return r;
+}

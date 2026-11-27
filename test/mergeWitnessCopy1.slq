@@ -1,0 +1,15 @@
+// args: --run
+
+def f(const c:!𝔹){
+	t:=[2,3];
+	q:=vector(t[0],1:!𝔹);
+	if c { q=vector(t[0],0:!𝔹); } else { q=vector(t[0],1:!𝔹); t[0]+=1; }
+	t[0]+=1;
+	w:=q:⋃[s:!ℕ^2]. !𝔹^s[0];
+	return (w:!𝔹[],t);
+}
+def main(){
+	r:=(f(true),f(false));
+	assert(r==(([0,0],[3,3]),([1,1],[4,3])));
+	return r;
+}
