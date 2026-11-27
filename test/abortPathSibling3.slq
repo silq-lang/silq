@@ -1,3 +1,5 @@
+// args: --run
+
 def h(x:𝔹){ return measure(x); }
 
 def consumedBeforeReturn(a:𝔹,k:!𝔹,j:!𝔹){
@@ -5,8 +7,10 @@ def consumedBeforeReturn(a:𝔹,k:!𝔹,j:!𝔹){
 	v1:=!v0;
 	t1:=h(v1);
 	if k { t2:=h(v0); x3:=(a,true); return (x3,t1,t2,t2); }
-	if j { x5:=(a,true); t6:=measure(v1); assert(false); } /// TODO
+	if j { x5:=(a,true); t6:=measure(v1); assert(false); }
 	t7:=measure(v1);
 	t8:=measure(v0);
 	return ((a,true),t1,t7,t8);
 }
+
+def main() ⇒ [consumedBeforeReturn(1,1,1),consumedBeforeReturn(1,1,0),consumedBeforeReturn(1,0,0)];

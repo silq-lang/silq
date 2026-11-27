@@ -1,0 +1,27 @@
+def partialInBranch(x:𝔹,y:𝔹,const q:𝔹,k:!ℕ){
+	if k>2 { if q { return (x,y); } }
+	m:=measure(dup(x)); /// error
+	if m { y:=X(y); }
+	return (x,y);
+}
+
+def otherBranchContinues(x:𝔹,y:𝔹,const q:𝔹){
+	if q { return (x,y); } else { y:=X(y); }
+	m:=measure(dup(x)); /// error
+	if m { y:=X(y); }
+	return (x,y);
+}
+
+def nestedBothReturn(x:𝔹,y:𝔹,const q:𝔹,const p:𝔹){
+	if q { if p { return (x,y); } else { return (x,y); } }
+	m:=measure(dup(x)); /// error
+	if m { y:=X(y); }
+	return (x,y);
+}
+
+def continuedAfterPartial(x:𝔹,y:𝔹,const q:𝔹,k:!ℕ){
+	if k>2 { if q { return (x,y); } y:=X(y); }
+	m:=measure(dup(x)); /// error
+	if m { y:=X(y); }
+	return (x,y);
+}

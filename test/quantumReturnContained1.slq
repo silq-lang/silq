@@ -1,0 +1,50 @@
+// args: --run
+
+def measuredAfter(x:𝔹,y:𝔹,const q:𝔹,k:!ℕ){
+	t:=dup(x); u:=dup(t);
+	if k>2 { if q { return (x,y); } else { return (x,y); } } else { y:=X(y); }
+	m:=measure(u);
+	if m { y:=X(y); }
+	return (x,y);
+}
+
+def returnAfterPartial(x:𝔹,y:𝔹,const q:𝔹,k:!ℕ){
+	if k>2 { if q { return (x,y); } y:=X(y); return (x,y); }
+	m:=measure(dup(x));
+	if m { y:=X(y); }
+	return (x,y);
+}
+
+def abortAfterPartial(x:𝔹,y:𝔹,const q:𝔹,k:!ℕ){
+	if k>2 { if q { return (x,y); } assert(false); }
+	m:=measure(dup(x));
+	if m { y:=X(y); }
+	return (x,y);
+}
+
+def inLoop(x:𝔹,y:𝔹,const q:𝔹,k:!ℕ){
+	for i in 0..2 {
+		if k>2 { if q { return (x,y); } else { return (x,y); } }
+		m:=measure(dup(y));
+		if m { y:=X(y); }
+		k+=1;
+	}
+	return (x,y);
+}
+
+def inWhile(x:𝔹,y:𝔹,const q:𝔹,k:!ℕ){
+	while k<5 {
+		if k==3 { if q { return (x,y); } else { return (x,y); } }
+		m:=measure(dup(x));
+		if m { y:=X(y); }
+		k+=1;
+	}
+	return (x,y);
+}
+
+def main(){
+	q:=H(0:𝔹);
+	r:=(measure(measuredAfter(1:𝔹,0:𝔹,q,0)),measure(measuredAfter(1:𝔹,1:𝔹,q,3)),measure(returnAfterPartial(1:𝔹,0:𝔹,q,0)),measure(abortAfterPartial(0:𝔹,1:𝔹,q,1)),measure(inLoop(1:𝔹,1:𝔹,q,0)),measure(inLoop(1:𝔹,1:𝔹,q,2)),measure(inWhile(1:𝔹,0:𝔹,q,0)),measure(inWhile(0:𝔹,0:𝔹,q,4)),measure(H(q)));
+	assert(r==((1,0),(1,1),(1,1),(0,1),(1,0),(1,0),(1,1),(0,0),0));
+	return r;
+}
