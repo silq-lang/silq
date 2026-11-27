@@ -1,0 +1,53 @@
+def consumedAfter(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	t0:=measure(v0); /// note
+	if l { while true { if k { return (a,t0,t0); } } }
+	a:=X(a); /// note
+	t1:=measure(v0); /// error
+	return (a,t0,t1);
+}
+def consumedAfterQuantum(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	t0:=measure(v0); /// note
+	if l { while true { if k { return a; } } }
+	a:=X(a); /// note
+	t1:=measure(v0); /// error
+	return a;
+}
+def returnThenLoop(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	t0:=measure(v0); /// note
+	if l { if k { return (a,t0,t0); } while true { } }
+	a:=X(a); /// note
+	t1:=measure(v0); /// error
+	return (a,t0,t1);
+}
+def repeatReturns(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	t0:=measure(v0); /// note
+	if l { repeat 2 { if k { return (a,t0,t0); } assert(false); } }
+	a:=X(a); /// note
+	t1:=measure(v0); /// error
+	return (a,t0,t1);
+}
+def doWhileReturns(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	t0:=measure(v0); /// note
+	if l { do { if k { return (a,t0,t0); } } while true; }
+	a:=X(a); /// note
+	t1:=measure(v0); /// error
+	return (a,t0,t1);
+}
+def inLoop(x:𝔹,k:!ℕ){
+	c:=0;
+	repeat 2 {
+		t:=dup(x);
+		m:=measure(t); /// note
+		if c>0 { while true { if k==0 { return x; } } }
+		x:=X(x); /// note
+		n:=measure(t); /// error
+		x:=X(x);
+		c+=1;
+	}
+	return x;
+}

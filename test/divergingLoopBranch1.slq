@@ -1,0 +1,56 @@
+// args: --run
+
+def kept(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	t0:=measure(v0);
+	if l { while true { if k { return (a,t0,t0); } } }
+	t1:=measure(v0);
+	return (a,t0,t1);
+}
+def forgetAfter(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	if l { while true { if k { return (a,1); } } }
+	forget(v0);
+	return (a,0);
+}
+def forgetAfterQuantum(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	t0:=measure(v0);
+	if l { while true { if k { return a; } } }
+	forget(v0);
+	return a;
+}
+def returnThenLoop(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	if l { if k { return (a,1); } while true { } }
+	forget(v0);
+	return (a,0);
+}
+def repeatReturns(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	t0:=measure(v0);
+	if l { repeat 2 { if k { return (a,t0,t0); } assert(false); } }
+	t1:=measure(v0);
+	return (a,t0,t1);
+}
+def doWhileReturns(a:𝔹,k:!𝔹,l:!𝔹){
+	v0:=dup(a);
+	if l { do { if k { return (a,1); } } while true; }
+	forget(v0);
+	return (a,0);
+}
+def inLoop(x:𝔹,k:!ℕ){
+	c:=0;
+	while c<3 {
+		t:=dup(x);
+		if c>1 { while true { if k==0 { return x; } } }
+		forget(t);
+		c+=1;
+	}
+	return x;
+}
+def main(){
+	r:=(measure(kept(1:𝔹,true,false)),measure(kept(0:𝔹,true,true)),measure(forgetAfter(1:𝔹,true,false)),measure(forgetAfter(0:𝔹,true,true)),measure(forgetAfterQuantum(1:𝔹,true,false)),measure(forgetAfterQuantum(0:𝔹,true,true)),measure(returnThenLoop(1:𝔹,true,false)),measure(returnThenLoop(0:𝔹,true,true)),measure(repeatReturns(1:𝔹,true,false)),measure(repeatReturns(0:𝔹,true,true)),measure(doWhileReturns(1:𝔹,true,false)),measure(doWhileReturns(0:𝔹,true,true)),measure(inLoop(1:𝔹,0)));
+	assert(r==((1,1,1),(0,0,0),(1,0),(0,1),1,0,(1,0),(0,1),(1,1,1),(0,0,0),(1,0),(0,1),1));
+	return r;
+}
