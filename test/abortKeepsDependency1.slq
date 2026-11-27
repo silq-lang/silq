@@ -1,0 +1,46 @@
+// args: --run
+
+def g(const x:𝔹){ return measure(dup(x)); }
+
+def measuredAfterConsumption(a:𝔹,m:!𝔹){
+	v0:=dup(a);
+	v1:=!v0;
+	t1:=measure(v1);
+	if m { x2:=(a,true); y3:=measure(x2); t5:=measure(v1); assert(false); }
+	t6:=measure(v1);
+	return (a,t1,t6);
+}
+
+def readAfterConsumption(a:𝔹,m:!𝔹){
+	v0:=dup(a);
+	v1:=!v0;
+	t1:=measure(v1);
+	if m { x2:=(a,true); t5:=g(v1); assert(false); }
+	t6:=measure(v1);
+	return (a,t1,t6);
+}
+
+def chain(a:𝔹,m:!𝔹){
+	v0:=dup(a);
+	v1:=dup(v0);
+	v2:=!v1;
+	t1:=measure(v2);
+	if m { a:=X(a); t5:=measure(v2); assert(false); }
+	t6:=measure(v2);
+	return (a,t1,t6);
+}
+
+def inNestedConditional(a:𝔹,m:!𝔹,k:!𝔹){
+	v0:=dup(a);
+	v1:=!v0;
+	t1:=measure(v1);
+	if m { x2:=(a,true); if k { t5:=measure(v1); } assert(false); }
+	t6:=measure(v1);
+	return (a,t1,t6);
+}
+
+def main(){
+	r:=(measure(measuredAfterConsumption(1:𝔹,false)),measure(readAfterConsumption(0:𝔹,false)),measure(chain(1:𝔹,false)),measure(inNestedConditional(0:𝔹,false,true)));
+	assert(r==((1,0,0),(0,1,1),(1,0,0),(0,1,1)));
+	return r;
+}

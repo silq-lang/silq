@@ -1,0 +1,29 @@
+def consumedBeforeConditional(a:𝔹,m:!𝔹){
+	v0:=dup(a);
+	v1:=!v0; /// error
+	t1:=measure(v1);
+	a:=X(a);
+	if m { t5:=measure(v1); assert(false); } /// error
+	return (a,t1);
+}
+
+def consumedOnBothPaths(a:𝔹,m:!𝔹){
+	v0:=dup(a);
+	v1:=!v0;
+	t1:=measure(v1);
+	if m { a:=X(a); t5:=measure(v1); assert(false); }
+	a:=X(a);
+	t6:=measure(v1); /// error
+	return (a,t1,t6);
+}
+
+def h(x:𝔹){ return measure(x); }
+def consumedByImplicitDup(a:𝔹,k:!𝔹,m:!𝔹){
+	v0:=dup(a);
+	v1:=dup(v0);
+	t1:=h(v0);
+	t2:=measure(v1);
+	if m { t3:=measure(v1); if k { x4:=(a,true); assert(false); } x5:=(a,true); t7:=h(v1); assert(false); } /// error
+	t13:=measure(v1);
+	return (a,t1,t2,t13);
+}
