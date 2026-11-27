@@ -1,0 +1,11 @@
+def h(x:𝔹){ return measure(x); }
+
+def consumedOnContinuingPath(a:𝔹,k:!𝔹,j:!𝔹){
+	v0:=dup(a);
+	v1:=!v0;
+	t1:=h(v1);
+	if k { t2:=h(v0); a:=X(a); }
+	if j { x5:=(a,true); t6:=measure(v1); assert(false); } /// error
+	t7:=measure(v1); /// error
+	return (a,t1,t7);
+}

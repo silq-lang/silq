@@ -11,7 +11,7 @@ def consumedInThen(a:𝔹,l:!𝔹){
 	v0:=!a;
 	v1:=dup(v0);
 	e:=v1;
-	if l { t:=measure(v0); a:=X(a); assert(false); } else { a:=X(a); u:=!v1; forget(u); w:=!v0; forget(w); } /// TODO
+	if l { t:=measure(v0); a:=X(a); assert(false); } else { a:=X(a); u:=!v1; forget(u); w:=!v0; forget(w); }
 	s:=measure(v0);
 	r:=measure(v1); /// error
 	return (a,s,r,e);

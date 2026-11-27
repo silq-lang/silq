@@ -20,8 +20,8 @@ def chained(a:𝔹,k:!𝔹,l:!𝔹){
 	v1:=dup(v0);
 	t1:=measure(v1);
 	ms+=t1;
-	if k { } else { if l { return (a,ms); } else { } } /// note
-	forget(v1); /// error
+	if k { } else { if l { return (a,ms); } else { } }
+	forget(v1);
 	return (a,ms);
 }
 def chainedDupInBranch(a:𝔹,k:!𝔹,l:!𝔹){

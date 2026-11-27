@@ -1,0 +1,41 @@
+// args: --run
+
+def g(const x:𝔹){ return measure(dup(x)); }
+def h(x:𝔹){ return measure(x); }
+
+def consumedBeforeAbort(a:𝔹,k:!𝔹,j:!𝔹){
+	v0:=dup(a);
+	v1:=!v0;
+	t1:=h(v1);
+	if k { t2:=h(v0); x3:=(a,true); assert(false); }
+	if j { x5:=(a,true); t6:=measure(v1); assert(false); }
+	t7:=measure(v1);
+	t8:=measure(v0);
+	return (a,t1,t7,t8);
+}
+
+def consumedBeforeNestedAbort(a:𝔹,k:!𝔹,l:!𝔹,j:!𝔹){
+	v0:=dup(a);
+	v1:=!v0;
+	t1:=h(v1);
+	if l { if k { t2:=h(v0); x3:=(a,true); assert(false); } }
+	if j { x5:=(a,true); t6:=measure(v1); assert(false); }
+	t7:=measure(v1);
+	t8:=measure(v0);
+	return (a,t1,t7,t8);
+}
+
+def forgottenBeforeNestedAbort(a:𝔹,l:!𝔹,m:!𝔹){
+	v0:=dup(a);
+	v1:=dup(v0);
+	t1:=h(v1);
+	if m { if l { x2:=(a,true); assert(false); } } else { t5:=g(v0); }
+	t7:=measure(v1);
+	return (a,t1,t7);
+}
+
+def main(){
+	r:=(measure(consumedBeforeAbort(1:𝔹,false,false)),measure(consumedBeforeNestedAbort(1:𝔹,false,true,false)),measure(forgottenBeforeNestedAbort(1:𝔹,false,true)),measure(forgottenBeforeNestedAbort(0:𝔹,true,false)));
+	assert(r==((1,0,0,1),(1,0,0,1),(1,1,1),(0,0,0)));
+	return r;
+}
