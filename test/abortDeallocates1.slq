@@ -1,0 +1,28 @@
+// args: --run
+
+def g(const x:𝔹){ return measure(dup(x)); }
+def h(x:𝔹){ return measure(x); }
+def constUseBeforeAbort(a:𝔹,k:!𝔹,m:!𝔹,p:!𝔹){
+	v0:=dup(a);
+	v1:=!v0;
+	t1:=h(v1);
+	if k {
+		if p { t:=h(v1); assert(false); }
+	} else {
+		if m {
+			if p { t:=measure(v1); x:=(a,true); u:=measure(v0); assert(false); }
+			x:=(a,true);
+			y:=measure(x);
+			t:=g(v1);
+			assert(false);
+		}
+		assert(false);
+	}
+	t2:=measure(v1);
+	return (a,t1,t2);
+}
+def main(){
+	r:=(measure(constUseBeforeAbort(0:𝔹,true,true,false)),measure(constUseBeforeAbort(1:𝔹,true,false,false)));
+	assert(r==((0,1,1),(1,0,0)));
+	return r;
+}

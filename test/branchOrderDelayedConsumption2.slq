@@ -1,12 +1,14 @@
+// args: --run
+
 def g(const x:𝔹){ return measure(dup(x)); }
 def measuredBefore(a:𝔹,k:!𝔹,l:!𝔹){
 	v0:=dup(a);
-	v1:=dup(v0); /// error
+	v1:=dup(v0);
 	t1:=measure(v1);
 	if l {
-		x:=(a,true); /// note
+		x:=(a,true);
 		y:=measure(x);
-		t:=g(v1); /// note
+		t:=g(v1);
 		assert(false);
 	}
 	if k {
@@ -14,7 +16,12 @@ def measuredBefore(a:𝔹,k:!𝔹,l:!𝔹){
 		u:=measure(v0);
 		assert(false);
 	}
-	t2:=measure(v0); /// note
-	forget(v1); /// error
+	t2:=measure(v0);
+	forget(v1);
 	return (a,t1,t2);
+}
+def main(){
+	r:=(measure(measuredBefore(0:𝔹,false,false)),measure(measuredBefore(1:𝔹,false,false)));
+	assert(r==((0,0,0),(1,1,1)));
+	return r;
 }

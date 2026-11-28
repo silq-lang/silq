@@ -1,14 +1,16 @@
+// args: --run
+
 def g(const x:𝔹){ return measure(dup(x)); }
 def h(x:𝔹){ return measure(x); }
 def keptAfterReturn(a:𝔹,k:!𝔹,l:!𝔹):𝔹×!𝔹×!𝔹{
 	v0:=dup(a);
-	v1:=dup(v0); /// error
+	v1:=dup(v0);
 	t1:=h(v1);
 	if l {
 		if k { return (a,false,false); }
-		x:=(a,true); /// note
+		x:=(a,true);
 		y:=measure(x);
-		t:=g(v1); /// note
+		t:=g(v1);
 		assert(false);
 	}
 	t2:=measure(v0);
@@ -16,17 +18,22 @@ def keptAfterReturn(a:𝔹,k:!𝔹,l:!𝔹):𝔹×!𝔹×!𝔹{
 }
 def nestedKeptAfterReturn(a:𝔹,k:!𝔹,l:!𝔹,m:!𝔹):𝔹×!𝔹×!𝔹{
 	v0:=dup(a);
-	v1:=dup(v0); /// error
+	v1:=dup(v0);
 	t1:=h(v1);
 	if m {
 		if l {
 			if k { return (a,false,false); }
-			x:=(a,true); /// note
+			x:=(a,true);
 			y:=measure(x);
-			t:=g(v1); /// note
+			t:=g(v1);
 			assert(false);
 		}
 	}
 	t2:=measure(v0);
 	return (a,t1,t2);
+}
+def main(){
+	r:=(measure(keptAfterReturn(0:𝔹,false,false)),measure(keptAfterReturn(1:𝔹,true,true)),measure(nestedKeptAfterReturn(1:𝔹,false,false,true)),measure(nestedKeptAfterReturn(0:𝔹,true,true,true)));
+	assert(r==((0,0,0),(1,0,0),(1,1,1),(0,0,0)));
+	return r;
 }
