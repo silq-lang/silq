@@ -1,0 +1,22 @@
+// args: --run
+
+def g(const x:𝔹){ return measure(dup(x)); }
+def nestedAbort(a:𝔹,k:!𝔹,m:!𝔹){
+	v0:=dup(a);
+	if !m { if k { x:=(a,true); y:=measure(x); t:=g(v0); assert(false); } }
+	forget(v0);
+	return a;
+}
+def nestedAbortChain(a:𝔹,k:!𝔹,l:!𝔹,m:!𝔹){
+	v0:=dup(a);
+	v1:=dup(v0);
+	if !k { if l { x:=(a,true); y:=measure(x); t:=g(v0); assert(false); } }
+	if m { t1:=measure(v0); }
+	t2:=measure(v1);
+	return (a,t2);
+}
+def main(){
+	r:=(measure(nestedAbort(1:𝔹,false,false)),measure(nestedAbort(0:𝔹,true,true)),measure(nestedAbortChain(1:𝔹,false,false,true)),measure(nestedAbortChain(0:𝔹,true,true,false)));
+	assert(r==(1,0,(1,1),(0,0)));
+	return r;
+}

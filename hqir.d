@@ -8781,16 +8781,16 @@ void interleaveBranches(CodeWriter cw, size_t i0, size_t i1, size_t i2, size_t i
 		}
 		if(source) foreach(r; s.qRet) if(r) routed[r] = source;
 	}
-	Q!(size_t, size_t, QReg)[] carriedReads; // (statement, split, part: the reads in a branch that diverges of a register that the code after the conditional, which continues the other branch, splits by the condition where it consumes it, also on the paths of this branch, see `ScopeWriter.carry`: they come before the split, or read the part of this branch after it, see `carriedNeeds`)
+	Q!(size_t, size_t, QReg)[] carriedReads; // (statement, split, part: the reads in a branch that diverges, or in a part of a branch that diverges where the code after the conditional continues both branches, of a register that the code after the conditional splits by the condition where it consumes it, also on the paths of the branch, see `ScopeWriter.carry`: they come before the split, or read the part of the paths that diverge after it, see `carriedNeeds`)
 	QReg carriedPart(size_t k, QReg r) {
-		if(continued != 1 && continued != 2 || branchOf(k) == 0 || branchOf(k) == continued) return null;
+		if(!continued || branchOf(k) == 0 || branchOf(k) == continued) return null;
 		auto c = item(consAt(r));
 		if(c == none || c < i3 - i0 || base(items[c].op) != opCSplit || items[c].qiArgs.length != 1 || items[c].qiArgs[0] !is r) return null;
 		auto cond = items[c].cArgs[0];
 		if(items[c].condC.canFind!(x => x.reg is cond) || !items[k].region) return null;
 		foreach(v; 0 .. 2) { // (the part of the paths that abort, which the code after deallocates, see `ScopeWriter.splitCarried`, as the branch aborts on all of its paths, see `CodeWriter.markDiverging`)
 			auto d = item(consAt(items[c].qRet[v]));
-			if(d != none && items[d].op == "qfree_call_rev[qbuiltin.error]" && items[d].condC.canFind!(x => x.reg is cond && x.value == (v == 1))) return items[c].qRet[v];
+			if(d != none && items[d].op == "qfree_call_rev[qbuiltin.error]" && items[d].condC.canFind!(x => x.reg is cond && x.value == (v == 1)) && !items[k].condC.canFind!(x => x.reg is cond && x.value != (v == 1))) return items[c].qRet[v]; // (not for a read that runs under the other value of the condition, on paths that do not abort)
 		}
 		return null;
 	}
