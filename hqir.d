@@ -8781,18 +8781,28 @@ void interleaveBranches(CodeWriter cw, size_t i0, size_t i1, size_t i2, size_t i
 		}
 		if(source) foreach(r; s.qRet) if(r) routed[r] = source;
 	}
-	Q!(size_t, size_t, QReg)[] carriedReads; // (statement, split, part: the reads in a branch that diverges, or in a part of a branch that diverges where the code after the conditional continues both branches, of a register that the code after the conditional splits by the condition where it consumes it, also on the paths of the branch, see `ScopeWriter.carry`: they come before the split, or read the part of the paths that diverge after it, see `carriedNeeds`)
+	Q!(size_t, size_t, QReg)[] carriedReads; // (statement, split, part: the reads in a region that diverges of a register that is split where it is consumed, by the condition of the paths that abort, see `ScopeWriter.carry`, in the code after the conditional or in the branch of the read, and by the conditions of the paths of the read: they come before the split, or read the part of their paths after the splits, which is deallocated there, see `carriedNeeds`)
+	bool abortedPart(QReg part, CReg cond, bool value) { // (see `ScopeWriter.splitCarried`)
+		auto d = item(consAt(part));
+		return d != none && items[d].op == "qfree_call_rev[qbuiltin.error]" && items[d].condC.canFind!(x => x.reg is cond && x.value == value);
+	}
 	QReg carriedPart(size_t k, QReg r) {
-		if(!continued || branchOf(k) == 0 || branchOf(k) == continued) return null;
-		auto c = item(consAt(r));
-		if(c == none || c < i3 - i0 || base(items[c].op) != opCSplit || items[c].qiArgs.length != 1 || items[c].qiArgs[0] !is r) return null;
-		auto cond = items[c].cArgs[0];
-		if(items[c].condC.canFind!(x => x.reg is cond) || !items[k].region) return null;
-		foreach(v; 0 .. 2) { // (the part of the paths that abort, which the code after deallocates, see `ScopeWriter.splitCarried`, as the branch aborts on all of its paths, see `CodeWriter.markDiverging`)
-			auto d = item(consAt(items[c].qRet[v]));
-			if(d != none && items[d].op == "qfree_call_rev[qbuiltin.error]" && items[d].condC.canFind!(x => x.reg is cond && x.value == (v == 1)) && !items[k].condC.canFind!(x => x.reg is cond && x.value != (v == 1))) return items[c].qRet[v]; // (not for a read that runs under the other value of the condition, on paths that do not abort)
+		if(branchOf(k) == 0 || !items[k].region) return null;
+		for(auto x = r;;) {
+			auto c = item(consAt(x));
+			if(c == none || branchOf(c) == 0 || c < i3 - i0 && branchOf(c) != branchOf(k) || base(items[c].op) != opCSplit || items[c].qiArgs.length != 1 || items[c].qiArgs[0] !is x) return null;
+			auto cond = items[c].cArgs[0];
+			if(items[c].condC.canFind!(y => y.reg is cond)) return null;
+			auto known = items[k].condC.countUntil!(y => y.reg is cond);
+			if(known < 0) { // (the condition of the paths that abort, by which the code after the conditional splits, of the branch that contains the read, which aborts on all of its paths, see `CodeWriter.markDiverging`)
+				if(c < i3 - i0 || !continued || branchOf(k) == continued) return null;
+				foreach(v; 0 .. 2) if(abortedPart(items[c].qRet[v], cond, v == 1)) return items[c].qRet[v];
+				return null;
+			}
+			auto value = items[k].condC[known].value, part = items[c].qRet[value ? 1 : 0]; // (a condition of the paths of the read, e.g., of a conditional in the code after the conditional or in the branch whose split `ScopeWriter.carry` deferred)
+			if(abortedPart(part, cond, value)) return part;
+			x = part;
 		}
-		return null;
 	}
 	foreach(k, ref s; items) {
 		foreach(r; s.qiArgs) if(r) edge(item(prodAt(r)), k);
@@ -9004,14 +9014,14 @@ void interleaveBranches(CodeWriter cw, size_t i0, size_t i1, size_t i2, size_t i
 		}
 		auto e = edges[cr[0]].countUntil(cr[1]); // (the read before the split)
 		if(e < 0) continue;
-		auto old = edges[cr[0]];
+		auto old = edges[cr[0]], last = item(prodAt(cr[2])); // (`last`: the split that defines the part)
 		edges[cr[0]] = old[0 .. e] ~ old[e + 1 .. $];
-		if(reaches(cr[0], k => k == cr[1])) {
+		if(reaches(cr[0], k => k == last)) {
 			edges[cr[0]] = old;
 			continue;
 		}
 		carriedRewrite[i] = true;
-		edge(cr[1], cr[0]);
+		edge(last, cr[0]);
 		auto pc = item(consAt(cr[2]));
 		edge(cr[0], pc);
 		foreach(k; ps) edge(k, pc);
@@ -9063,8 +9073,8 @@ void interleaveBranches(CodeWriter cw, size_t i0, size_t i1, size_t i2, size_t i
 		foreach(ref r; s.qcArgs) if(r is whole) r = cr[2];
 		s.condQ = s.condQ.dup;
 		foreach(ref c; s.condQ) if(c.reg is whole) c.reg = cr[2];
-		auto split = &items[cr[1]];
-		auto conds = split.condC ~ CondC(split.cArgs[0], split.qRet[1] is cr[2]); // (where the part exists, which holds on all paths of the branch, see `carriedPart`: the read and the statements of the branch that use what it computes run under them, as the backend only lets a statement use a register under the conditions of its definition)
+		auto split = &items[item(prodAt(cr[2]))];
+		auto conds = split.condC ~ CondC(split.cArgs[0], split.qRet[1] is cr[2]); // (where the part exists, which holds on all paths of the region, see `carriedPart`: the read and the statements of the branch that use what it computes run under them, as the backend only lets a statement use a register under the conditions of its definition)
 		MapX!(QReg, Unit) qs;
 		MapX!(CReg, Unit) cs;
 		foreach(k; order) {

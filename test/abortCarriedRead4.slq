@@ -1,0 +1,50 @@
+// args: --run
+
+def g(const x:𝔹){ return measure(dup(x)); }
+def h(x:𝔹){ return measure(x); }
+def laterAbort(a:𝔹,l:!𝔹,m:!𝔹){
+	v0:=dup(a);
+	v1:=!v0;
+	t1:=h(v1);
+	if m { if l { x:=(a,true); assert(false); } }
+	if l { } else { x:=(a,true); y:=measure(x); t:=g(v0); assert(false); }
+	if m { t:=g(v1); assert(false); }
+	t2:=measure(v1);
+	return (a,t1,t2);
+}
+def laterAbortAfterAbort(a:𝔹,k:!𝔹,l:!𝔹,m:!𝔹){
+	v0:=dup(a);
+	v1:=!v0;
+	t1:=h(v1);
+	if m { x:=(a,true); assert(false); }
+	if l { } else { x:=(a,true); y:=measure(x); t:=g(v0); assert(false); }
+	if k { } else { if m { t:=g(v1); assert(false); } }
+	t2:=measure(v1);
+	return (a,t1,t2);
+}
+def nestedAbortAfterAbort(a:𝔹,k:!𝔹,l:!𝔹,m:!𝔹){
+	v0:=dup(a);
+	v1:=dup(v0);
+	t1:=measure(v1);
+	if m { assert(false); }
+	if l { if k { x:=(a,true); y:=measure(x); t:=g(v0); assert(false); } }
+	forget(v0);
+	return (a,t1);
+}
+def splitInBranch(a:𝔹,k:!𝔹,l:!𝔹,m:!𝔹){
+	v0:=dup(a);
+	v1:=!v0;
+	t1:=h(v1);
+	if k {
+		if m { x:=(a,true); y:=measure(x); t:=g(v1); assert(false); }
+		if l { t:=measure(v1); }
+		assert(false);
+	}
+	t2:=measure(v1);
+	return (a,t1,t2);
+}
+def main(){
+	r:=(measure(laterAbort(0:𝔹,true,false)),measure(laterAbort(1:𝔹,true,false)),measure(laterAbortAfterAbort(1:𝔹,true,true,false)),measure(nestedAbortAfterAbort(1:𝔹,false,true,false)),measure(splitInBranch(0:𝔹,false,true,true)));
+	assert(r==((0,1,1),(1,0,0),(1,0,0),(1,1),(0,1,1)));
+	return r;
+}
