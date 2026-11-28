@@ -1,0 +1,32 @@
+def g(const x:𝔹){ return measure(dup(x)); }
+def h(x:𝔹){ return measure(x); }
+def keptAfterReturn(a:𝔹,k:!𝔹,l:!𝔹):𝔹×!𝔹×!𝔹{
+	v0:=dup(a);
+	v1:=dup(v0); /// error
+	t1:=h(v1);
+	if l {
+		if k { return (a,false,false); }
+		x:=(a,true); /// note
+		y:=measure(x);
+		t:=g(v1); /// note
+		assert(false);
+	}
+	t2:=measure(v0);
+	return (a,t1,t2);
+}
+def nestedKeptAfterReturn(a:𝔹,k:!𝔹,l:!𝔹,m:!𝔹):𝔹×!𝔹×!𝔹{
+	v0:=dup(a);
+	v1:=dup(v0); /// error
+	t1:=h(v1);
+	if m {
+		if l {
+			if k { return (a,false,false); }
+			x:=(a,true); /// note
+			y:=measure(x);
+			t:=g(v1); /// note
+			assert(false);
+		}
+	}
+	t2:=measure(v0);
+	return (a,t1,t2);
+}

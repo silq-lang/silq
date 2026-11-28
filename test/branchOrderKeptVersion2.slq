@@ -1,0 +1,48 @@
+// args: --run
+
+def g(const x:𝔹){ return measure(dup(x)); }
+def h(x:𝔹){ return measure(x); }
+def kept(a:𝔹,l:!𝔹):𝔹×!𝔹×!𝔹{
+	v0:=dup(a);
+	v1:=dup(v0);
+	t1:=h(v1);
+	if l {
+		x:=(a,true);
+		y:=measure(x);
+		t:=g(v1);
+		assert(false);
+	}
+	t2:=measure(v0);
+	return (a,t1,t2);
+}
+def recomputed(a:𝔹,k:!𝔹,l:!𝔹):𝔹×!𝔹×!𝔹{
+	v0:=dup(a);
+	v1:=dup(v0);
+	t1:=h(v1);
+	if l {
+		if k { return (a,false,false); }
+		x:=(a,true);
+		t:=g(v1);
+		assert(false);
+	}
+	t2:=measure(v0);
+	return (a,t1,t2);
+}
+def copied(a:𝔹,l:!𝔹):𝔹×!𝔹×!𝔹{
+	v0:=dup(a);
+	v1:=!v0;
+	t1:=measure(v1);
+	if l {
+		x:=(a,true);
+		y:=measure(x);
+		w:=dup(v1); t:=measure(w);
+		assert(false);
+	}
+	t2:=measure(v1);
+	return (a,t1,t2);
+}
+def main(){
+	r:=(measure(kept(1:𝔹,false)),measure(recomputed(0:𝔹,false,false)),measure(recomputed(1:𝔹,true,true)),measure(copied(1:𝔹,false)));
+	assert(r==((1,1,1),(0,0,0),(1,0,0),(1,0,0)));
+	return r;
+}
